@@ -142,6 +142,9 @@ static void make_last_opening_session(
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].transparent_color = -1;
     session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34].source_kind =
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
+    session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].valid = 1;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].pixels = left_pixels;
@@ -154,6 +157,9 @@ static void make_last_opening_session(
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].transparent_color = -1;
     session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_LEFT_PC34].source_kind =
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
+    session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].valid = 1;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].pixels = right_pixels;
@@ -165,6 +171,9 @@ static void make_last_opening_session(
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].height = 161;
     session->surfaces.surfaces[
         CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].transparent_color = -1;
+    session->surfaces.surfaces[
+        CSB_V1_STARTUP_RUNTIME_SURFACE_OPENING_RIGHT_PC34].source_kind =
+        CSB_V1_STARTUP_RUNTIME_SURFACE_SOURCE_GRAPHICS_DAT_PC34;
 
     package_receipt->valid = package_receipt->real_package_matched = 1;
     package_receipt->c002_left_door_consumed = 1;

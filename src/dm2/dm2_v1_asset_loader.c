@@ -72,6 +72,10 @@ static const uint8_t DM2_PC_EN_GRAPHICS_MD5[16] DM2_MAYBE_UNUSED = {
 #define DM2_PC_GDAT_CONTAINER_WORD 0x8005u
 #define DM2_FMTOWNS_GRAPHICS_MIN_SIZE (2U * 1024U * 1024U)
 #define DM2_FMTOWNS_GRAPHICS_MAX_SIZE (4U * 1024U * 1024U)
+
+/* PC-9821 JP: GDAT v5 but only ~2MB (smaller Japanese graphics set) */
+#define DM2_PC9821_GRAPHICS_MIN_SIZE (1U * 1024U * 1024U)
+#define DM2_PC9821_GRAPHICS_MAX_SIZE (4U * 1024U * 1024U)
 #define DM2_FMTOWNS_GDAT_CONTAINER_WORD 0x8004u
 #define DM2_PC_GDAT_ENT1_WORD 0x8001u
 #define DM2_GDAT_ENTRY_TYPE_MAX 0x0e
@@ -843,9 +847,12 @@ int dm2_v1_asset_loader_init(DM2_V1_AssetLoader *loader,
     int is_fmtowns = (first_word == DM2_FMTOWNS_GDAT_CONTAINER_WORD &&
                       size >= DM2_FMTOWNS_GRAPHICS_MIN_SIZE &&
                       size <= DM2_FMTOWNS_GRAPHICS_MAX_SIZE);
+    int is_pc9821 = (!be && first_word == DM2_PC_GDAT_CONTAINER_WORD &&
+                     size >= DM2_PC9821_GRAPHICS_MIN_SIZE &&
+                     size < DM2_PC_GRAPHICS_MIN_SIZE);
     int is_be = (be && (first_word == DM2_PC_GDAT_CONTAINER_WORD) &&
                  size >= (1U * 1024U * 1024U));
-    if (!is_pc && !is_fmtowns && !is_be) return -1;
+    if (!is_pc && !is_fmtowns && !is_pc9821 && !is_be) return -1;
 
     loader->data = data;
     loader->data_size = size;

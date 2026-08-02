@@ -20514,9 +20514,20 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         if (timer_index >= profile->csbwin_timer_summary_count) {
             return -1;
         }
-        if (queue_index > 0u &&
-            timer_index <= profile->csbwin_timer_queue[queue_index - 1u]) {
-            return -1;
+        if (queue_index > 0u) {
+            uint16_t prev_index = profile->csbwin_timer_queue[queue_index - 1u];
+            if (prev_index < profile->csbwin_timer_summary_count) {
+                const CSB_V1_CSBWin512TimerSummary *prev_timer =
+                    &profile->csbwin_timers[prev_index];
+                if (profile->csbwin_timers[timer_index].time <
+                    prev_timer->time) {
+                    return -1;
+                }
+                if (profile->csbwin_timers[timer_index].time ==
+                    prev_timer->time && timer_index < prev_index) {
+                    return -1;
+                }
+            }
         }
         timer = &profile->csbwin_timers[timer_index];
         if (!timer->valid || timer->function == DM1_EVENT_NONE) {

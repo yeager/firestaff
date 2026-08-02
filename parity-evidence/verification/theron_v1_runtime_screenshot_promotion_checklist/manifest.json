@@ -17,7 +17,7 @@
           "canonical_pcengine_root",
           "jp_extras_track02_bin"
         ],
-        "sha256": "27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131"
+        "sha256": "496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40"
       }
     ]
   },
@@ -61,7 +61,7 @@
     "presented BMP is a valid 320x200 24-bit BMP with >200 non-black pixels",
     "operator-local reviewer sign-off reports reviewed=true with non-empty reviewer and review_date"
   ],
-  "generated_at": "2026-08-02T12:32:40.838367+00:00",
+  "generated_at": "2026-08-02T14:26:30.117516+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this checklist.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -105,7 +105,7 @@
         {
           "key": "unique_source_bmp",
           "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131 duplicated across rows",
+          "note": "source sha256 496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40 duplicated across rows",
           "verdict": "FAIL"
         },
         {
@@ -124,7 +124,7 @@
       "classification": "REVIEW_CHECKLIST_INELIGIBLE",
       "label": "Theron canonical PC Engine root",
       "machine_eligible": false,
-      "presented_sha256": "46c1a5e1de7d10574a8059368e4d0f047f98def6a9529e811bb79f05cdff092e",
+      "presented_sha256": "38d25d1091175509df81c5dfea826788b77f0ff282e8b4a47a276703a5fcde21",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON STARTUP",
@@ -134,7 +134,7 @@
       },
       "reviewer_signed_off": false,
       "reviewer_signoff_record": null,
-      "source_sha256": "27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131"
+      "source_sha256": "496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40"
     },
     {
       "case_id": "jp_extras_track02_bin",
@@ -166,7 +166,7 @@
         {
           "key": "unique_source_bmp",
           "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131 duplicated across rows",
+          "note": "source sha256 496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40 duplicated across rows",
           "verdict": "FAIL"
         },
         {
@@ -185,7 +185,7 @@
       "classification": "REVIEW_CHECKLIST_INELIGIBLE",
       "label": "Theron JP extras Track 02",
       "machine_eligible": false,
-      "presented_sha256": "46c1a5e1de7d10574a8059368e4d0f047f98def6a9529e811bb79f05cdff092e",
+      "presented_sha256": "38d25d1091175509df81c5dfea826788b77f0ff282e8b4a47a276703a5fcde21",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON STARTUP",
@@ -195,7 +195,7 @@
       },
       "reviewer_signed_off": false,
       "reviewer_signoff_record": null,
-      "source_sha256": "27c3b7133272d4520e85f478b9116c1742167b5c8b1525ff654e8029b8933131"
+      "source_sha256": "496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40"
     },
     {
       "case_id": "us_extras_track02_bin",
@@ -227,7 +227,7 @@
         {
           "key": "unique_source_bmp",
           "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 f89fcdc2d7c1406ef16678a8ece3a6a21a2ce205d8c2947e7ff06f032b843391 unique",
+          "note": "source sha256 bc81f269e57d851a4569659b80dff82e767c907cebf000ac6be447371e3db78d unique",
           "verdict": "PASS"
         },
         {
@@ -246,7 +246,7 @@
       "classification": "REVIEW_CHECKLIST_INELIGIBLE",
       "label": "Theron US extras Track 02",
       "machine_eligible": false,
-      "presented_sha256": "bc79bb48c9735948835a7bab433e4a033bf7f3a4939f5e54550c5fe817621e1d",
+      "presented_sha256": "7a9b0362dbdd1df871f6fdbef225aaeb082b3bd454e65bcf734becea308c5c78",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON STARTUP",
@@ -256,7 +256,7 @@
       },
       "reviewer_signed_off": false,
       "reviewer_signoff_record": null,
-      "source_sha256": "f89fcdc2d7c1406ef16678a8ece3a6a21a2ce205d8c2947e7ff06f032b843391"
+      "source_sha256": "bc81f269e57d851a4569659b80dff82e767c907cebf000ac6be447371e3db78d"
     }
   ],
   "schema": "firestaff.parity.theron_v1_runtime_screenshot_promotion_checklist.v1",

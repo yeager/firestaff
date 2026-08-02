@@ -264,9 +264,9 @@ static void check_startup_chapter_real(
     check(r->startup_quest_items_collected == 0u, name);
     snprintf(name, sizeof(name), "%s quest summary starts at 0/7", prefix);
     check_str_contains(r->startup_quest_summary, "0/7", name);
-    snprintf(name, sizeof(name), "%s next hint remains UNAVAILABLE", prefix);
+    snprintf(name, sizeof(name), "%s next hint is DRATOR", prefix);
     check_str_contains(r->startup_next_dungeon_hint,
-                       "UNAVAILABLE",
+                       "DRATOR",
                        name);
 }
 

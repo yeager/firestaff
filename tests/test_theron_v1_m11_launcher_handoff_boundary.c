@@ -358,7 +358,7 @@ static void run_real_launcher_handoff_if_available(void) {
         &view, startup_rows, 16);
     expect_true(row_count >= 3 &&
                     startup_rows_contain(startup_rows, row_count,
-                                         "Chapter 1: Hall of Records") &&
+                                         "Chapter 1: AKUTUBA") &&
                     startup_rows_contain(startup_rows, row_count,
                                          "PRESS ENTER TO START"),
                 "M11 Theron launcher rows expose title-gate state");
@@ -380,11 +380,11 @@ static void run_real_launcher_handoff_if_available(void) {
         &view, startup_rows, 16);
     expect_true(row_count >= 5 &&
                     startup_rows_contain(startup_rows, row_count,
-                                         "Chapter 1: Hall of Records") &&
+                                         "Chapter 1: AKUTUBA") &&
                     startup_rows_contain(startup_rows, row_count,
                                          "CHOOSE A STAGE") &&
                     startup_rows_contain(startup_rows, row_count,
-                                         "> 1  Hall of Records"),
+                                         "> 1  AKUTUBA"),
                 "M11 Theron launcher rows expose stage-selection state");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,

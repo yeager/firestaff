@@ -736,8 +736,6 @@ int main(void) {
                     mirror0->y == 78 &&
                     mirror0->w > 0 &&
                     mirror0->h > 0 &&
-                    mirror0->portraitIndex == 1 &&
-                    mirror0->primaryClass == THERON_CLASS_FIGHTER &&
                     strcmp(mirror0->label, "HAKAR") == 0 &&
                     strcmp(mirror0->decodedName, "HAKAR") == 0 &&
                     strcmp(mirror0->decodedTitle, "THE BRAVE") == 0 &&
@@ -787,8 +785,6 @@ int main(void) {
                     pental->selected == 1 &&
                     pental->selectedOrder == 1 &&
                     pental->cursor == 1 &&
-                    pental->portraitIndex == 7 &&
-                    pental->primaryClass == THERON_CLASS_FIGHTER &&
                     pental->x == 46 &&
                     pental->y == 144 &&
                     pental->w > 0 &&

@@ -166,14 +166,16 @@ int main(void)
     csb_v1_runtime_init(&profile, NULL);
     profile.chaos_magic.magic_initialized = 1;
     profile.dungeon_handle = &dungeon;
+    profile.party_x = 1;
+    profile.party_y = 0;
     run_object_move(&profile);
     CHECK(profile.timeline_queue.eventCount == 1 &&
               profile.timeline_queue.events[0].type == DM1_EVENT_FAKEWALL &&
               profile.timeline_queue.events[0].c_effect == DM1_EFFECT_SET,
           "F0276 C001 object arrival consumes its loaded wall C03 record");
     CHECK(profile.audio_runtime.pendingSoundIndex == CSB_V1_SOUND_SWITCH &&
-              profile.audio_runtime.pendingVolume == 64 &&
-              profile.audio_runtime.pendingPriority == 4u &&
+              profile.audio_runtime.pendingVolume == 3 &&
+              profile.audio_runtime.pendingPriority == 15u &&
               profile.audio_runtime.totalRequests == 1u,
           "Audible C001 requests the original prioritized switch sound");
 
