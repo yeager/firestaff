@@ -1,3 +1,11 @@
+- ✅ 2026-08-02 v3.0.252 Nexus: event-to-command mapping + DM.BIN combat tables
+  Event dispatch now translates all 61 yam\event.c event types to NEXUS_CMD_*
+  commands via nexus_v1_event_to_command(). Movement (6), interaction (2), spell
+  (2), map toggle (1) events mapped. 13 additional UI events (cancel, set_lead,
+  mouse_click, etc.) now accepted by dispatch. Combat data tables extracted from
+  DM.BIN yam\cresub.c region 0x03B5A0-0x03B5F0: attack permutation (8 entries),
+  experience thresholds (40-240), stat bitmasks (6 entries), and 3 special combat
+  item IDs (149, 152, 151). Test coverage: event+command mapping + combat tables.
 - ✅ 2026-08-02 v3.0.251 DM2: Mac/Amiga big-endian dungeon loader
   68k big-endian DUNGEON.DAT (magic 0x313b) now loads alongside PC (0x3147)
   and FM Towns (0x3094). Mac EN and Amiga EN verified: 28 maps, 39411 bytes,

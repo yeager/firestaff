@@ -145,5 +145,10 @@ typedef struct {
 const char *nexus_v1_event_name(Nexus_EventType ev);
 int nexus_v1_event_dispatch(Nexus_V1_GameState *state, const Nexus_Event *ev);
 
+/* Translate an event type to a NEXUS_CMD_* command (nexus_v1_movement.h).
+ * Returns NEXUS_CMD_NONE if the event has no direct command mapping.
+ * Source: yam\event.c dispatch table → yam\inventry.c/timeline.c command queue. */
+int nexus_v1_event_to_command(Nexus_EventType ev);
+
 #endif
 

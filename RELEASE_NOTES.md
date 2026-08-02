@@ -1,6 +1,11 @@
 
 # Unreleased
 
+# Firestaff v3.0.252
+- Nexus: event-to-command mapping (nexus_v1_event_to_command)
+- Nexus: 13 additional UI events accepted by dispatch
+- Nexus: DM.BIN combat tables from yam\cresub.c (attack perm, XP thresholds, stat bits, special items)
+
 # Firestaff v3.0.251
 - DM2: Mac/Amiga 68k big-endian DUNGEON.DAT loader (magic 0x313b)
 - DM2: dm2_v1_source_timer_tick() accessor for timer queue

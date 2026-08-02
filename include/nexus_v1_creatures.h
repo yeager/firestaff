@@ -16,6 +16,12 @@ typedef struct {
     char model_file[32];  /* e.g. "SCORPION.MNS" */
     int health, attack, defense, speed;
     int experience_value;
+    int detection_range;  /* CRET byte 14: how far creature detects party */
+    int ai_type;          /* CRET byte 0: AI behavior index (0-15) */
+    int attack_count;     /* CRET byte 1: number/type of attacks */
+    int behav_flags;      /* CRET byte 3: movement/behavior bit flags */
+    int ranged_type;      /* CRET byte 4: ranged attack type (0=melee) */
+    int poison;           /* CRET byte 13: poison damage on hit */
     int model_index;      /* index into engine->models[] */
     int cret_bound;       /* 1 when CRET stats loaded from RLOWFIX.BIN */
     uint8_t cret_raw[96]; /* raw CRET record from RLOWFIX.BIN (96 bytes per creature) */
@@ -175,8 +181,51 @@ int nexus_v1_creatures_load_cret(Nexus_V1_CreatureManager *mgr,
 #define NEXUS_CRET_OFF_ARMOR      12
 #define NEXUS_CRET_OFF_POISON     13
 #define NEXUS_CRET_OFF_INDEX      15
+#define NEXUS_CRET_OFF_DETECTION  14
+#define NEXUS_CRET_OFF_INDEX      15
+#define NEXUS_CRET_OFF_ANIM_FRAMES 16
+#define NEXUS_CRET_OFF_MOVE_TYPE  17
+#define NEXUS_CRET_OFF_AI_PARAM   18
+#define NEXUS_CRET_OFF_AI_RANGE   19
 #define NEXUS_CRET_OFF_SPEED      49
 #define NEXUS_CRET_RECORD_SIZE    96
 #define NEXUS_CRET_COUNT          30
+
+/* CRET byte 0: AI behavior type (0-15).
+ * Source: RLOWFIX.BIN CRET records, cross-referenced with DM.BIN
+ * yam\crenet.c AI function pointer table at 0x0383A8. */
+#define NEXUS_CRET_OFF_AI_TYPE    0
+/* CRET byte 1: attack count or projectile type (0-17). */
+#define NEXUS_CRET_OFF_ATTACK_COUNT 1
+/* CRET byte 3: movement/behavior flags (bit field: 0x10,0x30,0x40,0x50,0x80). */
+#define NEXUS_CRET_OFF_BEHAV_FLAGS 3
+/* CRET byte 4: ranged attack type (0=melee, 4/6/10=ranged variants). */
+#define NEXUS_CRET_OFF_RANGED_TYPE 4
+
+/* DM.BIN yam\cresub.c combat data tables (0x03B5A0-0x03B5F0).
+ * These are extracted from the real Saturn binary; no synthetic values. */
+
+/* Attack type permutation (8 entries, DM.BIN 0x03B5A0).
+ * Maps creature attack category to stat lookup index. */
+#define NEXUS_COMBAT_ATTACK_PERM_COUNT 8
+
+/* Experience level thresholds (8 entries, DM.BIN 0x03B5D8).
+ * Creature level boundaries: 40, 80, 120, 160, 200, 240, 277. */
+#define NEXUS_COMBAT_XP_THRESHOLD_COUNT 8
+
+/* Stat bitmask table (6 entries, DM.BIN 0x03B5C6).
+ * Powers of 2: 1, 2, 4, 8, 16, 32. Used for wound/stat category flags. */
+#define NEXUS_COMBAT_STAT_BITS_COUNT 6
+
+/* Special combat item IDs (3 entries, DM.BIN 0x03B5D2). */
+#define NEXUS_COMBAT_SPECIAL_ITEM_COUNT 3
+
+/* Retrieve DM.BIN creature combat tables.  Returns pointers to static
+ * tables extracted from the real Saturn binary.
+ * Source: DM.BIN yam\cresub.c data region 0x03B5A0-0x03B5F0. */
+const uint8_t *nexus_v1_combat_attack_perm(void);
+const uint8_t *nexus_v1_combat_xp_thresholds(void);
+const uint8_t *nexus_v1_combat_stat_bits(void);
+const uint16_t *nexus_v1_combat_special_items(void);
 
 #endif

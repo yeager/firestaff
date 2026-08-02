@@ -70,6 +70,14 @@ target_link_libraries(test_nexus_v1_cret_creature_stats PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_cret_creature_stats COMMAND test_nexus_v1_cret_creature_stats)
 set_tests_properties(nexus_v1_cret_creature_stats PROPERTIES LABELS "nexus;creatures;tier4")
 
+add_executable(test_nexus_v1_combat_tables
+    tests/test_nexus_v1_combat_tables.c)
+target_include_directories(test_nexus_v1_combat_tables PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_combat_tables PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_combat_tables COMMAND test_nexus_v1_combat_tables)
+set_tests_properties(nexus_v1_combat_tables PROPERTIES LABELS "nexus;combat;tier4")
+
 add_executable(test_nexus_v1_prs3
     tests/test_nexus_v1_prs3.c)
 target_include_directories(test_nexus_v1_prs3 PRIVATE
@@ -3572,7 +3580,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.251 LANGUAGES C)
+project(Firestaff VERSION 3.0.252 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries

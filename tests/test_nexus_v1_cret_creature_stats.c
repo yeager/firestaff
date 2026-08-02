@@ -102,6 +102,33 @@ int main(void) {
                    i, t->name, t->health, t->attack, t->defense, t->speed);
     }
 
+    /* Verify new CRET fields for known creatures */
+    {
+        Nexus_CreatureType *antman = &mgr.types[0];
+        Nexus_CreatureType *golem = &mgr.types[5];
+        Nexus_CreatureType *chaos = &mgr.types[26];
+        if (antman->detection_range != 43) {
+            fprintf(stderr, "FAIL: AntMan detection=%d, expected 43\n", antman->detection_range); fail++;
+        }
+        if (antman->ai_type != 13) {
+            fprintf(stderr, "FAIL: AntMan ai_type=%d, expected 13\n", antman->ai_type); fail++;
+        }
+        if (antman->poison != 0) {
+            fprintf(stderr, "FAIL: AntMan poison=%d, expected 0\n", antman->poison); fail++;
+        }
+        if (golem->behav_flags != 48) {
+            fprintf(stderr, "FAIL: Golem behav_flags=%d, expected 48\n", golem->behav_flags); fail++;
+        }
+        if (chaos->ai_type != 4) {
+            fprintf(stderr, "FAIL: Chaos ai_type=%d, expected 4\n", chaos->ai_type); fail++;
+        }
+        if (chaos->ranged_type != 0) {
+            fprintf(stderr, "FAIL: Chaos ranged=%d, expected 0\n", chaos->ranged_type); fail++;
+        }
+        if (!fail)
+            printf("New CRET fields (detection, AI, poison, behavior) verified\n");
+    }
+
     if (fail) {
         fprintf(stderr, "%d stat mismatches\n", fail);
         return 1;
