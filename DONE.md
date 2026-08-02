@@ -1,3 +1,11 @@
+- ✅ 2026-08-02 v3.0.238 Theron parity: combat messages, text alphabet, spawn zones
+  Item condition adjectives (CONSUMABLE/POISONED/BROKEN/CURSED) from UD 0x0865D4.
+  Combat feedback (HEADS/TAILS coin flip, CAN'T REACH, NEED AMMO) from UD 0x089A32.
+  System messages (WAKE UP, GAME FROZEN, RESURRECTED, PASS) from ROM code banks.
+  Theron-specific "GO AWAY AND RESURRECT THERON" message. File select menu.
+  Super CD-ROM2 system requirement text. 5-bit packed text encoding alphabet
+  from UD 0x09D44F with common-word shortcuts (THE, YOU). Spawn zone sub-
+  structure decoded: per-creature spawn point records with zone indices.
 - ✅ 2026-08-02 v3.0.237 Theron parity: item properties, spell descriptors
   66 item property records from UD 0x099825 (6 bytes each): category/flags,
   primary/secondary/tertiary stats. THE RETALIATOR has maxed stats (0xFF).

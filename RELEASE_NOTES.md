@@ -1,6 +1,13 @@
 
 # Unreleased
 
+# Firestaff v3.0.238
+- Combat messages: item conditions (CONSUMABLE/POISONED/BROKEN/CURSED), coin flip (HEADS/TAILS), CAN'T REACH, NEED AMMO
+- System messages: WAKE UP, GAME FROZEN, RESURRECTED, PASS, "GO AWAY AND RESURRECT THERON"
+- 5-bit packed text alphabet from UD 0x09D44F with common-word shortcuts (THE, YOU)
+- File select menu, Super CD-ROM2 system requirement text
+- Dungeon map analysis: tile maps are NOT plain DM1 format — likely compressed using PC Engine-specific scheme
+
 # Firestaff v3.0.237
 - 66 item property records from UD 0x099825 (6-byte records: category/flags + 5 stat bytes)
 - 41 action/spell cost table from UD 0x09EFAF (FIREBALL=42, LIGHTNING=38, HEAL=2, PUNCH=1)
