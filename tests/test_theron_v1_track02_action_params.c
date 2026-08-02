@@ -27,5 +27,29 @@ int main(void) {
     assert(raw[0] == 0x06);
     assert(raw[1] == 0x08);
 
+    /* Combat action parameters */
+    assert(theron_v1_track02_combat_action_param_count() == 20);
+
+    const Theron_Track02CombatActionParam *n_action = theron_v1_track02_combat_action_param(0);
+    assert(n_action != NULL);
+    assert(n_action->field0 == 0x00);
+    assert(n_action->field1 == 0x04);
+
+    const Theron_Track02CombatActionParam *thrust = theron_v1_track02_combat_action_param(15);
+    assert(thrust != NULL);
+    assert(thrust->field0 == 0x11);
+    assert(thrust->field1 == 0x13);
+
+    assert(theron_v1_track02_combat_action_param(20) == NULL);
+
+    /* PCE string pointer table */
+    const uint16_t *ptrs = theron_v1_track02_action_ptr_table();
+    assert(ptrs != NULL);
+    assert(ptrs[0] == 0x6EA3);
+    assert(ptrs[43] == 0x6FAF);
+    /* HEAL appears twice */
+    assert(ptrs[35] == ptrs[36]);
+    assert(ptrs[35] == 0x6F8B);
+
     return 0;
 }

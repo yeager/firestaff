@@ -36,7 +36,8 @@
 #define NEXUS_CMD_TOGGLE_MAP    10
 #define NEXUS_CMD_INTERACT      11  /* click-route: open chest, pull lever,
                                        pick up floor item, etc. */
-#define NEXUS_CMD_COUNT         12
+#define NEXUS_CMD_REST          12
+#define NEXUS_CMD_COUNT         13
 #endif
 
 /* Movement result codes — mirrors DM1 MOVESENS result values.
