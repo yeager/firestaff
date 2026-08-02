@@ -120,6 +120,7 @@ typedef struct {
     int16_t  mana,    max_mana;
 
     /* Attribute stats (persist for all champions) */
+    int16_t  luck;
     int16_t  strength;
     int16_t  dexterity;
     int16_t  wisdom;

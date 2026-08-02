@@ -53,6 +53,7 @@ static void init_champion_from_roster(Theron_V1_Champion *c,
     c->mana        = (int16_t)rec->mana;
     c->max_mana    = (int16_t)rec->mana;
 
+    c->luck        = (int16_t)rec->luck;
     c->strength    = (int16_t)rec->strength;
     c->dexterity   = (int16_t)rec->dexterity;
     c->wisdom      = (int16_t)rec->wisdom;

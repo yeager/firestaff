@@ -76,11 +76,14 @@
   tile table is now behind an unconditional source-mapping gate. Bind the
   real square-value/depth/material mapping before enabling it.
 
-- **THERON-V1-CHAMPION-STATE-REAL-DATA:** *(Partially resolved v3.0.234-235)*
+- **THERON-V1-CHAMPION-STATE-REAL-DATA:** *(Partially resolved v3.0.234-249)*
   Real champion roster (8 entries from UD 0x09D1D6) now wired into
   `theron_v1_party_init()` with real HP/STA/MANA and 6 base attributes.
   Soul Room companion selection via `theron_v1_party_set_companion()`.
-  Remaining: portrait/class graphics from tile banks, save/load serialization
+  Skill sub-levels (Fighter/Ninja/Priest/Wizard × 4 sub-skills) added from
+  DMWeb encyclopaedia, cross-validated against Track 02 base stats.
+  Primary class now derived from highest skill tier per champion.
+  Remaining: portrait graphics from tile banks, save/load serialization
   with real stat ranges, production startup handoff integration.
 
 - **THERON-STARTUP-RECEIPT-REAL-DATA:** The no-data startup receipt and its
@@ -647,6 +650,10 @@
   live DB3/DB14 record, its links, target, direction, payload and timer
   handoff before enabling switches, relays, counters, teleports, shooters or
   resurrection.
+  **2026-08-02 update:** the 0x56 CONTINUE_TICK_GENERATOR timer is now
+  fully wired: resolves the actuator record from the timer's ObjectID via
+  the record pool, handles ActionType==3 toggle mode and OnceOnly re-queue.
+  Periodic actuator events (tick generators) now fire correctly.
 
 - **DM2-SHOP-GLASS-OWNER-HANDOFF:** The fixed-coordinate catalog path is
   closed. SKProject `DRAW_WALL_ORNATE` passes the live wall actuator into

@@ -16,6 +16,7 @@ int main(void) {
     assert(theron->hp == 175);
     assert(theron->stamina == 1500);
     assert(theron->mana == 50);
+    assert(theron->luck == 80);
     assert(theron->strength == 50);
 
     const Theron_ChampionRecord *mara = theron_v1_track02_us_champion(1);

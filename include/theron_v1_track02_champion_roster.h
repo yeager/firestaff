@@ -24,6 +24,7 @@ typedef struct {
     uint16_t hp;
     uint16_t stamina;
     uint16_t mana;
+    uint8_t  luck;
     uint8_t  strength;
     uint8_t  dexterity;
     uint8_t  wisdom;

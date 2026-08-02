@@ -1,6 +1,10 @@
 
 # Unreleased
 
+# Firestaff v3.0.249
+- DM2: tick generator timer handler (CONTINUE_TICK_GENERATOR) — periodic actuator events now fire
+- DM2: ActionType==3 toggle mode and OnceOnly re-queue from skproject skevent.cpp:2764
+
 # Firestaff v3.0.248
 - Nexus: 30 creature AI function pointers from DM.BIN 0x0383A8 (yam\crenet.c dispatch table)
 - Nexus: CreatureType struct gains ai_func_ptr field for SH-2 behavior dispatch

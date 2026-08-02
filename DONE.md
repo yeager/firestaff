@@ -1,3 +1,8 @@
+- ✅ 2026-08-02 v3.0.249 DM2: tick generator timer handler (CONTINUE_TICK_GENERATOR)
+  Wired the 0x56 tick generator timer from stub to full implementation.
+  Resolves actuator record from timer ObjectID via record pool, handles
+  ActionType==3 toggle mode and OnceOnly re-queue. Source: skevent.cpp:2764.
+  317 DM2 tests pass.
 - ✅ 2026-08-02 v3.0.248 Nexus: creature AI dispatch table + DMWeb format integration
   30 creature AI function pointers extracted from DM.BIN 0x0383A8 (yam\crenet.c).
   Index 0 ANTMAN = 0xFFFFFFFF (default), index 27 LORD_RIB = 0x00000000 (null).
