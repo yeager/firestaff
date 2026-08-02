@@ -142,6 +142,14 @@ target_link_libraries(test_nexus_v1_automap PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_automap COMMAND test_nexus_v1_automap)
 set_tests_properties(nexus_v1_automap PROPERTIES LABELS "nexus;automap;tier4")
 
+add_executable(test_nexus_v1_light
+    tests/test_nexus_v1_light.c)
+target_include_directories(test_nexus_v1_light PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_light PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_light COMMAND test_nexus_v1_light)
+set_tests_properties(nexus_v1_light PROPERTIES LABELS "nexus;light;tier4")
+
 add_executable(test_nexus_v1_projectiles
     tests/test_nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_projectiles PRIVATE
@@ -15030,6 +15038,21 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_cdda_cd_dat
         COMMAND test_dm2_v1_cdda_cd_dat
+    )
+
+    add_executable(test_dm2_v1_gdat_cross_platform
+        tests/test_dm2_v1_gdat_cross_platform.c
+    )
+    target_link_libraries(test_dm2_v1_gdat_cross_platform PRIVATE firestaff_dm2 firestaff_m10 m)
+    target_include_directories(test_dm2_v1_gdat_cross_platform PRIVATE
+        ${CMAKE_SOURCE_DIR}/include
+    )
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_gdat_cross_platform PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gdat_cross_platform
+        COMMAND test_dm2_v1_gdat_cross_platform
     )
 
     add_executable(test_dm2_v1_i18n_real_data
