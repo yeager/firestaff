@@ -1,6 +1,12 @@
 
 # Unreleased
 
+# Firestaff v3.0.241
+- Nexus magic system rewritten with real DM.BIN spell lookup table (32 entries at 0x038368)
+- 4 elements × 4 forms × 2 classes yield 8 unique spell types from Saturn binary
+- Priest/wizard parameter tables (0x038320/0x038340) provide per-power-level cost/damage
+- Auto-selects caster class with fallback to alternate class
+
 # Firestaff v3.0.240
 - Theron creature spawn now uses real category-based stat formulas from Track 02 disassembly
 - Added theron_v1_track02_compute_spawn_stats() for categories 0-3 with HP cap at 900

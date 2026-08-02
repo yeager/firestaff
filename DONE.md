@@ -1,3 +1,10 @@
+- ✅ 2026-08-02 v3.0.241 Nexus: real DM.BIN spell table magic system
+  Rewrote nexus_v1_magic.c with the 32-entry spell lookup table extracted from
+  DM.BIN offset 0x038368 (yam\spell.c). 4 elements × 4 forms × 2 classes
+  (priest/wizard). Skill prefix table at 0x038360, parameter tables A/B at
+  0x038320/0x038340 for per-power-level mana cost and damage. 8 unique spell
+  types (0,1,2,3,5,7,10,12). Auto-selects caster class with fallback. Test
+  verifies all table entries match binary data.
 - ✅ 2026-08-02 v3.0.240 Theron: wire category-based spawn stat formulas into combat runtime
   Added theron_v1_track02_compute_spawn_stats() implementing real category 0-3
   formulas from disassembly at UD 0x0870E5. Creature spawn now uses real

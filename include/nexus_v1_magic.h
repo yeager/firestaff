@@ -4,8 +4,15 @@
 
 #include "nexus_v1_champions.h"
 
-/* DM1-compatible spell system — 6 power levels × 4 element runes.
- * Nexus uses the same rune symbols but adds new spell combinations. */
+/* Nexus spell system — real data from DM.BIN (yam\spell.c).
+ * 4 elements x 4 forms x 2 classes (priest/wizard) = 32 lookup entries.
+ * Source: DM.BIN offset 0x038368, SH-2 address 0x06048368. */
+
+#define NEXUS_SPELL_INVALID 0xFFFF
+
+#define NEXUS_POWER_RUNE_COUNT 6
+#define NEXUS_ELEMENT_RUNE_COUNT 4
+#define NEXUS_FORM_RUNE_COUNT 4
 
 typedef enum {
     NEXUS_RUNE_LO = 0, NEXUS_RUNE_UM, NEXUS_RUNE_ON,
@@ -13,22 +20,33 @@ typedef enum {
 } Nexus_PowerRune;
 
 typedef enum {
-    NEXUS_ELEM_YA = 0, NEXUS_ELEM_VI, NEXUS_ELEM_OH,
-    NEXUS_ELEM_FUL, NEXUS_ELEM_DES, NEXUS_ELEM_ZO
+    NEXUS_ELEM_YA = 0, NEXUS_ELEM_VI, NEXUS_ELEM_OH, NEXUS_ELEM_FUL
 } Nexus_ElementRune;
 
-typedef struct {
-    int power_level;      /* 0-5 (Lo to Mon) */
-    int element;          /* element rune index */
-    int form;             /* form rune (optional) */
-    int alignment;        /* alignment rune (optional) */
-    int mana_cost;
-    int damage;
-    const char *name;
-} Nexus_Spell;
+typedef enum {
+    NEXUS_FORM_GOR = 0, NEXUS_FORM_KATH, NEXUS_FORM_IR, NEXUS_FORM_BRO
+} Nexus_FormRune;
 
-int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int elem, int form, int align);
-int nexus_v1_spell_mana_cost(int power, int elem);
+typedef enum {
+    NEXUS_SPELL_CLASS_PRIEST = 0,
+    NEXUS_SPELL_CLASS_WIZARD = 1
+} Nexus_SpellClass;
+
+typedef struct {
+    int valid;
+    int spell_type;
+    Nexus_SpellClass spell_class;
+    int power_level;
+    int element;
+    int form;
+    int mana_cost;
+    int required_skill;
+} Nexus_SpellLookup;
+
+Nexus_SpellLookup nexus_v1_spell_lookup(int power, int element, int form,
+                                        Nexus_SpellClass spell_class);
+int nexus_v1_spell_mana_cost(int power, int element);
+int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int element,
+                        int form, int align);
 
 #endif
-
