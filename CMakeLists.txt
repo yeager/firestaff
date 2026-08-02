@@ -30,6 +30,14 @@ target_include_directories(test_nexus_v1_champion_plrd PRIVATE
 target_link_libraries(test_nexus_v1_champion_plrd PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_champion_plrd COMMAND test_nexus_v1_champion_plrd)
 
+add_executable(test_nexus_v1_combat
+    tests/test_nexus_v1_combat.c)
+target_include_directories(test_nexus_v1_combat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_combat PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_combat COMMAND test_nexus_v1_combat)
+set_tests_properties(nexus_v1_combat PROPERTIES LABELS "nexus;combat;tier4")
+
 add_executable(test_nexus_v1_multi_level_capture_campaign_launcher
     tests/test_nexus_v1_multi_level_capture_campaign_launcher.c
     src/nexus/nexus_v1_multi_level_capture_campaign_launcher.c
