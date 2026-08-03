@@ -46,6 +46,7 @@ typedef struct {
     int champion_count;
     int tick_count;        /* total game ticks since start */
     int game_started;
+    int needs_redraw;
     const char *data_dir;
     char level_path[512];
     Nexus_V1_DungeonStartReceipt dungeon_start;

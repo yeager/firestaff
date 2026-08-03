@@ -102,6 +102,40 @@ uint8_t dm2_v1_is_object_visible_text(
     uint16_t record_word,
     const DM2_V1_ObjectTextCallbacks *cb, void *ctx);
 
+/* ---- DM2_OVERSEE_RECORD (c_record.cpp:1755) ----
+ * Walk a linked thing list, optionally recursing into containers/chests.
+ * Calls the filter callback for each record; stops when callback returns
+ * nonzero. Sets *prev_link_out to the address of the link that points to
+ * the matching record. Returns pointer to the matching record, or NULL. */
+typedef struct {
+    int16_t (*get_next_record_link)(void *ctx, uint16_t record_word);
+    uint8_t *(*get_record_address)(void *ctx, uint16_t record_word);
+    int (*is_container_chest)(void *ctx, uint16_t record_word);
+} DM2_V1_OverseeCallbacks;
+
+typedef int (*DM2_V1_OverseeFilterFn)(int16_t *record_ptr, int16_t *userdata);
+
+int16_t *dm2_v1_oversee_record(
+    int16_t *first_link, uint8_t type_filter,
+    int16_t **prev_link_out, DM2_V1_OverseeFilterFn filter_fn,
+    int16_t *userdata, int recurse_containers, int recurse_chests,
+    const DM2_V1_OverseeCallbacks *cb, void *ctx);
+
+/* ---- DM1_ROTATE_ACTUATOR_LIST (SkWinCore2.cpp:298) ----
+ * Rotate the order of actuator records on a tile side.
+ * Returns 1 if rotated, 0 if nothing to rotate. */
+typedef struct {
+    int16_t (*get_tile_record_link)(void *ctx, int16_t x, int16_t y);
+    int16_t (*get_next_record_link)(void *ctx, uint16_t rw);
+    uint8_t *(*get_record_address)(void *ctx, uint16_t rw);
+    void (*set_next_record_link)(void *ctx, uint16_t rw, int16_t next);
+    void (*set_tile_record_link)(void *ctx, int16_t x, int16_t y, int16_t rw);
+} DM2_V1_ActuatorRotateCallbacks;
+
+int dm2_v1_rotate_actuator_list(
+    int16_t map_x, int16_t map_y, uint8_t direction,
+    const DM2_V1_ActuatorRotateCallbacks *cb, void *ctx);
+
 #ifdef __cplusplus
 }
 #endif

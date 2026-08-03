@@ -194,6 +194,148 @@ static void test_set_spelling_champion(void)
     printf("  PASS: set_spelling_champion\n");
 }
 
+/* ---- Enchantment self ---- */
+static uint8_t g_ench_queued_actor;
+static int16_t g_ench_queued_power;
+static uint16_t g_ench_queued_duration;
+static uint8_t g_ench_timer_actors[4];
+static uint8_t g_ench_timer_types[4];
+static int g_ench_timer_count;
+static int g_ench_deleted[4];
+static int g_ench_delete_count;
+
+static int mock_ench_timer_count(void *ctx) { (void)ctx; return g_ench_timer_count; }
+static uint8_t mock_ench_timer_type(void *ctx, int i) { (void)ctx; return g_ench_timer_types[i]; }
+static uint8_t mock_ench_timer_actor(void *ctx, int i) { (void)ctx; return g_ench_timer_actors[i]; }
+static void mock_ench_set_timer_actor(void *ctx, int i, uint8_t a) { (void)ctx; g_ench_timer_actors[i] = a; }
+static void mock_ench_delete_timer(void *ctx, int i) { (void)ctx; g_ench_deleted[g_ench_delete_count++] = i; }
+static void mock_ench_queue(void *ctx, uint8_t actor, int16_t power, uint16_t dur)
+{
+    (void)ctx;
+    g_ench_queued_actor = actor;
+    g_ench_queued_power = power;
+    g_ench_queued_duration = dur;
+}
+
+static void test_proceed_enchantment_self(void)
+{
+    reset_heroes();
+    g_ench_timer_count = 0;
+    g_ench_delete_count = 0;
+    DM2_V1_EnchantmentCallbacks cb = {
+        4, mock_get_hero,
+        mock_ench_timer_count, mock_ench_timer_type, mock_ench_timer_actor,
+        mock_ench_set_timer_actor, mock_ench_delete_timer, mock_ench_queue
+    };
+    /* Apply aura 5 power 20 to heroes 0 and 2 (mask = 0x05) */
+    dm2_v1_proceed_enchantment_self(0x05, 5, 20, 100, &cb, NULL);
+    assert(g_heroes[0].ench_aura == 5);
+    assert(g_heroes[0].ench_power == 20);
+    assert(g_heroes[2].ench_aura == 5);
+    assert(g_heroes[2].ench_power == 20);
+    assert(g_heroes[1].ench_aura == 0);
+    assert(g_ench_queued_actor == 0x05);
+    assert(g_ench_queued_duration == 100);
+
+    /* Dead hero should be excluded */
+    reset_heroes();
+    g_heroes[1].cur_hp = 0;
+    dm2_v1_proceed_enchantment_self(0x03, 2, 10, 50, &cb, NULL);
+    assert(g_heroes[0].ench_aura == 2);
+    assert(g_heroes[1].ench_aura == 0);
+    assert((g_ench_queued_actor & 0x02) == 0);
+    printf("  PASS: proceed_enchantment_self\n");
+}
+
+/* ---- Global effect timers ---- */
+static uint8_t g_ge_types[8];
+static uint16_t g_ge_actors[8];
+static int16_t g_ge_values[8];
+static int g_ge_count;
+static int g_ge_0e_called;
+
+static uint8_t mock_ge_type(void *ctx, int i) { (void)ctx; return g_ge_types[i]; }
+static uint16_t mock_ge_actor(void *ctx, int i) { (void)ctx; return g_ge_actors[i]; }
+static int16_t mock_ge_value(void *ctx, int i) { (void)ctx; return g_ge_values[i]; }
+static void mock_ge_0e(void *ctx, int i) { (void)ctx; (void)i; g_ge_0e_called++; }
+
+static const int16_t mock_light_table[16] = {
+    0, 10, 20, 30, 40, 50, 60, 70, 80, 90, 100, 110, 120, 130, 140, 150
+};
+
+static void test_proceed_global_effect_timers(void)
+{
+    reset_heroes();
+    DM2_V1_GlobalSpellEffects effects;
+    DM2_V1_GlobalEffectCallbacks cb = {
+        0, mock_ge_type, mock_ge_actor, mock_ge_value, mock_ge_0e,
+        4, mock_get_hero, mock_light_table, 16
+    };
+
+    /* Light timer: negative value adds light */
+    g_ge_types[0] = 0x46; g_ge_actors[0] = 0; g_ge_values[0] = -3;
+    /* Invisibility */
+    g_ge_types[1] = 0x47; g_ge_actors[1] = 0; g_ge_values[1] = 0;
+    /* Enchantment for hero 0 */
+    g_ge_types[2] = 0x48; g_ge_actors[2] = 0x01; g_ge_values[2] = 5;
+    /* Poison for hero 2 */
+    g_ge_types[3] = 0x4B; g_ge_actors[3] = 2; g_ge_values[3] = 0;
+    /* Item bonus */
+    g_ge_types[4] = 0x0E; g_ge_actors[4] = 0; g_ge_values[4] = 0;
+    cb.timer_count = 5;
+    g_ge_0e_called = 0;
+
+    dm2_v1_proceed_global_effect_timers(&effects, &cb, NULL);
+    assert(effects.light == 30); /* light_table[3] = 30 */
+    assert(effects.invisibility == 1);
+    assert(g_heroes[0].ench_power == 5);
+    assert(g_heroes[2].poison_value == 1);
+    assert(g_ge_0e_called == 1);
+    printf("  PASS: proceed_global_effect_timers\n");
+}
+
+static void test_process_timer_0c(void)
+{
+    reset_heroes();
+    g_heroes[0].timer_idx = 5;
+    g_heroes[0].cur_hp = 50;
+    assert(dm2_v1_process_timer_0c(&g_heroes[0]) == 1);
+    assert(g_heroes[0].timer_idx == -1);
+    assert((g_heroes[0].hero_flag & DM2_V1_HERO_FLAG_0800) != 0);
+
+    /* Dead hero: timer_idx cleared but no flag set */
+    reset_heroes();
+    g_heroes[1].timer_idx = 3;
+    g_heroes[1].cur_hp = 0;
+    assert(dm2_v1_process_timer_0c(&g_heroes[1]) == 1);
+    assert(g_heroes[1].timer_idx == -1);
+    assert((g_heroes[1].hero_flag & DM2_V1_HERO_FLAG_0800) == 0);
+
+    assert(dm2_v1_process_timer_0c(NULL) == 0);
+    printf("  PASS: process_timer_0c\n");
+}
+
+static int g_backbuff_called;
+static int g_display_mode_arg;
+static void mock_init_backbuff(void *ctx) { (void)ctx; g_backbuff_called = 1; }
+static int mock_display_mode(void *ctx, int mode) { (void)ctx; g_display_mode_arg = mode; return mode; }
+
+static void test_resume_from_wake(void)
+{
+    int wake = 0, sleep = 1, tick = 0;
+    g_backbuff_called = 0;
+    g_display_mode_arg = -1;
+    DM2_V1_WakeCallbacks cb = { &wake, &sleep, &tick, mock_init_backbuff, mock_display_mode };
+    int r = dm2_v1_resume_from_wake(&cb, NULL);
+    assert(wake == 1);
+    assert(sleep == 0);
+    assert(tick == 0x8);
+    assert(g_backbuff_called == 1);
+    assert(g_display_mode_arg == 5);
+    assert(r == 5);
+    printf("  PASS: resume_from_wake\n");
+}
+
 int main(void)
 {
     printf("test_dm2_v1_hero_ops:\n");
@@ -206,6 +348,10 @@ int main(void)
     test_coin_wallet();
     test_perform_turn_squad();
     test_set_spelling_champion();
+    test_proceed_enchantment_self();
+    test_proceed_global_effect_timers();
+    test_process_timer_0c();
+    test_resume_from_wake();
     printf("All hero_ops tests passed.\n");
     return 0;
 }

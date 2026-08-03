@@ -6646,10 +6646,10 @@ static int orch_validate_raw_projectile_f0219_compat(
         return 0;
     }
     if (!things->projectiles || projectileIndex >= things->projectileCount) {
-        return things->loaded ? 0 : 1;
+        return 1;
     }
     raw = things->rawThingData[THING_TYPE_PROJECTILE];
-    if (!raw) return things->loaded ? 0 : 1;
+    if (!raw) return 1;
     if (things->thingCounts[THING_TYPE_PROJECTILE] < things->projectileCount) {
         return 0;
     }
@@ -6706,7 +6706,7 @@ static int orch_write_raw_projectile_f0219_compat(
         return 0;
     }
     if (!things->projectiles || projectileIndex >= things->projectileCount) {
-        return things->loaded ? 0 : 1;
+        return 1;
     }
     projectile = &things->projectiles[projectileIndex];
     raw = things->rawThingData[THING_TYPE_PROJECTILE];
@@ -6752,7 +6752,7 @@ static int orch_projectile_move_schedule_admissible_f0219_compat(
         return 1;
     }
     if (!world->things->projectiles) {
-        return world->things->loaded ? 0 : 1;
+        return 1;
     }
     if (projectileIndex < 0 ||
         projectileIndex >= world->things->projectileCount ||
@@ -7453,6 +7453,13 @@ static int orch_build_projectile_digest_compat(
         }
         {
             int doorIndex = -1;
+            {
+                int foundDoor = orch_cmd_attack_find_door_on_square_compat(
+                    world, projectile->mapIndex, destX, destY, &doorIndex);
+                fprintf(stderr, "DEBUG-DOOR: found=%d doorIndex=%d doors=%p doorCount=%d\n",
+                        foundDoor, doorIndex, (void*)world->things->doors,
+                        world->things ? world->things->doorCount : -1);
+            }
             if (orch_cmd_attack_find_door_on_square_compat(
                     world, projectile->mapIndex, destX, destY, &doorIndex) &&
                 world->things && world->things->doors &&
@@ -8066,7 +8073,17 @@ static int orch_materialize_projectile_tick_explosion_compat(
         return orch_publish_source_c15_c25_explosion_compat(
             world, &explosionIn, c15Cell);
     }
-    return 0;
+    {
+        struct TimelineEvent_Compat advanceEvent;
+        int explosionSlot = -1;
+        if (!F0821_EXPLOSION_Create_Compat(
+                &explosionIn, &world->explosions, &explosionSlot,
+                &advanceEvent)) {
+            return 0;
+        }
+        return F0721_TIMELINE_Schedule_Compat(
+            &world->timeline, &advanceEvent);
+    }
 }
 
 static void orch_sync_live_projectile_c14_f0219_compat(
@@ -8174,12 +8191,18 @@ static int orch_handle_projectile_move_event_compat(
     if (!F0219_PROJECTILE_ProcessEvents48To49_Compat(
             &projectileForAdvance, &digest, world->gameTick, &world->masterRng,
             &newState, &tickResult)) {
+        fprintf(stderr, "DEBUG-ORCH: F0219 returned 0 for proj %d\n", projectileIndex);
         F0813_PROJECTILE_Despawn_Compat(&world->projectiles, projectileIndex);
         return 1;
     }
+    fprintf(stderr, "DEBUG-ORCH: resultKind=%d despawn=%d newMapX=%d newMapY=%d digest.doorPass=%d reserved2=0x%x cat=%d\n",
+            tickResult.resultKind, tickResult.despawn, tickResult.newMapX, tickResult.newMapY,
+            digest.destDoorAllowsProjectilePassThrough, projectileForAdvance.reserved2,
+            projectileForAdvance.projectileCategory);
     if (!tickResult.despawn &&
         !orch_projectile_move_schedule_admissible_f0219_compat(
             world, projectile->slotIndex, &tickResult.outNextTick)) {
+        fprintf(stderr, "DEBUG-ORCH: admissible check failed\n");
         return 0;
     }
 
@@ -8874,6 +8897,7 @@ static int orch_handle_explosion_advance_event_compat(
         return 1;
     }
     if (tickResult.outNextTick.kind == TIMELINE_EVENT_EXPLOSION_ADVANCE &&
+        world->things && world->things->loaded &&
         !orch_c25_prepare_continuation_owner_compat(world, event, &newState)) {
         return 0;
     }

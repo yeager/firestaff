@@ -2733,6 +2733,8 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_v1_transition_table_init(&engine->transitions);
     nexus_v1_experience_init(&engine->experience);
     nexus_v1_fountain_manager_init(&engine->fountains);
+    nexus_v1_switch_manager_init(&engine->switches);
+    nexus_v1_container_manager_init(&engine->containers);
     /* Init sound engine */
     nexus_sound_init(&engine->audio);
     (void)nexus_v1_level_aux_source_receipt(
@@ -9838,6 +9840,91 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
         nexus_v1_action_timers_tick(&engine->action_timers);
         nexus_v1_door_tick(&engine->doors);
         nexus_v1_trap_tick(&engine->traps);
+        nexus_v1_creatures_tick(&engine->creatures,
+                                engine->mechanics->party_x,
+                                engine->mechanics->party_y,
+                                engine->current_level.squares,
+                                engine->mechanics->map_index);
+        {
+            Nexus_ProjectileHit hits[8];
+            int nhits = nexus_v1_projectiles_tick(&engine->projectiles,
+                                                   engine->current_level.squares,
+                                                   hits, 8);
+            int hi;
+            for (hi = 0; hi < nhits; hi++) {
+                if (hits[hi].hit_x == engine->mechanics->party_x &&
+                    hits[hi].hit_y == engine->mechanics->party_y) {
+                    int li = engine->champions.leader_index;
+                    if (li >= 0 && li < engine->champions.party_count) {
+                        int idx = engine->champions.party[li];
+                        if (idx >= 0 && idx < 4 && engine->champions.champions[idx].alive) {
+                            engine->champions.champions[idx].health -= hits[hi].damage;
+                            if (engine->champions.champions[idx].health <= 0) {
+                                engine->champions.champions[idx].health = 0;
+                                engine->champions.champions[idx].alive = 0;
+                            }
+                            nexus_v1_damage_display_add(&engine->damage_display,
+                                                        idx, hits[hi].damage, NEXUS_DMG_TAKEN);
+                        }
+                    }
+                } else {
+                    nexus_v1_creature_manager_damage_at(&engine->creatures,
+                                                        hits[hi].hit_x, hits[hi].hit_y,
+                                                        hits[hi].damage);
+                }
+            }
+        }
+        {
+            int ci2;
+            for (ci2 = 0; ci2 < engine->creatures.active_count; ci2++) {
+                Nexus_Creature *cr = &engine->creatures.active[ci2];
+                if (!cr->alive || cr->state != 3) continue;
+                if (cr->level != engine->mechanics->map_index) continue;
+                if (nexus_v1_creature_distance(cr->x, cr->y,
+                        engine->mechanics->party_x, engine->mechanics->party_y) <= 1) {
+                    int li = engine->champions.leader_index;
+                    if (li >= 0 && li < engine->champions.party_count) {
+                        int idx = engine->champions.party[li];
+                        if (idx >= 0 && idx < 4 && engine->champions.champions[idx].alive) {
+                            int dmg = 0;
+                            if (nexus_v1_creature_attack(&engine->creatures, ci2,
+                                    engine->champions.champions[idx].dexterity, &dmg)) {
+                                engine->champions.champions[idx].health -= dmg;
+                                if (engine->champions.champions[idx].health <= 0) {
+                                    engine->champions.champions[idx].health = 0;
+                                    engine->champions.champions[idx].alive = 0;
+                                }
+                                nexus_v1_damage_display_add(&engine->damage_display,
+                                                            idx, dmg, NEXUS_DMG_TAKEN);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        {
+            int ci3;
+            for (ci3 = 0; ci3 < engine->creatures.active_count; ci3++) {
+                Nexus_Creature *cr = &engine->creatures.active[ci3];
+                if (cr->health <= 0 && !cr->alive && cr->type_index >= 0) {
+                    int xp_val = engine->creatures.types[cr->type_index].experience_value;
+                    if (xp_val > 0) {
+                        int li = engine->champions.leader_index;
+                        if (li >= 0 && li < engine->champions.party_count) {
+                            int idx = engine->champions.party[li];
+                            if (idx >= 0 && idx < 4 && engine->champions.champions[idx].alive) {
+                                nexus_v1_experience_award_kill(&engine->experience,
+                                    &engine->champions.champions[idx], idx, xp_val);
+                                nexus_v1_experience_check_levelup(&engine->experience,
+                                    &engine->champions.champions[idx], idx);
+                            }
+                        }
+                    }
+                    cr->type_index = -2;
+                }
+            }
+        }
+        nexus_v1_light_tick(&engine->light);
         nexus_v1_damage_display_tick(&engine->damage_display);
         nexus_v1_messages_tick(&engine->messages);
         for (ci = 0; ci < engine->champions.party_count; ++ci) {
@@ -9863,7 +9950,7 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
     }
 
     if (redraw && engine->game.game_started) {
-        /* Signal viewport redraw */
+        engine->game.needs_redraw = 1;
     }
 
     /* Increment game tick counter */

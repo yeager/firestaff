@@ -15,6 +15,7 @@
 #include "nexus_v1_light.h"
 #include "nexus_v1_status.h"
 #include "nexus_v1_rest.h"
+#include "nexus_v1_encumbrance.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -156,6 +157,11 @@ void nexus_mechanics_clear_spell(Nexus_MechanicsState *st) {
     st->spell_element = -1;
     st->spell_form = -1;
     st->spell_align = -1;
+}
+
+void nexus_mechanics_set_leader_slot(Nexus_MechanicsState *st, int slot) {
+    if (!st) return;
+    st->set_leader_slot = slot;
 }
 
 static uint64_t mechanics_fnv1a64_bytes(const uint8_t *data, size_t size) {
@@ -795,7 +801,20 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 int fnt_idx = nexus_v1_fountain_find_at(&engine->fountains,
                                                         st->party_x, st->party_y);
                 int altar_state = nexus_altar_at(st->party_x, st->party_y);
-                if (fnt_idx >= 0) {
+                int sw_idx = nexus_v1_switch_find_at(&engine->switches,
+                                                     st->party_x, st->party_y);
+                int ct_idx = nexus_v1_container_find_at(&engine->containers,
+                                                        st->party_x, st->party_y);
+                if (sw_idx >= 0) {
+                    Nexus_SwitchResult sr = nexus_v1_switch_activate(
+                        &engine->switches, sw_idx);
+                    if (sr.activated && sr.target_type == NEXUS_SWITCH_TARGET_DOOR)
+                        nexus_v1_door_toggle(&engine->doors, sr.target_id);
+                    needs_redraw = 1;
+                } else if (ct_idx >= 0) {
+                    nexus_v1_container_open(&engine->containers, ct_idx, -1);
+                    needs_redraw = 1;
+                } else if (fnt_idx >= 0) {
                     nexus_v1_fountain_drink(&engine->fountains, fnt_idx, leader);
                     nexus_v1_message_push(&engine->messages, "DRINK");
                     needs_redraw = 1;
@@ -880,6 +899,16 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 nexus_v1_rest_stop(&engine->rest);
             else
                 nexus_v1_rest_start(&engine->rest);
+        } else if (cmd == NEXUS_CMD_SET_LEADER) {
+            int slot = st->set_leader_slot;
+            if (slot >= 0 && slot < engine->champions.party_count) {
+                int idx = engine->champions.party[slot];
+                if (idx >= 0 && idx < 4 &&
+                    engine->champions.champions[idx].alive) {
+                    engine->champions.leader_index = slot;
+                    needs_redraw = 1;
+                }
+            }
         } else {
             /* Step movement */
             int forward = (cmd == NEXUS_CMD_FORWARD) ? 1 : 0;
@@ -942,7 +971,20 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                                                        t_x, t_y)) {
                 st->party_x = t_x;
                 st->party_y = t_y;
-                st->move_cooldown_ticks = 6;
+                {
+                    int li2 = mechanics_party_leader_index(engine);
+                    if (li2 >= 0) {
+                        Nexus_V1_Champion *ldr = &engine->champions.champions[li2];
+                        st->move_cooldown_ticks = nexus_v1_encumbrance_move_ticks(ldr);
+                        int stam_cost = nexus_v1_encumbrance_stamina_cost(ldr);
+                        if (ldr->stamina > stam_cost)
+                            ldr->stamina -= stam_cost;
+                        else
+                            ldr->stamina = 0;
+                    } else {
+                        st->move_cooldown_ticks = NEXUS_BASE_MOVE_TICKS;
+                    }
+                }
                 needs_redraw = 1;
 
                 /* Check traps at new position */
@@ -1359,6 +1401,10 @@ int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
         nexus_mechanics_push_command(st, NEXUS_CMD_REST);
         return 0;
     case NEXUS_UI_EVENT_SAVE:
+        return 0;
+    case NEXUS_UI_EVENT_SET_LEADER:
+        nexus_mechanics_set_leader_slot(st, param);
+        nexus_mechanics_push_command(st, NEXUS_CMD_SET_LEADER);
         return 0;
     default:
         return -1;

@@ -2038,6 +2038,7 @@ static void test_orch_projectile_wall_impact_emits_non_explosion_sound(void) {
     createIn.stepEnergy = 10;
     createIn.currentTick = 100;
     createIn.firstMoveGraceFlag = 1;
+    createIn.associatedThing = (THING_TYPE_WEAPON << 10) | 0;
     assert(F0810_PROJECTILE_Create_Compat(
         &createIn, &world.projectiles, &slot, &firstMove) == 1);
     assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstMove) == 1);

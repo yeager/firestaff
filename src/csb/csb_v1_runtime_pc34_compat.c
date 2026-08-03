@@ -5426,6 +5426,66 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                 ? (int)(creature_profile->attributes & 0x0003u)
                 : 0;
             if ((behavior == 0 || behavior == 2 || behavior == 3) &&
+                (distance_x != 0 && distance_y != 0)) {
+                int wander_dir = (int)(flags >> 14) & 0x03;
+                int wander_x = record->mapX;
+                int wander_y = record->mapY;
+                int wandered = 0;
+                struct RngState_Compat wander_rng;
+                F0730_COMBAT_RngInit_Compat(
+                    &wander_rng,
+                    profile->dungeon_seed ^ profile->game_time ^
+                        ((uint32_t)record->mapX << 4) ^
+                        ((uint32_t)record->mapY << 12));
+                wander_dir = (wander_dir +
+                    (int)(F0731_COMBAT_RngNextRaw_Compat(&wander_rng) & 3u)) & 3;
+                if (wander_dir == 0) wander_y--;
+                else if (wander_dir == 1) wander_x++;
+                else if (wander_dir == 2) wander_y++;
+                else wander_x--;
+                if (!csb_v1_runtime_group_destination_is_blocked(
+                        dungeon, record->mapIndex, wander_x, wander_y) &&
+                    !csb_v1_runtime_group_destination_has_party_or_group(
+                        profile, record->mapIndex, wander_x, wander_y)) {
+                    csb_v1_runtime_sync_active_group_state_from_record(
+                        profile, group_thing, thing_record,
+                        record->mapIndex, record->mapX, record->mapY, 0, 0);
+                    wandered = csb_v1_runtime_move_group_thing_to_square(
+                        profile, dungeon, group_thing,
+                        record->mapIndex, record->mapX, record->mapY,
+                        record->mapIndex, wander_x, wander_y);
+                }
+                if (wandered) {
+                    int group_alive = 1;
+                    int w_map = record->mapIndex;
+                    csb_v1_runtime_request_creature_movement_sound(
+                        profile, (int)thing_record[4], wander_x, wander_y);
+                    (void)csb_v1_runtime_apply_group_consequences_at_square(
+                        profile, group_thing,
+                        &w_map, &wander_x, &wander_y, &group_alive);
+                    if (!group_alive) return;
+                    thing_record = csb_v1_runtime_mutable_thing_record(
+                        dungeon, group_thing, &thing_type, &thing_size);
+                    if (thing_record && thing_type == 4 && thing_size >= 16) {
+                        csb_v1_runtime_set_active_group_direction_group(
+                            profile, group_thing, thing_record,
+                            w_map, wander_x, wander_y,
+                            wander_dir, creature_count, creature_size);
+                        csb_v1_runtime_sync_active_group_state_from_record(
+                            profile, group_thing, thing_record,
+                            w_map, wander_x, wander_y, 1, 1);
+                    }
+                }
+                csb_v1_runtime_schedule_c37_group_event(
+                    profile,
+                    record->mapIndex,
+                    wandered ? wander_x : record->mapX,
+                    wandered ? wander_y : record->mapY,
+                    (int)thing_record[4],
+                    (uint32_t)((movement_ticks > 1) ? movement_ticks : 1));
+                return;
+            }
+            if ((behavior == 0 || behavior == 2 || behavior == 3) &&
                 (distance_x == 0 || distance_y == 0)) {
                 next_behavior = (distance_x + distance_y <= 1) ? 6 : 7;
                 flags = (uint16_t)((flags & 0xFFF0u) |
@@ -5487,6 +5547,62 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                         (int)thing_record[4],
                         1u);
                 }
+                return;
+            }
+            if (behavior == 1) {
+                int flee_dir;
+                int flee_x = record->mapX;
+                int flee_y = record->mapY;
+                int fled = 0;
+                flee_dir = csb_v1_runtime_direction_from_source_to_destination(
+                    profile->party_x,
+                    profile->party_y,
+                    record->mapX,
+                    record->mapY);
+                if (flee_dir == 0) flee_y--;
+                else if (flee_dir == 1) flee_x++;
+                else if (flee_dir == 2) flee_y++;
+                else flee_x--;
+                if (!csb_v1_runtime_group_destination_is_blocked(
+                        dungeon, record->mapIndex, flee_x, flee_y) &&
+                    !csb_v1_runtime_group_destination_has_party_or_group(
+                        profile, record->mapIndex, flee_x, flee_y)) {
+                    csb_v1_runtime_sync_active_group_state_from_record(
+                        profile, group_thing, thing_record,
+                        record->mapIndex, record->mapX, record->mapY, 0, 0);
+                    fled = csb_v1_runtime_move_group_thing_to_square(
+                        profile, dungeon, group_thing,
+                        record->mapIndex, record->mapX, record->mapY,
+                        record->mapIndex, flee_x, flee_y);
+                }
+                if (fled) {
+                    int group_alive = 1;
+                    int flee_map_index = record->mapIndex;
+                    csb_v1_runtime_request_creature_movement_sound(
+                        profile, (int)thing_record[4], flee_x, flee_y);
+                    (void)csb_v1_runtime_apply_group_consequences_at_square(
+                        profile, group_thing,
+                        &flee_map_index, &flee_x, &flee_y, &group_alive);
+                    if (!group_alive) return;
+                    thing_record = csb_v1_runtime_mutable_thing_record(
+                        dungeon, group_thing, &thing_type, &thing_size);
+                    if (thing_record && thing_type == 4 && thing_size >= 16) {
+                        csb_v1_runtime_set_active_group_direction_group(
+                            profile, group_thing, thing_record,
+                            record->mapIndex, flee_x, flee_y,
+                            flee_dir, creature_count, creature_size);
+                        csb_v1_runtime_sync_active_group_state_from_record(
+                            profile, group_thing, thing_record,
+                            record->mapIndex, flee_x, flee_y, 1, 1);
+                    }
+                }
+                csb_v1_runtime_schedule_c37_group_event(
+                    profile,
+                    record->mapIndex,
+                    fled ? flee_x : record->mapX,
+                    fled ? flee_y : record->mapY,
+                    (int)thing_record[4],
+                    (uint32_t)((movement_ticks > 1) ? movement_ticks : 1));
                 return;
             }
             if (behavior == 7) {
@@ -10240,10 +10356,9 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
      * common creature melee damage path (PROJEXPL.C F0230, then
      * CHAMPION.C F0321).  CSB keeps the real-format group lookup and target
      * selection here, then delegates the bounded damage roll to the shared
-     * M10 combat resolver used by DM1.  Poison scheduling and creature
-     * projectile launches are wired; armor inventory defense, rest wake,
-     * and broader aspect timing remain later slices.  Armor inventory
-     * defense is now populated via F0143 in the defender snapshot. */
+     * M10 combat resolver used by DM1. Poison, projectile launches,
+     * armor defense (F0143), and rest wake are wired. RNG jitter and
+     * broader aspect timing remain later slices. */
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
         thing_record = csb_v1_runtime_mutable_thing_record(
             dungeon,
@@ -10361,6 +10476,9 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
             if (damage > 0) {
                 int filtered_damage;
 
+                if (profile->csbwin_party_sleeping) {
+                    profile->csbwin_party_sleeping = 0;
+                }
                 /* CSBWin Monster.cpp:4541-4545 passes its final C38 damage,
                  * selected wound mask, and descriptor attack type through
                  * Character.cpp::DamageCharacter before mutating the hero. */
@@ -10412,14 +10530,9 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
                 }
             }
             if (!profile->game_over) {
-                /* ReDMCSB GROUP.C F0209 lines 2343-2422 computes the next
-                 * C38 attack time and F0208 lines 1820-1834 may convert the
-                 * paired earlier aspect update into C33..C36 with C.Ticks
-                 * carrying the remaining attack delay; when C33 dispatches
-                 * it prepares the matching C38.  This bounded CSB bridge
-                 * keeps the source AttackTicks base and explicit C33->C38
-                 * handoff; RNG jitter and live ActiveGroup aspect sprites
-                 * remain later slices. */
+                /* ReDMCSB GROUP.C F0209 lines 2343-2422: base attack
+                 * ticks via C33->C38 aspect handoff. RNG jitter and live
+                 * ActiveGroup aspect sprites remain later slices. */
                 uint32_t attack_delay =
                     (uint32_t)csb_v1_runtime_creature_attack_ticks(
                         (int)thing_record[4]);
@@ -16014,8 +16127,9 @@ static void csb_v1_runtime_process_party_floor_sensors_at_level(
      * for the party, resolves HOLD into SET/CLEAR, then calls F0272/F0268 to
      * enqueue the square-effect event.  This CSB runtime slice covers party
      * floor sensors, including C008 party-possession checks over imported
-     * champion slots; object/group movement sensors remain separate runtime
-     * work. */
+     * champion slots. Object/group movement sensors are handled by
+     * csb_v1_runtime_process_object_floor_sensors_at and
+     * csb_v1_runtime_process_group_creature_floor_sensors_at. */
     {
         int scan = first_thing;
         int scan_guard;

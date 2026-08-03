@@ -61,6 +61,18 @@ void nexus_v1_experience_award_spell(Nexus_V1_ExperienceState *state,
     }
 }
 
+void nexus_v1_experience_award_kill(Nexus_V1_ExperienceState *state,
+                                    Nexus_V1_Champion *champion,
+                                    int champion_index,
+                                    int creature_xp_value)
+{
+    if (!state || !champion || champion_index < 0 ||
+        champion_index >= NEXUS_MAX_CHAMPIONS || creature_xp_value <= 0)
+        return;
+    state->xp[champion_index].fighter_xp += creature_xp_value;
+    state->xp[champion_index].ninja_xp += creature_xp_value / 2;
+}
+
 int nexus_v1_experience_check_levelup(Nexus_V1_ExperienceState *state,
                                       Nexus_V1_Champion *champion,
                                       int champion_index)

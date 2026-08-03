@@ -24,6 +24,7 @@
 #include "theron_v1_world.h"
 #include "theron_v1_track02_creature_spawn.h"
 #include "theron_v1_track02_item_categories.h"
+#include "theron_v1_track02_item_properties.h"
 #include "theron_v1_track02_spell_descriptors.h"
 #include <stddef.h>
 #include <stdlib.h>
@@ -77,6 +78,16 @@ static const Theron_CreatureTemplate *creature_template_for(Theron_CreatureType 
 
 static int creature_id_for_index(int index) {
     return index + 1;
+}
+
+/* Look up b4 (damage/defense) from the Track 02 item property table.
+ * Weapons (cat 0x80): b4 = attack damage bonus.
+ * Armor   (cat 0x81): b4 = defense bonus. */
+static int item_property_b4(int item_index) {
+    if (item_index < 0) return 0;
+    const Theron_ItemPropertyRecord *rec =
+        theron_v1_track02_item_property((unsigned int)item_index);
+    return rec ? (int)rec->b4 : 0;
 }
 
 /* ── Creature lifecycle ───────────────────────────────────────────── */
@@ -205,10 +216,10 @@ int theron_v1_calc_defense(const Theron_V1_Champion *defender,
     } else {
         defense += defender->dexterity / 6;
     }
-    /* Equipment bonuses (simplified): weapon/armor/shield slots. */
-    if (defender->slots[THERON_ESLOT_ARMOR] >= 0) defense += 2;
-    if (defender->slots[THERON_ESLOT_SHIELD] >= 0) defense += 1;
-    if (defender->slots[THERON_ESLOT_HELM] >= 0) defense += 1;
+    /* Equipment defense from Track 02 item property table (b4 field). */
+    defense += item_property_b4(defender->slots[THERON_ESLOT_ARMOR]);
+    defense += item_property_b4(defender->slots[THERON_ESLOT_SHIELD]);
+    defense += item_property_b4(defender->slots[THERON_ESLOT_HELM]);
     return defense;
 }
 
@@ -250,7 +261,7 @@ int theron_v1_champion_attack(Theron_V1_World *world,
     if (attacker->stamina < stamina_cost) return -1;
     theron_v1_modify_champion_stamina(attacker, -stamina_cost);
 
-    int weapon_bonus = (attacker->slots[THERON_ESLOT_WEAPON] >= 0) ? 2 : 0;
+    int weapon_bonus = item_property_b4(attacker->slots[THERON_ESLOT_WEAPON]);
     int attack_power = attacker->strength / 4 + weapon_bonus;
     if (attacker->primary_class == THERON_CLASS_NINJA) {
         attack_power += attacker->dexterity / 6;

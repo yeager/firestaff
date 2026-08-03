@@ -2604,6 +2604,17 @@ that its exact runtime path is not already source-locked and tested.
     outdoor + 13 weather tests pass. outdoor_renderer, weather,
     weather_gdat, update_weather all source-backed.
 
+31. **DM2-PARITY-GAP-CLOSE:** Implement remaining 92 MISSING skproject symbols
+    (down from 112). Three new callback-based modules added:
+    - dm2_v1_record_ops_pc34_compat (8 functions, 8 tests)
+    - dm2_v1_creature_ops_pc34_compat (5 functions, 6 tests)
+    - dm2_v1_hero_ops_pc34_compat (7 functions, 9 tests)
+    Remaining gaps: c_hero.cpp (16), c_tim_proc.cpp (21), c_creature.cpp (9),
+    c_record.cpp (3), c_item.cpp (7), c_moverec.cpp (5), c_light.cpp (3),
+    SkWinCore.cpp (2), SkWinCore2.cpp (2), c_engage.cpp (1).
+    Most remaining symbols need full runtime state bridge (map, timer queue,
+    UI, graphics) before they can be wired.
+
 1. **DM1-HOC-RUNTIME-RENDER:** Finish the M11 HoC render consumer for mirrors,
    wall inscriptions, objects, actions, spells, and viewport materialization
    from real PC34 GRAPHICS.DAT/DUNGEON.DAT records; remove production fallback

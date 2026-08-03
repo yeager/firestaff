@@ -48,6 +48,8 @@ typedef struct Nexus_V1_Structure1FPlacementBindingReceipt
 #include "nexus_v1_experience.h"
 #include "nexus_v1_encumbrance.h"
 #include "nexus_v1_fountain.h"
+#include "nexus_v1_switches.h"
+#include "nexus_v1_containers.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_prs3_capture_trace_schema.h"
@@ -2588,6 +2590,8 @@ struct Nexus_V1_Engine {
     Nexus_V1_TransitionTable transitions;
     Nexus_V1_ExperienceState experience;
     Nexus_FountainManager fountains;
+    Nexus_SwitchManager switches;
+    Nexus_ContainerManager containers;
     /* Mechanics state — opaque pointer, allocated in nexus_v1_init().
      * Defined in nexus_v1_mechanics.c (source-locked DM1 game loop).
      * Source: DM1 CLIKMENU.C F0366, MOVESENS.C F0267. */

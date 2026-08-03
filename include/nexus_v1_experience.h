@@ -31,6 +31,11 @@ void nexus_v1_experience_award_spell(Nexus_V1_ExperienceState *state,
                                      int champion_index,
                                      int spell_power);
 
+void nexus_v1_experience_award_kill(Nexus_V1_ExperienceState *state,
+                                    Nexus_V1_Champion *champion,
+                                    int champion_index,
+                                    int creature_xp_value);
+
 int nexus_v1_experience_level_for_xp(int xp);
 
 int nexus_v1_experience_check_levelup(Nexus_V1_ExperienceState *state,

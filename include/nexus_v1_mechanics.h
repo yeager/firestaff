@@ -75,6 +75,8 @@ struct Nexus_MechanicsState {
     int spell_element;     /* selected element rune (0-3), or -1 */
     int spell_form;        /* selected form rune (0-3), or -1 */
     int spell_align;       /* alignment (0-1), or -1 */
+
+    int set_leader_slot;   /* party slot (0-3) for NEXUS_CMD_SET_LEADER */
 };
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -137,6 +139,9 @@ void nexus_mechanics_set_spell_runes(Nexus_MechanicsState *st,
 /* Clear the spell rune buffer. */
 void nexus_mechanics_clear_spell(Nexus_MechanicsState *st);
 
+/* Set the party slot (0-3) for NEXUS_CMD_SET_LEADER. */
+void nexus_mechanics_set_leader_slot(Nexus_MechanicsState *st, int slot);
+
 /* Load real Track 1 mechanics data for the current engine level.
  * Resets and repopulates door/teleporter/stair/pit/altar/floor-item registries
  * from authenticated DGN Structure1F records.  Synthetic fallbacks are blocked
@@ -155,6 +160,8 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index);
 #define NEXUS_UI_EVENT_INVENTORY 0x03
 #define NEXUS_UI_EVENT_REST      0x04
 #define NEXUS_UI_EVENT_SAVE      0x05
+#define NEXUS_UI_EVENT_SET_LEADER 0x06
+#define NEXUS_UI_EVENT_THROW     0x07
 
 int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
                                    Nexus_V1_Engine *engine,
