@@ -1,4 +1,7 @@
 
+# Firestaff v3.0.260
+- CI fix: commit all remaining untracked source/header/test files (nexus switches, containers, leader_switch; DM2 world_ops)
+
 # Firestaff v3.0.259
 - CI fix: commit DM2 record_ops, creature_ops, hero_ops test/source/header files
 

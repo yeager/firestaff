@@ -350,6 +350,14 @@ target_link_libraries(test_nexus_v1_containers PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_containers COMMAND test_nexus_v1_containers)
 set_tests_properties(nexus_v1_containers PROPERTIES LABELS "nexus;containers;tier4")
 
+add_executable(test_nexus_v1_leader_switch
+    tests/test_nexus_v1_leader_switch.c)
+target_include_directories(test_nexus_v1_leader_switch PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_leader_switch PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_leader_switch COMMAND test_nexus_v1_leader_switch)
+set_tests_properties(nexus_v1_leader_switch PROPERTIES LABELS "nexus;leader;tier4")
+
 add_executable(test_nexus_v1_projectiles
     tests/test_nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_projectiles PRIVATE
@@ -3867,7 +3875,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.259 LANGUAGES C)
+project(Firestaff VERSION 3.0.260 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -15350,6 +15358,24 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_hero_ops
         COMMAND test_dm2_v1_hero_ops
+    )
+
+    add_executable(test_dm2_v1_world_ops
+        tests/test_dm2_v1_world_ops.c
+        src/dm2/dm2_v1_world_ops_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_world_ops PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_world_ops PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_world_ops PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_world_ops
+        COMMAND test_dm2_v1_world_ops
     )
 
     add_executable(test_dm2_v1_timer_handlers_simple
