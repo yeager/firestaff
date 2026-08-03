@@ -31,12 +31,29 @@ static void test_process_timer_resurrection(void)
 /* ---- hero category: DM2_WOUND_PLAYER ---- */
 
 static int g_defeated_hero = -1;
+static int16_t g_accumulated_damage = 0;
+
+static int wp_hero_exists(void *ctx, int hero_idx) { (void)ctx; (void)hero_idx; return 1; }
+static int wp_is_sleeping(void *ctx) { (void)ctx; return 0; }
+static int32_t wp_hero_defense_pct(void *ctx, int hero_idx, uint32_t body_mask, int is_used)
+{ (void)ctx; (void)hero_idx; (void)body_mask; (void)is_used; return 0; }
+static int wp_random(void *ctx, int max) { (void)ctx; (void)max; return 0; }
+static int16_t wp_skill_lv(void *ctx, int hero_idx, int sg, int wb)
+{ (void)ctx; (void)hero_idx; (void)sg; (void)wb; return 0; }
+static void wp_resume(void *ctx) { (void)ctx; }
+static void wp_add_body_status(void *ctx, int hero_idx, uint16_t s)
+{ (void)ctx; (void)hero_idx; (void)s; }
+static void wp_accumulate(void *ctx, int hero_idx, int16_t wound)
+{ (void)ctx; (void)hero_idx; g_accumulated_damage += wound; }
 static void wp_defeated(void *ctx, int hero_idx) { (void)ctx; g_defeated_hero = hero_idx; }
 
 static void test_wound_player(void)
 {
-    DM2_V1_WoundPlayerHero hero = { 10, 20, 0 };
-    DM2_V1_WoundPlayerCallbacks cb = { wp_defeated };
+    DM2_V1_WoundPlayerHero hero = { 10, 0 };
+    DM2_V1_WoundPlayerCallbacks cb = {
+        wp_hero_exists, wp_is_sleeping, wp_hero_defense_pct, wp_random,
+        wp_skill_lv, wp_resume, wp_add_body_status, wp_accumulate
+    };
 
     int16_t applied = dm2_v1_wound_player(2, &hero, 4, 0, &cb, NULL);
     assert(applied == 4);
@@ -52,37 +69,78 @@ static void test_wound_player(void)
 
 /* ---- hero category: DM2_ADJUST_SKILLS ---- */
 
+static int32_t g_added_exp = 0;
+static int g_marked_dirty = -1;
+
+static int16_t as_get_gametick(void *ctx) { (void)ctx; return 0; }
+static int16_t as_get_exp_window_tick(void *ctx) { (void)ctx; return 0; }
+static int16_t as_get_exp_scale(void *ctx) { (void)ctx; return 256; }
+static int16_t as_get_skill_lv(void *ctx, int hi, int sg, int wb)
+{ (void)ctx; (void)hi; (void)sg; (void)wb; return 1; }
+static int16_t as_get_skill_exp(void *ctx, int hi, int sid)
+{ (void)ctx; (void)hi; (void)sid; return 0; }
+static void as_add_skill_exp(void *ctx, int hi, int sid, int32_t amount)
+{ (void)ctx; (void)hi; (void)sid; g_added_exp += amount; }
+static int as_random_bit(void *ctx) { (void)ctx; return 0; }
+static int16_t as_get_max_hp(void *ctx, int hi) { (void)ctx; (void)hi; return 100; }
+static void as_set_max_hp(void *ctx, int hi, int16_t v) { (void)ctx; (void)hi; (void)v; }
+static int16_t as_get_max_stamina(void *ctx, int hi) { (void)ctx; (void)hi; return 100; }
+static void as_set_max_stamina(void *ctx, int hi, int16_t v) { (void)ctx; (void)hi; (void)v; }
+static int16_t as_get_max_mp(void *ctx, int hi) { (void)ctx; (void)hi; return 100; }
+static void as_set_max_mp(void *ctx, int hi, int16_t v) { (void)ctx; (void)hi; (void)v; }
+static void as_add_ability_max(void *ctx, int hi, int a, int16_t d)
+{ (void)ctx; (void)hi; (void)a; (void)d; }
+static void as_mark_dirty(void *ctx, int hi) { (void)ctx; g_marked_dirty = hi; }
+static void as_display_level_up(void *ctx, int hi, int sg)
+{ (void)ctx; (void)hi; (void)sg; }
+
 static void test_adjust_skills(void)
 {
-    int16_t exp[1] = { 0 };
-    int16_t level[1] = { 0 };
-    static const int16_t thresholds[3] = { 10, 20, 30 };
-    DM2_V1_AdjustSkillsState state = { exp, level, thresholds, 3 };
+    DM2_V1_AdjustSkillsCallbacks cb = {
+        as_get_gametick, as_get_exp_window_tick, as_get_exp_scale,
+        as_get_skill_lv, as_get_skill_exp, as_add_skill_exp,
+        as_random_bit, as_get_max_hp, as_set_max_hp,
+        as_get_max_stamina, as_set_max_stamina,
+        as_get_max_mp, as_set_max_mp,
+        as_add_ability_max, as_mark_dirty, as_display_level_up
+    };
 
-    int32_t lvl = dm2_v1_adjust_skills(0, &state, 15);
-    assert(exp[0] == 15);
+    g_added_exp = 0;
+    g_marked_dirty = -1;
+    int32_t lvl = dm2_v1_adjust_skills(0, 4, 15, &cb, NULL);
+    assert(g_added_exp == 15);
     assert(lvl == 1);
-    assert(level[0] == 1);
+    assert(g_marked_dirty == 0);
     printf("test_adjust_skills OK\n");
 }
 
 /* ---- creature category: DM2_WOUND_CREATURE ---- */
 
 static int g_creature_defeated = -1;
+
 static void wc_defeated(void *ctx, int idx) { (void)ctx; g_creature_defeated = idx; }
+static void wc_notify(void *ctx, int idx) { (void)ctx; (void)idx; }
+static int wc_can_die(void *ctx, int idx) { (void)ctx; (void)idx; return 1; }
+static void wc_set_timeout(void *ctx, int idx, int t) { (void)ctx; (void)idx; (void)t; }
+static void wc_play_death(void *ctx, int idx) { (void)ctx; (void)idx; }
+static int wc_random(void *ctx, int max) { (void)ctx; (void)max; return 1; }
+static void wc_flee(void *ctx, int idx) { (void)ctx; (void)idx; }
 
 static void test_wound_creature(void)
 {
-    DM2_V1_WoundCreatureState creature = { 5 };
-    DM2_V1_WoundCreatureCallbacks cb = { wc_defeated };
+    DM2_V1_WoundCreatureState creature = { 5, 10, 0, 1, 0 };
+    DM2_V1_WoundCreatureCallbacks cb = {
+        wc_notify, wc_can_die, wc_set_timeout, wc_play_death,
+        wc_defeated, wc_random, wc_flee
+    };
 
-    int32_t applied = dm2_v1_wound_creature(9, &creature, 3, &cb, NULL);
-    assert(applied == 3);
+    g_creature_defeated = -1;
+    int32_t result = dm2_v1_wound_creature(9, &creature, 3, &cb, NULL);
+    assert(result == 0);
     assert(creature.cur_hp == 2);
     assert(g_creature_defeated == -1);
 
-    applied = dm2_v1_wound_creature(9, &creature, 10, &cb, NULL);
-    assert(applied == 2);
+    result = dm2_v1_wound_creature(9, &creature, 10, &cb, NULL);
     assert(creature.cur_hp == 0);
     assert(g_creature_defeated == 9);
     printf("test_wound_creature OK\n");
@@ -93,21 +151,48 @@ static void test_wound_creature(void)
 static int g_wounded_hero = -1;
 static int16_t g_wound_amount = 0;
 
-static int cap_roll_hit(void *ctx, int c, int h) { (void)ctx; (void)c; (void)h; return 1; }
-static void cap_wound(void *ctx, int hero_idx, int16_t dmg)
+static int cap_get_profile(void *ctx, int ci, DM2_V1_CreatureAttackProfile *out)
+{
+    (void)ctx; (void)ci;
+    out->to_hit_base = 100;
+    out->attack_type = 0;
+    out->max_damage = 50;
+    out->poison_chance = 0;
+    out->is_surprise_attack = 1;
+    return 1;
+}
+static int cap_get_dex(void *ctx, int hi) { (void)ctx; (void)hi; return 10; }
+static int cap_use_luck(void *ctx, int hi, int c) { (void)ctx; (void)hi; (void)c; return 0; }
+static int cap_fight_skill(void *ctx, int hi) { (void)ctx; (void)hi; return 5; }
+static int cap_random(void *ctx, int max) { (void)ctx; (void)max; return 7; }
+static int cap_rand_bit(void *ctx) { (void)ctx; return 0; }
+static int cap_rand_dir(void *ctx) { (void)ctx; return 0; }
+static int16_t cap_wound(void *ctx, int hero_idx, int16_t dmg)
 {
     (void)ctx;
     g_wounded_hero = hero_idx;
     g_wound_amount = dmg;
+    return dmg;
 }
+static void cap_hit_noise(void *ctx, int ci, int hi, int16_t d)
+{ (void)ctx; (void)ci; (void)hi; (void)d; }
+static int cap_resist(void *ctx, int hi, int16_t pc) { (void)ctx; (void)hi; (void)pc; return 0; }
+static void cap_poison(void *ctx, int hi, int a) { (void)ctx; (void)hi; (void)a; }
+static void cap_resume(void *ctx) { (void)ctx; }
 
 static void test_creature_attacks_player(void)
 {
-    DM2_V1_CreatureAttacksPlayerCallbacks cb = { cap_roll_hit, cap_wound };
-    int32_t hit = dm2_v1_creature_attacks_player(1, 2, 7, &cb, NULL);
-    assert(hit == 1);
+    DM2_V1_CreatureAttacksPlayerCallbacks cb = {
+        cap_get_profile, cap_get_dex, cap_use_luck, cap_fight_skill,
+        cap_random, cap_rand_bit, cap_rand_dir,
+        cap_wound, cap_hit_noise, cap_resist, cap_poison, cap_resume
+    };
+    g_wounded_hero = -1;
+    g_wound_amount = 0;
+    int32_t hit = dm2_v1_creature_attacks_player(1, 2, &cb, NULL);
+    assert(hit > 0);
     assert(g_wounded_hero == 2);
-    assert(g_wound_amount == 7);
+    assert(g_wound_amount == hit);
     printf("test_creature_attacks_player OK\n");
 }
 
@@ -199,15 +284,18 @@ static void test_check_recompute_light(void)
 
 /* ---- engage/dispatch category: DM2_ENGAGE_COMMAND ---- */
 
-static int32_t ec_dispatch(void *ctx, int hero_idx, int command_id)
+static int ec_is_dead(void *ctx, int hi) { (void)ctx; (void)hi; return 0; }
+static int ec_resolve(void *ctx, int hi, int raw)
+{ (void)ctx; (void)hi; return raw; }
+static int32_t ec_dispatch(void *ctx, int hero_idx, int cmd, int alt)
 {
-    (void)ctx;
-    return hero_idx * 100 + command_id;
+    (void)ctx; (void)alt;
+    return hero_idx * 100 + cmd;
 }
 
 static void test_engage_command(void)
 {
-    DM2_V1_EngageCommandCallbacks cb = { ec_dispatch };
+    DM2_V1_EngageCommandCallbacks cb = { ec_is_dead, ec_resolve, ec_dispatch };
     int32_t result = dm2_v1_engage_command(2, 5, &cb, NULL);
     assert(result == 205);
     printf("test_engage_command OK\n");

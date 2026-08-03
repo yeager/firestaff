@@ -62,9 +62,23 @@ int16_t dm2_v1_creature_can_handle_item_in(
     const DM2_V1_CreatureHandleCallbacks *cb, void *ctx);
 
 /* ---- DM2_CONFUSE_CREATURE (c_creature.cpp:1308) ----
- * Sets confusion flag on a creature. Reads byte at offset+0x11 of the
- * creature record and sets bit 0x04. */
-int dm2_v1_confuse_creature(uint8_t *creature_record);
+ * Confuse a creature: query AI spec confusion resistance (word@0x16
+ * bits 4..7), roll rand16(power) against it. If roll > resistance and
+ * resistance != 0xF, call ATTACK_CREATURE with type=0x2005 sound=0x64.
+ * Returns 1 if the attack was dispatched, 0 otherwise. */
+typedef struct {
+    uint16_t confuser_record;   /* ddat.v1e0b4c */
+    uint8_t *(*get_record_address)(void *ctx, uint16_t record);
+    uint8_t (*get_creature_type)(void *ctx, uint16_t record);
+    uint16_t (*query_ai_spec_resistance)(void *ctx, uint8_t creature_type);
+    int16_t (*rand16)(void *ctx, int16_t max);
+    void (*attack_creature)(void *ctx, uint16_t target, int16_t x, int16_t y,
+                            int16_t attack_type, int16_t sound, int32_t damage);
+} DM2_V1_ConfuseCreatureCallbacks;
+
+int dm2_v1_confuse_creature(
+    int16_t power, int16_t x, int16_t y, int32_t damage,
+    const DM2_V1_ConfuseCreatureCallbacks *cb, void *ctx);
 
 /* ---- DM2_CREATURE_KILL_ON_TIMER_POSITION (c_creature.cpp:2352) ----
  * Delete creature at timer position and set flag. */

@@ -100,11 +100,27 @@ int16_t dm2_v1_creature_can_handle_item_in(
     }
 }
 
-int dm2_v1_confuse_creature(uint8_t *creature_record)
+int dm2_v1_confuse_creature(
+    int16_t power, int16_t x, int16_t y, int32_t damage,
+    const DM2_V1_ConfuseCreatureCallbacks *cb, void *ctx)
 {
-    if (!creature_record)
+    if (!cb)
         return 0;
-    creature_record[0x11] |= 0x04;
+    uint16_t target = cb->confuser_record;
+    if (target == 0xFFFF)
+        return 0;
+    uint8_t *rec = cb->get_record_address(ctx, target);
+    if (!rec)
+        return 0;
+    uint8_t ctype = cb->get_creature_type(ctx, target);
+    uint16_t resist = cb->query_ai_spec_resistance(ctx, ctype);
+    uint16_t confuse_resist = (resist >> 4) & 0xF;
+    int16_t roll = cb->rand16(ctx, power);
+    if (confuse_resist > (uint16_t)roll)
+        return 0;
+    if (confuse_resist == 0xF)
+        return 0;
+    cb->attack_creature(ctx, target, x, y, 0x2005, 0x64, damage);
     return 1;
 }
 
@@ -129,8 +145,6 @@ uint8_t dm2_v1_creature_ccm06(
     if (delta == 2) {
         int r = cb->rand_fn(ctx);
         facing = (uint8_t)((facing + (r & 0x2) + 1) & 0x3);
-    } else {
-        facing = cb->target_dir;
     }
     return (uint8_t)(facing & 0x3);
 }
@@ -172,19 +186,18 @@ uint8_t dm2_v1_attack_party(
     int16_t total_damage, int body_parts, int wound_type,
     const DM2_V1_AttackPartyCallbacks *cb, void *ctx)
 {
-    if (!cb || total_damage <= 0)
+    if (!cb || total_damage == 0)
         return 0;
     uint8_t wounded_mask = 0;
-    int16_t range = total_damage >> 3;
-    if (range < 1) range = 1;
+    int16_t range = (int16_t)(total_damage / 8 + 1);
+    int16_t base = (int16_t)(total_damage - range);
+    int16_t rand_range = (int16_t)(2 * range);
     for (int i = 0; i < cb->hero_count; i++) {
-        if (!cb->is_hero_alive(ctx, i))
-            continue;
-        int16_t dmg = (int16_t)(total_damage + cb->rand16(ctx, range)
-                                - cb->rand16(ctx, range));
-        if (dmg < 1) dmg = 1;
-        cb->wound_player(ctx, i, dmg, body_parts, wound_type);
-        wounded_mask |= (uint8_t)(1 << i);
+        int16_t dmg = (int16_t)(cb->rand16(ctx, rand_range) + base);
+        int16_t clamped = dmg > 1 ? dmg : 1;
+        cb->wound_player(ctx, i, clamped, body_parts, wound_type);
+        if (clamped > 0)
+            wounded_mask |= (uint8_t)(1 << i);
     }
     return wounded_mask;
 }

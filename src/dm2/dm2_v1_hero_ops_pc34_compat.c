@@ -80,24 +80,27 @@ int dm2_v1_process_poison(
 {
     if (!cb || hero_idx == -1)
         return 0;
-    DM2_V1_HeroState *hero = cb->get_hero(ctx, hero_idx);
-    if (!hero || hero->cur_hp <= 0)
+    if (cb->is_last_hero && cb->is_last_hero(ctx, hero_idx))
         return 0;
-    cb->wound_player(ctx, hero_idx, 1, 0, 0);
-    int16_t stam_cost = counters;
-    if (stam_cost < 1)
-        stam_cost = 1;
-    stam_cost = (int16_t)(stam_cost << 4);
-    cb->adjust_stamina(ctx, hero_idx, stam_cost);
-    hero->cur_water = (int16_t)(hero->cur_water - 100);
-    if (hero->cur_water < DM2_V1_WATER_MIN)
-        hero->cur_water = DM2_V1_WATER_MIN;
-    hero->hero_flag |= DM2_V1_HERO_FLAG_0800;
-    hero->hero_flag |= DM2_V1_HERO_FLAG_2000;
+    DM2_V1_HeroState *hero = cb->get_hero(ctx, hero_idx);
+    if (!hero)
+        return 0;
+    int16_t wound_amount = (int16_t)((counters + 0x1E) >> 6);
+    if (wound_amount < 1)
+        wound_amount = 1;
+    cb->wound_player(ctx, hero_idx, wound_amount, 0, 0);
+    hero->hero_flag |= DM2_V1_HERO_FLAG_0800 | DM2_V1_HERO_FLAG_2000;
     counters--;
     if (counters <= 0)
         return 1;
-    hero->poison_value++;
+    int16_t accum = (int16_t)(hero->poison_value + counters);
+    if (accum > 0xC00) {
+        counters = (int16_t)(0xC00 - hero->poison_value);
+        if (counters <= 0)
+            return 1;
+    }
+    hero->poison_value = (int16_t)(hero->poison_value + counters);
+    hero->poisoned_count++;
     cb->queue_poison_timer(ctx, hero_idx, counters, 0x24);
     return 1;
 }
@@ -400,9 +403,8 @@ void dm2_v1_bring_champion_to_life(
     hero->cur_hp = saved_hp;
 
     /* BRING_CHAMPION_TO_LIFE */
-    hero->hero_flag &= 0;
-    for (int i = 0; i < 30; i++)
-        ;  /* items cleared by caller */
+    if (cb->clear_hero_items)
+        cb->clear_hero_items(ctx, hero_idx);
     int16_t max_hp = hero->max_hp;
     int16_t reduction = (int16_t)(max_hp >> 6);
     max_hp = (int16_t)(max_hp - reduction - 1);

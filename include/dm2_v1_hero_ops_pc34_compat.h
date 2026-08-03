@@ -35,7 +35,8 @@ typedef struct {
     int16_t cur_water;
     int16_t cur_food;
     uint16_t hero_flag;
-    int16_t poison_value;
+    int16_t poison_value;    /* hero->poison */
+    int16_t poisoned_count;  /* hero->poisoned */
     int16_t plague_value;
     uint8_t hero_type;
     uint8_t party_pos;
@@ -85,13 +86,15 @@ int dm2_v1_cure_plague(
     const DM2_V1_CurePoisonCallbacks *cb, void *ctx);
 
 /* ---- DM2_PROCESS_POISON (c_hero.cpp:3397) ----
- * Apply one poison tick: damage hero, reduce water, requeue timer.
- * Returns 1 if processed, 0 if hero is dead or invalid. */
+ * Apply one poison tick: wound = MAX(1, (counters+0x1E)>>6), wound player,
+ * set flags 0x2800, decrement counter; if remaining > 0, accumulate into
+ * hero->poison (capped at 0xC00), increment hero->poisoned, requeue timer
+ * with delay 0x24. Skips if hero_idx == last hero (ddat.v1e0288 check). */
 typedef struct {
     DM2_V1_HeroState *(*get_hero)(void *ctx, int hero_idx);
+    int (*is_last_hero)(void *ctx, int hero_idx);
     void (*wound_player)(void *ctx, int hero_idx, int damage,
                          int type, int flags);
-    void (*adjust_stamina)(void *ctx, int hero_idx, int16_t amount);
     void (*queue_poison_timer)(void *ctx, int hero_idx, int16_t counters,
                                uint32_t delay);
 } DM2_V1_ProcessPoisonCallbacks;
@@ -248,6 +251,7 @@ typedef struct {
     DM2_V1_HeroState *(*get_hero)(void *ctx, int idx);
     int16_t (*get_player_at_position)(void *ctx, uint8_t pos);
     uint8_t formation_start;
+    void (*clear_hero_items)(void *ctx, int hero_idx);
     void (*post_resurrect)(void *ctx, int hero_idx);
 } DM2_V1_ResurrectCallbacks;
 
