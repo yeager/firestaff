@@ -70,16 +70,18 @@ static void make_world(Theron_V1_World *w) {
         c->alive = 1;
         c->health = 50;
         c->max_health = 50;
-        c->stamina = 50;
-        c->max_stamina = 50;
+        c->stamina = 500;
+        c->max_stamina = 500;
         c->mana = 10;
         c->max_mana = 10;
-        c->strength = 14;
+        c->strength = 30;
         c->dexterity = 12;
         c->vitality = 12;
         c->anti_magic = 2;
         c->food = 50;
         c->water = 50;
+        for (int s = 0; s < THERON_EQUIP_SLOT_COUNT; s++)
+            c->slots[s] = -1;
     }
 }
 

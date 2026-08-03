@@ -79,6 +79,7 @@ int main(void) {
            "        CSBWin/Resurrect Theron's Quest reimpl\n");
 
     Theron_V1_World world;
+    theron_v1_world_init(&world);
     Theron_V1_Party party;
 
     /* ──────────────────────────────────────────────────────────────── */

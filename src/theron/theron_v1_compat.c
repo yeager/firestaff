@@ -24,6 +24,7 @@
 #include "theron_v1_world.h"
 #include "theron_v1_track02_creature_spawn.h"
 #include "theron_v1_track02_item_categories.h"
+#include "theron_v1_track02_spell_descriptors.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -239,19 +240,23 @@ int theron_v1_champion_attack(Theron_V1_World *world,
         theron_v1_party_getChampion(&world->party, attacking_slot);
     if (!attacker || !attacker->alive) return -1;
 
-    /* Weapon bonus: a real weapon in the weapon slot adds +2 damage.
-     * Source: THQUEST.ASM T900 item/attack table (simplified). */
+    /* Action index determines stamina cost from Track 02 spell descriptor
+     * table (UD 0x09EFAF).  Unarmed = PUNCH (6, cost 1), armed = CHOP (2,
+     * cost 8).  Source: THQUEST.ASM T600 action dispatch. */
+    unsigned int action_index = (attacker->slots[THERON_ESLOT_WEAPON] >= 0)
+                                    ? 2u   /* CHOP */
+                                    : 6u;  /* PUNCH */
+    int stamina_cost = (int)theron_v1_track02_action_spell_cost(action_index);
+    if (attacker->stamina < stamina_cost) return -1;
+    theron_v1_modify_champion_stamina(attacker, -stamina_cost);
+
     int weapon_bonus = (attacker->slots[THERON_ESLOT_WEAPON] >= 0) ? 2 : 0;
     int attack_power = attacker->strength / 4 + weapon_bonus;
     if (attacker->primary_class == THERON_CLASS_NINJA) {
         attack_power += attacker->dexterity / 6;
     }
 
-    int damage = theron_v1_calc_attack_damage(attack_power, NULL,
-                                               THERON_ATTACK_SLASH);
-    /* NULL defender → use base attack_power as-is minus default zero defense.
-     * For champion-vs-creature, apply creature defense. */
-    damage = attack_power - c->defense / 2;
+    int damage = attack_power - c->defense / 2;
     if (damage < 1) damage = 1;
 
     c->hp -= damage;
