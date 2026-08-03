@@ -31,7 +31,7 @@ Public wording should stay honest: these numbers describe verified Firestaff evi
 | DM2 V2 | 16% | 16/100 | `presentation_scaffold_partial` | V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete. |
 | DM Nexus V1 | 37% | 37/100 | `runtime_slices_verified_partial` | DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work. |
 | DM Nexus V2 | 20% | 20/100 | `presentation_scaffold_partial` | V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete. |
-| Theron V1 | 64% | 64/100 | `pce_io_catalog_joypad_vce_proven` | Original overlay regression (0/10) is the largest remaining gap. VRAM tile content source tracing and track-to-dungeon audio mapping remain open. |
+| Theron V1 | 72% | 72/100 | `hw_config_cd_play_vdc_joypad_proven` | Original overlay regression (0/10) is the largest remaining gap. Real menu implementation needed. |
 
 ## Recent evidence incorporated
 

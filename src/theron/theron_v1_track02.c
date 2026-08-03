@@ -10757,3 +10757,223 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_syscard_calls(
     out_receipt->valid = (out_receipt->total_call_sites > 0u);
     return THERON_TRACK02_SIGNAL_OK;
 }
+
+Theron_Track02SignalStatus theron_v1_track02_extract_cd_play_tracks(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02CdPlayTrackMapReceipt *out_receipt) {
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt)
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    out_receipt->variant = loader.variant;
+
+    for (i = 0u; i + 2u < track02_size; ++i) {
+        size_t sector, sector_off;
+        Theron_Track02CdPlaySite *site;
+        int in_code;
+
+        if (track02_data[i] != 0x20u) continue;
+        if (track02_data[i + 1u] != 0x3Fu || track02_data[i + 2u] != 0xE0u)
+            continue;
+
+        sector = i / TQR_RAW_SECTOR_BYTES;
+        sector_off = i % TQR_RAW_SECTOR_BYTES;
+
+        /* Filter: must be in sector user data */
+        if (sector_off < 16u || sector_off >= 2064u) continue;
+
+        /* Data false positive filter: in graphics tile data, the bytes
+         * $20 $3F $E0 appear as pixel data, and the following bytes
+         * typically echo the target ($3F $E0) again.  Real code would
+         * never have $3F $E0 at +3/+4 after JSR $E03F. */
+        in_code = 1;
+        if (i + 4u < track02_size &&
+            track02_data[i + 3u] == 0x3Fu &&
+            track02_data[i + 4u] == 0xE0u) {
+            in_code = 0;
+        }
+
+        if (out_receipt->total_sites >= THERON_TRACK02_MAX_CD_PLAY_SITES)
+            continue;
+
+        site = &out_receipt->sites[out_receipt->total_sites++];
+        site->raw_offset = i;
+        site->sector = sector;
+        site->user_data_offset = sector_off - 16u;
+        site->in_code_region = in_code;
+
+        if (in_code) {
+            ++out_receipt->code_sites;
+            /* Scan backward for LDA #xx (A9 xx) → STA $FF (85 FF) */
+            if (i >= 4u) {
+                size_t scan_start = (i >= 32u) ? i - 32u : 0u;
+                size_t j;
+                for (j = i - 1u; j >= scan_start + 3u; --j) {
+                    if (track02_data[j] == 0x85u &&
+                        track02_data[j + 1u] == 0xFFu &&
+                        track02_data[j - 2u] == 0xA9u) {
+                        site->track_param = track02_data[j - 1u];
+                        site->track_param_found = 1;
+                        ++out_receipt->sites_with_track;
+                        break;
+                    }
+                    if (j == 0) break;
+                }
+            }
+        }
+    }
+
+    out_receipt->valid = (out_receipt->total_sites > 0u);
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_extract_vdc_display_config(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02VdcDisplayConfigReceipt *out_receipt) {
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t i;
+    size_t reg_counts[32] = {0};
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt)
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    out_receipt->variant = loader.variant;
+
+    /* Count st0 #reg (03 reg) occurrences for each VDC register. */
+    for (i = 0u; i + 1u < track02_size; ++i) {
+        size_t sector_off = i % TQR_RAW_SECTOR_BYTES;
+        if (sector_off < 16u || sector_off >= 2062u) continue;
+        if (track02_data[i] == 0x03u && track02_data[i + 1u] < 0x20u)
+            reg_counts[track02_data[i + 1u]]++;
+    }
+
+    /* Prove register usage from counts. */
+    out_receipt->cr_proven = (reg_counts[0x05u] > 0u);
+    out_receipt->mwr_proven = (reg_counts[0x09u] > 0u);
+    out_receipt->satb_proven = (reg_counts[0x13u] > 0u);
+    out_receipt->screen_width_proven =
+        (reg_counts[0x0Au] > 0u && reg_counts[0x0Bu] > 0u);
+    out_receipt->screen_height_proven =
+        (reg_counts[0x0Cu] > 0u && reg_counts[0x0Du] > 0u);
+
+    /* Store register access counts as config sites for diagnostics. */
+    {
+        int r;
+        for (r = 0; r < 32; ++r) {
+            if (reg_counts[r] > 0u &&
+                out_receipt->config_site_count <
+                    THERON_TRACK02_MAX_VDC_CONFIG_SITES) {
+                Theron_Track02VdcConfigSite *site =
+                    &out_receipt->config_sites[
+                        out_receipt->config_site_count++];
+                site->reg = (uint8_t)r;
+                site->value = (uint16_t)reg_counts[r];
+                site->raw_offset = 0u;
+                site->sector = 0u;
+            }
+        }
+    }
+
+    out_receipt->valid = (out_receipt->cr_proven || out_receipt->mwr_proven ||
+                          out_receipt->satb_proven);
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_extract_joypad_actions(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02JoypadActionMapReceipt *out_receipt) {
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt)
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    out_receipt->variant = loader.variant;
+
+    /* Scan for AND #xx (29 xx) followed within 4 bytes by BEQ/BNE (F0/D0)
+     * in sector user data.  This catches joypad button mask tests. */
+    for (i = 0u; i + 1u < track02_size; ++i) {
+        size_t sector_off = i % TQR_RAW_SECTOR_BYTES;
+        uint8_t mask;
+
+        if (sector_off < 16u || sector_off >= 2062u) continue;
+        if (track02_data[i] != 0x29u) continue;
+
+        mask = track02_data[i + 1u];
+        if (mask == 0x00u || mask == 0xFFu) continue;
+
+        /* Check if preceded by LDA $1000 (AD 00 10) or LDA zp where zp
+         * stores joypad state, and followed by branch */
+        {
+            int has_branch = 0;
+            size_t j;
+            for (j = i + 2u; j < i + 6u && j < track02_size; ++j) {
+                if (track02_data[j] == 0xF0u || track02_data[j] == 0xD0u) {
+                    has_branch = 1;
+                    break;
+                }
+            }
+
+            /* Only record single-bit or known button masks */
+            if (mask == 0x01u || mask == 0x02u || mask == 0x04u ||
+                mask == 0x08u || mask == 0x10u || mask == 0x20u ||
+                mask == 0x40u || mask == 0x80u ||
+                mask == 0x0Fu || mask == 0xF0u || mask == 0x03u ||
+                mask == 0x0Cu || mask == 0x30u) {
+
+                out_receipt->combined_button_mask |= mask;
+
+                if (out_receipt->action_site_count <
+                        THERON_TRACK02_MAX_JOYPAD_ACTION_SITES) {
+                    Theron_Track02JoypadActionSite *site =
+                        &out_receipt->sites[out_receipt->action_site_count++];
+                    site->raw_offset = i;
+                    site->sector = i / TQR_RAW_SECTOR_BYTES;
+                    site->button_mask = mask;
+                    site->is_branch = has_branch;
+                }
+            }
+        }
+    }
+
+    /* PC Engine joypad button encoding (active low, but software inverts):
+     * bit 0 = I, bit 1 = II, bit 2 = Select, bit 3 = Run
+     * bit 4 = Up, bit 5 = Right, bit 6 = Down, bit 7 = Left
+     * (after the CLR/SEL read, high nibble = d-pad, low = buttons) */
+    out_receipt->button_i_proven =
+        (out_receipt->combined_button_mask & 0x01u) != 0;
+    out_receipt->button_ii_proven =
+        (out_receipt->combined_button_mask & 0x02u) != 0;
+    out_receipt->select_proven =
+        (out_receipt->combined_button_mask & 0x04u) != 0;
+    out_receipt->run_proven =
+        (out_receipt->combined_button_mask & 0x08u) != 0;
+    out_receipt->dpad_proven =
+        (out_receipt->combined_button_mask & 0xF0u) != 0;
+
+    out_receipt->valid = (out_receipt->action_site_count > 0u);
+    return THERON_TRACK02_SIGNAL_OK;
+}

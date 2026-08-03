@@ -4051,4 +4051,113 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_syscard_calls(
     const char *md5_hex,
     Theron_Track02SyscardCatalogReceipt *out_receipt);
 
+/* CD_PLAY track parameter extraction.  For each CD_PLAY call site that
+ * resides in code (user data region), scans the preceding bytes for
+ * LDA #imm → STA $FF (the System Card track-number register) and
+ * reports the track parameter.  Data-region false positives (surrounded
+ * by non-code byte patterns) are filtered out. */
+#define THERON_TRACK02_MAX_CD_PLAY_SITES 16u
+
+typedef struct {
+    size_t raw_offset;
+    size_t sector;
+    size_t user_data_offset;
+    uint8_t track_param;     /* value loaded into $FF before JSR */
+    int track_param_found;   /* 1 if LDA #xx → STA $FF pattern found */
+    int in_code_region;      /* 1 if site is likely code, not data */
+} Theron_Track02CdPlaySite;
+
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    size_t total_sites;
+    size_t code_sites;       /* sites in code regions only */
+    size_t sites_with_track; /* code sites where track param found */
+    Theron_Track02CdPlaySite sites[THERON_TRACK02_MAX_CD_PLAY_SITES];
+} Theron_Track02CdPlayTrackMapReceipt;
+
+Theron_Track02SignalStatus theron_v1_track02_extract_cd_play_tracks(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02CdPlayTrackMapReceipt *out_receipt);
+
+/* VDC display configuration extraction.  Scans for st0/st1/st2 triplets
+ * that configure VDC registers and extracts proven display settings:
+ * - MWR (reg $09): BAT width/height
+ * - CR  (reg $05): sprite/BG enable
+ * - HSR/HDR (regs $0A/$0B): horizontal display timing
+ * - VPR/VDW/VCR (regs $0C/$0D/$0E): vertical display timing
+ * - DVSSR (reg $13): SATB DMA source address */
+#define THERON_TRACK02_MAX_VDC_CONFIG_SITES 32u
+
+typedef struct {
+    uint8_t reg;
+    uint16_t value;     /* st1 | (st2 << 8) */
+    size_t raw_offset;
+    size_t sector;
+} Theron_Track02VdcConfigSite;
+
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+
+    int mwr_proven;
+    uint16_t mwr_value;
+
+    int cr_proven;
+    uint16_t cr_value;
+
+    int satb_proven;
+    uint16_t satb_address;
+
+    int screen_width_proven;
+    int screen_height_proven;
+    uint16_t hsr_value;
+    uint16_t hdr_value;
+    uint16_t vpr_value;
+    uint16_t vdw_value;
+    uint16_t vcr_value;
+
+    size_t config_site_count;
+    Theron_Track02VdcConfigSite config_sites[THERON_TRACK02_MAX_VDC_CONFIG_SITES];
+} Theron_Track02VdcDisplayConfigReceipt;
+
+Theron_Track02SignalStatus theron_v1_track02_extract_vdc_display_config(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02VdcDisplayConfigReceipt *out_receipt);
+
+/* Joypad button-to-action mapping.  Traces what code reads the stored
+ * joypad state value and extracts the button mask tests (AND #xx / BIT)
+ * to prove which buttons are used for which game actions. */
+#define THERON_TRACK02_MAX_JOYPAD_ACTION_SITES 64u
+
+typedef struct {
+    size_t raw_offset;
+    size_t sector;
+    uint8_t button_mask;   /* the AND #xx operand */
+    int is_branch;         /* 1 if followed by BEQ/BNE */
+} Theron_Track02JoypadActionSite;
+
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    size_t action_site_count;
+    uint8_t combined_button_mask;  /* OR of all button masks seen */
+    int dpad_proven;       /* masks $01-$08 seen (up/right/down/left) */
+    int button_i_proven;   /* mask $01 on button read seen */
+    int button_ii_proven;  /* mask $02 on button read seen */
+    int run_proven;        /* mask $04 seen */
+    int select_proven;     /* mask $08 seen */
+    Theron_Track02JoypadActionSite sites[THERON_TRACK02_MAX_JOYPAD_ACTION_SITES];
+} Theron_Track02JoypadActionMapReceipt;
+
+Theron_Track02SignalStatus theron_v1_track02_extract_joypad_actions(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02JoypadActionMapReceipt *out_receipt);
+
 #endif /* THERON_V1_TRACK02_H */

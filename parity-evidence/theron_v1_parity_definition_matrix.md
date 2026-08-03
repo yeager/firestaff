@@ -72,6 +72,8 @@ No reference source code exists. Parity is established through:
 | Joypad read routine | PROVEN | 213 port $1000 accesses; canonical STA/LDA CLR+SEL+read at sector 260:0x4B8 |
 | Timer accesses | PROVEN | 157 timer port ($0C00/$0C01) accesses |
 | IRQ control | PROVEN | 19 IRQ disable/status ($1402/$1403) accesses |
+| VDC register catalog | PROVEN | All 32 VDC registers accessed via st0 #reg; MWR/CR/SATB/HSR/HDR/VDW proven |
+| Joypad action mapping | PROVEN | All 5 button groups (I/II/Select/Run/D-pad) proven via AND #mask + branch; 64 action sites, combined mask $FF |
 
 ### 4. Rendering Pipeline
 
@@ -112,7 +114,8 @@ No reference source code exists. Parity is established through:
 | CD audio availability check | PROVEN | 19-track layout verified, OGG fallback |
 | ADPCM bank anchors (3) | PROVEN | US/JP offset pairs in Track 02 BIN |
 | Audio trigger mapping | PROVEN | System card catalog: 279 JSR sites to 17 BIOS vectors; 6 CD_PLAY, 1 AD_PLAY, 7 AD_CPLAY, 4 CD_FADE; track $0E loaded before CD_PLAY |
-| Track-to-dungeon mapping | OPEN | CD_PLAY parameter tracing proves track $0E; full track-to-dungeon map requires Mednafen runtime trace |
+| CD_PLAY track map | PROVEN | 2 code-region CD_PLAY sites (sectors 1224, 3095), both load track $0E via LDA #$0E → STA $FF; 4 data false positives filtered |
+| Track-to-dungeon mapping | OPEN | Both CD_PLAY sites use track $0E; full track-to-dungeon map requires Mednafen runtime trace |
 
 ### 8. Save/Load
 

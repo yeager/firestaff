@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.completion_matrix.v1",
-  "updatedAt": "2026-08-03T13:30:00+02:00",
+  "updatedAt": "2026-08-03T16:00:00+02:00",
   "basis": "Conservative weighted parity completion model. Points count only when tied to repository evidence; blocked/unproven work scores 0 for that criterion.",
   "criteria": [
     {
@@ -411,32 +411,32 @@
           "Full IPL-to-stage-2 boot chain verified byte-for-byte: IPL loader, entry path, call graph, dispatch machine, dynamic payload. Disassembly chain test exercises 17 verify functions."
         ],
         "core_input_movement": [
-          10,
-          "Command stream VM fully classified (10 handlers, $2780 state table, render chain). PC Engine joypad I/O proven: 213 port $1000 accesses, canonical read routine at sector 260 (STA/LDA CLR+SEL+read pattern), timer (157) and IRQ control (19) accesses proven."
+          13,
+          "Joypad button-to-action mapping proven: all 5 groups (I=$01, II=$02, Select=$04, Run=$08, D-pad=$F0) found via AND #mask + BEQ/BNE patterns. 64 action sites with combined mask $FF. Command VM 10 handlers classified. Joypad read routine + timer + IRQ proven."
         ],
         "viewport_ui_render": [
-          13,
-          "VDC register semantics proven (MAWR/VWR/BXR/BYR/CR, VRAM clear, VRAM tile transfer TIA). VCE palette port proven: 438 accesses to HuC6260 color table registers ($0402-$0405), palette write via CTW confirmed. Rendering pipeline through 5 tiers with 2310 bound bytes."
+          16,
+          "All 32 VDC registers proven accessed via st0 #reg. MWR (BAT size), CR (sprite/BG enable), SATB DMA, horizontal timing (HSR/HDR), vertical timing (VPR/VDW/VCR) all proven. VCE palette 438 accesses, VRAM clear/tile transfer proven. Rendering pipeline 5 tiers, 2310 bound bytes."
         ],
         "gameplay_systems": [
           14,
           "Save/load progress round-trip, shop purchase edges, dungeon progression, mechanics, champion, object-marker, and Track 02 parser slices are covered."
         ],
         "audio_timing": [
-          5,
-          "System card call catalog: 279 JSR sites to 17 distinct BIOS vectors including 6 CD_PLAY, 1 AD_PLAY, 7 AD_CPLAY, 4 CD_FADE. Audio trigger mapping proven at binary level; track parameter $0E loaded before CD_PLAY."
+          7,
+          "CD_PLAY track parameter fully mapped: 2 code-region sites both load track $0E via LDA #$0E \u2192 STA $FF. 4 data false positives filtered. System card catalog: 279 JSR sites to 17 BIOS vectors."
         ],
         "original_overlay_regression": [
           0,
           "No representative original overlay regression proof for Theron."
         ]
       },
-      "status": "pce_io_catalog_joypad_vce_proven",
+      "status": "hw_config_cd_play_vdc_joypad_proven",
       "primaryBlockers": [
-        "Original overlay regression (0/10) is the largest remaining gap. VRAM tile content source tracing and track-to-dungeon audio mapping remain open."
+        "Original overlay regression (0/10) is the largest remaining gap. Real menu implementation needed."
       ],
-      "completionPercent": 64,
-      "points": 64,
+      "completionPercent": 72,
+      "points": 72,
       "maxPoints": 100
     }
   ]
