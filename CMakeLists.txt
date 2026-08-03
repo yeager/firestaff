@@ -51624,3 +51624,15 @@ if(NOT MSVC)
 endif()
 add_test(NAME dm1_v1_creature_behavior_bootstrap COMMAND test_dm1_v1_creature_behavior_bootstrap)
 set_tests_properties(dm1_v1_creature_behavior_bootstrap PROPERTIES LABELS "dm1;group;bootstrap")
+
+add_executable(test_dm1_v1_creature_behavior_bootstrap_integration
+    tests/test_dm1_v1_creature_behavior_bootstrap_integration.c
+    src/dm1/dm1_v1_creature_behavior_bootstrap_pc34_compat.c
+    src/memory/memory_timeline_pc34_compat.c
+)
+target_link_libraries(test_dm1_v1_creature_behavior_bootstrap_integration PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(test_dm1_v1_creature_behavior_bootstrap_integration PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm1_v1_creature_behavior_bootstrap_integration COMMAND test_dm1_v1_creature_behavior_bootstrap_integration)
+set_tests_properties(dm1_v1_creature_behavior_bootstrap_integration PROPERTIES LABELS "dm1;group;bootstrap;integration")
