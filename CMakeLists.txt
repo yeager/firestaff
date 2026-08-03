@@ -3883,7 +3883,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.269 LANGUAGES C)
+project(Firestaff VERSION 3.0.270 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -21267,6 +21267,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -21307,6 +21312,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -21343,6 +21353,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -21383,6 +21398,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -21425,6 +21445,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
