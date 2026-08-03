@@ -88,10 +88,13 @@ static uint8_t mock_lookup_floor(void *ctx, int16_t index)
 static void test_wall_decoration(void)
 {
     uint8_t act[8] = {0};
-    act[4] = 0x30; /* deco_count = 3, index bits[15:12] */
+    /* index = word_at(act+4) >> 12; word is little-endian, so
+     * act[5] high nibble = index. 0x30 in act[5] → w4=0x3000 → index=3.
+     * table[2]=30, so use index=2 → act[5]=0x20 */
+    act[5] = 0x20;
     DM2_V1_DecorationLookupCallbacks dcb = { mock_lookup_wall, mock_lookup_floor };
     assert(dm2_v1_get_wall_decoration_of_actuator(act, &dcb, NULL) == 30);
-    act[4] = 0x00; /* no decoration */
+    act[4] = 0x00; act[5] = 0x00; /* no decoration: index=0 */
     assert(dm2_v1_get_wall_decoration_of_actuator(act, &dcb, NULL) == 0xFF);
     assert(dm2_v1_get_wall_decoration_of_actuator(NULL, &dcb, NULL) == 0xFF);
     printf("  PASS: wall_decoration\n");
@@ -100,9 +103,9 @@ static void test_wall_decoration(void)
 static void test_floor_decoration(void)
 {
     uint8_t act[8] = {0};
-    act[4] = 0x10; /* deco_count = 1 */
+    act[5] = 0x10; /* index = w4>>12 = 1 (high nibble of act[5]) */
     DM2_V1_DecorationLookupCallbacks dcb = { mock_lookup_wall, mock_lookup_floor };
-    assert(dm2_v1_get_floor_decoration_of_actuator(act, &dcb, NULL) == 55);
+    assert(dm2_v1_get_floor_decoration_of_actuator(act, &dcb, NULL) == 66); /* table[1]=66 */
     printf("  PASS: floor_decoration\n");
 }
 

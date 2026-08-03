@@ -108,7 +108,8 @@ static void mock_delete_timer(void *ctx, int i)
 static void test_cure_poison(void)
 {
     reset_heroes();
-    g_heroes[2].poison_value = 5;
+    g_heroes[2].poison_value = 8; /* sum of matching timer values: 5+3 */
+    g_heroes[2].poisoned_count = 2; /* two 0x4B timers for hero 2 */
     g_timer_types[0] = 0x46; g_timer_actors[0] = 2;
     g_timer_types[1] = 0x4B; g_timer_actors[1] = 2;
     g_timer_types[2] = 0x4B; g_timer_actors[2] = 1;
@@ -302,30 +303,61 @@ static void test_coin_wallet(void)
     printf("  PASS: coin_wallet\n");
 }
 
+static int g_squad_dir_reset;
+static void mock_reset_squad_dir(void *ctx) { (void)ctx; g_squad_dir_reset = 1; }
+static uint8_t mock_get_tile_value(void *ctx, int16_t x, int16_t y)
+{ (void)ctx; (void)x; (void)y; return 0; /* corridor tile */ }
+static int mock_get_teleporter_detail(void *ctx, int16_t x, int16_t y,
+    uint8_t *b1, uint8_t *b2, uint8_t *b3, uint8_t *b4)
+{ (void)ctx; (void)x; (void)y; (void)b1; (void)b2; (void)b3; (void)b4; return 0; }
+static int g_moverec_calls;
+static void mock_moverec(void *ctx, int16_t x, int16_t y, int16_t d, int a, int b, int c)
+{ (void)ctx; (void)x; (void)y; (void)d; (void)a; (void)b; (void)c; g_moverec_calls++; }
+static int16_t g_rotated_dir;
+static void mock_rotate_party(void *ctx, int16_t nd)
+{ (void)ctx; g_rotated_dir = nd; }
+
 static void test_perform_turn_squad(void)
 {
-    reset_heroes();
-    g_heroes[0].party_pos = 0;
-    g_heroes[1].party_pos = 1;
-    g_heroes[2].party_pos = 2;
-    g_heroes[3].party_pos = 3;
-    DM2_V1_SquadCallbacks cb = { 4, mock_get_hero };
+    g_squad_dir_reset = 0;
+    g_moverec_calls = 0;
+    g_rotated_dir = -1;
+    DM2_V1_SquadCallbacks cb = {
+        .hero_count = 4, .get_hero = mock_get_hero,
+        .reset_squad_dir = mock_reset_squad_dir,
+        .get_tile_value = mock_get_tile_value,
+        .get_teleporter_detail = mock_get_teleporter_detail,
+        .move_stairs = NULL, .map_teleport = NULL,
+        .moverec = mock_moverec,
+        .rotate_party = mock_rotate_party,
+        .party_x = 5, .party_y = 3, .party_dir = 0
+    };
     dm2_v1_perform_turn_squad(1, &cb, NULL);
-    assert(g_heroes[0].party_pos == 1);
-    assert(g_heroes[1].party_pos == 2);
-    assert(g_heroes[2].party_pos == 3);
-    assert(g_heroes[3].party_pos == 0);
+    assert(g_squad_dir_reset == 1);
+    assert(g_moverec_calls == 2);
+    assert(g_rotated_dir == 3); /* delta=1 → rotation=3, (3+0)&3=3 */
     printf("  PASS: perform_turn_squad\n");
 }
 
 static void test_set_spelling_champion(void)
 {
+    reset_heroes();
+    g_heroes[2].cur_hp = 10;
     int16_t spelling = -1;
-    DM2_V1_SpellingState state = { &spelling };
-    dm2_v1_set_spelling_champion(&state, 2, NULL, NULL);
-    assert(spelling == 2);
-    dm2_v1_set_spelling_champion(&state, -1, NULL, NULL);
-    assert(spelling == -1);
+    DM2_V1_SpellingState state = { &spelling, 0, 0, 0, NULL, NULL };
+    DM2_V1_SquadCallbacks scb = {
+        .hero_count = 4, .get_hero = mock_get_hero,
+        .reset_squad_dir = mock_reset_squad_dir,
+        .get_tile_value = mock_get_tile_value,
+        .get_teleporter_detail = mock_get_teleporter_detail,
+        .moverec = mock_moverec,
+        .rotate_party = mock_rotate_party,
+    };
+    dm2_v1_set_spelling_champion(&state, 2, &scb, NULL);
+    assert(spelling == 3); /* hero_idx+1 per skproject */
+    /* hero_idx=-1 → get_hero returns NULL → no change */
+    dm2_v1_set_spelling_champion(&state, -1, &scb, NULL);
+    assert(spelling == 3); /* unchanged */
     printf("  PASS: set_spelling_champion\n");
 }
 

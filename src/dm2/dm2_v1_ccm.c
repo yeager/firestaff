@@ -51,6 +51,7 @@
 
 #include "dm2_v1_ccm.h"
 #include "dm2_v1_ccm_dispatch_pc34_compat.h"
+#include "dm2_v1_ccm_advanced_pc34_compat.h"
 
 #include <string.h>
 
@@ -490,6 +491,42 @@ int dm2_v1_ccm_run_program(DM2_V1_CCMState *state,
     return rc;
 }
 
+/* ── Advanced handler dispatch ─────────────────────────────────── */
+int dm2_v1_ccm_execute_advanced(DM2_V1_CCMState *state,
+                                const DM2_V1_CCMAdvancedCallbacks *cb,
+                                DM2_V1_CCMAdvancedReceipt *out)
+{
+    DM2_V1_CcmSourceHandler group;
+    if (!state) return (int)DM2_CCM_RESULT_BAD_ARG;
+    if (state->last_opcode < 0 || state->last_opcode > 0xFF)
+        return (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
+
+    group = dm2_v1_ccm_dispatch_source_group((uint8_t)state->last_opcode);
+    switch (group) {
+        case DM2_V1_CCM_SRC_CCM03:
+            return dm2_v1_ccm_advanced_ccm03(cb, out)
+                ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
+        case DM2_V1_CCM_SRC_JUMPS:
+            return dm2_v1_ccm_advanced_jumps(cb, out)
+                ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
+        case DM2_V1_CCM_SRC_TAKES_ITEM:
+            return dm2_v1_ccm_advanced_takes_item(cb, out)
+                ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
+        case DM2_V1_CCM_SRC_PUTS_DOWN_ITEM:
+            return dm2_v1_ccm_advanced_puts_down_item(cb, out)
+                ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
+        case DM2_V1_CCM_SRC_TRANSFORM:
+            return dm2_v1_ccm_advanced_transform(cb, out)
+                ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
+        case DM2_V1_CCM_SRC_EXPLODE_OR_SUMMON:
+            return dm2_v1_ccm_advanced_explode_or_summon(
+                cb, (uint8_t)state->flags[22], out)
+                ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
+        default:
+            return (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
+    }
+}
+
 /* ── Observability ──────────────────────────────────────────────── */
 int dm2_v1_ccm_total_steps(void) { return s_total_steps; }
 int dm2_v1_ccm_total_unknown(void) { return s_total_unknown; }
@@ -516,6 +553,8 @@ const char *dm2_v1_ccm_source_evidence(void) {
         "  0x27/0x28 CAST_SPELL / 0x3D-0x40 EXPLODE_OR_SUMMON / 0xFF HALT (internal)\n"
         "  0x0B CCM0B / 0x0C/0x0D CCM0C / 0x2F-0x31 ACTIVATES_WALL\n"
         "  0x35-0x3A USES_LADDER_HOLE / 0x3B/0x3C TRANSFORM / 0x55 DM2_1B7D5\n"
+        "Advanced handler dispatch wired: CCM03, JUMPS, TAKES_ITEM,\n"
+        "  PUTS_DOWN_ITEM, TRANSFORM, EXPLODE_OR_SUMMON via dm2_v1_ccm_execute_advanced()\n"
         "All 48 source opcodes now live (flags 16-23 for bridge dispatch)\n"
         "No-handler bytes (source 'no branch taken') return UNKNOWN_OPCODE:\n"
         "  0x00, 0x10-0x12, 0x14, 0x1B-0x25, 0x32-0x34, 0x41-0x54, 0x56-0xFE\n"

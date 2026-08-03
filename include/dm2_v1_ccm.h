@@ -216,6 +216,16 @@ int  dm2_v1_ccm_run_program(DM2_V1_CCMState *state,
 int  dm2_v1_ccm_flag_get(const DM2_V1_CCMState *state, int flag_id);
 void dm2_v1_ccm_flag_set(DM2_V1_CCMState *state, int flag_id, int value);
 
+/* ── Advanced handler dispatch ─────────────────────────────────── */
+/* Execute the advanced handler body for the last dispatched opcode.
+ * Routes to the dm2_v1_ccm_advanced_* functions based on the opcode's
+ * source group.  Returns DM2_CCM_RESULT_OK if a handler ran,
+ * DM2_CCM_RESULT_UNKNOWN_OPCODE if the opcode has no advanced handler. */
+#include "dm2_v1_ccm_advanced_pc34_compat.h"
+int dm2_v1_ccm_execute_advanced(DM2_V1_CCMState *state,
+                                const DM2_V1_CCMAdvancedCallbacks *cb,
+                                DM2_V1_CCMAdvancedReceipt *out);
+
 /* ── Observability ──────────────────────────────────────────────── */
 int  dm2_v1_ccm_total_steps(void);
 int  dm2_v1_ccm_total_unknown(void);

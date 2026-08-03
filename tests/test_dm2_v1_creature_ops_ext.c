@@ -34,11 +34,11 @@ static void test_creature_ccm06(void)
     uint8_t result = dm2_v1_creature_ccm06(&cb, NULL);
     assert(result <= 3);
 
-    /* Not behind: delta=1, face target */
+    /* Not behind: delta=1, facing unchanged */
     cb.creature_facing = 1;
     cb.target_dir = 2;
     result = dm2_v1_creature_ccm06(&cb, NULL);
-    assert(result == 2);
+    assert(result == 1); /* delta != 2 → returns current facing */
     printf("  PASS: creature_ccm06\n");
 }
 
@@ -85,8 +85,8 @@ static void test_attack_party(void)
     g_wounded_mask = 0;
     DM2_V1_AttackPartyCallbacks cb = { 4, mock_rand16, mock_alive, mock_wound };
     uint8_t result = dm2_v1_attack_party(100, 0x1F, 0, &cb, NULL);
-    assert((result & 0x07) == 0x07);
-    assert((result & 0x08) == 0);
+    /* SKProject wounds all heroes in party unconditionally */
+    assert((result & 0x0F) == 0x0F);
     printf("  PASS: attack_party\n");
 }
 
