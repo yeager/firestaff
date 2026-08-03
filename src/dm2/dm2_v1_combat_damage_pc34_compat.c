@@ -163,11 +163,35 @@ int dm2_v1_attack_party(
         return 0;
     }
 
-    /* Per-hero damage randomization and WOUND_PLAYER calls require
-     * live hero state and RNG. Fail-closed.
-     * Reference formula: range = damage/8 + 1, per_hero = RAND16(2*range) + (damage - range)
-     * c_hero.cpp:3365-3392 */
-    receipt->fail_closed = 1;
+    /* Per-hero damage randomization and WOUND_PLAYER.
+     * c_hero.cpp:3365-3392:
+     *   range = damage/8 + 1
+     *   per_hero = (random_value % (2*range)) + (damage - range)
+     * Then WOUND_PLAYER for each living hero. */
+    {
+        int16_t range = request->base_damage / 8 + 1;
+        int16_t base = request->base_damage - range;
+        int i;
+
+        for (i = 0; i < request->heroes_in_party && i < 4; i++) {
+            int16_t per_dmg = (int16_t)(request->random_values[i] % (uint16_t)(2 * range)) + base;
+            if (per_dmg < 0) per_dmg = 0;
+            receipt->per_hero_damage[i] = per_dmg;
+
+            if (per_dmg > 0 && request->hero_wound[i].hero_hp > 0) {
+                DM2_V1_WoundPlayerRequest wound_req = request->hero_wound[i];
+                wound_req.wound_amount = per_dmg;
+                wound_req.damage_type = request->damage_type;
+                wound_req.hero_index = (int16_t)i;
+
+                dm2_v1_wound_player(&wound_req, &receipt->hero_results[i]);
+                if (receipt->hero_results[i].hero_wounded) {
+                    receipt->heroes_hit_mask |= (1u << i);
+                    receipt->heroes_wounded++;
+                }
+            }
+        }
+    }
 
     return 1;
 }

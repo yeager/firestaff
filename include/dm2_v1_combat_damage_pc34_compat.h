@@ -99,6 +99,8 @@ typedef struct {
     int16_t damage_type;
     int16_t damage_flags;
     int16_t heroes_in_party;
+    DM2_V1_WoundPlayerRequest hero_wound[4];
+    uint16_t random_values[4];
 } DM2_V1_AttackPartyRequest;
 
 /* ATTACK_PARTY receipt */
@@ -107,6 +109,8 @@ typedef struct {
     int fail_closed;
     uint32_t heroes_hit_mask;
     int16_t heroes_wounded;
+    DM2_V1_WoundPlayerReceipt hero_results[4];
+    int16_t per_hero_damage[4];
 } DM2_V1_AttackPartyReceipt;
 
 int dm2_v1_calc_player_attack_damage(
