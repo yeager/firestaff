@@ -91,6 +91,8 @@ typedef struct {
     int startup_text_prompt_status;
     int startup_text_prompt_count;
     char startup_text_prompt[THERON_STARTUP_MEDIA_PROMPT_CAPACITY];
+    int startup_font_tiles_ready;
+    Theron_Track02FontTileReceipt startup_font_tile_receipt;
 } Theron_StartupMedia;
 
 typedef struct {
@@ -169,6 +171,8 @@ typedef struct {
     int startup_text_prompt_status;
     int startup_text_prompt_count;
     char startup_text_prompt[THERON_STARTUP_MEDIA_PROMPT_CAPACITY];
+    int startup_font_tiles_ready;
+    Theron_Track02FontTileReceipt startup_font_tile_receipt;
 } Theron_StartupMediaStateReceipt;
 
 void theron_v1_startup_media_init(Theron_StartupMedia *media);

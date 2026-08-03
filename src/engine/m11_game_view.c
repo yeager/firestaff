@@ -17909,6 +17909,12 @@ static void m11_theron_apply_startup_media_state_receipt(
              sizeof(state->theronState.startup_text_prompt),
              "%s",
              receipt->startup_text_prompt);
+    state->theronState.startup_font_tiles_ready =
+        receipt->startup_font_tiles_ready;
+    if (receipt->startup_font_tiles_ready) {
+        state->theronState.startup_font_tile_receipt =
+            receipt->startup_font_tile_receipt;
+    }
     if (receipt->startup_roster_name_status != THERON_TRACK02_SIGNAL_OK) {
         return;
     }
@@ -41548,10 +41554,30 @@ int M11_GameView_TriggerNonMeleeActionByIndex(M11_GameViewState* state,
                                              &actionExperienceGain,
                                              &cancelActionDisable);
     m11_write_csb_runtime_champion_vitals(state, championIndex);
-    /* ReDMCSB ENDGAME.C F0446 lines 890-910 owns the fuse-sequence updates
-     * after game-won; the direct helper mirrors the action-row boundary. */
+    /* Advance one game tick for timeline scheduling (projectile movement,
+     * action cooldown).  Unlike the live TriggerActionRow path, this direct
+     * helper intentionally skips m11_apply_champion_time_effects (F0331)
+     * so the caller can observe the action's isolated mana/stamina effect
+     * without F0331 regen noise.  The live game loop runs F0331 separately
+     * through its own tick path. */
     if (!state->gameWon) {
-        (void)m11_apply_tick(state, CMD_NONE, "ACTION");
+        struct TickInput_Compat tickIn;
+        memset(&tickIn, 0, sizeof(tickIn));
+        tickIn.tick = state->world.gameTick;
+        tickIn.command = CMD_NONE;
+        memset(&state->lastTickResult, 0, sizeof(state->lastTickResult));
+        DM1_V1_MovementPipeline_DecrementCooldownsPc34Compat(
+            &state->dm1V1MovementPipeline);
+        (void)F0884_ORCH_AdvanceOneTick_Compat(
+            &state->world, &tickIn, &state->lastTickResult);
+        state->lastWorldHash = state->lastTickResult.worldHashPost;
+        M11_GameView_ProcessTickEmissions(state);
+        m11_process_creature_ticks(state);
+        M11_GameView_TickAnimation(state);
+        m11_check_party_death(state);
+        m11_mark_explored(state);
+        m11_decrement_action_disabled_ticks(state);
+        DM1_V1_VBlankTiming_ResetForNewTick(&state->vblankTiming);
     }
     {
         DM1_MeleeRuntimeOutcomeInputPc34 meleeOutcomeIn;
@@ -50844,6 +50870,41 @@ int M11_GameView_GetTheronStartupRenderRows(
     return row_count;
 }
 
+static void m11_theron_draw_font_tile_text(
+    unsigned char *framebuffer, int fbw, int fbh,
+    int x, int y, const char *text,
+    const Theron_Track02FontTileReceipt *font,
+    int color_index)
+{
+    int cx = x;
+    const char *p;
+    for (p = text; *p != '\0'; ++p) {
+        unsigned char ch = (unsigned char)*p;
+        if (ch < THERON_TRACK02_FONT_FIRST_CHAR ||
+            ch >= THERON_TRACK02_FONT_FIRST_CHAR +
+                  THERON_TRACK02_FONT_TILE_COUNT) {
+            cx += (int)THERON_TRACK02_FONT_PIXEL_WIDTH;
+            continue;
+        }
+        int tile_idx = ch - THERON_TRACK02_FONT_FIRST_CHAR;
+        const uint8_t *pixels = font->pixels[tile_idx];
+        int px, py;
+        for (py = 0; py < (int)THERON_TRACK02_FONT_PIXEL_HEIGHT; ++py) {
+            for (px = 0; px < (int)THERON_TRACK02_FONT_PIXEL_WIDTH; ++px) {
+                if (pixels[py * THERON_TRACK02_FONT_PIXEL_WIDTH + px] != 0) {
+                    int dx = cx + px;
+                    int dy = y + py;
+                    if (dx >= 0 && dx < fbw && dy >= 0 && dy < fbh) {
+                        framebuffer[dy * fbw + dx] =
+                            (unsigned char)color_index;
+                    }
+                }
+            }
+        }
+        cx += (int)THERON_TRACK02_FONT_PIXEL_WIDTH;
+    }
+}
+
 static const M11_TextStyle *m11_theron_startup_text_style(
     Theron_StartupRenderTextStyle style,
     M11_TextStyle *scratch)
@@ -51078,12 +51139,27 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                   plan->border_w, plan->border_h,
                   plan->border_color);
     for (i = 0; i < plan->text_count; ++i) {
-        M11_TextStyle scratch;
         const Theron_StartupRenderTextCommand *command = &plan->text[i];
-        const M11_TextStyle *style =
-            m11_theron_startup_text_style(command->style, &scratch);
-        m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
-                      command->x, command->y, command->text, style);
+        if (state->theronState.startup_font_tiles_ready) {
+            int ci = M11_COLOR_WHITE;
+            switch (command->style) {
+            case THERON_STARTUP_RENDER_TEXT_TITLE:   ci = M11_COLOR_YELLOW; break;
+            case THERON_STARTUP_RENDER_TEXT_ACTIVE:  ci = M11_COLOR_YELLOW; break;
+            case THERON_STARTUP_RENDER_TEXT_LOCKED:  ci = M11_COLOR_DARK_GRAY; break;
+            case THERON_STARTUP_RENDER_TEXT_PICKED:  ci = M11_COLOR_LIGHT_GREEN; break;
+            default: ci = M11_COLOR_WHITE; break;
+            }
+            m11_theron_draw_font_tile_text(
+                framebuffer, framebufferWidth, framebufferHeight,
+                command->x, command->y, command->text,
+                &state->theronState.startup_font_tile_receipt, ci);
+        } else {
+            M11_TextStyle scratch;
+            const M11_TextStyle *style =
+                m11_theron_startup_text_style(command->style, &scratch);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          command->x, command->y, command->text, style);
+        }
     }
 }
 

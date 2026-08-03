@@ -367,6 +367,18 @@ void theron_v1_startup_media_capture_track02(
                                             hucard_rom_size,
                                             md5_hex,
                                             out_media);
+    {
+        Theron_Track02FontTileReceipt font_receipt;
+        memset(&font_receipt, 0, sizeof(font_receipt));
+        if (theron_v1_track02_extract_font_tiles(
+                hucard_rom, hucard_rom_size, md5_hex,
+                &font_receipt) == THERON_TRACK02_SIGNAL_OK &&
+            font_receipt.valid &&
+            font_receipt.nonblank_tile_count > 0u) {
+            out_media->startup_font_tiles_ready = 1;
+            out_media->startup_font_tile_receipt = font_receipt;
+        }
+    }
     out_media->startup_media_ready =
         out_media->track02_variant != THERON_TRACK02_VARIANT_UNKNOWN &&
         (out_media->startup_bitmap_decode_status == THERON_TRACK02_SIGNAL_OK ||
@@ -530,6 +542,12 @@ void theron_v1_startup_media_capture_track02_state_receipt(
              sizeof(out_receipt->startup_text_prompt),
              "%s",
              media.startup_text_prompt);
+    out_receipt->startup_font_tiles_ready =
+        media.startup_font_tiles_ready;
+    if (media.startup_font_tiles_ready) {
+        out_receipt->startup_font_tile_receipt =
+            media.startup_font_tile_receipt;
+    }
     if (media.startup_roster_name_status != THERON_TRACK02_SIGNAL_OK) {
         return;
     }

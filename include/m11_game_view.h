@@ -1308,6 +1308,8 @@ typedef struct {
         uint32_t startup_bitmap_stage_checksum;
         uint32_t startup_bitmap_soul_room_checksum;
         uint32_t startup_bitmap_forcefield_checksum;
+        int startup_font_tiles_ready;
+        Theron_Track02FontTileReceipt startup_font_tile_receipt;
         char startup_roster_names[8][16];
         char startup_roster_titles[8][32];
         int startup_text_prompt_count;

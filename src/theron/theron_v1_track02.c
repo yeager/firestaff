@@ -2267,6 +2267,121 @@ Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas_wide(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
+static size_t tqr_raw_to_user_data_offset(size_t raw_offset) {
+    size_t sector = raw_offset / THERON_TRACK02_RAW_SECTOR_BYTES;
+    size_t within = raw_offset % THERON_TRACK02_RAW_SECTOR_BYTES;
+
+    if (within < THERON_TRACK02_RAW_USER_DATA_OFFSET ||
+        within >= THERON_TRACK02_RAW_USER_DATA_OFFSET +
+                  THERON_TRACK02_RAW_USER_DATA_BYTES) {
+        return (size_t)-1;
+    }
+    return sector * THERON_TRACK02_RAW_USER_DATA_BYTES +
+           (within - THERON_TRACK02_RAW_USER_DATA_OFFSET);
+}
+
+static size_t tqr_user_data_to_raw_offset(size_t ud_offset) {
+    size_t sector = ud_offset / THERON_TRACK02_RAW_USER_DATA_BYTES;
+    size_t within = ud_offset % THERON_TRACK02_RAW_USER_DATA_BYTES;
+
+    return sector * THERON_TRACK02_RAW_SECTOR_BYTES +
+           THERON_TRACK02_RAW_USER_DATA_OFFSET + within;
+}
+
+static int tqr_read_user_data_contiguous(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    size_t ud_offset,
+    uint8_t *out,
+    size_t count)
+{
+    size_t done = 0u;
+
+    while (done < count) {
+        size_t raw = tqr_user_data_to_raw_offset(ud_offset + done);
+        size_t sector = raw / THERON_TRACK02_RAW_SECTOR_BYTES;
+        size_t within = raw % THERON_TRACK02_RAW_SECTOR_BYTES;
+        size_t avail = THERON_TRACK02_RAW_USER_DATA_OFFSET +
+                       THERON_TRACK02_RAW_USER_DATA_BYTES - within;
+        size_t chunk = count - done;
+
+        if (chunk > avail) {
+            chunk = avail;
+        }
+        if (raw + chunk > track02_size) {
+            return 0;
+        }
+        memcpy(out + done, track02_data + raw, chunk);
+        done += chunk;
+    }
+    return 1;
+}
+
+#define TQR_US_FONT_TILE_USER_DATA_OFFSET 0x263200u
+#define TQR_JP_FONT_TILE_USER_DATA_OFFSET 0x263200u
+
+Theron_Track02SignalStatus theron_v1_track02_extract_font_tiles(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02FontTileReceipt *out_receipt)
+{
+    Theron_Track02Variant variant;
+    size_t ud_offset;
+    uint8_t raw_tiles[THERON_TRACK02_FONT_TILE_COUNT *
+                      THERON_TRACK02_FONT_TILE_BYTES];
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    if (!track02_data || !out_receipt || !md5_hex) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    if (variant == THERON_TRACK02_VARIANT_UNKNOWN) {
+        return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
+    }
+
+    if (variant == THERON_TRACK02_VARIANT_JP_BIN ||
+        variant == THERON_TRACK02_VARIANT_JP_REV1_ISO) {
+        ud_offset = TQR_JP_FONT_TILE_USER_DATA_OFFSET;
+    } else {
+        ud_offset = TQR_US_FONT_TILE_USER_DATA_OFFSET;
+    }
+
+    if (!tqr_read_user_data_contiguous(
+            track02_data, track02_size,
+            ud_offset, raw_tiles, sizeof(raw_tiles))) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    out_receipt->variant = variant;
+    out_receipt->user_data_offset = ud_offset;
+    out_receipt->tile_count = THERON_TRACK02_FONT_TILE_COUNT;
+    out_receipt->checksum = 0u;
+
+    for (size_t i = 0u; i < THERON_TRACK02_FONT_TILE_COUNT; ++i) {
+        const uint8_t *src = raw_tiles + i * THERON_TRACK02_FONT_TILE_BYTES;
+        uint8_t *dst = out_receipt->pixels[i];
+        size_t nonzero = 0u;
+        uint32_t tile_checksum = 0u;
+
+        theron_v1_track02_decode_4bpp_tile(
+            src, THERON_TRACK02_FONT_TILE_BYTES,
+            dst, &nonzero, &tile_checksum);
+
+        if (nonzero > 0u) {
+            ++out_receipt->nonblank_tile_count;
+        }
+        out_receipt->checksum ^= tile_checksum + (uint32_t)(i * 16777619u);
+    }
+
+    out_receipt->valid = out_receipt->nonblank_tile_count > 0;
+    return out_receipt->valid ? THERON_TRACK02_SIGNAL_OK
+                             : THERON_TRACK02_SIGNAL_NOT_FOUND;
+}
+
 Theron_Track02SignalStatus theron_v1_track02_copy_user_data_window_by_role(
     const uint8_t *track02_data,
     size_t track02_size,

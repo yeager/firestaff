@@ -13855,6 +13855,21 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_anim_bootstrap
     )
 
+    add_executable(test_dm2_v1_anim_chunk
+        tests/test_dm2_v1_anim_chunk_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_anim_chunk PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_anim_chunk PRIVATE firestaff_dm2)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_anim_chunk PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_anim_chunk
+        COMMAND test_dm2_v1_anim_chunk
+    )
+
     add_executable(test_dm2_v1_startup_audio_menu
         tests/test_dm2_v1_startup_audio_menu.c
     )
@@ -39682,6 +39697,35 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_test(
         NAME theron_v1_hw_config_summary
         COMMAND test_theron_v1_hw_config summary
+    )
+
+    add_executable(test_theron_v1_font_tiles
+        tests/test_theron_v1_font_tiles.c
+    )
+    target_link_libraries(test_theron_v1_font_tiles PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_font_tiles PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_font_tiles PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_font_tile_extraction
+        COMMAND test_theron_v1_font_tiles font_tile_extraction
+    )
+    add_test(
+        NAME theron_v1_font_space_tile_is_blank
+        COMMAND test_theron_v1_font_tiles font_space_tile_is_blank
+    )
+    add_test(
+        NAME theron_v1_font_letter_a_has_content
+        COMMAND test_theron_v1_font_tiles font_letter_a_has_content
+    )
+    add_test(
+        NAME theron_v1_font_char_mapping
+        COMMAND test_theron_v1_font_tiles font_char_mapping
     )
 
     add_executable(test_theron_v1_palette_runtime_admission

@@ -53,6 +53,13 @@
 #define THERON_TRACK02_4BPP_PALETTE_BYTES \
     (THERON_TRACK02_4BPP_PALETTE_ENTRY_COUNT * 2u)
 
+#define THERON_TRACK02_FONT_TILE_COUNT 96u
+#define THERON_TRACK02_FONT_TILE_BYTES 32u
+#define THERON_TRACK02_FONT_FIRST_CHAR 0x10u
+#define THERON_TRACK02_FONT_PIXEL_WIDTH 8u
+#define THERON_TRACK02_FONT_PIXEL_HEIGHT 8u
+#define THERON_TRACK02_FONT_PIXELS_PER_TILE 64u
+
 #define THERON_TRACK01_CDDA_SECTOR_BYTES 2352u
 #define THERON_TRACK01_CDDA_SAMPLE_RATE 44100
 #define THERON_TRACK01_CDDA_CHANNELS 2
@@ -461,6 +468,23 @@ Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas(
 Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas_wide(
     const Theron_Track02StartupBitmapCatalog *catalog,
     Theron_Track02StartupBitmapAtlas *out_atlas);
+
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    size_t user_data_offset;
+    size_t tile_count;
+    size_t nonblank_tile_count;
+    uint32_t checksum;
+    uint8_t pixels[THERON_TRACK02_FONT_TILE_COUNT]
+                   [THERON_TRACK02_FONT_PIXELS_PER_TILE];
+} Theron_Track02FontTileReceipt;
+
+Theron_Track02SignalStatus theron_v1_track02_extract_font_tiles(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02FontTileReceipt *out_receipt);
 
 /* HuC6260/VCE palette payload used by one 4bpp tile bank: sixteen
  * little-endian 9-bit words. Bits 0..2 are blue, 3..5 red, and 6..8 green;
