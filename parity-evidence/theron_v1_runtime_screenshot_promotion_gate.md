@@ -28,13 +28,16 @@ returned for rows whose data directory is missing on this host.
 
 | Case | Classification | Source sha256 | Probe summary | Notes |
 |---|---|---|---|---|
+| canonical_pcengine_root | `README_INELIGIBLE` | `496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON STARTUP' | presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels); sha256 496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin']; ineligible |
+| jp_extras_track02_bin | `README_INELIGIBLE` | `496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON STARTUP' | presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels); sha256 496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin']; ineligible |
+| us_extras_track02_bin | `README_INELIGIBLE` | `bc81f269e57d851a4569659b80dff82e767c907cebf000ac6be447371e3db78d` | sourceId=theron launchedEver=1 gameTick=0 mapIndex=0 lastOutcome='THERON STARTUP' | presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels) |
 
 ## Aggregate
 
 - Eligible rows: **0**
-- Ineligible rows: **0**
+- Ineligible rows: **3**
 - Skipped rows (no data on this host): **0**
-- Unique-source-sha256 findings: **0**
+- Unique-source-sha256 findings: **1**
 - Contract-drift findings: **0**
 
 ## Public Screenshot Boundary

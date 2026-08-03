@@ -77,6 +77,7 @@ struct Nexus_MechanicsState {
     int spell_align;       /* alignment (0-1), or -1 */
 
     int set_leader_slot;   /* party slot (0-3) for NEXUS_CMD_SET_LEADER */
+    int throw_slot;        /* inventory slot for NEXUS_CMD_THROW */
 };
 
 /* ═══════════════════════════════════════════════════════════════════

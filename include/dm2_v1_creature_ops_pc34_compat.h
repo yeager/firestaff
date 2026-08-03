@@ -67,8 +67,82 @@ int16_t dm2_v1_creature_can_handle_item_in(
 int dm2_v1_confuse_creature(uint8_t *creature_record);
 
 /* ---- DM2_CREATURE_KILL_ON_TIMER_POSITION (c_creature.cpp:2352) ----
- * Checks if a creature should die based on timer position.
- * Just calls DM2_WOUND_CREATURE(record) when the creature's HP <= 0. */
+ * Delete creature at timer position and set flag. */
+typedef struct {
+    void (*delete_creature_record)(void *ctx, uint16_t x, uint16_t y,
+                                    int param1, int param2);
+    int *v1e0570_flag;
+} DM2_V1_CreatureKillCallbacks;
+
+void dm2_v1_creature_kill_on_timer_position(
+    uint16_t x, uint16_t y,
+    const DM2_V1_CreatureKillCallbacks *cb, void *ctx);
+
+/* ---- DM2_CREATURE_CCM06 (c_creature.cpp:1574) ----
+ * Creature turns to face target. Randomizes if behind. */
+typedef struct {
+    uint8_t creature_facing;
+    uint8_t target_dir;
+    int (*rand_fn)(void *ctx);
+} DM2_V1_CreatureCCM06Callbacks;
+
+uint8_t dm2_v1_creature_ccm06(
+    const DM2_V1_CreatureCCM06Callbacks *cb, void *ctx);
+
+/* ---- DM2_1B7D5 (c_creature.cpp:2916) ----
+ * Create cloud at creature position with random strength. */
+typedef struct {
+    int16_t (*rand16)(void *ctx, int16_t max);
+    int (*create_cloud)(void *ctx, int spell_id, uint16_t strength,
+                        uint16_t x, uint16_t y, int param);
+} DM2_V1_CreateCloudCallbacks;
+
+int dm2_v1_creature_create_cloud(
+    uint16_t x, uint16_t y,
+    const DM2_V1_CreateCloudCallbacks *cb, void *ctx);
+
+/* ---- DM2_CREATURE_SHOOT_ITEM (c_creature.cpp:2359) ----
+ * Creature fires a projectile from inventory. */
+typedef struct {
+    int16_t (*find_shootable_item)(void *ctx, int8_t capability, uint16_t inv_link,
+                                    int filter);
+    void (*cut_record)(void *ctx, uint16_t record, uint16_t *from_link,
+                       int x, int y);
+    int16_t (*rand16)(void *ctx, int16_t max);
+    int16_t (*between_value)(int16_t lo, int16_t hi, int16_t val);
+    void (*shoot_item)(void *ctx, uint16_t item, uint16_t x, uint16_t y,
+                       int direction, int facing, uint8_t damage,
+                       uint8_t speed, int type);
+} DM2_V1_CreatureShootCallbacks;
+
+typedef struct {
+    int8_t capability;
+    uint16_t inv_link;
+    uint16_t x;
+    uint16_t y;
+    uint8_t creature_dir;
+    uint8_t creature_facing;
+    uint8_t attack_stat;
+    uint8_t speed_stat;
+} DM2_V1_CreatureShootState;
+
+int dm2_v1_creature_shoot_item(
+    const DM2_V1_CreatureShootState *state,
+    const DM2_V1_CreatureShootCallbacks *cb, void *ctx);
+
+/* ---- DM2_ATTACK_PARTY (c_hero.cpp:3346) ----
+ * Distribute creature attack across all living party heroes. */
+typedef struct {
+    int hero_count;
+    int16_t (*rand16)(void *ctx, int16_t max);
+    int (*is_hero_alive)(void *ctx, int idx);
+    void (*wound_player)(void *ctx, int hero_idx, int16_t damage,
+                         int body_parts, int wound_type);
+} DM2_V1_AttackPartyCallbacks;
+
+uint8_t dm2_v1_attack_party(
+    int16_t total_damage, int body_parts, int wound_type,
+    const DM2_V1_AttackPartyCallbacks *cb, void *ctx);
 
 #ifdef __cplusplus
 }

@@ -3,10 +3,20 @@
     "contract_drift": [],
     "decision": "NO_README_PROMOTION_PERMITTED",
     "eligible_count": 0,
-    "ineligible_count": 0,
+    "ineligible_count": 3,
     "skipped_count": 0,
     "status": "NO_README_PROMOTION_PERMITTED",
-    "uniqueness_findings": []
+    "uniqueness_findings": [
+      {
+        "kind": "duplicate_source_sha256_across_rows",
+        "note": "identical source BMP sha256 across multiple readiness rows is a strong indicator of a shared placeholder fixture rather than independent runtime captures",
+        "rows": [
+          "canonical_pcengine_root",
+          "jp_extras_track02_bin"
+        ],
+        "sha256": "496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40"
+      }
+    ]
   },
   "bootstrapManifest": "parity-evidence/verification/theron_v1_runtime_screenshot_readiness/manifest.json",
   "bootstrapSource": "parity-evidence/verification/theron_v1_runtime_screenshot_readiness",
@@ -28,7 +38,7 @@
     "source BMP sha256 unique across all rows",
     "presented BMP is valid 320x200 24-bit BMP with >200 non-black pixels"
   ],
-  "generated_at": "2026-08-02T16:49:38.243802+00:00",
+  "generated_at": "2026-08-03T09:33:25.150019+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this gate.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -37,7 +47,64 @@
     "The contract is a non-promotion lock, not a release gate; future promotion must satisfy every eligibility criterion in the contract."
   ],
   "ok": true,
-  "rows": [],
+  "rows": [
+    {
+      "case_id": "canonical_pcengine_root",
+      "classification": "README_INELIGIBLE",
+      "eligible": false,
+      "label": "Theron canonical PC Engine root",
+      "notes": [
+        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
+        "sha256 496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin']; ineligible"
+      ],
+      "presented_sha256": "38d25d1091175509df81c5dfea826788b77f0ff282e8b4a47a276703a5fcde21",
+      "probe_summary": {
+        "gameTick": 0,
+        "lastOutcome": "THERON STARTUP",
+        "launchedEver": 1,
+        "party.mapIndex": 0,
+        "sourceId": "theron"
+      },
+      "source_sha256": "496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40"
+    },
+    {
+      "case_id": "jp_extras_track02_bin",
+      "classification": "README_INELIGIBLE",
+      "eligible": false,
+      "label": "Theron JP extras Track 02",
+      "notes": [
+        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)",
+        "sha256 496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40 shared with rows ['canonical_pcengine_root', 'jp_extras_track02_bin']; ineligible"
+      ],
+      "presented_sha256": "38d25d1091175509df81c5dfea826788b77f0ff282e8b4a47a276703a5fcde21",
+      "probe_summary": {
+        "gameTick": 0,
+        "lastOutcome": "THERON STARTUP",
+        "launchedEver": 1,
+        "party.mapIndex": 0,
+        "sourceId": "theron"
+      },
+      "source_sha256": "496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40"
+    },
+    {
+      "case_id": "us_extras_track02_bin",
+      "classification": "README_INELIGIBLE",
+      "eligible": false,
+      "label": "Theron US extras Track 02",
+      "notes": [
+        "presented BMP failed geometry/non-black checks (must be 320x200, >200 non-black pixels)"
+      ],
+      "presented_sha256": "7a9b0362dbdd1df871f6fdbef225aaeb082b3bd454e65bcf734becea308c5c78",
+      "probe_summary": {
+        "gameTick": 0,
+        "lastOutcome": "THERON STARTUP",
+        "launchedEver": 1,
+        "party.mapIndex": 0,
+        "sourceId": "theron"
+      },
+      "source_sha256": "bc81f269e57d851a4569659b80dff82e767c907cebf000ac6be447371e3db78d"
+    }
+  ],
   "schema": "firestaff.parity.theron_v1_runtime_screenshot_promotion_gate.v1",
   "status": "NO_README_PROMOTION_PERMITTED"
 }

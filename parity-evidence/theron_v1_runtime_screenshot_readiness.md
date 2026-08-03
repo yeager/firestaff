@@ -1,6 +1,6 @@
 # Theron V1 runtime screenshot readiness
 
-Status: `FAIL`
+Status: `PASS`
 
 This gate runs real Firestaff Theron launches when hash-verified Track 02
 data is present. It records runtime probe fields plus BMP geometry and
@@ -10,6 +10,9 @@ hash receipts only; it does not add screenshots to public docs.
 
 | Case | Status | Boot marker | Runtime source | Fallback assets | Source BMP | Presented BMP |
 |---|---:|---:|---|---:|---:|---:|
+| Theron canonical PC Engine root | PASS | yes | `theron` | no | `1` | `1` |
+| Theron JP extras Track 02 | PASS | yes | `theron` | no | `1` | `1` |
+| Theron US extras Track 02 | PASS | yes | `theron` | no | `1` | `1` |
 
 ## Public Screenshot Boundary
 

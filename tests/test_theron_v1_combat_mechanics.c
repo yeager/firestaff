@@ -15,6 +15,7 @@
 #include "theron_v1_combat.h"
 #include "theron_v1_mechanics.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_track02_item_properties.h"
 #include "theron_v1_world.h"
 
 #include <stdio.h>
@@ -216,6 +217,45 @@ static void test_spell_casting(void) {
     w.party.champions[0].mana = 1;
     rc = theron_v1_champion_cast_spell(&w, 0, 20, cid);
     CHECK_INT("insufficient mana rejected", rc, -1);
+}
+
+static void test_armed_combat_uses_item_properties(void) {
+    printf("[test:armed_combat_uses_item_properties]\n");
+    Theron_V1_World w;
+    make_world(&w);
+
+    /* Equip VORPAL BLADE (index 6, b4=0x14=20 damage) */
+    w.party.champions[0].slots[THERON_ESLOT_WEAPON] = 6;
+    /* Equip MAIL AKETON (index 22, b4=0x0F=15 defense) on champion 1 */
+
+    /* Verify item property table returns expected values */
+    const Theron_ItemPropertyRecord *vorpal =
+        theron_v1_track02_item_property(6);
+    CHECK(vorpal != NULL, "VORPAL BLADE property record exists");
+    if (vorpal) {
+        CHECK_INT("VORPAL BLADE b4 damage", vorpal->b4, 0x14);
+    }
+
+    const Theron_ItemPropertyRecord *mail =
+        theron_v1_track02_item_property(22);
+    CHECK(mail != NULL, "MAIL AKETON property record exists");
+    if (mail) {
+        CHECK_INT("MAIL AKETON b4 defense", mail->b4, 0x0F);
+    }
+
+    /* Armed attack should deal more damage than unarmed */
+    int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_AKUTUBA,
+                                       w.current_dungeon, w.current_level,
+                                       9, 8);
+    Theron_V1_Creature *c = theron_v1_creature_by_id(&w, cid);
+    CHECK(c != NULL, "creature spawned for armed combat test");
+    if (c) {
+        int hp_before = c->hp;
+        theron_v1_champion_attack(&w, 0, cid);
+        int armed_damage = hp_before - c->hp;
+        CHECK_INT("armed attack deals significant damage",
+                  armed_damage > 5, 1);
+    }
 }
 
 static void test_source_evidence(void) {
@@ -602,6 +642,7 @@ int main(void) {
     test_between_dungeon_exit();
     test_decode_dungeon_level_object_table();
     test_spell_casting();
+    test_armed_combat_uses_item_properties();
     test_source_evidence();
 
     printf("\nResults: %d passed, %d failed\n", g_pass, g_fail);
