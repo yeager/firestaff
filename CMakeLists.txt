@@ -334,6 +334,22 @@ target_link_libraries(test_nexus_v1_fountain PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_fountain COMMAND test_nexus_v1_fountain)
 set_tests_properties(nexus_v1_fountain PROPERTIES LABELS "nexus;fountain;tier4")
 
+add_executable(test_nexus_v1_switches
+    tests/test_nexus_v1_switches.c)
+target_include_directories(test_nexus_v1_switches PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_switches PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_switches COMMAND test_nexus_v1_switches)
+set_tests_properties(nexus_v1_switches PROPERTIES LABELS "nexus;switches;tier4")
+
+add_executable(test_nexus_v1_containers
+    tests/test_nexus_v1_containers.c)
+target_include_directories(test_nexus_v1_containers PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_containers PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_containers COMMAND test_nexus_v1_containers)
+set_tests_properties(nexus_v1_containers PROPERTIES LABELS "nexus;containers;tier4")
+
 add_executable(test_nexus_v1_projectiles
     tests/test_nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_projectiles PRIVATE
@@ -3851,7 +3867,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.258 LANGUAGES C)
+project(Firestaff VERSION 3.0.259 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries

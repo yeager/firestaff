@@ -1,4 +1,7 @@
 
+# Firestaff v3.0.259
+- CI fix: commit DM2 record_ops, creature_ops, hero_ops test/source/header files
+
 # Firestaff v3.0.258
 - Savegame Editor: advanced 8-tab UI (Overview, Header, Save Parts, Champions, Party Info, Global Data, Header Words, Hex View)
 - Savegame Editor: real DM1 PC34 5-part format with F0417/F0418 XOR deobfuscation and checksum validation
