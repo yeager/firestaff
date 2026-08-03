@@ -45108,6 +45108,28 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_text_decode.
     )
 endif()
 
+# Theron Track 02 actuator decoder
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_actuator.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_actuator.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_actuator.h")
+    add_executable(test_theron_v1_track02_actuator
+        tests/test_theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_thing_data.c
+        src/theron/theron_v1_track02_dungeon_map.c
+        src/theron/theron_v1_track02_item_id_map.c
+    )
+    target_include_directories(test_theron_v1_track02_actuator PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_actuator PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_actuator
+        COMMAND test_theron_v1_track02_actuator
+    )
+endif()
+
 # Theron Track 02 item ID map and wall ornament tables
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_item_id_map.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_item_id_map.c"
