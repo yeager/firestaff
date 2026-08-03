@@ -204,12 +204,12 @@ DM2_PROCESS_CLOUD	SKULLWIN	SKULLWIN/c_cloud.cpp	587		NOT_APPLICABLE_ARCH
 init_creatures	SKULLWIN	SKULLWIN/c_creature.cpp	28		NOT_APPLICABLE_ARCH	Trivial pointer init (creatures=NULL); Firestaff creature system initializes via SDL3 architecture.
 DM2_APPLY_CREATURE_POISON_RESISTANCE	SKULLWIN	SKULLWIN/c_creature.cpp	34	src/dm2/dm2_v1_creature_ops_pc34_compat.c	IMPLEMENTED_PARITY
 DM2_ROTATE_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	58	src/dm2/dm2_v1_creature_ai_pc34_compat.c	IMPLEMENTED_PARITY
-DM2_CREATURE_CAN_HANDLE_ITEM_IN	SKULLWIN	SKULLWIN/c_creature.cpp	104	src/dm2/dm2_v1_creature_ops_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_CREATURE_CAN_HANDLE_ITEM_IN	SKULLWIN	SKULLWIN/c_creature.cpp	104	src/dm2/dm2_v1_creature_ops_pc34_compat.c	IMPLEMENTED_PARITY
 DM2_WOUND_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	165	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_wound_creature; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_ATTACK_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	318	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_attack_creature; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_ATTACK_CREATURE
 DM2_CREATURE_ATTACKS_PLAYER	SKULLWIN	SKULLWIN/c_creature.cpp	651	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_attacks_player; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_CREATURE_ATTACKS_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	906	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_attacks_creature; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
-DM2_CREATURE_ATTACKS_PARTY	SKULLWIN	SKULLWIN/c_creature.cpp	1000	src/dm2/dm2_v1_creature.c:388	IMPLEMENTED_NARROW
+DM2_CREATURE_ATTACKS_PARTY	SKULLWIN	SKULLWIN/c_creature.cpp	1000	src/dm2/dm2_v1_creature.c:388	IMPLEMENTED_PARITY
 DM2_CONFUSE_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	1308	src/dm2/dm2_v1_creature_ops_pc34_compat.c:dm2_v1_confuse_creature	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
 DM2_CREATURE_CAN_HANDLE_IT	SKULLWIN	SKULLWIN/c_creature.cpp	1344	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_can_handle_it; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_CREATURE_CCM06	SKULLWIN	SKULLWIN/c_creature.cpp	1574	src/dm2/dm2_v1_creature_ops_pc34_compat.c:dm2_v1_creature_ccm06	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
@@ -222,8 +222,8 @@ DM2_CREATURE_CCM0B	SKULLWIN	SKULLWIN/c_creature.cpp	2145	src/dm2/dm2_v1_runtime_
 DM2_CREATURE_TAKES_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2176	src/dm2/dm2_v1_ccm_advanced_pc34_compat.c	IMPLEMENTED_PARITY
 DM2_CREATURE_CCM0C	SKULLWIN	SKULLWIN/c_creature.cpp	2247	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_ccm0c; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_CREATURE_PUTS_DOWN_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2284	src/dm2/dm2_v1_ccm_advanced_pc34_compat.c	IMPLEMENTED_PARITY
-DM2_CREATURE_KILL_ON_TIMER_POSITION	SKULLWIN	SKULLWIN/c_creature.cpp	2352	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
-DM2_CREATURE_SHOOT_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2359	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
+DM2_CREATURE_KILL_ON_TIMER_POSITION	SKULLWIN	SKULLWIN/c_creature.cpp	2352	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_PARITY
+DM2_CREATURE_SHOOT_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2359	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_PARITY
 DM2_CREATURE_ROTATES_TARGET_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	2394	src/dm2/dm2_v1_world_ops_pc34_compat.c	IMPLEMENTED_PARITY
 DM2_PLACE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2411	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_place_merchandise; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_TAKE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2509	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_take_merchandise; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
@@ -231,7 +231,7 @@ DM2_CREATURE_ACTIVATES_WALL	SKULLWIN	SKULLWIN/c_creature.cpp	2564	src/dm2/dm2_v1
 DM2_CREATURE_TRANSFORM	SKULLWIN	SKULLWIN/c_creature.cpp	2637	src/dm2/dm2_v1_ccm_advanced_pc34_compat.c	IMPLEMENTED_PARITY
 DM2_CREATURE_EXPLODE_OR_SUMMON	SKULLWIN	SKULLWIN/c_creature.cpp	2762	src/dm2/dm2_v1_ccm_advanced_pc34_compat.c	IMPLEMENTED_PARITY
 DM2_CREATURE_WALK_NOW	SKULLWIN	SKULLWIN/c_creature.cpp	2845	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_walk_now; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
-DM2_1B7D5	SKULLWIN	SKULLWIN/c_creature.cpp	2916	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
+DM2_1B7D5	SKULLWIN	SKULLWIN/c_creature.cpp	2916	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_PARITY
 DM2_PROCEED_CCM	SKULLWIN	SKULLWIN/c_creature.cpp	2930	src/dm2/dm2_v1_creature.c:388	IMPLEMENTED_PARITY
 DM2_GET_CREATURE_ANIMATION_FRAME	SKULLWIN	SKULLWIN/c_creature.cpp	3217	src/dm2/dm2_v1_creature_animation_gdat.c:dm2_v1_creature_animation_gdat_select_dynamic_v5; src/dm2/dm2_v1_boot.c:dm2_v1_boot_dynamic_creature_material_receipt; tests/test_dm2_v1_dynamic_creature_material_real_data.c	IMPLEMENTED_PARITY	DM2 dynamic creature material follows the SKULLWIN FB/FC/FD animation tables to its exact CREATURES dtImage field, then requires matching GFX256 raw interval, decoded image, local palette, and M11 creature placement-plan identity; it cannot borrow the DB4/F9 map-chip image or a generic sprite fallback.
 DM2_4FCC	SKULLWIN	SKULLWIN/c_creature.cpp	3299	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_4fcc; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_4FCC
