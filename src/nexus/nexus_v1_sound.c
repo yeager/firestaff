@@ -1,8 +1,12 @@
 #include "nexus_v1_sound.h"
+#include "firestaff_audio.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
 #include <limits.h>
+
+static void nexus_sound_free_decoded(Nexus_SoundEngine *eng);
+static void nexus_sound_trigger_tone(Nexus_SoundEngine *eng, int tone_index);
 
 /* Nexus V1 sound system — source-bound SAL directory implementation.
  * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
@@ -1143,41 +1147,65 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
  * TODO: SDL_mixer CD audio playback or platform equivalent.
  * ═══════════════════════════════════════════════════════════════════ */
 
+static void nexus_cd_build_track_path(Nexus_SoundEngine *eng, int track_number) {
+    const char *home = getenv("HOME");
+    if (!home) home = ".";
+    snprintf(eng->cd_track_path, sizeof(eng->cd_track_path),
+             "%s/.firestaff/data/nexus/track%02d.wav", home, track_number);
+}
+
 int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
     if (!eng || !eng->initialized) return -1;
     if (track_number < 2 || track_number > 9) return -1;
 
     eng->current_cd_track = track_number;
-    /* The Saturn track mapping is known, but CD-DA playback is not wired to
-     * a host backend yet.  Do not report a logical enable flag as playback. */
-    printf("Nexus music: CD track %d selected (opaque/no-playback)\n",
-        track_number);
+    nexus_cd_build_track_path(eng, track_number);
+
+    if (eng->music_enabled) {
+        int result = fs_audio_play_track(eng->cd_track_path);
+        if (result == 0) {
+            eng->cd_playing = 1;
+            eng->cd_paused = 0;
+            printf("Nexus music: CD track %d playing\n", track_number);
+            return 0;
+        }
+    }
+    printf("Nexus music: CD track %d selected (no audio file at %s)\n",
+        track_number, eng->cd_track_path);
     return 0;
 }
 
 int nexus_sound_cd_stop(Nexus_SoundEngine *eng) {
     if (!eng) return -1;
-    printf("Nexus music: stop requested (opaque/no-playback)\n");
+    fs_audio_stop();
+    eng->cd_playing = 0;
+    eng->cd_paused = 0;
     return 0;
 }
 
 int nexus_sound_cd_pause(Nexus_SoundEngine *eng) {
     if (!eng) return -1;
-    printf("Nexus music: pause requested (opaque/no-playback)\n");
+    if (eng->cd_playing) {
+        eng->cd_paused = 1;
+        fs_audio_stop();
+    }
     return 0;
 }
 
 int nexus_sound_cd_resume(Nexus_SoundEngine *eng) {
     if (!eng) return -1;
-    printf("Nexus music: resume requested (opaque/no-playback)\n");
+    if (eng->cd_paused && eng->cd_track_path[0]) {
+        fs_audio_play_track(eng->cd_track_path);
+        eng->cd_paused = 0;
+    }
     return 0;
 }
 
 void nexus_sound_music_fade(Nexus_SoundEngine *eng, int fade_out_ms) {
     if (!eng) return;
-    printf("Nexus music: fade request %d ms (opaque/no-playback)\n",
-           fade_out_ms);
-    (void)eng;
+    (void)fade_out_ms;
+    fs_audio_stop();
+    eng->cd_playing = 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════

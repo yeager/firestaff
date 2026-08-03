@@ -1458,3 +1458,42 @@ int M11_Audio_OriginalSongAvailable(const M11_AudioState* state) {
 int M11_Audio_SoundPackAvailable(const M11_AudioState* state) {
     return (state && state->soundPackAvailable) ? 1 : 0;
 }
+
+#include "nexus_v1_sound.h"
+
+int M11_Audio_MixNexusSfx(M11_AudioState* state, void *nexus_audio) {
+#if M11_HAVE_SDL_AUDIO
+    Nexus_SoundEngine *eng = (Nexus_SoundEngine *)nexus_audio;
+    int16_t mix_buf[1024];
+    float float_buf[1024];
+    int count;
+    int i;
+    int has_active;
+
+    if (!state || !eng || !state->sdlStream) return 0;
+    if (state->backend != M11_AUDIO_BACKEND_SDL3) return 0;
+    if (!eng->sal_decode_ready) return 0;
+
+    has_active = 0;
+    for (i = 0; i < NEXUS_SOUND_MAX_VOICES; i++) {
+        if (eng->voices[i].active) { has_active = 1; break; }
+    }
+    if (!has_active) return 0;
+
+    count = nexus_sound_mix(eng, mix_buf, 1024);
+    if (count <= 0) return 0;
+
+    for (i = 0; i < count; i++) {
+        float_buf[i] = (float)mix_buf[i] / 32768.0f;
+    }
+
+    SDL_PutAudioStreamData((SDL_AudioStream*)state->sdlStream,
+                            float_buf,
+                            count * (int)sizeof(float));
+    return 1;
+#else
+    (void)state;
+    (void)nexus_audio;
+    return 0;
+#endif
+}

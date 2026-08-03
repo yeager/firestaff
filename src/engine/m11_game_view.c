@@ -20697,6 +20697,8 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                        : result;
         }
         nexus_v1_tick(state->nexusEngine);
+        M11_Audio_MixNexusSfx(&state->audioState,
+                               &state->nexusEngine->audio);
         if (state->nexusEngine->mechanics) {
             state->nexusEngine->game.party_x =
                 state->nexusEngine->mechanics->party_x;

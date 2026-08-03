@@ -1,4 +1,7 @@
 
+# Firestaff v3.0.262
+- CI fix: commit DM2 runtime_narrow header, nexus sound forward declarations, tracked source modifications
+
 # Firestaff v3.0.261
 - CI fix: commit all remaining untracked and uncommitted source/header/test files
 - DM2: creature_ops, hero_ops, record_ops, world_ops implementations
