@@ -1,4 +1,11 @@
 
+# Firestaff v3.0.261
+- CI fix: commit all remaining untracked and uncommitted source/header/test files
+- DM2: creature_ops, hero_ops, record_ops, world_ops implementations
+- Nexus: switches, containers, leader_switch, mechanics leader_slot
+- Theron: combat mechanics test
+- CSB: runtime updates, DM1 layout changes
+
 # Firestaff v3.0.260
 - CI fix: commit all remaining untracked source/header/test files (nexus switches, containers, leader_switch; DM2 world_ops)
 
