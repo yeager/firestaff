@@ -22,13 +22,15 @@ static void test_basic_loadable(void)
         mock_loadable, g_rect_table, g_field_table, g_alt_table, g_detail
     };
     DM2_V1_GdatStairsFrontSourceReceipt r;
-    assert(dm2_v1_gdat_stairs_front_source_receipt(0, 5, 100, &cb, NULL, &r) == 1);
+    int ok = dm2_v1_gdat_stairs_front_source_receipt(0, 5, 100, &cb, NULL, &r);
+    assert(ok == 1);
     assert(r.valid == 1);
     assert(r.no_draw == 0);
     assert(r.rect_number == 10);
     assert(r.field == 3);
     assert(r.loadable == 1);
     assert(r.graphicsset == 5);
+    (void)cb; (void)r; (void)ok;
     printf("  PASS: basic_loadable\n");
 }
 
@@ -41,13 +43,15 @@ static void test_not_loadable(void)
         mock_loadable, g_rect_table, g_field_table, g_alt_table, g_detail
     };
     DM2_V1_GdatStairsFrontSourceReceipt r;
-    assert(dm2_v1_gdat_stairs_front_source_receipt(0, 5, 100, &cb, NULL, &r) == 1);
+    int ok = dm2_v1_gdat_stairs_front_source_receipt(0, 5, 100, &cb, NULL, &r);
+    assert(ok == 1);
     assert(r.valid == 1);
     assert(r.no_draw == 0);
     assert(r.rect_number == 20);
     assert(r.field == 5);
     assert(r.loadable == 0);
     assert(r.alt_field == 101);
+    (void)cb; (void)r; (void)ok;
     printf("  PASS: not_loadable_uses_alt\n");
 }
 
@@ -59,20 +63,25 @@ static void test_negative_rect(void)
         mock_loadable, g_rect_table, g_field_table, g_alt_table, g_detail
     };
     DM2_V1_GdatStairsFrontSourceReceipt r;
-    assert(dm2_v1_gdat_stairs_front_source_receipt(1, 5, 100, &cb, NULL, &r) == 1);
+    int ok = dm2_v1_gdat_stairs_front_source_receipt(1, 5, 100, &cb, NULL, &r);
+    assert(ok == 1);
     assert(r.valid == 1);
     assert(r.no_draw == 1);
+    (void)cb; (void)r; (void)ok;
     printf("  PASS: negative_rect_no_draw\n");
 }
 
 static void test_null_safety(void)
 {
-    assert(dm2_v1_gdat_stairs_front_source_receipt(0, 0, 0, NULL, NULL, NULL) == 0);
+    int ok0 = dm2_v1_gdat_stairs_front_source_receipt(0, 0, 0, NULL, NULL, NULL);
+    assert(ok0 == 0);
     DM2_V1_GdatStairsFrontSourceReceipt r;
-    assert(dm2_v1_gdat_stairs_front_source_receipt(0, 0, 0, NULL, NULL, &r) == 1);
+    int ok = dm2_v1_gdat_stairs_front_source_receipt(0, 0, 0, NULL, NULL, &r);
+    assert(ok == 1);
     assert(r.valid == 1);
     assert(r.rect_number < 0);
     assert(r.no_draw == 1);
+    (void)ok0; (void)r; (void)ok;
     printf("  PASS: null_safety\n");
 }
 
