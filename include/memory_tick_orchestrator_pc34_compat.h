@@ -169,6 +169,7 @@ struct DM1GroupSmellDirectionPlan_Compat;
 #define EMIT_CHAMPION_DAMAGE_HIDDEN 0x11
 #define EMIT_TEXT_MESSAGE     0x12
 #define EMIT_ACTION_ENABLED   0x13
+#define EMIT_CREATURE_MOVED   0x14  /* payload: groupIndex, creatureType, newMapX, newMapY */
 
 /* EMIT_SPELL_EFFECT payload[3] keeps the F0412 power ordinal in the
  * low byte, ReDMCSB G0487 Spell.SkillIndex in the next byte, and the

@@ -15325,6 +15325,11 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                              "THE DUNGEON CLAIMS YOUR SOULS. LOAD A SAVE OR RETURN TO MENU.");
                 }
                 break;
+            case EMIT_CREATURE_MOVED:
+                m11_audio_emit_creature_movement_sound(
+                    state, (int)e->payload[1],
+                    (int)e->payload[2], (int)e->payload[3]);
+                break;
             default:
                 break;
         }

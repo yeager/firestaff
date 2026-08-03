@@ -11490,7 +11490,6 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
     DM1_V1_OrdinaryGroupMoveApplyPlanPc34 applyPlan;
     struct OrchThingUnlinkReceipt_Compat unlinkReceipt;
 
-    (void)result;
     if (!world || !ev || !world->things || !world->dungeon) return 0;
 
     groupIndex = ev->aux0;
@@ -11579,6 +11578,10 @@ static int orch_apply_creature_tick_group_move_f0267_compat(
     world->creatureAI[activeIndex].groupMapX = applyPlan.activeMapX;
     world->creatureAI[activeIndex].groupMapY = applyPlan.activeMapY;
     world->creatureAI[activeIndex].groupCells = applyPlan.activeCells;
+
+    emit(result, EMIT_CREATURE_MOVED,
+         groupIndex, (int32_t)group->creatureType,
+         applyPlan.activeMapX, applyPlan.activeMapY);
 
     if (!applyPlan.shouldRequeue) return 1;
     nextEvent = *ev;
