@@ -107,3 +107,84 @@ int dm2_v1_confuse_creature(uint8_t *creature_record)
     creature_record[0x11] |= 0x04;
     return 1;
 }
+
+void dm2_v1_creature_kill_on_timer_position(
+    uint16_t x, uint16_t y,
+    const DM2_V1_CreatureKillCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return;
+    cb->delete_creature_record(ctx, x, y, 0, 1);
+    if (cb->v1e0570_flag)
+        *cb->v1e0570_flag = 1;
+}
+
+uint8_t dm2_v1_creature_ccm06(
+    const DM2_V1_CreatureCCM06Callbacks *cb, void *ctx)
+{
+    if (!cb)
+        return 0;
+    uint8_t facing = cb->creature_facing;
+    uint8_t delta = (cb->target_dir - facing) & 0x3;
+    if (delta == 2) {
+        int r = cb->rand_fn(ctx);
+        facing = (uint8_t)((facing + (r & 0x2) + 1) & 0x3);
+    } else {
+        facing = cb->target_dir;
+    }
+    return (uint8_t)(facing & 0x3);
+}
+
+int dm2_v1_creature_create_cloud(
+    uint16_t x, uint16_t y,
+    const DM2_V1_CreateCloudCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return 0;
+    int16_t strength = (int16_t)(cb->rand16(ctx, 40) + 20);
+    return cb->create_cloud(ctx, (int)0xFF8E, (uint16_t)strength, x, y, 0xFF);
+}
+
+int dm2_v1_creature_shoot_item(
+    const DM2_V1_CreatureShootState *state,
+    const DM2_V1_CreatureShootCallbacks *cb, void *ctx)
+{
+    if (!cb || !state)
+        return 1;
+    int16_t item = cb->find_shootable_item(ctx, state->capability,
+                                            state->inv_link, 0xFF);
+    if (item == (int16_t)0xFFFE)
+        return 1;
+    uint16_t item_w = (uint16_t)item;
+    uint16_t inv = state->inv_link;
+    cb->cut_record(ctx, item_w, &inv, -1, 0);
+    int16_t base_dmg = (int16_t)(state->attack_stat / 4 + 1);
+    base_dmg = (int16_t)(base_dmg + cb->rand16(ctx, base_dmg));
+    base_dmg = (int16_t)(base_dmg + cb->rand16(ctx, base_dmg));
+    uint8_t damage = (uint8_t)cb->between_value(20, 255, base_dmg);
+    cb->shoot_item(ctx, item_w, state->x, state->y,
+                   state->creature_dir, state->creature_facing,
+                   damage, state->speed_stat, 0x08);
+    return 0;
+}
+
+uint8_t dm2_v1_attack_party(
+    int16_t total_damage, int body_parts, int wound_type,
+    const DM2_V1_AttackPartyCallbacks *cb, void *ctx)
+{
+    if (!cb || total_damage <= 0)
+        return 0;
+    uint8_t wounded_mask = 0;
+    int16_t range = total_damage >> 3;
+    if (range < 1) range = 1;
+    for (int i = 0; i < cb->hero_count; i++) {
+        if (!cb->is_hero_alive(ctx, i))
+            continue;
+        int16_t dmg = (int16_t)(total_damage + cb->rand16(ctx, range)
+                                - cb->rand16(ctx, range));
+        if (dmg < 1) dmg = 1;
+        cb->wound_player(ctx, i, dmg, body_parts, wound_type);
+        wounded_mask |= (uint8_t)(1 << i);
+    }
+    return wounded_mask;
+}

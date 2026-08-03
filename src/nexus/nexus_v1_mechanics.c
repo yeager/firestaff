@@ -16,6 +16,7 @@
 #include "nexus_v1_status.h"
 #include "nexus_v1_rest.h"
 #include "nexus_v1_encumbrance.h"
+#include "nexus_v1_throw.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
