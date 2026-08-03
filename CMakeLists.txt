@@ -45184,6 +45184,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_actuator.c"
     )
 endif()
 
+# Theron Track 02 door and teleporter decoders
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_door.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_door.c")
+    add_executable(test_theron_v1_track02_door
+        tests/test_theron_v1_track02_door.c
+        src/theron/theron_v1_track02_door.c
+        src/theron/theron_v1_track02_thing_data.c
+        src/theron/theron_v1_track02_dungeon_map.c
+    )
+    target_include_directories(test_theron_v1_track02_door PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_door PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_door
+        COMMAND test_theron_v1_track02_door
+    )
+endif()
+
 # Theron Track 02 full dungeon loader (tiles + ground refs + items + actuator fix)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_loader.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_loader.c")
