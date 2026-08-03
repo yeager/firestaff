@@ -304,6 +304,12 @@ typedef struct {
     int fail_closed;
 } DM2_V1_CreatureGeneratorReceipt;
 
+/* ── Ornate animation length callback ─────────────────────────────── */
+
+typedef int16_t (*DM2_V1_GetOrnateAnimLenFn)(void *ctx,
+                                              const uint8_t *record,
+                                              int is_wall);
+
 /* ── Wall/floor mecha dispatch ─────────────────────────────────────── */
 
 /* Full ACTUATE_WALL_MECHA dispatch: walks the actuator record chain
@@ -323,6 +329,8 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               uint32_t game_tick,
                               uint16_t *global_words,
                               uint16_t global_word_count,
+                              DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
+                              void *ornate_ctx,
                               DM2_V1_ActuatorEventReceipt *receipt);
 
 /* Full ACTUATE_FLOOR_MECHA dispatch.
@@ -336,6 +344,8 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                uint32_t game_tick,
                                uint16_t *global_words,
                                uint16_t global_word_count,
+                               DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
+                               void *ornate_ctx,
                                DM2_V1_ActuatorEventReceipt *receipt);
 
 /* ACTIVATE_TICK_GENERATOR — queue a tick generator timer.

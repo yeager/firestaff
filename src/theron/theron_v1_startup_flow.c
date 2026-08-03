@@ -3101,6 +3101,19 @@ int theron_v1_startup_execute_graphics_plan(
         case THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD:
             tqr_startup_exec_forcefield(command, executor);
             break;
+        case THERON_STARTUP_RENDER_GRAPHIC_BITMAP_ATLAS:
+            if (executor->draw_indexed_bitmap &&
+                plan->atlas_pixels && plan->atlas_palette_rgb8 &&
+                plan->atlas_width > 0 && plan->atlas_height > 0) {
+                executor->draw_indexed_bitmap(
+                    executor->userdata,
+                    command->x, command->y,
+                    (int)plan->atlas_width, (int)plan->atlas_height,
+                    plan->atlas_pixels,
+                    plan->atlas_palette_rgb8,
+                    plan->atlas_palette_count);
+            }
+            break;
         default:
             break;
         }

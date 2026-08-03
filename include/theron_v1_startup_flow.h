@@ -487,7 +487,8 @@ typedef enum {
     THERON_STARTUP_RENDER_GRAPHIC_TITLE_MARK,
     THERON_STARTUP_RENDER_GRAPHIC_STAGE_PANEL,
     THERON_STARTUP_RENDER_GRAPHIC_MIRROR_FRAME,
-    THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD
+    THERON_STARTUP_RENDER_GRAPHIC_FORCEFIELD,
+    THERON_STARTUP_RENDER_GRAPHIC_BITMAP_ATLAS
 } Theron_StartupRenderGraphicKind;
 
 typedef struct {
@@ -531,6 +532,11 @@ typedef struct {
     Theron_StartupRenderGraphicCommand graphics[
         THERON_STARTUP_RENDER_GRAPHIC_CAPACITY_MAX];
     int graphic_count;
+    const uint8_t *atlas_pixels;
+    uint16_t atlas_width;
+    uint16_t atlas_height;
+    const uint8_t (*atlas_palette_rgb8)[3];
+    int atlas_palette_count;
 } Theron_StartupRenderPlan;
 
 typedef void (*Theron_StartupFillRectFn)(
@@ -555,11 +561,22 @@ typedef void (*Theron_StartupPlotPixelFn)(
     int y,
     int color);
 
+typedef void (*Theron_StartupDrawIndexedBitmapFn)(
+    void *userdata,
+    int x,
+    int y,
+    int w,
+    int h,
+    const uint8_t *indexed_pixels,
+    const uint8_t palette_rgb8[][3],
+    int palette_count);
+
 typedef struct {
     void *userdata;
     Theron_StartupFillRectFn fill_rect;
     Theron_StartupDrawRectFn draw_rect;
     Theron_StartupPlotPixelFn plot_pixel;
+    Theron_StartupDrawIndexedBitmapFn draw_indexed_bitmap;
 } Theron_StartupGraphicExecutor;
 
 void theron_v1_startup_flow_init(Theron_StartupFlow *flow);

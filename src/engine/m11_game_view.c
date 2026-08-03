@@ -51014,6 +51014,53 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
     m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                   0, 0, framebufferWidth, framebufferHeight,
                   plan->background_color);
+
+    if (world && world->runtime_media.startup_palette_valid &&
+        state->theronState.startup_bitmap_atlas_ready) {
+        const Theron_Track02StartupBitmapAtlas *atlas =
+            &state->theronState.startup_bitmap_atlas;
+        unsigned int phase_route = 0u;
+        int ri;
+
+        switch (plan->phase) {
+        case THERON_STARTUP_PHASE_TITLE:
+            phase_route = THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE;
+            break;
+        case THERON_STARTUP_PHASE_STAGE_SELECT:
+            phase_route = THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE;
+            break;
+        case THERON_STARTUP_PHASE_SOUL_ROOM:
+            phase_route = THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM;
+            break;
+        case THERON_STARTUP_PHASE_READY:
+            phase_route = THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+            break;
+        default:
+            break;
+        }
+
+        for (ri = 0; ri < (int)atlas->route_count; ++ri) {
+            const Theron_Track02StartupBitmapAtlasRoute *route =
+                &atlas->routes[ri];
+            if (!(phase_route & (1u << (unsigned)ri))) continue;
+            if (route->width > 0u && route->height > 0u) {
+                int bx = (framebufferWidth - (int)route->width) / 2;
+                int by = plan->border_y > 0 ? plan->border_y : 8;
+                int px, py;
+                for (py = 0; py < (int)route->height; ++py) {
+                    for (px = 0; px < (int)route->width; ++px) {
+                        uint8_t idx = route->pixels[py * route->width + px];
+                        if (idx > 0u) {
+                            m11_put_pixel(framebuffer, framebufferWidth,
+                                          framebufferHeight,
+                                          bx + px, by + py, idx);
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     (void)m11_theron_draw_startup_graphics_from_receipt(state,
                                                         framebuffer,
                                                         framebufferWidth,

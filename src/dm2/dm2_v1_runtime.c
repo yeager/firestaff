@@ -4978,6 +4978,7 @@ static int dm2_runtime_actuate_wall_mecha(void *user,
                               action_type, direction,
                               (uint32_t)rt->tick_count,
                               NULL, 0,
+                              NULL, NULL,
                               &actu_receipt);
     return 1;
 }

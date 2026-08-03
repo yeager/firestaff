@@ -752,6 +752,8 @@ typedef struct {
     uint16_t *global_words;
     uint16_t global_word_count;
     const DM2_V1_CreatureKillerCallbacks *creature_killer_cb;
+    DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len;
+    void *ornate_ctx;
     DM2_V1_ActuatorEventReceipt *receipt;
 } WallMechaCtx;
 
@@ -980,18 +982,61 @@ static int wall_mecha_visitor(void *context,
             uint16_t new_data = (ctx->action_type == 0)
                               ? (uint16_t)(actu_data + 1)
                               : (uint16_t)(actu_data - 1);
-            /* Modulo ornate anim len not available without GDAT; store raw. */
+            if (ctx->get_ornate_anim_len) {
+                int16_t anim_len = ctx->get_ornate_anim_len(
+                    ctx->ornate_ctx, record, 1);
+                if (anim_len > 0)
+                    new_data = (uint16_t)(new_data % (uint16_t)anim_len);
+            }
             dm2_actu_set_data(record_mut, new_data & 0x1FF);
         }
         break;
 
     /* ── ORNATE_ANIMATOR / continuous (0x2c) skevent.cpp:1950-1953 ── */
-    case DM2_ACTU_ORNATE_ANIMATOR:
-        /* Full continuous ornate animator requires GDAT ornate anim len;
-         * mark invoked, fail-closed on animation scheduling. */
+    case DM2_ACTU_ORNATE_ANIMATOR: {
         r->ornate_animator_invoked++;
-        r->fail_closed++;
+        if (!record_mut || !ctx->get_ornate_anim_len) {
+            r->fail_closed++;
+            break;
+        }
+        uint16_t prev_once = dm2_actu_once_only(record);
+        dm2_actu_set_once_only(record_mut,
+            dm2_toggle_actuator_message(ctx->action_type,
+                dm2_actu_once_only(record)));
+        if (dm2_actu_once_only(record_mut) != prev_once) {
+            int16_t anim_len = ctx->get_ornate_anim_len(
+                ctx->ornate_ctx, record, 1);
+            if (anim_len < 1) anim_len = 1;
+            if (dm2_actu_once_only(record_mut) == 1) {
+                if (dm2_actu_active_status(record) == 0) {
+                    dm2_actu_set_active_status(record_mut, 1);
+                    uint16_t phase = (uint16_t)(
+                        ((anim_len - (ctx->game_tick % (uint32_t)anim_len))
+                         % (uint32_t)anim_len) & 0xFF);
+                    dm2_actu_set_data(record_mut,
+                        (actu_data & 0x100) | phase);
+                }
+            } else {
+                int16_t di = (int16_t)(((actu_data & 0xFF) + ctx->game_tick)
+                              % (uint32_t)anim_len);
+                if (di == 0) {
+                    dm2_actu_set_active_status(record_mut, 0);
+                } else {
+                    di = anim_len - di;
+                    DM2_V1_SourceTimer t = make_timer(ctx->map,
+                        ctx->game_tick + (uint32_t)di,
+                        0x59, 0, handle, 0);
+                    dm2_v1_source_timer_enqueue(ctx->queue, &t, 0);
+                }
+            }
+        }
+        if (dm2_actu_revert_effect(record) != 0 &&
+            dm2_actu_action_type(record) == 3) {
+            dm2_v1_invoke_actuator(ctx->queue, record,
+                ctx->action_type, 0, ctx->map, ctx->game_tick);
+        }
         break;
+    }
 
     /* ── SWITCH_SIGN_CREATURE (0x26) skevent.cpp:1954-1957 ───────── */
     case DM2_ACTU_SWITCH_SIGN_CREATURE:
@@ -1154,6 +1199,8 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               uint32_t game_tick,
                               uint16_t *global_words,
                               uint16_t global_word_count,
+                              DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
+                              void *ornate_ctx,
                               DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -1180,6 +1227,8 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.global_words      = global_words;
     ctx.global_word_count = global_word_count;
     ctx.creature_killer_cb = NULL;
+    ctx.get_ornate_anim_len = get_ornate_anim_len;
+    ctx.ornate_ctx  = ornate_ctx;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -1220,10 +1269,50 @@ static int floor_mecha_visitor(void *context,
     switch (atype) {
 
     /* ── CONTINUOUS_ORNATE_ANIMATOR (0x2c) skevent.cpp:2117-2119 ── */
-    case DM2_ACTU_ORNATE_ANIMATOR:
+    case DM2_ACTU_ORNATE_ANIMATOR: {
         r->ornate_animator_invoked++;
-        r->fail_closed++;
+        if (!record_mut || !ctx->get_ornate_anim_len) {
+            r->fail_closed++;
+            break;
+        }
+        uint16_t prev_once = dm2_actu_once_only(record);
+        dm2_actu_set_once_only(record_mut,
+            dm2_toggle_actuator_message(ctx->action_type,
+                dm2_actu_once_only(record)));
+        if (dm2_actu_once_only(record_mut) != prev_once) {
+            int16_t anim_len = ctx->get_ornate_anim_len(
+                ctx->ornate_ctx, record, 0);
+            if (anim_len < 1) anim_len = 1;
+            if (dm2_actu_once_only(record_mut) == 1) {
+                if (dm2_actu_active_status(record) == 0) {
+                    dm2_actu_set_active_status(record_mut, 1);
+                    uint16_t phase = (uint16_t)(
+                        ((anim_len - (ctx->game_tick % (uint32_t)anim_len))
+                         % (uint32_t)anim_len) & 0xFF);
+                    dm2_actu_set_data(record_mut,
+                        (dm2_actu_data(record) & 0x100) | phase);
+                }
+            } else {
+                int16_t di = (int16_t)(((dm2_actu_data(record) & 0xFF)
+                              + ctx->game_tick) % (uint32_t)anim_len);
+                if (di == 0) {
+                    dm2_actu_set_active_status(record_mut, 0);
+                } else {
+                    di = anim_len - di;
+                    DM2_V1_SourceTimer t = make_timer(ctx->map,
+                        ctx->game_tick + (uint32_t)di,
+                        0x59, 0, handle, 0);
+                    dm2_v1_source_timer_enqueue(ctx->queue, &t, 0);
+                }
+            }
+        }
+        if (dm2_actu_revert_effect(record) != 0 &&
+            dm2_actu_action_type(record) == 3) {
+            dm2_v1_invoke_actuator(ctx->queue, record,
+                ctx->action_type, 0, ctx->map, ctx->game_tick);
+        }
         break;
+    }
 
     /* ── RELAY_1 (0x20), RELAY_3 (0x45) skevent.cpp:2120-2124 ──── */
     case DM2_ACTU_RELAY_1:
@@ -1437,6 +1526,8 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                uint32_t game_tick,
                                uint16_t *global_words,
                                uint16_t global_word_count,
+                               DM2_V1_GetOrnateAnimLenFn get_ornate_anim_len,
+                               void *ornate_ctx,
                                DM2_V1_ActuatorEventReceipt *receipt)
 {
     WallMechaCtx ctx;
@@ -1463,6 +1554,8 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.global_words      = global_words;
     ctx.global_word_count = global_word_count;
     ctx.creature_killer_cb = NULL;
+    ctx.get_ornate_anim_len = get_ornate_anim_len;
+    ctx.ornate_ctx  = ornate_ctx;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
