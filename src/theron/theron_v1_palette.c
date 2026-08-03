@@ -27,8 +27,8 @@ void tqr_decode_tile_row(uint8_t *TQR_RESTRICT out_row,
                           const uint8_t *TQR_RESTRICT src_row,
                           int bpp) {
     if (!out_row || !src_row) return;
-    /* HuC6260 planar format: each bit-plane is one byte per 8 pixels.
-     * LSB = leftmost pixel.  For 2bpp: bitplanes 0 and 1.
+    /* HuC6270 planar format: each bit-plane is one byte per 8 pixels.
+     * MSB (bit 7) = leftmost pixel.  For 2bpp: bitplanes 0 and 1.
      * For 4bpp: bitplanes 0..3.
      *
      * Decoded byte per pixel = sum(bitplane_n[bit_n] << n) for n=0..bpp-1

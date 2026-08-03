@@ -2601,7 +2601,7 @@ static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
         engine->mechanics.party_x = action->x;
         engine->mechanics.party_y = action->y;
         if (action->level != engine->mechanics.current_level)
-            engine->mechanics.pending_level = action->level;
+            engine->mechanics.pending_level_change = action->level;
         break;
     case NEXUS_OP_SPAWN:
         nexus_v1_creature_spawn_on_level(&engine->creatures,
@@ -2615,10 +2615,11 @@ static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
     case NEXUS_OP_SOUND:
         nexus_sound_play(&engine->audio, action->value);
         break;
-    case NEXUS_OP_TRIGGER_DOOR:
-        nexus_v1_door_toggle(&engine->mechanics.doors,
-            action->x, action->y);
+    case NEXUS_OP_TRIGGER_DOOR: {
+        int di = nexus_v1_door_find(&engine->doors, action->x, action->y);
+        if (di >= 0) nexus_v1_door_toggle(&engine->doors, di);
         break;
+    }
     case NEXUS_OP_GIVE_ITEM: {
         int ci;
         for (ci = 0; ci < engine->champions.party_count; ci++) {
@@ -2638,22 +2639,25 @@ static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
     case NEXUS_OP_AWARD_XP: {
         int ci;
         for (ci = 0; ci < engine->champions.party_count; ci++) {
-            Nexus_V1_Champion *ch = &engine->champions.champions[
-                engine->champions.party[ci]];
-            nexus_v1_award_experience(ch, action->value);
+            int idx = engine->champions.party[ci];
+            nexus_v1_experience_award_kill(&engine->experience,
+                &engine->champions.champions[idx], idx, action->value);
         }
         break;
     }
-    case NEXUS_OP_DISPLAY_MESSAGE:
-        engine->mechanics.message_id = action->message_id;
-        engine->mechanics.message_timer = 120;
+    case NEXUS_OP_DISPLAY_MESSAGE: {
+        char msg[64];
+        snprintf(msg, sizeof(msg), "[Script message %d]", action->message_id);
+        nexus_v1_message_push(&engine->messages, msg);
         break;
+    }
     case NEXUS_OP_SET_FLAG:
         if (action->flag_index >= 0 && action->flag_index < NEXUS_SCRIPT_MAX_FLAGS)
             engine->script_vm.flags[action->flag_index] = (uint8_t)action->value;
         break;
     case NEXUS_OP_END_GAME:
-        engine->mechanics.game_won = 1;
+        engine->mechanics.game_over = 1;
+        engine->mechanics.game_over_reason = 1;
         break;
     default:
         break;
@@ -2825,6 +2829,8 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     (void)nexus_sound_level_runtime_receipt(&engine->audio,
                                             &engine->sfx_runtime_receipt);
     nexus_script_vm_init(&engine->script_vm);
+    nexus_script_vm_set_handler(&engine->script_vm,
+                                nexus_engine_script_handler, engine);
     (void)nexus_script_vm_runtime_receipt(&engine->script_vm,
                                           &engine->script_runtime_receipt);
 
