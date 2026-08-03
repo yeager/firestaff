@@ -302,10 +302,10 @@ int main(void)
     caii.slots[DM2_V1_CAII_SLOT_SIZE + 0x1a] = 0;
 
     {
-        DM2_V1_CreatureKillerReceipt rc;
+        DM2_V1_CreatureKillerWalkReceipt rc;
         memset(&rc, 0, sizeof(rc));
         /* 3x3 sweep around (2,2): ebx=ecx=2, radii |2-1| = 1. */
-        CHECK(dm2_v1_activate_creature_killer(
+        CHECK(dm2_v1_activate_creature_killer_walk(
                   &set, &dungeon, &caii, &queue, NULL, 0, 100, 4, 4,
                   2, 7, 2, 2, 1, 1, 0xb, 0, 0, 0, &rc) == 1,
               "killer sweep completes");
@@ -317,9 +317,9 @@ int main(void)
         CHECK(rc.ai_stops == 1, "mode 2 AI-stops the matching creature");
     }
     {
-        DM2_V1_CreatureKillerReceipt rc;
+        DM2_V1_CreatureKillerWalkReceipt rc;
         memset(&rc, 0, sizeof(rc));
-        CHECK(dm2_v1_activate_creature_killer(
+        CHECK(dm2_v1_activate_creature_killer_walk(
                   &set, &dungeon, &caii, &queue, NULL, 0, 100, 4, 4,
                   1, 7, 2, 2, 1, 1, 0xb, 0, 0, 0, &rc) == 1,
               "mode 1 sweep completes without stops");
@@ -327,18 +327,18 @@ int main(void)
               "mode 1 skips every creature");
     }
     {
-        DM2_V1_CreatureKillerReceipt rc;
+        DM2_V1_CreatureKillerWalkReceipt rc;
         memset(&rc, 0, sizeof(rc));
-        CHECK(dm2_v1_activate_creature_killer(
+        CHECK(dm2_v1_activate_creature_killer_walk(
                   &set, &dungeon, &caii, &queue, NULL, 0, 100, 4, 4,
                   3, 7, 2, 2, 1, 1, 0xb, 0, 0, 0, &rc) == 1,
               "mode above 2 completes through the source abort");
         CHECK(rc.aborted == 1, "mode > 2 aborts the sweep");
     }
     {
-        DM2_V1_CreatureKillerReceipt rc;
+        DM2_V1_CreatureKillerWalkReceipt rc;
         memset(&rc, 0, sizeof(rc));
-        CHECK(dm2_v1_activate_creature_killer(
+        CHECK(dm2_v1_activate_creature_killer_walk(
                   &set, &dungeon, &caii, &queue, NULL, 0, 100, 4, 4,
                   0x20, 7, 2, 2, 1, 1, 0x28, 1, 5, 6, &rc) == 1,
               "action 0x28 sweep completes");
@@ -348,10 +348,10 @@ int main(void)
               "unwired attack providers fail closed, never simulated");
     }
     {
-        DM2_V1_CreatureKillerReceipt rc;
+        DM2_V1_CreatureKillerWalkReceipt rc;
         memset(&rc, 0, sizeof(rc));
         /* sweep x/y in {-1,0,1} around (0,0): 5 cells out of bounds */
-        CHECK(dm2_v1_activate_creature_killer(
+        CHECK(dm2_v1_activate_creature_killer_walk(
                   &set, &dungeon, &caii, &queue, NULL, 0, 100, 4, 4,
                   2, 7, 0, 0, 1, 1, 0xb, 0, 0, 0, &rc) == 1,
               "edge sweep completes");
@@ -360,9 +360,9 @@ int main(void)
         CHECK(rc.creatures_found == 0, "no creatures in the edge sweep");
     }
     {
-        DM2_V1_CreatureKillerReceipt rc;
+        DM2_V1_CreatureKillerWalkReceipt rc;
         memset(&rc, 0, sizeof(rc));
-        CHECK(dm2_v1_activate_creature_killer(
+        CHECK(dm2_v1_activate_creature_killer_walk(
                   &set, &dungeon, &caii, &queue, NULL, 0, 100, 4, 4,
                   2, 7, 2, 2, 1, 1, 0x07, 0, 0, 0, &rc) == 1,
               "unknown action completes, receipted");

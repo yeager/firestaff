@@ -11091,12 +11091,13 @@ static int m11_raw_group_record_matches_live(
     if (!things || THING_GET_TYPE(groupThing) != THING_TYPE_GROUP) return 0;
     groupIndex = THING_GET_INDEX(groupThing);
     if (groupIndex < 0 || groupIndex >= things->groupCount ||
-        groupIndex >= things->thingCounts[THING_TYPE_GROUP] ||
+        (things->thingCounts[THING_TYPE_GROUP] > 0 &&
+         groupIndex >= things->thingCounts[THING_TYPE_GROUP]) ||
         !things->groups) {
         return 0;
     }
     raw = dm1_v1_dungeon_get_thing_data_pc34(things, groupThing);
-    if (!raw) return 0;
+    if (!raw) return 1;
     group = &things->groups[groupIndex];
     bitfield = (unsigned short)(raw[14] | ((unsigned short)raw[15] << 8));
     if (raw[4] >= 27u ||
@@ -13134,12 +13135,9 @@ static void m11_apply_champion_time_effects(M11_GameViewState* state) {
     if (!state || !state->active) {
         return;
     }
-    /* GAMELOOP.C:124-138 increments G0313 first, then invokes F0331 only
-     * when the PC 3.4 active/rest cadence mask is due. */
-    if (!DM1_V1_Needs_TimeEffectsDuePc34Compat(
-            state->world.gameTick, state->resting)) {
-        return;
-    }
+    /* GAMELOOP.C:124-138 increments G0313 first, then invokes F0331.
+     * F0331 runs every source tick; sub-effects (mana regen, HP heal)
+     * use their own internal time_criteria gate. */
     /* ReDMCSB CHAMPION.C F0331:2305-2509 owns scent, mana/stamina,
      * temporary XP, needs/stamina, health, statistic recovery, and panel
      * refresh in this order. */
@@ -14545,8 +14543,12 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
     /* Once behavior events are bootstrapped, M10's event-driven F0209
      * dispatch handles all creature AI through the timeline queue.  The
      * brute-force map scan below is only needed as a fallback before the
-     * bootstrap has seeded initial UPDATE_BEHAVIOR_GROUP events. */
-    if (state->creatureBehaviorBootstrapped) return;
+     * bootstrap has seeded initial UPDATE_BEHAVIOR_GROUP events, or when
+     * no active group states exist for M10 to dispatch through. */
+    if (state->creatureBehaviorBootstrapped &&
+        state->world.pc34ActiveGroupSourceCount > 0) {
+        return;
+    }
 
     mapIdx = state->world.party.mapIndex;
     if (mapIdx < 0 || mapIdx >= (int)state->world.dungeon->header.mapCount) return;
@@ -14562,6 +14564,13 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
                     state, mapIdx, mx, my, &candidate)) {
                 m11_process_one_creature_group(
                     state, candidate.thing, THING_GET_INDEX(candidate.thing));
+            } else if (!state->world.dungeon->tilesLoaded) {
+                unsigned short groupThing =
+                    m11_find_group_on_square(&state->world, mapIdx, mx, my);
+                if (groupThing != THING_NONE && groupThing != THING_ENDOFLIST) {
+                    m11_process_one_creature_group(
+                        state, groupThing, THING_GET_INDEX(groupThing));
+                }
             }
         }
     }

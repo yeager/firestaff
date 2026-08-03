@@ -11,11 +11,14 @@
 
 #include <string.h>
 
+#include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_dbitem_alloc_pc34_compat.h"
 #include "dm2_v1_move_record_to_pc34_compat.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_skproject_core.h"
 #include "dm2_v1_tile_record_walk_pc34_compat.h"
+
+/* Creature-killer types and declaration in dm2_v1_actuator_event_pc34_compat.h */
 
 /* ── Timer construction helpers ─────────────────────────────────────── */
 
@@ -738,6 +741,7 @@ int dm2_v1_activate_item_teleport(DM2_V1_RecordPoolSet *pool_set,
 typedef struct {
     DM2_V1_RecordPoolSet *pool_set;
     DM2_V1_DungeonData *dungeon;
+    DM2_V1_CaiiArray *caii;
     DM2_V1_SourceTimerQueue *queue;
     int map;
     int x;             /* timer X coordinate (tile walk origin) */
@@ -1143,6 +1147,7 @@ static int wall_mecha_visitor(void *context,
 
 int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               DM2_V1_DungeonData *dungeon,
+                              DM2_V1_CaiiArray *caii,
                               DM2_V1_SourceTimerQueue *queue,
                               int map, int x, int y,
                               int action_type, int direction,
@@ -1164,6 +1169,7 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
 
     ctx.pool_set    = pool_set;
     ctx.dungeon     = dungeon;
+    ctx.caii        = caii;
     ctx.queue       = queue;
     ctx.map         = map;
     ctx.x           = x;
@@ -1271,6 +1277,21 @@ static int floor_mecha_visitor(void *context,
     /* Source: _3a15_0d5c is a TODO/no-op in skproject. */
     case DM2_ACTU_CREATURE_DIRECTION:
         r->creature_direction_invoked++;
+        break;
+
+    /* ── CREATURE_ANIMATOR (0x3a) c_tim_proc.cpp:3177-3184 ───── */
+    case DM2_ACTU_CREATURE_ANIMATOR:
+        r->creature_animator_invoked++;
+        if (ctx->caii) {
+            DM2_V1_CaiiAnimateActivationReceipt anim;
+            memset(&anim, 0, sizeof(anim));
+            dm2_v1_caii_animate_activation(
+                ctx->pool_set, (const DM2_V1_DungeonData *)ctx->dungeon,
+                ctx->caii, ctx->queue, ctx->map, (unsigned long)ctx->game_tick,
+                ctx->x, ctx->y, &anim);
+        } else {
+            r->fail_closed++;
+        }
         break;
 
     /* ── ORNATE_ANIMATOR_2 (0x32) skevent.cpp:2206-2209 ──────────── */
@@ -1409,6 +1430,7 @@ static int floor_mecha_visitor(void *context,
 
 int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                DM2_V1_DungeonData *dungeon,
+                               DM2_V1_CaiiArray *caii,
                                DM2_V1_SourceTimerQueue *queue,
                                int map, int x, int y,
                                int action_type, int direction,
@@ -1430,6 +1452,7 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
 
     ctx.pool_set    = pool_set;
     ctx.dungeon     = dungeon;
+    ctx.caii        = caii;
     ctx.queue       = queue;
     ctx.map         = map;
     ctx.x           = x;
@@ -1500,7 +1523,7 @@ int dm2_v1_activate_creature_killer(
                 if (cb->set_creature_ai_state) {
                     cb->set_creature_ai_state(cb->ctx, creature_rec,
                                               cx, cy, 0x13, 1);
-                    receipt->creatures_affected++;
+                    receipt->ai_stops++;
                 }
             } else if (actu_type == 0x28) {
                 int32_t damage = (int32_t)(uint16_t)actu_data_lo;
@@ -1509,7 +1532,7 @@ int dm2_v1_activate_creature_killer(
                 if (cb->attack_creature) {
                     cb->attack_creature(cb->ctx, creature_rec,
                                         cx, cy, damage, 0x64, 0);
-                    receipt->creatures_affected++;
+                    receipt->attacks++;
                 }
             }
         }

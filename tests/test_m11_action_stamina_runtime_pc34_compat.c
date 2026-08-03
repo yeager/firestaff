@@ -352,8 +352,8 @@ static void seed_state(M11_GameViewState* state,
     state->world.party.champions[0].hp.maximum = 100;
     state->world.party.champions[0].stamina.current = stamina;
     state->world.party.champions[0].stamina.maximum = 100;
-    state->world.party.champions[0].food = 2048;
-    state->world.party.champions[0].water = 2048;
+    state->world.party.champions[0].food = -1;
+    state->world.party.champions[0].water = -1;
     state->world.party.champions[0].inventory[CHAMPION_SLOT_ACTION_HAND] =
         THING_NONE;
     state->world.party.champions[0].actionIndex = 255;
@@ -2275,8 +2275,8 @@ static void test_throw_action_removes_action_hand_object(void) {
     state.world.party.champions[0].direction = 3;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
     state.world.party.champions[0].maxLoad = 420;
-    state.world.party.champions[0].food = 0;
-    state.world.party.champions[0].water = 0;
+    state.world.party.champions[0].food = -1;
+    state.world.party.champions[0].water = -1;
     (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
     expectedCommonStaminaCost =
         dm1_v1_graphic560_action_stamina_get_pc34(DM1_ACTION_THROW) +
@@ -2367,8 +2367,8 @@ static void test_throw_full_projectile_list_still_accepts_f0328(void) {
     state.world.party.champions[0].direction = 3;
     state.world.party.champions[0].attributes[CHAMPION_ATTR_STRENGTH] = 40;
     state.world.party.champions[0].maxLoad = 420;
-    state.world.party.champions[0].food = 0;
-    state.world.party.champions[0].water = 0;
+    state.world.party.champions[0].food = -1;
+    state.world.party.champions[0].water = -1;
     state.world.projectiles.count = PROJECTILE_LIST_CAPACITY;
     (void)F0730_COMBAT_RngInit_Compat(&state.world.masterRng, 1u);
     expectedCommonStaminaCost =
@@ -8677,8 +8677,8 @@ static void test_fuse_without_lord_chaos_keeps_action_performed_tail(void) {
     state.world.party.mapY = 2;
     state.world.party.direction = 0; /* north: target is (2,1). */
     state.world.party.champions[0].direction = 3;
-    state.world.party.champions[0].food = 0;
-    state.world.party.champions[0].water = 0;
+    state.world.party.champions[0].food = -1;
+    state.world.party.champions[0].water = -1;
     things.loaded = 1;
     things.squareFirstThings = squareFirstThings;
     things.squareFirstThingCount = 25;
@@ -8729,8 +8729,8 @@ static void test_fuse_out_of_bounds_keeps_action_performed_without_explosion(voi
     state.world.party.mapY = 0;
     state.world.party.direction = 3; /* west: target is (-1,0). */
     state.world.party.champions[0].direction = 1;
-    state.world.party.champions[0].food = 0;
-    state.world.party.champions[0].water = 0;
+    state.world.party.champions[0].food = -1;
+    state.world.party.champions[0].water = -1;
 
     ASSERT_EQ(M11_GameView_TriggerNonMeleeActionByIndex(
                   &state, 0, DM1_ACTION_FUSE),
