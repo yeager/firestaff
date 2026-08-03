@@ -87,6 +87,24 @@ int main(void) {
     }
     test_creature_counts(ud, ud_size);
     free(ud);
+
+    /* Generator table validation */
+    {
+        assert(theron_dungeon_generators[0].count == 1); /* AKUTUBA */
+        assert(theron_dungeon_generators[0].gens[0].creature_type == 14); /* Mummy */
+        assert(theron_dungeon_generators[1].count == 2); /* DRATOR: Skeleton ×2 */
+        assert(theron_dungeon_generators[1].gens[0].creature_type == 11);
+        assert(theron_dungeon_generators[2].count == 3); /* FORMICIA: Trolin ×3 */
+        assert(theron_dungeon_generators[2].gens[0].creature_type == 17);
+        assert(theron_dungeon_generators[3].count == 1); /* SARMON: Ghost */
+        assert(theron_dungeon_generators[3].gens[0].creature_type == 7);
+        assert(theron_dungeon_generators[4].count == 0); /* SHADODAN: none */
+        assert(theron_dungeon_generators[5].count == 0); /* THIEVES: none */
+        assert(theron_dungeon_generators[6].count == 5); /* DEMON: BlackFlame ×5 */
+        assert(theron_dungeon_generators[6].gens[0].creature_type == 15);
+        printf("  Generator table: OK\n");
+    }
+
     printf("PASS\n");
     return 0;
 }

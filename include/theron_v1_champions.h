@@ -204,12 +204,18 @@ void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index);
  * original champion records are decoded. */
 void theron_v1_party_clear_fixture_defaults(Theron_V1_Party *party);
 
+/* Returns 1 if roster_index is available in the given dungeon (1-7).
+ * DOTAN (index 6) is absent from Dungeon 1 (AKUTUBA). */
+int theron_v1_companion_available_in_dungeon(unsigned int roster_index,
+                                             int dungeon_id);
+
 /* Set companion slot (1-3) to a champion from the roster (index 1-7).
  * Index 0 (Theron) cannot be placed as a companion.
- * Returns 0 on success, -1 on invalid slot/index. */
+ * Returns 0 on success, -1 on invalid slot/index/availability. */
 int theron_v1_party_set_companion(Theron_V1_Party *party,
                                   int slot,
-                                  unsigned int roster_index);
+                                  unsigned int roster_index,
+                                  int dungeon_id);
 
 /* Dungeon entry: apply per-dungeon inventory reset for companions.
  * Call on dungeon entry after level load.

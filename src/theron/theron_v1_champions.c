@@ -167,15 +167,27 @@ void theron_v1_party_clear_fixture_defaults(Theron_V1_Party *party) {
     party->gold = 0;
 }
 
+/* ── Per-dungeon companion availability ───────────────────────────────
+ * DOTAN (roster index 6) is absent from Dungeon 1 (AKUTUBA). */
+
+int theron_v1_companion_available_in_dungeon(unsigned int roster_index,
+                                             int dungeon_id) {
+    if (roster_index == 0 || roster_index >= theron_v1_track02_us_champion_count())
+        return 0;
+    if (roster_index == 6 && dungeon_id == 1) return 0;
+    return 1;
+}
+
 /* ── Soul Room companion selection ──────────────────────────────────── */
 
 int theron_v1_party_set_companion(Theron_V1_Party *party,
                                   int slot,
-                                  unsigned int roster_index) {
+                                  unsigned int roster_index,
+                                  int dungeon_id) {
     if (!party) return -1;
     if (slot < 1 || slot > 3) return -1;
-    if (roster_index >= theron_v1_track02_us_champion_count()) return -1;
-    if (roster_index == 0) return -1;
+    if (!theron_v1_companion_available_in_dungeon(roster_index, dungeon_id))
+        return -1;
     init_champion_from_roster(&party->champions[slot],
                               slot, roster_index);
     return 0;

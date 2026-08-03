@@ -121,12 +121,12 @@ static void test_champion_attack_kills_creature(void) {
     Theron_V1_World w;
     make_world(&w);
 
-    int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_KOBOLD,
+    int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_AKUTUBA,
                                        w.current_dungeon, w.current_level,
                                        9, 8);
     int killed = 0;
     int attacks = 0;
-    while (attacks < 20) {
+    while (attacks < 100) {
         int rc = theron_v1_champion_attack(&w, 0, cid);
         if (rc < 0) break;
         attacks++;

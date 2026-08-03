@@ -87,7 +87,8 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
     if (world->creature_count >= THERON_MAX_CREATURES_PER_LEVEL) return -1;
     if (type == THERON_CREATURE_NONE) return -1;
 
-    const Theron_CreatureTemplate *tmpl = creature_template_for(type);
+    Theron_CreatureType dungeon_type = (Theron_CreatureType)dungeon_id;
+    const Theron_CreatureTemplate *tmpl = creature_template_for(dungeon_type);
     if (!tmpl) return -1;
 
     Theron_V1_Creature *c = &world->creatures[world->creature_count];
@@ -98,8 +99,7 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
     c->dungeon_id = dungeon_id;
     c->x = x;
     c->y = y;
-    /* Use real category-based formulas from Track 02 disassembly */
-    unsigned int creature_idx = (unsigned int)(type - 1);
+    unsigned int creature_idx = (unsigned int)(dungeon_id - 1);
     const Theron_SpawnZoneDesc *zone = theron_v1_track02_spawn_zone(creature_idx);
     if (zone) {
         Theron_SpawnStats stats;

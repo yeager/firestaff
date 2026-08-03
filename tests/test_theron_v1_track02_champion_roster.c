@@ -123,16 +123,32 @@ int main(void) {
     {
         Theron_V1_Party party;
         theron_v1_party_init(&party, 0);
-        assert(theron_v1_party_set_companion(&party, 1, 4) == 0);
+        assert(theron_v1_party_set_companion(&party, 1, 4, 2) == 0);
         assert(strcmp(party.champions[1].name, "HAKAR") == 0);
         assert(party.champions[1].strength == 60);
-        assert(theron_v1_party_set_companion(&party, 2, 7) == 0);
+        assert(theron_v1_party_set_companion(&party, 2, 7, 2) == 0);
         assert(strcmp(party.champions[2].name, "PENTAI") == 0);
         assert(party.champions[2].anti_fire == 70);
-        assert(theron_v1_party_set_companion(&party, 0, 1) == -1);
-        assert(theron_v1_party_set_companion(&party, 4, 1) == -1);
-        assert(theron_v1_party_set_companion(&party, 1, 0) == -1);
-        assert(theron_v1_party_set_companion(&party, 1, 99) == -1);
+        assert(theron_v1_party_set_companion(&party, 0, 1, 2) == -1);
+        assert(theron_v1_party_set_companion(&party, 4, 1, 2) == -1);
+        assert(theron_v1_party_set_companion(&party, 1, 0, 2) == -1);
+        assert(theron_v1_party_set_companion(&party, 1, 99, 2) == -1);
+    }
+
+    /* DOTAN per-dungeon availability */
+    {
+        assert(theron_v1_companion_available_in_dungeon(6, 1) == 0);
+        assert(theron_v1_companion_available_in_dungeon(6, 2) == 1);
+        assert(theron_v1_companion_available_in_dungeon(6, 7) == 1);
+        for (unsigned int r = 1; r <= 7; r++) {
+            if (r == 6) continue;
+            assert(theron_v1_companion_available_in_dungeon(r, 1) == 1);
+        }
+        Theron_V1_Party party2;
+        theron_v1_party_init(&party2, 0);
+        assert(theron_v1_party_set_companion(&party2, 1, 6, 1) == -1);
+        assert(theron_v1_party_set_companion(&party2, 1, 6, 2) == 0);
+        assert(strcmp(party2.champions[1].name, "DOTAN") == 0);
     }
 
     printf("PASS: theron_v1_track02_champion_roster\n");

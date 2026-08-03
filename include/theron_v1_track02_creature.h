@@ -30,4 +30,30 @@ static const Theron_DungeonCreatureTypes theron_creature_types[THERON_DUNGEON_CO
     {{ 20, 15, 23 }, 3 },  /* DEMON:    Materializer, BlackFlame, Demon */
 };
 
+/* ── Creature generators ──────────────────────────────────────────────
+ * Source: DMWeb ChristopheF maps. */
+
+#define THERON_MAX_GENERATORS 5
+
+typedef struct {
+    uint8_t creature_type;
+    uint8_t level;
+    uint8_t max_spawn;
+} Theron_GeneratorDesc;
+
+typedef struct {
+    Theron_GeneratorDesc gens[THERON_MAX_GENERATORS];
+    uint8_t count;
+} Theron_DungeonGenerators;
+
+static const Theron_DungeonGenerators theron_dungeon_generators[THERON_DUNGEON_COUNT] = {
+    {{ { 14, 2, 3 }, {0}, {0}, {0}, {0} }, 1 },
+    {{ { 11, 0, 2 }, { 11, 1, 1 }, {0}, {0}, {0} }, 2 },
+    {{ { 17, 0, 2 }, { 17, 1, 4 }, { 17, 1, 4 }, {0}, {0} }, 3 },
+    {{ { 7, 1, 1 }, {0}, {0}, {0}, {0} }, 1 },
+    {{ {0}, {0}, {0}, {0}, {0} }, 0 },
+    {{ {0}, {0}, {0}, {0}, {0} }, 0 },
+    {{ { 15, 1, 1 }, { 15, 1, 1 }, { 15, 1, 1 }, { 15, 1, 1 }, { 15, 1, 1 } }, 5 },
+};
+
 #endif

@@ -695,6 +695,7 @@ int theron_v1_transition_execute(Theron_V1_World *world) {
 
     world->transition_pending = 0;
     theron_v1_world_spawn_level_creatures(world);
+    theron_v1_world_init_generators(world);
     theron_v1_world_runtime_media_invalidate_cache(world);
     return 0;
 }
@@ -754,16 +755,96 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
+ * Creature generators — DMWeb ChristopheF maps
+ * ══════════════════════════════════════════════════════════════════════ */
+
+#define THERON_GENERATOR_RESPAWN_INTERVAL 60
+
+void theron_v1_world_init_generators(Theron_V1_World *world) {
+    if (!world) return;
+    int di = world->current_dungeon - 1;
+    if (di < 0 || di >= THERON_DUNGEON_COUNT) return;
+    int lvl = world->current_level;
+
+    const Theron_DungeonGenerators *dg = &theron_dungeon_generators[di];
+    world->generator_active_count = 0;
+    for (int i = 0; i < THERON_MAX_GENERATORS; i++) {
+        world->generator_spawn_count[i] = 0;
+        world->generator_next_tick[i] = 0;
+    }
+    for (int i = 0; i < (int)dg->count; i++) {
+        if (dg->gens[i].level == lvl) {
+            int idx = world->generator_active_count++;
+            world->generator_spawn_count[idx] = 0;
+            world->generator_next_tick[idx] =
+                world->world_tick + THERON_GENERATOR_RESPAWN_INTERVAL;
+        }
+    }
+}
+
+void theron_v1_world_tick_generators(Theron_V1_World *world) {
+    if (!world || world->generator_active_count == 0) return;
+    int di = world->current_dungeon - 1;
+    if (di < 0 || di >= THERON_DUNGEON_COUNT) return;
+
+    const Theron_DungeonGenerators *dg = &theron_dungeon_generators[di];
+    int lvl = world->current_level;
+    int gen_idx = 0;
+
+    for (int i = 0; i < (int)dg->count && gen_idx < world->generator_active_count; i++) {
+        if (dg->gens[i].level != lvl) continue;
+        if (world->world_tick < world->generator_next_tick[gen_idx]) {
+            gen_idx++;
+            continue;
+        }
+        if (world->generator_spawn_count[gen_idx] >= dg->gens[i].max_spawn) {
+            gen_idx++;
+            continue;
+        }
+        if (world->creature_count >= THERON_MAX_CREATURES_PER_LEVEL) {
+            gen_idx++;
+            continue;
+        }
+
+        const Theron_V1_Level *level = &world->levels[di][lvl];
+        uint16_t seed = (uint16_t)(world->world_tick ^ (unsigned)(gen_idx * 37));
+        int attempts = 0;
+        while (attempts < 30) {
+            seed = (uint16_t)(seed * 25173u + 13849u);
+            int cx = (seed >> 8) % level->width;
+            seed = (uint16_t)(seed * 25173u + 13849u);
+            int cy = (seed >> 8) % level->height;
+            uint8_t sq = level->squares[cy][cx];
+            if (!THERON_SQUARE_IS_PASSABLE(sq) || sq == THERON_SQUARE_DOOR) {
+                attempts++; continue;
+            }
+            if (cx == world->party.leader_x && cy == world->party.leader_y) {
+                attempts++; continue;
+            }
+            if (theron_v1_creature_at(world, lvl, cx, cy)) {
+                attempts++; continue;
+            }
+            theron_v1_creature_spawn(world, (Theron_CreatureType)dg->gens[i].creature_type,
+                                     world->current_dungeon, lvl, cx, cy);
+            world->generator_spawn_count[gen_idx]++;
+            break;
+        }
+        world->generator_next_tick[gen_idx] =
+            world->world_tick + THERON_GENERATOR_RESPAWN_INTERVAL;
+        gen_idx++;
+    }
+}
+
+/* ══════════════════════════════════════════════════════════════════════
  * World tick
  * ══════════════════════════════════════════════════════════════════════ */
 
 void theron_v1_world_tick(Theron_V1_World *world) {
     if (!world) return;
     world->world_tick++;
-    /* Tick 1: timers */
     theron_v1_tick_timers(world);
-    /* Tick 2: creature AI (also called from theron_v1_apply_post_move_effects) */
     theron_v1_creature_ai_tick(world);
+    theron_v1_world_tick_generators(world);
 }
 
 void theron_v1_world_runtime_media_clear(Theron_V1_World *world) {

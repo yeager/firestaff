@@ -320,6 +320,11 @@ struct Theron_V1_World {
     Theron_V1_Creature creatures[THERON_MAX_CREATURES_PER_LEVEL];
     int creature_count;
 
+    /* Generator state (current dungeon, current level only) */
+    int generator_spawn_count[5];
+    uint64_t generator_next_tick[5];
+    int generator_active_count;
+
     /* Timer pool */
     Theron_V1_Timer timers[THERON_MAX_TIMERS];
     int timer_count;
@@ -435,6 +440,8 @@ void theron_v1_timers_clear_level(Theron_V1_World *world, int level);
 Theron_TransitionType theron_v1_check_transition(Theron_V1_World *world, int x, int y);
 int theron_v1_transition_execute(Theron_V1_World *world);
 int theron_v1_world_spawn_level_creatures(Theron_V1_World *world);
+void theron_v1_world_init_generators(Theron_V1_World *world);
+void theron_v1_world_tick_generators(Theron_V1_World *world);
 
 /* ── World tick ───────────────────────────────────────────────────── */
 void theron_v1_world_tick(Theron_V1_World *world);
