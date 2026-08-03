@@ -217,6 +217,38 @@ static void test_spell_casting(void) {
     w.party.champions[0].mana = 1;
     rc = theron_v1_champion_cast_spell(&w, 0, 20, cid);
     CHECK_INT("insufficient mana rejected", rc, -1);
+
+    /* LIGHTNING (index 23, cost 38) */
+    w.party.champions[0].mana = 100;
+    int cid2 = theron_v1_creature_spawn(&w, THERON_CREATURE_AKUTUBA,
+                                        w.current_dungeon, w.current_level,
+                                        10, 8);
+    Theron_V1_Creature *c2 = theron_v1_creature_by_id(&w, cid2);
+    int hp_before = c2 ? c2->hp : 0;
+    rc = theron_v1_champion_cast_spell(&w, 0, 23, cid2);
+    CHECK_INT("LIGHTNING returns 0 or 1", rc >= 0, 1);
+    if (c2 && (c2->flags & THERON_CF_ACTIVE))
+        CHECK_INT("LIGHTNING deals damage", c2->hp < hp_before, 1);
+
+    /* SPELLSHIELD (index 33, cost 30) — buff, no target */
+    w.party.champions[0].mana = 100;
+    int am_before = w.party.champions[0].anti_magic;
+    rc = theron_v1_champion_cast_spell(&w, 0, 33, -1);
+    CHECK_INT("SPELLSHIELD succeeds", rc, 0);
+    CHECK_INT("SPELLSHIELD boosts anti_magic",
+              w.party.champions[0].anti_magic > am_before, 1);
+
+    /* STUN (index 31, cost 7) — paralyzes creature */
+    w.party.champions[0].mana = 100;
+    int cid3 = theron_v1_creature_spawn(&w, THERON_CREATURE_AKUTUBA,
+                                        w.current_dungeon, w.current_level,
+                                        11, 8);
+    rc = theron_v1_champion_cast_spell(&w, 0, 31, cid3);
+    CHECK_INT("STUN returns 0 or 1", rc >= 0, 1);
+    Theron_V1_Creature *c3 = theron_v1_creature_by_id(&w, cid3);
+    if (c3 && (c3->flags & THERON_CF_ACTIVE))
+        CHECK_INT("STUN paralyzes creature",
+                  (c3->flags & THERON_CF_PARALYZED) != 0, 1);
 }
 
 static void test_armed_combat_uses_item_properties(void) {

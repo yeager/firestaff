@@ -306,9 +306,15 @@ int theron_v1_champion_cast_spell(Theron_V1_World *world,
     case 35: /* HEAL */
         theron_v1_modify_champion_hp(caster, 15 + caster->anti_magic / 2);
         return 0;
-    case 37: /* LIGHT — no combat effect, environmental */
+    case 37: /* LIGHT — environmental, no combat effect */
         return 0;
-    case 36: /* CALM — no combat effect */
+    case 36: /* CALM — environmental, no combat effect */
+        return 0;
+    case 33: /* SPELLSHIELD — buff, no target */
+        caster->anti_magic += 10;
+        return 0;
+    case 34: /* FIRESHIELD — buff, no target */
+        caster->anti_magic += 15;
         return 0;
     default:
         break;
@@ -319,10 +325,31 @@ int theron_v1_champion_cast_spell(Theron_V1_World *world,
     if (!c || !(c->flags & THERON_CF_ACTIVE)) return -1;
 
     int spell_power = caster->anti_magic / 2 + mana_cost / 3;
-    Theron_AttackType atype = THERON_ATTACK_MAGIC;
-    if (spell_index == 20) { /* FIREBALL */
-        atype = THERON_ATTACK_BLAST;
+
+    switch (spell_index) {
+    case 20: /* FIREBALL — blast damage */
         theron_v1_play_sound(THERON_SOUND_FIREBALL);
+        spell_power += 5;
+        break;
+    case 23: /* LIGHTNING — highest damage spell */
+        theron_v1_play_sound(THERON_SOUND_EXPLOSION);
+        spell_power += 8;
+        break;
+    case 21: /* DISPELL — effective vs magic creatures */
+        if (c->primary_attack == THERON_ATTACK_MAGIC)
+            spell_power += spell_power;
+        break;
+    case 22: /* CONFUSE — reduces creature speed */
+        c->speed += 2;
+        break;
+    case 24: /* DISRUPT — low cost, low damage */
+        break;
+    case 31: /* STUN — paralyze creature for several ticks */
+        c->flags |= THERON_CF_PARALYZED;
+        c->next_move_tick += 8;
+        break;
+    default:
+        break;
     }
 
     int damage = spell_power - c->defense / 3;
