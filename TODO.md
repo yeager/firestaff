@@ -2615,6 +2615,11 @@ that its exact runtime path is not already source-locked and tested.
    F0180 StartWandering. This enables M10's event-driven F0209 dispatch for
    pre-existing DUNGEON.DAT groups. 9 tests (null safety, empty, living/dead,
    multiple groups, not-on-map, already-scheduled, idempotent). Remaining:
+   2026-08-03: g_dm1_wall_frame_bitmaps remains NULL — viewport wall frame
+   drawing is no-op until GRAPHICS.DAT bitmap records are bound.  The asset
+   loader returns expanded 1-byte/pixel data but the viewport expects packed
+   1-bit/pixel bitmaps (DUNVIEW.C G2107/G2110-G2120 I34E).  Next step: add
+   a raw bitmap extraction mode or convert expanded pixels to packed format.
    2026-08-03: M11's brute-force map-scan creature tick path is now retired.
    Once the bootstrap flag is set, m11_process_creature_ticks returns early
    and all creature AI flows through M10's TIMELINE_EVENT_CREATURE_REACTION
