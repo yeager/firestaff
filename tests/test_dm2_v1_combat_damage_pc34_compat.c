@@ -61,14 +61,103 @@ static void test_calc_damage_valid(void)
     req.hero_strength = 40;
     req.creature_record = 0x1000;
     req.creature_defense = 10;
-    req.power_base = 20;
+    req.power_base = 64;
+    req.hero_ability = 40;
+    req.hero_max_load = 200;
+    req.item_weight = 20;
+    req.hero_skill_level = 5;
+    req.skill_type = 0;
+    req.stamina_adj = 60;
+    req.creature_armor = 5;
+    req.rand_hit = 8;
+    req.rand_defense = 0;
+    req.rand_armor = 0;
+    req.party_level = 3;
+    req.creature_armor_mult = 4;
     int r = dm2_v1_calc_player_attack_damage(&req, &receipt);
     assert(r == 1);
     assert(receipt.valid == 1);
-    assert(receipt.fail_closed == 1);
+    assert(receipt.fail_closed == 0);
     assert(receipt.hit == 1);
+    assert(receipt.final_damage > 0);
 
     printf("  PASS: calc_damage_valid\n");
+}
+
+static void test_calc_damage_miss_by_defense(void)
+{
+    DM2_V1_CalcAttackDamageReceipt receipt;
+    DM2_V1_CalcAttackDamageRequest req;
+    memset(&req, 0, sizeof(req));
+    req.hero_index = 0;
+    req.hero_hp = 100;
+    req.hero_dexterity = 5;
+    req.creature_record = 0x1000;
+    req.creature_defense = 80;
+    req.rand_hit = 0;
+    req.rand_defense = 0;
+    req.party_level = 10;
+    int r = dm2_v1_calc_player_attack_damage(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.miss == 1);
+    assert(receipt.hit == 0);
+
+    printf("  PASS: calc_damage_miss_by_defense\n");
+}
+
+static void test_calc_damage_poison(void)
+{
+    DM2_V1_CalcAttackDamageReceipt receipt;
+    DM2_V1_CalcAttackDamageRequest req;
+    memset(&req, 0, sizeof(req));
+    req.hero_index = 0;
+    req.hero_hp = 100;
+    req.hero_dexterity = 50;
+    req.creature_record = 0x1000;
+    req.creature_defense = 5;
+    req.power_base = 64;
+    req.hero_ability = 40;
+    req.hero_max_load = 200;
+    req.item_weight = 20;
+    req.stamina_adj = 60;
+    req.creature_armor = 0;
+    req.creature_poison_resist = 5;
+    req.rand_poison = 3;
+    req.rand_hit = 8;
+    req.party_level = 3;
+    int r = dm2_v1_calc_player_attack_damage(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.hit == 1);
+    assert(receipt.poison_applied == 1);
+
+    printf("  PASS: calc_damage_poison\n");
+}
+
+static void test_calc_damage_skill_exp(void)
+{
+    DM2_V1_CalcAttackDamageReceipt receipt;
+    DM2_V1_CalcAttackDamageRequest req;
+    memset(&req, 0, sizeof(req));
+    req.hero_index = 0;
+    req.hero_hp = 100;
+    req.hero_dexterity = 50;
+    req.creature_record = 0x1000;
+    req.creature_defense = 5;
+    req.power_base = 64;
+    req.hero_ability = 40;
+    req.hero_max_load = 200;
+    req.item_weight = 20;
+    req.stamina_adj = 60;
+    req.creature_armor = 0;
+    req.creature_armor_mult = 8;
+    req.rand_hit = 8;
+    req.party_level = 3;
+    int r = dm2_v1_calc_player_attack_damage(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.hit == 1);
+    assert(receipt.skill_exp_awarded >= 3);
+
+    printf("  PASS: calc_damage_skill_exp\n");
 }
 
 static void test_wound_null_safety(void)
@@ -195,11 +284,20 @@ static void test_attack_party_valid(void)
     memset(&req, 0, sizeof(req));
     req.base_damage = 50;
     req.damage_type = DM2_DMG_PHYSICAL;
-    req.heroes_in_party = 4;
+    req.heroes_in_party = 2;
+    req.hero_wound[0].hero_hp = 100;
+    req.hero_wound[0].hero_index = 0;
+    req.hero_wound[1].hero_hp = 80;
+    req.hero_wound[1].hero_index = 1;
+    req.random_values[0] = 3;
+    req.random_values[1] = 7;
     int r = dm2_v1_attack_party(&req, &receipt);
     assert(r == 1);
     assert(receipt.valid == 1);
-    assert(receipt.fail_closed == 1);
+    assert(receipt.fail_closed == 0);
+    assert(receipt.heroes_wounded == 2);
+    assert(receipt.per_hero_damage[0] > 0);
+    assert(receipt.per_hero_damage[1] > 0);
 
     printf("  PASS: attack_party_valid\n");
 }
@@ -220,6 +318,9 @@ int main(void)
     test_attack_party_null_safety();
     test_attack_party_zero_damage();
     test_attack_party_valid();
+    test_calc_damage_miss_by_defense();
+    test_calc_damage_poison();
+    test_calc_damage_skill_exp();
     printf("All combat damage tests passed.\n");
     return 0;
 }

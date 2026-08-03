@@ -34,6 +34,7 @@
  */
 
 #include "dm2_v1_combat_damage_pc34_compat.h"
+#include "dm2_v1_skproject_core.h"
 
 #include <string.h>
 
@@ -61,12 +62,69 @@ int dm2_v1_calc_player_attack_damage(
         return 0;
     }
 
-    /* Hit/miss and damage require live RNG, creature AI spec lookup,
-     * COMPUTE_PLAYER_ATTACK_OR_THROW_STRENGTH, QUERY_PLAYER_SKILL_LV,
-     * QUERY_GDAT_DBSPEC_WORD_VALUE, and APPLY_CREATURE_POISON_RESISTANCE.
-     * Fail-closed until these are bound. */
-    receipt->fail_closed = 1;
+    {
+        int32_t hit_val = (int32_t)request->hero_dexterity +
+                          (int32_t)(request->rand_hit & 0x0F);
+        int32_t def_val = ((int32_t)request->creature_defense +
+                           (int32_t)(request->rand_defense % 32) +
+                           2 * (int32_t)request->party_level - 16) / 2;
+        if (hit_val < def_val) {
+            receipt->miss = 1;
+            return 1;
+        }
+    }
+
     receipt->hit = 1;
+
+    {
+        int16_t strength = 0;
+        DM2_V1_SkprojectComputePlayerAttackOrThrowStrengthReceipt str_receipt;
+        dm2_v1_skproject_compute_player_attack_or_throw_strength(
+            request->hero_ability,
+            request->hero_max_load,
+            request->item_weight,
+            (uint8_t)request->hero_skill_level,
+            request->skill_type,
+            request->dbspec_word5,
+            request->dbspec_word8,
+            request->dbspec_word9,
+            request->bodyflag,
+            (uint8_t)request->hand,
+            request->stamina_adj,
+            &strength, &str_receipt);
+
+        {
+            int32_t damage = (int32_t)strength *
+                             (int32_t)request->power_base / 32;
+            damage -= (int32_t)request->creature_armor;
+            damage -= (int32_t)(request->rand_armor % 32);
+            receipt->raw_damage = (int16_t)(damage > 32767 ? 32767 : damage);
+
+            if (damage <= 0) {
+                receipt->final_damage = 0;
+                receipt->miss = 1;
+                receipt->hit = 0;
+                return 1;
+            }
+
+            if (request->hero_skill_level > 0) {
+                damage += (int32_t)request->hero_skill_level;
+            }
+
+            if (request->creature_poison_resist < 15 &&
+                request->rand_poison < (uint16_t)(15 - request->creature_poison_resist)) {
+                receipt->poison_applied = 1;
+            }
+
+            receipt->final_damage = (int16_t)(damage > 32767 ? 32767 : damage);
+
+            {
+                int16_t exp = (int16_t)(((int32_t)request->creature_armor_mult *
+                                         damage) >> 4) + 3;
+                receipt->skill_exp_awarded = exp;
+            }
+        }
+    }
 
     return 1;
 }

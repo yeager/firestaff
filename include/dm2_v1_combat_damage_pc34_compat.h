@@ -36,7 +36,9 @@ typedef enum {
     DM2_DMG_POISON     = 5
 } DM2_V1_DamageType;
 
-/* CALC_PLAYER_ATTACK_DAMAGE request */
+/* CALC_PLAYER_ATTACK_DAMAGE request.
+ * c_hero.cpp:232-430. Caller supplies all RNG draws and creature spec
+ * values so the function stays deterministic and testable. */
 typedef struct {
     int hero_index;
     int16_t hero_hp;
@@ -56,6 +58,20 @@ typedef struct {
     int16_t skill_type;
     int16_t power_base;
     int16_t power_random;
+    uint16_t rand_hit;
+    uint16_t rand_defense;
+    uint16_t rand_armor;
+    uint16_t rand_poison;
+    uint8_t hero_ability;
+    uint16_t hero_max_load;
+    uint16_t item_weight;
+    uint16_t dbspec_word5;
+    uint16_t dbspec_word8;
+    uint16_t dbspec_word9;
+    uint8_t bodyflag;
+    int16_t stamina_adj;
+    uint16_t creature_armor_mult;
+    int16_t party_level;
 } DM2_V1_CalcAttackDamageRequest;
 
 /* CALC_PLAYER_ATTACK_DAMAGE receipt */
