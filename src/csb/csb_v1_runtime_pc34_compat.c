@@ -136,6 +136,8 @@ static int csb_v1_runtime_stage_csbwin_save_policy(
     CSB_V1_RuntimeProfile *candidate);
 static uint32_t csb_v1_runtime_fnv1a32(const uint8_t *bytes, size_t size);
 static uint32_t csb_v1_runtime_read_le32(const uint8_t *bytes);
+static int csb_v1_runtime_request_source_sound(
+    CSB_V1_RuntimeProfile *profile, CsbV1AudioRequest *request);
 static int csb_v1_runtime_dsa_get_wing_talents(void *user,
                                                uint16_t fingerprint,
                                                uint32_t *out_talents);
@@ -562,6 +564,9 @@ static int csb_v1_runtime_rotate_wall_cell_sensors(
     int cell);
 static uint16_t csb_v1_runtime_csbwin_item16_group_thing(
     uint16_t monster_index);
+static int csb_v1_runtime_request_source_sound(
+    CSB_V1_RuntimeProfile *profile,
+    CsbV1AudioRequest *request);
 
 static unsigned short csb_v1_runtime_clamp_u16(int value)
 {
@@ -3308,8 +3313,10 @@ static void csb_v1_runtime_apply_destination_teleporter(
      * C05_ELEMENT_TELEPORTER, requires object/party scope for the party,
      * moves to TargetMapX/Y/TargetMapIndex, and applies teleporter rotation
      * through CHAMPION.C F0284.  This bounded runtime handoff applies one
-     * party teleporter only; chained teleporters, sounds, redraw timing, and
-     * object/group/projectile teleportation remain separate work. */
+     * party teleporter with audible M560_SOUND_BUZZ; chained teleporter/pit
+     * loops (100-step cap) are handled by
+     * csb_v1_runtime_apply_chained_consequences.  Redraw timing remains
+     * separate work. */
     result->old_party_level = profile->current_level;
     result->new_party_level = profile->current_level;
     if (csb_v1_runtime_f0194_remove_all_active_groups_pc34(profile) < 0) {
@@ -3324,6 +3331,15 @@ static void csb_v1_runtime_apply_destination_teleporter(
     csb_v1_dungeon_set_current_level(profile->current_level);
     result->new_party_level = profile->current_level;
     result->teleporter_transition_applied = 1;
+    if (teleporter.audible) {
+        CsbV1AudioRequest tp_sound;
+        memset(&tp_sound, 0, sizeof(tp_sound));
+        tp_sound.soundIndex = CSB_V1_SOUND_BUZZ;
+        tp_sound.mapX = (int16_t)profile->party_x;
+        tp_sound.mapY = (int16_t)profile->party_y;
+        tp_sound.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+        (void)csb_v1_runtime_request_source_sound(profile, &tp_sound);
+    }
 }
 
 static void csb_v1_runtime_apply_destination_stairs(
@@ -4689,7 +4705,7 @@ static void csb_v1_runtime_schedule_c38_attack_events(
          * for each creature in the group, reusing the group event priority
          * initialized as 255 - MovementTicks.  This bounded CSB bridge only
          * schedules those per-creature attack events; the C38 damage/evasion
-         * body remains a later runtime slice. */
+         * body is dispatched via apply_creature_attack_timeline_record. */
         memset(&event, 0, sizeof(event));
         event.map_time = DM1_MAP_TIME_MAKE(map_index, profile->game_time + 1u);
         event.type = (uint8_t)(DM1_EVENT_UPDATE_BEHAVIOR_CREATURE_0 +
@@ -5199,6 +5215,16 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
             *inout_map_x = target_x;
             *inout_map_y = target_y;
             moved_count++;
+            {
+                CsbV1AudioRequest buzz_request;
+                memset(&buzz_request, 0, sizeof(buzz_request));
+                buzz_request.soundIndex = CSB_V1_SOUND_BUZZ;
+                buzz_request.mapX = (int16_t)target_x;
+                buzz_request.mapY = (int16_t)target_y;
+                buzz_request.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+                (void)csb_v1_runtime_request_source_sound(
+                    profile, &buzz_request);
+            }
             if (csb_v1_runtime_apply_group_fall_damage(
                     profile,
                     group_thing,
@@ -5336,8 +5362,8 @@ static int csb_v1_runtime_apply_group_consequences_at_square(
      * DUNGEON.C F0154 to resolve the lower target map/coordinate. This
      * bounded CSB runtime bridge handles generated groups with raw C04
      * records and mirrors the surviving group's native active-group side
-     * state; buzz audio and full F0191 fall-damage aftermath remain separate
-     * work. */
+     * state; F0191 fall damage is applied via apply_group_fall_damage
+     * and M560_SOUND_BUZZ plays at the target square on pit entry. */
     return moved_count;
 }
 
@@ -6422,11 +6448,8 @@ static int csb_v1_runtime_fill_defender_combat_snapshot(
     }
 
     /* ReDMCSB CHAMPION.C F0321 consumes a snapshot of current champion
-     * statistics, wounds, defenses, and party shields.  CSB V1's imported
-     * champion block currently carries the source statistics and compact
-     * skill row but not yet the full DM1 armor/wound/rest/shield side state,
-     * so those fields stay at bounded zero until the shared inventory/
-     * lifecycle bridge is attached. */
+     * statistics, wounds, defenses, and party shields.  F0313 resolves
+     * per-slot armor defense from the equipped ARMOUR_INFO via F0143. */
     out->championIndex = champion_index;
     out->currentHealth = champion->CurrentHealth;
     out->dexterity = csb_v1_runtime_stat_or_default(
@@ -6463,6 +6486,27 @@ static int csb_v1_runtime_fill_defender_combat_snapshot(
         CSB_V1_STAT_LUCK,
         CSB_V1_STAT_MIN);
     out->wounds = (int)champion->Wounds;
+
+    {
+        const CSB_V1_DungeonData *dungeon = profile->dungeon_handle;
+        int slot;
+        for (slot = 0; slot < 6; ++slot) {
+            uint16_t thing_in_slot;
+            CSB_V1_F0143ArmourDefenseReceiptPc34 armour_receipt;
+            if (slot >= CSB_V1_SLOT_COUNT) break;
+            thing_in_slot = champion->Slots[slot];
+            if (thing_in_slot == 0xFFFEu || thing_in_slot == 0xFFFFu) continue;
+            if (csb_v1_runtime_f0143_armour_defense_receipt_pc34(
+                    dungeon, thing_in_slot, 0, &armour_receipt)) {
+                out->woundDefense[slot] = armour_receipt.defense;
+                if (armour_receipt.is_shield) {
+                    out->partyShieldDefense += armour_receipt.defense;
+                }
+            }
+        }
+        out->partyShieldDefense += (int)champion->ShieldStrength;
+        out->partyShieldDefense += (int)champion->ActionDefense;
+    }
     return 1;
 }
 
@@ -9601,7 +9645,7 @@ static int csb_v1_runtime_apply_group_fall_damage(
      * attack 20 after a moving C04 group falls through a pit.  GROUP.C F0191
      * lines 952-973 fans out attack +/- 1/8 from Count down to creature 0.
      * This bounded bridge reuses the existing real-format F0190 pack/drop/
-     * smoke helper; ActiveGroup side state and audio remain separate work. */
+     * smoke helper; ActiveGroup state is synced for survivors. */
     for (i = creature_count - 1; i >= 0; --i) {
         uint16_t hp;
         int damage;
@@ -9654,6 +9698,9 @@ static int csb_v1_runtime_apply_group_fall_damage(
     if (csb_v1_runtime_read_u16(group_record + 0) == 0xFFFFu) {
         return 2;
     }
+    csb_v1_runtime_sync_active_group_state_from_record(
+        profile, group_thing, group_record,
+        map_index, map_x, map_y, 1, 1);
     return killed_some ? 1 : 0;
 }
 
@@ -9713,8 +9760,9 @@ static int csb_v1_runtime_apply_explosion_group_action(
             /* ReDMCSB GROUP.C F0191 lines 952-973 applies the same
              * +/- 1/8 all-creature attack fanout used by explosion group
              * impacts in PROJEXPL.C F0213/F0220.  This real-format bridge
-             * mutates GROUP.Health[4]; active-group aspect cleanup, drops,
-             * and fixed possessions remain later CSB runtime slices. */
+             * mutates GROUP.Health[4] and calls pack_dead_group_creature
+             * for killed creatures (fixed possessions, slot drops, smoke,
+             * active-group compaction). */
             for (i = 0; i < creature_count; ) {
                 uint8_t *hp_ptr = thing_record + 6 + i * 2;
                 uint16_t hp = csb_v1_runtime_read_u16(hp_ptr);
@@ -10164,9 +10212,10 @@ static void csb_v1_runtime_apply_creature_attack_timeline_record(
      * common creature melee damage path (PROJEXPL.C F0230, then
      * CHAMPION.C F0321).  CSB keeps the real-format group lookup and target
      * selection here, then delegates the bounded damage roll to the shared
-     * M10 combat resolver used by DM1.  Full CSB runtime RNG state, poison,
-     * armor inventory, rest wake, ranged attacks, and broader aspect timing
-     * remain later slices. */
+     * M10 combat resolver used by DM1.  Poison scheduling and creature
+     * projectile launches are wired; armor inventory defense, rest wake,
+     * and broader aspect timing remain later slices.  Armor inventory
+     * defense is now populated via F0143 in the defender snapshot. */
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF; ++guard) {
         thing_record = csb_v1_runtime_mutable_thing_record(
             dungeon,
@@ -10514,10 +10563,11 @@ static void csb_v1_runtime_process_group_creature_floor_sensors_at(
         return;
     }
 
-    /* ReDMCSB MOVESENS.C F0276:1708-1714 admits C007 only for a C04
-     * group when no other group occupies the committed square.  The caller
-     * invokes this after F0163/F0164 has committed, so excluding group_thing
-     * observes the exact post-unlink/pre-link occupancy on both sides. */
+    /* ReDMCSB MOVESENS.C F0276:1708-1714 admits creature-scope sensor
+     * types (C001, C002, C007) for a C04 group when no other group
+     * occupies the committed square.  The caller invokes this after
+     * F0163/F0164 has committed, so excluding group_thing observes the
+     * exact post-unlink/pre-link occupancy on both sides. */
     thing = first_thing;
     for (guard = 0; guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
          ++guard) {
@@ -10542,9 +10592,15 @@ static void csb_v1_runtime_process_group_creature_floor_sensors_at(
             continue;
         }
         type_data = csb_v1_runtime_read_u16(record + 2);
-        if ((type_data & 0x007Fu) != DM1_SENSOR_FLOOR_CREATURE) {
-            thing = csb_v1_runtime_sensor_next_thing(dungeon, (uint16_t)thing);
-            continue;
+        {
+            int st = (int)(type_data & 0x007Fu);
+            if (st != DM1_SENSOR_FLOOR_CREATURE &&
+                st != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE_OBJECT &&
+                st != DM1_SENSOR_FLOOR_THERON_PARTY_CREATURE) {
+                thing = csb_v1_runtime_sensor_next_thing(
+                    dungeon, (uint16_t)thing);
+                continue;
+            }
         }
         for (scan = first_thing, scan_guard = 0;
              scan_guard < 128 && scan != 0xFFFE && scan != 0xFFFF;
@@ -18557,8 +18613,9 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
      * C01 door-animation, and F0241 lines 754-809 steps the door state one
      * value per event.  This runtime bridge mutates real-format CSB byte-map
      * square flags and bounded wall/generator sensor state for the startup
-     * playability path; projectile launchers, group movement, damage, sounds,
-     * and DSA effects remain separate work. */
+     * playability path.  Projectile launchers, group movement, damage, sounds,
+     * creature aspects, and poison are now dispatched; DSA timeline integration
+     * remains separate work. */
     for (i = 0; i < profile->last_timeline_dispatch.count && i < event_count;
          ++i) {
         const struct DM1_DispatchRecord_V1 *record =
