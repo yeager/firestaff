@@ -14542,24 +14542,19 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
         }
     }
 
+    /* Once behavior events are bootstrapped, M10's event-driven F0209
+     * dispatch handles all creature AI through the timeline queue.  The
+     * brute-force map scan below is only needed as a fallback before the
+     * bootstrap has seeded initial UPDATE_BEHAVIOR_GROUP events. */
+    if (state->creatureBehaviorBootstrapped) return;
+
     mapIdx = state->world.party.mapIndex;
     if (mapIdx < 0 || mapIdx >= (int)state->world.dungeon->header.mapCount) return;
     if (m11_is_stock_dm1_hall_map0(state)) {
-        /* ReDMCSB: the stock DM1 Hall of Champions map has no active
-         * creature GROUP chains.  Keep the M11 creature-AI pass out of
-         * source DM1 HoC so an older dense squareFirstThings interpretation
-         * cannot animate compact candidate payloads as false creatures.
-         * Do not suppress generic/custom map-0 dungeons: those may contain
-         * valid GROUP chains and must follow the normal F0209-style pass. */
         return;
     }
     map = &state->world.dungeon->maps[mapIdx];
 
-    /* ReDMCSB GROUP.C F0209/F0215 process the active map's group events by
-     * thing presence on creature-bearing maps.  Map 0 is handled above
-     * because the stock DM1 Hall of Champions is source-empty for GROUPs. */
-    /* The map iteration is scheduling only. F0115 supplies the bounded C04
-     * candidate; raw chain traversal is not duplicated in M11. */
     for (mx = 0; mx < (int)map->width; ++mx) {
         for (my = 0; my < (int)map->height; ++my) {
             DM1_F0115WorldGroupCandidatePc34 candidate;

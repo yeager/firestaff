@@ -2408,6 +2408,10 @@ that its exact runtime path is not already source-locked and tested.
    SDL3 audio playback (audio_sdl_m11.c with SND3 resampling) all
    implemented. Q-DM1-08 complete; real packaged-app/Mac capture remains
    tracked separately under Q-DM1-10.
+   2026-08-03: M11's brute-force creature tick map scan is now gated behind
+   the bootstrap flag — once UPDATE_BEHAVIOR_GROUP events are seeded, M10's
+   event-driven F0209 dispatch handles all creature AI through the timeline
+   queue, and the redundant per-square scan is skipped.
 9. **Q-DM1-09 Input and controller coverage:** command behavior for keyboard,
    mouse, touch, controller, fullscreen scaling and modal focus.
    2026-07-26: Host input bridge (dm1_v1_host_input_bridge), mouse input
@@ -2611,8 +2615,15 @@ that its exact runtime path is not already source-locked and tested.
    F0180 StartWandering. This enables M10's event-driven F0209 dispatch for
    pre-existing DUNGEON.DAT groups. 9 tests (null safety, empty, living/dead,
    multiple groups, not-on-map, already-scheduled, idempotent). Remaining:
-   retire M11's brute-force map-scan creature tick path once M10's event-driven
-   dispatch is verified to cover all creature behavior scenarios.
+   2026-08-03: M11's brute-force map-scan creature tick path is now retired.
+   Once the bootstrap flag is set, m11_process_creature_ticks returns early
+   and all creature AI flows through M10's TIMELINE_EVENT_CREATURE_REACTION
+   handler (orch_handle_creature_reaction_event_compat), which uses F0228
+   LoS, F0226 distance, F0208 event rescheduling, and full active group
+   state. M11 observes results via EMIT_DAMAGE_DEALT/EMIT_CREATURE_ATTACK
+   emissions from the tick result. Remaining: verify no presentation-only
+   side effects (creature movement sounds, log messages) are lost when M10
+   drives AI instead of M11's inline path.
 3. **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
    saved actions, including supported control flow and live monster/filter
    effects, with transactional save/runtime handoff and fail-closed unsupported
