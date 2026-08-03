@@ -353,6 +353,11 @@ struct Theron_V1_World {
     /* Track 02 visual state restored together with a resumed world. */
     Theron_RuntimeLevelMedia runtime_media;
 
+    /* Decoded dungeon text messages (wall plaques, scrolls).
+     * Loaded from Track 02 thing data text block per dungeon. */
+    unsigned int dungeon_text_count;
+    char dungeon_texts[64][256];
+
     /* Deterministic state hash */
     uint64_t state_hash;
 };
@@ -384,6 +389,15 @@ Theron_MapLoadResult theron_v1_level_load(Theron_V1_Level *level,
                                            int sub_level_index);
 
 uint8_t theron_v1_world_get_square(const Theron_V1_World *world, int x, int y);
+
+/* Decode dungeon text data into the world's text table.
+ * codons/count come from Theron_ThingData.text_data/text_data_count. */
+int theron_v1_world_load_dungeon_text(Theron_V1_World *world,
+                                       const uint16_t *codons,
+                                       unsigned int codon_count);
+
+const char *theron_v1_world_dungeon_text(const Theron_V1_World *world,
+                                          unsigned int text_index);
 void theron_v1_party_place(Theron_V1_World *world, int x, int y, int dir);
 
 /* ── Object database API ─────────────────────────────────────────── */

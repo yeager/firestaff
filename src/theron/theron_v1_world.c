@@ -20,6 +20,7 @@
 #include "theron_v1_track02.h"
 #include "theron_v1_track02_creature.h"
 #include "theron_v1_track02_dungeon_map.h"
+#include "theron_v1_track02_text_decode.h"
 #include <string.h>
 #include <stdio.h>
 #include <stddef.h>
@@ -1812,4 +1813,34 @@ const char *theron_v1_runtime_readiness_status_name(
     case THERON_RUNTIME_READINESS_BAD_INPUT:    return "bad-input";
     default:                                    return "unknown";
     }
+}
+
+int theron_v1_world_load_dungeon_text(Theron_V1_World *world,
+                                       const uint16_t *codons,
+                                       unsigned int codon_count)
+{
+    if (!world) return -1;
+    world->dungeon_text_count = 0;
+    if (!codons || codon_count == 0) return 0;
+
+    Theron_TextBlock tb;
+    if (theron_v1_track02_text_decode(codons, codon_count, &tb) != 0)
+        return -1;
+
+    unsigned int max = tb.count < 64 ? tb.count : 64;
+    for (unsigned int i = 0; i < max; i++) {
+        size_t len = strlen(tb.strings[i]);
+        if (len >= 256) len = 255;
+        memcpy(world->dungeon_texts[i], tb.strings[i], len);
+        world->dungeon_texts[i][len] = '\0';
+    }
+    world->dungeon_text_count = max;
+    return (int)max;
+}
+
+const char *theron_v1_world_dungeon_text(const Theron_V1_World *world,
+                                          unsigned int text_index)
+{
+    if (!world || text_index >= world->dungeon_text_count) return NULL;
+    return world->dungeon_texts[text_index];
 }

@@ -45325,10 +45325,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_text_decode.
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_text_decode.h")
     add_executable(test_theron_v1_track02_text_decode
         tests/test_theron_v1_track02_text_decode.c
-        src/theron/theron_v1_track02_text_decode.c
-        src/theron/theron_v1_track02_thing_data.c
-        src/theron/theron_v1_track02_dungeon_map.c
     )
+    target_link_libraries(test_theron_v1_track02_text_decode PRIVATE firestaff_theron)
     target_include_directories(test_theron_v1_track02_text_decode PRIVATE
         "${CMAKE_CURRENT_SOURCE_DIR}/include")
     if(NOT MSVC)

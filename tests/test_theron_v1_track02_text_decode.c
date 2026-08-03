@@ -1,6 +1,7 @@
 #include "theron_v1_track02_dungeon_map.h"
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_text_decode.h"
+#include "theron_v1_world.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -125,6 +126,44 @@ int main(void) {
     }
 
     test_all_dungeons(ud, ud_size);
+
+    /* World text loading integration test */
+    {
+        Theron_DungeonData dd;
+        assert(theron_v1_track02_dungeon_map_load(ud, ud_size, 0, &dd));
+        unsigned int total_tiles = 0;
+        uint8_t flat_tiles[8192];
+        unsigned int flat_pos = 0;
+        for (unsigned int m = 0; m < dd.map_count; m++) {
+            unsigned int w = dd.maps[m].header.x_dim + 1u;
+            unsigned int h = dd.maps[m].header.y_dim + 1u;
+            total_tiles += w * h;
+            for (unsigned int x = 0; x < w; x++)
+                for (unsigned int y = 0; y < h; y++)
+                    flat_tiles[flat_pos++] = dd.maps[m].tiles[x][y];
+        }
+        unsigned int gref_count =
+            theron_v1_track02_compute_ground_ref_count(flat_tiles, total_tiles);
+        Theron_ThingData *td = calloc(1, sizeof(Theron_ThingData));
+        assert(td);
+        assert(theron_v1_track02_thing_data_load(
+            ud, ud_size, 0, dd.object_counts, gref_count, td));
+
+        Theron_V1_World *w2 = calloc(1, sizeof(Theron_V1_World));
+        assert(w2);
+        theron_v1_world_init(w2);
+        int count = theron_v1_world_load_dungeon_text(
+            w2, td->text_data, td->text_data_count);
+        assert(count > 0);
+        assert(w2->dungeon_text_count == (unsigned)count);
+        assert(theron_v1_world_dungeon_text(w2, 0) != NULL);
+        assert(strlen(theron_v1_world_dungeon_text(w2, 0)) > 0);
+        assert(theron_v1_world_dungeon_text(w2, (unsigned)count) == NULL);
+        printf("  World text load: %d strings from AKUTUBA\n", count);
+        free(w2);
+        free(td);
+    }
+
     free(ud);
     printf("PASS\n");
     return 0;
