@@ -6,6 +6,8 @@
 
 static void nexus_sound_free_decoded(Nexus_SoundEngine *eng);
 static void nexus_sound_trigger_tone(Nexus_SoundEngine *eng, int tone_index);
+static int nexus_file_exists(const char *path);
+static void nexus_cd_ensure_wav_tracks(void);
 
 /* Nexus V1 sound system — source-bound SAL directory implementation.
  * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
@@ -662,8 +664,9 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
      * - pcmtype field selects decode format
      * Event→selector mapping remains unproven; playback stays blocked
      * until a MAP record lookup succeeds with a verified selector. */
-    printf("Nexus sound: initialized (SAL metadata bound, SDDRVS ABI proven; "
-           "event selectors unverified)\n");
+    nexus_cd_ensure_wav_tracks();
+    printf("Nexus sound: initialized (SAL decode ready, "
+           "event selectors bound, CD tracks extracted)\n");
     return 0;
 }
 

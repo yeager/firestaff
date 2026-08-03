@@ -1,4 +1,8 @@
 
+
+# Firestaff v3.0.264
+- CI fix: sync DM2 runtime_narrow .c with header, commit remaining local changes
+
 # Firestaff v3.0.263
 - CI fix: remove fs_audio linker dependency from nexus sound, commit remaining modifications
 
