@@ -840,7 +840,18 @@ int32_t dm2_v1_engage_command(
 {
     if (!cb || !cb->dispatch)
         return -1;
-    return cb->dispatch(ctx, hero_idx, command_id);
+    if (cb->hero_is_dead && cb->hero_is_dead(ctx, hero_idx))
+        return 0;
+
+    int alt_flag = (command_id & DM2_V1_ENGAGE_CMD_ALT_FLAG) != 0;
+    int raw_cmd = command_id & DM2_V1_ENGAGE_CMD_MASK;
+    int resolved_cmd = cb->set_handcmd_and_resolve
+        ? cb->set_handcmd_and_resolve(ctx, hero_idx, raw_cmd) : raw_cmd;
+
+    if ((uint16_t)(resolved_cmd - DM2_V1_ENGAGE_CMD_MIN) > (DM2_V1_ENGAGE_CMD_MAX - DM2_V1_ENGAGE_CMD_MIN))
+        return 0;
+
+    return cb->dispatch(ctx, hero_idx, resolved_cmd, alt_flag);
 }
 
 /* =====================================================================
@@ -851,148 +862,453 @@ int32_t dm2_v1_wound_creature(
     int creature_idx, DM2_V1_WoundCreatureState *creature, int16_t damage,
     const DM2_V1_WoundCreatureCallbacks *cb, void *ctx)
 {
-    if (!creature || creature->cur_hp <= 0)
+    if (!creature || !cb)
         return 0;
-    int16_t applied = damage;
-    if (applied > creature->cur_hp)
-        applied = creature->cur_hp;
-    creature->cur_hp = (int16_t)(creature->cur_hp - applied);
-    if (creature->cur_hp <= 0) {
-        creature->cur_hp = 0;
-        if (cb && cb->creature_defeated)
-            cb->creature_defeated(ctx, creature_idx);
+    if (creature->defense_type == 0xff)
+        return 0;
+
+    if (!(creature->ai_flags1 & 0x4) && cb->notify_cross_map_wake)
+        cb->notify_cross_map_wake(ctx, creature_idx);
+
+    int16_t hp = (int16_t)(creature->cur_hp - damage);
+    if (hp > 0) {
+        creature->cur_hp = hp;
+        return 0;
     }
-    return applied;
+
+    if ((creature->ai_flags1 & 0x8) && cb->can_creature_die &&
+        !cb->can_creature_die(ctx, creature_idx)) {
+        /* not allowed to die right now: survive at 1 hp */
+        creature->cur_hp = 1;
+        return 0;
+    }
+
+    creature->cur_hp = 0;
+
+    if ((creature->ai_flags1 & 0x8) && cb->set_ai_wander_timeout)
+        cb->set_ai_wander_timeout(ctx, creature_idx, 0xa0);
+
+    if ((creature->ai_flags1 & 0x80) && damage < creature->max_hp) {
+        /* non-lethal in spirit but hp already <=0 here means lethal;
+         * skproject's flee check only applies to non-lethal hits, which
+         * cannot reach this branch, kept for parity documentation. */
+    }
+
+    if (creature->kill_flag & 1) {
+        if (cb->creature_defeated)
+            cb->creature_defeated(ctx, creature_idx);
+        return 1;
+    }
+
+    if (cb->play_death_animation)
+        cb->play_death_animation(ctx, creature_idx);
+    return 0;
 }
 
 int32_t dm2_v1_creature_attacks_player(
-    int creature_idx, int hero_idx, int16_t damage,
+    int creature_idx, int hero_idx,
     const DM2_V1_CreatureAttacksPlayerCallbacks *cb, void *ctx)
 {
     if (!cb)
         return 0;
-    if (!cb->roll_to_hit(ctx, creature_idx, hero_idx))
+
+    DM2_V1_CreatureAttackProfile profile;
+    if (!cb->get_attack_profile || !cb->get_attack_profile(ctx, creature_idx, &profile))
         return 0;
-    cb->wound_player(ctx, hero_idx, damage);
-    return 1;
+
+    int hit = 0;
+    if (profile.is_surprise_attack || profile.attack_type == 8 || profile.attack_type == 9) {
+        hit = 1;
+    } else {
+        int dex = cb->get_hero_dexterity ? cb->get_hero_dexterity(ctx, hero_idx) : 0;
+        int roll = cb->random ? cb->random(ctx, 32) : 0;
+        if (profile.to_hit_base + roll >= dex)
+            hit = 1;
+        else if (cb->hero_use_luck && cb->hero_use_luck(ctx, hero_idx, 100 - dex))
+            hit = 1;
+    }
+    if (!hit)
+        return 0;
+
+    int32_t dmg = profile.max_damage;
+    int r1 = cb->random ? cb->random(ctx, dmg / 2 + 1) : 0;
+    dmg += r1;
+    int r2 = cb->random ? cb->random(ctx, dmg / 2 + 1) : 0;
+    dmg += r2;
+    if (dmg < 1)
+        dmg = 1;
+
+    int16_t applied = cb->wound_player ? cb->wound_player(ctx, hero_idx, (int16_t)dmg) : 0;
+
+    if (cb->queue_hit_noise)
+        cb->queue_hit_noise(ctx, creature_idx, hero_idx, applied);
+
+    if (profile.poison_chance != 0 && cb->hero_resist_poison &&
+        !cb->hero_resist_poison(ctx, hero_idx, profile.poison_chance)) {
+        if (cb->process_poison)
+            cb->process_poison(ctx, hero_idx, profile.poison_chance);
+    }
+
+    if (profile.is_surprise_attack && cb->resume_from_wake)
+        cb->resume_from_wake(ctx);
+
+    return applied;
 }
 
 int32_t dm2_v1_creature_attacks_creature(
-    int attacker_idx, int defender_idx, int16_t damage,
+    int attacker_idx, int16_t target_x, int16_t target_y,
     const DM2_V1_CreatureAttacksCreatureCallbacks *cb, void *ctx)
 {
     if (!cb)
+        return -1;
+
+    int defender_idx = cb->get_creature_at ? cb->get_creature_at(ctx, target_x, target_y) : -1;
+    if (defender_idx < 0)
+        return -1;
+
+    int defense = cb->get_defense ? cb->get_defense(ctx, defender_idx) : 0;
+    if (defense == 0xff)
         return 0;
-    if (!cb->roll_to_hit(ctx, attacker_idx, defender_idx))
+
+    int to_hit = cb->get_to_hit ? cb->get_to_hit(ctx, attacker_idx) : 0;
+    int r1 = cb->random ? cb->random(ctx, 32) : 0;
+    int r2 = cb->random ? cb->random(ctx, 32) : 0;
+    int hit = ((to_hit + r1) >= (defense + r2));
+    if (!hit && cb->rand_dir && cb->rand_dir(ctx) == 0)
+        hit = 1;
+    if (!hit)
         return 0;
-    cb->wound_creature(ctx, defender_idx, damage);
-    return 1;
+
+    int32_t dmg = cb->get_max_damage ? cb->get_max_damage(ctx, attacker_idx) : 0;
+    int rd1 = cb->random ? cb->random(ctx, dmg / 2 + 1) : 0;
+    dmg += rd1;
+    int rd2 = cb->random ? cb->random(ctx, dmg / 2 + 1) : 0;
+    dmg += rd2;
+    if (dmg < 1)
+        dmg = 1;
+
+    if (cb->apply_creature_damage)
+        cb->apply_creature_damage(ctx, attacker_idx, defender_idx, (int16_t)dmg);
+    return dmg;
 }
 
 int32_t dm2_v1_creature_can_handle_it(
-    const DM2_V1_CreatureHandleCaps *caps, int item_class)
+    const DM2_V1_CreatureHandleCaps *caps, uint16_t item, int flags,
+    const DM2_V1_CreatureCanHandleCallbacks *cb, void *ctx)
 {
-    if (!caps || item_class < 0 || item_class >= 32)
+    if (!caps)
         return 0;
+    int item_class = item & 0x3f;
+    if (item_class == 0x3e || item_class == 0x3f)
+        return 0;
+
+    if (item_class == 0x29 && cb && cb->is_container_moneybox &&
+        cb->is_container_moneybox(ctx, item)) {
+        if (cb->moneybox_already_opened && cb->moneybox_already_opened(ctx, item))
+            return (caps->handle_mask & (1u << item_class)) != 0;
+        return (flags & 0x80) != 0;
+    }
+
     return (caps->handle_mask & ((uint32_t)1 << item_class)) != 0;
 }
 
 int32_t dm2_v1_creature_cast_spell(
-    int creature_idx, int spell_id,
-    const DM2_V1_CreatureCastSpellCallbacks *cb, void *ctx)
+    int creature_idx, const DM2_V1_CreatureCastSpellCallbacks *cb, void *ctx)
 {
     if (!cb)
         return 0;
-    cb->cast_spell(ctx, creature_idx, spell_id);
-    return 1;
+
+    DM2_V1_CreatureSpellProfile profile;
+    if (!cb->get_spell_profile || !cb->get_spell_profile(ctx, creature_idx, &profile))
+        return 0;
+
+    int32_t d = profile.base_power / 4 + 1;
+    if (cb->random) {
+        d += cb->random(ctx, d > 0 ? d : 1);
+        d += cb->random(ctx, d > 0 ? d : 1);
+    }
+    if (profile.spell_item == 0 || (profile.spell_item & 1))
+        d *= 4;
+    else
+        d <<= 3;
+    if (d < 4)
+        d = 4;
+    if (d > 255)
+        d = 255;
+
+    int8_t power;
+    if (d >= 32)
+        power = 7;
+    else if (d >= 16)
+        power = 3;
+    else if (d >= 8)
+        power = 2;
+    else
+        power = 1;
+
+    if (cb->shoot_item)
+        cb->shoot_item(ctx, creature_idx, profile.spell_item, profile.direction,
+                        (int8_t)d, profile.speed, power);
+
+    int32_t applied = 0;
+    if (!profile.no_recoil && cb->wound_self) {
+        applied = cb->wound_self(ctx, creature_idx, (int16_t)d);
+    }
+    if (cb->mark_creature_dirty)
+        cb->mark_creature_dirty(ctx, creature_idx);
+    return applied != 0 ? 1 : 0;
 }
 
 int32_t dm2_v1_creature_steal_from_champion(
-    int creature_idx, int hero_idx,
-    const DM2_V1_CreatureStealCallbacks *cb, void *ctx)
+    int creature_idx, const DM2_V1_CreatureStealCallbacks *cb, void *ctx)
 {
     if (!cb)
-        return 0;
-    int32_t slot = cb->pick_random_item_slot(ctx, hero_idx);
-    if (slot < 0)
-        return 0;
-    int32_t item = cb->remove_possession(ctx, hero_idx, slot);
-    if (item < 0)
-        return 0;
-    cb->give_creature_item(ctx, creature_idx, item);
-    return 1;
+        return 1;
+
+    if (cb->same_tile_as_creature && !cb->same_tile_as_creature(ctx, creature_idx))
+        return 1;
+
+    int hero_idx = cb->get_player_at_creature_position
+        ? cb->get_player_at_creature_position(ctx, creature_idx) : -1;
+    if (hero_idx < 0)
+        return 1;
+
+    int dex = cb->get_hero_dexterity ? cb->get_hero_dexterity(ctx, hero_idx) : 0;
+    if (cb->hero_use_luck && cb->hero_use_luck(ctx, hero_idx, 100 - dex))
+        return 1;
+
+    int best_hand = -1;
+    int best_item = -1;
+    int best_weight = -1;
+    for (int hand = 0; hand < 2; hand++) {
+        int item = cb->get_hero_hand_item ? cb->get_hero_hand_item(ctx, hero_idx, hand) : -1;
+        if (item < 0)
+            continue;
+        if (cb->creature_can_handle_it && !cb->creature_can_handle_it(ctx, creature_idx, (uint16_t)item))
+            continue;
+        int weight = cb->get_item_weight ? cb->get_item_weight(ctx, (uint16_t)item) : 0;
+        if (weight > best_weight) {
+            best_weight = weight;
+            best_hand = hand;
+            best_item = item;
+        }
+    }
+    if (best_hand < 0)
+        return 1;
+
+    int32_t taken = cb->remove_possession ? cb->remove_possession(ctx, hero_idx, best_hand) : -1;
+    if (taken < 0)
+        return 1;
+    if (cb->give_creature_item)
+        cb->give_creature_item(ctx, creature_idx, taken);
+
+    if (cb->is_party_surprised && cb->is_party_surprised(ctx)) {
+        if (cb->clear_party_surprised)
+            cb->clear_party_surprised(ctx);
+        if (cb->resume_from_wake)
+            cb->resume_from_wake(ctx);
+    }
+    (void)best_item;
+    return 0;
 }
 
 int32_t dm2_v1_creature_ccm0b(
     int creature_idx, const DM2_V1_CreatureCcm0bCallbacks *cb, void *ctx)
 {
     if (!cb)
-        return -1;
-    return cb->step(ctx, creature_idx);
+        return 1;
+    if (!cb->go_there || cb->go_there(ctx, creature_idx))
+        return 1;
+    if (cb->get_target_tile_kind && cb->get_target_tile_kind(ctx, creature_idx) != 0xb)
+        return 1;
+    if (cb->invoke_message)
+        cb->invoke_message(ctx, creature_idx, 0);
+    return 0;
 }
 
 int32_t dm2_v1_creature_ccm0c(
     int creature_idx, const DM2_V1_CreatureCcm0cCallbacks *cb, void *ctx)
 {
     if (!cb)
-        return -1;
-    return cb->step(ctx, creature_idx);
+        return 1;
+
+    uint8_t phase = cb->get_phase ? cb->get_phase(ctx, creature_idx) : 0;
+    int32_t result = 0;
+
+    if (cb->ccm06)
+        cb->ccm06(ctx, creature_idx);
+
+    if (phase == 0) {
+        if (cb->arm_item_pickup_target)
+            cb->arm_item_pickup_target(ctx, creature_idx);
+    } else {
+        result = cb->takes_item ? cb->takes_item(ctx, creature_idx) : 0;
+    }
+
+    if (cb->advance_phase)
+        cb->advance_phase(ctx, creature_idx);
+    return result;
 }
 
 int32_t dm2_v1_creature_uses_ladder_hole(
-    int creature_idx, int16_t x, int16_t y,
-    const DM2_V1_CreatureUsesLadderHoleCallbacks *cb, void *ctx)
+    int creature_idx, const DM2_V1_CreatureUsesLadderHoleCallbacks *cb, void *ctx)
 {
     if (!cb)
-        return 0;
-    int tile = cb->get_tile_type(ctx, x, y);
-    if (tile <= 0)
-        return 0;
-    int level_delta = (tile == 1) ? 1 : -1;
-    cb->move_creature(ctx, creature_idx, x, y, level_delta);
-    return 1;
+        return 1;
+    if (!cb->go_there || cb->go_there(ctx, creature_idx))
+        return 1;
+    if (cb->get_tile_traversable && !cb->get_tile_traversable(ctx, creature_idx))
+        return 1;
+
+    int kind = cb->get_tile_kind ? cb->get_tile_kind(ctx, creature_idx) : 0;
+    int level = 0;
+    int16_t lx = 0, ly = 0;
+    int dir = 0;
+    int have_landing = 0;
+
+    if (kind == 0x39 || kind == 0x3a) {
+        int going_up = (kind == 0x39);
+        if (cb->find_ladder_landing)
+            have_landing = cb->find_ladder_landing(ctx, creature_idx, going_up,
+                                                    &level, &lx, &ly, &dir);
+        if (!have_landing && cb->rand_dir)
+            dir = cb->rand_dir(ctx);
+    } else if (kind == 0x35 || kind == 0x36) {
+        have_landing = 1;
+    }
+
+    if (cb->is_leaving_pit_tele_tile && cb->is_leaving_pit_tele_tile(ctx, creature_idx)) {
+        if (cb->operate_pit_tele_tile)
+            cb->operate_pit_tele_tile(ctx, lx, ly, 0);
+    }
+
+    if (cb->move_creature_to_level &&
+        cb->move_creature_to_level(ctx, creature_idx, level, lx, ly, dir) != 0)
+        return 1;
+
+    if (cb->reposition_from_landing)
+        cb->reposition_from_landing(ctx, creature_idx);
+    if (cb->operate_pit_tele_tile)
+        cb->operate_pit_tele_tile(ctx, lx, ly, 1);
+    if (cb->decrement_pending_move_counter)
+        cb->decrement_pending_move_counter(ctx, creature_idx);
+    if (cb->mark_creature_dirty)
+        cb->mark_creature_dirty(ctx, creature_idx);
+    (void)have_landing;
+    return 0;
 }
 
-int32_t dm2_v1_creature_walk_now(DM2_V1_CreatureWalkState *state)
+int32_t dm2_v1_creature_walk_now(
+    int creature_idx, const DM2_V1_CreatureWalkNowCallbacks *cb, void *ctx)
 {
-    if (!state || state->speed <= 0)
-        return 0;
-    state->move_counter += state->speed;
-    if (state->move_counter < 256)
-        return 0;
-    state->move_counter -= 256;
-    return 1;
+    if (!cb)
+        return 1;
+
+    if (cb->is_party_on_tile && cb->is_party_on_tile(ctx, creature_idx)) {
+        if (cb->force_attack_pose)
+            cb->force_attack_pose(ctx, creature_idx);
+        if (cb->attacks_party)
+            cb->attacks_party(ctx, creature_idx);
+    }
+
+    if (!cb->go_there || cb->go_there(ctx, creature_idx))
+        return 1;
+    if (cb->get_tile_walkable && !cb->get_tile_walkable(ctx, creature_idx))
+        return 1;
+
+    if (cb->is_leaving_pit_tele_tile && cb->is_leaving_pit_tele_tile(ctx, creature_idx)) {
+        if (cb->operate_pit_tele_tile)
+            cb->operate_pit_tele_tile(ctx, 0, 0, 0);
+    }
+
+    if (cb->move_creature_to_target && cb->move_creature_to_target(ctx, creature_idx) != 0)
+        return 1;
+
+    if (cb->reposition_from_landing)
+        cb->reposition_from_landing(ctx, creature_idx);
+    if (cb->operate_pit_tele_tile)
+        cb->operate_pit_tele_tile(ctx, 0, 0, 1);
+    if (cb->decrement_pending_move_counter)
+        cb->decrement_pending_move_counter(ctx, creature_idx);
+    if (cb->mark_creature_dirty)
+        cb->mark_creature_dirty(ctx, creature_idx);
+    return 0;
 }
 
 int32_t dm2_v1_creature_activates_wall(
-    int16_t x, int16_t y, int dir,
-    const DM2_V1_CreatureActivatesWallCallbacks *cb, void *ctx)
+    int creature_idx, const DM2_V1_CreatureActivatesWallCallbacks *cb, void *ctx)
 {
     if (!cb)
-        return 0;
-    cb->activate_wall_item(ctx, x, y, dir);
-    return 1;
+        return 1;
+    if (!cb->go_there_wall || cb->go_there_wall(ctx, creature_idx))
+        return 1;
+
+    int kind = cb->get_activation_kind ? cb->get_activation_kind(ctx, creature_idx) : 0;
+    int held = cb->get_held_item ? cb->get_held_item(ctx, creature_idx) : -1;
+    int32_t item = held;
+
+    if (!(kind == 2 && held < 0)) {
+        if (held < 0) {
+            item = cb->pick_up_item_for_activation
+                ? cb->pick_up_item_for_activation(ctx, creature_idx) : -1;
+            if (item < 0)
+                return 1;
+        }
+    }
+
+    if (cb->activate_wall_event)
+        cb->activate_wall_event(ctx, creature_idx, item);
+    return 0;
 }
 
 int32_t dm2_v1_place_merchandise(
-    int creature_idx, int16_t x, int16_t y, uint16_t item,
-    const DM2_V1_PlaceMerchandiseCallbacks *cb, void *ctx)
+    int creature_idx, const DM2_V1_PlaceMerchandiseCallbacks *cb, void *ctx)
 {
     if (!cb)
-        return 0;
-    (void)creature_idx;
-    cb->place_item_on_tile(ctx, x, y, item);
-    return 1;
+        return 1;
+    if (!cb->is_merchant || !cb->is_merchant(ctx, creature_idx))
+        return 1;
+
+    int placed_any = 0;
+    for (;;) {
+        int32_t item = cb->next_inventory_item ? cb->next_inventory_item(ctx, creature_idx) : -1;
+        if (item < 0)
+            break;
+        if (cb->is_container_moneybox && cb->is_container_moneybox(ctx, item)) {
+            if (cb->mark_moneybox_opened)
+                cb->mark_moneybox_opened(ctx, item);
+        }
+        if (cb->place_item_on_shop_tile)
+            cb->place_item_on_shop_tile(ctx, creature_idx, item);
+        if (!placed_any && cb->queue_shop_noise)
+            cb->queue_shop_noise(ctx, creature_idx, item);
+        placed_any = 1;
+        if (!cb->bulk_transfer_active || !cb->bulk_transfer_active(ctx, creature_idx))
+            break;
+    }
+    return placed_any ? 0 : 1;
 }
 
 int32_t dm2_v1_take_merchandise(
-    int creature_idx, int16_t x, int16_t y,
-    const DM2_V1_TakeMerchandiseCallbacks *cb, void *ctx)
+    int creature_idx, const DM2_V1_TakeMerchandiseCallbacks *cb, void *ctx)
 {
     if (!cb)
-        return -1;
-    (void)creature_idx;
-    return cb->remove_item_from_tile(ctx, x, y);
+        return 1;
+    if (!cb->is_merchant || !cb->is_merchant(ctx, creature_idx))
+        return 1;
+
+    int taken_any = 0;
+    for (;;) {
+        int32_t item = cb->next_shop_item ? cb->next_shop_item(ctx, creature_idx) : -1;
+        if (item < 0)
+            break;
+        if (cb->take_item_into_inventory)
+            cb->take_item_into_inventory(ctx, creature_idx, item);
+        taken_any = 1;
+        if (!cb->bulk_transfer_active || !cb->bulk_transfer_active(ctx, creature_idx))
+            break;
+    }
+    return taken_any ? 0 : 1;
 }
 
 /* =====================================================================
