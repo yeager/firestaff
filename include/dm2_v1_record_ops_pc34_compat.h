@@ -56,18 +56,27 @@ int16_t dm2_v1_get_wall_tile_any_takeable_item_record(
     const DM2_V1_TileRecordWalkCallbacks *cb, void *ctx);
 
 /* ---- DM2_GET_WALL_DECORATION_OF_ACTUATOR (c_record.cpp:1261) ----
- * Extract wall decoration index from actuator record byte layout.
- * Returns 0xFF if no decoration. */
+ * Extract wall decoration from actuator record: word@4 >> 12 gives the
+ * 1-based decoration index into the map's decoration table (looked up via
+ * mapdat.map/ddat.v1e03c0 structure). Returns 0xFF if index is 0.
+ * The lookup_decoration callback encapsulates the map-relative table
+ * addressing: (wall variant) reads ddat.v1e03c0 word@0xC >> 12 << 8,
+ * offsets into mapdat.map, and returns the byte at [base + index - 1]. */
+typedef struct {
+    uint8_t (*lookup_wall_decoration)(void *ctx, int16_t index);
+    uint8_t (*lookup_floor_decoration)(void *ctx, int16_t index);
+} DM2_V1_DecorationLookupCallbacks;
+
 uint8_t dm2_v1_get_wall_decoration_of_actuator(
     const uint8_t *actuator_record,
-    const uint8_t *decoration_table, int decoration_table_size);
+    const DM2_V1_DecorationLookupCallbacks *cb, void *ctx);
 
 /* ---- DM2_GET_FLOOR_DECORATION_OF_ACTUATOR (c_record.cpp:1288) ----
- * Extract floor decoration index from actuator record byte layout.
- * Returns 0xFF if no decoration. */
+ * Same structure as wall variant but uses word@0xA & 0xF from
+ * ddat.v1e03c0 for the floor-specific base offset. */
 uint8_t dm2_v1_get_floor_decoration_of_actuator(
     const uint8_t *actuator_record,
-    const uint8_t *decoration_table, int decoration_table_size);
+    const DM2_V1_DecorationLookupCallbacks *cb, void *ctx);
 
 /* ---- DM2_075f_056c (c_record.cpp:1870) ----
  * If record is missile (type 0xE), delete its timer. */

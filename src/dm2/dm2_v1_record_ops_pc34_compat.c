@@ -59,32 +59,32 @@ int16_t dm2_v1_get_wall_tile_any_takeable_item_record(
 
 uint8_t dm2_v1_get_wall_decoration_of_actuator(
     const uint8_t *actuator_record,
-    const uint8_t *decoration_table, int decoration_table_size)
+    const DM2_V1_DecorationLookupCallbacks *cb, void *ctx)
 {
     if (!actuator_record)
         return 0xFF;
-    uint8_t deco_count = (actuator_record[4] >> 4) & 0xF;
-    if (deco_count == 0)
+    uint16_t w4 = (uint16_t)(actuator_record[4] | (actuator_record[5] << 8));
+    int16_t index = (int16_t)(w4 >> 12);
+    if (index == 0)
         return 0xFF;
-    int idx = deco_count - 1;
-    if (!decoration_table || idx >= decoration_table_size)
+    if (!cb || !cb->lookup_wall_decoration)
         return 0xFF;
-    return decoration_table[idx];
+    return cb->lookup_wall_decoration(ctx, index);
 }
 
 uint8_t dm2_v1_get_floor_decoration_of_actuator(
     const uint8_t *actuator_record,
-    const uint8_t *decoration_table, int decoration_table_size)
+    const DM2_V1_DecorationLookupCallbacks *cb, void *ctx)
 {
     if (!actuator_record)
         return 0xFF;
-    uint8_t deco_count = (actuator_record[4] >> 4) & 0xF;
-    if (deco_count == 0)
+    uint16_t w4 = (uint16_t)(actuator_record[4] | (actuator_record[5] << 8));
+    int16_t index = (int16_t)(w4 >> 12);
+    if (index == 0)
         return 0xFF;
-    int idx = deco_count - 1;
-    if (!decoration_table || idx >= decoration_table_size)
+    if (!cb || !cb->lookup_floor_decoration)
         return 0xFF;
-    return decoration_table[idx];
+    return cb->lookup_floor_decoration(ctx, index);
 }
 
 int dm2_v1_missile_timer_cleanup(

@@ -77,15 +77,23 @@ static void test_get_wall_tile_any_takeable_item(void)
     printf("  PASS: get_wall_tile_any_takeable_item_record\n");
 }
 
+static uint8_t g_wall_deco_table[4] = {10, 20, 30, 40};
+static uint8_t g_floor_deco_table[2] = {55, 66};
+
+static uint8_t mock_lookup_wall(void *ctx, int16_t index)
+{ (void)ctx; return g_wall_deco_table[index]; }
+static uint8_t mock_lookup_floor(void *ctx, int16_t index)
+{ (void)ctx; return g_floor_deco_table[index]; }
+
 static void test_wall_decoration(void)
 {
     uint8_t act[8] = {0};
-    act[4] = 0x30; /* deco_count = 3 */
-    uint8_t table[4] = {10, 20, 30, 40};
-    assert(dm2_v1_get_wall_decoration_of_actuator(act, table, 4) == 30);
+    act[4] = 0x30; /* deco_count = 3, index bits[15:12] */
+    DM2_V1_DecorationLookupCallbacks dcb = { mock_lookup_wall, mock_lookup_floor };
+    assert(dm2_v1_get_wall_decoration_of_actuator(act, &dcb, NULL) == 30);
     act[4] = 0x00; /* no decoration */
-    assert(dm2_v1_get_wall_decoration_of_actuator(act, table, 4) == 0xFF);
-    assert(dm2_v1_get_wall_decoration_of_actuator(NULL, table, 4) == 0xFF);
+    assert(dm2_v1_get_wall_decoration_of_actuator(act, &dcb, NULL) == 0xFF);
+    assert(dm2_v1_get_wall_decoration_of_actuator(NULL, &dcb, NULL) == 0xFF);
     printf("  PASS: wall_decoration\n");
 }
 
@@ -93,8 +101,8 @@ static void test_floor_decoration(void)
 {
     uint8_t act[8] = {0};
     act[4] = 0x10; /* deco_count = 1 */
-    uint8_t table[2] = {55, 66};
-    assert(dm2_v1_get_floor_decoration_of_actuator(act, table, 2) == 55);
+    DM2_V1_DecorationLookupCallbacks dcb = { mock_lookup_wall, mock_lookup_floor };
+    assert(dm2_v1_get_floor_decoration_of_actuator(act, &dcb, NULL) == 55);
     printf("  PASS: floor_decoration\n");
 }
 

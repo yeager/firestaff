@@ -47,13 +47,33 @@ static void test_poison_zero_amount(void)
     printf("  PASS: poison_zero_amount\n");
 }
 
+static int g_confuse_attacked = 0;
+static uint8_t g_confuse_record[32];
+
+static uint8_t *cc_get_record(void *ctx, uint16_t record)
+{ (void)ctx; (void)record; return g_confuse_record; }
+static uint8_t cc_get_ctype(void *ctx, uint16_t record)
+{ (void)ctx; (void)record; return 0; }
+static uint16_t cc_query_resist(void *ctx, uint8_t ct)
+{ (void)ctx; (void)ct; return 2; }
+static int16_t cc_rand16(void *ctx, int16_t max)
+{ (void)ctx; (void)max; return 5; }
+static void cc_attack(void *ctx, uint16_t t, int16_t x, int16_t y,
+                       int16_t at, int16_t s, int32_t d)
+{ (void)ctx; (void)t; (void)x; (void)y; (void)at; (void)s; (void)d; g_confuse_attacked = 1; }
+
 static void test_confuse_creature(void)
 {
-    uint8_t creature[32];
-    memset(creature, 0, sizeof(creature));
-    assert(dm2_v1_confuse_creature(creature) == 1);
-    assert((creature[0x11] & 0x04) != 0);
-    assert(dm2_v1_confuse_creature(NULL) == 0);
+    memset(g_confuse_record, 0, sizeof(g_confuse_record));
+    DM2_V1_ConfuseCreatureCallbacks cb = {
+        0x1234, cc_get_record, cc_get_ctype, cc_query_resist, cc_rand16, cc_attack
+    };
+    g_confuse_attacked = 0;
+    int result = dm2_v1_confuse_creature(10, 3, 4, 100, &cb, NULL);
+    assert(result == 1);
+    assert(g_confuse_attacked == 1);
+
+    assert(dm2_v1_confuse_creature(10, 0, 0, 0, NULL, NULL) == 0);
     printf("  PASS: confuse_creature\n");
 }
 
@@ -84,7 +104,7 @@ static void test_creature_can_handle_item_in(void)
 static void test_null_safety(void)
 {
     assert(dm2_v1_apply_creature_poison_resistance(0, 5, NULL, NULL) == 0);
-    assert(dm2_v1_confuse_creature(NULL) == 0);
+    assert(dm2_v1_confuse_creature(10, 0, 0, 0, NULL, NULL) == 0);
     dm2_v1_rotate_creature(0, 0, 0, NULL, NULL);
     printf("  PASS: null_safety\n");
 }

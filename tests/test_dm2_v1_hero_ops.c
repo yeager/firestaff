@@ -95,6 +95,10 @@ static int g_delete_count;
 static int mock_timer_count(void *ctx) { (void)ctx; return g_timer_count; }
 static uint8_t mock_timer_type(void *ctx, int i) { (void)ctx; return g_timer_types[i]; }
 static uint8_t mock_timer_actor(void *ctx, int i) { (void)ctx; return g_timer_actors[i]; }
+static int16_t g_timer_values[8];
+
+static int16_t mock_timer_value(void *ctx, int i) { (void)ctx; return g_timer_values[i]; }
+static void mock_set_timer_value(void *ctx, int i, int16_t v) { (void)ctx; g_timer_values[i] = v; }
 static void mock_delete_timer(void *ctx, int i)
 {
     (void)ctx;
@@ -112,15 +116,21 @@ static void test_cure_poison(void)
     g_timer_count = 4;
     g_delete_count = 0;
 
+    g_timer_values[1] = 5;
+    g_timer_values[3] = 3;
     DM2_V1_CurePoisonCallbacks cb = {
         mock_timer_count, mock_timer_type, mock_timer_actor,
+        mock_timer_value, mock_set_timer_value,
         mock_delete_timer, mock_get_hero
     };
-    assert(dm2_v1_cure_poison(2, &cb, NULL) == 1);
+    assert(dm2_v1_cure_poison(2, 10, &cb, NULL) == 1);
     assert(g_heroes[2].poison_value == 0);
     assert(g_delete_count == 2);
     printf("  PASS: cure_poison\n");
 }
+
+static int mock_is_last_hero(void *ctx, int hero_idx)
+{ (void)ctx; (void)hero_idx; return 0; }
 
 static void test_process_poison(void)
 {
@@ -128,13 +138,10 @@ static void test_process_poison(void)
     g_wound_hero = -1;
     g_poison_hero = -1;
     DM2_V1_ProcessPoisonCallbacks cb = {
-        mock_get_hero, mock_wound, mock_adjust_stam, mock_queue_poison
+        mock_get_hero, mock_is_last_hero, mock_wound, mock_queue_poison
     };
     assert(dm2_v1_process_poison(0, 3, &cb, NULL) == 1);
     assert(g_wound_hero == 0);
-    assert(g_stam_hero == 0);
-    assert(g_stam_amt == 48); /* 3 << 4 */
-    assert(g_heroes[0].cur_water == 900);
     assert(g_poison_hero == 0);
     assert(g_poison_counters == 2);
     assert(g_poison_delay == 0x24);
@@ -145,7 +152,7 @@ static void test_process_poison_last_tick(void)
 {
     reset_heroes();
     DM2_V1_ProcessPoisonCallbacks cb = {
-        mock_get_hero, mock_wound, mock_adjust_stam, mock_queue_poison
+        mock_get_hero, mock_is_last_hero, mock_wound, mock_queue_poison
     };
     g_poison_hero = -1;
     assert(dm2_v1_process_poison(0, 1, &cb, NULL) == 1);
@@ -187,9 +194,9 @@ static void test_set_spelling_champion(void)
 {
     int16_t spelling = -1;
     DM2_V1_SpellingState state = { &spelling };
-    dm2_v1_set_spelling_champion(&state, 2);
+    dm2_v1_set_spelling_champion(&state, 2, NULL, NULL);
     assert(spelling == 2);
-    dm2_v1_set_spelling_champion(&state, -1);
+    dm2_v1_set_spelling_champion(&state, -1, NULL, NULL);
     assert(spelling == -1);
     printf("  PASS: set_spelling_champion\n");
 }

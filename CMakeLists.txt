@@ -3883,7 +3883,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.265 LANGUAGES C)
+project(Firestaff VERSION 3.0.266 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -4331,7 +4331,7 @@ endif()
 
 # ── Theron V1 static library ─────────────────────────────────────────
 file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/theron/theron_v2_*.c" "src/theron/theron_v22_*.c")
-list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_compat\\.c$")
+# theron_v1_compat.c is now required by theron_v1_world.c (creature_at, creature_spawn)
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_combat_runtime_noop\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shape_cache_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shapes\\.c$")

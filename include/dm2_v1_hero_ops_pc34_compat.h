@@ -65,18 +65,23 @@ int16_t dm2_v1_adjust_stamina(
     int hero_idx, int16_t stamina_cost,
     const DM2_V1_StaminaCallbacks *cb, void *ctx);
 
-/* ---- DM2_CURE_POISON (c_hero.cpp:2580, SkWinCore2.cpp:455) ----
- * Removes all poison timers for a hero and zeroes poison value. */
+/* ---- DM2_CURE_POISON (c_hero.cpp:2580) ----
+ * Partial poison cure: walks poison timers (type 0x4B) for the hero,
+ * subtracting cure_amount from timer counters until exhausted. Reduces
+ * hero->poison proportionally, deletes fully cured timers, decrements
+ * hero->poisoned count. Stops when all cure is applied or no more timers. */
 typedef struct {
     int (*get_timer_count)(void *ctx);
     uint8_t (*get_timer_type)(void *ctx, int timer_idx);
     uint8_t (*get_timer_actor)(void *ctx, int timer_idx);
+    int16_t (*get_timer_value)(void *ctx, int timer_idx);
+    void (*set_timer_value)(void *ctx, int timer_idx, int16_t value);
     void (*delete_timer)(void *ctx, int timer_idx);
     DM2_V1_HeroState *(*get_hero)(void *ctx, int hero_idx);
 } DM2_V1_CurePoisonCallbacks;
 
 int dm2_v1_cure_poison(
-    int hero_idx,
+    int hero_idx, int16_t cure_amount,
     const DM2_V1_CurePoisonCallbacks *cb, void *ctx);
 
 /* ---- CURE_PLAGUE (SkWinCore2.cpp:455) ----
@@ -113,11 +118,26 @@ int dm2_v1_take_coin_from_wallet(int16_t *wallet, int wallet_size,
                                   int16_t coin_type);
 
 /* ---- DM2_PERFORM_TURN_SQUAD (c_hero.cpp:2887) ----
- * Rotate entire party's positions by delta (+1 or -1).
- * Updates each hero's party_pos. */
+ * Turn the party: sets ddat.v1e0488, calls RESET_SQUAD_DIR (set all
+ * heroes' absdir to ddat.v1e0258), checks tile type for stairs (type 3
+ * → move_12b4_00af) or teleporter (→ map_3BF83), otherwise does
+ * moverec_3CE7D + party.rotate + moverec_3CE7D. Delta: 1 = right turn
+ * (rotation +3), 2 = about-face (rotation +1). */
 typedef struct {
     int hero_count;
     DM2_V1_HeroState *(*get_hero)(void *ctx, int hero_idx);
+    void (*reset_squad_dir)(void *ctx);
+    uint8_t (*get_tile_value)(void *ctx, int16_t x, int16_t y);
+    int (*get_teleporter_detail)(void *ctx, int16_t x, int16_t y,
+                                  uint8_t *out_b1, uint8_t *out_b2,
+                                  uint8_t *out_b3, uint8_t *out_b4);
+    void (*move_stairs)(void *ctx, int stair_flag);
+    void (*map_teleport)(void *ctx, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b1);
+    void (*moverec)(void *ctx, int16_t x, int16_t y, int16_t dir, int a, int b, int c);
+    void (*rotate_party)(void *ctx, int16_t new_dir);
+    int16_t party_x;
+    int16_t party_y;
+    int16_t party_dir;
 } DM2_V1_SquadCallbacks;
 
 void dm2_v1_perform_turn_squad(
@@ -125,12 +145,21 @@ void dm2_v1_perform_turn_squad(
     const DM2_V1_SquadCallbacks *cb, void *ctx);
 
 /* ---- DM2_SET_SPELLING_CHAMPION (c_hero.cpp:2971) ----
- * Set which hero is currently casting spells. -1 = none. */
+ * Activate spell casting for a hero: checks curHP != 0, sets
+ * curactmode=2, curacthero=hero_idx+1, recomputes squad position,
+ * updates right panel. */
 typedef struct {
-    int16_t *spelling_champion;
+    int16_t *spelling_champion;  /* party.curacthero */
+    int16_t curactmode;
+    int16_t spell_active;        /* ddat.v1e0b6c */
+    int16_t spell_symbol_count;  /* ddat.v1e0b62 */
+    void (*update_panel)(void *panel_ctx, int mode);
+    void *panel_ctx;
 } DM2_V1_SpellingState;
 
-void dm2_v1_set_spelling_champion(DM2_V1_SpellingState *state, int hero_idx);
+void dm2_v1_set_spelling_champion(
+    DM2_V1_SpellingState *state, int hero_idx,
+    const DM2_V1_SquadCallbacks *cb, void *ctx);
 
 /* ---- DM2_PROCEED_ENCHANTMENT_SELF (c_hero.cpp:724) ----
  * Apply self-targeted enchantment to party heroes.

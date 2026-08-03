@@ -35,22 +35,35 @@ int16_t dm2_v1_adjust_stamina(
 }
 
 int dm2_v1_cure_poison(
-    int hero_idx,
+    int hero_idx, int16_t cure_amount,
     const DM2_V1_CurePoisonCallbacks *cb, void *ctx)
 {
     if (!cb || hero_idx == -1)
         return 0;
-    int count = cb->get_timer_count(ctx);
-    for (int i = count - 1; i >= 0; i--) {
-        if (cb->get_timer_type(ctx, i) == 0x4B) {
-            if (cb->get_timer_actor(ctx, i) == (uint8_t)hero_idx) {
-                cb->delete_timer(ctx, i);
-            }
-        }
-    }
     DM2_V1_HeroState *hero = cb->get_hero(ctx, hero_idx);
-    if (hero)
-        hero->poison_value = 0;
+    if (!hero)
+        return 0;
+    int count = cb->get_timer_count(ctx);
+    for (int i = 0; i < count; i++) {
+        if (cb->get_timer_type(ctx, i) != 0x4B)
+            continue;
+        if (cb->get_timer_actor(ctx, i) != (uint8_t)hero_idx)
+            continue;
+        int16_t timer_counter = cb->get_timer_value(ctx, i);
+        if (cure_amount < timer_counter) {
+            cb->set_timer_value(ctx, i, (int16_t)(timer_counter - cure_amount));
+            hero->poison_value = (int16_t)(hero->poison_value - cure_amount);
+            return 1;
+        }
+        cure_amount = (int16_t)(cure_amount - timer_counter);
+        hero->poison_value = (int16_t)(hero->poison_value - timer_counter);
+        cb->delete_timer(ctx, i);
+        hero->poisoned_count--;
+        if (hero->poisoned_count == 0)
+            return 1;
+        if (cure_amount <= 0)
+            return 1;
+    }
     return 1;
 }
 
@@ -129,21 +142,50 @@ void dm2_v1_perform_turn_squad(
     int delta,
     const DM2_V1_SquadCallbacks *cb, void *ctx)
 {
-    if (!cb)
+    if (!cb || delta == 0)
         return;
-    for (int i = 0; i < cb->hero_count; i++) {
-        DM2_V1_HeroState *hero = cb->get_hero(ctx, i);
-        if (!hero)
-            continue;
-        hero->party_pos = (uint8_t)((hero->party_pos + delta) & 0x3);
+    cb->reset_squad_dir(ctx);
+    uint8_t tile_val = cb->get_tile_value(ctx, cb->party_x, cb->party_y);
+    uint8_t tile_type = (tile_val >> 5) & 0x7;
+    if (tile_type == 3) {
+        int stair_flag = tile_val & 0x4;
+        cb->move_stairs(ctx, stair_flag);
+        return;
     }
+    uint8_t b1, b2, b3, b4;
+    if (cb->get_teleporter_detail(ctx, cb->party_x, cb->party_y,
+                                   &b1, &b2, &b3, &b4)) {
+        cb->map_teleport(ctx, b2, b3, b4, b1);
+        return;
+    }
+    cb->moverec(ctx, cb->party_x, cb->party_y, -1, 1, 0, 0);
+    int16_t rotation;
+    if (delta != 2)
+        rotation = 3;
+    else
+        rotation = 1;
+    int16_t new_dir = (int16_t)((rotation + cb->party_dir) & 0x3);
+    cb->rotate_party(ctx, new_dir);
+    cb->moverec(ctx, cb->party_x, cb->party_y, -1, 1, 1, 0);
 }
 
-void dm2_v1_set_spelling_champion(DM2_V1_SpellingState *state, int hero_idx)
+void dm2_v1_set_spelling_champion(
+    DM2_V1_SpellingState *state, int hero_idx,
+    const DM2_V1_SquadCallbacks *cb, void *ctx)
 {
-    if (!state)
+    if (!state || !cb)
         return;
-    *state->spelling_champion = (int16_t)hero_idx;
+    DM2_V1_HeroState *hero = cb->get_hero(ctx, hero_idx);
+    if (!hero || hero->cur_hp == 0)
+        return;
+    *state->spelling_champion = (int16_t)(hero_idx + 1);
+    state->curactmode = 2;
+    state->spell_active = 1;
+    state->spell_symbol_count = 0;
+    if (cb->rotate_party)
+        cb->rotate_party(ctx, -1);
+    if (state->update_panel)
+        state->update_panel(state->panel_ctx, 0);
 }
 
 void dm2_v1_proceed_enchantment_self(
@@ -163,10 +205,8 @@ void dm2_v1_proceed_enchantment_self(
         DM2_V1_HeroState *hero = cb->get_hero(ctx, i);
         if (!hero)
             continue;
-        if (hero->cur_hp == 0) {
+        if (hero->cur_hp == 0)
             mask &= ~hero_bit;
-            continue;
-        }
         if (aura_type != hero->ench_aura || hero->cur_hp == 0) {
             hero->ench_power = 0;
             int timer_count = cb->get_timer_count(ctx);
