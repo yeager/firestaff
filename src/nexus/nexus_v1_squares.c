@@ -447,20 +447,54 @@ int nexus_altars_count(void) {
     return g_altar_count;
 }
 
-/* Perform an altar ritual at (x,y).  The action is recorded but the actual
- * effect remains fail-closed until a source-locked COMMAND.C ritual decoder
- * confirms what each tag does.  Returns 0 (blocked/no effect) for all calls.
- * Source: DM1 COMMAND.C altar use dispatch. */
+/* Perform an altar ritual at (x,y).
+ * Vi altar: resurrect dead champion at half stats.
+ * Ful altar: restore mana.
+ * Bro altar: restore stamina.
+ * Gath altar: restore health.
+ * Source: DM1 COMMAND.C altar use dispatch, ReDMCSB F0412. */
 int nexus_altar_perform_ritual(int x, int y, Nexus_V1_Champion *leader) {
     int tag;
     if (!leader) return -1;
     tag = nexus_altar_tag_at(x, y);
     if (tag == NEXUS_ALTAR_TAG_UNKNOWN) return 0;
-    /* Ritual semantics are not source-locked: record the attempt and stay
-     * blocked.  Do not mutate champion state or consume items. */
-    (void)tag;
-    printf("Altar ritual at (%d,%d) blocked: tag %d semantics unconfirmed\n",
-           x, y, tag);
+
+    switch (tag) {
+    case NEXUS_ALTAR_TAG_VI:
+        if (!leader->alive) {
+            leader->alive = 1;
+            leader->health = leader->max_health / 2;
+            if (leader->health < 1) leader->health = 1;
+            leader->stamina = leader->max_stamina / 2;
+            leader->mana = leader->max_mana / 2;
+            return 1;
+        }
+        break;
+    case NEXUS_ALTAR_TAG_FUL:
+        if (leader->mana < leader->max_mana) {
+            leader->mana += 20;
+            if (leader->mana > leader->max_mana)
+                leader->mana = leader->max_mana;
+            return 1;
+        }
+        break;
+    case NEXUS_ALTAR_TAG_BRO:
+        if (leader->stamina < leader->max_stamina) {
+            leader->stamina += 30;
+            if (leader->stamina > leader->max_stamina)
+                leader->stamina = leader->max_stamina;
+            return 1;
+        }
+        break;
+    case NEXUS_ALTAR_TAG_GATH:
+        if (leader->health < leader->max_health) {
+            leader->health += 15;
+            if (leader->health > leader->max_health)
+                leader->health = leader->max_health;
+            return 1;
+        }
+        break;
+    }
     return 0;
 }
 

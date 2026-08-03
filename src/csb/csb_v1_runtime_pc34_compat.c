@@ -18786,10 +18786,12 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     int i;
 
     if (!profile || !source_queue || !event_indices || event_count < 0) return;
-    /* ReDMCSB TIMELINE.C F0261: dispatches corridor, wall, projectile,
-     * explosion, door, fakewall, teleporter, pit, group generator/behavior/
-     * movement, creature aspect/attack, and poison events. CSB extended DSA
-     * timeline integration remains separate work. */
+    /* ReDMCSB TIMELINE.C F0261: dispatches all standard event types including
+     * spell buff expiry (C70-C79), champion action/damage display (C11/C12),
+     * resurrection (C13), queued sounds (C20), group reactions (C29-C31),
+     * group/creature aspect and behavior (C32-C41), and movement (C60/C61).
+     * CSBWin DSA custom-dungeon timeline extensions go through the DSA filter
+     * stack, not this path. */
     for (i = 0; i < profile->last_timeline_dispatch.count && i < event_count;
          ++i) {
         const struct DM1_DispatchRecord_V1 *record =
@@ -27411,9 +27413,9 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         /* CSBWin CSBCode.cpp:6429 dispatches TT_1 to Timer.cpp:1224-1341.
          * Retain ProcessTT_1's collision-free state step and its exact
          * +1-tick successor through Timer.cpp's DeleteTimer/SetTimer pool
-         * transaction. Party
-         * damage, material-group damage, and QueueSound need source state
-         * not present in this profile, so those shapes remain fail-closed. */
+         * transaction. Party damage and crush sound are now applied when
+         * the party stands on a closing door. Material-group damage remains
+         * fail-closed: it needs the full creature damage/reaction path. */
         if (timer->valid && !timer->truncated &&
             timer->source_index == timer_index &&
             record->eventType == timer->function &&
@@ -27439,8 +27441,49 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
             if (timer->ubyte9 == 1u && door_state != 0 &&
                 profile->current_level == record->mapIndex &&
                 profile->party_x == record->mapX &&
-                profile->party_y == record->mapY) {
-                return 1;
+                profile->party_y == record->mapY &&
+                profile->party_state_valid &&
+                profile->party_state.ChampionCount > 0) {
+                int ci;
+                struct RngState_Compat crush_rng;
+                F0730_COMBAT_RngInit_Compat(&crush_rng,
+                    profile->dungeon_seed ^ profile->game_time ^
+                    (uint32_t)record->mapX ^
+                    ((uint32_t)record->mapY << 8));
+                for (ci = 0; ci < profile->party_state.ChampionCount &&
+                             ci < CSB_V1_MAX_CHAMPIONS; ++ci) {
+                    CSB_V1_Champion *ch =
+                        &profile->party_state.Champions[ci];
+                    struct CombatantChampionSnapshot_Compat def;
+                    int sc = 0;
+                    if (ch->CurrentHealth <= 0 ||
+                        (ch->Attributes &
+                         CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0)
+                        continue;
+                    if (!csb_v1_runtime_fill_defender_combat_snapshot(
+                            profile, ci, &def) ||
+                        !F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
+                            COMBAT_ATTACK_SHARP, 5, 0x3Fu, &def,
+                            &crush_rng, &sc, NULL) ||
+                        sc <= 0)
+                        continue;
+                    if (sc >= ch->CurrentHealth) {
+                        ch->CurrentHealth = 0;
+                        csb_v1_runtime_mark_champion_dead(profile, ci);
+                    } else {
+                        ch->CurrentHealth =
+                            (int16_t)(ch->CurrentHealth - sc);
+                    }
+                }
+                {
+                    CsbV1AudioRequest cs;
+                    memset(&cs, 0, sizeof(cs));
+                    cs.soundIndex = 18;
+                    cs.mapX = (int16_t)record->mapX;
+                    cs.mapY = (int16_t)record->mapY;
+                    cs.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+                    (void)csb_v1_runtime_request_source_sound(profile, &cs);
+                }
             }
             thing = csb_v1_dungeon_get_first_thing(
                 profile->dungeon_handle, record->mapIndex, record->mapX,
@@ -27697,11 +27740,9 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         CSB_V1_Champion *champion;
 
         /* ReDMCSB TIMELINE.C F0253 lines 1574-1612 and CSBWin
-         * CSBCode.cpp:6457-6466/Timer.cpp:2591-2642 own TT_11. Retain only
-         * the saved no-rearm, non-SHOOT receipt: F0253 clears the action
-         * lock, clears the stored action defense, and resets ActionIndex.
-         * Ammunition selection and CSBWin's TAG0115ee branch have no complete
-         * save-owned inventory handoff here, so they remain fail-closed. */
+         * CSBCode.cpp:6457-6466/Timer.cpp:2591-2642 own TT_11. F0253 clears
+         * the action lock, clears the stored action defense, resets
+         * ActionIndex, and (for SHOOT) refills ready hand from quiver. */
         if (timer->valid && !timer->truncated &&
             timer->source_index == timer_index &&
             record->eventType == timer->function &&
@@ -27716,12 +27757,16 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
             timer->ubyte5 < (uint8_t)profile->party_state.ChampionCount &&
             timer->ubyte5 < CSB_V1_MAX_CHAMPIONS) {
             champion = &profile->party_state.Champions[timer->ubyte5];
-            if (champion->ActionIndex != 32u) { /* CSBWin atk_SHOOT. */
-                champion->EnableActionEventIndex = -1;
-                champion->Attributes &= (uint16_t)~0x0008u;
-                champion->CsbWinWord64 = 0;
-                champion->ActionIndex = CSB_V1_ACTION_NONE;
+            if (champion->ActionIndex == 32u) {
+                /* ReDMCSB TIMELINE.C F0253 lines ~1597-1607: SHOOT path
+                 * refills ready hand from quiver before clearing action. */
+                (void)csb_v1_runtime_refill_ready_hand_after_shoot(
+                    profile, (int)timer->ubyte5, NULL, NULL);
             }
+            champion->EnableActionEventIndex = -1;
+            champion->Attributes &= (uint16_t)~0x0008u;
+            champion->CsbWinWord64 = 0;
+            champion->ActionIndex = CSB_V1_ACTION_NONE;
         }
         /* Function 11 aliases the shared action-enable event. A malformed
          * restored TT_11 must not reach that generic path on a later pass. */

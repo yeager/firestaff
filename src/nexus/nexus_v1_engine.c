@@ -2659,6 +2659,7 @@ static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
     case NEXUS_OP_END_GAME:
         engine->mechanics->game_over = 1;
         engine->mechanics->game_over_reason = 1;
+        nexus_v1_gameover_victory(&engine->gameover);
         break;
     default:
         break;
@@ -9924,7 +9925,22 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
         int ci;
         nexus_v1_rest_tick(&engine->rest, &engine->champions);
         nexus_v1_hunger_tick(&engine->hunger, &engine->champions);
-        nexus_v1_spawners_tick(&engine->spawners, NULL, 0);
+        {
+            Nexus_SpawnEvent spawn_events[8];
+            int nspawn = nexus_v1_spawners_tick(&engine->spawners,
+                spawn_events, 8);
+            int si;
+            for (si = 0; si < nspawn; si++) {
+                int cr = nexus_v1_creature_spawn_on_level(
+                    &engine->creatures,
+                    spawn_events[si].creature_type,
+                    spawn_events[si].x, spawn_events[si].y,
+                    0, spawn_events[si].level);
+                if (cr >= 0)
+                    engine->spawners.spawners[spawn_events[si].spawner_index]
+                        .spawned_creature = cr;
+            }
+        }
         nexus_v1_action_timers_tick(&engine->action_timers);
         nexus_v1_door_tick(&engine->doors);
         nexus_v1_trap_tick(&engine->traps);
@@ -10057,6 +10073,8 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                     }
                     nexus_script_on_creature_dead(&engine->script_vm,
                         cr->type_index);
+                    nexus_v1_spawner_on_creature_death(&engine->spawners,
+                        ci3);
                     cr->type_index = -2;
                 }
             }

@@ -30,6 +30,38 @@ target_include_directories(test_nexus_v1_champion_plrd PRIVATE
 target_link_libraries(test_nexus_v1_champion_plrd PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_champion_plrd COMMAND test_nexus_v1_champion_plrd)
 
+add_executable(test_nexus_v1_sound_gameplay
+    tests/test_nexus_v1_sound_gameplay.c)
+target_include_directories(test_nexus_v1_sound_gameplay PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_sound_gameplay PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_sound_gameplay COMMAND test_nexus_v1_sound_gameplay)
+set_tests_properties(nexus_v1_sound_gameplay PROPERTIES LABELS "nexus;audio;tier4")
+
+add_executable(test_nexus_v1_creatures_gameplay
+    tests/test_nexus_v1_creatures_gameplay.c)
+target_include_directories(test_nexus_v1_creatures_gameplay PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_creatures_gameplay PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_creatures_gameplay COMMAND test_nexus_v1_creatures_gameplay)
+set_tests_properties(nexus_v1_creatures_gameplay PROPERTIES LABELS "nexus;creature;tier4")
+
+add_executable(test_nexus_v1_movement_gameplay
+    tests/test_nexus_v1_movement_gameplay.c)
+target_include_directories(test_nexus_v1_movement_gameplay PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_movement_gameplay PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_movement_gameplay COMMAND test_nexus_v1_movement_gameplay)
+set_tests_properties(nexus_v1_movement_gameplay PROPERTIES LABELS "nexus;movement;tier4")
+
+add_executable(test_nexus_v1_inventory_gameplay
+    tests/test_nexus_v1_inventory_gameplay.c)
+target_include_directories(test_nexus_v1_inventory_gameplay PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_inventory_gameplay PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_inventory_gameplay COMMAND test_nexus_v1_inventory_gameplay)
+set_tests_properties(nexus_v1_inventory_gameplay PROPERTIES LABELS "nexus;inventory;tier4")
+
 add_executable(test_nexus_v1_combat
     tests/test_nexus_v1_combat.c)
 target_include_directories(test_nexus_v1_combat PRIVATE
@@ -3883,7 +3915,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.270 LANGUAGES C)
+project(Firestaff VERSION 3.0.271 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -4346,6 +4378,11 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_viewport\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v22_shapes_runtime_noop.c
         src/theron/theron_v2_hud_widget_assets_runtime_noop.c
@@ -4953,6 +4990,11 @@ add_executable(firestaff_theron_v1_mechanics_champions_probe
     src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
     src/theron/theron_v1_compat.c
+    src/theron/theron_v1_track02_text_decode.c
+    src/theron/theron_v1_track02_item_properties.c
+    src/theron/theron_v1_track02_creature_spawn.c
+    src/theron/theron_v1_track02_item_categories.c
+    src/theron/theron_v1_track02_spell_descriptors.c
     src/theron/theron_v1_track02_spell_descriptors.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_asset_loader.c
@@ -5024,6 +5066,11 @@ add_executable(firestaff_theron_v1_startup_flow_probe
     src/theron/theron_v1_track02.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_compat.c
+    src/theron/theron_v1_track02_text_decode.c
+    src/theron/theron_v1_track02_item_properties.c
+    src/theron/theron_v1_track02_creature_spawn.c
+    src/theron/theron_v1_track02_item_categories.c
+    src/theron/theron_v1_track02_spell_descriptors.c
     src/theron/theron_v1_track02_spell_descriptors.c
 )
 target_include_directories(firestaff_theron_v1_startup_flow_probe PRIVATE
@@ -5099,6 +5146,11 @@ add_executable(test_theron_v1_startup_save_resume_pc34
     src/theron/theron_v1_startup_runtime_entry.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_compat.c
+    src/theron/theron_v1_track02_text_decode.c
+    src/theron/theron_v1_track02_item_properties.c
+    src/theron/theron_v1_track02_creature_spawn.c
+    src/theron/theron_v1_track02_item_categories.c
+    src/theron/theron_v1_track02_spell_descriptors.c
     src/theron/theron_v1_track02_spell_descriptors.c
     src/theron/theron_v2_hud_overlay_pc34.c
     src/theron/theron_v2_hud_widget_assets_pc34.c
@@ -6157,6 +6209,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -7272,6 +7329,11 @@ add_executable(firestaff_theron_v2_hud_launch_mode_probe
     src/theron/theron_v1_palette.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_compat.c
+    src/theron/theron_v1_track02_text_decode.c
+    src/theron/theron_v1_track02_item_properties.c
+    src/theron/theron_v1_track02_creature_spawn.c
+    src/theron/theron_v1_track02_item_categories.c
+    src/theron/theron_v1_track02_spell_descriptors.c
     src/theron/theron_v1_track02_spell_descriptors.c
     src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
@@ -7472,6 +7534,11 @@ add_executable(firestaff_theron_v1_first_room_runtime_probe
     src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
     src/theron/theron_v1_compat.c
+    src/theron/theron_v1_track02_text_decode.c
+    src/theron/theron_v1_track02_item_properties.c
+    src/theron/theron_v1_track02_creature_spawn.c
+    src/theron/theron_v1_track02_item_categories.c
+    src/theron/theron_v1_track02_spell_descriptors.c
     src/theron/theron_v1_track02_spell_descriptors.c
     src/theron/theron_v1_dungeon_progression.c
     src/theron/theron_v1_palette.c
@@ -9145,6 +9212,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -20825,6 +20897,21 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_csbwin_duplicate_timer_policy
     )
 
+    add_executable(test_csb_v1_tt11_shoot_action_clear
+        tests/test_csb_v1_tt11_shoot_action_clear.c
+    )
+    target_include_directories(test_csb_v1_tt11_shoot_action_clear PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_csb_v1_tt11_shoot_action_clear PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_tt11_shoot_action_clear PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME csb_v1_tt11_shoot_action_clear
+        COMMAND test_csb_v1_tt11_shoot_action_clear
+    )
+
     add_executable(test_csb_v1_csbwin_item16_atomic_restore
         tests/test_csb_v1_csbwin_item16_atomic_restore.c
     )
@@ -21489,6 +21576,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -21525,6 +21617,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -21552,6 +21649,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -21587,6 +21689,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -25468,6 +25575,11 @@ if(BUILD_TESTING)
         src/theron/theron_v22_shapes.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v2_presentation_mode_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
@@ -36447,6 +36559,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -36483,6 +36600,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -36520,6 +36642,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -38663,6 +38790,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_combat_mechanics
         tests/test_theron_v1_combat_mechanics.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
     )
     target_link_libraries(test_theron_v1_combat_mechanics PRIVATE
@@ -38742,6 +38874,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(firestaff_theron_v1_mechanics_playability_probe
         probes/theron/firestaff_theron_v1_mechanics_playability_probe.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
     )
     target_link_libraries(firestaff_theron_v1_mechanics_playability_probe PRIVATE
@@ -39256,6 +39393,11 @@ if(BUILD_TESTING AND THERON_SOURCES)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
@@ -39341,6 +39483,11 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
+        src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_item_properties.c
+        src/theron/theron_v1_track02_creature_spawn.c
+        src/theron/theron_v1_track02_item_categories.c
+        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c

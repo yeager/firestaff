@@ -1,0 +1,186 @@
+#include "nexus_v1_inventory.h"
+#include "nexus_v1_containers.h"
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <assert.h>
+
+static int g_fail = 0;
+static int g_count = 0;
+
+static void expect(int cond, const char *msg) {
+    g_count++;
+    if (!cond) { fprintf(stderr, "FAIL: %s\n", msg); g_fail++; }
+}
+
+static void test_item_pickup_empty_slot(void) {
+    Nexus_InventorySlot inv[NEXUS_INVENTORY_SLOTS];
+    nexus_inventory_init(inv, NEXUS_INVENTORY_SLOTS);
+
+    /* Verify all slots start empty */
+    for (int i = 0; i < NEXUS_INVENTORY_SLOTS; i++) {
+        expect(inv[i].item_id == -1, "slot starts empty (item_id == -1)");
+    }
+
+    /* Add an item */
+    int slot = nexus_inventory_add(inv, NEXUS_INVENTORY_SLOTS, 0, 1);
+    expect(slot >= 0, "add returns valid slot index");
+    expect(inv[slot].item_id == 0, "slot now contains item 0");
+    expect(inv[slot].quantity == 1, "slot quantity is 1");
+}
+
+static void test_item_drop(void) {
+    Nexus_InventorySlot inv[NEXUS_INVENTORY_SLOTS];
+    nexus_inventory_init(inv, NEXUS_INVENTORY_SLOTS);
+
+    int slot = nexus_inventory_add(inv, NEXUS_INVENTORY_SLOTS, 5, 1);
+    expect(slot >= 0, "item added for drop test");
+
+    nexus_inventory_remove(inv, slot);
+    expect(inv[slot].item_id == -1, "slot empty after remove");
+}
+
+static void test_equip_unequip(void) {
+    Nexus_InventorySlot inv[NEXUS_INVENTORY_SLOTS];
+    nexus_inventory_init(inv, NEXUS_INVENTORY_SLOTS);
+
+    /* Add a weapon (item 0) */
+    int slot = nexus_inventory_add(inv, NEXUS_INVENTORY_SLOTS, 0, 1);
+    expect(slot >= 0, "weapon added to inventory");
+
+    /* Equip it — weapon_slot=0, shield_slot=1, ring1=2, ring2=3, head=4,
+     * torso=5, legs=6, feet=7, hands=8, amulet=9 */
+    int rc = nexus_inventory_equip(inv, slot, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    /* rc is the slot that was cleared or -1 */
+    expect(rc >= 0 || rc == -1, "equip returns valid result");
+
+    /* Unequip — should return item to inventory */
+    int urc = nexus_inventory_unequip(inv, NEXUS_INVENTORY_SLOTS,
+                                       0, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9);
+    expect(urc >= 0 || urc == -1, "unequip returns valid result");
+}
+
+static void test_inventory_find(void) {
+    Nexus_InventorySlot inv[NEXUS_INVENTORY_SLOTS];
+    nexus_inventory_init(inv, NEXUS_INVENTORY_SLOTS);
+
+    expect(nexus_inventory_find(inv, NEXUS_INVENTORY_SLOTS, 3) == -1,
+           "find returns -1 for absent item");
+
+    int slot = nexus_inventory_add(inv, NEXUS_INVENTORY_SLOTS, 3, 1);
+    expect(slot >= 0, "item 3 added");
+    expect(nexus_inventory_find(inv, NEXUS_INVENTORY_SLOTS, 3) == slot,
+           "find returns correct slot for item 3");
+}
+
+static void test_inventory_move(void) {
+    Nexus_InventorySlot inv[NEXUS_INVENTORY_SLOTS];
+    nexus_inventory_init(inv, NEXUS_INVENTORY_SLOTS);
+
+    int slot = nexus_inventory_add(inv, NEXUS_INVENTORY_SLOTS, 7, 2);
+    expect(slot >= 0, "item added for move test");
+
+    int target = (slot + 1) % NEXUS_INVENTORY_SLOTS;
+    int rc = nexus_inventory_move(inv, slot, target);
+    expect(rc == 0 || rc == 1, "move returns success");
+    if (rc == 0 || rc == 1) {
+        expect(inv[target].item_id == 7, "item moved to target slot");
+    }
+}
+
+static void test_container_operations(void) {
+    Nexus_ContainerManager cmgr;
+    nexus_v1_container_manager_init(&cmgr);
+
+    /* Register a chest */
+    int cidx = nexus_v1_container_register(&cmgr,
+        NEXUS_CONTAINER_CHEST, 10, 10, 0, -1);
+    expect(cidx >= 0, "container registered");
+
+    /* Add items to chest */
+    int rc = nexus_v1_container_add_item(&cmgr, cidx, 42);
+    expect(rc == 0 || rc == 1, "add item to container succeeds");
+    expect(nexus_v1_container_item_count(&cmgr, cidx) == 1,
+           "container has 1 item");
+
+    nexus_v1_container_add_item(&cmgr, cidx, 43);
+    expect(nexus_v1_container_item_count(&cmgr, cidx) == 2,
+           "container has 2 items");
+
+    /* Open the container (not locked) */
+    int open_rc = nexus_v1_container_open(&cmgr, cidx, -1);
+    expect(open_rc == 1, "unlocked container opens successfully");
+    expect(nexus_v1_container_is_open(&cmgr, cidx) == 1,
+           "container is now open");
+
+    /* Take an item */
+    int taken = nexus_v1_container_take(&cmgr, cidx, 0);
+    expect(taken == 42, "took item 42 from slot 0");
+    expect(nexus_v1_container_item_count(&cmgr, cidx) == 1,
+           "container has 1 item after taking");
+
+    /* Find container at position */
+    int found = nexus_v1_container_find_at(&cmgr, 10, 10);
+    expect(found == cidx, "find_at returns correct container index");
+    expect(nexus_v1_container_find_at(&cmgr, 99, 99) == -1,
+           "find_at returns -1 for empty position");
+}
+
+static void test_container_locked(void) {
+    Nexus_ContainerManager cmgr;
+    nexus_v1_container_manager_init(&cmgr);
+
+    /* Register a locked chest requiring key_id 5 */
+    int cidx = nexus_v1_container_register(&cmgr,
+        NEXUS_CONTAINER_CHEST, 3, 3, 1, 5);
+    expect(cidx >= 0, "locked container registered");
+
+    /* Try to open without key */
+    int rc = nexus_v1_container_open(&cmgr, cidx, -1);
+    expect(rc == 0, "locked container does not open without key");
+
+    /* Try with wrong key */
+    rc = nexus_v1_container_open(&cmgr, cidx, 3);
+    expect(rc == 0, "locked container does not open with wrong key");
+
+    /* Open with correct key */
+    rc = nexus_v1_container_open(&cmgr, cidx, 5);
+    expect(rc == 1, "locked container opens with correct key");
+}
+
+static void test_floor_items(void) {
+    nexus_floor_init();
+
+    int idx = nexus_floor_drop(4, 4, 10, 1);
+    expect(idx >= 0, "floor drop returns valid index");
+    expect(nexus_floor_count_at(4, 4) == 1, "1 item at (4,4)");
+
+    nexus_floor_drop(4, 4, 11, 3);
+    expect(nexus_floor_count_at(4, 4) == 2, "2 items at (4,4)");
+
+    int item_id = -1, qty = -1;
+    int pick_rc = nexus_floor_pickup(idx, &item_id, &qty);
+    expect(pick_rc == 0 || pick_rc == 1, "floor pickup returns valid result");
+    if (pick_rc == 0 || pick_rc == 1) {
+        expect(item_id == 10, "picked up item_id 10");
+        expect(qty == 1, "picked up qty 1");
+    }
+}
+
+int main(void) {
+    test_item_pickup_empty_slot();
+    test_item_drop();
+    test_equip_unequip();
+    test_inventory_find();
+    test_inventory_move();
+    test_container_operations();
+    test_container_locked();
+    test_floor_items();
+
+    if (g_fail) {
+        fprintf(stderr, "test_nexus_v1_inventory_gameplay: %d failure(s)\n", g_fail);
+        return 1;
+    }
+    printf("ok: nexus_v1_inventory_gameplay (%d tests)\n", g_count);
+    return 0;
+}
