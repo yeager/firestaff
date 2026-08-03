@@ -409,3 +409,380 @@ int dm2_v1_ccm_advanced_explode_or_summon(
     out->result = 0;
     return 1;
 }
+
+/* ── DM2_1B7D5 (c_creature.cpp:2916-2928) ───────────────────────── */
+int dm2_v1_ccm_advanced_1b7d5(const DM2_V1_CCMAdvancedCallbacks *cb,
+                              DM2_V1_CCMAdvancedReceipt *out)
+{
+    int16_t x, y, duration;
+    if (!cb || !out) return 0;
+    out->valid = 0; out->result = 0;
+    if (!cb->get_xy || !cb->rand16 || !cb->create_cloud) return 0;
+
+    cb->get_xy(cb->ctx, &x, &y);
+    duration = cb->rand16(cb->ctx, 40) + 20;
+    cb->create_cloud(cb->ctx, (int16_t)0xff8e, duration, x, y, (int16_t)0xff);
+
+    out->valid = 1;
+    out->result = 0;
+    return 1;
+}
+
+/* ── DM2_CREATURE_CCM0B (c_creature.cpp:2145-2173) ──────────────── */
+int dm2_v1_ccm_advanced_ccm0b(const DM2_V1_CCMAdvancedCallbacks *cb,
+                              DM2_V1_CCMAdvancedReceipt *out)
+{
+    int16_t cx, cy, tx, ty;
+    uint16_t spx_0e;
+    uint8_t facing, b_1a;
+    int32_t r;
+
+    if (!cb || !out) return 0;
+    out->valid = 0; out->result = 0;
+    if (!cb->get_xy || !cb->get_spx_creature_word_0e || !cb->get_target_x ||
+        !cb->get_target_y || !cb->pathfind_0d10 || !cb->get_state ||
+        !cb->get_mode_byte || !cb->invoke_message || !cb->get_gametick)
+        return 0;
+
+    /* Extract facing from SPX_Creature word@0x0e bits 8-9. */
+    spx_0e = cb->get_spx_creature_word_0e(cb->ctx);
+    facing = (uint8_t)((spx_0e << 6) >> 14);
+
+    tx = cb->get_target_x(cb->ctx);
+    ty = cb->get_target_y(cb->ctx);
+    cb->get_xy(cb->ctx, &cx, &cy);
+
+    /* DM2_19f0_0d10: byte@0x20 | 0x80 as flags. */
+    r = cb->pathfind_0d10(cb->ctx,
+                          (uint8_t)(cb->get_mode_byte(cb->ctx) | 0x80),
+                          cx, cy, ty, tx, (int16_t)facing);
+    if (r == 0) {
+        out->valid = 1;
+        out->result = 1;
+        return 1;
+    }
+
+    b_1a = cb->get_state(cb->ctx);
+    if (b_1a != 0x0B) {
+        out->valid = 1;
+        out->result = 1;
+        return 1;
+    }
+
+    cb->invoke_message(cb->ctx, ty, tx, 0, 2, cb->get_gametick(cb->ctx));
+
+    out->valid = 1;
+    out->result = 0;
+    return 1;
+}
+
+/* ── DM2_CREATURE_CCM0C (c_creature.cpp:2247-2281) ──────────────── */
+int dm2_v1_ccm_advanced_ccm0c(const DM2_V1_CCMAdvancedCallbacks *cb,
+                              DM2_V1_CCMAdvancedReceipt *out)
+{
+    uint8_t phase;
+    int32_t result = 0;
+    DM2_V1_CCMAdvancedReceipt sub;
+
+    if (!cb || !out) return 0;
+    out->valid = 0; out->result = 0;
+    if (!cb->get_phase || !cb->set_phase || !cb->ccm06 ||
+        !cb->get_spx_creature_word_0e || !cb->set_ai_facing)
+        return 0;
+
+    phase = cb->get_phase(cb->ctx);
+
+    if (phase == 0) {
+        /* Phase 0: extract facing from SPX_Creature, run CCM06, store
+         * the facing result into byte@0x1d. */
+        uint16_t spx_0e = cb->get_spx_creature_word_0e(cb->ctx);
+        uint8_t facing = (uint8_t)((spx_0e << 6) >> 14);
+        cb->ccm06(cb->ctx);
+        cb->set_ai_facing(cb->ctx, facing);
+    } else if (phase == 1) {
+        /* Phase 1: CCM06 then TAKES_ITEM. */
+        cb->ccm06(cb->ctx);
+        sub.valid = 0; sub.result = 0;
+        dm2_v1_ccm_advanced_takes_item(cb, &sub);
+        result = sub.result;
+    }
+    /* else: source falls through with result=0. */
+
+    /* Increment phase unconditionally. */
+    cb->set_phase(cb->ctx, (uint8_t)(cb->get_phase(cb->ctx) + 1));
+
+    out->valid = 1;
+    out->result = (int32_t)(int16_t)result;
+    return 1;
+}
+
+/* ── DM2_CREATURE_ACTIVATES_WALL (c_creature.cpp:2564-2633) ──────── */
+int dm2_v1_ccm_advanced_activates_wall(const DM2_V1_CCMAdvancedCallbacks *cb,
+                                       DM2_V1_CCMAdvancedReceipt *out)
+{
+    int16_t cx, cy, tx, ty;
+    uint8_t b_1e, b_20, facing_raw;
+    uint16_t spx_0e, pos_w;
+    int32_t r;
+    int16_t item_rec;
+
+    if (!cb || !out) return 0;
+    out->valid = 0; out->result = 0;
+    if (!cb->get_creature_type || !cb->get_spx_creature_word_0e ||
+        !cb->get_target_x || !cb->get_target_y || !cb->get_xy ||
+        !cb->get_mode_byte || !cb->pathfind_2813 ||
+        !cb->wall_activate_event || !cb->get_pos_word ||
+        !cb->get_ai_facing || !cb->get_current_map)
+        return 0;
+
+    b_1e = cb->get_creature_type(cb->ctx);
+    b_20 = cb->get_mode_byte(cb->ctx);
+
+    /* Extract facing from SPX_Creature word@0x0e. */
+    spx_0e = cb->get_spx_creature_word_0e(cb->ctx);
+    facing_raw = (uint8_t)((spx_0e << 6) >> 14);
+
+    tx = cb->get_target_x(cb->ctx);
+    ty = cb->get_target_y(cb->ctx);
+    cb->get_xy(cb->ctx, &cx, &cy);
+
+    /* DM2_19f0_2813 pathfind check. */
+    r = cb->pathfind_2813(cb->ctx,
+                          (uint8_t)(b_20 | 0x80),
+                          cx, cy, ty, tx, (int16_t)facing_raw,
+                          (int16_t)b_1e);
+    if (r == 0) {
+        out->valid = 1;
+        out->result = 1;
+        return 1;
+    }
+
+    /* If mode != 2 and creature_type != -1(0xff), find and cut an item. */
+    if (b_20 != 2 && b_1e != 0xFF) {
+        if (!cb->can_handle_item_in || !cb->cut_record_from ||
+            !cb->get_spx_creature_word_02)
+        {
+            out->valid = 1;
+            out->result = 1;
+            return 1;
+        }
+        uint16_t poss_head = cb->get_spx_creature_word_02(cb->ctx);
+        item_rec = (int16_t)cb->can_handle_item_in(cb->ctx, b_1e,
+                                                    poss_head, 0xFF);
+        if (item_rec == (int16_t)0xFFFE) {
+            out->valid = 1;
+            out->result = 1;
+            return 1;
+        }
+        /* Cut the item from the possession chain. */
+        uint16_t head = poss_head;
+        cb->cut_record_from(cb->ctx, (uint16_t)item_rec, &head);
+    } else {
+        item_rec = (int16_t)0xFFFF;
+    }
+
+    /* Fire the wall activation event.
+     * Direction = (byte@0x1d + 2) & 3.
+     * x = pos_word & 0x1f, y = (pos_word << 6) >> 11. */
+    {
+        uint8_t ai_facing = cb->get_ai_facing(cb->ctx);
+        uint8_t dir = (uint8_t)((ai_facing + 2) & 3);
+        pos_w = cb->get_pos_word(cb->ctx);
+        int16_t px = (int16_t)(pos_w & 0x1F);
+        int16_t py = (int16_t)((pos_w << 6) >> 11);
+        int16_t creature_rec = (int16_t)cb->get_possession_head(cb->ctx);
+
+        cb->wall_activate_event(cb->ctx, px, py, (int16_t)dir,
+                                creature_rec, item_rec);
+    }
+
+    out->valid = 1;
+    out->result = 0;
+    return 1;
+}
+
+/* ── DM2_CREATURE_USES_LADDER_HOLE (c_creature.cpp:1709-1861) ───── */
+int dm2_v1_ccm_advanced_uses_ladder_hole(const DM2_V1_CCMAdvancedCallbacks *cb,
+                                         DM2_V1_CCMAdvancedReceipt *out)
+{
+    int16_t cx, cy, tx, ty;
+    uint8_t b_1a, b_1b;
+    uint16_t spx_0e, pos_w;
+    int32_t r, dir_rg6;
+    void *ladder_record = NULL;
+    int32_t pit_tele_flag;
+
+    if (!cb || !out) return 0;
+    out->valid = 0; out->result = 0;
+    if (!cb->get_xy || !cb->get_state || !cb->get_facing ||
+        !cb->get_target_x || !cb->get_target_y || !cb->creature_go_there ||
+        !cb->get_mode_byte || !cb->get_creature_capability_bits ||
+        !cb->get_spx_creature_word_0e || !cb->get_pos_word ||
+        !cb->set_target_x || !cb->set_target_y ||
+        !cb->find_ladder_around || !cb->move_record_to ||
+        !cb->get_ai_spec_pit_tele_flag ||
+        !cb->set_spx_creature_word_0e_facing ||
+        !cb->get_dungeon_level)
+        return 0;
+
+    b_1b = cb->get_facing(cb->ctx);
+    tx = cb->get_target_x(cb->ctx);
+    ty = cb->get_target_y(cb->ctx);
+    cb->get_xy(cb->ctx, &cx, &cy);
+
+    /* DM2_CREATURE_GO_THERE with byte@0x20 | 0x80 flags. */
+    r = cb->creature_go_there(cb->ctx,
+                              (uint8_t)(cb->get_mode_byte(cb->ctx) | 0x80),
+                              cx, cy, ty, tx, (int16_t)b_1b);
+    if (r == 0) {
+        out->valid = 1;
+        out->result = 1;
+        return 1;
+    }
+
+    /* Check creature capability bit 0x04. */
+    b_1a = cb->get_state(cb->ctx);
+    if ((cb->get_creature_capability_bits(cb->ctx, b_1a) & 0x04) == 0) {
+        out->valid = 1;
+        out->result = 1;
+        return 1;
+    }
+
+    /* Extract facing from SPX_Creature. */
+    spx_0e = cb->get_spx_creature_word_0e(cb->ctx);
+    dir_rg6 = (int32_t)((spx_0e << 6) >> 14);
+
+    /* Extract target from pos_word. */
+    pos_w = cb->get_pos_word(cb->ctx);
+    cb->set_target_y(cb->ctx, (int16_t)(pos_w & 0x1F));
+    cb->set_target_x(cb->ctx, (int16_t)((pos_w << 6) >> 11));
+
+    /* Determine ladder direction from b_1a. */
+    if (b_1a == 0x39 || b_1a == 0x3A) {
+        int16_t ladder_dir = (b_1a == 0x39) ? -1 : 1;
+        int32_t find_result;
+
+        cb->get_xy(cb->ctx, &cx, &cy);
+        find_result = cb->find_ladder_around(cb->ctx, cx, cy,
+                                             ladder_dir, &ladder_record);
+
+        if (ladder_record == NULL) {
+            /* No ladder on this level; try adjacent level. */
+            if (cb->locate_other_level && cb->change_current_map_to) {
+                int16_t lx = cx, ly = cy;
+                int32_t cur_map = cb->get_dungeon_level(cb->ctx);
+                void *other_rec = NULL;
+
+                int16_t new_map = cb->locate_other_level(cb->ctx, cur_map,
+                                                          (int32_t)ladder_dir,
+                                                          &lx, &ly, &other_rec);
+                cb->change_current_map_to(cb->ctx, (int32_t)new_map);
+                find_result = cb->find_ladder_around(cb->ctx, lx, ly,
+                                                     (int16_t)(-ladder_dir),
+                                                     &ladder_record);
+                dir_rg6 = find_result;
+                cb->change_current_map_to(cb->ctx, cur_map);
+
+                if ((int16_t)find_result == -1) {
+                    dir_rg6 = cb->randdir(cb->ctx);
+                }
+            } else {
+                dir_rg6 = cb->randdir(cb->ctx);
+            }
+        } else {
+            /* Ladder found — check byte@0x04 bit 0x20. */
+            if (cb->ladder_record_byte_04) {
+                uint8_t b04 = cb->ladder_record_byte_04(cb->ctx, ladder_record);
+                if ((b04 & 0x20) == 0) {
+                    /* Extract direction from word@0x04 bits. */
+                    if (cb->ladder_record_word_04) {
+                        uint16_t w04 = cb->ladder_record_word_04(cb->ctx,
+                                                                  ladder_record);
+                        int32_t extracted = (int32_t)((w04 << 11) >> 14);
+                        dir_rg6 = (extracted + find_result) & 3;
+                    }
+                } else {
+                    /* Use word@0x04 direction directly. */
+                    if (cb->ladder_record_word_04) {
+                        uint16_t w04 = cb->ladder_record_word_04(cb->ctx,
+                                                                  ladder_record);
+                        dir_rg6 = (int32_t)((w04 << 11) >> 14);
+                    }
+                }
+            }
+        }
+    }
+
+    /* Check AI spec pit-tele flag (byte@0x09 bit 0x40). */
+    pit_tele_flag = (int32_t)cb->get_ai_spec_pit_tele_flag(cb->ctx);
+    if (pit_tele_flag != 0 && cb->operate_pit_tele_tile) {
+        cb->get_xy(cb->ctx, &cx, &cy);
+        cb->operate_pit_tele_tile(cb->ctx, cx, cy, 1);
+    }
+
+    /* MOVE_RECORD_TO: remove creature from current position. */
+    cb->get_xy(cb->ctx, &cx, &cy);
+    cb->move_record_to(cb->ctx, (int16_t)cb->get_possession_head(cb->ctx),
+                       cx, cy, -1, 0, 0);
+
+    /* Level transition cache poke. */
+    pos_w = cb->get_pos_word(cb->ctx);
+    if (cb->level_transition_cache_poke) {
+        cb->level_transition_cache_poke(cb->ctx,
+                                        (int32_t)(pos_w >> 10));
+    }
+
+    /* Check creature state for direction query. */
+    if (b_1a == 0x35 || b_1a == 0x36) {
+        if (cb->query_cell_direction) {
+            ty = cb->get_target_y(cb->ctx);
+            tx = cb->get_target_x(cb->ctx);
+            dir_rg6 = cb->query_cell_direction(cb->ctx, ty, tx);
+        }
+    }
+
+    /* Write facing into SPX_Creature. */
+    cb->set_spx_creature_word_0e_facing(cb->ctx, (uint8_t)(dir_rg6 & 3));
+
+    /* MOVE_RECORD_TO: place creature at destination. */
+    tx = cb->get_target_x(cb->ctx);
+    ty = cb->get_target_y(cb->ctx);
+    r = cb->move_record_to(cb->ctx, (int16_t)cb->get_possession_head(cb->ctx),
+                           -1, 0, ty, tx, 0);
+
+    if (r != 0) {
+        if (cb->mark_needs_redraw)
+            cb->mark_needs_redraw(cb->ctx);
+        out->valid = 1;
+        out->result = 0;
+        return 1;
+    }
+
+    /* Move succeeded — update creature's live position from dest coords. */
+    if (cb->get_dest_coords && cb->set_xy) {
+        int16_t dx, dy;
+        uint8_t dl;
+        cb->get_dest_coords(cb->ctx, &dx, &dy, &dl);
+        cb->set_xy(cb->ctx, dx, dy);
+
+        if (cb->level_transition_cache_poke)
+            cb->level_transition_cache_poke(cb->ctx, (int32_t)dl);
+    }
+
+    /* Restore pit-tele tile if needed. */
+    if (pit_tele_flag != 0 && cb->operate_pit_tele_tile) {
+        cb->get_xy(cb->ctx, &cx, &cy);
+        cb->operate_pit_tele_tile(cb->ctx, cx, cy, 0);
+    }
+
+    /* Decrement creature counter. */
+    if (cb->get_creature_counter && cb->set_creature_counter) {
+        uint8_t ctr = cb->get_creature_counter(cb->ctx);
+        if (ctr != 0)
+            cb->set_creature_counter(cb->ctx, (uint8_t)(ctr - 1));
+    }
+
+    out->valid = 1;
+    out->result = 0;
+    return 1;
+}

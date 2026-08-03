@@ -28,10 +28,8 @@
  *   PUTS_DOWN_ITEM (0x19/0x29/0x2A/0x2D/0x2E),
  *   TAKES_ITEM (0x1A/0x2B/0x2C), CAST_SPELL (0x27/0x28),
  *   EXPLODE_OR_SUMMON (0x3D-0x40)
- * Source groups whose handler bodies are not yet proven stay explicit
- * stubs and return DM2_CCM_RESULT_UNKNOWN_OPCODE:
- *   CCM0B (0x0B), CCM0C (0x0C/0x0D), ACTIVATES_WALL (0x2F-0x31),
- *   USES_LADDER_HOLE (0x35-0x3A), TRANSFORM (0x3B/0x3C), DM2_1B7D5 (0x55)
+ * All source groups now have advanced handler bodies wired through
+ * dm2_v1_ccm_execute_advanced().
  *
  * Source-lock anchors:
  *   skproject/SKULLWIN/c_creature.cpp:2930-3212 - DM2_PROCEED_CCM compare chain
@@ -522,6 +520,21 @@ int dm2_v1_ccm_execute_advanced(DM2_V1_CCMState *state,
             return dm2_v1_ccm_advanced_explode_or_summon(
                 cb, (uint8_t)state->flags[22], out)
                 ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
+        case DM2_V1_CCM_SRC_1B7D5:
+            return dm2_v1_ccm_advanced_1b7d5(cb, out)
+                ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
+        case DM2_V1_CCM_SRC_CCM0B:
+            return dm2_v1_ccm_advanced_ccm0b(cb, out)
+                ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
+        case DM2_V1_CCM_SRC_CCM0C:
+            return dm2_v1_ccm_advanced_ccm0c(cb, out)
+                ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
+        case DM2_V1_CCM_SRC_ACTIVATES_WALL:
+            return dm2_v1_ccm_advanced_activates_wall(cb, out)
+                ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
+        case DM2_V1_CCM_SRC_USES_LADDER_HOLE:
+            return dm2_v1_ccm_advanced_uses_ladder_hole(cb, out)
+                ? (int)DM2_CCM_RESULT_OK : (int)DM2_CCM_RESULT_BAD_ARG;
         default:
             return (int)DM2_CCM_RESULT_UNKNOWN_OPCODE;
     }
@@ -553,8 +566,10 @@ const char *dm2_v1_ccm_source_evidence(void) {
         "  0x27/0x28 CAST_SPELL / 0x3D-0x40 EXPLODE_OR_SUMMON / 0xFF HALT (internal)\n"
         "  0x0B CCM0B / 0x0C/0x0D CCM0C / 0x2F-0x31 ACTIVATES_WALL\n"
         "  0x35-0x3A USES_LADDER_HOLE / 0x3B/0x3C TRANSFORM / 0x55 DM2_1B7D5\n"
-        "Advanced handler dispatch wired: CCM03, JUMPS, TAKES_ITEM,\n"
-        "  PUTS_DOWN_ITEM, TRANSFORM, EXPLODE_OR_SUMMON via dm2_v1_ccm_execute_advanced()\n"
+        "All 11 advanced handlers wired via dm2_v1_ccm_execute_advanced():\n"
+        "  CCM03, JUMPS, TAKES_ITEM, PUTS_DOWN_ITEM, TRANSFORM,\n"
+        "  EXPLODE_OR_SUMMON, 1B7D5, CCM0B, CCM0C, ACTIVATES_WALL,\n"
+        "  USES_LADDER_HOLE\n"
         "All 48 source opcodes now live (flags 16-23 for bridge dispatch)\n"
         "No-handler bytes (source 'no branch taken') return UNKNOWN_OPCODE:\n"
         "  0x00, 0x10-0x12, 0x14, 0x1B-0x25, 0x32-0x34, 0x41-0x54, 0x56-0xFE\n"

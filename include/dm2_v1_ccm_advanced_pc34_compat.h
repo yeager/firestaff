@@ -2,16 +2,20 @@
 #define FIRESTAFF_DM2_V1_CCM_ADVANCED_PC34_COMPAT_H
 
 /*
- * dm2_v1_ccm_advanced_pc34_compat.h — algorithmic parity ports of six
- * skproject CCM (Creature Command Machine) handler bodies that
- * dm2_v1_ccm.c's dispatcher previously only receipted as flag writes:
+ * dm2_v1_ccm_advanced_pc34_compat.h — algorithmic parity ports of all
+ * eleven skproject CCM (Creature Command Machine) handler bodies:
  *
  *   DM2_CREATURE_CCM03            c_creature.cpp:1609
  *   DM2_CREATURE_JUMPS            c_creature.cpp:1636
+ *   DM2_CREATURE_CCM0B            c_creature.cpp:2145
  *   DM2_CREATURE_TAKES_ITEM       c_creature.cpp:2176
+ *   DM2_CREATURE_CCM0C            c_creature.cpp:2247
  *   DM2_CREATURE_PUTS_DOWN_ITEM   c_creature.cpp:2284
+ *   DM2_CREATURE_ACTIVATES_WALL   c_creature.cpp:2564
  *   DM2_CREATURE_TRANSFORM        c_creature.cpp:2637
+ *   DM2_CREATURE_USES_LADDER_HOLE c_creature.cpp:1709
  *   DM2_CREATURE_EXPLODE_OR_SUMMON c_creature.cpp:2762
+ *   DM2_1B7D5                     c_creature.cpp:2916
  *
  * skproject's register emulation (c_nreg/RG*, DOWNCAST, s350/ddat global
  * structs) addresses the live creature record and session globals by raw
@@ -165,6 +169,102 @@ typedef struct {
 
     /* v350.v1e0570 — "needs redraw / party moved" host flag. */
     void (*mark_needs_redraw)(void *ctx);
+
+    /* ── Callbacks added for CCM0B / CCM0C / ACTIVATES_WALL /
+     *    USES_LADDER_HOLE / 1B7D5 (c_creature.cpp:2145-2928) ──────── */
+
+    /* byte@0x1d — AI-facing byte (used by CCM0C phase 0). */
+    uint8_t (*get_ai_facing)(void *ctx);
+    void    (*set_ai_facing)(void *ctx, uint8_t f);
+
+    /* byte@0x20 — mode/sub-state byte (used by CCM0B, ACTIVATES_WALL,
+     * USES_LADDER_HOLE). */
+    uint8_t (*get_mode_byte)(void *ctx);
+
+    /* SPX_Creature word@0x0e — packed facing bits (bits 8-9). */
+    uint16_t (*get_spx_creature_word_0e)(void *ctx);
+    void     (*set_spx_creature_word_0e_facing)(void *ctx, uint8_t facing);
+
+    /* SPX_Creature word@0x02 — possession chain head record word. */
+    uint16_t (*get_spx_creature_word_02)(void *ctx);
+
+    /* ddat.v1e08a4 / ddat.v1e08a6 — target cell coordinates. */
+    int16_t (*get_target_x)(void *ctx);
+    int16_t (*get_target_y)(void *ctx);
+    void    (*set_target_x)(void *ctx, int16_t x);
+    void    (*set_target_y)(void *ctx, int16_t y);
+
+    /* DM2_19f0_0d10 — pathfinding/LOS check (CCM0B). Returns 0=blocked. */
+    int32_t (*pathfind_0d10)(void *ctx, uint8_t flags, int16_t cx, int16_t cy,
+                             int16_t ty, int16_t tx, int16_t facing);
+
+    /* DM2_INVOKE_MESSAGE (CCM0B completion event). */
+    void (*invoke_message)(void *ctx, int16_t y, int16_t x,
+                           int32_t p1, int32_t p2, int32_t gametick);
+
+    /* DM2_19f0_2813 — wall-activation pathfind (ACTIVATES_WALL). */
+    int32_t (*pathfind_2813)(void *ctx, uint8_t flags, int16_t cx, int16_t cy,
+                             int16_t sy, int16_t sx, int16_t facing,
+                             int16_t ctype);
+
+    /* DM2_events_3C1E5 — wall activation event (ACTIVATES_WALL). */
+    void (*wall_activate_event)(void *ctx, int16_t x, int16_t y,
+                                int16_t dir, int16_t creature_rec,
+                                int16_t item_rec);
+
+    /* DM2_CREATURE_GO_THERE — movement towards target (USES_LADDER_HOLE).
+     * Returns 1 on success, 0 on fail. */
+    int32_t (*creature_go_there)(void *ctx, uint8_t flags, int16_t cx,
+                                 int16_t cy, int16_t ty, int16_t tx,
+                                 int16_t facing);
+
+    /* table1d613a creature capability bits (USES_LADDER_HOLE). */
+    uint8_t (*get_creature_capability_bits)(void *ctx, uint8_t b_1a);
+
+    /* DM2_FIND_LADDAR_AROUND — find a ladder on the current level.
+     * Returns direction, sets *out_record to the ladder record (or NULL). */
+    int32_t (*find_ladder_around)(void *ctx, int16_t x, int16_t y,
+                                  int16_t dir, void **out_record);
+
+    /* DM_LOCATE_OTHER_LEVEL — cross-level resolution (USES_LADDER_HOLE).
+     * Returns the new map id; updates *io_x and *io_y in place. */
+    int16_t (*locate_other_level)(void *ctx, int32_t cur_map, int32_t dir,
+                                  int16_t *io_x, int16_t *io_y,
+                                  void **out_record);
+
+    /* DM2_CHANGE_CURRENT_MAP_TO — level switch (USES_LADDER_HOLE). */
+    void (*change_current_map_to)(void *ctx, int32_t map);
+
+    /* DM2_OPERATE_PIT_TELE_TILE — pit/teleporter tile operation. */
+    void (*operate_pit_tele_tile)(void *ctx, int16_t x, int16_t y, int32_t p);
+
+    /* DM2_1c9a_0648 — transition cache poke for level (reused). */
+    void (*level_transition_cache_poke)(void *ctx, int32_t level);
+
+    /* DM2_query_0cee_06dc — query direction from cell (USES_LADDER_HOLE). */
+    int32_t (*query_cell_direction)(void *ctx, int16_t y, int16_t x);
+
+    /* Ladder record byte@0x04 access (USES_LADDER_HOLE). */
+    uint8_t (*ladder_record_byte_04)(void *ctx, void *record);
+    uint16_t (*ladder_record_word_04)(void *ctx, void *record);
+
+    /* ddat.v1d3248 — current dungeon level. */
+    int32_t (*get_dungeon_level)(void *ctx);
+
+    /* s350.v1e07d8.b_01 — creature counter decrement. */
+    uint8_t (*get_creature_counter)(void *ctx);
+    void    (*set_creature_counter)(void *ctx, uint8_t v);
+
+    /* ddat.v1e102a / v1e1028 / v1e102c — destination coords after
+     * cross-level move. */
+    void (*get_dest_coords)(void *ctx, int16_t *out_x, int16_t *out_y,
+                            uint8_t *out_level);
+
+    /* s350.v1e0552 byte@0x09 bit 0x40 — AI spec pit-tele flag. */
+    uint8_t (*get_ai_spec_pit_tele_flag)(void *ctx);
+
+    /* timdat.gametick (CCM0B). */
+    int32_t (*get_gametick)(void *ctx);
 } DM2_V1_CCMAdvancedCallbacks;
 
 /* Generic receipt: 1 == the handler body ran to completion against a
@@ -249,6 +349,41 @@ int dm2_v1_ccm_advanced_explode_or_summon(
     const DM2_V1_CCMAdvancedCallbacks *cb,
     uint8_t mode /* byte@0x20 */,
     DM2_V1_CCMAdvancedReceipt *out);
+
+/* DM2_1B7D5 (c_creature.cpp:2916).
+ * Spawn a poison cloud at the creature's position with random duration
+ * (20-59 ticks).  Returns the CREATE_CLOUD result. */
+int dm2_v1_ccm_advanced_1b7d5(const DM2_V1_CCMAdvancedCallbacks *cb,
+                              DM2_V1_CCMAdvancedReceipt *out);
+
+/* DM2_CREATURE_CCM0B (c_creature.cpp:2145).
+ * Pathfind to target; if creature type (byte@0x1a) == 0x0B, fire
+ * INVOKE_MESSAGE at the target cell.  Returns 1 on fail, 0 on success. */
+int dm2_v1_ccm_advanced_ccm0b(const DM2_V1_CCMAdvancedCallbacks *cb,
+                              DM2_V1_CCMAdvancedReceipt *out);
+
+/* DM2_CREATURE_CCM0C (c_creature.cpp:2247).
+ * Two-phase creature behavior:
+ *   phase 0: CCM06 + store facing to byte@0x1d
+ *   phase 1: CCM06 + TAKES_ITEM
+ * Increments phase unconditionally.  Returns i32 result (0 on phase 1
+ * success). */
+int dm2_v1_ccm_advanced_ccm0c(const DM2_V1_CCMAdvancedCallbacks *cb,
+                              DM2_V1_CCMAdvancedReceipt *out);
+
+/* DM2_CREATURE_ACTIVATES_WALL (c_creature.cpp:2564).
+ * Pathfind to a wall, optionally remove an item from the creature's
+ * possession, and fire a wall activation event.  Returns 1 on fail,
+ * 0 on success. */
+int dm2_v1_ccm_advanced_activates_wall(const DM2_V1_CCMAdvancedCallbacks *cb,
+                                       DM2_V1_CCMAdvancedReceipt *out);
+
+/* DM2_CREATURE_USES_LADDER_HOLE (c_creature.cpp:1709).
+ * Move creature to target, resolve ladder direction and destination
+ * level, transition creature between dungeon levels.  Returns 1 on
+ * fail, 0 on success. */
+int dm2_v1_ccm_advanced_uses_ladder_hole(const DM2_V1_CCMAdvancedCallbacks *cb,
+                                         DM2_V1_CCMAdvancedReceipt *out);
 
 #ifdef __cplusplus
 }
