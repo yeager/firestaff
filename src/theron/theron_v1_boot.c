@@ -5497,10 +5497,8 @@ int theron_v1_boot_runtime_handle_m12_input(
     }
     theron_v1_boot_runtime_input_receipt_init(out_receipt);
 
-    /* v2.8.x: arrow Left/Right now mean strafe (matches original DM1 PC 3.4
-     * convention).  TURN_LEFT/RIGHT comes from Home / End / Q / E / KP_4 /
-     * KP_6.  Theron's track-02 world has no strafe route, so
-     * STRAFE_LEFT/RIGHT and the legacy LEFT/RIGHT tokens are ignored. */
+    /* Theron has no strafe.  Arrow Left/Right produce turns (same as
+     * Home/End/Q/E).  STRAFE_LEFT/RIGHT from A/D are ignored. */
     if (m12_input == M12_MENU_INPUT_TURN_LEFT) {
         (void)theron_v1_boot_runtime_turn_party(
             world, -1,
@@ -5529,12 +5527,36 @@ int theron_v1_boot_runtime_handle_m12_input(
         out_receipt->status = "RIGHT";
         return 1;
     }
-    if (m12_input == M12_MENU_INPUT_LEFT ||
-        m12_input == M12_MENU_INPUT_RIGHT ||
-        m12_input == M12_MENU_INPUT_STRAFE_LEFT ||
+    if (m12_input == M12_MENU_INPUT_LEFT) {
+        (void)theron_v1_boot_runtime_turn_party(
+            world, -1,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        out_receipt->handled = 1;
+        out_receipt->turned = 1;
+        out_receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW;
+        out_receipt->status_scope = "TURN";
+        out_receipt->status = "LEFT (ARROW)";
+        return 1;
+    }
+    if (m12_input == M12_MENU_INPUT_RIGHT) {
+        (void)theron_v1_boot_runtime_turn_party(
+            world, 1,
+            &out_receipt->party_x,
+            &out_receipt->party_y,
+            &out_receipt->party_dir,
+            &out_receipt->tick_count);
+        out_receipt->handled = 1;
+        out_receipt->turned = 1;
+        out_receipt->result = THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW;
+        out_receipt->status_scope = "TURN";
+        out_receipt->status = "RIGHT (ARROW)";
+        return 1;
+    }
+    if (m12_input == M12_MENU_INPUT_STRAFE_LEFT ||
         m12_input == M12_MENU_INPUT_STRAFE_RIGHT) {
-        /* Theron has no strafe route: keep the current pose in the receipt
-         * and report ignored. */
         theron_v1_boot_runtime_world_receipt(
             world,
             &out_receipt->party_x,
