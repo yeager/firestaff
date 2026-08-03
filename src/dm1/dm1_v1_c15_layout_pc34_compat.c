@@ -273,11 +273,14 @@ int dm1_v1_f0221_fluxcage_on_square_pc34(
     int safety = 0;
 
     if (out_has_fluxcage) *out_has_fluxcage = 0;
-    if (!dungeon || !things || !out_has_fluxcage || !things->loaded ||
-        !things->rawThingData[THING_TYPE_EXPLOSION] || !things->explosions ||
-        things->thingCounts[THING_TYPE_EXPLOSION] != things->explosionCount ||
+    if (!dungeon || !things || !out_has_fluxcage ||
         map_index < 0 || map_index >= dungeon->header.mapCount) {
         return 0;
+    }
+    if (!things->loaded ||
+        !things->rawThingData[THING_TYPE_EXPLOSION] || !things->explosions ||
+        things->thingCounts[THING_TYPE_EXPLOSION] != things->explosionCount) {
+        return 1;
     }
     thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
         dungeon, things, map_index, map_x, map_y);
