@@ -286,6 +286,14 @@ target_link_libraries(test_nexus_v1_traps PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_traps COMMAND test_nexus_v1_traps)
 set_tests_properties(nexus_v1_traps PROPERTIES LABELS "nexus;traps;tier4")
 
+add_executable(test_nexus_v1_tick_integration
+    tests/test_nexus_v1_tick_integration.c)
+target_include_directories(test_nexus_v1_tick_integration PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_tick_integration PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_tick_integration COMMAND test_nexus_v1_tick_integration)
+set_tests_properties(nexus_v1_tick_integration PROPERTIES LABELS "nexus;tick;tier4")
+
 add_executable(test_nexus_v1_projectiles
     tests/test_nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_projectiles PRIVATE
@@ -45185,12 +45193,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_text_decode.
 endif()
 
 # Theron Track 02 creature and champion decoders
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature.c"
-        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_creature.c")
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature.c")
     add_executable(test_theron_v1_track02_creature
         tests/test_theron_v1_track02_creature.c
-        src/theron/theron_v1_track02_creature.c
-        src/theron/theron_v1_track02_thing_data.c
         src/theron/theron_v1_track02_dungeon_map.c
     )
     target_include_directories(test_theron_v1_track02_creature PRIVATE

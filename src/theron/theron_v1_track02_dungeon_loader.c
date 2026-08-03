@@ -199,19 +199,9 @@ int theron_v1_track02_load_full_dungeon(
                 result->actuators_placed++;
                 break;
             }
-            case THERON_CAT_CREATURE: {
-                const uint8_t *rec = &td->items[cat][id * theron_item_bytes[cat]];
-                obj.type = 0x0E;
-                obj.state = rec[2];
-                obj.quantity = (uint16_t)rec[4] | ((uint16_t)rec[5] << 8);
-                result->creatures_placed++;
-                break;
-            }
-            case THERON_CAT_CHAMPION: {
-                obj.type = 0x0F;
-                result->champions_placed++;
-                break;
-            }
+            /* Categories 14 (creature) and 15 (champion) never appear in ground
+             * ref chains. TQ places creatures via per-map creature_count and ROM
+             * creature type tables (see theron_v1_track02_creature.h). */
             default:
                 obj.type = (uint8_t)(0x10 + cat);
                 result->items_placed++;
