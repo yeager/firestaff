@@ -202,39 +202,39 @@ DM2_CREATE_CLOUD	SKULLWIN	SKULLWIN/c_cloud.cpp	127		NOT_APPLICABLE_ARCH
 DM2_CALC_CLOUD_DAMAGE	SKULLWIN	SKULLWIN/c_cloud.cpp	446		NOT_APPLICABLE_ARCH
 DM2_PROCESS_CLOUD	SKULLWIN	SKULLWIN/c_cloud.cpp	587		NOT_APPLICABLE_ARCH
 init_creatures	SKULLWIN	SKULLWIN/c_creature.cpp	28		NOT_APPLICABLE_ARCH	Trivial pointer init (creatures=NULL); Firestaff creature system initializes via SDL3 architecture.
-DM2_APPLY_CREATURE_POISON_RESISTANCE	SKULLWIN	SKULLWIN/c_creature.cpp	34		IMPLEMENTED_NARROW
-DM2_ROTATE_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	58		IMPLEMENTED_NARROW
-DM2_CREATURE_CAN_HANDLE_ITEM_IN	SKULLWIN	SKULLWIN/c_creature.cpp	104		IMPLEMENTED_NARROW
-DM2_WOUND_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	165		NARROW:dm2_v1_wound_creature
-DM2_ATTACK_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	318		IMPLEMENTED_NARROW
-DM2_CREATURE_ATTACKS_PLAYER	SKULLWIN	SKULLWIN/c_creature.cpp	651		NARROW:dm2_v1_creature_attacks_player
-DM2_CREATURE_ATTACKS_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	906		NARROW:dm2_v1_creature_attacks_creature
+DM2_APPLY_CREATURE_POISON_RESISTANCE	SKULLWIN	SKULLWIN/c_creature.cpp	34	src/dm2/dm2_v1_creature_ops_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_ROTATE_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	58	src/dm2/dm2_v1_creature_ai_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_CREATURE_CAN_HANDLE_ITEM_IN	SKULLWIN	SKULLWIN/c_creature.cpp	104	src/dm2/dm2_v1_creature_ops_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_WOUND_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	165	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_wound_creature; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ATTACK_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	318	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_attack_creature; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_ATTACK_CREATURE
+DM2_CREATURE_ATTACKS_PLAYER	SKULLWIN	SKULLWIN/c_creature.cpp	651	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_attacks_player; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_CREATURE_ATTACKS_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	906	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_attacks_creature; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_CREATURE_ATTACKS_PARTY	SKULLWIN	SKULLWIN/c_creature.cpp	1000	src/dm2/dm2_v1_creature.c:388	IMPLEMENTED_NARROW
-DM2_CONFUSE_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	1308		IMPLEMENTED_NARROW
-DM2_CREATURE_CAN_HANDLE_IT	SKULLWIN	SKULLWIN/c_creature.cpp	1344		NARROW:dm2_v1_creature_can_handle_it
-DM2_CREATURE_CCM06	SKULLWIN	SKULLWIN/c_creature.cpp	1574	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
+DM2_CONFUSE_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	1308	src/dm2/dm2_v1_creature_ops_pc34_compat.c:dm2_v1_confuse_creature	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
+DM2_CREATURE_CAN_HANDLE_IT	SKULLWIN	SKULLWIN/c_creature.cpp	1344	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_can_handle_it; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_CREATURE_CCM06	SKULLWIN	SKULLWIN/c_creature.cpp	1574	src/dm2/dm2_v1_creature_ops_pc34_compat.c:dm2_v1_creature_ccm06	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
 DM2_CREATURE_CCM03	SKULLWIN	SKULLWIN/c_creature.cpp	1609	src/dm2/dm2_v1_ccm.c:194	IMPLEMENTED_NARROW
 DM2_CREATURE_JUMPS	SKULLWIN	SKULLWIN/c_creature.cpp	1636	src/dm2/dm2_v1_ccm.c:207	IMPLEMENTED_NARROW
-DM2_CREATURE_USES_LADDER_HOLE	SKULLWIN	SKULLWIN/c_creature.cpp	1709		NARROW:dm2_v1_creature_uses_ladder_hole
-DM2_CREATURE_CAST_SPELL	SKULLWIN	SKULLWIN/c_creature.cpp	1865		NARROW:dm2_v1_creature_cast_spell
-DM2_CREATURE_STEAL_FROM_CHAMPION	SKULLWIN	SKULLWIN/c_creature.cpp	1972		NARROW:dm2_v1_creature_steal_from_champion
-DM2_CREATURE_CCM0B	SKULLWIN	SKULLWIN/c_creature.cpp	2145		NARROW:dm2_v1_creature_ccm0b
+DM2_CREATURE_USES_LADDER_HOLE	SKULLWIN	SKULLWIN/c_creature.cpp	1709	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_uses_ladder_hole; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_CREATURE_CAST_SPELL	SKULLWIN	SKULLWIN/c_creature.cpp	1865	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_cast_spell; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_CREATURE_STEAL_FROM_CHAMPION	SKULLWIN	SKULLWIN/c_creature.cpp	1972	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_steal_from_champion; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_CREATURE_CCM0B	SKULLWIN	SKULLWIN/c_creature.cpp	2145	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_ccm0b; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_CREATURE_TAKES_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2176	src/dm2/dm2_v1_ccm.c:246	IMPLEMENTED_NARROW
-DM2_CREATURE_CCM0C	SKULLWIN	SKULLWIN/c_creature.cpp	2247		NARROW:dm2_v1_creature_ccm0c
+DM2_CREATURE_CCM0C	SKULLWIN	SKULLWIN/c_creature.cpp	2247	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_ccm0c; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_CREATURE_PUTS_DOWN_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2284	src/dm2/dm2_v1_ccm.c:240	IMPLEMENTED_NARROW
 DM2_CREATURE_KILL_ON_TIMER_POSITION	SKULLWIN	SKULLWIN/c_creature.cpp	2352	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_CREATURE_SHOOT_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2359	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_CREATURE_ROTATES_TARGET_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	2394	src/dm2/dm2_v1_world_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_PLACE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2411		NARROW:dm2_v1_place_merchandise
-DM2_TAKE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2509		NARROW:dm2_v1_take_merchandise
-DM2_CREATURE_ACTIVATES_WALL	SKULLWIN	SKULLWIN/c_creature.cpp	2564		NARROW:dm2_v1_creature_activates_wall
+DM2_PLACE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2411	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_place_merchandise; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_TAKE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2509	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_take_merchandise; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_CREATURE_ACTIVATES_WALL	SKULLWIN	SKULLWIN/c_creature.cpp	2564	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_activates_wall; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_CREATURE_TRANSFORM	SKULLWIN	SKULLWIN/c_creature.cpp	2637	src/dm2/dm2_v1_ccm.c:319	IMPLEMENTED_NARROW
 DM2_CREATURE_EXPLODE_OR_SUMMON	SKULLWIN	SKULLWIN/c_creature.cpp	2762	src/dm2/dm2_v1_ccm.c:341	IMPLEMENTED_NARROW
-DM2_CREATURE_WALK_NOW	SKULLWIN	SKULLWIN/c_creature.cpp	2845		NARROW:dm2_v1_creature_walk_now
+DM2_CREATURE_WALK_NOW	SKULLWIN	SKULLWIN/c_creature.cpp	2845	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_creature_walk_now; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_1B7D5	SKULLWIN	SKULLWIN/c_creature.cpp	2916	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_PROCEED_CCM	SKULLWIN	SKULLWIN/c_creature.cpp	2930	src/dm2/dm2_v1_creature.c:388	IMPLEMENTED_NARROW
 DM2_GET_CREATURE_ANIMATION_FRAME	SKULLWIN	SKULLWIN/c_creature.cpp	3217	src/dm2/dm2_v1_creature_animation_gdat.c:dm2_v1_creature_animation_gdat_select_dynamic_v5; src/dm2/dm2_v1_boot.c:dm2_v1_boot_dynamic_creature_material_receipt; tests/test_dm2_v1_dynamic_creature_material_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 dynamic creature material follows the SKULLWIN FB/FC/FD animation tables to its exact CREATURES dtImage field, then requires matching GFX256 raw interval, decoded image, local palette, and M11 creature placement-plan identity; it cannot borrow the DB4/F9 map-chip image or a generic sprite fallback.
-DM2_4FCC	SKULLWIN	SKULLWIN/c_creature.cpp	3299		IMPLEMENTED_NARROW
+DM2_4FCC	SKULLWIN	SKULLWIN/c_creature.cpp	3299	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_4fcc; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_4FCC
 DM2_ALLOC_CPX_LINK_NODE	SKULLWIN	SKULLWIN/c_dballoc.cpp	26	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_reuse_list_init	VERIFIED_SOURCE_MAPPING	DM2 v1 CPX1 receipt links reusable CPX blocks in source descending amount order without allocating decoded buffers.
 DM2_ALLOC_CPX_UNLINK_NODE	SKULLWIN	SKULLWIN/c_dballoc.cpp	65	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_cpx1_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 CPX1 receipt unlinks the selected reusable block before source remainder handling and never exposes backing bytes.
 DM2_ALLOC_CPX1	SKULLWIN	SKULLWIN/c_dballoc.cpp	87	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_cpx1_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 CPX1 receipt selects an exact reusable block when available, otherwise the largest block, and retains only remainders of at least 30 bytes.
@@ -291,7 +291,7 @@ DM2_dialog_2066_38d9	SKULLWIN	SKULLWIN/c_dialog.cpp	307		NOT_APPLICABLE_ARCH	DOS
 DM2_dialog_OPEN_DIALOG_PANEL	SKULLWIN	SKULLWIN/c_dialog.cpp	352	include/dm2_v1_dialogue_gdat.h:29	NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
 DM2_dialog_2066_37f2	SKULLWIN	SKULLWIN/c_dialog.cpp	433		NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
 DM2_dialog_2066_398a	SKULLWIN	SKULLWIN/c_dialog.cpp	454		NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
-DM2_ENGAGE_COMMAND	SKULLWIN	SKULLWIN/c_engage.cpp	24		NARROW:dm2_v1_engage_command
+DM2_ENGAGE_COMMAND	SKULLWIN	SKULLWIN/c_engage.cpp	24	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_engage_command; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 init	SKULLWIN	SKULLWIN/c_eventqueue.cpp	10	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 set	SKULLWIN	SKULLWIN/c_eventqueue.cpp	33	src/dm2/dm2_v2_touch_runtime.c:71	NOT_APPLICABLE_ARCH
 PROCESS_SINGLEEVENT	SKULLWIN	SKULLWIN/c_eventqueue.cpp	44		NOT_APPLICABLE_ARCH	DOS event queue dispatch; Firestaff uses M11 event architecture
@@ -475,16 +475,16 @@ DM2_gfxstr_24a5_0732	SKULLWIN	SKULLWIN/c_gfx_str.cpp	717	src/dm2/dm2_v1_skprojec
 DM2_DISPLAY_HINT_TEXT	SKULLWIN	SKULLWIN/c_gfx_str.cpp	775	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_SCROLLBOX_MESSAGE	SKULLWIN	SKULLWIN/c_gfx_str.cpp	846	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_ICON_PICT_BUFF	SKULLWIN	SKULLWIN/c_gui_draw.cpp	31	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_icon_pict_buff; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_DRAW_ICON_PICT_ENTRY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	58		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
-DM2_DRAW_DIALOGUE_PROGRESS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	79		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
-DM2_DRAW_DIALOGUE_PARTS_PICT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	97		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
-DM2_DRAW_DIALOGUE_PICT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	117		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
-DM2_DRAW_WAKE_UP_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	147		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
-DM2_DRAW_PLAYER_3STAT_HEALTH_BAR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	167		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_ICON_PICT_ENTRY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	58	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_DIALOGUE_PROGRESS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	79	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_DIALOGUE_PARTS_PICT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	97	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_DIALOGUE_PICT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	117	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_WAKE_UP_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	147	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_PLAYER_3STAT_HEALTH_BAR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	167	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_CUR_MAX_HMS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	238	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cur_max_hms; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_PLAYER_3STAT_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	260	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_text; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_DRAW_PLAYER_NAME_AT_CMDSLOT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	281		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
-DM2_DRAW_PLAYER_DAMAGE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	289		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_PLAYER_NAME_AT_CMDSLOT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	281	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_PLAYER_DAMAGE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	289	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_CHIP_OF_MAGIC_MAP	SKULLWIN	SKULLWIN/c_gui_draw.cpp	311		NOT_APPLICABLE_ARCH
 DM2_QUERY_GDAT_SQUAD_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	390		NOT_APPLICABLE_ARCH
 DM2_DRAW_CRYOCELL_LEVER	SKULLWIN	SKULLWIN/c_gui_draw.cpp	414	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cryocell_lever; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
@@ -495,28 +495,28 @@ DM2_guidraw_0b36_0c52	SKULLWIN	SKULLWIN/c_gui_draw.cpp	617	src/dm2/dm2_v1_skproj
 DM2_DRAW_PLAYER_3STAT_PANE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	642	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_pane; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_guidraw_29ee_00a3	SKULLWIN	SKULLWIN/c_gui_draw.cpp	683		NOT_APPLICABLE_ARCH
 DM2_DRAW_CMD_SLOT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	693	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cmd_slot; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_DRAW_SPELL_TO_BE_CAST	SKULLWIN	SKULLWIN/c_gui_draw.cpp	714		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_SPELL_TO_BE_CAST	SKULLWIN	SKULLWIN/c_gui_draw.cpp	714	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_PLAYER_ATTACK_DIR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	733	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_attack_dir; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_DRAW_SPELL_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	805		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_SPELL_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	805	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_SHOW_ATTACK_RESULT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	864	src/dm2/dm2_v1_hud_survey_helpers.c; include/dm2_v1_hud_survey_helpers.h; tests/test_dm2_v1_hud_survey_helpers.c	IMPLEMENTED_NARROW	DM2 v1 HUD survey helper exposes the SKULLWIN attack-result alias and routes player damage through the source-shaped HUD damage icon/text receipt; invalid champion indices fail closed.
 DM2_guidraw_0b36_105b	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1016		NOT_APPLICABLE_ARCH
-DM2_DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1030		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds skproject squad spell/leader icon slot, mirror, leader, spell, and overlay routing.
+DM2_DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1030	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds skproject squad spell/leader icon slot, mirror, leader, spell, and overlay routing.
 DM2_guidraw_24a5_0e82	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1126		NOT_APPLICABLE_ARCH
 DM2_DRAW_FOOD_WATER_POISON_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1215	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_food_water_poison_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_ITEM_STATS_BAR	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1232	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_stats_bar; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_guidraw_2405_014a	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1307		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
-DM2_DRAW_ITEM_IN_HAND	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1516		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_guidraw_2405_014a	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1307	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_ITEM_IN_HAND	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1516	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_CONTAINER_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1540	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_guidraw_2405_011f	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1626	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2405_011f_query_inflated_rect; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the c_gui_draw wrapper as _2405_00ec blit-rect query plus source inflate margin over caller-owned UI rect state.
-DM2_guidraw_2405_00ec	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1638		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
-DM2_DRAW_ITEM_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1656		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_guidraw_2405_00ec	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1638	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_ITEM_ICON	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1656	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_CONTAINER_SURVEY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1795	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_survey; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_DRAW_EYE_MOUTH_COLORED_RECTANGLE	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1824	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_eye_mouth_colored_rectangle; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_guidraw_2e62_03b5	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1833	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2e62_03b5_item_icon_update; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	SKULLWIN/c_gui_draw.cpp alias of SKWIN/SkWinCore.cpp _2e62_03b5; same item icon update receipt applies.
-DM2_DRAW_SCROLL_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1996		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
-DM2_DRAW_ITEM_SURVEY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2072		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_SCROLL_TEXT	SKULLWIN	SKULLWIN/c_gui_draw.cpp	1996	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_ITEM_SURVEY	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2072	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_ITEM_ON_WOOD_PANEL	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2234	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_on_wood_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_DRAW_HAND_ACTION_ICONS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2341		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
+DM2_DRAW_HAND_ACTION_ICONS	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2341	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 c_gui_draw receipt binds the skproject GUI route to real GDAT/button/text/blit requests without synthetic visuals.
 DM2_DRAW_MAP_CHIP	SKULLWIN	SKULLWIN/c_gui_draw.cpp	2412		NOT_APPLICABLE_ARCH
 DM2_guidraw_29ee_1d03	SKULLWIN	SKULLWIN/c_gui_draw.cpp	3499		NOT_APPLICABLE_ARCH
 DM2_guidraw_29ee_1946	SKULLWIN	SKULLWIN/c_gui_draw.cpp	3561		NOT_APPLICABLE_ARCH
@@ -591,54 +591,54 @@ use_luck	SKULLWIN	SKULLWIN/c_hero.cpp	136		IMPLEMENTED	DM2 party/hero module imp
 rotate	SKULLWIN	SKULLWIN/c_hero.cpp	168	src/dm2/dm2_v1_creature.c:879	IMPLEMENTED_NARROW
 set_hero_flags	SKULLWIN	SKULLWIN/c_hero.cpp	190		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
 get_player_weight	SKULLWIN	SKULLWIN/c_hero.cpp	197		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
-calc_player_weight	SKULLWIN	SKULLWIN/c_hero.cpp	208		IMPLEMENTED_NARROW
-DM2_CALC_PLAYER_ATTACK_DAMAGE	SKULLWIN	SKULLWIN/c_hero.cpp	232		NARROW:dm2_v1_calc_player_attack_damage
-DM2_hero_39796	SKULLWIN	SKULLWIN/c_hero.cpp	464		NARROW:dm2_v1_hero_39796
+calc_player_weight	SKULLWIN	SKULLWIN/c_hero.cpp	208	src/dm2/dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
+DM2_CALC_PLAYER_ATTACK_DAMAGE	SKULLWIN	SKULLWIN/c_hero.cpp	232	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_calc_player_attack_damage; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_hero_39796	SKULLWIN	SKULLWIN/c_hero.cpp	464	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_hero_39796; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_hero_2c1d_0300	SKULLWIN	SKULLWIN/c_hero.cpp	652	dm2_v1_hero_2c1d_0300	IMPLEMENTED
 DM2_SHOOT_CHAMPION_MISSILE	SKULLWIN	SKULLWIN/c_hero.cpp	688	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
-DM2_PROCEED_ENCHANTMENT_SELF	SKULLWIN	SKULLWIN/c_hero.cpp	724	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_PROCEED_ENCHANTMENT_SELF	SKULLWIN	SKULLWIN/c_hero.cpp	724	src/dm2/dm2_v1_hero_ops_pc34_compat.c:dm2_v1_proceed_enchantment_self	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
 DM2_hero_2c1d_0186	SKULLWIN	SKULLWIN/c_hero.cpp	840	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 R_36EFE	SKULLWIN	SKULLWIN/c_hero.cpp	873	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
-DM2_BRING_CHAMPION_TO_LIFE	SKULLWIN	SKULLWIN/c_hero.cpp	916	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
-DM2_REVIVE_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	957		NARROW:dm2_v1_revive_player
-DM2_SELECT_CHAMPION	SKULLWIN	SKULLWIN/c_hero.cpp	1052		NARROW:dm2_v1_select_champion
-DM2_ADJUST_SKILLS	SKULLWIN	SKULLWIN/c_hero.cpp	1166		NARROW:dm2_v1_adjust_skills
+DM2_BRING_CHAMPION_TO_LIFE	SKULLWIN	SKULLWIN/c_hero.cpp	916	src/dm2/dm2_v1_hero_ops_pc34_compat.c:dm2_v1_bring_champion_to_life	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
+DM2_REVIVE_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	957	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_revive_player; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_SELECT_CHAMPION	SKULLWIN	SKULLWIN/c_hero.cpp	1052	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_select_champion; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ADJUST_SKILLS	SKULLWIN	SKULLWIN/c_hero.cpp	1166	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_adjust_skills; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_hero_2c1d_132c	SKULLWIN	SKULLWIN/c_hero.cpp	1383		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
-DM2_hero_2c1d_135d	SKULLWIN	SKULLWIN/c_hero.cpp	1403		NARROW:dm2_v1_hero_2c1d_135d	
-DM2_WOUND_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	1496		NARROW:dm2_v1_wound_player
-DM2_ADJUST_STAMINA	SKULLWIN	SKULLWIN/c_hero.cpp	1722		IMPLEMENTED_NARROW
-DM2_UPDATE_CHAMPIONS_STATS	SKULLWIN	SKULLWIN/c_hero.cpp	1757		NARROW:dm2_v1_update_champions_stats
+DM2_hero_2c1d_135d	SKULLWIN	SKULLWIN/c_hero.cpp	1403	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_hero_2c1d_135d; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_WOUND_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	1496	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_wound_player; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ADJUST_STAMINA	SKULLWIN	SKULLWIN/c_hero.cpp	1722	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_UPDATE_CHAMPIONS_STATS	SKULLWIN	SKULLWIN/c_hero.cpp	1757	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_update_champions_stats; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_USE_DEXTERITY_ATTRIBUTE	SKULLWIN	SKULLWIN/c_hero.cpp	2026	dm2_v1_hero_use_dexterity_attribute_raw	IMPLEMENTED
-DM2_WIELD_WEAPON	SKULLWIN	SKULLWIN/c_hero.cpp	2064		NARROW:dm2_v1_wield_weapon
+DM2_WIELD_WEAPON	SKULLWIN	SKULLWIN/c_hero.cpp	2064	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_wield_weapon; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_EQUIP_ITEM_TO_HAND	SKULLWIN	SKULLWIN/c_hero.cpp	2161	dm2_v1_skproject_core.c:7989	IMPLEMENTED
 DM2_ADD_ITEM_TO_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	2188	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_BURN_PLAYER_LIGHTING_ITEMS	SKULLWIN	SKULLWIN/c_hero.cpp	2262	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_SELECT_CHAMPION_LEADER	SKULLWIN	SKULLWIN/c_hero.cpp	2325	dm2_v1_party_select_champion_leader	IMPLEMENTED
-DM2_REMOVE_OBJECT_FROM_HAND	SKULLWIN	SKULLWIN/c_hero.cpp	2354		NARROW:dm2_v1_remove_object_from_hand
+DM2_REMOVE_OBJECT_FROM_HAND	SKULLWIN	SKULLWIN/c_hero.cpp	2354	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_remove_object_from_hand; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_hero_37BEA	SKULLWIN	SKULLWIN/c_hero.cpp	2383	dm2_v1_hero_37bea	IMPLEMENTED
 DM2_GET_PARTY_SPECIAL_FORCE	SKULLWIN	SKULLWIN/c_hero.cpp	2407	dm2_v1_get_party_special_force	IMPLEMENTED
 DM2_ADJUST_HAND_COOLDOWN	SKULLWIN	SKULLWIN/c_hero.cpp	2432	dm2_v1_hero_adjust_hand_cooldown	IMPLEMENTED
 DM2_REMOVE_POSSESSION	SKULLWIN	SKULLWIN/c_hero.cpp	2485	src/dm2/dm2_v1_object_transfer_helpers.c; include/dm2_v1_object_transfer_helpers.h; tests/test_dm2_v1_object_transfer_helpers.c	IMPLEMENTED_NARROW	DM2 v1 object-transfer helper models bounded source-chain unlink planning over caller-owned object links; malformed chains and missing objects fail closed.
 DM2_DROP_PLAYER_ITEMS	SKULLWIN	SKULLWIN/c_hero.cpp	2535	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
-DM2_CURE_POISON	SKULLWIN	SKULLWIN/c_hero.cpp	2580	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_PLAYER_DEFEATED	SKULLWIN	SKULLWIN/c_hero.cpp	2636		NARROW:dm2_v1_player_defeated
-DM2_PROCESS_PLAYERS_DAMAGE	SKULLWIN	SKULLWIN/c_hero.cpp	2777		NARROW:dm2_v1_process_players_damage
+DM2_CURE_POISON	SKULLWIN	SKULLWIN/c_hero.cpp	2580	src/dm2/dm2_v1_hero_ops_pc34_compat.c:dm2_v1_cure_poison	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
+DM2_PLAYER_DEFEATED	SKULLWIN	SKULLWIN/c_hero.cpp	2636	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_player_defeated; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_PROCESS_PLAYERS_DAMAGE	SKULLWIN	SKULLWIN/c_hero.cpp	2777	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_process_players_damage; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_PUT_ITEM_TO_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	2838	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
-DM2_PERFORM_TURN_SQUAD	SKULLWIN	SKULLWIN/c_hero.cpp	2887		IMPLEMENTED_NARROW
+DM2_PERFORM_TURN_SQUAD	SKULLWIN	SKULLWIN/c_hero.cpp	2887	src/dm2/dm2_v1_hero_ops_pc34_compat.c:dm2_v1_perform_turn_squad	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
 DM2_RESET_SQUAD_DIR	SKULLWIN	SKULLWIN/c_hero.cpp	2939	dm2_v1_party_reset_squad_dir	IMPLEMENTED
 DM2_RESUME_FROM_WAKE	SKULLWIN	SKULLWIN/c_hero.cpp	2961	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_SET_SPELLING_CHAMPION	SKULLWIN	SKULLWIN/c_hero.cpp	2971		IMPLEMENTED_NARROW
-DM2_PLAYER_CONSUME_OBJECT	SKULLWIN	SKULLWIN/c_hero.cpp	2998		NARROW:dm2_v1_player_consume_object
-DM2_ATTACK_PARTY	SKULLWIN	SKULLWIN/c_hero.cpp	3346	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
-DM2_PROCESS_POISON	SKULLWIN	SKULLWIN/c_hero.cpp	3397		IMPLEMENTED_NARROW
-DM2_TAKE_COIN_FROM_WALLET	SKULLWIN	SKULLWIN/c_hero.cpp	3451		IMPLEMENTED_NARROW
-DM2_ADD_COIN_TO_WALLET	SKULLWIN	SKULLWIN/c_hero.cpp	3506		IMPLEMENTED_NARROW
+DM2_SET_SPELLING_CHAMPION	SKULLWIN	SKULLWIN/c_hero.cpp	2971	src/dm2/dm2_v1_hero_ops_pc34_compat.c:dm2_v1_set_spelling_champion	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
+DM2_PLAYER_CONSUME_OBJECT	SKULLWIN	SKULLWIN/c_hero.cpp	2998	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_player_consume_object; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ATTACK_PARTY	SKULLWIN	SKULLWIN/c_hero.cpp	3346	src/dm2/dm2_v1_creature_ops_pc34_compat.c:dm2_v1_attack_party	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
+DM2_PROCESS_POISON	SKULLWIN	SKULLWIN/c_hero.cpp	3397	src/dm2/dm2_v1_hero_ops_pc34_compat.c:dm2_v1_process_poison	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
+DM2_TAKE_COIN_FROM_WALLET	SKULLWIN	SKULLWIN/c_hero.cpp	3451	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_ADD_COIN_TO_WALLET	SKULLWIN	SKULLWIN/c_hero.cpp	3506	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_2759_0e93	SKULLWIN	SKULLWIN/c_hero.cpp	3580	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2759_0e93_hand_activation; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	SKULLWIN/c_hero.cpp alias of SKWIN/SkWinCore.cpp _2759_0e93; same hand activation predicate receipt applies.
 DM2_LOAD_PROJECTILE_TO_HAND	SKULLWIN	SKULLWIN/c_hero.cpp	3643	src/dm2/dm2_v1_object_transfer_helpers.c; include/dm2_v1_object_transfer_helpers.h; tests/test_dm2_v1_object_transfer_helpers.c	IMPLEMENTED_NARROW	DM2 v1 object-transfer helper models projectile-to-empty-hand transfer while preserving source-head mutation; occupied hands and malformed input fail closed.
 DM2_CAST_CHAMPION_MISSILE_SPELL	SKULLWIN	SKULLWIN/c_hero.cpp	3840	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_2c1d_0e23	SKULLWIN	SKULLWIN/c_hero.cpp	3879		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
-DM2_hero_2c1d_1de2	SKULLWIN	SKULLWIN/c_hero.cpp	3903		NARROW:dm2_v1_hero_2c1d_1de2
-DM2_CHANGE_PLAYER_POS	SKULLWIN	SKULLWIN/c_hero.cpp	4037		NARROW:dm2_v1_change_player_pos
+DM2_hero_2c1d_1de2	SKULLWIN	SKULLWIN/c_hero.cpp	3903	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_hero_2c1d_1de2; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_CHANGE_PLAYER_POS	SKULLWIN	SKULLWIN/c_hero.cpp	4037	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_change_player_pos; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION	SKULLWIN	SKULLWIN/c_hero.cpp	4141	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 init_global_images	SKULLWIN	SKULLWIN/c_image.cpp	18		NOT_APPLICABLE_ARCH
 init	SKULLWIN	SKULLWIN/c_image.cpp	27	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
@@ -671,15 +671,15 @@ DM2_ADD_ITEM_CHARGE	SKULLWIN	SKULLWIN/c_item.cpp	251	include/dm2_v1_skproject_co
 DM2_GET_MAX_CHARGE	SKULLWIN	SKULLWIN/c_item.cpp	344	include/dm2_v1_skproject_core.h:dm2_v1_skproject_get_max_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN c_item max-charge query: OBJECT_NULL and unsupported DB types return zero, DB5 weapon and DB6 cloth return 15, and DB10 miscellaneous items return 3.
 DM2_QUERY_ITEM_VALUE	SKULLWIN	SKULLWIN/c_item.cpp	360	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_value	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the bounded SKULLWIN c_item item-value flow: caller-supplied source-shaped GDAT word values feed base value, cls4 1/2 charge multipliers, potion money scaling, recursive container contents, and moneybox weight/value aggregation without fabricating records.
 DM2_QUERY_ITEM_WEIGHT	SKULLWIN	SKULLWIN/c_item.cpp	496	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_weight	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN c_item weight wrapper as QUERY_ITEM_VALUE(object, 1) over the same bounded source-shaped item receipt.
-DM2_GET_ITEM_NAME	SKULLWIN	SKULLWIN/c_item.cpp	502		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ITEM_NAME with source-shaped cls1/cls2 and champion-bones owner side effect before GDAT text lookup.
-DM2_IS_MISCITEM_DRINK_WATER	SKULLWIN	SKULLWIN/c_item.cpp	528		src/dm2/dm2_v1_item_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_MOVE_ITEM_TO	SKULLWIN	SKULLWIN/c_item.cpp	554		NARROW:dm2_v1_move_item_to
-DM2_ACTIVATE_ITEM_TELEPORT	SKULLWIN	SKULLWIN/c_item.cpp	651		NARROW:dm2_v1_activate_item_teleport
+DM2_GET_ITEM_NAME	SKULLWIN	SKULLWIN/c_item.cpp	502	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ITEM_NAME with source-shaped cls1/cls2 and champion-bones owner side effect before GDAT text lookup.
+DM2_IS_MISCITEM_DRINK_WATER	SKULLWIN	SKULLWIN/c_item.cpp	528	src/dm2/dm2_v1_item_ops_pc34_compat.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW
+DM2_MOVE_ITEM_TO	SKULLWIN	SKULLWIN/c_item.cpp	554	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_move_item_to; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ACTIVATE_ITEM_TELEPORT	SKULLWIN	SKULLWIN/c_item.cpp	651	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_activate_item_teleport; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2__CHECK_ROOM_FOR_CONTAINER	SKULLWIN	SKULLWIN/c_item.cpp	975	src/dm2/dm2_v1_world_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_F958	SKULLWIN	SKULLWIN/c_item.cpp	1034		src/dm2/dm2_v1_item_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_SHOOT_ITEM	SKULLWIN	SKULLWIN/c_item.cpp	1043		NARROW:dm2_v1_shoot_item
+DM2_F958	SKULLWIN	SKULLWIN/c_item.cpp	1034	src/dm2/dm2_v1_item_ops_pc34_compat.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW
+DM2_SHOOT_ITEM	SKULLWIN	SKULLWIN/c_item.cpp	1043	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_shoot_item; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_PUT_OBJECT_INTO_CONTAINER	SKULLWIN	SKULLWIN/c_item.cpp	1146	src/dm2/dm2_v1_object_transfer_helpers.c; include/dm2_v1_object_transfer_helpers.h; tests/test_dm2_v1_object_transfer_helpers.c	IMPLEMENTED_NARROW	DM2 v1 object-transfer helper models bounded append-to-container chain planning over caller-owned links; duplicate or malformed chain data fails closed.
-DM2_TAKE_OBJECT	SKULLWIN	SKULLWIN/c_item.cpp	1185		src/dm2/dm2_v1_item_ops_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_TAKE_OBJECT	SKULLWIN	SKULLWIN/c_item.cpp	1185	src/dm2/dm2_v1_item_ops_pc34_compat.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW
 init	SKULLWIN	SKULLWIN/c_keybd.cpp	77	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 getkey	SKULLWIN	SKULLWIN/c_keybd.cpp	87		NOT_APPLICABLE_ARCH
 putkey	SKULLWIN	SKULLWIN/c_keybd.cpp	99		NOT_APPLICABLE_ARCH
@@ -687,8 +687,8 @@ DM2_HAS_KEY	SKULLWIN	SKULLWIN/c_keybd.cpp	114		NOT_APPLICABLE_ARCH
 DM2_GETKEY_TRANSLATED	SKULLWIN	SKULLWIN/c_keybd.cpp	123		NOT_APPLICABLE_ARCH
 DM2_keybd_476d_05b6	SKULLWIN	SKULLWIN/c_keybd.cpp	178		NOT_APPLICABLE_ARCH
 DM2_RECALC_LIGHT_LEVEL	SKULLWIN	SKULLWIN/c_light.cpp	16	src/dm2/dm2_v1_gdat_scene_m11_command.c:dm2_v1_c_light_m11_receipt_build_for_map; tests/test_dm2_v1_c_light_receipt.c	VERIFIED_SOURCE_MAPPING	DM2 c_light receipt maps skproject c_light.cpp DM2_RECALC_LIGHT_LEVEL terminal inputs into a bounded runtime receipt: fixed maps start at source level one, dynamic maps consume authenticated live base light, darkness is subtracted and clamped to 0..5, and the map-bound path hashes the real Map_definitions descriptor identity from DUNGEON.DAT without synthetic light fallback.
-DM2_ADD_BACKGROUND_LIGHT_FROM_TILE	SKULLWIN	SKULLWIN/c_light.cpp	202		NARROW:dm2_v1_add_background_light_from_tile
-DM2_CHECK_RECOMPUTE_LIGHT	SKULLWIN	SKULLWIN/c_light.cpp	490		NARROW:dm2_v1_check_recompute_light
+DM2_ADD_BACKGROUND_LIGHT_FROM_TILE	SKULLWIN	SKULLWIN/c_light.cpp	202	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_add_background_light_from_tile; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_CHECK_RECOMPUTE_LIGHT	SKULLWIN	SKULLWIN/c_light.cpp	490	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_check_recompute_light; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_PROCEED_LIGHT	SKULLWIN	SKULLWIN/c_light.cpp	596	src/dm2/dm2_v1_light_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_MARK_DYN_LOAD	SKULLWIN	SKULLWIN/c_loadlevel.cpp	25		NOT_APPLICABLE_ARCH
 DM2_2676_008f	SKULLWIN	SKULLWIN/c_loadlevel.cpp	54		NOT_APPLICABLE_ARCH
@@ -739,17 +739,17 @@ DM2_move_2fcf_0b8b	SKULLWIN	SKULLWIN/c_move.cpp	947	src/dm2/dm2_v1_skproject_cor
 DM2_0cee_317f	SKULLWIN	SKULLWIN/c_move.cpp	1032	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_wall_ornate_alcove_data_index; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_ATTACK_WALL	SKULLWIN	SKULLWIN/c_move.cpp	1053	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_attack_wall; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_move_075f_0af9	SKULLWIN	SKULLWIN/c_move.cpp	1307	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_move_075f_0af9; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DM2_move_075f_06bd	SKULLWIN	SKULLWIN/c_move.cpp	1972		IMPLEMENTED_NARROW
+DM2_move_075f_06bd	SKULLWIN	SKULLWIN/c_move.cpp	1972	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_move_075f_06bd; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_move_075f_06bd
 DM2_ATTACK_DOOR	SKULLWIN	SKULLWIN/c_move.cpp	2097	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_attack_door; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DM2_move_2fcf_0434	SKULLWIN	SKULLWIN/c_move.cpp	2152	src/dm2/dm2_v1_move_2fcf_0434.c:dm2_v1_DM2_move_2fcf_0434_teleporter_gate; tests/test_dm2_v1_move_2fcf_0434.c	VERIFIED_SOURCE_MAPPING	DM2 v1 move_2fcf_0434 teleporter gate maps skproject c_move.cpp source tile and DB1 Teleporter prerequisites into a bounded receipt; real DUNGEON.DAT enabled teleporter candidates are admitted only to the incomplete-record-graph block path, with no w0 traversal, synthetic teleport, sound, or map mutation.
 DM2_move_075f_1bc2	SKULLWIN	SKULLWIN/c_move.cpp	2861	src/dm2/dm2_v1_move_075f_1bc2.c:dm2_v1_DM2_move_075f_1bc2_target_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 move_075f_1bc2 receipt maps loaded DUNGEON.DAT source tiles to bounded target movement facts, including raw tile, square type, first thing link, door state, passability, and vertical stair direction; real DUNGEON.DAT target receipts now feed PERFORM_MOVE without fallback.
 DM2_move_2c1d_028c	SKULLWIN	SKULLWIN/c_move.cpp	2914	src/dm2/dm2_v1_move_2c1d_028c.c:dm2_v1_DM2_move_2c1d_028c_commit_receipt; tests/test_dm2_v1_move_2c1d_028c.c	VERIFIED_SOURCE_MAPPING	DM2 v1 move_2c1d_028c commit receipt consumes the source-backed move_075f_1bc2 target receipt, preserving facing, advancing only accepted moves, keeping blocked pose unchanged, and proving committed and blocked cases against real DUNGEON.DAT without runtime mutation or synthetic chained effects.
-DM2_TRY_PUSH_OBJECT_TO	SKULLWIN	SKULLWIN/c_moverec.cpp	25		NARROW:dm2_v1_try_push_object_to
-DM2_2fcf_0234	SKULLWIN	SKULLWIN/c_moverec.cpp	144		NARROW:dm2_v1_moverec_2fcf_0234
+DM2_TRY_PUSH_OBJECT_TO	SKULLWIN	SKULLWIN/c_moverec.cpp	25	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_try_push_object_to; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_2fcf_0234	SKULLWIN	SKULLWIN/c_moverec.cpp	144	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_moverec_2fcf_0234; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_SET_MINION_RECENT_OPEN_DOOR_LOCATION	SKULLWIN	SKULLWIN/c_moverec.cpp	312	src/dm2/dm2_v1_moverec_ops_pc34_compat.c; include/dm2_v1_moverec_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_moverec_2fcf_01c5	SKULLWIN	SKULLWIN/c_moverec.cpp	365	src/dm2/dm2_v1_moverec_ops_pc34_compat.c; include/dm2_v1_moverec_ops_pc34_compat.h	IMPLEMENTED_NARROW
-DM2_MOVE_RECORD_TO	SKULLWIN	SKULLWIN/c_moverec.cpp	392		IMPLEMENTED_NARROW
-DM2_moverec_3CE7D	SKULLWIN	SKULLWIN/c_moverec.cpp	1147		NARROW:dm2_v1_moverec_3ce7d
+DM2_MOVE_RECORD_TO	SKULLWIN	SKULLWIN/c_moverec.cpp	392	src/dm2/dm2_v1_actuator_event_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_moverec_3CE7D	SKULLWIN	SKULLWIN/c_moverec.cpp	1147	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_moverec_3ce7d; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_query_098d_000f	SKULLWIN	SKULLWIN/c_querydb.cpp	23	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_098d_000f; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_IS_CLS1_CRITICAL_FOR_LOAD	SKULLWIN	SKULLWIN/c_querydb.cpp	29	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_cls1_critical_for_load; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_DYN_BUFF	SKULLWIN	SKULLWIN/c_querydb.cpp	36	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_query_gdat_dyn_buff; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
@@ -779,10 +779,10 @@ DM2_IS_REBIRTH_ALTAR	SKULLWIN	SKULLWIN/c_querydb.cpp	682	src/dm2/dm2_v1_skprojec
 DM2_QUERY_DOOR_DAMAGE_RESIST	SKULLWIN	SKULLWIN/c_querydb.cpp	713	include/dm2_v1_asset_loader.h:dm2_v1_query_door_damage_resist_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_CREATURE_WORD_VALUE	SKULLWIN	SKULLWIN/c_querydb.cpp	722	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 DM2_IS_WALL_ORNATE_SPRING	SKULLWIN	SKULLWIN/c_querydb.cpp	793	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_wall_ornate_spring; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
-DM2_IS_MISCITEM_CURRENCY	SKULLWIN	SKULLWIN/c_querydb.cpp	803		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_MISCITEM_CURRENCY as DB10 plus GDAT flags bit 0x4000.
-DM2_IS_CONTAINER_MONEYBOX	SKULLWIN	SKULLWIN/c_querydb.cpp	820		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
+DM2_IS_MISCITEM_CURRENCY	SKULLWIN	SKULLWIN/c_querydb.cpp	803	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_MISCITEM_CURRENCY as DB10 plus GDAT flags bit 0x4000.
+DM2_IS_CONTAINER_MONEYBOX	SKULLWIN	SKULLWIN/c_querydb.cpp	820	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
 DM2_IS_CONTAINER_MAP	SKULLWIN	SKULLWIN/c_querydb.cpp	845	include/dm2_v1_skproject_core.h:dm2_v1_skproject_is_container_map; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	Bounded ObjectID DB-type 9 plus CONTAINERS ContainerType==1 predicate mirrors c_querydb.cpp:845.
-DM2_IS_CONTAINER_CHEST	SKULLWIN	SKULLWIN/c_querydb.cpp	861		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_CONTAINER_CHEST as DB9 type-0 container excluding moneyboxes.
+DM2_IS_CONTAINER_CHEST	SKULLWIN	SKULLWIN/c_querydb.cpp	861	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps IS_CONTAINER_CHEST as DB9 type-0 container excluding moneyboxes.
 DM2_IS_DISTINCTIVE_ITEM_ON_ACTUATOR	SKULLWIN	SKULLWIN/c_querydb.cpp	880	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_distinctive_item_on_actuator; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 skproject core maps the tile-chain search for a distinctive item type with optional container descent; distinctive type resolved through caller callback because DM2_GET_DISTINCTIVE_ITEMTYPE record semantics are not yet proven.
 DM2_IS_MISSILE_VALID_TO_LAUNCHER	SKULLWIN	SKULLWIN/c_querydb.cpp	949	src/dm2/dm2_v1_item_missile_helpers.c; include/dm2_v1_item_missile_helpers.h; tests/test_dm2_v1_item_missile_helpers.c	IMPLEMENTED_NARROW	DM2 v1 item/missile helper models bounded launcher/missile class checks over caller-owned item facts; absent launcher/missile data rejects.
 DM2_GET_CREATURE_WEIGHT	SKULLWIN	SKULLWIN/c_querydb.cpp	982	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_get_creature_weight; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core records a caller-resolved creature weight and the source overweight threshold used by lift admission.
@@ -804,7 +804,7 @@ DM2_DIR_FROM_5x5_POS	SKULLWIN	SKULLWIN/c_querydb.cpp	1900	src/dm2/dm2_v1_skproje
 DM2_GET_DOOR_STAT_0X10	SKULLWIN	SKULLWIN/c_querydb.cpp	1917	include/dm2_v1_asset_loader.h:dm2_v1_get_door_stat_0x10_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt reads real DOORS dtWordValue field 0x0e through QUERY_GDAT_ENTRY_DATA_INDEX and fails closed when the source row is absent.
 DM2_GET_GLOB_VAR	SKULLWIN	SKULLWIN/c_querydb.cpp	1926	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_get_glob_var; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the global-words table lookup with source-sized bounds checking.
 DM2_GET_GRAPHICS_FOR_DOOR	SKULLWIN	SKULLWIN/c_querydb.cpp	1955	include/dm2_v1_asset_loader.h:dm2_v1_get_graphics_for_door_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 querydb receipt reads real DOORS dtWordValue field 0x0d for the SKULLWIN door-type contract and fails closed when the source row is absent.
-DM2_GET_ITEM_ORDER_IN_CONTAINER	SKULLWIN	SKULLWIN/c_querydb.cpp	1964		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ITEM_ORDER_IN_CONTAINER over GDAT order text ranges, J-offset items, and money item table lookup.
+DM2_GET_ITEM_ORDER_IN_CONTAINER	SKULLWIN	SKULLWIN/c_querydb.cpp	1964	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ITEM_ORDER_IN_CONTAINER over GDAT order text ranges, J-offset items, and money item table lookup.
 DM2_COUNT_BY_COIN_TYPES	SKULLWIN	SKULLWIN/c_querydb.cpp	2088	src/dm2/dm2_v1_skproject_core.c:886	VERIFIED_SOURCE_MAPPING
 DM2_RETRIEVE_ENVIRONMENT_CMD_CD_FW	SKULLWIN	SKULLWIN/c_querydb.cpp	2144	src/dm2/dm2_v1_weather_gdat.c:dm2_v1_weather_gdat_overlay_plan; tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 weather overlay plans preserve the source CD/FW command text fields, cloud-then-rain slot order, zero offsets, 0x40 scale initialization, decoded material identity, and fail-closed no-draw behavior for missing material.
 DM2_CALC_PLAYER_WALK_DELAY	SKULLWIN	SKULLWIN/c_querydb.cpp	2175	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_calc_player_walk_delay; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 skproject core maps the encumbrance/bodyflag/walkspeed walk-delay formula with caller-resolved hero fields.
@@ -850,49 +850,49 @@ DM2_QUERY_DOOR_STRENGTH	SKULLWIN	SKULLWIN/c_querydb.cpp	5007	include/dm2_v1_asse
 DM2_IS_CREATURE_ALLOWED_ON_LEVEL	SKULLWIN	SKULLWIN/c_querydb.cpp	5025	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_creature_allowed_on_level; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the level allowance predicate: AI spec flags bit 0x40 of the high byte always allows, otherwise the record cls2 must appear in the caller-resolved level allowance list (source count ((word@0xc << 8) >> 12) & 0xf).
 DM2_query_0cee_319e	SKULLWIN	SKULLWIN/c_querydb.cpp	5073	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_query_0cee_319e; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the GDAT entry 9 data index 11 query keyed by record cls2 with the source 0xff-to-0 fallback over caller-owned cls2/GDAT accessors.
 init	SKULLWIN	SKULLWIN/c_random.cpp	7	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
-DM2_RAND	SKULLWIN	SKULLWIN/c_random.cpp	13		IMPLEMENTED_NARROW
+DM2_RAND	SKULLWIN	SKULLWIN/c_random.cpp	13	src/dm2/dm2_v1_projectile_impact_attack.c	IMPLEMENTED_NARROW
 DM2_RAND16	SKULLWIN	SKULLWIN/c_random.cpp	21	include/dm2_v1_skproject_core.h:dm2_v1_skproject_rand16	VERIFIED_SOURCE_MAPPING
 DM2_RANDBIT	SKULLWIN	SKULLWIN/c_random.cpp	30	include/dm2_v1_skproject_core.h:dm2_v1_skproject_randbit	VERIFIED_SOURCE_MAPPING
 DM2_RANDDIR	SKULLWIN	SKULLWIN/c_random.cpp	40	include/dm2_v1_skproject_core.h:dm2_v1_skproject_randdir	VERIFIED_SOURCE_MAPPING
-init_global_records	SKULLWIN	SKULLWIN/c_record.cpp	33		IMPLEMENTED_NARROW
+init_global_records	SKULLWIN	SKULLWIN/c_record.cpp	33	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_init_global_records; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject init_global_records
 mk_record	SKULLWIN	SKULLWIN/c_record.cpp	41	src/dm2/dm2_v1_dungeon_loader.c; include/dm2_v1_dungeon_loader.h; tests/test_dm2_v1_c_map_tile_access.c	VERIFIED_SOURCE_MAPPING	DM2 v1 dungeon loader maps skproject record construction preserving signed sentinel values as raw object words.
 record_to_word	SKULLWIN	SKULLWIN/c_record.cpp	42	src/dm2/dm2_v1_dungeon_loader.c; include/dm2_v1_dungeon_loader.h; tests/test_dm2_v1_c_map_tile_access.c	VERIFIED_SOURCE_MAPPING	DM2 v1 dungeon loader maps skproject record-to-word signed sentinel restoration.
 record_to_long	SKULLWIN	SKULLWIN/c_record.cpp	43	src/dm2/dm2_v1_dungeon_loader.c; include/dm2_v1_dungeon_loader.h; tests/test_dm2_v1_c_map_tile_access.c	VERIFIED_SOURCE_MAPPING	DM2 v1 dungeon loader maps skproject record-to-long sign extension for sentinel records.
-DM2_GET_ADDRESS_OF_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	46	include/dm2_v1_world_model.h:257	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core implements the c_record 4-bit table / 10-bit index address receipt with bounded record counts and byte offsets.
+DM2_GET_ADDRESS_OF_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	46	include/dm2_v1_world_model.h:257	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core implements the c_record 4-bit table / 10-bit index address receipt with bounded record counts and byte offsets.
 DM2_GET_NEXT_RECORD_LINK	SKULLWIN	SKULLWIN/c_record.cpp	54	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_get_next_thing	VERIFIED_SOURCE_MAPPING
 DM2_APPEND_RECORD_TO	SKULLWIN	SKULLWIN/c_record.cpp	60	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_append_record_to	VERIFIED_SOURCE_MAPPING	DM2 v1 loader implements the bounded source mutation for APPEND_RECORD_TO: reject end/null append inputs, reset appended GenericRecord::w0 to OBJECT_END_MARKER, append through a parent link or existing tile chain, and insert into an empty byte-square tile with ground-stack shift plus column-index bump.
 DM2_CUT_RECORD_FROM	SKULLWIN	SKULLWIN/c_record.cpp	121	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_cut_record_from	VERIFIED_SOURCE_MAPPING	DM2 v1 loader implements the bounded source mutation for CUT_RECORD_FROM: reject end/null cut inputs, mask direction bits with 0x3fff for record address and comparisons, unlink from parent-owned chains or tile chains, replace first tile roots with their next link, compact single-root tile ground-stack entries, decrement later column offsets, and reset the cut GenericRecord::w0 to OBJECT_END_MARKER.
-DM2_GET_DISTINCTIVE_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	175		IMPLEMENTED_NARROW
-DM2_QUERY_CLS2_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	203		IMPLEMENTED_NARROW
-DM2_SET_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	284		IMPLEMENTED_NARROW
-DM2_QUERY_GDAT_DBSPEC_WORD_VALUE	SKULLWIN	SKULLWIN/c_record.cpp	352		IMPLEMENTED_NARROW
-DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	367		IMPLEMENTED_NARROW
-DM2_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	403		IMPLEMENTED_NARROW
-DM2_QUERY_ITEMDB_FROM_DISTINCTIVE_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	449		IMPLEMENTED_NARROW
-DM2_QUERY_CLS1_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	454		IMPLEMENTED_NARROW
-DM2_GET_WALL_TILE_ANYITEM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	477		IMPLEMENTED_NARROW
-DM2_SET_ITEM_IMPORTANCE	SKULLWIN	SKULLWIN/c_record.cpp	498		IMPLEMENTED_NARROW
-DM2_RECYCLE_A_RECORD_FROM_THE_WORLD	SKULLWIN	SKULLWIN/c_record.cpp	544		NARROW:dm2_v1_recycle_a_record_from_the_world
-DM2_ALLOC_NEW_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1076		IMPLEMENTED_NARROW
-DM2_ALLOC_NEW_DBITEM	SKULLWIN	SKULLWIN/c_record.cpp	1142		IMPLEMENTED_NARROW
+DM2_GET_DISTINCTIVE_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	175	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_get_distinctive_itemtype; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_GET_DISTINCTIVE_ITEMTYPE
+DM2_QUERY_CLS2_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	203	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_query_cls2_from_record; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_QUERY_CLS2_FROM_RECORD
+DM2_SET_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	284	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_set_itemtype; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_SET_ITEMTYPE
+DM2_QUERY_GDAT_DBSPEC_WORD_VALUE	SKULLWIN	SKULLWIN/c_record.cpp	352	src/dm2/dm2_v1_record_ops_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	367	src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	403	src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_QUERY_ITEMDB_FROM_DISTINCTIVE_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	449	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_get_wall_tile_anyitem_record; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_QUERY_ITEMDB_FROM_DISTINCTIVE_ITEMTYPE
+DM2_QUERY_CLS1_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	454	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_query_cls1_from_record; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_QUERY_CLS1_FROM_RECORD
+DM2_GET_WALL_TILE_ANYITEM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	477	src/dm2/dm2_v1_record_ops_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_SET_ITEM_IMPORTANCE	SKULLWIN	SKULLWIN/c_record.cpp	498	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_set_item_importance; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_SET_ITEM_IMPORTANCE
+DM2_RECYCLE_A_RECORD_FROM_THE_WORLD	SKULLWIN	SKULLWIN/c_record.cpp	544	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_recycle_a_record_from_the_world; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ALLOC_NEW_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1076	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_alloc_new_record; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_ALLOC_NEW_RECORD
+DM2_ALLOC_NEW_DBITEM	SKULLWIN	SKULLWIN/c_record.cpp	1142	src/dm2/dm2_v1_actuator_event_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_ALLOC_NEW_DBITEM_DEEPLY	SKULLWIN	SKULLWIN/c_record.cpp	1167	dm2_v1_dbitem_alloc_pc34_compat.c:221	IMPLEMENTED
-DM2_DEALLOC_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1205		IMPLEMENTED_NARROW
+DM2_DEALLOC_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1205	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_dealloc_record; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_DEALLOC_RECORD
 DM2_QUERY_CLS2_OF_TEXT_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1210	src/dm2/dm2_v1_dungeon_loader.c:2347	IMPLEMENTED_NARROW
-DM2_GET_WALL_DECORATION_OF_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	1261		IMPLEMENTED_NARROW
-DM2_GET_FLOOR_DECORATION_OF_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	1288		IMPLEMENTED_NARROW
+DM2_GET_WALL_DECORATION_OF_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	1261	src/dm2/dm2_v1_record_ops_pc34_compat.c:dm2_v1_get_wall_decoration_of_actuator	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
+DM2_GET_FLOOR_DECORATION_OF_ACTUATOR	SKULLWIN	SKULLWIN/c_record.cpp	1288	src/dm2/dm2_v1_record_ops_pc34_compat.c:dm2_v1_get_floor_decoration_of_actuator	IMPLEMENTED_PARITY	Fixed to match skproject algorithmic parity
 DM2_IS_WALL_ORNATE_ALCOVE_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1317	dm2_v1_skproject_core.c:11468	IMPLEMENTED
 DM2_QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKULLWIN	SKULLWIN/c_record.cpp	1341	dm2_v1_creature_ai_spec	IMPLEMENTED
 DM2_QUERY_CREATURE_AI_SPEC_FLAGS	SKULLWIN	SKULLWIN/c_record.cpp	1346	dm2_v1_creature_ai_spec_flags	IMPLEMENTED
 DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1351	dm2_v1_creature_ai_spec_def	IMPLEMENTED
-DM2_DELETE_CREATURE_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1356		IMPLEMENTED_NARROW
-DM2_DELETE_MISSILE_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1427		NARROW:dm2_v1_delete_missile_record
-DM2_DROP_CREATURE_POSSESSION	SKULLWIN	SKULLWIN/c_record.cpp	1537		IMPLEMENTED_NARROW
+DM2_DELETE_CREATURE_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1356	src/dm2/dm2_v1_delete_creature_full_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_DELETE_MISSILE_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1427	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_delete_missile_record; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_DROP_CREATURE_POSSESSION	SKULLWIN	SKULLWIN/c_record.cpp	1537	src/dm2/dm2_v1_delete_creature_full_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_OVERSEE_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1755	src/dm2/dm2_v1_record_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_ROTATE_RECORD_BY_TELEPORTER	SKULLWIN	SKULLWIN/c_record.cpp	1839		IMPLEMENTED_NARROW
-DM2_075f_056c	SKULLWIN	SKULLWIN/c_record.cpp	1870		IMPLEMENTED_NARROW
+DM2_ROTATE_RECORD_BY_TELEPORTER	SKULLWIN	SKULLWIN/c_record.cpp	1839	src/dm2/dm2_v1_record_ops_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_075f_056c	SKULLWIN	SKULLWIN/c_record.cpp	1870	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_075f_056c; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_075f_056c
 DM2_savegame_3a15_0002	SKULLWIN	SKULLWIN/c_savegame.cpp	81		NOT_APPLICABLE_ARCH
 DM2_savegame_2066_2498	SKULLWIN	SKULLWIN/c_savegame.cpp	127		NOT_APPLICABLE_ARCH
-DM2_READ_DUNGEON_STRUCTURE	SKULLWIN	SKULLWIN/c_savegame.cpp	229		IMPLEMENTED_NARROW
+DM2_READ_DUNGEON_STRUCTURE	SKULLWIN	SKULLWIN/c_savegame.cpp	229	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_read_dungeon_structure; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_READ_DUNGEON_STRUCTURE
 u_mbuf	SKULLWIN	SKULLWIN/c_savegame.cpp	231		NOT_APPLICABLE_ARCH
 DM2_LOAD_NEW_DUNGEON	SKULLWIN	SKULLWIN/c_savegame.cpp	615		NOT_APPLICABLE_ARCH
 DM2_SKLOAD_READ	SKULLWIN	SKULLWIN/c_savegame.cpp	637		NOT_APPLICABLE_ARCH
@@ -960,57 +960,57 @@ DM2_SOUND9	SKULLWIN	SKULLWIN/c_sound.cpp	650	src/dm2/dm2_v1_sound.c:418	VERIFIED
 DM2_QUERY_SND_ENTRY_INDEX	SKULLWIN	SKULLWIN/c_sound.cpp	664	src/dm2/dm2_v1_sound.c:402	VERIFIED_SOURCE_MAPPING
 DM2_SKCHR_TO_SCRIPTCHR	SKULLWIN	SKULLWIN/c_str.cpp	7	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKULLWIN script char conversion for A-Z, dot, and fallback characters.
 DM2_LTOA10	SKULLWIN	SKULLWIN/c_str.cpp	15	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKULLWIN signed base-10 formatting through bounded caller output.
-DM2_FMT_NUM	SKULLWIN	SKULLWIN/c_str.cpp	37		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps FMT_NUM clean/non-clean four-byte number buffer formatting and returned offset.
+DM2_FMT_NUM	SKULLWIN	SKULLWIN/c_str.cpp	37	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps FMT_NUM clean/non-clean four-byte number buffer formatting and returned offset.
 DM2_FILL_STR	SKULLWIN	SKULLWIN/c_str.cpp	66	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN strided fill-string helper over caller-owned buffers with bounded delta writes.
 DM2_PROCESS_TIMER_0C	SKULLWIN	SKULLWIN/c_tim_proc.cpp	30	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_PROCESS_TIMER_RESURRECTION	SKULLWIN	SKULLWIN/c_tim_proc.cpp	39		NARROW:dm2_v1_process_timer_resurrection
-DM2_STEP_DOOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	127		IMPLEMENTED_NARROW
+DM2_PROCESS_TIMER_RESURRECTION	SKULLWIN	SKULLWIN/c_tim_proc.cpp	39	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_process_timer_resurrection; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_STEP_DOOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	127	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_step_door; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_STEP_DOOR
 DM2_PROCESS_TIMER_DESTROY_DOOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	422	dm2_runtime_destroy_door_timer (dm2_v1_runtime.c)	IMPLEMENTED_NARROW
 DM2_STEP_MISSILE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	442	include/dm2_v1_projectile_pc34_compat.h:207	IMPLEMENTED_NARROW
-DM2_PROCESS_TIMER_3D	SKULLWIN	SKULLWIN/c_tim_proc.cpp	902		src/dm2/dm2_v1_timer_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_PROCESS_TIMER_LIGHT	SKULLWIN	SKULLWIN/c_tim_proc.cpp	918		IMPLEMENTED_NARROW
+DM2_PROCESS_TIMER_3D	SKULLWIN	SKULLWIN/c_tim_proc.cpp	902	src/dm2/dm2_v1_timer_ops_pc34_compat.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW
+DM2_PROCESS_TIMER_LIGHT	SKULLWIN	SKULLWIN/c_tim_proc.cpp	918	src/dm2/dm2_v1_timer_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_CONTINUE_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	961	src/dm2/dm2_v1_timer_ops_pc34_compat.c; include/dm2_v1_timer_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_CONTINUE_TICK_GENERATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	994	src/dm2/dm2_v1_timer_ops_pc34_compat.c; include/dm2_v1_timer_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_PROCESS_TIMER_RELEASE_DOOR_BUTTON	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1068	dm2_runtime_release_door_button_timer (dm2_v1_runtime.c)	IMPLEMENTED_NARROW
 DM2_PROCESS_TIMER_59	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1077	dm2_runtime_process_timer_59 (dm2_v1_runtime.c)	IMPLEMENTED_NARROW
-DM2_CONTINUE_ORNATE_NOISE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1092		NARROW:dm2_v1_continue_ornate_noise
-DM2_ACTIVATE_RELAY1	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1174		src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_ACTIVATE_RELAY2	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1249		src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_ACTIVATE_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1325		NARROW:dm2_v1_activate_ornate_animator
-DM2_ACTIVATE_TEST_FLAG	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1405		src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_ACTIVATE_INVERSE_FLAG	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1450		src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_CONTINUE_ORNATE_NOISE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1092	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_continue_ornate_noise; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ACTIVATE_RELAY1	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1174	src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW
+DM2_ACTIVATE_RELAY2	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1249	src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW
+DM2_ACTIVATE_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1325	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_activate_ornate_animator; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ACTIVATE_TEST_FLAG	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1405	src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW
+DM2_ACTIVATE_INVERSE_FLAG	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1450	src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW
 DM2_timproc_3a15_1da8	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1488		IMPLEMENTED	Ornate animator toggle helper; standalone arithmetic
-DM2_ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1503		NARROW:dm2_v1_activate_continuous_ornate_animator
-DM2_ACTIVATE_SHOOTER	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1610		NARROW:dm2_v1_activate_shooter
+DM2_ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1503	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_activate_continuous_ornate_animator; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ACTIVATE_SHOOTER	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1610	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_activate_shooter; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 DM2_ACTIVATE_TICK_GENERATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1817	src/dm2/dm2_v1_timer_ops_pc34_compat.c; include/dm2_v1_timer_ops_pc34_compat.h	IMPLEMENTED_NARROW
 SKW_3a15_0d5c	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1888	src/dm2/dm2_v1_timer_ops_pc34_compat.c; include/dm2_v1_timer_ops_pc34_compat.h	IMPLEMENTED_NARROW
-DM2_ACTUATE_WALL_MECHA	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1923		IMPLEMENTED_NARROW
-DM2_ANIMATE_CREATURE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	2859		NARROW:dm2_v1_animate_creature
-DM2_ACTIVATE_CREATURE_KILLER	SKULLWIN	SKULLWIN/c_tim_proc.cpp	2907		IMPLEMENTED_NARROW
-DM2_ACTUATE_FLOOR_MECHA	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3009		IMPLEMENTED_NARROW
-DM2_ADVANCE_TILES_TIME	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3533		NARROW:dm2_v1_advance_tiles_time
-DM2_ACTUATE_PITFALL	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3707		IMPLEMENTED_NARROW
-DM2_ACTUATE_DOOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3744		IMPLEMENTED_NARROW
-DM2_ACTUATE_TELEPORTER	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3832		IMPLEMENTED_NARROW
-DM2_ACTUATE_TRICKWALL	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3875		IMPLEMENTED_NARROW
+DM2_ACTUATE_WALL_MECHA	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1923	src/dm2/dm2_v1_runtime.c	IMPLEMENTED_NARROW
+DM2_ANIMATE_CREATURE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	2859	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_animate_creature; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ACTIVATE_CREATURE_KILLER	SKULLWIN	SKULLWIN/c_tim_proc.cpp	2907	src/dm2/dm2_v1_tile_record_walk_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_ACTUATE_FLOOR_MECHA	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3009	src/dm2/dm2_v1_actuator_event_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_ADVANCE_TILES_TIME	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3533	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_advance_tiles_time; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_ACTUATE_PITFALL	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3707	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_actuate_pitfall; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_ACTUATE_PITFALL
+DM2_ACTUATE_DOOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3744	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_actuate_door; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_ACTUATE_DOOR
+DM2_ACTUATE_TELEPORTER	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3832	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_actuate_teleporter; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_ACTUATE_TELEPORTER
+DM2_ACTUATE_TRICKWALL	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3875	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_actuate_trickwall; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_ACTUATE_TRICKWALL
 DM2_PROCESS_TIMER_0E	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3952	src/dm2/dm2_v1_timer_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_PROCEED_TIMERS	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3980		IMPLEMENTED_NARROW
-DM2_INVOKE_MESSAGE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4332		IMPLEMENTED_NARROW
-DM2_INVOKE_ACTUATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4367		IMPLEMENTED_NARROW
-DM2_PROCESS_ACTUATOR_TICK_GENERATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4395		NARROW:dm2_v1_process_actuator_tick_generator
-DM2_OPERATE_PIT_TELE_TILE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4513		NARROW:dm2_v1_operate_pit_tele_tile
-DM2_TRY_ORNATE_NOISE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4591		NARROW:dm2_v1_try_ornate_noise
+DM2_PROCEED_TIMERS	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3980	src/dm2/dm2_v1_creature_schedule_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_INVOKE_MESSAGE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4332	src/dm2/dm2_v1_delete_creature_full_pc34_compat.c	IMPLEMENTED_NARROW
+DM2_INVOKE_ACTUATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4367	src/dm2/dm2_v1_runtime.c	IMPLEMENTED_NARROW
+DM2_PROCESS_ACTUATOR_TICK_GENERATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4395	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_process_actuator_tick_generator; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_OPERATE_PIT_TELE_TILE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4513	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_operate_pit_tele_tile; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
+DM2_TRY_ORNATE_NOISE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4591	src/dm2/dm2_v1_runtime_narrow_pc34_compat.c:dm2_v1_try_ornate_noise; include/dm2_v1_runtime_narrow_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation with skproject-matched logic
 init	SKULLWIN	SKULLWIN/c_timer.cpp	8	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 DM2_cmp_timers	SKULLWIN	SKULLWIN/c_timer.cpp	31	src/dm2/dm2_v1_runtime.c:189	IMPLEMENTED_NARROW
-DM2_timer_3a15_0486	SKULLWIN	SKULLWIN/c_timer.cpp	50		IMPLEMENTED_NARROW
-DM2_REARRANGE_TIMERLIST	SKULLWIN	SKULLWIN/c_timer.cpp	97		IMPLEMENTED_NARROW
+DM2_timer_3a15_0486	SKULLWIN	SKULLWIN/c_timer.cpp	50	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_timer_heap_sift; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_timer_3a15_0486
+DM2_REARRANGE_TIMERLIST	SKULLWIN	SKULLWIN/c_timer.cpp	97	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_rearrange_timerlist; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_REARRANGE_TIMERLIST
 DM2_SORT_TIMERS	SKULLWIN	SKULLWIN/c_timer.cpp	126	include/dm2_v1_runtime.h:191	IMPLEMENTED_NARROW
-DM2_GET_TIMER_NEW_INDEX	SKULLWIN	SKULLWIN/c_timer.cpp	202		IMPLEMENTED_NARROW
-DM2_DELETE_TIMER	SKULLWIN	SKULLWIN/c_timer.cpp	216		IMPLEMENTED_NARROW
-DM2_QUEUE_TIMER	SKULLWIN	SKULLWIN/c_timer.cpp	235		IMPLEMENTED_NARROW
-DM2_GET_AND_DELETE_NEXT_TIMER	SKULLWIN	SKULLWIN/c_timer.cpp	261		IMPLEMENTED_NARROW
-DM2_IS_TIMER_TO_PROCEED	SKULLWIN	SKULLWIN/c_timer.cpp	269		IMPLEMENTED_NARROW
-DM2_timer_3a15_05f7	SKULLWIN	SKULLWIN/c_timer.cpp	281		IMPLEMENTED_NARROW
+DM2_GET_TIMER_NEW_INDEX	SKULLWIN	SKULLWIN/c_timer.cpp	202	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_get_timer_new_index; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_GET_TIMER_NEW_INDEX
+DM2_DELETE_TIMER	SKULLWIN	SKULLWIN/c_timer.cpp	216	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_delete_timer; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_DELETE_TIMER
+DM2_QUEUE_TIMER	SKULLWIN	SKULLWIN/c_timer.cpp	235	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_queue_timer; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_QUEUE_TIMER
+DM2_GET_AND_DELETE_NEXT_TIMER	SKULLWIN	SKULLWIN/c_timer.cpp	261	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_get_and_delete_next_timer; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_GET_AND_DELETE_NEXT_TIMER
+DM2_IS_TIMER_TO_PROCEED	SKULLWIN	SKULLWIN/c_timer.cpp	269	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_is_timer_to_proceed; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_IS_TIMER_TO_PROCEED
+DM2_timer_3a15_05f7	SKULLWIN	SKULLWIN/c_timer.cpp	281	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_timer_reindex; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_timer_3a15_05f7
 init	SKULLWIN	SKULLWIN/c_tmouse.cpp	16	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 push	SKULLWIN	SKULLWIN/c_tmouse.cpp	22	src/dm2/dm2_v1_viewport_renderer.c:1383	NOT_APPLICABLE_ARCH
 pop	SKULLWIN	SKULLWIN/c_tmouse.cpp	34	src/dm2/dm2_v1_creature.c:105	NOT_APPLICABLE_ARCH
@@ -1064,7 +1064,7 @@ DEBUG_DUMP_BIN_DATA	SKULLWIN	SKULLWIN/dm2debug.cpp	166		NOT_APPLICABLE_ARCH
 DEBUG_DUMP_ULP	SKULLWIN	SKULLWIN/dm2debug.cpp	178		NOT_APPLICABLE_ARCH
 DEBUG_SKLOADENT	SKULLWIN	SKULLWIN/dm2debug.cpp	246		NOT_APPLICABLE_ARCH
 DEBUG_SKGDATENT	SKULLWIN	SKULLWIN/dm2debug.cpp	266		NOT_APPLICABLE_ARCH
-DM2_UPDATE_GLOB_VAR	SKULLWIN	SKULLWIN/dm2global.cpp	21		IMPLEMENTED_NARROW
+DM2_UPDATE_GLOB_VAR	SKULLWIN	SKULLWIN/dm2global.cpp	21	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_update_glob_var; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_UPDATE_GLOB_VAR
 bpeek	SKULLWIN	SKULLWIN/emu.cpp	10		NOT_APPLICABLE_ARCH
 wpeek	SKULLWIN	SKULLWIN/emu.cpp	11		NOT_APPLICABLE_ARCH
 lpeek	SKULLWIN	SKULLWIN/emu.cpp	12		NOT_APPLICABLE_ARCH
@@ -1217,7 +1217,7 @@ DM2_MIN	SKULLWIN	SKULLWIN/util.cpp	120		NOT_APPLICABLE_ARCH
 DM2_MAX	SKULLWIN	SKULLWIN/util.cpp	127	src/dm2/dm2_v1_creature.c:448	NOT_APPLICABLE_ARCH
 DM2_COPY_MEMORY	SKULLWIN	SKULLWIN/util.cpp	135		NOT_APPLICABLE_ARCH
 DM2_4BYTES_TO_LONG	SKULLWIN	SKULLWIN/util.cpp	142		NOT_APPLICABLE_ARCH
-DM2_ROTATE_5x5_POS	SKULLWIN	SKULLWIN/util.cpp	147		IMPLEMENTED_NARROW
+DM2_ROTATE_5x5_POS	SKULLWIN	SKULLWIN/util.cpp	147	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_rotate_5x5_pos; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject DM2_ROTATE_5x5_POS
 sgn8	SKULLWIN	SKULLWIN/util.cpp	181		NOT_APPLICABLE_ARCH
 jul_shl32	SKULLWIN	SKULLWIN/util.cpp	187		NOT_APPLICABLE_ARCH
 init	SKULLWIN	SKULLWIN/xtypes.cpp	3	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
@@ -1265,7 +1265,7 @@ movsw	SKWIN	SKWIN/SkGlobal.cpp	1333		NOT_APPLICABLE_ARCH
 RCJ	SKWIN	SKWIN/SkGlobal.cpp	1342		NOT_APPLICABLE_ARCH
 UtilConvertU16ToTile	SKWIN	SKWIN/SkGlobal.cpp	1358		NOT_APPLICABLE_ARCH
 CheckSafePointer	SKWIN	SKWIN/SkGlobal.cpp	1389		NOT_APPLICABLE_ARCH
-EXTENDED_LOAD_SPELLS_DEFINITION	SKWIN	SKWIN/SkWinCore.cpp	189		IMPLEMENTED_NARROW
+EXTENDED_LOAD_SPELLS_DEFINITION	SKWIN	SKWIN/SkWinCore.cpp	189	src/dm2/dm2_v1_extended_spells_definition.c	IMPLEMENTED_NARROW
 EXTENDED_LOAD_AI_DEFINITION	SKWIN	SKWIN/SkWinCore.cpp	233	src/dm2/dm2_v1_creature.c:254+dm2_v1_creature_tables.c:genuine	IMPLEMENTED
 getXActrName	SKWIN	SKWIN/SkWinCore.cpp	451		NOT_APPLICABLE_ARCH
 getSpellTypeName	SKWIN	SKWIN/SkWinCore.cpp	461		NOT_APPLICABLE_ARCH
@@ -1318,43 +1318,43 @@ QUERY_CREATURES_ITEM_MASK	SKWIN	SKWIN/SkWinCore.cpp	2057	include/dm2_v1_asset_lo
 ZERO_MEMORY	SKWIN	SKWIN/SkWinCore.cpp	2166		NOT_APPLICABLE_ARCH
 PROCESS_TIMER_0E	SKWIN	SKWIN/SkWinCore.cpp	2173	src/dm2/dm2_v1_timer_ops_pc34_compat.c; include/dm2_v1_timer_ops_pc34_compat.h	IMPLEMENTED_NARROW
 ADD_ITEM_CHARGE	SKWIN	SKWIN/SkWinCore.cpp	2197	include/dm2_v1_skproject_core.h:dm2_v1_skproject_add_item_charge	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::ADD_ITEM_CHARGE through the same bounded charge receipt used for the SKULLWIN c_item alias.
-IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/SkWinCore.cpp	2257		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN/xxx IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
+IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/SkWinCore.cpp	2257	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN/xxx IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
 QUERY_GDAT_DBSPEC_WORD_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2275		NOT_APPLICABLE_ARCH
 QUERY_ITEM_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2287	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_value	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::QUERY_ITEM_VALUE with source-shaped records and GDAT word values for base value, charge additions, potion money scaling, recursive container contents, and moneybox aggregation while leaving real loader/HUD consumption closed.
 QUERY_ITEM_WEIGHT	SKWIN	SKWIN/SkWinCore.cpp	2367	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_weight	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SkWinCore::QUERY_ITEM_WEIGHT as QUERY_ITEM_VALUE(recordLink, 1).
-IS_CONTAINER_CHEST	SKWIN	SKWIN/SkWinCore.cpp	2374		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN IS_CONTAINER_CHEST as DB9 type-0 container excluding moneyboxes.
+IS_CONTAINER_CHEST	SKWIN	SKWIN/SkWinCore.cpp	2374	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN IS_CONTAINER_CHEST as DB9 type-0 container excluding moneyboxes.
 CALC_PLAYER_WEIGHT	SKWIN	SKWIN/SkWinCore.cpp	2392	include/dm2_v1_skproject_core.h:dm2_v1_skproject_calc_player_weight	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the bounded SkWinCore::CALC_PLAYER_WEIGHT flow: 30 inventory slots are summed through QUERY_ITEM_WEIGHT, the selected player's hand action 0/1 chest overlay adds eight current-container items, and the hero flag 0x1000 receipt is preserved.
 PROCEED_GLOBAL_EFFECT_TIMERS	SKWIN	SKWIN/SkWinCore.cpp	2426	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
 _2066_1f37	SKWIN	SKWIN/SkWinCore.cpp	2512	src/dm2/dm2_v1_skproject_core.c:4545	IMPLEMENTED
 APPEND_RECORD_TO	SKWIN	SKWIN/SkWinCore.cpp	2544	include/dm2_v1_dungeon_loader.h:dm2_v1_skproject_append_record_to	VERIFIED_SOURCE_MAPPING	DM2 v1 loader maps SkWinCore::APPEND_RECORD_TO through source-shaped ObjectID mutation over bounded dungeon data, including parent-link, existing tile-chain, and empty-tile insertion routes.
 _2066_1ec9	SKWIN	SKWIN/SkWinCore.cpp	2664	src/dm2/dm2_v1_skproject_core.c:4594	IMPLEMENTED
-GET_ADDRESS_OF_RECORDX4	SKWIN	SKWIN/SkWinCore.cpp	2692		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN detached creature accessor and rejects effect records at the source boundary.
-GET_ADDRESS_OF_RECORD0	SKWIN	SKWIN/SkWinCore.cpp	2693		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x0 with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORD1	SKWIN	SKWIN/SkWinCore.cpp	2694		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x1 with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORD2	SKWIN	SKWIN/SkWinCore.cpp	2695		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x2 with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORD3	SKWIN	SKWIN/SkWinCore.cpp	2696		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x3 with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORD4	SKWIN	SKWIN/SkWinCore.cpp	2697		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x4 with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORD5	SKWIN	SKWIN/SkWinCore.cpp	2698		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x5 with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORD6	SKWIN	SKWIN/SkWinCore.cpp	2699		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x6 with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORD7	SKWIN	SKWIN/SkWinCore.cpp	2700		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x7 with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORD8	SKWIN	SKWIN/SkWinCore.cpp	2701		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x8 with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORD9	SKWIN	SKWIN/SkWinCore.cpp	2702		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x9 with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORDA	SKWIN	SKWIN/SkWinCore.cpp	2703		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xA with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORDB	SKWIN	SKWIN/SkWinCore.cpp	2704		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xB with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORDC	SKWIN	SKWIN/SkWinCore.cpp	2705		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xC with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORDD	SKWIN	SKWIN/SkWinCore.cpp	2706		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xD with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORDE	SKWIN	SKWIN/SkWinCore.cpp	2707		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xE with source-shaped bounds and type checks.
-GET_ADDRESS_OF_RECORDF	SKWIN	SKWIN/SkWinCore.cpp	2708		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xF with source-shaped bounds and type checks.
-GET_ADDRESS_OF_GENERIC_CONTAINER_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2709		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN generic-container accessor over concrete item container DB pools without fabricating records.
-GET_ADDRESS_OF_ACTU	SKWIN	SKWIN/SkWinCore.cpp	2711		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN actuator accessor and requires DB type 3.
+GET_ADDRESS_OF_RECORDX4	SKWIN	SKWIN/SkWinCore.cpp	2692	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN detached creature accessor and rejects effect records at the source boundary.
+GET_ADDRESS_OF_RECORD0	SKWIN	SKWIN/SkWinCore.cpp	2693	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x0 with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORD1	SKWIN	SKWIN/SkWinCore.cpp	2694	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x1 with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORD2	SKWIN	SKWIN/SkWinCore.cpp	2695	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x2 with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORD3	SKWIN	SKWIN/SkWinCore.cpp	2696	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x3 with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORD4	SKWIN	SKWIN/SkWinCore.cpp	2697	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x4 with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORD5	SKWIN	SKWIN/SkWinCore.cpp	2698	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x5 with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORD6	SKWIN	SKWIN/SkWinCore.cpp	2699	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x6 with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORD7	SKWIN	SKWIN/SkWinCore.cpp	2700	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x7 with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORD8	SKWIN	SKWIN/SkWinCore.cpp	2701	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x8 with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORD9	SKWIN	SKWIN/SkWinCore.cpp	2702	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0x9 with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORDA	SKWIN	SKWIN/SkWinCore.cpp	2703	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xA with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORDB	SKWIN	SKWIN/SkWinCore.cpp	2704	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xB with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORDC	SKWIN	SKWIN/SkWinCore.cpp	2705	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xC with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORDD	SKWIN	SKWIN/SkWinCore.cpp	2706	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xD with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORDE	SKWIN	SKWIN/SkWinCore.cpp	2707	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xE with source-shaped bounds and type checks.
+GET_ADDRESS_OF_RECORDF	SKWIN	SKWIN/SkWinCore.cpp	2708	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN typed record accessor for DB type 0xF with source-shaped bounds and type checks.
+GET_ADDRESS_OF_GENERIC_CONTAINER_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2709	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN generic-container accessor over concrete item container DB pools without fabricating records.
+GET_ADDRESS_OF_ACTU	SKWIN	SKWIN/SkWinCore.cpp	2711	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN actuator accessor and requires DB type 3.
 GET_NEXT_RECORD_LINK	SKWIN	SKWIN/SkWinCore.cpp	2718	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_get_next_thing	VERIFIED_SOURCE_MAPPING
-GET_ADDRESS_OF_DETACHED_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2734		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN detached-record route and rejects OBJECT_EFFECT_FIREBALL-or-later links.
-GET_ADDRESS_OF_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2744	src/dm2/dm2_v1_runtime.c:329	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ADDRESS_OF_RECORD to the skproject 4-bit table / 10-bit index formula with fail-closed record bounds.
+GET_ADDRESS_OF_DETACHED_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2734	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN detached-record route and rejects OBJECT_EFFECT_FIREBALL-or-later links.
+GET_ADDRESS_OF_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2744	src/dm2/dm2_v1_runtime.c:329	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ADDRESS_OF_RECORD to the skproject 4-bit table / 10-bit index formula with fail-closed record bounds.
 CHANGE_CURRENT_MAP_TO	SKWIN	SKWIN/SkWinCore.cpp	2774	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_change_current_map_to	VERIFIED_SOURCE_MAPPING
 GET_TILE_RECORD_LINK	SKWIN	SKWIN/SkWinCore.cpp	2822	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_walk_square_things	VERIFIED_SOURCE_MAPPING
-GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2839		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN tile-record address route through the bounded GET_ADDRESS_OF_RECORD receipt.
-IS_TILE_PASSAGE	SKWIN	SKWIN/SkWinCore.cpp	2846		IMPLEMENTED_NARROW
-GET_TILE_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2874		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_TILE_VALUE including in-bounds tile bytes, adjacent boundary masks, corner probes, and 0xE0 blocked edges.
+GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/SkWinCore.cpp	2839	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN tile-record address route through the bounded GET_ADDRESS_OF_RECORD receipt.
+IS_TILE_PASSAGE	SKWIN	SKWIN/SkWinCore.cpp	2846	src/dm2/dm2_v1_dungeon_loader.c	IMPLEMENTED_NARROW
+GET_TILE_VALUE	SKWIN	SKWIN/SkWinCore.cpp	2874	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_TILE_VALUE including in-bounds tile bytes, adjacent boundary masks, corner probes, and 0xE0 blocked edges.
 QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/SkWinCore.cpp	2995	src/dm2/dm2_v1_creature.c:1022	IMPLEMENTED_NARROW
 QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/SkWinCore.cpp	3008	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
 SET_TILE_ATTRIBUTE_02	SKWIN	SKWIN/SkWinCore.cpp	3050	src/dm2/dm2_v1_world_ops_pc34_compat.c	IMPLEMENTED_NARROW
@@ -1362,7 +1362,7 @@ _1c9a_02c3	SKWIN	SKWIN/SkWinCore.cpp	3058	src/dm2/dm2_v1_skproject_core.c:dm2_v1
 _4937_01a9	SKWIN	SKWIN/SkWinCore.cpp	3070	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_4937_01a9_select_frame; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _4937_01a9 animation frame selection over caller-owned animation frame table and random state; 0xffff base resets to 0, advance from low nibble, probability gate from bits 4-7, content from b4 nibbles.
 GRAPHICS_DATA_OPEN	SKWIN	SKWIN/SkWinCore.cpp	3131		NOT_APPLICABLE_ARCH
 ORIGINAL__GRAPHICS_DATA_OPEN	SKWIN	SKWIN/SkWinCore.cpp	3179		NOT_APPLICABLE_ARCH
-LOCATE_OTHER_LEVEL	SKWIN	SKWIN/SkWinCore.cpp	3207		IMPLEMENTED_NARROW
+LOCATE_OTHER_LEVEL	SKWIN	SKWIN/SkWinCore.cpp	3207	src/dm2/dm2_v1_gdat_pit_roof_m11_receipt.c	IMPLEMENTED_NARROW
 ALLOC_TEMP_RECT	SKWIN	SKWIN/SkWinCore.cpp	3302	include/dm2_v1_skproject_core.h:36	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject temp-rect ring keeps the original four-slot ringbuffer, writes x/y/w/h, advances modulo four, and is covered by focused core helper test.
 ALLOC_TEMP_ORIGIN_RECT	SKWIN	SKWIN/SkWinCore.cpp	3324	include/dm2_v1_skproject_core.h:43	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject temp-origin helper delegates to ALLOC_TEMP_RECT with x/y zero and is covered by focused core helper test.
 FIND_ICI_FROM_CACHE_HASH	SKWIN	SKWIN/SkWinCore.cpp	3332	include/dm2_v1_skproject_core.h:dm2_v1_skproject_find_ici_from_cache_hash	VERIFIED_SOURCE_MAPPING
@@ -1388,7 +1388,7 @@ _3e74_2b30	SKWIN	SKWIN/SkWinCore.cpp	4301	src/dm2/dm2_v1_skproject_core.c:dm2_v1
 ALLOC_LOWER_CPXHEAP	SKWIN	SKWIN/SkWinCore.cpp	4379	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_lower	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject CPX heap receipt allocates lower heap memory from the lowest address of the selected free span and preserves ordered residual blocks.
 ALLOC_CPXHEAP_MEM	SKWIN	SKWIN/SkWinCore.cpp	4484	include/dm2_v1_skproject_cpx_heap.h:dm2_v1_skproject_cpx_alloc_lower	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject CPX heap receipt covers the lower-heap memory allocation/free-list ordering subset without pointer creation or image-buffer ownership.
 _3e74_585a	SKWIN	SKWIN/SkWinCore.cpp	4514	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_3e74_585a_recycle_or_free_cache; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core receipt maps QUERY_MEMENTI_FROM then either RECYCLE_MEMENTI(si,yy) for a bound mement or FREE_CACHE_INDEX for an unbound cache slot.
-FILL_ENTIRE_PICT	SKWIN	SKWIN/SkWinCore.cpp	4531		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FILL_ENTIRE_PICT width alignment and FIRE_FILL_RECT_ANY planning without manufacturing pixel data.
+FILL_ENTIRE_PICT	SKWIN	SKWIN/SkWinCore.cpp	4531	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FILL_ENTIRE_PICT width alignment and FIRE_FILL_RECT_ANY planning without manufacturing pixel data.
 FIRE_HIDE_MOUSE_CURSOR	SKWIN	SKWIN/SkWinCore.cpp	4547		NOT_APPLICABLE_ARCH
 _01b0_0adb	SKWIN	SKWIN/SkWinCore.cpp	4557	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_01b0_0adb_hide_mouse; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core models the IBMIO mouse-hide runtime state: first hide locks the mouse event and redraws the cursor, nested hides only increment depth, and no host cursor API is invoked.
 IBMIO_SET_CURSOR_PATTERN	SKWIN	SKWIN/SkWinCore.cpp	4595		NOT_APPLICABLE_ARCH
@@ -1401,7 +1401,7 @@ ALLOC_TEMP_CACHE_INDEX	SKWIN	SKWIN/SkWinCore.cpp	4786	include/dm2_v1_skproject_c
 _0b36_0d67	SKWIN	SKWIN/SkWinCore.cpp	4797	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_0d67_adjust_dirty_rects; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core preserves the source dirty-rect ownership rules: reuse covering rects, replace contained rects, compact full lists, clip to the button-group bounds, and fail closed for absent state.
 _0b36_0c52	SKWIN	SKWIN/SkWinCore.cpp	4894	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_0b36_0c52_init_button_group; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps QUERY_EXPANDED_RECT, ALLOC_TEMP_CACHE_INDEX, ALLOC_NEW_PICT, and optional initial dirty-rect seeding over caller-owned rect/cache state.
 OFFSET_RECT	SKWIN	SKWIN/SkWinCore.cpp	4916	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_offset_rect; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN OFFSET_RECT with the same origin-relative x/y and unchanged cx/cy semantics as the sk3f6c route.
-FILL_RECT_SUMMARY	SKWIN	SKWIN/SkWinCore.cpp	4932		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FILL_RECT_SUMMARY null-rect guard, offset rect, fill, and dirty-rect planning.
+FILL_RECT_SUMMARY	SKWIN	SKWIN/SkWinCore.cpp	4932	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FILL_RECT_SUMMARY null-rect guard, offset rect, fill, and dirty-rect planning.
 _29ee_00a3	SKWIN	SKWIN/SkWinCore.cpp	4955	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_29ee_00a3_init_button_group_black; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _29ee_00a3: button-group initialization guarded by w0==0xffff, rect 11, and optional black fill over caller-owned expanded rects/cache index.
 IS_MISSILE_VALID_TO_LAUNCHER	SKWIN	SKWIN/SkWinCore.cpp	4973	src/dm2/dm2_v1_item_missile_helpers.c; include/dm2_v1_item_missile_helpers.h; tests/test_dm2_v1_item_missile_helpers.c	IMPLEMENTED_NARROW	DM2 v1 item/missile helper models bounded launcher/missile class checks over caller-owned item facts; absent launcher/missile data rejects.
 BETWEEN_VALUE	SKWIN	SKWIN/SkWinCore.cpp	4995	include/dm2_v1_skproject_core.h:30	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper clamps newv to min/max exactly like SKWINSPX v4 SkWinCore::BETWEEN_VALUE and is covered by focused core helper test.
@@ -1436,7 +1436,7 @@ _44c8_20e5	SKWIN	SKWIN/SkWinCore.cpp	6501		NOT_APPLICABLE_ARCH
 _44c8_2143	SKWIN	SKWIN/SkWinCore.cpp	6539		NOT_APPLICABLE_ARCH
 FIRE_STRETCH_BLIT_TO_MEMORY_4TO4BPP	SKWIN	SKWIN/SkWinCore.cpp	6592		NOT_APPLICABLE_ARCH
 QUERY_PICST_IT	SKWIN	SKWIN/SkWinCore.cpp	6647		NOT_APPLICABLE_ARCH
-DRAW_SIMPLE_STR	SKWIN	SKWIN/SkWinCore.cpp	6815		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds simple text metric query, blit rect, draw string, and dirty rect route.
+DRAW_SIMPLE_STR	SKWIN	SKWIN/SkWinCore.cpp	6815	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds simple text metric query, blit rect, draw string, and dirty rect route.
 DRAW_ICON_PICT_BUFF	SKWIN	SKWIN/SkWinCore.cpp	6855	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_icon_pict_buff; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_ICON_PICT_ENTRY	SKWIN	SKWIN/SkWinCore.cpp	6901	src/dm2/dm2_v1_inventory_panel.c:334	IMPLEMENTED_NARROW
 SHOW_ATTACK_RESULT	SKWIN	SKWIN/SkWinCore.cpp	6929	src/dm2/dm2_v1_hud_survey_helpers.c; include/dm2_v1_hud_survey_helpers.h; tests/test_dm2_v1_hud_survey_helpers.c	IMPLEMENTED_NARROW	DM2 v1 HUD survey helper routes player damage through the source-shaped HUD damage icon/text receipt; invalid champion indices fail closed.
@@ -1450,17 +1450,17 @@ FIRE_BLIT_TO_MEMORY_ROW_4TO8BPP	SKWIN	SKWIN/SkWinCore.cpp	7368		NOT_APPLICABLE_A
 _44c8_1aca	SKWIN	SKWIN/SkWinCore.cpp	7459		NOT_APPLICABLE_ARCH
 DRAW_GRAY_OVERLAY	SKWIN	SKWIN/SkWinCore.cpp	7513	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_gray_overlay; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_HAND_ACTION_ICONS	SKWIN	SKWIN/SkWinCore.cpp	7536	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_hand_action_icons; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 receipt now covers the SKWIN hand-action icon route; runtime inventory panel remains an additional consumer.
-DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKWIN	SKWIN/SkWinCore.cpp	7594		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds squad spell/leader icon slot, mirror, leader, spell, and overlay routing.
+DRAW_SQUAD_SPELL_AND_LEADER_ICON	SKWIN	SKWIN/SkWinCore.cpp	7594	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds squad spell/leader icon slot, mirror, leader, spell, and overlay routing.
 DM2_CHECK_ROOM_FOR_CONTAINER	SKWIN	SKWIN/SkWinCore.cpp	7682	src/dm2/dm2_v1_world_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DRAW_MONEYBOX	SKWIN	SKWIN/SkWinCore.cpp	7714	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_moneybox; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_CONTAINER_PANEL	SKWIN	SKWIN/SkWinCore.cpp	7767	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_SQUAD_POS_INTERFACE	SKWIN	SKWIN/SkWinCore.cpp	7817		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds squad position panel base icon, alive/selected filtering, palette, aura, and pict buffer routing.
+DRAW_SQUAD_POS_INTERFACE	SKWIN	SKWIN/SkWinCore.cpp	7817	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds squad position panel base icon, alive/selected filtering, palette, aura, and pict buffer routing.
 DRAW_STRONG_TEXT	SKWIN	SKWIN/SkWinCore.cpp	7910	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN strong text alias to the existing c_gfx_str plan: optional background fill, two shadow passes, and foreground pass.
 DRAW_NAME_STR	SKWIN	SKWIN/SkWinCore.cpp	7948	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_plan_draw_string; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_PLAYER_NAME_AT_CMDSLOT	SKWIN	SKWIN/SkWinCore.cpp	7983		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
+DRAW_PLAYER_NAME_AT_CMDSLOT	SKWIN	SKWIN/SkWinCore.cpp	7983	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
 SK_STRLEN	SKWIN	SKWIN/SkWinCore.cpp	8006	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN byte strlen up to the null terminator.
-DRAW_SPELL_TO_BE_CAST	SKWIN	SKWIN/SkWinCore.cpp	8020		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
-DRAW_SPELL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	8056		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
+DRAW_SPELL_TO_BE_CAST	SKWIN	SKWIN/SkWinCore.cpp	8020	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
+DRAW_SPELL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	8056	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
 SK_STRSTR	SKWIN	SKWIN/SkWinCore.cpp	8099	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN substring search including the original null return for empty needle.
 QUERY_CMDSTR_TEXT	SKWIN	SKWIN/SkWinCore.cpp	8136	src/dm2/dm2_v1_hud_panel_routing.c; include/dm2_v1_hud_panel_routing.h; tests/test_dm2_v1_hud_panel_routing.c	IMPLEMENTED_NARROW	DM2 v1 HUD panel routing models bounded command-string text receipts over caller-provided GDAT dtText bytes; unterminated or missing text rejects without synthetic command labels.
 QUERY_CMDSTR_ENTRY	SKWIN	SKWIN/SkWinCore.cpp	8187	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 asset loader maps the SKWIN alias for real command-string key lookup.
@@ -1484,7 +1484,7 @@ QUERY_CMDSTR_NAME	SKWIN	SKWIN/SkWinCore.cpp	8945	src/dm2/dm2_v1_asset_loader.c; 
 DRAW_CMD_SLOT	SKWIN	SKWIN/SkWinCore.cpp	8973	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cmd_slot; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 _29ee_0b2b	SKWIN	SKWIN/SkWinCore.cpp	9003	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_29ee_0b2b_draw_command_slots; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _29ee_0b2b: bounded loop requesting DRAW_CMD_SLOT for each active slot followed by DRAW_PLAYER_ATTACK_DIR, with no synthetic slot content.
 _29ee_1d03	SKWIN	SKWIN/SkWinCore.cpp	9018		NOT_APPLICABLE_ARCH
-FIND_LADDER_AROUND	SKWIN	SKWIN/SkWinCore.cpp	9060		IMPLEMENTED_NARROW
+FIND_LADDER_AROUND	SKWIN	SKWIN/SkWinCore.cpp	9060	src/dm2/dm2_v1_find_ladder_around.c	IMPLEMENTED_NARROW
 _19f0_124b	SKWIN	SKWIN/SkWinCore.cpp	9131	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_19f0_124b_level_transition; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _19f0_124b: stairs-direction gate, open-pit/ladder gate, non-pit ladder-down flag, LOCATE_OTHER_LEVEL handoff, and optional target-pit passability check over caller-owned tile and map descriptors.
 _29ee_18eb	SKWIN	SKWIN/SkWinCore.cpp	9203	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_29ee_18eb_level_transition_pair; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _29ee_18eb: paired down (-1, 0x0110) and up (+1, 0x0108) _19f0_124b calls over caller-owned map/tile state.
 CALC_VECTOR_W_DIR	SKWIN	SKWIN/SkWinCore.cpp	9220	include/dm2_v1_skproject_core.h:252	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core helper preserves glbXAxisDelta/glbYAxisDelta additive vector rotation and is covered by focused core helper test.
@@ -1548,27 +1548,27 @@ DRAW_CHARSHEET_OPTION_ICON	SKWIN	SKWIN/SkWinCore.cpp	12818	src/dm2/dm2_v1_skproj
 DRAW_PLAYER_3STAT_PANE	SKWIN	SKWIN/SkWinCore.cpp	12833	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_pane; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_CHAMPION_PICTURE	SKWIN	SKWIN/SkWinCore.cpp	12867	src/dm2/dm2_v2_hud_runtime.c:128	IMPLEMENTED_NARROW
 DRAW_PLAYER_3STAT_HEALTH_BAR	SKWIN	SKWIN/SkWinCore.cpp	12885	src/dm2/dm2_v1_viewport_renderer.c:5369	IMPLEMENTED_NARROW
-DRAW_PLAYER_DAMAGE	SKWIN	SKWIN/SkWinCore.cpp	12954		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
+DRAW_PLAYER_DAMAGE	SKWIN	SKWIN/SkWinCore.cpp	12954	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 SKWIN alias is covered by the same c_gui_draw receipt route.
 DRAW_CUR_MAX_HMS	SKWIN	SKWIN/SkWinCore.cpp	12983	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cur_max_hms; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_PLAYER_3STAT_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13018	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_player_3stat_text; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 _2405_00ec	SKWIN	SKWIN/SkWinCore.cpp	13041	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2405_00ec_query_blit_rect; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source QUERY_BLIT_RECT wrapper using caller-owned blit rects and _4976_0106/_0108-equivalent draw offsets; missing rect rows fail closed.
 _2405_011f	SKWIN	SKWIN/SkWinCore.cpp	13062	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2405_011f_query_inflated_rect; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 skproject core maps the source wrapper as _2405_00ec plus INFLATE_RECT using the _4976_0112-equivalent margin over caller-owned UI rect state.
 DRAW_EYE_MOUTH_COLORED_RECTANGLE	SKWIN	SKWIN/SkWinCore.cpp	13076	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_eye_mouth_colored_rectangle; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_CRYOCELL_LEVER	SKWIN	SKWIN/SkWinCore.cpp	13096	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_cryocell_lever; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-DRAW_POWER_STAT_BAR	SKWIN	SKWIN/SkWinCore.cpp	13118		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds power stat bar rect scaling, warning colour selection, background fill, value fill, and tail fill.
+DRAW_POWER_STAT_BAR	SKWIN	SKWIN/SkWinCore.cpp	13118	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds power stat bar rect scaling, warning colour selection, background fill, value fill, and tail fill.
 QUERY_FOOD_WATER_BAR_COLOR	SKWIN	SKWIN/SkWinCore.cpp	13194	src/dm2/dm2_v1_champion_hud_helpers.c; include/dm2_v1_champion_hud_helpers.h; tests/test_dm2_v1_champion_hud_helpers.c	IMPLEMENTED_NARROW	Bounded bar color query: GDAT override with default fallback. Source: SkWinCore.cpp:13194.
 QUERY_3STAT_BAR_COLOR	SKWIN	SKWIN/SkWinCore.cpp	13203	src/dm2/dm2_v1_champion_hud_helpers.c; include/dm2_v1_champion_hud_helpers.h; tests/test_dm2_v1_champion_hud_helpers.c	IMPLEMENTED_NARROW	Bounded bar color query: GDAT override with default fallback. Source: SkWinCore.cpp:13203.
 DRAW_FOOD_WATER_POISON_PANEL	SKWIN	SKWIN/SkWinCore.cpp	13214	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_food_water_poison_panel; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 DRAW_GUIDED_STR	SKWIN	SKWIN/SkWinCore.cpp	13258	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_plan_draw_string; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 _24a5_0732	SKWIN	SKWIN/SkWinCore.cpp	13331	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_24a5_0732_draw_centered_vp_str; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _24a5_0732 centered viewport string draw as a narrow receipt: ASCII remap, prefix [0x02,0x20], centering offset, and DRAW_VP_STR request.
-DRAW_SCROLL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13374		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds scroll-object message text, scroll panel subpanel, static art, and centered line draw planning.
+DRAW_SCROLL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	13374	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds scroll-object message text, scroll panel subpanel, static art, and centered line draw planning.
 QUERY_GDAT_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13434	src/dm2/dm2_v1_asset_loader.c; include/dm2_v1_asset_loader.h; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING	DM2 v1 asset loader maps the SKWIN alias for real GDAT item-name dtText field 0x18.
-GET_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13447		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_ITEM_NAME with cls1/cls2 lookup and champion-bones owner side effect.
+GET_ITEM_NAME	SKWIN	SKWIN/SkWinCore.cpp	13447	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_ITEM_NAME with cls1/cls2 lookup and champion-bones owner side effect.
 DRAW_ITEM_ICON	SKWIN	SKWIN/SkWinCore.cpp	13478	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_item_icon; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 receipt now covers the SKWIN item icon route; runtime inventory panel remains an additional consumer.
 DRAW_CONTAINER_SURVEY	SKWIN	SKWIN/SkWinCore.cpp	13612	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_draw_container_survey; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
-IS_MISCITEM_CURRENCY	SKWIN	SKWIN/SkWinCore.cpp	13634		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN IS_MISCITEM_CURRENCY as DB10 plus GDAT flags bit 0x4000.
+IS_MISCITEM_CURRENCY	SKWIN	SKWIN/SkWinCore.cpp	13634	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN IS_MISCITEM_CURRENCY as DB10 plus GDAT flags bit 0x4000.
 COUNT_BY_COIN_TYPES	SKWIN	SKWIN/SkWinCore.cpp	13651	src/dm2/dm2_v1_skproject_core.c:886	VERIFIED_SOURCE_MAPPING
-GET_ITEM_ORDER_IN_CONTAINER	SKWIN	SKWIN/SkWinCore.cpp	13681		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_ITEM_ORDER_IN_CONTAINER over GDAT order text ranges, J-offset items, and money item table lookup.
+GET_ITEM_ORDER_IN_CONTAINER	SKWIN	SKWIN/SkWinCore.cpp	13681	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_ITEM_ORDER_IN_CONTAINER over GDAT order text ranges, J-offset items, and money item table lookup.
 SK_LTOA10	SKWIN	SKWIN/SkWinCore.cpp	13776	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN signed base-10 formatting through bounded SK_STRCPY-equivalent output.
 MONEY_BOX_SURVEY	SKWIN	SKWIN/SkWinCore.cpp	13814	src/dm2/dm2_v1_hud_survey_helpers.c; include/dm2_v1_hud_survey_helpers.h; tests/test_dm2_v1_hud_survey_helpers.c	IMPLEMENTED_NARROW	DM2 v1 HUD survey helper consumes source coin-order/count/item tables plus real container record-chain survey; missing tables or chain fail closed and no synthetic GDAT/container art is admitted.
 _2759_0155	SKWIN	SKWIN/SkWinCore.cpp	13854	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_2759_0155_query_object_commands; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 skproject core maps SKWIN _2759_0155 command-string presence check over caller-owned GDAT loadable and command-string tables for text indices 8..11.
@@ -1578,10 +1578,10 @@ _2e62_03b5	SKWIN	SKWIN/SkWinCore.cpp	14236	src/dm2/dm2_v1_skproject_core.c:dm2_v
 DRAW_LOCAL_TEXT	SKWIN	SKWIN/SkWinCore.cpp	14343	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_plan_draw_string; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW
 GET_PLAYER_ABILITY	SKWIN	SKWIN/SkWinCore.cpp	14379	src/dm2/dm2_v1_hero_stats_pc34_compat.c; include/dm2_v1_hero_stats_pc34_compat.h	IMPLEMENTED_NARROW	Equivalent to get_adj_ability1 (c_hero.cpp:81) with RNG component excluded. Pure computation path covered by dm2_v1_hero_get_adj_ability1.
 FILL_STR	SKWIN	SKWIN/SkWinCore.cpp	14408	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FILL_STR count/delta byte writes without fabricating output buffers.
-FMT_NUM	SKWIN	SKWIN/SkWinCore.cpp	14418		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FMT_NUM clean/non-clean four-byte number buffer formatting and returned offset.
+FMT_NUM	SKWIN	SKWIN/SkWinCore.cpp	14418	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN FMT_NUM clean/non-clean four-byte number buffer formatting and returned offset.
 SK_STRCPY	SKWIN	SKWIN/SkWinCore.cpp	14462	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN strcpy semantics with bounded Firestaff output receipt.
 SK_STRCAT	SKWIN	SKWIN/SkWinCore.cpp	14467	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN strcat semantics with bounded Firestaff output receipt.
-DRAW_SKILL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	14473		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds skill panel subpanel, blank panel, skill labels, attribute labels, and ability-value route.
+DRAW_SKILL_PANEL	SKWIN	SKWIN/SkWinCore.cpp	14473	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	IMPLEMENTED_NARROW	DM2 v1 SKWIN receipt binds skill panel subpanel, blank panel, skill labels, attribute labels, and ability-value route.
 REFRESH_PLAYER_STAT_DISP	SKWIN	SKWIN/SkWinCore.cpp	14573		NOT_APPLICABLE_ARCH
 PTR_ADVANCE	SKWIN	SKWIN/SkWinCore.cpp	33667	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_ptr_advance; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the COMPRESS_RECTS byte-cursor advance macro as a bounded offset delta receipt.
 WRITE_BYTE	SKWIN	SKWIN/SkWinCore.cpp	33668	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_write_byte; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the COMPRESS_RECTS byte write macro as a bounded one-byte cursor store.
@@ -1590,24 +1590,24 @@ READ_BYTE	SKWIN	SKWIN/SkWinCore.cpp	33855	src/dm2/dm2_v1_skproject_core.c:dm2_v1
 READ_SBYTE	SKWIN	SKWIN/SkWinCore.cpp	33856	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_read_sbyte; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the QUERY_RECT signed byte cursor read while preserving int8 sign interpretation.
 READ_WORD	SKWIN	SKWIN/SkWinCore.cpp	33857	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_read_word; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the QUERY_RECT 16-bit cursor read as bounded little-endian READ_WORD receipt with missing-buffer and bounds rejection.
 MIN	SKWIN	SKWIN/SkWinCore.cpp	54512	src/dm2/dm2_v1_creature.c:51	NOT_APPLICABLE_ARCH
-QUERY_GDAT_POTION_SPELL_TYPE_FROM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	39		IMPLEMENTED_NARROW
-QUERY_GDAT_POTION_BEHAVIOUR_FROM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	47		IMPLEMENTED_NARROW
-QUERY_GDAT_WATER_VALUE_FROM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	55		IMPLEMENTED_NARROW
-QUERY_GDAT_DOOR_IS_MIRRORED	SKWIN	SKWIN/SkWinCore2.cpp	63		IMPLEMENTED_NARROW
+QUERY_GDAT_POTION_SPELL_TYPE_FROM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	39	src/dm2/dm2_v1_asset_loader.c	IMPLEMENTED_NARROW
+QUERY_GDAT_POTION_BEHAVIOUR_FROM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	47	src/dm2/dm2_v1_asset_loader.c	IMPLEMENTED_NARROW
+QUERY_GDAT_WATER_VALUE_FROM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	55	src/dm2/dm2_v1_asset_loader.c	IMPLEMENTED_NARROW
+QUERY_GDAT_DOOR_IS_MIRRORED	SKWIN	SKWIN/SkWinCore2.cpp	63	src/dm2/dm2_v1_asset_loader.c	IMPLEMENTED_NARROW
 EXTENDED_LOAD_DM1_ITEM_CONVERSION_LIST	SKWIN	SKWIN/SkWinCore2.cpp	71	src/dm2/dm2_v1_dm1_item_conversion.c; include/dm2_v1_dm1_item_conversion.h; tests/test_dm2_v1_dm1_item_conversion.c	IMPLEMENTED_NARROW	199-entry const DM1-to-DM2 item category+ID conversion table with bounded lookup.
 DM1_ROTATE_ACTUATOR_LIST	SKWIN	SKWIN/SkWinCore2.cpp	298	src/dm2/dm2_v1_record_ops_pc34_compat.c	IMPLEMENTED_NARROW
-SET_NEXT_RECORD_LINK	SKWIN	SKWIN/SkWinCore2.cpp	361		IMPLEMENTED_NARROW
-GET_WALL_TILE_ANY_TAKEABLE_ITEM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	368		IMPLEMENTED_NARROW
+SET_NEXT_RECORD_LINK	SKWIN	SKWIN/SkWinCore2.cpp	361	src/dm2/dm2_v1_record_ops_pc34_compat.c	IMPLEMENTED_NARROW
+GET_WALL_TILE_ANY_TAKEABLE_ITEM_RECORD	SKWIN	SKWIN/SkWinCore2.cpp	368	src/dm2/dm2_v1_record_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DEBUG_HELP_WRITER	SKWIN	SKWIN/SkWinCore2.cpp	388		NOT_APPLICABLE_ARCH
 DEBUG_HELP_DISPLAY_STACK	SKWIN	SKWIN/SkWinCore2.cpp	407		NOT_APPLICABLE_ARCH
 STUN_CHAMPION	SKWIN	SKWIN/SkWinCore2.cpp	435	src/dm2/dm2_v1_combat_helpers.c; include/dm2_v1_combat_helpers.h; tests/test_dm2_v1_combat_helpers.c	IMPLEMENTED_NARROW	Bounded stun computation: adds stun_value to both hand cooldowns, clamps at 255.
-CURE_PLAGUE	SKWIN	SKWIN/SkWinCore2.cpp	455		IMPLEMENTED_NARROW
-PROCESS_PLAGUE	SKWIN	SKWIN/SkWinCore2.cpp	475		IMPLEMENTED_NARROW
+CURE_PLAGUE	SKWIN	SKWIN/SkWinCore2.cpp	455	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
+PROCESS_PLAGUE	SKWIN	SKWIN/SkWinCore2.cpp	475	src/dm2/dm2_v1_runtime_parity_pc34_compat.c:dm2_v1_process_plague; include/dm2_v1_runtime_parity_pc34_compat.h	IMPLEMENTED_PARITY	Callback-based parity implementation matching skproject PROCESS_PLAGUE
 TEST_TEXT	SKWIN	SKWIN/SkWinCore2.cpp	520		NOT_APPLICABLE_ARCH	Debug printf function; not game logic.
-DIRECT_QUERY_GDAT_ENTRY_DATA_BUFF	SKWIN	SKWIN/SkWinCore2.cpp	537		IMPLEMENTED_NARROW
-DIRECT_QUERY_GDAT_TEXT	SKWIN	SKWIN/SkWinCore2.cpp	554		IMPLEMENTED_NARROW
+DIRECT_QUERY_GDAT_ENTRY_DATA_BUFF	SKWIN	SKWIN/SkWinCore2.cpp	537	src/dm2/dm2_v1_asset_loader.c	IMPLEMENTED_NARROW
+DIRECT_QUERY_GDAT_TEXT	SKWIN	SKWIN/SkWinCore2.cpp	554	src/dm2/dm2_v1_asset_loader.c	IMPLEMENTED_NARROW
 GET_CHAMPION_BONES_ITEM_ID	SKWIN	SKWIN/SkWinCore2.cpp	583	src/dm2/dm2_v1_combat_helpers.c; include/dm2_v1_combat_helpers.h; tests/test_dm2_v1_combat_helpers.c	IMPLEMENTED_NARROW	Returns 0 for DM2 mode, 5 for DM1 mode.
-IS_OBJECT_VISIBLE_TEXT	SKWIN	SKWIN/SkWinCore2.cpp	592		IMPLEMENTED_NARROW
+IS_OBJECT_VISIBLE_TEXT	SKWIN	SKWIN/SkWinCore2.cpp	592	src/dm2/dm2_v1_record_ops_pc34_compat.c	IMPLEMENTED_NARROW
 SkwinDEBUG	SKWIN	SKWIN/SkWinDebug.cpp	35	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
 Unreachable	SKWIN	SKWIN/SkWinDebug.cpp	51	include/dm2_v1_dungeon_loader.h:55	NOT_APPLICABLE_ARCH
 Write2LOGX	SKWIN	SKWIN/SkWinDebug.cpp	96	host-platform/UI variant outside Firestaff DM2 core	NONAPPLICABLE
@@ -1725,7 +1725,7 @@ GET_TELEPORTER_DETAIL	SKWIN	SKWIN/xxx.cpp	3235		NOT_APPLICABLE_ARCH
 GET_POINTER_OF_RECORD_LINK_AND_SOMEWHAT	SKWIN	SKWIN/xxx.cpp	3272		NOT_APPLICABLE_ARCH
 WRITE_RECORD_CHECKCODE	SKWIN	SKWIN/xxx.cpp	3303	include/dm2_v1_save_load.h:462	IMPLEMENTED_NARROW
 ADD_INDEX_TO_POSSESSION_INDICES	SKWIN	SKWIN/xxx.cpp	3570		NOT_APPLICABLE_ARCH
-IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/xxx.cpp	3578		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN/xxx IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
+IS_CONTAINER_MONEYBOX	SKWIN	SKWIN/xxx.cpp	3578	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN/xxx IS_CONTAINER_MONEYBOX as DB9 type-0 container with a real GDAT moneybox item-list entry.
 GET_WALL_DECORATION_OF_ACTUATOR	SKWIN	SKWIN/xxx.cpp	3617	src/dm2/dm2_v1_dungeon_loader.c:2516	IMPLEMENTED_NARROW
 QUERY_GDAT_ENTRY_DATA_INDEX	SKWIN	SKWIN/xxx.cpp	3693	src/dm2/dm2_v1_asset_loader.c:837	IMPLEMENTED_NARROW
 QUERY_GDAT_ENTRYPTR	SKWIN	SKWIN/xxx.cpp	3721		NOT_APPLICABLE_ARCH
@@ -1734,12 +1734,12 @@ _0cee_2de0	SKWIN	SKWIN/xxx.cpp	3807		NOT_APPLICABLE_ARCH
 QUERY_CREATURE_AI_SPEC_FROM_RECORD	SKWIN	SKWIN/xxx.cpp	3813		NOT_APPLICABLE_ARCH
 QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKWIN	SKWIN/xxx.cpp	3819	src/dm2/dm2_v1_creature.c:1022	IMPLEMENTED_NARROW
 QUERY_GDAT_CREATURE_WORD_VALUE	SKWIN	SKWIN/xxx.cpp	3826	include/dm2_v1_asset_loader.h:dm2_v1_query_gdat_creature_word_value_receipt; src/dm2/dm2_v1_asset_loader.c; tests/test_dm2_v1_gdat_querydb_receipts.c	VERIFIED_SOURCE_MAPPING
-GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/xxx.cpp	3865	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_address_of_tile_record	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN tile-record address route through the bounded GET_ADDRESS_OF_RECORD receipt.
+GET_ADDRESS_OF_TILE_RECORD	SKWIN	SKWIN/xxx.cpp	3865	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_address_of_tile_record	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKWIN tile-record address route through the bounded GET_ADDRESS_OF_RECORD receipt.
 IS_TILE_SOLID	SKWIN	SKWIN/xxx.cpp	3871	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_is_tile_solid	VERIFIED_SOURCE_MAPPING
-GET_TILE_VALUE	SKWIN	SKWIN/xxx.cpp	3891	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_tile_value	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_TILE_VALUE including in-bounds tile bytes, adjacent boundary masks, corner probes, and 0xE0 blocked edges.
+GET_TILE_VALUE	SKWIN	SKWIN/xxx.cpp	3891	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_tile_value	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps SKWIN GET_TILE_VALUE including in-bounds tile bytes, adjacent boundary masks, corner probes, and 0xE0 blocked edges.
 GET_TILE_RECORD_LINK	SKWIN	SKWIN/xxx.cpp	3998	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_walk_square_things	VERIFIED_SOURCE_MAPPING
 GET_OBJECT_INDEX_FROM_TILE	SKWIN	SKWIN/xxx.cpp	4008	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_get_object_index_from_tile	VERIFIED_SOURCE_MAPPING
-GET_ADDRESS_OF_RECORD	SKWIN	SKWIN/xxx.cpp	4027	src/dm2/dm2_v1_runtime.c:329	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ADDRESS_OF_RECORD to the skproject 4-bit table / 10-bit index formula with fail-closed record bounds.
+GET_ADDRESS_OF_RECORD	SKWIN	SKWIN/xxx.cpp	4027	src/dm2/dm2_v1_runtime.c:329	IMPLEMENTED_NARROW	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ADDRESS_OF_RECORD to the skproject 4-bit table / 10-bit index formula with fail-closed record bounds.
 GET_NEXT_RECORD_LINK	SKWIN	SKWIN/xxx.cpp	4033	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_dungeon_get_next_thing	VERIFIED_SOURCE_MAPPING
 CHANGE_CURRENT_MAP_TO	SKWIN	SKWIN/xxx.cpp	4039	src/dm2/dm2_v1_dungeon_loader.c:dm2_v1_skproject_change_current_map_to	VERIFIED_SOURCE_MAPPING
 WRITE_1BIT	SKWIN	SKWIN/xxx.cpp	4079	src/dm2/dm2_v1_save_load.c:dm2_v1_save_suppress_symbol_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 save/load maps the xxx.cpp WRITE_1BIT alias to the same source SUPPRESS writer receipt used for SKULLWIN c_savegame.
