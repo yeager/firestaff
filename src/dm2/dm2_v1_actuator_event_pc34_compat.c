@@ -740,11 +740,14 @@ typedef struct {
     DM2_V1_DungeonData *dungeon;
     DM2_V1_SourceTimerQueue *queue;
     int map;
+    int x;             /* timer X coordinate (tile walk origin) */
+    int y;             /* timer Y coordinate (tile walk origin) */
     int action_type;   /* timer ActionType (from value_b high byte) */
     int direction;     /* timer Value2 (from value_b low byte) */
     uint32_t game_tick;
     uint16_t *global_words;
     uint16_t global_word_count;
+    const DM2_V1_CreatureKillerCallbacks *creature_killer_cb;
     DM2_V1_ActuatorEventReceipt *receipt;
 } WallMechaCtx;
 
@@ -1163,11 +1166,14 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.dungeon     = dungeon;
     ctx.queue       = queue;
     ctx.map         = map;
+    ctx.x           = x;
+    ctx.y           = y;
     ctx.action_type = action_type;
     ctx.direction   = direction;
     ctx.game_tick   = game_tick;
     ctx.global_words      = global_words;
     ctx.global_word_count = global_word_count;
+    ctx.creature_killer_cb = NULL;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
@@ -1242,14 +1248,24 @@ static int floor_mecha_visitor(void *context,
         break;
 
     /* ── CREATURE_KILLER (0x0b) + CREATURE_AI_STATE (0x28)
-     *    skevent.cpp:2129-2141 — both call ACTIVATE_CREATURE_KILLER.
-     *    Needs GET_CREATURE_AT + creature command/attack dispatch;
-     *    fail-closed until creature runtime is wired. ─────────── */
+     *    skevent.cpp:2129-2141 — both call ACTIVATE_CREATURE_KILLER. */
     case DM2_ACTU_CREATURE_KILLER:
-    case DM2_ACTU_CREATURE_AI_STATE:
+    case DM2_ACTU_CREATURE_AI_STATE: {
+        uint16_t ck_data = dm2_actu_data(record);
+        DM2_V1_CreatureKillerReceipt ck_receipt;
         r->creature_killer_invoked++;
-        r->fail_closed++;
+        dm2_v1_activate_creature_killer(
+            ctx->creature_killer_cb,
+            (int16_t)(ck_data & 0x0F),
+            (int16_t)((ck_data >> 4) & 0x1F),
+            (int16_t)ctx->x, (int16_t)ctx->y,
+            (int16_t)dm2_actu_xcoord(record),
+            (int16_t)dm2_actu_ycoord(record),
+            (int16_t)atype, (int16_t)ctx->action_type,
+            &ck_receipt);
+        if (!ck_receipt.valid) r->fail_closed++;
         break;
+    }
 
     /* ── CREATURE_DIRECTION (0x42) skevent.cpp:2234-2236 ─────── */
     /* Source: _3a15_0d5c is a TODO/no-op in skproject. */
@@ -1416,16 +1432,88 @@ int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
     ctx.dungeon     = dungeon;
     ctx.queue       = queue;
     ctx.map         = map;
+    ctx.x           = x;
+    ctx.y           = y;
     ctx.action_type = action_type;
     ctx.direction   = direction;
     ctx.game_tick   = game_tick;
     ctx.global_words      = global_words;
     ctx.global_word_count = global_word_count;
+    ctx.creature_killer_cb = NULL;
     ctx.receipt     = receipt;
 
     memset(&walk_receipt, 0, sizeof(walk_receipt));
     dm2_v1_tile_record_walk(pool_set, dungeon, map, x, y,
                             floor_mecha_visitor, &ctx, &walk_receipt);
+
+    receipt->valid = 1;
+    return 1;
+}
+
+/* ── ACTIVATE_CREATURE_KILLER — c_tim_proc.cpp:2907-3007 ──────────── */
+int dm2_v1_activate_creature_killer(
+    const DM2_V1_CreatureKillerCallbacks *cb,
+    int16_t actu_data_lo, int16_t actu_data_hi,
+    int16_t actu_x, int16_t actu_y,
+    int16_t timer_x, int16_t timer_y,
+    int16_t actu_type, int16_t action_type,
+    DM2_V1_CreatureKillerReceipt *receipt)
+{
+    int16_t dx_abs, dy_abs, origin_x, origin_y, span_x, span_y;
+    int16_t ix, iy;
+
+    if (!receipt) return 0;
+    memset(receipt, 0, sizeof(*receipt));
+    if (!cb || !cb->get_creature_at || !cb->creature_type_matches) return 0;
+
+    dx_abs = (int16_t)((actu_x - timer_x) < 0 ? -(actu_x - timer_x) : (actu_x - timer_x));
+    dy_abs = (int16_t)((actu_y - timer_y) < 0 ? -(actu_y - timer_y) : (actu_y - timer_y));
+    origin_x = (int16_t)(actu_x - dx_abs);
+    origin_y = (int16_t)(actu_y - dy_abs);
+    span_x = (int16_t)(2 * dx_abs + 1);
+    span_y = (int16_t)(2 * dy_abs + 1);
+
+    for (iy = span_y - 1; iy >= 0; iy--) {
+        for (ix = span_x - 1; ix >= 0; ix--) {
+            int16_t cx = (int16_t)(origin_x + ix);
+            int16_t cy = (int16_t)(origin_y + iy);
+            uint16_t creature_rec;
+
+            if (cx < 0 || cx >= cb->map_width) continue;
+            if (cy < 0 || cy >= cb->map_height) continue;
+            receipt->cells_scanned++;
+
+            creature_rec = cb->get_creature_at(cb->ctx, cx, cy);
+            if (creature_rec == 0xFFFFu) continue;
+            receipt->creatures_found++;
+
+            if (!cb->creature_type_matches(cb->ctx, creature_rec, (uint16_t)actu_data_hi))
+                continue;
+
+            if (actu_type == 0x0b) {
+                if (actu_data_lo == 0) continue;
+                if (actu_data_lo == 1) continue;
+                if (actu_data_lo != 2) {
+                    receipt->valid = 1;
+                    return 1;
+                }
+                if (cb->set_creature_ai_state) {
+                    cb->set_creature_ai_state(cb->ctx, creature_rec,
+                                              cx, cy, 0x13, 1);
+                    receipt->creatures_affected++;
+                }
+            } else if (actu_type == 0x28) {
+                int32_t damage = (int32_t)(uint16_t)actu_data_lo;
+                if (action_type != 0)
+                    damage |= 0x8000;
+                if (cb->attack_creature) {
+                    cb->attack_creature(cb->ctx, creature_rec,
+                                        cx, cy, damage, 0x64, 0);
+                    receipt->creatures_affected++;
+                }
+            }
+        }
+    }
 
     receipt->valid = 1;
     return 1;

@@ -227,6 +227,118 @@ static void test_new_actuator_types(void)
 
 /* ── Main ──────────────────────────────────────────────────────────── */
 
+/* ── Creature killer mock callbacks ───────────────────────────────── */
+
+typedef struct {
+    int get_creature_calls;
+    int type_match_calls;
+    int set_ai_calls;
+    int attack_calls;
+    uint16_t last_creature_rec;
+    int32_t last_damage;
+} CKMockCtx;
+
+static uint16_t ck_mock_get_creature(void *ctx, int16_t x, int16_t y) {
+    CKMockCtx *m = (CKMockCtx *)ctx;
+    m->get_creature_calls++;
+    if (x == 3 && y == 3) return 42;
+    return 0xFFFFu;
+}
+
+static int ck_mock_type_matches(void *ctx, uint16_t rec, uint16_t type) {
+    CKMockCtx *m = (CKMockCtx *)ctx;
+    m->type_match_calls++;
+    (void)type;
+    return (rec == 42) ? 1 : 0;
+}
+
+static void ck_mock_set_ai(void *ctx, uint16_t rec,
+                            int16_t x, int16_t y, uint8_t state, int32_t flag) {
+    CKMockCtx *m = (CKMockCtx *)ctx;
+    m->set_ai_calls++;
+    m->last_creature_rec = rec;
+    (void)x; (void)y; (void)state; (void)flag;
+}
+
+static void ck_mock_attack(void *ctx, uint16_t rec,
+                            int16_t x, int16_t y, int32_t damage,
+                            int32_t threshold, int32_t flag) {
+    CKMockCtx *m = (CKMockCtx *)ctx;
+    m->attack_calls++;
+    m->last_creature_rec = rec;
+    m->last_damage = damage;
+    (void)x; (void)y; (void)threshold; (void)flag;
+}
+
+static void test_creature_killer(void)
+{
+    DM2_V1_CreatureKillerReceipt receipt;
+    CKMockCtx mock;
+    DM2_V1_CreatureKillerCallbacks cb;
+    int ret;
+
+    printf("  creature_killer: ");
+
+    /* NULL safety */
+    ret = dm2_v1_activate_creature_killer(NULL, 0, 0, 0, 0, 0, 0, 0, 0, NULL);
+    assert(ret == 0);
+
+    memset(&receipt, 0, sizeof(receipt));
+    ret = dm2_v1_activate_creature_killer(NULL, 0, 0, 0, 0, 0, 0, 0, 0, &receipt);
+    assert(ret == 0);
+    assert(receipt.valid == 0);
+
+    /* Set up callbacks */
+    memset(&mock, 0, sizeof(mock));
+    memset(&cb, 0, sizeof(cb));
+    cb.ctx = &mock;
+    cb.map_width = 10;
+    cb.map_height = 10;
+    cb.get_creature_at = ck_mock_get_creature;
+    cb.creature_type_matches = ck_mock_type_matches;
+    cb.set_creature_ai_state = ck_mock_set_ai;
+    cb.attack_creature = ck_mock_attack;
+
+    /* Type 0x0b (CREATURE_KILLER) with actu_data_lo=2: set AI state */
+    memset(&mock, 0, sizeof(mock));
+    /* actu at (3,3), timer at (3,3) -> 1x1 area scanning just (3,3) */
+    ret = dm2_v1_activate_creature_killer(&cb, 2, 0, 3, 3, 3, 3, 0x0b, 0, &receipt);
+    assert(ret == 1);
+    assert(receipt.valid == 1);
+    assert(receipt.cells_scanned == 1);
+    assert(receipt.creatures_found == 1);
+    assert(mock.set_ai_calls == 1);
+    assert(mock.last_creature_rec == 42);
+
+    /* Type 0x28 (CREATURE_AI_STATE): attack creature */
+    memset(&mock, 0, sizeof(mock));
+    ret = dm2_v1_activate_creature_killer(&cb, 5, 0, 3, 3, 3, 3, 0x28, 1, &receipt);
+    assert(ret == 1);
+    assert(receipt.valid == 1);
+    assert(mock.attack_calls == 1);
+    assert(mock.last_damage == (5 | 0x8000)); /* action_type != 0 -> OR 0x8000 */
+
+    /* Type 0x0b with actu_data_lo=0: skip (continue, no AI state set) */
+    memset(&mock, 0, sizeof(mock));
+    ret = dm2_v1_activate_creature_killer(&cb, 0, 0, 3, 3, 3, 3, 0x0b, 0, &receipt);
+    assert(ret == 1);
+    assert(mock.set_ai_calls == 0);
+
+    /* Type 0x0b with actu_data_lo=1: skip (continue, no AI state set) */
+    memset(&mock, 0, sizeof(mock));
+    ret = dm2_v1_activate_creature_killer(&cb, 1, 0, 3, 3, 3, 3, 0x0b, 0, &receipt);
+    assert(ret == 1);
+    assert(mock.set_ai_calls == 0);
+
+    /* Type 0x0b with actu_data_lo=3: early return (unknown value) */
+    memset(&mock, 0, sizeof(mock));
+    ret = dm2_v1_activate_creature_killer(&cb, 3, 0, 3, 3, 3, 3, 0x0b, 0, &receipt);
+    assert(ret == 1);
+    assert(mock.set_ai_calls == 0);
+
+    printf("PASS\n");
+}
+
 int main(void)
 {
     printf("test_dm2_v1_actuator_event_pc34_compat:\n");
@@ -238,6 +350,7 @@ int main(void)
     test_null_safety();
     test_handle_helpers();
     test_new_actuator_types();
+    test_creature_killer();
     printf("All actuator event tests passed.\n");
     return 0;
 }

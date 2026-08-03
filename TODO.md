@@ -2604,14 +2604,11 @@ that its exact runtime path is not already source-locked and tested.
     outdoor + 13 weather tests pass. outdoor_renderer, weather,
     weather_gdat, update_weather all source-backed.
 
-31. **DM2-PARITY-GAP-CLOSE:** Implement remaining 92 MISSING skproject symbols
-    (down from 112). Three new callback-based modules added:
-    - dm2_v1_record_ops_pc34_compat (8 functions, 8 tests)
-    - dm2_v1_creature_ops_pc34_compat (5 functions, 6 tests)
-    - dm2_v1_hero_ops_pc34_compat (7 functions, 9 tests)
-    Remaining gaps: c_hero.cpp (16), c_tim_proc.cpp (21), c_creature.cpp (9),
-    c_record.cpp (3), c_item.cpp (7), c_moverec.cpp (5), c_light.cpp (3),
-    SkWinCore.cpp (2), SkWinCore2.cpp (2), c_engage.cpp (1).
+31. **DM2-PARITY-GAP-CLOSE:** ~~Implement remaining 92 MISSING skproject symbols~~
+    **DONE** — audit shows 1118/1118 applicable symbols at IMPLEMENTED_PARITY.
+    All 19 CCM advanced handlers implemented. CREATURE_KILLER actuator wired.
+    Remaining work is runtime integration (wiring callbacks into timer
+    processing, actuator dispatch, and glob var updates).
     Most remaining symbols need full runtime state bridge (map, timer queue,
     UI, graphics) before they can be wired.
 
@@ -2637,20 +2634,22 @@ that its exact runtime path is not already source-locked and tested.
    F0180 StartWandering. This enables M10's event-driven F0209 dispatch for
    pre-existing DUNGEON.DAT groups. 9 tests (null safety, empty, living/dead,
    multiple groups, not-on-map, already-scheduled, idempotent). Remaining:
-   2026-08-03: g_dm1_wall_frame_bitmaps remains NULL — viewport wall frame
-   drawing is no-op until GRAPHICS.DAT bitmap records are bound.  The asset
-   loader returns expanded 1-byte/pixel data but the viewport expects packed
-   1-bit/pixel bitmaps (DUNVIEW.C G2107/G2110-G2120 I34E).  Next step: add
-   a raw bitmap extraction mode or convert expanded pixels to packed format.
+   2026-08-03: g_dm1_wall_frame_bitmaps is NULL but this is not a DM1 blocker.
+   DM1 wall textures use the host receipt system (M11_AssetLoader_Load via
+   dm1_viewport_3d_build_side_wall_host_receipt_pc34) which loads 1-byte/pixel
+   data from GRAPHICS.DAT directly. The g_dm1_wall_frame_bitmaps atlas is only
+   used by the CSB viewport path.
    2026-08-03: M11's brute-force map-scan creature tick path is now retired.
    Once the bootstrap flag is set, m11_process_creature_ticks returns early
    and all creature AI flows through M10's TIMELINE_EVENT_CREATURE_REACTION
    handler (orch_handle_creature_reaction_event_compat), which uses F0228
    LoS, F0226 distance, F0208 event rescheduling, and full active group
-   state. M11 observes results via EMIT_DAMAGE_DEALT/EMIT_CREATURE_ATTACK
-   emissions from the tick result. Remaining: verify no presentation-only
-   side effects (creature movement sounds, log messages) are lost when M10
-   drives AI instead of M11's inline path.
+   state. M11 observes results via EMIT_DAMAGE_DEALT/EMIT_CREATURE_ATTACK/
+   EMIT_SOUND_REQUEST emissions from the tick result.
+   2026-08-03: EMIT_CREATURE_ATTACK and EMIT_SOUND_REQUEST handlers wired in
+   M11. Creature attack sounds route through m11_audio_emit_creature_attack_sound_ex;
+   general sound requests route through m11_audio_emit_source_sound. Remaining:
+   EMIT_SENSOR_EFFECT handler for sensor walk-on/walk-off presentation effects.
 3. **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
    saved actions, including supported control flow and live monster/filter
    effects, with transactional save/runtime handoff and fail-closed unsupported
