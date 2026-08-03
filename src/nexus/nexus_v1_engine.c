@@ -2598,10 +2598,10 @@ static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
 
     switch (action->opcode) {
     case NEXUS_OP_TELEPORT:
-        engine->mechanics.party_x = action->x;
-        engine->mechanics.party_y = action->y;
-        if (action->level != engine->mechanics.current_level)
-            engine->mechanics.pending_level_change = action->level;
+        engine->mechanics->party_x = action->x;
+        engine->mechanics->party_y = action->y;
+        if (action->level != engine->mechanics->map_index)
+            engine->mechanics->pending_level_change = action->level;
         break;
     case NEXUS_OP_SPAWN:
         nexus_v1_creature_spawn_on_level(&engine->creatures,
@@ -2610,13 +2610,14 @@ static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
     case NEXUS_OP_SET_SQUARE:
         if (action->x >= 0 && action->x < NEXUS_MAX_MAP_SIZE &&
             action->y >= 0 && action->y < NEXUS_MAX_MAP_SIZE)
-            engine->mechanics.squares[action->y][action->x] = (uint8_t)action->value;
+            engine->current_level.squares[action->y][action->x] = (uint8_t)action->value;
         break;
     case NEXUS_OP_SOUND:
-        nexus_sound_play(&engine->audio, action->value);
+        nexus_sound_play(&engine->audio, (Nexus_SoundEvent)action->value);
         break;
     case NEXUS_OP_TRIGGER_DOOR: {
-        int di = nexus_v1_door_find(&engine->doors, action->x, action->y);
+        int di = nexus_v1_door_find(&engine->doors, action->x, action->y,
+            engine->mechanics->map_index);
         if (di >= 0) nexus_v1_door_toggle(&engine->doors, di);
         break;
     }
@@ -2656,8 +2657,8 @@ static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
             engine->script_vm.flags[action->flag_index] = (uint8_t)action->value;
         break;
     case NEXUS_OP_END_GAME:
-        engine->mechanics.game_over = 1;
-        engine->mechanics.game_over_reason = 1;
+        engine->mechanics->game_over = 1;
+        engine->mechanics->game_over_reason = 1;
         break;
     default:
         break;
