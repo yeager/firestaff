@@ -30,6 +30,7 @@ typedef enum {
 } Theron_ActuatorWallType;
 
 typedef struct {
+    uint16_t next_ref;
     uint8_t  type;
     uint16_t value;
     uint8_t  once;

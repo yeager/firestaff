@@ -238,6 +238,14 @@ target_link_libraries(test_nexus_v1_spawner PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_spawner COMMAND test_nexus_v1_spawner)
 set_tests_properties(nexus_v1_spawner PROPERTIES LABELS "nexus;spawner;tier4")
 
+add_executable(test_nexus_v1_encumbrance
+    tests/test_nexus_v1_encumbrance.c)
+target_include_directories(test_nexus_v1_encumbrance PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_encumbrance PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_encumbrance COMMAND test_nexus_v1_encumbrance)
+set_tests_properties(nexus_v1_encumbrance PROPERTIES LABELS "nexus;encumbrance;tier4")
+
 add_executable(test_nexus_v1_damage_indicator
     tests/test_nexus_v1_damage_indicator.c)
 target_include_directories(test_nexus_v1_damage_indicator PRIVATE
@@ -253,6 +261,30 @@ target_include_directories(test_nexus_v1_formation PRIVATE
 target_link_libraries(test_nexus_v1_formation PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_formation COMMAND test_nexus_v1_formation)
 set_tests_properties(nexus_v1_formation PROPERTIES LABELS "nexus;formation;tier4")
+
+add_executable(test_nexus_v1_experience
+    tests/test_nexus_v1_experience.c)
+target_include_directories(test_nexus_v1_experience PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_experience PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_experience COMMAND test_nexus_v1_experience)
+set_tests_properties(nexus_v1_experience PROPERTIES LABELS "nexus;experience;tier4")
+
+add_executable(test_nexus_v1_level_transition
+    tests/test_nexus_v1_level_transition.c)
+target_include_directories(test_nexus_v1_level_transition PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_level_transition PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_level_transition COMMAND test_nexus_v1_level_transition)
+set_tests_properties(nexus_v1_level_transition PROPERTIES LABELS "nexus;level_transition;tier4")
+
+add_executable(test_nexus_v1_traps
+    tests/test_nexus_v1_traps.c)
+target_include_directories(test_nexus_v1_traps PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_traps PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_traps COMMAND test_nexus_v1_traps)
+set_tests_properties(nexus_v1_traps PROPERTIES LABELS "nexus;traps;tier4")
 
 add_executable(test_nexus_v1_projectiles
     tests/test_nexus_v1_projectiles.c)
@@ -15160,6 +15192,28 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_save_store_extra_dungeon_data
         COMMAND test_dm2_v1_save_store_extra_dungeon_data
+    )
+
+    add_executable(test_dm2_v1_save_load_extra_dungeon_data
+        tests/test_dm2_v1_save_load_extra_dungeon_data.c
+        src/dm2/dm2_v1_save_load_extra_dungeon_data_pc34_compat.c
+        src/dm2/dm2_v1_save_store_extra_dungeon_data_pc34_compat.c
+        src/dm2/dm2_v1_save_read_record_checkcode_pc34_compat.c
+        src/dm2/dm2_v1_save_write_record_checkcode_pc34_compat.c
+        src/dm2/dm2_v1_save_record_masks_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_save_load_extra_dungeon_data PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_save_load_extra_dungeon_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_load_extra_dungeon_data PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_load_extra_dungeon_data
+        COMMAND test_dm2_v1_save_load_extra_dungeon_data
     )
 
     add_executable(test_dm2_v1_save_write_possession_indices
@@ -45127,6 +45181,27 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_actuator.c"
     add_test(
         NAME theron_v1_track02_actuator
         COMMAND test_theron_v1_track02_actuator
+    )
+endif()
+
+# Theron Track 02 ground ref chain walker
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_ground_ref.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_ground_ref.h")
+    add_executable(test_theron_v1_track02_ground_ref
+        tests/test_theron_v1_track02_ground_ref.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_thing_data.c
+        src/theron/theron_v1_track02_dungeon_map.c
+        src/theron/theron_v1_track02_item_id_map.c
+    )
+    target_include_directories(test_theron_v1_track02_ground_ref PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_ground_ref PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_ground_ref
+        COMMAND test_theron_v1_track02_ground_ref
     )
 endif()
 

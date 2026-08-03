@@ -1,6 +1,7 @@
-#include "theron_v1_track02_actuator.h"
+#include "theron_v1_track02_ground_ref.h"
 #include "theron_v1_track02_dungeon_map.h"
 #include "theron_v1_track02_thing_data.h"
+#include "theron_v1_track02_actuator.h"
 #include "theron_v1_track02_item_id_map.h"
 #include <assert.h>
 #include <stdio.h>
@@ -33,27 +34,15 @@ static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
     return ud;
 }
 
-static void test_decode_basic(void) {
-    /* 8-byte record: next_ref(2) + type/value(2) + effect(2) + target(2) */
-    uint8_t raw[8] = {0};
-    raw[0] = 0xFE; raw[1] = 0xFF; /* next = 0xFFFE (REFERENCE_NONE) */
-    raw[2] = 0x05; raw[3] = 0x00; /* type=5, value=0 */
-
-    Theron_Actuator act;
-    assert(theron_v1_track02_actuator_decode(raw, &act) == 0);
-    assert(act.next_ref == 0xFFFE);
-    assert(act.type == 5);
-    assert(act.value == 0);
-    printf("  Basic decode OK\n");
-}
-
-static void test_value_fix(void) {
-    assert(theron_v1_track02_actuator_needs_value_fix(TQ_ACT_WALL_ALCOVE_ITEM, 1));
-    assert(theron_v1_track02_actuator_needs_value_fix(TQ_ACT_WALL_ITEM_EATER, 1));
-    assert(!theron_v1_track02_actuator_needs_value_fix(TQ_ACT_WALL_TRIGGER, 1));
-    assert(theron_v1_track02_actuator_needs_value_fix(TQ_ACT_FLOOR_CARRIED_ITEM, 0));
-    assert(!theron_v1_track02_actuator_needs_value_fix(TQ_ACT_FLOOR_PARTY, 0));
-    printf("  Value fix check OK\n");
+static void test_ref_encode_decode(void) {
+    uint16_t ref = theron_ref_make(3, 1, 42);
+    assert(theron_ref_id(ref) == 42);
+    assert(theron_ref_category(ref) == 3);
+    assert(theron_ref_position(ref) == 1);
+    assert(!theron_ref_is_end(ref));
+    assert(theron_ref_is_end(THERON_REF_NONE));
+    assert(theron_ref_is_end(THERON_REF_UNUSED));
+    printf("  Ref encode/decode OK\n");
 }
 
 static const char *find_track02(void) {
@@ -66,6 +55,21 @@ static const char *find_track02(void) {
     FILE *fp = fopen(path, "rb");
     if (fp) { fclose(fp); return path; }
     return NULL;
+}
+
+static const uint8_t *get_item_record(const Theron_ThingData *td,
+                                       unsigned int cat, unsigned int id) {
+    if (cat >= 16 || id >= td->object_counts[cat]) return NULL;
+    size_t item_size = theron_item_bytes[cat];
+    if (item_size == 0) return NULL;
+    return &td->items[cat][id * item_size];
+}
+
+static uint16_t get_item_next_ref(const Theron_ThingData *td,
+                                   unsigned int cat, unsigned int id) {
+    const uint8_t *rec = get_item_record(td, cat, id);
+    if (!rec) return THERON_REF_NONE;
+    return (uint16_t)rec[0] | ((uint16_t)rec[1] << 8);
 }
 
 static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
@@ -96,50 +100,66 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(theron_v1_track02_thing_data_load(
             ud, ud_size, d, dd.object_counts, gref_count, td));
 
-        unsigned int num_act = dd.object_counts[3];
-        unsigned int type_counts[128] = {0};
-        unsigned int value_fix_count = 0;
-        unsigned int none_refs = 0;
+        /* Walk all ground refs and follow item chains */
+        unsigned int total_chain_items = 0;
+        unsigned int max_chain_depth = 0;
+        unsigned int cat_visit_counts[16] = {0};
 
-        for (unsigned int i = 0; i < num_act; i++) {
+        for (unsigned int g = 0; g < gref_count; g++) {
+            uint16_t ref = td->ground_refs[g];
+            unsigned int depth = 0;
+            while (!theron_ref_is_end(ref) && depth < 100) {
+                unsigned int cat = theron_ref_category(ref);
+                unsigned int id = theron_ref_id(ref);
+                assert(cat < 16);
+                assert(id < td->object_counts[cat]);
+                cat_visit_counts[cat]++;
+                total_chain_items++;
+                depth++;
+                ref = get_item_next_ref(td, cat, id);
+            }
+            if (depth > max_chain_depth)
+                max_chain_depth = depth;
+        }
+
+        /* Verify actuator value fix translation */
+        unsigned int fixed = 0;
+        for (unsigned int i = 0; i < dd.object_counts[3]; i++) {
             Theron_Actuator act;
             assert(theron_v1_track02_actuator_decode(
                 &td->items[3][i * 8], &act) == 0);
-            if (act.type < 128) type_counts[act.type]++;
-            if (act.next_ref == 0xFFFE) none_refs++;
 
-            if (theron_v1_track02_actuator_needs_value_fix(act.type, 1)) {
-                uint8_t translated = theron_v1_track02_translate_item_id(
-                    (uint8_t)(act.value & 0xFF));
-                if (translated != (act.value & 0xFF))
-                    value_fix_count++;
+            int is_wall = (act.type >= 1 && act.type <= 11);
+            if (theron_v1_track02_actuator_needs_value_fix(act.type, is_wall)) {
+                uint8_t orig = (uint8_t)(act.value & 0xFF);
+                uint8_t translated = theron_v1_track02_translate_item_id(orig);
+                if (translated != orig) fixed++;
             }
         }
 
-        printf("  %s: %u actuators (%u end-of-chain)", names[d], num_act, none_refs);
-        if (value_fix_count > 0)
-            printf(" (%u need value fix)", value_fix_count);
-
-        printf(" types:");
-        for (int t = 0; t < 128; t++) {
-            if (type_counts[t] > 0)
-                printf(" %d×%u", t, type_counts[t]);
+        printf("  %s: %u ground_refs → %u chain items (max depth %u), %u actuator value fixes\n",
+               names[d], gref_count, total_chain_items, max_chain_depth, fixed);
+        printf("    cats:");
+        const char *cat_names[] = {
+            "door","telep","text","act","weap","cloth","scrl","pot",
+            "cont","misc","miss","?","?","?","cret","chmp"
+        };
+        for (int c = 0; c < 16; c++) {
+            if (cat_visit_counts[c] > 0)
+                printf(" %s=%u", cat_names[c], cat_visit_counts[c]);
         }
         printf("\n");
 
-        if (d == 0) {
-            assert(num_act == 180);
-            assert(type_counts[TQ_ACT_WALL_TRIGGER] > 0);
-        }
+        assert(total_chain_items > 0);
+        assert(max_chain_depth < 50);
 
         free(td);
     }
 }
 
 int main(void) {
-    printf("test_theron_v1_track02_actuator\n");
-    test_decode_basic();
-    test_value_fix();
+    printf("test_theron_v1_track02_ground_ref\n");
+    test_ref_encode_decode();
 
     const char *path = find_track02();
     if (!path) {
