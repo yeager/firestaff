@@ -137,7 +137,36 @@ int theron_v1_track02_dungeon_map_load(
         list_off += 2;
     }
 
+    /* Per-column cumulative thing counts: sum(xdim) entries as uint16 LE.
+     * Used by the thing list to locate things per map column. */
+    unsigned int total_columns = 0;
+    for (unsigned int m = 0; m < nmaps; m++)
+        total_columns += xdims[m];
+    if (total_columns > THERON_TRACK02_MAX_COLUMNS) return 0;
+    out->column_thing_count_total = (uint16_t)total_columns;
+    for (unsigned int i = 0; i < total_columns; i++) {
+        if (list_off + 2 > ud_size) return 0;
+        out->column_thing_counts[i] = (uint16_t)ud_data[list_off] |
+            ((uint16_t)ud_data[list_off + 1] << 8);
+        list_off += 2;
+    }
+
+    /* 4 unknown bytes between column counts and thing descriptor size table. */
+    list_off += 4;
+
+    /* 12-byte thing descriptor size table — bytes per record for each of the
+     * 12 thing types (door, teleporter, text, actuator, creature, weapon,
+     * clothing, scroll, potion, container, misc_item, missile). */
+    if (list_off + THERON_TRACK02_THING_TYPE_COUNT > ud_size) return 0;
+    memcpy(out->thing_descriptor_sizes, ud_data + list_off,
+           THERON_TRACK02_THING_TYPE_COUNT);
+    list_off += THERON_TRACK02_THING_TYPE_COUNT;
+
+    /* Remaining bytes before map tile data are thing list records. */
     size_t map_abs = UD_BASE + qb->map_data_offset;
+    out->thing_list_offset = list_off;
+    out->thing_list_size = (list_off < map_abs) ? (map_abs - list_off) : 0;
+
     if (map_abs >= ud_size) return 0;
 
     size_t pos = map_abs;

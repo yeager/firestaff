@@ -9,6 +9,8 @@
 #endif
 #define THERON_TRACK02_MAX_MAPS       8
 #define THERON_TRACK02_MAX_MAP_DIM    32
+#define THERON_TRACK02_MAX_COLUMNS    256
+#define THERON_TRACK02_THING_TYPE_COUNT 12
 
 typedef enum {
     THERON_TILE_WALL       = 0,
@@ -46,6 +48,11 @@ typedef struct Theron_DungeonData {
     uint16_t     object_counts[16];
     uint16_t     creature_gfx_bank[THERON_TRACK02_MAX_MAPS];
     uint16_t     cumulative_column_items[THERON_TRACK02_MAX_MAPS];
+    uint16_t     column_thing_counts[THERON_TRACK02_MAX_COLUMNS];
+    uint16_t     column_thing_count_total;
+    uint8_t      thing_descriptor_sizes[THERON_TRACK02_THING_TYPE_COUNT];
+    size_t       thing_list_offset;
+    size_t       thing_list_size;
     Theron_Map   maps[THERON_TRACK02_MAX_MAPS];
 } Theron_DungeonData;
 
