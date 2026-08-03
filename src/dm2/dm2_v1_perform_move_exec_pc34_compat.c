@@ -157,6 +157,9 @@ int dm2_v1_perform_move_exec(
         receipt->classification = DM2_MOVE_CLASS_DOOR_ATTACK;
     } else if (plan->target_square_type == 8) {
         receipt->classification = DM2_MOVE_CLASS_TELEPORTER;
+    } else if (request->target_creature_handle != 0xFFFFu &&
+               request->target_creature_handle != 0u) {
+        receipt->classification = DM2_MOVE_CLASS_CREATURE;
     } else {
         receipt->classification = DM2_MOVE_CLASS_OPEN_TILE;
     }

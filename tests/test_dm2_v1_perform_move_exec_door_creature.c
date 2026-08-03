@@ -128,6 +128,59 @@ int main(void)
               "heavy creature pushed when random == 0");
     }
 
+    /* Creature classification: exec routes to CREATURE when handle is set */
+    {
+        DM2_V1_PerformMoveExecRequest req;
+        memset(&req, 0, sizeof(req));
+        req.plan.valid = 1;
+        req.plan.accepted = 1;
+        req.plan.from_x = 5;
+        req.plan.from_y = 5;
+        req.plan.to_x = 6;
+        req.plan.to_y = 5;
+        req.plan.to_dir = 1;
+        req.plan.current_level = 0;
+        req.plan.target_square_type = 0;
+        req.hero_count = 1;
+        req.heroes[0].alive = 1;
+        req.heroes[0].max_load = 100;
+        req.heroes[0].player_weight = 50;
+        req.target_creature_handle = 42;
+        req.target_creature_weight = 50;
+        req.creature_force_threshold = 100;
+        req.creature_random_value = 0;
+        dm2_v1_perform_move_exec(NULL, NULL, NULL, &req, &receipt);
+        CHECK(receipt.classification == DM2_MOVE_CLASS_CREATURE,
+              "creature on target tile classifies as CREATURE");
+        CHECK(receipt.creature_pushable == 1,
+              "lightweight creature is pushable");
+        CHECK(receipt.position_updated == 1,
+              "position updated after successful push");
+    }
+
+    /* Creature classification: no creature → OPEN_TILE */
+    {
+        DM2_V1_PerformMoveExecRequest req;
+        memset(&req, 0, sizeof(req));
+        req.plan.valid = 1;
+        req.plan.accepted = 1;
+        req.plan.from_x = 5;
+        req.plan.from_y = 5;
+        req.plan.to_x = 6;
+        req.plan.to_y = 5;
+        req.plan.to_dir = 1;
+        req.plan.current_level = 0;
+        req.plan.target_square_type = 0;
+        req.hero_count = 1;
+        req.heroes[0].alive = 1;
+        req.heroes[0].max_load = 100;
+        req.heroes[0].player_weight = 50;
+        req.target_creature_handle = 0xFFFF;
+        dm2_v1_perform_move_exec(NULL, NULL, NULL, &req, &receipt);
+        CHECK(receipt.classification == DM2_MOVE_CLASS_OPEN_TILE,
+              "no creature on tile classifies as OPEN_TILE");
+    }
+
     printf("\n%d passed, %d failed (of %d)\n",
            passed, failed, passed + failed);
     return failed ? 1 : 0;
