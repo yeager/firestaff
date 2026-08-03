@@ -2594,6 +2594,7 @@ struct Nexus_V1_Engine {
     Nexus_SwitchManager switches;
     Nexus_ContainerManager containers;
     Nexus_V1_SaveManager save_manager;
+    struct Nexus_Viewport *viewport;
     /* Mechanics state — opaque pointer, allocated in nexus_v1_init().
      * Defined in nexus_v1_mechanics.c (source-locked DM1 game loop).
      * Source: DM1 CLIKMENU.C F0366, MOVESENS.C F0267. */

@@ -18898,6 +18898,57 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
             csb_v1_runtime_apply_poison_event_record(
                 profile, record, event_indices[i]);
             break;
+        case DM1_EVENT_ENABLE_CHAMPION_ACTION:
+            if (record->cell >= 0 && record->cell < CSB_V1_MAX_CHAMPIONS &&
+                record->cell < profile->party_state.ChampionCount) {
+                profile->party_state.Champions[record->cell].EnableActionEventIndex = -1;
+            }
+            break;
+        case DM1_EVENT_HIDE_DAMAGE_RECEIVED:
+            if (record->cell >= 0 && record->cell < CSB_V1_MAX_CHAMPIONS &&
+                record->cell < profile->party_state.ChampionCount) {
+                profile->party_state.Champions[record->cell].HideDamageReceivedEventIndex = -1;
+                profile->party_state.Champions[record->cell].MaximumDamageReceived = 0;
+            }
+            break;
+        case DM1_EVENT_PLAY_SOUND:
+            {
+                CsbV1AudioRequest snd;
+                memset(&snd, 0, sizeof(snd));
+                snd.soundIndex = (int16_t)record->aux0;
+                snd.mapX = (int16_t)record->mapX;
+                snd.mapY = (int16_t)record->mapY;
+                snd.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+                (void)csb_v1_runtime_request_source_sound(profile, &snd);
+            }
+            break;
+        case DM1_EVENT_LIGHT:
+            profile->csbwin_character_tail_brightness = 0;
+            break;
+        case DM1_EVENT_INVISIBILITY:
+            profile->csbwin_character_tail_invisible = 0;
+            break;
+        case DM1_EVENT_CHAMPION_SHIELD:
+            if (record->cell >= 0 && record->cell < CSB_V1_MAX_CHAMPIONS &&
+                record->cell < profile->party_state.ChampionCount) {
+                profile->party_state.Champions[record->cell].ShieldStrength = 0;
+            }
+            break;
+        case DM1_EVENT_THIEVES_EYE:
+            profile->csbwin_character_tail_see_thru_walls = 0;
+            break;
+        case DM1_EVENT_PARTY_SHIELD:
+            profile->csbwin_character_tail_party_shield = 0;
+            break;
+        case DM1_EVENT_SPELLSHIELD:
+            profile->csbwin_character_tail_spell_shield = 0;
+            break;
+        case DM1_EVENT_FIRESHIELD:
+            profile->csbwin_character_tail_fire_shield = 0;
+            break;
+        case DM1_EVENT_FOOTPRINTS:
+            profile->csbwin_character_tail_magic_footprints_active = 0;
+            break;
         default:
             break;
         }

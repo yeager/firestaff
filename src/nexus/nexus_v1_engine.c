@@ -6,7 +6,9 @@
 #include "nexus_v1_structure1f_placement_binding.h"
 #include "asset_find_by_hash.h"
 #include "nexus_v1_mechanics.h"
+#include "nexus_v1_viewport.h"
 #include "nexus_v1_inventory.h"
+#include "nexus_v1_drops.h"
 #include "nexus_v1_squares.h"
 #include "nexus_v1_movement.h"
 #include "nexus_v1_font_s2d.h"
@@ -2741,6 +2743,9 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         nexus_v1_save_default_dir(save_dir, sizeof(save_dir));
         nexus_v1_save_init(&engine->save_manager, save_dir);
     }
+    engine->viewport = calloc(1, sizeof(Nexus_Viewport));
+    if (engine->viewport)
+        nexus_viewport_init(engine->viewport);
     /* Init sound engine */
     nexus_sound_init(&engine->audio);
     (void)nexus_v1_level_aux_source_receipt(
@@ -10008,6 +10013,8 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
 
     if (redraw && engine->game.game_started) {
         engine->game.needs_redraw = 1;
+        if (engine->viewport)
+            nexus_viewport_render(engine->viewport, engine);
     }
 
     /* Increment game tick counter */
@@ -10024,6 +10031,8 @@ void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
     /* Free mechanics state */
     free(engine->mechanics);
     engine->mechanics = NULL;
+    free(engine->viewport);
+    engine->viewport = NULL;
     for (i = 0; i < engine->model_count; i++)
         nexus_v1_dmdf_free(&engine->models[i]);
     nexus_ui_manager_free(&engine->ui);

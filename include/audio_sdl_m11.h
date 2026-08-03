@@ -162,6 +162,11 @@ int M11_Audio_OriginalSnd3Available(const M11_AudioState* state);
 int M11_Audio_OriginalSongAvailable(const M11_AudioState* state);
 int M11_Audio_SoundPackAvailable(const M11_AudioState* state);
 
+/* Nexus SAL SFX: mix any active Nexus voices into the SDL3 audio stream.
+ * Call once per frame from the Nexus game loop.
+ * nexus_audio is a Nexus_SoundEngine* (opaque here to avoid header deps). */
+int M11_Audio_MixNexusSfx(M11_AudioState* state, void *nexus_audio);
+
 #ifdef __cplusplus
 }
 #endif

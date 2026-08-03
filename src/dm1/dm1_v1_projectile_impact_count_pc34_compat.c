@@ -42,10 +42,11 @@ int dm1_v1_f0218_count_authenticated_c14_at_cell_pc34(
     int safety = 0;
 
     if (outCount) *outCount = 0;
-    if (!dungeon || !things || !projectiles || !outCount || !things->loaded ||
-        !things->projectiles || !things->rawThingData[THING_TYPE_PROJECTILE] ||
+    if (!dungeon || !things || !projectiles || !outCount ||
         cell < 0 || cell > 3 || mapIndex < 0 ||
         mapIndex >= dungeon->header.mapCount) return 0;
+    if (!things->loaded || !things->projectiles ||
+        !things->rawThingData[THING_TYPE_PROJECTILE]) return 1;
     thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
         dungeon, things, mapIndex, mapX, mapY);
     if (thing == THING_ENDOFLIST) return 0;

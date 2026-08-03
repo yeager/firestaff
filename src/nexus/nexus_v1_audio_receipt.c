@@ -309,6 +309,9 @@ int nexus_v1_audio_decode_supported(Nexus_V1_AudioKind kind) {
     if (kind == NEXUS_V1_AUDIO_KIND_MAP_TABLE) {
         return 1;
     }
+    if (kind == NEXUS_V1_AUDIO_KIND_SAL_BANK) {
+        return 1;
+    }
     return 0;
 }
 

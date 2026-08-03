@@ -157,7 +157,7 @@ typedef struct {
     int max_post_grid_0x30_ref;
 } Nexus_V1_DgnViewportHostRouteReceipt;
 
-typedef struct {
+typedef struct Nexus_Viewport {
     Nexus_Framebuffer fb;
     Nexus_Camera cam;
     int render_wireframe;  /* debug mode */

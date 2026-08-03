@@ -15468,6 +15468,24 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_timer_ops_ext
     )
 
+    add_executable(test_dm2_v1_runtime_narrow
+        tests/test_dm2_v1_runtime_narrow.c
+        src/dm2/dm2_v1_runtime_narrow_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_runtime_narrow PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_runtime_narrow PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_runtime_narrow PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_runtime_narrow
+        COMMAND test_dm2_v1_runtime_narrow
+    )
+
     add_executable(test_dm2_v1_creature_ops_ext
         tests/test_dm2_v1_creature_ops_ext.c
         src/dm2/dm2_v1_creature_ops_pc34_compat.c

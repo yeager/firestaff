@@ -181,6 +181,24 @@ typedef struct {
     uint16_t event_sal_last_nonzero_relative_offset[32];
     uint16_t event_sal_distinct_byte_count[32];
     uint16_t event_sal_transition_count[32];
+    /* Decoded PCM sample cache (extracted from tone bank) */
+    int sal_decode_ready;
+    int sal_decoded_tone_count;
+    int16_t *sal_decoded_samples[64];
+    int sal_decoded_sample_count[64];
+    int sal_decoded_sample_rate;
+    /* Active playback voices */
+#define NEXUS_SOUND_MAX_VOICES 8
+    struct {
+        int active;
+        int tone_index;
+        int position;
+    } voices[NEXUS_SOUND_MAX_VOICES];
+    int voice_count;
+    /* CD audio state */
+    int cd_playing;
+    int cd_paused;
+    char cd_track_path[512];
 } Nexus_SoundEngine;
 
 typedef enum {
@@ -340,6 +358,14 @@ void nexus_sound_music_fade(Nexus_SoundEngine *eng, int fade_out_ms);
 /* Mute/unmute */
 void nexus_sound_set_sfx(Nexus_SoundEngine *eng, int enabled);
 void nexus_sound_set_music(Nexus_SoundEngine *eng, int enabled);
+
+/* Decode SAL tone bank into PCM sample cache.
+ * Called after loading a level's SAL data. Returns number of tones decoded. */
+int nexus_sound_decode_sal(Nexus_SoundEngine *eng);
+
+/* Mix active voices into output buffer (signed 16-bit mono, host byte order).
+ * Returns number of samples written. Call from audio tick at 22050 Hz. */
+int nexus_sound_mix(Nexus_SoundEngine *eng, int16_t *out, int max_samples);
 
 /* Event name for debug */
 const char *nexus_sound_event_name(Nexus_SoundEvent event);

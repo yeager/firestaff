@@ -6585,7 +6585,7 @@ static int orch_delete_projectile_event_f0214_compat(
             }
         }
     }
-    if (eventIndex < 0) return 0;
+    if (eventIndex < 0) return 1;
     event = &world->timeline.events[eventIndex];
 
     for (i = eventIndex + 1; i < world->timeline.count; ++i) {
@@ -6689,10 +6689,10 @@ int F0890g_ORCH_ValidateF0218ImpactOwner_Compat(
     }
     projectile = &world->things->projectiles[projectileIndex];
     eventIndex = (int)projectile->eventIndex;
-    if (eventIndex < 0 || eventIndex >= world->timeline.count) return 0;
+    if (eventIndex < 0 || eventIndex >= world->timeline.count) return 1;
     event = &world->timeline.events[eventIndex];
-    return event->kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
-           event->aux0 == projectileIndex;
+    if (event->kind != TIMELINE_EVENT_PROJECTILE_MOVE) return 1;
+    return event->aux0 == projectileIndex;
 }
 
 static int orch_write_raw_projectile_f0219_compat(
@@ -8886,6 +8886,8 @@ static int orch_handle_explosion_advance_event_compat(
 
     if (!world || !event) return 0;
     if (world->things && world->things->loaded &&
+        world->things->explosions &&
+        world->things->rawThingData[THING_TYPE_EXPLOSION] &&
         !orch_c25_event_source_bound_compat(world, event)) {
         return 0;
     }
@@ -9972,10 +9974,6 @@ static int orch_drop_creature_fixed_possessions_compat(
             DM1_MAX_FIXED_POSSESSION_DROPS, &dropCount, &weaponDropped)) {
         return 0;
     }
-    if (outSoundId && dropCount > 0) {
-        *outSoundId = weaponDropped ? 0 : ORCH_SOUND_WOODEN_THUD_PC34;
-    }
-
     for (i = 0; i < dropCount; ++i) {
         unsigned short thing =
             orch_allocate_fixed_possession_thing_compat(world->things, &drops[i]);
@@ -9987,6 +9985,9 @@ static int orch_drop_creature_fixed_possessions_compat(
         } else {
             (void)orch_set_next_thing_compat(world->things, thing, THING_NONE);
         }
+    }
+    if (outSoundId && droppedAny) {
+        *outSoundId = weaponDropped ? 0 : ORCH_SOUND_WOODEN_THUD_PC34;
     }
     return droppedAny;
 }

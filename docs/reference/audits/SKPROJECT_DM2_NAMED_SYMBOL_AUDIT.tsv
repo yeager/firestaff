@@ -205,32 +205,32 @@ init_creatures	SKULLWIN	SKULLWIN/c_creature.cpp	28		NOT_APPLICABLE_ARCH	Trivial 
 DM2_APPLY_CREATURE_POISON_RESISTANCE	SKULLWIN	SKULLWIN/c_creature.cpp	34		IMPLEMENTED_NARROW
 DM2_ROTATE_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	58		IMPLEMENTED_NARROW
 DM2_CREATURE_CAN_HANDLE_ITEM_IN	SKULLWIN	SKULLWIN/c_creature.cpp	104		IMPLEMENTED_NARROW
-DM2_WOUND_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	165		MISSING
+DM2_WOUND_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	165		NARROW:dm2_v1_wound_creature
 DM2_ATTACK_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	318		IMPLEMENTED_NARROW
-DM2_CREATURE_ATTACKS_PLAYER	SKULLWIN	SKULLWIN/c_creature.cpp	651		MISSING
-DM2_CREATURE_ATTACKS_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	906		MISSING
+DM2_CREATURE_ATTACKS_PLAYER	SKULLWIN	SKULLWIN/c_creature.cpp	651		NARROW:dm2_v1_creature_attacks_player
+DM2_CREATURE_ATTACKS_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	906		NARROW:dm2_v1_creature_attacks_creature
 DM2_CREATURE_ATTACKS_PARTY	SKULLWIN	SKULLWIN/c_creature.cpp	1000	src/dm2/dm2_v1_creature.c:388	IMPLEMENTED_NARROW
 DM2_CONFUSE_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	1308		IMPLEMENTED_NARROW
-DM2_CREATURE_CAN_HANDLE_IT	SKULLWIN	SKULLWIN/c_creature.cpp	1344		MISSING
+DM2_CREATURE_CAN_HANDLE_IT	SKULLWIN	SKULLWIN/c_creature.cpp	1344		NARROW:dm2_v1_creature_can_handle_it
 DM2_CREATURE_CCM06	SKULLWIN	SKULLWIN/c_creature.cpp	1574	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_CREATURE_CCM03	SKULLWIN	SKULLWIN/c_creature.cpp	1609	src/dm2/dm2_v1_ccm.c:194	IMPLEMENTED_NARROW
 DM2_CREATURE_JUMPS	SKULLWIN	SKULLWIN/c_creature.cpp	1636	src/dm2/dm2_v1_ccm.c:207	IMPLEMENTED_NARROW
-DM2_CREATURE_USES_LADDER_HOLE	SKULLWIN	SKULLWIN/c_creature.cpp	1709		MISSING
-DM2_CREATURE_CAST_SPELL	SKULLWIN	SKULLWIN/c_creature.cpp	1865		MISSING
-DM2_CREATURE_STEAL_FROM_CHAMPION	SKULLWIN	SKULLWIN/c_creature.cpp	1972		MISSING
-DM2_CREATURE_CCM0B	SKULLWIN	SKULLWIN/c_creature.cpp	2145		MISSING
+DM2_CREATURE_USES_LADDER_HOLE	SKULLWIN	SKULLWIN/c_creature.cpp	1709		NARROW:dm2_v1_creature_uses_ladder_hole
+DM2_CREATURE_CAST_SPELL	SKULLWIN	SKULLWIN/c_creature.cpp	1865		NARROW:dm2_v1_creature_cast_spell
+DM2_CREATURE_STEAL_FROM_CHAMPION	SKULLWIN	SKULLWIN/c_creature.cpp	1972		NARROW:dm2_v1_creature_steal_from_champion
+DM2_CREATURE_CCM0B	SKULLWIN	SKULLWIN/c_creature.cpp	2145		NARROW:dm2_v1_creature_ccm0b
 DM2_CREATURE_TAKES_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2176	src/dm2/dm2_v1_ccm.c:246	IMPLEMENTED_NARROW
-DM2_CREATURE_CCM0C	SKULLWIN	SKULLWIN/c_creature.cpp	2247		MISSING
+DM2_CREATURE_CCM0C	SKULLWIN	SKULLWIN/c_creature.cpp	2247		NARROW:dm2_v1_creature_ccm0c
 DM2_CREATURE_PUTS_DOWN_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2284	src/dm2/dm2_v1_ccm.c:240	IMPLEMENTED_NARROW
 DM2_CREATURE_KILL_ON_TIMER_POSITION	SKULLWIN	SKULLWIN/c_creature.cpp	2352	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_CREATURE_SHOOT_ITEM	SKULLWIN	SKULLWIN/c_creature.cpp	2359	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_CREATURE_ROTATES_TARGET_CREATURE	SKULLWIN	SKULLWIN/c_creature.cpp	2394	src/dm2/dm2_v1_world_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_PLACE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2411		MISSING
-DM2_TAKE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2509		MISSING
-DM2_CREATURE_ACTIVATES_WALL	SKULLWIN	SKULLWIN/c_creature.cpp	2564		MISSING
+DM2_PLACE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2411		NARROW:dm2_v1_place_merchandise
+DM2_TAKE_MERCHANDISE	SKULLWIN	SKULLWIN/c_creature.cpp	2509		NARROW:dm2_v1_take_merchandise
+DM2_CREATURE_ACTIVATES_WALL	SKULLWIN	SKULLWIN/c_creature.cpp	2564		NARROW:dm2_v1_creature_activates_wall
 DM2_CREATURE_TRANSFORM	SKULLWIN	SKULLWIN/c_creature.cpp	2637	src/dm2/dm2_v1_ccm.c:319	IMPLEMENTED_NARROW
 DM2_CREATURE_EXPLODE_OR_SUMMON	SKULLWIN	SKULLWIN/c_creature.cpp	2762	src/dm2/dm2_v1_ccm.c:341	IMPLEMENTED_NARROW
-DM2_CREATURE_WALK_NOW	SKULLWIN	SKULLWIN/c_creature.cpp	2845		MISSING
+DM2_CREATURE_WALK_NOW	SKULLWIN	SKULLWIN/c_creature.cpp	2845		NARROW:dm2_v1_creature_walk_now
 DM2_1B7D5	SKULLWIN	SKULLWIN/c_creature.cpp	2916	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_PROCEED_CCM	SKULLWIN	SKULLWIN/c_creature.cpp	2930	src/dm2/dm2_v1_creature.c:388	IMPLEMENTED_NARROW
 DM2_GET_CREATURE_ANIMATION_FRAME	SKULLWIN	SKULLWIN/c_creature.cpp	3217	src/dm2/dm2_v1_creature_animation_gdat.c:dm2_v1_creature_animation_gdat_select_dynamic_v5; src/dm2/dm2_v1_boot.c:dm2_v1_boot_dynamic_creature_material_receipt; tests/test_dm2_v1_dynamic_creature_material_real_data.c	VERIFIED_SOURCE_MAPPING	DM2 dynamic creature material follows the SKULLWIN FB/FC/FD animation tables to its exact CREATURES dtImage field, then requires matching GFX256 raw interval, decoded image, local palette, and M11 creature placement-plan identity; it cannot borrow the DB4/F9 map-chip image or a generic sprite fallback.
@@ -291,7 +291,7 @@ DM2_dialog_2066_38d9	SKULLWIN	SKULLWIN/c_dialog.cpp	307		NOT_APPLICABLE_ARCH	DOS
 DM2_dialog_OPEN_DIALOG_PANEL	SKULLWIN	SKULLWIN/c_dialog.cpp	352	include/dm2_v1_dialogue_gdat.h:29	NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
 DM2_dialog_2066_37f2	SKULLWIN	SKULLWIN/c_dialog.cpp	433		NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
 DM2_dialog_2066_398a	SKULLWIN	SKULLWIN/c_dialog.cpp	454		NOT_APPLICABLE_ARCH	DOS dialog panel UI; Firestaff uses M11 dialog rendering
-DM2_ENGAGE_COMMAND	SKULLWIN	SKULLWIN/c_engage.cpp	24		MISSING
+DM2_ENGAGE_COMMAND	SKULLWIN	SKULLWIN/c_engage.cpp	24		NARROW:dm2_v1_engage_command
 init	SKULLWIN	SKULLWIN/c_eventqueue.cpp	10	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 set	SKULLWIN	SKULLWIN/c_eventqueue.cpp	33	src/dm2/dm2_v2_touch_runtime.c:71	NOT_APPLICABLE_ARCH
 PROCESS_SINGLEEVENT	SKULLWIN	SKULLWIN/c_eventqueue.cpp	44		NOT_APPLICABLE_ARCH	DOS event queue dispatch; Firestaff uses M11 event architecture
@@ -592,43 +592,43 @@ rotate	SKULLWIN	SKULLWIN/c_hero.cpp	168	src/dm2/dm2_v1_creature.c:879	IMPLEMENTE
 set_hero_flags	SKULLWIN	SKULLWIN/c_hero.cpp	190		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
 get_player_weight	SKULLWIN	SKULLWIN/c_hero.cpp	197		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
 calc_player_weight	SKULLWIN	SKULLWIN/c_hero.cpp	208		IMPLEMENTED_NARROW
-DM2_CALC_PLAYER_ATTACK_DAMAGE	SKULLWIN	SKULLWIN/c_hero.cpp	232		MISSING
-DM2_hero_39796	SKULLWIN	SKULLWIN/c_hero.cpp	464		MISSING
+DM2_CALC_PLAYER_ATTACK_DAMAGE	SKULLWIN	SKULLWIN/c_hero.cpp	232		NARROW:dm2_v1_calc_player_attack_damage
+DM2_hero_39796	SKULLWIN	SKULLWIN/c_hero.cpp	464		NARROW:dm2_v1_hero_39796
 DM2_hero_2c1d_0300	SKULLWIN	SKULLWIN/c_hero.cpp	652	dm2_v1_hero_2c1d_0300	IMPLEMENTED
 DM2_SHOOT_CHAMPION_MISSILE	SKULLWIN	SKULLWIN/c_hero.cpp	688	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_PROCEED_ENCHANTMENT_SELF	SKULLWIN	SKULLWIN/c_hero.cpp	724	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_hero_2c1d_0186	SKULLWIN	SKULLWIN/c_hero.cpp	840	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 R_36EFE	SKULLWIN	SKULLWIN/c_hero.cpp	873	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_BRING_CHAMPION_TO_LIFE	SKULLWIN	SKULLWIN/c_hero.cpp	916	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
-DM2_REVIVE_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	957		MISSING
-DM2_SELECT_CHAMPION	SKULLWIN	SKULLWIN/c_hero.cpp	1052		MISSING
-DM2_ADJUST_SKILLS	SKULLWIN	SKULLWIN/c_hero.cpp	1166		MISSING
+DM2_REVIVE_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	957		NARROW:dm2_v1_revive_player
+DM2_SELECT_CHAMPION	SKULLWIN	SKULLWIN/c_hero.cpp	1052		NARROW:dm2_v1_select_champion
+DM2_ADJUST_SKILLS	SKULLWIN	SKULLWIN/c_hero.cpp	1166		NARROW:dm2_v1_adjust_skills
 DM2_hero_2c1d_132c	SKULLWIN	SKULLWIN/c_hero.cpp	1383		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
-DM2_hero_2c1d_135d	SKULLWIN	SKULLWIN/c_hero.cpp	1403		MISSING	
-DM2_WOUND_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	1496		MISSING
+DM2_hero_2c1d_135d	SKULLWIN	SKULLWIN/c_hero.cpp	1403		NARROW:dm2_v1_hero_2c1d_135d	
+DM2_WOUND_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	1496		NARROW:dm2_v1_wound_player
 DM2_ADJUST_STAMINA	SKULLWIN	SKULLWIN/c_hero.cpp	1722		IMPLEMENTED_NARROW
-DM2_UPDATE_CHAMPIONS_STATS	SKULLWIN	SKULLWIN/c_hero.cpp	1757		MISSING
+DM2_UPDATE_CHAMPIONS_STATS	SKULLWIN	SKULLWIN/c_hero.cpp	1757		NARROW:dm2_v1_update_champions_stats
 DM2_USE_DEXTERITY_ATTRIBUTE	SKULLWIN	SKULLWIN/c_hero.cpp	2026	dm2_v1_hero_use_dexterity_attribute_raw	IMPLEMENTED
-DM2_WIELD_WEAPON	SKULLWIN	SKULLWIN/c_hero.cpp	2064		MISSING
+DM2_WIELD_WEAPON	SKULLWIN	SKULLWIN/c_hero.cpp	2064		NARROW:dm2_v1_wield_weapon
 DM2_EQUIP_ITEM_TO_HAND	SKULLWIN	SKULLWIN/c_hero.cpp	2161	dm2_v1_skproject_core.c:7989	IMPLEMENTED
 DM2_ADD_ITEM_TO_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	2188	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_BURN_PLAYER_LIGHTING_ITEMS	SKULLWIN	SKULLWIN/c_hero.cpp	2262	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_SELECT_CHAMPION_LEADER	SKULLWIN	SKULLWIN/c_hero.cpp	2325	dm2_v1_party_select_champion_leader	IMPLEMENTED
-DM2_REMOVE_OBJECT_FROM_HAND	SKULLWIN	SKULLWIN/c_hero.cpp	2354		MISSING
+DM2_REMOVE_OBJECT_FROM_HAND	SKULLWIN	SKULLWIN/c_hero.cpp	2354		NARROW:dm2_v1_remove_object_from_hand
 DM2_hero_37BEA	SKULLWIN	SKULLWIN/c_hero.cpp	2383	dm2_v1_hero_37bea	IMPLEMENTED
 DM2_GET_PARTY_SPECIAL_FORCE	SKULLWIN	SKULLWIN/c_hero.cpp	2407	dm2_v1_get_party_special_force	IMPLEMENTED
 DM2_ADJUST_HAND_COOLDOWN	SKULLWIN	SKULLWIN/c_hero.cpp	2432	dm2_v1_hero_adjust_hand_cooldown	IMPLEMENTED
 DM2_REMOVE_POSSESSION	SKULLWIN	SKULLWIN/c_hero.cpp	2485	src/dm2/dm2_v1_object_transfer_helpers.c; include/dm2_v1_object_transfer_helpers.h; tests/test_dm2_v1_object_transfer_helpers.c	IMPLEMENTED_NARROW	DM2 v1 object-transfer helper models bounded source-chain unlink planning over caller-owned object links; malformed chains and missing objects fail closed.
 DM2_DROP_PLAYER_ITEMS	SKULLWIN	SKULLWIN/c_hero.cpp	2535	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_CURE_POISON	SKULLWIN	SKULLWIN/c_hero.cpp	2580	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_PLAYER_DEFEATED	SKULLWIN	SKULLWIN/c_hero.cpp	2636		MISSING
-DM2_PROCESS_PLAYERS_DAMAGE	SKULLWIN	SKULLWIN/c_hero.cpp	2777		MISSING
+DM2_PLAYER_DEFEATED	SKULLWIN	SKULLWIN/c_hero.cpp	2636		NARROW:dm2_v1_player_defeated
+DM2_PROCESS_PLAYERS_DAMAGE	SKULLWIN	SKULLWIN/c_hero.cpp	2777		NARROW:dm2_v1_process_players_damage
 DM2_PUT_ITEM_TO_PLAYER	SKULLWIN	SKULLWIN/c_hero.cpp	2838	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_PERFORM_TURN_SQUAD	SKULLWIN	SKULLWIN/c_hero.cpp	2887		IMPLEMENTED_NARROW
 DM2_RESET_SQUAD_DIR	SKULLWIN	SKULLWIN/c_hero.cpp	2939	dm2_v1_party_reset_squad_dir	IMPLEMENTED
 DM2_RESUME_FROM_WAKE	SKULLWIN	SKULLWIN/c_hero.cpp	2961	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_SET_SPELLING_CHAMPION	SKULLWIN	SKULLWIN/c_hero.cpp	2971		IMPLEMENTED_NARROW
-DM2_PLAYER_CONSUME_OBJECT	SKULLWIN	SKULLWIN/c_hero.cpp	2998		MISSING
+DM2_PLAYER_CONSUME_OBJECT	SKULLWIN	SKULLWIN/c_hero.cpp	2998		NARROW:dm2_v1_player_consume_object
 DM2_ATTACK_PARTY	SKULLWIN	SKULLWIN/c_hero.cpp	3346	src/dm2/dm2_v1_creature_ops_pc34_compat.c; include/dm2_v1_creature_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_PROCESS_POISON	SKULLWIN	SKULLWIN/c_hero.cpp	3397		IMPLEMENTED_NARROW
 DM2_TAKE_COIN_FROM_WALLET	SKULLWIN	SKULLWIN/c_hero.cpp	3451		IMPLEMENTED_NARROW
@@ -637,8 +637,8 @@ DM2_2759_0e93	SKULLWIN	SKULLWIN/c_hero.cpp	3580	src/dm2/dm2_v1_skproject_core.c:
 DM2_LOAD_PROJECTILE_TO_HAND	SKULLWIN	SKULLWIN/c_hero.cpp	3643	src/dm2/dm2_v1_object_transfer_helpers.c; include/dm2_v1_object_transfer_helpers.h; tests/test_dm2_v1_object_transfer_helpers.c	IMPLEMENTED_NARROW	DM2 v1 object-transfer helper models projectile-to-empty-hand transfer while preserving source-head mutation; occupied hands and malformed input fail closed.
 DM2_CAST_CHAMPION_MISSILE_SPELL	SKULLWIN	SKULLWIN/c_hero.cpp	3840	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_2c1d_0e23	SKULLWIN	SKULLWIN/c_hero.cpp	3879		IMPLEMENTED	DM2 party/hero module implemented in dm2_v1_party.c
-DM2_hero_2c1d_1de2	SKULLWIN	SKULLWIN/c_hero.cpp	3903		MISSING
-DM2_CHANGE_PLAYER_POS	SKULLWIN	SKULLWIN/c_hero.cpp	4037		MISSING
+DM2_hero_2c1d_1de2	SKULLWIN	SKULLWIN/c_hero.cpp	3903		NARROW:dm2_v1_hero_2c1d_1de2
+DM2_CHANGE_PLAYER_POS	SKULLWIN	SKULLWIN/c_hero.cpp	4037		NARROW:dm2_v1_change_player_pos
 DM2_CHAMPION_SQUAD_RECOMPUTE_POSITION	SKULLWIN	SKULLWIN/c_hero.cpp	4141	src/dm2/dm2_v1_hero_ops_pc34_compat.c; include/dm2_v1_hero_ops_pc34_compat.h	IMPLEMENTED_NARROW
 init_global_images	SKULLWIN	SKULLWIN/c_image.cpp	18		NOT_APPLICABLE_ARCH
 init	SKULLWIN	SKULLWIN/c_image.cpp	27	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
@@ -673,11 +673,11 @@ DM2_QUERY_ITEM_VALUE	SKULLWIN	SKULLWIN/c_item.cpp	360	include/dm2_v1_skproject_c
 DM2_QUERY_ITEM_WEIGHT	SKULLWIN	SKULLWIN/c_item.cpp	496	include/dm2_v1_skproject_core.h:dm2_v1_skproject_query_item_weight	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN c_item weight wrapper as QUERY_ITEM_VALUE(object, 1) over the same bounded source-shaped item receipt.
 DM2_GET_ITEM_NAME	SKULLWIN	SKULLWIN/c_item.cpp	502		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps GET_ITEM_NAME with source-shaped cls1/cls2 and champion-bones owner side effect before GDAT text lookup.
 DM2_IS_MISCITEM_DRINK_WATER	SKULLWIN	SKULLWIN/c_item.cpp	528		src/dm2/dm2_v1_item_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_MOVE_ITEM_TO	SKULLWIN	SKULLWIN/c_item.cpp	554		MISSING
-DM2_ACTIVATE_ITEM_TELEPORT	SKULLWIN	SKULLWIN/c_item.cpp	651		MISSING
+DM2_MOVE_ITEM_TO	SKULLWIN	SKULLWIN/c_item.cpp	554		NARROW:dm2_v1_move_item_to
+DM2_ACTIVATE_ITEM_TELEPORT	SKULLWIN	SKULLWIN/c_item.cpp	651		NARROW:dm2_v1_activate_item_teleport
 DM2__CHECK_ROOM_FOR_CONTAINER	SKULLWIN	SKULLWIN/c_item.cpp	975	src/dm2/dm2_v1_world_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_F958	SKULLWIN	SKULLWIN/c_item.cpp	1034		src/dm2/dm2_v1_item_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_SHOOT_ITEM	SKULLWIN	SKULLWIN/c_item.cpp	1043		MISSING
+DM2_SHOOT_ITEM	SKULLWIN	SKULLWIN/c_item.cpp	1043		NARROW:dm2_v1_shoot_item
 DM2_PUT_OBJECT_INTO_CONTAINER	SKULLWIN	SKULLWIN/c_item.cpp	1146	src/dm2/dm2_v1_object_transfer_helpers.c; include/dm2_v1_object_transfer_helpers.h; tests/test_dm2_v1_object_transfer_helpers.c	IMPLEMENTED_NARROW	DM2 v1 object-transfer helper models bounded append-to-container chain planning over caller-owned links; duplicate or malformed chain data fails closed.
 DM2_TAKE_OBJECT	SKULLWIN	SKULLWIN/c_item.cpp	1185		src/dm2/dm2_v1_item_ops_pc34_compat.c	IMPLEMENTED_NARROW
 init	SKULLWIN	SKULLWIN/c_keybd.cpp	77	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
@@ -687,8 +687,8 @@ DM2_HAS_KEY	SKULLWIN	SKULLWIN/c_keybd.cpp	114		NOT_APPLICABLE_ARCH
 DM2_GETKEY_TRANSLATED	SKULLWIN	SKULLWIN/c_keybd.cpp	123		NOT_APPLICABLE_ARCH
 DM2_keybd_476d_05b6	SKULLWIN	SKULLWIN/c_keybd.cpp	178		NOT_APPLICABLE_ARCH
 DM2_RECALC_LIGHT_LEVEL	SKULLWIN	SKULLWIN/c_light.cpp	16	src/dm2/dm2_v1_gdat_scene_m11_command.c:dm2_v1_c_light_m11_receipt_build_for_map; tests/test_dm2_v1_c_light_receipt.c	VERIFIED_SOURCE_MAPPING	DM2 c_light receipt maps skproject c_light.cpp DM2_RECALC_LIGHT_LEVEL terminal inputs into a bounded runtime receipt: fixed maps start at source level one, dynamic maps consume authenticated live base light, darkness is subtracted and clamped to 0..5, and the map-bound path hashes the real Map_definitions descriptor identity from DUNGEON.DAT without synthetic light fallback.
-DM2_ADD_BACKGROUND_LIGHT_FROM_TILE	SKULLWIN	SKULLWIN/c_light.cpp	202		MISSING
-DM2_CHECK_RECOMPUTE_LIGHT	SKULLWIN	SKULLWIN/c_light.cpp	490		MISSING
+DM2_ADD_BACKGROUND_LIGHT_FROM_TILE	SKULLWIN	SKULLWIN/c_light.cpp	202		NARROW:dm2_v1_add_background_light_from_tile
+DM2_CHECK_RECOMPUTE_LIGHT	SKULLWIN	SKULLWIN/c_light.cpp	490		NARROW:dm2_v1_check_recompute_light
 DM2_PROCEED_LIGHT	SKULLWIN	SKULLWIN/c_light.cpp	596	src/dm2/dm2_v1_light_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_MARK_DYN_LOAD	SKULLWIN	SKULLWIN/c_loadlevel.cpp	25		NOT_APPLICABLE_ARCH
 DM2_2676_008f	SKULLWIN	SKULLWIN/c_loadlevel.cpp	54		NOT_APPLICABLE_ARCH
@@ -744,12 +744,12 @@ DM2_ATTACK_DOOR	SKULLWIN	SKULLWIN/c_move.cpp	2097	src/dm2/dm2_v1_skproject_core.
 DM2_move_2fcf_0434	SKULLWIN	SKULLWIN/c_move.cpp	2152	src/dm2/dm2_v1_move_2fcf_0434.c:dm2_v1_DM2_move_2fcf_0434_teleporter_gate; tests/test_dm2_v1_move_2fcf_0434.c	VERIFIED_SOURCE_MAPPING	DM2 v1 move_2fcf_0434 teleporter gate maps skproject c_move.cpp source tile and DB1 Teleporter prerequisites into a bounded receipt; real DUNGEON.DAT enabled teleporter candidates are admitted only to the incomplete-record-graph block path, with no w0 traversal, synthetic teleport, sound, or map mutation.
 DM2_move_075f_1bc2	SKULLWIN	SKULLWIN/c_move.cpp	2861	src/dm2/dm2_v1_move_075f_1bc2.c:dm2_v1_DM2_move_075f_1bc2_target_receipt	VERIFIED_SOURCE_MAPPING	DM2 v1 move_075f_1bc2 receipt maps loaded DUNGEON.DAT source tiles to bounded target movement facts, including raw tile, square type, first thing link, door state, passability, and vertical stair direction; real DUNGEON.DAT target receipts now feed PERFORM_MOVE without fallback.
 DM2_move_2c1d_028c	SKULLWIN	SKULLWIN/c_move.cpp	2914	src/dm2/dm2_v1_move_2c1d_028c.c:dm2_v1_DM2_move_2c1d_028c_commit_receipt; tests/test_dm2_v1_move_2c1d_028c.c	VERIFIED_SOURCE_MAPPING	DM2 v1 move_2c1d_028c commit receipt consumes the source-backed move_075f_1bc2 target receipt, preserving facing, advancing only accepted moves, keeping blocked pose unchanged, and proving committed and blocked cases against real DUNGEON.DAT without runtime mutation or synthetic chained effects.
-DM2_TRY_PUSH_OBJECT_TO	SKULLWIN	SKULLWIN/c_moverec.cpp	25		MISSING
-DM2_2fcf_0234	SKULLWIN	SKULLWIN/c_moverec.cpp	144		MISSING
+DM2_TRY_PUSH_OBJECT_TO	SKULLWIN	SKULLWIN/c_moverec.cpp	25		NARROW:dm2_v1_try_push_object_to
+DM2_2fcf_0234	SKULLWIN	SKULLWIN/c_moverec.cpp	144		NARROW:dm2_v1_moverec_2fcf_0234
 DM2_SET_MINION_RECENT_OPEN_DOOR_LOCATION	SKULLWIN	SKULLWIN/c_moverec.cpp	312	src/dm2/dm2_v1_moverec_ops_pc34_compat.c; include/dm2_v1_moverec_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_moverec_2fcf_01c5	SKULLWIN	SKULLWIN/c_moverec.cpp	365	src/dm2/dm2_v1_moverec_ops_pc34_compat.c; include/dm2_v1_moverec_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_MOVE_RECORD_TO	SKULLWIN	SKULLWIN/c_moverec.cpp	392		IMPLEMENTED_NARROW
-DM2_moverec_3CE7D	SKULLWIN	SKULLWIN/c_moverec.cpp	1147		MISSING
+DM2_moverec_3CE7D	SKULLWIN	SKULLWIN/c_moverec.cpp	1147		NARROW:dm2_v1_moverec_3ce7d
 DM2_query_098d_000f	SKULLWIN	SKULLWIN/c_querydb.cpp	23	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_098d_000f; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_IS_CLS1_CRITICAL_FOR_LOAD	SKULLWIN	SKULLWIN/c_querydb.cpp	29	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_is_cls1_critical_for_load; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
 DM2_QUERY_GDAT_DYN_BUFF	SKULLWIN	SKULLWIN/c_querydb.cpp	36	src/dm2/dm2_v1_skproject_core.c:dm2_v1_skproject_query_gdat_dyn_buff; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING
@@ -872,7 +872,7 @@ DM2_QUERY_ITEMDB_FROM_DISTINCTIVE_ITEMTYPE	SKULLWIN	SKULLWIN/c_record.cpp	449		I
 DM2_QUERY_CLS1_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	454		IMPLEMENTED_NARROW
 DM2_GET_WALL_TILE_ANYITEM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	477		IMPLEMENTED_NARROW
 DM2_SET_ITEM_IMPORTANCE	SKULLWIN	SKULLWIN/c_record.cpp	498		IMPLEMENTED_NARROW
-DM2_RECYCLE_A_RECORD_FROM_THE_WORLD	SKULLWIN	SKULLWIN/c_record.cpp	544		MISSING
+DM2_RECYCLE_A_RECORD_FROM_THE_WORLD	SKULLWIN	SKULLWIN/c_record.cpp	544		NARROW:dm2_v1_recycle_a_record_from_the_world
 DM2_ALLOC_NEW_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1076		IMPLEMENTED_NARROW
 DM2_ALLOC_NEW_DBITEM	SKULLWIN	SKULLWIN/c_record.cpp	1142		IMPLEMENTED_NARROW
 DM2_ALLOC_NEW_DBITEM_DEEPLY	SKULLWIN	SKULLWIN/c_record.cpp	1167	dm2_v1_dbitem_alloc_pc34_compat.c:221	IMPLEMENTED
@@ -885,7 +885,7 @@ DM2_QUERY_CREATURE_AI_SPEC_FROM_TYPE	SKULLWIN	SKULLWIN/c_record.cpp	1341	dm2_v1_
 DM2_QUERY_CREATURE_AI_SPEC_FLAGS	SKULLWIN	SKULLWIN/c_record.cpp	1346	dm2_v1_creature_ai_spec_flags	IMPLEMENTED
 DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1351	dm2_v1_creature_ai_spec_def	IMPLEMENTED
 DM2_DELETE_CREATURE_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1356		IMPLEMENTED_NARROW
-DM2_DELETE_MISSILE_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1427		MISSING
+DM2_DELETE_MISSILE_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1427		NARROW:dm2_v1_delete_missile_record
 DM2_DROP_CREATURE_POSSESSION	SKULLWIN	SKULLWIN/c_record.cpp	1537		IMPLEMENTED_NARROW
 DM2_OVERSEE_RECORD	SKULLWIN	SKULLWIN/c_record.cpp	1755	src/dm2/dm2_v1_record_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_ROTATE_RECORD_BY_TELEPORTER	SKULLWIN	SKULLWIN/c_record.cpp	1839		IMPLEMENTED_NARROW
@@ -963,7 +963,7 @@ DM2_LTOA10	SKULLWIN	SKULLWIN/c_str.cpp	15	src/dm2/dm2_v1_skproject_core.c; inclu
 DM2_FMT_NUM	SKULLWIN	SKULLWIN/c_str.cpp	37		src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps FMT_NUM clean/non-clean four-byte number buffer formatting and returned offset.
 DM2_FILL_STR	SKULLWIN	SKULLWIN/c_str.cpp	66	src/dm2/dm2_v1_skproject_core.c; include/dm2_v1_skproject_core.h; tests/test_dm2_v1_skproject_core.c	VERIFIED_SOURCE_MAPPING	DM2 v1 skproject core maps the SKULLWIN strided fill-string helper over caller-owned buffers with bounded delta writes.
 DM2_PROCESS_TIMER_0C	SKULLWIN	SKULLWIN/c_tim_proc.cpp	30	src/dm2/dm2_v1_hero_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_PROCESS_TIMER_RESURRECTION	SKULLWIN	SKULLWIN/c_tim_proc.cpp	39		MISSING
+DM2_PROCESS_TIMER_RESURRECTION	SKULLWIN	SKULLWIN/c_tim_proc.cpp	39		NARROW:dm2_v1_process_timer_resurrection
 DM2_STEP_DOOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	127		IMPLEMENTED_NARROW
 DM2_PROCESS_TIMER_DESTROY_DOOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	422	dm2_runtime_destroy_door_timer (dm2_v1_runtime.c)	IMPLEMENTED_NARROW
 DM2_STEP_MISSILE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	442	include/dm2_v1_projectile_pc34_compat.h:207	IMPLEMENTED_NARROW
@@ -973,22 +973,22 @@ DM2_CONTINUE_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	961	src/dm2/dm2_v1
 DM2_CONTINUE_TICK_GENERATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	994	src/dm2/dm2_v1_timer_ops_pc34_compat.c; include/dm2_v1_timer_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_PROCESS_TIMER_RELEASE_DOOR_BUTTON	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1068	dm2_runtime_release_door_button_timer (dm2_v1_runtime.c)	IMPLEMENTED_NARROW
 DM2_PROCESS_TIMER_59	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1077	dm2_runtime_process_timer_59 (dm2_v1_runtime.c)	IMPLEMENTED_NARROW
-DM2_CONTINUE_ORNATE_NOISE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1092		MISSING
+DM2_CONTINUE_ORNATE_NOISE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1092		NARROW:dm2_v1_continue_ornate_noise
 DM2_ACTIVATE_RELAY1	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1174		src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_ACTIVATE_RELAY2	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1249		src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW
-DM2_ACTIVATE_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1325		MISSING
+DM2_ACTIVATE_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1325		NARROW:dm2_v1_activate_ornate_animator
 DM2_ACTIVATE_TEST_FLAG	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1405		src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_ACTIVATE_INVERSE_FLAG	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1450		src/dm2/dm2_v1_actuator_ops_pc34_compat.c	IMPLEMENTED_NARROW
 DM2_timproc_3a15_1da8	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1488		IMPLEMENTED	Ornate animator toggle helper; standalone arithmetic
-DM2_ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1503		MISSING
-DM2_ACTIVATE_SHOOTER	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1610		MISSING
+DM2_ACTIVATE_CONTINUOUS_ORNATE_ANIMATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1503		NARROW:dm2_v1_activate_continuous_ornate_animator
+DM2_ACTIVATE_SHOOTER	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1610		NARROW:dm2_v1_activate_shooter
 DM2_ACTIVATE_TICK_GENERATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1817	src/dm2/dm2_v1_timer_ops_pc34_compat.c; include/dm2_v1_timer_ops_pc34_compat.h	IMPLEMENTED_NARROW
 SKW_3a15_0d5c	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1888	src/dm2/dm2_v1_timer_ops_pc34_compat.c; include/dm2_v1_timer_ops_pc34_compat.h	IMPLEMENTED_NARROW
 DM2_ACTUATE_WALL_MECHA	SKULLWIN	SKULLWIN/c_tim_proc.cpp	1923		IMPLEMENTED_NARROW
-DM2_ANIMATE_CREATURE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	2859		MISSING
+DM2_ANIMATE_CREATURE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	2859		NARROW:dm2_v1_animate_creature
 DM2_ACTIVATE_CREATURE_KILLER	SKULLWIN	SKULLWIN/c_tim_proc.cpp	2907		IMPLEMENTED_NARROW
 DM2_ACTUATE_FLOOR_MECHA	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3009		IMPLEMENTED_NARROW
-DM2_ADVANCE_TILES_TIME	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3533		MISSING
+DM2_ADVANCE_TILES_TIME	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3533		NARROW:dm2_v1_advance_tiles_time
 DM2_ACTUATE_PITFALL	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3707		IMPLEMENTED_NARROW
 DM2_ACTUATE_DOOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3744		IMPLEMENTED_NARROW
 DM2_ACTUATE_TELEPORTER	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3832		IMPLEMENTED_NARROW
@@ -997,9 +997,9 @@ DM2_PROCESS_TIMER_0E	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3952	src/dm2/dm2_v1_timer_
 DM2_PROCEED_TIMERS	SKULLWIN	SKULLWIN/c_tim_proc.cpp	3980		IMPLEMENTED_NARROW
 DM2_INVOKE_MESSAGE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4332		IMPLEMENTED_NARROW
 DM2_INVOKE_ACTUATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4367		IMPLEMENTED_NARROW
-DM2_PROCESS_ACTUATOR_TICK_GENERATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4395		MISSING
-DM2_OPERATE_PIT_TELE_TILE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4513		MISSING
-DM2_TRY_ORNATE_NOISE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4591		MISSING
+DM2_PROCESS_ACTUATOR_TICK_GENERATOR	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4395		NARROW:dm2_v1_process_actuator_tick_generator
+DM2_OPERATE_PIT_TELE_TILE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4513		NARROW:dm2_v1_operate_pit_tele_tile
+DM2_TRY_ORNATE_NOISE	SKULLWIN	SKULLWIN/c_tim_proc.cpp	4591		NARROW:dm2_v1_try_ornate_noise
 init	SKULLWIN	SKULLWIN/c_timer.cpp	8	src/dm2/dm2_v2_touch_runtime.c:32	NOT_APPLICABLE_ARCH
 DM2_cmp_timers	SKULLWIN	SKULLWIN/c_timer.cpp	31	src/dm2/dm2_v1_runtime.c:189	IMPLEMENTED_NARROW
 DM2_timer_3a15_0486	SKULLWIN	SKULLWIN/c_timer.cpp	50		IMPLEMENTED_NARROW

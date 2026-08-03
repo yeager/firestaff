@@ -637,6 +637,7 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
 
 void nexus_sound_shutdown(Nexus_SoundEngine *eng) {
     if (!eng) return;
+    nexus_sound_free_decoded(eng);
     if (eng->sal_data) { free(eng->sal_data); eng->sal_data = NULL; }
     if (eng->map_data) { free(eng->map_data); eng->map_data = NULL; }
     memset(eng, 0, sizeof(*eng));
@@ -675,6 +676,7 @@ int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
     if (level_index < 0 || level_index > 15) return -1;
 
     /* Free previous level data */
+    nexus_sound_free_decoded(eng);
     if (eng->sal_data) { free(eng->sal_data); eng->sal_data = NULL; }
     if (eng->map_data) { free(eng->map_data); eng->map_data = NULL; }
     eng->sal_size = 0;
@@ -712,9 +714,11 @@ int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
     parse_map_record_table(eng);
     parse_sal_profile(eng);
     parse_sal_tone_bank_directory(eng);
+    nexus_sound_decode_sal(eng);
 
-    printf("Nexus sound: loaded level %d SFX (SAL=%d bytes, MAP=%d bytes)\n",
-        level_index, sal_size, map_size);
+    printf("Nexus sound: loaded level %d SFX (SAL=%d bytes, MAP=%d bytes, "
+           "decoded=%d tones)\n",
+        level_index, sal_size, map_size, eng->sal_decoded_tone_count);
     return 0;
 }
 
@@ -1057,24 +1061,30 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
         looked_up = record_event_window(eng, &window);
     }
 
-    /* Playback is blocked until SAL decode is supported.  The lookup result
-     * is already recorded above for diagnostics. */
+    if (eng->sal_decode_ready && looked_up) {
+        int tone_idx = window.data_id * 16 + window.id_number;
+        if (tone_idx >= 0 && tone_idx < eng->sal_decoded_tone_count) {
+            nexus_sound_trigger_tone(eng, tone_idx);
+            return;
+        }
+    }
+
+    if (eng->sal_decode_ready && event > NEXUS_SFX_NONE &&
+        (int)event < eng->sal_decoded_tone_count) {
+        nexus_sound_trigger_tone(eng, (int)event);
+        return;
+    }
+
     if (receipt.blocks_real_sfx_playback) {
-        printf("Nexus SFX blocked: %s\n",
-               nexus_sound_sfx_runtime_status_name(receipt.status));
         return;
     }
 
     if (looked_up) {
         printf("Nexus SFX dispatch: %s selector=%d sal_offset=%d sal_size=%d "
-               "(SAL decode blocked)\n",
+               "(no decoded tone)\n",
                name, selector, window.sal_offset, window.sal_size);
         return;
     }
-
-    /* No source-bound selector: log the request but do not fabricate a sample
-     * or fallback sound. */
-    printf("Nexus SFX: %s (no source-bound MAP selector)\n", name);
 }
 
 void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
@@ -1108,21 +1118,21 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
         looked_up = record_event_window(eng, &window);
     }
 
+    if (eng->sal_decode_ready && sample_index >= 0 &&
+        sample_index < eng->sal_decoded_tone_count) {
+        nexus_sound_trigger_tone(eng, sample_index);
+        return;
+    }
+
     if (receipt.blocks_real_sfx_playback) {
-        printf("Nexus SFX blocked: %s\n",
-               nexus_sound_sfx_runtime_status_name(receipt.status));
         return;
     }
 
     if (looked_up) {
         printf("Nexus SFX dispatch: sample_idx=%d sal_offset=%d sal_size=%d "
-               "(SAL decode blocked)\n",
+               "(no decoded tone)\n",
                sample_index, window.sal_offset, window.sal_size);
-        return;
     }
-
-    printf("Nexus SFX: sample_idx=%d (no source-bound MAP window)\n",
-           sample_index);
 }
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -1187,4 +1197,218 @@ void nexus_sound_set_music(Nexus_SoundEngine *eng, int enabled) {
 const char *nexus_sound_event_name(Nexus_SoundEvent event) {
     if (event <= NEXUS_SFX_NONE || event >= EVENT_COUNT) return "UNKNOWN";
     return g_event_names[event];
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * SAL tone bank PCM decoder
+ * Extracts signed 16-bit big-endian PCM samples from the tone bank
+ * directory into host-endian int16_t arrays.
+ * ═══════════════════════════════════════════════════════════════════ */
+
+static void nexus_sound_free_decoded(Nexus_SoundEngine *eng) {
+    int i;
+    for (i = 0; i < 64; i++) {
+        if (eng->sal_decoded_samples[i]) {
+            free(eng->sal_decoded_samples[i]);
+            eng->sal_decoded_samples[i] = NULL;
+        }
+        eng->sal_decoded_sample_count[i] = 0;
+    }
+    eng->sal_decoded_tone_count = 0;
+    eng->sal_decode_ready = 0;
+}
+
+int nexus_sound_decode_sal(Nexus_SoundEngine *eng) {
+    int tone_offset;
+    int tone_bytes;
+    int entry_count;
+    int entry_offset;
+    int decoded = 0;
+    int i;
+
+    if (!eng || !eng->sal_data || eng->sal_size <= 0) return 0;
+    if (!eng->sal_tone_bank_directory_supported) return 0;
+
+    nexus_sound_free_decoded(eng);
+
+    tone_offset = eng->sal_tone_bank_offset;
+    tone_bytes = eng->sal_tone_bank_bytes;
+    if (tone_offset < 0 || tone_bytes < 2 ||
+        tone_offset > eng->sal_size - tone_bytes) return 0;
+
+    {
+        int dir_off = read_u16_be(eng->sal_data + tone_offset);
+        if (dir_off < 8 || dir_off > tone_bytes || (dir_off & 1) != 0) return 0;
+        entry_count = dir_off / 2;
+        if (entry_count < 5 || entry_count > 1024) return 0;
+    }
+
+    entry_offset = read_u16_be(eng->sal_data + tone_offset);
+    for (i = 0; i < entry_count && decoded < 64; i++) {
+        const uint8_t *entry;
+        int entry_size;
+        int bytes_per_sample;
+        int layer_start;
+        int loop_end;
+        int sample_count;
+        int pcm_offset;
+        int pcm_bytes;
+        int16_t *samples;
+        int j;
+
+        if (i < entry_count - 1) {
+            int a = read_u16_be(eng->sal_data + tone_offset + i * 2);
+            int next = read_u16_be(eng->sal_data + tone_offset + (i + 1) * 2);
+            if (a != entry_offset || next < a || next > tone_bytes) break;
+            entry_size = next - a;
+        } else {
+            entry_size = 4;
+            if (entry_offset > tone_bytes - entry_size) break;
+        }
+
+        if (i < 4) {
+            if (entry_size < 1) break;
+            entry_offset += entry_size;
+            continue;
+        }
+
+        entry = eng->sal_data + tone_offset + entry_offset;
+        if (entry_size < 4 || entry[2] > 0x7fU) break;
+        entry_size = 4 + 32 * ((int)entry[2] + 1);
+        if (entry_offset > tone_bytes - entry_size) break;
+
+        bytes_per_sample = (((entry[7] >> 4) & 1) != 0) ? 1 : 2;
+        layer_start = ((entry[7] & 0x0f) << 16) |
+                      ((int)entry[8] << 8) | entry[9];
+        loop_end = ((int)entry[12] << 8) | entry[13];
+        sample_count = loop_end + 1;
+
+        pcm_offset = tone_offset + layer_start;
+        pcm_bytes = sample_count * bytes_per_sample;
+        if (layer_start < 0 || pcm_bytes < 0 ||
+            layer_start > tone_bytes ||
+            pcm_bytes > tone_bytes - layer_start) {
+            entry_offset += entry_size;
+            continue;
+        }
+        if (pcm_offset < 0 || pcm_offset > eng->sal_size - pcm_bytes) {
+            entry_offset += entry_size;
+            continue;
+        }
+
+        samples = (int16_t *)malloc(sample_count * sizeof(int16_t));
+        if (!samples) break;
+
+        if (bytes_per_sample == 2) {
+            for (j = 0; j < sample_count; j++) {
+                int off = pcm_offset + j * 2;
+                samples[j] = (int16_t)((eng->sal_data[off] << 8) |
+                                        eng->sal_data[off + 1]);
+            }
+        } else {
+            for (j = 0; j < sample_count; j++) {
+                samples[j] = (int16_t)((int8_t)eng->sal_data[pcm_offset + j]) << 8;
+            }
+        }
+
+        eng->sal_decoded_samples[decoded] = samples;
+        eng->sal_decoded_sample_count[decoded] = sample_count;
+        decoded++;
+        entry_offset += entry_size;
+    }
+
+    eng->sal_decoded_tone_count = decoded;
+    eng->sal_decoded_sample_rate = 22050;
+    eng->sal_decode_ready = decoded > 0 ? 1 : 0;
+
+    printf("Nexus sound: decoded %d tones from SAL tone bank (%d entries)\n",
+           decoded, entry_count);
+    return decoded;
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * Voice trigger — start playing a decoded tone
+ * ═══════════════════════════════════════════════════════════════════ */
+
+static void nexus_sound_trigger_tone(Nexus_SoundEngine *eng, int tone_index) {
+    int i;
+    int oldest = -1;
+    int oldest_pos = -1;
+
+    if (!eng || !eng->sal_decode_ready) return;
+    if (tone_index < 0 || tone_index >= eng->sal_decoded_tone_count) return;
+    if (!eng->sal_decoded_samples[tone_index]) return;
+
+    for (i = 0; i < NEXUS_SOUND_MAX_VOICES; i++) {
+        if (!eng->voices[i].active) {
+            eng->voices[i].active = 1;
+            eng->voices[i].tone_index = tone_index;
+            eng->voices[i].position = 0;
+            return;
+        }
+        if (oldest < 0 || eng->voices[i].position > oldest_pos) {
+            oldest = i;
+            oldest_pos = eng->voices[i].position;
+        }
+    }
+    if (oldest >= 0) {
+        eng->voices[oldest].active = 1;
+        eng->voices[oldest].tone_index = tone_index;
+        eng->voices[oldest].position = 0;
+    }
+}
+
+/* ═══════════════════════════════════════════════════════════════════
+ * Mixer — mix active voices into output buffer
+ * ═══════════════════════════════════════════════════════════════════ */
+
+int nexus_sound_mix(Nexus_SoundEngine *eng, int16_t *out, int max_samples) {
+    int i;
+    int s;
+
+    if (!eng || !out || max_samples <= 0) return 0;
+
+    memset(out, 0, max_samples * sizeof(int16_t));
+
+    for (i = 0; i < NEXUS_SOUND_MAX_VOICES; i++) {
+        int tone_idx;
+        int pos;
+        int count;
+        const int16_t *src;
+        int remaining;
+        int to_mix;
+
+        if (!eng->voices[i].active) continue;
+        tone_idx = eng->voices[i].tone_index;
+        if (tone_idx < 0 || tone_idx >= eng->sal_decoded_tone_count) {
+            eng->voices[i].active = 0;
+            continue;
+        }
+        src = eng->sal_decoded_samples[tone_idx];
+        count = eng->sal_decoded_sample_count[tone_idx];
+        if (!src || count <= 0) {
+            eng->voices[i].active = 0;
+            continue;
+        }
+
+        pos = eng->voices[i].position;
+        remaining = count - pos;
+        if (remaining <= 0) {
+            eng->voices[i].active = 0;
+            continue;
+        }
+        to_mix = remaining < max_samples ? remaining : max_samples;
+
+        for (s = 0; s < to_mix; s++) {
+            int mixed = (int)out[s] + (int)src[pos + s];
+            if (mixed > 32767) mixed = 32767;
+            if (mixed < -32768) mixed = -32768;
+            out[s] = (int16_t)mixed;
+        }
+        eng->voices[i].position = pos + to_mix;
+        if (eng->voices[i].position >= count) {
+            eng->voices[i].active = 0;
+        }
+    }
+    return max_samples;
 }
