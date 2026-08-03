@@ -16,7 +16,9 @@
  */
 
 #include "theron_v1_world.h"
+#include "theron_v1_combat.h"
 #include "theron_v1_track02.h"
+#include "theron_v1_track02_creature.h"
 #include "theron_v1_track02_dungeon_map.h"
 #include <string.h>
 #include <stdio.h>
@@ -287,6 +289,7 @@ int theron_v1_world_load_track02_dungeon(
         }
 
         lv->thing_count = 0;
+        lv->creature_budget = (int)tm->header.creature_count;
         world->level_loaded[slot][m] = 1;
         loaded++;
     }
@@ -691,8 +694,63 @@ int theron_v1_transition_execute(Theron_V1_World *world) {
     }
 
     world->transition_pending = 0;
+    theron_v1_world_spawn_level_creatures(world);
     theron_v1_world_runtime_media_invalidate_cache(world);
     return 0;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+ * Level creature spawning
+ *
+ * Called after a level transition. Uses the per-map creature_budget
+ * from the dungeon header and the per-dungeon creature type table
+ * from theron_v1_track02_creature.h.
+ * ══════════════════════════════════════════════════════════════════════ */
+
+int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
+    if (!world) return -1;
+    int di = world->current_dungeon - 1;
+    if (di < 0 || di >= THERON_DUNGEON_COUNT) return -1;
+    int lvl = world->current_level;
+    if (lvl < 0 || lvl >= THERON_MAX_LEVELS_PER_DUNGEON) return -1;
+    if (!world->level_loaded[di][lvl]) return -1;
+
+    const Theron_V1_Level *level = &world->levels[di][lvl];
+    int budget = level->creature_budget;
+    if (budget <= 0) return 0;
+
+    const Theron_DungeonCreatureTypes *ct = &theron_creature_types[di];
+    if (ct->count == 0) return 0;
+
+    world->creature_count = 0;
+
+    uint16_t seed = (uint16_t)(world->world_tick ^ (unsigned)(di * 7 + lvl * 31));
+    int spawned = 0;
+    for (int i = 0; i < budget && spawned < THERON_MAX_CREATURES_PER_LEVEL; i++) {
+        uint8_t ctype = ct->types[i % ct->count];
+        seed = (uint16_t)(seed * 25173u + 13849u);
+        int attempts = 0;
+        while (attempts < 50) {
+            seed = (uint16_t)(seed * 25173u + 13849u);
+            int cx = (seed >> 8) % level->width;
+            seed = (uint16_t)(seed * 25173u + 13849u);
+            int cy = (seed >> 8) % level->height;
+            uint8_t sq = level->squares[cy][cx];
+            if (!THERON_SQUARE_IS_PASSABLE(sq)) { attempts++; continue; }
+            if (sq == THERON_SQUARE_DOOR) { attempts++; continue; }
+            if (cx == world->party.leader_x && cy == world->party.leader_y) {
+                attempts++; continue;
+            }
+            if (theron_v1_creature_at(world, lvl, cx, cy)) {
+                attempts++; continue;
+            }
+            theron_v1_creature_spawn(world, (Theron_CreatureType)ctype,
+                                     world->current_dungeon, lvl, cx, cy);
+            spawned++;
+            break;
+        }
+    }
+    return spawned;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -704,8 +762,8 @@ void theron_v1_world_tick(Theron_V1_World *world) {
     world->world_tick++;
     /* Tick 1: timers */
     theron_v1_tick_timers(world);
-    /* Tick 2: Phase 4 creature AI (placeholder) */
-    /* Tick 3: ambient effects placeholder */
+    /* Tick 2: creature AI (also called from theron_v1_apply_post_move_effects) */
+    theron_v1_creature_ai_tick(world);
 }
 
 void theron_v1_world_runtime_media_clear(Theron_V1_World *world) {

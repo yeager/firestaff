@@ -204,6 +204,7 @@ typedef struct {
     int   geometry_offset;
     int   geometry_size;
     int   thing_count;
+    int   creature_budget;      /* per-map creature_count from dungeon header */
 } Theron_V1_Level;
 
 /* ── Object database ───────────────────────────────────────────────── */
@@ -433,6 +434,7 @@ void theron_v1_timers_clear_level(Theron_V1_World *world, int level);
 /* ── Level transitions ────────────────────────────────────────────── */
 Theron_TransitionType theron_v1_check_transition(Theron_V1_World *world, int x, int y);
 int theron_v1_transition_execute(Theron_V1_World *world);
+int theron_v1_world_spawn_level_creatures(Theron_V1_World *world);
 
 /* ── World tick ───────────────────────────────────────────────────── */
 void theron_v1_world_tick(Theron_V1_World *world);
