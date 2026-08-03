@@ -14638,6 +14638,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather.c
         src/memory/memory_projectile_pc34_compat.c
         src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_ccm_advanced_pc34_compat.c
+        src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
@@ -14721,6 +14723,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather.c
         src/memory/memory_projectile_pc34_compat.c
         src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_ccm_advanced_pc34_compat.c
+        src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
@@ -14804,6 +14808,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather.c
         src/memory/memory_projectile_pc34_compat.c
         src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_ccm_advanced_pc34_compat.c
+        src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
@@ -18490,6 +18496,8 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_ccm_pc34_compat
         tests/test_dm2_v1_ccm_pc34_compat.c
         src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_ccm_advanced_pc34_compat.c
+        src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_ccm_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -18522,6 +18530,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_ccm_source_alignment_pc34_compat
         tests/test_dm2_v1_ccm_source_alignment_pc34_compat.c
         src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_ccm_advanced_pc34_compat.c
         src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_ccm_source_alignment_pc34_compat PRIVATE
@@ -39638,6 +39647,43 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND test_theron_v1_cmd_semantics
     )
 
+    add_executable(test_theron_v1_hw_config
+        tests/test_theron_v1_hw_config.c
+    )
+    target_link_libraries(test_theron_v1_hw_config PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_hw_config PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_hw_config PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_hw_config_cd_play
+        COMMAND test_theron_v1_hw_config cd_play_track
+    )
+    add_test(
+        NAME theron_v1_hw_config_vdc
+        COMMAND test_theron_v1_hw_config vdc_display
+    )
+    add_test(
+        NAME theron_v1_hw_config_joypad
+        COMMAND test_theron_v1_hw_config joypad_action
+    )
+    add_test(
+        NAME theron_v1_hw_config_filter
+        COMMAND test_theron_v1_hw_config false_positive
+    )
+    add_test(
+        NAME theron_v1_hw_config_sites
+        COMMAND test_theron_v1_hw_config config_sites
+    )
+    add_test(
+        NAME theron_v1_hw_config_summary
+        COMMAND test_theron_v1_hw_config summary
+    )
+
     add_executable(test_theron_v1_palette_runtime_admission
         tests/test_theron_v1_palette_runtime_admission.c
     )
@@ -47762,6 +47808,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_weather.c
         src/memory/memory_projectile_pc34_compat.c
         src/dm2/dm2_v1_ccm.c
+        src/dm2/dm2_v1_ccm_advanced_pc34_compat.c
+        src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c

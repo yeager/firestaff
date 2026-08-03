@@ -14,6 +14,7 @@
 
 #include <stdint.h>
 
+#include "dm2_v1_caii_alloc_pc34_compat.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
 #include "dm2_v1_timeline.h"
@@ -230,12 +231,45 @@ typedef struct {
     int push_button_invoked;
     int creature_killer_invoked;
     int cross_scene_invoked;
+    int creature_animator_invoked;
     int creature_direction_invoked;
     int door_bit13_toggled;
     int the_end_triggered;
     int unknown_type_skipped;
     int fail_closed;
 } DM2_V1_ActuatorEventReceipt;
+
+/* ── Creature-killer callback interface ──────────────────────────── */
+
+typedef struct {
+    void *ctx;
+    int16_t map_width;
+    int16_t map_height;
+    uint16_t (*get_creature_at)(void *ctx, int16_t x, int16_t y);
+    int (*creature_type_matches)(void *ctx, uint16_t rec, uint16_t filter);
+    void (*set_creature_ai_state)(void *ctx, uint16_t rec,
+                                  int16_t x, int16_t y,
+                                  int16_t state, int16_t val);
+    void (*attack_creature)(void *ctx, uint16_t rec,
+                            int16_t x, int16_t y,
+                            int32_t damage, int16_t hp, int16_t flags);
+} DM2_V1_CreatureKillerCallbacks;
+
+typedef struct {
+    int valid;
+    int cells_scanned;
+    int creatures_found;
+    int ai_stops;
+    int attacks;
+} DM2_V1_CreatureKillerReceipt;
+
+int dm2_v1_activate_creature_killer(
+    const DM2_V1_CreatureKillerCallbacks *cb,
+    int16_t actu_data_lo, int16_t actu_data_hi,
+    int16_t actu_x, int16_t actu_y,
+    int16_t timer_x, int16_t timer_y,
+    int16_t actu_type, int16_t action_type,
+    DM2_V1_CreatureKillerReceipt *receipt);
 
 /* ── Shooter receipt ──────────────────────────────────────────────── */
 
@@ -282,6 +316,7 @@ typedef struct {
  * Source: skevent.cpp:1633-2068 ACTUATE_WALL_MECHA */
 int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
                               DM2_V1_DungeonData *dungeon,
+                              DM2_V1_CaiiArray *caii,
                               DM2_V1_SourceTimerQueue *queue,
                               int map, int x, int y,
                               int action_type, int direction,
@@ -294,6 +329,7 @@ int dm2_v1_actuate_wall_mecha(DM2_V1_RecordPoolSet *pool_set,
  * Source: skevent.cpp:2072-2232 ACTUATE_FLOOR_MECHA */
 int dm2_v1_actuate_floor_mecha(DM2_V1_RecordPoolSet *pool_set,
                                DM2_V1_DungeonData *dungeon,
+                               DM2_V1_CaiiArray *caii,
                                DM2_V1_SourceTimerQueue *queue,
                                int map, int x, int y,
                                int action_type, int direction,

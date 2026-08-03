@@ -4973,7 +4973,7 @@ static int dm2_runtime_actuate_wall_mecha(void *user,
 
     memset(&actu_receipt, 0, sizeof(actu_receipt));
     dm2_v1_actuate_wall_mecha(&rt->record_pools, dungeon,
-                              &rt->timer_queue,
+                              &rt->caii, &rt->timer_queue,
                               rt->dungeon_level, x, y,
                               action_type, direction,
                               (uint32_t)rt->tick_count,

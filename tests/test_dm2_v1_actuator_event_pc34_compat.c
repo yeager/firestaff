@@ -166,11 +166,11 @@ static void test_null_safety(void)
 {
     DM2_V1_ActuatorEventReceipt receipt;
 
-    assert(dm2_v1_actuate_wall_mecha(NULL, NULL, NULL,
+    assert(dm2_v1_actuate_wall_mecha(NULL, NULL, NULL, NULL,
                                       0, 0, 0, 0, 0, 0, NULL, 0, &receipt) == 0);
     assert(receipt.fail_closed == 1);
 
-    assert(dm2_v1_actuate_floor_mecha(NULL, NULL, NULL,
+    assert(dm2_v1_actuate_floor_mecha(NULL, NULL, NULL, NULL,
                                        0, 0, 0, 0, 0, 0, NULL, 0, &receipt) == 0);
     assert(receipt.fail_closed == 1);
 
@@ -253,21 +253,21 @@ static int ck_mock_type_matches(void *ctx, uint16_t rec, uint16_t type) {
 }
 
 static void ck_mock_set_ai(void *ctx, uint16_t rec,
-                            int16_t x, int16_t y, uint8_t state, int32_t flag) {
+                            int16_t x, int16_t y, int16_t state, int16_t val) {
     CKMockCtx *m = (CKMockCtx *)ctx;
     m->set_ai_calls++;
     m->last_creature_rec = rec;
-    (void)x; (void)y; (void)state; (void)flag;
+    (void)x; (void)y; (void)state; (void)val;
 }
 
 static void ck_mock_attack(void *ctx, uint16_t rec,
                             int16_t x, int16_t y, int32_t damage,
-                            int32_t threshold, int32_t flag) {
+                            int16_t hp, int16_t flags) {
     CKMockCtx *m = (CKMockCtx *)ctx;
     m->attack_calls++;
     m->last_creature_rec = rec;
     m->last_damage = damage;
-    (void)x; (void)y; (void)threshold; (void)flag;
+    (void)x; (void)y; (void)hp; (void)flags;
 }
 
 static void test_creature_killer(void)
