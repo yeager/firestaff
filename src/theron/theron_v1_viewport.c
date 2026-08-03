@@ -443,12 +443,11 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
     if (vp->synthetic_rendering_blocked || vp->palette.tile_count <= 0) {
         return;
     }
-#ifdef THERON_VIEWPORT_FIXTURE_RENDER
-    return;
-#else
+#ifndef THERON_VIEWPORT_FIXTURE_RENDER
     if (!theron_vp_source_tile_mapping_ready(vp)) {
         return;
     }
+#endif
 
     /* A tile bank alone is not a level handoff.  Do not fall back to the
      * historical (0,0,north) pose when the real dungeon record has not been
@@ -569,7 +568,6 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
             }
         }
     }
-#endif /* THERON_VIEWPORT_FIXTURE_RENDER */
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -816,10 +814,6 @@ void theron_vp_render_ui(Theron_V1_Viewport *vp,
      * until an original Track 02 UI-bank route is independently captured. */
     if (!theron_vp_source_ui_bank_ready(vp)) return;
 
-#ifdef THERON_V2_HUD_FIXTURE_RENDER
-    (void)ui_flags;
-    return;
-#else
     int x_margin = 32;   /* (256-192)/2 */
     int y_margin = 16;   /* (224-192)/2 */
 
@@ -844,7 +838,6 @@ void theron_vp_render_ui(Theron_V1_Viewport *vp,
     }
 
     (void)x_margin;
-#endif /* THERON_V2_HUD_FIXTURE_RENDER */
 }
 
 /* ══════════════════════════════════════════════════════════════════════
