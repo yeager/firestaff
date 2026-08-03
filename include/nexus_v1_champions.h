@@ -80,6 +80,7 @@ typedef struct Nexus_V1_Champion {
     /* Attribute flags — matches DM1 champion Attributes field.
      * Source: CHAMPION.C M008_SET pattern for LOAD|STATISTICS flags. */
     int attributes;
+    int gold;
 } Nexus_V1_Champion;
 
 typedef struct {

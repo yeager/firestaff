@@ -18911,6 +18911,29 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
                 profile->party_state.Champions[record->cell].MaximumDamageReceived = 0;
             }
             break;
+        case DM1_EVENT_VI_ALTAR_REBIRTH:
+            {
+                int ci = (record->aux0 >> 2) & 3;
+                if ((record->aux0 & 3u) == 0u &&
+                    profile->party_state_valid &&
+                    ci < profile->party_state.ChampionCount &&
+                    ci < CSB_V1_MAX_CHAMPIONS) {
+                    CSB_V1_Champion *ch =
+                        &profile->party_state.Champions[ci];
+                    int mh = ch->MaximumHealth;
+                    if (ch->CurrentHealth == 0 && mh > 0) {
+                        mh -= mh / 64 + 1;
+                        if (mh < 25) mh = 25;
+                        ch->MaximumHealth = (int16_t)mh;
+                        ch->CurrentHealth = (int16_t)(mh / 2);
+                        ch->Direction =
+                            (uint8_t)(profile->party_dir & 3);
+                        ch->Attributes &=
+                            ~(uint16_t)CSB_V1_CHAMPION_ATTRIBUTE_DEAD;
+                    }
+                }
+            }
+            break;
         case DM1_EVENT_PLAY_SOUND:
             {
                 CsbV1AudioRequest snd;
@@ -27304,6 +27327,22 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         }
         /* Keep every restored function-71 receipt source-owned so it cannot
          * acquire a future generic event path without saved identity checks. */
+        return 1;
+    }
+    if (timer->function == 20u) {
+        /* ReDMCSB TIMELINE.C F0246 lines 953-960: TT_PLAYSND plays the
+         * sound index stored in the timer's aux0 field. */
+        if (timer->valid && !timer->truncated &&
+            timer->source_index == timer_index &&
+            record->eventType == timer->function) {
+            CsbV1AudioRequest snd;
+            memset(&snd, 0, sizeof(snd));
+            snd.soundIndex = (int16_t)timer->ubyte5;
+            snd.mapX = (int16_t)timer->ubyte6;
+            snd.mapY = (int16_t)timer->ubyte7;
+            snd.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+            (void)csb_v1_runtime_request_source_sound(profile, &snd);
+        }
         return 1;
     }
     if (timer->function == 24u) {

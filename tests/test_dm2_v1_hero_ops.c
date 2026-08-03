@@ -160,17 +160,145 @@ static void test_process_poison_last_tick(void)
     printf("  PASS: process_poison_last_tick\n");
 }
 
+/* ---- Coin wallet: mock container item-record store (NEXT-linked). ---- */
+#define MOCK_MAX_ITEMS 32
+static uint16_t g_item_db_type[MOCK_MAX_ITEMS];
+static uint16_t g_item_denom[MOCK_MAX_ITEMS];
+static uint8_t g_item_charge[MOCK_MAX_ITEMS];
+static uint16_t g_item_next[MOCK_MAX_ITEMS];
+static uint16_t g_container_head[MOCK_MAX_ITEMS];
+static uint16_t g_next_alloc_ref;
+static int g_dealloc_calls;
+static uint16_t g_last_dealloc;
+
+static void reset_wallet_mock(void)
+{
+    for (int i = 0; i < MOCK_MAX_ITEMS; i++) {
+        g_item_db_type[i] = 0;
+        g_item_denom[i] = 0;
+        g_item_charge[i] = 0;
+        g_item_next[i] = DM2_V1_OBJECT_END;
+        g_container_head[i] = DM2_V1_OBJECT_END;
+    }
+    g_next_alloc_ref = 20;
+    g_dealloc_calls = 0;
+    g_last_dealloc = DM2_V1_OBJECT_NULL;
+}
+
+static int mock_is_moneybox(void *ctx, uint16_t ref) { (void)ctx; (void)ref; return 1; }
+static int mock_is_currency(void *ctx, uint16_t ref)
+{ (void)ctx; return g_item_db_type[ref] == DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY; }
+static uint16_t mock_get_db_type(void *ctx, uint16_t ref)
+{ (void)ctx; return g_item_db_type[ref]; }
+static uint16_t mock_get_denom(void *ctx, uint16_t ref)
+{ (void)ctx; return g_item_denom[ref]; }
+static uint16_t mock_get_head(void *ctx, uint16_t container)
+{ (void)ctx; return g_container_head[container]; }
+static uint16_t mock_get_next(void *ctx, uint16_t ref)
+{ (void)ctx; return g_item_next[ref]; }
+static uint8_t mock_get_charge(void *ctx, uint16_t ref)
+{ (void)ctx; return g_item_charge[ref]; }
+static void mock_set_charge(void *ctx, uint16_t ref, uint8_t c)
+{ (void)ctx; g_item_charge[ref] = c; }
+
+static void mock_append(void *ctx, uint16_t ref, uint16_t container)
+{
+    (void)ctx;
+    g_item_next[ref] = DM2_V1_OBJECT_END;
+    uint16_t head = g_container_head[container];
+    if (head == DM2_V1_OBJECT_END) {
+        g_container_head[container] = ref;
+        return;
+    }
+    uint16_t cur = head;
+    while (g_item_next[cur] != DM2_V1_OBJECT_END)
+        cur = g_item_next[cur];
+    g_item_next[cur] = ref;
+}
+
+static void mock_cut(void *ctx, uint16_t ref, uint16_t container)
+{
+    (void)ctx;
+    uint16_t head = g_container_head[container];
+    if (head == ref) {
+        g_container_head[container] = g_item_next[ref];
+        return;
+    }
+    uint16_t cur = head;
+    while (cur != DM2_V1_OBJECT_END && g_item_next[cur] != ref)
+        cur = g_item_next[cur];
+    if (cur != DM2_V1_OBJECT_END)
+        g_item_next[cur] = g_item_next[ref];
+}
+
+static void mock_dealloc(void *ctx, uint16_t ref)
+{
+    (void)ctx;
+    g_dealloc_calls++;
+    g_last_dealloc = ref;
+}
+
+static uint16_t mock_alloc(void *ctx, uint16_t denom)
+{
+    (void)ctx;
+    uint16_t ref = g_next_alloc_ref++;
+    g_item_db_type[ref] = DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY;
+    g_item_denom[ref] = denom;
+    g_item_charge[ref] = 0;
+    g_item_next[ref] = DM2_V1_OBJECT_END;
+    return ref;
+}
+
 static void test_coin_wallet(void)
 {
-    int16_t wallet[4] = {0, 0, 0, 0};
-    assert(dm2_v1_add_coin_to_wallet(wallet, 4, 0) == 1);
-    assert(wallet[0] == 1);
-    assert(dm2_v1_add_coin_to_wallet(wallet, 4, 2) == 1);
-    assert(wallet[2] == 1);
-    assert(dm2_v1_take_coin_from_wallet(wallet, 4, 0) == 1);
-    assert(wallet[0] == 0);
-    assert(dm2_v1_take_coin_from_wallet(wallet, 4, 0) == 0);
-    assert(dm2_v1_add_coin_to_wallet(wallet, 4, 5) == 0); /* out of range */
+    reset_wallet_mock();
+    static const uint16_t coin_types[4] = {10, 20, 30, 40};
+    DM2_V1_WalletCallbacks cb = {
+        mock_is_moneybox, mock_is_currency, mock_get_db_type, mock_get_denom,
+        mock_get_head, mock_get_next, mock_get_charge, mock_set_charge,
+        mock_append, mock_cut, mock_dealloc, mock_alloc,
+        coin_types, 4
+    };
+    const uint16_t container = 1;
+
+    /* Two coin item records of denomination 10 to add. */
+    uint16_t item5 = 5, item6 = 6;
+    g_item_db_type[item5] = DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY;
+    g_item_denom[item5] = 10;
+    g_item_db_type[item6] = DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY;
+    g_item_denom[item6] = 10;
+
+    assert(dm2_v1_add_coin_to_wallet(container, item5, &cb, NULL) == 1);
+    assert(g_container_head[container] == item5);
+
+    /* Second coin of same denomination collapses into item5's charge
+     * and deallocates its own record. */
+    assert(dm2_v1_add_coin_to_wallet(container, item6, &cb, NULL) == 1);
+    assert(g_item_charge[item5] == 1);
+    assert(g_dealloc_calls == 1);
+    assert(g_last_dealloc == item6);
+
+    /* Take: stack has charge > 0, decrement and allocate a fresh
+     * single-coin record for the caller. */
+    uint16_t taken = dm2_v1_take_coin_from_wallet(container, 0, &cb, NULL);
+    assert(taken != DM2_V1_OBJECT_NULL);
+    assert(taken != item5);
+    assert(g_item_charge[item5] == 0);
+
+    /* Take again: stack is down to its last coin (charge == 0), so the
+     * record itself is cut from the container and returned. */
+    taken = dm2_v1_take_coin_from_wallet(container, 0, &cb, NULL);
+    assert(taken == item5);
+    assert(g_container_head[container] == DM2_V1_OBJECT_END);
+
+    /* Wallet now empty for that denomination. */
+    taken = dm2_v1_take_coin_from_wallet(container, 0, &cb, NULL);
+    assert(taken == DM2_V1_OBJECT_NULL);
+
+    /* Out-of-range coin type index. */
+    taken = dm2_v1_take_coin_from_wallet(container, 99, &cb, NULL);
+    assert(taken == DM2_V1_OBJECT_NULL);
+
     printf("  PASS: coin_wallet\n");
 }
 

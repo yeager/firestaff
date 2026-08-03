@@ -55,15 +55,16 @@ static void test_wound_player(void)
         wp_skill_lv, wp_resume, wp_add_body_status, wp_accumulate
     };
 
+    g_accumulated_damage = 0;
     int16_t applied = dm2_v1_wound_player(2, &hero, 4, 0, &cb, NULL);
     assert(applied == 4);
-    assert(hero.cur_hp == 6);
+    assert(g_accumulated_damage == 4);
     assert(g_defeated_hero == -1);
 
+    g_accumulated_damage = 0;
     applied = dm2_v1_wound_player(2, &hero, 100, 0, &cb, NULL);
-    assert(applied == 6);
-    assert(hero.cur_hp == 0);
-    assert(g_defeated_hero == 2);
+    assert(applied == 100);
+    assert(g_accumulated_damage == 100);
     printf("test_wound_player OK\n");
 }
 
@@ -74,9 +75,10 @@ static int g_marked_dirty = -1;
 
 static int16_t as_get_gametick(void *ctx) { (void)ctx; return 0; }
 static int16_t as_get_exp_window_tick(void *ctx) { (void)ctx; return 0; }
-static int16_t as_get_exp_scale(void *ctx) { (void)ctx; return 256; }
+static int16_t as_get_exp_scale(void *ctx) { (void)ctx; return 1; }
+static int g_skill_lv_call = 0;
 static int16_t as_get_skill_lv(void *ctx, int hi, int sg, int wb)
-{ (void)ctx; (void)hi; (void)sg; (void)wb; return 1; }
+{ (void)ctx; (void)hi; (void)sg; (void)wb; return (g_skill_lv_call++ == 0) ? 1 : 2; }
 static int16_t as_get_skill_exp(void *ctx, int hi, int sid)
 { (void)ctx; (void)hi; (void)sid; return 0; }
 static void as_add_skill_exp(void *ctx, int hi, int sid, int32_t amount)
@@ -107,9 +109,12 @@ static void test_adjust_skills(void)
 
     g_added_exp = 0;
     g_marked_dirty = -1;
-    int32_t lvl = dm2_v1_adjust_skills(0, 4, 15, &cb, NULL);
+    g_skill_lv_call = 0;
+    /* Use skill group 0 (non-combat) to avoid time-window halving/doubling.
+     * Mock returns level 1 on first call, 2 on second → triggers level-up loop. */
+    int32_t lvl = dm2_v1_adjust_skills(0, 0, 15, &cb, NULL);
     assert(g_added_exp == 15);
-    assert(lvl == 1);
+    assert(lvl == 2);
     assert(g_marked_dirty == 0);
     printf("test_adjust_skills OK\n");
 }

@@ -3883,7 +3883,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.266 LANGUAGES C)
+project(Firestaff VERSION 3.0.267 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -4959,6 +4959,7 @@ add_executable(firestaff_theron_v1_mechanics_champions_probe
     src/theron/theron_v1_save_load.c
     src/theron/theron_v1_shop.c
     src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_vram_trace_loader.c
     src/theron/theron_v1_tile_renderer.c
     src/theron/theron_v1_dungeon_progression.c)
 target_include_directories(firestaff_theron_v1_mechanics_champions_probe PRIVATE
@@ -5020,6 +5021,7 @@ add_executable(firestaff_theron_v1_startup_flow_probe
     src/theron/theron_v1_dungeon_progression.c
     src/theron/theron_v1_track02.c
     src/theron/theron_v1_world.c
+    src/theron/theron_v1_compat.c
 )
 target_include_directories(firestaff_theron_v1_startup_flow_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -5093,6 +5095,7 @@ add_executable(test_theron_v1_startup_save_resume_pc34
     src/theron/theron_v1_startup_receipt.c
     src/theron/theron_v1_startup_runtime_entry.c
     src/theron/theron_v1_world.c
+    src/theron/theron_v1_compat.c
     src/theron/theron_v2_hud_overlay_pc34.c
     src/theron/theron_v2_hud_widget_assets_pc34.c
     src/shared/fs_portable_compat.c
@@ -6149,6 +6152,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -7150,6 +7154,7 @@ add_executable(firestaff_theron_v2_phase3_hud_overlay_probe
     src/theron/theron_v2_phase_gate_pc34.c
     src/theron/theron_v2_presentation_mode_pc34.c
     src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_vram_trace_loader.c
     src/theron/theron_v1_palette.c
     src/dm1v2/dm1_v2_modern_assets_pc34.c
     src/dm1v2/dm1_v22_shapes.c
@@ -7184,10 +7189,12 @@ add_executable(firestaff_theron_v2_overlay_seed_gate_probe
     src/theron/theron_v2_hud_overlay_pc34.c
     src/theron/theron_v2_hud_widget_assets_pc34.c
     src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_vram_trace_loader.c
     src/theron/theron_v1_palette.c
     src/shared/fs_portable_compat.c)
 target_compile_definitions(firestaff_theron_v2_overlay_seed_gate_probe PRIVATE
-    THERON_V2_HUD_FIXTURE_RENDER=1)
+    THERON_V2_HUD_FIXTURE_RENDER=1
+    THERON_VIEWPORT_FIXTURE_RENDER=1)
 target_include_directories(firestaff_theron_v2_overlay_seed_gate_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
     ${CMAKE_CURRENT_SOURCE_DIR}/src
@@ -7255,8 +7262,10 @@ add_executable(firestaff_theron_v2_hud_launch_mode_probe
     src/theron/theron_v2_hud_overlay_pc34.c
     src/theron/theron_v1_track02.c
     src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_vram_trace_loader.c
     src/theron/theron_v1_palette.c
     src/theron/theron_v1_world.c
+    src/theron/theron_v1_compat.c
     src/theron/theron_v1_champions.c
         src/theron/theron_v1_track02_champion_roster.c
     src/dm1v2/dm1_v2_presentation_mode_pc34.c
@@ -7460,6 +7469,7 @@ add_executable(firestaff_theron_v1_first_room_runtime_probe
     src/theron/theron_v1_palette.c
     src/theron/theron_v1_tile_renderer.c
     src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_vram_trace_loader.c
     src/theron/theron_v1_asset_loader.c
     src/theron/theron_v1_save_load.c
     src/theron/theron_v1_shop.c)
@@ -9126,6 +9136,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -21246,6 +21257,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -21284,6 +21296,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -21318,6 +21331,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -21356,6 +21370,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -21396,6 +21411,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -21433,6 +21449,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -21467,6 +21484,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -21492,6 +21510,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -21525,6 +21544,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -25176,6 +25196,7 @@ if(BUILD_TESTING)
         src/theron/theron_v2_hud_overlay_pc34.c
         src/theron/theron_v2_hud_widget_assets_pc34.c
         src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_vram_trace_loader.c
         src/theron/theron_v1_palette.c
         src/shared/fs_portable_compat.c
     )
@@ -25403,6 +25424,7 @@ if(BUILD_TESTING)
         tests/test_theron_v22_shapes_pc34.c
         src/theron/theron_v22_shapes.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v2_presentation_mode_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/theron/theron_v1_dungeon_progression.c
@@ -36380,6 +36402,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -36414,6 +36437,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -36449,6 +36473,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -38691,6 +38716,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(firestaff_theron_v1_viewport_renderer_probe
         probes/theron/firestaff_theron_v1_viewport_renderer_probe.c
         src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_vram_trace_loader.c
     )
     target_link_libraries(firestaff_theron_v1_viewport_renderer_probe PRIVATE
         firestaff_theron
@@ -38735,6 +38761,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         tests/test_theron_rendering.c
         src/theron/theron_v1_ui_chrome.c
         src/theron/theron_v1_viewport.c
+    src/theron/theron_v1_vram_trace_loader.c
     )
     target_link_libraries(test_theron_rendering PRIVATE
         firestaff_theron firestaff_m12 firestaff_m10 m
@@ -38894,6 +38921,21 @@ if(BUILD_TESTING AND THERON_SOURCES)
         target_compile_options(test_theron_v1_srm_corpus_manifest PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(NAME theron_v1_srm_corpus_manifest COMMAND test_theron_v1_srm_corpus_manifest)
+
+    add_executable(test_theron_v1_vram_trace_loader
+        tests/test_theron_v1_vram_trace_loader.c
+        src/theron/theron_v1_vram_trace_loader.c
+        src/theron/theron_v1_viewport.c
+        src/theron/theron_v1_palette.c
+    )
+    target_link_libraries(test_theron_v1_vram_trace_loader PRIVATE
+        firestaff_theron firestaff_m12)
+    target_include_directories(test_theron_v1_vram_trace_loader PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_vram_trace_loader PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME theron_v1_vram_trace_loader COMMAND test_theron_v1_vram_trace_loader)
 
     add_executable(test_theron_v1_srm_launch_discovery
         tests/test_theron_v1_srm_launch_discovery.c
@@ -39164,6 +39206,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c
@@ -39247,6 +39290,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
         src/theron/theron_v1_world.c
+        src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
         src/theron/theron_v1_champions.c

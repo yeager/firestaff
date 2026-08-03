@@ -69,4 +69,9 @@ int nexus_v1_shop_buy(Nexus_ShopManager *mgr,
 
 int nexus_v1_shop_find_by_id(const Nexus_ShopManager *mgr, int shop_id);
 
+#define NEXUS_SHOP_SELL_RATIO 2
+
+int nexus_v1_shop_sell(Nexus_ShopManager *mgr,
+    Nexus_V1_Champion *seller, int inventory_slot);
+
 #endif

@@ -43,6 +43,7 @@ typedef struct {
     uint8_t ench_aura;
     uint8_t ench_power;
     int16_t timer_idx;
+    uint8_t absdir;           /* hero->absdir */
 } DM2_V1_HeroState;
 
 #define DM2_V1_HERO_FLAG_0800  0x0800
@@ -108,14 +109,64 @@ int dm2_v1_process_poison(
     int hero_idx, int16_t counters,
     const DM2_V1_ProcessPoisonCallbacks *cb, void *ctx);
 
-/* ---- DM2_ADD_COIN_TO_WALLET / DM2_TAKE_COIN_FROM_WALLET ----
- * Wallet is an array of 4 coin slots (platinum/gold/silver/copper).
- * add_coin returns 1 on success, 0 if wallet full.
- * take_coin returns 1 on success, 0 if wallet empty. */
-int dm2_v1_add_coin_to_wallet(int16_t *wallet, int wallet_size,
-                               int16_t coin_type);
-int dm2_v1_take_coin_from_wallet(int16_t *wallet, int wallet_size,
-                                  int16_t coin_type);
+/* ---- DM2_ADD_COIN_TO_WALLET / DM2_TAKE_COIN_FROM_WALLET
+ * (SKWINDOS/dm2byh.cpp:1451 SKW_ADD_COIN_TO_WALLET,
+ *  SKWINDOS/dm2byc.cpp:1172 SKW_TAKE_COIN_FROM_WALLET) ----
+ * A "wallet" is a container item record (moneybox); coins are item
+ * records held in the container's linked list (NEXT pointer). Coins of
+ * the same denomination are collapsed into a single record with a
+ * packed charge/quantity count (0..0x3F) rather than one record per
+ * coin.
+ *
+ * add_coin: container_ref must be a moneybox (is_container_moneybox)
+ * and coin_item_ref must be a currency item (is_item_currency). Walks
+ * the container's item list; if it hits a non-currency item, returns
+ * whether that slot is occupied. If an existing coin record of the
+ * same denomination is found with charge < 0x3F, increments its charge
+ * and deallocates the incoming record. Otherwise appends the incoming
+ * record to the end of the list. Returns 1 on success, 0 if the
+ * container/item preconditions fail.
+ *
+ * take_coin: coin_type_index selects a denomination via the
+ * coin_type_table (ddata.v1e0394). Walks the container's item list
+ * remembering the last matching-denomination record. On reaching the
+ * end of the (currency-only) run: if a match was found and its charge
+ * is nonzero, decrements the charge and allocates a fresh single-coin
+ * record of that denomination to return; if the match's charge is
+ * zero (last coin in the stack), cuts that record out of the
+ * container list and returns it directly. Returns DM2_V1_OBJECT_NULL
+ * (0xFFFF) if no matching coin was found or the list contains a
+ * non-currency item before reaching the end. */
+#define DM2_V1_OBJECT_NULL 0xFFFFu
+#define DM2_V1_OBJECT_END  0xFFFEu
+#define DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY 0xA
+#define DM2_V1_COIN_CHARGE_MAX 0x3F
+
+typedef struct {
+    int (*is_container_moneybox)(void *ctx, uint16_t container_ref);
+    int (*is_item_currency)(void *ctx, uint16_t item_ref);
+    uint16_t (*get_item_db_type)(void *ctx, uint16_t item_ref);
+    uint16_t (*get_distinctive_item_type)(void *ctx, uint16_t item_ref);
+    uint16_t (*get_container_head)(void *ctx, uint16_t container_ref);
+    uint16_t (*get_next_item_in_list)(void *ctx, uint16_t item_ref);
+    uint8_t (*get_item_charge)(void *ctx, uint16_t item_ref);
+    void (*set_item_charge)(void *ctx, uint16_t item_ref, uint8_t charge);
+    void (*append_item_to_container)(void *ctx, uint16_t item_ref,
+                                     uint16_t container_ref);
+    void (*cut_item_from_container)(void *ctx, uint16_t item_ref,
+                                    uint16_t container_ref);
+    void (*dealloc_record)(void *ctx, uint16_t item_ref);
+    uint16_t (*alloc_new_dbitem)(void *ctx, uint16_t denomination);
+    const uint16_t *coin_type_table; /* ddata.v1e0394 */
+    int coin_type_table_size;
+} DM2_V1_WalletCallbacks;
+
+int dm2_v1_add_coin_to_wallet(uint16_t container_ref, uint16_t coin_item_ref,
+                               const DM2_V1_WalletCallbacks *cb, void *ctx);
+uint16_t dm2_v1_take_coin_from_wallet(uint16_t container_ref,
+                                      int16_t coin_type_index,
+                                      const DM2_V1_WalletCallbacks *cb,
+                                      void *ctx);
 
 /* ---- DM2_PERFORM_TURN_SQUAD (c_hero.cpp:2887) ----
  * Turn the party: sets ddat.v1e0488, calls RESET_SQUAD_DIR (set all
@@ -247,11 +298,16 @@ int dm2_v1_hero_cast_enchantment(
     const DM2_V1_CastEnchantCallbacks *cb, void *ctx);
 
 /* ---- DM2_SHOOT_CHAMPION_MISSILE (c_hero.cpp:688) ----
- * Fire a projectile from a champion. */
+ * Fire a projectile from a champion. After DM2_SHOOT_ITEM, skproject
+ * also writes two globals (c_hero.cpp:719-720):
+ *   ddat.v1e025e = 4     (missile-noise/animation trigger)
+ *   ddat.v1e0274 = direction (last-shot direction) */
 typedef struct {
     void (*shoot_item)(void *ctx, uint16_t item, int16_t x, int16_t y,
                        int direction, int facing, uint8_t damage,
                        uint8_t speed, uint8_t power);
+    void (*set_v1e025e)(void *ctx, int16_t value);
+    void (*set_v1e0274)(void *ctx, uint8_t direction);
 } DM2_V1_ShootMissileCallbacks;
 
 typedef struct {
@@ -274,7 +330,10 @@ int dm2_v1_cast_champion_missile_spell(
     const DM2_V1_ShootMissileCallbacks *cb, void *ctx);
 
 /* ---- R_36EFE + DM2_BRING_CHAMPION_TO_LIFE (c_hero.cpp:873+916) ----
- * Resurrect a dead champion. */
+ * Resurrect a dead champion. R_36EFE always assigns
+ * hero->absdir = ddat.v1e0258 (c_hero.cpp:911, `formation_start` here)
+ * once the party position has been (re)assigned, regardless of whether
+ * a rescan for a free slot happened. */
 typedef struct {
     int hero_count;
     DM2_V1_HeroState *(*get_hero)(void *ctx, int idx);
@@ -308,9 +367,13 @@ int dm2_v1_add_item_to_player(
     const DM2_V1_AddItemCallbacks *cb, void *ctx);
 
 /* ---- DM2_BURN_PLAYER_LIGHTING_ITEMS (c_hero.cpp:2262) ----
- * Decrement charges on lit torches/lanterns. */
+ * Decrement charges on lit torches/lanterns. Excludes the last party
+ * hero from the burn loop when ddat.v1e0288 is set (c_hero.cpp:2271-2277:
+ * `vl_00 = heros_in_party - (ddat.v1e0288 != 0)`), the same "is last
+ * hero" condition used by DM2_PROCESS_POISON. */
 typedef struct {
     int hero_count;
+    int (*is_last_hero)(void *ctx, int hero_idx); /* ddat.v1e0288 check */
     int16_t (*get_hero_hand_item)(void *ctx, int hero_idx, int hand);
     uint16_t (*query_item_flags)(void *ctx, uint16_t item);
     int16_t (*add_item_charge)(void *ctx, uint16_t item, int16_t delta);

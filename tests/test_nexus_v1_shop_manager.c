@@ -64,9 +64,11 @@ int main(void) {
 
         memset(&ch, 0, sizeof(ch));
         memset(ch.inventory, 0xFF, sizeof(ch.inventory));
+        ch.gold = 500;
         expect(nexus_v1_shop_buy(&mgr, &ch, 0), "buy ok");
         expect(ch.inventory[0] == 0xAA, "item in inventory");
         expect(mgr.shops[si].stock[0].stock == 1, "stock decremented");
+        expect(ch.gold == 400, "gold deducted");
     }
 
     /* Test 6: buy when out of stock */
@@ -94,10 +96,43 @@ int main(void) {
         nexus_v1_shop_open(&mgr, si);
         memset(&ch, 0, sizeof(ch));
         memset(ch.inventory, 0x01, sizeof(ch.inventory));
+        ch.gold = 500;
         expect(!nexus_v1_shop_buy(&mgr, &ch, 0), "cannot buy full inv");
     }
 
-    /* Test 8: find by id */
+    /* Test 8: cannot buy without gold */
+    {
+        Nexus_ShopManager mgr;
+        Nexus_V1_Champion ch;
+        int si;
+        nexus_v1_shop_manager_init(&mgr);
+        si = nexus_v1_shop_register(&mgr, 1, "S");
+        nexus_v1_shop_add_stock(&mgr, si, 0xAA, 100, 2);
+        nexus_v1_shop_open(&mgr, si);
+        memset(&ch, 0, sizeof(ch));
+        memset(ch.inventory, 0xFF, sizeof(ch.inventory));
+        ch.gold = 50;
+        expect(!nexus_v1_shop_buy(&mgr, &ch, 0), "cannot buy no gold");
+    }
+
+    /* Test 9: sell item */
+    {
+        Nexus_ShopManager mgr;
+        Nexus_V1_Champion ch;
+        int si;
+        nexus_v1_shop_manager_init(&mgr);
+        si = nexus_v1_shop_register(&mgr, 1, "S");
+        nexus_v1_shop_open(&mgr, si);
+        memset(&ch, 0, sizeof(ch));
+        memset(ch.inventory, 0xFF, sizeof(ch.inventory));
+        ch.inventory[0] = 0x9C;
+        ch.gold = 0;
+        expect(nexus_v1_shop_sell(&mgr, &ch, 0), "sell ok");
+        expect(ch.inventory[0] == 0xFF, "slot cleared");
+        expect(ch.gold == 250, "gold received");
+    }
+
+    /* Test 10: find by id */
     {
         Nexus_ShopManager mgr;
         nexus_v1_shop_manager_init(&mgr);
@@ -107,7 +142,7 @@ int main(void) {
         expect(nexus_v1_shop_find_by_id(&mgr, 99) == -1, "not found");
     }
 
-    /* Test 9: NULL safety */
+    /* Test 11: NULL safety */
     {
         nexus_v1_shop_manager_init(NULL);
         expect(nexus_v1_shop_register(NULL, 0, NULL) == -1, "NULL register");

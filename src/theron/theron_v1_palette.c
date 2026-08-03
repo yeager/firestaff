@@ -36,19 +36,21 @@ void tqr_decode_tile_row(uint8_t *TQR_RESTRICT out_row,
      * Decode the supplied planar bytes directly; never synthesize fallback
      * pixels when source data is absent. */
     if (bpp == 2) {
-        /* 2bpp: bitplane 0 at src_row[0], bitplane 1 at src_row[1] */
+        /* 2bpp: bitplane 0 at src_row[0], bitplane 1 at src_row[1].
+         * Bit 7 = leftmost pixel (HuC6270 native). */
         for (int i = 0; i < 8; i++) {
-            int bit0 = (src_row[0] >> i) & 1;
-            int bit1 = (src_row[1] >> i) & 1;
+            int bit0 = (src_row[0] >> (7 - i)) & 1;
+            int bit1 = (src_row[1] >> (7 - i)) & 1;
             out_row[i] = (uint8_t)((bit1 << 1) | bit0);
         }
     } else if (bpp == 4) {
-        /* 4bpp: bitplanes 0..3 at src_row[0..3] */
+        /* 4bpp: bitplanes 0+1 at src_row[0..1], planes 2+3 at src_row[2..3].
+         * Bit 7 = leftmost pixel. */
         for (int i = 0; i < 8; i++) {
-            int b0 = (src_row[0] >> i) & 1;
-            int b1 = (src_row[1] >> i) & 1;
-            int b2 = (src_row[2] >> i) & 1;
-            int b3 = (src_row[3] >> i) & 1;
+            int b0 = (src_row[0] >> (7 - i)) & 1;
+            int b1 = (src_row[1] >> (7 - i)) & 1;
+            int b2 = (src_row[2] >> (7 - i)) & 1;
+            int b3 = (src_row[3] >> (7 - i)) & 1;
             out_row[i] = (uint8_t)((b3 << 3) | (b2 << 2) | (b1 << 1) | b0);
         }
     } else {
@@ -61,9 +63,21 @@ void tqr_decode_tile(uint8_t *TQR_RESTRICT out64,
                      const uint8_t *TQR_RESTRICT src,
                      int bpp) {
     if (!out64 || !src) return;
-    int row_bytes = (bpp == 2) ? 2 : 4;
-    for (int row = 0; row < 8; row++) {
-        tqr_decode_tile_row(out64 + row * 8, src + row * row_bytes, bpp);
+    if (bpp == 2) {
+        for (int row = 0; row < 8; row++)
+            tqr_decode_tile_row(out64 + row * 8, src + row * 2, 2);
+    } else if (bpp == 4) {
+        /* PCE 4bpp: 32 bytes per tile.
+         * Bytes 0-15: planes 0+1 interleaved (row*2=p0, row*2+1=p1)
+         * Bytes 16-31: planes 2+3 interleaved (16+row*2=p2, 16+row*2+1=p3) */
+        for (int row = 0; row < 8; row++) {
+            uint8_t planar[4];
+            planar[0] = src[row * 2];
+            planar[1] = src[row * 2 + 1];
+            planar[2] = src[16 + row * 2];
+            planar[3] = src[16 + row * 2 + 1];
+            tqr_decode_tile_row(out64 + row * 8, planar, 4);
+        }
     }
 }
 
@@ -100,9 +114,9 @@ int tqr_palette_load_group(TQR_PaletteState *pal,
         count = TQR_PALETTE_SIZE - start;
     }
     for (int i = 0; i < count; i++) {
-        uint16_t bgr444 = (uint16_t)((data[i*2] << 8) | data[i*2+1]);
-        pal->entries[start + i].bgr444 = bgr444;
-        pal->entries[start + i].rgba   = tqr_bgr444_to_rgba(bgr444);
+        uint16_t bgr = (uint16_t)(data[i*2] | (data[i*2+1] << 8));
+        pal->entries[start + i].bgr444 = bgr;
+        pal->entries[start + i].rgba   = tqr_bgr333_to_rgba(bgr);
     }
     return count;
 }
@@ -110,7 +124,7 @@ int tqr_palette_load_group(TQR_PaletteState *pal,
 void tqr_palette_expand_rgba(TQR_PaletteState *pal) {
     if (!pal) return;
     for (int i = 0; i < TQR_PALETTE_SIZE; i++) {
-        pal->entries[i].rgba = tqr_bgr444_to_rgba(pal->entries[i].bgr444);
+        pal->entries[i].rgba = tqr_bgr333_to_rgba(pal->entries[i].bgr444);
     }
 }
 

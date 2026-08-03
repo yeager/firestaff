@@ -110,6 +110,9 @@ Nexus_SpellEffectResult nexus_v1_spell_effect_debuff(
         break;
     case NEXUS_SPELL_EFFECT_DARKNESS:
     case NEXUS_SPELL_EFFECT_DARKNESS_A:
+        nexus_v1_status_apply(target_status, NEXUS_STATUS_SEE_THROUGH,
+                              (power + 1) * 60, -((power + 1) * 2));
+        r.status_applied = 1;
         r.applied = 1;
         break;
     case NEXUS_SPELL_EFFECT_WEAKEN:

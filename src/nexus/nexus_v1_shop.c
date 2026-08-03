@@ -91,10 +91,12 @@ int nexus_v1_shop_buy(Nexus_ShopManager *mgr,
     if (entry_idx < 0 || entry_idx >= s->stock_count) return 0;
     e = &s->stock[entry_idx];
     if (e->stock <= 0) return 0;
+    if (buyer->gold < e->price) return 0;
 
     for (slot = 0; slot < NEXUS_INVENTORY_SLOTS; slot++) {
         if (buyer->inventory[slot] == 0xFFU) {
             buyer->inventory[slot] = (uint8_t)e->item_id;
+            buyer->gold -= e->price;
             e->stock--;
             return 1;
         }
@@ -109,6 +111,23 @@ int nexus_v1_shop_find_by_id(const Nexus_ShopManager *mgr, int shop_id) {
         if (mgr->shops[i].shop_id == shop_id) return i;
     }
     return -1;
+}
+
+int nexus_v1_shop_sell(Nexus_ShopManager *mgr,
+    Nexus_V1_Champion *seller, int inventory_slot) {
+    int price;
+    uint16_t item_id;
+    if (!mgr || !seller || !mgr->open) return 0;
+    if (inventory_slot < 0 || inventory_slot >= NEXUS_INVENTORY_SLOTS) return 0;
+    item_id = seller->inventory[inventory_slot];
+    if (item_id == 0xFFU) return 0;
+    price = nexus_v1_shop_price(item_id);
+    if (price < 0) return 0;
+    price /= NEXUS_SHOP_SELL_RATIO;
+    if (price < 1) price = 1;
+    seller->inventory[inventory_slot] = 0xFFU;
+    seller->gold += price;
+    return 1;
 }
 
 int nexus_v1_shop_price(uint16_t item_id) {

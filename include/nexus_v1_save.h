@@ -39,7 +39,7 @@
 /* ── Magic and version ────────────────────────────────────────────── */
 
 #define NEXUS_SAVE_MAGIC   0x53584E46U     /* 'FNXS' = 'F' + ('N'<<8) + ('X'<<16) + ('S'<<24) */
-#define NEXUS_SAVE_VERSION 2                    /* v2: adds champion_data_size + world_data_size */
+#define NEXUS_SAVE_VERSION 3                    /* v3: adds champion gold field */
 #define NEXUS_SAVE_MAX_SLOTS 8
 
 /* ── Save header — stored at the start of every save file ──────────── */

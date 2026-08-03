@@ -2591,6 +2591,75 @@ static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
     free(data);
 }
 
+static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
+                                        void *user_data) {
+    Nexus_V1_Engine *engine = (Nexus_V1_Engine *)user_data;
+    if (!action || !engine) return;
+
+    switch (action->opcode) {
+    case NEXUS_OP_TELEPORT:
+        engine->mechanics.party_x = action->x;
+        engine->mechanics.party_y = action->y;
+        if (action->level != engine->mechanics.current_level)
+            engine->mechanics.pending_level = action->level;
+        break;
+    case NEXUS_OP_SPAWN:
+        nexus_v1_creature_spawn_on_level(&engine->creatures,
+            action->value, action->x, action->y, 0, action->level);
+        break;
+    case NEXUS_OP_SET_SQUARE:
+        if (action->x >= 0 && action->x < NEXUS_MAX_MAP_SIZE &&
+            action->y >= 0 && action->y < NEXUS_MAX_MAP_SIZE)
+            engine->mechanics.squares[action->y][action->x] = (uint8_t)action->value;
+        break;
+    case NEXUS_OP_SOUND:
+        nexus_sound_play(&engine->audio, action->value);
+        break;
+    case NEXUS_OP_TRIGGER_DOOR:
+        nexus_v1_door_toggle(&engine->mechanics.doors,
+            action->x, action->y);
+        break;
+    case NEXUS_OP_GIVE_ITEM: {
+        int ci;
+        for (ci = 0; ci < engine->champions.party_count; ci++) {
+            int slot;
+            Nexus_V1_Champion *ch = &engine->champions.champions[
+                engine->champions.party[ci]];
+            for (slot = 0; slot < NEXUS_INVENTORY_SLOTS; slot++) {
+                if (ch->inventory[slot] == 0xFFU) {
+                    ch->inventory[slot] = (uint8_t)action->item_id;
+                    goto give_done;
+                }
+            }
+        }
+        give_done:
+        break;
+    }
+    case NEXUS_OP_AWARD_XP: {
+        int ci;
+        for (ci = 0; ci < engine->champions.party_count; ci++) {
+            Nexus_V1_Champion *ch = &engine->champions.champions[
+                engine->champions.party[ci]];
+            nexus_v1_award_experience(ch, action->value);
+        }
+        break;
+    }
+    case NEXUS_OP_DISPLAY_MESSAGE:
+        engine->mechanics.message_id = action->message_id;
+        engine->mechanics.message_timer = 120;
+        break;
+    case NEXUS_OP_SET_FLAG:
+        if (action->flag_index >= 0 && action->flag_index < NEXUS_SCRIPT_MAX_FLAGS)
+            engine->script_vm.flags[action->flag_index] = (uint8_t)action->value;
+        break;
+    case NEXUS_OP_END_GAME:
+        engine->mechanics.game_won = 1;
+        break;
+    default:
+        break;
+    }
+}
+
 int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     char disc_path[512];
     if (!engine || !data_dir) return -1;
@@ -4128,6 +4197,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     engine->script_trace_host_receipt.blocks_real_script_dispatch = 1;
     engine->script_trace_host_receipt.fallback_visuals_permitted = 0;
     free(script_data);
+    nexus_script_on_level_load(&engine->script_vm, level);
 
     snprintf(sal_name, sizeof(sal_name), "SNDLEV%02d.SAL", level);
     snprintf(map_name, sizeof(map_name), "SNDLEV%02d.MAP", level);

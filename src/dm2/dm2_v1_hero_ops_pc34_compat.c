@@ -118,24 +118,70 @@ int dm2_v1_process_poison(
     return 1;
 }
 
-int dm2_v1_add_coin_to_wallet(int16_t *wallet, int wallet_size,
-                               int16_t coin_type)
+int dm2_v1_add_coin_to_wallet(uint16_t container_ref, uint16_t coin_item_ref,
+                               const DM2_V1_WalletCallbacks *cb, void *ctx)
 {
-    if (!wallet || coin_type < 0 || coin_type >= wallet_size)
+    if (!cb)
         return 0;
-    wallet[coin_type]++;
+    if (!cb->is_container_moneybox(ctx, container_ref))
+        return 0;
+    if (!cb->is_item_currency(ctx, coin_item_ref))
+        return 0;
+
+    uint16_t denom = cb->get_distinctive_item_type(ctx, coin_item_ref);
+    uint16_t item = cb->get_container_head(ctx, container_ref);
+    while (item != DM2_V1_OBJECT_END) {
+        uint16_t db_type = cb->get_item_db_type(ctx, item);
+        if (db_type != DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY)
+            return db_type != 0;
+        if (cb->get_distinctive_item_type(ctx, item) == denom &&
+            cb->get_item_charge(ctx, item) < DM2_V1_COIN_CHARGE_MAX) {
+            cb->set_item_charge(ctx, item,
+                (uint8_t)(cb->get_item_charge(ctx, item) + 1));
+            cb->dealloc_record(ctx, coin_item_ref);
+            return 1;
+        }
+        item = cb->get_next_item_in_list(ctx, item);
+    }
+    cb->set_item_charge(ctx, coin_item_ref, 0);
+    cb->append_item_to_container(ctx, coin_item_ref, container_ref);
     return 1;
 }
 
-int dm2_v1_take_coin_from_wallet(int16_t *wallet, int wallet_size,
-                                  int16_t coin_type)
+uint16_t dm2_v1_take_coin_from_wallet(uint16_t container_ref,
+                                       int16_t coin_type_index,
+                                       const DM2_V1_WalletCallbacks *cb,
+                                       void *ctx)
 {
-    if (!wallet || coin_type < 0 || coin_type >= wallet_size)
-        return 0;
-    if (wallet[coin_type] <= 0)
-        return 0;
-    wallet[coin_type]--;
-    return 1;
+    if (!cb || coin_type_index < 0)
+        return DM2_V1_OBJECT_NULL;
+    if (!cb->coin_type_table || coin_type_index >= cb->coin_type_table_size)
+        return DM2_V1_OBJECT_NULL;
+    uint16_t denom = cb->coin_type_table[coin_type_index];
+
+    uint16_t found = DM2_V1_OBJECT_NULL;
+    uint16_t item = cb->get_container_head(ctx, container_ref);
+    for (;;) {
+        if (item == DM2_V1_OBJECT_END) {
+            if (found != DM2_V1_OBJECT_NULL) {
+                uint16_t stack = found;
+                if (cb->get_item_charge(ctx, stack) != 0) {
+                    cb->set_item_charge(ctx, stack,
+                        (uint8_t)(cb->get_item_charge(ctx, stack) - 1));
+                    found = cb->alloc_new_dbitem(ctx, denom);
+                } else {
+                    cb->cut_item_from_container(ctx, stack, container_ref);
+                }
+            }
+            return found;
+        }
+        uint16_t db_type = cb->get_item_db_type(ctx, item);
+        if (db_type != DM2_V1_ITEM_DB_TYPE_MISC_CURRENCY)
+            return DM2_V1_OBJECT_NULL;
+        if (cb->get_distinctive_item_type(ctx, item) == denom)
+            found = item;
+        item = cb->get_next_item_in_list(ctx, item);
+    }
 }
 
 void dm2_v1_perform_turn_squad(
@@ -386,6 +432,10 @@ void dm2_v1_shoot_champion_missile(
     int facing = (direction + (pos_offset >> 1)) & 0x3;
     cb->shoot_item(ctx, item, state->party_x, state->party_y,
                    direction, facing, clamped_dmg, clamped_ke, clamped_power);
+    if (cb->set_v1e025e)
+        cb->set_v1e025e(ctx, 4);
+    if (cb->set_v1e0274)
+        cb->set_v1e0274(ctx, (uint8_t)direction);
 }
 
 int dm2_v1_cast_champion_missile_spell(
@@ -440,6 +490,7 @@ void dm2_v1_bring_champion_to_life(
             }
         }
     }
+    hero->absdir = cb->formation_start;
     hero->cur_hp = saved_hp;
 
     /* BRING_CHAMPION_TO_LIFE */
@@ -491,7 +542,10 @@ int dm2_v1_burn_player_lighting_items(
     if (!cb)
         return 0;
     int any_burned = 0;
-    for (int h = cb->hero_count - 1; h >= 0; h--) {
+    int last_idx = cb->hero_count - 1;
+    if (cb->is_last_hero && cb->is_last_hero(ctx, last_idx))
+        last_idx--;
+    for (int h = last_idx; h >= 0; h--) {
         for (int hand = 1; hand >= 0; hand--) {
             int16_t item = cb->get_hero_hand_item(ctx, h, hand);
             if (item == -1)

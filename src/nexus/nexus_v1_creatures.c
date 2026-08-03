@@ -185,6 +185,20 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
         }
         }
 
+        /* Flee behavior: creatures with behav_flags bit 0 set flee when below
+         * 25% health.  Ranged creatures flee when party is adjacent.
+         * Source: DM1 CREATURE.C F0209 creature flee state. */
+        {
+        Nexus_CreatureType *ct = &mgr->types[c->type_index];
+        int max_hp = ct->health;
+        if (max_hp > 0 && c->health * 4 < max_hp && (ct->behav_flags & 1)) {
+            c->state = 4; /* flee */
+        }
+        if (ct->ranged_type > 0 && dist <= 1 && c->state == 2) {
+            c->state = 4; /* ranged creature flees melee range */
+        }
+        }
+
         /* Move toward party when chasing — speed-based movement interval.
          * Fast creatures (speed=5) move every tick; slow (speed=1) every 5 ticks.
          * Source: DM1 CREATURE.C creature movement timing. */
@@ -211,6 +225,31 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
                     c->y += dy;
                     if (dy < 0) c->facing = 0; /* North */
                     else if (dy > 0) c->facing = 2; /* South */
+                }
+            }
+        }
+
+        /* Flee: move away from party. */
+        if (c->state == 4 && c->ai_timer % (6 - mgr->types[c->type_index].speed) == 0) {
+            int dx = 0, dy = 0;
+            if (abs(party_x - c->x) > abs(party_y - c->y)) {
+                dx = (party_x > c->x) ? -1 : 1;
+            } else {
+                dy = (party_y > c->y) ? -1 : 1;
+            }
+            if (dx != 0) {
+                int sq = nexus_get_square(squares, c->x + dx, c->y);
+                if (sq != 0 && sq != 21 && sq != 22) {
+                    c->x += dx;
+                    if (dx > 0) c->facing = 1;
+                    else c->facing = 3;
+                }
+            } else if (dy != 0) {
+                int sq = nexus_get_square(squares, c->x, c->y + dy);
+                if (sq != 0 && sq != 21 && sq != 22) {
+                    c->y += dy;
+                    if (dy < 0) c->facing = 0;
+                    else c->facing = 2;
                 }
             }
         }

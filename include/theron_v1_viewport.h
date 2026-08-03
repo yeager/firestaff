@@ -95,6 +95,9 @@ typedef struct {
                                                           present but no
                                                           source-locked tile
                                                           bank bound yet */
+    int                   vram_trace_loaded;  /* 1=real VRAM trace data bound */
+    uint8_t              *vram_trace_data;    /* 64KB VRAM snapshot (owned) */
+    uint8_t              *vce_trace_data;     /* 1KB VCE palette snapshot (owned) */
 } Theron_V1_Viewport;
 
 /* ── Camera / party view state ──────────────────────────────────── */

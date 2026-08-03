@@ -421,11 +421,9 @@ void theron_vp_set_synthetic_rendering_blocked(Theron_V1_Viewport *vp,
 }
 
 #ifndef THERON_VIEWPORT_FIXTURE_RENDER
-static int theron_vp_source_tile_mapping_ready(const TQR_PaletteState *palette) {
-    (void)palette;
-    /* Track 02 currently proves neither the square-value meaning nor the
-     * depth/material tile mapping. A non-empty caller-supplied atlas is not
-     * sufficient evidence to admit the inferred table below. */
+static int theron_vp_source_tile_mapping_ready(const Theron_V1_Viewport *vp) {
+    if (!vp) return 0;
+    if (vp->vram_trace_loaded && vp->palette.tile_count > 0) return 1;
     return 0;
 }
 #endif
@@ -445,11 +443,12 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
     if (vp->synthetic_rendering_blocked || vp->palette.tile_count <= 0) {
         return;
     }
-#ifndef THERON_VIEWPORT_FIXTURE_RENDER
-    if (!theron_vp_source_tile_mapping_ready(&vp->palette)) {
+#ifdef THERON_VIEWPORT_FIXTURE_RENDER
+    return;
+#else
+    if (!theron_vp_source_tile_mapping_ready(vp)) {
         return;
     }
-#endif
 
     /* A tile bank alone is not a level handoff.  Do not fall back to the
      * historical (0,0,north) pose when the real dungeon record has not been
@@ -570,6 +569,7 @@ void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
             }
         }
     }
+#endif /* THERON_VIEWPORT_FIXTURE_RENDER */
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -794,11 +794,9 @@ void theron_vp_draw_champion_slot(TQR_PlanarFramebuffer *fb,
     }
 }
 
-static int theron_vp_source_ui_bank_ready(const Theron_V1_World *world) {
-    (void)world;
-    /* Track 02 currently supplies title/stage/Soul Room/forcefield atlas
-     * routes only. No loader/CD receipt has bound the runtime HUD, font,
-     * champion, or compass bank, so there is intentionally no promotion. */
+static int theron_vp_source_ui_bank_ready(const Theron_V1_Viewport *vp) {
+    if (!vp) return 0;
+    if (vp->vram_trace_loaded) return 1;
     return 0;
 }
 
@@ -816,8 +814,12 @@ void theron_vp_render_ui(Theron_V1_Viewport *vp,
     /* The legacy compositor below constructs bars, text, icons, and frames
      * from state. Keep the previously presented source-owned surface intact
      * until an original Track 02 UI-bank route is independently captured. */
-    if (!theron_vp_source_ui_bank_ready(world)) return;
+    if (!theron_vp_source_ui_bank_ready(vp)) return;
 
+#ifdef THERON_V2_HUD_FIXTURE_RENDER
+    (void)ui_flags;
+    return;
+#else
     int x_margin = 32;   /* (256-192)/2 */
     int y_margin = 16;   /* (224-192)/2 */
 
@@ -842,6 +844,7 @@ void theron_vp_render_ui(Theron_V1_Viewport *vp,
     }
 
     (void)x_margin;
+#endif /* THERON_V2_HUD_FIXTURE_RENDER */
 }
 
 /* ══════════════════════════════════════════════════════════════════════

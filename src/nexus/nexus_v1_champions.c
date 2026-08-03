@@ -229,6 +229,7 @@ void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool) {
         c->anti_fire = 5;
         c->food = 1500;
         c->water = 1500;
+        c->gold = 0;
         c->alive = 1;
         c->portrait_index = i;
 
@@ -339,7 +340,7 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
             c->primary_class = NEXUS_CLASS_PRIEST;
         else if (wizard > fighter)
             c->primary_class = NEXUS_CLASS_WIZARD;
-        c->food = c->water = 1500; c->alive = 1; c->portrait_index = i;
+        c->food = c->water = 1500; c->gold = 0; c->alive = 1; c->portrait_index = i;
         for (j = 0; j < 30; ++j) c->inventory[j] = 0xffU;
         for (j = 0; j < NEXUS_SLOT_COUNT; ++j) {
             uint16_t item = (uint16_t)(((uint16_t)r[24U + 4U * (unsigned)j] << 8) |
@@ -542,15 +543,15 @@ static const uint8_t *rd32(const uint8_t *p, uint32_t *out) {
 
 /* Calculate champion blob size.
  * Matches ReDMCSB CHAMPION.C F0309 save structure:
- *   name_ascii(32) + name_jp(64) + 25 int fields + inventory(30) + slots(11×4)
- *   = 32 + 64 + 25×4 + 30 + 44 = 270 bytes
- * The 25 int fields are: primary_class, health, max_health, stamina,
+ *   name_ascii(32) + name_jp(64) + 26 int fields + inventory(30) + slots(11×4)
+ *   = 32 + 64 + 26×4 + 30 + 44 = 274 bytes
+ * The 26 int fields are: primary_class, health, max_health, stamina,
  * max_stamina, mana, max_mana, strength, dexterity, wisdom, vitality,
  * anti_magic, anti_fire, fighter_level, ninja_level, priest_level,
  * wizard_level, food, water, alive, portrait_index, load, max_load,
- * wounds, attributes. */
+ * wounds, attributes, gold. */
 static size_t champion_blob_size(void) {
-    return 32 + 64 + (25 * 4) + 30 + (NEXUS_SLOT_COUNT * 4);
+    return 32 + 64 + (26 * 4) + 30 + (NEXUS_SLOT_COUNT * 4);
 }
 
 size_t nexus_v1_champion_pool_serialize_size(const Nexus_V1_ChampionPool *pool) {
@@ -621,6 +622,7 @@ size_t nexus_v1_champion_pool_serialize(const Nexus_V1_ChampionPool *pool,
         p = wr32(p, (uint32_t)c->max_load);
         p = wr32(p, (uint32_t)c->wounds);
         p = wr32(p, (uint32_t)c->attributes);
+        p = wr32(p, (uint32_t)c->gold);
         /* inventory(30) */
         for (j = 0; j < 30; j++)
             *p++ = c->inventory[j];
@@ -698,6 +700,7 @@ int nexus_v1_champion_pool_deserialize(Nexus_V1_ChampionPool *pool,
         p = rd32(p, (uint32_t *)&c->max_load);
         p = rd32(p, (uint32_t *)&c->wounds);
         p = rd32(p, (uint32_t *)&c->attributes);
+        p = rd32(p, (uint32_t *)&c->gold);
         /* inventory(30) */
         for (j = 0; j < 30; j++)
             c->inventory[j] = (int8_t)*p++;

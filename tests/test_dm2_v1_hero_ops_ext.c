@@ -184,13 +184,33 @@ static void test_burn_lighting_items(void)
     g_charge_calls = 0;
     g_recalc_called = 0;
     DM2_V1_BurnLightCallbacks cb = {
-        1, mock_hand_item, mock_item_flags, mock_add_charge,
+        1, NULL, mock_hand_item, mock_item_flags, mock_add_charge,
         mock_set_imp, mock_recalc
     };
     int r = dm2_v1_burn_player_lighting_items(&cb, NULL);
     assert(r == 1);
     assert(g_recalc_called == 1);
     printf("  PASS: burn_lighting_items\n");
+}
+
+static int mock_burn_is_last_hero(void *ctx, int hero_idx)
+{ (void)ctx; return hero_idx == 1; }
+
+static void test_burn_lighting_items_excludes_last_hero(void)
+{
+    g_charge_calls = 0;
+    g_recalc_called = 0;
+    DM2_V1_BurnLightCallbacks cb = {
+        2, mock_burn_is_last_hero, mock_hand_item, mock_item_flags,
+        mock_add_charge, mock_set_imp, mock_recalc
+    };
+    /* hero_count = 2; is_last_hero(1) == true excludes hero index 1,
+     * so only hero 0's hand item (which mock_hand_item burns) is
+     * processed and mock_add_charge should still be called for it. */
+    int r = dm2_v1_burn_player_lighting_items(&cb, NULL);
+    assert(r == 1);
+    assert(g_charge_calls > 0);
+    printf("  PASS: burn_lighting_items_excludes_last_hero\n");
 }
 
 static int g_drop_count;
@@ -243,6 +263,7 @@ int main(void)
     test_bring_champion_to_life();
     test_add_item_to_player();
     test_burn_lighting_items();
+    test_burn_lighting_items_excludes_last_hero();
     test_drop_player_items();
     test_put_item_to_player();
     printf("All hero_ops_ext tests passed.\n");

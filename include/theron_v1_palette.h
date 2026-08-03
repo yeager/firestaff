@@ -132,8 +132,7 @@ void tqr_decode_tile(uint8_t *TQR_RESTRICT out64,
 
 /* ── Palette API ───────────────────────────────────────────────────── */
 
-/* BGR444 → RGBA8 expansion (4-bit → 8-bit per channel).
- * HuC6270 format: 4 bits per channel, left-shift 4 to expand. */
+/* BGR444 → RGBA8 expansion (4-bit → 8-bit per channel). */
 static inline uint32_t tqr_bgr444_to_rgba(uint16_t bgr444) {
     unsigned r = (bgr444 >> 8) & 0xF;
     unsigned g = (bgr444 >> 4) & 0xF;
@@ -142,6 +141,16 @@ static inline uint32_t tqr_bgr444_to_rgba(uint16_t bgr444) {
     g = (g << 4) | g;
     b = (b << 4) | b;
     return 0xFF000000U | (r << 16) | (g << 8) | b;
+}
+
+/* BGR333 → RGBA8 expansion (real PCE HuC6260 VCE format).
+ * 9-bit color: B[8:6] G[5:3] R[2:0], 3 bits per channel.
+ * Multiply by 36 to expand 0-7 → 0-252. */
+static inline uint32_t tqr_bgr333_to_rgba(uint16_t bgr333) {
+    unsigned r =  bgr333        & 0x7;
+    unsigned g = (bgr333 >> 3)  & 0x7;
+    unsigned b = (bgr333 >> 6)  & 0x7;
+    return 0xFF000000U | ((r * 36) << 16) | ((g * 36) << 8) | (b * 36);
 }
 
 /* Initialize an unbound palette.  All entries remain zero until verified
