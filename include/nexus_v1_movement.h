@@ -40,7 +40,8 @@
 #define NEXUS_CMD_REST          12
 #define NEXUS_CMD_SET_LEADER    13
 #define NEXUS_CMD_THROW         14
-#define NEXUS_CMD_COUNT         15
+#define NEXUS_CMD_DROP_ITEM     15
+#define NEXUS_CMD_COUNT         16
 #endif
 
 /* Movement result codes — mirrors DM1 MOVESENS result values.

@@ -49,6 +49,7 @@ typedef struct {
     int projectile_type;
     int source_champion;
     int hit_wall;
+    int slot_index;
 } Nexus_ProjectileHit;
 
 int nexus_v1_projectiles_tick(Nexus_ProjectileManager* mgr,

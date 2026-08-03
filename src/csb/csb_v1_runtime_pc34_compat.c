@@ -17715,10 +17715,49 @@ static int csb_v1_runtime_apply_saved_csbwin_door_animation_timer(
     if (effect == DM1_EFFECT_CLEAR && timer->level == profile->current_level &&
         timer->ubyte6 == profile->party_x && timer->ubyte7 == profile->party_y &&
         profile->party_state_valid && profile->party_state.ChampionCount > 0) {
-        /* The source damage + sound transaction cannot yet roll back with
-         * the TIMER pool. Do not publish a partial door/timer successor. */
-        return 0;
-    } else {
+        /* ReDMCSB TIMELINE.C F0241: closing door on party deals 5 damage
+         * (SHARP) to each living champion. */
+        int ci;
+        struct RngState_Compat crush_rng;
+        F0730_COMBAT_RngInit_Compat(&crush_rng,
+            profile->dungeon_seed ^ profile->game_time ^
+            (uint32_t)timer->ubyte6 ^ ((uint32_t)timer->ubyte7 << 8));
+        for (ci = 0; ci < profile->party_state.ChampionCount &&
+                     ci < CSB_V1_MAX_CHAMPIONS; ++ci) {
+            CSB_V1_Champion *champion = &profile->party_state.Champions[ci];
+            struct CombatantChampionSnapshot_Compat defender;
+            int scaled = 0;
+            if (champion->CurrentHealth <= 0 ||
+                (champion->Attributes & CSB_V1_CHAMPION_ATTRIBUTE_DEAD) != 0) {
+                continue;
+            }
+            if (!csb_v1_runtime_fill_defender_combat_snapshot(
+                    profile, ci, &defender) ||
+                !F0739b_COMBAT_ScaleChampionDamageF0321Rng_Compat(
+                    COMBAT_ATTACK_SHARP, 5, 0x3Fu, &defender,
+                    &crush_rng, &scaled, NULL) ||
+                scaled <= 0) {
+                continue;
+            }
+            if (scaled >= champion->CurrentHealth) {
+                champion->CurrentHealth = 0;
+                csb_v1_runtime_mark_champion_dead(profile, ci);
+            } else {
+                champion->CurrentHealth =
+                    (int16_t)(champion->CurrentHealth - scaled);
+            }
+        }
+        {
+            CsbV1AudioRequest crush_sound;
+            memset(&crush_sound, 0, sizeof(crush_sound));
+            crush_sound.soundIndex = 18;
+            crush_sound.mapX = (int16_t)timer->ubyte6;
+            crush_sound.mapY = (int16_t)timer->ubyte7;
+            crush_sound.mode = CSB_V1_MODE_PLAY_IF_PRIORITIZED;
+            (void)csb_v1_runtime_request_source_sound(profile, &crush_sound);
+        }
+    }
+    {
         next_state = door_state + (effect == DM1_EFFECT_SET ? -1 : 1);
         staged_square = (uint8_t)((*square & (uint8_t)~0x07u) |
                                   (uint8_t)next_state);

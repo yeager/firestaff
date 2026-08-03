@@ -2735,6 +2735,11 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_v1_fountain_manager_init(&engine->fountains);
     nexus_v1_switch_manager_init(&engine->switches);
     nexus_v1_container_manager_init(&engine->containers);
+    {
+        char save_dir[512];
+        nexus_v1_save_default_dir(save_dir, sizeof(save_dir));
+        nexus_v1_save_init(&engine->save_manager, save_dir);
+    }
     /* Init sound engine */
     nexus_sound_init(&engine->audio);
     (void)nexus_v1_level_aux_source_receipt(
@@ -9872,14 +9877,41 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                                                         hits[hi].hit_x, hits[hi].hit_y,
                                                         hits[hi].damage);
                 }
+                {
+                    int thrown_item = nexus_v1_throw_on_hit(&engine->thrown,
+                                                            hits[hi].slot_index);
+                    if (thrown_item >= 0)
+                        nexus_floor_drop(hits[hi].hit_x, hits[hi].hit_y,
+                                         thrown_item, 1);
+                }
             }
         }
         {
             int ci2;
             for (ci2 = 0; ci2 < engine->creatures.active_count; ci2++) {
                 Nexus_Creature *cr = &engine->creatures.active[ci2];
-                if (!cr->alive || cr->state != 3) continue;
+                if (!cr->alive) continue;
                 if (cr->level != engine->mechanics->map_index) continue;
+                if (cr->type_index < 0) continue;
+                {
+                    int cdist = nexus_v1_creature_distance(cr->x, cr->y,
+                        engine->mechanics->party_x, engine->mechanics->party_y);
+                    int ranged = engine->creatures.types[cr->type_index].ranged_type;
+                    if (ranged > 0 && cdist > 1 && cdist <= 5 && cr->state == 2 &&
+                        cr->ai_timer % 8 == 0) {
+                        int dir = 0;
+                        int dx = engine->mechanics->party_x - cr->x;
+                        int dy = engine->mechanics->party_y - cr->y;
+                        if (abs(dx) > abs(dy))
+                            dir = (dx > 0) ? 1 : 3;
+                        else
+                            dir = (dy > 0) ? 2 : 0;
+                        nexus_v1_projectile_spawn(&engine->projectiles,
+                            NEXUS_PROJ_FIREBALL, cr->x, cr->y, dir,
+                            engine->creatures.types[cr->type_index].attack, 2, -1);
+                    }
+                }
+                if (cr->state != 3) continue;
                 if (nexus_v1_creature_distance(cr->x, cr->y,
                         engine->mechanics->party_x, engine->mechanics->party_y) <= 1) {
                     int li = engine->champions.leader_index;
@@ -9893,9 +9925,18 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                                 if (engine->champions.champions[idx].health <= 0) {
                                     engine->champions.champions[idx].health = 0;
                                     engine->champions.champions[idx].alive = 0;
+                                    nexus_v1_champion_on_death_update_leader(
+                                        &engine->champions, li);
                                 }
                                 nexus_v1_damage_display_add(&engine->damage_display,
                                                             idx, dmg, NEXUS_DMG_TAKEN);
+                                if (cr->type_index >= 0) {
+                                    int psn = engine->creatures.types[cr->type_index].poison;
+                                    if (psn > 0)
+                                        nexus_v1_status_apply(
+                                            &engine->champion_status[idx],
+                                            NEXUS_STATUS_POISON, psn, 10);
+                                }
                             }
                         }
                     }
@@ -9920,6 +9961,8 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                             }
                         }
                     }
+                    nexus_script_on_creature_dead(&engine->script_vm,
+                        cr->type_index);
                     cr->type_index = -2;
                 }
             }
@@ -9939,6 +9982,8 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                         if (ch->health <= 0) {
                             ch->health = 0;
                             ch->alive = 0;
+                            nexus_v1_champion_on_death_update_leader(
+                                &engine->champions, ci);
                         }
                     }
                     nexus_v1_status_tick(&engine->champion_status[idx]);

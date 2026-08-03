@@ -69,6 +69,7 @@ int nexus_v1_projectiles_tick(Nexus_ProjectileManager* mgr,
                 out_hits[hits].projectile_type = (int)p->type;
                 out_hits[hits].source_champion = p->source_champion;
                 out_hits[hits].hit_wall = 1;
+                out_hits[hits].slot_index = i;
                 hits++;
             }
             p->active = 0;
@@ -86,6 +87,7 @@ int nexus_v1_projectiles_tick(Nexus_ProjectileManager* mgr,
             out_hits[hits].projectile_type = (int)p->type;
             out_hits[hits].source_champion = p->source_champion;
             out_hits[hits].hit_wall = 0;
+            out_hits[hits].slot_index = i;
             hits++;
         }
     }

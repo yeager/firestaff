@@ -2632,6 +2632,7 @@ static void test_orch_projectile_closed_door_impact_destroys_door(void) {
     createIn.stepEnergy = 10;
     createIn.currentTick = 100;
     createIn.firstMoveGraceFlag = 1;
+    createIn.associatedThing = (THING_TYPE_WEAPON << 10) | 0;
     assert(F0810_PROJECTILE_Create_Compat(
         &createIn, &world.projectiles, &slot, &firstMove) == 1);
     assert(F0721_TIMELINE_Schedule_Compat(&world.timeline, &firstMove) == 1);
@@ -4530,6 +4531,12 @@ static void test_orch_projectile_group_hit_all_kill_cleans_up_group(void) {
     assert(groups[0].next == THING_NONE);
     assert(squareFirstThings[0] != make_thing(THING_TYPE_GROUP, 0));
     assert(world.creatureAICount == 0);
+    fprintf(stderr, "DBG: explosions.count=%d timeline.count=%d\n",
+            world.explosions.count, world.timeline.count);
+    {int xx; for (xx = 0; xx < world.timeline.count && xx < 5; ++xx) {
+        fprintf(stderr, "DBG: timeline[%d] kind=%d\n",
+                xx, world.timeline.events[xx].kind);
+    }}
     assert(world.explosions.count == 1);
     assert(world.explosions.entries[0].explosionType == C040_EXPLOSION_SMOKE);
     assert(world.explosions.entries[0].mapIndex == 0);

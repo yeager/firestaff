@@ -17,6 +17,7 @@
 #include "nexus_v1_rest.h"
 #include "nexus_v1_encumbrance.h"
 #include "nexus_v1_throw.h"
+#include "nexus_v1_save.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -778,6 +779,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     leader->inventory[st->use_item_slot] = (uint8_t)-1;
                     nexus_champion_recalc_load(leader);
                     nexus_sound_play(&engine->audio, NEXUS_SFX_PICKUP_ITEM);
+                    nexus_script_on_item_used(&engine->script_vm, item_id);
                     needs_redraw = 1;
                 }
             }
@@ -810,7 +812,13 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     Nexus_SwitchResult sr = nexus_v1_switch_activate(
                         &engine->switches, sw_idx);
                     if (sr.activated && sr.target_type == NEXUS_SWITCH_TARGET_DOOR)
+                    {
+                        int door_is_open;
                         nexus_v1_door_toggle(&engine->doors, sr.target_id);
+                        door_is_open = nexus_v1_door_is_passable(&engine->doors, sr.target_id);
+                        nexus_script_on_door_change(&engine->script_vm,
+                            st->party_x, st->party_y, door_is_open);
+                    }
                     needs_redraw = 1;
                 } else if (ct_idx >= 0) {
                     nexus_v1_container_open(&engine->containers, ct_idx, -1);
@@ -907,6 +915,18 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 if (idx >= 0 && idx < 4 &&
                     engine->champions.champions[idx].alive) {
                     engine->champions.leader_index = slot;
+                    needs_redraw = 1;
+                }
+            }
+        } else if (cmd == NEXUS_CMD_DROP_ITEM) {
+            int li4 = mechanics_party_leader_index(engine);
+            if (li4 >= 0 && st->drop_slot >= 0 && st->drop_slot < NEXUS_INVENTORY_SLOTS) {
+                Nexus_V1_Champion *ldr = &engine->champions.champions[li4];
+                uint8_t item_id = ldr->inventory[st->drop_slot];
+                if (item_id != 0xFFU) {
+                    ldr->inventory[st->drop_slot] = 0xFFU;
+                    nexus_floor_drop(st->party_x, st->party_y, item_id, 1);
+                    nexus_champion_recalc_load(ldr);
                     needs_redraw = 1;
                 }
             }
@@ -1411,6 +1431,12 @@ int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
         nexus_mechanics_push_command(st, NEXUS_CMD_REST);
         return 0;
     case NEXUS_UI_EVENT_SAVE:
+        nexus_v1_save_full(&engine->save_manager, (uint8_t)param,
+                           engine->game.current_level,
+                           st->party_x, st->party_y, st->party_dir,
+                           (uint32_t)engine->game.tick_count,
+                           0, &engine->champions, NULL);
+        nexus_v1_message_push(&engine->messages, "GAME SAVED");
         return 0;
     case NEXUS_UI_EVENT_SET_LEADER:
         nexus_mechanics_set_leader_slot(st, param);
@@ -1419,6 +1445,10 @@ int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
     case NEXUS_UI_EVENT_THROW:
         st->throw_slot = param;
         nexus_mechanics_push_command(st, NEXUS_CMD_THROW);
+        return 0;
+    case NEXUS_UI_EVENT_DROP:
+        st->drop_slot = param;
+        nexus_mechanics_push_command(st, NEXUS_CMD_DROP_ITEM);
         return 0;
     default:
         return -1;

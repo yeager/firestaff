@@ -8031,6 +8031,25 @@ static int orch_publish_source_c15_c25_explosion_compat(
     return 1;
 }
 
+static int orch_create_explosion_with_fallback_compat(
+    struct GameWorld_Compat* world,
+    const struct ExplosionCreateInput_Compat* input,
+    int c15Cell)
+{
+    if (world->things && world->things->loaded &&
+        orch_publish_source_c15_c25_explosion_compat(world, input, c15Cell)) {
+        return 1;
+    }
+    {
+        struct TimelineEvent_Compat adv;
+        int slot = -1;
+        if (F0821_EXPLOSION_Create_Compat(input, &world->explosions, &slot, &adv)) {
+            return F0721_TIMELINE_Schedule_Compat(&world->timeline, &adv);
+        }
+    }
+    return 0;
+}
+
 static int orch_materialize_projectile_tick_explosion_compat(
     struct GameWorld_Compat* world,
     const struct ProjectileInstance_Compat* projectile,
@@ -8050,7 +8069,7 @@ static int orch_materialize_projectile_tick_explosion_compat(
 
     sourceOwnedPotion = projectile &&
         (projectile->flags & PROJECTILE_FLAG_REMOVE_POTION_ON_IMPACT);
-    if (sourceOwnedPotion) {
+    if (sourceOwnedPotion && world->things && world->things->loaded) {
         if (!orch_validate_f0217_thrown_potion_receipt_compat(
                 world, projectile, projectileIndex, tickResult, &explosionIn,
                 &c15Cell)) {
@@ -8639,12 +8658,12 @@ static int orch_apply_projectile_group_action_compat(
                 world, group, &f0231ApplyPlan.mutationDispatchPlan);
         }
         if (killedAllAfterplay.shouldPresentSourceSmoke) {
-            (void)orch_publish_source_c15_c25_explosion_compat(
+            (void)orch_create_explosion_with_fallback_compat(
                 world, &killedAllAfterplay.sourceSmokeCreateInput,
                 killedAllAfterplay.sourceSmokeCreateInput.centered ? 0 :
                 killedAllAfterplay.sourceSmokeCreateInput.cell);
         } else if (f0231ApplyPlan.shouldCreateDeathSmoke) {
-            (void)orch_publish_source_c15_c25_explosion_compat(
+            (void)orch_create_explosion_with_fallback_compat(
                 world, &f0231ApplyPlan.smokeCreateInput,
                 f0231ApplyPlan.smokeCreateInput.centered ? 0 :
                 f0231ApplyPlan.smokeCreateInput.cell);
@@ -10137,7 +10156,7 @@ static void orch_apply_moving_killed_all_afterplay_f0190_compat(
         !plan.requiresDeferredDestinationCleanup) {
         return;
     }
-    (void)orch_publish_source_c15_c25_explosion_compat(
+    (void)orch_create_explosion_with_fallback_compat(
         world, &plan.sourceSmokeCreateInput,
         plan.sourceSmokeCreateInput.centered ? 0 :
         plan.sourceSmokeCreateInput.cell);
@@ -13047,12 +13066,12 @@ int F0888_ORCH_ApplyPlayerInput_Compat(
                                         .mutationDispatchPlan);
                         }
                         if (killedAllAfterplay.shouldPresentSourceSmoke) {
-                            (void)orch_publish_source_c15_c25_explosion_compat(
+                            (void)orch_create_explosion_with_fallback_compat(
                                 world, &killedAllAfterplay.sourceSmokeCreateInput,
                                 killedAllAfterplay.sourceSmokeCreateInput.centered ? 0 :
                                 killedAllAfterplay.sourceSmokeCreateInput.cell);
                         } else if (aftermathApplyPlan.shouldCreateDeathSmoke) {
-                            (void)orch_publish_source_c15_c25_explosion_compat(
+                            (void)orch_create_explosion_with_fallback_compat(
                                 world, &aftermathApplyPlan.smokeCreateInput,
                                 aftermathApplyPlan.smokeCreateInput.centered ? 0 :
                                 aftermathApplyPlan.smokeCreateInput.cell);

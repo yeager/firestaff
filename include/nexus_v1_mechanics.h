@@ -78,6 +78,7 @@ struct Nexus_MechanicsState {
 
     int set_leader_slot;   /* party slot (0-3) for NEXUS_CMD_SET_LEADER */
     int throw_slot;        /* inventory slot for NEXUS_CMD_THROW */
+    int drop_slot;         /* inventory slot for NEXUS_CMD_DROP_ITEM */
 };
 
 /* ═══════════════════════════════════════════════════════════════════
@@ -163,6 +164,7 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index);
 #define NEXUS_UI_EVENT_SAVE      0x05
 #define NEXUS_UI_EVENT_SET_LEADER 0x06
 #define NEXUS_UI_EVENT_THROW     0x07
+#define NEXUS_UI_EVENT_DROP      0x08
 
 int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
                                    Nexus_V1_Engine *engine,
