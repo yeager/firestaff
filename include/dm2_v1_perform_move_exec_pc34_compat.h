@@ -110,6 +110,24 @@ typedef struct {
     uint32_t game_tick;
     const DM2_V1_SkprojectMapDescriptor *map_descriptors;
     uint16_t map_descriptor_count;
+
+    /* Door attack context (skmove.cpp:428-474).
+     * Caller resolves these from the door record on the target tile. */
+    uint8_t door_tile_type;
+    uint8_t door_record_byte2;
+    uint8_t door_record_byte3;
+    uint16_t door_required_power;
+    int door_use_byte2_gate;
+    int door_rebirth_altar;
+    uint16_t door_timer_delay;
+    uint16_t party_attack_power;
+
+    /* Creature encounter context (skmove.cpp:477-543).
+     * Caller resolves these from the creature on the target tile. */
+    uint16_t target_creature_handle;
+    uint16_t target_creature_weight;
+    uint16_t creature_force_threshold;
+    uint16_t creature_random_value;
 } DM2_V1_PerformMoveExecRequest;
 
 /* Execute a planned move.

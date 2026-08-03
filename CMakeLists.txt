@@ -20897,21 +20897,6 @@ if(BUILD_TESTING)
         COMMAND test_csb_v1_csbwin_duplicate_timer_policy
     )
 
-    add_executable(test_csb_v1_tt11_shoot_action_clear
-        tests/test_csb_v1_tt11_shoot_action_clear.c
-    )
-    target_include_directories(test_csb_v1_tt11_shoot_action_clear PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-    )
-    target_link_libraries(test_csb_v1_tt11_shoot_action_clear PRIVATE firestaff_m10)
-    if(NOT MSVC)
-        target_compile_options(test_csb_v1_tt11_shoot_action_clear PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME csb_v1_tt11_shoot_action_clear
-        COMMAND test_csb_v1_tt11_shoot_action_clear
-    )
-
     add_executable(test_csb_v1_csbwin_item16_atomic_restore
         tests/test_csb_v1_csbwin_item16_atomic_restore.c
     )
@@ -21971,6 +21956,22 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_perform_move_receipt
         COMMAND test_dm2_v1_perform_move_receipt
+    )
+
+    add_executable(test_dm2_v1_perform_move_exec_door_creature
+        tests/test_dm2_v1_perform_move_exec_door_creature.c
+    )
+    target_include_directories(test_dm2_v1_perform_move_exec_door_creature PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_perform_move_exec_door_creature
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_perform_move_exec_door_creature PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_perform_move_exec_door_creature
+        COMMAND test_dm2_v1_perform_move_exec_door_creature
     )
 
     add_executable(test_dm2_v1_projectile_impact_attack

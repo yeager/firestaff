@@ -17669,6 +17669,9 @@ static void csb_v1_runtime_apply_door_timeline_record(
     }
 }
 
+static int csb_v1_runtime_square_has_material_group(
+    const CSB_V1_DungeonData *dungeon, int level, int map_x, int map_y);
+
 static int csb_v1_runtime_apply_saved_csbwin_door_animation_timer(
     CSB_V1_RuntimeProfile *profile,
     const struct DM1_DispatchRecord_V1 *record,
@@ -17757,6 +17760,17 @@ static int csb_v1_runtime_apply_saved_csbwin_door_animation_timer(
             (void)csb_v1_runtime_request_source_sound(profile, &crush_sound);
         }
     }
+    /* ReDMCSB TIMELINE.C F0241 lines ~1118-1140: a material creature group
+     * on a closing door reverses the door direction to EFFECT_SET (reopen).
+     * Non-material creatures phase through and do not block. */
+    if (effect == DM1_EFFECT_CLEAR && profile->dungeon_handle) {
+        int mat = csb_v1_runtime_square_has_material_group(
+            profile->dungeon_handle, timer->level,
+            timer->ubyte6, timer->ubyte7);
+        if (mat > 0) {
+            effect = DM1_EFFECT_SET;
+        }
+    }
     {
         next_state = door_state + (effect == DM1_EFFECT_SET ? -1 : 1);
         staged_square = (uint8_t)((*square & (uint8_t)~0x07u) |
@@ -17775,11 +17789,12 @@ static int csb_v1_runtime_apply_saved_csbwin_door_animation_timer(
     next.b_mapX = timer->ubyte6;
     next.b_mapY = timer->ubyte7;
     next.c_cell = timer->ubyte8;
-    next.c_effect = timer->ubyte9;
+    next.c_effect = (uint8_t)effect;
     event_index = csb_v1_runtime_add_timeline_event(profile, &next);
     if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) return 0;
     successor = *timer;
     successor.time = profile->game_time + 1u;
+    successor.ubyte9 = (uint8_t)effect;
     if (!csb_v1_runtime_replace_dispatched_csbwin_timer(
             profile, queue_slot, timer_index, &successor, event_index)) {
         (void)dm1v1_event_delete(&profile->timeline_queue, event_index);
@@ -18870,10 +18885,22 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
                     record);
             }
             break;
+        case DM1_EVENT_GROUP_REACTION_DANGER_ON_SQUARE:
+        case DM1_EVENT_GROUP_REACTION_HIT_BY_PROJECTILE:
+        case DM1_EVENT_GROUP_REACTION_PARTY_IS_ADJACENT:
         case DM1_EVENT_UPDATE_BEHAVIOR_GROUP:
             csb_v1_runtime_apply_group_behavior_timeline_record(
                 profile,
                 record);
+            break;
+        case DM1_EVENT_UPDATE_ASPECT_GROUP:
+            csb_v1_runtime_apply_group_aspect_timeline_record(
+                profile,
+                record);
+            break;
+        case DM1_EVENT_REMOVE_FLUXCAGE:
+            csb_v1_runtime_apply_remove_fluxcage_record(
+                profile, record);
             break;
         case DM1_EVENT_MOVE_GROUP_SILENT:
         case DM1_EVENT_MOVE_GROUP_AUDIBLE:
@@ -27413,9 +27440,9 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
         /* CSBWin CSBCode.cpp:6429 dispatches TT_1 to Timer.cpp:1224-1341.
          * Retain ProcessTT_1's collision-free state step and its exact
          * +1-tick successor through Timer.cpp's DeleteTimer/SetTimer pool
-         * transaction. Party damage and crush sound are now applied when
-         * the party stands on a closing door. Material-group damage remains
-         * fail-closed: it needs the full creature damage/reaction path. */
+         * transaction. Party damage and crush sound applied when party stands
+         * on a closing door. Material creature groups reverse door direction
+         * (F0241: door reopens when blocked by a material creature). */
         if (timer->valid && !timer->truncated &&
             timer->source_index == timer_index &&
             record->eventType == timer->function &&
@@ -27512,16 +27539,29 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
                 thing = csb_v1_runtime_sensor_next_thing(
                     profile->dungeon_handle, (uint16_t)thing);
             }
-            if (guard >= 128 || material_group_occupies) return 1;
+            if (guard >= 128) return 1;
 
-            next_door_state =
-                door_state + (timer->ubyte9 == 0u ? -1 : 1);
-            if ((timer->ubyte9 == 0u && next_door_state == 0) ||
-                (timer->ubyte9 == 1u && next_door_state == 4)) {
+            {
+                /* ReDMCSB F0241: a material creature group on a closing door
+                 * reverses the door direction (reopens). */
+                uint8_t eff = timer->ubyte9;
+                if (material_group_occupies && eff == 1u) {
+                    eff = 0u;
+                }
+                next_door_state =
+                    door_state + (eff == 0u ? -1 : 1);
+            }
+            if ((timer->ubyte9 == 0u && !material_group_occupies &&
+                 next_door_state == 0) ||
+                (timer->ubyte9 == 1u && !material_group_occupies &&
+                 next_door_state == 4)) {
                 *square = (uint8_t)((*square & (uint8_t)~0x07u) |
                                     (uint8_t)next_door_state);
                 return 1;
             }
+            {
+                uint8_t eff2 = timer->ubyte9;
+                if (material_group_occupies && eff2 == 1u) eff2 = 0u;
             /* The materialized M10 dispatch runs after its source timer's
              * saved tick. Preserve the existing runtime bridge's live clock
              * boundary while still making SetTimer own the replacement slot. */
@@ -27534,11 +27574,12 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
             next.b_mapX = timer->ubyte6;
             next.b_mapY = timer->ubyte7;
             next.c_cell = timer->ubyte8;
-            next.c_effect = timer->ubyte9;
+            next.c_effect = eff2;
             event_index = csb_v1_runtime_add_timeline_event(profile, &next);
             if (event_index >= 0 && event_index < DM1_EVENT_MAX_COUNT) {
                 successor = *timer;
                 successor.time = profile->game_time + 1u;
+                successor.ubyte9 = eff2;
                 if (csb_v1_runtime_replace_dispatched_csbwin_timer(
                         profile, queue_slot, timer_index, &successor,
                         event_index)) {
@@ -27548,6 +27589,7 @@ static int csb_v1_runtime_dispatch_saved_csbwin_timer_dsa(
                     (void)dm1v1_event_delete(&profile->timeline_queue,
                                               event_index);
                 }
+            }
             }
         }
         /* TT_1 aliases shared door animation. Invalid and collision-owned

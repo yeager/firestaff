@@ -235,18 +235,58 @@ int dm2_v1_perform_move_exec(
         break;
     }
 
-    case DM2_MOVE_CLASS_DOOR_ATTACK:
-        /* Door attack: select front champions, compute attack power,
-         * call DM2_ATTACK_DOOR.  skmove.cpp:428-474 */
+    case DM2_MOVE_CLASS_DOOR_ATTACK: {
+        /* Door attack: party attacks a closed door with combined power.
+         * skmove.cpp:428-474 */
+        DM2_V1_SkprojectAttackDoorReceipt door_receipt;
+        int door_ok = dm2_v1_skproject_attack_door(
+            request->door_tile_type,
+            request->door_record_byte2,
+            request->door_record_byte3,
+            request->party_attack_power,
+            request->door_required_power,
+            request->door_use_byte2_gate,
+            request->door_rebirth_altar,
+            request->door_timer_delay,
+            (int16_t)plan->to_x,
+            (int16_t)plan->to_y,
+            &door_receipt);
         receipt->door_attacked = 1;
-        receipt->fail_closed = 1;
+        receipt->door_attack_power = (int)request->party_attack_power;
+        if (!door_ok) {
+            receipt->fail_closed = 0;
+        }
         break;
+    }
 
-    case DM2_MOVE_CLASS_CREATURE:
-        /* Creature encounter: try push (12b4_0d75), if blocked
-         * then ATTACK_CREATURE.  skmove.cpp:477-543 */
-        receipt->fail_closed = 1;
+    case DM2_MOVE_CLASS_CREATURE: {
+        /* Creature encounter: try push first (12b4_0d75), if creature
+         * can't be pushed, attack it.  skmove.cpp:477-543 */
+        receipt->creature_handle = (int)request->target_creature_handle;
+        if (request->target_creature_handle == 0xFFFFu) {
+            receipt->fail_closed = 1;
+            break;
+        }
+        DM2_V1_SkprojectCreaturePushReceipt push_receipt;
+        int pushed = dm2_v1_skproject_move_12b4_0d75(
+            (int16_t)plan->to_x,
+            (int16_t)plan->to_y,
+            (uint8_t)(plan->to_dir & 3),
+            1,
+            request->target_creature_weight,
+            request->creature_force_threshold,
+            request->creature_random_value,
+            &push_receipt);
+        receipt->creature_pushable = pushed;
+        if (pushed) {
+            receipt->final_x = (int16_t)plan->to_x;
+            receipt->final_y = (int16_t)plan->to_y;
+            receipt->position_updated = 1;
+        } else {
+            receipt->creature_attacked = 1;
+        }
         break;
+    }
 
     case DM2_MOVE_CLASS_BLOCKED:
         break;
