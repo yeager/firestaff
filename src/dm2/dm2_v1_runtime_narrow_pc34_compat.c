@@ -138,22 +138,109 @@ int dm2_v1_operate_pit_tele_tile(
  * c_hero.cpp
  * ===================================================================== */
 
-int16_t dm2_v1_calc_player_attack_damage(
-    const DM2_V1_AttackDamageHero *hero, int16_t weapon_damage,
-    int16_t action_strength, int16_t to_hit_bonus, int16_t stealth_bonus)
+/* belongs to DM2_hero_2c1d_135d — c_hero.cpp:1352 (DM2_hero_2c1d_132c):
+ * halves an armour class value when the "used/worn-out" flag is set. */
+static int32_t dm2_v1_hero_2c1d_132c_helper(int16_t armour_class, int is_used)
 {
-    if (!hero || hero->cur_hp <= 0)
-        return 0;
-    int32_t dmg = weapon_damage;
-    dmg += (action_strength * (hero->skill_fighter + 1)) / 32;
-    dmg += (to_hit_bonus + stealth_bonus + hero->skill_ninja) / 8;
-    if (dmg < 0)
-        dmg = 0;
-    if (dmg > 0x7FFF)
-        dmg = 0x7FFF;
-    return (int16_t)dmg;
+    int32_t v = armour_class;
+    if (is_used)
+        v = v >> 3;
+    return v;
 }
 
+/* DM2_CALC_PLAYER_ATTACK_DAMAGE — c_hero.cpp:232 */
+int16_t dm2_v1_calc_player_attack_damage(
+    int hero_idx, const DM2_V1_AttackDamageHero *hero, int creature_idx,
+    int16_t action_strength, int32_t skill_id,
+    const DM2_V1_AttackDamageCallbacks *cb, void *ctx)
+{
+    if (!hero || !cb || hero->cur_hp <= 0)
+        return 0;
+
+    int16_t result = 0;
+    int hit = 0;
+
+    /* skproject bails the whole roll immediately if the target has no
+     * defense-class spec (0xff == "no creature/no defense record"). */
+    if (hero->weapon_poison_class != 0xff) {
+        int creature_present = (creature_idx >= 0);
+        if (creature_present) {
+            int16_t def_class = cb->creature_defense_class
+                ? cb->creature_defense_class(ctx, creature_idx) : 0;
+            int16_t armour_class = cb->creature_armour_class
+                ? cb->creature_armour_class(ctx, creature_idx) : 0;
+            int asleep = cb->is_creature_asleep
+                ? cb->is_creature_asleep(ctx, creature_idx) : 0;
+
+            /* dexterity-vs-defense to-hit gate (m_8BA8 in the source) */
+            int r = cb->random ? cb->random(ctx, 32) : 0;
+            int16_t threshold = (int16_t)((2 * def_class + def_class + r - 16) / 2);
+            (void)armour_class;
+            int16_t dex = hero->dexterity;
+            if (!(asleep) && dex <= threshold) {
+                int rd = cb->random_dir ? cb->random_dir(ctx) : 0;
+                if (rd != 0 || (cb->use_luck && cb->use_luck(ctx, hero_idx, (int16_t)(75 - action_strength))))
+                    hit = 1;
+            }
+        }
+
+        if (hit) {
+            /* strength-derived base roll, m_8C2A..m_8CF7 */
+            int32_t strength_roll = action_strength;
+            int rr = cb->random ? cb->random(ctx, action_strength / 2 + 1) : 0;
+            strength_roll += rr;
+            int32_t dmg = ((int32_t)strength_roll * hero->skill_fighter) >> 5;
+
+            int r1 = cb->random ? cb->random(ctx, 32) : 0;
+            int r2 = cb->random ? cb->random(ctx, 32) : 0;
+            dmg += r1 - r2;
+
+            int rd1 = cb->random_dir ? cb->random_dir(ctx) : 0;
+            dmg += rd1 + 1;
+            int rd2 = cb->random_dir ? cb->random_dir(ctx) : 0;
+            dmg += rd2;
+
+            /* fighter skill-threshold bonus */
+            int roll32 = cb->random ? cb->random(ctx, 64) : 0;
+            if (hero->skill_fighter > roll32)
+                dmg += 10;
+
+            /* poison-resistance roll */
+            if (hero->weapon_poison_class != 0) {
+                int roll20 = cb->random ? cb->random(ctx, 32) : 0;
+                if (dmg > roll20 && cb->apply_creature_poison_resistance)
+                    dmg += cb->apply_creature_poison_resistance(
+                        ctx, creature_idx, (int16_t)hero->weapon_poison_class);
+            }
+
+            if (dmg < 0)
+                dmg = 0;
+            if (dmg > 0x7FFF)
+                dmg = 0x7FFF;
+            result = (int16_t)dmg;
+
+            /* skill exp gain proportional to the damage dealt */
+            if (cb->adjust_skills)
+                cb->adjust_skills(ctx, hero_idx, skill_id, (dmg * 3) / 16 + 3);
+        }
+    }
+
+    if (!hit) {
+        /* miss: still a small residual roll (m_8DE8) */
+        int rb = cb->random_bit ? cb->random_bit(ctx) : 0;
+        result = (int16_t)(2 + rb);
+    }
+
+    if (cb->adjust_stamina)
+        cb->adjust_stamina(ctx, hero_idx, action_strength);
+
+    return result;
+}
+
+/* DM2_hero_39796 — c_hero.cpp:464. See header note: the real skproject
+ * function at this identifier is the champion name-entry UI loop, which
+ * has no non-UI state to port. We keep the tick-regen contract the
+ * narrow API previously exposed for callers that need a per-tick hook. */
 void dm2_v1_hero_39796(DM2_V1_HeroRegenState *hero)
 {
     if (!hero || hero->cur_hp <= 0)
@@ -166,156 +253,581 @@ void dm2_v1_hero_39796(DM2_V1_HeroRegenState *hero)
     hero->hero_flag |= 0x0800;
 }
 
-int dm2_v1_hero_2c1d_135d(int16_t skill_value, int16_t action_difficulty)
+/* DM2_hero_2c1d_135d — c_hero.cpp:1403 (armour defense percentage) */
+int32_t dm2_v1_hero_2c1d_135d(
+    int hero_idx, uint16_t body_item_slot[6], uint16_t hand_item[2],
+    int is_used, uint32_t body_flag,
+    const DM2_V1_DefenseCallbacks *cb, void *ctx)
 {
-    int32_t gain = action_difficulty - (skill_value / 4);
-    if (gain < 1)
-        gain = 1;
-    return (int)gain;
-}
+    if (!cb)
+        return 0;
+    (void)hand_item;
 
-int32_t dm2_v1_adjust_skills(
-    int hero_idx, DM2_V1_AdjustSkillsState *state, int32_t exp_gain)
-{
-    if (!state || !state->skill_exp || !state->skill_level)
-        return -1;
-    (void)hero_idx;
-    state->skill_exp[hero_idx] += (int16_t)exp_gain;
-    int32_t level = 0;
-    if (state->level_thresholds) {
-        for (int i = 0; i < state->level_threshold_count; i++) {
-            if (state->skill_exp[hero_idx] >= state->level_thresholds[i])
-                level = i + 1;
-            else
-                break;
-        }
+    int32_t defense = 0;
+
+    /* body slots 0-5 */
+    for (int slot = 0; slot < 6; slot++) {
+        if (!(body_flag & (1u << slot)))
+            continue;
+        int16_t ac = cb->item_armour_class
+            ? cb->item_armour_class(ctx, body_item_slot[slot]) : 0;
+        int32_t shield_flag = (slot == 4) ? 0x8000 : 0;
+        int32_t contribution = dm2_v1_hero_2c1d_132c_helper(ac, is_used) | shield_flag;
+        defense += contribution & 0xffff;
     }
-    state->skill_level[hero_idx] = (int16_t)level;
-    return level;
+
+    /* hand slots 0-1 */
+    int32_t hand_bonus = 0;
+    for (int hand = 0; hand < 2; hand++) {
+        int16_t dc = cb->hand_defense_class
+            ? cb->hand_defense_class(ctx, hero_idx, hand) : 0;
+        hand_bonus += dc;
+    }
+
+    int16_t adj_dex = cb->ability_defense_bonus
+        ? cb->ability_defense_bonus(ctx, hero_idx) : 0;
+    int r = cb->random ? cb->random(ctx, adj_dex / 8 + 1) : 0;
+    defense += r;
+    if (is_used)
+        defense >>= 1;
+    defense += hand_bonus;
+
+    if (cb->is_asleep && cb->is_asleep(ctx, hero_idx))
+        defense >>= 1;
+
+    defense /= 2;
+    if (defense < 0)
+        defense = 0;
+    if (defense > 100)
+        defense = 100;
+    return defense;
 }
 
+/* DM2_ADJUST_SKILLS — c_hero.cpp:1166 */
+int32_t dm2_v1_adjust_skills(
+    int hero_idx, int32_t skill_id, int32_t exp_gain,
+    const DM2_V1_AdjustSkillsCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return -1;
+
+    /* time-window halving for combat (4..11) skill ids */
+    if (skill_id >= 4 && skill_id <= 11) {
+        int16_t tick = cb->get_gametick ? cb->get_gametick(ctx) : 0;
+        int16_t window = cb->get_exp_window_tick ? cb->get_exp_window_tick(ctx) : 0;
+        if ((int32_t)(tick - 150) > window)
+            exp_gain >>= 1;
+    }
+    if (exp_gain == 0)
+        return 0;
+
+    int16_t scale = cb->get_exp_scale ? cb->get_exp_scale(ctx) : 0;
+    if (scale != 0)
+        exp_gain *= scale;
+
+    int group = (int)skill_id;
+    if (group >= 4) {
+        group -= 4;
+        group >>= 2;
+    }
+    int16_t level_before = cb->get_skill_lv ? cb->get_skill_lv(ctx, hero_idx, group, 0) : 0;
+
+    if (skill_id >= 4) {
+        int16_t tick = cb->get_gametick ? cb->get_gametick(ctx) : 0;
+        int16_t window = cb->get_exp_window_tick ? cb->get_exp_window_tick(ctx) : 0;
+        if (tick - 40 < window)
+            exp_gain *= 2;
+    }
+
+    if (cb->add_skill_exp) {
+        cb->add_skill_exp(ctx, hero_idx, (int)skill_id, exp_gain);
+        if (skill_id >= 4)
+            cb->add_skill_exp(ctx, hero_idx, group, exp_gain);
+    }
+
+    int16_t level_after = cb->get_skill_lv ? cb->get_skill_lv(ctx, hero_idx, group, 0) : 0;
+
+    for (int32_t pass = level_before; (uint16_t)pass < (uint16_t)level_after; pass++) {
+        int rb0 = cb->random_bit ? cb->random_bit(ctx) : 0;
+        int rb1 = cb->random_bit ? cb->random_bit(ctx) : 0;
+        int8_t vit_delta = (int8_t)(rb1 + 1);
+        int rb2 = cb->random_bit ? cb->random_bit(ctx) : 0;
+        int32_t vit_gain = rb2;
+        if (group != 2)
+            vit_gain &= rb0;
+        if (cb->add_ability_max)
+            cb->add_ability_max(ctx, hero_idx, /*E_VITALITY*/ 0, (int16_t)vit_gain);
+
+        int rb3 = cb->random_bit ? cb->random_bit(ctx) : 0;
+        int16_t antifire_gain = (int16_t)(rb3 & ~rb0);
+        if (cb->add_ability_max)
+            cb->add_ability_max(ctx, hero_idx, /*E_ANTIFIRE*/ 1, antifire_gain);
+
+        int16_t hp_gain, sta_gain;
+        int16_t maxhp, maxsta, maxmp;
+        switch (group) {
+        case 0: /* fighter */
+            if (cb->add_ability_max) {
+                cb->add_ability_max(ctx, hero_idx, /*E_STRENGTH*/ 2, vit_delta);
+                cb->add_ability_max(ctx, hero_idx, /*E_DEXTERITY*/ 3, (int16_t)rb2);
+            }
+            break;
+        case 1: /* ninja */
+            if (cb->add_ability_max) {
+                cb->add_ability_max(ctx, hero_idx, /*E_STRENGTH*/ 2, (int16_t)rb2);
+                cb->add_ability_max(ctx, hero_idx, /*E_DEXTERITY*/ 3, vit_delta);
+            }
+            break;
+        case 2: /* wizard */
+            maxmp = cb->get_max_mp ? cb->get_max_mp(ctx, hero_idx) : 0;
+            if (cb->set_max_mp)
+                cb->set_max_mp(ctx, hero_idx, (int16_t)(maxmp + 1));
+            if (cb->add_ability_max)
+                cb->add_ability_max(ctx, hero_idx, /*E_WIZARDRY*/ 4, (int16_t)rb2);
+            break;
+        case 3: /* priest */
+            maxmp = cb->get_max_mp ? cb->get_max_mp(ctx, hero_idx) : 0;
+            if (cb->set_max_mp)
+                cb->set_max_mp(ctx, hero_idx, (int16_t)(maxmp + 1));
+            if (cb->add_ability_max)
+                cb->add_ability_max(ctx, hero_idx, /*E_WIZARDRY*/ 4, vit_delta);
+            break;
+        default:
+            break;
+        }
+        if (group == 2 || group == 3) {
+            maxmp = cb->get_max_mp ? cb->get_max_mp(ctx, hero_idx) : 0;
+            int rd = 0; /* DM2_RANDDIR() range placeholder */
+            maxmp = (int16_t)(maxmp + rd);
+            if (maxmp > 0x384)
+                maxmp = 0x384;
+            if (cb->set_max_mp)
+                cb->set_max_mp(ctx, hero_idx, maxmp);
+            if (cb->add_ability_max)
+                cb->add_ability_max(ctx, hero_idx, /*E_ANTIMAGIC*/ 5, 0);
+        }
+
+        hp_gain = (int16_t)(1 + rb2);
+        maxhp = cb->get_max_hp ? cb->get_max_hp(ctx, hero_idx) : 0;
+        maxhp = (int16_t)(maxhp + hp_gain);
+        if (maxhp > 999)
+            maxhp = 999;
+        if (cb->set_max_hp)
+            cb->set_max_hp(ctx, hero_idx, maxhp);
+
+        sta_gain = (int16_t)(1 + rb2);
+        maxsta = cb->get_max_stamina ? cb->get_max_stamina(ctx, hero_idx) : 0;
+        maxsta = (int16_t)(maxsta + sta_gain);
+        if (maxsta > 9999)
+            maxsta = 9999;
+        if (cb->set_max_stamina)
+            cb->set_max_stamina(ctx, hero_idx, maxsta);
+
+        if (cb->mark_hero_dirty)
+            cb->mark_hero_dirty(ctx, hero_idx);
+        if (cb->display_level_up_hint)
+            cb->display_level_up_hint(ctx, hero_idx, group);
+    }
+
+    return level_after;
+}
+
+/* DM2_WOUND_PLAYER — c_hero.cpp:1496 */
 int16_t dm2_v1_wound_player(
-    int hero_idx, DM2_V1_WoundPlayerHero *hero, int16_t damage, int flags,
+    int hero_idx, DM2_V1_WoundPlayerHero *hero, int16_t wound,
+    uint32_t body_mask,
     const DM2_V1_WoundPlayerCallbacks *cb, void *ctx)
 {
-    (void)flags;
-    if (!hero || hero->cur_hp <= 0)
+    if (!hero || !cb)
         return 0;
-    int16_t applied = damage;
-    if (applied > hero->cur_hp)
-        applied = hero->cur_hp;
-    hero->cur_hp = (int16_t)(hero->cur_hp - applied);
-    hero->hero_flag |= 0x0800;
-    if (hero->cur_hp <= 0) {
-        hero->cur_hp = 0;
-        if (cb && cb->player_defeated)
-            cb->player_defeated(ctx, hero_idx);
+    if (cb->hero_exists && !cb->hero_exists(ctx, hero_idx))
+        return 0;
+    if (cb->is_sleeping && cb->is_sleeping(ctx))
+        return 0;
+    if (wound <= 0)
+        return 0;
+    if (hero->cur_hp == 0)
+        return 0;
+
+    int ignore_armour = (body_mask & 0x8000) != 0;
+    uint32_t mask = body_mask & 0x7fff;
+
+    if (mask != 0) {
+        int is_used = ignore_armour;
+        int32_t defense_pct = cb->hero_defense_pct
+            ? cb->hero_defense_pct(ctx, hero_idx, mask, is_used) : 0;
+
+        /* skill-based partial mitigation for a "shocking" body-part hit */
+        {
+            int16_t lv = cb->skill_lv ? cb->skill_lv(ctx, hero_idx, 7, 1) : 0;
+            int roll = cb->random ? cb->random(ctx, 16) : 0;
+            if ((int32_t)lv + (int32_t)(mask / 8) > roll) {
+                if (ignore_armour) {
+                    wound = (int16_t)(wound - (int16_t)mask);
+                    if (wound <= 0)
+                        return 0;
+                }
+                defense_pct += (int32_t)mask / 4;
+            }
+        }
+
+        wound = (int16_t)((int32_t)wound * (130 - defense_pct) / 64);
+        if (wound <= 0)
+            return 0;
+
+        if (cb->is_sleeping && cb->resume_from_wake)
+            cb->resume_from_wake(ctx);
+
+        if (wound > 10) {
+            int roll = cb->random ? cb->random(ctx, 128) : 0;
+            if (cb->add_body_status)
+                cb->add_body_status(ctx, hero_idx, (uint16_t)(1u << (roll & 7)));
+        }
     }
-    return applied;
+
+    if (wound <= 0)
+        return 0;
+
+    hero->hero_flag |= 0x0800;
+    if (cb->accumulate_pending_damage)
+        cb->accumulate_pending_damage(ctx, hero_idx, wound);
+    return wound;
 }
 
+/* DM2_UPDATE_CHAMPIONS_STATS — c_hero.cpp:1757 */
 void dm2_v1_update_champions_stats(
     const DM2_V1_UpdateChampionsStatsCallbacks *cb, void *ctx)
 {
-    if (!cb)
+    if (!cb || cb->hero_count == 0)
         return;
-    for (int i = 0; i < cb->hero_count; i++)
+
+    int16_t accum = cb->get_stat_tick_accum ? cb->get_stat_tick_accum(ctx) : 0;
+    accum = (int16_t)(accum + 0x38);
+    if (accum > 0x80)
+        accum = (int16_t)(accum - 0x80);
+    if (cb->set_stat_tick_accum)
+        cb->set_stat_tick_accum(ctx, accum);
+
+    for (int i = 0; i < cb->hero_count; i++) {
+        if (cb->is_held_item_slot && cb->is_held_item_slot(ctx, i))
+            continue;
+        if (cb->hero_alive && !cb->hero_alive(ctx, i))
+            continue;
         cb->recompute_hero_stats(ctx, i);
+    }
 }
 
+/* DM2_WIELD_WEAPON — c_hero.cpp:2064 */
 int dm2_v1_wield_weapon(
-    int hero_idx, uint16_t item, int hand_slot, int forced,
+    int hero_idx, int16_t x, int16_t y, int hero_partypos, int hero_absdir,
+    int16_t action_strength, int require_melee,
     const DM2_V1_WieldWeaponCallbacks *cb, void *ctx)
 {
     if (!cb)
         return 0;
-    if (!forced && !cb->is_item_fit(ctx, item, hand_slot))
+
+    int creature_idx = cb->get_creature_at ? cb->get_creature_at(ctx, x, y) : -1;
+    if (creature_idx < 0)
         return 0;
-    cb->equip_item(ctx, hero_idx, item, hand_slot);
+
+    /* refuse to strike through an ally standing in the way */
+    int rel = (hero_partypos + 4 - hero_absdir) & 3;
+    if (rel >= 2) {
+        int side = (rel <= 2) ? 3 : 1;
+        int target_pos = (side + hero_partypos) & 3;
+        if (cb->get_player_at_position &&
+            cb->get_player_at_position(ctx, target_pos) != -1) {
+            return 0;
+        }
+    }
+
+    if (require_melee && cb->creature_ai_throw_only &&
+        cb->creature_ai_throw_only(ctx, creature_idx)) {
+        return 0;
+    }
+
+    int16_t dmg = cb->calc_attack_damage
+        ? cb->calc_attack_damage(ctx, hero_idx, creature_idx, action_strength, 0)
+        : 0;
+    if (cb->set_pending_combat_damage)
+        cb->set_pending_combat_damage(ctx, dmg);
     return 1;
 }
 
-int32_t dm2_v1_remove_object_from_hand(DM2_V1_RemoveFromHandState *state)
+/* DM2_REMOVE_OBJECT_FROM_HAND — c_hero.cpp:2354 */
+int32_t dm2_v1_remove_object_from_hand(
+    DM2_V1_RemoveFromHandState *state, int event_hero_idx,
+    const DM2_V1_RemoveFromHandCallbacks *cb, void *ctx)
 {
-    if (!state || !state->hand_item)
+    if (!state)
         return -1;
-    int32_t item = *state->hand_item;
-    *state->hand_item = -1;
+    int16_t item = state->hand_item;
+    if (item == -1)
+        return -1;
+
+    state->hand_weight = 0;
+    state->hand_flags = -1;
+    state->hand_item = -1;
+
+    if (cb) {
+        if (cb->hide_mouse)
+            cb->hide_mouse(ctx);
+        if (cb->show_mouse)
+            cb->show_mouse(ctx);
+        if (cb->process_item_bonus_release)
+            cb->process_item_bonus_release(ctx, event_hero_idx, (uint16_t)item);
+        if (cb->relink_item_to_view_tile)
+            cb->relink_item_to_view_tile(ctx, (uint16_t)item);
+    }
     return item;
 }
 
+/* DM2_PLAYER_DEFEATED — c_hero.cpp:2636 */
 void dm2_v1_player_defeated(
-    int hero_idx, const DM2_V1_PlayerDefeatedCallbacks *cb, void *ctx)
+    const DM2_V1_PlayerDefeatedInfo *info,
+    const DM2_V1_PlayerDefeatedCallbacks *cb, void *ctx)
 {
-    if (!cb)
+    if (!info || !cb)
         return;
-    cb->drop_player_items(ctx, hero_idx);
-    cb->mark_hero_dead(ctx, hero_idx);
-    if (cb->count_living_heroes(ctx) <= 0)
-        cb->trigger_game_over(ctx);
+
+    if (info->is_active_hero && cb->refresh_squad_hands_panel)
+        cb->refresh_squad_hands_panel(ctx);
+
+    if (info->is_last_visible_champion) {
+        if (info->is_mouse_drag_capture) {
+            if (cb->release_mouse_capture)
+                cb->release_mouse_capture(ctx);
+            if (cb->get_hand_item) {
+                int16_t item = cb->get_hand_item(ctx);
+                if (item != -1 && cb->display_taken_item_name)
+                    cb->display_taken_item_name(ctx, (uint16_t)item);
+            }
+            if (cb->show_mouse)
+                cb->show_mouse(ctx);
+        }
+        if (info->is_mouse_select_capture) {
+            if (cb->release_mouse_capture)
+                cb->release_mouse_capture(ctx);
+            if (cb->show_mouse)
+                cb->show_mouse(ctx);
+        }
+        if (cb->refresh_champion_display)
+            cb->refresh_champion_display(ctx, 4);
+    }
+
+    if (info->is_event_capture) {
+        if (cb->release_mouse_capture)
+            cb->release_mouse_capture(ctx);
+        if (cb->show_mouse)
+            cb->show_mouse(ctx);
+    }
+
+    if (cb->drop_player_items)
+        cb->drop_player_items(ctx, info->hero_idx);
+    if (cb->mark_hero_dead)
+        cb->mark_hero_dead(ctx, info->hero_idx);
 }
 
+/* DM2_PROCESS_PLAYERS_DAMAGE — c_hero.cpp:2777 */
 void dm2_v1_process_players_damage(
     const DM2_V1_ProcessPlayersDamageCallbacks *cb, void *ctx)
 {
     if (!cb)
         return;
+
     for (int i = 0; i < cb->hero_count; i++) {
-        int16_t dmg = cb->get_pending_damage(ctx, i);
-        if (dmg == 0)
+        if (cb->take_pending_body_status && cb->merge_body_status) {
+            uint16_t status = cb->take_pending_body_status(ctx, i);
+            if (status != 0)
+                cb->merge_body_status(ctx, i, status);
+        }
+
+        int16_t wound = cb->take_pending_damage ? cb->take_pending_damage(ctx, i) : 0;
+        if (wound == 0)
             continue;
-        cb->wound_player(ctx, i, dmg);
-        cb->clear_pending_damage(ctx, i);
+
+        int16_t hp = cb->get_cur_hp ? cb->get_cur_hp(ctx, i) : 0;
+        if (hp == 0)
+            continue;
+
+        hp = (int16_t)(hp - wound);
+        if (hp > 0) {
+            if (cb->set_cur_hp)
+                cb->set_cur_hp(ctx, i, hp);
+            if (cb->set_damage_suffered)
+                cb->set_damage_suffered(ctx, i, wound);
+            if (cb->mark_hero_dirty)
+                cb->mark_hero_dirty(ctx, i);
+
+            int timer_idx = cb->get_hero_timer ? cb->get_hero_timer(ctx, i) : -1;
+            if (timer_idx != -1) {
+                if (cb->rearm_hero_timer)
+                    cb->rearm_hero_timer(ctx, i, timer_idx, 5);
+            } else if (cb->queue_hero_hit_timer) {
+                cb->queue_hero_hit_timer(ctx, i, 5);
+            }
+        } else {
+            if (cb->player_defeated)
+                cb->player_defeated(ctx, i);
+        }
     }
 }
 
+/* DM2_PLAYER_CONSUME_OBJECT — c_hero.cpp:2998 */
 int dm2_v1_player_consume_object(
     int hero_idx, uint16_t item,
     const DM2_V1_PlayerConsumeObjectCallbacks *cb, void *ctx)
 {
     if (!cb)
         return 0;
-    int category = cb->get_item_category(ctx, item);
-    return cb->dispatch(ctx, hero_idx, item, category);
+    int category = cb->get_item_category ? cb->get_item_category(ctx, item) : -1;
+    if (cb->item_is_stackable_charge && cb->item_is_stackable_charge(ctx, item)) {
+        if (cb->decrement_item_charge)
+            cb->decrement_item_charge(ctx, item);
+    }
+    return cb->dispatch ? cb->dispatch(ctx, hero_idx, item, category) : 0;
 }
 
+/* DM2_CHANGE_PLAYER_POS — c_hero.cpp:4037 */
 void dm2_v1_change_player_pos(
-    int16_t packed_pos, const DM2_V1_ChangePlayerPosCallbacks *cb, void *ctx)
+    int16_t packed_pos, const DM2_V1_ChangePlayerPosState *state,
+    const DM2_V1_ChangePlayerPosCallbacks *cb, void *ctx)
+{
+    if (!cb || !state)
+        return;
+
+    int target_slot = packed_pos & 0x7fff;
+    int also_dir = state->also_swap_direction;
+
+    int target_hero = cb->get_player_at_position
+        ? cb->get_player_at_position(ctx, target_slot) : -1;
+
+    if (state->drag_in_progress) {
+        int src_hero = cb->get_player_at_position
+            ? cb->get_player_at_position(ctx, state->drag_source_position) : -1;
+        if (also_dir && src_hero != -1 && cb->set_direction && cb->get_party_facing) {
+            cb->set_direction(ctx, src_hero, cb->get_party_facing(ctx));
+        }
+        if (state->drag_source_position != target_slot) {
+            if (target_hero != -1 && cb->swap_positions)
+                cb->swap_positions(ctx, target_hero, src_hero);
+        }
+    } else if (target_hero != -1 && cb->swap_positions) {
+        cb->swap_positions(ctx, target_hero, target_slot);
+    }
+}
+
+/* DM2_hero_2c1d_1de2 — c_hero.cpp:3903 (throw item) */
+int32_t dm2_v1_hero_2c1d_1de2(
+    int hero_idx, int slot, int16_t x, int16_t y, int direction,
+    const DM2_V1_ThrowItemCallbacks *cb, void *ctx)
 {
     if (!cb)
-        return;
-    int hero_idx = (packed_pos >> 8) & 0xFF;
-    uint8_t new_pos = (uint8_t)(packed_pos & 0xFF);
-    cb->swap_positions(ctx, hero_idx, new_pos);
+        return 0;
+
+    int16_t item;
+    if (slot < 0) {
+        item = cb->remove_from_hand ? cb->remove_from_hand(ctx) : -1;
+        if (item == -1)
+            return 0;
+        if (cb->set_hand_slot1)
+            cb->set_hand_slot1(ctx, hero_idx, item);
+        slot = 1;
+    } else {
+        item = cb->remove_possession ? cb->remove_possession(ctx, hero_idx, slot) : -1;
+        if (item == -1)
+            return 0;
+    }
+
+    int16_t strength = cb->compute_throw_strength
+        ? cb->compute_throw_strength(ctx, hero_idx, slot) : 0;
+
+    if (cb->queue_launch_noise)
+        cb->queue_launch_noise(ctx, (uint16_t)item, x, y);
+    if (cb->shoot_item)
+        cb->shoot_item(ctx, (uint16_t)item, x, y, direction, strength);
+    return 1;
 }
 
-int32_t dm2_v1_hero_2c1d_1de2(int hero_idx, int16_t resist_stat, int16_t power)
-{
-    (void)hero_idx;
-    if (resist_stat >= power)
-        return 1;
-    return 0;
-}
-
+/* DM2_REVIVE_PLAYER — c_hero.cpp:957 */
 void dm2_v1_revive_player(
-    int8_t hero_type, int8_t direction,
+    DM2_V1_HeroRecord *hero, int8_t hero_type, int8_t direction,
     const DM2_V1_RevivePlayerCallbacks *cb, void *ctx)
 {
-    if (!cb)
+    if (!hero || !cb)
         return;
-    cb->init_hero_stats(ctx, hero_type);
-    cb->set_hero_direction(ctx, direction);
+
+    for (int i = 0; i < 30; i++)
+        hero->item[i] = (uint16_t)-1;
+
+    int free_pos = cb->find_free_position ? cb->find_free_position(ctx, direction) : 0;
+    hero->partypos = (int8_t)free_pos;
+    hero->absdir = direction;
+
+    hero->cur_hp = hero->max_hp = (int16_t)(cb->hp_base * 10);
+    hero->cur_stamina = hero->max_stamina = (int16_t)(cb->stamina_base * 10);
+    hero->cur_mp = hero->max_mp = (int16_t)(cb->mp_base * 10);
+
+    for (int i = 0; i < 7; i++) {
+        int16_t v = cb->ability_base[i];
+        if (v < 30)
+            v = 30;
+        hero->ability_cur[i] = hero->ability_max[i] = v;
+    }
+
+    for (int i = 0; i < 16; i++) {
+        int32_t v = 0;
+        if (cb->skill_level[i] != 0)
+            v = 0x40 << (uint8_t)cb->skill_level[i];
+        hero->skill[i / 4][i % 4] = v;
+    }
+    for (int g = 0; g < 4; g++) {
+        int32_t sum = 0;
+        for (int i = 0; i < 4; i++)
+            sum += hero->skill[g][i];
+        /* group total stored alongside sub-skills, matching the
+         * skill[0][group] layout used by DM2_QUERY_PLAYER_SKILL_LV */
+        hero->skill[0][g] = sum;
+    }
+
+    int r1 = cb->random ? cb->random(ctx) : 0;
+    int r2 = cb->random ? cb->random(ctx) : 0;
+    hero->food = (uint16_t)((r1 & 0xff) + 1500);
+    hero->water = (uint16_t)((r2 & 0xff) + 1500);
+    (void)hero_type;
 }
 
+/* DM2_SELECT_CHAMPION — c_hero.cpp:1052 */
 void dm2_v1_select_champion(
-    int hero_idx, int panel_slot, int mode,
+    const DM2_V1_SelectChampionState *state, int creation_map_id,
+    int previous_map_id, int new_hero_idx,
     const DM2_V1_SelectChampionCallbacks *cb, void *ctx)
 {
-    if (!cb)
+    if (!state || !cb)
         return;
-    (void)panel_slot;
-    cb->set_selected_champion(ctx, hero_idx);
-    cb->refresh_panel(ctx, mode);
+    if (state->hand_item_captured || state->already_full)
+        return;
+
+    if (cb->change_current_map)
+        cb->change_current_map(ctx, creation_map_id);
+
+    if (cb->revive_player)
+        cb->revive_player(ctx, state->hero_type, state->direction);
+
+    if (new_hero_idx == 0 && cb->select_leader)
+        cb->select_leader(ctx, 0);
+
+    if (cb->scavenge_creation_tile_items)
+        cb->scavenge_creation_tile_items(ctx, new_hero_idx);
+
+    if (cb->refresh_champion_strip)
+        cb->refresh_champion_strip(ctx);
+
+    if (cb->change_current_map)
+        cb->change_current_map(ctx, previous_map_id);
+
+    if (cb->recompute_player_weight)
+        cb->recompute_player_weight(ctx, new_hero_idx);
 }
 
 /* =====================================================================

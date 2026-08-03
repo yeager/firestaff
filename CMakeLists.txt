@@ -350,6 +350,14 @@ target_link_libraries(test_nexus_v1_containers PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_containers COMMAND test_nexus_v1_containers)
 set_tests_properties(nexus_v1_containers PROPERTIES LABELS "nexus;containers;tier4")
 
+add_executable(test_nexus_v1_sal_decode
+    tests/test_nexus_v1_sal_decode.c)
+target_include_directories(test_nexus_v1_sal_decode PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_sal_decode PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_sal_decode COMMAND test_nexus_v1_sal_decode)
+set_tests_properties(nexus_v1_sal_decode PROPERTIES LABELS "nexus;audio;tier4")
+
 add_executable(test_nexus_v1_leader_switch
     tests/test_nexus_v1_leader_switch.c)
 target_include_directories(test_nexus_v1_leader_switch PRIVATE
@@ -3875,7 +3883,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.262 LANGUAGES C)
+project(Firestaff VERSION 3.0.263 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries

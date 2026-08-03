@@ -199,6 +199,10 @@ typedef struct {
     int cd_playing;
     int cd_paused;
     char cd_track_path[512];
+    /* CD audio callbacks (set by host layer, e.g. M11) */
+    int (*cd_play_callback)(const char *path, void *userdata);
+    void (*cd_stop_callback)(void *userdata);
+    void *cd_callback_userdata;
 } Nexus_SoundEngine;
 
 typedef enum {
@@ -354,6 +358,12 @@ int nexus_sound_cd_resume(Nexus_SoundEngine *eng);
 
 /* Music fade (level transition) */
 void nexus_sound_music_fade(Nexus_SoundEngine *eng, int fade_out_ms);
+
+/* CD audio host callbacks */
+void nexus_sound_set_cd_callbacks(Nexus_SoundEngine *eng,
+    int (*play)(const char *path, void *userdata),
+    void (*stop)(void *userdata),
+    void *userdata);
 
 /* Mute/unmute */
 void nexus_sound_set_sfx(Nexus_SoundEngine *eng, int enabled);

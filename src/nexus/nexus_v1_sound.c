@@ -1,5 +1,4 @@
 #include "nexus_v1_sound.h"
-#include "firestaff_audio.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -649,10 +648,10 @@ void nexus_sound_shutdown(Nexus_SoundEngine *eng) {
 
 /* ═══════════════════════════════════════════════════════════════════
  * Load SFX bank for level
- * SAL format unknown: 290-460 KB per level suggests compressed samples.
- * MAP format: 66-90 bytes = small index table.
- * TODO: reverse-engineer SAL (compressed PCM? Saturn SAS? ATRAC?)
- *       and MAP (event_id → sample_offset/size?).
+ * SAL format: SCSP tone bank — "dsp01.EXB" DSP program header followed
+ * by tone directory (BE16 offset table) and signed 16-bit big-endian
+ * PCM sample data at 22050 Hz.
+ * MAP format: 8-byte records (DataID/ID/start/size), terminated by 0xFF.
  * Source: docs/nexus_audio_format.md.
  * ═══════════════════════════════════════════════════════════════════ */
 
@@ -1144,7 +1143,7 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
  * DM Nexus CD: tracks 2-9 are Red Book Audio music.
  * Level pairs: 0-1→track2, 2-3→track3, ..., 14-15→track9.
  * Source: docs/nexus_music.md, nexus_v1_game.c nexus_v1_cd_track_for_level().
- * TODO: SDL_mixer CD audio playback or platform equivalent.
+ * CD playback via host callback (set by M11 layer).
  * ═══════════════════════════════════════════════════════════════════ */
 
 static void nexus_cd_build_track_path(Nexus_SoundEngine *eng, int track_number) {
@@ -1161,8 +1160,9 @@ int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
     eng->current_cd_track = track_number;
     nexus_cd_build_track_path(eng, track_number);
 
-    if (eng->music_enabled) {
-        int result = fs_audio_play_track(eng->cd_track_path);
+    if (eng->music_enabled && eng->cd_play_callback) {
+        int result = eng->cd_play_callback(eng->cd_track_path,
+                                            eng->cd_callback_userdata);
         if (result == 0) {
             eng->cd_playing = 1;
             eng->cd_paused = 0;
@@ -1177,7 +1177,8 @@ int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
 
 int nexus_sound_cd_stop(Nexus_SoundEngine *eng) {
     if (!eng) return -1;
-    fs_audio_stop();
+    if (eng->cd_stop_callback)
+        eng->cd_stop_callback(eng->cd_callback_userdata);
     eng->cd_playing = 0;
     eng->cd_paused = 0;
     return 0;
@@ -1187,15 +1188,16 @@ int nexus_sound_cd_pause(Nexus_SoundEngine *eng) {
     if (!eng) return -1;
     if (eng->cd_playing) {
         eng->cd_paused = 1;
-        fs_audio_stop();
+        if (eng->cd_stop_callback)
+        eng->cd_stop_callback(eng->cd_callback_userdata);
     }
     return 0;
 }
 
 int nexus_sound_cd_resume(Nexus_SoundEngine *eng) {
     if (!eng) return -1;
-    if (eng->cd_paused && eng->cd_track_path[0]) {
-        fs_audio_play_track(eng->cd_track_path);
+    if (eng->cd_paused && eng->cd_track_path[0] && eng->cd_play_callback) {
+        eng->cd_play_callback(eng->cd_track_path, eng->cd_callback_userdata);
         eng->cd_paused = 0;
     }
     return 0;
@@ -1204,13 +1206,24 @@ int nexus_sound_cd_resume(Nexus_SoundEngine *eng) {
 void nexus_sound_music_fade(Nexus_SoundEngine *eng, int fade_out_ms) {
     if (!eng) return;
     (void)fade_out_ms;
-    fs_audio_stop();
+    if (eng->cd_stop_callback)
+        eng->cd_stop_callback(eng->cd_callback_userdata);
     eng->cd_playing = 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
  * Mute controls
  * ═══════════════════════════════════════════════════════════════════ */
+
+void nexus_sound_set_cd_callbacks(Nexus_SoundEngine *eng,
+    int (*play)(const char *path, void *userdata),
+    void (*stop)(void *userdata),
+    void *userdata) {
+    if (!eng) return;
+    eng->cd_play_callback = play;
+    eng->cd_stop_callback = stop;
+    eng->cd_callback_userdata = userdata;
+}
 
 void nexus_sound_set_sfx(Nexus_SoundEngine *eng, int enabled) {
     if (!eng) return;
