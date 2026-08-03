@@ -142,25 +142,18 @@ int nexus_pits_register(int x, int y, int target_x, int target_y, int target_lev
 int nexus_pits_resolve(int x, int y, int *out_target_x, int *out_target_y, int *out_target_level);
 int nexus_pits_count(void);
 
-/* Altar registry — real floor-decoration records are recorded but stay
- * fail-closed until the exact altar tag/aspect is source-locked.
- * Source: DM1 COMMAND.C altar use / CHAMPION.C offering logic.
- *
- * A Structure1F floor-decoration record becomes a candidate altar when its
- * model/aspect matches a known altar tag.  The ritual action itself remains
- * blocked until COMMAND.C ritual semantics are confirmed. */
+/* Altar registry — Vi altar of rebirth (alcove-based resurrection).
+ * Source: DMWeb DGN Structure1Fd docs, Nexus manual translation.
+ * Nexus has only the Vi altar; FUL/BRO/GATH are DM1-specific and do not exist. */
 #define NEXUS_MAX_ALTARS 64
 
 #define NEXUS_ALTAR_TAG_UNKNOWN 0
-#define NEXUS_ALTAR_TAG_FUL     1  /* fire / Ful altar proxy */
-#define NEXUS_ALTAR_TAG_VI      2  /* life / Vi altar proxy */
-#define NEXUS_ALTAR_TAG_BRO     3  /* moon / Bro altar proxy */
-#define NEXUS_ALTAR_TAG_GATH    4  /* wind / Gath altar proxy */
+#define NEXUS_ALTAR_TAG_VI      1
 
 typedef struct {
     int x, y;
-    uint8_t tag;         /* NEXUS_ALTAR_TAG_* from Structure1F model/aspect */
-    int blocked;         /* 1 = real record present but semantics unproven */
+    uint8_t tag;
+    int level;
 } Nexus_Altar;
 
 void nexus_altars_init(void);
@@ -170,10 +163,7 @@ int nexus_altar_at(int x, int y);
 int nexus_altar_tag_at(int x, int y);
 int nexus_altars_count(void);
 
-/* Perform altar ritual at (x,y).  Returns 1 if a ritual effect was applied,
- * 0 if no altar or blocked, -1 if invalid arguments.
- * Source: DM1 COMMAND.C altar-use dispatch; remains fail-closed when the
- * exact altar tag/aspect is not source-locked. */
+int nexus_altar_resurrect(int x, int y, struct Nexus_V1_Champion *champion);
 int nexus_altar_perform_ritual(int x, int y, struct Nexus_V1_Champion *leader);
 
 /* Registry counts (used by probes/tests) */
