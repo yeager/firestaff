@@ -1,4 +1,10 @@
 
+# Firestaff v3.0.257
+- Savegame Editor: standalone Tk app for editing savegames across all 5 games (DM1, CSB, DM2, Theron, Nexus)
+- Savegame Editor: header field editing, champion stat editing, hex view
+- Savegame Editor: format auto-detection, XOR deobfuscation (DM1/Theron), i18n (19 languages)
+- Savegame Editor: PyInstaller bundling and GitHub Actions release packaging
+
 # Firestaff v3.0.256
 - Dungeon Studio: full .fsdung dungeon editor with V1 + V2.x high-res graphics slots
 - Artpack Studio: Settings dialog with secure API key storage (keyring/Keychain)

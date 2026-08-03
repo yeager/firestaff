@@ -11,6 +11,7 @@ README_SRC="$ROOT/README.md"
 BIN_SRC="$BUILD_DIR/firestaff"
 ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio}"
 DUNGEON_STUDIO_BIN_SRC="${DUNGEON_STUDIO_BIN_SRC:-$BUILD_DIR/dungeon-studio-bundle/dist/firestaff_dungeon_studio}"
+SAVEGAME_EDITOR_BIN_SRC="${SAVEGAME_EDITOR_BIN_SRC:-$BUILD_DIR/savegame-editor-bundle/dist/firestaff_savegame_editor}"
 OUT_DIR="$ROOT/release"
 PKG_NAME="firestaff"
 SUMMARY="Firestaff preview Dungeon Master engine"
@@ -28,6 +29,10 @@ if [[ ! -x "$DUNGEON_STUDIO_BIN_SRC" ]]; then
   echo "Missing built Dungeon Studio launcher: $DUNGEON_STUDIO_BIN_SRC" >&2
   exit 1
 fi
+if [[ ! -x "$SAVEGAME_EDITOR_BIN_SRC" ]]; then
+  echo "Missing built Savegame Editor launcher: $SAVEGAME_EDITOR_BIN_SRC" >&2
+  exit 1
+fi
 
 mkdir -p "$OUT_DIR"
 
@@ -38,10 +43,12 @@ mkdir -p "$DEB_ROOT/DEBIAN" "$DEB_ROOT/usr/bin" "$DEB_ROOT/usr/share/doc/$PKG_NA
 cp "$BIN_SRC" "$DEB_ROOT/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$DUNGEON_STUDIO_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_dungeon_studio"
+cp "$SAVEGAME_EDITOR_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$DEB_ROOT/usr/share/firestaff/firestaff-startup-intro.ppm"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff_dungeon_studio"
+chmod 0755 "$DEB_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$README_SRC" "$DEB_ROOT/usr/share/doc/$PKG_NAME/README.md"
 cp "$RELEASE_NOTES_SRC" "$DEB_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
 if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
@@ -77,6 +84,16 @@ Icon=firestaff
 Categories=Graphics;Game;RolePlaying;
 Terminal=false
 DESKTOP
+cat > "$DEB_ROOT/usr/share/applications/firestaff-savegame-editor.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Firestaff Savegame Editor
+Comment=Edit Firestaff savegame files
+Exec=firestaff_savegame_editor
+Icon=firestaff
+Categories=Utility;Game;RolePlaying;
+Terminal=false
+DESKTOP
 cat > "$DEB_ROOT/DEBIAN/control" <<CONTROL
 Package: $PKG_NAME
 Version: $VERSION
@@ -101,10 +118,12 @@ mkdir -p "$RPM_ROOT/usr/bin" "$RPM_ROOT/usr/share/doc/$PKG_NAME" "$RPM_ROOT/usr/
 cp "$BIN_SRC" "$RPM_ROOT/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$DUNGEON_STUDIO_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_dungeon_studio"
+cp "$SAVEGAME_EDITOR_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$RPM_ROOT/usr/share/firestaff/firestaff-startup-intro.ppm"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_dungeon_studio"
+chmod 0755 "$RPM_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$README_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/README.md"
 cp "$RELEASE_NOTES_SRC" "$RPM_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
 RPM_ICON_ENTRY=""
@@ -115,6 +134,7 @@ fi
 cp "$DEB_ROOT/usr/share/applications/firestaff.desktop" "$RPM_ROOT/usr/share/applications/firestaff.desktop"
 cp "$DEB_ROOT/usr/share/applications/firestaff-artpack-studio.desktop" "$RPM_ROOT/usr/share/applications/firestaff-artpack-studio.desktop"
 cp "$DEB_ROOT/usr/share/applications/firestaff-dungeon-studio.desktop" "$RPM_ROOT/usr/share/applications/firestaff-dungeon-studio.desktop"
+cp "$DEB_ROOT/usr/share/applications/firestaff-savegame-editor.desktop" "$RPM_ROOT/usr/share/applications/firestaff-savegame-editor.desktop"
 cat > "$RPM_TOP/SPECS/firestaff.spec" <<SPEC
 Name:           $PKG_NAME
 Version:        ${VERSION//-/_}
@@ -131,11 +151,13 @@ $DESCRIPTION
 /usr/bin/firestaff
 /usr/bin/firestaff_artpack_studio
 /usr/bin/firestaff_dungeon_studio
+/usr/bin/firestaff_savegame_editor
 /usr/share/doc/$PKG_NAME/README.md
 /usr/share/doc/$PKG_NAME/RELEASE_NOTES.md
 /usr/share/applications/firestaff.desktop
 /usr/share/applications/firestaff-artpack-studio.desktop
 /usr/share/applications/firestaff-dungeon-studio.desktop
+/usr/share/applications/firestaff-savegame-editor.desktop
 /usr/share/firestaff/firestaff-startup-intro.ppm
 $RPM_ICON_ENTRY
 SPEC

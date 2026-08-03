@@ -11,6 +11,7 @@ RELEASE_NOTES_SRC="${RELEASE_NOTES_SRC:-$ROOT/README.md}"
 BIN_SRC="$BUILD_DIR/firestaff.exe"
 ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio.exe}"
 DUNGEON_STUDIO_BIN_SRC="${DUNGEON_STUDIO_BIN_SRC:-$BUILD_DIR/dungeon-studio-bundle/dist/firestaff_dungeon_studio.exe}"
+SAVEGAME_EDITOR_BIN_SRC="${SAVEGAME_EDITOR_BIN_SRC:-$BUILD_DIR/savegame-editor-bundle/dist/firestaff_savegame_editor.exe}"
 
 if [[ ! -x "$BIN_SRC" ]]; then
   echo "Missing built binary: $BIN_SRC" >&2
@@ -24,12 +25,17 @@ if [[ ! -x "$DUNGEON_STUDIO_BIN_SRC" ]]; then
   echo "Missing built Dungeon Studio launcher: $DUNGEON_STUDIO_BIN_SRC" >&2
   exit 1
 fi
+if [[ ! -x "$SAVEGAME_EDITOR_BIN_SRC" ]]; then
+  echo "Missing built Savegame Editor launcher: $SAVEGAME_EDITOR_BIN_SRC" >&2
+  exit 1
+fi
 
 rm -rf "$STAGE_DIR"
 mkdir -p "$STAGE_DIR" "$ROOT/release"
 cp "$BIN_SRC" "$STAGE_DIR/firestaff.exe"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$STAGE_DIR/firestaff_artpack_studio.exe"
 cp "$DUNGEON_STUDIO_BIN_SRC" "$STAGE_DIR/firestaff_dungeon_studio.exe"
+cp "$SAVEGAME_EDITOR_BIN_SRC" "$STAGE_DIR/firestaff_savegame_editor.exe"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$STAGE_DIR/firestaff-startup-intro.ppm"
 cp "$README_SRC" "$STAGE_DIR/README.md"
 cp "$RELEASE_NOTES_SRC" "$STAGE_DIR/RELEASE_NOTES.md"

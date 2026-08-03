@@ -9,6 +9,7 @@ README_SRC="$ROOT/README.md"
 BIN_SRC="$BUILD_DIR/firestaff"
 ARTPACK_STUDIO_BIN_SRC="${ARTPACK_STUDIO_BIN_SRC:-$BUILD_DIR/artpack-studio-bundle/dist/firestaff_artpack_studio}"
 DUNGEON_STUDIO_BIN_SRC="${DUNGEON_STUDIO_BIN_SRC:-$BUILD_DIR/dungeon-studio-bundle/dist/firestaff_dungeon_studio}"
+SAVEGAME_EDITOR_BIN_SRC="${SAVEGAME_EDITOR_BIN_SRC:-$BUILD_DIR/savegame-editor-bundle/dist/firestaff_savegame_editor}"
 OUT_DIR="$ROOT/release"
 PKG_NAME="firestaff"
 PKG_ARCH="x86_64"
@@ -31,6 +32,10 @@ if [[ ! -x "$ARTPACK_STUDIO_BIN_SRC" ]]; then
 fi
 if [[ ! -x "$DUNGEON_STUDIO_BIN_SRC" ]]; then
   echo "Missing built Dungeon Studio launcher: $DUNGEON_STUDIO_BIN_SRC" >&2
+  exit 1
+fi
+if [[ ! -x "$SAVEGAME_EDITOR_BIN_SRC" ]]; then
+  echo "Missing built Savegame Editor launcher: $SAVEGAME_EDITOR_BIN_SRC" >&2
   exit 1
 fi
 
@@ -74,9 +79,11 @@ mkdir -p \
 cp "$BIN_SRC" "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-bin"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-artpack-studio-bin"
 cp "$DUNGEON_STUDIO_BIN_SRC" "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-dungeon-studio-bin"
+cp "$SAVEGAME_EDITOR_BIN_SRC" "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-savegame-editor-bin"
 chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-bin"
 chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-artpack-studio-bin"
 chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-dungeon-studio-bin"
+chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-savegame-editor-bin"
 cp -L "$SDL3_LIB" "$PKG_ROOT/usr/lib/$PKG_NAME/libSDL3.so.0"
 chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/libSDL3.so.0"
 cat > "$PKG_ROOT/usr/bin/firestaff" <<'WRAPPER'
@@ -100,6 +107,13 @@ export LD_LIBRARY_PATH="/usr/lib/firestaff${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
 exec /usr/lib/firestaff/firestaff-dungeon-studio-bin "$@"
 WRAPPER
 chmod 0755 "$PKG_ROOT/usr/bin/firestaff_dungeon_studio"
+cat > "$PKG_ROOT/usr/bin/firestaff_savegame_editor" <<'WRAPPER'
+#!/usr/bin/env sh
+set -eu
+export LD_LIBRARY_PATH="/usr/lib/firestaff${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+exec /usr/lib/firestaff/firestaff-savegame-editor-bin "$@"
+WRAPPER
+chmod 0755 "$PKG_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$README_SRC" "$PKG_ROOT/usr/share/doc/$PKG_NAME/README.md"
 cp "$RELEASE_NOTES_SRC" "$PKG_ROOT/usr/share/doc/$PKG_NAME/RELEASE_NOTES.md"
 if [[ -f "$ROOT/assets/branding/firestaff-logo.png" ]]; then
@@ -133,6 +147,16 @@ Comment=Create and edit Firestaff dungeon data
 Exec=firestaff_dungeon_studio
 Icon=firestaff
 Categories=Graphics;Game;RolePlaying;
+Terminal=false
+DESKTOP
+cat > "$PKG_ROOT/usr/share/applications/firestaff-savegame-editor.desktop" <<DESKTOP
+[Desktop Entry]
+Type=Application
+Name=Firestaff Savegame Editor
+Comment=Edit Firestaff savegame files
+Exec=firestaff_savegame_editor
+Icon=firestaff
+Categories=Utility;Game;RolePlaying;
 Terminal=false
 DESKTOP
 

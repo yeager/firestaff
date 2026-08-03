@@ -143,6 +143,9 @@ jobs:
       - name: Bundle Dungeon Studio
         run: FIRESTAFF_DUNGEON_PYTHON="$(brew --prefix python@3.13)/bin/python3.13" ./scripts/build_dungeon_studio_bundle.sh "$PWD/build/dungeon-studio-bundle"
 
+      - name: Bundle Savegame Editor
+        run: FIRESTAFF_SAVEGAME_PYTHON="$(brew --prefix python@3.13)/bin/python3.13" ./scripts/build_savegame_editor_bundle.sh "$PWD/build/savegame-editor-bundle"
+
       - name: Smoke probes
         shell: bash
         run: |
@@ -180,6 +183,7 @@ jobs:
           PACKAGE_SUFFIX="-macos-$FIRESTAFF_ARCH" \
           ARTPACK_STUDIO_APP_SRC="$PWD/build/artpack-studio-bundle/dist/Firestaff Artpack Studio.app" \
           DUNGEON_STUDIO_APP_SRC="$PWD/build/dungeon-studio-bundle/dist/Firestaff Dungeon Studio.app" \
+          SAVEGAME_EDITOR_APP_SRC="$PWD/build/savegame-editor-bundle/dist/Firestaff Savegame Editor.app" \
           RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
           ./scripts/package_macos_preview.sh
 
@@ -246,6 +250,9 @@ jobs:
       - name: Bundle Dungeon Studio
         run: ./scripts/build_dungeon_studio_bundle.sh "$PWD/build/dungeon-studio-bundle"
 
+      - name: Bundle Savegame Editor
+        run: ./scripts/build_savegame_editor_bundle.sh "$PWD/build/savegame-editor-bundle"
+
       - name: Smoke probes
         run: |
           set -euo pipefail
@@ -292,6 +299,7 @@ jobs:
           VERSION="$FIRESTAFF_VERSION" \
           ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio.exe" \
           DUNGEON_STUDIO_BIN_SRC="$PWD/build/dungeon-studio-bundle/dist/firestaff_dungeon_studio.exe" \
+          SAVEGAME_EDITOR_BIN_SRC="$PWD/build/savegame-editor-bundle/dist/firestaff_savegame_editor.exe" \
           RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
           ./scripts/package_windows_preview.sh
           VERSION="$FIRESTAFF_VERSION" ./scripts/package_windows_installer_preview.sh
@@ -387,6 +395,9 @@ jobs:
       - name: Bundle Dungeon Studio
         run: ./scripts/build_dungeon_studio_bundle.sh "$PWD/build/dungeon-studio-bundle"
 
+      - name: Bundle Savegame Editor
+        run: ./scripts/build_savegame_editor_bundle.sh "$PWD/build/savegame-editor-bundle"
+
       - name: Smoke probes
         run: |
           set -euo pipefail
@@ -422,6 +433,7 @@ jobs:
           ARCH_RPM="$RPM_ARCH" \
           ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio" \
           DUNGEON_STUDIO_BIN_SRC="$PWD/build/dungeon-studio-bundle/dist/firestaff_dungeon_studio" \
+          SAVEGAME_EDITOR_BIN_SRC="$PWD/build/savegame-editor-bundle/dist/firestaff_savegame_editor" \
           RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
           ./scripts/package_linux_preview.sh
 
@@ -436,6 +448,7 @@ jobs:
             VERSION="$FIRESTAFF_VERSION" \
             ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio" \
             DUNGEON_STUDIO_BIN_SRC="$PWD/build/dungeon-studio-bundle/dist/firestaff_dungeon_studio" \
+            SAVEGAME_EDITOR_BIN_SRC="$PWD/build/savegame-editor-bundle/dist/firestaff_savegame_editor" \
             RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
             ./scripts/package_steamdeck_preview.sh
 
@@ -446,6 +459,7 @@ jobs:
             VERSION="$FIRESTAFF_VERSION" \
             ARTPACK_STUDIO_BIN_SRC="$PWD/build/artpack-studio-bundle/dist/firestaff_artpack_studio" \
             DUNGEON_STUDIO_BIN_SRC="$PWD/build/dungeon-studio-bundle/dist/firestaff_dungeon_studio" \
+            SAVEGAME_EDITOR_BIN_SRC="$PWD/build/savegame-editor-bundle/dist/firestaff_savegame_editor" \
             RELEASE_NOTES_SRC="$PWD/$FIRESTAFF_RELEASE_NOTES" \
             APPIMAGETOOL=/tmp/appimagetool-x86_64.AppImage \
             ./scripts/package_steamdeck_appimage.sh

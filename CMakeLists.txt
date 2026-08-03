@@ -3803,7 +3803,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.256 LANGUAGES C)
+project(Firestaff VERSION 3.0.257 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -45181,6 +45181,31 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_actuator.c"
     add_test(
         NAME theron_v1_track02_actuator
         COMMAND test_theron_v1_track02_actuator
+    )
+endif()
+
+# Theron Track 02 full dungeon loader (tiles + ground refs + items + actuator fix)
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_loader.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_loader.c")
+    add_executable(test_theron_v1_track02_dungeon_loader
+        tests/test_theron_v1_track02_dungeon_loader.c
+        src/theron/theron_v1_track02_dungeon_loader.c
+        src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_thing_data.c
+        src/theron/theron_v1_track02_dungeon_map.c
+        src/theron/theron_v1_track02_item_id_map.c
+    )
+    target_link_libraries(test_theron_v1_track02_dungeon_loader PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_dungeon_loader PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_dungeon_loader PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_dungeon_loader
+        COMMAND test_theron_v1_track02_dungeon_loader
     )
 endif()
 
