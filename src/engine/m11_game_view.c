@@ -348,6 +348,7 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 #include "theron_v2_presentation_mode_pc34.h"
 #include "theron_v2_settings_pc34.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
+#include "dm1_v1_creature_behavior_bootstrap_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -14498,6 +14499,27 @@ int M11_GameView_ProbeDm1F0115CreatureTickCandidate(
         state, mapIndex, mapX, mapY, outCandidate);
 }
 
+static int m11_bootstrap_find_group_cb(void *ctx, int group_index,
+                                      int *out_map, int *out_x, int *out_y)
+{
+    M11_GameViewState *state = (M11_GameViewState *)ctx;
+    unsigned short groupThing;
+    int mi;
+    if (!state || !state->world.things || !state->world.dungeon) return 0;
+    if (group_index < 0 || group_index >= state->world.things->groupCount) return 0;
+    groupThing = (unsigned short)((THING_TYPE_GROUP << 10) | (group_index & 0x3FF));
+    for (mi = 0; mi < (int)state->world.dungeon->header.mapCount; ++mi) {
+        int gx, gy;
+        if (m11_find_group_position(&state->world, mi, groupThing, &gx, &gy)) {
+            *out_map = mi;
+            *out_x = gx;
+            *out_y = gy;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* Visit source-owned F0115 group candidates on the current map and process
  * their AI.  This intentionally leaves HoC filtering and creature actions
  * outside the discovery boundary. */
@@ -14509,6 +14531,16 @@ static void m11_process_creature_ticks(M11_GameViewState* state) {
     if (!state || !state->active || state->partyDead) return;
     if (!state->world.dungeon || !state->world.things ||
         !state->world.things->squareFirstThings) return;
+
+    if (!state->creatureBehaviorBootstrapped &&
+        state->world.things->groupCount > 0) {
+        DM1_V1_CreatureBehaviorBootstrapResultPc34 bootstrapResult;
+        if (dm1_v1_creature_behavior_bootstrap_pc34(
+                &state->world, m11_bootstrap_find_group_cb, state,
+                &bootstrapResult)) {
+            state->creatureBehaviorBootstrapped = 1;
+        }
+    }
 
     mapIdx = state->world.party.mapIndex;
     if (mapIdx < 0 || mapIdx >= (int)state->world.dungeon->header.mapCount) return;
@@ -23781,6 +23813,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             if (input == M12_MENU_INPUT_ACTION &&
                 (state->nexusState.startup_dgn_render_blocked ||
                  state->nexusState.startup_dgn_viewport_host_blocks_runtime)) {
+                if (!state->nexusState.startup_prs3_blocker_consumed) {
+                    state->nexusState.champion_select_active = 0;
+                }
                 m11_set_status(state, "ASSETS", "MENU.BPK PRS3 TRACE REQUIRED");
                 return M11_GAME_INPUT_RETURN_TO_MENU;
             }

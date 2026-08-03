@@ -15194,6 +15194,28 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_save_store_extra_dungeon_data
     )
 
+    add_executable(test_dm2_v1_load_orchestrator
+        tests/test_dm2_v1_load_orchestrator.c
+        src/dm2/dm2_v1_load_orchestrator_pc34_compat.c
+        src/dm2/dm2_v1_save_load_extra_dungeon_data_pc34_compat.c
+        src/dm2/dm2_v1_save_read_record_checkcode_pc34_compat.c
+        src/dm2/dm2_v1_save_write_record_checkcode_pc34_compat.c
+        src/dm2/dm2_v1_save_record_masks_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_load_orchestrator PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_load_orchestrator PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_load_orchestrator PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_load_orchestrator
+        COMMAND test_dm2_v1_load_orchestrator
+    )
+
     add_executable(test_dm2_v1_save_load_extra_dungeon_data
         tests/test_dm2_v1_save_load_extra_dungeon_data.c
         src/dm2/dm2_v1_save_load_extra_dungeon_data_pc34_compat.c
@@ -45162,6 +45184,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_text_decode.
     )
 endif()
 
+# Theron Track 02 creature and champion decoders
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_creature.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_creature.c")
+    add_executable(test_theron_v1_track02_creature
+        tests/test_theron_v1_track02_creature.c
+        src/theron/theron_v1_track02_creature.c
+        src/theron/theron_v1_track02_thing_data.c
+        src/theron/theron_v1_track02_dungeon_map.c
+    )
+    target_include_directories(test_theron_v1_track02_creature PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_creature PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_creature
+        COMMAND test_theron_v1_track02_creature
+    )
+endif()
+
 # Theron Track 02 actuator decoder
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_actuator.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_actuator.c"
@@ -51570,3 +51612,15 @@ add_executable(test_csb_v1_amiga_graphics_dat
 target_include_directories(test_csb_v1_amiga_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_csb_v1_amiga_graphics_dat COMMAND test_csb_v1_amiga_graphics_dat)
 set_tests_properties(test_csb_v1_amiga_graphics_dat PROPERTIES LABELS "csb;amiga")
+
+add_executable(test_dm1_v1_creature_behavior_bootstrap
+    tests/test_dm1_v1_creature_behavior_bootstrap.c
+    src/dm1/dm1_v1_creature_behavior_bootstrap_pc34_compat.c
+    src/memory/memory_timeline_pc34_compat.c
+)
+target_link_libraries(test_dm1_v1_creature_behavior_bootstrap PRIVATE firestaff_m10)
+if(NOT MSVC)
+    target_compile_options(test_dm1_v1_creature_behavior_bootstrap PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm1_v1_creature_behavior_bootstrap COMMAND test_dm1_v1_creature_behavior_bootstrap)
+set_tests_properties(dm1_v1_creature_behavior_bootstrap PROPERTIES LABELS "dm1;group;bootstrap")

@@ -930,6 +930,7 @@ typedef struct {
     int endgameFinalDelayTicks;
     int endgameRestartAllowed;
     int endgameRestartRequested;
+    int creatureBehaviorBootstrapped;
     int endgameCalledWithTrue;
     int endgameChaosOrderSwitchCount;
     int endgameFuseSequenceUpdateTicks;

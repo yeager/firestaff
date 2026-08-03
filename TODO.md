@@ -2605,6 +2605,14 @@ that its exact runtime path is not already source-locked and tested.
 2. **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
    live group, line-of-sight, projectile-impact, teleporter, and spell-tick
    runtime paths using raw C04/C05/C14/C15 ownership and source scheduling.
+   2026-08-03: Creature behavior event bootstrap module added. On the first
+   tick after dungeon load, M11 now seeds UPDATE_BEHAVIOR_GROUP (C37) timeline
+   events for every living group that lacks a scheduled behavior event, matching
+   F0180 StartWandering. This enables M10's event-driven F0209 dispatch for
+   pre-existing DUNGEON.DAT groups. 9 tests (null safety, empty, living/dead,
+   multiple groups, not-on-map, already-scheduled, idempotent). Remaining:
+   retire M11's brute-force map-scan creature tick path once M10's event-driven
+   dispatch is verified to cover all creature behavior scenarios.
 3. **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
    saved actions, including supported control flow and live monster/filter
    effects, with transactional save/runtime handoff and fail-closed unsupported
