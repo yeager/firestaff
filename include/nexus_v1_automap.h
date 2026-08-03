@@ -28,4 +28,20 @@ void nexus_v1_automap_set_level(Nexus_Automap *map, int level);
 
 int nexus_v1_automap_explored_count(const Nexus_Automap *map, int level);
 
+typedef struct {
+    int cell_size;
+    uint32_t wall_color;
+    uint32_t floor_color;
+    uint32_t party_color;
+    uint32_t bg_color;
+} Nexus_AutomapRenderConfig;
+
+void nexus_v1_automap_default_config(Nexus_AutomapRenderConfig *cfg);
+
+int nexus_v1_automap_render(const Nexus_Automap *map,
+                            const uint8_t squares[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE],
+                            int party_x, int party_y,
+                            const Nexus_AutomapRenderConfig *cfg,
+                            uint32_t *pixels, int width, int height);
+
 #endif

@@ -39,6 +39,15 @@ typedef struct Nexus_V1_Structure1FPlacementBindingReceipt
 #include "nexus_v1_spawner.h"
 #include "nexus_v1_damage_indicator.h"
 #include "nexus_v1_formation.h"
+#include "nexus_v1_doors.h"
+#include "nexus_v1_gameover.h"
+#include "nexus_v1_dialogue.h"
+#include "nexus_v1_shop.h"
+#include "nexus_v1_traps.h"
+#include "nexus_v1_level_transition.h"
+#include "nexus_v1_experience.h"
+#include "nexus_v1_encumbrance.h"
+#include "nexus_v1_fountain.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_prs3_capture_trace_schema.h"
@@ -2571,6 +2580,14 @@ struct Nexus_V1_Engine {
     Nexus_SpawnerManager spawners;
     Nexus_DamageDisplay damage_display;
     Nexus_Formation formation;
+    Nexus_DoorManager doors;
+    Nexus_GameOverState gameover;
+    Nexus_NPCManager npcs;
+    Nexus_ShopManager shops;
+    Nexus_V1_TrapManager traps;
+    Nexus_V1_TransitionTable transitions;
+    Nexus_V1_ExperienceState experience;
+    Nexus_FountainManager fountains;
     /* Mechanics state — opaque pointer, allocated in nexus_v1_init().
      * Defined in nexus_v1_mechanics.c (source-locked DM1 game loop).
      * Source: DM1 CLIKMENU.C F0366, MOVESENS.C F0267. */

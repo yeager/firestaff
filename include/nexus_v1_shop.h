@@ -22,4 +22,51 @@ int nexus_v1_shop_table(const Nexus_ShopEntry **out);
  * If the item appears multiple times, returns the first match. */
 int nexus_v1_shop_price(uint16_t item_id);
 
+/* ── Shop runtime manager ──────────────────────────────────────────── */
+
+#include "nexus_v1_champions.h"
+
+#define NEXUS_MAX_SHOP_STOCK 16
+#define NEXUS_MAX_SHOPS 8
+
+typedef struct {
+    int item_id;
+    int price;
+    int stock;
+} Nexus_ShopStockEntry;
+
+typedef struct {
+    Nexus_ShopStockEntry stock[NEXUS_MAX_SHOP_STOCK];
+    int stock_count;
+    int shop_id;
+    char name[32];
+} Nexus_ShopInstance;
+
+typedef struct {
+    Nexus_ShopInstance shops[NEXUS_MAX_SHOPS];
+    int count;
+    int active_shop;
+    int selected_item;
+    int open;
+} Nexus_ShopManager;
+
+void nexus_v1_shop_manager_init(Nexus_ShopManager *mgr);
+
+int nexus_v1_shop_register(Nexus_ShopManager *mgr,
+    int shop_id, const char *name);
+
+int nexus_v1_shop_add_stock(Nexus_ShopManager *mgr,
+    int shop_idx, int item_id, int price, int stock);
+
+int nexus_v1_shop_open(Nexus_ShopManager *mgr, int shop_idx);
+
+void nexus_v1_shop_close(Nexus_ShopManager *mgr);
+
+int nexus_v1_shop_is_open(const Nexus_ShopManager *mgr);
+
+int nexus_v1_shop_buy(Nexus_ShopManager *mgr,
+    Nexus_V1_Champion *buyer, int entry_idx);
+
+int nexus_v1_shop_find_by_id(const Nexus_ShopManager *mgr, int shop_id);
+
 #endif

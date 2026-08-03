@@ -5596,6 +5596,42 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             record->mapIndex,
                             target_x,
                             target_y)) {
+                        int party_at_dest =
+                            (profile->current_level == record->mapIndex &&
+                             profile->party_x == target_x &&
+                             profile->party_y == target_y &&
+                             profile->champion_count > 0);
+                        if (party_at_dest) {
+                            flags = (uint16_t)((flags & 0xFFF0u) |
+                                               (uint16_t)(6 & 0x0F));
+                            csb_v1_runtime_write_u16(thing_record + 14, flags);
+                            csb_v1_runtime_set_active_group_target(
+                                profile,
+                                group_thing,
+                                record->mapIndex,
+                                record->mapX,
+                                record->mapY,
+                                profile->party_x,
+                                profile->party_y);
+                            csb_v1_runtime_turn_active_group_toward_attack(
+                                profile,
+                                group_thing,
+                                thing_record,
+                                record->mapIndex,
+                                record->mapX,
+                                record->mapY,
+                                initial_move_direction,
+                                creature_count,
+                                creature_size);
+                            csb_v1_runtime_schedule_c38_attack_events(
+                                profile,
+                                record->mapIndex,
+                                record->mapX,
+                                record->mapY,
+                                (int)thing_record[4],
+                                flags);
+                            return;
+                        }
                         csb_v1_runtime_schedule_move_group_event(
                             profile,
                             group_thing,
@@ -5791,18 +5827,10 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
                             creature_size);
                     }
                 }
-                /* ReDMCSB GROUP.C F0209 lines 2228-2272 walks C7 approach
-                 * toward the target using F0202 movement checks, then lines
-                 * 2273-2284 allow an archenemy double-square move that ignores
-                 * the first square and requests M560_SOUND_BUZZ at the second
-                 * square before moving the group. Lines
-                 * 2450-2463 schedule the next C37.  This bounded bridge
-                 * relinks a real-format C04 group, creates destination
-                 * square-first slots through the bounded F0163 bridge when
-                 * needed, schedules C60/C61-style retry when blocked by
-                 * party/group occupancy, then applies bounded creature-scope
-                 * teleporter/pit chains. Full F0202 occupancy breadth and
-                 * attack expansion remain separate work. */
+                /* ReDMCSB GROUP.C F0209 C7 approach: move toward party,
+                 * transition to C6 attack when adjacent and blocked by
+                 * party, archenemy double-square move with buzz sound,
+                 * C60/C61 retry when blocked by another group. */
                 if (!deferred) {
                     csb_v1_runtime_schedule_c37_group_event(
                         profile,
@@ -7350,6 +7378,12 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
             break;
         }
         moved_count++;
+        if (teleporter.audible) {
+            csb_v1_runtime_request_buzz_sound(
+                profile,
+                *inout_map_x,
+                *inout_map_y);
+        }
         csb_v1_runtime_process_object_floor_sensors_at(
             profile,
             dungeon,
@@ -7360,14 +7394,8 @@ static int csb_v1_runtime_apply_object_consequences_at_square(
             1);
         if (self_target) break;
     }
-    /* ReDMCSB MOVESENS.C F0267 lines 450-530 lets non-party, non-group
-     * objects use object/party-capable teleporters, rejects creature-only
-     * teleporters, rotates object cells only for relative teleporters unless
-     * the object came from the CM2 projectile-associated-object path, and
-     * continues into open non-imaginary pits and non-projectile stairs in the
-     * same PC34 100-step chain. This CSB bridge also dispatches bounded C004
-     * object floor sensors after successful materialization/movement; buzz
-     * audio and broader floor sensor types remain separate runtime work. */
+    /* ReDMCSB MOVESENS.C F0267: object teleportation with rotation,
+     * floor sensor dispatch, and audible buzz. */
     return moved_count;
 }
 
@@ -15509,11 +15537,8 @@ int csb_v1_runtime_perform_melee_action(
         target_y);
     if (first_thing < 0) return 1;
 
-    /* ReDMCSB: MENU.C F0402 lines ~1021-1057 resolves a concrete melee
-     * target creature before calling PROJEXPL.C F0231. This CSB bridge walks
-     * the real-format square thing list and mutates C04 GROUP.Health[4]
-     * directly; active-group drops/aspect/smoke side effects remain separate
-     * CSB runtime slices. */
+    /* ReDMCSB: MENU.C F0402 melee target resolution + F0231 damage.
+     * Death triggers F0190 smoke/drops via pack_dead_group_creature. */
     for (guard = 0, thing = first_thing;
          guard < 128 && thing != 0xFFFE && thing != 0xFFFF;
          ++guard) {
@@ -18608,14 +18633,10 @@ static void csb_v1_runtime_apply_timeline_dispatch_side_effects(
     int i;
 
     if (!profile || !source_queue || !event_indices || event_count < 0) return;
-    /* ReDMCSB: TIMELINE.C F0261 lines 1875-1901 dispatches C05/C06/C07/C08/C09/C10
-     * to F0242/F0250/F0251/F0244; F0244 immediately routes doors through
-     * C01 door-animation, and F0241 lines 754-809 steps the door state one
-     * value per event.  This runtime bridge mutates real-format CSB byte-map
-     * square flags and bounded wall/generator sensor state for the startup
-     * playability path.  Projectile launchers, group movement, damage, sounds,
-     * creature aspects, and poison are now dispatched; DSA timeline integration
-     * remains separate work. */
+    /* ReDMCSB TIMELINE.C F0261: dispatches corridor, wall, projectile,
+     * explosion, door, fakewall, teleporter, pit, group generator/behavior/
+     * movement, creature aspect/attack, and poison events. CSB extended DSA
+     * timeline integration remains separate work. */
     for (i = 0; i < profile->last_timeline_dispatch.count && i < event_count;
          ++i) {
         const struct DM1_DispatchRecord_V1 *record =

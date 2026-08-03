@@ -1,4 +1,16 @@
 
+# Firestaff v3.0.258
+- Savegame Editor: advanced 8-tab UI (Overview, Header, Save Parts, Champions, Party Info, Global Data, Header Words, Hex View)
+- Savegame Editor: real DM1 PC34 5-part format with F0417/F0418 XOR deobfuscation and checksum validation
+- Savegame Editor: informative ID lookup tables for Format, Platform, and Dungeon IDs
+- Savegame Editor: champion cards with HP/Stamina/Mana progress bars, 20 skills editable
+- Savegame Editor: color-coded header word visualization (keys, checksums, format fields)
+- Savegame Editor: macOS app identity fix (NSProcessInfo.setProcessName), app icon
+- Nexus: dialogue system, gameover screen, fountain interaction
+- Nexus: automap rendering, tick integration, shop manager
+- DM2: load orchestrator and post-load timer rebuild
+- CI fix: commit all source/header/test files referenced by CMakeLists.txt
+
 # Firestaff v3.0.257
 - Savegame Editor: standalone Tk app for editing savegames across all 5 games (DM1, CSB, DM2, Theron, Nexus)
 - Savegame Editor: header field editing, champion stat editing, hex view

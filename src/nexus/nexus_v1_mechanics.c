@@ -792,8 +792,14 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 int item_id = -1, qty = 0;
                 int idx = nexus_floor_get_at(st->party_x, st->party_y, 0,
                                               &item_id, &qty);
+                int fnt_idx = nexus_v1_fountain_find_at(&engine->fountains,
+                                                        st->party_x, st->party_y);
                 int altar_state = nexus_altar_at(st->party_x, st->party_y);
-                if (altar_state != 0) {
+                if (fnt_idx >= 0) {
+                    nexus_v1_fountain_drink(&engine->fountains, fnt_idx, leader);
+                    nexus_v1_message_push(&engine->messages, "DRINK");
+                    needs_redraw = 1;
+                } else if (altar_state != 0) {
                     /* Altar square: attempt ritual.  Real effect is blocked
                      * until COMMAND.C altar semantics are source-locked.
                      * Source: DM1 COMMAND.C altar use dispatch. */
@@ -861,6 +867,9 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                                 effect, 2, leader_idx);
                         }
                         nexus_sound_play(&engine->audio, NEXUS_SFX_SPELL_CAST);
+                        nexus_v1_experience_award_spell(&engine->experience,
+                                                        leader, leader_idx,
+                                                        st->spell_power);
                         needs_redraw = 1;
                     }
                 }
@@ -935,6 +944,37 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 st->party_y = t_y;
                 st->move_cooldown_ticks = 6;
                 needs_redraw = 1;
+
+                /* Check traps at new position */
+                {
+                    int li = mechanics_party_leader_index(engine);
+                    if (li >= 0) {
+                        Nexus_V1_TrapResult tr = nexus_v1_trap_trigger(
+                            &engine->traps,
+                            &engine->champions.champions[li],
+                            st->map_index, t_x, t_y);
+                        if (tr.triggered && tr.damage_dealt > 0) {
+                            nexus_v1_damage_display_add(&engine->damage_display,
+                                li, tr.damage_dealt, NEXUS_DMG_TAKEN);
+                        }
+                    }
+                }
+
+                /* Check transition table for level changes */
+                {
+                    const Nexus_V1_Transition *trans =
+                        nexus_v1_transition_find(&engine->transitions,
+                                                  st->map_index, t_x, t_y);
+                    if (trans) {
+                        int dl, dx, dy, dd;
+                        if (nexus_v1_transition_apply(trans, &dl, &dx, &dy, &dd)) {
+                            st->pending_level_change = dl;
+                            st->party_x = dx;
+                            st->party_y = dy;
+                            if (dd >= 0) st->party_dir = dd;
+                        }
+                    }
+                }
 
                 /* Process square event */
                 Nexus_SquareEvent sq_event = nexus_process_square_event(sq, t_x, t_y, &tx, &ty, &tl, &td);

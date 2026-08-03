@@ -1,3 +1,14 @@
+- ✅ 2026-08-03 v3.0.258 Savegame Editor: advanced 8-tab UI + CI fix
+  Complete rewrite with 8 tabs: Overview (champion cards with progress bars),
+  Header (informative ID lookup for Format/Platform/Dungeon), Save Parts
+  (F0417/F0418 deobfuscation + checksum validation per part), Champions
+  (20 skills, name/title decoded from PARTY data), Party Info (spells),
+  Global Data (event counts), Header Words (color-coded hex), Hex View.
+  macOS menu bar fix via NSProcessInfo.setProcessName ctypes. App icon from
+  firestaff.icns. CI fix: commit 18 source/header/test files that were
+  referenced in CMakeLists.txt but never committed. Nexus: dialogue, gameover,
+  fountain, automap render, tick integration. DM2: load orchestrator, timer
+  rebuild.
 - ✅ 2026-08-02 v3.0.254 Nexus: spell casting integration + shop price table
   Spell system wired into mechanics tick: NEXUS_CMD_CAST_SPELL resolves rune
   combination via DM.BIN lookup table, deducts mana from caster, and applies

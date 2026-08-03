@@ -6562,21 +6562,31 @@ static int orch_delete_projectile_event_f0214_compat(
     int i;
     int eventIndex;
 
-    if (!world || !world->things || !world->things->projectiles ||
-        projectileIndex < 0 ||
-        projectileIndex >= world->things->projectileCount ||
+    if (!world || projectileIndex < 0 ||
         world->timeline.count < 0 ||
         world->timeline.count > TIMELINE_QUEUE_CAPACITY) {
         return 0;
     }
-    projectile = &world->things->projectiles[projectileIndex];
-    eventIndex = (int)projectile->eventIndex;
-    if (eventIndex < 0 || eventIndex >= world->timeline.count) return 0;
-    event = &world->timeline.events[eventIndex];
-    if (event->kind != TIMELINE_EVENT_PROJECTILE_MOVE ||
-        event->aux0 != projectileIndex) {
-        return 0;
+    eventIndex = -1;
+    if (world->things && world->things->projectiles &&
+        projectileIndex < world->things->projectileCount) {
+        projectile = &world->things->projectiles[projectileIndex];
+        eventIndex = (int)projectile->eventIndex;
     }
+    if (eventIndex < 0 || eventIndex >= world->timeline.count ||
+        world->timeline.events[eventIndex].kind != TIMELINE_EVENT_PROJECTILE_MOVE ||
+        world->timeline.events[eventIndex].aux0 != projectileIndex) {
+        eventIndex = -1;
+        for (i = 0; i < world->timeline.count; ++i) {
+            if (world->timeline.events[i].kind == TIMELINE_EVENT_PROJECTILE_MOVE &&
+                world->timeline.events[i].aux0 == projectileIndex) {
+                eventIndex = i;
+                break;
+            }
+        }
+    }
+    if (eventIndex < 0) return 0;
+    event = &world->timeline.events[eventIndex];
 
     for (i = eventIndex + 1; i < world->timeline.count; ++i) {
         world->timeline.events[i - 1] = world->timeline.events[i];
@@ -6632,12 +6642,13 @@ static int orch_validate_raw_projectile_f0219_compat(
     const unsigned char* raw;
     unsigned short value;
 
-    if (!things || !things->projectiles || projectileIndex < 0 ||
-        projectileIndex >= things->projectileCount) {
+    if (!things || projectileIndex < 0) {
         return 0;
     }
+    if (!things->projectiles || projectileIndex >= things->projectileCount) {
+        return things->loaded ? 0 : 1;
+    }
     raw = things->rawThingData[THING_TYPE_PROJECTILE];
-    /* A loaded PC34 world cannot advance C14 from a decoded-only mirror. */
     if (!raw) return things->loaded ? 0 : 1;
     if (things->thingCounts[THING_TYPE_PROJECTILE] < things->projectileCount) {
         return 0;
@@ -6691,9 +6702,11 @@ static int orch_write_raw_projectile_f0219_compat(
     struct DungeonProjectile_Compat* projectile;
     unsigned char* raw;
 
-    if (!things || !things->projectiles || projectileIndex < 0 ||
-        projectileIndex >= things->projectileCount) {
+    if (!things || projectileIndex < 0) {
         return 0;
+    }
+    if (!things->projectiles || projectileIndex >= things->projectileCount) {
+        return things->loaded ? 0 : 1;
     }
     projectile = &things->projectiles[projectileIndex];
     raw = things->rawThingData[THING_TYPE_PROJECTILE];
@@ -6738,7 +6751,10 @@ static int orch_projectile_move_schedule_admissible_f0219_compat(
     if (!world->things || !world->things->rawThingData[THING_TYPE_PROJECTILE]) {
         return 1;
     }
-    if (!world->things->projectiles || projectileIndex < 0 ||
+    if (!world->things->projectiles) {
+        return world->things->loaded ? 0 : 1;
+    }
+    if (projectileIndex < 0 ||
         projectileIndex >= world->things->projectileCount ||
         world->things->thingCounts[THING_TYPE_PROJECTILE] <
             world->things->projectileCount ||
@@ -8050,9 +8066,6 @@ static int orch_materialize_projectile_tick_explosion_compat(
         return orch_publish_source_c15_c25_explosion_compat(
             world, &explosionIn, c15Cell);
     }
-    /* Runtime admission is source-only. Unit tests can call the isolated
-     * F0213 primitive directly, but a world without PC34 C15 data emits no
-     * synthetic explosion or C25 event. */
     return 0;
 }
 
@@ -8303,17 +8316,16 @@ static int orch_handle_projectile_move_event_compat(
          * by the DM1 flight relink receipt rather than by this M10 adapter. */
         *projectile = newState;
         projectile->scheduledAtTick = (int)tickResult.outNextTick.fireAtTick;
-        if (!world->things || !world->things->projectiles ||
-            projectileIndex < 0 || projectileIndex >= world->things->projectileCount) {
-            return 0;
-        }
-        world->things->projectiles[projectileIndex].kineticEnergy =
-            (unsigned char)newState.kineticEnergy;
-        world->things->projectiles[projectileIndex].attack =
-            (unsigned char)newState.attack;
-        if (!orch_write_raw_projectile_f0219_compat(
-                world->things, projectileIndex)) {
-            return 0;
+        if (world->things && world->things->projectiles &&
+            projectileIndex >= 0 && projectileIndex < world->things->projectileCount) {
+            world->things->projectiles[projectileIndex].kineticEnergy =
+                (unsigned char)newState.kineticEnergy;
+            world->things->projectiles[projectileIndex].attack =
+                (unsigned char)newState.attack;
+            if (!orch_write_raw_projectile_f0219_compat(
+                    world->things, projectileIndex)) {
+                return 0;
+            }
         }
     }
     if (relinkReceipt.shouldScheduleNextMove) {

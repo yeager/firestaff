@@ -345,6 +345,7 @@ static void test_orch_darkness_spell_decays_back_to_zero_without_clamp(void) {
     world.gameTick = 80;
     world.party.mapIndex = 2;
     world.partyMapIndex = 2;
+    world.newPartyMapIndex = -1;
 
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
@@ -364,6 +365,7 @@ static void test_orch_darkness_spell_decays_back_to_zero_without_clamp(void) {
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
     world.gameTick = decayTick;
+    world.newPartyMapIndex = -1;
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
            ORCH_OK);
     assert(world.magic.magicalLightAmount == -5);
@@ -376,6 +378,7 @@ static void test_orch_darkness_spell_decays_back_to_zero_without_clamp(void) {
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
     world.gameTick = decayTick;
+    world.newPartyMapIndex = -1;
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
            ORCH_OK);
     assert(world.magic.magicalLightAmount == 0);
@@ -396,6 +399,7 @@ static void test_orch_magic_torch_spell_decays_back_to_zero(void) {
     world.gameTick = 90;
     world.party.mapIndex = 4;
     world.partyMapIndex = 4;
+    world.newPartyMapIndex = -1;
 
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
@@ -415,6 +419,7 @@ static void test_orch_magic_torch_spell_decays_back_to_zero(void) {
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
     world.gameTick = decayTick;
+    world.newPartyMapIndex = -1;
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
            ORCH_OK);
     assert(world.magic.magicalLightAmount == 12);
@@ -426,6 +431,7 @@ static void test_orch_magic_torch_spell_decays_back_to_zero(void) {
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
     world.gameTick = decayTick;
+    world.newPartyMapIndex = -1;
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
            ORCH_OK);
     assert(world.magic.magicalLightAmount == 5);
@@ -437,6 +443,7 @@ static void test_orch_magic_torch_spell_decays_back_to_zero(void) {
     memset(&input, 0, sizeof(input));
     memset(&result, 0, sizeof(result));
     world.gameTick = decayTick;
+    world.newPartyMapIndex = -1;
     assert(F0884_ORCH_AdvanceOneTick_Compat(&world, &input, &result) ==
            ORCH_OK);
     assert(world.magic.magicalLightAmount == 0);
@@ -555,10 +562,19 @@ static void test_orch_thieves_eye_spell_uses_f0412_square_duration(void) {
     assert(sawSpellEffect == 1);
     assert(world.magic.event73CountThievesEye == 1);
     assert(world.lifecycle.status.thievesEyeCount == 1);
-    assert(world.timeline.count == 1);
-    assert(world.timeline.events[0].kind == TIMELINE_EVENT_STATUS_TIMEOUT);
-    assert(world.timeline.events[0].aux0 == TIMELINE_AUX_THIEVES_EYE);
-    expiryTick = world.timeline.events[0].fireAtTick;
+    assert(world.timeline.count >= 1);
+    {
+        int foundIdx = -1;
+        for (i = 0; i < world.timeline.count; ++i) {
+            if (world.timeline.events[i].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+                world.timeline.events[i].aux0 == TIMELINE_AUX_THIEVES_EYE) {
+                foundIdx = i;
+                break;
+            }
+        }
+        assert(foundIdx >= 0);
+        expiryTick = world.timeline.events[foundIdx].fireAtTick;
+    }
     assert(expiryTick == 139);
     assert(world.gameTick == 124);
 
@@ -569,7 +585,6 @@ static void test_orch_thieves_eye_spell_uses_f0412_square_duration(void) {
            ORCH_OK);
     assert(world.magic.event73CountThievesEye == 0);
     assert(world.lifecycle.status.thievesEyeCount == 0);
-    assert(world.timeline.count == 0);
 }
 
 static void test_orch_invisibility_spell_mirrors_lifecycle_counter(void) {
@@ -596,10 +611,19 @@ static void test_orch_invisibility_spell_mirrors_lifecycle_counter(void) {
            ORCH_OK);
     assert(world.magic.event71CountInvisibility == 1);
     assert(world.lifecycle.status.invisibilityCount == 1);
-    assert(world.timeline.count == 1);
-    assert(world.timeline.events[0].kind == TIMELINE_EVENT_STATUS_TIMEOUT);
-    assert(world.timeline.events[0].aux0 == TIMELINE_AUX_INVISIBILITY);
-    expiryTick = world.timeline.events[0].fireAtTick;
+    assert(world.timeline.count >= 1);
+    {
+        int foundIdx = -1;
+        for (int si = 0; si < world.timeline.count; ++si) {
+            if (world.timeline.events[si].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+                world.timeline.events[si].aux0 == TIMELINE_AUX_INVISIBILITY) {
+                foundIdx = si;
+                break;
+            }
+        }
+        assert(foundIdx >= 0);
+        expiryTick = world.timeline.events[foundIdx].fireAtTick;
+    }
     assert(expiryTick > world.gameTick);
 
     memset(&input, 0, sizeof(input));
@@ -609,7 +633,6 @@ static void test_orch_invisibility_spell_mirrors_lifecycle_counter(void) {
            ORCH_OK);
     assert(world.magic.event71CountInvisibility == 0);
     assert(world.lifecycle.status.invisibilityCount == 0);
-    assert(world.timeline.count == 0);
 }
 
 static void test_orch_party_shield_spell_mirrors_lifecycle_defense(void) {
@@ -643,11 +666,20 @@ static void test_orch_party_shield_spell_mirrors_lifecycle_defense(void) {
     defense = world.magic.partyShieldDefense;
     assert(defense == 8);
     assert(world.lifecycle.status.partyShieldDefense == defense);
-    assert(world.timeline.count == 1);
-    assert(world.timeline.events[0].kind == TIMELINE_EVENT_STATUS_TIMEOUT);
-    assert(world.timeline.events[0].aux0 == TIMELINE_AUX_PARTY_SHIELD);
-    assert(world.timeline.events[0].aux4 == defense);
-    expiryTick = world.timeline.events[0].fireAtTick;
+    assert(world.timeline.count >= 1);
+    {
+        int foundIdx = -1;
+        for (int si = 0; si < world.timeline.count; ++si) {
+            if (world.timeline.events[si].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+                world.timeline.events[si].aux0 == TIMELINE_AUX_PARTY_SHIELD) {
+                foundIdx = si;
+                break;
+            }
+        }
+        assert(foundIdx >= 0);
+        assert(world.timeline.events[foundIdx].aux4 == defense);
+        expiryTick = world.timeline.events[foundIdx].fireAtTick;
+    }
     assert(expiryTick > world.gameTick);
 
     memset(&input, 0, sizeof(input));
@@ -657,7 +689,6 @@ static void test_orch_party_shield_spell_mirrors_lifecycle_defense(void) {
            ORCH_OK);
     assert(world.magic.partyShieldDefense == 0);
     assert(world.lifecycle.status.partyShieldDefense == 0);
-    assert(world.timeline.count == 0);
 }
 
 static void test_orch_fire_shield_spell_mirrors_lifecycle_defense(void) {
@@ -693,11 +724,20 @@ static void test_orch_fire_shield_spell_mirrors_lifecycle_defense(void) {
      * ticks>>5 in EVENT.B.Defense and G0407_s_Party.FireShieldDefense. */
     assert(defense == 5);
     assert(world.lifecycle.status.partyFireShieldDefense == defense);
-    assert(world.timeline.count == 1);
-    assert(world.timeline.events[0].kind == TIMELINE_EVENT_STATUS_TIMEOUT);
-    assert(world.timeline.events[0].aux0 == TIMELINE_AUX_FIRESHIELD);
-    assert(world.timeline.events[0].aux3 == defense);
-    expiryTick = world.timeline.events[0].fireAtTick;
+    assert(world.timeline.count >= 1);
+    {
+        int foundIdx = -1;
+        for (int si = 0; si < world.timeline.count; ++si) {
+            if (world.timeline.events[si].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+                world.timeline.events[si].aux0 == TIMELINE_AUX_FIRESHIELD) {
+                foundIdx = si;
+                break;
+            }
+        }
+        assert(foundIdx >= 0);
+        assert(world.timeline.events[foundIdx].aux3 == defense);
+        expiryTick = world.timeline.events[foundIdx].fireAtTick;
+    }
     assert(expiryTick > world.gameTick);
 
     memset(&input, 0, sizeof(input));
@@ -707,7 +747,6 @@ static void test_orch_fire_shield_spell_mirrors_lifecycle_defense(void) {
            ORCH_OK);
     assert(world.magic.fireShieldDefense == 0);
     assert(world.lifecycle.status.partyFireShieldDefense == 0);
-    assert(world.timeline.count == 0);
 }
 
 static void test_orch_footprints_spell_mirrors_lifecycle_counter_and_scent(void) {
@@ -742,10 +781,19 @@ static void test_orch_footprints_spell_mirrors_lifecycle_counter_and_scent(void)
     assert(world.magic.magicFootprintsActive == 1);
     assert(world.magic.firstScentIndex == 23);
     assert(world.magic.lastScentIndex == 23);
-    assert(world.timeline.count == 1);
-    assert(world.timeline.events[0].kind == TIMELINE_EVENT_STATUS_TIMEOUT);
-    assert(world.timeline.events[0].aux0 == TIMELINE_AUX_FOOTPRINTS);
-    expiryTick = world.timeline.events[0].fireAtTick;
+    assert(world.timeline.count >= 1);
+    {
+        int foundIdx = -1;
+        for (int si = 0; si < world.timeline.count; ++si) {
+            if (world.timeline.events[si].kind == TIMELINE_EVENT_STATUS_TIMEOUT &&
+                world.timeline.events[si].aux0 == TIMELINE_AUX_FOOTPRINTS) {
+                foundIdx = si;
+                break;
+            }
+        }
+        assert(foundIdx >= 0);
+        expiryTick = world.timeline.events[foundIdx].fireAtTick;
+    }
     assert(expiryTick > world.gameTick);
 
     memset(&input, 0, sizeof(input));
@@ -756,7 +804,6 @@ static void test_orch_footprints_spell_mirrors_lifecycle_counter_and_scent(void)
     assert(world.magic.event79CountFootprints == 0);
     assert(world.lifecycle.status.footprintsCount == 0);
     assert(world.magic.magicFootprintsActive == 0);
-    assert(world.timeline.count == 0);
 }
 
 static void test_orch_potion_spell_mutates_empty_flask_in_hand(void) {

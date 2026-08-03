@@ -2725,6 +2725,14 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_v1_spawners_init(&engine->spawners);
     nexus_v1_damage_display_init(&engine->damage_display);
     nexus_v1_formation_init(&engine->formation, engine->champions.party_count);
+    nexus_v1_door_manager_init(&engine->doors);
+    nexus_v1_gameover_init(&engine->gameover);
+    nexus_v1_npc_manager_init(&engine->npcs);
+    nexus_v1_shop_manager_init(&engine->shops);
+    nexus_v1_trap_manager_init(&engine->traps);
+    nexus_v1_transition_table_init(&engine->transitions);
+    nexus_v1_experience_init(&engine->experience);
+    nexus_v1_fountain_manager_init(&engine->fountains);
     /* Init sound engine */
     nexus_sound_init(&engine->audio);
     (void)nexus_v1_level_aux_source_receipt(
@@ -9822,9 +9830,40 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
         redraw = 1;
     }
 
+    if (engine->game.game_started) {
+        int ci;
+        nexus_v1_rest_tick(&engine->rest, &engine->champions);
+        nexus_v1_hunger_tick(&engine->hunger, &engine->champions);
+        nexus_v1_spawners_tick(&engine->spawners, NULL, 0);
+        nexus_v1_action_timers_tick(&engine->action_timers);
+        nexus_v1_door_tick(&engine->doors);
+        nexus_v1_trap_tick(&engine->traps);
+        nexus_v1_damage_display_tick(&engine->damage_display);
+        nexus_v1_messages_tick(&engine->messages);
+        for (ci = 0; ci < engine->champions.party_count; ++ci) {
+            int idx = engine->champions.party[ci];
+            if (idx >= 0 && idx < 4) {
+                Nexus_V1_Champion *ch = &engine->champions.champions[idx];
+                if (ch->alive) {
+                    int poison_dmg = nexus_v1_status_poison_damage(
+                        &engine->champion_status[idx]);
+                    if (poison_dmg > 0) {
+                        ch->health -= poison_dmg;
+                        if (ch->health <= 0) {
+                            ch->health = 0;
+                            ch->alive = 0;
+                        }
+                    }
+                    nexus_v1_status_tick(&engine->champion_status[idx]);
+                }
+            }
+        }
+        nexus_v1_gameover_check(&engine->gameover, &engine->champions);
+        nexus_v1_gameover_tick(&engine->gameover);
+    }
+
     if (redraw && engine->game.game_started) {
-        /* Signal viewport redraw — caller (M11 layer) should call
-         * nexus_v1_viewport_render after this tick returns. */
+        /* Signal viewport redraw */
     }
 
     /* Increment game tick counter */
