@@ -910,6 +910,15 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     needs_redraw = 1;
                 }
             }
+        } else if (cmd == NEXUS_CMD_THROW) {
+            int li3 = mechanics_party_leader_index(engine);
+            if (li3 >= 0) {
+                Nexus_V1_Champion *ldr = &engine->champions.champions[li3];
+                nexus_v1_throw_item(&engine->thrown, &engine->projectiles,
+                                    ldr, li3, st->throw_slot,
+                                    NULL, st->party_x, st->party_y, st->party_dir);
+                needs_redraw = 1;
+            }
         } else {
             /* Step movement */
             int forward = (cmd == NEXUS_CMD_FORWARD) ? 1 : 0;
@@ -1406,6 +1415,10 @@ int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
     case NEXUS_UI_EVENT_SET_LEADER:
         nexus_mechanics_set_leader_slot(st, param);
         nexus_mechanics_push_command(st, NEXUS_CMD_SET_LEADER);
+        return 0;
+    case NEXUS_UI_EVENT_THROW:
+        st->throw_slot = param;
+        nexus_mechanics_push_command(st, NEXUS_CMD_THROW);
         return 0;
     default:
         return -1;

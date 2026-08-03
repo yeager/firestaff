@@ -202,6 +202,119 @@ typedef struct {
 void dm2_v1_champion_squad_recompute_position(
     const DM2_V1_SquadRecomputeCallbacks *cb, void *ctx);
 
+/* ---- DM2_hero_2c1d_0186 (c_hero.cpp:840) ----
+ * Cast an enchantment on the party. If requires_mp, deducts 4 MP. */
+typedef struct {
+    void (*proceed_enchantment_self)(void *ctx, uint16_t mask, uint8_t aura,
+                                     int16_t power, uint16_t duration);
+} DM2_V1_CastEnchantCallbacks;
+
+int dm2_v1_hero_cast_enchantment(
+    DM2_V1_HeroState *hero, uint8_t enchant_type,
+    int16_t power, int requires_mp,
+    const DM2_V1_CastEnchantCallbacks *cb, void *ctx);
+
+/* ---- DM2_SHOOT_CHAMPION_MISSILE (c_hero.cpp:688) ----
+ * Fire a projectile from a champion. */
+typedef struct {
+    void (*shoot_item)(void *ctx, uint16_t item, int16_t x, int16_t y,
+                       int direction, int facing, uint8_t damage,
+                       uint8_t speed, uint8_t power);
+} DM2_V1_ShootMissileCallbacks;
+
+typedef struct {
+    uint8_t abs_dir;
+    uint8_t party_pos;
+    int16_t party_x;
+    int16_t party_y;
+} DM2_V1_ShootMissileState;
+
+void dm2_v1_shoot_champion_missile(
+    const DM2_V1_ShootMissileState *state,
+    uint16_t item, int16_t damage, int16_t kinetic_energy, int16_t spell_power,
+    const DM2_V1_ShootMissileCallbacks *cb, void *ctx);
+
+/* ---- DM2_CAST_CHAMPION_MISSILE_SPELL (c_hero.cpp:3840) ----
+ * Cast a missile spell if hero has enough MP. */
+int dm2_v1_cast_champion_missile_spell(
+    DM2_V1_HeroState *hero, const DM2_V1_ShootMissileState *state,
+    uint16_t spell_item, int16_t spell_power, int16_t mp_cost,
+    const DM2_V1_ShootMissileCallbacks *cb, void *ctx);
+
+/* ---- R_36EFE + DM2_BRING_CHAMPION_TO_LIFE (c_hero.cpp:873+916) ----
+ * Resurrect a dead champion. */
+typedef struct {
+    int hero_count;
+    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx);
+    int16_t (*get_player_at_position)(void *ctx, uint8_t pos);
+    uint8_t formation_start;
+    void (*post_resurrect)(void *ctx, int hero_idx);
+} DM2_V1_ResurrectCallbacks;
+
+void dm2_v1_bring_champion_to_life(
+    int hero_idx,
+    const DM2_V1_ResurrectCallbacks *cb, void *ctx);
+
+/* ---- DM2_ADD_ITEM_TO_PLAYER (c_hero.cpp:2188) ----
+ * Auto-equip an item to the first matching inventory slot. */
+typedef struct {
+    uint16_t slot_start;
+    uint16_t slot_end;
+    int16_t category_filter;
+} DM2_V1_SlotGroup;
+
+typedef struct {
+    int (*is_item_fit)(void *ctx, uint16_t item, int slot, int mode);
+    void (*equip_item)(void *ctx, int hero_idx, uint16_t item, int slot);
+} DM2_V1_AddItemCallbacks;
+
+int dm2_v1_add_item_to_player(
+    int hero_idx, int16_t *hero_items, int item_count,
+    uint16_t item_record, uint16_t item_db_type,
+    const DM2_V1_SlotGroup *groups, int group_count,
+    const DM2_V1_AddItemCallbacks *cb, void *ctx);
+
+/* ---- DM2_BURN_PLAYER_LIGHTING_ITEMS (c_hero.cpp:2262) ----
+ * Decrement charges on lit torches/lanterns. */
+typedef struct {
+    int hero_count;
+    int16_t (*get_hero_hand_item)(void *ctx, int hero_idx, int hand);
+    uint16_t (*query_item_flags)(void *ctx, uint16_t item);
+    int16_t (*add_item_charge)(void *ctx, uint16_t item, int16_t delta);
+    void (*set_item_importance)(void *ctx, uint16_t item, int val);
+    void (*recalc_light)(void *ctx);
+} DM2_V1_BurnLightCallbacks;
+
+int dm2_v1_burn_player_lighting_items(
+    const DM2_V1_BurnLightCallbacks *cb, void *ctx);
+
+/* ---- DM2_DROP_PLAYER_ITEMS (c_hero.cpp:2535) ----
+ * Drop all 30 inventory items of a hero onto the floor. */
+typedef struct {
+    int16_t (*remove_possession)(void *ctx, int hero_idx, int slot);
+    void (*move_record_to)(void *ctx, uint16_t record, int16_t x, int16_t y,
+                            uint8_t pos);
+} DM2_V1_DropItemsCallbacks;
+
+int dm2_v1_drop_player_items(
+    int hero_idx, uint8_t party_pos,
+    int16_t tile_x, int16_t tile_y,
+    const uint8_t *slot_order, int slot_count,
+    const DM2_V1_DropItemsCallbacks *cb, void *ctx);
+
+/* ---- DM2_PUT_ITEM_TO_PLAYER (c_hero.cpp:2838) ----
+ * Place cursor item into hero backpack (slots 13-29). */
+typedef struct {
+    int16_t cursor_item;
+    int16_t (*remove_object_from_hand)(void *ctx);
+    void (*equip_item)(void *ctx, int hero_idx, uint16_t item, int slot);
+} DM2_V1_PutItemCallbacks;
+
+int dm2_v1_put_item_to_player(
+    int hero_idx, DM2_V1_HeroState *hero,
+    int16_t *hero_items, int item_count,
+    const DM2_V1_PutItemCallbacks *cb, void *ctx);
+
 #ifdef __cplusplus
 }
 #endif

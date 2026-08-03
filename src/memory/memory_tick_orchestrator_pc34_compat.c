@@ -7453,13 +7453,6 @@ static int orch_build_projectile_digest_compat(
         }
         {
             int doorIndex = -1;
-            {
-                int foundDoor = orch_cmd_attack_find_door_on_square_compat(
-                    world, projectile->mapIndex, destX, destY, &doorIndex);
-                fprintf(stderr, "DEBUG-DOOR: found=%d doorIndex=%d doors=%p doorCount=%d\n",
-                        foundDoor, doorIndex, (void*)world->things->doors,
-                        world->things ? world->things->doorCount : -1);
-            }
             if (orch_cmd_attack_find_door_on_square_compat(
                     world, projectile->mapIndex, destX, destY, &doorIndex) &&
                 world->things && world->things->doors &&
@@ -8191,18 +8184,12 @@ static int orch_handle_projectile_move_event_compat(
     if (!F0219_PROJECTILE_ProcessEvents48To49_Compat(
             &projectileForAdvance, &digest, world->gameTick, &world->masterRng,
             &newState, &tickResult)) {
-        fprintf(stderr, "DEBUG-ORCH: F0219 returned 0 for proj %d\n", projectileIndex);
         F0813_PROJECTILE_Despawn_Compat(&world->projectiles, projectileIndex);
         return 1;
     }
-    fprintf(stderr, "DEBUG-ORCH: resultKind=%d despawn=%d newMapX=%d newMapY=%d digest.doorPass=%d reserved2=0x%x cat=%d\n",
-            tickResult.resultKind, tickResult.despawn, tickResult.newMapX, tickResult.newMapY,
-            digest.destDoorAllowsProjectilePassThrough, projectileForAdvance.reserved2,
-            projectileForAdvance.projectileCategory);
     if (!tickResult.despawn &&
         !orch_projectile_move_schedule_admissible_f0219_compat(
             world, projectile->slotIndex, &tickResult.outNextTick)) {
-        fprintf(stderr, "DEBUG-ORCH: admissible check failed\n");
         return 0;
     }
 
