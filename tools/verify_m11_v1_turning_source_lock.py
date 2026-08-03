@@ -57,12 +57,12 @@ FIRESTAFF_FILES = [
     {
         'path': ROOT / 'src/engine/m11_v1_turning_presentation_pc34_compat.c',
         'claim': 'guarded V1 presentation turning seam stores one-step 90-degree endpoint render semantics with no wall block check',
-        'needles': ['M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL', 'COMMAND.C:2150-2152', 'CLIKMENU.C:171-173', 'result.quarterTurnSteps = 1', 'result.animationFrames = 1', 'result.intermediateFrames = 0', 'result.wallBlockCheck = 0', 'result.waitsForViewportVBlank = 1', 'poses[i].cell = m11_normalize_direction(poses[i].cell + result.delta)', 'poses[i].direction = m11_normalize_direction(poses[i].direction + result.delta)'],
+        'needles': ['DM1_V1_TURNING_PRESENTATION_MODE_ORIGINAL_PC34', 'COMMAND.C:2150-2152', 'CLIKMENU.C:171-173', 'result.quarterTurnSteps = 1', 'result.animationFrames = 1', 'result.intermediateFrames = 0', 'result.wallBlockCheck = 0', 'result.waitsForViewportVBlank = 1', 'poses[i].cell = dm1_v1_turning_normalize_direction(poses[i].cell + result.delta)', 'poses[i].direction = dm1_v1_turning_normalize_direction(poses[i].direction + result.delta)'],
     },
     {
         'path': ROOT / 'src/dm1/dm1_v1_movement_command_core_pc34_compat.c',
         'claim': 'turn dispatch uses guarded M11 V1 seam and handles stairs-before-turn source sequence',
-        'needles': ['CLIKMENU.C:167-169 consumes a turn command on a stairs', 'F0705_MOVEMENT_ResolveStairsTransition_Compat', 'm11_v1_turning_apply_party_original_presentation_pc34_compat', 'M11_V1_TURNING_PRESENTATION_MODE_ORIGINAL', 'CHAMPION.C:117-130'],
+        'needles': ['CLIKMENU.C:167-169 consumes a turn command on a stairs', 'dm1_v1_dungeon_resolve_stairs_transition_pc34', 'm11_v1_turning_apply_party_original_presentation_pc34_compat', 'dm1_v1_apply_party_turn_receipt', 'CHAMPION.C F0284 lines 117-130'],
     },
     {
         'path': ROOT / 'tests/test_dm1_v1_turning_presentation_pc34_compat.c',
@@ -108,7 +108,7 @@ def main() -> int:
     citations = [require_source(e) for e in SOURCE_RANGES]
     firestaff = [require_firestaff(e) for e in FIRESTAFF_FILES]
     cmake = read(ROOT / 'CMakeLists.txt', 'utf-8')
-    if 'm11_v1_turning_presentation_pc34_compat' not in cmake:
+    if 'dm1_v1_turning_presentation_pc34_compat' not in cmake and 'm11_v1_turning_presentation_pc34_compat' not in cmake:
         raise AssertionError('CMakeLists.txt does not register m11_v1_turning_presentation_pc34_compat')
     result = {
         'status': 'pass',

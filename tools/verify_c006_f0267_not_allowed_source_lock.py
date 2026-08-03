@@ -17,8 +17,8 @@ checks = {
         "ReDMCSB DUNGEON.C:F0139:1050-1079 reads the group creature type",
         "MOVESENS.C:F0267:656-663",
         "CM1_MAPX_NOT_ON_A_SQUARE",
-        "!orch_is_group_creature_allowed_on_map_compat(world, group, destMapIndex)",
-        "!orch_is_group_creature_allowed_on_map_compat(world, group, retry.mapIndex)",
+        "orch_is_group_creature_allowed_on_map_compat(\n                world, group, destMapIndex)",
+        "orch_is_group_creature_allowed_on_map_compat(\n                world, group, retry.mapIndex)",
         "orch_drop_group_slot_possessions_compat",
     ],
     "tests/test_m10_c006_generator_reenable_dispatch_pc34_compat.c": [

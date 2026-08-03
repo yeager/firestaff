@@ -137,9 +137,9 @@ FIRE_CHECKS = [
             "if (m11_viewport_cell_is_wall_like(&cells[depth][1]))",
             "if (flipWalls) {",
             "the native center-wall graphic flipped horizontally.",
-            "(void)m11_draw_dm1_wall_blit_flipped(state, framebuffer,",
+            "drawn = m11_draw_dm1_wall_blit_flipped(state, framebuffer,",
             "} else {",
-            "(void)m11_draw_dm1_front_wall_blit(state, framebuffer,",
+            "drawn = m11_draw_dm1_front_wall_blit(state, framebuffer,",
         ],
     },
     {

@@ -47,11 +47,11 @@ SRC = [
 
 LOCAL = [
     # Span maintenance: the door-front occlusion metadata table grew and now
-    # lives at src lines 931-942 (was 283-290); the runtime-test table and its
-    # assertions live at test lines 1303-1340 (was 739-800).  The drift
+    # lives at src lines 968-982 (was 948-959); the runtime-test table and its
+    # assertions live at test lines 1730-1775 (was 1303-1340).  The drift
     # regression in the test binary guards the same evidence by whole-file
     # scan, so these LOCAL spans track the table locations.
-    ("firestaff-mirrored-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "948-959", [
+    ("firestaff-mirrored-door-front-metadata", ROOT / "src/dm1/dm1_v1_viewport_3d_pc34_compat.c", "968-982", [
         "DM1_VIEW_SQUARE_D3R, 0x0128, 0x0439",
         "DUNVIEW.C:6579 floor ornament under mirrored rear pass",
         "DUNVIEW.C:6592-6593 optional button before door panel",
@@ -60,7 +60,7 @@ LOCAL = [
         "DM1_VIEW_SQUARE_D2R, 0x0128, 0x0439",
         "DUNVIEW.C:7181 floor ornament under mirrored rear pass",
     ]),
-    ("firestaff-mirrored-door-front-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "1303-1340", [
+    ("firestaff-mirrored-door-front-runtime-test", ROOT / "tests/test_dm1_v1_viewport_3d_pc34_compat.c", "1730-1775", [
         "{ DM1_VIEW_SQUARE_D3R, \"6579\", \"6580\", \"6582\", \"6592\", \"6598\", \"6601\", 0x0128, 0x0439, {2, 1}, {3, 4} },",
         "{ DM1_VIEW_SQUARE_D2L, \"6988\", \"6989\", \"6991\", NULL,   \"7000\", \"7003\", 0x0218, 0x0349, {1, 2}, {4, 3} },",
         "{ DM1_VIEW_SQUARE_D2R, \"7181\", \"7182\", \"7184\", NULL,   \"7193\", \"7196\", 0x0128, 0x0439, {2, 1}, {3, 4} },",
