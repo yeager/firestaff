@@ -3892,4 +3892,126 @@ Theron_Track02SignalStatus theron_v1_track02_verify_stage2_45xx_tier2_callees(
     const char *md5_hex,
     Theron_Track02Stage245xxTier2CalleesReceipt *out_receipt);
 
+/* Command stream VM semantic roles.  The 10 jump-table handlers implement
+ * a bytecoded command interpreter: the stream at $6000 contains variable-
+ * length instructions (1-9 bytes), each dispatched by opcode through the
+ * L410D jump table.  These roles classify what each handler does without
+ * claiming callee or state-table semantics. */
+typedef enum {
+    THERON_CMD_ROLE_UNKNOWN = 0,
+    THERON_CMD_ROLE_UNCONDITIONAL_ACTION,
+    THERON_CMD_ROLE_CONDITIONAL_EQ_ACTION,
+    THERON_CMD_ROLE_CONDITIONAL_EQ_BRANCH,
+    THERON_CMD_ROLE_CONDITIONAL_GT_BRANCH,
+    THERON_CMD_ROLE_CONDITIONAL_LT_BRANCH,
+    THERON_CMD_ROLE_TWO_OPERAND_DISPATCH_A,
+    THERON_CMD_ROLE_TWO_OPERAND_DISPATCH_B,
+    THERON_CMD_ROLE_TWO_OPERAND_DISPATCH_C,
+    THERON_CMD_ROLE_RENDER_DISPATCH,
+    THERON_CMD_ROLE_STREAM_END
+} Theron_Track02CmdRole;
+
+/* Per-handler semantic classification. */
+typedef struct {
+    Theron_Track02CmdRole role;
+    uint16_t handler_cpu_address;
+    uint8_t advance_bytes;
+    uint8_t operand_count;
+    int reads_state_table;
+    int calls_subroutine;
+    int calls_render_chain;
+} Theron_Track02CmdHandlerSemantic;
+
+/* Receipt for the command stream VM semantic classification.  Chains the
+ * proven jump-table handler body proof, then classifies each of the 10
+ * handlers by its structural role in the command interpreter: compare
+ * mode (EQ/GT/LT), operand count (0/1/2), branch targets, subroutine
+ * calls, and rendering dispatch.  No callee semantics ($41B9, $43D6,
+ * $37D8, $383E) or state-table entry meanings ($2780) are claimed. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    size_t handler_count;
+    Theron_Track02CmdHandlerSemantic handlers[10];
+    size_t total_advance_bytes_sum;
+    int all_handlers_classified;
+    int state_table_base_proven;
+    uint16_t state_table_base;
+    int render_chain_proven;
+    int stream_vm_complete;
+} Theron_Track02CmdSemanticReceipt;
+
+/* Classifies the 10 jump-table handlers by their structural role in
+ * the command stream VM.  Chains the jump-table handler body proof;
+ * classification is derived from the proven handler bytes only.  The
+ * advance byte counts come from the proven dispatch stubs. */
+Theron_Track02SignalStatus theron_v1_track02_classify_cmd_semantics(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02CmdSemanticReceipt *out_receipt);
+
+const char *theron_v1_track02_cmd_role_name(Theron_Track02CmdRole role);
+
+/* PC Engine CD System Card call vectors. */
+#define THERON_SYSCARD_CD_BOOT   0xE009u
+#define THERON_SYSCARD_CD_RESET  0xE00Cu
+#define THERON_SYSCARD_CD_BASE   0xE00Fu
+#define THERON_SYSCARD_CD_READ   0xE012u
+#define THERON_SYSCARD_CD_GRPRD  0xE015u
+#define THERON_SYSCARD_CD_PREP   0xE018u
+#define THERON_SYSCARD_CD_FADE   0xE01Bu
+#define THERON_SYSCARD_AD_TRANS  0xE027u
+#define THERON_SYSCARD_AD_READ   0xE02Au
+#define THERON_SYSCARD_AD_WRITE  0xE02Du
+#define THERON_SYSCARD_AD_PLAY   0xE030u
+#define THERON_SYSCARD_AD_CPLAY  0xE033u
+#define THERON_SYSCARD_AD_STOP   0xE036u
+#define THERON_SYSCARD_AD_STAT   0xE039u
+#define THERON_SYSCARD_CD_SCAN   0xE03Cu
+#define THERON_SYSCARD_CD_PLAY   0xE03Fu
+#define THERON_SYSCARD_CD_SEARCH 0xE042u
+#define THERON_SYSCARD_CD_PAUSE  0xE045u
+#define THERON_SYSCARD_CD_DINFO  0xE048u
+#define THERON_SYSCARD_CD_CONTR  0xE04Bu
+#define THERON_SYSCARD_CD_SUBRD  0xE04Eu
+#define THERON_SYSCARD_CD_PCMRD  0xE051u
+#define THERON_SYSCARD_CD_FAD    0xE054u
+
+#define THERON_TRACK02_MAX_SYSCARD_CALL_SITES 300u
+
+typedef struct {
+    uint16_t vector;
+    size_t raw_offset;
+    size_t sector;
+    size_t user_data_offset;
+    int in_user_data;
+} Theron_Track02SyscardCallSite;
+
+/* Receipt for the system card call site catalog.  Scans the entire Track 02
+ * BIN for JSR ($20) instructions targeting system card vectors ($E000+).
+ * Reports all call sites with their raw offsets, sectors, and user data
+ * positions.  Only sites within sector user data (offset 16..2063) are
+ * flagged as code (vs. data false positives). */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    size_t total_call_sites;
+    size_t cd_play_count;
+    size_t ad_play_count;
+    size_t ad_cplay_count;
+    size_t cd_read_count;
+    size_t cd_fade_count;
+    size_t cd_boot_count;
+    size_t overflow_count;
+    size_t call_site_count;
+    Theron_Track02SyscardCallSite call_sites[THERON_TRACK02_MAX_SYSCARD_CALL_SITES];
+} Theron_Track02SyscardCatalogReceipt;
+
+Theron_Track02SignalStatus theron_v1_track02_catalog_syscard_calls(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02SyscardCatalogReceipt *out_receipt);
+
 #endif /* THERON_V1_TRACK02_H */

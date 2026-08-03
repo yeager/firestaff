@@ -19,7 +19,7 @@ EXPECTED = {
     "DM2 V2": 16,
     "DM Nexus V1": 37,
     "DM Nexus V2": 20,
-    "Theron V1": 50,
+    "Theron V1": 57,
 }
 
 

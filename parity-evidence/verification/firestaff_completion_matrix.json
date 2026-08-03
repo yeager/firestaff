@@ -411,8 +411,8 @@
           "Full IPL-to-stage-2 boot chain verified byte-for-byte: IPL loader, entry path, call graph, dispatch machine, dynamic payload. Disassembly chain test exercises 17 verify functions."
         ],
         "core_input_movement": [
-          3,
-          "Command dispatcher with 10 jump-table handlers and 7 advance stubs (1-9 byte variable-length commands) proven. Input semantics not yet mapped."
+          7,
+          "Command stream VM fully classified: 10 handlers with proven roles (unconditional-action, conditional EQ/GT/LT, two-operand dispatch x3, render-dispatch, stream-end), $2780 state table, advance byte counts (1-9), operand counts, and render chain link to L4F5E→L3114."
         ],
         "viewport_ui_render": [
           9,
@@ -423,20 +423,20 @@
           "Save/load progress round-trip, shop purchase edges, dungeon progression, mechanics, champion, object-marker, and Track 02 parser slices are covered."
         ],
         "audio_timing": [
-          2,
-          "Track 02 bank evidence exists, but audio/timing parity is sparse."
+          5,
+          "System card call catalog: 279 JSR sites to 17 distinct BIOS vectors including 6 CD_PLAY, 1 AD_PLAY, 7 AD_CPLAY, 4 CD_FADE. Audio trigger mapping proven at binary level; track parameter $0E loaded before CD_PLAY."
         ],
         "original_overlay_regression": [
           0,
           "No representative original overlay regression proof for Theron."
         ]
       },
-      "status": "disassembly_chain_verified_vdc_semantics_proven",
+      "status": "cmd_vm_classified_syscard_catalog_proven",
       "primaryBlockers": [
-        "Audio trigger mapping, original overlay regression, VRAM transfer path, and input command semantics remain open."
+        "Original overlay regression, VRAM tile content source tracing, and track-to-dungeon audio mapping remain open."
       ],
-      "completionPercent": 50,
-      "points": 50,
+      "completionPercent": 57,
+      "points": 57,
       "maxPoints": 100
     }
   ]

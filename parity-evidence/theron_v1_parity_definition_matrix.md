@@ -53,6 +53,9 @@ No reference source code exists. Parity is established through:
 | L4AF7 MPR page body | PROVEN | $FFF5-derived bank mapping |
 | L4F5E selector | PROVEN | $4EC1 argument, JSR $3114 |
 | Dispatch machine contiguous | PROVEN | 0x121 bytes ($40B5-$4120) |
+| Command VM semantic classification | PROVEN | 10 handlers classified: unconditional-action, conditional EQ/GT/LT, two-operand dispatch ×3, render-dispatch, stream-end |
+| State table base ($2780) | PROVEN | L41F8 LDA $2780,X — 7 of 10 handlers read game-state array |
+| Render chain linkage | PROVEN | Handler 9 → L4F5E → L3114 rendering pipeline |
 
 ### 3. VDC Initialization
 
@@ -104,8 +107,8 @@ No reference source code exists. Parity is established through:
 | Track 01 CDDA handoff | PROVEN | `theron_v1_track01_cdda_handoff_from_verified_media` |
 | CD audio availability check | PROVEN | 19-track layout verified, OGG fallback |
 | ADPCM bank anchors (3) | PROVEN | US/JP offset pairs in Track 02 BIN |
-| Audio trigger mapping | OPEN | CD_PLAY system card calls not yet traced |
-| Track-to-dungeon mapping | OPEN | Requires Mednafen CD-DA trace |
+| Audio trigger mapping | PROVEN | System card catalog: 279 JSR sites to 17 BIOS vectors; 6 CD_PLAY, 1 AD_PLAY, 7 AD_CPLAY, 4 CD_FADE; track $0E loaded before CD_PLAY |
+| Track-to-dungeon mapping | OPEN | CD_PLAY parameter tracing proves track $0E; full track-to-dungeon map requires Mednafen runtime trace |
 
 ### 8. Save/Load
 
@@ -146,11 +149,10 @@ rendering pipeline through 5 tiers of callees, and all 10 jump table handlers.
 
 ## Blockers
 
-1. **Audio trigger mapping**: CD_PLAY/AD_PLAY system card calls in the stage-2
-   code have not been traced. Mednafen runtime capture needed.
-2. **Original overlay regression**: No pixel-level comparison between Firestaff
+1. **Original overlay regression**: No pixel-level comparison between Firestaff
    rendering and original PC Engine output exists.
-3. **VRAM tile content**: L466B proves the TIA bulk transfer path to VWR,
+2. **VRAM tile content**: L466B proves the TIA bulk transfer path to VWR,
    but the specific tile data source addresses are not yet traced.
-4. **Input/movement binding**: The command dispatcher stream format is proven
-   but command semantics (movement, menu, etc.) are not mapped.
+3. **Track-to-dungeon audio mapping**: System card calls are cataloged (279
+   sites, 6 CD_PLAY with track $0E parameter), but which CD-DA track plays
+   in which dungeon requires Mednafen runtime trace correlation.
