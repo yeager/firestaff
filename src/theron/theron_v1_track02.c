@@ -10605,6 +10605,97 @@ Theron_Track02SignalStatus theron_v1_track02_classify_cmd_semantics(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
+static int tqr_is_abs_io_opcode(uint8_t opcode) {
+    return opcode == 0xADu || opcode == 0x8Du ||
+           opcode == 0x2Cu || opcode == 0x0Cu ||
+           opcode == 0x1Cu || opcode == 0x9Du;
+}
+
+Theron_Track02SignalStatus theron_v1_track02_catalog_pce_io(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02PceIoCatalogReceipt *out_receipt) {
+    Theron_Track02IplLoaderReceipt loader;
+    Theron_Track02SignalStatus status;
+    size_t i;
+    /* Joypad read routine pattern: STA $1000, STA $1000, STA $1000,
+     * LDA $1000, STA $1000, LDA $1000 — standard PC Engine joypad scan.
+     * The 6 accesses are at offsets 0,5,10,15,21,26 relative to start. */
+    static const uint8_t joypad_pattern[] = {
+        0x8Du, 0x00u, 0x10u,
+    };
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!track02_data || !md5_hex || !out_receipt) {
+        return THERON_TRACK02_SIGNAL_BAD_INPUT;
+    }
+    status = theron_v1_track02_find_ipl_loader(track02_data, track02_size,
+                                                md5_hex, &loader);
+    if (status != THERON_TRACK02_SIGNAL_OK) return status;
+    out_receipt->variant = loader.variant;
+
+    for (i = 0u; i + 2u < track02_size; ++i) {
+        uint16_t addr;
+        size_t sector_off = i % TQR_RAW_SECTOR_BYTES;
+
+        if (sector_off < 16u || sector_off >= 2064u) continue;
+        if (!tqr_is_abs_io_opcode(track02_data[i])) continue;
+
+        addr = (uint16_t)track02_data[i + 1u] |
+               ((uint16_t)track02_data[i + 2u] << 8);
+
+        if (addr == THERON_PCEIO_JOYPAD) {
+            ++out_receipt->joypad_access_count;
+            /* Check for the canonical joypad scan routine:
+             * STA $1000 / LDA #xx / STA $1000 / LDA #xx / STA $1000 /
+             * delay / LDA $1000 (read directions) / ... / STA $1000 /
+             * delay / LDA $1000 (read buttons).
+             * Byte pattern at offset 0: 8D 00 10 A9 xx 8D 00 10 A9 xx
+             * 8D 00 10 ... AD 00 10 */
+            if (!out_receipt->joypad_read_routine_proven &&
+                track02_data[i] == 0x8Du &&
+                i + 30u < track02_size &&
+                track02_data[i + 3u] == 0xA9u &&
+                track02_data[i + 5u] == 0x8Du &&
+                track02_data[i + 6u] == 0x00u &&
+                track02_data[i + 7u] == 0x10u &&
+                track02_data[i + 8u] == 0xA9u &&
+                track02_data[i + 10u] == 0x8Du &&
+                track02_data[i + 11u] == 0x00u &&
+                track02_data[i + 12u] == 0x10u &&
+                track02_data[i + 15u] == 0xADu &&
+                track02_data[i + 16u] == 0x00u &&
+                track02_data[i + 17u] == 0x10u) {
+                out_receipt->joypad_read_routine_proven = 1;
+                out_receipt->joypad_read_routine_sector =
+                    (uint16_t)(i / TQR_RAW_SECTOR_BYTES);
+                out_receipt->joypad_read_routine_user_offset =
+                    (uint16_t)(sector_off - 16u);
+            }
+        } else if (addr >= THERON_PCEIO_VCE_CTL &&
+                   addr <= THERON_PCEIO_VCE_CTW_HI) {
+            ++out_receipt->vce_palette_access_count;
+            if (!out_receipt->vce_palette_write_proven &&
+                (addr == THERON_PCEIO_VCE_CTW_LO ||
+                 addr == THERON_PCEIO_VCE_CTW_HI) &&
+                track02_data[i] == 0x8Du) {
+                out_receipt->vce_palette_write_proven = 1;
+            }
+        } else if (addr == THERON_PCEIO_TIMER_CTR ||
+                   addr == THERON_PCEIO_TIMER_CTL) {
+            ++out_receipt->timer_access_count;
+        } else if (addr == THERON_PCEIO_IRQ_DISABLE ||
+                   addr == THERON_PCEIO_IRQ_STATUS) {
+            ++out_receipt->irq_access_count;
+        }
+    }
+
+    out_receipt->valid = (out_receipt->joypad_access_count > 0u ||
+                          out_receipt->vce_palette_access_count > 0u);
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 static int tqr_is_syscard_vector(uint16_t addr) {
     return addr >= 0xE009u && addr <= 0xE054u &&
            ((addr - 0xE009u) % 3u) == 0u;

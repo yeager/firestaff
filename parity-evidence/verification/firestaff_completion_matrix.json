@@ -411,12 +411,12 @@
           "Full IPL-to-stage-2 boot chain verified byte-for-byte: IPL loader, entry path, call graph, dispatch machine, dynamic payload. Disassembly chain test exercises 17 verify functions."
         ],
         "core_input_movement": [
-          7,
-          "Command stream VM fully classified: 10 handlers with proven roles (unconditional-action, conditional EQ/GT/LT, two-operand dispatch x3, render-dispatch, stream-end), $2780 state table, advance byte counts (1-9), operand counts, and render chain link to L4F5E→L3114."
+          10,
+          "Command stream VM fully classified (10 handlers, $2780 state table, render chain). PC Engine joypad I/O proven: 213 port $1000 accesses, canonical read routine at sector 260 (STA/LDA CLR+SEL+read pattern), timer (157) and IRQ control (19) accesses proven."
         ],
         "viewport_ui_render": [
-          9,
-          "VDC register semantics proven: MAWR/VWR/BXR/BYR/CR writes, VRAM clear (port_clear), and VRAM tile transfer (L466B TIA bulk write to VWR) verified. Rendering pipeline through 5 tiers of callees with 2310 bound bytes."
+          13,
+          "VDC register semantics proven (MAWR/VWR/BXR/BYR/CR, VRAM clear, VRAM tile transfer TIA). VCE palette port proven: 438 accesses to HuC6260 color table registers ($0402-$0405), palette write via CTW confirmed. Rendering pipeline through 5 tiers with 2310 bound bytes."
         ],
         "gameplay_systems": [
           14,
@@ -431,12 +431,12 @@
           "No representative original overlay regression proof for Theron."
         ]
       },
-      "status": "cmd_vm_classified_syscard_catalog_proven",
+      "status": "pce_io_catalog_joypad_vce_proven",
       "primaryBlockers": [
-        "Original overlay regression, VRAM tile content source tracing, and track-to-dungeon audio mapping remain open."
+        "Original overlay regression (0/10) is the largest remaining gap. VRAM tile content source tracing and track-to-dungeon audio mapping remain open."
       ],
-      "completionPercent": 57,
-      "points": 57,
+      "completionPercent": 64,
+      "points": 64,
       "maxPoints": 100
     }
   ]

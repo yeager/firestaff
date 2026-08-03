@@ -68,6 +68,10 @@ No reference source code exists. Parity is established through:
 | L466B VRAM tile transfer | PROVEN | ST0→MAWR via $02:$03, ST0→VWR, TIA bulk write to VRAM |
 | L4932 VDC CR write | PROVEN | ST0 #$05, $F3→$0002, $F4 AND #$07→$0003 |
 | L4B2D delay loop | PROVEN | Nested DEX/BNE×DEC/BNE countdown |
+| VCE palette port writes | PROVEN | 438 HuC6260 accesses: CTA_LO/HI ($0402/$0403) index + CTW_LO/HI ($0404/$0405) color data |
+| Joypad read routine | PROVEN | 213 port $1000 accesses; canonical STA/LDA CLR+SEL+read at sector 260:0x4B8 |
+| Timer accesses | PROVEN | 157 timer port ($0C00/$0C01) accesses |
+| IRQ control | PROVEN | 19 IRQ disable/status ($1402/$1403) accesses |
 
 ### 4. Rendering Pipeline
 

@@ -187,6 +187,29 @@ static void test_syscard_catalog(const uint8_t *data, size_t size) {
            receipt.cd_fade_count, receipt.cd_boot_count);
 }
 
+static void test_pce_io_catalog(const uint8_t *data, size_t size) {
+    Theron_Track02PceIoCatalogReceipt receipt;
+    Theron_Track02SignalStatus status;
+
+    memset(&receipt, 0, sizeof(receipt));
+    status = theron_v1_track02_catalog_pce_io(
+        data, size, THERON_TRACK02_MD5_US_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_OK);
+    assert(receipt.valid);
+    assert(receipt.joypad_access_count > 100);
+    assert(receipt.vce_palette_access_count > 200);
+    assert(receipt.timer_access_count > 0);
+    assert(receipt.irq_access_count > 0);
+    assert(receipt.joypad_read_routine_proven);
+    assert(receipt.vce_palette_write_proven);
+    printf("  PASS: pce_io_catalog (joypad=%zu, VCE=%zu, timer=%zu, IRQ=%zu, "
+           "joypad_routine=sector %u:0x%03x)\n",
+           receipt.joypad_access_count, receipt.vce_palette_access_count,
+           receipt.timer_access_count, receipt.irq_access_count,
+           receipt.joypad_read_routine_sector,
+           receipt.joypad_read_routine_user_offset);
+}
+
 static void test_syscard_cd_play_sites(const uint8_t *data, size_t size) {
     Theron_Track02SyscardCatalogReceipt receipt;
     size_t i, code_cd_play = 0;
@@ -249,11 +272,12 @@ int main(void) {
     test_operand_counts(data, size);
     test_state_table(data, size);
     test_render_chain(data, size);
+    test_pce_io_catalog(data, size);
     test_syscard_catalog(data, size);
     test_syscard_cd_play_sites(data, size);
     test_vm_structure_summary(data, size);
 
     free(data);
-    printf("PASS (11 tests)\n");
+    printf("PASS (12 tests)\n");
     return 0;
 }

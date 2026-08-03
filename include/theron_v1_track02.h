@@ -4008,6 +4008,43 @@ typedef struct {
     Theron_Track02SyscardCallSite call_sites[THERON_TRACK02_MAX_SYSCARD_CALL_SITES];
 } Theron_Track02SyscardCatalogReceipt;
 
+/* PC Engine I/O port addresses. */
+#define THERON_PCEIO_VDC_PORT    0x0000u
+#define THERON_PCEIO_VCE_CTL     0x0400u
+#define THERON_PCEIO_VCE_CTA_LO  0x0402u
+#define THERON_PCEIO_VCE_CTA_HI  0x0403u
+#define THERON_PCEIO_VCE_CTW_LO  0x0404u
+#define THERON_PCEIO_VCE_CTW_HI  0x0405u
+#define THERON_PCEIO_PSG         0x0800u
+#define THERON_PCEIO_TIMER_CTR   0x0C00u
+#define THERON_PCEIO_TIMER_CTL   0x0C01u
+#define THERON_PCEIO_JOYPAD      0x1000u
+#define THERON_PCEIO_IRQ_DISABLE 0x1402u
+#define THERON_PCEIO_IRQ_STATUS  0x1403u
+
+/* Receipt for the PC Engine I/O port access catalog.  Scans the Track 02
+ * BIN for absolute-addressed I/O port instructions (LDA/STA/BIT/TSB/TRB)
+ * targeting known PC Engine hardware ports.  Reports per-port totals and
+ * proves that joypad, VCE palette, timer, and IRQ control code exists. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    size_t joypad_access_count;
+    size_t vce_palette_access_count;
+    size_t timer_access_count;
+    size_t irq_access_count;
+    int joypad_read_routine_proven;
+    uint16_t joypad_read_routine_sector;
+    uint16_t joypad_read_routine_user_offset;
+    int vce_palette_write_proven;
+} Theron_Track02PceIoCatalogReceipt;
+
+Theron_Track02SignalStatus theron_v1_track02_catalog_pce_io(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    const char *md5_hex,
+    Theron_Track02PceIoCatalogReceipt *out_receipt);
+
 Theron_Track02SignalStatus theron_v1_track02_catalog_syscard_calls(
     const uint8_t *track02_data,
     size_t track02_size,
