@@ -251,7 +251,7 @@ typedef struct {
     uint32_t flags;
 } Theron_V1_Object;
 
-#define THERON_MAX_OBJECTS 256
+#define THERON_MAX_OBJECTS 512
 
 /* ── Timer system ─────────────────────────────────────────────────── */
 typedef enum {
