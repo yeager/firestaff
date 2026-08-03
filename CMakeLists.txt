@@ -647,6 +647,15 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_stairs_side_m11_re
     add_test(NAME dm2_v1_gdat_stairs_side_m11_receipt COMMAND test_dm2_v1_gdat_stairs_side_m11_receipt)
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_stairs_front_receipt.c")
+    add_executable(test_dm2_v1_gdat_stairs_front_receipt tests/test_dm2_v1_gdat_stairs_front_receipt.c src/dm2/dm2_v1_gdat_stairs_front_receipt.c)
+    target_include_directories(test_dm2_v1_gdat_stairs_front_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdat_stairs_front_receipt PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME dm2_v1_gdat_stairs_front_receipt COMMAND test_dm2_v1_gdat_stairs_front_receipt)
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_gdat_stairs_side_transform_receipt.c")
     add_executable(test_dm2_v1_gdat_stairs_side_transform_receipt tests/test_dm2_v1_gdat_stairs_side_transform_receipt.c)
     target_include_directories(test_dm2_v1_gdat_stairs_side_transform_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
