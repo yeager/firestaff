@@ -3,8 +3,8 @@
  *
  * Champion attacks, creature AI, HP/stat damage, drops, and SFX triggers.
  *
- * TQR combat system — "light" subset of DM1 combat with unique altar-of-vi.
- * Theron has no spellcasting; combat is purely physical (fighter/ninja).
+ * TQR combat system — DM1-derived combat with unique altar-of-vi.
+ * Spells use mana costs from Track 02 spell descriptor table (UD 0x09EFAF).
  *
  * Source references:
  *   THQUEST.ASM T500  — creature spawning / wave triggers
@@ -193,6 +193,12 @@ int  theron_v1_creature_count(const Theron_V1_World *world,
 int theron_v1_champion_attack(Theron_V1_World *world,
                                int attacking_slot,
                                int target_creature_id);
+
+/* ── Spell casting (indices 20-40 from Track 02 spell descriptors) ── */
+int theron_v1_champion_cast_spell(Theron_V1_World *world,
+                                   int casting_slot,
+                                   unsigned int spell_index,
+                                   int target_creature_id);
 
 /* ── Creature attack (single creature vs champion) ───────────────── */
 Theron_CombatResult theron_v1_creature_attack_champion(

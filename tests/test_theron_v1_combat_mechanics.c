@@ -184,6 +184,40 @@ static void test_hp_modification_clamps(void) {
     CHECK_INT("HP clamps to zero", c.health, 0);
 }
 
+static void test_spell_casting(void) {
+    printf("[test:spell_casting]\n");
+    Theron_V1_World w;
+    make_world(&w);
+    w.party.champions[0].mana = 100;
+    w.party.champions[0].max_mana = 100;
+    w.party.champions[0].anti_magic = 20;
+
+    /* HEAL (index 35, cost 2) — self-heal */
+    w.party.champions[0].health = 20;
+    int rc = theron_v1_champion_cast_spell(&w, 0, 35, -1);
+    CHECK_INT("HEAL succeeds", rc, 0);
+    CHECK_INT("HEAL restores HP", w.party.champions[0].health > 20, 1);
+    CHECK_INT("HEAL deducts mana", w.party.champions[0].mana < 100, 1);
+
+    /* Invalid spell index */
+    rc = theron_v1_champion_cast_spell(&w, 0, 5, -1);
+    CHECK_INT("non-spell index rejected", rc, -1);
+
+    /* FIREBALL (index 20, cost 42) — offensive */
+    w.party.champions[0].mana = 100;
+    int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_AKUTUBA,
+                                       w.current_dungeon, w.current_level,
+                                       9, 8);
+    rc = theron_v1_champion_cast_spell(&w, 0, 20, cid);
+    CHECK_INT("FIREBALL returns 0 or 1", rc >= 0, 1);
+    CHECK_INT("FIREBALL costs mana", w.party.champions[0].mana < 100, 1);
+
+    /* Insufficient mana */
+    w.party.champions[0].mana = 1;
+    rc = theron_v1_champion_cast_spell(&w, 0, 20, cid);
+    CHECK_INT("insufficient mana rejected", rc, -1);
+}
+
 static void test_source_evidence(void) {
     printf("[test:source_evidence]\n");
     const char *ev = theron_v1_combat_source_evidence();
@@ -567,6 +601,7 @@ int main(void) {
     test_level_transition_stairs();
     test_between_dungeon_exit();
     test_decode_dungeon_level_object_table();
+    test_spell_casting();
     test_source_evidence();
 
     printf("\nResults: %d passed, %d failed\n", g_pass, g_fail);

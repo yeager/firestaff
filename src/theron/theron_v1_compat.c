@@ -273,6 +273,61 @@ int theron_v1_champion_attack(Theron_V1_World *world,
     return 0; /* hit but alive */
 }
 
+/* ── Spell casting ───────────────────────────────────────────────── */
+
+int theron_v1_champion_cast_spell(Theron_V1_World *world,
+    int casting_slot, unsigned int spell_index,
+    int target_creature_id)
+{
+    if (!world || casting_slot < 0 ||
+        casting_slot >= THERON_MAX_CHAMPIONS) return -1;
+    if (spell_index < 20 || spell_index >= 41) return -1;
+
+    Theron_V1_Champion *caster =
+        theron_v1_party_getChampion(&world->party, casting_slot);
+    if (!caster || !caster->alive) return -1;
+
+    int mana_cost = (int)theron_v1_track02_action_spell_cost(spell_index);
+    if (caster->mana < mana_cost) return -1;
+    theron_v1_modify_champion_mana(caster, -mana_cost);
+
+    switch (spell_index) {
+    case 35: /* HEAL */
+        theron_v1_modify_champion_hp(caster, 15 + caster->anti_magic / 2);
+        return 0;
+    case 37: /* LIGHT — no combat effect, environmental */
+        return 0;
+    case 36: /* CALM — no combat effect */
+        return 0;
+    default:
+        break;
+    }
+
+    /* Offensive spells target a creature */
+    Theron_V1_Creature *c = theron_v1_creature_by_id(world, target_creature_id);
+    if (!c || !(c->flags & THERON_CF_ACTIVE)) return -1;
+
+    int spell_power = caster->anti_magic / 2 + mana_cost / 3;
+    Theron_AttackType atype = THERON_ATTACK_MAGIC;
+    if (spell_index == 20) { /* FIREBALL */
+        atype = THERON_ATTACK_BLAST;
+        theron_v1_play_sound(THERON_SOUND_FIREBALL);
+    }
+
+    int damage = spell_power - c->defense / 3;
+    if (damage < 1) damage = 1;
+    c->hp -= damage;
+
+    if (c->hp <= 0) {
+        c->hp = 0;
+        c->flags &= ~THERON_CF_ACTIVE;
+        theron_v1_play_sound(THERON_SOUND_CREATURE_DIE);
+        theron_v1_drop_loot(world, c->id, c->x, c->y);
+        return 1;
+    }
+    return 0;
+}
+
 /* ── Creature attack champion ─────────────────────────────────────── */
 
 Theron_CombatResult theron_v1_creature_attack_champion(
