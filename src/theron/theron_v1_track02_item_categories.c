@@ -24,3 +24,37 @@ uint8_t theron_v1_track02_item_category(unsigned int index) {
 size_t theron_v1_track02_item_category_count(void) {
     return THERON_TRACK02_ITEM_CATEGORY_COUNT;
 }
+
+#include "theron_v1_champions.h"
+
+int theron_v1_track02_resolve_drop_item(uint8_t synthetic_id, unsigned int seed) {
+    uint8_t target_cat;
+    switch (synthetic_id) {
+    case THERON_ITEM_WEAPON:
+        target_cat = THERON_ITEM_CAT_WEAPON; break;
+    case THERON_ITEM_ARMOR:
+    case THERON_ITEM_SHIELD:
+    case THERON_ITEM_HELM:
+    case THERON_ITEM_BOOTS:
+        target_cat = THERON_ITEM_CAT_ARMOR; break;
+    case THERON_ITEM_POTION:
+    case THERON_ITEM_ANTIDOTE:
+    case THERON_ITEM_FOOD:
+    case THERON_ITEM_WATER:
+        target_cat = THERON_ITEM_CAT_CONSUMABLE; break;
+    case THERON_ITEM_SCROLL:
+        return 3;
+    case THERON_ITEM_KEY:
+        return 64;
+    default:
+        return -1;
+    }
+    unsigned int matches[THERON_TRACK02_ITEM_CATEGORY_COUNT];
+    unsigned int count = 0;
+    for (unsigned int i = 0; i < THERON_TRACK02_ITEM_CATEGORY_COUNT; i++) {
+        if (g_categories[i] == target_cat)
+            matches[count++] = i;
+    }
+    if (count == 0) return -1;
+    return (int)matches[seed % count];
+}

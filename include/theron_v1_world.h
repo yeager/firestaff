@@ -248,6 +248,7 @@ typedef struct {
     int      level;
     int      dungeon_id;
     int      quantity;
+    int      item_index;  /* Track 02 item index (0-65), -1 = none/gold */
     int      linked_id;
     uint32_t flags;
 } Theron_V1_Object;

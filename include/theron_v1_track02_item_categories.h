@@ -22,6 +22,8 @@ extern "C" {
 uint8_t theron_v1_track02_item_category(unsigned int index);
 size_t theron_v1_track02_item_category_count(void);
 
+int theron_v1_track02_resolve_drop_item(uint8_t synthetic_id, unsigned int seed);
+
 #ifdef __cplusplus
 }
 #endif

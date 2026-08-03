@@ -23,6 +23,7 @@
 #include "theron_v1_combat.h"
 #include "theron_v1_world.h"
 #include "theron_v1_track02_creature_spawn.h"
+#include "theron_v1_track02_item_categories.h"
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
@@ -371,25 +372,34 @@ int theron_v1_drop_loot(Theron_V1_World *world,
             o.level = world->current_level;
             o.dungeon_id = world->current_dungeon;
             o.quantity = gold;
+            o.item_index = -1;
             theron_v1_object_place(world, &o);
         }
     }
 
-    /* Item drops */
+    /* Item drops — resolve synthetic category to real Track 02 item index */
     for (int i = 0; i < 4 && world->object_count < THERON_MAX_OBJECTS; i++) {
         uint8_t item = c->item_drop_table[i];
         if (item == 0) continue;
+        int real_idx = theron_v1_track02_resolve_drop_item(
+            item, (unsigned int)rand());
+        if (real_idx < 0) continue;
+        uint8_t cat = theron_v1_track02_item_category((unsigned int)real_idx);
+        uint8_t otype = THERON_OBJTYPE_CHEST;
+        if (cat == THERON_ITEM_CAT_WEAPON) otype = THERON_OBJTYPE_WEAPON;
+        else if (cat == THERON_ITEM_CAT_ARMOR) otype = THERON_OBJTYPE_ARMOR;
+        else if (cat == THERON_ITEM_CAT_CONSUMABLE) otype = THERON_OBJTYPE_POTION;
         Theron_V1_Object o;
         memset(&o, 0, sizeof(o));
         o.id = world->object_count + 1;
-        o.type = THERON_OBJTYPE_CHEST;
+        o.type = otype;
         o.x = x;
         o.y = y;
         o.level = world->current_level;
         o.dungeon_id = world->current_dungeon;
         o.quantity = 1;
+        o.item_index = real_idx;
         theron_v1_object_place(world, &o);
-        (void)item; /* item ID stored in object would need object schema extension */
     }
     return 0;
 }

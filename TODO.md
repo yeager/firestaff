@@ -87,9 +87,17 @@
   applied during party init (Track 02 item indices).
   Dungeon-to-creature-region mapping fixed: AKUTUBA=D1 (not D2),
   all 7 dungeons now have level_count=3 per DMWeb.
-  Remaining: portrait graphics from tile banks, item ID space
-  unification (THERON_ITEM_* categories vs Track 02 indices),
-  dungeon seeds 2-7 (needs disassembly), DOTAN per-dungeon availability.
+  DOTAN per-dungeon availability now enforced (absent from Dungeon 1).
+  Creature generators from DMWeb ChristopheF maps wired into level
+  transitions and world tick (5 dungeons with generators).
+  Spawn zone/template lookup fixed to use dungeon_id.
+  Item ID unification complete: drop system now resolves synthetic
+  THERON_ITEM_* categories to real Track 02 item indices (0-65) using
+  the verified category table at UD 0x21A046. Objects carry real
+  item_index and correct object type (WEAPON/ARMOR/POTION).
+  Dungeon seeds: TQ data blocks have no DM1-style global header with
+  randomGeneratorSeed; seeds are likely in PCE code, not data.
+  Remaining: portrait graphics from tile banks.
 
 - **THERON-STARTUP-RECEIPT-REAL-DATA:** The no-data startup receipt and its
   placeholder labels are now fixture/probe-only. The verified receipt no
@@ -143,8 +151,11 @@
   `theron_v1_track02_compute_spawn_stats()`. 4 categories with real
   param1/param2 from spawn zone descriptors. HP capped at 900.
   THIEF/DEMON use template fallback (scripted, no spawn zones).
-  Remaining: exact PCE rand() sequence verification;
-  wire category formulas into the spawn path. Drop tables unverified.
+  Category formulas wired into spawn path via dungeon_id-based zone lookup.
+  Creature generators now respawn per DMWeb data.
+  Drop system now resolves to real Track 02 item indices via category table.
+  PCE rand() lives in bank-switched overlay ($4644/$4667) — not statically
+  resolvable; current LCG assumption unconfirmed but unrefuted.
 
 - **THERON-SHOP-REAL-DATA:** *(Closed v3.0.242)* No shop/vendor mechanic
   exists in Theron's Quest. Full Track 02 scan found zero BUY/SELL/SHOP

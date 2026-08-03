@@ -55,6 +55,8 @@ static int normalize_dir(int dir) {
  * object ids remain unclaimed until the Track 02 object table is decoded. */
 static int object_item_id(const Theron_V1_Object *object) {
     if (!object) return THERON_ITEM_NONE;
+    if (object->item_index >= 0)
+        return object->item_index;
     switch (object->type) {
     case THERON_OBJTYPE_POTION: return THERON_ITEM_POTION;
     case THERON_OBJTYPE_SCROLL: return THERON_ITEM_SCROLL;
