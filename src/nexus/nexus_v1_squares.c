@@ -383,14 +383,9 @@ int nexus_pits_count(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════════
- * Altar registry — records real floor-decoration positions but stays
- * fail-closed until a source-locked altar tag is proven.
- * Source: DM1 COMMAND.C altar use dispatch, CHAMPION.C offering logic.
- *
- * A Structure1F floor-decoration record becomes a candidate altar when its
- * model/aspect byte matches a known altar tag.  The ritual effect itself is
- * blocked until COMMAND.C altar semantics are confirmed against original
- * Saturn data.
+ * Altar registry — Vi altar of rebirth (alcove-based resurrection).
+ * Source: DMWeb DGN Structure1Fd docs, Nexus manual translation.
+ * Nexus has only the Vi altar; FUL/BRO/GATH are DM1-specific.
  * ═══════════════════════════════════════════════════════════════════ */
 
 static Nexus_Altar g_altars[NEXUS_MAX_ALTARS];
@@ -408,7 +403,6 @@ int nexus_altars_register(int x, int y) {
 int nexus_altars_register_tagged(int x, int y, uint8_t tag) {
     int i;
     if (g_altar_count >= NEXUS_MAX_ALTARS) return -1;
-    /* Avoid duplicate entries. */
     for (i = 0; i < g_altar_count; i++) {
         if (g_altars[i].x == x && g_altars[i].y == y) {
             if (tag != NEXUS_ALTAR_TAG_UNKNOWN &&
@@ -421,7 +415,7 @@ int nexus_altars_register_tagged(int x, int y, uint8_t tag) {
     g_altars[g_altar_count].x = x;
     g_altars[g_altar_count].y = y;
     g_altars[g_altar_count].tag = tag;
-    g_altars[g_altar_count].blocked = 1;
+    g_altars[g_altar_count].level = 0;
     return g_altar_count++;
 }
 
@@ -429,7 +423,7 @@ int nexus_altar_at(int x, int y) {
     int i;
     for (i = 0; i < g_altar_count; i++) {
         if (g_altars[i].x == x && g_altars[i].y == y)
-            return g_altars[i].blocked ? 2 : 1;
+            return 1;
     }
     return 0;
 }
@@ -447,55 +441,23 @@ int nexus_altars_count(void) {
     return g_altar_count;
 }
 
-/* Perform an altar ritual at (x,y).
- * Vi altar: resurrect dead champion at half stats.
- * Ful altar: restore mana.
- * Bro altar: restore stamina.
- * Gath altar: restore health.
- * Source: DM1 COMMAND.C altar use dispatch, ReDMCSB F0412. */
-int nexus_altar_perform_ritual(int x, int y, Nexus_V1_Champion *leader) {
+int nexus_altar_resurrect(int x, int y, Nexus_V1_Champion *champion) {
     int tag;
-    if (!leader) return -1;
+    if (!champion) return -1;
     tag = nexus_altar_tag_at(x, y);
-    if (tag == NEXUS_ALTAR_TAG_UNKNOWN) return 0;
-
-    switch (tag) {
-    case NEXUS_ALTAR_TAG_VI:
-        if (!leader->alive) {
-            leader->alive = 1;
-            leader->health = leader->max_health / 2;
-            if (leader->health < 1) leader->health = 1;
-            leader->stamina = leader->max_stamina / 2;
-            leader->mana = leader->max_mana / 2;
-            return 1;
-        }
-        break;
-    case NEXUS_ALTAR_TAG_FUL:
-        if (leader->mana < leader->max_mana) {
-            leader->mana += 20;
-            if (leader->mana > leader->max_mana)
-                leader->mana = leader->max_mana;
-            return 1;
-        }
-        break;
-    case NEXUS_ALTAR_TAG_BRO:
-        if (leader->stamina < leader->max_stamina) {
-            leader->stamina += 30;
-            if (leader->stamina > leader->max_stamina)
-                leader->stamina = leader->max_stamina;
-            return 1;
-        }
-        break;
-    case NEXUS_ALTAR_TAG_GATH:
-        if (leader->health < leader->max_health) {
-            leader->health += 15;
-            if (leader->health > leader->max_health)
-                leader->health = leader->max_health;
-            return 1;
-        }
-        break;
+    if (tag != NEXUS_ALTAR_TAG_VI) return 0;
+    if (!champion->alive) {
+        champion->alive = 1;
+        champion->health = champion->max_health;
+        champion->stamina = champion->max_stamina;
+        champion->mana = champion->max_mana;
+        return 1;
     }
     return 0;
+}
+
+int nexus_altar_perform_ritual(int x, int y, Nexus_V1_Champion *leader) {
+    return nexus_altar_resurrect(x, y, leader);
 }
 
 /* Registry counts */

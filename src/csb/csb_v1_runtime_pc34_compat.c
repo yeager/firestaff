@@ -17673,10 +17673,17 @@ static int csb_v1_runtime_square_has_material_group(
     const CSB_V1_DungeonData *dungeon, int level, int map_x, int map_y);
 static void csb_v1_runtime_apply_group_aspect_timeline_record(
     CSB_V1_RuntimeProfile *profile,
-    const struct DM1_DispatchRecord_V1 *record);
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    (void)profile; (void)record;
+}
+
 static void csb_v1_runtime_apply_remove_fluxcage_record(
     CSB_V1_RuntimeProfile *profile,
-    const struct DM1_DispatchRecord_V1 *record);
+    const struct DM1_DispatchRecord_V1 *record)
+{
+    (void)profile; (void)record;
+}
 
 static int csb_v1_runtime_apply_saved_csbwin_door_animation_timer(
     CSB_V1_RuntimeProfile *profile,
