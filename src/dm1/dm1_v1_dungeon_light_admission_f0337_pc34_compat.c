@@ -40,9 +40,9 @@ int dm1_v1_dungeon_light_admit_f0337_pc34(
         int index;
         int prior;
         if (thing == THING_NONE || thing == THING_ENDOFLIST) continue;
-        if (THING_GET_TYPE(thing) != THING_TYPE_WEAPON || !things ||
-            !things->loaded || !things->weapons ||
-            !things->rawThingData[THING_TYPE_WEAPON]) return 1;
+        if (THING_GET_TYPE(thing) != THING_TYPE_WEAPON) return 1;
+        if (!things || !things->loaded || !things->weapons ||
+            !things->rawThingData[THING_TYPE_WEAPON]) continue;
         index = (int)THING_GET_INDEX(thing);
         if (index < 0 || index >= things->weaponCount ||
             index >= things->thingCounts[THING_TYPE_WEAPON]) return 1;

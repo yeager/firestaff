@@ -18372,6 +18372,10 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
     if (raw_square < 0 || dungeon->square_bytes != 1) {
         return;
     }
+    /* ReDMCSB TIMELINE.C F0248: only operates on wall squares (type 0). */
+    if ((raw_square >> 5) != 0) {
+        return;
+    }
     if (!csb_v1_runtime_validate_square_thing_chain(
             dungeon, record->mapIndex, record->mapX, record->mapY)) {
         return;
