@@ -6,6 +6,7 @@
 #include "nexus_v1_structure1f_placement_binding.h"
 #include "asset_find_by_hash.h"
 #include "nexus_v1_mechanics.h"
+#include "nexus_v1_inventory.h"
 #include "nexus_v1_squares.h"
 #include "nexus_v1_movement.h"
 #include "nexus_v1_font_s2d.h"
@@ -9959,6 +9960,17 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                                 nexus_v1_experience_check_levelup(&engine->experience,
                                     &engine->champions.champions[idx], idx);
                             }
+                        }
+                    }
+                    {
+                        int drop_items[4], drop_qtys[4];
+                        int ndrops = nexus_drops_roll(cr->type_index,
+                            cr->x, cr->y, drop_items, drop_qtys, 4);
+                        int di;
+                        for (di = 0; di < ndrops; di++) {
+                            if (drop_items[di] >= 0)
+                                nexus_floor_drop(cr->x, cr->y,
+                                                 drop_items[di], drop_qtys[di]);
                         }
                     }
                     nexus_script_on_creature_dead(&engine->script_vm,
