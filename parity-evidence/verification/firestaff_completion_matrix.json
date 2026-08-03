@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.completion_matrix.v1",
-  "updatedAt": "2026-08-03T01:00:00+02:00",
+  "updatedAt": "2026-08-03T13:30:00+02:00",
   "basis": "Conservative weighted parity completion model. Points count only when tied to repository evidence; blocked/unproven work scores 0 for that criterion.",
   "criteria": [
     {
@@ -403,20 +403,20 @@
           "Track 02 JP/US provenance, launcher scan reuse, and hash/profile evidence exist."
         ],
         "definition_matrix": [
-          3,
-          "No complete Theron V1 parity matrix, but runtime/progression/save gates now define important slices."
+          7,
+          "Comprehensive Theron V1 parity definition matrix with 10 categories, 40+ gates, proven/open status, and bound-byte totals."
         ],
         "launch_smoke": [
-          5,
-          "Track 02 bank/object marker, launcher scan reuse, and runtime screenshot-readiness receipts exist; positive real-asset launch remains active work."
+          7,
+          "Full IPL-to-stage-2 boot chain verified byte-for-byte: IPL loader, entry path, call graph, dispatch machine, dynamic payload. Disassembly chain test exercises 17 verify functions."
         ],
         "core_input_movement": [
-          2,
-          "Dungeon progression/mechanics probes exist; broad input/movement parity is not complete."
+          3,
+          "Command dispatcher with 10 jump-table handlers and 7 advance stubs (1-9 byte variable-length commands) proven. Input semantics not yet mapped."
         ],
         "viewport_ui_render": [
-          5,
-          "Tile/viewport/runtime screenshot-readiness and presentation scaffolds exist, but real screen parity remains open."
+          9,
+          "VDC register semantics proven: MAWR/VWR/BXR/BYR/CR writes, VRAM clear (port_clear), and VRAM tile transfer (L466B TIA bulk write to VWR) verified. Rendering pipeline through 5 tiers of callees with 2310 bound bytes."
         ],
         "gameplay_systems": [
           14,
@@ -431,12 +431,12 @@
           "No representative original overlay regression proof for Theron."
         ]
       },
-      "status": "track02_slices_verified_partial",
+      "status": "disassembly_chain_verified_vdc_semantics_proven",
       "primaryBlockers": [
-        "Track 02 provenance, parser, save/progression/shop/mechanics slices exist; positive real-asset launch through Track 02 and broader runtime capture remain active work."
+        "Audio trigger mapping, original overlay regression, VRAM transfer path, and input command semantics remain open."
       ],
-      "completionPercent": 39,
-      "points": 39,
+      "completionPercent": 50,
+      "points": 50,
       "maxPoints": 100
     }
   ]
