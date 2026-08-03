@@ -45211,6 +45211,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_load
         tests/test_theron_v1_track02_dungeon_loader.c
         src/theron/theron_v1_track02_dungeon_loader.c
         src/theron/theron_v1_track02_actuator.c
+        src/theron/theron_v1_track02_door.c
         src/theron/theron_v1_track02_thing_data.c
         src/theron/theron_v1_track02_dungeon_map.c
         src/theron/theron_v1_track02_item_id_map.c

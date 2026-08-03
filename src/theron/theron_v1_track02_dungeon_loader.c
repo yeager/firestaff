@@ -3,6 +3,7 @@
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_track02_ground_ref.h"
 #include "theron_v1_track02_actuator.h"
+#include "theron_v1_track02_door.h"
 #include "theron_v1_track02_item_id_map.h"
 #include "theron_v1_world.h"
 #include <stdlib.h>
@@ -132,17 +133,34 @@ int theron_v1_track02_load_full_dungeon(
 
             switch (cat) {
             case THERON_CAT_DOOR: {
-                const uint8_t *rec = &td->items[cat][id * theron_item_bytes[cat]];
+                Theron_Door door;
+                theron_v1_track02_door_decode(
+                    &td->items[cat][id * theron_item_bytes[cat]], &door);
                 obj.type = 0x01;
-                obj.state = rec[2];
+                obj.state = door.type;
+                obj.quantity = door.ornate;
+                obj.flags = (uint32_t)pos |
+                            ((uint32_t)door.opens_up << 8) |
+                            ((uint32_t)door.button << 9) |
+                            ((uint32_t)door.destroyable << 10) |
+                            ((uint32_t)door.bashable << 11);
                 world->levels[di][map].squares[ty][tx] = THERON_SQUARE_DOOR;
                 result->doors_placed++;
                 break;
             }
             case THERON_CAT_TELEPORTER: {
-                const uint8_t *rec = &td->items[cat][id * theron_item_bytes[cat]];
+                Theron_Teleporter tp;
+                theron_v1_track02_teleporter_decode(
+                    &td->items[cat][id * theron_item_bytes[cat]], &tp);
                 obj.type = 0x02;
-                obj.linked_id = (int)((uint16_t)rec[2] | ((uint16_t)rec[3] << 8));
+                obj.state = tp.scope;
+                obj.quantity = tp.rotation;
+                obj.flags = (uint32_t)pos |
+                            ((uint32_t)tp.absolute << 8) |
+                            ((uint32_t)tp.sound << 9);
+                obj.linked_id = (int)((tp.level_dest << 10) |
+                                       (tp.y_dest << 5) |
+                                       tp.x_dest);
                 world->levels[di][map].squares[ty][tx] = THERON_SQUARE_TELEPORTER;
                 result->teleporters_placed++;
                 break;
