@@ -294,6 +294,30 @@ target_link_libraries(test_nexus_v1_tick_integration PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_tick_integration COMMAND test_nexus_v1_tick_integration)
 set_tests_properties(nexus_v1_tick_integration PROPERTIES LABELS "nexus;tick;tier4")
 
+add_executable(test_nexus_v1_automap_render
+    tests/test_nexus_v1_automap_render.c)
+target_include_directories(test_nexus_v1_automap_render PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_automap_render PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_automap_render COMMAND test_nexus_v1_automap_render)
+set_tests_properties(nexus_v1_automap_render PROPERTIES LABELS "nexus;automap;tier4")
+
+add_executable(test_nexus_v1_gameover
+    tests/test_nexus_v1_gameover.c)
+target_include_directories(test_nexus_v1_gameover PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_gameover PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_gameover COMMAND test_nexus_v1_gameover)
+set_tests_properties(nexus_v1_gameover PROPERTIES LABELS "nexus;gameover;tier4")
+
+add_executable(test_nexus_v1_dialogue
+    tests/test_nexus_v1_dialogue.c)
+target_include_directories(test_nexus_v1_dialogue PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_dialogue PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_dialogue COMMAND test_nexus_v1_dialogue)
+set_tests_properties(nexus_v1_dialogue PROPERTIES LABELS "nexus;dialogue;tier4")
+
 add_executable(test_nexus_v1_projectiles
     tests/test_nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_projectiles PRIVATE
@@ -15222,6 +15246,60 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_load_orchestrator
         COMMAND test_dm2_v1_load_orchestrator
+    )
+
+    add_executable(test_dm2_v1_save_post_load_timer_rebuild
+        tests/test_dm2_v1_save_post_load_timer_rebuild.c
+        src/dm2/dm2_v1_save_post_load_timer_rebuild_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_save_post_load_timer_rebuild PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_save_post_load_timer_rebuild PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_post_load_timer_rebuild PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_post_load_timer_rebuild
+        COMMAND test_dm2_v1_save_post_load_timer_rebuild
+    )
+
+    add_executable(test_dm2_v1_timer_handlers_simple
+        tests/test_dm2_v1_timer_handlers_simple.c
+        src/dm2/dm2_v1_timer_handlers_simple_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_timer_handlers_simple PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_timer_handlers_simple PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_timer_handlers_simple PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_timer_handlers_simple
+        COMMAND test_dm2_v1_timer_handlers_simple
+    )
+
+    add_executable(test_dm2_v1_save_post_load_global_effects
+        tests/test_dm2_v1_save_post_load_global_effects.c
+        src/dm2/dm2_v1_save_post_load_global_effects_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_save_post_load_global_effects PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_save_post_load_global_effects PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_save_post_load_global_effects PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_save_post_load_global_effects
+        COMMAND test_dm2_v1_save_post_load_global_effects
     )
 
     add_executable(test_dm2_v1_save_load_extra_dungeon_data
