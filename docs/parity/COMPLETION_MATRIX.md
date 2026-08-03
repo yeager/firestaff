@@ -27,7 +27,7 @@ Public wording should stay honest: these numbers describe verified Firestaff evi
 | DM1 V2 | 51% | 51/100 | `runtime_presentation_verified_partial` | V2.0/V2.1 runtime presentation smoke exists, but finished V2.2 real-art material/pixel gates and original-pairing evidence remain open. |
 | CSB V1 | 43% | 43/100 | `runtime_boundary_verified_partial` | CSB has launch/profile, save, dungeon, command-chain, utility/import, and viewport source-slice gates, but end-to-end gameplay/render capture proof is still being hardened. |
 | CSB V2 | 31% | 31/100 | `presentation_verified_partial` | CSB V2 HUD/filter/smooth-movement probes are wired, but real CSB V1 gameplay parity and modern-art per-cell material proof remain open. |
-| DM2 V1 | 34% | 34/100 | `runtime_slices_verified_partial` | Door/button, projectile, creature, minimap, weather/timer, and save-adjacent slices exist; V1 dungeon/render/mechanics parity and real-asset runtime proof remain active work. |
+| DM2 V1 | 36% | 36/100 | `runtime_slices_verified_partial` | Door/button, projectile, creature, minimap, weather/timer, save-adjacent slices, combat damage pipeline, and movement execution chain exist; V1 dungeon/render/mechanics parity and real-asset runtime proof remain active work. |
 | DM2 V2 | 16% | 16/100 | `presentation_scaffold_partial` | V2 presentation scaffolds exist, but V1 parity base and finished V2 proof are not complete. |
 | DM Nexus V1 | 37% | 37/100 | `runtime_slices_verified_partial` | DMDF/DGN/data, BPK/BPX, font, save, and mechanics slices exist; real-asset end-to-end handoff and screen capture proof remain active work. |
 | DM Nexus V2 | 20% | 20/100 | `presentation_scaffold_partial` | V2 lighting/touch/upscale/presentation probes exist, but real V1 runtime coverage and V2 material proof remain incomplete. |
@@ -109,9 +109,9 @@ This refresh incorporates the post-2026-05-09 work now present on `origin/main`,
 | `reference_inventory` | 8/10 | DM2 PC/French/German/Mac data inventories and SKULL.ASM/source references exist; no ReDMCSB C equivalent. |
 | `definition_matrix` | 4/10 | DM2 V1 does not yet have a complete parity matrix, but multiple scoped parity gates now define runtime boundaries. |
 | `launch_smoke` | 4/10 | Asset scanner/profile coverage and required-file launch gating exist; full runtime launch proof is still active work. |
-| `core_input_movement` | 2/15 | Some minimap/transition and runtime scaffolds exist, but core movement parity remains incomplete. |
+| `core_input_movement` | 3/15 | Movement plan/exec chain with door attack, creature push/classification, stair level change, and teleporter resolution implemented; core runtime wiring remains incomplete. |
 | `viewport_ui_render` | 3/20 | HUD/minimap/presentation-adjacent gates exist; V1 renderer parity remains open. |
-| `gameplay_systems` | 12/15 | Door/button, pressure/trigger, projectile, creature collision/death/drop, weather/timer save, world-state/minimap, shop/combat slices, and save-adjacent gates are covered. |
+| `gameplay_systems` | 13/15 | Door/button, pressure/trigger, projectile, creature collision/death/drop, weather/timer save, world-state/minimap, shop/combat slices, save-adjacent gates, and skproject combat damage pipeline (CALC_PLAYER_ATTACK_DAMAGE, WOUND_PLAYER, ATTACK_PARTY) are covered. |
 | `audio_timing` | 1/10 | Limited timing/weather seed coverage; no broad DM2 audio/timing parity proof. |
 | `original_overlay_regression` | 0/10 | No DM2 V1 representative original overlay regression proof. |
 

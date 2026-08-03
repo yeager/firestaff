@@ -1,6 +1,6 @@
 {
   "schema": "firestaff.completion_matrix.v1",
-  "updatedAt": "2026-06-25T15:38:00+02:00",
+  "updatedAt": "2026-08-03T01:00:00+02:00",
   "basis": "Conservative weighted parity completion model. Points count only when tied to repository evidence; blocked/unproven work scores 0 for that criterion.",
   "criteria": [
     {
@@ -235,16 +235,16 @@
           "Asset scanner/profile coverage and required-file launch gating exist; full runtime launch proof is still active work."
         ],
         "core_input_movement": [
-          2,
-          "Some minimap/transition and runtime scaffolds exist, but core movement parity remains incomplete."
+          3,
+          "Movement plan/exec chain with door attack, creature push/classification, stair level change, and teleporter resolution implemented; core runtime wiring remains incomplete."
         ],
         "viewport_ui_render": [
           3,
           "HUD/minimap/presentation-adjacent gates exist; V1 renderer parity remains open."
         ],
         "gameplay_systems": [
-          12,
-          "Door/button, pressure/trigger, projectile, creature collision/death/drop, weather/timer save, world-state/minimap, shop/combat slices, and save-adjacent gates are covered."
+          13,
+          "Door/button, pressure/trigger, projectile, creature collision/death/drop, weather/timer save, world-state/minimap, shop/combat slices, save-adjacent gates, and skproject combat damage pipeline (CALC_PLAYER_ATTACK_DAMAGE, WOUND_PLAYER, ATTACK_PARTY) are covered."
         ],
         "audio_timing": [
           1,
@@ -259,8 +259,8 @@
       "primaryBlockers": [
         "Door/button, projectile, creature, minimap, weather/timer, and save-adjacent slices exist; V1 dungeon/render/mechanics parity and real-asset runtime proof remain active work."
       ],
-      "completionPercent": 34,
-      "points": 34,
+      "completionPercent": 36,
+      "points": 36,
       "maxPoints": 100
     },
     {

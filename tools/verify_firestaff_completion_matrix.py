@@ -15,7 +15,7 @@ EXPECTED = {
     "DM1 V2": 51,
     "CSB V1": 43,
     "CSB V2": 31,
-    "DM2 V1": 34,
+    "DM2 V1": 36,
     "DM2 V2": 16,
     "DM Nexus V1": 37,
     "DM Nexus V2": 20,
