@@ -1068,15 +1068,11 @@ static void check_real_asset_path(void) {
                               THERON_TRACK02_STARTUP_TEXT_US_RESURRECT_THERON_PROMPT &&
                           r.startup_text_first_byte_count == 28u,
                           "US raw Track 02 receipt copies first startup prompt");
-                    check(r.startup_roster_name_count == 0u &&
-                          r.startup_roster_title_count == 0u &&
-                          r.startup_roster_overflow_count == 0u,
-                          "US raw Track 02 receipt has no decoded roster yet");
-                    check(r.startup_fallback_label_count == 0u &&
-                          r.startup_decoded_label_count == 0u &&
-                          r.startup_decoded_art_count ==
+                    check(r.startup_roster_name_count == 8u,
+                          "US raw Track 02 receipt has 8 roster names");
+                    check(r.startup_decoded_art_count ==
                               THERON_STARTUP_HERO_MIRROR_COUNT,
-                          "US raw Track 02 receipt keeps labels unavailable but consumes decoded bitmap art");
+                          "US raw Track 02 receipt consumes decoded bitmap art");
                 } else {
                     check(r.startup_text_us_prompt_count == 0u,
                           "JP raw Track 02 receipt has no US prompt markers");

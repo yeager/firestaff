@@ -51165,20 +51165,18 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                                                         framebufferWidth,
                                                         framebufferHeight,
                                                         &ui_caller);
-    /* A verified Track 02 startup surface owns every startup phase.  Do not
-     * layer the synthetic render-plan border or text over title, stage
-     * select, Soul Room, or forcefield atlas graphics. */
-    if (!theron_v1_boot_startup_host_render_plan_fallback_allowed(
-            &ui_caller.host_render)) {
-        return;
-    }
-    m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                  plan->border_x, plan->border_y,
-                  plan->border_w, plan->border_h,
-                  plan->border_color);
-    for (i = 0; i < plan->text_count; ++i) {
-        const Theron_StartupRenderTextCommand *command = &plan->text[i];
-        if (state->theronState.startup_font_tiles_ready) {
+    /* When real font tiles are available, always render menu text from the
+     * Track 02 font — even when atlas graphics were drawn.  The atlas
+     * provides header art strips; the font tiles provide the menu text.
+     * Only fall back to synthetic M11 text when no font tiles exist AND
+     * no Track 02 atlas was drawn. */
+    if (state->theronState.startup_font_tiles_ready) {
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      plan->border_x, plan->border_y,
+                      plan->border_w, plan->border_h,
+                      plan->border_color);
+        for (i = 0; i < plan->text_count; ++i) {
+            const Theron_StartupRenderTextCommand *command = &plan->text[i];
             int ci = M11_COLOR_WHITE;
             switch (command->style) {
             case THERON_STARTUP_RENDER_TEXT_TITLE:   ci = M11_COLOR_YELLOW; break;
@@ -51191,7 +51189,15 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                 framebuffer, framebufferWidth, framebufferHeight,
                 command->x, command->y, command->text,
                 &state->theronState.startup_font_tile_receipt, ci);
-        } else {
+        }
+    } else if (theron_v1_boot_startup_host_render_plan_fallback_allowed(
+                   &ui_caller.host_render)) {
+        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      plan->border_x, plan->border_y,
+                      plan->border_w, plan->border_h,
+                      plan->border_color);
+        for (i = 0; i < plan->text_count; ++i) {
+            const Theron_StartupRenderTextCommand *command = &plan->text[i];
             M11_TextStyle scratch;
             const M11_TextStyle *style =
                 m11_theron_startup_text_style(command->style, &scratch);

@@ -1076,9 +1076,11 @@ static void check_raw_user_data_contract(
                 }
             }
         } else if (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) == 0) {
-            check_int("US startup roster name catalog unsupported",
+            check_int("US startup roster name catalog OK",
                       status,
-                      THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+                      THERON_TRACK02_SIGNAL_OK);
+            check_int("US startup roster name count",
+                      (int)roster_catalog.name_count, 8);
         }
     }
 

@@ -237,15 +237,14 @@ static int test_strafe_rejected(void)
     Theron_V1_World world;
     Theron_V1_BootRuntimeInputReceipt receipt;
 
-    TEST("Strafe and legacy LEFT/RIGHT tokens are ignored");
+    TEST("LEFT/RIGHT turn, STRAFE_LEFT/RIGHT ignored");
     setup_open_room(&world);
     ASSERT(theron_v1_boot_runtime_handle_m12_input(&world, NULL,
             M12_MENU_INPUT_LEFT, &receipt) == 1,
            "LEFT should fill receipt");
-    ASSERT(receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_IGNORED,
-           "LEFT should be ignored");
-    ASSERT(strcmp(receipt.status, "THERON HAS NO STRAFE") == 0,
-           "status should note no strafe");
+    ASSERT(receipt.result == THERON_V1_BOOT_RUNTIME_INPUT_RESULT_REDRAW,
+           "LEFT should turn");
+    ASSERT(receipt.turned == 1, "LEFT should set turned");
 
     ASSERT(theron_v1_boot_runtime_handle_m12_input(&world, NULL,
             M12_MENU_INPUT_STRAFE_LEFT, &receipt) == 1,

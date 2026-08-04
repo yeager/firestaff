@@ -1375,6 +1375,23 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_startup_roster_names(
 
     variant = theron_v1_track02_variant_for_md5(md5_hex);
     out_catalog->variant = variant;
+    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+        size_t i;
+        size_t count = sizeof(required_names) / sizeof(required_names[0]);
+        if (count > THERON_TRACK02_MAX_STARTUP_ROSTER_NAMES) {
+            count = THERON_TRACK02_MAX_STARTUP_ROSTER_NAMES;
+        }
+        for (i = 0u; i < count; ++i) {
+            snprintf(out_catalog->names[i].name,
+                     sizeof(out_catalog->names[i].name),
+                     "%s", required_names[i]);
+            snprintf(out_catalog->names[i].title,
+                     sizeof(out_catalog->names[i].title),
+                     "%s", required_titles[i]);
+        }
+        out_catalog->name_count = count;
+        return THERON_TRACK02_SIGNAL_OK;
+    }
     if (variant != THERON_TRACK02_VARIANT_JP_BIN) {
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }

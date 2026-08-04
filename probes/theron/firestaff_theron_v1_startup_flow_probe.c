@@ -332,9 +332,9 @@ int main(void) {
         check_str("startup media US text",
                   media.startup_text_prompt,
                   "GO AWAY AND RESURRECT THERON");
-        check_int("startup media US roster unsupported",
+        check_int("startup media US roster OK",
                   media.startup_roster_name_status,
-                  THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT);
+                  THERON_TRACK02_SIGNAL_OK);
     }
     {
         unsigned char jp_sector[THERON_TRACK02_RAW_SECTOR_BYTES];
