@@ -2335,7 +2335,7 @@ static int tqr_read_user_data_contiguous(
 }
 
 #define TQR_US_FONT_TILE_USER_DATA_OFFSET 0x263200u
-#define TQR_JP_FONT_TILE_USER_DATA_OFFSET 0x263200u
+#define TQR_JP_FONT_TILE_USER_DATA_OFFSET 0x262A00u
 
 Theron_Track02SignalStatus theron_v1_track02_extract_font_tiles(
     const uint8_t *track02_data,
