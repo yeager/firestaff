@@ -3023,7 +3023,10 @@ that its exact runtime path is not already source-locked and tested.
     with raw Thing ownership and timeline correctness.
 15. **DM1-CREATURE-COMBAT-AI:** Complete remaining original group movement,
     LoS, attacks, projectile impacts, drops, deaths, sound, and active-group
-    scheduling beyond the current bounded receipts.
+    scheduling beyond the current bounded receipts. v3.0.276: creature info
+    table G0243 corrected from PC 3.4 binary — 87 combat stats and 16
+    attributes fields now match FIRES.EXE. Remaining: decode bytes 13-25
+    (sightRange, smellRange, attackType, woundProbabilities).
 16. **DM1-ITEM-INVENTORY-INTERACTION:** Complete C05-C13 object placement,
     chest, quiver, food, potion, scroll, weapon, armour, and inventory drag/
     drop interaction from original data records.

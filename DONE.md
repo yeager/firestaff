@@ -1,3 +1,9 @@
+- ✅ 2026-08-04 v3.0.276 DM1: creature info table G0243 binary-verified from PC 3.4
+  Disassembled FIRES.EXE, located G0243 at DS:0x0995 (26-byte stride, 27 entries).
+  Corrected 87 combat stat fields and 16 attributes fields across all creatures.
+  Replaced Atari ST (ReDMCSB) values with PC 3.4 binary data. Key discoveries:
+  Giant Scorpion attack 40→150, poison 5→240; Stone Golem defense 70→240;
+  Red Dragon attack 70→255; Ghost gains SEE_INVISIBLE+NIGHT_VISION. Pass 1100.
 - ✅ 2026-08-03 v3.0.258 Savegame Editor: advanced 8-tab UI + CI fix
   Complete rewrite with 8 tabs: Overview (champion cards with progress bars),
   Header (informative ID lookup for Format/Platform/Dungeon), Save Parts

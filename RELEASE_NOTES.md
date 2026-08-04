@@ -1,5 +1,11 @@
 
 
+# Firestaff v3.0.276
+- DM1: creature info table G0243 corrected from PC 3.4 FIRES.EXE binary disassembly
+- 87 combat stat fields and 16 attributes fields updated across all 27 creatures
+- Replaced Atari ST (ReDMCSB) values with verified PC 3.4 binary data
+- Parity evidence: pass1100
+
 # Firestaff v3.0.264
 - CI fix: sync DM2 runtime_narrow .c with header, commit remaining local changes
 
