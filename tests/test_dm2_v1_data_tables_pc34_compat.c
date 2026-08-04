@@ -38,20 +38,16 @@ static void test_music_map_level0(void)
 
 static void test_music_map_sentinel(void)
 {
-    /* Entries 46-62 are 0xFF (unused levels) */
     for (int i = 46; i <= 62; i++)
         assert(dm2_v1_music_map[i] == 0xFF);
-    /* Entry 63 is 0x0e */
     assert(dm2_v1_music_map[63] == 0x0e);
     printf("test_music_map_sentinel OK\n");
 }
 
 static void test_sound_freq_table(void)
 {
-    /* First entry is highest frequency, descending */
     assert(dm2_v1_table_1d14e2[0] == 0x25a0);
     assert(dm2_v1_table_1d14e2[7] == 0x0000);
-    /* Second half is ascending */
     assert(dm2_v1_table_1d14e2[8] == 0x0800);
     assert(dm2_v1_table_1d14e2[23] == 0xf800);
     printf("test_sound_freq_table OK\n");
@@ -59,7 +55,6 @@ static void test_sound_freq_table(void)
 
 static void test_clock_sound_table(void)
 {
-    /* Symmetrical: dawn/dusk are louder, midday is quiet */
     assert(dm2_v1_table_1d70f0[0] == 5);
     assert(dm2_v1_table_1d70f0[5] == 1);
     assert(dm2_v1_table_1d70f0[23] == 5);
@@ -68,19 +63,16 @@ static void test_clock_sound_table(void)
 
 static void test_dir_position_map(void)
 {
-    /* First 4 entries: 3,2,1,0 = reverse order */
     assert(dm2_v1_table_1d26a8[0] == 3);
     assert(dm2_v1_table_1d26a8[1] == 2);
     assert(dm2_v1_table_1d26a8[2] == 1);
     assert(dm2_v1_table_1d26a8[3] == 0);
-    /* 0x04 sentinel for unused slots */
     assert(dm2_v1_table_1d26a8[4] == 4);
     printf("test_dir_position_map OK\n");
 }
 
 static void test_item_type_flags(void)
 {
-    /* Entry 0 = 1, entry 1 = 0 */
     assert(dm2_v1_table_1d6f4c[0] == 1);
     assert(dm2_v1_table_1d6f4c[1] == 0);
     assert(dm2_v1_table_1d6f4c[2] == 0);
@@ -141,10 +133,8 @@ static void test_dir_i8_variants(void)
 
 static void test_neighbor_offsets(void)
 {
-    /* 8-direction: entry 0 is dx=-1,dy=0 (west) */
     assert(dm2_v1_table_1d62b0[0][0] == -1);
     assert(dm2_v1_table_1d62b0[0][1] == 0);
-    /* entry 3 is dx=1,dy=0 (east) */
     assert(dm2_v1_table_1d62b0[3][0] == 1);
     assert(dm2_v1_table_1d62b0[3][1] == 0);
     printf("test_neighbor_offsets OK\n");
@@ -199,6 +189,119 @@ static void test_gui_element_map(void)
     printf("test_gui_element_map OK\n");
 }
 
+static void test_batch3_creature_tables(void)
+{
+    assert(dm2_v1_table_1d6702[0] == 0x00);
+    assert(dm2_v1_table_1d6702[15] == 0x64);
+    assert(dm2_v1_table_1d6712[0] == 0x63);
+    assert(dm2_v1_table_1d6712[4] == 0x01);
+    assert(dm2_v1_table_1d6712[20] == 0x12);
+    printf("test_batch3_creature_tables OK\n");
+}
+
+static void test_batch3_viewport_tables(void)
+{
+    assert(dm2_v1_table_1d275a[0][0] == 0xfe);
+    assert(dm2_v1_table_1d275a[0][1] == 0x0a);
+    assert(dm2_v1_table_1d275a[31][0] == 0x02);
+    assert(dm2_v1_table_1d275a[31][1] == 0xf5);
+    printf("test_batch3_viewport_tables OK\n");
+}
+
+static void test_batch3_struct_tables(void)
+{
+    assert(dm2_v1_table_1d26d0[0].v[0] == 0x00);
+    assert(dm2_v1_table_1d26d0[0].v[1] == 0x01);
+    assert(dm2_v1_table_1d26d0[0].v[2] == 0x03);
+    assert(dm2_v1_table_1d26d0[0].v[3] == 0x02);
+    assert(dm2_v1_table_1d26d0[7].v[0] == 0x03);
+    assert(dm2_v1_table_1d3ed5[0].a == 0x80);
+    assert(dm2_v1_table_1d3ed5[0].w == 0x0000);
+    assert(dm2_v1_table_1d3ed5[4].a == 0x81);
+    assert(dm2_v1_table_1d3ed5[4].w == 0x0012);
+    printf("test_batch3_struct_tables OK\n");
+}
+
+static void test_batch3_item_action_tables(void)
+{
+    assert(dm2_v1_table_1d3d23[0].a == 0x0002);
+    assert(dm2_v1_table_1d3d23[0].b == 0x0000);
+    assert(dm2_v1_table_1d3d23[0].d == 0x00);
+    assert(dm2_v1_table_1d3d23[5].a == 0x00a1);
+    assert(dm2_v1_table_1d3d23[5].d == 0x03);
+    assert(dm2_v1_table_1d3d23[61].a == 0x0002);
+    assert(dm2_v1_table_1d3d23[61].b == 0x003d);
+    printf("test_batch3_item_action_tables OK\n");
+}
+
+static void test_batch3_creature_viewport(void)
+{
+    assert(dm2_v1_table_1d6a74[0].v[0] == 0x01);
+    assert(dm2_v1_table_1d6a74[22].v[0] == 0x14);
+    assert(dm2_v1_table_1d6ad0[0][0] == 0x00);
+    assert(dm2_v1_table_1d6ad0[22][0] == 0x03);
+    assert(dm2_v1_table_1d6ad0[22][1] == 0x04);
+    assert(dm2_v1_table_1d6b76[0] == 0x60);
+    assert(dm2_v1_table_1d6b76[131] == 0x00);
+    printf("test_batch3_creature_viewport OK\n");
+}
+
+static void test_batch3_door_tables(void)
+{
+    assert(dm2_v1_table_1d6c70[0] == 0x035e);
+    assert(dm2_v1_table_1d6c70[9] == 0xffff);
+    assert(dm2_v1_table_1d6c70[15] == 0x0353);
+    assert(dm2_v1_table_1d6cc0[0] == 0x02be);
+    assert(dm2_v1_table_1d6cc0[15] == 0x02cd);
+    printf("test_batch3_door_tables OK\n");
+}
+
+static void test_batch3_movement_tables(void)
+{
+    assert(dm2_v1_table_1d6d3c[0] == 0x002a);
+    assert(dm2_v1_table_1d6d3c[5] == 0x0028);
+    assert(dm2_v1_table_1d6d5a[0][0] == 0x00);
+    assert(dm2_v1_table_1d6d5a[0][2] == 0xff);
+    assert(dm2_v1_table_1d6d5a[3][4] == 0x01);
+    printf("test_batch3_movement_tables OK\n");
+}
+
+static void test_batch3_grid_tables(void)
+{
+    assert(dm2_v1_table_1d6e03[0][0] == 0x00);
+    assert(dm2_v1_table_1d6e03[0][1] == 0x00);
+    assert(dm2_v1_table_1d6e03[24][0] == 0x04);
+    assert(dm2_v1_table_1d6e03[24][1] == 0x04);
+    assert(dm2_v1_table_1d6de3[0][0] == 0x08);
+    assert(dm2_v1_table_1d6de3[0][1] == 0x04);
+    printf("test_batch3_grid_tables OK\n");
+}
+
+static void test_batch3_vsgame(void)
+{
+    assert(dm2_v1_vsgame[0] == 0xff);
+    assert(dm2_v1_vsgame[3] == 0x3f);
+    assert(dm2_v1_vsgame[119] == 0x00);
+    printf("test_batch3_vsgame OK\n");
+}
+
+static void test_batch3_char_table(void)
+{
+    assert(dm2_v1_table_1d292c[0] == 0x0061);
+    assert(dm2_v1_table_1d292c[24] == 0x0030);
+    assert(dm2_v1_table_1d292c[31] == 0x0037);
+    printf("test_batch3_char_table OK\n");
+}
+
+static void test_batch3_ornament_position(void)
+{
+    assert(dm2_v1_table_1d6eb3[0].a == 0x08);
+    assert(dm2_v1_table_1d6eb3[0].b == 0x00);
+    assert(dm2_v1_table_1d6eb3[15].a == 0x10);
+    assert(dm2_v1_table_1d6eb3[15].b == 0x0c);
+    printf("test_batch3_ornament_position OK\n");
+}
+
 int main(void)
 {
     test_dir_dx();
@@ -223,6 +326,17 @@ int main(void)
     test_creature_ai_behavior();
     test_tile_visibility();
     test_gui_element_map();
+    test_batch3_creature_tables();
+    test_batch3_viewport_tables();
+    test_batch3_struct_tables();
+    test_batch3_item_action_tables();
+    test_batch3_creature_viewport();
+    test_batch3_door_tables();
+    test_batch3_movement_tables();
+    test_batch3_grid_tables();
+    test_batch3_vsgame();
+    test_batch3_char_table();
+    test_batch3_ornament_position();
     printf("All dm2_v1_data_tables tests passed.\n");
     return 0;
 }

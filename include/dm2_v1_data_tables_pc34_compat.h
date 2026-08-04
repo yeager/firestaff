@@ -17,125 +17,142 @@
 extern "C" {
 #endif
 
+typedef struct { uint8_t a; uint8_t b; } dm2_s_bb;
+typedef struct { uint8_t a; uint8_t b; uint16_t w; } dm2_s_bbw;
+typedef struct { uint16_t a; uint16_t b; uint16_t c; uint8_t d; } dm2_s_wwwb;
+typedef struct { uint16_t a; uint16_t b; uint16_t c; } dm2_s_www;
+typedef struct { uint8_t v[4]; } dm2_s_4bytearray;
+
 /* Direction X deltas: N=0, E=+1, S=0, W=-1 */
 extern const int16_t dm2_v1_dir_dx[4];
 
 /* Direction Y deltas: N=-1, E=0, S=+1, W=0 */
 extern const int16_t dm2_v1_dir_dy[4];
 
-/* Creature positioning offsets (6 entries) */
 extern const int8_t dm2_v1_table_1d645d[6];
-
-/* Clock-hour to sound duration (24 entries) */
 extern const int8_t dm2_v1_table_1d70f0[24];
-
-/* Sound frequency table (24 entries) */
 extern const uint16_t dm2_v1_table_1d14e2[24];
-
-/* Music map: level -> track index (64 entries = SONGLIST.DAT) */
 extern const uint8_t dm2_v1_music_map[64];
-
-/* Viewport bitmap color tables (8 entries each) */
 extern const uint32_t dm2_v1_table_1d7092[8];
 extern const uint32_t dm2_v1_table_1d7072[8];
 extern const uint32_t dm2_v1_table_1d7052[8];
 extern const uint32_t dm2_v1_table_1d7042[4];
-
-/* Creature AI sub-skill index table (20 entries) */
 extern const uint8_t dm2_v1_table_1d7029[20];
-
-/* Creature type class table (23 entries) */
 extern const uint8_t dm2_v1_table_1d7012[23];
-
-/* Item type flags (16 entries) */
 extern const uint8_t dm2_v1_table_1d6f4c[16];
-
-/* Direction-to-position mapping (32 entries) */
 extern const int8_t dm2_v1_table_1d26a8[32];
-
-/* Creature damage class (9 entries) */
 extern const int8_t dm2_v1_table_1d6290[9];
-
-/* Creature action sub-type (5 entries) */
 extern const int16_t dm2_v1_table_1d6299[5];
-
-/* Door ordinal query (5 entries) */
 extern const uint8_t dm2_v1_table_1d6f27[5];
-
-/* Creature AI behavior flags (30 entries) */
 extern const int8_t dm2_v1_table_1d62ee[30];
-
-/* Direction reverse map (4 entries) */
 extern const int8_t dm2_v1_table_1d62e8[4];
-
-/* Creature group size offsets (4 entries) */
 extern const int16_t dm2_v1_table_1d62e0[4];
-
-/* Directional neighbor offsets, 8 dirs x 2 (dx,dy) */
 extern const int16_t dm2_v1_table_1d62b0[8][2];
-
-/* Perpendicular direction offsets (4 entries x 2) */
 extern const int16_t dm2_v1_table_1d62d0[4][2];
-
-/* Direction X deltas (i8 variant): S=0, E=+1, N=0, W=-1 */
 extern const int8_t dm2_v1_table_1d3ffc[4];
-
-/* Direction Y deltas (i8 variant): S=+1, E=0, N=-1, W=0 */
 extern const int8_t dm2_v1_table_1d3ff8[4];
-
-/* Viewport item ordinals (8 entries) */
 extern const int16_t dm2_v1_table_1d27c4[8];
-
-/* Viewport item ordinals B (10 entries) */
 extern const int16_t dm2_v1_table_1d27d4[10];
-
-/* Creature slot indices (6 entries) */
 extern const int8_t dm2_v1_table_1d268e[6];
-
-/* Tile visibility bitmask (16 entries) */
 extern const int8_t dm2_v1_table_1d2660[16];
-
-/* Tile property flags (13 entries) */
 extern const int16_t dm2_v1_table_1d2670[13];
-
-/* Creature AI attack type (8 entries) */
 extern const int8_t dm2_v1_table_1d26c8[8];
-
-/* Direction bitmask shift (4 entries) */
 extern const int8_t dm2_v1_table_1d26f8[4];
-
-/* Viewport wall ordinals (4 entries) */
 extern const int16_t dm2_v1_table_1d2752[4];
-
-/* Creature AI movement flags (44 entries) */
 extern const int8_t dm2_v1_table_1d324c[44];
-
-/* Door/wall interaction flags (16 entries) */
 extern const uint16_t dm2_v1_table_1d3278[16];
-
-/* GUI element type map (16 entries) */
 extern const uint8_t dm2_v1_table_1d3298[16];
-
-/* Door visual ordinals (18 entries) */
 extern const uint16_t dm2_v1_table_1d6fee[18];
-
-/* Door visual byte map (18 entries) */
 extern const uint8_t dm2_v1_table_1d6fdc[18];
-
-/* Wall ornament ordinals A (32 entries) */
 extern const uint16_t dm2_v1_table_1d6f9c[32];
-
-/* Wall ornament byte map A (32 entries) */
 extern const uint8_t dm2_v1_table_1d6f7c[32];
-
-/* Wall ornament byte map B (32 entries) */
 extern const uint8_t dm2_v1_table_1d6f5c[32];
-
-/* Item ordinal to wall mapping (16 entries) */
 extern const uint16_t dm2_v1_table_1d6f2c[16];
-
-/* Item ordinals for things (14 entries) */
 extern const int16_t dm2_v1_table_1d6f0b[14];
+
+/* Batch 3: remaining const tables from dm2data.cpp */
+extern const int8_t dm2_v1_table_1d6702[16];
+extern const int8_t dm2_v1_table_1d6712[21];
+extern const int16_t dm2_v1_table_1d672b[9];
+extern const int16_t dm2_v1_table_1d673d[7];
+extern const uint8_t dm2_v1_table_1d281c[16];
+extern const int8_t dm2_v1_table_1d282c[16];
+extern const uint8_t dm2_v1_table_1d631a[60];
+extern const uint8_t dm2_v1_table_1d6356[263];
+extern const uint8_t dm2_v1_vsgame[120];
+extern const dm2_s_4bytearray dm2_v1_table_1d26d0[8];
+extern const dm2_s_4bytearray dm2_v1_table_1d26f0[2];
+extern const uint8_t dm2_v1_table_1d275a[32][2];
+extern const dm2_s_bbw dm2_v1_table_1d3ed5[10];
+extern const dm2_s_wwwb dm2_v1_table_1d3d23[62];
+extern const uint8_t dm2_v1_table_1d3cd0[83];
+extern const dm2_s_bbw dm2_v1_table_1d3ba0[76];
+extern const uint8_t dm2_v1_table_1d6afe[23];
+extern const dm2_s_4bytearray dm2_v1_table_1d6a74[23];
+extern const uint8_t dm2_v1_table_1d6ad0[23][2];
+extern const uint8_t dm2_v1_table_1d6b43[23];
+extern const uint8_t dm2_v1_table_1d6b5a[23];
+extern const int8_t dm2_v1_table_1d6b2c[23];
+extern const int8_t dm2_v1_table_1d6b15[23];
+extern const int8_t dm2_v1_table_1d6a54[4][4];
+extern const int8_t dm2_v1_table_1d6a64[4][4];
+extern const int8_t dm2_v1_table_1d6b71[5];
+extern const uint8_t dm2_v1_table_1d6efd[14];
+extern const uint8_t dm2_v1_table_1d6ee1[14][2];
+extern const uint8_t dm2_v1_table_1d6ed3[14];
+extern const dm2_s_bb dm2_v1_table_1d6eb3[16];
+extern const int8_t dm2_v1_table_1d6ea8[3];
+extern const int8_t dm2_v1_table_1d6eab[4];
+extern const int8_t dm2_v1_table_1d6eaf[4];
+extern const dm2_s_bb dm2_v1_table_1d6e68[4][8];
+extern const uint8_t dm2_v1_table_1d6e51[23];
+extern const uint8_t dm2_v1_table_1d6797[37];
+extern const int8_t dm2_v1_table_1d6e41[16];
+extern const int8_t dm2_v1_table_1d6e35[12];
+extern const uint16_t dm2_v1_table_1d6c70[16];
+extern const int8_t dm2_v1_table_1d6c90[16];
+extern const uint8_t dm2_v1_table_1d6ca0[16];
+extern const uint8_t dm2_v1_table_1d6cb0[16];
+extern const int16_t dm2_v1_table_1d6cc0[16];
+extern const int8_t dm2_v1_table_1d6c10[5];
+extern const int8_t dm2_v1_table_1d6c19[5];
+extern const int8_t dm2_v1_table_1d6c1e[23];
+extern const int8_t dm2_v1_table_1d6c35[23];
+extern const int16_t dm2_v1_table_1d6c4c[9];
+extern const uint8_t dm2_v1_table_1d6c5e[9];
+extern const int8_t dm2_v1_table_1d6c67[9];
+extern const uint8_t dm2_v1_table_1d6c06[5];
+extern const int8_t dm2_v1_table_1d6c0b[5];
+extern const dm2_s_www dm2_v1_table_1d6a31[5];
+extern const int8_t dm2_v1_table_1d6e03[26][2];
+extern const int8_t dm2_v1_table_1d6de3[16][2];
+extern const int8_t dm2_v1_table_1d6dd3[16];
+extern const int8_t dm2_v1_table_1d69aa[6];
+extern const int8_t dm2_v1_table_1d69a2[6];
+extern const uint16_t dm2_v1_table_1d6998[5];
+extern const uint8_t dm2_v1_table_1d6984[20];
+extern const int8_t dm2_v1_table_1d6980[4];
+extern const int8_t dm2_v1_table_1d69b0[32];
+extern const int8_t dm2_v1_table_1d69d0[4];
+extern const uint8_t dm2_v1_table_1d6b76[132];
+extern const int16_t dm2_v1_table_1d6d3c[6];
+extern const int8_t dm2_v1_table_1d6d48[6];
+extern const int8_t dm2_v1_table_1d6d4e[6];
+extern const int8_t dm2_v1_table_1d6d54[6];
+extern const uint8_t dm2_v1_table_1d6ce0[92];
+extern const uint8_t dm2_v1_table_1d6d5a[4][5];
+extern const dm2_s_bb dm2_v1_table_1d6d6e[4];
+extern const uint8_t dm2_v1_table_1d6d76[2][4];
+extern const uint8_t dm2_v1_table_1d6d7e[2][4];
+extern const int8_t dm2_v1_table_1d6d86[2];
+extern const int8_t dm2_v1_table_1d6d88[25];
+extern const int8_t dm2_v1_table_1d6da1[25];
+extern const int8_t dm2_v1_table_1d6dba[25];
+extern const int8_t dm2_v1_table_1d67d9[7];
+extern const int8_t dm2_v1_table_1d67e0[5][6];
+extern const int8_t dm2_v1_table_1d67fe[4];
+extern const int16_t dm2_v1_table_1d292c[32];
+extern const uint8_t dm2_v1_table_1d70b4[17];
 
 #ifdef __cplusplus
 }
