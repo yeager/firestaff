@@ -15595,6 +15595,21 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_string
     )
 
+    add_executable(test_dm2_v1_rect
+        tests/test_dm2_v1_rect_pc34_compat.c
+        src/dm2/dm2_v1_rect_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_rect PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_rect PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_rect
+        COMMAND test_dm2_v1_rect
+    )
+
     add_executable(test_dm2_v1_actuator_ops
         tests/test_dm2_v1_actuator_ops.c
         src/dm2/dm2_v1_actuator_ops_pc34_compat.c
@@ -47921,6 +47936,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_timer_queue_pc34_compat.c
         src/dm2/dm2_v1_random_pc34_compat.c
         src/dm2/dm2_v1_string_pc34_compat.c
+        src/dm2/dm2_v1_rect_pc34_compat.c
         src/dm2/dm2_v1_timer_ops_pc34_compat.c
         src/dm2/dm2_v1_engage_command_pc34_compat.c
         src/dm2/dm2_v1_hero_ops_pc34_compat.c
