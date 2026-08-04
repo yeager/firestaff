@@ -15550,6 +15550,51 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_timer_ops
     )
 
+    add_executable(test_dm2_v1_timer_queue
+        tests/test_dm2_v1_timer_queue_pc34_compat.c
+        src/dm2/dm2_v1_timer_queue_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_timer_queue PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_timer_queue PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_timer_queue
+        COMMAND test_dm2_v1_timer_queue
+    )
+
+    add_executable(test_dm2_v1_random
+        tests/test_dm2_v1_random_pc34_compat.c
+        src/dm2/dm2_v1_random_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_random PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_random PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_random
+        COMMAND test_dm2_v1_random
+    )
+
+    add_executable(test_dm2_v1_string
+        tests/test_dm2_v1_string_pc34_compat.c
+        src/dm2/dm2_v1_string_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_string PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_string PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_string
+        COMMAND test_dm2_v1_string
+    )
+
     add_executable(test_dm2_v1_actuator_ops
         tests/test_dm2_v1_actuator_ops.c
         src/dm2/dm2_v1_actuator_ops_pc34_compat.c
@@ -47873,6 +47918,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/csb/csb_v1_projectile_speed_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
         src/memory/memory_timeline_pc34_compat.c
+        src/dm2/dm2_v1_timer_queue_pc34_compat.c
+        src/dm2/dm2_v1_random_pc34_compat.c
+        src/dm2/dm2_v1_string_pc34_compat.c
         src/dm2/dm2_v1_timer_ops_pc34_compat.c
         src/dm2/dm2_v1_engage_command_pc34_compat.c
         src/dm2/dm2_v1_hero_ops_pc34_compat.c
