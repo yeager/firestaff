@@ -49,8 +49,7 @@ pre-commit:
           esac
           hits=$(grep -nH ' $' "$f" 2>/dev/null || true)
           if [ -n "$hits" ]; then
-            bad="$bad
-$hits"
+            bad="${bad} ${hits}"
           fi
         done
         if [ -n "$bad" ]; then
