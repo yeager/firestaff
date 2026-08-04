@@ -12,11 +12,11 @@
 static void test_calc_damage_null_safety(void)
 {
     DM2_V1_CalcAttackDamageReceipt receipt;
-    int r = dm2_v1_calc_player_attack_damage(NULL, &receipt);
+    int r = dm2_v1_calc_player_attack_damage_receipt(NULL, &receipt);
     assert(r == 0);
     assert(receipt.fail_closed == 1);
 
-    r = dm2_v1_calc_player_attack_damage(NULL, NULL);
+    r = dm2_v1_calc_player_attack_damage_receipt(NULL, NULL);
     assert(r == 0);
 
     printf("  PASS: calc_damage_null_safety\n");
@@ -29,7 +29,7 @@ static void test_calc_damage_dead_hero(void)
     memset(&req, 0, sizeof(req));
     req.hero_hp = 0;
     req.creature_record = 100;
-    int r = dm2_v1_calc_player_attack_damage(&req, &receipt);
+    int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 0);
     assert(receipt.miss == 1);
 
@@ -43,7 +43,7 @@ static void test_calc_damage_no_creature(void)
     memset(&req, 0, sizeof(req));
     req.hero_hp = 100;
     req.creature_record = -1;
-    int r = dm2_v1_calc_player_attack_damage(&req, &receipt);
+    int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 0);
     assert(receipt.miss == 1);
 
@@ -74,7 +74,7 @@ static void test_calc_damage_valid(void)
     req.rand_armor = 0;
     req.party_level = 3;
     req.creature_armor_mult = 4;
-    int r = dm2_v1_calc_player_attack_damage(&req, &receipt);
+    int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.valid == 1);
     assert(receipt.fail_closed == 0);
@@ -97,7 +97,7 @@ static void test_calc_damage_miss_by_defense(void)
     req.rand_hit = 0;
     req.rand_defense = 0;
     req.party_level = 10;
-    int r = dm2_v1_calc_player_attack_damage(&req, &receipt);
+    int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.miss == 1);
     assert(receipt.hit == 0);
@@ -125,7 +125,7 @@ static void test_calc_damage_poison(void)
     req.rand_poison = 3;
     req.rand_hit = 8;
     req.party_level = 3;
-    int r = dm2_v1_calc_player_attack_damage(&req, &receipt);
+    int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.hit == 1);
     assert(receipt.poison_applied == 1);
@@ -152,7 +152,7 @@ static void test_calc_damage_skill_exp(void)
     req.creature_armor_mult = 8;
     req.rand_hit = 8;
     req.party_level = 3;
-    int r = dm2_v1_calc_player_attack_damage(&req, &receipt);
+    int r = dm2_v1_calc_player_attack_damage_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.hit == 1);
     assert(receipt.skill_exp_awarded >= 3);
@@ -163,11 +163,11 @@ static void test_calc_damage_skill_exp(void)
 static void test_wound_null_safety(void)
 {
     DM2_V1_WoundPlayerReceipt receipt;
-    int r = dm2_v1_wound_player(NULL, &receipt);
+    int r = dm2_v1_wound_player_receipt(NULL, &receipt);
     assert(r == 0);
     assert(receipt.fail_closed == 1);
 
-    r = dm2_v1_wound_player(NULL, NULL);
+    r = dm2_v1_wound_player_receipt(NULL, NULL);
     assert(r == 0);
 
     printf("  PASS: wound_null_safety\n");
@@ -181,7 +181,7 @@ static void test_wound_zero_damage(void)
     req.hero_index = 0;
     req.wound_amount = 0;
     req.hero_hp = 100;
-    int r = dm2_v1_wound_player(&req, &receipt);
+    int r = dm2_v1_wound_player_receipt(&req, &receipt);
     assert(r == 0);
     assert(receipt.hero_wounded == 0);
 
@@ -196,7 +196,7 @@ static void test_wound_lethal(void)
     req.hero_index = 0;
     req.wound_amount = 200;
     req.hero_hp = 50;
-    int r = dm2_v1_wound_player(&req, &receipt);
+    int r = dm2_v1_wound_player_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.hero_wounded == 1);
     assert(receipt.hero_killed == 1);
@@ -213,7 +213,7 @@ static void test_wound_survivable(void)
     req.hero_index = 1;
     req.wound_amount = 20;
     req.hero_hp = 100;
-    int r = dm2_v1_wound_player(&req, &receipt);
+    int r = dm2_v1_wound_player_receipt(&req, &receipt);
     assert(r == 1);
     assert(receipt.hero_wounded == 1);
     assert(receipt.hero_killed == 0);
@@ -231,7 +231,7 @@ static void test_wound_dead_hero(void)
     req.hero_index = 0;
     req.wound_amount = 10;
     req.hero_hp = 0;
-    int r = dm2_v1_wound_player(&req, &receipt);
+    int r = dm2_v1_wound_player_receipt(&req, &receipt);
     assert(r == 0);
 
     printf("  PASS: wound_dead_hero\n");
@@ -245,7 +245,7 @@ static void test_wound_invalid_index(void)
     req.hero_index = 5;
     req.wound_amount = 10;
     req.hero_hp = 100;
-    int r = dm2_v1_wound_player(&req, &receipt);
+    int r = dm2_v1_wound_player_receipt(&req, &receipt);
     assert(r == 0);
 
     printf("  PASS: wound_invalid_index\n");

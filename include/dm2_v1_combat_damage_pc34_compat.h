@@ -129,11 +129,11 @@ typedef struct {
     int16_t per_hero_damage[4];
 } DM2_V1_AttackPartyReceipt;
 
-int dm2_v1_calc_player_attack_damage(
+int dm2_v1_calc_player_attack_damage_receipt(
     const DM2_V1_CalcAttackDamageRequest *request,
     DM2_V1_CalcAttackDamageReceipt *receipt);
 
-int dm2_v1_wound_player(
+int dm2_v1_wound_player_receipt(
     const DM2_V1_WoundPlayerRequest *request,
     DM2_V1_WoundPlayerReceipt *receipt);
 

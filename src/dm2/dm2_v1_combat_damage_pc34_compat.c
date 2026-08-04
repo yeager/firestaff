@@ -38,7 +38,7 @@
 
 #include <string.h>
 
-int dm2_v1_calc_player_attack_damage(
+int dm2_v1_calc_player_attack_damage_receipt(
     const DM2_V1_CalcAttackDamageRequest *request,
     DM2_V1_CalcAttackDamageReceipt *receipt)
 {
@@ -129,7 +129,7 @@ int dm2_v1_calc_player_attack_damage(
     return 1;
 }
 
-int dm2_v1_wound_player(
+int dm2_v1_wound_player_receipt(
     const DM2_V1_WoundPlayerRequest *request,
     DM2_V1_WoundPlayerReceipt *receipt)
 {
@@ -242,7 +242,7 @@ int dm2_v1_attack_party(
                 wound_req.damage_type = request->damage_type;
                 wound_req.hero_index = (int16_t)i;
 
-                dm2_v1_wound_player(&wound_req, &receipt->hero_results[i]);
+                dm2_v1_wound_player_receipt(&wound_req, &receipt->hero_results[i]);
                 if (receipt->hero_results[i].hero_wounded) {
                     receipt->heroes_hit_mask |= (1u << i);
                     receipt->heroes_wounded++;

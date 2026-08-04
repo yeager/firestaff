@@ -25,7 +25,7 @@ typedef struct {
     void    (*resume_from_wake)(void *ctx);
     int16_t (*get_adj_ability2)(void *ctx, int16_t hero_idx,
                                 int16_t ability, int16_t amount);
-} DM2_V1_CreatureAttacksPlayerCallbacks;
+} DM2_V1_CreatureAttacksPlayerReceiptCallbacks;
 
 typedef struct {
     int16_t hero_idx;
@@ -54,9 +54,9 @@ typedef struct {
 /* table1d26f8: wound type lookup (3 entries) */
 extern const uint8_t dm2_v1_table1d26f8[3];
 
-int32_t dm2_v1_creature_attacks_player(
+int32_t dm2_v1_creature_attacks_player_receipt(
     const DM2_V1_CreatureAttacksPlayerState *state,
-    const DM2_V1_CreatureAttacksPlayerCallbacks *cb,
+    const DM2_V1_CreatureAttacksPlayerReceiptCallbacks *cb,
     void *ctx,
     DM2_V1_CreatureAttacksPlayerReceipt *receipt);
 

@@ -7,9 +7,9 @@
 /* c_creature.cpp uses table1d26f8 for wound type selection */
 const uint8_t dm2_v1_table1d26f8[3] = { 0x01, 0x02, 0x04 };
 
-int32_t dm2_v1_creature_attacks_player(
+int32_t dm2_v1_creature_attacks_player_receipt(
     const DM2_V1_CreatureAttacksPlayerState *state,
-    const DM2_V1_CreatureAttacksPlayerCallbacks *cb,
+    const DM2_V1_CreatureAttacksPlayerReceiptCallbacks *cb,
     void *ctx,
     DM2_V1_CreatureAttacksPlayerReceipt *receipt)
 {
