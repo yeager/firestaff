@@ -121,6 +121,84 @@ static void test_door_ordinal(void)
     printf("test_door_ordinal OK\n");
 }
 
+static void test_dir_reverse(void)
+{
+    assert(dm2_v1_table_1d62e8[0] == 0);
+    assert(dm2_v1_table_1d62e8[1] == 3);
+    assert(dm2_v1_table_1d62e8[2] == 2);
+    assert(dm2_v1_table_1d62e8[3] == 1);
+    printf("test_dir_reverse OK\n");
+}
+
+static void test_dir_i8_variants(void)
+{
+    assert(dm2_v1_table_1d3ffc[1] == 1);
+    assert(dm2_v1_table_1d3ffc[3] == -1);
+    assert(dm2_v1_table_1d3ff8[0] == 1);
+    assert(dm2_v1_table_1d3ff8[2] == -1);
+    printf("test_dir_i8_variants OK\n");
+}
+
+static void test_neighbor_offsets(void)
+{
+    /* 8-direction: entry 0 is dx=-1,dy=0 (west) */
+    assert(dm2_v1_table_1d62b0[0][0] == -1);
+    assert(dm2_v1_table_1d62b0[0][1] == 0);
+    /* entry 3 is dx=1,dy=0 (east) */
+    assert(dm2_v1_table_1d62b0[3][0] == 1);
+    assert(dm2_v1_table_1d62b0[3][1] == 0);
+    printf("test_neighbor_offsets OK\n");
+}
+
+static void test_perpendicular_offsets(void)
+{
+    assert(dm2_v1_table_1d62d0[0][0] == 0);
+    assert(dm2_v1_table_1d62d0[0][1] == 1);
+    assert(dm2_v1_table_1d62d0[2][0] == 1);
+    assert(dm2_v1_table_1d62d0[2][1] == 0);
+    printf("test_perpendicular_offsets OK\n");
+}
+
+static void test_door_visual_ordinals(void)
+{
+    assert(dm2_v1_table_1d6fee[0] == 0xffff);
+    assert(dm2_v1_table_1d6fee[2] == 0x0340);
+    assert(dm2_v1_table_1d6fdc[2] == 0xcd);
+    printf("test_door_visual_ordinals OK\n");
+}
+
+static void test_wall_ornament_ordinals(void)
+{
+    assert(dm2_v1_table_1d6f9c[6] == 0x0336);
+    assert(dm2_v1_table_1d6f9c[7] == 0x0329);
+    assert(dm2_v1_table_1d6f7c[6] == 0x4f);
+    assert(dm2_v1_table_1d6f5c[6] == 0x4f);
+    printf("test_wall_ornament_ordinals OK\n");
+}
+
+static void test_creature_ai_behavior(void)
+{
+    assert(dm2_v1_table_1d62ee[0] == 0x41);
+    assert(dm2_v1_table_1d62ee[29] == 0x00);
+    printf("test_creature_ai_behavior OK\n");
+}
+
+static void test_tile_visibility(void)
+{
+    assert(dm2_v1_table_1d2660[0] == 0x04);
+    assert(dm2_v1_table_1d2660[12] == 0x0f);
+    assert(dm2_v1_table_1d2660[15] == 0x0f);
+    printf("test_tile_visibility OK\n");
+}
+
+static void test_gui_element_map(void)
+{
+    assert(dm2_v1_table_1d3298[0] == 0x0e);
+    assert(dm2_v1_table_1d3298[15] == 0x0d);
+    assert(dm2_v1_table_1d3298[2] == 0xff);
+    printf("test_gui_element_map OK\n");
+}
+
 int main(void)
 {
     test_dir_dx();
@@ -136,6 +214,15 @@ int main(void)
     test_creature_skill_index();
     test_creature_type_class();
     test_door_ordinal();
+    test_dir_reverse();
+    test_dir_i8_variants();
+    test_neighbor_offsets();
+    test_perpendicular_offsets();
+    test_door_visual_ordinals();
+    test_wall_ornament_ordinals();
+    test_creature_ai_behavior();
+    test_tile_visibility();
+    test_gui_element_map();
     printf("All dm2_v1_data_tables tests passed.\n");
     return 0;
 }
