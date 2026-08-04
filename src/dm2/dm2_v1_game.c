@@ -1,5 +1,11 @@
 #include "dm2_v1_game.h"
+#include "dm2_v1_runtime_parity_pc34_compat.h"
 #include <string.h>
+
+/* DM2_V1_GameGlobVars and DM2_V1_GlobVarState are layout-identical;
+ * the game header defines its own copy to avoid include conflicts. */
+_Static_assert(sizeof(DM2_V1_GameGlobVars) == sizeof(DM2_V1_GlobVarState),
+               "glob var structs must be layout-identical");
 
 void dm2_v1_init(DM2_V1_GameState *state, const char *data_dir) {
     if (!state) return;
@@ -31,4 +37,15 @@ int dm2_v1_enter_shop(DM2_V1_GameState *state) {
 
 int dm2_v1_is_outdoor(const DM2_V1_GameState *state) {
     return state ? state->outdoor : 0;
+}
+
+int dm2_v1_game_get_glob_var(void *ctx, uint16_t index) {
+    DM2_V1_GameState *gs = (DM2_V1_GameState *)ctx;
+    return (int)dm2_v1_get_glob_var((const DM2_V1_GlobVarState *)&gs->glob_vars, index);
+}
+
+void dm2_v1_game_update_glob_var(void *ctx, uint16_t index, int op, uint16_t value) {
+    DM2_V1_GameState *gs = (DM2_V1_GameState *)ctx;
+    dm2_v1_update_glob_var_direct((DM2_V1_GlobVarState *)&gs->glob_vars,
+                                  (int16_t)index, (int16_t)op, (int16_t)value);
 }

@@ -14643,6 +14643,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
         src/dm2/dm2_v1_gdat_wall_m11_command.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
@@ -14730,6 +14731,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
         src/dm2/dm2_v1_gdat_wall_m11_command.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
@@ -14817,6 +14819,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
         src/dm2/dm2_v1_gdat_wall_m11_command.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
@@ -15670,6 +15673,22 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_glob_var
     )
 
+    add_executable(test_dm2_v1_game_glob_var_integration
+        tests/test_dm2_v1_game_glob_var_integration.c
+        src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_game_glob_var_integration PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_game_glob_var_integration PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_game_glob_var_integration
+        COMMAND test_dm2_v1_game_glob_var_integration
+    )
+
     add_executable(test_dm2_v1_palette
         tests/test_dm2_v1_palette_pc34_compat.c
         src/dm2/dm2_v1_palette_pc34_compat.c
@@ -16188,6 +16207,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_gdat_scene_m11_command.c
         src/dm2/dm2_v1_gdat_wall_m11_command.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
@@ -16363,6 +16383,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_creature_animation_gdat.c
@@ -16446,6 +16467,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_creature_animation_gdat.c
@@ -16529,6 +16551,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_creature_animation_gdat.c
@@ -16612,6 +16635,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_creature_animation_gdat.c
@@ -16695,6 +16719,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_creature_animation_gdat.c
@@ -16780,6 +16805,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_creature_animation_gdat.c
@@ -16860,6 +16886,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_creature_animation_gdat.c
@@ -16961,6 +16988,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_creature_animation_gdat.c
@@ -47983,6 +48011,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
         src/dm2/dm2_v1_gdat_wall_m11_command.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_pressure_plate.c
         src/dm2/dm2_v1_projectile_pc34_compat.c

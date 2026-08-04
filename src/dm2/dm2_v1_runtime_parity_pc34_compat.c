@@ -422,7 +422,7 @@ int8_t dm2_v1_query_cls2_from_record(
 
 int16_t dm2_v1_query_cls1_from_record(
     int32_t record_word,
-    const DM2_V1_RecordQueryCallbacks *cb, void *ctx)
+    const DM2_V1_RecordQueryCallbacks *cb, void *ctx __attribute__((unused)))
 {
     if (!cb || record_word == -1)
         return -1;
@@ -572,22 +572,8 @@ void dm2_v1_dealloc_record(
     cb->db_counts[db_type]--;
 }
 
-/* c_record.cpp:1142 — DM2_ALLOC_NEW_DBITEM */
-
-int16_t dm2_v1_alloc_new_dbitem(
-    int16_t db_type, int16_t template_record,
-    const DM2_V1_AllocDbitemCallbacks *cb, void *ctx)
-{
-    if (!cb)
-        return -1;
-    int16_t new_rec = cb->alloc_new_record(ctx, db_type);
-    if (new_rec < 0)
-        return -1;
-    if (template_record >= 0)
-        cb->copy_record(ctx, (uint16_t)new_rec, (uint16_t)template_record);
-    cb->set_next_link(ctx, (uint16_t)new_rec, -1);
-    return new_rec;
-}
+/* c_record.cpp:1142 — DM2_ALLOC_NEW_DBITEM
+ * Superseded by dm2_v1_dbitem_alloc_pc34_compat.c */
 
 /* c_record.cpp:1261/1288 — decoration functions moved to
  * dm2_v1_record_ops_pc34_compat.c with proper map-based lookup */
@@ -605,30 +591,8 @@ void dm2_v1_delete_creature_record(
     cb->dealloc_record(ctx, record_word);
 }
 
-/* c_record.cpp:1537 — DM2_DROP_CREATURE_POSSESSION */
-
-void dm2_v1_drop_creature_possession(
-    int16_t creature_record, int16_t x, int16_t y,
-    const DM2_V1_DropPossessionCallbacks *cb, void *ctx)
-{
-    if (!cb)
-        return;
-    uint8_t *rec = cb->get_record_address(ctx, (uint16_t)creature_record);
-    if (!rec)
-        return;
-    /* Creature possession chain starts at word+2 */
-    int16_t item = (int16_t)(rec[2] | (rec[3] << 8));
-    while (item != -1 && item != (int16_t)0xFFFE) {
-        uint8_t *item_rec = cb->get_record_address(ctx, (uint16_t)item);
-        int16_t next = -1;
-        if (item_rec)
-            next = (int16_t)(item_rec[0] | (item_rec[1] << 8));
-        cb->place_item_on_tile(ctx, item, x, y);
-        item = next;
-    }
-    rec[2] = 0xFF;
-    rec[3] = 0xFF;
-}
+/* c_record.cpp:1537 — DM2_DROP_CREATURE_POSSESSION
+ * Superseded by dm2_v1_drop_possession_pc34_compat.c */
 
 /* c_record.cpp:1839 — DM2_ROTATE_RECORD_BY_TELEPORTER */
 
@@ -681,7 +645,7 @@ void dm2_v1_init_global_records(
 
 int32_t dm2_v1_attack_creature(
     int16_t creature_record, int16_t x, int16_t y,
-    int16_t attack_type, int16_t sound_id, int32_t damage,
+    int16_t attack_type __attribute__((unused)), int16_t sound_id, int32_t damage,
     const DM2_V1_AttackCreatureCallbacks *cb, void *ctx)
 {
     if (!cb)
