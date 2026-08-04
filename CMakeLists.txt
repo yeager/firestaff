@@ -14655,6 +14655,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_ccm_advanced_pc34_compat.c
         src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
+        src/dm2/dm2_v1_ccm_loop_pc34_compat.c
+        src/dm2/dm2_v1_creature_something_pc34_compat.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
@@ -14740,6 +14742,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_ccm_advanced_pc34_compat.c
         src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
+        src/dm2/dm2_v1_ccm_loop_pc34_compat.c
+        src/dm2/dm2_v1_creature_something_pc34_compat.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
@@ -14825,6 +14829,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_ccm_advanced_pc34_compat.c
         src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
+        src/dm2/dm2_v1_ccm_loop_pc34_compat.c
+        src/dm2/dm2_v1_creature_something_pc34_compat.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
@@ -47854,6 +47860,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_ccm.c
         src/dm2/dm2_v1_ccm_advanced_pc34_compat.c
         src/dm2/dm2_v1_ccm_dispatch_pc34_compat.c
+        src/dm2/dm2_v1_ccm_loop_pc34_compat.c
+        src/dm2/dm2_v1_creature_something_pc34_compat.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c
         src/dm2/dm2_v1_sound.c
@@ -47865,6 +47873,11 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/csb/csb_v1_projectile_speed_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
         src/memory/memory_timeline_pc34_compat.c
+        src/dm2/dm2_v1_timer_ops_pc34_compat.c
+        src/dm2/dm2_v1_engage_command_pc34_compat.c
+        src/dm2/dm2_v1_hero_ops_pc34_compat.c
+        src/dm2/dm2_v1_light_ops_pc34_compat.c
+        src/dm2/dm2_v1_creature_ops_pc34_compat.c
     )
     if(NOT MSVC)
         target_link_libraries(test_dm2_v1_scene_light_control PRIVATE m)

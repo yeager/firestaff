@@ -175,7 +175,7 @@ int dm2_v1_continue_tick_generator(
     return 0;
 }
 
-int dm2_v1_activate_tick_generator(
+int dm2_v1_activate_tick_generator_cb(
     uint8_t *actuator_record, uint16_t record_idx,
     const DM2_V1_ActivateTickGenCallbacks *cb, void *ctx)
 {

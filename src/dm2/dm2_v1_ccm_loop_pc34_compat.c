@@ -203,6 +203,12 @@ int dm2_v1_ccm_message_loop(
     int map_home,
     int32_t v1e0238,
     unsigned long game_tick,
+    DM2_V1_CcmAiGoalCallback ai_goal_cb,
+    void *ai_goal_ctx,
+    DM2_V1_CcmSevenCallback seven_cb,
+    void *seven_ctx,
+    DM2_V1_CcmProceedCallback proceed_ccm,
+    void *proceed_ctx,
     DM2_V1_CcmLoopReceipt *receipt)
 {
     DM2_V1_CcmLoopReceipt rc;
@@ -307,12 +313,19 @@ int dm2_v1_ccm_message_loop(
         /* c_ai.cpp:5397-5401: b_1a = b_17. */
         slot[0x1a] = slot[0x17];
         if ((int)(int8_t)slot[0x17] == -1) {
-            /* DM2_14cd_09e2 — the AI goal picker, host-owned.  The
-             * source's b_1a write above already happened; fail closed
-             * before any further mutation. */
-            receipt->ai_goal_unbound = 1;
-            receipt->command = (int)(int8_t)slot[0x1a];
-            return 0;
+            if (ai_goal_cb) {
+                int goal_r = ai_goal_cb(ai_goal_ctx, slot,
+                                        creature_type, game_tick);
+                if (!goal_r) {
+                    receipt->ai_goal_unbound = 1;
+                    receipt->command = (int)(int8_t)slot[0x1a];
+                    return 0;
+                }
+            } else {
+                receipt->ai_goal_unbound = 1;
+                receipt->command = (int)(int8_t)slot[0x1a];
+                return 0;
+            }
         }
         slot[0x17] = 0xff; /* c_ai.cpp:5406 */
         /* DM2_14cd_062e (c_ai.cpp:5412): the byte@0x12 == 0xff head is
@@ -321,8 +334,16 @@ int dm2_v1_ccm_message_loop(
          * receipted cfg_reset) needs the table1d5f82 s_seven chain
          * (c_ai.cpp:2447-2459), which stays unproven — fail closed. */
         if (slot[0x12] != 0xffu) {
-            receipt->s_seven_unbound = 1;
-            return 0;
+            if (seven_cb) {
+                int seven_r = seven_cb(seven_ctx, slot, creature_type);
+                if (seven_r == 0) {
+                    slot[0x1a] = 0xff; /* cfg reset: b_1a = -1 */
+                    receipt->cfg_reset = 1;
+                }
+            } else {
+                receipt->s_seven_unbound = 1;
+                return 0;
+            }
         }
         {
             int timing_proven = 0;
@@ -485,15 +506,38 @@ int dm2_v1_ccm_message_loop(
                 rg4w += (int)ccm_rand16(rng, (uint16_t)rg2w);
                 receipt->v1e058d = (rg4w <= rg3w) ? 1 : 0;
             }
-            /* DM2_PROCEED_CCM — the per-command handler body stays
-             * host-owned.  Receipted through the proven DM2-005
-             * dispatch matrix; fail closed BEFORE any handler effect
-             * (the or8 into slot byte@0x21 included). */
+            /* DM2_PROCEED_CCM — receipted through the proven DM2-005
+             * dispatch matrix.  When a callback is provided, dispatch
+             * through it; otherwise fail closed. */
             receipt->ccm_handler = (int)(int8_t)slot[0x1a];
             receipt->ccm_handler_group =
                 (int)dm2_v1_ccm_dispatch_source_group(slot[0x1a]);
-            receipt->ccm_handler_unbound = 1;
-            return 0;
+            if (proceed_ccm) {
+                int32_t hr = proceed_ccm(proceed_ctx, slot[0x1a],
+                    creature_type, slot, (uint16_t)adj[0],
+                    (uint16_t)adj[1], game_tick);
+                receipt->ccm_handler_dispatched = 1;
+                receipt->ccm_handler_result = (int)hr;
+                /* c_creature.cpp:3186-3188: RG3L = RG1L when handler
+                 * returned non-zero.  c_creature.cpp:3191-3208: when
+                 * RG3W == 0, write gametick to slot[4] if table1d613a
+                 * entry & 3 != 0; otherwise set v1e07d8.b_01. */
+                if (hr == 0) {
+                    uint8_t cmd = slot[0x1a];
+                    if (cmd < 0x2fu) {
+                        uint8_t tflags = dm2_v1_table1d607e[cmd][0];
+                        if ((tflags & 0x03u) != 0) {
+                            slot[4] = (uint8_t)(game_tick & 0xffu);
+                        }
+                    }
+                }
+                /* c_ai.cpp:5586: or8(slot[0x21], RG1Blo) — the low byte
+                 * of the handler result is OR'd into slot[0x21]. */
+                slot[0x21] |= (uint8_t)(hr & 0xffu);
+            } else {
+                receipt->ccm_handler_unbound = 1;
+                return 0;
+            }
         }
         if (slot[0x21] != 0u && (row[2] & 0x40u) != 0u) {
             /* c_ai.cpp:5592-5604: the bound DM2_50CB stream step.

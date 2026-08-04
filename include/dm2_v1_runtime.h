@@ -44,6 +44,7 @@
 #include "dm2_v1_gdat_wall_m11_command.h"
 #include "dm2_v1_weather_gdat.h"
 #include "dm2_v1_weather.h"
+#include "dm2_v1_engage_command_pc34_compat.h"
 
 /* Runtime-visible proof that the M11-owned frame consumed DM2 GDAT pixels.
  * This is deliberately aggregate: it proves ownership and real consumption
@@ -1282,6 +1283,11 @@ void dm2_v1_runtime_set_turn_callback(DM2_V2_TurnCallback cb);
 /* dm2_v1_runtime_set_stairs_callback — register V2 stairs callback. */
 void dm2_v1_runtime_set_stairs_callback(DM2_V2_StairsCallback cb);
 
+void dm2_v1_runtime_set_cdda_callback(
+    void (*play)(void *ctx, const uint8_t *pcm, size_t size, int loop),
+    void (*stop)(void *ctx),
+    void *ctx);
+
 /* ── Doors ─────────────────────────────────────────────────────────── */
 
 /*
@@ -1435,6 +1441,15 @@ int dm2_v1_runtime_get_actuator_count(void);
 uint32_t dm2_v1_runtime_get_last_generated_object(void);
 int dm2_v1_runtime_get_last_projectile_slot(void);
 int dm2_v1_runtime_get_projectile_actuator_count(void);
+
+/* ── Hand actions (engage command) ────────────────────────────────── */
+/* Dispatch a hand action from the champion panel.
+ * Wires to dm2_v1_engage_command with runtime-bound callbacks for
+ * CONFUSE_CREATURE and PROCEED_LIGHT.
+ * Source: skengage.cpp:23-869 DM2_ENGAGE_COMMAND */
+int dm2_v1_runtime_engage_command(
+    const DM2_V1_EngageCommandRequest *request,
+    DM2_V1_EngageCommandReceipt *receipt);
 
 /* ── Special squares ──────────────────────────────────────────────── */
 

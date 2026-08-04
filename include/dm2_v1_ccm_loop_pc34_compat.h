@@ -134,6 +134,8 @@ typedef struct {
   int ccm_handler;           /* slot byte@0x1a at the handler boundary */
   int ccm_handler_group;     /* DM2_V1_CcmSourceHandler at the boundary */
   int ccm_handler_unbound;   /* fail-closed: PROCEED_CCM body host-owned */
+  int ccm_handler_dispatched;/* callback dispatched the handler */
+  int ccm_handler_result;    /* callback return value (RG3L) */
   int walk_50cb_calls;       /* bound DM2_50CB invocations */
   int walk_50cb_last;        /* last 50CB return (-1 when never called) */
   int loop_result;           /* RG4W at m_15785 */
@@ -147,6 +149,30 @@ typedef struct {
   int bitmap_would_copy;     /* m_157BC receipted (structurally 0) */
   char source_evidence[512];
 } DM2_V1_CcmLoopReceipt;
+
+/* Callback for DM2_14cd_09e2 — the AI goal picker.  Called when
+ * slot[0x17] == -1 (no pending command).  The callback should set
+ * slot[0x1a] to the chosen command.  Returns 1 if a goal was set,
+ * 0 to fail closed. */
+typedef int (*DM2_V1_CcmAiGoalCallback)(
+    void *ctx, uint8_t *slot, uint16_t creature_type,
+    unsigned long game_tick);
+
+/* Callback for DM2_14cd_062e table1d5f82 s_seven chain.  Called when
+ * slot[0x12] != 0xff.  Returns 0 to reset b_1a to -1, non-zero to keep
+ * the current b_1a.  When NULL, the loop fails closed. */
+typedef int (*DM2_V1_CcmSevenCallback)(
+    void *ctx, uint8_t *slot, uint16_t creature_type);
+
+/* Callback for DM2_PROCEED_CCM dispatch.  Called with the command byte
+ * (slot[0x1a]), creature_type (GDAT word@1 & 0x1f), and the CAII slot
+ * pointer.  Returns the RG3L handler result: 0 = no effect (command
+ * unhandled or void handler), non-zero = the handler's return value.
+ * When NULL, the loop fails closed at the handler boundary. */
+typedef int32_t (*DM2_V1_CcmProceedCallback)(
+    void *ctx, uint8_t command, uint16_t creature_type,
+    uint8_t *slot, uint16_t adj0, uint16_t adj1,
+    unsigned long game_tick);
 
 int dm2_v1_ccm_message_loop(
     DM2_V1_RecordPoolSet *pool_set,
@@ -167,6 +193,12 @@ int dm2_v1_ccm_message_loop(
     int map_home,
     int32_t v1e0238,
     unsigned long game_tick,
+    DM2_V1_CcmAiGoalCallback ai_goal_cb,
+    void *ai_goal_ctx,
+    DM2_V1_CcmSevenCallback seven_cb,
+    void *seven_ctx,
+    DM2_V1_CcmProceedCallback proceed_ccm,
+    void *proceed_ctx,
     DM2_V1_CcmLoopReceipt *receipt);
 
 #endif

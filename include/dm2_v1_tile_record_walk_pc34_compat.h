@@ -141,7 +141,7 @@ typedef struct {
     int aborted;            /* action 0xb mode > 2: source return */
     int unknown_action;     /* action neither 0xb nor 0x28 (receipted) */
     char source_evidence[512];
-} DM2_V1_CreatureKillerReceipt;
+} DM2_V1_CreatureKillerWalkReceipt;
 
 /* DM2_ACTIVATE_CREATURE_KILLER (c_tim_proc.cpp:2907-2988) — bounded
  * slice.  `mode` is the source eaxl (RG6 word: AI-stop selector /
@@ -153,7 +153,7 @@ typedef struct {
  * globals the bound ATTACK_CREATURE slice needs; `map_width`/
  * `map_height` stand in for mapdat.map_width/map_height.  Returns 1
  * when the sweep ran to a source return; 0 fail-closed. */
-int dm2_v1_activate_creature_killer(
+int dm2_v1_activate_creature_killer_walk(
     DM2_V1_RecordPoolSet *pool_set,
     const DM2_V1_DungeonData *dungeon,
     DM2_V1_CaiiArray *caii,
@@ -167,7 +167,7 @@ int dm2_v1_activate_creature_killer(
     int center_x, int center_y,
     int action, int attack_flag,
     int target_x, int target_y,
-    DM2_V1_CreatureKillerReceipt *receipt);
+    DM2_V1_CreatureKillerWalkReceipt *receipt);
 
 const char *dm2_v1_tile_record_walk_source_evidence(void);
 

@@ -98,7 +98,7 @@ static void test_activate_tick_generator(void)
     act_rec[2] = (uint8_t)(aw2 & 0xFF);
     act_rec[3] = (uint8_t)(aw2 >> 8);
     DM2_V1_ActivateTickGenCallbacks cb = { 100, 0, mock_queue_tick };
-    int r = dm2_v1_activate_tick_generator(act_rec, 0x10, &cb, NULL);
+    int r = dm2_v1_activate_tick_generator_cb(act_rec, 0x10, &cb, NULL);
     assert(r == 1);
     assert(g_tick_mult == 1);
     assert((act_rec[4] & 0x01) == 1);

@@ -974,6 +974,19 @@ static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
     state->dm2State.leader_hand_object = receipt.leader_hand_object;
 }
 
+static void m11_dm2_cdda_play(void *ctx, const uint8_t *pcm, size_t size,
+                              int loop)
+{
+    M11_GameViewState *s = (M11_GameViewState *)ctx;
+    M11_Audio_PlayCdda(&s->audioState, pcm, size, loop);
+}
+
+static void m11_dm2_cdda_stop(void *ctx)
+{
+    M11_GameViewState *s = (M11_GameViewState *)ctx;
+    M11_Audio_StopCdda(&s->audioState);
+}
+
 static void m11_dm2_bind_verified_sound_playback(void)
 {
     static DM2_V1_SoundPlaybackBackend backend;
@@ -16626,6 +16639,8 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             return 0;
         }
         m11_dm2_bind_verified_sound_playback();
+        dm2_v1_runtime_set_cdda_callback(
+            m11_dm2_cdda_play, m11_dm2_cdda_stop, state);
         if (spec->savePath && spec->savePath[0] != '\0') {
             if (!m11_dm2_resume_from_save_path(state, &launch, spec->savePath)) {
                 m11_log_event(state, M11_COLOR_RED,

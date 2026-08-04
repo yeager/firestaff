@@ -1,6 +1,9 @@
 #ifndef FIRESTAFF_AUDIO_SDL_M11_H
 #define FIRESTAFF_AUDIO_SDL_M11_H
 
+#include <stddef.h>
+#include <stdint.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -60,6 +63,8 @@ typedef struct {
     int titleMusicPlayRequestCount;
     int titleMusicEnabled;
     void* sdlStream;
+    void* cddaStream;
+    int   cddaPlaying;
     M11_SoundBuffer sounds[M11_AUDIO_MARKER_COUNT];
     M11_SoundBuffer originalSounds[M11_AUDIO_ORIGINAL_SOUND_COUNT];
     M11_SoundBuffer titleMusic;
@@ -161,6 +166,13 @@ int M11_Audio_PlayTitleMusic(M11_AudioState* state);
 int M11_Audio_OriginalSnd3Available(const M11_AudioState* state);
 int M11_Audio_OriginalSongAvailable(const M11_AudioState* state);
 int M11_Audio_SoundPackAvailable(const M11_AudioState* state);
+
+/* CDDA playback for FM Towns: push raw 16-bit signed LE stereo 44100Hz PCM
+ * to the dedicated CDDA audio stream. Returns 1 on success, 0 if unavailable. */
+int M11_Audio_PlayCdda(M11_AudioState* state,
+                       const uint8_t *pcm_data, size_t pcm_size,
+                       int loop);
+int M11_Audio_StopCdda(M11_AudioState* state);
 
 /* Nexus SAL SFX: mix any active Nexus voices into the SDL3 audio stream.
  * Call once per frame from the Nexus game loop.

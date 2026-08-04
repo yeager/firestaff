@@ -24,6 +24,7 @@
  */
 
 #include <stdint.h>
+#include "dm2_v1_record_pool_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -55,11 +56,19 @@ typedef enum {
     DM2_XACT_WAKE              = 88
 } DM2_V1_XactType;
 
+/* Callback: query AI spec flags for a creature handle.
+ * Returns the flags word (bit 0 = rotate possessions). */
+typedef uint16_t (*DM2_V1_QueryCreatureAiSpecFlagsFn)(void *ctx,
+                                                       uint16_t creature_handle);
+
 /* ROTATE_CREATURE request */
 typedef struct {
     int16_t creature_handle;
     int16_t new_direction;
     int rotate_relative;
+    DM2_V1_RecordPoolSet *pool_set;
+    DM2_V1_QueryCreatureAiSpecFlagsFn query_ai_spec_flags;
+    void *ai_spec_ctx;
 } DM2_V1_RotateCreatureRequest;
 
 /* ROTATE_CREATURE receipt */

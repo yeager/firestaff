@@ -1,5 +1,6 @@
 #include "dm2_v1_skproject_core.h"
 
+#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_find_ladder_around.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
@@ -13650,6 +13651,202 @@ int dm2_v1_skproject_query_0cee_1a46(
     receipt.valid = 1;
     if (out_receipt) *out_receipt = receipt;
     return 1;
+}
+
+/* skproject _0cee_1a46 extended: actuator ornate animation path.
+   Walks thing list for text (type 2) and actuator (type 3) records.
+   For actuators, resolves GraphicNumber via wall decoration table
+   and computes animation frame via QUERY_ORNATE_ANIM_FRAME. */
+int dm2_v1_skproject_query_0cee_1a46_ext(
+    const struct DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int16_t view_dir,
+    int16_t side_index,
+    uint32_t game_tick,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    const void *asset_loader_ptr,
+    int16_t *out_wall_gfx_index,
+    int16_t *out_wall_gfx_field,
+    DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt)
+{
+    const DM2_V1_AssetLoader *asset_loader =
+        (const DM2_V1_AssetLoader *)asset_loader_ptr;
+    DM2_V1_SkprojectQuery0cee1a46Receipt receipt;
+    int16_t wall_gfx_index = -1;
+    int16_t wall_gfx_field = -1;
+    int ok;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.first_thing = first_thing;
+    receipt.view_dir = view_dir;
+    receipt.side_index = (int16_t)side_index;
+
+    if (!out_wall_gfx_index || !out_wall_gfx_field) {
+        receipt.blocked_missing_output = 1;
+        if (out_wall_gfx_index) *out_wall_gfx_index = -1;
+        if (out_wall_gfx_field) *out_wall_gfx_field = -1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    *out_wall_gfx_index = -1;
+    *out_wall_gfx_field = -1;
+
+    if (!d) {
+        receipt.blocked_missing_dungeon = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    {
+        int text_idx = -1, text_field = -1;
+        ok = dm2_v1_dungeon_find_text_wall_gfx(
+            d, first_thing, view_dir, side_index, 32,
+            &text_idx, &text_field);
+        wall_gfx_index = (int16_t)text_idx;
+        wall_gfx_field = (int16_t)text_field;
+    }
+    if (ok != 0) {
+        receipt.found_static_text = 1u;
+        receipt.wall_gfx_index = (uint16_t)wall_gfx_index;
+        receipt.wall_gfx_field = (uint16_t)wall_gfx_field;
+        *out_wall_gfx_index = wall_gfx_index;
+        *out_wall_gfx_field = wall_gfx_field;
+        receipt.valid = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 1;
+    }
+
+    /* Actuator (type 3) ornate animation path — skproject _0cee_1a46:505-651 */
+    if (!wall_gfx_list || wall_gfx_count <= 0) {
+        receipt.blocked_actuator_animation_path = 1;
+        receipt.blocked_no_wall_gfx = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    {
+        uint16_t thing = first_thing;
+        int max_steps = 32;
+        for (int step = 0; step < max_steps; ++step) {
+            int type = -1;
+            int size = 0;
+            const uint8_t *record;
+            int object_dir, relative_side;
+            int next;
+
+            if (thing == DM2_THING_END_MARKER) break;
+            record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
+            if (!record || size < 2) break;
+            if (type > 3) break;
+
+            if (type == 3 && size >= 8) {
+                uint16_t w2 = (uint16_t)(record[2] | (record[3] << 8));
+                uint16_t w4 = (uint16_t)(record[4] | (record[5] << 8));
+                uint16_t graphic_number = (w4 >> 12) & 0x0fu;
+                uint16_t actuator_type = w2 & 0x7fu;
+                uint16_t active_status = w4 & 0x01u;
+                uint16_t once_only = (w4 >> 2) & 0x01u;
+                uint16_t actuator_data = w2 >> 7;
+
+                object_dir = (int)((thing >> 14) & 3u);
+                relative_side = ((object_dir - (view_dir & 3)) & 3);
+
+                if (relative_side == side_index && graphic_number > 0) {
+                    uint8_t decoration;
+                    int si = 0, di = 0;
+                    uint32_t bp0c = game_tick;
+                    uint32_t bp10 = 0;
+
+                    if ((int)graphic_number > wall_gfx_count) goto next_thing;
+                    decoration = wall_gfx_list[graphic_number - 1];
+                    if (decoration == 0xffu) goto next_thing;
+
+                    receipt.found_actuator = 1;
+                    receipt.actuator_type = (uint8_t)actuator_type;
+
+                    switch (actuator_type) {
+                    case 0x3f: /* shop panel */
+                        break;
+                    case 0x7f: /* champion mirror */
+                        if (active_status == 0) si = 1;
+                        break;
+                    case 0x7e: /* resuscitation */
+                        if (once_only != 0) si = 1;
+                        break;
+                    case 0x17: /* 2-state wall switch */
+                        di = (int)once_only;
+                        if (di != 0) si = 1;
+                        break;
+                    case 0x18: /* push button wall switch */
+                        di = (int)(active_status ^ once_only);
+                        break;
+                    case 0x1a: /* key hole */
+                        di = (int)once_only;
+                        if (di != 0) si = 1;
+                        break;
+                    case 0x1b:
+                        di = (int)active_status;
+                        if (once_only == (uint16_t)di) si = 1;
+                        break;
+                    case 0x32: /* ornate animator 2 */
+                        if (active_status != 0) {
+                            bp0c = actuator_data;
+                            si = 1;
+                        }
+                        break;
+                    case 0x2c: /* continuous ornate animator */
+                        if (active_status != 0) {
+                            bp10 = actuator_data & 0xffu;
+                            si = 1;
+                        }
+                        break;
+                    case 0x41: /* ornate step animator */
+                        di = (int)actuator_data;
+                        break;
+                    case 0x46: /* sealable push button */
+                        di = (int)active_status;
+                        break;
+                    }
+
+                    if (si != 0 && asset_loader) {
+                        DM2_V1_QueryOrnateAnimFrameReceipt anim_receipt;
+                        if (dm2_v1_query_ornate_anim_frame_receipt(
+                                asset_loader, 0x09, (int)decoration,
+                                bp0c, bp10, &anim_receipt) &&
+                            anim_receipt.accepted) {
+                            di = (int)anim_receipt.frame;
+                        }
+                        receipt.actuator_needs_anim = 1;
+                    } else if (si != 0) {
+                        receipt.blocked_actuator_animation_path = 1;
+                        if (out_receipt) *out_receipt = receipt;
+                        return 0;
+                    }
+
+                    wall_gfx_index = (int16_t)decoration;
+                    wall_gfx_field = (int16_t)di;
+                    receipt.wall_gfx_index = (uint16_t)decoration;
+                    receipt.wall_gfx_field = (uint16_t)di;
+                    *out_wall_gfx_index = wall_gfx_index;
+                    *out_wall_gfx_field = wall_gfx_field;
+                    receipt.valid = 1;
+                    if (out_receipt) *out_receipt = receipt;
+                    return 1;
+                }
+            }
+
+next_thing:
+            next = dm2_v1_dungeon_get_next_thing(d, thing);
+            if (next < 0 || next == (int)thing) break;
+            thing = (uint16_t)next;
+        }
+    }
+
+    receipt.blocked_no_wall_gfx = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
 }
 
 /* SKULLWIN/c_querydb.cpp:3735 DM2_query_48ae_011a. */

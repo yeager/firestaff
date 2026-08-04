@@ -5425,6 +5425,9 @@ typedef struct {
     uint16_t wall_gfx_index;
     uint16_t wall_gfx_field;
     uint8_t found_static_text;
+    uint8_t found_actuator;
+    uint8_t actuator_type;
+    uint8_t actuator_needs_anim;
 } DM2_V1_SkprojectQuery0cee1a46Receipt;
 
 int dm2_v1_skproject_query_0cee_1a46(
@@ -5432,6 +5435,19 @@ int dm2_v1_skproject_query_0cee_1a46(
     uint16_t first_thing,
     int16_t view_dir,
     int16_t side_index,
+    int16_t *out_wall_gfx_index,
+    int16_t *out_wall_gfx_field,
+    DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt);
+
+int dm2_v1_skproject_query_0cee_1a46_ext(
+    const struct DM2_V1_DungeonData *d,
+    uint16_t first_thing,
+    int16_t view_dir,
+    int16_t side_index,
+    uint32_t game_tick,
+    const uint8_t *wall_gfx_list,
+    int wall_gfx_count,
+    const void *asset_loader,
     int16_t *out_wall_gfx_index,
     int16_t *out_wall_gfx_field,
     DM2_V1_SkprojectQuery0cee1a46Receipt *out_receipt);

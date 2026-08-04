@@ -107,7 +107,7 @@ static void test_bring_champion_to_life(void)
     DM2_V1_ResurrectCallbacks cb = {
         4, mock_get_hero, mock_get_player_at, 0, mock_post
     };
-    dm2_v1_bring_champion_to_life(0, &cb, NULL);
+    dm2_v1_hero_bring_to_life(0, &cb, NULL);
     assert(g_heroes[0].cur_hp > 0);
     assert(g_heroes[0].max_hp < 100);
     assert(g_heroes[0].max_hp >= 25);

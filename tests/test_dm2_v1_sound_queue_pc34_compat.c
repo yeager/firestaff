@@ -342,5 +342,6 @@ int main(void)
     assert(!pr.valid);
 
     assert(dm2_v1_sound_queue_source_evidence() != 0);
+
     return 0;
 }

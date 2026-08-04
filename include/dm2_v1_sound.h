@@ -489,6 +489,23 @@ int  dm2_v1_sound_inspect_music_data(const uint8_t *data, size_t size,
                                      DM2_V1_MusicStreamReceipt *out_receipt);
 int  dm2_v1_sound_queue_music(int track, int loop,
                               DM2_V1_MusicQueueReceipt *out_receipt);
+/* Queue CDDA music: raw 16-bit signed LE stereo 44100Hz PCM.
+ * The queue takes ownership (copies the data); caller may free after. */
+int  dm2_v1_sound_queue_cdda(const uint8_t *pcm_data, size_t pcm_size,
+                              int disc_track, int loop,
+                              DM2_V1_MusicQueueReceipt *out_receipt);
+
+typedef struct {
+    int valid;
+    int disc_track;
+    const uint8_t *pcm_data;
+    size_t pcm_size;
+    int loop;
+} DM2_V1_CddaFlushReceipt;
+
+int  dm2_v1_sound_flush_cdda(DM2_V1_CddaFlushReceipt *out_receipt);
+void dm2_v1_sound_release_cdda(void);
+
 int  dm2_v1_sound_schedule_music(uint32_t elapsed_us,
                                   DM2_V1_MusicScheduleReceipt *out_receipt);
 int  dm2_v1_sound_play_music(int track);

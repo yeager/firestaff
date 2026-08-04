@@ -1,6 +1,7 @@
 #include "dm2_v1_sound.h"
 
 #include <assert.h>
+#include <string.h>
 
 #if !defined(__STDC_VERSION__) || __STDC_VERSION__ < 201112L
 #error "This test requires C11 or later."
@@ -229,5 +230,38 @@ int main(void)
     assert(dm2_v1_skproject_sound6_sndptr6_allocation(0u, &receipt) == 1);
     assert(!receipt.allocation_requested);
     assert(receipt.allocation_size == 0u);
+
+    /* ── CDDA queue (FM Towns raw PCM) ──────────────────────────────── */
+    {
+        DM2_V1_MusicQueueReceipt mq;
+        /* 44100Hz stereo 16-bit: 1 second = 176400 bytes */
+        static uint8_t fake_pcm[176400];
+        memset(fake_pcm, 0, sizeof(fake_pcm));
+
+        assert(dm2_v1_sound_queue_cdda(NULL, 0, 2, 0, &mq) < 0);
+        assert(dm2_v1_sound_queue_cdda(fake_pcm, 5, 2, 0, &mq) < 0);
+        assert(dm2_v1_sound_queue_cdda(fake_pcm, sizeof(fake_pcm),
+                                       3, 1, &mq) == DM2_V1_MUSIC_QUEUE_READY);
+        assert(mq.asset_resolved == 1);
+        assert(mq.request_queued == 1);
+        assert(mq.decoder_proven == 1);
+        assert(mq.backend_proven == 1);
+        assert(mq.loop_duration_us >= 999000u && mq.loop_duration_us <= 1001000u);
+
+        /* Flush: should return the queued data */
+        {
+            DM2_V1_CddaFlushReceipt flush;
+            assert(dm2_v1_sound_flush_cdda(&flush) == 1);
+            assert(flush.valid == 1);
+            assert(flush.disc_track == 3);
+            assert(flush.pcm_size == sizeof(fake_pcm));
+            assert(flush.loop == 1);
+            assert(flush.pcm_data != NULL);
+            /* Second flush: nothing queued */
+            assert(dm2_v1_sound_flush_cdda(&flush) == 0);
+        }
+        dm2_v1_sound_release_cdda();
+    }
+
     return 0;
 }

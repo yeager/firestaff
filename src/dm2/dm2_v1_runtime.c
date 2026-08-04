@@ -34,6 +34,7 @@
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_spell_timer_handlers_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
+#include "dm2_v1_creature_schedule_pc34_compat.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_sound.h"
@@ -42,7 +43,15 @@
 #include "dm2_v1_world_model.h"
 #include "dm2_v1_i18n.h"
 #include "dm2_v1_champion_lifecycle_pc34_compat.h"
+#include "dm2_v1_move_record_to_pc34_compat.h"
+#include "dm2_v1_record_ops_pc34_compat.h"
 #include "dm2_v1_save_load.h"
+#include "dm2_v1_sound_queue_pc34_compat.h"
+#include "dm2_v1_timer_ops_pc34_compat.h"
+#include "dm2_v1_engage_command_pc34_compat.h"
+#include "dm2_v1_light_ops_pc34_compat.h"
+#include "dm2_v1_creature_ops_pc34_compat.h"
+#include "dm2_v1_ccm_loop_pc34_compat.h"
 #include "fs_portable_compat.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -263,6 +272,15 @@ typedef struct {
     int spell_timer_ctx_ready;
     DM2_V1_I18nContext i18n;
     int i18n_ready;
+    /* DM2-008: source-ordered sound queue (c_sfx.cpp, c_sound.cpp).
+     * QUEUE_NOISE_GEN1/GEN2 push entries; DM2_PLAY_SOUND drains them. */
+    DM2_V1_SoundQueueState sound_queue;
+    DM2_V1_SoundQueueEnv sound_env;
+    int sound_queue_ready;
+    /* CDDA playback callback — set by M11 host to push PCM to SDL3 */
+    void (*cdda_play_cb)(void *ctx, const uint8_t *pcm, size_t size, int loop);
+    void (*cdda_stop_cb)(void *ctx);
+    void *cdda_cb_ctx;
 } DM2_V1_RuntimeState;
 
 static DM2_V1_RuntimeState g_dm2_runtime;
@@ -1488,8 +1506,24 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
     receipt.valid = 1;
     receipt.selected_track = track;
     memset(&queue, 0, sizeof(queue));
-    receipt.queue_result = dm2_v1_sound_queue_music(track, 1, &queue);
-    receipt.source_stream_resolved = queue.asset_resolved ? 1 : 0;
+
+    if (dm2_v1_platform_music_system(rt->boot->platform) ==
+        DM2_MUSIC_SYSTEM_CDDA_COORD) {
+        uint8_t *pcm = NULL;
+        size_t pcm_size;
+        if (rt->cdda_stop_cb)
+            rt->cdda_stop_cb(rt->cdda_cb_ctx);
+        pcm_size = dm2_v1_boot_load_cdda_track(rt->boot, track, &pcm);
+        if (pcm && pcm_size > 0) {
+            receipt.queue_result = dm2_v1_sound_queue_cdda(
+                pcm, pcm_size, track, 1, &queue);
+            receipt.source_stream_resolved = queue.asset_resolved ? 1 : 0;
+            free(pcm);
+        }
+    } else {
+        receipt.queue_result = dm2_v1_sound_queue_music(track, 1, &queue);
+        receipt.source_stream_resolved = queue.asset_resolved ? 1 : 0;
+    }
     /* A queue result establishes neither scheduling nor audible output. */
     receipt.playback_started = 0;
     rt->music_map_receipt = receipt;
@@ -2266,6 +2300,21 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
         field_runtime.user = &g_dm2_runtime;
         dm2_v1_creature_set_field_runtime(&field_runtime);
     }
+    /* Bind the GDAT loader to the sound subsystem so QUEUE_NOISE_GEN1/GEN2
+     * can resolve sample bindings from the asset database. */
+    {
+        const DM2_V1_AssetLoader *snd_loader =
+            dm2_v1_boot_asset_loader(boot_profile);
+        dm2_v1_sound_bind_gdat_loader(snd_loader, snd_loader ? 1 : 0);
+    }
+    /* Initialize sound queue for QUEUE_NOISE_GEN1/GEN2 runtime routing. */
+    dm2_v1_sound_queue_state_init(&g_dm2_runtime.sound_queue,
+                                  DM2_V1_SOUND_SSOUND_QUEUE_CAP);
+    memset(&g_dm2_runtime.sound_env, 0, sizeof(g_dm2_runtime.sound_env));
+    g_dm2_runtime.sound_env.current_map = (int16_t)g_dm2_runtime.dungeon_level;
+    g_dm2_runtime.sound_env.gate_map_a = -1;
+    g_dm2_runtime.sound_env.gate_map_b = -1;
+    g_dm2_runtime.sound_queue_ready = 1;
     /* i18n: when running FM Towns, load English text overlay from PC GDAT */
     dm2_v1_i18n_init(&g_dm2_runtime.i18n);
     if (boot_profile->platform == DM2_PLATFORM_FMTOWNS_JA) {
@@ -4022,6 +4071,98 @@ static int dm2_runtime_delete_creature_full(
     }
 }
 
+/*
+ * dm2_runtime_think_body — creature AI body with CCM loop invocation.
+ * Source: c_ai.cpp:5649-5999 DM2_THINK_CREATURE.
+ *
+ * When the asset loader and CAII are available, invokes the CCM message
+ * loop (DM2_13e4_0982) which runs the creature's AI behavior script.
+ * The CCM loop handles animation, movement commands, and timer re-queue.
+ * When the CCM loop is not available or fails closed, falls back to
+ * simple timer re-queue so creatures stay active.
+ */
+static int dm2_runtime_think_body(
+    void *context,
+    int16_t creature_record,
+    const DM2_V1_SourceTimer *timer,
+    int map, int x, int y, int think_type)
+{
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
+    DM2_V1_CreatureScheduleReceipt sched_receipt;
+    const DM2_V1_AssetLoader *loader;
+
+    if (!rt || !timer) return 0;
+    (void)think_type;
+
+    loader = rt->boot ? dm2_v1_boot_asset_loader(rt->boot) : NULL;
+
+    /* Try the CCM message loop when all prerequisites are available. */
+    if (loader && rt->caii_ready && rt->record_pools_valid) {
+        DM2_V1_CcmLoopReceipt ccm_receipt;
+        DM2_V1_SourceTimer timer_copy = *timer;
+        int16_t adj[2] = {0, 0};
+        const uint8_t *anim_row = NULL;
+        int v1e0584 = -1;
+        uint8_t *rec;
+        uint8_t *slot;
+
+        rec = dm2_v1_record_pool_address_mut(&rt->record_pools,
+                                              creature_record);
+        if (rec && rec[5] != 0xffu &&
+            (int)rec[5] < rt->caii.capacity) {
+            slot = rt->caii.slots +
+                   (size_t)rec[5] * DM2_V1_CAII_SLOT_SIZE;
+            /* Extract adj pair from CAII slot at offset 0x0e-0x11 */
+            adj[0] = (int16_t)((uint16_t)slot[0x0e] |
+                               ((uint16_t)slot[0x0f] << 8));
+            adj[1] = (int16_t)((uint16_t)slot[0x10] |
+                               ((uint16_t)slot[0x11] << 8));
+
+            memset(&ccm_receipt, 0, sizeof(ccm_receipt));
+            if (dm2_v1_ccm_message_loop(
+                    &rt->record_pools,
+                    &rt->caii,
+                    &rt->timer_queue,
+                    loader,
+                    &rt->drop_rng,
+                    creature_record,
+                    &timer_copy,
+                    0,
+                    adj,
+                    &anim_row,
+                    &v1e0584,
+                    0,
+                    (int16_t)map,
+                    0,
+                    rt->dungeon_level,
+                    rt->dungeon_level,
+                    (int32_t)rt->view_dir,
+                    (unsigned long)rt->tick_count,
+                    NULL, NULL, NULL, NULL, NULL, NULL,
+                    &ccm_receipt) == 1 && ccm_receipt.valid) {
+                /* CCM loop handled the creature — it re-queued the
+                 * timer internally via ccm_requeue_tail. Write back
+                 * the updated adj pair to the CAII slot. */
+                slot[0x0e] = (uint8_t)(adj[0] & 0xff);
+                slot[0x0f] = (uint8_t)((uint16_t)adj[0] >> 8);
+                slot[0x10] = (uint8_t)(adj[1] & 0xff);
+                slot[0x11] = (uint8_t)((uint16_t)adj[1] >> 8);
+                return 1;
+            }
+        }
+    }
+
+    /* Fallback: simple re-queue to keep creature active. */
+    dm2_v1_creature_schedule_at(
+        &rt->record_pools,
+        rt->boot ? (const DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL,
+        &rt->timer_queue,
+        map, (unsigned long)rt->tick_count,
+        x, y, &sched_receipt);
+
+    return sched_receipt.valid ? 1 : 0;
+}
+
 static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
     const DM2_V1_DungeonData *dungeon;
 
@@ -4056,6 +4197,8 @@ static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
     dm2_v1_drops_rng_init(&rt->drop_rng);
     dm2_v1_caii_set_delete_creature_full_fn(
         dm2_runtime_delete_creature_full, rt);
+    rt->think_binding.think_body = dm2_runtime_think_body;
+    rt->think_binding.think_body_context = rt;
     rt->think_binding_ready = 1;
 }
 
@@ -4756,27 +4899,125 @@ static int dm2_runtime_resurrection_timer(void *user,
 
 /*
  * dm2_runtime_process_0e_timer — 0x0E timer handler.
- * Source: c_tim_proc.cpp:4106 DM2_PROCESS_TIMER_0E(timer, 0xFFFFFFFE).
- * Fail-closed: requires global effect state ownership.
+ * Source: skevent.cpp:27-49 PROCESS_TIMER_0E.
+ * Temporarily morphs an item's type, processes bonus, then restores.
+ * Timer fields: value_a bits 0-9 = record DB type,
+ *               value_b = new type (Value2),
+ *               actor = hero index.
+ * Caller bonus_value = 0xFFFFFFFE (-2).
  */
+static uint8_t *dm2_0e_get_record(void *ctx, uint16_t rw) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    return dm2_v1_record_pool_address_mut(&rt->record_pools, (int16_t)rw);
+}
+static void *dm2_0e_alloc(void *ctx, int32_t size) {
+    (void)ctx;
+    return malloc((size_t)size);
+}
+static void dm2_0e_dealloc(void *ctx, void *ptr, int32_t size) {
+    (void)ctx; (void)size;
+    free(ptr);
+}
+static void dm2_0e_set_itemtype(void *ctx, uint16_t record, uint16_t new_type) {
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)ctx;
+    dm2_v1_record_pool_set_itemtype(&rt->record_pools, record, new_type);
+}
+static void dm2_0e_process_item_bonus(void *ctx, uint8_t actor,
+                                       uint16_t record, int mode,
+                                       uint16_t value) {
+    (void)ctx; (void)actor; (void)record; (void)mode; (void)value;
+    /* PROCESS_ITEM_BONUS requires the full champion stat system.
+     * Fail-closed: the item type is still morphed and restored
+     * correctly; only the bonus application is skipped. */
+}
+static void dm2_0e_copy_memory(void *dst, const void *src, int32_t size) {
+    if (size > 0) memcpy(dst, src, (size_t)size);
+}
+static int32_t dm2_0e_get_item_size(uint16_t db_type) {
+    return (int32_t)dm2_v1_record_pool_record_size((int)db_type);
+}
+
 static int dm2_runtime_process_0e_timer(void *user,
                                         const DM2_V1_SourceTimer *timer,
                                         uint16_t source_index,
                                         DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_Timer0ECallbacks cb;
+
+    (void)source_index; (void)receipt;
+
+    if (!rt || !rt->record_pools_valid)
+        return 1;
+
+    cb.get_record_address = dm2_0e_get_record;
+    cb.alloc_memory = dm2_0e_alloc;
+    cb.dealloc_memory = dm2_0e_dealloc;
+    cb.set_itemtype = dm2_0e_set_itemtype;
+    cb.process_item_bonus = dm2_0e_process_item_bonus;
+    cb.copy_memory = dm2_0e_copy_memory;
+    cb.get_item_size = dm2_0e_get_item_size;
+
+    dm2_v1_process_timer_0e(
+        (uint16_t)(timer->value_a & 0x3FF),
+        (uint16_t)timer->value_b,
+        timer->actor,
+        0xFFFEu,
+        &cb, rt);
+
     return 1;
 }
 
 /*
  * dm2_runtime_process_sound_timer — 0x15 timer handler.
- * Source: c_tim_proc.cpp:4065 DM2_PROCESS_SOUND(timer.getA()).
- * Fail-closed: requires audio subsystem binding.
+ * Source: skevent.cpp:2590 / c_sfx.cpp:303 DM2_PROCESS_SOUND(timer.getA()).
+ * Reads s_sizee delayed slot, if map matches then QUEUE_NOISE_GEN1,
+ * clears the slot.
  */
 static int dm2_runtime_process_sound_timer(void *user,
                                            const DM2_V1_SourceTimer *timer,
                                            uint16_t source_index,
                                            DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    uint16_t slot_index;
+    DM2_V1_SoundDelayedSlot *slot;
+
+    (void)source_index; (void)receipt;
+
+    if (!rt || !rt->sound_queue_ready)
+        return 1;
+
+    slot_index = (uint16_t)(timer->value_a & 0xFFFF);
+    if (slot_index >= DM2_V1_SOUND_DELAYED_SLOT_COUNT)
+        return 1;
+
+    slot = &rt->sound_queue.delayed[slot_index];
+    if (slot->l_00 == 0)
+        return 1;
+
+    /* c_sfx.cpp:303-327: if slot map matches current or gate maps,
+     * call QUEUE_NOISE_GEN1 with the stored parameters. */
+    {
+        int8_t cls1 = (int8_t)slot->barr_04[0];
+        int8_t cls2 = (int8_t)slot->barr_04[1];
+        int8_t cls3 = (int8_t)slot->barr_04[2];
+        int8_t slot_map = (int8_t)slot->barr_04[3];
+        int16_t sx = (int16_t)slot->barr_04[4];
+        int16_t sy = (int16_t)slot->barr_04[5];
+
+        if (slot_map == rt->sound_env.current_map ||
+            slot_map == rt->sound_env.gate_map_a ||
+            slot_map == rt->sound_env.gate_map_b) {
+            DM2_V1_SoundQueueReceipt snd_rc;
+            dm2_v1_sound_queue_noise_gen1(
+                &rt->sound_queue,
+                cls1, cls2, cls3,
+                slot->w_0a, slot->w_0c,
+                sx, sy, 1,
+                &rt->sound_env, &snd_rc);
+        }
+    }
+
+    slot->l_00 = 0;
     return 1;
 }
 
@@ -4803,14 +5044,39 @@ static int dm2_runtime_spell_timer_delegate(void *user,
 
 /*
  * dm2_runtime_process_3d_timer — 0x3C/0x3D timer handler.
- * Source: c_tim_proc.cpp:4094 DM2_PROCESS_TIMER_3D(timer).
- * Fail-closed: requires CAII/record ownership chain.
+ * Source: skevent.cpp:2570 PROCESS_TIMER_3D.
+ * Moves a record from "nowhere" (-3,0) to the timer's (x,y) coordinates.
+ * Timer fields: value_a = XcoordB|YcoordB, value_b = record handle (id8).
+ * If type==0x3C and move succeeds, queues teleport noise (not yet wired).
  */
 static int dm2_runtime_process_3d_timer(void *user,
                                         const DM2_V1_SourceTimer *timer,
                                         uint16_t source_index,
                                         DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    DM2_V1_MoveRecordToReceipt move_rc;
+    int16_t dest_x, dest_y, record_handle;
+    int move_ok;
+
+    (void)source_index; (void)receipt;
+    rt->actuator_tile_timers++;
+
+    if (!rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data)
+        return 1;
+
+    dest_x = (int16_t)(timer->value_a & 0xFF);
+    dest_y = (int16_t)((timer->value_a >> 8) & 0xFF);
+    record_handle = timer->value_b;
+
+    move_ok = dm2_v1_move_record_to(
+        &rt->record_pools,
+        (DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        &rt->timer_queue,
+        record_handle, -3, 0, dest_x, dest_y, 0,
+        rt->dungeon_level, (uint32_t)rt->tick_count,
+        &move_rc);
+
+    (void)move_ok;
     return 1;
 }
 
@@ -4819,28 +5085,142 @@ static int dm2_runtime_process_3d_timer(void *user,
 
 /*
  * dm2_runtime_ornate_noise_timer — 0x5A timer handler.
- * Source: c_tim_proc.cpp:4216 DM2_CONTINUE_ORNATE_NOISE(timer).
- * Fail-closed: requires audio + ornate record ownership.
+ * Source: skevent.cpp:2818 / c_tim_proc.cpp:4216 DM2_CONTINUE_ORNATE_NOISE.
+ * Reads actuator record, checks ActiveStatus, resolves wall/floor decoration,
+ * requeues timer with anim_len delay, and queues activation sound.
  */
 static int dm2_runtime_ornate_noise_timer(void *user,
                                           const DM2_V1_SourceTimer *timer,
                                           uint16_t source_index,
                                           DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    uint8_t *rec;
+    uint16_t w4, graphic_number, active_status;
+    uint8_t tile_x, tile_y;
+    int tile_raw, is_wall;
+    uint8_t category, decoration;
+    const uint8_t *gfx_list;
+    int gfx_count;
+    int timer_map;
+
+    (void)source_index; (void)receipt;
+
+    if (!rt || !rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data)
+        return 1;
+
+    rec = dm2_v1_record_pool_address_mut(&rt->record_pools,
+                                          timer->value_b);
+    if (!rec)
+        return 1;
+
+    w4 = (uint16_t)(rec[4] | (rec[5] << 8));
+    active_status = w4 & 0x01u;
+    timer_map = (int)((timer->ticks_and_map >> 24) & 0xFFu);
+
+    if (active_status == 0 || timer_map != rt->dungeon_level)
+        return 1;
+
+    tile_x = (uint8_t)(timer->value_a & 0xFF);
+    tile_y = (uint8_t)((timer->value_a >> 8) & 0xFF);
+
+    tile_raw = dm2_v1_dungeon_get_tile_raw(
+        (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
+        rt->dungeon_level, tile_x, tile_y);
+    if (tile_raw < 0)
+        return 1;
+
+    is_wall = ((tile_raw >> 5) & 7) == 0 ? 1 : 0;
+    graphic_number = (w4 >> 12) & 0x0Fu;
+    if (graphic_number == 0)
+        return 1;
+
+    if (is_wall) {
+        category = 0x09;
+        gfx_list = rt->map_wall_gfx_list;
+        gfx_count = rt->map_wall_gfx_count;
+    } else {
+        category = 0x0A;
+        gfx_list = rt->map_floor_gfx_list;
+        gfx_count = rt->map_floor_gfx_count;
+    }
+
+    if ((int)graphic_number > gfx_count)
+        return 1;
+    decoration = gfx_list[graphic_number - 1];
+    if (decoration == 0xFFu)
+        return 1;
+
+    /* Requeue timer: tick += GET_ORNATE_ANIM_LEN */
+    {
+        const DM2_V1_AssetLoader *loader =
+            dm2_v1_boot_asset_loader(rt->boot);
+        if (loader) {
+            DM2_V1_GetOrnateAnimLenReceipt anim_rc;
+            if (dm2_v1_get_ornate_anim_len_receipt(
+                    loader, (int)category, (int)decoration, 0, &anim_rc) &&
+                anim_rc.accepted && anim_rc.length > 0) {
+                DM2_V1_SourceTimer requeue = *timer;
+                requeue.ticks_and_map =
+                    (timer->ticks_and_map & 0xFF000000u) |
+                    ((dm2_v1_source_timer_tick(timer) +
+                      (uint32_t)anim_rc.length) &
+                     DM2_V1_SOURCE_TIMER_TICK_MASK);
+                dm2_v1_runtime_enqueue_source_timer(&requeue, 0);
+            }
+        }
+    }
+
+    /* QUEUE_NOISE_GEN2: activation sound */
+    if (rt->sound_queue_ready) {
+        DM2_V1_SoundQueueReceipt snd_rc;
+        dm2_v1_sound_queue_noise_gen2(
+            &rt->sound_queue,
+            (int8_t)category, (int8_t)decoration, (int8_t)0x88,
+            (int8_t)0xFF, (int16_t)tile_x, (int16_t)tile_y,
+            1, 0x8C, 0x80,
+            &rt->sound_env, &snd_rc);
+    }
+
     return 1;
 }
 
 /*
  * dm2_runtime_move_record_rotate_timer — 0x5D timer handler.
- * Source: c_tim_proc.cpp:4228-4251.
- * Calls DM2_MOVE_RECORD_TO + party.rotate if on current map.
- * Fail-closed: requires record chain + party state ownership.
+ * Source: skevent.cpp:3140-3145.
+ * If timer map == player map: MOVE_RECORD_TO(NULL, playerX, playerY,
+ * targetX, targetY) then ROTATE_SQUAD(direction).
+ * Timer value_a: bits 0-4 = target X, bits 5-9 = target Y, bits 10-11 = dir.
+ * Timer value_b: map index (compared against player map).
  */
 static int dm2_runtime_move_record_rotate_timer(void *user,
                                                 const DM2_V1_SourceTimer *timer,
                                                 uint16_t source_index,
                                                 DM2_V1_ProceedTimersReceipt *receipt) {
-    (void)user; (void)timer; (void)source_index; (void)receipt;
+    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
+    int16_t target_x, target_y, new_dir;
+
+    (void)source_index; (void)receipt;
+
+    if (!rt || !rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data)
+        return 1;
+
+    if ((int)timer->value_b != rt->dungeon_level)
+        return 1;
+
+    target_x = (int16_t)(timer->value_a & 0x1F);
+    target_y = (int16_t)((timer->value_a >> 5) & 0x1F);
+    new_dir = (int16_t)((timer->value_a >> 10) & 0x3);
+
+    /* MOVE_RECORD_TO(OBJECT_NULL, playerX, playerY, targetX, targetY)
+     * is party teleport — this modifies session state (party position).
+     * For now, update party position directly without the full
+     * MOVE_RECORD_TO chain (which handles creature wake/sleep). */
+    if (rt->session_snapshot_valid) {
+        rt->session_snapshot.party_x = (uint16_t)target_x;
+        rt->session_snapshot.party_y = (uint16_t)target_y;
+        rt->session_snapshot.party_dir = (uint8_t)new_dir;
+    }
+
     return 1;
 }
 
@@ -4849,18 +5229,81 @@ static int dm2_runtime_move_record_rotate_timer(void *user,
 
 /*
  * dm2_runtime_ornate_animator_timer — 0x55 timer handler.
- * Source: skevent.cpp ACTIVATE_ORNATE_ANIMATOR queues ttyOrnateAnimator.
- * The handler advances the ornate animation frame on the actuator record.
- * Consumed fail-closed until GDAT ornate-anim-len is bound.
+ * Source: skevent.cpp:2742 CONTINUE_ORNATE_ANIMATOR.
+ * Advances the ornate animation frame on the actuator record via
+ * dm2_v1_continue_ornate_animator, querying GDAT for the animation
+ * length through the asset loader's decoration table lookup.
  */
+
+typedef struct {
+    DM2_V1_RuntimeState *rt;
+    DM2_V1_SourceTimer requeue;
+} DM2_OrnateAnimCtx;
+
+static uint8_t *dm2_ornate_get_record(void *ctx, uint16_t rw) {
+    DM2_OrnateAnimCtx *oc = (DM2_OrnateAnimCtx *)ctx;
+    return dm2_v1_record_pool_address_mut(&oc->rt->record_pools, (int16_t)rw);
+}
+
+static int16_t dm2_ornate_get_anim_len(void *ctx, uint8_t *rec, int mode) {
+    DM2_OrnateAnimCtx *oc = (DM2_OrnateAnimCtx *)ctx;
+    DM2_V1_RuntimeState *rt = oc->rt;
+    const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(rt->boot);
+    uint16_t w4 = (uint16_t)(rec[4] | (rec[5] << 8));
+    int16_t gfx_num = (int16_t)((w4 >> 12) & 0xf);
+    int category;
+    uint8_t decoration;
+    DM2_V1_GetOrnateAnimLenReceipt receipt;
+
+    if (gfx_num == 0) return 1;
+    if (mode == 0) {
+        category = 0x0a;
+        if (gfx_num - 1 >= rt->map_floor_gfx_count) return 1;
+        decoration = rt->map_floor_gfx_list[gfx_num - 1];
+    } else {
+        category = 0x09;
+        if (gfx_num - 1 >= rt->map_wall_gfx_count) return 1;
+        decoration = rt->map_wall_gfx_list[gfx_num - 1];
+    }
+    if (!loader) return 1;
+    if (!dm2_v1_get_ornate_anim_len_receipt(
+            loader, category, (int)decoration, 0, &receipt))
+        return 1;
+    return (int16_t)receipt.length;
+}
+
+static void dm2_ornate_queue_timer(void *ctx) {
+    DM2_OrnateAnimCtx *oc = (DM2_OrnateAnimCtx *)ctx;
+    oc->requeue.ticks_and_map =
+        (oc->requeue.ticks_and_map & ~DM2_V1_SOURCE_TIMER_TICK_MASK) |
+        ((dm2_v1_source_timer_tick(&oc->requeue) + 1) &
+         DM2_V1_SOURCE_TIMER_TICK_MASK);
+    dm2_v1_runtime_enqueue_source_timer(&oc->requeue, 0);
+}
+
 static int dm2_runtime_ornate_animator_timer(void *user,
                                              const DM2_V1_SourceTimer *timer,
                                              uint16_t source_index,
                                              DM2_V1_ProceedTimersReceipt *receipt)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    (void)timer; (void)source_index; (void)receipt;
+    DM2_OrnateAnimCtx oc;
+    DM2_V1_OrnateAnimCallbacks cb;
+
+    (void)source_index; (void)receipt;
     rt->actuator_tile_timers++;
+
+    if (!rt->record_pools_valid) return 1;
+    if (dm2_v1_record_handle_pool(timer->value_a) != DM2_DB_ACTUATOR) return 1;
+
+    oc.rt = rt;
+    oc.requeue = *timer;
+    cb.get_record_address = dm2_ornate_get_record;
+    cb.get_ornate_anim_len = dm2_ornate_get_anim_len;
+    cb.queue_timer = dm2_ornate_queue_timer;
+
+    dm2_v1_continue_ornate_animator(
+        (uint16_t)timer->value_a, (int)timer->value_b, &cb, &oc);
     return 1;
 }
 
@@ -5169,15 +5612,47 @@ static int dm2_runtime_actuate_teleporter(void *user,
 
     current_type = raw & DM2_SQUARE_TYPE_MASK;
 
-    /* Teleporter actuation toggles the teleporter's active state.
-     * The full source (c_tim_proc.cpp:3832) reads the teleporter thing
-     * record to resolve target map/x/y and performs the actual entity
-     * transport.  For now, toggle the teleporter open/closed bit in the
-     * tile raw word (bit 5 in the raw word controls visibility/passability
-     * for teleporters on DM2). */
+    /* c_tim_proc.cpp:3849-3850 — word@4 bits 1-2 == 0x6 means
+     * fall through to floor mecha instead. */
     if (current_type == DM2_SQUARE_TELEPORTER) {
-        uint16_t new_raw = (uint16_t)(raw ^ DM2_SQUARE_WALL_MASK);
-        dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level, x, y, new_raw);
+        int16_t first = dm2_v1_dungeon_get_first_thing(
+            (const DM2_V1_DungeonData *)dungeon, rt->dungeon_level, x, y);
+        if (first != DM2_V1_RECORD_HANDLE_NULL &&
+            first != DM2_V1_RECORD_HANDLE_END && rt->record_pools_valid) {
+            const uint8_t *trec = dm2_v1_record_pool_address(
+                &rt->record_pools, first);
+            if (trec) {
+                uint16_t w4 = (uint16_t)trec[4] | ((uint16_t)trec[5] << 8);
+                if ((w4 & 0x6) == 0x6) {
+                    /* Redirect to floor mecha. */
+                    return dm2_runtime_actuate_floor_mecha(
+                        user, timer, source_index, receipt);
+                }
+            }
+        }
+
+        /* c_tim_proc.cpp:3853-3872 — toggle teleporter open bit (byte bit 3).
+         * yB==2: query current state; result 0 = open, else close.
+         * yB!=2: use yB directly as the action value. */
+        uint8_t yB = (uint8_t)((timer->value_b >> 8) & 0xff);
+        int action;
+        if (yB == 2) {
+            action = (raw & 0x08) ? 1 : 0;
+        } else {
+            action = (int)yB;
+        }
+        if (action == 0) {
+            uint16_t new_raw = (uint16_t)(raw | 0x08);
+            dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level,
+                                         x, y, new_raw);
+        } else {
+            uint16_t new_raw = (uint16_t)(raw & ~0x08);
+            dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level,
+                                         x, y, new_raw);
+        }
+        /* Fall through to floor mecha like the source. */
+        return dm2_runtime_actuate_floor_mecha(
+            user, timer, source_index, receipt);
     }
     return 1;
 }
@@ -5202,7 +5677,7 @@ static int dm2_runtime_actuate_trickwall(void *user,
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
     DM2_V1_DungeonData *dungeon;
-    int x, y, raw, current_type, target_type;
+    int x, y, raw;
     uint16_t new_raw;
 
     (void)source_index;
@@ -5221,17 +5696,67 @@ static int dm2_runtime_actuate_trickwall(void *user,
     raw = dm2_v1_dungeon_get_tile_raw(dungeon, rt->dungeon_level, x, y);
     if (raw < 0) return 1;
 
-    current_type = raw & DM2_SQUARE_TYPE_MASK;
-    if (current_type == DM2_SQUARE_FAKE_WALL)
-        target_type = DM2_SQUARE_FLOOR;
-    else if (current_type == DM2_SQUARE_FLOOR)
-        target_type = DM2_SQUARE_FAKE_WALL;
-    else
-        return 1;
+    /* c_tim_proc.cpp:3896-3904 — yB==2: query tile bit 2 (0x4).
+     * Result 0 = passable (open), 1 = solid (closed). */
+    {
+        uint8_t yB = (uint8_t)((timer->value_b >> 8) & 0xff);
+        int action;
+        if (yB == 2) {
+            action = (raw & 0x04) ? 1 : 0;
+        } else {
+            action = (int)(yB & 0xff);
+        }
 
-    new_raw = (uint16_t)((raw & (uint16_t)~DM2_SQUARE_TYPE_MASK) |
-                         (target_type & DM2_SQUARE_TYPE_MASK));
-    dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level, x, y, new_raw);
+        if (action != 1) {
+            /* c_tim_proc.cpp:3907-3908 — set bit 2 (make solid/wall). */
+            new_raw = (uint16_t)(raw | 0x04);
+            dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level,
+                                         x, y, new_raw);
+        } else {
+            /* c_tim_proc.cpp:3910-3941 — try to open (clear bit 2).
+             * Blocked if party is here or creature with AI flag bit 5
+             * clear is present — re-queue timer. */
+            int blocked = 0;
+
+            if (rt->session_snapshot_valid &&
+                rt->dungeon_level == (int)timer->ticks_and_map >> 24 &&
+                (int)rt->session_snapshot.party_x == x &&
+                (int)rt->session_snapshot.party_y == y) {
+                blocked = 1;
+            }
+
+            if (!blocked && rt->record_pools_valid) {
+                int16_t cr = dm2_v1_get_creature_at(
+                    &rt->record_pools, (const DM2_V1_DungeonData *)dungeon,
+                    rt->dungeon_level, x, y);
+                if (cr != DM2_V1_RECORD_HANDLE_NULL) {
+                    const uint8_t *crec = dm2_v1_record_pool_address(
+                        &rt->record_pools, cr);
+                    if (crec) {
+                        uint16_t flags = 0;
+                        dm2_v1_creature_ai_spec_flags(
+                            (int)crec[4], &flags);
+                        if ((flags & 0x20) == 0)
+                            blocked = 1;
+                    }
+                }
+            }
+
+            if (blocked) {
+                /* Re-queue: increment data (retry counter) and re-enqueue. */
+                DM2_V1_SourceTimer requeue;
+                requeue = *timer;
+                requeue.value_b = (int16_t)(timer->value_b + 1);
+                dm2_v1_runtime_enqueue_source_timer(&requeue, 0);
+            } else {
+                new_raw = (uint16_t)(raw & ~0x04);
+                dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level,
+                                             x, y, new_raw);
+            }
+        }
+    }
+
+    /* c_tim_proc.cpp:3944-3946 — viewport redraw flag. */
     return 1;
 }
 
@@ -5399,6 +5924,26 @@ void dm2_v1_runtime_tick(void) {
                                     &dispatcher,
                                     &rt->proceed_timers);
         rt->spell_timer_ctx_ready = 0;
+    }
+
+    /* Drain sound queue — DM2_SOUND8 (c_sound.cpp:633-647).
+     * Timer handlers (0x15, 0x5A) and actuator events push entries;
+     * the flush drains them to the audio backend each tick. */
+    if (rt->sound_queue_ready) {
+        DM2_V1_SoundPlayReceipt snd_receipt;
+        memset(&snd_receipt, 0, sizeof(snd_receipt));
+        dm2_v1_sound_queue_sound8_flush(&rt->sound_queue, 0, &snd_receipt);
+    }
+
+    /* CDDA flush: push queued FM Towns PCM to the SDL3 audio stream */
+    {
+        DM2_V1_CddaFlushReceipt cdda;
+        if (dm2_v1_sound_flush_cdda(&cdda) && cdda.valid &&
+            rt->cdda_play_cb) {
+            rt->cdda_play_cb(rt->cdda_cb_ctx,
+                             cdda.pcm_data, cdda.pcm_size,
+                             cdda.loop);
+        }
     }
 
     /* After any 0x54 weather timer has stepped the v1e14xx chain, run the
@@ -9250,6 +9795,16 @@ void dm2_v1_runtime_set_stairs_callback(DM2_V2_StairsCallback cb) {
     g_dm2_runtime.stairs_callback = cb;
 }
 
+void dm2_v1_runtime_set_cdda_callback(
+    void (*play)(void *ctx, const uint8_t *pcm, size_t size, int loop),
+    void (*stop)(void *ctx),
+    void *ctx)
+{
+    g_dm2_runtime.cdda_play_cb = play;
+    g_dm2_runtime.cdda_stop_cb = stop;
+    g_dm2_runtime.cdda_cb_ctx = ctx;
+}
+
 /* ── Interaction / square helpers ─────────────────────────────────── */
 
 int dm2_v1_runtime_get_square_type(int level, int x, int y) {
@@ -9529,6 +10084,36 @@ const uint8_t *dm2_v1_runtime_i18n_text(int category, int index, int field,
 
 int dm2_v1_runtime_i18n_ready(void) {
     return g_dm2_runtime.i18n_ready;
+}
+
+/* ── Engage command (hand actions) ────────────────────────────────── */
+
+int dm2_v1_runtime_engage_command(
+    const DM2_V1_EngageCommandRequest *request,
+    DM2_V1_EngageCommandReceipt *receipt)
+{
+    DM2_V1_EngageCommandRequest patched;
+    DM2_V1_EngageCommandReceipt local;
+    if (!receipt) receipt = &local;
+    if (!request) {
+        memset(receipt, 0, sizeof(*receipt));
+        receipt->fail_closed = 1;
+        return 0;
+    }
+    patched = *request;
+
+    /* Bind PROCEED_LIGHT callbacks when the runtime has a light system.
+     * The light_cb/ctx remain NULL for now (the runtime light table is
+     * not yet populated), so cases 5/37/38 will still fall through to
+     * the engage_command's own NULL guard until the light subsystem is
+     * wired.  This is the correct layering: the runtime owns the
+     * binding decision. */
+
+    /* Bind CONFUSE_CREATURE callbacks when the runtime has creature data.
+     * Same layering: the confuse_cb stays NULL until the runtime owns
+     * the creature record resolver and AI spec query. */
+
+    return dm2_v1_engage_command(&patched, receipt);
 }
 
 /* ── Source evidence ──────────────────────────────────────────────── */

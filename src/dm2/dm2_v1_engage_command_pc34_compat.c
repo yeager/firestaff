@@ -37,6 +37,9 @@
  */
 
 #include "dm2_v1_engage_command_pc34_compat.h"
+#include "dm2_v1_hero_ops_pc34_compat.h"
+#include "dm2_v1_light_ops_pc34_compat.h"
+#include "dm2_v1_creature_ops_pc34_compat.h"
 
 #include <string.h>
 
@@ -90,9 +93,25 @@ int dm2_v1_engage_command(
         receipt->fail_closed = 1;
         break;
 
-    case 2: /* CAST_CHAMPION_MISSILE_SPELL */
-        receipt->spell_cast = 1;
-        receipt->fail_closed = 1;
+    case 2: /* CAST_CHAMPION_MISSILE_SPELL — skengage.cpp:224-256 */
+        if (request->hero && request->shoot_cb) {
+            DM2_V1_ShootMissileState ms;
+            ms.abs_dir = (uint8_t)(request->hero_abs_dir & 0x3);
+            ms.party_pos = (uint8_t)request->hero_party_pos;
+            ms.party_x = request->party_x;
+            ms.party_y = request->party_y;
+            int r2 = dm2_v1_cast_champion_missile_spell(
+                (DM2_V1_HeroState *)request->hero, &ms,
+                request->shoot_item, request->shoot_spell_power,
+                request->shoot_mp_cost,
+                (const DM2_V1_ShootMissileCallbacks *)request->shoot_cb,
+                request->shoot_ctx);
+            receipt->spell_cast = 1;
+            if (!r2) receipt->skill_exp_gained >>= 1;
+        } else {
+            receipt->spell_cast = 1;
+            receipt->fail_closed = 1;
+        }
         break;
 
     case 3: /* WIELD_WEAPON */
@@ -101,16 +120,35 @@ int dm2_v1_engage_command(
         receipt->fail_closed = 1;
         break;
 
-    case 4: /* CONFUSE_CREATURE */
-        receipt->creature_confused = 1;
-        receipt->fail_closed = 1;
+    case 4: /* CONFUSE_CREATURE — skengage.cpp:315-328 */
+        if (request->confuse_cb) {
+            int16_t power = request->cmd.delay;
+            int conf_r = dm2_v1_confuse_creature(
+                power, request->party_x, request->party_y,
+                request->confuse_damage,
+                request->confuse_cb, request->confuse_ctx);
+            receipt->creature_confused = 1;
+            if (conf_r == 0)
+                receipt->skill_exp_gained >>= 2;
+        } else {
+            receipt->creature_confused = 1;
+            receipt->fail_closed = 1;
+        }
         break;
 
-    case 5:  /* PROCEED_LIGHT */
+    case 5:  /* PROCEED_LIGHT — skengage.cpp:330-335 */
     case 37: /* PROCEED_LIGHT (variant) */
     case 38: /* PROCEED_LIGHT (variant) */
-        receipt->light_toggled = 1;
-        receipt->fail_closed = 1;
+        if (request->light_cb) {
+            dm2_v1_proceed_light(
+                (uint16_t)(request->cmd.action_id - 1),
+                request->cmd.delay,
+                request->light_cb, request->light_ctx);
+            receipt->light_toggled = 1;
+        } else {
+            receipt->light_toggled = 1;
+            receipt->fail_closed = 1;
+        }
         break;
 
     case 6: /* CREATE_CLOUD */
@@ -134,12 +172,28 @@ int dm2_v1_engage_command(
         receipt->mana_gained = 1;
         break;
 
-    case 11: /* ABILITY type 5 */
-    case 12: /* ABILITY type 4 */
-    case 13: /* ABILITY type 6 */
-    case 14: /* ABILITY type 3 */
-        receipt->fail_closed = 1;
+    case 11: /* ABILITY type 5 — skengage.cpp:397 */
+    case 12: /* ABILITY type 4 — skengage.cpp:403 */
+    case 13: /* ABILITY type 6 — skengage.cpp:409 */
+    case 14: /* ABILITY type 3 — skengage.cpp:415 */
+    {
+        static const uint8_t ability_type_map[] = {5, 4, 6, 3};
+        uint8_t ench_type = ability_type_map[action_case - 11];
+        int16_t delay = request->cmd.delay;
+        if (delay < 32) delay = 32;
+        delay <<= 2;
+        if (request->hero && request->enchant_cb) {
+            int r = dm2_v1_hero_cast_enchantment(
+                (DM2_V1_HeroState *)request->hero, ench_type, delay, 0,
+                (const DM2_V1_CastEnchantCallbacks *)request->enchant_cb,
+                request->enchant_ctx);
+            receipt->enchantment_cast = 1;
+            if (!r) receipt->skill_exp_gained >>= 2;
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
+    }
 
     case 15: /* CONSUME object */
         receipt->consumed = 1;
@@ -156,11 +210,32 @@ int dm2_v1_engage_command(
         receipt->fail_closed = 1;
         break;
 
-    case 32: /* HERO_ACT type 1 */
-    case 33: /* HERO_ACT type 0 */
-    case 34: /* HERO_ACT type 2 */
-        receipt->fail_closed = 1;
+    case 32: /* HERO_ACT — skengage.cpp:487-510 */
+    case 33:
+    case 34:
+    {
+        uint8_t ench_type;
+        int16_t delay = request->cmd.delay;
+        if (delay < 32) delay = 32;
+        delay = (int16_t)(delay * 3);
+        if (request->timer_type == 0x21)
+            ench_type = 1;
+        else if (request->timer_type == 0x22)
+            ench_type = 0;
+        else
+            ench_type = 2;
+        if (request->hero && request->enchant_cb) {
+            int r = dm2_v1_hero_cast_enchantment(
+                (DM2_V1_HeroState *)request->hero, ench_type, delay, 1,
+                (const DM2_V1_CastEnchantCallbacks *)request->enchant_cb,
+                request->enchant_ctx);
+            receipt->enchantment_cast = 1;
+            if (!r) receipt->skill_exp_gained >>= 2;
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
+    }
 
     case 35: /* HEAL_SELF: convert MP to HP.
             * skengage.cpp:740-779: heal_amount = min(power_base, 10),

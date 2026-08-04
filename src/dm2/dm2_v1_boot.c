@@ -1029,6 +1029,25 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                     break;
                 }
             }
+
+            if (profile->cdda_cd_dat_verified) {
+                int ti;
+                snprintf(profile->cdda_track_dir,
+                         sizeof(profile->cdda_track_dir),
+                         "%s/cdda", profile->asset_root);
+                profile->cdda_tracks_available = 0;
+                for (ti = 2; ti <= 10; ti++) {
+                    char tp[1024];
+                    FILE *tf;
+                    snprintf(tp, sizeof(tp), "%s/track%02d.raw",
+                             profile->cdda_track_dir, ti);
+                    tf = fopen(tp, "rb");
+                    if (tf) {
+                        fclose(tf);
+                        profile->cdda_tracks_available++;
+                    }
+                }
+            }
         }
     }
 
@@ -1098,6 +1117,50 @@ int dm2_v1_boot_music_track_for_level(const DM2_V1_BootProfile *profile,
         return 0;
     }
     return 0;
+}
+
+size_t dm2_v1_boot_load_cdda_track(const DM2_V1_BootProfile *profile,
+                                    int disc_track,
+                                    uint8_t **out_data)
+{
+    char path[1024];
+    FILE *f;
+    long fsize;
+    uint8_t *buf;
+
+    if (out_data) *out_data = NULL;
+    if (!profile || !out_data) return 0;
+    if (profile->cdda_track_dir[0] == '\0') return 0;
+    if (disc_track < 2 || disc_track > 99) return 0;
+
+    snprintf(path, sizeof(path), "%s/track%02d.raw",
+             profile->cdda_track_dir, disc_track);
+
+    f = fopen(path, "rb");
+    if (!f) return 0;
+
+    fseek(f, 0, SEEK_END);
+    fsize = ftell(f);
+    if (fsize <= 0 || fsize % 4 != 0) {
+        fclose(f);
+        return 0;
+    }
+    fseek(f, 0, SEEK_SET);
+
+    buf = (uint8_t *)malloc((size_t)fsize);
+    if (!buf) {
+        fclose(f);
+        return 0;
+    }
+    if (fread(buf, 1, (size_t)fsize, f) != (size_t)fsize) {
+        free(buf);
+        fclose(f);
+        return 0;
+    }
+    fclose(f);
+
+    *out_data = buf;
+    return (size_t)fsize;
 }
 
 /* ── Init defaults ────────────────────────────────────────────────────── */

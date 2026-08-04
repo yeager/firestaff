@@ -31,6 +31,12 @@ int dm2_v1_rotate_creature(
     const DM2_V1_RotateCreatureRequest *request,
     DM2_V1_RotateCreatureReceipt *receipt)
 {
+    uint8_t *rec;
+    uint16_t w0e;
+    int16_t old_dir;
+    int16_t new_dir;
+    int16_t delta;
+
     if (!receipt) return 0;
     memset(receipt, 0, sizeof(*receipt));
 
@@ -41,16 +47,80 @@ int dm2_v1_rotate_creature(
 
     receipt->valid = 1;
 
-    if (request->creature_handle < 0) {
+    if (request->creature_handle < 0 || !request->pool_set) {
+        receipt->fail_closed = 1;
         return 0;
     }
 
-    receipt->new_direction = request->new_direction & 3;
+    rec = dm2_v1_record_pool_address_mut(request->pool_set,
+                                          request->creature_handle);
+    if (!rec) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
 
-    /* Record access (GET_ADDRESS_OF_RECORD) and AI spec flag query
-     * (QUERY_CREATURE_AI_SPEC_FLAGS) require live record pool.
-     * Fail-closed. */
-    receipt->fail_closed = 1;
+    /* c_creature.cpp:70-71 — word_at(rec, 0xe) << 6 >> 14 = bits 14-15 >> 8
+     * Actually: (word_at(rec,0xe) << 6) >> 14 extracts bits 8-9.
+     * But the write path (lines 80-82) does: and8(rec+0xf, 0xfc); or16(rec+0xe, dir<<8)
+     * So direction is bits 8-9 of word at 0xe, i.e. byte 0xf bits 0-1. */
+    w0e = (uint16_t)rec[0xe] | ((uint16_t)rec[0xf] << 8);
+    old_dir = (int16_t)((w0e >> 8) & 3);
+    receipt->old_direction = old_dir;
+
+    if (request->rotate_relative) {
+        new_dir = (old_dir + request->new_direction) & 3;
+    } else {
+        new_dir = request->new_direction & 3;
+    }
+    receipt->new_direction = new_dir;
+
+    /* c_creature.cpp:78 — delta = (new_dir - old_dir) & 3 */
+    delta = (new_dir - old_dir) & 3;
+
+    /* c_creature.cpp:80-82 — write direction into byte 0xf bits 0-1,
+     * and into word 0xe bits 8-9 */
+    rec[0xf] = (uint8_t)((rec[0xf] & 0xFC) | (new_dir & 3));
+
+    /* c_creature.cpp:83-84 — if AI spec flag bit 0 clear, done */
+    if (request->query_ai_spec_flags) {
+        uint16_t flags = request->query_ai_spec_flags(
+            request->ai_spec_ctx, (uint16_t)request->creature_handle);
+        if ((flags & 1) == 0)
+            return 1;
+    } else {
+        return 1;
+    }
+
+    /* c_creature.cpp:86-99 — rotate each possession in the chain at rec+2.
+     * Walk the word-linked list; for each, rotate bits 14-15 by delta. */
+    {
+        uint8_t *ptr = rec + 2;
+        int budget = 256;
+        for (;;) {
+            uint16_t link_w;
+            uint16_t cur_dir;
+            uint16_t rotated;
+            uint8_t *pos_rec;
+
+            link_w = (uint16_t)ptr[0] | ((uint16_t)ptr[1] << 8);
+            if (link_w == 0xFFFEu)
+                break;
+            if (--budget <= 0)
+                break;
+
+            cur_dir = (link_w >> 14) & 3;
+            rotated = (uint16_t)((cur_dir + delta) & 3);
+            link_w = (link_w & 0x3FFFu) | (rotated << 14);
+            ptr[0] = (uint8_t)(link_w & 0xFF);
+            ptr[1] = (uint8_t)(link_w >> 8);
+            receipt->possessions_rotated++;
+
+            pos_rec = dm2_v1_record_pool_address_mut(
+                request->pool_set, (int16_t)(link_w & 0x3FFFu));
+            if (!pos_rec) break;
+            ptr = pos_rec;
+        }
+    }
 
     return 1;
 }

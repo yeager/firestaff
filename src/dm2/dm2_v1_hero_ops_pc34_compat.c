@@ -463,7 +463,7 @@ int dm2_v1_cast_champion_missile_spell(
     return 1;
 }
 
-void dm2_v1_bring_champion_to_life(
+void dm2_v1_hero_bring_to_life(
     int hero_idx,
     const DM2_V1_ResurrectCallbacks *cb, void *ctx)
 {

@@ -242,7 +242,7 @@ int dm2_v1_proceed_xact_85(DM2_V1_RecordPoolSet *pool_set,
     return 1;
 }
 
-int dm2_v1_activate_creature_killer(
+int dm2_v1_activate_creature_killer_walk(
     DM2_V1_RecordPoolSet *pool_set,
     const DM2_V1_DungeonData *dungeon,
     DM2_V1_CaiiArray *caii,
@@ -256,9 +256,9 @@ int dm2_v1_activate_creature_killer(
     int center_x, int center_y,
     int action, int attack_flag,
     int target_x, int target_y,
-    DM2_V1_CreatureKillerReceipt *receipt)
+    DM2_V1_CreatureKillerWalkReceipt *receipt)
 {
-    DM2_V1_CreatureKillerReceipt local;
+    DM2_V1_CreatureKillerWalkReceipt local;
     int dxr, dyr, start_x, start_y, rows, vl_0c;
     uint16_t mode_w = (uint16_t)mode;
     uint16_t filter_w = (uint16_t)type_filter;

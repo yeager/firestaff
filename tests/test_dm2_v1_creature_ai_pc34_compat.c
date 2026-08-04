@@ -26,7 +26,7 @@ static void test_rotate_invalid_handle(void)
     printf("  PASS: rotate_invalid_handle\n");
 }
 
-static void test_rotate_valid(void)
+static void test_rotate_no_pool(void)
 {
     DM2_V1_RotateCreatureReceipt receipt;
     DM2_V1_RotateCreatureRequest req;
@@ -34,24 +34,41 @@ static void test_rotate_valid(void)
     req.creature_handle = 0x1000;
     req.new_direction = 2;
     int r = dm2_v1_rotate_creature(&req, &receipt);
-    assert(r == 1);
+    assert(r == 0);
     assert(receipt.valid == 1);
     assert(receipt.fail_closed == 1);
-    assert(receipt.new_direction == 2);
-    printf("  PASS: rotate_valid\n");
+    printf("  PASS: rotate_no_pool\n");
 }
 
-static void test_rotate_direction_wrap(void)
+static void test_rotate_with_record(void)
 {
     DM2_V1_RotateCreatureReceipt receipt;
     DM2_V1_RotateCreatureRequest req;
+    DM2_V1_RecordPoolSet pools;
+    uint8_t record[32];
+
+    memset(&pools, 0, sizeof(pools));
+    memset(record, 0, sizeof(record));
+    pools.valid = 1;
+    pools.pools[4].bytes = record;
+    pools.pools[4].record_count = 1;
+    pools.pools[4].record_size = 32;
+
+    record[0x0e] = 0x00;
+    record[0x0f] = 0x01;
+
     memset(&req, 0, sizeof(req));
-    req.creature_handle = 0x1000;
-    req.new_direction = 7;
+    req.creature_handle = (int16_t)((4 << 10) | 0);
+    req.new_direction = 2;
+    req.pool_set = &pools;
     int r = dm2_v1_rotate_creature(&req, &receipt);
     assert(r == 1);
-    assert(receipt.new_direction == 3);
-    printf("  PASS: rotate_direction_wrap\n");
+    assert(receipt.valid == 1);
+    assert(receipt.fail_closed == 0);
+    assert(receipt.old_direction == 1);
+    assert(receipt.new_direction == 2);
+    assert((record[0x0f] & 3) == 2);
+    printf("  PASS: rotate_with_record\n");
 }
 
 static void test_think_null_safety(void)
@@ -98,8 +115,8 @@ int main(void)
     printf("test_dm2_v1_creature_ai_pc34_compat:\n");
     test_rotate_null_safety();
     test_rotate_invalid_handle();
-    test_rotate_valid();
-    test_rotate_direction_wrap();
+    test_rotate_no_pool();
+    test_rotate_with_record();
     test_think_null_safety();
     test_think_invalid_tile();
     test_think_valid();

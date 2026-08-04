@@ -816,6 +816,8 @@ int M11_Audio_Init(M11_AudioState* state) {
     state->lastSoundIndex = -1;
     state->lastMusicTrackId = -1;
     state->sdlStream    = NULL;
+    state->cddaStream   = NULL;
+    state->cddaPlaying  = 0;
 
     /* Pre-generate procedural sounds regardless of backend */
     m11_generate_sounds(state);
@@ -881,6 +883,22 @@ int M11_Audio_Init(M11_AudioState* state) {
         SDL_ResumeAudioStreamDevice(stream);
         state->sdlStream = stream;
         state->backend   = M11_AUDIO_BACKEND_SDL3;
+
+        /* CDDA stream: stereo 16-bit signed LE at 44100Hz for FM Towns */
+        {
+            SDL_AudioSpec cdda_spec;
+            SDL_AudioStream *cdda;
+            cdda_spec.format   = SDL_AUDIO_S16LE;
+            cdda_spec.channels = 2;
+            cdda_spec.freq     = 44100;
+            cdda = SDL_OpenAudioDeviceStream(
+                m11_preferred_playback_device(),
+                &cdda_spec, NULL, NULL);
+            if (cdda) {
+                SDL_ResumeAudioStreamDevice(cdda);
+                state->cddaStream = cdda;
+            }
+        }
     }
 #else
     state->backend = M11_AUDIO_BACKEND_NONE;
@@ -893,6 +911,11 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     if (!state) return;
 
 #if M11_HAVE_SDL_AUDIO
+    if (state->cddaStream) {
+        SDL_DestroyAudioStream((SDL_AudioStream*)state->cddaStream);
+        state->cddaStream = NULL;
+        state->cddaPlaying = 0;
+    }
     if (state->sdlStream) {
         SDL_DestroyAudioStream((SDL_AudioStream*)state->sdlStream);
         state->sdlStream = NULL;
@@ -1460,6 +1483,41 @@ int M11_Audio_SoundPackAvailable(const M11_AudioState* state) {
 }
 
 #include "nexus_v1_sound.h"
+
+int M11_Audio_PlayCdda(M11_AudioState* state,
+                       const uint8_t *pcm_data, size_t pcm_size,
+                       int loop)
+{
+#if M11_HAVE_SDL_AUDIO
+    if (!state || !pcm_data || pcm_size < 4 || !state->cddaStream)
+        return 0;
+    if (pcm_size % 4u != 0u) return 0;
+
+    SDL_ClearAudioStream((SDL_AudioStream*)state->cddaStream);
+    if (!SDL_PutAudioStreamData((SDL_AudioStream*)state->cddaStream,
+                                pcm_data, (int)pcm_size))
+        return 0;
+    state->cddaPlaying = 1;
+    (void)loop;
+    return 1;
+#else
+    (void)state; (void)pcm_data; (void)pcm_size; (void)loop;
+    return 0;
+#endif
+}
+
+int M11_Audio_StopCdda(M11_AudioState* state)
+{
+#if M11_HAVE_SDL_AUDIO
+    if (!state || !state->cddaStream) return 0;
+    SDL_ClearAudioStream((SDL_AudioStream*)state->cddaStream);
+    state->cddaPlaying = 0;
+    return 1;
+#else
+    (void)state;
+    return 0;
+#endif
+}
 
 int M11_Audio_MixNexusSfx(M11_AudioState* state, void *nexus_audio) {
 #if M11_HAVE_SDL_AUDIO

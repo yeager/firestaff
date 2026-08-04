@@ -18,6 +18,8 @@
  */
 
 #include <stdint.h>
+#include "dm2_v1_light_ops_pc34_compat.h"
+#include "dm2_v1_creature_ops_pc34_compat.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -101,6 +103,27 @@ typedef struct {
     uint8_t cmd_flag_8000;    /* high bit of command word */
     DM2_V1_EngageCmdStr cmd;
     uint32_t game_tick;
+
+    /* Optional callbacks for cases that delegate to subsystems.
+     * When NULL, the case falls through to fail_closed. */
+    const DM2_V1_ProceedLightCallbacks *light_cb;
+    void *light_ctx;
+    const DM2_V1_ConfuseCreatureCallbacks *confuse_cb;
+    void *confuse_ctx;
+    int32_t confuse_damage;   /* skengage.cpp:322: RG61l (accumulated) */
+
+    void *hero;               /* DM2_V1_HeroState* (for MP deduction) */
+    const void *enchant_cb;   /* DM2_V1_CastEnchantCallbacks* */
+    void *enchant_ctx;
+    int16_t timer_type;       /* vw_54: timer subtype for ACT mapping */
+
+    const void *shoot_cb;     /* DM2_V1_ShootMissileCallbacks* */
+    void *shoot_ctx;
+    uint16_t shoot_item;      /* item handle for SHOOT/CAST_MISSILE */
+    int16_t shoot_damage;
+    int16_t shoot_kinetic;
+    int16_t shoot_spell_power;
+    int16_t shoot_mp_cost;
 } DM2_V1_EngageCommandRequest;
 
 /* Engage command receipt — what the dispatcher did. */
@@ -131,6 +154,7 @@ typedef struct {
     int minion_dest_set;
     int position_swapped;
     int interface_loaded;
+    int enchantment_cast;
 
     int16_t cooldown_applied;
     int16_t stamina_cost;

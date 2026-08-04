@@ -93,6 +93,13 @@ static int g_dm2_music_loop_enabled;
 static int g_dm2_music_backend_proven;
 static uint16_t g_dm2_music_ticks_per_quarter = 96u;
 
+/* CDDA state for FM Towns raw PCM playback */
+static uint8_t *g_dm2_cdda_pcm_data;
+static size_t    g_dm2_cdda_pcm_size;
+static int       g_dm2_cdda_disc_track;
+static int       g_dm2_cdda_loop;
+static int       g_dm2_cdda_queued;
+
 /* ── DM2-008 GDAT-backed sound backend ────────────────────────────────────
  * Source: skproject/SKULLWIN/c_sound.h/cpp, c_sfx.cpp
  * dm2sound.xsndptr2 is the source-owned seven-byte runtime queue populated by
@@ -1501,6 +1508,68 @@ int dm2_v1_sound_queue_music(int track, int loop,
     return g_dm2_music_backend_proven
                ? DM2_V1_MUSIC_QUEUE_READY
                : DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE;
+}
+
+int dm2_v1_sound_queue_cdda(const uint8_t *pcm_data, size_t pcm_size,
+                             int disc_track, int loop,
+                             DM2_V1_MusicQueueReceipt *out_receipt)
+{
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!pcm_data || pcm_size < 4u)
+        return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+    /* 16-bit stereo 44100Hz: 4 bytes per frame */
+    if (pcm_size % 4u != 0u)
+        return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+
+    {
+        uint8_t *copy = (uint8_t *)malloc(pcm_size);
+        if (!copy) return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
+        memcpy(copy, pcm_data, pcm_size);
+        free(g_dm2_cdda_pcm_data);
+        g_dm2_cdda_pcm_data = copy;
+    }
+    g_dm2_cdda_pcm_size = pcm_size;
+    g_dm2_cdda_disc_track = disc_track;
+    g_dm2_cdda_loop = loop ? 1 : 0;
+    g_dm2_cdda_queued = 1;
+
+    if (out_receipt) {
+        out_receipt->asset_resolved = 1;
+        out_receipt->request_queued = 1;
+        out_receipt->decoder_proven = 1;
+        out_receipt->backend_proven = 1;
+        out_receipt->schedule_handoff_ready = 1;
+        out_receipt->loop_duration_us =
+            (uint32_t)((pcm_size / 4u) * 1000000ull / 44100ull);
+        snprintf(out_receipt->asset_path, sizeof(out_receipt->asset_path),
+                 "CDDA::track%02d (FM Towns)", disc_track);
+    }
+    return DM2_V1_MUSIC_QUEUE_READY;
+}
+
+int dm2_v1_sound_flush_cdda(DM2_V1_CddaFlushReceipt *out_receipt)
+{
+    DM2_V1_CddaFlushReceipt local;
+    memset(&local, 0, sizeof(local));
+    if (out_receipt == NULL) out_receipt = &local;
+
+    if (!g_dm2_cdda_queued) return 0;
+    g_dm2_cdda_queued = 0;
+
+    out_receipt->disc_track = g_dm2_cdda_disc_track;
+    out_receipt->pcm_data = g_dm2_cdda_pcm_data;
+    out_receipt->pcm_size = g_dm2_cdda_pcm_size;
+    out_receipt->loop = g_dm2_cdda_loop;
+    out_receipt->valid = 1;
+    return 1;
+}
+
+void dm2_v1_sound_release_cdda(void)
+{
+    free(g_dm2_cdda_pcm_data);
+    g_dm2_cdda_pcm_data = NULL;
+    g_dm2_cdda_pcm_size = 0;
+    g_dm2_cdda_queued = 0;
 }
 
 int dm2_v1_sound_schedule_music(uint32_t elapsed_us,

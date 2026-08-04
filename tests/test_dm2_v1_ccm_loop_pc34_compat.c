@@ -204,6 +204,18 @@ static DM2_V1_SourceTimer make_timer(uint8_t type, uint32_t ticks_and_map)
     return t;
 }
 
+static int g_mock_proceed_called;
+static uint8_t g_mock_proceed_command;
+static int32_t g_mock_proceed_result;
+static int32_t mock_proceed_fn(void *ctx, uint8_t command,
+    uint16_t ct, uint8_t *s, uint16_t a0, uint16_t a1,
+    unsigned long gt) {
+    (void)ctx; (void)ct; (void)s; (void)a0; (void)a1; (void)gt;
+    g_mock_proceed_called = 1;
+    g_mock_proceed_command = command;
+    return g_mock_proceed_result;
+}
+
 int main(void)
 {
     static uint8_t data[DATA_SIZE];
@@ -245,7 +257,7 @@ int main(void)
     CHECK(dm2_v1_ccm_message_loop(&set, &caii, &queue, &loader, &rng,
                                   rec_handle(0), &timer, 7, adj, &anim,
                                   &v1e0584, 0, 3, 0, 0, 0, 0, 1000,
-                                  &rc) == 1,
+                                  NULL, NULL, NULL, NULL, NULL, NULL, &rc) == 1,
           "(a) loop completes");
     CHECK(rc.valid && rc.body_entered && !rc.payload_skip && !rc.type_0x22,
           "(a) body entered on the !flag branch");
@@ -276,7 +288,7 @@ int main(void)
     CHECK(dm2_v1_ccm_message_loop(&set, &caii, &queue, &loader, &rng,
                                   rec_handle(0), &timer, 7, adj, &anim,
                                   &v1e0584, 0, 3, 1, 0, 0, 0, 1000,
-                                  &rc) == 1,
+                                  NULL, NULL, NULL, NULL, NULL, NULL, &rc) == 1,
           "(b) payload-skip completes");
     CHECK(rc.valid && rc.payload_skip && !rc.body_entered &&
               !rc.loop_entered && rc.gaf_return == -1,
@@ -300,7 +312,7 @@ int main(void)
     CHECK(dm2_v1_ccm_message_loop(&set, &caii, &queue, &loader, &rng,
                                   rec_handle(0), &timer, 7, adj, &anim,
                                   &v1e0584, 0, 9, 0, 0, 0, 0, 1000,
-                                  &rc) == 1,
+                                  NULL, NULL, NULL, NULL, NULL, NULL, &rc) == 1,
           "(c) special-mticks completes");
     CHECK(rc.valid && rc.special_mticks && rc.type_0x22 &&
               !rc.loop_entered && rc.gaf_return == -1,
@@ -324,7 +336,7 @@ int main(void)
     CHECK(dm2_v1_ccm_message_loop(&set, &caii, &queue, &loader, &rng,
                                   rec_handle(0), &timer, 7, adj, &anim,
                                   &v1e0584, 0, 3, 0, 0, 0, 0, 1000,
-                                  &rc) == 1,
+                                  NULL, NULL, NULL, NULL, NULL, NULL, &rc) == 1,
           "(d) dying branch completes");
     CHECK(rc.valid && rc.dying_branch && rc.cloud_would_create &&
               rc.cloud_id == 0x6e,
@@ -348,7 +360,7 @@ int main(void)
     CHECK(dm2_v1_ccm_message_loop(&set, &caii, &queue, &loader, &rng,
                                   rec_handle(0), &timer, 7, adj, &anim,
                                   &v1e0584, 0, 3, 0, 0, 0, 0, 1000,
-                                  &rc) == 0,
+                                  NULL, NULL, NULL, NULL, NULL, NULL, &rc) == 0,
           "(e) the handler boundary fails closed");
     CHECK(!rc.valid && rc.ccm_handler_unbound && rc.ccm_handler == 0x07 &&
               rc.ccm_handler_group == DM2_V1_CCM_SRC_CCM06,
@@ -370,7 +382,7 @@ int main(void)
     CHECK(dm2_v1_ccm_message_loop(&set, &caii, &queue, &loader, &rng,
                                   rec_handle(0), &timer, 7, adj, &anim,
                                   &v1e0584, 0, 3, 0, 0, 0, 0, 1000,
-                                  &rc) == 0 &&
+                                  NULL, NULL, NULL, NULL, NULL, NULL, &rc) == 0 &&
               rc.ai_goal_unbound && slot0[0x1a] == 0xff,
           "(f) DM2_14cd_09e2 boundary after the b_1a write");
 
@@ -387,7 +399,7 @@ int main(void)
     CHECK(dm2_v1_ccm_message_loop(&set, &caii, &queue, &loader, &rng,
                                   rec_handle(0), &timer, 7, adj, &anim,
                                   &v1e0584, 0, 3, 0, 0, 0, 0, 1000,
-                                  &rc) == 0 &&
+                                  NULL, NULL, NULL, NULL, NULL, NULL, &rc) == 0 &&
               rc.s_seven_unbound && slot0[0x1a] == 0x05 &&
               slot0[0x17] == 0xff,
           "(g) 14cd_062e table path fails closed after b_17 clear");
@@ -404,7 +416,7 @@ int main(void)
     CHECK(dm2_v1_ccm_message_loop(&set, &caii, &queue, &loader, &rng,
                                   rec_handle(1), &timer, 7, adj, &anim,
                                   &v1e0584, 0, 3, 0, 0, 0, 0, 1000,
-                                  &rc) == 0 &&
+                                  NULL, NULL, NULL, NULL, NULL, NULL, &rc) == 0 &&
               rc.anim_row_null && rc.gaf_return == 1 &&
               rc.bitmap_state_reset,
           "(h) static GAF leaves the row NULL; table1d613a[5] & 4 receipted");
@@ -422,13 +434,40 @@ int main(void)
     CHECK(dm2_v1_ccm_message_loop(&set, &caii, &queue, &loader, &rng,
                                   rec_handle(0), &timer, 7, adj, &anim,
                                   &v1e0584, 0, 3, 0, 0, 0, 0, 1000,
-                                  &rc) == 1,
+                                  NULL, NULL, NULL, NULL, NULL, NULL, &rc) == 1,
           "(i) mode 6 completes");
     CHECK(rc.valid && rc.dir_written == 1 && slot0[0x1d] == 1,
           "(i) mode 6 wrote the facing ((2 - 1) & 3) to byte@0x1d");
     CHECK(rc.gaf_return == 0 && rc.loop_result == 0 &&
               rc.walk_50cb_calls == 0 && queue.timers[0].type == 0x22,
           "(i) sequence-end GAF; loop_result 0 re-arms 0x22");
+
+    /* ── (j) proceed_ccm callback dispatches the handler ────────── */
+    dm2_v1_source_timer_queue_init(&queue);
+    reset_slot(&caii, 0);
+    slot0[0x1a] = 0x07;  /* any command; 4FCC uses adj_base not attribution */
+    slot0[0x21] = 0;     /* no pending — rg1 stays 1, handler fires on 0x80 */
+    rng.random = 0;
+    adj[0] = 6; adj[1] = -1;  /* base 6 + frame -1 -> 4FCC starts fresh at 0 */
+    anim = NULL;
+    v1e0584 = -1;
+    timer = make_timer(0x21, (3u << 24) | 900u);
+    memset(&rc, 0, sizeof(rc));
+    g_mock_proceed_called = 0;
+    g_mock_proceed_command = 0;
+    g_mock_proceed_result = 42;
+    CHECK(dm2_v1_ccm_message_loop(&set, &caii, &queue, &loader, &rng,
+                                  rec_handle(0), &timer, 7, adj, &anim,
+                                  &v1e0584, 0, 3, 0, 0, 0, 0, 1000,
+                                  NULL, NULL, NULL, NULL,
+                                  mock_proceed_fn, NULL, &rc) == 1,
+          "(j) callback dispatch completes");
+    CHECK(g_mock_proceed_called && g_mock_proceed_command == 0x07,
+          "(j) callback received command 0x07");
+    CHECK(rc.ccm_handler_dispatched && rc.ccm_handler_result == 42,
+          "(j) receipt records dispatch result 42");
+    CHECK(!rc.ccm_handler_unbound,
+          "(j) handler is NOT unbound when callback provided");
 
     dm2_v1_caii_array_free(&caii);
     free(set.pools[4].bytes);
