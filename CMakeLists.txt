@@ -18446,6 +18446,24 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_invoke_message_pc34_compat
     )
 
+    # ── DM2: viewport rendering (c_gui_vp.cpp) ──
+    add_executable(test_dm2_v1_gui_vp_pc34_compat
+        tests/test_dm2_v1_gui_vp_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_gui_vp_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_gui_vp_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gui_vp_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gui_vp_pc34_compat
+        COMMAND test_dm2_v1_gui_vp_pc34_compat
+    )
+
     # ── DM2: event handlers (c_events.cpp) ──
     add_executable(test_dm2_v1_event_handlers_pc34_compat
         tests/test_dm2_v1_event_handlers_pc34_compat.c
