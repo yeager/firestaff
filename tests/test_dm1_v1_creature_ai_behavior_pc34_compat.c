@@ -1555,8 +1555,8 @@ static void test_oitu_promoted_to_full(void) {
               "oitu_dex: DUNGEON.C G0243[21] DEX=60");
     EXPECT_EQ(p->baseDefense, 33,
               "oitu_def: DUNGEON.C G0243[21] DEF=33");
-    EXPECT_EQ(p->attackType, COMBAT_ATTACK_NORMAL,
-              "oitu_attackType: G0243[21] AttackType=3 (NORMAL)");
+    EXPECT_EQ(p->attackType, COMBAT_ATTACK_SHARP,
+              "oitu_attackType: G0243[21] AttackType=4 (SHARP) — PC 3.4 binary");
     EXPECT_EQ(p->implementationTier, CREATURE_IMPL_TIER_FULL,
               "oitu_tier: STUB->FULL (BUG-104 batch 3)");
 }
