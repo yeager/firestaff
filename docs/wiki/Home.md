@@ -6,11 +6,11 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 
 | Game | Platform | Reference Source | Wiki Pages |
 |------|----------|-----------------|------------|
-| [Dungeon Master (DM1)](DM1-Technical-Reference) | DOS PC 3.4 | ReDMCSB | [Technical Reference](DM1-Technical-Reference), [PC34 Internals](DM1-PC34-Internals) |
-| [Chaos Strikes Back (CSB)](CSB-Technical-Reference) | DOS PC 3.4 | ReDMCSB | [Technical Reference](CSB-Technical-Reference), [DSA and Save Internals](CSB-DSA-and-Save-Internals) |
-| [Dungeon Master II (DM2)](DM2-Technical-Reference) | DOS | skproject | [Technical Reference](DM2-Technical-Reference), [GDAT Internals](DM2-GDAT-Internals) |
-| [Theron's Quest](Therons-Quest-Technical-Reference) | PC Engine | None | [Technical Reference](Therons-Quest-Technical-Reference), [Track 02 Internals](Therons-Quest-Track02-Internals) |
-| [DM Nexus](Nexus-Technical-Reference) | Sega Saturn | None | [Technical Reference](Nexus-Technical-Reference), [DGN/PRS3 Internals](Nexus-DGN-and-PRS3-Internals), [SAL/MAP Internals](Nexus-SAL-MAP-Internals) |
+| [Dungeon Master (DM1)](DM1-Technical-Reference) | DOS PC 3.4 | ReDMCSB | [Technical Reference](DM1-Technical-Reference), [PC34 Internals](DM1-PC34-Internals), [RE Documentation](DM1-Reverse-Engineering) |
+| [Chaos Strikes Back (CSB)](CSB-Technical-Reference) | DOS PC 3.4 | ReDMCSB | [Technical Reference](CSB-Technical-Reference), [DSA and Save Internals](CSB-DSA-and-Save-Internals), [RE Documentation](CSB-Reverse-Engineering) |
+| [Dungeon Master II (DM2)](DM2-Technical-Reference) | DOS | skproject | [Technical Reference](DM2-Technical-Reference), [GDAT Internals](DM2-GDAT-Internals), [RE Documentation](DM2-Reverse-Engineering) |
+| [Theron's Quest](Therons-Quest-Technical-Reference) | PC Engine | None | [Technical Reference](Therons-Quest-Technical-Reference), [Track 02 Internals](Therons-Quest-Track02-Internals), [RE Documentation](Therons-Quest-Reverse-Engineering) |
+| [DM Nexus](Nexus-Technical-Reference) | Sega Saturn | None | [Technical Reference](Nexus-Technical-Reference), [DGN/PRS3 Internals](Nexus-DGN-and-PRS3-Internals), [SAL/MAP Internals](Nexus-SAL-MAP-Internals), [RE Documentation](Nexus-Reverse-Engineering) |
 
 ## Platform Guides
 
@@ -19,6 +19,15 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 - [Linux](Platform-Linux) — deb/rpm, Steam Deck (pacman/AppImage), build from source
 - [iOS](Platform-iOS) — AltStore Classic sideloading, SideStore, game data via Files app
 - [Android](Platform-Android) — APK sideloading, game data transfer
+
+## Reverse Engineering
+
+- [Reverse Engineering Index](Reverse-Engineering-Index) — overview of all RE documentation, cross-game formats, parity evidence
+- [DM1 RE](DM1-Reverse-Engineering) — 1388 F-numbered functions, DUNGEON.DAT format, creature types, ReDMCSB file map
+- [CSB RE](CSB-Reverse-Engineering) — IMG1 graphics format, DSA scripting system, 357 CSB modules
+- [DM2 RE](DM2-Reverse-Engineering) — 56 skproject files, GDAT format, symbol audit, hex-offset modules
+- [Theron RE](Therons-Quest-Reverse-Engineering) — PC Engine CD layout, Track 02 format, champion/item system
+- [Nexus RE](Nexus-Reverse-Engineering) — Saturn disc structure, DGN geometry, BPK/PRS3 archive, MNS materials
 
 ## Project Pages
 
