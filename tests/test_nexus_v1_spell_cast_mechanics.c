@@ -8,12 +8,12 @@
 int main(void) {
     int fail = 0;
 
-    /* Test 1: spell lookup table — FUL+IR wizard = fireball (0x0005) */
+    /* Test 1: spell lookup — FUL+IR wizard = type 2 (DM.BIN 0x038368) */
     {
         Nexus_SpellLookup sp = nexus_v1_spell_lookup(
             NEXUS_RUNE_ON, NEXUS_ELEM_FUL, NEXUS_FORM_IR,
             NEXUS_SPELL_CLASS_WIZARD);
-        if (!sp.valid || sp.spell_type != NEXUS_SPELL_EFFECT_DARKNESS) {
+        if (!sp.valid || sp.spell_type != 2) {
             fprintf(stderr, "FAIL: FUL+IR wizard lookup: valid=%d type=0x%04X\n",
                     sp.valid, sp.spell_type);
             fail++;
@@ -23,39 +23,39 @@ int main(void) {
         }
     }
 
-    /* Test 2: spell lookup — YA+GOR priest = heal (0x0000) */
+    /* Test 2: YA+GOR priest = 0xFFFF (invalid in real DM.BIN table) */
     {
         Nexus_SpellLookup sp = nexus_v1_spell_lookup(
             NEXUS_RUNE_LO, NEXUS_ELEM_YA, NEXUS_FORM_GOR,
             NEXUS_SPELL_CLASS_PRIEST);
-        if (!sp.valid || sp.spell_type != NEXUS_SPELL_EFFECT_HEAL) {
-            fprintf(stderr, "FAIL: YA+GOR priest lookup\n");
+        if (sp.valid) {
+            fprintf(stderr, "FAIL: YA+GOR priest should be invalid\n");
             fail++;
         } else {
-            printf("  YA+GOR priest: spell_type=0x%04X cost=%d OK\n",
-                   sp.spell_type, sp.mana_cost);
+            printf("  YA+GOR priest: correctly invalid OK\n");
         }
     }
 
-    /* Test 3: invalid combination — YA+BRO priest = 0xFFFF */
+    /* Test 3: YA+BRO priest = type 0 (valid in real DM.BIN table) */
     {
         Nexus_SpellLookup sp = nexus_v1_spell_lookup(
             NEXUS_RUNE_LO, NEXUS_ELEM_YA, NEXUS_FORM_BRO,
             NEXUS_SPELL_CLASS_PRIEST);
-        if (sp.valid) {
-            fprintf(stderr, "FAIL: YA+BRO priest should be invalid\n");
+        if (!sp.valid || sp.spell_type != 0) {
+            fprintf(stderr, "FAIL: YA+BRO priest lookup: valid=%d type=0x%04X\n",
+                    sp.valid, sp.spell_type);
             fail++;
         } else {
-            printf("  YA+BRO priest: correctly invalid OK\n");
+            printf("  YA+BRO priest: spell_type=0x%04X OK\n", sp.spell_type);
         }
     }
 
-    /* Test 4: spell damage table */
+    /* Test 4: spell damage — DM.BIN 0x038320/0x038340 real values */
     {
         int d0 = nexus_v1_spell_damage(0, NEXUS_SPELL_CLASS_PRIEST);
         int d5 = nexus_v1_spell_damage(5, NEXUS_SPELL_CLASS_WIZARD);
-        if (d0 != 6 || d5 != 46) {
-            fprintf(stderr, "FAIL: spell damage: d0=%d (exp 6) d5=%d (exp 46)\n", d0, d5);
+        if (d0 != 56 || d5 != 102) {
+            fprintf(stderr, "FAIL: spell damage: d0=%d (exp 56) d5=%d (exp 102)\n", d0, d5);
             fail++;
         } else {
             printf("  Spell damage: LO priest=%d, MON wizard=%d OK\n", d0, d5);
@@ -68,7 +68,7 @@ int main(void) {
         int result;
         memset(&ch, 0, sizeof(ch));
         ch.alive = 1;
-        ch.mana = 100;
+        ch.mana = 500;
         ch.priest_level = 3;
         ch.wizard_level = 5;
         result = nexus_v1_cast_spell(&ch, NEXUS_RUNE_ON, NEXUS_ELEM_FUL,
@@ -76,11 +76,11 @@ int main(void) {
         if (result <= 0) {
             fprintf(stderr, "FAIL: cast spell returned %d (expected >0 damage)\n", result);
             fail++;
-        } else if (ch.mana >= 100) {
+        } else if (ch.mana >= 500) {
             fprintf(stderr, "FAIL: mana not deducted (still %d)\n", ch.mana);
             fail++;
         } else {
-            printf("  Cast FUL+IR: damage=%d mana=%d/%d OK\n", result, ch.mana, 100);
+            printf("  Cast FUL+IR: damage=%d mana=%d/%d OK\n", result, ch.mana, 500);
         }
     }
 

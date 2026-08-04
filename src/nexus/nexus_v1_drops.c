@@ -1,4 +1,5 @@
 #include "nexus_v1_drops.h"
+#include "nexus_v1_combat.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -54,13 +55,13 @@ int nexus_drops_roll(int creature_type_idx, int x, int y,
     if (!out_item_ids || !out_quantities || max_drops < 1) return 0;
 
     gold_amount = nexus_gold_by_category[creature_type_idx % 4];
-    gold_amount = gold_amount / 2 + (rand() % (gold_amount / 2 + 1));
+    gold_amount = gold_amount / 2 + nexus_v1_combat_random(gold_amount / 2 + 1);
     if (gold_amount > 0) {
         nexus_gold_add(x, y, gold_amount);
     }
 
-    if ((rand() % 100) < 30 && max_drops > 0) {
-        int pool_idx = (creature_type_idx + rand()) % NEXUS_DROP_ITEM_POOL_SIZE;
+    if (nexus_v1_combat_random(100) < 30 && max_drops > 0) {
+        int pool_idx = (creature_type_idx + nexus_v1_combat_random(NEXUS_DROP_ITEM_POOL_SIZE)) % NEXUS_DROP_ITEM_POOL_SIZE;
         out_item_ids[0] = nexus_drop_item_pool[pool_idx];
         out_quantities[0] = 1;
         item_count = 1;

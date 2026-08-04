@@ -2,17 +2,15 @@
 #ifndef NEXUS_V1_REST_H
 #define NEXUS_V1_REST_H
 
-/* Nexus V1 rest system — party rest/sleep for stamina and mana regen.
- * Source: DM1 CHAMPION.C F0325 stamina regen, F0309 sleep mechanics.
- * Party rests in place. Creatures can interrupt rest. */
+/* Nexus V1 rest system — DM.BIN 0x02F318 regen pulse, 0x030914 timer reset. */
 
 #include "nexus_v1_champions.h"
 
-#define NEXUS_REST_REGEN_TICKS     10
+#define NEXUS_REST_REGEN_TICKS     30   /* DM.BIN 0x02F32E: CMP/GE #30 */
 #define NEXUS_REST_STAMINA_PER_TICK 2
 #define NEXUS_REST_MANA_PER_TICK    1
 #define NEXUS_REST_HEALTH_PER_TICK  1
-#define NEXUS_REST_HEALTH_INTERVAL  30
+#define NEXUS_REST_HEALTH_INTERVAL  46  /* DM.BIN 0x02F382: CMP/GE #46 */
 
 typedef struct {
     int resting;         /* 1 if party is currently resting */

@@ -7,39 +7,25 @@
  * Index: (element * 4 + form) * 2 + class.
  * 0xFFFF = no spell for that combination. */
 static const unsigned short g_spell_table[32] = {
-    /* YA+GOR  priest/wizard */ 0x0000, 0x0001,
-    /* YA+KATH priest/wizard */ 0x0002, 0x0003,
-    /* YA+IR   priest/wizard */ 0x0005, 0x0005,
-    /* YA+BRO  priest/wizard */ 0xFFFF, 0x0007,
-    /* VI+GOR  priest/wizard */ 0x000A, 0x000A,
-    /* VI+KATH priest/wizard */ 0x0002, 0x0003,
-    /* VI+IR   priest/wizard */ 0x0005, 0x000C,
-    /* VI+BRO  priest/wizard */ 0xFFFF, 0x0007,
-    /* OH+GOR  priest/wizard */ 0x0001, 0x0001,
-    /* OH+KATH priest/wizard */ 0x0002, 0x0003,
-    /* OH+IR   priest/wizard */ 0x000A, 0x000C,
-    /* OH+BRO  priest/wizard */ 0xFFFF, 0x0007,
-    /* FUL+GOR priest/wizard */ 0x000A, 0x000C,
-    /* FUL+KATH priest/wizard */ 0x0002, 0x0003,
-    /* FUL+IR  priest/wizard */ 0x0005, 0x000C,
-    /* FUL+BRO priest/wizard */ 0xFFFF, 0x0007,
+    /* DM.BIN 0x038368: 32 BE16 spell type indices.
+     * Index: (element * 4 + form) * 2 + class. 0xFFFF = no spell. */
+    0xFFFF, 0xFFFF,  0xFFFF, 0xFFFF,  0xFFFF, 0xFFFF,  0x0000, 0xFFFF,
+    0x0000, 0x0001,  0xFFFF, 0x0000,  0x0001, 0x0002,  0x000C, 0xFFFF,
+    0xFFFF, 0x0001,  0x0003, 0xFFFF,  0x0000, 0x0003,  0x0001, 0x0005,
+    0x000A, 0xFFFF,  0x0007, 0xFFFF,  0x0000, 0x0002,  0x0001, 0x0003,
 };
 
-/* Skill prefix table — DM.BIN 0x038360.
- * Maps element index to required class: 1=priest, 3=wizard.
- * (8 bytes, packed as uint16 pairs.) */
-static const int g_skill_prefix[4] = { 1, 3, 1, 3 };
 
-/* Parameter table A (priest costs) — DM.BIN 0x038320.
- * 6 pairs of (cost_base, damage_base) for power levels 0-5. */
+/* Parameter table A — DM.BIN 0x038320.
+ * 12 uint16 BE values. Interpretation as cost/damage pairs not verified. */
 static const int g_param_priest[6][2] = {
-    {4, 6}, {7, 10}, {12, 18}, {16, 24}, {20, 30}, {24, 36}
+    {26, 56}, {134, 70}, {115, 5}, {199, 26}, {186, 47}, {294, 60}
 };
 
-/* Parameter table B (wizard costs) — DM.BIN 0x038340.
- * 6 pairs of (cost_base, damage_base) for power levels 0-5. */
+/* Parameter table B — DM.BIN 0x038340.
+ * 12 uint16 BE values. Interpretation as cost/damage pairs not verified. */
 static const int g_param_wizard[6][2] = {
-    {5, 8}, {9, 14}, {15, 22}, {20, 30}, {25, 38}, {30, 46}
+    {111, 30}, {207, 42}, {26, 56}, {134, 70}, {186, 47}, {294, 102}
 };
 
 Nexus_SpellLookup nexus_v1_spell_lookup(int power, int element, int form,

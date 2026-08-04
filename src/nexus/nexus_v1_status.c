@@ -59,12 +59,9 @@ int nexus_v1_status_defense_bonus(const Nexus_StatusEffects *se) {
     return se->strength[NEXUS_STATUS_SHIELD];
 }
 
-/* DM1 experience thresholds per level (approximate from ReDMCSB).
- * Level 1 = 500 XP, doubles each level up to 16. */
+/* DM.BIN 0x0604B5DC: 6-byte xp_thresholds, each byte << 8. */
 static const int xp_thresholds[NEXUS_MAX_CLASS_LEVEL + 1] = {
-    0, 500, 1000, 2000, 4000, 8000, 16000, 32000,
-    64000, 128000, 256000, 512000, 1024000, 2048000, 4096000, 8192000,
-    16384000
+    0, 10240, 20480, 30720, 40960, 51200, 61440
 };
 
 void nexus_v1_xp_init(Nexus_Experience *xp) {

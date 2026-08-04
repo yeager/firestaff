@@ -42,10 +42,68 @@ int main(void) {
     expect(items[1] == 0x98, "item[1]=0x98 (152)");
     expect(items[2] == 0x97, "item[2]=0x97 (151)");
 
+    /* Stat indices (DM.BIN 0x03B5CD) */
+    {
+        const uint8_t *si = nexus_v1_combat_stat_indices();
+        expect(si[0] == 0, "si[0]=0");
+        expect(si[5] == 5, "si[5]=5");
+    }
+
+    /* Damage thresholds (DM.BIN 0x03B5A8) */
+    {
+        const uint8_t *dt = nexus_v1_combat_damage_thresholds();
+        expect(dt[0] == 0x80, "dt[0]=0x80");
+        expect(dt[4] == 0x80, "dt[4]=0x80");
+        expect(dt[5] == 0x00, "dt[5]=0x00");
+    }
+
+    /* Class param A (DM.BIN 0x03B5B6) */
+    {
+        const uint16_t *pa = nexus_v1_combat_class_param_a();
+        expect(pa[0] == 4,  "pa[0]=4");
+        expect(pa[1] == 18, "pa[1]=18");
+        expect(pa[2] == 11, "pa[2]=11");
+        expect(pa[3] == 25, "pa[3]=25");
+    }
+
+    /* Class param B (DM.BIN 0x03B5BE) */
+    {
+        const uint16_t *pb = nexus_v1_combat_class_param_b();
+        expect(pb[0] == 0,  "pb[0]=0");
+        expect(pb[1] == 5,  "pb[1]=5");
+        expect(pb[2] == 40, "pb[2]=40");
+        expect(pb[3] == 26, "pb[3]=26");
+    }
+
+    /* Type indices (DM.BIN 0x03B5E2) */
+    {
+        const uint8_t *ti = nexus_v1_combat_type_indices();
+        expect(ti[0] == 1,  "ti[0]=1");
+        expect(ti[1] == 21, "ti[1]=21");
+        expect(ti[6] == 19, "ti[6]=19");
+    }
+
+    /* Flag bits (DM.BIN 0x03B608) */
+    {
+        const uint32_t *fb = nexus_v1_combat_flag_bits();
+        expect(fb[0] == 0x20, "fb[0]=0x20");
+        expect(fb[1] == 0x10, "fb[1]=0x10");
+        expect(fb[2] == 0x08, "fb[2]=0x08");
+        expect(fb[3] == 0x04, "fb[3]=0x04");
+    }
+
+    /* Action perm (DM.BIN 0x03B618) */
+    {
+        const uint8_t *ap = nexus_v1_combat_action_perm();
+        expect(ap[0] == 0, "ap[0]=0");
+        expect(ap[1] == 4, "ap[1]=4");
+        expect(ap[4] == 1, "ap[4]=1");
+    }
+
     if (g_failures) {
         fprintf(stderr, "test_nexus_v1_combat_tables: %d failure(s)\n", g_failures);
         return 1;
     }
-    puts("ok: DM.BIN combat tables verified (attack perm + XP thresholds + stat bits + special items)");
+    puts("ok: DM.BIN combat tables verified (all 11 tables from 0x03B5A0-0x03B620)");
     return 0;
 }

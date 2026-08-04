@@ -7,7 +7,7 @@
 
 /* Nexus V1 Software Rasterizer
  * ==============================
- * Renders to a 320x200 indexed framebuffer (Saturn VDP1 resolution).
+ * Renders to a 320x224 indexed framebuffer (DM.BIN 0x03B960: 319x223).
  *
  * Features:
  *   - Z-buffer (per-pixel depth test)
@@ -31,7 +31,7 @@
 
 /* ─────────────────────────── Public Types ──────────────────────── */
 #define NEXUS_FB_W 320
-#define NEXUS_FB_H 200
+#define NEXUS_FB_H 224
 
 typedef struct {
     uint8_t  color_buffer[NEXUS_FB_W * NEXUS_FB_H];

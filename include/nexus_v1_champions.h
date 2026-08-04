@@ -53,12 +53,14 @@ typedef struct Nexus_V1_Champion {
     int health, max_health;
     int stamina, max_stamina;
     int mana, max_mana;
+    int luck;
     int strength, dexterity, wisdom, vitality, anti_magic, anti_fire;
     int fighter_level, ninja_level, priest_level, wizard_level;
     int food, water;
     int alive;
     int direction;            /* 0=N 1=E 2=S 3=W, used by Vi altar rebirth */
     int portrait_index;       /* CG texture index for portrait */
+    int portrait_type;        /* PLRD byte 23: body type (0-2) */
     uint8_t inventory[30];    /* item indices (30 slots) */
 
     /* Equipment slots — added per ReDMCSB CHAMPION.C F0309.
@@ -91,20 +93,12 @@ typedef struct {
     int leader_index;
 } Nexus_V1_ChampionPool;
 
-/* Maximum load calculation — matches ReDMCSB CHAMPION.C F0309.
- * max_load = (strength<<3) + 100, stamina-adjusted, wound-adjusted,
- * elven-boots bonus (+6.25%), rounded to nearest 10.
- * Source: CHAMPION.C F0309 lines 1157-1195, F0306_GetStaminaAdjustedValue.
- *
- * Movement tick rate — matches ReDMCSB CHAMPION.C F0310.
- * Returns number of game ticks between steps (55ms per tick).
- * When load >= max_load, movement is severely slowed (BUG0_72: uses > not >=).
- * Source: CHAMPION.C F0310 lines 1197-1222, BUG0_72 comment at line 1198. */
+/* Max load: DM.BIN 0x029ECC — (strength<<3)+100.
+ * Movement ticks: DM.BIN 0x02A7FA — load-ratio based, constants partially extracted. */
 int nexus_champion_get_maximum_load(const Nexus_V1_Champion *c);
 int nexus_champion_get_movement_ticks(const Nexus_V1_Champion *c);
 
-/* Stamina decrement — matches ReDMCSB CHAMPION.C F0325.
- * Decrements stamina by 'cost'. If stamina reaches 0, champion
+/* Stamina decrement — DM.BIN 0x029F38 (stamina scaling subroutine).
  * takes damage equal to |negative_stamina|/2 as wounds.
  * Source: CHAMPION.C F0325 lines 2025-2048. */
 void nexus_champion_decrement_stamina(Nexus_V1_Champion *c, int cost);

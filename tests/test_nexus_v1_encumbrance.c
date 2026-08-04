@@ -54,19 +54,21 @@ int main(void) {
         memset(&light, 0, sizeof(light));
         memset(&heavy, 0, sizeof(heavy));
         memset(&overloaded, 0, sizeof(overloaded));
-        light.max_load = 200; light.load = 50;
-        heavy.max_load = 200; heavy.load = 160;
-        overloaded.max_load = 200; overloaded.load = 250;
-        if (nexus_v1_encumbrance_stamina_cost(&light) != 1 ||
-            nexus_v1_encumbrance_stamina_cost(&heavy) != 2 ||
-            nexus_v1_encumbrance_stamina_cost(&overloaded) != NEXUS_OVERLOADED_STAMINA_DRAIN) {
+        /* DM.BIN 0x02A93A: tiered stamina cost.
+         * light (<62.5%): 2, medium (>=62.5%): 3, overloaded: (excess*4)/max+4 */
+        light.max_load = 200; light.load = 50;       /* 25% -> cost 2 */
+        heavy.max_load = 200; heavy.load = 160;       /* 80% -> cost 3 */
+        overloaded.max_load = 200; overloaded.load = 250; /* excess=50 -> (50*4)/200+4 = 5 */
+        if (nexus_v1_encumbrance_stamina_cost(&light) != NEXUS_STAMINA_COST_LIGHT ||
+            nexus_v1_encumbrance_stamina_cost(&heavy) != NEXUS_STAMINA_COST_MEDIUM ||
+            nexus_v1_encumbrance_stamina_cost(&overloaded) != 5) {
             fprintf(stderr, "FAIL: stamina costs %d/%d/%d\n",
                     nexus_v1_encumbrance_stamina_cost(&light),
                     nexus_v1_encumbrance_stamina_cost(&heavy),
                     nexus_v1_encumbrance_stamina_cost(&overloaded));
             fail++;
         } else {
-            printf("  Stamina cost: 1/2/%d OK\n", NEXUS_OVERLOADED_STAMINA_DRAIN);
+            printf("  Stamina cost: 2/3/5 OK (DM.BIN tiered)\n");
         }
     }
 
@@ -120,7 +122,7 @@ int main(void) {
     /* Test 8: NULL safety */
     {
         if (nexus_v1_encumbrance_move_ticks(NULL) != NEXUS_BASE_MOVE_TICKS ||
-            nexus_v1_encumbrance_stamina_cost(NULL) != 1 ||
+            nexus_v1_encumbrance_stamina_cost(NULL) != NEXUS_STAMINA_COST_LIGHT ||
             nexus_v1_encumbrance_overloaded(NULL) ||
             nexus_v1_encumbrance_ratio(NULL) != 0) {
             fprintf(stderr, "FAIL: NULL safety\n"); fail++;

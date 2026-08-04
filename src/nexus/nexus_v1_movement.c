@@ -301,16 +301,16 @@ int nexus_try_move(int dir, int forward,
     return 1;
 }
 
-/* Stamina cost formula — matches DM1 MOVESENS.C:597.
- * Source: MOVESENS.C F0267_MOVE_GetMoveResult_CPSCE line 597:
- *   F0325_CHAMPION_DecrementStamina(..., ((load * 25) / max_load) + 1);
- * NOTE: The multiplier is 25, not 3. The load*3 version was a local
- * stub error — the correct DM1 formula uses load*25/max_load+1.
- * BUG FIX: was load*3 (stub error), corrected to load*25 per ReDMCSB.
- * ReDMCSB: MOVESENS.C F0267 line 597, CHAMPION.C F0325 line 2025. */
+/* DM.BIN 0x02A93A: tiered stamina cost per movement step.
+ * Light (<62.5%): 2, Medium (>=62.5%): 3, Overloaded: (excess*4)/max+4. */
 int nexus_movement_stamina_cost(int load, int max_load) {
     int max_l = max_load > 0 ? max_load : 1;
-    return ((load * 25) / max_l) + 1;
+    if (load > max_l) {
+        int excess = load - max_l;
+        return (excess * 4) / max_l + 4;
+    }
+    if (load * 8 > max_l * 5) return 3;
+    return 2;
 }
 
 /* ═══════════════════════════════════════════════════════════════════

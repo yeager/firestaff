@@ -52,7 +52,8 @@ int nexus_v1_status_defense_bonus(const Nexus_StatusEffects *se);
 #define NEXUS_XP_CLASS_WIZARD  3
 #define NEXUS_XP_CLASS_COUNT   4
 
-#define NEXUS_MAX_CLASS_LEVEL  16
+/* DM.BIN 0x0604B5DC: 6 XP levels, each byte << 8 */
+#define NEXUS_MAX_CLASS_LEVEL  6
 
 typedef struct {
     int xp[NEXUS_XP_CLASS_COUNT];

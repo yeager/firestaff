@@ -215,9 +215,9 @@ int nexus_v1_creatures_load_cret(Nexus_V1_CreatureManager *mgr,
  * Maps creature attack category to stat lookup index. */
 #define NEXUS_COMBAT_ATTACK_PERM_COUNT 8
 
-/* Experience level thresholds (8 entries, DM.BIN 0x03B5D8).
- * Creature level boundaries: 40, 80, 120, 160, 200, 240, 277. */
-#define NEXUS_COMBAT_XP_THRESHOLD_COUNT 8
+/* Experience thresholds (6 entries, DM.BIN 0x0604B5DC).
+ * Each byte × 256 = XP threshold. SH-2: MOV.B + SHLL8, bounds 0..5. */
+#define NEXUS_COMBAT_XP_THRESHOLD_COUNT 6
 
 /* Stat bitmask table (6 entries, DM.BIN 0x03B5C6).
  * Powers of 2: 1, 2, 4, 8, 16, 32. Used for wound/stat category flags. */
@@ -226,12 +226,40 @@ int nexus_v1_creatures_load_cret(Nexus_V1_CreatureManager *mgr,
 /* Special combat item IDs (3 entries, DM.BIN 0x03B5D2). */
 #define NEXUS_COMBAT_SPECIAL_ITEM_COUNT 3
 
+/* Stat index table (6 entries, DM.BIN 0x0604B5CD). Identity: {0,1,2,3,4,5}. */
+#define NEXUS_COMBAT_STAT_INDEX_COUNT 6
+
+/* Damage thresholds (6 entries, DM.BIN 0x0604B5A8). {128,128,128,128,128,0}. */
+#define NEXUS_COMBAT_DAMAGE_THRESHOLD_COUNT 6
+
+/* Per-class combat parameters (4 uint16, DM.BIN 0x0604B5B6). {4,18,11,25}. */
+#define NEXUS_COMBAT_CLASS_PARAM_A_COUNT 4
+
+/* Per-class combat parameters (4 uint16, DM.BIN 0x0604B5BE). {0,5,40,26}. */
+#define NEXUS_COMBAT_CLASS_PARAM_B_COUNT 4
+
+/* Combat item/spell type indices (7 entries, DM.BIN 0x0604B5E2). */
+#define NEXUS_COMBAT_TYPE_INDEX_COUNT 7
+
+/* Combat flag bits (4 uint32, DM.BIN 0x0604B608). {32,16,8,4}. */
+#define NEXUS_COMBAT_FLAG_BITS_COUNT 4
+
+/* Combat action permutation (5 entries, DM.BIN 0x0604B618). {0,4,2,5,1}. */
+#define NEXUS_COMBAT_ACTION_PERM_COUNT 5
+
 /* Retrieve DM.BIN creature combat tables.  Returns pointers to static
  * tables extracted from the real Saturn binary.
- * Source: DM.BIN yam\cresub.c data region 0x03B5A0-0x03B5F0. */
+ * Source: DM.BIN yam\cresub.c data region 0x03B5A0-0x03B620. */
 const uint8_t *nexus_v1_combat_attack_perm(void);
 const uint8_t *nexus_v1_combat_xp_thresholds(void);
 const uint8_t *nexus_v1_combat_stat_bits(void);
 const uint16_t *nexus_v1_combat_special_items(void);
+const uint8_t *nexus_v1_combat_stat_indices(void);
+const uint8_t *nexus_v1_combat_damage_thresholds(void);
+const uint16_t *nexus_v1_combat_class_param_a(void);
+const uint16_t *nexus_v1_combat_class_param_b(void);
+const uint8_t *nexus_v1_combat_type_indices(void);
+const uint32_t *nexus_v1_combat_flag_bits(void);
+const uint8_t *nexus_v1_combat_action_perm(void);
 
 #endif

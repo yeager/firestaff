@@ -1,5 +1,6 @@
 
 #include "nexus_v1_creatures.h"
+#include "nexus_v1_combat.h"    /* for nexus_v1_combat_random */
 #include "nexus_v1_movement.h"  /* for nexus_get_square */
 #include <string.h>
 #include <stdio.h>
@@ -172,15 +173,15 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
                 /* Pick a new nearby wander target within a 3-square radius.
                  * Source: DM1 CREATURE.C idle movement — creatures shuffle
                  * around their home area when not chasing the party. */
-                int wx = c->x + (rand() % 7) - 3;
-                int wy = c->y + (rand() % 7) - 3;
+                int wx = c->x + nexus_v1_combat_random(7) - 3;
+                int wy = c->y + nexus_v1_combat_random(7) - 3;
                 if (wx < 0) wx = 0;
                 if (wx >= NEXUS_MAX_MAP_SIZE) wx = NEXUS_MAX_MAP_SIZE - 1;
                 if (wy < 0) wy = 0;
                 if (wy >= NEXUS_MAX_MAP_SIZE) wy = NEXUS_MAX_MAP_SIZE - 1;
                 c->wander_target_x = wx;
                 c->wander_target_y = wy;
-                c->wander_timer = 20 + (rand() % 20);
+                c->wander_timer = 20 + nexus_v1_combat_random(20);
             }
         }
         }
@@ -330,16 +331,15 @@ int nexus_v1_creature_attack(Nexus_V1_CreatureManager *mgr, int creature_idx,
      * DM1-style: hit if (attack_roll + creature_attack) > champion_defense.
      * Base hit chance: 60% + (creature_attack - champion_defense)/2.
      * Source: DM1 CREATURE.C creature attack resolution. */
-    roll = rand() % 100;
+    roll = nexus_v1_combat_random(100);
     dmg = mgr->types[c->type_index].attack;
 
     /* Apply defense reduction: champion armor absorbs creature damage.
      * Formula: damage_reduction = defense/2 + random(0..defense/2)
      * Minimum damage = 1 (attacks always deal at least 1 damage).
-     * Source: DM1 CREATURE.C F0209 creature attack vs champion (defense wiring;
-     *         champion pool ref acquired via mechanics layer get_champion_defense). */
+     * RNG: Saturn LCG (DM.BIN 0x06027FCE). */
     if (champion_defense > 0) {
-        int def_reduce = (champion_defense / 2) + (rand() % (champion_defense / 2 + 1));
+        int def_reduce = (champion_defense / 2) + nexus_v1_combat_random(champion_defense / 2 + 1);
         dmg -= def_reduce;
         if (dmg < 1) dmg = 1;
     }
@@ -591,7 +591,7 @@ int nexus_v1_creature_rebind_unbound(Nexus_V1_CreatureManager *mgr) {
     return resolved;
 }
 
-/* DM.BIN yam\cresub.c combat data tables at 0x03B5A0-0x03B5F0.
+/* DM.BIN yam\cresub.c combat data tables at 0x03B5A0-0x03B620.
  * Extracted from the real Saturn SH-2 binary. */
 
 static const uint8_t g_attack_perm[NEXUS_COMBAT_ATTACK_PERM_COUNT] = {
@@ -599,7 +599,7 @@ static const uint8_t g_attack_perm[NEXUS_COMBAT_ATTACK_PERM_COUNT] = {
 };
 
 static const uint8_t g_xp_thresholds[NEXUS_COMBAT_XP_THRESHOLD_COUNT] = {
-    0x28, 0x50, 0x78, 0xA0, 0xC8, 0xF0, 0x01, 0x15
+    0x28, 0x50, 0x78, 0xA0, 0xC8, 0xF0
 };
 
 static const uint8_t g_stat_bits[NEXUS_COMBAT_STAT_BITS_COUNT] = {
@@ -610,7 +610,42 @@ static const uint16_t g_special_items[NEXUS_COMBAT_SPECIAL_ITEM_COUNT] = {
     0x0095, 0x0098, 0x0097
 };
 
+static const uint8_t g_stat_indices[NEXUS_COMBAT_STAT_INDEX_COUNT] = {
+    0x00, 0x01, 0x02, 0x03, 0x04, 0x05
+};
+
+static const uint8_t g_damage_thresholds[NEXUS_COMBAT_DAMAGE_THRESHOLD_COUNT] = {
+    0x80, 0x80, 0x80, 0x80, 0x80, 0x00
+};
+
+static const uint16_t g_class_param_a[NEXUS_COMBAT_CLASS_PARAM_A_COUNT] = {
+    4, 18, 11, 25
+};
+
+static const uint16_t g_class_param_b[NEXUS_COMBAT_CLASS_PARAM_B_COUNT] = {
+    0, 5, 40, 26
+};
+
+static const uint8_t g_type_indices[NEXUS_COMBAT_TYPE_INDEX_COUNT] = {
+    1, 21, 17, 18, 23, 15, 19
+};
+
+static const uint32_t g_flag_bits[NEXUS_COMBAT_FLAG_BITS_COUNT] = {
+    0x00000020, 0x00000010, 0x00000008, 0x00000004
+};
+
+static const uint8_t g_action_perm[NEXUS_COMBAT_ACTION_PERM_COUNT] = {
+    0, 4, 2, 5, 1
+};
+
 const uint8_t *nexus_v1_combat_attack_perm(void) { return g_attack_perm; }
 const uint8_t *nexus_v1_combat_xp_thresholds(void) { return g_xp_thresholds; }
 const uint8_t *nexus_v1_combat_stat_bits(void) { return g_stat_bits; }
 const uint16_t *nexus_v1_combat_special_items(void) { return g_special_items; }
+const uint8_t *nexus_v1_combat_stat_indices(void) { return g_stat_indices; }
+const uint8_t *nexus_v1_combat_damage_thresholds(void) { return g_damage_thresholds; }
+const uint16_t *nexus_v1_combat_class_param_a(void) { return g_class_param_a; }
+const uint16_t *nexus_v1_combat_class_param_b(void) { return g_class_param_b; }
+const uint8_t *nexus_v1_combat_type_indices(void) { return g_type_indices; }
+const uint32_t *nexus_v1_combat_flag_bits(void) { return g_flag_bits; }
+const uint8_t *nexus_v1_combat_action_perm(void) { return g_action_perm; }

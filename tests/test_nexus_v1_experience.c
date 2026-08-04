@@ -21,10 +21,10 @@ int main(void) {
     /* Test 2: level_for_xp thresholds */
     {
         if (nexus_v1_experience_level_for_xp(0) != 0 ||
-            nexus_v1_experience_level_for_xp(499) != 0 ||
-            nexus_v1_experience_level_for_xp(500) != 1 ||
-            nexus_v1_experience_level_for_xp(1000) != 2 ||
-            nexus_v1_experience_level_for_xp(99999) != NEXUS_MAX_CLASS_LEVEL) {
+            nexus_v1_experience_level_for_xp(10239) != 0 ||
+            nexus_v1_experience_level_for_xp(10240) != 1 ||
+            nexus_v1_experience_level_for_xp(20480) != 2 ||
+            nexus_v1_experience_level_for_xp(999999) != NEXUS_MAX_CLASS_LEVEL) {
             fprintf(stderr, "FAIL: level_for_xp\n"); fail++;
         } else {
             printf("  Level thresholds OK\n");
@@ -90,7 +90,7 @@ int main(void) {
         ch.strength = 10;
         ch.max_health = 50;
         ch.fighter_level = 0;
-        state.xp[0].fighter_xp = 500;
+        state.xp[0].fighter_xp = 10240;
         old_str = ch.strength;
         result = nexus_v1_experience_check_levelup(&state, &ch, 0);
         if (!result || ch.fighter_level != 1 ||
@@ -112,7 +112,7 @@ int main(void) {
         ch.primary_class = NEXUS_CLASS_FIGHTER;
         ch.strength = 10;
         ch.fighter_level = 0;
-        state.xp[0].fighter_xp = 499;
+        state.xp[0].fighter_xp = 10239;
         if (nexus_v1_experience_check_levelup(&state, &ch, 0)) {
             fprintf(stderr, "FAIL: premature levelup\n"); fail++;
         } else {
@@ -130,7 +130,7 @@ int main(void) {
         ch.wisdom = 10;
         ch.max_mana = 20;
         ch.wizard_level = 0;
-        state.xp[0].wizard_xp = 1500;
+        state.xp[0].wizard_xp = 30720;
         nexus_v1_experience_check_levelup(&state, &ch, 0);
         if (ch.wizard_level != 3 ||
             ch.wisdom != 10 + 3 * NEXUS_STAT_GAIN_PER_LEVEL ||

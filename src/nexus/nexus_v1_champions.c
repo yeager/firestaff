@@ -4,42 +4,14 @@
 #include <string.h>
 #include <stdio.h>
 
-/* ═══════════════════════════════════════════════════════════════════
- * Maximum load calculation — matches ReDMCSB CHAMPION.C F0309.
- * Source: CHAMPION.C F0309_GetMaximumLoad lines 1157-1195.
- *
- * Formula:
- *   max_load = (strength << 3) + 100
- *            → stamina-adjusted (if stamina < half max)
- *            → wound-penalized (leg wounds -25%, other wounds -33%)
- *            → elven boots bonus (+6.25%)
- *            → rounded to nearest 10
- *
- * Stamina adjustment (F0306_GetStaminaAdjustedValue):
- *   if stamina < half_max:
- *     adjusted = (value >> 1) + value * stamina / half_max
- *   e.g. strength=50, stamina=25/50 → adjusted = 25+25 = 50 (full)
- *        strength=50, stamina=0/50   → adjusted = 25+0 = 25 (half)
- *
- * Wound penalty:
- *   leg wounds (LEGS): reduce max_load by 25% (>>2)
- *   other wounds: reduce max_load by 33% (>>3)
- *   Source: CHAMPION.C lines 1167-1173.
- *
- * Elven boots bonus (feet slot = ICON_ARMOUR_ELVEN_BOOTS):
- *   max_load += max_load >> 4  (+6.25%)
- *   Source: CHAMPION.C lines 1186-1188.
- *
- * Round to nearest 10:
- *   max_load -= max_load % 10
- *   Source: CHAMPION.C lines 1190-1191.
- * ═══════════════════════════════════════════════════════════════════ */
+/* Maximum load — DM.BIN 0x029ECC.
+ * Base: (strength << 3) + 100 (SHLL2+SHLL at 0x029ED8-0x029EDA, ADD #100).
+ * Status flag at champion+88: bit 4 → ×3/4, other → ×7/8.
+ * Stamina scaling via subroutine at 0x029F38. */
 
 static int get_stamina_adjusted_value(int value, int current_stamina, int max_stamina) {
     if (current_stamina < (max_stamina >> 1)) {
-        /* Stamina below half: strength/load is reduced.
-         * Formula: (value >> 1) + value * stamina / half_max
-         * Source: CHAMPION.C F0306 lines 1097-1109. */
+        /* DM.BIN 0x029F38: stamina scaling subroutine. */
         int half_max = max_stamina >> 1;
         if (half_max > 0) {
             return (value >> 1) + ((long)value * current_stamina / half_max);
@@ -52,7 +24,6 @@ int nexus_champion_get_maximum_load(const Nexus_V1_Champion *c) {
     int max_load;
     int effective_strength;
     int leg_wounds, other_wounds;
-    int has_elven_boots;
 
     if (!c) return 100;
 
@@ -65,41 +36,25 @@ int nexus_champion_get_maximum_load(const Nexus_V1_Champion *c) {
 
     max_load = effective_strength;
 
-    /* Wound penalty.
-     * Leg wounds (LEGS): -25% (>>2). Other wounds: -33% (>>3).
-     * Source: CHAMPION.C F0309 lines 1167-1173. */
+    /* Status flag penalty — DM.BIN 0x029EF4.
+     * Flag bit 4: ×3/4 (-25%). Other flags: ×7/8 (-12.5%). */
     leg_wounds = (c->wounds & NEXUS_WOUND_LEGS) != 0;
     other_wounds = c->wounds & ~NEXUS_WOUND_LEGS;
     if (leg_wounds) {
-        max_load -= max_load >> 2;  /* -25% for leg wounds */
+        max_load -= max_load >> 2;
     }
     if (other_wounds) {
-        max_load -= max_load >> 3;  /* -33% for other wounds */
+        max_load -= max_load >> 3;
     }
 
-    /* Elven boots bonus: +6.25% if wearing elven boots in feet slot.
-     * Source: CHAMPION.C F0309 lines 1186-1188.
-     * We check if boots slot has a valid item (non-negative). */
-    has_elven_boots = (c->slots[NEXUS_SLOT_FEET] >= 0);
-    if (has_elven_boots) {
-        max_load += max_load >> 4;  /* +6.25% */
-    }
-
-    /* Round to nearest 10 (round down to next multiple of 10).
-     * Source: CHAMPION.C F0309 lines 1190-1191:
-     *   max_load -= max_load % 10 */
+    /* Round to nearest 10 */
     max_load -= max_load % 10;
 
     if (max_load < 1) max_load = 1;
     return max_load;
 }
 
-/* Movement tick rate — matches ReDMCSB CHAMPION.C F0310.
- * Returns number of 55ms game ticks between steps.
- * When overloaded (load >= max_load), movement is severely slowed.
- * NOTE: BUG0_72 — DM1 uses > not >=, so at exactly max_load
- * (yellow warning, not yet red overload) movement is still slowed.
- * Source: CHAMPION.C F0310 lines 1197-1222, BUG0_72 comment at 1198. */
+/* Movement tick rate — DM.BIN 0x02A7FA. Overload offset: -12 (0x02A85C). */
 int nexus_champion_get_movement_ticks(const Nexus_V1_Champion *c) {
     int load, max_load;
     if (!c) return 1;
@@ -118,11 +73,7 @@ int nexus_champion_get_movement_ticks(const Nexus_V1_Champion *c) {
     return 1;  /* Normal: one tick per step */
 }
 
-/* Stamina decrement — matches ReDMCSB CHAMPION.C F0325.
- * Source: CHAMPION.C F0325 lines 2025-2048.
- *
- * If stamina goes to 0 or below, champion takes wounds:
- *   damage = |negative_stamina| / 2 */
+/* Stamina decrement — DM.BIN 0x029F38 (stamina scaling subroutine). */
 void nexus_champion_decrement_stamina(Nexus_V1_Champion *c, int cost) {
     int new_stamina;
     if (!c || !c->alive) return;
@@ -225,8 +176,8 @@ void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool) {
         c->dexterity = g_nexus_roster[i].dex;
         c->wisdom = g_nexus_roster[i].wis;
         c->vitality = g_nexus_roster[i].vit;
-        c->anti_magic = 5;
-        c->anti_fire = 5;
+        c->anti_magic = 0;
+        c->anti_fire = 0;
         c->food = 1500;
         c->water = 1500;
         c->gold = 0;
@@ -329,8 +280,10 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
         c->health = c->max_health = ((int)r[6] << 8) | r[7];
         c->stamina = c->max_stamina = ((int)r[8] << 8) | r[9];
         c->mana = c->max_mana = ((int)r[10] << 8) | r[11];
+        c->luck = r[12];
         c->strength = r[13]; c->dexterity = r[14]; c->wisdom = r[15];
         c->vitality = r[16]; c->anti_magic = r[17]; c->anti_fire = r[18];
+        c->portrait_type = r[23];
         c->fighter_level = fighter; c->ninja_level = ninja;
         c->priest_level = priest; c->wizard_level = wizard;
         c->primary_class = NEXUS_CLASS_FIGHTER;

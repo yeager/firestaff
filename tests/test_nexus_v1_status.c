@@ -123,13 +123,13 @@ int main(void) {
     {
         Nexus_Experience xp;
         nexus_v1_xp_init(&xp);
-        nexus_v1_xp_add(&xp, NEXUS_XP_CLASS_FIGHTER, 600);
+        nexus_v1_xp_add(&xp, NEXUS_XP_CLASS_FIGHTER, 10240);
         int leveled = nexus_v1_xp_check_levelup(&xp, NEXUS_XP_CLASS_FIGHTER);
         if (leveled != 1 || xp.level[NEXUS_XP_CLASS_FIGHTER] != 1) {
             fprintf(stderr, "FAIL: levelup: leveled=%d level=%d\n",
                     leveled, xp.level[NEXUS_XP_CLASS_FIGHTER]); fail++;
         } else {
-            printf("  Fighter 600 XP: level 0->1 OK\n");
+            printf("  Fighter 10240 XP: level 0->1 OK\n");
         }
     }
 
@@ -137,24 +137,24 @@ int main(void) {
     {
         Nexus_Experience xp;
         nexus_v1_xp_init(&xp);
-        nexus_v1_xp_add(&xp, NEXUS_XP_CLASS_WIZARD, 5000);
+        nexus_v1_xp_add(&xp, NEXUS_XP_CLASS_WIZARD, 30720);
         int leveled = nexus_v1_xp_check_levelup(&xp, NEXUS_XP_CLASS_WIZARD);
         if (leveled < 3 || xp.level[NEXUS_XP_CLASS_WIZARD] < 3) {
             fprintf(stderr, "FAIL: multi-level: leveled=%d level=%d\n",
                     leveled, xp.level[NEXUS_XP_CLASS_WIZARD]); fail++;
         } else {
-            printf("  Wizard 5000 XP: level 0->%d (%d levels) OK\n",
+            printf("  Wizard 30720 XP: level 0->%d (%d levels) OK\n",
                    xp.level[NEXUS_XP_CLASS_WIZARD], leveled);
         }
     }
 
     /* Test 11: XP threshold table */
     {
-        if (nexus_v1_xp_threshold(0) != 0 || nexus_v1_xp_threshold(1) != 500 ||
-            nexus_v1_xp_threshold(2) != 1000) {
+        if (nexus_v1_xp_threshold(0) != 0 || nexus_v1_xp_threshold(1) != 10240 ||
+            nexus_v1_xp_threshold(2) != 20480) {
             fprintf(stderr, "FAIL: xp thresholds\n"); fail++;
         } else {
-            printf("  XP thresholds: L0=0 L1=500 L2=1000 OK\n");
+            printf("  XP thresholds: L0=0 L1=10240 L2=20480 OK\n");
         }
     }
 
