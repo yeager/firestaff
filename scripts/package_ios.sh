@@ -29,8 +29,9 @@ printf 'APPL????' > "${BUNDLE_DIR}/PkgInfo"
 
 codesign --force --deep --sign - "${BUNDLE_DIR}" 2>/dev/null || true
 
+IPA_OUTPUT="${RELEASE_DIR}/${APP_NAME}-${VERSION}-ios-arm64.ipa"
 cd "${STAGING_DIR}"
-zip -r -9 "${OLDPWD}/${RELEASE_DIR}/${APP_NAME}-${VERSION}-ios-arm64.ipa" Payload/
+zip -r -9 "${IPA_OUTPUT}" Payload/
 
 rm -rf "${STAGING_DIR}"
 

@@ -1,5 +1,8 @@
 
 
+# Firestaff v3.0.282
+- CI fix: iOS IPA packaging path duplication (absolute RELEASE_DIR + OLDPWD)
+
 # Firestaff v3.0.281
 - Replace all system("mkdir -p") calls with FSP_CreateDirectoryRecursive() (iOS compat)
 - Android APK: pass --min-sdk-version 24 to apksigner (raw XML manifest)
