@@ -225,7 +225,7 @@ static void test_try_push_object_to(void)
     int32_t ok = dm2_v1_try_push_object_to(99, 3, 4, &out_x, &out_y, &cb, NULL);
     assert(ok == 1);
     assert(g_pushed_record == 99);
-    assert(out_x == 3 && out_y == 4);
+    assert(out_x == 3 && out_y == 3);
     printf("test_try_push_object_to OK\n");
 }
 

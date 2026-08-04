@@ -100,9 +100,9 @@ int16_t dm2_v1_creature_can_handle_item_in(
     }
 }
 
-int dm2_v1_confuse_creature(
+int dm2_v1_confuse_creature_simple(
     int16_t power, int16_t x, int16_t y, int32_t damage,
-    const DM2_V1_ConfuseCreatureCallbacks *cb, void *ctx)
+    const DM2_V1_ConfuseCreatureSimpleCallbacks *cb, void *ctx)
 {
     if (!cb)
         return 0;

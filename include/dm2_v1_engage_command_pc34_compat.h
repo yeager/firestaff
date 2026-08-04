@@ -108,7 +108,7 @@ typedef struct {
      * When NULL, the case falls through to fail_closed. */
     const DM2_V1_ProceedLightCallbacks *light_cb;
     void *light_ctx;
-    const DM2_V1_ConfuseCreatureCallbacks *confuse_cb;
+    const DM2_V1_ConfuseCreatureSimpleCallbacks *confuse_cb;
     void *confuse_ctx;
     int32_t confuse_damage;   /* skengage.cpp:322: RG61l (accumulated) */
 

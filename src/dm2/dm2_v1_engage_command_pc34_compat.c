@@ -143,7 +143,7 @@ int dm2_v1_engage_command(
     case 4: /* CONFUSE_CREATURE — skengage.cpp:315-328 */
         if (request->confuse_cb) {
             int16_t power = request->cmd.delay;
-            int conf_r = dm2_v1_confuse_creature(
+            int conf_r = dm2_v1_confuse_creature_simple(
                 power, request->party_x, request->party_y,
                 request->confuse_damage,
                 request->confuse_cb, request->confuse_ctx);

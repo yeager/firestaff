@@ -74,11 +74,11 @@ typedef struct {
     int16_t (*rand16)(void *ctx, int16_t max);
     void (*attack_creature)(void *ctx, uint16_t target, int16_t x, int16_t y,
                             int16_t attack_type, int16_t sound, int32_t damage);
-} DM2_V1_ConfuseCreatureCallbacks;
+} DM2_V1_ConfuseCreatureSimpleCallbacks;
 
-int dm2_v1_confuse_creature(
+int dm2_v1_confuse_creature_simple(
     int16_t power, int16_t x, int16_t y, int32_t damage,
-    const DM2_V1_ConfuseCreatureCallbacks *cb, void *ctx);
+    const DM2_V1_ConfuseCreatureSimpleCallbacks *cb, void *ctx);
 
 /* ---- DM2_CREATURE_KILL_ON_TIMER_POSITION (c_creature.cpp:2352) ----
  * Delete creature at timer position and set flag. */

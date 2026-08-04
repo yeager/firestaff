@@ -227,7 +227,7 @@ static void test_confuse_with_callback(void)
 {
     DM2_V1_EngageCommandReceipt receipt;
     DM2_V1_EngageCommandRequest req = make_request(5);
-    DM2_V1_ConfuseCreatureCallbacks cb;
+    DM2_V1_ConfuseCreatureSimpleCallbacks cb;
     memset(&cb, 0, sizeof(cb));
     cb.get_record_address = mock_confuse_get_record;
     cb.get_creature_type = mock_confuse_get_type;

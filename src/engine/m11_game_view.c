@@ -44638,7 +44638,8 @@ static int m11_draw_nexus_title_from_real_assets(
         return 0;
     }
     nexus_fb_init(&nexusFb);
-    nexus_render_title(title, &nexusFb, state->nexusState.title_frame);
+    nexus_render_title(title, &nexusFb,
+                       state->nexusState.title_frame);
     copyW = framebufferWidth < NEXUS_FB_W ? framebufferWidth : NEXUS_FB_W;
     copyH = framebufferHeight < NEXUS_FB_H ? framebufferHeight : NEXUS_FB_H;
     for (y = 0; y < copyH; ++y) {
@@ -51916,7 +51917,7 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 rendered = -1;
             }
         }
-        if (rendered != 0) {
+        if (rendered == -1) {
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_BLACK);
