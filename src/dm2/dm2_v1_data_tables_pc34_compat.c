@@ -1168,3 +1168,9 @@ const dm2_s_wbbbbw dm2_v1_table_1d653c[55] = {
     { 0x021f, -1, 0x00, 0x00, 0x00, 0x0000 },
     { 0x0220, -1, 0x00, 0x00, 0x00, 0x0000 }
 };
+
+const char *const dm2_v1_table_1d6912[18] = {
+    "SK", "LV", "CM", "BZ", "TR", "ST",
+    "PA", "TA", "NC", "EX", "PB", "DM",
+    "MS", "SD", "RP", "HN", "AT", "WH"
+};

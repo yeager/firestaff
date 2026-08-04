@@ -164,6 +164,9 @@ extern const dm2_s_www dm2_v1_table_1d338c[264];
 extern const int8_t dm2_v1_table_1d296c[63][36];
 extern const dm2_s_wbbbbw dm2_v1_table_1d653c[55];
 
+/* GDAT command-string type prefixes (table1d6912) */
+extern const char *const dm2_v1_table_1d6912[18];
+
 #ifdef __cplusplus
 }
 #endif

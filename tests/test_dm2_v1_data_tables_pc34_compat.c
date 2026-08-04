@@ -1,6 +1,7 @@
 #include "dm2_v1_data_tables_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 
 static void test_dir_dx(void)
 {
@@ -338,6 +339,15 @@ static void test_batch4_runtime_tables(void)
     printf("test_batch4_runtime_tables OK\n");
 }
 
+static void test_gdat_cmdstr_types(void)
+{
+    assert(strcmp(dm2_v1_table_1d6912[0], "SK") == 0);
+    assert(strcmp(dm2_v1_table_1d6912[5], "ST") == 0);
+    assert(strcmp(dm2_v1_table_1d6912[11], "DM") == 0);
+    assert(strcmp(dm2_v1_table_1d6912[17], "WH") == 0);
+    printf("test_gdat_cmdstr_types OK\n");
+}
+
 int main(void)
 {
     test_dir_dx();
@@ -374,6 +384,7 @@ int main(void)
     test_batch3_char_table();
     test_batch3_ornament_position();
     test_batch4_runtime_tables();
+    test_gdat_cmdstr_types();
     printf("All dm2_v1_data_tables tests passed.\n");
     return 0;
 }
