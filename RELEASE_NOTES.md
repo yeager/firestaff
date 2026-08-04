@@ -1,5 +1,9 @@
 
 
+# Firestaff v3.0.281
+- Replace all system("mkdir -p") calls with FSP_CreateDirectoryRecursive() (iOS compat)
+- Android APK: pass --min-sdk-version 24 to apksigner (raw XML manifest)
+
 # Firestaff v3.0.280
 - CI fix: guard system() calls behind FIRESTAFF_IOS/Android ifdefs (unavailable on iOS)
 - CI fix: Android SDL3 linking via CMAKE_FIND_ROOT_PATH for NDK toolchain

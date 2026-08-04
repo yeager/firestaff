@@ -35,6 +35,7 @@
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include "fs_portable_compat.h"
 #include <string.h>
 
 /* ── Default runtime flags ───────────────────────────────────────────
@@ -285,14 +286,7 @@ const char* TQR_V1_BootProfile_GetSaveRoot(const TQR_V1_BootProfile *profile) {
     }
     saveDir = profile->saveDir;
 
-    /* Ensure directory exists */
-    {
-        char cmd[1024];
-        int rc = snprintf(cmd, sizeof(cmd), "mkdir -p \"%s\"", saveDir);
-        if (rc > 0 && rc < (int)sizeof(cmd)) {
-            (void)system(cmd);
-        }
-    }
+    FSP_CreateDirectoryRecursive(saveDir);
 
     return saveDir;
 }

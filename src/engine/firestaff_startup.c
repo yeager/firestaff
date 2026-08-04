@@ -16,15 +16,7 @@ static const char *fs_get_default_data_dir(void) {
 }
 
 static void fs_mkdir_p(const char *path) {
-#ifdef _WIN32
-    char cmd[600];
-    snprintf(cmd, sizeof(cmd), "mkdir \"%s\" 2>nul", path);
-    system(cmd);
-#else
-    char cmd[600];
-    snprintf(cmd, sizeof(cmd), "mkdir -p '%s' 2>/dev/null", path);
-    system(cmd);
-#endif
+    FSP_CreateDirectoryRecursive(path);
 }
 
 /* Create data directories if they don't exist */

@@ -63,6 +63,7 @@ fi
     --ks-key-alias androiddebugkey \
     --ks-pass pass:android \
     --key-pass pass:android \
+    --min-sdk-version 24 \
     --out "${FINAL}" \
     "${ALIGNED}"
 
