@@ -123,32 +123,26 @@ int main(void) {
         free(buf);
     }
 
-    /* 6. Char dimension inference: large glyph data -> 16x16.
-     *    Source: glyph_size = (size - 48) / char_count >= 32. With
-     *    char_count=64 and 33 bytes/glyph, glyph_data_size = 2112,
-     *    glyph_size = 2112/64 = 33 (>=32) -> 16x16. */
+    /* 6. SCR character generator tiles are always 8x8 regardless of data size. */
     {
         int sz;
         uint8_t* buf = make_scr(64, 33, &sz);
         Nexus_V1_Font f;
         nexus_v1_font_load(&f, buf, sz);
-        CHECK(f.char_width == 16 && f.char_height == 16,
-              "33 bytes/glyph -> 16x16 font");
+        CHECK(f.char_width == 8 && f.char_height == 8,
+              "SCR font always 8x8 (large payload)");
         nexus_v1_font_free(&f);
         free(buf);
     }
 
-    /* 7. Char dimension inference: medium glyph data -> 12x12.
-     *    Source: 18 <= glyph_size < 32. With char_count=64 and
-     *    20 bytes/glyph, glyph_data_size = 1280, glyph_size = 20
-     *    (>=18) -> 12x12. */
+    /* 7. SCR font 8x8 with medium payload size. */
     {
         int sz;
         uint8_t* buf = make_scr(64, 20, &sz);
         Nexus_V1_Font f;
         nexus_v1_font_load(&f, buf, sz);
-        CHECK(f.char_width == 12 && f.char_height == 12,
-              "20 bytes/glyph -> 12x12 font");
+        CHECK(f.char_width == 8 && f.char_height == 8,
+              "SCR font always 8x8 (medium payload)");
         nexus_v1_font_free(&f);
         free(buf);
     }

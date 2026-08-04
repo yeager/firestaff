@@ -79,6 +79,11 @@ struct Nexus_MechanicsState {
     int set_leader_slot;   /* party slot (0-3) for NEXUS_CMD_SET_LEADER */
     int throw_slot;        /* inventory slot for NEXUS_CMD_THROW */
     int drop_slot;         /* inventory slot for NEXUS_CMD_DROP_ITEM */
+
+    /* Fire protection — DM.BIN 0x0603C386: bit 0 of attribute word at
+     * offset 310 from state pointer gates fire square traversal.
+     * Set by Fire Shield spell (FUL BRO NETA); decremented each tick. */
+    int fire_shield_ticks;
 };
 
 /* ═══════════════════════════════════════════════════════════════════

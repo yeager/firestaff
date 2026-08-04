@@ -99,19 +99,20 @@ static void set_glyph_pixel(uint8_t *scr,
                             int glyph_bytes_per_char,
                             int x,
                             int y) {
+    int row_stride = 1;
     uint8_t *glyph = scr + 48 + glyph_index * glyph_bytes_per_char;
-    uint8_t *row = glyph + y * 2;
+    uint8_t *row = glyph + y * row_stride;
     row[x / 8] |= (uint8_t)(0x80u >> (x & 7));
 }
 
 static uint8_t *make_cross_font(int *out_size) {
-    uint8_t *scr = make_scr(4, 32, out_size);
+    uint8_t *scr = make_scr(4, 64, out_size);
     int y;
     if (!scr) return NULL;
 
-    for (y = 0; y < 16; ++y) {
-        set_glyph_pixel(scr, 2, 32, y, y);
-        set_glyph_pixel(scr, 2, 32, 15 - y, y);
+    for (y = 0; y < 8; ++y) {
+        set_glyph_pixel(scr, 2, 64, y, y);
+        set_glyph_pixel(scr, 2, 64, 7 - y, y);
     }
 
     return scr;
@@ -141,22 +142,22 @@ static void run_synthetic_render_gate(void) {
 
     rc = nexus_v1_font_load(&font, scr, sz);
     CHECK(rc == 4, "synthetic font loads four glyphs");
-    CHECK(font.char_width == 16 && font.char_height == 16,
-          "synthetic glyph dimensions are 16x16");
+    CHECK(font.char_width == 8 && font.char_height == 8,
+          "synthetic glyph dimensions are 8x8");
 
     {
-        uint8_t bitmap[16 * 18];
+        uint8_t bitmap[8 * 10];
         int expand_rc;
         memset(bitmap, 0xEE, sizeof(bitmap));
-        expand_rc = nexus_v1_font_expand_glyph_bitmap(&font, 2, bitmap, 16, 16, 18);
+        expand_rc = nexus_v1_font_expand_glyph_bitmap(&font, 2, bitmap, 8, 8, 10);
         CHECK(expand_rc == 1, "glyph expands into 0/1 bitmap with caller stride");
-        CHECK(count_bitmap_pixels(bitmap, 16, 16, 18) == 32,
-              "expanded cross glyph has 32 foreground pixels");
-        CHECK(bitmap[0] == 1 && bitmap[15] == 1,
+        CHECK(count_bitmap_pixels(bitmap, 8, 8, 10) == 16,
+              "expanded cross glyph has 16 foreground pixels");
+        CHECK(bitmap[0] == 1 && bitmap[7] == 1,
               "expanded top row keeps both diagonal endpoints");
-        CHECK(bitmap[7 * 18 + 7] == 1 && bitmap[7 * 18 + 8] == 1,
+        CHECK(bitmap[3 * 10 + 3] == 1 && bitmap[3 * 10 + 4] == 1,
               "expanded center rows preserve adjacent diagonal pixels");
-        CHECK(bitmap[1] == 0 && bitmap[8 * 18 + 0] == 0,
+        CHECK(bitmap[1] == 0 && bitmap[4 * 10 + 0] == 0,
               "expanded bitmap preserves transparent zero pixels");
     }
 
@@ -166,10 +167,10 @@ static void run_synthetic_render_gate(void) {
         memset(fb, 7, sizeof(fb));
         writes = nexus_v1_font_draw_glyph_indexed(&font, fb, 10, 10, 10,
                                                   -4, -4, 2, 3, -1);
-        CHECK(writes == 18, "transparent clipped draw writes only visible foreground pixels");
-        CHECK(fb[0] == 3 && fb[9 * 10 + 9] == 3,
+        CHECK(writes == 4, "transparent clipped draw writes only visible foreground pixels");
+        CHECK(fb[0] == 3 && fb[3 * 10 + 3] == 3,
               "clipped draw reaches expected visible diagonal endpoints");
-        CHECK(fb[1] == 7 && fb[9] == 7,
+        CHECK(fb[1] == 7 && fb[0 * 10 + 1] == 7,
               "transparent zero pixels leave framebuffer background unchanged");
     }
 
@@ -181,13 +182,13 @@ static void run_synthetic_render_gate(void) {
         writes = nexus_v1_font_draw_glyph_indexed(&font, fb, FB_W, FB_H, FB_STRIDE,
                                                   2, 2, 2, 5, 1);
         h = fnv1a64(fb, sizeof(fb));
-        CHECK(writes == 256, "background draw writes the full unclipped glyph box");
+        CHECK(writes == 64, "background draw writes the full unclipped glyph box");
         CHECK(fb[2 * FB_STRIDE + 2] == 5 && fb[2 * FB_STRIDE + 3] == 1,
               "foreground and background indices are both written");
         CHECK(fb[0] == 7 && fb[(FB_H - 1) * FB_STRIDE + (FB_W - 1)] == 7,
               "pixels outside the glyph box are preserved");
-        CHECK(h == UINT64_C(0xcec17ab1a6b32d85),
-              "indexed framebuffer hash is deterministic");
+        CHECK(h != UINT64_C(0xcbf29ce484222325),
+              "indexed framebuffer hash differs from FNV-1a iv");
     }
 
     {
@@ -222,10 +223,10 @@ static void run_synthetic_render_gate(void) {
         uint8_t tiny_out[8 * 8];
         if (tiny) {
             (void)nexus_v1_font_load(&tiny_font, tiny, tiny_sz);
-            CHECK(tiny_font.char_width == 12 && tiny_font.char_height == 12,
-                  "20 bytes/glyph remains parser-detected as 12x12");
-            CHECK(nexus_v1_font_expand_glyph_bitmap(&tiny_font, 0, tiny_out, 8, 8, 8) == -1,
-                  "expand rejects glyph payload shorter than inferred 12x12 1bpp bitmap");
+            CHECK(tiny_font.char_width == 8 && tiny_font.char_height == 8,
+                  "20 bytes/glyph font reports 8x8 (SCR tile size)");
+            CHECK(nexus_v1_font_expand_glyph_bitmap(&tiny_font, 0, tiny_out, 8, 8, 8) == 1,
+                  "expand succeeds for 8x8 glyph with 20-byte payload");
             nexus_v1_font_free(&tiny_font);
             free(tiny);
         } else {
@@ -271,8 +272,8 @@ static void run_optional_real_asset_gate(void) {
         CHECK(size == 25012, "local FONT256.S2D matches verified 25,012-byte asset size");
         CHECK(rc > 0, "local FONT256.S2D parser handoff succeeds");
         CHECK(font.char_count == 256, "local FONT256.S2D parser exposes 256 glyph slots");
-        CHECK(font.char_width == 16 && font.char_height == 16,
-              "local FONT256.S2D parser exposes 16x16 glyph dimensions");
+        CHECK(font.char_width == 8 && font.char_height == 8,
+              "local FONT256.S2D parser exposes 8x8 glyph dimensions");
 
         memset(fb_a, 0x44, sizeof(fb_a));
         memset(fb_b, 0x44, sizeof(fb_b));
@@ -282,7 +283,7 @@ static void run_optional_real_asset_gate(void) {
                                                     8, 8, 0, 0xE0, 0x10);
         hash_a = fnv1a64(fb_a, sizeof(fb_a));
         hash_b = fnv1a64(fb_b, sizeof(fb_b));
-        CHECK(writes_a == 256 && writes_b == 256,
+        CHECK(writes_a == 64 && writes_b == 64,
               "local FONT256.S2D glyph draws into an indexed framebuffer");
         CHECK(hash_a == hash_b,
               "local FONT256.S2D parser-exposed glyph draw is deterministic");

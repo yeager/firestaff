@@ -21,13 +21,12 @@ int nexus_v1_font_load(Nexus_V1_Font *font, const uint8_t *data, int size) {
     if (font->char_count <= 0 || font->char_count > 512)
         font->char_count = 256;
 
-    /* Estimate char dimensions from data size */
-    int glyph_data_size = size - 48;  /* skip header */
-    int glyph_size = glyph_data_size / font->char_count;
-    /* Common Saturn font: 12x12, 16x16, 8x16 */
-    if (glyph_size >= 32) { font->char_width = 16; font->char_height = 16; }
-    else if (glyph_size >= 18) { font->char_width = 12; font->char_height = 12; }
-    else { font->char_width = 8; font->char_height = glyph_size; }
+    /* SCR character generator tiles are 8x8 8bpp (64 bytes each).
+     * The SCR header has no explicit glyph dimension field; the 8x8
+     * tile size is inherent to the Saturn VDP2 character generator format. */
+    int glyph_data_size = size - 48;
+    font->char_width = 8;
+    font->char_height = 8;
 
     font->bitmap_data = malloc(glyph_data_size);
     if (font->bitmap_data) {

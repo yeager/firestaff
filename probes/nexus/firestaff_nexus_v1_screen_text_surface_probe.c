@@ -173,8 +173,8 @@ static void run_synthetic_surface_gate(void)
     fprintf(stderr, "\n-- synthetic S2D screen-text surface gate --\n");
 
     memset(&font, 0, sizeof(font));
-    font_scr = make_cross_font(96, 16, 16, &font_size);
-    section_scr = build_section_scr(0x120, 96u * 32u, 96, 3, &section_size);
+    font_scr = make_cross_font(96, 8, 8, &font_size);
+    section_scr = build_section_scr(0x120, 96u * 8u, 96, 3, &section_size);
     rc = nexus_v1_font_load(&font, font_scr, font_size);
     CHECK(rc > 0, "synthetic S2D font loads through flat 1bpp parser");
     rc = nexus_v1_font_load_sections(section_scr, section_size, &sections);
@@ -191,7 +191,7 @@ static void run_synthetic_surface_gate(void)
     style.line_height = 0;
     style.tab_stop = 0;
     style.max_chars = 0;
-    style.bytes_per_glyph = 32;
+    style.bytes_per_glyph = 8;
 
     memset(fb, 0, sizeof(fb));
     drawn = nexus_v1_screen_text_draw_indexed(
@@ -208,7 +208,7 @@ static void run_synthetic_surface_gate(void)
     CHECK(receipt.chars_skipped == 0,
           "screen-text receipt chars_skipped == 0");
     CHECK(receipt.writes > 0, "screen-text receipt writes > 0");
-    CHECK(receipt.cursor_x == style.x + 5 * (16 + style.letter_spacing_x),
+    CHECK(receipt.cursor_x == style.x + 5 * (8 + style.letter_spacing_x),
           "screen-text cursor advances from requested x origin");
     CHECK(receipt.cursor_y == style.y,
           "screen-text cursor_y preserves requested y origin for single line");
@@ -219,8 +219,8 @@ static void run_synthetic_surface_gate(void)
     for (y = 0; y < FB_H; ++y) {
         for (x = 0; x < FB_W; ++x) {
             if (fb[y * FB_STRIDE + x] != 0) {
-                if (x < style.x || y < style.y || y >= style.y + 16 ||
-                    x >= style.x + 5 * (16 + style.letter_spacing_x)) {
+                if (x < style.x || y < style.y || y >= style.y + 8 ||
+                    x >= style.x + 5 * (8 + style.letter_spacing_x)) {
                     outside_writes++;
                 }
             }
@@ -300,7 +300,7 @@ static void run_optional_real_asset_gate(void)
         style.fg_index = 2;
         style.bg_index = 0;
         style.letter_spacing_x = 0;
-        style.bytes_per_glyph = 32;
+        style.bytes_per_glyph = 8;
 
         memset(fb, 0, sizeof(fb));
         drawn_a = nexus_v1_screen_text_draw_s2d_bytes(

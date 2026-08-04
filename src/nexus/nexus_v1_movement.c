@@ -134,10 +134,14 @@ int nexus_square_is_fire(int sq) {
 }
 
 int nexus_square_is_passable(int sq) {
-    /* Wall (type 0) is impassable. Water (21) and fire (22) are also
-     * impassable in V1 (require item/rune to cross).
-     * Source: DM1 DUNGEON.C SQUARE_TYPE() passability. */
-    if (sq == 0 || sq == 21 || sq == 22) return 0;
+    /* Wall (type 0) is the only unconditionally impassable type.
+     * Water (21) is always passable (no crossing gate in DM.BIN movement path;
+     * all CMP/EQ #21 sites are rendering/dispatch, not passability).
+     * Fire (22) passability is conditional — gated by fire_shield_ticks in
+     * the mechanics state (DM.BIN 0x0603C386: bit 0 of attribute word).
+     * This function reports the base type passability; fire gating is
+     * applied in nexus_mechanics_tick where state is available. */
+    if (sq == 0) return 0;
     return 1;
 }
 

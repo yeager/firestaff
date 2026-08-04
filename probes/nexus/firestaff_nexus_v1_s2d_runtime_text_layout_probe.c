@@ -270,8 +270,8 @@ static uint8_t *make_cross_scr(int char_count,
 static uint8_t *make_synthetic_4section_font(int char_count,
                                              int *out_size)
 {
-    /* Total bytes needed for char_count 1bpp 16x16 glyphs. */
-    int glyph_bytes = (16 / 8) * 16;  /* = 32 bytes/glyph */
+    /* Total bytes needed for char_count 1bpp 8x8 glyphs. */
+    int glyph_bytes = 8;  /* = 8 bytes/glyph (8x8 1bpp) */
     int total = char_count * glyph_bytes;
     int section_sizes[4] = {0};
     int i;
@@ -395,7 +395,7 @@ static void run_map_only_gate(void) {
         uint8_t *font = make_synthetic_4section_font(256, &scr_size);
         rc = nexus_v1_font_load_sections(font, scr_size, &sections);
         CHECK(rc == 0, "four-populated synthetic SCR parses");
-        rc = nexus_v1_s2d_section_glyph_map(&sections, 32, &map);
+        rc = nexus_v1_s2d_section_glyph_map(&sections, 8, &map);
         CHECK(rc == 0, "four-populated synthetic map builds");
         CHECK(map.range_count == 4, "synthetic map has 4 ranges");
         CHECK(map.ranges[0].table_index == 0 &&
@@ -472,14 +472,14 @@ static void run_layout_only_gate(void) {
 
     fprintf(stderr, "\n-- synthetic layout gate --\n");
 
-    /* Build a 16x16 1bpp font covering 64 glyphs with a "cross"
+    /* Build an 8x8 1bpp font covering 64 glyphs with a "cross"
      * pattern. Section table at index 0 covers all 64 glyphs. */
     memset(fb, 0, sizeof(fb));
-    font_scr = make_cross_scr(64, 16, 16, &scr_size);
+    font_scr = make_cross_scr(64, 8, 8, &scr_size);
     rc = nexus_v1_font_load(&font, font_scr, scr_size);
     CHECK(rc > 0, "synthetic cross-font loads");
-    CHECK(font.char_width == 16 && font.char_height == 16,
-          "synthetic cross-font dimensions 16x16");
+    CHECK(font.char_width == 8 && font.char_height == 8,
+          "synthetic cross-font dimensions 8x8");
 
     {
         uint32_t offsets[32] = {0};
@@ -487,11 +487,11 @@ static void run_layout_only_gate(void) {
         uint8_t *scr2;
         int ss2 = 0;
         offsets[0] = 0x120;
-        sizes[0] = (uint32_t)(64 * ((16 + 7) / 8) * 16);
+        sizes[0] = (uint32_t)(64 * 8);
         scr2 = build_scr(offsets, sizes, 64, &ss2);
         rc = nexus_v1_font_load_sections(scr2, ss2, &sections);
         CHECK(rc == 0, "single-section synthetic SCR parses for layout");
-        rc = nexus_v1_s2d_section_glyph_map(&sections, 32, &map);
+        rc = nexus_v1_s2d_section_glyph_map(&sections, 8, &map);
         CHECK(rc == 0, "single-section synthetic map builds for layout");
         free(scr2);
     }
@@ -509,9 +509,9 @@ static void run_layout_only_gate(void) {
     cfg.fg_index = 7;
     cfg.bg_index = -1;
     cfg.letter_spacing_x = 1;
-    cfg.line_height = 0;  /* auto = 16 */
+    cfg.line_height = 0;  /* auto = 8 */
     cfg.tab_stop = 0;
-    cfg.bytes_per_glyph = 32;
+    cfg.bytes_per_glyph = 8;
     rc = nexus_v1_s2d_text_layout_init(&layout, &font, &map, &cfg);
     CHECK(rc == 0, "layout_init succeeds with valid font + map + config");
     CHECK(layout.initialized == 1, "layout.initialized == 1 after init");
@@ -556,12 +556,12 @@ static void run_layout_only_gate(void) {
         &layout, fb, 64, 16, 64, "A");
     CHECK(drawn == 1, "draw_string(\"A\") returns 1");
     CHECK(layout.cursor.chars_drawn == 1, "single-glyph chars_drawn == 1");
-    CHECK(layout.cursor.cursor_x == 16 + 1, "single-glyph cursor_x = w+sp");
+    CHECK(layout.cursor.cursor_x == 8 + 1, "single-glyph cursor_x = w+sp");
     CHECK(layout.cursor.writes > 0, "single-glyph paints at least 1 pixel");
     {
         int x, y, hits = 0;
-        for (y = 0; y < 16; ++y) {
-            for (x = 0; x < 17; ++x) {
+        for (y = 0; y < 8; ++y) {
+            for (x = 0; x < 9; ++x) {
                 if (fb[y * 64 + x] == 7) ++hits;
             }
         }
@@ -575,8 +575,8 @@ static void run_layout_only_gate(void) {
         &layout, fb, 64, 16, 64, "ABCDE");
     CHECK(drawn == 5, "draw_string(\"ABCDE\") returns 5");
     CHECK(layout.cursor.chars_drawn == 5, "ABCDE chars_drawn == 5");
-    CHECK(layout.cursor.cursor_x == 5 * (16 + 1),
-          "ABCDE cursor_x = 5*(16+letter_spacing)");
+    CHECK(layout.cursor.cursor_x == 5 * (8 + 1),
+          "ABCDE cursor_x = 5*(8+letter_spacing)");
 
     /* [14] '\n' advances y, resets x, increments line_count. */
     memset(fb, 0, sizeof(fb));
@@ -587,9 +587,9 @@ static void run_layout_only_gate(void) {
     CHECK(layout.cursor.chars_drawn == 4, "AB\\nCD chars_drawn == 4");
     CHECK(layout.cursor.line_count == 1, "AB\\nCD line_count == 1");
     CHECK(layout.cursor.newline_count == 1, "AB\\nCD newline_count == 1");
-    CHECK(layout.cursor.cursor_x == 2 * (16 + 1),
-          "AB\\nCD cursor_x = 2*(16+letter_spacing)");
-    CHECK(layout.cursor.cursor_y == 16, "AB\\nCD cursor_y == line_height");
+    CHECK(layout.cursor.cursor_x == 2 * (8 + 1),
+          "AB\\nCD cursor_x = 2*(8+letter_spacing)");
+    CHECK(layout.cursor.cursor_y == 8, "AB\\nCD cursor_y == line_height");
 
     /* [15] Deterministic screen-text hash. */
     {
@@ -623,8 +623,8 @@ static void run_layout_only_gate(void) {
             &layout, fb, 64, 16, 64, "ABCDE");
         CHECK(drawn == 3, "max_chars=3 caps draw_string at 3 glyphs");
         CHECK(layout.cursor.chars_drawn == 3, "capped chars_drawn == 3");
-        CHECK(layout.cursor.cursor_x == 3 * (16 + 1),
-              "capped cursor_x = 3*(16+letter_spacing)");
+        CHECK(layout.cursor.cursor_x == 3 * (8 + 1),
+              "capped cursor_x = 3*(8+letter_spacing)");
         nexus_v1_s2d_text_layout_set_max_chars(&layout, 0);
     }
 
@@ -666,7 +666,7 @@ static void run_layout_only_gate(void) {
               "screen_text receipt reports no skipped chars");
         CHECK(receipt_a.map_char_count == 64,
               "screen_text receipt carries map_char_count");
-        CHECK(receipt_a.final_cursor_x == 4 + 5 * (16 + 1),
+        CHECK(receipt_a.final_cursor_x == 4 + 5 * (8 + 1),
               "screen_text final cursor_x preserves x origin + advance");
         CHECK(receipt_a.final_cursor_y == 5,
               "screen_text final cursor_y preserves y origin");
@@ -701,7 +701,7 @@ static void run_layout_only_gate(void) {
      * layout to draw a 32-glyph string. */
     {
         int tiny_size = 0;
-        uint8_t *tiny_font = make_cross_scr(16, 16, 16, &tiny_size);
+        uint8_t *tiny_font = make_cross_scr(16, 8, 8, &tiny_size);
         Nexus_V1_Font tiny;
         uint32_t offsets[32] = {0};
         uint32_t sizes[32] = {0};
@@ -713,11 +713,11 @@ static void run_layout_only_gate(void) {
 
         rc = nexus_v1_font_load(&tiny, tiny_font, tiny_size);
         offsets[0] = 0x120;
-        sizes[0] = (uint32_t)(16 * 32);
+        sizes[0] = (uint32_t)(16 * 8);
         scr2 = build_scr(offsets, sizes, 16, &ss2);
         rc = nexus_v1_font_load_sections(scr2, ss2, &tiny_sec);
         CHECK(rc == 0, "tiny 16-glyph font SCR parses");
-        rc = nexus_v1_s2d_section_glyph_map(&tiny_sec, 32, &tiny_map);
+        rc = nexus_v1_s2d_section_glyph_map(&tiny_sec, 8, &tiny_map);
         CHECK(rc == 0, "tiny 16-glyph map builds");
 
         rc = nexus_v1_s2d_text_layout_init(&tiny_layout, &tiny,
@@ -1054,7 +1054,7 @@ static void run_shift_jis_classifier_only_gate(void) {
           "NUL is NOT a Shift-JIS trail (sentinel for cursor loop)");
 }
 
-/* Synthetic-font Shift-JIS skip gate. Builds a 16x16 1bpp font
+/* Synthetic-font Shift-JIS skip gate. Builds an 8x8 1bpp font
  * covering all 256 glyphs and runs a deterministic script with
  * embedded Shift-JIS bytes through the layout cursor. Verifies
  * that the SJIS bytes are skipped (no draw, no cursor advance),
@@ -1093,11 +1093,11 @@ static void run_shift_jis_skip_gate(void) {
         uint8_t *scr2;
         int ss2 = 0;
         offsets[0] = 0x120;
-        sizes[0] = (uint32_t)(256 * 32);
+        sizes[0] = (uint32_t)(256 * 8);
         scr2 = build_scr(offsets, sizes, 256, &ss2);
         rc = nexus_v1_font_load_sections(scr2, ss2, &sections);
         CHECK(rc == 0, "shift-jis gate: single-section SCR parses for layout");
-        rc = nexus_v1_s2d_section_glyph_map(&sections, 32, &map);
+        rc = nexus_v1_s2d_section_glyph_map(&sections, 8, &map);
         CHECK(rc == 0, "shift-jis gate: section→glyph-range map builds");
         free(scr2);
     }
@@ -1108,7 +1108,7 @@ static void run_shift_jis_skip_gate(void) {
     cfg.letter_spacing_x = 1;
     cfg.line_height = 0;
     cfg.tab_stop = 0;
-    cfg.bytes_per_glyph = 32;
+    cfg.bytes_per_glyph = 8;
     rc = nexus_v1_s2d_text_layout_init(&layout, &font, &map, &cfg);
     CHECK(rc == 0, "shift-jis gate: layout inits");
     CHECK(layout.initialized == 1,
@@ -1174,8 +1174,8 @@ static void run_shift_jis_skip_gate(void) {
     /* Cursor advanced exactly 4 ASCII glyphs. The SJIS bytes do
      * NOT advance cursor_x because the layout does not claim to
      * render them. */
-    CHECK(layout.cursor.cursor_x == 4 * (16 + 1),
-          "shift-jis gate: cursor_x == 4*(16+letter_spacing) (only ASCII advances)");
+    CHECK(layout.cursor.cursor_x == 4 * (8 + 1),
+          "shift-jis gate: cursor_x == 4*(8+letter_spacing) (only ASCII advances)");
     CHECK(layout.cursor.cursor_y == 0,
           "shift-jis gate: cursor_y == 0 (no newlines)");
     CHECK(layout.cursor.writes > 0,

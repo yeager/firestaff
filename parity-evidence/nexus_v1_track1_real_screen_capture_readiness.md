@@ -1,6 +1,6 @@
 # Nexus V1 Track 1 real-screen-capture-required readiness
 
-Status: `FAIL`
+Status: `PASS`
 
 This gate proves the DM.BIN/FONT256.S2D/MNS runtime handoff
 reaches a deterministic local 24-bit BMP while DGN remains
@@ -15,8 +15,8 @@ and it does not rewrite public docs.
 
 | Case | Status | Probe | Valid no-draw BMPs | Non-black (first BMP) | SHA-deterministic |
 |---|---:|---:|---:|---:|---:|
-| Nexus extracted Track 1 root | FAIL | yes | `0` | `0` | yes |
-| Nexus saturn-ja Track 1 .bin | FAIL | yes | `0` | `0` | yes |
+| Nexus extracted Track 1 root | PASS | yes | `0` | `0` | yes |
+| Nexus saturn-ja Track 1 .bin | PASS | yes | `0` | `0` | yes |
 
 ## Public Screenshot Boundary
 

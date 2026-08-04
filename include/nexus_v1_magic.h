@@ -70,7 +70,8 @@ int nexus_v1_spell_damage(int power, Nexus_SpellClass cls);
 #define NEXUS_SPELL_EFFECT_STRENGTH   0x000A
 #define NEXUS_SPELL_EFFECT_SLOW       0x000B
 #define NEXUS_SPELL_EFFECT_DARKNESS   0x000C
-#define NEXUS_SPELL_EFFECT_COUNT         13
+#define NEXUS_SPELL_EFFECT_FIRE_SHIELD 0x000D
+#define NEXUS_SPELL_EFFECT_COUNT         14
 
 /* Spell effect categories for the game loop. */
 typedef enum {

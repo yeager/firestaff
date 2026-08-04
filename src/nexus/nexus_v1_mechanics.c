@@ -977,13 +977,19 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 }
             }
 
-            /* Water/fire square traversal: the synthetic table used hardcoded
-             * ordinals 65/80 ("Rope"/"Rune of Fire"), but real ITEM.IBS maps
-             * those to a Weapon and a Potion respectively.  Until Saturn-
-             * specific traversal semantics are proven, these squares block
-             * unconditionally (fail closed). */
-            if (sq == NEXUS_SQUARE_WATER || sq == NEXUS_SQUARE_FIRE) {
-                sq = 0; /* treat as wall */
+            /* Water/fire square traversal — DM.BIN disassembly evidence:
+             *
+             * Water (type 21): no crossing gate found in movement path.
+             * All four CMP/EQ #21,R0 sites (0x01CE40, 0x020E3A, 0x02CBAA,
+             * 0x02CD52) are rendering/dispatch, not passability checks.
+             * Water squares are always passable; damage is applied on entry.
+             *
+             * Fire (type 22): DM.BIN 0x0603C386 gates on bit 0 of a 16-bit
+             * attribute word at offset 310 from state pointer. If fire
+             * protection is active (fire_shield_ticks > 0), the party can
+             * cross. Otherwise, the square blocks movement. */
+            if (sq == NEXUS_SQUARE_FIRE && st->fire_shield_ticks <= 0) {
+                sq = 0; /* block: no fire protection */
             }
 
             /* A teleporter without a decoded source link is not an ordinary
@@ -1338,6 +1344,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
      * Source: DM1 CHAMPION.C food/water drain (F0325 stamina decrement). */
     if (st->food_drain_timer > 0) st->food_drain_timer--;
     if (st->water_drain_timer > 0) st->water_drain_timer--;
+    if (st->fire_shield_ticks > 0) st->fire_shield_ticks--;
     if (st->food_drain_timer <= 0) {
         st->food_drain_timer = FOOD_DRAIN_TICKS;
         /* Drain 1 food from each living party champion.

@@ -24,7 +24,7 @@ loader parity before any image bytes leave the operator-local output
 directory.
 
 Exit codes:
-  0  PASS — every present data case produced a valid 320x200 BMP with
+  0  PASS — every present data case produced a valid 320x224 BMP with
              zero non-black pixels, the probe reported PASS, and the
              two consecutive BMP hashes match.
   1  FAIL — at least one present case failed.
@@ -228,13 +228,13 @@ def run_case(probe: Path, case: dict[str, Any]) -> dict[str, Any]:
             bool(pairs) and all(p["first"] == p["second"] for p in pairs)
         )
 
-    # Pass/fail decision: probe returned 0, at least one valid 320x200
+    # Pass/fail decision: probe returned 0, at least one valid 320x224
     # BMP with no non-black pixels was produced, and the two consecutive
     # runs produced matching SHA256 pairs. Non-black DGN pixels require a
     # separate original-Saturn capture/admission receipt.
     valid_shots = [s for s in row["screenshots"]
                    if s.get("valid") and s.get("width") == 320
-                   and s.get("height") == 200
+                   and s.get("height") == 224
                    and s.get("non_black_pixels", -1) == 0]
     probe_ok = row["probe_first_run"].get("ok") is True
     row["ok"] = (

@@ -12,7 +12,7 @@
     "successfulMovementTiming": "dm1_v1_movement_timing_pc34_compat.c:66-90",
     "successfulMovementTimingSpan": "dm1_v1_movement_timing_pc34_compat.c:76-86"
   },
-  "head": "1da847ff82b3aa994aeabd514bca41380093d41a",
+  "head": "a972d8e3286642b457794583fc2827dfa970bb5a",
   "notClaimed": [
     "new original DOSBox capture",
     "viewport/touch/rendering parity",
@@ -34,6 +34,6 @@
   "schema": "firestaff.parity.pass580_dm1_v1_forward_collision_timing.v1",
   "scope": "DM1 V1 movement pipeline only: queued forward command dispatch, cooldown gating, blocked-square behavior, stamina and non-stamina stamina side effects, and unchanged party position on blocked movement.",
   "status": "PASS580_DM1_V1_FORWARD_COLLISION_TIMING_LOCKED",
-  "timestampUtc": "2026-08-04T07:31:44.192537+00:00",
+  "timestampUtc": "2026-08-04T10:17:37.749413+00:00",
   "worktree": "/Volumes/Extern-disk/firestaff-claude"
 }

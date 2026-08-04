@@ -569,9 +569,8 @@ Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
 
     case NEXUS_SQUARE_ALARM:
         /* Alarm: set all creatures to alerted state.
-         * Implementation: creature manager receives alert signal.
-         * V1 stub: alarm event returned, actual alert dispatch in
-         * creature tick. Source: DM1 MOVESENS.C alarm sensor. */
+         * Event dispatched to nexus_v1_creatures_alert_all() in
+         * nexus_v1_mechanics.c:1096. Source: DM1 MOVESENS.C alarm sensor. */
         return NEXUS_EVENT_ALARM_TRIGGER;
 
     case NEXUS_SQUARE_CHUTE:

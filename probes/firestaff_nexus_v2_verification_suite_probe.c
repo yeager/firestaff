@@ -294,17 +294,16 @@ static void check_v2_upscaled_init(void)
     Nexus_V2_RenderPipeline pipe;
     int rc = nexus_v2_pipeline_init(&pipe, NEXUS_V2_UPSCALED);
     check(rc == 0, "V2 UPSCALED: pipeline_init returns 0");
-    /* V2.1 default is 640x400. */
-    check(pipe.output_w == 640,
-          "V2 UPSCALED: output_w == 640");
-    check(pipe.output_h == 400,
-          "V2 UPSCALED: output_h == 400");
+    check(pipe.output_w == NEXUS_FB_W * 2,
+          "V2 UPSCALED: output_w == 2x NEXUS_FB_W");
+    check(pipe.output_h == NEXUS_FB_H * 2,
+          "V2 UPSCALED: output_h == 2x NEXUS_FB_H");
     check(pipe.config.mode == NEXUS_V2_UPSCALED,
           "V2 UPSCALED: config.mode == NEXUS_V2_UPSCALED");
     check(pipe.config.bilinear_filter == 1,
           "V2 UPSCALED: bilinear_filter default ON");
     check(pipe.output_buffer != 0,
-          "V2 UPSCALED: output_buffer allocated (640*400*4 bytes)");
+          "V2 UPSCALED: output_buffer allocated");
     nexus_v2_pipeline_shutdown(&pipe);
 }
 
@@ -447,12 +446,12 @@ static void check_config_mode_to_dimensions(void)
     Nexus_V2_RenderPipeline pipe;
     int rc;
     rc = nexus_v2_pipeline_init(&pipe, NEXUS_V2_OFF);
-    check(rc == 0 && pipe.output_w == 320 && pipe.output_h == 200,
-          "config->dim: V2_OFF -> 320x200");
+    check(rc == 0 && pipe.output_w == NEXUS_FB_W && pipe.output_h == NEXUS_FB_H,
+          "config->dim: V2_OFF -> NEXUS_FB_W x NEXUS_FB_H");
     nexus_v2_pipeline_shutdown(&pipe);
     rc = nexus_v2_pipeline_init(&pipe, NEXUS_V2_UPSCALED);
-    check(rc == 0 && pipe.output_w == 640 && pipe.output_h == 400,
-          "config->dim: V2_UPSCALED -> 640x400");
+    check(rc == 0 && pipe.output_w == NEXUS_FB_W * 2 && pipe.output_h == NEXUS_FB_H * 2,
+          "config->dim: V2_UPSCALED -> 2x NEXUS_FB");
     nexus_v2_pipeline_shutdown(&pipe);
     rc = nexus_v2_pipeline_init(&pipe, NEXUS_V2_ENHANCED);
     check(rc == 0 && pipe.output_w == 1280 && pipe.output_h == 800,

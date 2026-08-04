@@ -27,7 +27,7 @@
  *  - Phase 5 (BPK archive contract): nexus_v1_bpk_archive_parse
  *    rejects too-small input and accepts the synthetic BPPK/BMPD
  *    directory fixture.
- *  - Phase 6 (font parser contract): synth 16x16 S2D loads with
+ *  - Phase 6 (font parser contract): synth 8x8 S2D loads with
  *    parser-detected dimensions and rejects NULL/bounds queries.
  *  - Phase 7 (determinism): the synthetic DGN parse is deterministic
  *    over a small repetition count.
@@ -350,14 +350,14 @@ static void probe_phase_6_font_contract(void)
     printf("  Source-lock: src/nexus/nexus_v1_saturn_font.c\n");
     printf("               include/nexus_v1_saturn_font.h\n");
 
-    /* Build a minimal synthetic 16x16, 1-bpp, 4-glyph font fixture.
+    /* Build a minimal synthetic 8x8, 1-bpp, 4-glyph font fixture.
      * Layout per nexus_v1_saturn_font.c:
      *   offset 0..14  : "SEGA SATURN SCR" magic (15 bytes)
      *   offset 16..19 : char_count big-endian
      *   offset 20..47 : padding (28 bytes)
-     *   offset 48..   : glyph_count × (dim*dim/8) bytes payload
-     * 4 glyphs × 16×16/8 = 4 × 32 = 128 bytes payload. */
-    const int dim = 16;
+     *   offset 48..   : glyph payload bytes
+     * SCR character generator tiles are always 8x8. */
+    const int dim = 8;
     const int glyphs = 4;
     const int payload = glyphs * (dim * dim / 8);
     const int total = 48 + payload;
@@ -371,11 +371,11 @@ static void probe_phase_6_font_contract(void)
     Nexus_V1_Font font;
     memset(&font, 0, sizeof(font));
     int r = nexus_v1_font_load(&font, font_buf, total);
-    CHECK(r > 0, "font_load accepts synthetic 16x16 4-glyph fixture");
+    CHECK(r > 0, "font_load accepts synthetic 8x8 4-glyph fixture");
 
     if (r > 0) {
         CHECK(font.char_width == dim && font.char_height == dim,
-              "font glyph dimensions are 16x16");
+              "font glyph dimensions are 8x8");
         CHECK(font.char_count == glyphs,
               "font char_count matches the 4-glyph fixture");
 

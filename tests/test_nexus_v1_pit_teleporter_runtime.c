@@ -327,9 +327,9 @@ static void test_water_blocked_without_rope(void) {
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     int redraw = nexus_mechanics_tick(&st, &engine);
 
-    CHECK(redraw == 0, "water without rope does not request redraw");
-    CHECK(st.party_x == 10 && st.party_y == 10,
-          "water without rope keeps party on starting square");
+    CHECK(redraw == 1, "water square is always passable (no gate in DM.BIN)");
+    CHECK(st.party_x == 10 && st.party_y == 9,
+          "water square allows movement (DM.BIN: no CMP/EQ #21 in movement path)");
 }
 
 static void test_water_crossed_with_rope(void) {
@@ -344,12 +344,9 @@ static void test_water_crossed_with_rope(void) {
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     int redraw = nexus_mechanics_tick(&st, &engine);
 
-    /* Water/fire traversal is fail-closed: real ITEM.IBS ordinals 65/80
-     * are not Rope/Rune of Fire.  Block unconditionally until Saturn
-     * traversal semantics are proven. */
-    CHECK(redraw == 0, "water with item blocked (fail-closed)");
-    CHECK(st.party_x == 10 && st.party_y == 10,
-          "water with item keeps party on starting square (fail-closed)");
+    CHECK(redraw == 1, "water square passable regardless of inventory");
+    CHECK(st.party_x == 10 && st.party_y == 9,
+          "water square allows movement (no crossing gate in DM.BIN)");
 }
 
 static void test_fire_blocked_without_rune(void) {
@@ -375,14 +372,14 @@ static void test_fire_crossed_with_rune(void) {
     reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
     engine.current_level.squares[9][10] = NEXUS_SQUARE_FIRE;
     engine.current_level.collision_refs[9][10] = 0;
-    give_leader_item(&engine, 80);
+    st.fire_shield_ticks = 100;
 
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     int redraw = nexus_mechanics_tick(&st, &engine);
 
-    CHECK(redraw == 0, "fire with item blocked (fail-closed)");
-    CHECK(st.party_x == 10 && st.party_y == 10,
-          "fire with item keeps party on starting square (fail-closed)");
+    CHECK(redraw == 1, "fire with fire_shield allows crossing");
+    CHECK(st.party_x == 10 && st.party_y == 9,
+          "fire with fire_shield moves party (DM.BIN 0x0603C386 bit 0 gate)");
 }
 
 static void test_square_event_water_returns_cross_water(void) {

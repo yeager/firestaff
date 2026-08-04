@@ -1676,9 +1676,9 @@ static PROBE_NOINLINE void probe_water_fire_runtime(void)
 
         int redraw = nexus_mechanics_tick(&st, &engine);
 
-        CHECK(redraw == 0, "water without rope does not request redraw");
-        CHECK(st.party_x == 10 && st.party_y == 10,
-              "water without rope keeps party on starting square");
+        CHECK(redraw == 1, "water always passable (no crossing gate in DM.BIN)");
+        CHECK(st.party_x == 10 && st.party_y == 9,
+              "water allows movement (DM.BIN: no CMP/EQ #21 in movement path)");
     }
 
     /* Water crossed with Rope. */
@@ -1722,9 +1722,9 @@ static PROBE_NOINLINE void probe_water_fire_runtime(void)
 
         int redraw = nexus_mechanics_tick(&st, &engine);
 
-        CHECK(redraw == 0, "water fail-closed (IBS ordinal 65 is Weapon, not Rope)");
-        CHECK(st.party_x == 10 && st.party_y == 10,
-              "water blocked unconditionally until traversal semantics proven");
+        CHECK(redraw == 1, "water passable regardless of inventory");
+        CHECK(st.party_x == 10 && st.party_y == 9,
+              "water allows movement (no crossing gate in DM.BIN)");
     }
 
     /* Fire blocked without Rune of Fire. */
@@ -1805,17 +1805,17 @@ static PROBE_NOINLINE void probe_water_fire_runtime(void)
         engine.champions.champions[0].stamina = 100;
         engine.champions.champions[0].max_stamina = 100;
         memset(engine.champions.champions[0].inventory, 0xFFU, 30);
-        engine.champions.champions[0].inventory[0] = 80; /* Rune of Fire */
 
         nexus_mechanics_init(&st, 10, 10, NEXUS_DIR_NORTH);
         st.map_index = 3;
+        st.fire_shield_ticks = 100;
         nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
 
         int redraw = nexus_mechanics_tick(&st, &engine);
 
-        CHECK(redraw == 0, "fire fail-closed (IBS ordinal 80 is Potion, not Rune)");
-        CHECK(st.party_x == 10 && st.party_y == 10,
-              "fire blocked unconditionally until traversal semantics proven");
+        CHECK(redraw == 1, "fire with fire_shield allows crossing");
+        CHECK(st.party_x == 10 && st.party_y == 9,
+              "fire with fire_shield moves party (DM.BIN 0x0603C386 bit 0 gate)");
     }
 
     /* Square event codes for water/fire. */

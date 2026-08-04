@@ -19,6 +19,28 @@
  *   DM2_PROCEED_COMMAND_SLOT     c_events.cpp:2818
  *   DM2_PLAYER_TESTING_WALL      c_events.cpp:625
  *   DM2_PUSH_PULL_RIGID_BODY     c_events.cpp:467
+ *   DM2_events_5BFB              c_events.cpp:170
+ *   DM2_events_AB26              c_events.cpp:201
+ *   DM2_events_38c8_0002         c_events.cpp:327
+ *   DM2_events_38c8_0060         c_events.cpp:355
+ *   DM2_events_13262             c_events.cpp:427
+ *   DM2_ADD_RUNE_TO_TAIL         c_events.cpp:1871
+ *   DM2_REMOVE_RUNE_FROM_TAIL    c_events.cpp:1931
+ *   DM2_CLICK_MONEYBOX           c_events.cpp:1941
+ *   DM2_events_2e62_0cfa         c_events.cpp:2153
+ *   DM2_events_30DEA             c_events.cpp:2903
+ *   DM2_events_443c_0434         c_events.cpp:3958
+ *   DM2_events_2f3f_04ea         c_events.cpp:1996
+ *   DM2_events_121e_0351         c_events.cpp:1298
+ *   DM2_events_37BBB             c_events.cpp:1290
+ *   DM2_events_121e_0003         c_events.cpp:1222
+ *   DM2_events_121e_013a         c_events.cpp:974
+ *   DM2_eventa_121e_0222         c_events.cpp:1051
+ *   DM2_events_121e_03ae         c_events.cpp:1171
+ *   DM2_events_32cb_0287         c_events.cpp:670
+ *   DM2_events_32cb_03a6         c_events.cpp:736
+ *   DM2_guivp_32cb_01b6          c_events.cpp:1345
+ *   DM2_events_3C1E5             c_events.cpp:2949
  */
 
 #include <stdint.h>

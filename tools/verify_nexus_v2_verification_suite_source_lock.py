@@ -18,7 +18,7 @@ REQUIRED_SOURCE = [
 
 REQUIRED_FIRESTAFF = [
     (ROOT / "include/nexus_v1_rasterizer.h", "#define NEXUS_FB_W 320"),
-    (ROOT / "include/nexus_v1_rasterizer.h", "#define NEXUS_FB_H 200"),
+    (ROOT / "include/nexus_v1_rasterizer.h", "#define NEXUS_FB_H 224"),
     (ROOT / "include/nexus_v2_config.h", "NEXUS_V2_OFF = 0"),
     (ROOT / "include/nexus_v2_config.h", "NEXUS_V2_UPSCALED"),
     (ROOT / "include/nexus_v2_config.h", "NEXUS_V2_ENHANCED"),

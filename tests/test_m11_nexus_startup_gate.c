@@ -213,8 +213,8 @@ static void expect_title_sequence_contract(void) {
                     frame0.frame_in_phase == 0 &&
                     frame0.frames_until_ready == 54 &&
                     frame0.reveal_h == 80 &&
-                    frame0.reveal_y0 == 60 &&
-                    frame0.reveal_y1 == 140 &&
+                    frame0.reveal_y0 == (NEXUS_FB_H - 80) / 2 &&
+                    frame0.reveal_y1 == (NEXUS_FB_H - 80) / 2 + 80 &&
                     frame0.edge_color == 12 &&
                     !frame0.boot_reveal_complete,
                 "Nexus title sequence frame 0 reveal contract is stable");
@@ -223,8 +223,8 @@ static void expect_title_sequence_contract(void) {
                     frame16.frame_in_phase == 16 &&
                     frame16.frames_until_ready == 38 &&
                     frame16.reveal_h == 144 &&
-                    frame16.reveal_y0 == 28 &&
-                    frame16.reveal_y1 == 172 &&
+                    frame16.reveal_y0 == (NEXUS_FB_H - 144) / 2 &&
+                    frame16.reveal_y1 == (NEXUS_FB_H - 144) / 2 + 144 &&
                     frame16.edge_color == 16 &&
                     !frame16.boot_reveal_complete,
                 "Nexus title sequence frame 16 reveal contract is stable");
@@ -233,8 +233,8 @@ static void expect_title_sequence_contract(void) {
                     frame30.frame_in_phase == 0 &&
                     frame30.frames_until_ready == 24 &&
                     frame30.reveal_h == 200 &&
-                    frame30.reveal_y0 == 0 &&
-                    frame30.reveal_y1 == 200 &&
+                    frame30.reveal_y0 == (NEXUS_FB_H - 200) / 2 &&
+                    frame30.reveal_y1 == (NEXUS_FB_H - 200) / 2 + 200 &&
                     frame30.boot_reveal_complete &&
                     frame30.hold_frame == 0 &&
                     !frame30.start_ready &&
@@ -244,7 +244,7 @@ static void expect_title_sequence_contract(void) {
                     frame54.phase == NEXUS_V1_TITLE_PHASE_START_READY &&
                     frame54.frame_in_phase == 0 &&
                     frame54.frames_until_ready == 0 &&
-                    frame54.reveal_h == 200 &&
+                    frame54.reveal_h == NEXUS_FB_H &&
                     frame54.boot_reveal_complete &&
                     frame54.hold_frame == 24 &&
                     frame54.start_ready,

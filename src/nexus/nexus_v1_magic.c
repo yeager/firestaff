@@ -115,6 +115,7 @@ Nexus_SpellCategory nexus_v1_spell_category(int spell_type) {
     case NEXUS_SPELL_EFFECT_SHIELD:
     case NEXUS_SPELL_EFFECT_LIGHT:
     case NEXUS_SPELL_EFFECT_STRENGTH:
+    case NEXUS_SPELL_EFFECT_FIRE_SHIELD:
         return NEXUS_SPELL_CAT_PARTY;
     case NEXUS_SPELL_EFFECT_FIREBALL:
     case NEXUS_SPELL_EFFECT_LIGHTNING:

@@ -57,7 +57,7 @@
     ],
     "stable_door_sha256": "87271b0649d8a00500a2284cc69b6a6b275f1ce8e3d27607c346393e997dd4ed"
   },
-  "generated_at": "2026-08-04T07:32:31.071550+00:00",
+  "generated_at": "2026-08-04T10:17:43.984266+00:00",
   "honesty": "This gate locks original keypad/route evidence only. It does not claim a paired original creature screenshot.",
   "key_atlas": {
     "class_counts": {

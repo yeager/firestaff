@@ -1,5 +1,6 @@
 
 #include "nexus_v2_config.h"
+#include "nexus_v1_rasterizer.h"
 #include <string.h>
 
 void nexus_v2_config_init(Nexus_V2_Config *cfg, Nexus_V2_Mode mode) {
@@ -12,8 +13,8 @@ void nexus_v2_config_init(Nexus_V2_Config *cfg, Nexus_V2_Mode mode) {
         cfg->upscale_factor = 2;
         cfg->bilinear_filter = 1;
         cfg->widescreen = 0;
-        cfg->render_width = 640;
-        cfg->render_height = 400;
+        cfg->render_width = NEXUS_FB_W * 2;
+        cfg->render_height = NEXUS_FB_H * 2;
         break;
     case NEXUS_V2_ENHANCED:
         cfg->upscale_factor = 2;
@@ -44,8 +45,8 @@ void nexus_v2_config_init(Nexus_V2_Config *cfg, Nexus_V2_Mode mode) {
         break;
     default: /* V1 Original */
         cfg->upscale_factor = 1;
-        cfg->render_width = 320;
-        cfg->render_height = 200;
+        cfg->render_width = NEXUS_FB_W;
+        cfg->render_height = NEXUS_FB_H;
         break;
     }
 }
