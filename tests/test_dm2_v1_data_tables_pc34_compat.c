@@ -339,6 +339,27 @@ static void test_batch4_runtime_tables(void)
     printf("test_batch4_runtime_tables OK\n");
 }
 
+static void test_graphics_runtime_data(void)
+{
+    assert(dm2_v1_xblitb[0] == 0xff);
+    assert(dm2_v1_xblitb[255] == 0x00);
+    assert(dm2_v1_xblitb[256] == 0x00);
+    assert(dm2_v1_xblitb[4095] == 0xff);
+
+    assert(dm2_v1_mouse_cur1[0] == 0x00);
+    assert(dm2_v1_mouse_cur1[1] == 0xcc);
+    assert(dm2_v1_mouse_cur1[95] == 0xcc);
+
+    assert(dm2_v1_mouse_cur2_pixels[0] == 0xff);
+    assert(dm2_v1_mouse_cur2_pixels[127] == 0xff);
+
+    assert(dm2_v1_mouse_cur2_rect1[0] == 2);
+    assert(dm2_v1_mouse_cur2_rect1[2] == 16);
+    assert(dm2_v1_mouse_cur2_rect2[0] == 0);
+    assert(dm2_v1_mouse_cur2_rect2[2] == 16);
+    printf("test_graphics_runtime_data OK\n");
+}
+
 static void test_gdat_cmdstr_types(void)
 {
     assert(strcmp(dm2_v1_table_1d6912[0], "SK") == 0);
@@ -385,6 +406,7 @@ int main(void)
     test_batch3_ornament_position();
     test_batch4_runtime_tables();
     test_gdat_cmdstr_types();
+    test_graphics_runtime_data();
     printf("All dm2_v1_data_tables tests passed.\n");
     return 0;
 }

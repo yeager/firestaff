@@ -167,6 +167,13 @@ extern const dm2_s_wbbbbw dm2_v1_table_1d653c[55];
 /* GDAT command-string type prefixes (table1d6912) */
 extern const char *const dm2_v1_table_1d6912[18];
 
+/* Graphics runtime data (from bin/v5 dat files) */
+extern const uint8_t dm2_v1_xblitb[4096];
+extern const uint8_t dm2_v1_mouse_cur1[96];
+extern const uint8_t dm2_v1_mouse_cur2_pixels[128];
+extern const int16_t dm2_v1_mouse_cur2_rect1[4];
+extern const int16_t dm2_v1_mouse_cur2_rect2[4];
+
 #ifdef __cplusplus
 }
 #endif
