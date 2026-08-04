@@ -531,6 +531,93 @@ int16_t dm2_v1_gdat_byte_swap_16(int16_t value)
     return (int16_t)((v >> 8) | (v << 8));
 }
 
+/* skproject: DM2_ALLOC_NEW_BMP (c_gdatfile.cpp:560-573) */
+int dm2_v1_gdat_alloc_new_bmp(int16_t dbidx, int16_t width, int16_t height,
+                               int8_t bpp,
+                               const DM2_V1_GdatFileCallbacks *cb,
+                               void *ctx,
+                               DM2_V1_GdatAllocPictReceipt *out)
+{
+    if (!cb || !cb->alloc_memory || !out) return 0;
+    (void)dbidx; /* used by caller for cpxheap allocation */
+
+    int32_t row_bytes;
+    if (bpp != 4)
+        row_bytes = (int32_t)(uint16_t)width;
+    else
+        row_bytes = (int32_t)(((uint16_t)width + 1) & 0xfffe) >> 1;
+
+    int32_t pixel_size = (row_bytes & 0xffff) * (int32_t)(uint16_t)height;
+
+    uint8_t *mem = cb->alloc_memory(ctx, pixel_size + 6, 0);
+    if (!mem) {
+        out->bmp = NULL;
+        return 0;
+    }
+    mem[0] = (uint8_t)bpp;
+    mem[1] = 0;
+    mem[2] = (uint8_t)(width & 0xff);
+    mem[3] = (uint8_t)((width >> 8) & 0xff);
+    mem[4] = (uint8_t)(height & 0xff);
+    mem[5] = (uint8_t)((height >> 8) & 0xff);
+
+    out->bmp = mem + 6;
+    out->width = width;
+    out->height = height;
+    out->bpp = bpp;
+    out->buffer_size = pixel_size + 6;
+    return 1;
+}
+
+/* skproject: DM2_LOAD_GDAT_ENTRY_DATA_TO (c_gdatfile.cpp:818-821) */
+int dm2_v1_gdat_load_entry_data_to(int8_t cls1, int8_t cls2,
+                                    int8_t entry_type, int8_t data_idx,
+                                    uint8_t *dest,
+                                    const DM2_V1_GdatLoadEntryCallbacks *cb,
+                                    void *ctx)
+{
+    if (!cb || !dest) return 0;
+    int16_t dbidx = cb->query_entry_data_index(ctx, cls1, cls2,
+                                                entry_type, data_idx);
+    if (dbidx < 0) return 0;
+    return cb->load_raw_data(ctx, dbidx, dest);
+}
+
+/* skproject: DM2_TRACK_UNDERLAY (c_gdatfile.cpp:997-1024) */
+int dm2_v1_gdat_track_underlay(uint16_t dbidx,
+                                const uint8_t *table, int16_t table_count,
+                                DM2_V1_GdatTrackUnderlayReceipt *out)
+{
+    if (!table || !out || table_count <= 0) {
+        if (out) { out->found = 0; out->value = -1; }
+        return 0;
+    }
+
+    /* Binary search in 4-byte records: [uint16_t key, int16_t value] */
+    int16_t lo = 0;
+    int16_t hi = table_count + 1;
+    for (;;) {
+        int16_t mid = (int16_t)((lo + hi) / 2);
+        if (mid == lo) {
+            out->found = 0;
+            out->value = -1;
+            return 1;
+        }
+        const uint8_t *entry = table + 4 * (mid - 1);
+        uint16_t key = (uint16_t)(entry[0] | (entry[1] << 8));
+        if (dbidx > key) {
+            lo = mid;
+        } else if (dbidx < key) {
+            hi = mid;
+        } else {
+            int16_t val = (int16_t)(entry[2] | (entry[3] << 8));
+            out->found = 1;
+            out->value = val;
+            return 1;
+        }
+    }
+}
+
 /* skproject: DM2_READ_GRAPHICS_STRUCTURE (c_gdatfile.cpp:1026-1128)
  * Stub — full implementation requires many subsystems (dballoc, ulp, etc.) */
 int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,

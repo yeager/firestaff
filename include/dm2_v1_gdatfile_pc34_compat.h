@@ -271,6 +271,38 @@ int dm2_v1_gdat_free_pict_buff(int16_t width, int16_t height,
 /* skproject: R_2BAD4 (c_gdatfile.cpp:575) — byte-swap 16-bit */
 int16_t dm2_v1_gdat_byte_swap_16(int16_t value);
 
+/* skproject: DM2_ALLOC_NEW_BMP (c_gdatfile.cpp:560) */
+int dm2_v1_gdat_alloc_new_bmp(int16_t dbidx, int16_t width, int16_t height,
+                               int8_t bpp,
+                               const DM2_V1_GdatFileCallbacks *cb,
+                               void *ctx,
+                               DM2_V1_GdatAllocPictReceipt *out);
+
+/* skproject: DM2_LOAD_GDAT_ENTRY_DATA_TO (c_gdatfile.cpp:818)
+ * Load raw GDAT data for a given cls1/cls2/type/idx into dest buffer. */
+typedef struct {
+    int16_t (*query_entry_data_index)(void *ctx, int8_t cls1, int8_t cls2,
+                                      int8_t entry_type, int8_t data_idx);
+    int (*load_raw_data)(void *ctx, int16_t dbidx, uint8_t *dest);
+} DM2_V1_GdatLoadEntryCallbacks;
+
+int dm2_v1_gdat_load_entry_data_to(int8_t cls1, int8_t cls2,
+                                    int8_t entry_type, int8_t data_idx,
+                                    uint8_t *dest,
+                                    const DM2_V1_GdatLoadEntryCallbacks *cb,
+                                    void *ctx);
+
+/* skproject: DM2_TRACK_UNDERLAY (c_gdatfile.cpp:997)
+ * Binary search in underlay table for a matching dbidx. */
+typedef struct {
+    int32_t  found;
+    int16_t  value;
+} DM2_V1_GdatTrackUnderlayReceipt;
+
+int dm2_v1_gdat_track_underlay(uint16_t dbidx,
+                                const uint8_t *table, int16_t table_count,
+                                DM2_V1_GdatTrackUnderlayReceipt *out);
+
 /* skproject: DM2_READ_GRAPHICS_STRUCTURE (c_gdatfile.cpp:1026) */
 int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
                                          const DM2_V1_GdatFileCallbacks *cb,

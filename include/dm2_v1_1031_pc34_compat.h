@@ -262,6 +262,67 @@ int32_t dm2_v1_1031_hit_test_clickrects(
     const DM2_V1_1031_Www *entries,
     int16_t x, int16_t y, int16_t mask);
 
+/*
+ * Look up child list from table_cd0.
+ * Source: DM2_1031_023b in c_1031.cpp.
+ */
+const int8_t *dm2_v1_1031_get_child_list(
+    const DM2_V1_1031_Callbacks *cb,
+    const DM2_V1_1031_Bbw *entry);
+
+/*
+ * Look up click rect array from table_338c.
+ * Source: DM2_1031_024c in c_1031.cpp.
+ */
+DM2_V1_1031_Www *dm2_v1_1031_get_click_rects(
+    const DM2_V1_1031_Callbacks *cb,
+    const DM2_V1_1031_Bbw *entry);
+
+/*
+ * Clear dirty refresh flag.
+ * Source: DM2_1031_04F5 in c_1031.cpp.
+ */
+void dm2_v1_1031_clear_dirty(
+    const DM2_V1_1031_Callbacks *cb,
+    DM2_V1_1031_State *state);
+
+/*
+ * Trigger update for the current mode.
+ * Source: DM2_107B0 in c_1031.cpp.
+ */
+int32_t dm2_v1_1031_refresh_current(
+    const DM2_V1_1031_Callbacks *cb,
+    DM2_V1_1031_State *state);
+
+/*
+ * Recursive search for a click rect by ID.
+ * Source: DM2_1031_06b3 in c_1031.cpp.
+ */
+const DM2_V1_1031_Www *dm2_v1_1031_find_click_rect(
+    const DM2_V1_1031_Callbacks *cb,
+    const DM2_V1_1031_State *state,
+    const DM2_V1_1031_Bbw *root,
+    int16_t target_id);
+
+/*
+ * Simulate click on a UI element by ID.
+ * Source: DM2_1031_0781 in c_1031.cpp.
+ */
+void dm2_v1_1031_click_by_id(
+    const DM2_V1_1031_Callbacks *cb,
+    DM2_V1_1031_State *state,
+    int16_t target_id);
+
+/*
+ * Look up a click rect entry by event code and fill event data.
+ * Source: DM2_1031_0c58 in c_1031.cpp.
+ */
+void dm2_v1_1031_lookup_event(
+    const DM2_V1_1031_Callbacks *cb,
+    DM2_V1_1031_State *state,
+    int16_t event_code,
+    const DM2_V1_1031_Www *entries);
+
 #ifdef __cplusplus
 }
 #endif

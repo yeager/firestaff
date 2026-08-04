@@ -213,6 +213,179 @@ DM2_V1_1031_HitTestReceipt dm2_v1_1031_hit_test(
     return receipt;
 }
 
+/* ── DM2_1031_023b — get child list ─────────────────────────────────── */
+
+const int8_t *dm2_v1_1031_get_child_list(
+    const DM2_V1_1031_Callbacks *cb,
+    const DM2_V1_1031_Bbw *entry)
+{
+    if (cb == NULL || entry == NULL || cb->table_cd0 == NULL) return NULL;
+    return &cb->table_cd0[entry->w_02];
+}
+
+/* ── DM2_1031_024c — get click rects ───────────────────────────────── */
+
+DM2_V1_1031_Www *dm2_v1_1031_get_click_rects(
+    const DM2_V1_1031_Callbacks *cb,
+    const DM2_V1_1031_Bbw *entry)
+{
+    if (cb == NULL || entry == NULL || cb->table_d23 == NULL) return NULL;
+    int16_t n = cb->table_d23[entry->w_02].w_02;
+    return (n != -1) ? &cb->table_338c[n] : NULL;
+}
+
+/* ── DM2_1031_04F5 — clear dirty flag ──────────────────────────────── */
+
+void dm2_v1_1031_clear_dirty(
+    const DM2_V1_1031_Callbacks *cb,
+    DM2_V1_1031_State *state)
+{
+    if (state == NULL) return;
+    if (state->v1e03a8 != 0) {
+        state->v1e03a8 = 0;
+        if (cb != NULL)
+            cb->guidraw_refresh(cb->ctx);
+    }
+}
+
+/* ── DM2_107B0 — refresh current mode ─────────────────────────────── */
+
+int32_t dm2_v1_1031_refresh_current(
+    const DM2_V1_1031_Callbacks *cb,
+    DM2_V1_1031_State *state)
+{
+    if (state == NULL) return 0;
+    return dm2_v1_1031_update_state(cb, state, state->current_mode);
+}
+
+/* ── DM2_1031_06b3 — recursive click rect search by ID ─────────────── */
+
+const DM2_V1_1031_Www *dm2_v1_1031_find_click_rect(
+    const DM2_V1_1031_Callbacks *cb,
+    const DM2_V1_1031_State *state,
+    const DM2_V1_1031_Bbw *root,
+    int16_t target_id)
+{
+    if (cb == NULL || root == NULL) return NULL;
+
+    const int8_t *list = dm2_v1_1031_get_child_list(cb, root);
+    if (list == NULL) return NULL;
+
+    for (;;) {
+        uint8_t idx = (uint8_t)(*list) & 0x7F;
+        const DM2_V1_1031_Bbw *child = &cb->table_bbw[idx];
+        int32_t cond = (int32_t)(root->b_00 & 0x7F);
+
+        /* gate_1031 uses condition+5 in the recursive search */
+        if (dm2_v1_1031_gate(cb, state, cond + 5, child)) {
+            if ((child->b_00 & 0x80) == 0x80) {
+                /* Recurse into subtree */
+                const DM2_V1_1031_Www *found =
+                    dm2_v1_1031_find_click_rect(cb, state, child, target_id);
+                if (found != NULL)
+                    return found;
+            } else {
+                /* Leaf: scan click rect entries */
+                DM2_V1_1031_Www *entries =
+                    dm2_v1_1031_get_click_rects(cb, child);
+                if (entries != NULL) {
+                    DM2_V1_1031_Www *e = entries;
+                    for (;;) {
+                        int16_t w0 = e->w_00;
+                        w0 &= 0x07FF;
+                        if (w0 == 0) break;
+                        if (w0 == target_id)
+                            return e;
+                        e++;
+                    }
+                }
+            }
+        }
+
+        list++;
+        if (((uint8_t)(*list) & 0x80) != 0)
+            return NULL;
+    }
+}
+
+/* ── DM2_1031_0781 — click by ID ───────────────────────────────────── */
+
+void dm2_v1_1031_click_by_id(
+    const DM2_V1_1031_Callbacks *cb,
+    DM2_V1_1031_State *state,
+    int16_t target_id)
+{
+    if (cb == NULL || state == NULL || cb->table_ed5 == NULL) return;
+
+    const DM2_V1_1031_Www *found = dm2_v1_1031_find_click_rect(
+        cb, state, &cb->table_ed5[state->current_mode],
+        (int16_t)((uint16_t)target_id & 0xFFFF));
+    if (found == NULL) return;
+
+    DM2_V1_1031_Rect rc;
+    int16_t rect_query = found->w_02;
+    DM2_V1_1031_Rect *r = dm2_v1_1031_query_rect_with_offset(cb, rect_query, &rc);
+    if (r == NULL) return;
+
+    int16_t click_mask = (int16_t)(found->w_04 & 0xFF);
+    cb->queue_event(cb->ctx, rc.x, rc.y, click_mask);
+}
+
+/* ── DM2_1031_0c58 — lookup event by code ──────────────────────────── */
+
+void dm2_v1_1031_lookup_event(
+    const DM2_V1_1031_Callbacks *cb,
+    DM2_V1_1031_State *state,
+    int16_t event_code,
+    const DM2_V1_1031_Www *entries)
+{
+    if (cb == NULL) return;
+
+    cb->set_event_unk09(cb->ctx, -1);
+
+    if (entries == NULL) goto not_found;
+
+    const DM2_V1_1031_Www *first = entries;
+    const DM2_V1_1031_Www *e = entries;
+
+    for (;;) {
+        int16_t w0 = e->w_00;
+        w0 &= 0x07FF;
+        if (w0 == 0) break;
+
+        if (((e->w_04 >> 8) & 0x08) == 0 && w0 == event_code) {
+            int16_t rect_query = e->w_02;
+            DM2_V1_1031_Rect rc;
+            dm2_v1_1031_query_rect_with_offset(cb, rect_query, &rc);
+
+            cb->set_event_unk05(cb->ctx, rect_query);
+            int16_t unk05 = cb->get_event_unk05(cb->ctx);
+            if ((unk05 & 0x8000) != 0)
+                cb->set_event_unk09(cb->ctx, 7);
+            else if ((unk05 & 0x4000) != 0)
+                cb->set_event_unk09(cb->ctx, 18);
+
+            cb->set_event_unk05(cb->ctx, (int16_t)(unk05 & 0x3FFF));
+            cb->set_event_unk08(cb->ctx, rc.x);
+            cb->set_event_unk07(cb->ctx, rc.y);
+            cb->set_event_unk0a(cb->ctx, w0);
+
+            int16_t first_w0 = (int16_t)(first->w_00 & 0x07FF);
+            cb->set_event_unk06(cb->ctx, (int16_t)(w0 - first_w0 + 1));
+            return;
+        }
+
+        e++;
+    }
+
+not_found:
+    cb->set_event_unk05(cb->ctx, -1);
+    cb->set_event_unk08(cb->ctx, 0);
+    cb->set_event_unk07(cb->ctx, 0);
+    cb->set_event_unk0a(cb->ctx, event_code);
+    cb->set_event_unk06(cb->ctx, 0);
+}
+
 /* ── DM2_10777 — reset UI state ─────────────────────────────────────── */
 
 /* Source: c_1031.cpp DM2_10777 */

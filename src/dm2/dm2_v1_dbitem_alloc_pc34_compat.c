@@ -15,11 +15,10 @@
  */
 
 #include "dm2_v1_dbitem_alloc_pc34_compat.h"
+#include "dm2_v1_record_ops_pc34_compat.h"
 
 #include <string.h>
 
-/* skproject DB pool indices (c_record.cpp GET_ITEMDB_OF_ITEMSPEC_ACTUATOR
- * return values). */
 #define DM2_V1_DB_CREATURE 4
 #define DM2_V1_DB_WEAPON 5
 #define DM2_V1_DB_CLOTH 6
@@ -27,58 +26,6 @@
 #define DM2_V1_DB_POTION 8
 #define DM2_V1_DB_CONTAINER 9
 #define DM2_V1_DB_MISC 10
-
-int dm2_v1_get_itemdb_of_itemspec_actuator(uint16_t itemspec)
-{
-    /* c_record.cpp:367-401 — si = itemspec & 0x1ff (RG1Bhi &= 0x1). */
-    int si = (int)(itemspec & 0x01ffu);
-    switch (si >> 7) {
-        case 0:
-            return DM2_V1_DB_WEAPON;
-        case 1:
-            return DM2_V1_DB_CLOTH;
-        case 2:
-            return DM2_V1_DB_MISC;
-        case 3:
-            if (si > 0x01fc) {
-                return -1; /* source 0xffff */
-            }
-            if (si == 0x01fc) {
-                return DM2_V1_DB_SCROLL;
-            }
-            if (si >= 0x01e0) {
-                return DM2_V1_DB_CONTAINER;
-            }
-            return si < 0x01b0 ? DM2_V1_DB_POTION : DM2_V1_DB_CREATURE;
-        default:
-            return -1;
-    }
-}
-
-int dm2_v1_get_itemtype_of_itemspec_actuator(uint16_t itemspec)
-{
-    /* c_record.cpp:403-444 — dx = itemspec & 0x1ff, group base
-     * subtraction. */
-    int dx = (int)(itemspec & 0x01ffu);
-    switch (dx >> 7) {
-        case 0:
-            return dx;
-        case 1:
-            return dx - 0x0080;
-        case 2:
-            return dx - 0x0100;
-        case 3:
-            if (dx >= 0x01fc) {
-                return 0;
-            }
-            if (dx >= 0x01e0) {
-                return dx - 0x01e0;
-            }
-            return dx < 0x01b0 ? dx - 0x0180 : dx - 0x01b0;
-        default:
-            return 0;
-    }
-}
 
 static int16_t dm2_v1_rd16(const uint8_t *p)
 {

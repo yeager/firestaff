@@ -142,6 +142,11 @@ static inline DM2_V1_Pixel16 dm2_v1_build_pixels_masked16(DM2_V1_Pixel16 src, DM
     return result;
 }
 
+/**
+ * Source evidence string for parity tracking.
+ */
+const char *dm2_v1_gfx_pixel_source_evidence(void);
+
 #ifdef __cplusplus
 }
 #endif

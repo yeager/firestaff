@@ -49,7 +49,7 @@ typedef struct {
     void (*delete_timer)(void *ctx, int timer_idx);
 } DM2_V1_ContinueOrnateNoiseCallbacks;
 
-void dm2_v1_continue_ornate_noise(
+void dm2_v1_continue_ornate_noise_cb(
     int timer_idx, int16_t x, int16_t y, uint32_t delay,
     const DM2_V1_ContinueOrnateNoiseCallbacks *cb, void *ctx);
 
@@ -337,7 +337,7 @@ typedef struct {
     void (*relink_item_to_view_tile)(void *ctx, uint16_t item);
 } DM2_V1_RemoveFromHandCallbacks;
 
-int32_t dm2_v1_remove_object_from_hand(
+int32_t dm2_v1_remove_object_from_hand_ex(
     DM2_V1_RemoveFromHandState *state, int event_hero_idx,
     const DM2_V1_RemoveFromHandCallbacks *cb, void *ctx);
 

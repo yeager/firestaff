@@ -97,10 +97,6 @@ int16_t dm2_v1_get_distinctive_itemtype(
     int16_t record_word,
     const DM2_V1_RecordQueryCallbacks *cb, void *ctx);
 
-int8_t dm2_v1_query_cls2_from_record(
-    int32_t record_word,
-    const DM2_V1_RecordQueryCallbacks *cb, void *ctx);
-
 typedef struct {
     uint8_t *(*get_record_address)(void *ctx, uint16_t record_word);
 } DM2_V1_SetItemtypeCallbacks;
@@ -108,10 +104,6 @@ typedef struct {
 void dm2_v1_set_itemtype(
     int32_t record_word, int32_t new_type,
     const DM2_V1_SetItemtypeCallbacks *cb, void *ctx);
-
-int16_t dm2_v1_query_cls1_from_record(
-    int32_t record_word,
-    const DM2_V1_RecordQueryCallbacks *cb, void *ctx);
 
 typedef struct {
     uint8_t *(*get_record_address)(void *ctx, uint16_t record_word);

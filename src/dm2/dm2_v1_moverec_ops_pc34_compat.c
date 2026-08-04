@@ -47,3 +47,4 @@ void dm2_v1_moverec_2fcf_01c5(
     cb->queue_timer(ctx, timer_type, x, y, record, fire_tick);
     cb->set_minion_door(ctx, record, x, y, map, 1);
 }
+

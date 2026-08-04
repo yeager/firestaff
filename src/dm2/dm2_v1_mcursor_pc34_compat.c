@@ -92,3 +92,25 @@ DM2_V1_InitBasicCursorsReceipt dm2_v1_init_basic_cursors(
     receipt.initialized = (receipt.cursor_count == 2);
     return receipt;
 }
+
+DM2_V1_InitMouseCursorsReceipt dm2_v1_init_mouse_cursors(
+    uint8_t *cursor1_buf, uint16_t cursor1_size,
+    DM2_V1_Cursor2 *cursor2_buf,
+    const DM2_V1_InitMouseCursorsCallbacks *cb, void *ctx)
+{
+    DM2_V1_InitMouseCursorsReceipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (!cb || !cb->read_binary || !cursor1_buf || !cursor2_buf)
+        return receipt;
+
+    int r1 = cb->read_binary(ctx, "mouse1.dat", cursor1_buf, cursor1_size);
+    receipt.file1_loaded = (r1 != 0);
+
+    int r2 = cb->read_binary(ctx, "mouse2.dat", (uint8_t *)cursor2_buf,
+                              (uint16_t)sizeof(DM2_V1_Cursor2));
+    receipt.file2_loaded = (r2 != 0);
+
+    receipt.initialized = receipt.file1_loaded && receipt.file2_loaded;
+    return receipt;
+}

@@ -66,6 +66,19 @@ typedef struct {
     int  cursor_count;
 } DM2_V1_InitBasicCursorsReceipt;
 
+/* ---- init_mousecursors (c_mcursor.cpp:19) ----
+ * Read mouse cursor data from binary files into buffers.
+ * In the reference this reads mouse1.dat (0x60 bytes) and mouse2.dat. */
+typedef struct {
+    int (*read_binary)(void *ctx, const char *filename, uint8_t *buffer, uint16_t size);
+} DM2_V1_InitMouseCursorsCallbacks;
+
+typedef struct {
+    bool file1_loaded;
+    bool file2_loaded;
+    bool initialized;
+} DM2_V1_InitMouseCursorsReceipt;
+
 /* ========================================================================
  * Functions
  * ======================================================================== */
@@ -91,6 +104,14 @@ DM2_V1_InitBasicCursorsReceipt dm2_v1_init_basic_cursors(
     const uint8_t *cursor1_data,
     const DM2_V1_Cursor2 *cursor2_data,
     const uint8_t *palette);
+
+/*
+ * init_mouse_cursors — load mouse cursor data from binary files via callback.
+ */
+DM2_V1_InitMouseCursorsReceipt dm2_v1_init_mouse_cursors(
+    uint8_t *cursor1_buf, uint16_t cursor1_size,
+    DM2_V1_Cursor2 *cursor2_buf,
+    const DM2_V1_InitMouseCursorsCallbacks *cb, void *ctx);
 
 #ifdef __cplusplus
 }

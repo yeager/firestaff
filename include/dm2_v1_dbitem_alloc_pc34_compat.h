@@ -57,14 +57,6 @@
 extern "C" {
 #endif
 
-/* c_record.cpp:367-401 — DB index 4..10 for the itemspec, or -1 when the
- * source returns 0xffff (itemspec & 0x1ff in {0x1fd..0x1ff}). */
-int dm2_v1_get_itemdb_of_itemspec_actuator(uint16_t itemspec);
-
-/* c_record.cpp:403-444 — item type 0..127 after the group base
- * subtraction. */
-int dm2_v1_get_itemtype_of_itemspec_actuator(uint16_t itemspec);
-
 /* c_record.cpp:1076-1139 — allocate a zeroed record in pool
  * (db_request & 0x7fff); db_request 0x800A selects dbMisc without the
  * 3-record reserve.  Returns the direction-free handle (db << 10 | index)

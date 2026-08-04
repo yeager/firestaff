@@ -340,6 +340,10 @@ void dm2_v1_timer_reindex(DM2_V1_TimerHeapState *s, int16_t timer_slot)
  * c_record.cpp:175 — DM2_GET_DISTINCTIVE_ITEMTYPE
  * ===================================================================== */
 
+static int8_t dm2_v1_query_cls2_from_record_rp(
+    int32_t record_word,
+    const DM2_V1_RecordQueryCallbacks *cb, void *ctx);
+
 int16_t dm2_v1_get_distinctive_itemtype(
     int16_t record_word,
     const DM2_V1_RecordQueryCallbacks *cb, void *ctx)
@@ -349,7 +353,7 @@ int16_t dm2_v1_get_distinctive_itemtype(
     if (record_word == -1)
         return 0x1FF;
 
-    int8_t cls2 = dm2_v1_query_cls2_from_record((int32_t)record_word, cb, ctx);
+    int8_t cls2 = dm2_v1_query_cls2_from_record_rp((int32_t)record_word, cb, ctx);
     int16_t db_type = (int16_t)(((uint16_t)record_word & 0x3C00) >> 10);
     int16_t base = cb->table1d3278[db_type];
 
@@ -365,7 +369,7 @@ int16_t dm2_v1_get_distinctive_itemtype(
 
 /* c_record.cpp:203 — DM2_QUERY_CLS2_FROM_RECORD */
 
-int8_t dm2_v1_query_cls2_from_record(
+static int8_t dm2_v1_query_cls2_from_record_rp(
     int32_t record_word,
     const DM2_V1_RecordQueryCallbacks *cb, void *ctx)
 {
@@ -418,23 +422,6 @@ int8_t dm2_v1_query_cls2_from_record(
     }
 }
 
-/* c_record.cpp:454 — DM2_QUERY_CLS1_FROM_RECORD */
-
-int16_t dm2_v1_query_cls1_from_record(
-    int32_t record_word,
-    const DM2_V1_RecordQueryCallbacks *cb, void *ctx __attribute__((unused)))
-{
-    if (!cb || record_word == -1)
-        return -1;
-    int16_t db_type = (int16_t)(((uint16_t)record_word & 0x3C00) >> 10);
-    if (db_type > 0xF)
-        return -1;
-    /* CLS1 lookup table — maps DB type to GDAT category */
-    static const int16_t cls1_table[16] = {
-        -1, -1, 2, 3, 4, 5, 6, 7, 8, 9, 10, -1, -1, -1, -1, 15
-    };
-    return cls1_table[db_type];
-}
 
 /* c_record.cpp:284 — DM2_SET_ITEMTYPE */
 

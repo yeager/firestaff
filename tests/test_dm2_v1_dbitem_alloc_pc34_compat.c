@@ -16,6 +16,7 @@
  */
 
 #include "dm2_v1_dbitem_alloc_pc34_compat.h"
+#include "dm2_v1_record_ops_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>

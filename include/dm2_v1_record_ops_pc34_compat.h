@@ -130,6 +130,110 @@ int16_t *dm2_v1_oversee_record(
     int16_t *userdata, int recurse_containers, int recurse_chests,
     const DM2_V1_OverseeCallbacks *cb, void *ctx);
 
+/* ---- DM2_GET_ITEMDB_OF_ITEMSPEC_ACTUATOR (c_record.cpp:367) ----
+ * Pure lookup: map a distinctive itemtype to its DB category.
+ * Returns 5,6,10,4,8,9,7 or 0xFFFF if out of range. */
+int16_t dm2_v1_get_itemdb_of_itemspec_actuator(uint16_t itemspec);
+
+/* ---- DM2_GET_ITEMTYPE_OF_ITEMSPEC_ACTUATOR (c_record.cpp:403) ----
+ * Pure lookup: extract the item type offset from a distinctive itemtype.
+ * Returns the adjusted type value. */
+int16_t dm2_v1_get_itemtype_of_itemspec_actuator(uint16_t itemspec);
+
+/* ---- DM2_QUERY_CLS1_FROM_RECORD (c_record.cpp:454) ----
+ * Walk record chain (following type-14 containers) to find the
+ * database category (cls1). Uses table1d3298 lookup. */
+typedef struct {
+    const uint8_t *(*get_record_address)(void *ctx, uint16_t rw);
+    uint8_t table1d3298[16];  /* db type -> cls1 mapping */
+} DM2_V1_Cls1Callbacks;
+
+uint8_t dm2_v1_query_cls1_from_record(
+    uint16_t record_word,
+    const DM2_V1_Cls1Callbacks *cb, void *ctx);
+
+/* ---- DM2_QUERY_CLS2_FROM_RECORD (c_record.cpp:203) ----
+ * Determine the sub-type (cls2) of a record by inspecting its
+ * db type and record data. Handles all 16 record types. */
+typedef struct {
+    const uint8_t *(*get_record_address)(void *ctx, uint16_t rw);
+    uint8_t (*query_cls2_of_text_record)(void *ctx, uint16_t rw);
+    uint8_t (*get_wall_decoration_of_actuator)(void *ctx, const uint8_t *rec);
+} DM2_V1_Cls2Callbacks;
+
+uint8_t dm2_v1_query_cls2_from_record(
+    uint16_t record_word,
+    const DM2_V1_Cls2Callbacks *cb, void *ctx);
+
+/* ---- DM2_QUERY_CLS2_OF_TEXT_RECORD (c_record.cpp:1210) ----
+ * Extract cls2 from a text record (type 2) based on text subtype. */
+typedef struct {
+    const uint8_t *(*get_record_address)(void *ctx, uint16_t rw);
+} DM2_V1_TextCls2Callbacks;
+
+uint8_t dm2_v1_query_cls2_of_text_record(
+    uint16_t record_word,
+    const DM2_V1_TextCls2Callbacks *cb, void *ctx);
+
+/* ---- DM2_GET_DISTINCTIVE_ITEMTYPE (c_record.cpp:175) ----
+ * Combine db-type and cls2 into a distinctive item type using
+ * table1d3278 mapping. Returns 0x1FF for OBJECT_NULL. */
+typedef struct {
+    uint8_t (*query_cls2_from_record)(void *ctx, uint16_t rw);
+    int16_t table1d3278[16];  /* db type -> base itemtype mapping */
+} DM2_V1_DistinctiveItemtypeCallbacks;
+
+int16_t dm2_v1_get_distinctive_itemtype(
+    uint16_t record_word,
+    const DM2_V1_DistinctiveItemtypeCallbacks *cb, void *ctx);
+
+/* ---- DM2_SET_ITEMTYPE (c_record.cpp:284) ----
+ * Write the item subtype (cls2) into a record's data field.
+ * Handles db types 4..10 with type-specific bit packing. */
+typedef struct {
+    uint8_t *(*get_record_address)(void *ctx, uint16_t rw);
+} DM2_V1_SetItemtypeCallbacks;
+
+void dm2_v1_set_itemtype(
+    uint16_t record_word, uint8_t item_type,
+    const DM2_V1_SetItemtypeCallbacks *cb, void *ctx);
+
+/* ---- DM2_SET_ITEM_IMPORTANCE (c_record.cpp:498) ----
+ * Set the importance/priority bit on an item record. */
+void dm2_v1_set_item_importance(
+    uint16_t record_word, uint8_t importance,
+    const DM2_V1_SetItemtypeCallbacks *cb, void *ctx);
+
+/* ---- DM2_QUERY_ITEMDB_FROM_DISTINCTIVE_ITEMTYPE (c_record.cpp:449) ----
+ * Get the cls1 value for a distinctive item type. */
+uint8_t dm2_v1_query_itemdb_from_distinctive_itemtype(
+    uint16_t distinctive_type,
+    const DM2_V1_Cls1Callbacks *cb, void *ctx);
+
+/* ---- DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD (c_record.cpp:1351) ----
+ * Look up AI spec data for a creature by its type byte. */
+typedef struct {
+    int16_t (*query_gdat_creature_word_value)(void *ctx, uint8_t ctype, uint8_t idx);
+    const uint8_t *(*get_ai_spec)(void *ctx, uint16_t spec_index);
+    const uint8_t *(*get_record_address)(void *ctx, uint16_t rw);
+} DM2_V1_CreatureAICallbacks;
+
+const uint8_t *dm2_v1_query_creature_ai_spec_from_record(
+    uint8_t creature_type,
+    const DM2_V1_CreatureAICallbacks *cb, void *ctx);
+
+/* ---- DM2_QUERY_CREATURE_AI_SPEC_FROM_TYPE (c_record.cpp:1341) ----
+ * Look up AI spec data from a creature record word. */
+const uint8_t *dm2_v1_query_creature_ai_spec_from_type(
+    uint16_t record_word,
+    const DM2_V1_CreatureAICallbacks *cb, void *ctx);
+
+/* ---- DM2_QUERY_CREATURE_AI_SPEC_FLAGS (c_record.cpp:1346) ----
+ * Get the AI spec flags word for a creature record. */
+int16_t dm2_v1_query_creature_ai_spec_flags(
+    uint16_t record_word,
+    const DM2_V1_CreatureAICallbacks *cb, void *ctx);
+
 /* ---- DM1_ROTATE_ACTUATOR_LIST (SkWinCore2.cpp:298) ----
  * Rotate the order of actuator records on a tile side.
  * Returns 1 if rotated, 0 if nothing to rotate. */

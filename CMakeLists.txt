@@ -18573,6 +18573,19 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_engage_command_pc34_compat
     )
 
+    # ── DM2: input dispatcher (c_input.cpp) ──
+    add_executable(test_dm2_v1_input_pc34_compat
+        tests/test_dm2_v1_input_pc34_compat.c
+        src/dm2/dm2_v1_input_pc34_compat.c
+        src/dm2/dm2_v1_event_handlers_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_input_pc34_compat PRIVATE
+        ${CMAKE_SOURCE_DIR}/include)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_input_pc34_compat PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME dm2_v1_input_pc34_compat COMMAND test_dm2_v1_input_pc34_compat)
+
     # ── DM2: creature AI module (c_1c9a.cpp) ──
     add_executable(test_dm2_v1_1c9a_pc34_compat
         tests/test_dm2_v1_1c9a_pc34_compat.c
@@ -18607,6 +18620,204 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_gfx_blit_pc34_compat
         COMMAND test_dm2_v1_gfx_blit_pc34_compat
+    )
+
+    # ── DM2: GFX bmp module (c_gfx_bmp.cpp) ──
+    add_executable(test_dm2_v1_gfx_bmp_pc34_compat
+        tests/test_dm2_v1_gfx_bmp_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_gfx_bmp_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_gfx_bmp_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gfx_bmp_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gfx_bmp_pc34_compat
+        COMMAND test_dm2_v1_gfx_bmp_pc34_compat
+    )
+
+    # ── DM2: GFX pixel module (c_gfx_pixel.cpp) ──
+    add_executable(test_dm2_v1_gfx_pixel_pc34_compat
+        tests/test_dm2_v1_gfx_pixel_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_gfx_pixel_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_gfx_pixel_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gfx_pixel_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gfx_pixel_pc34_compat
+        COMMAND test_dm2_v1_gfx_pixel_pc34_compat
+    )
+
+    # ── DM2: creature AI condition (c_ai.cpp condition checks) ──
+    add_executable(test_dm2_v1_creature_ai_condition_pc34_compat
+        tests/test_dm2_v1_creature_ai_condition_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_creature_ai_condition_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_ai_condition_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_ai_condition_pc34_compat
+            PRIVATE -Wall -Wextra -Werror=implicit-function-declaration)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_ai_condition_pc34_compat
+        COMMAND test_dm2_v1_creature_ai_condition_pc34_compat
+    )
+
+    # ── DM2: creature AI decision (c_ai.cpp decision/selection) ──
+    add_executable(test_dm2_v1_creature_ai_decision_pc34_compat
+        tests/test_dm2_v1_creature_ai_decision_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_creature_ai_decision_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_ai_decision_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_ai_decision_pc34_compat
+            PRIVATE -Wall -Wextra -Werror=implicit-function-declaration)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_ai_decision_pc34_compat
+        COMMAND test_dm2_v1_creature_ai_decision_pc34_compat
+    )
+
+    # ── DM2: creature AI loop (c_ai.cpp main loop) ──
+    add_executable(test_dm2_v1_creature_ai_loop_pc34_compat
+        tests/test_dm2_v1_creature_ai_loop_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_creature_ai_loop_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_ai_loop_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_ai_loop_pc34_compat
+            PRIVATE -Wall -Wextra -Werror=implicit-function-declaration)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_ai_loop_pc34_compat
+        COMMAND test_dm2_v1_creature_ai_loop_pc34_compat
+    )
+
+    # ── DM2: creature AI prepare (c_ai.cpp prepare/unprepare) ──
+    add_executable(test_dm2_v1_creature_ai_prepare_pc34_compat
+        tests/test_dm2_v1_creature_ai_prepare_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_creature_ai_prepare_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_ai_prepare_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_ai_prepare_pc34_compat
+            PRIVATE -Wall -Wextra -Werror=implicit-function-declaration)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_ai_prepare_pc34_compat
+        COMMAND test_dm2_v1_creature_ai_prepare_pc34_compat
+    )
+
+    # ── DM2: creature combat assessment (c_ai.cpp combat helpers) ──
+    add_executable(test_dm2_v1_creature_combat_assess_pc34_compat
+        tests/test_dm2_v1_creature_combat_assess_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_creature_combat_assess_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_combat_assess_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_combat_assess_pc34_compat
+            PRIVATE -Wall -Wextra -Werror=implicit-function-declaration)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_combat_assess_pc34_compat
+        COMMAND test_dm2_v1_creature_combat_assess_pc34_compat
+    )
+
+    # ── DM2: querydb module ──
+    add_executable(test_dm2_v1_querydb_pc34_compat
+        tests/test_dm2_v1_querydb_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_querydb_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_querydb_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_querydb_pc34_compat
+            PRIVATE -Wall -Wextra -Werror=implicit-function-declaration)
+    endif()
+    add_test(
+        NAME dm2_v1_querydb_pc34_compat
+        COMMAND test_dm2_v1_querydb_pc34_compat
+    )
+
+    # ── DM2: XACT dispatch module ──
+    add_executable(test_dm2_v1_xact_dispatch_pc34_compat
+        tests/test_dm2_v1_xact_dispatch_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_xact_dispatch_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_xact_dispatch_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_xact_dispatch_pc34_compat
+            PRIVATE -Wall -Wextra -Werror=implicit-function-declaration)
+    endif()
+    add_test(
+        NAME dm2_v1_xact_dispatch_pc34_compat
+        COMMAND test_dm2_v1_xact_dispatch_pc34_compat
+    )
+
+    # ── DM2: creature XACT handlers (c_ai.cpp XACT cases) ──
+    add_executable(test_dm2_v1_creature_xact_handlers_pc34_compat
+        tests/test_dm2_v1_creature_xact_handlers_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_creature_xact_handlers_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_xact_handlers_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_xact_handlers_pc34_compat
+            PRIVATE -Wall -Wextra -Werror=implicit-function-declaration)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_xact_handlers_pc34_compat
+        COMMAND test_dm2_v1_creature_xact_handlers_pc34_compat
+    )
+
+    # ── DM2: creature ops parity ──
+    add_executable(test_dm2_v1_creature_ops_parity
+        tests/test_dm2_v1_creature_ops_parity.c
+    )
+    target_include_directories(test_dm2_v1_creature_ops_parity PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_creature_ops_parity
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_creature_ops_parity
+            PRIVATE -Wall -Wextra -Werror=implicit-function-declaration)
+    endif()
+    add_test(
+        NAME dm2_v1_creature_ops_parity
+        COMMAND test_dm2_v1_creature_ops_parity
     )
 
     # ── DM2: gfx_main module (c_gfx_main.cpp) ──
@@ -18872,6 +19083,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_dbitem_alloc_pc34_compat
         tests/test_dm2_v1_dbitem_alloc_pc34_compat.c
         src/dm2/dm2_v1_dbitem_alloc_pc34_compat.c
+        src/dm2/dm2_v1_record_ops_pc34_compat.c
         src/dm2/dm2_v1_drops.c
         src/dm2/dm2_v1_record_pool_pc34_compat.c
         src/dm2/dm2_v1_world_model.c
@@ -37143,6 +37355,7 @@ if(BUILD_TESTING)
     add_executable(test_tqr_v1_boot_profile_smoke
         tests/tqr_v1_boot_profile_smoke.c
         src/tqr/tqr_v1_boot_profile.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_tqr_v1_boot_profile_smoke PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -48314,11 +48527,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_data_tables_pc34_compat.c
         src/dm2/dm2_v1_timer_ops_pc34_compat.c
         src/dm2/dm2_v1_engage_command_pc34_compat.c
+        src/dm2/dm2_v1_input_pc34_compat.c
         src/dm2/dm2_v1_event_handlers_pc34_compat.c
         src/dm2/dm2_v1_gfx_main_pc34_compat.c
         src/dm2/dm2_v1_hero_ops_pc34_compat.c
         src/dm2/dm2_v1_light_ops_pc34_compat.c
         src/dm2/dm2_v1_creature_ops_pc34_compat.c
+        src/dm2/dm2_v1_actuator_ops_pc34_compat.c
+        src/dm2/dm2_v1_record_ops_pc34_compat.c
     )
     if(NOT MSVC)
         target_link_libraries(test_dm2_v1_scene_light_control PRIVATE m)
@@ -53010,3 +53226,30 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 add_test(NAME dm2_v1_1031_pc34_compat COMMAND test_dm2_v1_1031_pc34_compat)
+
+# ── DM2: timer processing dispatcher (c_tim_proc.cpp) ──
+# timer_ops and runtime_parity provide symbols called by tim_proc
+# (process_timer_3d, process_timer_destroy_door, process_timer_resurrection,
+# step_door).  timer_ops also re-defines step_missile and
+# process_timer_light that already live in tim_proc, so we link it as a
+# static archive with -force_load to let the linker pick the first
+# definition.
+add_library(_tim_proc_deps STATIC
+    src/dm2/dm2_v1_timer_ops_pc34_compat.c
+    src/dm2/dm2_v1_runtime_parity_pc34_compat.c
+)
+target_include_directories(_tim_proc_deps PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+
+add_executable(test_dm2_v1_tim_proc_pc34_compat
+    tests/test_dm2_v1_tim_proc_pc34_compat.c
+    src/dm2/dm2_v1_tim_proc_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_tim_proc_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_tim_proc_pc34_compat PRIVATE _tim_proc_deps)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_tim_proc_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_tim_proc_pc34_compat COMMAND test_dm2_v1_tim_proc_pc34_compat)

@@ -9,18 +9,7 @@
  * c_tim_proc.cpp
  * ===================================================================== */
 
-void dm2_v1_process_timer_resurrection(
-    int timer_idx, const DM2_V1_TimerResurrectionCallbacks *cb, void *ctx)
-{
-    if (!cb)
-        return;
-    uint8_t hero_idx = cb->get_timer_actor(ctx, timer_idx);
-    (void)cb->get_timer_value(ctx, timer_idx);
-    cb->bring_champion_to_life(ctx, (int)hero_idx);
-    cb->delete_timer(ctx, timer_idx);
-}
-
-void dm2_v1_continue_ornate_noise(
+void dm2_v1_continue_ornate_noise_cb(
     int timer_idx, int16_t x, int16_t y, uint32_t delay,
     const DM2_V1_ContinueOrnateNoiseCallbacks *cb, void *ctx)
 {
@@ -555,7 +544,7 @@ int dm2_v1_wield_weapon(
 }
 
 /* DM2_REMOVE_OBJECT_FROM_HAND — c_hero.cpp:2354 */
-int32_t dm2_v1_remove_object_from_hand(
+int32_t dm2_v1_remove_object_from_hand_ex(
     DM2_V1_RemoveFromHandState *state, int event_hero_idx,
     const DM2_V1_RemoveFromHandCallbacks *cb, void *ctx)
 {

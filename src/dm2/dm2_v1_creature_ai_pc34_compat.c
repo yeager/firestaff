@@ -125,6 +125,225 @@ int dm2_v1_rotate_creature(
     return 1;
 }
 
+/* ------------------------------------------------------------------ */
+/* XACT dispatch (c_ai.cpp:2152-2338)                                 */
+/* ------------------------------------------------------------------ */
+
+int dm2_v1_xact_dispatch_action(int8_t action_byte,
+                                 DM2_V1_XactDispatchReceipt *receipt)
+{
+    int opt;
+
+    if (!receipt) return 0;
+    memset(receipt, 0, sizeof(*receipt));
+    receipt->valid = 1;
+    receipt->handler_id = -1;
+
+    /* c_ai.cpp:2155 — opt = eaxb - 63; valid range 0..35 maps to XACT 56..91
+     * Wait: the code says eaxb-63 but case 0 calls XACT_56. That means
+     * the action byte encoding is: action_byte = xact_number + 7.
+     * So opt = action_byte - 63, and xact_number = opt + 56. */
+    opt = (int)action_byte - 63;
+    if (opt < 0 || opt > 35) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    receipt->handler_id = opt + 56;
+
+    switch (opt) {
+    case 0:  /* XACT 56 — stop */
+    case 1:  /* XACT 57 — stop/clear */
+    case 3:  /* XACT 59/76 — move forward */
+    case 6:  /* XACT 62 — attack */
+    case 7:  /* XACT 63 — cast spell */
+    case 8:  /* XACT 64 — shoot missile */
+    case 9:  /* XACT 65 — flee */
+    case 10: /* XACT 66 — move random */
+    case 11: /* XACT 67 — move to target */
+    case 12: /* XACT 68 — guard position */
+    case 14: /* XACT 70 — face party */
+    case 15: /* XACT 71 — patrol */
+    case 17: /* XACT 73 — spawn */
+    case 18: /* XACT 74 — open door */
+    case 19: /* XACT 75 — use item */
+    case 21: /* XACT 77 — follow */
+    case 22: /* XACT 78 — sleep */
+    case 24: /* XACT 80 */
+    case 25: /* XACT 81 */
+    case 26: /* XACT 82 */
+    case 27: /* XACT 83 */
+    case 28: /* XACT 84 */
+    case 29: /* XACT 85 */
+    case 33: /* XACT 89 */
+    case 34: /* XACT 90 — random */
+    case 35: /* XACT 91 — item check */
+        receipt->sets_ret = 1;
+        break;
+
+    case 2:  /* XACT 58 — inline: b_1a = 19 */
+        receipt->inline_action = 1;
+        receipt->inline_b_1a = 19;
+        break;
+
+    case 4:  /* XACT 60 — inline: b_1a = 0 */
+        receipt->inline_action = 1;
+        receipt->inline_b_1a = 0;
+        break;
+
+    case 5:  /* XACT 61 — nop */
+        break;
+
+    case 13: /* XACT 69 — sound (void) */
+    case 23: /* XACT 79 — wake (void) */
+        break;
+
+    case 16: /* XACT 72 — regenerate (via 72/87/88 handler) */
+    case 31: /* XACT 87 — sleep (via 72/87/88 handler) */
+    case 32: /* XACT 88 — wake (via 72/87/88 handler) */
+        break;
+
+    case 20: /* XACT 76 — move backward: sets v1e0572=-1, v1e0574=0, then calls 59/76 */
+        receipt->sets_ret = 1;
+        receipt->inline_action = 1;
+        receipt->inline_v1e0572 = -1;
+        receipt->inline_v1e0574 = 0;
+        receipt->handler_id = 76; /* actual handler is 59/76 after state setup */
+        break;
+
+    case 30: /* XACT 86 — set state */
+        receipt->sets_ret = 1;
+        break;
+
+    default:
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    return 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* PROCEED_XACT_72_87_88 (c_ai.cpp:949-955)                          */
+/* ------------------------------------------------------------------ */
+
+int dm2_v1_proceed_xact_72_87_88(const DM2_V1_Xact72_87_88Request *req,
+                                  DM2_V1_Xact72_87_88Receipt *receipt)
+{
+    int8_t n;
+
+    if (!receipt) return 0;
+    memset(receipt, 0, sizeof(*receipt));
+
+    if (!req) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    receipt->valid = 1;
+
+    /* c_ai.cpp:951 — n = CUTX8(s350.v1e0572) */
+    n = (int8_t)(req->v1e0572 & 0xFF);
+
+    /* c_ai.cpp:952-953 — if n == -1, use v1e07d8.w_04 instead */
+    if (n == -1)
+        n = (int8_t)(req->v1e07d8_w04 & 0xFF);
+
+    receipt->b_1a = n;
+    return 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* PROCEED_XACT_86 (c_ai.cpp:2120-2126)                              */
+/* ------------------------------------------------------------------ */
+
+int dm2_v1_proceed_xact_86(const DM2_V1_Xact86Request *req,
+                            DM2_V1_Xact86Receipt *receipt)
+{
+    if (!receipt) return 0;
+    memset(receipt, 0, sizeof(*receipt));
+
+    if (!req) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    receipt->valid = 1;
+
+    /* c_ai.cpp:2122 — b_20 = CUTX8(v1e07d8.w_04) */
+    receipt->b_20 = (int8_t)(req->v1e07d8_w04 & 0xFF);
+
+    /* c_ai.cpp:2123 — b_1e = CUTX8(v1e07d8.w_06) */
+    receipt->b_1e = (int8_t)(req->v1e07d8_w06 & 0xFF);
+
+    /* c_ai.cpp:2124 — b_1a = CUTX8(v1e0572) + 61 */
+    receipt->b_1a = (int8_t)((req->v1e0572 & 0xFF) + 61);
+
+    return 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* PROCEED_XACT_90 (c_ai.cpp:2136-2138)                              */
+/* ------------------------------------------------------------------ */
+
+int dm2_v1_proceed_xact_90(const DM2_V1_Xact90Request *req,
+                            DM2_V1_Xact90Receipt *receipt)
+{
+    if (!receipt) return 0;
+    memset(receipt, 0, sizeof(*receipt));
+
+    if (!req) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    receipt->valid = 1;
+
+    /* c_ai.cpp:2138 — return (v1e0572 > RAND16(100) ? 1 : 0) - 3
+     * So if threshold > rand: 1-3 = -2 (pass); else 0-3 = -3 (fail) */
+    receipt->result = (req->v1e0572 > req->rand_value) ? -2 : -3;
+
+    return 1;
+}
+
+/* ------------------------------------------------------------------ */
+/* PROCEED_XACT_91 (c_ai.cpp:2142-2150)                              */
+/* ------------------------------------------------------------------ */
+
+int dm2_v1_proceed_xact_91(const DM2_V1_Xact91Request *req,
+                            DM2_V1_Xact91Receipt *receipt)
+{
+    if (!receipt) return 0;
+    memset(receipt, 0, sizeof(*receipt));
+
+    if (!req) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    receipt->valid = 1;
+
+    if (!req->can_handle_item) {
+        receipt->fail_closed = 1;
+        return 0;
+    }
+
+    /* c_ai.cpp:2144-2147 — if both checks return -2, return -3; else -2 */
+    if (req->can_handle_item(req->ctx, req->v1e0572,
+                              req->possession_w00, 0xFF) == -2) {
+        if (req->can_handle_item(req->ctx, req->v1e0574,
+                                  req->possession_w00, 0xFF) == -2) {
+            receipt->result = -3;
+            return 1;
+        }
+    }
+
+    receipt->result = -2;
+    return 1;
+}
+
+/* ------------------------------------------------------------------ */
+
 int dm2_v1_think_creature(
     const DM2_V1_ThinkCreatureRequest *request,
     DM2_V1_ThinkCreatureReceipt *receipt)

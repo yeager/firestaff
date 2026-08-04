@@ -78,6 +78,28 @@ void dm2_v1_proceed_light(
     uint16_t light_type, int16_t intensity,
     const DM2_V1_ProceedLightCallbacks *cb, void *ctx);
 
+/* ---- DM2_ADD_BACKGROUND_LIGHT_FROM_TILE (c_light.cpp:202) ----
+ * Query tile light and add it to the light map with distance attenuation. */
+typedef struct {
+    int16_t (*get_tile_light)(void *ctx, int16_t x, int16_t y);
+    void (*add_light)(void *ctx, int16_t x, int16_t y, int16_t amount);
+} DM2_V1_AddBackgroundLightCallbacks;
+
+void dm2_v1_add_background_light_from_tile(
+    int16_t x, int16_t y, int16_t radius,
+    const DM2_V1_AddBackgroundLightCallbacks *cb, void *ctx);
+
+/* ---- DM2_CHECK_RECOMPUTE_LIGHT (c_light.cpp:490) ----
+ * Check dirty flag, recompute light map if needed. */
+typedef struct {
+    int (*is_light_dirty)(void *ctx);
+    void (*recompute_light_map)(void *ctx);
+    void (*clear_light_dirty)(void *ctx);
+} DM2_V1_CheckRecomputeLightCallbacks;
+
+int32_t dm2_v1_check_recompute_light(
+    const DM2_V1_CheckRecomputeLightCallbacks *cb, void *ctx);
+
 static inline int16_t dm2_v1_between_value(int16_t lo, int16_t hi, int16_t val)
 {
     if (val < lo) return lo;
