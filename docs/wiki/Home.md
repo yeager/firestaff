@@ -12,6 +12,14 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 | [Theron's Quest](Therons-Quest-Technical-Reference) | PC Engine | None | [Technical Reference](Therons-Quest-Technical-Reference), [Track 02 Internals](Therons-Quest-Track02-Internals) |
 | [DM Nexus](Nexus-Technical-Reference) | Sega Saturn | None | [Technical Reference](Nexus-Technical-Reference), [DGN/PRS3 Internals](Nexus-DGN-and-PRS3-Internals), [SAL/MAP Internals](Nexus-SAL-MAP-Internals) |
 
+## Platform Guides
+
+- [macOS](Platform-macOS) — DMG/ZIP install, Homebrew build, Gatekeeper notes
+- [Windows](Platform-Windows) — installer/portable ZIP, MSYS2 build
+- [Linux](Platform-Linux) — deb/rpm, Steam Deck (pacman/AppImage), build from source
+- [iOS](Platform-iOS) — AltStore Classic sideloading, SideStore, game data via Files app
+- [Android](Platform-Android) — APK sideloading, game data transfer
+
 ## Project Pages
 
 - [Building and Installing](Building-and-Installing) — build from source, install release packages, sideload on iOS/Android
