@@ -265,10 +265,10 @@ static void check_hash_set_contract(void) {
     CHECK(M12_AssetStatus_GameKnownHashCount("theron") == 4U);
     CHECK(M12_AssetStatus_GameRequiredFileCount("theron") == 1U);
     CHECK(M12_AssetStatus_GameVerifiedFileCount("theron") == 1U);
-    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp") == 0);
-    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-en") == 1);
-    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp-rev1-iso") == 2);
-    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-en-iso") == 3);
+    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-en") == 0);
+    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp") == 1);
+    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-en-iso") == 2);
+    CHECK(M12_AssetStatus_FindVersionIndex("theron", "pce-jp-rev1-iso") == 3);
 }
 
 static void check_scan_no_data_marks_theron_unavailable(char* dataDir) {

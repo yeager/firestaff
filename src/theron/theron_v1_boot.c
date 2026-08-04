@@ -535,11 +535,11 @@ void theron_v1_boot_profile_init(Theron_V1_BootProfile *profile) {
     memset(profile, 0, sizeof(*profile));
 
     strncpy(profile->game_id, "theron", sizeof(profile->game_id) - 1);
-    profile->platform = THERON_PLATFORM_PCE_JP;
+    profile->platform = THERON_PLATFORM_PCE_US;
     strncpy(profile->platform_label,
-            g_platform_labels[THERON_PLATFORM_PCE_JP],
+            g_platform_labels[THERON_PLATFORM_PCE_US],
             sizeof(profile->platform_label) - 1);
-    strncpy(profile->version_id, "pce-jp", sizeof(profile->version_id) - 1);
+    strncpy(profile->version_id, "pce-en", sizeof(profile->version_id) - 1);
 
     profile->in_dungeon_save_allowed = 0; /* TQ design restriction */
 

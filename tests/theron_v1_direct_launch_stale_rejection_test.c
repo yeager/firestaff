@@ -154,7 +154,7 @@ int main(void) {
 
     expect_true(M12_AssetStatus_GameAvailable(&status, "theron") == 1,
                 "initial scan marks synthetic Track 02 available");
-    version = M12_AssetStatus_GetVersion(&status, "theron", 0U);
+    version = M12_AssetStatus_GetVersion(&status, "theron", 1U);
     expect_true(version && version->matched &&
                     strcmp(version->matchedPath, trackPath) == 0 &&
                     strcmp(version->matchedMd5, trackMd5) == 0,
@@ -192,7 +192,7 @@ int main(void) {
                 "deleted Track 02 bumps stale-rejection counter");
     expect_true(M12_AssetStatus_GameAvailable(&status, "theron") == 0,
                 "deleted Track 02 leaves Theron unavailable");
-    version = M12_AssetStatus_GetVersion(&status, "theron", 0U);
+    version = M12_AssetStatus_GetVersion(&status, "theron", 1U);
     expect_true(!version || !version->matched,
                 "deleted Track 02 clears the matched version");
 

@@ -194,7 +194,7 @@ int main(void) {
     check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&directRootStatus, "theron"),
                      extrasJapanDir) == 0,
               "Theron direct-launch scan prefers raw theron-extras Track 02 runtime dir");
-    version = M12_AssetStatus_GetVersion(&directRootStatus, "theron", 0U);
+    version = M12_AssetStatus_GetVersion(&directRootStatus, "theron", 1U);
     check_int(version && version->matched &&
                   strcmp(version->matchedPath, extrasTrackPath) == 0 &&
                   strcmp(version->matchedMd5, trackMd5) == 0,
@@ -261,7 +261,7 @@ int main(void) {
     check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&specificTheronStatus, "theron"),
                      theronDir) == 0,
               "Theron specific-directory scan keeps the explicit theron/ runtime dir");
-    version = M12_AssetStatus_GetVersion(&specificTheronStatus, "theron", 0U);
+    version = M12_AssetStatus_GetVersion(&specificTheronStatus, "theron", 1U);
     check_int(version && version->matched &&
                   strcmp(version->matchedPath, trackPath) == 0 &&
                   strcmp(version->matchedMd5, trackMd5) == 0,
@@ -278,7 +278,7 @@ int main(void) {
     check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&looseDirStatus, "theron"),
                      looseDir) == 0,
               "Theron arbitrary-directory direct scan derives runtime root from matched file");
-    version = M12_AssetStatus_GetVersion(&looseDirStatus, "theron", 0U);
+    version = M12_AssetStatus_GetVersion(&looseDirStatus, "theron", 1U);
     check_int(version && version->matched &&
                   strcmp(version->matchedPath, looseTrackPath) == 0 &&
                   strcmp(version->matchedMd5, trackMd5) == 0,
@@ -299,7 +299,7 @@ int main(void) {
 
     check_int(M12_AssetStatus_GameAvailable(&status, "theron") == 1,
               "initial launcher scan marks synthetic Theron Track 02 available");
-    version = M12_AssetStatus_GetVersion(&status, "theron", 0U);
+    version = M12_AssetStatus_GetVersion(&status, "theron", 1U);
     check_int(version && version->matched &&
                   strcmp(version->matchedPath, extrasTrackPath) == 0 &&
                   strcmp(version->matchedMd5, trackMd5) == 0,
@@ -320,7 +320,7 @@ int main(void) {
 
     check_int(M12_AssetStatus_GameAvailable(&status, "theron") == 1,
               "repeat launcher refresh keeps Theron available");
-    version = M12_AssetStatus_GetVersion(&status, "theron", 0U);
+    version = M12_AssetStatus_GetVersion(&status, "theron", 1U);
     check_int(version && version->matched &&
                   strcmp(version->matchedPath, extrasTrackPath) == 0 &&
                   strcmp(version->matchedMd5, trackMd5) == 0,

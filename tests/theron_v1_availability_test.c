@@ -499,14 +499,14 @@ int main(void) {
                 "Theron requires one Track 02 data file");
     expect_true(M12_AssetStatus_GameVerifiedFileCount("theron") == 1U,
                 "Theron verifies one Track 02 data file");
-    expect_true(M12_AssetStatus_FindVersionIndex("theron", "pce-jp") == 0,
-                "Theron JP version id is indexed");
-    expect_true(M12_AssetStatus_FindVersionIndex("theron", "pce-en") == 1,
+    expect_true(M12_AssetStatus_FindVersionIndex("theron", "pce-en") == 0,
                 "Theron US version id is indexed");
-    expect_true(M12_AssetStatus_FindVersionIndex("theron", "pce-jp-rev1-iso") == 2,
-                "Theron JP Rev 1 ISO version id is indexed");
-    expect_true(M12_AssetStatus_FindVersionIndex("theron", "pce-en-iso") == 3,
+    expect_true(M12_AssetStatus_FindVersionIndex("theron", "pce-jp") == 1,
+                "Theron JP version id is indexed");
+    expect_true(M12_AssetStatus_FindVersionIndex("theron", "pce-en-iso") == 2,
                 "Theron US ISO version id is indexed");
+    expect_true(M12_AssetStatus_FindVersionIndex("theron", "pce-jp-rev1-iso") == 3,
+                "Theron JP Rev 1 ISO version id is indexed");
 
     expect_true(make_temp_dir(temp_dir), "temporary data dir created");
     snprintf(theron_dir, sizeof(theron_dir), "%s%s%s", temp_dir, PATH_SEP, "theron");

@@ -334,14 +334,14 @@ static const char* const g_theronTrack02Names[] = {
 };
 
 static const M12_VersionSpec g_theronVersions[] = {
-    {"theron", "pce-jp", "PC Engine JP (Track 02)", "PCE JP",
-     g_theronTrack02Names, "b7afb338ad31be1025b53f9aff12d73a", M12_ARCH_PCE},
     {"theron", "pce-en", "TurboGrafx-16 US (Track 02)", "TG16 US",
      g_theronTrack02Names, "f23601102138f87c33025877767ebf76", M12_ARCH_PCE},
-    {"theron", "pce-jp-rev1-iso", "PC Engine JP Rev 1 (Track 02 ISO)", "PCE JP Rev1",
-     g_theronTrack02Names, "397039af02d50d15c70b74088eb8a1cb", M12_ARCH_PCE},
+    {"theron", "pce-jp", "PC Engine JP (Track 02)", "PCE JP",
+     g_theronTrack02Names, "b7afb338ad31be1025b53f9aff12d73a", M12_ARCH_PCE},
     {"theron", "pce-en-iso", "TurboGrafx-16 US (Track 02 ISO)", "TG16 US ISO",
-     g_theronTrack02Names, "ceb02343868f80cec899e9b239aff2da", M12_ARCH_PCE}
+     g_theronTrack02Names, "ceb02343868f80cec899e9b239aff2da", M12_ARCH_PCE},
+    {"theron", "pce-jp-rev1-iso", "PC Engine JP Rev 1 (Track 02 ISO)", "PCE JP Rev1",
+     g_theronTrack02Names, "397039af02d50d15c70b74088eb8a1cb", M12_ARCH_PCE}
 };
 
 static const M12_GameVersionSpec g_games[] = {
