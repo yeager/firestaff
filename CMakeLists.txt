@@ -36136,6 +36136,7 @@ if(BUILD_TESTING)
         tests/nexus_v1_boot_profile_smoke.c
         src/nexus/nexus_v1_boot_profile.c
         src/shared/asset_find_by_hash.c
+        src/shared/fs_portable_compat.c
     )
     target_include_directories(test_nexus_v1_boot_profile_smoke PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
