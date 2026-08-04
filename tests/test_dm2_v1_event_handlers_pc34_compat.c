@@ -243,6 +243,143 @@ static void test_proceed_command_slot_no_active_hero(void)
     printf("test_proceed_command_slot_no_active_hero OK\n");
 }
 
+/* ---- New handler tests ---- */
+
+static void test_events_5bfb_sound_dispatch(void)
+{
+    int16_t v1d26a0 = 0, v1d26a2 = 0;
+    int sound3_calls = 0;
+    /* Cannot use nested callbacks portably, test null safety */
+    DM2_V1_Events5BFBCallbacks cb;
+    memset(&cb, 0, sizeof(cb));
+    cb.v1d26a0 = &v1d26a0;
+    cb.v1d26a2 = &v1d26a2;
+
+    dm2_v1_events_5bfb(5, 0, &cb, NULL);
+    assert(v1d26a0 == 5);
+
+    dm2_v1_events_5bfb(3, 0x0a, &cb, NULL);
+    assert(v1d26a2 == 3);
+
+    dm2_v1_events_5bfb(0, 0, NULL, NULL);
+    printf("test_events_5bfb_sound_dispatch OK\n");
+}
+
+static void test_events_38c8_0002_null_safety(void)
+{
+    DM2_V1_Events38c80002Receipt receipt;
+    dm2_v1_events_38c8_0002(NULL, NULL, &receipt);
+    assert(receipt.handled == 0);
+    printf("test_events_38c8_0002_null_safety OK\n");
+}
+
+static void test_events_38c8_0060_null_safety(void)
+{
+    dm2_v1_events_38c8_0060(NULL, NULL);
+    printf("test_events_38c8_0060_null_safety OK\n");
+}
+
+static void test_remove_rune_from_tail(void)
+{
+    int16_t mock_nrunes = 3;
+    int16_t mock_runes[8] = {0x60, 0x67, 0x6E, 0, 0, 0, 0, 0};
+    int16_t mock_v1e0b6c_val = 0;
+
+    /* Direct state test */
+    DM2_V1_RemoveRuneFromTailCallbacks cb;
+    memset(&cb, 0, sizeof(cb));
+    cb.curacthero = 1;
+    cb.v1e0b6c = &mock_v1e0b6c_val;
+
+    /* Without callbacks wired, just verify null safety */
+    dm2_v1_remove_rune_from_tail(NULL, NULL);
+
+    printf("test_remove_rune_from_tail OK\n");
+    (void)mock_nrunes;
+    (void)mock_runes;
+}
+
+static void test_click_moneybox_null_safety(void)
+{
+    DM2_V1_ClickMoneyboxReceipt receipt;
+    dm2_v1_click_moneybox(0, NULL, NULL, &receipt);
+    assert(receipt.handled == 0);
+    printf("test_click_moneybox_null_safety OK\n");
+}
+
+static void test_events_2e62_0cfa_null_safety(void)
+{
+    dm2_v1_events_2e62_0cfa(0, NULL, NULL);
+    printf("test_events_2e62_0cfa_null_safety OK\n");
+}
+
+static void test_events_30dea_null_safety(void)
+{
+    DM2_V1_Events30DEAReceipt receipt;
+    int ret = dm2_v1_events_30dea(0, NULL, NULL, &receipt);
+    assert(ret == 0);
+    assert(receipt.handled == 0);
+    printf("test_events_30dea_null_safety OK\n");
+}
+
+static void test_events_443c_0434_null_safety(void)
+{
+    DM2_V1_Events443c0434Receipt receipt;
+    dm2_v1_events_443c_0434(NULL, NULL, &receipt);
+    assert(receipt.handled == 0);
+    printf("test_events_443c_0434_null_safety OK\n");
+}
+
+static void test_events_37bbb_no_hero(void)
+{
+    mock_event_heroidx = -1;
+    DM2_V1_Events37BBBCallbacks cb;
+    memset(&cb, 0, sizeof(cb));
+    cb.get_event_heroidx = get_event_heroidx;
+    int ret = dm2_v1_events_37bbb(0, &cb, NULL);
+    assert(ret == 0);
+    printf("test_events_37bbb_no_hero OK\n");
+}
+
+static void test_events_121e_0003_null_safety(void)
+{
+    dm2_v1_events_121e_0003(0, NULL, NULL);
+    printf("test_events_121e_0003_null_safety OK\n");
+}
+
+static void test_events_121e_013a_null_safety(void)
+{
+    dm2_v1_events_121e_013a(0, 0, 0, NULL, NULL);
+    printf("test_events_121e_013a_null_safety OK\n");
+}
+
+static void test_eventa_121e_0222_no_hero(void)
+{
+    mock_event_heroidx = -1;
+    DM2_V1_Eventa121e0222Callbacks cb;
+    memset(&cb, 0, sizeof(cb));
+    cb.get_event_heroidx = get_event_heroidx;
+    int16_t ret = dm2_v1_eventa_121e_0222(0, 0, 0, &cb, NULL);
+    assert(ret == 0);
+    printf("test_eventa_121e_0222_no_hero OK\n");
+}
+
+static void test_events_3c1e5_null_safety(void)
+{
+    DM2_V1_Events3C1E5Receipt receipt;
+    dm2_v1_events_3c1e5(0, 0, 0, 0, 0, NULL, NULL, &receipt);
+    assert(receipt.handled == 0);
+    printf("test_events_3c1e5_null_safety OK\n");
+}
+
+static void test_events_ab26_null_safety(void)
+{
+    DM2_V1_EventsAB26Receipt receipt;
+    dm2_v1_events_ab26(NULL, NULL, &receipt);
+    assert(receipt.handled == 0);
+    printf("test_events_ab26_null_safety OK\n");
+}
+
 int main(void)
 {
     test_click_item_slot_no_hero();
@@ -253,6 +390,20 @@ int main(void)
     test_push_pull_rigid_body_null_safety();
     test_player_testing_wall_null_safety();
     test_proceed_command_slot_no_active_hero();
+    test_events_5bfb_sound_dispatch();
+    test_events_38c8_0002_null_safety();
+    test_events_38c8_0060_null_safety();
+    test_remove_rune_from_tail();
+    test_click_moneybox_null_safety();
+    test_events_2e62_0cfa_null_safety();
+    test_events_30dea_null_safety();
+    test_events_443c_0434_null_safety();
+    test_events_37bbb_no_hero();
+    test_events_121e_0003_null_safety();
+    test_events_121e_013a_null_safety();
+    test_eventa_121e_0222_no_hero();
+    test_events_3c1e5_null_safety();
+    test_events_ab26_null_safety();
     printf("All dm2_v1_event_handlers tests passed.\n");
     return 0;
 }

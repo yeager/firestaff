@@ -234,6 +234,508 @@ void dm2_v1_push_pull_rigid_body(
     const DM2_V1_PushPullRigidBodyCallbacks *cb, void *ctx,
     DM2_V1_PushPullRigidBodyReceipt *receipt);
 
+/* ---- DM2_events_5BFB (c_events.cpp:170) ----
+ * Sound/UI helper: sets v1d26a0/v1d26a2 and queues noise. */
+typedef struct {
+    int16_t *v1d26a0;
+    int16_t *v1d26a2;
+    int16_t v1e0270;
+    int16_t v1e0272;
+    void (*queue_noise_gen1)(void *ctx, int16_t cat, int16_t sub,
+                             int16_t snd, int16_t vol, int16_t dur,
+                             int16_t x, int16_t y, int16_t flags);
+    void (*sound3)(void *ctx, int16_t a, int16_t b);
+} DM2_V1_Events5BFBCallbacks;
+
+void dm2_v1_events_5bfb(
+    int16_t param1, int16_t param2,
+    const DM2_V1_Events5BFBCallbacks *cb, void *ctx);
+
+/* ---- DM2_events_38c8_0002 (c_events.cpp:327) ----
+ * Viewport enter: sets v1e13f0 flag, hides mouse, fills halftone. */
+typedef struct {
+    int16_t *v1e13f0;
+    int16_t *dialog2;
+    int16_t *v1e00b8;
+    int16_t *v1e0976;
+    void (*champion_squad_recompute)(void *ctx);
+    void (*update_right_panel)(void *ctx, int mode);
+    void (*proc_1031_04f5)(void *ctx);
+    void (*hide_mouse)(void *ctx);
+    void (*show_mouse)(void *ctx);
+    void (*move_12b4_0092)(void *ctx);
+    void (*fill_halftone_recti)(void *ctx, int16_t idx);
+} DM2_V1_Events38c80002Callbacks;
+
+typedef struct {
+    int handled;
+} DM2_V1_Events38c80002Receipt;
+
+void dm2_v1_events_38c8_0002(
+    const DM2_V1_Events38c80002Callbacks *cb, void *ctx,
+    DM2_V1_Events38c80002Receipt *receipt);
+
+/* ---- DM2_events_38c8_0060 (c_events.cpp:355) ----
+ * Viewport exit: clears v1e13f0 flag, triggers redraw. */
+typedef struct {
+    int16_t *v1e13f0;
+    int16_t *dialog2;
+    int16_t *v1e0238;
+    int16_t *v1e0976;
+    int16_t *v1e0b6c;
+    int16_t *v1e0b30;
+    int16_t curacthero;
+    void (*draw_wake_up_text)(void *ctx);
+    void (*drawings_completed)(void *ctx);
+    void (*guidraw_24a5_1798)(void *ctx, int16_t param);
+    void (*init_backbuff)(void *ctx);
+    void (*guidraw_29ee_000f)(void *ctx);
+} DM2_V1_Events38c80060Callbacks;
+
+void dm2_v1_events_38c8_0060(
+    const DM2_V1_Events38c80060Callbacks *cb, void *ctx);
+
+/* ---- DM2_events_13262 (c_events.cpp:427) ----
+ * Click dispatch by zone: scans v1e02f0 array for matching
+ * zone and routes to CLICK_VWPT. */
+typedef struct {
+    int16_t v1e0404;
+    int16_t v1d26fc;
+    int16_t v1d26fe;
+    int16_t (*get_zone_b_0a)(void *ctx, int idx);
+    int16_t (*get_zone_b_0b)(void *ctx, int idx);
+    int16_t (*get_zone_rc_x)(void *ctx, int idx);
+    int16_t (*get_zone_rc_y)(void *ctx, int idx);
+    void (*click_vwpt)(void *ctx, int16_t x, int16_t y);
+} DM2_V1_Events13262Callbacks;
+
+void dm2_v1_events_13262(
+    int16_t param,
+    const DM2_V1_Events13262Callbacks *cb, void *ctx);
+
+/* ---- DM2_ADD_RUNE_TO_TAIL (c_events.cpp:1871) ----
+ * Add a rune symbol to the current spell sequence. */
+typedef struct {
+    int16_t curacthero;
+    int16_t (*get_hero_nrunes)(void *ctx, int hero);
+    void (*set_hero_nrunes)(void *ctx, int hero, int16_t n);
+    int16_t (*get_hero_rune)(void *ctx, int hero, int idx);
+    void (*set_hero_rune)(void *ctx, int hero, int idx, int16_t val);
+    int16_t (*get_hero_curMP)(void *ctx, int hero);
+    void (*set_hero_curMP)(void *ctx, int hero, int16_t mp);
+    void (*or_hero_flag)(void *ctx, int hero, int16_t bits);
+    const uint8_t *rune_cost_table; /* table1d67e0[nrunes][6] */
+    const uint8_t *rune_power_table; /* table1d6797 */
+    int16_t *v1e0b6c;
+    void (*update_right_panel)(void *ctx, int mode);
+    void (*proc_107b0)(void *ctx);
+    void (*refresh_player_stat_disp)(void *ctx, int16_t hero);
+} DM2_V1_AddRuneToTailCallbacks;
+
+typedef struct {
+    int handled;
+    int rune_added;
+} DM2_V1_AddRuneToTailReceipt;
+
+void dm2_v1_add_rune_to_tail(
+    int16_t rune_index,
+    const DM2_V1_AddRuneToTailCallbacks *cb, void *ctx,
+    DM2_V1_AddRuneToTailReceipt *receipt);
+
+/* ---- DM2_REMOVE_RUNE_FROM_TAIL (c_events.cpp:1931) ----
+ * Remove the last rune from the current spell sequence. */
+typedef struct {
+    int16_t curacthero;
+    int16_t (*get_hero_nrunes)(void *ctx, int hero);
+    void (*set_hero_nrunes)(void *ctx, int hero, int16_t n);
+    void (*set_hero_rune)(void *ctx, int hero, int idx, int16_t val);
+    int16_t *v1e0b6c;
+    void (*update_right_panel)(void *ctx, int mode);
+    void (*proc_107b0)(void *ctx);
+} DM2_V1_RemoveRuneFromTailCallbacks;
+
+void dm2_v1_remove_rune_from_tail(
+    const DM2_V1_RemoveRuneFromTailCallbacks *cb, void *ctx);
+
+/* ---- DM2_CLICK_MONEYBOX (c_events.cpp:1941) ----
+ * Click on a moneybox slot: deposit or withdraw coins. */
+typedef struct {
+    int16_t (*get_v1d67bc)(void *ctx);
+    int16_t curacthero;
+    int16_t curactmode;
+    int16_t (*get_hero_item)(void *ctx, int hero, int slot);
+    int16_t (*get_held_item)(void *ctx);
+    int16_t (*get_item_order_in_container)(void *ctx, int16_t container, int16_t slot);
+    int16_t (*take_coin_from_wallet)(void *ctx, int16_t container, int16_t order);
+    int (*add_coin_to_wallet)(void *ctx, int16_t container, int16_t coin);
+    void (*take_object)(void *ctx, int16_t record, int mode);
+    int (*remove_object_from_hand)(void *ctx);
+    int16_t *v1e0b6c;
+    void (*update_right_panel)(void *ctx, int mode);
+    void (*calc_player_weight)(void *ctx, int16_t hero);
+} DM2_V1_ClickMoneyboxCallbacks;
+
+typedef struct {
+    int handled;
+    int deposited;
+    int withdrawn;
+} DM2_V1_ClickMoneyboxReceipt;
+
+void dm2_v1_click_moneybox(
+    int16_t slot_index,
+    const DM2_V1_ClickMoneyboxCallbacks *cb, void *ctx,
+    DM2_V1_ClickMoneyboxReceipt *receipt);
+
+/* ---- DM2_events_2e62_0cfa (c_events.cpp:2153) ----
+ * Refresh all player stat displays and right panel. */
+typedef struct {
+    int16_t (*get_heros_in_party)(void *ctx);
+    int16_t (*get_v1e0976)(void *ctx);
+    int16_t (*get_hero_ench_power)(void *ctx, int hero);
+    int16_t (*get_hero_ench_aura)(void *ctx, int hero);
+    int16_t (*get_hero_flag)(void *ctx, int hero);
+    void (*set_hero_flag)(void *ctx, int hero, int16_t flags);
+    int (*get_vcapture3)(void *ctx);
+    int16_t (*get_held_item)(void *ctx);
+    void (*refresh_player_stat_disp)(void *ctx, int16_t hero);
+    void (*update_right_panel)(void *ctx, int mode);
+} DM2_V1_Events2e620cfaCallbacks;
+
+void dm2_v1_events_2e62_0cfa(
+    int16_t param,
+    const DM2_V1_Events2e620cfaCallbacks *cb, void *ctx);
+
+/* ---- DM2_events_30DEA (c_events.cpp:2903) ----
+ * Item charge management for engage_command results. */
+typedef struct {
+    int16_t v1e0b7e;
+    int16_t v1e0b7f;
+    int16_t v1e0b80;
+    int16_t v1e0b50;
+    int16_t curactmode;
+    int16_t (*query_cmdstr_entry)(void *ctx, int16_t cls1, int16_t cls2,
+                                  int16_t idx, int16_t field);
+    int16_t (*add_item_charge)(void *ctx, int16_t record, int16_t delta);
+    int16_t (*query_gdat_dbspec_word)(void *ctx, int16_t record, int16_t field);
+    void (*remove_possession)(void *ctx, int16_t hero, int16_t slot);
+    void (*dealloc_record)(void *ctx, int16_t record);
+} DM2_V1_Events30DEACallbacks;
+
+typedef struct {
+    int handled;
+    int item_destroyed;
+} DM2_V1_Events30DEAReceipt;
+
+int dm2_v1_events_30dea(
+    int16_t hero,
+    const DM2_V1_Events30DEACallbacks *cb, void *ctx,
+    DM2_V1_Events30DEAReceipt *receipt);
+
+/* ---- DM2_events_443c_0434 (c_events.cpp:3958) ----
+ * Refresh mouse cursor based on held item state. */
+typedef struct {
+    int16_t (*get_held_item)(void *ctx);
+    void (*generate_cursor_from_item)(void *ctx);
+    void (*refresh_mouse)(void *ctx);
+} DM2_V1_Events443c0434Callbacks;
+
+typedef struct {
+    int handled;
+    int cursor_changed;
+} DM2_V1_Events443c0434Receipt;
+
+void dm2_v1_events_443c_0434(
+    const DM2_V1_Events443c0434Callbacks *cb, void *ctx,
+    DM2_V1_Events443c0434Receipt *receipt);
+
+/* ---- DM2_events_121e_0351 (c_events.cpp:1298) ----
+ * Viewport click sub-handler: test click against arrow panel rects. */
+typedef struct {
+    int16_t v1e0530;
+    int (*pt_in_expanded_rect)(void *ctx, int16_t rect_id, int16_t x, int16_t y);
+    int (*hero_2c1d_1de2)(void *ctx, int16_t hero, int16_t param1, int16_t param2);
+    int16_t (*get_event_heroidx)(void *ctx);
+    int *v1e0488;
+} DM2_V1_Events121e0351Callbacks;
+
+void dm2_v1_events_121e_0351(
+    int16_t x, int16_t y,
+    const DM2_V1_Events121e0351Callbacks *cb, void *ctx);
+
+/* ---- DM2_events_37BBB (c_events.cpp:1290) ----
+ * Hero wall test helper: calls hero_2c1d_1de2 if hero exists. */
+typedef struct {
+    int16_t (*get_event_heroidx)(void *ctx);
+    int (*hero_2c1d_1de2)(void *ctx, int16_t hero, int16_t param1, int16_t param2);
+} DM2_V1_Events37BBBCallbacks;
+
+int dm2_v1_events_37bbb(
+    int16_t param,
+    const DM2_V1_Events37BBBCallbacks *cb, void *ctx);
+
+/* ---- DM2_events_121e_0003 (c_events.cpp:1222) ----
+ * Viewport click sub-handler: compute target tile from click zone
+ * and dispatch to events_3C1E5 (wall interaction). */
+typedef struct {
+    int16_t v1e0270;
+    int16_t v1e0272;
+    int16_t v1e0258;
+    int16_t map_width;
+    int16_t map_height;
+    int16_t savegamewpc_w_00;
+    const int16_t *dx_table;
+    const int16_t *dy_table;
+    void (*events_3c1e5)(void *ctx, int16_t x, int16_t y,
+                          int16_t dir, int16_t param, int16_t record);
+} DM2_V1_Events121e0003Callbacks;
+
+void dm2_v1_events_121e_0003(
+    int16_t param,
+    const DM2_V1_Events121e0003Callbacks *cb, void *ctx);
+
+/* ---- DM2_events_121e_013a (c_events.cpp:974) ----
+ * Viewport click: pick up item from tile via events_32cb_03a6. */
+typedef struct {
+    int16_t v1e0270;
+    int16_t v1e0272;
+    int16_t v1e0258;
+    int16_t (*get_event_heroidx)(void *ctx);
+    int16_t (*get_zone_b_0a)(void *ctx, int idx);
+    int16_t (*get_zone_b_0b)(void *ctx, int idx);
+    int16_t (*get_zone_w_08)(void *ctx, int idx);
+    const int16_t *dx_table;
+    const int16_t *dy_table;
+    int16_t (*events_32cb_03a6)(void *ctx, int16_t x, int16_t y,
+        int16_t zone_b0a, int16_t tile_x, int16_t tile_y,
+        int16_t record, int16_t zone_b0b, int argl3);
+    int (*is_container_moneybox)(void *ctx, int16_t record);
+    void (*move_record_to)(void *ctx, int16_t record, int16_t x, int16_t y,
+                            int16_t dest, int16_t param);
+    void (*take_object)(void *ctx, int16_t record, int mode);
+    int *v1e0ff6;
+    int *v1e0488;
+} DM2_V1_Events121e013aCallbacks;
+
+void dm2_v1_events_121e_013a(
+    int16_t click_x, int16_t click_y, int16_t zone_idx,
+    const DM2_V1_Events121e013aCallbacks *cb, void *ctx);
+
+/* ---- DM2_eventa_121e_0222 (c_events.cpp:1051) ----
+ * Viewport click: drop held item onto tile. */
+typedef struct {
+    int16_t v1e0258;
+    int16_t (*get_event_heroidx)(void *ctx);
+    int (*remove_object_from_hand)(void *ctx);
+    int16_t (*get_creature_at)(void *ctx, int16_t x, int16_t y);
+    void *(*query_creature_ai_spec)(void *ctx, int16_t creature);
+    void *(*get_address_of_record)(void *ctx, int16_t record);
+    int (*is_container_moneybox)(void *ctx, int16_t record);
+    void (*move_record_to)(void *ctx, int16_t record, int16_t dest_x,
+                            int16_t dest_y, int16_t src_x, int16_t src_y);
+    int *v1e0488;
+} DM2_V1_Eventa121e0222Callbacks;
+
+int16_t dm2_v1_eventa_121e_0222(
+    int16_t x, int16_t y, int16_t dir_offset,
+    const DM2_V1_Eventa121e0222Callbacks *cb, void *ctx);
+
+/* ---- DM2_events_121e_03ae (c_events.cpp:1171) ----
+ * Viewport click: try place item via 32cb_03a6, fall back to 0222. */
+typedef struct {
+    int16_t v1e0258;
+    int16_t savegamewpc_w_00;
+    int16_t (*events_32cb_03a6)(void *ctx, int16_t x, int16_t y,
+        int16_t argw0, int16_t tile_x, int16_t tile_y,
+        int16_t record, int16_t argw2, int argl3);
+    int (*remove_object_from_hand)(void *ctx);
+    int16_t (*eventa_121e_0222)(void *ctx, int16_t x, int16_t y, int16_t dir);
+} DM2_V1_Events121e03aeCallbacks;
+
+int dm2_v1_events_121e_03ae(
+    int16_t click_x, int16_t click_y,
+    int16_t tile_x, int16_t tile_y,
+    int16_t argw0, int16_t argl1, int16_t argw2,
+    const DM2_V1_Events121e03aeCallbacks *cb, void *ctx);
+
+/* ---- DM2_events_32cb_0287 (c_events.cpp:670) ----
+ * Viewport sub: compute creature/item visibility at stone room position. */
+typedef struct {
+    int16_t v1e12c8;
+    int16_t v1e12ca;
+    int16_t v1e12cc;
+    void (*calc_vector_w_dir)(void *ctx, int16_t dir, int16_t dy, int16_t dx,
+                               int16_t *out_y, int16_t *out_x);
+    void (*summarize_stone_room)(void *ctx, void *out, int16_t dir,
+                                  int16_t x, int16_t y);
+    int16_t (*guivp_32cb_15b8)(void *ctx, int16_t idx, int16_t param, int16_t mode);
+    int (*guivp_32cb_00f1)(void *ctx, int16_t x, int16_t y, int16_t param);
+    void *(*alloc_lobigpool)(void *ctx, int16_t size);
+    void (*dealloc_lobigpool)(void *ctx, int16_t size);
+    void **ptr1e1044;
+    int16_t img_width;
+    int16_t img_height;
+    const int16_t (*table1d6ad0)[2];
+    const int16_t *table1d6afe;
+} DM2_V1_Events32cb0287Callbacks;
+
+int dm2_v1_events_32cb_0287(
+    int16_t param, int16_t click_x, int16_t click_y,
+    const DM2_V1_Events32cb0287Callbacks *cb, void *ctx);
+
+/* ---- DM2_events_32cb_03a6 (c_events.cpp:736) ----
+ * Viewport sub: draw and hit-test items on tile for click handling. */
+typedef struct {
+    int16_t (*get_tile_record_link)(void *ctx, int16_t x, int16_t y);
+    int16_t (*get_creature_at)(void *ctx, int16_t x, int16_t y);
+    void *(*get_address_of_record)(void *ctx, int16_t record);
+    int16_t (*get_next_record_link)(void *ctx, int16_t record);
+    int (*is_container_chest)(void *ctx, int16_t record);
+    uint8_t (*query_cls2_from_record)(void *ctx, int16_t record);
+    int (*query_gdat_entry_if_loadable)(void *ctx, int16_t cls1,
+        uint8_t cls2, int16_t idx, int16_t param);
+    void (*draw_item)(void *ctx, int16_t record, int16_t param1,
+        int16_t param2, int16_t param3, int16_t param4);
+    int (*guivp_32cb_00f1)(void *ctx, int16_t x, int16_t y, int16_t param);
+    int16_t (*query_gdat_dbspec_word)(void *ctx, int16_t record, int16_t field);
+} DM2_V1_Events32cb03a6Callbacks;
+
+int16_t dm2_v1_events_32cb_03a6(
+    int16_t click_x, int16_t click_y,
+    int16_t zone_dir, int16_t tile_x,
+    int16_t tile_y, int16_t record,
+    int16_t zone_type, int argl3,
+    const DM2_V1_Events32cb03a6Callbacks *cb, void *ctx);
+
+/* ---- DM2_guivp_32cb_01b6 (c_events.cpp:1345) ----
+ * Viewport sub: hit-test creature at tile for click handling. */
+typedef struct {
+    int16_t (*get_creature_at)(void *ctx, int16_t x, int16_t y);
+    void *(*get_address_of_record)(void *ctx, int16_t record);
+    void (*query_creature_picst)(void *ctx, int16_t mode,
+        int16_t param, void *record, void *creature, int16_t id);
+    void (*draw_temp_picst)(void *ctx);
+    int (*guivp_32cb_00f1)(void *ctx, int16_t x, int16_t y, int16_t param);
+    int16_t v1e12da;
+    const int16_t *table1d6b15;
+} DM2_V1_Guivp32cb01b6Callbacks;
+
+int dm2_v1_guivp_32cb_01b6(
+    int16_t click_x, int16_t click_y,
+    int16_t tile_x, int16_t tile_y,
+    int16_t *out_dir,
+    const DM2_V1_Guivp32cb01b6Callbacks *cb, void *ctx);
+
+/* ---- DM2_events_3C1E5 (c_events.cpp:2949) ----
+ * Wall interaction: alcove insert/take, lever, sensor activation.
+ * This is the most complex handler — many sub-interactions. */
+typedef struct {
+    int16_t (*get_tile_record_link)(void *ctx, int16_t x, int16_t y);
+    int16_t (*get_next_record_link)(void *ctx, int16_t record);
+    int (*is_wall_ornate_alcove)(void *ctx, int16_t tile_record, int16_t record);
+    int (*query_0cee_319e)(void *ctx, int16_t record);
+    int (*is_container_chest)(void *ctx, int16_t record);
+    uint8_t (*query_cls2_from_record)(void *ctx, int16_t record);
+    void *(*get_address_of_record)(void *ctx, int16_t record);
+    int (*is_container_moneybox)(void *ctx, int16_t record);
+    void (*move_record_to)(void *ctx, int16_t record, int16_t x, int16_t y,
+                            int16_t dest, int16_t param);
+    void (*take_object)(void *ctx, int16_t record, int mode);
+    int (*remove_object_from_hand)(void *ctx);
+    void (*invoke_message)(void *ctx, int16_t x, int16_t y,
+                            int16_t param1, int16_t param2, int32_t tick);
+    void (*queue_timer)(void *ctx, int16_t type, int16_t actor,
+                         int16_t a_val, int32_t tick, int16_t map);
+    void (*queue_noise_gen1)(void *ctx, int16_t cat, int16_t sub,
+                              int16_t snd, int16_t vol, int16_t dur,
+                              int16_t x, int16_t y, int16_t flags);
+    int16_t (*get_event_heroidx)(void *ctx);
+    int16_t v1e0270;
+    int16_t v1e0272;
+    int32_t gametick;
+    int16_t v1d3248;
+    int *v1e0488;
+} DM2_V1_Events3C1E5Callbacks;
+
+typedef struct {
+    int handled;
+    int action_type;
+} DM2_V1_Events3C1E5Receipt;
+
+void dm2_v1_events_3c1e5(
+    int16_t x, int16_t y, int16_t dir,
+    int16_t param, int16_t record,
+    const DM2_V1_Events3C1E5Callbacks *cb, void *ctx,
+    DM2_V1_Events3C1E5Receipt *receipt);
+
+/* ---- DM2_events_AB26 (c_events.cpp:201) ----
+ * Game load dialogue: displays save/load slot selection UI. */
+typedef struct {
+    int16_t *v1d26a0;
+    int16_t *v1d26a2;
+    int (*query_gdat_entry_if_loadable)(void *ctx, int16_t cls1,
+        uint8_t cls2, int16_t idx, int16_t param);
+    void (*proc_0aaf_02f8)(void *ctx, int16_t param, int16_t mode);
+    void (*query_gdat_text)(void *ctx, uint8_t cls1, uint8_t cls2,
+                             uint8_t idx, char *out);
+    void (*draw_vp_rc_str)(void *ctx, int16_t rect_id, int16_t color,
+                            const char *str);
+    void (*draw_static_pic)(void *ctx, int16_t cls1, uint8_t cls2,
+                             uint8_t idx, int16_t rect_id, int alpha);
+    void (*draw_gameload_dialogue_to_screen)(void *ctx);
+    int16_t (*proc_0aaf_0067)(void *ctx, int16_t param);
+    uint8_t (*palette_col11)(void *ctx);
+    void (*events_5bfb)(void *ctx, int16_t param1, int16_t param2);
+} DM2_V1_EventsAB26Callbacks;
+
+typedef struct {
+    int handled;
+    int slot_selected;
+    int16_t selected_slot;
+} DM2_V1_EventsAB26Receipt;
+
+void dm2_v1_events_ab26(
+    const DM2_V1_EventsAB26Callbacks *cb, void *ctx,
+    DM2_V1_EventsAB26Receipt *receipt);
+
+/* ---- DM2_events_2f3f_04ea (c_events.cpp:1996) ----
+ * Cryocell/champion release handler. */
+typedef struct {
+    int16_t v1e0288;
+    int16_t v1d3248;
+    int16_t heros_in_party;
+    void (*change_current_map_to)(void *ctx, int16_t map);
+    int (*remove_object_from_hand)(void *ctx);
+    void (*draw_cryocell_lever)(void *ctx, int16_t param);
+    void (*add_item_to_player)(void *ctx, int16_t hero, int16_t item);
+    void (*cut_record_from)(void *ctx, int16_t record, int16_t x, int16_t y);
+    int16_t (*get_tile_record_link)(void *ctx, int16_t x, int16_t y);
+    int16_t (*get_next_record_link)(void *ctx, int16_t record);
+    void *(*get_address_of_record)(void *ctx, int16_t record);
+    void (*display_hint_new_line)(void *ctx);
+    void (*display_hint_text)(void *ctx, int16_t color, const char *text);
+    void (*query_gdat_text)(void *ctx, uint8_t cls1, uint8_t cls2,
+                             uint8_t idx, char *out);
+    void (*guidraw_24a5_1798)(void *ctx, int16_t param);
+    void (*events_38c8_0060)(void *ctx);
+    void (*hide_mouse)(void *ctx);
+    void (*show_mouse)(void *ctx);
+    void (*select_champion_leader)(void *ctx, int16_t param);
+    void (*fill_screen_rect)(void *ctx, int16_t rect_id, uint8_t color);
+    int16_t v1d6a2d;
+    int16_t *v1e098c;
+    int16_t *v1e01a0_tick;
+    int32_t gametick;
+    const int16_t *dx_table;
+    const int16_t *dy_table;
+    const uint8_t *table1d69d0;
+} DM2_V1_Events2f3f04eaCallbacks;
+
+void dm2_v1_events_2f3f_04ea(
+    int16_t click_x, int16_t click_y,
+    int16_t dir, int16_t map,
+    int16_t argw0,
+    const DM2_V1_Events2f3f04eaCallbacks *cb, void *ctx);
+
 #ifdef __cplusplus
 }
 #endif
