@@ -1,32 +1,62 @@
 {
   "firestaffChecks": [
     {
-      "hits": [],
-      "id": "firestaff-d1c-door-front-metadata",
-      "lines": "959-959",
-      "missing": [
-        "DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349",
-        "DUNVIEW.C:7874-7875 pass1 rear cells before frame",
-        "DUNVIEW.C:7877-7902 top/side frame and button draw",
-        "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament",
-        "DUNVIEW.C:7910-7937 pass2 front cells after door"
+      "hits": [
+        {
+          "line": 980,
+          "needle": "DM1_VIEW_SQUARE_D1C, 0x0218, 0x0349"
+        },
+        {
+          "line": 980,
+          "needle": "DUNVIEW.C:7874-7875 pass1 rear cells before frame"
+        },
+        {
+          "line": 980,
+          "needle": "DUNVIEW.C:7877-7902 top/side frame and button draw"
+        },
+        {
+          "line": 980,
+          "needle": "DUNVIEW.C:7905-7908 F0111 door bitmap/ornament"
+        },
+        {
+          "line": 980,
+          "needle": "DUNVIEW.C:7910-7937 pass2 front cells after door"
+        }
       ],
+      "id": "firestaff-d1c-door-front-metadata",
+      "lines": "980-980",
+      "missing": [],
       "sourceFile": "dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     },
     {
-      "hits": [],
-      "id": "firestaff-d1c-runtime-test",
-      "lines": "1314-1340",
-      "missing": [
-        "DM1_VIEW_SQUARE_D1C, \"7874\", \"7875\", \"7877\", \"7901\", \"7905\", \"7937\"",
-        "check_int(\"door_front_occlusion.rear_order\", spec->rear_cell_order, expected[i].rear_order);",
-        "check_int(\"door_front_occlusion.front_order\", spec->front_cell_order, expected[i].front_order);",
-        "rear.cells[0] == expected[i].rear_cells[0]",
-        "front.cells[0] == expected[i].front_cells[0]"
+      "hits": [
+        {
+          "line": 1744,
+          "needle": "DM1_VIEW_SQUARE_D1C, \"7874\", \"7875\", \"7877\", \"7901\", \"7905\", \"7937\""
+        },
+        {
+          "line": 1757,
+          "needle": "check_int(\"door_front_occlusion.rear_order\", spec->rear_cell_order, expected[i].rear_order);"
+        },
+        {
+          "line": 1758,
+          "needle": "check_int(\"door_front_occlusion.front_order\", spec->front_cell_order, expected[i].front_order);"
+        },
+        {
+          "line": 1766,
+          "needle": "rear.cells[0] == expected[i].rear_cells[0]"
+        },
+        {
+          "line": 1770,
+          "needle": "front.cells[0] == expected[i].front_cells[0]"
+        }
       ],
+      "id": "firestaff-d1c-runtime-test",
+      "lines": "1744-1770",
+      "missing": [],
       "sourceFile": "test_dm1_v1_viewport_3d_pc34_compat.c",
-      "status": "FAIL"
+      "status": "PASS"
     }
   ],
   "nonClaims": [
@@ -146,8 +176,8 @@
   ],
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "schema": "pass519_dm1_v1_d1c_door_front_field_source_lock.v1",
-  "status": "failed",
-  "statusToken": "FAILED_PASS519_DM1_V1_D1C_DOOR_FRONT_FIELD_SOURCE_LOCK",
+  "status": "passed",
+  "statusToken": "PASS519_DM1_V1_D1C_DOOR_FRONT_FIELD_SOURCE_LOCKED",
   "verificationRuns": [
     {
       "command": [
@@ -163,9 +193,9 @@
         "/Volumes/Extern-disk/firestaff-claude/tools/verify_pass519_dm1_v1_d1c_door_front_field_source_lock.py",
         "--check-only"
       ],
-      "outputTail": "FAIL pass519 check-only: firestaff-d1c-door-front-metadata,firestaff-d1c-runtime-test",
-      "passed": false,
-      "returncode": 1
+      "outputTail": "PASS pass519 check-only",
+      "passed": true,
+      "returncode": 0
     }
   ]
 }

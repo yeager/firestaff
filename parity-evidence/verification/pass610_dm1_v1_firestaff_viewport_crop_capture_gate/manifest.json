@@ -6,7 +6,7 @@
     "no TODO.md update"
   ],
   "ok": true,
-  "probeStdoutTail": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/DUNGEON.DAT]\nwrote /Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.json and /Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.md\nPASS dm1_v1_wall_collision_runtime_capture rows=4 out=/Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
+  "probeStdoutTail": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1-extras/legacy-dos/DungeonMasterPC34/DATA/DUNGEON.DAT]\nwrote /Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.json and /Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.md\nPASS dm1_v1_wall_collision_runtime_capture rows=4 out=/Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
   "problems": [],
   "runtime": {
     "distinctViewportCropHashes": 3,

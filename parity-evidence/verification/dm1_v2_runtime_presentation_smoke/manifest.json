@@ -1,7 +1,7 @@
 {
   "data_dir": "/Users/bosse/.firestaff/data/dm1",
-  "firestaff": "/tmp/firestaff-build/firestaff",
-  "generated_at": "2026-08-02T16:18:43.070274+00:00",
+  "firestaff": "/Volumes/Extern-disk/firestaff-claude/build/firestaff",
+  "generated_at": "2026-08-03T19:06:18.351210+00:00",
   "modes": [],
   "non_claims": [
     "No original PC 3.4 screenshot pairing.",

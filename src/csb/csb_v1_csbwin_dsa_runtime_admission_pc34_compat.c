@@ -78,7 +78,7 @@ static int csb_v1_csbwin_dsa_handoff_foundation_current(
         !profile->runtime.csbwin_extended_level_index_present ||
         profile->runtime.csbwin_extended_dsa_state.imported_action_count !=
             handoff->imported_action_count ||
-        profile->runtime.csbwin_timer_queue_summary_count !=
+        (uint16_t)profile->runtime.timeline_queue.eventCount !=
             handoff->live_timer_event_count) {
         return 0;
     }

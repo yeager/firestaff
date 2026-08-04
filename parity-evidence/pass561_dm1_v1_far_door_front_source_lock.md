@@ -1,6 +1,6 @@
 # Pass561 DM1 V1 far door-front source lock
 
-Status: failed
+Status: passed
 
 Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far door-front order: rear F0115 pass, far F0111 door, then front F0115 pass.
 
@@ -24,11 +24,20 @@ Claim: D3L2 and mirrored D3R2 front-door branches use ReDMCSB's two-pass far doo
 
 ## Firestaff Evidence
 
-- FAIL firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:949-950)
+- PASS firestaff-far-door-front-metadata (dm1_v1_viewport_3d_pc34_compat.c:970-971)
+  - line 970: DM1_VIEW_SQUARE_D3L2, 0x0218, 0x0349
+  - line 970: DUNVIEW.C:6270 floor ornament under far rear pass
+  - line 971: DM1_VIEW_SQUARE_D3R2, 0x0128, 0x0439
+  - line 971: DUNVIEW.C:6337 floor ornament under mirrored far rear pass
 
-- FAIL firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1304-1317)
+- PASS firestaff-far-door-front-runtime-test (test_dm1_v1_viewport_3d_pc34_compat.c:1734-1747)
+  - line 1734: DM1_VIEW_SQUARE_D3L2, "6270"
+  - line 1735: DM1_VIEW_SQUARE_D3R2, "6337"
+  - line 1747: door_front_occlusion_spec_count(), 11
 
-- FAIL firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:4197-4198)
+- PASS firestaff-source-evidence-string (dm1_v1_viewport_3d_pc34_compat.c:4537-4538)
+  - line 4537: DUNVIEW.C:6270-6286 D3L2 far door-front occlusion
+  - line 4538: DUNVIEW.C:6337-6353 D3R2 mirrored far door-front occlusion
 
 ## Verification
 
@@ -50,7 +59,7 @@ PASS drift.pass643.d3l2_d3r2_material_plan_consumed present in src/engine/m11_ga
 PASS dm1_v1_viewport_3d_source_lock
 ~~~
 
-- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=1
+- /opt/homebrew/opt/python@3.14/bin/python3.14 /Volumes/Extern-disk/firestaff-claude/tools/verify_pass561_dm1_v1_far_door_front_source_lock.py --check-only: rc=0
 ~~~
-FAIL pass561 check-only: firestaff-far-door-front-metadata,firestaff-far-door-front-runtime-test,firestaff-source-evidence-string
+PASS pass561 check-only
 ~~~

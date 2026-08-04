@@ -85,11 +85,11 @@
     }
   ],
   "status": "PASS786_DM1_V1_MIRROR_CANDIDATE_C040_SPELL_AREA_CLICK_WHILE_PANEL_LIVE_LOCKED",
-  "timestampUtc": "2026-08-02T16:18:40.749025+00:00",
+  "timestampUtc": "2026-08-03T19:06:04.221803+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/tmp/firestaff-build/test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat"
       ],
       "outputTail": "dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live: 48/48 assertions passed",
       "passed": true,

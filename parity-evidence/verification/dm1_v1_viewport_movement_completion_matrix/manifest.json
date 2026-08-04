@@ -15,8 +15,26 @@
         "-j2"
       ],
       "outputTail": [
-        "[0/2] Re-checking globbed directories...",
-        "ninja: no work to do."
+        "[1668/1688] Building C object CMakeFiles/firestaff_m10.dir/src/csb/csb_v1_utility_flow_pc34.c.o",
+        "[1669/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_original_save_classifier.c.o",
+        "[1670/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_ccm.c.o",
+        "[1671/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_creature.c.o",
+        "[1672/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_creature_tables.c.o",
+        "[1673/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_party.c.o",
+        "[1674/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_hand_action_gdat.c.o",
+        "[1675/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_asset_loader.c.o",
+        "[1676/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_sound.c.o",
+        "[1677/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_original_save_pc34_handoff.c.o",
+        "[1678/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_midi_backend.c.o",
+        "[1679/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_drops.c.o",
+        "[1680/1688] Building C object CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/tests/test_dm1_v1_input_command_queue_pc34_compat.c.o",
+        "[1681/1688] Linking C static library libfirestaff_m10.a",
+        "[1682/1688] Linking C executable test_dm1_v1_movement_core_pc34_compat",
+        "[1683/1688] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
+        "[1684/1688] Linking C executable test_dm1_v1_turning_presentation_pc34_compat",
+        "[1685/1688] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
+        "[1686/1688] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[1687/1688] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
       "returncode": 0
@@ -139,7 +157,7 @@
       "outputTail": [
         "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
         "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:20734-20933; main_loop_m11.c:5752-5769; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
+        "- Firestaff: m11_game_view.c:20821-21020; main_loop_m11.c:5752-5769; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
         "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
@@ -239,7 +257,7 @@
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
         "- Firestaff field rows/zones (DM1-owned): /Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c:19",
-        "- Firestaff source viewport draw order: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:45912",
+        "- Firestaff source viewport draw order: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:46071",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -266,8 +284,8 @@
       "id": "viewport_palette_source_lock_gate",
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
-        "- Firestaff palette compute: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:13450",
-        "- Firestaff palette apply: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:29781",
+        "- Firestaff palette compute: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:13462",
+        "- Firestaff palette apply: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:29920",
         "- ReDMCSB F0337: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
         "- ReDMCSB light tables: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
         "- ReDMCSB DRAWVIEW palette install: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
@@ -399,5 +417,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-08-01T17:18:57.603928+00:00"
+  "timestampUtc": "2026-08-04T01:09:23.415041+00:00"
 }

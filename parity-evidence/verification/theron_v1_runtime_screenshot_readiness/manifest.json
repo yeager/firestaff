@@ -13,7 +13,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260803-114319.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260803-114319.bmp",
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260804-030756.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260804-030756.bmp",
         "stdout": "[TQR] Verified Track 02 accepted: <canonical_pcengine_root-data-dir>/TQJP02.bin; later original graphics bank is not captured yet, so fallback visuals stay disabled\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
       },
       "fallback_assets_used": false,
@@ -26,9 +26,9 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260803-114319.bmp",
-          "non_black_pixels": 17388,
-          "sha256": "38d25d1091175509df81c5dfea826788b77f0ff282e8b4a47a276703a5fcde21",
+          "name": "firestaff-presented-20260804-030756.bmp",
+          "non_black_pixels": 25887,
+          "sha256": "2533d1b32ea16200bf2653efc3d5f93e920e527dfe88f390fc6550a329faa8c0",
           "size": 1555254,
           "valid": true,
           "width": 960
@@ -75,9 +75,9 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260803-114319.bmp",
-          "non_black_pixels": 2202,
-          "sha256": "496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40",
+          "name": "firestaff-20260804-030756.bmp",
+          "non_black_pixels": 3272,
+          "sha256": "9d3c75eb5dec53367015681dffc7e47c0ef5db330f75b39d1bd58b3017cef88b",
           "size": 192054,
           "valid": true,
           "width": 320
@@ -98,7 +98,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260803-114321.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260803-114321.bmp",
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260804-030800.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260804-030800.bmp",
         "stdout": "[TQR] Verified Track 02 accepted: <jp_extras_track02_bin-data-dir>/Dungeon Master - Theron's Quest (Japan) (Track 02).bin; later original graphics bank is not captured yet, so fallback visuals stay disabled\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
       },
       "fallback_assets_used": false,
@@ -111,9 +111,9 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260803-114321.bmp",
-          "non_black_pixels": 17388,
-          "sha256": "38d25d1091175509df81c5dfea826788b77f0ff282e8b4a47a276703a5fcde21",
+          "name": "firestaff-presented-20260804-030800.bmp",
+          "non_black_pixels": 25887,
+          "sha256": "2533d1b32ea16200bf2653efc3d5f93e920e527dfe88f390fc6550a329faa8c0",
           "size": 1555254,
           "valid": true,
           "width": 960
@@ -160,9 +160,9 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260803-114321.bmp",
-          "non_black_pixels": 2202,
-          "sha256": "496e2f9877ec3a09a16c898af1ed8bd4b8044ac7c69dd497a208094d46e8ab40",
+          "name": "firestaff-20260804-030800.bmp",
+          "non_black_pixels": 3272,
+          "sha256": "9d3c75eb5dec53367015681dffc7e47c0ef5db330f75b39d1bd58b3017cef88b",
           "size": 192054,
           "valid": true,
           "width": 320
@@ -183,7 +183,7 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260803-114324.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260803-114324.bmp",
+        "stderr": "AUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260804-030807.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260804-030807.bmp",
         "stdout": "[TQR] Verified Track 02 accepted: <us_extras_track02_bin-data-dir>/Dungeon Master - Theron's Quest (USA) (Track 02).bin; later original graphics bank is not captured yet, so fallback visuals stay disabled\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)\nTQR level load: dungeon=1 level=0 size=32x27 status=OK entrance=(4,0)"
       },
       "fallback_assets_used": false,
@@ -196,9 +196,9 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260803-114324.bmp",
-          "non_black_pixels": 17388,
-          "sha256": "7a9b0362dbdd1df871f6fdbef225aaeb082b3bd454e65bcf734becea308c5c78",
+          "name": "firestaff-presented-20260804-030807.bmp",
+          "non_black_pixels": 18738,
+          "sha256": "f34244164e175cb64e7507c87052e791db124a726a7f4c7567a8ff7b74b61c3b",
           "size": 1555254,
           "valid": true,
           "width": 960
@@ -245,9 +245,9 @@
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260803-114324.bmp",
-          "non_black_pixels": 2202,
-          "sha256": "bc81f269e57d851a4569659b80dff82e767c907cebf000ac6be447371e3db78d",
+          "name": "firestaff-20260804-030807.bmp",
+          "non_black_pixels": 2358,
+          "sha256": "eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8",
           "size": 192054,
           "valid": true,
           "width": 320
@@ -257,7 +257,7 @@
     }
   ],
   "firestaff": "build/firestaff",
-  "generated_at": "2026-08-03T09:43:18.270531+00:00",
+  "generated_at": "2026-08-04T01:07:49.763423+00:00",
   "non_claims": [
     "No public Theron screenshot image is promoted.",
     "No generated or mock image is used.",

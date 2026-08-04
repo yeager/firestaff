@@ -71,11 +71,11 @@
     }
   ],
   "status": "PASS872_DM1_V1_PALETTE_CHANGES_CURSOR_MASK_V2_LOCKED",
-  "timestampUtc": "2026-08-02T16:18:42.936486+00:00",
+  "timestampUtc": "2026-08-03T19:06:17.972952+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/tmp/firestaff-build/test_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat"
+        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_palette_changes_cursor_mask_v2_pc34_compat"
       ],
       "outputTail": "dm1_v1_palette_changes_cursor_mask_v2: 84/84 assertions passed",
       "passed": true,

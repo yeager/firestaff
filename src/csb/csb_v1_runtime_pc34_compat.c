@@ -20784,7 +20784,6 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
     int imported = 0;
 
     if (!profile || !profile->csbwin_body_runtime_summary_valid) {
-        fprintf(stderr, "DBG materialize_tq: body_valid=%d\n", profile?profile->csbwin_body_runtime_summary_valid:0);
         return -1;
     }
     if (profile->csbwin_timer_queue_summary_count >
@@ -20797,9 +20796,6 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         (profile->csbwin_timer_queue_summary_total != 0u &&
          profile->csbwin_timer_queue_summary_total !=
              profile->csbwin_timer_queue_summary_count)) {
-        fprintf(stderr, "DBG materialize_tq: counts fail tq_count=%u tq_total=%u ts_count=%u ts_total=%u\n",
-                profile->csbwin_timer_queue_summary_count, profile->csbwin_timer_queue_summary_total,
-                profile->csbwin_timer_summary_count, profile->csbwin_timer_summary_total);
         return -1;
     }
     /* Timer.cpp::CheckTimers is compiled only in CSBWin debug builds.  The
@@ -20838,14 +20834,32 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
         if (timer_index >= profile->csbwin_timer_summary_count) {
             return -1;
         }
-        /* CSBWin Timer.cpp CheckTimers uses a min-heap, not a sorted array */
+        /* CSBWin Timer.cpp CheckTimers uses a min-heap ordered by time,
+         * then timerFunction, then ubyte5, then source_index. */
         if (queue_index > 0u) {
             uint16_t parent_qi = (queue_index - 1u) / 2u;
             uint16_t parent_index = profile->csbwin_timer_queue[parent_qi];
             if (parent_index < profile->csbwin_timer_summary_count) {
-                if (profile->csbwin_timers[timer_index].time <
-                    profile->csbwin_timers[parent_index].time) {
+                const CSB_V1_CSBWin512TimerSummary *child =
+                    &profile->csbwin_timers[timer_index];
+                const CSB_V1_CSBWin512TimerSummary *parent =
+                    &profile->csbwin_timers[parent_index];
+                if (child->time < parent->time) {
                     return -1;
+                }
+                if (child->time == parent->time) {
+                    if (child->function < parent->function) {
+                        return -1;
+                    }
+                    if (child->function == parent->function) {
+                        if (child->ubyte5 < parent->ubyte5) {
+                            return -1;
+                        }
+                        if (child->ubyte5 == parent->ubyte5 &&
+                            child->source_index < parent->source_index) {
+                            return -1;
+                        }
+                    }
                 }
             }
         }
@@ -20866,7 +20880,6 @@ int csb_v1_runtime_materialize_csbwin_timer_queue(
             int event_index = csb_v1_runtime_append_unmerged_map_timer_to_queue(
                 &staged_queue, &event);
             if (event_index < 0 || event_index >= DM1_EVENT_MAX_COUNT) {
-                fprintf(stderr, "DBG materialize_tq: append fail qi=%u ei=%d\n", queue_index, event_index);
                 return -1;
             }
             staged_slots[event_index] = queue_index;

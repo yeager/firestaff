@@ -55,7 +55,7 @@
       "claim": "turn dispatch uses guarded M11 V1 seam and handles stairs-before-turn source sequence"
     },
     {
-      "file": "tests/test_m11_v1_turning_presentation_pc34_compat.c",
+      "file": "tests/test_dm1_v1_turning_presentation_pc34_compat.c",
       "claim": "ctest asserts direction delta, one endpoint frame, no intermediate yaw frames, no wall block, V1 guard, and champion pose rotation"
     }
   ],

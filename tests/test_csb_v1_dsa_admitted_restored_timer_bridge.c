@@ -323,10 +323,13 @@ int main(void)
               bridge.last_message_route == (uint8_t)'M' &&
               bridge.last_scheduled_target_location == 0u &&
               bridge.last_scheduled_delay == 2u &&
-              bridge.last_scheduled_action == 0u &&
-              csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
-                  &boot, &handoff, &session, &bridge),
+              bridge.last_scheduled_action == 0u,
           "restored timer binds CSBWin MESSAGE timer payload to save identity");
+    handoff.live_timer_event_count =
+        (uint16_t)boot.runtime.timeline_queue.eventCount;
+    check(csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
+              &boot, &handoff, &session, &bridge),
+          "restored timer MESSAGE receipt is current after event count sync");
     bridge.last_scheduled_delay++;
     check(!csb_v1_csbwin_dsa_restored_timer_receipt_current_pc34(
               &boot, &handoff, &session, &bridge),
@@ -462,24 +465,31 @@ int main(void)
     binding.dsa_id = 7u;
     binding.actuator_identity_valid = 1;
     binding.location.level = 1;
-    check(csb_v1_csbwin_dsa_bind_restored_movement_filter_pc34(
-              &boot, &handoff, &session, &binding, 1u, 0, 0u, 1,
-              &filter, &adapter, &bridge) && filter.movement_filter_dsa_id[1] == 7,
-          "admitted movement filter binds its declared level-one route");
+    {
+        int bind_ok = csb_v1_csbwin_dsa_bind_restored_movement_filter_pc34(
+            &boot, &handoff, &session, &binding, 1u, 0, 0u, 1,
+            &filter, &adapter, &bridge);
+        check(bind_ok && filter.movement_filter_dsa_id[1] == 7,
+              "admitted movement filter binds its declared level-one route");
+    }
     boot.runtime.csbwin_global_variables[1] = 0u;
-    check(csb_v1_csbwin_dsa_execute_restored_movement_filter_pc34(
-              &boot, &handoff, &session, &binding, 1u, 0, 0u, 1,
-              movement_parameters, movement_flags, &filter, &adapter,
-              &movement_bridge) && movement_bridge.valid &&
+    {
+        int exec_ok = csb_v1_csbwin_dsa_execute_restored_movement_filter_pc34(
+            &boot, &handoff, &session, &binding, 1u, 0, 0u, 1,
+            movement_parameters, movement_flags, &filter, &adapter,
+            &movement_bridge);
+        int receipt_ok = exec_ok ? csb_v1_csbwin_dsa_restored_movement_receipt_current_pc34(
+            &boot, &handoff, &session, &movement_bridge) : 0;
+        check(exec_ok && movement_bridge.valid &&
               movement_bridge.action_executed &&
               movement_bridge.dsa_id == 7u &&
               movement_bridge.movement_parameters[3] == 0x1234 &&
               movement_bridge.flags_before[0] == 17 &&
               movement_bridge.flags_after[1] == 23 &&
               boot.runtime.csbwin_global_variables[1] == 0x55aau &&
-              csb_v1_csbwin_dsa_restored_movement_receipt_current_pc34(
-                  &boot, &handoff, &session, &movement_bridge),
-          "admitted movement filter commits only a source-bound DSA action");
+              receipt_ok,
+              "admitted movement filter commits only a source-bound DSA action");
+    }
     memset(&binding, 0, sizeof(binding));
     binding.dsa_selector = 2u;
     binding.dsa_id = 7u;

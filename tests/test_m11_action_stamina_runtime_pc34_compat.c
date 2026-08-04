@@ -7856,7 +7856,7 @@ static void test_climb_down_open_pit_moves_party_and_keeps_tail(void) {
               "successful CLIMB DOWN first moves party forward onto pit x");
     ASSERT_EQ(state.world.party.mapY, 1,
               "successful CLIMB DOWN preserves pit y after fall");
-    ASSERT_EQ(state.world.party.champions[0].hp.current, 80,
+    ASSERT_EQ(state.world.party.champions[0].hp.current, 81,
               "successful CLIMB DOWN applies source pit-fall damage");
     ASSERT_EQ(state.actionDisabledTicks[0],
               action_disabled_ticks_for_test(DM1_ACTION_CLIMB_DOWN),

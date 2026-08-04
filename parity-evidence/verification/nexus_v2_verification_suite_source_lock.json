@@ -31,7 +31,9 @@
       "text": "#define M526_WaitVerticalBlank()        Vsync()"
     }
   ],
-  "errors": [],
+  "errors": [
+    "missing Firestaff Nexus V2 phase7 text '#define NEXUS_FB_H 200' in include/nexus_v1_rasterizer.h"
+  ],
   "scope": "nexus_v2_verification_suite source-lock",
-  "status": "passed"
+  "status": "failed"
 }
