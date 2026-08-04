@@ -2468,6 +2468,10 @@ static int shell_append_quoted(char *cmd, size_t cmdSize, const char *arg) {
 }
 
 static int shell_tool_exists(const char *tool) {
+#if defined(__ANDROID__) || defined(FIRESTAFF_IOS)
+    (void)tool;
+    return 0;
+#else
     char cmd[128];
     if (!tool || !*tool) return 0;
     if (snprintf(cmd, sizeof(cmd), "command -v %s >/dev/null 2>&1", tool) >=
@@ -2475,6 +2479,7 @@ static int shell_tool_exists(const char *tool) {
         return 0;
     }
     return system(cmd) == 0;
+#endif
 }
 
 static int make_chd_temp_dir(char *outDir, size_t outDirSize) {
@@ -2500,6 +2505,11 @@ static int chd_extractcd_to_cue(const char *chdPath,
                                 size_t outCuePathSize,
                                 char *outTempDir,
                                 size_t outTempDirSize) {
+#if defined(__ANDROID__) || defined(FIRESTAFF_IOS)
+    (void)chdPath; (void)outCuePath; (void)outCuePathSize;
+    (void)outTempDir; (void)outTempDirSize;
+    return 0;
+#else
     char cmd[ASSET_PATH_MAX * 3];
     if (!chdPath || !outCuePath || outCuePathSize == 0U ||
         !outTempDir || outTempDirSize == 0U || !shell_tool_exists("chdman")) {
@@ -2534,6 +2544,7 @@ static int chd_extractcd_to_cue(const char *chdPath,
         return 0;
     }
     return 1;
+#endif
 }
 
 static void cleanup_chd_temp(const char *tempDir, const char *cuePath) {

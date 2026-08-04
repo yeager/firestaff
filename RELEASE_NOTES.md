@@ -1,5 +1,9 @@
 
 
+# Firestaff v3.0.280
+- CI fix: guard system() calls behind FIRESTAFF_IOS/Android ifdefs (unavailable on iOS)
+- CI fix: Android SDL3 linking via CMAKE_FIND_ROOT_PATH for NDK toolchain
+
 # Firestaff v3.0.279
 - CI fix: iOS MACOSX_BUNDLE disabled for plain executable packaging
 - CI fix: Android realpath() uses NULL-allocated buffer (NDK PATH_MAX)

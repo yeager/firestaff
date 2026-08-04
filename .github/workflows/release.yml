@@ -598,7 +598,7 @@ jobs:
             -DANDROID_PLATFORM=24 \
             -DCMAKE_BUILD_TYPE=Release \
             -DCMAKE_PREFIX_PATH=/tmp/SDL3-android \
-            -DBUILD_SHARED_LIBS=ON
+            -DCMAKE_FIND_ROOT_PATH=/tmp/SDL3-android
 
       - name: Build
         run: cmake --build build --target firestaff --parallel
