@@ -1,5 +1,10 @@
 
 
+# Firestaff v3.0.279
+- CI fix: iOS MACOSX_BUNDLE disabled for plain executable packaging
+- CI fix: Android realpath() uses NULL-allocated buffer (NDK PATH_MAX)
+- CI fix: iOS install rule uses BUNDLE DESTINATION, Android uses LIBRARY
+
 # Firestaff v3.0.278
 - iOS and Android build support: cross-compilation toolchains, packaging scripts, CI jobs
 - GitHub Actions release workflow: iOS .ipa (AltStore Classic sideload) and Android .apk artifacts

@@ -3924,7 +3924,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.278 LANGUAGES C)
+project(Firestaff VERSION 3.0.279 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -4878,6 +4878,9 @@ if(CMAKE_SYSTEM_NAME STREQUAL "Android")
     set_target_properties(firestaff PROPERTIES OUTPUT_NAME "main")
 else()
     add_executable(firestaff src/shared/firestaff_main_m11.c)
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        set_target_properties(firestaff PROPERTIES MACOSX_BUNDLE FALSE)
+    endif()
 endif()
 # M11 objects referenced by the executable call back into M12 menu/asset helpers;
 # repeat M12 after M11 so static linkers resolve both directions.
@@ -30572,7 +30575,13 @@ endif()
 endif()
 
 # ── Install rules ────────────────────────────────────────────────────
-install(TARGETS firestaff firestaff_artpack_studio RUNTIME DESTINATION bin)
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    install(TARGETS firestaff BUNDLE DESTINATION bin)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    install(TARGETS firestaff LIBRARY DESTINATION lib)
+else()
+    install(TARGETS firestaff firestaff_artpack_studio RUNTIME DESTINATION bin)
+endif()
 install(FILES scripts/firestaff_artpack_studio.py
         DESTINATION share/firestaff/scripts)
 if(UNIX AND NOT APPLE)

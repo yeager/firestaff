@@ -138,11 +138,13 @@ int FSP_ResolvePhysicalPath(char* out, size_t outSize, const char* path) {
     }
 #else
     {
-        char resolved[FSP_PATH_MAX];
-        if (!realpath(path, resolved)) {
+        char *resolved = realpath(path, NULL);
+        if (!resolved) {
             return 0;
         }
-        return fsp_copy(out, outSize, resolved);
+        fsp_copy(out, outSize, resolved);
+        free(resolved);
+        return 1;
     }
 #endif
 }
