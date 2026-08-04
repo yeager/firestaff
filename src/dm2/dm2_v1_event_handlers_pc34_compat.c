@@ -1280,3 +1280,167 @@ void dm2_v1_push_pull_rigid_body(
     r.target_y = dest_y;
     if (receipt) *receipt = r;
 }
+
+/* ---- DM2_ADJUST_UI_EVENT (c_input.cpp:112) ---- */
+
+void dm2_v1_adjust_ui_event(
+    int16_t *idx, int16_t x, int16_t y,
+    const DM2_V1_AdjustUiEventCallbacks *cb, void *ctx,
+    DM2_V1_AdjustUiEventReceipt *receipt)
+{
+    DM2_V1_AdjustUiEventReceipt r;
+    memset(&r, 0, sizeof(r));
+    if (receipt) *receipt = r;
+    if (!cb || !idx) return;
+
+    r.original_idx = *idx;
+    r.adjusted_idx = *idx;
+
+    if (*idx >= 116 && *idx <= 123) {
+        /* Action hand clicks (idx 116-123).
+         * Hand index: 0 for idx 116-119, 1 for idx 120-123. */
+        int16_t curacthero = cb->get_curacthero(ctx);
+        if (curacthero == 0) {
+            *idx = 0;
+            r.suppressed = 1;
+        } else {
+            int16_t hero = (int16_t)(curacthero - 1);
+            if (cb->get_hero_curHP(ctx, hero) == 0) {
+                *idx = 0;
+                r.suppressed = 1;
+            } else {
+                int16_t hand = (int16_t)((*idx >= 120) ? 1 : 0);
+                int16_t cooldown = cb->get_hero_hand_cooldown(ctx, hero, hand);
+                if (cooldown > 0) {
+                    *idx = 0;
+                    r.suppressed = 1;
+                } else {
+                    /* Check item activability for the hand slot */
+                    int16_t slot = (int16_t)(hand == 0 ? 0x06 : 0x07);
+                    int16_t item = cb->get_hero_item(ctx, hero, slot);
+                    if (item != -1 && cb->is_item_activable &&
+                        !cb->is_item_activable(ctx, item)) {
+                        *idx = 0;
+                        r.suppressed = 1;
+                    }
+                }
+            }
+        }
+    } else if (*idx >= 95 && *idx <= 98) {
+        /* Movement arrows (idx 95-98).
+         * Check player position and hand cooldown. */
+        if (cb->v1e0288 != 0) {
+            *idx = 0;
+            r.suppressed = 1;
+        } else {
+            int16_t curacthero = cb->get_curacthero(ctx);
+            if (curacthero != 0) {
+                int16_t hero = (int16_t)(curacthero - 1);
+                int16_t pos = cb->get_player_position(ctx, hero);
+                if (pos < 0) {
+                    *idx = 0;
+                    r.suppressed = 1;
+                } else {
+                    int16_t cd0 = cb->get_hero_hand_cooldown(ctx, hero, 0);
+                    int16_t cd1 = cb->get_hero_hand_cooldown(ctx, hero, 1);
+                    if (cd0 > 0 || cd1 > 0) {
+                        *idx = 0;
+                        r.suppressed = 1;
+                    }
+                }
+            }
+        }
+    }
+
+    r.adjusted_idx = *idx;
+    r.handled = 1;
+    if (receipt) *receipt = r;
+}
+
+/* ---- DM2_1031_03f2 (c_input.cpp:55) ---- */
+
+int16_t dm2_v1_1031_03f2(
+    const DM2_V1_1031_03f2Callbacks *cb, void *ctx,
+    DM2_V1_1031_03f2Receipt *receipt)
+{
+    DM2_V1_1031_03f2Receipt r;
+    memset(&r, 0, sizeof(r));
+    if (receipt) *receipt = r;
+    if (!cb || !cb->table1d3ba0 || !cb->table1d3d23) return 0;
+
+    int16_t bbw = cb->s_bbw;
+
+    /* Walk the event table looking for entries matching bbw.
+     * Each entry is 3 bytes: [0]=bbw_match, [1]=sub_bbw, [2]=flags.
+     * If bbw matches entry[0], check flags:
+     *   - If flags indicates a sub-table (entry[2] & 0x80), recurse
+     *     with sub_bbw = entry[1].
+     *   - Otherwise return the event index from table1d3d23. */
+    for (int16_t i = 0; i < cb->table1d3ba0_count; i++) {
+        const uint8_t *entry = &cb->table1d3ba0[i * 3];
+        if ((int16_t)entry[0] != bbw)
+            continue;
+
+        if (entry[2] & 0x80) {
+            /* Recursive: look up sub-table */
+            int16_t sub_result = 0;
+            if (cb->recurse) {
+                sub_result = cb->recurse(ctx, (int16_t)entry[1]);
+                r.recursed = 1;
+            }
+            if (sub_result != 0) {
+                r.handled = 1;
+                r.event_index = sub_result;
+                if (receipt) *receipt = r;
+                return sub_result;
+            }
+        } else {
+            /* Direct lookup from table1d3d23 */
+            int16_t evt_idx = cb->table1d3d23[(int)entry[1]];
+            if (evt_idx == 0 && cb->v1d39bc)
+                evt_idx = cb->v1d39bc[(int)entry[1]];
+            r.handled = 1;
+            r.event_index = evt_idx;
+            if (receipt) *receipt = r;
+            return evt_idx;
+        }
+    }
+
+    r.handled = 1;
+    r.event_index = 0;
+    if (receipt) *receipt = r;
+    return 0;
+}
+
+/* ---- DM2_0b36_129a (c_input.cpp:522) ---- */
+
+void dm2_v1_0b36_129a(
+    const char *str, int16_t color,
+    const DM2_V1_0b36_129aCallbacks *cb, void *ctx,
+    DM2_V1_0b36_129aReceipt *receipt)
+{
+    DM2_V1_0b36_129aReceipt r;
+    memset(&r, 0, sizeof(r));
+    if (receipt) *receipt = r;
+    if (!cb || !str) return;
+
+    /* Query string metrics to center within button rect */
+    int16_t str_w = 0;
+    int16_t str_h = 0;
+    if (cb->query_str_width)
+        str_w = cb->query_str_width(ctx, str);
+    if (cb->query_str_height)
+        str_h = cb->query_str_height(ctx, str);
+
+    /* Center horizontally, vertically within button group area */
+    int16_t draw_x = (int16_t)(cb->btn_x + (cb->btn_w - str_w) / 2);
+    int16_t draw_y = (int16_t)(cb->btn_y + (cb->btn_h - str_h) / 2);
+
+    if (cb->draw_string)
+        cb->draw_string(ctx, draw_x, draw_y, str, color);
+
+    r.handled = 1;
+    r.draw_x = draw_x;
+    r.draw_y = draw_y;
+    if (receipt) *receipt = r;
+}

@@ -411,6 +411,224 @@ int dm2_v1_put_item_to_player(
     int16_t *hero_items, int item_count,
     const DM2_V1_PutItemCallbacks *cb, void *ctx);
 
+/* ---- c_hero::init (c_hero.cpp:40) ----
+ * Zero all hero fields. */
+void dm2_v1_hero_init(DM2_V1_HeroState *hero);
+
+/* ---- c_party::init (c_hero.cpp:153) ----
+ * Initialize party: zero all heroes and party-level state. */
+typedef struct {
+    int max_heroes;
+    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx);
+} DM2_V1_PartyInitCallbacks;
+
+void dm2_v1_party_init(
+    int *hero_count, int *curactmode, int *curacthero,
+    const DM2_V1_PartyInitCallbacks *cb, void *ctx);
+
+/* ---- c_party::rotate (c_hero.cpp:168) ----
+ * Rotate party facing. Updates each hero's partypos and absdir. */
+typedef struct {
+    int hero_count;
+    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx);
+    int16_t *party_dir;      /* ddat.v1e0258 */
+    int16_t *party_absdir;   /* ddat.v1e0264 */
+    int16_t v1e0234;         /* staircase flag */
+    uint8_t party_absdir_val; /* party.absdir for staircase mode */
+} DM2_V1_RotateCallbacks;
+
+void dm2_v1_party_rotate(
+    int16_t new_dir,
+    const DM2_V1_RotateCallbacks *cb, void *ctx);
+
+/* ---- c_party::set_hero_flags (c_hero.cpp:190) ----
+ * Set bit 0x4000 on every hero's heroflag. */
+void dm2_v1_party_set_hero_flags(
+    int hero_count,
+    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx), void *ctx);
+
+/* ---- c_party::get_player_weight (c_hero.cpp:197) ----
+ * Get hero's carried weight; adds hand-held item weight if event hero. */
+int16_t dm2_v1_get_player_weight(
+    const DM2_V1_HeroState *hero,
+    int is_event_hero, int16_t hand_weight);
+
+/* ---- c_party::calc_player_weight (c_hero.cpp:208) ----
+ * Sum weights of all items in hero's inventory slots. */
+typedef struct {
+    int16_t (*query_item_weight)(void *ctx, uint16_t item);
+    int (*is_container_chest)(void *ctx, uint16_t item);
+    uint16_t *hero_items;
+    int item_count;
+    uint16_t *hand_container;
+    int container_size;
+    int is_active_hero;    /* heroidx == curacthero-1 && curactmode < 2 */
+    uint16_t active_hand_item; /* handitems[h+1][curactmode] */
+} DM2_V1_CalcWeightCallbacks;
+
+int16_t dm2_v1_calc_player_weight(
+    DM2_V1_HeroState *hero,
+    const DM2_V1_CalcWeightCallbacks *cb, void *ctx);
+
+/* ---- DM2_RESET_SQUAD_DIR (c_hero.cpp:2939) ----
+ * Reset all heroes' absdir to the party's current facing direction. */
+void dm2_v1_reset_squad_dir(
+    int hero_count, uint8_t party_dir,
+    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx), void *ctx);
+
+/* ---- DM2_SELECT_CHAMPION_LEADER (c_hero.cpp:2325) ----
+ * Change the active champion leader. */
+typedef struct {
+    int hero_count;
+    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx);
+    int16_t *event_heroidx;
+    int16_t v1e0288;  /* last hero check */
+} DM2_V1_SelectLeaderCallbacks;
+
+void dm2_v1_select_champion_leader(
+    int hero_idx,
+    const DM2_V1_SelectLeaderCallbacks *cb, void *ctx);
+
+/* ---- DM2_EQUIP_ITEM_TO_HAND (c_hero.cpp:2161) ----
+ * Place an item into a hero's slot (or party hand container if slot >= 30). */
+typedef struct {
+    uint16_t *hero_items;
+    int item_count;
+    uint16_t *hand_container;
+    int container_size;
+    void (*process_item_bonus)(void *ctx, int hero_idx, uint16_t item,
+                                int slot, int mode);
+} DM2_V1_EquipCallbacks;
+
+void dm2_v1_equip_item_to_hand(
+    int hero_idx, uint16_t item, int slot,
+    const DM2_V1_EquipCallbacks *cb, void *ctx);
+
+/* ---- DM2_REMOVE_POSSESSION (c_hero.cpp:2485) ----
+ * Remove an item from a hero's slot. Returns the item record or -1. */
+typedef struct {
+    uint16_t *hero_items;
+    int item_count;
+    uint16_t *hand_container;
+    int container_size;
+    void (*process_item_bonus)(void *ctx, int hero_idx, uint16_t item,
+                                int slot, int mode);
+    void (*display_right_panel)(void *ctx);
+    int16_t curacthero;    /* party.curacthero */
+    int16_t curactmode;    /* party.curactmode */
+} DM2_V1_RemovePossessionCallbacks;
+
+int16_t dm2_v1_remove_possession(
+    int hero_idx, int slot,
+    const DM2_V1_RemovePossessionCallbacks *cb, void *ctx);
+
+/* ---- DM2_GET_PARTY_SPECIAL_FORCE (c_hero.cpp:2407) ----
+ * Sum the "special force" value across all party members. */
+typedef struct {
+    int hero_count;
+    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx);
+    int16_t (*get_player_weight)(void *ctx, int hero_idx);
+} DM2_V1_SpecialForceCallbacks;
+
+int dm2_v1_get_party_special_force(
+    const DM2_V1_SpecialForceCallbacks *cb, void *ctx);
+
+/* ---- DM2_ADJUST_HAND_COOLDOWN (c_hero.cpp:2432) ----
+ * Set hand cooldown timers after an action. */
+#define DM2_V1_MAX_HANDS 4
+
+typedef struct {
+    uint8_t hand_cooldown[DM2_V1_MAX_HANDS];
+} DM2_V1_HeroCooldownState;
+
+void dm2_v1_adjust_hand_cooldown(
+    DM2_V1_HeroCooldownState *hero,
+    int16_t cooldown_ticks, int hand_idx,
+    int easy_mode);
+
+/* ---- DM2_ATTACK_PARTY (c_hero.cpp:3346) ----
+ * Creature attacks all party members. Returns bitmask of wounded heroes. */
+typedef struct {
+    int hero_count;
+    int16_t (*wound_player)(void *ctx, int hero_idx, int16_t damage,
+                             int body_parts, int damage_type);
+    int16_t (*rand16)(void *ctx, int16_t max);
+    int16_t (*max16)(void *ctx, int16_t a, int16_t b);
+} DM2_V1_HeroAttackPartyCallbacks;
+
+int dm2_v1_hero_attack_party(
+    int16_t total_damage, int body_parts, int damage_type,
+    const DM2_V1_HeroAttackPartyCallbacks *cb, void *ctx);
+
+/* ---- DM2_REMOVE_OBJECT_FROM_HAND (c_hero.cpp:2354) ----
+ * Remove the item currently held in the cursor hand. */
+typedef struct {
+    int16_t *cursor_item;   /* ddat.savegamewpc.w_00 */
+    int16_t *cursor_extra;  /* ddat.savegamewpc.w_18 */
+    int16_t *cursor_weight; /* ddat.savegamewpc.weight */
+    int8_t *cursor_type;    /* ddat.savegamewpc.b_16 */
+    void (*hide_cursor_item)(void *ctx);
+    void (*process_item_bonus)(void *ctx, int hero_idx, uint16_t item,
+                                int slot, int mode);
+    void (*moverec)(void *ctx);
+    int16_t event_heroidx;
+} DM2_V1_RemoveFromHandCallbacks;
+
+int16_t dm2_v1_remove_object_from_hand(
+    const DM2_V1_RemoveFromHandCallbacks *cb, void *ctx);
+
+/* ---- DM2_PROCESS_PLAYERS_DAMAGE (c_hero.cpp:2777) ----
+ * Apply pending damage to all heroes. */
+typedef struct {
+    int hero_count;
+    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx);
+    int16_t *pending_damage;  /* ddat.v1e0bb0[hero_idx] */
+    uint16_t *pending_wounds; /* ddat.v1e0ba8[hero_idx] */
+    void (*player_defeated)(void *ctx, int hero_idx);
+    void (*queue_damage_timer)(void *ctx, int hero_idx, int16_t damage);
+} DM2_V1_ProcessDamageCallbacks;
+
+void dm2_v1_process_players_damage(
+    const DM2_V1_ProcessDamageCallbacks *cb, void *ctx);
+
+/* ---- DM2_PLAYER_DEFEATED (c_hero.cpp:2636) ----
+ * Handle hero death. */
+typedef struct {
+    int hero_count;
+    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx);
+    void (*drop_items)(void *ctx, int hero_idx);
+    void (*create_bones)(void *ctx, int hero_idx, uint8_t party_pos);
+    void (*cure_poison)(void *ctx, int hero_idx);
+    void (*select_leader)(void *ctx, int hero_idx);
+    void (*recompute_position)(void *ctx);
+    void (*on_all_dead)(void *ctx);
+    void (*post_defeat)(void *ctx, int hero_idx);
+    int16_t event_heroidx;
+    uint8_t party_dir;       /* ddat.v1e0258 */
+    int16_t v1e00b8;         /* pending position swap */
+} DM2_V1_PlayerDefeatedCallbacks;
+
+void dm2_v1_player_defeated(
+    int hero_idx,
+    const DM2_V1_PlayerDefeatedCallbacks *cb, void *ctx);
+
+/* ---- DM2_USE_DEXTERITY_ATTRIBUTE (c_hero.cpp:2026) ----
+ * Compute effective dexterity check value. Pure computation. */
+typedef struct {
+    int valid;
+    int16_t value;
+} DM2_V1_UseDexterityResult;
+
+int dm2_v1_use_dexterity_attribute(
+    int16_t adj_dex,          /* get_adj_ability1(DEXTERITY, CUR) */
+    int16_t player_weight,    /* get_player_weight() */
+    int16_t max_load,         /* get_max_load() */
+    int is_sleeping,          /* ddat.v1e0238 != 0 */
+    int16_t rand_7a,          /* DM2_RAND() & 7 */
+    int16_t rand_7b,          /* DM2_RAND() & 7 */
+    int16_t rand_7c,          /* DM2_RAND() & 7 */
+    DM2_V1_UseDexterityResult *out);
+
 #ifdef __cplusplus
 }
 #endif

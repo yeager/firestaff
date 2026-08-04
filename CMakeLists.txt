@@ -15840,6 +15840,25 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_hero_ops_ext
     )
 
+    add_executable(test_dm2_v1_hero_remaining
+        tests/test_dm2_v1_hero_remaining.c
+        src/dm2/dm2_v1_hero_ops_pc34_compat.c
+        src/dm2/dm2_v1_hero_stats_pc34_compat.c
+    )
+    target_link_libraries(test_dm2_v1_hero_remaining PRIVATE
+        firestaff_dm2 firestaff_m10 firestaff_zlib
+    )
+    target_include_directories(test_dm2_v1_hero_remaining PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_hero_remaining PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_hero_remaining
+        COMMAND test_dm2_v1_hero_remaining
+    )
+
     add_executable(test_dm2_v1_moverec_ops
         tests/test_dm2_v1_moverec_ops.c
         src/dm2/dm2_v1_moverec_ops_pc34_compat.c
@@ -18482,6 +18501,60 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_event_handlers_pc34_compat
     )
 
+    # ── DM2: GUI drawing (c_gui_draw.cpp) ──
+    add_executable(test_dm2_v1_gui_draw_pc34_compat
+        tests/test_dm2_v1_gui_draw_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_gui_draw_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_gui_draw_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gui_draw_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gui_draw_pc34_compat
+        COMMAND test_dm2_v1_gui_draw_pc34_compat
+    )
+
+    # ── DM2: mouse/touch input (c_tmouse.cpp) ──
+    add_executable(test_dm2_v1_tmouse_pc34_compat
+        tests/test_dm2_v1_tmouse_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_tmouse_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_tmouse_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_tmouse_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_tmouse_pc34_compat
+        COMMAND test_dm2_v1_tmouse_pc34_compat
+    )
+
+    # ── DM2: database allocation (c_dballoc.cpp) ──
+    add_executable(test_dm2_v1_dballoc_pc34_compat
+        tests/test_dm2_v1_dballoc_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_dballoc_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_dballoc_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dballoc_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_dballoc_pc34_compat
+        COMMAND test_dm2_v1_dballoc_pc34_compat
+    )
+
     # ── DM2: ENGAGE_COMMAND hand action dispatcher ──
     add_executable(test_dm2_v1_engage_command_pc34_compat
         tests/test_dm2_v1_engage_command_pc34_compat.c
@@ -18498,6 +18571,112 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_engage_command_pc34_compat
         COMMAND test_dm2_v1_engage_command_pc34_compat
+    )
+
+    # ── DM2: creature AI module (c_1c9a.cpp) ──
+    add_executable(test_dm2_v1_1c9a_pc34_compat
+        tests/test_dm2_v1_1c9a_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_1c9a_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_1c9a_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_1c9a_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_1c9a_pc34_compat
+        COMMAND test_dm2_v1_1c9a_pc34_compat
+    )
+
+    # ── DM2: GFX blit engine (c_gfx_blit.cpp) ──
+    add_executable(test_dm2_v1_gfx_blit_pc34_compat
+        tests/test_dm2_v1_gfx_blit_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_gfx_blit_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_gfx_blit_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gfx_blit_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gfx_blit_pc34_compat
+        COMMAND test_dm2_v1_gfx_blit_pc34_compat
+    )
+
+    # ── DM2: gfx_main module (c_gfx_main.cpp) ──
+    add_executable(test_dm2_v1_gfx_main_pc34_compat
+        tests/test_dm2_v1_gfx_main_pc34_compat.c
+        src/dm2/dm2_v1_gfx_main_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_gfx_main_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gfx_main_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gfx_main_pc34_compat
+        COMMAND test_dm2_v1_gfx_main_pc34_compat
+    )
+
+    # ── DM2: gfx_str module (c_gfx_str.cpp) ──
+    add_executable(test_dm2_v1_gfx_str_pc34_compat
+        tests/test_dm2_v1_gfx_str_pc34_compat.c
+        src/dm2/dm2_v1_gfx_str_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_gfx_str_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gfx_str_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gfx_str_pc34_compat
+        COMMAND test_dm2_v1_gfx_str_pc34_compat
+    )
+
+    # ── DM2: gfx_pal module (c_gfx_pal.cpp) ──
+    add_executable(test_dm2_v1_gfx_pal_pc34_compat
+        tests/test_dm2_v1_gfx_pal_pc34_compat.c
+        src/dm2/dm2_v1_gfx_pal_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_gfx_pal_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_gfx_pal_pc34_compat PRIVATE m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gfx_pal_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gfx_pal_pc34_compat
+        COMMAND test_dm2_v1_gfx_pal_pc34_compat
+    )
+
+    # ── DM2: savegame unified module (c_savegame.cpp) ──
+    add_executable(test_dm2_v1_savegame_pc34_compat
+        tests/test_dm2_v1_savegame_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_savegame_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_v1_savegame_pc34_compat
+        PRIVATE firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_savegame_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_savegame_pc34_compat
+        COMMAND test_dm2_v1_savegame_pc34_compat
     )
 
     # ── DM2: combat damage pipeline ──
@@ -18570,6 +18749,23 @@ if(BUILD_TESTING)
     add_test(
         NAME dm2_v1_shop_npc_pc34_compat
         COMMAND test_dm2_v1_shop_npc_pc34_compat
+    )
+
+    # ── DM2: GDAT file handling (c_gdatfile.cpp) ──
+    add_executable(test_dm2_v1_gdatfile_pc34_compat
+        tests/test_dm2_v1_gdatfile_pc34_compat.c
+        src/dm2/dm2_v1_gdatfile_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_gdatfile_pc34_compat PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdatfile_pc34_compat
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gdatfile_pc34_compat
+        COMMAND test_dm2_v1_gdatfile_pc34_compat
     )
 
     # ── DM2-002: DELETE_CREATURE_RECORD mutating tail ──
@@ -48119,6 +48315,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_timer_ops_pc34_compat.c
         src/dm2/dm2_v1_engage_command_pc34_compat.c
         src/dm2/dm2_v1_event_handlers_pc34_compat.c
+        src/dm2/dm2_v1_gfx_main_pc34_compat.c
         src/dm2/dm2_v1_hero_ops_pc34_compat.c
         src/dm2/dm2_v1_light_ops_pc34_compat.c
         src/dm2/dm2_v1_creature_ops_pc34_compat.c
@@ -52634,3 +52831,182 @@ if(NOT MSVC)
 endif()
 add_test(NAME dm1_v1_creature_behavior_bootstrap_integration COMMAND test_dm1_v1_creature_behavior_bootstrap_integration)
 set_tests_properties(dm1_v1_creature_behavior_bootstrap_integration PROPERTIES LABELS "dm1;group;bootstrap;integration")
+
+add_executable(test_dm2_v1_image
+    tests/test_dm2_v1_image_pc34_compat.c
+    src/dm2/dm2_v1_image_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_image PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_image PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_image COMMAND test_dm2_v1_image)
+
+# ── DM2: segment 350 init ──
+add_executable(test_dm2_v1_seg350_pc34_compat
+    tests/test_dm2_v1_seg350_pc34_compat.c
+    src/dm2/dm2_v1_seg350_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_seg350_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_seg350_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_seg350_pc34_compat COMMAND test_dm2_v1_seg350_pc34_compat)
+
+# ── DM2: music WAV playback ──
+add_executable(test_dm2_v1_music_wav_pc34_compat
+    tests/test_dm2_v1_music_wav_pc34_compat.c
+    src/dm2/dm2_v1_music_wav_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_music_wav_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_music_wav_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_music_wav_pc34_compat COMMAND test_dm2_v1_music_wav_pc34_compat)
+
+# ── DM2: keyboard input handling ──
+add_executable(test_dm2_v1_keybd_pc34_compat
+    tests/test_dm2_v1_keybd_pc34_compat.c
+    src/dm2/dm2_v1_keybd_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_keybd_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_keybd_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_keybd_pc34_compat COMMAND test_dm2_v1_keybd_pc34_compat)
+
+# ── DM2: event queue management ──
+add_executable(test_dm2_v1_eventqueue_pc34_compat
+    tests/test_dm2_v1_eventqueue_pc34_compat.c
+    src/dm2/dm2_v1_eventqueue_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_eventqueue_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_eventqueue_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_eventqueue_pc34_compat COMMAND test_dm2_v1_eventqueue_pc34_compat)
+
+# ── DM2: button group management ──
+add_executable(test_dm2_v1_buttons_pc34_compat
+    tests/test_dm2_v1_buttons_pc34_compat.c
+    src/dm2/dm2_v1_buttons_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_buttons_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_buttons_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_buttons_pc34_compat COMMAND test_dm2_v1_buttons_pc34_compat)
+
+# ── DM2: click rectangle zones ──
+add_executable(test_dm2_v1_clickrect_pc34_compat
+    tests/test_dm2_v1_clickrect_pc34_compat.c
+    src/dm2/dm2_v1_clickrect_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_clickrect_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_clickrect_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_clickrect_pc34_compat COMMAND test_dm2_v1_clickrect_pc34_compat)
+
+# ── DM2: mouse cursor graphics ──
+add_executable(test_dm2_v1_mcursor_pc34_compat
+    tests/test_dm2_v1_mcursor_pc34_compat.c
+    src/dm2/dm2_v1_mcursor_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_mcursor_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_mcursor_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_mcursor_pc34_compat COMMAND test_dm2_v1_mcursor_pc34_compat)
+
+# ── DM2: extended rectangle operations (c_xrect.cpp) ──
+add_executable(test_dm2_v1_xrect_pc34_compat
+    tests/test_dm2_v1_xrect_pc34_compat.c
+    src/dm2/dm2_v1_xrect_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_xrect_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_xrect_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_xrect_pc34_compat COMMAND test_dm2_v1_xrect_pc34_compat)
+
+# ── DM2: segment 0AAF dialogue/menu (c_0aaf.cpp) ──
+add_executable(test_dm2_v1_0aaf_pc34_compat
+    tests/test_dm2_v1_0aaf_pc34_compat.c
+    src/dm2/dm2_v1_0aaf_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_0aaf_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_0aaf_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_0aaf_pc34_compat COMMAND test_dm2_v1_0aaf_pc34_compat)
+
+# ── DM2: cloud/weather system (c_cloud.cpp) ──
+add_executable(test_dm2_v1_cloud_pc34_compat
+    tests/test_dm2_v1_cloud_pc34_compat.c
+    src/dm2/dm2_v1_cloud_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_cloud_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_cloud_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_cloud_pc34_compat COMMAND test_dm2_v1_cloud_pc34_compat)
+
+# ── DM2: sound effects processing (c_sfx.cpp) ──
+add_executable(test_dm2_v1_sfx_pc34_compat
+    tests/test_dm2_v1_sfx_pc34_compat.c
+    src/dm2/dm2_v1_sfx_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_sfx_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_sfx_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_sfx_pc34_compat COMMAND test_dm2_v1_sfx_pc34_compat)
+
+# ── DM2: level loading/initialization (c_loadlevel.cpp) ──
+add_executable(test_dm2_v1_loadlevel_pc34_compat
+    tests/test_dm2_v1_loadlevel_pc34_compat.c
+    src/dm2/dm2_v1_loadlevel_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_loadlevel_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_loadlevel_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_loadlevel_pc34_compat COMMAND test_dm2_v1_loadlevel_pc34_compat)
+
+# ── DM2: segment 1031 UI logic (c_1031.cpp) ──
+add_executable(test_dm2_v1_1031_pc34_compat
+    tests/test_dm2_v1_1031_pc34_compat.c
+    src/dm2/dm2_v1_1031_pc34_compat.c
+)
+target_include_directories(test_dm2_v1_1031_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_1031_pc34_compat
+        PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME dm2_v1_1031_pc34_compat COMMAND test_dm2_v1_1031_pc34_compat)

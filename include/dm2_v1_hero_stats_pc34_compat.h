@@ -93,4 +93,32 @@ int dm2_v1_hero_get_max_load(
     int16_t rand16_value,
     DM2_V1_HeroGetMaxLoadReceipt *out);
 
+/* ---- use_luck (c_hero.cpp:136) ----
+ * Luck check: random test against luck ability. On success, luck decreases
+ * by 2; on failure, increases by 2. Clamped 10-220.
+ * rand16_ability: DM2_RAND16(2 * get_adj_ability1(E_LUCK, E_CUR))
+ * rand16_luck: DM2_RAND16(100)
+ * randbit: DM2_RANDBIT() result (0 or 1) */
+typedef struct {
+    int valid;
+    int result;         /* 1 = success, 0 = failure */
+    uint8_t new_luck;   /* updated ability[E_LUCK][E_CUR] */
+} DM2_V1_HeroUseLuckResult;
+
+int dm2_v1_hero_use_luck(
+    DM2_V1_HeroStats *hero,
+    int16_t threshold,
+    int randbit,
+    int16_t rand16_100,
+    int16_t rand16_ability,
+    DM2_V1_HeroUseLuckResult *out);
+
+/* ---- hero_2c1d_0300 (c_hero.cpp:652) ----
+ * Adjust a hero ability (cur value) by a delta, with diminishing returns
+ * when the gap between cur and max exceeds 20. Clamps to 10-220. */
+void dm2_v1_hero_adjust_ability(
+    DM2_V1_HeroStats *hero,
+    int ability_idx,
+    int16_t delta);
+
 #endif

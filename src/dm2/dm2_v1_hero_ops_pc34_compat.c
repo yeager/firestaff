@@ -2,6 +2,7 @@
 
 #include "dm2_v1_hero_ops_pc34_compat.h"
 #include <stddef.h>
+#include <string.h>
 
 static int16_t dm2_abs16(int16_t v)
 {
@@ -610,4 +611,441 @@ int dm2_v1_put_item_to_player(
         return 1;
     }
     return 0;
+}
+
+/* ---- c_hero::init (c_hero.cpp:40) ---- */
+void dm2_v1_hero_init(DM2_V1_HeroState *hero)
+{
+    if (!hero)
+        return;
+    memset(hero, 0, sizeof(DM2_V1_HeroState));
+}
+
+/* ---- c_party::init (c_hero.cpp:153) ---- */
+void dm2_v1_party_init(
+    int *hero_count, int *curactmode, int *curacthero,
+    const DM2_V1_PartyInitCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return;
+    for (int i = 0; i < cb->max_heroes; i++) {
+        DM2_V1_HeroState *h = cb->get_hero(ctx, i);
+        if (h)
+            dm2_v1_hero_init(h);
+    }
+    if (hero_count)
+        *hero_count = 0;
+    if (curactmode)
+        *curactmode = 0;
+    if (curacthero)
+        *curacthero = 0;
+}
+
+/* ---- c_party::rotate (c_hero.cpp:168) ---- */
+void dm2_v1_party_rotate(
+    int16_t new_dir,
+    const DM2_V1_RotateCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->party_dir)
+        return;
+    if (new_dir == *cb->party_dir)
+        return;
+    int16_t turns = (int16_t)(new_dir - *cb->party_dir);
+    if (turns < 0)
+        turns = (int16_t)(turns + 4);
+    for (int i = 0; i < cb->hero_count; i++) {
+        DM2_V1_HeroState *h = cb->get_hero(ctx, i);
+        if (!h)
+            continue;
+        h->party_pos = (uint8_t)((h->party_pos + turns) & 0x3);
+        h->absdir = (uint8_t)((h->absdir + turns) & 0x3);
+    }
+    *cb->party_dir = new_dir;
+    if (cb->party_absdir) {
+        if (cb->v1e0234 != 0)
+            *cb->party_absdir = (int16_t)((cb->party_absdir_val + turns) & 0x3);
+        else
+            *cb->party_absdir = new_dir;
+    }
+}
+
+/* ---- c_party::set_hero_flags (c_hero.cpp:190) ---- */
+void dm2_v1_party_set_hero_flags(
+    int hero_count,
+    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx), void *ctx)
+{
+    if (!get_hero)
+        return;
+    for (int i = 0; i < hero_count; i++) {
+        DM2_V1_HeroState *h = get_hero(ctx, i);
+        if (h)
+            h->hero_flag |= DM2_V1_HERO_FLAG_4000;
+    }
+}
+
+/* ---- c_party::get_player_weight (c_hero.cpp:197) ---- */
+int16_t dm2_v1_get_player_weight(
+    const DM2_V1_HeroState *hero,
+    int is_event_hero, int16_t hand_weight)
+{
+    if (!hero || hero->cur_hp == 0)
+        return 0;
+    int16_t w = 0; /* hero->weight not in DM2_V1_HeroState; caller provides via hand_weight */
+    if (is_event_hero)
+        w = (int16_t)(w + hand_weight);
+    return w;
+}
+
+/* ---- c_party::calc_player_weight (c_hero.cpp:208) ---- */
+int16_t dm2_v1_calc_player_weight(
+    DM2_V1_HeroState *hero,
+    const DM2_V1_CalcWeightCallbacks *cb, void *ctx)
+{
+    if (!cb || !hero)
+        return 0;
+    int16_t wsum = 0;
+    for (int i = 0; i < cb->item_count; i++)
+        wsum = (int16_t)(wsum + cb->query_item_weight(ctx, cb->hero_items[i]));
+    if (cb->is_active_hero && cb->is_container_chest &&
+        cb->is_container_chest(ctx, cb->active_hand_item)) {
+        for (int i = 0; i < cb->container_size; i++)
+            wsum = (int16_t)(wsum + cb->query_item_weight(ctx, cb->hand_container[i]));
+    }
+    hero->hero_flag |= 0x1000;
+    return wsum;
+}
+
+/* ---- DM2_RESET_SQUAD_DIR (c_hero.cpp:2939) ---- */
+void dm2_v1_reset_squad_dir(
+    int hero_count, uint8_t party_dir,
+    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx), void *ctx)
+{
+    if (!get_hero)
+        return;
+    for (int i = 0; i < hero_count; i++) {
+        DM2_V1_HeroState *h = get_hero(ctx, i);
+        if (h)
+            h->absdir = party_dir;
+    }
+}
+
+/* ---- DM2_SELECT_CHAMPION_LEADER (c_hero.cpp:2325) ---- */
+void dm2_v1_select_champion_leader(
+    int hero_idx,
+    const DM2_V1_SelectLeaderCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->event_heroidx)
+        return;
+    if ((int16_t)hero_idx == *cb->event_heroidx)
+        return;
+    if (hero_idx != -1) {
+        DM2_V1_HeroState *h = cb->get_hero(ctx, hero_idx);
+        if (!h || h->cur_hp == 0)
+            return;
+    }
+    int16_t old = *cb->event_heroidx;
+    if (old != -1) {
+        DM2_V1_HeroState *h = cb->get_hero(ctx, (int)old);
+        if (h)
+            h->hero_flag |= 0x1400;
+    }
+    *cb->event_heroidx = (int16_t)hero_idx;
+    if (hero_idx == -1)
+        return;
+    /* Check for last hero exclusion */
+    if ((int16_t)(hero_idx + 1) == cb->v1e0288)
+        return;
+    DM2_V1_HeroState *h = cb->get_hero(ctx, hero_idx);
+    if (h)
+        h->hero_flag |= 0x1400;
+}
+
+/* ---- DM2_EQUIP_ITEM_TO_HAND (c_hero.cpp:2161) ---- */
+void dm2_v1_equip_item_to_hand(
+    int hero_idx, uint16_t item, int slot,
+    const DM2_V1_EquipCallbacks *cb, void *ctx)
+{
+    if (!cb || item == 0xFFFF)
+        return;
+    uint16_t masked = item & 0x3FFF;
+    if (slot < 30 && cb->hero_items && slot < cb->item_count)
+        cb->hero_items[slot] = masked;
+    else if (slot >= 30 && cb->hand_container) {
+        int ci = slot - 30;
+        if (ci < cb->container_size)
+            cb->hand_container[ci] = masked;
+    }
+    if (cb->process_item_bonus)
+        cb->process_item_bonus(ctx, hero_idx, item, slot, 1);
+}
+
+/* ---- DM2_REMOVE_POSSESSION (c_hero.cpp:2485) ---- */
+int16_t dm2_v1_remove_possession(
+    int hero_idx, int slot,
+    const DM2_V1_RemovePossessionCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return -1;
+    int16_t item;
+    if (slot < 30 && cb->hero_items && slot < cb->item_count) {
+        item = (int16_t)cb->hero_items[slot];
+        cb->hero_items[slot] = 0xFFFF;
+    } else if (slot >= 30 && cb->hand_container) {
+        int ci = slot - 30;
+        if (ci < cb->container_size) {
+            item = (int16_t)cb->hand_container[ci];
+            cb->hand_container[ci] = 0xFFFF;
+        } else {
+            return -1;
+        }
+    } else {
+        return -1;
+    }
+    if (item == -1 || item == (int16_t)0xFFFF)
+        return -1;
+    /* Check if need to refresh right panel */
+    if (cb->display_right_panel) {
+        int16_t active = (int16_t)(cb->curacthero - 1);
+        if (hero_idx == (int)active && slot <= 1 &&
+            slot == (int)cb->curactmode) {
+            cb->display_right_panel(ctx);
+        }
+    }
+    if (cb->process_item_bonus)
+        cb->process_item_bonus(ctx, hero_idx, (uint16_t)item, slot, -1);
+    return item;
+}
+
+/* ---- DM2_hero_37BEA (helper for GET_PARTY_SPECIAL_FORCE) ---- */
+static int dm2_v1_hero_special_force(
+    const DM2_V1_HeroState *hero,
+    int16_t weight)
+{
+    if (!hero || hero->cur_hp == 0)
+        return 0;
+    int has_flag = (hero->hero_flag & 0x10) ? 1 : 0;
+    int has_weight = weight / 10;
+    return (has_weight + has_flag) != 0 ? 0x32 : 0x28;
+}
+
+/* ---- DM2_GET_PARTY_SPECIAL_FORCE (c_hero.cpp:2407) ---- */
+int dm2_v1_get_party_special_force(
+    const DM2_V1_SpecialForceCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return 0;
+    int total = 0;
+    for (int i = 0; i < cb->hero_count; i++) {
+        DM2_V1_HeroState *h = cb->get_hero(ctx, i);
+        int16_t w = cb->get_player_weight ? cb->get_player_weight(ctx, i) : 0;
+        total += dm2_v1_hero_special_force(h, w);
+    }
+    return total;
+}
+
+/* ---- DM2_ADJUST_HAND_COOLDOWN (c_hero.cpp:2432) ---- */
+void dm2_v1_adjust_hand_cooldown(
+    DM2_V1_HeroCooldownState *hero,
+    int16_t cooldown_ticks, int hand_idx,
+    int easy_mode)
+{
+    if (!hero)
+        return;
+    /* cooldown_ticks + cooldown_ticks/4 */
+    int16_t cd = (int16_t)(cooldown_ticks + cooldown_ticks / 4);
+    int start, count;
+    if (hand_idx != -1) {
+        start = hand_idx;
+        count = 1;
+    } else {
+        start = 0;
+        count = 3;
+    }
+    if (easy_mode)
+        cd = (int16_t)((uint16_t)cd >> 2);
+    cd = (int16_t)(cd + 2);
+    for (int i = start; i < start + count && i < DM2_V1_MAX_HANDS; i++) {
+        int16_t cur = (int16_t)hero->hand_cooldown[i];
+        int16_t half_new, half_old;
+        if ((uint16_t)cd <= (uint16_t)cur) {
+            half_new = (int16_t)((uint16_t)cd / 2);
+            half_old = cur;
+        } else {
+            half_new = cd;
+            half_old = (int16_t)(cur / 2);
+        }
+        int16_t result = (int16_t)(half_old + half_new);
+        if ((uint16_t)result > 0xFF)
+            result = 0xFF;
+        hero->hand_cooldown[i] = (uint8_t)result;
+    }
+}
+
+/* ---- DM2_ATTACK_PARTY (c_hero.cpp:3346) ---- */
+int dm2_v1_hero_attack_party(
+    int16_t total_damage, int body_parts, int damage_type,
+    const DM2_V1_HeroAttackPartyCallbacks *cb, void *ctx)
+{
+    if (!cb || total_damage == 0)
+        return 0;
+    int mask = 0;
+    int16_t spread = (int16_t)(total_damage / 8 + 1);
+    int16_t base = (int16_t)(total_damage - spread);
+    int16_t rand_range = (int16_t)(2 * spread);
+    for (int i = 0; i < cb->hero_count; i++) {
+        int16_t rnd = cb->rand16(ctx, rand_range);
+        int16_t dmg = (int16_t)(rnd + base);
+        if (dmg < 1)
+            dmg = 1;
+        int16_t result = cb->wound_player(ctx, i, dmg, body_parts, damage_type);
+        if (result != 0)
+            mask |= (1 << i);
+    }
+    return mask;
+}
+
+/* ---- DM2_REMOVE_OBJECT_FROM_HAND (c_hero.cpp:2354) ---- */
+int16_t dm2_v1_remove_object_from_hand(
+    const DM2_V1_RemoveFromHandCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->cursor_item)
+        return -1;
+    int16_t item = *cb->cursor_item;
+    if (item == -1)
+        return -1;
+    if (cb->cursor_extra)
+        *cb->cursor_extra = 0;
+    if (cb->cursor_weight)
+        *cb->cursor_weight = 0;
+    *cb->cursor_item = -1;
+    if (cb->cursor_type)
+        *cb->cursor_type = -1;
+    if (cb->hide_cursor_item)
+        cb->hide_cursor_item(ctx);
+    if (cb->process_item_bonus)
+        cb->process_item_bonus(ctx, (int)cb->event_heroidx,
+                               (uint16_t)item, -1, -1);
+    if (cb->moverec)
+        cb->moverec(ctx);
+    return item;
+}
+
+/* ---- DM2_PROCESS_PLAYERS_DAMAGE (c_hero.cpp:2777) ---- */
+void dm2_v1_process_players_damage(
+    const DM2_V1_ProcessDamageCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return;
+    for (int i = 0; i < cb->hero_count; i++) {
+        DM2_V1_HeroState *hero = cb->get_hero(ctx, i);
+        if (!hero)
+            continue;
+        /* Apply body wounds */
+        if (cb->pending_wounds) {
+            hero->hero_type |= (uint8_t)(cb->pending_wounds[i] & 0xFF);
+            cb->pending_wounds[i] = 0;
+        }
+        int16_t dmg = cb->pending_damage ? cb->pending_damage[i] : 0;
+        if (dmg == 0)
+            continue;
+        if (cb->pending_damage)
+            cb->pending_damage[i] = 0;
+        if (hero->cur_hp == 0)
+            continue;
+        int16_t new_hp = (int16_t)(hero->cur_hp - dmg);
+        if (new_hp > 0) {
+            hero->cur_hp = new_hp;
+            hero->hero_flag |= DM2_V1_HERO_FLAG_0800;
+            if (cb->queue_damage_timer)
+                cb->queue_damage_timer(ctx, i, dmg);
+        } else {
+            if (cb->player_defeated)
+                cb->player_defeated(ctx, i);
+        }
+    }
+}
+
+/* ---- DM2_PLAYER_DEFEATED (c_hero.cpp:2636) ---- */
+void dm2_v1_player_defeated(
+    int hero_idx,
+    const DM2_V1_PlayerDefeatedCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return;
+    DM2_V1_HeroState *hero = cb->get_hero(ctx, hero_idx);
+    if (!hero)
+        return;
+    hero->cur_hp = 0;
+    hero->hero_flag |= DM2_V1_HERO_FLAG_4000;
+    /* Drop items */
+    if (cb->drop_items)
+        cb->drop_items(ctx, hero_idx);
+    /* Create bones on floor */
+    if (cb->create_bones)
+        cb->create_bones(ctx, hero_idx, hero->party_pos);
+    /* Reset hero direction */
+    hero->absdir = cb->party_dir;
+    /* Recompute position if needed */
+    int16_t rel_pos = (int16_t)((hero->party_pos + 4 - cb->party_dir) & 0x3);
+    if ((int16_t)(rel_pos + 1) == cb->v1e00b8 && cb->recompute_position)
+        cb->recompute_position(ctx);
+    /* Cure poison if poisoned */
+    if (hero->poisoned_count != 0 && cb->cure_poison)
+        cb->cure_poison(ctx, hero_idx);
+    /* Find first alive hero */
+    int first_alive = -1;
+    for (int i = 0; i < cb->hero_count; i++) {
+        DM2_V1_HeroState *h = cb->get_hero(ctx, i);
+        if (h && h->cur_hp != 0) {
+            first_alive = i;
+            break;
+        }
+    }
+    if (first_alive == -1) {
+        /* All heroes dead */
+        if (cb->on_all_dead)
+            cb->on_all_dead(ctx);
+    } else {
+        /* Select new leader if this was the leader */
+        if (hero_idx == (int)cb->event_heroidx && cb->select_leader)
+            cb->select_leader(ctx, first_alive);
+    }
+    if (cb->post_defeat)
+        cb->post_defeat(ctx, hero_idx);
+}
+
+/* ---- DM2_USE_DEXTERITY_ATTRIBUTE (c_hero.cpp:2026) ---- */
+int dm2_v1_use_dexterity_attribute(
+    int16_t adj_dex,
+    int16_t player_weight,
+    int16_t max_load,
+    int is_sleeping,
+    int16_t rand_7a,
+    int16_t rand_7b,
+    int16_t rand_7c,
+    DM2_V1_UseDexterityResult *out)
+{
+    if (!out) return 0;
+    /* adj_dex + rand[0..7] */
+    int16_t base = (int16_t)(adj_dex + rand_7a);
+    /* weight penalty: (base/2 * weight) / max_load */
+    int16_t half = (int16_t)(base / 2);
+    int32_t weight_penalty = 0;
+    if (max_load > 0)
+        weight_penalty = ((int32_t)half * (int32_t)player_weight) / (int32_t)max_load;
+    int16_t dex = (int16_t)(base - (int16_t)weight_penalty);
+    /* Clamp to min 2 */
+    if (dex < 2) dex = 2;
+    /* Halve if sleeping */
+    if (is_sleeping)
+        dex = (int16_t)(dex >> 1);
+    /* Final: dex/2 clamped to [rand_7c+1, 100-rand_7b] */
+    int16_t result = (int16_t)(dex / 2);
+    int16_t lo = (int16_t)(rand_7c + 1);
+    int16_t hi = (int16_t)(100 - rand_7b);
+    if (result < lo) result = lo;
+    if (result > hi) result = hi;
+    out->valid = 1;
+    out->value = result;
+    return 1;
 }

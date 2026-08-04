@@ -149,3 +149,75 @@ int dm2_v1_hero_get_max_load(
     out->value = s;
     return 1;
 }
+
+/* skproject c_hero.cpp:136-147  use_luck (DM2_USE_LUCK_ATTRIBUTE) */
+int dm2_v1_hero_use_luck(
+    DM2_V1_HeroStats *hero,
+    int16_t threshold,
+    int randbit,
+    int16_t rand16_100,
+    int16_t rand16_ability,
+    DM2_V1_HeroUseLuckResult *out)
+{
+    if (!hero || !out) {
+        if (out) out->valid = 0;
+        return 0;
+    }
+
+    int result;
+    if (randbit && rand16_100 > threshold) {
+        result = 1;
+    } else {
+        result = rand16_ability > threshold ? 1 : 0;
+    }
+
+    int16_t luck_cur = (int16_t)hero->ability[DM2_V1_HERO_ABILITY_LUCK].current;
+    int16_t luck_max = (int16_t)hero->ability[DM2_V1_HERO_ABILITY_LUCK].maximum;
+    int16_t max_clamp = luck_max;
+    if (max_clamp > 220) max_clamp = 220;
+
+    if (result)
+        luck_cur -= 2;
+    else
+        luck_cur += 2;
+
+    luck_cur = clamp_i16(10, max_clamp, luck_cur);
+    hero->ability[DM2_V1_HERO_ABILITY_LUCK].current = (uint8_t)luck_cur;
+
+    out->valid = 1;
+    out->result = result;
+    out->new_luck = (uint8_t)luck_cur;
+    return 1;
+}
+
+/* skproject c_hero.cpp:652-684  hero_2c1d_0300 */
+void dm2_v1_hero_adjust_ability(
+    DM2_V1_HeroStats *hero,
+    int ability_idx,
+    int16_t delta)
+{
+    if (!hero || (unsigned)ability_idx >= DM2_V1_HERO_NUM_ABILITIES)
+        return;
+
+    int16_t cur = (int16_t)hero->ability[ability_idx].current;
+    int16_t max = (int16_t)hero->ability[ability_idx].maximum;
+
+    /* Check if delta moves cur further from max (same sign as cur-max+delta) */
+    int16_t gap = (int16_t)(cur - max + delta);
+    int gap_neg = gap < 0;
+    int delta_neg = delta < 0;
+
+    if (gap_neg == delta_neg) {
+        /* Diminishing returns: for every 20 units of |gap|, reduce delta by 3/4 */
+        int16_t abs_gap = gap < 0 ? (int16_t)-gap : gap;
+        while (abs_gap > 20) {
+            int16_t quarter = (int16_t)(delta / 4);
+            delta = (int16_t)(delta - quarter);
+            abs_gap = (int16_t)(abs_gap - 20);
+        }
+    }
+
+    int16_t result = (int16_t)(cur + delta);
+    result = clamp_i16(10, 220, result);
+    hero->ability[ability_idx].current = (uint8_t)result;
+}

@@ -41,6 +41,11 @@
  *   DM2_events_32cb_03a6         c_events.cpp:736
  *   DM2_guivp_32cb_01b6          c_events.cpp:1345
  *   DM2_events_3C1E5             c_events.cpp:2949
+ *
+ * From c_input.cpp:
+ *   DM2_ADJUST_UI_EVENT           c_input.cpp:112
+ *   DM2_1031_03f2                 c_input.cpp:55
+ *   DM2_0b36_129a                 c_input.cpp:522
  */
 
 #include <stdint.h>
@@ -666,6 +671,85 @@ void dm2_v1_events_3c1e5(
     int16_t param, int16_t record,
     const DM2_V1_Events3C1E5Callbacks *cb, void *ctx,
     DM2_V1_Events3C1E5Receipt *receipt);
+
+/* ---- DM2_ADJUST_UI_EVENT (c_input.cpp:112) ----
+ * Adjust a UI event index based on hand cooldowns and item
+ * activability. For idx 116-123 (action hand clicks): checks
+ * the hero's hand cooldown timer and whether the wielded item
+ * is activable; clears idx to 0 if not available. For idx
+ * 95-98 (movement arrows): checks player position validity
+ * and hand cooldown. */
+typedef struct {
+    int16_t (*get_curacthero)(void *ctx);
+    int16_t (*get_hero_curHP)(void *ctx, int hero);
+    int16_t (*get_hero_hand_cooldown)(void *ctx, int hero, int hand);
+    int16_t (*get_hero_item)(void *ctx, int hero, int slot);
+    int (*is_item_activable)(void *ctx, int16_t item);
+    int16_t (*get_player_position)(void *ctx, int hero);
+    int16_t v1e0288;
+} DM2_V1_AdjustUiEventCallbacks;
+
+typedef struct {
+    int handled;
+    int16_t original_idx;
+    int16_t adjusted_idx;
+    int suppressed;
+} DM2_V1_AdjustUiEventReceipt;
+
+void dm2_v1_adjust_ui_event(
+    int16_t *idx, int16_t x, int16_t y,
+    const DM2_V1_AdjustUiEventCallbacks *cb, void *ctx,
+    DM2_V1_AdjustUiEventReceipt *receipt);
+
+/* ---- DM2_1031_03f2 (c_input.cpp:55) ----
+ * Recursive event table lookup. Walks table1d3ba0 entries
+ * matching the current s_bbw value, returning the event index
+ * from table1d3d23/v1d39bc. Used by the touch-click zone
+ * matrix to resolve which handler a click dispatches to. */
+typedef struct {
+    int16_t s_bbw;
+    const uint8_t *table1d3ba0;   /* event table: [n][3] packed entries */
+    int16_t table1d3ba0_count;    /* number of entries */
+    const int16_t *table1d3d23;   /* event index table */
+    const int16_t *v1d39bc;       /* secondary event index table */
+    int16_t (*recurse)(void *ctx, int16_t sub_bbw);
+} DM2_V1_1031_03f2Callbacks;
+
+typedef struct {
+    int handled;
+    int16_t event_index;
+    int recursed;
+} DM2_V1_1031_03f2Receipt;
+
+int16_t dm2_v1_1031_03f2(
+    const DM2_V1_1031_03f2Callbacks *cb, void *ctx,
+    DM2_V1_1031_03f2Receipt *receipt);
+
+/* ---- DM2_0b36_129a (c_input.cpp:522) ----
+ * Draw a string to a button group bitmap during event execution.
+ * Queries string metrics, then calls DM2_DRAW_STRING at the
+ * computed position within the button group rectangle. */
+typedef struct {
+    int16_t (*query_str_width)(void *ctx, const char *str);
+    int16_t (*query_str_height)(void *ctx, const char *str);
+    void (*draw_string)(void *ctx, int16_t x, int16_t y,
+                        const char *str, int16_t color);
+    int16_t btn_x;
+    int16_t btn_y;
+    int16_t btn_w;
+    int16_t btn_h;
+} DM2_V1_0b36_129aCallbacks;
+
+typedef struct {
+    int handled;
+    int16_t draw_x;
+    int16_t draw_y;
+} DM2_V1_0b36_129aReceipt;
+
+void dm2_v1_0b36_129a(
+    const char *str, int16_t color,
+    const DM2_V1_0b36_129aCallbacks *cb, void *ctx,
+    DM2_V1_0b36_129aReceipt *receipt);
 
 /* ---- DM2_events_AB26 (c_events.cpp:201) ----
  * Game load dialogue: displays save/load slot selection UI. */
