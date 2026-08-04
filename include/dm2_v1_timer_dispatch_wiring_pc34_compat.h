@@ -188,6 +188,16 @@ typedef struct {
      * dependency chain that binding pulls in. */
     DM2_V1_TimerTypeHandler think_creature_handler;
     void *think_creature_context;
+
+    /* WALL_MECHA / FLOOR_MECHA (actuator_tile classes 0, 1) — the host
+     * binds these to adapters wrapping dm2_v1_actuate_wall_mecha /
+     * dm2_v1_actuate_floor_mecha (dm2_v1_actuator_event_pc34_compat.h).
+     * Same pattern as think_creature: raw handler + context to avoid
+     * linking the record-pool dependency chain into unit tests. */
+    DM2_V1_TimerTypeHandler wall_mecha_handler;
+    void *wall_mecha_context;
+    DM2_V1_TimerTypeHandler floor_mecha_handler;
+    void *floor_mecha_context;
 } DM2_V1_TimerDispatchWiringContext;
 
 /* Populate dispatcher.handlers[] for all implemented timer types.

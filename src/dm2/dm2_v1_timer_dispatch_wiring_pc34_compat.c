@@ -538,6 +538,32 @@ static int handle_alloc_new_creature(void *context, const DM2_V1_SourceTimer *ti
     return 1;
 }
 
+/* Adapter: WALL_MECHA (actuator_tile class 0) */
+static int handle_actuate_wall_mecha(void *context, const DM2_V1_SourceTimer *timer,
+                                     uint16_t source_index,
+                                     DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->wall_mecha_handler)
+        return 0;
+    return w->wall_mecha_handler(
+        w->wall_mecha_context ? w->wall_mecha_context : context,
+        timer, source_index, receipt);
+}
+
+/* Adapter: FLOOR_MECHA (actuator_tile class 1) */
+static int handle_actuate_floor_mecha(void *context, const DM2_V1_SourceTimer *timer,
+                                      uint16_t source_index,
+                                      DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->floor_mecha_handler)
+        return 0;
+    return w->floor_mecha_handler(
+        w->floor_mecha_context ? w->floor_mecha_context : context,
+        timer, source_index, receipt);
+}
+
 #define WIRED_COUNT 26
 
 void dm2_v1_timer_dispatch_wiring_init(
@@ -577,9 +603,10 @@ void dm2_v1_timer_dispatch_wiring_init(
     dispatcher->handlers[DM2_V1_TIMER_MOVE_RECORD_ROTATE] = handle_move_record_rotate;
     dispatcher->handlers[DM2_V1_TIMER_ALLOC_NEW_CREATURE] = handle_alloc_new_creature;
 
-    /* 0x04 ACTUATE_TILE subdispatch: classes 2 (pitfall), 4 (door),
-     * 5 (teleporter), 6 (trickwall).  Class 0/1 (mecha) and 3 (fall-through
-     * no-op) are handled by the dispatcher core itself. */
+    /* 0x04 ACTUATE_TILE subdispatch: all 7 classes wired.
+     * Class 3 is a source-level fall-through no-op (never dispatched). */
+    dispatcher->actuator_tile[0] = handle_actuate_wall_mecha;
+    dispatcher->actuator_tile[1] = handle_actuate_floor_mecha;
     dispatcher->actuator_tile[2] = handle_actuate_pitfall;
     dispatcher->actuator_tile[4] = handle_actuate_door;
     dispatcher->actuator_tile[5] = handle_actuate_teleporter;

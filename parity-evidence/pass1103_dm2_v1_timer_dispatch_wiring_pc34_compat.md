@@ -17,7 +17,7 @@ architecture used by the rest of the module.
 |------|------|-----------------|--------|
 | 0x01 | STEP_DOOR | c_tim_proc.cpp | delegated |
 | 0x02 | DESTROY_DOOR | c_tim_proc.cpp:422 | delegated |
-| 0x04 | ACTUATE_TILE (classes 2/4/5/6) | c_tim_proc.cpp:4214-4230 | delegated via actuator_tile[] |
+| 0x04 | ACTUATE_TILE (classes 0/1/2/4/5/6) | c_tim_proc.cpp:4214-4230 | delegated via actuator_tile[] |
 | 0x0C | PROCESS_TIMER_0C | c_tim_proc.cpp:30 | delegated |
 | 0x0D | RESURRECTION | c_tim_proc.cpp:39 | delegated |
 | 0x0E | PROCESS_0E | SkWinCore.cpp:2173 | delegated |
@@ -62,8 +62,14 @@ the dispatcher core (`dm2_v1_proceed_timers.c`) already owns the
 square-class subdispatch via `dispatcher->tile_class_at` and
 `dispatcher->actuator_tile[0..6]`; this wiring module only supplies
 classes 2 (pitfall), 4 (door), 5 (teleporter), and 6 (trickwall). Classes
-0/1 (wall/floor mecha no-op) and 3 (fall-through no-op) are handled inside
-the dispatcher core itself and need no adapter here.
+3 (fall-through no-op) is handled inside the dispatcher core itself and
+needs no adapter here. Classes 0 (wall mecha) and 1 (floor mecha) are
+wired via the same indirection pattern as THINK_CREATURE: raw
+`DM2_V1_TimerTypeHandler` function pointers (`wall_mecha_handler`,
+`floor_mecha_handler`) that the host binds to adapters wrapping
+`dm2_v1_actuate_wall_mecha` / `dm2_v1_actuate_floor_mecha` from
+`dm2_v1_actuator_event_pc34_compat.c`, avoiding the record-pool
+dependency chain in unit tests.
 
 0x0D RESURRECTION, 0x19 PROCESS_CLOUD, 0x1E STEP_MISSILE, and 0x5A
 ORNATE_NOISE each got a new callback struct + implementation in
@@ -118,5 +124,6 @@ implemented handlers: RESURRECTION's final (yB==0) phase invoking
 `bring_champion_to_life`, PROCESS_CLOUD decaying a type-7 cloud to zero
 and consuming the timer, STEP_MISSILE bouncing off (deleting at) a wall
 tile, THINK_CREATURE_A/B delegating to a bound `think_creature_handler`
-(and rejecting when unbound), and ORNATE_NOISE clearing the frame counter
-when the record is inactive.
+(and rejecting when unbound), ORNATE_NOISE clearing the frame counter when the record is inactive, and
+WALL_MECHA/FLOOR_MECHA delegating to bound handlers (and rejecting when
+unbound).

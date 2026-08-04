@@ -29,7 +29,10 @@ static void test_init_populates_handlers(void)
     /* 0x04 ACTUATE_TILE is wired via actuator_tile[]/tile_class_at, not
      * handlers[0x04]. */
     assert(dispatcher.handlers[0x04] == NULL);
+    assert(dispatcher.actuator_tile[0] != NULL);
+    assert(dispatcher.actuator_tile[1] != NULL);
     assert(dispatcher.actuator_tile[2] != NULL);
+    assert(dispatcher.actuator_tile[3] == NULL); /* class 3 is no-op */
     assert(dispatcher.actuator_tile[4] != NULL);
     assert(dispatcher.actuator_tile[5] != NULL);
     assert(dispatcher.actuator_tile[6] != NULL);
@@ -346,6 +349,71 @@ static void test_ornate_noise_clears_frame_when_inactive(void)
     printf("test_ornate_noise_clears_frame_when_inactive OK\n");
 }
 
+static int wall_mecha_seen = 0;
+static int fake_wall_mecha_handler(void *context __attribute__((unused)),
+                                   const DM2_V1_SourceTimer *timer __attribute__((unused)),
+                                   uint16_t source_index __attribute__((unused)),
+                                   DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    wall_mecha_seen++;
+    return 1;
+}
+
+static int floor_mecha_seen = 0;
+static int fake_floor_mecha_handler(void *context __attribute__((unused)),
+                                    const DM2_V1_SourceTimer *timer __attribute__((unused)),
+                                    uint16_t source_index __attribute__((unused)),
+                                    DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    floor_mecha_seen++;
+    return 1;
+}
+
+static int fake_tile_class_wall(void *ctx __attribute__((unused)),
+                                int map __attribute__((unused)),
+                                int x __attribute__((unused)),
+                                int y __attribute__((unused)))
+{
+    return 0;
+}
+
+static void test_wall_floor_mecha_delegates_to_bound_handler(void)
+{
+    DM2_V1_TimerDispatcher dispatcher;
+    DM2_V1_TimerDispatchWiringContext wctx;
+    memset(&wctx, 0, sizeof(wctx));
+    wctx.wall_mecha_handler = fake_wall_mecha_handler;
+    wctx.floor_mecha_handler = fake_floor_mecha_handler;
+    wctx.tile_class_at = fake_tile_class_wall;
+    dm2_v1_timer_dispatch_wiring_init(&dispatcher, &wctx);
+
+    wall_mecha_seen = 0;
+    floor_mecha_seen = 0;
+    DM2_V1_SourceTimer timer;
+    memset(&timer, 0, sizeof(timer));
+    DM2_V1_ProceedTimersReceipt receipt;
+    memset(&receipt, 0, sizeof(receipt));
+
+    int result = dispatcher.actuator_tile[0](&wctx, &timer, 0, &receipt);
+    assert(result == 1);
+    assert(wall_mecha_seen == 1);
+
+    result = dispatcher.actuator_tile[1](&wctx, &timer, 0, &receipt);
+    assert(result == 1);
+    assert(floor_mecha_seen == 1);
+
+    /* Without bound handlers, fail closed */
+    DM2_V1_TimerDispatchWiringContext wctx2;
+    memset(&wctx2, 0, sizeof(wctx2));
+    dm2_v1_timer_dispatch_wiring_init(&dispatcher, &wctx2);
+    result = dispatcher.actuator_tile[0](&wctx2, &timer, 0, &receipt);
+    assert(result == 0);
+    result = dispatcher.actuator_tile[1](&wctx2, &timer, 0, &receipt);
+    assert(result == 0);
+
+    printf("test_wall_floor_mecha_delegates_to_bound_handler OK\n");
+}
+
 int main(void)
 {
     test_wiring_count();
@@ -360,6 +428,7 @@ int main(void)
     test_step_missile_bounces_off_wall();
     test_think_creature_delegates_to_bound_handler();
     test_ornate_noise_clears_frame_when_inactive();
+    test_wall_floor_mecha_delegates_to_bound_handler();
     printf("All dm2_v1_timer_dispatch_wiring tests passed.\n");
     return 0;
 }
