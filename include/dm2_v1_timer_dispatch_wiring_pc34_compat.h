@@ -9,18 +9,18 @@
  * to the uniform DM2_V1_TimerTypeHandler signature used by the timer
  * dispatcher (dm2_v1_proceed_timers_pc34_compat.h).
  *
- * Currently wired timer types: 0x01..0x5E (26 of 26)
+ * Currently wired timer types: 0x01..0x5E (26 of 26, fully implemented)
  *   0x01 STEP_DOOR                0x02 DESTROY_DOOR
  *   0x04 ACTUATE_TILE             0x0C PROCESS_0C
- *   0x0D RESURRECTION (stub)      0x0E PROCESS_0E
- *   0x15 PROCESS_SOUND            0x19 PROCESS_CLOUD (stub)
- *   0x1E STEP_MISSILE (stub)      0x21 THINK_CREATURE_A (stub)
- *   0x22 THINK_CREATURE_B (stub)  0x3D PROCESS_3D
+ *   0x0D RESURRECTION             0x0E PROCESS_0E
+ *   0x15 PROCESS_SOUND            0x19 PROCESS_CLOUD
+ *   0x1E STEP_MISSILE             0x21 THINK_CREATURE_A
+ *   0x22 THINK_CREATURE_B         0x3D PROCESS_3D
  *   0x46 LIGHT                    0x47 HERO_ENCH_FLAG
  *   0x48 ENCH_POWER               0x4B POISON
  *   0x54 UPDATE_WEATHER           0x55 ORNATE_ANIMATOR
  *   0x56 TICK_GENERATOR           0x58 RELEASE_DOOR_BUTTON
- *   0x59 PROCESS_59               0x5A ORNATE_NOISE (stub)
+ *   0x59 PROCESS_59               0x5A ORNATE_NOISE
  *   0x5B RECORD_CLEAR             0x5C RECORD_SET
  *   0x5D MOVE_RECORD_ROTATE       0x5E ALLOC_NEW_CREATURE
  *
@@ -132,6 +132,62 @@ typedef struct {
     int16_t *hero_poison;     /* per hero */
     uint8_t *ench_flag_counter; /* savegames1.b_02 */
     int16_t ench_flag_hero_slot; /* v1e0976 */
+
+    /* RESURRECTION (0x0D) */
+    void (*bring_champion_to_life)(void *ctx, int16_t actor);
+    int16_t (*get_tile_record_link)(void *ctx, int16_t x, int16_t y);
+    int16_t (*get_next_record_link)(void *ctx, uint16_t record);
+    int16_t (*query_cls1_from_record)(void *ctx, int32_t record);
+    int16_t (*query_cls2_from_record)(void *ctx, int32_t record);
+    int16_t (*add_item_charge)(void *ctx, int32_t record, int mode);
+    void (*cut_record_from)(void *ctx, uint16_t record, int16_t x, int16_t y);
+    void (*dealloc_record)(void *ctx, uint16_t record);
+    int16_t (*create_cloud)(void *ctx, int16_t type, int16_t param,
+                            int16_t x, int16_t y, int16_t cls);
+    void (*queue_resurrection_timer)(void *ctx);
+
+    /* Shared tile-value accessor (PROCESS_CLOUD, STEP_MISSILE, ORNATE_NOISE) */
+    uint8_t (*get_tile_value)(void *ctx, int16_t x, int16_t y);
+
+    /* PROCESS_CLOUD (0x19) */
+    int16_t (*calc_cloud_damage)(void *ctx, uint16_t cloud_rw, int16_t target);
+    void (*attack_door)(void *ctx, int16_t x, int16_t y, int16_t damage,
+                        int16_t mode, int16_t param);
+    void (*attack_party)(void *ctx, int16_t damage, int16_t mode, int16_t param);
+    int16_t (*get_creature_at)(void *ctx, int16_t x, int16_t y);
+    int (*is_creature_immune)(void *ctx, int16_t creature);
+    void (*attack_creature)(void *ctx, int16_t creature, int16_t x, int16_t y,
+                            int16_t type, int16_t power, int16_t damage);
+    void (*queue_cloud_timer)(void *ctx);
+    void (*queue_noise_gen2)(void *ctx, uint8_t cat, uint8_t idx,
+                             uint8_t vol, uint8_t pan, int16_t x, int16_t y,
+                             int repeat, uint8_t p1, uint8_t p2);
+    int16_t party_x_cloud;
+    int16_t party_y_cloud;
+
+    /* STEP_MISSILE (0x1E) */
+    int16_t (*query_creature_ai_spec_flags)(void *ctx, int16_t creature);
+    int (*move_record)(void *ctx, int16_t level, int16_t x, int16_t y,
+                       int16_t dir, uint16_t record);
+    void (*append_record_to)(void *ctx, uint16_t record, int16_t x, int16_t y);
+    void (*delete_missile_record)(void *ctx, uint16_t record, int16_t x, int16_t y);
+    void (*queue_missile_timer)(void *ctx);
+    const int16_t *missile_dx_table;
+    const int16_t *missile_dy_table;
+
+    /* ORNATE_NOISE (0x5A) */
+    uint8_t (*get_wall_decoration)(void *ctx, uint8_t *rec);
+    uint8_t (*get_floor_decoration)(void *ctx, uint8_t *rec);
+    void (*queue_ornate_noise_timer)(void *ctx, int16_t extra_data);
+
+    /* THINK_CREATURE (0x21/0x22) — the host binds this to
+     * dm2_v1_think_creature_timer_handler (dm2_v1_think_creature_pc34_compat.h)
+     * with think_creature_context set to its DM2_V1_ThinkCreatureBinding*.
+     * Kept as a raw DM2_V1_TimerTypeHandler here so this wiring module (and
+     * its unit tests) do not need to link the record-pool/dungeon-loader
+     * dependency chain that binding pulls in. */
+    DM2_V1_TimerTypeHandler think_creature_handler;
+    void *think_creature_context;
 } DM2_V1_TimerDispatchWiringContext;
 
 /* Populate dispatcher.handlers[] for all implemented timer types.

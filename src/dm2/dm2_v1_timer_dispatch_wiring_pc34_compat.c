@@ -259,13 +259,131 @@ static int handle_process_sound(void *context, const DM2_V1_SourceTimer *timer,
     return 1;
 }
 
-/* Stub handlers: acknowledged, not yet behaviourally implemented. */
-static int handle_stub(void *context __attribute__((unused)),
-                       const DM2_V1_SourceTimer *timer __attribute__((unused)),
-                       uint16_t source_index __attribute__((unused)),
-                       DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+/* Adapter: RESURRECTION (0x0D) */
+static int handle_resurrection(void *context, const DM2_V1_SourceTimer *timer,
+                               uint16_t source_index __attribute__((unused)),
+                               DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
 {
-    return 0;
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->bring_champion_to_life && !w->get_tile_record_link && !w->create_cloud)
+        return 0;
+    DM2_V1_ResurrectionCallbacks cb = {
+        .bring_champion_to_life = w->bring_champion_to_life,
+        .get_tile_record_link = w->get_tile_record_link,
+        .get_next_record_link = w->get_next_record_link,
+        .query_cls1_from_record = w->query_cls1_from_record,
+        .query_cls2_from_record = w->query_cls2_from_record,
+        .add_item_charge = w->add_item_charge,
+        .cut_record_from = w->cut_record_from,
+        .dealloc_record = w->dealloc_record,
+        .create_cloud = w->create_cloud,
+        .queue_timer = w->queue_resurrection_timer
+    };
+    uint8_t xA = (uint8_t)(timer->value_a & 0xff);
+    uint8_t yA = (uint8_t)((timer->value_a >> 8) & 0xff);
+    uint8_t xB = (uint8_t)(timer->value_b & 0xff);
+    uint8_t yB = (uint8_t)((timer->value_b >> 8) & 0xff);
+    return dm2_v1_process_timer_resurrection(xA, yA, xB, yB, (uint8_t)timer->actor, &cb, context);
+}
+
+/* Adapter: PROCESS_CLOUD (0x19) */
+static int handle_process_cloud(void *context, const DM2_V1_SourceTimer *timer,
+                                uint16_t source_index __attribute__((unused)),
+                                DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->get_record_address)
+        return 0;
+    DM2_V1_ProcessCloudCallbacks cb = {
+        .get_record_address = w->get_record_address,
+        .get_tile_value = w->get_tile_value,
+        .calc_cloud_damage = w->calc_cloud_damage,
+        .attack_door = w->attack_door,
+        .attack_party = w->attack_party,
+        .get_creature_at = w->get_creature_at,
+        .is_creature_immune = w->is_creature_immune,
+        .attack_creature = w->attack_creature,
+        .cut_record_from = w->cut_record_from,
+        .dealloc_record = w->dealloc_record,
+        .queue_timer = w->queue_cloud_timer,
+        .queue_noise_gen2 = w->queue_noise_gen2,
+        .current_map = w->current_map,
+        .party_map = w->party_map,
+        .party_x = w->party_x_cloud,
+        .party_y = w->party_y_cloud
+    };
+    uint8_t xA = (uint8_t)(timer->value_a & 0xff);
+    uint8_t yA = (uint8_t)((timer->value_a >> 8) & 0xff);
+    return dm2_v1_process_cloud((uint16_t)timer->value_a, xA, yA, &cb, context);
+}
+
+/* Adapter: STEP_MISSILE (0x1E) */
+static int handle_step_missile(void *context, const DM2_V1_SourceTimer *timer,
+                               uint16_t source_index __attribute__((unused)),
+                               DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->get_record_address)
+        return 0;
+    DM2_V1_StepMissileCallbacks cb = {
+        .get_record_address = w->get_record_address,
+        .get_tile_value = w->get_tile_value,
+        .get_creature_at = w->get_creature_at,
+        .query_creature_ai_spec_flags = w->query_creature_ai_spec_flags,
+        .move_record = w->move_record,
+        .cut_record_from = w->cut_record_from,
+        .append_record_to = w->append_record_to,
+        .delete_missile_record = w->delete_missile_record,
+        .attack_creature = w->attack_creature,
+        .queue_timer = w->queue_missile_timer,
+        .current_map = w->current_map,
+        .party_x = w->party_x_cloud,
+        .party_y = w->party_y_cloud,
+        .dx_table = w->missile_dx_table,
+        .dy_table = w->missile_dy_table
+    };
+    uint8_t x = (uint8_t)(timer->value_a & 0xff);
+    uint8_t y = (uint8_t)((timer->value_a >> 8) & 0xff);
+    return dm2_v1_step_missile((uint16_t)timer->value_b, x, y, &cb, context);
+}
+
+/* Adapter: THINK_CREATURE_A/B (0x21/0x22) — delegates to the host-bound
+ * think_creature_handler, normally dm2_v1_think_creature_timer_handler
+ * (dm2_v1_think_creature_pc34_compat.h) with think_creature_context set to
+ * a DM2_V1_ThinkCreatureBinding*.  Indirected through a plain
+ * DM2_V1_TimerTypeHandler so this wiring module does not need to link the
+ * record-pool/dungeon-loader dependency chain that binding pulls in. */
+static int handle_think_creature(void *context, const DM2_V1_SourceTimer *timer,
+                                 uint16_t source_index,
+                                 DM2_V1_ProceedTimersReceipt *receipt)
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->think_creature_handler)
+        return 0;
+    return w->think_creature_handler(w->think_creature_context, timer, source_index, receipt);
+}
+
+/* Adapter: ORNATE_NOISE (0x5A) */
+static int handle_ornate_noise(void *context, const DM2_V1_SourceTimer *timer,
+                               uint16_t source_index __attribute__((unused)),
+                               DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->get_record_address)
+        return 0;
+    DM2_V1_OrnateNoiseCallbacks cb = {
+        .get_record_address = w->get_record_address,
+        .get_tile_value = w->get_tile_value,
+        .get_wall_decoration = w->get_wall_decoration,
+        .get_floor_decoration = w->get_floor_decoration,
+        .get_ornate_anim_len = w->get_ornate_anim_len,
+        .queue_timer_with_data = w->queue_ornate_noise_timer,
+        .queue_noise_gen2 = w->queue_noise_gen2,
+        .party_map = w->party_map
+    };
+    uint8_t xA = (uint8_t)(timer->value_a & 0xff);
+    uint8_t yA = (uint8_t)((timer->value_a >> 8) & 0xff);
+    return dm2_v1_continue_ornate_noise((uint16_t)timer->value_a, xA, yA, w->current_map, &cb, context);
 }
 
 /* Adapter: HERO_ENCH_FLAG (0x47) */
@@ -436,13 +554,13 @@ void dm2_v1_timer_dispatch_wiring_init(
     dispatcher->handlers[DM2_V1_TIMER_STEP_DOOR] = handle_step_door;
     dispatcher->handlers[DM2_V1_TIMER_DESTROY_DOOR] = handle_destroy_door;
     dispatcher->handlers[DM2_V1_TIMER_PROCESS_0C] = handle_process_0c;
-    dispatcher->handlers[DM2_V1_TIMER_RESURRECTION] = handle_stub;
+    dispatcher->handlers[DM2_V1_TIMER_RESURRECTION] = handle_resurrection;
     dispatcher->handlers[DM2_V1_TIMER_PROCESS_0E] = handle_process_0e;
     dispatcher->handlers[DM2_V1_TIMER_PROCESS_SOUND] = handle_process_sound;
-    dispatcher->handlers[DM2_V1_TIMER_PROCESS_CLOUD] = handle_stub;
-    dispatcher->handlers[DM2_V1_TIMER_STEP_MISSILE] = handle_stub;
-    dispatcher->handlers[DM2_V1_TIMER_THINK_CREATURE_A] = handle_stub;
-    dispatcher->handlers[DM2_V1_TIMER_THINK_CREATURE_B] = handle_stub;
+    dispatcher->handlers[DM2_V1_TIMER_PROCESS_CLOUD] = handle_process_cloud;
+    dispatcher->handlers[DM2_V1_TIMER_STEP_MISSILE] = handle_step_missile;
+    dispatcher->handlers[DM2_V1_TIMER_THINK_CREATURE_A] = handle_think_creature;
+    dispatcher->handlers[DM2_V1_TIMER_THINK_CREATURE_B] = handle_think_creature;
     dispatcher->handlers[DM2_V1_TIMER_PROCESS_3D] = handle_process_3d;
     dispatcher->handlers[DM2_V1_TIMER_LIGHT] = handle_light;
     dispatcher->handlers[DM2_V1_TIMER_HERO_ENCH_FLAG] = handle_hero_ench_flag;
@@ -453,7 +571,7 @@ void dm2_v1_timer_dispatch_wiring_init(
     dispatcher->handlers[DM2_V1_TIMER_TICK_GENERATOR] = handle_tick_generator;
     dispatcher->handlers[DM2_V1_TIMER_RELEASE_DOOR_BUTTON] = handle_release_door_button;
     dispatcher->handlers[DM2_V1_TIMER_PROCESS_59] = handle_process_59;
-    dispatcher->handlers[DM2_V1_TIMER_ORNATE_NOISE] = handle_stub;
+    dispatcher->handlers[DM2_V1_TIMER_ORNATE_NOISE] = handle_ornate_noise;
     dispatcher->handlers[DM2_V1_TIMER_5B_RECORD_CLEAR] = handle_5b_record_clear;
     dispatcher->handlers[DM2_V1_TIMER_5C_RECORD_SET] = handle_5c_record_set;
     dispatcher->handlers[DM2_V1_TIMER_MOVE_RECORD_ROTATE] = handle_move_record_rotate;

@@ -347,3 +347,219 @@ void dm2_v1_process_timer_alloc_new_creature(
         dir = cb->calc_vector_dir(ctx, x, y, cb->party_x, cb->party_y);
     cb->alloc_new_creature(ctx, creature_type, 7, dir, x, y);
 }
+
+int dm2_v1_process_timer_resurrection(
+    uint8_t xA, uint8_t yA, uint8_t xB, uint8_t yB, uint8_t actor,
+    const DM2_V1_ResurrectionCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return 0;
+    int16_t new_yb;
+
+    if (yB == 0) {
+        if (cb->bring_champion_to_life)
+            cb->bring_champion_to_life(ctx, (int16_t)actor);
+        return 1; /* final phase: no re-queue */
+    } else if (yB == 1) {
+        int16_t rec = cb->get_tile_record_link
+            ? cb->get_tile_record_link(ctx, (int16_t)xA, (int16_t)yA) : -1;
+        int found = 0;
+        int guard = 0;
+        while (rec >= 0 && !found && guard < 4096) {
+            int16_t cls1 = cb->query_cls1_from_record
+                ? cb->query_cls1_from_record(ctx, rec) : -1;
+            int16_t cls2 = cb->query_cls2_from_record
+                ? cb->query_cls2_from_record(ctx, rec) : -1;
+            if (cls1 == 0x15 && cls2 == 0) {
+                if (cb->add_item_charge)
+                    cb->add_item_charge(ctx, rec, 1);
+                if (rec == actor) {
+                    if (cb->cut_record_from)
+                        cb->cut_record_from(ctx, (uint16_t)rec, (int16_t)xA, (int16_t)yA);
+                    if (cb->dealloc_record)
+                        cb->dealloc_record(ctx, (uint16_t)rec);
+                    found = 1;
+                }
+            }
+            if (!cb->get_next_record_link)
+                break;
+            rec = cb->get_next_record_link(ctx, (uint16_t)rec);
+            guard++;
+        }
+        new_yb = 0;
+    } else { /* yB >= 2: create cloud phase */
+        if (cb->create_cloud)
+            cb->create_cloud(ctx, 0x28, 5, (int16_t)xB, (int16_t)yB, 0);
+        new_yb = (int16_t)(yB - 1);
+    }
+
+    if (cb->queue_timer)
+        cb->queue_timer(ctx);
+    (void)new_yb;
+    return 1;
+}
+
+int dm2_v1_process_cloud(
+    uint16_t record_word, uint8_t xA, uint8_t yA,
+    const DM2_V1_ProcessCloudCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return 0;
+    uint8_t *rec = cb->get_record_address ? cb->get_record_address(ctx, record_word) : NULL;
+    if (!rec)
+        return 0;
+
+    uint8_t cloud_type = rec[4];
+    uint16_t w2 = (uint16_t)(rec[2] | (rec[3] << 8));
+    int16_t decay = (int16_t)(w2 & 0x7F);
+
+    uint8_t tile = cb->get_tile_value ? cb->get_tile_value(ctx, (int16_t)xA, (int16_t)yA) : 0;
+    if (((tile >> 5) & 0x7) == 4 && cb->attack_door)
+        cb->attack_door(ctx, (int16_t)xA, (int16_t)yA, decay, cloud_type, 0);
+
+    int16_t damage = cb->calc_cloud_damage ? cb->calc_cloud_damage(ctx, record_word, 0) : decay;
+
+    if ((int16_t)xA == cb->party_x && (int16_t)yA == cb->party_y && cb->attack_party)
+        cb->attack_party(ctx, damage, cloud_type, 0);
+
+    if (cb->get_creature_at) {
+        int16_t creature = cb->get_creature_at(ctx, (int16_t)xA, (int16_t)yA);
+        if (creature >= 0 &&
+            (!cb->is_creature_immune || !cb->is_creature_immune(ctx, creature)) &&
+            cb->attack_creature) {
+            cb->attack_creature(ctx, creature, (int16_t)xA, (int16_t)yA, cloud_type, decay, damage);
+        }
+    }
+
+    int decayed = 0;
+    if (cloud_type == 7) {
+        decay -= 1;
+        decayed = 1;
+    } else if (cloud_type == 0x28) {
+        decay -= 5;
+        decayed = 1;
+    } else if (cloud_type == 0x64) {
+        decay -= 1;
+        decayed = 1;
+        if (cb->queue_noise_gen2 && cb->current_map == cb->party_map)
+            cb->queue_noise_gen2(ctx, 4, 0, 0x40, 0x40, (int16_t)xA, (int16_t)yA, 0, 0, 0);
+    }
+
+    if (decayed && decay <= 0) {
+        if (cb->cut_record_from)
+            cb->cut_record_from(ctx, record_word, (int16_t)xA, (int16_t)yA);
+        if (cb->dealloc_record)
+            cb->dealloc_record(ctx, record_word);
+        return 1;
+    }
+
+    if (decayed) {
+        w2 = (uint16_t)((w2 & 0xFF80) | ((uint16_t)decay & 0x7F));
+        rec[2] = (uint8_t)(w2 & 0xFF);
+        rec[3] = (uint8_t)(w2 >> 8);
+    }
+
+    if (cb->queue_timer)
+        cb->queue_timer(ctx);
+    return 1;
+}
+
+int dm2_v1_step_missile(
+    uint16_t record_word, uint8_t x, uint8_t y,
+    const DM2_V1_StepMissileCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return 0;
+    uint8_t *rec = cb->get_record_address ? cb->get_record_address(ctx, record_word) : NULL;
+    if (!rec)
+        return 0;
+
+    uint8_t direction = (uint8_t)(rec[4] & 0x03);
+    int16_t dx = cb->dx_table ? cb->dx_table[direction] : 0;
+    int16_t dy = cb->dy_table ? cb->dy_table[direction] : 0;
+    int16_t nx = (int16_t)((int16_t)x + dx);
+    int16_t ny = (int16_t)((int16_t)y + dy);
+
+    uint8_t tile = cb->get_tile_value ? cb->get_tile_value(ctx, nx, ny) : 0;
+    int is_wall = (((tile >> 5) & 0x7) == 0);
+
+    if (is_wall) {
+        if (cb->delete_missile_record)
+            cb->delete_missile_record(ctx, record_word, (int16_t)x, (int16_t)y);
+        return 1;
+    }
+
+    if (nx == cb->party_x && ny == cb->party_y) {
+        if (cb->attack_creature)
+            cb->attack_creature(ctx, -1, nx, ny, rec[4], 0, 0);
+        if (cb->delete_missile_record)
+            cb->delete_missile_record(ctx, record_word, (int16_t)x, (int16_t)y);
+        return 1;
+    }
+
+    int16_t creature = cb->get_creature_at ? cb->get_creature_at(ctx, nx, ny) : -1;
+    if (creature >= 0) {
+        int reflect = 0;
+        if (cb->query_creature_ai_spec_flags)
+            reflect = (cb->query_creature_ai_spec_flags(ctx, creature) & 0x2) != 0;
+        if (reflect) {
+            rec[4] = (uint8_t)((rec[4] & ~0x03) | ((direction + 2) & 0x03));
+            if (cb->queue_timer)
+                cb->queue_timer(ctx);
+            return 1;
+        }
+        if (cb->attack_creature)
+            cb->attack_creature(ctx, creature, nx, ny, rec[4], 0, 0);
+        if (cb->delete_missile_record)
+            cb->delete_missile_record(ctx, record_word, (int16_t)x, (int16_t)y);
+        return 1;
+    }
+
+    if (cb->cut_record_from)
+        cb->cut_record_from(ctx, record_word, (int16_t)x, (int16_t)y);
+    if (cb->append_record_to)
+        cb->append_record_to(ctx, record_word, nx, ny);
+    if (cb->move_record)
+        cb->move_record(ctx, cb->current_map, nx, ny, direction, record_word);
+    if (cb->queue_timer)
+        cb->queue_timer(ctx);
+    return 1;
+}
+
+int dm2_v1_continue_ornate_noise(
+    uint16_t record_word, uint8_t timer_xA, uint8_t timer_yA,
+    int16_t timer_map,
+    const DM2_V1_OrnateNoiseCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return 0;
+    uint8_t *rec = cb->get_record_address ? cb->get_record_address(ctx, record_word) : NULL;
+    if (!rec)
+        return 0;
+
+    if (rec[4] & 0x01) {
+        uint8_t decoration = 0;
+        uint8_t tile = cb->get_tile_value ? cb->get_tile_value(ctx, (int16_t)timer_xA, (int16_t)timer_yA) : 0;
+        int is_wall = ((tile >> 5) == 0);
+        if (is_wall) {
+            if (cb->get_wall_decoration)
+                decoration = cb->get_wall_decoration(ctx, rec);
+        } else {
+            if (cb->get_floor_decoration)
+                decoration = cb->get_floor_decoration(ctx, rec);
+        }
+        int16_t anim_len = cb->get_ornate_anim_len
+            ? cb->get_ornate_anim_len(ctx, rec, decoration) : 0;
+        if (cb->queue_timer_with_data)
+            cb->queue_timer_with_data(ctx, anim_len);
+        if (cb->queue_noise_gen2 && timer_map == cb->party_map)
+            cb->queue_noise_gen2(ctx, 3, decoration, 0x40, 0x40,
+                                 (int16_t)timer_xA, (int16_t)timer_yA, 0, 0, 0);
+    } else {
+        uint16_t w2 = (uint16_t)(rec[2] | (rec[3] << 8));
+        w2 &= 0x00FF; /* clear high-byte frame counter */
+        rec[2] = (uint8_t)(w2 & 0xFF);
+        rec[3] = (uint8_t)(w2 >> 8);
+    }
+    return 1;
+}

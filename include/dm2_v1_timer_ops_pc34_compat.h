@@ -252,6 +252,110 @@ void dm2_v1_process_timer_alloc_new_creature(
     uint8_t x, uint8_t y, uint8_t creature_type,
     const DM2_V1_AllocNewCreatureCallbacks *cb, void *ctx);
 
+/* ---- 0x0D RESURRECTION (c_tim_proc.cpp:39) ----
+ * Three-phase champion resurrection: create cloud, consume the matching
+ * altar-list item record, then bring the champion to life.  Driven by
+ * the timer's yB phase counter; phases 1/2 decrement yB and re-queue,
+ * phase 0 finishes without a re-queue. */
+typedef struct {
+    void (*bring_champion_to_life)(void *ctx, int16_t actor);
+    int16_t (*get_tile_record_link)(void *ctx, int16_t x, int16_t y);
+    int16_t (*get_next_record_link)(void *ctx, uint16_t record);
+    int16_t (*query_cls1_from_record)(void *ctx, int32_t record);
+    int16_t (*query_cls2_from_record)(void *ctx, int32_t record);
+    int16_t (*add_item_charge)(void *ctx, int32_t record, int mode);
+    void (*cut_record_from)(void *ctx, uint16_t record, int16_t x, int16_t y);
+    void (*dealloc_record)(void *ctx, uint16_t record);
+    int16_t (*create_cloud)(void *ctx, int16_t type, int16_t param,
+                            int16_t x, int16_t y, int16_t cls);
+    void (*queue_timer)(void *ctx);
+} DM2_V1_ResurrectionCallbacks;
+
+int dm2_v1_process_timer_resurrection(
+    uint8_t xA, uint8_t yA, uint8_t xB, uint8_t yB, uint8_t actor,
+    const DM2_V1_ResurrectionCallbacks *cb, void *ctx);
+
+/* ---- 0x19 PROCESS_CLOUD (c_cloud.cpp:587) ----
+ * Apply one cloud tick: attack doors/party/creatures at the cloud cell,
+ * decay type-specific cloud life, re-queue or deallocate. */
+typedef struct {
+    uint8_t *(*get_record_address)(void *ctx, uint16_t rw);
+    uint8_t (*get_tile_value)(void *ctx, int16_t x, int16_t y);
+    int16_t (*calc_cloud_damage)(void *ctx, uint16_t cloud_rw, int16_t target);
+    void (*attack_door)(void *ctx, int16_t x, int16_t y, int16_t damage,
+                        int16_t mode, int16_t param);
+    void (*attack_party)(void *ctx, int16_t damage, int16_t mode, int16_t param);
+    int16_t (*get_creature_at)(void *ctx, int16_t x, int16_t y);
+    int (*is_creature_immune)(void *ctx, int16_t creature);
+    void (*attack_creature)(void *ctx, int16_t creature, int16_t x, int16_t y,
+                            int16_t type, int16_t power, int16_t damage);
+    void (*cut_record_from)(void *ctx, uint16_t record, int16_t x, int16_t y);
+    void (*dealloc_record)(void *ctx, uint16_t record);
+    void (*queue_timer)(void *ctx);
+    void (*queue_noise_gen2)(void *ctx, uint8_t cat, uint8_t idx,
+                             uint8_t vol, uint8_t pan, int16_t x, int16_t y,
+                             int repeat, uint8_t p1, uint8_t p2);
+    int16_t current_map;
+    int16_t party_map;
+    int16_t party_x;
+    int16_t party_y;
+} DM2_V1_ProcessCloudCallbacks;
+
+int dm2_v1_process_cloud(
+    uint16_t record_word, uint8_t xA, uint8_t yA,
+    const DM2_V1_ProcessCloudCallbacks *cb, void *ctx);
+
+/* ---- 0x1E STEP_MISSILE (c_tim_proc.cpp:442) ----
+ * Advance a missile one tile: wall bounce/deletion, party/creature hit
+ * detection (with AI-spec reflection), else move and re-queue.
+ * Direction is carried in the record's low 2 bits of byte@4. */
+typedef struct {
+    uint8_t *(*get_record_address)(void *ctx, uint16_t rw);
+    uint8_t (*get_tile_value)(void *ctx, int16_t x, int16_t y);
+    int16_t (*get_creature_at)(void *ctx, int16_t x, int16_t y);
+    int16_t (*query_creature_ai_spec_flags)(void *ctx, int16_t creature);
+    int (*move_record)(void *ctx, int16_t level, int16_t x, int16_t y,
+                       int16_t dir, uint16_t record);
+    void (*cut_record_from)(void *ctx, uint16_t record, int16_t x, int16_t y);
+    void (*append_record_to)(void *ctx, uint16_t record, int16_t x, int16_t y);
+    void (*delete_missile_record)(void *ctx, uint16_t record, int16_t x, int16_t y);
+    void (*attack_creature)(void *ctx, int16_t creature, int16_t x, int16_t y,
+                            int16_t type, int16_t power, int16_t damage);
+    void (*queue_timer)(void *ctx);
+    int16_t current_map;
+    int16_t party_x;
+    int16_t party_y;
+    const int16_t *dx_table; /* index by direction 0..3 */
+    const int16_t *dy_table;
+} DM2_V1_StepMissileCallbacks;
+
+int dm2_v1_step_missile(
+    uint16_t record_word, uint8_t x, uint8_t y,
+    const DM2_V1_StepMissileCallbacks *cb, void *ctx);
+
+/* ---- 0x5A ORNATE_NOISE (c_tim_proc.cpp:1092) ----
+ * When the ornament record is still active, resolve the wall/floor
+ * decoration at the timer cell, re-queue with the ornament's animation
+ * length, and emit noise on the party's map.  When inactive, clear the
+ * frame counter (high byte of word@2). */
+typedef struct {
+    uint8_t *(*get_record_address)(void *ctx, uint16_t rw);
+    uint8_t (*get_tile_value)(void *ctx, int16_t x, int16_t y);
+    uint8_t (*get_wall_decoration)(void *ctx, uint8_t *rec);
+    uint8_t (*get_floor_decoration)(void *ctx, uint8_t *rec);
+    int16_t (*get_ornate_anim_len)(void *ctx, uint8_t *rec, int mode);
+    void (*queue_timer_with_data)(void *ctx, int16_t extra_data);
+    void (*queue_noise_gen2)(void *ctx, uint8_t cat, uint8_t idx,
+                             uint8_t vol, uint8_t pan, int16_t x, int16_t y,
+                             int repeat, uint8_t p1, uint8_t p2);
+    int16_t party_map;
+} DM2_V1_OrnateNoiseCallbacks;
+
+int dm2_v1_continue_ornate_noise(
+    uint16_t record_word, uint8_t timer_xA, uint8_t timer_yA,
+    int16_t timer_map,
+    const DM2_V1_OrnateNoiseCallbacks *cb, void *ctx);
+
 #ifdef __cplusplus
 }
 #endif
