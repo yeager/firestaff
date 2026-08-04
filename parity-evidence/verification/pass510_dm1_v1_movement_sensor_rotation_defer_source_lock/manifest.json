@@ -6,7 +6,7 @@
     "movementCore": "successful steps call party leave/enter sensors before successful-step timing; blocked steps return before this path",
     "sensorTrigger": "F0725/F0726 expose deferred rotationPending metadata instead of mutating sensor lists in-place"
   },
-  "head": "e0dc84fba32c8ee6b8f625c0e4e9ba301321c38a",
+  "head": "b4ce7ada953731d190ff7e591a4355b4f8330242",
   "notClaimed": [
     "new runtime sensor-list mutation implementation",
     "original DOS breakpoint trace",

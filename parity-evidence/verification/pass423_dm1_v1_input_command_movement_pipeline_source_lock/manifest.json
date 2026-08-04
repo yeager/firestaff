@@ -1,9 +1,9 @@
 {
   "schema": "firestaff.parity.pass423_dm1_v1_input_command_movement_pipeline_source_lock.v1",
-  "timestampUtc": "2026-08-04T01:09:21.935764+00:00",
+  "timestampUtc": "2026-08-04T07:24:16.534627+00:00",
   "status": "PASS423_DM1_V1_INPUT_COMMAND_MOVEMENT_PIPELINE_SOURCE_LOCKED",
   "branch": "main",
-  "head": "3d0ff9fe7728f4e20a6e74113d551fcc3acc0937",
+  "head": "b4ce7ada953731d190ff7e591a4355b4f8330242",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "scope": "PC-34 raw input -> command enqueue -> F0380 gate/dequeue -> F0365/F0366 turn/move dispatch",
   "sourceAudit": [
@@ -105,7 +105,7 @@
         "-j2"
       ],
       "returncode": 0,
-      "tail": "/src/dm2/dm2_v1_creature.c.o\n[1672/1685] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_creature_tables.c.o\n[1673/1685] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_party.c.o\n[1674/1685] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_hand_action_gdat.c.o\n[1675/1685] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_asset_loader.c.o\n[1676/1685] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_original_save_pc34_handoff.c.o\n[1677/1685] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_sound.c.o\n[1678/1685] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_drops.c.o\n[1679/1685] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_midi_backend.c.o\n[1680/1685] Building C object CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/tests/test_dm1_v1_input_command_queue_pc34_compat.c.o\n[1681/1685] Linking C static library libfirestaff_m10.a\n[1682/1685] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[1683/1685] Linking C executable test_dm1_v1_movement_command_core_pc34_compat\n[1684/1685] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat\n"
+      "tail": "/src/dm2/dm2_v1_creature.c.o\n[1677/1690] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_creature_tables.c.o\n[1678/1690] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_party.c.o\n[1679/1690] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_hand_action_gdat.c.o\n[1680/1690] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_asset_loader.c.o\n[1681/1690] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_sound.c.o\n[1682/1690] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_midi_backend.c.o\n[1683/1690] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_drops.c.o\n[1684/1690] Building C object CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/tests/test_dm1_v1_input_command_queue_pc34_compat.c.o\n[1685/1690] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_original_save_pc34_handoff.c.o\n[1686/1690] Linking C static library libfirestaff_m10.a\n[1687/1690] Linking C executable test_dm1_v1_movement_command_core_pc34_compat\n[1688/1690] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[1689/1690] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat\n"
     },
     {
       "command": [
@@ -117,7 +117,7 @@
         "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat"
       ],
       "returncode": 0,
-      "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1377: dm1_v1_input_command_queue_pc34_compat\n1/3 Test #1377: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.57 sec\n    Start 1386: dm1_v1_movement_command_core_pc34_compat\n2/3 Test #1386: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.11 sec\n    Start 1529: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/3 Test #1529: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.12 sec\n\n100% tests passed out of 3\n\nTotal Test time (real) =   0.84 sec\n"
+      "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1382: dm1_v1_input_command_queue_pc34_compat\n1/3 Test #1382: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.18 sec\n    Start 1391: dm1_v1_movement_command_core_pc34_compat\n2/3 Test #1391: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.14 sec\n    Start 1534: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/3 Test #1534: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.13 sec\n\n100% tests passed out of 3\n\nTotal Test time (real) =   0.52 sec\n"
     },
     {
       "command": [

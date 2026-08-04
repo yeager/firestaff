@@ -41,15 +41,20 @@ pre-commit:
 
     trailing_whitespace:
       run: |
-        bad=$(git diff --cached --name-only --diff-filter=ACMR -z | \
-              xargs -0 -I{} sh -c '
-                case "{}" in
-                  *.png|*.jpg|*.gif|*.webp|*.ico|*.icns|*.pdf|*.zip|*.gz|*.bz2|*.xz|*.mo|*.fsdung) exit 0 ;;
-                esac
-                grep -nH " $" "{}" 2>/dev/null' || true)
+        bad=""
+        for f in $(git diff --cached --name-only --diff-filter=ACMR); do
+          [ -f "$f" ] || continue
+          case "$f" in
+            *.png|*.jpg|*.gif|*.webp|*.ico|*.icns|*.pdf|*.zip|*.gz|*.bz2|*.xz|*.mo|*.fsdung) continue ;;
+          esac
+          hits=$(grep -nH ' $' "$f" 2>/dev/null || true)
+          if [ -n "$hits" ]; then
+            bad="$bad
+$hits"
+          fi
+        done
         if [ -n "$bad" ]; then
-          echo "ERROR: trailing whitespace in:"
-          echo "$bad"
+          echo "ERROR: trailing whitespace in:$bad"
           exit 1
         fi
 

@@ -15,26 +15,26 @@
         "-j2"
       ],
       "outputTail": [
-        "[1668/1688] Building C object CMakeFiles/firestaff_m10.dir/src/csb/csb_v1_utility_flow_pc34.c.o",
-        "[1669/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_original_save_classifier.c.o",
-        "[1670/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_ccm.c.o",
-        "[1671/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_creature.c.o",
-        "[1672/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_creature_tables.c.o",
-        "[1673/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_party.c.o",
-        "[1674/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_hand_action_gdat.c.o",
-        "[1675/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_asset_loader.c.o",
-        "[1676/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_sound.c.o",
-        "[1677/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_original_save_pc34_handoff.c.o",
-        "[1678/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_midi_backend.c.o",
-        "[1679/1688] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_drops.c.o",
-        "[1680/1688] Building C object CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/tests/test_dm1_v1_input_command_queue_pc34_compat.c.o",
-        "[1681/1688] Linking C static library libfirestaff_m10.a",
-        "[1682/1688] Linking C executable test_dm1_v1_movement_core_pc34_compat",
-        "[1683/1688] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
-        "[1684/1688] Linking C executable test_dm1_v1_turning_presentation_pc34_compat",
-        "[1685/1688] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
-        "[1686/1688] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-        "[1687/1688] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat"
+        "[1673/1693] Building C object CMakeFiles/firestaff_m10.dir/src/csb/csb_v1_utility_flow_pc34.c.o",
+        "[1674/1693] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_original_save_classifier.c.o",
+        "[1675/1693] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_ccm.c.o",
+        "[1676/1693] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_creature.c.o",
+        "[1677/1693] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_creature_tables.c.o",
+        "[1678/1693] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_party.c.o",
+        "[1679/1693] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_hand_action_gdat.c.o",
+        "[1680/1693] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_asset_loader.c.o",
+        "[1681/1693] Building C object CMakeFiles/firestaff_m10.dir/src/dm1/dm1_v1_original_save_pc34_handoff.c.o",
+        "[1682/1693] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_sound.c.o",
+        "[1683/1693] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_midi_backend.c.o",
+        "[1684/1693] Building C object CMakeFiles/firestaff_m10.dir/src/dm2/dm2_v1_drops.c.o",
+        "[1685/1693] Building C object CMakeFiles/test_dm1_v1_input_command_queue_pc34_compat.dir/tests/test_dm1_v1_input_command_queue_pc34_compat.c.o",
+        "[1686/1693] Linking C static library libfirestaff_m10.a",
+        "[1687/1693] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
+        "[1688/1693] Linking C executable test_dm1_v1_movement_core_pc34_compat",
+        "[1689/1693] Linking C executable test_dm1_v1_turning_presentation_pc34_compat",
+        "[1690/1693] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
+        "[1691/1693] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[1692/1693] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
       "returncode": 0
@@ -417,5 +417,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-08-04T01:09:23.415041+00:00"
+  "timestampUtc": "2026-08-04T07:24:18.708363+00:00"
 }

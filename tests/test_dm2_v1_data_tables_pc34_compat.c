@@ -319,10 +319,10 @@ static void test_batch4_runtime_tables(void)
     assert(dm2_v1_table_1d39bc[120].w_00 == -0x8000);
     assert(dm2_v1_table_1d39bc[120].w_02 == 0x0000);
 
-    assert(dm2_v1_table_1d338c[0].a == -0x7f29);
+    assert((int16_t)dm2_v1_table_1d338c[0].a == -0x7f29);
     assert(dm2_v1_table_1d338c[0].b == 0x0197);
     assert(dm2_v1_table_1d338c[0].c == 0x8002);
-    assert(dm2_v1_table_1d338c[263].a == -0x8000);
+    assert((int16_t)dm2_v1_table_1d338c[263].a == -0x8000);
     assert(dm2_v1_table_1d338c[263].b == 0x0000);
     assert(dm2_v1_table_1d338c[263].c == 0x0000);
 

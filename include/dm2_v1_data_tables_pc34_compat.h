@@ -156,7 +156,7 @@ extern const int8_t dm2_v1_table_1d67fe[4];
 extern const int16_t dm2_v1_table_1d292c[32];
 extern const uint8_t dm2_v1_table_1d70b4[17];
 
-/* Batch 4: runtime-loaded tables (from bin/v5/*.dat files) */
+/* Batch 4: runtime-loaded tables (from bin/v5 dat files) */
 extern const int8_t dm2_v1_table_1d7108[128];
 extern const int8_t dm2_v1_table_1d6802[272];
 extern const dm2_s_ww2 dm2_v1_table_1d39bc[121];
