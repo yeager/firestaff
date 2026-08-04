@@ -3,6 +3,7 @@
  * source, with external state access delegated through callbacks. */
 
 #include "dm2_v1_runtime_parity_pc34_compat.h"
+#include "dm2_v1_item_ops_pc34_compat.h"
 #include <stddef.h>
 #include <string.h>
 
@@ -475,26 +476,16 @@ void dm2_v1_set_itemtype(
     }
 }
 
-/* c_record.cpp:477 — DM2_GET_WALL_TILE_ANYITEM_RECORD */
-
-int16_t dm2_v1_get_wall_tile_anyitem_record(
-    int16_t first_record,
-    const DM2_V1_WallTileRecordCallbacks *cb, void *ctx)
-{
-    if (!cb)
-        return -1;
-    int16_t rw = first_record;
-    while (rw != -1 && rw != (int16_t)0xFFFE) {
-        int16_t db_type = (int16_t)(((uint16_t)rw & 0x3C00) >> 10);
-        if (db_type != 3) /* not a wall decoration record */
-            return rw;
-        uint8_t *rec = cb->get_record_address(ctx, (uint16_t)rw);
-        if (!rec)
-            return -1;
-        rw = (int16_t)(rec[0] | (rec[1] << 8));
-    }
-    return -1;
-}
+/* c_record.cpp:477 — DM2_GET_WALL_TILE_ANYITEM_RECORD
+ *
+ * NOTE: the canonical implementation of this callback-walk helper lives in
+ * dm2_v1_record_ops_pc34_compat.c (matching the
+ * DM2_V1_TileRecordWalkCallbacks signature declared in
+ * dm2_v1_record_ops_pc34_compat.h). The declaration of this name in
+ * dm2_v1_runtime_parity_pc34_compat.h with a different (dead/unused)
+ * DM2_V1_WallTileRecordCallbacks signature is not implemented here to avoid
+ * a duplicate-symbol clash when both translation units are linked together;
+ * nothing in this codebase calls this variant. */
 
 /* c_record.cpp:498 — DM2_SET_ITEM_IMPORTANCE */
 
@@ -581,28 +572,16 @@ void dm2_v1_delete_creature_record(
 /* c_record.cpp:1537 — DM2_DROP_CREATURE_POSSESSION
  * Superseded by dm2_v1_drop_possession_pc34_compat.c */
 
-/* c_record.cpp:1839 — DM2_ROTATE_RECORD_BY_TELEPORTER */
-
-void dm2_v1_rotate_record_by_teleporter(
-    int16_t record_word, int16_t rotation,
-    const DM2_V1_RotateRecordCallbacks *cb, void *ctx)
-{
-    if (!cb || record_word == -1 || rotation == 0)
-        return;
-    uint8_t *rec = cb->get_record_address(ctx, (uint16_t)record_word);
-    if (!rec)
-        return;
-    int16_t db_type = (int16_t)(((uint16_t)record_word & 0x3C00) >> 10);
-    if (db_type == 4) {
-        /* Creature: direction in bits 14-15 of word+14 */
-        uint16_t w14 = (uint16_t)(rec[14] | (rec[15] << 8));
-        uint16_t dir = (w14 >> 14) & 3;
-        dir = (uint16_t)((dir + rotation) & 3);
-        w14 = (uint16_t)((w14 & 0x3FFF) | (dir << 14));
-        rec[14] = (uint8_t)(w14 & 0xFF);
-        rec[15] = (uint8_t)(w14 >> 8);
-    }
-}
+/* c_record.cpp:1839 — DM2_ROTATE_RECORD_BY_TELEPORTER
+ *
+ * NOTE: the canonical implementation of this name lives in
+ * dm2_v1_record_ops_pc34_compat.c, matching the uint16_t-returning
+ * (teleporter_flags, stored_dir, record_word, out_dir) signature declared
+ * in dm2_v1_record_ops_pc34_compat.h. The declaration of this name in
+ * dm2_v1_runtime_parity_pc34_compat.h with a different (dead/unused)
+ * DM2_V1_RotateRecordCallbacks signature is not implemented here to avoid
+ * a duplicate-symbol clash when both translation units are linked
+ * together; nothing in this codebase calls this variant. */
 
 /* c_record.cpp:1870 — DM2_075f_056c */
 
@@ -669,48 +648,6 @@ int32_t dm2_v1_4fcc(
     return cb->dispatch(ctx, creature_idx, x, y);
 }
 
-/* =====================================================================
- * c_item.cpp:528 — DM2_IS_MISCITEM_DRINK_WATER
- * ===================================================================== */
-
-int dm2_v1_is_miscitem_drink_water(
-    int16_t record_word,
-    const DM2_V1_MiscItemCallbacks *cb, void *ctx)
-{
-    if (!cb || record_word == -1)
-        return 0;
-    uint8_t *rec = cb->get_record_address(ctx, (uint16_t)record_word);
-    if (!rec)
-        return 0;
-    int16_t db_type = (int16_t)(((uint16_t)record_word & 0x3C00) >> 10);
-    if (db_type != 10) /* must be miscellaneous item */
-        return 0;
-    uint8_t subtype = rec[2] & 0x7F;
-    int16_t gdat_val = cb->query_gdat(ctx, 10, subtype, 11, 0x53);
-    return (gdat_val != 0) ? 1 : 0;
-}
-
-/* c_item.cpp:1034 — DM2_F958 */
-
-int16_t dm2_v1_f958(int16_t value, int16_t threshold)
-{
-    int16_t result = (int16_t)-value;
-    if (result < threshold)
-        result = threshold;
-    return result;
-}
-
-/* c_item.cpp:1185 — DM2_TAKE_OBJECT */
-
-void dm2_v1_take_object(
-    int16_t item, int16_t x, int16_t y,
-    const DM2_V1_TakeObjectCallbacks *cb, void *ctx)
-{
-    if (!cb)
-        return;
-    cb->unlink_item(ctx, item, x, y);
-    cb->set_item_importance(ctx, item, 0);
-}
 
 /* =====================================================================
  * c_move.cpp:1972 — DM2_move_075f_06bd
@@ -729,7 +666,7 @@ void dm2_v1_move_075f_06bd(
  * c_tim_proc.cpp — Tile actuator stubs
  * ===================================================================== */
 
-void dm2_v1_step_door(
+void dm2_v1_step_door_tile(
     int16_t x, int16_t y, int16_t record_word, int16_t direction,
     const DM2_V1_TimerActuatorCallbacks *cb, void *ctx)
 {

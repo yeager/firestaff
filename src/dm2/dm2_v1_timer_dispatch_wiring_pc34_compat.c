@@ -17,7 +17,7 @@ static int handle_light(void *context, const DM2_V1_SourceTimer *timer,
         .light_table = w->light_table,
         .light_table_size = w->light_table_size
     };
-    dm2_v1_process_timer_light(timer->value_a, &cb, context);
+    dm2_v1_process_timer_light_tile(timer->value_a, &cb, context);
     return 1;
 }
 
@@ -35,7 +35,7 @@ static int handle_destroy_door(void *context, const DM2_V1_SourceTimer *timer,
         .party_map = w->party_map,
         .redraw_flags = w->redraw_flags
     };
-    dm2_v1_process_timer_destroy_door(
+    dm2_v1_process_timer_destroy_door_tile(
         (uint8_t)timer->value_a, (uint8_t)timer->value_b, &cb, context);
     return 1;
 }
@@ -67,7 +67,7 @@ static int handle_process_3d(void *context, const DM2_V1_SourceTimer *timer,
         .move_record_to = w->move_record_to,
         .queue_noise = w->queue_noise
     };
-    dm2_v1_process_timer_3d(
+    dm2_v1_process_timer_3d_tile(
         (uint16_t)timer->value_a,
         (uint8_t)(timer->value_b & 0xFF),
         (uint8_t)((timer->value_b >> 8) & 0xFF),
@@ -283,7 +283,7 @@ static int handle_resurrection(void *context, const DM2_V1_SourceTimer *timer,
     uint8_t yA = (uint8_t)((timer->value_a >> 8) & 0xff);
     uint8_t xB = (uint8_t)(timer->value_b & 0xff);
     uint8_t yB = (uint8_t)((timer->value_b >> 8) & 0xff);
-    return dm2_v1_process_timer_resurrection(xA, yA, xB, yB, (uint8_t)timer->actor, &cb, context);
+    return dm2_v1_process_timer_resurrection_tile(xA, yA, xB, yB, (uint8_t)timer->actor, &cb, context);
 }
 
 /* Adapter: PROCESS_CLOUD (0x19) */

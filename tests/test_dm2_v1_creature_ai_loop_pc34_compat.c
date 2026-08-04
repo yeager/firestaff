@@ -12,6 +12,7 @@
  */
 
 #include "dm2_v1_creature_ai_loop_pc34_compat.h"
+#include "dm2_v1_creature.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 
 #include <stdio.h>
@@ -110,8 +111,11 @@ static void build_loader(void)
                    0x05, 9);
     set_word_entry(&g_entries[n++], DM2_GDAT_CATEGORY_CREATURES, TYPE_DYN,
                    0x01, 0x0d);
+    /* table1d607e[4] = { 0xe8, 0x00, 0x00, 0x00 }: byte0 & 0x40 != 0, so
+     * this row selects the static-creature branch of
+     * dm2_v1_creature_strategy_select (c_ai.cpp:4772). */
     set_word_entry(&g_entries[n++], DM2_GDAT_CATEGORY_CREATURES, TYPE_STA,
-                   0x01, 0x06);
+                   0x01, 0x04);
     set_word_entry(&g_entries[n++], DM2_GDAT_CATEGORY_CREATURE_AI, 5, 0, 0x00);
     set_word_entry(&g_entries[n++], DM2_GDAT_CATEGORY_CREATURE_AI, 5, 4, 40);
     set_word_entry(&g_entries[n++], DM2_GDAT_CATEGORY_CREATURE_AI, 5, 9, 0x05);
@@ -139,6 +143,8 @@ static void build_loader(void)
     g_loader.raw_sizes = g_raw_sizes;
     g_loader.entries = g_entries;
     g_loader.entry_count = (uint16_t)n;
+
+    dm2_v1_creature_load_ai_table_from_gdat(&g_loader);
 }
 
 /* ── pool/CAII ─────────────────────────────────────────────────────── */

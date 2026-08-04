@@ -15788,7 +15788,6 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_runtime_narrow
         tests/test_dm2_v1_runtime_narrow.c
-        src/dm2/dm2_v1_runtime_narrow_pc34_compat.c
     )
     target_link_libraries(test_dm2_v1_runtime_narrow PRIVATE
         firestaff_dm2 firestaff_m10 firestaff_zlib
@@ -15842,8 +15841,6 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_hero_remaining
         tests/test_dm2_v1_hero_remaining.c
-        src/dm2/dm2_v1_hero_ops_pc34_compat.c
-        src/dm2/dm2_v1_hero_stats_pc34_compat.c
     )
     target_link_libraries(test_dm2_v1_hero_remaining PRIVATE
         firestaff_dm2 firestaff_m10 firestaff_zlib

@@ -171,6 +171,10 @@ int32_t dm2_v1_query_door_is_mirrored(int32_t door_type,
 int32_t dm2_v1_is_wall_ornate_alcove(int32_t ornament,
                                      const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
+    /* ReDMCSB/skproject c_querydb.cpp:635 DM2_IS_WALL_ORNATE_ALCOVE:
+       ornament byte 0xff (-1) is a guard sentinel meaning "no ornament";
+       return 0 without querying the database. */
+    if ((uint8_t)ornament == 0xff) return 0;
     if (!cb || !cb->query_gdat_entry_data_index) return 0;
     return (int32_t)cb->query_gdat_entry_data_index(ctx, 9, (int8_t)ornament, 11, 10);
 }
@@ -437,9 +441,12 @@ int32_t dm2_v1_query_creature_gfx_idx(int32_t creature_type,
 int32_t dm2_v1_is_miscitem_currency(int32_t record,
                                     const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    int32_t cls = ((record ^ (record & 0xff)) & 0x3c00) >> 10;
+    if (!cb) return 0;
+    int32_t cls = cb->query_cls1_from_record
+                      ? cb->query_cls1_from_record(ctx, record)
+                      : (int32_t)(((record ^ (record & 0xff)) & 0x3c00) >> 10);
     if (cls != 0x0a) return 0;
-    if (!cb || !cb->query_gdat_dbspec_word_value) return 0;
+    if (!cb->query_gdat_dbspec_word_value) return 0;
     int32_t v = cb->query_gdat_dbspec_word_value(ctx, record & 0xffff, 0);
     return (v & 0x4000) ? 1 : 0;
 }

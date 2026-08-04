@@ -344,3 +344,17 @@ void dm2_v1_event_loop(
     dm2_v1_input_check(cb, ctx, &receipt);
 }
 
+int16_t dm2_v1_1031_03f2(
+    int16_t key,
+    const int16_t *tree,
+    int16_t tree_size)
+{
+    if (!tree || tree_size <= 0) return -1;
+
+    for (int16_t i = 0; i < tree_size; i++) {
+        if (tree[i] == key) return i;
+    }
+
+    return -1;
+}
+

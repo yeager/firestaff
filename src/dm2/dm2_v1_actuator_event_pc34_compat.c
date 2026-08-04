@@ -79,6 +79,111 @@ int dm2_v1_invoke_actuator(DM2_V1_SourceTimerQueue *queue,
     return 1;
 }
 
+/* ── ACTIVATE_RELAY1 ───────────────────────────────────────────────── */
+
+/* Source: skevent.cpp:1154-1183 — ACTIVATE_RELAY1(Timer *ref, Actuator *pr4,
+ * X16 delayAsMult).  Once-only actuators gate on their revert-effect flag
+ * and the incoming timer's action type; otherwise queue a tty04
+ * INVOKE_MESSAGE timer at the actuator's target coordinates with a delay
+ * computed either as a multiplier shift or a plain sum. */
+int dm2_v1_activate_relay1(DM2_V1_RecordPoolSet *pool_set,
+                           DM2_V1_DungeonData *dungeon,
+                           DM2_V1_SourceTimerQueue *queue,
+                           const uint8_t *actu_record,
+                           int timer_action_type,
+                           int delay_as_mult,
+                           int map, uint32_t game_tick)
+{
+    (void)pool_set;
+    (void)dungeon;
+
+    if (queue == NULL || actu_record == NULL) return 0;
+
+    if (dm2_actu_once_only(actu_record) != 0) {
+        if (dm2_actu_revert_effect(actu_record) != 0 || timer_action_type != 0) {
+            if (dm2_actu_revert_effect(actu_record) == 0 || timer_action_type != 1)
+                return 1;
+        }
+    }
+
+    uint16_t actu_data = dm2_actu_data(actu_record);
+    uint8_t  delay      = dm2_actu_delay(actu_record);
+    uint32_t fire_tick;
+
+    if (delay_as_mult != 0) {
+        fire_tick = game_tick + ((uint32_t)actu_data << delay);
+    } else {
+        fire_tick = (uint32_t)actu_data + game_tick + delay;
+    }
+
+    uint8_t target_x = dm2_actu_xcoord(actu_record);
+    uint8_t target_y = dm2_actu_ycoord(actu_record);
+    uint8_t dir      = dm2_actu_direction(actu_record);
+    int action = (dm2_actu_once_only(actu_record) != 0)
+                     ? dm2_actu_action_type(actu_record)
+                     : timer_action_type;
+
+    DM2_V1_SourceTimer t = make_timer(map, fire_tick, 0x04, 0,
+                                       encode_xy(target_x, target_y),
+                                       (int16_t)((dir & 0xFF) | ((action & 0xFF) << 8)));
+    dm2_v1_source_timer_enqueue(queue, &t, 0);
+    return 1;
+}
+
+/* ── ACTIVATE_RELAY2 ───────────────────────────────────────────────── */
+
+/* Source: skevent.cpp:1185-1224 — ACTIVATE_RELAY2(Timer *ref, Actuator *pr4,
+ * X16 xx).  Dispatches to INVOKE_ACTUATOR with an action type/delay chosen
+ * from the actuator's own action type, its revert-effect flag, and the
+ * incoming timer's action type. */
+int dm2_v1_activate_relay2(DM2_V1_RecordPoolSet *pool_set,
+                           DM2_V1_DungeonData *dungeon,
+                           DM2_V1_SourceTimerQueue *queue,
+                           const uint8_t *actu_record,
+                           int timer_action_type,
+                           int actu_data_param,
+                           int map, uint32_t game_tick)
+{
+    (void)pool_set;
+    (void)dungeon;
+
+    if (queue == NULL || actu_record == NULL) return 0;
+
+    int di = actu_data_param;
+    uint8_t actu_action = dm2_actu_action_type(actu_record);
+
+    if (actu_action == 3) {
+        if (dm2_actu_revert_effect(actu_record) != 0) {
+            dm2_v1_invoke_actuator(queue, actu_record, timer_action_type, 0,
+                                    map, game_tick);
+            if (di == 0) {
+                int si;
+                switch (timer_action_type) {
+                    case 0: si = 1; break;
+                    case 1: si = 0; break;
+                    case 2: si = 2; break;
+                    default: si = timer_action_type; break;
+                }
+                dm2_v1_invoke_actuator(queue, actu_record, si, di,
+                                        map, game_tick);
+            }
+            return 1;
+        }
+        dm2_v1_invoke_actuator(queue, actu_record, timer_action_type, di,
+                                map, game_tick);
+        return 1;
+    }
+
+    if (dm2_actu_revert_effect(actu_record) != 0 || timer_action_type != 0) {
+        if (dm2_actu_revert_effect(actu_record) == 0 || timer_action_type != 1)
+            return 1;
+    }
+
+    dm2_v1_invoke_actuator(queue, actu_record, actu_action, di,
+                            map, game_tick);
+    return 1;
+}
+
 /* ── ACTIVATE_TICK_GENERATOR ───────────────────────────────────────── */
 
 /* Source: skevent.cpp:357-400 */

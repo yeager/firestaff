@@ -105,7 +105,7 @@ static void test_activate_relay1(void)
     act.data[3] = 0x05;
 
     g_msg_sent = 0;
-    int r = dm2_v1_activate_relay1(&act, 3, 0, &cb, NULL);
+    int r = dm2_v1_actuator_ops_activate_relay1(&act, 3, 0, &cb, NULL);
     assert(r == 1);
     assert(g_msg_sent == 1);
     assert(g_msg_action == 3);
@@ -113,7 +113,7 @@ static void test_activate_relay1(void)
     /* Gate check: bit 4 set, bit 5 clear, yb != 0 => blocked */
     act.data[4] = 0x04;
     g_msg_sent = 0;
-    r = dm2_v1_activate_relay1(&act, 2, 0, &cb, NULL);
+    r = dm2_v1_actuator_ops_activate_relay1(&act, 2, 0, &cb, NULL);
     assert(r == 0);
 
     printf("  PASS: activate_relay1\n");

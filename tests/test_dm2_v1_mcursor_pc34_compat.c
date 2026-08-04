@@ -121,6 +121,41 @@ static void test_init_basic_cursors(void)
     printf("  PASS: init_basic_cursors\n");
 }
 
+static int mock_read_binary(void *ctx, const char *filename, uint8_t *buf, uint16_t size)
+{
+    (void)ctx;
+    if (!filename || !buf) return 0;
+    memset(buf, 0x42, size);
+    return 1;
+}
+
+static void test_init_mouse_cursors(void)
+{
+    uint8_t cursor1[DM2_V1_MOUSECURSOR_FILESIZE1];
+    DM2_V1_Cursor2 cursor2;
+    memset(cursor1, 0, sizeof(cursor1));
+    memset(&cursor2, 0, sizeof(cursor2));
+
+    DM2_V1_InitMouseCursorsCallbacks cb = { mock_read_binary };
+    DM2_V1_InitMouseCursorsReceipt r = dm2_v1_init_mouse_cursors(
+        cursor1, DM2_V1_MOUSECURSOR_FILESIZE1, &cursor2, &cb, NULL);
+
+    assert(r.initialized);
+    assert(r.file1_loaded);
+    assert(r.file2_loaded);
+    assert(cursor1[0] == 0x42);
+
+    printf("  PASS: init_mouse_cursors\n");
+}
+
+static void test_init_mouse_cursors_null(void)
+{
+    DM2_V1_InitMouseCursorsReceipt r = dm2_v1_init_mouse_cursors(
+        NULL, 0, NULL, NULL, NULL);
+    assert(!r.initialized);
+    printf("  PASS: init_mouse_cursors_null\n");
+}
+
 static void test_null_safety(void)
 {
     DM2_V1_GenerateCursorReceipt r;
@@ -142,6 +177,8 @@ int main(void)
     RUN(test_generate_cursor_4bpp);
     RUN(test_generate_cursor_hotspot);
     RUN(test_init_basic_cursors);
+    RUN(test_init_mouse_cursors);
+    RUN(test_init_mouse_cursors_null);
     RUN(test_null_safety);
     printf("  %d passed, %d failed\n", passed, failed);
     return failed;

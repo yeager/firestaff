@@ -31,6 +31,34 @@ int16_t dm2_v1_retrieve_item_bonus(
     return (context >= 0) ? result : -result;
 }
 
+/* ---- DM2_IS_MISCITEM_DRINK_WATER (c_item.cpp:528) ---- */
+int dm2_v1_is_miscitem_drink_water(
+    uint16_t record_word,
+    const DM2_V1_DrinkWaterCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->query_gdat_dbspec_word || !cb->add_item_charge)
+        return 0;
+    int16_t drinkable = cb->query_gdat_dbspec_word(ctx, record_word, 0);
+    if ((drinkable & 1) == 0)
+        return 0;
+    int16_t charges = cb->add_item_charge(ctx, record_word, 0);
+    if (charges == 0)
+        return 0;
+    cb->add_item_charge(ctx, record_word, -1);
+    if (record_word == cb->item_in_hand && cb->retake_object)
+        cb->retake_object(ctx, record_word);
+    return 1;
+}
+
+/* ---- DM2_F958 (c_item.cpp:1034) ---- */
+int16_t dm2_v1_f958(uint16_t record_word,
+                     const DM2_V1_ItemValueCallbacks *cb, void *ctx)
+{
+    if (!cb || !cb->query_item_value) return -1;
+    int16_t value = cb->query_item_value(ctx, record_word, 2);
+    return (value <= -1) ? value : -1;
+}
+
 /* ---- DM2_GET_MAX_CHARGE (c_item.cpp:344) ---- */
 int16_t dm2_v1_get_max_charge(uint16_t record_word)
 {
@@ -132,3 +160,38 @@ DM2_V1_ItemNameReceipt dm2_v1_get_item_name(
     return receipt;
 }
 
+
+/* ---- DM2_TAKE_OBJECT (c_item.cpp:1185) ---- */
+void dm2_v1_take_object(
+    uint16_t record_word, int deferred,
+    const DM2_V1_TakeObjectCallbacks *cb, void *ctx)
+{
+    if (!cb || record_word == 0xFFFFu)
+        return;
+
+    int16_t gdat_word = cb->query_gdat_dbspec_word
+                             ? cb->query_gdat_dbspec_word(ctx, record_word, 0)
+                             : 0;
+    int16_t weight = cb->query_item_weight
+                          ? cb->query_item_weight(ctx, record_word)
+                          : 0;
+    if (cb->set_hand_item)
+        cb->set_hand_item(ctx, record_word, gdat_word, weight);
+    if (cb->draw_item_in_hand)
+        cb->draw_item_in_hand(ctx);
+    if (cb->display_item_name)
+        cb->display_item_name(ctx, record_word);
+
+    if (deferred == 0) {
+        if (cb->process_events)
+            cb->process_events(ctx);
+    } else {
+        if (cb->set_deferred_flag)
+            cb->set_deferred_flag(ctx);
+    }
+
+    if (cb->process_item_bonus)
+        cb->process_item_bonus(ctx, record_word);
+    if (cb->moverec_update)
+        cb->moverec_update(ctx);
+}

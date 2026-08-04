@@ -39,6 +39,24 @@ int16_t dm2_v1_get_wall_tile_any_takeable_item_record(
     }
 }
 
+int16_t dm2_v1_get_wall_tile_anyitem_record(
+    int16_t map_x, int16_t map_y,
+    const DM2_V1_TileRecordWalkCallbacks *cb, void *ctx)
+{
+    if (!cb)
+        return (int16_t)OBJECT_END_WORD;
+    int16_t rec = cb->get_tile_record_link(ctx, map_x, map_y);
+    for (;;) {
+        uint16_t w = (uint16_t)rec;
+        if (w == OBJECT_END_WORD || w == OBJECT_NULL_WORD)
+            return (int16_t)OBJECT_END_WORD;
+        uint16_t db_type = (w >> 10) & 0xF;
+        if (db_type > 3)
+            return rec;
+        rec = cb->get_next_record_link(ctx, w);
+    }
+}
+
 uint8_t dm2_v1_get_wall_decoration_of_actuator(
     const uint8_t *actuator_record,
     const DM2_V1_DecorationLookupCallbacks *cb, void *ctx)
@@ -84,6 +102,21 @@ int dm2_v1_missile_timer_cleanup(
     int16_t timer_idx = (int16_t)(rec[6] | (rec[7] << 8));
     cb->delete_timer(ctx, timer_idx);
     return 1;
+}
+
+uint16_t dm2_v1_rotate_record_by_teleporter(
+    uint8_t teleporter_flags, uint8_t stored_dir,
+    uint16_t record_word, uint8_t *out_dir)
+{
+    uint8_t dir = (uint8_t)(stored_dir & 0x3);
+    if (out_dir)
+        *out_dir = dir;
+    if (teleporter_flags & 0x10) {
+        /* Relative mode: overwrite the record word's facing direction
+         * (bits 14-15) with the resolved direction. */
+        record_word = (uint16_t)((record_word & 0x3FFF) | ((uint16_t)dir << 14));
+    }
+    return record_word;
 }
 
 uint8_t dm2_v1_is_object_visible_text(

@@ -29,16 +29,8 @@ extern "C" {
  * ===================================================================== */
 
 /* ---- DM2_PROCESS_TIMER_RESURRECTION (c_tim_proc.cpp:39) ----
- * Timer fired: resurrect the actor identified by the timer. */
-typedef struct {
-    uint8_t (*get_timer_actor)(void *ctx, int timer_idx);
-    int16_t (*get_timer_value)(void *ctx, int timer_idx);
-    void (*bring_champion_to_life)(void *ctx, int hero_idx);
-    void (*delete_timer)(void *ctx, int timer_idx);
-} DM2_V1_TimerResurrectionCallbacks;
-
-void dm2_v1_process_timer_resurrection(
-    int timer_idx, const DM2_V1_TimerResurrectionCallbacks *cb, void *ctx);
+ * Superseded by the receipt-based form in dm2_v1_tim_proc_pc34_compat.h.
+ * The narrow 3-param callback form is no longer declared here. */
 
 /* ---- DM2_CONTINUE_ORNATE_NOISE (c_tim_proc.cpp:1092) ----
  * Continue a periodic ornament noise timer, requeueing it. */

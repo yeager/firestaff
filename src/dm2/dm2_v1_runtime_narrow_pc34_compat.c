@@ -1344,16 +1344,25 @@ int32_t dm2_v1_try_push_object_to(
     int16_t *out_x, int16_t *out_y,
     const DM2_V1_TryPushObjectToCallbacks *cb, void *ctx)
 {
+    static const int16_t dir_dx[4] = { 0, 1, 0, -1 }; /* N, E, S, W */
+    static const int16_t dir_dy[4] = { -1, 0, 1, 0 };
+
     if (!cb)
         return 0;
-    if (!cb->is_tile_free(ctx, dst_x, dst_y))
-        return 0;
-    cb->move_record_to(ctx, record, dst_x, dst_y);
-    if (out_x)
-        *out_x = dst_x;
-    if (out_y)
-        *out_y = dst_y;
-    return 1;
+
+    for (int dir = 0; dir < 4; dir++) {
+        int16_t cand_x = (int16_t)(dst_x + dir_dx[dir]);
+        int16_t cand_y = (int16_t)(dst_y + dir_dy[dir]);
+        if (cb->is_tile_free(ctx, cand_x, cand_y)) {
+            cb->move_record_to(ctx, record, cand_x, cand_y);
+            if (out_x)
+                *out_x = cand_x;
+            if (out_y)
+                *out_y = cand_y;
+            return 1;
+        }
+    }
+    return 0;
 }
 
 void dm2_v1_moverec_2fcf_0234(
@@ -1425,8 +1434,8 @@ void dm2_v1_add_background_light_from_tile(
     if (light == 0)
         return;
     int16_t amount = (int16_t)(light - radius);
-    if (amount < 0)
-        amount = 0;
+    if (amount < 2)
+        amount = 2;
     cb->add_light(ctx, x, y, amount);
 }
 

@@ -721,7 +721,7 @@ typedef struct {
     int recursed;
 } DM2_V1_1031_03f2Receipt;
 
-int16_t dm2_v1_1031_03f2(
+int16_t dm2_v1_1031_03f2_tree(
     const DM2_V1_1031_03f2Callbacks *cb, void *ctx,
     DM2_V1_1031_03f2Receipt *receipt);
 

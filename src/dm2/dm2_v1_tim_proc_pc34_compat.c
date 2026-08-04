@@ -104,6 +104,201 @@ void dm2_v1_process_timer_0c(
     }
 }
 
+/* ── PROCESS_TIMER_RESURRECTION (c_tim_proc.cpp:39) ─────────────── */
+/*
+ * Three-phase champion resurrection driven by tim->yB:
+ *   yB == 0  final phase: bring the champion to life, no re-queue
+ *   yB == 1  scan the tile's record list for the matching altar item,
+ *            remove it, decrement yB, re-queue
+ *   yB == 2  create the resurrection cloud, adddata(5), decrement yB,
+ *            re-queue
+ *   yB  > 2  no-op (matches skproject: only phase 2 is handled, higher
+ *            phases return without side effects)
+ */
+void dm2_v1_process_timer_resurrection(
+    DM2_V1_TimerRecord *tim,
+    const DM2_V1_TimProcCallbacks *cb, void *ctx,
+    DM2_V1_ProcessTimerResurrectionReceipt *receipt)
+{
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+    if (!receipt || !tim) return;
+    if (!cb) { receipt->fail_closed = 1; return; }
+
+    receipt->valid = 1;
+
+    int16_t xA = (int16_t)tim->xA;
+    int16_t yA = (int16_t)tim->yA;
+    int16_t xB = (int16_t)tim->xB;
+    int16_t actor = (int16_t)tim->actor;
+    uint8_t yB = tim->yB;
+
+    if (yB == 0) {
+        if (cb->bring_champion_to_life)
+            cb->bring_champion_to_life(actor, ctx);
+        receipt->champion_brought_to_life = 1;
+        return;
+    }
+
+    if (yB == 1) {
+        int16_t rec = cb->get_tile_record_link
+            ? cb->get_tile_record_link(xA, yA, ctx) : -1;
+        int guard = 0;
+        while (rec >= 0 && guard < 4096) {
+            int16_t cls1 = cb->query_cls1_from_record
+                ? cb->query_cls1_from_record(rec, ctx) : -1;
+            if (cls1 == 0x15) {
+                int16_t cls2 = cb->query_cls2_from_record
+                    ? cb->query_cls2_from_record(rec, ctx) : -1;
+                if (cls2 == 0) {
+                    int16_t charge = cb->add_item_charge
+                        ? cb->add_item_charge(rec, 0, ctx) : 0;
+                    if (charge == actor) {
+                        if (cb->cut_record_from)
+                            cb->cut_record_from(rec, NULL, xA, yA, ctx);
+                        if (cb->dealloc_record)
+                            cb->dealloc_record(rec, ctx);
+                        tim->data++;
+                        receipt->records_removed = 1;
+                        break;
+                    }
+                }
+            }
+            if (!cb->get_next_record_link)
+                break;
+            rec = (int16_t)cb->get_next_record_link((uint16_t)rec, ctx);
+            guard++;
+        }
+    } else if (yB == 2) {
+        if (cb->create_cloud)
+            cb->create_cloud(0xffe4, 0, xA, yA, xB, ctx);
+        tim->data += 5;
+        receipt->cloud_created = 1;
+    } else {
+        return;
+    }
+
+    tim->yB = (uint8_t)(yB - 1);
+    if (cb->queue_timer) {
+        cb->queue_timer(tim, ctx);
+        receipt->requeued = 1;
+    }
+}
+
+/* ── PROCESS_TIMER_DESTROY_DOOR (c_tim_proc.cpp:422) ────────────── */
+void dm2_v1_process_timer_destroy_door(
+    DM2_V1_TimerRecord *tim,
+    const DM2_V1_TimProcCallbacks *cb, void *ctx,
+    DM2_V1_ProcessTimerDestroyDoorReceipt *receipt)
+{
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+    if (!receipt || !tim) return;
+    if (!cb) { receipt->fail_closed = 1; return; }
+
+    receipt->valid = 1;
+    receipt->door_destroyed = 1;
+
+    /* skproject: low 3 bits of the tile byte set to 5 (destroyed door). */
+    if (cb->get_address_of_tile_record) {
+        uint8_t *tile = cb->get_address_of_tile_record(
+            (int16_t)tim->xA, (int16_t)tim->yA, ctx);
+        if (tile)
+            *tile = (uint8_t)((*tile & 0xF8) | 0x05);
+    }
+
+    if (cb->get_current_map && cb->get_party_map &&
+        cb->get_current_map(ctx) == cb->get_party_map(ctx) &&
+        cb->set_render_flag) {
+        cb->set_render_flag(3, ctx);
+    }
+}
+
+/* ── PROCESS_TIMER_3D (c_tim_proc.cpp:902) ──────────────────────── */
+void dm2_v1_process_timer_3d(
+    DM2_V1_TimerRecord *tim,
+    const DM2_V1_TimProcCallbacks *cb, void *ctx,
+    DM2_V1_ProcessTimer3DReceipt *receipt)
+{
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+    if (!receipt || !tim) return;
+    if (!cb) { receipt->fail_closed = 1; return; }
+
+    receipt->valid = 1;
+
+    int16_t x = (int16_t)tim->xA;
+    int16_t y = (int16_t)tim->yA;
+
+    if (cb->move_record_to) {
+        cb->move_record_to((int32_t)tim->valueB, -3, 0, x, y, ctx);
+        receipt->record_moved = 1;
+    }
+
+    if (tim->type == DM2_TIMER_TYPE_3D) {
+        if (cb->queue_noise_gen1)
+            cb->queue_noise_gen1(3, 0, (int8_t)0x89, (int16_t)0x61,
+                (int16_t)0x80, x, y, 1, ctx);
+        receipt->noise_queued = 1;
+    }
+}
+
+/* ── STEP_DOOR (DM2_STEP_DOOR) ──────────────────────────────────── */
+/*
+ * Simplified port of skproject c_tim_proc.cpp DM2_STEP_DOOR: advance the
+ * door animation frame at (xA, yA) one step per call and attack anything
+ * standing in the doorway while it is moving.  tim->yB carries the
+ * requested direction (non-zero = opening, zero = closing) in this
+ * portable representation.
+ */
+void dm2_v1_step_door(
+    DM2_V1_TimerRecord *tim,
+    const DM2_V1_TimProcCallbacks *cb, void *ctx,
+    DM2_V1_StepDoorReceipt *receipt)
+{
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+    if (!receipt || !tim) return;
+    if (!cb) { receipt->fail_closed = 1; return; }
+
+    receipt->valid = 1;
+
+    int16_t x = (int16_t)tim->xA;
+    int16_t y = (int16_t)tim->yA;
+
+    uint8_t *tile = cb->get_address_of_tile_record
+        ? cb->get_address_of_tile_record(x, y, ctx) : NULL;
+    if (!tile)
+        return;
+
+    /* Door tile type must remain DM2_TILE_DOOR while stepping. */
+    if (((*tile) & 0x07) != DM2_TILE_DOOR)
+        return;
+
+    int opening = tim->yB != 0;
+    uint8_t frame = *tile & 0x07;
+
+    if (opening) {
+        if (frame < 6) frame++;
+        if (frame == 6) receipt->door_opened = 1;
+    } else {
+        if (frame > 0) frame--;
+        if (frame == 0) receipt->door_closed = 1;
+    }
+    *tile = (uint8_t)((*tile & 0xF8) | (frame & 0x07));
+    receipt->door_stepped = 1;
+
+    /* Attack a creature caught in the doorway. */
+    int16_t creature = cb->get_creature_at
+        ? cb->get_creature_at(x, y, ctx) : -1;
+    if (creature != -1 && creature != (int16_t)0xFFFF && cb->attack_creature) {
+        cb->attack_creature(creature, x, y, 0, 0, 0, ctx);
+        receipt->creature_attacked = 1;
+    }
+
+    /* Continue stepping until the door is fully open or closed. */
+    if (frame != 0 && frame != 6 && cb->queue_timer) {
+        cb->queue_timer(tim, ctx);
+        receipt->requeued = 1;
+    }
+}
+
 /* ── STEP_MISSILE ───────────────────────────────────────────────── */
 static void dm2_v1_step_missile_cb(
     DM2_V1_TimerRecord *tim,
@@ -166,7 +361,7 @@ static void dm2_v1_step_missile_cb(
 }
 
 /* ── PROCESS_TIMER_LIGHT ────────────────────────────────────────── */
-static void dm2_v1_process_timer_light_cb(
+void dm2_v1_process_timer_light(
     DM2_V1_TimerRecord *tim,
     const DM2_V1_TimProcCallbacks *cb, void *ctx,
     DM2_V1_ProcessTimerLightReceipt *receipt)
@@ -405,7 +600,7 @@ void dm2_v1_proceed_timers(
             }
             {
                 DM2_V1_ProcessTimerLightReceipt lr;
-                dm2_v1_process_timer_light_cb(&tim, cb, ctx, &lr);
+                dm2_v1_process_timer_light(&tim, cb, ctx, &lr);
             }
             if (cb->recalc_light_level)
                 cb->recalc_light_level(ctx);

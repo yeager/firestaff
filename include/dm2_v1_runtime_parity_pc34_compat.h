@@ -227,30 +227,6 @@ int32_t dm2_v1_4fcc(
     const DM2_V1_4FCCCallbacks *cb, void *ctx);
 
 /* =====================================================================
- * c_item.cpp — IS_MISCITEM_DRINK_WATER, F958, TAKE_OBJECT
- * ===================================================================== */
-
-typedef struct {
-    uint8_t *(*get_record_address)(void *ctx, uint16_t record_word);
-    int16_t (*query_gdat)(void *ctx, int cls1, int cls2, int cat, int idx);
-} DM2_V1_MiscItemCallbacks;
-
-int dm2_v1_is_miscitem_drink_water(
-    int16_t record_word,
-    const DM2_V1_MiscItemCallbacks *cb, void *ctx);
-
-int16_t dm2_v1_f958(int16_t value, int16_t threshold);
-
-typedef struct {
-    void (*unlink_item)(void *ctx, int16_t item, int16_t x, int16_t y);
-    void (*set_item_importance)(void *ctx, int16_t item, int16_t importance);
-} DM2_V1_TakeObjectCallbacks;
-
-void dm2_v1_take_object(
-    int16_t item, int16_t x, int16_t y,
-    const DM2_V1_TakeObjectCallbacks *cb, void *ctx);
-
-/* =====================================================================
  * c_move.cpp — move_075f_06bd
  * ===================================================================== */
 
@@ -277,7 +253,12 @@ typedef struct {
     int16_t *redraw_flags;
 } DM2_V1_TimerActuatorCallbacks;
 
-void dm2_v1_step_door(
+/* Renamed from dm2_v1_step_door to avoid an ABI-incompatible symbol
+ * collision with the DM2_V1_TimerRecord*-based dm2_v1_step_door()
+ * declared in dm2_v1_tim_proc_pc34_compat.h (same name, different
+ * calling convention -> caused a segfault when the linker picked this
+ * definition for calls made against the other signature). */
+void dm2_v1_step_door_tile(
     int16_t x, int16_t y, int16_t record_word, int16_t direction,
     const DM2_V1_TimerActuatorCallbacks *cb, void *ctx);
 

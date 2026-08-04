@@ -3,7 +3,7 @@
 #include "dm2_v1_timer_ops_pc34_compat.h"
 #include <stddef.h>
 
-int16_t dm2_v1_process_timer_light(
+int16_t dm2_v1_process_timer_light_tile(
     int16_t intensity,
     const DM2_V1_LightTimerCallbacks *cb, void *ctx)
 {
@@ -50,7 +50,7 @@ void dm2_v1_process_timer_release_door_button(
         rec[3] &= ~0x08;
 }
 
-void dm2_v1_process_timer_destroy_door(
+void dm2_v1_process_timer_destroy_door_tile(
     uint8_t tile_x, uint8_t tile_y,
     const DM2_V1_DestroyDoorCallbacks *cb, void *ctx)
 {
@@ -64,7 +64,7 @@ void dm2_v1_process_timer_destroy_door(
         *cb->redraw_flags = 3;
 }
 
-void dm2_v1_process_timer_3d(
+void dm2_v1_process_timer_3d_tile(
     uint16_t record_word, uint8_t x, uint8_t y, uint8_t timer_type,
     const DM2_V1_Timer3DCallbacks *cb, void *ctx)
 {
@@ -348,7 +348,7 @@ void dm2_v1_process_timer_alloc_new_creature(
     cb->alloc_new_creature(ctx, creature_type, 7, dir, x, y);
 }
 
-int dm2_v1_process_timer_resurrection(
+int dm2_v1_process_timer_resurrection_tile(
     uint8_t xA, uint8_t yA, uint8_t xB, uint8_t yB, uint8_t actor,
     const DM2_V1_ResurrectionCallbacks *cb, void *ctx)
 {

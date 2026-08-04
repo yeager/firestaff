@@ -81,13 +81,13 @@ typedef struct {
                            uint16_t action, uint32_t delay);
 } DM2_V1_Relay1Callbacks;
 
-int dm2_v1_activate_relay1(
+int dm2_v1_actuator_ops_activate_relay1(
     const DM2_V1_ActuatorRecord *act, uint8_t timer_yb, int is_delayed,
     const DM2_V1_Relay1Callbacks *cb, void *ctx);
 
 /* ---- DM2_ACTIVATE_RELAY2 (c_tim_proc.cpp:1249) ----
  * Similar to relay1 but with different delay computation. */
-int dm2_v1_activate_relay2(
+int dm2_v1_actuator_ops_activate_relay2(
     const DM2_V1_ActuatorRecord *act, uint8_t timer_yb, int is_delayed,
     const DM2_V1_Relay1Callbacks *cb, void *ctx);
 

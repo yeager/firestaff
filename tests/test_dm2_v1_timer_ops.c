@@ -31,7 +31,7 @@ static void test_process_timer_light_darkness(void)
         &g_light_val, mock_queue_light, mock_light_table, 16
     };
     /* Positive = darkness spell, intensity 3 */
-    dm2_v1_process_timer_light(3, &cb, NULL);
+    dm2_v1_process_timer_light_tile(3, &cb, NULL);
     /* delta = (table[3] - table[2]) * 2 = (45-25)*2 = 40 */
     assert(g_light_val == 540);
     assert(g_light_queued == 1);
@@ -48,7 +48,7 @@ static void test_process_timer_light_source(void)
         &g_light_val, mock_queue_light, mock_light_table, 16
     };
     /* Negative = light source, intensity -2 */
-    dm2_v1_process_timer_light(-2, &cb, NULL);
+    dm2_v1_process_timer_light_tile(-2, &cb, NULL);
     /* abs=2, dec=1. delta = table[2]-table[1] = 25-10 = 15. Negated = -15 */
     assert(g_light_val == 85);
     assert(g_light_queued == 1);
@@ -62,7 +62,7 @@ static void test_process_timer_light_zero(void)
     DM2_V1_LightTimerCallbacks cb = {
         &g_light_val, mock_queue_light, mock_light_table, 16
     };
-    assert(dm2_v1_process_timer_light(0, &cb, NULL) == 0);
+    assert(dm2_v1_process_timer_light_tile(0, &cb, NULL) == 0);
     assert(g_light_val == 100);
     printf("  PASS: process_timer_light_zero\n");
 }
@@ -100,7 +100,7 @@ static void test_destroy_door(void)
     g_redraw = 0;
     DM2_V1_DestroyDoorCallbacks cb = { mock_get_tile, 2, 2, &g_redraw };
     g_tile_byte = 0xF0;
-    dm2_v1_process_timer_destroy_door(3, 5, &cb, NULL);
+    dm2_v1_process_timer_destroy_door_tile(3, 5, &cb, NULL);
     assert(g_tile_byte == 0xF5); /* low 3 bits = 5 */
     assert(g_redraw == 3);
 
@@ -109,7 +109,7 @@ static void test_destroy_door(void)
     cb.current_map = 1;
     cb.party_map = 2;
     g_tile_byte = 0x08;
-    dm2_v1_process_timer_destroy_door(0, 0, &cb, NULL);
+    dm2_v1_process_timer_destroy_door_tile(0, 0, &cb, NULL);
     assert(g_tile_byte == 0x0D);
     assert(g_redraw == 0);
     printf("  PASS: destroy_door\n");
@@ -136,13 +136,13 @@ static void test_timer_3d(void)
 
     /* Move succeeds (returns 0), type != 0x3D — no noise */
     g_moved = g_noise = 0;
-    dm2_v1_process_timer_3d(0x1400, 5, 3, 0x3C, &cb, NULL);
+    dm2_v1_process_timer_3d_tile(0x1400, 5, 3, 0x3C, &cb, NULL);
     assert(g_moved == 1);
     assert(g_noise == 0);
 
     /* Type 0x3D — always noise */
     g_moved = g_noise = 0;
-    dm2_v1_process_timer_3d(0x1400, 5, 3, 0x3D, &cb, NULL);
+    dm2_v1_process_timer_3d_tile(0x1400, 5, 3, 0x3D, &cb, NULL);
     assert(g_noise == 1);
 
     printf("  PASS: timer_3d\n");

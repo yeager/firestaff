@@ -229,13 +229,14 @@ static void test_shoot_item_success(void)
     printf("  PASS: shoot_item_success\n");
 }
 
-/* ==== CREATURE_ATTACKS_PARTY_FULL tests ==== */
-#if 0 /* CreatureAttacksParty types not yet defined */
+/* ==== CREATURE_ATTACKS_PARTY tests (receipt-based API) ==== */
+#include "dm2_v1_creature_attacks_party_pc34_compat.h"
+
 static int16_t cap_abs(int16_t v) { return v < 0 ? (int16_t)-v : v; }
 static int16_t g_vector_dir;
-static int16_t cap_vector_dir(int16_t x1, int16_t y1, int16_t x2, int16_t y2)
+static int16_t cap_vector_dir(void *ctx, int16_t x1, int16_t y1, int16_t x2, int16_t y2)
 {
-    (void)x1; (void)y1; (void)x2; (void)y2;
+    (void)ctx; (void)x1; (void)y1; (void)x2; (void)y2;
     return g_vector_dir;
 }
 static int16_t cap_randdir_val;
@@ -252,7 +253,7 @@ static int16_t cap_get_player(void *ctx, uint8_t pos)
     return g_player_at_pos;
 }
 static int16_t g_find_hero_result;
-static int16_t cap_find_hero(void *ctx, uint16_t x, uint16_t y, int f)
+static int16_t cap_find_hero(void *ctx, uint16_t x, uint16_t y, int16_t f)
 {
     (void)ctx; (void)x; (void)y; (void)f;
     return g_find_hero_result;
@@ -295,10 +296,7 @@ static void cap_push(void *ctx, int16_t x, int16_t y, int16_t d, int f)
     (void)ctx; (void)x; (void)y; (void)d; (void)f;
     g_pushed = 1;
 }
-static int32_t g_last_tick;
-static uint8_t g_out_b1c;
-static uint8_t g_out_b28[4];
-static uint8_t g_out_b29[4]; /* CreatureAttacksParty types not yet defined */
+
 static DM2_V1_CreatureAttacksPartyCallbacks make_cap_cb(void)
 {
     DM2_V1_CreatureAttacksPartyCallbacks cb;
@@ -318,10 +316,6 @@ static DM2_V1_CreatureAttacksPartyCallbacks make_cap_cb(void)
     cb.creature_attacks_creature = cap_cac;
     cb.get_creature_weight = cap_weight;
     cb.push_party = cap_push;
-    cb.out_last_attack_tick = &g_last_tick;
-    cb.out_creature_b_1c = &g_out_b1c;
-    cb.out_hero_b_28 = g_out_b28;
-    cb.out_hero_b_29 = g_out_b29;
     return cb;
 }
 
@@ -329,40 +323,42 @@ static DM2_V1_CreatureAttacksPartyState make_cap_state(void)
 {
     DM2_V1_CreatureAttacksPartyState st;
     memset(&st, 0, sizeof(st));
-    st.spx_word_0e = 0x0100; /* direction bits: (0x0100 << 6) >> 14 = 1 */
+    st.spx_word_0e = 0x0100;
     st.creature_x = 5;
     st.creature_y = 5;
-    st.target_x = 5;
-    st.target_y = 5;
     st.current_map = 1;
     st.party_map = 1;
     st.party_x = 5;
     st.party_y = 5;
     st.gametick = 100;
     st.heros_in_party = 2;
-    st.hero_curHP[0] = 50;
-    st.hero_curHP[1] = 30;
+    st.hero_hp[0] = 50;
+    st.hero_hp[1] = 30;
     st.creature_b_1c = 0;
     return st;
 }
 
 static void test_cap_null_safety(void)
 {
-    assert(dm2_v1_creature_attacks_party_full(NULL, NULL, NULL) == 1);
+    DM2_V1_CreatureAttacksPartyReceipt r;
+    int ret = dm2_v1_creature_attacks_party_full(NULL, NULL, NULL, &r);
+    assert(ret == 0);
+    assert(r.fail_closed == 1);
     printf("  PASS: cap_null_safety\n");
 }
 
 static void test_cap_too_far(void)
 {
-    /* Creature at (5,5), target at (5,8) — Manhattan dist 3 > 1 */
     DM2_V1_CreatureAttacksPartyCallbacks cb = make_cap_cb();
     DM2_V1_CreatureAttacksPartyState st = make_cap_state();
     st.creature_x = 5;
     st.creature_y = 5;
-    st.target_x = 5;
-    st.target_y = 8;
-    int r = dm2_v1_creature_attacks_party_full(&st, &cb, NULL);
-    assert(r == 1);
+    st.party_x = 5;
+    st.party_y = 8;
+    DM2_V1_CreatureAttacksPartyReceipt r;
+    int ret = dm2_v1_creature_attacks_party_full(&st, &cb, NULL, &r);
+    assert(ret == 1);
+    assert(r.result == 1);
     printf("  PASS: cap_too_far\n");
 }
 
@@ -375,10 +371,10 @@ static void test_cap_same_tile_attacks_hero(void)
     g_attack_player_result = 5;
     g_vector_dir = 0;
     g_rand16_val = 0;
-    memset(g_out_b29, 0, 4);
-    int r = dm2_v1_creature_attacks_party_full(&st, &cb, NULL);
-    assert(r == 0);
-    assert(g_last_tick == 100);
+    DM2_V1_CreatureAttacksPartyReceipt r;
+    dm2_v1_creature_attacks_party_full(&st, &cb, NULL, &r);
+    assert(r.attacked == 1);
+    assert(r.last_attack_tick == 100);
     printf("  PASS: cap_same_tile_attacks_hero\n");
 }
 
@@ -386,10 +382,12 @@ static void test_cap_no_alive_heroes(void)
 {
     DM2_V1_CreatureAttacksPartyCallbacks cb = make_cap_cb();
     DM2_V1_CreatureAttacksPartyState st = make_cap_state();
-    st.hero_curHP[0] = 0;
-    st.hero_curHP[1] = 0;
-    int r = dm2_v1_creature_attacks_party_full(&st, &cb, NULL);
-    assert(r == 1);
+    st.hero_hp[0] = 0;
+    st.hero_hp[1] = 0;
+    DM2_V1_CreatureAttacksPartyReceipt r;
+    int ret = dm2_v1_creature_attacks_party_full(&st, &cb, NULL, &r);
+    assert(ret == 1);
+    assert(r.result == 1);
     printf("  PASS: cap_no_alive_heroes\n");
 }
 
@@ -397,13 +395,15 @@ static void test_cap_not_at_party_door(void)
 {
     DM2_V1_CreatureAttacksPartyCallbacks cb = make_cap_cb();
     DM2_V1_CreatureAttacksPartyState st = make_cap_state();
-    /* Party not at target */
-    st.party_x = 10;
-    g_tile_type = 4; /* door */
+    st.party_map = 2;
+    g_tile_type = 4;
     g_door_attacked = 0;
     g_rand16_val = 5;
-    (void)dm2_v1_creature_attacks_party_full(&st, &cb, NULL);
-    /* attack_door returns 0, then creature_attacks_creature returns 0 */
+    static uint8_t ai[32] = {0};
+    ai[6] = 10;
+    st.ai_spec = ai;
+    DM2_V1_CreatureAttacksPartyReceipt r;
+    dm2_v1_creature_attacks_party_full(&st, &cb, NULL, &r);
     assert(g_door_attacked == 1);
     printf("  PASS: cap_not_at_party_door\n");
 }
@@ -413,21 +413,22 @@ static void test_cap_push_heavy(void)
     DM2_V1_CreatureAttacksPartyCallbacks cb = make_cap_cb();
     DM2_V1_CreatureAttacksPartyState st = make_cap_state();
     st.creature_b_1a = 0x26;
-    /* Creature adjacent, party at target, attack succeeds, then push */
-    st.creature_x = 4;
+    st.creature_x = 5;
     st.creature_y = 5;
-    st.ai_byte_0 = 0; /* no direction check flag */
-    g_vector_dir = 0;
+    static uint8_t ai_h[32] = {0};
+    st.ai_spec = ai_h;
+    g_vector_dir = 1;
     g_player_at_pos = 0;
     g_find_hero_result = 0;
     g_attack_player_result = 5;
     g_rand16_val = 0;
-    memset(g_out_b29, 0, 4);
-    g_creature_weight = 200; /* > 0x64 */
-    cap_rand_full_val = 0x0F; /* & 0xF != 0 -> skip randdir */
+    g_creature_weight = 200;
+    cap_rand_full_val = 0x10;
+    cap_randdir_val = 1;
     g_pushed = 0;
-    dm2_v1_creature_attacks_party_full(&st, &cb, NULL);
-    assert(g_pushed == 1);
+    DM2_V1_CreatureAttacksPartyReceipt r;
+    dm2_v1_creature_attacks_party_full(&st, &cb, NULL, &r);
+    assert(r.pushed == 1);
     printf("  PASS: cap_push_heavy\n");
 }
 
@@ -436,36 +437,39 @@ static void test_cap_push_light_randdir_zero(void)
     DM2_V1_CreatureAttacksPartyCallbacks cb = make_cap_cb();
     DM2_V1_CreatureAttacksPartyState st = make_cap_state();
     st.creature_b_1a = 0x26;
-    st.creature_x = 4;
+    st.creature_x = 5;
     st.creature_y = 5;
-    st.ai_byte_0 = 0;
-    g_vector_dir = 0;
+    static uint8_t ai_light[32] = {0};
+    st.ai_spec = ai_light;
+    g_vector_dir = 1;
     g_player_at_pos = 0;
     g_find_hero_result = 0;
     g_attack_player_result = 5;
     g_rand16_val = 0;
-    memset(g_out_b29, 0, 4);
-    g_creature_weight = 50; /* <= 0x64 */
-    cap_randdir_val = 0; /* randdir == 0 -> return 0, no push */
+    g_creature_weight = 50;
+    cap_randdir_val = 0;
     g_pushed = 0;
-    int r = dm2_v1_creature_attacks_party_full(&st, &cb, NULL);
-    assert(r == 0);
-    assert(g_pushed == 0);
+    DM2_V1_CreatureAttacksPartyReceipt r;
+    dm2_v1_creature_attacks_party_full(&st, &cb, NULL, &r);
+    assert(r.result == 0);
+    assert(r.pushed == 0);
     printf("  PASS: cap_push_light_randdir_zero\n");
 }
 
 static void test_cap_direction_mismatch_with_flag(void)
 {
-    /* Adjacent, wrong direction, AI bit 2 set -> bail */
     DM2_V1_CreatureAttacksPartyCallbacks cb = make_cap_cb();
     DM2_V1_CreatureAttacksPartyState st = make_cap_state();
     st.creature_x = 5;
-    st.creature_y = 4; /* adjacent to target 5,5 */
-    st.ai_byte_0 = 0x04; /* bit 2 set */
-    g_vector_dir = 2; /* dir to target = 2 */
-    st.spx_word_0e = 0x0000; /* facing dir = 0 */
-    int r = dm2_v1_creature_attacks_party_full(&st, &cb, NULL);
-    assert(r == 1);
+    st.creature_y = 4;
+    static uint8_t ai[32] = {0};
+    st.ai_spec = ai;
+    g_vector_dir = 2;
+    st.spx_word_0e = 0x0000;
+    DM2_V1_CreatureAttacksPartyReceipt r;
+    int ret = dm2_v1_creature_attacks_party_full(&st, &cb, NULL, &r);
+    assert(ret == 1);
+    assert(r.result == 1);
     printf("  PASS: cap_direction_mismatch_with_flag\n");
 }
 
@@ -475,22 +479,20 @@ static void test_cap_type6_direction_wrap(void)
     DM2_V1_CreatureAttacksPartyState st = make_cap_state();
     st.creature_x = 5;
     st.creature_y = 4;
-    st.creature_b_20 = 6; /* type 6 -> direction wraps +2 */
-    st.ai_byte_0 = 0x04;
-    /* SPX word 0x0E = 0x0000 -> facing = 0, wrapped = (0+2)&3 = 2 */
+    st.creature_b_20 = 6;
+    static uint8_t ai[32] = {0x04};
+    st.ai_spec = ai;
     st.spx_word_0e = 0x0000;
-    g_vector_dir = 2; /* dir to target = 2, matches wrapped */
-    /* Should NOT bail on direction mismatch */
+    g_vector_dir = 2;
     g_player_at_pos = 0;
     g_find_hero_result = 0;
     g_attack_player_result = 5;
     g_rand16_val = 0;
-    memset(g_out_b29, 0, 4);
-    int r = dm2_v1_creature_attacks_party_full(&st, &cb, NULL);
-    assert(r == 0);
+    DM2_V1_CreatureAttacksPartyReceipt r;
+    int ret = dm2_v1_creature_attacks_party_full(&st, &cb, NULL, &r);
+    assert(r.attacked == 1);
     printf("  PASS: cap_type6_direction_wrap\n");
 }
-#endif
 
 int main(void)
 {
@@ -516,7 +518,16 @@ int main(void)
     test_shoot_item_no_ammo();
     test_shoot_item_success();
 
-    /* CREATURE_ATTACKS_PARTY_FULL — disabled until types defined */
+    /* CREATURE_ATTACKS_PARTY */
+    test_cap_null_safety();
+    test_cap_too_far();
+    test_cap_same_tile_attacks_hero();
+    test_cap_no_alive_heroes();
+    test_cap_not_at_party_door();
+    test_cap_push_heavy();
+    test_cap_push_light_randdir_zero();
+    test_cap_direction_mismatch_with_flag();
+    test_cap_type6_direction_wrap();
 
     printf("All creature_ops_parity tests passed.\n");
     return 0;

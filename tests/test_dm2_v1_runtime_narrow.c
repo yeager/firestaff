@@ -7,26 +7,10 @@
 #include <stdio.h>
 #include <string.h>
 
-/* ---- timer category: DM2_PROCESS_TIMER_RESURRECTION ---- */
-
-static int g_resurrect_hero = -1;
-static int g_timer_deleted = -1;
-
-static uint8_t tr_get_actor(void *ctx, int idx) { (void)ctx; (void)idx; return 3; }
-static int16_t tr_get_value(void *ctx, int idx) { (void)ctx; (void)idx; return 0; }
-static void tr_bring_to_life(void *ctx, int hero_idx) { (void)ctx; g_resurrect_hero = hero_idx; }
-static void tr_delete_timer(void *ctx, int idx) { (void)ctx; g_timer_deleted = idx; }
-
-static void test_process_timer_resurrection(void)
-{
-    DM2_V1_TimerResurrectionCallbacks cb = {
-        tr_get_actor, tr_get_value, tr_bring_to_life, tr_delete_timer
-    };
-    dm2_v1_process_timer_resurrection(7, &cb, NULL);
-    assert(g_resurrect_hero == 3);
-    assert(g_timer_deleted == 7);
-    printf("test_process_timer_resurrection OK\n");
-}
+/* ---- timer category: DM2_PROCESS_TIMER_RESURRECTION ----
+ * Note: the narrow 3-param form declared in runtime_narrow was superseded
+ * by the receipt-based 4-param form in dm2_v1_tim_proc_pc34_compat.
+ * That version is tested in test_dm2_v1_tim_proc_pc34_compat. */
 
 /* ---- hero category: DM2_WOUND_PLAYER ---- */
 
@@ -308,7 +292,6 @@ static void test_engage_command(void)
 
 int main(void)
 {
-    test_process_timer_resurrection();
     test_wound_player();
     test_adjust_skills();
     test_wound_creature();

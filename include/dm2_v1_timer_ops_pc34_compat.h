@@ -31,7 +31,10 @@ typedef struct {
     int light_table_size;
 } DM2_V1_LightTimerCallbacks;
 
-int16_t dm2_v1_process_timer_light(
+/* Named _tile to avoid an ABI-incompatible symbol collision with the
+ * DM2_V1_TimerRecord*-based dm2_v1_process_timer_light() declared in
+ * dm2_v1_tim_proc_pc34_compat.h. */
+int16_t dm2_v1_process_timer_light_tile(
     int16_t intensity,
     const DM2_V1_LightTimerCallbacks *cb, void *ctx);
 
@@ -55,7 +58,10 @@ typedef struct {
     int *redraw_flags;
 } DM2_V1_DestroyDoorCallbacks;
 
-void dm2_v1_process_timer_destroy_door(
+/* Named _tile to avoid an ABI-incompatible symbol collision with the
+ * DM2_V1_TimerRecord*-based dm2_v1_process_timer_destroy_door() declared
+ * in dm2_v1_tim_proc_pc34_compat.h. */
+void dm2_v1_process_timer_destroy_door_tile(
     uint8_t tile_x, uint8_t tile_y,
     const DM2_V1_DestroyDoorCallbacks *cb, void *ctx);
 
@@ -67,7 +73,10 @@ typedef struct {
     void (*queue_noise)(void *ctx, int16_t x, int16_t y);
 } DM2_V1_Timer3DCallbacks;
 
-void dm2_v1_process_timer_3d(
+/* Named _tile to avoid an ABI-incompatible symbol collision with the
+ * DM2_V1_TimerRecord*-based dm2_v1_process_timer_3d() declared in
+ * dm2_v1_tim_proc_pc34_compat.h. */
+void dm2_v1_process_timer_3d_tile(
     uint16_t record_word, uint8_t x, uint8_t y, uint8_t timer_type,
     const DM2_V1_Timer3DCallbacks *cb, void *ctx);
 
@@ -271,7 +280,10 @@ typedef struct {
     void (*queue_timer)(void *ctx);
 } DM2_V1_ResurrectionCallbacks;
 
-int dm2_v1_process_timer_resurrection(
+/* Named _tile to avoid an ABI-incompatible symbol collision with the
+ * DM2_V1_TimerRecord*-based dm2_v1_process_timer_resurrection() declared
+ * in dm2_v1_tim_proc_pc34_compat.h. */
+int dm2_v1_process_timer_resurrection_tile(
     uint8_t xA, uint8_t yA, uint8_t xB, uint8_t yB, uint8_t actor,
     const DM2_V1_ResurrectionCallbacks *cb, void *ctx);
 

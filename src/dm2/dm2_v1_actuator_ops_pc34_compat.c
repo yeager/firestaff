@@ -48,7 +48,7 @@ void dm2_v1_activate_inverse_flag(
     cb->invoke_actuator(ctx, act->data, action, 0);
 }
 
-int dm2_v1_activate_relay1(
+int dm2_v1_actuator_ops_activate_relay1(
     const DM2_V1_ActuatorRecord *act, uint8_t timer_yb, int is_delayed,
     const DM2_V1_Relay1Callbacks *cb, void *ctx)
 {
@@ -89,9 +89,9 @@ int dm2_v1_activate_relay1(
     return 1;
 }
 
-int dm2_v1_activate_relay2(
+int dm2_v1_actuator_ops_activate_relay2(
     const DM2_V1_ActuatorRecord *act, uint8_t timer_yb, int is_delayed,
     const DM2_V1_Relay1Callbacks *cb, void *ctx)
 {
-    return dm2_v1_activate_relay1(act, timer_yb, is_delayed, cb, ctx);
+    return dm2_v1_actuator_ops_activate_relay1(act, timer_yb, is_delayed, cb, ctx);
 }
