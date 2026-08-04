@@ -280,3 +280,19 @@ msgstr "FILTR"
 
 msgid "VSYNC"
 msgstr "VSYNC"
+
+#. Popup title when no game data files are found at startup
+msgid "NO GAME DATA FOUND"
+msgstr "NEBYLA NALEZENA ŽÁDNÁ HERNÍ DATA"
+
+#. Desktop: instruction to copy game files
+msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
+msgstr "ZKOPÍRUJTE PŮVODNÍ HERNÍ SOUBORY DO DATOVÉHO ADRESÁŘE"
+
+#. Android: instruction to copy game files via file manager
+msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
+msgstr "ZKOPÍRUJTE HERNÍ SOUBORY DO Documents/Firestaff/data POMOCÍ SPRÁVCE SOUBORŮ"
+
+#. iOS: instruction to copy game files via Files app
+msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
+msgstr "POUŽIJTE APLIKACI SOUBORY KE ZKOPÍROVÁNÍ HERNÍCH SOUBORŮ DO Firestaff/data V TÉTO APLIKACI"

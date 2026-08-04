@@ -54,6 +54,10 @@
 #include <string.h>
 #include <time.h>
 
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
+
 void m12_update_game_availability(const FS_GameAvailability *avail);
 static int m12_data_directory_dialog_token_is_placeholder(const char* path);
 
@@ -1772,16 +1776,33 @@ static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
              gameId ? gameId : "");
 }
 
+static const char* m12_platform_data_instructions(const M12_StartupMenuState* state) {
+#if defined(__ANDROID__)
+    return m12_tr(state, "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER");
+#elif defined(__APPLE__) && TARGET_OS_IOS
+    return m12_tr(state, "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP");
+#else
+    return m12_tr(state, "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY");
+#endif
+}
+
 static void m12_show_no_game_data_popup(M12_StartupMenuState* state) {
-    char line3[160];
+    char line3[256];
+    const char* dataDir;
+    const char* instructions;
     if (!state || M12_AssetStatus_HasOriginalFileCandidate(&state->assetStatus)) {
         return;
     }
+    dataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+    if (dataDir && dataDir[0] != '\0' && !FSP_DirExists(dataDir)) {
+        FSP_CreateDirectoryRecursive(dataDir);
+    }
+    instructions = m12_platform_data_instructions(state);
     m12_format_data_dir_line(state, line3, sizeof(line3));
     m12_enter_message_view(state);
     m12_set_buffered_message(state,
                              m12_tr(state, "NO GAME DATA FOUND"),
-                             m12_tr(state, "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"),
+                             instructions,
                              line3);
 }
 

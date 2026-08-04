@@ -280,3 +280,19 @@ msgstr "필터"
 
 msgid "VSYNC"
 msgstr "VSYNC"
+
+#. Popup title when no game data files are found at startup
+msgid "NO GAME DATA FOUND"
+msgstr "게임 데이터를 찾을 수 없습니다"
+
+#. Desktop: instruction to copy game files
+msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
+msgstr "원본 게임 파일을 데이터 디렉토리에 복사하세요"
+
+#. Android: instruction to copy game files via file manager
+msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
+msgstr "파일 관리자를 사용하여 게임 파일을 Documents/Firestaff/data에 복사하세요"
+
+#. iOS: instruction to copy game files via Files app
+msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
+msgstr "파일 앱을 사용하여 게임 파일을 이 앱의 Firestaff/data에 복사하세요"

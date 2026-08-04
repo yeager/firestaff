@@ -7,7 +7,7 @@
  * Replaces ad-hoc getenv/snprintf path wiring that was duplicated across
  * config_m12.c, asset_status_m12.c, card_art_m12.c, and m11_game_view.c.
  *
- * Platform support: macOS, Linux, Windows (MSVC + MinGW).
+ * Platform support: macOS, Linux, Windows (MSVC + MinGW), iOS, Android.
  * No dynamic allocation — all output goes into caller-owned buffers.
  */
 
@@ -106,6 +106,8 @@ int FSP_GetUserConfigDir(char* out, size_t outSize);
  * Get the default game-data directory for retail game files.
  *   macOS/Linux: ~/.firestaff/data
  *   Windows:     %USERPROFILE%\.firestaff\data
+ *   iOS:         $HOME/Documents/Firestaff/data  (app sandbox)
+ *   Android:     /sdcard/Documents/Firestaff/data
  * Returns 1 on success, 0 on error.
  */
 int FSP_GetDefaultOriginalsDir(char* out, size_t outSize);
@@ -114,9 +116,7 @@ int FSP_GetDefaultOriginalsDir(char* out, size_t outSize);
  * Resolve the game data directory.  Priority:
  *   1. `requestedDir` if non-NULL and non-empty
  *   2. FIRESTAFF_DATA environment variable
- *   3. macOS/Linux: ~/.firestaff/data
- *   4. Windows: %USERPROFILE%\.firestaff\data
- *   5. Current directory "./data"
+ *   3. Platform default (see FSP_GetDefaultOriginalsDir)
  * Returns 1 on success, 0 on error.
  */
 int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir);

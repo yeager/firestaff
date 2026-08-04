@@ -640,3 +640,19 @@ msgstr "Stereo"
 
 msgid "OK"
 msgstr "OK"
+
+#. Popup title when no game data files are found at startup
+msgid "NO GAME DATA FOUND"
+msgstr "INGEN SPELDATA HITTADES"
+
+#. Desktop: instruction to copy game files
+msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
+msgstr "KOPIERA ORIGINALSPELFILERNA TILL DATAKATALOGEN"
+
+#. Android: instruction to copy game files via file manager
+msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
+msgstr "KOPIERA SPELFILER TILL Documents/Firestaff/data MED EN FILHANTERARE"
+
+#. iOS: instruction to copy game files via Files app
+msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
+msgstr "ANVÄND APPEN FILER FÖR ATT KOPIERA SPELFILER TILL Firestaff/data I DENNA APP"

@@ -280,3 +280,19 @@ msgstr "SZŰRŐ"
 
 msgid "VSYNC"
 msgstr "VSYNC"
+
+#. Popup title when no game data files are found at startup
+msgid "NO GAME DATA FOUND"
+msgstr "NEM TALÁLHATÓ JÁTÉKADAT"
+
+#. Desktop: instruction to copy game files
+msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
+msgstr "MÁSOLJA AZ EREDETI JÁTÉKFÁJLOKAT AZ ADATKÖNYVTÁRBA"
+
+#. Android: instruction to copy game files via file manager
+msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
+msgstr "MÁSOLJA A JÁTÉKFÁJLOKAT A Documents/Firestaff/data MAPPÁBA EGY FÁJLKEZELŐVEL"
+
+#. iOS: instruction to copy game files via Files app
+msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
+msgstr "HASZNÁLJA A FÁJLOK ALKALMAZÁST A JÁTÉKFÁJLOK MÁSOLÁSÁHOZ A Firestaff/data MAPPÁBA EBBEN AZ ALKALMAZÁSBAN"

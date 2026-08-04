@@ -1,5 +1,15 @@
 
 
+# Firestaff v3.0.278
+- iOS and Android build support: cross-compilation toolchains, packaging scripts, CI jobs
+- GitHub Actions release workflow: iOS .ipa (AltStore Classic sideload) and Android .apk artifacts
+- Wiki pages: Home, Architecture, Building, Game Data, Parity Evidence, Release Process
+- Platform-specific game data directories: iOS ($HOME/Documents/Firestaff/data),
+  Android (/sdcard/Documents/Firestaff/data) with auto-creation and translated first-launch popup
+- i18n: 4 new startup-menu strings translated to all 20 languages
+- CI fixes: remove -fembed-bitcode (Xcode 14+), Android shared library target,
+  conditional PkgConfig for cross-compilation
+
 # Firestaff v3.0.277
 - DM1: complete G0243 struct decode — sightRange, smellRange, attackType,
   woundProbabilities, and properties corrected from PC 3.4 binary

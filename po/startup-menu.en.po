@@ -91,3 +91,19 @@ msgstr "FILTER"
 #. Renderer/settings label
 msgid "VSYNC"
 msgstr "VSYNC"
+
+#. Popup title when no game data files are found at startup
+msgid "NO GAME DATA FOUND"
+msgstr "NO GAME DATA FOUND"
+
+#. Desktop: instruction to copy game files
+msgid "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
+msgstr "COPY ORIGINAL GAME FILES INTO THE DATA DIRECTORY"
+
+#. Android: instruction to copy game files via file manager
+msgid "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
+msgstr "COPY GAME FILES TO Documents/Firestaff/data USING A FILE MANAGER"
+
+#. iOS: instruction to copy game files via Files app
+msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
+msgstr "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"

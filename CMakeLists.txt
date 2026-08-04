@@ -3924,7 +3924,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.277 LANGUAGES C)
+project(Firestaff VERSION 3.0.278 LANGUAGES C)
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -4009,7 +4009,11 @@ else()
 endif()
 
 # ── SDL discovery (prefer SDL3, fall back to SDL2) ──────────────────
-find_package(PkgConfig REQUIRED)
+if(NOT CMAKE_SYSTEM_NAME STREQUAL "iOS" AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
+    find_package(PkgConfig REQUIRED)
+else()
+    find_package(PkgConfig QUIET)
+endif()
 find_package(SDL3 QUIET CONFIG)
 if(SDL3_FOUND)
     message(STATUS "Found SDL3")
@@ -4869,7 +4873,12 @@ if(NOT MSVC)
 endif()
 
 # ── Main executable ──────────────────────────────────────────────────
-add_executable(firestaff src/shared/firestaff_main_m11.c)
+if(CMAKE_SYSTEM_NAME STREQUAL "Android")
+    add_library(firestaff SHARED src/shared/firestaff_main_m11.c)
+    set_target_properties(firestaff PROPERTIES OUTPUT_NAME "main")
+else()
+    add_executable(firestaff src/shared/firestaff_main_m11.c)
+endif()
 # M11 objects referenced by the executable call back into M12 menu/asset helpers;
 # repeat M12 after M11 so static linkers resolve both directions.
 # firestaff_v2 and firestaff_m10 are already pulled in transitively:

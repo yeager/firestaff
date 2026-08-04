@@ -25,6 +25,10 @@
 #define FSP_ALT_SEP '\\'
 #endif
 
+#if defined(__APPLE__)
+#include <TargetConditionals.h>
+#endif
+
 /* ── Internal helpers ───────────────────────────────────────────────── */
 
 static int fsp_is_separator(char c) {
@@ -313,7 +317,33 @@ int FSP_GetDefaultOriginalsDir(char* out, size_t outSize) {
         return 0;
     }
 
-#if defined(_WIN32)
+#if defined(__ANDROID__)
+    /* Android: app-private external storage under Documents/Firestaff/data.
+     * SDL_GetPrefPath is not available here (no SDL dependency), so use the
+     * standard Android external storage path. Users transfer game data via
+     * USB/file manager to this location. */
+    {
+        const char* extStorage = getenv("EXTERNAL_STORAGE");
+        if (extStorage && extStorage[0] != '\0') {
+            rc = snprintf(out, outSize, "%s/Documents/Firestaff/data", extStorage);
+            return rc > 0 && (size_t)rc < outSize;
+        }
+    }
+    fsp_copy(out, outSize, "/sdcard/Documents/Firestaff/data");
+    return 1;
+#elif defined(__APPLE__) && TARGET_OS_IOS
+    /* iOS: Documents/Firestaff/data inside the app sandbox.
+     * Users transfer game data via the Files app or iTunes File Sharing. */
+    {
+        const char* home = getenv("HOME");
+        if (home && home[0] != '\0') {
+            rc = snprintf(out, outSize, "%s/Documents/Firestaff/data", home);
+            return rc > 0 && (size_t)rc < outSize;
+        }
+    }
+    fsp_copy(out, outSize, "./data");
+    return 1;
+#elif defined(_WIN32)
     {
         const char* userProfile = getenv("USERPROFILE");
         if (userProfile && userProfile[0] != '\0') {
@@ -345,7 +375,6 @@ int FSP_GetDefaultOriginalsDir(char* out, size_t outSize) {
 
 int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir) {
     const char* envData;
-    int rc;
 
     if (!out || outSize == 0U) {
         return 0;
@@ -364,45 +393,8 @@ int FSP_ResolveDataDir(char* out, size_t outSize, const char* requestedDir) {
         return 1;
     }
 
-#if defined(_WIN32)
-    /* Priority 3: Windows public releases default to the same user-owned
-     * Firestaff game-data root shape as macOS/Linux: ~/.firestaff/data,
-     * expressed with the Windows user profile directory. */
-    {
-        const char* userProfile = getenv("USERPROFILE");
-        if (userProfile && userProfile[0] != '\0') {
-            rc = snprintf(out, outSize, "%s\\.firestaff\\data", userProfile);
-            return rc > 0 && (size_t)rc < outSize;
-        }
-    }
-
-    /* Priority 4: APPDATA fallback for unusual Windows environments that
-     * expose roaming app data but not USERPROFILE. */
-    {
-        const char* appData = getenv("APPDATA");
-        if (appData && appData[0] != '\0') {
-            rc = snprintf(out, outSize, "%s\\Firestaff\\data", appData);
-            return rc > 0 && (size_t)rc < outSize;
-        }
-    }
-    fsp_copy(out, outSize, ".\\data");
-    return 1;
-#else
-    /* Priority 3: macOS/Linux public releases default to ~/.firestaff/data.
-     * This path is documented for user-owned game data and must not depend on
-     * whether the directory already exists. */
-    {
-        const char* home = getenv("HOME");
-        if (home && home[0] != '\0') {
-            rc = snprintf(out, outSize, "%s/.firestaff/data", home);
-            return rc > 0 && (size_t)rc < outSize;
-        }
-    }
-
-    /* Priority 4: current directory data folder. */
-    fsp_copy(out, outSize, "./data");
-    return 1;
-#endif
+    /* Priority 3: platform-specific default. */
+    return FSP_GetDefaultOriginalsDir(out, outSize);
 }
 
 int FSP_SetEnv(const char* name, const char* value, int overwrite) {

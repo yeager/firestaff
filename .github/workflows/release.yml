@@ -484,9 +484,150 @@ jobs:
             release/Firestaff-${{ env.FIRESTAFF_VERSION }}-linux-${{ matrix.arch }}.sha256
           if-no-files-found: error
 
+  ios:
+    name: iOS arm64
+    needs: preflight
+    runs-on: macos-14
+    permissions:
+      contents: read
+    env:
+      FIRESTAFF_VERSION: ${{ needs.preflight.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Install dependencies
+        run: brew install cmake ninja || true
+
+      - name: Build SDL3 for iOS
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
+          cmake -S /tmp/SDL3 -B /tmp/SDL3-ios-build -G Ninja \
+            -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_ARCHITECTURES=arm64 \
+            -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DSDL_SHARED=OFF \
+            -DSDL_STATIC=ON \
+            -DSDL_TESTS=OFF \
+            -DCMAKE_INSTALL_PREFIX=/tmp/SDL3-ios
+          cmake --build /tmp/SDL3-ios-build --parallel
+          cmake --install /tmp/SDL3-ios-build
+
+      - name: Configure
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="${PWD}/cmake/ios-arm64.toolchain.cmake" \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH=/tmp/SDL3-ios \
+            -DCMAKE_FIND_ROOT_PATH=/tmp/SDL3-ios
+
+      - name: Build
+        run: cmake --build build --target firestaff --parallel
+
+      - name: Package IPA
+        run: |
+          set -euo pipefail
+          VERSION="$FIRESTAFF_VERSION" \
+          BUILD_DIR="$PWD/build" \
+          PLIST_SRC="$PWD/assets/Info-iOS.plist" \
+          RELEASE_DIR="$PWD/release" \
+          ./scripts/package_ios.sh
+
+          cd release
+          shasum -a 256 \
+            "Firestaff-${FIRESTAFF_VERSION}-ios-arm64.ipa" \
+            > "Firestaff-${FIRESTAFF_VERSION}-ios-arm64.sha256"
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: firestaff-${{ env.FIRESTAFF_VERSION }}-ios-arm64
+          path: |
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-ios-arm64.ipa
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-ios-arm64.sha256
+          if-no-files-found: error
+
+  android:
+    name: Android arm64
+    needs: preflight
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+    env:
+      FIRESTAFF_VERSION: ${{ needs.preflight.outputs.version }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Set up Android SDK and NDK
+        run: |
+          set -euo pipefail
+          export ANDROID_SDK_ROOT="${ANDROID_SDK_ROOT:-$ANDROID_HOME}"
+          echo "ANDROID_SDK_ROOT=${ANDROID_SDK_ROOT}" >> "$GITHUB_ENV"
+          yes | "${ANDROID_SDK_ROOT}/cmdline-tools/latest/bin/sdkmanager" \
+            "ndk;27.0.12077973" \
+            "build-tools;34.0.0" \
+            "platforms;android-34" || true
+          echo "ANDROID_NDK_HOME=${ANDROID_SDK_ROOT}/ndk/27.0.12077973" >> "$GITHUB_ENV"
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake ninja-build pkg-config
+
+      - name: Build SDL3 for Android
+        run: |
+          set -euo pipefail
+          git clone --depth 1 --branch "$SDL3_TAG" https://github.com/libsdl-org/SDL.git /tmp/SDL3
+          cmake -S /tmp/SDL3 -B /tmp/SDL3-android-build -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=24 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DSDL_SHARED=ON \
+            -DSDL_STATIC=OFF \
+            -DSDL_TESTS=OFF \
+            -DCMAKE_INSTALL_PREFIX=/tmp/SDL3-android
+          cmake --build /tmp/SDL3-android-build --parallel
+          cmake --install /tmp/SDL3-android-build
+
+      - name: Configure
+        run: |
+          cmake -B build -G Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="${ANDROID_NDK_HOME}/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=arm64-v8a \
+            -DANDROID_PLATFORM=24 \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DCMAKE_PREFIX_PATH=/tmp/SDL3-android \
+            -DBUILD_SHARED_LIBS=ON
+
+      - name: Build
+        run: cmake --build build --target firestaff --parallel
+
+      - name: Package APK
+        run: |
+          set -euo pipefail
+          VERSION="$FIRESTAFF_VERSION" \
+          BUILD_DIR="$PWD/build" \
+          MANIFEST_SRC="$PWD/assets/AndroidManifest.xml" \
+          RELEASE_DIR="$PWD/release" \
+          ./scripts/package_android.sh
+
+          cd release
+          sha256sum \
+            "Firestaff-${FIRESTAFF_VERSION}-android-arm64.apk" \
+            > "Firestaff-${FIRESTAFF_VERSION}-android-arm64.sha256"
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: firestaff-${{ env.FIRESTAFF_VERSION }}-android-arm64
+          path: |
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-android-arm64.apk
+            release/Firestaff-${{ env.FIRESTAFF_VERSION }}-android-arm64.sha256
+          if-no-files-found: error
+
   publish:
     name: Publish GitHub Release
-    needs: [preflight, macos, windows, linux]
+    needs: [preflight, macos, windows, linux, ios, android]
     runs-on: ubuntu-24.04
     permissions:
       contents: write
@@ -530,7 +671,7 @@ jobs:
             echo ""
             echo "## Release assets"
             echo ""
-            echo "This release includes macOS arm64, macOS x86_64, Windows x86_64, Linux x86_64, Linux arm64, and Steam Deck x86_64 packages. Steam Deck provides both a pacman package and an AppImage; use the x86_64 packages, not the Linux ARM64 artifact. Original Dungeon Master game data is not included."
+            echo "This release includes macOS arm64, macOS x86_64, Windows x86_64, Linux x86_64, Linux arm64, Steam Deck x86_64, iOS arm64 (.ipa for AltStore Classic sideload), and Android arm64 (.apk) packages. Steam Deck provides both a pacman package and an AppImage; use the x86_64 packages, not the Linux ARM64 artifact. The iOS .ipa can be sideloaded via AltStore Classic without an Apple Developer account. Original Dungeon Master game data is not included."
             echo ""
             if [[ -n "$previous_tag" ]]; then
               echo "Full changelog: https://github.com/${GITHUB_REPOSITORY}/compare/${previous_tag}...${FIRESTAFF_TAG}"
@@ -579,3 +720,9 @@ jobs:
               --notes-file generated_notes.md \
               "${release_flags[@]}"
           fi
+
+      - name: Sync wiki pages
+        shell: bash
+        run: |
+          set -euo pipefail
+          WIKI_SRC="$PWD/docs/wiki" ./scripts/sync_wiki.sh
