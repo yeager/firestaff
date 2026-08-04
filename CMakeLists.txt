@@ -15640,6 +15640,36 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_util
     )
 
+    add_executable(test_dm2_v1_data_tables
+        tests/test_dm2_v1_data_tables_pc34_compat.c
+        src/dm2/dm2_v1_data_tables_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_data_tables PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_data_tables PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_data_tables
+        COMMAND test_dm2_v1_data_tables
+    )
+
+    add_executable(test_dm2_v1_palette
+        tests/test_dm2_v1_palette_pc34_compat.c
+        src/dm2/dm2_v1_palette_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_palette PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_palette PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_palette
+        COMMAND test_dm2_v1_palette
+    )
+
     add_executable(test_dm2_v1_actuator_ops
         tests/test_dm2_v1_actuator_ops.c
         src/dm2/dm2_v1_actuator_ops_pc34_compat.c
@@ -47969,6 +47999,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_rect_pc34_compat.c
         src/dm2/dm2_v1_skill_query_pc34_compat.c
         src/dm2/dm2_v1_util_pc34_compat.c
+        src/dm2/dm2_v1_palette_pc34_compat.c
+        src/dm2/dm2_v1_data_tables_pc34_compat.c
         src/dm2/dm2_v1_timer_ops_pc34_compat.c
         src/dm2/dm2_v1_engage_command_pc34_compat.c
         src/dm2/dm2_v1_hero_ops_pc34_compat.c
