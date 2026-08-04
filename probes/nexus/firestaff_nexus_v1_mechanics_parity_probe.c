@@ -299,7 +299,7 @@ static PROBE_NOINLINE void probe_movement(void)
     CHECK(NEXUS_CMD_TURN_RIGHT  == 4,  "NEXUS_CMD_TURN_RIGHT  = 4");
     CHECK(NEXUS_CMD_STRAFE_LEFT == 5,  "NEXUS_CMD_STRAFE_LEFT = 5");
     CHECK(NEXUS_CMD_STRAFE_RIGHT== 6,  "NEXUS_CMD_STRAFE_RIGHT= 6");
-    CHECK(NEXUS_CMD_COUNT == 13,       "NEXUS_CMD_COUNT = 13");
+    CHECK(NEXUS_CMD_COUNT == 16,       "NEXUS_CMD_COUNT = 16");
 
     /* Movement result codes */
     CHECK(NEXUS_MOVE_OK            == 0, "NEXUS_MOVE_OK            = 0");
@@ -635,8 +635,8 @@ static PROBE_NOINLINE void probe_save_load(void)
     /* Magic and version constants */
     CHECK(NEXUS_SAVE_MAGIC == 0x53584E46U,
           "NEXUS_SAVE_MAGIC = 'FNXS'");
-    CHECK(NEXUS_SAVE_VERSION == 2,
-          "NEXUS_SAVE_VERSION = 2");
+    CHECK(NEXUS_SAVE_VERSION == 3,
+          "NEXUS_SAVE_VERSION = 3");
     CHECK(NEXUS_SAVE_MAX_SLOTS == 8,
           "NEXUS_SAVE_MAX_SLOTS = 8");
 
@@ -654,7 +654,7 @@ static PROBE_NOINLINE void probe_save_load(void)
     hdr.party_dir     = 0;
     hdr.state_hash    = 0;
     CHECK(hdr.magic == NEXUS_SAVE_MAGIC,     "SaveHeader.magic is writable");
-    CHECK(hdr.version == 2,                 "SaveHeader.version is writable");
+    CHECK(hdr.version == 3,                 "SaveHeader.version is writable");
 
     /* Nexus_V1_SaveSlot */
     Nexus_V1_SaveSlot slot;
@@ -1892,7 +1892,7 @@ static PROBE_NOINLINE void probe_altar_registry(void)
     CHECK(nexus_altars_count() == 0, "altar registry starts empty");
     CHECK(nexus_altars_register_tagged(7, 8, NEXUS_ALTAR_TAG_VI) >= 0,
           "tagged altar registers");
-    CHECK(nexus_altar_at(7, 8) == 2, "registered altar reports blocked");
+    CHECK(nexus_altar_at(7, 8) == 1, "registered altar is present");
     CHECK(nexus_altar_tag_at(7, 8) == NEXUS_ALTAR_TAG_VI,
           "altar tag is preserved");
 

@@ -32,6 +32,7 @@
 #include <string.h>
 #include <stdint.h>
 #include "nexus_v1_creatures.h"
+#include "nexus_v1_combat.h"
 #include "nexus_v1_dungeon.h"
 
 static int g_pass = 0;
@@ -127,23 +128,22 @@ int main(void) {
               "distance=1 -> state=3 (attack range)");
     }
 
-    /* 4. Chase triggers movement on speed-based interval.
-     *    Start at (3,0) with party at (0,0) -> dist=3 -> chase. */
+    /* 4. Chase triggers movement on probability roll.
+     *    Start at (3,0) with party at (0,0) -> dist=3, det=3 -> chase.
+     *    Seed combat RNG for determinism. Speed=3 means random(100)+1>=3
+     *    (~98% chance per tick). Run 20 ticks to ensure at least one move. */
     {
         Nexus_V1_CreatureManager mgr;
         memset(&mgr, 0, sizeof(mgr));
-        /* speed=3 -> movement every (6-3)=3 ticks. */
+        nexus_v1_combat_seed(42);
         spawn_basic(&mgr, 3, 0);
-        /* First tick sets state=2 (chase); movement triggers on
-         * ai_timer % 3 == 0, i.e. on ticks 0 (after the first
-         * increment), 3, 6. */
-        for (int i = 0; i < 6; ++i) {
+        for (int i = 0; i < 20; ++i) {
             nexus_v1_creatures_tick(&mgr, 0, 0, g_empty_map, 0);
         }
-        CHECK(mgr.active[0].x < 3,
-              "speed=3 chase triggers movement (x decremented from 3)");
-        CHECK(mgr.active[0].state == 2,
-              "speed=3 chase stays in state=2 after movement");
+        CHECK(mgr.active[0].x != 3 || mgr.active[0].y != 0,
+              "speed=3 chase triggers movement (position changed from 3,0)");
+        CHECK(mgr.active[0].state == 2 || mgr.active[0].state == 3,
+              "creature in chase or attack range after movement");
     }
 
     /* 5. Alert-all sweep forces every active creature to state=2. */
@@ -180,7 +180,7 @@ int main(void) {
         for (int rep = 0; rep < 5; ++rep) {
             Nexus_V1_CreatureManager mgr;
             memset(&mgr, 0, sizeof(mgr));
-            srand(0x5EEDu);
+            nexus_v1_combat_seed(0x5EEDu);
             spawn_basic(&mgr, 10, 10);
             spawn_basic(&mgr, 5, 5);
             spawn_basic(&mgr, 2, 2);

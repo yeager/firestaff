@@ -50,12 +50,12 @@ int main(void) {
         }
     }
 
-    /* Test 4: spell damage — DM.BIN 0x038320/0x038340 real values */
+    /* Test 4: spell damage — DM.BIN 0x03B5DC magnitude table */
     {
         int d0 = nexus_v1_spell_damage(0, NEXUS_SPELL_CLASS_PRIEST);
         int d5 = nexus_v1_spell_damage(5, NEXUS_SPELL_CLASS_WIZARD);
-        if (d0 != 56 || d5 != 102) {
-            fprintf(stderr, "FAIL: spell damage: d0=%d (exp 56) d5=%d (exp 102)\n", d0, d5);
+        if (d0 != 40 || d5 != 240) {
+            fprintf(stderr, "FAIL: spell damage: d0=%d (exp 40) d5=%d (exp 240)\n", d0, d5);
             fail++;
         } else {
             printf("  Spell damage: LO priest=%d, MON wizard=%d OK\n", d0, d5);

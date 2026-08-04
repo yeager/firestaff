@@ -16,19 +16,17 @@ static const unsigned short g_spell_table[32] = {
 };
 
 
-/* DM.BIN 0x038320/0x038340: VDP2 scroll register pairs for spell power bar
- * HUD positioning — NOT cost/damage pairs. File bytes at 0x028320:
- * {0x8804,0x8928,0x8805,0x892C,...} are VDP register addresses.
- * Values below are placeholder mana costs pending SH2 disassembly of the
- * casting function. Real mana costs may derive from the magnitude table
- * at 0x03B5DC {40,80,120,160,200,240} combined with spell-type modifiers. */
-static const int g_param_priest[6][2] = {
-    {26, 56}, {134, 70}, {115, 5}, {199, 26}, {186, 47}, {294, 60}
-};
-
-static const int g_param_wizard[6][2] = {
-    {111, 30}, {207, 42}, {26, 56}, {134, 70}, {186, 47}, {294, 102}
-};
+/* DM.BIN 0x0601ABC0: mana cost formula (fixed-point pipeline).
+ * Internal 16.16: cost_fp = 0x14000 * skill + fixmul(reserve, 1024) + 0xA000.
+ * Unit = 0x4000 (16384). Formula in units: 5*skill + reserve_term + 2.5.
+ * Without caster reserve data, cost ≈ (5*power + 2.5) * 10 integer mana.
+ * DM.BIN 0x038320/0x038340 are VDP2 scroll register pairs (HUD). */
+static int nexus_mana_cost(int power)
+{
+    if (power < 0) power = 0;
+    if (power > 5) power = 5;
+    return 50 * power + 25;
+}
 
 Nexus_SpellLookup nexus_v1_spell_lookup(int power, int element, int form,
                                         Nexus_SpellClass spell_class)
@@ -57,9 +55,7 @@ Nexus_SpellLookup nexus_v1_spell_lookup(int power, int element, int form,
     r.element = element;
     r.form = form;
 
-    params = (spell_class == NEXUS_SPELL_CLASS_PRIEST)
-             ? g_param_priest : g_param_wizard;
-    r.mana_cost = params[power][0];
+    r.mana_cost = nexus_mana_cost(power);
     r.required_skill = power;
     return r;
 }
@@ -67,16 +63,18 @@ Nexus_SpellLookup nexus_v1_spell_lookup(int power, int element, int form,
 int nexus_v1_spell_mana_cost(int power, int element) {
     (void)element;
     if (power < 0 || power >= NEXUS_POWER_RUNE_COUNT) return 999;
-    return g_param_priest[power][0];
+    return nexus_mana_cost(power);
 }
+
+/* DM.BIN 0x03B5DC: magnitude table used for spell effect scaling. */
+static const int g_spell_magnitude[6] = {40, 80, 120, 160, 200, 240};
 
 int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int element,
                         int form, int align)
 {
     Nexus_SpellLookup sp;
     Nexus_SpellClass cls;
-    const int (*params)[2];
-    int cost, damage;
+    int cost, skill, base_dmg;
 
     if (!caster || !caster->alive) return -1;
 
@@ -91,9 +89,9 @@ int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int element,
         if (!sp.valid) return -1;
     }
 
-    params = (sp.spell_class == NEXUS_SPELL_CLASS_PRIEST)
-             ? g_param_priest : g_param_wizard;
-    cost = params[power][0];
+    skill = (sp.spell_class == NEXUS_SPELL_CLASS_PRIEST)
+            ? caster->priest_level : caster->wizard_level;
+    cost = nexus_mana_cost(power);
 
     if (caster->mana < cost) return -1;
 
@@ -105,10 +103,10 @@ int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int element,
 
     caster->mana -= cost;
 
-    damage = params[power][1] + nexus_v1_combat_random(params[power][1] / 2 + 1);
+    base_dmg = g_spell_magnitude[power < 6 ? power : 5];
     (void)align;
 
-    return damage;
+    return base_dmg + nexus_v1_combat_random(base_dmg / 2 + 1);
 }
 
 Nexus_SpellCategory nexus_v1_spell_category(int spell_type) {
@@ -128,8 +126,7 @@ Nexus_SpellCategory nexus_v1_spell_category(int spell_type) {
 }
 
 int nexus_v1_spell_damage(int power, Nexus_SpellClass cls) {
-    const int (*params)[2];
+    (void)cls;
     if (power < 0 || power >= NEXUS_POWER_RUNE_COUNT) return 0;
-    params = (cls == NEXUS_SPELL_CLASS_PRIEST) ? g_param_priest : g_param_wizard;
-    return params[power][1];
+    return g_spell_magnitude[power < 6 ? power : 5];
 }

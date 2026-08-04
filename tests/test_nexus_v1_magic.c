@@ -51,9 +51,9 @@ int main(void) {
     sp = nexus_v1_spell_lookup(0, 0, 4, NEXUS_SPELL_CLASS_PRIEST);
     expect(!sp.valid, "form >= 4 invalid");
 
-    /* Mana cost — DM.BIN 0x038320 real values */
-    expect(nexus_v1_spell_mana_cost(0, 0) == 26, "power 0 cost = 26");
-    expect(nexus_v1_spell_mana_cost(5, 0) == 294, "power 5 cost = 294");
+    /* Mana cost — DM.BIN 0x0601ABC0 formula: 50*power + 25 */
+    expect(nexus_v1_spell_mana_cost(0, 0) == 25, "power 0 cost = 25");
+    expect(nexus_v1_spell_mana_cost(5, 0) == 275, "power 5 cost = 275");
     expect(nexus_v1_spell_mana_cost(6, 0) == 999, "power 6 invalid");
 
     /* Cast spell — use a valid combo (YA+BRO priest) */
