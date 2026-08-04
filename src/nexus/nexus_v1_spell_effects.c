@@ -24,24 +24,34 @@
 #include "nexus_v1_spell_effects.h"
 #include <string.h>
 
-/* DM.BIN 0x01ECD8: real system copies stat modifiers directly from spell struct
- * fields (7 stat slots at struct+0x21, 10 modifier words at struct+0x58).
- * Effect magnitudes below use power scaling; real values come from spell data
- * structs (7 stat slots at +0x21, 10 modifier words at +0x58) loaded from
- * game files at runtime — they are DATA, not CODE, and are not in DM.BIN. */
+/* DM.BIN 0x03B5DC: spell magnitude table {40,80,120,160,200,240} step 40.
+ * DM.BIN 0x36AD8: light power index tables (4 groups × 6 entries).
+ * DM.BIN 0x36AF0: duration multiplier tables {8,12,16,20,24,28}/{4,8,12,16,20,24}.
+ * DM.BIN 0x36AFC: light power % table (identical to DM1 G0039).
+ * All magnitudes are CODE-computed in DM.BIN, not loaded from external files. */
+static const int nexus_spell_magnitude[6] = {40, 80, 120, 160, 200, 240};
+static const int nexus_light_power_idx[6] = {1, 2, 3, 4, 5, 6};
+static const int nexus_light_pct[16] = {
+    0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100
+};
+static const int nexus_duration_mult_a[6] = {8, 12, 16, 20, 24, 28};
+static const int nexus_duration_mult_b[6] = {4, 8, 12, 16, 20, 24};
+
 Nexus_SpellEffectResult nexus_v1_spell_effect_party(
     int spell_type, int power,
     Nexus_V1_Champion *caster,
     Nexus_StatusEffects *status,
     Nexus_LightState *light) {
     Nexus_SpellEffectResult r;
+    int pidx;
     memset(&r, 0, sizeof(r));
 
     if (!caster) return r;
+    pidx = (power < 0) ? 0 : (power > 5) ? 5 : power;
 
     switch (spell_type) {
     case NEXUS_SPELL_EFFECT_HEAL: {
-        int amount = (power + 1) * 10;
+        int amount = nexus_spell_magnitude[pidx];
         caster->health += amount;
         if (caster->health > caster->max_health)
             caster->health = caster->max_health;
@@ -52,22 +62,25 @@ Nexus_SpellEffectResult nexus_v1_spell_effect_party(
     case NEXUS_SPELL_EFFECT_SHIELD:
         if (status) {
             nexus_v1_status_apply(status, NEXUS_STATUS_SHIELD,
-                                  (power + 1) * 60, (power + 1) * 5);
+                                  2000 * nexus_duration_mult_a[pidx],
+                                  nexus_spell_magnitude[pidx] / 8);
             r.status_applied = 1;
         }
         r.applied = 1;
         break;
     case NEXUS_SPELL_EFFECT_LIGHT:
         if (light) {
-            nexus_v1_light_add(light, (power + 1) * 3);
-            r.light_added = (power + 1) * 3;
+            int lpct = nexus_light_pct[nexus_light_power_idx[pidx]];
+            nexus_v1_light_add(light, lpct);
+            r.light_added = lpct;
         }
         r.applied = 1;
         break;
     case NEXUS_SPELL_EFFECT_STRENGTH:
         if (status) {
             nexus_v1_status_apply(status, NEXUS_STATUS_HASTE,
-                                  (power + 1) * 80, (power + 1) * 3);
+                                  2000 * nexus_duration_mult_b[pidx],
+                                  nexus_spell_magnitude[pidx] / 12);
             r.status_applied = 1;
         }
         r.applied = 1;
@@ -91,7 +104,7 @@ Nexus_SpellEffectResult nexus_v1_spell_effect_party(
 
 /* DM.BIN 0x012232: projectile creation uses BCD-decoded coordinates from spell
  * data struct, with damage from combat tables at 0x06080C98. Damage values below
- * use power scaling; real values from game data tables, not DM.BIN code. */
+ * use power scaling from nexus_spell_magnitude table at 0x03B5DC. */
 int nexus_v1_spell_effect_attack_projectile(
     int spell_type, int power,
     enum Nexus_ProjectileType *out_type,

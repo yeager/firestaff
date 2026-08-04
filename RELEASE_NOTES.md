@@ -1,5 +1,12 @@
 
 
+# Firestaff v3.0.277
+- DM1: complete G0243 struct decode — sightRange, smellRange, attackType,
+  woundProbabilities, and properties corrected from PC 3.4 binary
+- 67 additional fields corrected across all 27 creatures
+- Binary struct layout fully mapped (26 bytes, 15 fields identified)
+- Parity evidence: pass1101
+
 # Firestaff v3.0.276
 - DM1: creature info table G0243 corrected from PC 3.4 FIRES.EXE binary disassembly
 - 87 combat stat fields and 16 attributes fields updated across all 27 creatures

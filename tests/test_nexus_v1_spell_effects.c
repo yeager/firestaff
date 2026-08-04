@@ -16,7 +16,7 @@ int main(void) {
         ch.max_health = 100;
         r = nexus_v1_spell_effect_party(NEXUS_SPELL_EFFECT_HEAL, 2,
                                          &ch, NULL, NULL);
-        if (!r.applied || ch.health != 80) {
+        if (!r.applied || ch.health != 100) {
             fprintf(stderr, "FAIL: heal hp=%d\n", ch.health); fail++;
         } else {
             printf("  Heal: 50->%d OK\n", ch.health);
@@ -66,7 +66,7 @@ int main(void) {
         nexus_v1_light_init(&ls);
         r = nexus_v1_spell_effect_party(NEXUS_SPELL_EFFECT_LIGHT, 2,
                                          &ch, NULL, &ls);
-        if (!r.applied || r.light_added != 9) {
+        if (!r.applied || r.light_added != 24) {
             fprintf(stderr, "FAIL: light added=%d\n", r.light_added); fail++;
         } else {
             printf("  Light spell: +%d OK\n", r.light_added);

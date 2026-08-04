@@ -3025,8 +3025,10 @@ that its exact runtime path is not already source-locked and tested.
     LoS, attacks, projectile impacts, drops, deaths, sound, and active-group
     scheduling beyond the current bounded receipts. v3.0.276: creature info
     table G0243 corrected from PC 3.4 binary — 87 combat stats and 16
-    attributes fields now match FIRES.EXE. Remaining: decode bytes 13-25
-    (sightRange, smellRange, attackType, woundProbabilities).
+    attributes fields now match FIRES.EXE. v3.0.277: full 26-byte struct
+    decoded — sightRange, smellRange, attackType, woundProbabilities, and
+    properties all corrected (67 more fields). Remaining: bytes 18-21
+    (4 unknown bytes per creature).
 16. **DM1-ITEM-INVENTORY-INTERACTION:** Complete C05-C13 object placement,
     chest, quiver, food, potion, scroll, weapon, armour, and inventory drag/
     drop interaction from original data records.

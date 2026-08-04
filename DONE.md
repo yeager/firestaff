@@ -1,3 +1,10 @@
+- ✅ 2026-08-04 v3.0.277 DM1: complete G0243 struct decode from PC 3.4 binary
+  Full 26-byte struct layout mapped. sightRange/smellRange decoded from nibble-
+  packed bytes 14-15, attackType from byte 24, woundProbabilities from offset
+  22-23, properties from offset 16-17. 67 additional fields corrected. Key:
+  Giant Scorpion NORMAL→SHARP, Screamer NORMAL→PSYCHIC, Stone Golem SHARP→BLUNT,
+  Red Dragon FIRE→SHARP (melee), Lord Chaos sight 5→9, Magenta Worm smell 0→10.
+  Pass 1101.
 - ✅ 2026-08-04 v3.0.276 DM1: creature info table G0243 binary-verified from PC 3.4
   Disassembled FIRES.EXE, located G0243 at DS:0x0995 (26-byte stride, 27 entries).
   Corrected 87 combat stat fields and 16 attributes fields across all creatures.

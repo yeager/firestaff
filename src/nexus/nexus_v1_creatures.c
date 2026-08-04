@@ -140,9 +140,9 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
         if (c->level != map_index) continue;
         /* Fail-closed: actors without a proven type binding (type_index
          * < 0) have no source-locked stats, and hidden actors (Structure1B
-         * invisible-by-default bit, DMWeb: the Grey Lord on LEV1.DGN) wait
-         * for a reveal trigger whose semantics are not yet source-locked.
-         * Neither may move or attack. */
+         * invisible-by-default bit) wait for SLEV reveal triggers.
+         * SLEV01.BIN entry 1 (0x018C): engine cmd R4=9, model index at
+         * RAM 0x0020116C. Guarded by byte 7 bit 3 one-shot flag. */
         if (c->type_index < 0 || c->hidden) continue;
 
         /* Alarm override: while a level alarm is active, all living creatures
