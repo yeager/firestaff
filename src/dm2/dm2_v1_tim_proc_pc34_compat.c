@@ -85,7 +85,7 @@ int32_t dm2_v1_timproc_compute_flag(int32_t yB_value, int32_t current_flag,
 }
 
 /* ── PROCESS_TIMER_0C: set hero ready flag ──────────────────────── */
-void dm2_v1_process_timer_0c(
+void dm2_v1_process_timer_0c_receipt(
     int16_t hero_index,
     const DM2_V1_TimProcCallbacks *cb, void *ctx,
     DM2_V1_ProcessTimer0CReceipt *receipt)
@@ -455,7 +455,7 @@ void dm2_v1_invoke_message(
 }
 
 /* ── INVOKE_ACTUATOR ────────────────────────────────────────────── */
-void dm2_v1_invoke_actuator(
+void dm2_v1_invoke_actuator_receipt(
     uint8_t *addr, int32_t param, int32_t extra,
     const DM2_V1_TimProcCallbacks *cb, void *ctx,
     DM2_V1_InvokeActuatorReceipt *receipt)
@@ -543,7 +543,7 @@ void dm2_v1_proceed_timers(
 
         case DM2_TIMER_TYPE_0C: {
             DM2_V1_ProcessTimer0CReceipt cr;
-            dm2_v1_process_timer_0c(tim.actor, cb, ctx, &cr);
+            dm2_v1_process_timer_0c_receipt(tim.actor, cb, ctx, &cr);
             break;
         }
 

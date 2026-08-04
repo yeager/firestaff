@@ -335,7 +335,7 @@ void dm2_v1_proceed_timers(
     DM2_V1_ProceedTimersReceipt *receipt);
 
 /* Individual timer handlers */
-void dm2_v1_process_timer_0c(
+void dm2_v1_process_timer_0c_receipt(
     int16_t hero_index,
     const DM2_V1_TimProcCallbacks *cb, void *ctx,
     DM2_V1_ProcessTimer0CReceipt *receipt);
@@ -380,7 +380,7 @@ void dm2_v1_invoke_message(
     const DM2_V1_TimProcCallbacks *cb, void *ctx,
     DM2_V1_InvokeMessageReceipt *receipt);
 
-void dm2_v1_invoke_actuator(
+void dm2_v1_invoke_actuator_receipt(
     uint8_t *addr, int32_t param, int32_t extra,
     const DM2_V1_TimProcCallbacks *cb, void *ctx,
     DM2_V1_InvokeActuatorReceipt *receipt);

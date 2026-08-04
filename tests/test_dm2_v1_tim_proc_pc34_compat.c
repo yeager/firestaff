@@ -250,7 +250,7 @@ static void test_null_safety(void)
     dm2_v1_proceed_timers(NULL, NULL, NULL);
 
     DM2_V1_ProcessTimer0CReceipt cr;
-    dm2_v1_process_timer_0c(0, NULL, NULL, &cr);
+    dm2_v1_process_timer_0c_receipt(0, NULL, NULL, &cr);
     assert(cr.fail_closed == 1);
 
     DM2_V1_ProcessTimerResurrectionReceipt rr;
@@ -277,7 +277,7 @@ static void test_null_safety(void)
     assert(imr.fail_closed == 1);
 
     DM2_V1_InvokeActuatorReceipt iar;
-    dm2_v1_invoke_actuator(NULL, 0, 0, NULL, NULL, &iar);
+    dm2_v1_invoke_actuator_receipt(NULL, 0, 0, NULL, NULL, &iar);
     assert(iar.fail_closed == 1);
 
     printf("  PASS: null_safety\n");
@@ -323,7 +323,7 @@ static void test_process_timer_0c_alive(void)
     ctx.hero_hp = 50;
 
     DM2_V1_ProcessTimer0CReceipt r;
-    dm2_v1_process_timer_0c(2, &cb, &ctx, &r);
+    dm2_v1_process_timer_0c_receipt(2, &cb, &ctx, &r);
     assert(r.valid == 1);
     assert(r.hero_flag_set == 1);
     assert(r.hero_index == 2);
@@ -339,7 +339,7 @@ static void test_process_timer_0c_dead(void)
     ctx.hero_hp = 0;
 
     DM2_V1_ProcessTimer0CReceipt r;
-    dm2_v1_process_timer_0c(1, &cb, &ctx, &r);
+    dm2_v1_process_timer_0c_receipt(1, &cb, &ctx, &r);
     assert(r.valid == 1);
     assert(r.hero_flag_set == 0);
 
@@ -512,7 +512,7 @@ static void test_invoke_actuator(void)
 
     /* Without invoke_message callback, actuator still parses but does not invoke */
     DM2_V1_InvokeActuatorReceipt r;
-    dm2_v1_invoke_actuator(addr, 0, 0, &cb, &ctx, &r);
+    dm2_v1_invoke_actuator_receipt(addr, 0, 0, &cb, &ctx, &r);
     assert(r.valid == 1);
     assert(r.actuator_invoked == 1);
 
