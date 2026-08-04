@@ -15553,6 +15553,22 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_timer_ops
     )
 
+    add_executable(test_dm2_v1_timer_dispatch_wiring
+        tests/test_dm2_v1_timer_dispatch_wiring_pc34_compat.c
+        src/dm2/dm2_v1_timer_dispatch_wiring_pc34_compat.c
+        src/dm2/dm2_v1_timer_ops_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_timer_dispatch_wiring PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_timer_dispatch_wiring PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_timer_dispatch_wiring
+        COMMAND test_dm2_v1_timer_dispatch_wiring
+    )
+
     add_executable(test_dm2_v1_timer_queue
         tests/test_dm2_v1_timer_queue_pc34_compat.c
         src/dm2/dm2_v1_timer_queue_pc34_compat.c
