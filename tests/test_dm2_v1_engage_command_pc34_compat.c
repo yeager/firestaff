@@ -443,6 +443,187 @@ static void test_cast_missile_with_callback(void)
     printf("  PASS: cast_missile_with_callback\n");
 }
 
+static int g_timer_queued;
+static uint8_t g_timer_type;
+static int16_t g_timer_delay;
+
+static int mock_queue_timer(void *ctx, uint8_t type, int16_t delay,
+                            uint32_t game_tick, int16_t map)
+{
+    (void)ctx; (void)game_tick; (void)map;
+    g_timer_queued = 1;
+    g_timer_type = type;
+    g_timer_delay = delay;
+    return 1;
+}
+
+static void test_attack_with_timer_callback(void)
+{
+    DM2_V1_EngageCommandReceipt receipt;
+    DM2_V1_EngageCommandRequest req = make_request(2);
+    req.queue_timer_cb = mock_queue_timer;
+    req.queue_timer_ctx = NULL;
+    req.attack_counter = 0;
+    req.attack_hero_flag = 1;
+    g_timer_queued = 0;
+
+    int r = dm2_v1_engage_command(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.attack_queued == 1);
+    assert(!receipt.fail_closed);
+    assert(g_timer_queued);
+    assert(g_timer_type == 0x47);
+    assert(g_timer_delay == 64);
+    assert(receipt.hero_flag_set == 1);
+    printf("  PASS: attack_with_timer_callback\n");
+}
+
+static int g_consume_called;
+static int g_consume_hero_idx;
+
+static int mock_consume(void *ctx, int hero_idx, uint16_t item, int hand)
+{
+    (void)ctx; (void)item; (void)hand;
+    g_consume_called = 1;
+    g_consume_hero_idx = hero_idx;
+    return 1;
+}
+
+static void test_consume_with_callback(void)
+{
+    DM2_V1_EngageCommandReceipt receipt;
+    DM2_V1_EngageCommandRequest req = make_request(16);
+    req.consume_cb = mock_consume;
+    req.consume_ctx = NULL;
+    req.hero_index = 2;
+    g_consume_called = 0;
+
+    int r = dm2_v1_engage_command(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.consumed == 1);
+    assert(!receipt.fail_closed);
+    assert(g_consume_called);
+    assert(g_consume_hero_idx == 2);
+    printf("  PASS: consume_with_callback\n");
+}
+
+static int g_cloud_created;
+
+static int mock_create_cloud(void *ctx, int16_t type, int16_t power,
+                             int16_t x, int16_t y, uint8_t duration)
+{
+    (void)ctx; (void)x; (void)y; (void)duration;
+    g_cloud_created = 1;
+    assert(type == (int16_t)0xff8e);
+    assert(power >= 2);
+    return 1;
+}
+
+static void test_cloud_with_callback(void)
+{
+    DM2_V1_EngageCommandReceipt receipt;
+    DM2_V1_EngageCommandRequest req = make_request(7); /* case 6 */
+    req.create_cloud_cb = mock_create_cloud;
+    req.create_cloud_ctx = NULL;
+    g_cloud_created = 0;
+
+    int r = dm2_v1_engage_command(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.cloud_created == 1);
+    assert(!receipt.fail_closed);
+    assert(g_cloud_created);
+    printf("  PASS: cloud_with_callback\n");
+}
+
+static int g_move_called;
+
+static int mock_move_record(void *ctx, int16_t src_x, int16_t src_y,
+                            int16_t dst_x, int16_t dst_y)
+{
+    (void)ctx; (void)src_x; (void)src_y; (void)dst_x; (void)dst_y;
+    g_move_called = 1;
+    return 1;
+}
+
+static void test_step_forward_with_callback(void)
+{
+    DM2_V1_EngageCommandReceipt receipt;
+    DM2_V1_EngageCommandRequest req = make_request(10); /* case 9 */
+    req.move_record_cb = mock_move_record;
+    req.move_record_ctx = NULL;
+    req.step_tile_type = 2;
+    req.step_creature_flags = (int16_t)0x8000;
+    g_move_called = 0;
+
+    int r = dm2_v1_engage_command(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.stepped_forward == 1);
+    assert(!receipt.fail_closed);
+    assert(g_move_called);
+
+    /* Non-corridor tile → no step */
+    req.step_tile_type = 4;
+    g_move_called = 0;
+    r = dm2_v1_engage_command(&req, &receipt);
+    assert(r == 0);
+    assert(!g_move_called);
+
+    printf("  PASS: step_forward_with_callback\n");
+}
+
+static int g_turn_called;
+
+static int mock_turn(void *ctx, int hero_idx, int hand, int16_t swap_dir)
+{
+    (void)ctx; (void)hero_idx; (void)hand; (void)swap_dir;
+    g_turn_called = 1;
+    return 1;
+}
+
+static void test_turn_with_callback(void)
+{
+    DM2_V1_EngageCommandReceipt receipt;
+    DM2_V1_EngageCommandRequest req = make_request(42); /* case 41 */
+    req.turn_cb = mock_turn;
+    req.turn_ctx = NULL;
+    req.party_dir = 0;
+    req.hero_party_pos = 1;
+    g_turn_called = 0;
+
+    int r = dm2_v1_engage_command(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.position_swapped == 1);
+    assert(!receipt.fail_closed);
+    assert(g_turn_called);
+    printf("  PASS: turn_with_callback\n");
+}
+
+static int g_release_called;
+
+static int mock_release_minion(void *ctx, uint16_t record)
+{
+    (void)ctx; (void)record;
+    g_release_called = 1;
+    return 1;
+}
+
+static void test_release_minion_with_callback(void)
+{
+    DM2_V1_EngageCommandReceipt receipt;
+    DM2_V1_EngageCommandRequest req = make_request(48); /* case 47 */
+    req.release_minion_cb = mock_release_minion;
+    req.release_minion_ctx = NULL;
+    req.minion_record = 0x42;
+    g_release_called = 0;
+
+    int r = dm2_v1_engage_command(&req, &receipt);
+    assert(r == 1);
+    assert(receipt.minion_released == 1);
+    assert(!receipt.fail_closed);
+    assert(g_release_called);
+    printf("  PASS: release_minion_with_callback\n");
+}
+
 int main(void)
 {
     printf("test_dm2_v1_engage_command_pc34_compat:\n");
@@ -466,6 +647,12 @@ int main(void)
     test_ability_enchantment();
     test_hero_act_enchantment();
     test_cast_missile_with_callback();
+    test_attack_with_timer_callback();
+    test_consume_with_callback();
+    test_cloud_with_callback();
+    test_step_forward_with_callback();
+    test_turn_with_callback();
+    test_release_minion_with_callback();
     printf("All engage command tests passed.\n");
     return 0;
 }

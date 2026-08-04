@@ -85,7 +85,7 @@ typedef struct {
                        int direction);
 } DM2_V1_ActivateShooterCallbacks;
 
-void dm2_v1_activate_shooter(
+void dm2_v1_activate_shooter_narrow(
     int timer_idx, int16_t x, int16_t y, uint16_t item, int direction,
     const DM2_V1_ActivateShooterCallbacks *cb, void *ctx);
 
@@ -520,7 +520,7 @@ typedef struct {
     void (*recompute_player_weight)(void *ctx, int hero_idx);
 } DM2_V1_SelectChampionCallbacks;
 
-void dm2_v1_select_champion(
+void dm2_v1_select_champion_narrow(
     const DM2_V1_SelectChampionState *state, int creation_map_id,
     int previous_map_id, int new_hero_idx,
     const DM2_V1_SelectChampionCallbacks *cb, void *ctx);
@@ -561,7 +561,7 @@ typedef struct {
     int32_t (*dispatch)(void *ctx, int hero_idx, int resolved_cmd, int alt_flag);
 } DM2_V1_EngageCommandCallbacks;
 
-int32_t dm2_v1_engage_command(
+int32_t dm2_v1_engage_command_narrow(
     int hero_idx, int command_id,
     const DM2_V1_EngageCommandCallbacks *cb, void *ctx);
 
@@ -940,7 +940,7 @@ typedef struct {
                         int16_t dst_x, int16_t dst_y, int32_t mode);
 } DM2_V1_ActivateItemTeleportCallbacks;
 
-int32_t dm2_v1_activate_item_teleport(
+int32_t dm2_v1_activate_item_teleport_narrow(
     uint16_t item, int16_t src_x, int16_t src_y,
     int16_t dst_x, int16_t dst_y, int32_t mode,
     const DM2_V1_ActivateItemTeleportCallbacks *cb, void *ctx);

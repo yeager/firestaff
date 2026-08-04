@@ -61,7 +61,7 @@ void dm2_v1_activate_continuous_ornate_animator(
     cb->requeue_timer(ctx, timer_idx, delay);
 }
 
-void dm2_v1_activate_shooter(
+void dm2_v1_activate_shooter_narrow(
     int timer_idx, int16_t x, int16_t y, uint16_t item, int direction,
     const DM2_V1_ActivateShooterCallbacks *cb, void *ctx)
 {
@@ -798,7 +798,7 @@ void dm2_v1_revive_player(
 }
 
 /* DM2_SELECT_CHAMPION — c_hero.cpp:1052 */
-void dm2_v1_select_champion(
+void dm2_v1_select_champion_narrow(
     const DM2_V1_SelectChampionState *state, int creation_map_id,
     int previous_map_id, int new_hero_idx,
     const DM2_V1_SelectChampionCallbacks *cb, void *ctx)
@@ -834,7 +834,7 @@ void dm2_v1_select_champion(
  * c_engage.cpp
  * ===================================================================== */
 
-int32_t dm2_v1_engage_command(
+int32_t dm2_v1_engage_command_narrow(
     int hero_idx, int command_id,
     const DM2_V1_EngageCommandCallbacks *cb, void *ctx)
 {
@@ -1326,7 +1326,7 @@ void dm2_v1_move_item_to(
     cb->link_to_tile(ctx, item, x, y);
 }
 
-int32_t dm2_v1_activate_item_teleport(
+int32_t dm2_v1_activate_item_teleport_narrow(
     uint16_t item, int16_t src_x, int16_t src_y,
     int16_t dst_x, int16_t dst_y, int32_t mode,
     const DM2_V1_ActivateItemTeleportCallbacks *cb, void *ctx)

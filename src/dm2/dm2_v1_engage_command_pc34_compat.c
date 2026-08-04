@@ -85,12 +85,20 @@ int dm2_v1_engage_command(
         receipt->success = 0;
         break;
 
-    case 1: /* ATTACK: queue timer 0x47 */
+    case 1: /* ATTACK: queue timer 0x47 — skengage.cpp:203-222 */
         receipt->attack_queued = 1;
         receipt->cooldown_applied = request->cmd.delay;
         if (receipt->cooldown_applied < 32)
             receipt->cooldown_applied = 32;
-        receipt->fail_closed = 1;
+        if (request->queue_timer_cb) {
+            if (request->attack_counter == 0 && request->attack_hero_flag != 0)
+                receipt->hero_flag_set = 1;
+            request->queue_timer_cb(request->queue_timer_ctx, 0x47,
+                                    receipt->cooldown_applied,
+                                    request->game_tick, request->party_map);
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
     case 2: /* CAST_CHAMPION_MISSILE_SPELL — skengage.cpp:224-256 */
@@ -114,10 +122,22 @@ int dm2_v1_engage_command(
         }
         break;
 
-    case 3: /* WIELD_WEAPON */
+    case 3: /* WIELD_WEAPON — skengage.cpp:258-312 */
     case 7: /* WIELD_WEAPON (variant) */
         receipt->weapon_wielded = 1;
-        receipt->fail_closed = 1;
+        if (request->wield_cb) {
+            int tile_type = (request->tile_value >> 5) & 0xff;
+            int tile_sub = request->tile_value & 0x7;
+            if (tile_type == 4 && tile_sub == 4) {
+                receipt->door_attacked = 1;
+            } else if (request->creature_at_target != -1) {
+                receipt->creature_attacked = 1;
+            } else {
+                receipt->success = 0;
+            }
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
     case 4: /* CONFUSE_CREATURE — skengage.cpp:315-328 */
@@ -151,9 +171,18 @@ int dm2_v1_engage_command(
         }
         break;
 
-    case 6: /* CREATE_CLOUD */
+    case 6: /* CREATE_CLOUD — skengage.cpp:336-343 */
         receipt->cloud_created = 1;
-        receipt->fail_closed = 1;
+        if (request->create_cloud_cb) {
+            int16_t power = request->cmd.delay;
+            if (power < 2) power = 2;
+            request->create_cloud_cb(request->create_cloud_ctx,
+                                     (int16_t)0xff8e, power,
+                                     request->party_x, request->party_y,
+                                     0xff);
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
     case 8: /* HEAL_PARTY: savegames1.b_04 += delay, capped at 255 */
@@ -163,9 +192,26 @@ int dm2_v1_engage_command(
             receipt->cooldown_applied = 32;
         break;
 
-    case 9: /* STEP_FORWARD into creature tile */
+    case 9: /* STEP_FORWARD — skengage.cpp:354-387 */
         receipt->stepped_forward = 1;
-        receipt->fail_closed = 1;
+        if (request->move_record_cb) {
+            int can_step = 1;
+            if (request->step_creature_flags >= 0 &&
+                (request->step_creature_flags & 0x8000) == 0)
+                can_step = 0;
+            if (request->step_tile_type != 2)
+                can_step = 0;
+            if (can_step) {
+                request->move_record_cb(request->move_record_ctx,
+                                        request->party_x, request->party_y,
+                                        request->step_target_x,
+                                        request->step_target_y);
+            } else {
+                receipt->success = 0;
+            }
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
     case 10: /* MANA_GAIN: savegames1.b_03 += delay, capped at 200 */
@@ -195,19 +241,45 @@ int dm2_v1_engage_command(
         break;
     }
 
-    case 15: /* CONSUME object */
+    case 15: /* CONSUME — skengage.cpp:422-424 */
         receipt->consumed = 1;
-        receipt->fail_closed = 1;
+        if (request->consume_cb) {
+            request->consume_cb(request->consume_ctx,
+                                request->hero_index,
+                                (uint16_t)request->item_handle,
+                                request->hand);
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
-    case 16: /* EQUIP item to hand */
+    case 16: /* EQUIP — skengage.cpp:426-439 */
         receipt->equipped = 1;
-        receipt->fail_closed = 1;
+        if (request->equip_cb) {
+            request->equip_cb(request->equip_ctx,
+                              request->hero_index, request->hand);
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
-    case 31: /* SHOOT_CHAMPION_MISSILE */
+    case 31: /* SHOOT_CHAMPION_MISSILE — skengage.cpp:441-485 */
         receipt->missile_shot = 1;
-        receipt->fail_closed = 1;
+        if (request->shoot_cb) {
+            DM2_V1_ShootMissileState ms;
+            ms.abs_dir = (uint8_t)(request->hero_abs_dir & 0x3);
+            ms.party_pos = (uint8_t)request->hero_party_pos;
+            ms.party_x = request->party_x;
+            ms.party_y = request->party_y;
+            dm2_v1_shoot_champion_missile(
+                &ms, request->shoot_item,
+                request->shoot_damage, request->shoot_kinetic,
+                request->shoot_spell_power,
+                (const DM2_V1_ShootMissileCallbacks *)request->shoot_cb,
+                request->shoot_ctx);
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
     case 32: /* HERO_ACT — skengage.cpp:487-510 */
@@ -265,37 +337,102 @@ int dm2_v1_engage_command(
         break;
     }
 
-    case 41: /* TURN/POSITION swap */
+    case 41: /* TURN/POSITION swap — skengage.cpp:547-565 */
         receipt->position_swapped = 1;
-        receipt->fail_closed = 1;
+        if (request->turn_cb) {
+            int16_t swap_dir;
+            int16_t hero_pos = request->hero_party_pos;
+            int16_t fwd = (request->party_dir + 1) & 0x3;
+            int16_t back = (request->party_dir + 2) & 0x3;
+            if (hero_pos == fwd) {
+                swap_dir = back;
+            } else if (hero_pos == back) {
+                swap_dir = fwd;
+            } else {
+                swap_dir = 0;
+            }
+            receipt->success = request->turn_cb(request->turn_ctx,
+                                                request->hero_index,
+                                                request->hand, swap_dir);
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
-    case 43: /* SET_MINION_DESTINATION */
+    case 43: /* SET_MINION_DESTINATION — skengage.cpp:567-576 */
         receipt->minion_dest_set = 1;
-        receipt->fail_closed = 1;
+        if (request->set_minion_dest_cb) {
+            int r = request->set_minion_dest_cb(
+                request->set_minion_dest_ctx,
+                request->item_handle,
+                request->party_x, request->party_y,
+                request->party_map);
+            if (!r) {
+                receipt->success = 0;
+                receipt->skill_exp_gained = 0;
+            }
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
-    case 44: /* MINION missile */
+    case 44: /* MINION missile — skengage.cpp:578-613 */
     case 45: /* MINION attack */
-        receipt->fail_closed = 1;
+        if (request->create_minion_cb) {
+            receipt->minion_created = 1;
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
-    case 46: /* CREATE_MINION type 0x30 */
+    case 46: /* CREATE_MINION type 0x30 — skengage.cpp:616-686 */
     case 48: /* CREATE_MINION type 0x31 */
     case 49: /* CREATE_MINION type 0x34 */
     case 50: /* CREATE_MINION type 0x35 */
+    {
+        static const uint8_t minion_type_map[] = {
+            [46] = 0x30, [48] = 0x31, [49] = 0x34, [50] = 0x35
+        };
         receipt->minion_created = 1;
-        receipt->fail_closed = 1;
+        if (request->create_minion_cb) {
+            int16_t power = request->cmd.delay;
+            power = (int16_t)((power << 16) >> 19);
+            int16_t dir = (int16_t)((request->party_dir + 2) & 0x3);
+            int r = request->create_minion_cb(
+                request->create_minion_ctx,
+                minion_type_map[action_case], power, dir,
+                request->party_x, request->party_y,
+                request->party_map, request->item_handle,
+                (int8_t)(request->party_dir & 0xff));
+            if (!r) {
+                receipt->success = 0;
+            }
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
+    }
 
-    case 47: /* RELEASE_MINION */
+    case 47: /* RELEASE_MINION — skengage.cpp:622-625 */
         receipt->minion_released = 1;
-        receipt->fail_closed = 1;
+        if (request->release_minion_cb) {
+            request->release_minion_cb(request->release_minion_ctx,
+                                       request->minion_record);
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
-    case 53: /* LOAD_GDAT_INTERFACE */
+    case 53: /* LOAD_GDAT_INTERFACE — skengage.cpp:645-655 */
         receipt->interface_loaded = 1;
-        receipt->fail_closed = 1;
+        if (request->load_interface_cb) {
+            int r = request->load_interface_cb(request->load_interface_ctx);
+            if (r) {
+                receipt->success = 0;
+            }
+        } else {
+            receipt->fail_closed = 1;
+        }
         break;
 
     default:

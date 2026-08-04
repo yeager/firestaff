@@ -124,6 +124,64 @@ typedef struct {
     int16_t shoot_kinetic;
     int16_t shoot_spell_power;
     int16_t shoot_mp_cost;
+
+    /* case 1 ATTACK: queue timer 0x47 */
+    int (*queue_timer_cb)(void *ctx, uint8_t type, int16_t delay,
+                          uint32_t game_tick, int16_t map);
+    void *queue_timer_ctx;
+    uint8_t attack_counter;   /* savegames1.b_02 pre-increment value */
+    int16_t attack_hero_flag; /* v1e0976: hero index+1 that gets 0x4000 flag */
+
+    /* case 3/7 WIELD: wield weapon + attack door/creature */
+    const void *wield_cb;     /* DM2_V1_WieldWeaponCallbacks* */
+    void *wield_ctx;
+    int16_t wield_strength;   /* pre-computed attack/throw strength */
+
+    /* case 6 CLOUD: create cloud at party position */
+    int (*create_cloud_cb)(void *ctx, int16_t type, int16_t power,
+                           int16_t x, int16_t y, uint8_t duration);
+    void *create_cloud_ctx;
+
+    /* case 9 STEP: move party into creature tile */
+    int (*move_record_cb)(void *ctx, int16_t src_x, int16_t src_y,
+                          int16_t dst_x, int16_t dst_y);
+    void *move_record_ctx;
+    int16_t step_target_x;    /* pre-computed facing tile coords */
+    int16_t step_target_y;
+    int16_t step_creature_flags; /* creature AI spec flags at target */
+    int16_t step_tile_type;   /* tile type at step target (bits 7:5) */
+
+    /* case 15 CONSUME */
+    int (*consume_cb)(void *ctx, int hero_idx, uint16_t item, int hand);
+    void *consume_ctx;
+
+    /* case 16 EQUIP */
+    int (*equip_cb)(void *ctx, int hero_idx, int hand);
+    void *equip_ctx;
+
+    /* case 41 TURN: position swap */
+    int (*turn_cb)(void *ctx, int hero_idx, int hand, int16_t swap_dir);
+    void *turn_ctx;
+
+    /* case 43 SET_MINION_DEST */
+    int (*set_minion_dest_cb)(void *ctx, uint16_t item,
+                              int16_t x, int16_t y, int16_t map);
+    void *set_minion_dest_ctx;
+
+    /* case 47 RELEASE_MINION */
+    int (*release_minion_cb)(void *ctx, uint16_t minion_record);
+    void *release_minion_ctx;
+    uint16_t minion_record;   /* word_at(item_record, 2) */
+
+    /* case 46/48/49/50 CREATE_MINION */
+    int (*create_minion_cb)(void *ctx, uint8_t type, int16_t power,
+                            int16_t dir, int16_t x, int16_t y,
+                            int16_t map, uint16_t item, int8_t facing);
+    void *create_minion_ctx;
+
+    /* case 53 LOAD_GDAT_INTERFACE */
+    int (*load_interface_cb)(void *ctx);
+    void *load_interface_ctx;
 } DM2_V1_EngageCommandRequest;
 
 /* Engage command receipt — what the dispatcher did. */
@@ -155,6 +213,9 @@ typedef struct {
     int position_swapped;
     int interface_loaded;
     int enchantment_cast;
+    int hero_flag_set;
+    int door_attacked;
+    int creature_attacked;
 
     int16_t cooldown_applied;
     int16_t stamina_cost;

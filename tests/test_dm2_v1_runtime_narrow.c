@@ -301,7 +301,7 @@ static int32_t ec_dispatch(void *ctx, int hero_idx, int cmd, int alt)
 static void test_engage_command(void)
 {
     DM2_V1_EngageCommandCallbacks cb = { ec_is_dead, ec_resolve, ec_dispatch };
-    int32_t result = dm2_v1_engage_command(2, 5, &cb, NULL);
+    int32_t result = dm2_v1_engage_command_narrow(2, 5, &cb, NULL);
     assert(result == 205);
     printf("test_engage_command OK\n");
 }
