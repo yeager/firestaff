@@ -2,43 +2,85 @@
 
 ## What
 
-Wire 7 implemented timer ops handlers into the DM2_V1_TimerDispatcher
-framework via adapter functions that bridge the uniform TimerTypeHandler
-signature to the narrow per-timer callback APIs.
+Wire all 26 of 26 source timer-type-matrix entries into the
+DM2_V1_TimerDispatcher framework via adapter functions that bridge the
+uniform TimerTypeHandler signature to the narrow per-timer callback APIs.
+Behaviourally complex types without a ported implementation yet are wired
+as acknowledged stub handlers (return 0, fail-closed) rather than left
+unbound, so `dm2_v1_timer_type_is_known()` membership and the wiring table
+now agree on the full matrix.
 
 ## Wired timer types
 
-| Type | Name | skproject source |
-|------|------|-----------------|
-| 0x02 | DESTROY_DOOR | c_tim_proc.cpp:422 |
-| 0x0E | PROCESS_0E | SkWinCore.cpp:2173 |
-| 0x3D | PROCESS_3D | c_tim_proc.cpp:902 |
-| 0x46 | LIGHT | c_tim_proc.cpp:918 |
-| 0x55 | ORNATE_ANIMATOR | c_tim_proc.cpp:961 |
-| 0x56 | TICK_GENERATOR | c_tim_proc.cpp:994 |
-| 0x58 | RELEASE_DOOR_BUTTON | c_tim_proc.cpp:1068 |
+| Type | Name | skproject source | Status |
+|------|------|-----------------|--------|
+| 0x01 | STEP_DOOR | c_tim_proc.cpp | delegated |
+| 0x02 | DESTROY_DOOR | c_tim_proc.cpp:422 | delegated |
+| 0x04 | ACTUATE_TILE (classes 2/4/5/6) | c_tim_proc.cpp:4214-4230 | delegated via actuator_tile[] |
+| 0x0C | PROCESS_TIMER_0C | c_tim_proc.cpp:30 | delegated |
+| 0x0D | RESURRECTION | c_tim_proc.cpp | stub |
+| 0x0E | PROCESS_0E | SkWinCore.cpp:2173 | delegated |
+| 0x15 | PROCESS_SOUND | c_tim_proc.cpp:4066 | delegated |
+| 0x19 | PROCESS_CLOUD | c_tim_proc.cpp | stub |
+| 0x1E | STEP_MISSILE | c_tim_proc.cpp | stub |
+| 0x21 | THINK_CREATURE_A | c_tim_proc.cpp | stub |
+| 0x22 | THINK_CREATURE_B | c_tim_proc.cpp | stub |
+| 0x3D | PROCESS_3D | c_tim_proc.cpp:902 | delegated |
+| 0x46 | LIGHT | c_tim_proc.cpp:918 | delegated |
+| 0x47 | HERO_ENCH_FLAG | c_tim_proc.cpp:4112 | delegated |
+| 0x48 | ENCH_POWER | c_tim_proc.cpp:4130 | delegated |
+| 0x4B | POISON | c_tim_proc.cpp:4164 | delegated |
+| 0x54 | UPDATE_WEATHER | c_tim_proc.cpp:4182 | delegated |
+| 0x55 | ORNATE_ANIMATOR | c_tim_proc.cpp:961 | delegated |
+| 0x56 | TICK_GENERATOR | c_tim_proc.cpp:994 | delegated |
+| 0x58 | RELEASE_DOOR_BUTTON | c_tim_proc.cpp:1068 | delegated |
+| 0x59 | PROCESS_TIMER_59 | c_tim_proc.cpp:1077 | delegated |
+| 0x5A | ORNATE_NOISE | c_tim_proc.cpp | stub |
+| 0x5B | RECORD_CLEAR (byte@4 &= ~1) | c_tim_proc.cpp | delegated (inline) |
+| 0x5C | RECORD_SET (byte@2 \|= 1) | c_tim_proc.cpp | delegated (inline) |
+| 0x5D | MOVE_RECORD_ROTATE | c_tim_proc.cpp:4230 | delegated |
+| 0x5E | ALLOC_NEW_CREATURE | c_tim_proc.cpp:4253 | delegated |
 
 ## Design
 
 Each adapter extracts timer fields (value_a, value_b, actor, reserved) into
-the per-handler callback struct, then delegates to the existing timer ops
-function. Handlers with missing callback fields return 0 (fail-closed),
-propagating the dispatcher's receipt counting.
+the per-handler callback struct, then delegates to the corresponding timer
+ops function in `dm2_v1_timer_ops_pc34_compat.c`. Handlers with missing
+callback fields return 0 (fail-closed), propagating the dispatcher's
+receipt counting.
 
-`DM2_V1_TimerDispatchWiringContext` aggregates all callback function pointers
-the host must provide. Fields left NULL cause their timer types to gracefully
+`DM2_V1_TimerDispatchWiringContext` aggregates all callback function
+pointers the host must provide, including hero-state arrays (timeridx,
+curHP, heroflag, ench_power, poisoned/poison) indexed per party slot, and
+the actuator-tile subdispatch functions (pitfall/door/teleporter/trickwall)
+used by 0x04. Fields left NULL cause their timer types to gracefully
 reject (handler returns 0, counted as handler_rejected_count).
 
-## Remaining types (19 of 26)
+0x04 ACTUATE_TILE is not registered in `dispatcher->handlers[]` at all —
+the dispatcher core (`dm2_v1_proceed_timers.c`) already owns the
+square-class subdispatch via `dispatcher->tile_class_at` and
+`dispatcher->actuator_tile[0..6]`; this wiring module only supplies
+classes 2 (pitfall), 4 (door), 5 (teleporter), and 6 (trickwall). Classes
+0/1 (wall/floor mecha no-op) and 3 (fall-through no-op) are handled inside
+the dispatcher core itself and need no adapter here.
 
-0x01 STEP_DOOR, 0x04 ACTUATE_TILE subdispatch, 0x0C, 0x0D RESURRECTION,
-0x15 SOUND, 0x19 CLOUD, 0x1E STEP_MISSILE, 0x21/0x22 THINK_CREATURE,
-0x47 HERO_ENCH_FLAG, 0x48 ENCH_POWER, 0x4B POISON, 0x54 UPDATE_WEATHER,
-0x59, 0x5A ORNATE_NOISE, 0x5B/0x5C record flag ops, 0x5D MOVE_RECORD_ROTATE,
-0x5E ALLOC_NEW_CREATURE.
+Stub handlers (0x0D, 0x19, 0x1E, 0x21, 0x22, 0x5A) are registered so that
+every known timer type has *some* bound handler — matching source order
+acknowledgement — but always return 0 until their full behavioural port
+lands; this keeps them distinguishable from unknown types (NULL, which the
+dispatcher core still special-cases as `skipped_unknown_type`).
+
+`dm2_v1_process_timer_0c` was renamed `dm2_v1_process_timer_0c_cb` in
+`dm2_v1_timer_ops_pc34_compat.{h,c}` to avoid a duplicate-symbol link
+error against the pre-existing `dm2_v1_process_timer_0c(DM2_V1_HeroState*)`
+in `dm2_v1_hero_ops_pc34_compat.c`, which implements the same source
+routine against a different (already-wired) hero-state abstraction.
 
 ## Test
 
-`test_dm2_v1_timer_dispatch_wiring` — verifies wiring count, handler
-population, NULL safety, fail-closed on missing callbacks, and end-to-end
-RELEASE_DOOR_BUTTON handler with mock record.
+`test_dm2_v1_timer_dispatch_wiring` — verifies wiring count (26), full
+handler-table population for every known type except 0x04 (which is
+verified via `actuator_tile[]` instead), NULL safety, fail-closed on
+missing callbacks, end-to-end RELEASE_DOOR_BUTTON and 5B_RECORD_CLEAR
+handlers with a mock record, and end-to-end 0x04 subdispatch routing to
+the door actuator via a fake tile-class lookup.

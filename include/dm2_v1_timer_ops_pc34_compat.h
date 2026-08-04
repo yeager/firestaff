@@ -142,6 +142,116 @@ int dm2_v1_skw_3a15_0d5c(
     const uint8_t *actuator_record, uint8_t timer_yb,
     const DM2_V1_RotateCreatureActCallbacks *cb, void *ctx);
 
+/* ---- DM2_PROCESS_TIMER_0C (c_tim_proc.cpp:30) ----
+ * Clear hero timer index; set heroflag 0x800 if alive. */
+typedef struct {
+    int16_t *hero_timeridx;
+    int16_t *hero_curHP;
+    uint16_t *hero_heroflag;
+} DM2_V1_Timer0CCallbacks;
+
+void dm2_v1_process_timer_0c_cb(
+    int16_t hero_index,
+    const DM2_V1_Timer0CCallbacks *cb);
+
+/* ---- DM2_PROCESS_SOUND (c_tim_proc.cpp:4066) ----
+ * Trigger a sound effect by ID. */
+typedef struct {
+    void (*play_sound)(void *ctx, int16_t sound_id);
+} DM2_V1_SoundTimerCallbacks;
+
+void dm2_v1_process_timer_sound(
+    int16_t sound_id,
+    const DM2_V1_SoundTimerCallbacks *cb, void *ctx);
+
+/* ---- DM2_UPDATE_WEATHER (c_tim_proc.cpp:4182) ----
+ * Trigger weather update. */
+typedef struct {
+    void (*update_weather)(void *ctx, int16_t mode);
+} DM2_V1_WeatherTimerCallbacks;
+
+void dm2_v1_process_timer_update_weather(
+    int16_t mode,
+    const DM2_V1_WeatherTimerCallbacks *cb, void *ctx);
+
+/* ---- 0x47 HERO_ENCH_FLAG (c_tim_proc.cpp:4112) ----
+ * Decrement savegames1.b_02; if zero and hero present, set heroflag 0x4000. */
+typedef struct {
+    uint8_t *counter;         /* savegames1.b_02 */
+    int16_t hero_slot;        /* v1e0976 — hero who cast */
+    uint16_t *hero_heroflag;  /* hero[slot].heroflag */
+    int16_t *hero_curHP;
+} DM2_V1_HeroEnchFlagCallbacks;
+
+void dm2_v1_process_timer_hero_ench_flag(
+    const DM2_V1_HeroEnchFlagCallbacks *cb);
+
+/* ---- 0x48 ENCH_POWER (c_tim_proc.cpp:4130) ----
+ * Decrement ench_power for party heroes matching actor mask. */
+typedef struct {
+    int16_t heros_in_party;
+    int16_t *hero_ench_power; /* array stride 1 per hero */
+    int16_t *hero_curHP;      /* array stride 1 per hero */
+} DM2_V1_EnchPowerCallbacks;
+
+void dm2_v1_process_timer_ench_power(
+    uint8_t actor_mask, int16_t amount,
+    const DM2_V1_EnchPowerCallbacks *cb);
+
+/* ---- 0x4B POISON (c_tim_proc.cpp:4164) ----
+ * Decrement hero poison counters and apply poison damage. */
+typedef struct {
+    int16_t *hero_poisoned;
+    int16_t *hero_poison;
+    void (*process_poison)(void *ctx, int16_t hero_index, int16_t amount);
+} DM2_V1_PoisonTimerCallbacks;
+
+void dm2_v1_process_timer_poison(
+    uint8_t actor, int16_t amount,
+    const DM2_V1_PoisonTimerCallbacks *cb, void *ctx);
+
+/* ---- 0x59 PROCESS_TIMER_59 (c_tim_proc.cpp:1077) ----
+ * Clear record active bit; flag redraw if on current map. */
+typedef struct {
+    uint8_t *(*get_record_address)(void *ctx, uint16_t rw);
+    int16_t current_map;
+    int16_t party_map;
+    uint8_t *redraw_byte;
+} DM2_V1_Timer59Callbacks;
+
+void dm2_v1_process_timer_59(
+    uint16_t record_word, int16_t timer_map,
+    const DM2_V1_Timer59Callbacks *cb, void *ctx);
+
+/* ---- 0x5D MOVE_RECORD_ROTATE (c_tim_proc.cpp:4230) ----
+ * Move a record and rotate party direction. */
+typedef struct {
+    int (*move_record_to)(void *ctx, uint16_t record, int16_t level,
+                          int16_t unused, int16_t x, int16_t y);
+    void (*party_rotate)(void *ctx, int16_t direction);
+    int16_t party_map;
+} DM2_V1_MoveRecordRotateCallbacks;
+
+void dm2_v1_process_timer_move_record_rotate(
+    uint16_t value_a, int16_t timer_map,
+    int16_t party_x, int16_t party_y,
+    const DM2_V1_MoveRecordRotateCallbacks *cb, void *ctx);
+
+/* ---- 0x5E ALLOC_NEW_CREATURE (c_tim_proc.cpp:4253) ----
+ * Spawn a new creature at timer coordinates. */
+typedef struct {
+    int16_t (*alloc_new_creature)(void *ctx, int16_t type, int16_t x_param,
+                                   int16_t dir, int16_t x, int16_t y);
+    int16_t (*rand_dir)(void *ctx);
+    int16_t (*calc_vector_dir)(void *ctx, int16_t x1, int16_t y1, int16_t x2, int16_t y2);
+    int16_t party_x;
+    int16_t party_y;
+} DM2_V1_AllocNewCreatureCallbacks;
+
+void dm2_v1_process_timer_alloc_new_creature(
+    uint8_t x, uint8_t y, uint8_t creature_type,
+    const DM2_V1_AllocNewCreatureCallbacks *cb, void *ctx);
+
 #ifdef __cplusplus
 }
 #endif

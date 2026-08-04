@@ -1,5 +1,6 @@
 #include "dm2_v1_timer_dispatch_wiring_pc34_compat.h"
 #include "dm2_v1_timer_ops_pc34_compat.h"
+#include "dm2_v1_runtime_parity_pc34_compat.h"
 #include <string.h>
 
 /* Adapter: LIGHT (0x46) */
@@ -137,7 +138,289 @@ static int handle_tick_generator(void *context, const DM2_V1_SourceTimer *timer,
     return 1;
 }
 
-#define WIRED_COUNT 7
+/* Build a DM2_V1_TimerActuatorCallbacks view from the wiring context. */
+static DM2_V1_TimerActuatorCallbacks make_actuator_cb(DM2_V1_TimerDispatchWiringContext *w)
+{
+    DM2_V1_TimerActuatorCallbacks cb;
+    memset(&cb, 0, sizeof(cb));
+    cb.get_tile_byte = NULL;
+    cb.get_record_address = w->get_record_address;
+    cb.queue_noise = w->queue_noise;
+    cb.requeue_timer = NULL;
+    cb.invoke_actuator = NULL;
+    cb.current_map = w->current_map;
+    cb.party_map = w->party_map;
+    cb.redraw_flags = NULL;
+    return cb;
+}
+
+/* Adapter: STEP_DOOR (0x01) */
+static int handle_step_door(void *context, const DM2_V1_SourceTimer *timer,
+                            uint16_t source_index __attribute__((unused)),
+                            DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->step_door_fn)
+        return 0;
+    DM2_V1_TimerActuatorCallbacks cb = make_actuator_cb(w);
+    int16_t x = (int16_t)(timer->value_a & 0xff);
+    int16_t y = (int16_t)((timer->value_a >> 8) & 0xff);
+    w->step_door_fn(x, y, timer->value_b, (int16_t)timer->actor, &cb, context);
+    return 1;
+}
+
+/* Actuator-tile subdispatch adapters (0x04 classes 2,4,5,6) */
+static int handle_actuate_pitfall(void *context, const DM2_V1_SourceTimer *timer,
+                                  uint16_t source_index __attribute__((unused)),
+                                  DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->actuate_pitfall)
+        return 0;
+    DM2_V1_TimerActuatorCallbacks cb = make_actuator_cb(w);
+    int16_t x = (int16_t)(timer->value_a & 0xff);
+    int16_t y = (int16_t)((timer->value_a >> 8) & 0xff);
+    w->actuate_pitfall(x, y, timer->value_b, &cb, context);
+    return 1;
+}
+
+static int handle_actuate_door(void *context, const DM2_V1_SourceTimer *timer,
+                               uint16_t source_index __attribute__((unused)),
+                               DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->actuate_door_fn)
+        return 0;
+    DM2_V1_TimerActuatorCallbacks cb = make_actuator_cb(w);
+    int16_t x = (int16_t)(timer->value_a & 0xff);
+    int16_t y = (int16_t)((timer->value_a >> 8) & 0xff);
+    w->actuate_door_fn(x, y, timer->value_b, &cb, context);
+    return 1;
+}
+
+static int handle_actuate_teleporter(void *context, const DM2_V1_SourceTimer *timer,
+                                     uint16_t source_index __attribute__((unused)),
+                                     DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->actuate_teleporter_fn)
+        return 0;
+    DM2_V1_TimerActuatorCallbacks cb = make_actuator_cb(w);
+    int16_t x = (int16_t)(timer->value_a & 0xff);
+    int16_t y = (int16_t)((timer->value_a >> 8) & 0xff);
+    w->actuate_teleporter_fn(x, y, timer->value_b, &cb, context);
+    return 1;
+}
+
+static int handle_actuate_trickwall(void *context, const DM2_V1_SourceTimer *timer,
+                                    uint16_t source_index __attribute__((unused)),
+                                    DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->actuate_trickwall_fn)
+        return 0;
+    DM2_V1_TimerActuatorCallbacks cb = make_actuator_cb(w);
+    int16_t x = (int16_t)(timer->value_a & 0xff);
+    int16_t y = (int16_t)((timer->value_a >> 8) & 0xff);
+    w->actuate_trickwall_fn(x, y, timer->value_b, &cb, context);
+    return 1;
+}
+
+/* Adapter: PROCESS_0C (0x0C) */
+static int handle_process_0c(void *context, const DM2_V1_SourceTimer *timer,
+                             uint16_t source_index __attribute__((unused)),
+                             DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->hero_timeridx || !w->hero_curHP || !w->hero_heroflag)
+        return 0;
+    int idx = timer->actor;
+    if (idx < 0 || idx >= w->heros_in_party)
+        return 0;
+    DM2_V1_Timer0CCallbacks cb = {
+        .hero_timeridx = &w->hero_timeridx[idx],
+        .hero_curHP = &w->hero_curHP[idx],
+        .hero_heroflag = &w->hero_heroflag[idx]
+    };
+    dm2_v1_process_timer_0c_cb(timer->actor, &cb);
+    return 1;
+}
+
+/* Adapter: PROCESS_SOUND (0x15) */
+static int handle_process_sound(void *context, const DM2_V1_SourceTimer *timer,
+                                uint16_t source_index __attribute__((unused)),
+                                DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->play_sound)
+        return 0;
+    DM2_V1_SoundTimerCallbacks cb = { .play_sound = w->play_sound };
+    dm2_v1_process_timer_sound(timer->value_a, &cb, context);
+    return 1;
+}
+
+/* Stub handlers: acknowledged, not yet behaviourally implemented. */
+static int handle_stub(void *context __attribute__((unused)),
+                       const DM2_V1_SourceTimer *timer __attribute__((unused)),
+                       uint16_t source_index __attribute__((unused)),
+                       DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    return 0;
+}
+
+/* Adapter: HERO_ENCH_FLAG (0x47) */
+static int handle_hero_ench_flag(void *context, const DM2_V1_SourceTimer *timer __attribute__((unused)),
+                                 uint16_t source_index __attribute__((unused)),
+                                 DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->ench_flag_counter)
+        return 0;
+    DM2_V1_HeroEnchFlagCallbacks cb = {
+        .counter = w->ench_flag_counter,
+        .hero_slot = w->ench_flag_hero_slot,
+        .hero_heroflag = w->hero_heroflag,
+        .hero_curHP = w->hero_curHP
+    };
+    dm2_v1_process_timer_hero_ench_flag(&cb);
+    return 1;
+}
+
+/* Adapter: ENCH_POWER (0x48) */
+static int handle_ench_power(void *context, const DM2_V1_SourceTimer *timer,
+                             uint16_t source_index __attribute__((unused)),
+                             DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->hero_ench_power)
+        return 0;
+    DM2_V1_EnchPowerCallbacks cb = {
+        .heros_in_party = w->heros_in_party,
+        .hero_ench_power = w->hero_ench_power,
+        .hero_curHP = w->hero_curHP
+    };
+    dm2_v1_process_timer_ench_power((uint8_t)timer->actor, timer->value_a, &cb);
+    return 1;
+}
+
+/* Adapter: POISON (0x4B) */
+static int handle_poison(void *context, const DM2_V1_SourceTimer *timer,
+                         uint16_t source_index __attribute__((unused)),
+                         DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->hero_poisoned || !w->hero_poison)
+        return 0;
+    DM2_V1_PoisonTimerCallbacks cb = {
+        .hero_poisoned = w->hero_poisoned,
+        .hero_poison = w->hero_poison,
+        .process_poison = w->process_poison
+    };
+    dm2_v1_process_timer_poison((uint8_t)timer->actor, timer->value_a, &cb, context);
+    return 1;
+}
+
+/* Adapter: UPDATE_WEATHER (0x54) */
+static int handle_update_weather(void *context, const DM2_V1_SourceTimer *timer,
+                                 uint16_t source_index __attribute__((unused)),
+                                 DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->update_weather)
+        return 0;
+    DM2_V1_WeatherTimerCallbacks cb = { .update_weather = w->update_weather };
+    dm2_v1_process_timer_update_weather(timer->value_a, &cb, context);
+    return 1;
+}
+
+/* Adapter: PROCESS_59 (0x59) */
+static int handle_process_59(void *context, const DM2_V1_SourceTimer *timer,
+                             uint16_t source_index __attribute__((unused)),
+                             DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->get_record_address)
+        return 0;
+    DM2_V1_Timer59Callbacks cb = {
+        .get_record_address = w->get_record_address,
+        .current_map = w->current_map,
+        .party_map = w->party_map,
+        .redraw_byte = w->redraw_byte_59
+    };
+    dm2_v1_process_timer_59((uint16_t)timer->value_a, w->current_map, &cb, context);
+    return 1;
+}
+
+/* Adapter: 5B_RECORD_CLEAR (0x5B) — record byte@4 &= ~1 */
+static int handle_5b_record_clear(void *context, const DM2_V1_SourceTimer *timer,
+                                  uint16_t source_index __attribute__((unused)),
+                                  DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->get_record_address)
+        return 0;
+    uint8_t *rec = w->get_record_address(context, (uint16_t)timer->value_a);
+    if (!rec)
+        return 0;
+    rec[4] &= ~0x01;
+    return 1;
+}
+
+/* Adapter: 5C_RECORD_SET (0x5C) — record byte@2 |= 1 */
+static int handle_5c_record_set(void *context, const DM2_V1_SourceTimer *timer,
+                                uint16_t source_index __attribute__((unused)),
+                                DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->get_record_address)
+        return 0;
+    uint8_t *rec = w->get_record_address(context, (uint16_t)timer->value_a);
+    if (!rec)
+        return 0;
+    rec[2] |= 0x01;
+    return 1;
+}
+
+/* Adapter: MOVE_RECORD_ROTATE (0x5D) */
+static int handle_move_record_rotate(void *context, const DM2_V1_SourceTimer *timer,
+                                     uint16_t source_index __attribute__((unused)),
+                                     DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->move_record_to)
+        return 0;
+    DM2_V1_MoveRecordRotateCallbacks cb = {
+        .move_record_to = w->move_record_to,
+        .party_rotate = w->party_rotate,
+        .party_map = w->party_map
+    };
+    dm2_v1_process_timer_move_record_rotate(
+        (uint16_t)timer->value_a, w->current_map, w->party_x, w->party_y, &cb, context);
+    return 1;
+}
+
+/* Adapter: ALLOC_NEW_CREATURE (0x5E) */
+static int handle_alloc_new_creature(void *context, const DM2_V1_SourceTimer *timer,
+                                     uint16_t source_index __attribute__((unused)),
+                                     DM2_V1_ProceedTimersReceipt *receipt __attribute__((unused)))
+{
+    DM2_V1_TimerDispatchWiringContext *w = (DM2_V1_TimerDispatchWiringContext *)context;
+    if (!w->alloc_new_creature || !w->rand_dir)
+        return 0;
+    uint8_t x = (uint8_t)(timer->value_a & 0xff);
+    uint8_t y = (uint8_t)((timer->value_a >> 8) & 0xff);
+    DM2_V1_AllocNewCreatureCallbacks cb = {
+        .alloc_new_creature = w->alloc_new_creature,
+        .rand_dir = w->rand_dir,
+        .calc_vector_dir = w->calc_vector_dir,
+        .party_x = w->party_x,
+        .party_y = w->party_y
+    };
+    dm2_v1_process_timer_alloc_new_creature(x, y, (uint8_t)timer->actor, &cb, context);
+    return 1;
+}
+
+#define WIRED_COUNT 26
 
 void dm2_v1_timer_dispatch_wiring_init(
     DM2_V1_TimerDispatcher *dispatcher,
@@ -148,15 +431,41 @@ void dm2_v1_timer_dispatch_wiring_init(
     dispatcher->context = wiring_ctx;
     memset(dispatcher->handlers, 0, sizeof(dispatcher->handlers));
     memset(dispatcher->actuator_tile, 0, sizeof(dispatcher->actuator_tile));
-    dispatcher->tile_class_at = NULL;
+    dispatcher->tile_class_at = wiring_ctx->tile_class_at;
 
+    dispatcher->handlers[DM2_V1_TIMER_STEP_DOOR] = handle_step_door;
     dispatcher->handlers[DM2_V1_TIMER_DESTROY_DOOR] = handle_destroy_door;
+    dispatcher->handlers[DM2_V1_TIMER_PROCESS_0C] = handle_process_0c;
+    dispatcher->handlers[DM2_V1_TIMER_RESURRECTION] = handle_stub;
     dispatcher->handlers[DM2_V1_TIMER_PROCESS_0E] = handle_process_0e;
+    dispatcher->handlers[DM2_V1_TIMER_PROCESS_SOUND] = handle_process_sound;
+    dispatcher->handlers[DM2_V1_TIMER_PROCESS_CLOUD] = handle_stub;
+    dispatcher->handlers[DM2_V1_TIMER_STEP_MISSILE] = handle_stub;
+    dispatcher->handlers[DM2_V1_TIMER_THINK_CREATURE_A] = handle_stub;
+    dispatcher->handlers[DM2_V1_TIMER_THINK_CREATURE_B] = handle_stub;
     dispatcher->handlers[DM2_V1_TIMER_PROCESS_3D] = handle_process_3d;
     dispatcher->handlers[DM2_V1_TIMER_LIGHT] = handle_light;
+    dispatcher->handlers[DM2_V1_TIMER_HERO_ENCH_FLAG] = handle_hero_ench_flag;
+    dispatcher->handlers[DM2_V1_TIMER_ENCH_POWER] = handle_ench_power;
+    dispatcher->handlers[DM2_V1_TIMER_POISON] = handle_poison;
+    dispatcher->handlers[DM2_V1_TIMER_UPDATE_WEATHER] = handle_update_weather;
     dispatcher->handlers[DM2_V1_TIMER_ORNATE_ANIMATOR] = handle_ornate_animator;
     dispatcher->handlers[DM2_V1_TIMER_TICK_GENERATOR] = handle_tick_generator;
     dispatcher->handlers[DM2_V1_TIMER_RELEASE_DOOR_BUTTON] = handle_release_door_button;
+    dispatcher->handlers[DM2_V1_TIMER_PROCESS_59] = handle_process_59;
+    dispatcher->handlers[DM2_V1_TIMER_ORNATE_NOISE] = handle_stub;
+    dispatcher->handlers[DM2_V1_TIMER_5B_RECORD_CLEAR] = handle_5b_record_clear;
+    dispatcher->handlers[DM2_V1_TIMER_5C_RECORD_SET] = handle_5c_record_set;
+    dispatcher->handlers[DM2_V1_TIMER_MOVE_RECORD_ROTATE] = handle_move_record_rotate;
+    dispatcher->handlers[DM2_V1_TIMER_ALLOC_NEW_CREATURE] = handle_alloc_new_creature;
+
+    /* 0x04 ACTUATE_TILE subdispatch: classes 2 (pitfall), 4 (door),
+     * 5 (teleporter), 6 (trickwall).  Class 0/1 (mecha) and 3 (fall-through
+     * no-op) are handled by the dispatcher core itself. */
+    dispatcher->actuator_tile[2] = handle_actuate_pitfall;
+    dispatcher->actuator_tile[4] = handle_actuate_door;
+    dispatcher->actuator_tile[5] = handle_actuate_teleporter;
+    dispatcher->actuator_tile[6] = handle_actuate_trickwall;
 }
 
 int dm2_v1_timer_dispatch_wiring_count(void)
