@@ -15655,6 +15655,21 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_data_tables
     )
 
+    add_executable(test_dm2_v1_glob_var
+        tests/test_dm2_v1_glob_var_pc34_compat.c
+        src/dm2/dm2_v1_runtime_parity_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_glob_var PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_glob_var PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_glob_var
+        COMMAND test_dm2_v1_glob_var
+    )
+
     add_executable(test_dm2_v1_palette
         tests/test_dm2_v1_palette_pc34_compat.c
         src/dm2/dm2_v1_palette_pc34_compat.c

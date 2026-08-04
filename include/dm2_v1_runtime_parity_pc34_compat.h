@@ -14,13 +14,30 @@
 int16_t dm2_v1_rotate_5x5_pos(int16_t pos, int16_t rotation);
 
 /* =====================================================================
- * dm2global.cpp — DM2_UPDATE_GLOB_VAR
+ * dm2global.cpp — DM2_UPDATE_GLOB_VAR / DM2_GET_GLOB_VAR
+ * Three-tier storage: bits (0x00-0x3F), bytes (0x40-0x7F), words (0x80-0xBF)
  * ===================================================================== */
 
 typedef struct {
-    uint8_t *bit_vars;       /* ddat.v1e0104 — 8 bytes for vars 0x00..0x3F */
-    uint8_t *byte_vars;      /* ddat.globalb — for vars 0x40..0x7F */
-    int16_t *word_vars;      /* ddat.v1e000c — for vars 0x80..0xBF */
+    uint8_t bit_vars[8];     /* ddat.v1e0104 — 64 bit flags */
+    uint8_t byte_vars[64];   /* ddat.globalb — byte vars 0x40..0x7F */
+    int16_t word_vars[192];  /* ddat.v1e000c — word vars 0x00..0xBF */
+} DM2_V1_GlobVarState;
+
+void dm2_v1_glob_var_init(DM2_V1_GlobVarState *state);
+
+int32_t dm2_v1_get_glob_var(
+    const DM2_V1_GlobVarState *state, uint16_t index);
+
+int32_t dm2_v1_update_glob_var_direct(
+    DM2_V1_GlobVarState *state,
+    int16_t var_idx, int16_t mode, int16_t value);
+
+/* Legacy callback interface (retained for existing callers) */
+typedef struct {
+    uint8_t *bit_vars;
+    uint8_t *byte_vars;
+    int16_t *word_vars;
     int16_t (*get_glob_var)(void *ctx, int16_t var_idx);
     int16_t (*between_value)(int16_t lo, int16_t hi, int16_t val);
 } DM2_V1_UpdateGlobVarCallbacks;
