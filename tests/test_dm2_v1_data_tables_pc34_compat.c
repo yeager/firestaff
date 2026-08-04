@@ -302,6 +302,42 @@ static void test_batch3_ornament_position(void)
     printf("test_batch3_ornament_position OK\n");
 }
 
+static void test_batch4_runtime_tables(void)
+{
+    assert(dm2_v1_table_1d7108[0] == 0x01);
+    assert(dm2_v1_table_1d7108[15] == 0x05);
+    assert(dm2_v1_table_1d7108[16] == -5);
+    assert(dm2_v1_table_1d7108[31] == -1);
+    assert(dm2_v1_table_1d7108[127] == -10);
+
+    assert(dm2_v1_table_1d6802[0] == 0x76);
+    assert(dm2_v1_table_1d6802[3] == 0x00);
+    assert(dm2_v1_table_1d6802[271] == 0x58);
+
+    assert(dm2_v1_table_1d39bc[0].w_00 == -0x7f29);
+    assert(dm2_v1_table_1d39bc[0].w_02 == 0x001c);
+    assert(dm2_v1_table_1d39bc[120].w_00 == -0x8000);
+    assert(dm2_v1_table_1d39bc[120].w_02 == 0x0000);
+
+    assert(dm2_v1_table_1d338c[0].a == -0x7f29);
+    assert(dm2_v1_table_1d338c[0].b == 0x0197);
+    assert(dm2_v1_table_1d338c[0].c == 0x8002);
+    assert(dm2_v1_table_1d338c[263].a == -0x8000);
+    assert(dm2_v1_table_1d338c[263].b == 0x0000);
+    assert(dm2_v1_table_1d338c[263].c == 0x0000);
+
+    assert(dm2_v1_table_1d296c[0][0] == 0x45);
+    assert(dm2_v1_table_1d296c[0][35] == 0x02);
+    assert(dm2_v1_table_1d296c[62][0] == 0x40);
+
+    assert(dm2_v1_table_1d653c[0].w_00 == 0x00d1);
+    assert(dm2_v1_table_1d653c[0].b_02 == 0x38);
+    assert(dm2_v1_table_1d653c[0].w_06 == 0x0000);
+    assert(dm2_v1_table_1d653c[54].w_00 == 0x0220);
+    assert(dm2_v1_table_1d653c[54].b_02 == -1);
+    printf("test_batch4_runtime_tables OK\n");
+}
+
 int main(void)
 {
     test_dir_dx();
@@ -337,6 +373,7 @@ int main(void)
     test_batch3_vsgame();
     test_batch3_char_table();
     test_batch3_ornament_position();
+    test_batch4_runtime_tables();
     printf("All dm2_v1_data_tables tests passed.\n");
     return 0;
 }

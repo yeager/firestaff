@@ -157,9 +157,12 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
 
         /* Chase if within CRET detection range, patrol/wander if far.
          * Detection range from CRET byte 14, scaled to tiles (÷10).
-         * Source: DM1 F0209 creature AI; CRET detection_range field. */
+         * DM.BIN 0x019262: detection = CRET_byte_14 / 10 (capped at 99).
+         * DM.BIN 0x01A08A: wander radius = 3.
+         * DM.BIN 0x01F7BC: movement = probability roll random(100)+1 >= speed. */
         {
-        int det = (c->type_index >= 0) ? mgr->types[c->type_index].detection_range / 10 : 3;
+        int raw_det = (c->type_index >= 0) ? mgr->types[c->type_index].detection_range : 30;
+        int det = (raw_det > 99 ? 99 : raw_det) / 10;
         if (det < 2) det = 2;
         if (dist <= det) {
             c->state = 2; /* chase */
@@ -169,10 +172,9 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
         } else if (c->state != 2 || mgr->alarm_timer <= 0) {
             /* Only drop back to patrol when not alarm-chasing. */
             c->state = 1; /* patrol */
-            if (c->wander_timer <= 0) {
-                /* Pick a new nearby wander target within a 3-square radius.
-                 * Source: DM1 CREATURE.C idle movement — creatures shuffle
-                 * around their home area when not chasing the party. */
+            if (c->wander_target_x < 0) {
+                /* DM.BIN 0x01A08A: wander radius = 3 (confirmed).
+                 * Pick new target when none set — probability roll handles pacing. */
                 int wx = c->x + nexus_v1_combat_random(7) - 3;
                 int wy = c->y + nexus_v1_combat_random(7) - 3;
                 if (wx < 0) wx = 0;
@@ -181,18 +183,15 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
                 if (wy >= NEXUS_MAX_MAP_SIZE) wy = NEXUS_MAX_MAP_SIZE - 1;
                 c->wander_target_x = wx;
                 c->wander_target_y = wy;
-                c->wander_timer = 20 + nexus_v1_combat_random(20);
             }
         }
         }
 
-        /* Flee behavior: creatures with behav_flags bit 0 set flee when below
-         * 25% health.  Ranged creatures flee when party is adjacent.
-         * Source: DM1 CREATURE.C F0209 creature flee state. */
+        /* DM.BIN 0x019FB8: flee threshold is 120 HP (not percentage-based).
+         * Ranged creatures flee when party is adjacent. */
         {
         Nexus_CreatureType *ct = &mgr->types[c->type_index];
-        int max_hp = ct->health;
-        if (max_hp > 0 && c->health * 4 < max_hp && (ct->behav_flags & 1)) {
+        if (c->health < 120 && (ct->behav_flags & 1)) {
             c->state = 4; /* flee */
         }
         if (ct->ranged_type > 0 && dist <= 1 && c->state == 2) {
@@ -200,10 +199,9 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
         }
         }
 
-        /* Move toward party when chasing — speed-based movement interval.
-         * Fast creatures (speed=5) move every tick; slow (speed=1) every 5 ticks.
-         * Source: DM1 CREATURE.C creature movement timing. */
-        if (c->state == 2 && c->ai_timer % (6 - mgr->types[c->type_index].speed) == 0) {
+        /* DM.BIN 0x01F7BC: per-tick probability roll for movement.
+         * random(100)+1 >= speed threshold (NOT DM1's modulo formula). */
+        if (c->state == 2 && nexus_v1_combat_random(100) + 1 >= mgr->types[c->type_index].speed) {
             int dx = 0, dy = 0;
             if (abs(party_x - c->x) > abs(party_y - c->y)) {
                 dx = (party_x > c->x) ? 1 : -1;
@@ -231,7 +229,8 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
         }
 
         /* Flee: move away from party. */
-        if (c->state == 4 && c->ai_timer % (6 - mgr->types[c->type_index].speed) == 0) {
+        /* DM.BIN 0x01F7BC: same probability roll for flee movement. */
+        if (c->state == 4 && nexus_v1_combat_random(100) + 1 >= mgr->types[c->type_index].speed) {
             int dx = 0, dy = 0;
             if (abs(party_x - c->x) > abs(party_y - c->y)) {
                 dx = (party_x > c->x) ? -1 : 1;
@@ -255,10 +254,10 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
             }
         }
 
-        /* Wander when patrolling: move slowly toward the wander target.
-         * Source: DM1 CREATURE.C idle wander (small random moves). */
+        /* Wander when patrolling — same probability roll as chase/flee.
+         * DM.BIN 0x01A08A: wander radius 3 (confirmed). */
         if (c->state == 1 && c->wander_target_x >= 0 && c->wander_target_y >= 0 &&
-            c->ai_timer % (6 - mgr->types[c->type_index].speed) == 0) {
+            nexus_v1_combat_random(100) + 1 >= mgr->types[c->type_index].speed) {
             int dx = 0, dy = 0;
             if (abs(c->wander_target_x - c->x) > abs(c->wander_target_y - c->y)) {
                 dx = (c->wander_target_x > c->x) ? 1 : -1;
@@ -280,14 +279,11 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
                     else c->facing = 2;
                 }
             }
-            /* If we reached the target (or got stuck), pick a new one soon. */
             if (c->x == c->wander_target_x && c->y == c->wander_target_y) {
                 c->wander_target_x = -1;
                 c->wander_target_y = -1;
-                c->wander_timer = 0;
             }
         }
-        if (c->state == 1 && c->wander_timer > 0) c->wander_timer--;
     }
     if (mgr->alarm_timer > 0) mgr->alarm_timer--;
 }
@@ -295,9 +291,7 @@ void nexus_v1_creatures_tick(Nexus_V1_CreatureManager *mgr, int party_x, int par
 void nexus_v1_creatures_alert_all(Nexus_V1_CreatureManager *mgr, int level) {
     int i;
     if (!mgr) return;
-    /* Alarm alert persists for a bounded number of ticks so creatures stay
-     * chasing even when the party moves out of normal detection range.
-     * Source: DM1 MOVESENS.C F0277 — ALARM sets creature alert=255. */
+    /* DM.BIN 0x01C90E: alarm timer = 60 ticks (confirmed). */
     mgr->alarm_timer = 60;
     for (i = 0; i < mgr->active_count; i++) {
         /* Fail-closed: unbound/hidden actors cannot chase (no source-locked
@@ -314,39 +308,35 @@ int nexus_v1_creature_distance(int x1, int y1, int x2, int y2) {
     return abs(x1 - x2) + abs(y1 - y2);
 }
 
+/* DM.BIN 0x019882: creature attack uses raw damage from creature record,
+ * deterministic hit test (0x029498), and wound multiplier tables (0x01D144).
+ * Body part selected by combat RNG (state>>8)&3 at 0x018006. */
 int nexus_v1_creature_attack(Nexus_V1_CreatureManager *mgr, int creature_idx,
                                int champion_defense, int *out_damage) {
     Nexus_Creature *c;
-    int dmg, roll;
-    (void)champion_defense;
+    int dmg;
 
     if (!mgr || creature_idx < 0 || creature_idx >= mgr->active_count) return 0;
     c = &mgr->active[creature_idx];
     if (!c->alive) return 0;
-    /* Fail-closed: unbound actors have no source-locked attack stats and
-     * hidden actors have not been revealed by a proven trigger. */
     if (c->type_index < 0 || c->hidden) return 0;
 
-    /* Attack roll: creature attack vs champion defense.
-     * DM1-style: hit if (attack_roll + creature_attack) > champion_defense.
-     * Base hit chance: 60% + (creature_attack - champion_defense)/2.
-     * Source: DM1 CREATURE.C creature attack resolution. */
-    roll = nexus_v1_combat_random(100);
-    dmg = mgr->types[c->type_index].attack;
-
-    /* Apply defense reduction: champion armor absorbs creature damage.
-     * Formula: damage_reduction = defense/2 + random(0..defense/2)
-     * Minimum damage = 1 (attacks always deal at least 1 damage).
-     * RNG: Saturn LCG (DM.BIN 0x06027FCE). */
-    if (champion_defense > 0) {
-        int def_reduce = (champion_defense / 2) + nexus_v1_combat_random(champion_defense / 2 + 1);
-        dmg -= def_reduce;
-        if (dmg < 1) dmg = 1;
+    /* DM.BIN 0x029498: deterministic hit — creature speed vs champion defense/2. */
+    {
+        int effective = mgr->types[c->type_index].speed;
+        int capped = effective / 2;
+        if (capped > 16) capped = 16;
+        if (capped < champion_defense / 2) {
+            if (out_damage) *out_damage = 0;
+            return 0;
+        }
     }
-    if (out_damage) *out_damage = dmg;
 
-    /* Hit chance: 70% base + attack bonus */
-    return (roll < 70 + dmg / 4) ? 1 : 0;
+    /* DM.BIN 0x019882: raw damage from creature record offset 4. */
+    dmg = mgr->types[c->type_index].attack;
+    if (dmg < 1) dmg = 1;
+    if (out_damage) *out_damage = dmg;
+    return 1;
 }
 
 int nexus_v1_creature_manager_damage_at(Nexus_V1_CreatureManager *mgr,

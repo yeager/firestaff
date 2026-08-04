@@ -27,9 +27,10 @@ int csb_v1_f0248_local_effect_consume_pc34_compat(
         out_receipt->award_steal_experience = 1;
         out_receipt->leader_only = (source_cell != -1);
     } else {
-        /* F0270 overwrites this pending value. F0271 later rotates only for
-         * CLEAR or TOGGLE, so SET remains a deliberate no-rotation result. */
-        out_receipt->rotation_effect = sensor_result->localEffectValue;
+        /* F0270 overwrites this pending value with the resolved effect from
+         * F0272. F0271 later rotates only for CLEAR or TOGGLE, so a
+         * resolved SET remains a deliberate no-rotation result. */
+        out_receipt->rotation_effect = sensor_result->resolvedEffect;
     }
     return 1;
 }

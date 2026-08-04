@@ -6,8 +6,18 @@
 
 #include "nexus_v1_champions.h"
 
-#define NEXUS_BASE_MOVE_TICKS    4
-#define NEXUS_MAX_MOVE_TICKS    20
+/* DM.BIN 0x02A7FA: movement tick formula.
+ * tick = (RNG & 0xF) + champion[94] + weight_adjustment + skill_bonus
+ * weight_adjustment uses three tiers against threshold = max_load/16:
+ *   light (weight*40 <= threshold): tick += weight*40 - 12
+ *   moderate (weight*40 <= threshold*1.5 - 6): tick += (weight*40 - threshold)/2
+ *   severe (weight*40 > threshold*1.5 - 6): tick -= (weight*40 - upper)*2
+ * Caller at 0x02C2EA clamps: max 31 (AND #0x1F), min 2 (recalc if <= 1). */
+#define NEXUS_WEIGHT_SCALE      40  /* DM.BIN 0x02A83C-0x02A844: weight*40 */
+#define NEXUS_LOAD_DIVISOR      16  /* DM.BIN 0x02A854: max_load >> 4 */
+#define NEXUS_TICK_OFFSET      -12  /* DM.BIN 0x02A85E: ADD #-12 constant */
+#define NEXUS_MIN_MOVE_TICKS     2  /* DM.BIN 0x02C2EE: recalc if <= 1 */
+#define NEXUS_MAX_MOVE_TICKS    31  /* DM.BIN 0x02C2EA: AND #0x1F */
 #define NEXUS_STAMINA_COST_LIGHT    2   /* DM.BIN 0x02A95A: load*8 <= max*5 */
 #define NEXUS_STAMINA_COST_MEDIUM   3   /* DM.BIN 0x02A95C: load*8 > max*5 */
 #define NEXUS_ENCUMBRANCE_SEVERE_THRESHOLD 4000 /* DM.BIN 0x029EA4 */

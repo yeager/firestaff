@@ -6,32 +6,35 @@
 int main(void) {
     int fail = 0;
 
-    /* Test 1: unloaded champion — base speed */
-    {
-        Nexus_V1_Champion ch;
-        memset(&ch, 0, sizeof(ch));
-        ch.max_load = 200;
-        ch.load = 0;
-        if (nexus_v1_encumbrance_move_ticks(&ch) != NEXUS_BASE_MOVE_TICKS) {
-            fprintf(stderr, "FAIL: unloaded ticks=%d\n",
-                    nexus_v1_encumbrance_move_ticks(&ch)); fail++;
-        } else {
-            printf("  Unloaded: %d ticks OK\n", NEXUS_BASE_MOVE_TICKS);
-        }
-    }
-
-    /* Test 2: heavy load — slower */
+    /* Test 1: unloaded champion — min ticks (DM.BIN 0x02C2EE: min=2) */
     {
         Nexus_V1_Champion ch;
         int ticks;
         memset(&ch, 0, sizeof(ch));
         ch.max_load = 200;
-        ch.load = 180;
+        ch.load = 0;
         ticks = nexus_v1_encumbrance_move_ticks(&ch);
-        if (ticks <= NEXUS_BASE_MOVE_TICKS) {
-            fprintf(stderr, "FAIL: heavy load ticks=%d\n", ticks); fail++;
+        if (ticks < NEXUS_MIN_MOVE_TICKS || ticks > NEXUS_MAX_MOVE_TICKS) {
+            fprintf(stderr, "FAIL: unloaded ticks=%d out of [2,31]\n", ticks); fail++;
         } else {
-            printf("  Heavy load: %d ticks OK\n", ticks);
+            printf("  Unloaded: %d ticks OK\n", ticks);
+        }
+    }
+
+    /* Test 2: heavy load — slower than unloaded */
+    {
+        Nexus_V1_Champion ch;
+        int light_ticks, heavy_ticks;
+        memset(&ch, 0, sizeof(ch));
+        ch.max_load = 200;
+        ch.load = 0;
+        light_ticks = nexus_v1_encumbrance_move_ticks(&ch);
+        ch.load = 180;
+        heavy_ticks = nexus_v1_encumbrance_move_ticks(&ch);
+        if (heavy_ticks <= light_ticks) {
+            fprintf(stderr, "FAIL: heavy=%d not > light=%d\n", heavy_ticks, light_ticks); fail++;
+        } else {
+            printf("  Heavy load: %d > %d ticks OK\n", heavy_ticks, light_ticks);
         }
     }
 
@@ -121,7 +124,7 @@ int main(void) {
 
     /* Test 8: NULL safety */
     {
-        if (nexus_v1_encumbrance_move_ticks(NULL) != NEXUS_BASE_MOVE_TICKS ||
+        if (nexus_v1_encumbrance_move_ticks(NULL) != 8 ||
             nexus_v1_encumbrance_stamina_cost(NULL) != NEXUS_STAMINA_COST_LIGHT ||
             nexus_v1_encumbrance_overloaded(NULL) ||
             nexus_v1_encumbrance_ratio(NULL) != 0) {

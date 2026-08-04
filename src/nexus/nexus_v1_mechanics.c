@@ -1012,7 +1012,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                         else
                             ldr->stamina = 0;
                     } else {
-                        st->move_cooldown_ticks = NEXUS_BASE_MOVE_TICKS;
+                        st->move_cooldown_ticks = 8;
                     }
                 }
                 needs_redraw = 1;

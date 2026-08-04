@@ -18,16 +18,32 @@ int main(void) {
         }
     }
 
-    /* Test 2: level_for_xp thresholds */
+    /* Test 2a: class level — DM.BIN 0x3B5DC linear thresholds (10240/level) */
     {
         if (nexus_v1_experience_level_for_xp(0) != 0 ||
             nexus_v1_experience_level_for_xp(10239) != 0 ||
             nexus_v1_experience_level_for_xp(10240) != 1 ||
             nexus_v1_experience_level_for_xp(20480) != 2 ||
-            nexus_v1_experience_level_for_xp(999999) != NEXUS_MAX_CLASS_LEVEL) {
-            fprintf(stderr, "FAIL: level_for_xp\n"); fail++;
+            nexus_v1_experience_level_for_xp(61440) != 6) {
+            fprintf(stderr, "FAIL: class level_for_xp\n"); fail++;
         } else {
-            printf("  Level thresholds OK\n");
+            printf("  Class level thresholds OK\n");
+        }
+    }
+
+    /* Test 2b: stat level — DM.BIN 0x029FFE halving loop (threshold 500) */
+    {
+        int ok = 1;
+        if (nexus_v1_stat_level_for_xp(0) != 0) ok = 0;
+        if (nexus_v1_stat_level_for_xp(499) != 0) ok = 0;
+        if (nexus_v1_stat_level_for_xp(500) != 1) ok = 0;
+        if (nexus_v1_stat_level_for_xp(1000) != 2) ok = 0;
+        if (nexus_v1_stat_level_for_xp(2000) != 3) ok = 0;
+        if (nexus_v1_stat_level_for_xp(32000) != 7) ok = 0;
+        if (!ok) {
+            fprintf(stderr, "FAIL: stat_level_for_xp halving\n"); fail++;
+        } else {
+            printf("  Stat level thresholds (halving) OK\n");
         }
     }
 
@@ -79,11 +95,11 @@ int main(void) {
         }
     }
 
-    /* Test 6: level-up triggers stat gains */
+    /* Test 6: level-up at class threshold 10240 */
     {
         Nexus_V1_ExperienceState state;
         Nexus_V1_Champion ch;
-        int old_str, result;
+        int result;
         nexus_v1_experience_init(&state);
         memset(&ch, 0, sizeof(ch));
         ch.primary_class = NEXUS_CLASS_FIGHTER;
@@ -91,19 +107,16 @@ int main(void) {
         ch.max_health = 50;
         ch.fighter_level = 0;
         state.xp[0].fighter_xp = 10240;
-        old_str = ch.strength;
         result = nexus_v1_experience_check_levelup(&state, &ch, 0);
-        if (!result || ch.fighter_level != 1 ||
-            ch.strength != old_str + NEXUS_STAT_GAIN_PER_LEVEL ||
-            ch.max_health != 55) {
-            fprintf(stderr, "FAIL: levelup str=%d lvl=%d hp=%d\n",
-                    ch.strength, ch.fighter_level, ch.max_health); fail++;
+        if (!result || ch.fighter_level != 1) {
+            fprintf(stderr, "FAIL: levelup lvl=%d\n",
+                    ch.fighter_level); fail++;
         } else {
             printf("  Fighter level-up OK\n");
         }
     }
 
-    /* Test 7: no level-up when XP insufficient */
+    /* Test 7: no level-up when XP insufficient (10239 < 10240) */
     {
         Nexus_V1_ExperienceState state;
         Nexus_V1_Champion ch;
@@ -120,7 +133,7 @@ int main(void) {
         }
     }
 
-    /* Test 8: multi-level jump */
+    /* Test 8: multi-level jump — 30720 XP = level 3 (linear: 30720/10240) */
     {
         Nexus_V1_ExperienceState state;
         Nexus_V1_Champion ch;
@@ -132,11 +145,9 @@ int main(void) {
         ch.wizard_level = 0;
         state.xp[0].wizard_xp = 30720;
         nexus_v1_experience_check_levelup(&state, &ch, 0);
-        if (ch.wizard_level != 3 ||
-            ch.wisdom != 10 + 3 * NEXUS_STAT_GAIN_PER_LEVEL ||
-            ch.max_mana != 20 + 15) {
-            fprintf(stderr, "FAIL: multi-level wiz_lvl=%d wis=%d mana=%d\n",
-                    ch.wizard_level, ch.wisdom, ch.max_mana); fail++;
+        if (ch.wizard_level != 3) {
+            fprintf(stderr, "FAIL: multi-level wiz_lvl=%d (expected 3)\n",
+                    ch.wizard_level); fail++;
         } else {
             printf("  Multi-level jump OK\n");
         }

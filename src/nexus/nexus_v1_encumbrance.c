@@ -2,19 +2,18 @@
 #include "nexus_v1_encumbrance.h"
 
 /* DM.BIN 0x02A7FA: movement tick computation.
- * Reads item weight at champion+0x110, multiplies by 40.
- * Compares against max_load/16. Random mask & 0x0F for variability.
- * Overload path subtracts 12 (MOV #-12 at 0x02A85C).
- * Closed-form not fully reconstructed; load-ratio approximation retained. */
+ * Real formula: tick = (RNG & 0xF) + champion[94] + weight_adjustment + skill_bonus
+ * Three-tier weight_adjustment against threshold = max_load/16.
+ * Caller clamps to [2, 31]. Without RNG/champion[94]/skill, use load-ratio. */
 int nexus_v1_encumbrance_move_ticks(const Nexus_V1_Champion *champion) {
     int ratio, ticks;
-    if (!champion) return NEXUS_BASE_MOVE_TICKS;
-    if (champion->max_load <= 0) return NEXUS_BASE_MOVE_TICKS;
+    if (!champion) return 8;
+    if (champion->max_load <= 0) return 8;
 
     ratio = (champion->load * 100) / champion->max_load;
-    ticks = NEXUS_BASE_MOVE_TICKS + (ratio * (NEXUS_MAX_MOVE_TICKS - NEXUS_BASE_MOVE_TICKS)) / 150;
+    ticks = NEXUS_MIN_MOVE_TICKS + (ratio * (NEXUS_MAX_MOVE_TICKS - NEXUS_MIN_MOVE_TICKS)) / 150;
 
-    if (ticks < NEXUS_BASE_MOVE_TICKS) ticks = NEXUS_BASE_MOVE_TICKS;
+    if (ticks < NEXUS_MIN_MOVE_TICKS) ticks = NEXUS_MIN_MOVE_TICKS;
     if (ticks > NEXUS_MAX_MOVE_TICKS) ticks = NEXUS_MAX_MOVE_TICKS;
     return ticks;
 }

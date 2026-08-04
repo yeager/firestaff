@@ -2,9 +2,9 @@
 #ifndef NEXUS_V1_ACTION_TIMER_H
 #define NEXUS_V1_ACTION_TIMER_H
 
-/* Nexus V1 champion action timer — DM.BIN 0x02F2B6.
- * Base timer init value: 24. Melee/spell/throw differentiation
- * not yet isolated in disassembly; using 24 as unified base. */
+/* Nexus V1 champion action timer — DM.BIN 0x02F2B6: MOV #24,R0.
+ * Single unified base cooldown for all action types. No differentiation
+ * between melee/spell/throw in the init code at 0x02F2B6. */
 
 #include "nexus_v1_champions.h"
 

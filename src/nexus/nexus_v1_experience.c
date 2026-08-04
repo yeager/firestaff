@@ -8,10 +8,12 @@ void nexus_v1_experience_init(Nexus_V1_ExperienceState *state)
     memset(state, 0, sizeof(*state));
 }
 
-/* DM.BIN 0x0604B5DC: 6-byte table, each byte << 8. Linear 10240/level. */
-static const int nexus_xp_thresholds[NEXUS_MAX_CLASS_LEVEL + 1] = {
+/* DM.BIN 0x3B5DC: class level thresholds — 6 bytes, each << 8.
+ * {40,80,120,160,200,240} → {10240,20480,30720,40960,51200,61440}. */
+static const int nexus_xp_thresholds[7] = {
     0, 10240, 20480, 30720, 40960, 51200, 61440
 };
+#define NEXUS_CLASS_LEVEL_COUNT 6
 
 /* DM.BIN 0x03A260: skill progression tables (4 classes × 32 bytes).
  * Maps raw XP index (0-31) to effective skill level for each class.
@@ -44,14 +46,29 @@ int nexus_v1_stat_init_value(int rank)
     return nexus_stat_init_table[rank];
 }
 
+/* DM.BIN 0x3B5DC: class level from XP using linear thresholds. */
 int nexus_v1_experience_level_for_xp(int xp)
 {
     int level;
     if (xp < 0) return 0;
-    for (level = NEXUS_MAX_CLASS_LEVEL; level > 0; level--) {
+    for (level = NEXUS_CLASS_LEVEL_COUNT; level > 0; level--) {
         if (xp >= nexus_xp_thresholds[level]) return level;
     }
     return 0;
+}
+
+/* DM.BIN 0x029FFE: stat level via halving loop (threshold 500).
+ * Used for stat scaling, separate from class level-up. */
+int nexus_v1_stat_level_for_xp(int xp)
+{
+    int level = 1;
+    if (xp < 0) return 0;
+    if (xp < NEXUS_XP_LEVEL_THRESHOLD) return 0;
+    while (xp >= NEXUS_XP_LEVEL_THRESHOLD) {
+        xp >>= 1;
+        level++;
+    }
+    return level - 1;
 }
 
 void nexus_v1_experience_award_combat(Nexus_V1_ExperienceState *state,
@@ -110,6 +127,11 @@ void nexus_v1_experience_award_kill(Nexus_V1_ExperienceState *state,
     state->xp[champion_index].ninja_xp += creature_xp_value / 2;
 }
 
+/* DM.BIN 0x02A094: level-up check — recompute level from XP halving loop,
+ * then multiply by (difficulty + 1) for difficulty-scaled stats.
+ * Stat bonuses per class: stat 2 gets +1 if item==0xA5, stat 14 +1 if item==0xA4.
+ * The stat gain on level-up is NOT a fixed +2/+5 — the level IS the stat scale.
+ * Difficulty modifier at 0x06064570 is RAM (zero-init), set from save/menu. */
 int nexus_v1_experience_check_levelup(Nexus_V1_ExperienceState *state,
                                       Nexus_V1_Champion *champion,
                                       int champion_index)
@@ -125,36 +147,24 @@ int nexus_v1_experience_check_levelup(Nexus_V1_ExperienceState *state,
 
     new_level = nexus_v1_experience_level_for_xp(xp->fighter_xp);
     if (new_level > champion->fighter_level) {
-        champion->strength += NEXUS_STAT_GAIN_PER_LEVEL *
-                              (new_level - champion->fighter_level);
-        champion->max_health += 5 * (new_level - champion->fighter_level);
         champion->fighter_level = new_level;
         leveled_up = 1;
     }
 
     new_level = nexus_v1_experience_level_for_xp(xp->ninja_xp);
     if (new_level > champion->ninja_level) {
-        champion->dexterity += NEXUS_STAT_GAIN_PER_LEVEL *
-                               (new_level - champion->ninja_level);
-        champion->max_stamina += 5 * (new_level - champion->ninja_level);
         champion->ninja_level = new_level;
         leveled_up = 1;
     }
 
     new_level = nexus_v1_experience_level_for_xp(xp->priest_xp);
     if (new_level > champion->priest_level) {
-        champion->wisdom += NEXUS_STAT_GAIN_PER_LEVEL *
-                            (new_level - champion->priest_level);
-        champion->max_mana += 5 * (new_level - champion->priest_level);
         champion->priest_level = new_level;
         leveled_up = 1;
     }
 
     new_level = nexus_v1_experience_level_for_xp(xp->wizard_xp);
     if (new_level > champion->wizard_level) {
-        champion->wisdom += NEXUS_STAT_GAIN_PER_LEVEL *
-                            (new_level - champion->wizard_level);
-        champion->max_mana += 5 * (new_level - champion->wizard_level);
         champion->wizard_level = new_level;
         leveled_up = 1;
     }

@@ -1,7 +1,34 @@
 
+/* DM.BIN spell system — flag-based effect dispatcher, NOT a script interpreter.
+ * Vtable at 0x0383AC: 8 entries × 12 bytes = {anim_primary, effect_desc, anim_secondary}.
+ * "Script tables" are sprite placement tables: {u16 tile_idx, u16 0, u16 x, u16 y}.
+ * Param tables at 0x038320/0x038340: spell power bar HUD coordinates, not formulas.
+ * Rune mapping at 0x038360: {0x13,0x23,0x33,0x43,0x11,0x21,0x31,0x41}.
+ *
+ * Core spell handler at 0x01A53C: 32-bit flag word from champion+84.
+ * Sub-function analysis:
+ *   0x01EC34: combat data marshalling — copies spell params to combat structs,
+ *             delegates to 0x017B80 (item-type matching loop, table at 0x0604AAD3).
+ *   0x01ECD8: stat modifier — pure data copy (7 stat slots + 10 modifier words),
+ *             0xFF sentinel for unused slots. No arithmetic.
+ *   0x0204E2: status effect — resistance formula:
+ *             attack_power = random(0..31) + caster_stat + (power+1)*2 - 16
+ *             hits if attack_power > target_defense || critical_check()
+ *             buff effectiveness = 100 - target_anti_magic, 4 buff slots max.
+ *   0x012232: projectile creation — BCD decode + Saturn DMA + entity alloc.
+ *             Returns 7 on success, 0xFF on failure.
+ * Combat damage (0x017B80): item-type matching loop against table at 0x0604AAD3.
+ * Hit resolution (0x029498): table-driven lookup at 0x06080C98, indexed by
+ * attacker*4 → sub-table, then defender*2 → damage word. Tables are runtime-init. */
+
 #include "nexus_v1_spell_effects.h"
 #include <string.h>
 
+/* DM.BIN 0x01ECD8: real system copies stat modifiers directly from spell struct
+ * fields (7 stat slots at struct+0x21, 10 modifier words at struct+0x58).
+ * Effect magnitudes below use power scaling; real values come from spell data
+ * structs (7 stat slots at +0x21, 10 modifier words at +0x58) loaded from
+ * game files at runtime — they are DATA, not CODE, and are not in DM.BIN. */
 Nexus_SpellEffectResult nexus_v1_spell_effect_party(
     int spell_type, int power,
     Nexus_V1_Champion *caster,
@@ -62,6 +89,9 @@ Nexus_SpellEffectResult nexus_v1_spell_effect_party(
     return r;
 }
 
+/* DM.BIN 0x012232: projectile creation uses BCD-decoded coordinates from spell
+ * data struct, with damage from combat tables at 0x06080C98. Damage values below
+ * use power scaling; real values from game data tables, not DM.BIN code. */
 int nexus_v1_spell_effect_attack_projectile(
     int spell_type, int power,
     enum Nexus_ProjectileType *out_type,
@@ -87,6 +117,9 @@ int nexus_v1_spell_effect_attack_projectile(
     }
 }
 
+/* DM.BIN 0x0204E2: status effect resistance check.
+ * attack_power = random(0..31) + caster_stat + (power+1)*2 - 16
+ * Spell hits if attack_power > target_defense. */
 Nexus_SpellEffectResult nexus_v1_spell_effect_debuff(
     int spell_type, int power,
     Nexus_StatusEffects *target_status) {

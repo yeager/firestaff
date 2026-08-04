@@ -22,6 +22,8 @@ typedef struct { uint8_t a; uint8_t b; uint16_t w; } dm2_s_bbw;
 typedef struct { uint16_t a; uint16_t b; uint16_t c; uint8_t d; } dm2_s_wwwb;
 typedef struct { uint16_t a; uint16_t b; uint16_t c; } dm2_s_www;
 typedef struct { uint8_t v[4]; } dm2_s_4bytearray;
+typedef struct { int16_t w_00; int16_t w_02; } dm2_s_ww2;
+typedef struct { int16_t w_00; int8_t b_02; int8_t b_03; int8_t b_04; int8_t b_05; int16_t w_06; } dm2_s_wbbbbw;
 
 /* Direction X deltas: N=0, E=+1, S=0, W=-1 */
 extern const int16_t dm2_v1_dir_dx[4];
@@ -153,6 +155,14 @@ extern const int8_t dm2_v1_table_1d67e0[5][6];
 extern const int8_t dm2_v1_table_1d67fe[4];
 extern const int16_t dm2_v1_table_1d292c[32];
 extern const uint8_t dm2_v1_table_1d70b4[17];
+
+/* Batch 4: runtime-loaded tables (from bin/v5/*.dat files) */
+extern const int8_t dm2_v1_table_1d7108[128];
+extern const int8_t dm2_v1_table_1d6802[272];
+extern const dm2_s_ww2 dm2_v1_table_1d39bc[121];
+extern const dm2_s_www dm2_v1_table_1d338c[264];
+extern const int8_t dm2_v1_table_1d296c[63][36];
+extern const dm2_s_wbbbbw dm2_v1_table_1d653c[55];
 
 #ifdef __cplusplus
 }

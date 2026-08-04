@@ -4460,7 +4460,7 @@ static void test_timeline_wall_gate_and_generator_sensor_mutations(void)
         sizeof(raw),
         1,
         0,
-        (uint8_t)(1u << 5),
+        (uint8_t)(0u << 5),
         (uint16_t)((51u << 7) |
                    DM1_SENSOR_WALL_DOUBLE_PROJ_LAUNCHER_NEW_OBJ),
         (uint16_t)(1u << 2),

@@ -110,7 +110,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * melee creature, sight 3, ½-square. PC 3.4 binary verified:
      * movTicks=8, atkTicks=20, attack=150, defense=55, hp=150, dex=55,
      * poison=240. Atari ST values were substantially different. */
-    {  0, 3, 0,  8, 20, 150, 55, 150, 55,240, COMBAT_ATTACK_NORMAL, 0x0222, 0x0482, 40, CREATURE_IMPL_TIER_FULL, 0x299B },
+    {  0, 3, 1,  8, 20, 150, 55, 150, 55,240, COMBAT_ATTACK_SHARP,  0xFD40, 0x0482, 40, CREATURE_IMPL_TIER_FULL, 0x29AB },
     /* C01 Swamp Slime     (FULL — BUG-104) — GROUP.C F0207 C01 path:
      * ranged SLIME explosion (C0xFF81_THING_EXPLOSION_SLIME on the
      * C01 path of F0207) with melee contact poison (poisonAttack=15
@@ -127,7 +127,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     {  1, 2, 1, 15, 32,  80, 20, 110, 20, 15, COMBAT_ATTACK_BLUNT,   0xFC41, 0x0480, 30, CREATURE_IMPL_TIER_FULL, 0x33A9 },
     /* C02 Giggler         (FULL — BUG-104) — GROUP.C F0193: melee reach
      * party → steal from champion slots then always flee. */
-    {  2, 4, 0,  3,  5,  10, 50,  10,110,  0, COMBAT_ATTACK_NORMAL, 0x0222, 0x4510, 20, CREATURE_IMPL_TIER_FULL, 0x710A },
+    {  2, 6, 3,  3,  5,  10, 50,  10,110,  0, COMBAT_ATTACK_NORMAL, 0xFD20, 0x4510, 20, CREATURE_IMPL_TIER_FULL, 0x710A },
     /* C03 Wizard Eye       (FULL — BUG-104) — GROUP.C F0209 T0209054 /
      * ReDMCSB DUNGEON.C G0243[3]: flying sentinel ("gives vision of the
      * party to other creatures"). Sight 10, smell 2, attack_range 3.
@@ -136,7 +136,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * LEVITATION=1, KEEP_THROWN_SHARP_WEAPONS=1. AttackType=5 (MAGIC).
      * In v1 the "vision share" channel is marked via emittedSpellRequest
      * and a dedicated per-tick block in F0804 §(5b). */
-    {  3, 10, 2, 10, 21,  58, 30,  40, 80,  0, COMBAT_ATTACK_MAGIC,  0x0113, 0x04B4, 25, CREATURE_IMPL_TIER_FULL, 0x96AA },
+    {  3, 10, 2, 10, 21,  58, 30,  40, 80,  0, COMBAT_ATTACK_MAGIC,  0xF910, 0x04B4, 25, CREATURE_IMPL_TIER_FULL, 0x96AA },
     /* C04 Pain Rat         (FULL — BUG-104) — GROUP.C F0207 C04:
      * swarm creature, low HP, very fast melee. DUNGEON.C G0243[4]
      * (MEDIA720 PC 3.4): MovementTicks=9, AttackTicks=8, Defense=45,
@@ -163,7 +163,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
     {  5, 2, 2, 20, 18,  30,100,  60, 30,  0, COMBAT_ATTACK_BLUNT,   0xFFD6, 0x0581, 25, CREATURE_IMPL_TIER_FULL, 0x4338 },
     /* C06 Screamer         (FULL — BUG-104) — GROUP.C F0209 C5_BEHAVIOR_FLEE
      * branch: cowardly group-fleer; panics when party is in sight. */
-    {  6, 2, 0,120, 10,   5,  5, 165,  5,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x070C, 10, CREATURE_IMPL_TIER_FULL, 0x10F1 },
+    {  6, 1, 1,120, 10,   5,  5, 165,  5,  0, COMBAT_ATTACK_PSYCHIC,0xFC84, 0x070C, 10, CREATURE_IMPL_TIER_FULL, 0x10F1 },
     /* C07 Rockpile         (FULL — BUG-104) — GROUP.C F0207: stationary
      * ranged rock-thrower (C30_WEAPON_ROCK), sight 3, attack range > 1.
      * v1 keeps the creature "anchored" by setting movementTicks to its
@@ -171,26 +171,26 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * projectile-typed ranged action is in flight. C24_SOUND_ATTACK_ROCK
      * is the rock-throw attack sound (DEFS.H:117). attackType=BLUNT
      * drives the F0800 wound slot selection. */
-    {  7, 3, 0,185, 15,  40,170,  50, 10,  5, COMBAT_ATTACK_BLUNT,  0x0000, 0x0300, 35, CREATURE_IMPL_TIER_FULL, 0x25C4 },
+    {  7, 3, 4,185, 15,  40,170,  50, 10,  5, COMBAT_ATTACK_SHARP,  0xFD93, 0x0300, 35, CREATURE_IMPL_TIER_FULL, 0x25C4 },
     /* C08 Ghost/Rive       (FULL — BUG-104) — GROUP.C F0207/F0209: phase
      * through walls (NON_MATERIAL = 1), fear weapon (causes champions
      * to flee via F0821_DM1_GROUP_ShouldFrighten), and a psychic-typed
      * attack that does not require adjacency. attackTicks=8 matches
      * the fear-rattle cadence in GROUP.C:1645. sight 4 gives the
      * ghost enough lead time to line up fear shots. */
-    {  8, 4, 0, 11, 16,  55, 15,  30, 80,  0, COMBAT_ATTACK_PSYCHIC,0x0000, 0x5864, 45, CREATURE_IMPL_TIER_FULL, 0x4664 },
+    {  8, 3, 4, 11, 16,  55, 15,  30, 80,  0, COMBAT_ATTACK_PSYCHIC,0xFB30, 0x5864, 45, CREATURE_IMPL_TIER_FULL, 0x4684 },
     /* C09 Stone Golem      (FULL — plan §4.11) */
-    {  9, 3, 0, 21, 14, 219,240, 120, 35,  0, COMBAT_ATTACK_SHARP,  0x0222, 0x0282, 50, CREATURE_IMPL_TIER_FULL, 0x3BFF },
+    {  9, 3, 0, 21, 14, 219,240, 120, 35,  0, COMBAT_ATTACK_BLUNT,  0xF920, 0x0282, 50, CREATURE_IMPL_TIER_FULL, 0x3BFF },
     /* C10 Mummy            (FULL — plan §4.11) */
-    { 10, 3, 4, 17, 12,  20, 25,  33, 40,  0, COMBAT_ATTACK_NORMAL, 0x0222, 0x1480, 45, CREATURE_IMPL_TIER_FULL, 0x5497 },
+    { 10, 4, 2, 17, 12,  20, 25,  33, 40,  0, COMBAT_ATTACK_BLUNT,  0xFB20, 0x1480, 45, CREATURE_IMPL_TIER_FULL, 0x5497 },
     /* C11 Black Flame      (FULL — BUG-104) — GROUP.C F0207: fire
      * ranged stream (C0xFF80_THING_EXPLOSION_FIREBALL on the C11 path
      * of F0207), no melee (attackType=FIRE), NON_MATERIAL=1 keeps it
      * from being hit by physical weapons. attackTicks=9 keeps the
      * fireball cadence at roughly 1.5 seconds of dungeon time. */
-    { 11, 4, 0,255,  8, 105, 45,  80, 60,  0, COMBAT_ATTACK_FIRE,   0x0000, 0x18C6, 40, CREATURE_IMPL_TIER_FULL, 0x55A5 },
+    { 11, 2, 3,255,  8, 105, 45,  80, 60,  0, COMBAT_ATTACK_FIRE,   0xFD95, 0x18C6, 40, CREATURE_IMPL_TIER_FULL, 0x55A5 },
     /* C12 Skeleton         (FULL — plan §4.11) */
-    { 12, 3, 4,  7,  7,  22, 22,  20, 80,  0, COMBAT_ATTACK_SHARP,  0x0222, 0x1280, 50, CREATURE_IMPL_TIER_FULL, 0x6596 },
+    { 12, 3, 0,  7,  7,  22, 22,  20, 80,  0, COMBAT_ATTACK_SHARP,  0xFA30, 0x1280, 50, CREATURE_IMPL_TIER_FULL, 0x6596 },
     /* C13 Couatl           (FULL — BUG-104) — GROUP.C F0207 C13:
      * flying sharp melee that sometimes drops a reward. DUNGEON.C
      * G0243[13] (MEDIA720 PC 3.4): MovementTicks=5, AttackTicks=10,
@@ -205,14 +205,14 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * "FLIP_NON_ATTACK" half the time animation (F0205 line 267) is
      * also handled by the SIDE_ATTACK + flip rotation logic in
      * dm1_v1_creature_ai_behavior. */
-    { 13, 3, 4,  5, 10,  90, 42,  39, 88,100, COMBAT_ATTACK_SHARP,   0xFA30, 0x14A2, 55, CREATURE_IMPL_TIER_FULL, 0x5734 },
+    { 13, 3, 3,  5, 10,  90, 42,  39, 88,100, COMBAT_ATTACK_SHARP,   0xFA30, 0x14A2, 55, CREATURE_IMPL_TIER_FULL, 0x5745 },
     /* C14 Vexirk           (FULL — BUG-104) — GROUP.C F0207 ranged
      * spell-caster; full state machine + F0800 magic-typed action,
      * F0823 covers the richer projectile selection. */
-    { 14, 4, 0, 10, 20,  75, 47,  44, 90,  0, COMBAT_ATTACK_MAGIC,  0x0000, 0x05B8, 40, CREATURE_IMPL_TIER_FULL, 0xD952 },
+    { 14, 5, 3, 10, 20,  75, 47,  44, 90,  0, COMBAT_ATTACK_MAGIC,  0xFD60, 0x05B8, 40, CREATURE_IMPL_TIER_FULL, 0xD952 },
     /* C15 Magenta Worm     (FULL — BUG-104) — GROUP.C F0207: poison-on-bite
      * with 30-point venom, high HP melee creature, slow movement. */
-    { 15, 3, 0, 18, 19,  45, 72,  70, 35, 35, COMBAT_ATTACK_NORMAL, 0x0000, 0x0381, 50, CREATURE_IMPL_TIER_FULL, 0x15AB },
+    { 15, 1,10, 18, 19,  45, 72,  70, 35, 35, COMBAT_ATTACK_SHARP,  0xFFC5, 0x0381, 50, CREATURE_IMPL_TIER_FULL, 0x15AB },
     /* C16 Trolin / Anti-Mage (FULL — BUG-104) — GROUP.C F0207 C16:
      * spell-caster anti-mage. DUNGEON.C G0243[16] (MEDIA720): MOV=13,
      * AttackTicks=8, Defense=28, BaseHealth=20, Attack=25, Poison=0,
@@ -233,7 +233,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * literal teleport; see GROUP.C:2275 (F0204) for the arch-enemy
      * warp source and the F0823 anti-mage palette in PROJEXPL.C
      * for the spell delivery path. */
-    { 16, 3, 4, 13,  8,  25, 28,  20, 41,  0, COMBAT_ATTACK_BLUNT,   0xFC30, 0x0680, 45, CREATURE_IMPL_TIER_FULL, 0x2148 },
+    { 16, 3, 3, 13,  8,  25, 28,  20, 41,  0, COMBAT_ATTACK_BLUNT,   0xFC30, 0x0680, 45, CREATURE_IMPL_TIER_FULL, 0x2148 },
     /* C17 Giant Wasp       (FULL — BUG-104) — GROUP.C F0207 C17:
      * flying fast sharp melee with poison sting.
      * ReDMCSB DUNGEON.C G0243[17]: Sight 2, smell 4, attack_range 1.
@@ -242,11 +242,11 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * KEEP_THROWN_SHARP_WEAPONS=1. In v1 the poison delivery reuses the
      * M10 F0321 poison path (BUG-113) and the per-tick block in F0804
      * §(5b) handles the quarter-square-melee cell shift per F0207. */
-    { 17, 2, 4,  1, 16,  28,180,   8,150, 20, COMBAT_ATTACK_SHARP,  0x0112, 0x04A0, 45, CREATURE_IMPL_TIER_FULL, 0x19FD },
+    { 17, 2, 4,  1, 16,  28,180,   8,150, 20, COMBAT_ATTACK_SHARP,  0xF710, 0x04A0, 45, CREATURE_IMPL_TIER_FULL, 0x19FD },
     /* C18 Animated Armour  (FULL — BUG-104) — GROUP.C F0209 C6_BEHAVIOR_ATTACK:
      * full-square, sharp attack, melee only. Cursed fixed possessions
      * (F0186 table G0248) handled by F0824. */
-    { 18, 3, 0, 14,  6, 105,140,  60, 70,  0, COMBAT_ATTACK_SHARP,  0x0000, 0x0280, 45, CREATURE_IMPL_TIER_FULL, 0x7AFF },
+    { 18, 5, 0, 14,  6, 105,140,  60, 70,  0, COMBAT_ATTACK_SHARP,  0xFA30, 0x0280, 45, CREATURE_IMPL_TIER_FULL, 0x7AFF },
     /* C19 Materializer     (FULL — BUG-104) — GROUP.C F0207/F0209: ranged
      * spell-caster, sight 5, attack range > 1, MOV=5 (very fast).
      * DUNGEON.C G0243[19]: MovementTicks=5, AttackTicks=18, Defense=15,
@@ -258,7 +258,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * lightning / open-door spell via F0823 (F0823 case
      * DM1_CREATURE_TYPE_MATERIALIZER is already wired to POISON_CLOUD
      * 50% of the time in dm1_v1_creature_ai_behavior.c). */
-    { 19, 5, 0,  5, 18,  61, 15,  33, 65,  0, COMBAT_ATTACK_MAGIC,  0xFC40, 0x4060, 60, CREATURE_IMPL_TIER_FULL, 0xAC77 },
+    { 19, 8, 2,  5, 18,  61, 15,  33, 65,  0, COMBAT_ATTACK_MAGIC,  0xFC40, 0x4060, 60, CREATURE_IMPL_TIER_FULL, 0xAC97 },
     /* C20 Water Elemental  (FULL — BUG-104) — GROUP.C F0207: ranged
      * water-stream attack (C0xFF86_THING_EXPLOSION_WATER on the C20
      * path of F0207), NON_MATERIAL=1 lets it flow through water
@@ -266,7 +266,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * wound-slot path; the F0804 orchestrator branches C20 to set a
      * ranged water damage flag so the resolver picks the water-
      * explosion damage type. */
-    { 20, 3, 0, 25, 25,  66, 75, 144, 50,  0, COMBAT_ATTACK_NORMAL, 0x0000, 0x10DE, 40, CREATURE_IMPL_TIER_FULL, 0x7679 },
+    { 20, 1, 3, 25, 25,  66, 75, 144, 50,  0, COMBAT_ATTACK_BLUNT,  0xFD93, 0x10DE, 40, CREATURE_IMPL_TIER_FULL, 0x7699 },
     /* C21 Oitu             (FULL — BUG-104) — GROUP.C F0207 C21:
      * melee sharp with a periodic invisibility cycle. The Oitu is
      * community-known as a "phase spider" analogue; ReDMCSB DUNGEON.C
@@ -277,7 +277,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * attribute in ReDMCSB — it is a runtime behavioral effect driven
      * by the F0804 §(5b) per-type block, which flips emittedSpellRequest
      * every 16 ticks to drive F0810's reaction-event invert. */
-    { 21, 2, 5,  7, 15, 130, 33,  77, 60,  0, COMBAT_ATTACK_NORMAL, 0x0224, 0x0082, 55, CREATURE_IMPL_TIER_FULL, 0x696A },
+    { 21, 2, 5,  7, 15, 130, 33,  77, 60,  0, COMBAT_ATTACK_SHARP,  0xFC30, 0x0082, 55, CREATURE_IMPL_TIER_FULL, 0x696A },
     /* C22 Demon            (FULL — BUG-104) — GROUP.C F0207/F0209: ranged
      * fire spell-caster, sight 4, attack range > 1. DUNGEON.C G0243[22]:
      * MovementTicks=10, AttackTicks=14, Defense=68, BaseHealth=100,
@@ -288,7 +288,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * In v1 the demon advances to ATTACK when the party is in sight
      * and F0804 §(5b) marks emittedSpellRequest for ranged fire; F0823
      * falls through to the default FIREBALL projectile case for C22. */
-    { 22, 4, 0, 10, 14, 100, 68, 100, 75,  0, COMBAT_ATTACK_BLUNT,  0xF920, 0x1480, 60, CREATURE_IMPL_TIER_FULL, 0xBDF9 },
+    { 22, 4, 3, 10, 14, 100, 68, 100, 75,  0, COMBAT_ATTACK_BLUNT,  0xF920, 0x1480, 60, CREATURE_IMPL_TIER_FULL, 0xBDF9 },
     /* C23 Lord Chaos       (FULL — BUG-104) — GROUP.C F0207/F0209 + F0204:
      * archenemy spell-caster that can warp (double-square move), is
      * immune to Freeze Life (BUG0_14 in ReDMCSB), and emits a mix of
@@ -304,11 +304,11 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * POISON_CLOUD/OPEN_DOOR projectile mix. The archenemy FREEZE
      * LIFE immunity is honoured via ctx->isArchenemy in
      * dm1_v1_creature_ai_behavior.c F0810. */
-    { 23, 5, 0, 12, 22, 210,255, 180,130,  0, COMBAT_ATTACK_MAGIC,  0xFB52, 0x78AA, 100, CREATURE_IMPL_TIER_FULL, 0xFF37 },
+    { 23, 9, 3, 12, 22, 210,255, 180,130,  0, COMBAT_ATTACK_MAGIC,  0xFB52, 0x78AA, 100, CREATURE_IMPL_TIER_FULL, 0xFFA7 },
     /* C24 Red Dragon       (FULL — BUG-104) — GROUP.C F0207: flame-stream
      * ranged fire attack, sight 5, high HP. attackType=FIRE drives F0800
      * fire-typed melee; ranged flame projectile in F0823. */
-    { 24, 5, 0, 13, 28, 255,110, 255, 70,  0, COMBAT_ATTACK_FIRE,   0x0000, 0x068A, 70, CREATURE_IMPL_TIER_FULL, 0xBF7C },
+    { 24, 5, 6, 13, 28, 255,110, 255, 70,  0, COMBAT_ATTACK_SHARP,  0xFC30, 0x068A, 70, CREATURE_IMPL_TIER_FULL, 0xBFBC },
     /* C25 Lord Order       (FULL — BUG-104) — GROUP.C F0207/F0209 + F0204:
      * archenemy healer / buffer that can buff, heal other creatures,
      * and do ranged magic. Stats identical to Lord Chaos in
@@ -316,7 +316,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * intent; the F0804 §(5b) block emits a heal-allies spell request
      * when the party is visible and the cooldown matches ATT_TICKS=22.
      * F0204 double-move applies just as it does to Lord Chaos. */
-    { 25, 5, 0, 12, 22, 210,255, 180,130,  0, COMBAT_ATTACK_MAGIC,  0xFB52, 0x78AA, 100, CREATURE_IMPL_TIER_FULL, 0xFF37 },
+    { 25, 9, 3, 12, 22, 210,255, 180,130,  0, COMBAT_ATTACK_MAGIC,  0xFB52, 0x78AA, 100, CREATURE_IMPL_TIER_FULL, 0xFFBC },
     /* C26 Grey Lord        (FULL — BUG-104) — GROUP.C F0207/F0209 + F0204:
      * archenemy mirror of Lord Chaos with a different spell mix
      * (F0823 falls through to FIREBALL for C26 with the same
@@ -325,7 +325,7 @@ g_profiles[CREATURE_TYPE_COUNT] = {
      * test documents the mirror-of-Chaos contract; F0804 §(5b)
      * marks emittedSpellRequest and a warp-eligible double-move
      * just like Lord Chaos. */
-    { 26, 4, 0,255,255, 210,255, 180,130,  0, COMBAT_ATTACK_MAGIC,  0xFB52, 0x78AA, 100, CREATURE_IMPL_TIER_FULL, 0xFF37 }
+    { 26, 9, 3,255,255, 210,255, 180,130,  0, COMBAT_ATTACK_MAGIC,  0xFB52, 0x78AA, 100, CREATURE_IMPL_TIER_FULL, 0xFFF0 }
 };
 
 _Static_assert((sizeof(g_profiles) / sizeof(g_profiles[0])) ==

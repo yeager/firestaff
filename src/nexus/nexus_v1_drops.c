@@ -22,19 +22,19 @@ static const int nexus_gold_by_category[4] = { 32, 16, 8, 4 };
  * by GetItem's drop loop.  Source: DM.BIN file offset 0x3B600. */
 static const uint8_t nexus_drop_base_table[8] = { 6, 0, 2, 3, 6, 1, 1, 5 };
 
-/* DM.BIN 0x3B620: item table from creature data region.
- * Pairs of 16-bit BE item IDs verified against ITEM.IBS (243 items).
- * Source: DM.BIN file offset 0x3B620, accessed at creature_struct+0x110. */
-static const int nexus_drop_item_pool[] = {
-    72, 74, 80, 104, 138, 144, 145, 158, 165, 174
+/* DM.BIN 0x3B620: item pair table — 6 pairs of 16-bit BE item IDs + null pair.
+ * base_table[slot] indexes into this array. Pair {0,0} = empty slot.
+ * Source: DM.BIN file offset 0x3B620. */
+static const int nexus_drop_item_pairs[7][2] = {
+    {0, 74}, {72, 144}, {80, 158}, {80, 174}, {104, 145}, {138, 165}, {0, 0}
 };
-#define NEXUS_DROP_ITEM_POOL_SIZE \
-    ((int)(sizeof(nexus_drop_item_pool)/sizeof(nexus_drop_item_pool[0])))
+#define NEXUS_DROP_PAIR_COUNT 7
 
+/* DM.BIN 0x3B608: gold entry from category table, plus item slots via base_table. */
 int nexus_drops_for_type(int creature_type_idx,
                           Nexus_DropEntry *out_table,
                           int max_entries) {
-    int gold_amount;
+    int gold_amount, count = 0, slot;
     if (!out_table || max_entries < 1) return 0;
     if (creature_type_idx < 0) return 0;
 
@@ -42,14 +42,33 @@ int nexus_drops_for_type(int creature_type_idx,
     out_table[0].item_id = -1;
     out_table[0].min_qty = gold_amount / 2;
     out_table[0].max_qty = gold_amount;
-    out_table[0].chance = 80;
-    return 1;
+    out_table[0].chance = 100;
+    count = 1;
+
+    for (slot = 0; slot < 8 && count < max_entries; slot++) {
+        int pair_idx = nexus_drop_base_table[slot];
+        if (pair_idx < NEXUS_DROP_PAIR_COUNT) {
+            int a = nexus_drop_item_pairs[pair_idx][0];
+            int b = nexus_drop_item_pairs[pair_idx][1];
+            if (a > 0 || b > 0) {
+                out_table[count].item_id = (a > 0) ? a : b;
+                out_table[count].min_qty = 1;
+                out_table[count].max_qty = 1;
+                out_table[count].chance = 12;
+                count++;
+            }
+        }
+    }
+    return count;
 }
 
+/* DM.BIN 0x01FB9E: GetItem drop logic uses base_table to route 8 slots
+ * to item pairs. Each slot yields one of two items from the pair. */
 int nexus_drops_roll(int creature_type_idx, int x, int y,
                       int *out_item_ids, int *out_quantities,
                       int max_drops) {
     int gold_amount, item_count = 0;
+    int slot, pair_idx, item_id;
 
     if (creature_type_idx < 0) return 0;
     if (!out_item_ids || !out_quantities || max_drops < 1) return 0;
@@ -60,11 +79,15 @@ int nexus_drops_roll(int creature_type_idx, int x, int y,
         nexus_gold_add(x, y, gold_amount);
     }
 
-    if (nexus_v1_combat_random(100) < 30 && max_drops > 0) {
-        int pool_idx = (creature_type_idx + nexus_v1_combat_random(NEXUS_DROP_ITEM_POOL_SIZE)) % NEXUS_DROP_ITEM_POOL_SIZE;
-        out_item_ids[0] = nexus_drop_item_pool[pool_idx];
-        out_quantities[0] = 1;
-        item_count = 1;
+    slot = nexus_v1_combat_random(8);
+    pair_idx = nexus_drop_base_table[slot];
+    if (pair_idx < NEXUS_DROP_PAIR_COUNT) {
+        item_id = nexus_drop_item_pairs[pair_idx][nexus_v1_combat_random(2)];
+        if (item_id > 0 && max_drops > 0) {
+            out_item_ids[0] = item_id;
+            out_quantities[0] = 1;
+            item_count = 1;
+        }
     }
 
     return item_count;
@@ -72,7 +95,7 @@ int nexus_drops_roll(int creature_type_idx, int x, int y,
 
 /* ═══════════════════════════════════════════════════════════════════
  * Gold pile management
- * Source: DM1 gold pile system.
+ * Gold pile storage — generic infrastructure, not formula-dependent.
  * ═══════════════════════════════════════════════════════════════════ */
 
 static Nexus_GoldPile g_gold_piles[NEXUS_MAX_GOLD_PILES];
