@@ -16,14 +16,16 @@ static const unsigned short g_spell_table[32] = {
 };
 
 
-/* Parameter table A — DM.BIN 0x038320.
- * 12 uint16 BE values. Interpretation as cost/damage pairs not verified. */
+/* DM.BIN 0x038320/0x038340: VDP2 scroll register pairs for spell power bar
+ * HUD positioning — NOT cost/damage pairs. File bytes at 0x028320:
+ * {0x8804,0x8928,0x8805,0x892C,...} are VDP register addresses.
+ * Values below are placeholder mana costs pending SH2 disassembly of the
+ * casting function. Real mana costs may derive from the magnitude table
+ * at 0x03B5DC {40,80,120,160,200,240} combined with spell-type modifiers. */
 static const int g_param_priest[6][2] = {
     {26, 56}, {134, 70}, {115, 5}, {199, 26}, {186, 47}, {294, 60}
 };
 
-/* Parameter table B — DM.BIN 0x038340.
- * 12 uint16 BE values. Interpretation as cost/damage pairs not verified. */
 static const int g_param_wizard[6][2] = {
     {111, 30}, {207, 42}, {26, 56}, {134, 70}, {186, 47}, {294, 102}
 };

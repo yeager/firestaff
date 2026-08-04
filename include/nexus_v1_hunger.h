@@ -26,16 +26,14 @@
  *
  * Starvation (0x01F4EA): E702 = MOV #2,R7 → calls 0x06014EC0 with R7=2.
  * Dehydration (0x0C6CA): E703 = MOV #3,R7 → calls 0x06014EC0 with R7=3.
- * Tick rates below are simplified proxies; real system is accumulator-driven. */
+ * The accumulator oscillates ±rate each tick. When it crosses the threshold,
+ * a drain event fires. Rate/threshold ratio determines drain frequency. */
 #define NEXUS_HUNGER_ACCUM_RATE   1024  /* DM.BIN 0x02EF36: 0x0400 */
 #define NEXUS_HUNGER_ACCUM_THRESH 8192  /* DM.BIN 0x02EF38: 0x2000 */
 #define NEXUS_HUNGER_ACCUM_CYCLE     8  /* threshold / rate = 8 ticks per drain */
 #define NEXUS_FOOD_CAP_CHECK      1000  /* DM.BIN 0x02F2E6 */
 #define NEXUS_FOOD_CAP_CLAMP       999  /* DM.BIN 0x02F2E8 */
-#define NEXUS_HUNGER_TICK_RATE    60    /* simplified proxy for accumulator cycle */
-#define NEXUS_THIRST_TICK_RATE    40    /* simplified proxy for accumulator cycle */
-#define NEXUS_HUNGER_DRAIN         1
-#define NEXUS_THIRST_DRAIN         1
+#define NEXUS_WATER_THRESHOLD        8  /* DM.BIN 0x020EE0: champ_word[16] >= 8 */
 #define NEXUS_STARVATION_DAMAGE    2    /* DM.BIN 0x01F4EA: E702 MOV #2,R7 */
 #define NEXUS_DEHYDRATION_DAMAGE   3    /* DM.BIN 0x0C6CA: E703 MOV #3,R7 */
 
@@ -46,8 +44,10 @@
 #define NEXUS_WATER_MAX          255
 
 typedef struct {
-    int hunger_timer;
-    int thirst_timer;
+    int food_accumulator;
+    int water_accumulator;
+    int tick_counter;
+    int encumbrance;
 } Nexus_HungerState;
 
 void nexus_v1_hunger_init(Nexus_HungerState *state);
