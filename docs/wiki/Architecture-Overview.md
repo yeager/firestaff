@@ -15,7 +15,7 @@ Firestaff uses a strict four-layer ownership model. Each layer owns specific dat
 
 ```
 src/
-  engine/       M11 game view (~50k lines in m11_game_view.c)
+  engine/       M11 game view (m11_game_view.c)
   csb/          CSB-specific: viewport, boot, runtime, DSA
   dm1/          DM1-specific: viewport 3D, music, movement, combat, inventory
   dm1v2/        DM1 V2 presentation layer (camera, modern rendering)
@@ -25,8 +25,8 @@ src/
   frontend/     UI frontend, dialog, text rendering
   audio/        Audio decoding (SND, SONG.DAT)
 
-include/        All public headers (~1980 files)
-tests/          Test sources (~2960 files)
+include/        All public headers (~2554 files)
+tests/          Test sources (~3138 files)
 parity-evidence/ Source-lock evidence documents
 ```
 

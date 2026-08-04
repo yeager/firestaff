@@ -132,4 +132,4 @@ Run a subset:
 ctest --test-dir build -R "viewport" -j4 --output-on-failure
 ```
 
-There are approximately 3200 tests. Some viewport and boot tests require original game data files and will fail or timeout without them.
+There are approximately 3490 tests. Some viewport and boot tests require original game data files and will fail or timeout without them.

@@ -116,8 +116,8 @@ presented-frame consumer.
 
 ## Parity Evidence Corpus
 
-`parity-evidence/` holds 1018 pass-numbered documents (`pass{NNN}_*.md`),
-474 of which are DM1-specific. They cover viewport wall/door/ornament
+`parity-evidence/` holds 1,090+ pass-numbered documents (`pass{NNN}_*.md`),
+764 of which are DM1-specific. They cover viewport wall/door/ornament
 routing, movement completion (`pass402`, `pass406`, and the viewport
 movement completion matrix), inventory slot placement and drag/drop,
 combat timelines, champion panel material, and original-transcript

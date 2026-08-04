@@ -2,10 +2,10 @@
 
 ## Version Scheme
 
-Firestaff uses semantic versioning: `MAJOR.MINOR.PATCH` (e.g., `3.0.277`). The version is set in `CMakeLists.txt` line ~3505:
+Firestaff uses semantic versioning: `MAJOR.MINOR.PATCH` (e.g., `3.0.282`). The version is set in `CMakeLists.txt`:
 
 ```cmake
-project(Firestaff VERSION 3.0.277 LANGUAGES C)
+project(Firestaff VERSION 3.0.282 LANGUAGES C)
 ```
 
 ## Creating a Release
@@ -14,7 +14,7 @@ project(Firestaff VERSION 3.0.277 LANGUAGES C)
 2. **Update changelog** in `RELEASE_NOTES.md` (add a section headed `# Firestaff vX.Y.Z`)
 3. **Update TODO.md and DONE.md** as needed
 4. **Commit** the version bump
-5. **Tag** with `v` prefix: `git tag v3.0.277`
+5. **Tag** with `v` prefix: `git tag v3.0.282`
 6. **Push** with tags: `git push --tags`
 
 The GitHub Actions release workflow triggers automatically on `v*` tags.

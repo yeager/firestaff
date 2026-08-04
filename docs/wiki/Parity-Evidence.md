@@ -8,7 +8,7 @@ The `parity-evidence/` directory contains source-lock evidence documents, each n
 2. A binary offset or data table in the original executable
 3. A runnable verification path (test binary or probe command)
 
-Pass documents are numbered sequentially. As of the current release, the corpus contains over 1100 documents.
+Pass documents are numbered sequentially. As of the current release, the corpus contains over 1,090 documents.
 
 ## Purpose
 
@@ -46,7 +46,7 @@ A typical pass document contains:
 
 ### DM1 PC34 Compatibility (`*_pc34_compat.md`)
 
-474 documents covering:
+764 documents covering:
 - Viewport wall/door/ornament routing
 - Movement completion matrix
 - Inventory slot placement and drag/drop

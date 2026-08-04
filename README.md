@@ -3,15 +3,15 @@
 **Five Dungeon Master games. One engine. Your original data.**
 
 Firestaff is a source-faithful reimplementation of every major Dungeon Master
-game engine, built from scratch in portable C for macOS, Windows, Linux and
-Steam Deck. It plays your legally owned game files on modern hardware with
-pixel-perfect **Original** rendering or selectable **Custom** presentation at
-resolutions from 640×400 up to 4K.
+game engine, built from scratch in portable C for macOS, Windows, Linux,
+Steam Deck, iOS and Android. It plays your legally owned game files on modern
+hardware with pixel-perfect **Original** rendering or selectable **Custom**
+presentation at resolutions from 640×400 up to 4K.
 
 [![Release](https://img.shields.io/github/v/release/yeager/firestaff)](https://github.com/yeager/firestaff/releases/latest)
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Steam%20Deck-orange)]()
+[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Steam%20Deck%20%7C%20iOS%20%7C%20Android-orange)]()
 
 <p align="center">
   <img src="assets/branding/firestaff-logo.png" alt="Firestaff logo" width="360">
@@ -58,10 +58,10 @@ with filtered, upscaled and modern targets up to 3840×2160. Custom always runs
 on top of the same source-locked engine — it never bypasses collision, timing,
 combat or inventory logic.
 
-**Preservation-grade documentation.** 960+ parity-evidence documents, 3,670+
+**Preservation-grade documentation.** 1,090+ parity-evidence documents, 3,490+
 automated tests, and a [comprehensive wiki](https://github.com/yeager/firestaff/wiki)
-covering file formats, hardware architecture, and source-reference boundaries
-for all five games.
+covering file formats, hardware architecture, reverse engineering details, and
+source-reference boundaries for all five games.
 
 ## Quick Start
 
@@ -73,7 +73,9 @@ for all five games.
 | Platform | Data directory |
 |----------|---------------|
 | macOS / Linux | `~/.firestaff/data/` |
-| Windows | `<install folder>\data\` |
+| Windows | `%USERPROFILE%\.firestaff\data\` |
+| iOS | Files app > On My iPhone > Firestaff > data/ |
+| Android | `/sdcard/Documents/Firestaff/data/` |
 
 Suggested layout:
 
@@ -90,11 +92,12 @@ Suggested layout:
 
 | Platform | Package |
 |----------|---------|
-| macOS | DMG and ZIP |
-| Windows | Installer and ZIP |
-| Linux x86_64 | DEB and RPM |
-| Linux ARM64 | DEB and RPM |
-| Steam Deck | pacman `.pkg.tar.zst` |
+| macOS (arm64 / x86_64) | DMG and ZIP |
+| Windows (x86_64) | Installer and ZIP |
+| Linux (x86_64 / arm64) | DEB and RPM |
+| Steam Deck | pacman `.pkg.tar.zst` and AppImage |
+| iOS (arm64) | IPA (AltStore Classic sideload) |
+| Android (arm64) | APK (sideload) |
 
 ## Game Status
 
@@ -211,21 +214,21 @@ Launcher UI (M12)
 | `src/csb/` | Chaos Strikes Back runtime |
 | `src/dm2/` | Dungeon Master II runtime |
 | `src/nexus/` | DM Nexus Saturn runtime |
-| `src/theron/` | Theron's Quest runtime |
+| `src/tqr/` | Theron's Quest runtime |
 | `src/dm1v2/` | DM1 Custom presentation |
-| `tests/` | 3,670+ integration tests and source-lock gates |
-| `parity-evidence/` | 960+ verification documents |
+| `tests/` | 3,490+ integration tests and source-lock gates |
+| `parity-evidence/` | 1,090+ verification documents |
 
 ## The Engine in Numbers
 
 | Metric | Count |
 |--------|-------|
-| Lines of C | 1,190,000+ |
-| Source files | 2,425 |
-| Headers | 2,379 |
-| Test files | 2,919 |
-| Automated tests | 3,673 |
-| Parity-evidence documents | 960+ |
+| Lines of C | 1,250,000+ |
+| Source files | 2,596 |
+| Headers | 2,554 |
+| Test files | 3,138 |
+| Automated tests | 3,493 |
+| Parity-evidence documents | 1,090+ |
 | Verified game-data hashes | 165+ |
 | Localization languages | 19 |
 
@@ -251,9 +254,9 @@ font cache with system-font fallback for Cyrillic, Greek, CJK and Hangul.
 The [Firestaff Wiki](https://github.com/yeager/firestaff/wiki) has detailed
 documentation for users, developers and preservationists:
 
-- Installation, controls, savegames, Steam Deck setup
-- Game guides for all five titles
-- File format specifications for every supported game
+- Per-platform install guides (macOS, Windows, Linux, iOS AltStore, Android sideload)
+- Reverse engineering documentation for all five games (function registries, file formats, data structures)
+- File format specifications: DUNGEON.DAT, GRAPHICS.DAT (IMG3/IMG1/GDAT), save formats
 - Technical references and source-lock architecture
 - Deep internals: DM1 PC34, CSB DSA, DM2 GDAT, Nexus DGN/PRS3/Saturn hardware, Theron's Quest Track 02
 - Preservation worklists for ReDMCSB, CSBWin and skproject
