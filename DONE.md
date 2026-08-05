@@ -49169,6 +49169,7 @@ authenticated in-place renderer is the only route allowed to draw V2.2 art.
 The focused test now proves that both an empty cache and a populated V2.2
 cache leave the framebuffer byte-for-byte unchanged. Tracked as
 `DM1-ORIGINAL-REPLACE-016`.
+
 # ✅ 2026-08-06 DM2 source-teleporter compact-placement removal
 
 The live G1/GDAT viewport no longer paints a teleporter field with the old
@@ -49181,11 +49182,10 @@ their compatibility coverage. Verification: `test_dm2_v1_teleporter_material_gat
 PASS and PC English boot probe PASS with original `graphics.dat` MD5
 `25247ede4dabb6a71e5dabdfbcd5907d`. Source: `SKWINSPX/src/v4/c_gui_vp.cpp::DRAW_TELEPORTER_TILE`
 and `kskval1.h` teleporter tables.
-- ✅ 2026-08-06 DM1 V2 HUD synthetic overlay removal: the compatibility
-  `dm1_v2_hud_overlay_pc34` route no longer paints its hard-coded 5x5 font,
-  invented champion names, procedural compass/status/action/rune panels, or
-  fixed meter values. It retains state/timing APIs and stays strict no-draw
-  until the real PC34 M653/C009/C010/C011 surfaces are decoded and passed by a
-  source-owned renderer. The focused test proves both the generic HUD and
-  champion panel leave populated framebuffers unchanged. Tracked as
-  `DM1-ORIGINAL-REPLACE-017`.
+- ✅ 2026-08-05 Theron Track02 static consumer disassembly: added a
+  byte-backed HuC6280 bank-$1f fragment for `$243e–$24b0`, extracted from
+  the hash-locked US retail ISO with da65. It records the real bitstream and
+  memory-map-register helpers around `$2450/$2459/$246e`. The later `$2600`
+  consumer remains correctly blocked because its bytes are RAM-loaded and
+  are not present in the static image; the required next capture is the
+  post-CD RAM window with PC and source-LBA provenance.
