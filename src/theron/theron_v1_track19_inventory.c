@@ -1,5 +1,10 @@
 #include "theron_v1_track19_inventory.h"
+#include "asset_status_m12.h"
+#include "theron_v1_track19_item_names.h"
+#include "theron_v1_track19_level_labels.h"
 
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 int theron_v1_track19_inventory(const char *md5,
@@ -53,5 +58,60 @@ int theron_v1_track19_inventory(const char *md5,
     out->source_format = sector_bytes == 2048u ? "MODE1/2048-ISO" :
         "MODE1/2352-RAW";
     out->variant = variant;
+    return 1;
+}
+
+int theron_v1_track19_inventory_file(
+        const char *path, Theron_V1Track19InventoryReceipt *out) {
+    FILE *file;
+    long file_size;
+    size_t bytes;
+    uint8_t *data;
+    char md5[33];
+    char text[64];
+    unsigned int i;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!path || !path[0] || !out || !m12_file_md5_hex(path, md5) ||
+        !(file = fopen(path, "rb"))) return 0;
+    if (fseek(file, 0L, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0 || file_size > 64L * 1024L * 1024L ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    bytes = (size_t)file_size;
+    if (!theron_v1_track19_inventory(md5, bytes, out) ||
+        !out->mode1_2048 || out->mode1_2352) {
+        fclose(file);
+        return 0;
+    }
+    data = (uint8_t *)malloc(bytes);
+    if (!data || fread(data, 1u, bytes, file) != bytes) {
+        free(data);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    snprintf(out->source_md5, sizeof(out->source_md5), "%s", md5);
+    if (strcmp(out->variant, "us") == 0) {
+        for (i = 0u; i < THERON_TRACK19_US_ITEM_NAME_COUNT; ++i) {
+            if (!theron_v1_track19_us_item_name_from_iso(
+                    data, bytes, i, text, sizeof(text))) {
+                free(data);
+                return 0;
+            }
+        }
+        out->item_name_table_verified = 1;
+        for (i = 0u; i < THERON_TRACK19_US_LEVEL_LABEL_COUNT; ++i) {
+            if (!theron_v1_track19_us_level_label_from_iso(
+                    data, bytes, i, text, sizeof(text))) {
+                free(data);
+                return 0;
+            }
+        }
+        out->level_label_table_verified = 1;
+    }
+    free(data);
     return 1;
 }

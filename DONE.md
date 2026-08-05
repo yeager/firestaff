@@ -48734,3 +48734,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Archive-cache regression coverage now proves the three real Atari startup
   modules remain materialized beside the verified launch pair. Source-lock:
   ReDMCSB `ANIM.C:67-72,94`; verified against the real Atari ST archive.
+- ✅ 2026-08-05 Theron Track 19 file-inventory binding: added a reusable
+  file-backed receipt that authenticates the exact ISO hash/size and validates
+  both real US metadata spans (69 item names and 15 level labels). The
+  inventory exposes verification flags without admitting dungeon maps,
+  objects, or bitmap semantics.

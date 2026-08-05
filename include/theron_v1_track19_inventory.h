@@ -16,10 +16,18 @@ typedef struct {
     size_t bytes;
     const char *source_format;
     const char *variant;
+    int item_name_table_verified;
+    int level_label_table_verified;
+    char source_md5[33];
 } Theron_V1Track19InventoryReceipt;
 
 int theron_v1_track19_inventory(const char *md5,
                                 size_t bytes,
                                 Theron_V1Track19InventoryReceipt *out);
+
+/* Read a real Track 19 ISO, authenticate its known hash/size, and validate
+ * the source-owned US item and level-label spans when applicable. */
+int theron_v1_track19_inventory_file(
+    const char *path, Theron_V1Track19InventoryReceipt *out);
 
 #endif

@@ -90,6 +90,9 @@
   The real 15-entry Track 19 level-selector label span is now byte-validated
   as metadata; it does not yet admit any level map or object record.
 
+  File-backed Track 19 inventory now carries the authenticated source hash and
+  both metadata-verification flags; later record semantics remain closed.
+
   Track 02 object-data and dungeon-map bounds are now overflow-safe; truncated
   sources are rejected before ground-reference or item records can be
   admitted. This is a loader-integrity fix only, not semantic promotion of
