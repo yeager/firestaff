@@ -49913,3 +49913,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   no M11 or DM2 production archive can use its unresolved original selector
   or simplified dialogue-image placement. Verification: production rebuild,
   focused c_0aaf regression, and real PC-DM2 M11 startup gate.
+
+- ✅ 2026-08-06 DM2 runtime-narrow placeholder isolation: removed the
+  disconnected callback audit from both production CMake globs. Its
+  `DM2_hero_39796` stamina substitute does not match SKProject's original
+  name-entry UI and its moverec/light exports overlap separate implementations.
+  The two focused unit targets compile it explicitly; M11 and the DM2 archive
+  cannot select it while the real owner-backed runtime remains unfinished.

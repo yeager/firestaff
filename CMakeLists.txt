@@ -4195,6 +4195,13 @@ list(REMOVE_ITEM M10_SOURCES
 # path into a production archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_0aaf_pc34_compat.c")
+# `dm2_v1_runtime_narrow_pc34_compat.c` is a disconnected callback audit.
+# In particular, its `DM2_hero_39796` stand-in is not the original name-entry
+# UI at c_hero.cpp:464, and several moverec/light symbols have real, separate
+# implementations.  Do not let the broad glob choose an arbitrary test stub
+# for a production DM2 session; its two unit targets compile it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_narrow_pc34_compat.c")
 # This contract probe seeds a 10x10 synthetic room-skin fixture and is used
 # exclusively by its unit test.  Keep it out of the production M10 archive:
 # the live CSB viewport must consume only source-bound dungeon/material data.
@@ -4348,7 +4355,8 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_food_water_bridge.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_outdoor_renderer.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_1c9a_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_0aaf_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_0aaf_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_narrow_pc34_compat.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -15810,6 +15818,7 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_runtime_narrow
         tests/test_dm2_v1_runtime_narrow.c
+        src/dm2/dm2_v1_runtime_narrow_pc34_compat.c
     )
     target_link_libraries(test_dm2_v1_runtime_narrow PRIVATE
         firestaff_dm2 firestaff_m10 firestaff_zlib
@@ -15863,6 +15872,7 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_hero_remaining
         tests/test_dm2_v1_hero_remaining.c
+        src/dm2/dm2_v1_runtime_narrow_pc34_compat.c
     )
     target_link_libraries(test_dm2_v1_hero_remaining PRIVATE
         firestaff_dm2 firestaff_m10 firestaff_zlib

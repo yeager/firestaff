@@ -4060,8 +4060,13 @@ that its exact runtime path is not already source-locked and tested.
     fail-closed in the production API. Only `dm2_v1_boot` may expose a menu
     hit after decoding the mounted GDAT RAW4 matrix.
 41. **DM2-PARTY-INVENTORY-SPELLS:** Complete real champion, inventory, item,
-    skill, action, spell, damage, condition, and UI mutation paths through
-    the source runtime.
+   skill, action, spell, damage, condition, and UI mutation paths through
+   the source runtime. **2026-08-06 update:** the disconnected
+   `runtime_narrow` callback audit no longer reaches production: its
+   `DM2_hero_39796` substitute is not the source name-entry UI at
+   `c_hero.cpp:464`, and some of its moverec/light exports duplicate separate
+   source-bound modules. Its isolated test contracts remain until a complete
+   owner-backed runtime route is wired.
 42. **DM2-CREATURE-AI-COMBAT:** Complete skproject creature AI, movement,
     combat, projectiles, cloud effects, drops, occupancy, and timeline-driven
     behavior from raw original records.
