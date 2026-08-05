@@ -32,7 +32,7 @@ extern "C" {
  *   Each row of 8 pixels stored as consecutive bit-plane bytes.
  *   2bpp:  16 bytes per tile  (8 rows x 2 bit-planes)
  *   4bpp:  32 bytes per tile  (8 rows x 4 bit-planes)
- *   Bit order: LSB = leftmost pixel (HuC6260 native)
+ *   Bit order: MSB (bit 7) = leftmost pixel (HuC6270 VRAM byte order)
  *
  * Palette BGR444 format (4 bits per channel, 12-bit packed):
  *   bits [11:8] = R (4 bits, values 0-15)
@@ -119,7 +119,7 @@ typedef struct {
  * bpp=2: src has 2 bytes per row (bitplane 0 then bitplane 1)
  * bpp=4: src has 4 bytes per row (bitplane 0..3)
  * Out row must have 8 bytes (one palette index per pixel).
- * Bit layout: LSB = leftmost pixel (HuC6260 native, NOT flipped). */
+ * Bit layout: MSB (bit 7) = leftmost pixel (HuC6270 VRAM byte order). */
 void tqr_decode_tile_row(uint8_t *TQR_RESTRICT out_row,
                           const uint8_t *TQR_RESTRICT src_row,
                           int bpp);

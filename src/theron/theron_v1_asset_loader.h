@@ -21,11 +21,13 @@
  *                  f23601102138f87c33025877767ebf76 (US)
  *
  * Source references:
- *   THQUEST.ASM T400   — tile bank loading
- *   THQUEST.ASM T410   — Track 03 graphics parsing
- *   THQUEST.ASM T420   — Track 04 sound parsing
- *   HuC6260/HuC6270 datasheet — VDC/VCE graphics format
- *   HuC6270 (PC Engine) ADPCM sound format
+ *   docs/source-lock/tqr_v1_track02_consumer_disassembly_2026-08-05.md
+ *     — static consumer boundary and missing post-CD RAM capture
+ *   docs/source-lock/tqr_v1_track02_graphics_format_real_media_2026-07-11.md
+ *     — real-media scan, intentionally decoder-blocked
+ *   docs/source-lock/tqr_v1_huc6260_palette_word_format_2026-07-11.md
+ *     — caller-offset palette decoder only
+ *   HuC6260/HuC6270 documentation — VDC/VCE graphics format
  */
 
 #ifndef THERON_V1_ASSET_LOADER_H
@@ -88,8 +90,8 @@ typedef struct {
  *
  * Returns: TR_ASSET_OK (0) on success, negative error code on failure.
  *
- * Source: THQUEST.ASM T400 (HuCard ROM mapping), T410 (Track 03),
- *         T420 (Track 04), T430 (hash verification).
+ * Source: the verified Track 02 media/intake and source-lock documents above.
+ * No Track 03/04 parser or hash-verification ownership is claimed here.
  */
 TrAssetResult tr_asset_load(const char *file_path,
                              TrAssetBundle *bundle);
@@ -123,8 +125,10 @@ void tr_asset_free(TrAssetBundle *bundle);
 
 /* Verify the asset bundle against the expected SHA256.
  * expected_sha256: 64-character hex string (NULL = skip verification).
- * Returns: TR_ASSET_OK if verification passes or is skipped.
- * Source: THQUEST.ASM T430 (hash verification).
+ * Returns: TR_ASSET_OK if the legacy no-expected-hash path is used.
+ * Supplying an expected digest is rejected because this legacy API does not
+ * own the canonical Track 02 hash catalog; production boot authenticates the
+ * media before calling it.
  */
 TrAssetResult tr_asset_verify(const TrAssetBundle *bundle,
                                const char *expected_sha256);

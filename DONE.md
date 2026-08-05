@@ -6,6 +6,16 @@
   rebuild, stairs-plan test 111/111, real DM1 HoC floor probe 6/6, and the
   24-mirror/click probe 241/241.
 
+- ✅ 2026-08-06 Theron asset-loader truthfulness hardening: removed stale
+  claims that unversioned `THQUEST.ASM` T410/T420/T430 labels were verified
+  graphics/audio/hash owners. The loader now cites the current source-lock
+  consumer/palette receipts, rejects empty or truncated input before its
+  legacy four-byte probe, and keeps Track 03/04 plus rendering capture-gated.
+  Corrected the PCE planar-bit documentation to match the implemented
+  MSB-left decode. Rendering regression now covers empty-input rejection.
+  Production archive audit: clean CMake configure/build with only the
+  intended runtime no-op seams; no inferred tile/viewport module was admitted.
+
 - ✅ 2026-08-05 DM1/ReDMCSB F0702 held-object cursor: the live leader-hand
   cursor now consumes the real GRAPHICS.DAT 16x16 icon rectangle and the
   audited F0702 builder, producing the original 18x18 result with offset

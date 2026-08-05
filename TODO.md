@@ -227,6 +227,12 @@
   consumer entry, object/level records, and semantic publication remain
   blocked.
 
+  The legacy asset-loader source-evidence strings are now aligned with the
+  versioned consumer/palette receipts, and empty/truncated input is rejected
+  before the compatibility loader reads its region probe. This is an
+  integrity/truthfulness fix only; the actual Track 02 graphics consumer,
+  bitmap bank, palette offset and live `$2600` RAM join remain open.
+
   Full-dungeon loading now accepts a valid zero-ground-reference map and
   rejects object-capacity exhaustion instead of reporting a partial success.
 

@@ -4,12 +4,13 @@
  * Loads Theron's Quest binary assets from PC Engine HuCard/CD-ROM format.
  *
  * Source-lock:
- *   THQUEST.ASM T400   — tile bank loading
- *   THQUEST.ASM T410   — Track 03 graphics parsing
- *   THQUEST.ASM T420   — Track 04 sound parsing
- *   THQUEST.ASM T430   — hash verification
- *   HuC6260/HuC6270 datasheet — VDC/VCE graphics format
- *   HuC6270 ADPCM sound format
+ *   docs/source-lock/tqr_v1_track02_consumer_disassembly_2026-08-05.md
+ *     — static consumer boundary and missing post-CD RAM capture
+ *   docs/source-lock/tqr_v1_track02_graphics_format_real_media_2026-07-11.md
+ *     — real-media graphics scan, intentionally decoder-blocked
+ *   docs/source-lock/tqr_v1_huc6260_palette_word_format_2026-07-11.md
+ *     — caller-offset palette-word decoder only
+ *   HuC6260/HuC6270 documentation — VDC/VCE graphics format
  */
 
 #include "theron_v1_asset_loader.h"
@@ -121,7 +122,10 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
     long file_size = ftell(fp);
     fseek(fp, 0, SEEK_SET);
 
-    if (file_size < 0 || file_size > 64 * 1024 * 1024) {
+    /* A raw Track 02 container must at least have enough bytes for the
+     * legacy region probe below.  Empty/truncated input is not a valid
+     * source-backed container and must not reach data[0..3]. */
+    if (file_size < 4 || file_size > 64 * 1024 * 1024) {
         fclose(fp);
         return TR_ASSET_ERR_FILE;
     }
@@ -238,7 +242,7 @@ int tr_asset_generated_v1_rendering_allowed(const TrAssetBundle *bundle) {
      * when no such bank exists; a decoded tile bank plus verified palette
      * route is authoritative original data and overrides the block.
      * Source: theron_v1_asset_loader.h synthetic_rendering_blocked contract;
-     * TODO.md Theron original-media synthetic-path audit (graphics/palette). */
+     * docs/source-lock/tqr_v1_track02_graphics_format_real_media_2026-07-11.md. */
     return bundle->track03_data != NULL &&
            bundle->palette.tile_count > 0 &&
            bundle->palette_route_verified;
@@ -296,9 +300,9 @@ void tr_asset_free(TrAssetBundle *bundle) {
 
 /* ── Source citation ─────────────────────────────────────────────── */
 const char *tr_asset_source_evidence(void) {
-    return "THQUEST.ASM T400 (tile bank loading)  "
-           "+ THQUEST.ASM T410 (Track 03 graphics parsing)  "
-           "+ THQUEST.ASM T420 (Track 04 sound parsing)  "
-           "+ THQUEST.ASM T430 (hash verification)  "
-           "+ HuC6260/HuC6270 datasheet (VDC/VCE format)";
+    return "tqr_v1_track02_consumer_disassembly_2026-08-05.md "
+           "+ tqr_v1_track02_graphics_format_real_media_2026-07-11.md "
+           "+ tqr_v1_huc6260_palette_word_format_2026-07-11.md "
+           "+ HuC6260/HuC6270 documentation (VDC/VCE format); "
+           "graphics/audio ownership remains capture-gated";
 }

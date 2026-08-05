@@ -13,8 +13,11 @@
  * Track 02 tile/palette extraction must populate the state from the PC Engine
  * CD-ROM data track before the viewport is admitted to draw.
  *
- * Source: THQUEST.ASM T400 (tile bank loading), T520 (tile selection),
- *         HuC6260/HuC6270 datasheet, tqr_v1_phase2_data_formats_H2339.md §7
+ * Source: docs/source-lock/tqr_v1_track02_consumer_disassembly_2026-08-05.md,
+ *         docs/source-lock/tqr_v1_huc6260_palette_word_format_2026-07-11.md,
+ *         HuC6260/HuC6270 documentation.  The Track 02 byte span and
+ *         graphics consumer remain unbound, so this module only decodes
+ *         caller-supplied source bytes.
  */
 
 #include "theron_v1_palette.h"
@@ -84,17 +87,9 @@ void tqr_decode_tile(uint8_t *TQR_RESTRICT out64,
 /* ── Palette init ─────────────────────────────────────────────────── */
 
 /*
- * Default PC Engine dungeon stone palette.
- * 16 palette groups × 16 colors = 512 entries.
- * Group 0 (dungeon walls/floors):
- *   0-3:   black, dark gray, gray, light gray
- *   4-7:   brown tones (stone wall shading)
- *   8-11:  tan/light brown (floor highlights)
- *   12-15: blue-gray (ceiling/special)
- * Groups 1-3 follow similar distributions for their domains.
- *
- * No palette is generated locally: entries remain zero until source bytes
- * have been loaded through a verified route.
+ * Initialize an unbound palette state.  No palette is generated locally:
+ * entries remain zero until source bytes have been loaded through a verified
+ * route.
  */
 
 /* Leave the palette unbound until verified source data is decoded. */

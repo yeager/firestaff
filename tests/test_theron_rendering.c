@@ -602,6 +602,17 @@ static int test_asset_selection_wiring(void) {
 static int test_asset_load_raw_track02_fallback(void) {
     TEST("Runtime: raw Track 02 without supplemental markers stays loadable");
 
+    {
+        const char *empty_path = "/tmp/firestaff_theron_empty_asset_test.bin";
+        FILE *empty = fopen(empty_path, "wb");
+        TrAssetBundle empty_bundle;
+        ASSERT(empty != NULL, "could not create empty asset fixture");
+        ASSERT(fclose(empty) == 0, "could not close empty asset fixture");
+        ASSERT(tr_asset_load(empty_path, &empty_bundle) == TR_ASSET_ERR_FILE,
+               "empty asset must be rejected before region probing");
+        remove(empty_path);
+    }
+
     const char *path = "/tmp/firestaff_theron_raw_track02_test.bin";
     static const uint8_t raw_track02[32] = {
         0x20, 0x48, 0x55, 0x43, 0x36, 0x32, 0x38, 0x30,
