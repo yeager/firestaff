@@ -123,6 +123,12 @@
   leaves the framebuffer untouched until Saturn explored-state and VDP2
   placement evidence is authenticated.
 
+- ✅ 2026-08-06 Nexus V2 HUD placeholder removal: procedural compass, depth,
+  gold, champion bars, action icons and panel markers no longer write pixels or
+  advance animation state. The diagnostic state API remains available, while
+  HUD drawing stays blocked until authentic Saturn HUD and VDP1/VDP2 placement
+  evidence is bound.
+
 - ✅ 2026-08-05 Nexus startup title fallback removal: the generic title
   renderer no longer copies a raw `TITLE.CG` character-generator atlas to the
   framebuffer when the Saturn MAPD/TIBG handoff is missing. TITLE.CG and

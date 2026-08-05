@@ -71,6 +71,9 @@
   the old implicit same-coordinate next-level route is removed.
   Production HUD no longer injects fabricated script/fountain/save strings;
   bind these messages only through authenticated DMN text and SLEV consumers.
+  The procedural V2 HUD overlay (compass, depth, bars, icons and gold) is now
+  no-draw even when its diagnostic runtime is force-enabled; retain only state
+  for inspection until the authentic Saturn HUD/VDP1/VDP2 owner is captured.
   Startup runtime receipts now also keep `hud_ready` clear after a DGN handoff;
   level-loaded state alone cannot promote an unbound Saturn HUD consumer.
   FONT256.S2D loader now exposes only the 242 real character-generator tiles

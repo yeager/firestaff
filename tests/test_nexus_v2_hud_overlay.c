@@ -1,6 +1,6 @@
 /* Nexus V2 Phase 3 HUD Overlay — smoke test
  * Tests that the HUD overlay module initialises, sets parameters,
- * renders into a framebuffer, and produces deterministic output
+ * leaves the framebuffer untouched, and produces deterministic state
  * without any game data or SDL.
  */
 
@@ -108,14 +108,14 @@ int main(void) {
     nexus_v2_hud_render(&h, fb, FB_W, FB_H);
     check("render: no crash", 1);
 
-    /* Check that some pixels were written (compass area: x=8..24, y=8..24) */
+    /* The procedural diagnostic surface must not write retail pixels. */
     int compass_pixels = 0;
     for (int y = 8; y < 24; y++) {
         for (int x = 8; x < 24; x++) {
             if (fb[y * FB_W + x] != 0) compass_pixels++;
         }
     }
-    check("compass: some pixels written", compass_pixels > 0);
+    check("compass: no synthetic pixels written", compass_pixels == 0);
 
     /* Check gold counter area (bottom-right) was written */
     int gold_pixels = 0;
@@ -124,7 +124,7 @@ int main(void) {
             if (fb[y * FB_W + x] != 0) gold_pixels++;
         }
     }
-    check("gold counter: some pixels written", gold_pixels > 0);
+    check("gold counter: no synthetic pixels written", gold_pixels == 0);
 
     /* Check depth indicator (top-right corner) was written */
     int depth_pixels = 0;
@@ -133,7 +133,7 @@ int main(void) {
             if (fb[y * FB_W + x] != 0) depth_pixels++;
         }
     }
-    check("depth: some pixels written", depth_pixels > 0);
+    check("depth: no synthetic pixels written", depth_pixels == 0);
 
     /* Hidden render (opacity=0) → no pixels */
     memset(fb, 0, sizeof(fb));
@@ -162,11 +162,11 @@ int main(void) {
     h.hit_flash_active = true;
     h.hit_flash_timer = 3;
     nexus_v2_hud_render(&h, fb, FB_W, FB_H);
-    check("hit_flash_timer decrements on render", h.hit_flash_timer == 2);
+    check("blocked render does not mutate diagnostic timer", h.hit_flash_timer == 3);
     nexus_v2_hud_render(&h, fb, FB_W, FB_H);
-    check("hit_flash_timer 1 after 2nd render", h.hit_flash_timer == 1);
+    check("blocked render remains inert", h.hit_flash_timer == 3);
     nexus_v2_hud_render(&h, fb, FB_W, FB_H);
-    check("hit_flash_timer 0 after 3rd render → inactive", h.hit_flash_timer == 0 && h.hit_flash_active == false);
+    check("blocked render preserves flash state", h.hit_flash_timer == 3 && h.hit_flash_active == true);
 
     /* ── Null safety ─────────────────────────────────────────────── */
     nexus_v2_hud_set_direction(NULL, 1);
