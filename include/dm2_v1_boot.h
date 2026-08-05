@@ -62,6 +62,12 @@ typedef enum {
     DM2_PLATFORM_COUNT
 } DM2_Platform;
 
+/* Return nonzero only for a documented, same-platform DM2 graphics/dungeon
+ * hash pair.  Hash membership alone is insufficient: PC, FM Towns and Amiga
+ * dungeon payloads have different formats and must never be cross-launched. */
+int dm2_v1_boot_asset_hash_pair_supported(const char *graphics_md5,
+                                          const char *dungeon_md5);
+
 /* Music system classification by platform.
  * PC:           HMP via SONGLIST.DAT (63B, per-map index)
  * Mac/Amiga:    HMP/MOD via CD.DAT/md.dat (176B, per-map mapping)

@@ -124,6 +124,30 @@ static void test_defaults(void)
           "dungeon seed remains unavailable before DUNGEON.DAT is verified");
 }
 
+static void test_asset_hash_pairs_are_platform_bound(void)
+{
+    CHECK(dm2_v1_boot_asset_hash_pair_supported(
+              "25247ede4dabb6a71e5dabdfbcd5907d",
+              "6caccd7875009e82fe2e28e7f6d6adc0") == 1,
+          "PC graphics and PC dungeon form an authenticated pair");
+    CHECK(dm2_v1_boot_asset_hash_pair_supported(
+              "027ff3b8ddc2c4c4cdda7ada0b0bc46c",
+              "74c7549f174574201988bf936385841a") == 1,
+          "FM Towns graphics and dungeon form an authenticated pair");
+    CHECK(dm2_v1_boot_asset_hash_pair_supported(
+              "1c940ea95703eaea0ecdf84d17e954b9",
+              "719ae78bc124027806c65491a256827d") == 1,
+          "Amiga graphics and dungeon form an authenticated pair");
+    CHECK(dm2_v1_boot_asset_hash_pair_supported(
+              "25247ede4dabb6a71e5dabdfbcd5907d",
+              "74c7549f174574201988bf936385841a") == 0,
+          "PC graphics cannot launch with FM Towns dungeon data");
+    CHECK(dm2_v1_boot_asset_hash_pair_supported(
+              "027ff3b8ddc2c4c4cdda7ada0b0bc46c",
+              "719ae78bc124027806c65491a256827d") == 0,
+          "FM Towns graphics cannot launch with Amiga dungeon data");
+}
+
 static void test_scan_missing_data(void)
 {
     DM2_V1_BootProfile p;
@@ -1075,6 +1099,8 @@ int main(void)
 /* ── defaults ── */
     printf("--- test_defaults ---\n");
     test_defaults();
+    printf("\n--- test_asset_hash_pairs_are_platform_bound ---\n");
+    test_asset_hash_pairs_are_platform_bound();
 /* ── scan with no assets --─ */
     printf("\n--- test_scan_missing_data ---\n");
     test_scan_missing_data();

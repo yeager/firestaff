@@ -49661,3 +49661,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   proves that a structurally valid request remains non-mutating and
   fail-closed. Source: `SKULLWIN/c_hero.cpp::DM2_SELECT_CHAMPION`
   (1052-1200).
+
+- ✅ 2026-08-06 DM2 platform-pair launch gate: boot now accepts only the
+  documented original GRAPHICS.DAT/DUNGEON.DAT pairs, rather than combining
+  any two individually recognised hashes. The regression covers the real PC,
+  FM Towns and Amiga identities and rejects PC/FM Towns and FM Towns/Amiga
+  mixtures. This keeps foreign byte order and scene data from being presented
+  as a playable DM2 session.

@@ -653,6 +653,27 @@ static const char *const g_dm2_dungeon_hashes [] = {
     NULL
 };
 
+typedef struct {
+    const char *graphics_md5;
+    const char *dungeon_md5;
+} DM2_V1_AssetHashPair;
+
+/* Original media pairs.  The PC retail localizations share the little-endian
+ * DUNGEON.DAT; the FM Towns and Amiga ports do not.  Keep this relationship
+ * explicit rather than treating independent recognised hashes as a launch
+ * credential.  Source: DMWeb's DM2 data-file notes and the platform payload
+ * identities audited from the supplied original media. */
+static const DM2_V1_AssetHashPair g_dm2_asset_hash_pairs[] = {
+    {"25247ede4dabb6a71e5dabdfbcd5907d", "6caccd7875009e82fe2e28e7f6d6adc0"},
+    {"b4d733576ea60c41737f79f212faf528", "6caccd7875009e82fe2e28e7f6d6adc0"},
+    {"e52ab5e01715042b16a4dcff02052e5d", "6caccd7875009e82fe2e28e7f6d6adc0"},
+    {"027ff3b8ddc2c4c4cdda7ada0b0bc46c", "74c7549f174574201988bf936385841a"},
+    {"5cab25f6b975957eae4a203174e7f2a6", "719ae78bc124027806c65491a256827d"},
+    {"1c940ea95703eaea0ecdf84d17e954b9", "719ae78bc124027806c65491a256827d"},
+    {"a654ba19e9a6919f46818ecd23d7ea9d", "92f83c251fec69e01c594bc01ce5cd51"},
+    {"a80c555a858ef7770e1d7f3d2e37fec3", "fa644b2451af197874ee7dc3951e7033"}
+};
+
 /* PC SONGLIST.DAT, 63 bytes. SHA-256:
  * 401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72
  * The MD5 is used solely for the existing recursive asset-discovery API. */
@@ -713,6 +734,21 @@ static int md5_matches(const char *found_hex, const char *expected_hex) {
         if (a != b) return 0;
     }
     return 1;
+}
+
+int dm2_v1_boot_asset_hash_pair_supported(const char *graphics_md5,
+                                          const char *dungeon_md5) {
+    size_t i;
+
+    for (i = 0u;
+         i < sizeof(g_dm2_asset_hash_pairs) / sizeof(g_dm2_asset_hash_pairs[0]);
+         ++i) {
+        if (md5_matches(graphics_md5, g_dm2_asset_hash_pairs[i].graphics_md5) &&
+            md5_matches(dungeon_md5, g_dm2_asset_hash_pairs[i].dungeon_md5)) {
+            return 1;
+        }
+    }
+    return 0;
 }
 
 /* ── File size helper ─────────────────────────────────────────────────── */
@@ -1026,21 +1062,8 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
 
     /* Verify against known hashes */
     profile->assets_verified = 0;
-    if (profile->graphics_md5[0] && profile->dungeon_md5[0]) {
-        size_t i;
-        for (i = 0; g_dm2_graphics_hashes[i]; i++) {
-            if (md5_matches(profile->graphics_md5, g_dm2_graphics_hashes[i])) {
-                size_t j;
-                for (j = 0; g_dm2_dungeon_hashes[j]; j++) {
-                    if (md5_matches(profile->dungeon_md5, g_dm2_dungeon_hashes[j])) {
-                        profile->assets_verified = 1;
-                        break;
-                    }
-                }
-                break;
-            }
-        }
-    }
+    profile->assets_verified = dm2_v1_boot_asset_hash_pair_supported(
+        profile->graphics_md5, profile->dungeon_md5);
 
     /* Detect platform */
     profile->platform = DM2_PLATFORM_PC_EN;
@@ -1218,7 +1241,8 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     }
 
     /* Determine if we found both required files */
-    if (profile->graphics_path[0] && profile->dungeon_path[0]) {
+    if (profile->assets_verified && profile->graphics_path[0] &&
+        profile->dungeon_path[0]) {
         return 0;  /* success */
     }
     return -1;  /* missing assets */
