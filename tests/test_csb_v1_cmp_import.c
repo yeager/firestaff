@@ -20,7 +20,7 @@
  *      -o test_csb_v1_cmp_import
  *
  * Source lock:
- *   - ReDMCSB DEFS.H CMP typedef (size 496 bytes)
+ *   - ReDMCSB DEFS.H CMP typedef / CEDT001.C F7000 (508 bytes)
  *   - ReDMCSB PORTRAIT.C F0515_CHAMPION_ConvertPortraitsToAtariSTPlanar
  *   - ReDMCSB CEDT002.C / CEDT021.C (Utility Disk Champion Editor)
  *   - CSBWin/CedtData.cpp (CSB Utility Disk tool)

@@ -48669,3 +48669,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   transition or place the party at the clicked square. Transition and party
   state remain unchanged until a real terminal object record resolves;
   missing-target and cycle regressions now assert rejection.
+
+- ✅ 2026-08-05 CSB Utility Disk CMP disk-format correction: replaced the
+  synthetic 496-byte portrait layout with ReDMCSB's actual 508-byte `CMP`
+  record. The decoder now reads the big-endian `Magic`, dungeon-id, platform,
+  compatibility words, reserved words, name/title and the 464-byte portrait at
+  offset 44. ReDMCSB `DEFS.H` defines the layout and `CEDT001.C F7000` writes
+  exactly 508 bytes. The extracted original Atari ST `PORTRAIT/HALK.CMP`
+  decodes as HALK, THE BARBARIAN; CMP import, portrait-handoff and title/import
+  regressions pass without allowing a portrait-only file to invent party state.

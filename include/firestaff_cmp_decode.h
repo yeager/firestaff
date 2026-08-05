@@ -10,20 +10,26 @@
  *
  * Format (per ReDMCSB DEFS.H + PORTRAIT.C):
  *
- *   offset 0   int16_t cmp_i_C  - reserved/unused (0)
- *   offset 2   int16_t cmp_i_E  - reserved/unused (0)
- *   offset 4   char Name[8]     - 8-byte champion name
+ *   offset 0   uint16_t Magic       - 0x91a7
+ *   offset 2   uint16_t DungeonID
+ *   offset 4   uint16_t Platform
+ *   offset 6   uint16_t cmp_ui_6    - 1
+ *   offset 8   uint16_t cmp_ui_8    - high bit clear
+ *   offset 10  int16_t  cmp_i_A     - reserved/unused (0)
+ *   offset 12  int16_t  cmp_i_C     - reserved/unused (0)
+ *   offset 14  int16_t  cmp_i_E     - reserved/unused (0)
+ *   offset 16  char Name[8]     - 8-byte champion name
  *                                (uppercase ASCII,
  *                                 null-padded)
- *   offset 12  char Title[20]   - 20-byte champion title
+ *   offset 24  char Title[20]   - 20-byte champion title
  *                                (uppercase ASCII,
  *                                 null-padded)
- *   offset 32  char Portrait[464] - 32x29 pixel 4bpp
+ *   offset 44  char Portrait[464] - 32x29 pixel 4bpp
  *                                  portrait bitmap, total
  *                                  = 32 * 29 * 4 / 8
  *                                  = 464 bytes
  *
- * Total file size = 496 bytes.
+ * Total file size = 508 bytes.
  *
  * The portrait is stored in the Amiga interleave layout
  * (the layout ReDMCSB PORTRAIT.C calls "Amiga" in
@@ -36,8 +42,9 @@
  * conversion happens upstream of any CMP ingestion.
  *
  * What this decoder does:
- *   - Validates file size is exactly 496 bytes.
- *   - Parses cmp_i_C / cmp_i_E (must both be 0; if not,
+ *   - Validates file size is exactly 508 bytes.
+ *   - Parses the source compatibility header and cmp_i_A/cmp_i_C/cmp_i_E
+ *     (the latter three must be 0; if not,
  *     returns -2 so the caller can distinguish "not a
  *     CMP" from "malformed").
  *   - Validates Name and Title are uppercase ASCII or
@@ -48,10 +55,8 @@
  *     lifetime of the returned pointer.
  *
  * Provenance:
- *   - ReDMCSB DEFS.H: CMP typedef (size 466 in ReDMCSB's
- *     own counting because it counts the trailing
- *     Portrait[464] as a separate array; the actual struct
- *     is 32 + 464 = 496 bytes on disk).
+ *   - ReDMCSB DEFS.H: CMP typedef and CEDT001.C F7000,
+ *     which writes exactly 508 bytes to disk.
  *   - ReDMCSB PORTRAIT.C: F0515_CHAMPION_ConvertPortraits
  *     ToAtariSTPlanar / FromAtariSTPlanar (used to lay
  *     out the 4 bitplanes for either Amiga or Atari ST).
@@ -78,7 +83,11 @@ extern "C" {
 #endif
 
 /* CMP file size in bytes. */
-#define FIRESTAFF_CMP_FILE_SIZE  496u
+#define FIRESTAFF_CMP_FILE_SIZE  508u
+#define FIRESTAFF_CMP_HEADER_SIZE 44u
+#define FIRESTAFF_CMP_NAME_OFFSET 16u
+#define FIRESTAFF_CMP_TITLE_OFFSET 24u
+#define FIRESTAFF_CMP_PORTRAIT_OFFSET 44u
 
 /* Portrait dimensions. */
 #define FIRESTAFF_CMP_PORTRAIT_WIDTH   32u
@@ -92,6 +101,12 @@ extern "C" {
 /* Decoded CMP structure (header fields only; the portrait
  * bitmap remains in the caller's input buffer). */
 typedef struct {
+    uint16_t magic;                                  /* 0x91a7 */
+    uint16_t dungeon_id;
+    uint16_t platform;
+    uint16_t cmp_ui_6;                               /* must be 1 */
+    uint16_t cmp_ui_8;                               /* bit 0x8000 clear */
+    uint16_t cmp_i_A;                                /* reserved, must be 0 */
     uint16_t cmp_i_C;                                /* reserved, must be 0 */
     uint16_t cmp_i_E;                                /* reserved, must be 0 */
     char     name[FIRESTAFF_CMP_NAME_SIZE];          /* uppercase ASCII, null-padded */
@@ -105,8 +120,8 @@ typedef struct {
  *
  * Returns:
  *   0  on success; out->portrait points into *data.
- *  -1  on invalid arguments (NULL pointer, data_size < 496).
- *  -2  on invalid magic (cmp_i_C or cmp_i_E != 0).
+ *  -1  on invalid arguments (NULL pointer, data_size != 508).
+ *  -2  on invalid source compatibility header.
  *  -3  on invalid Name/Title characters (not uppercase ASCII
  *      or null).
  *

@@ -36464,10 +36464,10 @@ add_executable(test_nexus_v1_dgn_material_raster
 
     # ── CSB Utility Disk .CMP file decoder (Tier 2 #6) ──
     # Verifies src/shared/firestaff_cmp_decode.c parses the
-    # 496-byte CMP format used by Chaos Strikes Back's
+    # 508-byte CMP format used by Chaos Strikes Back's
     # Champion Editor: 32x29 4bpp portrait + champion name
     # + title. The decoder validates file size, magic
-    # (cmp_i_C == cmp_i_E == 0), and Name/Title character
+    # (Magic 0x91a7, ui_6/ui_8, and reserved words), and Name/Title character
     # set (uppercase A-Z, digits, space, NUL).
     add_executable(test_firestaff_cmp_decode
         tests/test_firestaff_cmp_decode.c
@@ -36587,7 +36587,7 @@ add_executable(test_nexus_v1_dgn_material_raster
     # Wires the existing firestaff_cmp_decode.c decoder to the
     # CSB_V1_Champion / CSB_V1_PartyState runtime data structures.
     # Source lock:
-    #   - ReDMCSB DEFS.H CMP typedef (size 496 bytes)
+    #   - ReDMCSB DEFS.H CMP typedef / CEDT001.C F7000 (size 508 bytes)
     #   - ReDMCSB PORTRAIT.C F0515_CHAMPION_ConvertPortraitsToAtariSTPlanar
     #   - ReDMCSB CEDT002.C / CEDT021.C (Utility Disk Champion Editor)
     #   - CSBWin/CedtData.cpp (CSB Utility Disk tool)

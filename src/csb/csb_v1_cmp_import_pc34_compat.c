@@ -97,11 +97,13 @@ int csb_v1_cmp_import_self_test(void)
     /* cmp_i_C and cmp_i_E are already 0. */
     const char* name  = "HECTOR";
     const char* title = "WARRIOR";
-    memcpy(cmp_buf + 4, name, 6);
-    memcpy(cmp_buf + 4 + FIRESTAFF_CMP_NAME_SIZE, title, 7);
+    cmp_buf[0] = 0x91; cmp_buf[1] = 0xa7;
+    cmp_buf[7] = 1; cmp_buf[9] = 1;
+    memcpy(cmp_buf + FIRESTAFF_CMP_NAME_OFFSET, name, 6);
+    memcpy(cmp_buf + FIRESTAFF_CMP_TITLE_OFFSET, title, 7);
     /* Fill portrait with a recognisable pattern so we can
      * verify the copy in the test. */
-    memset(cmp_buf + 4 + FIRESTAFF_CMP_NAME_SIZE + FIRESTAFF_CMP_TITLE_SIZE,
+    memset(cmp_buf + FIRESTAFF_CMP_PORTRAIT_OFFSET,
            0xA5, CMP_PORTRAIT_BYTES);
 
     /* 1. Valid import into a single champion. */
@@ -122,7 +124,7 @@ int csb_v1_cmp_import_self_test(void)
         csb_v1_champion_init(&champ);
         uint8_t bad_buf[FIRESTAFF_CMP_FILE_SIZE];
         memcpy(bad_buf, cmp_buf, sizeof(bad_buf));
-        bad_buf[0] = 0x42;  /* cmp_i_C big-endian high byte */
+        bad_buf[0] = 0x42;  /* Magic big-endian high byte */
         bad_buf[1] = 0x42;  /* cmp_i_C big-endian low byte */
         int rc = csb_v1_cmp_import_champion(&champ, bad_buf, sizeof(bad_buf));
         if (rc != -2) return -1;
@@ -134,7 +136,7 @@ int csb_v1_cmp_import_self_test(void)
         csb_v1_champion_init(&champ);
         uint8_t bad_buf[FIRESTAFF_CMP_FILE_SIZE];
         memcpy(bad_buf, cmp_buf, sizeof(bad_buf));
-        bad_buf[4] = 'h';  /* lowercase 'h' */
+        bad_buf[FIRESTAFF_CMP_NAME_OFFSET] = 'h';  /* lowercase 'h' */
         int rc = csb_v1_cmp_import_champion(&champ, bad_buf, sizeof(bad_buf));
         if (rc != -3) return -1;
     }

@@ -4,7 +4,7 @@
  * CSB V1 Utility Disk Champion Portrait (.CMP) import flow.
  *
  * The CSB Utility Disk Champion Editor writes a champion's
- * metadata + portrait to a 496-byte .CMP file. The on-disk
+ * metadata + portrait to a 508-byte .CMP file. The on-disk
  * format is parsed by FirestaffCmp_Decode() (see
  * firestaff_cmp_decode.h). This module glues that decoder
  * to the CSB V1 Champion runtime data structure
@@ -15,7 +15,7 @@
  * Three import entry points:
  *
  *   csb_v1_cmp_import_champion
- *     Decodes one 496-byte CMP buffer and writes the metadata
+ *     Decodes one 508-byte CMP buffer and writes the metadata
  *     + portrait into a CSB_V1_Champion record. The portrait
  *     bytes are copied into the champion's 3712-byte portrait
  *     slot (CSB_V1_PORTRAIT_BYTE_COUNT), preserving the Amiga
@@ -29,7 +29,8 @@
  * save first and then use csb_v1_cmp_import_champion() as a portrait overlay.
  *
  * Source:
- *   - ReDMCSB DEFS.H CMP typedef (size 496 = 32 header + 464 portrait).
+ *   - ReDMCSB DEFS.H CMP typedef / CEDT001.C F7000
+ *     (size 508 = 44 header + 464 portrait).
  *   - ReDMCSB PORTRAIT.C F0515_CHAMPION_ConvertPortraitsToAtariSTPlanar.
  *   - ReDMCSB CEDT002.C / CEDT021.C (Utility Disk Champion Editor flow).
  *   - CSBWin/CedtData.cpp CMP load/save (CSB Utility Disk tool).
@@ -52,7 +53,7 @@ extern "C" {
  */
 #ifdef CSB_V1_CMP_IMPORT_CONTRACT_ONLY
 /*
- * Import a 496-byte CMP buffer into a CSB_V1_Champion record.
+ * Import a 508-byte CMP buffer into a CSB_V1_Champion record.
  *
  * Returns:
  *   0  on success; champion->Name, champion->Title, and

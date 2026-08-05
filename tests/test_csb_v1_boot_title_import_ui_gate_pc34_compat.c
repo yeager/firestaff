@@ -48,7 +48,7 @@
  *   ReDMCSB CHANGE8_13 (CSB engine version 2.1 hardcoded).
  *   ReDMCSB CEDT002.C + CEDT021.C + CEDTINC7.C
  *     (Utility Disk Champion Editor → CSB runtime handoff).
- *   ReDMCSB DEFS.H CMP typedef (size 496 bytes).
+ *   ReDMCSB DEFS.H CMP typedef / CEDT001.C F7000 (size 508 bytes).
  *   CSBWin/CedtData.cpp (CSB Utility Disk tool flow).
  *
  * The boot checks run against an operator-supplied original CSB package.
@@ -104,10 +104,11 @@ static int build_synthetic_cmp(uint8_t *buf, size_t buf_size,
     if (name_len == 0 || name_len > FIRESTAFF_CMP_NAME_SIZE) return -1;
     if (title_len == 0 || title_len > FIRESTAFF_CMP_TITLE_SIZE) return -1;
     memset(buf, 0, buf_size);
-    /* cmp_i_C + cmp_i_E are already 0 */
-    memcpy(buf + 4, name, name_len);
-    memcpy(buf + 4 + FIRESTAFF_CMP_NAME_SIZE, title, title_len);
-    memset(buf + 4 + FIRESTAFF_CMP_NAME_SIZE + FIRESTAFF_CMP_TITLE_SIZE,
+    buf[0] = 0x91; buf[1] = 0xa7;
+    buf[7] = 1; buf[9] = 1;
+    memcpy(buf + FIRESTAFF_CMP_NAME_OFFSET, name, name_len);
+    memcpy(buf + FIRESTAFF_CMP_TITLE_OFFSET, title, title_len);
+    memset(buf + FIRESTAFF_CMP_PORTRAIT_OFFSET,
            portrait_fill, CMP_PORTRAIT_BYTES_FOR_TEST);
     return 0;
 }

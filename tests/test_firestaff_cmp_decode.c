@@ -5,7 +5,7 @@
  * which runs all internal cases:
  *   - valid_cmp
  *   - too_short
- *   - bad_magic (cmp_i_C or cmp_i_E != 0)
+ *   - bad_magic (the source compatibility header is malformed)
  *   - bad_name (lowercase character)
  *   - bad_title (control character)
  *   - max_lengths (7-char name + 19-char title)
@@ -18,10 +18,34 @@
 #include "firestaff_cmp_decode.h"
 
 #include <stdio.h>
+#include <string.h>
 
-int main(void) {
+static int verify_real_cmp(const char *path) {
+    uint8_t bytes[FIRESTAFF_CMP_FILE_SIZE];
+    FirestaffCmp cmp;
+    FILE *file;
+
+    file = fopen(path, "rb");
+    if (!file || fread(bytes, 1U, sizeof(bytes), file) != sizeof(bytes) ||
+        fgetc(file) != EOF) {
+        if (file) fclose(file);
+        fprintf(stderr, "test_firestaff_cmp_decode: cannot read exact CMP %s\n", path);
+        return 0;
+    }
+    fclose(file);
+    if (FirestaffCmp_Decode(bytes, sizeof(bytes), &cmp) != 0 ||
+        cmp.magic != 0x91a7u || strcmp(cmp.name, "HALK") != 0 ||
+        strcmp(cmp.title, "THE BARBARIAN") != 0 ||
+        cmp.portrait_size != FIRESTAFF_CMP_PORTRAIT_BYTES) {
+        fprintf(stderr, "test_firestaff_cmp_decode: real CMP rejected or decoded incorrectly\n");
+        return 0;
+    }
+    return 1;
+}
+
+int main(int argc, char **argv) {
     int rc = FirestaffCmp_SelfTest();
-    if (rc == 0) {
+    if (rc == 0 && (argc == 1 || (argc == 2 && verify_real_cmp(argv[1])))) {
         printf("test_firestaff_cmp_decode: PASS\n");
         return 0;
     }

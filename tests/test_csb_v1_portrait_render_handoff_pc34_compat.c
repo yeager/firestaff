@@ -9,7 +9,8 @@
  *   -> csb_v1_runtime_select_champion_portrait_render_source()
  *
  * Source lock:
- *   - ReDMCSB DEFS.H CMP typedef: 496-byte Utility Disk portrait record.
+ *   - ReDMCSB DEFS.H CMP typedef / CEDT001.C F7000: 508-byte Utility Disk
+ *     portrait record.
  *   - ReDMCSB PANEL.C F0354 lines 2195-2239: status-box portrait draws from
  *     M516_CHAMPIONS[ChampionIndex].Portrait.
  *   - ReDMCSB CHAMDRAW.C F0292 lines 731-940: status-box refresh routes
@@ -50,13 +51,15 @@ static int g_passed = 0;
 static void make_cmp(uint8_t cmp[FIRESTAFF_CMP_FILE_SIZE],
                      const char *name,
                      const char *title,
-                     uint8_t seed)
+    uint8_t seed)
 {
     memset(cmp, 0, FIRESTAFF_CMP_FILE_SIZE);
-    memcpy(cmp + 4, name, strlen(name));
-    memcpy(cmp + 4 + FIRESTAFF_CMP_NAME_SIZE, title, strlen(title));
+    cmp[0] = 0x91; cmp[1] = 0xa7;
+    cmp[7] = 1; cmp[9] = 1;
+    memcpy(cmp + FIRESTAFF_CMP_NAME_OFFSET, name, strlen(name));
+    memcpy(cmp + FIRESTAFF_CMP_TITLE_OFFSET, title, strlen(title));
     for (int i = 0; i < 464; ++i) {
-        cmp[4 + FIRESTAFF_CMP_NAME_SIZE + FIRESTAFF_CMP_TITLE_SIZE + i] =
+        cmp[FIRESTAFF_CMP_PORTRAIT_OFFSET + i] =
             (uint8_t)(seed + i);
     }
 }

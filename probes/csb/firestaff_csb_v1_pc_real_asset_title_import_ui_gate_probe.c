@@ -33,7 +33,7 @@
  *   - ReDMCSB DIALOG.C:2014-2023 + CHANGE8_13 (engine version).
  *   - ReDMCSB CEDT002.C + CEDT021.C + CEDTINC7.C
  *     (Utility Disk Champion Editor → CSB runtime).
- *   - ReDMCSB DEFS.H CMP typedef (size 496 bytes).
+ *   - ReDMCSB DEFS.H CMP typedef / CEDT001.C F7000 (size 508 bytes).
  *   - ReDMCSB ENTRANCE.C F0806 (CSB entrance).
  *   - ReDMCSB LOADSAVE.C F0435 (new-game map 0).
  *
@@ -199,9 +199,11 @@ static int build_synthetic_cmp(uint8_t *buf, size_t buf_size,
     if (name_len == 0 || name_len > FIRESTAFF_CMP_NAME_SIZE) return -1;
     if (title_len == 0 || title_len > FIRESTAFF_CMP_TITLE_SIZE) return -1;
     memset(buf, 0, buf_size);
-    memcpy(buf + 4, name, name_len);
-    memcpy(buf + 4 + FIRESTAFF_CMP_NAME_SIZE, title, title_len);
-    memset(buf + 4 + FIRESTAFF_CMP_NAME_SIZE + FIRESTAFF_CMP_TITLE_SIZE,
+    buf[0] = 0x91; buf[1] = 0xa7;
+    buf[7] = 1; buf[9] = 1;
+    memcpy(buf + FIRESTAFF_CMP_NAME_OFFSET, name, name_len);
+    memcpy(buf + FIRESTAFF_CMP_TITLE_OFFSET, title, title_len);
+    memset(buf + FIRESTAFF_CMP_PORTRAIT_OFFSET,
            portrait_fill, 464u);
     return 0;
 }
