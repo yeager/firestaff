@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 Nexus SAL decode admission correction: `NEXUS_V1_AUDIO_KIND_SAL_BANK`
+  no longer advertises supported runtime decode from the heuristic host
+  tone-bank parser. The parser may still retain bounded diagnostic PCM
+  candidates, but SAL playback remains capture-gated; MAP table parsing stays
+  supported. Updated the misleading initialization readiness text and the
+  audio receipt probe. Verification: `test_nexus_v1_sound_runtime_receipt`
+  plus `firestaff_nexus_v1_audio_receipt_probe`, 89/89 passes on the European
+  SAL/MAP corpus.
+
 - ✅ 2026-08-06 Nexus HUD static-table removal: removed the hardcoded
   `nexus_v1_hud_layout()`/HP-position table and `nexus_v1_hud_hit_rects()` /
   hit-test table from the production library. The two modules now expose only

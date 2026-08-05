@@ -310,7 +310,10 @@ int nexus_v1_audio_decode_supported(Nexus_V1_AudioKind kind) {
         return 1;
     }
     if (kind == NEXUS_V1_AUDIO_KIND_SAL_BANK) {
-        return 1;
+        /* DMWeb proves the DataID-0 directory and bounded entry metadata,
+         * but no authenticated Saturn sample-consumption/driver trace proves
+         * that this host PCM interpretation is the retail playback route. */
+        return 0;
     }
     return 0;
 }

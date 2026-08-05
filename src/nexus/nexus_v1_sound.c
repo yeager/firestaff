@@ -637,7 +637,7 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
      * - pcmtype field selects decode format
      * Event→selector mapping remains unproven; playback stays blocked
      * until a MAP record lookup succeeds with a verified selector. */
-    printf("Nexus sound: initialized (SAL decode ready, "
+    printf("Nexus sound: initialized (SAL metadata only, "
            "event selectors fail-closed, CD playback format-gated)\n");
     return 0;
 }
@@ -763,6 +763,7 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
     out_receipt->event_dispatch_source_verified =
         eng->event_dispatch_source_verified;
     out_receipt->sal_decode_supported =
+        nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SAL_BANK) &&
         eng->sal_tone_bank_directory_supported &&
         eng->sal_tone_entry_count_decoded == eng->sal_tone_entry_count;
     out_receipt->map_decode_supported =

@@ -232,8 +232,8 @@ static void check_cdda_layout(void) {
 
 static void check_boundary_names(void) {
     printf("\n[Boundary/status names]\n");
-    CHECK(nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SAL_BANK) == 1,
-          "SAL bank decode is supported");
+    CHECK(nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_SAL_BANK) == 0,
+          "SAL bank playback decode remains capture-gated");
     CHECK(nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_MAP_TABLE) == 1,
           "bounded MAP event table decode is supported");
     CHECK(nexus_v1_audio_decode_supported(NEXUS_V1_AUDIO_KIND_CDDA_LAYOUT) == 0,
