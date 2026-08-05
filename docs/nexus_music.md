@@ -72,6 +72,10 @@ The `engine->current_cd_track` value is maintained correctly. The actual CD audi
 
 In CUE/BIN format, CD-DA tracks are raw PCM audio files. The game data tracks (ISO9660) coexist with audio tracks on the same disc image.
 
+Firestaff does not wrap raw CD-DA bytes in a guessed WAV header. CD playback
+accepts only an already decoded host audio file or a capture-backed CD
+callback; missing or unsupported track material remains unavailable.
+
 No specific music filenames are referenced in the current source — the engine uses numeric track IDs that correspond to the CUE sheet track numbering.
 
 ## Comparison with DM1

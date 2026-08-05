@@ -7,7 +7,6 @@
 static void nexus_sound_free_decoded(Nexus_SoundEngine *eng);
 static void nexus_sound_trigger_tone(Nexus_SoundEngine *eng, int tone_index);
 static int nexus_file_exists(const char *path);
-static void nexus_cd_ensure_wav_tracks(void);
 
 /* Nexus V1 sound system — source-bound SAL directory implementation.
  * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
@@ -638,9 +637,8 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
      * - pcmtype field selects decode format
      * Event→selector mapping remains unproven; playback stays blocked
      * until a MAP record lookup succeeds with a verified selector. */
-    nexus_cd_ensure_wav_tracks();
     printf("Nexus sound: initialized (SAL decode ready, "
-           "event selectors fail-closed, CD tracks extracted)\n");
+           "event selectors fail-closed, CD playback format-gated)\n");
     return 0;
 }
 
@@ -1150,78 +1148,6 @@ static int nexus_file_exists(const char *path) {
     FILE *f = fopen(path, "rb");
     if (f) { fclose(f); return 1; }
     return 0;
-}
-
-static void nexus_cdda_bin_to_wav(const char *bin_path, const char *wav_path) {
-    FILE *fin, *fout;
-    long bin_size;
-    uint8_t header[44];
-    uint8_t buf[4096];
-    size_t n;
-    uint32_t data_size;
-    uint32_t file_size;
-
-    if (nexus_file_exists(wav_path)) return;
-    fin = fopen(bin_path, "rb");
-    if (!fin) return;
-    fseek(fin, 0, SEEK_END);
-    bin_size = ftell(fin);
-    fseek(fin, 0, SEEK_SET);
-    if (bin_size <= 0 || bin_size > 200 * 1024 * 1024) {
-        fclose(fin);
-        return;
-    }
-
-    data_size = (uint32_t)bin_size;
-    file_size = data_size + 36;
-
-    /* WAV header: RIFF/WAVE, 16-bit signed LE stereo 44100 Hz */
-    memcpy(header, "RIFF", 4);
-    header[4] = file_size & 0xff; header[5] = (file_size >> 8) & 0xff;
-    header[6] = (file_size >> 16) & 0xff; header[7] = (file_size >> 24) & 0xff;
-    memcpy(header + 8, "WAVE", 4);
-    memcpy(header + 12, "fmt ", 4);
-    header[16] = 16; header[17] = 0; header[18] = 0; header[19] = 0;
-    header[20] = 1; header[21] = 0;  /* PCM */
-    header[22] = 2; header[23] = 0;  /* stereo */
-    header[24] = 0x44; header[25] = 0xac; header[26] = 0; header[27] = 0; /* 44100 */
-    /* byte rate = 44100 * 2 * 2 = 176400 */
-    header[28] = 0x10; header[29] = 0xb1; header[30] = 0x02; header[31] = 0;
-    header[32] = 4; header[33] = 0;  /* block align */
-    header[34] = 16; header[35] = 0; /* bits per sample */
-    memcpy(header + 36, "data", 4);
-    header[40] = data_size & 0xff; header[41] = (data_size >> 8) & 0xff;
-    header[42] = (data_size >> 16) & 0xff; header[43] = (data_size >> 24) & 0xff;
-
-    fout = fopen(wav_path, "wb");
-    if (!fout) { fclose(fin); return; }
-    fwrite(header, 1, 44, fout);
-    while ((n = fread(buf, 1, sizeof(buf), fin)) > 0) {
-        fwrite(buf, 1, n, fout);
-    }
-    fclose(fin);
-    fclose(fout);
-    printf("Nexus music: converted %s -> %s\n", bin_path, wav_path);
-}
-
-static void nexus_cd_ensure_wav_tracks(void) {
-    const char *home = getenv("HOME");
-    char bin_path[512];
-    char wav_path[512];
-    int track;
-
-    if (!home) return;
-    for (track = 2; track <= 9; track++) {
-        snprintf(wav_path, sizeof(wav_path),
-                 "%s/.firestaff/data/nexus/track%02d.wav", home, track);
-        if (nexus_file_exists(wav_path)) continue;
-        snprintf(bin_path, sizeof(bin_path),
-                 "%s/.firestaff/data/nexus/Dungeon Master Nexus (Japan) (Track %d).bin",
-                 home, track);
-        if (nexus_file_exists(bin_path)) {
-            nexus_cdda_bin_to_wav(bin_path, wav_path);
-        }
-    }
 }
 
 static void nexus_cd_build_track_path(Nexus_SoundEngine *eng, int track_number) {

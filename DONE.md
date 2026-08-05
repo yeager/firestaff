@@ -1,3 +1,8 @@
+- ✅ 2026-08-05 Nexus CD-DA synthetic metadata removal: deleted the startup
+  path that wrapped raw track bytes in an invented 44.1 kHz stereo WAV header.
+  The runtime now selects only existing host audio formats or an external CD
+  callback; unsupported/missing track material remains blocked.
+
 - ✅ 2026-08-05 Nexus PRS3 legacy decoder correction: aligned the CMake-linked
   public decoder with DMWeb `DecodePRS3` for both forward-window (`+18`) and
   negative-window (`-0xFEE`) references. Added regression fixtures for both

@@ -28,6 +28,8 @@
   The legacy public PRS3 API now follows the same DMWeb forward/negative
   window rule as the active decoder; VDP1 pixel/palette admission remains
   capture-gated.
+  CD-DA startup no longer manufactures WAV files from raw track bytes;
+  authenticated CD image/decoder handoff remains required for music playback.
 
 - **DUNGEON-STUDIO-FSDUNG:** Dungeon Studio: import original dungeons from
   all five games (DM1, CSB, DM2, Theron's Quest, DM Nexus) and export to a
