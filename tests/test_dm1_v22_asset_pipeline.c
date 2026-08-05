@@ -414,6 +414,30 @@ static void test_source_evidence(void) {
     CHECK_NE(strstr(ev, "DUNVIEW.C"), NULL, "source_evidence mentions DUNVIEW.C");
 }
 
+static void test_real_dm1_modern_png_if_configured(void) {
+    /* CI has no copyrighted game/art pack. On a developer machine, point this
+     * test at the installed real pack to exercise the production decoder. */
+    const char* root = getenv("FIRESTAFF_DM1_MODERN_ASSET_ROOT");
+    if (!root || !root[0]) return;
+    char manifest[512];
+    snprintf(manifest, sizeof(manifest), "%s/modern_asset_manifest.json", root);
+    dm1_v22_set_manifest_path(manifest);
+    dm1_v22_set_installed(1);
+    DM1_V22_AssetDescriptor desc;
+    memset(&desc, 0, sizeof(desc));
+    CHECK_EQ(dm1_v22_asset_load("wall_shapes", "wall_d3_carved_hero_01",
+                                DM1_V22_PROVENANCE_MODERN, &desc), 1,
+             "real DM1 modern PNG loads when pack is configured");
+    CHECK(desc.is_valid && desc.pixels && desc.pixels_size ==
+          (size_t)desc.width * (size_t)desc.height * 4,
+          "real DM1 modern PNG exposes packed RGBA pixels");
+    CHECK_EQ(dm1_v22_asset_validate(&desc), 1,
+             "real DM1 modern PNG descriptor validates");
+    dm1_v22_asset_free(&desc);
+    dm1_v22_set_installed(0);
+    dm1_v22_set_manifest_path("");
+}
+
 /* ── Main ───────────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -431,6 +455,7 @@ int main(void) {
     test_best_available_provenance();
     test_manifest_path_round_trip();
     test_source_evidence();
+    test_real_dm1_modern_png_if_configured();
 
     if (failures == 0) {
         printf("PASS: all tests (%d failures)\n", failures);

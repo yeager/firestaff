@@ -49259,3 +49259,13 @@ six original 128-glyph rows. Sources: Greatstone PC 1.0 catalogue,
   requested/raw/bound MODE1/2352 sectors, LBA range `3234..4267`, 25 CD IRQ
   rows and 19 destination candidates. The receipt remains explicitly opaque:
   it does not publish level, object, tile, palette or runtime semantics.
+
+- ✅ 2026-08-06 DM1 V2.2 real PNG pixel decoder: the modern asset pipeline now
+  decodes the real zlib-compressed PNG files from the installed V2.2 pack
+  instead of accepting IHDR metadata only. It validates the PNG structure,
+  collects all IDAT chunks, inflates non-interlaced 8-bit RGB/RGBA data,
+  applies filters 0-4, and exposes packed RGBA pixels to the authenticated
+  asset descriptor. Unsupported PNG variants fail closed and do not generate
+  substitute art. `firestaff_v2` now links the existing zlib provider.
+  Verification: `ninja -C /tmp/firestaff-title-build test_dm1_v22_asset_pipeline`
+  and the focused test both pass. Tracked as `DM1-ORIGINAL-REPLACE-019`.

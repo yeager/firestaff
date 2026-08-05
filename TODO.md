@@ -1276,6 +1276,14 @@ diagnostic; it must not silently fall back to a generated visual.
   checkerboard. Verification: `test_dm1_v22_asset_pipeline` asserts the NULL
   result and existing descriptor validation still passes.
 
+- **DM1-ORIGINAL-REPLACE-019:** Closed 2026-08-06. Bound the DM1 V2.2 modern
+  asset loader to a real zlib PNG decoder for the shipped non-interlaced 8-bit
+  RGB/RGBA assets. It validates the PNG structure, inflates all IDAT chunks,
+  applies PNG filters 0-4, expands RGB to opaque RGBA, and rejects unsupported
+  variants instead of fabricating pixels. Verification: the V2.2 pipeline
+  builds and `test_dm1_v22_asset_pipeline` passes; unsupported formats remain
+  no-draw.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

@@ -35,6 +35,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdint.h>
+#include <limits.h>
+
+#if defined(FIRESTAFF_HAS_ZLIB) && FIRESTAFF_HAS_ZLIB
+#include <zlib.h>
+#endif
 
 /* ══════════════════════════════════════════════════════════════════════
  * Module State
@@ -398,6 +404,136 @@ static int build_asset_path(DM1_V22_AssetProvenance prov,
     return 1;
 }
 
+static uint32_t png_u32(const unsigned char* p) {
+    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+           ((uint32_t)p[2] << 8) | (uint32_t)p[3];
+}
+
+static int png_unfilter(unsigned char* rows, size_t stride, int height,
+                        int bpp) {
+    for (int y = 0; y < height; y++) {
+        unsigned char* row = rows + (size_t)y * stride;
+        const unsigned char* prev = y ? row - stride : NULL;
+        unsigned int filter = row[0];
+        for (size_t x = 1; x < stride; x++) {
+            unsigned int left = x > (size_t)bpp ? row[x - bpp] : 0;
+            unsigned int up = prev ? prev[x] : 0;
+            unsigned int up_left = prev && x > (size_t)bpp ? prev[x - bpp] : 0;
+            switch (filter) {
+                case 0: break;
+                case 1: row[x] = (unsigned char)(row[x] + left); break;
+                case 2: row[x] = (unsigned char)(row[x] + up); break;
+                case 3: row[x] = (unsigned char)(row[x] + ((left + up) / 2)); break;
+                case 4: {
+                    int p = (int)left + (int)up - (int)up_left;
+                    int pa = abs(p - (int)left), pb = abs(p - (int)up);
+                    int pc = abs(p - (int)up_left);
+                    unsigned int predict = pa <= pb && pa <= pc ? left :
+                        (pb <= pc ? up : up_left);
+                    row[x] = (unsigned char)(row[x] + predict);
+                    break;
+                }
+                default: return 0;
+            }
+        }
+    }
+    return 1;
+}
+
+/* Decode the real non-interlaced RGB/RGBA PNG assets. Unsupported variants
+ * are rejected; no replacement pixels are generated. */
+static int png_decode_rgba(const char* path, int* out_w, int* out_h,
+                           void** out_pixels, size_t* out_size) {
+#if !defined(FIRESTAFF_HAS_ZLIB) || !FIRESTAFF_HAS_ZLIB
+    (void)path; (void)out_w; (void)out_h; (void)out_pixels; (void)out_size;
+    return 0;
+#else
+    static const unsigned char sig[8] = {0x89,0x50,0x4e,0x47,0x0d,0x0a,0x1a,0x0a};
+    FILE* fp = fopen(path, "rb");
+    if (!fp || fseek(fp, 0, SEEK_END) != 0) { if (fp) fclose(fp); return 0; }
+    long length = ftell(fp);
+    if (length < 33) { fclose(fp); return 0; }
+    rewind(fp);
+    size_t input_size = (size_t)length;
+    unsigned char* input = (unsigned char*)malloc(input_size);
+    if (!input || fread(input, 1, input_size, fp) != input_size) {
+        free(input); fclose(fp); return 0;
+    }
+    fclose(fp);
+    int ok = 0;
+    uint32_t width = 0, height = 0;
+    unsigned char depth = 0, type_value = 0, interlace = 0;
+    unsigned char* compressed = NULL;
+    size_t compressed_size = 0;
+    if (memcmp(input, sig, sizeof(sig)) != 0) goto done;
+    size_t pos = 8;
+    while (pos + 12 <= input_size) {
+        uint32_t chunk_len = png_u32(input + pos);
+        if ((size_t)chunk_len > input_size - pos - 12) goto done;
+        const unsigned char* chunk_type = input + pos + 4;
+        const unsigned char* data = input + pos + 8;
+        if (memcmp(chunk_type, "IHDR", 4) == 0) {
+            if (chunk_len != 13 || width != 0) goto done;
+            width = png_u32(data); height = png_u32(data + 4);
+            depth = data[8]; type_value = data[9]; interlace = data[12];
+            if (data[10] != 0 || data[11] != 0) goto done;
+        } else if (memcmp(chunk_type, "IDAT", 4) == 0) {
+            if ((size_t)chunk_len > SIZE_MAX - compressed_size) goto done;
+            unsigned char* grown = (unsigned char*)realloc(
+                compressed, compressed_size + (size_t)chunk_len);
+            if (!grown) goto done;
+            compressed = grown;
+            memcpy(compressed + compressed_size, data, chunk_len);
+            compressed_size += chunk_len;
+        } else if (memcmp(chunk_type, "IEND", 4) == 0) break;
+        pos += (size_t)chunk_len + 12;
+    }
+    if (!width || !height || depth != 8 || interlace != 0 ||
+        (type_value != 2 && type_value != 6) || !compressed_size ||
+        width > INT_MAX || height > INT_MAX || compressed_size > UINT_MAX) goto done;
+    int channels = type_value == 6 ? 4 : 3;
+    size_t row_bytes = (size_t)width * (size_t)channels;
+    if (row_bytes > SIZE_MAX - 1 || (size_t)height > SIZE_MAX / (row_bytes + 1)) goto done;
+    size_t raw_size = (row_bytes + 1) * (size_t)height;
+    if (raw_size > UINT_MAX) goto done;
+    unsigned char* rows = (unsigned char*)malloc(raw_size);
+    if (!rows) goto done;
+    z_stream stream;
+    memset(&stream, 0, sizeof(stream));
+    if (inflateInit(&stream) != Z_OK) { free(rows); goto done; }
+    stream.next_in = compressed; stream.avail_in = (uInt)compressed_size;
+    stream.next_out = rows; stream.avail_out = (uInt)raw_size;
+    int result = inflate(&stream, Z_FINISH);
+    size_t actual = stream.total_out;
+    inflateEnd(&stream);
+    if (result != Z_STREAM_END || actual != raw_size ||
+        !png_unfilter(rows, row_bytes + 1, (int)height, channels)) {
+        free(rows); goto done;
+    }
+    if ((size_t)width > SIZE_MAX / (size_t)height / 4) { free(rows); goto done; }
+    size_t pixel_size = (size_t)width * (size_t)height * 4;
+    unsigned char* pixels = (unsigned char*)malloc(pixel_size);
+    if (!pixels) { free(rows); goto done; }
+    for (uint32_t y = 0; y < height; y++) {
+        const unsigned char* src = rows + (size_t)y * (row_bytes + 1) + 1;
+        unsigned char* dst = pixels + (size_t)y * (size_t)width * 4;
+        for (uint32_t x = 0; x < width; x++) {
+            dst[x * 4 + 0] = src[x * channels + 0];
+            dst[x * 4 + 1] = src[x * channels + 1];
+            dst[x * 4 + 2] = src[x * channels + 2];
+            dst[x * 4 + 3] = channels == 4 ? src[x * 4 + 3] : 255;
+        }
+    }
+    free(rows);
+    *out_w = (int)width; *out_h = (int)height;
+    *out_pixels = pixels; *out_size = pixel_size;
+    ok = 1;
+done:
+    free(compressed); free(input);
+    return ok;
+#endif
+}
+
 /* Attempt to load a single asset file (PNG or TGA) from disk.
  * This is the low-level file load used within the fallback chain.
  *
@@ -412,8 +548,15 @@ static int build_asset_path(DM1_V22_AssetProvenance prov,
  * the route no-draw until a complete pixel decoder is bound. */
 static int try_load_asset_file(const char* file_path,
                                int* out_w, int* out_h,
-                               DM1_V22_AssetFormat* out_format) {
+                               DM1_V22_AssetFormat* out_format,
+                               void** out_pixels, size_t* out_pixels_size) {
     if (!file_path || !file_path[0]) return 0;
+    if (out_pixels) *out_pixels = NULL;
+    if (out_pixels_size) *out_pixels_size = 0;
+    if (png_decode_rgba(file_path, out_w, out_h, out_pixels, out_pixels_size)) {
+        if (out_format) *out_format = DM1_V22_FORMAT_PNG;
+        return 1;
+    }
 
     FILE* fp = fopen(file_path, "rb");
     if (!fp) return 0;
@@ -497,11 +640,11 @@ int dm1_v22_asset_load(const char* category, const char* asset_id,
             /* Try to load the file */
             int w = 0, h = 0;
             DM1_V22_AssetFormat fmt = DM1_V22_FORMAT_UNKNOWN;
-            if (try_load_asset_file(path, &w, &h, &fmt)) {
-                /* File found and header valid — fill descriptor.
-                 * NOTE: actual pixel buffer loading would happen here
-                 * with a full PNG/TGA library. For now we record the
-                 * metadata. */
+            void* pixels = NULL;
+            size_t pixels_size = 0;
+            if (try_load_asset_file(path, &w, &h, &fmt,
+                                     &pixels, &pixels_size)) {
+                /* File found and decoded — fill descriptor. */
                 out_desc->provenance = prov;
                 out_desc->category   = DM1_V22_CATEGORY_UNKNOWN; /* caller sets */
                 out_desc->asset_id   = asset_id;
@@ -510,9 +653,9 @@ int dm1_v22_asset_load(const char* category, const char* asset_id,
                 out_desc->width   = w;
                 out_desc->height  = h;
                 out_desc->format  = fmt;
-                out_desc->pixels  = NULL; /* Not loaded in this probe version */
-                out_desc->pixels_size = 0;
-                out_desc->is_valid = 0;   /* Pixels not loaded */
+                out_desc->pixels  = pixels;
+                out_desc->pixels_size = pixels_size;
+                out_desc->is_valid = pixels != NULL ? 1 : 0;
                 out_desc->load_attempted = 1;
                 return 1; /* Found it */
             }
