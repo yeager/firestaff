@@ -1566,6 +1566,12 @@ diagnostic; it must not silently fall back to a generated visual.
   placement. **2026-07-31 update:** invalid `UPDATE_GFXSET` control receipts
   (missing hash or an out-of-range graphics-set selector) now clear the scene
   and light plans rather than silently falling back to graphics set zero.
+  **2026-08-06 update:** the remaining local DB2/DB3 wall-button walkers are
+  now fixture-only. A mounted M11 source provider may use only the
+  authenticated `dm2_v1_dungeon_*` record chain; if that chain cannot bind a
+  button, the button is absent instead of obtaining a guessed WALL_GFX
+  selection. Complete the G1 record-chain ownership before restoring any
+  missing source button.
 - **DM2-ORIGINAL-REPLACE-002:** Replace the V2 HUD's synthetic 1x1/overlay
   route with real interface/widget records from `dm2/GRAPHICS.DAT`; do not
   use generated PNG pixels as a runtime fallback. **2026-07-30 update:** the

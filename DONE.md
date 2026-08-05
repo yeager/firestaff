@@ -49232,6 +49232,18 @@ the catalogue count and ownership; the boot-profile smoke test verifies the
 six original 128-glyph rows. Sources: Greatstone PC 1.0 catalogue,
 `SKWINSPX/src/v4/skcore.cpp::_3929_0e16_FONT_LOAD`, and
 `SKWINSPX/src/v4/sktext.cpp::QUERY_FONT`.
+
+# ✅ 2026-08-06 DM2 source wall-button fallback removal
+
+The local DB2/DB3 wall-button walkers are now available only to isolated
+fixture providers. A mounted M11 GDAT provider must resolve a wall button via
+the authenticated `dm2_v1_dungeon_find_text_wall_gfx` or
+`dm2_v1_dungeon_resolve_actuator_wall_gfx` chain; an unresolved chain leaves
+the button absent and cannot select a guessed `WALL_GFX` image. Verification:
+`test_dm2_v1_door_scene_control_gate` PASS, real-data door overlay plan PASS,
+and the PC English boot probe reaches `dm2-startup-menu`. Source:
+`SKWINSPX/src/v4/c_gui_vp.cpp::DM2_DRAW_DOOR` and the G1 record helpers in
+`c_record.cpp`.
 - ✅ 2026-08-05 Theron Track02 static consumer disassembly: added a
   byte-backed HuC6280 bank-$1f fragment for `$243e–$24b0`, extracted from
   the hash-locked US retail ISO with da65. It records the real bitstream and
