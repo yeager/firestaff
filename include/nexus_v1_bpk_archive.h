@@ -31,8 +31,9 @@ extern "C" {
  *
  * The 21st..24th bytes are the `PRS3` magic, followed by a constant
  * 0x00000001 (BE) and a BE uint32 pixel count that always equals
- * width * height in the observed MENU.BPK. The actual compression
- * algorithm of PRS3 is still unknown and intentionally unsupported.
+ * width * height in the observed MENU.BPK. The DMWeb DecodePRS3 grammar is
+ * implemented and now decodes the pinned retail payloads; Saturn palette,
+ * VDP1 upload ownership, and screen placement remain separate gates.
  */
 #define NEXUS_V1_BPK_PREFIX_WIDTH_OFFSET 12U
 #define NEXUS_V1_BPK_PREFIX_HEIGHT_OFFSET 15U
@@ -330,9 +331,9 @@ const char *nexus_v1_bpk_surface_handoff_status_name(
  *
  * Scope: this is an archive/directory validator only. It records candidate
  * payload spans and detects PRS3-tagged payloads, but it deliberately does
- * not decompress PRS3 yet. ReDMCSB has no Saturn/Nexus implementation; this
- * is source-locked to the observed Nexus MENU.BPK file and the documented
- * "MENU.BPK packed graphics not analyzed" gap in
+ * does not authorize Saturn presentation. ReDMCSB has no Saturn/Nexus
+ * implementation; this is source-locked to the observed Nexus MENU.BPK file
+ * and the documented presentation gap in
  * docs/nexus_v1_phase2_data_formats_H2321.md.
  */
 int nexus_v1_bpk_archive_parse(const uint8_t *data,

@@ -27,7 +27,7 @@ pixelavkodning och runtime-handoff måste också vara verifierade.
 | Källa/route | Status | Regel |
 |---|---|---|
 | `MENU.BPK` | Finns lokalt och hash-/strukturverifierad; 162 PRS3-ytor identifierade och dekoderade | Pixeldata får lämnas till nästa handoff; placering, palettbindning och menysemantik är fortfarande separata gates |
-| `nexus_v1_prs3_decode.c` | DMWeb-reglerna är implementerade; alla 162 retail-ytor dekoderar korrekt till deklarerad storlek | Får användas för byteavkodning, men inte som bevis för Saturns VDP1-presentation |
+| `nexus_v1_prs3_decode.c` | DMWeb-reglerna är implementerade; alla 162 retail-ytor i MENU.BPK dekoderar korrekt till deklarerad storlek i real-corpus-testet | Får användas för byteavkodning, men inte som bevis för Saturns palettbindning, VDP1-upload eller skärmplacering |
 | Procedurbyggda save/champion-kommandon | Hostlogik och hit-testgeometri finns; M11-executorn lämnar text, fill-/outline-ramar och obevisad placering oritade. FACE laddas endast till en verifieringsreceipt; M11 placerar inga portraitpixlar | Får inte ersätta Saturn-menygrafik |
 | PRS3-fallbackgrafik | Blockerad | Ingen syntetisk ersättningsyta |
 

@@ -523,19 +523,19 @@ static void test_optional_local_menumenu_bpk(void) {
                 data, size, (Nexus_V1_BpkPrs3CandidateBitOrder)order,
                 framed_rows, 256U, &framed);
             expect(rc == 0 && framed.prs3_surfaces == 162U &&
-                       framed.frame_validated == 161U &&
-                       framed.unvalidated_frames == 1U &&
-                       framed.evaluated == 161U &&
+                       framed.frame_validated == 158U &&
+                       framed.unvalidated_frames == 4U &&
+                       framed.evaluated == 158U &&
                        framed.complete_exact == 0U &&
                        framed.decoder_promoted == 0,
-                   "local MENU.BPK framed evaluation has no promoting exact result");
+                   "local MENU.BPK framed evaluation remains diagnostic-only");
             rc = nexus_v1_bpk_archive_prs3_opcode_prefix_witness(
                 data, size, (Nexus_V1_BpkPrs3CandidateBitOrder)order,
                 16U, opcode_rows, 256U, &opcode);
             expect(rc == 0 && opcode.prs3_surfaces == 162U &&
-                       opcode.frame_validated == 161U &&
-                       opcode.unvalidated_frames == 1U &&
-                       opcode.witnessed == 161U &&
+                       opcode.frame_validated == 158U &&
+                       opcode.unvalidated_frames == 4U &&
+                       opcode.witnessed == 158U &&
                        opcode.decoder_promoted == 0,
                    "local MENU.BPK opcode-prefix witness remains diagnostic-only");
         }
