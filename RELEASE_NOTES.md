@@ -1,6 +1,11 @@
 
 
 # Firestaff v3.0.288
+- DM2 parity: implement 3 missing c_gdatfile functions from skproject
+  (BUILD_GDAT_ENTRY_DATA, sound sample XOR decode, deferred sound resolver)
+- Fix 3 DM2 test failures: creature AI loop column-major dungeon layout,
+  launcher handoff SDL timeout, runtime narrow adjacent tile assertion
+- Fix DM2 startup profile gate timeout (SIGALRM) and minimap link error
 - Asset scanner caching: scan results persisted to ~/.firestaff/cache/asset_scan_cache.dat
   so unchanged files skip MD5 re-hashing on repeat scans
 - FM Towns disc image support: ZIP/ISO 9660/CDDA extraction pipeline for DM1 and DM2
