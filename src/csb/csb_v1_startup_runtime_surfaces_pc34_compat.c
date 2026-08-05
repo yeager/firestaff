@@ -7,11 +7,13 @@
 #include "memory_graphics_dat_state_pc34_compat.h"
 #include "csb_v1_graphics_lzw_pc34_compat.h"
 #include "csb_v1_graphics_atari_st_loader_pc34_compat.h"
+#include "csb_v1_fmtowns_graphics_dat.h"
 #include "csb_v1_startup_img3_decode_pc34_compat.h"
 #include "firestaff_x68k_media_receipt.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 /* ReDMCSB TITLE.C F0437 lines 424-463 loads C001 once and uses C424-C426
@@ -43,6 +45,73 @@ static uint32_t csb_v1_startup_surface_pixel_hash_pc34(
         hash *= 16777619u;
     }
     return hash ? hash : 1u;
+}
+
+/* ReDMCSB MEMORY.C F0490 selects a F31E/F31J GRAPHICS.DAT record and then
+ * IMAGE2.C F0689 expands it.  Keep this route separate from PC IMG3: the
+ * container marker and item count are authenticated before IMG2 sees bytes. */
+static int csb_v1_boot_decode_fmtowns_graphics_dat_asset_pc34(
+    const char *path, unsigned int graphic_index,
+    unsigned char **out_pixels, int *out_width, int *out_height,
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 *out_decode_receipt)
+{
+    FILE *file = NULL;
+    long file_size;
+    unsigned char *data = NULL;
+    unsigned char *pixels = NULL;
+    CSB_V1_FmtownsItemDecodeReceipt item_receipt;
+    int ok = 0;
+
+    if (!path || !path[0] || !out_pixels || !out_width || !out_height ||
+        graphic_index > UINT16_MAX) return 0;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0 || fseek(file, 0L, SEEK_SET) != 0 ||
+        (size_t)file_size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE) goto done;
+    data = (unsigned char *)malloc((size_t)file_size);
+    pixels = (unsigned char *)malloc(CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34);
+    if (!data || !pixels ||
+        fread(data, 1u, (size_t)file_size, file) != (size_t)file_size ||
+        !csb_v1_fmtowns_graphics_probe(data, (size_t)file_size) ||
+        !csb_v1_fmtowns_graphics_decode_item(
+            data, (size_t)file_size, (uint16_t)graphic_index, pixels,
+            CSB_V1_STARTUP_SURFACE_MAX_PIXELS_PC34, &item_receipt) ||
+        !item_receipt.is_image || item_receipt.width == 0u ||
+        item_receipt.height == 0u ||
+        item_receipt.container_offset > (size_t)file_size ||
+        item_receipt.stream_byte_count >
+            (size_t)file_size - item_receipt.container_offset) goto done;
+    if (out_decode_receipt) {
+        memset(out_decode_receipt, 0, sizeof(*out_decode_receipt));
+        out_decode_receipt->valid = 1;
+        out_decode_receipt->width = item_receipt.width;
+        out_decode_receipt->height = item_receipt.height;
+        out_decode_receipt->stream_byte_count = item_receipt.stream_byte_count;
+        out_decode_receipt->stream_bytes_consumed = item_receipt.stream_bytes_consumed;
+        out_decode_receipt->emitted_planar_pixels = item_receipt.pixel_count;
+        out_decode_receipt->physical_planar_pixels =
+            (size_t)item_receipt.width * item_receipt.height;
+        out_decode_receipt->stream_fnv1a = item_receipt.stream_fnv1a;
+        out_decode_receipt->indexed_pixel_fnv1a = item_receipt.pixel_fnv1a;
+        out_decode_receipt->ended_at_record_boundary =
+            item_receipt.stream_bytes_consumed == item_receipt.stream_byte_count;
+        out_decode_receipt->indexed_colors_are_4bit = 1;
+        if (firestaff_x68k_media_receipt_sha256_hex(
+                data + item_receipt.container_offset,
+                item_receipt.stream_byte_count,
+                out_decode_receipt->compressed_record_sha256,
+                sizeof(out_decode_receipt->compressed_record_sha256)) != 0) goto done;
+    }
+    *out_pixels = pixels;
+    *out_width = item_receipt.width;
+    *out_height = item_receipt.height;
+    pixels = NULL;
+    ok = 1;
+done:
+    if (file) fclose(file);
+    free(pixels);
+    free(data);
+    return ok;
 }
 
 static int csb_v1_startup_hud_capture_surface_matches_pc34(
@@ -216,6 +285,11 @@ int csb_v1_boot_decode_graphics_dat_asset_pc34(
         memset(out_decode_receipt, 0, sizeof(*out_decode_receipt));
     }
     if (!path || !path[0] || !out_pixels || !out_width || !out_height) return 0;
+    if (csb_v1_boot_decode_fmtowns_graphics_dat_asset_pc34(
+            path, graphic_index, out_pixels, out_width, out_height,
+            out_decode_receipt)) {
+        return 1;
+    }
     memset(&file_state, 0, sizeof(file_state));
     memset(&runtime_state, 0, sizeof(runtime_state));
     memset(&header, 0, sizeof(header));

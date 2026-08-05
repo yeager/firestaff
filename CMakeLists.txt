@@ -11972,6 +11972,7 @@ if(BUILD_TESTING)
     src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
     src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
     src/csb/redmcsb_f0687_f0688_img3_pc34_compat.c
+        src/csb/csb_v1_fmtowns_graphics_dat.c
         src/csb/csb_v1_runtime_pc34_compat.c
         src/shared/asset_find_by_hash.c
     )

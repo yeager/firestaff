@@ -2,6 +2,7 @@
 
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int passed;
@@ -304,6 +305,36 @@ static void test_fmtowns_media_registry(void)
           "M11 gate accepts the authenticated FM Towns Japanese pair");
 }
 
+static void test_fmtowns_startup_surface_decode(void)
+{
+    const char *path = getenv("FIRESTAFF_CSB_FMTOWNS_GRAPHICS");
+    unsigned char *pixels = NULL;
+    int width = 0;
+    int height = 0;
+    CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+
+    if (!path || path[0] == '\0') {
+        printf("  SKIP: FIRESTAFF_CSB_FMTOWNS_GRAPHICS not set\n");
+        return;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(csb_v1_boot_decode_graphics_dat_asset_pc34(
+              path, 1u, &pixels, &width, &height, &receipt) &&
+          pixels && width == 320 && height == 153 && receipt.valid &&
+          receipt.indexed_colors_are_4bit &&
+          receipt.compressed_record_sha256[0] != '\0',
+          "FM Towns C001 reaches the startup IMG2 surface route");
+    free(pixels);
+    pixels = NULL;
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(csb_v1_boot_decode_graphics_dat_asset_pc34(
+              path, 4u, &pixels, &width, &height, &receipt) &&
+          pixels && width == 320 && height == 200 && receipt.valid &&
+          receipt.compressed_record_sha256[0] != '\0',
+          "FM Towns C004 reaches the entrance IMG2 surface route");
+    free(pixels);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot Profile Smoke Test ===\n\n");
@@ -317,6 +348,7 @@ int main(void)
     test_enter_loads_verified_dungeon_context();
     test_source_evidence();
     test_fmtowns_media_registry();
+    test_fmtowns_startup_surface_decode();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
 }

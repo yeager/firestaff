@@ -56,6 +56,7 @@ typedef struct {
     uint16_t height;
     size_t   stream_byte_count;
     size_t   stream_bytes_consumed;
+    size_t   container_offset;
     size_t   pixel_count;
     uint32_t stream_fnv1a;
     uint32_t pixel_fnv1a;

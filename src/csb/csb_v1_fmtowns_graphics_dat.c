@@ -257,7 +257,11 @@ int csb_v1_fmtowns_graphics_decode_item(
         width == 0u || height == 0u || (size_t)width * height > pixel_capacity) {
         return 0;
     }
-    return csb_v1_fmtowns_img2_decode(data + payload_offset, compressed_size,
-                                      width, height, indexed_pixels,
-                                      pixel_capacity, receipt);
+    if (!csb_v1_fmtowns_img2_decode(data + payload_offset, compressed_size,
+                                    width, height, indexed_pixels,
+                                    pixel_capacity, receipt)) {
+        return 0;
+    }
+    if (receipt) receipt->container_offset = payload_offset;
+    return 1;
 }
