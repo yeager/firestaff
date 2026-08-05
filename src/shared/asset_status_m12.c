@@ -2591,6 +2591,17 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     if (!needsRuntimeCache) {
         return 1;
     }
+    if (strcmp(gameId, "dm2") == 0) {
+        /* DM2 archive payloads must stay in their user-supplied container.
+         * DM2's FM Towns boot path owns its verified CD files in memory;
+         * the PC archive reader has not yet been given an equivalent
+         * memory-backed GRAPHICS/DUNGEON owner.  Do not turn either variant
+         * into ordinary files under asset-cache: that silently unpacks game
+         * data to disk and makes a partial archive route look playable.
+         * Returning failure makes the normal required-file gate keep launch
+         * closed until the relevant in-memory reader is bound. */
+        return 0;
+    }
     if (!FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
         !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir, "asset-cache") ||
         !FSP_JoinPath(gameCacheDir, sizeof(gameCacheDir), cacheRoot, gameId) ||

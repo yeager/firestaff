@@ -10,8 +10,10 @@
   original installer/archive semantics in memory before admitting it. Complete
   M12 menu admission for that CD image and the nested Amiga floppy corpus only
   after their original GRAPHICS.DAT/DUNGEON.DAT pairs can be verified together.
-  Do not synthesize a compatible install, palette, dungeon, music map or save
-  corpus for any platform.
+  Generic DM2 ZIP/ISO cache materialization is deliberately disabled: it must
+  either gain a verified in-memory PC reader or remain non-launchable. Do not
+  synthesize a compatible install, palette, dungeon, music map or save corpus
+  for any platform.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   deliberately non-mutating until the original 263-byte `c_hero` layout,

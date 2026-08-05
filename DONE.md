@@ -49796,3 +49796,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   fabricated state change. CTest covers the runtime spell-timer behaviour
   and a static gate rejects reintroducing a surrogate mutation. Source:
   `SKULLWIN/c_tim_proc.cpp:4111-4178` and `SKULLWIN/c_hero.h:58-130`.
+
+- ✅ 2026-08-06 DM2 archive no-unpack gate: M12 no longer materializes
+  GRAPHICS.DAT, DUNGEON.DAT, music, or alternate dungeon files from a DM2
+  ZIP/ISO into `asset-cache`. Archive-backed PC DM2 now remains
+  non-launchable until its real in-memory reader is bound; the existing FM
+  Towns CD path retains its separately verified memory-only reader. The
+  focused ISO regression proves the original virtual paths remain diagnostic
+  evidence, no cache payload is written, and launch stays blocked.

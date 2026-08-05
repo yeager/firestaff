@@ -102,14 +102,6 @@ static int path_has_virtual_entry(const char* path,
            strstr(path, entryName);
 }
 
-static int path_has_cache_leaf(const char* path,
-                               const char* cacheRoot,
-                               const char* gameId,
-                               const char* leaf) {
-    return path && strstr(path, cacheRoot) && strstr(path, gameId) &&
-           strstr(path, leaf) && !strstr(path, "::");
-}
-
 static int write_iso_dir_record(unsigned char* dir,
                                 int offset,
                                 unsigned int lba,
@@ -243,27 +235,6 @@ static int write_two_file_iso(const char* path) {
     return fclose(fp) == 0;
 }
 
-static int runtime_cache_file_matches_payload(const M12_AssetStatus* status,
-                                              const char* gameId,
-                                              const char* leaf,
-                                              const unsigned char* payload,
-                                              size_t payloadSize) {
-    char gameLeaf[M12_ASSET_DATA_DIR_CAPACITY];
-    char runtimePath[M12_ASSET_DATA_DIR_CAPACITY];
-    const char* runtimeRoot = M12_AssetStatus_GetRuntimeDataDir(status, gameId);
-    if (!runtimeRoot || !gameId || !leaf || !payload) {
-        return 0;
-    }
-    if (snprintf(gameLeaf, sizeof(gameLeaf), "%s/%s", gameId, leaf) >=
-        (int)sizeof(gameLeaf)) {
-        return 0;
-    }
-    if (!FSP_JoinPath(runtimePath, sizeof(runtimePath), runtimeRoot, gameLeaf)) {
-        return 0;
-    }
-    return file_matches_payload(runtimePath, payload, payloadSize);
-}
-
 static int block_asset_cache_root(void) {
     char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
@@ -362,26 +333,17 @@ static void scan_iso_fixture_case(int blockCache) {
                                      "GRAPHICS.DAT"),
               "version match should preserve the original ISO virtual path");
 
-    if (blockCache) {
-        required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
-        check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
-                  "DM2 launch availability should be cleared when ISO "
-                  "required files cannot materialize into the cache");
-        check_int(required && required->matched &&
-                  path_has_virtual_entry(required->matchedPath,
-                                         "dm2-required.iso", "GRAPHICS.DAT"),
-                  "failed materialization should leave the required row's "
-                  "source virtual path visible for diagnostics");
-        check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                         dataRoot) == 0,
-                  "failed materialization must not advertise asset-cache as "
-                  "the DM2 runtime data root");
-        return;
-    }
-
-    check_int(M12_AssetStatus_GameAvailable(&status, "dm2"),
-              "DM2 should be available when both required hashes are ISO-backed "
-              "and materialized");
+    required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
+    check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
+              "DM2 archive payloads stay non-launchable until an in-memory "
+              "runtime owner exists");
+    check_int(required && required->matched &&
+              path_has_virtual_entry(required->matchedPath,
+                                     "dm2-required.iso", "GRAPHICS.DAT"),
+              "DM2 diagnostics retain the source virtual GRAPHICS path");
+    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
+                     dataRoot) == 0,
+              "DM2 archive routing must not advertise asset-cache as runtime data");
     check_int(FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) &&
               FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir,
                            "asset-cache") &&
@@ -394,56 +356,15 @@ static void scan_iso_fixture_case(int blockCache) {
               FSP_JoinPath(cachedShopDungeon, sizeof(cachedShopDungeon),
                            cacheRoot, "dm2/DUNGEON_SHOP.DAT"),
               "asset cache leaf paths should resolve");
-    check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                     cacheRoot) == 0,
-              "DM2 runtime data root should point at the asset cache root");
-
-    required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
-    check_int(required && required->matched &&
-              path_has_cache_leaf(required->matchedPath, cacheRoot,
-                                  "dm2", "GRAPHICS.DAT"),
-              "DM2 graphics required file should be materialized into cache");
-    check_int(required && strcmp(required->matchedPath, cachedGraphics) == 0,
-              "DM2 graphics required path should match runtimeDataDir/dm2/GRAPHICS.DAT");
-    required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 1U);
-    check_int(required && required->matched &&
-              path_has_cache_leaf(required->matchedPath, cacheRoot,
-                                  "dm2", "DUNGEON.DAT"),
-              "DM2 dungeon required file should be materialized into cache");
-    check_int(required && strcmp(required->matchedPath, cachedDungeon) == 0,
-              "DM2 dungeon required path should match runtimeDataDir/dm2/DUNGEON.DAT");
-    check_int(file_matches_payload(cachedGraphics, kGraphicsPayload,
-                                   sizeof(kGraphicsPayload) - 1U),
-              "cached GRAPHICS.DAT should contain the ISO entry payload");
-    check_int(file_matches_payload(cachedDungeon, kDungeonPayload,
-                                   sizeof(kDungeonPayload) - 1U),
-              "cached DUNGEON.DAT should contain the ISO entry payload");
-    check_int(runtime_cache_file_matches_payload(&status, "dm2",
-                                                 "GRAPHICS.DAT",
-                                                 kGraphicsPayload,
-                                                 sizeof(kGraphicsPayload) - 1U),
-              "DM2 launch lookup should open cached GRAPHICS.DAT as an ordinary file");
-    check_int(runtime_cache_file_matches_payload(&status, "dm2",
-                                                 "DUNGEON.DAT",
-                                                 kDungeonPayload,
-                                                 sizeof(kDungeonPayload) - 1U),
-              "DM2 launch lookup should open cached DUNGEON.DAT as an ordinary file");
-    check_int(file_matches_payload(cachedMusic, kMusicPayload,
-                                   sizeof(kMusicPayload) - 1U),
-              "cached DM2 startup music should contain the ISO sidecar payload");
-    check_int(file_matches_payload(cachedShopDungeon, kShopDungeonPayload,
-                                   sizeof(kShopDungeonPayload) - 1U),
-              "cached DM2 dungeon sidecar should contain the ISO sidecar payload");
-    check_int(runtime_cache_file_matches_payload(&status, "dm2",
-                                                 "00.hmp.mid",
-                                                 kMusicPayload,
-                                                 sizeof(kMusicPayload) - 1U),
-              "DM2 launch lookup should open cached 00.hmp.mid as an ordinary file");
-    check_int(runtime_cache_file_matches_payload(&status, "dm2",
-                                                 "DUNGEON_SHOP.DAT",
-                                                 kShopDungeonPayload,
-                                                 sizeof(kShopDungeonPayload) - 1U),
-              "DM2 launch lookup should open cached DUNGEON_SHOP.DAT as an ordinary file");
+    check_int(!file_matches_payload(cachedGraphics, kGraphicsPayload,
+                                    sizeof(kGraphicsPayload) - 1U) &&
+              !file_matches_payload(cachedDungeon, kDungeonPayload,
+                                    sizeof(kDungeonPayload) - 1U) &&
+              !file_matches_payload(cachedMusic, kMusicPayload,
+                                    sizeof(kMusicPayload) - 1U) &&
+              !file_matches_payload(cachedShopDungeon, kShopDungeonPayload,
+                                    sizeof(kShopDungeonPayload) - 1U),
+              "DM2 archive payloads must never be unpacked into asset-cache");
 }
 
 int main(void) {
@@ -457,6 +378,6 @@ int main(void) {
         fprintf(stderr, "%d failure(s)\n", failures);
         return 1;
     }
-    puts("ok: DM2 ISO virtual required files materialize before launch and block on cache failure");
+    puts("ok: DM2 ISO virtual required files stay in the archive and block launch");
     return 0;
 }
