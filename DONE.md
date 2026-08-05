@@ -4,6 +4,13 @@
   the ISO entries byte for byte. The asset validator now reports a documented
   `OK-ALTERNATE` identity instead of treating those genuine revisions as
   corrupt; canonical PRS3/VDP1 capture identity remains unchanged.
+- ✅ 2026-08-05 CSB quickplay handoff provenance: the quickplay dungeon-handle
+  probe no longer creates a miniature dungeon or seeds a profile as verified
+  when PC data is absent. It now admits only any hash-recognised original CSB
+  package, including the local Atari ST data, and otherwise skips. The CTest
+  entry explicitly avoids a broad default-root archive scan; an explicit data
+  directory performs the real boot, failed-rescan, re-scan and cleanup checks.
+  The original Atari package passes all 35 checks.
 
 - ✅ 2026-08-05 CSB C37 movement-tick initialization: the live C37 group
   behavior bridge now loads the source-locked creature movement cadence before

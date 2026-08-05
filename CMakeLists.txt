@@ -7880,15 +7880,13 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 
-# CSB V1 PC 3.4 quickplay/startup dungeon-handle probe.
+# CSB V1 quickplay/startup dungeon-handle probe.
 # Narrow runtime-boundary probe that proves the verified DUNGEON.DAT
 # handle survives boot handoff into the runtime AND is cleared on a
-# failed rescan.  PC-real-asset path when FIRESTAFF_CSB_PC_DATA (or
-# argv[1]) points at a hash-verified PC CSB pair; otherwise the probe
-# falls back to a synthetic-fixture path that still drives the
-# production csb_v1_boot_enter_game() / csb_v1_boot_scan_assets() /
-# csb_v1_boot_cleanup() code paths so CI stays deterministic on
-# hosts without user-supplied game data.
+# failed rescan. It accepts any hash-verified original CSB package from
+# argv[1], FIRESTAFF_CSB_DATA, or the legacy FIRESTAFF_CSB_PC_DATA. Without
+# original data it exits successfully with SKIP; it never fabricates a
+# verified profile or dungeon from fixture bytes.
 #
 # Source-lock boundary:
 #   - ReDMCSB ENTRANCE.C F0806 lines 409-441 (CSB entrance).
@@ -37169,14 +37167,10 @@ if(BUILD_TESTING)
         )
     endif()
 
-    # ── CSB V1 PC 3.4 quickplay/startup dungeon-handle probe ─────
-    # Tier 1 / Skip-safe: hosts without user-supplied PC CSB data
-    # fall through to the synthetic-fixture path and still drive
-    # the production csb_v1_boot_enter_game() / csb_v1_boot_scan_assets()
-    # code paths so the handle-survival and rescan-clearing
-    # invariants are checked on CI hosts without game data. Hosts
-    # that DO have the hash-verified PC CSB pair exercise the full
-    # real-asset handle handoff end-to-end.
+    # ── CSB V1 quickplay/startup dungeon-handle probe ────────────
+    # Tier 1 / Skip-safe. CTest explicitly opts out of recursive default-root
+    # scanning. Operators pass a hash-verified original package with argv[1]
+    # or FIRESTAFF_CSB_DATA to exercise the full handoff end-to-end.
     if(TARGET firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe)
         add_test(
             NAME csb_v1_pc34_quickplay_dungeon_handle
@@ -37184,6 +37178,7 @@ if(BUILD_TESTING)
         )
         set_tests_properties(csb_v1_pc34_quickplay_dungeon_handle PROPERTIES
             LABELS "tier1;csb;quickplay;boot_handoff;dungeon_handle;rescan;skip_safe"
+            ENVIRONMENT "FIRESTAFF_CSB_DATA="
             TIMEOUT 60
         )
     endif()
