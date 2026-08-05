@@ -49,9 +49,12 @@ size_t nexus_v1_prs3_decode(const uint8_t *src, size_t src_size,
                 int count      = 3 + (byte1 & 0x0F);
                 int raw_offset = ((byte1 >> 4) << 8) | byte0;
 
-                /* Convert raw 12-bit value to a signed relative offset,
-                 * then adjust upward into a valid absolute position. */
-                int offset = raw_offset - 0xFEE;
+                /* DMWeb DMNDataFileDecoder.vbs::DecodePRS3 uses two
+                 * 12-bit window regions: values below &HFDC address the
+                 * forward window after a +18 bias, while &HFDC..&HFFF
+                 * address the negative window after subtracting &HFEE. */
+                int offset = raw_offset >= 0xFDC ?
+                    raw_offset - 0xFEE : raw_offset + 18;
                 while ((int)out_pos - offset > 4095)
                     offset += 4096;
 

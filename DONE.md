@@ -1,3 +1,10 @@
+- ✅ 2026-08-05 Nexus PRS3 legacy decoder correction: aligned the CMake-linked
+  public decoder with DMWeb `DecodePRS3` for both forward-window (`+18`) and
+  negative-window (`-0xFEE`) references. Added regression fixtures for both
+  branches; all-literal, malformed-input, and buffer-boundary tests still
+  pass. This fixes byte decoding only and does not admit Saturn VDP1 pixels or
+  palettes without capture evidence.
+
 - ✅ 2026-08-05 Nexus SAL/MAP documentation correction: documented the
   verified retail 16-level corpus, bounded MAP record route, and DMWeb DataID
   0 tone-bank metadata decode. Corrected stale claims that Nexus SFX data was

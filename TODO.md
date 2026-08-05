@@ -25,6 +25,9 @@
   FONT256.S2D loader now binds its real decoder-reported tile count; the
   remaining text gap is the original Saturn code/attribute-to-screen owner,
   not another hardcoded glyph count.
+  The legacy public PRS3 API now follows the same DMWeb forward/negative
+  window rule as the active decoder; VDP1 pixel/palette admission remains
+  capture-gated.
 
 - **DUNGEON-STUDIO-FSDUNG:** Dungeon Studio: import original dungeons from
   all five games (DM1, CSB, DM2, Theron's Quest, DM Nexus) and export to a
