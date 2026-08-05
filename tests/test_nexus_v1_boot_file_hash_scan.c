@@ -242,9 +242,9 @@ int main(void) {
         memset(&engine, 0, sizeof(engine));
         engine.source = NEXUS_SRC_EXTRACTED;
         snprintf(engine.data_dir, sizeof(engine.data_dir), "%s", root);
-        check_int(nexus_v1_load_model(&engine, "SCORPION.MNS") == 0,
-                  "Nexus model loader resolves renamed MNS by DMDF signature fallback");
-        nexus_v1_dmdf_free(&engine.models[0]);
+        check_int(nexus_v1_load_model(&engine, "SCORPION.MNS") == -1 &&
+                      engine.model_count == 0,
+                  "Nexus model loader rejects renamed/synthetic MNS DMDF bytes");
 
         check_int(FSP_JoinPath(dmdf_dst,
                                sizeof(dmdf_dst),
@@ -314,9 +314,9 @@ int main(void) {
             engine.iso.files[2].lba = 2U;
             engine.iso.files[2].size = (uint32_t)sizeof(dmdf_material);
 
-            check_int(nexus_v1_load_model(&engine, "SCORPION.MNS") == 0,
-                      "Nexus ISO model loader resolves renamed MNS by DMDF signature fallback");
-            nexus_v1_dmdf_free(&engine.models[0]);
+            check_int(nexus_v1_load_model(&engine, "SCORPION.MNS") == -1 &&
+                          engine.model_count == 0,
+                      "Nexus ISO model loader rejects renamed/synthetic MNS DMDF bytes");
             data = nexus_v1_read_file(&engine, "FLOORS.DMDF", &size);
             check_int(data != NULL && size == (int)sizeof(dmdf_model),
                       "Nexus ISO material loader resolves renamed DMDF by signature fallback");

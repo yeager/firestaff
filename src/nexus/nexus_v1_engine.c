@@ -9980,11 +9980,27 @@ int nexus_v1_dgn_static_material_source_receipt(
 int nexus_v1_load_model(Nexus_V1_Engine *engine, const char *name) {
     int size = 0;
     uint8_t *data;
+    const char *canonical_md5;
 
     if (!engine || !name || engine->model_count >= NEXUS_MAX_MODELS) return -1;
 
+    /* DMDF magic and a requested filename are format evidence only.  The
+     * creature model pool is a runtime route, so admit only the named retail
+     * MNS identities already catalogued from the real Nexus corpus.  This
+     * closes the old renamed/synthetic-DMDF signature fallback without
+     * affecting the separate diagnostic material-container readers. */
+    if (!nexus_path_has_ext(name, ".MNS") ||
+        !(canonical_md5 = nexus_v1_known_file_md5(name))) {
+        return -1;
+    }
+
     data = nexus_v1_read_file(engine, name, &size);
     if (!data) return -1;
+
+    if (!nexus_v1_dgn_bytes_match_canonical_md5(data, size, canonical_md5)) {
+        free(data);
+        return -1;
+    }
 
     if (!nexus_v1_dmdf_is_valid(data, size)) {
         free(data);

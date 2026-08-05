@@ -109,6 +109,9 @@
   DGN Structure2 texture decode is format evidence only; keep retail source
   verification on the hash-bound LEV00--LEV15 route and do not promote decoded
   pixels to viewport/VDP1 without Saturn capture proof.
+  Creature MNS admission now also requires the exact retail hash identity;
+  do not reintroduce renamed/synthetic DMDF signature fallback into the model
+  pool while VDP1 model command semantics remain capture-gated.
   Startup runtime receipts now also keep `hud_ready` clear after a DGN handoff;
   level-loaded state alone cannot promote an unbound Saturn HUD consumer.
   FONT256.S2D loader now exposes only the 242 real character-generator tiles

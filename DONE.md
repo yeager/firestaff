@@ -50336,7 +50336,6 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   the hash-verified LEV00--LEV15 admission route; the real LEV00 diagnostic
   still decodes indexed-4bpp and direct-555 surfaces, but neither reaches
   viewport/VDP1 drawing.
-
 - ✅ 2026-08-06 DM1 external original-save corpus: verified the two
   operator-staged PC34 files `DMSAVE.DAT` and `DMSAVE (1).DAT` from
   `/Users/bosse/Downloads` against the real PC3.4 dungeon backing. Both
@@ -50362,3 +50361,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   player-facing M11 resume requires a complete original raw SKSAVE path.
   Verification: save/load 25/25, real PC-DOS corpus 35/35, M11 profile gate,
   and startup menu contract 103/103.
+- ✅ 2026-08-06 Nexus MNS model admission tightened: `nexus_v1_load_model()`
+  now requires a catalogued retail `*.MNS` identity and an exact MD5 match
+  before adding a DMDF model to the runtime pool. Renamed/synthetic DMDF
+  signature matches are rejected; the generic DMDF reader remains available
+  only to bounded diagnostic/material-container inspection. The real MNS
+  corpus route therefore cannot promote placeholder geometry into creature
+ rendering.
