@@ -48,6 +48,21 @@ bounded structural inspection only; they do not satisfy the canonical
 | English Saturn ISO | `MENU.BPK` | `a6f2272a4f6cb3c6b3b33012bc5b15ed` | `f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca` | 87,684 |
 | French Saturn ISO | `MENU.BPK` | `fcf8a00fbb92593ed9ae908f8e285cda` | `c4e2427f54083e92cdf38f3b1f296e135bdb007de227431be690cc41381fd543` | 87,820 |
 
+The same English ISO carries the following real revisions of other Nexus
+resources. The hash validator accepts these rows as alternate retail
+identities when the canonical capture corpus is not the selected source.
+
+| Region/source | File | MD5 | SHA256 | Size |
+|---|---|---|---|---:|
+| English Saturn ISO | `nexus/FONT256.S2D` | `7bea3db1ccfe7cd8f32e364685cb0937` | `764a2d6ce11b463817f5c1f2dfefbf55ff9221a1362cb5e4366998100d8ff3bb` | 25,012 |
+| English Saturn ISO | `nexus/ITEM.IBS` | `be3ea97919c7e802e5b151aad20fd6ec` | `f72b8a11f648fbbba7bf84e94582eb95127836ca519ae24491ebcfd15de8fcb4` | 100,352 |
+| English Saturn ISO | `nexus/LOGOBG.DG2` | `53916e61c9f1c19eb65dd5e8950f37ea` | `4ec8e134bb4a255df55c83c56f3cad6058b015b7cd3110df7cfb14b1507987ef` | 72,198 |
+| English Saturn ISO | `nexus/MENU.BPK` | `a6f2272a4f6cb3c6b3b33012bc5b15ed` | `f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca` | 87,684 |
+| English Saturn ISO | `nexus/RHIFIX.BIN` | `7241f7889e5530a2ddb83d7690a174e0` | `9843bd4962683a79589b3f08f71bf1f61cdf29febf9040525ee144d0627fdbd2` | 5,448 |
+| English Saturn ISO | `nexus/RLOWFIX.BIN` | `14c3a7e6fed2dc9e53a727640d4c9348` | `e5cce2db884320541f91c22c1ec1ffac6efea30b2b7c3c206a442980f241a833` | 74,980 |
+| English Saturn ISO | `nexus/TITLE.BIN` | `0b293be24d06eb550b27442ac9e8924c` | `a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44` | 112,216 |
+| English Saturn ISO | `nexus/WARNING.BIN` | `eb246b67f7758f23310221ac9b9efe2d` | `78cebe5c8a7728119b47d6ed86982f4b25fba79d0a06aca02e6f18999e4bb83d` | 101,256 |
+
 ## All Files
 
 - `csb/DUNGEON.DAT` (2,098 bytes): `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba`

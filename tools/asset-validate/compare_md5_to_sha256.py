@@ -81,6 +81,12 @@ _TABLE_RE = re.compile(
     r"^\|\s*(?P<game>[^|]+?)\s*\|\s*(?P<file>[^|]+?)\s*\|\s*`(?P<hash>[a-f0-9]{64})`\s*\|\s*(?P<size>[\d,]+)\s*\|",
     re.MULTILINE,
 )
+_ALTERNATE_TABLE_RE = re.compile(
+    r"^\|\s*(?P<source>[^|]+?)\s*\|\s*`(?P<path>[^`]+?)`\s*\|\s*"
+    r"`(?P<md5>[a-f0-9]{32})`\s*\|\s*`(?P<sha>[a-f0-9]{64})`\s*\|\s*"
+    r"(?P<size>[\d,]+)\s*\|",
+    re.MULTILINE,
+)
 _BULLET_RE = re.compile(
     r"^-\s*`(?P<path>[^`]+?)`\s*\((?P<size>[\d,]+)\s*bytes?\)\s*:\s*`(?P<hash>[a-f0-9]{64})`",
     re.MULTILINE,
@@ -92,6 +98,15 @@ _EMBEDDED_MD5_RE = re.compile(r'"([0-9a-f]{32})"')
 class RegistryEntry:
     game: str
     filename: str
+    sha256: str
+    size: int
+
+
+@dataclass(frozen=True)
+class RegistryAlternate:
+    path: Path
+    source: str
+    md5: str
     sha256: str
     size: int
 
@@ -109,9 +124,12 @@ class CheckRow:
     notes: list[str] = field(default_factory=list)
 
 
-def parse_registry(path: Path) -> dict[Path, RegistryEntry]:
+def parse_registry(
+    path: Path,
+) -> tuple[dict[Path, RegistryEntry], dict[Path, list[RegistryAlternate]]]:
     text = path.read_text(encoding="utf-8")
     out: dict[Path, RegistryEntry] = {}
+    alternates: dict[Path, list[RegistryAlternate]] = {}
     for m in _TABLE_RE.finditer(text):
         rel = Path(m.group("game").strip()) / m.group("file").strip()
         out.setdefault(
@@ -134,7 +152,16 @@ def parse_registry(path: Path) -> dict[Path, RegistryEntry]:
                 size=int(m.group("size").replace(",", "")),
             ),
         )
-    return out
+    for m in _ALTERNATE_TABLE_RE.finditer(text):
+        alternate = RegistryAlternate(
+            path=Path(m.group("path").strip()),
+            source=m.group("source").strip(),
+            md5=m.group("md5"),
+            sha256=m.group("sha"),
+            size=int(m.group("size").replace(",", "")),
+        )
+        alternates.setdefault(alternate.path, []).append(alternate)
+    return out, alternates
 
 
 def collect_embedded_md5() -> set[str]:
@@ -296,7 +323,7 @@ def run_checks(
     rows: list[CheckRow] = []
     notes: list[str] = []
 
-    entries = parse_registry(registry)
+    entries, alternates = parse_registry(registry)
     embedded = collect_embedded_md5()
     if not embedded:
         notes.append("WARN: no embedded MD5 literals found in any source file")
@@ -350,6 +377,14 @@ def run_checks(
                 )
             if not size_ok:
                 row.notes.append(f"size mismatch: expected {e.size}, got {size}")
+            for alternate in alternates.get(rel, []):
+                if (sha == alternate.sha256 and md5 == alternate.md5 and
+                        size == alternate.size):
+                    row.status = "OK-ALTERNATE"
+                    row.notes.append(
+                        f"matches documented {alternate.source} retail revision"
+                    )
+                    break
         rows.append(row)
 
     return rows, notes
@@ -396,7 +431,9 @@ def main() -> int:
     else:
         print_report(rows, notes)
 
-    failures = [r for r in rows if r.status not in ("OK", "OK-SIZE-DRIFT", "MISSING")]
+    failures = [r for r in rows if r.status not in (
+        "OK", "OK-SIZE-DRIFT", "OK-ALTERNATE", "MISSING"
+    )]
     missing = [r for r in rows if r.status == "MISSING"]
     if failures:
         print(f"\nFAIL: {len(failures)} mismatch(es)", file=sys.stderr)

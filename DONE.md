@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus retail-revision inventory: verified all eight local
+  English-ISO hash mismatches (`FONT256.S2D`, `ITEM.IBS`, `LOGOBG.DG2`,
+  `MENU.BPK`, `RHIFIX.BIN`, `RLOWFIX.BIN`, `TITLE.BIN`, `WARNING.BIN`) against
+  the ISO entries byte for byte. The asset validator now reports a documented
+  `OK-ALTERNATE` identity instead of treating those genuine revisions as
+  corrupt; canonical PRS3/VDP1 capture identity remains unchanged.
+
 - ✅ 2026-08-05 CSB C37 movement-tick initialization: the live C37 group
   behavior bridge now loads the source-locked creature movement cadence before
   it reschedules diagonal wandering or flee behavior.  Those branches had
