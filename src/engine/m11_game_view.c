@@ -351,6 +351,7 @@ static int m11_csb_v22_materialize_artpack(const char *artpack_path,
 #include "theron_v2_settings_pc34.h"
 #include "theron_v2_hud_launch_mode_pc34.h"
 #include "dm1_v1_creature_behavior_bootstrap_pc34_compat.h"
+#include "redmcsb_f0702_build_object_mouse_pointer_icon_pc34_compat.h"
 
 #include <ctype.h>
 #include <stdarg.h>
@@ -42177,6 +42178,10 @@ void M11_GameView_DrawLeaderHandCursor(const M11_GameViewState* state,
                                        unsigned char* framebuffer,
                                        int framebufferWidth,
                                        int framebufferHeight) {
+    const M11_AssetSlot* slot;
+    DM1_V1_ObjectIconSourceZonePc34 zone;
+    uint8_t objectBitmap[REDMCSB_F0702_OBJECT_BITMAP_BYTES_PC34];
+    uint8_t pointerBitmap[REDMCSB_F0702_POINTER_BITMAP_BYTES_PC34];
     int iconIndex;
     if (!state || !framebuffer || !state->pointerPositionKnown ||
         !state->leaderHandObjectPresent ||
@@ -42184,12 +42189,71 @@ void M11_GameView_DrawLeaderHandCursor(const M11_GameViewState* state,
         return;
     }
     iconIndex = DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(state);
-    if (iconIndex < 0) return;
-    /* ReDMCSB F0033/F0038 uses the same 16x16 icon atlas for C017's
-     * leader-hand pointer that it uses for the inventory/action cells. */
-    (void)m11_draw_dm_object_icon_index(
-        state, framebuffer, framebufferWidth, framebufferHeight,
-        iconIndex, state->pointerX, state->pointerY, 0);
+    if (iconIndex < 0 ||
+        !dm1_v1_object_icon_source_zone_pc34(iconIndex, &zone)) return;
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        !m11_csb_install_runtime_source_graphic(
+            state, (unsigned int)zone.graphic_index)) {
+        return;
+    }
+    slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
+                                (unsigned int)zone.graphic_index);
+    if (!slot || !slot->loaded || !slot->pixels ||
+        zone.x < 0 || zone.y < 0 ||
+        zone.x + REDMCSB_F0702_OBJECT_WIDTH_PC34 > (int)slot->width ||
+        zone.y + REDMCSB_F0702_OBJECT_HEIGHT_PC34 > (int)slot->height) {
+        return;
+    }
+    /* ReDMCSB IO.C F0702 consumes a packed 4bpp 16x16 icon and creates an
+     * 18x18 cursor: shadow at (2,2), object at (0,0), color 12 transparent.
+     * The GRAPHICS.DAT loader exposes indexed bytes, so pack only this real
+     * source rectangle before calling the audited F0702 implementation. */
+    memset(objectBitmap, 0, sizeof(objectBitmap));
+    {
+        int y;
+        for (y = 0; y < REDMCSB_F0702_OBJECT_HEIGHT_PC34; ++y) {
+            int x;
+            for (x = 0; x < REDMCSB_F0702_OBJECT_WIDTH_PC34; ++x) {
+                const unsigned char pixel = (unsigned char)(slot->pixels[
+                    (zone.y + y) * (int)slot->width + zone.x + x] &
+                    M11_FB_INDEX_MASK);
+                unsigned char* packed = &objectBitmap[y * 8 + (x / 2)];
+                if ((x & 1) == 0) {
+                    *packed = (unsigned char)((*packed & 0x0f) |
+                                              ((pixel & 0x0f) << 4));
+                } else {
+                    *packed = (unsigned char)((*packed & 0xf0) |
+                                              (pixel & 0x0f));
+                }
+            }
+        }
+    }
+    if (!redmcsb_f0702_build_object_mouse_pointer_icon_pc34_compat(
+            objectBitmap, sizeof(objectBitmap), pointerBitmap,
+            sizeof(pointerBitmap))) {
+        return;
+    }
+    {
+        int y;
+        for (y = 0; y < REDMCSB_F0702_POINTER_HEIGHT_PC34; ++y) {
+            int x;
+            for (x = 0; x < REDMCSB_F0702_POINTER_WIDTH_PC34; ++x) {
+                const unsigned char pixel = (unsigned char)(
+                    ((x & 1) == 0)
+                        ? (pointerBitmap[y * 9 + (x / 2)] >> 4)
+                        : pointerBitmap[y * 9 + (x / 2)]);
+                const int dstX = state->pointerX + x;
+                const int dstY = state->pointerY + y;
+                if (pixel == REDMCSB_F0702_TRANSPARENT_COLOR_PC34 ||
+                    dstX < 0 || dstX >= framebufferWidth ||
+                    dstY < 0 || dstY >= framebufferHeight) {
+                    continue;
+                }
+                framebuffer[dstY * framebufferWidth + dstX] =
+                    (unsigned char)(pixel & M11_FB_INDEX_MASK);
+            }
+        }
+    }
 }
 
 static int m11_v1_inventory_slot_icon_index_for_thing(const M11_GameViewState* state,

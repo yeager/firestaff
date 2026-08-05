@@ -1,3 +1,11 @@
+- ✅ 2026-08-05 DM1/ReDMCSB F0702 held-object cursor: the live leader-hand
+  cursor now consumes the real GRAPHICS.DAT 16x16 icon rectangle and the
+  audited F0702 builder, producing the original 18x18 result with offset
+  shadow and transparent color 12. The previous direct 16x16 blit could show
+  a wrong-looking/junk cursor after pickup. Verification: Ninja rebuild,
+  `test_redmcsb_f0702_build_object_mouse_pointer_icon_pc34_compat`, and the
+  real DM1 HoC floor/mirror probes pass.
+
 - ✅ 2026-08-05 Nexus runtime readiness source receipt: the screenshot
   readiness verifier now recognizes the engine's actual `opened disc image`
   ISO log, while retaining the legacy wording for compatibility. This fixes
