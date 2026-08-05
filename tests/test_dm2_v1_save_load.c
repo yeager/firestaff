@@ -1413,7 +1413,7 @@ static int test_raw_sksave_resume_import(void)
     gs->wPlayerMap = 5;
     gs->wChampionLeader = 0;
     gs->wTimersCount = 1;
-    gs->rain_state[0] = 19;
+    gs->bRainStrength = 19;
 
     memset(&champ, 0, sizeof(champ));
     memcpy(champ.first_name, "SAROS", 5);
@@ -1641,7 +1641,7 @@ static int test_raw_sksave_resume_import(void)
         imported_session.party_y != gs->wPlayerPosY ||
         imported_session.party_dir != (gs->wPlayerDir & 3u) ||
         imported_session.party_level != (uint8_t)gs->wPlayerMap ||
-        imported_session.rain_intensity != gs->rain_state[0] ||
+        imported_session.rain_intensity != gs->bRainStrength ||
         imported_champ.inventory[0] != tail_inventory[0] ||
         imported_champ.inventory[8] != tail_inventory[8] ||
         imported_session.original_global_flags[2] != global_flags[2] ||
@@ -2078,7 +2078,7 @@ static int test_sksave_corpus_scan_receipt(void)
         state_receipt.entries[0].party_map != gs->wPlayerMap ||
         state_receipt.entries[0].champion_count != gs->wChampionsCount ||
         state_receipt.entries[0].timer_count != 0u ||
-        state_receipt.entries[0].rain_intensity != gs->rain_state[0] ||
+        state_receipt.entries[0].rain_intensity != gs->bRainStrength ||
         state_receipt.entries[0].global_flags_hash !=
             corpus_hash_bytes(global_flags, sizeof(global_flags)) ||
         state_receipt.entries[0].global_bytes_hash !=

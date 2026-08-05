@@ -391,8 +391,9 @@ const char *dm2_v1_save_source_evidence(void);
 
 #define DM2_GAME_STATE_BLOCK_SIZE 56
 
-/* Packed wire-layout view of skload_table_60. The original DM2 save block is
- * byte-addressed; do not let host uint32_t alignment move _dw22 from byte 30. */
+/* Packed wire-layout view of SKProject's skload_table_60. The original DM2
+ * save block is byte-addressed; do not let host alignment move dw22 from byte
+ * 22. Source: SKWIN/DME.h:956-990 and SKULLWIN/c_savegame.cpp:1483-1517. */
 #if defined(_MSC_VER)
 #pragma pack(push, 1)
 #endif
@@ -410,12 +411,26 @@ __attribute__((packed))
     uint16_t wPlayerMap;
     uint16_t wChampionLeader;
     uint16_t wTimersCount;
-    uint8_t  rain_state[8];
-    uint32_t _dw22;
-    uint32_t _dw26;
-    uint16_t _w30;
-    uint16_t _w34;
-    uint8_t  _reserved42[14];
+    uint32_t dw22;
+    uint32_t dw26;
+    uint16_t w30;
+    uint16_t wPlayerThrowCounter;
+    uint16_t w34;
+    uint8_t  b36;
+    uint8_t  b37;
+    uint8_t  b38;
+    uint8_t  b39;
+    uint16_t wRainFlagSomething;
+    uint8_t  bRainAmbientLightModifier;
+    uint8_t  bRainDirection;
+    uint8_t  bRainStrength;
+    uint8_t  bRainLevelForSky;
+    uint8_t  bRainLevelForGround;
+    uint8_t  bRainMultiplicator;
+    uint16_t wRainStormController;
+    uint8_t  bRainRelated3;
+    uint8_t  bRainRelated2;
+    uint32_t dwRainSpecialNextTick;
 } DM2_GameStateBlock;
 #if defined(_MSC_VER)
 #pragma pack(pop)

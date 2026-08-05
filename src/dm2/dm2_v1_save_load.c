@@ -35,12 +35,12 @@ _Static_assert(sizeof(DM2_GameStateBlock) == DM2_GAME_STATE_BLOCK_SIZE,
                "DM2_GameStateBlock must match skload_table_60 size");
 _Static_assert(offsetof(DM2_GameStateBlock, wTimersCount) == 20,
                "DM2_GameStateBlock wTimersCount offset must match skload_table_60");
-_Static_assert(offsetof(DM2_GameStateBlock, rain_state) == 22,
-               "DM2_GameStateBlock rain_state offset must match skload_table_60");
-_Static_assert(offsetof(DM2_GameStateBlock, _dw22) == 30,
-               "DM2_GameStateBlock _dw22 offset must match skload_table_60");
-_Static_assert(offsetof(DM2_GameStateBlock, _reserved42) == 42,
-               "DM2_GameStateBlock reserved tail must start at byte 42");
+_Static_assert(offsetof(DM2_GameStateBlock, dw22) == 22,
+               "DM2_GameStateBlock dw22 offset must match skload_table_60");
+_Static_assert(offsetof(DM2_GameStateBlock, bRainStrength) == 44,
+               "DM2_GameStateBlock rain strength must match skload_table_60");
+_Static_assert(offsetof(DM2_GameStateBlock, dwRainSpecialNextTick) == 52,
+               "DM2_GameStateBlock rain timer must match skload_table_60");
 
 /* ════════════════════════════════════════════════════════════════
  * SUPPRESS codec
@@ -1820,39 +1820,18 @@ bool dm2_db_write_record(uint8_t pool, uint32_t index,
  * Source: SKULL.ASM skload_table_60 write mask */
 static void dm2_suppress_gamestate_mask(uint8_t mask[DM2_GAME_STATE_BLOCK_SIZE])
 {
-    if (!mask) return;
-    memset(mask, 0, DM2_GAME_STATE_BLOCK_SIZE);
-
-    /* dwGameTick (4 bytes) */
-    mask[0] = 0xFF; mask[1] = 0xFF; mask[2] = 0xFF; mask[3] = 0xFF;
-    /* dwRandomSeed (4 bytes) */
-    mask[4] = 0xFF; mask[5] = 0xFF; mask[6] = 0xFF; mask[7] = 0xFF;
-    /* wChampionsCount (2 bytes) */
-    mask[8] = 0xFF; mask[9] = 0xFF;
-    /* wPlayerPosX (2 bytes) */
-    mask[10] = 0xFF; mask[11] = 0xFF;
-    /* wPlayerPosY (2 bytes) */
-    mask[12] = 0xFF; mask[13] = 0xFF;
-    /* wPlayerDir (2 bytes) */
-    mask[14] = 0xFF; mask[15] = 0xFF;
-    /* wPlayerMap (2 bytes) */
-    mask[16] = 0xFF; mask[17] = 0xFF;
-    /* wChampionLeader (2 bytes) */
-    mask[18] = 0xFF; mask[19] = 0xFF;
-    /* wTimersCount (2 bytes) */
-    mask[20] = 0xFF; mask[21] = 0xFF;
-    /* rain_state[8] */
-    memset(&mask[22], 0xFF, 8);
-    /* _dw22 (4 bytes) */
-    mask[30] = 0xFF; mask[31] = 0xFF; mask[32] = 0xFF; mask[33] = 0xFF;
-    /* _dw26 (4 bytes) */
-    mask[34] = 0xFF; mask[35] = 0xFF; mask[36] = 0xFF; mask[37] = 0xFF;
-    /* _w30 (2 bytes) */
-    mask[38] = 0xFF; mask[39] = 0xFF;
-    /* _w34 (2 bytes) */
-    mask[40] = 0xFF; mask[41] = 0xFF;
-    /* rest of 56 bytes - reserved/padding, store all zeros via mask 0 */
-    /* bytes 42-55: padding, mask stays 0 */
+    /* SKProject SKWIN/SkGlobal.cpp:336-341, _4976_395a. The final explicit
+     * zero is the C-string terminator consumed as mask byte 55. */
+    static const uint8_t source_mask[DM2_GAME_STATE_BLOCK_SIZE] = {
+        0xff, 0xff, 0xff, 0x00, 0xff, 0xff, 0x00, 0x00,
+        0x07, 0x00, 0x1f, 0x00, 0x1f, 0x00, 0x03, 0x00,
+        0x3f, 0x00, 0x03, 0x00, 0xff, 0x01, 0xff, 0xff,
+        0xff, 0xff, 0xff, 0xff, 0xff, 0x00, 0x07, 0x00,
+        0x07, 0x00, 0x03, 0x00, 0x01, 0x00, 0xff, 0x00,
+        0x01, 0x00, 0x01, 0x03, 0xff, 0xff, 0xff, 0x03,
+        0xff, 0x00, 0x1f, 0x03, 0xff, 0xff, 0xff, 0x00
+    };
+    if (mask) memcpy(mask, source_mask, sizeof(source_mask));
 }
 
 int dm2_suppress_encode_gamestate(const DM2_GameStateBlock *gs,

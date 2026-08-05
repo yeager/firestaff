@@ -35,8 +35,15 @@ stream must parse before a save is admitted.
    - `wPlayerMap` - current dungeon map index
    - `wChampionLeader` - party leader champion slot
    - `wTimersCount` - active timer count
-   - Rain state fields (8 bytes)
-   - `_dw22/26`, `_w30`, `_w34` - misc state
+   - `dw22`, `dw26`, `w30`, `wPlayerThrowCounter`, `w34`, and bytes 36–39
+   - `wRainFlagSomething`, ambient-light modifier, direction, strength,
+     sky/ground levels, multiplicator, storm controller, two related bytes,
+     and `dwRainSpecialNextTick` (bytes 40–55)
+
+   This is the packed `skload_table_60` layout in SKProject
+   `SKWIN/DME.h`; it is not an eight-byte weather-state array. The matching
+   `SKWIN/SkGlobal.cpp::_4976_395a` SUPPRESS mask selects source bits across
+   all 56 bytes, including the terminating zero mask byte at offset 55.
 10. **Ingame global flags** (8 bytes, SUPPRESS)
 11. **Ingame global bytes** (64 bytes, SUPPRESS)
 12. **Ingame global words** (64 words, SUPPRESS)

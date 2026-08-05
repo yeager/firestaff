@@ -6974,6 +6974,13 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-05 DM2 SKSave game-state wire-layout correction: replaced the
+  fabricated byte-22 `rain_state[8]` and broad 56-byte mask with SKProject
+  `skload_table_60`'s exact fields and `SKWIN/SkGlobal.cpp::_4976_395a` mask,
+  including its final zero mask byte. `bRainStrength` now comes from original
+  byte 44 rather than unrelated state. Save/load, weather/timer and real-data
+  startup gates pass; incomplete record/session ownership remains blocked.
+
 - ✅ 2026-08-05 DM2 unowned creature-clock removal: `dm2_v1_runtime_tick()`
   no longer advances the legacy global creature fixture pool after the
   source-order timer dispatcher. The only production-capable creature route

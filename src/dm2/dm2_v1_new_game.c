@@ -601,7 +601,9 @@ static void dm2_v1_apply_original_gamestate(DM2_V1_SessionState *session,
     session->party_dir = (uint8_t)(gs->wPlayerDir & 3u);
     session->party_level = (uint8_t)(gs->wPlayerMap & 0xFFu);
     session->leader_index = (uint8_t)(gs->wChampionLeader & 3u);
-    session->rain_intensity = gs->rain_state[0];
+    /* c_savegame.cpp:1504-1509 maps byte 44 to v1e1483. The old byte-22
+     * "rain_state" array overlapped unrelated dw22/dw26 state. */
+    session->rain_intensity = gs->bRainStrength;
 }
 
 static int dm2_v1_decode_original_champions(DM2_V1_SessionState *session,

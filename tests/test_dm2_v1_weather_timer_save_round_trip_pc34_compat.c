@@ -10,11 +10,11 @@
  *
  * Verifies the narrow persistence contract that DM2 weather + timer state
  * survives a SUPPRESS encode/decode round-trip. The DM2 save format stores
- * weather as rain_state[8] inside the 56-byte game state block and stores
+ * the source-named weather fields inside the 56-byte game state block and stores
  * per-champion torch + creature + tick-generator timers as 10-byte
  * DM2_TimerEntry records (timer_id, current_tick, interval_ticks, flags,
  * user_data). Both blocks use SUPPRESS bit-plane encoding; this test
- * proves the existing codec keeps every weather/timer byte intact.
+ * proves the codec keeps every source-owned weather/timer field intact.
  *
  * No game data required; test uses synthetic state only.
  */
@@ -43,14 +43,9 @@ static uint16_t suppress7_u16(uint16_t value)
     return (uint16_t)(value & 0x7F7Fu);
 }
 
-static uint32_t suppress7_u32(uint32_t value)
-{
-    return value & 0x7F7F7F7Fu;
-}
+/* ── Test 1: exact skload_table_60 weather fields round-trip ─────────── */
 
-/* ── Test 1: DM2_GameStateBlock rain_state round-trip ────────────────── */
-
-static void test_gamestate_rain_state_round_trip(void)
+static void test_gamestate_weather_fields_round_trip(void)
 {
     DM2_GameStateBlock in;
     DM2_GameStateBlock out;
@@ -58,12 +53,11 @@ static void test_gamestate_rain_state_round_trip(void)
     int enc_n;
     int dec_n;
 
-    /* Synthetic game state: tick=0x12345678, seed=0x0100 (default weather LCG),
-     * 4 champions at (5,7) facing East on map 2, leader=0, 3 active timers.
-     * rain_state[8] encodes the 4 outdoor weather states + 4 intensity bytes
-     * (matching skload_table_60 byte layout in docs/dm2_save_format.md). */
+    /* Source-shaped state. SKProject DME.h::skload_table_60 stores these
+     * individual weather fields at bytes 40..55; it does not contain a
+     * host-side rain_state[8] array. */
     memset(&in, 0, sizeof(in));
-    in.dwGameTick        = 0x12345678u;
+    in.dwGameTick        = 0x00345678u;
     in.dwRandomSeed      = 0x00000100u;
     in.wChampionsCount   = 4;
     in.wPlayerPosX       = 5;
@@ -72,18 +66,24 @@ static void test_gamestate_rain_state_round_trip(void)
     in.wPlayerMap        = 2;
     in.wChampionLeader   = 0;
     in.wTimersCount      = 3;
-    in.rain_state[0]     = DM2_WEATHER_CLEAR;
-    in.rain_state[1]     = DM2_WEATHER_RAIN;
-    in.rain_state[2]     = DM2_WEATHER_FOG;
-    in.rain_state[3]     = DM2_WEATHER_STORM;
-    in.rain_state[4]     = 0;   /* intensity for clear */
-    in.rain_state[5]     = 40;  /* intensity for rain */
-    in.rain_state[6]     = 30;  /* intensity for fog */
-    in.rain_state[7]     = 80;  /* intensity for storm */
-    in._dw22             = 0;
-    in._dw26             = 0;
-    in._w30              = 0;
-    in._w34              = 0;
+    in.dw22              = 0x12345678u;
+    in.dw26              = 0x00030007u;
+    in.w30               = 7;
+    in.wPlayerThrowCounter = 3;
+    in.w34               = 1;
+    in.b36               = 1;
+    in.b38               = 0x5a;
+    in.wRainFlagSomething = 1;
+    in.bRainAmbientLightModifier = 1;
+    in.bRainDirection    = 3;
+    in.bRainStrength     = 80;
+    in.bRainLevelForSky  = 0x4d;
+    in.bRainLevelForGround = 0x37;
+    in.bRainMultiplicator = 3;
+    in.wRainStormController = 0x001f;
+    in.bRainRelated3     = 0x13;
+    in.bRainRelated2     = 2;
+    in.dwRainSpecialNextTick = 0x00123456u;
 
     enc_n = dm2_suppress_encode_gamestate(&in, buf, sizeof(buf));
     CHECK(enc_n > 0, "encode produces bytes");
@@ -94,55 +94,42 @@ static void test_gamestate_rain_state_round_trip(void)
     CHECK(dec_n > 0, "decode consumes bytes");
     CHECK(dec_n == enc_n, "encode/decode byte count matches (round-trip is lossless)");
 
-    /* Field-by-field checks. SUPPRESS encodes LSB-first with 7 bits per
-     * byte, so the high bit (0x80) is dropped on encode; this matches the
-     * existing skload_table_60 layout documented in dm2_save_format.md. */
-    CHECK((out.dwGameTick & 0x7F7F7F7Fu) == (in.dwGameTick & 0x7F7F7F7Fu),
-          "dwGameTick LSB-bits round-trip");
-    CHECK((out.dwRandomSeed & 0x7F7Fu) == (in.dwRandomSeed & 0x7F7Fu),
-          "dwRandomSeed LSB-byte round-trip");
-    CHECK(out.wChampionsCount == (in.wChampionsCount & 0x7F7Fu),
+    /* _4976_395a selects distinct source bits per field; it is not a generic
+     * seven-bit-byte codec. These fixtures stay inside each field's mask. */
+    CHECK(out.dwGameTick == in.dwGameTick,
+          "dwGameTick source-mask round-trip");
+    CHECK(out.dwRandomSeed == in.dwRandomSeed,
+          "dwRandomSeed source-mask round-trip");
+    CHECK(out.wChampionsCount == in.wChampionsCount,
           "wChampionsCount round-trip");
-    CHECK(out.wPlayerPosX == (in.wPlayerPosX & 0x7F7Fu),
+    CHECK(out.wPlayerPosX == in.wPlayerPosX,
           "wPlayerPosX round-trip");
-    CHECK(out.wPlayerPosY == (in.wPlayerPosY & 0x7F7Fu),
+    CHECK(out.wPlayerPosY == in.wPlayerPosY,
           "wPlayerPosY round-trip");
-    CHECK(out.wPlayerDir == (in.wPlayerDir & 0x7F7Fu),
+    CHECK(out.wPlayerDir == in.wPlayerDir,
           "wPlayerDir round-trip");
-    CHECK(out.wPlayerMap == (in.wPlayerMap & 0x7F7Fu),
+    CHECK(out.wPlayerMap == in.wPlayerMap,
           "wPlayerMap round-trip");
-    CHECK(out.wChampionLeader == (in.wChampionLeader & 0x7F7Fu),
+    CHECK(out.wChampionLeader == in.wChampionLeader,
           "wChampionLeader round-trip");
-    CHECK(out.wTimersCount == (in.wTimersCount & 0x7F7Fu),
+    CHECK(out.wTimersCount == in.wTimersCount,
           "wTimersCount round-trip");
 
-    /* Weather/rain_state[8] — this is the narrow persistence contract. */
-    CHECK(out.rain_state[0] == (in.rain_state[0] & 0x7F),
-          "rain_state[0] clear weather round-trip");
-    CHECK(out.rain_state[1] == (in.rain_state[1] & 0x7F),
-          "rain_state[1] rain weather round-trip");
-    CHECK(out.rain_state[2] == (in.rain_state[2] & 0x7F),
-          "rain_state[2] fog weather round-trip");
-    CHECK(out.rain_state[3] == (in.rain_state[3] & 0x7F),
-          "rain_state[3] storm weather round-trip");
-    CHECK(out.rain_state[4] == (in.rain_state[4] & 0x7F),
-          "rain_state[4] clear intensity round-trip");
-    CHECK(out.rain_state[5] == (in.rain_state[5] & 0x7F),
-          "rain_state[5] rain intensity round-trip");
-    CHECK(out.rain_state[6] == (in.rain_state[6] & 0x7F),
-          "rain_state[6] fog intensity round-trip");
-    CHECK(out.rain_state[7] == (in.rain_state[7] & 0x7F),
-          "rain_state[7] storm intensity round-trip");
-
-    /* Padding bytes (42..55) should decode as 0 when fill=0 — that
-     * confirms the trailing zero-mask tail is preserved. */
-    {
-        uint8_t pad = 0;
-        for (int i = 42; i < DM2_GAME_STATE_BLOCK_SIZE; i++) {
-            pad |= ((const uint8_t *)&out)[i];
-        }
-        CHECK(pad == 0, "padding bytes 42..55 decode as 0 with fill=0");
-    }
+    CHECK(out.dw22 == in.dw22 && out.dw26 == in.dw26 && out.w30 == in.w30 &&
+          out.wPlayerThrowCounter == in.wPlayerThrowCounter && out.w34 == in.w34,
+          "source game-state fields at bytes 22..35 round-trip");
+    CHECK(out.b36 == in.b36 && out.b38 == in.b38 &&
+          out.wRainFlagSomething == in.wRainFlagSomething &&
+          out.bRainAmbientLightModifier == in.bRainAmbientLightModifier &&
+          out.bRainDirection == in.bRainDirection &&
+          out.bRainStrength == in.bRainStrength &&
+          out.bRainLevelForSky == in.bRainLevelForSky &&
+          out.bRainLevelForGround == in.bRainLevelForGround &&
+          out.bRainMultiplicator == in.bRainMultiplicator &&
+          out.wRainStormController == in.wRainStormController &&
+          out.bRainRelated3 == in.bRainRelated3 && out.bRainRelated2 == in.bRainRelated2 &&
+          out.dwRainSpecialNextTick == in.dwRainSpecialNextTick,
+          "source weather fields at bytes 40..55 round-trip");
 }
 
 
@@ -271,14 +258,10 @@ static void test_gamestate_timer_stream_fixture_round_trip(void)
     gs_in.wPlayerMap = 5;
     gs_in.wChampionLeader = 2;
     gs_in.wTimersCount = 4;
-    gs_in.rain_state[0] = DM2_WEATHER_STORM;
-    gs_in.rain_state[1] = DM2_WEATHER_RAIN;
-    gs_in.rain_state[2] = DM2_WEATHER_FOG;
-    gs_in.rain_state[3] = DM2_WEATHER_CLEAR;
-    gs_in.rain_state[4] = 80;
-    gs_in.rain_state[5] = 40;
-    gs_in.rain_state[6] = 30;
-    gs_in.rain_state[7] = 0;
+    gs_in.bRainDirection = 3;
+    gs_in.bRainStrength = 80;
+    gs_in.bRainLevelForSky = 3;
+    gs_in.bRainLevelForGround = 40;
 
     memset(timers_in, 0, sizeof(timers_in));
     timers_in[0].timer_id = DM2_TIMER_TORCH;
@@ -333,15 +316,17 @@ static void test_gamestate_timer_stream_fixture_round_trip(void)
     CHECK(dec_n > 0, "stream fixture gamestate decodes");
     CHECK((size_t)dec_n == offsets[1],
           "gamestate decoder consumes exactly the first stream segment");
-    CHECK(suppress7_u32(gs_out.dwGameTick) == suppress7_u32(gs_in.dwGameTick),
+    CHECK((gs_out.dwGameTick & 0x00ffffffu) ==
+          (gs_in.dwGameTick & 0x00ffffffu),
           "stream fixture game tick round-trips");
-    CHECK(suppress7_u32(gs_out.dwRandomSeed) == suppress7_u32(gs_in.dwRandomSeed),
+    CHECK((gs_out.dwRandomSeed & 0x0000ffffu) ==
+          (gs_in.dwRandomSeed & 0x0000ffffu),
           "stream fixture random/weather seed round-trips");
     CHECK(gs_out.wTimersCount == gs_in.wTimersCount,
           "stream fixture timer count round-trips");
-    CHECK(gs_out.rain_state[0] == gs_in.rain_state[0] &&
-          gs_out.rain_state[4] == gs_in.rain_state[4],
-          "stream fixture active storm state/intensity round-trip");
+    CHECK(gs_out.bRainDirection == gs_in.bRainDirection &&
+          gs_out.bRainStrength == gs_in.bRainStrength,
+          "stream fixture rain direction/strength round-trip");
 
     stream_n = offsets[1];
     memset(timers_out, 0xCC, sizeof(timers_out));
@@ -421,8 +406,7 @@ static void test_weather_seed_persists_via_gamestate_round_trip(void)
     /* Pack into gamestate dwRandomSeed (low 16 bits carry the LCG state). */
     memset(&gs, 0, sizeof(gs));
     gs.dwRandomSeed = seed_in;
-    gs.rain_state[0] = (uint8_t)state_pre.weather;
-    gs.rain_state[4] = (uint8_t)state_pre.weather_intensity;
+    gs.bRainStrength = (uint8_t)state_pre.weather_intensity;
     gs.wPlayerMap = 1;
 
     enc_n = dm2_suppress_encode_gamestate(&gs, buf, sizeof(buf));
@@ -443,8 +427,8 @@ static void test_weather_seed_persists_via_gamestate_round_trip(void)
           "weather LCG produces identical next seed after save/load");
     CHECK(w_post == w_pre,
           "weather state after load matches pre-save state");
-    CHECK((gs.rain_state[0] & 0x7F) == (uint8_t)state_pre.weather,
-          "weather byte in gamestate survives round-trip");
+    CHECK(gs.bRainStrength == (uint8_t)state_pre.weather_intensity,
+          "rain strength byte in gamestate survives round-trip");
 }
 
 /* ── Test 6: skproject weather timer transaction ──────────────────── */
@@ -512,8 +496,8 @@ static void test_save_source_evidence_strings(void)
 
     CHECK(save_load_ev && save_load_ev[0] != '\0',
           "dm2_v1_save_source_evidence returns non-empty");
-    CHECK(save_load_ev && strstr(save_load_ev, "0xBEEF") != NULL,
-          "save source evidence cites 0xBEEF slot magic");
+    CHECK(save_load_ev && strstr(save_load_ev, "SKSave") != NULL,
+          "save source evidence cites the original SKSave format");
 
     CHECK(weather_ev && weather_ev[0] != '\0',
           "dm2_v1_weather_source_evidence returns non-empty");
@@ -527,8 +511,8 @@ int main(void)
 {
     printf("=== DM2 V1 Weather/Timer Save Round-Trip Test ===\n\n");
 
-    printf("--- test_gamestate_rain_state_round_trip ---\n");
-    test_gamestate_rain_state_round_trip();
+    printf("--- test_gamestate_weather_fields_round_trip ---\n");
+    test_gamestate_weather_fields_round_trip();
 
     printf("\n--- test_timer_entry_round_trip ---\n");
     test_timer_entry_round_trip();

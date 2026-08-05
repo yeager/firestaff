@@ -672,6 +672,11 @@
   Session rain intensity and weather-chain seed/state are also unproven in
   this envelope, so they remain unavailable rather than being promoted into
   the live environment.
+  **2026-08-05 update:** the invented byte-22 `rain_state[8]` view and its
+  fabricated broad mask are removed. The importer now uses SKProject's exact
+  `skload_table_60` field order and `_4976_395a` 56-byte SUPPRESS mask;
+  `bRainStrength` is retained only as decoded corpus evidence, not as a
+  license to start an unowned weather/session chain.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

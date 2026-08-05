@@ -3018,7 +3018,7 @@ int main(void) {
         original_gs.wPlayerDir = 1u;
         original_gs.wPlayerMap = 3u;
         original_gs.wChampionLeader = 0u;
-        original_gs.rain_state[0] = 20u;
+        original_gs.bRainStrength = 20u;
 
         memset(&original_champ, 0, sizeof(original_champ));
         memcpy(original_champ.first_name, "TORHAM", 6);
