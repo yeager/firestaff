@@ -24,6 +24,8 @@ int main(void) {
     const char *unknown_iso = "/tmp/firestaff-theron-track02-unknown.iso";
     const char *unknown_bin = "/tmp/firestaff-theron-track02-unknown.bin";
     const char *declared_iso_alias = "/tmp/TQUS02.iso";
+    const char *home = getenv("HOME");
+    char canonical_iso[512];
     FILE *file;
 
     CHECK(theron_v1_track02_raw_media_intake_discover(NULL, &receipt));
@@ -141,6 +143,37 @@ int main(void) {
         "/tmp/firestaff-no-such-track02.cue", &receipt));
     CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_UNAVAILABLE);
     CHECK(receipt.failure_reason == THERON_V1_TRACK02_MEDIA_REASON_PATH_UNAVAILABLE);
+
+    /* The assembled US ISO is the real local Track 02 artifact used by the
+     * production cache.  Keep this assertion optional for clean CI hosts,
+     * but when the supplied game data is present, prove the direct ISO route
+     * end-to-end instead of relying only on hash/layout unit inputs. */
+    canonical_iso[0] = '\0';
+    if (home && home[0] &&
+        snprintf(canonical_iso, sizeof(canonical_iso),
+                 "%s/.firestaff/cache/theron/"
+                 "TQUS02-ceb02343868f80cec899e9b239aff2da.iso", home) <
+            (int)sizeof(canonical_iso)) {
+        FILE *canonical = fopen(canonical_iso, "rb");
+        if (canonical) {
+            fclose(canonical);
+            CHECK(theron_v1_track02_raw_media_intake_discover(
+                      canonical_iso, &receipt));
+            CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY);
+            CHECK(receipt.variant == THERON_TRACK02_VARIANT_US_ISO);
+            CHECK(receipt.mode1_2048 && !receipt.mode1_2352);
+            CHECK(!receipt.cue_consumed);
+            CHECK(!receipt.raw_trace_preparation_allowed);
+            CHECK(receipt.payload_bytes == 6596608u);
+            CHECK(receipt.sector_count == 3221u);
+            CHECK(receipt.first_user_data_offset == 0u);
+            CHECK(receipt.logical_user_data_window_bytes == 6596608u);
+            CHECK(!strcmp(receipt.track02_md5,
+                          THERON_TRACK02_MD5_US_ISO));
+        } else {
+            printf("test_theron_v1_track02_raw_media_intake: SKIP canonical US ISO\n");
+        }
+    }
 
     if (media && media[0]) {
         CHECK(theron_v1_track02_raw_media_intake_discover(media, &receipt));

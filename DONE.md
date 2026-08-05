@@ -49396,6 +49396,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   production no-op HUD seam and manifest classifier await a real Track 02
   widget bank.
 
+- ✅ 2026-08-06 Theron canonical ISO intake proof: the raw media-intake test
+  now consumes the supplied assembled US Track 02 ISO when present and checks
+  its real MD5, 2048-byte sector layout, 3221-sector payload, user-data window,
+  and non-eligibility for raw MODE1/2352 trace preparation. This strengthens
+  BIN/CUE/ISO separation without promoting opaque ISO bytes to level, object,
+  bitmap, or palette semantics.
+
 - ✅ 2026-08-06 Theron Main-RAM loader capture receipt: the supplied real
   Mednafen sidecar is now parsed as a strict regular-file receipt. It verifies
   the observed TIA transfer from `$c800` to `$0404` (128 bytes), loader PC

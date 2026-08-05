@@ -107,6 +107,13 @@
   remaining handoff work is the authenticated non-startup level/object
   corpus and real bitmap/palette capture.
 
+  The raw media-intake regression now exercises the supplied assembled US ISO
+  at `~/.firestaff/cache/theron/TQUS02-ceb02343868f80cec899e9b239aff2da.iso`
+  when present, proving its direct MODE1/2048 hash, sector count, user-data
+  window, and deliberate exclusion from raw-loader trace preparation. BIN/CUE
+  and ISO paths therefore have separate verified receipts; later semantic
+  publication still requires the executing consumer trace.
+
   The supplied retail US ISO now contributes one bounded real startup-level
   envelope at `0x5a9114`, linked to the first retail descriptor by `0x92f2`.
   Its seed-table window is still zero-fill, so this proves the level record
