@@ -16,7 +16,10 @@
   as a decoder diagnostic and is rejected by slot, corpus and runtime resume;
   the mounted PC-DOS corpus now verifies all eight real raw dungeon prefixes
   after the authentic 42-byte header, but its later SUPPRESS session sections
-  remain blocked until the complete SKProject read order is recovered.
+  remain blocked until the complete SKProject read order is recovered. The
+  original PC-DOS boot/HUD path again reaches the real GDAT command plan after
+  the identity scanner was widened to retain every supported graphics and
+  dungeon hash in one scan; this does not admit an incomplete save session.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   source-bound lifecycle/presentation path with a structural fail-closed seam.

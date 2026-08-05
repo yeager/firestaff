@@ -6868,6 +6868,17 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-05 DM2 hash-verified PC-DOS boot repair: expanded the temporary
+  DM2 identity list so all supported `GRAPHICS.DAT` identities and every
+  `DUNGEON.DAT` identity are scanned together. The prior seven-entry limit
+  was exhausted by graphics variants after PC-9821 support, silently omitting
+  every dungeon hash and blocking a valid PC-DOS launch. The real
+  `graphics.dat`/`dungeon.dat` corpus now enters the M11 GDAT-HUD command plan
+  (nine source-backed commands) with no visual fallback. Verification:
+  `dm2_v1_gdat_hud_m11_command_real_data`,
+  `dm2_v1_m11_startup_profile_gate`, `dm2_v1_save_load`, and
+  `dm2_v1_quicksave_original_writer_gate` pass against mounted original data.
+
 - ✅ 2026-08-05 DM2 DOS SKSave header and raw-prefix corpus: added the
   authenticated PC-DOS header admission rule (version word plus bounded ASCII
   save name) alongside the legacy low-level fixture compatibility path. The

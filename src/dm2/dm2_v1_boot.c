@@ -745,20 +745,26 @@ static int dm2_try_hash_scan_root(const char *root,
                                   char dungeon_path[512],
                                   size_t *dungeon_size,
                                   char dungeon_md5[33]) {
-    const char *hashes[8];
-    char paths[8][ASSET_PATH_MAX];
-    int matched[8];
+    /* Keep room for every supported graphics and dungeon identity.  The
+     * PC-9821 graphics addition made the old seven-entry fill limit consume
+     * the temporary list before any DUNGEON.DAT hash was appended, making
+     * valid PC-DOS boot scans fail despite authenticated files. */
+    const char *hashes[16];
+    char paths[16][ASSET_PATH_MAX];
+    int matched[16];
     int hash_count = 0;
     int graphics_index = -1;
     int dungeon_index = -1;
     int i;
 
     if (!root || !root[0]) return 0;
-    for (i = 0; g_dm2_graphics_hashes[i] && hash_count < 7; ++i) {
+    for (i = 0; g_dm2_graphics_hashes[i] &&
+         hash_count < (int)(sizeof(hashes) / sizeof(hashes[0])) - 1; ++i) {
         hashes[hash_count++] = g_dm2_graphics_hashes[i];
     }
     dungeon_index = hash_count;
-    for (i = 0; g_dm2_dungeon_hashes[i] && hash_count < 7; ++i) {
+    for (i = 0; g_dm2_dungeon_hashes[i] &&
+         hash_count < (int)(sizeof(hashes) / sizeof(hashes[0])) - 1; ++i) {
         hashes[hash_count++] = g_dm2_dungeon_hashes[i];
     }
     hashes[hash_count] = NULL;
