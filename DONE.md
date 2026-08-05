@@ -1,3 +1,10 @@
+- ✅ 2026-08-05 Theron JP Track 19 level-label provenance: the real
+  `TQJP19.iso` selector table is now bound at `0x203A7E–0x203B8C` as 15
+  fixed 16-byte Shift-JIS records with source `0x8197` delimiters. The exact
+  span hash is checked before return and the JP file inventory now verifies
+  both item and label tables. Labels remain metadata only; no map, object or
+  bitmap semantics are inferred. Real US/JP and data-free probes pass.
+
 - ✅ 2026-08-05 Theron JP Track 19 item-name provenance: the real
   `TQJP19.iso` table is now bound at `0x0E92B1–0x0E955D` as 69 raw Shift-JIS
   records. The exact span hash is checked before any record is returned, and

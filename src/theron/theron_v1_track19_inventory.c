@@ -2,6 +2,7 @@
 #include "asset_status_m12.h"
 #include "theron_v1_track19_item_names.h"
 #include "theron_v1_track19_jp_item_names.h"
+#include "theron_v1_track19_jp_level_labels.h"
 #include "theron_v1_track19_level_labels.h"
 
 #include <stdio.h>
@@ -115,6 +116,8 @@ int theron_v1_track19_inventory_file(
     } else if (strcmp(out->variant, "jp") == 0) {
         uint8_t raw_name[128];
         size_t raw_name_size;
+        uint8_t raw_label[32];
+        size_t raw_label_size;
 
         for (i = 0u; i < THERON_TRACK19_JP_ITEM_NAME_COUNT; ++i) {
             if (!theron_v1_track19_jp_item_name_from_iso(
@@ -125,6 +128,15 @@ int theron_v1_track19_inventory_file(
             }
         }
         out->item_name_table_verified = 1;
+        for (i = 0u; i < THERON_TRACK19_JP_LEVEL_LABEL_COUNT; ++i) {
+            if (!theron_v1_track19_jp_level_label_from_iso(
+                    data, bytes, i, raw_label, sizeof(raw_label),
+                    &raw_label_size) || raw_label_size == 0u) {
+                free(data);
+                return 0;
+            }
+        }
+        out->level_label_table_verified = 1;
     }
     free(data);
     return 1;

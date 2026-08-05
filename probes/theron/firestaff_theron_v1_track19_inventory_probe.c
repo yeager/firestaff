@@ -1,6 +1,7 @@
 #include "theron_v1_track19_inventory.h"
 #include "theron_v1_track19_item_names.h"
 #include "theron_v1_track19_jp_item_names.h"
+#include "theron_v1_track19_jp_level_labels.h"
 #include "theron_v1_track19_level_labels.h"
 
 #include <stdio.h>
@@ -83,6 +84,8 @@ static int verify_real_jp_item_table(void) {
     uint8_t *bytes;
     uint8_t name[128];
     size_t name_size;
+    uint8_t label[32];
+    size_t label_size;
     unsigned int i;
 
     if (!path || !path[0]) return 1;
@@ -111,6 +114,35 @@ static int verify_real_jp_item_table(void) {
     bytes[THERON_TRACK19_JP_ITEM_NAME_OFFSET] ^= 1u;
     if (theron_v1_track19_jp_item_name_from_iso(
             bytes, (size_t)size, 0u, name, sizeof(name), &name_size)) {
+        free(bytes);
+        return 0;
+    }
+    free(bytes);
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0 || size > 64L * 1024L * 1024L ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    for (i = 0u; i < THERON_TRACK19_JP_LEVEL_LABEL_COUNT; ++i) {
+        if (!theron_v1_track19_jp_level_label_from_iso(
+                bytes, (size_t)size, i, label, sizeof(label), &label_size) ||
+            label_size != THERON_TRACK19_JP_LEVEL_LABEL_BYTES) {
+            free(bytes);
+            return 0;
+        }
+    }
+    bytes[THERON_TRACK19_JP_LEVEL_LABEL_OFFSET] ^= 1u;
+    if (theron_v1_track19_jp_level_label_from_iso(
+            bytes, (size_t)size, 0u, label, sizeof(label), &label_size)) {
         free(bytes);
         return 0;
     }
@@ -159,7 +191,7 @@ int main(void) {
     if (real_jp_iso && real_jp_iso[0] &&
         (!theron_v1_track19_inventory_file(real_jp_iso, &file_receipt) ||
          !file_receipt.item_name_table_verified ||
-         file_receipt.level_label_table_verified ||
+         !file_receipt.level_label_table_verified ||
          file_receipt.source_md5[0] == '\0')) return 1;
     return 0;
 }

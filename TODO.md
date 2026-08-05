@@ -93,8 +93,10 @@
   The JP Track 19 ISO item-name table is now byte-validated as 69 raw
   Shift-JIS records at UD 0x0E92B1; the file inventory verifies the exact
   source span after the known JP ISO MD5 gate. JP level-selector labels and
-  all later map/object properties remain closed until their fixed-record
-  layout and original consumer are proven.
+  all later map/object properties remain closed until their original consumer
+  is proven. The JP level-selector table is now also byte-validated as 15
+  fixed 16-byte Shift-JIS records at UD 0x203A7E, including its 0x8197
+  delimiters; this remains metadata only and does not admit maps or objects.
 
   File-backed Track 19 inventory now carries the authenticated source hash and
   both metadata-verification flags; later record semantics remain closed.
