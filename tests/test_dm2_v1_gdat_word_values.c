@@ -85,6 +85,20 @@ static int load_graphics(uint8_t **out_data, size_t *out_size, char *path, size_
         "dm2/DM2GRA.DAT"
     };
     size_t i;
+    const char *dm2_data = getenv("FIRESTAFF_DM2_DATA_DIR");
+
+    /* Keep real-corpus checks usable with the same direct DM2 data root as
+     * the boot-profile tests.  This accepts user-supplied files in place and
+     * never extracts or copies them. */
+    if (dm2_data && dm2_data[0]) {
+        static const char *names[] = {
+            "GRAPHICS.DAT", "graphics.dat", "DM2GRAPHICS.DAT", "DM2GRA.DAT"
+        };
+        for (i = 0; i < sizeof(names) / sizeof(names[0]); ++i) {
+            snprintf(path, path_size, "%s/%s", dm2_data, names[i]);
+            if (read_file(path, out_data, out_size)) return 1;
+        }
+    }
 
     for (i = 0; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
         if (candidate_path(path, path_size, suffixes[i]) &&
@@ -211,6 +225,17 @@ static void test_interface_palette_real_data(void)
               "real INTERFACE_GENERAL dtPalIRGB/dtPalette16 pair decodes");
         CHECK(palette.hash != 0u,
               "real interface palette exposes a nonzero semantic receipt");
+        /* Greatstone's dm2_pc10_en GRAPHICS.DAT raw 0206 (P8B1
+         * "Interface - Main Screen 0", system palette) documents the same
+         * global palette used by raw 0174/0175 IMG9 credits/menu.  The GDAT
+         * rows are RGB888 and the renderer consumes RGB6. */
+        CHECK(palette.rgb6[0][0] == 0u && palette.rgb6[0][1] == 0u &&
+                  palette.rgb6[0][2] == 0u &&
+                  palette.rgb6[1][0] == 3u && palette.rgb6[1][1] == 2u &&
+                  palette.rgb6[1][2] == 0u &&
+                  palette.rgb6[4][0] == 14u && palette.rgb6[4][1] == 8u &&
+                  palette.rgb6[4][2] == 1u,
+              "real DM2 system palette matches documented IMG9 RGB6 anchors");
     }
     dm2_v1_asset_loader_free(&loader);
     free(graphics);

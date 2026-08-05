@@ -50214,3 +50214,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   SKSave projection has no active M11/runtime caller and cannot reproduce the
   original continuous SUPPRESS read order, so only its explicit diagnostics
   retain it until complete `DM2_GAME_LOAD` ownership exists.
+- ✅ 2026-08-06 DM2 credits/menu system-palette regression: real PC English
+  `GRAPHICS.DAT` is now discoverable through the direct
+  `FIRESTAFF_DM2_DATA_DIR` root without copying or extracting game data. The
+  typed `INTERFACE_GENERAL/0` PAL_IRGB decoder is checked against Greatstone's
+  documented P8B1 system-palette anchors for the IMG9 menu/credits resources;
+  the real M11 startup suite also proves Credits enter, countdown, palette
+  publication, and left/right dismissal. Verification: GDAT suite 33/33,
+  real PC startup/profile gate, and hash-based data scan all pass.
