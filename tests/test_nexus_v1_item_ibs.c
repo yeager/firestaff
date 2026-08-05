@@ -32,6 +32,7 @@ static int test_synthetic(void) {
 }
 
 static int test_real_decode(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
@@ -40,8 +41,14 @@ static int test_real_decode(void) {
     int i, unique_img, unique_floor;
     uint32_t seen[256];
 
-    if (!home) { printf("  SKIP real_decode (no HOME)\n"); return 0; }
-    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/ITEM.IBS", home);
+    if (data_dir && data_dir[0] != '\0') {
+        snprintf(path, sizeof(path), "%s/ITEM.IBS", data_dir);
+    } else if (home) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/ITEM.IBS", home);
+    } else {
+        printf("  SKIP real_decode (no data directory)\n");
+        return 0;
+    }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP real_decode (no ITEM.IBS)\n"); return 0; }
 

@@ -11,6 +11,9 @@
   2026-08-05: bounded DMWeb PRS3 byte decoding is verified against all 20
   real FACE.BIN frames; this only advances diagnostics. Startup FACE, MENU,
   STABG, HUD, and viewport presentation remain blocked pending Saturn capture.
+  ITEM.IBS diagnostics now also honor the external data-root environment and
+  verify the real 243/223/109 item-image corpus; item draw authorization still
+  requires the missing original Saturn VDP1 command receipt.
 
 - **DUNGEON-STUDIO-FSDUNG:** Dungeon Studio: import original dungeons from
   all five games (DM1, CSB, DM2, Theron's Quest, DM Nexus) and export to a

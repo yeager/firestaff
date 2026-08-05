@@ -31,10 +31,10 @@ extern "C" {
  *   - Low-health pulse on champion bars
  *   - Compass smooth rotation between cardinal directions
  *
- * Source: Saturn NEXUS.BIN HUD surface data
- *         DMDF parser documentation (DMDF/DGN level format)
- *         Saturn SDK VDP1 bitmap surfaces, VDP2 background layers
- *         ReDMCSB PANEL.C / DUNGEON.C (champion status refresh)
+ * Source status: no retail Nexus HUD surface or widget-placement receipt is
+ * admitted from the supplied corpus. This module is a test-only procedural
+ * diagnostic surface; production M11 links the no-op boundary until Saturn
+ * VDP1/VDP2 capture proves the real HUD owner.
  * ══════════════════════════════════════════════════════════════════════ */
 
 /* ── Compass ─────────────────────────────────────────────────────── */

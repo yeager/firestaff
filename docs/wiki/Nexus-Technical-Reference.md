@@ -28,10 +28,11 @@ no-draw.
 ## MENU.BPK / PRS3
 
 `MENU.BPK` PRS3 entries are inspected for bounded topology, mode, dimensions,
-and directory-trailer layout. Firestaff does not materialize either synthetic
-or retail PRS3 surfaces until an original decoder is proved from executable or
-media evidence. Archive metadata may support launcher diagnostics but is not a
-graphics decoder.
+and directory-trailer layout. The reviewed DMWeb `DecodePRS3` byte grammar is
+implemented and verified against the real 20-frame `FACE.BIN` corpus. This is
+still not a Saturn presentation proof: `MENU.BPK` output remains no-draw until
+an original VDP1 capture binds decoded bytes to palette lane, placement, and
+command order. No synthetic PRS3 surface is admitted.
 
 ## Gameplay Mechanics (Real-Data)
 

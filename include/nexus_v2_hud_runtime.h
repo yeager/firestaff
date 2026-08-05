@@ -25,9 +25,10 @@ extern "C" {
  * true. The overlay renders into the supplied framebuffer without
  * altering V1 state.
  *
- * Source: Saturn NEXUS.BIN HUD surface data, DMDF/DGN level format,
- *         Saturn SDK VDP1/VDP2 layer documentation,
- *         ReDMCSB PANEL.C / DUNGEON.C (champion status refresh)
+ * Source status: no retail Nexus HUD surface or VDP1/VDP2 widget-placement
+ * receipt is admitted from the supplied corpus. Production uses the no-op
+ * boundary; the procedural implementation is test/probe-only until capture
+ * evidence binds the real owner.
  * ================================================================ */
 
 /* ── Lifecycle ─────────────────────────────────────────────────── */

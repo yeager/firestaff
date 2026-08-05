@@ -88,4 +88,6 @@ Record-based PC Engine CD layout. Evidence-driven: Track 02 IPL/stage-two/stage-
 
 ### DM Nexus (No Reference Source)
 
-Saturn DMDF/DGN data family. Structure1B geometry, Structure3 face topology, MNS static materials, PRS3 compressed assets (decode blocked pending Saturn capture evidence), SLEV scripts, SAL/MAP audio.
+Saturn DMDF/DGN data family. Structure1B geometry, Structure3 face topology,
+MNS static materials, bounded PRS3 byte decoding, SLEV scripts, and SAL/MAP
+audio. PRS3 presentation remains blocked pending Saturn capture evidence.

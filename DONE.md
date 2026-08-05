@@ -48959,3 +48959,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
 # Documentation now distinguishes the reviewed bounded PRS3 decoder and its
 # 20/20 real FACE.BIN result from the still-blocked Saturn VDP1 presentation
 # route. No startup pixels or synthetic fallback were enabled.
+
+# Nexus ITEM.IBS diagnostics now honor `FIRESTAFF_NEXUS_DATA_DIR`; the real
+# corpus test verifies 243 item declarations, 223 inventory images, and 109
+# floor images. Nexus HUD documentation now identifies the procedural V2
+# overlay as test/probe-only; production remains on the no-op boundary until
+# retail Saturn widget ownership and VDP1/VDP2 placement are captured.
