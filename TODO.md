@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-HUD-SATURN-DISPATCH-CAPTURE:** `DM.BIN` now supplies the runtime
+  hit-rectangle table and a raw, order-preserving screen hit-test. Keep this
+  API placement-only until an original Saturn/VDP1 capture binds each region
+  to the ring-menu command, pad/mouse event, or viewport action. In
+  particular, overlapping viewport rectangles must not be resolved by a
+  guessed priority outside the retail table order.
+
 - **THERON-V1-MAIN-RAM-CONSUMER-TRACE:** the current Mednafen 1.32.1
   capture build now emits a bounded, line-delimited sidecar for reads from
   game-owned main RAM when the reader PC is also in game RAM, including logical

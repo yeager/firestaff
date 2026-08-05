@@ -105,6 +105,22 @@ int main(void) {
             fprintf(stderr, "FAIL: initialized engine did not expose retail HUD geometry\n");
             return 1;
         }
+        {
+            size_t region = 0U;
+            Nexus_HitRect rect;
+            if (!nexus_v1_hud_raw_hit_test(&engine, 150, 80, &region, &rect) ||
+                region != NEXUS_HIT_VIEWPORT || rect.x1 != 144 ||
+                rect.y1 != 72 || rect.x2 != 240 || rect.y2 != 200 ||
+                !nexus_v1_hud_raw_hit_test(&engine, 40, 150, &region, &rect) ||
+                region != NEXUS_HIT_MOVEMENT_PAD || rect.x1 != 27 ||
+                rect.y1 != 142 || rect.x2 != 129 || rect.y2 != 207 ||
+                nexus_v1_hud_raw_hit_test(&engine, 0, 0, &region, &rect)) {
+                nexus_v1_shutdown(&engine);
+                free(data);
+                fprintf(stderr, "FAIL: runtime HUD raw hit-test did not preserve DM.BIN order\n");
+                return 1;
+            }
+        }
         nexus_v1_shutdown(&engine);
     }
 

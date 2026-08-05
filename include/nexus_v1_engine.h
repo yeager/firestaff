@@ -3189,6 +3189,14 @@ int nexus_v1_hud_geometry(
     Nexus_HudElement layout[NEXUS_HUD_LAYOUT_ENTRY_COUNT],
     Nexus_HitRect hit_rects[NEXUS_HIT_RECT_COUNT],
     size_t *layout_count, size_t *hit_rect_count);
+/* Return the first raw DM.BIN hit rectangle containing the Saturn screen
+ * point.  Table order is retained because the retail table contains
+ * overlapping regions.  This is placement evidence only: it does not infer
+ * a menu command or route input into mechanics. */
+int nexus_v1_hud_raw_hit_test(
+    const Nexus_V1_Engine *engine,
+    int screen_x, int screen_y,
+    size_t *out_region_index, Nexus_HitRect *out_rect);
 int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine);
 /* Source identity for MENU.BPK. A parseable archive is not eligible for the
  * retail menu route until this receipt is hash-verified. */

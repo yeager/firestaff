@@ -18,6 +18,13 @@
   Verification: real `theron-mainram-hid-20260727-173852` capture,
   `theron_v1_mednafen_main_ram_trace` CTest passed.
 
+- ✅ 2026-08-06 Nexus HUD raw placement handoff: the authenticated `DM.BIN`
+  40-entry hit-rectangle table is now consumable through a raw screen
+  hit-test that preserves retail table order, including overlapping regions.
+  It returns no mechanics command and fails closed without the canonical
+  `DM.BIN` receipt. Verification: real Nexus ISO `test_nexus_v1_champion_panel`
+  passes with viewport and movement-pad points plus miss/initialization gates.
+
 - ✅ 2026-08-06 Nexus MENU.BPK retail-revision binding: added explicit
   source-bound marker identities for the real English (87,684-byte) and French
   (87,820-byte) ISO revisions documented in `docs/VERIFIED_HASHES.md`. They are

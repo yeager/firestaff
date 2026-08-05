@@ -10427,6 +10427,34 @@ int nexus_v1_hud_geometry(
     return 1;
 }
 
+int nexus_v1_hud_raw_hit_test(
+    const Nexus_V1_Engine *engine,
+    int screen_x, int screen_y,
+    size_t *out_region_index, Nexus_HitRect *out_rect)
+{
+    size_t i;
+
+    if (out_region_index) *out_region_index = 0U;
+    if (out_rect) memset(out_rect, 0, sizeof(*out_rect));
+    if (!nexus_v1_hud_geometry_ready(engine) || !out_region_index ||
+        !out_rect || screen_x < INT16_MIN || screen_x > INT16_MAX ||
+        screen_y < INT16_MIN || screen_y > INT16_MAX) {
+        return 0;
+    }
+    for (i = 0U; i < engine->hud_hit_rect_count; ++i) {
+        const Nexus_HitRect *rect = &engine->hud_hit_rects[i];
+        /* Empty zeroed entries in the retail table are not hit regions. */
+        if (rect->x1 >= rect->x2 || rect->y1 >= rect->y2) continue;
+        if (screen_x >= rect->x1 && screen_x < rect->x2 &&
+            screen_y >= rect->y1 && screen_y < rect->y2) {
+            *out_region_index = i;
+            *out_rect = *rect;
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine) {
     return engine && engine->menu_bpk_source.canonical_hash_verified
         ? engine->menu_bpk_decode_receipt_valid : 0;
