@@ -1,3 +1,10 @@
+- ✅ 2026-08-05 Nexus secondary retail media corpus materialized: extracted
+  original `SMAP00.BIN`–`SMAP15.BIN`, `STONE.BIN`, `RHIFIX.BIN`, `POTEFT.BIN`,
+  and related startup/effect resources from the local English ISO into the
+  user-owned data root. Real-data gates now pass for all 16 automaps (640×608,
+  deterministic hashes) and the TITLE/RES* decoder, including RHIFIX and
+  POTEFT. No generated palette or automap pixels were promoted into runtime.
+
 - ✅ 2026-08-05 Nexus startup retail media materialization and source priority:
   extracted the original English ISO `TITLE.CG`, `TITLE.BIN`, `WARNING.BIN`,
   `GAMEOVER.BIN`, and `STABG.BIN` into the user-owned Nexus data root. Engine
