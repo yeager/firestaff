@@ -203,9 +203,10 @@ int theron_v1_track02_load_full_dungeon(
                 result->actuators_placed++;
                 break;
             }
-            /* Categories 14 (creature) and 15 (champion) never appear in ground
-             * ref chains. TQ places creatures via per-map creature_count and ROM
-             * creature type tables (see theron_v1_track02_creature.h).
+            /* Categories 14 (missile) and 15 (cloud) do not appear in the
+             * current ground-ref chains. TQ places monsters via per-map
+             * creature_count and the source-bound monster/type tables (see
+             * theron_v1_track02_creature.h).
              *
              * The remaining item categories have real bytes in Track 02, but
              * their runtime object-kind/item-index ownership is not decoded

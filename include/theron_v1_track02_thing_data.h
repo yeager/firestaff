@@ -21,7 +21,10 @@ typedef enum {
     THERON_CAT_CLOTHING    = 6,
     THERON_CAT_SCROLL      = 7,
     THERON_CAT_POTION      = 8,
-    THERON_CAT_CONTAINER   = 9,
+    THERON_CAT_CHEST       = 9,
+    /* Compatibility spelling retained for callers that treat a chest as a
+     * generic container; both names are the same source category. */
+    THERON_CAT_CONTAINER   = THERON_CAT_CHEST,
     THERON_CAT_MISC        = 10,
     THERON_CAT_MISSILE     = 14,
     THERON_CAT_CLOUD       = 15,
