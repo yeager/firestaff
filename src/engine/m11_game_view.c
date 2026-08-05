@@ -10729,8 +10729,8 @@ static const char* const s_potionTypeNames[] = {
 };
 
 static const char* const s_junkTypeNames[] = {
-    "COMPASS", "TORCH", "WATERSKIN", "JEWEL SYMAL",
-    "ILLUMULET", "ASHES", "BONES", "SAR COIN",
+    "COMPASS", "WATERSKIN", "JEWEL SYMAL", "ILLUMULET",
+    "ASHES", "BONES", "SAR COIN", "SILVER COIN",
     "GOLD COIN", "IRON KEY", "KEY OF B", "SOLID KEY",
     "SQUARE KEY", "TOURQUOISE KEY", "CROSS KEY", "ONYX KEY",
     "SKELETON KEY", "GOLD KEY", "WINGED KEY", "TOPAZ KEY",
@@ -10739,9 +10739,10 @@ static const char* const s_junkTypeNames[] = {
     "GREEN GEM", "APPLE", "CORN", "BREAD",
     "CHEESE", "SCREAMER SLICE", "WORM ROUND", "DRUMSTICK",
     "DRAGON STEAK", "GEM OF AGES", "EKKHARD CROSS", "MOONSTONE",
-    "THE HELLION", "PENDANT FERAL", "MAGICAL BOX", "MIRROR OF DAWN",
-    "ROPE", "RABBIT FOOT", "CORBAMITE", "CHOKER",
-    "LOCK PICKS", "MAGNIFIER", "ZOKATHRA SPELL", "EMPTY FLASK"
+    "THE HELLION", "PENDANT FERAL", "MAGICAL BOX", "MAGICAL BOX",
+    "MIRROR OF DAWN", "ROPE", "RABBIT FOOT", "CORBAMITE",
+    "CHOKER", "LOCK PICKS", "MAGNIFIER", "ZOKATHRA SPELL",
+    "EMPTY FLASK"
 };
 
 /* Scroll names not needed yet — all scrolls are just "SCROLL" */
@@ -24254,6 +24255,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
         dm1_v1_endgame_presentation_decide_pc34(&endgameInput, &endgameDecision);
         if (endgameDecision.action ==
             DM1_V1_ENDGAME_PRESENTATION_ACTION_RETURN_TO_MENU_PC34) {
+            m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+        return M11_GAME_INPUT_IGNORED;
+    }
+
+    if (state->partyDead) {
+        if (input == M12_MENU_INPUT_BACK) {
             m11_set_status(state, "RETURN", "BACK TO LAUNCHER");
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }

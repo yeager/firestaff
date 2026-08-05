@@ -3866,13 +3866,28 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
      * touch the sync root when the flag is off or the root is
      * unusable; see cloud_sync_m12.h for the full contract. */
     M12_CloudSync_ApplyConfig(&config);
-    m12_scan_startup_asset_status(state,
-                                  &config,
-                                  hasExplicitDataDirOverride,
-                                  gameId,
-                                  options && options->looseFilesOnlyAssetScan,
-                                  options ? options->scanProgressFn : NULL,
-                                  options ? options->scanProgressUserData : NULL);
+    if (options && options->skipAssetScan) {
+        state->deferredScanPending = 1;
+        snprintf(state->deferredDataDir, sizeof(state->deferredDataDir),
+                 "%s", config.dataDir);
+        if (gameId) {
+            snprintf(state->deferredGameId, sizeof(state->deferredGameId),
+                     "%s", gameId);
+        } else {
+            state->deferredGameId[0] = '\0';
+        }
+        state->deferredLooseFilesOnly =
+            (options && options->looseFilesOnlyAssetScan) ? 1 : 0;
+        state->deferredHasExplicitDataDir = hasExplicitDataDirOverride;
+    } else {
+        m12_scan_startup_asset_status(state,
+                                      &config,
+                                      hasExplicitDataDirOverride,
+                                      gameId,
+                                      options && options->looseFilesOnlyAssetScan,
+                                      options ? options->scanProgressFn : NULL,
+                                      options ? options->scanProgressUserData : NULL);
+    }
     {
         char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
         const char* scannedDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
@@ -3887,15 +3902,57 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
                      "%s", canonicalDataDir);
         }
     }
-    /* Mirror V2.2 modern-assets installation state into the config struct
-     * so the value is persisted on save (even though it's set by
-     * M12_AssetStatus_Scan at runtime, not by the user). */
-    config.v22_modern_assets_installed = M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus);
+    if (!(options && options->skipAssetScan)) {
+        config.v22_modern_assets_installed = M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus);
+    }
     for (gi = 0; gi < M12_CONFIG_GAME_COUNT; ++gi) {
         m12_normalize_game_version_index(state, gi);
     }
 }
 
+
+void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
+                                     M12_AssetStatusScanProgressFn progressFn,
+                                     void* progressUserData) {
+    M12_Config config;
+    if (!state || !state->deferredScanPending) {
+        return;
+    }
+    state->deferredScanPending = 0;
+    M12_Config_Load(&config, state->deferredDataDir[0] ? state->deferredDataDir : NULL);
+    snprintf(config.dataDir, sizeof(config.dataDir), "%s", state->deferredDataDir);
+    m12_scan_startup_asset_status(state,
+                                  &config,
+                                  state->deferredHasExplicitDataDir,
+                                  state->deferredGameId[0] ? state->deferredGameId : NULL,
+                                  state->deferredLooseFilesOnly,
+                                  progressFn,
+                                  progressUserData);
+    {
+        char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+        const char* scannedDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
+        if (!m12_data_directory_dialog_token_is_placeholder(config.dataDir) &&
+            FSP_DirExists(config.dataDir)) {
+            snprintf(state->selectedDataDir, sizeof(state->selectedDataDir),
+                     "%s", config.dataDir);
+        } else if (m12_canonicalize_data_directory(scannedDataDir,
+                                                   canonicalDataDir,
+                                                   sizeof(canonicalDataDir))) {
+            snprintf(state->selectedDataDir, sizeof(state->selectedDataDir),
+                     "%s", canonicalDataDir);
+        }
+    }
+    config.v22_modern_assets_installed = M12_AssetStatus_V22ModernAssetsInstalled(&state->assetStatus);
+    M12_Config_Save(&config);
+    m12_sync_entries_from_assets(state);
+    m12_publish_game_availability(state);
+    m12_sync_card_art(state);
+    M12_CreatureArt_Init(&state->creatureArt,
+                         M12_AssetStatus_GetDataDir(&state->assetStatus),
+                         (unsigned int)time(NULL));
+    m12_probe_quick_resume(state);
+    m12_save_config(state);
+}
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state) {
     M12_StartupMenu_InitWithDataDir(state, NULL, NULL);

@@ -10,7 +10,7 @@ extern "C" {
 enum {
     M12_STARTUP_INTRO_WIDTH = 480,
     M12_STARTUP_INTRO_HEIGHT = 270,
-    M12_STARTUP_INTRO_DURATION_MS = 6000
+    M12_STARTUP_INTRO_DURATION_MS = 3000
 };
 
 /* Load a packaged P6 PPM background. Failure leaves the procedural fallback

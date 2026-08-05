@@ -281,16 +281,217 @@ static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
     return 1;
 }
 
-static int m11_play_firestaff_startup_intro(void) {
+typedef struct {
+    M12_StartupMenuState* menuState;
+    SDL_Mutex* mutex;
+    M12_AssetScanProgress progress;
+    SDL_AtomicInt done;
+    Uint64 startedMs;
+} M11_IntroScanJob;
+
+static int m11_intro_scan_progress_callback(
+    const M12_AssetScanProgress* progress, void* userData) {
+    M11_IntroScanJob* job = (M11_IntroScanJob*)userData;
+    if (!job || !progress) return 1;
+    if (job->mutex) SDL_LockMutex(job->mutex);
+    job->progress = *progress;
+    if (job->mutex) SDL_UnlockMutex(job->mutex);
+    return 1;
+}
+
+static int SDLCALL m11_intro_scan_thread(void* data) {
+    M11_IntroScanJob* job = (M11_IntroScanJob*)data;
+    if (!job || !job->menuState) return 1;
+    M12_StartupMenu_RunDeferredScan(job->menuState,
+                                    m11_intro_scan_progress_callback,
+                                    job);
+    SDL_SetAtomicInt(&job->done, 1);
+    return 0;
+}
+
+static void m11_draw_intro_progress_bar(unsigned char* rgba,
+                                        int w, int h,
+                                        const M12_AssetScanProgress* progress,
+                                        Uint64 elapsedMs) {
+    int barW, barH, barX, barY, fillW, textY;
+    size_t pct = 0;
+    char label[96];
+    if (!rgba || w <= 0 || h <= 0) return;
+    if (progress && progress->totalSteps > 0) {
+        pct = (progress->completedSteps * 100) / progress->totalSteps;
+        if (pct > 100) pct = 100;
+    }
+    barW = w * 3 / 5;
+    barH = 4;
+    barX = (w - barW) / 2;
+    barY = h - 24;
+    {
+        int bx, by;
+        for (by = barY; by < barY + barH && by < h; ++by) {
+            for (bx = barX; bx < barX + barW && bx < w; ++bx) {
+                int idx = (by * w + bx) * 4;
+                rgba[idx] = 40; rgba[idx+1] = 40; rgba[idx+2] = 50; rgba[idx+3] = 255;
+            }
+        }
+    }
+    fillW = (int)((size_t)barW * pct / 100);
+    if (fillW > 0) {
+        int bx, by;
+        for (by = barY; by < barY + barH && by < h; ++by) {
+            for (bx = barX; bx < barX + fillW && bx < w; ++bx) {
+                int idx = (by * w + bx) * 4;
+                rgba[idx] = 200; rgba[idx+1] = 200; rgba[idx+2] = 220; rgba[idx+3] = 255;
+            }
+        }
+    }
+    textY = barY - 14;
+    if (progress && progress->totalSteps > 0 && progress->completedSteps > 0 &&
+        elapsedMs > 500 && pct > 0 && pct < 100) {
+        Uint64 etaMs = (elapsedMs * (100 - pct)) / pct;
+        int etaSec = (int)((etaMs + 500) / 1000);
+        if (progress->currentGameId[0] != '\0') {
+            snprintf(label, sizeof(label), "Scanning %s  %zu%%  ~%ds",
+                     progress->currentGameId, pct, etaSec);
+        } else {
+            snprintf(label, sizeof(label), "Scanning  %zu%%  ~%ds", pct, etaSec);
+        }
+    } else if (pct > 0) {
+        snprintf(label, sizeof(label), "Scanning  %zu%%", pct);
+    } else {
+        snprintf(label, sizeof(label), "Scanning game data...");
+    }
+    {
+        static const unsigned char font5x8[95][8] = {
+            {0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00}, /* space */
+            {0x04,0x04,0x04,0x04,0x04,0x00,0x04,0x00}, /* ! */
+            {0x0A,0x0A,0x00,0x00,0x00,0x00,0x00,0x00}, /* " */
+            {0x0A,0x1F,0x0A,0x0A,0x1F,0x0A,0x00,0x00}, /* # */
+            {0x04,0x0F,0x14,0x0E,0x05,0x1E,0x04,0x00}, /* $ */
+            {0x19,0x1A,0x02,0x04,0x0B,0x13,0x00,0x00}, /* % */
+            {0x0C,0x12,0x0C,0x15,0x12,0x0D,0x00,0x00}, /* & */
+            {0x04,0x04,0x00,0x00,0x00,0x00,0x00,0x00}, /* ' */
+            {0x02,0x04,0x08,0x08,0x08,0x04,0x02,0x00}, /* ( */
+            {0x08,0x04,0x02,0x02,0x02,0x04,0x08,0x00}, /* ) */
+            {0x04,0x15,0x0E,0x04,0x0E,0x15,0x04,0x00}, /* * */
+            {0x00,0x04,0x04,0x1F,0x04,0x04,0x00,0x00}, /* + */
+            {0x00,0x00,0x00,0x00,0x00,0x04,0x04,0x08}, /* , */
+            {0x00,0x00,0x00,0x1F,0x00,0x00,0x00,0x00}, /* - */
+            {0x00,0x00,0x00,0x00,0x00,0x00,0x04,0x00}, /* . */
+            {0x01,0x02,0x02,0x04,0x08,0x08,0x10,0x00}, /* / */
+            {0x0E,0x11,0x13,0x15,0x19,0x11,0x0E,0x00}, /* 0 */
+            {0x04,0x0C,0x04,0x04,0x04,0x04,0x0E,0x00}, /* 1 */
+            {0x0E,0x11,0x01,0x06,0x08,0x10,0x1F,0x00}, /* 2 */
+            {0x0E,0x11,0x01,0x06,0x01,0x11,0x0E,0x00}, /* 3 */
+            {0x02,0x06,0x0A,0x12,0x1F,0x02,0x02,0x00}, /* 4 */
+            {0x1F,0x10,0x1E,0x01,0x01,0x11,0x0E,0x00}, /* 5 */
+            {0x06,0x08,0x10,0x1E,0x11,0x11,0x0E,0x00}, /* 6 */
+            {0x1F,0x01,0x02,0x04,0x08,0x08,0x08,0x00}, /* 7 */
+            {0x0E,0x11,0x11,0x0E,0x11,0x11,0x0E,0x00}, /* 8 */
+            {0x0E,0x11,0x11,0x0F,0x01,0x02,0x0C,0x00}, /* 9 */
+            {0x00,0x00,0x04,0x00,0x00,0x04,0x00,0x00}, /* : */
+            {0x00,0x00,0x04,0x00,0x00,0x04,0x04,0x08}, /* ; */
+            {0x02,0x04,0x08,0x10,0x08,0x04,0x02,0x00}, /* < */
+            {0x00,0x00,0x1F,0x00,0x1F,0x00,0x00,0x00}, /* = */
+            {0x08,0x04,0x02,0x01,0x02,0x04,0x08,0x00}, /* > */
+            {0x0E,0x11,0x01,0x02,0x04,0x00,0x04,0x00}, /* ? */
+            {0x0E,0x11,0x17,0x15,0x17,0x10,0x0E,0x00}, /* @ */
+            {0x0E,0x11,0x11,0x1F,0x11,0x11,0x11,0x00}, /* A */
+            {0x1E,0x11,0x11,0x1E,0x11,0x11,0x1E,0x00}, /* B */
+            {0x0E,0x11,0x10,0x10,0x10,0x11,0x0E,0x00}, /* C */
+            {0x1E,0x11,0x11,0x11,0x11,0x11,0x1E,0x00}, /* D */
+            {0x1F,0x10,0x10,0x1E,0x10,0x10,0x1F,0x00}, /* E */
+            {0x1F,0x10,0x10,0x1E,0x10,0x10,0x10,0x00}, /* F */
+            {0x0E,0x11,0x10,0x17,0x11,0x11,0x0E,0x00}, /* G */
+            {0x11,0x11,0x11,0x1F,0x11,0x11,0x11,0x00}, /* H */
+            {0x0E,0x04,0x04,0x04,0x04,0x04,0x0E,0x00}, /* I */
+            {0x07,0x02,0x02,0x02,0x02,0x12,0x0C,0x00}, /* J */
+            {0x11,0x12,0x14,0x18,0x14,0x12,0x11,0x00}, /* K */
+            {0x10,0x10,0x10,0x10,0x10,0x10,0x1F,0x00}, /* L */
+            {0x11,0x1B,0x15,0x15,0x11,0x11,0x11,0x00}, /* M */
+            {0x11,0x19,0x15,0x13,0x11,0x11,0x11,0x00}, /* N */
+            {0x0E,0x11,0x11,0x11,0x11,0x11,0x0E,0x00}, /* O */
+            {0x1E,0x11,0x11,0x1E,0x10,0x10,0x10,0x00}, /* P */
+            {0x0E,0x11,0x11,0x11,0x15,0x12,0x0D,0x00}, /* Q */
+            {0x1E,0x11,0x11,0x1E,0x14,0x12,0x11,0x00}, /* R */
+            {0x0E,0x11,0x10,0x0E,0x01,0x11,0x0E,0x00}, /* S */
+            {0x1F,0x04,0x04,0x04,0x04,0x04,0x04,0x00}, /* T */
+            {0x11,0x11,0x11,0x11,0x11,0x11,0x0E,0x00}, /* U */
+            {0x11,0x11,0x11,0x11,0x0A,0x0A,0x04,0x00}, /* V */
+            {0x11,0x11,0x11,0x15,0x15,0x1B,0x11,0x00}, /* W */
+            {0x11,0x11,0x0A,0x04,0x0A,0x11,0x11,0x00}, /* X */
+            {0x11,0x11,0x0A,0x04,0x04,0x04,0x04,0x00}, /* Y */
+            {0x1F,0x01,0x02,0x04,0x08,0x10,0x1F,0x00}, /* Z */
+            {0x0E,0x08,0x08,0x08,0x08,0x08,0x0E,0x00}, /* [ */
+            {0x10,0x08,0x08,0x04,0x02,0x02,0x01,0x00}, /* \ */
+            {0x0E,0x02,0x02,0x02,0x02,0x02,0x0E,0x00}, /* ] */
+            {0x04,0x0A,0x11,0x00,0x00,0x00,0x00,0x00}, /* ^ */
+            {0x00,0x00,0x00,0x00,0x00,0x00,0x1F,0x00}, /* _ */
+            {0x08,0x04,0x00,0x00,0x00,0x00,0x00,0x00}, /* ` */
+            {0x00,0x00,0x0E,0x01,0x0F,0x11,0x0F,0x00}, /* a */
+            {0x10,0x10,0x1E,0x11,0x11,0x11,0x1E,0x00}, /* b */
+            {0x00,0x00,0x0E,0x11,0x10,0x11,0x0E,0x00}, /* c */
+            {0x01,0x01,0x0F,0x11,0x11,0x11,0x0F,0x00}, /* d */
+            {0x00,0x00,0x0E,0x11,0x1F,0x10,0x0E,0x00}, /* e */
+            {0x06,0x08,0x1C,0x08,0x08,0x08,0x08,0x00}, /* f */
+            {0x00,0x00,0x0F,0x11,0x0F,0x01,0x0E,0x00}, /* g */
+            {0x10,0x10,0x1E,0x11,0x11,0x11,0x11,0x00}, /* h */
+            {0x04,0x00,0x0C,0x04,0x04,0x04,0x0E,0x00}, /* i */
+            {0x02,0x00,0x06,0x02,0x02,0x12,0x0C,0x00}, /* j */
+            {0x10,0x10,0x12,0x14,0x18,0x14,0x12,0x00}, /* k */
+            {0x0C,0x04,0x04,0x04,0x04,0x04,0x0E,0x00}, /* l */
+            {0x00,0x00,0x1A,0x15,0x15,0x11,0x11,0x00}, /* m */
+            {0x00,0x00,0x1E,0x11,0x11,0x11,0x11,0x00}, /* n */
+            {0x00,0x00,0x0E,0x11,0x11,0x11,0x0E,0x00}, /* o */
+            {0x00,0x00,0x1E,0x11,0x1E,0x10,0x10,0x00}, /* p */
+            {0x00,0x00,0x0F,0x11,0x0F,0x01,0x01,0x00}, /* q */
+            {0x00,0x00,0x16,0x19,0x10,0x10,0x10,0x00}, /* r */
+            {0x00,0x00,0x0F,0x10,0x0E,0x01,0x1E,0x00}, /* s */
+            {0x08,0x08,0x1C,0x08,0x08,0x09,0x06,0x00}, /* t */
+            {0x00,0x00,0x11,0x11,0x11,0x11,0x0F,0x00}, /* u */
+            {0x00,0x00,0x11,0x11,0x11,0x0A,0x04,0x00}, /* v */
+            {0x00,0x00,0x11,0x11,0x15,0x15,0x0A,0x00}, /* w */
+            {0x00,0x00,0x11,0x0A,0x04,0x0A,0x11,0x00}, /* x */
+            {0x00,0x00,0x11,0x11,0x0F,0x01,0x0E,0x00}, /* y */
+            {0x00,0x00,0x1F,0x02,0x04,0x08,0x1F,0x00}, /* z */
+            {0x02,0x04,0x04,0x08,0x04,0x04,0x02,0x00}, /* { */
+            {0x04,0x04,0x04,0x04,0x04,0x04,0x04,0x00}, /* | */
+            {0x08,0x04,0x04,0x02,0x04,0x04,0x08,0x00}, /* } */
+            {0x00,0x09,0x16,0x00,0x00,0x00,0x00,0x00}, /* ~ */
+        };
+        int ci, cx;
+        size_t len = strlen(label);
+        cx = (w - (int)len * 6) / 2;
+        if (cx < 0) cx = 0;
+        for (ci = 0; label[ci] && cx + 5 < w; ++ci, cx += 6) {
+            int gx, gy;
+            unsigned char ch = (unsigned char)label[ci];
+            if (ch < 32 || ch > 126) continue;
+            const unsigned char* glyph = font5x8[ch - 32];
+            for (gy = 0; gy < 8 && textY + gy < h && textY + gy >= 0; ++gy) {
+                unsigned char row = glyph[gy];
+                for (gx = 0; gx < 5 && cx + gx < w; ++gx) {
+                    if (row & (0x10 >> gx)) {
+                        int idx = ((textY + gy) * w + cx + gx) * 4;
+                        rgba[idx] = 180; rgba[idx+1] = 180; rgba[idx+2] = 200; rgba[idx+3] = 220;
+                    }
+                }
+            }
+        }
+    }
+}
+
+static int m11_play_firestaff_startup_intro(M12_StartupMenuState* menuState) {
     unsigned char* rgba;
     char resourcePath[1024];
     const char* basePath;
     Uint64 started;
+    M11_IntroScanJob scanJob;
+    SDL_Thread* scanThread = NULL;
+    int scanActive = 0;
+
     rgba = (unsigned char*)malloc((size_t)M12_STARTUP_INTRO_WIDTH *
                                   (size_t)M12_STARTUP_INTRO_HEIGHT * 4U);
     if (!rgba) return 0;
-    /* The branded intro is part of the launcher shell.  Do not inherit a
-     * previous game's 4:3/content-aspect presentation while it is visible. */
     (void)M11_Render_SetPresentationFillWindow(1);
     (void)M12_StartupIntro_LoadBackground("assets/branding/firestaff-startup-intro.ppm");
     basePath = SDL_GetBasePath();
@@ -304,24 +505,62 @@ static int m11_play_firestaff_startup_intro(void) {
         SDL_free((void*)basePath);
     }
     (void)M12_StartupIntro_LoadBackground("/usr/share/firestaff/firestaff-startup-intro.ppm");
+
+    memset(&scanJob, 0, sizeof(scanJob));
+    if (menuState && menuState->deferredScanPending) {
+        scanJob.menuState = menuState;
+        scanJob.mutex = SDL_CreateMutex();
+        SDL_SetAtomicInt(&scanJob.done, 0);
+        scanJob.startedMs = SDL_GetTicks();
+        scanThread = SDL_CreateThread(m11_intro_scan_thread, "IntroScan", &scanJob);
+        scanActive = scanThread != NULL;
+    }
+
     started = SDL_GetTicks();
-    while ((SDL_GetTicks() - started) < M12_STARTUP_INTRO_DURATION_MS) {
+    for (;;) {
         Uint64 elapsed = SDL_GetTicks() - started;
+        int scanDone = !scanActive || SDL_GetAtomicInt(&scanJob.done);
+        uint32_t effectiveDuration = M12_STARTUP_INTRO_DURATION_MS;
+        if (!scanDone && elapsed >= M12_STARTUP_INTRO_DURATION_MS) {
+            effectiveDuration = (uint32_t)elapsed + 1000;
+        }
+        if (scanDone && elapsed >= M12_STARTUP_INTRO_DURATION_MS) {
+            break;
+        }
         M12_StartupIntro_Render(rgba,
                                 M12_STARTUP_INTRO_WIDTH,
                                 M12_STARTUP_INTRO_HEIGHT,
-                                (uint32_t)elapsed,
-                                M12_STARTUP_INTRO_DURATION_MS,
+                                (uint32_t)(elapsed < effectiveDuration ? elapsed : effectiveDuration - 1),
+                                effectiveDuration,
                                 FIRESTAFF_VERSION_NUMBER);
+        if (scanActive && !scanDone) {
+            M12_AssetScanProgress snap;
+            if (scanJob.mutex) SDL_LockMutex(scanJob.mutex);
+            snap = scanJob.progress;
+            if (scanJob.mutex) SDL_UnlockMutex(scanJob.mutex);
+            m11_draw_intro_progress_bar(rgba,
+                                        M12_STARTUP_INTRO_WIDTH,
+                                        M12_STARTUP_INTRO_HEIGHT,
+                                        &snap,
+                                        elapsed);
+        }
         (void)M11_Render_PresentRGBA(rgba,
                                      M12_STARTUP_INTRO_WIDTH,
                                      M12_STARTUP_INTRO_HEIGHT);
         if (M11_Render_PumpEvents()) {
+            if (scanThread) {
+                SDL_WaitThread(scanThread, NULL);
+            }
+            if (scanJob.mutex) SDL_DestroyMutex(scanJob.mutex);
             free(rgba);
             return 1;
         }
         SDL_Delay(33U);
     }
+    if (scanThread) {
+        SDL_WaitThread(scanThread, NULL);
+    }
+    if (scanJob.mutex) SDL_DestroyMutex(scanJob.mutex);
     free(rgba);
     return 0;
 }
@@ -5033,6 +5272,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         menuInitOptions.skipScreenshotGalleryScan = o->bootProbe ? 1 : 0;
         menuInitOptions.looseFilesOnlyAssetScan =
             (o->bootProbe && (!o->dataDir || !o->dataDir[0])) ? 1 : 0;
+        if (!o->bootProbe && !o->directLaunch) {
+            menuInitOptions.skipAssetScan = 1;
+        }
         scanCtx.framebuffer = launcherFramebuffer;
         scanCtx.width = M11_LAUNCHER_FB_WIDTH;
         scanCtx.height = M11_LAUNCHER_FB_HEIGHT;
@@ -5126,8 +5368,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
     int startupTextInputActive = 0;
     if (!o->bootProbe && !o->directLaunch && o->durationMs < 0 &&
         getenv("FIRESTAFF_SKIP_INTRO") == NULL &&
-        m11_play_firestaff_startup_intro()) {
+        m11_play_firestaff_startup_intro(&menuState)) {
         goto cleanup;
+    }
+    if (menuState.deferredScanPending) {
+        M11_ScanProgressContext fallbackCtx;
+        fallbackCtx.framebuffer = launcherFramebuffer;
+        fallbackCtx.width = M11_LAUNCHER_FB_WIDTH;
+        fallbackCtx.height = M11_LAUNCHER_FB_HEIGHT;
+        M12_StartupMenu_RunDeferredScan(&menuState,
+                                        m11_scan_progress_callback,
+                                        &fallbackCtx);
     }
     M11_ApplyStartupMenuRuntime(&menuState);
     firestaff_ra_runtime_init(&raRuntime);

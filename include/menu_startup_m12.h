@@ -671,11 +671,17 @@ typedef struct M12_StartupMenuState {
     M12_AssetScanProgress dataDirScanProgress;
     void* dataDirScanJob;
     M12_DM1HoCPresentedCaptureReceipt dm1HoCPresentedCaptureReceipt;
+    int deferredScanPending;
+    char deferredDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char deferredGameId[16];
+    int deferredLooseFilesOnly;
+    int deferredHasExplicitDataDir;
 } M12_StartupMenuState;
 
 typedef struct M12_StartupMenuInitOptions {
     int skipScreenshotGalleryScan;
     int looseFilesOnlyAssetScan;
+    int skipAssetScan;
     M12_AssetStatusScanProgressFn scanProgressFn;
     void* scanProgressUserData;
 } M12_StartupMenuInitOptions;
@@ -688,6 +694,9 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
                                      const char* dataDir,
                                      const char* gameId,
                                      const M12_StartupMenuInitOptions* options);
+void M12_StartupMenu_RunDeferredScan(M12_StartupMenuState* state,
+                                     M12_AssetStatusScanProgressFn progressFn,
+                                     void* progressUserData);
 int M12_SessionTimer_MinutesForIndex(int index);
 int M12_SessionTimer_IndexForMinutes(int minutes);
 int M12_StartupMenu_SessionTimerLimitMinutes(const M12_StartupMenuState* state);

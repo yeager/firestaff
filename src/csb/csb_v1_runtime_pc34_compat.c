@@ -12892,8 +12892,8 @@ static const char *csb_v1_runtime_object_name_from_record(
         "SHIELD OF DARC", "DEXHELM"
     };
     static const char *const kJunkTypeNames[] = {
-        "COMPASS", "TORCH", "WATERSKIN", "JEWEL SYMAL",
-        "ILLUMULET", "ASHES", "BONES", "SAR COIN",
+        "COMPASS", "WATERSKIN", "JEWEL SYMAL", "ILLUMULET",
+        "ASHES", "BONES", "SAR COIN", "SILVER COIN",
         "GOLD COIN", "IRON KEY", "KEY OF B", "SOLID KEY",
         "SQUARE KEY", "TOURQUOISE KEY", "CROSS KEY", "ONYX KEY",
         "SKELETON KEY", "GOLD KEY", "WINGED KEY", "TOPAZ KEY",
@@ -12902,9 +12902,10 @@ static const char *csb_v1_runtime_object_name_from_record(
         "GREEN GEM", "APPLE", "CORN", "BREAD",
         "CHEESE", "SCREAMER SLICE", "WORM ROUND", "DRUMSTICK",
         "DRAGON STEAK", "GEM OF AGES", "EKKHARD CROSS", "MOONSTONE",
-        "THE HELLION", "PENDANT FERAL", "MAGICAL BOX", "MIRROR OF DAWN",
-        "ROPE", "RABBIT FOOT", "CORBAMITE", "CHOKER",
-        "LOCK PICKS", "MAGNIFIER", "ZOKATHRA SPELL", "EMPTY FLASK"
+        "THE HELLION", "PENDANT FERAL", "MAGICAL BOX", "MAGICAL BOX",
+        "MIRROR OF DAWN", "ROPE", "RABBIT FOOT", "CORBAMITE",
+        "CHOKER", "LOCK PICKS", "MAGNIFIER", "ZOKATHRA SPELL",
+        "EMPTY FLASK"
     };
     uint16_t word;
     int subtype;
