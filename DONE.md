@@ -49803,7 +49803,6 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   fabricated state change. CTest covers the runtime spell-timer behaviour
   and a static gate rejects reintroducing a surrogate mutation. Source:
   `SKULLWIN/c_tim_proc.cpp:4111-4178` and `SKULLWIN/c_hero.h:58-130`.
-
 - ✅ 2026-08-06 DM2 archive no-unpack gate: M12 no longer materializes
   GRAPHICS.DAT, DUNGEON.DAT, music, or alternate dungeon files from a DM2
   ZIP/ISO into `asset-cache`. Archive-backed PC DM2 now remains
@@ -49811,3 +49810,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   Towns CD path retains its separately verified memory-only reader. The
   focused ISO regression proves the original virtual paths remain diagnostic
   evidence, no cache payload is written, and launch stays blocked.
+- ✅ 2026-08-06 Theron inferred tile-descriptor cleanup: removed the unused
+  `theron_v1_tile_descriptor.h`, whose `$43E4`/`$4914`/`$4DC6` claims could
+  not be located in the versioned HuC6280 disassembly. The reverse-engineering
+  registry now lists only live bitmap/palette/VRAM receipt modules; no inferred
+   tile format was promoted into production.

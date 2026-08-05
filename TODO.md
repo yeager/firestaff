@@ -297,6 +297,11 @@
   in quest blocks. Block 3 has a compression signature (0x14 marker, C1/C5/C7
   prefix bytes). Exact tile format and decompression algorithm require
   HuC6280 disassembly of the graphics driver routine.
+  The former `theron_v1_tile_descriptor.h` was removed on 2026-08-06: its
+  claimed `$43E4`/`$4914` routines and `$4DC6` 32-byte records are absent from
+  the versioned HuC6280 disassembly, and no production or test caller used the
+  header. No tile/material semantics are promoted by this cleanup; bind the
+  actual graphics consumer and VRAM/palette trace before adding a replacement.
 
 - **THERON-CUE-FULL-PAYLOAD-VALIDATION:** Closed 2026-07-31. The USA and JP
   CUE handoff regressions now read the complete hash-verified Track 02
