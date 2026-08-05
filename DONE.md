@@ -48691,3 +48691,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   unreachable THS4 sound parser body and its guessed marker constants from
   the implementation. The public diagnostic APIs remain explicit rejection
   seams; no Firestaff-only THG3/THS4 bytes can become runtime media.
+
+- ✅ 2026-08-05 CSB Utility Disk portrait inventory and scanner repair: added
+  hash identities for all 26 original Atari ST `PORTRAIT/*.CMP` files, whose
+  508-byte disk format is established by ReDMCSB `CEDTDATA.C:394/397` and
+  `CEDT001.C F7000`. The CSB report now uses media already materialized by
+  the status scan instead of triggering a second recursive archive traversal.
+  Archive materialization retains the real `ANIMATE.FTL`, `CHAOS.FTL` and
+  `FTLCODE` modules beside the launch pair. A real loose-package scan shows
+  those modules plus `SWITCH.DAT` and `MINI.DAT`; the fingerprint suite passes
+  373/0.

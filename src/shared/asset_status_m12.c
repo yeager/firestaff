@@ -1157,7 +1157,8 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * original Utility Disk companions: HINT.FTL starts the tool,
          * ANIM.C line 67 loads ANIMATE.DAT/SCR, and SWITCH.C line 473 loads
          * SWITCH.DAT.  They are optional and never affect the launch gate. */
-        "HCSB.DAT", "HINT.FTL", "ANIMATE.DAT", "ANIMATE.SCR", "SWITCH.DAT",
+        "HCSB.DAT", "HINT.FTL", "ANIMATE.DAT", "ANIMATE.SCR", "ANIMATE.FTL",
+        "CHAOS.FTL", "FTLCODE", "SWITCH.DAT",
         /* MINI.DAT is the original Atari ST/Amiga CSB campaign save.  Keep
          * it with an archive-backed installation so Resume can hand its
          * authenticated GAMEBLOCK payload to the native CSB runtime. */

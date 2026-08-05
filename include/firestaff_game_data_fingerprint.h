@@ -62,7 +62,8 @@ typedef enum {
     FIRESTAFF_FILE_MINI_DAT      = 19,
     /* Atari ST loadable FTL modules.  These are executable source media,
      * not generic host-program placeholders. */
-    FIRESTAFF_FILE_CSB_FTL_MODULE = 20
+    FIRESTAFF_FILE_CSB_FTL_MODULE = 20,
+    FIRESTAFF_FILE_CSB_PORTRAIT_CMP = 21
 } FirestaffFileType;
 
 typedef struct {
@@ -80,7 +81,7 @@ typedef struct {
     const FirestaffGameDataFingerprint *entry;
 } FirestaffGameDataClassifyResult;
 
-#define FIRESTAFF_FINGERPRINT_COUNT 86
+#define FIRESTAFF_FINGERPRINT_COUNT 112
 
 extern const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERPRINT_COUNT];
 

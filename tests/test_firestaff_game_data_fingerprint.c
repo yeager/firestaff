@@ -68,6 +68,10 @@ static void test_classify_known_hashes(void) {
     ASSERT(r.valid && r.entry->file_type == FIRESTAFF_FILE_CSB_FTL_MODULE,
            "CSB Atari FTLCODE runtime module source hash found");
 
+    r = firestaff_game_data_classify_hex("06E622DC4142AFDC6B7BBB80BE911E49");
+    ASSERT(r.valid && r.entry->file_type == FIRESTAFF_FILE_CSB_PORTRAIT_CMP,
+           "CSB Atari HALK Utility Disk portrait source hash found");
+
     r = firestaff_game_data_classify_hex("531EA104A2FBC2011EA73D11F274C57D");
     ASSERT(r.valid && r.entry->file_type == FIRESTAFF_FILE_MINI_DAT,
            "CSB Atari campaign MINI.DAT source hash found");
