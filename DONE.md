@@ -208,6 +208,12 @@
   leaves the framebuffer untouched until Saturn explored-state and VDP2
   placement evidence is authenticated.
 
+- ✅ 2026-08-06 Nexus SAL provenance wording: real SNDLEV00–15 banks still
+  retain 45 bounded tone candidates per bank for diagnostics, but runtime
+  logs now label them as candidates/metadata rather than decoded playable
+  tones. The playback and event-dispatch gates remain closed pending Saturn
+  driver/selector evidence; the real 16-level SAL/MAP corpus remains green.
+
 - ✅ 2026-08-06 Nexus startup command-kind gate: the shared title-capture
   receipt now admits only `BOOT_TITLE_FRAME` commands. A stale or misclassified
   `TITLE_BACKGROUND` command cannot reuse boot timing/capture metadata to copy

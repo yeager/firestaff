@@ -723,8 +723,8 @@ int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
     parse_sal_tone_bank_directory(eng);
     nexus_sound_decode_sal(eng);
 
-    printf("Nexus sound: loaded level %d SFX (SAL=%d bytes, MAP=%d bytes, "
-           "decoded=%d tones)\n",
+    printf("Nexus sound: loaded level %d SFX metadata (SAL=%d bytes, "
+           "MAP=%d bytes, diagnostic_candidates=%d)\n",
         level_index, sal_size, map_size, eng->sal_decoded_tone_count);
     return 0;
 }
@@ -1388,7 +1388,8 @@ int nexus_sound_decode_sal(Nexus_SoundEngine *eng) {
     eng->sal_decoded_sample_rate = 22050;
     eng->sal_decode_ready = decoded > 0 ? 1 : 0;
 
-    printf("Nexus sound: decoded %d tones from SAL tone bank (%d entries)\n",
+    printf("Nexus sound: retained %d diagnostic SAL tone candidates "
+           "(%d entries; playback remains capture-gated)\n",
            decoded, entry_count);
     return decoded;
 }
