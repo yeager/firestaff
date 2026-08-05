@@ -1,3 +1,9 @@
+- ✅ 2026-08-05 Theron dungeon-map record integrity: hardened the Track 02
+  map/table loader with overflow-safe range checks for dimension tables,
+  cumulative column records, descriptor bytes, and map tiles. Added a
+  truncated-map regression alongside the object-loader check; focused test
+  passes and still skips only the optional full Track 02 BIN branch.
+
 - ✅ 2026-08-05 Theron object-record loader integrity: replaced vulnerable
   `offset + length` bounds checks in the source-bound Track 02 ground/item/
   text loader with overflow-safe range validation. Added a truncated-source

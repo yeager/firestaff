@@ -15,6 +15,10 @@
 #define BYTES_PER_SECTOR 2048
 #define UD_BASE (PREGAP_SECTORS * BYTES_PER_SECTOR)
 
+static int theron_map_range_fits(size_t offset, size_t length, size_t size) {
+    return offset <= size && length <= size - offset;
+}
+
 static const Theron_QuestBlockOffsets g_quest_offsets[THERON_TRACK02_DUNGEON_COUNT] = {
     { 0x0002A0F1, 0x0002A2D7, 0x0002A831, 0x0002AD0F, 0x0002B800, 0x0002C9D8 },
     { 0x0006A333, 0x0006A5E9, 0x0006ABA5, 0x0006B031, 0x0006B800, 0x0006CECC },
@@ -70,7 +74,7 @@ int theron_v1_track02_dungeon_map_load(
     const Theron_QuestBlockOffsets *qb = &g_quest_offsets[dungeon_index];
 
     size_t dims_abs = UD_BASE + qb->dims_offset;
-    if (dims_abs + 9u * nmaps + 32 > ud_size) return 0;
+    if (!theron_map_range_fits(dims_abs, 9u * nmaps + 32u, ud_size)) return 0;
 
     const uint8_t *p = ud_data + dims_abs;
 
@@ -144,20 +148,23 @@ int theron_v1_track02_dungeon_map_load(
         total_columns += xdims[m];
     if (total_columns > THERON_TRACK02_MAX_COLUMNS) return 0;
     out->column_thing_count_total = (uint16_t)total_columns;
+    if (!theron_map_range_fits(list_off,
+                               (size_t)total_columns * sizeof(uint16_t) + 4u,
+                               ud_size)) return 0;
     for (unsigned int i = 0; i < total_columns; i++) {
-        if (list_off + 2 > ud_size) return 0;
         out->column_thing_counts[i] = (uint16_t)ud_data[list_off] |
             ((uint16_t)ud_data[list_off + 1] << 8);
         list_off += 2;
     }
 
     /* 4 unknown bytes between column counts and thing descriptor size table. */
-    list_off += 4;
+    list_off += 4u;
 
     /* 12-byte thing descriptor size table — bytes per record for each of the
      * 12 thing types (door, teleporter, text, actuator, creature, weapon,
      * clothing, scroll, potion, container, misc_item, missile). */
-    if (list_off + THERON_TRACK02_THING_TYPE_COUNT > ud_size) return 0;
+    if (!theron_map_range_fits(list_off, THERON_TRACK02_THING_TYPE_COUNT,
+                               ud_size)) return 0;
     memcpy(out->thing_descriptor_sizes, ud_data + list_off,
            THERON_TRACK02_THING_TYPE_COUNT);
     list_off += THERON_TRACK02_THING_TYPE_COUNT;
@@ -175,7 +182,7 @@ int theron_v1_track02_dungeon_map_load(
         unsigned int h = (unsigned int)ydims[m] + 1;
         if (w > THERON_TRACK02_MAX_MAP_DIM || h > THERON_TRACK02_MAX_MAP_DIM)
             return 0;
-        if (pos + (size_t)w * h > ud_size) return 0;
+        if (!theron_map_range_fits(pos, (size_t)w * h, ud_size)) return 0;
         for (unsigned int x = 0; x < w; x++) {
             for (unsigned int y = 0; y < h; y++) {
                 out->maps[m].tiles[x][y] = ud_data[pos++];
@@ -185,4 +192,3 @@ int theron_v1_track02_dungeon_map_load(
 
     return 1;
 }
-

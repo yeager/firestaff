@@ -75,6 +75,15 @@ static void test_truncated_source_rejected(void) {
     printf("  truncated source rejects out-of-range records OK\n");
 }
 
+static void test_truncated_map_source_rejected(void) {
+    uint8_t byte = 0;
+    Theron_DungeonData dungeon;
+
+    assert(!theron_v1_track02_dungeon_map_load(&byte, sizeof(byte), 0,
+                                               &dungeon));
+    printf("  truncated map source rejects out-of-range tables OK\n");
+}
+
 static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
     const char *names[] = {
         "AKUTUBA", "DRATOR", "FORMICIA", "SARMON",
@@ -132,6 +141,7 @@ int main(void) {
     test_ground_ref_count();
     test_ground_ref_count_bound();
     test_truncated_source_rejected();
+    test_truncated_map_source_rejected();
 
     const char *path = find_track02();
     if (!path) {
