@@ -1,6 +1,7 @@
 
 #ifndef NEXUS_V1_HUD_HIT_RECTS_H
 #define NEXUS_V1_HUD_HIT_RECTS_H
+#include <stddef.h>
 #include <stdint.h>
 
 /* Nexus HUD hit-test rectangles from DM.BIN yam\menuctrl.c at 0x038000.
@@ -30,9 +31,21 @@ typedef struct {
 #define NEXUS_HIT_MOVEMENT_PAD        25   /* ( 27,142)-(129,207) 102×65 */
 
 #define NEXUS_HIT_RECT_COUNT          40
+#define NEXUS_HIT_RECT_DM_BIN_OFFSET  0x38000U
+#define NEXUS_HIT_RECT_ENTRY_BYTES    8U
 
 /* Retrieve the hit rectangle table.  Returns NEXUS_HIT_RECT_COUNT. */
 int nexus_v1_hud_hit_rects(const Nexus_HitRect **out);
+
+/* Parse the retail ring-menu rectangles directly from DM.BIN.  The static
+ * accessor remains compatibility-only; runtime handoffs must use this
+ * source-bound form when a mounted Saturn package is available. */
+int nexus_v1_hud_hit_rects_parse_dm_bin(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_HitRect *out,
+    size_t out_capacity,
+    size_t *out_count);
 
 /* Hit-test a screen coordinate against all rectangles.
  * Returns the index of the first matching rectangle, or -1 if none. */

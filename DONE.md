@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus HUD hit-test source binding: added a bounds-checked
+  big-endian parser for the retail `DM.BIN` ring-menu rectangles at
+  `0x38000` (40 entries × 8 bytes). The mounted European corpus parses all
+  40 and matches the compatibility table exactly. This proves click geometry
+  provenance only; the production click handoff still needs to consume the
+  mounted table and must not enable HUD pixels or VDP placement.
+
 - ✅ 2026-08-06 Nexus HUD layout source binding: added a bounds-checked
   big-endian parser for the retail `DM.BIN` `yam\\menuctrl.c` layout at
   `0x376D0` (80 entries × 8 bytes). With the mounted European corpus,

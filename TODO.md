@@ -25450,6 +25450,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   palette and VDP1/VDP2 destinations from one authenticated Saturn capture;
   the old static accessor remains compatibility-only and cannot authorize
   HUD pixels.
+- 🔧 Nexus HUD click-route binding: the real `DM.BIN` ring-menu rectangle
+  section at `0x38000` now parses and matches all 40 entries. Replace the
+  compatibility-only static hit-test accessor in the live click route with
+  an epoch/package-bound mounted-table handoff before treating screen clicks
+  as retail HUD interaction.
 - 🔧 Nexus champion follow-up: PLRD equipment ordinals now bind to the real
   `ITEM.IBS` declaration category/weight lane. Bind the remaining ITEM.IBS
   text/action/combat semantics before exposing item names, attack, defense or

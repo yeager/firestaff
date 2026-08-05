@@ -1,6 +1,55 @@
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "nexus_v1_hud_hit_rects.h"
+
+static int verify_real_dm_bin(void)
+{
+    const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char path[1024];
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+    Nexus_HitRect parsed[NEXUS_HIT_RECT_COUNT];
+    const Nexus_HitRect *legacy;
+    size_t count = 0U;
+    size_t i;
+
+    if (!root || !root[0]) return 0;
+    if (snprintf(path, sizeof(path), "%s/DM.BIN", root) >= (int)sizeof(path)) {
+        return 0;
+    }
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    if (nexus_v1_hud_hit_rects_parse_dm_bin(
+            bytes, (size_t)size, parsed, NEXUS_HIT_RECT_COUNT,
+            &count) != 0 || count != NEXUS_HIT_RECT_COUNT) {
+        free(bytes);
+        return -1;
+    }
+    (void)nexus_v1_hud_hit_rects(&legacy);
+    for (i = 0U; i < count; ++i) {
+        if (memcmp(&parsed[i], &legacy[i], sizeof(parsed[i])) != 0) {
+            free(bytes);
+            return -1;
+        }
+    }
+    free(bytes);
+    return 1;
+}
 
 int main(void) {
     const Nexus_HitRect *rects;
@@ -69,6 +118,18 @@ int main(void) {
     if (fail) {
         fprintf(stderr, "%d failures\n", fail);
         return 1;
+    }
+    {
+        int real = verify_real_dm_bin();
+        if (real < 0) {
+            fprintf(stderr, "FAIL: real DM.BIN HUD hit-rect parse mismatch\n");
+            return 1;
+        }
+        if (real > 0) {
+            printf("ok: real DM.BIN HUD hit rectangles parsed and match source table\n");
+        } else {
+            printf("ok: real DM.BIN HUD hit rectangles skipped (data root not mounted)\n");
+        }
     }
     printf("ok: Nexus HUD hit rectangles verified (%d rects from DM.BIN 0x038000)\n", count);
     return 0;
