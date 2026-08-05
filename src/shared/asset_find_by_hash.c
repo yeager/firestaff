@@ -3035,6 +3035,68 @@ static int external_extract_entry_to_path(const char *archivePath,
     return ok;
 }
 
+static uint8_t *external_read_entry_bytes(const char *archivePath,
+                                          const char *entryName,
+                                          size_t *out_size) {
+    char cmd[ASSET_PATH_MAX * 4];
+    const char *tool;
+    FILE *pipe;
+    uint8_t *bytes = NULL;
+    size_t used = 0U, capacity = 0U;
+    int ok = 1;
+    if (!archivePath || !entryName || !out_size) return NULL;
+    tool = external_archive_tool_for_path(archivePath);
+    if (!tool || !external_entry_command(cmd, sizeof(cmd), tool, archivePath, entryName)) {
+        return NULL;
+    }
+    pipe = popen(cmd, "r");
+    if (!pipe) return NULL;
+    for (;;) {
+        uint8_t chunk[8192];
+        size_t got = fread(chunk, 1U, sizeof(chunk), pipe);
+        if (got > 0U) {
+            if (used > (size_t)ASSET_SCAN_MAX_FILE_BYTES - got) {
+                ok = 0;
+                break;
+            }
+            if (used + got > capacity) {
+                size_t next = capacity ? capacity * 2U : 65536U;
+                uint8_t *grown;
+                while (next < used + got) next *= 2U;
+                grown = (uint8_t *)realloc(bytes, next);
+                if (!grown) { ok = 0; break; }
+                bytes = grown;
+                capacity = next;
+            }
+            memcpy(bytes + used, chunk, got);
+            used += got;
+        }
+        if (got < sizeof(chunk)) {
+            if (ferror(pipe)) ok = 0;
+            break;
+        }
+    }
+    if (pclose(pipe) != 0) ok = 0;
+    if (!ok || used == 0U) {
+        free(bytes);
+        return NULL;
+    }
+    *out_size = used;
+    return bytes;
+}
+
+static int copy_nested_virtual_match_path(const char *archive, const char *adf,
+                                          const char *entry, char *out_path,
+                                          int out_path_len) {
+    char virtual_path[ASSET_PATH_MAX];
+    if (!archive || !adf || !entry || !out_path || out_path_len <= 0 ||
+        snprintf(virtual_path, sizeof(virtual_path), "%s::%s::%s",
+                 archive, adf, entry) >= (int)sizeof(virtual_path)) {
+        return 0;
+    }
+    return copy_match_path(virtual_path, out_path, out_path_len);
+}
+
 static int external_archive_commit_entry(const char *archivePath,
                                          const char *expectedMd5,
                                          const char *entryName,
@@ -3057,6 +3119,17 @@ static int external_archive_commit_entry(const char *archivePath,
     }
     return 1;
 }
+
+static int scan_external_adf_by_md5(const char *archive_path,
+                                    const char *adf_entry,
+                                    const char *expected_md5,
+                                    char *out_path, int out_path_len);
+static int scan_external_adf_by_md5_list(const char *archive_path,
+                                         const char *adf_entry,
+                                         const char *const *md5_list,
+                                         int md5_count,
+                                         char out_paths[][ASSET_PATH_MAX],
+                                         int matched[]);
 
 static int scan_external_archive_by_md5(const char *archivePath,
                                         const char *expectedMd5,
@@ -3085,6 +3158,11 @@ static int scan_external_archive_by_md5(const char *archivePath,
         line[strcspn(line, "\r\n")] = '\0';
         if (strcmp(tool, "bsdtar") == 0) {
             if (line[0] != '\0') {
+                if (is_adf_path(line) && scan_external_adf_by_md5(
+                        archivePath, line, expectedMd5, outPath, outPathLen)) {
+                    (void)pclose(pipe);
+                    return 1;
+                }
                 (void)external_archive_commit_entry(archivePath, expectedMd5,
                                                     line, UINT32_MAX,
                                                     bestName, &hasMatch);
@@ -3093,6 +3171,11 @@ static int scan_external_archive_by_md5(const char *archivePath,
         }
         if (strncmp(line, "Path = ", 7) == 0) {
             if (hasEntry && !isFolder) {
+                if (is_adf_path(entryName) && scan_external_adf_by_md5(
+                        archivePath, entryName, expectedMd5, outPath, outPathLen)) {
+                    (void)pclose(pipe);
+                    return 1;
+                }
                 (void)external_archive_commit_entry(archivePath, expectedMd5,
                                                     entryName, entrySize,
                                                     bestName, &hasMatch);
@@ -3111,6 +3194,11 @@ static int scan_external_archive_by_md5(const char *archivePath,
         }
     }
     if (hasEntry && !isFolder) {
+        if (is_adf_path(entryName) && scan_external_adf_by_md5(
+                archivePath, entryName, expectedMd5, outPath, outPathLen)) {
+            (void)pclose(pipe);
+            return 1;
+        }
         (void)external_archive_commit_entry(archivePath, expectedMd5,
                                             entryName, entrySize,
                                             bestName, &hasMatch);
@@ -3152,6 +3240,10 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
         line[strcspn(line, "\r\n")] = '\0';
         if (strcmp(tool, "bsdtar") == 0) {
             if (line[0] != '\0' && line[strlen(line) - 1U] != '/') {
+                if (is_adf_path(line)) {
+                    foundCount += scan_external_adf_by_md5_list(
+                        archivePath, line, md5List, md5Count, outPaths, matched);
+                }
                 char hex[33];
                 int matchIndex;
                 if (external_entry_md5(archivePath, line, hex)) {
@@ -3171,6 +3263,10 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
         }
         if (commit && entryName[0] != '\0' && strcmp(entryName, archivePath) != 0 &&
             entrySize >= 16U && entrySize <= ASSET_TAR_MAX_ENTRY_BYTES) {
+            if (is_adf_path(entryName)) {
+                foundCount += scan_external_adf_by_md5_list(
+                    archivePath, entryName, md5List, md5Count, outPaths, matched);
+            }
             char hex[33];
             int matchIndex;
             if (external_entry_md5(archivePath, entryName, hex)) {
@@ -3199,6 +3295,10 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
     if (hasEntry && !isFolder && entryName[0] != '\0' &&
         strcmp(entryName, archivePath) != 0 &&
         entrySize >= 16U && entrySize <= ASSET_TAR_MAX_ENTRY_BYTES) {
+        if (is_adf_path(entryName)) {
+            foundCount += scan_external_adf_by_md5_list(
+                archivePath, entryName, md5List, md5Count, outPaths, matched);
+        }
         char hex[33];
         int matchIndex;
         if (external_entry_md5(archivePath, entryName, hex)) {
@@ -3518,6 +3618,104 @@ static int adf_extract_entry_to_path(const char *adfPath, const char *entry,
     extract.out_path = outFilePath;
     extract.extracted = 0;
     result = firestaff_amiga_adf_visit_ofs_files(image, imageSize,
+                                                  adf_extract_visitor, &extract);
+    free(image);
+    return result >= 0 && extract.extracted;
+}
+
+static int scan_external_adf_by_md5(const char *archive_path,
+                                    const char *adf_entry,
+                                    const char *expected_md5,
+                                    char *out_path, int out_path_len) {
+    uint8_t *image;
+    size_t image_size;
+    AdfSingleMatch match;
+    int result;
+    if (!archive_path || !adf_entry || !expected_md5) return 0;
+    image = external_read_entry_bytes(archive_path, adf_entry, &image_size);
+    if (!image) return 0;
+    memset(&match, 0, sizeof(match));
+    match.expected_md5 = expected_md5;
+    result = firestaff_amiga_adf_visit_ofs_files(image, image_size,
+                                                  adf_find_single_visitor, &match);
+    free(image);
+    return result >= 0 && match.found &&
+           copy_nested_virtual_match_path(archive_path, adf_entry, match.name,
+                                          out_path, out_path_len);
+}
+
+typedef struct {
+    const char *archive;
+    const char *adf;
+    const char *const *md5_list;
+    int md5_count;
+    char (*out_paths)[ASSET_PATH_MAX];
+    int *matched;
+    int found_count;
+} ExternalAdfListMatch;
+
+static int external_adf_find_list_visitor(const char *name, const uint8_t *bytes,
+                                          size_t byte_count, void *user_data) {
+    ExternalAdfListMatch *matches = (ExternalAdfListMatch *)user_data;
+    AssetMd5Ctx ctx;
+    char hex[33];
+    int index;
+    md5_init(&ctx);
+    md5_update(&ctx, bytes, (unsigned int)byte_count);
+    md5_final(&ctx, hex);
+    index = md5_list_match_index(hex, matches->md5_list, NULL, matches->md5_count);
+    if (index >= 0 && !matches->matched[index] &&
+        copy_nested_virtual_match_path(matches->archive, matches->adf, name,
+                                       matches->out_paths[index], ASSET_PATH_MAX)) {
+        matches->matched[index] = 1;
+        ++matches->found_count;
+    }
+    return 0;
+}
+
+static int scan_external_adf_by_md5_list(const char *archive_path,
+                                         const char *adf_entry,
+                                         const char *const *md5_list,
+                                         int md5_count,
+                                         char out_paths[][ASSET_PATH_MAX],
+                                         int matched[]) {
+    uint8_t *image;
+    size_t image_size;
+    ExternalAdfListMatch matches;
+    int result;
+    if (!archive_path || !adf_entry || !md5_list || md5_count <= 0 ||
+        !out_paths || !matched) return 0;
+    image = external_read_entry_bytes(archive_path, adf_entry, &image_size);
+    if (!image) return 0;
+    memset(&matches, 0, sizeof(matches));
+    matches.archive = archive_path;
+    matches.adf = adf_entry;
+    matches.md5_list = md5_list;
+    matches.md5_count = md5_count;
+    matches.out_paths = out_paths;
+    matches.matched = matched;
+    result = firestaff_amiga_adf_visit_ofs_files(image, image_size,
+                                                  external_adf_find_list_visitor,
+                                                  &matches);
+    free(image);
+    return result < 0 ? 0 : matches.found_count;
+}
+
+static int external_adf_extract_entry_to_path(const char *archive_path,
+                                              const char *adf_entry,
+                                              const char *entry,
+                                              const char *out_file_path) {
+    uint8_t *image;
+    size_t image_size;
+    AdfExtractMatch extract;
+    int result;
+    if (!archive_path || !adf_entry || !entry || !out_file_path) return 0;
+    image = external_read_entry_bytes(archive_path, adf_entry, &image_size);
+    if (!image) return 0;
+    extract.entry = entry;
+    extract.out_path = out_file_path;
+    extract.extracted = 0;
+    result = firestaff_amiga_adf_visit_ofs_files(image, image_size,
                                                   adf_extract_visitor, &extract);
     free(image);
     return result >= 0 && extract.extracted;
@@ -4126,6 +4324,18 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
         return adf_extract_entry_to_path(container, entry, outFilePath);
     }
     if (kind == ASSET_CONTAINER_EXTERNAL) {
+        const char *nested = strstr(entry, "::");
+        if (nested) {
+            char adf_entry[ASSET_PATH_MAX];
+            size_t adf_len = (size_t)(nested - entry);
+            if (adf_len == 0U || adf_len >= sizeof(adf_entry) || nested[2] == '\0') {
+                return 0;
+            }
+            memcpy(adf_entry, entry, adf_len);
+            adf_entry[adf_len] = '\0';
+            return external_adf_extract_entry_to_path(container, adf_entry,
+                                                      nested + 2, outFilePath);
+        }
         if (!external_tool_available_for_path(container)) {
             record_missing_extractor(container);
             return 0;

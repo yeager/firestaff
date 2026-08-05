@@ -1028,6 +1028,16 @@ static int m12_materialize_optional_virtual_sibling(const char* seedVirtualPath,
         return 0;
     }
     sep = strstr(seedVirtualPath, "::");
+    /* ADF-in-archive paths are archive::disk.adf::FILE.  Optional source
+     * siblings belong beside FILE inside the disk, so retain every outer
+     * container segment and replace only the final entry component. */
+    while (sep) {
+        const char* next = strstr(sep + 2, "::");
+        if (!next) {
+            break;
+        }
+        sep = next;
+    }
     if (!sep) {
         return 0;
     }
