@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 DM1 status-hand placement mask: corrected the ReDMCSB
+  C020..C027 -> C211..C218 route so its champion-relative hand parity resolves
+  through canonical C00/C01 hand masks. Held objects now use the real
+  `MASK0x0200_HANDS` admission when placed into another champion's ready/action
+  hand; the old raw parity lookup could use an unrestricted slot mask and was
+  inconsistent with source inventory rules. `test_dm1_v1_inventory_panel_mouse_routes_pc34_compat`
+  passes 372/372, together with the real PC34 object and alcove placement tests.
+
 - ✅ 2026-08-06 DM1 floor pickup ownership: corrected
   `M11_GameView_PickupItem()` so a floor object first enters the transient
   ReDMCSB `G4055_s_LeaderHandObject`, instead of being silently assigned to

@@ -36420,7 +36420,12 @@ static int m11_process_v1_status_hand_slot_box_click(M11_GameViewState* state,
         unsigned int allowedSlots =
             m11_allowed_slots_for_state_thing(state, leaderThing);
         unsigned int slotMask =
-            m11_v1_inventory_source_slot_box_mask(slotBoxIndex & 1);
+            /* C020..C027 are champion-relative status boxes, while the
+             * source slot mask table is indexed by the canonical C00/C01
+             * hand boxes.  Passing the raw parity (0/1) accidentally used
+             * the unrestricted backpack masks and broke hand placement for
+             * held real objects. */
+            m11_v1_inventory_source_slot_box_mask(8 + (slotBoxIndex & 1));
         if ((allowedSlots & slotMask) == 0) {
             return 0;
         }
