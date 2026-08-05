@@ -337,6 +337,11 @@ int32_t dm2_v1_adjust_skills(
     int16_t level_after = cb->get_skill_lv ? cb->get_skill_lv(ctx, hero_idx, group, 0) : 0;
 
     for (int32_t pass = level_before; (uint16_t)pass < (uint16_t)level_after; pass++) {
+        /* c_hero.cpp:1335-1348 calls DM2_RANDDIR twice for c==2/3 after every
+         * level-up. Do not substitute a deterministic zero: without the
+         * LCG owner, leave the source-owned stat mutation unavailable. */
+        if ((group == 2 || group == 3) && !cb->random_dir)
+            return -1;
         int rb0 = cb->random_bit ? cb->random_bit(ctx) : 0;
         int rb1 = cb->random_bit ? cb->random_bit(ctx) : 0;
         int8_t vit_delta = (int8_t)(rb1 + 1);
@@ -386,14 +391,21 @@ int32_t dm2_v1_adjust_skills(
         }
         if (group == 2 || group == 3) {
             maxmp = cb->get_max_mp ? cb->get_max_mp(ctx, hero_idx) : 0;
-            int rd = 0; /* DM2_RANDDIR() range placeholder */
-            maxmp = (int16_t)(maxmp + rd);
+            int mp_jitter = cb->random_dir(ctx) & 3;
+            maxmp = (int16_t)(maxmp + mp_jitter);
             if (maxmp > 0x384)
                 maxmp = 0x384;
             if (cb->set_max_mp)
                 cb->set_max_mp(ctx, hero_idx, maxmp);
-            if (cb->add_ability_max)
-                cb->add_ability_max(ctx, hero_idx, /*E_ANTIMAGIC*/ 5, 0);
+            {
+                /* The original advances the LCG even when no local consumer
+                 * happens to expose the antimagic-stat write. */
+                int antimagic_jitter = cb->random_dir(ctx) & 3;
+                if (cb->add_ability_max) {
+                    cb->add_ability_max(ctx, hero_idx, /*E_ANTIMAGIC*/ 5,
+                                        (int16_t)antimagic_jitter);
+                }
+            }
         }
 
         hp_gain = (int16_t)(1 + rb2);

@@ -68,14 +68,28 @@ static int16_t as_get_skill_exp(void *ctx, int hi, int sid)
 static void as_add_skill_exp(void *ctx, int hi, int sid, int32_t amount)
 { (void)ctx; (void)hi; (void)sid; g_added_exp += amount; }
 static int as_random_bit(void *ctx) { (void)ctx; return 0; }
+static int g_random_dir_values[2];
+static int g_random_dir_pos;
+static int as_random_dir(void *ctx)
+{
+    (void)ctx;
+    assert(g_random_dir_pos < 2);
+    return g_random_dir_values[g_random_dir_pos++];
+}
 static int16_t as_get_max_hp(void *ctx, int hi) { (void)ctx; (void)hi; return 100; }
 static void as_set_max_hp(void *ctx, int hi, int16_t v) { (void)ctx; (void)hi; (void)v; }
 static int16_t as_get_max_stamina(void *ctx, int hi) { (void)ctx; (void)hi; return 100; }
 static void as_set_max_stamina(void *ctx, int hi, int16_t v) { (void)ctx; (void)hi; (void)v; }
-static int16_t as_get_max_mp(void *ctx, int hi) { (void)ctx; (void)hi; return 100; }
-static void as_set_max_mp(void *ctx, int hi, int16_t v) { (void)ctx; (void)hi; (void)v; }
+static int16_t g_max_mp;
+static int16_t as_get_max_mp(void *ctx, int hi) { (void)ctx; (void)hi; return g_max_mp; }
+static void as_set_max_mp(void *ctx, int hi, int16_t v) { (void)ctx; (void)hi; g_max_mp = v; }
+static int16_t g_last_antimagic_delta;
 static void as_add_ability_max(void *ctx, int hi, int a, int16_t d)
-{ (void)ctx; (void)hi; (void)a; (void)d; }
+{
+    (void)ctx; (void)hi;
+    if (a == 5)
+        g_last_antimagic_delta = d;
+}
 static void as_mark_dirty(void *ctx, int hi) { (void)ctx; g_marked_dirty = hi; }
 static void as_display_level_up(void *ctx, int hi, int sg)
 { (void)ctx; (void)hi; (void)sg; }
@@ -85,7 +99,7 @@ static void test_adjust_skills(void)
     DM2_V1_AdjustSkillsCallbacks cb = {
         as_get_gametick, as_get_exp_window_tick, as_get_exp_scale,
         as_get_skill_lv, as_get_skill_exp, as_add_skill_exp,
-        as_random_bit, as_get_max_hp, as_set_max_hp,
+        as_random_bit, as_random_dir, as_get_max_hp, as_set_max_hp,
         as_get_max_stamina, as_set_max_stamina,
         as_get_max_mp, as_set_max_mp,
         as_add_ability_max, as_mark_dirty, as_display_level_up
@@ -100,6 +114,27 @@ static void test_adjust_skills(void)
     assert(g_added_exp == 15);
     assert(lvl == 2);
     assert(g_marked_dirty == 0);
+
+    /* c_hero.cpp:1335-1348 invokes DM2_RANDDIR for wizard/priest level-ups;
+     * a real caller must provide that LCG step instead of inheriting zero. */
+    g_added_exp = 0;
+    g_skill_lv_call = 0;
+    g_max_mp = 100;
+    g_random_dir_values[0] = 3;
+    g_random_dir_values[1] = 2;
+    g_random_dir_pos = 0;
+    g_last_antimagic_delta = -1;
+    lvl = dm2_v1_adjust_skills(0, 12, 15, &cb, NULL);
+    assert(lvl == 2);
+    assert(g_max_mp == 104); /* +1 class gain, then RANDDIR() == 3 */
+    assert(g_last_antimagic_delta == 2);
+    assert(g_random_dir_pos == 2);
+
+    cb.random_dir = NULL;
+    g_skill_lv_call = 0;
+    g_max_mp = 100;
+    assert(dm2_v1_adjust_skills(0, 12, 15, &cb, NULL) == -1);
+    assert(g_max_mp == 100);
     printf("test_adjust_skills OK\n");
 }
 

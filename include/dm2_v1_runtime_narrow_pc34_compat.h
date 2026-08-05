@@ -227,6 +227,10 @@ typedef struct {
     int16_t (*get_skill_exp)(void *ctx, int hero_idx, int skill_id);
     void (*add_skill_exp)(void *ctx, int hero_idx, int skill_id, int32_t amount);
     int (*random_bit)(void *ctx);
+    /* SKProject c_random.cpp::DM2_RANDDIR: advances the shared LCG and
+     * returns the next state shifted right eight bits, masked to 0..3.
+     * Required for both wizard/priest maximum-mana and antimagic jitter. */
+    int (*random_dir)(void *ctx);
     int16_t (*get_max_hp)(void *ctx, int hero_idx);
     void (*set_max_hp)(void *ctx, int hero_idx, int16_t v);
     int16_t (*get_max_stamina)(void *ctx, int hero_idx);

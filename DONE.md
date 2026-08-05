@@ -7061,6 +7061,14 @@
   a non-playable save. Source: `SKULLWIN/dm2data.h:150-159`,
   `c_dialog.cpp:115-117,199-202,337-343`, `c_savegame.cpp:2169-2204`.
 
+- ✅ 2026-08-05 DM2 hero-progression RNG placeholder removal: the linked
+  callback-compatible `dm2_v1_adjust_skills()` path no longer substitutes
+  `DM2_RANDDIR()` with zero for wizard/priest level-up mana or antimagic. It
+  now requires the caller's two source LCG steps and masks their real 0..3
+  results, while a missing random owner rejects the stat mutation. Regression
+  coverage proves both source jitters and a fail-closed missing callback. Source:
+  `SKULLWIN/c_random.cpp:39-46`, `c_hero.cpp:1335-1348`.
+
 - ✅ 2026-07-31 DM2 original-save admission: closed the remaining D2RS
   runtime-read path. Public slot/last-session loaders, corpus runtime import
   and runtime restore now admit only original-envelope or raw SKSave

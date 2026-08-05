@@ -1421,6 +1421,13 @@ diagnostic; it must not silently fall back to a generated visual.
   update:** the V1 champion-stat bridge no longer supplies the former fixed
   per-hero bar colours; absent source GDAT/palette ownership now blocks its
   HUD receipt.
+  **2026-08-05 inventory update:** a production-link scan found a literal
+  `DM2_RANDDIR()` placeholder in `dm2_v1_adjust_skills`; its immediate
+  runtime correction now requires the source LCG callback for both maximum
+  mana and antimagic jitter instead of substituting direction zero. Other
+  literal matches still require consumer-by-consumer classification: V2
+  no-draw/fail-closed boundaries, test seams and narrow source-state adapters
+  are not interchangeable with synthetic runtime pixels.
 - **THERON-ORIGINAL-REPLACE-001:** Replace the coloured UI chrome, checkerboard
   palette and chapter-marker placeholders with real US/JP Track 02 bitmap,
   palette and loader-selected records.  The supplied `TQUS02.bin`, CUE and
