@@ -1,5 +1,13 @@
 
 
+# Firestaff v3.0.289
+- Fix DM1/CSB junk item name table: remove spurious TORCH entry that shifted
+  all names from subtype 1 onward (rope showed "APPLE", etc.)
+- Fix Game Over + ESC menu overlap: add partyDead input guard so ESC returns
+  to launcher directly instead of opening a hidden dialog behind the overlay
+- Cache ZIP container entry MD5 hashes: archive files are only decompressed
+  and hashed once per mtime/size, making repeat scans near-instant
+
 # Firestaff v3.0.288
 - DM2 parity: implement 3 missing c_gdatfile functions from skproject
   (BUILD_GDAT_ENTRY_DATA, sound sample XOR decode, deferred sound resolver)

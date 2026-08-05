@@ -1129,6 +1129,15 @@ static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
     uint32_t pos;
     uint16_t i;
     int foundCount = 0;
+    struct stat zipStat;
+    int64_t zipMtime = 0, zipSize = 0;
+    int haveZipStat = 0;
+
+    if (s_scan_cache && stat(zipPath, &zipStat) == 0) {
+        zipMtime = (int64_t)zipStat.st_mtime;
+        zipSize = (int64_t)zipStat.st_size;
+        haveZipStat = 1;
+    }
 
     fp = fopen(zipPath, "rb");
     if (!fp) return 0;
@@ -1214,15 +1223,30 @@ static int scan_zip_by_md5_list(const char *zipPath, const char *const *md5List,
         localNameLen = read_u16le(local + 26);
         localExtraLen = read_u16le(local + 28);
         dataOffset = localOffset + 30U + localNameLen + localExtraLen;
-        if (method == 0U) {
-            if (!zip_stored_entry_md5(fp, dataOffset, uncompressedSize, hex)) continue;
-        } else if (method == 8U) {
-            if (!zip_deflated_entry_md5(fp, dataOffset, compressedSize,
-                                        uncompressedSize, hex)) {
-                continue;
+        {
+            char cacheKey[512];
+            int cached = 0;
+            if (haveZipStat && s_scan_cache) {
+                snprintf(cacheKey, sizeof(cacheKey), "%s::%s", zipPath, name);
+                cached = scache_lookup(s_scan_cache, cacheKey,
+                                       zipMtime, zipSize, hex);
             }
-        } else {
-            continue;
+            if (!cached) {
+                if (method == 0U) {
+                    if (!zip_stored_entry_md5(fp, dataOffset, uncompressedSize, hex)) continue;
+                } else if (method == 8U) {
+                    if (!zip_deflated_entry_md5(fp, dataOffset, compressedSize,
+                                                uncompressedSize, hex)) {
+                        continue;
+                    }
+                } else {
+                    continue;
+                }
+                if (haveZipStat && s_scan_cache) {
+                    snprintf(cacheKey, sizeof(cacheKey), "%s::%s", zipPath, name);
+                    scache_put(s_scan_cache, cacheKey, zipMtime, zipSize, hex);
+                }
+            }
         }
         matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
         if (matchIndex >= 0) {
