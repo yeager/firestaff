@@ -107,6 +107,11 @@ M12-launchern visar Nexus som `V1 Only (V2 Source Blocked)` och dess
 `presentationReady`-gate avvisar Nexus V2.2-modernläge. Därmed kan den
 procedurbyggda presentationen inte väljas som en till synes färdig route.
 
+Den äldre ITEM.IBS-diagnostikdekodern återanvänder inte längre palette 0 för
+DMWebs `FF00`-associationer eller ogiltiga floor-palette-ID:n. Sådana poster
+förblir obevisade i receipten; den verifierade runtime-banken och dess
+VDP1-gate ändras inte.
+
 ## Ny verifiering av HUD-källan
 
 DMWebs `DMNDataFileDecoder.vbs`, `DecodeSTABGBIN`, är nu implementerad som

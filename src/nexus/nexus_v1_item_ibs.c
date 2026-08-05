@@ -146,7 +146,12 @@ int nexus_v1_item_ibs_decode(const uint8_t *data, int data_size,
         const uint32_t *palette;
 
         if (assoc_word == 0xFF00 || pal_idx >= hdr.palette_count) {
-            pal_idx = 0;
+            /* DMWeb's FF00 association is an unused slot.  It is not a
+             * request to reuse palette zero; doing that would manufacture a
+             * diagnostic image from an unbound source association. */
+            out->image_hashes[img] = 0;
+            out->images_decoded++;
+            continue;
         }
         palette = out->palettes[pal_idx];
 
@@ -183,8 +188,13 @@ int nexus_v1_item_ibs_decode(const uint8_t *data, int data_size,
                 int byte_count = (px_count + 1) / 2;
                 uint32_t abs_img = floor_base + fd->image_offset;
                 uint32_t pal_rgba[16];
-                int pid = fd->palette_id < 64 ? fd->palette_id : 0;
+                int pid = fd->palette_id < 64 ? fd->palette_id : -1;
                 int j;
+
+                if (pid < 0) {
+                    out->floor_images_decoded++;
+                    continue;
+                }
 
                 if (fd->palette_offset) {
                     uint32_t abs_pal = floor_base + fd->palette_offset;

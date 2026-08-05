@@ -3,6 +3,20 @@
   remain explicitly unbound until Track 02 portrait tile records are decoded;
   the fixture startup path can still provide its separately gated metadata.
 
+- ✅ 2026-08-05 Nexus startup/ITEM.IBS provenance cleanup: the legacy
+  ITEM.IBS decoder no longer maps unused `FF00` associations or invalid floor
+  palette IDs to palette zero; those records stay unbound. The startup-menu
+  fixture now keeps its large synthetic containers off the macOS stack and
+  checks the source-defined 48-frame boot-warning boundary instead of a stale
+  zero-frame expectation. Real ITEM.IBS and startup-menu tests pass.
+
+- ✅ 2026-08-05 Nexus ITEM.IBS association gate: the legacy ITEM.IBS
+  diagnostic decoder no longer maps DMWeb's unused `FF00` association or an
+  out-of-range floor palette to palette zero. Those records now remain
+  explicitly unbound instead of producing fabricated pixel hashes. The real
+  100352-byte ITEM.IBS corpus still decodes with 243 declarations, 223 image
+  records and 109 floor records.
+
 - ✅ 2026-08-05 Theron creature-name provenance cleanup: removed the public
   Goblin/Orc/Kobold/Boss/FIREBALL aliases that mapped synthetic names onto
   real creatures. Tests and probes now use the seven Track 02 dungeon names

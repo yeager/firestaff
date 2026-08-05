@@ -193,8 +193,10 @@ int main(void)
     Nexus_V1_StartupLaunchGateReceipt launch_gate_receipt;
     Nexus_V1_StartupAssetHandoffReceipt asset_handoff_receipt;
     Nexus_V1_LauncherRuntimeReceipt synthetic_runtime_receipt;
-    Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
-    Nexus_V1_Engine synthetic_engine;
+    /* These fixture containers include the full runtime receipts and are too
+     * large for the macOS main-thread stack when kept as automatic objects. */
+    static Nexus_V1_DgnRenderCommand dgn_commands[NEXUS_V1_DGN_VIEW_RENDER_MAX_COMMANDS];
+    static Nexus_V1_Engine synthetic_engine;
     uint8_t synthetic_surface_pixel = 1;
     uint8_t synthetic_floor_pixel = 1;
     uint8_t synthetic_wall_pixel = 1;
@@ -3853,7 +3855,8 @@ int main(void)
                        launch_receipt.host_receipt.mode_update.title_active &&
                        launch_receipt.host_receipt.mode_update.
                            set_title_frame &&
-                       launch_receipt.host_receipt.mode_update.title_frame == 0 &&
+                       launch_receipt.host_receipt.mode_update.title_frame ==
+                           nexus_v1_boot_warning_frames() &&
                        launch_receipt.host_receipt.input_result ==
                            NEXUS_V1_STARTUP_HOST_INPUT_REDRAW &&
                        strcmp(launch_receipt.host_receipt.status,

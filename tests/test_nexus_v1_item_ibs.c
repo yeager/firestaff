@@ -71,6 +71,11 @@ static int test_real_decode(void) {
         free(data);
         return 1;
     }
+    if (result.image_hashes[0] != 0) {
+        printf("  FAIL unused FF00 association produced a pixel hash\n");
+        free(data);
+        return 1;
+    }
     if (result.floor_images_decoded != 109) {
         printf("  FAIL expected 109 floor images, got %d\n",
                result.floor_images_decoded);
