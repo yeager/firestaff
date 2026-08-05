@@ -171,6 +171,21 @@ static void test_real_bin(void) {
                        cdda.tracks[0].sector_count,
                        (double)cdda.tracks[0].sector_count / 75.0);
             }
+            if (cdda.track_count > 0) {
+                const CSB_V1_FmtownsCddaTrack *last =
+                    &cdda.tracks[cdda.track_count - 1];
+                size_t last_capacity = bin_size - last->byte_offset;
+                uint8_t *last_pcm = (uint8_t *)malloc(last_capacity);
+                ASSERT(last_pcm != NULL, "allocates final CDDA track buffer");
+                if (last_pcm) {
+                    int extracted = csb_v1_fmtowns_cdda_extract(
+                        bin, bin_size, last, last_pcm, last_capacity);
+                    ASSERT(extracted > 0, "extracts final CUE track to image end");
+                    ASSERT((size_t)extracted == last_capacity,
+                           "final CUE track ends at real image boundary");
+                    free(last_pcm);
+                }
+            }
             free(cue_text);
         } else {
             printf("SKIP: CUE file not available\n");

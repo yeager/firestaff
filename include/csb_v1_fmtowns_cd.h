@@ -95,7 +95,8 @@ int csb_v1_fmtowns_cdda_parse_cue(const char *cue_text, size_t cue_len,
                                    CSB_V1_FmtownsCddaLayout *out);
 
 /* Extract raw CDDA PCM data for one audio track from the BIN image.
- * Audio is 16-bit signed LE stereo at 44100 Hz.
+ * Audio is 16-bit signed LE stereo at 44100 Hz. A zero sector_count denotes
+ * the final CUE track and is resolved to the raw image end at extraction.
  * Returns the number of bytes written, or -1 on error. */
 int csb_v1_fmtowns_cdda_extract(const uint8_t *bin_data, size_t bin_size,
                                  const CSB_V1_FmtownsCddaTrack *track,
