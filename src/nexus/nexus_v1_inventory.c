@@ -177,8 +177,9 @@ int nexus_itemdef_count(void) {
 
 const Nexus_ItemDef *nexus_itemdef_get(int id) {
     if (id >= 0 && id < g_ibs_count) return &g_ibs_defs[id];
-    if (!g_ibs_ever_bound && id >= 0 && id < ITEM_COUNT)
-        return &g_nexus_items[id];
+    /* The historical DM1 catalog is fixture/reference data only.  Returning
+     * it before ITEM.IBS admission would expose guessed names and combat
+     * semantics to live Nexus HUD/mechanics. */
     return NULL;
 }
 

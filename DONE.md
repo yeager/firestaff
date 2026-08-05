@@ -11,6 +11,16 @@
   unclassified sidecar. Verified by the generic fingerprint suite, the CSB
   Amiga asset probe, and the local original Atari ST package scan.
 
+- ✅ 2026-08-05 Nexus loot/item provenance hardening: removed the remaining
+  live-engine calls to the DM1-compatible creature-drop table and made the
+  historical item catalog reference-only in `nexus_itemdef_get()`. Nexus
+  creature death now awards only source-backed XP/script effects; live floor
+  loot, names, and combat stats remain blocked until Saturn drop records and
+  ITEM.IBS semantics are authenticated. Verified with
+  `test_nexus_v1_champion_plrd`, `test_nexus_v1_dgn_geometry_readiness`, the
+  `firestaff_nexus` build, and `git diff --check` against the local retail
+  corpus.
+
 - ✅ 2026-08-05 CSB optional-media provenance: verbose `--scan-data` now
   computes each materialized Utility Disk file's MD5 and consults the shared
   CSB fingerprint catalog. A real Atari ST package reports `HCSB.DAT`

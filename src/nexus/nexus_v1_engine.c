@@ -10068,17 +10068,12 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                             }
                         }
                     }
-                    {
-                        int drop_items[4], drop_qtys[4];
-                        int ndrops = nexus_drops_roll(cr->type_index,
-                            cr->x, cr->y, drop_items, drop_qtys, 4);
-                        int di;
-                        for (di = 0; di < ndrops; di++) {
-                            if (drop_items[di] >= 0)
-                                nexus_floor_drop(cr->x, cr->y,
-                                                 drop_items[di], drop_qtys[di]);
-                        }
-                    }
+                    /* Saturn creature-drop records are not authenticated.
+                     * The former DM1-compatible table in nexus_v1_drops.c
+                     * must not manufacture Nexus loot in the live engine.
+                     * Keep the death/XP/script path source-backed and leave
+                     * the floor unchanged until a real Nexus drop capture is
+                     * admitted. */
                     nexus_script_on_creature_dead(&engine->script_vm,
                         cr->type_index);
                     nexus_v1_spawner_on_creature_death(&engine->spawners,

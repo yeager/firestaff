@@ -691,17 +691,8 @@ static int mechanics_attack_adjacent_creature(Nexus_V1_Engine *engine,
             nexus_v1_gain_experience(leader, NEXUS_CLASS_FIGHTER,
                                      mgr->types[c->type_index].experience_value);
             nexus_sound_play(&engine->audio, NEXUS_SFX_CREATURE_DEATH);
-            {
-                int item_ids[8];
-                int quantities[8];
-                int drop_count = nexus_drops_roll(c->type_index,
-                                                  c->x, c->y,
-                                                  item_ids, quantities, 8);
-                int d;
-                for (d = 0; d < drop_count; d++) {
-                    nexus_floor_drop(c->x, c->y, item_ids[d], quantities[d]);
-                }
-            }
+            /* Nexus Saturn creature-drop ownership is still unproven.
+             * Do not call the retired DM1-compatible drop table here. */
         }
     } else {
         nexus_sound_play(&engine->audio, NEXUS_SFX_ATTACK_MISS);
