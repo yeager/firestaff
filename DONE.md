@@ -49100,11 +49100,13 @@ The DM2 V1 asset-loader probe now verifies that the hash-verified PC English
 `GRAPHICS.DAT` raw-data table has exactly 5,624 records, matching Greatstone's
 PC 1.0 catalogue IDs `0000` through `5623`. The audit also establishes that
 Greatstone publishes 4,032 visual records (860 IMG3, 3,167 IMG9, 4 IMG11, and
-1 FNT1); the file's separate 11,854-row ENT1 table is metadata, not a
-conflicting asset count. The probe continues to decode source-owned floor,
-ceiling, title, door and interface images only from the original file.
+1 FNT1); the probe verifies every one against a distinct source raw record.
+The FNT1 source is raw record 0203 (`dtRaw7`), with later `dtImageOffset`
+rows for glyph offsets; the file's separate 11,854-row ENT1 table is metadata,
+not a conflicting asset count. The probe continues to decode source-owned
+floor, ceiling, title, door and interface images only from the original file.
 Verified against `/Users/bosse/.firestaff/data/dm2/dos_extract/data/graphics.dat`
-(MD5 `25247ede4dabb6a71e5dabdfbcd5907d`): 30/30 passes. Source:
+(MD5 `25247ede4dabb6a71e5dabdfbcd5907d`): 32/32 passes. Source:
 http://greatstone.free.fr/dm/db_data/dm2_pc10_en/graphics.dat/graphics.dat.html.
 This is an identity/catalogue gate, not a claim that all 4,032 PNGs have
 already received pixel-for-pixel comparison; that remaining audit is tracked

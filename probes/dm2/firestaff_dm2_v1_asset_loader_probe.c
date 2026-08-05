@@ -379,6 +379,41 @@ int main(int argc, char **argv) {
     PROBE_ASSERT(loader.raw_data_count == 5624u,
                  "PC English raw table matches Greatstone records 0000-5623: %u",
                  loader.raw_data_count);
+    {
+        /* Greatstone publishes a raster for every raw record that the PC
+         * catalogue identifies as IMG3/IMG9/IMG11/FNT1: 4,032 in total.
+         * The FNT1 record is raw 0203 and is entered as dtRaw7; its later
+         * dtImageOffset rows only describe glyph offsets. ENT1 may otherwise
+         * refer to a raw payload more than once, so count distinct raw indices
+         * rather than metadata rows. */
+        uint8_t *seen_images = calloc(loader.raw_data_count, 1u);
+        unsigned int image_raw_count = 0u;
+        uint16_t entry_ordinal;
+        PROBE_ASSERT(seen_images != NULL,
+                     "allocates PC English raw-image audit bitmap");
+        if (seen_images) {
+            for (entry_ordinal = 0u;
+                 entry_ordinal < loader.entry_count;
+                 ++entry_ordinal) {
+                const DM2_V1_GdatEntry *entry =
+                    &loader.entries[entry_ordinal];
+                uint16_t raw_index =
+                    (uint16_t)(entry->data_index & 0x7fffu);
+                if ((entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE ||
+                     (raw_index == 203u &&
+                      entry->cls3 == DM2_GDAT_ENTRY_TYPE_RAW7)) &&
+                    raw_index < loader.raw_data_count &&
+                    !seen_images[raw_index]) {
+                    seen_images[raw_index] = 1u;
+                    ++image_raw_count;
+                }
+            }
+            PROBE_ASSERT(image_raw_count == 4032u,
+                         "PC English image raw records match Greatstone PNG catalogue: %u",
+                         image_raw_count);
+            free(seen_images);
+        }
+    }
     int count = dm2_v1_asset_category_entry_count(&loader, DM2_GDAT_CATEGORY_GRAPHICSSET);
     PROBE_ASSERT(count > 0,
                  "GDAT graphics-set category has indexed entries: %d", count);
