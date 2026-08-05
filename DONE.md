@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 DM1 real HoC pickup/placement proof: extended the real
+  PC3.4 alcove-object runtime test through the source inventory route. A
+  rendered object enters the transient ReDMCSB G4055 hand, the inventory
+  panel opens, the original `AllowedSlots=0x40` mask selects legal quiver
+  slot C519, and the same Thing id remains owned by that slot with its M564
+  name table still valid. Verification:
+  `test_m11_dm1_real_alcove_item_runtime_pc34`, real map 1 party (6,3,2),
+  Thing 5196, graphic 511.
+
 - ✅ 2026-08-06 DM1 F0702 cursor framebuffer proof: extended the real PC3.4
   object-name test to call `M11_GameView_DrawLeaderHandCursor()` after moving
   `EYE OF TIME` into the transient leader hand and require non-zero pixels in

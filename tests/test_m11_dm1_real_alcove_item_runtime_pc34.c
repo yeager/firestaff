@@ -6,6 +6,9 @@
 
 #include "m11_game_view.h"
 #include "memory_dungeon_dat_pc34_compat.h"
+#include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+#include "dm1_v1_inventory_slot_placement_pc34_compat.h"
+#include "dm1_v1_champion_panel_hud_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -140,6 +143,71 @@ int main(void)
                                     state.inventoryPanelActive);
                             M11_GameView_Shutdown(&state);
                             return 1;
+                        }
+                        {
+                            unsigned short picked =
+                                DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state);
+                            int pickedIconIndex;
+                            DM1_V1_InventorySlotBoxZonePc34 targetZone;
+                            int targetSlot = -1;
+                            int targetBox = 0;
+                            unsigned int allowedSlots =
+                                dm1_v1_dungeon_get_object_allowed_slots_pc34(
+                                    state.world.things, picked);
+                            if (allowedSlots & 0x0200u) {
+                                targetSlot = CHAMPION_SLOT_HAND_LEFT;
+                            } else if (allowedSlots & 0x0040u) {
+                                targetSlot = CHAMPION_SLOT_QUIVER_1;
+                            } else if (allowedSlots & 0x0080u) {
+                                targetSlot = CHAMPION_SLOT_QUIVER_2;
+                            } else if (allowedSlots & 0x0100u) {
+                                targetSlot = CHAMPION_SLOT_POUCH_1;
+                            } else if (allowedSlots & 0xFFFFu) {
+                                targetSlot = CHAMPION_SLOT_BACKPACK_1;
+                            }
+                            targetBox = dm1_v1_inventory_source_slot_box_for_champion_slot_pc34(
+                                targetSlot);
+                            if (targetSlot < 0 || targetBox <= 0 ||
+                                !dm1_v1_inventory_source_slot_box_zone_pc34(
+                                    targetBox, &targetZone) ||
+                                !M11_GameView_ToggleInventoryPanel(&state)) {
+                                fprintf(stderr, "real alcove item inventory panel did not open\n");
+                                M11_GameView_Shutdown(&state);
+                                return 1;
+                            }
+                            clickResult = M11_GameView_HandlePointer(
+                                &state,
+                                DM1_VIEWPORT_X + targetZone.x + targetZone.w / 2,
+                                DM1_VIEWPORT_Y + targetZone.y + targetZone.h / 2,
+                                1);
+                            if (clickResult != M11_GAME_INPUT_REDRAW ||
+                                DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) != THING_NONE ||
+                                state.world.party.champions[0].inventory[targetSlot] != picked) {
+                                fprintf(stderr, "real item did not place into legal source slot result=%d held=%u target=%u allowed=0x%x icon=%d panel=%d point=(%d,%d)\n",
+                                        clickResult,
+                                        (unsigned int)DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state),
+                                        (unsigned int)state.world.party.champions[0].inventory[targetSlot],
+                                        allowedSlots,
+                                        dm1_v1_dungeon_get_object_icon_index_pc34(state.world.things, picked, 0),
+                                        state.inventoryPanelActive,
+                                        DM1_VIEWPORT_X + targetZone.x + targetZone.w / 2,
+                                        DM1_VIEWPORT_Y + targetZone.y + targetZone.h / 2);
+                                M11_GameView_Shutdown(&state);
+                                return 1;
+                            }
+                            pickedIconIndex = dm1_v1_dungeon_get_object_icon_index_pc34(
+                                state.world.things, picked, 0);
+                            if (!state.dm1ObjectNameTableValid ||
+                                pickedIconIndex < 0 ||
+                                state.dm1ObjectNames[pickedIconIndex][0] == '\0') {
+                                fprintf(stderr, "real placed item lost its M564 name\n");
+                                M11_GameView_Shutdown(&state);
+                                return 1;
+                            }
+                            printf("ok: real PC34 alcove pickup/place thing=%u target=C%d allowed=0x%x\n",
+                                   (unsigned int)picked,
+                                   targetZone.zoneId,
+                                   allowedSlots);
                         }
                         printf("ok: real PC34 alcove item map=%d party=(%d,%d,%d) graphic=%d zone=%d\n",
                                mapIndex, x, y, direction, receipt.graphicsId,
