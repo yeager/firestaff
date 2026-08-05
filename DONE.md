@@ -50132,3 +50132,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   could not safely represent `DM2_GAME_LOAD`. Its dedicated ABI test remains
   explicit; production-symbol audit, the full save/load suite, and the local
   eight-file authentic PC-DOS SKSAVE prefix census pass.
+- ✅ 2026-08-06 Theron real seven-dungeon thing-data coverage: updated
+  `test_theron_v1_track02_thing_data` to discover the supplied
+  `~/.firestaff/data/theron/TQUS02.bin` (or explicit
+  `FIRESTAFF_THERON_TRACK02_RAW`) before its legacy fixture path. The test
+  now exercises all seven authentic dungeon ground-reference/item/text
+  regions and rejects non-sector-aligned raw input. Result: all seven real
+  regions pass with 190–264 ground refs and 871–1132 items; no synthetic
+  records or presentation semantics were promoted.
