@@ -184,7 +184,30 @@ int main(int argc, char **argv) {
                 compressed_img3.height == 136u && compressed_img3.bpp == 4u &&
                 compressed_img3.decode_img3_underlay,
             "Greatstone raw 0003 compressed IMG3 realizes as 224x136 4bpp");
-        uint8_t *pixels = dm2_v1_asset_load_image_field(
+        /* Raw 0289 is the German full character-sheet image. It shares its
+         * category/index/field with English and French entries, so this must
+         * be decoded from its exact raw index for a catalogue audit. */
+        uint8_t *pixels = dm2_v1_asset_load_raw_image(
+            &loader, 289u, &w, &h, &fmt);
+        PROBE_ASSERT(pixels != NULL && w == 224 && h == 136 &&
+                         fmt == DM2_IMG_FMT_IMG3 &&
+                         fnv1a32_pixels(pixels, (size_t)w * (size_t)h) ==
+                             0xfe5653b4u,
+                     "Greatstone raw 0289 decodes by exact raw index, not an English field alias");
+        dm2_v1_asset_free_pixels(pixels);
+        {
+            DM2_V1_QueryGdatSummaryImageReceipt palette_receipt;
+            memset(&palette_receipt, 0, sizeof(palette_receipt));
+            PROBE_ASSERT(dm2_v1_query_gdat_summary_image_receipt(
+                             &loader, DM2_GDAT_CATEGORY_CLOTHES, 21, 24,
+                             &palette_receipt) &&
+                             palette_receipt.colors == 16u &&
+                             palette_receipt.palette_hash == 0x87b1600du,
+                         "C4 local palette comes from the raw record tail, not a width-derived offset");
+        }
+        w = h = 0;
+        fmt = DM2_IMG_FMT_UNKNOWN;
+        pixels = dm2_v1_asset_load_image_field(
             &loader,
             DM2_GDAT_CATEGORY_GRAPHICSSET,
             0,

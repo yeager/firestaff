@@ -72,10 +72,13 @@
   the original file's 5,624-entry raw table. All 4,031 IMG3/IMG9/IMG11
   rasters now have a nonzero decoded-pixel receipt from those same original
   bytes; FNT1 raw 0203 is separately classified as the single
-  Interface/Main-Screen scroll-font record, not a HUD fallback. Complete
-  per-image visual comparison against Greatstone's 4,032 published PNGs
-  remains open; it must compare decoded original pixels and palette semantics,
-  never introduce downloaded or generated replacement artwork.
+  Interface/Main-Screen scroll-font record, not a HUD fallback. A temporary,
+  non-shipped full PNG audit against Greatstone found 4,030/4,031 exact
+  palette-index matches. The remaining raw 2279 U4 image is a documented
+  exporter semantic difference: SKProject returns its packed pixels with the
+  raw-tail local palette, while Greatstone expands the nibbles to greyscale.
+  Do not alter the original palette path or add downloaded/generated artwork
+  merely to imitate that third-party export.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   source-bound lifecycle/presentation path with a structural fail-closed seam.

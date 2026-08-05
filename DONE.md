@@ -49263,6 +49263,24 @@ six original 128-glyph rows. Sources: Greatstone PC 1.0 catalogue,
 `SKWINSPX/src/v4/skcore.cpp::_3929_0e16_FONT_LOAD`, and
 `SKWINSPX/src/v4/sktext.cpp::QUERY_FONT`.
 
+# ✅ 2026-08-06 DM2 PC Greatstone raw-palette audit
+
+`QUERY_GDAT_IMAGE_LOCALPAL` now reads the final 16 bytes of every accepted
+4-bpp raw GDAT record, exactly as `SKULLWIN/c_querydb.cpp:228-253` specifies.
+The previous width-derived address could read compressed IMG3 commands as a
+palette. The loader also exposes an audit-only exact-raw decode path so
+language variants sharing a category/index/field cannot be compared through
+the first matching (usually English) entry. A temporary external audit of all
+4,031 Greatstone IMG3/IMG9/IMG11 PNGs against the hash-verified PC English
+`GRAPHICS.DAT` gives 4,030 exact palette-index matches. Raw 2279 is the sole
+documented representation difference: source `EXTRACT_GDAT_IMAGE` returns
+the special U4 payload with its raw-tail palette, while Greatstone emits
+greyscale-expanded nibbles. No downloaded or generated art is used at
+runtime. Verification: `probe_dm2_v1_asset_loader` and PC English boot probe
+PASS. Sources: Greatstone PC 1.0 catalogue,
+`SKULLWIN/c_querydb.cpp::DM2_QUERY_GDAT_IMAGE_LOCALPAL`, and
+`SKULLWIN/c_gdatfile.cpp::DM2_EXTRACT_GDAT_IMAGE`.
+
 # ✅ 2026-08-06 DM2 source wall-button fallback removal
 
 The local DB2/DB3 wall-button walkers are now available only to isolated

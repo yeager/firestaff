@@ -453,7 +453,6 @@ static int dm2_v1_asset_load_image_local_palette(
     uint16_t width;
     uint16_t height;
     uint16_t bpp = 0u;
-    size_t payload_bytes;
     size_t palette_offset;
 
     if (out_hash) *out_hash = 0u;
@@ -470,11 +469,12 @@ static int dm2_v1_asset_load_image_local_palette(
     width = (uint16_t)(img_rd16(raw, loader->big_endian) & 0x03ffu);
     height = (uint16_t)(img_rd16(raw + 2u, loader->big_endian) & 0x03ffu);
     if (width == 0u || height == 0u) return 0;
-    payload_bytes = (size_t)(((width + 1u) & 0xfffeu) >> 1) * (size_t)height;
-    palette_offset = DM2_IMG3_HEADER_SIZE + payload_bytes;
-    if (palette_offset + DM2_IMG_LOCAL_PALETTE_SIZE > raw_size) {
-        palette_offset = raw_size - DM2_IMG_LOCAL_PALETTE_SIZE;
-    }
+    /* SKProject's QUERY_GDAT_IMAGE_LOCALPAL returns
+     * `raw + QUERY_GDAT_RAW_DATA_LENGTH(didx) - 0x10` for every accepted
+     * 4-bpp image (SKULLWIN/c_querydb.cpp:228-253).  C4 command streams are
+     * variable length, so their palette cannot be found from width*height:
+     * that calculation can point into compressed pixels. */
+    palette_offset = raw_size - DM2_IMG_LOCAL_PALETTE_SIZE;
     memcpy(out_palette16, raw + palette_offset, DM2_IMG_LOCAL_PALETTE_SIZE);
     if (out_hash) {
         *out_hash = dm2_fnv1a_bytes(out_palette16,
@@ -3862,8 +3862,28 @@ uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
                                         int *out_width, int *out_height,
                                         DM2_ImageFormat *out_format) {
     const DM2_V1_GdatEntry *entry;
+    uint16_t raw_index;
+
+    if (out_width) *out_width = 0;
+    if (out_height) *out_height = 0;
+    if (out_format) *out_format = DM2_IMG_FMT_UNKNOWN;
+    entry = dm2_gdat_find_entry(loader,
+                                category,
+                                index,
+                                DM2_GDAT_ENTRY_TYPE_IMAGE,
+                                field);
+    if (!entry) return NULL;
+    raw_index = (uint16_t)(entry->data_index & 0x7fffu);
+    return dm2_v1_asset_load_raw_image(loader, raw_index,
+                                       out_width, out_height, out_format);
+}
+
+uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
+                                      uint16_t raw_index,
+                                      int *out_width, int *out_height,
+                                      DM2_ImageFormat *out_format) {
     const uint8_t *raw;
-    size_t raw_size = 0;
+    size_t raw_size = 0u;
     uint16_t cx;
     uint16_t cy;
     uint16_t bpp;
@@ -3875,12 +3895,7 @@ uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
     if (out_width) *out_width = 0;
     if (out_height) *out_height = 0;
     if (out_format) *out_format = DM2_IMG_FMT_UNKNOWN;
-    entry = dm2_gdat_find_entry(loader,
-                                category,
-                                index,
-                                DM2_GDAT_ENTRY_TYPE_IMAGE,
-                                field);
-    raw = dm2_gdat_raw_from_entry(loader, entry, &raw_size);
+    raw = dm2_v1_load_gdat_raw_data(loader, raw_index, &raw_size);
     if (!raw || raw_size < DM2_IMG3_HEADER_SIZE) return NULL;
 
     cx = img_rd16(raw + 0, loader->big_endian);

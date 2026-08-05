@@ -1229,6 +1229,16 @@ uint8_t *dm2_v1_asset_load_image_field(const DM2_V1_AssetLoader *loader,
                                         int *out_width, int *out_height,
                                         DM2_ImageFormat *out_format);
 
+/* Decode one exact raw GDAT image record. This is the raw-table counterpart
+ * to QUERY_GDAT_IMAGE_ENTRY_BUFF: it deliberately bypasses category/index/
+ * field selection so catalogue and multilingual audits cannot silently pick
+ * a different entry sharing the same GDAT address. It does not select an
+ * image for gameplay; production callers must retain the source entry query. */
+uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
+                                     uint16_t raw_index,
+                                     int *out_width, int *out_height,
+                                     DM2_ImageFormat *out_format);
+
 /* ── SKULLWIN/c_gfx_decode.cpp source-named decode receipts ────────── */
 
 /* skproject: c_gfx_decode.cpp init (line 19) / alloc (line 41).
