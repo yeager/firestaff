@@ -4,6 +4,15 @@
   the ISO entries byte for byte. The asset validator now reports a documented
   `OK-ALTERNATE` identity instead of treating those genuine revisions as
   corrupt; canonical PRS3/VDP1 capture identity remains unchanged.
+- ✅ 2026-08-05 CSB Utility Disk CMP provenance: the title/import probe no
+  longer fabricates a `HECTOR` champion and portrait buffer. It reads the
+  original Atari ST `PORTRAIT/ALEX.CMP` record (508 bytes), verifies its
+  ReDMCSB CMP header, `ALEX`/`ANDER` identity and 464-byte portrait payload,
+  then proves that the portrait-only record cannot manufacture omitted stats,
+  possessions or a party slot. A corrupted copy is rejected and leaves the
+  real dungeon-header pose unchanged. The explicit original-data run passes
+  26/26; an absent CMP skips rather than substituting bytes.
+
 - ✅ 2026-08-05 CSB quickplay handoff provenance: the quickplay dungeon-handle
   probe no longer creates a miniature dungeon or seeds a profile as verified
   when PC data is absent. It now admits only any hash-recognised original CSB

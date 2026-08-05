@@ -7811,6 +7811,7 @@ add_executable(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
     src/csb/csb_v1_character_pc34_compat.c
+    src/shared/firestaff_cmp_decode.c
     src/shared/asset_find_by_hash.c
     src/shared/fs_portable_compat.c
 )

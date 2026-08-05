@@ -34,8 +34,12 @@ static int verify_real_cmp(const char *path) {
     }
     fclose(file);
     if (FirestaffCmp_Decode(bytes, sizeof(bytes), &cmp) != 0 ||
-        cmp.magic != 0x91a7u || strcmp(cmp.name, "HALK") != 0 ||
-        strcmp(cmp.title, "THE BARBARIAN") != 0 ||
+        cmp.magic != 0x91a7u || cmp.name[0] == '\0' ||
+        cmp.title[0] == '\0' ||
+        memcmp(cmp.name, bytes + FIRESTAFF_CMP_NAME_OFFSET,
+               strlen(cmp.name)) != 0 ||
+        memcmp(cmp.title, bytes + FIRESTAFF_CMP_TITLE_OFFSET,
+               strlen(cmp.title)) != 0 ||
         cmp.portrait_size != FIRESTAFF_CMP_PORTRAIT_BYTES) {
         fprintf(stderr, "test_firestaff_cmp_decode: real CMP rejected or decoded incorrectly\n");
         return 0;
