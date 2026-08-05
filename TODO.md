@@ -39,6 +39,10 @@
   intake only. Later-level and object semantics remain blocked until a
   source-backed CD-read/record trace binds them.
 
+  Track 02 object-data bounds are now overflow-safe; truncated sources are
+  rejected before ground-reference or item records can be admitted. This is
+  a loader-integrity fix only, not semantic promotion of unbound records.
+
 - **THERON-LEGACY-ASSET-PARSER-CLEANUP:** The unreachable THG3/THS4 tile
   parser body has been removed. These Firestaff-only marker formats remain
   rejected; future real bitmap/palette work must enter through an

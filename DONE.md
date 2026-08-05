@@ -1,3 +1,9 @@
+- ✅ 2026-08-05 Theron object-record loader integrity: replaced vulnerable
+  `offset + length` bounds checks in the source-bound Track 02 ground/item/
+  text loader with overflow-safe range validation. Added a truncated-source
+  regression; focused object-data test passes and skips only the optional
+  full Track 02 BIN branch when it is not staged.
+
 - ✅ 2026-08-05 Nexus boot-library corpus verification: the materialized
   original `0DMSTRT.BIN` now passes the real-file structure-admission gate
   (`test_nexus_v1_0dmstrt_structure_admission .../0DMSTRT.BIN`). Its fixup,

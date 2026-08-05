@@ -20,6 +20,10 @@
 #define BYTES_PER_SECTOR 2048
 #define UD_BASE (PREGAP_SECTORS * BYTES_PER_SECTOR)
 
+static int theron_range_fits(size_t offset, size_t length, size_t size) {
+    return offset <= size && length <= size - offset;
+}
+
 static unsigned int get_items_split_index(unsigned int dungeon_index) {
     switch (dungeon_index) {
         case 0: return 4;  /* AKUTUBA */
@@ -64,7 +68,7 @@ int theron_v1_track02_thing_data_load(
 
     size_t gref_abs = UD_BASE + qb.ground_refs_offset;
     size_t gref_bytes = (size_t)ground_ref_count * 2;
-    if (gref_abs + gref_bytes > ud_size) return 0;
+    if (!theron_range_fits(gref_abs, gref_bytes, ud_size)) return 0;
     memcpy(out->ground_refs, ud_data + gref_abs, gref_bytes);
 
     unsigned int split = get_items_split_index(dungeon_index);
@@ -75,7 +79,7 @@ int theron_v1_track02_thing_data_load(
         size_t n = object_counts[cat];
         size_t total = item_size * n;
         if (item_size == 0 || n == 0) continue;
-        if (pos + total > ud_size) return 0;
+        if (!theron_range_fits(pos, total, ud_size)) return 0;
         if (total > sizeof(out->items[cat])) return 0;
         memcpy(out->items[cat], ud_data + pos, total);
         pos += total;
@@ -87,7 +91,7 @@ int theron_v1_track02_thing_data_load(
         size_t n = object_counts[cat];
         size_t total = item_size * n;
         if (item_size == 0 || n == 0) continue;
-        if (pos + total > ud_size) return 0;
+        if (!theron_range_fits(pos, total, ud_size)) return 0;
         if (total > sizeof(out->items[cat])) return 0;
         memcpy(out->items[cat], ud_data + pos, total);
         pos += total;
@@ -97,7 +101,7 @@ int theron_v1_track02_thing_data_load(
     if (text_size > 0) {
         size_t text_abs = UD_BASE + qb.text_data_offset;
         size_t text_bytes = (size_t)text_size * 2;
-        if (text_abs + text_bytes > ud_size) return 0;
+        if (!theron_range_fits(text_abs, text_bytes, ud_size)) return 0;
         if (text_size > 1024) return 0;
         out->text_data_count = text_size;
         memcpy(out->text_data, ud_data + text_abs, text_bytes);

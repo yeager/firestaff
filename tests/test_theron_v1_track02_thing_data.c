@@ -62,6 +62,19 @@ static void test_ground_ref_count_bound(void) {
     printf("  ground_ref_count bound rejects overflow OK\n");
 }
 
+static void test_truncated_source_rejected(void) {
+    uint8_t byte = 0;
+    uint16_t object_counts[THERON_ITEM_CATEGORY_COUNT] = {0};
+    Theron_ThingData data;
+
+    /* The first real ground-reference offset is far beyond this buffer.
+     * A short source must be rejected before any pointer arithmetic can
+     * wrap or manufacture an object record. */
+    assert(!theron_v1_track02_thing_data_load(
+        &byte, sizeof(byte), 0, object_counts, 0, &data));
+    printf("  truncated source rejects out-of-range records OK\n");
+}
+
 static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
     const char *names[] = {
         "AKUTUBA", "DRATOR", "FORMICIA", "SARMON",
@@ -118,6 +131,7 @@ int main(void) {
 
     test_ground_ref_count();
     test_ground_ref_count_bound();
+    test_truncated_source_rejected();
 
     const char *path = find_track02();
     if (!path) {
