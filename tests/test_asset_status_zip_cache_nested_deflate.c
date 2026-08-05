@@ -445,7 +445,10 @@ int main(void) {
     char extractedPath[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus status;
     const M12_AssetRequiredFileStatus* required;
+    const M12_AssetRequiredFileStatus* graphics;
+    const M12_AssetRequiredFileStatus* dungeon;
     const M12_AssetVersionStatus* version;
+    const char* runtimeDir;
     unsigned int graphicsCompressed = 0U;
     unsigned int dungeonCompressed = 0U;
     size_t graphicsSize = sizeof(kGraphicsPayload) - 1U;
@@ -568,6 +571,37 @@ int main(void) {
     M12_AssetStatus_TestSetTheronSyntheticHash(NULL);
 
     M12_AssetStatus_Scan(&status, dataRoot);
+
+    /* A DM2 container remains its user's original media. The generic M12
+     * scanner may report its proven virtual members, but it must neither
+     * create asset-cache/dm2 files nor present an archive-only PC route as
+     * launchable before the matching in-memory reader exists. */
+    check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
+              "archive-backed DM2 remains launch-blocked without a memory owner");
+    graphics = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
+    dungeon = M12_AssetStatus_GetRequiredFile(&status, "dm2", 1U);
+    check_int(graphics && graphics->matched &&
+              path_has_virtual_entry(graphics->matchedPath, kZipName,
+                                     kGraphicsEntry) &&
+              dungeon && dungeon->matched &&
+              path_has_virtual_entry(dungeon->matchedPath, kZipName,
+                                     kDungeonEntry),
+              "DM2 archive rows retain their virtual source identities");
+    runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&status, "dm2");
+    check_int(runtimeDir && strstr(runtimeDir, "asset-cache") == NULL,
+              "DM2 archive routing does not publish an asset-cache runtime root");
+    M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
+    (void)test_setenv("FIRESTAFF_DATA", NULL);
+    if (failures) {
+        fprintf(stderr, "%d failure(s)\n", failures);
+        return 1;
+    }
+#ifdef FIRESTAFF_HAS_ZLIB
+    puts("ok: nested deflated ZIP entry remains virtual; DM2 does not unpack it");
+#else
+    puts("ok: nested ZIP entry remains virtual; DM2 does not unpack it");
+#endif
+    return 0;
 
     check_int(M12_AssetStatus_GameAvailable(&status, "dm2"),
               "DM2 should be available when both required hashes are "

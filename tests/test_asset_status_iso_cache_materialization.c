@@ -460,6 +460,34 @@ static void check_flat_dat_iso_materialization(
     set_hashes(graphicsMd5, dungeonMd5);
     M12_AssetStatus_Scan(&status, dataRoot);
 
+    if (strcmp(gameId, "dm2") == 0) {
+        /* DM2 archive data is never copied to an ordinary cache file.  Until
+         * a platform-specific memory reader owns this exact container, the
+         * launcher preserves the virtual evidence and keeps launch closed. */
+        graphics = M12_AssetStatus_GetRequiredFile(&status, gameId, 0U);
+        dungeon = M12_AssetStatus_GetRequiredFile(&status, gameId, 1U);
+        check_int(!M12_AssetStatus_GameAvailable(&status, gameId),
+                  "DM2 ISO entries must remain non-launchable without an in-memory owner");
+        check_int(graphics && graphics->matched &&
+                  strstr(graphics->matchedPath, "::") != NULL &&
+                  dungeon && dungeon->matched &&
+                  strstr(dungeon->matchedPath, "::") != NULL,
+                  "DM2 required rows must retain their original ISO paths");
+        runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&status, gameId);
+        check_int(runtimeDir && strstr(runtimeDir, "asset-cache") == NULL,
+                  "DM2 ISO routing must not publish an asset-cache runtime path");
+
+        M12_AssetStatus_Scan(&status, isoPath);
+        check_int(!M12_AssetStatus_GameAvailable(&status, gameId),
+                  "direct DM2 ISO requests must remain launch-blocked");
+        runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&status, gameId);
+        check_int(runtimeDir && strstr(runtimeDir, "asset-cache") == NULL,
+                  "direct DM2 ISO requests must not unpack to asset-cache");
+        set_hashes(NULL, NULL);
+        (void)remove(extractedPath);
+        return;
+    }
+
     check_int(M12_AssetStatus_GameAvailable(&status, gameId) == 1,
               "game should be available when both required hashes match in ISO");
     graphics = M12_AssetStatus_GetRequiredFile(&status, gameId, 0U);
@@ -602,7 +630,7 @@ static void check_csb_iso_materializes(const char* dataRoot) {
         M12_AssetStatus_TestSetCsbSyntheticHashes);
 }
 
-static void check_dm2_iso_materializes(const char* dataRoot) {
+static void check_dm2_iso_stays_in_media(const char* dataRoot) {
     const char isoName[] = "dm2_cd.iso";
     char gameDir[M12_ASSET_DATA_DIR_CAPACITY];
     check_int(FSP_JoinPath(gameDir, sizeof(gameDir), dataRoot, "dm2") &&
@@ -636,7 +664,7 @@ int main(void) {
 
     check_dm1_iso_materializes(dataRoot);
     check_csb_iso_materializes(dataRoot);
-    check_dm2_iso_materializes(dataRoot);
+    check_dm2_iso_stays_in_media(dataRoot);
 
     (void)test_setenv("FIRESTAFF_DATA", NULL);
 
@@ -644,7 +672,6 @@ int main(void) {
         fprintf(stderr, "%d failure(s)\n", failures);
         return 1;
     }
-    puts("ok: DM1/CSB/DM2 ISO 9660 archive-backed required files materialize "
-         "to ordinary asset-cache leaves");
+    puts("ok: DM1/CSB ISO required files materialize; DM2 ISO stays virtual");
     return 0;
 }

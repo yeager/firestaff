@@ -3260,14 +3260,14 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     }
     if (FSP_FileExists(requestedDataDir) &&
         !FSP_DirExists(requestedDataDir) &&
-        !m12_explicit_path_is_archive(requestedDataDir) &&
         FSP_ParentDir(containerParent, sizeof(containerParent), requestedDataDir)) {
         /* Hash-first explicit file handling. A direct path may be a
          * ZIP/ISO/BIN container, a correctly hashed Track/image file with an
          * arbitrary extension, or a renamed GRAPHICS/DUNGEON payload. Do not
          * publish the legacy generic "file candidate" status before the
-         * recursive hash scanner has had a chance to walk the parent
-         * directory and materialize canonical runtime files. */
+         * recursive hash scanner has had a chance to inspect its parent.
+         * Archive-backed DM2 stays virtual and launch-blocked here; it is
+         * never materialized by the generic cache path. */
         effectiveRequestedDataDir = containerParent;
         requestedFileScanParent = 1;
     } else if (!honorRequestedDataDir &&

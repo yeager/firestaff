@@ -361,7 +361,7 @@ static void check_direct_game_scan_limits_hash_fanout(const char* root) {
               "direct DM1 scan should not mark other games available");
 }
 
-static void check_dm2_virtual_required_files_materialize(const char* root) {
+static void check_dm2_virtual_required_files_stay_in_media(const char* root) {
 #ifdef FIRESTAFF_HAS_ZLIB
     static const char graphicsPayload[] =
         "Firestaff synthetic DM2 graphics deflated fixture v1\n";
@@ -421,33 +421,22 @@ static void check_dm2_virtual_required_files_materialize(const char* root) {
     M12_AssetStatus_TestResetScanMetrics();
     M12_AssetStatus_Scan(&status, root);
 
-    check_int(M12_AssetStatus_GameAvailable(&status, "dm2") == 1,
-              "DM2 should be available when synthetic GRAPHICS and DUNGEON hashes match");
+    /* DM2 source media is not a cache input.  Archive entries remain
+     * evidence only until a platform-specific in-memory reader owns them. */
+    check_int(M12_AssetStatus_GameAvailable(&status, "dm2") == 0,
+              "archive-only DM2 must remain launch-blocked without a memory owner");
     check_int(M12_AssetStatus_GetRequiredFileCount(&status, "dm2") == 2U,
               "DM2 should still report GRAPHICS and DUNGEON as required files");
     graphics = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
     dungeon = M12_AssetStatus_GetRequiredFile(&status, "dm2", 1U);
-    check_int(graphics && graphics->matched && strstr(graphics->matchedPath, "::") == NULL,
-              "DM2 virtual GRAPHICS should be materialized to a flat runtime file");
-    check_int(dungeon && dungeon->matched && strstr(dungeon->matchedPath, "::") == NULL,
-              "DM2 virtual DUNGEON should be materialized to a flat runtime file");
-    check_int(graphics && strstr(graphics->matchedPath, "asset-cache") != NULL &&
-                  strstr(graphics->matchedPath, "dm2") != NULL,
-              "materialized DM2 GRAPHICS should live in the asset cache");
-    check_int(dungeon && strstr(dungeon->matchedPath, "asset-cache") != NULL &&
-                  strstr(dungeon->matchedPath, "dm2") != NULL,
-              "materialized DM2 DUNGEON should live in the asset cache");
+    check_int(graphics && graphics->matched && strstr(graphics->matchedPath, "::") != NULL,
+              "DM2 GRAPHICS must retain its archive virtual path");
+    check_int(dungeon && dungeon->matched && strstr(dungeon->matchedPath, "::") != NULL,
+              "DM2 DUNGEON must retain its archive virtual path");
     runtimeDir = M12_AssetStatus_GetRuntimeDataDir(&status, "dm2");
-    check_int(runtimeDir && strstr(runtimeDir, "asset-cache") != NULL &&
-                  strstr(runtimeDir, "::") == NULL,
-              "DM2 runtime data dir should be an ordinary cache directory when virtual files are materialized");
-    check_int(graphics && runtimeDir &&
-                  strncmp(graphics->matchedPath, runtimeDir, strlen(runtimeDir)) == 0,
-              "Materialized DM2 GRAPHICS should live under the runtime cache directory");
-    check_int(graphics && file_matches_payload(graphics->matchedPath, graphicsPayload),
-              "materialized DM2 GRAPHICS should match the ZIP payload");
-    check_int(dungeon && file_matches_payload(dungeon->matchedPath, dungeonPayload),
-              "materialized DM2 DUNGEON should match the ISO payload");
+    check_int(runtimeDir && strstr(runtimeDir, "asset-cache") == NULL,
+              "DM2 archive routing must not publish an asset-cache directory");
+    M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
 }
 
 static void check_direct_theron_file_scan_avoids_root_rescan(const char* root) {
@@ -610,7 +599,7 @@ int main(void) {
 
     check_direct_game_scan_limits_hash_fanout(requestRoot);
     check_dm1_optional_boot_files_are_original_candidates(requestRoot);
-    check_dm2_virtual_required_files_materialize(requestRoot);
+    check_dm2_virtual_required_files_stay_in_media(requestRoot);
     check_direct_theron_file_scan_avoids_root_rescan(requestRoot);
     check_theron_zip_track02_materializes(requestRoot);
 
