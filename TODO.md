@@ -796,6 +796,8 @@
   Asset admission now rejects cross-platform GRAPHICS.DAT/DUNGEON.DAT mixes;
   finish the same pair-bound admission for every remaining container and
   installer format before exposing those ports in the launcher.
+  The FM Towns CD ZIP is accepted with either the global data root or `dm2/`
+  itself as the configured root, while the payload remains memory-only.
   **2026-07-31 update:** the boot profile no longer preloads the PC-English
   G1 seed (`257`) or level count (`28`). Both remain zero until the
   hash-verified `DUNGEON.DAT` header supplies the real values.

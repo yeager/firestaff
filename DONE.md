@@ -49668,3 +49668,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   FM Towns and Amiga identities and rejects PC/FM Towns and FM Towns/Amiga
   mixtures. This keeps foreign byte order and scene data from being presented
   as a playable DM2 session.
+
+- ✅ 2026-08-06 DM2 FM Towns direct-root intake: the original CD ZIP can now
+  be found when the selected data directory is either the global data root or
+  its `dm2` directory. The archive remains in place; GDAT, G1 and CD.DAT are
+  still admitted from memory only. The opt-in real-media regression verifies
+  both root forms.

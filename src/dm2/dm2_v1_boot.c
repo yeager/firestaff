@@ -906,17 +906,29 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
                                                      const char *data_dir)
 {
     char zip_path[512];
+    char nested_zip_path[512];
     uint8_t *cue_data = NULL;
     size_t cue_size = 0;
     uint8_t *img_data = NULL;
     size_t img_size = 0;
 
-    snprintf(zip_path, sizeof(zip_path),
+    /* A configured root may be the Firestaff data root or the user's DM2
+     * directory itself.  The archive is retained in place and all following
+     * extraction is memory-only; neither spelling authorizes a cache or an
+     * unpacked copy. */
+    snprintf(nested_zip_path, sizeof(nested_zip_path),
              "%s/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip", data_dir);
+    snprintf(zip_path, sizeof(zip_path),
+             "%s/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip", data_dir);
 
     if (firestaff_zip_extract_by_suffix(zip_path, ".cue",
-                                        &cue_data, &cue_size) != 0)
-        return;
+                                        &cue_data, &cue_size) != 0) {
+        snprintf(zip_path, sizeof(zip_path), "%s", nested_zip_path);
+        if (firestaff_zip_extract_by_suffix(zip_path, ".cue",
+                                            &cue_data, &cue_size) != 0) {
+            return;
+        }
+    }
 
     uint32_t track_starts[9] = {0};
     int track_count = fmtowns_cue_parse_track_starts(

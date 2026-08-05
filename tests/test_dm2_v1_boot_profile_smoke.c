@@ -1093,6 +1093,28 @@ static void test_fmtowns_zip_real_media(void)
     dm2_v1_boot_cleanup(&p);
 }
 
+/* Same original media but with the configured data root set to dm2/ itself.
+ * This is an opt-in real-data check and deliberately creates no extracted
+ * files. */
+static void test_fmtowns_zip_direct_data_root(void)
+{
+    const char *root = getenv("FIRESTAFF_DM2_FMTOWNS_DIRECT_ROOT");
+    DM2_V1_BootProfile p;
+
+    if (!root || !root[0]) {
+        printf("  SKIP: FIRESTAFF_DM2_FMTOWNS_DIRECT_ROOT not set\n");
+        return;
+    }
+
+    dm2_v1_boot_profile_init(&p);
+    CHECK(dm2_v1_boot_scan_assets(&p, root) == 0 && p.assets_verified == 1 &&
+              p.platform == DM2_PLATFORM_FMTOWNS_JA,
+          "FM Towns ZIP is admitted when the data root is dm2 itself");
+    CHECK(p.graphics_mem != NULL && p.dungeon_mem != NULL,
+          "direct FM Towns root retains original CD payloads only in memory");
+    dm2_v1_boot_cleanup(&p);
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Boot Profile Smoke Test ===\n\n");
@@ -1141,6 +1163,8 @@ int main(void)
     test_source_evidence();
     printf("\n--- test_fmtowns_zip_real_media ---\n");
     test_fmtowns_zip_real_media();
+    printf("\n--- test_fmtowns_zip_direct_data_root ---\n");
+    test_fmtowns_zip_direct_data_root();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
