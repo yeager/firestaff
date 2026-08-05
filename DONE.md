@@ -1,3 +1,11 @@
+- ✅ 2026-08-05 Nexus automap/RES retail follow-up: materialized the
+  original `SMAP00.BIN`–`SMAP15.BIN`, `STONE.BIN`, `RHIFIX.BIN`, and
+  `POTEFT.BIN` resources from the local English ISO. The real-data SMAP gate
+  passes all 16 level maps with deterministic 640×608 hashes; the RES* gate
+  passes TITLE, RHIFIX, and POTEFT. Legacy generic automap colors and the
+  unused palette constants remain outside the production source-bound route;
+  no synthetic pixels were promoted.
+
 - ✅ 2026-08-05 Nexus secondary retail media corpus materialized: extracted
   original `SMAP00.BIN`–`SMAP15.BIN`, `STONE.BIN`, `RHIFIX.BIN`, `POTEFT.BIN`,
   and related startup/effect resources from the local English ISO into the
