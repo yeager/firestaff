@@ -242,7 +242,7 @@ V1_fb.color_buffer[320×200]  (indexed)
 ✅ Wall/floor/object/creature/projectile/UI/title rendering — implemented
 ✅ Palette/BGR555/texture handling — implemented (STONE.BIN, BGR555→RGBA)
 ✅ DMDF model loading — implemented with `nexus_project_model_vert()` bridge
-✅ Deterministic fallback for unsupported 3D assets — per-asset fallback via gray billboard
+✅ Unsupported 3D assets — explicitly no-draw until source material is authenticated
 ✅ No crashes on missing/corrupt data (all bounds-validated before use)
 ✅ Source citations in every function comment
-✅ Deterministic gray placeholder for any missing surface/texture
+✅ Missing surface/texture — explicitly no-draw; no generated placeholder is admitted

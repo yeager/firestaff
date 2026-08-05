@@ -48466,7 +48466,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   Short palettes clear and remain unavailable; they do not receive the old
   inferred `g_npal_default` colour table. Verified by the real-data DGN
   geometry readiness gate against `/Users/bosse/.firestaff/data/nexus`.
-
 - ✅ 2026-08-05 DM2 actuator generator provenance hardening: removed the
   remaining live wall-mecha generator mutations. Creature generation no
   longer invents a fixed HP/base value or tick-derived direction, and item
@@ -48475,3 +48474,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `ALLOC_NEW_DBITEM` ownership chains. Verified by the focused actuator and
   runtime gates plus the mounted real-data startup, HUD, material,
   scene/weather and original-save-writer gates.
+
+- ✅ 2026-08-05 Nexus rasterizer provenance cleanup: corrected the Phase 4
+  source-lock record to describe the actual production boundary. Flat-color
+  geometry, unsupported 3D assets, and missing surfaces/textures remain
+  explicitly no-draw; the retired gray-billboard/placeholder claims are no
+  longer documented as runtime features. Verified with
+  `test_nexus_v1_dgn_material_raster`, the real-data DGN geometry gate, and
+  `git diff --check`.
