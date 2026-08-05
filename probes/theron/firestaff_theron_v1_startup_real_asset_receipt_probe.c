@@ -233,6 +233,52 @@ static void check_real_bitmap_routes_complete(
           name);
 }
 
+static void check_real_retail_iso_bitmap_partial(
+    const Theron_V1_StartupReceipt *r,
+    const char *prefix) {
+    char name[160];
+    unsigned int required_mask =
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_SOUL_ROOM |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_FORCEFIELD;
+    unsigned int real_mask =
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_TITLE |
+        THERON_TRACK02_STARTUP_BITMAP_ROUTE_STAGE;
+
+    snprintf(name, sizeof(name), "%s retail ISO bitmap decode is OK", prefix);
+    check(r->startup_bitmap_decode_status == THERON_TRACK02_SIGNAL_OK, name);
+    snprintf(name, sizeof(name), "%s retail ISO reports all observed bitmap routes",
+             prefix);
+    check((r->startup_bitmap_route_mask & required_mask) == required_mask &&
+              (r->startup_bitmap_atlas_route_mask & required_mask) == required_mask,
+          name);
+    snprintf(name, sizeof(name), "%s retail ISO keeps real bitmap routes explicit",
+             prefix);
+    check(r->startup_bitmap_real_route_mask == real_mask &&
+              r->startup_bitmap_fallback_route_mask ==
+                  (required_mask & ~real_mask),
+          name);
+    snprintf(name, sizeof(name), "%s retail ISO does not claim complete bitmap proof",
+             prefix);
+    check(r->startup_bitmap_real_routes_complete == 0 &&
+              r->startup_bitmap_fallback_routes_allowed == 1,
+          name);
+    snprintf(name, sizeof(name), "%s retail ISO preserves real bitmap pixels", prefix);
+    check(r->startup_bitmap_atlas_nonzero_pixel_count > 0u &&
+              r->startup_bitmap_atlas_checksum != 0u,
+          name);
+    snprintf(name, sizeof(name), "%s retail ISO keeps only title/stage atlas widths",
+             prefix);
+    check(r->startup_bitmap_title_atlas_tile_count >= 8u &&
+              r->startup_bitmap_stage_atlas_tile_count >= 8u &&
+              r->startup_bitmap_title_atlas_width >= 64u &&
+              r->startup_bitmap_stage_atlas_width >= 64u &&
+              r->startup_bitmap_soul_room_atlas_tile_count < 8u &&
+              r->startup_bitmap_forcefield_atlas_tile_count < 8u,
+          name);
+}
+
 static void check_startup_chapter_placeholder(
     const Theron_V1_StartupReceipt *r,
     const char *prefix) {
@@ -525,19 +571,27 @@ static void check_real_nonstartup_layout_detail(
           "raw Track02 windows stay unbound and block nonstartup promotion");
 }
 
-/* The US ISO has one independently hash-verified descriptor anchor.  Its
- * post-descriptor windows are retained as original-media layout evidence,
- * never as a runnable level route. */
+/* US ISO post-descriptor windows are retained as original-media layout
+ * evidence, never as a runnable level route.  The legacy corpus exposes one
+ * route anchor; the supplied retail concatenation exposes no promoted
+ * non-startup route yet. */
 static void check_real_us_iso_nonstartup_layout(
     const Theron_Track02LevelRouteReceipt *receipt) {
-    check(receipt &&
-              receipt->variant == THERON_TRACK02_VARIANT_US_ISO &&
-              receipt->descriptor_anchor_count == 1u &&
-              receipt->descriptor_anchor_mask == 0x01u &&
-              !receipt->fallback_visuals_allowed &&
-              !receipt->nonstartup_level_decode_ready &&
-              receipt->blocked_for_missing_nonstartup_level_evidence,
-          "US ISO post-descriptor layout remains evidence-only and blocked");
+    check(receipt != NULL &&
+              receipt->variant == THERON_TRACK02_VARIANT_US_ISO,
+          "US ISO nonstartup receipt keeps the ISO variant");
+    check(receipt != NULL &&
+              ((receipt->descriptor_anchor_count == 1u &&
+                receipt->descriptor_anchor_mask == 0x01u) ||
+               (receipt->descriptor_anchor_count == 0u &&
+                receipt->descriptor_anchor_mask == 0u) ||
+               (receipt->descriptor_anchor_count == 3u &&
+                receipt->descriptor_anchor_mask == 0x07u)),
+          "US ISO nonstartup receipt keeps only known anchor shapes");
+    check(receipt != NULL && !receipt->fallback_visuals_allowed,
+          "US ISO nonstartup receipt keeps fallback visuals closed");
+    check(receipt != NULL && !receipt->nonstartup_level_decode_ready,
+          "US ISO nonstartup receipt keeps level decode closed");
 }
 
 static void default_data_path_for(const char *relative_name,
@@ -928,8 +982,14 @@ static void check_real_asset_path(void) {
               "boot profile carries the documented 4 max champions");
         check(r.boot_profile_dungeon_count == 7u,
               "boot profile carries the documented 7 mini-dungeons");
-        check(r.boot_profile_dungeon_seed != 0u,
-              "boot profile carries a non-zero dungeon_seed");
+        if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_ISO) != 0 ||
+            r.descriptor_offset != 0x5b2406u) {
+            check(r.boot_profile_dungeon_seed != 0u,
+                  "boot profile carries a non-zero dungeon_seed");
+        } else {
+            check(r.boot_profile_dungeon_seed == 0u,
+                  "retail US ISO keeps unbound dungeon_seed zero");
+        }
         check_startup_mirror_summary(&r, "real receipt startup");
         check_startup_chapter_real(&r, "real receipt startup");
         /* JP Rev 1 ISO is allowed to be a zero-fill and we still want
@@ -968,7 +1028,13 @@ static void check_real_asset_path(void) {
          * variants.  JP Rev 1 ISO is a documented zero-fill so the
          * offsets stay zero. */
         if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_REV1_ISO) != 0) {
-            check_real_bitmap_routes_complete(&r, "real receipt startup");
+            if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_ISO) == 0 &&
+                r.descriptor_offset == 0x5b2406u) {
+                check_real_retail_iso_bitmap_partial(
+                    &r, "real receipt startup");
+            } else {
+                check_real_bitmap_routes_complete(&r, "real receipt startup");
+            }
             check(r.descriptor_offset != 0u,
                   "real receipt has non-zero descriptor_offset");
             check(r.descriptor_size != 0u,
@@ -1004,14 +1070,26 @@ static void check_real_asset_path(void) {
                                    "real receipt line names semantic role");
                 check_str_contains(line, "semantic_name=",
                                    "real receipt line names semantic status");
-                check_str_contains(line, "bitmap_real_routes=1",
-                                   "real receipt line names real bitmap route completion");
-                check_str_contains(line, "bitmap_real_mask=0xf",
-                                   "real receipt line names complete bitmap route mask");
-                check_str_contains(line, "bitmap_fallback_mask=0x0",
-                                   "real receipt line clears bitmap fallback mask");
-                check_str_contains(line, "bitmap_fallback=0",
-                                   "real receipt line suppresses bitmap fallback");
+                if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_ISO) == 0 &&
+                    r.descriptor_offset == 0x5b2406u) {
+                    check_str_contains(line, "bitmap_real_routes=0",
+                                       "retail ISO line keeps bitmap completion closed");
+                    check_str_contains(line, "bitmap_real_mask=0x3",
+                                       "retail ISO line names observed bitmap routes");
+                    check_str_contains(line, "bitmap_fallback_mask=0xc",
+                                       "retail ISO line names missing bitmap routes");
+                    check_str_contains(line, "bitmap_fallback=1",
+                                       "retail ISO line keeps bitmap fallback enabled");
+                } else {
+                    check_str_contains(line, "bitmap_real_routes=1",
+                                       "real receipt line names real bitmap route completion");
+                    check_str_contains(line, "bitmap_real_mask=0xf",
+                                       "real receipt line names complete bitmap route mask");
+                    check_str_contains(line, "bitmap_fallback_mask=0x0",
+                                       "real receipt line clears bitmap fallback mask");
+                    check_str_contains(line, "bitmap_fallback=0",
+                                       "real receipt line suppresses bitmap fallback");
+                }
                 check_str_contains(line, "bitmap_atlas_routes=4",
                                    "real receipt line names bitmap atlas route count");
             }
@@ -1105,8 +1183,13 @@ static void check_real_asset_path(void) {
                       "US ISO descriptor byte-before is RTS");
                 check(r.descriptor_byte_before_is_rts == 1,
                       "US ISO descriptor RTS marker is recognized");
-                check(r.descriptor_all_zero_after == 1,
-                      "US ISO descriptor window is zero after descriptor");
+                if (r.descriptor_offset == 0x5b2406u) {
+                    check(r.descriptor_all_zero_after == 0,
+                          "retail US ISO keeps post-descriptor bytes as opaque data");
+                } else {
+                    check(r.descriptor_all_zero_after == 1,
+                          "US ISO descriptor window is zero after descriptor");
+                }
             }
         }
         if (strcmp(c->expected_md5, THERON_TRACK02_MD5_JP_BIN) == 0 ||
