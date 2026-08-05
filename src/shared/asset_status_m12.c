@@ -288,7 +288,13 @@ static const M12_VersionSpec g_csbVersions[] = {
     {"csb", "st20-21-en", "Atari ST 2.0/2.1 English", "ST 2.1 EN", g_csbGraphicsNames, "ebf6a57af3f27782e358c0490bfd2f2e", M12_ARCH_ATARI_ST},
     {"csb", "st20-21-hd-en", "Atari ST 2.x English hard-disk", "ST 2.x HD", g_csbGraphicsNames, "e0ce7ac5160ca5540e90cf09ab9fad49", M12_ARCH_ATARI_ST},
     {"csb", "amiga35-en", "Amiga 3.5 English", "Amiga 3.5 EN", g_csbGraphicsNames, "291e1bc6803e3dc4b974c60117ca5d68", M12_ARCH_AMIGA},
-    {"csb", "amiga35-multi", "Amiga 3.5 Multilanguage", "Amiga 3.5 ML", g_csbGraphicsNames, "cefaddfdf5651df2c91f61b5611a8362", M12_ARCH_AMIGA}
+    {"csb", "amiga35-multi", "Amiga 3.5 Multilanguage", "Amiga 3.5 ML", g_csbGraphicsNames, "cefaddfdf5651df2c91f61b5611a8362", M12_ARCH_AMIGA},
+    /* Victor's original FM Towns CD has both CDATA (English) and CJDATA
+     * (Japanese).  These MD5 values are from the files in the original
+     * raw-2352 image, not filenames or repacked data.  Greatstone's FM
+     * Towns extraction provides the corresponding asset inventory. */
+    {"csb", "fmtowns-en", "FM Towns English", "FMT EN", g_csbGraphicsNames, "405b757038eea3c263e60f240854d6de", M12_ARCH_FM_TOWNS},
+    {"csb", "fmtowns-ja", "FM Towns Japanese", "FMT JP", g_csbGraphicsNames, "761d6fc588b31aeaaa9caf3725e111b9", M12_ARCH_FM_TOWNS}
 };
 
 static const M12_VersionSpec g_dm2Versions[] = {
@@ -358,7 +364,10 @@ static const M12_RequiredFileSpec g_requiredFiles[] = {
     {"dm1", "graphics", "GRAPHICS.DAT", NULL, 1},
     {"dm1", "dungeon", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6", 0},
     {"csb", "graphics", "GRAPHICS.DAT", NULL, 1},
-    {"csb", "dungeon", "DUNGEON.DAT", "6695d2acebce49f95db1d8f3a5c733de", 0},
+    /* The three hashes are PC/Atari/Amiga, FM Towns CDATA and FM Towns
+     * CJDATA respectively.  A required-file MD5 can be a semicolon-separated
+     * alternative set; exactly one verified member satisfies this role. */
+    {"csb", "dungeon", "DUNGEON.DAT", "6695d2acebce49f95db1d8f3a5c733de;83c56cf1b779e7460a55c9299ebeb04b;7ca51c17ef8bd542ca5f0273672ec1a5", 0},
     {"dm2", "graphics", "GRAPHICS.DAT", NULL, 1},
     {"dm2", "dungeon", "DUNGEON.DAT", "6caccd7875009e82fe2e28e7f6d6adc0", 0},
     {"nexus", "data", "DM.BIN / Saturn data marker", NULL, 1},
@@ -2380,6 +2389,45 @@ static int m12_required_hash_matches_fast_candidates(
     return 0;
 }
 
+/* A required role can have platform-specific original payloads.  Keep the
+ * catalog compact by accepting a semicolon-separated set of verified MD5
+ * values, while still returning the exact member that was found. */
+static int m12_required_hash_matches_alternatives(
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount,
+    const M12_RequiredFileSpec* spec,
+    const char* alternatives,
+    char matchedPath[M12_ASSET_DATA_DIR_CAPACITY],
+    char matchedHash[M12_ASSET_MD5_CAPACITY],
+    int looseFilesOnly) {
+    const char* cursor = alternatives;
+    if (!alternatives || alternatives[0] == '\0') {
+        return 0;
+    }
+    while (*cursor != '\0') {
+        const char* end = strchr(cursor, ';');
+        size_t length = end ? (size_t)(end - cursor) : strlen(cursor);
+        char md5[M12_ASSET_MD5_CAPACITY];
+        if (length > 0U && length < sizeof(md5)) {
+            memcpy(md5, cursor, length);
+            md5[length] = '\0';
+            if (m12_required_hash_matches_fast_candidates(roots, rootCount,
+                                                          spec, md5,
+                                                          matchedPath, matchedHash) ||
+                m12_required_hash_matches_any_root(roots, rootCount, md5,
+                                                   matchedPath, matchedHash,
+                                                   looseFilesOnly)) {
+                return 1;
+            }
+        }
+        if (!end) {
+            break;
+        }
+        cursor = end + 1;
+    }
+    return 0;
+}
+
 static int m12_fill_required_files(M12_AssetStatus* status,
                                    int gameIndex,
                                    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
@@ -2441,19 +2489,10 @@ static int m12_fill_required_files(M12_AssetStatus* status,
                 m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), version->matchedPath);
                 m12_copy_string(fileStatus->matchedHash, sizeof(fileStatus->matchedHash), version->matchedMd5);
             }
-        } else if (m12_required_hash_matches_fast_candidates(
-                       roots,
-                       rootCount,
-                       spec,
-                       requiredMd5,
-                       fileStatus->matchedPath,
-                       fileStatus->matchedHash) ||
-                   m12_required_hash_matches_any_root(roots,
-                                                      rootCount,
-                                                      requiredMd5,
-                                                      fileStatus->matchedPath,
-                                                      fileStatus->matchedHash,
-                                                      looseFilesOnly)) {
+        } else if (m12_required_hash_matches_alternatives(
+                       roots, rootCount, spec, requiredMd5,
+                       fileStatus->matchedPath, fileStatus->matchedHash,
+                       looseFilesOnly)) {
             fileStatus->matched = 1;
         }
         if (fileStatus->required && !fileStatus->matched) {

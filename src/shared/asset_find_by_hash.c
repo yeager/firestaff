@@ -1435,14 +1435,9 @@ static int scan_iso_dir_by_md5_list(FILE *fp, int raw2352, uint32_t dirLba,
     uint32_t sectors = (dirSize + ASSET_ISO_SECTOR_SIZE - 1U) / ASSET_ISO_SECTOR_SIZE;
     uint32_t s;
     int foundCount = 0;
-    /* Duplicate-hash tiebreak buffers (mirrors the ZIP
-     * is_better_zip_entry tiebreak in scan_zip_by_md5_list). Sized to
-     * ASSET_PATH_MAX / 128 worst-case bestNames = 4, which is well
-     * above any realistic md5Count for a single game-data ISO (CSB,
-     * DM2, Nexus, Theron all use <=4 unique file MD5s per ISO).
-     * Caller-supplied md5Count larger than this falls back to
-     * first-match-wins for those extra slots (conservative). */
-    enum { ASSET_ISO_LIST_BEST_MAX = 4 };
+    /* The old four-slot bound predates CSB's English and Japanese FM Towns
+     * profiles and skipped their MD5 slots during one-pass ISO scans. */
+    enum { ASSET_ISO_LIST_BEST_MAX = 16 };
     char bestNames[ASSET_ISO_LIST_BEST_MAX][128];
     int hasBest[ASSET_ISO_LIST_BEST_MAX];
     int i;
