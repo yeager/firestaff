@@ -40,8 +40,10 @@
   source-bound lifecycle/presentation path with a structural fail-closed seam.
   Reconnect the real Track 02 level handoff only after the authenticated
   tile/material/UI banks and square mapping are decoded.
-  CUE parsing now rejects trailing tokens and malformed MSF fields before
-  media/hash intake. Keep BIN/CUE/ISO receipt normalization and later
+  CUE parsing now accepts the unquoted `FILE TQUS02.iso BINARY` form used by
+  the supplied real CUE sheets while still rejecting trailing tokens and
+  malformed MSF fields before media/hash intake. Keep BIN/CUE/ISO receipt
+  normalization and later
   object/level records on the same verified-media path.
 
   Real Track 02 teleporter records now retain their packed level/y/x target

@@ -17,6 +17,12 @@
   89,060-byte canonical identity remains mandatory for PRS3/VDP1 capture;
   no decoder or renderer promotion was widened.
 
+- ✅ 2026-08-05 Theron real CUE intake: Track 02 CUE resolution now accepts
+  both quoted and unquoted `FILE ... BINARY` declarations, including the
+  unquoted MODE1/2048 form used by the supplied US/JP sheets. Strict track,
+  INDEX 01, duplicate-index and trailing-token rejection remains intact;
+  focused CUE layout and resolver tests pass.
+
 - ✅ 2026-08-05 DM2 HMP false-playback removal: a bounded structural read of
   original `HMIMIDIP013195` bytes can no longer mark the stream schedulable or
   hand its guessed event walk to the MIDI backend. The 29 real GDAT HMP

@@ -32,6 +32,7 @@ int main(void)
     char cue_path[320];
     char iso_path[320];
     char bin_path[320];
+    char plain_iso_path[320];
     char resolved[THERON_TRACK02_MOUNT_PATH_CAPACITY];
 
     snprintf(root, sizeof(root), "firestaff-theron-cue-%ld",
@@ -39,9 +40,20 @@ int main(void)
     snprintf(cue_path, sizeof(cue_path), "%s/layout.cue", root);
     snprintf(iso_path, sizeof(iso_path), "%s/Track 02.iso", root);
     snprintf(bin_path, sizeof(bin_path), "%s/Track 02.bin", root);
+    snprintf(plain_iso_path, sizeof(plain_iso_path), "%s/track02.iso", root);
     if (THERON_MKDIR(root) != 0 || !write_file(iso_path, "x") ||
-        !write_file(bin_path, "x")) {
+        !write_file(bin_path, "x") || !write_file(plain_iso_path, "x")) {
         fputs("FAIL: CUE test setup\n", stderr);
+        return 1;
+    }
+
+    if (!write_file(cue_path,
+                    "FILE track02.iso BINARY\n"
+                    "  TRACK 02 MODE1/2048\n"
+                    "    INDEX 01 00:00:00\n") ||
+        theron_v1_track02_resolve_media_path(cue_path, resolved) !=
+            THERON_TRACK02_SIGNAL_OK || strcmp(resolved, plain_iso_path) != 0) {
+        fputs("FAIL: unquoted MODE1/2048 CUE did not resolve\n", stderr);
         return 1;
     }
 
@@ -114,6 +126,7 @@ int main(void)
     remove(cue_path);
     remove(iso_path);
     remove(bin_path);
+    remove(plain_iso_path);
     rmdir(root);
     puts("theron Track 02 CUE layout passed");
     return 0;

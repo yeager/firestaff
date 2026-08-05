@@ -205,7 +205,8 @@ Theron_Track02Variant theron_v1_track02_variant_for_md5(const char *md5_hex);
 /* Resolve an operator-supplied Track 02 path to the payload that the existing
  * hash-gated decoders consume.  A plain BIN/ISO path is returned unchanged.
  * A CUE path is accepted only when it declares exactly one `TRACK 02 MODE1/2352`
- * entry backed by a preceding `FILE "..." BINARY` declaration.  The returned
+ * or `MODE1/2048` entry backed by a preceding quoted or unquoted
+ * `FILE ... BINARY` declaration. The returned
  * payload must be readable.  This is media mounting only: it does not inspect
  * or decode the payload, and callers must still hash-verify it before use. */
 Theron_Track02SignalStatus theron_v1_track02_resolve_media_path(

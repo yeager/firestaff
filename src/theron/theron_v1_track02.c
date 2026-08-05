@@ -312,10 +312,18 @@ static int tqr_cue_file_line(const char *line, char *out_name, size_t out_cap) {
     if (!p || !tqr_ascii_starts_ci(p, "FILE") ||
         (p[4] != ' ' && p[4] != '\t')) return 0;
     p = tqr_skip_space(p + 4u);
-    if (*p != '"') return 0;
-    ++p;
-    end = strchr(p, '"');
-    if (!end || end == p) return 0;
+    if (*p == '"') {
+        ++p;
+        end = strchr(p, '"');
+        if (!end || end == p) return 0;
+    } else {
+        end = p;
+        while (*end && *end != ' ' && *end != '\t' &&
+               *end != '\r' && *end != '\n') {
+            ++end;
+        }
+        if (end == p) return 0;
+    }
     len = (size_t)(end - p);
     if (len >= out_cap) return 0;
     memcpy(out_name, p, len);
