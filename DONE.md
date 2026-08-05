@@ -49124,3 +49124,17 @@ in `TODO.md` and cannot be satisfied with substitute art.
   remain unavailable instead of selecting substitute pixels. The focused
   `test_dm1_v22_verification` passes with source-index assertions. Tracked as
   `DM1-ORIGINAL-REPLACE-015`.
+
+# ✅ 2026-08-06 DM2 source-door RAW4 fallback removal
+
+`dm2_v1_viewport_build_door_render_plan()` no longer uses the old compact,
+hard-coded door panel or button rectangles when a source-scheduled G1/GDAT
+scene cannot resolve its selected `INTERFACE_GENERAL/0/RAW4/0` owner. It
+removes that door from the plan instead, matching SKProject
+`DM2_DRAW_DOOR`/`DM2_DRAW_DOOR_FRAMES` rather than presenting a guessed
+position. Non-source diagnostics retain the compatibility geometry. The
+real-data door-overlay test now mounts the original asset loader so its
+source plan uses the actual RAW4 table. Verification: source-owner absence
+gate PASS; PC English RAW4 placement test PASS; canonical GDAT door overlay
+plan PASS. Source: `SKWINSPX/src/v4/c_gui_vp.cpp::DM2_DRAW_DOOR` and
+`DM2_DRAW_DOOR_FRAMES`.

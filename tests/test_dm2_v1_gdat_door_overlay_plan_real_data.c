@@ -244,6 +244,7 @@ int main(void)
         viewport.squares[DM2_SQ_D0C].door_gfx_admitted = 1;
         dm2_v1_viewport_set_source_materials_required(&viewport, 1);
         bind_scene_control(&viewport);
+        dm2_v1_viewport_set_asset_loader(&viewport, &loader);
         dm2_v1_viewport_set_asset_provider(&viewport, static_fetch,
                                            &fallback_fetches);
         dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette,
@@ -354,6 +355,7 @@ int main(void)
             viewport.squares[distance_square].door_opening_dir = 0;
             dm2_v1_viewport_set_source_materials_required(&viewport, 1);
             bind_scene_control(&viewport);
+            dm2_v1_viewport_set_asset_loader(&viewport, &loader);
             dm2_v1_viewport_set_asset_provider(
                 &viewport, static_fetch, &fallback_fetches);
             dm2_v1_viewport_set_asset_palette_provider(
@@ -431,6 +433,7 @@ int main(void)
     viewport.squares[DM2_SQ_D3C].door_open_pct = 50;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     bind_scene_control(&viewport);
+    dm2_v1_viewport_set_asset_loader(&viewport, &loader);
     dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
     dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
     dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &d3_plan);
@@ -460,6 +463,7 @@ int main(void)
     viewport.squares[DM2_SQ_D3C].door_open_pct = 50;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     bind_scene_control(&viewport);
+    dm2_v1_viewport_set_asset_loader(&viewport, &loader);
     dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
     dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
     dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &d3_plan);
@@ -488,6 +492,7 @@ int main(void)
     viewport.squares[DM2_SQ_D0C].door_button = 1;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     bind_scene_control(&viewport);
+    dm2_v1_viewport_set_asset_loader(&viewport, &loader);
     dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
     dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
     dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &material_plan);
@@ -516,6 +521,7 @@ int main(void)
     viewport.squares[DM2_SQ_D0C].door_button = 1;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     bind_scene_control(&viewport);
+    dm2_v1_viewport_set_asset_loader(&viewport, &loader);
     dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
     dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
     dm2_v1_viewport_set_gdat_scene_movement_active(&viewport, 1);
@@ -537,6 +543,7 @@ int main(void)
     viewport.squares[DM2_SQ_D0C].door_button = 1;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     bind_scene_control(&viewport);
+    dm2_v1_viewport_set_asset_loader(&viewport, &loader);
     dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
     dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
     dm2_v1_viewport_set_gdat_scene_movement_active(&viewport, 1);
@@ -567,6 +574,7 @@ int main(void)
     viewport.squares[DM2_SQ_D0C].door_button = 1;
     dm2_v1_viewport_set_source_materials_required(&viewport, 1);
     bind_scene_control(&viewport);
+    dm2_v1_viewport_set_asset_loader(&viewport, &loader);
     dm2_v1_viewport_set_asset_provider(&viewport, static_fetch, &fallback_fetches);
     dm2_v1_viewport_set_asset_palette_provider(&viewport, static_palette, NULL);
     dm2_v1_viewport_set_gdat_door_overlay_material_plan(&viewport, &material_plan);

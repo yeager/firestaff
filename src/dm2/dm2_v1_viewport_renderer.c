@@ -3778,11 +3778,19 @@ int dm2_v1_viewport_build_door_render_plan(
          * resolves the panel from its GDAT owner.  It has no generated-colour
          * substitute, so an unresolved panel is removed from the plan below. */
         if (!dm2_v1_viewport_door_panel_rect_for_square_from_source(
-                s, square, row->panel_gdat_index, &panel_rect) &&
-            !dm2_v1_viewport_door_panel_rect_for_square(square, &panel_rect)) {
-            memset(row, 0, sizeof(*row));
-            --out_plan->door_count;
-            continue;
+                s, square, row->panel_gdat_index, &panel_rect)) {
+            /* A live source scene has the original RAW4 table and selected
+             * DOORS image.  Do not replace either with the old guessed box
+             * when that source query fails: SKWIN's DRAW_DOOR has no host
+             * geometry fallback.  The compact table is retained only for
+             * diagnostic/non-source consumers. */
+            if (source_scheduler ||
+                !dm2_v1_viewport_door_panel_rect_for_square(square,
+                                                             &panel_rect)) {
+                memset(row, 0, sizeof(*row));
+                --out_plan->door_count;
+                continue;
+            }
         }
         row->panel_rect = panel_rect;
         row->panel_visible_rect =
@@ -3792,9 +3800,17 @@ int dm2_v1_viewport_build_door_render_plan(
         if (vs->door_button || vs->door_wall_button) {
             if (!dm2_v1_viewport_door_button_rect_for_square_from_source(
                     s, square, &row->button_rect)) {
-                (void)dm2_v1_viewport_door_button_rect_for_square(
-                    square,
-                    &row->button_rect);
+                /* Default button placement is likewise a RAW4-owned source
+                 * rectangle.  A source scene with an unresolved table must
+                 * suppress the entire door rather than paint it at a guessed
+                 * position. */
+                if (source_scheduler ||
+                    !dm2_v1_viewport_door_button_rect_for_square(
+                        square, &row->button_rect)) {
+                    memset(row, 0, sizeof(*row));
+                    --out_plan->door_count;
+                    continue;
+                }
             }
             if (vs->door_button) {
                 row->button_gdat_index =
