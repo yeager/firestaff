@@ -25289,8 +25289,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   icon resolver now matches the PC34 ReDMCSB bit layout for weapon charge,
   torch charge and scroll Closed state. Pickup now selects the rendered pile
   top and enforces F0302/G0038 AllowedSlots before moving an object into a
-  hand, pouch or backpack; real Mac pickup/placement capture is still
-  required.
+  hand, pouch or backpack. Invalid decoded subtypes now fail closed instead
+  of silently rendering subtype-0 artwork; real Mac pickup/placement capture
+  is still required.
 - [ ] DM1-HOC-OBJECTS-003 Capture the live held-object cursor on the host window
   after pickup and during movement. The source framebuffer now invalidates on
   pointer motion and hides the host arrow while G4055 is occupied; close only

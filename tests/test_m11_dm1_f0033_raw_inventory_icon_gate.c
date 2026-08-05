@@ -26,7 +26,9 @@ int main(void)
     M11_GameViewState state;
     struct DungeonThings_Compat things;
     struct DungeonWeapon_Compat decodedWeapon;
-    unsigned char rawWeapon[4] = { 0, 0, 2, 0x8au };
+    /* PC34 torch subtype 2, lit, ChargeCount 4: raw byte 3 packs
+     * ChargeCount in bits 2..5 and Lit in bit 7. */
+    unsigned char rawWeapon[4] = { 0, 0, 2, 0x90u };
     unsigned short torch = make_thing(THING_TYPE_WEAPON, 0);
 
     memset(&state, 0, sizeof(state));

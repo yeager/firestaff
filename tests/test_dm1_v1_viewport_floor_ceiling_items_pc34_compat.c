@@ -210,6 +210,13 @@ static void test_item_sprite_metadata_ownership(void)
     expect_int("item.sprite.container0", (int)dm1_item_sprite_index(9, 0), 498,
                "M612 + G0209 FirstNativeBitmapRelativeIndex");
 
+    expect_int("item.aspect.invalid.weapon", dm1_item_aspect_index(5, 46), -1,
+               "invalid weapon subtype fails closed instead of becoming weapon 0");
+    expect_int("item.aspect.invalid.scroll", dm1_item_aspect_index(7, 1), -1,
+               "scroll has no nonzero subtype in PC34");
+    expect_int("item.aspect.invalid.junk", dm1_item_aspect_index(10, 53), -1,
+               "invalid junk subtype fails closed instead of drawing junk 0");
+
     expect_int("item.aspect.invalid", dm1_item_aspect_index(1, 0), -1,
                "non-object THING type has no F0115 item sprite");
     expect_int("item.sprite.invalid", (int)dm1_item_sprite_index(1, 0), 0,

@@ -57,29 +57,33 @@ static const unsigned char kObjectAspectFirstNative[85] = {
 
 int dm1_item_aspect_index(int thingType, int subtype) {
     int objectInfoIndex;
-    if (subtype < 0) subtype = 0;
+    /* ReDMCSB F7019 indexes G0237 with the decoded Thing subtype. An
+     * invalid subtype is not object 0: accepting it as subtype 0 can make
+     * malformed/stale HoC Things render as an unrelated junk icon. */
+    if (subtype < 0) return -1;
     switch (thingType) {
         case THING_TYPE_WEAPON:
-            if (subtype > 45) subtype = 0;
+            if (subtype > 45) return -1;
             objectInfoIndex = 23 + subtype;
             break;
         case THING_TYPE_ARMOUR:
-            if (subtype > 57) subtype = 0;
+            if (subtype > 57) return -1;
             objectInfoIndex = 69 + subtype;
             break;
         case THING_TYPE_SCROLL:
+            if (subtype != 0) return -1;
             objectInfoIndex = 0;
             break;
         case THING_TYPE_POTION:
-            if (subtype > 20) subtype = 0;
+            if (subtype > 20) return -1;
             objectInfoIndex = 2 + subtype;
             break;
         case THING_TYPE_CONTAINER:
-            if (subtype > 0) subtype = 0;
+            if (subtype > 0) return -1;
             objectInfoIndex = 1 + subtype;
             break;
         case THING_TYPE_JUNK:
-            if (subtype > 52) subtype = 0;
+            if (subtype > 52) return -1;
             objectInfoIndex = 127 + subtype;
             break;
         default:
