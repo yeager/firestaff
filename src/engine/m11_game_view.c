@@ -29543,8 +29543,13 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
 
     switch (cell->elementType) {
         case DUNGEON_ELEMENT_DOOR:
-            /* Try real door frame graphics first */
-            if (g_drawState &&
+            /* ReDMCSB F0111/F0128 owns every authenticated DM1 door
+             * panel/frame pass, including depth, state and orientation.
+             * The generic face pass must not scale a frame-strip over the
+             * whole face before those source passes run; doing so produces
+             * duplicate/misaligned doors and can hide the correct panel. */
+            if (!m11_dm1_authenticated_viewport_source_active() &&
+                g_drawState &&
                 m11_draw_door_frame_asset(g_drawState, framebuffer,
                                           framebufferWidth, framebufferHeight,
                                           rect, depthIndex)) {
@@ -29582,8 +29587,11 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
             }
             break;
         case DUNGEON_ELEMENT_STAIRS:
-            /* Try real stair graphics first */
-            if (g_drawState) {
+            /* ReDMCSB F0104/F0128 owns the authenticated stairs material
+             * pass.  Do not stretch a generic front bitmap here before the
+             * source zone/orientation pass has selected the exact D/L/R
+             * record. */
+            if (!m11_dm1_authenticated_viewport_source_active() && g_drawState) {
                 int stairUp = (cell->square & 0x04) ? 1 : 0; /* ReDMCSB DEFS.H MASK0x0004_STAIRS_UP */
                 if (m11_draw_stairs_asset(g_drawState, framebuffer,
                                           framebufferWidth, framebufferHeight,

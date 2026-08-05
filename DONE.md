@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 DM1 generic door/stair render suppression: authenticated
+  PC34 sessions no longer scale a generic frame/stair bitmap across the wall
+  face before ReDMCSB F0111/F0104 selects the source-owned depth, orientation,
+  state and zone records. This prevents the early pass from duplicating or
+  obscuring the correct HoC material; the legacy primitive path remains
+  fixture-only. Verification: Ninja build, 73/73 center-door assertions,
+  99/99 D2C stairs assertions, and the real 14-map/24,416-pose M11 sweep.
+
 - ✅ 2026-08-06 DM1 sensor-message duplicate fix: `EMIT_SENSOR_EFFECT` is
   now telemetry only. The source F0276 movement effect path remains the sole
   renderer for authenticated sensor text, preventing a second white copy of
