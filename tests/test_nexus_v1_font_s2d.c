@@ -1,4 +1,5 @@
 #include "nexus_v1_font_s2d.h"
+#include "nexus_v1_saturn_font.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -88,6 +89,24 @@ static int test_font256(void) {
             return 1;
         }
         printf("  PASS DMWeb Character Generator: 242 bounded 8x8 tiles\n");
+        {
+            Nexus_V1_Font font;
+            int character_generator_tiles =
+                (int)((r.character_generator_size - 16U) / 64U);
+            memset(&font, 0, sizeof(font));
+            if (nexus_v1_font_load_from_s2d(&font, data, size, &r) !=
+                    character_generator_tiles ||
+                font.char_count != character_generator_tiles ||
+                nexus_v1_font_get_glyph(&font, character_generator_tiles - 1) == NULL ||
+                nexus_v1_font_get_glyph(&font, character_generator_tiles) != NULL) {
+                printf("  FAIL font exposes only real character-generator tiles\n");
+                nexus_v1_font_free(&font);
+                free(data);
+                return 1;
+            }
+            nexus_v1_font_free(&font);
+            printf("  PASS font exposes only real character-generator tiles\n");
+        }
     }
     {
         uint16_t tilemap_word = 0;

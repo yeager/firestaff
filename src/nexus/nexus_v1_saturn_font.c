@@ -48,21 +48,26 @@ int nexus_v1_font_load_from_s2d(Nexus_V1_Font *font,
 
     memset(font, 0, sizeof(*font));
 
-    /* Use the tile count from the bounded DMWeb decoder. The retail
-     * FONT256.S2D currently reports 242 tiles, but keeping that number here
-     * as a literal would make a different source revision silently consume
-     * invented/zero-filled glyph slots. */
-    tile_count = decoded->tile_count;
-    if (tile_count <= 0 || tile_count > 256) return -1;
-    if (decoded->character_generator_size < 16U + (uint32_t)tile_count * 64U)
+    /* `tile_count` in the DMWeb decoder is the 16x256 page tilemap
+     * capacity, not the number of character-generator tiles. Derive the
+     * latter from its verified region: a 16-byte region prefix followed by
+     * one 64-byte 8bpp tile per actual glyph. Do not expose the nominal
+     * 256-character SCR header as invented/zero-filled glyph slots: the
+     * page/tilemap character-code mapping is still unproven, so callers may
+     * address only character-generator tiles that are actually present. */
+    if (decoded->character_generator_size < 16U ||
+        ((decoded->character_generator_size - 16U) % 64U) != 0U) {
         return -1;
+    }
+    tile_count = (int)((decoded->character_generator_size - 16U) / 64U);
+    if (tile_count <= 0 || tile_count > 256) return -1;
 
-    font->char_count = 256;
+    font->char_count = tile_count;
     font->char_width = 8;
     font->char_height = 8;
     font->bytes_per_pixel = 1;
-    font->bitmap_size = font->char_count * 64;
-    font->bitmap_data = (uint8_t *)calloc(1, (size_t)font->bitmap_size);
+    font->bitmap_size = tile_count * 64;
+    font->bitmap_data = (uint8_t *)malloc((size_t)font->bitmap_size);
     if (!font->bitmap_data) return -1;
 
     for (i = 0; i < tile_count; i++) {

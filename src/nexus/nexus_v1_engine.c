@@ -2878,7 +2878,10 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
                            engine->font.char_count);
                 } else {
                     printf("Nexus font: FONT256.S2D regions admitted; glyph mapping pending\n");
-                    engine->font_loaded = 1;
+                    /* Region admission is not a drawable font. Keep the
+                     * runtime flag clear until the real glyph mapping and
+                     * payload handoff are source-bound. */
+                    engine->font_loaded = 0;
                 }
             }
             free(font_data);

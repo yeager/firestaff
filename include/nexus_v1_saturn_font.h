@@ -5,7 +5,9 @@
 #include "nexus_v1_font_s2d.h"
 
 /* SEGA SATURN SCR — Saturn Screen Resource font format.
- * FONT256.S2D contains 256 character glyphs for Japanese text.
+ * FONT256.S2D declares 256 character codes for Japanese text; the verified
+ * retail character-generator region currently contains 242 actual 8x8 tiles.
+ * The remaining code-to-tile mapping is not implied by the header.
  *
  * On-disk layout (asset-backed, FONT256.S2D, 25,012 bytes):
  *   offset 0x00: "SEGA SATURN SCR\0" (16-byte magic)

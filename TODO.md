@@ -44,9 +44,10 @@
   Structure1F destinations and Saturn explored-state evidence remain needed.
   Production HUD no longer injects fabricated script/fountain/save strings;
   bind these messages only through authenticated DMN text and SLEV consumers.
-  FONT256.S2D loader now binds its real decoder-reported tile count; the
-  remaining text gap is the original Saturn code/attribute-to-screen owner,
-  not another hardcoded glyph count.
+  FONT256.S2D loader now exposes only the 242 real character-generator tiles
+  derived from the verified CG region; it no longer allocates 14 zero-filled
+  glyph placeholders. The remaining text gap is the original Saturn
+  code/attribute-to-screen owner, not another guessed glyph count.
   The legacy public PRS3 API now follows the same DMWeb forward/negative
   window rule as the active decoder; the pinned retail MENU.BPK test decodes
   all 162 PRS3 surfaces as indexed 8bpp; PRS3 mode tags are not host RGB

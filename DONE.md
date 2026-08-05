@@ -1,3 +1,11 @@
+- ✅ 2026-08-05 Nexus FONT256 synthetic-glyph removal: corrected the S2D
+  loader to distinguish DMWeb's 2048-entry page tilemap capacity from the
+  character-generator region. It now derives 242 real 8×8/8-bit tiles from
+  the verified CG span and exposes no zero-filled glyphs for the remaining
+  nominal SCR character slots. Engine `font_loaded` stays clear while the
+  original page/attribute character mapping is still unknown. Real FONT256,
+  font-render, determinism and text-layout regressions pass.
+
 - ✅ 2026-08-05 Nexus raw SFX selector gate: `nexus_sound_play_idx()` no
   longer starts a decoded SAL tone from an unproven integer sample index. The
   API retains MAP/window diagnostics only; production playback remains

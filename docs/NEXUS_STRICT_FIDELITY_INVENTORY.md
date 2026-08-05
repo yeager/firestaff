@@ -28,6 +28,7 @@ pixelavkodning och runtime-handoff måste också vara verifierade.
 |---|---|---|
 | `MENU.BPK` | Finns lokalt och hash-/strukturverifierad; alla 162 PRS3-ytor identifieras som 8-bitars indexdata efter DMWeb-avkodning | PRS3:s prefix-mode är ett internt formatfält, inte hostens bytebredd/färgklass. Placering, CLUT/palettbindning och menysemantik är fortfarande separata gates |
 | `nexus_v1_prs3_decode.c` | DMWeb-reglerna är implementerade; alla 162 retail-ytor i MENU.BPK dekoderar korrekt till deklarerad storlek i real-corpus-testet. Lagrade, icke-PRS3-ytor behåller separat modebaserad bpp-tolkning | Får användas för byteavkodning, men inte som bevis för Saturns palettbindning, VDP1-upload eller skärmplacering |
+| `FONT256.S2D` CG-font | DMWeb:s verifierade CG-region ger 242 verkliga 8×8/8-bit tiles; loadern exponerar nu endast dessa 242 bytefönster och fyller inte längre 14 okända glyphplatser med nollor | SCR:s nominella 256 tecken, page/tilemap-kodning, Shift-JIS-mappning och Saturns textplacering är fortfarande obevisade; ingen produktionsrendering utan dessa källor |
 | Procedurbyggda save/champion-kommandon | Hostlogik och hit-testgeometri finns; M11-executorn lämnar text, fill-/outline-ramar och obevisad placering oritade. FACE laddas endast till en verifieringsreceipt; M11 placerar inga portraitpixlar | Får inte ersätta Saturn-menygrafik |
 | PRS3-fallbackgrafik | Blockerad | Ingen syntetisk ersättningsyta |
 
