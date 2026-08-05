@@ -49188,9 +49188,11 @@ floor, ceiling, title, door and interface images only from the original file.
 Verified against `/Users/bosse/.firestaff/data/dm2/dos_extract/data/graphics.dat`
 (MD5 `25247ede4dabb6a71e5dabdfbcd5907d`): 32/32 passes. Source:
 http://greatstone.free.fr/dm/db_data/dm2_pc10_en/graphics.dat/graphics.dat.html.
-This is an identity/catalogue gate, not a claim that all 4,032 PNGs have
-already received pixel-for-pixel comparison; that remaining audit is tracked
-in `TODO.md` and cannot be satisfied with substitute art.
+This was initially an identity/catalogue gate. The follow-up audit recorded
+below on 2026-08-06 completes the comparison for all 4,031 raster PNGs:
+4,030 are palette-index exact, while raw 2279 is the documented Greatstone
+U4 greyscale-export difference. FNT1 raw 0203 remains metadata rather than
+a raster or a generated-font fallback.
 - ✅ 2026-08-05 DM1 V2.2 source-shape binding: replaced graphic-0 texture
   placeholders in the shape bridge with the authenticated PC-34
   GRAPHICS.DAT records for depth-specific walls, floor, door frame, stairs
