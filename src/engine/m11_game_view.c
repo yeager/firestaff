@@ -44573,38 +44573,21 @@ static void m11_nexus_startup_exec_fill_rect(
     void *userdata,
     const Nexus_V1_StartupDrawCommand *command)
 {
-    M11_NexusStartupDrawContext *context =
-        (M11_NexusStartupDrawContext*)userdata;
-    if (!context || !command) {
-        return;
-    }
-    m11_fill_rect(context->framebuffer,
-                  context->framebufferWidth,
-                  context->framebufferHeight,
-                  command->rect.x,
-                  command->rect.y,
-                  command->rect.w,
-                  command->rect.h,
-                  (unsigned char)command->text_color);
+    /* The startup planner retains hit-test/state geometry, but these
+     * procedural rectangles are not authenticated Saturn MENU.BPK/STABG
+     * surfaces.  Keep the visual executor no-draw until VDP1 placement and
+     * palette ownership are proven by capture. */
+    (void)userdata;
+    (void)command;
 }
 
 static void m11_nexus_startup_exec_outline_rect(
     void *userdata,
     const Nexus_V1_StartupDrawCommand *command)
 {
-    M11_NexusStartupDrawContext *context =
-        (M11_NexusStartupDrawContext*)userdata;
-    if (!context || !command) {
-        return;
-    }
-    m11_draw_rect(context->framebuffer,
-                  context->framebufferWidth,
-                  context->framebufferHeight,
-                  command->rect.x,
-                  command->rect.y,
-                  command->rect.w,
-                  command->rect.h,
-                  (unsigned char)command->text_color);
+    /* Selection frames are likewise layout metadata, not source pixels. */
+    (void)userdata;
+    (void)command;
 }
 
 static void m11_nexus_startup_exec_text(

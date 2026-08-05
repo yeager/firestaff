@@ -25146,6 +25146,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   out-of-range or incomplete MNS/BPK/Structure2 surfaces. The remaining gap is
   still the authenticated Saturn PRS3 pixel/palette and VDP1 placement route;
   no replacement texture or procedural viewport may be added.
+- 🔧 Nexus startup menu pixels: M11 no longer paints the planner's procedural
+  save/champion fill- and outline-rectangles. Bind `MENU.BPK`/`STABG.BIN`
+  surfaces, text glyphs, palette and VDP1 placement from one authenticated
+  Saturn capture before restoring any menu chrome or selection frame.
 - 🔧 Nexus ITEM.IBS gameplay semantics: live ITEM.IBS declarations no longer
   reinterpret carry-location bits as consumable flags, and the old fixed-ID
   DM1 potion/armor/melee routes are blocked for real Nexus data. Bind the

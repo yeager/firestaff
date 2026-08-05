@@ -49405,3 +49405,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   the Saturn creature/category/item dispatcher is proven; explicit generic
   gold-pile storage remains available for a future source-owned producer.
   Added `test_nexus_v1_drops_gate` covering the no-materialization contract.
+
+- ✅ 2026-08-05 Nexus startup menu rectangle placeholder removal: M11 no longer
+  paints the procedural save/champion fill- and outline-rectangles emitted by
+  the host planner. State and hit-test metadata remain available, while menu
+  chrome stays no-draw until `MENU.BPK`/`STABG.BIN` palette and VDP1 placement
+  are authenticated from Saturn capture.
