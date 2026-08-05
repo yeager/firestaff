@@ -1118,6 +1118,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               "hash-verified Structure1A/Structure1F selectors fail closed to bounded face-normal ordinals");
         memset(&active_engine, 0, sizeof(active_engine));
         active_engine.level_loaded = 1;
+        /* The source-scene admission compares the canonical DGN source level
+         * with the engine's current level. Zero is only correct for LEV00. */
         active_engine.game.current_level = level;
         active_engine.current_level = loaded_level;
         active_engine.current_level_dgn_data = data;
@@ -1158,8 +1160,15 @@ static void test_real_dgn_structure1_layout_corpus(void) {
             for (structure1c_cell_x = 0;
                  structure1c_cell_x < active_engine.current_level.width;
                  ++structure1c_cell_x) {
+                /* DMWeb Structure1B uses 0x0FFF for a wall/no-collision
+                 * cell. Only an indexed reference (1..0x0FFE) can resolve to
+                 * a Structure1C record; treating the wall sentinel as an
+                 * active record makes the real retail corpus fail falsely. */
                 if (active_engine.current_level
-                        .collision_refs[structure1c_cell_y][structure1c_cell_x] != 0U) {
+                            .collision_refs[structure1c_cell_y][structure1c_cell_x] != 0U &&
+                    active_engine.current_level
+                            .collision_refs[structure1c_cell_y][structure1c_cell_x] !=
+                        0x0FFFU) {
                     CHECK(nexus_v1_current_level_lookup_structure1c_cell_source(
                               &active_engine, structure1c_cell_x,
                               structure1c_cell_y, &structure1c_cell_source) == 1 &&
