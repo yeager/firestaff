@@ -396,6 +396,8 @@ static const char* const g_originalCandidateNames[] = {
     "FTLCODE",
     "SWITCH.DAT",
     "MINI.DAT",
+    "MINIF.DAT",
+    "MINIG.DAT",
     "CSBGAME.DAT",
     "CSBGRAPH.DAT",
     "CSB.DAT",
@@ -1163,6 +1165,14 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * SWITCH.DAT.  They are optional and never affect the launch gate. */
         "HCSB.DAT", "HINT.FTL", "ANIMATE.DAT", "ANIMATE.SCR", "ANIMATE.FTL",
         "CHAOS.FTL", "FTLCODE", "SWITCH.DAT",
+        /* Greatstone's Amiga 3.1 EN/FR/GE catalog distinguishes the
+         * title-animation bank from the PC C001 route: TITL.DAT contains
+         * its AN/PL/EN/DL sequence, ENDA.DAT carries the end animation, and
+         * KAOS.FTL/SWSH.FTL supply their source palettes and FTL logo media.
+         * Keep these exact package sidecars beside the selected Amiga
+         * GRAPHICS.DAT so a later Amiga presenter cannot fall back to the
+         * incompatible PC title assets. */
+        "TITL.DAT", "ENDA.DAT", "KAOS.FTL", "SWSH.FTL",
         /* DMWeb Saved Game Files: MINI.DAT is the original Atari ST/Amiga
          * CSB campaign save; the Amiga multilingual Utility Disk instead
          * carries its French and German campaigns as MINIF.DAT / MINIG.DAT.

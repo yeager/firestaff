@@ -365,11 +365,15 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     char cachedAnimateModule[512];
     char cachedChaosModule[512];
     char cachedFtlCode[512];
+    char cachedAmigaTitle[512];
+    char cachedAmigaEnd[512];
+    char cachedAmigaKaos[512];
+    char cachedAmigaSwsh[512];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
     const char* runtimeDir;
-    TestZipEntry zipEntries[13];
+    TestZipEntry zipEntries[17];
     M12_AssetStatus status;
 
     memset(csbCacheDir, 0, sizeof(csbCacheDir));
@@ -385,6 +389,10 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     memset(cachedAnimateModule, 0, sizeof(cachedAnimateModule));
     memset(cachedChaosModule, 0, sizeof(cachedChaosModule));
     memset(cachedFtlCode, 0, sizeof(cachedFtlCode));
+    memset(cachedAmigaTitle, 0, sizeof(cachedAmigaTitle));
+    memset(cachedAmigaEnd, 0, sizeof(cachedAmigaEnd));
+    memset(cachedAmigaKaos, 0, sizeof(cachedAmigaKaos));
+    memset(cachedAmigaSwsh, 0, sizeof(cachedAmigaSwsh));
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_graphics.zip"),
               "positive ZIP path should fit");
     check_int(join_path(isoPath, sizeof(isoPath), root, "csb_required.iso"),
@@ -416,6 +424,14 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     zipEntries[11].payload = kCsbChaosModulePayload;
     zipEntries[12].name = "archive/FTLCODE";
     zipEntries[12].payload = kCsbFtlCodePayload;
+    zipEntries[13].name = "archive/TITL.DAT";
+    zipEntries[13].payload = "original Amiga CSB TITL animation bank";
+    zipEntries[14].name = "archive/ENDA.DAT";
+    zipEntries[14].payload = "original Amiga CSB ENDA animation bank";
+    zipEntries[15].name = "archive/KAOS.FTL";
+    zipEntries[15].payload = "original Amiga CSB KAOS title palette";
+    zipEntries[16].name = "archive/SWSH.FTL";
+    zipEntries[16].payload = "original Amiga CSB SWSH logo media";
     check_int(write_stored_zip_entries(zipPath,
                                        zipEntries,
                                        sizeof(zipEntries) / sizeof(zipEntries[0])),
@@ -505,7 +521,15 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                   FSP_JoinPath(cachedChaosModule, sizeof(cachedChaosModule),
                                csbCacheDir, "CHAOS.FTL") &&
                   FSP_JoinPath(cachedFtlCode, sizeof(cachedFtlCode),
-                               csbCacheDir, "FTLCODE"),
+                               csbCacheDir, "FTLCODE") &&
+                  FSP_JoinPath(cachedAmigaTitle, sizeof(cachedAmigaTitle),
+                               csbCacheDir, "TITL.DAT") &&
+                  FSP_JoinPath(cachedAmigaEnd, sizeof(cachedAmigaEnd),
+                               csbCacheDir, "ENDA.DAT") &&
+                  FSP_JoinPath(cachedAmigaKaos, sizeof(cachedAmigaKaos),
+                               csbCacheDir, "KAOS.FTL") &&
+                  FSP_JoinPath(cachedAmigaSwsh, sizeof(cachedAmigaSwsh),
+                               csbCacheDir, "SWSH.FTL"),
               "CSB optional startup cache paths should resolve");
     check_int(file_matches_payload(cachedBonusDungeon, kCsbBonusDungeonPayload),
               "archive-backed CSB bonus dungeon should be materialized next to GRAPHICS.DAT");
@@ -537,6 +561,18 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
               "archive-backed CSB CHAOS.FTL startup module should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedFtlCode, kCsbFtlCodePayload),
               "archive-backed CSB FTLCODE runtime module should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedAmigaTitle,
+                                   "original Amiga CSB TITL animation bank"),
+              "archive-backed Amiga CSB TITL.DAT title animation should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedAmigaEnd,
+                                   "original Amiga CSB ENDA animation bank"),
+              "archive-backed Amiga CSB ENDA.DAT end animation should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedAmigaKaos,
+                                   "original Amiga CSB KAOS title palette"),
+              "archive-backed Amiga CSB KAOS.FTL title palette should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedAmigaSwsh,
+                                   "original Amiga CSB SWSH logo media"),
+              "archive-backed Amiga CSB SWSH.FTL logo media should be materialized next to GRAPHICS.DAT");
 
     /* Re-scan the same required package without its optional save members.
      * A cache must not retain MINI.DAT/CSBGAME.DAT from an earlier archive:
@@ -559,6 +595,9 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                   "missing archive-backed MINIF.DAT should remove stale cache campaign data");
         check_int(!path_exists(cachedMiniGermanSave),
                   "missing archive-backed MINIG.DAT should remove stale cache campaign data");
+        check_int(!path_exists(cachedAmigaTitle) && !path_exists(cachedAmigaEnd) &&
+                      !path_exists(cachedAmigaKaos) && !path_exists(cachedAmigaSwsh),
+                  "missing archive-backed Amiga title sidecars should remove stale cache media");
     }
 }
 
