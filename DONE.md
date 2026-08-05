@@ -1,3 +1,20 @@
+- ✅ 2026-08-05 Nexus SMAP/LVMP stale-gate correction: the existing
+  source decoder is now documented against the verified DMWeb LVMP layout
+  (80×76 16-bit tilemap, 256-entry BGR555 palette, 8×8 indexed tiles), and
+  its parser rejects mismatched file/section sizes before decoding. The real
+  external corpus test now honors `FIRESTAFF_NEXUS_DATA_DIR` and passes all
+  16 maps with deterministic 640×608 pixel hashes. This proves source
+  decoding only; Saturn VDP2 HUD placement and explored-state writes remain
+  gated pending capture evidence.
+
+- ✅ 2026-08-05 Nexus inventory source gate cleanup: removed the unused
+  historical DM1 item catalog from the production Nexus library. Inventory
+  gameplay tests now bind the verified real `ITEM.IBS` bank from
+  `FIRESTAFF_NEXUS_DATA_DIR` and skip when that source is absent, instead of
+  silently depending on guessed item names/stats. Also corrected equip's
+  item-id derivation to use the source-bound slot identity; no attack,
+  defence, or equippability semantics were inferred.
+
 - ✅ 2026-08-06 Theron retail-US ISO bank profile: the canonical hash-verified
   `TQUS19.iso + TQUS02End.iso` image now admits its three exact descriptor/span
   pairs at `0x5b2406/0x5b4406/0x5b6584` and

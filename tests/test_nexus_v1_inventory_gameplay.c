@@ -1,5 +1,6 @@
 #include "nexus_v1_inventory.h"
 #include "nexus_v1_containers.h"
+#include "nexus_v1_dungeon.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -7,6 +8,40 @@
 
 static int g_fail = 0;
 static int g_count = 0;
+
+static uint8_t *load_item_ibs(int *out_size) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    const char *home = getenv("HOME");
+    char path[512];
+    FILE *fp;
+    long size;
+    uint8_t *data;
+
+    if (data_dir && data_dir[0]) {
+        snprintf(path, sizeof(path), "%s/ITEM.IBS", data_dir);
+    } else if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/ITEM.IBS", home);
+    } else {
+        return NULL;
+    }
+    fp = fopen(path, "rb");
+    if (!fp) return NULL;
+    if (fseek(fp, 0, SEEK_END) != 0) { fclose(fp); return NULL; }
+    size = ftell(fp);
+    if (size <= 0 || fseek(fp, 0, SEEK_SET) != 0) {
+        fclose(fp);
+        return NULL;
+    }
+    data = (uint8_t *)malloc((size_t)size);
+    if (!data || fread(data, 1, (size_t)size, fp) != (size_t)size) {
+        free(data);
+        fclose(fp);
+        return NULL;
+    }
+    fclose(fp);
+    *out_size = (int)size;
+    return data;
+}
 
 static void expect(int cond, const char *msg) {
     g_count++;
@@ -168,6 +203,20 @@ static void test_floor_items(void) {
 }
 
 int main(void) {
+    Nexus_V1_ItemIbsBank bank;
+    uint8_t *item_ibs;
+    int item_ibs_size = 0;
+
+    item_ibs = load_item_ibs(&item_ibs_size);
+    if (!item_ibs ||
+        nexus_v1_item_ibs_parse_verified(item_ibs, item_ibs_size, 1, &bank) != 0) {
+        free(item_ibs);
+        puts("SKIP: verified Nexus ITEM.IBS is required for inventory gameplay");
+        return 77;
+    }
+    nexus_itemdef_bind_ibs_bank(&bank, NEXUS_V1_ITEM_IBS_DECLARATION_COUNT);
+    free(item_ibs);
+
     test_item_pickup_empty_slot();
     test_item_drop();
     test_equip_unequip();

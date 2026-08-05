@@ -1,72 +1,8 @@
 #include "nexus_v1_inventory.h"
 #include "nexus_v1_dungeon.h"
 #include <string.h>
-#include <stdio.h>
-#include <stddef.h>
-
-/* ═══════════════════════════════════════════════════════════════════
- * Historical DM1 item catalog — retained as reference/fixture bytes only.
- * It is not exposed by nexus_itemdef_get() until Saturn-specific item
- * records are source-bound.
- * ═══════════════════════════════════════════════════════════════════ */
-
-/* clang-format off */
-/* Static fallback table — only used when IBS has never been bound.
- * Uses simplified initializers; new IBS fields default to zero. */
-#define SITEM(n, cat, w, a, d, f) \
-    {(n), (cat), 0, 0, (w), (a), (d), (f), {0,0,0}, 0xffff, 0xffff, 0xffff, 0xffff, {0xffff,0xffff,0xffff}, 0}
-const Nexus_ItemDef g_nexus_items[] = {
-    [0]  = SITEM("Falchion",      NEXUS_ITEM_WEAPON,  18, 30,  0, NEXUS_ITEMF_EQUIPPABLE),
-    [1]  = SITEM("Rapier",        NEXUS_ITEM_WEAPON,  14, 24,  4, NEXUS_ITEMF_EQUIPPABLE),
-    [2]  = SITEM("Mace",          NEXUS_ITEM_WEAPON,  30, 32,  0, NEXUS_ITEMF_EQUIPPABLE),
-    [3]  = SITEM("Club",          NEXUS_ITEM_WEAPON,  20, 16,  0, NEXUS_ITEMF_EQUIPPABLE),
-    [4]  = SITEM("Staff",         NEXUS_ITEM_WEAPON,  12, 10,  2, NEXUS_ITEMF_EQUIPPABLE),
-    [5]  = SITEM("Sword",         NEXUS_ITEM_WEAPON,  22, 34,  2, NEXUS_ITEMF_EQUIPPABLE),
-    [6]  = SITEM("Axe",           NEXUS_ITEM_WEAPON,  26, 36,  0, NEXUS_ITEMF_EQUIPPABLE),
-    [7]  = SITEM("Dagger",        NEXUS_ITEM_WEAPON,   6, 14,  0, NEXUS_ITEMF_EQUIPPABLE),
-    [8]  = SITEM("Arrow",         NEXUS_ITEM_WEAPON,   1, 10,  0, NEXUS_ITEMF_STACKABLE),
-    [9]  = SITEM("Slayer",        NEXUS_ITEM_WEAPON,  28, 50,  6, NEXUS_ITEMF_EQUIPPABLE),
-    [10] = SITEM("Vorpal Blade",  NEXUS_ITEM_WEAPON,  20, 48,  4, NEXUS_ITEMF_EQUIPPABLE),
-    [11] = SITEM("Firestaff",     NEXUS_ITEM_WEAPON,  16, 40, 10, NEXUS_ITEMF_EQUIPPABLE),
-    [20] = SITEM("Leather Jerkin",NEXUS_ITEM_ARMOUR,   8,  0,  8, NEXUS_ITEMF_EQUIPPABLE),
-    [21] = SITEM("Mail Aketon",   NEXUS_ITEM_ARMOUR,  24,  0, 14, NEXUS_ITEMF_EQUIPPABLE),
-    [22] = SITEM("Plate Armor",   NEXUS_ITEM_ARMOUR,  40,  0, 22, NEXUS_ITEMF_EQUIPPABLE),
-    [23] = SITEM("Shield",        NEXUS_ITEM_ARMOUR,  16,  0, 12, NEXUS_ITEMF_EQUIPPABLE),
-    [24] = SITEM("Helmet",        NEXUS_ITEM_ARMOUR,  10,  0,  6, NEXUS_ITEMF_EQUIPPABLE),
-    [25] = SITEM("Boots",         NEXUS_ITEM_ARMOUR,   6,  0,  4, NEXUS_ITEMF_EQUIPPABLE),
-    [26] = SITEM("Gauntlets",     NEXUS_ITEM_ARMOUR,   8,  0,  5, NEXUS_ITEMF_EQUIPPABLE),
-    [30] = SITEM("Health Potion", NEXUS_ITEM_POTION,   2,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
-    [31] = SITEM("Mana Potion",   NEXUS_ITEM_POTION,   2,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
-    [32] = SITEM("Stamina Potion",NEXUS_ITEM_POTION,   2,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
-    [33] = SITEM("Antidote",      NEXUS_ITEM_POTION,   2,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
-    [40] = SITEM("Scroll",        NEXUS_ITEM_SCROLL,   1,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
-    [50] = SITEM("Chest",         NEXUS_ITEM_MISC,    10,  0,  0, NEXUS_ITEMF_NO_DROP),
-    [51] = SITEM("Sack",          NEXUS_ITEM_MISC,     2,  0,  0, NEXUS_ITEMF_STACKABLE),
-    [60] = SITEM("Torch",         NEXUS_ITEM_MISC,     6,  8,  0, NEXUS_ITEMF_STACKABLE),
-    [61] = SITEM("Compass",       NEXUS_ITEM_MISC,     2,  0,  0, 0),
-    [62] = SITEM("Rabbit Foot",   NEXUS_ITEM_MISC,     1,  0,  0, 0),
-    [63] = SITEM("Corn",          NEXUS_ITEM_FOOD,     3,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
-    [64] = SITEM("Water Flask",   NEXUS_ITEM_MISC,     4,  0,  0, NEXUS_ITEMF_CONSUMABLE|NEXUS_ITEMF_STACKABLE),
-    [65] = SITEM("Rope",          NEXUS_ITEM_MISC,     8,  0,  0, 0),
-    [66] = SITEM("Key",           NEXUS_ITEM_MISC,     1,  0,  0, NEXUS_ITEMF_KEY),
-    [70] = SITEM("Gold Key",      NEXUS_ITEM_MISC,     1,  0,  0, NEXUS_ITEMF_KEY),
-    [71] = SITEM("Silver Key",    NEXUS_ITEM_MISC,     1,  0,  0, NEXUS_ITEMF_KEY),
-    [72] = SITEM("Skeleton Key",  NEXUS_ITEM_MISC,     1,  0,  0, NEXUS_ITEMF_KEY),
-    [80] = SITEM("Rune of Fire",  NEXUS_ITEM_MISC,     2,  0,  0, 0),
-    [81] = SITEM("Rune of Ice",   NEXUS_ITEM_MISC,     2,  0,  0, 0),
-    [82] = SITEM("Rune of Light", NEXUS_ITEM_MISC,     2,  0,  0, 0),
-    [83] = SITEM("Rune of Dark",  NEXUS_ITEM_MISC,     2,  0,  0, 0),
-    [84] = SITEM("Rune of Earth", NEXUS_ITEM_MISC,     2,  0,  0, 0),
-    [85] = SITEM("Rune of Wind",  NEXUS_ITEM_MISC,     2,  0,  0, 0),
-    [255] = {NULL, NEXUS_ITEM_CAT_MAX, 0, 0, 0, 0, 0, 0, {0,0,0}, 0, 0, 0, 0, {0,0,0}, 0}
-};
-#undef SITEM
-/* clang-format on */
-
-#define ITEM_COUNT ((int)(sizeof(g_nexus_items)/sizeof(g_nexus_items[0])))
 
 static int g_ibs_count;
-static int g_ibs_ever_bound;
 static Nexus_ItemDef g_ibs_defs[NEXUS_V1_ITEM_IBS_DECLARATION_COUNT];
 
 static uint16_t ibs_read_be16(const uint8_t *p) {
@@ -75,14 +11,12 @@ static uint16_t ibs_read_be16(const uint8_t *p) {
 
 void nexus_itemdef_clear_ibs_declarations(void) {
     g_ibs_count = 0;
-    g_ibs_ever_bound = 1;
     memset(g_ibs_defs, 0, sizeof(g_ibs_defs));
 }
 
 void nexus_itemdef_bind_ibs_raw(const uint8_t *data, int count) {
     int i;
     const uint8_t *rec;
-    g_ibs_ever_bound = 1;
     g_ibs_count = (!data || count <= 0) ? 0 :
         (count > NEXUS_V1_ITEM_IBS_DECLARATION_COUNT ?
             NEXUS_V1_ITEM_IBS_DECLARATION_COUNT : count);
@@ -119,7 +53,6 @@ void nexus_itemdef_bind_ibs_declarations(const uint8_t *category,
                                          const uint16_t *action3_string,
                                          int count) {
     int i;
-    g_ibs_ever_bound = 1;
     g_ibs_count = (category && weight && count > 0) ?
         (count > NEXUS_V1_ITEM_IBS_DECLARATION_COUNT ?
             NEXUS_V1_ITEM_IBS_DECLARATION_COUNT : count) : 0;
@@ -142,7 +75,6 @@ void nexus_itemdef_bind_ibs_bank(const void *bank_ptr, int count) {
     const Nexus_V1_ItemIbsBank *bank = (const Nexus_V1_ItemIbsBank *)bank_ptr;
     int i;
     if (!bank || count <= 0) return;
-    g_ibs_ever_bound = 1;
     g_ibs_count = count > NEXUS_V1_ITEM_IBS_DECLARATION_COUNT ?
         NEXUS_V1_ITEM_IBS_DECLARATION_COUNT : count;
     for (i = 0; i < g_ibs_count; ++i) {
@@ -169,17 +101,11 @@ void nexus_itemdef_bind_ibs_bank(const void *bank_ptr, int count) {
 }
 
 int nexus_itemdef_count(void) {
-    /* The table above is retained as a fixture/reference only.  No Saturn
-     * item-definition source has been admitted, so it must not become live
-     * Nexus inventory or combat state. */
     return g_ibs_count;
 }
 
 const Nexus_ItemDef *nexus_itemdef_get(int id) {
     if (id >= 0 && id < g_ibs_count) return &g_ibs_defs[id];
-    /* The historical DM1 catalog is fixture/reference data only.  Returning
-     * it before ITEM.IBS admission would expose guessed names and combat
-     * semantics to live Nexus HUD/mechanics. */
     return NULL;
 }
 
@@ -319,7 +245,9 @@ int nexus_inventory_equip(Nexus_InventorySlot *inv, int slot,
 
     def = nexus_inventory_get(inv, slot);
     if (!def) return -1;
-    item_id = (int)(def - g_nexus_items);
+    /* Definition storage is source-bound and separate from the slot's
+     * identity. Never derive an item id through pointer subtraction. */
+    item_id = inv[slot].item_id;
 
     if (!(def->flags & NEXUS_ITEMF_EQUIPPABLE)) return -1;
 
@@ -330,11 +258,7 @@ int nexus_inventory_equip(Nexus_InventorySlot *inv, int slot,
         old_item = inv[weapon_slot];
         inv[weapon_slot] = inv[slot];
     } else if (def->defense > 0 && def->attack == 0) {
-        /* Armor — map to specific slot */
-        /* Armor — map to specific slot by item ID.
-         * DO NOT use pointer arithmetic (def - g_nexus_items) — use item_id.
-         * Fix: item_id range mapping replaces broken pointer subtraction.
-         * Source: fix. */
+        /* Armor — map to specific slot by item ID. */
         if (item_id >= 20 && item_id <= 22) {
             /* Leather Jerkin, Mail Aketon, Plate Armor → torso */
             target_slot = torso_slot; old_item = inv[torso_slot];

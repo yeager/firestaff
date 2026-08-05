@@ -38,7 +38,9 @@ Creature Models (DMDF format):
 - Textures: embedded VDP1 BITMAP (undocumented)
 - nexus_v1_dmdf_load() scaffolded for header/vertices/faces
 
-Audio (NOT PARSED): SNDLEV00-15.SAL, SLEV00-15.BIN, SMAP00-15.BIN all unknown format.
+Audio/runtime dispatch remains source-gated for SNDLEV00-15.SAL and SLEV00-15.BIN.
+SMAP00-15.BIN is a decoded LVMP tilemap/palette/tileset resource; its Saturn
+VDP2 HUD placement and explored-state writes are not yet authenticated.
 
 ## 3. Editability by File Type
 

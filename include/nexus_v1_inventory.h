@@ -91,10 +91,9 @@ typedef struct {
 } Nexus_CursorItem;
 
 /* ═══════════════════════════════════════════════════════════════════
- * Historical item catalog storage; live Nexus lookup remains source-gated.
- * The shared DM1 encyclopedia is not a substitute for Saturn records.
+ * Live Nexus lookup is source-gated: no item definition exists until a
+ * verified Saturn ITEM.IBS bank has been bound.
  * ═══════════════════════════════════════════════════════════════════ */
-extern const Nexus_ItemDef g_nexus_items[];
 int nexus_itemdef_count(void);
 const Nexus_ItemDef *nexus_itemdef_get(int id);
 /* Bind raw 40-byte ITEM.IBS records (DMWeb format).

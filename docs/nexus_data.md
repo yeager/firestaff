@@ -183,7 +183,7 @@ The task file is mentioned in dungeon/squares docs as:
 | *.MNS | DMDF (big-endian) | 46-88 KB each | 3D creature models | Header + vertices + faces parsed |
 | SNDLEV*.SAL | Binary | 290-460 KB each | Per-level audio bank | NOT PARSED |
 | SLEV*.BIN | Binary | 2-12 KB each | Per-level script | NOT PARSED |
-| SMAP*.BIN | Binary | 17-30 KB each | Minimap data | NOT PARSED |
+| SMAP*.BIN | LVMP binary | 17-30 KB each | 80×76 tilemap + 256-colour BGR555 palette + 8×8 indexed tiles | Parsed to source RGBA; VDP2 placement remains gated |
 | FONT256.S2D | Saturn font binary | ~64 KB | 256-char font (incl. JP) | Parsed (Saturn font loader) |
 | DM.BIN | Binary | ~133 MB | Full disc image data | ISO reader exists |
 | FACE.BIN | Unknown | Unknown | Champion faces? | NOT FOUND in source |

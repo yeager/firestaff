@@ -27,17 +27,26 @@ static int test_synthetic(void) {
     memset(bad, 0, sizeof(bad));
     if (nexus_v1_smap_parse_header(bad, 32, &hdr)) return 1;
     if (nexus_v1_smap_parse_header(NULL, 0, &hdr)) return 1;
+    memcpy(bad, "LVMP", 4);
+    if (nexus_v1_smap_parse_header(bad, 32, &hdr)) return 1;
     printf("  PASS synthetic\n");
     return 0;
 }
 
 static int test_real_decode(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     int fail = 0;
     int level;
 
-    if (!home) { printf("  SKIP real_decode (no HOME)\n"); return 0; }
+    if (!data_dir || !data_dir[0]) {
+        if (!home || !home[0]) {
+            printf("  SKIP real_decode (Nexus data root unavailable)\n");
+            return 0;
+        }
+        data_dir = NULL;
+    }
 
     for (level = 0; level <= 15; ++level) {
         uint8_t *data;
@@ -46,8 +55,12 @@ static int test_real_decode(void) {
         Nexus_V1_SmapDecodeResult result;
         uint32_t *rgba;
 
-        snprintf(path, sizeof(path),
-                 "%s/.firestaff/data/nexus/SMAP%02d.BIN", home, level);
+        if (data_dir) {
+            snprintf(path, sizeof(path), "%s/SMAP%02d.BIN", data_dir, level);
+        } else {
+            snprintf(path, sizeof(path),
+                     "%s/.firestaff/data/nexus/SMAP%02d.BIN", home, level);
+        }
         data = load_file(path, &size);
         if (!data) {
             printf("  SKIP SMAP%02d.BIN (not found)\n", level);

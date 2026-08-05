@@ -19,6 +19,9 @@ static uint32_t bgr555_to_rgba(uint16_t c) {
 
 int nexus_v1_smap_parse_header(const uint8_t *data, int data_size,
                                 Nexus_V1_SmapHeader *out) {
+    uint64_t tilemap_end;
+    uint64_t palette_end;
+    uint64_t tileset_end;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!data || data_size < 0x20) return 0;
@@ -30,11 +33,28 @@ int nexus_v1_smap_parse_header(const uint8_t *data, int data_size,
     out->palette_size = read_be32(data + 20);
     out->tileset_offset = read_be32(data + 24);
     out->tileset_size = read_be32(data + 28);
+    /* DMWeb's LVMP corpus uses one fixed 80x76, 16-bit tilemap and a
+     * 256-entry BGR555 palette. Reject a plausible-looking header that would
+     * make decode walk into an adjacent section as if it were map data. */
+    if (out->file_size != (uint32_t)data_size ||
+        out->tilemap_size != (uint32_t)(NEXUS_SMAP_TILE_WIDTH *
+                                        NEXUS_SMAP_TILE_HEIGHT * 2) ||
+        out->palette_size != (uint32_t)(NEXUS_SMAP_PALETTE_COLORS * 2) ||
+        out->tileset_size == 0U ||
+        out->tileset_size % (NEXUS_SMAP_TILE_SIZE * NEXUS_SMAP_TILE_SIZE) != 0U) {
+        return 0;
+    }
     out->tile_count = (int)(out->tileset_size / (NEXUS_SMAP_TILE_SIZE *
                             NEXUS_SMAP_TILE_SIZE));
-    if ((int)(out->tileset_offset + out->tileset_size) > data_size) return 0;
-    if ((int)(out->palette_offset + out->palette_size) > data_size) return 0;
-    if ((int)(out->tilemap_offset + out->tilemap_size) > data_size) return 0;
+    tilemap_end = (uint64_t)out->tilemap_offset + out->tilemap_size;
+    palette_end = (uint64_t)out->palette_offset + out->palette_size;
+    tileset_end = (uint64_t)out->tileset_offset + out->tileset_size;
+    if (tilemap_end > (uint64_t)data_size ||
+        palette_end > (uint64_t)data_size ||
+        tileset_end > (uint64_t)data_size ||
+        out->tilemap_offset < 0x20U ||
+        out->palette_offset < tilemap_end ||
+        out->tileset_offset < palette_end) return 0;
     out->valid = 1;
     return 1;
 }

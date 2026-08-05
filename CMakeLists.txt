@@ -60,7 +60,10 @@ target_include_directories(test_nexus_v1_inventory_gameplay PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_inventory_gameplay PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_inventory_gameplay COMMAND test_nexus_v1_inventory_gameplay)
-set_tests_properties(nexus_v1_inventory_gameplay PROPERTIES LABELS "nexus;inventory;tier4")
+set_tests_properties(nexus_v1_inventory_gameplay PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;inventory;real-media;tier4")
 
 add_executable(test_nexus_v1_combat
     tests/test_nexus_v1_combat.c)
@@ -37881,7 +37884,9 @@ add_executable(test_nexus_v1_smap_bin tests/test_nexus_v1_smap_bin.c)
 target_include_directories(test_nexus_v1_smap_bin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_smap_bin PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_smap_bin COMMAND test_nexus_v1_smap_bin)
-set_tests_properties(nexus_v1_smap_bin PROPERTIES LABELS "nexus;saturn;automap;skip_safe")
+set_tests_properties(nexus_v1_smap_bin PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "nexus;saturn;automap;real-media;skip_safe")
 add_executable(test_nexus_v1_face_bin tests/test_nexus_v1_face_bin.c)
 target_include_directories(test_nexus_v1_face_bin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_face_bin PRIVATE firestaff_nexus)

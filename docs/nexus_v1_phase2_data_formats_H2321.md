@@ -31,7 +31,7 @@ ReDMCSB (WIP20210206) covers DM1/CSB/DM2 only — **no Saturn/Nexus code exists 
 | # | Format | File(s) | Status |
 |---|--------|---------|--------|
 | 1 | Dungeon | `LEV00-LEV15.DGN` | Grid ✅ · Geometry ❌ |
-| 2 | Map/Minimap | `SMAP00-SMAP15.BIN` | ❌ Unknown |
+| 2 | Map/Minimap | `SMAP00-SMAP15.BIN` | ✅ LVMP decode |
 | 3 | Object | `NEXUS_OBJECT_*` (in DGN) | ✅ Partial |
 | 4 | Text | `FONT256.S2D`, `*.TXT` | ✅ Partial |
 | 5 | Champion | `CHAMPIONS.DAT`, `FACE.BIN` | ✅ Partial |
@@ -170,18 +170,24 @@ for (gy = 0; gy < 32; gy++)
 
 ### 2.2 Format
 
-**Status: COMPLETELY UNKNOWN.** No implementation or binary inspection exists in Firestaff.
+The verified retail corpus has the DMWeb `LVMP` layout:
 
-**Hypotheses:**
-- `SMAP*.BIN` likely stores a 32×32 bitmask (1024 bits = 128 bytes) of explored squares — matching the dungeon grid dimensions.
-- Alternative: packed Run-Length-Encoding of square visibility states.
-- Alternative: per-square visibility flag + icon type (door, trap, teleporter marker) — would explain larger file sizes (17–30 KB vs 128 bytes).
+```
+0x00  4   LVMP signature
+0x04  4   file size
+0x08  4   tilemap offset
+0x0C  4   tilemap size (80×76 big-endian words)
+0x10  4   palette offset
+0x14  4   palette size (256 BGR555 colours)
+0x18  4   tileset offset
+0x1C  4   tileset size (8×8 indexed tiles)
+```
 
-**File size analysis:** 17–30 KB per level. A raw 32×32 visibility grid would be ~1 KB. The 17–30 KB size suggests either:
-- Per-square icon/feature flags (door=1 byte, trap=1 byte, teleporter=1 byte × 1024 = ~3 KB minimum)
-- Additional per-square data (e.g., "seen from north", "seen from east" booleans)
-- Uncompressed 8bpp minimap bitmap (32×32 = 1 KB, too small — likely larger display resolution)
-- Some other encoding not yet reverse-engineered
+Firestaff's bounded decoder renders each source map to 640×608 RGBA, applying
+the tilemap H/V flip bits and the source BGR555 palette. All 16 supplied
+English maps decode with deterministic per-level pixel hashes. This proves the
+resource grammar and pixel conversion, not the original Saturn VDP2 overlay
+placement or explored-state runtime policy; those remain presentation work.
 
 ### 2.3 Variants
 
@@ -204,9 +210,9 @@ typedef struct {
 
 | Item | Status |
 |------|--------|
-| SMAP\*.BIN format | ❌ **UNKNOWN** — no binary inspection |
-| Minimap struct | ❌ **NOT DEFINED** |
-| Minimap rendering | ❌ **NOT IMPLEMENTED** |
+| SMAP\*.BIN format | ✅ **LVMP decoded** — bounded header/tilemap/palette/tileset parser |
+| Minimap struct | ✅ **Nexus_V1_SmapHeader / Nexus_V1_SmapDecodeResult** |
+| Minimap rendering | ✅ **Source decode only** — 640×608 RGBA; Saturn HUD/VDP2 placement remains gated |
 
 ---
 
