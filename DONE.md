@@ -48877,3 +48877,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   verkliga Atari ST-data från `Game,Chaos_Strikes_Back,Atari_ST,Software.7z`
   extraherades till en tillfällig katalog och proben passerade 30/30 genom
   boot, dungeon-handoff, tick, första viewport-frame och cleanup.
+- ✅ 2026-08-05 DM1 movement timing fail-closed: the isolated PC34
+  movement reference no longer assumes a synthetic two-tick default when
+  champion records are unavailable. It now requires the caller to provide
+  the ReDMCSB F0310 party timing result, leaves movement queued when absent,
+  and retains the exact active F0310 formula in the shared timing path.
+  Focused movement and timing tests pass.

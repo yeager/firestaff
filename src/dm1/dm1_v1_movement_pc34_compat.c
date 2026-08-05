@@ -67,7 +67,9 @@ void dm1v1_movement_init(DM1_V1_MovementState *state,
     state->step_timer = 0;               /* G0310_i_DisabledMovementTicks = 0 */
     state->projectile_lockout_timer = 0;  /* G0311_i_ProjectileDisabledMovementTicks = 0 */
     state->projectile_lockout_dir = 0;
-    state->step_cost = 2;               /* default unencumbered cost */
+    /* F0310 is champion-dependent; callers must provide the real party
+     * maximum before movement is allowed. */
+    state->step_cost = 0;
 }
 
 
@@ -358,6 +360,13 @@ int16_t dm1v1_movement_execute_step(DM1_V1_MovementState *state,
                 return 0;
             }
         }
+
+        /* This isolated reference state has no champion records of its own.
+         * Refuse to move until the caller supplies F0310's real result. */
+        if (state->step_cost <= 0) {
+            queue->locked = 0;
+            return 0;
+        }
     }
 
     /* Ref: F0380 ~line 2089: dequeue — advance first_index */
@@ -419,13 +428,9 @@ int16_t dm1v1_movement_execute_step(DM1_V1_MovementState *state,
         state->pos_x = new_x;
         state->pos_y = new_y;
 
-        /* Ref: F0366 ~line 319-340: Compute step duration.
-         * AL1115_ui_Ticks = 1;
-         * for each champion: if alive, AL1115 = MAX(AL1115, F0310_GetMovementTicks(champ))
-         *
-         * F0310_CHAMPION_GetMovementTicks returns ticks based on champion load/stats.
-         * Default unencumbered: ~2 ticks. We use a constant approximation here. */
-        state->step_timer = (state->step_cost > 0) ? state->step_cost : 2;
+        /* Ref: F0366 ~line 319-340. step_cost is the caller's maximum
+         * F0310_CHAMPION_GetMovementTicks result. */
+        state->step_timer = state->step_cost;
 
         /* Ref: F0366 ~line 345-346:
          * G0310_i_DisabledMovementTicks = AL1115_ui_Ticks;
@@ -513,13 +518,13 @@ int dm1v1_movement_is_in_movement(const DM1_V1_MovementState *state)
 /*
  * dm1v1_movement_set_step_cost — Set configurable step duration.
  *
- * Callers should compute this per ReDMCSB CHAMPION.C F0310:
+ * Callers must compute this per ReDMCSB CHAMPION.C F0310:
  *   cost = max(1, max(F0310_GetMovementTicks(champ) for each alive champion))
  * F0310 factors in champion load, stamina, speed boots.
- * Default is 2 (typical unencumbered movement).
+ * A non-positive value clears timing and keeps movement fail-closed.
  */
 void dm1v1_movement_set_step_cost(DM1_V1_MovementState *state, int16_t cost)
 {
     if (!state) return;
-    state->step_cost = (cost > 0) ? cost : 2;
+    state->step_cost = (cost > 0) ? cost : 0;
 }
