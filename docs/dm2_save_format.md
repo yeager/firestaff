@@ -8,14 +8,14 @@ Located alongside `Dungeon.ftl`. On save, `SKSave.dat` is renamed to `.bak` and 
 
 ## Header (42 bytes, `sksave_header_asc`)
 ```
-w0       : version/flags (written as 1 on each save)
-b2[34]   : ASCII null-terminated save name string (max 34 chars)
-w36      : (slot index in ASCII + 0x30, e.g. slot 0 -> 0x30 = '0')
-w38      : magic marker 0xBEEF (valid slot indicator)
-w40      : magic marker 0xDEAD (valid slot indicator)
+w0       : version/flags (PC-DOS corpus: 1)
+b2[34]   : bounded null-terminated ASCII save name
+w36..w40 : opaque in the currently authenticated corpus
 ```
 
-A slot is valid when `w38 == 0xBEEF && w40 == 0xDEAD`.
+The real DOS files do not use Firestaff's former `0xBEEF/0xDEAD` fixture
+markers. Header shape is only a container gate; the raw dungeon and SUPPRESS
+stream must parse before a save is admitted.
 
 ## Save Sections (in order)
 1. **Dungeon header** (`DunHeader`, 44 bytes)
@@ -57,6 +57,6 @@ A slot is valid when `w38 == 0xBEEF && w40 == 0xDEAD`.
 | File | `CHAMP.DAT` per champion + `DUNGEON.DAT` per dungeon | Single `SKSave.dat` with all state |
 | Compression | None (raw records) | SUPPRESS bit-level RLE |
 | Dungeon state | Separate .DAT per level | Fully embedded in save |
-| Header magic | None visible | Magic 0xBEEF/0xDEAD slot markers |
+| Header | None visible | Version/name container; remaining words are opaque |
 | Extra data | None | `STORE_EXTRA_DUNGEON_DATA()` hook |
 | Backup | None | `.bak` auto-created on each save |

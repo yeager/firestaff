@@ -4,7 +4,7 @@
  *   1. SUPPRESS codec encode/decode round-trip
  *   2. SKProject bit-mask order and cross-section carry corpus vectors
  *   3. SUPPRESS decode fill=1 vs fill=0 modes
- *   4. Slot header encoding (0xBEEF/0xDEAD magic, name, slot+0x30)
+ *   4. Legacy fixture header compatibility plus authenticated DOS-header detection
  *   5. Slot scan: occupied vs empty detection
  *   6. Save + load round-trip (stateless path)
  *   7. Backup fallback on load
@@ -20,7 +20,7 @@
  *
  * Source refs:
  *   docs/dm2_save_format.md — SUPPRESS codec, slot header layout
- *   docs/dm2_save_slots.md — 10 slots, 0xBEEF/0xDEAD magic
+ *   docs/dm2_save_slots.md — 10 slots and authenticated DOS header shape
  *   docs/dm2_party_state.md — champion 261-byte format
  *   ReDMCSB DEFS.H:680-681 — CurrentHealth/MaximumHealth persisted fields
  *   ReDMCSB CHAMPION.C F0320:1727-1737 — damage reaching <=0 calls kill
@@ -351,7 +351,7 @@ static int test_suppress_fill_mode(void)
 
 static int test_slot_header_encoding(void)
 {
-    printf("  Slot header encoding (magic BEEF/DEAD, name, slot+0x30)...\n");
+    printf("  Legacy fixture header compatibility (name, slot+0x30)...\n");
 
     for (uint8_t s = 0; s < 10; s++) {
         uint8_t hdr[42] = {0};
@@ -561,7 +561,7 @@ static int test_cross_version_diagnostics(void)
 {
     printf("  Cross-version diagnostics...\n");
 
-    /* Valid DM2 slot header */
+    /* Legacy fixture header remains accepted by low-level test helpers. */
     uint8_t dm2_hdr[42] = {0};
     dm2_hdr[38] = 0xEF; dm2_hdr[39] = 0xBE;
     dm2_hdr[40] = 0xAD; dm2_hdr[41] = 0xDE;
@@ -580,6 +580,20 @@ static int test_cross_version_diagnostics(void)
     if (v_dm2 != DM2V1_VERSION_DM2) { printf("    FAIL: DM2=%d\n", v_dm2); return 0; }
     if (v_dm1 != DM2V1_VERSION_DM1) { printf("    FAIL: DM1=%d\n", v_dm1); return 0; }
     if (v_unk != DM2V1_VERSION_UNKNOWN) { printf("    FAIL: Unknown=%d\n", v_unk); return 0; }
+
+    /* Authentic PC-DOS header shape: version 1, printable bounded label,
+     * opaque trailing words. It identifies the container only; session
+     * admission remains gated by the raw dungeon/SUPPRESS parser. */
+    uint8_t dos_hdr[42] = {0};
+    dos_hdr[0] = 1;
+    memcpy(dos_hdr + 2, "MCANINCH 1", 10);
+    dos_hdr[36] = 0xB4; dos_hdr[37] = 0x00;
+    dos_hdr[38] = 0x40; dos_hdr[39] = 0x01;
+    dos_hdr[40] = 0x14; dos_hdr[41] = 0x00;
+    if (dm2_v1_save_detect_game_version(dos_hdr) != DM2V1_VERSION_DM2) {
+        printf("    FAIL: authentic DOS header not classified as DM2\n");
+        return 0;
+    }
 
     /* Null-fill diagnostic */
     uint8_t null_data[64];
@@ -3270,7 +3284,63 @@ static int test_external_original_sksave_corpus_census(void)
 
     original_count = (uint16_t)(corpus.original_envelope_candidate_count +
                                 corpus.original_raw_candidate_count);
-    if (original_count == 0u ||
+    if (original_count == 0u) {
+        unsigned int raw_prefix_count = 0u;
+        unsigned int slot;
+
+        /* The mounted DOS corpus uses lower-case SKSAVE filenames and the
+         * authentic 42-byte header shape. Its later SUPPRESS sections are
+         * not yet completely decoded, but c_savegame.cpp first consumes the
+         * raw dungeon prefix. Verify that real, source-owned boundary here;
+         * do not replace an unparsed session with fixture state. */
+        for (slot = 0u; slot < 4u; ++slot) {
+            const char *suffixes[] = { ".dat", ".bak" };
+            unsigned int suffix;
+            for (suffix = 0u; suffix < 2u; ++suffix) {
+                char path[512];
+                FILE *file;
+                long end;
+                uint8_t *bytes;
+                DM2_V1_OriginalRawDungeonReceipt raw;
+
+                snprintf(path, sizeof(path), "%s/sksave%u%s", corpus_root,
+                         slot, suffixes[suffix]);
+                file = fopen(path, "rb");
+                if (!file) continue;
+                if (fseek(file, 0, SEEK_END) != 0 ||
+                    (end = ftell(file)) <= 42L ||
+                    (size_t)end > DM2_SESSION_MAX_SIZE ||
+                    fseek(file, 0, SEEK_SET) != 0) {
+                    fclose(file);
+                    continue;
+                }
+                bytes = (uint8_t *)malloc((size_t)end);
+                if (!bytes || fread(bytes, 1u, (size_t)end, file) !=
+                                  (size_t)end ||
+                    !dm2_v1_original_raw_sksave_dungeon_receipt(
+                        bytes + 42u, (size_t)end - 42u, &raw) ||
+                    !raw.valid || raw.map_count == 0u ||
+                    raw.suppress_state_offset == 0u) {
+                    free(bytes);
+                    fclose(file);
+                    continue;
+                }
+                free(bytes);
+                fclose(file);
+                ++raw_prefix_count;
+            }
+        }
+        if (raw_prefix_count == 0u) {
+            printf("    FAIL: corpus has neither a complete session nor "
+                   "a source-valid raw dungeon prefix\n");
+            return 0;
+        }
+        printf("    PASS: %u authentic raw dungeon prefixes verified; "
+               "unparsed SUPPRESS sessions remain blocked\n",
+               raw_prefix_count);
+        return 1;
+    }
+    if (
         state.original_candidate_count != original_count ||
         !state.original_candidate_list_complete ||
         state.parsed_candidate_count != original_count ||
@@ -3278,7 +3348,11 @@ static int test_external_original_sksave_corpus_census(void)
         state.entry_count != original_count ||
         state.corpus_hash == 0u) {
         printf("    FAIL: corpus contains no complete original-save census "
-               "(original=%u entries=%u parsed=%u rejected=%u)\n",
+               "(valid=%u importable=%u header-rejected=%u original=%u "
+               "entries=%u parsed=%u rejected=%u)\n",
+               (unsigned)corpus.valid_slot_count,
+               (unsigned)corpus.importable_candidate_count,
+               (unsigned)corpus.import_rejected_candidate_count,
                (unsigned)original_count, (unsigned)state.entry_count,
                (unsigned)state.parsed_candidate_count,
                (unsigned)state.rejected_candidate_count);

@@ -4,20 +4,21 @@
 
 DM2 provides exactly **10 save slots**, numbered 0–9. This is established by:
 - `sksave_header_asc _4976_5250[10]` — array of 10 header structs used during load dialog
-- The slot scanning loop in `_2066_33e7()`: `for (si = 0; si < 10; si++)` checks each slot for the magic marker pair
+- The slot scanning loop in `_2066_33e7()`: `for (si = 0; si < 10; si++)` checks each slot header before it is offered for load
 
 ## Slot Identifiers
 
-Each slot has a **42-byte ASCII header** (`sksave_header_asc`):
+Each slot has a **42-byte header** (`sksave_header_asc`). The mounted PC-DOS
+corpus establishes the version word and bounded printable name; other fields
+must remain opaque until they are tied to the original save routine:
 ```
 w0       : U16 — version flag (set to 1 on each save)
 b2[34]   : U8[34] — null-terminated ASCII save name (max 33 chars + null)
-w36      : U16 — slot index + 0x30 (so slot 0 -> 0x30 = '0' in ASCII)
-w38      : U16 — magic 0xBEEF = valid slot marker
-w40      : U16 — magic 0xDEAD = valid slot marker
 ```
 
-A slot is **valid/occupied** when `w38 == 0xBEEF && w40 == 0xDEAD`. Empty slots have different values.
+A candidate must pass the header shape and then the complete original raw
+dungeon/SUPPRESS parser. Do not treat guessed marker values or a filename as
+proof that a save is valid.
 
 ## Slot Name Entry
 
@@ -27,16 +28,10 @@ Slot names are entered through dialog `0x0d` (the save-name dialog), invoked fro
 
 1. `GAME_SAVE_MENU()` calls `_2066_33e7()` which scans all 10 slots.
 2. If resuming an existing save (`_4976_5bf6 != 0`), it uses the previously loaded slot index (`_4976_525c`).
-3. If starting fresh, it scans for the first empty slot (where the magic markers are not set to `0xBEEF/0xDEAD`). The loop:
-
-```cpp
-for (si = 0; si < 10; si++) {
-    if (_4976_5250[si].w40 == 0xDEAD && _4976_5250[si].w38 == 0xBEEF) {
-        _2066_33c4(_4976_5268, si);  // auto-generate a name for this slot
-        break;
-    }
-}
-```
+3. If starting fresh, it scans for the first empty slot. The exact occupied
+   marker rule is not yet source-locked: the authenticated PC-DOS corpus uses
+   version 1 plus a printable bounded name and non-zero opaque trailing words,
+   not Firestaff's old fixture markers.
 
 4. User can type a custom name or accept the auto-generated one.
 5. If all 10 slots are full and no overwrite is chosen, the dialog returns to slot selection.
@@ -73,5 +68,5 @@ DM2 consolidates everything into one file per slot and provides a structured dia
 ## Edge Cases
 
 - **Empty slot auto-fill**: When the user confirms save without a name, `_2066_33c4` auto-generates a name (e.g. based on dungeon name or timestamp).
-- **Corrupted slot**: Slots with valid magic but corrupted data cause `READ_DUNGEON_STRUCTURE` or `SUPPRESS_READER` to fail, which triggers a dialog error (0x1b = "The game could not be loaded").
+- **Corrupted slot**: Slots with a valid header but corrupted data cause `READ_DUNGEON_STRUCTURE` or `SUPPRESS_READER` to fail, which triggers a dialog error (0x1b = "The game could not be loaded").
 - **Overwrite guard**: `GAME_SAVE_MENU()` checks `glbGameTick` and `_4976_523c` (last save tick) to prevent saving immediately after loading (`+100` tick gate). If the gate is not met, a confirmation dialog (0x0c) is shown first.

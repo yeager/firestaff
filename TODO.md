@@ -14,7 +14,9 @@
   only with authenticated G1/GDAT/SKSave material; missing source owners must
   continue to block the corresponding runtime path. D2RS is now retained only
   as a decoder diagnostic and is rejected by slot, corpus and runtime resume;
-  obtain an authentic original SKSave corpus before expanding resume coverage.
+  the mounted PC-DOS corpus now verifies all eight real raw dungeon prefixes
+  after the authentic 42-byte header, but its later SUPPRESS session sections
+  remain blocked until the complete SKProject read order is recovered.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   structural no-op seam. Reconnect the real Track 02 level handoff only after

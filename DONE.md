@@ -6838,6 +6838,16 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-05 DM2 DOS SKSave header and raw-prefix corpus: added the
+  authenticated PC-DOS header admission rule (version word plus bounded ASCII
+  save name) alongside the legacy low-level fixture compatibility path. The
+  external corpus gate now reads the eight supplied `sksave0..3.dat/.bak`
+  artifacts and verifies each real raw dungeon prefix after its 42-byte
+  header. Later SUPPRESS state remains fail-closed rather than being replaced
+  by a fixture session. Verification:
+  `FIRESTAFF_DM2_SKSAVE_CORPUS=~/.firestaff/data/dm2/dos_extract/data
+  ./build-dm2-main-verify/test_dm2_v1_save_load` passes 24/24.
+
 - ✅ 2026-07-31 DM2 original-save admission: closed the remaining D2RS
   runtime-read path. Public slot/last-session loaders, corpus runtime import
   and runtime restore now admit only original-envelope or raw SKSave

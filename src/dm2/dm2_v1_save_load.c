@@ -3,7 +3,7 @@
  * Source lock:
  *   SKULL.ASM: _2066_#### save/load entry points
  *   docs/dm2_save_format.md — full save format + SUPPRESS codec
- *   docs/dm2_save_slots.md — 10 slots, 0xBEEF/0xDEAD magic
+ *   docs/dm2_save_slots.md — 10 slots and authenticated DOS header shape
  *   docs/dm2_party_state.md — champion squad persistence, masks
  *
  * SUPPRESS is a bit-plane RLE codec used throughout the DM2 save file:
@@ -348,9 +348,30 @@ int dm2_v1_save_suppress_symbol_receipt(
 
 static bool dm2_sl_header_valid(const uint8_t hdr[42])
 {
+    size_t i;
     uint16_t m1 = (uint16_t)hdr[38] | ((uint16_t)hdr[39] << 8);
     uint16_t m2 = (uint16_t)hdr[40] | ((uint16_t)hdr[41] << 8);
-    return m1 == DM2_SLOT_MAGIC_1 && m2 == DM2_SLOT_MAGIC_2;
+
+    /* Historic Firestaff fixtures used this invented marker pair. Retain it
+     * only as a low-level container test shape; production session loaders
+     * subsequently reject their private D2RS payloads. */
+    if (m1 == DM2_SLOT_MAGIC_1 && m2 == DM2_SLOT_MAGIC_2) return true;
+
+    /* Original DOS SKSaveNN files use a 42-byte sksave_header_asc record,
+     * but do not carry the fixture marker pair. The mounted PC corpus has a
+     * little-endian version word 1 and a bounded printable save label at
+     * b2. DM2_READ_SKSAVE_DUNGEON owns the bytes immediately after this
+     * record, so this is only the container gate; the raw dungeon/SUPPRESS
+     * parser remains mandatory before a candidate becomes loadable.
+     *
+     * SKProject: SKULLWIN/c_savegame.cpp::DM2_READ_SKSAVE_DUNGEON,
+     * DM2_GAME_LOAD. */
+    if (hdr[0] != 1u || hdr[1] != 0u) return false;
+    for (i = 2u; i < 36u; ++i) {
+        if (hdr[i] == 0u) return i != 2u;
+        if (hdr[i] < 0x20u || hdr[i] > 0x7eu) return false;
+    }
+    return false;
 }
 
 static FILE *dm2_sl_open_valid_payload(const char *path, int *status)
@@ -369,8 +390,8 @@ static FILE *dm2_sl_open_valid_payload(const char *path, int *status)
     }
 
     /* ReDMCSB LOADSAVE.C F0435 lines 2665-2671 validates the save header
-     * before reading payload parts. DM2's 42-byte slot header uses the
-     * 0xBEEF/0xDEAD pair as the equivalent slot-valid gate. */
+     * before reading payload parts. Keep the authenticated DOS header shape
+     * as a container gate only; a full parser still decides loadability. */
     if (!dm2_sl_header_valid(hdr)) {
         fclose(f);
         if (status) *status = -5;
@@ -1064,9 +1085,7 @@ bool dm2_v1_save_has_valid_slot(const char *save_base, uint8_t slot)
     FILE *f = fopen(path, "rb");
     if (!f) return false;
     uint8_t hdr[42];
-    bool ok = (fread(hdr, 42, 1, f) == 1)
-              && ((uint16_t)hdr[38] | ((uint16_t)hdr[39] << 8)) == DM2_SLOT_MAGIC_1
-              && ((uint16_t)hdr[40] | ((uint16_t)hdr[41] << 8)) == DM2_SLOT_MAGIC_2;
+    bool ok = (fread(hdr, 42, 1, f) == 1) && dm2_sl_header_valid(hdr);
     fclose(f);
     return ok;
 }
@@ -1105,7 +1124,8 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
 
     /* SKWin/DM2 resume probes SKSave.dat before SKSave.bak; keep the same
      * preference so real corpus scans tell the runtime which file would win.
-     * The 42-byte 0xBEEF/0xDEAD header is the same gate used by slot loads. */
+     * The authenticated 42-byte container header is the same initial gate
+     * used by slot loads. */
     snprintf(path, sizeof(path), "%s/SKSave.dat", save_base);
     status = dm2_sksave_probe_path(path, &payload_size);
     if (status == DM2_SK_CORPUS_VALID) {
@@ -1594,9 +1614,9 @@ int dm2_v1_save_version_diagnostics(const uint8_t *data, size_t size)
 int dm2_v1_save_detect_game_version(const uint8_t *header42)
 {
     if (!header42) return DM2V1_VERSION_UNKNOWN;
+    if (dm2_sl_header_valid(header42)) return DM2V1_VERSION_DM2;
     uint16_t m1 = (uint16_t)header42[38] | ((uint16_t)header42[39] << 8);
     uint16_t m2 = (uint16_t)header42[40] | ((uint16_t)header42[41] << 8);
-    if (m1 == DM2_SLOT_MAGIC_1 && m2 == DM2_SLOT_MAGIC_2) return DM2V1_VERSION_DM2;
     if ((m1 == 0x444D || m1 == 0x4D44) &&
         (m2 == 0 || m2 == 0x3156 || m2 == 0x5631)) return DM2V1_VERSION_DM1;
     return DM2V1_VERSION_UNKNOWN;
@@ -1607,7 +1627,7 @@ const char *dm2_v1_save_source_evidence(void)
     return
         "SKULL.ASM: DM2 save/load entry points, SUPPRESS codec\n"
         "docs/dm2_save_format.md: full format specification\n"
-        "docs/dm2_save_slots.md: 10-slot system, 0xBEEF/0xDEAD magic\n"
+        "docs/dm2_save_slots.md: 10-slot system and DOS header shape\n"
         "docs/dm2_party_state.md: champion squad persistence, SUPPRESS masks\n"
         "SKULL.ASM: WRITE_RECORD_CHECKCODE, WRITE_MINION_ASSOC\n"
         "SKULL.ASM: _2066_33e7 slot picker, GAME_SAVE/GAME_LOAD\n"
@@ -2201,7 +2221,7 @@ const char *dm2_pc_save_interoperability_report(const uint8_t *data, size_t size
  * Source: skproject/SKULLWIN/c_savegame.cpp:2087 DM2_GAME_SAVE_MENU
  *
  * Layout:
- *   42-byte slot header (0xBEEF/0xDEAD magic at bytes 38-41)
+ *   42-byte slot header (DOS version/name shape; trailing words opaque)
  *   SUPPRESS-encoded game state block (56 bytes data, table1d631a mask)
  *   SUPPRESS-encoded global flags (8 bytes)
  *   SUPPRESS-encoded global bytes (64 bytes)
@@ -2243,7 +2263,8 @@ int dm2_v1_save_game_write(const char *path,
         return -1;
     }
 
-    /* Write 42-byte header with 0xBEEF/0xDEAD magic */
+    /* This incomplete writer is behind the public original-save gate. It
+     * must never claim its legacy fixture header is an authentic DOS save. */
     memset(hdr, 0, sizeof(hdr));
     hdr[0] = 0x01; hdr[1] = 0x00; /* version = 1 */
     hdr[38] = (uint8_t)(DM2_SLOT_MAGIC_1 & 0xFF);
@@ -2337,7 +2358,7 @@ const char *dm2_v1_save_phase7_source_evidence(void)
         "SKULL.ASM: WRITE_RECORD_CHECKCODE for inventory chains\n"
         "SKULL.ASM: WRITE_MINION_ASSOC for minion table\n"
         "docs/dm2_save_format.md: full save format specification\n"
-        "docs/dm2_save_slots.md: 10-slot system, 0xBEEF/0xDEAD magic\n"
+        "docs/dm2_save_slots.md: 10-slot system and DOS header shape\n"
         "docs/dm2_party_state.md: champion squad, inventories, minions\n"
         "docs/dm2_source_lock.md: Phase 7 implementation evidence\n";
 }
