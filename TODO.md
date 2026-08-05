@@ -47,7 +47,9 @@
   animation frames, and VDP1 destinations before restoring door pixels.
   M11's direct TITLE.CG copy path is also removed; retain decoded title bytes
   as a receipt until the original Saturn VDP1/VDP2 destination and composition
-  are captured.
+  are captured. The render plan now rejects raw TITLE.CG atlas pixels whenever
+  the real MAPD/TIBG source is present, so no unbound atlas copy can masquerade
+  as the retail title composition.
   CD-DA startup no longer manufactures WAV files from raw track bytes;
   authenticated CD image/decoder handoff remains required for music playback.
   Title timing remains a host state receipt only; the former synthetic edge

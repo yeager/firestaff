@@ -72,6 +72,18 @@ int main(void)
     for (map = 0; map < 16; ++map)
         check(title.decoded_map_palette[map] != 0,
               "retail MAPD palette word is populated");
+    title.pixels = (unsigned char *)malloc(1U);
+    check(title.pixels != NULL, "title presentation sentinel allocates");
+    title.width = NEXUS_V1_TITLE_MAP_WIDTH;
+    title.height = NEXUS_V1_TITLE_MAP_HEIGHT;
+    title.loaded = 1;
+    {
+        Nexus_V1_TitleRenderPlan plan;
+        check(nexus_v1_title_build_render_plan(&title, 0, &plan) == 0,
+              "raw TITLE.CG atlas is blocked after MAPD source decode");
+    }
+    free(title.pixels);
+    title.pixels = NULL;
     nexus_title_free(&title);
     free(title_bin); free(title_cg);
     if (failures) return 1;

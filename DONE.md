@@ -1,3 +1,9 @@
+- ✅ 2026-08-05 Nexus startup title presentation gate: when the real
+  `TITLE.BIN` MAPD/TIBG source is decoded, the renderer no longer copies the
+  raw `TITLE.CG` atlas directly to the framebuffer. The five decoded maps are
+  retained as source evidence until Saturn VDP1/VDP2 selection and placement
+  are captured; isolated synthetic render fixtures remain test-only.
+
 - ✅ 2026-08-05 Nexus MNS skeleton bound: raised the bounded parser capacity
   from the inferred 32-joint limit to 64 after measuring the real corpus.
   `SCORPION.MNS` retains 33 joints and `ROCKPILE.MNS` retains 37; all 30
