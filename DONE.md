@@ -30,6 +30,12 @@
   passes TITLE, RHIFIX, and POTEFT. Legacy generic automap colors and the
   unused palette constants remain outside the production source-bound route;
   no synthetic pixels were promoted.
+- ✅ 2026-08-05 Theron BIN/CUE/ISO intake hardening: CUE `FILE`, `TRACK`,
+  `INDEX`, and `PREGAP` fields now reject non-whitespace trailing tokens and
+  malformed MSF suffixes before verified-layout/hash admission. Added a
+  regression for trailing CUE tokens. Focused raw-media intake test passes;
+  no local full Track 02 payload is available, so the real-media branch
+  remains an honest skip.
 
 - ✅ 2026-08-05 Nexus secondary retail media corpus materialized: extracted
   original `SMAP00.BIN`–`SMAP15.BIN`, `STONE.BIN`, `RHIFIX.BIN`, `POTEFT.BIN`,

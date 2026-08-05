@@ -25,8 +25,9 @@
   source-bound lifecycle/presentation path with a structural fail-closed seam.
   Reconnect the real Track 02 level handoff only after the authenticated
   tile/material/UI banks and square mapping are decoded.
-  Keep BIN/CUE/ISO receipt normalization and later object/level records on
-  the same verified-media path.
+  CUE parsing now rejects trailing tokens and malformed MSF fields before
+  media/hash intake. Keep BIN/CUE/ISO receipt normalization and later
+  object/level records on the same verified-media path.
 
 - **THERON-FIXTURE-HELPER-ARCHIVE:** Closed 2026-07-31. Synthetic first-room
   constructors are now compiled only into explicit fixture targets; the

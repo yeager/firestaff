@@ -19,6 +19,7 @@ int main(void) {
     Theron_Track02Variant variant;
     const char *media = getenv("FIRESTAFF_THERON_TRACK02_MEDIA");
     const char *wrong_cue = "/tmp/firestaff-theron-track02-wrong-layout.cue";
+    const char *trailing_cue = "/tmp/firestaff-theron-track02-trailing-token.cue";
     const char *missing_payload_cue = "/tmp/firestaff-theron-track02-missing-payload.cue";
     const char *unknown_iso = "/tmp/firestaff-theron-track02-unknown.iso";
     const char *unknown_bin = "/tmp/firestaff-theron-track02-unknown.bin";
@@ -68,6 +69,19 @@ int main(void) {
         CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED);
         CHECK(receipt.failure_reason == THERON_V1_TRACK02_MEDIA_REASON_CUE_LAYOUT_INVALID);
         remove(wrong_cue);
+    }
+    file = fopen(trailing_cue, "wb");
+    CHECK(file != NULL);
+    if (file) {
+        fputs("FILE \"track.bin\" BINARY extra\n"
+              "TRACK 02 MODE1/2352 trailing\n"
+              "INDEX 01 00:00:00\n", file);
+        fclose(file);
+        CHECK(theron_v1_track02_raw_media_intake_discover(trailing_cue,
+                                                           &receipt));
+        CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_REJECTED);
+        CHECK(receipt.failure_reason == THERON_V1_TRACK02_MEDIA_REASON_CUE_LAYOUT_INVALID);
+        remove(trailing_cue);
     }
     file = fopen(missing_payload_cue, "wb");
     CHECK(file != NULL);

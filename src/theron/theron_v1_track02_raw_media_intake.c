@@ -151,9 +151,10 @@ static int theron_v1_track02_media_parse_msf(const char *text,
     unsigned int minute;
     unsigned int second;
     unsigned int frame;
+    char trailing;
 
     if (!text || !out_sector ||
-        sscanf(text, "%u:%u:%u", &minute, &second, &frame) != 3 ||
+        sscanf(text, "%u:%u:%u %c", &minute, &second, &frame, &trailing) != 3 ||
         second >= 60u || frame >= 75u ||
         minute > (UINT32_MAX / (60u * 75u))) {
         return 0;
@@ -205,6 +206,7 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
         unsigned int track;
         char mode[32];
         char *p = line;
+        int consumed = 0;
 
         while (*p == ' ' || *p == '\t') ++p;
         /* A UTF-8 BOM may prefix the first CUE directive. It carries no CUE
@@ -221,9 +223,27 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
                 fclose(file);
                 return 0;
             }
+            if (sscanf(p, "FILE \"%511[^\"]\" %31s %n", member, type,
+                       &consumed) != 2 &&
+                sscanf(p, "FILE %511s %31s %n", member, type, &consumed) != 2) {
+                fclose(file);
+                return 0;
+            }
+            for (p += consumed; *p; ++p) {
+                if (*p != ' ' && *p != '\t' && *p != '\r' && *p != '\n') {
+                    fclose(file);
+                    return 0;
+                }
+            }
             snprintf(current_member, sizeof(current_member), "%s", member);
             current_binary = theron_v1_track02_media_ieq(type, "BINARY");
-        } else if (sscanf(p, "TRACK %u %31s", &track, mode) == 2) {
+        } else if (sscanf(p, "TRACK %u %31s %n", &track, mode, &consumed) == 2) {
+            for (char *tail = p + consumed; *tail; ++tail) {
+                if (*tail != ' ' && *tail != '\t' && *tail != '\r' && *tail != '\n') {
+                    fclose(file);
+                    return 0;
+                }
+            }
             current_track = track;
             if (track == 2u) {
                 ++track02_count;
