@@ -3856,6 +3856,11 @@ that its exact runtime path is not already source-locked and tested.
     It correctly reaches the source-owned `GAME_LOAD` gate. The remaining
     original new-game initialization, save selection, options, and full menu
     state machine are still open.
+    **2026-08-06 input correction:** M11 no longer falls through from the
+    verified `0xD7`/`0xD9` GDAT pointer route to the retired Firestaff
+    row/panel layout. A click that cannot be matched by source rectangles,
+    including the display-to-framebuffer retry, is inert rather than selecting
+    a host-invented save row.
 41. **DM2-PARTY-INVENTORY-SPELLS:** Complete real champion, inventory, item,
     skill, action, spell, damage, condition, and UI mutation paths through
     the source runtime.

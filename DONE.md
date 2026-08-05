@@ -49306,6 +49306,18 @@ hash-verified PC English boot probe PASS. Sources:
 `SKULLWIN/c_querydb.cpp::DM2_QUERY_CMDSTR_TEXT` (line 274) and
 `SKWIN/SkWinCore.cpp::QUERY_CMDSTR_TEXT` (line 8136).
 
+# ✅ 2026-08-06 DM2 M11 source-menu pointer gate
+
+M11 now accepts DM2 startup clicks only through the original title-menu GDAT
+rectangles and their display-to-framebuffer retry. The final fallback to the
+old Firestaff row/panel layout is removed, so an unmatched click cannot select
+a host-authored save row or trigger gameplay. The original `0xD7` new-game
+and `0xD9` resume hit paths remain intact. Verification:
+`test_dm2_v1_startup_pointer_hit_contract` and the hash-verified PC English
+boot probe PASS. Sources: `SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN`
+(55182-55244), `HANDLE_UI_EVENT` (32001-32021), and source GDAT rectangle
+table raw 201.
+
 # ✅ 2026-08-06 DM2 source wall-button fallback removal
 
 The local DB2/DB3 wall-button walkers are now available only to isolated
