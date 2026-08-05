@@ -16,6 +16,13 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    state.active = 1;
+    if (M11_GameView_HandlePointerMove(&state, 120, 80) !=
+            M11_GAME_INPUT_REDRAW) {
+        fprintf(stderr, "held DM1 object did not invalidate the cursor frame\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     memset(name, 'X', sizeof(name));
     name[sizeof(name) - 1] = '\0';
     if (DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(

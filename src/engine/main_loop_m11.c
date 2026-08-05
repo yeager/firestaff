@@ -648,6 +648,27 @@ static int m11_map_window_pointer_to_game_source(
     return 1;
 }
 
+static void m11_sync_source_object_cursor(const M11_GameViewState* gameView) {
+    static int hostCursorHidden = 0;
+    int shouldHide;
+
+    shouldHide = gameView && gameView->active &&
+        (gameView->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG ||
+         gameView->sourceKind == M11_GAME_SOURCE_CUSTOM_DUNGEON ||
+         gameView->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON ||
+         gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT) &&
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(gameView) != THING_NONE;
+    if (shouldHide == hostCursorHidden) {
+        return;
+    }
+    if (shouldHide) {
+        SDL_HideCursor();
+    } else {
+        SDL_ShowCursor();
+    }
+    hostCursorHidden = shouldHide;
+}
+
 static int m11_dm1_v20_presentation_active(const M11_GameViewState* gameView) {
     return gameView &&
         gameView->presentationMode == M12_PRESENTATION_V20_FILTERED &&
@@ -679,6 +700,10 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
     int csb_v20_active = gameView &&
         gameView->presentationMode == M12_PRESENTATION_V20_FILTERED &&
         gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT;
+
+    /* The original object cursor is painted into the source framebuffer.
+     * Keep the host arrow from covering it while an item is in G4055. */
+    m11_sync_source_object_cursor(gameView);
 
     if (outPresentedFrame) {
         *outPresentedFrame = NULL;

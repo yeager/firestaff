@@ -49366,3 +49366,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   not enter `cd_playing`; the focused gameplay test covers the no-empty-path
   contract. SAL/MAP event dispatch and authentic CD presentation remain
   blocked pending Saturn capture/decoder proof.
+
+- ✅ 2026-08-06 DM1 held-object cursor redraw: pointer motion while the
+  ReDMCSB G4055 leader hand contains an object now invalidates the framebuffer,
+  and the SDL host arrow is hidden while the source object cursor is painted.
+  This fixes the stale/absent object-shaped pointer after HoC or dungeon
+  pickup without inventing cursor art. Verification: Ninja `firestaff` build,
+  `test_m11_dm1_source_item_name_guard` (including held-object pointer redraw),
+  and the real PC3.4 `test_m11_dm1_real_alcove_item_runtime_pc34` all pass.

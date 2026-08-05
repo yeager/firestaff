@@ -25005,6 +25005,13 @@ M11_GameInputResult M11_GameView_HandlePointerMove(M11_GameViewState* state,
         M11_GameView_Dm2LeaderHandObjectIconAvailable(state)) {
         return M11_GAME_INPUT_REDRAW;
     }
+    /* ReDMCSB CLIKVIEW.C keeps the held object attached to the mouse
+     * pointer.  The host loop redraws only when this route reports a
+     * change; returning IGNORED here left the source-owned object cursor
+     * frozen after pickup and made it appear that no object was held. */
+    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE) {
+        return M11_GAME_INPUT_REDRAW;
+    }
     return M11_GAME_INPUT_IGNORED;
 }
 

@@ -25211,6 +25211,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - [ ] DM1-HOC-OBJECTS-002 Capture a real PC34 HoC pickup/placement round trip
   for weapon, potion, scroll, container and junk objects. Confirm M564 names,
   C00/C01 hand masks and backpack ownership remain source-backed.
+- [ ] DM1-HOC-OBJECTS-003 Capture the live held-object cursor on the host window
+  after pickup and during movement. The source framebuffer now invalidates on
+  pointer motion and hides the host arrow while G4055 is occupied; close only
+  after a real Mac capture proves the object-shaped pointer remains visible at
+  the mapped pointer position.
 - Theron teleporter resolution now rejects unresolved object-ID links and
   cycles; restore positive legacy links only when backed by an authenticated
   Track 02/T900 record corpus.
