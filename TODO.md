@@ -9176,8 +9176,13 @@ lane is carried forward in the sections below.
     for `DM2_DRAW_STRING`, `DM2_DRAW_STRONG_TEXT`, button/name/viewport/local/
     backbuffer text routes, literal-only `DM2_FORMAT_SKSTR` and
     `DM2_QUERY_GDAT_TEXT` encrypted-text decode, plus hint-line wrapping.
+    **2026-08-05 inventory update:** the linked narrow adapter's invented
+    alphabetic `.Za`--`.Zz` substitutions are removed. SKProject's original
+    grammar is numeric `.Z000`--`.Z028` plus byte-`0x01` directives and needs
+    shared `ddat`/party/GDAT ownership; before that is bound, directives stay
+    literal rather than synthesizing hero names, buffer text, or newlines.
     Remaining adjacent work is live pixel blitting, palette/blitter ownership,
-    dynamic `.Z`/0x01 substitutions, scrollbox screen mutation, and wiring
+    dynamic `.Z000`--`.Z028`/0x01 substitutions, scrollbox screen mutation, and wiring
     these receipts to real runtime HUD/menu consumers without fallback visuals.
   - 2026-07-16 DM2 graphics-data file lifecycle update: skproject
     `DM2_GRAPHICS_DATA_OPEN`, `DM2_GRAPHICS_DATA_CLOSE`, and

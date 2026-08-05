@@ -7076,6 +7076,14 @@
   a non-playable save. Source: `SKULLWIN/dm2data.h:150-159`,
   `c_dialog.cpp:115-117,199-202,337-343`, `c_savegame.cpp:2169-2204`.
 
+- ✅ 2026-08-05 DM2 FORMAT_SKSTR synthetic-substitution removal: the linked
+  narrow text adapter no longer invents alphabetic `.Za`--`.Zz` substitutions.
+  It preserves source bytes literally until the genuine numeric
+  `.Z000`--`.Z028`/byte-`0x01` owner can be bound, preventing fabricated hero,
+  buffer, or newline text. Regression coverage proves the numeric grammar and
+  callback-bearing fake forms remain literal. Source:
+  `SKULLWIN/c_gfx_str.cpp:290-557`.
+
 - ✅ 2026-08-05 DM2 music-label synthetic-data removal: deleted the unused
   invented HMP track-name table from the active sound module and corrected its
   source count to 29 tracks. Playback continues to use only the authenticated

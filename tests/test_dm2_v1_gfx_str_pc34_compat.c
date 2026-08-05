@@ -353,18 +353,22 @@ static void test_format_skstr_passthrough(void)
     printf("  PASS: format_skstr_passthrough\n");
 }
 
-static void test_format_skstr_newline_escape(void)
+static void test_format_skstr_source_directives_stay_literal(void)
 {
     char dest[256];
 
-    /* .Zd should insert newline */
+    /* c_gfx_str.cpp uses numeric .Z000--.Z028 directives, not .Zd.
+     * The narrow adapter has no full ddat owner, so both forms must remain
+     * original bytes rather than becoming invented output. */
+    dm2_v1_gfx_str_format_skstr("Line1.Z020Line2", dest, NULL, NULL);
+    assert(strcmp(dest, "Line1.Z020Line2") == 0);
     dm2_v1_gfx_str_format_skstr("Line1.ZdLine2", dest, NULL, NULL);
-    assert(strcmp(dest, "Line1\nLine2") == 0);
+    assert(strcmp(dest, "Line1.ZdLine2") == 0);
 
-    printf("  PASS: format_skstr_newline_escape\n");
+    printf("  PASS: format_skstr_source_directives_stay_literal\n");
 }
 
-static void test_format_skstr_hero_name(void)
+static void test_format_skstr_does_not_invent_hero_name(void)
 {
     char dest[256];
     DM2_V1_GfxStrCallbacks cb;
@@ -375,16 +379,16 @@ static void test_format_skstr_hero_name(void)
 
     mock_v1e0218_val = 0;
     dm2_v1_gfx_str_format_skstr("Hi .Za!", dest, &cb, NULL);
-    assert(strcmp(dest, "Hi HALK!") == 0);
+    assert(strcmp(dest, "Hi .Za!") == 0);
 
     mock_v1e0218_val = 2;
     dm2_v1_gfx_str_format_skstr(".Za says hello", dest, &cb, NULL);
-    assert(strcmp(dest, "MOPHUS says hello") == 0);
+    assert(strcmp(dest, ".Za says hello") == 0);
 
-    printf("  PASS: format_skstr_hero_name\n");
+    printf("  PASS: format_skstr_does_not_invent_hero_name\n");
 }
 
-static void test_format_skstr_buffer_insert(void)
+static void test_format_skstr_does_not_invent_buffer_text(void)
 {
     char dest[256];
     DM2_V1_GfxStrCallbacks cb;
@@ -393,9 +397,9 @@ static void test_format_skstr_buffer_insert(void)
     cb.get_v1e0988 = mock_get_v1e0988;
 
     dm2_v1_gfx_str_format_skstr("Got .Zb!", dest, &cb, NULL);
-    assert(strcmp(dest, "Got ITEM!") == 0);
+    assert(strcmp(dest, "Got .Zb!") == 0);
 
-    printf("  PASS: format_skstr_buffer_insert\n");
+    printf("  PASS: format_skstr_does_not_invent_buffer_text\n");
 }
 
 static void test_format_skstr_null_args(void)
@@ -579,9 +583,9 @@ int main(void)
     test_draw_string_newline();
     test_format_skstr_null_termination();
     test_format_skstr_passthrough();
-    test_format_skstr_newline_escape();
-    test_format_skstr_hero_name();
-    test_format_skstr_buffer_insert();
+    test_format_skstr_source_directives_stay_literal();
+    test_format_skstr_does_not_invent_hero_name();
+    test_format_skstr_does_not_invent_buffer_text();
     test_format_skstr_null_args();
     test_word_wrap_basic();
     test_word_wrap_no_wrap_needed();

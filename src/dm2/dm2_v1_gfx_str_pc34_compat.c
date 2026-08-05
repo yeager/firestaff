@@ -457,14 +457,12 @@ void dm2_v1_gfx_str_draw_local_text(DM2_V1_GfxStrState *state,
 /* ── DM2_FORMAT_SKSTR ─────────────────────────────────────────────── */
 /* Source: c_gfx_str.cpp DM2_FORMAT_SKSTR
  *
- * Formats a DM2 string with escape sequences and variable substitution.
- * The full function has 29 switch cases; this implements the basic cases
- * and marks the rest with TODO comments.
- *
- * Escape sequences use .Z prefix followed by a case character:
- *   .Za - .Zz for various substitutions (hero names, numbers, etc.)
- *   .ZA - .ZZ for additional cases
- *   Null byte terminates the string. */
+ * The original does not use alphabetic .Za--.Zz escapes.  Its .Z directives
+ * contain three decimal digits (0..28) and resolve through shared ddat/party/
+ * GDAT state (c_gfx_str.cpp:290-557).  This narrow public adapter has no
+ * authenticated owner for that complete state.  Keep every byte literal until
+ * that owner is bound: inventing hero names, buffers, or newlines would turn
+ * an original text record into synthetic runtime text. */
 
 void dm2_v1_gfx_str_format_skstr(const char *src, char *dest,
                                   const DM2_V1_GfxStrCallbacks *cb,
@@ -472,7 +470,6 @@ void dm2_v1_gfx_str_format_skstr(const char *src, char *dest,
 {
     const char *s;
     char *d;
-    const char *hero_name;
 
     if (src == NULL || dest == NULL) {
         if (dest) dest[0] = '\0';
@@ -482,156 +479,10 @@ void dm2_v1_gfx_str_format_skstr(const char *src, char *dest,
     s = src;
     d = dest;
 
-    while (*s != '\0') {
-        /* Check for .Z escape sequence */
-        if (s[0] == '.' && s[1] == 'Z' && s[2] != '\0') {
-            char esc = s[2];
-            s += 3;
-
-            switch (esc) {
-            case 'a':
-                /* .Za — insert hero name from index in v1e0218.
-                 * Source: c_gfx_str.cpp FORMAT_SKSTR case 'a' */
-                if (cb != NULL && cb->get_v1e0218 != NULL &&
-                    cb->get_hero_name != NULL) {
-                    int16_t idx = cb->get_v1e0218(ctx);
-                    hero_name = cb->get_hero_name(ctx, (int32_t)idx);
-                    if (hero_name != NULL) {
-                        while (*hero_name != '\0')
-                            *d++ = *hero_name++;
-                    }
-                }
-                break;
-
-            case 'b':
-                /* .Zb — insert string from v1e0988 buffer.
-                 * Source: c_gfx_str.cpp FORMAT_SKSTR case 'b' */
-                if (cb != NULL && cb->get_v1e0988 != NULL) {
-                    const uint8_t *buf = cb->get_v1e0988(ctx);
-                    if (buf != NULL) {
-                        while (*buf != '\0')
-                            *d++ = (char)*buf++;
-                    }
-                }
-                break;
-
-            case 'c':
-                /* .Zc — insert string from v1e097c buffer.
-                 * Source: c_gfx_str.cpp FORMAT_SKSTR case 'c' */
-                if (cb != NULL && cb->get_v1e097c != NULL) {
-                    const uint8_t *buf = cb->get_v1e097c(ctx);
-                    if (buf != NULL) {
-                        while (*buf != '\0')
-                            *d++ = (char)*buf++;
-                    }
-                }
-                break;
-
-            case 'd':
-                /* .Zd — insert newline.
-                 * Source: c_gfx_str.cpp FORMAT_SKSTR case 'd' */
-                *d++ = '\n';
-                break;
-
-            case 'e':
-                /* TODO: .Ze — c_gfx_str.cpp FORMAT_SKSTR case 'e' */
-                break;
-
-            case 'f':
-                /* TODO: .Zf — c_gfx_str.cpp FORMAT_SKSTR case 'f' */
-                break;
-
-            case 'g':
-                /* TODO: .Zg — c_gfx_str.cpp FORMAT_SKSTR case 'g' */
-                break;
-
-            case 'h':
-                /* TODO: .Zh — c_gfx_str.cpp FORMAT_SKSTR case 'h' */
-                break;
-
-            case 'i':
-                /* TODO: .Zi — c_gfx_str.cpp FORMAT_SKSTR case 'i' */
-                break;
-
-            case 'j':
-                /* TODO: .Zj — c_gfx_str.cpp FORMAT_SKSTR case 'j' */
-                break;
-
-            case 'k':
-                /* TODO: .Zk — c_gfx_str.cpp FORMAT_SKSTR case 'k' */
-                break;
-
-            case 'l':
-                /* TODO: .Zl — c_gfx_str.cpp FORMAT_SKSTR case 'l' */
-                break;
-
-            case 'm':
-                /* TODO: .Zm — c_gfx_str.cpp FORMAT_SKSTR case 'm' */
-                break;
-
-            case 'n':
-                /* TODO: .Zn — c_gfx_str.cpp FORMAT_SKSTR case 'n' */
-                break;
-
-            case 'o':
-                /* TODO: .Zo — c_gfx_str.cpp FORMAT_SKSTR case 'o' */
-                break;
-
-            case 'p':
-                /* TODO: .Zp — c_gfx_str.cpp FORMAT_SKSTR case 'p' */
-                break;
-
-            case 'q':
-                /* TODO: .Zq — c_gfx_str.cpp FORMAT_SKSTR case 'q' */
-                break;
-
-            case 'r':
-                /* TODO: .Zr — c_gfx_str.cpp FORMAT_SKSTR case 'r' */
-                break;
-
-            case 's':
-                /* TODO: .Zs — c_gfx_str.cpp FORMAT_SKSTR case 's' */
-                break;
-
-            case 't':
-                /* TODO: .Zt — c_gfx_str.cpp FORMAT_SKSTR case 't' */
-                break;
-
-            case 'u':
-                /* TODO: .Zu — c_gfx_str.cpp FORMAT_SKSTR case 'u' */
-                break;
-
-            case 'v':
-                /* TODO: .Zv — c_gfx_str.cpp FORMAT_SKSTR case 'v' */
-                break;
-
-            case 'w':
-                /* TODO: .Zw — c_gfx_str.cpp FORMAT_SKSTR case 'w' */
-                break;
-
-            case 'x':
-                /* TODO: .Zx — c_gfx_str.cpp FORMAT_SKSTR case 'x' */
-                break;
-
-            case 'y':
-                /* TODO: .Zy — c_gfx_str.cpp FORMAT_SKSTR case 'y' */
-                break;
-
-            case 'z':
-                /* TODO: .Zz — c_gfx_str.cpp FORMAT_SKSTR case 'z' */
-                break;
-
-            default:
-                /* Unknown escape — copy literally */
-                *d++ = '.';
-                *d++ = 'Z';
-                *d++ = esc;
-                break;
-            }
-        } else {
-            *d++ = *s++;
-        }
-    }
+    (void)cb;
+    (void)ctx;
+    while (*s != '\0')
+        *d++ = *s++;
 
     *d = '\0';
 }
