@@ -48576,3 +48576,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `nexus_sound_play_idx()` check the complete runtime receipt before invoking
   the tone trigger. Decoded bytes cannot bypass the unresolved SDDRVS/event
   ABI gate. Verified with the real-corpus sound runtime receipt test.
+
+## DM1 HoC source item-name guard
+
+- **DM1-HOC-OBJECTS-003**: DM1 item labels now require the authenticated
+  ReDMCSB `OBJECT.C` M564 icon-indexed name stream. When that source table is
+  absent or malformed, Firestaff leaves the label empty instead of presenting
+  the legacy hand-written subtype catalog as if it were original data. The
+  fallback catalog remains available only outside DM1 source-owned routes.
+  Verified with a successful Ninja `firestaff` and real-alcove target build,
+  plus `git diff --check`, on 2026-08-05.

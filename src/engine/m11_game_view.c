@@ -10958,14 +10958,24 @@ static void m11_get_source_item_name(const M11_GameViewState* state,
                                      char* out,
                                      size_t outSize) {
     int icon;
-    if (state && state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
-        state->dm1ObjectNameTableValid) {
+    if (state && m11_is_dm1_source_kind(state->sourceKind)) {
+        /* ReDMCSB OBJECT.C F0031/F0033 owns DM1 names through M564's
+         * icon-indexed stream.  A missing or malformed source table must not
+         * turn the hand-written subtype catalog below into a production
+         * answer: that catalog is not the PC34 object-name source and was the
+         * cause of misleading HoC floor-item labels. */
+        if (!state->dm1ObjectNameTableValid) {
+            if (outSize > 0u) out[0] = '\0';
+            return;
+        }
         icon = dm1_v1_dungeon_get_object_icon_index_pc34(
             things, thingId, state->world.party.direction);
         if (icon >= 0 && icon < 199 && state->dm1ObjectNames[icon][0]) {
             snprintf(out, outSize, "%s", state->dm1ObjectNames[icon]);
             return;
         }
+        if (outSize > 0u) out[0] = '\0';
+        return;
     }
     m11_get_item_name(things, thingId, out, outSize);
 }
