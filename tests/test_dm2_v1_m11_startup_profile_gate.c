@@ -2384,6 +2384,10 @@ int main(void) {
             loadable_icon_handle = icon_handle;
         }
         if (icon_handle != 0u) {
+            int icon_x = -1;
+            int icon_y = -1;
+            int icon_w = -1;
+            int icon_h = -1;
             dm2_v1_runtime_set_leader_hand_object(icon_handle);
             view.dm2State.leader_hand_object =
                 dm2_v1_runtime_get_leader_hand_object();
@@ -2392,6 +2396,13 @@ int main(void) {
                         "M11 DM2 leader-hand ObjectID accessor follows runtime icon handle");
             expect_true(!M11_GameView_Dm2LeaderHandObjectIconAvailable(&view),
                         "M11 DM2 blocks leader-hand presentation without a source rect");
+            expect_true(!M11_GameView_GetDm2LeaderHandObjectIconZone(
+                            &icon_x, &icon_y, &icon_w, &icon_h) &&
+                            icon_x == 0 && icon_y == 0 &&
+                            icon_w == 0 && icon_h == 0 &&
+                            !M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
+                                &view, &icon_x, &icon_y, &icon_w, &icon_h),
+                        "M11 DM2 exposes no placeholder leader-hand icon zone");
             expect_true(M11_GameView_HandlePointerMove(&view, 120, 80) ==
                             M11_GAME_INPUT_IGNORED,
                         "M11 DM2 pointer motion cannot request an unowned icon redraw");

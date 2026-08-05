@@ -652,6 +652,10 @@
   RAW4 ids (`0x0197` and `0x0199`), rather than mistakenly passing their
   input events (`0xD7`/`0xD9`) to `QUERY_RECT`. The last M11 dependency on
   the fixed DM2 click-zone matrix has been removed.
+  **2026-08-06 leader-hand follow-up:** the unproven fixed `304,41,14,14`
+  leader-hand icon/cursor zone is no longer exposed by M11. The API reports
+  no zone until SKProject's live `DRAW_ITEM_ICON` rectangle and image route
+  are bound from original DM2 data.
   **2026-07-31 update:** the M12 settings catalogue now has one explicit
   sixteen-row two-column capacity shared by the renderer, hit-test contract
   and regression suite; the renderer/brightness additions no longer leave a

@@ -2601,6 +2601,9 @@ int M11_GameView_HandleMirrorCandidateRenameClick(M11_GameViewState* state,
                                                   int x,
                                                   int y);
 int M11_GameView_CancelMirrorCandidate(M11_GameViewState* state);
+/* Returns 1 only when a source-owned DM2 leader-hand icon rectangle is
+ * available. The current GDAT route has no proven rectangle, so it fails
+ * closed and clears every output. */
 int M11_GameView_GetDm2LeaderHandObjectIconZone(int* outX,
                                                 int* outY,
                                                 int* outW,

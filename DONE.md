@@ -50094,3 +50094,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   or dispatches through the fixed `dm2_touch_click_zone_matrix` production
   path; real PC-DOS New Game now reaches the source-owned GAME_LOAD gate
   through the decoded GDAT rectangle.
+- ✅ 2026-08-06 DM2 leader-hand placeholder-zone closure: removed M11's
+  fixed `304,41,14,14` icon and pointer-relative `14×14` leader-hand boxes.
+  Those coordinates had no authenticated DM2 GDAT/UI rectangle, so the
+  public queries now clear their outputs and fail closed until the real
+  `DRAW_ITEM_ICON` route is decoded. The real PC-DOS startup/runtime test
+  proves no placeholder zone is exposed.

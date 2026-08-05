@@ -42011,11 +42011,15 @@ int M11_GameView_GetDm2LeaderHandObjectIconZone(int* outX,
                                                 int* outY,
                                                 int* outW,
                                                 int* outH) {
-    if (outX) *outX = 304;
-    if (outY) *outY = 41;
-    if (outW) *outW = 14;
-    if (outH) *outH = 14;
-    return 1;
+    /* SKProject DRAW_ITEM_ICON obtains both image and placement from the
+     * live UI/GDAT route. No authenticated DM2 leader-hand rect has been
+     * decoded yet, so the former 304,41,14,14 host rectangle was a
+     * placeholder and must not escape through this public API. */
+    if (outX) *outX = 0;
+    if (outY) *outY = 0;
+    if (outW) *outW = 0;
+    if (outH) *outH = 0;
+    return 0;
 }
 
 int M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
@@ -42024,27 +42028,11 @@ int M11_GameView_GetDm2LeaderHandObjectCursorIconZone(
     int* outY,
     int* outW,
     int* outH) {
-    int x;
-    int y;
-    int w = 14;
-    int h = 14;
-
-    if (!state || state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
-        !state->pointerPositionKnown) {
-        return M11_GameView_GetDm2LeaderHandObjectIconZone(
-            outX, outY, outW, outH);
-    }
-    x = state->pointerX;
-    y = state->pointerY;
-    if (x < 0) x = 0;
-    if (y < 0) y = 0;
-    if (x > M11_FB_WIDTH - w) x = M11_FB_WIDTH - w;
-    if (y > M11_FB_HEIGHT - h) y = M11_FB_HEIGHT - h;
-    if (outX) *outX = x;
-    if (outY) *outY = y;
-    if (outW) *outW = w;
-    if (outH) *outH = h;
-    return 1;
+    (void)state;
+    /* A pointer-relative host box cannot substitute for the original cursor
+     * image and its source-controlled mouse route. */
+    return M11_GameView_GetDm2LeaderHandObjectIconZone(
+        outX, outY, outW, outH);
 }
 
 uint32_t M11_GameView_GetDm2LeaderHandObject(const M11_GameViewState* state) {
