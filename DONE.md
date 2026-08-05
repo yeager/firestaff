@@ -1,3 +1,9 @@
+- ✅ 2026-08-05 Nexus boot-library corpus verification: the materialized
+  original `0DMSTRT.BIN` now passes the real-file structure-admission gate
+  (`test_nexus_v1_0dmstrt_structure_admission .../0DMSTRT.BIN`). Its fixup,
+  zero-gap, version-stamp, and ISO-stub facts are admitted as opaque source
+  structure only; no boot semantics or generated substitute is inferred.
+
 - ✅ 2026-08-05 Nexus automap/RES retail follow-up: materialized the
   original `SMAP00.BIN`–`SMAP15.BIN`, `STONE.BIN`, `RHIFIX.BIN`, and
   `POTEFT.BIN` resources from the local English ISO. The real-data SMAP gate
