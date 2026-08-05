@@ -78,13 +78,6 @@ static int csb_v1_dm1_record_invalid_slot_byte_offset(const uint8_t *dm1_record)
     return 0;
 }
 
-/* write_le16: reserved for future CSB→DM1 export path (Phase 6 covers import only). */
-static void __attribute__((unused)) write_le16(uint8_t *p, int16_t v)
-{
-    p[0] = (uint8_t)(v & 0xFF);
-    p[1] = (uint8_t)((v >> 8) & 0xFF);
-}
-
 /* ── Source evidence ──────────────────────────────────────────────────── */
 const char *csb_v1_utility_import_source_evidence(void)
 {

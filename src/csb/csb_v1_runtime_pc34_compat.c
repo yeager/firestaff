@@ -1115,28 +1115,6 @@ static void csb_v1_init_save_dir(void)
 #endif
 }
 
-/* ── Internal MD5 helper ─────────────────────────────────────────────── */
-
-/*
- * Compute MD5 hex of a file.  Returns 0 on success, -1 on error.
- * outHex must be at least 33 bytes.
- * Uses the same MD5 backend as asset_find_by_hash.c.
- */
-static int __attribute__((unused)) csb_v1_file_md5_hex (const char *path, char *outHex, size_t hexSize)
-{
-    /* Use asset_find_by_md5_list internally for file existence + MD5.
-     * We only expose the hash computation through asset_status_m12.
-     * For runtime use, the hash comes from M12_AssetStatus scan results.
-     * This function stubs to the simplest cross-platform approach. */
-    (void)path;
-    (void)outHex;
-    (void)hexSize;
-    if (outHex && hexSize >= 33) {
-        outHex[0] = '\0';
-    }
-    return -1;
-}
-
 static void csb_v1_runtime_sync_map_difficulty(
     CSB_V1_RuntimeProfile *profile)
 {
