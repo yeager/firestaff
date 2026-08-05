@@ -49014,3 +49014,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   no-draw. The local DOS manual was recorded as behavioural evidence for
   pickup, cursor and inventory contracts, never as a substitute asset source.
   Ninja `firestaff` build and `git diff --check` pass.
+
+- ✅ 2026-08-05 DM1 utility-panel fallback removal: normal DM1 source sessions
+  no longer paint the legacy cyan panel, host champion/status labels or light
+  bar when the authenticated C009/C010/C011 surfaces are unavailable. Those
+  paths remain explicitly limited to debug/non-source sessions; missing DM1
+  source material is now no-draw.

@@ -44915,6 +44915,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
      * manufacture CSB chrome. ReDMCSB's C009/C010 route stays black when its
      * verified GRAPHICS.DAT material is absent. */
     if (!drewAuthenticFrames && !m11_v1_chrome_mode_enabled(state) &&
+        !m11_is_dm1_source_kind(state->sourceKind) &&
         state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       M11_UTILITY_PANEL_X, M11_UTILITY_PANEL_Y,
@@ -44935,6 +44936,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
                       250, 34, line, &g_text_small);
     } else if (activeChampion && !drewAuthenticFrames &&
                !m11_v1_chrome_mode_enabled(state) &&
+               !m11_is_dm1_source_kind(state->sourceKind) &&
                state->sourceKind != M11_GAME_SOURCE_CSB_BOOT) {
         /* Legacy/procedural fallback only.  In normal V1 chrome mode,
          * C017 is reserved for the source leader-hand object name and
@@ -44953,6 +44955,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
         (state->showDebugHUD ||
          (!(drewAuthenticFrames && !state->showDebugHUD) &&
           !m11_v1_chrome_mode_enabled(state) &&
+          !m11_is_dm1_source_kind(state->sourceKind) &&
           state->sourceKind != M11_GAME_SOURCE_CSB_BOOT))) {
         if (state->showDebugHUD) {
             snprintf(line, sizeof(line), "L%d HP%u ST%u",
@@ -45002,6 +45005,7 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
      * bars make the DM1 action area look like a debug utility panel. */
     if (state->showDebugHUD ||
         (!drewAuthenticFrames && !m11_v1_chrome_mode_enabled(state) &&
+         !m11_is_dm1_source_kind(state->sourceKind) &&
          state->sourceKind != M11_GAME_SOURCE_CSB_BOOT)) {
         int lightLevel = m11_compute_light_level(state);
         unsigned char lightColor;

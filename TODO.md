@@ -1165,6 +1165,14 @@ diagnostic; it must not silently fall back to a generated visual.
   manual as a graphics source. Verification: Ninja `firestaff` target builds;
   `git diff --check` passes.
 
+- **DM1-ORIGINAL-REPLACE-012:** Closed 2026-08-05. Normal DM1 source sessions
+  no longer enter the legacy utility-panel fallback when authenticated C009
+  action-area or C010/C011 spell-area material is unavailable. The fallback
+  cyan frame, host champion/status text and diagnostic light bar remain
+  available only for non-source/debug sessions; DM1 now leaves the source
+  surface untouched until real GRAPHICS.DAT material is admitted.
+  Verification: Ninja `firestaff` target builds; `git diff --check` passes.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less
