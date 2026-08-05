@@ -54,6 +54,12 @@
   file. Cleanup also releases all retained FM Towns source buffers. The
   opt-in original-media receipt reaches game entry without unpacking data.
 
+- ✅ 2026-08-06 DM2 FM Towns GAME_LOAD memory path: source-authenticated G1
+  data is now rechecked and copied from the retained CD buffer when NEW GAME
+  reloads its dungeon. It no longer opens the non-file display label. The
+  original champion-selection/timer phase remains unavailable rather than
+  being replaced by a generated party or save state.
+
 - ✅ 2026-08-05 Nexus startup prompt placeholder removal: suppressed the
   host-generated 12-frame title-prompt blink from production receipts and
   updated startup gates to report no prompt until the original Saturn text/HUD

@@ -1628,20 +1628,35 @@ int dm2_v1_boot_load_new_dungeon(
     if (!out_receipt) return 0;
     memset(out_receipt, 0, sizeof(*out_receipt));
     if (!profile || !profile->assets_verified || !profile->dm2_state ||
-        !profile->dungeon_data || profile->dungeon_path[0] == '\0') {
+        !profile->dungeon_data ||
+        (!profile->dungeon_mem && profile->dungeon_path[0] == '\0')) {
         return 0;
     }
     /* The title scan admits an original DUNGEON.DAT by hash. GAME_LOAD must
      * not silently consume a replacement that appeared after that scan. */
     if (profile->dungeon_md5[0] != '\0' &&
-        (!path_md5_hex(profile->dungeon_path, current_md5) ||
+        (!dm2_v1_boot_recheck_asset_md5(profile->dungeon_mem,
+                                         profile->dungeon_mem_size,
+                                         profile->dungeon_path,
+                                         current_md5) ||
          !md5_matches(current_md5, profile->dungeon_md5))) {
         return 0;
     }
-    if (!dm2_v1_boot_read_asset_bytes(profile->dungeon_path,
-                                      10L * 1024L * 1024L,
-                                      &bytes,
-                                      &file_size)) {
+    if (profile->dungeon_mem) {
+        if (profile->dungeon_mem_size == 0u ||
+            profile->dungeon_mem_size > 10u * 1024u * 1024u) {
+            return 0;
+        }
+        file_size = profile->dungeon_mem_size;
+        bytes = (uint8_t *)malloc(file_size);
+        if (!bytes) {
+            return 0;
+        }
+        memcpy(bytes, profile->dungeon_mem, file_size);
+    } else if (!dm2_v1_boot_read_asset_bytes(profile->dungeon_path,
+                                              10L * 1024L * 1024L,
+                                              &bytes,
+                                              &file_size)) {
         return 0;
     }
     memset(&candidate, 0, sizeof(candidate));

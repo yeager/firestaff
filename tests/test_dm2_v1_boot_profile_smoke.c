@@ -1058,6 +1058,14 @@ static void test_fmtowns_zip_real_media(void)
           "FM Towns original CD.DAT is retained for CDDA routing");
     CHECK(dm2_v1_boot_enter_game(&p) == 0,
           "FM Towns in-memory source bytes pass the boot recheck");
+    {
+        DM2_V1_BootNewDungeonReceipt new_dungeon;
+        memset(&new_dungeon, 0, sizeof(new_dungeon));
+        CHECK(dm2_v1_boot_load_new_dungeon(&p, &new_dungeon) == 1 &&
+                  new_dungeon.valid && new_dungeon.reloaded &&
+                  !new_dungeon.synthetic_party_created,
+              "FM Towns GAME_LOAD reloads authenticated G1 bytes in memory");
+    }
     dm2_v1_boot_cleanup(&p);
 }
 
