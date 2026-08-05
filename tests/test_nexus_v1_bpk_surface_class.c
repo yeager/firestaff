@@ -1243,6 +1243,7 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
 }
 
 static void test_optional_local_menu_bpk(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[2048];
     uint8_t *data = NULL;
@@ -1256,14 +1257,21 @@ static void test_optional_local_menu_bpk(void) {
     uint32_t indexed = 0U, rgb565 = 0U, rgb888 = 0U, rgba32 = 0U;
     uint64_t expected_total = 0U;
 
-    if (!home || !home[0]) {
-        puts("SKIP: HOME is unset; no local Nexus MENU.BPK check");
+    if (data_dir && data_dir[0]) {
+        if (snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) < 0) {
+            return;
+        }
+    } else if (home && home[0]) {
+        if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
+                     home) < 0) {
+            return;
+        }
+    } else {
+        puts("SKIP: Nexus data root is unset; no local MENU.BPK check");
         return;
     }
-    if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
-                 home) < 0) return;
     if (!read_file(path, &data, &size)) {
-        puts("SKIP: local Nexus MENU.BPK not present");
+        printf("SKIP: local Nexus MENU.BPK not present at %s\n", path);
         return;
     }
 

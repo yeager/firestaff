@@ -208,6 +208,14 @@
   leaves the framebuffer untouched until Saturn explored-state and VDP2
   placement evidence is authenticated.
 
+- ✅ 2026-08-06 Nexus MENU.BPK PRS3 real-corpus regression: the BPK surface
+  test now accepts `FIRESTAFF_NEXUS_DATA_DIR` explicitly and verifies the
+  mounted retail `MENU.BPK` rather than depending on an implicit home path.
+  The European corpus passes all 162 PRS3 surface checks and the existing
+  bounded byte decoder reports every surface complete. This proves compressed
+  byte recovery only; Saturn VDP1/CLUT placement and menu rendering remain
+  capture-gated.
+
 - ✅ 2026-08-06 Nexus startup title-frame receipt gate: the M11
   `BOOT_TITLE_FRAME` executor now requires the same source-bound Saturn
   title capture/timing receipt as the title-background route before touching
