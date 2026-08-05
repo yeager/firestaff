@@ -17,6 +17,9 @@ static int verify_real_us_item_table(void) {
     uint8_t *bytes;
     Theron_ItemPropertyRecord property;
     const Theron_ItemPropertyRecord *expected;
+    size_t envelope_offset;
+    size_t envelope_bytes;
+    uint32_t envelope_fnv1a;
     unsigned int i;
     char name[64];
 
@@ -35,6 +38,22 @@ static int verify_real_us_item_table(void) {
         return 0;
     }
     fclose(file);
+    if (!theron_v1_track19_startup_level_envelope_validate(
+            bytes, (size_t)size, &envelope_offset, &envelope_bytes,
+            &envelope_fnv1a) ||
+        envelope_offset != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET ||
+        envelope_bytes != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES ||
+        envelope_fnv1a != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_FNV1A) {
+        free(bytes);
+        return 0;
+    }
+    bytes[THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET + 12u] ^= 1u;
+    if (theron_v1_track19_startup_level_envelope_validate(
+            bytes, (size_t)size, NULL, NULL, NULL)) {
+        free(bytes);
+        return 0;
+    }
+    bytes[THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET + 12u] ^= 1u;
     for (i = 0u; i < THERON_TRACK19_US_ITEM_NAME_COUNT; ++i) {
         if (!theron_v1_track19_us_item_name_from_iso(
                 bytes, (size_t)size, i, name, sizeof(name))) {
@@ -107,6 +126,9 @@ static int verify_real_jp_item_table(void) {
     size_t label_size;
     Theron_ItemPropertyRecord property;
     const Theron_ItemPropertyRecord *expected;
+    size_t envelope_offset;
+    size_t envelope_bytes;
+    uint32_t envelope_fnv1a;
     unsigned int i;
 
     if (!path || !path[0]) return 1;
@@ -124,6 +146,22 @@ static int verify_real_jp_item_table(void) {
         return 0;
     }
     fclose(file);
+    if (!theron_v1_track19_startup_level_envelope_validate(
+            bytes, (size_t)size, &envelope_offset, &envelope_bytes,
+            &envelope_fnv1a) ||
+        envelope_offset != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET ||
+        envelope_bytes != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES ||
+        envelope_fnv1a != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_FNV1A) {
+        free(bytes);
+        return 0;
+    }
+    bytes[THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET + 12u] ^= 1u;
+    if (theron_v1_track19_startup_level_envelope_validate(
+            bytes, (size_t)size, NULL, NULL, NULL)) {
+        free(bytes);
+        return 0;
+    }
+    bytes[THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET + 12u] ^= 1u;
     for (i = 0u; i < THERON_TRACK19_JP_ITEM_NAME_COUNT; ++i) {
         if (!theron_v1_track19_jp_item_name_from_iso(
                 bytes, (size_t)size, i, name, sizeof(name), &name_size) ||
@@ -232,6 +270,15 @@ int main(void) {
              THERON_TRACK19_OPAQUE_RECORD_WINDOW_US_OFFSET ||
          file_receipt.opaque_record_window_bytes !=
              THERON_TRACK19_OPAQUE_RECORD_WINDOW_BYTES ||
+         !file_receipt.startup_level_envelope_verified ||
+         file_receipt.startup_level_envelope_offset !=
+             THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET ||
+         file_receipt.startup_level_envelope_bytes !=
+             THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES ||
+         file_receipt.startup_level_envelope_fnv1a !=
+             THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_FNV1A ||
+         file_receipt.startup_usable || file_receipt.level_usable ||
+         file_receipt.bitmap_usable ||
          file_receipt.source_md5[0] == '\0')) return 1;
     if (real_jp_iso && real_jp_iso[0] &&
         (!theron_v1_track19_inventory_file(real_jp_iso, &file_receipt) ||
@@ -247,6 +294,15 @@ int main(void) {
              THERON_TRACK19_OPAQUE_RECORD_WINDOW_JP_OFFSET ||
          file_receipt.opaque_record_window_bytes !=
              THERON_TRACK19_OPAQUE_RECORD_WINDOW_BYTES ||
+         !file_receipt.startup_level_envelope_verified ||
+         file_receipt.startup_level_envelope_offset !=
+             THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET ||
+         file_receipt.startup_level_envelope_bytes !=
+             THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES ||
+         file_receipt.startup_level_envelope_fnv1a !=
+             THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_FNV1A ||
+         file_receipt.startup_usable || file_receipt.level_usable ||
+         file_receipt.bitmap_usable ||
          file_receipt.source_md5[0] == '\0')) return 1;
     return 0;
 }

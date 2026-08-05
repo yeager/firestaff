@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Theron Track19 startup envelope receipt: real US and JP
+  Track19 ISOs now validate the exact 32×27, 876-byte envelope at `0x5a9114`
+  with FNV-1a `0x54fce0a0`; its bytes match the canonical retail Track02
+  envelope. This remains provenance-only: object, tile, palette, later-level,
+  and runtime dungeon publication remain fail-closed.
+
 - ✅ 2026-08-05 Nexus synthetic transition cleanup: removed the Structure1B
   square-grid fallback that invented stairs links to the adjacent level at
   the same coordinates. Stairs now require an authenticated Structure1F

@@ -138,6 +138,12 @@
   File-backed Track 19 inventory now carries the authenticated source hash and
   both metadata-verification flags; later record semantics remain closed.
 
+  The real US and JP Track 19 ISOs now also validate the identical 876-byte
+  startup-level envelope at `0x5a9114` (`0x36c`, FNV-1a `0x54fce0a0`), which
+  matches the canonical retail Track 02 envelope. This is a record-level
+  provenance receipt only; the original consumer for objects, tiles, palettes,
+  and later-level records remains unproven, so runtime publication stays closed.
+
   Track 02 object-data and dungeon-map bounds are now overflow-safe; truncated
   sources are rejected before ground-reference or item records can be
   admitted. This is a loader-integrity fix only, not semantic promotion of

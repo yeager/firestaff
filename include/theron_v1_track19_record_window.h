@@ -20,6 +20,17 @@
 #define THERON_TRACK19_OPAQUE_RECORD_WINDOW_JP_OFFSET 0x0E955Eu
 #define THERON_TRACK19_OPAQUE_RECORD_WINDOW_BYTES 502u
 
+/* The same 32x27 startup envelope is present at this offset in the real US
+ * and JP Track 19 ISOs and in the canonical retail Track 02 concatenation.
+ * Its bytes are admitted as a provenance receipt only; no object, tile,
+ * palette, or runtime dungeon meaning is inferred from the envelope. */
+#define THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET 0x5A9114u
+#define THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES 0x36Cu
+#define THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_FNV1A 0x54FCE0A0u
+#define THERON_TRACK19_STARTUP_LEVEL_WIDTH 32u
+#define THERON_TRACK19_STARTUP_LEVEL_HEIGHT 27u
+#define THERON_TRACK19_STARTUP_LEVEL_HEADER_BYTES 12u
+
 int theron_v1_track19_item_property_table_validate(
     const uint8_t *iso, size_t iso_size, int japanese_variant,
     size_t *out_offset, size_t *out_bytes);
@@ -34,5 +45,9 @@ int theron_v1_track19_item_property_from_iso(
 int theron_v1_track19_opaque_record_window_validate(
     const uint8_t *iso, size_t iso_size, int japanese_variant,
     size_t *out_offset, size_t *out_bytes);
+
+int theron_v1_track19_startup_level_envelope_validate(
+    const uint8_t *iso, size_t iso_size, size_t *out_offset,
+    size_t *out_bytes, uint32_t *out_fnv1a);
 
 #endif

@@ -2,6 +2,7 @@
 #define THERON_V1_TRACK19_INVENTORY_H
 
 #include <stddef.h>
+#include <stdint.h>
 
 typedef struct {
     int valid;
@@ -24,6 +25,10 @@ typedef struct {
     int opaque_record_window_verified;
     size_t opaque_record_window_offset;
     size_t opaque_record_window_bytes;
+    int startup_level_envelope_verified;
+    size_t startup_level_envelope_offset;
+    size_t startup_level_envelope_bytes;
+    uint32_t startup_level_envelope_fnv1a;
     char source_md5[33];
 } Theron_V1Track19InventoryReceipt;
 

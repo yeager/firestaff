@@ -69,3 +69,30 @@ int theron_v1_track19_opaque_record_window_validate(
     if (out_bytes) *out_bytes = THERON_TRACK19_OPAQUE_RECORD_WINDOW_BYTES;
     return 1;
 }
+
+int theron_v1_track19_startup_level_envelope_validate(
+        const uint8_t *iso, size_t iso_size, size_t *out_offset,
+        size_t *out_bytes, uint32_t *out_fnv1a) {
+    static const uint8_t header[THERON_TRACK19_STARTUP_LEVEL_HEADER_BYTES] = {
+        0x00u, 0x20u, 0x00u, 0x1Bu, 0x01u, 0x08u,
+        0xE9u, 0x38u, 0x00u, 0x26u, 0x01u, 0x03u
+    };
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!iso || iso_size < THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET +
+            THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES ||
+        memcmp(iso + THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET, header,
+               sizeof(header)) != 0) {
+        return 0;
+    }
+    for (i = 0u; i < THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES; ++i) {
+        hash ^= iso[THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET + i];
+        hash *= 16777619u;
+    }
+    if (hash != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_FNV1A) return 0;
+    if (out_offset) *out_offset = THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET;
+    if (out_bytes) *out_bytes = THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES;
+    if (out_fnv1a) *out_fnv1a = hash;
+    return 1;
+}

@@ -153,8 +153,16 @@ int theron_v1_track19_inventory_file(
         free(data);
         return 0;
     }
+    if (!theron_v1_track19_startup_level_envelope_validate(
+            data, bytes, &out->startup_level_envelope_offset,
+            &out->startup_level_envelope_bytes,
+            &out->startup_level_envelope_fnv1a)) {
+        free(data);
+        return 0;
+    }
     out->item_property_table_verified = 1;
     out->opaque_record_window_verified = 1;
+    out->startup_level_envelope_verified = 1;
     free(data);
     return 1;
 }
