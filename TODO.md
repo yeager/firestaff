@@ -220,6 +220,9 @@
   creature ticks no longer turn reduced `b_1a`/`b_17` fields into movement,
   attacks, direction changes or cooldowns. Reconnect only with the complete
   SKProject DB4/CAII command stream and live dungeon/timer/party callbacks.
+  **2026-08-06 world-state boundary:** the partial `dm2_v1_world_state`
+  SKSave projection is test-only. It has no M11/runtime caller and does not
+  own SKProject's continuous SUPPRESS stream, so it cannot be a resume route.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   source-bound lifecycle/presentation path with a structural fail-closed seam.

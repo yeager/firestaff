@@ -4417,7 +4417,8 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_querydb_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gdatfile_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_sfx_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_ccm.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_ccm.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_world_state.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -16349,6 +16350,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_gdat_scene_m11_command.c
         src/dm2/dm2_v1_gdat_wall_m11_command.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_glob_var.c
         src/dm2/dm2_v1_runtime_parity_pc34_compat.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c

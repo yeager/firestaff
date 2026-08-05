@@ -50192,3 +50192,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   DB4/CAII command-stream owner and live dungeon/timer/party callbacks, so
   production now records an unexecuted CCM receipt while retaining authentic
   GDAT creature data/rendering. The isolated CCM tests remain explicit.
+- ✅ 2026-08-06 DM2 partial world-state isolation: removed
+  `dm2_v1_world_state.c` from the broad production DM2 archive. Its bounded
+  SKSave projection has no active M11/runtime caller and cannot reproduce the
+  original continuous SUPPRESS read order, so only its explicit diagnostics
+  retain it until complete `DM2_GAME_LOAD` ownership exists.
