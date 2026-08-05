@@ -1,3 +1,8 @@
+- ✅ 2026-08-05 Theron production-link verification after packed teleporter
+  handoff: full `firestaff` target and `firestaff_m11_phase_a_probe` build
+  cleanly for the changed route; Phase A passes 24/24. Existing non-Theron
+  warning-only diagnostics remain unchanged.
+
 - ✅ 2026-08-05 Theron Track 02 teleporter parity: the dungeon loader now
   marks packed level/y/x links explicitly instead of exposing them as host
   object IDs. Runtime resolution follows the source coordinates, supports a

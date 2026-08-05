@@ -36,6 +36,10 @@
   targets reject instead of falling back to the clicked square. Tile/material
   and full bitmap semantics remain separately blocked.
 
+  Production `firestaff` and M11 Phase A now link and pass with this route;
+  remaining handoff work is the authenticated non-startup level/object
+  corpus and real bitmap/palette capture.
+
 - **THERON-FIXTURE-HELPER-ARCHIVE:** Closed 2026-07-31. Synthetic first-room
   constructors are now compiled only into explicit fixture targets; the
   production Theron archive exports no generated level-buffer helpers.
