@@ -196,6 +196,12 @@
   1B7D5 as callback-bound SKProject handler ports rather than stubs. This
   does not admit a live creature path: production still rejects absent
   command-stream, DB4/CAII and callback ownership.
+  **2026-08-06 callback-audit isolation:** the broad production compatibility
+  glob no longer links `dm2_v1_runtime_parity_pc34_compat.c`. Its timer,
+  record, creature and actuator callback bodies have no live DB/CCM owner.
+  The only active source-bounded subset, SKProject's `ddat` global-variable
+  store, now lives in `dm2_v1_glob_var.c`; all other bodies remain available
+  only to their explicit audit targets.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   source-bound lifecycle/presentation path with a structural fail-closed seam.

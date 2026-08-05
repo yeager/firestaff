@@ -50026,3 +50026,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   admission. Inventory-panel mouse regression passes 372/372; real Mac
   pickup/placement and held-cursor capture remain tracked under
   DM1-HOC-OBJECTS-002/003.
+
+- ✅ 2026-08-06 DM2 runtime callback-audit isolation: removed the unbound
+  `dm2_v1_runtime_parity_pc34_compat.c` callback transcript from both broad
+  production archives. Its timer, record, creature and actuator bodies had no
+  live DB/CCM owner or non-test caller. The only live subset, the source
+  `ddat` bit/byte/word global-variable store consumed by `dm2_v1_game.c`, is
+  now a small independent module. Verification: production archive symbol
+  audit confirms the unbound callback symbols are absent; glob-variable unit
+  and game integration tests pass; the real PC `GRAPHICS.DAT`/`DUNGEON.DAT`
+  M11 startup-profile gate passes.

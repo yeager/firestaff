@@ -39,78 +39,10 @@ int16_t dm2_v1_rotate_5x5_pos(int16_t pos, int16_t rotation)
     return (int16_t)(5 * (div + 2) + mod + 2);
 }
 
-/* =====================================================================
- * dm2global.cpp / skgdtqdb.cpp:1928 — Glob var three-tier storage
- * ===================================================================== */
-
-void dm2_v1_glob_var_init(DM2_V1_GlobVarState *state)
-{
-    if (!state) return;
-    memset(state, 0, sizeof(*state));
-}
-
-int32_t dm2_v1_get_glob_var(
-    const DM2_V1_GlobVarState *state, uint16_t index)
-{
-    if (!state) return 0;
-    if (index <= 0x3F) {
-        uint16_t byte_idx = index / 8;
-        uint8_t bit = (uint8_t)(1 << (index & 7));
-        return (state->bit_vars[byte_idx] & bit) != 0 ? 1 : 0;
-    }
-    if (index <= 0x7F) {
-        return (int32_t)(uint8_t)state->byte_vars[index - 0x40];
-    }
-    if (index <= 0xBF) {
-        return (int32_t)state->word_vars[index];
-    }
-    return 0;
-}
-
-static int16_t dm2_between_value(int16_t lo, int16_t hi, int16_t val)
-{
-    if (val < lo) return lo;
-    if (val > hi) return hi;
-    return val;
-}
-
-int32_t dm2_v1_update_glob_var_direct(
-    DM2_V1_GlobVarState *state,
-    int16_t var_idx, int16_t mode, int16_t value)
-{
-    if (!state) return 0;
-    int16_t cur = (int16_t)dm2_v1_get_glob_var(state, (uint16_t)var_idx);
-    int16_t result = cur;
-
-    if ((uint16_t)mode <= 6) {
-        switch (mode) {
-        case 0: result = 1; break;
-        case 1: result = 0; break;
-        case 2: result = (int16_t)(cur != 0 ? 0 : 1); break;
-        case 3: result = (int16_t)(cur + value); break;
-        case 4: result = (int16_t)(cur - value); break;
-        case 5: break;
-        case 6: result = value; break;
-        }
-    }
-
-    uint16_t uvar = (uint16_t)var_idx;
-    if (uvar <= 0x3F) {
-        uint8_t bit = (uint8_t)(1 << (uvar & 7));
-        uint16_t byte_idx = uvar >> 3;
-        if (result != 0)
-            state->bit_vars[byte_idx] |= bit;
-        else
-            state->bit_vars[byte_idx] &= (uint8_t)~bit;
-    } else if (uvar <= 0x7F) {
-        int16_t clamped = dm2_between_value(0, 255, result);
-        state->byte_vars[uvar - 0x40] = (uint8_t)clamped;
-        result = clamped;
-    } else if (uvar <= 0xBF) {
-        state->word_vars[uvar] = result;
-    }
-    return (int32_t)result;
-}
+/* dm2global.cpp / skgdtqdb.cpp:1928 — the only live subset (the
+ * ddat-backed bit/byte/word store) lives in dm2_v1_glob_var.c.  This
+ * callback audit stays out of production: none of the remaining timer,
+ * record, creature or actuator bodies owns a mounted DM2 runtime record. */
 
 /* =====================================================================
  * dm2global.cpp:21 — DM2_UPDATE_GLOB_VAR (legacy callback interface)

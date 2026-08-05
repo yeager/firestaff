@@ -4202,6 +4202,12 @@ list(REMOVE_ITEM M10_SOURCES
 # for a production DM2 session; its two unit targets compile it explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_narrow_pc34_compat.c")
+# `dm2_v1_runtime_parity_pc34_compat.c` contains callback-only timer, record,
+# creature and actuator transcripts with no live DB/CCM owner.  Its sole
+# production requirement, the ddat global-variable store, is split into
+# dm2_v1_glob_var.c.  Keep the remaining audit test-only.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_parity_pc34_compat.c")
 # The broad `c_gui_draw` callback transcription has no M11 caller and still
 # substitutes dimensions, coin placement and glyph/UI decisions for the
 # source-owned GDAT and buttongroup state.  The live HUD uses the gated
@@ -4387,6 +4393,7 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_1c9a_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_0aaf_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_narrow_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_parity_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_draw_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_vp_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_querydb_pc34_compat.c"
@@ -15753,6 +15760,7 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_glob_var
         tests/test_dm2_v1_glob_var_pc34_compat.c
+        src/dm2/dm2_v1_glob_var.c
         src/dm2/dm2_v1_runtime_parity_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_glob_var PRIVATE
@@ -15769,6 +15777,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_game_glob_var_integration
         tests/test_dm2_v1_game_glob_var_integration.c
         src/dm2/dm2_v1_game.c
+        src/dm2/dm2_v1_glob_var.c
         src/dm2/dm2_v1_runtime_parity_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_game_glob_var_integration PRIVATE
