@@ -211,12 +211,13 @@ static void build_dungeon(DM2_V1_DungeonData *d,
     d->raw_data = g_dungeon_raw;
     d->raw_size = RAW_SIZE;
 
-    /* Cell (1,0) has objects */
-    g_dungeon_raw[MAP_BASE + 1] = 0x10;
+    /* Cell (1,0) has objects — column-major: x*h+y = 1*4+0 = 4 */
+    g_dungeon_raw[MAP_BASE + 4] = 0x10;
     wr16(g_dungeon_raw + COLUMN_BASE + 0, 0);
     wr16(g_dungeon_raw + COLUMN_BASE + 2, 1);
-    /* Ground stack: first thing at idx 0 -> creature record 0 */
-    wr16(g_dungeon_raw + GROUND_BASE + 0, (uint16_t)rec_handle(0));
+    /* Ground stack: thing at idx 1 -> creature record 0 (column for x=1
+     * starts at index 1). */
+    wr16(g_dungeon_raw + GROUND_BASE + 2, (uint16_t)rec_handle(0));
     /* Next link in record: end */
     wr16(set->pools[4].bytes + 0, (uint16_t)DM2_V1_RECORD_HANDLE_END);
 }

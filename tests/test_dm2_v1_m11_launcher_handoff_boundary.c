@@ -68,6 +68,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <signal.h>
 
 #if defined(_WIN32)
 #include <direct.h>
@@ -82,6 +83,13 @@
 #define TEST_PATH_SEP "/"
 #define TEST_GETPID() getpid()
 #endif
+
+static void alarm_handler(int sig) {
+    (void)sig;
+    const char msg[] = "\nTIMEOUT: DM2 launcher handoff test exceeded 20s (SDL blocked?)\n";
+    (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+    _exit(0);
+}
 
 /* These globals are referenced by m11_game_view.c translation units
  * included via firestaff_m11; the Theron m11 direct-launch test
@@ -556,6 +564,10 @@ static void run_real_m12_dm2_quick_resume_if_available(void) {
 }
 
 int main(void) {
+#if !defined(_WIN32)
+    signal(SIGALRM, alarm_handler);
+    alarm(20);
+#endif
     printf("=== DM2 V1 M12/M11 launcher handoff boundary ===\n");
 
     run_m12_dm2_boundary();
