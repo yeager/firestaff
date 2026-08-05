@@ -48816,3 +48816,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   stays explicitly unbound. Runtime-image restore no longer revives the old
   synthetic multiplier. Source-lock: ReDMCSB `DEFS.H` `MAP.C`, `PANEL.C`
   F0337, `CHAMPION.C` and `PROJEXPL.C`; covered by CSB boot and save tests.
+# DM1 synthetic wall-coordinate fallback removed
+
+- ✅ 2026-08-05 DM1 wall-ornament provenance cleanup: removed the legacy
+  `DM1_V1_WallOrnament_SetupDefaultCoordsPc34Compat()` perspective rectangles.
+  They were approximate host geometry and were not present in ReDMCSB. The
+  compatibility entry point now clears its coordinates and fails closed;
+  active PC34 rendering continues to consume the authenticated G0205 table
+  from `GRAPHICS.DAT`. The focused wall-ornament test passes 127/127.

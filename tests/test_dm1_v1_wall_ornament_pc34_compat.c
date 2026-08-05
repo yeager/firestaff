@@ -1,6 +1,7 @@
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 
 #include <stdio.h>
+#include <string.h>
 
 static int g_passed;
 static int g_failed;
@@ -45,6 +46,7 @@ int main(void)
     DM1_WallOrnamentViewSpecPc34 spec;
     DM1_WallOrnamentRenderPlanPc34 plan;
     DM1_FrontMirrorRenderPlanPc34 mirrorPlan;
+    DM1_V1_WallOrnamentDefPc34 defaultDef;
 
     /* ReDMCSB DUNVIEW.C G0194: wall ornament global index to G0205
      * coordinate-set index. */
@@ -60,6 +62,17 @@ int main(void)
                dm1_v1_wall_ornament_coord_set_index_pc34(59), 6);
     expect_int("coord_set.out_of_range.high",
                dm1_v1_wall_ornament_coord_set_index_pc34(60), 0);
+
+    /* No source-owned G0205 table means no geometry. The legacy helper must
+     * not manufacture perspective rectangles. */
+    memset(&defaultDef, 0xA5, sizeof(defaultDef));
+    DM1_V1_WallOrnament_SetupDefaultCoordsPc34Compat(&defaultDef);
+    expect_int("default_coords.closed.x", defaultDef.coords[0].x, 0);
+    expect_int("default_coords.closed.y", defaultDef.coords[0].y, 0);
+    expect_int("default_coords.closed.w", defaultDef.coords[0].w, 0);
+    expect_int("default_coords.closed.h", defaultDef.coords[0].h, 0);
+    expect_int("default_coords.closed.depth", defaultDef.coords[0].depth, 0);
+    expect_int("default_coords.closed.side", defaultDef.coords[0].side, 0);
 
     /* ReDMCSB DUNVIEW.C G0205: {X1, X2, Y1, Y2, ByteWidth, Height};
      * destination width/height are derived from inclusive X/Y bounds. */

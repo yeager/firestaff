@@ -95,48 +95,13 @@ const DM1_V1_WallOrnamentCoordPc34* DM1_V1_WallOrnament_GetCoordPc34Compat(const
     return &orn->coords[idx];
 }
 
-/* Setup default ornament coordinate positions based on DM1 perspective geometry.
- * These approximate the ReDMCSB coordinate tables from graphic 558.
- * Depth 0 = closest (largest), depth 3 = farthest (smallest) */
+/* The old helper used to invent perspective rectangles. That was never a
+ * valid PC34 render path: ReDMCSB reads the source-owned G0205 table from
+ * GRAPHICS.DAT. Keep the ABI for old callers, but fail closed instead of
+ * manufacturing coordinates when no source table is supplied. */
 void DM1_V1_WallOrnament_SetupDefaultCoordsPc34Compat(DM1_V1_WallOrnamentDefPc34* orn) {
     if (!orn) return;
-
-    /* Depth scaling factors: approximate DM1 perspective projection
-     * Based on DUNVIEW.C wall zone geometry */
-    static const struct { int16_t base_w, base_h, base_x_left, base_x_center, base_x_right, base_y; } depth_params[4] = {
-        /* D0: closest — ornament fills most of wall */
-        { 64, 48, 16, 80, 144, 44 },
-        /* D1: medium close */
-        { 40, 30, 32, 92, 152, 52 },
-        /* D2: medium far */
-        { 24, 18, 48, 100, 152, 58 },
-        /* D3: farthest — small */
-        { 16, 12, 56, 104, 152, 62 }
-    };
-
-    for (int d = 0; d < 4; d++) {
-        for (int s = 0; s < 3; s++) {
-            int idx = d * 3 + s;
-            if (idx >= DM1_ORN_COORD_SETS) break;
-            orn->coords[idx].w = depth_params[d].base_w;
-            orn->coords[idx].h = depth_params[d].base_h;
-            orn->coords[idx].depth = (int16_t)d;
-            orn->coords[idx].side = (int16_t)s;
-            orn->coords[idx].y = depth_params[d].base_y;
-
-            switch (s) {
-                case 0: /* left */
-                    orn->coords[idx].x = depth_params[d].base_x_left;
-                    break;
-                case 1: /* center */
-                    orn->coords[idx].x = depth_params[d].base_x_center;
-                    break;
-                case 2: /* right */
-                    orn->coords[idx].x = depth_params[d].base_x_right;
-                    break;
-            }
-        }
-    }
+    memset(orn->coords, 0, sizeof(orn->coords));
 }
 
 int dm1_v1_wall_ornament_coord_set_index_pc34(int globalIndex) {
