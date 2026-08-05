@@ -48727,3 +48727,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   through `LEVEL 15`. The probe validates the complete table and rejects a
   changed label byte; this exposes labels only and does not invent maps,
   objects, or bitmap semantics.
+- ✅ 2026-08-05 CSB scanner sidecar visibility: `--scan-data` now searches
+  beside the hash-matched loose `GRAPHICS.DAT` package (not only the selected
+  data root) before reporting verified CSB media. The candidate inventory also
+  recognizes Atari `ANIMATE.FTL`, `CHAOS.FTL`, `FTLCODE` and `MINI.DAT`.
+  Archive-cache regression coverage now proves the three real Atari startup
+  modules remain materialized beside the verified launch pair. Source-lock:
+  ReDMCSB `ANIM.C:67-72,94`; verified against the real Atari ST archive.

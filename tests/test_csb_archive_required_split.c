@@ -49,6 +49,12 @@ static const char kCsbSavePayload[] =
     "Firestaff synthetic CSB utility CSBGAME fixture v1\n";
 static const char kCsbMiniSavePayload[] =
     "Firestaff synthetic CSB Atari MINI campaign fixture v1\n";
+static const char kCsbAnimateModulePayload[] =
+    "Firestaff synthetic CSB Atari ANIMATE FTL module fixture v1\n";
+static const char kCsbChaosModulePayload[] =
+    "Firestaff synthetic CSB Atari CHAOS FTL module fixture v1\n";
+static const char kCsbFtlCodePayload[] =
+    "Firestaff synthetic CSB Atari FTLCODE runtime fixture v1\n";
 static const char kCsbWrongGraphicsPayload[] =
     "Firestaff synthetic CSB wrong graphics archive fixture v1\n";
 static const char kCsbGraphicsMd5[] = "5b5922a7c89d7a885f7334000df4846a";
@@ -337,11 +343,14 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     char cachedHintData[512];
     char cachedSave[512];
     char cachedMiniSave[512];
+    char cachedAnimateModule[512];
+    char cachedChaosModule[512];
+    char cachedFtlCode[512];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
     const char* runtimeDir;
-    TestZipEntry zipEntries[8];
+    TestZipEntry zipEntries[11];
     M12_AssetStatus status;
 
     memset(csbCacheDir, 0, sizeof(csbCacheDir));
@@ -352,6 +361,9 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     memset(cachedHintData, 0, sizeof(cachedHintData));
     memset(cachedSave, 0, sizeof(cachedSave));
     memset(cachedMiniSave, 0, sizeof(cachedMiniSave));
+    memset(cachedAnimateModule, 0, sizeof(cachedAnimateModule));
+    memset(cachedChaosModule, 0, sizeof(cachedChaosModule));
+    memset(cachedFtlCode, 0, sizeof(cachedFtlCode));
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_graphics.zip"),
               "positive ZIP path should fit");
     check_int(join_path(isoPath, sizeof(isoPath), root, "csb_required.iso"),
@@ -373,6 +385,12 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     zipEntries[6].payload = kCsbMiniSavePayload;
     zipEntries[7].name = "archive/HCSB.DAT";
     zipEntries[7].payload = "original CSB Hint Oracle graphics data";
+    zipEntries[8].name = "archive/ANIMATE.FTL";
+    zipEntries[8].payload = kCsbAnimateModulePayload;
+    zipEntries[9].name = "archive/CHAOS.FTL";
+    zipEntries[9].payload = kCsbChaosModulePayload;
+    zipEntries[10].name = "archive/FTLCODE";
+    zipEntries[10].payload = kCsbFtlCodePayload;
     check_int(write_stored_zip_entries(zipPath,
                                        zipEntries,
                                        sizeof(zipEntries) / sizeof(zipEntries[0])),
@@ -450,7 +468,13 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                   FSP_JoinPath(cachedSave, sizeof(cachedSave),
                                csbCacheDir, "CSBGAME.DAT") &&
                   FSP_JoinPath(cachedMiniSave, sizeof(cachedMiniSave),
-                               csbCacheDir, "MINI.DAT"),
+                               csbCacheDir, "MINI.DAT") &&
+                  FSP_JoinPath(cachedAnimateModule, sizeof(cachedAnimateModule),
+                               csbCacheDir, "ANIMATE.FTL") &&
+                  FSP_JoinPath(cachedChaosModule, sizeof(cachedChaosModule),
+                               csbCacheDir, "CHAOS.FTL") &&
+                  FSP_JoinPath(cachedFtlCode, sizeof(cachedFtlCode),
+                               csbCacheDir, "FTLCODE"),
               "CSB optional startup cache paths should resolve");
     check_int(file_matches_payload(cachedBonusDungeon, kCsbBonusDungeonPayload),
               "archive-backed CSB bonus dungeon should be materialized next to GRAPHICS.DAT");
@@ -467,6 +491,15 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
               "archive-backed CSB CSBGAME.DAT utility save should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedMiniSave, kCsbMiniSavePayload),
               "archive-backed CSB MINI.DAT campaign save should be materialized next to GRAPHICS.DAT");
+    /* ReDMCSB ANIM.C:67-72 loads ANIMATE.FTL and CHAOS.FTL, then transfers
+     * to FTLCODE.  Preserve that original Atari startup family when the
+     * verified GRAPHICS.DAT anchor originates in an archive. */
+    check_int(file_matches_payload(cachedAnimateModule, kCsbAnimateModulePayload),
+              "archive-backed CSB ANIMATE.FTL startup module should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedChaosModule, kCsbChaosModulePayload),
+              "archive-backed CSB CHAOS.FTL startup module should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedFtlCode, kCsbFtlCodePayload),
+              "archive-backed CSB FTLCODE runtime module should be materialized next to GRAPHICS.DAT");
 }
 
 static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {

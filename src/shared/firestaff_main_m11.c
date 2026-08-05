@@ -107,7 +107,10 @@ static int find_csb_optional_media(const M12_AssetStatus* status,
                                    char outPath[512]) {
     const char* runtimeRoot;
     const char* dataRoot;
+    const M12_AssetRequiredFileStatus* graphics;
     char csbDir[512];
+    char parent[512];
+    char grandparent[512];
     if (!status || !label || !outPath) return 0;
     outPath[0] = '\0';
     runtimeRoot = M12_AssetStatus_GetRuntimeDataDir(status, "csb");
@@ -117,6 +120,20 @@ static int find_csb_optional_media(const M12_AssetStatus* status,
     if (dataRoot && FSP_JoinPath(outPath, 512U, dataRoot, label) && FSP_FileExists(outPath)) return 1;
     if (dataRoot && FSP_JoinPath(csbDir, sizeof(csbDir), dataRoot, "csb") &&
         FSP_JoinPath(outPath, 512U, csbDir, label) && FSP_FileExists(outPath)) return 1;
+    /* A hash-first scan deliberately accepts the user's original directory
+     * layout.  When GRAPHICS.DAT was found as a loose nested file, inspect
+     * its package directory (and its immediate parent) before falling back
+     * to dataRoot/csb.  This keeps --scan-data's verified-media report from
+     * appearing to search only the two launch files.  Archive-backed sources
+     * are already represented by the runtime cache above. */
+    graphics = M12_AssetStatus_GetRequiredFile(status, "csb", 0U);
+    if (graphics && graphics->matched && graphics->matchedPath[0] != '\0' &&
+        strstr(graphics->matchedPath, "::") == NULL &&
+        FSP_ParentDir(parent, sizeof(parent), graphics->matchedPath)) {
+        if (FSP_JoinPath(outPath, 512U, parent, label) && FSP_FileExists(outPath)) return 1;
+        if (FSP_ParentDir(grandparent, sizeof(grandparent), parent) &&
+            FSP_JoinPath(outPath, 512U, grandparent, label) && FSP_FileExists(outPath)) return 1;
+    }
     outPath[0] = '\0';
     return 0;
 }
