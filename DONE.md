@@ -49058,3 +49058,8 @@ authorizing weather pixels. The runtime weather-timer regression proves an
 outdoor session with no original chain produces neither a timer nor a receipt.
 Source: `SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD` and
 `SKWINSPX/src/v5/c_weather.cpp::DM2_SET_TIMER_WEATHER`.
+- ✅ 2026-08-05 DM1 creature replacement palette binding: the live M11
+  creature compositor now applies the source G0243/F0695 slot-9/slot-10
+  replacement targets after the G0221/G0222 depth mapping. No-replacement
+  creatures keep the original palette. Ninja target and the DM1 creature
+  rendering integration test pass.

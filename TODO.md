@@ -1183,6 +1183,14 @@ diagnostic; it must not silently fall back to a generated visual.
   surface untouched until real GRAPHICS.DAT material is admitted.
   Verification: Ninja `firestaff` target builds; `git diff --check` passes.
 
+- **DM1-ORIGINAL-REPLACE-013:** Closed 2026-08-05. Bound the live M11
+  creature compositor to the source G0243/F0695 replacement-color targets.
+  G0221/G0222 depth mapping remains intact, while source palette slots 9 and
+  10 now use the verified creature-specific destinations; creatures without
+  replacement sets retain the original mapping. Verification: Ninja
+  `firestaff` target and `test_dm1_v1_creature_render_pc34_compat_integration`
+  pass.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

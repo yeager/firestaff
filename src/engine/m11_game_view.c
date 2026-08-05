@@ -504,11 +504,30 @@ static int dm1_creature_palette_for_depth(
         int depthIndex,
         unsigned char palette[16]) {
     const unsigned char* src;
+    int replacementColor9;
+    int replacementColor10;
     int i;
-    (void)creatureType;
     src = depthIndex >= 3 ? dm1_creature_palette_d3() : dm1_creature_palette_d2();
     if (!src || !palette) return 0;
     for (i = 0; i < 16; ++i) palette[i] = src[i];
+
+    /* ReDMCSB DUNVIEW.C F0093/F0695 changes the active VGA palette entries
+     * 9 and 10 from G0243's replacement-set nibbles before F0115 blits the
+     * creature. The indexed host framebuffer cannot mutate the DAC per
+     * sprite, so preserve the same source result by remapping those two
+     * source slots in the local G0221/G0222 output palette. Creatures with
+     * no replacement set retain the original targets 9 and 10. */
+    replacementColor9 = 9;
+    replacementColor10 = 10;
+    (void)dm1_creature_replacement_colors(creatureType,
+                                          &replacementColor9,
+                                          &replacementColor10);
+    if (replacementColor9 >= 0 && replacementColor9 < 16) {
+        palette[9] = (unsigned char)replacementColor9;
+    }
+    if (replacementColor10 >= 0 && replacementColor10 < 16) {
+        palette[10] = (unsigned char)replacementColor10;
+    }
     return 1;
 }
 
