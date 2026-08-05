@@ -22,6 +22,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+/* DM.BIN/ITEM.IBS presence alone does not authenticate the Saturn action
+ * dispatcher. Keep the live combat/spell bridge closed until an original
+ * runtime trace binds command routing, stat reads, RNG, and side effects. */
+int nexus_v1_action_semantics_proven(void)
+{
+    return 0;
+}
+
 /* Nexus V1 mechanics — assembled game loop.
  * Combines: movement, square events, creature AI, combat, resource drain,
  * script triggers, sound triggers.
@@ -544,7 +552,7 @@ static int mechanics_attack_adjacent_creature(Nexus_V1_Engine *engine,
      * In particular, the old unarmed power=2 path was inherited from DM1.
      * Keep live Nexus combat fail-closed until a Saturn attack dispatcher
      * capture/disassembly binds the player attack value and target routing. */
-    if (engine->item_ibs_runtime_source.source_bound) return 0;
+    if (!nexus_v1_action_semantics_proven()) return 0;
     mgr = &engine->creatures;
     if (mgr->active_count <= 0) return 0;
 
@@ -770,7 +778,8 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
              * Source: DM1 COMMAND.C F0412 spell cast dispatch;
              *         DM.BIN 0x0383AC spell handler vtable. */
             int leader_idx = mechanics_party_leader_index(engine);
-            if (leader_idx >= 0 && st->spell_power >= 0 && st->spell_element >= 0 &&
+            if (nexus_v1_action_semantics_proven() &&
+                leader_idx >= 0 && st->spell_power >= 0 && st->spell_element >= 0 &&
                 st->spell_form >= 0) {
                 Nexus_V1_Champion *leader = &engine->champions.champions[leader_idx];
                 Nexus_SpellClass cls = (leader->wizard_level >= leader->priest_level)
@@ -1090,7 +1099,8 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             if (c->state == 3) { /* attack range */
                 int champ_def = get_champion_defense(&engine->champions);
                 int dmg = 0;
-                if (nexus_v1_creature_attack(&engine->creatures, i, champ_def, &dmg)) {
+                if (nexus_v1_action_semantics_proven() &&
+                    nexus_v1_creature_attack(&engine->creatures, i, champ_def, &dmg)) {
                     if (dmg > 0) {
                         int target_idx = -1;
                         int pi;
@@ -1151,7 +1161,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             if (!c->alive || c->level != st->map_index) continue;
             if (c->type_index < 0 || c->hidden) continue;
             rtype = engine->creatures.types[c->type_index].ranged_type;
-            if (rtype == 0) continue;
+            if (rtype == 0 || !nexus_v1_action_semantics_proven()) continue;
             if (c->state != 2) continue;
             {
                 int dist = nexus_v1_creature_distance(c->x, c->y,
@@ -1183,6 +1193,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             int n_hits = nexus_v1_projectiles_tick(&engine->projectiles,
                 engine->current_level.squares, proj_hits, NEXUS_MAX_PROJECTILES);
             for (i = 0; i < n_hits; i++) {
+                if (!nexus_v1_action_semantics_proven()) continue;
                 if (proj_hits[i].hit_wall) continue;
                 if (proj_hits[i].source_champion >= 0) {
                     int killed = nexus_v1_creature_manager_damage_at(

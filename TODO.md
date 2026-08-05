@@ -30,6 +30,11 @@
   equipment catalog when ITEM.IBS action semantics are absent; click dispatch
   remains available, but use is no-op until the Saturn action dispatcher is
   source-bound.
+  The Nexus mechanics and engine tick paths now share an explicit closed
+  action-semantics gate: inherited melee, spell dispatch, creature attack,
+  ranged projectile launch, and projectile damage cannot mutate live state
+  until Saturn command/RNG/stat/side-effect evidence is bound. Isolated
+  combat/spell module tests remain diagnostic only.
   SMAP00-15 are now loaded and decoded from hash-verified retail bytes when a
   level becomes active; the retained pixels remain HUD/VDP2 no-draw until the
   Saturn placement and explored-state write path are captured.

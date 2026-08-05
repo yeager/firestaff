@@ -20,7 +20,7 @@ pixelavkodning och runtime-handoff måste också vara verifierade.
 | Saturns `ITEM.IBS` | Verifierad 0x18800-byte visual/declaration-bank; real DGN Structure1Fa-referenser binds utan ersättningsbild | IBS bevisar ikon-/deklarationsdata, inte combat-, vikt-, namn- eller use-stats; item-use i live mechanics är nu no-op tills Saturns action-dispatcher är bunden |
 | Infererad DM1-drop-tabell i `nexus_v1_drops.c` | Bortkopplad från runtime | Tabellen är uttryckligen DM1-kompatibel och härledd från XP; drops returnerar nu tomt tills Nexus-källa finns |
 | DM1-inherited magiformel/stub i `nexus_v1_magic.c` | Bortkopplad från runtime | Rune-kombinationer och spell-effekter är inte verifierade; kostnad och cast returnerar nu blockerad route utan manaändring |
-| DM1-style combat/XP i `nexus_v1_combat.c` | Bortkopplad från runtime | Attackformel, kritisk träff, stamina-kostnad och XP var inte Nexus-verifierade; attack ger nu inget resultat tills källan finns |
+| DM1-style combat/XP i `nexus_v1_combat.c` | Bortkopplad från runtime; mechanics/engine action-gate stängd | Attackformel, kritisk träff, stamina-kostnad, creature attacks, spells, projectile damage och XP är inte Nexus-verifierade; live-routes muterar inte state tills Saturnkällan finns |
 
 ## Meny
 

@@ -10058,6 +10058,7 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                                                    hits, 8);
             int hi;
             for (hi = 0; hi < nhits; hi++) {
+                if (!nexus_v1_action_semantics_proven()) continue;
                 if (hits[hi].hit_x == engine->mechanics->party_x &&
                     hits[hi].hit_y == engine->mechanics->party_y) {
                     int li = engine->champions.leader_index;
@@ -10098,7 +10099,8 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                     int cdist = nexus_v1_creature_distance(cr->x, cr->y,
                         engine->mechanics->party_x, engine->mechanics->party_y);
                     int ranged = engine->creatures.types[cr->type_index].ranged_type;
-                    if (ranged > 0 && cdist > 1 && cdist <= 5 && cr->state == 2 &&
+                    if (nexus_v1_action_semantics_proven() && ranged > 0 &&
+                        cdist > 1 && cdist <= 5 && cr->state == 2 &&
                         cr->ai_timer % 8 == 0) {
                         int dir = 0;
                         int dx = engine->mechanics->party_x - cr->x;
@@ -10120,7 +10122,8 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                         int idx = engine->champions.party[li];
                         if (idx >= 0 && idx < 4 && engine->champions.champions[idx].alive) {
                             int dmg = 0;
-                            if (nexus_v1_creature_attack(&engine->creatures, ci2,
+                            if (nexus_v1_action_semantics_proven() &&
+                                nexus_v1_creature_attack(&engine->creatures, ci2,
                                     engine->champions.champions[idx].dexterity, &dmg)) {
                                 engine->champions.champions[idx].health -= dmg;
                                 if (engine->champions.champions[idx].health <= 0) {

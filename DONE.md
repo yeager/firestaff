@@ -1,3 +1,11 @@
+- ✅ 2026-08-05 Nexus action-semantics gate: added one shared production
+  capability check used by mechanics and engine tick paths. Until an original
+  Saturn action-dispatch trace binds command routing, stat reads, RNG and side
+  effects, live melee/spell dispatch, creature attacks, ranged launches and
+  projectile damage are no-op; isolated combat/spell contracts remain tests.
+  This removes the remaining DM1-style fallback mutation from Nexus runtime.
+  Focused combat, spell, tick, click-route, ITEM, DGN and MNS regressions pass.
+
 - ✅ 2026-08-05 Nexus ITEM.IBS action-use gate: removed the inverted live
   mechanics condition that executed the inherited DM1 consumable/equipment
   catalog when the real ITEM.IBS source was absent. Inventory clicks now stay

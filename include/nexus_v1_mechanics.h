@@ -86,6 +86,10 @@ struct Nexus_MechanicsState {
     int fire_shield_ticks;
 };
 
+/* True only after a Saturn action-dispatch trace binds combat/spell command
+ * routing and side effects. The current retail corpus has no such receipt. */
+int nexus_v1_action_semantics_proven(void);
+
 /* ═══════════════════════════════════════════════════════════════════
  * Initialization and input
  * ═══════════════════════════════════════════════════════════════════ */
