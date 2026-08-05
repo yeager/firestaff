@@ -28,8 +28,7 @@ SUPPRESS stream must parse before a save is admitted.
 5. **Text data** (`dunTextData`, `cwTextData << 1` bytes)
 6. **16 DB record pools** (each `dbSize[db] * nRecords[db]` bytes)
 7. **Map data** (`dunMapData`, `cbMapData` bytes)
-8. **Extra dungeon data** (via `STORE_EXTRA_DUNGEON_DATA()`)
-9. **Game state block** (`skload_table_60`, 56 bytes, SUPPRESS-encoded):
+8. **Game state block** (`s_savegamebuffer`, 60 bytes, SUPPRESS-encoded):
    - `dwGameTick` - global game tick counter
    - `dwRandomSeed` - RNG seed
    - `wChampionsCount` - number of champions (1-4)
@@ -38,28 +37,34 @@ SUPPRESS stream must parse before a save is admitted.
    - `wPlayerMap` - current dungeon map index
    - `wChampionLeader` - party leader champion slot
    - `wTimersCount` - active timer count
-   - `dw22`, `dw26`, `w30`, `wPlayerThrowCounter`, `w34`, and bytes 36–39
-   - `wRainFlagSomething`, ambient-light modifier, direction, strength,
-     sky/ground levels, multiplicator, storm controller, two related bytes,
-     and `dwRainSpecialNextTick` (bytes 40–55)
+   - opaque source fields at offsets `0x16..0x3b`; their names and sizes are
+     exactly those in `SKWINSPX/src/v5/sksvgame.cpp::s_savegamebuffer`
 
-   This is the packed `skload_table_60` layout in SKProject
-   `SKWIN/DME.h`; it is not an eight-byte weather-state array. The matching
-   `SKWIN/SkGlobal.cpp::_4976_395a` SUPPRESS mask selects source bits across
-   all 56 bytes, including the terminating zero mask byte at offset 55.
-10. **Ingame global flags** (8 bytes, SUPPRESS)
-11. **Ingame global bytes** (64 bytes, SUPPRESS)
-12. **Ingame global words** (64 words, SUPPRESS)
-13. **Champion squad** (261 bytes x `wChampionsCount`, SUPPRESS)
-14. **Global spell effects** (6 bytes, SUPPRESS)
-15. **Timers table** (10 bytes x `wTimersCount`, SUPPRESS)
-16. **Champion inventories** - each champion's 30 inventory slots written as record-link chains via `WRITE_RECORD_CHECKCODE`
-17. **Leader hand possession** - single record link
-18. **Extra dungeon data**
-19. **Minion association table** (via `WRITE_MINION_ASSOC`)
+   This is the packed `s_savegamebuffer` layout in SKProject
+   `SKWINSPX/src/v5/sksvgame.cpp` (size `0x3c`), not the former Firestaff
+   56-byte diagnostic convenience view and not an eight-byte weather-state
+   array. `table1d631a[60]` in `dm2data.cpp` selects its source bits.
+9. **Ingame global flags** (8 bytes, SUPPRESS)
+10. **Ingame global bytes** (64 bytes, SUPPRESS)
+11. **Ingame global words** (64 words, SUPPRESS)
+12. **Champion squad** (261 bytes x `wChampionsCount`, SUPPRESS)
+13. **Global spell effects** (6 bytes, SUPPRESS)
+14. **Timers table** (12-byte `c_tim` rows x `wTimersCount`, SUPPRESS;
+    mask starts at `vsgame[0]`)
+15. **Champion inventories** - each champion's 30 inventory slots written as record-link chains via `WRITE_RECORD_CHECKCODE`
+16. **Leader hand possession** - single record link
+17. **Saved tile and record-chain data** (the source
+    `STORE_EXTRA_DUNGEON_DATA()` / `DM2_READ_SKSAVE_DUNGEON` continuation on
+    the same SUPPRESS stream)
+18. **Possession indices** (source `DM2_WRITE_POSSESSION_INDICES` /
+    `DM2_2066_062b` continuation)
 
 ## Compression: SUPPRESS (Bit-level RLE)
-`SUPPRESS_WRITER` writes bit-planes using per-field masks. Fields with mask=0 are skipped. Non-zero nibbles from data+mask are packed LSB-first into a byte stream. A companion `SUPPRESS_READER` decodes on load. Flush at end of save.
+`SUPPRESS_WRITER` writes selected source bits using per-field masks. Fields
+with mask=0 are skipped. Set mask bits are scanned from bit 7 to bit 0 and
+packed MSB-first into one continuous byte stream; the fixed state, globals,
+heroes, timers and later record chains share that stream until the final
+flush. A companion `SUPPRESS_READER` decodes in the same order.
 
 ## DM1 vs DM2 Key Format Differences
 | Aspect | DM1 | DM2 |

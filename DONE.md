@@ -50293,7 +50293,6 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   0x0c-byte `c_tim` rows. All four saves and four backups pass without
   materializing a playable session; `DM2_READ_SKSAVE_DUNGEON` remains
   explicitly fail-closed. Verification: authentic corpus suite 35/35.
-
 - ✅ 2026-08-06 DM1 real object corpus: added
   `test_m11_dm1_real_object_corpus`, which launches from the supplied real
   PC3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` and verifies 611 weapon, armour, scroll,
@@ -50304,3 +50303,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `FIRESTAFF_DM1_DATA_DIR=/tmp/firestaff-dm1-real-20260805`
   `test_m11_dm1_real_object_corpus` passed (611/611). Runtime placement and
   real Mac cursor/panel capture remain separate open work.
+
+- ✅ 2026-08-06 DM2 SKSAVE format-reference correction: replaced the obsolete
+  56-byte stateblock/10-byte timer description with SKProject's actual
+  `s_savegamebuffer` (0x3c) and `c_tim` (0x0c) sections. The documented
+  order now keeps `STORE_EXTRA_DUNGEON_DATA` after inventory/leader links and
+  records that all sections share the MSB-first SUPPRESS stream.
