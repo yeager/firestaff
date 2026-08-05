@@ -39,6 +39,7 @@ pixelavkodning och runtime-handoff måste också vara verifierade.
 | `nexus_v2_hud_overlay.c` / `nexus_v2_hud_runtime.c` | Syntetisk font, labels, ikoner och hårdkodad presentation | Inte längre länkade i `firestaff_nexus`; endast uttryckliga test/probe-targets |
 | Runtime-state (riktning, nivå, guld) | Delvis tillgängligt i engine-state, men ingen verifierad Saturn-HUD-bindning | Får inte målas in i syntetisk HUD |
 | Blockerad viewport/HUD-route | Tidigare diagnostisk text är borttagen ur M11-spelytan | Blank fail-closed frame; status hör till launcher/statuslager |
+| Structure3 textured mesh | DGN-face/texture-payload kan fortfarande inventeras och materialiseras som receipt | Host-rasterisering kräver nu uttryckligt bevis för transform samt pixel/palett/VDP1-semantik; format-/offsetbevis räcker inte |
 
 ## Saturn-referens
 

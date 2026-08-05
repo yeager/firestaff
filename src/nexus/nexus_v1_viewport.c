@@ -498,6 +498,16 @@ static int viewport_render_structure3_mesh(
             engine, &scene) != 1 || !scene.valid || !scene.decoder_permitted)
         return 0;
 
+    /* A bounded Structure2 payload decoder is not a Saturn VDP1 receipt.
+     * The complete-source scene deliberately keeps this bit clear until an
+     * original capture binds pixel format, CLUT/palette ownership and the
+     * submitted VDP1 command.  Do not let valid texture bytes cross that
+     * boundary into the host rasterizer merely because their dimensions and
+     * offsets are internally consistent. */
+    if (!scene.transform_semantics_proven ||
+        !scene.pixel_palette_vdp1_semantics_proven)
+        return 0;
+
     for (entry_index = 0;
          entry_index < engine->current_level.structure3_directory.entry_count;
          ++entry_index) {

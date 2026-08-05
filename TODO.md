@@ -42,6 +42,9 @@
   The real MNS decoder now retains the observed 33-joint SCORPION and
   37-joint ROCKPILE skeletons instead of truncating them at 32; visible
   creature rendering and VDP1 texture/palette handoff remain open.
+  The Structure3 viewport rasterizer now also requires the complete scene's
+  transform and pixel/palette/VDP1 semantics bits; payload/format admission
+  alone can no longer present a textured mesh before Saturn capture.
   The legacy Nexus door raster API is now no-draw: its former DM1-derived
   gap geometry and palette guesses were removed. Bind Saturn door materials,
   animation frames, and VDP1 destinations before restoring door pixels.
