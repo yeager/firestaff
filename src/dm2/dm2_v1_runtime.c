@@ -5853,20 +5853,16 @@ void dm2_v1_runtime_tick(void) {
             dm2_runtime_move_record_rotate_timer;
         /* Spell-effect timer delegation: 0x46 light, 0x47 hero ench flag,
          * 0x48 ench power, 0x4B poison, 0x19 cloud, 0x1E missile, 0x5E summon.
-         * These route through the proven dm2_v1_spell_timer_dispatch() which
-         * owns the source-named handler bodies.  Context is rebuilt each tick
-         * from the session snapshot champion records. */
+         * 0x47/0x48/0x4B consume in source order but are deliberately
+         * non-mutating: session champion records are not SKProject c_hero.
+         * Do not copy that surrogate merely to make an effect appear live. */
         if (rt->session_snapshot_valid &&
             rt->session_snapshot.champion_count > 0 &&
             rt->session_snapshot.champion_count <= 4) {
-            DM2_ChampionRecord spell_champions[4];
             int sc = rt->session_snapshot.champion_count;
-            for (int ci = 0; ci < sc; ++ci)
-                spell_champions[ci] = *(const DM2_ChampionRecord *)
-                    rt->session_snapshot.champion_data[ci];
             dm2_v1_spell_timer_handler_context_init_ex(
                 &rt->spell_timer_ctx,
-                spell_champions, sc,
+                NULL, sc,
                 &rt->timer_queue,
                 (uint32_t)rt->tick_count,
                 rt->session_snapshot.party_level,

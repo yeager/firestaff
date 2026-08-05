@@ -565,9 +565,9 @@ static void test_spell_timer_hero_ench_flag(void)
     memset(champs, 0, sizeof(champs));
     dm2_v1_source_timer_queue_init(&queue);
     dm2_v1_spell_timer_handler_context_init(&ctx, champs, 4, &queue, 0u, 0);
-    /* One active aura refcount; the single 0x47 pop decrements it to zero
-     * and sets the aura bit, matching c_events.cpp case 3 + c_tim_proc.cpp
-     * 0x47 handler shape. */
+    /* A bounded champion record is not SKProject's 263-byte c_hero.  The
+     * timer must remain ordered but may not truncate c_hero::heroflag 0x4000
+     * into its byte-sized surrogate. */
     ctx.hero_ench_countdown = 1;
     ctx.hero_ench_target_index = 2;
     memset(&dispatcher, 0, sizeof(dispatcher));
@@ -579,14 +579,14 @@ static void test_spell_timer_hero_ench_flag(void)
 
     dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
 
-    expect_true(ctx.receipt.hero_ench_countdown_expired == 1,
-                "hero enchantment countdown expired");
-    expect_true(ctx.receipt.hero_ench_flag_set == 1,
-                "hero enchantment flag was set");
-    expect_true((champs[2].hero_flag & DM2_V1_SPELL_TIMER_HEROFLAG_AURA_BIT) != 0,
-                "target champion hero_flag has aura bit");
-    expect_true(ctx.hero_ench_countdown == 0,
-                "hero enchantment refcount reached zero");
+    expect_true(ctx.receipt.hero_ench_dispatched == 1,
+                "hero enchantment timer remains ordered");
+    expect_true(ctx.receipt.hero_state_owner_missing == 1,
+                "hero enchantment rejects the surrogate owner");
+    expect_true(champs[2].hero_flag == 0,
+                "target champion surrogate is unchanged");
+    expect_true(ctx.hero_ench_countdown == 1,
+                "detached aura counter is unchanged");
 }
 
 static void test_spell_timer_ench_power_decay(void)
@@ -613,10 +613,12 @@ static void test_spell_timer_ench_power_decay(void)
 
     expect_true(ctx.receipt.ench_power_dispatched == 1,
                 "ench power handler dispatched");
-    expect_true(ctx.ench_power[1] == 43, "ench power decayed by 7");
-    expect_true(ctx.receipt.ench_power_decays[1] == 7,
-                "ench power decay recorded");
-    expect_true(champs[1].body_flag == 43, "ench power written to body_flag");
+    expect_true(ctx.ench_power[1] == 50,
+                "detached enchantment counter is unchanged");
+    expect_true(ctx.receipt.hero_state_owner_missing == 1,
+                "ench power rejects the surrogate owner");
+    expect_true(champs[1].body_flag == 0,
+                "ench power is not written to body_flag");
 }
 
 static void test_spell_timer_poison_decay(void)
@@ -644,10 +646,12 @@ static void test_spell_timer_poison_decay(void)
     dm2_v1_proceed_timers(&queue, 1u, &dispatcher, &receipt);
 
     expect_true(ctx.receipt.poison_dispatched == 1, "poison handler dispatched");
-    expect_true(champs[0].poison_value == 4, "poison_value decremented");
-    expect_true(ctx.poison_strength[0] == 8, "poison strength decayed by 2");
-    expect_true(ctx.receipt.poison_value_decays[0] == 1,
-                "poison value decay recorded");
+    expect_true(champs[0].poison_value == 5,
+                "surrogate poison_value is unchanged");
+    expect_true(ctx.poison_strength[0] == 10,
+                "detached poison counter is unchanged");
+    expect_true(ctx.receipt.hero_state_owner_missing == 1,
+                "poison rejects the surrogate owner");
 }
 
 static void test_spell_timer_cloud_fail_closed(void)

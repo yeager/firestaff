@@ -49776,3 +49776,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   type-0x0D. The CTest gate covers both handlers and rejects any read or
   write of the non-source surrogate fields. Source:
   `SKULLWIN/c_tim_proc.cpp:25-31` and `SKULLWIN/c_hero.h:58-63`.
+
+- ✅ 2026-08-06 DM2 spell-timer surrogate removal: types 0x47, 0x48 and
+  0x4B no longer write the 261-byte session surrogate as if it were
+  SKProject's 263-byte `c_hero`. The old path truncated `heroflag` 0x4000,
+  used `body_flag` as `ench_power`, and mixed `poisoned`/`poison` with
+  unrelated byte and detached counters. Each timer remains consumed in
+  source order but reports its missing `c_party`/`c_hero` owner without a
+  fabricated state change. CTest covers the runtime spell-timer behaviour
+  and a static gate rejects reintroducing a surrogate mutation. Source:
+  `SKULLWIN/c_tim_proc.cpp:4111-4178` and `SKULLWIN/c_hero.h:58-130`.

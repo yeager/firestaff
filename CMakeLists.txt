@@ -17101,6 +17101,11 @@ if(BUILD_TESTING)
             COMMAND ${Python3_EXECUTABLE}
                     ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_resurrection_surrogate_gate.py
         )
+        add_test(
+            NAME dm2_v1_spell_timer_surrogate_gate
+            COMMAND ${Python3_EXECUTABLE}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_spell_timer_surrogate_gate.py
+        )
     endif()
 
     # -- DM1 V1 M12/M11 Launcher Handoff Boundary ------------------

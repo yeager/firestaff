@@ -12,11 +12,11 @@
  *
  * The module binds the spell timer requests emitted by
  * dm2_v1_spell_cast_player_apply() to source-named handler bodies.
- * Proven handlers:
+ * Source-ordered handlers:
  *   0x46 DM2_PROCESS_TIMER_LIGHT
- *   0x47 hero enchantment flag countdown
- *   0x48 per-hero enchantment power decay
- *   0x4b poison tick decay
+ *   0x47 hero enchantment flag countdown (gated pending c_hero ownership)
+ *   0x48 per-hero enchantment power decay (gated pending c_hero ownership)
+ *   0x4b poison tick decay (gated pending c_hero ownership)
  * Bounded cycle-12 handlers (fail-closed when real DB/creature data is absent):
  *   0x19 DM2_PROCESS_TIMER_19 cloud step
  *   0x1e DM2_STEP_MISSILE -> DM2 V1 projectile/flying-item instantiation
@@ -46,13 +46,7 @@ enum {
     DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS = 4,
     /* Source: c_tim_proc.cpp:939 — DM2_PROCESS_TIMER_LIGHT requeues every
      * 8 ticks while RG4W (the remaining duration word) is non-zero. */
-    DM2_V1_SPELL_TIMER_LIGHT_REQUEUE_DELAY = 8,
-    /* Source: c_tim_proc.cpp:4121 — party.hero[...].heroflag |= 0x4000.
-     * The Firestaff DM2_ChampionRecord hero_flag is currently uint8_t, so
-     * this bounded slice proxies the low byte of that source bitfield. */
-    DM2_V1_SPELL_TIMER_HEROFLAG_AURA_BIT = 0x40,
-    /* No guessed DB14/DB4 field constants: cloud, missile and summon timers
-     * reject reduced payloads until their original record handoff is bound. */
+    DM2_V1_SPELL_TIMER_LIGHT_REQUEUE_DELAY = 8
 };
 
 /* Per-handler observability receipt.  It records what the bounded bodies
@@ -70,6 +64,9 @@ typedef struct {
     int hero_ench_dispatched;
     int hero_ench_countdown_expired;
     int hero_ench_flag_set;
+    /* 0x47/0x48/0x4b were consumed without mutation because the complete
+     * source c_party/c_hero owner was unavailable. */
+    int hero_state_owner_missing;
 
     /* 0x48 enchantment power decay */
     int ench_power_dispatched;

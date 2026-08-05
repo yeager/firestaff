@@ -23,7 +23,11 @@
   `SKULLWIN/c_hero.cpp::DM2_BRING_CHAMPION_TO_LIFE`.
   The same ownership gate covers type-0x0C: its source writes 16-bit
   `c_hero::timeridx` and flag `0x0800`, neither of which can be represented
-  by the session surrogate's byte fields.
+  by the session surrogate's byte fields. It also covers spell timer types
+  0x47, 0x48 and 0x4B: their source `c_party::hero[]` writes target 16-bit
+  `heroflag` (0x4000), `ench_power`, `poisoned` and `poison`. They must not
+  use the surrogate's unrelated byte flags, `body_flag`, poison value or
+  detached counters.
 
 - **NEXUS-SATURN-PRESENTATION-HANDOFF:** Nexus production no longer contains
   the old inferred master palette or partial-texture fallback. Continue from

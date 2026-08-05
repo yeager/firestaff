@@ -17,14 +17,6 @@ static uint32_t spell_timer_pack_ticks_and_map(uint32_t tick, int map_id)
            (tick & DM2_V1_SOURCE_TIMER_TICK_MASK);
 }
 
-static int dm2_v1_spell_timer_handler_index_valid(
-    const DM2_V1_SpellTimerHandlerContext *ctx, int idx)
-{
-    return ctx != NULL && ctx->champions != NULL &&
-           idx >= 0 && idx < ctx->champion_count &&
-           idx < DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS;
-}
-
 /* SKProject SKULLWIN/dm2data.cpp:60-64, table1d6702.  This is original
  * executable data, not a host-selected light curve. */
 static const int8_t g_dm2_light_steps[16] = {
@@ -106,11 +98,11 @@ static int dm2_v1_spell_timer_handle_light(
  * 0x4000.  In the original, b_02 is a refcount incremented by each aura
  * cast (c_events.cpp case 3) and decremented by each 0x47 timer pop.
  *
- * This bounded slice treats ctx->hero_ench_countdown as that refcount.
- * The caller should initialise it to the number of active aura timers;
- * each 0x47 pop decrements it and sets the flag when the refcount falls
- * to zero.  The timer value_a (original delay) is intentionally ignored,
- * matching the source handler which does not read it. */
+ * The source owner is ddat.savegames1 plus c_party::hero[].  The bounded
+ * session's byte-sized DM2_ChampionRecord is not a compatible substitute:
+ * c_hero::heroflag is a 16-bit word and the source writes bit 0x4000.  Keep
+ * the ordered pop, but do not decrement a fabricated refcount or truncate
+ * the bit into a surrogate record. */
 static int dm2_v1_spell_timer_handle_hero_ench_flag(
     void *context,
     const DM2_V1_SourceTimer *timer,
@@ -125,25 +117,7 @@ static int dm2_v1_spell_timer_handle_hero_ench_flag(
     if (!ctx || !timer) return 0;
 
     ctx->receipt.hero_ench_dispatched++;
-
-    if (ctx->hero_ench_countdown <= 0) {
-        /* Stray timer with no active aura: fail-closed rather than
-         * underflowing the source refcount. */
-        return 0;
-    }
-
-    ctx->hero_ench_countdown--;
-    if (ctx->hero_ench_countdown == 0) {
-        int target = (ctx->hero_ench_target_index >= 0)
-                         ? ctx->hero_ench_target_index
-                         : (int)timer->actor;
-        ctx->receipt.hero_ench_countdown_expired = 1;
-        if (dm2_v1_spell_timer_handler_index_valid(ctx, target)) {
-            ctx->champions[target].hero_flag |=
-                (uint8_t)DM2_V1_SPELL_TIMER_HEROFLAG_AURA_BIT;
-            ctx->receipt.hero_ench_flag_set = 1;
-        }
-    }
+    ctx->receipt.hero_state_owner_missing = 1;
     return 1;
 }
 
@@ -151,9 +125,9 @@ static int dm2_v1_spell_timer_handle_hero_ench_flag(
  *
  * For every hero whose bit is set in the actor bitmask, the source subtracts
  * timer value_a from party.hero[i].ench_power and clamps at zero.  The spell
- * cast player currently emits a single-actor timer, so the bounded slice
- * treats actor as a one-hot index and writes the clamped result back to the
- * champion body_flag proxy field. */
+ * cast player currently emits a single-actor timer.  c_hero::ench_power is
+ * a 16-bit word at offset 0x103; body_flag is a different 16-bit field at
+ * 0x34.  Never use the session surrogate's byte body_flag as a proxy. */
 static int dm2_v1_spell_timer_handle_ench_power(
     void *context,
     const DM2_V1_SourceTimer *timer,
@@ -162,41 +136,22 @@ static int dm2_v1_spell_timer_handle_ench_power(
 {
     DM2_V1_SpellTimerHandlerContext *ctx =
         (DM2_V1_SpellTimerHandlerContext *)context;
-    int amount;
-    int actor;
-    int i;
-
     (void)source_index;
     (void)receipt;
     if (!ctx || !timer) return 0;
 
     ctx->receipt.ench_power_dispatched++;
-    amount = (int)timer->value_a;
-    actor = (int)timer->actor;
-
-    for (i = 0; i < ctx->champion_count &&
-                i < DM2_V1_SPELL_TIMER_HANDLER_MAX_CHAMPIONS; ++i) {
-        int mask = 1 << i;
-        if ((actor & mask) == 0) continue;
-        if (!dm2_v1_spell_timer_handler_index_valid(ctx, i)) continue;
-
-        ctx->ench_power[i] = (int16_t)(ctx->ench_power[i] - (int16_t)amount);
-        if (ctx->ench_power[i] < 0) {
-            ctx->ench_power[i] = 0;
-        }
-        /* Bounded proxy writeback to the existing champion record field. */
-        ctx->champions[i].body_flag = (uint8_t)ctx->ench_power[i];
-        ctx->receipt.ench_power_decays[i] = amount;
-    }
+    ctx->receipt.hero_state_owner_missing = 1;
     return 1;
 }
 
 /* 0x4b poison tick (c_tim_proc.cpp:4165-4178).
  *
  * The source decrements party.hero[actor].poisoned, subtracts timer value_a
- * from party.hero[actor].poison, then calls DM2_PROCESS_POISON.  This bounded
- * slice performs the two decrements and clamps poison_strength at zero;
- * DM2_PROCESS_POISON damage application remains unproven and fail-closed. */
+ * from party.hero[actor].poison, then calls DM2_PROCESS_POISON.  The
+ * c_hero::poisoned and c_hero::poison fields are distinct source-owned fields.
+ * The former implementation decremented the surrogate poison_value and a
+ * detached context counter, neither of which is the original state. */
 static int dm2_v1_spell_timer_handle_poison(
     void *context,
     const DM2_V1_SourceTimer *timer,
@@ -205,30 +160,12 @@ static int dm2_v1_spell_timer_handle_poison(
 {
     DM2_V1_SpellTimerHandlerContext *ctx =
         (DM2_V1_SpellTimerHandlerContext *)context;
-    int actor;
-    int amount;
-
     (void)source_index;
     (void)receipt;
     if (!ctx || !timer) return 0;
 
-    actor = (int)timer->actor;
-    if (!dm2_v1_spell_timer_handler_index_valid(ctx, actor)) return 0;
-
     ctx->receipt.poison_dispatched++;
-    amount = (int)timer->value_a;
-
-    if (ctx->champions[actor].poison_value > 0) {
-        ctx->champions[actor].poison_value--;
-        ctx->receipt.poison_value_decays[actor] = 1;
-    }
-
-    ctx->poison_strength[actor] =
-        (int16_t)(ctx->poison_strength[actor] - (int16_t)amount);
-    if (ctx->poison_strength[actor] < 0) {
-        ctx->poison_strength[actor] = 0;
-    }
-    ctx->receipt.poison_strength_decays[actor] = amount;
+    ctx->receipt.hero_state_owner_missing = 1;
     return 1;
 }
 
