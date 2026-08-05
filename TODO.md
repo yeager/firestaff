@@ -1297,6 +1297,15 @@ diagnostic; it must not silently fall back to a generated visual.
   builds and `test_dm1_v22_asset_pipeline` passes; unsupported formats remain
   no-draw.
 
+- **DM1-ORIGINAL-REPLACE-020:** Closed 2026-08-06. Removed the remaining
+  procedural V2 particle emitters, full-screen spell overlays, dust/sparkle
+  field effects, and dynamic-light indexed repaint from the DM1 presentation
+  route. ReDMCSB owns projectile/explosion bitmaps, field bitmaps, and the
+  F0337 palette; Firestaff now leaves those surfaces to the authenticated V1
+  source renderer and returns no-draw for unbound V2 effects. Verification:
+  focused enhanced-effects, spell-overlay, and extended-field tests prove
+  generated state does not advance or write pixels.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

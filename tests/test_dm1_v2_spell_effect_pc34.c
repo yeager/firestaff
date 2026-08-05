@@ -46,19 +46,19 @@ int main(void) {
     require(!v2_spell_overlay_type_for_dm1_explosion_thing((int16_t)0x1234, &mapped), "unknown explosion is rejected");
 
     v2_spell_overlay_init();
-    require(v2_spell_overlay_trigger_dm1_explosion_thing((int16_t)0xFF80, 2.0f), "trigger fireball overlay");
+    require(v2_spell_overlay_trigger_dm1_explosion_thing((int16_t)0xFF80, 2.0f), "recognize fireball source thing");
     M11_V2_SpellOverlay snap = v2_spell_overlay_snapshot();
-    require(snap.active && snap.type == VFX_FIREBALL_BURST, "snapshot reflects active fireball");
+    require(!snap.active && snap.type == 0, "generated overlay remains inactive");
     v2_spell_overlay_update(0.25f);
     snap = v2_spell_overlay_snapshot();
-    require(snap.active && snap.progress > 0.49f && snap.progress < 0.51f, "progress is speed * dt");
+    require(!snap.active && snap.progress == 0.0f, "generated overlay does not advance");
 
     uint8_t fb[16];
     memset(fb, 0, sizeof(fb));
     v2_spell_overlay_render(fb, 4, 4);
     int nonzero = 0;
     for (size_t i = 0; i < sizeof(fb); ++i) nonzero += fb[i] != 0;
-    require(nonzero > 0, "fireball overlay writes visible pixels");
+    require(nonzero == 0, "generated overlay writes no pixels");
 
     require(file_contains("assets-v2/manifests/firestaff-v2-wave1-effects-starter.manifest.json", "fs.v2.effect.fireball-burst.overlay"), "effect manifest contains fireball overlay id");
     require(file_contains("assets-v2/effects/wave1/specs/starter-spell-effects.md", "PROJEXPL.C"), "effect spec cites PROJEXPL.C");

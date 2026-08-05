@@ -47,7 +47,7 @@ static void test_default_gate_is_noop(void) {
     CHECK(approxf(v22_light_get(4, 4), beforeLight));
 }
 
-static void test_presentation_gate_ticks_particles_without_lighting(void) {
+static void test_presentation_gate_does_not_tick_generated_particles(void) {
     DM1_V2_PhaseGateConfig gate;
     DM1_V2_Settings settings;
     float beforeLight;
@@ -61,13 +61,14 @@ static void test_presentation_gate_ticks_particles_without_lighting(void) {
     beforeLight = v22_light_get(5, 5);
 
     CHECK(dm1_v2_enhanced_effects_runtime_tick(&gate, &settings, 1.0f) == 1);
-    CHECK(v2_particle_active_count() == 0);
+    CHECK(v2_particle_active_count() == 1);
     CHECK(approxf(v22_light_get(5, 5), beforeLight));
 }
 
 static void test_presentation_gate_and_dynamic_lighting_tick_light_map(void) {
     DM1_V2_PhaseGateConfig gate;
     DM1_V2_Settings settings;
+    float beforeLight;
 
     dm1_v2_phase_gate_defaults(&gate);
     gate.v2PresentationEnabled = 1;
@@ -76,12 +77,13 @@ static void test_presentation_gate_and_dynamic_lighting_tick_light_map(void) {
     v2_light_init();
     v22_light_clear();
     v22_light_set_ambient(0.52f);
+    beforeLight = v22_light_get(6, 6);
 
     CHECK(dm1_v2_enhanced_effects_runtime_tick(&gate, &settings, 0.016f) == 1);
-    CHECK(approxf(v22_light_get(6, 6), 0.52f));
+    CHECK(approxf(v22_light_get(6, 6), beforeLight));
 }
 
-static void test_indexed_render_gate_paints_particles(void) {
+static void test_indexed_render_gate_rejects_generated_particles(void) {
     DM1_V2_PhaseGateConfig gate;
     DM1_V2_Settings settings;
     unsigned char framebuffer[64 * 64];
@@ -97,11 +99,11 @@ static void test_indexed_render_gate_paints_particles(void) {
 
     gate.v2PresentationEnabled = 1;
     CHECK(dm1_v2_enhanced_effects_runtime_render_indexed(
-              &gate, &settings, framebuffer, 64, 64, 4, 5) > 0);
-    CHECK(framebuffer[(5 + 12) * 64 + (4 + 10)] != 0);
+              &gate, &settings, framebuffer, 64, 64, 4, 5) == 0);
+    CHECK(framebuffer[(5 + 12) * 64 + (4 + 10)] == 0);
 }
 
-static void test_indexed_render_gate_paints_dynamic_lights(void) {
+static void test_indexed_render_gate_rejects_generated_dynamic_lights(void) {
     DM1_V2_PhaseGateConfig gate;
     DM1_V2_Settings settings;
     unsigned char framebuffer[240 * 160];
@@ -123,8 +125,8 @@ static void test_indexed_render_gate_paints_dynamic_lights(void) {
 
     gate.v2PresentationEnabled = 1;
     CHECK(dm1_v2_enhanced_effects_runtime_render_indexed(
-              &gate, &settings, framebuffer, 240, 160, 0, 0) > 0);
-    CHECK(framebuffer[lightY * 240 + lightX] != 0);
+              &gate, &settings, framebuffer, 240, 160, 0, 0) == 0);
+    CHECK(framebuffer[lightY * 240 + lightX] == 0);
 
     memset(framebuffer, 0, sizeof(framebuffer));
     settings.dynamicLightingEnabled = 0;
@@ -177,7 +179,7 @@ static void test_null_inputs_fail_safe(void) {
     init_particle_with_short_life();
     beforeLight = v22_light_get(8, 8);
     CHECK(dm1_v2_enhanced_effects_runtime_tick(&gate, NULL, 1.0f) == 1);
-    CHECK(v2_particle_active_count() == 0);
+    CHECK(v2_particle_active_count() == 1);
     CHECK(approxf(v22_light_get(8, 8), beforeLight));
 }
 
@@ -188,10 +190,10 @@ int main(void) {
     CHECK(strstr(evidence, "PROJEXPL.C") != NULL);
 
     test_default_gate_is_noop();
-    test_presentation_gate_ticks_particles_without_lighting();
+    test_presentation_gate_does_not_tick_generated_particles();
     test_presentation_gate_and_dynamic_lighting_tick_light_map();
-    test_indexed_render_gate_paints_particles();
-    test_indexed_render_gate_paints_dynamic_lights();
+    test_indexed_render_gate_rejects_generated_particles();
+    test_indexed_render_gate_rejects_generated_dynamic_lights();
     test_direct_particle_seed_is_bounded_and_visible();
     test_null_inputs_fail_safe();
 

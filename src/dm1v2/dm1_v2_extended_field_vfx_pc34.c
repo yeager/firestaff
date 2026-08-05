@@ -46,14 +46,8 @@ typedef enum {
 /* Map an extended field family to a particle emitter preset.
  * Returns -1 if no preset is defined. */
 int dm1_v2_extended_vfx_family_to_emitter_preset(DM1_V2_ExtendedFieldEffectFamily family) {
-    switch (family) {
-        case DM1_V2_EFFECT_FAMILY_TELEPORTER:   return MAGIC_SPARKLE;
-        case DM1_V2_EFFECT_FAMILY_PIT:          return DUST_PUFF;
-        case DM1_V2_EFFECT_FAMILY_STAIRS:        return DUST_PUFF;
-        case DM1_V2_EFFECT_FAMILY_FLOOR_ORNAMENT: return DUST_PUFF;
-        case DM1_V2_EFFECT_FAMILY_FAKEWALL:      return MAGIC_SPARKLE;
-        default:                                  return -1;
-    }
+    (void)family;
+    return -1; /* ReDMCSB has no particle/VFX emitter for these elements. */
 }
 
 /* Trigger a VFX effect for an extended dungeon element at map position.
@@ -68,24 +62,8 @@ int dm1_v2_extended_vfx_trigger_field(
     int mapY,
     DM1_V2_ExtendedFieldEffectFamily family)
 {
-    int preset = dm1_v2_extended_vfx_family_to_emitter_preset(family);
-    if (preset < 0) return -1;
-
-    M11_V2_EmitterConfig cfg = v2_emitter_preset_get((M11_V2_EmitterPreset)preset);
-    /* Reduce rate for ambient field effects (not bursty like explosions) */
-    cfg.rate *= 0.2f;
-    cfg.count = cfg.count / 2;
-
-    return v2_particle_emitter_create(
-        (float)mapX,
-        (float)mapY,
-        cfg.rate,
-        cfg.spread,
-        cfg.life,
-        cfg.size,
-        cfg.gravity,
-        cfg.color,
-        cfg.count);
+    (void)mapX; (void)mapY; (void)family;
+    return -1; /* Source field bitmaps are rendered by the V1 route. */
 }
 
 /* Deterministic fallback for unknown field types.

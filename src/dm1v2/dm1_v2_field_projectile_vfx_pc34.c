@@ -33,19 +33,12 @@
 
 #include <math.h>
 
-/* Map DM1_V2_EffectFamily to the nearest particle emitter preset.
- * FIREBALL -> SPELL_FIREBALL, POISON -> SPELL_POISON, etc.
- * Returns -1 if no preset matches. */
+/* DM1 source effects have no particle-emitter equivalent. Keep this API as a
+ * negative admission result so callers cannot turn source things into fake
+ * V2 particles. */
 int dm1_v2_vfx_family_to_emitter_preset(DM1_V2_FieldProjectileEffectFamily family) {
-    switch (family) {
-        case DM1_V2_EFFECT_FAMILY_FIREBALL:       return SPELL_FIREBALL;
-        case DM1_V2_EFFECT_FAMILY_LIGHTNING:      return MAGIC_SPARKLE;
-        case DM1_V2_EFFECT_FAMILY_POISON:         return SPELL_POISON;
-        case DM1_V2_EFFECT_FAMILY_FLUXCAGE_FIELD: return MAGIC_SPARKLE;
-        case DM1_V2_EFFECT_FAMILY_SLIME:         return SPELL_FIREBALL;  /* ReDMCSB DEFS.H:421 — slime burst */
-        case DM1_V2_EFFECT_FAMILY_SMOKE:          return TORCH_SMOKE;    /* ReDMCSB DEFS.H:421 — smoke puff */
-        default:                                   return -1;
-    }
+    (void)family;
+    return -1; /* ReDMCSB has no particle emitter preset. */
 }
 
 /* Trigger a spell overlay and particle emitter for a DM1 explosion thing.
@@ -61,31 +54,9 @@ int dm1_v2_vfx_trigger_explosion_thing(int16_t dm1Thing, int mapX, int mapY) {
         dm1_v2_field_projectile_effect_metadata_for_dm1_thing(dm1Thing);
     if (!meta) return 0;
 
-    /* Trigger V2 spell overlay for the explosion family */
-    if (meta->family == DM1_V2_EFFECT_FAMILY_FIREBALL) {
-        v2_spell_overlay_trigger(VFX_FIREBALL_BURST, 1.0f);
-    } else if (meta->family == DM1_V2_EFFECT_FAMILY_LIGHTNING) {
-        v2_spell_overlay_trigger(VFX_LIGHTNING_BOLT, 1.0f);
-    } else if (meta->family == DM1_V2_EFFECT_FAMILY_POISON) {
-        v2_spell_overlay_trigger(VFX_POISON_CLOUD, 1.0f);
-    }
-    /* Fluxcage is a field effect, handled separately. */
-
-    /* Emit particles at the dungeon position if an emitter preset matches */
-    int preset = dm1_v2_vfx_family_to_emitter_preset(meta->family);
-    if (preset >= 0) {
-        M11_V2_EmitterConfig cfg = v2_emitter_preset_get((M11_V2_EmitterPreset)preset);
-        int emIdx = v2_particle_emitter_create(
-            (float)mapX, (float)mapY,
-            cfg.rate, cfg.spread, cfg.life, cfg.size, cfg.gravity,
-            cfg.color, cfg.count);
-        if (emIdx >= 0) {
-            /* Emit a burst of particles */
-            for (int i = 0; i < 5; i++) {
-                v2_particle_emit(emIdx, (float)mapX, (float)mapY);
-            }
-        }
-    }
+    /* ReDMCSB renders the source explosion bitmap in DUNVIEW/PROJEXPL.
+     * No generated V2 overlay or particle material is admitted here. */
+    (void)mapX; (void)mapY;
     return 1;
 }
 
@@ -93,13 +64,8 @@ int dm1_v2_vfx_trigger_explosion_thing(int16_t dm1Thing, int mapX, int mapY) {
  * Field effects render as a persistent emitter in the viewport.
  * Returns emitter index, or -1 if no matching preset. */
 int dm1_v2_vfx_trigger_field(int mapX, int mapY, DM1_V2_FieldProjectileEffectFamily family) {
-    int preset = dm1_v2_vfx_family_to_emitter_preset(family);
-    if (preset < 0) return -1;
-    M11_V2_EmitterConfig cfg = v2_emitter_preset_get((M11_V2_EmitterPreset)preset);
-    return v2_particle_emitter_create(
-        (float)mapX, (float)mapY,
-        cfg.rate * 0.3f, cfg.spread * 0.5f, cfg.life,
-        cfg.size, cfg.gravity, cfg.color, cfg.count);
+    (void)mapX; (void)mapY; (void)family;
+    return -1; /* Source field bitmaps remain on the authenticated V1 path. */
 }
 
 /* Compute dungeon ambient lighting for V2 presentation.

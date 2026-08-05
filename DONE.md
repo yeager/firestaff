@@ -49312,3 +49312,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   The receipt deliberately exposes no `$2600` bytes and cannot publish level,
   object, or viewport semantics; the remaining gap is the executing consumer
   RAM window joined back to the CD source-LBA.
+
+- ✅ 2026-08-06 DM1 V2 generated-effects removal: retired the procedural
+  particle presets, full-screen spell overlays, dust/sparkle field effects,
+  and dynamic-light indexed repaint. ReDMCSB's source-owned projectile,
+  explosion, field bitmap and F0337 palette routes remain authoritative;
+  unbound V2 effects now fail closed without advancing or painting pixels.
+  Focused enhanced-effects, spell-overlay and extended-field tests pass.
+  Tracked as `DM1-ORIGINAL-REPLACE-020`.

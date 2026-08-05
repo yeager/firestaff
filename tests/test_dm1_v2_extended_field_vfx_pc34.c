@@ -43,50 +43,46 @@ int main(void) {
      * DUNVIEW.C:6816-6831 field draw order.
      */
 
-    /* Test emitter preset mapping for extended families */
+    /* ReDMCSB has source field bitmaps, not particle emitters. */
     CHECK(dm1_v2_extended_vfx_family_to_emitter_preset(
-        DM1_V2_EFFECT_FAMILY_TELEPORTER) >= 0);
+        DM1_V2_EFFECT_FAMILY_TELEPORTER) == -1);
     CHECK(dm1_v2_extended_vfx_family_to_emitter_preset(
-        DM1_V2_EFFECT_FAMILY_PIT) >= 0);
+        DM1_V2_EFFECT_FAMILY_PIT) == -1);
     CHECK(dm1_v2_extended_vfx_family_to_emitter_preset(
-        DM1_V2_EFFECT_FAMILY_STAIRS) >= 0);
+        DM1_V2_EFFECT_FAMILY_STAIRS) == -1);
     CHECK(dm1_v2_extended_vfx_family_to_emitter_preset(
-        DM1_V2_EFFECT_FAMILY_FLOOR_ORNAMENT) >= 0);
+        DM1_V2_EFFECT_FAMILY_FLOOR_ORNAMENT) == -1);
     CHECK(dm1_v2_extended_vfx_family_to_emitter_preset(
-        DM1_V2_EFFECT_FAMILY_FAKEWALL) >= 0);
-    /* Unrecognised family returns -1 */
+        DM1_V2_EFFECT_FAMILY_FAKEWALL) == -1);
+    /* Unrecognised family also returns -1 */
     CHECK(dm1_v2_extended_vfx_family_to_emitter_preset(
         (DM1_V2_ExtendedFieldEffectFamily)999) == -1);
 
-    /* Initialise particle system so emitter creation succeeds */
+    /* No source-owned V2 emitter may be created. */
     v2_particle_init();
 
-    /* Teleporters trigger MAGIC_SPARKLE preset */
+    /* Source field routes reject generated V2 emitters. */
     emitter = dm1_v2_extended_vfx_trigger_field(4, 5,
         DM1_V2_EFFECT_FAMILY_TELEPORTER);
-    CHECK(emitter >= 0);
+    CHECK(emitter == -1);
 
-    /* Pits trigger DUST_PUFF preset */
     emitter = dm1_v2_extended_vfx_trigger_field(8, 3,
         DM1_V2_EFFECT_FAMILY_PIT);
-    CHECK(emitter >= 0);
+    CHECK(emitter == -1);
 
-    /* Stairs trigger DUST_PUFF preset */
     emitter = dm1_v2_extended_vfx_trigger_field(2, 7,
         DM1_V2_EFFECT_FAMILY_STAIRS);
-    CHECK(emitter >= 0);
+    CHECK(emitter == -1);
 
-    /* Fake walls trigger MAGIC_SPARKLE preset */
     emitter = dm1_v2_extended_vfx_trigger_field(10, 1,
         DM1_V2_EFFECT_FAMILY_FAKEWALL);
-    CHECK(emitter >= 0);
+    CHECK(emitter == -1);
 
-    /* Floor ornaments trigger DUST_PUFF preset */
     emitter = dm1_v2_extended_vfx_trigger_field(15, 15,
         DM1_V2_EFFECT_FAMILY_FLOOR_ORNAMENT);
-    CHECK(emitter >= 0);
+    CHECK(emitter == -1);
 
-    /* Unknown family returns -1 */
+    /* Unknown family also returns -1 */
     CHECK(dm1_v2_extended_vfx_trigger_field(4, 5,
         (DM1_V2_ExtendedFieldEffectFamily)999) == -1);
 
