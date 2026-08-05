@@ -50108,3 +50108,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   public queries now clear their outputs and fail closed until the real
   `DRAW_ITEM_ICON` route is decoded. The real PC-DOS startup/runtime test
   proves no placeholder zone is exposed.
+- ✅ 2026-08-06 DM2 incomplete SKSAVE load-orchestrator isolation: removed
+  the unbound `dm2_v1_load_orchestrator_pc34_compat.c` transcript from both
+  production source globs. It had no live caller and skipped original
+  raw-block/map sizing plus complete `READ_SKSAVE_DUNGEON` ownership, so it
+  could not safely represent `DM2_GAME_LOAD`. Its dedicated ABI test remains
+  explicit; production-symbol audit, the full save/load suite, and the local
+  eight-file authentic PC-DOS SKSAVE prefix census pass.

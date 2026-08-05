@@ -188,6 +188,12 @@
   data. Raw SKSave resume remains fail-closed after its real dungeon-prefix
   receipt until `DM2_GAME_LOAD` and `DM2_READ_SKSAVE_DUNGEON` are materialised
   in source order.
+  2026-08-06: the callback-only `dm2_v1_load_orchestrator_pc34_compat`
+  transcript is no longer linked by the production M10/DM2 archives. It
+  omits source-owned raw-block/map sizing and full `READ_SKSAVE_DUNGEON`
+  ownership, and has no runtime caller; its narrow ABI contract remains
+  explicit-test-only while the real eight-file PC-DOS corpus stays fail-closed
+  after its verified dungeon prefixes.
   2026-08-06: Greatstone's PC 1.0 `GRAPHICS.DAT` catalogue is now bound to
   the original file's 5,624-entry raw table. All 4,031 IMG3/IMG9/IMG11
   rasters now have a nonzero decoded-pixel receipt from those same original
