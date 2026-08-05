@@ -5953,12 +5953,16 @@ void dm2_v1_runtime_tick(void) {
         (void)dm2_v1_runtime_update_weather_frame(NULL, NULL);
     }
 
-    /* Every outdoor tick carries the current set-timer-weather receipt so the
-     * renderer/M11 gate can prove the weather overlay was produced under the
-     * same source timer owner that admitted the live DistantEnvironment slots.
-     * The receipt is valid whenever the party is outdoors, regardless of
-     * whether this exact tick is a 0x54 dispatch instant. */
-    if (rt->outdoor) {
+    /* A map being outdoors is not the source-owned c_weather timer chain.
+     * DM2_SET_TIMER_WEATHER is reached only after GAME_LOAD restores the
+     * v1e14xx state and its 0x54 timer owner.  Do not manufacture a valid
+     * receipt from the outdoor flag/tick counter: it could otherwise combine
+     * with independently supplied GDAT slots and authorize weather pixels.
+     *
+     * Source: SKProject/SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD and
+     *         SKWINSPX/src/v5/c_weather.cpp::DM2_SET_TIMER_WEATHER. */
+    memset(&rt->set_timer_weather, 0, sizeof(rt->set_timer_weather));
+    if (rt->outdoor && rt->weather_chain_started) {
         (void)dm2_v1_weather_set_timer_weather_receipt(
             1, (uint32_t)rt->tick_count, &rt->set_timer_weather);
     }

@@ -38,6 +38,7 @@ static void test_outdoor_does_not_construct_chain(void)
 {
     DM2_V1_BootProfile boot = {0};
     DM2_V1_ProceedTimersReceipt receipt = {0};
+    DM2_V1_SetTimerWeatherReceipt timer_owner = {0};
 
     dm2_v1_runtime_init(&boot);
     dm2_v1_runtime_set_weather_seed(0x2D2Du);
@@ -48,8 +49,9 @@ static void test_outdoor_does_not_construct_chain(void)
     CHECK(dm2_v1_runtime_last_proceed_timers_receipt(&receipt) == 1 &&
               receipt.type_tally[DM2_V1_TIMER_UPDATE_WEATHER] == 0 &&
               dm2_v1_runtime_weather_chain_started() == 0 &&
-              dm2_v1_runtime_weather_source_timer_pending() == 0,
-          "outdoor state does not fabricate a source weather timer");
+              dm2_v1_runtime_weather_source_timer_pending() == 0 &&
+              dm2_v1_runtime_last_set_timer_weather_receipt(&timer_owner) == 0,
+          "outdoor state does not fabricate a source weather timer or receipt");
 }
 
 static void test_indoor_never_starts_weather_chain(void)

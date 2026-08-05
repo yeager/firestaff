@@ -49048,3 +49048,13 @@ SKProject read order, including `DM2_READ_SKSAVE_DUNGEON`, is materialised.
 The regression proves the prior synthetic tail cannot be accepted by either
 the candidate or slot loader. Source:
 `SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD` (1476-1526).
+# ✅ 2026-08-06 DM2 unowned weather-timer receipt removal
+
+The active DM2 runtime no longer marks `DM2_SET_TIMER_WEATHER` as valid merely
+because an outdoor map tick occurred. A valid receipt now requires the live,
+source-owned weather chain; otherwise it is cleared before M11 can combine it
+with GDAT material. This prevents host tick counters or map flags from
+authorizing weather pixels. The runtime weather-timer regression proves an
+outdoor session with no original chain produces neither a timer nor a receipt.
+Source: `SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD` and
+`SKWINSPX/src/v5/c_weather.cpp::DM2_SET_TIMER_WEATHER`.

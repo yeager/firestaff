@@ -701,6 +701,10 @@
   unowned bounded session-rain field cannot fabricate the `0x54` weather
   timer chain or enable clouds, rain, or lightning. Import the exact
   `v1e14xx`/savegame owner before admitting that chain.
+  **2026-08-06 update:** an outdoor map/tick no longer manufactures a valid
+  `DM2_SET_TIMER_WEATHER` receipt. The runtime clears that receipt until the
+  complete source-owned `v1e14xx` chain is present, preventing independently
+  supplied GDAT slots from promoting an unowned weather overlay.
   **2026-07-31 audit:** the legacy colour-only outdoor facade is outside the
   production archive. The active viewport's outdoor route requires G1 map,
   GDAT/local-palette, c_light and source timer-slot receipts together; seven
