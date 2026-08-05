@@ -222,7 +222,10 @@
 
   The V2 procedural overlay is now likewise excluded from the production
   archive; production exposes only a no-op seam until the real HUD bank is
-  decoded. Its pixel implementation remains fixture-only.
+  decoded. The procedural implementation is retained only in the startup
+  receipt fixture target so its handoff contract remains testable; it is
+  excluded from the production archive. The remaining widget manifest code
+  is admission diagnostics only, not a render source.
   The retired procedural `theron_v1_ui_chrome.c` module is now removed from
   the repository and the rendering test links the same production no-op seam;
   remaining work is only authenticated HUD tile-bank, layout, and portrait
@@ -234,9 +237,8 @@
   existing no-draw gate until original loader/VRAM evidence identifies the
   dungeon tile bank and palette mapping. The verified level header seed is
   now retained in the level record, together with the opaque header level
-  index; tile semantics remain unresolved. The procedural viewport source is
-  now excluded from `firestaff_theron`; production resolves the dedicated
-  no-op seam until an authenticated tile/material/palette route exists.
+  index; tile semantics remain unresolved. The viewport remains no-draw until
+  an authenticated tile/material/palette route exists.
 - **THERON-V1-TILE-RENDERER-REAL-DATA:** The inferred square/depth tile
   table is now fixture-only. Production exposes no tile selection, decode or
   raster pixels until Track 02 tile-bank semantics are decoded. The viewport

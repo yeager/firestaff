@@ -12,7 +12,7 @@
  *
  * When generator == "placeholder" the slot is treated as the procedural
  * rectangle/letter fallback already drawn by
- * src/theron/theron_v2_hud_overlay_pc34.c — this is the honest current
+ * src/theron/theron_v2_hud_overlay_runtime_noop.c — this is the honest current
  * default for every widget. Real PNG/PBR slots must declare
  * generator != "placeholder" and a source_file that resolves on disk
  * via FSP_JoinPath against the manifest's directory.
@@ -30,7 +30,7 @@
  *   - ReDMCSB DUNGEON.C F0260 (stat-bar refresh timing)
  *   - dmweb Theron overview (7 dungeons + 7 relic goals + rune magic)
  *   - docs/source-lock/tqr_v1_phase2_data_formats_H2339.md
- *   - src/theron/theron_v2_hud_overlay_pc34.c (procedural fallback)
+ *   - src/theron/theron_v2_hud_overlay_runtime_noop.c (production seam)
  *   - include/theron_v22_modern_assets_pc34.h (sibling V2.2 manifest)
  *   - include/dm2_v2_hud_widget_assets.h (sibling Phase 3 gate pattern)
  *   - docs/FIRESTAFF_GAP_LIST.md Theron V2 Phase 3 row
@@ -597,7 +597,7 @@ const char* theron_v2_hud_widget_assets_source_evidence(void) {
         "Source: ReDMCSB DUNGEON.C F0260 (stat-bar refresh timing, sibling)\n"
         "Source: dmweb Theron overview (7 dungeons + 7 relic goals + rune magic)\n"
         "Source: docs/source-lock/tqr_v1_phase2_data_formats_H2339.md\n"
-        "Source: src/theron/theron_v2_hud_overlay_pc34.c (procedural fallback)\n"
+        "Source: src/theron/theron_v2_hud_overlay_runtime_noop.c (production seam)\n"
         "Source: include/theron_v22_modern_assets_pc34.h (sibling V2.2 manifest)\n"
         "Source: include/dm2_v2_hud_widget_assets.h (sibling Phase 3 gate)\n"
         "Source: docs/FIRESTAFF_GAP_LIST.md Theron V2 Phase 3 row\n"

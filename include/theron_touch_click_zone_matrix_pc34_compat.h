@@ -28,7 +28,7 @@
  *   - V2 HUD overlay (256x224 PC Engine native framebuffer):
  *     the THERON_V2_HUD_ / THERON_V2_CHAMP_BAR_ / THERON_V2_ACTION_
  *     constants in include/theron_v2_hud_overlay_pc34.h plus the
- *     render coordinates in src/theron/theron_v2_hud_overlay_pc34.c
+ *     render coordinates in include/theron_v2_hud_overlay_pc34.h
  *     (compass 16,12; rune slots 36+i*6,8 4x4; action strip
  *     16+i*32,208 28x14; champion bars 4+i*62,184 60x8).
  * The original game is gamepad-driven: Theron has no mouse route

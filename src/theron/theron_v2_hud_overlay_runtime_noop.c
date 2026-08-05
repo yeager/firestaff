@@ -1,10 +1,11 @@
 /*
  * Production seam for the Theron V2 HUD overlay.
  *
- * The former overlay contains procedural compass, text, rune and champion
+ * The fixture overlay contains procedural compass, text, rune and champion
  * bar pixels.  Track 02 has not yielded an authenticated HUD/font/widget
  * bank, so production must expose state setters without drawing anything.
- * The complete implementation remains available to focused fixture tests.
+ * The implementation is excluded from production until an authenticated
+ * Track 02 HUD/widget bank can supply the same surfaces.
  */
 
 #include "theron_v2_hud_overlay_pc34.h"

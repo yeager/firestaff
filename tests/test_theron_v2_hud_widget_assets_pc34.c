@@ -31,7 +31,7 @@
  *   - ReDMCSB DUNGEON.C F0260 (stat-bar refresh timing)
  *   - dmweb Theron overview (7 dungeons + 7 relic goals + rune magic)
  *   - docs/source-lock/tqr_v1_phase2_data_formats_H2339.md
- *   - src/theron/theron_v2_hud_overlay_pc34.c (procedural fallback)
+ *   - src/theron/theron_v2_hud_overlay_runtime_noop.c (production seam)
  *   - include/theron_v22_modern_assets_pc34.h (sibling V2.2 manifest)
  *   - include/dm2_v2_hud_widget_assets.h (sibling Phase 3 gate pattern)
  */

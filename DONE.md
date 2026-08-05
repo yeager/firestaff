@@ -49387,12 +49387,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   an authenticated Track 02 tile-bank/material binding is available, so no
   generated tile surface can be mistaken for real dungeon graphics.
 
-- ✅ 2026-08-06 Theron production viewport gate: excluded the legacy
-  procedural `theron_v1_viewport.c` pixel implementation from the
-  `firestaff_theron` library. The runtime now resolves the existing
-  `theron_v1_viewport_runtime_noop.c` seam until Track 02 tile/material and
-  palette ownership is authenticated; fixture-only target linkages remain
-  isolated for later migration.
+- ✅ 2026-08-06 Theron V2 procedural HUD production gate: removed the generated
+  compass/text/rune/champion-bar overlay from production and launch-mode
+  targets. The source remains only in the startup receipt fixture, where it
+  preserves the handoff contract without shipping synthetic pixels. The
+  production no-op HUD seam and manifest classifier await a real Track 02
+  widget bank.
 
 - ✅ 2026-08-06 Theron Main-RAM loader capture receipt: the supplied real
   Mednafen sidecar is now parsed as a strict regular-file receipt. It verifies

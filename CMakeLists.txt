@@ -5218,8 +5218,8 @@ add_executable(test_theron_v1_startup_save_resume_pc34
     src/theron/theron_v1_track02_item_categories.c
     src/theron/theron_v1_track02_spell_descriptors.c
     src/theron/theron_v1_track02_spell_descriptors.c
-    src/theron/theron_v2_hud_overlay_pc34.c
     src/theron/theron_v2_hud_widget_assets_pc34.c
+    src/theron/theron_v2_hud_overlay_pc34.c
     src/shared/fs_portable_compat.c
 )
 target_include_directories(test_theron_v1_startup_save_resume_pc34 PRIVATE
@@ -7270,76 +7270,6 @@ set_tests_properties(theron_v2_touch_runtime_probe PROPERTIES
     LABELS "tier2;theron;v2;phase6;touch;controller;presentation-only"
 )
 
-# Theron V2 Phase 3 HUD Overlay probe (initial seed). Headless: no game data.
-# See include/theron_v2_hud_overlay_pc34.h. Verifies phase-gate + presentation
-# mode contract (V1 stays source-locked, V2 modes paint into the PC Engine
-# 256x224 indexed fb), setter coverage, render into framebuffer, V1 chrome
-# preserved when V2 inactive, source evidence citations, null safety.
-add_executable(firestaff_theron_v2_phase3_hud_overlay_probe
-    probes/firestaff_theron_v2_phase3_hud_overlay_probe.c
-    src/theron/theron_v2_hud_overlay_pc34.c
-    src/theron/theron_v2_hud_widget_assets_pc34.c
-    src/theron/theron_v2_phase_gate_pc34.c
-    src/theron/theron_v2_presentation_mode_pc34.c
-    src/theron/theron_v1_viewport.c
-    src/theron/theron_v1_vram_trace_loader.c
-    src/theron/theron_v1_palette.c
-    src/dm1v2/dm1_v2_modern_assets_pc34.c
-    src/dm1v2/dm1_v22_shapes.c
-    src/dm1v2/dm1_v2_presentation_mode_pc34.c
-    src/dm1v2/dm1_v2_asset_pipeline_pc34.c
-    src/dm1v2/dm1_v2_anim_timing_pc34.c
-    src/shared/fs_portable_compat.c)
-target_include_directories(firestaff_theron_v2_phase3_hud_overlay_probe PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/theron)
-target_link_libraries(firestaff_theron_v2_phase3_hud_overlay_probe
-    PRIVATE firestaff_theron firestaff_v2 firestaff_m10 m)
-if(NOT MSVC)
-    target_compile_options(firestaff_theron_v2_phase3_hud_overlay_probe PRIVATE -Wall -Wextra -O2)
-endif()
-add_test(
-    NAME theron_v2_phase3_hud_overlay_probe
-    COMMAND firestaff_theron_v2_phase3_hud_overlay_probe
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-)
-set_tests_properties(theron_v2_phase3_hud_overlay_probe PROPERTIES
-    LABELS "tier2;theron;v2;phase3;hud;presentation-only"
-)
-
-# Theron V2 HUD overlay seed gate. Headless: no game data.
-# Proves the V1->V2 presentation snapshot can be built from a const
-# Theron V1 world without mutating V1 runtime bytes, and that V1
-# original mode returns a hidden overlay that paints no pixels.
-add_executable(firestaff_theron_v2_overlay_seed_gate_probe
-    probes/firestaff_theron_v2_overlay_seed_gate_probe.c
-    src/theron/theron_v2_hud_overlay_pc34.c
-    src/theron/theron_v2_hud_widget_assets_pc34.c
-    src/theron/theron_v1_viewport.c
-    src/theron/theron_v1_vram_trace_loader.c
-    src/theron/theron_v1_palette.c
-    src/shared/fs_portable_compat.c)
-target_link_libraries(firestaff_theron_v2_overlay_seed_gate_probe PRIVATE
-    firestaff_theron firestaff_m12)
-target_compile_definitions(firestaff_theron_v2_overlay_seed_gate_probe PRIVATE
-    THERON_V2_HUD_FIXTURE_RENDER=1)
-target_include_directories(firestaff_theron_v2_overlay_seed_gate_probe PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-    ${CMAKE_CURRENT_SOURCE_DIR}/src/theron)
-if(NOT MSVC)
-    target_compile_options(firestaff_theron_v2_overlay_seed_gate_probe PRIVATE -Wall -Wextra -O2)
-endif()
-add_test(
-    NAME firestaff_theron_v2_overlay_seed_gate_probe
-    COMMAND firestaff_theron_v2_overlay_seed_gate_probe
-    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
-)
-set_tests_properties(firestaff_theron_v2_overlay_seed_gate_probe PROPERTIES
-    LABELS "tier2;theron;v2;phase3;hud;presentation-only;seed-gate"
-)
-
 # Theron V2 HUD widget asset manifest probe. Headless: no game data.
 # See include/theron_v2_hud_widget_assets_pc34.h. Mirrors the DM2 V2
 # widget-assets gate pattern (dm2_v2_hud_widget_assets_pc34) but for
@@ -7388,7 +7318,6 @@ add_executable(firestaff_theron_v2_hud_launch_mode_probe
     src/theron/theron_v2_hud_launch_mode_pc34.c
     src/theron/theron_v2_phase_gate_pc34.c
     src/theron/theron_v2_presentation_mode_pc34.c
-    src/theron/theron_v2_hud_overlay_pc34.c
     src/theron/theron_v1_track02.c
     src/theron/theron_v1_viewport.c
     src/theron/theron_v1_vram_trace_loader.c
@@ -11585,8 +11514,6 @@ if(BUILD_TESTING AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_screensh
         src/engine/screenshot_m11.c)
     target_include_directories(test_m11_screenshot_capture_delivery PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
-target_compile_definitions(firestaff_theron_v2_phase3_hud_overlay_probe PRIVATE
-    THERON_V2_HUD_FIXTURE_RENDER=1)
     if(NOT MSVC)
         target_compile_options(test_m11_screenshot_capture_delivery PRIVATE -Wall -Wextra -O2)
     endif()
@@ -26134,37 +26061,6 @@ if(BUILD_TESTING)
     add_test(
         NAME theron_v2_phase_gate_pc34
         COMMAND test_theron_v2_phase_gate_pc34
-    )
-
-    # ── Theron V2 Phase 3 HUD overlay smoke test ──────────────────
-    # Source-lock: src/theron/theron_v2_hud_overlay_pc34.c
-    # Phase 3 (initial seed): presentation-only enhanced UI chrome.
-    # Data-free: no game assets, no SDL rendering required.  Verifies
-    # init/set/render cycle on the PC Engine 256x224 indexed fb, hit-flash
-    # decay, low-HP pulse trigger, top-bar / stats-bar / action-strip
-    # visibility toggles, source evidence citations, and null safety.
-    add_executable(test_theron_v2_hud_overlay_pc34
-        tests/test_theron_v2_hud_overlay_pc34.c
-        src/theron/theron_v2_hud_overlay_pc34.c
-        src/theron/theron_v2_hud_widget_assets_pc34.c
-        src/theron/theron_v1_viewport.c
-    src/theron/theron_v1_vram_trace_loader.c
-        src/theron/theron_v1_palette.c
-        src/shared/fs_portable_compat.c
-    )
-    target_include_directories(test_theron_v2_hud_overlay_pc34 PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
-    )
-    target_compile_definitions(test_theron_v2_hud_overlay_pc34 PRIVATE
-        THERON_V2_HUD_FIXTURE_RENDER=1)
-    target_link_libraries(test_theron_v2_hud_overlay_pc34 PRIVATE firestaff_theron m)
-    if(NOT MSVC)
-        target_compile_options(test_theron_v2_hud_overlay_pc34 PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME theron_v2_hud_overlay_pc34
-        COMMAND test_theron_v2_hud_overlay_pc34
     )
 
     # ── Theron V2 HUD launch-mode gate (presentation-only) ──────

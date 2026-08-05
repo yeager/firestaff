@@ -64,7 +64,6 @@ static void hud_plot(uint8_t *fb, int stride, int w, int h_res, int x, int y, ui
         fb[y * (size_t)stride + x] = val;
     }
 }
-
 static void hud_rect(uint8_t *fb, int stride, int w, int h_res,
                      int x, int y, int rw, int rh, uint8_t val)
 {

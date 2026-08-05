@@ -34,15 +34,15 @@ static const TheronTouchClickZonePc34Compat kTheronTouchClickZones[] = {
 
     /* ── V2 HUD overlay, 256x224 PC Engine native (TQR_FB_W/H) ──── */
     {  0u, 0u, TR_V2, TR_SCR, TR_LEFT,   4,   0,  24,  24, "hud.compass",
-       "theron_v2_hud_overlay_pc34.h THERON_V2_HUD_COMPASS_CX/CY (16,12) center +/- 12; theron_v2_hud_overlay_pc34.c hud_compass_draw; presentation-only indicator" },
+       "theron_v2_hud_overlay_pc34.h THERON_V2_HUD_COMPASS_CX/CY (16,12) center +/- 12; production HUD seam remains no-draw; presentation-only indicator" },
     {  0u, 1u, TR_V2, TR_SCR, TR_LEFT,  36,   8,   4,   4, "hud.rune_slot_0",
-       "theron_v2_hud_overlay_pc34.c rune indicator drawn at (36,8), 4 slots 4x4 px at 6 px pitch (slot 0); presentation-only indicator" },
+       "theron_v2_hud_overlay_pc34.h rune indicator route at (36,8), 4 slots 4x4 px at 6 px pitch (slot 0); production route remains no-draw" },
     {  0u, 2u, TR_V2, TR_SCR, TR_LEFT,  42,   8,   4,   4, "hud.rune_slot_1",
-       "theron_v2_hud_overlay_pc34.c rune indicator slot 1 at (42,8) 4x4" },
+       "theron_v2_hud_overlay_pc34.h rune indicator slot 1 at (42,8) 4x4; production route remains no-draw" },
     {  0u, 3u, TR_V2, TR_SCR, TR_LEFT,  48,   8,   4,   4, "hud.rune_slot_2",
-       "theron_v2_hud_overlay_pc34.c rune indicator slot 2 at (48,8) 4x4" },
+       "theron_v2_hud_overlay_pc34.h rune indicator slot 2 at (48,8) 4x4; production route remains no-draw" },
     {  0u, 4u, TR_V2, TR_SCR, TR_LEFT,  54,   8,   4,   4, "hud.rune_slot_3",
-       "theron_v2_hud_overlay_pc34.c rune indicator slot 3 at (54,8) 4x4" },
+       "theron_v2_hud_overlay_pc34.h rune indicator slot 3 at (54,8) 4x4; production route remains no-draw" },
     {  0u, 5u, TR_V2, TR_SCR, TR_LEFT,  64,   4,  24,   5, "hud.quest_items",
        "theron_v2_hud_overlay_pc34.h THERON_V2_HUD_QUEST_X/Y (64,4); 6 glyph cells (Qx/Qy) at 4 px pitch x 5 px glyph height; text indicator" },
     {  0u, 6u, TR_V2, TR_SCR, TR_LEFT, 160,   4,  24,   5, "hud.dungeon_progress",
@@ -155,7 +155,7 @@ const char* THERON_TOUCHCLICK_Compat_GetSourceEvidence(void) {
            "zones from include/theron_v2_hud_overlay_pc34.h "
            "(THERON_V2_HUD_COMPASS_CX/CY 16/12, QUEST 64/4, DUNGEON "
            "160/4, RELIC 220/4, CHAMP_BAR 4+62i/184/60x8, ACTION "
-           "16+32i/208/28x14) and src/theron/theron_v2_hud_overlay_pc34.c "
+           "16+32i/208/28x14) and include/theron_v2_hud_overlay_pc34.h "
            "render coordinates (rune slots 36+6i,8 4x4); anchored to "
            "THQUEST.ASM T600/T900 claims; the original game is "
            "gamepad-driven with no mouse route tables — gesture runtime "

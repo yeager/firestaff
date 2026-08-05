@@ -1,4 +1,5 @@
 #include "theron_v1_viewport.h"
+#include "theron_v1_palette.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -21,6 +22,12 @@ int theron_vp_init(Theron_V1_Viewport *vp) {
     vp->fb.stride = TQR_FB_W;
     vp->fb.data = (uint8_t *)calloc((size_t)TQR_FB_W * TQR_FB_H, 1);
     if (!vp->fb.data) return 0;
+    /* Preserve the real viewport lifecycle contract.  Only pixel admission
+     * is disabled here; callers still need an initialized, explicitly
+     * unbound palette and stable letterbox origin. */
+    tqr_palette_init_defaults(&vp->palette);
+    vp->viewport_x = 0;
+    vp->viewport_y = 0;
     vp->initialized = 1;
     return 1;
 }
@@ -28,6 +35,7 @@ int theron_vp_init(Theron_V1_Viewport *vp) {
 void theron_vp_free(Theron_V1_Viewport *vp) {
     if (!vp) return;
     free(vp->fb.data);
+    tqr_palette_free_tiles(&vp->palette);
     memset(vp, 0, sizeof(*vp));
 }
 
@@ -82,8 +90,9 @@ int theron_vp_tile_for_square(int square_type, int depth, int is_wall) {
 }
 
 void theron_vp_clear(Theron_V1_Viewport *vp, uint8_t color_index) {
-    (void)vp;
-    (void)color_index;
+    if (!vp || !vp->fb.data) return;
+    memset(vp->fb.data, color_index,
+           (size_t)vp->fb.w * (size_t)vp->fb.h);
 }
 
 const char *theron_v1_viewport_source_evidence(void) {
