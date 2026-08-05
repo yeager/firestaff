@@ -9,7 +9,9 @@ on:
 
 concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  # Let the active main verification finish; GitHub keeps only the newest
+  # pending run for this group, avoiding a never-ending cancel/restart loop.
+  cancel-in-progress: false
 
 env:
   SDL3_TAG: release-3.2.14
