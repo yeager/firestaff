@@ -11944,35 +11944,58 @@ static unsigned short m11_find_pile_top_item_on_square(
     return THING_NONE;
 }
 
-/* Find the first empty backpack/pouch slot for a champion. */
-static int m11_find_empty_slot(const struct ChampionState_Compat* champ) {
-    int slot;
-    if (!champ || !champ->present) {
+/* Declared here because the source slot-mask table lives with the inventory
+ * panel implementation below this pickup path. */
+static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex);
+
+/* Find the first empty slot admitted by ReDMCSB F0302/G0038. */
+static int m11_find_empty_slot(const struct ChampionState_Compat* champ,
+                               const struct DungeonThings_Compat* things,
+                               unsigned short thing) {
+    unsigned int allowedSlots;
+    if (!champ || !champ->present || !things ||
+        thing == THING_NONE || thing == THING_ENDOFLIST) {
         return -1;
     }
-    /* Prefer hands first, then pouches, then backpack.
-     * BUG-DNY-DM1-2026-06-16 user playtest: the first pickup used to
-     * land in HAND_LEFT (the ready hand), leaving the prominent
-     * HAND_RIGHT action-icon cell empty so the player thought the
-     * pickup silently failed.  Fill the action hand (HAND_RIGHT)
-     * first so the picked-up item is immediately visible in the
-     * action-area cell that F0386_MENUS_DrawActionIcon drives.
-     * The user can then move the item to the ready hand via the
-     * swap input if they want. */
-    if (champ->inventory[CHAMPION_SLOT_HAND_RIGHT] == THING_NONE) {
-        return CHAMPION_SLOT_HAND_RIGHT;
-    }
-    if (champ->inventory[CHAMPION_SLOT_HAND_LEFT] == THING_NONE) {
-        return CHAMPION_SLOT_HAND_LEFT;
-    }
-    for (slot = CHAMPION_SLOT_POUCH_1; slot <= CHAMPION_SLOT_POUCH_2; ++slot) {
-        if (champ->inventory[slot] == THING_NONE) {
-            return slot;
-        }
-    }
-    for (slot = CHAMPION_SLOT_BACKPACK_1; slot <= CHAMPION_SLOT_BACKPACK_8; ++slot) {
-        if (champ->inventory[slot] == THING_NONE) {
-            return slot;
+    allowedSlots = dm1_v1_dungeon_get_object_allowed_slots_pc34(things, thing);
+    if (allowedSlots == 0u) return -1;
+
+    /* ReDMCSB checks ObjectAllowedSlots & G0038[slot] before every
+     * placement. Keep the action-hand-first UX, but only among legal slots. */
+    {
+        static const int preferredSlots[] = {
+            CHAMPION_SLOT_HAND_RIGHT,
+            CHAMPION_SLOT_HAND_LEFT,
+            CHAMPION_SLOT_POUCH_1,
+            CHAMPION_SLOT_POUCH_2,
+            CHAMPION_SLOT_BACKPACK_1,
+            CHAMPION_SLOT_BACKPACK_2,
+            CHAMPION_SLOT_BACKPACK_3,
+            CHAMPION_SLOT_BACKPACK_4,
+            CHAMPION_SLOT_BACKPACK_5,
+            CHAMPION_SLOT_BACKPACK_6,
+            CHAMPION_SLOT_BACKPACK_7,
+            CHAMPION_SLOT_BACKPACK_8,
+            CHAMPION_SLOT_BACKPACK_9,
+            CHAMPION_SLOT_BACKPACK_10,
+            CHAMPION_SLOT_BACKPACK_11,
+            CHAMPION_SLOT_BACKPACK_12,
+            CHAMPION_SLOT_BACKPACK_13,
+            CHAMPION_SLOT_BACKPACK_14,
+            CHAMPION_SLOT_BACKPACK_15,
+            CHAMPION_SLOT_BACKPACK_16,
+            CHAMPION_SLOT_BACKPACK_17
+        };
+        size_t i;
+        for (i = 0; i < sizeof(preferredSlots) / sizeof(preferredSlots[0]); ++i) {
+            int sourceSlot =
+                M11_GameView_GetV1InventorySourceSlotBoxForChampionSlot(
+                    preferredSlots[i]);
+            if (sourceSlot >= 0 &&
+                (allowedSlots & m11_v1_inventory_source_slot_box_mask(sourceSlot)) != 0u &&
+                champ->inventory[preferredSlots[i]] == THING_NONE) {
+                return preferredSlots[i];
+            }
         }
     }
     return -1;
@@ -12123,11 +12146,31 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
         return 0;
     }
 
-    item = m11_find_first_item_on_square(
-        &state->world,
-        state->world.party.mapIndex,
-        state->world.party.mapX,
-        state->world.party.mapY);
+    /* F0373 owns the visible pile top. Prefer the frame-local target that
+     * was actually painted, preventing an invisible chain neighbour from
+     * being removed when several objects share a square. */
+    item = THING_NONE;
+    {
+        int targetIndex;
+        for (targetIndex = s_m11_dm1_rendered_pile_target_count - 1;
+             targetIndex >= 0; --targetIndex) {
+            const M11_Dm1RenderedPileTarget* target =
+                &s_m11_dm1_rendered_pile_targets[targetIndex];
+            if (target->valid &&
+                target->mapX == state->world.party.mapX &&
+                target->mapY == state->world.party.mapY) {
+                item = target->thing;
+                break;
+            }
+        }
+    }
+    if (item == THING_NONE) {
+        item = m11_find_first_item_on_square(
+            &state->world,
+            state->world.party.mapIndex,
+            state->world.party.mapX,
+            state->world.party.mapY);
+    }
     if (item == THING_NONE) {
         m11_set_status(state, "PICKUP", "NOTHING TO PICK UP");
         snprintf(state->inspectTitle, sizeof(state->inspectTitle), "EMPTY FLOOR");
@@ -12136,7 +12179,7 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
         return 0;
     }
 
-    targetSlot = m11_find_empty_slot(champ);
+    targetSlot = m11_find_empty_slot(champ, state->world.things, item);
     if (targetSlot < 0) {
         m11_set_status(state, "PICKUP", "INVENTORY FULL");
         snprintf(state->inspectTitle, sizeof(state->inspectTitle), "HANDS FULL");

@@ -49487,3 +49487,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   boot probe reached `dm2-startup-menu` with `levelLoaded=1`. Sources:
   `SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN` (55182-55220),
   `HANDLE_UI_EVENT` (32001-32021), and `SKULLWIN/startend.cpp`.
+
+- ✅ 2026-08-06 DM1 pickup ownership: `M11_GameView_PickupItem()` now prefers
+  the frame-local F0115 rendered pile-top THING, preventing an invisible
+  linked-list neighbour from disappearing on pickup. Destination selection
+  enforces the real PC34 F0302/G0038 `AllowedSlots` mask before choosing a
+  hand, pouch or backpack slot. Slot-mask (152 assertions), source-name,
+  Ninja, and real PC3.4 alcove runtime checks pass.
