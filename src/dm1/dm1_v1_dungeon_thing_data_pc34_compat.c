@@ -14,6 +14,7 @@ enum {
 
     kIconWeaponTorchUnlit = 4,
     kIconJunkWater = 8,
+    kIconJunkJewelSymalUnequipped = 10,
     kIconJunkIllumuletUnequipped = 12,
     kIconWeaponFlamittEmpty = 14,
     kIconWeaponEyeOfTimeEmpty = 16,
@@ -551,6 +552,7 @@ int dm1_v1_dungeon_get_object_icon_index_pc34(
         if ((raw[3] >> 2) & 0x3fu) return iconIndex + 1;
         break;
     case kIconJunkWater:
+    case kIconJunkJewelSymalUnequipped:
     case kIconJunkIllumuletUnequipped:
         if ((raw[3] >> 6) & 0x03u) return iconIndex + 1;
         break;

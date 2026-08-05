@@ -48633,6 +48633,16 @@ the supplied root and selected MD5 to prove this without shipping game data.
   against a title that advances too quickly. ReDMCSB `ANIM.C:67-72` and its
   VBlank waits establish the source timing; the extracted local Atari ST
   package passes the focused handoff test.
+
+## DM1 source object icon parity
+
+- **DM1-HOC-OBJECTS-004**: Added the missing ReDMCSB `OBJECT.C F0033`
+  charged-Jewel-Symal branch. DM1 now resolves the source `G0237` Jewel Symal
+  icon from its raw `JUNK.ChargeCount`, matching the original water/illumulet
+  charged-item family instead of leaving the base icon selected. Regression
+  coverage exercises the PC34 raw record and expects icon 11 for a charged
+  Jewel Symal. Verification: `test_dm1_v1_projectile_explosion_render_pc34_compat`
+  passed with all tests, plus `git diff --check`, on 2026-08-05.
 - ✅ 2026-08-05 CSB Atari ST executable-media inventory: corrected the
   `SWITCH.DAT` fingerprint to the bytes in the original hard-disk package and
   added hash identities for `ANIMATE.FTL`, `CHAOS.FTL`, and `FTLCODE`.

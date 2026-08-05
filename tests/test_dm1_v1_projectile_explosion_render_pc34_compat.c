@@ -755,6 +755,12 @@ static void test_f0141_f0032_f0033_raw_object_icon_path(void)
               "F0141 compass G0237 index");
     ASSERT_EQ(dm1_v1_dungeon_get_object_icon_index_pc34(&things, junkThing, 2), 2,
               "F0033 compass follows G0308 party direction");
+    junk[2] = 2; /* G0237 row 129: Jewel Symal. */
+    junk[3] = 0x40u; /* Source JUNK.ChargeCount = 1. */
+    ASSERT_EQ(dm1_v1_dungeon_get_object_type_pc34(&things, junkThing), 10,
+              "F0032 Jewel Symal base icon");
+    ASSERT_EQ(dm1_v1_dungeon_get_object_icon_index_pc34(&things, junkThing, 0), 11,
+              "F0033 charged Jewel Symal icon");
     ASSERT_EQ(dm1_v1_dungeon_get_object_info_index_pc34(&things, potionThing), 2,
               "F0141 potion G0237 index");
     ASSERT_EQ(dm1_v1_dungeon_get_object_type_pc34(&things, potionThing), 148,
