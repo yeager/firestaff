@@ -334,13 +334,14 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     char cachedSwoosh[512];
     char cachedSwshSound[512];
     char cachedHint[512];
+    char cachedHintData[512];
     char cachedSave[512];
     char cachedMiniSave[512];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
     const char* runtimeDir;
-    TestZipEntry zipEntries[7];
+    TestZipEntry zipEntries[8];
     M12_AssetStatus status;
 
     memset(csbCacheDir, 0, sizeof(csbCacheDir));
@@ -348,6 +349,7 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     memset(cachedSwoosh, 0, sizeof(cachedSwoosh));
     memset(cachedSwshSound, 0, sizeof(cachedSwshSound));
     memset(cachedHint, 0, sizeof(cachedHint));
+    memset(cachedHintData, 0, sizeof(cachedHintData));
     memset(cachedSave, 0, sizeof(cachedSave));
     memset(cachedMiniSave, 0, sizeof(cachedMiniSave));
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_graphics.zip"),
@@ -369,6 +371,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     zipEntries[5].payload = kCsbSavePayload;
     zipEntries[6].name = "archive/MINI.DAT";
     zipEntries[6].payload = kCsbMiniSavePayload;
+    zipEntries[7].name = "archive/HCSB.DAT";
+    zipEntries[7].payload = "original CSB Hint Oracle graphics data";
     check_int(write_stored_zip_entries(zipPath,
                                        zipEntries,
                                        sizeof(zipEntries) / sizeof(zipEntries[0])),
@@ -441,6 +445,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                                csbCacheDir, "SWSHSND.DAT") &&
                   FSP_JoinPath(cachedHint, sizeof(cachedHint),
                                csbCacheDir, "HCSB.HTC") &&
+                  FSP_JoinPath(cachedHintData, sizeof(cachedHintData),
+                               csbCacheDir, "HCSB.DAT") &&
                   FSP_JoinPath(cachedSave, sizeof(cachedSave),
                                csbCacheDir, "CSBGAME.DAT") &&
                   FSP_JoinPath(cachedMiniSave, sizeof(cachedMiniSave),
@@ -454,6 +460,9 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
               "archive-backed CSB SWSHSND startup data should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedHint, kCsbHintPayload),
               "archive-backed CSB HCSB.HTC utility data should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedHintData,
+                                   "original CSB Hint Oracle graphics data"),
+              "archive-backed CSB HCSB.DAT Hint Oracle graphics should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedSave, kCsbSavePayload),
               "archive-backed CSB CSBGAME.DAT utility save should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedMiniSave, kCsbMiniSavePayload),

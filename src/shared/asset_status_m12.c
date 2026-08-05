@@ -387,6 +387,11 @@ static const char* const g_originalCandidateNames[] = {
     "HCSB.HTC",
     "HCSBF.HTC",
     "HCSBG.HTC",
+    "HCSB.DAT",
+    "HINT.FTL",
+    "ANIMATE.DAT",
+    "ANIMATE.SCR",
+    "SWITCH.DAT",
     "CSBGAME.DAT",
     "CSBGRAPH.DAT",
     "CSB.DAT",
@@ -1145,6 +1150,14 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
         "SWSHSND.C", "SWSHSND.DAT", "SWSH.SND", "SWSHSDAT.BIN",
         "SWSHSDAT.DAT",
         "DUNGEONB.DAT", "HCSB.HTC", "HCSBF.HTC", "HCSBG.HTC",
+        /* ReDMCSB: HINTLOAD.C lines 15-18 names HCSB.HTC, HCSB.DAT and
+         * CSBGAME.DAT as one Hint/Oracle media family.  HINTTEXT.C line 28
+         * reads graphic 0 from HCSB.DAT, so preserve it when the verified
+         * GRAPHICS.DAT anchor came from an archive.  The remaining files are
+         * original Utility Disk companions: HINT.FTL starts the tool,
+         * ANIM.C line 67 loads ANIMATE.DAT/SCR, and SWITCH.C line 473 loads
+         * SWITCH.DAT.  They are optional and never affect the launch gate. */
+        "HCSB.DAT", "HINT.FTL", "ANIMATE.DAT", "ANIMATE.SCR", "SWITCH.DAT",
         /* MINI.DAT is the original Atari ST/Amiga CSB campaign save.  Keep
          * it with an archive-backed installation so Resume can hand its
          * authenticated GAMEBLOCK payload to the native CSB runtime. */
