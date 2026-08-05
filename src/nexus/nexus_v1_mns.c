@@ -1,4 +1,5 @@
 #include "nexus_v1_mns.h"
+#include <limits.h>
 #include <string.h>
 
 static uint32_t read_be32(const uint8_t *p) {
@@ -12,6 +13,11 @@ static uint16_t read_be16(const uint8_t *p) {
 
 static int32_t read_be32s(const uint8_t *p) {
     return (int32_t)read_be32(p);
+}
+
+static int range_in_file(uint32_t offset, uint64_t length, int data_size) {
+    return data_size >= 0 && (uint64_t)offset <= (uint64_t)data_size &&
+           length <= (uint64_t)data_size - (uint64_t)offset;
 }
 
 static uint32_t bgr555_to_rgba(uint16_t c) {
@@ -39,7 +45,7 @@ static int parse_mesh(const uint8_t *data, int data_size,
     const uint8_t *md;
     int i;
 
-    if ((int)(mesh_off + NEXUS_MNS_MESH_DESC_SIZE) > data_size) return 0;
+    if (!range_in_file(mesh_off, NEXUS_MNS_MESH_DESC_SIZE, data_size)) return 0;
     md = data + mesh_off;
 
     m->vertex_count = read_be16(md + 4);
@@ -50,8 +56,12 @@ static int parse_mesh(const uint8_t *data, int data_size,
     if (m->vertex_count > NEXUS_MNS_MAX_VERTICES) m->vertex_count = NEXUS_MNS_MAX_VERTICES;
     if (m->face_count > NEXUS_MNS_MAX_FACES) m->face_count = NEXUS_MNS_MAX_FACES;
 
-    if ((int)(m->vertex_offset + m->vertex_count * NEXUS_MNS_VERTEX_SIZE) > data_size) return 0;
-    if ((int)(m->face_offset + m->face_count * NEXUS_MNS_FACE_SIZE) > data_size) return 0;
+    if (!range_in_file(m->vertex_offset,
+                       (uint64_t)m->vertex_count * NEXUS_MNS_VERTEX_SIZE,
+                       data_size) ||
+        !range_in_file(m->face_offset,
+                       (uint64_t)m->face_count * NEXUS_MNS_FACE_SIZE,
+                       data_size)) return 0;
 
     for (i = 0; i < m->vertex_count; ++i) {
         const uint8_t *v = data + m->vertex_offset + i * NEXUS_MNS_VERTEX_SIZE;
@@ -99,7 +109,7 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
         const uint8_t *j;
         Nexus_V1_MnsJoint *jt = &out->joints[i];
 
-        if ((int)(joff + NEXUS_MNS_JOINT_SIZE) > data_size) break;
+        if (!range_in_file(joff, NEXUS_MNS_JOINT_SIZE, data_size)) return 0;
         j = data + joff;
 
         jt->index = (int)read_be32(j);
@@ -119,7 +129,11 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
         }
     }
 
-    if (out->text_offset && (int)(out->text_offset + 8) <= data_size) {
+    /* DMWeb StrucTextHeader contains the magic, section size and texture
+     * count. The count is at +0x08, so the complete 12-byte prefix must be
+     * present before any of those fields are read. */
+    if (out->text_offset &&
+        range_in_file(out->text_offset, 12U, data_size)) {
         const uint8_t *text = data + out->text_offset;
         if (read_be32(text) == NEXUS_MNS_TEXT_MAGIC) {
             uint32_t text_size = read_be32(text + 4);
@@ -133,7 +147,8 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
                 uint32_t doff = desc_start + (uint32_t)i * NEXUS_MNS_TEXT_DESC_SIZE;
                 Nexus_V1_MnsTextureDesc *td;
 
-                if ((int)(doff + NEXUS_MNS_TEXT_DESC_SIZE) > data_size) break;
+                if (!range_in_file(doff, NEXUS_MNS_TEXT_DESC_SIZE,
+                                   data_size)) break;
                 td = &out->textures[i];
                 td->image_id = read_be16(data + doff);
                 td->encoding = read_be16(data + doff + 2);
@@ -143,11 +158,17 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
 
                 if (td->image_id == 0xFFFF) break;
 
+                if ((uint64_t)td->width * td->height > INT_MAX) {
+                    td->pixel_count = 0;
+                    out->texture_count++;
+                    continue;
+                }
                 td->pixel_count = td->width * td->height;
                 if (td->pixel_count > 0 && td->image_offset) {
                     uint32_t abs_off = out->text_offset + td->image_offset;
                     int byte_count = td->pixel_count * 2;
-                    if ((int)(abs_off + byte_count) <= data_size) {
+                    if (range_in_file(abs_off, (uint64_t)byte_count,
+                                      data_size)) {
                         uint32_t rgba[16384];
                         int j;
                         if (td->pixel_count <= 16384) {
@@ -180,7 +201,7 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
                 uint32_t tbl_off_pos = out->motn_offset + 0x10 + (uint32_t)t * 4;
                 uint32_t tbl_rel;
                 int f_idx = 0;
-                if ((int)(tbl_off_pos + 4) > data_size) break;
+                if (!range_in_file(tbl_off_pos, 4U, data_size)) break;
                 tbl_rel = read_be32(data + tbl_off_pos);
                 if (tbl_rel == 0 || tbl_rel == 0xFFFFFFFF) break;
                 /* Walk frame offset list (DMWeb: each table is N offsets
@@ -196,12 +217,12 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
                         Nexus_V1_MnsMotnFrame *frm;
                         uint16_t flags;
 
-                        if ((int)(entry_pos + 4) > data_size) break;
+                        if (!range_in_file(entry_pos, 4U, data_size)) break;
                         frame_rel = read_be32(data + entry_pos);
                         if (frame_rel == 0xFFFFFFFF || frame_rel == 0) break;
 
                         abs_frame = out->motn_offset + frame_rel;
-                        if ((int)(abs_frame + 4) > data_size) break;
+                        if (!range_in_file(abs_frame, 4U, data_size)) break;
                         fp = data + abs_frame;
                         frm = &out->motn.tables[t].frames[f_idx];
                         frm->duration = read_be16(fp);
@@ -211,7 +232,8 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
                         if (flags == 2) frame_size += 4;
                         else if (flags == 3) frame_size += 8;
                         else if (flags >= 4) frame_size += 12;
-                        if ((int)(abs_frame + frame_size) > data_size) break;
+                        if (!range_in_file(abs_frame, (uint64_t)frame_size,
+                                           data_size)) break;
                         for (j = 0; j < motn_joints && j < NEXUS_MNS_MAX_JOINTS; ++j) {
                             int roff = 20 + j * 8;
                             frm->rotation[j][0] = (int16_t)read_be16(fp + roff);
@@ -451,7 +473,8 @@ int nexus_v1_mns_render_texture(const uint8_t *data, int data_size,
     if (td->pixel_count <= 0 || rgba_capacity < td->pixel_count) return 0;
 
     abs_off = result->text_offset + td->image_offset;
-    if ((int)(abs_off + td->pixel_count * 2) > data_size) return 0;
+    if (!range_in_file(abs_off, (uint64_t)td->pixel_count * 2,
+                       data_size)) return 0;
 
     for (j = 0; j < td->pixel_count; ++j) {
         uint16_t c = read_be16(data + abs_off + j * 2);

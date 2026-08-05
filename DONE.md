@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus MNS parser bounds: tightened the DMWeb MNS decoder's
+  declared joint-table, mesh, TEXT-header/descriptor, MOTN-frame, and pixel
+  range checks. A truncated declared joint table is rejected, and the TEXT
+  count is no longer read from an incomplete 8-byte prefix. The real corpus
+  remains unchanged: all 30 MNS files and 452 source textures pass
+  `test_nexus_v1_mns`; this is parser hardening only, not creature rendering
+  admission. Saturn VDP1 texture/palette ownership remains capture-gated.
+
 - ✅ 2026-08-06 DM1 side-door source gate: authenticated PC34 sessions now
   require a loaded pixel surface for side-door wall-set material. Dimension-only
   cache entries no longer reach `M11_AssetLoader_BlitScaled`, and the legacy

@@ -28,6 +28,13 @@ static int test_synthetic(void) {
     memset(bad, 0, sizeof(bad));
     if (nexus_v1_mns_decode(bad, 64, &r)) return 1;
     if (nexus_v1_mns_decode(NULL, 0, &r)) return 1;
+    /* A declared joint table is part of the DMDF envelope, not an optional
+     * hint. A truncated table must not be accepted as a valid model. */
+    memset(bad, 0, sizeof(bad));
+    bad[0] = 'D'; bad[1] = 'M'; bad[2] = 'D'; bad[3] = 'F';
+    bad[0x28 + 3] = 1;
+    bad[0x1C + 3] = 0x34;
+    if (nexus_v1_mns_decode(bad, 0x34, &r)) return 1;
     printf("  PASS synthetic\n");
     return 0;
 }

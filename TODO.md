@@ -63,6 +63,10 @@
   semantics.
   Gold-pile pickup is also held behind the same Saturn action/drop gate;
   generic storage remains diagnostic and no retail drop record is fabricated.
+  MNS mesh/skeleton/texture decoding now rejects truncated declared joint
+  tables and guards TEXT/mesh/MOTN/pixel ranges; keep creature rendering
+  blocked until the parsed model is joined to an authenticated Saturn VDP1
+  texture/palette command receipt.
   The Nexus mechanics and engine tick paths now share an explicit closed
   action-semantics gate: inherited melee, spell dispatch, creature attack,
   ranged projectile launch, and projectile damage cannot mutate live state
