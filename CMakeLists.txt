@@ -9358,6 +9358,20 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_source_item_name_guard.c")
+        add_executable(test_m11_dm1_source_item_name_guard
+            tests/test_m11_dm1_source_item_name_guard.c)
+        target_link_libraries(test_m11_dm1_source_item_name_guard PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_source_item_name_guard PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_source_item_name_guard
+            COMMAND test_m11_dm1_source_item_name_guard
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0115_floor_item_runtime_capture_pc34.c")
         add_executable(test_m11_dm1_f0115_floor_item_runtime_capture_pc34
             tests/test_m11_dm1_f0115_floor_item_runtime_capture_pc34.c)
