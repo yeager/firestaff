@@ -28,7 +28,7 @@ pixelavkodning och runtime-handoff måste också vara verifierade.
 |---|---|---|
 | `MENU.BPK` | Finns lokalt och hash-/strukturverifierad; 162 PRS3-ytor identifierade och dekoderade | Pixeldata får lämnas till nästa handoff; placering, palettbindning och menysemantik är fortfarande separata gates |
 | `nexus_v1_prs3_decode.c` | DMWeb-reglerna är implementerade; alla 162 retail-ytor dekoderar korrekt till deklarerad storlek | Får användas för byteavkodning, men inte som bevis för Saturns VDP1-presentation |
-| Procedurbyggda save/champion-kommandon | Hostlogik och hit-testgeometri finns; M11-executorn lämnar text, fill-/outline-ramar och obevisad placering oritade. FACE-pixlar kan endast nå en separat verifierad portrait-route | Får inte ersätta Saturn-menygrafik |
+| Procedurbyggda save/champion-kommandon | Hostlogik och hit-testgeometri finns; M11-executorn lämnar text, fill-/outline-ramar och obevisad placering oritade. FACE laddas endast till en verifieringsreceipt; M11 placerar inga portraitpixlar | Får inte ersätta Saturn-menygrafik |
 | PRS3-fallbackgrafik | Blockerad | Ingen syntetisk ersättningsyta |
 
 ## HUD över viewport
@@ -83,6 +83,10 @@ Den äldre projektilrutinen använde paletteindex och `rand()`-jitter för att
 fabricera spell-effekter. Den är nu helt spärrad tills en verifierad Saturn-
 effektström och VDP1-bindning finns. Inga host-genererade projektilpixlar får
 passera Nexus-rasterizern.
+Den äldre dörrritaren hade dessutom DM1-härledd gapgeometri och palettindex
+10/14. Den är nu uttryckligen no-draw även när en godtycklig host-textur
+skickas in; dörrarnas gameplay-tillstånd kvarstår, men Saturnmaterial,
+animationsramar och VDP1-destination måste bindas innan dörrpixlar får skrivas.
 Mekanikproben är uppdaterad till detta kontrakt och passerar 285/285; de
 Nexus-specifika itemrutterna är explicit blockerade tills en Saturn-katalog
 är verifierad.

@@ -28,6 +28,9 @@
   The legacy public PRS3 API now follows the same DMWeb forward/negative
   window rule as the active decoder; VDP1 pixel/palette admission remains
   capture-gated.
+  The legacy Nexus door raster API is now no-draw: its former DM1-derived
+  gap geometry and palette guesses were removed. Bind Saturn door materials,
+  animation frames, and VDP1 destinations before restoring door pixels.
   CD-DA startup no longer manufactures WAV files from raw track bytes;
   authenticated CD image/decoder handoff remains required for music playback.
   Title timing remains a host state receipt only; the former synthetic edge

@@ -152,11 +152,9 @@ void nexus_draw_wall_tex_mapped(Nexus_Framebuffer *fb,
     const uint8_t *tex_data, int tex_w, int tex_h,
     const uint32_t *tex_palette, const uint8_t texel_map[256]);
 
-/* Door state drawing (DM1 DUNGEON.C door semantics):
- *   CLOSED: full-height quad
- *   OPEN:   narrowed side-offset quad (gap visible)
- *   LOCKED: full-height + color brighten (gold tint, key indicator)  */
-/* Door state values from nexus_v1_doors.h: NEXUS_DOOR_CLOSED/OPEN enum */
+/* Door state API retained for the gameplay layer. Rendering is currently
+ * no-draw: Saturn door surfaces, animation frames, and VDP1 placement have
+ * not been proven from Nexus DGN/MNS/capture evidence. */
 void nexus_draw_door(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     float x, float z, int facing, int door_state,
     int texture_id, const uint8_t *tex_data, int tex_w, int tex_h,

@@ -49458,3 +49458,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   reads. Focused icon/data tests, Ninja build, and the real PC3.4 alcove
   runtime test pass. HoC pickup/placement capture remains open in
   `DM1-HOC-OBJECTS-002`.
+- ✅ 2026-08-05 Nexus door raster placeholder removal: removed the uncalled
+  DM1-derived open/closed/locked door geometry and guessed palette indices
+  from `nexus_v1_rasterizer.c`. The public gameplay-facing API now remains
+  fail-closed even when a host texture is supplied. Added a framebuffer color
+  and depth regression to `test_nexus_v1_dgn_material_raster`; Saturn door
+  materials, animation frames, and VDP1 destinations remain capture-gated.

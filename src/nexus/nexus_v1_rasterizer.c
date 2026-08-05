@@ -472,73 +472,15 @@ void nexus_draw_door(Nexus_Framebuffer *fb, const Nexus_Camera *cam,
     int texture_id, const uint8_t *tex_data, int tex_w, int tex_h,
     const uint32_t *tex_palette)
 {
-    float gap_w = 1.0f, gap_h = 1.0f, off_x = 0.0f, off_z = 0.0f;
-    Nexus_RasterVertex dv[4];
-    float wx0, wz0, wx1, wz1;
-    int f = facing & 3;
-    (void)texture_id;  /* door state drives panel quad (tex_data unused) */
-    (void)tex_data;
-    (void)tex_w;
-    (void)tex_h;
-    (void)tex_palette;
-    if (!fb || !cam) return;
-
-    /* Source: DM1 DUNGEON.C F0107 (door panel states).
-     * CLOSED: full-height quad.  OPEN: narrow + side gap.
-     * LOCKED: full-height + warm color shift (gold tint).        */
-    switch (door_state) {
-    case NEXUS_DOOR_CLOSED:
-        nexus_draw_wall(fb, cam, x, z, facing, 10,
-            -1, NULL, 0, 0, NULL);
-        return;
-    case NEXUS_DOOR_OPEN:
-        /* Narrow slab offset to one side so gap is visible */
-        gap_w = 0.30f;  gap_h = 0.75f;
-        if (f == 0) off_z = -0.30f;      /* N: gap to south  */
-        else if (f == 2) off_z = 0.30f;  /* S: gap to north  */
-        else if (f == 1) off_x = 0.30f;  /* E: gap to west   */
-        else             off_x = -0.30f; /* W: gap to east   */
-        break;
-    case NEXUS_DOOR_LOCKED:
-        /* Full-size door panel; color shifted to gold (palette ~14) */
-        gap_w = 1.00f; gap_h = 1.00f;
-        break;
-    default:
-        gap_w = 1.0f; gap_h = 1.0f;
-    }
-
-    /* Grid corners of face f */
-    static const float wx_tab[4] = {0, 1, 1, 0};
-    static const float wz_tab[4] = {0, 0, 1, 1};
-    wx0 = x + wx_tab[f];  wz0 = z + wz_tab[f];
-    wx1 = x + wx_tab[(f+1)&3]; wz1 = z + wz_tab[(f+1)&3];
-
-    dv[0].position = (Vec3){ wx0, 0.0f, wz0 };
-    dv[1].position = (Vec3){ wx1, 0.0f, wz1 };
-    /* Narrow/lower slab: scale toward v0 direction */
-    dv[0].position.x += off_x; dv[0].position.z += off_z;
-    dv[2].position = (Vec3){ dv[1].position.x + off_x,
-                               1.0f * gap_h,
-                               dv[1].position.z + off_z };
-    dv[3].position = (Vec3){ dv[0].position.x, 1.0f * gap_h,
-                               dv[0].position.z };
-    /* Top edge: scale the diagonal */
-    dv[2].position.x = dv[0].position.x
-        + (dv[1].position.x - wx0) * gap_w;
-    dv[2].position.z = dv[0].position.z
-        + (dv[1].position.z - wz0) * gap_w;
-
-    {
-        uint8_t base = (door_state == NEXUS_DOOR_LOCKED) ? 14 : 10;
-        dv[0].color = dv[1].color = dv[2].color = dv[3].color = base;
-    }
-    dv[0].uv = (Vec2){0,1}; dv[1].uv = (Vec2){1,1};
-    dv[2].uv = (Vec2){1,0}; dv[3].uv = (Vec2){0,0};
-    dv[0].texture_id = dv[1].texture_id =
-        dv[2].texture_id = dv[3].texture_id = -1;
-
-    nexus_raster_quad_tex(fb, dv[0], dv[1], dv[2], dv[3], cam,
-        tex_data, tex_w, tex_h, tex_palette);
+    /* The former implementation copied DM1 DUNGEON.C F0107 semantics into
+     * Nexus: guessed gap geometry and palette indices 10/14. Saturn door
+     * surfaces, animation frames, and VDP1 destination placement are not yet
+     * bound to a verified DGN/MNS/VDP1 receipt. Keep the public API for the
+     * gameplay state layer, but fail closed instead of emitting synthetic
+     * pixels when a caller supplies an arbitrary host texture. */
+    (void)fb; (void)cam; (void)x; (void)z; (void)facing;
+    (void)door_state; (void)texture_id; (void)tex_data; (void)tex_w;
+    (void)tex_h; (void)tex_palette;
 }
 
 /* ── Billboard / creature model bridge ──────────────────────────── */

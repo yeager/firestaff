@@ -158,6 +158,27 @@ int main(void) {
     nexus_fb_init(&fb);
     nexus_fb_clear(&fb);
     nexus_camera_init(&cam, (Vec3){0.5f, 0.5f, 3.5f}, 0);
+
+    /* Door rendering must not resurrect the removed DM1-derived geometry or
+     * palette guesses merely because a host texture was supplied. */
+    {
+        const uint8_t door_pixel = 1U;
+        const uint32_t door_palette[256] = {[1] = 0xffabcdefU};
+        uint64_t color_before;
+        uint64_t depth_before;
+        nexus_fb_clear(&fb);
+        color_before = fnv1a64(fb.color_buffer, sizeof(fb.color_buffer));
+        depth_before = fnv1a64((const uint8_t *)fb.z_buffer,
+                               sizeof(fb.z_buffer));
+        nexus_draw_door(&fb, &cam, 0.0f, 2.0f, 0, NEXUS_DOOR_OPEN,
+                        3, &door_pixel, 1, 1, door_palette);
+        expect(fnv1a64(fb.color_buffer, sizeof(fb.color_buffer)) ==
+                   color_before &&
+                   fnv1a64((const uint8_t *)fb.z_buffer,
+                           sizeof(fb.z_buffer)) == depth_before,
+               "unproven Saturn door geometry stays no-draw");
+    }
+
     memset(map, 0xff, sizeof(map));
     palette[1] = 0xff102030U;
     palette[2] = 0xff405060U;
