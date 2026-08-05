@@ -50318,7 +50318,6 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `s_savegamebuffer` (0x3c) and `c_tim` (0x0c) sections. The documented
   order now keeps `STORE_EXTRA_DUNGEON_DATA` after inventory/leader links and
   records that all sections share the MSB-first SUPPRESS stream.
-
 - ✅ 2026-08-06 Theron Track 02 raw item-record decoder: added a portable
   little-endian decoder for the source-bound category 4–10 records, including
   the universal next-reference prefix and the documented monster, weapon,
@@ -50338,7 +50337,6 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   still decodes indexed-4bpp and direct-555 surfaces, but neither reaches
   viewport/VDP1 drawing.
 
-
 - ✅ 2026-08-06 DM1 external original-save corpus: verified the two
   operator-staged PC34 files `DMSAVE.DAT` and `DMSAVE (1).DAT` from
   `/Users/bosse/Downloads` against the real PC3.4 dungeon backing. Both
@@ -50357,3 +50355,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   payload span. The inventory probe passes against `TQUS19.iso` and
   `TQJP19.iso`; no tile, object, palette, or runtime level semantics were
   inferred from the opaque payload.
+
+- ✅ 2026-08-06 DM2 D2RS public-resume closure: `dm2_v1_session_load_slot()`
+  and `dm2_v1_session_load_last_session()` now reject the internal D2RS
+  decoder envelope. Its decoder remains test-only diagnostic coverage, while
+  player-facing M11 resume requires a complete original raw SKSAVE path.
+  Verification: save/load 25/25, real PC-DOS corpus 35/35, M11 profile gate,
+  and startup menu contract 103/103.

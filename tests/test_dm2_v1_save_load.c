@@ -1330,10 +1330,15 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
         return 0;
     }
     memset(&imported_session, 0, sizeof(imported_session));
+    if (dm2_v1_session_import_original_payload(&imported_session,
+                                               loaded, loaded_size) != 0) {
+        printf("    FAIL: diagnostic D2RS decoder rejected its explicit fixture\n");
+        cleanup_one_slot_dir(tmpdir, 4);
+        return 0;
+    }
     r = dm2_v1_session_load_slot(tmpdir, 4, &imported_session);
-    if (r != 0) {
-        printf("    FAIL: session loader rejected SUPPRESS resume payload (r=%d)\n",
-               r);
+    if (r == 0) {
+        printf("    FAIL: public slot loader admitted a D2RS fixture\n");
         cleanup_one_slot_dir(tmpdir, 4);
         return 0;
     }
@@ -1360,7 +1365,7 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
         imported_session.original_timers[0].timer_id != timers[0].timer_id ||
         imported_session.original_timers[0].user_data !=
             timers[0].user_data) {
-        printf("    FAIL: session loader did not import SUPPRESS resume tuple\n");
+        printf("    FAIL: diagnostic D2RS decoder did not preserve its tuple\n");
         cleanup_one_slot_dir(tmpdir, 4);
         return 0;
     }
@@ -1406,10 +1411,10 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
         return 0;
     }
     memset(&imported_session, 0, sizeof(imported_session));
-    r = dm2_v1_session_load_slot(tmpdir, 4, &imported_session);
-    if (r != 0) {
-        printf("    FAIL: overwritten SUPPRESS payload did not import (r=%d)\n",
-               r);
+    if (dm2_v1_session_import_original_payload(&imported_session,
+                                               loaded, loaded_size) != 0 ||
+        dm2_v1_session_load_slot(tmpdir, 4, &imported_session) == 0) {
+        printf("    FAIL: overwritten D2RS diagnostic/public-loader boundary failed\n");
         cleanup_one_slot_dir(tmpdir, 4);
         return 0;
     }
@@ -1422,12 +1427,12 @@ static int test_resume_smoke_gate_position_facing_inventory(void)
         imported_session.party_dir != (resumed->wPlayerDir & 3u) ||
         imported_session.party_level != (uint8_t)resumed->wPlayerMap ||
         imported_champ.inventory[8] != resumed_champ.inventory[8]) {
-        printf("    FAIL: overwritten SUPPRESS payload did not update session import\n");
+        printf("    FAIL: overwritten diagnostic D2RS payload did not update tuple\n");
         cleanup_one_slot_dir(tmpdir, 4);
         return 0;
     }
 
-    printf("    PASS: resume tuple and inventory survived save/load + overwrite "
+    printf("    PASS: diagnostic tuple survives raw slot I/O but public resume rejects D2RS "
            "(gs=%zuB champion=%zuB payload=%zuB)\n",
            enc_gs_size, enc_champ_size, payload_size);
     cleanup_one_slot_dir(tmpdir, 4);

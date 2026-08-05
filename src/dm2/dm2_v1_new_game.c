@@ -1215,8 +1215,13 @@ int dm2_v1_session_load_slot(const char *save_base, uint8_t slot,
          * D2RS blob is only retained for decoder diagnostics; accepting it
          * through a public slot loader would make a Firestaff-private
          * fixture look like a playable save. */
-        if (candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
-            candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)
+        /* D2RS is a Firestaff decoder fixture, never an original SKSave
+         * payload.  Slot selection is a player-facing GAME_LOAD boundary;
+         * accepting the fixture here would make synthetic state playable.
+         * The raw branch remains unavailable until its complete
+         * READ_SKSAVE_DUNGEON continuation has a source-owned runtime
+         * implementation. */
+        if (candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)
             return -1;
         *session = candidate.session;
     }
@@ -1238,8 +1243,9 @@ int dm2_v1_session_load_last_session(const char *save_base,
         DM2_V1_SaveCandidate candidate;
         if (dm2_v1_session_parse_save_candidate(&candidate, buf, out_size) != 0)
             return -1;
-        if (candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
-            candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)
+        /* See dm2_v1_session_load_slot(): a D2RS envelope is diagnostic
+         * material, not a resume candidate. */
+        if (candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)
             return -1;
         *session = candidate.session;
     }

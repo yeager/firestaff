@@ -1119,7 +1119,6 @@ int main(void) {
     DM2_V1_BootStartupRenderOwnershipReceipt ownership_receipt;
     DM2_V1_BootStartupRealVisualCaptureReceipt real_visual_capture;
     DM2_V1_BootProfile* profile;
-    DM2_V1_GameState* world;
     unsigned char framebuffer[320 * 200];
     unsigned char framebuffer_without_hand[320 * 200] __attribute__((unused));
     char direct_save_root[512] __attribute__((unused)) = {0};
@@ -3044,7 +3043,6 @@ int main(void) {
         DM2_GameStateBlock original_gs;
         DM2_ChampionRecord original_champ;
         DM2_MinionTable original_minions;
-        DM2_MinionAssoc imported_minion;
 
         memset(&original_gs, 0, sizeof(original_gs));
         original_gs.dwGameTick = 84u;
@@ -3086,33 +3084,12 @@ int main(void) {
         fill_dm2_launch_spec(&spec, data_dir);
         spec.savePath = save_path;
         M11_GameView_Init(&view);
-        expect_true(M11_GameView_Start(&view, &spec),
-                    "M11 DM2 SUPPRESS payload resume succeeds");
-        expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
-                    "M11 DM2 SUPPRESS payload reports resumed status");
-        expect_true(view.dm2State.party_x == 19 &&
-                    view.dm2State.party_y == 7 &&
-                    view.dm2State.party_dir == 1,
-                    "M11 DM2 SUPPRESS payload mirrors saved party pose");
-        expect_true(view.dm2State.tick_count == 84,
-                    "M11 DM2 SUPPRESS payload mirrors saved game tick");
-        expect_true(dm2_v1_runtime_get_party_x() == 19 &&
-                    dm2_v1_runtime_get_party_y() == 7 &&
-                    dm2_v1_runtime_get_party_dir() == 1,
-                    "DM2 runtime SUPPRESS payload applies saved party pose");
-        expect_true(dm2_v1_runtime_get_tick_count() == 84,
-                    "DM2 runtime SUPPRESS payload applies saved tick");
-        expect_true(dm2_v1_runtime_get_minion_count() == 1u,
-                    "DM2 runtime SUPPRESS payload applies minion count");
-        expect_true(dm2_v1_runtime_get_minion_assoc(0,
-                                                    &imported_minion) == 0 &&
-                        imported_minion.object_id ==
-                            dm2_db_make_handle(6, 0x0022) &&
-                        imported_minion.owner_champion == 0u,
-                    "DM2 runtime SUPPRESS payload applies minion association");
-        world = (DM2_V1_GameState*)view.dm2World;
-        expect_true(world && world->current_level == 3,
-                    "DM2 world SUPPRESS payload applies saved level");
+        expect_true(M11_GameView_Start(&view, &spec) == 0,
+                    "M11 DM2 rejects the D2RS SUPPRESS fixture as a resume");
+        expect_true(strstr(view.lastOutcome, "DM2 RESUME FAILED") != NULL,
+                    "M11 DM2 reports the D2RS resume blocker");
+        expect_true(view.active == 0,
+                    "D2RS rejection leaves no synthetic DM2 runtime active");
         M11_GameView_Shutdown(&view);
     }
 
