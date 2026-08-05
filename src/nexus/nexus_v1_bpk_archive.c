@@ -39,16 +39,23 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size) {
 static uint32_t bpk_surface_bpp(const Nexus_V1_BpkEntry *entry,
                                 const Nexus_V1_BpkEntryPrefix *prefix)
 {
-    (void)entry;
-    return prefix ? nexus_v1_bpk_mode_to_bpp(prefix->mode) : 0U;
+    if (!prefix) return 0U;
+    /* DMWeb Translation Kit: PRS3 always expands to one 8-bit palette
+     * index per pixel. The prefix mode byte is opaque PRS3 flags, not a
+     * host RGB byte-width selector. Only stored/non-PRS3 entries use the
+     * mode-derived layout. */
+    if (entry && entry->has_prs3) return 1U;
+    return nexus_v1_bpk_mode_to_bpp(prefix->mode);
 }
 
 static Nexus_V1_BpkSurfaceClass bpk_surface_class(
     const Nexus_V1_BpkEntry *entry, const Nexus_V1_BpkEntryPrefix *prefix)
 {
-    (void)entry;
-    return prefix ? nexus_v1_bpk_mode_to_surface_class(prefix->mode) :
-                    NEXUS_V1_BPK_SURFACE_UNKNOWN;
+    if (!prefix) return NEXUS_V1_BPK_SURFACE_UNKNOWN;
+    if (entry && entry->has_prs3) {
+        return NEXUS_V1_BPK_SURFACE_INDEXED_8BPP;
+    }
+    return nexus_v1_bpk_mode_to_surface_class(prefix->mode);
 }
 
 static int read_header(const uint8_t *data,

@@ -116,15 +116,13 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_BpkPaletteTrailerReceipt;
 
-/* Per-entry surface layout (pass1083). For every entry whose 20-byte
- * prefix is complete AND whose entry is PRS3, the surface-class helpers
- * below compute indexed 8bpp output. For stored/non-PRS3 entries, mode
- * tags retain their separate mode-derived layout until source-bound.
- * the bytes-per-pixel, rowstride (no alignment padding), and expected
- * unpacked surface byte count. For the unique directory trailer (mode
- * 10) and any unknown mode, the helpers return 0 and the surface_estimate
- * walker skips the entry. This is the strongest no-decode surface-class
- * contract the engine can offer until a real PRS3 implementation lands.
+/* Per-entry surface layout (pass1083). PRS3 entries use DMWeb's 8-bit
+ * indexed output regardless of their opaque prefix mode byte. Stored/non-
+ * PRS3 entries retain their mode-derived layout until source-bound. The
+ * helpers expose bytes-per-pixel, rowstride (no alignment padding), and
+ * expected unpacked surface byte count. For the unique directory trailer
+ * (mode 10) and any unknown mode, they return 0 and the surface_estimate
+ * walker skips the entry.
  */
 typedef enum {
     NEXUS_V1_BPK_SURFACE_UNKNOWN = 0,

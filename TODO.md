@@ -27,7 +27,8 @@
   not another hardcoded glyph count.
   The legacy public PRS3 API now follows the same DMWeb forward/negative
   window rule as the active decoder; the pinned retail MENU.BPK test decodes
-  all 162 PRS3 surfaces. VDP1 pixel/palette admission remains capture-gated.
+  all 162 PRS3 surfaces as indexed 8bpp; PRS3 mode tags are not host RGB
+  widths. VDP1 pixel/CLUT/palette admission remains capture-gated.
   The legacy Nexus door raster API is now no-draw: its former DM1-derived
   gap geometry and palette guesses were removed. Bind Saturn door materials,
   animation frames, and VDP1 destinations before restoring door pixels.

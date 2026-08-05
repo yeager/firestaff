@@ -1,3 +1,9 @@
+- ✅ 2026-08-05 Nexus MENU.BPK PRS3 surface semantics: PRS3 mode tags are now
+  treated as opaque format fields, while decoded retail output is 8-bit indexed
+  data for all 162 real MENU.BPK surfaces. Stored non-PRS3 entries retain their
+  mode-derived bpp/surface classes. Updated synthetic and real-corpus regressions;
+  Saturn CLUT/palette, VDP1 upload, and placement remain blocked pending capture.
+
 - ✅ 2026-08-05 Nexus startup prompt placeholder removal: suppressed the
   host-generated 12-frame title-prompt blink from production receipts and
   updated startup gates to report no prompt until the original Saturn text/HUD
