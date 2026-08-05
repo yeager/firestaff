@@ -51,6 +51,14 @@ static Nexus_ClickResult click_route_inventory(Nexus_MechanicsState *st,
     if (target->champion_index < 0 ||
         target->champion_index >= engine->champions.champion_count)
         return NEXUS_CLICK_RESULT_INVALID;
+
+    /* ITEM.IBS binds declaration/image/action identifiers, but it does not
+     * bind the Saturn menu dispatcher or its inventory/equipment mutation
+     * side effects.  Keep both inventory-use and equipment-unequip routes
+     * fail-closed; otherwise a click would silently execute the inherited
+     * DM1 slot semantics in a real Nexus session. */
+    if (!nexus_v1_action_semantics_proven())
+        return NEXUS_CLICK_RESULT_NO_ACTION;
     champ_idx = target->champion_index;
 
     if (target->kind == NEXUS_CLICK_TARGET_INVENTORY_SLOT) {

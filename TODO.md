@@ -38,8 +38,9 @@
   requires the missing original Saturn VDP1 command receipt.
   The live inventory-use route no longer runs the inherited DM1 consumable /
   equipment catalog when ITEM.IBS action semantics are absent; click dispatch
-  remains available, but use is no-op until the Saturn action dispatcher is
-  source-bound.
+  remains available, but use and equipment-to-inventory mutation are no-op
+  until the Saturn action dispatcher is source-bound. Floor-item records remain
+  provenance-only until the same dispatcher proves pickup/slot semantics.
   The Nexus mechanics and engine tick paths now share an explicit closed
   action-semantics gate: inherited melee, spell dispatch, creature attack,
   ranged projectile launch, and projectile damage cannot mutate live state

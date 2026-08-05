@@ -4,6 +4,13 @@
   only ISO/extracted source classification; the non-black-pixel gate remains
   strict until a reviewed Saturn capture binds the viewport.
 
+- ✅ 2026-08-05 Nexus ITEM click-route hardening: equipment-slot clicks no
+  longer perform an inherited host-side unequip/copy into the flat inventory.
+  The click target and hit-test route remain available, but all inventory and
+  equipment mutation now stops at the shared Saturn action-semantics gate.
+  The real ITEM.IBS declaration/image/action fields remain diagnostic until
+  the original Saturn dispatcher is bound.
+
 - ✅ 2026-08-05 Nexus ISO-only startup source fix: `has_extracted()` now
   rejects virtual `container::entry` hash matches when deciding whether a
   root contains loose extracted DM.BIN and LEV00.DGN files. A directory that

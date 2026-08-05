@@ -107,12 +107,12 @@ static void test_equipment_slot_click_unequip(void) {
     engine.champions.champions[0].slots[NEXUS_SLOT_WEAPON - 1] = 5; /* Sword */
 
     target = nexus_click_target_equipment_slot(0, NEXUS_SLOT_WEAPON);
-    CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_OK,
-          "equipment slot click dispatches OK");
-    CHECK(engine.champions.champions[0].slots[NEXUS_SLOT_WEAPON - 1] == 0xFFU,
-          "sword removed from weapon slot");
-    CHECK(engine.champions.champions[0].inventory[0] == 5,
-          "sword returned to first inventory slot");
+    CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_NO_ACTION,
+          "equipment slot click is blocked without Saturn item semantics");
+    CHECK(engine.champions.champions[0].slots[NEXUS_SLOT_WEAPON - 1] == 5,
+          "unverified sword remains equipped");
+    CHECK(engine.champions.champions[0].inventory[0] == 0xFFU,
+          "unverified sword is not copied into inventory");
 }
 
 static void test_equipment_slot_click_empty(void) {
