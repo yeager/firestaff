@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus HUD layout source binding: added a bounds-checked
+  big-endian parser for the retail `DM.BIN` `yam\\menuctrl.c` layout at
+  `0x376D0` (80 entries × 8 bytes). With the mounted European corpus,
+  `test_nexus_v1_hud_layout` parses all 80 entries and matches the recorded
+  values byte-for-byte. This is geometry provenance only; M11 HUD pixels and
+  VDP placement remain capture-gated.
+
 - ✅ 2026-08-06 Nexus MENU.BPK stored-surface provenance: the legacy runtime
   render receipt no longer sets `fallback_visuals_permitted` for a bounded
   stored payload. Stored bytes remain an original-data route, while synthetic

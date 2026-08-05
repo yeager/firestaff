@@ -1,6 +1,55 @@
 
 #include <stdio.h>
+#include <stdlib.h>
 #include "nexus_v1_hud_layout.h"
+
+static int verify_real_dm_bin(void)
+{
+    const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char path[1024];
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+    Nexus_HudElement parsed[NEXUS_HUD_LAYOUT_ENTRY_COUNT];
+    const Nexus_HudElement *legacy;
+    size_t count = 0U;
+    size_t i;
+
+    if (!root || !root[0]) return 0;
+    if (snprintf(path, sizeof(path), "%s/DM.BIN", root) >= (int)sizeof(path)) {
+        return 0;
+    }
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    if (fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    if (nexus_v1_hud_layout_parse_dm_bin(
+            bytes, (size_t)size, parsed, NEXUS_HUD_LAYOUT_ENTRY_COUNT,
+            &count) != 0 || count != NEXUS_HUD_LAYOUT_ENTRY_COUNT) {
+        free(bytes);
+        return -1;
+    }
+    (void)nexus_v1_hud_layout(&legacy);
+    for (i = 0U; i < count; ++i) {
+        if (parsed[i].element_id != legacy[i].element_id ||
+            parsed[i].x != legacy[i].x || parsed[i].y != legacy[i].y) {
+            free(bytes);
+            return -1;
+        }
+    }
+    free(bytes);
+    return 1;
+}
 
 int main(void) {
     const Nexus_HudElement *elems;
@@ -55,6 +104,18 @@ int main(void) {
     if (fail) {
         fprintf(stderr, "%d failures\n", fail);
         return 1;
+    }
+    {
+        int real = verify_real_dm_bin();
+        if (real < 0) {
+            fprintf(stderr, "FAIL: real DM.BIN HUD layout parse mismatch\n");
+            return 1;
+        }
+        if (real > 0) {
+            printf("ok: real DM.BIN HUD layout parsed and matches source table\n");
+        } else {
+            printf("ok: real DM.BIN HUD layout skipped (data root not mounted)\n");
+        }
     }
     printf("ok: Nexus HUD layout table verified (80 entries, %d groups)\n", count);
     return 0;

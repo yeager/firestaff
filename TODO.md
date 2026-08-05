@@ -25438,6 +25438,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Nexus FONT256 text binding: retail DMWeb map/page header facts are now
   exposed. The remaining gap is proving how page tilemap entries become
   runtime character codes before enabling text rendering.
+- 🔧 Nexus HUD runtime binding: `DM.BIN` `yam\\menuctrl.c` geometry at
+  `0x376D0` now has a real-data parser and European corpus verification. Wire
+  that parser into the M11 HUD handoff, then bind the element surfaces,
+  palette and VDP1/VDP2 destinations from one authenticated Saturn capture;
+  the old static accessor remains compatibility-only and cannot authorize
+  HUD pixels.
 - 🔧 Nexus champion follow-up: PLRD equipment ordinals now bind to the real
   `ITEM.IBS` declaration category/weight lane. Bind the remaining ITEM.IBS
   text/action/combat semantics before exposing item names, attack, defense or

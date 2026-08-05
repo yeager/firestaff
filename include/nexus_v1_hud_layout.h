@@ -1,6 +1,7 @@
 
 #ifndef NEXUS_V1_HUD_LAYOUT_H
 #define NEXUS_V1_HUD_LAYOUT_H
+#include <stddef.h>
 #include <stdint.h>
 
 /* Nexus HUD element layout table from DM.BIN yam\menuctrl.c at 0x0376D0.
@@ -13,6 +14,10 @@ typedef struct {
     uint16_t x;
     uint16_t y;
 } Nexus_HudElement;
+
+#define NEXUS_HUD_LAYOUT_DM_BIN_OFFSET 0x376D0U
+#define NEXUS_HUD_LAYOUT_ENTRY_BYTES    8U
+#define NEXUS_HUD_LAYOUT_ENTRY_COUNT    80U
 
 /* Element ID constants from the layout table. */
 #define NEXUS_HUD_VIEWPORT        0x0040
@@ -73,6 +78,17 @@ typedef struct {
  * sentinel entries where element_id == 0xFFFF).
  * Source: DM.BIN yam\menuctrl.c 0x0376D0. */
 int nexus_v1_hud_layout(const Nexus_HudElement **out);
+
+/* Parse the retail menuctrl layout directly from DM.BIN.  The static accessor
+ * above is retained for legacy callers; new runtime handoffs must use this
+ * source-bound parser so the HUD geometry cannot silently drift from the
+ * mounted Saturn binary. */
+int nexus_v1_hud_layout_parse_dm_bin(
+    const uint8_t *data,
+    size_t data_size,
+    Nexus_HudElement *out,
+    size_t out_capacity,
+    size_t *out_count);
 
 /* Retrieve HP bar X positions for champion slots 0-3. */
 const uint16_t *nexus_v1_hud_hp_bar_positions(void);
