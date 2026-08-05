@@ -1,3 +1,14 @@
+- ✅ 2026-08-06 Nexus real RLOWFIX/CRET handoff: corrected the real-data
+  champion test to use the verified European RLOWFIX layout (TEXT#4 at
+  `0xF270`, TABL at `0x1232C`, 450 strings) and the configured
+  `FIRESTAFF_NEXUS_DATA_DIR`, removing stale offsets and host-specific paths.
+  Added a bytes-based CRET loader and switched engine initialization to the
+  authenticated `nexus_v1_read_file("RLOWFIX.BIN")` route, so ISO-only roots
+  bind all 30 real creature stat records without requiring a loose copy.
+  Verification: `test_nexus_v1_champion_plrd`,
+  `test_nexus_v1_cret_creature_stats`, champion-panel, HUD and SLEV/SAL
+  provenance tests pass against `/Users/bosse/.firestaff/data/nexus`.
+
 - ✅ 2026-08-06 DM1 status-hand placement mask: corrected the ReDMCSB
   C020..C027 -> C211..C218 route so its champion-relative hand parity resolves
   through canonical C00/C01 hand masks. Held objects now use the real

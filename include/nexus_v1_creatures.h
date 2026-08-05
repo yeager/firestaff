@@ -177,6 +177,12 @@ int nexus_v1_creature_rebind_unbound(Nexus_V1_CreatureManager *mgr);
  * Source: RLOWFIX.BIN CRET section at offset 0xF2B4. */
 int nexus_v1_creatures_load_cret(Nexus_V1_CreatureManager *mgr,
                                  const char *rlowfix_path);
+/* Same CRET binding for an authenticated file/ISO member already materialized
+ * by the Nexus source reader.  This keeps ISO-only roots on the ISO route
+ * instead of requiring a loose RLOWFIX.BIN copy. */
+int nexus_v1_creatures_load_cret_bytes(Nexus_V1_CreatureManager *mgr,
+                                       const uint8_t *data,
+                                       size_t data_size);
 
 /* CRET record field offsets (96-byte record from RLOWFIX.BIN). */
 #define NEXUS_CRET_OFF_HP          7

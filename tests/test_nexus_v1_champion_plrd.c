@@ -8,8 +8,10 @@
 #include <string.h>
 
 int main(void) {
-    const char *path = "/Users/bosse/.firestaff/data/nexus/RLOWFIX.BIN";
-    FILE *f = fopen(path, "rb");
+    const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char path[1024];
+    char item_path[1024];
+    FILE *f;
     long size;
     uint8_t *bytes;
     Nexus_V1_ChampionPool pool;
@@ -17,6 +19,14 @@ int main(void) {
     Nexus_V1_RlowfixText text;
     Nexus_V1_RlowfixText menu_text;
     Nexus_V1_RlowfixTabl tabl;
+    if (!root || !root[0]) root = ".firestaff/data/nexus";
+    if (snprintf(path, sizeof(path), "%s/RLOWFIX.BIN", root) >=
+            (int)sizeof(path) ||
+        snprintf(item_path, sizeof(item_path), "%s/ITEM.IBS", root) >=
+            (int)sizeof(item_path)) {
+        return 77;
+    }
+    f = fopen(path, "rb");
     if (!f) { puts("SKIP: local Nexus RLOWFIX.BIN not present"); return 0; }
     if (fseek(f, 0, SEEK_END) != 0) return 1;
     size = ftell(f);
@@ -26,8 +36,9 @@ int main(void) {
     fclose(f);
     if (!nexus_v1_champions_init_from_rlowfix(&pool, bytes, (size_t)size)) return 1;
     if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size, 0xa374, &text) ||
-        text.resource_index != 0 || text.string_count != 449) return 1;
-    if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size, 0xe824,
+        text.resource_index != 0 || text.string_count != 450) return 1;
+    /* European RLOWFIX.BIN: TEXT resource 4 at 0xF270. */
+    if (!nexus_v1_rlowfix_text_parse(bytes, (size_t)size, 0xf270,
                                      &menu_text) ||
         menu_text.resource_index != 4 || menu_text.string_count != 15) return 1;
     {
@@ -42,7 +53,8 @@ int main(void) {
                 !menu_bytes || menu_size == 0) return 1;
         }
     }
-    if (!nexus_v1_rlowfix_tabl_parse(bytes, (size_t)size, 0x118d4, &tabl) ||
+    /* European RLOWFIX.BIN: TABL directory record at 0x1232C. */
+    if (!nexus_v1_rlowfix_tabl_parse(bytes, (size_t)size, 0x1232c, &tabl) ||
         tabl.entry_count != 216 || tabl.code[0] != 0x05 ||
         tabl.code[1] != 0xe16e) return 1;
     {
@@ -58,10 +70,10 @@ int main(void) {
         pool.champions[0].health != 50 || pool.champions[0].stamina != 57 ||
         pool.champions[0].mana != 13 || pool.champions[19].health != 125 ||
         pool.champions[19].wizard_level != 2 ||
-        pool.champions[0].name_tabl_index[0] != 0x91 ||
-        pool.champions[0].name_tabl_code[0] != 0x0064) return 1;
+        pool.champions[0].name_tabl_index[0] != 0x21 ||
+        pool.champions[0].name_tabl_code[0] != 0x00c1) return 1;
     {
-        FILE *item_file = fopen("/Users/bosse/.firestaff/data/nexus/ITEM.IBS", "rb");
+        FILE *item_file = fopen(item_path, "rb");
         long item_size;
         uint8_t *item_bytes;
         if (!item_file || fseek(item_file, 0, SEEK_END) != 0) return 1;

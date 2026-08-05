@@ -492,29 +492,13 @@ int nexus_v1_creature_spawn_actor(Nexus_V1_CreatureManager *mgr,
     return mgr->active_count - 1;
 }
 
-int nexus_v1_creatures_load_cret(Nexus_V1_CreatureManager *mgr,
-                                 const char *rlowfix_path) {
-    FILE *file;
-    long fsize;
-    uint8_t *buf;
+int nexus_v1_creatures_load_cret_bytes(Nexus_V1_CreatureManager *mgr,
+                                       const uint8_t *buf,
+                                       size_t data_size) {
     int bound = 0, i;
-    uint32_t cret_off, table_off;
+    size_t cret_off, table_off;
 
-    if (!mgr || !rlowfix_path) return 0;
-    file = fopen(rlowfix_path, "rb");
-    if (!file) return 0;
-    if (fseek(file, 0, SEEK_END) != 0 || (fsize = ftell(file)) <= 0 ||
-            fseek(file, 0, SEEK_SET) != 0) {
-        fclose(file);
-        return 0;
-    }
-    buf = (uint8_t *)malloc((size_t)fsize);
-    if (!buf || fread(buf, 1, (size_t)fsize, file) != (size_t)fsize) {
-        free(buf);
-        fclose(file);
-        return 0;
-    }
-    fclose(file);
+    if (!mgr || !buf || data_size == 0U) return 0;
 
     /* Scan for "CRET" magic followed by section-index 0 (the creature stat
      * table).  The RES directory at the start of the file also contains
@@ -522,7 +506,7 @@ int nexus_v1_creatures_load_cret(Nexus_V1_CreatureManager *mgr,
      * "CRET" + uint32 index (0 for stats) and is located deeper in the file
      * (offset > 0x100). */
     cret_off = 0;
-    for (i = 0; i + 8 <= fsize; i++) {
+    for (i = 0; (size_t)i + 8U <= data_size; i++) {
         if (buf[i] == 'C' && buf[i+1] == 'R' && buf[i+2] == 'E' && buf[i+3] == 'T' &&
             buf[i+4] == 0 && buf[i+5] == 0 && buf[i+6] == 0 && buf[i+7] == 0 &&
             i > 0x100) {
@@ -530,13 +514,12 @@ int nexus_v1_creatures_load_cret(Nexus_V1_CreatureManager *mgr,
             break;
         }
     }
-    if (cret_off == 0) { free(buf); return 0; }
+    if (cret_off == 0U) return 0;
 
     table_off = cret_off + 8; /* skip "CRET\0\0\0\0" header */
-    if (table_off + NEXUS_CRET_COUNT * NEXUS_CRET_RECORD_SIZE > (uint32_t)fsize) {
-        free(buf);
+    if (table_off > data_size ||
+        NEXUS_CRET_COUNT * NEXUS_CRET_RECORD_SIZE > data_size - table_off)
         return 0;
-    }
 
     for (i = 0; i < NEXUS_CRET_COUNT && i < mgr->type_count; i++) {
         Nexus_CreatureType *t = &mgr->types[i];
@@ -556,6 +539,32 @@ int nexus_v1_creatures_load_cret(Nexus_V1_CreatureManager *mgr,
         bound++;
     }
 
+    return bound;
+}
+
+int nexus_v1_creatures_load_cret(Nexus_V1_CreatureManager *mgr,
+                                 const char *rlowfix_path) {
+    FILE *file;
+    long fsize;
+    uint8_t *buf;
+    int bound;
+
+    if (!mgr || !rlowfix_path) return 0;
+    file = fopen(rlowfix_path, "rb");
+    if (!file) return 0;
+    if (fseek(file, 0, SEEK_END) != 0 || (fsize = ftell(file)) <= 0 ||
+            fseek(file, 0, SEEK_SET) != 0) {
+        fclose(file);
+        return 0;
+    }
+    buf = (uint8_t *)malloc((size_t)fsize);
+    if (!buf || fread(buf, 1, (size_t)fsize, file) != (size_t)fsize) {
+        free(buf);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    bound = nexus_v1_creatures_load_cret_bytes(mgr, buf, (size_t)fsize);
     free(buf);
     return bound;
 }

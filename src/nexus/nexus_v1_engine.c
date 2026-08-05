@@ -2870,12 +2870,19 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_v1_load_hud_geometry(engine);
     nexus_v1_load_menu_bpk_decode_receipt(engine);
 
-    /* Init creature manager and load real stats from RLOWFIX.BIN CRET. */
+    /* Init creature manager and load real stats from the source-bound
+     * RLOWFIX.BIN CRET member.  Use nexus_v1_read_file() so an ISO-only root
+     * receives the same authenticated virtual member as PLRD/champions. */
     nexus_v1_creatures_init_production(&engine->creatures);
     {
-        char cret_path[512];
-        snprintf(cret_path, sizeof(cret_path), "%s/RLOWFIX.BIN", engine->data_dir);
-        nexus_v1_creatures_load_cret(&engine->creatures, cret_path);
+        int rlowfix_size = 0;
+        uint8_t *rlowfix = nexus_v1_read_file(engine, "RLOWFIX.BIN",
+                                              &rlowfix_size);
+        if (rlowfix) {
+            nexus_v1_creatures_load_cret_bytes(
+                &engine->creatures, rlowfix, (size_t)rlowfix_size);
+        }
+        free(rlowfix);
     }
 
     /* Init projectile manager */
