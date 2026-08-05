@@ -88,6 +88,13 @@
   Its seed-table window is still zero-fill, so this proves the level record
   only; runtime dungeon draw and full semantic handoff remain gated.
 
+  The real Mednafen `*.trace.cd` sidecar now has a strict opaque receipt path:
+  it validates the source marker, 51 SCSI READ commands, 157 MODE1/2352 raw
+  sectors and all 157 command-to-sector bindings from the captured app run.
+  This is transport/app-capture evidence only; the loaded `$2600` RAM
+  consumer bytes and level/object semantics still require a RAM-window
+  capture with executing PC and source-LBA provenance.
+
   Full-dungeon loading now accepts a valid zero-ground-reference map and
   rejects object-capacity exhaustion instead of reporting a partial success.
 

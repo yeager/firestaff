@@ -49209,3 +49209,9 @@ and `kskval1.h` teleporter tables.
   metadata-only PNG discovery remains non-renderable until a real decoder is
   bound. The focused asset-pipeline test verifies the explicit no-draw result.
   Tracked as `DM1-ORIGINAL-REPLACE-018`.
+- ✅ 2026-08-05 Theron real app-capture CD-state receipt: added a strict
+  parser for the supplied Mednafen `*.trace.cd` sidecar. The real capture is
+  accepted with MD5 `3e61070ac6bb1ef0ec03cbb83f6a7d6c`, 51 SCSI commands, 157
+  requested/raw/bound MODE1/2352 sectors, LBA range `3234..4267`, 25 CD IRQ
+  rows and 19 destination candidates. The receipt remains explicitly opaque:
+  it does not publish level, object, tile, palette or runtime semantics.

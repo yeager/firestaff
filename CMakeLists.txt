@@ -46788,6 +46788,29 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_load
     )
 endif()
 
+# Theron Mednafen CD-state sidecar receipt. This consumes the real app-capture
+# transport grammar only; it never admits level/object or visual semantics.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_mednafen_cd_state_trace.c"
+        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_mednafen_cd_state_trace.c")
+    add_executable(test_theron_v1_mednafen_cd_state_trace
+        tests/test_theron_v1_mednafen_cd_state_trace.c
+        src/theron/theron_v1_mednafen_cd_state_trace.c
+    )
+    target_link_libraries(test_theron_v1_mednafen_cd_state_trace PRIVATE firestaff_m12)
+    target_include_directories(test_theron_v1_mednafen_cd_state_trace PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_mednafen_cd_state_trace PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_mednafen_cd_state_trace
+        COMMAND test_theron_v1_mednafen_cd_state_trace
+    )
+    set_tests_properties(theron_v1_mednafen_cd_state_trace PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;capture;real_data;opaque")
+endif()
+
 # Theron Track 02 ground ref chain walker
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_ground_ref.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_ground_ref.h")
