@@ -87,6 +87,9 @@
   level/object records and item properties still require the source loader
   trace before runtime publication.
 
+  The real 15-entry Track 19 level-selector label span is now byte-validated
+  as metadata; it does not yet admit any level map or object record.
+
   Track 02 object-data and dungeon-map bounds are now overflow-safe; truncated
   sources are rejected before ground-reference or item records can be
   admitted. This is a loader-integrity fix only, not semantic promotion of

@@ -1,5 +1,6 @@
 #include "theron_v1_track19_inventory.h"
 #include "theron_v1_track19_item_names.h"
+#include "theron_v1_track19_level_labels.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +37,36 @@ static int verify_real_us_item_table(void) {
     }
     bytes[THERON_TRACK19_US_ITEM_NAME_OFFSET] ^= 1u;
     if (theron_v1_track19_us_item_name_from_iso(
+            bytes, (size_t)size, 0u, name, sizeof(name))) {
+        free(bytes);
+        return 0;
+    }
+    /* Reload the unmodified source bytes so the level-label table is tested
+     * independently of the item-table mutation above. */
+    free(bytes);
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0 || size > 64L * 1024L * 1024L ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    for (i = 0u; i < THERON_TRACK19_US_LEVEL_LABEL_COUNT; ++i) {
+        if (!theron_v1_track19_us_level_label_from_iso(
+                bytes, (size_t)size, i, name, sizeof(name))) {
+            free(bytes);
+            return 0;
+        }
+    }
+    bytes[THERON_TRACK19_US_LEVEL_LABEL_OFFSET] ^= 1u;
+    if (theron_v1_track19_us_level_label_from_iso(
             bytes, (size_t)size, 0u, name, sizeof(name))) {
         free(bytes);
         return 0;

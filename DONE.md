@@ -48722,3 +48722,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   null-separated names against the verified catalog before returning any one
   label, and rejects truncation or byte changes. The real local `TQUS19.iso`
   passes the full table probe.
+- ✅ 2026-08-05 Theron Track 19 level-label binding: added byte validation for
+  the real US ISO selector table at offset `2112059`, covering `LEVEL  1`
+  through `LEVEL 15`. The probe validates the complete table and rejects a
+  changed label byte; this exposes labels only and does not invent maps,
+  objects, or bitmap semantics.
