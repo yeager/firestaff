@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 Nexus S2D glyph-window provenance: the section-aware
+  `nexus_v1_s2d_glyph_decode` path now rejects forged range-map redirects,
+  ranges that exceed a parsed SCR section, invalid section indices, offset
+  overflow, and aggregate-size overflow before copying bytes. Synthetic probe
+  coverage verifies rejection and recovery to the original map; the real
+  `FONT256.S2D` path still passes all 256 glyph windows. This hardens byte
+  provenance only; Saturn code/attribute mapping, text placement, and screen
+  parity remain capture-gated.
+
 - ✅ 2026-08-06 Nexus MNS parser bounds: tightened the DMWeb MNS decoder's
   declared joint-table, mesh, TEXT-header/descriptor, MOTN-frame, and pixel
   range checks. A truncated declared joint table is rejected, and the TEXT

@@ -258,6 +258,24 @@ static void run_map_only_gate(void) {
     CHECK(byte_map.windows[63].char_index == 63,
           "single-section window 63 char_index == 63");
 
+    /* A forged range map must not create a byte window beyond the parsed
+     * section or redirect it to a different section. */
+    {
+        Nexus_V1_S2D_SectionGlyphMap forged = range_map;
+        forged.ranges[0].char_count++;
+        CHECK(nexus_v1_s2d_glyph_byte_map_build(
+                  &sections, &forged, &byte_map) == -1,
+              "forged range beyond section is rejected");
+        forged = range_map;
+        forged.ranges[0].table_index = 6;
+        CHECK(nexus_v1_s2d_glyph_byte_map_build(
+                  &sections, &forged, &byte_map) == -1,
+              "forged range redirect is rejected");
+        CHECK(nexus_v1_s2d_glyph_byte_map_build(
+                  &sections, &range_map, &byte_map) == 0,
+              "original section range remains accepted");
+    }
+
     /* Out-of-coverage lookup returns NULL. */
     CHECK(nexus_v1_s2d_glyph_byte_window_lookup(&byte_map, 64) == NULL,
           "lookup char 64 returns NULL (out of coverage)");

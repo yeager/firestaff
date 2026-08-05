@@ -37,6 +37,7 @@
 
 #include "nexus_v1_s2d_glyph_decode.h"
 
+#include <limits.h>
 #include <string.h>
 
 int nexus_v1_s2d_glyph_byte_map_build(
@@ -73,8 +74,32 @@ int nexus_v1_s2d_glyph_byte_map_build(
          * entries produced by nexus_v1_font_load_sections. We use
          * the parsed order (NOT the original SCR table index) so
          * the decoder stays consistent with the layout cursor. */
-        const Nexus_V1_FontSection *sec =
-            &sections->sections[range->parsed_section_index];
+        const Nexus_V1_FontSection *sec;
+        uint64_t covered_bytes;
+
+        if (range->parsed_section_index < 0 ||
+            range->parsed_section_index >= sections->section_count ||
+            range->char_start < 0 || range->char_count < 0 ||
+            range->table_index < 0 ||
+            range->table_index >= (int)NEXUS_V1_FONT_SCR_SECTION_TABLE_MAX) {
+            return -1;
+        }
+        sec = &sections->sections[range->parsed_section_index];
+        /* Do not trust a caller-supplied range map to manufacture windows
+         * outside the parsed SCR section or to redirect a range to another
+         * section. The normal map builder satisfies these identities; these
+         * checks keep the public byte-copy API fail-closed as well. */
+        if (range->table_index != sec->index ||
+            range->file_offset != sec->file_offset ||
+            range->size_bytes != sec->size) {
+            return -1;
+        }
+        covered_bytes = (uint64_t)(uint32_t)range->char_count *
+                        (uint64_t)out->bytes_per_glyph;
+        if (covered_bytes > sec->size ||
+            covered_bytes > (uint64_t)UINT32_MAX - sec->file_offset) {
+            return -1;
+        }
 
         for (j = 0; j < range->char_count; ++j) {
             int char_index = range->char_start + j;
@@ -96,6 +121,10 @@ int nexus_v1_s2d_glyph_byte_map_build(
     }
 
     out->window_count = w;
+    if ((uint64_t)w * out->bytes_per_glyph > INT_MAX) {
+        memset(out, 0, sizeof(*out));
+        return -1;
+    }
     out->bytes_total = w * (int)out->bytes_per_glyph;
     return 0;
 }

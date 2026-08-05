@@ -97,6 +97,9 @@
   derived from the verified CG region; it no longer allocates 14 zero-filled
   glyph placeholders. The remaining text gap is the original Saturn
   code/attribute-to-screen owner, not another guessed glyph count.
+  The section-aware S2D glyph-byte map now also verifies every caller-supplied
+  range against the parsed SCR section identity and byte budget; keep the
+  actual Saturn code/attribute mapping and screen placement capture-gated.
   ISO-only Nexus roots now remain on the ISO source route when hash discovery
   returns virtual `disc.iso::...` entries; do not classify container members as
   loose extracted files or retry them as `data_dir/LEV00.DGN`.
