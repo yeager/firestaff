@@ -42,35 +42,35 @@ int main(void)
                       FIRESTAFF_PLATFORM_AMIGA,
                       FIRESTAFF_FILE_GRAPHICS_DAT);
 
-    /* CSB Amiga v3.3 Dungeon.DAT (English default) */
+    /* CSB Amiga 3.1 original / v3.3 Dungeon.DAT (English default) */
     test_classify_hex("Dungeon.DAT",
                       "6695d2acebce49f95db1d8f3a5c733de",
                       FIRESTAFF_GAME_CSB,
                       FIRESTAFF_PLATFORM_AMIGA,
                       FIRESTAFF_FILE_DUNGEON_DAT);
 
-    /* CSB Amiga v3.3 French DungeonF.DAT */
+    /* CSB Amiga 3.1 original / v3.3 French DungeonF.DAT */
     test_classify_hex("DungeonF.DAT",
                       "5ece6270669693f7f48bd2e1e350cdb6",
                       FIRESTAFF_GAME_CSB,
                       FIRESTAFF_PLATFORM_AMIGA,
                       FIRESTAFF_FILE_DUNGEON_DAT);
 
-    /* CSB Amiga v3.3 German DungeonG.DAT */
+    /* CSB Amiga 3.1 original / v3.3 German DungeonG.DAT */
     test_classify_hex("DungeonG.DAT",
                       "7926a41466c7113c082a8d766b2e5a16",
                       FIRESTAFF_GAME_CSB,
                       FIRESTAFF_PLATFORM_AMIGA,
                       FIRESTAFF_FILE_DUNGEON_DAT);
 
-    /* CSB Amiga v3.3 TITL.DAT */
+    /* CSB Amiga 3.1 original / v3.3 TITL.DAT */
     test_classify_hex("TITL.DAT",
                       "5b590ea3a6f5eed513b5678b01468ee4",
                       FIRESTAFF_GAME_CSB,
                       FIRESTAFF_PLATFORM_AMIGA,
                       FIRESTAFF_FILE_TITL_DAT);
 
-    /* CSB Amiga v3.3 ENDA.DAT */
+    /* CSB Amiga 3.1 original / v3.3 ENDA.DAT */
     test_classify_hex("ENDA.DAT",
                       "9f2b73ff73ad0032810d79021c900ca9",
                       FIRESTAFF_GAME_CSB,
@@ -84,7 +84,7 @@ int main(void)
                       FIRESTAFF_PLATFORM_AMIGA,
                       FIRESTAFF_FILE_KAOS_FTL);
 
-    /* CSB Amiga v3.3 SWSH.FTL */
+    /* CSB Amiga 3.1 original / v3.3 SWSH.FTL */
     test_classify_hex("SWSH.FTL",
                       "ff3872baaed8ee4e83ee3c0684b2eeec",
                       FIRESTAFF_GAME_CSB,
@@ -115,6 +115,7 @@ int main(void)
     assert(FIRESTAFF_FILE_TITL_DAT == 12);
     assert(FIRESTAFF_FILE_ENDA_DAT == 13);
     assert(FIRESTAFF_FILE_SWSH_FTL == 14);
+    assert(FIRESTAFF_FILE_KAOS_FTL == 22);
 
     puts("ok: CSB Amiga asset probe (11 fingerprints verified)");
     return 0;
