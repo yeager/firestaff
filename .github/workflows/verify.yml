@@ -7,10 +7,11 @@ on:
     branches: [main]
   workflow_dispatch:
 
+# Keep every push verification independently queued. GitHub otherwise retains
+# only one pending run per concurrency group, which can cancel a verification
+# before any job is created when main receives several legitimate pushes.
 concurrency:
-  group: verify-${{ github.workflow }}-${{ github.ref }}
-  # Let the active main verification finish; GitHub keeps only the newest
-  # pending run for this group, avoiding a never-ending cancel/restart loop.
+  group: verify-${{ github.workflow }}-${{ github.run_id }}
   cancel-in-progress: false
 
 env:
