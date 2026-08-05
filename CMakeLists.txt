@@ -4120,17 +4120,6 @@ if(NOT MSVC)
     target_compile_options(firestaff_fmtowns_disc PRIVATE -Wall -Wextra -O2)
 endif()
 
-# ── Scan cache ──────────────────────────────────────────────────────
-add_library(firestaff_scan_cache STATIC
-    src/shared/firestaff_scan_cache.c
-)
-target_include_directories(firestaff_scan_cache PUBLIC
-    ${CMAKE_CURRENT_SOURCE_DIR}/include
-)
-if(NOT MSVC)
-    target_compile_options(firestaff_scan_cache PRIVATE -Wall -Wextra -O2)
-endif()
-
 # ── RetroAchievements adapter ────────────────────────────────────────
 add_library(firestaff_retroachievements STATIC
     src/shared/firestaff_retroachievements.c
