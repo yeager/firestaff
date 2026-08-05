@@ -27,6 +27,14 @@
   existing US ASCII table. No host-language translation or inferred item
   semantics were added; JP level-selector labels remain closed pending their
   fixed-record layout proof. The data-free and real US/JP inventory probes pass.
+- ✅ 2026-08-05 Nexus real-DGN Structure1C lookup: corrected the early-stop
+  callback contract in Structure1F/Structure1C cell lookup wrappers. A valid
+  matching source packet no longer gets rejected because the complete scene
+  visitor intentionally returned before whole-scene completion. The real-DGN
+  gate also skips DMWeb's `0x0FFF` wall/no-collision sentinel when selecting
+  an active Structure1B reference. Focused retail-level verification no
+  longer reports false Structure1C lookup failures; MENU.BPK's separate
+  canonical-hash mismatch remains an independent open gate.
 
 - ✅ 2026-08-05 Nexus STONE.BIN provenance boundary: the legacy global
   256-entry `nexus_palette_load_stone()` path is now blocked. Retail STONE is

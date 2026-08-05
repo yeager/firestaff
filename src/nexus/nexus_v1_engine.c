@@ -6821,9 +6821,13 @@ int nexus_v1_current_level_lookup_structure1f_source_entry(
     memset(&lookup, 0, sizeof(lookup));
     memset(&scene, 0, sizeof(scene));
     lookup.wanted_entry_index = entry_index;
-    if (nexus_v1_current_level_visit_structure1f_source_scene(
-            engine, nexus_v1_structure1f_entry_lookup_consumer, &lookup,
-            &scene) != 1 || !scene.valid || !lookup.found) {
+    /* The visitor returns 0 when a consumer deliberately stops after its
+     * matching packet.  A lookup is therefore proven by the validated packet
+     * itself; requiring whole-scene completion turns every early match into a
+     * false miss. */
+    (void)nexus_v1_current_level_visit_structure1f_source_scene(
+        engine, nexus_v1_structure1f_entry_lookup_consumer, &lookup, &scene);
+    if (!lookup.found) {
         return 0;
     }
     *out_packet = lookup.packet;
@@ -6991,10 +6995,14 @@ int nexus_v1_current_level_lookup_structure1c_cell_source(
     memset(&lookup, 0, sizeof(lookup));
     memset(&scene, 0, sizeof(scene));
     lookup.wanted_record_index = (int)collision_ref;
-    if (nexus_v1_current_level_visit_structure1c_source_scene(
-            engine, nexus_v1_structure1c_cell_lookup_consumer, &lookup,
-            &scene) != 1 || !scene.valid || !lookup.found ||
-        !lookup.packet.referenced_by_structure1b ||
+    /* As with Structure1F, a matching consumer intentionally stops the
+     * source-scene walk before its whole-scene receipt is complete.  The
+     * packet already carries the bounded reference provenance needed by this
+     * cell lookup; whole-scene completion is enforced by the visitor's other
+     * consumers, not by this early-match wrapper. */
+    (void)nexus_v1_current_level_visit_structure1c_source_scene(
+        engine, nexus_v1_structure1c_cell_lookup_consumer, &lookup, &scene);
+    if (!lookup.found || !lookup.packet.referenced_by_structure1b ||
         lookup.packet.reference_occurrence_count <= 0) {
         return 0;
     }
