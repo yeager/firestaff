@@ -48507,10 +48507,18 @@ the supplied root and selected MD5 to prove this without shipping game data.
   longer documented as runtime features. Verified with
   `test_nexus_v1_dgn_material_raster`, the real-data DGN geometry gate, and
   `git diff --check`.
-
 - ✅ 2026-08-05 DM2 unbound CCM timer hardening: an unresolved
   `DM2_THINK_CREATURE` body now consumes its source timer without re-queuing a
   coordinate-only creature retry. Live record pools and timer queues remain
   unchanged until the complete original CCM stream owns animation, movement
   and rescheduling. Verified by the think-creature, CCM-runtime and CAII
   reschedule gates.
+
+- ✅ 2026-08-05 Nexus FACE.BIN production provenance gate: the low-level
+  retail PRS3 structural/pixel diagnostic remains available for evidence, but
+  `nexus_ui_load_face_record()` no longer promotes unproven PRS3 output or its
+  64-entry per-frame palette into live startup UI. Production now records all
+  portraits as blocked until an original Saturn capture authenticates pixel
+  grammar, palette lane, and placement. Verified with the real FACE.BIN
+  structural probe, updated Track 1 launch probe (57/57), and the focused
+  Nexus build.

@@ -1110,14 +1110,20 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     int portrait_h,
     const uint32_t *palette)
 {
-    int entry_size;
-    int expand_result;
-    Nexus_UI_Surface *surf;
-    const uint8_t *prs3_data = record_data;
-    int prs3_size = record_size;
-    int has_source_palette = 0;
-    int i;
     (void)palette;
+    /* FACE.BIN's compact PRS3 streams have bounded structural receipts, but
+     * their Saturn pixel grammar is not authenticated.  The low-level
+     * expand helper remains available to isolated format diagnostics; the
+     * production startup loader must not promote those bytes into portraits
+     * until an original Saturn capture binds the decoder and palette lane. */
+    (void)mgr;
+    (void)record_data;
+    (void)record_size;
+    (void)face_index;
+    (void)portrait_w;
+    (void)portrait_h;
+    return -1;
+    #if 0
     if (!mgr) return -1;
     if (face_index < 0 || face_index >= 20) return -1;
     if (portrait_w <= 0 || portrait_h <= 0) {
@@ -1182,6 +1188,7 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
         surf->source_palette_loaded = 1;
     }
     return 1;
+    #endif
 }
 
 /* Legacy raw-face helper. DMWeb's retail FACE.BIN is a compact PRS3
