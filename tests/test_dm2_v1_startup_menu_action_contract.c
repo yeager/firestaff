@@ -37,6 +37,7 @@ static int test_apply_session(void *userdata,
 int main(void)
 {
     DM2_V1_StartupMenu menu;
+    DM2_V1_StartupMenu raw_corpus_menu;
     DM2_V1_StartupAction action;
     DM2_V1_StartupActionPlan plan;
     DM2_V1_StartupExecution execution;
@@ -758,7 +759,20 @@ int main(void)
               boot_real_visual_capture.valid == 0,
           "boot real visual capture rejects missing GRAPHICS.DAT profile");
     real_data_dir = getenv("FIRESTAFF_DM2_REAL_DATA_DIR");
+    if (!real_data_dir || !real_data_dir[0]) {
+        real_data_dir = getenv("FIRESTAFF_DM2_DATA_DIR");
+    }
     if (real_data_dir && real_data_dir[0]) {
+        /* The supplied DOS corpus contains lower-case raw SKSAVE files. Its
+         * raw dungeon prefix is authentic, but its later SUPPRESS state is
+         * intentionally not a runtime owner yet. It must not materialize a
+         * Continue/slot action merely because the container header exists. */
+        dm2_v1_startup_menu_init(&raw_corpus_menu, real_data_dir);
+        check(dm2_v1_startup_menu_scan_saves(&raw_corpus_menu) &&
+                  raw_corpus_menu.resume_available == 0 &&
+                  raw_corpus_menu.slot_mask == 0u &&
+                  raw_corpus_menu.row_count == 1,
+              "real raw SKSave corpus remains unavailable until full GAME_LOAD ownership");
         memset(&boot_launch, 0, sizeof(boot_launch));
         if (dm2_v1_boot_startup_launch_alloc(real_data_dir,
                                              &boot_launch) &&

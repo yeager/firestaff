@@ -50258,3 +50258,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   source-owned raw saved-dungeon prefix; the incomplete SUPPRESS tail remains
   explicitly unplayable. Verification: real SKSave suite 27/27 and the
   external corpus census 25/25.
+- ✅ 2026-08-06 DM2 raw-SKSave startup-menu gate: the real PC-DOS corpus is
+  now part of the startup action regression. Its authentic but incomplete
+  raw saves create neither Continue nor slot UI actions, preventing a
+  header-only save from entering the runtime. Verification: real startup
+  menu action contract 103/103.
