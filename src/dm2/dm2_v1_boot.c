@@ -7440,6 +7440,55 @@ int dm2_v1_boot_startup_menu_pointer_layout(
     return 1;
 }
 
+int dm2_v1_boot_startup_menu_aux_pointer_layout(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_StartupMenuAuxPointerLayout *out_layout)
+{
+    DM2_V1_BootGraphicsDat *gfx;
+    DM2_V1_BootGraphicsDat *owned_gfx = NULL;
+    const uint8_t *raw;
+    size_t raw_size = 0u;
+    uint32_t hash = 2166136261u;
+
+    if (!out_layout) return 0;
+    memset(out_layout, 0, sizeof(*out_layout));
+    if (!profile) return 0;
+    gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+    if (!gfx && profile->graphics_mem && profile->graphics_mem_size > 0u) {
+        owned_gfx = dm2_v1_boot_graphics_load_from_buffer(
+            profile->graphics_mem, profile->graphics_mem_size);
+        gfx = owned_gfx;
+    } else if (!gfx && profile->graphics_path[0] != '\0') {
+        owned_gfx = dm2_v1_boot_graphics_load(profile->graphics_path);
+        gfx = owned_gfx;
+    }
+    if (!gfx) return 0;
+    raw = dm2_v1_asset_load_typed_sized(&gfx->loader,
+        DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0, DM2_GDAT_ENTRY_TYPE_RAW4,
+        0, &raw_size);
+    if (!raw || raw_size < 4u) goto done;
+    for (size_t i = 0u; i < raw_size; ++i) {
+        hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
+    }
+    /* SKProject skval1.h _4976_0d9e and c_xrect.cpp::QUERY_RECT: event
+     * records name these three installed rectangle ids; decode the mounted
+     * RAW4 bytes rather than replaying the PC coordinate constants. */
+    if (!dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x019bu,
+                                             &out_layout->show_credits) ||
+        !dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x01b2u,
+                                             &out_layout->quit_game) ||
+        !dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x0002u,
+                                             &out_layout->dismiss_credits)) {
+        memset(out_layout, 0, sizeof(*out_layout));
+        goto done;
+    }
+    out_layout->table_hash = hash;
+    out_layout->valid = 1;
+done:
+    dm2_v1_boot_graphics_free(owned_gfx);
+    return out_layout->valid;
+}
+
 int dm2_v1_boot_startup_menu_pointer_hit(
     DM2_V1_BootProfile *profile,
     int x,

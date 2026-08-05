@@ -1896,6 +1896,14 @@ typedef struct {
     DM2_V1_InterfaceRect resume_game;
 } DM2_V1_StartupMenuPointerLayout;
 
+typedef struct {
+    int valid;
+    uint32_t table_hash;
+    DM2_V1_InterfaceRect show_credits;
+    DM2_V1_InterfaceRect quit_game;
+    DM2_V1_InterfaceRect dismiss_credits;
+} DM2_V1_StartupMenuAuxPointerLayout;
+
 /* skproject SHOW_MENU_SCREEN installs the title-menu rectangle table before
  * HANDLE_UI_EVENT dispatches event 0xD7 (NEW) or 0xD9 (RESUME). Both routes
  * retain their source-owned GDAT hit rectangles. RESUME stays fail-closed
@@ -1946,6 +1954,12 @@ typedef struct {
 int dm2_v1_boot_startup_menu_pointer_layout(
     DM2_V1_BootProfile *profile,
     DM2_V1_StartupMenuPointerLayout *out_layout);
+
+/* Source rectangle ids 0x019b (credits), 0x01b2 (quit) and 0x0002
+ * (credits dismissal) from SHOW_MENU_SCREEN's installed RAW4 table. */
+int dm2_v1_boot_startup_menu_aux_pointer_layout(
+    DM2_V1_BootProfile *profile,
+    DM2_V1_StartupMenuAuxPointerLayout *out_layout);
 
 /* Returns a source-owned 0xD7/0xD9 hit receipt only. The caller resolves
  * 0xD9 through the boot-owned SKSave admission path before it mutates a

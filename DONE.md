@@ -50058,3 +50058,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   audit confirms the unbound callback symbols are absent; glob-variable unit
   and game integration tests pass; the real PC `GRAPHICS.DAT`/`DUNGEON.DAT`
   M11 startup-profile gate passes.
+- ✅ 2026-08-06 DM2 startup auxiliary RAW4 pointer routing: M11 now derives
+  Credits, Quit and either-button credits dismissal from the actual
+  `INTERFACE_GENERAL/0/RAW4/0` GDAT rectangle records (`0x019b`, `0x01b2`,
+  `0x0002`) rather than the fixed PC coordinate matrix. Missing or invalid
+  original data yields no action. The real PC-DOS corpus regression uses the
+  decoded rectangles for the complete Credits enter/draw/countdown/dismiss
+  route; focused boot/global-variable regressions also pass.

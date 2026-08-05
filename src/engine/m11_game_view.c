@@ -24756,6 +24756,48 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
     return M11_GAME_INPUT_IGNORED;
 }
 
+static M11_GameInputResult m11_dm2_startup_enter_credits(
+    M11_GameViewState *state)
+{
+    const DM2_V1_AssetLoader *loader;
+    DM2_V1_QueryGdatSummaryImageReceipt image;
+    DM2_V1_InterfacePalette palette;
+    uint32_t raw_hash = 0u;
+    uint32_t raw_bytes = 0u;
+    int credits_material_ready = 0;
+
+    if (!state || !state->dm2BootProfile) return M11_GAME_INPUT_IGNORED;
+    /* SKProject startend.cpp::DM2_SHOW_CREDITS draws TITLE/0/dt07/1.
+     * The pointer caller has already proved the matching RAW4 rectangle. */
+    loader = dm2_v1_boot_asset_loader(
+        (const DM2_V1_BootProfile *)state->dm2BootProfile);
+    memset(&image, 0, sizeof(image));
+    if (loader &&
+        dm2_v1_query_gdat_summary_image_receipt(
+            loader, DM2_GDAT_CATEGORY_TITLE, 0, 1, &image) &&
+        image.accepted && image.metadata.width == 320u &&
+        image.metadata.height == 200u &&
+        ((image.metadata.bits_per_pixel == 8u &&
+          dm2_v1_boot_interface_palette(
+              (DM2_V1_BootProfile *)state->dm2BootProfile, &palette)) ||
+         (image.metadata.bits_per_pixel == 4u && image.colors == 16u &&
+          image.palette_hash != 0u)) &&
+        dm2_v1_boot_gdat_raw_asset_proof(
+            (DM2_V1_BootProfile *)state->dm2BootProfile,
+            DM2_GDAT_CATEGORY_TITLE, 0, 1, 0x32435244u,
+            &raw_hash, &raw_bytes) && raw_hash != 0u && raw_bytes > 0u) {
+        credits_material_ready = 1;
+    }
+    if (!credits_material_ready) {
+        m11_set_status(state, "STARTUP", "DM2 CREDITS GDAT REQUIRED");
+        return M11_GAME_INPUT_REDRAW;
+    }
+    state->dm2State.startup_credits_active = 1;
+    state->dm2State.startup_credits_remaining_ticks = 1800;
+    m11_set_status(state, "STARTUP", "DM2 CREDITS GDAT");
+    return M11_GAME_INPUT_REDRAW;
+}
+
 static M11_GameInputResult m11_dm2_handle_startup_pointer(
     M11_GameViewState *state,
     int x,
@@ -24764,6 +24806,7 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
 {
     DM2_V1_StartupExecution execution;
     DM2_V1_StartupHostActionReceipt action_receipt;
+    DM2_V1_StartupMenuAuxPointerLayout aux_layout;
     int fbX;
     int fbY;
 
@@ -24773,15 +24816,15 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
     if (state->dm2State.startup_credits_active) {
-        Dm2TouchClickZonePc34Compat zone;
-        unsigned int sourceButton =
-            (buttonMask & DM1_V1_MOUSE_MASK_RIGHT_PC34) != 0
-                ? TOUCH_CLICK_BUTTON_RIGHT_PC34_COMPAT
-                : TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT;
-        if (DM2_TOUCHCLICK_Compat_HitTestInView(
-                DM2_TOUCH_CLICK_VIEW_CREDITS_PC34_COMPAT, x, y,
-                sourceButton, &zone) &&
-            zone.commandId == 239u) {
+        memset(&aux_layout, 0, sizeof(aux_layout));
+        if (dm2_v1_boot_startup_menu_aux_pointer_layout(
+                (DM2_V1_BootProfile *)state->dm2BootProfile, &aux_layout) &&
+            aux_layout.valid &&
+            m11_point_in_rect(x, y,
+                              aux_layout.dismiss_credits.x,
+                              aux_layout.dismiss_credits.y,
+                              aux_layout.dismiss_credits.w,
+                              aux_layout.dismiss_credits.h)) {
             /* SKProject startend.cpp::DM2_SHOW_CREDITS lines 1381-1401:
              * DM2_EVENT_LOOP exits on its common 0xEF event, whose source
              * click table accepts either mouse button.  Do not make the
@@ -24794,50 +24837,30 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         }
         return M11_GAME_INPUT_IGNORED;
     }
+    memset(&aux_layout, 0, sizeof(aux_layout));
+    if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0 &&
+        dm2_v1_boot_startup_menu_aux_pointer_layout(
+            (DM2_V1_BootProfile *)state->dm2BootProfile, &aux_layout) &&
+        aux_layout.valid) {
+        if (m11_point_in_rect(x, y, aux_layout.show_credits.x,
+                              aux_layout.show_credits.y,
+                              aux_layout.show_credits.w,
+                              aux_layout.show_credits.h)) {
+            return m11_dm2_startup_enter_credits(state);
+        }
+        if (m11_point_in_rect(x, y, aux_layout.quit_game.x,
+                              aux_layout.quit_game.y,
+                              aux_layout.quit_game.w,
+                              aux_layout.quit_game.h)) {
+            /* SKProject HANDLE_UI_EVENT 0xE0 → QUIT. */
+            return M11_GAME_INPUT_RETURN_TO_MENU;
+        }
+    }
     {
         Dm2TouchClickZonePc34Compat zone;
         if (DM2_TOUCHCLICK_Compat_HitTestInView(
                 DM2_TOUCH_CLICK_VIEW_MAIN_MENU_PC34_COMPAT, x, y,
                 TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &zone)) {
-            if (zone.commandId == 218u) {
-                /* SKProject startend.cpp::DM2_SHOW_CREDITS */
-                const DM2_V1_AssetLoader *loader;
-                DM2_V1_QueryGdatSummaryImageReceipt image;
-                DM2_V1_InterfacePalette palette;
-                uint32_t raw_hash = 0u;
-                uint32_t raw_bytes = 0u;
-                int credits_material_ready = 0;
-                loader = dm2_v1_boot_asset_loader(
-                    (const DM2_V1_BootProfile *)state->dm2BootProfile);
-                memset(&image, 0, sizeof(image));
-                if (loader &&
-                    dm2_v1_query_gdat_summary_image_receipt(
-                        loader, DM2_GDAT_CATEGORY_TITLE, 0, 1, &image) &&
-                    image.accepted && image.metadata.width == 320u &&
-                    image.metadata.height == 200u &&
-                    ((image.metadata.bits_per_pixel == 8u &&
-                      dm2_v1_boot_interface_palette(
-                          (DM2_V1_BootProfile *)state->dm2BootProfile,
-                          &palette)) ||
-                     (image.metadata.bits_per_pixel == 4u &&
-                      image.colors == 16u && image.palette_hash != 0u)) &&
-                    dm2_v1_boot_gdat_raw_asset_proof(
-                        (DM2_V1_BootProfile *)state->dm2BootProfile,
-                        DM2_GDAT_CATEGORY_TITLE, 0, 1, 0x32435244u,
-                        &raw_hash, &raw_bytes) && raw_hash != 0u &&
-                    raw_bytes > 0u) {
-                    credits_material_ready = 1;
-                }
-                if (!credits_material_ready) {
-                    m11_set_status(state, "STARTUP",
-                                   "DM2 CREDITS GDAT REQUIRED");
-                    return M11_GAME_INPUT_REDRAW;
-                }
-                state->dm2State.startup_credits_active = 1;
-                state->dm2State.startup_credits_remaining_ticks = 1800;
-                m11_set_status(state, "STARTUP", "DM2 CREDITS GDAT");
-                return M11_GAME_INPUT_REDRAW;
-            }
             if (zone.commandId == 215u) {
                 /* SKProject HANDLE_UI_EVENT 0xD7 → NEW GAME */
                 DM2_V1_StartupAction action;
@@ -24886,10 +24909,6 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
                     }
                 }
                 return M11_GAME_INPUT_IGNORED;
-            }
-            if (zone.commandId == 224u) {
-                /* SKProject HANDLE_UI_EVENT 0xE0 → QUIT */
-                return M11_GAME_INPUT_RETURN_TO_MENU;
             }
         }
     }

@@ -643,6 +643,11 @@
   **2026-07-31 update:** DM2's source-owned credits event now reaches the
   common 0xEF dismissal route for either original mouse button; M11 no longer
   traps the title menu in credits because of a host-only left-click filter.
+  **2026-08-06 update:** DM2's Credits, Quit and credits-dismiss pointer
+  routes now decode their actual `INTERFACE_GENERAL/0/RAW4/0` rectangles
+  (ids `0x019b`, `0x01b2`, `0x0002`) from the mounted, hash-verified PC
+  `GRAPHICS.DAT`. M11 does not replay the old fixed coordinate matrix for
+  those actions; absent or undecodable RAW4 data leaves them inert.
   **2026-07-31 update:** the M12 settings catalogue now has one explicit
   sixteen-row two-column capacity shared by the renderer, hit-test contract
   and regression suite; the renderer/brightness additions no longer leave a

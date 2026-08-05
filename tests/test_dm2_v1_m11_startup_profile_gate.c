@@ -1807,17 +1807,41 @@ int main(void) {
         dm2_v1_boot_gdat_image_asset_free(menu_pixels);
     }
     {
+        DM2_V1_StartupMenuAuxPointerLayout aux_pointer_layout;
         uint8_t *credits_pixels = NULL;
         int credits_w = 0;
         int credits_h = 0;
         int credits_stride = 0;
         int sample_x = -1;
         int sample_y = -1;
-        expect_true(M11_GameView_HandlePointer(&view, 90, 165, 1) ==
+        int credits_x;
+        int credits_y;
+        int dismiss_x;
+        int dismiss_y;
+        memset(&aux_pointer_layout, 0, sizeof(aux_pointer_layout));
+        expect_true(dm2_v1_boot_startup_menu_aux_pointer_layout(
+                        profile, &aux_pointer_layout) &&
+                        aux_pointer_layout.valid &&
+                        aux_pointer_layout.show_credits.w > 0 &&
+                        aux_pointer_layout.show_credits.h > 0 &&
+                        aux_pointer_layout.quit_game.w > 0 &&
+                        aux_pointer_layout.quit_game.h > 0 &&
+                        aux_pointer_layout.dismiss_credits.w > 0 &&
+                        aux_pointer_layout.dismiss_credits.h > 0,
+                    "M11 DM2 obtains credits, quit and dismiss rectangles from verified GDAT");
+        credits_x = aux_pointer_layout.show_credits.x +
+            aux_pointer_layout.show_credits.w / 2;
+        credits_y = aux_pointer_layout.show_credits.y +
+            aux_pointer_layout.show_credits.h / 2;
+        dismiss_x = aux_pointer_layout.dismiss_credits.x +
+            aux_pointer_layout.dismiss_credits.w / 2;
+        dismiss_y = aux_pointer_layout.dismiss_credits.y +
+            aux_pointer_layout.dismiss_credits.h / 2;
+        expect_true(M11_GameView_HandlePointer(&view, credits_x, credits_y, 1) ==
                         M11_GAME_INPUT_REDRAW &&
                         view.dm2State.startup_credits_active == 1 &&
                         view.dm2State.startup_credits_remaining_ticks == 1800,
-                    "M11 DM2 credits enter only through source event 218");
+                    "M11 DM2 credits enter only through the source RAW4 rectangle");
         if (dm2_v1_boot_gdat_image_asset_fetch(profile, 5, 0, 1,
                                                &credits_pixels, &credits_w,
                                                &credits_h,
@@ -1869,21 +1893,22 @@ int main(void) {
                         view.dm2State.startup_credits_active == 0 &&
                         view.dm2State.startup_credits_remaining_ticks == 0,
                     "M11 DM2 credits return after the source 1,800-step countdown");
-        expect_true(M11_GameView_HandlePointer(&view, 90, 165, 1) ==
+        expect_true(M11_GameView_HandlePointer(&view, credits_x, credits_y, 1) ==
                         M11_GAME_INPUT_REDRAW &&
                         view.dm2State.startup_credits_active == 1,
                     "M11 DM2 credits may re-enter from the source menu event");
-        expect_true(M11_GameView_HandlePointer(&view, 0, 0, 1) ==
+        expect_true(M11_GameView_HandlePointer(&view, dismiss_x, dismiss_y, 1) ==
                         M11_GAME_INPUT_REDRAW &&
                         view.dm2State.startup_credits_active == 0 &&
                         view.dm2State.startup_credits_remaining_ticks == 0,
                     "M11 DM2 credits leave only through source event 239");
-        expect_true(M11_GameView_HandlePointer(&view, 90, 165, 1) ==
+        expect_true(M11_GameView_HandlePointer(&view, credits_x, credits_y, 1) ==
                         M11_GAME_INPUT_REDRAW &&
                         view.dm2State.startup_credits_active == 1,
                     "M11 DM2 credits may re-enter before a secondary click");
         expect_true(M11_GameView_HandlePointerButton(
-                        &view, 0, 0, DM1_V1_MOUSE_MASK_RIGHT_PC34) ==
+                        &view, dismiss_x, dismiss_y,
+                        DM1_V1_MOUSE_MASK_RIGHT_PC34) ==
                         M11_GAME_INPUT_REDRAW &&
                         view.dm2State.startup_credits_active == 0 &&
                         view.dm2State.startup_credits_remaining_ticks == 0,
