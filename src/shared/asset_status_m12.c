@@ -1234,6 +1234,12 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * launch.  See Greatstone's FM Towns file inventory and the local
          * CD parser's TITLE.ANM/STORY.ANM/ENDING.ANM catalogue. */
         "TITLE.ANM", "STORY.ANM", "ENDING.ANM",
+        /* The language-specific FM Towns programs are P3 (Phar Lap 386)
+         * executables.  Preserve both original files from the same Victor
+         * package as the ANM streams: this keeps launch/capture provenance
+         * intact and prevents a future FM Towns handoff from borrowing a
+         * PC, Amiga, or synthetic program image. */
+        "CHTWE.EXP", "CHTWJ.EXP",
         /* The same CD's 24 original champion records are individual CMP
          * files under PORTRAIT/.  Preserve their directory in the cache:
          * the FM Towns decoder reads the embedded name/title and 4bpp pixels,
