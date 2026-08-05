@@ -50,6 +50,19 @@ static void test_classify_known_hashes(void) {
     r = firestaff_game_data_classify_hex("CEFADDFDF5651DF2C91F61B5611A8362");
     ASSERT(r.valid, "CSB Amiga 3.5 ML found");
     ASSERT(r.entry->language == FIRESTAFF_LANG_MULTILANGUAGE, "CSB 3.5 ML lang");
+
+    r = firestaff_game_data_classify_hex("4174D6DE5384323072B185640ED31723");
+    ASSERT(r.valid && r.entry->game == FIRESTAFF_GAME_CSB &&
+           r.entry->file_type == FIRESTAFF_FILE_ANIMATE_SCR,
+           "CSB Atari ANIMATE.SCR source hash found");
+
+    r = firestaff_game_data_classify_hex("67007E7943F9EF6F0B12FF4BD1BEF3D1");
+    ASSERT(r.valid && r.entry->file_type == FIRESTAFF_FILE_HINT_FTL,
+           "CSB Atari Hint Oracle HINT.FTL source hash found");
+
+    r = firestaff_game_data_classify_hex("B1FC60F2C0D8F8A89E5D4E295E93AE42");
+    ASSERT(r.valid && r.entry->file_type == FIRESTAFF_FILE_SWITCH_DAT,
+           "CSB Atari Utility Disk SWITCH.DAT source hash found");
 }
 
 static void test_classify_unknown(void) {

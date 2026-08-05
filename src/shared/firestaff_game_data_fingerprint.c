@@ -36,6 +36,9 @@
 #define F_ENDA FIRESTAFF_FILE_ENDA_DAT
 #define F_SWSH FIRESTAFF_FILE_SWSH_FTL
 #define F_HTC  FIRESTAFF_FILE_HCSB_HTC
+#define F_SCR  FIRESTAFF_FILE_ANIMATE_SCR
+#define F_HINT FIRESTAFF_FILE_HINT_FTL
+#define F_SWCH FIRESTAFF_FILE_SWITCH_DAT
 
 #define MD5(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) \
     {0x##a,0x##b,0x##c,0x##d,0x##e,0x##f,0x##g,0x##h, \
@@ -72,6 +75,15 @@ const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERP
     /* CSB Atari ST */
     {MD5(EB,F6,A5,7A,F3,F2,77,82,E3,58,C0,49,0B,FD,2F,2E), G_CSB, P_ST, L_EN, F_GFX, "2.0/2.1", "CSB Atari ST 2.0 and 2.1 English GRAPHICS.DAT"},
     {MD5(9F,8F,EB,26,9C,95,9C,9F,E7,22,AC,08,F9,9D,9C,35), G_CSB, P_ST, L_EN, F_ANIM, NULL, "CSB Atari ST Utility Disk English ANIMATE.DAT"},
+    /* ReDMCSB ANIM.C lines 67-72 opens this hash-locked pair. The local
+     * Atari ST 2.x source package and the Phase 0 provenance gate retain
+     * the matching byte count and SHA-256 evidence for both files. */
+    {MD5(41,74,D6,DE,53,84,32,30,72,B1,85,64,0E,D3,17,23), G_CSB, P_ST, L_EN, F_SCR, "2.0", "CSB Atari ST 2.0 ANIMATE.SCR"},
+    /* ReDMCSB HINTLOAD.C / COMPILE.H identifies HINT.FTL as the Hint Oracle
+     * executable, while SWITCH.C line 473 loads SWITCH.DAT for the Utility
+     * Disk switcher. Greatstone's CSB file inventory names both files. */
+    {MD5(67,00,7E,79,43,F9,EF,6F,0B,12,FF,4B,D1,BE,F3,D1), G_CSB, P_ST, L_EN, F_HINT, "2.x", "CSB Atari ST 2.x Hint Oracle HINT.FTL"},
+    {MD5(B1,FC,60,F2,C0,D8,F8,A8,9E,5D,4E,29,5E,93,AE,42), G_CSB, P_ST, L_EN, F_SWCH, "2.x", "CSB Atari ST 2.x Utility Disk SWITCH.DAT"},
     /* CSB Hint Oracle files. ReDMCSB HINTLOAD.C names HCSB.HTC and
      * dmweb documents these five release hashes. */
     {MD5(8C,E6,9B,54,CF,25,5A,15,E9,8E,90,9B,B4,5B,97,42), G_CSB, P_ST, L_EN, F_HTC, "R1", "CSB Atari ST 2.x Hint Oracle HCSB.HTC"},

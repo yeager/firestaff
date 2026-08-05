@@ -57,6 +57,13 @@
   `test_nexus_v1_champion_plrd`, `test_nexus_v1_dgn_geometry_readiness`, the
   `firestaff_nexus` build, and `git diff --check` against the local retail
   corpus.
+- ✅ 2026-08-05 CSB Atari ST Utility Disk sidecar catalog: added source-bound
+  MD5 identities for the original `ANIMATE.SCR`, `HINT.FTL`, and `SWITCH.DAT`
+  sidecars from the local 2.x package. `ANIM.C:67-72` establishes the paired
+  animation files, `HINTLOAD.C`/`COMPILE.H` identify the Hint Oracle program,
+  and `SWITCH.C:473` loads the switcher data. The fingerprint suite passes
+  280/0 and a real verbose scan now identifies the animation script and Hint
+  Oracle executable without treating their names as proof.
 
 - ✅ 2026-08-05 CSB optional-media provenance: verbose `--scan-data` now
   computes each materialized Utility Disk file's MD5 and consults the shared

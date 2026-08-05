@@ -55,7 +55,10 @@ typedef enum {
     FIRESTAFF_FILE_TITL_DAT      = 12,
     FIRESTAFF_FILE_ENDA_DAT      = 13,
     FIRESTAFF_FILE_SWSH_FTL      = 14,
-    FIRESTAFF_FILE_HCSB_HTC      = 15
+    FIRESTAFF_FILE_HCSB_HTC      = 15,
+    FIRESTAFF_FILE_ANIMATE_SCR   = 16,
+    FIRESTAFF_FILE_HINT_FTL      = 17,
+    FIRESTAFF_FILE_SWITCH_DAT    = 18
 } FirestaffFileType;
 
 typedef struct {
@@ -73,7 +76,7 @@ typedef struct {
     const FirestaffGameDataFingerprint *entry;
 } FirestaffGameDataClassifyResult;
 
-#define FIRESTAFF_FINGERPRINT_COUNT 79
+#define FIRESTAFF_FINGERPRINT_COUNT 82
 
 extern const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERPRINT_COUNT];
 
