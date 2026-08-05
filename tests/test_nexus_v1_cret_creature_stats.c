@@ -42,27 +42,53 @@ static const struct {
 
 int main(void) {
     Nexus_V1_CreatureManager mgr;
+    Nexus_V1_CreatureManager bytes_mgr;
     const char *data_dir;
     char path[512];
-    int bound, i, fail = 0;
+    FILE *bytes_file;
+    long bytes_size;
+    uint8_t *bytes;
+    int bound, bytes_bound, i, fail = 0;
 
-    data_dir = getenv("NEXUS_DATA_DIR");
-    if (!data_dir) data_dir = getenv("HOME");
+    data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    if (!data_dir) data_dir = getenv("NEXUS_DATA_DIR");
     if (!data_dir) {
         fprintf(stderr, "SKIP: no data dir\n");
         return 0;
     }
 
-    if (getenv("NEXUS_DATA_DIR"))
-        snprintf(path, sizeof(path), "%s/RLOWFIX.BIN", data_dir);
-    else
-        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/RLOWFIX.BIN", data_dir);
+    snprintf(path, sizeof(path), "%s/RLOWFIX.BIN", data_dir);
 
     nexus_v1_creatures_init(&mgr);
     bound = nexus_v1_creatures_load_cret(&mgr, path);
     if (bound == 0) {
         fprintf(stderr, "SKIP: RLOWFIX.BIN not found or CRET section missing\n");
         return 0;
+    }
+    bytes_file = fopen(path, "rb");
+    if (!bytes_file || fseek(bytes_file, 0, SEEK_END) != 0 ||
+        (bytes_size = ftell(bytes_file)) <= 0 ||
+        fseek(bytes_file, 0, SEEK_SET) != 0) {
+        if (bytes_file) fclose(bytes_file);
+        return 1;
+    }
+    bytes = (uint8_t *)malloc((size_t)bytes_size);
+    if (!bytes || fread(bytes, 1U, (size_t)bytes_size, bytes_file) !=
+            (size_t)bytes_size) {
+        free(bytes);
+        fclose(bytes_file);
+        return 1;
+    }
+    fclose(bytes_file);
+    nexus_v1_creatures_init(&bytes_mgr);
+    bytes_bound = nexus_v1_creatures_load_cret_bytes(
+        &bytes_mgr, bytes, (size_t)bytes_size);
+    free(bytes);
+    if (bytes_bound != bound || bytes_bound != NEXUS_CRET_COUNT ||
+        bytes_mgr.types[0].health != 0x78 ||
+        bytes_mgr.types[26].ranged_type != 0) {
+        fprintf(stderr, "FAIL: bytes-based CRET binding diverged from file route\n");
+        return 1;
     }
 
     printf("CRET: bound %d creatures\n", bound);

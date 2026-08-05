@@ -9,6 +9,12 @@
   `test_nexus_v1_cret_creature_stats`, champion-panel, HUD and SLEV/SAL
   provenance tests pass against `/Users/bosse/.firestaff/data/nexus`.
 
+- ✅ 2026-08-06 Nexus CRET regression hardening: the real-data CRET test now
+  follows `FIRESTAFF_NEXUS_DATA_DIR` and independently verifies the new
+  bytes-based loader against all 30 RLOWFIX records, rather than relying on a
+  legacy HOME-relative path. Verification: `test_nexus_v1_cret_creature_stats`
+  passes with the European corpus.
+
 - ✅ 2026-08-06 DM1 status-hand placement mask: corrected the ReDMCSB
   C020..C027 -> C211..C218 route so its champion-relative hand parity resolves
   through canonical C00/C01 hand masks. Held objects now use the real
