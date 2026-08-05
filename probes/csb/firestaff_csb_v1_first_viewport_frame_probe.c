@@ -14,13 +14,12 @@
  * the boot -> runtime -> first-viewport-frame handoff chain:
  *
  *   1. CSB_V1_BootProfile init.
- *   2. Asset scan (real data when present, otherwise hash-simulated
- *      synthetic CSB V1 DUNGEON.DAT + GRAPHICS.DAT paths).
+ *   2. Hash-verified asset scan from an explicit real CSB data root.
  *   3. csb_v1_boot_enter_game() materializes the runtime:
  *      - dungeon_handle != NULL (loaded DUNGEON.DAT into heap)
  *      - current dungeon singleton points at the handoff-owned dungeon
  *      - runtime state == CSB_STATE_TITLE
- *      - variant_id == CSB_V1_VARIANT_PC34_EN
+ *      - variant_id carries the source package's supported CSB variant
  *      - party_x/y/dir/difficulty seeded from the source-owned start pose
  *      - asset path strings copied into runtime.dungeon_asset /
  *        runtime.graphics_asset
@@ -54,21 +53,11 @@
  *      runtime-owned dungeon via the singleton-aware cleanup path and
  *      drops the runtime back to PROFILE_READY.
  *
- * Two execution modes:
- *
- *   - default / synthetic path (no real CSB assets):
- *       The probe writes a small synthetic DUNGEON.DAT + a stub
- *       GRAPHICS.DAT into a temp dir, populates the boot profile
- *       fields the same way the asset scanner would, and exercises
- *       the full handoff chain. Exits 0 PASS. This is the CI path
- *       and never depends on user-supplied data.
- *
- *   - real-asset path (when $FIRESTAFF_CSB_PC_DATA or argv[1] points
- *     at a real CSB V1 directory containing the canonical PC 3.4 EN
- *     GRAPHICS.DAT + DUNGEON.DAT pair):
- *       The probe runs csb_v1_boot_scan_assets() against the real
- *       directory, then performs the same chain. Exits 0 PASS or
- *       non-zero FAIL depending on the verified contract.
+ * This is a real-data probe. Pass a directory through argv[1] or
+ * $FIRESTAFF_CSB_DATA (the legacy $FIRESTAFF_CSB_PC_DATA is also accepted).
+ * It accepts the hash-recognised PC 3.4, Atari ST and Amiga packages. Hosts
+ * without such material report SKIP and exit zero; they never fabricate a
+ * dungeon or GRAPHICS.DAT just to exercise a rendering path.
  *
  * Source-locks (matches the citation blocks in src/csb/csb_v1_boot.c,
  * tests/test_csb_v1_boot_viewport_render_gate.c, and
@@ -97,17 +86,15 @@
  *   cmake --build build --target firestaff_csb_v1_first_viewport_frame_probe
  *   ./build/firestaff_csb_v1_first_viewport_frame_probe
  *
- *   exit 0 PASS when all checks hold, regardless of asset availability.
+ *   exit 0 PASS when all checks hold, or SKIP when no real package is given.
  *
  * Disjoint from:
  *   - probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c
  *       (scan + enter_game + one tick; this probe adds the
  *       first-viewport-frame render entry as the next link in the chain)
  *   - tests/test_csb_v1_boot_viewport_render_gate.c
- *       (test_csb_v1_boot_viewport_render_gate is a data-free CTest
- *       unit; this probe is a headless CI probe that prefers real
- *       assets when present and falls back to a synthetic CSB V1
- *       DUNGEON.DAT otherwise)
+ *       (test_csb_v1_boot_viewport_render_gate is the data-free CTest unit;
+ *       this probe proves the separately scoped real-package handoff)
  *   - probes/firestaff_csb_v2_phase1_launch_profile_separation_probe.c
  *       (phase gates + hash catalog; this probe exercises the
  *       data-free first-frame boundary, not the V2 phase gates)
@@ -118,21 +105,11 @@
 #include "csb_v1_runtime_pc34_compat.h"
 #include "csb_v1_viewport_pc34_compat.h"
 #include "csb_v1_game_state_pc34_compat.h"
-#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-#include <sys/stat.h>
-
-#ifdef _WIN32
-#  include <direct.h>
-#  define PROBE_MKDIR(path) _mkdir(path)
-#else
-#  include <sys/types.h>
-#  define PROBE_MKDIR(path) mkdir((path), 0700)
-#endif
 
 /* M11-shaped framebuffer geometry. Matches render_sdl_m11.h
  * M11_FB_WIDTH/M11_FB_HEIGHT and the ReDMCSB VIEWPORT.C M091
@@ -176,96 +153,6 @@ static int g_fail = 0;
         printf("  FAIL: %s\n", msg); \
     } \
 } while (0)
-
-/* ── Synthetic CSB V1 DUNGEON.DAT builder ──────────────────────────────── */
-
-/* Layout mirrors tests/test_csb_v1_boot_runtime_handoff.c so the
- * fixture shape matches the legacy CSB V1 dungeon loader (square_bytes == 2,
- * column-major 16-bit records, ReDMCSB DUNGEON.C F0151).
- *
- *   0..1   : level_count (LE16) = 1
- *   2..3   : ignored padding
- *   4      : level 0 width  (uint8)
- *   5      : level 0 height (uint8)
- *   6..9   : level 0 absolute byte offset to squares (LE32)
- *   10..   : squares, column-major, 2 bytes each
- *
- * Cell (x,y) lives at offset 10 + (x*height + y) * 2.
- *
- * The center marker cell (1,1) gets marker_first_thing in its high byte
- * so column-major thing-data round-trip is provable through the
- * handoff. Row 0 + Row 2 + col 0 + col 2 are WALL so the M11
- * viewport render has both a corridor and a wall in front of the
- * seeded party (party at (1,1) facing NORTH per CSB_V1_START_PARTY_DIR).
- */
-static int probe_build_synthetic_dungeon(uint8_t *buf, int buf_size,
-                                          uint8_t marker_type,
-                                          uint8_t marker_first_thing)
-{
-    if (!buf || buf_size < 28) return -1;
-    memset(buf, 0, (size_t)buf_size);
-    buf[0] = 1;  buf[1] = 0;   /* level_count = 1 */
-    buf[2] = 16; buf[3] = 0;   /* ignored padding (matches existing fixture) */
-    buf[4] = 3;  buf[5] = 3;    /* level 0 width=3, height=3 */
-    buf[6] = 10; buf[7] = 0;   /* level 0 absolute square offset = 10 */
-    buf[8] = 0;  buf[9] = 0;
-    /* Row 0: walls */
-    buf[10] = 1; buf[11] = 0;
-    buf[12] = 1; buf[13] = 0;
-    buf[14] = 1; buf[15] = 0;
-    /* Row 1: wall, marker (center), wall */
-    buf[16] = 1;                buf[17] = 0;
-    buf[18] = marker_type;      buf[19] = marker_first_thing;
-    buf[20] = 1;                buf[21] = 0;
-    /* Row 2: walls */
-    buf[22] = 1; buf[23] = 0;
-    buf[24] = 1; buf[25] = 0;
-    buf[26] = 1; buf[27] = 0;
-    return 0;
-}
-
-static int probe_write_synthetic_dungeon(const char *path,
-                                          uint8_t marker_type,
-                                          uint8_t marker_first_thing)
-{
-    uint8_t buf[32];
-    FILE *f;
-    size_t n;
-    if (probe_build_synthetic_dungeon(buf, (int)sizeof(buf),
-                                       marker_type,
-                                       marker_first_thing) != 0) {
-        return -1;
-    }
-    f = fopen(path, "wb");
-    if (!f) return -1;
-    n = fwrite(buf, 1, sizeof(buf), f);
-    fclose(f);
-    return (n == sizeof(buf)) ? 0 : -1;
-}
-
-/* ── Stub GRAPHICS.DAT for the synthetic path ──────────────────────────
- *
- * The CSB V1 boot profile records GRAPHICS.DAT as the verified
- * graphics asset but does not call into the graphics loader from
- * csb_v1_boot_enter_game().  csb_v1_viewport_render_frame() does
- * touch the wall-set / ornament blit tables which read graphics
- * archive metadata, so we still need a readable file on disk for
- * the asset scanner to record.  A small valid file (one non-zero
- * byte) is sufficient.  This is the same trick used by
- * probes/csb/firestaff_csb_v1_pc_real_asset_launch_probe.c when
- * the boot profile is hash-simulated.
- */
-static int probe_write_stub_graphics(const char *path)
-{
-    static const uint8_t stub[] = { 'C', 'S', 'B', 'G', 0x00 };
-    FILE *f;
-    size_t n;
-    f = fopen(path, "wb");
-    if (!f) return -1;
-    n = fwrite(stub, 1, sizeof(stub), f);
-    fclose(f);
-    return (n == sizeof(stub)) ? 0 : -1;
-}
 
 /* ── 32x32 dungeon grid snapshot from the live runtime ──────────────── */
 
@@ -317,101 +204,12 @@ static const char *probe_data_dir(int argc, char **argv,
 
     if (argc > 1 && argv[1] && argv[1][0] != '\0') return argv[1];
 
-    env = getenv("FIRESTAFF_CSB_PC_DATA");
+    env = getenv("FIRESTAFF_CSB_DATA");
     if (env && env[0] != '\0') return env;
 
-    /* CI owns the deterministic synthetic fixture below. Real asset capture
-     * is deliberate through FIRESTAFF_CSB_PC_DATA or an argument. */
+    env = getenv("FIRESTAFF_CSB_PC_DATA");
+    if (env && env[0] != '\0') return env;
     return NULL;
-}
-
-static int probe_real_assets_present(const char *dir)
-{
-    const char *hashes[6];
-    char paths[5][ASSET_PATH_MAX];
-    int matched[5];
-    int graphics_count = 0;
-    int hash_count = 0;
-    int i;
-    int have_graphics = 0;
-    int have_dungeon = 0;
-    static const char *const g_csb_graphics[] = {
-        "61fbfd56887c94adc26888a9491c6611",  /* PC 3.4 EN */
-        "ebf6a57af3f27782e358c0490bfd2f2e",  /* Atari ST 2.1 EN */
-        "291e1bc6803e3dc4b974c60117ca5d68",  /* Amiga 3.5 EN */
-        "cefaddfdf5651df2c91f61b5611a8362",  /* Amiga 3.5 ML */
-        NULL
-    };
-    static const char *const g_csb_dungeon[] = {
-        "6695d2acebce49f95db1d8f3a5c733de",
-        NULL
-    };
-
-    if (!dir || dir[0] == '\0') return 0;
-
-    /* Match csb_v1_boot_scan_required_paths(): prefer an already extracted,
-     * hash-verified install over opening every unrelated archive in a shared
-     * data root. The probe's real path must not turn a nearby 300 MiB RAR
-     * into a startup dependency when GRAPHICS.DAT/DUNGEON.DAT are present. */
-    for (i = 0; g_csb_graphics[i] != NULL; ++i) {
-        hashes[hash_count++] = g_csb_graphics[i];
-        ++graphics_count;
-    }
-    for (i = 0; g_csb_dungeon[i] != NULL; ++i) {
-        hashes[hash_count++] = g_csb_dungeon[i];
-    }
-    hashes[hash_count] = NULL;
-    memset(paths, 0, sizeof(paths));
-    memset(matched, 0, sizeof(matched));
-    (void)asset_find_all_files_by_md5_list(dir, hashes, paths, matched,
-                                            hash_count, 4);
-    for (i = 0; i < graphics_count; ++i) {
-        if (matched[i]) have_graphics = 1;
-    }
-    for (i = graphics_count; i < hash_count; ++i) {
-        if (matched[i]) have_dungeon = 1;
-    }
-    return have_graphics && have_dungeon;
-}
-
-/* ── Synthetic boot profile preparation ──────────────────────────────── */
-
-static int probe_prepare_synthetic_profile(const char *tmp_dir,
-                                            CSB_V1_BootProfile *profile)
-{
-    char dungeon_path[ASSET_PATH_MAX];
-    char graphics_path[ASSET_PATH_MAX];
-
-    snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT", tmp_dir);
-    snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT", tmp_dir);
-
-    if (probe_write_synthetic_dungeon(dungeon_path, 2 /* FLOOR */, 0) != 0) {
-        fprintf(stderr, "probe: failed to write synthetic DUNGEON.DAT to %s\n",
-                dungeon_path);
-        return -1;
-    }
-    if (probe_write_stub_graphics(graphics_path) != 0) {
-        fprintf(stderr, "probe: failed to write stub GRAPHICS.DAT to %s\n",
-                graphics_path);
-        return -1;
-    }
-
-    csb_v1_boot_profile_init(profile);
-    snprintf(profile->asset_root, sizeof(profile->asset_root), "%s", tmp_dir);
-    snprintf(profile->dungeon_path, sizeof(profile->dungeon_path), "%s", dungeon_path);
-    snprintf(profile->graphics_path, sizeof(profile->graphics_path), "%s", graphics_path);
-    snprintf(profile->dungeon_md5, sizeof(profile->dungeon_md5),
-             "6695d2acebce49f95db1d8f3a5c733de");
-    snprintf(profile->graphics_md5, sizeof(profile->graphics_md5),
-             "61fbfd56887c94adc26888a9491c6611");
-    profile->dungeon_verified  = 1;
-    profile->graphics_verified = 1;
-    profile->assets_verified   = 1;
-    profile->variant_id        = CSB_V1_VARIANT_PC34_EN;
-    profile->graphics_kind     = CSB_V1_ASSET_GFX_ARCHIVE_GRAPHICS;
-    profile->entrance_map_index = 255U;
-    profile->start_map_index    = 0U;
-    return 0;
 }
 
 /* ── Framebuffer-counting helpers ─────────────────────────────────────── */
@@ -473,8 +271,9 @@ static void probe_first_viewport_frame(CSB_V1_BootProfile *profile,
           "boot state advances to RUNTIME_READY");
     CHECK(profile->runtime.state == CSB_STATE_TITLE,
           "runtime state machine is CSB_STATE_TITLE (ReDMCSB ENTRANCE.C F0806)");
-    CHECK(profile->runtime.variant_id == CSB_V1_VARIANT_PC34_EN,
-          "runtime carries the PC CSB variant");
+    CHECK(profile->runtime.variant_id == profile->variant_id &&
+          profile->runtime.variant_id != CSB_V1_VARIANT_UNKNOWN,
+          "runtime retains the verified CSB package variant");
     CHECK(profile->runtime.dungeon_handle != NULL,
           "runtime owns a loaded dungeon handle");
     CHECK(csb_v1_dungeon_get_current() == profile->runtime.dungeon_handle,
@@ -713,47 +512,37 @@ int main(int argc, char **argv)
 {
     char default_dir[1024];
     const char *real_dir;
-    const char *tmp_dir = "/tmp/firestaff-csb-v1-first-viewport-frame-probe";
     CSB_V1_BootProfile profile;
-    int used_real = 0;
-    int used_synth = 0;
 
     printf("=== CSB V1 first-viewport-frame startup probe ===\n\n");
 
     real_dir = probe_data_dir(argc, argv, default_dir, sizeof(default_dir));
     printf("real-asset dir probed: %s\n", real_dir ? real_dir : "(none)");
 
-    if (probe_real_assets_present(real_dir)) {
-        printf("real CSB V1 assets found at %s; running real-asset path\n",
-               real_dir);
-        memset(&profile, 0, sizeof(profile));
-        csb_v1_boot_profile_init(&profile);
-        CHECK(csb_v1_boot_scan_assets(&profile, real_dir) == 0,
-              "real CSB V1 assets scan by hash");
-        CHECK(profile.assets_verified == 1,
-              "real-asset boot profile marks assets verified");
-        CHECK(profile.graphics_verified == 1,
-              "real-asset GRAPHICS.DAT verified by MD5");
-        CHECK(profile.dungeon_verified == 1,
-              "real-asset DUNGEON.DAT verified by MD5");
-        CHECK(profile.variant_id == CSB_V1_VARIANT_PC34_EN,
-              "real-asset variant detection selects PC DOS 3.4 English");
-        probe_first_viewport_frame(&profile, "real-asset");
-        used_real = 1;
-    } else {
-        printf("real CSB V1 assets NOT present at %s; running synthetic-data path\n",
-               real_dir ? real_dir : "(unset)");
-        (void)PROBE_MKDIR(tmp_dir);
-        memset(&profile, 0, sizeof(profile));
-        if (probe_prepare_synthetic_profile(tmp_dir, &profile) != 0) {
-            fprintf(stderr, "probe: failed to stage synthetic CSB V1 assets\n");
-            return 1;
-        }
-        probe_first_viewport_frame(&profile, "synthetic");
-        used_synth = 1;
+    if (!real_dir) {
+        printf("SKIP: set FIRESTAFF_CSB_DATA (or pass argv[1]) to a directory "
+               "with a hash-recognised CSB GRAPHICS.DAT and DUNGEON.DAT pair.\n");
+        return 0;
     }
 
-    printf("\nchecks=%d failures=%d (real=%d synth=%d)\n",
-           g_pass, g_fail, used_real, used_synth);
+    printf("real CSB V1 assets found at %s; running real-asset path\n", real_dir);
+    memset(&profile, 0, sizeof(profile));
+    csb_v1_boot_profile_init(&profile);
+    if (csb_v1_boot_scan_assets(&profile, real_dir) != 0) {
+        printf("SKIP: no hash-recognised CSB package found under %s.\n", real_dir);
+        return 0;
+    }
+    CHECK(1, "real CSB V1 assets scan by hash");
+    CHECK(profile.assets_verified == 1,
+          "real-asset boot profile marks assets verified");
+    CHECK(profile.graphics_verified == 1,
+          "real-asset GRAPHICS.DAT verified by MD5");
+    CHECK(profile.dungeon_verified == 1,
+          "real-asset DUNGEON.DAT verified by MD5");
+    CHECK(profile.variant_id != CSB_V1_VARIANT_UNKNOWN,
+          "real-asset variant detection selects a supported CSB package");
+    probe_first_viewport_frame(&profile, "real-asset");
+
+    printf("\nchecks=%d failures=%d (real=1)\n", g_pass, g_fail);
     return g_fail == 0 ? 0 : 1;
 }

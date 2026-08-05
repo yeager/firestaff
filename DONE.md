@@ -48866,3 +48866,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   materializes both archive members, rescans a GRAPHICS-only replacement, and
   verifies that neither stale save remains.  The focused archive split test
   passes.
+- ✅ 2026-08-05 CSB verklig första viewport-frame: den registrerade
+  `firestaff_csb_v1_first_viewport_frame_probe` skapar inte längre en falsk
+  PC-profil med stubbat `GRAPHICS.DAT` och en egen dungeon. Den kräver nu en
+  hashverifierad CSB-källa via argument eller `FIRESTAFF_CSB_DATA`, accepterar
+  PC-, Atari ST- och Amiga-varianter och skippar ärligt när ingen paketdata
+  finns. Runtime behåller den verifierade variantidentiteten i stället för
+  att förutsätta PC 3.4. Verifiering: CTest utan data skippar och passerar;
+  verkliga Atari ST-data från `Game,Chaos_Strikes_Back,Atari_ST,Software.7z`
+  extraherades till en tillfällig katalog och proben passerade 30/30 genom
+  boot, dungeon-handoff, tick, första viewport-frame och cleanup.
