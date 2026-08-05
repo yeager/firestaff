@@ -1157,6 +1157,14 @@ diagnostic; it must not silently fall back to a generated visual.
   overlay. Verification: `test_dm1_v1_viewport_3d_pc34_compat` and
   `test_m11_dm1_f0115_floor_item_runtime_capture_pc34` with local PC34 data.
 
+- **DM1-ORIGINAL-REPLACE-011:** Closed 2026-08-05. Removed the remaining
+  legacy viewport renderer's synthetic coloured wall, floor, ceiling, side
+  wall and door pixels. Missing source material now remains no-draw; the
+  source-backed M11/CSB renderers remain the only owners of those surfaces.
+  This matches the DOS manual's interaction evidence without treating the
+  manual as a graphics source. Verification: Ninja `firestaff` target builds;
+  `git diff --check` passes.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

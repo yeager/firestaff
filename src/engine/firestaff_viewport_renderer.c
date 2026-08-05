@@ -103,57 +103,10 @@ void fs_vp_render_frame(FS_ViewportRenderer *vp) {
                 int bmp = fs_viewport_select_wall_bitmap(0, depth, col);
                 if (bmp >= 0 && bmp < vp->atlas->bitmap_count)
                     fs_vp_draw_bitmap_scaled(vp, bmp, x_offset, y_offset, wall_w, wall_h);
-                else {
-                    /* Fallback: draw colored rectangle */
-                    int px2, py2;
-                    uint8_t color = 5 + depth;
-                    for (py2 = y_offset; py2 < y_offset + wall_h; py2++)
-                        for (px2 = x_offset; px2 < x_offset + wall_w; px2++)
-                            if (px2 >= VP_X && px2 < VP_X + VP_W && py2 >= VP_Y && py2 < VP_Y + VP_H)
-                                vp->framebuffer[py2 * FB_W + px2] = color;
-                }
-            } else {
-                /* Open floor: draw floor color */
-                int px2, py2;
-                uint8_t floor_color = 8;
-                uint8_t ceil_color = 9;
-                /* Floor (bottom half) */
-                for (py2 = y_offset + wall_h/2; py2 < y_offset + wall_h; py2++)
-                    for (px2 = x_offset; px2 < x_offset + wall_w; px2++)
-                        if (px2 >= VP_X && px2 < VP_X + VP_W && py2 >= VP_Y && py2 < VP_Y + VP_H)
-                            vp->framebuffer[py2 * FB_W + px2] = floor_color;
-                /* Ceiling (top half) */
-                for (py2 = y_offset; py2 < y_offset + wall_h/2; py2++)
-                    for (px2 = x_offset; px2 < x_offset + wall_w; px2++)
-                        if (px2 >= VP_X && px2 < VP_X + VP_W && py2 >= VP_Y && py2 < VP_Y + VP_H)
-                            vp->framebuffer[py2 * FB_W + px2] = ceil_color;
-
-                /* Side walls */
-                if (sq->wall_west) {
-                    uint8_t wc = 6;
-                    for (py2 = y_offset; py2 < y_offset + wall_h; py2++)
-                        if (x_offset >= VP_X && py2 >= VP_Y && py2 < VP_Y + VP_H)
-                            vp->framebuffer[py2 * FB_W + x_offset] = wc;
-                }
-                if (sq->wall_east) {
-                    uint8_t wc = 6;
-                    int rx = x_offset + wall_w - 1;
-                    for (py2 = y_offset; py2 < y_offset + wall_h; py2++)
-                        if (rx < VP_X + VP_W && py2 >= VP_Y && py2 < VP_Y + VP_H)
-                            vp->framebuffer[py2 * FB_W + rx] = wc;
-                }
-
-                /* Door */
-                if (sq->door_type > 0 && sq->door_state == 0) {
-                    uint8_t door_color = 10; /* brown */
-                    int dw2 = wall_w * 2 / 3, dh2 = wall_h * 3 / 4;
-                    int ddx = x_offset + (wall_w - dw2) / 2;
-                    int ddy = y_offset + wall_h - dh2;
-                    for (py2 = ddy; py2 < ddy + dh2; py2++)
-                        for (px2 = ddx; px2 < ddx + dw2; px2++)
-                            if (px2 >= VP_X && px2 < VP_X + VP_W && py2 >= VP_Y && py2 < VP_Y + VP_H)
-                                vp->framebuffer[py2 * FB_W + px2] = door_color;
-                }
+                /* Missing wall material is deliberately no-draw.  The
+                 * source-backed M11/CSB renderers own floor, ceiling, side
+                 * wall and door composition; this legacy bridge must never
+                 * invent pixels when a GRAPHICS.DAT record is unavailable. */
             }
         }
     }
@@ -165,4 +118,3 @@ void fs_vp_to_rgba(FS_ViewportRenderer *vp) {
     for (i = 0; i < FB_W * FB_H; i++)
         vp->rgba_buffer[i] = vp->palette[vp->framebuffer[i]];
 }
-

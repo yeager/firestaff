@@ -49006,3 +49006,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   existing 22-record SCK/Greatstone pixel comparison remains zero-difference.
   Title cadence/palette tests pass. Full 713-record visual comparison and
   packaged macOS capture remain explicitly open in `TODO.md`.
+
+- ✅ 2026-08-05 DM1 legacy synthetic viewport removal: the unowned
+  `firestaff_viewport_renderer` bridge no longer paints coloured rectangles
+  for missing walls, floors, ceilings, side walls or doors. It now draws only
+  an authenticated atlas wall bitmap; unavailable source material remains
+  no-draw. The local DOS manual was recorded as behavioural evidence for
+  pickup, cursor and inventory contracts, never as a substitute asset source.
+  Ninja `firestaff` build and `git diff --check` pass.
