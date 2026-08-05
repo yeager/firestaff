@@ -10,6 +10,13 @@ static const char *const g_csb_atari_animation_hashes[] = {
     NULL
 };
 
+static const char *const g_csb_atari_animation_runtime_chain_hashes[] = {
+    "e7dedcff055c069e22d083b8015b48e0", /* ANIMATE.FTL, Atari ST CSB 2.0 */
+    "b170b74cfcca429dd54b07bbdc795484", /* CHAOS.FTL, Atari ST CSB 2.0 */
+    "18abdf771f37e8953bf95ba2f462469d", /* FTLCODE, Atari ST CSB 2.0 */
+    NULL
+};
+
 static int csb_v1_atari_st_animation_source_identity(
     const char *path, char out[ASSET_PATH_MAX], int *is_virtual)
 {
@@ -111,5 +118,93 @@ int csb_v1_atari_st_animation_materialize(
     }
     snprintf(script_path, ASSET_PATH_MAX, "%s", cached_script);
     snprintf(data_path, ASSET_PATH_MAX, "%s", cached_data);
+    return 1;
+}
+
+int csb_v1_atari_st_animation_discover_runtime_chain(
+    const char *search_root, CSB_V1_AtariStAnimationRuntimeChainReceipt *out)
+{
+    char paths[3][ASSET_PATH_MAX];
+    int matched[3];
+    int animate_virtual;
+    int chaos_virtual;
+    int ftlcode_virtual;
+    char animate_identity[ASSET_PATH_MAX];
+    char chaos_identity[ASSET_PATH_MAX];
+    char ftlcode_identity[ASSET_PATH_MAX];
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!search_root || !search_root[0]) return 0;
+    memset(paths, 0, sizeof(paths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_by_md5_list(search_root,
+            g_csb_atari_animation_runtime_chain_hashes, paths, matched, 3,
+            8) != 3 || !matched[0] || !matched[1] || !matched[2] ||
+        !csb_v1_atari_st_animation_source_identity(paths[0], animate_identity,
+            &animate_virtual) ||
+        !csb_v1_atari_st_animation_source_identity(paths[1], chaos_identity,
+            &chaos_virtual) ||
+        !csb_v1_atari_st_animation_source_identity(paths[2], ftlcode_identity,
+            &ftlcode_virtual) || animate_virtual != chaos_virtual ||
+        animate_virtual != ftlcode_virtual ||
+        strcmp(animate_identity, chaos_identity) != 0 ||
+        strcmp(animate_identity, ftlcode_identity) != 0) return 0;
+    snprintf(out->animate_ftl_path, sizeof(out->animate_ftl_path), "%s", paths[0]);
+    snprintf(out->chaos_ftl_path, sizeof(out->chaos_ftl_path), "%s", paths[1]);
+    snprintf(out->ftlcode_path, sizeof(out->ftlcode_path), "%s", paths[2]);
+    snprintf(out->source_identity, sizeof(out->source_identity), "%s",
+             animate_identity);
+    out->source_is_virtual = animate_virtual;
+    out->valid = 1;
+    return 1;
+}
+
+int csb_v1_atari_st_animation_materialize_runtime_chain(
+    const CSB_V1_AtariStAnimationRuntimeChainReceipt *receipt,
+    const char *cache_root, char animate_ftl_path[ASSET_PATH_MAX],
+    char chaos_ftl_path[ASSET_PATH_MAX], char ftlcode_path[ASSET_PATH_MAX])
+{
+    static const char *const leaf_names[] = {
+        "ANIMATE.FTL", "CHAOS.FTL", "FTLCODE"
+    };
+    const char *source_paths[3];
+    char *output_paths[3];
+    char cache_dir[ASSET_PATH_MAX];
+    char cached_paths[3][ASSET_PATH_MAX];
+    int i;
+
+    if (!receipt || !receipt->valid || !animate_ftl_path || !chaos_ftl_path ||
+        !ftlcode_path) return 0;
+    animate_ftl_path[0] = '\0';
+    chaos_ftl_path[0] = '\0';
+    ftlcode_path[0] = '\0';
+    source_paths[0] = receipt->animate_ftl_path;
+    source_paths[1] = receipt->chaos_ftl_path;
+    source_paths[2] = receipt->ftlcode_path;
+    output_paths[0] = animate_ftl_path;
+    output_paths[1] = chaos_ftl_path;
+    output_paths[2] = ftlcode_path;
+    if (!receipt->source_is_virtual) {
+        for (i = 0; i < 3; ++i) {
+            if (!asset_file_matches_md5(source_paths[i],
+                    g_csb_atari_animation_runtime_chain_hashes[i])) return 0;
+            snprintf(output_paths[i], ASSET_PATH_MAX, "%s", source_paths[i]);
+        }
+        return 1;
+    }
+    if (!cache_root || !cache_root[0] ||
+        !FSP_JoinPath(cache_dir, sizeof(cache_dir), cache_root,
+            "csb-atari-animation") || !FSP_CreateDirectoryRecursive(cache_dir)) {
+        return 0;
+    }
+    for (i = 0; i < 3; ++i) {
+        if (!FSP_JoinPath(cached_paths[i], sizeof(cached_paths[i]), cache_dir,
+                leaf_names[i]) ||
+            !asset_extract_virtual_path(source_paths[i], cached_paths[i]) ||
+            !asset_file_matches_md5(cached_paths[i],
+                g_csb_atari_animation_runtime_chain_hashes[i])) return 0;
+        snprintf(output_paths[i], ASSET_PATH_MAX, "%s", cached_paths[i]);
+    }
     return 1;
 }

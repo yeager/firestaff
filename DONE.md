@@ -48754,3 +48754,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   both real US metadata spans (69 item names and 15 level labels). The
   inventory exposes verification flags without admitting dungeon maps,
   objects, or bitmap semantics.
+- ✅ 2026-08-05 CSB Atari-animationens runtimekedja: den verkliga
+  `ANIMATE.FTL`/`CHAOS.FTL`/`FTLCODE`-trion har nu ett eget
+  hash-verifierat discovery- och cachekvitto. Modulerna måste komma från
+  samma katalog eller arkiv och körs aldrig som värdbinärer. Verifierat mot
+  den lokala Atari ST 2.0-katalogen med original-MD5. Källor: ReDMCSB
+  `ANIM.C:67-72,94`, `COMPILE.H:609-620` samt DMWebs Animation Script- och
+  Animationsformatdokumentation.
