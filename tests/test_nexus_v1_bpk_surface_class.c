@@ -714,8 +714,8 @@ static void test_runtime_render_receipt_ready_for_stored_surfaces(void) {
            "stored receipt: all stored payloads fit");
     expect(receipt.requires_prs3_decoder == 0,
            "stored receipt does not require PRS3 decoder");
-    expect(receipt.fallback_visuals_permitted == 1,
-           "stored receipt permits normal render path");
+    expect(receipt.fallback_visuals_permitted == 0,
+           "stored receipt does not permit fallback visuals");
 }
 
 static void test_runtime_render_receipt_blocks_truncated_stored_surfaces(void) {

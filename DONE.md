@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus MENU.BPK stored-surface provenance: the legacy runtime
+  render receipt no longer sets `fallback_visuals_permitted` for a bounded
+  stored payload. Stored bytes remain an original-data route, while synthetic
+  replacement visuals stay closed. Updated the focused surface-class
+  regression; MENU.BPK handoff gate remains green.
+
 - ✅ 2026-08-06 Nexus startup text no-draw correction: the real
   `FONT256.S2D` path in `nexus_v1_screen_text_draw_s2d_bytes()` no longer
   reports successful text rendering through the obsolete flat glyph stream.

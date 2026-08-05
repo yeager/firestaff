@@ -24724,7 +24724,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   unavailable pending independent original-Saturn codec evidence.
 
 - The legacy `nexus_v1_bpk_surface_class` synthetic fixture still asserts a
-  synthetic PRS3 literal decoder and decoded material import. It is
+  synthetic PRS3 literal decoder and decoded material import. Its stored
+  payload receipt now keeps the fallback-provenance bit closed, but it is
   incompatible with the current retail fail-closed PRS3 route and is not
   evidence for a Saturn codec; replace it with authenticated capture-backed
   expectations before treating it as a promotion test.

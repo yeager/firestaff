@@ -619,8 +619,11 @@ int nexus_v1_bpk_archive_runtime_render_receipt(
         out_receipt->route = NEXUS_V1_BPK_RUNTIME_ROUTE_READY_STORED;
     }
 
-    out_receipt->fallback_visuals_permitted =
-        (out_receipt->route == NEXUS_V1_BPK_RUNTIME_ROUTE_READY_STORED) ? 1 : 0;
+    /* DMWeb, Dungeon Master Nexus > File formats > BPK files: a stored
+     * payload is original archive data, not permission to synthesize a
+     * replacement surface. Keep the provenance bit closed; the stored route
+     * itself remains the only route that may expose those bytes. */
+    out_receipt->fallback_visuals_permitted = 0;
     return 0;
 }
 
