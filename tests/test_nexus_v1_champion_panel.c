@@ -15,6 +15,10 @@ int main(void) {
     Nexus_PanelRect stat_bars[NEXUS_STAT_BAR_RECT_COUNT];
     Nexus_PanelRect inv_slots[NEXUS_INV_SLOT_RECT_COUNT];
     Nexus_PanelRect equip_slots[NEXUS_EQUIP_SLOT_RECT_COUNT];
+    Nexus_HudElement hud_layout[NEXUS_HUD_LAYOUT_ENTRY_COUNT];
+    Nexus_HitRect hud_hit_rects[NEXUS_HIT_RECT_COUNT];
+    size_t hud_layout_count = 0U;
+    size_t hud_hit_rect_count = 0U;
     const Nexus_PanelRect* r;
 
     if (!root || !root[0]) root = ".firestaff/data/nexus";
@@ -40,12 +44,28 @@ int main(void) {
         fprintf(stderr, "FAIL: retail DM.BIN panel tables did not parse\n");
         return 1;
     }
+    if (nexus_v1_hud_layout_parse_dm_bin(
+            data, (size_t)size, hud_layout, NEXUS_HUD_LAYOUT_ENTRY_COUNT,
+            &hud_layout_count) != 0 ||
+        nexus_v1_hud_hit_rects_parse_dm_bin(
+            data, (size_t)size, hud_hit_rects, NEXUS_HIT_RECT_COUNT,
+            &hud_hit_rect_count) != 0 ||
+        hud_layout_count != NEXUS_HUD_LAYOUT_ENTRY_COUNT ||
+        hud_hit_rect_count != NEXUS_HIT_RECT_COUNT) {
+        free(data);
+        fprintf(stderr, "FAIL: retail DM.BIN HUD layout/hit tables did not parse\n");
+        return 1;
+    }
 
     {
         Nexus_V1_Engine engine;
         Nexus_PanelRect engine_stats[NEXUS_STAT_BAR_RECT_COUNT];
         Nexus_PanelRect engine_inv[NEXUS_INV_SLOT_RECT_COUNT];
         Nexus_PanelRect engine_equip[NEXUS_EQUIP_SLOT_RECT_COUNT];
+        Nexus_HudElement engine_hud_layout[NEXUS_HUD_LAYOUT_ENTRY_COUNT];
+        Nexus_HitRect engine_hud_hit_rects[NEXUS_HIT_RECT_COUNT];
+        size_t engine_hud_layout_count = 0U;
+        size_t engine_hud_hit_rect_count = 0U;
         memset(&engine, 0, sizeof(engine));
         if (nexus_v1_champion_panel_geometry_ready(&engine) ||
             nexus_v1_champion_panel_geometry(
@@ -54,13 +74,32 @@ int main(void) {
             fprintf(stderr, "FAIL: uninitialized engine exposed HUD geometry\n");
             return 1;
         }
+        if (nexus_v1_hud_geometry_ready(&engine) ||
+            nexus_v1_hud_geometry(&engine, engine_hud_layout,
+                                  engine_hud_hit_rects,
+                                  &engine_hud_layout_count,
+                                  &engine_hud_hit_rect_count) != 0) {
+            free(data);
+            fprintf(stderr, "FAIL: uninitialized engine exposed HUD tables\n");
+            return 1;
+        }
         if (nexus_v1_init(&engine, root) != 0 ||
             !nexus_v1_champion_panel_geometry_ready(&engine) ||
             nexus_v1_champion_panel_geometry(
                 &engine, engine_stats, engine_inv, engine_equip) != 0 ||
             memcmp(engine_stats, stat_bars, sizeof(stat_bars)) != 0 ||
             memcmp(engine_inv, inv_slots, sizeof(inv_slots)) != 0 ||
-            memcmp(engine_equip, equip_slots, sizeof(equip_slots)) != 0) {
+            memcmp(engine_equip, equip_slots, sizeof(equip_slots)) != 0 ||
+            !nexus_v1_hud_geometry_ready(&engine) ||
+            nexus_v1_hud_geometry(&engine, engine_hud_layout,
+                                  engine_hud_hit_rects,
+                                  &engine_hud_layout_count,
+                                  &engine_hud_hit_rect_count) != 1 ||
+            engine_hud_layout_count != hud_layout_count ||
+            engine_hud_hit_rect_count != hud_hit_rect_count ||
+            memcmp(engine_hud_layout, hud_layout, sizeof(hud_layout)) != 0 ||
+            memcmp(engine_hud_hit_rects, hud_hit_rects,
+                   sizeof(hud_hit_rects)) != 0) {
             nexus_v1_shutdown(&engine);
             free(data);
             fprintf(stderr, "FAIL: initialized engine did not expose retail HUD geometry\n");

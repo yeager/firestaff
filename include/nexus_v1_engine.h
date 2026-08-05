@@ -54,6 +54,8 @@ typedef struct Nexus_V1_Structure1FPlacementBindingReceipt
 #include "nexus_v1_save.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_champion_panel.h"
+#include "nexus_v1_hud_hit_rects.h"
+#include "nexus_v1_hud_layout.h"
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_prs3_capture_trace_schema.h"
 #include "nexus_v1_script_vm.h"
@@ -2550,6 +2552,14 @@ struct Nexus_V1_Engine {
     Nexus_PanelRect champion_panel_inv_slots[NEXUS_INV_SLOT_RECT_COUNT];
     Nexus_PanelRect champion_panel_equip_slots[NEXUS_EQUIP_SLOT_RECT_COUNT];
     int champion_panel_geometry_bound;
+    /* Real DM.BIN HUD geometry for future input/HUD consumers. This does not
+     * authorize framebuffer pixels or Saturn VDP placement. */
+    Nexus_V1_LevelAuxSourceReceipt hud_geometry_source;
+    Nexus_HudElement hud_layout[NEXUS_HUD_LAYOUT_ENTRY_COUNT];
+    Nexus_HitRect hud_hit_rects[NEXUS_HIT_RECT_COUNT];
+    size_t hud_layout_count;
+    size_t hud_hit_rect_count;
+    int hud_geometry_bound;
     Nexus_V1_LevelAuxSourceReceipt menu_bpk_source;
     uint64_t menu_bpk_package_fnv1a64;
     int menu_bpk_prs3_execution_evidence_valid;
@@ -3173,6 +3183,12 @@ int nexus_v1_champion_panel_geometry(
     Nexus_PanelRect stat_bars[NEXUS_STAT_BAR_RECT_COUNT],
     Nexus_PanelRect inv_slots[NEXUS_INV_SLOT_RECT_COUNT],
     Nexus_PanelRect equip_slots[NEXUS_EQUIP_SLOT_RECT_COUNT]);
+int nexus_v1_hud_geometry_ready(const Nexus_V1_Engine *engine);
+int nexus_v1_hud_geometry(
+    const Nexus_V1_Engine *engine,
+    Nexus_HudElement layout[NEXUS_HUD_LAYOUT_ENTRY_COUNT],
+    Nexus_HitRect hit_rects[NEXUS_HIT_RECT_COUNT],
+    size_t *layout_count, size_t *hit_rect_count);
 int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine);
 /* Source identity for MENU.BPK. A parseable archive is not eligible for the
  * retail menu route until this receipt is hash-verified. */

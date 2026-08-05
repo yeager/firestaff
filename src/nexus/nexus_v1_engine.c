@@ -2543,6 +2543,43 @@ static void nexus_v1_load_champion_panel_geometry(Nexus_V1_Engine *engine)
     free(data);
 }
 
+static void nexus_v1_load_hud_geometry(Nexus_V1_Engine *engine)
+{
+    uint8_t *data;
+    int size = 0;
+    size_t layout_count = 0U;
+    size_t hit_rect_count = 0U;
+
+    if (!engine) return;
+    memset(&engine->hud_geometry_source, 0,
+           sizeof(engine->hud_geometry_source));
+    memset(engine->hud_layout, 0, sizeof(engine->hud_layout));
+    memset(engine->hud_hit_rects, 0, sizeof(engine->hud_hit_rects));
+    engine->hud_layout_count = 0U;
+    engine->hud_hit_rect_count = 0U;
+    engine->hud_geometry_bound = 0;
+    if (nexus_v1_level_aux_source_receipt(
+            engine, "DM.BIN", &engine->hud_geometry_source) != 0 ||
+        !engine->hud_geometry_source.canonical_hash_verified) {
+        return;
+    }
+    data = nexus_v1_read_file(engine, "DM.BIN", &size);
+    if (!data) return;
+    if (nexus_v1_hud_layout_parse_dm_bin(
+            data, (size_t)size, engine->hud_layout,
+            NEXUS_HUD_LAYOUT_ENTRY_COUNT, &layout_count) == 0 &&
+        nexus_v1_hud_hit_rects_parse_dm_bin(
+            data, (size_t)size, engine->hud_hit_rects,
+            NEXUS_HIT_RECT_COUNT, &hit_rect_count) == 0 &&
+        layout_count == NEXUS_HUD_LAYOUT_ENTRY_COUNT &&
+        hit_rect_count == NEXUS_HIT_RECT_COUNT) {
+        engine->hud_layout_count = layout_count;
+        engine->hud_hit_rect_count = hit_rect_count;
+        engine->hud_geometry_bound = 1;
+    }
+    free(data);
+}
+
 static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
     int size = 0;
     int dm_bin_size = 0;
@@ -2830,6 +2867,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_v1_load_startup_surfaces(engine);
     nexus_v1_load_startup_faces(engine);
     nexus_v1_load_champion_panel_geometry(engine);
+    nexus_v1_load_hud_geometry(engine);
     nexus_v1_load_menu_bpk_decode_receipt(engine);
 
     /* Init creature manager and load real stats from RLOWFIX.BIN CRET. */
@@ -10362,6 +10400,31 @@ int nexus_v1_champion_panel_geometry(
     memcpy(equip_slots, engine->champion_panel_equip_slots,
            sizeof(engine->champion_panel_equip_slots));
     return 0;
+}
+
+int nexus_v1_hud_geometry_ready(const Nexus_V1_Engine *engine)
+{
+    return engine && engine->hud_geometry_bound &&
+           engine->hud_geometry_source.canonical_hash_verified &&
+           engine->hud_layout_count == NEXUS_HUD_LAYOUT_ENTRY_COUNT &&
+           engine->hud_hit_rect_count == NEXUS_HIT_RECT_COUNT;
+}
+
+int nexus_v1_hud_geometry(
+    const Nexus_V1_Engine *engine,
+    Nexus_HudElement layout[NEXUS_HUD_LAYOUT_ENTRY_COUNT],
+    Nexus_HitRect hit_rects[NEXUS_HIT_RECT_COUNT],
+    size_t *layout_count, size_t *hit_rect_count)
+{
+    if (layout_count) *layout_count = 0U;
+    if (hit_rect_count) *hit_rect_count = 0U;
+    if (!nexus_v1_hud_geometry_ready(engine) || !layout || !hit_rects)
+        return 0;
+    memcpy(layout, engine->hud_layout, sizeof(engine->hud_layout));
+    memcpy(hit_rects, engine->hud_hit_rects, sizeof(engine->hud_hit_rects));
+    if (layout_count) *layout_count = engine->hud_layout_count;
+    if (hit_rect_count) *hit_rect_count = engine->hud_hit_rect_count;
+    return 1;
 }
 
 int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine) {

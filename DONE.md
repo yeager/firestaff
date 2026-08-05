@@ -50374,7 +50374,6 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   verified bytes for receipts and diagnostics, while presentation remains
   explicitly no-draw until Saturn VDP1/VDP2 command, palette-bank, and
   destination capture is bound.
-
 - ✅ 2026-08-06 DM2 original SKSAVE fixed-state receipt: promoted the real
   PC-DOS corpus decoder for the exact `DM2_GAME_LOAD` fixed SUPPRESS sequence
   into `dm2_v1_original_raw_sksave_fixed_state_receipt()`. It reads the
@@ -50382,3 +50381,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   timers on one MSB-first reader, then records the precise record-link
   boundary for `DM2_READ_SKSAVE_DUNGEON`. All eight supplied primary/backup
   saves pass; no incomplete session is admitted or made playable.
+- ✅ 2026-08-06 Nexus HUD runtime binding: production engine init now retains
+  the 80-entry layout table at `DM.BIN+0x376D0` and 40-entry ring-menu hit
+  table at `DM.BIN+0x38000` only after the exact real `DM.BIN` hash receipt is
+  verified. Copy-out getters refuse uninitialized/unverified engines; these
+  coordinates remain input/HUD provenance, not framebuffer or VDP placement.

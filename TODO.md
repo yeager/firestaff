@@ -115,6 +115,9 @@
   Startup UI surface wrappers are now no-draw seams; retain TITLE/ WARNING/
   GAMEOVER/FACE/STABG source bytes only as receipts until their Saturn VDP1/
   VDP2 placement and palette-bank ownership are captured.
+  HUD layout and ring-menu hit rectangles are now bound into the live engine
+  from verified DM.BIN; connect them to Saturn input/text/VDP consumers only
+  after the corresponding runtime dispatch and placement capture is proven.
   Startup runtime receipts now also keep `hud_ready` clear after a DGN handoff;
   level-loaded state alone cannot promote an unbound Saturn HUD consumer.
   FONT256.S2D loader now exposes only the 242 real character-generator tiles
