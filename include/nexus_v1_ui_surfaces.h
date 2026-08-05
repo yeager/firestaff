@@ -14,12 +14,9 @@
  *   STABG.BIN   — status-area background  (52 KB)
  *   FONT256.S2D — Saturn SCR font           (already nexus_v1_saturn_font.c)
  *
- * Rendering entry points:
- *   nexus_ui_render_title()    — blit TITLE.CG to framebuffer
- *   nexus_ui_render_warning()  — blit WARNING.BIN
- *   nexus_ui_render_gameover() — blit GAMEOVER.BIN
- *   nexus_ui_render_portrait() — blit FACE.BIN entry
- *   nexus_ui_render_stabg()    — blit STABG.BIN as status area bg
+ * Rendering entry points retain no-draw compatibility seams until a Saturn
+ * VDP1/VDP2 capture binds command order, palette banks, and destinations.
+ * They must not copy a real source surface directly to a host framebuffer.
  *
  * Source-lock references:
  *   ReDMCSB BLIT.C      — F0132 blit rect (F0132)

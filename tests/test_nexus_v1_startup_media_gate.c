@@ -74,6 +74,8 @@ int main(void)
     unsigned char *local_title;
     size_t local_warning_size = 0U;
     Nexus_UI_Dgt2PpView warning_view;
+    unsigned char no_draw_fb[16];
+    int no_draw_index;
 
     memset(&ui, 0, sizeof(ui));
     memset(&engine, 0, sizeof(engine));
@@ -82,6 +84,17 @@ int main(void)
     memcpy(opaque_warning, "RES*", 4);
 
     nexus_ui_manager_init(&ui);
+    memset(no_draw_fb, 0xa5, sizeof(no_draw_fb));
+    nexus_ui_render_title(&ui, no_draw_fb, 4, 4);
+    nexus_ui_render_warning(&ui, no_draw_fb, 4, 4);
+    nexus_ui_render_gameover(&ui, no_draw_fb, 4, 4);
+    nexus_ui_render_stabg(&ui, no_draw_fb, 4, 4, 0, 0);
+    nexus_ui_render_portrait(&ui, 0, no_draw_fb, 4, 4, 0, 0, 0);
+    for (no_draw_index = 0; no_draw_index < (int)sizeof(no_draw_fb);
+         ++no_draw_index) {
+        expect_true(no_draw_fb[no_draw_index] == 0xa5,
+                    "startup UI convenience wrappers remain Saturn-capture no-draw");
+    }
     expect_true(nexus_ui_load_title(&ui, NULL, 0, NULL) < 0 &&
                     ui.surfaces[NEXUS_SURFACE_TITLE].data == NULL,
                 "missing TITLE.CG cannot become a generated title surface");

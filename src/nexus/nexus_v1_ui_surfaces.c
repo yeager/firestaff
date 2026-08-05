@@ -1211,54 +1211,62 @@ void nexus_ui_blit_surface_flip(const Nexus_UI_Surface *surf,
 }
 
 /* ── Convenience render wrappers ─────────────────────────────── */
+/* These helpers intentionally remain no-draw.  The loaders retain real
+ * source pixels for inspection, but a host framebuffer copy would invent the
+ * Saturn VDP1/VDP2 command, palette-bank, and destination ownership that is
+ * still absent from the capture.  Keep the low-level blit utility available
+ * to isolated format tests; production presentation must use a future
+ * source-bound Saturn handoff. */
 void nexus_ui_render_title(const Nexus_UI_Manager *mgr,
     uint8_t *fb, int fb_w, int fb_h)
 {
-    if (!mgr || !fb) return;
-    nexus_ui_blit_surface(&mgr->surfaces[NEXUS_SURFACE_TITLE],
-        fb, fb_w, fb_h, 0, 0);
+    (void)mgr;
+    (void)fb;
+    (void)fb_w;
+    (void)fb_h;
 }
 
 void nexus_ui_render_warning(const Nexus_UI_Manager *mgr,
     uint8_t *fb, int fb_w, int fb_h)
 {
-    if (!mgr || !fb) return;
-    nexus_ui_blit_surface(&mgr->surfaces[NEXUS_SURFACE_WARNING],
-        fb, fb_w, fb_h, 0, 0);
+    (void)mgr;
+    (void)fb;
+    (void)fb_w;
+    (void)fb_h;
 }
 
 void nexus_ui_render_gameover(const Nexus_UI_Manager *mgr,
     uint8_t *fb, int fb_w, int fb_h)
 {
-    if (!mgr || !fb) return;
-    nexus_ui_blit_surface(&mgr->surfaces[NEXUS_SURFACE_GAMEOVER],
-        fb, fb_w, fb_h, 0, 0);
+    (void)mgr;
+    (void)fb;
+    (void)fb_w;
+    (void)fb_h;
 }
 
 void nexus_ui_render_stabg(const Nexus_UI_Manager *mgr,
     uint8_t *fb, int fb_w, int fb_h, int dest_x, int dest_y)
 {
-    /* STABG pixels are source palette indices. Do not let a test/host-built
-     * surface reach an indexed framebuffer without the retail palette that
-     * gives those indices meaning. Saturn VDP placement remains owned by a
-     * separate, still-blocked handoff. */
-    if (!mgr || !fb || !mgr->surfaces[NEXUS_SURFACE_STABG].data ||
-        !mgr->surfaces[NEXUS_SURFACE_STABG].source_palette_loaded)
-        return;
-    nexus_ui_blit_surface(&mgr->surfaces[NEXUS_SURFACE_STABG],
-        fb, fb_w, fb_h, dest_x, dest_y);
+    (void)mgr;
+    (void)fb;
+    (void)fb_w;
+    (void)fb_h;
+    (void)dest_x;
+    (void)dest_y;
 }
 
 void nexus_ui_render_portrait(const Nexus_UI_Manager *mgr,
     int portrait_index, uint8_t *fb, int fb_w, int fb_h,
     int dest_x, int dest_y, int flip_h)
 {
-    Nexus_UISurfaceType which;
-    if (!mgr || !fb) return;
-    if (portrait_index < 0 || portrait_index >= 20) return;
-    which = NEXUS_SURFACE_FACE0 + portrait_index;
-    nexus_ui_blit_surface_flip(&mgr->surfaces[which],
-        fb, fb_w, fb_h, dest_x, dest_y, flip_h);
+    (void)mgr;
+    (void)portrait_index;
+    (void)fb;
+    (void)fb_w;
+    (void)fb_h;
+    (void)dest_x;
+    (void)dest_y;
+    (void)flip_h;
 }
 
 /* ── Palette remap ─────────────────────────────────────────────── */

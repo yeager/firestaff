@@ -50368,3 +50368,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   only to bounded diagnostic/material-container inspection. The real MNS
   corpus route therefore cannot promote placeholder geometry into creature
  rendering.
+- ✅ 2026-08-06 Nexus startup surface presentation tightened: the public
+  TITLE/WARNING/GAMEOVER/FACE/STABG convenience wrappers no longer copy real
+  source pixels directly into a host framebuffer. Their loaders still retain
+  verified bytes for receipts and diagnostics, while presentation remains
+  explicitly no-draw until Saturn VDP1/VDP2 command, palette-bank, and
+  destination capture is bound.
