@@ -123,6 +123,11 @@
   leaves the framebuffer untouched until Saturn explored-state and VDP2
   placement evidence is authenticated.
 
+- ✅ 2026-08-06 Nexus ITEM mutation gate completion: mechanics no longer picks
+  up floor items or mutates inventory/floor state for DROP_ITEM and THROW while
+  the Saturn ITEM/action dispatcher is unproven. DGN/ITEM.IBS declarations
+  remain read-only provenance; the existing action-semantics gate stays closed.
+
 - ✅ 2026-08-06 Nexus V2 HUD placeholder removal: procedural compass, depth,
   gold, champion bars, action icons and panel markers no longer write pixels or
   advance animation state. The diagnostic state API remains available, while

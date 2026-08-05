@@ -751,7 +751,8 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                      * Source: DM1 COMMAND.C altar use dispatch. */
                     nexus_altar_perform_ritual(st->party_x, st->party_y, leader);
                     needs_redraw = 1;
-                } else if (idx >= 0 && item_id >= 0) {
+                } else if (idx >= 0 && item_id >= 0 &&
+                           nexus_v1_action_semantics_proven()) {
                     int slot;
                     /* Find first empty slot in the flat uint8_t inventory. */
                     for (slot = 0; slot < NEXUS_INVENTORY_SLOTS; slot++) {
@@ -764,6 +765,9 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                             break;
                         }
                     }
+                } else if (idx >= 0 && item_id >= 0) {
+                    /* ITEM.IBS and a DGN floor record identify a candidate
+                     * object, but do not prove Saturn pickup/slot mutation. */
                 } else {
                     attacked = mechanics_attack_adjacent_creature(engine, st);
                     if (attacked) needs_redraw = 1;
@@ -839,7 +843,8 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             }
         } else if (cmd == NEXUS_CMD_DROP_ITEM) {
             int li4 = mechanics_party_leader_index(engine);
-            if (li4 >= 0 && st->drop_slot >= 0 && st->drop_slot < NEXUS_INVENTORY_SLOTS) {
+            if (nexus_v1_action_semantics_proven() && li4 >= 0 &&
+                st->drop_slot >= 0 && st->drop_slot < NEXUS_INVENTORY_SLOTS) {
                 Nexus_V1_Champion *ldr = &engine->champions.champions[li4];
                 uint8_t item_id = ldr->inventory[st->drop_slot];
                 if (item_id != 0xFFU) {
@@ -851,7 +856,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
             }
         } else if (cmd == NEXUS_CMD_THROW) {
             int li3 = mechanics_party_leader_index(engine);
-            if (li3 >= 0) {
+            if (nexus_v1_action_semantics_proven() && li3 >= 0) {
                 Nexus_V1_Champion *ldr = &engine->champions.champions[li3];
                 nexus_v1_throw_item(&engine->thrown, &engine->projectiles,
                                     ldr, li3, st->throw_slot,

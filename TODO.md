@@ -50,6 +50,9 @@
   remains available, but use and equipment-to-inventory mutation are no-op
   until the Saturn action dispatcher is source-bound. Floor-item records remain
   provenance-only until the same dispatcher proves pickup/slot semantics.
+  The mechanics tick now applies the same gate to floor pickup, DROP_ITEM and
+  THROW; no live inventory/floor mutation occurs from unproven ITEM/action
+  semantics.
   The Nexus mechanics and engine tick paths now share an explicit closed
   action-semantics gate: inherited melee, spell dispatch, creature attack,
   ranged projectile launch, and projectile damage cannot mutate live state
