@@ -39,6 +39,9 @@
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "asset_find_by_hash.h"
+#include "dm2_v1_fmtowns_disc.h"
+#include "firestaff_zip_extract.h"
+#include "firestaff_fmtowns_disc.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -540,6 +543,33 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     free(gfx);
 }
 
+static DM2_V1_BootGraphicsDat *dm2_v1_boot_graphics_load_from_buffer(
+    const uint8_t *mem, size_t mem_size) {
+    uint8_t *bytes;
+    DM2_V1_BootGraphicsDat *gfx;
+
+    if (!mem || mem_size == 0) return NULL;
+    bytes = (uint8_t *)malloc(mem_size);
+    if (!bytes) return NULL;
+    memcpy(bytes, mem, mem_size);
+
+    gfx = (DM2_V1_BootGraphicsDat *)calloc(1, sizeof(*gfx));
+    if (!gfx) { free(bytes); return NULL; }
+    gfx->bytes = bytes;
+    gfx->size = mem_size;
+    if (dm2_v1_asset_loader_init(&gfx->loader, gfx->bytes, mem_size) != 0 ||
+        !dm2_v1_asset_loader_verify(&gfx->loader) ||
+        !dm2_v1_asset_loader_validate_typed_graph(&gfx->loader)) {
+        dm2_v1_boot_graphics_free(gfx);
+        return NULL;
+    }
+    (void)dm2_v1_creature_load_ai_table_from_gdat(&gfx->loader);
+    gfx->ccm_program_count =
+        dm2_v1_creature_load_ccm_programs_from_gdat_auto(
+            &gfx->loader, &gfx->ccm_program_field);
+    return gfx;
+}
+
 static DM2_V1_BootGraphicsDat *dm2_v1_boot_graphics_load(
     const char *graphics_path) {
     uint8_t *bytes = NULL;
@@ -814,6 +844,103 @@ static void copy_parent_dir(char dst[512], const char *path) {
     dst[n] = '\0';
 }
 
+/* ── FM Towns disc image loading from ZIP ───────────────────────────── */
+
+static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
+                                                     const char *data_dir)
+{
+    char zip_path[512];
+    uint8_t *cue_data = NULL;
+    size_t cue_size = 0;
+    uint8_t *img_data = NULL;
+    size_t img_size = 0;
+
+    snprintf(zip_path, sizeof(zip_path),
+             "%s/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip", data_dir);
+
+    if (firestaff_zip_extract_by_suffix(zip_path, ".cue",
+                                        &cue_data, &cue_size) != 0)
+        return;
+
+    uint32_t track_starts[9] = {0};
+    int track_count = fmtowns_cue_parse_track_starts(
+        (const char *)cue_data, cue_size, track_starts, 9);
+    free(cue_data);
+    if (track_count < 3) return;
+
+    if (firestaff_zip_extract_by_suffix(zip_path, ".img",
+                                        &img_data, &img_size) != 0)
+        return;
+
+    strncpy(profile->fmtowns_zip_path, zip_path,
+            sizeof(profile->fmtowns_zip_path) - 1);
+    profile->fmtowns_disc_image = img_data;
+    profile->fmtowns_disc_image_size = img_size;
+    memcpy(profile->fmtowns_cdda_track_starts, track_starts,
+           sizeof(profile->fmtowns_cdda_track_starts));
+    profile->fmtowns_cdda_track_count = track_count;
+    profile->cdda_tracks_available = (int)(DM2_FMTOWNS_CDDA_LAST_TRACK -
+                                           DM2_FMTOWNS_CDDA_FIRST_TRACK + 1);
+
+    /* Extract game files from the disc image if not already found */
+    FmtownsDiscProbeResult probe;
+    if (fmtowns_disc_probe(img_data, img_size, FMTOWNS_SECTOR_2352,
+                            &probe) == 0) {
+        if (!profile->graphics_path[0]) {
+            const FmtownsIsoEntry *gfx =
+                fmtowns_disc_find(&probe, "DATA/GRAPHICS.DAT");
+            if (gfx) {
+                fmtowns_disc_extract_alloc(img_data, img_size,
+                    FMTOWNS_SECTOR_2352, gfx,
+                    &profile->graphics_mem, &profile->graphics_mem_size);
+                if (profile->graphics_mem) {
+                    profile->graphics_size = profile->graphics_mem_size;
+                    snprintf(profile->graphics_path,
+                             sizeof(profile->graphics_path),
+                             "%s (FM Towns disc image)", zip_path);
+                    profile->assets_verified = 1;
+                    profile->platform = DM2_PLATFORM_FMTOWNS_JA;
+                    strncpy(profile->platform_label, "FM Towns Japanese",
+                            sizeof(profile->platform_label) - 1);
+                    strncpy(profile->version_id, "fmtowns-ja",
+                            sizeof(profile->version_id) - 1);
+                }
+            }
+        }
+        if (!profile->dungeon_path[0]) {
+            const FmtownsIsoEntry *dgn =
+                fmtowns_disc_find(&probe, "DATA/DUNGEON.DAT");
+            if (dgn) {
+                fmtowns_disc_extract_alloc(img_data, img_size,
+                    FMTOWNS_SECTOR_2352, dgn,
+                    &profile->dungeon_mem, &profile->dungeon_mem_size);
+                if (profile->dungeon_mem) {
+                    profile->dungeon_size = profile->dungeon_mem_size;
+                    snprintf(profile->dungeon_path,
+                             sizeof(profile->dungeon_path),
+                             "%s (FM Towns disc image)", zip_path);
+                }
+            }
+        }
+        if (!profile->cdda_cd_dat_verified) {
+            const FmtownsIsoEntry *cd =
+                fmtowns_disc_find(&probe, "DATA/CD.DAT");
+            if (cd && cd->size == 40u) {
+                uint8_t *cd_data = NULL;
+                size_t cd_size = 0;
+                if (fmtowns_disc_extract_alloc(img_data, img_size,
+                        FMTOWNS_SECTOR_2352, cd,
+                        &cd_data, &cd_size) == 0 && cd_size == 40u) {
+                    memcpy(profile->cdda_cd_dat_data, cd_data, 40u);
+                    profile->cdda_cd_dat_size = 40u;
+                    profile->cdda_cd_dat_verified = 1;
+                }
+                free(cd_data);
+            }
+        }
+    }
+}
+
 /* ── Scan and verify DM2 assets ─────────────────────────────────────── */
 
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
@@ -857,6 +984,11 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                                      profile->dungeon_path,
                                      &profile->dungeon_size,
                                      profile->dungeon_md5);
+
+    /* If no loose files found, try FM Towns disc image in ZIP */
+    if (!profile->graphics_path[0] || !profile->dungeon_path[0]) {
+        dm2_v1_boot_load_fmtowns_disc_from_zip(profile, base);
+    }
 
     /* Determine if using DM2-specific filenames */
     profile->use_dm2_filenames =
@@ -1047,6 +1179,13 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                         profile->cdda_tracks_available++;
                     }
                 }
+
+                /* FM Towns: load disc image from ZIP for CDDA extraction */
+                if (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+                    profile->cdda_tracks_available == 0 &&
+                    !profile->fmtowns_disc_image) {
+                    dm2_v1_boot_load_fmtowns_disc_from_zip(profile, base);
+                }
             }
         }
     }
@@ -1123,44 +1262,74 @@ size_t dm2_v1_boot_load_cdda_track(const DM2_V1_BootProfile *profile,
                                     int disc_track,
                                     uint8_t **out_data)
 {
-    char path[1024];
-    FILE *f;
-    long fsize;
-    uint8_t *buf;
-
     if (out_data) *out_data = NULL;
     if (!profile || !out_data) return 0;
-    if (profile->cdda_track_dir[0] == '\0') return 0;
     if (disc_track < 2 || disc_track > 99) return 0;
 
-    snprintf(path, sizeof(path), "%s/track%02d.raw",
-             profile->cdda_track_dir, disc_track);
-
-    f = fopen(path, "rb");
-    if (!f) return 0;
-
-    fseek(f, 0, SEEK_END);
-    fsize = ftell(f);
-    if (fsize <= 0 || fsize % 4 != 0) {
-        fclose(f);
-        return 0;
+    /* Path 1: extract from in-memory FM Towns disc image */
+    if (profile->fmtowns_disc_image && profile->fmtowns_disc_image_size > 0 &&
+        disc_track >= (int)DM2_FMTOWNS_CDDA_FIRST_TRACK &&
+        disc_track <= (int)DM2_FMTOWNS_CDDA_LAST_TRACK &&
+        disc_track < profile->fmtowns_cdda_track_count + 2) {
+        DM2_V1_FmtownsCddaTrackInfo info;
+        if (dm2_v1_fmtowns_cdda_track_info(
+                disc_track,
+                profile->fmtowns_cdda_track_starts,
+                profile->fmtowns_cdda_track_count,
+                (uint32_t)(profile->fmtowns_disc_image_size /
+                           DM2_FMTOWNS_SECTOR_SIZE),
+                &info) == 0) {
+            uint8_t *pcm = NULL;
+            size_t pcm_size = 0;
+            if (dm2_v1_fmtowns_cdda_extract(
+                    profile->fmtowns_disc_image,
+                    profile->fmtowns_disc_image_size,
+                    info.start_sector, info.sector_count,
+                    &pcm, &pcm_size) == 0) {
+                *out_data = pcm;
+                return pcm_size;
+            }
+        }
     }
-    fseek(f, 0, SEEK_SET);
 
-    buf = (uint8_t *)malloc((size_t)fsize);
-    if (!buf) {
-        fclose(f);
-        return 0;
-    }
-    if (fread(buf, 1, (size_t)fsize, f) != (size_t)fsize) {
-        free(buf);
-        fclose(f);
-        return 0;
-    }
-    fclose(f);
+    /* Path 2: load from pre-extracted trackNN.raw files */
+    if (profile->cdda_track_dir[0] != '\0') {
+        char path[1024];
+        FILE *f;
+        long fsize;
+        uint8_t *buf;
 
-    *out_data = buf;
-    return (size_t)fsize;
+        snprintf(path, sizeof(path), "%s/track%02d.raw",
+                 profile->cdda_track_dir, disc_track);
+
+        f = fopen(path, "rb");
+        if (!f) return 0;
+
+        fseek(f, 0, SEEK_END);
+        fsize = ftell(f);
+        if (fsize <= 0 || fsize % 4 != 0) {
+            fclose(f);
+            return 0;
+        }
+        fseek(f, 0, SEEK_SET);
+
+        buf = (uint8_t *)malloc((size_t)fsize);
+        if (!buf) {
+            fclose(f);
+            return 0;
+        }
+        if (fread(buf, 1, (size_t)fsize, f) != (size_t)fsize) {
+            free(buf);
+            fclose(f);
+            return 0;
+        }
+        fclose(f);
+
+        *out_data = buf;
+        return (size_t)fsize;
+    }
+
+    return 0;
 }
 
 /* ── Init defaults ────────────────────────────────────────────────────── */
@@ -1362,7 +1531,11 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
         return -1;
     }
 
-    if (profile->graphics_path[0] != '\0') {
+    if (profile->graphics_mem && profile->graphics_mem_size > 0) {
+        profile->graphics_dat =
+            dm2_v1_boot_graphics_load_from_buffer(
+                profile->graphics_mem, profile->graphics_mem_size);
+    } else if (profile->graphics_path[0] != '\0') {
         profile->graphics_dat =
             dm2_v1_boot_graphics_load(profile->graphics_path);
     }
@@ -7137,11 +7310,13 @@ int dm2_v1_boot_startup_menu_pointer_layout(
     memset(out_layout, 0, sizeof(*out_layout));
     if (!profile) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    if (!gfx && profile->graphics_path[0] != '\0') {
-        /* SHOW_MENU_SCREEN owns this route before GAME_LOAD publishes the
-         * runtime graphics handle. Re-open only the verified source file
-         * named by the boot profile; do not promote a fallback surface. */
-        owned_gfx = dm2_v1_boot_graphics_load(profile->graphics_path);
+    if (!gfx) {
+        if (profile->graphics_mem && profile->graphics_mem_size > 0) {
+            owned_gfx = dm2_v1_boot_graphics_load_from_buffer(
+                profile->graphics_mem, profile->graphics_mem_size);
+        } else if (profile->graphics_path[0] != '\0') {
+            owned_gfx = dm2_v1_boot_graphics_load(profile->graphics_path);
+        }
         gfx = owned_gfx;
     }
     if (!gfx) return 0;

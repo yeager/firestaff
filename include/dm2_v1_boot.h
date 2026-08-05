@@ -144,6 +144,12 @@ typedef struct {
     int     use_dm2_filenames;  /* 1 if legacy DM2* filenames were used */
     int     assets_verified;    /* 1 if MD5 hash matched a known version */
 
+    /* ── In-memory asset buffers (from archive extraction) ── */
+    uint8_t *graphics_mem;   /* malloc'd GRAPHICS.DAT from disc image */
+    size_t   graphics_mem_size;
+    uint8_t *dungeon_mem;    /* malloc'd DUNGEON.DAT from disc image */
+    size_t   dungeon_mem_size;
+
     /* ── Save namespace ───────────────────────────────────── */
     char    save_root[1024];   /* saves/dm2/ */
 
@@ -174,6 +180,13 @@ typedef struct {
     /* ── CDDA extracted track directory ────────────────────── */
     char    cdda_track_dir[512];  /* e.g. ~/.firestaff/data/dm2-fmtowns-ja/cdda */
     int     cdda_tracks_available; /* count of trackNN.raw files found */
+
+    /* ── FM Towns disc image (loaded from ZIP, kept in memory) ── */
+    char    fmtowns_zip_path[512];
+    uint8_t *fmtowns_disc_image;
+    size_t   fmtowns_disc_image_size;
+    uint32_t fmtowns_cdda_track_starts[9]; /* track_starts[2..8] */
+    int      fmtowns_cdda_track_count;
 
     /* ── Deterministic config ──────────────────────────────── */
     DM2_V1_DeterministicConfig deterministic;

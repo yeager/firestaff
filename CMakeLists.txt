@@ -3924,7 +3924,11 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.286 LANGUAGES C)
+project(Firestaff VERSION 3.0.287 LANGUAGES C)
+
+set(FIRESTAFF_DUNGEON_STUDIO_VERSION "0.1")
+set(FIRESTAFF_SAVEGAME_EDITOR_VERSION "0.1")
+set(FIRESTAFF_ARTPACK_STUDIO_VERSION "0.1")
 
 # ── Apple ld duplicate-library warning noise ──────────────────────
 # The M11/M12 static-archive cycles intentionally keep repeated libraries
@@ -4093,6 +4097,29 @@ function(firestaff_link_zlib target visibility)
     endif()
 endfunction()
 
+# ── ZIP archive reader (in-memory extraction from ZIP files) ─────────
+add_library(firestaff_zip_extract STATIC
+    src/shared/firestaff_zip_extract.c
+)
+target_include_directories(firestaff_zip_extract PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_zip_extract PRIVATE -Wall -Wextra -O2)
+endif()
+firestaff_link_zlib(firestaff_zip_extract PUBLIC)
+
+# ── FM Towns disc image reader (ISO 9660 + CDDA extraction) ──────────
+add_library(firestaff_fmtowns_disc STATIC
+    src/shared/firestaff_fmtowns_disc.c
+)
+target_include_directories(firestaff_fmtowns_disc PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_fmtowns_disc PRIVATE -Wall -Wextra -O2)
+endif()
+
 # ── RetroAchievements adapter ────────────────────────────────────────
 add_library(firestaff_retroachievements STATIC
     src/shared/firestaff_retroachievements.c
@@ -4239,6 +4266,7 @@ if(APPLE)
         "-framework CoreMIDI"
         "-framework CoreFoundation")
 endif()
+target_link_libraries(firestaff_m10 PUBLIC firestaff_zip_extract firestaff_fmtowns_disc)
 target_compile_definitions(firestaff_m10 PUBLIC
     COMPILE_H
     STATICFUNCTION=static
@@ -4902,6 +4930,9 @@ endif()
 
 add_executable(firestaff_artpack_studio
     tools/firestaff_artpack_studio_launcher.c
+)
+target_compile_definitions(firestaff_artpack_studio PRIVATE
+    ARTPACK_STUDIO_VERSION="${FIRESTAFF_ARTPACK_STUDIO_VERSION}"
 )
 if(NOT MSVC)
     target_compile_options(firestaff_artpack_studio PRIVATE -Wall -Wextra -O2)
@@ -21956,6 +21987,34 @@ if(BUILD_TESTING)
     add_test(
         NAME firestaff_retroachievements_unit
         COMMAND test_firestaff_retroachievements
+    )
+
+    add_executable(test_firestaff_fmtowns_disc
+        tests/test_firestaff_fmtowns_disc.c
+    )
+    target_link_libraries(test_firestaff_fmtowns_disc PRIVATE
+        firestaff_fmtowns_disc firestaff_zip_extract
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_fmtowns_disc PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_fmtowns_disc_unit
+        COMMAND test_firestaff_fmtowns_disc
+    )
+
+    add_executable(test_firestaff_zip_extract
+        tests/test_firestaff_zip_extract.c
+    )
+    target_link_libraries(test_firestaff_zip_extract PRIVATE
+        firestaff_zip_extract
+    )
+    if(NOT MSVC)
+        target_compile_options(test_firestaff_zip_extract PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME firestaff_zip_extract_unit
+        COMMAND test_firestaff_zip_extract
     )
 
     # ── Accessibility manifest writer unit test ────────────────────
