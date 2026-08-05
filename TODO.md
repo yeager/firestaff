@@ -4083,7 +4083,10 @@ that its exact runtime path is not already source-locked and tested.
    viewport renderer. **2026-08-06 query update:** the inactive `c_querydb`
    callback transcription is also test-only because its many remaining TODO
    bodies cannot authenticate GDAT bytes; production must use mounted,
-   provenance-checked GDAT/G1 owners.
+   provenance-checked GDAT/G1 owners. **2026-08-06 GDAT reader update:** the
+   inactive legacy `c_gdatfile` adapter is test-only too. Its
+   `READ_GRAPHICS_STRUCTURE` success result does not decode the original
+   structure, so it cannot substitute for the mounted GRAPHICS.DAT owner.
 42. **DM2-CREATURE-AI-COMBAT:** Complete skproject creature AI, movement,
     combat, projectiles, cloud effects, drops, occupancy, and timeline-driven
     behavior from raw original records.

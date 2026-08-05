@@ -49953,3 +49953,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   many incomplete GDAT-query bodies and has no M11 caller; its explicit test
   target remains while production uses the mounted, provenance-checked
   GDAT/G1 query owners.
+
+- ✅ 2026-08-06 DM2 c_gdatfile placeholder isolation: removed the inactive
+  legacy callback GDAT reader from both production CMake globs. Its graphics
+  structure routine reported success without decoding the original structure;
+  focused tests still compile the adapter explicitly, while production cannot
+  use it instead of the mounted GRAPHICS.DAT data owner.
