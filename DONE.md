@@ -49449,3 +49449,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   the planner's guessed 10×10 rectangles. Champion-index and VDP destination
   remain no-draw until Saturn placement evidence is available; the M11 startup
   gate regression now asserts the blocked pixel route.
+
+- ✅ 2026-08-06 DM1 PC34 object icon bitfields: corrected the ReDMCSB F0033
+  mapping for weapon/torch ChargeCount (bits 10..13) and SCROLL.Closed
+  (bits 10..15), removing wrong item variants caused by shifted raw-byte
+  reads. Focused icon/data tests, Ninja build, and the real PC3.4 alcove
+  runtime test pass. HoC pickup/placement capture remains open in
+  `DM1-HOC-OBJECTS-002`.

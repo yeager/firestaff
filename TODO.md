@@ -25240,7 +25240,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   real capture is still required.
 - [ ] DM1-HOC-OBJECTS-002 Capture a real PC34 HoC pickup/placement round trip
   for weapon, potion, scroll, container and junk objects. Confirm M564 names,
-  C00/C01 hand masks and backpack ownership remain source-backed.
+  C00/C01 hand masks and backpack ownership remain source-backed. The F0033
+  icon resolver now matches the PC34 ReDMCSB bit layout for weapon charge,
+  torch charge and scroll Closed state; real Mac pickup/placement capture is
+  still required.
 - [ ] DM1-HOC-OBJECTS-003 Capture the live held-object cursor on the host window
   after pickup and during movement. The source framebuffer now invalidates on
   pointer motion and hides the host arrow while G4055 is occupied; close only

@@ -713,7 +713,7 @@ static void test_f0115_world_candidates_real_pc34_data(void) {
 static void test_f0141_f0032_f0033_raw_object_icon_path(void)
 {
     struct DungeonThings_Compat things;
-    unsigned char weapon[4] = { 0, 0, 2, 0x8au };
+    unsigned char weapon[4] = { 0, 0, 2, 0x90u };
     unsigned char scroll[4] = { 0, 0, 0, 0 };
     unsigned char junk[4] = { 0, 0, 0, 0 };
     unsigned char potion[4] = { 0, 0, 0, 0 };
@@ -747,7 +747,7 @@ static void test_f0141_f0032_f0033_raw_object_icon_path(void)
               "F0141 scroll G0237 index");
     ASSERT_EQ(dm1_v1_dungeon_get_object_icon_index_pc34(&things, scrollThing, 0), 30,
               "F0033 open scroll icon");
-    scroll[3] = 0x04u;
+    scroll[2] = 0x04u;
     ASSERT_EQ(dm1_v1_dungeon_get_object_icon_index_pc34(&things, scrollThing, 0), 31,
               "F0033 closed scroll icon");
 

@@ -545,11 +545,17 @@ int dm1_v1_dungeon_get_object_icon_index_pc34(
             static const unsigned char torchTypeForCharge[16] = {
                 0, 1, 1, 1, 2, 2, 2, 2, 3, 3, 3, 3, 3, 3, 3, 3
             };
-            return iconIndex + torchTypeForCharge[(raw[3] >> 1) & 0x0fu];
+            /* ReDMCSB WEAPON.ChargeCount is bits 10..13 of the
+             * little-endian property word: PC34 raw byte 3, bits 2..5. */
+            return iconIndex + torchTypeForCharge[(raw[3] >> 2) & 0x0fu];
         }
         break;
     case kIconScrollOpen:
-        if ((raw[3] >> 2) & 0x3fu) return iconIndex + 1;
+        /* ReDMCSB SCROLL.Closed is bits 10..15 of the property word. */
+        if ((((unsigned int)raw[2] >> 2) |
+             ((unsigned int)raw[3] << 6)) & 0x3fu) {
+            return iconIndex + 1;
+        }
         break;
     case kIconJunkWater:
     case kIconJunkJewelSymalUnequipped:
@@ -562,7 +568,8 @@ int dm1_v1_dungeon_get_object_icon_index_pc34(
     case kIconWeaponFuryRaBladeEmpty:
     case kIconWeaponEyeOfTimeEmpty:
     case kIconWeaponStaffOfClawsEmpty:
-        if ((raw[3] >> 1) & 0x0fu) return iconIndex + 1;
+        /* ReDMCSB WEAPON.ChargeCount is bits 10..13. */
+        if ((raw[3] >> 2) & 0x0fu) return iconIndex + 1;
         break;
     default:
         break;
