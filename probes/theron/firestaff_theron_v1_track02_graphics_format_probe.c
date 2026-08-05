@@ -85,9 +85,30 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     return 1;
 }
 
+static const char *resolve_track02_path(const char *env_name,
+                                        const char *file_name,
+                                        char *fallback,
+                                        size_t fallback_size) {
+    const char *value = getenv(env_name);
+    const char *home = getenv("HOME");
+    if (value && value[0]) return value;
+    if (!home || !home[0] || !fallback || fallback_size == 0u) return NULL;
+    if (snprintf(fallback, fallback_size,
+                 "%s/.firestaff/data/theron/%s", home, file_name) < 0) {
+        return NULL;
+    }
+    return fallback;
+}
+
 static void probe_real_media(void) {
-    const char *jp_path = getenv("FIRESTAFF_THERON_TRACK02_JP_BIN");
-    const char *us_path = getenv("FIRESTAFF_THERON_TRACK02_US_BIN");
+    char jp_fallback[512];
+    char us_fallback[512];
+    const char *jp_path = resolve_track02_path(
+        "FIRESTAFF_THERON_TRACK02_JP_BIN", "TQJP02.bin",
+        jp_fallback, sizeof(jp_fallback));
+    const char *us_path = resolve_track02_path(
+        "FIRESTAFF_THERON_TRACK02_US_BIN", "TQUS02.bin",
+        us_fallback, sizeof(us_fallback));
     uint8_t *jp = NULL;
     uint8_t *us = NULL;
     size_t jp_size = 0u;
@@ -100,7 +121,7 @@ static void probe_real_media(void) {
     if (!jp_path || !us_path || !read_file(jp_path, &jp, &jp_size) ||
         !read_file(us_path, &us, &us_size) || !m12_file_md5_hex(jp_path, jp_md5) ||
         !m12_file_md5_hex(us_path, us_md5)) {
-        printf("SKIP real JP/US Track 02 scan needs FIRESTAFF_THERON_TRACK02_{JP,US}_BIN\n");
+        printf("SKIP real JP/US Track 02 scan: standard or FIRESTAFF_THERON_TRACK02_{JP,US}_BIN path unavailable\n");
         free(jp);
         free(us);
         return;

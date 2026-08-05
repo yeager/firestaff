@@ -21,16 +21,34 @@ static int read_raw_user_byte(FILE *file, size_t user_offset, uint8_t *out) {
     return 1;
 }
 
+static const char *resolve_track02_path(const char *env_name,
+                                        const char *file_name,
+                                        char *fallback,
+                                        size_t fallback_size) {
+    const char *value = getenv(env_name);
+    const char *home = getenv("HOME");
+    if (value && value[0]) return value;
+    if (!home || !home[0] || !fallback || fallback_size == 0u) return NULL;
+    if (snprintf(fallback, fallback_size,
+                 "%s/.firestaff/data/theron/%s", home, file_name) < 0) {
+        return NULL;
+    }
+    return fallback;
+}
+
 static void verify_real_track02_level_blocks(const char *env_name,
+                                             const char *file_name,
                                              Theron_Track02Variant variant,
                                              const char *label) {
-    const char *path = getenv(env_name);
+    char fallback[512];
+    const char *path = resolve_track02_path(env_name, file_name,
+                                            fallback, sizeof(fallback));
     FILE *file;
     long file_size;
     uint8_t shared[THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE];
 
     if (!path || !path[0]) {
-        puts("SKIP: no FIRESTAFF_THERON_TRACK02_RAW real-data path");
+        puts("SKIP: no standard or FIRESTAFF_THERON_TRACK02_* real-data path");
         return;
     }
     file = fopen(path, "rb");
@@ -107,9 +125,9 @@ int main(void) {
         assert(b->ud_offset > 0);
     }
 
-    verify_real_track02_level_blocks("FIRESTAFF_THERON_TRACK02_RAW",
+    verify_real_track02_level_blocks("FIRESTAFF_THERON_TRACK02_RAW", "TQUS02.bin",
                                      THERON_TRACK02_VARIANT_US_BIN, "US");
-    verify_real_track02_level_blocks("FIRESTAFF_THERON_TRACK02_JP_RAW",
+    verify_real_track02_level_blocks("FIRESTAFF_THERON_TRACK02_JP_RAW", "TQJP02.bin",
                                      THERON_TRACK02_VARIANT_JP_BIN, "JP");
 
     printf("PASS: theron_v1_track02_level_data_blocks\n");

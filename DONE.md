@@ -49823,3 +49823,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   not be located in the versioned HuC6280 disassembly. The reverse-engineering
   registry now lists only live bitmap/palette/VRAM receipt modules; no inferred
    tile format was promoted into production.
+- ✅ 2026-08-06 Theron real-media probe discovery: level-bank and graphics
+  reconnaissance tests now use the supplied standard
+  `.firestaff/data/theron/TQUS02.bin` and `TQJP02.bin` paths automatically,
+  with environment variables retained as overrides. This removes the local
+  false-skip while keeping graphics/tile semantic publication fail-closed.

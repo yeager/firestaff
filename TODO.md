@@ -197,6 +197,11 @@
   prologue and every eight-byte per-level metadata record. This closes the
   old hardcoded-only test gap while deliberately promoting no tile, palette,
   map or object semantics.
+  The level-bank and graphics-format probes now also discover `TQUS02.bin`
+  and `TQJP02.bin` from the standard `.firestaff/data/theron` root, while
+  retaining explicit environment overrides. Real media is therefore scanned
+  automatically when supplied; the graphics decoder and runtime handoff stay
+  blocked because the HuC6280 consumer still does not bind the bank semantics.
 
   The real Mednafen `*.trace.cd` sidecar now has a strict opaque receipt path:
   it validates the source marker, 51 SCSI READ commands, 157 MODE1/2352 raw
