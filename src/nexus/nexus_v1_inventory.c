@@ -84,8 +84,11 @@ void nexus_itemdef_bind_ibs_bank(const void *bank_ptr, int count) {
         g_ibs_defs[i].carry_locations = bank->item_carry_locations[i];
         g_ibs_defs[i].ibs_flags = bank->item_ibs_flags[i];
         g_ibs_defs[i].weight = bank->item_weight[i];
-        g_ibs_defs[i].flags =
-            (bank->item_carry_locations[i] & 0x01) ? NEXUS_ITEMF_CONSUMABLE : 0;
+        /* DMWeb defines byte 2 as carry-location bits. It does not prove the
+         * live consumable/equipment effect ABI, so do not reinterpret one of
+         * those bits as a gameplay flag. ITEM.IBS remains declaration data
+         * until the Saturn action dispatcher is bound. */
+        g_ibs_defs[i].flags = 0;
         g_ibs_defs[i].action_id[0] = bank->item_action_id[i][0];
         g_ibs_defs[i].action_id[1] = bank->item_action_id[i][1];
         g_ibs_defs[i].action_id[2] = bank->item_action_id[i][2];

@@ -48837,6 +48837,19 @@ the supplied root and selected MD5 to prove this without shipping game data.
   material command.
 - Verification: `test_nexus_v1_dgn_material_raster` and
   `git diff --check` pass; no game data was added to the repository.
+
+# 2026-08-05 Nexus ITEM.IBS gameplay placeholder removal
+
+- ✅ The live ITEM.IBS bank now preserves byte-2 carry locations as raw
+  declaration data instead of inventing `NEXUS_ITEMF_CONSUMABLE` flags.
+- ✅ Real-data mechanics no longer dispatch the fixed DM1 item-ID potion,
+  armour-slot or unarmed-power paths. Those compatibility helpers remain
+  isolated from the authenticated Nexus route until Saturn action/combat
+  semantics are bound from DM.BIN disassembly or an authenticated capture.
+- Verification: `test_nexus_v1_item_ibs`,
+  `test_nexus_v1_inventory_gameplay`, `test_nexus_v1_item_use`,
+  `test_nexus_v1_tick_integration`, Nexus mechanics build and
+  `git diff --check` pass; no game data is committed.
 - ✅ 2026-08-05 Theron Track 02 thing-data loader hardening: reject an
   oversized ground-reference count before narrowing it into the source-shaped
   16-bit receipt field or calculating the copy span. Regression coverage now

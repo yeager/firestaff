@@ -515,7 +515,10 @@ static int get_champion_defense(Nexus_V1_ChampionPool *pool) {
  * Returns 1 if the item was consumed/used, 0 if no effect.
  * Source: DM1 COMMAND.C item use / CLIKMENU.C action dispatch;
  *         CHAMPION.C F0309 equipment slot layout.
- * Nexus V1 uses the same item catalog as DM1 (nexus_v1_inventory.c). */
+ * Nexus V1 uses the same item catalog as DM1 (nexus_v1_inventory.c).
+ * The helper remains for isolated compatibility fixtures only; the live
+ * Nexus path must not call it until Saturn ITEM.IBS action semantics are
+ * source-bound. */
 static int apply_use_item(Nexus_V1_Champion *leader, int item_id) {
     const Nexus_ItemDef *def;
     int target_slot;
@@ -627,6 +630,11 @@ static int mechanics_attack_adjacent_creature(Nexus_V1_Engine *engine,
     Nexus_CombatResult result;
 
     if (!engine || !st) return 0;
+    /* ITEM.IBS declaration bytes do not prove the Saturn combat-action ABI.
+     * In particular, the old unarmed power=2 path was inherited from DM1.
+     * Keep live Nexus combat fail-closed until a Saturn attack dispatcher
+     * capture/disassembly binds the player attack value and target routing. */
+    if (engine->item_ibs_runtime_source.source_bound) return 0;
     mgr = &engine->creatures;
     if (mgr->active_count <= 0) return 0;
 
@@ -764,7 +772,8 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 st->use_item_slot >= 0 && st->use_item_slot < 30) {
                 Nexus_V1_Champion *leader = &engine->champions.champions[leader_idx];
                 int item_id = leader->inventory[st->use_item_slot];
-                if (apply_use_item(leader, item_id)) {
+                if (!engine->item_ibs_runtime_source.source_bound &&
+                    apply_use_item(leader, item_id)) {
                     leader->inventory[st->use_item_slot] = (uint8_t)-1;
                     nexus_champion_recalc_load(leader);
                     nexus_sound_play(&engine->audio, NEXUS_SFX_PICKUP_ITEM);
