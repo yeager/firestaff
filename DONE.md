@@ -1,3 +1,8 @@
+- ✅ 2026-08-05 Theron portrait provenance boundary: roster initialization no
+  longer turns the party slot into a fabricated portrait index. Portraits
+  remain explicitly unbound until Track 02 portrait tile records are decoded;
+  the fixture startup path can still provide its separately gated metadata.
+
 - ✅ 2026-08-05 Theron creature-name provenance cleanup: removed the public
   Goblin/Orc/Kobold/Boss/FIREBALL aliases that mapped synthetic names onto
   real creatures. Tests and probes now use the seven Track 02 dungeon names

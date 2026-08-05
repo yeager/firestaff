@@ -57,6 +57,9 @@
   Removed the public synthetic creature-name aliases used by old tests;
   tests and probes now name the seven real Track 02 dungeon creatures.
 
+  Roster initialization no longer derives portrait IDs from party slots;
+  bind actual portrait tile records before exposing portrait graphics.
+
 - **THERON-FIXTURE-HELPER-ARCHIVE:** Closed 2026-07-31. Synthetic first-room
   constructors are now compiled only into explicit fixture targets; the
   production Theron archive exports no generated level-buffer helpers.

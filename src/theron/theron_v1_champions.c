@@ -43,7 +43,12 @@ static void init_champion_from_roster(Theron_V1_Champion *c,
     memcpy(c->name, rec->name, len);
     c->name[23] = '\0';
 
-    c->portrait_index = (uint8_t)(slot);
+    /* Track 02 roster records do not bind portrait pixels or portrait IDs.
+     * Do not derive a visual index from the host party slot. The explicit
+     * startup fixture/asset path may fill this field after its own evidence
+     * gate; the source-bound roster path keeps it unavailable. */
+    (void)slot;
+    c->portrait_index = 0u;
     c->alive          = 1;
 
     c->health      = (int16_t)rec->hp;
