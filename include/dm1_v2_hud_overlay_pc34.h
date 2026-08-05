@@ -85,6 +85,7 @@ void v2_hud_set_rune_overlay_state(uint8_t selected_rune_mask,
                                    bool recant_enabled,
                                    bool caster_ready);
 void v2_hud_tick_presentation_state(void);
+const char* v21_hud_panel_source_evidence(void);
 
 /* V2.2 health-pulse alpha — V1 tick-synchronous ping-pong, 2 Hz.
  * Source: v22_hud_pulse_v1_sync marker; ReDMCSB TIMELINE.C F0260. */

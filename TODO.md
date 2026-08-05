@@ -1243,6 +1243,14 @@ diagnostic; it must not silently fall back to a generated visual.
   `test_m11_v22_render_overlay_pc34` passes with populated V2.2 cache data and
   an unchanged framebuffer; no placeholder palette index remains in this path.
 
+- **DM1-ORIGINAL-REPLACE-017:** Closed 2026-08-06. Retired the separate DM1
+  V2 HUD overlay's hard-coded 5x5 font, invented champion names, procedural
+  status/action/rune rectangles, compass, and fixed 75% meter. The API keeps
+  presentation state and timing signals but is strict no-draw until decoded
+  PC34 M653/C009/C010/C011 surfaces are supplied. Verification:
+  `test_dm1_v2_hud_overlay_pc34` proves populated state leaves the framebuffer
+  unchanged and cites the authenticated source owners.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less
