@@ -7388,6 +7388,16 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-05 DM1 boot save-evidence correction: a normal real-data HoC
+  boot no longer promotes its loaded `DUNGEON.DAT`/`GRAPHICS.DAT` runtime into
+  an original PC34 save corpus. Save header, five-part corpus, four-portrait
+  corpus, dungeon payload and required save hashes remain unset until an
+  explicitly configured corpus is classified. Verified with the extracted
+  real DM1 boot probe: `dm1CompleteSaveCorpusRoute=0` and
+  `dm1CompleteOriginalSaveRoundtripRoute=0`, while the normal HoC render
+  route remains available. The actual original-save corpus/roundtrip remains
+  open in `TODO.md`.
+
 - ✅ 2026-08-06 DM1 authenticated viewport fallback gate: M11 no longer
   paints synthetic primitive doors or stairs after a real PC34 source session
   fails to resolve its bitmap. Authenticated raw Thing data now fails closed,

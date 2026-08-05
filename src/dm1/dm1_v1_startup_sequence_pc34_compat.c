@@ -3428,18 +3428,10 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
     save_facts.outcome = &resume_outcome;
     save_facts.host_apply = &resume_host;
     save_facts.runtime_handoff = &resume_handoff;
-    save_facts.observed_save_header =
-        complete_facts->dungeon_loaded ? 1 : 0;
-    save_facts.observed_save_part_count =
-        DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
-    save_facts.observed_champion_portrait_count =
-        DM1_V1_STARTUP_SAVE_CORPUS_PORTRAIT_COUNT_PC34;
-    save_facts.observed_dungeon_payload =
-        complete_facts->dungeon_loaded ? 1 : 0;
-    save_facts.observed_required_graphics_hash_match =
-        complete_facts->assets_available ? 1 : 0;
-    save_facts.observed_required_dungeon_hash_match =
-        complete_facts->dungeon_loaded ? 1 : 0;
+    /* A loaded runtime dungeon is not an original save.  These fields must
+     * stay zero until the configured PC34 corpus has supplied save-owned
+     * evidence; otherwise a normal HoC boot is falsely advertised as a
+     * complete save-corpus/roundtrip route. */
     {
         char corpus_root[DM1_ORIGINAL_SAVE_PATH_MAX];
         DM1OriginalSaveCorpusManifest corpus;
@@ -3511,8 +3503,6 @@ int dm1_v1_startup_hoc_boot_complete_support_from_host_facts_pc34(
                 save_facts.observed_user_save_corpus_first_pc34_path =
                     corpus.paths[first_pc34_index];
             }
-            save_facts.observed_save_part_count =
-                DM1_V1_STARTUP_SAVE_CORPUS_PART_COUNT_PC34;
         }
     }
     if (!dm1_v1_startup_save_resume_capture_receipt_pc34(&save_facts,

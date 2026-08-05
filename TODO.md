@@ -25060,6 +25060,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## DM1 original-save corpus follow-up
 
+- [ ] Keep the DM1 boot receipt fail-closed when no original save corpus is
+  configured. A normal GRAPHICS.DAT/DUNGEON.DAT HoC boot must not infer the
+  five save parts, four champion portraits, save header, dungeon payload, or
+  required save hashes from the live dungeon. The boot-probe correction now
+  leaves those fields unset; the remaining work is still a real PC34 save
+  corpus plus an original-save roundtrip verified on the target host.
+
 - [x] Stage an operator-supplied, original PC34 save corpus and run the
   fixture-free F0435 -> F0433 -> F0435 admission target. The implementation
   now requires C3/C4 raw identity plus party, GLOBAL_DATA/map, ACTIVE_GROUP,
