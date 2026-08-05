@@ -22594,6 +22594,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   witness facts from a real HuC6280/System Card trace instead of a caller
   supplied receipt.
 - 🔧 Phase 5 - Mechanics parity hardening: 50-assertion mechanics probe covers movement, click routes, doors, pits, teleporters, altar, combat, drops, and sounds. **2026-07-23 update (Lane E, cycle 11):** new `firestaff_theron_v1_mechanics_playability_probe` loads the authentic JP/US Track 02 Hall-of-Records level-0 grid and verifies movement, turning, wall blocking, and floor movement on the real 32×27 loader-accepted grid (36/36 PASS on staged TQUS02.bin + TQJP02.bin). Remaining work is broader real-asset gameplay traces for doors, pits, teleporters, altar, combat, drops, and sounds once those object semantics are source-locked.
+- 🔧 2026-08-06 Theron drop-placeholder removal: the old category-to-item
+  resolver accepted synthetic item IDs and a host seed, then presented a
+  guessed weapon, armour, consumable, scroll, or key as a real drop. The
+  category table remains a verified item-name/category receipt, but no drop
+  can be admitted until the original T900 consumer and selection record are
+  decoded from Track 02. `theron_v1_drop_loot()` already fails closed at that
+  boundary; the obsolete resolver and its positive fixture assertions are
+  removed. Next evidence is a real T900 drop record plus its consumer.
 - 🔧 Startup presentation hardening: stage/Soul Room render rows, enriched startup layout labels, and Track 02 descriptor-role receipt summaries are now test-visible; remaining work is real Track 02 startup art/audio decoding and pixel evidence instead of fallback text presentation.
 - ✅ 2026-07-22: Theron boot now owns the runtime input/idle facade (`theron_v1_boot_runtime_handle_m12_input` / `theron_v1_boot_runtime_handle_idle_tick`); M11 Track 02 runtime path no longer calls `theron_v1_boot_runtime_tick_world`, `theron_v1_boot_runtime_turn_party`, or `theron_v1_boot_runtime_move_party` directly. Regression test `test_theron_v1_boot_runtime_input` passes 12/12; related probes (`theron_v1_rendering`, `theron_v1_startup_flow_probe`, `theron_v1_m11_direct_launch`, `m11_phase_a`) pass.
 - ✅ 2026-07-23: Theron boot now owns the startup host-receipt apply facade (`theron_v1_boot_apply_startup_host_receipt`); M11 no longer maps `Theron_StartupHostReceipt` fields to `m11_set_status`, `m11_set_inspect_readout`, `m11_log_event`, or input-result actions directly. M11 provides a small callback table (`set_status` / `set_inspect` / `log_event`) and the facade owns the decision order and semantics. This closes the chapter-inspect wiring and startup host-receipt apply items from the 2026-07-22 remaining work. Regression test `test_theron_v1_boot_host_receipt` passes 14/14; related probes (`theron_v1_rendering`, `theron_v1_startup_flow_probe`, `theron_v1_m11_direct_launch`, `theron_v1_m11_launcher_handoff_boundary`, `m11_phase_a`) pass.

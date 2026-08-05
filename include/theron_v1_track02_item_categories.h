@@ -10,7 +10,9 @@ extern "C" {
 
 /* Source: US Track 02 BIN, UD 0x21A046.
  * 66-byte category/type table, one byte per primary item name.
- * Values: 0x22 = COMPASS (unique), 0x80 = weapon, 0x81 = armor, 0x82 = consumable. */
+ * Values: 0x22 = COMPASS (unique), 0x80 = weapon, 0x81 = armor, 0x82 = consumable.
+ * This category table is not a T900 drop record; no drop resolver is exposed
+ * until an original drop consumer and item-selection record are decoded. */
 
 #define THERON_TRACK02_ITEM_CATEGORY_COUNT  66u
 
@@ -21,8 +23,6 @@ extern "C" {
 
 uint8_t theron_v1_track02_item_category(unsigned int index);
 size_t theron_v1_track02_item_category_count(void);
-
-int theron_v1_track02_resolve_drop_item(uint8_t synthetic_id, unsigned int seed);
 
 #ifdef __cplusplus
 }

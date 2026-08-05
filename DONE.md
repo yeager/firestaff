@@ -49630,3 +49630,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   dynamic `$3800` payload receipt. The real JP path resolves the dynamic
   payload to record/raw sector `0x4df`; US-specific later disassembly windows
   remain fail-closed and are not mislabeled as JP parity.
+
+- ✅ 2026-08-06 Theron synthetic drop resolver removal: removed
+  `theron_v1_track02_resolve_drop_item()`, which converted invented item IDs
+  and a seed into guessed drops without a decoded T900 record. The verified
+  66-entry Track 02 category table remains available for source-backed item
+  metadata, while `theron_v1_drop_loot()` continues to reject publication
+  until an original drop consumer and selection record are proven. The item
+  category regression passes without synthetic drop assertions.
