@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Theron startup-receipt CUE handoff: the real startup receipt
+  now consumes the authenticated Track 02 raw-media intake for `.cue` input.
+  Supplied US/JP sheets with missing `TQUS02.iso`/`TQJP02.iso` aliases are
+  resolved through the verified split/complete-image materializer before the
+  receipt hashes bytes or calls direct boot; malformed CUEs remain skipped
+  without falling back to a path-only payload. The delivered JP CUE reaches
+  the real receipt path and retains the canonical ISO identity.
+
 - ✅ 2026-08-06 Nexus retail-revision inventory: verified all eight local
   English-ISO hash mismatches (`FONT256.S2D`, `ITEM.IBS`, `LOGOBG.DG2`,
   `MENU.BPK`, `RHIFIX.BIN`, `RLOWFIX.BIN`, `TITLE.BIN`, `WARNING.BIN`) against

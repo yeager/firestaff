@@ -39,6 +39,7 @@
 #include "theron_v1_startup_receipt.h"
 #include "asset_status_m12.h"
 #include "theron_v1_chapter_marker.h"
+#include "theron_v1_track02_raw_media_intake.h"
 #include "theron_v1_startup_flow.h"
 #include "theron_v1_startup_media.h"
 
@@ -46,6 +47,15 @@
 #include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
+
+static int startup_receipt_is_cue_path(const char *path) {
+    const char *dot = path ? strrchr(path, '.') : NULL;
+    if (!dot) return 0;
+    return (dot[1] == 'c' || dot[1] == 'C') &&
+           (dot[2] == 'u' || dot[2] == 'U') &&
+           (dot[3] == 'e' || dot[3] == 'E') &&
+           dot[4] == '\0';
+}
 
 /* ── Known Track 02 MD5 set (mirrors g_theronVersions in ─────────────
  * src/shared/asset_status_m12.c, kept inline so the receipt module is
@@ -412,6 +422,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
     int file_size;
     int m12_hash_ok = 0;
     int bank_signal_ok = 0;
+    Theron_V1Track02RawMediaIntakeReceipt media_intake;
 
     if (!receipt) return 0;
     theron_v1_startup_receipt_reset(receipt);
@@ -449,11 +460,36 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
         return 0;
     }
 
-    /* Mount only the CUE-declared MODE1/2352 Track 02 payload.  The mount
-     * itself proves no game semantics; its bytes still pass the same MD5
-     * gate below before any decoder receives them. */
-    if (theron_v1_track02_resolve_media_path(track02_path, payload_path) !=
-        THERON_TRACK02_SIGNAL_OK) {
+    /* Resolve CUE input through the authenticated raw-media intake first.
+     * The supplied retail sheets may name a missing split-image alias
+     * (TQUS02.iso/TQJP02.iso); the intake proves the sibling extents and
+     * materializes only the documented, hash-verified ISO.  This keeps the
+     * startup receipt and the raw loader on one real-media path. */
+    memset(&media_intake, 0, sizeof(media_intake));
+    payload_path[0] = '\0';
+    if (theron_v1_track02_raw_media_intake_discover(
+            track02_path, &media_intake) &&
+        media_intake.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY) {
+        safe_str_copy(payload_path, sizeof(payload_path),
+                      media_intake.payload_path);
+    } else if (startup_receipt_is_cue_path(track02_path)) {
+        set_verdict(receipt, THERON_V1_STARTUP_RECEIPT_SKIPPED, "skipped");
+        set_variant(receipt, theron_v1_track02_variant_for_md5(expected_md5));
+        safe_str_copy(receipt->track02_path, sizeof(receipt->track02_path),
+                      track02_path);
+        safe_str_copy(receipt->track02_md5_hex,
+                      sizeof(receipt->track02_md5_hex), expected_md5);
+        safe_str_copy(receipt->skip_reason_note,
+                      sizeof(receipt->skip_reason_note),
+                      "authenticated CUE intake did not resolve Track 02");
+        receipt->m11_dispatch_source_kind = -1;
+        receipt->session_tick_token =
+            theron_v1_startup_receipt_session_tick(receipt);
+        return 0;
+    } else if (!startup_receipt_is_cue_path(track02_path) &&
+               theron_v1_track02_resolve_media_path(track02_path,
+                                                     payload_path) !=
+               THERON_TRACK02_SIGNAL_OK) {
         set_verdict(receipt, THERON_V1_STARTUP_RECEIPT_SKIPPED, "skipped");
         set_variant(receipt, theron_v1_track02_variant_for_md5(expected_md5));
         safe_str_copy(receipt->track02_path, sizeof(receipt->track02_path), track02_path);
@@ -532,7 +568,7 @@ int theron_v1_startup_receipt_from_file(const char *track02_path,
      * call theron_v1_boot_enter_game() (that allocates Theron state and
      * would require SDL); the receipt is purely a startup summary. */
     theron_v1_boot_profile_init(&profile);
-    if (theron_v1_boot_load_verified_path(&profile, track02_path, expected_md5) != 0) {
+    if (theron_v1_boot_load_verified_path(&profile, payload_path, expected_md5) != 0) {
         set_verdict(receipt,
                     THERON_V1_STARTUP_RECEIPT_REJECTED,
                     "rejected");
