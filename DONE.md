@@ -50228,3 +50228,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   the real M11 startup suite also proves Credits enter, countdown, palette
   publication, and left/right dismissal. Verification: GDAT suite 33/33,
   real PC startup/profile gate, and hash-based data scan all pass.
+- ✅ 2026-08-06 DM2 direct-corpus boot regression: the boot-profile smoke
+  test now honors `FIRESTAFF_DM2_DATA_DIR` before its legacy default path and
+  reads the supplied PC corpus in place. This makes the full source-GDAT
+  startup, HUD, dungeon-material, palette/light, and V2-no-fallback check
+  reproducible without copying, unpacking, or staging original game files.
+  Verification: real PC boot-profile suite 95/95.

@@ -100,6 +100,25 @@ static int test_dm2_v2_render_fallback_callback(int party_dir,
     return -1;
 }
 
+static int resolve_real_dm2_data_root(char *out, size_t out_size)
+{
+    const char *direct = getenv("FIRESTAFF_DM2_DATA_DIR");
+    const char *home = getenv("HOME");
+
+    if (!out || out_size == 0u) return 0;
+    out[0] = '\0';
+    /* Real-corpus tests must accept the same direct root as the runtime.
+     * This is a read-only path: the test neither stages nor extracts game
+     * data. */
+    if (direct && direct[0]) {
+        snprintf(out, out_size, "%s", direct);
+        return 1;
+    }
+    if (!home || !home[0]) return 0;
+    snprintf(out, out_size, "%s/.firestaff/data/dm2", home);
+    return 1;
+}
+
 static void test_defaults(void)
 {
     DM2_V1_BootProfile p;
@@ -516,15 +535,13 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
     uint32_t typed_hash = 0u;
     uint32_t typed_bytes = 0u;
     int v2_callback_count = 0;
-    const char *home = getenv("HOME");
     char root[512];
     FILE *g;
     FILE *d;
-    if (!home || !home[0]) {
-        printf("  SKIP: HOME not set for optional real DM2 startup launch\n");
+    if (!resolve_real_dm2_data_root(root, sizeof(root))) {
+        printf("  SKIP: no direct or default DM2 data root for optional startup launch\n");
         return;
     }
-    snprintf(root, sizeof(root), "%s/.firestaff/data/dm2", home);
     {
         char graphics[600];
         char dungeon[600];
