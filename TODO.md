@@ -83,9 +83,9 @@
   intake only. Later-level and object semantics remain blocked until a
   source-backed CD-read/record trace binds them.
 
-  The US Track 19 item-name span is now byte-validated from real ISO data;
-  level/object records and item properties still require the source loader
-  trace before runtime publication.
+  The US Track 19 item-name span and 66×6 item-property table are now
+  byte-validated from real ISO data; level/object records still require the
+  source loader trace before runtime publication.
 
   The real 15-entry Track 19 level-selector label span is now byte-validated
   as metadata; it does not yet admit any level map or object record.

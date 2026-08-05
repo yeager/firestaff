@@ -4,15 +4,19 @@
 #include "theron_v1_track19_jp_level_labels.h"
 #include "theron_v1_track19_level_labels.h"
 #include "theron_v1_track19_record_window.h"
+#include "theron_v1_track02_item_properties.h"
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int verify_real_us_item_table(void) {
     const char *path = getenv("THERON_TRACK19_US_ISO");
     FILE *file;
     long size;
     uint8_t *bytes;
+    Theron_ItemPropertyRecord property;
+    const Theron_ItemPropertyRecord *expected;
     unsigned int i;
     char name[64];
 
@@ -61,6 +65,20 @@ static int verify_real_us_item_table(void) {
         return 0;
     }
     fclose(file);
+    expected = theron_v1_track02_item_property(65u);
+    if (!expected || !theron_v1_track19_item_property_from_iso(
+            bytes, (size_t)size, 0, 65u, &property) ||
+        memcmp(&property, expected, sizeof(property)) != 0) {
+        free(bytes);
+        return 0;
+    }
+    bytes[THERON_TRACK19_ITEM_PROPERTY_TABLE_US_OFFSET] ^= 1u;
+    if (theron_v1_track19_item_property_from_iso(
+            bytes, (size_t)size, 0, 0u, &property)) {
+        free(bytes);
+        return 0;
+    }
+    bytes[THERON_TRACK19_ITEM_PROPERTY_TABLE_US_OFFSET] ^= 1u;
     for (i = 0u; i < THERON_TRACK19_US_LEVEL_LABEL_COUNT; ++i) {
         if (!theron_v1_track19_us_level_label_from_iso(
                 bytes, (size_t)size, i, name, sizeof(name))) {
@@ -87,6 +105,8 @@ static int verify_real_jp_item_table(void) {
     size_t name_size;
     uint8_t label[32];
     size_t label_size;
+    Theron_ItemPropertyRecord property;
+    const Theron_ItemPropertyRecord *expected;
     unsigned int i;
 
     if (!path || !path[0]) return 1;
@@ -133,6 +153,20 @@ static int verify_real_jp_item_table(void) {
         return 0;
     }
     fclose(file);
+    expected = theron_v1_track02_item_property(65u);
+    if (!expected || !theron_v1_track19_item_property_from_iso(
+            bytes, (size_t)size, 1, 65u, &property) ||
+        memcmp(&property, expected, sizeof(property)) != 0) {
+        free(bytes);
+        return 0;
+    }
+    bytes[THERON_TRACK19_ITEM_PROPERTY_TABLE_JP_OFFSET] ^= 1u;
+    if (theron_v1_track19_item_property_from_iso(
+            bytes, (size_t)size, 1, 0u, &property)) {
+        free(bytes);
+        return 0;
+    }
+    bytes[THERON_TRACK19_ITEM_PROPERTY_TABLE_JP_OFFSET] ^= 1u;
     for (i = 0u; i < THERON_TRACK19_JP_LEVEL_LABEL_COUNT; ++i) {
         if (!theron_v1_track19_jp_level_label_from_iso(
                 bytes, (size_t)size, i, label, sizeof(label), &label_size) ||

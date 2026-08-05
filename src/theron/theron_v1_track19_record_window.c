@@ -26,6 +26,24 @@ int theron_v1_track19_item_property_table_validate(
     return 1;
 }
 
+int theron_v1_track19_item_property_from_iso(
+        const uint8_t *iso, size_t iso_size, int japanese_variant,
+        unsigned int index, Theron_ItemPropertyRecord *out) {
+    size_t offset;
+    size_t bytes;
+
+    if (!out || index >= THERON_TRACK19_ITEM_PROPERTY_TABLE_COUNT ||
+        !theron_v1_track19_item_property_table_validate(
+            iso, iso_size, japanese_variant, &offset, &bytes) ||
+        bytes != THERON_TRACK19_ITEM_PROPERTY_TABLE_BYTES) {
+        return 0;
+    }
+    memcpy(out, iso + offset +
+           index * THERON_TRACK19_ITEM_PROPERTY_RECORD_BYTES,
+           THERON_TRACK19_ITEM_PROPERTY_RECORD_BYTES);
+    return 1;
+}
+
 /* FNV-1a over the identical 502-byte US/JP window in the real ISO corpus.
  * It intentionally overlaps 395 bytes of the authenticated property table;
  * the unclassified remainder is not promoted to object/map semantics. */

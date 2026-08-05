@@ -17,9 +17,11 @@
 - ✅ 2026-08-05 Theron Track 19 item-property provenance correction: the real
   US/JP ISOs now authenticate the full 66×6-byte item-property table at
   `0x0E951D` / `0x0E955D`, byte-for-byte against the source-bound Track 02
-  records. The existing overlapping 502-byte FNV receipt remains structural
-  evidence only; its unclassified remainder is not promoted to map/object,
-  bitmap or palette semantics. Real US/JP inventory probes pass.
+  records. A file-backed accessor now returns an individual record only after
+  the complete table revalidates. The existing overlapping 502-byte FNV
+  receipt remains structural evidence only; its unclassified remainder is not
+  promoted to map/object, bitmap or palette semantics. Real US/JP inventory
+  probes pass.
 
 - ✅ 2026-08-05 Theron JP Track 19 level-label provenance: the real
   `TQJP19.iso` selector table is now bound at `0x203A7E–0x203B8C` as 15
