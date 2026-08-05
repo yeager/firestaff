@@ -57,6 +57,11 @@
   The Structure3 viewport rasterizer now also requires the complete scene's
   transform and pixel/palette/VDP1 semantics bits; payload/format admission
   alone can no longer present a textured mesh before Saturn capture.
+  The legacy raw SAL sample-index API is now diagnostic-only: decoded SAL
+  bytes cannot start host playback without a source-owned event→MAP selector
+  binding. The real SLEV/SAL/SNDLEV corpus, SDDRVS ABI and distributed game
+  call sites still need an authenticated Saturn event trace before production
+  SFX playback can be admitted.
   The legacy Nexus door raster API is now no-draw: its former DM1-derived
   gap geometry and palette guesses were removed. Bind Saturn door materials,
   animation frames, and VDP1 destinations before restoring door pixels.

@@ -74,7 +74,10 @@ när textur eller palett saknas; den avstår från att rita tills ett verifierat
 material finns. `nexus_v1_drops.c` hittar inte längre på ett guld-drop för en
 okänd creature-typ. Nexus-ljudet loggar nu uttryckligen blockerad playback;
 SAL/MAP-filerna får användas som evidens men ingen syntetisk sample eller
-falskt "playing"-tillstånd produceras. Oregistrerade trapp-/chutelänkar
+falskt "playing"-tillstånd produceras. Den äldre råa sample-index-vägen är
+dessutom diagnostisk även när SAL-dekodning lyckas; endast en källbunden
+event→MAP-selector från Saturn-trace får senare öppna playback. Oregistrerade
+trapp-/chutelänkar
 returnerar nu blockerad square-event i stället för en påhittad nivåförflyttning,
 och dörrtest utan källbunden inventory passerar inte som om nyckel fanns.
 Movement passerar inte heller en dörr som inte har en verifierad öppen status i

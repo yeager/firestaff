@@ -1118,17 +1118,11 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
         looked_up = record_event_window(eng, &window);
     }
 
-    if (!receipt.blocks_real_sfx_playback && eng->sal_decode_ready &&
-        sample_index >= 0 &&
-        sample_index < eng->sal_decoded_tone_count) {
-        nexus_sound_trigger_tone(eng, sample_index);
-        return;
-    }
-
-    if (receipt.blocks_real_sfx_playback) {
-        return;
-    }
-
+    /* A raw sample index is not a source-owned event binding.  Keep this
+     * legacy API diagnostic-only even when SAL bytes happen to decode: only
+     * the event route may later be admitted after a proven Saturn
+     * event→MAP-selector trace. */
+    (void)receipt;
     if (looked_up) {
         printf("Nexus SFX dispatch: sample_idx=%d sal_offset=%d sal_size=%d "
                "(no decoded tone)\n",

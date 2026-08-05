@@ -1,3 +1,10 @@
+- ✅ 2026-08-05 Nexus raw SFX selector gate: `nexus_sound_play_idx()` no
+  longer starts a decoded SAL tone from an unproven integer sample index. The
+  API retains MAP/window diagnostics only; production playback remains
+  blocked until a Saturn-owned event→MAP selector trace and SDDRVS handoff are
+  authenticated. Focused real-corpus SLEV/SAL/SNDLEV receipt and decode tests
+  remain green.
+
 - ✅ 2026-08-05 Nexus action-semantics gate: added one shared production
   capability check used by mechanics and engine tick paths. Until an original
   Saturn action-dispatch trace binds command routing, stat reads, RNG and side
