@@ -49396,6 +49396,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   production no-op HUD seam and manifest classifier await a real Track 02
   widget bank.
 
+- ✅ 2026-08-06 Theron canonical ISO intake proof: the raw media-intake test
+  now consumes the supplied assembled US Track 02 ISO when present and checks
+  its real MD5, 2048-byte sector layout, 3221-sector payload, user-data window,
+  and non-eligibility for raw MODE1/2352 trace preparation. This strengthens
+  BIN/CUE/ISO separation without promoting opaque ISO bytes to level, object,
+  bitmap, or palette semantics.
+
 - ✅ 2026-08-06 Theron Main-RAM loader capture receipt: the supplied real
   Mednafen sidecar is now parsed as a strict regular-file receipt. It verifies
   the observed TIA transfer from `$c800` to `$0404` (128 bytes), loader PC
@@ -49458,6 +49465,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   reads. Focused icon/data tests, Ninja build, and the real PC3.4 alcove
   runtime test pass. HoC pickup/placement capture remains open in
   `DM1-HOC-OBJECTS-002`.
+
+- ✅ 2026-08-05 Nexus door raster placeholder removal: removed the uncalled
+  DM1-derived open/closed/locked door geometry and guessed palette indices
+  from `nexus_v1_rasterizer.c`. The public gameplay-facing API now remains
+  fail-closed even when a host texture is supplied. Added a framebuffer color
+  and depth regression to `test_nexus_v1_dgn_material_raster`; Saturn door
+  materials, animation frames, and VDP1 destinations remain capture-gated.
 
 - ✅ 2026-08-06 DM2 startup synthetic-keyboard gate: M11 no longer translates
   generic Firestaff `UP`/`DOWN`/`ACCEPT` menu tokens into DM2 startup actions.
