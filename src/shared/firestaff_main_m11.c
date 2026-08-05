@@ -13,6 +13,7 @@
 
 #include "asset_status_m12.h"
 #include "asset_find_by_hash.h"
+#include "firestaff_game_data_fingerprint.h"
 #include "firestaff_version.h"
 #include "fs_portable_compat.h"
 #include "render_sdl_m11.h"
@@ -127,6 +128,20 @@ static int find_csb_optional_media(const M12_AssetStatus* status,
     return 0;
 }
 
+static const char* csb_optional_media_provenance(const char* path,
+                                                 char md5[33]) {
+    FirestaffGameDataClassifyResult classified;
+    if (!path || !md5 || !asset_file_md5_hex(path, md5)) {
+        return NULL;
+    }
+    classified = firestaff_game_data_classify_hex(md5);
+    if (!classified.valid || !classified.entry ||
+        classified.entry->game != FIRESTAFF_GAME_CSB) {
+        return NULL;
+    }
+    return classified.entry->description;
+}
+
 static void print_scan_game(const M12_AssetStatus* status,
                             const char* gameId,
                             const char* title,
@@ -165,6 +180,15 @@ static void print_scan_game(const M12_AssetStatus* status,
             char path[512];
             if (find_csb_optional_media(status, optionalLabels[i], path)) {
                 printf("  %-28s FOUND  %s\n", optionalLabels[i], path);
+                if (verbose) {
+                    char md5[33];
+                    const char* provenance = csb_optional_media_provenance(path, md5);
+                    if (provenance) {
+                        printf("    md5: %s  verified: %s\n", md5, provenance);
+                    } else if (asset_file_md5_hex(path, md5)) {
+                        printf("    md5: %s  unclassified optional media\n", md5);
+                    }
+                }
             }
         }
     }

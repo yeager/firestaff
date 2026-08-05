@@ -1,3 +1,12 @@
+- ✅ 2026-08-05 CSB optional-media provenance: verbose `--scan-data` now
+  computes each materialized Utility Disk file's MD5 and consults the shared
+  CSB fingerprint catalog. A real Atari ST package reports `HCSB.DAT`
+  (`708e113c869ab922633e885aa72a3c77`) and `ANIMATE.DAT`
+  (`9f8feb269c959c9fe722ac08f99d9c35`) as verified source media; unlisted
+  optional companions remain explicitly unclassified rather than being
+  presented as verified. Verified by the fingerprint unit, the CSB archive
+  regression, and a scan of the local original package.
+
 - ✅ 2026-08-05 Nexus boot-library corpus verification: the materialized
   original `0DMSTRT.BIN` now passes the real-file structure-admission gate
   (`test_nexus_v1_0dmstrt_structure_admission .../0DMSTRT.BIN`). Its fixup,
