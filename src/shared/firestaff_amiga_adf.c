@@ -85,9 +85,9 @@ static int adf_visit_file(const uint8_t *image, size_t blocks, uint32_t number,
     return rc < 0 ? -1 : 1;
 }
 
-int firestaff_amiga_adf_visit_ofs_files(const uint8_t *image, size_t image_size,
-                                        FirestaffAmigaAdfFileVisitor visitor,
-                                        void *user_data) {
+FIRESTAFF_AMIGA_ADF_API int firestaff_amiga_adf_visit_ofs_files(
+    const uint8_t *image, size_t image_size,
+    FirestaffAmigaAdfFileVisitor visitor, void *user_data) {
     size_t blocks, i; int found = 0;
     if (!image || image_size < ADF_BLOCK * 4U || image_size % ADF_BLOCK != 0U ||
         memcmp(image, "DOS\0", 4U) != 0) return -1;

@@ -31,6 +31,12 @@
 #include <unistd.h>
 #endif
 
+/* Keep the scanner independently linkable: focused probes compile this file
+ * directly, while the normal M11 build also exports the reader separately. */
+#define FIRESTAFF_AMIGA_ADF_API static
+#include "firestaff_amiga_adf.c"
+#undef FIRESTAFF_AMIGA_ADF_API
+
 #define ASSET_SCAN_MAX_FILE_BYTES (32LL * 1024LL * 1024LL)
 #define ASSET_ZIP_MAX_ENTRY_BYTES (16U * 1024U * 1024U)
 #define ASSET_TAR_MAX_ENTRY_BYTES (32U * 1024U * 1024U)
@@ -472,6 +478,7 @@ typedef enum {
     ASSET_CONTAINER_GZIP,
     ASSET_CONTAINER_LHA,
     ASSET_CONTAINER_CHD,
+    ASSET_CONTAINER_ADF,
     ASSET_CONTAINER_EXTERNAL
 } AssetContainerKind;
 
@@ -533,6 +540,10 @@ static int is_chd_path(const char *path) {
     return has_case_suffix(path, ".chd");
 }
 
+static int is_adf_path(const char *path) {
+    return has_case_suffix(path, ".adf");
+}
+
 static int is_external_archive_path(const char *path) {
     return is_external_tar_archive_path(path) ||
            has_case_suffix(path, ".7z") || has_case_suffix(path, ".rar") ||
@@ -576,6 +587,7 @@ static AssetContainerKind asset_container_kind_from_suffix(const char *path) {
     if (is_gzip_path(path)) return ASSET_CONTAINER_GZIP;
     if (is_lha_path(path)) return ASSET_CONTAINER_LHA;
     if (is_chd_path(path)) return ASSET_CONTAINER_CHD;
+    if (is_adf_path(path)) return ASSET_CONTAINER_ADF;
     if (is_external_archive_path(path)) return ASSET_CONTAINER_EXTERNAL;
     return ASSET_CONTAINER_NONE;
 }
@@ -605,6 +617,10 @@ static AssetContainerKind asset_container_kind_from_magic(const char *path) {
     if (got >= 2U && header[0] == 0x1f && header[1] == 0x8b) {
         fclose(fp);
         return ASSET_CONTAINER_GZIP;
+    }
+    if (got >= 4U && memcmp(header, "DOS\0", 4U) == 0) {
+        fclose(fp);
+        return ASSET_CONTAINER_ADF;
     }
     if ((got >= 3U && memcmp(header, "BZh", 3U) == 0) ||
         (got >= 6U && memcmp(header, "\xfd" "7zXZ\0", 6U) == 0) ||
@@ -3340,6 +3356,173 @@ static int external_tool_available_for_path(const char *path) {
 #endif
 }
 
+/* AmigaDOS OFS disks are filesystems, not opaque archives. Load the bounded
+ * image once and ask the shared reader for its validated files. This keeps
+ * ADF discovery independent of a host-side extractor and works for every
+ * supported game rather than naming CSB files specially. */
+static uint8_t *adf_load_image(const char *path, size_t *outSize) {
+    FILE *fp;
+    long size;
+    uint8_t *image;
+    if (!path || !outSize || !(fp = fopen(path, "rb"))) return NULL;
+    if (fseek(fp, 0L, SEEK_END) != 0 || (size = ftell(fp)) < 0L ||
+        size > ASSET_SCAN_MAX_FILE_BYTES || fseek(fp, 0L, SEEK_SET) != 0) {
+        fclose(fp);
+        return NULL;
+    }
+    image = (uint8_t *)malloc((size_t)size);
+    if (!image || fread(image, 1U, (size_t)size, fp) != (size_t)size) {
+        free(image);
+        fclose(fp);
+        return NULL;
+    }
+    fclose(fp);
+    *outSize = (size_t)size;
+    return image;
+}
+
+typedef struct {
+    const char *expected_md5;
+    char name[31];
+    int found;
+} AdfSingleMatch;
+
+static int adf_find_single_visitor(const char *name, const uint8_t *bytes,
+                                   size_t byte_count, void *user_data) {
+    AdfSingleMatch *match = (AdfSingleMatch *)user_data;
+    AssetMd5Ctx ctx;
+    char hex[33];
+    md5_init(&ctx);
+    md5_update(&ctx, bytes, (unsigned int)byte_count);
+    md5_final(&ctx, hex);
+    if (strcmp(hex, match->expected_md5) == 0 &&
+        (!match->found || strcmp(name, match->name) < 0)) {
+        snprintf(match->name, sizeof(match->name), "%s", name);
+        match->found = 1;
+    }
+    return 0;
+}
+
+static int scan_adf_by_md5(const char *adfPath, const char *expectedMd5,
+                           char *outPath, int outPathLen) {
+    uint8_t *image;
+    size_t imageSize;
+    AdfSingleMatch match;
+    int result;
+    memset(&match, 0, sizeof(match));
+    match.expected_md5 = expectedMd5;
+    image = adf_load_image(adfPath, &imageSize);
+    if (!image) return 0;
+    result = firestaff_amiga_adf_visit_ofs_files(image, imageSize,
+                                                  adf_find_single_visitor, &match);
+    free(image);
+    return result >= 0 && match.found &&
+           copy_virtual_match_path(adfPath, match.name, outPath, outPathLen);
+}
+
+typedef struct {
+    const char *container;
+    const char *const *md5_list;
+    int md5_count;
+    char (*out_paths)[ASSET_PATH_MAX];
+    int *matched;
+    int found_count;
+} AdfListMatch;
+
+static int adf_find_list_visitor(const char *name, const uint8_t *bytes,
+                                 size_t byte_count, void *user_data) {
+    AdfListMatch *matches = (AdfListMatch *)user_data;
+    AssetMd5Ctx ctx;
+    char hex[33];
+    int index;
+    md5_init(&ctx);
+    md5_update(&ctx, bytes, (unsigned int)byte_count);
+    md5_final(&ctx, hex);
+    index = md5_list_match_index(hex, matches->md5_list, NULL, matches->md5_count);
+    if (index >= 0) {
+        int should_update = !matches->matched[index];
+        if (!should_update) {
+            const char *old_name = strstr(matches->out_paths[index], "::");
+            should_update = old_name != NULL && strcmp(name, old_name + 2) < 0;
+        }
+        if (should_update && copy_virtual_match_path(matches->container, name,
+                                                      matches->out_paths[index],
+                                                      ASSET_PATH_MAX)) {
+            if (!matches->matched[index]) {
+                matches->matched[index] = 1;
+                ++matches->found_count;
+            }
+        }
+    }
+    return 0;
+}
+
+static int scan_adf_by_md5_list(const char *adfPath, const char *const *md5List,
+                                int md5Count,
+                                char outPaths[][ASSET_PATH_MAX], int matched[]) {
+    uint8_t *image;
+    size_t imageSize;
+    AdfListMatch matches;
+    int result;
+    if (!md5List || md5Count <= 0 || !outPaths || !matched) return 0;
+    image = adf_load_image(adfPath, &imageSize);
+    if (!image) return 0;
+    memset(&matches, 0, sizeof(matches));
+    matches.container = adfPath;
+    matches.md5_list = md5List;
+    matches.md5_count = md5Count;
+    matches.out_paths = outPaths;
+    matches.matched = matched;
+    result = firestaff_amiga_adf_visit_ofs_files(image, imageSize,
+                                                  adf_find_list_visitor, &matches);
+    free(image);
+    return result < 0 ? 0 : matches.found_count;
+}
+
+typedef struct {
+    const char *entry;
+    const char *out_path;
+    int extracted;
+} AdfExtractMatch;
+
+static int adf_extract_visitor(const char *name, const uint8_t *bytes,
+                               size_t byte_count, void *user_data) {
+    AdfExtractMatch *extract = (AdfExtractMatch *)user_data;
+    FILE *out;
+    if (asset_casecmp(name, extract->entry) != 0) return 0;
+    out = fopen(extract->out_path, "wb");
+    if (!out) return -1;
+    if (fwrite(bytes, 1U, byte_count, out) != byte_count) {
+        fclose(out);
+        remove(extract->out_path);
+        return -1;
+    }
+    if (fclose(out) != 0) {
+        remove(extract->out_path);
+        return -1;
+    }
+    extract->extracted = 1;
+    return 0;
+}
+
+static int adf_extract_entry_to_path(const char *adfPath, const char *entry,
+                                     const char *outFilePath) {
+    uint8_t *image;
+    size_t imageSize;
+    AdfExtractMatch extract;
+    int result;
+    if (!entry || !outFilePath) return 0;
+    image = adf_load_image(adfPath, &imageSize);
+    if (!image) return 0;
+    extract.entry = entry;
+    extract.out_path = outFilePath;
+    extract.extracted = 0;
+    result = firestaff_amiga_adf_visit_ofs_files(image, imageSize,
+                                                  adf_extract_visitor, &extract);
+    free(image);
+    return result >= 0 && extract.extracted;
+}
+
 static int scan_container_by_md5(const char *path, const char *expectedMd5,
                                  char *outPath, int outPathLen) {
     AssetContainerKind kind = asset_container_kind_for_path(path);
@@ -3369,6 +3552,9 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
     }
     if (kind == ASSET_CONTAINER_CHD) {
         return scan_chd_by_md5(path, expectedMd5, outPath, outPathLen);
+    }
+    if (kind == ASSET_CONTAINER_ADF) {
+        return scan_adf_by_md5(path, expectedMd5, outPath, outPathLen);
     }
     if (kind == ASSET_CONTAINER_EXTERNAL) {
         if (!external_tool_available_for_path(path)) {
@@ -3411,6 +3597,9 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
     }
     if (kind == ASSET_CONTAINER_CHD) {
         return scan_chd_by_md5_list(path, md5List, md5Count, outPaths, matched);
+    }
+    if (kind == ASSET_CONTAINER_ADF) {
+        return scan_adf_by_md5_list(path, md5List, md5Count, outPaths, matched);
     }
     if (kind == ASSET_CONTAINER_EXTERNAL) {
         if (!external_tool_available_for_path(path)) {
@@ -3932,6 +4121,9 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
     }
     if (kind == ASSET_CONTAINER_CHD) {
         return chd_extract_entry_to_path(container, entry, outFilePath);
+    }
+    if (kind == ASSET_CONTAINER_ADF) {
+        return adf_extract_entry_to_path(container, entry, outFilePath);
     }
     if (kind == ASSET_CONTAINER_EXTERNAL) {
         if (!external_tool_available_for_path(container)) {

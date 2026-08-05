@@ -47,6 +47,45 @@ static void put32(unsigned char* p, unsigned int v) {
     p[3] = (unsigned char)((v >> 24U) & 0xffU);
 }
 
+static void putbe32(unsigned char* p, unsigned int v) {
+    p[0] = (unsigned char)((v >> 24U) & 0xffU);
+    p[1] = (unsigned char)((v >> 16U) & 0xffU);
+    p[2] = (unsigned char)((v >> 8U) & 0xffU);
+    p[3] = (unsigned char)(v & 0xffU);
+}
+
+/* Minimal valid AmigaDOS OFS disk: it deliberately uses a filesystem file
+ * header and data block, rather than pretending an ADF is a generic archive. */
+static int write_adf_fixture(const char* path) {
+    static const char payload[] = "Firestaff hash identity fixture v1\n";
+    static const char name[] = "GRAPHICS.DAT";
+    unsigned char image[4U * 512U] = {0};
+    unsigned char* header = image + 2U * 512U;
+    unsigned char* data = image + 3U * 512U;
+    FILE* fp;
+    memcpy(image, "DOS\0", 4U);
+    putbe32(header, 2U);
+    putbe32(header + 4U, 2U);
+    putbe32(header + 8U, 1U);
+    putbe32(header + 77U * 4U, 3U);
+    putbe32(header + 81U * 4U, (unsigned int)(sizeof(payload) - 1U));
+    header[432U] = (unsigned char)(sizeof(name) - 1U);
+    memcpy(header + 433U, name, sizeof(name) - 1U);
+    putbe32(header + 127U * 4U, 0xfffffffdU);
+    putbe32(data, 8U);
+    putbe32(data + 4U, 2U);
+    putbe32(data + 8U, 1U);
+    putbe32(data + 12U, (unsigned int)(sizeof(payload) - 1U));
+    memcpy(data + 24U, payload, sizeof(payload) - 1U);
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fwrite(image, 1U, sizeof(image), fp) != sizeof(image)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static int write_stored_zip_fixture(const char* path) {
     static const char payload[] = "Firestaff hash identity fixture v1\n";
     static const char name[] = "dm2/RENAMED.BIN";
@@ -451,6 +490,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/cue_a.payload");
     remove("asset_find_by_hash_test_tmp/cue_b.payload");
     remove("asset_find_by_hash_test_tmp/split.cue");
+    remove("asset_find_by_hash_test_tmp/chaos.adf");
     RMDIR("asset_find_by_hash_test_tmp/nested");
     RMDIR("asset_find_by_hash_test_tmp");
 }
@@ -565,6 +605,38 @@ int main(void) {
     }
 
     remove("asset_find_by_hash_test_tmp/nested/renamed.asset");
+    if (!write_adf_fixture("asset_find_by_hash_test_tmp/chaos.adf")) {
+        cleanup_fixture();
+        fprintf(stderr, "ADF fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_entry(outPath, "chaos.adf", "GRAPHICS.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "ADF filesystem entry lookup failed: %s\n", outPath);
+        return 1;
+    }
+    if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "ADF virtual extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    memset(outPaths, 0, sizeof(outPaths));
+    memset(matched, 0, sizeof(matched));
+    if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
+                                   outPaths, matched, 2, 2) != 1 ||
+        matched[0] || !matched[1] ||
+        !path_has_virtual_entry(outPaths[1], "chaos.adf", "GRAPHICS.DAT")) {
+        cleanup_fixture();
+        fprintf(stderr, "ADF MD5-list lookup failed: matched=%d,%d path=%s\n",
+                matched[0], matched[1], outPaths[1]);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/chaos.adf");
     if (!write_stored_zip_fixture("asset_find_by_hash_test_tmp/archive.zip")) {
         cleanup_fixture();
         fprintf(stderr, "ZIP fixture setup failed\n");
