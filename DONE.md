@@ -78,6 +78,12 @@
   package passes the complete save-to-runtime regression with HALK's restored
   pose and non-empty source viewport pixels.
 
+- ✅ 2026-08-05 CSB campaign-save scanner coverage: `--scan-data --verbose`
+  now reports the materialized original Atari ST `MINI.DAT` campaign save by
+  MD5 (`531ea104a2fbc2011ea73d11f274c57d`). It remains an optional companion,
+  not a substitute for the GRAPHICS/DUNGEON launch gate. The local Phase 0
+  package and the shared fingerprint suite verify the source identity.
+
 - ✅ 2026-08-05 CSB optional-media provenance: verbose `--scan-data` now
   computes each materialized Utility Disk file's MD5 and consults the shared
   CSB fingerprint catalog. A real Atari ST package reports `HCSB.DAT`
