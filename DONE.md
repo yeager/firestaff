@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 DM1 real object-name handoff: added a corpus-backed runtime
+  test that launches from the real PC3.4 `GRAPHICS.DAT`/`DUNGEON.DAT`, checks
+  the authenticated M564 C199 name table, and resolves a real dungeon weapon
+  through the ReDMCSB F0031/F0033 leader-hand path (`EYE OF TIME` in the
+  supplied corpus). This confirms that the production name route is not using
+  the retired `WEAPON n` subtype fallback. The broader C05-C13 placement and
+  inventory interaction work remains open.
+
 - ✅ 2026-08-06 DM1 HoC stairs overpaint ordering: the exact ReDMCSB
   F0104/F0105 PC34 stairs pass now runs after M11's final F0128 center-wall
   occlusion replay for D3..D1. Previously that replay could paint over an

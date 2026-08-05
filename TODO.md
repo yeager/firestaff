@@ -3529,7 +3529,11 @@ that its exact runtime path is not already source-locked and tested.
     (4 unknown bytes per creature).
 16. **DM1-ITEM-INVENTORY-INTERACTION:** Complete C05-C13 object placement,
     chest, quiver, food, potion, scroll, weapon, armour, and inventory drag/
-    drop interaction from original data records.
+    drop interaction from original data records. 2026-08-06: a real PC3.4
+    corpus test now proves M564 object-name loading and leader-hand resolution
+    (`EYE OF TIME`) from actual `GRAPHICS.DAT`/`DUNGEON.DAT`; incorrect-name
+    reports should therefore be investigated in icon/Thing identity or the
+    interaction route, not fixed with another handwritten name table.
 17. **DM1-SOUND-MUSIC-STARTUP:** Complete original DM1 sound/music playback,
     title/swoosh/entrance cadence, palette transitions, and runtime sound
     events with real media and no generated timing.

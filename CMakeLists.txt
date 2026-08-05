@@ -9329,6 +9329,20 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_real_object_names.c")
+        add_executable(test_m11_dm1_real_object_names
+            tests/test_m11_dm1_real_object_names.c)
+        target_link_libraries(test_m11_dm1_real_object_names PRIVATE firestaff_m12 firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_m11_dm1_real_object_names PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME m11_dm1_real_object_names
+            COMMAND test_m11_dm1_real_object_names
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0115_floor_item_runtime_capture_pc34.c")
         add_executable(test_m11_dm1_f0115_floor_item_runtime_capture_pc34
             tests/test_m11_dm1_f0115_floor_item_runtime_capture_pc34.c)
