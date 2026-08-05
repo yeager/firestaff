@@ -343,35 +343,54 @@ int dm2_v1_save_suppress_symbol_receipt(
  * Slot manager
  * ════════════════════════════════════════════════════════════════ */
 
-#define DM2_SLOT_MAGIC_1  0xBEEF
-#define DM2_SLOT_MAGIC_2  0xDEAD
-
 static bool dm2_sl_header_valid(const uint8_t hdr[42])
 {
     size_t i;
-    uint16_t m1 = (uint16_t)hdr[38] | ((uint16_t)hdr[39] << 8);
-    uint16_t m2 = (uint16_t)hdr[40] | ((uint16_t)hdr[41] << 8);
-
-    /* Historic Firestaff fixtures used this invented marker pair. Retain it
-     * only as a low-level container test shape; production session loaders
-     * subsequently reject their private D2RS payloads. */
-    if (m1 == DM2_SLOT_MAGIC_1 && m2 == DM2_SLOT_MAGIC_2) return true;
 
     /* Original DOS SKSaveNN files use a 42-byte sksave_header_asc record,
-     * but do not carry the fixture marker pair. The mounted PC corpus has a
-     * little-endian version word 1 and a bounded printable save label at
-     * b2. DM2_READ_SKSAVE_DUNGEON owns the bytes immediately after this
-     * record, so this is only the container gate; the raw dungeon/SUPPRESS
-     * parser remains mandatory before a candidate becomes loadable.
+     * whose c_hex2a::l_26 field starts at b38. A missing slot is represented
+     * in the in-memory dialog list by 0xdeadbeef, not by an on-disk file.
+     * The mounted PC corpus has a little-endian version word 1 and a bounded
+     * printable save label at b2. DM2_READ_SKSAVE_DUNGEON owns the bytes
+     * immediately after this record, so this is only the container gate; the
+     * raw dungeon/SUPPRESS parser remains mandatory before a candidate
+     * becomes loadable.
      *
-     * SKProject: SKULLWIN/c_savegame.cpp::DM2_READ_SKSAVE_DUNGEON,
-     * DM2_GAME_LOAD. */
+     * SKProject: SKULLWIN/dm2data.h::c_hex2a; c_dialog.cpp:115-117,
+     * 199-202, 337-343; c_savegame.cpp:2169-2181. */
     if (hdr[0] != 1u || hdr[1] != 0u) return false;
-    for (i = 2u; i < 36u; ++i) {
+    if (hdr[38] == 0xefu && hdr[39] == 0xbeu &&
+        hdr[40] == 0xadu && hdr[41] == 0xdeu) return false;
+    for (i = 2u; i < 38u; ++i) {
         if (hdr[i] == 0u) return i != 2u;
         if (hdr[i] < 0x20u || hdr[i] > 0x7eu) return false;
     }
     return false;
+}
+
+static void dm2_sl_build_source_header(uint8_t hdr[42], const char *name,
+                                       const char *previous_path)
+{
+    uint8_t previous[42];
+    FILE *previous_file;
+    size_t nlen;
+
+    memset(hdr, 0, 42u);
+    /* SKProject c_savegame.cpp:2169-2181 reads the previous 42-byte header
+     * after rotation, retains c_hex2a::l_26, then replaces only w_00/name. */
+    if (previous_path &&
+        (previous_file = fopen(previous_path, "rb")) != NULL) {
+        if (fread(previous, sizeof(previous), 1u, previous_file) == 1u &&
+            dm2_sl_header_valid(previous)) {
+            memcpy(hdr + 38u, previous + 38u, 4u);
+        }
+        fclose(previous_file);
+    }
+    hdr[0] = 1u;
+    if (!name) return;
+    nlen = strlen(name);
+    if (nlen > 35u) nlen = 35u;
+    memcpy(hdr + 2u, name, nlen);
 }
 
 static FILE *dm2_sl_open_valid_payload(const char *path, int *status)
@@ -929,7 +948,7 @@ int dm2_sl_save(const char *save_base, uint8_t slot,
                  const char *name,
                  const uint8_t *data, size_t data_size)
 {
-    if (!save_base || !data || data_size == 0) return -1;
+    if (!save_base || !name || !name[0] || !data || data_size == 0) return -1;
     if (slot >= DM2_SLOT_MAX) return -1;
 
     char path_dat[256], path_bak[256];
@@ -943,22 +962,10 @@ int dm2_sl_save(const char *save_base, uint8_t slot,
     FILE *f = fopen(path_dat, "wb");
     if (!f) return -2;
 
-    /* Build 42-byte slot header (sksave_header_asc) */
-    uint8_t hdr[42] = {0};
-    hdr[0] = 1; hdr[1] = 0; /* version flag = 1 */
-    if (name) {
-        size_t nlen = strlen(name);
-        if (nlen > 33) nlen = 33;
-        memcpy(hdr + 2, name, nlen);
-    }
-    uint8_t slot_plus30 = (uint8_t)((slot + 0x30) & 0xFF);
-    hdr[36] = slot_plus30;
-    hdr[37] = 0;
-    /* Magic markers: 0xBEEF / 0xDEAD — little-endian across w38/w40 */
-    hdr[38] = (uint8_t)(DM2_SLOT_MAGIC_1 & 0xFF);
-    hdr[39] = (uint8_t)((DM2_SLOT_MAGIC_1 >> 8) & 0xFF);
-    hdr[40] = (uint8_t)(DM2_SLOT_MAGIC_2 & 0xFF);
-    hdr[41] = (uint8_t)((DM2_SLOT_MAGIC_2 >> 8) & 0xFF);
+    /* Build the source c_hex2a header. SKSaveNN naming is a Firestaff test
+     * helper; the original header itself carries no fabricated slot number. */
+    uint8_t hdr[42];
+    dm2_sl_build_source_header(hdr, name, path_bak);
 
     if (fwrite(hdr, 42, 1, f) != 1) { fclose(f); return -3; }
     if (fwrite(data, 1, data_size, f) != data_size) { fclose(f); return -3; }
@@ -971,7 +978,7 @@ int dm2_sl_save_last_session(const char *save_base,
                              const uint8_t *data,
                              size_t data_size)
 {
-    if (!save_base || !data || data_size == 0) return -1;
+    if (!save_base || !name || !name[0] || !data || data_size == 0) return -1;
 
     char path_dat[256], path_bak[256];
     snprintf(path_dat, sizeof(path_dat), "%s/SKSave.dat", save_base);
@@ -985,19 +992,8 @@ int dm2_sl_save_last_session(const char *save_base,
     FILE *f = fopen(path_dat, "wb");
     if (!f) return -2;
 
-    uint8_t hdr[42] = {0};
-    hdr[0] = 1; hdr[1] = 0;
-    if (name) {
-        size_t nlen = strlen(name);
-        if (nlen > 33) nlen = 33;
-        memcpy(hdr + 2, name, nlen);
-    }
-    hdr[36] = 0x30;
-    hdr[37] = 0;
-    hdr[38] = (uint8_t)(DM2_SLOT_MAGIC_1 & 0xFF);
-    hdr[39] = (uint8_t)((DM2_SLOT_MAGIC_1 >> 8) & 0xFF);
-    hdr[40] = (uint8_t)(DM2_SLOT_MAGIC_2 & 0xFF);
-    hdr[41] = (uint8_t)((DM2_SLOT_MAGIC_2 >> 8) & 0xFF);
+    uint8_t hdr[42];
+    dm2_sl_build_source_header(hdr, name, path_bak);
 
     if (fwrite(hdr, 42, 1, f) != 1) { fclose(f); return -3; }
     if (fwrite(data, 1, data_size, f) != data_size) { fclose(f); return -3; }
@@ -2221,106 +2217,22 @@ int dm2_v1_save_game_write(const char *path,
                            uint8_t timer_count,
                            DM2_V1_SaveWriteReceipt *out_receipt)
 {
-    FILE *f;
-    DM2_SuppressWriter writer;
-    uint8_t hdr[42];
-    uint8_t suppress_buf[1024];
-    size_t written_total = 0;
-    int encoded;
-    uint8_t champion_mask[261];
-    uint32_t hash = 2166136261u;
-
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
-    if (!path || !gamestate) {
-        if (out_receipt) out_receipt->fail_closed = 1;
-        return -1;
-    }
+    (void)path;
+    (void)gamestate;
+    (void)global_flags;
+    (void)global_bytes;
+    (void)global_words;
+    (void)champions;
+    (void)champion_count;
+    (void)timers;
+    (void)timer_count;
 
-    f = fopen(path, "wb");
-    if (!f) {
-        if (out_receipt) out_receipt->fail_closed = 1;
-        return -1;
-    }
-
-    /* This incomplete writer is behind the public original-save gate. It
-     * must never claim its legacy fixture header is an authentic DOS save. */
-    memset(hdr, 0, sizeof(hdr));
-    hdr[0] = 0x01; hdr[1] = 0x00; /* version = 1 */
-    hdr[38] = (uint8_t)(DM2_SLOT_MAGIC_1 & 0xFF);
-    hdr[39] = (uint8_t)(DM2_SLOT_MAGIC_1 >> 8);
-    hdr[40] = (uint8_t)(DM2_SLOT_MAGIC_2 & 0xFF);
-    hdr[41] = (uint8_t)(DM2_SLOT_MAGIC_2 >> 8);
-    if (fwrite(hdr, 42, 1, f) != 1) goto fail;
-    written_total += 42;
-    if (out_receipt) out_receipt->header_written = 1;
-
-    /* SUPPRESS-encode game state block */
-    dm2_suppress_writer_init(&writer);
-    encoded = dm2_suppress_encode_gamestate(gamestate, suppress_buf, sizeof(suppress_buf));
-    if (encoded < 0) goto fail;
-    if (fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
-    written_total += (size_t)encoded;
-    if (out_receipt) out_receipt->gamestate_written = 1;
-
-    /* SUPPRESS-encode global flags */
-    encoded = dm2_suppress_encode_global_flags(global_flags, suppress_buf, sizeof(suppress_buf));
-    if (encoded < 0) goto fail;
-    if (encoded > 0 && fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
-    written_total += (size_t)encoded;
-    if (out_receipt) out_receipt->global_flags_written = 1;
-
-    /* SUPPRESS-encode global bytes */
-    encoded = dm2_suppress_encode_global_bytes(global_bytes, suppress_buf, sizeof(suppress_buf));
-    if (encoded < 0) goto fail;
-    if (encoded > 0 && fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
-    written_total += (size_t)encoded;
-    if (out_receipt) out_receipt->global_bytes_written = 1;
-
-    /* SUPPRESS-encode global words */
-    encoded = dm2_suppress_encode_global_words(global_words, suppress_buf, sizeof(suppress_buf));
-    if (encoded < 0) goto fail;
-    if (encoded > 0 && fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
-    written_total += (size_t)encoded;
-    if (out_receipt) out_receipt->global_words_written = 1;
-
-    /* SUPPRESS-encode champion records */
-    dm2_suppress_champion_mask(champion_mask);
-    for (uint8_t i = 0; i < champion_count && champions; ++i) {
-        encoded = dm2_suppress_encode_champion(&champions[i], champion_mask,
-                                                suppress_buf, sizeof(suppress_buf));
-        if (encoded < 0) goto fail;
-        if (encoded > 0 && fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
-        written_total += (size_t)encoded;
-    }
-    if (out_receipt) out_receipt->champions_written = 1;
-
-    /* SUPPRESS-encode timer entries */
-    for (uint8_t i = 0; i < timer_count && timers; ++i) {
-        encoded = dm2_suppress_encode_timer(&timers[i], suppress_buf, sizeof(suppress_buf));
-        if (encoded < 0) goto fail;
-        if (encoded > 0 && fwrite(suppress_buf, (size_t)encoded, 1, f) != 1) goto fail;
-        written_total += (size_t)encoded;
-    }
-    if (out_receipt) out_receipt->timers_written = 1;
-
-    /* Flush any remaining SUPPRESS bits — the streaming writer is used
-     * by the individual encode functions, each of which flushes internally,
-     * so this is a no-op in practice but keeps the contract explicit. */
-
-    fclose(f);
-
-    if (out_receipt) {
-        out_receipt->valid = 1;
-        out_receipt->total_bytes_written = written_total;
-        hash = dm2_v1_save_hash_bytes(hash, hdr, sizeof(hdr));
-        hash = dm2_v1_save_hash_bytes(hash, (const uint8_t *)&written_total,
-                                       sizeof(written_total));
-        out_receipt->receipt_hash = hash ? hash : 1u;
-    }
-    return 0;
-
-fail:
-    fclose(f);
+    /* c_savegame.cpp:2169-2204 writes the complete dungeon header, map
+     * tables, every DB pool and map data before its SUPPRESS sections. This
+     * partial helper has none of those source-owned regions, so producing a
+     * file here would be synthetic. Keep the public writer closed until that
+     * exact record order is implemented. */
     if (out_receipt) out_receipt->fail_closed = 1;
     return -1;
 }

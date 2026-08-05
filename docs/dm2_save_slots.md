@@ -13,7 +13,8 @@ corpus establishes the version word and bounded printable name; other fields
 must remain opaque until they are tied to the original save routine:
 ```
 w0       : U16 — version flag (set to 1 on each save)
-b2[34]   : U8[34] — null-terminated ASCII save name (max 33 chars + null)
+b2[36]   : U8[36] — null-terminated ASCII save name (`c_hex2a::text`)
+l38       : U32 — opaque prior-header value retained on save
 ```
 
 A candidate must pass the header shape and then the complete original raw
@@ -28,10 +29,9 @@ Slot names are entered through dialog `0x0d` (the save-name dialog), invoked fro
 
 1. `GAME_SAVE_MENU()` calls `_2066_33e7()` which scans all 10 slots.
 2. If resuming an existing save (`_4976_5bf6 != 0`), it uses the previously loaded slot index (`_4976_525c`).
-3. If starting fresh, it scans for the first empty slot. The exact occupied
-   marker rule is not yet source-locked: the authenticated PC-DOS corpus uses
-   version 1 plus a printable bounded name and non-zero opaque trailing words,
-   not Firestaff's old fixture markers.
+3. If starting fresh, it scans for the first empty slot. SKProject marks an
+   empty **in-memory** `c_hex2a` entry with `l38 == 0xDEADBEEF`; an existing
+   source-shaped file instead has version 1 and a printable bounded name.
 
 4. User can type a custom name or accept the auto-generated one.
 5. If all 10 slots are full and no overwrite is chosen, the dialog returns to slot selection.
@@ -50,14 +50,6 @@ The load dialog `SELECT_LOAD_GAME()` uses `_4976_4dfc` state machine to track us
 - Case 1: user cancelled (returns `si = -1`)
 - Case 2: user confirmed selection (`bp06 = 1` → break and return `si`)
 - Case 3: scroll/refresh — recomputes visible entries and calls `_2066_398a(si)` to highlight the current slot
-
-## Slot Identification in Header
-
-The `w36` field stores `slot_index + 0x30`. This means:
-- Slot 0 → 0x30 = ASCII '0'
-- Slot 9 → 0x39 = ASCII '9'
-
-This allows identifying the slot purely from the binary header without parsing a name.
 
 ## DM1 Comparison
 

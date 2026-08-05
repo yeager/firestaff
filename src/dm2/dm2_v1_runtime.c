@@ -2497,7 +2497,7 @@ int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
 
     /* skproject SKWINSPX/src/v4/skgame.cpp SELECT_LOAD_GAME and
      * skfileop.cpp READ_SAVEGAMES_FILENAMES route startup resume through a
-     * chosen SKSAVE digit after validating the 0xBEEF/0xDEAD slot header.
+     * chosen SKSAVE digit after validating the source c_hex2a header.
      * Firestaff's bounded session importer applies the startup-owned fields
      * already modeled by DM2_V1_GameState/RuntimeState; broader dungeon DB
      * pools stay owned by the later full SKSave importer. */

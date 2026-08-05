@@ -3,7 +3,7 @@
  * Source lock:
  *   SKULL.ASM: save/load entry points, SUPPRESS codec
  *   docs/dm2_save_format.md — full format specification
- *   docs/dm2_save_slots.md — 10-slot system with 0xBEEF/0xDEAD magic
+ *   docs/dm2_save_slots.md — 10-slot system and SKSave header shape
  *   docs/dm2_party_state.md — champion squad persistence
  */
 
@@ -123,7 +123,8 @@ int dm2_v1_save_suppress_symbol_receipt(
 
 /* ════════════════════════════════════════════════════════════════
  * Slot manager — 10-slot system matching SKSave%02u.dat layout
- * Slot is valid when header w38==0xBEEF && w40==0xDEAD
+ * A slot is a source-shaped c_hex2a header (version 1, printable name);
+ * c_hex2a::l_26 == 0xDEADBEEF means an empty in-memory dialog entry.
  * Source: docs/dm2_save_slots.md
  * ════════════════════════════════════════════════════════════════ */
 
@@ -289,14 +290,15 @@ void dm2_sl_init(DM2_SL_State *state, const char *save_base);
 /* Scan all 10 slots; populates state->slots[]. */
 bool dm2_sl_scan_slots(DM2_SL_State *state);
 
-/* True if slot[N] is occupied (0xBEEF/0xDEAD magic present). */
+/* True if slot[N] has a source-shaped SKSave header. */
 bool dm2_sl_slot_occupied(const DM2_SL_State *state, uint8_t slot);
 
 /* Slot display name, or NULL if empty. */
 const char *dm2_sl_slot_name(const DM2_SL_State *state, uint8_t slot);
 
-/* Save to slot N: renames existing to SKSave.bak, writes new.
- * name can be NULL (anonymous). Returns 0 on success. */
+/* Save to slot N: renames existing to SKSave.bak, writes a source-shaped
+ * header and caller-provided payload. name must be nonempty. Returns 0 on
+ * success. This low-level helper is not an original-save serializer. */
 int dm2_sl_save(const char *save_base, uint8_t slot,
                  const char *name,
                  const uint8_t *data, size_t data_size);
@@ -331,10 +333,10 @@ int dm2_sl_delete(const char *save_base, uint8_t slot);
 uint8_t dm2_v1_save_slot_count(void);   /* → 10 */
 bool   dm2_v1_save_slot_valid(uint8_t slot);
 
-/* True if SKSave%02u.dat has valid 0xBEEF/0xDEAD slot header. */
+/* True if SKSave%02u.dat has a source-shaped SKSave header. */
 bool dm2_v1_save_has_valid_slot(const char *save_base, uint8_t slot);
 
-/* True if SKSave.dat or SKSave.bak has a valid 0xBEEF/0xDEAD header. */
+/* True if SKSave.dat or SKSave.bak has a source-shaped SKSave header. */
 bool dm2_v1_save_has_valid_last_session(const char *save_base);
 
 /* Scan a directory containing original-style SKSave.dat/SKSave.bak and
@@ -673,7 +675,7 @@ bool dm2_db_write_record(uint8_t pool, uint32_t index,
                           const DM2_DB_State *db);
 
 /* ════════════════════════════════════════════════════════════════
- * Save game writing — DM2_GAME_SAVE_MENU flow
+ * Save game writing — fail-closed pending complete DM2_GAME_SAVE_MENU flow
  * Source: skproject/SKULLWIN/c_savegame.cpp:2087
  * ════════════════════════════════════════════════════════════════ */
 
@@ -693,6 +695,8 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_SaveWriteReceipt;
 
+/* Always fails closed until the full source dungeon/DB write order exists;
+ * callers must not offer a save file based on partial state. */
 int dm2_v1_save_game_write(const char *path,
                            const DM2_GameStateBlock *gamestate,
                            const uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE],

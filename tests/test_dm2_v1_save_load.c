@@ -4,7 +4,7 @@
  *   1. SUPPRESS codec encode/decode round-trip
  *   2. SKProject bit-mask order and cross-section carry corpus vectors
  *   3. SUPPRESS decode fill=1 vs fill=0 modes
- *   4. Legacy fixture header compatibility plus authenticated DOS-header detection
+ *   4. Authenticated DOS-header detection and source-shaped header encoding
  *   5. Slot scan: occupied vs empty detection
  *   6. Save + load round-trip (stateless path)
  *   7. Backup fallback on load
@@ -143,14 +143,9 @@ static int write_valid_sksave_file_at_path(const char *path,
     hdr[0] = 1u;
     if (name) {
         size_t nlen = strlen(name);
-        if (nlen > 33u) nlen = 33u;
+        if (nlen > 35u) nlen = 35u;
         memcpy(hdr + 2u, name, nlen);
     }
-    hdr[36] = 0x30u;
-    hdr[38] = (uint8_t)(0xBEEFu & 0xffu);
-    hdr[39] = (uint8_t)((0xBEEFu >> 8) & 0xffu);
-    hdr[40] = (uint8_t)(0xDEADu & 0xffu);
-    hdr[41] = (uint8_t)((0xDEADu >> 8) & 0xffu);
 
     f = fopen(path, "wb");
     if (!f) return -1;
@@ -170,7 +165,7 @@ static int write_bad_slot_file(const char *dir, uint8_t slot)
     uint8_t payload[8] = { 'B', 'A', 'D', 'S', 'L', 'O', 'T', 0 };
     snprintf(path, sizeof(path), "%s/SKSave%02u.dat", dir, (unsigned)slot);
     memset(hdr, 0, sizeof(hdr));
-    hdr[38] = 0x44; hdr[39] = 0x4D; /* DM1-ish marker, not DM2 BEEF/DEAD. */
+    hdr[0] = 2u; /* Not the source's version-1 SKSave shape. */
     FILE *f = fopen(path, "wb");
     if (!f) return -1;
     if (fwrite(hdr, sizeof(hdr), 1, f) != 1 ||
@@ -351,7 +346,7 @@ static int test_suppress_fill_mode(void)
 
 static int test_slot_header_encoding(void)
 {
-    printf("  Legacy fixture header compatibility (name, slot+0x30)...\n");
+    printf("  Source-shaped SKSave header encoding...\n");
 
     for (uint8_t s = 0; s < 10; s++) {
         uint8_t hdr[42] = {0};
@@ -363,25 +358,9 @@ static int test_slot_header_encoding(void)
         if (nlen > 33) nlen = 33;
         memcpy(hdr + 2, name, nlen);
 
-        hdr[36] = (uint8_t)((s + 0x30) & 0xFF);
-        hdr[37] = 0;
-
-        hdr[38] = (uint8_t)(0xBEEF & 0xFF);
-        hdr[39] = (uint8_t)((0xBEEF >> 8) & 0xFF);
-        hdr[40] = (uint8_t)(0xDEAD & 0xFF);
-        hdr[41] = (uint8_t)((0xDEAD >> 8) & 0xFF);
-
-        uint16_t m1 = (uint16_t)hdr[38] | ((uint16_t)hdr[39] << 8);
-        uint16_t m2 = (uint16_t)hdr[40] | ((uint16_t)hdr[41] << 8);
-        if (m1 != 0xBEEF || m2 != 0xDEAD) {
-            printf("    FAIL slot %u: magic wrong 0x%04X/0x%04X\n", s, m1, m2);
-            return 0;
-        }
-
-        uint16_t slot_field = (uint16_t)hdr[36] | ((uint16_t)hdr[37] << 8);
-        if (slot_field != (s + 0x30)) {
-            printf("    FAIL slot %u: slot field 0x%04X expected 0x%02X\n",
-                   s, slot_field, s + 0x30);
+        if (hdr[38] != 0u || hdr[39] != 0u ||
+            hdr[40] != 0u || hdr[41] != 0u) {
+            printf("    FAIL slot %u: initial opaque field was invented\n", s);
             return 0;
         }
 
@@ -391,7 +370,43 @@ static int test_slot_header_encoding(void)
             return 0;
         }
     }
-    printf("    PASS: slot headers 0..9 all correct\n");
+    printf("    PASS: source-shaped headers 0..9 contain no fixture marker\n");
+    return 1;
+}
+
+static int test_incomplete_original_writer_fails_closed(void)
+{
+    char tmpdir[256];
+    char path[256];
+    DM2_GameStateBlock gamestate;
+    DM2_V1_SaveWriteReceipt receipt;
+    FILE *f;
+
+    printf("  Incomplete original writer fails closed...\n");
+    snprintf(tmpdir, sizeof(tmpdir), "/tmp/firestaff_dm2_writer_%d", FS_GETPID());
+    FS_MKDIR(tmpdir);
+    snprintf(path, sizeof(path), "%s/SKSave.dat", tmpdir);
+    memset(&gamestate, 0, sizeof(gamestate));
+    memset(&receipt, 0, sizeof(receipt));
+
+    if (dm2_v1_save_game_write(path, &gamestate, NULL, NULL, NULL,
+                               NULL, 0u, NULL, 0u, &receipt) != -1 ||
+        !receipt.fail_closed || receipt.valid || receipt.header_written) {
+        printf("    FAIL: incomplete writer was not closed\n");
+        (void)remove(path);
+        FS_RMDIR(tmpdir);
+        return 0;
+    }
+    f = fopen(path, "rb");
+    if (f) {
+        fclose(f);
+        printf("    FAIL: incomplete writer created a file\n");
+        (void)remove(path);
+        FS_RMDIR(tmpdir);
+        return 0;
+    }
+    FS_RMDIR(tmpdir);
+    printf("    PASS: no partial save file was created\n");
     return 1;
 }
 
@@ -438,6 +453,45 @@ static int test_save_load_roundtrip(void)
     int r = dm2_sl_save(tmpdir, 3, "Test_Save",
                         game_state, sizeof(game_state));
     if (r != 0) { printf("    FAIL: save returned %d\n", r); FS_RMDIR(tmpdir); return 0; }
+
+    /* SKProject c_savegame.cpp:2169-2181 retains c_hex2a::l_26 from the
+     * previous header instead of manufacturing a slot marker. Seed the
+     * mounted-corpus value seen at b38 and prove a rotated save keeps it. */
+    {
+        char path[256];
+        uint8_t hdr[42];
+        const uint8_t source_l26[4] = { 0x58u, 0xf8u, 0x00u, 0x00u };
+        FILE *header_file;
+
+        snprintf(path, sizeof(path), "%s/SKSave03.dat", tmpdir);
+        header_file = fopen(path, "r+b");
+        if (!header_file || fread(hdr, sizeof(hdr), 1u, header_file) != 1u ||
+            hdr[0] != 1u || hdr[1] != 0u ||
+            memcmp(hdr + 2u, "Test_Save", 9u) != 0 ||
+            memcmp(hdr + 38u, "\0\0\0\0", 4u) != 0 ||
+            fseek(header_file, 38L, SEEK_SET) != 0 ||
+            fwrite(source_l26, sizeof(source_l26), 1u, header_file) != 1u) {
+            if (header_file) fclose(header_file);
+            printf("    FAIL: initial source-shaped header mismatch\n");
+            cleanup_one_slot_dir(tmpdir, 3u);
+            FS_RMDIR(tmpdir);
+            return 0;
+        }
+        fclose(header_file);
+        r = dm2_sl_save(tmpdir, 3, "Test_Save_2", game_state,
+                        sizeof(game_state));
+        header_file = fopen(path, "rb");
+        if (r != 0 || !header_file ||
+            fread(hdr, sizeof(hdr), 1u, header_file) != 1u ||
+            memcmp(hdr + 38u, source_l26, sizeof(source_l26)) != 0) {
+            if (header_file) fclose(header_file);
+            printf("    FAIL: previous c_hex2a opaque value was not retained\n");
+            cleanup_one_slot_dir(tmpdir, 3u);
+            FS_RMDIR(tmpdir);
+            return 0;
+        }
+        fclose(header_file);
+    }
 
     uint8_t loaded[256];
     size_t got;
@@ -561,10 +615,10 @@ static int test_cross_version_diagnostics(void)
 {
     printf("  Cross-version diagnostics...\n");
 
-    /* Legacy fixture header remains accepted by low-level test helpers. */
+    /* Source-shaped DM2 header: version 1 plus bounded printable name. */
     uint8_t dm2_hdr[42] = {0};
-    dm2_hdr[38] = 0xEF; dm2_hdr[39] = 0xBE;
-    dm2_hdr[40] = 0xAD; dm2_hdr[41] = 0xDE;
+    dm2_hdr[0] = 1u;
+    memcpy(dm2_hdr + 2u, "DM2", 4u);
 
     /* Valid DM1 header (pair 0x444D / 0x3156 = "DM1V") */
     uint8_t dm1_hdr[42] = {0};
@@ -573,13 +627,25 @@ static int test_cross_version_diagnostics(void)
     /* Unknown — no magic */
     uint8_t unk_hdr[42] = {0};
 
+    /* SKProject uses this only for an empty in-memory dialog entry. */
+    uint8_t empty_entry_hdr[42] = {0};
+    empty_entry_hdr[0] = 1u;
+    memcpy(empty_entry_hdr + 2u, "Empty", 6u);
+    empty_entry_hdr[38] = 0xefu; empty_entry_hdr[39] = 0xbeu;
+    empty_entry_hdr[40] = 0xadu; empty_entry_hdr[41] = 0xdeu;
+
     int v_dm2 = dm2_v1_save_detect_game_version(dm2_hdr);
     int v_dm1 = dm2_v1_save_detect_game_version(dm1_hdr);
     int v_unk = dm2_v1_save_detect_game_version(unk_hdr);
+    int v_empty = dm2_v1_save_detect_game_version(empty_entry_hdr);
 
     if (v_dm2 != DM2V1_VERSION_DM2) { printf("    FAIL: DM2=%d\n", v_dm2); return 0; }
     if (v_dm1 != DM2V1_VERSION_DM1) { printf("    FAIL: DM1=%d\n", v_dm1); return 0; }
     if (v_unk != DM2V1_VERSION_UNKNOWN) { printf("    FAIL: Unknown=%d\n", v_unk); return 0; }
+    if (v_empty != DM2V1_VERSION_UNKNOWN) {
+        printf("    FAIL: empty-entry sentinel was accepted (%d)\n", v_empty);
+        return 0;
+    }
 
     /* Authentic PC-DOS header shape: version 1, printable bounded label,
      * opaque trailing words. It identifies the container only; session
@@ -3432,7 +3498,8 @@ int main(void)
     RUN(2,  test_suppress_skproject_corpus_vectors);
     RUN(3,  test_suppress_fill_mode);
     RUN(4,  test_slot_header_encoding);
-    RUN(5,  test_slot_scan);
+    RUN(5,  test_incomplete_original_writer_fails_closed);
+    RUN(6,  test_slot_scan);
     RUN(6,  test_save_load_roundtrip);
     RUN(7,  test_backup_fallback);
     RUN(8,  test_last_session_backup_fallback);

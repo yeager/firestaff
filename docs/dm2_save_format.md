@@ -9,13 +9,16 @@ Located alongside `Dungeon.ftl`. On save, `SKSave.dat` is renamed to `.bak` and 
 ## Header (42 bytes, `sksave_header_asc`)
 ```
 w0       : version/flags (PC-DOS corpus: 1)
-b2[34]   : bounded null-terminated ASCII save name
-w36..w40 : opaque in the currently authenticated corpus
+b2[36]   : bounded null-terminated ASCII save name (`c_hex2a::text`)
+l38       : opaque `c_hex2a::l_26`, retained from the prior file on save
 ```
 
 The real DOS files do not use Firestaff's former `0xBEEF/0xDEAD` fixture
-markers. Header shape is only a container gate; the raw dungeon and SUPPRESS
-stream must parse before a save is admitted.
+markers. `0xDEADBEEF` is the in-memory empty-entry sentinel used by the
+original load dialog and is not accepted as an on-disk header. On save,
+SKProject retains `l38` from the previous header, changes `w0` to 1 and copies
+the entered name. Header shape is only a container gate; the raw dungeon and
+SUPPRESS stream must parse before a save is admitted.
 
 ## Save Sections (in order)
 1. **Dungeon header** (`DunHeader`, 44 bytes)

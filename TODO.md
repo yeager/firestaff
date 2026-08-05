@@ -31,6 +31,10 @@
   dungeon hash in one scan. Its post-admission diagnostic now also reports
   the real G1 seed and map count instead of the intentionally unavailable
   pre-load zeroes; this does not admit an incomplete save session.
+  The old low-level SKSave helper now emits the real `c_hex2a` header boundary
+  only and is not a serializer: complete original dungeon/DB write ordering
+  from `SKProject/SKULLWIN/c_savegame.cpp` remains required before save output
+  can be offered to players.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   source-bound lifecycle/presentation path with a structural fail-closed seam.

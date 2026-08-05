@@ -7037,13 +7037,23 @@
 
 - ✅ 2026-08-05 DM2 DOS SKSave header and raw-prefix corpus: added the
   authenticated PC-DOS header admission rule (version word plus bounded ASCII
-  save name) alongside the legacy low-level fixture compatibility path. The
+  save name). The
   external corpus gate now reads the eight supplied `sksave0..3.dat/.bak`
   artifacts and verifies each real raw dungeon prefix after its 42-byte
   header. Later SUPPRESS state remains fail-closed rather than being replaced
   by a fixture session. Verification:
   `FIRESTAFF_DM2_SKSAVE_CORPUS=~/.firestaff/data/dm2/dos_extract/data
   ./build-dm2-main-verify/test_dm2_v1_save_load` passes 24/24.
+
+- ✅ 2026-08-05 DM2 SKSave synthetic-header removal: removed the invented
+  `0xBEEF/0xDEAD` file marker from every slot helper and stopped accepting it
+  on input. Headers now match SKProject `c_hex2a`: version word, bounded
+  printable `text[36]`, and the existing file's retained opaque `l_26` value;
+  the original dialog's `0xDEADBEEF` empty-entry sentinel is rejected as a
+  file. The partial `dm2_v1_save_game_write()` path is now fail-closed because
+  it lacks the original dungeon/DB record sections, so it cannot manufacture
+  a non-playable save. Source: `SKULLWIN/dm2data.h:150-159`,
+  `c_dialog.cpp:115-117,199-202,337-343`, `c_savegame.cpp:2169-2204`.
 
 - ✅ 2026-07-31 DM2 original-save admission: closed the remaining D2RS
   runtime-read path. Public slot/last-session loaders, corpus runtime import
@@ -24124,7 +24134,7 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
 
 - ✅ 2026-07-13 DM2 real-SKSave corpus identity gate: each accepted corpus
   candidate now carries an FNV-1a receipt over the complete original file,
-  including the 42-byte `0xBEEF`/`0xDEAD` header. The new receipted read API
+  including the 42-byte authenticated SKSave header. The new receipted read API
   rechecks the file receipt, payload size/hash, and candidate kind before any
   bytes are released for later import; a changed file is rejected before
   deserialize/runtime mutation. This is a skproject-shaped save boundary, not
@@ -24320,7 +24330,7 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
   sequence regression.
 
 - 2026-07-13 DM2 original-save to world-state restore: valid SKSave envelopes
-  now strip only after the 0xBEEF/0xDEAD gate and run their complete `D2RS` or
+  now strip only after the authenticated SKSave-header gate and run their complete `D2RS` or
   raw candidate parser before a `DM2_WorldState` is allocated. The resulting
   state copies only direct source fields: party location, champion HP/mana,
   food/water, tick, level, rain and preserved raw bytes. Rejected candidates
