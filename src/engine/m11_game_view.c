@@ -44636,6 +44636,9 @@ static void m11_nexus_startup_exec_boot_title_frame(
     if (!context || !context->framebuffer || !command) {
         return;
     }
+    if (!m11_nexus_startup_title_receipt_ready(context, command)) {
+        return;
+    }
     nexus_fb_init(&nexusFb);
     nexus_render_title((const Nexus_TitleScreen*)(
                            context->state

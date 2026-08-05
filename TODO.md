@@ -25476,6 +25476,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   save/champion fill- and outline-rectangles. Bind `MENU.BPK`/`STABG.BIN`
   surfaces, text glyphs, palette and VDP1 placement from one authenticated
   Saturn capture before restoring any menu chrome or selection frame.
+- 🔧 Nexus startup title pixels: the M11 `BOOT_TITLE_FRAME` executor is now
+  capture-gated like the title-background route. Bind the real `TITLE.CG` /
+  `TITLE.BIN` composition and VDP1/VDP2 placement from an authenticated Saturn
+  capture before enabling any title framebuffer write.
 - 🔧 Nexus startup portrait pixels: `FACE.BIN` remains a verified asset
   receipt, but M11 no longer places it in the planner's guessed portrait
   rectangles. Prove the champion-index and Saturn VDP destination before

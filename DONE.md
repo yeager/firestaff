@@ -199,6 +199,13 @@
   leaves the framebuffer untouched until Saturn explored-state and VDP2
   placement evidence is authenticated.
 
+- ✅ 2026-08-06 Nexus startup title-frame receipt gate: the M11
+  `BOOT_TITLE_FRAME` executor now requires the same source-bound Saturn
+  title capture/timing receipt as the title-background route before touching
+  the framebuffer. An unbound command cannot mutate the frame and rely on the
+  title renderer's blank fail-clear as a substitute for missing VDP1/VDP2
+  placement evidence.
+
 - ✅ 2026-08-06 Nexus ITEM mutation gate completion: mechanics no longer picks
   up floor items or mutates inventory/floor state for DROP_ITEM and THROW while
   the Saturn ITEM/action dispatcher is unproven. DGN/ITEM.IBS declarations
