@@ -2617,6 +2617,10 @@ int DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(M11_GameViewState* state,
 void DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(M11_GameViewState* state);
 unsigned short DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(const M11_GameViewState* state);
 int DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(const M11_GameViewState* state);
+void M11_GameView_DrawLeaderHandCursor(const M11_GameViewState* state,
+                                       unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight);
 int DM1_V1_M11Runtime_GetInventorySlotIconIndexPc34Compat(const M11_GameViewState* state,
                                              int championSlot);
 int DM1_V1_M11Runtime_GetLeaderHandObjectNamePc34Compat(const M11_GameViewState* state,

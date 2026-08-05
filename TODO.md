@@ -24862,3 +24862,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `csb-entrance-opening-1`. It therefore cannot be used as a positive F0807
   opening-door capture; compare a rebuilt installed app against v3.0.197
   before diagnosing or masking the old red-strip report.
+- [ ] DM1-HOC-OBJECTS-001 Verify the live PC34 HoC wall-torch material and
+  holder composition against the original GRAPHICS.DAT capture. The current
+  runtime must not substitute a synthetic black ornament; bind the exact
+  source graphic, palette and depth route before closing this item.
+- [ ] DM1-HOC-OBJECTS-002 Capture a real PC34 HoC pickup/placement round trip
+  for weapon, potion, scroll, container and junk objects. Confirm M564 names,
+  C00/C01 hand masks and backpack ownership remain source-backed.
+- [ ] DM1-VIEWPORT-001 Verify nearest-wall occlusion on real HoC corridor
+  captures. A corridor can currently appear to continue through the wall;
+  compare the F0107/F0115 draw order with the PC34 viewport capture before
+  changing geometry or adding a synthetic mask.

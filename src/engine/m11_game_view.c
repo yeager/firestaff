@@ -36155,8 +36155,8 @@ static unsigned int m11_v1_inventory_source_slot_box_mask(int sourceSlotBoxIndex
     switch (sourceSlotBoxIndex) {
         case 0:
         case 1:  return 0xFFFFu;
-        case 8:
-        case 9:  return 0x0200u;
+        case 8:  return 0x0200u; /* C00 ready hand */
+        case 9:  return 0x0002u; /* C01 action hand */
         case 10: return 0x0002u;
         case 11: return 0x0008u;
         case 12: return 0x0010u;
@@ -41973,6 +41973,25 @@ int DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(const M11_GameViewS
         return -1;
     }
     return m11_object_icon_index_for_thing(state, state->world.things, thing);
+}
+
+void M11_GameView_DrawLeaderHandCursor(const M11_GameViewState* state,
+                                       unsigned char* framebuffer,
+                                       int framebufferWidth,
+                                       int framebufferHeight) {
+    int iconIndex;
+    if (!state || !framebuffer || !state->pointerPositionKnown ||
+        !state->leaderHandObjectPresent ||
+        state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
+        return;
+    }
+    iconIndex = DM1_V1_M11Runtime_GetLeaderHandObjectIconIndexPc34Compat(state);
+    if (iconIndex < 0) return;
+    /* ReDMCSB F0033/F0038 uses the same 16x16 icon atlas for C017's
+     * leader-hand pointer that it uses for the inventory/action cells. */
+    (void)m11_draw_dm_object_icon_index(
+        state, framebuffer, framebufferWidth, framebufferHeight,
+        iconIndex, state->pointerX, state->pointerY, 0);
 }
 
 static int m11_v1_inventory_slot_icon_index_for_thing(const M11_GameViewState* state,

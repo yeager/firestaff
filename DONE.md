@@ -48363,3 +48363,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   instead of the total viewport no-op. Dungeon tiles, unverified chrome, and
   inferred mappings remain fail-closed; the verified Track 02 font and future
   authenticated palette/VRAM routes are now reachable by the real M11 path.
+- ✅ 2026-08-05 DM1 HoC object presentation: restored ReDMCSB's D2 palette
+  remap for D1/D0 wall ornaments, preventing authentic torch-holder and
+  ornament pixels from becoming black silhouettes. Corrected the C00/C01
+  ready/action hand slot masks so valid objects can be placed in either hand.
+
+- ✅ 2026-08-05 DM1 leader-hand cursor: after pickup, the framebuffer draws
+  the source PC34 16x16 object icon at the tracked pointer position, using
+  the same F0033/F0038 icon resolver as inventory and action cells.
