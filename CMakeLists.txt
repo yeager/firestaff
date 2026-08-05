@@ -4528,6 +4528,7 @@ set(M11_SOURCES
     src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_fmtowns_cd.c
     src/csb/csb_v1_amiga_graphics_dat.c
+    src/csb/csb_v1_amiga_titl_dat.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
     src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_fmtowns_anm.c
@@ -52726,6 +52727,15 @@ target_include_directories(test_csb_v1_amiga_asset_probe PRIVATE ${CMAKE_CURRENT
 target_link_libraries(test_csb_v1_amiga_asset_probe PRIVATE firestaff_m10)
 add_test(NAME csb_v1_amiga_asset_probe COMMAND test_csb_v1_amiga_asset_probe)
 set_tests_properties(csb_v1_amiga_asset_probe PROPERTIES LABELS "csb;amiga")
+
+add_executable(test_csb_v1_amiga_titl_dat
+    tests/test_csb_v1_amiga_titl_dat.c
+    src/csb/csb_v1_amiga_titl_dat.c)
+target_include_directories(test_csb_v1_amiga_titl_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME csb_v1_amiga_titl_dat COMMAND test_csb_v1_amiga_titl_dat)
+set_tests_properties(csb_v1_amiga_titl_dat PROPERTIES
+    SKIP_RETURN_CODE 77
+    LABELS "csb;amiga;real_data;title")
 
 add_executable(test_csb_v1_amiga_dungeon_probe tests/test_csb_v1_amiga_dungeon_probe.c)
 target_include_directories(test_csb_v1_amiga_dungeon_probe PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
