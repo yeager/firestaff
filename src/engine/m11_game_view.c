@@ -44734,39 +44734,6 @@ static int m11_draw_nexus_dgn_host_plan(
     return 1;
 }
 
-static int m11_draw_nexus_title_from_real_assets(
-    const M11_GameViewState *state,
-    unsigned char *framebuffer,
-    int framebufferWidth,
-    int framebufferHeight)
-{
-    const Nexus_TitleScreen *title;
-    Nexus_Framebuffer nexusFb;
-    int y;
-    int copyW;
-    int copyH;
-
-    if (!state || !framebuffer || !state->nexusState.title_active) {
-        return 0;
-    }
-    title = (const Nexus_TitleScreen*)state->nexusTitleScreen;
-    if (!title || !title->loaded || !title->pixels ||
-        title->width <= 0 || title->height <= 0) {
-        return 0;
-    }
-    nexus_fb_init(&nexusFb);
-    nexus_render_title(title, &nexusFb,
-                       state->nexusState.title_frame);
-    copyW = framebufferWidth < NEXUS_FB_W ? framebufferWidth : NEXUS_FB_W;
-    copyH = framebufferHeight < NEXUS_FB_H ? framebufferHeight : NEXUS_FB_H;
-    for (y = 0; y < copyH; ++y) {
-        memcpy(&framebuffer[y * framebufferWidth],
-               &nexusFb.color_buffer[y * NEXUS_FB_W],
-               (size_t)copyW);
-    }
-    return 1;
-}
-
 /* ReDMCSB STARTUP2.C:411-423 completes F0394's spell-area update before
  * F0387 redraws the action area, then F0395 draws movement arrows.  Keep
  * the action area as a final-panel pass so later M11 HUD work cannot retain
@@ -51920,13 +51887,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                                                     : NULL,
                                                 commands,
                                                 command_count);
-            } else if (state->nexusState.title_active &&
-                       m11_draw_nexus_title_from_real_assets(state,
-                                                             framebuffer,
-                                                             framebufferWidth,
-                                                             framebufferHeight)) {
-                /* TITLE.CG remains a genuine drawable source while the next
-                 * MENU.BPK route is rightly blocked on PRS3 evidence. */
+            } else if (state->nexusState.title_active) {
+                /* TITLE.CG is decoded and retained as a source receipt, but
+                 * its Saturn VDP1/VDP2 destination is not authenticated. */
             } else if (host_caller_ready) {
                 /* The startup receipt owns the blocked-route diagnostic;
                  * this framebuffer remains source pixels or no-draw. */

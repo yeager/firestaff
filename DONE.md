@@ -49472,7 +49472,6 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   fail-closed even when a host texture is supplied. Added a framebuffer color
   and depth regression to `test_nexus_v1_dgn_material_raster`; Saturn door
   materials, animation frames, and VDP1 destinations remain capture-gated.
-
 - ✅ 2026-08-06 DM2 startup synthetic-keyboard gate: M11 no longer translates
   generic Firestaff `UP`/`DOWN`/`ACCEPT` menu tokens into DM2 startup actions.
   `SHOW_MENU_SCREEN` owns its input through the original MessageLoop and its
@@ -49494,3 +49493,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   enforces the real PC34 F0302/G0038 `AllowedSlots` mask before choosing a
   hand, pouch or backpack slot. Slot-mask (152 assertions), source-name,
   Ninja, and real PC3.4 alcove runtime checks pass.
+- ✅ 2026-08-05 Nexus TITLE.CG placement placeholder removal: removed
+  `m11_draw_nexus_title_from_real_assets()`, which copied decoded title bytes
+  to an unproven 320×224 top-left destination. TITLE.CG/TITLE.BIN remain
+  byte-decoded source receipts; M11 startup presentation stays no-draw until
+  Saturn VDP1/VDP2 placement and composition are authenticated.

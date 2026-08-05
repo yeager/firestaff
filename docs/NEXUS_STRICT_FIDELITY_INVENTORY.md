@@ -8,7 +8,7 @@ pixelavkodning och runtime-handoff måste också vara verifierade.
 
 | Källa/route | Status | Regel |
 |---|---|---|
-| `TITLE.CG` + `TITLE.BIN` MAPD | DMWeb-dekodern dokumenterar 5 MAPD-bilder på 64×28 tiles, 8×8 pixels, med 4bpp `TITLE.CG`-tiles och 16-färgspalett från MAPD; Firestaff avkodar nu alla fem retail-frames och paletten från MAPD-offset `0x8c54` | 512×224-bildernas Saturn→Firestaff-presentationsbindning är fortfarande blockerad |
+| `TITLE.CG` + `TITLE.BIN` MAPD | DMWeb-dekodern dokumenterar 5 MAPD-bilder på 64×28 tiles, 8×8 pixels, med 4bpp `TITLE.CG`-tiles och 16-färgspalett från MAPD; Firestaff avkodar nu alla fem retail-frames och paletten från MAPD-offset `0x8c54` | 512×224-bildernas Saturn→Firestaff-presentationsbindning är fortfarande blockerad; M11 gör ingen implicit top-left-kopia till 320×224 |
 | Kodbyggda titelkanter/prompt | Borttagna från `nexus_v1_title.c` | Ingen syntetisk grafik läggs ovanpå `TITLE.CG` |
 | Saknad/ej redo titelasset | Blockerad | Ingen syntetisk titelbild |
 | Startup-fallback | Isolerad status/diagnostik | Får inte materialiseras som spelgrafik |
