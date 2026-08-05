@@ -771,6 +771,29 @@ static void test_floor_party_on_stairs_runtime_gate(void) {
           "Runtime C005: stairs effect is remote toggle");
     CHECK(effects.effects[0].sensorType == DM1_SENSOR_FLOOR_PARTY_ON_STAIRS,
           "Runtime C005: effect carries sensor type");
+
+    /* ReDMCSB MOVESENS.C carries the common-word effect through F0272.
+     * HOLD resolves to SET on an addition; it is not a host TOGGLE default. */
+    sensors[0].effect = DM1_EFFECT_SET;
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.effects[0].textIndex == DM1_EFFECT_SET,
+          "Runtime C005: SET comes from sensor record");
+    sensors[0].effect = DM1_EFFECT_CLEAR;
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.effects[0].textIndex == DM1_EFFECT_CLEAR,
+          "Runtime C005: CLEAR comes from sensor record");
+    sensors[0].effect = DM1_EFFECT_TOGGLE;
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.effects[0].textIndex == DM1_EFFECT_TOGGLE,
+          "Runtime C005: TOGGLE comes from sensor record");
+    sensors[0].effect = DM1_EFFECT_HOLD;
+    F0718_SENSOR_ProcessPartyEnterLeave_Compat(&dungeon, &things, 0, 1, 0,
+                                               SENSOR_EVENT_WALK_ON, &effects);
+    CHECK(effects.effects[0].textIndex == DM1_EFFECT_SET,
+          "Runtime C005: HOLD resolves to SET on walk-on");
 }
 
 /* ----------------------------------------------------------------

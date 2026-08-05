@@ -49638,3 +49638,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   metadata, while `theron_v1_drop_loot()` continues to reject publication
   until an original drop consumer and selection record are proven. The item
   category regression passes without synthetic drop assertions.
+- ✅ 2026-08-06 DM1 sensor effect ownership: F0718 floor and stairs sensor
+  effects now carry the authenticated PC34 common-word SET/CLEAR/TOGGLE/HOLD
+  field instead of forcing a synthetic TOGGLE. HOLD resolves to SET for the
+  walk-on addition path, matching ReDMCSB MOVESENS.C/F0272. Added the effect
+  field to the sensor enumeration handoff and covered SET, CLEAR, TOGGLE and
+  HOLD in `test_dm1_v1_sensor_trigger_pc34_compat` (287/287 pass). Runtime
+  group-generator and broader actuator ownership remain open.

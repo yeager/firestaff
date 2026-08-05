@@ -111,7 +111,7 @@ int F0710_SENSOR_Execute_Compat(
         e->destMapX = sensor->targetMapX;
         e->destMapY = sensor->targetMapY;
         e->destCell = sensor->targetCell;
-        e->textIndex = 2; /* TOGGLE — default effect for floor sensors; full effect resolution requires DungeonSensor_Compat lookup via sensor->sensorIndex */ /* 0=SET, 1=CLEAR, 2=TOGGLE, 3=HOLD */
+        e->textIndex = sensor->effect == 3 ? 0 : sensor->effect;
         outList->count = 1;
         return 1;
     }
@@ -125,7 +125,7 @@ int F0710_SENSOR_Execute_Compat(
         e->destMapX = sensor->targetMapX;
         e->destMapY = sensor->targetMapY;
         e->destCell = sensor->targetCell;
-        e->textIndex = 2; /* TOGGLE — default effect for floor sensors; full effect resolution requires DungeonSensor_Compat lookup via sensor->sensorIndex */
+        e->textIndex = sensor->effect == 3 ? 0 : sensor->effect;
         outList->count = 1;
         return 1;
     }
@@ -151,7 +151,7 @@ int F0710_SENSOR_Execute_Compat(
         e->destMapX = sensor->targetMapX;
         e->destMapY = sensor->targetMapY;
         e->destCell = sensor->targetCell;
-        e->textIndex = 2; /* TOGGLE */
+        e->textIndex = sensor->effect == 3 ? 0 : sensor->effect;
         outList->count = 1;
         return 1;
     }
@@ -398,6 +398,7 @@ int F0717_SENSOR_EnumerateOnSquare_Compat(
                 out->sensorIndex = index;
                 out->sensorType = sensor->sensorType;
                 out->sensorData = sensor->sensorData;
+                out->effect = sensor->effect;
                 out->isLocal = sensor->localEffect;
                 out->cell = THING_GET_CELL(thingRef);
                 if (!sensor->localEffect) {

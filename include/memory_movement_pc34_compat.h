@@ -117,6 +117,7 @@ struct SensorOnSquare_Compat {
     int sensorIndex;             /* Index into things.sensors[] of FIRST sensor */
     int sensorType;              /* Type code of first sensor */
     unsigned short sensorData;   /* Data of first sensor */
+    int effect;                  /* Common-word SET/CLEAR/TOGGLE/HOLD */
     /* Remote target (if applicable) */
     int targetMapX;
     int targetMapY;

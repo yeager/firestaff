@@ -570,6 +570,7 @@ int F0703_MOVEMENT_IdentifySensorsOnSquare_Compat(
                 outSensor->sensorIndex = index;
                 outSensor->sensorType = sensor->sensorType;
                 outSensor->sensorData = sensor->sensorData;
+                outSensor->effect = sensor->effect;
                 outSensor->isLocal = sensor->localEffect;
 
                 if (!sensor->localEffect) {

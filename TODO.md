@@ -3027,6 +3027,10 @@ that its exact runtime path is not already source-locked and tested.
    longer becomes a synthetic `TEXT #N` dialog. Remaining sensor work is
    source-backed mutation/effect coverage beyond the currently modeled
    teleport/text families.
+   2026-08-06: F0718 floor/stairs sensor effects now preserve the real PC34
+   common-word SET/CLEAR/TOGGLE/HOLD field (HOLD resolves to SET on walk-on)
+   instead of forcing a synthetic TOGGLE. Runtime generator and broader
+   actuator ownership remain open.
 3. **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
    saved actions, including supported control flow and live monster/filter
    effects, with transactional save/runtime handoff and fail-closed unsupported
