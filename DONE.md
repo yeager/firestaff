@@ -48458,3 +48458,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   missing asset from masquerading as a corridor opening or fabricated wall.
   Verified with the DM1 wall-ornament (`121/121`) and inventory placement
   (`156/156`) tests plus a successful Ninja `firestaff` build on 2026-08-05.
+- ✅ 2026-08-05 Nexus palette source-lock correction: aligned the Phase 4
+  rendering documentation with the actual fail-closed `STONE.BIN` loader.
+  Short palettes clear and remain unavailable; they do not receive the old
+  inferred `g_npal_default` colour table. Verified by the real-data DGN
+  geometry readiness gate against `/Users/bosse/.firestaff/data/nexus`.

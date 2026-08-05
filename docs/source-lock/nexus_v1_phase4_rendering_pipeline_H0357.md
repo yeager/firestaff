@@ -39,7 +39,7 @@ BGR555 layout: `1R RRRG GGGGB BBBBB` (16 bits). Each 5-bit channel spans 0–31 
 
 **Source:** `docs/NEXUS_FILE_CLASSIFICATION.md` — STONE.BIN = 4 KB = exactly 256 × 16-bit BGR555 entries.
 
-`nexus_palette_load_stone()` reads `size / 2` uint16_t BGR555 entries into `Nexus_PaletteState.entries[256]`. If fewer than 256 loaded (short file), remaining entries filled from `g_npal_default` (deterministic fallback).
+`nexus_palette_load_stone()` admits a palette only when the complete 256-entry source span is present. Short input clears the palette and remains blocked; it never fills missing entries from the retired inferred `g_npal_default` table.
 
 **Color classification evidence (inferNexus master palette):**
 
@@ -177,7 +177,7 @@ Each projectile uses DDA pixel placement: step `(dx,dy,dz)` computed from start�
 
 **Source:** ReDMCSB BLIT.C F0132 — fast rect copy with optional horizontal flip.
 
-Clips source rect to destination framebuffer bounds. Per-pixel copy: `fb[dy*fb_w + dx] = surf->data[row*surf->w + (flip ? w-1-col : col)]`. 
+Clips source rect to destination framebuffer bounds. Per-pixel copy: `fb[dy*fb_w + dx] = surf->data[row*surf->w + (flip ? w-1-col : col)]`.
 
 ### 4.4 FACE.BIN Layout
 
@@ -239,10 +239,10 @@ V1_fb.color_buffer[320×200]  (indexed)
 
 ## 8. Compliance with Phase 4 Mandate
 
-✅ Wall/floor/object/creature/projectile/UI/title rendering — implemented  
-✅ Palette/BGR555/texture handling — implemented (STONE.BIN, BGR555→RGBA)  
-✅ DMDF model loading — implemented with `nexus_project_model_vert()` bridge  
-✅ Deterministic fallback for unsupported 3D assets — per-asset fallback via gray billboard  
-✅ No crashes on missing/corrupt data (all bounds-validated before use)  
-✅ Source citations in every function comment  
-✅ Deterministic gray placeholder for any missing surface/texture  
+✅ Wall/floor/object/creature/projectile/UI/title rendering — implemented
+✅ Palette/BGR555/texture handling — implemented (STONE.BIN, BGR555→RGBA)
+✅ DMDF model loading — implemented with `nexus_project_model_vert()` bridge
+✅ Deterministic fallback for unsupported 3D assets — per-asset fallback via gray billboard
+✅ No crashes on missing/corrupt data (all bounds-validated before use)
+✅ Source citations in every function comment
+✅ Deterministic gray placeholder for any missing surface/texture
