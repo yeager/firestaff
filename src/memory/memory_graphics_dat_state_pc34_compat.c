@@ -35,3 +35,26 @@ struct MemoryGraphicsDatRuntimeState_Compat* runtimeState FINAL_SEPARATOR
         runtimeState->fileSize = header.fileSize;
         return 1;
 }
+
+int F0479_MEMORY_InitializeGraphicsDatState_FromBuffer_Compat(
+const unsigned char *data SEPARATOR
+long size SEPARATOR
+struct MemoryGraphicsDatState_Compat*     fileState    SEPARATOR
+struct MemoryGraphicsDatRuntimeState_Compat* runtimeState FINAL_SEPARATOR
+{
+        struct MemoryGraphicsDatHeader_Compat header;
+
+        memset(runtimeState, 0, sizeof(*runtimeState));
+        if (!F0479_MEMORY_LoadGraphicsDatHeader_FromBuffer_Compat(
+                data, size, fileState, &header)) {
+                return 0;
+        }
+        runtimeState->initialized = 1;
+        runtimeState->format = header.format;
+        runtimeState->graphicCount = header.graphicCount;
+        runtimeState->compressedByteCounts = header.compressedByteCounts;
+        runtimeState->decompressedByteCounts = header.decompressedByteCounts;
+        runtimeState->widthHeight = header.widthHeight;
+        runtimeState->fileSize = header.fileSize;
+        return 1;
+}

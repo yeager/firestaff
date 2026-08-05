@@ -3923,12 +3923,19 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
     if (!receipt->bind_graphics_dat) {
         return 1;
     }
-    /* The source-visible DM1 path owns GRAPHICS.DAT. Continuing after a
-     * failed bind leaves M11 active with stale or host surfaces, which makes
-     * M648 inscriptions and HUD art look like valid game output. */
+    /* The source-visible DM1 path owns GRAPHICS.DAT. Try file-based loading
+     * first, then fall back to in-memory FM Towns disc image buffer. */
     if (!M11_AssetLoader_Init(&state->assetLoader,
                               receipt->graphics_dat_path)) {
-        return 0;
+        if (state->fmtownsGraphicsDat && state->fmtownsGraphicsDatSize > 0) {
+            if (!M11_AssetLoader_InitFromBuffer(&state->assetLoader,
+                    state->fmtownsGraphicsDat,
+                    (long)state->fmtownsGraphicsDatSize)) {
+                return 0;
+            }
+        } else {
+            return 0;
+        }
     }
     state->assetsAvailable = 1;
     (void)m11_dm1_load_object_names_m564(state);
@@ -27922,8 +27929,10 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
     /* Extract wall ornament ordinal from sensors on this square.
      * In DM, wall ornaments are placed via sensor things whose
      * ornamentOrdinal field specifies the graphic to display.
-     * Sensor-placed ornaments OVERRIDE random ornaments. */
-    if (state->world.things && state->world.things->sensors) {
+     * Sensor-placed ornaments OVERRIDE random ornaments.
+     * Only walls carry ornaments and champion mirrors. */
+    if (cell.elementType == DUNGEON_ELEMENT_WALL &&
+        state->world.things && state->world.things->sensors) {
         unsigned short scanThing = viewportStaticFirstThing;
         int scanSafety = 0;
         while (scanThing != THING_ENDOFLIST && scanThing != THING_NONE && scanSafety < 64) {
@@ -28119,8 +28128,11 @@ static int m11_viewport_cell_is_open(const M11_ViewportCell* cell) {
 
 static int m11_viewport_cell_is_wall_like(const M11_ViewportCell* cell) {
     int effectiveElement;
-    if (!cell || !cell->valid) {
+    if (!cell) {
         return 0;
+    }
+    if (!cell->valid) {
+        return 1;
     }
     effectiveElement = DM1_V1_Viewport_EffectiveElementForSquarePc34Compat(cell->square);
     /* ReDMCSB DUNGEON.C F0172: closed fakewalls become

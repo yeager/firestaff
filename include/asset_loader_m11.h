@@ -62,6 +62,12 @@ typedef struct {
    Returns 1 on success, 0 on failure. */
 int M11_AssetLoader_Init(M11_AssetLoader* loader, const char* graphicsDatPath);
 
+/* Initialize the loader from an in-memory GRAPHICS.DAT buffer.
+   The buffer must remain valid for the loader's lifetime.
+   Returns 1 on success, 0 on failure. */
+int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
+                                   const unsigned char *data, long size);
+
 /* Shut down and free all cached data. */
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader);
 

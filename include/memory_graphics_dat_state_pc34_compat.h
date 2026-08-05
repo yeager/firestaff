@@ -18,6 +18,11 @@ int F0479_MEMORY_InitializeGraphicsDatState_Compat(
     struct MemoryGraphicsDatState_Compat* fileState,
     struct MemoryGraphicsDatRuntimeState_Compat* runtimeState);
 
+int F0479_MEMORY_InitializeGraphicsDatState_FromBuffer_Compat(
+    const unsigned char *data, long size,
+    struct MemoryGraphicsDatState_Compat* fileState,
+    struct MemoryGraphicsDatRuntimeState_Compat* runtimeState);
+
 void F0479_MEMORY_FreeGraphicsDatState_Compat(
     struct MemoryGraphicsDatRuntimeState_Compat* runtimeState);
 

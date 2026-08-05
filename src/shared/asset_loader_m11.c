@@ -72,6 +72,49 @@ int M11_AssetLoader_Init(M11_AssetLoader* loader, const char* graphicsDatPath) {
     return 1;
 }
 
+int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
+                                   const unsigned char *data, long size) {
+    struct MemoryGraphicsDatState_Compat* fileState;
+    struct MemoryGraphicsDatRuntimeState_Compat* runtimeState;
+
+    if (!loader || !data || size <= 0) {
+        return 0;
+    }
+    memset(loader, 0, sizeof(*loader));
+    snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath),
+             "(in-memory buffer, %ld bytes)", size);
+
+    fileState = (struct MemoryGraphicsDatState_Compat*)calloc(
+        1, sizeof(struct MemoryGraphicsDatState_Compat));
+    runtimeState = (struct MemoryGraphicsDatRuntimeState_Compat*)calloc(
+        1, sizeof(struct MemoryGraphicsDatRuntimeState_Compat));
+    if (!fileState || !runtimeState) {
+        free(fileState);
+        free(runtimeState);
+        return 0;
+    }
+
+    if (!F0479_MEMORY_InitializeGraphicsDatState_FromBuffer_Compat(
+            data, size, fileState, runtimeState)) {
+        free(fileState);
+        free(runtimeState);
+        return 0;
+    }
+
+    if (!F0477_MEMORY_OpenGraphicsDat_FromBuffer_Compat(data, size, fileState)) {
+        F0479_MEMORY_FreeGraphicsDatState_Compat(runtimeState);
+        free(fileState);
+        free(runtimeState);
+        return 0;
+    }
+
+    loader->fileState = fileState;
+    loader->runtimeState = runtimeState;
+    loader->graphicCount = runtimeState->graphicCount;
+    loader->initialized = 1;
+    return 1;
+}
+
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
     int i;
     if (!loader) {

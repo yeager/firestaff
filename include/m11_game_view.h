@@ -820,6 +820,16 @@ typedef struct {
     unsigned char championDeathHandledMask;
     uint32_t exploredBits[32]; /* 32 * 32 = 1024 cells tracked per level */
 
+    /* FM Towns disc image (loaded from ZIP, kept for CDDA + game data) */
+    uint8_t *fmtownsDiscImage;
+    size_t   fmtownsDiscImageSize;
+    uint8_t *fmtownsGraphicsDat;
+    size_t   fmtownsGraphicsDatSize;
+    uint8_t *fmtownsDungeonDat;
+    size_t   fmtownsDungeonDatSize;
+    uint32_t fmtownsCddaTrackStarts[24];
+    int      fmtownsCddaTrackCount;
+
     /* Asset loader for GRAPHICS.DAT-backed rendering */
     M11_AssetLoader assetLoader;
     int assetsAvailable; /* 1 if assetLoader is ready */

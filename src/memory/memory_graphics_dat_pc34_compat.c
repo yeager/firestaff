@@ -44,6 +44,30 @@ struct MemoryGraphicsDatState_Compat*  state FINAL_SEPARATOR
         return state->fileSize >= 0;
 }
 
+int F0477_MEMORY_OpenGraphicsDat_FromBuffer_Compat(
+const unsigned char *data SEPARATOR
+long size SEPARATOR
+struct MemoryGraphicsDatState_Compat* state FINAL_SEPARATOR
+{
+        if (!data || size <= 0 || !state) return 0;
+        if (state->referenceCount++) {
+                return 1;
+        }
+#if defined(_WIN32)
+        return 0;
+#else
+        state->file = fmemopen((void *)data, (size_t)size, "rb");
+        if (state->file == 0) {
+                state->referenceCount = 0;
+                return 0;
+        }
+        state->fileSize = size;
+        state->cachedChunkIndex = -1;
+        state->cacheContainsGraphicData = 0;
+        return 1;
+#endif
+}
+
 int F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(
 struct MemoryGraphicsDatState_Compat* state FINAL_SEPARATOR
 {

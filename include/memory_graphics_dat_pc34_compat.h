@@ -16,6 +16,10 @@ int F0477_MEMORY_OpenGraphicsDat_CPSDF_Compat(
     const char* path,
     struct MemoryGraphicsDatState_Compat* state);
 
+int F0477_MEMORY_OpenGraphicsDat_FromBuffer_Compat(
+    const unsigned char *data, long size,
+    struct MemoryGraphicsDatState_Compat* state);
+
 int F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(
     struct MemoryGraphicsDatState_Compat* state);
 

@@ -105,8 +105,7 @@ struct MemoryGraphicsDatHeader_Compat* header FINAL_SEPARATOR
         memset(header, 0, sizeof(*header));
 }
 
-int F0479_MEMORY_LoadGraphicsDatHeader_Compat(
-const char*                          path   SEPARATOR
+static int parse_graphics_dat_header_from_open_state(
 struct MemoryGraphicsDatState_Compat* state SEPARATOR
 struct MemoryGraphicsDatHeader_Compat* header FINAL_SEPARATOR
 {
@@ -118,12 +117,6 @@ struct MemoryGraphicsDatHeader_Compat* header FINAL_SEPARATOR
         int littleEndianExtentMatches;
         int bigEndianExtentMatches;
         long actualFileSize;
-
-
-        memset(header, 0, sizeof(*header));
-        if (!F0477_MEMORY_OpenGraphicsDat_CPSDF_Compat(path, state)) {
-                return 0;
-        }
         if (fseek(state->file, 0, SEEK_SET) != 0) {
                 F0478_MEMORY_CloseGraphicsDat_CPSDF_Compat(state);
                 return 0;
@@ -237,4 +230,29 @@ struct MemoryGraphicsDatHeader_Compat* header FINAL_SEPARATOR
                 return 0;
         }
         return 1;
+}
+
+int F0479_MEMORY_LoadGraphicsDatHeader_Compat(
+const char*                          path   SEPARATOR
+struct MemoryGraphicsDatState_Compat* state SEPARATOR
+struct MemoryGraphicsDatHeader_Compat* header FINAL_SEPARATOR
+{
+        memset(header, 0, sizeof(*header));
+        if (!F0477_MEMORY_OpenGraphicsDat_CPSDF_Compat(path, state)) {
+                return 0;
+        }
+        return parse_graphics_dat_header_from_open_state(state, header);
+}
+
+int F0479_MEMORY_LoadGraphicsDatHeader_FromBuffer_Compat(
+const unsigned char *data SEPARATOR
+long size SEPARATOR
+struct MemoryGraphicsDatState_Compat* state SEPARATOR
+struct MemoryGraphicsDatHeader_Compat* header FINAL_SEPARATOR
+{
+        memset(header, 0, sizeof(*header));
+        if (!F0477_MEMORY_OpenGraphicsDat_FromBuffer_Compat(data, size, state)) {
+                return 0;
+        }
+        return parse_graphics_dat_header_from_open_state(state, header);
 }

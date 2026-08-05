@@ -18,6 +18,11 @@ int F0479_MEMORY_LoadGraphicsDatHeader_Compat(
     struct MemoryGraphicsDatState_Compat* state,
     struct MemoryGraphicsDatHeader_Compat* header);
 
+int F0479_MEMORY_LoadGraphicsDatHeader_FromBuffer_Compat(
+    const unsigned char *data, long size,
+    struct MemoryGraphicsDatState_Compat* state,
+    struct MemoryGraphicsDatHeader_Compat* header);
+
 void F0479_MEMORY_FreeGraphicsDatHeader_Compat(
     struct MemoryGraphicsDatHeader_Compat* header);
 
