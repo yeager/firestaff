@@ -157,7 +157,9 @@ static void print_scan_game(const M12_AssetStatus* status,
     }
     if (strcmp(gameId, "csb") == 0) {
         static const char* const optionalLabels[] = {
-            "HCSB.HTC", "HCSB.DAT", "HINT.FTL", "ANIMATE.DAT", "SWITCH.DAT"
+            "SWOOSH", "SWOOSH.DAT", "SWSHSND.C", "SWSHSND.DAT",
+            "HCSB.HTC", "HCSB.DAT", "HINT.FTL", "ANIMATE.DAT",
+            "ANIMATE.SCR", "SWITCH.DAT"
         };
         for (i = 0U; i < sizeof(optionalLabels) / sizeof(optionalLabels[0]); ++i) {
             char path[512];
