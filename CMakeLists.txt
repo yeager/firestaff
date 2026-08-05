@@ -4215,6 +4215,12 @@ list(REMOVE_ITEM M10_SOURCES
 # renderer.  Build this audit only with its explicit test target.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_vp_pc34_compat.c")
+# `c_querydb` is an unauthenticated callback transcription: most of its
+# supposed GDAT queries are still TODO bodies and there is no M11 caller.
+# Keep it available for the isolated API audit only; production must use the
+# mounted, provenance-checked GDAT/G1 data owners.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_querydb_pc34_compat.c")
 # This contract probe seeds a 10x10 synthetic room-skin fixture and is used
 # exclusively by its unit test.  Keep it out of the production M10 archive:
 # the live CSB viewport must consume only source-bound dungeon/material data.
@@ -4371,7 +4377,8 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_0aaf_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_narrow_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_draw_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_vp_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_vp_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_querydb_pc34_compat.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -18830,6 +18837,7 @@ if(BUILD_TESTING)
     # ── DM2: querydb module ──
     add_executable(test_dm2_v1_querydb_pc34_compat
         tests/test_dm2_v1_querydb_pc34_compat.c
+        src/dm2/dm2_v1_querydb_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_querydb_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

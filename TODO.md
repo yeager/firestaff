@@ -4080,7 +4080,10 @@ that its exact runtime path is not already source-locked and tested.
    update:** the separate `c_gui_vp` callback transcription is test-only too;
    it forwards host-provided tiles and click zones instead of consuming the
    original G1/GDAT scene owner. The production route remains the gated
-   viewport renderer.
+   viewport renderer. **2026-08-06 query update:** the inactive `c_querydb`
+   callback transcription is also test-only because its many remaining TODO
+   bodies cannot authenticate GDAT bytes; production must use mounted,
+   provenance-checked GDAT/G1 owners.
 42. **DM2-CREATURE-AI-COMBAT:** Complete skproject creature AI, movement,
     combat, projectiles, cloud effects, drops, occupancy, and timeline-driven
     behavior from raw original records.

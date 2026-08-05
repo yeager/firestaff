@@ -49947,3 +49947,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   caller and forwards host-provided tiles and click zones rather than original
   G1/GDAT scene state. The explicit contract test remains, while live M11
   rendering stays on the provenance-gated DM2 viewport renderer.
+
+- ✅ 2026-08-06 DM2 c_querydb placeholder isolation: removed the inactive
+  callback query transcription from both production CMake globs. It contains
+  many incomplete GDAT-query bodies and has no M11 caller; its explicit test
+  target remains while production uses the mounted, provenance-checked
+  GDAT/G1 query owners.
