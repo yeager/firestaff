@@ -148,11 +148,11 @@ int main(void)
                r, world.party.leader_x, world.party.leader_y,
                world.transition_spawn_x, world.transition_spawn_y);
 
-        /* Should fall back to placing party at the teleporter square itself */
-        check_int("resolve returned 0", r, 0);
+        /* Missing object records must not become a successful transition. */
+        check_int("resolve rejected missing target", r, -1);
         check_int("party stays at teleporter x", world.party.leader_x, 1);
         check_int("party stays at teleporter y", world.party.leader_y, 1);
-        check_int("transition pending", world.transition_pending, 1);
+        check_int("transition remains clear", world.transition_pending, 0);
     }
 
     printf("\n");
@@ -213,15 +213,14 @@ int main(void)
 
         /*
          * A cycle has no terminal non-teleporter destination, so the
-         * resolver must fall back to the clicked teleporter square and keep
-         * party identity state intact.
+         * resolver must reject it and keep party/transition state intact.
          */
-        check_int("cycle returns resolved", r, 0);
-        check_int("transition pending", world.transition_pending, 1);
-        check_int("transition type TELEPORTER", world.transition_type,
-                 THERON_TRANSITION_TELEPORTER);
-        check_int("return path spawn x", world.transition_spawn_x, 3);
-        check_int("return path spawn y", world.transition_spawn_y, 3);
+        check_int("cycle rejected", r, -1);
+        check_int("transition remains clear", world.transition_pending, 0);
+        check_int("transition type unchanged", world.transition_type,
+                 THERON_TRANSITION_EXIT);
+        check_int("return path spawn unchanged x", world.transition_spawn_x, 99);
+        check_int("return path spawn unchanged y", world.transition_spawn_y, 99);
         check_int("return path party x", world.party.leader_x, 3);
         check_int("return path party y", world.party.leader_y, 3);
         check_int("return path keeps leader dir", world.party.leader_dir,
@@ -231,7 +230,7 @@ int main(void)
         check_int("return path keeps active champion wounds", world.party.champions[1].wounds,
                  THERON_WOUND_HEAD);
         check_int("return path keeps levitate flag", world.party.levitating, 0);
-        check_int("return path keeps current level", world.transition_target_level, 0);
+        check_int("return path keeps target level", world.transition_target_level, 2);
     }
 
     printf("\n");

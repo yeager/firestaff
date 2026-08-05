@@ -486,7 +486,6 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
     int iteration = 0;
     int cx = x, cy = y;
     int current_level = world->current_level;
-    int source_coord_link = 0;
 
     while (iteration < THERON_TELEPORTER_CHAIN_MAX) {
         Theron_V1_Object *o = theron_v1_object_at(world, current_level, cx, cy);
@@ -498,7 +497,6 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
         int target_x = 0;
         int target_y = 0;
         if (o->flags & THERON_OBJ_F_TRACK02_COORD_LINK) {
-            source_coord_link = 1;
             target_x = link_id & 0x1F;
             target_y = (link_id >> 5) & 0x1F;
             target_level = (link_id >> 10) & 0x0F;
@@ -519,10 +517,9 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
             }
         }
         if (!target) {
-            /* A source-bound coordinate link must never fall back to the
-             * clicked square when its authenticated object target is absent. */
-            if (o->flags & THERON_OBJ_F_TRACK02_COORD_LINK) return -1;
-            break;
+            /* A missing target is an incomplete object record.  Do not turn
+             * that data error into a successful move at the clicked square. */
+            return -1;
         }
         if (target->type == THERON_OBJTYPE_TELEPORTER) {
             cx = target->x;
@@ -543,20 +540,10 @@ int theron_v1_teleporter_resolve(Theron_V1_World *world, int x, int y) {
         return 0;
     }
 
-    if (source_coord_link) return -1;
-
-    /* Fallback: no chain resolved; place party at clicked square */
-    world->transition_spawn_x = x;
-    world->transition_spawn_y = y;
-    world->transition_pending = 1;
-    /* ReDMCSB: MOVESENS.C:475-537 — unresolved teleporter chain returns
-     * via THERON_TRANSITION_TELEPORTER with clicked square as spawn. */
-    world->transition_type = THERON_TRANSITION_TELEPORTER;
-    world->transition_target_level = world->current_level;
-    world->party.leader_x = x;
-    world->party.leader_y = y;
-    theron_v1_play_sound(THERON_SOUND_TELEPORT);
-    return 0;
+    /* A cycle or chain-limit hit has no authenticated terminal destination.
+     * Leave transition and party state untouched until a real target record
+     * is available. */
+    return -1;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

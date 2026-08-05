@@ -55,8 +55,9 @@
   marks packed level/y/x links explicitly instead of exposing them as host
   object IDs. Runtime resolution follows the source coordinates, supports a
   validated cross-level transition, and rejects missing source targets rather
-  than using the clicked-square fallback. The legacy object-ID chain remains
-  available only for fixture/probe objects. Teleporter probe passes.
+  than using the clicked-square fallback. Unresolved legacy object-ID chains
+  now fail closed as well; only fully resolved fixture/probe links can pass.
+  Teleporter probe passes.
 
 - ✅ 2026-08-05 Theron dungeon-map record integrity: hardened the Track 02
   map/table loader with overflow-safe range checks for dimension tables,
@@ -48633,7 +48634,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   against a title that advances too quickly. ReDMCSB `ANIM.C:67-72` and its
   VBlank waits establish the source timing; the extracted local Atari ST
   package passes the focused handoff test.
-
 ## DM1 source object icon parity
 
 - **DM1-HOC-OBJECTS-004**: Added the missing ReDMCSB `OBJECT.C F0033`
@@ -48650,3 +48650,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   makes the `FTLCODE` transfer explicit. They are reported as verified source
   media without changing the `GRAPHICS.DAT`/`DUNGEON.DAT` start gate. The
   fingerprint suite passes 294/0 against the extracted local package.
+- ✅ 2026-08-05 Theron teleporter fail-closed hardening: unresolved legacy
+  object-ID links and cyclic/overlong chains no longer report a successful
+  transition or place the party at the clicked square. Transition and party
+  state remain unchanged until a real terminal object record resolves;
+  missing-target and cycle regressions now assert rejection.
