@@ -136,12 +136,6 @@ typedef enum {
 /* Maximum path length for an asset file on disk. */
 #define DM1_V22_ASSET_PATH_MAX 512
 
-/* Missing-asset placeholder dimensions.
- * The renderer uses a 16×16 magenta checkerboard when the entire
- * fallback chain is exhausted and no asset can be found. */
-#define DM1_V22_MISSING_W 16
-#define DM1_V22_MISSING_H 16
-
 typedef struct {
     /* Provenance of this specific asset file. */
     DM1_V22_AssetProvenance provenance;
@@ -246,10 +240,8 @@ void dm1_v22_asset_free(DM1_V22_AssetDescriptor* desc);
  * Logs specific failure reason on validation error. */
 int dm1_v22_asset_validate(const DM1_V22_AssetDescriptor* desc);
 
-/* Returns a static missing-asset descriptor (16×16 magenta checkerboard).
- * out_w/out_h are always set to 16. Never returns NULL.
- * This is used by the renderer when the full fallback chain is exhausted
- * and no asset can be found. */
+/* Returns NULL when no authenticated asset is available. Missing art is
+ * explicitly no-draw; this API never fabricates a bitmap. */
 const DM1_V22_AssetDescriptor* dm1_v22_get_missing_descriptor(int* out_w, int* out_h);
 
 /* ══════════════════════════════════════════════════════════════════════

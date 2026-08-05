@@ -160,70 +160,10 @@ const char* dm1_v22_category_name(DM1_V22_AssetCategory cat) {
     }
 }
 
-/* ══════════════════════════════════════════════════════════════════════
- * Missing Asset Placeholder
- *
- * 16×16 magenta checkerboard — returned when the entire fallback chain
- * is exhausted and no asset can be found.
- * ══════════════════════════════════════════════════════════════════════ */
-
-#define DM1_V22_MISSING_W  16
-#define DM1_V22_MISSING_H  16
-
-static const uint32_t g_missing_pixels[DM1_V22_MISSING_H][DM1_V22_MISSING_W] = {
-    { 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF,
-      0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF },
-    { 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF,
-      0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF },
-    { 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF,
-      0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF },
-    { 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF,
-      0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF },
-    { 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF,
-      0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF },
-    { 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF,
-      0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF },
-    { 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF,
-      0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF },
-    { 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF,
-      0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF },
-    { 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF,
-      0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF },
-    { 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF,
-      0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF },
-    { 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF,
-      0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF },
-    { 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF,
-      0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF },
-    { 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF,
-      0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF },
-    { 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF,
-      0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF },
-    { 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF,
-      0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF },
-    { 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF,
-      0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF, 0xFF00FFFF, 0xFFFF00FF }
-};
-
-static const DM1_V22_AssetDescriptor g_missing_descriptor = {
-    .provenance  = DM1_V22_PROVENANCE_UNKNOWN,
-    .category    = DM1_V22_CATEGORY_UNKNOWN,
-    .asset_id    = "DM1_V22_MISSING_PLACEHOLDER",
-    .source_anchor = "dm1_v22_asset_pipeline.c:missing_placeholder",
-    .file_path   = "",
-    .width       = DM1_V22_MISSING_W,
-    .height      = DM1_V22_MISSING_H,
-    .format      = DM1_V22_FORMAT_RGBA,
-    .pixels      = (void*)g_missing_pixels,
-    .pixels_size = sizeof(g_missing_pixels),
-    .is_valid    = 1,
-    .load_attempted = 1
-};
-
 const DM1_V22_AssetDescriptor* dm1_v22_get_missing_descriptor(int* out_w, int* out_h) {
-    if (out_w)  *out_w  = DM1_V22_MISSING_W;
-    if (out_h)  *out_h  = DM1_V22_MISSING_H;
-    return &g_missing_descriptor;
+    if (out_w) *out_w = 0;
+    if (out_h) *out_h = 0;
+    return NULL;
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -468,8 +408,8 @@ static int build_asset_path(DM1_V22_AssetProvenance prov,
  * Returns: 1 if file was found and header is valid, 0 otherwise.
  * On success, out_w/out_h and out_format are filled in.
  * NOTE: actual pixel loading is not implemented in this probe-friendly
- * version — the renderer will use the missing placeholder until the
- * full asset loading agent wires in a PNG library. */
+ * version — a metadata-only result is not renderable and callers must keep
+ * the route no-draw until a complete pixel decoder is bound. */
 static int try_load_asset_file(const char* file_path,
                                int* out_w, int* out_h,
                                DM1_V22_AssetFormat* out_format) {
@@ -672,7 +612,7 @@ int dm1_v22_asset_load(const char* category, const char* asset_id,
 
 void dm1_v22_asset_free(DM1_V22_AssetDescriptor* desc) {
     if (!desc) return;
-    if (desc->pixels && desc->pixels != (void*)g_missing_pixels) {
+    if (desc->pixels) {
         free(desc->pixels);
     }
     memset(desc, 0, sizeof(*desc));

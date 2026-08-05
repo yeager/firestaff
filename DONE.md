@@ -49195,3 +49195,17 @@ and `kskval1.h` teleporter tables.
   consumer remains correctly blocked because its bytes are RAM-loaded and
   are not present in the static image; the required next capture is the
   post-CD RAM window with PC and source-LBA provenance.
+- ✅ 2026-08-06 DM1 V2 HUD synthetic overlay removal: the compatibility
+  `dm1_v2_hud_overlay_pc34` route no longer paints its hard-coded 5x5 font,
+  invented champion names, procedural compass/status/action/rune panels, or
+  fixed meter values. It retains state/timing APIs and stays strict no-draw
+  until the real PC34 M653/C009/C010/C011 surfaces are decoded and passed by a
+  source-owned renderer. The focused test proves both the generic HUD and
+  champion panel leave populated framebuffers unchanged. Tracked as
+  `DM1-ORIGINAL-REPLACE-017`.
+- ✅ 2026-08-06 DM1 V2.2 missing-art checkerboard removal: deleted the
+  hard-coded 16x16 magenta/cyan bitmap and its valid-looking descriptor.
+  `dm1_v22_get_missing_descriptor()` now returns `NULL` and zero dimensions;
+  metadata-only PNG discovery remains non-renderable until a real decoder is
+  bound. The focused asset-pipeline test verifies the explicit no-draw result.
+  Tracked as `DM1-ORIGINAL-REPLACE-018`.

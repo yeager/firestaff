@@ -17,7 +17,7 @@
  *   T1: enum value ordering (MODERN > UPSCALED > FILTERED > ORIGINAL)
  *   T2: fallback chain count correctness
  *   T3: category count is non-zero
- *   T4: missing placeholder dimensions are non-zero
+ *   T4: missing art has no fabricated dimensions or pixels
  *
  * Runtime tests:
  *   T5:  provenance_name() returns correct strings
@@ -108,9 +108,7 @@ static void check_compile_time_invariants(void) {
     _Static_assert(DM1_V22_CATEGORY_COUNT > 0,
                    "DM1_V22_CATEGORY_COUNT must be non-zero");
 
-    /* T4: Missing placeholder dimensions are set correctly. */
-    _Static_assert(DM1_V22_MISSING_W == 16 && DM1_V22_MISSING_H == 16,
-                   "missing placeholder must be 16×16");
+    /* T4: missing art has no fabricated dimensions or bitmap. */
 }
 
 /* ── Scratch directory helpers ─────────────────────────────────────── */
@@ -203,17 +201,12 @@ static void test_category_naming(void) {
 }
 
 static void test_missing_placeholder(void) {
-    /* T9: missing_descriptor() returns non-NULL, is_valid=1, 16×16 RGBA */
+    /* T9: missing_descriptor() is an explicit no-draw result. */
     int w = 0, h = 0;
     const DM1_V22_AssetDescriptor* desc = dm1_v22_get_missing_descriptor(&w, &h);
-    CHECK_NE(desc, NULL, "missing descriptor != NULL");
-    CHECK_EQ(w, 16, "missing width = 16");
-    CHECK_EQ(h, 16, "missing height = 16");
-    CHECK_EQ(desc->width, 16, "desc->width = 16");
-    CHECK_EQ(desc->height, 16, "desc->height = 16");
-    CHECK_EQ(desc->is_valid, 1, "missing is_valid = 1");
-    CHECK_EQ(desc->load_attempted, 1, "missing load_attempted = 1");
-    CHECK_EQ(desc->pixels_size, 16 * 16 * 4, "missing pixel buffer size = 16×16×4");
+    CHECK_EQ(desc, NULL, "missing descriptor = NULL");
+    CHECK_EQ(w, 0, "missing width = 0");
+    CHECK_EQ(h, 0, "missing height = 0");
 }
 
 static void test_asset_validation(void) {

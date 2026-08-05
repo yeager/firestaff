@@ -1251,6 +1251,14 @@ diagnostic; it must not silently fall back to a generated visual.
   `test_dm1_v2_hud_overlay_pc34` proves populated state leaves the framebuffer
   unchanged and cites the authenticated source owners.
 
+- **DM1-ORIGINAL-REPLACE-018:** Closed 2026-08-06. Removed the DM1 V2.2
+  pipeline's 16x16 magenta/cyan missing-art bitmap and descriptor. Missing
+  modern art now returns `NULL` with zero dimensions, so it cannot be treated
+  as valid RGBA or reach a renderer. PNG discovery remains metadata-only until
+  a real pixel decoder is bound; that path stays no-draw instead of using a
+  checkerboard. Verification: `test_dm1_v22_asset_pipeline` asserts the NULL
+  result and existing descriptor validation still passes.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less
