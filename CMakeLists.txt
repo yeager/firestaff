@@ -39758,7 +39758,7 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_rendering
         tests/test_theron_rendering.c
-        src/theron/theron_v1_ui_chrome.c
+        src/theron/theron_v1_ui_chrome_runtime_noop.c
         src/theron/theron_v1_viewport.c
     src/theron/theron_v1_vram_trace_loader.c
     )

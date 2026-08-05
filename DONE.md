@@ -49318,6 +49318,14 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   missing asset cannot draw synthetic pixels; real Track 02 tile/palette
   ownership remains blocked pending loader/VRAM evidence.
 
+- ✅ 2026-08-06 Theron procedural UI-chrome removal: deleted the obsolete
+  fixture-only implementation containing inferred bars, coloured blocks and
+  champion-slot geometry. The rendering regression now links the same
+  production no-op seam used by `firestaff_theron`, so the removed renderer
+  cannot be reintroduced accidentally through a test target. Real HUD tile,
+  layout and portrait binding remain blocked until Track 02 ownership is
+  captured.
+
 - ✅ 2026-08-06 Theron Main-RAM loader capture receipt: the supplied real
   Mednafen sidecar is now parsed as a strict regular-file receipt. It verifies
   the observed TIA transfer from `$c800` to `$0404` (128 bytes), loader PC

@@ -215,6 +215,10 @@
   The V2 procedural overlay is now likewise excluded from the production
   archive; production exposes only a no-op seam until the real HUD bank is
   decoded. Its pixel implementation remains fixture-only.
+  The retired procedural `theron_v1_ui_chrome.c` module is now removed from
+  the repository and the rendering test links the same production no-op seam;
+  remaining work is only authenticated HUD tile-bank, layout, and portrait
+  binding from Track 02.
 
 - **THERON-V1-VIEWPORT-REAL-DATA:** The initial 32×27 Track 02 grid is now
   byte-faithful but its square values have no proven tile/material meaning.

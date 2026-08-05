@@ -1238,13 +1238,9 @@ static int test_startup_render_plan_blocks_synthetic_shapes_without_permit(void)
 static int test_ui_chrome_blocks_unbound_source_bank(void) {
     TEST("Runtime: UI chrome module blocks placeholder bars until a source bank is bound");
 
-    /* TQR-SYN-01: tr_ui_render_topbar / tr_ui_draw_champion_slot draw
-     * placeholder dungeon/name/class blocks. Verified Track 02 exposes
-     * title/stage/Soul Room/forcefield bitmap routes and roster/prompt text,
-     * so this legacy chrome compositor must stay off until a real font/panel
-     * bank is decoded.  tr_ui_source_bank_ready() currently reports not-ready
-     * for every state, so the whole module is a no-op; this test locks that
-     * contract. */
+    /* TQR-SYN-01: Track 02 exposes startup bitmap/text routes, but no
+     * authenticated runtime font/panel bank. The production seam therefore
+     * remains a no-op; this test locks the no-draw contract. */
     TQR_PlanarFramebuffer fb;
     fb.w = 256; fb.h = 224; fb.stride = 256;
     fb.data = (uint8_t *)calloc((size_t)fb.w * fb.h, 1);
