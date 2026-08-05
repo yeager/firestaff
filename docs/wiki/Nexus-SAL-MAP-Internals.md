@@ -25,7 +25,11 @@ requested from this result.
 playback time. This is purely a host-owned binding mechanism — it does not
 assign Saturn event meaning to any selector value. Until original Saturn
 event→selector evidence is available, every entry stays unmapped and the
-dispatch table is fail-closed.
+dispatch table is fail-closed. The runtime receipt has a separate
+`event_dispatch_source_verified` admission bit: even a canonical SAL decode
+and matching `SDDRVS.TSK` identity remains `blocked-event-dispatch` until an
+original Saturn event→MAP trace proves the dispatch owner. MAP windows and
+selector bindings remain diagnostic in the meantime.
 
 ## TODO
 

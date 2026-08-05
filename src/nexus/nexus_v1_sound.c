@@ -760,6 +760,8 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
         eng->map_canonical_source_verified;
     out_receipt->sound_driver_canonical_source_verified =
         eng->sound_driver_canonical_source_verified;
+    out_receipt->event_dispatch_source_verified =
+        eng->event_dispatch_source_verified;
     out_receipt->sal_decode_supported =
         eng->sal_tone_bank_directory_supported &&
         eng->sal_tone_entry_count_decoded == eng->sal_tone_entry_count;
@@ -934,6 +936,16 @@ int nexus_sound_level_runtime_receipt(const Nexus_SoundEngine *eng,
         return 0;
     }
 
+    /* Real SAL decoding plus a matching SDDRVS image still does not bind a
+     * host event to a MAP selector. Selectors may be retained as opaque
+     * diagnostic windows, but playback stays blocked until an original
+     * Saturn event-dispatch trace is admitted. */
+    if (!eng->event_dispatch_source_verified) {
+        out_receipt->status = NEXUS_SFX_RUNTIME_BLOCKED_EVENT_DISPATCH;
+        out_receipt->blocks_real_sfx_playback = 1;
+        return 0;
+    }
+
     out_receipt->status = NEXUS_SFX_RUNTIME_READY_DECODED;
     out_receipt->playback_enabled = eng->sfx_enabled ? 1 : 0;
     return 0;
@@ -949,6 +961,8 @@ const char *nexus_sound_sfx_runtime_status_name(
         return "blocked-asset-mismatch";
     case NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE:
         return "blocked-unsupported-decode";
+    case NEXUS_SFX_RUNTIME_BLOCKED_EVENT_DISPATCH:
+        return "blocked-event-dispatch";
     case NEXUS_SFX_RUNTIME_READY_DECODED: return "ready-decoded";
     default: return "unknown";
     }
@@ -1068,7 +1082,8 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
         looked_up = record_event_window(eng, &window);
     }
 
-    if (!receipt.blocks_real_sfx_playback && eng->sal_decode_ready &&
+    if (!receipt.blocks_real_sfx_playback &&
+        eng->event_dispatch_source_verified && eng->sal_decode_ready &&
         selector >= 0 &&
         selector < eng->sal_decoded_tone_count) {
         nexus_sound_trigger_tone(eng, selector);

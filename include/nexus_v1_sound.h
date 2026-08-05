@@ -195,6 +195,9 @@ typedef struct {
         int position;
     } voices[NEXUS_SOUND_MAX_VOICES];
     int voice_count;
+    /* SDDRVS identity does not prove the Saturn event dispatcher. This
+     * remains zero until an original event-to-MAP trace is admitted. */
+    int event_dispatch_source_verified;
     /* CD audio state */
     int cd_playing;
     int cd_paused;
@@ -210,7 +213,8 @@ typedef enum {
     NEXUS_SFX_RUNTIME_BLOCKED_MISSING_ASSET = 1,
     NEXUS_SFX_RUNTIME_BLOCKED_ASSET_MISMATCH = 2,
     NEXUS_SFX_RUNTIME_BLOCKED_UNSUPPORTED_DECODE = 3,
-    NEXUS_SFX_RUNTIME_READY_DECODED = 4
+    NEXUS_SFX_RUNTIME_BLOCKED_EVENT_DISPATCH = 4,
+    NEXUS_SFX_RUNTIME_READY_DECODED = 5
 } Nexus_SfxRuntimeStatus;
 
 typedef struct {
@@ -297,6 +301,7 @@ typedef struct {
     int sal_canonical_source_verified;
     int map_canonical_source_verified;
     int sound_driver_canonical_source_verified;
+    int event_dispatch_source_verified;
     int playback_enabled;
     int blocks_real_sfx_playback;
     int fallback_visuals_permitted;

@@ -76,7 +76,9 @@
   alone can no longer present a textured mesh before Saturn capture.
   The legacy raw SAL sample-index API is now diagnostic-only: decoded SAL
   bytes cannot start host playback without a source-owned event→MAP selector
-  binding. The real SLEV/SAL/SNDLEV corpus, SDDRVS ABI and distributed game
+  binding. Canonical SLEV/SAL/SNDLEV bytes and SDDRVS identity now also remain
+  blocked at the runtime receipt until `event_dispatch_source_verified` is
+  admitted. The real SLEV/SAL/SNDLEV corpus, SDDRVS ABI and distributed game
   call sites still need an authenticated Saturn event trace before production
   SFX playback can be admitted.
   The legacy Nexus door raster API is now no-draw: its former DM1-derived

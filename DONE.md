@@ -34,6 +34,12 @@
   `test_dm1_v1_f0190_moving_killed_all_m10_handoff_pc34_compat`, and
   `test_dm1_v1_f0190_c040_m11_integration_audit` passed.
 
+- ✅ 2026-08-05 Nexus SLEV/SAL dispatch gate: canonical SAL/MAP decoding and
+  `SDDRVS.TSK` identity no longer imply a playable SFX runtime. The receipt
+  now reports `blocked-event-dispatch` and `nexus_sound_play()` remains
+  fail-closed until an original Saturn event→MAP dispatch trace is admitted;
+  selector/window bindings remain diagnostic only.
+
 - ✅ 2026-08-05 Nexus raw SFX selector gate: `nexus_sound_play_idx()` no
   longer starts a decoded SAL tone from an unproven integer sample index. The
   API retains MAP/window diagnostics only; production playback remains
