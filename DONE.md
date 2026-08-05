@@ -3,6 +3,22 @@
   text loader with overflow-safe range validation. Added a truncated-source
   regression; focused object-data test passes and skips only the optional
   full Track 02 BIN branch when it is not staged.
+- ✅ 2026-08-05 CSB Hint Oracle fingerprint catalog: the shared hash registry
+  now contains the five dmweb/ReDMCSB-documented `HCSB.HTC` variants (Atari
+  ST R1, Amiga EN R2/R3, Amiga FR R1 and Amiga DE R1/R2). Consequently the
+  normal verbose scan identifies the real local Atari ST Hint Oracle by MD5
+  `8ce69b54cf255a15e98e909bb45b9742`, instead of presenting it as an
+  unclassified sidecar. Verified by the generic fingerprint suite, the CSB
+  Amiga asset probe, and the local original Atari ST package scan.
+
+- ✅ 2026-08-05 CSB optional-media provenance: verbose `--scan-data` now
+  computes each materialized Utility Disk file's MD5 and consults the shared
+  CSB fingerprint catalog. A real Atari ST package reports `HCSB.DAT`
+  (`708e113c869ab922633e885aa72a3c77`) and `ANIMATE.DAT`
+  (`9f8feb269c959c9fe722ac08f99d9c35`) as verified source media; unlisted
+  optional companions remain explicitly unclassified rather than being
+  presented as verified. Verified by the fingerprint unit, the CSB archive
+  regression, and a scan of the local original package.
 
 - ✅ 2026-08-05 Nexus boot-library corpus verification: the materialized
   original `0DMSTRT.BIN` now passes the real-file structure-admission gate

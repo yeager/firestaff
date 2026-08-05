@@ -35,6 +35,7 @@
 #define F_TITL FIRESTAFF_FILE_TITL_DAT
 #define F_ENDA FIRESTAFF_FILE_ENDA_DAT
 #define F_SWSH FIRESTAFF_FILE_SWSH_FTL
+#define F_HTC  FIRESTAFF_FILE_HCSB_HTC
 
 #define MD5(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) \
     {0x##a,0x##b,0x##c,0x##d,0x##e,0x##f,0x##g,0x##h, \
@@ -71,6 +72,13 @@ const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERP
     /* CSB Atari ST */
     {MD5(EB,F6,A5,7A,F3,F2,77,82,E3,58,C0,49,0B,FD,2F,2E), G_CSB, P_ST, L_EN, F_GFX, "2.0/2.1", "CSB Atari ST 2.0 and 2.1 English GRAPHICS.DAT"},
     {MD5(9F,8F,EB,26,9C,95,9C,9F,E7,22,AC,08,F9,9D,9C,35), G_CSB, P_ST, L_EN, F_ANIM, NULL, "CSB Atari ST Utility Disk English ANIMATE.DAT"},
+    /* CSB Hint Oracle files. ReDMCSB HINTLOAD.C names HCSB.HTC and
+     * dmweb documents these five release hashes. */
+    {MD5(8C,E6,9B,54,CF,25,5A,15,E9,8E,90,9B,B4,5B,97,42), G_CSB, P_ST, L_EN, F_HTC, "R1", "CSB Atari ST 2.x Hint Oracle HCSB.HTC"},
+    {MD5(33,4F,C1,8C,B9,8D,12,80,A4,C5,5A,16,56,6D,5E,F9), G_CSB, P_AMI, L_EN, F_HTC, "R2", "CSB Amiga Hint Oracle English R2 HCSB.HTC"},
+    {MD5(C0,68,62,29,8F,19,3B,1F,E4,79,EA,EF,F6,AC,D5,7E), G_CSB, P_AMI, L_EN, F_HTC, "R3", "CSB Amiga Hint Oracle English R3 HCSB.HTC"},
+    {MD5(80,3E,DE,61,13,6C,CF,C2,BF,F8,E2,66,D8,DC,39,35), G_CSB, P_AMI, L_FR, F_HTC, "R1", "CSB Amiga Hint Oracle French R1 HCSBF.HTC"},
+    {MD5(5A,7A,B2,C8,38,72,15,C7,2B,2A,BE,77,2E,2D,DC,68), G_CSB, P_AMI, L_DE, F_HTC, "R1/R2", "CSB Amiga Hint Oracle German R1/R2 HCSBG.HTC"},
     /* CSB FM Towns */
     {MD5(40,5B,75,70,38,EE,A3,C2,63,E6,0F,24,08,54,D6,DE), G_CSB, P_FMT, L_EN, F_GFX, NULL, "CSB FM-Towns English GRAPHICS.DAT"},
     {MD5(76,1D,6F,C5,88,B3,1A,EA,AA,9C,AF,37,25,E1,11,B9), G_CSB, P_FMT, L_JP, F_GFX, NULL, "CSB FM-Towns Japanese GRAPHICS.DAT"},
