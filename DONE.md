@@ -49131,7 +49131,6 @@ in `TODO.md` and cannot be satisfied with substitute art.
   remain unavailable instead of selecting substitute pixels. The focused
   `test_dm1_v22_verification` passes with source-index assertions. Tracked as
   `DM1-ORIGINAL-REPLACE-015`.
-
 # ✅ 2026-08-06 DM2 source-door RAW4 fallback removal
 
 `dm2_v1_viewport_build_door_render_plan()` no longer uses the old compact,
@@ -49145,3 +49144,14 @@ source plan uses the actual RAW4 table. Verification: source-owner absence
 gate PASS; PC English RAW4 placement test PASS; canonical GDAT door overlay
 plan PASS. Source: `SKWINSPX/src/v4/c_gui_vp.cpp::DM2_DRAW_DOOR` and
 `DM2_DRAW_DOOR_FRAMES`.
+
+# ✅ 2026-08-06 DM1 legacy V2.2 overlay synthetic-pixel removal
+
+The retired `m11_v22_render_overlay_pc34` compatibility route no longer paints
+material-colour rectangles, palette-shadowed fills, borders, or any other
+generated V2.2 pixels over the DM1 V1 framebuffer. It remains link-compatible
+for probes and preserves the source viewport-cell geometry API, while the
+authenticated in-place renderer is the only route allowed to draw V2.2 art.
+The focused test now proves that both an empty cache and a populated V2.2
+cache leave the framebuffer byte-for-byte unchanged. Tracked as
+`DM1-ORIGINAL-REPLACE-016`.

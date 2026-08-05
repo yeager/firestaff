@@ -1230,6 +1230,14 @@ diagnostic; it must not silently fall back to a generated visual.
   source-fail-closed. Verification: `test_dm1_v22_verification` passes,
   including the source-index assertions; no modern artpack is fabricated.
 
+- **DM1-ORIGINAL-REPLACE-016:** Closed 2026-08-06. Retired the legacy M11
+  V2.2 overlay's synthetic material-colour rectangles, palette shadowing and
+  border pixels. The compatibility API now always returns no-draw; only the
+  authenticated in-place V2.2 asset renderer may write modern pixels. Shared
+  source viewport rectangles remain available for that renderer. Verification:
+  `test_m11_v22_render_overlay_pc34` passes with populated V2.2 cache data and
+  an unchanged framebuffer; no placeholder palette index remains in this path.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less
