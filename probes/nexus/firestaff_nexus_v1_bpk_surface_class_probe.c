@@ -275,6 +275,7 @@ static void test_optional_real_menumenu_bpk(void) {
     Nexus_V1_BpkSurfaceEntry entries[200];
     Nexus_V1_BpkSurfaceEstimate summary;
     uint32_t indexed = 0U, rgb565 = 0U, rgb888 = 0U, rgba32 = 0U;
+    uint32_t mode6 = 0U, mode14 = 0U, mode22 = 0U, mode30 = 0U;
     uint64_t expected_total = 0U;
 
     memset(entries, 0, sizeof(entries));
@@ -298,6 +299,13 @@ static void test_optional_real_menumenu_bpk(void) {
 
     /* Cross-check mode bucket counts against the pass1082 mode distribution. */
     for (uint32_t i = 0; i < summary.used; ++i) {
+        switch (entries[i].mode) {
+        case 6U: ++mode6; break;
+        case 14U: ++mode14; break;
+        case 22U: ++mode22; break;
+        case 30U: ++mode30; break;
+        default: break;
+        }
         switch (entries[i].layout.surface_class) {
         case NEXUS_V1_BPK_SURFACE_INDEXED_8BPP: ++indexed; break;
         case NEXUS_V1_BPK_SURFACE_RGB565:       ++rgb565; break;
@@ -320,10 +328,16 @@ static void test_optional_real_menumenu_bpk(void) {
                       (uint32_t)entries[i].height,
               "real MENU.BPK pixel_count == w*h");
     }
-    CHECK(indexed == 14U, "real MENU.BPK: 14 indexed 8bpp entries");
-    CHECK(rgb565 == 62U, "real MENU.BPK: 62 RGB565 entries");
-    CHECK(rgb888 == 39U, "real MENU.BPK: 39 RGB888 entries");
-    CHECK(rgba32 == 47U, "real MENU.BPK: 47 RGBA8888 entries");
+    /* DMWeb's PRS3 decoder expands every mode-tagged stream to 8-bit
+     * palette indices. The opaque prefix mode distribution is retained
+     * separately; it is not a decoded host pixel format. */
+    CHECK(indexed == 162U,
+          "real MENU.BPK: all PRS3 outputs are indexed 8bpp");
+    CHECK(rgb565 == 0U, "real MENU.BPK: no PRS3 RGB565 outputs");
+    CHECK(rgb888 == 0U, "real MENU.BPK: no PRS3 RGB888 outputs");
+    CHECK(rgba32 == 0U, "real MENU.BPK: no PRS3 RGBA8888 outputs");
+    CHECK(mode6 == 14U && mode14 == 62U && mode22 == 39U && mode30 == 47U,
+          "real MENU.BPK: opaque mode distribution is preserved");
     CHECK(expected_total == summary.total_surface_bytes,
           "real MENU.BPK: per-entry sum equals summary total");
 

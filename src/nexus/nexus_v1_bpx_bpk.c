@@ -57,6 +57,19 @@ int nexus_v1_bpx_bpk_identify_marker(const char *path,
         return NEXUS_V1_BPX_BPK_OK;
     }
 
+    /* docs/VERIFIED_HASHES.md records these as real English/French ISO
+     * revisions. They are source-bound evidence for bounded inspection, not
+     * permission to use the canonical PRS3/VDP1 capture route. */
+    if (sha256 &&
+        ((size == NEXUS_V1_MENU_BPK_ENGLISH_SIZE &&
+          strcmp(sha256, NEXUS_V1_MENU_BPK_ENGLISH_SHA256) == 0) ||
+         (size == NEXUS_V1_MENU_BPK_FRENCH_SIZE &&
+          strcmp(sha256, NEXUS_V1_MENU_BPK_FRENCH_SHA256) == 0))) {
+        *out_format =
+            NEXUS_V1_BPX_BPK_FORMAT_VERIFIED_MENU_BPK_RETAIL_ALTERNATE;
+        return NEXUS_V1_BPX_BPK_OK;
+    }
+
     if (has_archive_suffix(path)) {
         return NEXUS_V1_BPX_BPK_ERR_UNSUPPORTED;
     }

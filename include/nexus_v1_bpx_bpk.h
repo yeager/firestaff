@@ -13,14 +13,25 @@
  * - docs/VERIFIED_HASHES.md:103 records MENU.BPK size/hash.
  *
  * This module does not claim to decode the proprietary Saturn BPK stream.
- * It provides a real-file marker plus a synthetic BPX0 archive contract used
- * to lock parser bounds and stored-entry extraction until MENU.BPK bytes are
- * available for reverse engineering.
+ * It provides source-bound markers for the canonical and documented ISO
+ * retail revisions, plus a synthetic BPX0 archive contract used only to lock
+ * parser bounds and stored-entry extraction. Real MENU.BPK bytes are used by
+ * separate bounded structural probes; PRS3/VDP1 promotion remains gated.
  */
 
 #define NEXUS_V1_MENU_BPK_SIZE 89060u
 #define NEXUS_V1_MENU_BPK_SHA256 \
     "740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636"
+
+/* Real ISO-bound retail revisions from docs/VERIFIED_HASHES.md. These are
+ * valid for bounded structural inspection only; neither identity satisfies
+ * the canonical PRS3/VDP1 capture corpus. */
+#define NEXUS_V1_MENU_BPK_ENGLISH_SIZE 87684u
+#define NEXUS_V1_MENU_BPK_ENGLISH_SHA256 \
+    "f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca"
+#define NEXUS_V1_MENU_BPK_FRENCH_SIZE 87820u
+#define NEXUS_V1_MENU_BPK_FRENCH_SHA256 \
+    "c4e2427f54083e92cdf38f3b1f296e135bdb007de227431be690cc41381fd543"
 
 #define NEXUS_V1_BPX_BPK_MAX_ENTRIES 64
 #define NEXUS_V1_BPX0_HEADER_SIZE 16u
@@ -34,7 +45,9 @@ typedef enum {
      * 20-byte MENU.BPK-shaped prefix (width/height/mode tag at bytes
      * 12..14 / 15 / 19) plus the PRS3 magic + 0x00000001 version + pixel
      * count sub-header without claiming PRS3 decompression. */
-    NEXUS_V1_BPX_BPK_FORMAT_SYNTHETIC_PRS3 = 3
+    NEXUS_V1_BPX_BPK_FORMAT_SYNTHETIC_PRS3 = 3,
+    /* A documented English/French ISO-bound retail revision. */
+    NEXUS_V1_BPX_BPK_FORMAT_VERIFIED_MENU_BPK_RETAIL_ALTERNATE = 4
 } Nexus_V1_BpxBpkFormat;
 
 typedef enum {

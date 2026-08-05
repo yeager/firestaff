@@ -105,6 +105,15 @@ int main(void) {
 
     rc = nexus_v1_bpx_bpk_identify_marker(
         "nexus/MENU.BPK",
+        NEXUS_V1_MENU_BPK_ENGLISH_SIZE,
+        NEXUS_V1_MENU_BPK_ENGLISH_SHA256,
+        &format);
+    CHECK(rc == NEXUS_V1_BPX_BPK_OK &&
+          format == NEXUS_V1_BPX_BPK_FORMAT_VERIFIED_MENU_BPK_RETAIL_ALTERNATE,
+          "English ISO-bound retail MENU.BPK revision recognized");
+
+    rc = nexus_v1_bpx_bpk_identify_marker(
+        "nexus/MENU.BPK",
         NEXUS_V1_MENU_BPK_SIZE,
         "0000000000000000000000000000000000000000000000000000000000000000",
         &format);

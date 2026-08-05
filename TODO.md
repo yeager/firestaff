@@ -103,6 +103,9 @@
   The procedural V2 HUD overlay (compass, depth, bars, icons and gold) is now
   no-draw even when its diagnostic runtime is force-enabled; retain only state
   for inspection until the authentic Saturn HUD/VDP1/VDP2 owner is captured.
+  MENU.BPK English/French ISO revisions are now recognized as real alternate
+  identities for bounded inspection; do not treat their opaque mode tags as
+  host RGB formats or promote them to PRS3/VDP1 output without capture proof.
   Startup runtime receipts now also keep `hud_ready` clear after a DGN handoff;
   level-loaded state alone cannot promote an unbound Saturn HUD consumer.
   FONT256.S2D loader now exposes only the 242 real character-generator tiles

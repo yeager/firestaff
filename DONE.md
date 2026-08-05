@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 Nexus MENU.BPK retail-revision binding: added explicit
+  source-bound marker identities for the real English (87,684-byte) and French
+  (87,820-byte) ISO revisions documented in `docs/VERIFIED_HASHES.md`. They are
+  accepted for bounded structural inspection only and remain distinct from the
+  canonical 89,060-byte PRS3/VDP1 capture revision. Corrected the real-media
+  surface probe so DMWeb's opaque mode distribution (14/62/39/47) is checked
+  separately from the proven PRS3 output format (162 indexed 8-bit surfaces).
+  Verification: BPX marker probe 23/23 and real MENU.BPK surface probe 531/531.
+
 - ✅ 2026-08-06 DM1 generic door/stair render suppression: authenticated
   PC34 sessions no longer scale a generic frame/stair bitmap across the wall
   face before ReDMCSB F0111/F0104 selects the source-owned depth, orientation,
