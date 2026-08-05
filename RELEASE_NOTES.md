@@ -1,5 +1,9 @@
 
 
+# Firestaff v3.0.290
+- Add percent sign glyph to built-in bitmap font so scanning progress
+  shows "15%" instead of "15"
+
 # Firestaff v3.0.289
 - Fix DM1/CSB junk item name table: remove spurious TORCH entry that shifted
   all names from subtype 1 onward (rope showed "APPLE", etc.)
