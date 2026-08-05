@@ -78,6 +78,11 @@
   consumer evidence are authenticated; the host HUD placeholder cannot leak
   through the runtime receipt.
 
+- ✅ 2026-08-06 Nexus viewport receipt hardening: a Structure3 mesh submission
+  no longer produces `ready-rendered-mesh` unless the viewport receipt also
+  proves `ready`, non-empty pixels, `captured_frame_ready`, and a nonzero frame
+  hash. Offscreen or blank mesh output remains `blocked-raster`.
+
 - ✅ 2026-08-05 Nexus startup title fallback removal: the generic title
   renderer no longer copies a raw `TITLE.CG` character-generator atlas to the
   framebuffer when the Saturn MAPD/TIBG handoff is missing. TITLE.CG and

@@ -2038,6 +2038,24 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                                      host_route.status),
                                  "ready-rendered-mesh") == 0,
                           "Structure3 mesh rendering provides a ready host route");
+                    {
+                        Nexus_V1_DgnViewportRenderReceipt saved_render =
+                            untextured_viewport.last_dgn_render_receipt;
+                        untextured_viewport.last_dgn_render_receipt.ready = 0;
+                        untextured_viewport.last_dgn_render_receipt
+                            .captured_frame_ready = 0;
+                        untextured_viewport.last_dgn_render_receipt.written_pixels = 0;
+                        untextured_viewport.last_dgn_render_receipt.frame_hash = 0U;
+                        memset(&host_route, 0, sizeof(host_route));
+                        CHECK(nexus_viewport_dgn_host_route_receipt(
+                                  &untextured_viewport, &active_engine,
+                                  &host_route) == 0 &&
+                                  host_route.blocks_runtime_dgn &&
+                                  host_route.status ==
+                                      NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_RASTER,
+                              "blank Structure3 mesh output remains blocked-raster");
+                        untextured_viewport.last_dgn_render_receipt = saved_render;
+                    }
                 }
             }
         }

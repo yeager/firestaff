@@ -958,6 +958,16 @@ int nexus_viewport_dgn_host_route_receipt(
         handoff.max_post_grid_0x30_ref;
 
     if (render->structure3_mesh_rendered) {
+        /* Structure3 mesh submission is not itself a presented frame. A
+         * clipped/offscreen mesh can still have consumed textured faces while
+         * writing no framebuffer pixels. Keep the host route blocked until
+         * the render receipt carries the same non-empty frame witness as the
+         * legacy material route. */
+        if (!render->ready || !render->captured_frame_ready ||
+            render->written_pixels <= 0 || render->frame_hash == 0u) {
+            out_receipt->status = NEXUS_V1_DGN_HOST_ROUTE_BLOCKED_RASTER;
+            return 0;
+        }
         out_receipt->status = NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH;
         out_receipt->host_route_consumed = 1;
         out_receipt->can_present_runtime_dgn = 1;

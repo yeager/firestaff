@@ -86,7 +86,9 @@
   creature rendering and VDP1 texture/palette handoff remain open.
   The Structure3 viewport rasterizer now also requires the complete scene's
   transform and pixel/palette/VDP1 semantics bits; payload/format admission
-  alone can no longer present a textured mesh before Saturn capture.
+  alone can no longer present a textured mesh before Saturn capture. Its host
+  route also requires a non-empty captured frame witness; mesh submission by
+  itself cannot claim viewport readiness.
   The legacy raw SAL sample-index API is now diagnostic-only: decoded SAL
   bytes cannot start host playback without a source-owned event→MAP selector
   binding. Canonical SLEV/SAL/SNDLEV bytes and SDDRVS identity now also remain
