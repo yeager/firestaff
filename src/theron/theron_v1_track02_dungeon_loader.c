@@ -98,8 +98,11 @@ int theron_v1_track02_load_full_dungeon(
         return -1;
     }
 
-    TilePosition *pos_table = calloc(gref_count, sizeof(TilePosition));
-    if (!pos_table) { free(td); return -1; }
+    TilePosition *pos_table = NULL;
+    if (gref_count > 0u) {
+        pos_table = calloc(gref_count, sizeof(TilePosition));
+        if (!pos_table) { free(td); return -1; }
+    }
 
     int pos_count = build_gref_position_table(&dd, pos_table, gref_count);
     if (pos_count < 0 || (unsigned int)pos_count != gref_count) {
@@ -210,7 +213,11 @@ int theron_v1_track02_load_full_dungeon(
             }
 
             if (place) {
-                theron_v1_object_place(world, &obj);
+                if (theron_v1_object_place(world, &obj) != 0) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
                 world->levels[di][map].thing_count++;
                 result->total_things_placed++;
             }

@@ -40,6 +40,9 @@
   remaining handoff work is the authenticated non-startup level/object
   corpus and real bitmap/palette capture.
 
+  Full-dungeon loading now accepts a valid zero-ground-reference map and
+  rejects object-capacity exhaustion instead of reporting a partial success.
+
 - **THERON-FIXTURE-HELPER-ARCHIVE:** Closed 2026-07-31. Synthetic first-room
   constructors are now compiled only into explicit fixture targets; the
   production Theron archive exports no generated level-buffer helpers.

@@ -1,3 +1,21 @@
+- ✅ 2026-08-05 Theron full-dungeon loader integrity: zero ground-reference
+  dungeons no longer fail because of `calloc(0)`, and failed object placement
+  now aborts the load instead of returning a partial-success receipt. Focused
+  dungeon-loader target builds; its full Track 02 branch remains an honest
+  skip when the BIN is not staged.
+
+- ✅ 2026-08-05 Theron production-link verification after packed teleporter
+  handoff: full `firestaff` target and `firestaff_m11_phase_a_probe` build
+  cleanly for the changed route; Phase A passes 24/24. Existing non-Theron
+  warning-only diagnostics remain unchanged.
+
+- ✅ 2026-08-05 Theron Track 02 teleporter parity: the dungeon loader now
+  marks packed level/y/x links explicitly instead of exposing them as host
+  object IDs. Runtime resolution follows the source coordinates, supports a
+  validated cross-level transition, and rejects missing source targets rather
+  than using the clicked-square fallback. The legacy object-ID chain remains
+  available only for fixture/probe objects. Teleporter probe passes.
+
 - ✅ 2026-08-05 Theron dungeon-map record integrity: hardened the Track 02
   map/table loader with overflow-safe range checks for dimension tables,
   cumulative column records, descriptor bytes, and map tiles. Added a
