@@ -48729,6 +48729,17 @@ the supplied root and selected MD5 to prove this without shipping game data.
   runtime records; generic wall ornaments retain the sensor/drop path.
   Verified with a full `firestaff` build and the source fountain regression
   (`fountainInteractionInvariantOk=1`) on 2026-08-05.
+
+## DM1 source wall ornament table correction
+
+- **DM1-HOC-OBJECTS-006**: Corrected the DM1 PC34/I34E `G0194` wall-ornament
+  coordinate-set table. Firestaff had used the ReDMCSB `MEDIA353` variant
+  (`DUNVIEW.C:846-906`); PC34 uses the `MEDIA529`/`I34E` table at
+  `DUNVIEW.C:932-1007`, including coordinate sets 7/8 for the real wall
+  ornament family. The source graphic base remains `M615=259`, with F0791
+  transparent colour 10 and G0198/G0199 palette maps unchanged. Focused
+  G0194 and wall-plan tests pass after the correction. Real macOS pixel
+  capture is still tracked separately in `DM1-HOC-OBJECTS-001`.
 - ✅ 2026-08-05 CSB Atari ST executable-media inventory: corrected the
   `SWITCH.DAT` fingerprint to the bytes in the original hard-disk package and
   added hash identities for `ANIMATE.FTL`, `CHAOS.FTL`, and `FTLCODE`.

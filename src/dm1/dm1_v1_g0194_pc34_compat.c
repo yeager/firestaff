@@ -5,7 +5,7 @@
 /*
  * ReDMCSB source-lock map for this gate (G0194):
  * - DUNVIEW.C:471 - declaration
- * - DUNVIEW.C:846-906 - PC 3.4 EN init (60 entries)
+ * - DUNVIEW.C:932-1007 - PC 3.4/I34E init (60 entries)
  * - DUNVIEW.C F0113/F0100 - read sites
  *
  * Disjoint from pass784+ non-mirror-candidate contract gates.
@@ -18,7 +18,9 @@ enum {
 };
 
 static const unsigned char s_g0194[kTableSize] = {
-1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 1, 1, 1, 1, 1, 4, 4, 4, 5, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 2, 6, 6, 6, 7
+7, 1, 1, 1, 0, 0, 0, 8, 0, 8, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0,
+0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 1, 1, 1, 1, 1,
+4, 4, 4, 5, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 2, 6, 6, 6, 6
 };
 
 const unsigned char *
@@ -68,7 +70,11 @@ dm1_v1_g0194_run_pc34(
     out->allBytesInByteRange = all_bytes_in_byte_range;
 
     {
-        static const unsigned char kExpected[kTableSize] = { 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 1, 1, 1, 1, 1, 4, 4, 4, 5, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 2, 6, 6, 6, 7 };
+        static const unsigned char kExpected[kTableSize] = {
+            7, 1, 1, 1, 0, 0, 0, 8, 0, 8, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0,
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 1, 1, 1, 1, 1,
+            4, 4, 4, 5, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 2, 6, 6, 6, 6
+        };
         for (i = 0; i < kTableSize; ++i) {
             if (s_g0194[i] != kExpected[i]) {
                 table_matches_declaration = 0;

@@ -22,7 +22,11 @@ static void test_table_values(void)
     const unsigned char *t = dm1_v1_g0194_table_pc34();
     int n = dm1_v1_g0194_size_pc34();
     int i;
-    int kExpected[60] = { 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 2, 3, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 1, 1, 1, 1, 1, 4, 4, 4, 5, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 2, 6, 6, 6, 7 };
+    int kExpected[60] = {
+        7, 1, 1, 1, 0, 0, 0, 8, 0, 8, 0, 2, 2, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 2, 1, 1, 1, 1, 1,
+        4, 4, 4, 5, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 2, 6, 6, 6, 6
+    };
     CHECK(t != 0);
     CHECK(n == 60);
     for (i = 0; i < 60; ++i) {
@@ -48,8 +52,10 @@ static void test_lookup_function(void)
 
 static void test_first_last_specific(void)
 {
-    CHECK(dm1_v1_g0194_get_pc34(0) == 1);
-    CHECK(dm1_v1_g0194_get_pc34(59) == 7);
+    CHECK(dm1_v1_g0194_get_pc34(0) == 7);
+    CHECK(dm1_v1_g0194_get_pc34(7) == 8);
+    CHECK(dm1_v1_g0194_get_pc34(9) == 8);
+    CHECK(dm1_v1_g0194_get_pc34(59) == 6);
 }
 
 static void test_run_accepted(void)
