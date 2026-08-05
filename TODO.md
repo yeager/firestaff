@@ -3873,6 +3873,13 @@ that its exact runtime path is not already source-locked and tested.
     row/panel layout. A click that cannot be matched by source rectangles,
     including the display-to-framebuffer retry, is inert rather than selecting
     a host-invented save row.
+    **2026-08-06 keyboard correction:** M11 now also rejects normalized
+    Firestaff `UP`/`DOWN`/`ACCEPT` menu tokens while the DM2 title menu is
+    active. `SHOW_MENU_SCREEN` consumes original MessageLoop events and the
+    imported GDAT matrix produces `0xD7`/`0xD9`; no original keyboard-to-event
+    table has yet been ported. Source pointer rectangles remain the only live
+    menu actions. Import `c_0aaf`/`c_input` translation before enabling any
+    keyboard/controller mapping.
 41. **DM2-PARTY-INVENTORY-SPELLS:** Complete real champion, inventory, item,
     skill, action, spell, damage, condition, and UI mutation paths through
     the source runtime.

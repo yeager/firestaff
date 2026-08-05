@@ -1656,26 +1656,6 @@ static int m11_dm2_boot_runtime_startup_idle(
         out_receipt);
 }
 
-static int m11_dm2_boot_runtime_startup_input(
-    M11_GameViewState *state,
-    M12_MenuInput input,
-    DM2_V1_StartupExecution *out_execution,
-    DM2_V1_StartupHostActionReceipt *out_receipt)
-{
-    DM2_V1_BootRuntimeStartupSnapshot snapshot;
-    if (!state || !out_execution || !out_receipt) {
-        return 0;
-    }
-    m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-    return dm2_v1_boot_startup_execute_firestaff_input_from_snapshot(
-        &snapshot,
-        (int)input,
-        m11_dm2_startup_apply_session_callback,
-        state,
-        out_execution,
-        out_receipt);
-}
-
 static int m11_dm2_boot_runtime_startup_pointer(
     M11_GameViewState *state,
     int x,
@@ -1707,9 +1687,6 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     M11_GameViewState *state,
     M12_MenuInput input)
 {
-    DM2_V1_StartupExecution execution;
-    DM2_V1_StartupHostActionReceipt action_receipt;
-
     if (!state || !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
@@ -1719,16 +1696,17 @@ static M11_GameInputResult m11_dm2_startup_handle_input(
     if (state->dm2State.startup_credits_active) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (!m11_dm2_boot_runtime_startup_input(
-            state,
-            input,
-            &execution,
-            &action_receipt)) {
-        return input == M12_MENU_INPUT_NONE
-                   ? M11_GAME_INPUT_IGNORED
-                   : M11_GAME_INPUT_REDRAW;
-    }
-    return m11_dm2_startup_apply_host_action_receipt(state, &action_receipt);
+    /* SHOW_MENU_SCREEN consumes DM2's own MessageLoop events.  Its menu
+     * actions are the source UI events 0xD7/0xD9, selected by the mounted
+     * GDAT RAW4 click matrix.  M12's UP/DOWN/ACCEPT tokens have no imported
+     * DM2 keyboard-to-event translation, so treating its host row model as a
+     * menu action could select a synthetic save/new-game route.  Keep those
+     * tokens inert until c_0aaf/c_input's original translation is ported.
+     * Source: SKWIN SkWinCore.cpp::SHOW_MENU_SCREEN (55182-55220),
+     * HANDLE_UI_EVENT (32001-32021); SKULLWIN startend.cpp::DM2_SHOW_MENU_SCREEN.
+     */
+    (void)input;
+    return M11_GAME_INPUT_IGNORED;
 }
 
 static int m11_csb_mapped_inventory_slot(int csb_slot)

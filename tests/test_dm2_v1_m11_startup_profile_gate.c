@@ -1907,13 +1907,10 @@ int main(void) {
                         view.dm2State.startup_credits_remaining_ticks == 0,
                     "M11 DM2 credits leave through the source right-button 239 event");
     }
-    while (view.dm2State.startup_menu_selected_row + 1 <
-           view.dm2State.startup_menu_row_count) {
-        expect_true(M11_GameView_HandleInput(&view,
-                                             M12_MENU_INPUT_DOWN) ==
-                        M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 startup menu moves toward NEW GAME");
-    }
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+                    M11_GAME_INPUT_IGNORED &&
+                    view.dm2State.startup_menu_active == 1,
+                "M11 DM2 startup rejects unproven host keyboard navigation");
     view.world.party.championCount = 1;
     view.world.party.activeChampionIndex = 0;
     view.dm2State.leader_hand_object = dm2_db_make_handle(10, 0x0033);
@@ -1924,10 +1921,9 @@ int main(void) {
     (void)dm2_v1_runtime_set_champion_inventory_object(
         0, CHAMPION_SLOT_HEAD,
         view.dm2State.champion_inventory_objects[0][CHAMPION_SLOT_HEAD]);
-    expect_true(M11_GameView_HandleInput(&view,
-                                         M12_MENU_INPUT_ACCEPT) ==
+    expect_true(M11_GameView_HandlePointer(&view, 100, 60, 1) ==
                     M11_GAME_INPUT_REDRAW,
-                "M11 DM2 startup menu NEW GAME reaches GAME_LOAD gate");
+                "M11 DM2 source NEW GAME rectangle reaches GAME_LOAD gate");
     expect_true(view.dm2State.startup_menu_active == 1 &&
                     strstr(view.lastOutcome,
                            "DM2 GAME_LOAD DUNGEON READY: INITIALIZATION REQUIRED") != NULL,
@@ -2070,10 +2066,9 @@ int main(void) {
                  sizeof(view.dm2State.startup_save_root),
                  "%s",
                  profile->save_root);
-        expect_true(M11_GameView_HandleInput(&view,
-                                             M12_MENU_INPUT_ACCEPT) ==
+        expect_true(M11_GameView_HandlePointer(&view, 20, 70, 1) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 startup menu CONTINUE loads SKSave.dat");
+                    "M11 DM2 source RESUME rectangle loads SKSave.dat");
         expect_true(view.dm2State.startup_menu_active == 0,
                     "M11 DM2 startup menu dismisses after CONTINUE");
         expect_true(strstr(view.lastOutcome, "DM2 CONTINUED") != NULL,
