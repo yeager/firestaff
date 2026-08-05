@@ -19,7 +19,9 @@
   remain blocked until the complete SKProject read order is recovered. The
   original PC-DOS boot/HUD path again reaches the real GDAT command plan after
   the identity scanner was widened to retain every supported graphics and
-  dungeon hash in one scan; this does not admit an incomplete save session.
+  dungeon hash in one scan. Its post-admission diagnostic now also reports
+  the real G1 seed and map count instead of the intentionally unavailable
+  pre-load zeroes; this does not admit an incomplete save session.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   source-bound lifecycle/presentation path with a structural fail-closed seam.

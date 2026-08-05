@@ -1263,6 +1263,9 @@ int main(void) {
     expect_true(view.dm2State.startup_title_animation_tick == 0,
                 "M11 DM2 startup never manufactures a title tick");
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
+    expect_true(profile != NULL && profile->deterministic.max_levels == 28u &&
+                    profile->deterministic.dungeon_seed == 257u,
+                "M11 DM2 launch retains the PC-DOS G1 level count and seed");
     if (profile && profile->graphics_dat) {
         DM2_V1_BootRuntimeStartupSnapshot startup_snapshot;
         DM2_V1_BootStartupViewModel startup_view_model;

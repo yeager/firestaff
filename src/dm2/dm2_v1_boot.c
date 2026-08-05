@@ -10001,7 +10001,6 @@ int dm2_v1_boot_startup_launch_alloc(
         return 0;
     }
     dm2_v1_boot_set_save_root(profile, NULL);
-    dm2_v1_boot_print_summary(profile);
     if (dm2_v1_boot_enter_game(profile) != 0) {
         out_launch->prepare_result =
             DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED;
@@ -10023,6 +10022,11 @@ int dm2_v1_boot_startup_launch_alloc(
         free(profile);
         return 0;
     }
+    /* Print only after DUNGEON_Load has admitted the G1 header.  Before that
+     * point max_levels and dungeon_seed are deliberately unavailable rather
+     * than PC-English defaults, so an earlier summary falsely reported zero
+     * values for a successfully mounted original game. */
+    dm2_v1_boot_print_summary(profile);
     out_launch->profile = profile;
     out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_OK;
     out_launch->runtime_bound = 1;

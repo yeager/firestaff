@@ -6874,6 +6874,13 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-05 DM2 G1 boot-summary truthfulness: moved the DM2 profile
+  summary until after hash-verified `DUNGEON.DAT` admission, so it reports
+  the original PC-DOS G1 values (`seed=257`, `levels=28`) instead of the
+  deliberately unavailable pre-load zeroes. The M11 startup real-data gate
+  now asserts those values alongside the source start pose. Verification:
+  direct `--game dm2 --boot-probe` capture and
+  `dm2_v1_m11_startup_profile_gate`.
 - ✅ 2026-08-05 DM2 hash-verified PC-DOS boot repair: expanded the temporary
   DM2 identity list so all supported `GRAPHICS.DAT` identities and every
   `DUNGEON.DAT` identity are scanned together. The prior seven-entry limit
