@@ -198,6 +198,13 @@
   ownership, and has no runtime caller; its narrow ABI contract remains
   explicit-test-only while the real eight-file PC-DOS corpus stays fail-closed
   after its verified dungeon prefixes.
+  2026-08-06: the direct real-corpus regression now continues the same
+  SKProject SUPPRESS reader through `s_savegamebuffer` (0x3c), `v1e0104`,
+  `globalb`, `globalw`, `c_hero`, `c_wbbb`, and source-sized `c_tim` (0x0c)
+  sections for all eight mounted PC-DOS saves. This replaces the old 56-byte
+  state/10-byte timer diagnostic assumption at this boundary only; the
+  following `DM2_READ_SKSAVE_DUNGEON` record-link stream remains unowned and
+  must stay blocked from resume until it is ported in source order.
   2026-08-06: Greatstone's PC 1.0 `GRAPHICS.DAT` catalogue is now bound to
   the original file's 5,624-entry raw table. All 4,031 IMG3/IMG9/IMG11
   rasters now have a nonzero decoded-pixel receipt from those same original

@@ -50278,7 +50278,6 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   raw saves create neither Continue nor slot UI actions, preventing a
   header-only save from entering the runtime. Verification: real startup
   menu action contract 103/103.
-
 - ✅ 2026-08-06 Theron Track 02 object-category source binding: corrected the
   category names/numbers to match the retail `itemBytes[]`/`CATEGORYTYPE`
   order (`monster`, `weapon`, `clothing`, `scroll`, `potion`, `chest`,
@@ -50286,3 +50285,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   labels. The real US Track 02 test now verifies all seven dungeon count
   tables and nonzero payload in every populated category. This proves copied
   raw records only; no guessed runtime item or combat semantics were enabled.
+
+- ✅ 2026-08-06 DM2 SKSAVE fixed-section source-order regression: the
+  read-only PC-DOS corpus test now follows the continuous SKProject
+  `DM2_GAME_LOAD` SUPPRESS stream through the actual 0x3c-byte
+  `s_savegamebuffer`, globals, 263-byte heroes, 6-byte save state and
+  0x0c-byte `c_tim` rows. All four saves and four backups pass without
+  materializing a playable session; `DM2_READ_SKSAVE_DUNGEON` remains
+  explicitly fail-closed. Verification: authentic corpus suite 35/35.
