@@ -49926,3 +49926,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   caller and substitutes buttongroup dimensions, coin placement and UI glyph
   decisions for original GDAT/runtime state. Its explicit test target remains;
   the live M11 HUD stays on the source-gated viewport path.
+
+- ✅ 2026-08-06 DM2 c_gui_vp placeholder isolation: removed the disconnected
+  callback viewport renderer from both production CMake globs. It has no M11
+  caller and forwards host-provided tiles and click zones rather than original
+  G1/GDAT scene state. The explicit contract test remains, while live M11
+  rendering stays on the provenance-gated DM2 viewport renderer.

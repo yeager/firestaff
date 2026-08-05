@@ -4070,7 +4070,11 @@ that its exact runtime path is not already source-locked and tested.
    disconnected `c_gui_draw` callback transcription is also test-only. It
    guesses buttongroup dimensions, coin placement and UI glyph decisions;
    M11 must keep using the provenance-gated viewport/HUD route until those
-   original GDAT and runtime owners are fully bound.
+   original GDAT and runtime owners are fully bound. **2026-08-06 viewport
+   update:** the separate `c_gui_vp` callback transcription is test-only too;
+   it forwards host-provided tiles and click zones instead of consuming the
+   original G1/GDAT scene owner. The production route remains the gated
+   viewport renderer.
 42. **DM2-CREATURE-AI-COMBAT:** Complete skproject creature AI, movement,
     combat, projectiles, cloud effects, drops, occupancy, and timeline-driven
     behavior from raw original records.

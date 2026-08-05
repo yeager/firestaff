@@ -4209,6 +4209,12 @@ list(REMOVE_ITEM M10_SOURCES
 # test until its full original-data owner is available.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_draw_pc34_compat.c")
+# `c_gui_vp` is likewise a callback-only viewport transcript with no M11
+# caller.  It forwards unowned tiles and click zones rather than reading the
+# real G1/GDAT scene state; the live DM2 viewport is the provenance-gated
+# renderer.  Build this audit only with its explicit test target.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_vp_pc34_compat.c")
 # This contract probe seeds a 10x10 synthetic room-skin fixture and is used
 # exclusively by its unit test.  Keep it out of the production M10 archive:
 # the live CSB viewport must consume only source-bound dungeon/material data.
@@ -4364,7 +4370,8 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_1c9a_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_0aaf_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_narrow_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_draw_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_draw_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_vp_pc34_compat.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -18537,6 +18544,7 @@ if(BUILD_TESTING)
     # ── DM2: viewport rendering (c_gui_vp.cpp) ──
     add_executable(test_dm2_v1_gui_vp_pc34_compat
         tests/test_dm2_v1_gui_vp_pc34_compat.c
+        src/dm2/dm2_v1_gui_vp_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_gui_vp_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
