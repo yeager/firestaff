@@ -1,3 +1,36 @@
+- ✅ 2026-08-05 Nexus boot-library corpus verification: the materialized
+  original `0DMSTRT.BIN` now passes the real-file structure-admission gate
+  (`test_nexus_v1_0dmstrt_structure_admission .../0DMSTRT.BIN`). Its fixup,
+  zero-gap, version-stamp, and ISO-stub facts are admitted as opaque source
+  structure only; no boot semantics or generated substitute is inferred.
+
+- ✅ 2026-08-05 CSB scanner report: `--scan-data` now distinguishes the
+  mandatory `GRAPHICS.DAT`/`DUNGEON.DAT` launch pair from discovered CSB
+  Utility Disk media. It reports `HCSB.HTC`, `HCSB.DAT`, `HINT.FTL`,
+  `ANIMATE.DAT` and `SWITCH.DAT` only when they are actually present in the
+  selected data tree or archive-materialized CSB cache. Verified against an
+  extracted original Atari ST package: the report shows the two start files
+  plus the real `HCSB.HTC` and `HCSB.DAT` sidecars.
+
+- ✅ 2026-08-05 CSB archive scanner: Utility Disk companions now survive
+  archive-backed discovery alongside the hash-verified launch pair.
+  `HCSB.DAT`, `HINT.FTL`, `ANIMATE.DAT`, `ANIMATE.SCR` and `SWITCH.DAT` are
+  recognised as original CSB candidates and materialized into the ordinary
+  runtime cache when present next to a verified `GRAPHICS.DAT`. `HCSB.DAT`
+  is source-backed Hint/Oracle material (ReDMCSB `HINTLOAD.C` lines 15-18 and
+  `HINTTEXT.C` line 28), not a launch requirement. The launch gate remains
+  correctly limited to verified `GRAPHICS.DAT` and `DUNGEON.DAT`. Verified by
+  `test_csb_archive_required_split` with a split ZIP/ISO package and an
+  archive-backed `HCSB.DAT` sidecar.
+
+- ✅ 2026-08-05 Nexus automap/RES retail follow-up: materialized the
+  original `SMAP00.BIN`–`SMAP15.BIN`, `STONE.BIN`, `RHIFIX.BIN`, and
+  `POTEFT.BIN` resources from the local English ISO. The real-data SMAP gate
+  passes all 16 level maps with deterministic 640×608 hashes; the RES* gate
+  passes TITLE, RHIFIX, and POTEFT. Legacy generic automap colors and the
+  unused palette constants remain outside the production source-bound route;
+  no synthetic pixels were promoted.
+
 - ✅ 2026-08-05 Nexus secondary retail media corpus materialized: extracted
   original `SMAP00.BIN`–`SMAP15.BIN`, `STONE.BIN`, `RHIFIX.BIN`, `POTEFT.BIN`,
   and related startup/effect resources from the local English ISO into the

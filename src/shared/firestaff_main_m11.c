@@ -14,6 +14,7 @@
 #include "asset_status_m12.h"
 #include "asset_find_by_hash.h"
 #include "firestaff_version.h"
+#include "fs_portable_compat.h"
 #include "render_sdl_m11.h"
 
 #include <stdio.h>
@@ -94,6 +95,38 @@ static int parse_party_triplet(const char* text,
     return 1;
 }
 
+/* These files are deliberately reported separately from the two-file CSB
+ * launch gate.  ReDMCSB HINTLOAD.C lines 15-18 and ANIM.C line 67 show that
+ * they are genuine Utility Disk media, but a missing tool companion must
+ * never make the base game appear unavailable. */
+static int find_csb_optional_media(const M12_AssetStatus* status,
+                                   const char* label,
+                                   char outPath[512]) {
+    const char* runtimeRoot;
+    const char* dataRoot;
+    char csbDir[512];
+    if (!status || !label || !outPath) {
+        return 0;
+    }
+    outPath[0] = '\0';
+    runtimeRoot = M12_AssetStatus_GetRuntimeDataDir(status, "csb");
+    if (runtimeRoot && FSP_JoinPath(csbDir, sizeof(csbDir), runtimeRoot, "csb") &&
+        FSP_JoinPath(outPath, 512U, csbDir, label) && FSP_FileExists(outPath)) {
+        return 1;
+    }
+    dataRoot = M12_AssetStatus_GetDataDir(status);
+    if (dataRoot && FSP_JoinPath(outPath, 512U, dataRoot, label) &&
+        FSP_FileExists(outPath)) {
+        return 1;
+    }
+    if (dataRoot && FSP_JoinPath(csbDir, sizeof(csbDir), dataRoot, "csb") &&
+        FSP_JoinPath(outPath, 512U, csbDir, label) && FSP_FileExists(outPath)) {
+        return 1;
+    }
+    outPath[0] = '\0';
+    return 0;
+}
+
 static void print_scan_game(const M12_AssetStatus* status,
                             const char* gameId,
                             const char* title,
@@ -121,6 +154,17 @@ static void print_scan_game(const M12_AssetStatus* status,
             }
         }
         printf("\n");
+    }
+    if (strcmp(gameId, "csb") == 0) {
+        static const char* const optionalLabels[] = {
+            "HCSB.HTC", "HCSB.DAT", "HINT.FTL", "ANIMATE.DAT", "SWITCH.DAT"
+        };
+        for (i = 0U; i < sizeof(optionalLabels) / sizeof(optionalLabels[0]); ++i) {
+            char path[512];
+            if (find_csb_optional_media(status, optionalLabels[i], path)) {
+                printf("  %-28s FOUND  %s\n", optionalLabels[i], path);
+            }
+        }
     }
     if (strcmp(gameId, "nexus") == 0) {
         const M12_NexusBpkTrailerMetadata* bpk =
