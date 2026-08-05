@@ -81,6 +81,8 @@ typedef struct {
     uint64_t candidate_source_fnv1a64;
     int parser_supported;
     int dispatch_enabled;
+    /* Requires an authenticated Saturn SH-2/event dispatch trace. */
+    int source_dispatch_trace_verified;
     int parsed_record_size;
     int parsed_rule_count;
     int real_task_profile_supported;
@@ -135,6 +137,7 @@ typedef struct {
     uint64_t candidate_source_fnv1a64;
     int parser_supported;
     int dispatch_enabled;
+    int source_dispatch_trace_verified;
     int parsed_record_size;
     int parsed_rule_count;
     int real_task_profile_supported;

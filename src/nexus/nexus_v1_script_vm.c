@@ -226,6 +226,7 @@ int nexus_script_vm_load_canonical_level(Nexus_ScriptVM *vm, int level_index,
     vm->canonical_source_verified = canonical_source_verified ? 1 : 0;
     vm->parser_supported = 0;
     vm->dispatch_enabled = 0;
+    vm->source_dispatch_trace_verified = 0;
     vm->parsed_record_size = 0;
     vm->parsed_rule_count = 0;
     vm->real_task_profile_supported = 0;
@@ -283,6 +284,7 @@ void nexus_script_vm_unload(Nexus_ScriptVM *vm) {
     vm->canonical_source_verified = 0;
     vm->parser_supported = 0;
     vm->dispatch_enabled = 0;
+    vm->source_dispatch_trace_verified = 0;
     vm->parsed_record_size = 0;
     vm->parsed_rule_count = 0;
     vm->real_task_profile_supported = 0;
@@ -334,6 +336,8 @@ int nexus_script_vm_runtime_receipt(const Nexus_ScriptVM *vm,
     out_receipt->canonical_source_verified = vm->canonical_source_verified;
     out_receipt->parser_supported = vm->parser_supported;
     out_receipt->dispatch_enabled = vm->dispatch_enabled;
+    out_receipt->source_dispatch_trace_verified =
+        vm->source_dispatch_trace_verified;
     out_receipt->parsed_record_size = vm->parsed_record_size;
     out_receipt->parsed_rule_count = vm->parsed_rule_count;
     out_receipt->real_task_profile_supported =
@@ -417,10 +421,15 @@ const char *nexus_script_runtime_status_name(
  * source evidence yet. Keep this separate from the public receipt fields:
  * tests and callers may construct a Nexus_ScriptVM, but cannot turn a manual
  * condition/action fixture into a Saturn runtime route by setting a flag.
- * Replace this only with a hash-bound SH-2 dispatch proof. */
+ * Replace this only with a hash-bound SH-2 dispatch proof and set
+ * source_dispatch_trace_verified from that proof; parser flags alone are not
+ * an ownership or ABI receipt. */
 static int nexus_script_dispatch_is_source_backed(const Nexus_ScriptVM *vm) {
     if (!vm) return 0;
-    return vm->parsed_rule_count > 0 && vm->parser_supported;
+    return vm->candidate_source_loaded && vm->canonical_source_verified &&
+           vm->real_task_profile_supported && vm->parser_supported &&
+           vm->dispatch_enabled && vm->source_dispatch_trace_verified &&
+           vm->parsed_rule_count > 0;
 }
 
 static void nexus_dispatch_action(Nexus_ScriptVM *vm,

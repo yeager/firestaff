@@ -96,6 +96,9 @@
   admitted. The real SLEV/SAL/SNDLEV corpus, SDDRVS ABI and distributed game
   call sites still need an authenticated Saturn event trace before production
   SFX playback can be admitted.
+  SLEV rule dispatch now has a separate `source_dispatch_trace_verified`
+  receipt bit; parser/profile flags and even a forged canonical task profile
+  cannot enable actions without the missing Saturn SH-2/event trace.
   The legacy Nexus door raster API is now no-draw: its former DM1-derived
   gap geometry and palette guesses were removed. Bind Saturn door materials,
   animation frames, and VDP1 destinations before restoring door pixels.

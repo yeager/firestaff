@@ -99,6 +99,32 @@ static void test_manual_rules_cannot_enable_runtime_dispatch(void) {
     CHECK(rb.count == 0, "matching manual rule cannot dispatch audio");
 }
 
+static void test_forged_parser_flags_cannot_enable_dispatch(void) {
+    Nexus_ScriptVM vm;
+    Nexus_ScriptRule *rule;
+    Receipt receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    nexus_script_vm_init(&vm);
+    nexus_script_vm_set_handler(&vm, receipt_handler, &receipt);
+    rule = append_rule(&vm, 301, NEXUS_OP_WHEN_LEVEL_LOADED,
+                       0, 0, 4, NEXUS_OP_DISPLAY_MESSAGE);
+    CHECK(rule != NULL, "forged-dispatch fixture allocates");
+    if (!rule) return;
+
+    /* Even a caller that forges every existing parser/profile bit still lacks
+     * the authenticated Saturn event trace and must remain inert. */
+    vm.candidate_source_loaded = 1;
+    vm.canonical_source_verified = 1;
+    vm.real_task_profile_supported = 1;
+    vm.parser_supported = 1;
+    vm.dispatch_enabled = 1;
+    vm.parsed_rule_count = 1;
+    nexus_script_on_level_load(&vm, 4);
+    CHECK(vm.source_dispatch_trace_verified == 0 && receipt.count == 0,
+          "forged parser flags cannot dispatch without Saturn trace proof");
+}
+
 static void test_event_operand_matching(void) {
     Nexus_ScriptVM vm;
     Receipt r;
@@ -208,6 +234,8 @@ static void test_runtime_receipts_block_unparsed_real_source(void) {
     CHECK(receipt.blocks_real_script_dispatch == 1 &&
           receipt.fallback_visuals_permitted == 0,
           "script receipt forbids fallback dispatch for unsupported real source");
+    CHECK(receipt.source_dispatch_trace_verified == 0,
+          "real SLEV receipt exposes missing Saturn dispatch trace");
     CHECK(strcmp(nexus_script_runtime_status_name(receipt.status),
                  "blocked-unsupported-format") == 0,
           "script receipt has stable blocked status name");
@@ -688,6 +716,7 @@ static void test_real_slev_corpus_profile(void) {
 
 int main(void) {
     test_manual_rules_cannot_enable_runtime_dispatch();
+    test_forged_parser_flags_cannot_enable_dispatch();
     test_event_operand_matching();
     test_once_only_manual_fire_and_unload();
     test_runtime_receipts_block_unparsed_real_source();

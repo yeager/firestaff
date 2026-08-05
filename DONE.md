@@ -93,6 +93,13 @@
   proves `ready`, non-empty pixels, `captured_frame_ready`, and a nonzero frame
   hash. Offscreen or blank mesh output remains `blocked-raster`.
 
+- ✅ 2026-08-06 Nexus SLEV dispatch provenance hardening: script actions now
+  require a separate authenticated Saturn SH-2/event-dispatch trace bit in
+  addition to canonical source, task profile, parser, and dispatch receipts.
+  Forged parser/profile flags and manual rules remain inert; no production path
+  sets the new bit until the original event ABI is captured. The focused SLEV
+  regression covers this fail-closed boundary.
+
 - ✅ 2026-08-05 Nexus startup title fallback removal: the generic title
   renderer no longer copies a raw `TITLE.CG` character-generator atlas to the
   framebuffer when the Saturn MAPD/TIBG handoff is missing. TITLE.CG and
