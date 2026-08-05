@@ -83,6 +83,10 @@
   intake only. Later-level and object semantics remain blocked until a
   source-backed CD-read/record trace binds them.
 
+  The US Track 19 item-name span is now byte-validated from real ISO data;
+  level/object records and item properties still require the source loader
+  trace before runtime publication.
+
   Track 02 object-data and dungeon-map bounds are now overflow-safe; truncated
   sources are rejected before ground-reference or item records can be
   admitted. This is a loader-integrity fix only, not semantic promotion of

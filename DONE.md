@@ -48708,7 +48708,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   unreachable THS4 sound parser body and its guessed marker constants from
   the implementation. The public diagnostic APIs remain explicit rejection
   seams; no Firestaff-only THG3/THS4 bytes can become runtime media.
-
 - ✅ 2026-08-05 CSB Utility Disk portrait inventory and scanner repair: added
   hash identities for all 26 original Atari ST `PORTRAIT/*.CMP` files, whose
   508-byte disk format is established by ReDMCSB `CEDTDATA.C:394/397` and
@@ -48718,3 +48717,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `FTLCODE` modules beside the launch pair. A real loose-package scan shows
   those modules plus `SWITCH.DAT` and `MINI.DAT`; the fingerprint suite passes
   373/0.
+- ✅ 2026-08-05 Theron Track 19 item-name binding: added a source-span reader
+  for the US MODE1/2048 table at ISO offset `0x0E9271`. It validates all 69
+  null-separated names against the verified catalog before returning any one
+  label, and rejects truncation or byte changes. The real local `TQUS19.iso`
+  passes the full table probe.
