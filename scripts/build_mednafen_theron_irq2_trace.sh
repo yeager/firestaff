@@ -63,11 +63,13 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_register_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch"
 
-# The remaining extensions target an older debugger hook and are research-only.
-# The main-RAM loader trace above applies cleanly to this coherent 1.32.1
-# capture path; it records bounded executed control flow without assigning any
-# game-data semantics.
+# The older G4/FIFO-origin extensions target a different debugger hook and
+# remain research-only. The current consumer-read extension applies to this
+# coherent 1.32.1 path and records bounded game-owned main-RAM reads without
+# assigning any game-data semantics.
 
 # The released Mednafen tree carries generated Makefile.in files. Copying it
 # into a fresh trace root can make make try to regenerate them, which would

@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **THERON-V1-MAIN-RAM-CONSUMER-TRACE:** the current Mednafen 1.32.1
+  capture build now emits a bounded, line-delimited sidecar for reads from
+  game-owned main RAM when the reader PC is also in game RAM, including logical
+  and physical addresses, byte value, and reader-PC provenance. This is still
+  opaque execution evidence: no level, object, tile, palette, or bitmap meaning
+  is assigned. Remaining: run it against an authentic Track 02 CUE with a real
+  SDL2 runtime and join the observed reads to source-LBA/FIFO receipts.
+
 - **THERON-V1-VIEWPORT-REAL-DATA:** the old inferred viewport renderer is now
   explicitly fixture-only and excluded from the production archive. Replace
   its no-op seam only after one original Track 02 capture binds the actual

@@ -359,8 +359,9 @@ require_instrumented_mednafen_binary() {
     # The stock Mednafen binary accepts the environment variables below but
     # silently ignores them. Refuse it before starting a timed original-media
     # run: an empty trace is not capture evidence. The runtime needs both the
-    # general CPU/CD producer and the main-RAM control-flow producer.
-    for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE; do
+    # general CPU/CD producer, main-RAM control-flow producer, and the
+    # game-owned main-RAM consumer-read producer.
+    for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE; do
         if ! grep -aFq "$marker" "$binary" 2>/dev/null; then
             printf '%s\n' 'FAIL: MEDNAFEN_BIN lacks the required Firestaff Theron instrumentation; build it with scripts/build_mednafen_theron_irq2_trace.sh' >&2
             return 1
@@ -432,6 +433,7 @@ memory_trace="${trace}.memory"
 cd_trace="${trace}.cd"
 input_trace="${trace}.input"
 main_ram_loader_trace="${trace}.main-ram-loader"
+main_ram_consumer_trace="${trace}.main-ram-consumer"
 transition_receipt="${trace}.transition"
 stage2_system_card_receipt="${trace}.stage2-system-card"
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
@@ -445,7 +447,7 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$transition_receipt" "$stage2_system_card_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$transition_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ -n "$configured_home" ]]; then
@@ -486,6 +488,7 @@ launch=(
     FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace" \
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
+    FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
     SDL_VIDEODRIVER="$capture_sdl_video_driver" \
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
@@ -643,7 +646,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -680,6 +683,7 @@ transition_main_ram_e009_enter_count=$(trace_count '^main_ram_e009_enter ' "$cd_
 transition_main_ram_e009_data_read_count=$(trace_count '^main_ram_e009_data_read ' "$cd_trace")
 transition_main_ram_e009_return_count=$(trace_count '^main_ram_e009_return ' "$cd_trace")
 transition_main_ram_e009_register_write_count=$(trace_count '^main_ram_e009_register_write ' "$cd_trace")
+transition_main_ram_consumer_read_count=$(trace_count '^main_ram_consumer_read ' "$main_ram_consumer_trace")
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
@@ -714,6 +718,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'main_ram_e009_data_reads=%s\n' "$transition_main_ram_e009_data_read_count"
     printf 'main_ram_e009_returns=%s\n' "$transition_main_ram_e009_return_count"
     printf 'main_ram_e009_register_writes=%s\n' "$transition_main_ram_e009_register_write_count"
+    printf 'main_ram_consumer_reads=%s\n' "$transition_main_ram_consumer_read_count"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     trace_input_order_receipt "$input_trace"
     if [[ "$host_input_requested" == 1 ]]; then

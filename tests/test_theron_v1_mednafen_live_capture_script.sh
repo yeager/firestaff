@@ -7,6 +7,7 @@ quartz_helper=$repo/scripts/send_theron_macos_quartz_keypair.swift
 runtime_verifier=$repo/scripts/verify_theron_mednafen_sdl2_runtime.sh
 build_script=$repo/scripts/build_mednafen_theron_irq2_trace.sh
 irq2_patch=$repo/scripts/mednafen_1.32.1_theron_irq2_trace.patch
+consumer_read_patch=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
 later_raw_receipt=$repo/scripts/verify_theron_later_raw_sector_media_receipt.pl
 
 if [[ ! -x "$script" ]]; then
@@ -31,7 +32,8 @@ if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_scrip
    ! grep -Fq 'mednafen_1.32.1_theron_scripted_pce_input.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_cd_transfer_owner_trace.patch' "$build_script" ||
    ! grep -Fq 'mednafen_1.32.1_theron_main_ram_loader_trace.patch' "$build_script" ||
-   ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch' "$build_script"; then
+   ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch' "$build_script" ||
+   ! grep -Fq 'mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch' "$build_script"; then
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
     exit 1
 fi
@@ -90,7 +92,7 @@ if ! grep -Fq 'FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace"' "$script"; then
     exit 1
 fi
 if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
-   ! grep -Fq 'for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE' "$script" ||
+   ! grep -Fq 'for marker in FIRESTAFF_THERON_IRQ2_TRACE FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE' "$script" ||
    ! grep -Fq 'grep -aFq "$marker" "$binary"' "$script" ||
    ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE' "$script" ||
    ! grep -Fq 'MEDNAFEN_BIN lacks the required Firestaff Theron instrumentation' "$script" ||
@@ -99,6 +101,7 @@ if ! grep -Fq 'require_instrumented_mednafen_binary()' "$script" ||
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace"' "$script" ||
    ! grep -Fq 'main_ram_loader_tii_transfers=%s' "$script" ||
    ! grep -Fq 'continuation_tii_source_3c80=%s' "$script" ||
    ! grep -Fq 'main_ram_loader_rts=%s' "$script" ||
@@ -109,8 +112,18 @@ if ! grep -Fq 'FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace"' 
    ! grep -Fq 'main_ram_loader_bra=%s' "$script" ||
    ! grep -Fq 'main_ram_loader_bra_targets=%s' "$script" ||
    ! grep -Fq 'main_ram_loader_bra_target_jsrs=%s' "$script" ||
-   ! grep -Fq 'main_ram_loader_e009_dispatches=%s' "$script"; then
+   ! grep -Fq 'main_ram_loader_e009_dispatches=%s' "$script" ||
+   ! grep -Fq 'main_ram_consumer_reads=%s' "$script"; then
     printf 'FAIL: capture script must retain the post-$3800 TII producer receipt\n' >&2
+    exit 1
+fi
+if [[ ! -f "$consumer_read_patch" ]] ||
+   ! grep -Fq 'TheronPCECDTraceMainRAMConsumerRead' "$consumer_read_patch" ||
+   ! grep -Fq 'physical_address >= 0x1f0000 && physical_address < 0x1f8000' "$consumer_read_patch" ||
+   ! grep -Fq 'reader_physical_pc >= 0x1f0000 && reader_physical_pc < 0x1f8000' "$consumer_read_patch" ||
+   ! grep -Fq 'main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x' "$consumer_read_patch" ||
+   grep -Fq '\\\\n' "$consumer_read_patch"; then
+    printf 'FAIL: consumer-read patch must retain bounded game-owned RAM provenance with real line-delimited output\n' >&2
     exit 1
 fi
 if ! grep -Fq 'mednafen_binary_md5=$(md5_file "$mednafen_bin")' "$script" ||

@@ -1,0 +1,82 @@
+--- a/src/pce/huc6280.h
++++ b/src/pce/huc6280.h
+@@ -10,4 +10,7 @@ void TheronPCECDTraceMainRAME009Enter(uint16 logical_pc, uint32 physical_pc,
+ void TheronPCECDTraceMainRAME009MainRAMStep(uint16 logical_pc,
+                                             uint32 physical_pc);
++void TheronPCECDTraceMainRAMConsumerRead(uint16 logical_address,
++                                         uint32 physical_address, uint8 value,
++                                         uint16 reader_pc, uint32 reader_physical_pc);
+ 
+ class alignas(128) HuC6280
+@@ -398,11 +400,27 @@
+ 	// Logical
+ 	INLINE uint8 RdMem(unsigned int address)
+ 	{
++	 uint8 ret;
+ 	 if(FastPageR[address >> 13])
+-	  return *(uint8*)(FastPageR[address >> 13] + address);
++	  ret = *(uint8*)(FastPageR[address >> 13] + address);
++	 else
++	 {
++	  LastLogicalReadAddr = address;
++	  uint8 wmpr = MPR[address >> 13];
++	  ret = ReadMap[wmpr]((wmpr << 13) | (address & 0x1FFF));
++	 }
+ 
+-	 LastLogicalReadAddr = address;
++	 const uint8 wmpr = MPR[address >> 13];
++	 const uint32 physical_address = (wmpr << 13) | (address & 0x1FFF);
++	 if(physical_address >= 0x1f0000 && physical_address < 0x1f8000)
++	 {
++	  const uint16 reader_pc = GetRegister(GSREG_PC);
++	  const uint8 reader_mpr = MPR[reader_pc >> 13];
++	  const uint32 reader_physical_pc = (reader_mpr << 13) | (reader_pc & 0x1FFF);
++	  if(reader_physical_pc >= 0x1f0000 && reader_physical_pc < 0x1f8000)
++	   TheronPCECDTraceMainRAMConsumerRead(address, physical_address, ret,
++	                                       reader_pc, reader_physical_pc);
++	 }
+ 
+-	 uint8 wmpr = MPR[address >> 13];
+-	 return ReadMap[wmpr]((wmpr << 13) | (address & 0x1FFF));
++	 return ret;
+ 	}
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -108,5 +108,7 @@
+ static uint16 TheronPCECDMainRAME009ReturnPC;
+ static unsigned TheronPCECDMainRAME009Sequence;
+ static unsigned TheronPCECDCriticalTraceCount;
++static FILE *TheronPCECDMainRAMConsumerTrace;
++static unsigned TheronPCECDMainRAMConsumerTraceCount;
+ static void TheronTracePCECDState(const char *format, ...);
+ static void TheronTracePCECDCriticalState(const char *format, ...);
+@@ -133,5 +135,28 @@
+  TheronPCECDMainRAME009Active = false;
+ }
+ 
++void TheronPCECDTraceMainRAMConsumerRead(uint16 logical_address,
++                                         uint32 physical_address, uint8 value,
++                                         uint16 reader_pc, uint32 reader_physical_pc)
++{
++ if(TheronPCECDMainRAMConsumerTraceCount >= 4096)
++  return;
++ if(!TheronPCECDMainRAMConsumerTrace)
++ {
++  const char *path = getenv("FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE");
++  if(!path || !*path)
++   return;
++  TheronPCECDMainRAMConsumerTrace = fopen(path, "w");
++  if(!TheronPCECDMainRAMConsumerTrace)
++   return;
++  fputs("source=mednafen-pce-instrumented-main-ram-consumer\n",
++        TheronPCECDMainRAMConsumerTrace);
++ }
++ fprintf(TheronPCECDMainRAMConsumerTrace,
++         "main_ram_consumer_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x\n",
++         TheronPCECDMainRAMConsumerTraceCount++, logical_address,
++         physical_address, value, reader_pc, reader_physical_pc);
++ fflush(TheronPCECDMainRAMConsumerTrace);
++}
+ 
+ static void TheronTracePCECDState(const char *format, ...)
+ {

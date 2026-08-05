@@ -50065,6 +50065,14 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   production archive continues to use the no-op seam. No synthetic pixel path
   was promoted. Verification: `git diff --check` plus the existing production
   archive audit and Theron rendering/VRAM tests.
+
+- ✅ 2026-08-06 Theron game-owned RAM consumer trace: the instrumented
+  Mednafen 1.32.1 build now captures bounded reads from physical main RAM when
+  the reader also executes in the game-owned window, with logical/physical
+  addresses and reader PC provenance in a separate sidecar. The patch compiles
+  and embeds its marker; authentic runtime capture remains blocked by the
+  SDL2-compat-only runtime and no staged CUE, so no game-data semantics were
+  promoted.
 - ✅ 2026-08-06 DM1 ReDMCSB F0302 action-hand placement mask: corrected the
   C508/action-hand destination from `0x0002` (head) to source
   `MASK0x0200_HANDS`, matching ReDMCSB `DEFS.H` and `DUNGEON.C` object
