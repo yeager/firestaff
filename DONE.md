@@ -50188,6 +50188,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   pass text decoding, actuator inventory and creature-count checks. The full
   runtime loader remains fail-closed on unbound item categories, so no guessed
   object kind was promoted.
+- ✅ 2026-08-06 Theron real CUE intake hardening: Track 02 `FILE` and `TRACK`
+  parsing is now case-insensitive, while the existing strict layout, payload,
+  pregap and hash checks remain intact. The raw-media regression now wraps the
+  supplied authentic `TQUS02.bin` in a temporary mixed-case CUE and verifies
+  the real US index-01 sector 225, MD5 `f23601102138f87c33025877767ebf76`, and
+  raw-trace preparation; no synthetic media bytes are used.
 - ✅ 2026-08-06 DM2 incomplete SKSAVE load-orchestrator isolation: removed
   the unbound `dm2_v1_load_orchestrator_pc34_compat.c` transcript from both
   production source globs. It had no live caller and skipped original

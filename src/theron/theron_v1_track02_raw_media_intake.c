@@ -218,27 +218,31 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
         }
         if (theron_v1_track02_media_starts_with_i(p, "FILE ")) {
             char type[32];
-            if (sscanf(p, "FILE \"%511[^\"]\" %31s", member, type) != 2 &&
-                sscanf(p, "FILE %511s %31s", member, type) != 2) {
+            const char *file_args = p + strlen("FILE ");
+            if (sscanf(file_args, " \"%511[^\"]\" %31s", member, type) != 2 &&
+                sscanf(file_args, " %511s %31s", member, type) != 2) {
                 fclose(file);
                 return 0;
             }
-            if (sscanf(p, "FILE \"%511[^\"]\" %31s %n", member, type,
+            if (sscanf(file_args, " \"%511[^\"]\" %31s %n", member, type,
                        &consumed) != 2 &&
-                sscanf(p, "FILE %511s %31s %n", member, type, &consumed) != 2) {
+                sscanf(file_args, " %511s %31s %n", member, type, &consumed) != 2) {
                 fclose(file);
                 return 0;
             }
-            for (p += consumed; *p; ++p) {
-                if (*p != ' ' && *p != '\t' && *p != '\r' && *p != '\n') {
+            for (const char *tail = file_args + consumed; *tail; ++tail) {
+                if (*tail != ' ' && *tail != '\t' && *tail != '\r' && *tail != '\n') {
                     fclose(file);
                     return 0;
                 }
             }
             snprintf(current_member, sizeof(current_member), "%s", member);
             current_binary = theron_v1_track02_media_ieq(type, "BINARY");
-        } else if (sscanf(p, "TRACK %u %31s %n", &track, mode, &consumed) == 2) {
-            for (char *tail = p + consumed; *tail; ++tail) {
+        } else if (theron_v1_track02_media_starts_with_i(p, "TRACK ") &&
+                   sscanf(p + strlen("TRACK "), " %u %31s %n", &track, mode,
+                          &consumed) == 2) {
+            for (char *tail = p + strlen("TRACK ") + consumed;
+                 *tail; ++tail) {
                 if (*tail != ' ' && *tail != '\t' && *tail != '\r' && *tail != '\n') {
                     fclose(file);
                     return 0;
@@ -275,9 +279,8 @@ static int theron_v1_track02_media_parse_cue(const char *cue_path,
         } else if (current_track == 2u &&
                    theron_v1_track02_media_starts_with_i(p, "PREGAP ")) {
             ++pregap_count;
-            if (pregap_count != 1 ||
-                !theron_v1_track02_media_parse_msf(p + strlen("PREGAP "),
-                                                    &pregap_sector)) {
+            if (pregap_count != 1 || !theron_v1_track02_media_parse_msf(
+                    p + strlen("PREGAP "), &pregap_sector)) {
                 fclose(file);
                 return 0;
             }

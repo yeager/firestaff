@@ -2,6 +2,10 @@
 #include <stdlib.h>
 #include <string.h>
 
+#if !defined(_WIN32)
+#include <unistd.h>
+#endif
+
 #include "theron_v1_track02_raw_media_intake.h"
 
 static int failures;
@@ -12,6 +16,55 @@ static int failures;
         ++failures; \
     } \
 } while (0)
+
+static const char *find_standard_us_bin(void) {
+    const char *home = getenv("HOME");
+    static char path[512];
+    FILE *file;
+
+    if (!home || !home[0] || snprintf(path, sizeof(path),
+            "%s/.firestaff/data/theron/TQUS02.bin", home) >=
+            (int)sizeof(path)) return NULL;
+    file = fopen(path, "rb");
+    if (!file) return NULL;
+    fclose(file);
+    return path;
+}
+
+static void test_real_us_cue_path(void) {
+#if defined(_WIN32)
+    (void)find_standard_us_bin;
+#else
+    const char *bin = find_standard_us_bin();
+    char cue_path[256];
+    FILE *cue;
+    Theron_V1Track02RawMediaIntakeReceipt receipt;
+
+    if (!bin) {
+        printf("test_theron_v1_track02_raw_media_intake: SKIP real US CUE\n");
+        return;
+    }
+    snprintf(cue_path, sizeof(cue_path),
+             "/tmp/firestaff_theron_real_us_%ld.cue", (long)getpid());
+    cue = fopen(cue_path, "wb");
+    CHECK(cue != NULL);
+    if (!cue) return;
+    fprintf(cue, "file \"%s\" binary\n"
+                 "  track 02 mode1/2352\n"
+                 "    pregap 00:03:00\n"
+                 "    index 01 00:00:00\n", bin);
+    CHECK(fclose(cue) == 0);
+
+    CHECK(theron_v1_track02_raw_media_intake_discover(cue_path, &receipt));
+    CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY);
+    CHECK(receipt.cue_consumed && receipt.mode1_2352);
+    CHECK(receipt.variant == THERON_TRACK02_VARIANT_US_BIN);
+    CHECK(receipt.cue_index01_sector == 225u);
+    CHECK(receipt.raw_trace_preparation_allowed);
+    CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_US_BIN));
+    remove(cue_path);
+#endif
+}
 
 int main(void) {
     Theron_V1Track02RawMediaIntakeReceipt receipt;
@@ -196,5 +249,6 @@ int main(void) {
     } else {
         printf("test_theron_v1_track02_raw_media_intake: SKIP (no local Track 02 media)\n");
     }
+    test_real_us_cue_path();
     return failures ? EXIT_FAILURE : EXIT_SUCCESS;
 }
