@@ -89,7 +89,9 @@
 #include "memory_door_action_pc34_compat.h"
 #include "memory_dungeon_dat_pc34_compat.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
+#include "dm1_v1_fountain_interaction_pc34_compat.h"
 #include "firestaff/dm1/v1/G0202_pc34_compat.h"
+#include "firestaff/dm1/v1/G0193_pc34_compat.h"
 #include "dm1_v1_dungeon_weapon_info_pc34_compat.h"
 #include "dm1_v1_chest_admission_f0333_f0334_pc34_compat.h"
 #include "dm1_v1_leader_hand_throw_admission_f0329_pc34_compat.h"
@@ -27599,6 +27601,105 @@ static void m11_dm1_wire_current_map_alcove_list(M11_GameViewState* state,
     }
 }
 
+/* ReDMCSB DUNGEON.C F0601 / DUNVIEW.C G0268.  The fountain is not a
+ * hard-coded wall-ornament kind: G0261's local slot must resolve to the
+ * current map's global ornament table and then match G0193's source list.
+ * Failing closed is important for HoC: an arbitrary wall ornament must not
+ * consume or mutate the object in the leader hand. */
+static int m11_dm1_front_wall_is_fountain(
+    M11_GameViewState* state,
+    const M11_ViewportCell* frontCell) {
+    int mapIndex;
+    int localOrdinal;
+    int globalIndex;
+    int i;
+
+    if (!state || !frontCell || !frontCell->valid ||
+        frontCell->elementType != DUNGEON_ELEMENT_WALL ||
+        frontCell->wallOrnamentOrdinal <= 0) {
+        return 0;
+    }
+    mapIndex = state->world.party.mapIndex;
+    localOrdinal = frontCell->wallOrnamentOrdinal - 1;
+    if (mapIndex < 0 || mapIndex >= 32 || localOrdinal < 0 ||
+        localOrdinal >= 16) {
+        return 0;
+    }
+    m11_ensure_ornament_cache(state, mapIndex);
+    if (!state->world.dungeon || !state->world.dungeon->maps ||
+        !state->ornamentCacheLoaded[mapIndex] ||
+        localOrdinal >= (int)state->world.dungeon->maps[mapIndex].wallOrnamentCount) {
+        return 0;
+    }
+    globalIndex = state->wallOrnamentIndices[mapIndex][localOrdinal];
+    for (i = 0; i < dm1_v1_g0193_size_pc34(); ++i) {
+        if (globalIndex == dm1_v1_g0193_get_pc34(i)) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+/* Apply the source-locked CLIKVIEW.C fountain path to the actual loaded
+ * Thing record.  This deliberately does not infer a fountain from a graphic
+ * id or a generic ornament fallback. */
+static int m11_dm1_apply_fountain_click(
+    M11_GameViewState* state,
+    const M11_ViewportCell* frontCell) {
+    unsigned short handThing;
+    int icon;
+
+    if (!state || !frontCell || !m11_dm1_front_wall_is_fountain(state, frontCell) ||
+        !state->world.things) {
+        return 0;
+    }
+    handThing = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
+    if (handThing == THING_NONE) {
+        int championIndex = state->world.party.activeChampionIndex;
+        if (championIndex < 0 || championIndex >= CHAMPION_MAX_PARTY ||
+            !state->world.party.champions[championIndex].present) {
+            return 0;
+        }
+        state->world.party.champions[championIndex].water =
+            DM1_V1_FOUNTAIN_WATER_MAX;
+        m11_audio_emit_source_sound(state, DM1_V1_FOUNTAIN_SWALLOW_SOUND,
+                                    M11_AUDIO_MARKER_COMBAT);
+        m11_set_status(state, "FOUNTAIN", "DRANK WATER");
+        m11_refresh_hash(state);
+        return 1;
+    }
+
+    icon = m11_object_icon_index_for_thing(state, state->world.things,
+                                           handThing);
+    if (THING_GET_TYPE(handThing) == THING_TYPE_JUNK &&
+        icon >= DM1_V1_ICON_JUNK_WATER &&
+        icon <= DM1_V1_ICON_JUNK_WATERSKIN) {
+        int index = THING_GET_INDEX(handThing);
+        if (!state->world.things->junks || index < 0 ||
+            index >= state->world.things->junkCount) {
+            return 0;
+        }
+        state->world.things->junks[index].chargeCount =
+            DM1_V1_FOUNTAIN_FULL_CHARGES;
+        m11_set_status(state, "FOUNTAIN", "CONTAINER FILLED");
+        m11_refresh_hash(state);
+        return 1;
+    }
+    if (THING_GET_TYPE(handThing) == THING_TYPE_POTION && icon ==
+        DM1_V1_ICON_POTION_EMPTY_FLASK) {
+        int index = THING_GET_INDEX(handThing);
+        if (!state->world.things->potions || index < 0 ||
+            index >= state->world.things->potionCount) {
+            return 0;
+        }
+        state->world.things->potions[index].type = 15;
+        m11_set_status(state, "FOUNTAIN", "FLASK FILLED WITH WATER");
+        m11_refresh_hash(state);
+        return 1;
+    }
+    return 0;
+}
+
 static int m11_projectile_subtype_to_aspect_index(int subtype) {
     return dm1_v1_projectile_subtype_to_aspect(subtype);
 }
@@ -28630,6 +28731,11 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
         if (m11_c080_grab_rendered_pile_target(state, localX, localY)) {
             return M11_GAME_INPUT_REDRAW;
         }
+        if (facingWall &&
+            m11_point_in_source_box(localX, localY, g_wallOrnamentBox) &&
+            m11_dm1_apply_fountain_click(state, &frontCell)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
         /* DM1 production has real F0115 rectangles above. Retain the
          * historical fixed boxes only for non-source diagnostic sessions;
          * otherwise an unavailable/occluded bitmap could still be picked. */
@@ -28759,7 +28865,15 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
         }
     } else {
         /* ── Item in hand: throw or drop ── */
-        if (facingWall && !facingAlcove) {
+        /* ReDMCSB CLIKVIEW.C checks G0288_B_FacingFountain before the
+         * generic wall-drop path.  Keep this before the broad wall branch;
+         * otherwise a held flask/waterskin can never reach F0601/CLIKVIEW's
+         * fill operation. */
+        if (facingWall &&
+            m11_point_in_source_box(localX, localY, g_wallOrnamentBox) &&
+            m11_dm1_apply_fountain_click(state, &frontCell)) {
+            return M11_GAME_INPUT_REDRAW;
+        } else if (facingWall && !facingAlcove) {
             /* F0377: Wall ahead, not alcove → drop at party-square cells
              * 0..1, then check wall ornament zone for sensor. */
             int vc;
@@ -28778,30 +28892,6 @@ static M11_GameInputResult m11_process_v1_c080_click(M11_GameViewState* state,
             }
         } else if (facingWall && frontCell.wallOrnamentOrdinal >= 0 &&
                    !facingAlcove) {
-            /* F0377: Wall ornament click with item in hand.
-             * Check for fountain: ReDMCSB G0288_B_FacingFountain.
-             * Fountain ornament indices vary by dungeon, but global
-             * indices 10-12 are common fountain types.
-             * If holding a flask (icon 8,9) or empty flask (icon 195),
-             * fill it.  Otherwise, touch sensor. */
-            int fIcon = m11_object_icon_index_for_thing(
-                state, state->world.things,
-                DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state));
-
-            if ((fIcon == 8 || fIcon == 9) &&
-                m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
-                /* Fill water container at fountain */
-                m11_set_status(state, "FOUNTAIN", "CONTAINER FILLED");
-                m11_refresh_hash(state);
-                return M11_GAME_INPUT_REDRAW;
-            }
-            if (fIcon == 195 &&
-                m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
-                /* Fill empty flask → water flask */
-                m11_set_status(state, "FOUNTAIN", "FLASK FILLED WITH WATER");
-                m11_refresh_hash(state);
-                return M11_GAME_INPUT_REDRAW;
-            }
             /* Non-fountain wall ornament with item: touch sensor */
             if (m11_point_in_source_box(localX, localY, g_wallOrnamentBox)) {
                 /* Wall sensor pass-through */

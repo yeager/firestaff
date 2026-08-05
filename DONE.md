@@ -48673,6 +48673,17 @@ the supplied root and selected MD5 to prove this without shipping game data.
   coverage exercises the PC34 raw record and expects icon 11 for a charged
   Jewel Symal. Verification: `test_dm1_v1_projectile_explosion_render_pc34_compat`
   passed with all tests, plus `git diff --check`, on 2026-08-05.
+
+## DM1 source fountain interaction
+
+- **DM1-HOC-OBJECTS-005**: Reconnected the live DM1 C080 wall-click route to
+  the ReDMCSB `F0601` fountain predicate. The current map's real
+  `DUNGEON.DAT` wall-ornament table is now matched against `G0193` before a
+  leader-hand object can be changed. Empty-hand drinking, charged waterskin
+  filling and empty-flask to water-flask mutation now update the loaded
+  runtime records; generic wall ornaments retain the sensor/drop path.
+  Verified with a full `firestaff` build and the source fountain regression
+  (`fountainInteractionInvariantOk=1`) on 2026-08-05.
 - ✅ 2026-08-05 CSB Atari ST executable-media inventory: corrected the
   `SWITCH.DAT` fingerprint to the bytes in the original hard-disk package and
   added hash identities for `ANIMATE.FTL`, `CHAOS.FTL`, and `FTLCODE`.
