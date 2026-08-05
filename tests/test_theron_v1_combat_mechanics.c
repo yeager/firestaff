@@ -160,7 +160,7 @@ static void test_champion_attack_kills_creature(void) {
         }
     }
     CHECK_INT("creature eventually killed", killed, 1);
-    CHECK_INT("object count increased from drops", w.object_count > 0, 1);
+    CHECK_INT("unbound drop record does not publish loot", w.object_count, 0);
 }
 
 static void test_creature_attack_champion(void) {
@@ -187,8 +187,9 @@ static void test_creature_drop_loot(void) {
     int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_GOBLIN,
                                        w.current_dungeon, w.current_level,
                                        9, 8);
-    theron_v1_drop_loot(&w, cid, 9, 8);
-    CHECK_INT("drop_loot increases object count", w.object_count > before, 1);
+    CHECK_INT("unbound Track 02 drop record is rejected",
+              theron_v1_drop_loot(&w, cid, 9, 8), -1);
+    CHECK_INT("rejected drop does not publish an object", w.object_count, before);
 }
 
 static void test_hp_modification_clamps(void) {

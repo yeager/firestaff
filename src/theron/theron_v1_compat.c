@@ -23,11 +23,9 @@
 #include "theron_v1_combat.h"
 #include "theron_v1_world.h"
 #include "theron_v1_track02_creature_spawn.h"
-#include "theron_v1_track02_item_categories.h"
 #include "theron_v1_track02_item_properties.h"
 #include "theron_v1_track02_spell_descriptors.h"
 #include <stddef.h>
-#include <stdlib.h>
 #include <string.h>
 
 /* ── Internal creature stat table ─────────────────────────────────── */
@@ -43,26 +41,23 @@ typedef struct {
     Theron_AIBehaviour ai;
     Theron_AttackType primary;
     Theron_AttackType secondary;
-    int gold_min;
-    int gold_max;
-    uint8_t drops[4];
 } Theron_CreatureTemplate;
 
 static const Theron_CreatureTemplate g_creature_templates[] = {
     { THERON_CREATURE_AKUTUBA, 3, THERON_AI_GUARD,
-      THERON_ATTACK_SLASH, THERON_ATTACK_NONE, 1,  5,  { THERON_ITEM_FOOD, 0, 0, 0 } },
+      THERON_ATTACK_SLASH, THERON_ATTACK_NONE },
     { THERON_CREATURE_DRATOR,  3, THERON_AI_CHASE,
-      THERON_ATTACK_SLASH, THERON_ATTACK_NONE, 2,  8,  { THERON_ITEM_WEAPON, 0, 0, 0 } },
+      THERON_ATTACK_SLASH, THERON_ATTACK_NONE },
     { THERON_CREATURE_FORMIC,  4, THERON_AI_CHASE,
-      THERON_ATTACK_PIERCE, THERON_ATTACK_NONE, 1, 6,  { THERON_ITEM_POTION, 0, 0, 0 } },
+      THERON_ATTACK_PIERCE, THERON_ATTACK_NONE },
     { THERON_CREATURE_SARMON,  2, THERON_AI_CHASE,
-      THERON_ATTACK_POISON, THERON_ATTACK_NONE, 1, 4,  { 0, 0, 0, 0 } },
+      THERON_ATTACK_POISON, THERON_ATTACK_NONE },
     { THERON_CREATURE_SHADO,   3, THERON_AI_GUARD,
-      THERON_ATTACK_SLASH, THERON_ATTACK_NONE, 1, 3,  { 0, 0, 0, 0 } },
+      THERON_ATTACK_SLASH, THERON_ATTACK_NONE },
     { THERON_CREATURE_THIEF,   2, THERON_AI_CHASE,
-      THERON_ATTACK_SLASH, THERON_ATTACK_NONE, 5, 15, { THERON_ITEM_ARMOR, 0, 0, 0 } },
+      THERON_ATTACK_SLASH, THERON_ATTACK_NONE },
     { THERON_CREATURE_DEMON,   3, THERON_AI_CHASE,
-      THERON_ATTACK_MAGIC, THERON_ATTACK_BLAST, 8, 25, { 0, 0, 0, 0 } },
+      THERON_ATTACK_MAGIC, THERON_ATTACK_BLAST },
 };
 
 static const size_t g_creature_template_count =
@@ -135,9 +130,6 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
     c->primary_attack = tmpl->primary;
     c->secondary_attack = tmpl->secondary;
     c->flags = THERON_CF_ACTIVE;
-    c->gold_drop_min = tmpl->gold_min;
-    c->gold_drop_max = tmpl->gold_max;
-    memcpy(c->item_drop_table, tmpl->drops, sizeof(c->item_drop_table));
     c->next_move_tick = (int)world->world_tick + tmpl->speed;
     world->creature_count++;
     return c->id;
@@ -451,56 +443,15 @@ int theron_v1_modify_champion_mana(Theron_V1_Champion *c, int delta) {
 int theron_v1_drop_loot(Theron_V1_World *world,
     int creature_id, int x, int y)
 {
-    if (!world) return -1;
-    const Theron_V1_Creature *c = theron_v1_creature_by_id(world, creature_id);
-    if (!c) return -1;
+    (void)x;
+    (void)y;
+    if (!world || creature_id <= 0 ||
+        !theron_v1_creature_by_id(world, creature_id)) return -1;
 
-    /* Gold drop */
-    if (c->gold_drop_max > 0 && world->object_count < THERON_MAX_OBJECTS) {
-        int gold = c->gold_drop_min;
-        if (c->gold_drop_max > c->gold_drop_min) {
-            gold += rand() % (c->gold_drop_max - c->gold_drop_min + 1);
-        }
-        if (gold > 0) {
-            Theron_V1_Object o;
-            memset(&o, 0, sizeof(o));
-            o.id = world->object_count + 1;
-            o.type = THERON_OBJTYPE_CHEST;
-            o.x = x;
-            o.y = y;
-            o.level = world->current_level;
-            o.dungeon_id = world->current_dungeon;
-            o.quantity = gold;
-            o.item_index = -1;
-            theron_v1_object_place(world, &o);
-        }
-    }
-
-    /* Item drops — resolve synthetic category to real Track 02 item index */
-    for (int i = 0; i < 4 && world->object_count < THERON_MAX_OBJECTS; i++) {
-        uint8_t item = c->item_drop_table[i];
-        if (item == 0) continue;
-        int real_idx = theron_v1_track02_resolve_drop_item(
-            item, (unsigned int)rand());
-        if (real_idx < 0) continue;
-        uint8_t cat = theron_v1_track02_item_category((unsigned int)real_idx);
-        uint8_t otype = THERON_OBJTYPE_CHEST;
-        if (cat == THERON_ITEM_CAT_WEAPON) otype = THERON_OBJTYPE_WEAPON;
-        else if (cat == THERON_ITEM_CAT_ARMOR) otype = THERON_OBJTYPE_ARMOR;
-        else if (cat == THERON_ITEM_CAT_CONSUMABLE) otype = THERON_OBJTYPE_POTION;
-        Theron_V1_Object o;
-        memset(&o, 0, sizeof(o));
-        o.id = world->object_count + 1;
-        o.type = otype;
-        o.x = x;
-        o.y = y;
-        o.level = world->current_level;
-        o.dungeon_id = world->current_dungeon;
-        o.quantity = 1;
-        o.item_index = real_idx;
-        theron_v1_object_place(world, &o);
-    }
-    return 0;
+    /* No authenticated T900 drop record is available in the local Track 02
+     * corpus. The old gold ranges and category list were host approximations;
+     * do not publish loot or consume host RNG until a real record is decoded. */
+    return -1;
 }
 
 /* ── Creature AI tick ─────────────────────────────────────────────── */

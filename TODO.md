@@ -137,10 +137,10 @@
   Creature generators from DMWeb ChristopheF maps wired into level
   transitions and world tick (5 dungeons with generators).
   Spawn zone/template lookup fixed to use dungeon_id.
-  Item ID unification complete: drop system now resolves synthetic
-  THERON_ITEM_* categories to real Track 02 item indices (0-65) using
-  the verified category table at UD 0x21A046. Objects carry real
-  item_index and correct object type (WEAPON/ARMOR/POTION).
+  The verified category table at UD 0x21A046 remains available for decoding,
+  but creature loot publication is blocked until source T900 records bind
+  category, item index, quantity and gold generation. Previous host gold
+  ranges/category lists are no longer admitted.
   Dungeon seeds: TQ data blocks have no DM1-style global header with
   randomGeneratorSeed; seeds are likely in PCE code, not data.
   Remaining: portrait graphics from tile banks.
@@ -196,10 +196,11 @@
   Category-based formula system wired into combat runtime via
   `theron_v1_track02_compute_spawn_stats()`. 4 categories with real
   param1/param2 from spawn zone descriptors. HP capped at 900.
-  THIEF/DEMON use template fallback (scripted, no spawn zones).
+  THIEF/DEMON scripted stats are blocked until their encounter records bind.
   Category formulas wired into spawn path via dungeon_id-based zone lookup.
   Creature generators now respawn per DMWeb data.
-  Drop system now resolves to real Track 02 item indices via category table.
+  Drop category mapping remains a decoder utility; runtime loot stays blocked
+  until source T900 records and the PCE RNG call are decoded.
   PCE rand() lives in bank-switched overlay ($4644/$4667) — not statically
   resolvable; current LCG assumption unconfirmed but unrefuted.
 

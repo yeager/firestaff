@@ -234,8 +234,9 @@ void theron_v1_creature_die(Theron_V1_World *world, int creature_id);
 
 /* ── Drops ────────────────────────────────────────────────────────── */
 /*
- * theron_v1_drop_loot — generate drops when a creature is killed.
- *   Rolls against creature's drop table; places items on floor at x,y.
+ * theron_v1_drop_loot — publish a source-backed creature drop when killed.
+ *   Returns -1 while the Track 02 T900 drop record is not decoded; no
+ *   inferred gold or item is placed on the floor.
  *   Source: THQUEST.ASM T900 creature drops.
  */
 int theron_v1_drop_loot(Theron_V1_World *world,
