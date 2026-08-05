@@ -1,14 +1,9 @@
-- ✅ 2026-08-05 CSB archive scanner: Utility Disk companions now survive
-  archive-backed discovery alongside the hash-verified launch pair.
-  `HCSB.DAT`, `HINT.FTL`, `ANIMATE.DAT`, `ANIMATE.SCR` and `SWITCH.DAT` are
-  recognised as original CSB candidates and materialized into the ordinary
-  runtime cache when present next to a verified `GRAPHICS.DAT`. `HCSB.DAT`
-  is source-backed Hint/Oracle material (ReDMCSB `HINTLOAD.C` lines 15-18 and
-  `HINTTEXT.C` line 28), not a launch requirement. The launch gate remains
-  correctly limited to verified `GRAPHICS.DAT` and `DUNGEON.DAT`. Verified by
-  `test_csb_archive_required_split` with a split ZIP/ISO package and an
-  archive-backed `HCSB.DAT` sidecar.
-
+- ✅ 2026-08-05 Theron HUD text bound to real Track 02 glyphs: replaced the
+  viewport's hand-written synthetic 3×5 font with the 120-glyph 8×6 bitmap
+  table extracted from US Track 02 UD 0x09A000. ASCII case normalization,
+  spacing, width, and bounds remain deterministic; unproven chrome panels,
+  portraits, and tile/material mapping stay fail-closed. Build and the focused
+  `test_theron_v1_track02_font_glyphs` gate pass (17/17).
 - ✅ 2026-08-05 v3.0.288 Asset scanner caching + FM Towns disc image support
   Scan cache: file MD5 results persisted to ~/.firestaff/cache/asset_scan_cache.dat
   keyed by (path, mtime, size). Unchanged files skip re-hashing on repeat scans.

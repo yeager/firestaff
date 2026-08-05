@@ -24,6 +24,7 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_dungeon_progression.h"
 #include "theron_v1_palette.h"
+#include "theron_v1_track02_font_glyphs.h"
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -199,57 +200,25 @@ static const int g_tile_table[16][TQR_VP_DEPTH][2] = {
     },
 };
 
-/* -- Small fallback UI font ----------------------------------------- */
+/* -- Track 02 UI font -------------------------------------------------
+ *
+ * The HUD text uses the 8x6 glyphs extracted from the authenticated US
+ * Track 02 BIN at UD 0x09A000.  Keep this separate from the still-blocked
+ * panel/portrait art: having a real font does not prove the surrounding
+ * chrome bank or its draw order.
+ */
 
 static uint8_t tqr_ui_glyph_row(char ch, int row) {
-    static const uint8_t letters[26][5] = {
-        {0x02, 0x05, 0x07, 0x05, 0x05}, /* A */
-        {0x06, 0x05, 0x06, 0x05, 0x06}, /* B */
-        {0x03, 0x04, 0x04, 0x04, 0x03}, /* C */
-        {0x06, 0x05, 0x05, 0x05, 0x06}, /* D */
-        {0x07, 0x04, 0x06, 0x04, 0x07}, /* E */
-        {0x07, 0x04, 0x06, 0x04, 0x04}, /* F */
-        {0x03, 0x04, 0x05, 0x05, 0x03}, /* G */
-        {0x05, 0x05, 0x07, 0x05, 0x05}, /* H */
-        {0x07, 0x02, 0x02, 0x02, 0x07}, /* I */
-        {0x01, 0x01, 0x01, 0x05, 0x02}, /* J */
-        {0x05, 0x05, 0x06, 0x05, 0x05}, /* K */
-        {0x04, 0x04, 0x04, 0x04, 0x07}, /* L */
-        {0x05, 0x07, 0x07, 0x05, 0x05}, /* M */
-        {0x05, 0x07, 0x07, 0x07, 0x05}, /* N */
-        {0x02, 0x05, 0x05, 0x05, 0x02}, /* O */
-        {0x06, 0x05, 0x06, 0x04, 0x04}, /* P */
-        {0x02, 0x05, 0x05, 0x07, 0x03}, /* Q */
-        {0x06, 0x05, 0x06, 0x05, 0x05}, /* R */
-        {0x03, 0x04, 0x02, 0x01, 0x06}, /* S */
-        {0x07, 0x02, 0x02, 0x02, 0x02}, /* T */
-        {0x05, 0x05, 0x05, 0x05, 0x07}, /* U */
-        {0x05, 0x05, 0x05, 0x05, 0x02}, /* V */
-        {0x05, 0x05, 0x07, 0x07, 0x05}, /* W */
-        {0x05, 0x05, 0x02, 0x05, 0x05}, /* X */
-        {0x05, 0x05, 0x02, 0x02, 0x02}, /* Y */
-        {0x07, 0x01, 0x02, 0x04, 0x07}, /* Z */
-    };
-    static const uint8_t digits[10][5] = {
-        {0x07, 0x05, 0x05, 0x05, 0x07}, /* 0 */
-        {0x02, 0x06, 0x02, 0x02, 0x07}, /* 1 */
-        {0x07, 0x01, 0x07, 0x04, 0x07}, /* 2 */
-        {0x07, 0x01, 0x03, 0x01, 0x07}, /* 3 */
-        {0x05, 0x05, 0x07, 0x01, 0x01}, /* 4 */
-        {0x07, 0x04, 0x07, 0x01, 0x07}, /* 5 */
-        {0x07, 0x04, 0x07, 0x05, 0x07}, /* 6 */
-        {0x07, 0x01, 0x02, 0x02, 0x02}, /* 7 */
-        {0x07, 0x05, 0x07, 0x05, 0x07}, /* 8 */
-        {0x07, 0x05, 0x07, 0x01, 0x07}, /* 9 */
-    };
+    const uint8_t *glyph;
+    unsigned int index;
 
-    if (row < 0 || row >= 5) return 0;
+    if (row < 0 || row >= (int)THERON_TRACK02_FONT_GLYPH_HEIGHT) return 0;
     if (ch >= 'a' && ch <= 'z') ch = (char)(ch - 'a' + 'A');
-    if (ch >= 'A' && ch <= 'Z') return letters[(unsigned)(ch - 'A')][row];
-    if (ch >= '0' && ch <= '9') return digits[(unsigned)(ch - '0')][row];
-    if (ch == '-') return row == 2 ? 0x07 : 0x00;
-    if (ch == ':') return (row == 1 || row == 3) ? 0x02 : 0x00;
-    return 0;
+    if (ch == ' ') return 0;
+    index = (unsigned int)(unsigned char)ch;
+    if (index >= theron_v1_track02_font_glyph_count()) return 0;
+    glyph = theron_v1_track02_font_glyph(index);
+    return glyph ? glyph[row] : 0;
 }
 
 static void tqr_ui_draw_char(TQR_PlanarFramebuffer *fb,
@@ -257,10 +226,10 @@ static void tqr_ui_draw_char(TQR_PlanarFramebuffer *fb,
                              char ch,
                              uint8_t color) {
     if (!fb || !fb->data) return;
-    for (int row = 0; row < 5; row++) {
+    for (int row = 0; row < THERON_TRACK02_FONT_GLYPH_HEIGHT; row++) {
         uint8_t bits = tqr_ui_glyph_row(ch, row);
-        for (int col = 0; col < 3; col++) {
-            if ((bits & (uint8_t)(1u << (2 - col))) == 0) continue;
+        for (int col = 0; col < THERON_TRACK02_FONT_GLYPH_WIDTH; col++) {
+            if ((bits & (uint8_t)(1u << (7 - col))) == 0) continue;
             int px = x + col;
             int py = y + row;
             if (px >= 0 && px < fb->w && py >= 0 && py < fb->h) {
@@ -281,7 +250,7 @@ static void tqr_ui_draw_text(TQR_PlanarFramebuffer *fb,
         if (text[i] != ' ') {
             tqr_ui_draw_char(fb, dx, y, text[i], color);
         }
-        dx += 4;
+        dx += THERON_TRACK02_FONT_GLYPH_WIDTH;
     }
 }
 

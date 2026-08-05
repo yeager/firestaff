@@ -56,7 +56,8 @@
   implementation remains fixture-only. Production exposes a no-op API until
   the original Track 02 UI chrome bank is decoded. The startup menu also
   withholds fixture portrait/class metadata; decoded names alone do not
-  authorize inferred portraits or classes. Remaining: HUD tile bank,
+  authorize inferred portraits or classes. The production viewport HUD text
+  now consumes the verified 8×6 Track 02 glyphs. Remaining: HUD tile bank,
   bar/slot layout coordinates, portrait graphics.
 
   The V2 procedural overlay is now likewise excluded from the production
