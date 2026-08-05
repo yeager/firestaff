@@ -24222,6 +24222,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Theron Track 02 remaining evidence
 
+- 2026-08-06 update: the Track 02 thing-category enum is now source-bound to
+  the retail order used by DMBUILDER6 (`4=monster`, `5=weapon`, `6=clothing`,
+  `7=scroll`, `8=potion`, `9=chest`, `10=misc`, `14=missile`, `15=cloud`).
+  A real US Track 02 regression now checks all seven dungeon object-count
+  tables and requires nonzero copied payload for every populated category.
+  This is raw record provenance only; runtime item/monster publication and
+  combat/render semantics remain closed until their consumers are bound.
+
 - 2026-07-15: Runtime level-bank selection now retains the authenticated
   startup bitmap's Track 02 MD5 and raw/user-data sector envelope. Remaining:
   obtain original loader/CD-read evidence that binds a post-startup bitmap or

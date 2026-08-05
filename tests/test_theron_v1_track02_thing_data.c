@@ -102,6 +102,53 @@ static void test_truncated_map_source_rejected(void) {
     printf("  truncated map source rejects out-of-range tables OK\n");
 }
 
+static void test_source_category_layout(void) {
+    assert(THERON_CAT_MONSTER == 4);
+    assert(THERON_CAT_WEAPON == 5);
+    assert(THERON_CAT_CLOTHING == 6);
+    assert(THERON_CAT_SCROLL == 7);
+    assert(THERON_CAT_POTION == 8);
+    assert(THERON_CAT_CONTAINER == 9);
+    assert(THERON_CAT_MISC == 10);
+    assert(THERON_CAT_MISSILE == 14);
+    assert(THERON_CAT_CLOUD == 15);
+    assert(theron_item_bytes[THERON_CAT_MONSTER] == 16u);
+    assert(theron_item_bytes[THERON_CAT_CONTAINER] == 8u);
+    assert(theron_item_bytes[THERON_CAT_MISSILE] == 8u);
+    printf("  source category order and record widths OK\n");
+}
+
+static void test_real_item_records(const Theron_ThingData *td,
+                                   unsigned int dungeon_index) {
+    /* Authenticated object-count words from each real US quest block. */
+    static const uint16_t expected[7][11] = {
+        {31, 68, 17, 180, 118, 143, 153, 6, 11, 3, 181},
+        {38, 38, 11, 199, 106, 123, 159, 1, 8, 0, 176},
+        {19, 23, 11, 149, 101, 126, 151, 0, 12, 0, 169},
+        {19, 106, 15, 341, 94, 123, 151, 3, 15, 0, 155},
+        {5, 127, 13, 181, 107, 116, 153, 4, 14, 1, 149},
+        {12, 71, 19, 192, 101, 136, 171, 3, 14, 0, 159},
+        {16, 29, 21, 118, 90, 148, 172, 1, 9, 3, 164},
+    };
+
+    assert(dungeon_index < 7u);
+    for (unsigned int cat = 0; cat <= THERON_CAT_MISC; ++cat) {
+        assert(td->object_counts[cat] == expected[dungeon_index][cat]);
+        if (td->object_counts[cat] == 0u)
+            continue;
+        size_t bytes = (size_t)td->object_counts[cat] *
+                       theron_item_bytes[cat];
+        int has_payload = 0;
+        for (size_t i = 0; i < bytes; ++i) {
+            if (td->items[cat][i] != 0u) {
+                has_payload = 1;
+                break;
+            }
+        }
+        assert(has_payload);
+    }
+}
+
 static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
     const char *names[] = {
         "AKUTUBA", "DRATOR", "FORMICIA", "SARMON",
@@ -134,6 +181,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(ok);
 
         assert(td->ground_ref_count == gref_count);
+        test_real_item_records(td, d);
 
         unsigned int total_items = 0;
         for (int c = 0; c < 16; c++)
@@ -160,6 +208,7 @@ int main(void) {
     test_ground_ref_count_bound();
     test_truncated_source_rejected();
     test_truncated_map_source_rejected();
+    test_source_category_layout();
 
     const char *path = find_track02();
     if (!path) {

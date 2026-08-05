@@ -9,19 +9,22 @@
 #define THERON_MAX_ITEMS_PER_CAT     512
 
 typedef enum {
+    /* Source binding: DMBUILDER6/src/item.c:itemBytes[] and
+     * DMBUILDER6/src/dm.h:CATEGORYTYPE; loading order is preserved by
+     * loadTheronsQuestDungeonData() in DMBUILDER6/src/loaddungeon.c. */
     THERON_CAT_DOOR        = 0,
     THERON_CAT_TELEPORTER  = 1,
     THERON_CAT_TEXT        = 2,
     THERON_CAT_ACTUATOR    = 3,
-    THERON_CAT_WEAPON      = 4,
-    THERON_CAT_CLOTHING    = 5,
-    THERON_CAT_SCROLL      = 6,
-    THERON_CAT_POTION      = 7,
-    THERON_CAT_CONTAINER   = 8,
-    THERON_CAT_MISC        = 9,
-    THERON_CAT_MISSILE     = 10,
-    THERON_CAT_CREATURE    = 14,
-    THERON_CAT_CHAMPION    = 15,
+    THERON_CAT_MONSTER     = 4,
+    THERON_CAT_WEAPON      = 5,
+    THERON_CAT_CLOTHING    = 6,
+    THERON_CAT_SCROLL      = 7,
+    THERON_CAT_POTION      = 8,
+    THERON_CAT_CONTAINER   = 9,
+    THERON_CAT_MISC        = 10,
+    THERON_CAT_MISSILE     = 14,
+    THERON_CAT_CLOUD       = 15,
 } Theron_ItemCategory;
 
 static const size_t theron_item_bytes[THERON_ITEM_CATEGORY_COUNT] = {

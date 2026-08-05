@@ -50271,3 +50271,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   raw saves create neither Continue nor slot UI actions, preventing a
   header-only save from entering the runtime. Verification: real startup
   menu action contract 103/103.
+
+- ✅ 2026-08-06 Theron Track 02 object-category source binding: corrected the
+  category names/numbers to match the retail `itemBytes[]`/`CATEGORYTYPE`
+  order (`monster`, `weapon`, `clothing`, `scroll`, `potion`, `chest`,
+  `misc`, `missile`, `cloud`) instead of the former shifted creature/champion
+  labels. The real US Track 02 test now verifies all seven dungeon count
+  tables and nonzero payload in every populated category. This proves copied
+  raw records only; no guessed runtime item or combat semantics were enabled.

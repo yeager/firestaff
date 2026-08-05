@@ -2,8 +2,8 @@
  *
  * Loads the "thing list" data from Track 02 quest blocks:
  * ground references (per-tile item chains), doors, teleporters, texts,
- * actuators, weapons, clothing, scrolls, potions, containers, misc, missiles,
- * creatures, and champions.
+ * actuators, monsters, weapons, clothing, scrolls, potions, chests, misc,
+ * missiles, and clouds.
  *
  * Format from gbsphenx/dmbuilder (item.c itemBytes[], loaddungeon.c).
  * Item data is split across two regions per quest block:
