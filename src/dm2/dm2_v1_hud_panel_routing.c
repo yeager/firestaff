@@ -2,44 +2,6 @@
 
 #include <string.h>
 
-static uint32_t dm2_panel_fnv1a(const uint8_t *data, size_t size)
-{
-    uint32_t hash = 2166136261u;
-    size_t i;
-
-    if (!data && size != 0u) {
-        return 0u;
-    }
-    for (i = 0u; i < size; ++i) {
-        hash ^= data[i];
-        hash *= 16777619u;
-    }
-    return hash;
-}
-
-static int dm2_panel_text_len(const uint8_t *text,
-                              size_t text_size,
-                              size_t *out_len)
-{
-    size_t i;
-
-    if (out_len) {
-        *out_len = 0u;
-    }
-    if (!text) {
-        return 0;
-    }
-    for (i = 0u; i < text_size; ++i) {
-        if (text[i] == 0u) {
-            if (out_len) {
-                *out_len = i;
-            }
-            return 1;
-        }
-    }
-    return 0;
-}
-
 static void dm2_query_cmdstr_text_begin(
     DM2_V1_QueryCmdstrTextReceipt *receipt,
     const char *symbol,
@@ -122,44 +84,22 @@ static int dm2_query_cmdstr_text_impl(
     const char *symbol,
     const char *source_path)
 {
-    size_t text_len = 0u;
-    size_t copy_len;
-
     dm2_query_cmdstr_text_begin(out_receipt, symbol, source_path);
-    if (category < 0 || category > 0xff ||
-        index < 0 || index > 0xff || field < 0 || field > 0xff) {
-        if (out_receipt) {
-            out_receipt->blocked = 1;
-        }
-        return 0;
-    }
-    if (!text || !dm2_panel_text_len(text, text_size, &text_len)) {
-        if (out_receipt) {
-            out_receipt->blocked = 1;
-            out_receipt->category = (uint8_t)category;
-            out_receipt->index = (uint8_t)index;
-            out_receipt->field = (uint8_t)field;
-        }
-        return 0;
-    }
-    copy_len = text_len;
-    if (copy_len >= DM2_V1_HUD_PANEL_CMDSTR_TEXT_CAP) {
-        copy_len = DM2_V1_HUD_PANEL_CMDSTR_TEXT_CAP - 1u;
-        if (out_receipt) {
-            out_receipt->truncated = 1u;
-        }
-    }
+    /* QUERY_CMDSTR_TEXT reads GDAT itself in the original engine
+     * (SKULLWIN/c_querydb.cpp:274; SKWIN/SkWinCore.cpp:8136).  This old
+     * adapter accepted arbitrary host bytes and falsely recorded them as a
+     * GDAT payload.  A category/index/field tuple alone cannot authenticate
+     * such a buffer, so preserve the source boundary: block until a mounted
+     * loader can supply the raw GDAT record and its provenance receipt. */
+    (void)text;
+    (void)text_size;
     if (out_receipt) {
         out_receipt->category = (uint8_t)category;
         out_receipt->index = (uint8_t)index;
         out_receipt->field = (uint8_t)field;
-        out_receipt->byte_count = (uint16_t)copy_len;
-        memcpy(out_receipt->text, text, copy_len);
-        out_receipt->text[copy_len] = '\0';
-        out_receipt->text_hash = dm2_panel_fnv1a(text, text_len);
-        out_receipt->valid = 1;
+        out_receipt->blocked = 1;
     }
-    return 1;
+    return 0;
 }
 
 int dm2_v1_QUERY_CMDSTR_TEXT(

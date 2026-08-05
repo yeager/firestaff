@@ -86,6 +86,9 @@ int dm2_v1_QUERY_CMDSTR_TEXT(
     const uint8_t *text,
     size_t text_size,
     DM2_V1_QueryCmdstrTextReceipt *out_receipt);
+/* The present signature cannot prove the caller-provided bytes belong to the
+ * requested GDAT tuple, so both query entry points fail closed. A future
+ * runtime binding must query the mounted original GDAT loader directly. */
 int dm2_v1_DM2_QUERY_CMDSTR_TEXT(
     int category,
     int index,

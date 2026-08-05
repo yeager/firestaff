@@ -30,17 +30,15 @@ static void test_query_cmdstr_text(void)
                                          8,
                                          weapon_text,
                                          sizeof(weapon_text),
-                                         &text) == 1,
-                "QUERY_CMDSTR_TEXT accepts a real GDAT dtText payload");
-    expect_true(text.valid && text.source_locked &&
+                                         &text) == 0,
+                "QUERY_CMDSTR_TEXT rejects unproven caller bytes");
+    expect_true(!text.valid && text.blocked && text.source_locked &&
                     strcmp(text.symbol, "QUERY_CMDSTR_TEXT") == 0 &&
                     text.category == DM2_TEST_GDAT_CATEGORY_WEAPONS &&
                     text.index == 2u &&
-                    text.field == 8u &&
-                    text.byte_count == 23u &&
-                    strcmp(text.text, "SWING:SK=48 DM=-5 HN=12") == 0 &&
-                    text.text_hash != 0u,
-                "QUERY_CMDSTR_TEXT receipt preserves source tuple and bytes");
+                    text.field == 8u && text.byte_count == 0u &&
+                    text.text_hash == 0u,
+                "QUERY_CMDSTR_TEXT records tuple but admits no fake text");
 
     expect_true(dm2_v1_DM2_QUERY_CMDSTR_TEXT(
                     DM2_TEST_GDAT_CATEGORY_MESSAGES,
@@ -48,12 +46,13 @@ static void test_query_cmdstr_text(void)
                     7,
                     message_text,
                     sizeof(message_text),
-                    &text) == 1,
-                "DM2_QUERY_CMDSTR_TEXT exposes the SKULLWIN querydb alias");
-    expect_true(text.valid &&
+                    &text) == 0,
+                "DM2_QUERY_CMDSTR_TEXT rejects unproven alias bytes");
+    expect_true(text.blocked && !text.valid &&
                     strcmp(text.symbol, "DM2_QUERY_CMDSTR_TEXT") == 0 &&
-                    strcmp(text.text, "OPEN:LV=2") == 0,
-                "DM2_QUERY_CMDSTR_TEXT copies only original text bytes");
+                    text.category == DM2_TEST_GDAT_CATEGORY_MESSAGES &&
+                    text.index == 4u && text.field == 7u,
+                "DM2_QUERY_CMDSTR_TEXT retains only the requested GDAT tuple");
 
     expect_true(dm2_v1_QUERY_CMDSTR_TEXT(DM2_TEST_GDAT_CATEGORY_WEAPONS,
                                          3,
@@ -61,7 +60,7 @@ static void test_query_cmdstr_text(void)
                                          bad_text,
                                          sizeof(bad_text),
                                          &text) == 0,
-                "QUERY_CMDSTR_TEXT blocks dtText without a NUL terminator");
+                "QUERY_CMDSTR_TEXT also blocks unterminated caller bytes");
     expect_true(text.blocked && !text.valid,
                 "unterminated command text is fail-closed");
 }
@@ -73,43 +72,26 @@ static void test_event_and_panel_routing(void)
     DM2_V1_TransmitUiEventReceipt event;
     DM2_V1_UpdateRightPanelReceipt panel;
 
-    expect_true(dm2_v1_QUERY_CMDSTR_TEXT(DM2_TEST_GDAT_CATEGORY_WEAPONS,
-                                         2,
-                                         8,
-                                         weapon_text,
-                                         sizeof(weapon_text),
-                                         &text) == 1,
-                "test fixture command text loads before event routing");
+    (void)dm2_v1_QUERY_CMDSTR_TEXT(DM2_TEST_GDAT_CATEGORY_WEAPONS,
+                                   2,
+                                   8,
+                                   weapon_text,
+                                   sizeof(weapon_text),
+                                   &text);
 
     expect_true(dm2_v1_TRANSMIT_UI_EVENT(
                     DM2_V1_HUD_UI_EVENT_COMMAND_TEXT,
                     0x2222u,
                     &text,
-                    &event) == 1,
-                "TRANSMIT_UI_EVENT accepts command-text event with real text");
-    expect_true(event.valid && event.requested_panel_refresh &&
-                    event.consumed_real_cmdstr_text &&
-                    !event.used_synthetic_text &&
-                    event.category == DM2_TEST_GDAT_CATEGORY_WEAPONS &&
-                    event.index == 2u &&
-                    event.field == 8u &&
-                    strcmp(event.symbol, "TRANSMIT_UI_EVENT") == 0,
-                "TRANSMIT_UI_EVENT records real GDAT command text provenance");
-
+                    &event) == 0,
+                "TRANSMIT_UI_EVENT blocks command text without proven GDAT");
+    expect_true(event.blocked && !event.valid && !event.used_synthetic_text,
+                "blocked command text cannot create a HUD event");
     expect_true(dm2_v1_UPDATE_RIGHT_PANEL(
-                    DM2_V1_HUD_RIGHT_PANEL_CONTAINER,
+                    DM2_V1_HUD_RIGHT_PANEL_COMMANDS,
                     &event,
-                    &panel) == 1,
-                "UPDATE_RIGHT_PANEL consumes transmitted HUD event");
-    expect_true(panel.valid &&
-                    panel.consumed_transmitted_event &&
-                    panel.consumed_real_cmdstr_text &&
-                    panel.previous_mode == DM2_V1_HUD_RIGHT_PANEL_CONTAINER &&
-                    panel.next_mode == DM2_V1_HUD_RIGHT_PANEL_COMMANDS &&
-                    panel.redraw_requested &&
-                    panel.payload_ref == 0x2222u &&
-                    strcmp(panel.symbol, "UPDATE_RIGHT_PANEL") == 0,
-                "UPDATE_RIGHT_PANEL selects command panel from command event");
+                    &panel) == 0,
+                "UPDATE_RIGHT_PANEL blocks invalid transmitted event");
 
     expect_true(dm2_v1_DM2_TRANSMIT_UI_EVENT(
                     DM2_V1_HUD_UI_EVENT_CONTAINER,
@@ -127,19 +109,6 @@ static void test_event_and_panel_routing(void)
                     strcmp(panel.symbol, "DM2_UPDATE_RIGHT_PANEL") == 0,
                 "DM2_UPDATE_RIGHT_PANEL records container panel routing");
 
-    expect_true(dm2_v1_TRANSMIT_UI_EVENT(
-                    DM2_V1_HUD_UI_EVENT_COMMAND_TEXT,
-                    0x2222u,
-                    0,
-                    &event) == 0,
-                "TRANSMIT_UI_EVENT blocks command-text event without real text");
-    expect_true(event.blocked && !event.valid,
-                "missing real command text does not create synthetic event text");
-    expect_true(dm2_v1_UPDATE_RIGHT_PANEL(
-                    DM2_V1_HUD_RIGHT_PANEL_COMMANDS,
-                    &event,
-                    &panel) == 0,
-                "UPDATE_RIGHT_PANEL blocks invalid transmitted event");
 }
 
 int main(void)

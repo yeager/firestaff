@@ -49293,6 +49293,19 @@ marked implemented, while the real boot probe continues to use the
 hash-verified PC English corpus. Sources: `SKULLWIN/c_creature.cpp`
 `DM2_PROCEED_CCM` (2930-3212) and the handler bodies at 1709-2928.
 
+# ✅ 2026-08-06 DM2 HUD command-text provenance gate
+
+`QUERY_CMDSTR_TEXT` and `DM2_QUERY_CMDSTR_TEXT` no longer accept arbitrary
+caller buffers and label them as original GDAT text. The original routines
+read GDAT internally, so the tuple-only adapter now blocks until a mounted
+GDAT loader can provide the selected raw record and provenance. Consequently
+command-text UI events and the associated right-panel refresh cannot be
+created from synthetic text; non-text container events retain their existing
+source-bound routing. Verification: `test_dm2_v1_hud_panel_routing` and the
+hash-verified PC English boot probe PASS. Sources:
+`SKULLWIN/c_querydb.cpp::DM2_QUERY_CMDSTR_TEXT` (line 274) and
+`SKWIN/SkWinCore.cpp::QUERY_CMDSTR_TEXT` (line 8136).
+
 # ✅ 2026-08-06 DM2 source wall-button fallback removal
 
 The local DB2/DB3 wall-button walkers are now available only to isolated

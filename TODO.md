@@ -917,6 +917,11 @@
   **2026-07-31 update:** M11 now has no residual DM2 ObjectID-to-local-name
   lookup at all. It returns no leader-hand name until the complete decoded
   DB-record to GDAT `dtText/0x18` and `FORMAT_SKSTR` ownership route exists.
+  **2026-08-06 HUD correction:** the generic `QUERY_CMDSTR_TEXT` adapter no
+  longer accepts caller-provided bytes as if they were GDAT text. Its public
+  tuple-only signature cannot authenticate a buffer, so command-text events
+  remain blocked until a mounted original GDAT query returns the raw record
+  together with provenance.
 
 - **DM2-DIALOGUE-TEXT-OWNER-HANDOFF:** Save/load-dialogue labels require the
   original `GDAT 0/0/dtWordValue/0` transform owner as well as their
