@@ -25310,3 +25310,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - Theron teleporter resolution now rejects unresolved object-ID links and
   cycles; restore positive legacy links only when backed by an authenticated
   Track 02/T900 record corpus.
+
+- [ ] THERON-V1-TRACK02-JP-LEVEL-DATA: promote the authenticated Japanese
+  Track 02 level-bank receipt into runtime only after the HuC6280 graphics
+  consumer and tile/map ownership are disassembled. The JP raw BIN now has
+  its own verified seven-block offsets and metadata table; this remains a
+  source-bound inventory, not a synthetic or inferred tile binding.

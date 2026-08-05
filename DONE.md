@@ -49571,3 +49571,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   existing source message queue. The old host dialog and synthetic `TEXT #N`
   label were removed; missing or malformed source text is fail-closed. The
   DM1 sensor-timing integration and `firestaff_m11` Ninja build pass.
+
+- ✅ 2026-08-06 Theron JP Track 02 level-bank receipt: added the separate
+  authenticated Japanese MODE1/2352 table (MD5
+  `b7afb338ad31be1025b53f9aff12d73a`) with all seven real user-data offsets
+  and metadata records. The regression now accepts optional
+  `FIRESTAFF_THERON_TRACK02_JP_RAW` and passes against both supplied US and
+  JP BINs; ISO/unknown variants remain rejected and no tile/map/object
+  semantics were promoted.

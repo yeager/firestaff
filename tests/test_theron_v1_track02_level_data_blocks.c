@@ -21,8 +21,10 @@ static int read_raw_user_byte(FILE *file, size_t user_offset, uint8_t *out) {
     return 1;
 }
 
-static void verify_real_track02_level_blocks(void) {
-    const char *path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
+static void verify_real_track02_level_blocks(const char *env_name,
+                                             Theron_Track02Variant variant,
+                                             const char *label) {
+    const char *path = getenv(env_name);
     FILE *file;
     long file_size;
     uint8_t shared[THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE];
@@ -41,12 +43,13 @@ static void verify_real_track02_level_blocks(void) {
 
     for (size_t i = 0; i < THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE; ++i) {
         assert(read_raw_user_byte(file,
-                                  theron_v1_track02_level_data_block(0)->ud_offset + i,
+                                  theron_v1_track02_level_data_block_for_variant(
+                                      variant, 0)->ud_offset + i,
                                   &shared[i]));
     }
     for (unsigned int level = 0; level < THERON_TRACK02_LEVEL_COUNT; ++level) {
         const Theron_LevelDataBlockDesc *block =
-            theron_v1_track02_level_data_block(level);
+            theron_v1_track02_level_data_block_for_variant(variant, level);
         for (size_t i = 0; i < THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE; ++i) {
             uint8_t byte;
             assert(read_raw_user_byte(file, block->ud_offset + i, &byte));
@@ -62,7 +65,7 @@ static void verify_real_track02_level_blocks(void) {
         }
     }
     fclose(file);
-    puts("PASS: authentic US Track 02 level-block prologues and metadata");
+    printf("PASS: authentic %s Track 02 level-block prologues and metadata\n", label);
 }
 
 int main(void) {
@@ -91,6 +94,12 @@ int main(void) {
 
     /* Out of bounds */
     assert(theron_v1_track02_level_data_block(7) == NULL);
+    assert(theron_v1_track02_level_data_block_for_variant(
+               THERON_TRACK02_VARIANT_JP_BIN, 0)->ud_offset == 0x09E82F);
+    assert(theron_v1_track02_level_data_block_for_variant(
+               THERON_TRACK02_VARIANT_JP_BIN, 1)->per_level_meta[2] == 0x04);
+    assert(theron_v1_track02_level_data_block_for_variant(
+               THERON_TRACK02_VARIANT_US_ISO, 0) == NULL);
 
     /* All blocks have non-zero UD offsets */
     for (unsigned i = 0; i < THERON_TRACK02_LEVEL_COUNT; i++) {
@@ -98,7 +107,10 @@ int main(void) {
         assert(b->ud_offset > 0);
     }
 
-    verify_real_track02_level_blocks();
+    verify_real_track02_level_blocks("FIRESTAFF_THERON_TRACK02_RAW",
+                                     THERON_TRACK02_VARIANT_US_BIN, "US");
+    verify_real_track02_level_blocks("FIRESTAFF_THERON_TRACK02_JP_RAW",
+                                     THERON_TRACK02_VARIANT_JP_BIN, "JP");
 
     printf("PASS: theron_v1_track02_level_data_blocks\n");
     return 0;

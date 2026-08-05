@@ -3,12 +3,14 @@
 
 #include <stdint.h>
 #include <stddef.h>
+#include "theron_v1_track02.h"
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-/* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
+/* Sources: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76) and JP
+ * Track 02 BIN (MD5 b7afb338ad31be1025b53f9aff12d73a).
  *
  * 7 per-level graphics/tile banks (~256KB each = one PCE HuCard bank).
  * Identified by byte-exact 232-byte shared prologue signature.
@@ -31,6 +33,9 @@ typedef struct {
 } Theron_LevelDataBlockDesc;
 
 const Theron_LevelDataBlockDesc *theron_v1_track02_level_data_block(unsigned int level);
+
+const Theron_LevelDataBlockDesc *theron_v1_track02_level_data_block_for_variant(
+    Theron_Track02Variant variant, unsigned int level);
 
 #ifdef __cplusplus
 }

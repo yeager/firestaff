@@ -1,6 +1,7 @@
 #include "theron_v1_track02_level_data_blocks.h"
 
-/* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
+/* Sources: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76) and JP
+ * Track 02 BIN (MD5 b7afb338ad31be1025b53f9aff12d73a).
  *
  * 7 level data blocks found by full-track scan for a repeated 232-byte
  * (0xE8) prologue signature. Each block has:
@@ -22,7 +23,25 @@ static const Theron_LevelDataBlockDesc g_level_blocks[THERON_TRACK02_LEVEL_COUNT
     /* Level 7 */ { 0x21F000, { 0x0D, 0x86, 0x06, 0x30, 0x0F, 0x0E, 0x07, 0x0E } },
 };
 
+static const Theron_LevelDataBlockDesc g_jp_level_blocks[THERON_TRACK02_LEVEL_COUNT] = {
+    /* Level 1 */ { 0x09E82F, { 0x07, 0x87, 0x18, 0x10, 0x10, 0x10, 0x10, 0x20 } },
+    /* Level 2 */ { 0x0DEB71, { 0x07, 0x87, 0x04, 0x02, 0x04, 0x02, 0x04, 0x02 } },
+    /* Level 3 */ { 0x11E82F, { 0x0F, 0x87, 0x0F, 0x04, 0x00, 0x01, 0x01, 0x01 } },
+    /* Level 4 */ { 0x15EED7, { 0x03, 0x83, 0x3F, 0x3F, 0x3F, 0x07, 0x1F, 0x0F } },
+    /* Level 5 */ { 0x19EE9B, { 0x0F, 0x87, 0x1E, 0x1E, 0x1E, 0x1F, 0x3F, 0x3F } },
+    /* Level 6 */ { 0x1DE82F, { 0x07, 0x87, 0x07, 0x0C, 0x10, 0x30, 0x20, 0x20 } },
+    /* Level 7 */ { 0x21E82F, { 0x0F, 0x87, 0x10, 0x10, 0x10, 0x00, 0x20, 0x01 } },
+};
+
 const Theron_LevelDataBlockDesc *theron_v1_track02_level_data_block(unsigned int level) {
+    return theron_v1_track02_level_data_block_for_variant(
+        THERON_TRACK02_VARIANT_US_BIN, level);
+}
+
+const Theron_LevelDataBlockDesc *theron_v1_track02_level_data_block_for_variant(
+    Theron_Track02Variant variant, unsigned int level) {
     if (level >= THERON_TRACK02_LEVEL_COUNT) return NULL;
-    return &g_level_blocks[level];
+    if (variant == THERON_TRACK02_VARIANT_US_BIN) return &g_level_blocks[level];
+    if (variant == THERON_TRACK02_VARIANT_JP_BIN) return &g_jp_level_blocks[level];
+    return NULL;
 }
