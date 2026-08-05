@@ -34,6 +34,30 @@ static void test_probe_null(void) {
     ASSERT(csb_v1_fmtowns_cd_probe(NULL, 0) == 0, "probe rejects NULL");
 }
 
+static void test_cue_index_one_without_zero_padding(void) {
+    static const char cue[] =
+        "FILE \"CHAOS.IMG\" BINARY\n"
+        "  TRACK 1 MODE1/2352\n"
+        "    INDEX 1 00:00:00\n"
+        "  TRACK 2 AUDIO\n"
+        "    INDEX 1 01:00:00\n"
+        "  TRACK 3 AUDIO\n"
+        "    INDEX 01 01:48:00\n";
+    CSB_V1_FmtownsCddaLayout cdda;
+
+    ASSERT(csb_v1_fmtowns_cdda_parse_cue(cue, sizeof(cue) - 1u, &cdda) == 0,
+           "CUE parser accepts unpadded INDEX 1");
+    ASSERT(cdda.track_count == 2, "CUE parser records both audio tracks");
+    ASSERT(cdda.tracks[0].track_number == 2 &&
+           cdda.tracks[0].start_sector == 4500u,
+           "unpadded INDEX 1 preserves first CDDA start");
+    ASSERT(cdda.tracks[1].track_number == 3 &&
+           cdda.tracks[1].start_sector == 8100u,
+           "zero-padded INDEX 01 remains accepted");
+    ASSERT(cdda.tracks[0].sector_count == 3600u,
+           "CUE parser derives the first CDDA duration");
+}
+
 static void test_real_bin(void) {
     char bin_path[512], cue_path[512];
     const char *home = getenv("HOME");
@@ -158,6 +182,7 @@ static void test_real_bin(void) {
 
 int main(void) {
     test_probe_null();
+    test_cue_index_one_without_zero_padding();
     test_real_bin();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);

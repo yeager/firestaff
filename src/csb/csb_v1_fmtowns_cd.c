@@ -243,9 +243,23 @@ int csb_v1_fmtowns_cdda_parse_cue(const char *cue_text, size_t cue_len,
                 out->tracks[track_idx].track_number = (uint32_t)track_num;
                 track_idx++;
             }
-        } else if (strncmp(line, "INDEX 01 ", 9) == 0 && track_idx > 0) {
-            const char *t = line + 9;
+        } else if (strncmp(line, "INDEX", 5) == 0 && track_idx > 0) {
+            const char *t = line + 5;
             int mm = 0, ss = 0, ff = 0;
+            int index_number = 0;
+
+            /* Red Book CUE accepts a decimal index number, so retail dumps
+             * may write either "INDEX 01" or "INDEX 1".  The local CSB FM
+             * Towns Victor disc uses the latter.  Requiring zero padding
+             * silently lost every CDDA start offset and made the original
+             * music timeline unusable. */
+            while (*t == ' ' || *t == '\t') t++;
+            while (*t >= '0' && *t <= '9') {
+                index_number = index_number * 10 + (*t - '0');
+                t++;
+            }
+            if (index_number != 1) continue;
+            while (*t == ' ' || *t == '\t') t++;
             while (*t >= '0' && *t <= '9') { mm = mm*10 + (*t-'0'); t++; }
             if (*t == ':') t++;
             while (*t >= '0' && *t <= '9') { ss = ss*10 + (*t-'0'); t++; }
