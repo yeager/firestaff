@@ -96,10 +96,6 @@ static void test_real_data(void) {
 
     /* Decode C001 title (item 1: 320x153) */
     {
-        size_t off = 4u + 728u * 2u + 728u * 2u + 728u * 4u;
-        uint16_t comp0 = rd16le(data + 4);
-        size_t item1_off = off + comp0;
-        uint16_t comp1 = rd16le(data + 4 + 2);
         uint16_t cw = rd16le(data + 4 + 728*4 + 1*4);
         uint16_t ch = rd16le(data + 4 + 728*4 + 1*4 + 2);
         uint8_t *pixels;
@@ -112,9 +108,8 @@ static void test_real_data(void) {
         ASSERT(pixels != NULL, "pixel alloc");
 
         if (pixels) {
-            int ok = csb_v1_fmtowns_img2_decode(
-                data + item1_off, comp1, cw, ch,
-                pixels, pixel_count, &irec);
+            int ok = csb_v1_fmtowns_graphics_decode_item(
+                data, size, 1u, pixels, pixel_count, &irec);
             ASSERT(ok == 1, "C001 decode succeeds");
             ASSERT(irec.valid == 1, "C001 receipt valid");
             ASSERT(irec.width == 320, "C001 width 320");
@@ -141,12 +136,6 @@ static void test_real_data(void) {
 
     /* Decode C004 entrance (item 4: 320x200) */
     {
-        size_t payload_start = 4u + 728u * 2u + 728u * 2u + 728u * 4u;
-        size_t item_off = payload_start;
-        uint16_t i;
-        for (i = 0; i < 4; i++)
-            item_off += rd16le(data + 4 + i * 2);
-        uint16_t comp4 = rd16le(data + 4 + 4 * 2);
         uint16_t cw = rd16le(data + 4 + 728*4 + 4*4);
         uint16_t ch = rd16le(data + 4 + 728*4 + 4*4 + 2);
         uint8_t *pixels;
@@ -157,9 +146,8 @@ static void test_real_data(void) {
         pixel_count = (size_t)cw * ch;
         pixels = (uint8_t *)calloc(1, pixel_count);
         if (pixels) {
-            int ok = csb_v1_fmtowns_img2_decode(
-                data + item_off, comp4, cw, ch,
-                pixels, pixel_count, &irec);
+            int ok = csb_v1_fmtowns_graphics_decode_item(
+                data, size, 4u, pixels, pixel_count, &irec);
             ASSERT(ok == 1, "C004 decode succeeds");
             ASSERT(irec.width == 320 && irec.height == 200,
                    "C004 dims 320x200");

@@ -87,6 +87,16 @@ int csb_v1_fmtowns_img2_decode(const uint8_t *item, size_t item_size,
                                 size_t pixel_capacity,
                                 CSB_V1_FmtownsItemDecodeReceipt *receipt);
 
+/* Select and expand one raster item directly from the original F31E/F31J
+ * GRAPHICS.DAT container.  This mirrors ReDMCSB MEMORY.C F0490 selecting a
+ * record followed by IMAGE2.C F0689 expansion; non-raster data records are
+ * deliberately rejected instead of being interpreted as pixels. */
+int csb_v1_fmtowns_graphics_decode_item(const uint8_t *data, size_t size,
+                                        uint16_t item_index,
+                                        uint8_t *indexed_pixels,
+                                        size_t pixel_capacity,
+                                        CSB_V1_FmtownsItemDecodeReceipt *receipt);
+
 #ifdef __cplusplus
 }
 #endif

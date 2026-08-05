@@ -219,3 +219,45 @@ int csb_v1_fmtowns_img2_decode(const uint8_t *item, size_t item_size,
     }
     return pos >= total ? 1 : 0;
 }
+
+int csb_v1_fmtowns_graphics_decode_item(
+    const uint8_t *data, size_t size, uint16_t item_index,
+    uint8_t *indexed_pixels, size_t pixel_capacity,
+    CSB_V1_FmtownsItemDecodeReceipt *receipt) {
+    uint16_t count;
+    size_t compressed_table;
+    size_t dimensions_table;
+    size_t payload_start;
+    size_t payload_offset;
+    uint16_t compressed_size;
+    uint16_t width;
+    uint16_t height;
+    uint16_t i;
+
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+    if (!data || !indexed_pixels || !csb_v1_fmtowns_graphics_probe(data, size)) {
+        return 0;
+    }
+    count = rd16le(data + 2);
+    if (item_index >= count) return 0;
+    compressed_table = 4u;
+    dimensions_table = compressed_table + (size_t)count * 4u;
+    payload_start = dimensions_table + (size_t)count * 4u;
+    if (payload_start > size) return 0;
+    payload_offset = payload_start;
+    for (i = 0u; i < item_index; ++i) {
+        uint16_t prior_size = rd16le(data + compressed_table + (size_t)i * 2u);
+        if (prior_size > size - payload_offset) return 0;
+        payload_offset += prior_size;
+    }
+    compressed_size = rd16le(data + compressed_table + (size_t)item_index * 2u);
+    width = rd16le(data + dimensions_table + (size_t)item_index * 4u);
+    height = rd16le(data + dimensions_table + (size_t)item_index * 4u + 2u);
+    if (compressed_size < 4u || compressed_size > size - payload_offset ||
+        width == 0u || height == 0u || (size_t)width * height > pixel_capacity) {
+        return 0;
+    }
+    return csb_v1_fmtowns_img2_decode(data + payload_offset, compressed_size,
+                                      width, height, indexed_pixels,
+                                      pixel_capacity, receipt);
+}
