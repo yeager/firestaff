@@ -1,6 +1,6 @@
 # Nexus V1 Phase 4 — Rendering Pipeline
 **Job:** `Nexus_V1_Phase4_RenderingPipeline_0357`
-**Status:** ✅ COMPLETE
+**Status:** Source-format portions verified; Saturn presentation remains blocked
 **Author:** Firestaff agent (cron)
 **Last revised:** 2026-05-27T04:10 UTC+2
 
@@ -35,32 +35,26 @@ BGR555 layout: `1R RRRG GGGGB BBBBB` (16 bits). Each 5-bit channel spans 0–31 
 
 **Source-lock implementation:** `bgr555_to_rgba()` in `nexus_v1_palette.c`.
 
-### 2.2 STONE.BIN — Master Palette
+### 2.2 STONE.BIN — Image-local palettes
 
-**Source:** `docs/NEXUS_FILE_CLASSIFICATION.md` — STONE.BIN = 4 KB = exactly 256 × 16-bit BGR555 entries.
+**Source:** DMWeb `DecodeRawPPpp` and the retail corpus — STONE.BIN is 4,400
+bytes containing eight 550-byte `pp` records. Each record is a 32×32 4bpp
+image with its own 16-entry big-endian palette.
 
-`nexus_palette_load_stone()` admits a palette only when the complete 256-entry source span is present. Short input clears the palette and remains blocked; it never fills missing entries from the retired inferred `g_npal_default` table.
+`nexus_palette_load_stone()` is retained as a blocked legacy entry point. It
+does not reinterpret a retail `STONE.BIN` as a synthetic 256-entry global
+palette. Callers must use the source-owned STONE pp receipt and record decoder.
 
-**Color classification evidence (inferNexus master palette):**
-
-| Slots | Content |
-|-------|---------|
-| 0 | Transparent / black |
-| 1–15 | Dark dungeon stone (R=0–15, G=5–20, B=5–20) |
-| 16–31 | Wall sandstone (R=22–28, G=18–24, B=14–20) |
-| 32–63 | Floor/ceiling stone + stairs/pit/darkness |
-| 64–95 | Objects: doors, potions, scrolls, keys, chests |
-| 96–127 | Creature base, lava/fire, water, treasure gold |
-| 128–159 | Water, green elements, gold |
-| 160–191 | Creature extended / elemental |
-| 192–223 | UI / menu / text / health bars |
-| 224–255 | UI lighter shades, white, skin tones |
+The old slot classification was inferred metadata and is not a retail source
+mapping; it is not used by production.
 
 ### 2.3 Texture Atlas
 
 `Nexus_Texture` records: `data`, `w`, `h`, `pal_start`, `pal_count`, `source_file`, `label`.
 
-`nexus_texture_load_from_surface()` validates bounds (w > 0, h > 0) before allocating. Short data produces a partial load + deterministic gray fill for the remainder (zero-pad via calloc). Never crashes on invalid data.
+`nexus_texture_load_from_surface()` validates dimensions and the complete
+source span before allocating. Short, negative, or overflow-prone input is
+rejected without zero-padding or publishing partial texture pixels.
 
 **Source:** ReDMCSB PALETTE.C — DM1 palette load/apply (equivalent mechanism).
 
@@ -72,7 +66,9 @@ BGR555 layout: `1R RRRG GGGGB BBBBB` (16 bits). Each 5-bit channel spans 0–31 
 
 **Source:** Saturn VDP1 Programmer's Guide — `G0296_puc_Bitmap_Viewport` (320×200 indexed bitmap). Maps to `Nexus_Framebuffer`: `[320×200] uint8_t color_buffer`, `float z_buffer[320×200]` (near=0.1, far=100.0), `uint32_t palette[256]` (RGBA expanded), `int clear_color`.
 
-**Source-lock init:** `nexus_fb_init()` sets default 16-entry palette (dark dungeon tones). `nexus_fb_set_palette()` lets callers inject full 256-entry palette from SRP.
+**Source-lock init:** `nexus_fb_init()` leaves the palette unbound. Only an
+authenticated source/capture route may populate it through
+`nexus_fb_set_palette()`.
 
 **Source:** ReDMCSB DRAWVIEW.C F2172 — viewport blit to screen memory (`0xe12000` base, 224-pixel wide lines, 136-pixel height, screen-relative). DM1 draws into `G0296_puc_Bitmap_Viewport`, blits to `G0348_Bitmap_Screen` via F2172.
 

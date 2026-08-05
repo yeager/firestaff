@@ -1,3 +1,10 @@
+- ✅ 2026-08-05 Nexus STONE.BIN provenance boundary: the legacy global
+  256-entry `nexus_palette_load_stone()` path is now blocked. Retail STONE is
+  eight image-local 550-byte `pp` records per DMWeb; production must use the
+  verified pp receipt/decoder and cannot promote an inferred global palette.
+  Phase-4 rendering documentation was corrected to remove the stale inferred
+  slot classification and partial-texture fallback claims.
+
 - ✅ 2026-08-05 Nexus palette-span provenance: `nexus_palette_load_surface()`
   now rejects invalid, truncated, and overflow-prone source spans without
   zero-filling palette entries or promoting a partial surface to a complete

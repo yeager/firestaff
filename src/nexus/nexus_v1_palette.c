@@ -45,24 +45,22 @@ void nexus_palette_init_defaults(Nexus_PaletteState *pal) {
 int nexus_palette_load_stone(Nexus_PaletteState *pal,
     const uint8_t *data, int size)
 {
-    int i, n;
+    (void)data;
+    (void)size;
     if (!pal) return 0;
-    if (!data || size < NEXUS_PALETTE_SIZE * 2) {
-        memset(pal->entries, 0, sizeof(pal->entries));
-        memset(pal->rgba, 0, sizeof(pal->rgba));
-        pal->source_palette_bound = 0;
-        printf("Nexus palette: source data incomplete; palette remains blocked\n");
-        return 0;
-    }
-    n = NEXUS_PALETTE_SIZE;
 
-    for (i = 0; i < n; i++)
-        pal->entries[i] = (uint16_t)data[i*2] | ((uint16_t)data[i*2+1] << 8);
-
-    pal->source_palette_bound = 1;
-    printf("Nexus palette: source-bound load %d entries from STONE.BIN\n", n);
-    nexus_palette_expand_rgba(pal);
-    return n;
+    /* DMWeb's retail STONE.BIN is eight independent 550-byte `pp` records:
+     * each owns a 16-entry big-endian palette beside its 4bpp texels.  It is
+     * not a 256-entry global palette.  Keep this legacy entry point blocked;
+     * callers must use nexus_palette_stone_pp_receipt() and
+     * nexus_palette_decode_stone_pp_record() so image-local provenance is
+     * preserved instead of manufacturing a global colour table. */
+    memset(pal->entries, 0, sizeof(pal->entries));
+    memset(pal->rgba, 0, sizeof(pal->rgba));
+    pal->source_palette_bound = 0;
+    printf("Nexus palette: STONE.BIN uses image-local pp palettes; "
+           "global palette load blocked\n");
+    return 0;
 }
 
 int nexus_palette_load_surface(Nexus_PaletteState *pal,

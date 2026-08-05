@@ -127,7 +127,8 @@ fortsatt fail-closed och ingen syntetisk HUD-yta har aktiverats.
 Den tidigare handskrivna master-paletten i `src/nexus/nexus_v1_palette.c` är
 quarantänad och kompileras inte. Den var härledd från kommentarer/storlek, inte
 från retaildata. `nexus_palette_init_defaults()` lämnar därför palette-state
-tom tills `STONE.BIN` eller annan verifierad yta binds.
+tom. Den äldre globala `nexus_palette_load_stone()`-vägen är uttryckligen
+blockerad; `STONE.BIN` måste gå genom sin verifierade image-local `pp`-dekoder.
 
 Retail-censusen visar dessutom att `STONE.BIN` är 4 400 byte = åtta 550-byte
 `pp`-poster. DMWebs `DecodeRawPPpp` läser varje post som 32×32 4bpp-bild med

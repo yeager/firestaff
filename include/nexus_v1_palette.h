@@ -60,8 +60,9 @@ typedef struct {
 /* Source palette API. A palette stays unavailable until source bytes bind it. */
 /* ── Palette API ────────────────────────────────────────────────────── */
 
-/* Initialize from a complete STONE.BIN source span. Returns entries loaded,
- * or zero while the palette remains unavailable. */
+/* Legacy global-palette entry point. Retail STONE.BIN is image-local `pp`
+ * data, so this remains blocked and returns zero; use the STONE pp receipt/
+ * decoder for source-owned palettes. */
 int nexus_palette_load_stone(Nexus_PaletteState *pal, const uint8_t *data, int size);
 
 /* Load extended palette from a surface file (TITLE.CG, ITEM.IBS, etc).

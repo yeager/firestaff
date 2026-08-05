@@ -5662,14 +5662,13 @@ static void test_palette_source_gate(void) {
     nexus_palette_init_defaults(&palette);
     CHECK(!palette.source_palette_bound && nexus_palette_lookup(&palette, 7U) == 0U,
           "an absent Nexus source palette cannot create fallback pixels");
-    CHECK(nexus_palette_load_stone(&palette, source, sizeof(source)) ==
-              NEXUS_PALETTE_SIZE &&
-          palette.source_palette_bound &&
-          palette.entries[0] == 0x0201U,
-          "a complete source palette is admitted without generated entries");
+    CHECK(nexus_palette_load_stone(&palette, source, sizeof(source)) == 0 &&
+          !palette.source_palette_bound && palette.entries[0] == 0 &&
+          nexus_palette_lookup(&palette, 7U) == 0U,
+          "STONE.BIN cannot be promoted to a synthetic global palette");
     CHECK(nexus_palette_load_stone(&palette, source, 2) == 0 &&
           !palette.source_palette_bound && nexus_palette_lookup(&palette, 7U) == 0U,
-          "a truncated palette source withdraws the renderable palette");
+          "a short STONE source remains blocked");
     CHECK(nexus_palette_load_surface(&palette, surface, (int)sizeof(surface),
                                      0, 3, 0) == 0 &&
           !palette.source_palette_bound && palette.entries[0] == 0,
