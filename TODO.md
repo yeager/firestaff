@@ -3056,6 +3056,11 @@ that its exact runtime path is not already source-locked and tested.
    C003 is 128x161, and C004/C005 are 320x200. The focused boot smoke binds
    each decoded IMG2 record to its exact stream boundary and SHA-256 receipt;
    live HUD, viewport and audio work remains open.
+   2026-08-05: Archive/ISO cache materialization now retains the original
+   FM Towns `TITLE.ANM`, `STORY.ANM` and `ENDING.ANM` sidecars with the
+   selected CDATA/CJDATA package. This removes the scanner-only-DAT boundary
+   without promoting optional media to a launch requirement or borrowing a
+   different platform's presentation sequence.
    2026-07-30 source audit: the hash-verified local PC3.4 package passed the
    C001-C005/C017/C040 runtime probe (75 checks), including all 31 original
    C004/C002/C003 opening pages. The Atari M12/M11 handoff also passed 589

@@ -1225,6 +1225,15 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * GRAPHICS.DAT so a later Amiga presenter cannot fall back to the
          * incompatible PC title assets. */
         "TITL.DAT", "ENDA.DAT", "KAOS.FTL", "SWSH.FTL",
+        /* The Victor FM Towns CD keeps its presentation media at the ISO
+         * root, beside CDATA/CJDATA rather than beside GRAPHICS.DAT.  Keep
+         * the original ANM streams in the materialized package so the FM
+         * Towns presenter can consume its own title, story and ending data
+         * instead of borrowing a PC/Amiga startup sequence.  They remain
+         * optional: only the hash-verified graphics/dungeon pair admits
+         * launch.  See Greatstone's FM Towns file inventory and the local
+         * CD parser's TITLE.ANM/STORY.ANM/ENDING.ANM catalogue. */
+        "TITLE.ANM", "STORY.ANM", "ENDING.ANM",
         /* DMWeb Saved Game Files: MINI.DAT is the original Atari ST/Amiga
          * CSB campaign save; the Amiga multilingual Utility Disk instead
          * carries its French and German campaigns as MINIF.DAT / MINIG.DAT.

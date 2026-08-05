@@ -369,11 +369,14 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     char cachedAmigaEnd[512];
     char cachedAmigaKaos[512];
     char cachedAmigaSwsh[512];
+    char cachedFmtownsTitle[512];
+    char cachedFmtownsStory[512];
+    char cachedFmtownsEnding[512];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
     const char* runtimeDir;
-    TestZipEntry zipEntries[17];
+    TestZipEntry zipEntries[20];
     M12_AssetStatus status;
 
     memset(csbCacheDir, 0, sizeof(csbCacheDir));
@@ -393,6 +396,9 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     memset(cachedAmigaEnd, 0, sizeof(cachedAmigaEnd));
     memset(cachedAmigaKaos, 0, sizeof(cachedAmigaKaos));
     memset(cachedAmigaSwsh, 0, sizeof(cachedAmigaSwsh));
+    memset(cachedFmtownsTitle, 0, sizeof(cachedFmtownsTitle));
+    memset(cachedFmtownsStory, 0, sizeof(cachedFmtownsStory));
+    memset(cachedFmtownsEnding, 0, sizeof(cachedFmtownsEnding));
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_graphics.zip"),
               "positive ZIP path should fit");
     check_int(join_path(isoPath, sizeof(isoPath), root, "csb_required.iso"),
@@ -432,6 +438,12 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     zipEntries[15].payload = "original Amiga CSB KAOS title palette";
     zipEntries[16].name = "archive/SWSH.FTL";
     zipEntries[16].payload = "original Amiga CSB SWSH logo media";
+    zipEntries[17].name = "archive/TITLE.ANM";
+    zipEntries[17].payload = "original FM Towns CSB title animation";
+    zipEntries[18].name = "archive/STORY.ANM";
+    zipEntries[18].payload = "original FM Towns CSB story animation";
+    zipEntries[19].name = "archive/ENDING.ANM";
+    zipEntries[19].payload = "original FM Towns CSB ending animation";
     check_int(write_stored_zip_entries(zipPath,
                                        zipEntries,
                                        sizeof(zipEntries) / sizeof(zipEntries[0])),
@@ -529,7 +541,13 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                   FSP_JoinPath(cachedAmigaKaos, sizeof(cachedAmigaKaos),
                                csbCacheDir, "KAOS.FTL") &&
                   FSP_JoinPath(cachedAmigaSwsh, sizeof(cachedAmigaSwsh),
-                               csbCacheDir, "SWSH.FTL"),
+                               csbCacheDir, "SWSH.FTL") &&
+                  FSP_JoinPath(cachedFmtownsTitle, sizeof(cachedFmtownsTitle),
+                               csbCacheDir, "TITLE.ANM") &&
+                  FSP_JoinPath(cachedFmtownsStory, sizeof(cachedFmtownsStory),
+                               csbCacheDir, "STORY.ANM") &&
+                  FSP_JoinPath(cachedFmtownsEnding, sizeof(cachedFmtownsEnding),
+                               csbCacheDir, "ENDING.ANM"),
               "CSB optional startup cache paths should resolve");
     check_int(file_matches_payload(cachedBonusDungeon, kCsbBonusDungeonPayload),
               "archive-backed CSB bonus dungeon should be materialized next to GRAPHICS.DAT");
@@ -561,6 +579,13 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
               "archive-backed CSB CHAOS.FTL startup module should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedFtlCode, kCsbFtlCodePayload),
               "archive-backed CSB FTLCODE runtime module should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedFmtownsTitle,
+                                   "original FM Towns CSB title animation") &&
+                  file_matches_payload(cachedFmtownsStory,
+                                       "original FM Towns CSB story animation") &&
+                  file_matches_payload(cachedFmtownsEnding,
+                                       "original FM Towns CSB ending animation"),
+              "archive-backed CSB FM Towns ANM media should be materialized with its package");
     check_int(!path_exists(cachedAmigaTitle) && !path_exists(cachedAmigaEnd) &&
                   !path_exists(cachedAmigaKaos) && !path_exists(cachedAmigaSwsh),
               "name-matched synthetic Amiga title sidecars must not be materialized as source media");
@@ -589,6 +614,10 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
         check_int(!path_exists(cachedAmigaTitle) && !path_exists(cachedAmigaEnd) &&
                       !path_exists(cachedAmigaKaos) && !path_exists(cachedAmigaSwsh),
                   "missing archive-backed Amiga title sidecars should remove stale cache media");
+        check_int(!path_exists(cachedFmtownsTitle) &&
+                      !path_exists(cachedFmtownsStory) &&
+                      !path_exists(cachedFmtownsEnding),
+                  "missing FM Towns ANM media should remove stale cache copies");
     }
 }
 
