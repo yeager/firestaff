@@ -295,7 +295,9 @@ static const M12_VersionSpec g_dm2Versions[] = {
     {"dm2", "pc-en", "PC English", "PC EN", g_dm2GraphicsNames, "25247ede4dabb6a71e5dabdfbcd5907d", M12_ARCH_PC},
     {"dm2", "pc-fr", "PC French", "PC FR", g_dm2GraphicsNames, "b4d733576ea60c41737f79f212faf528", M12_ARCH_PC},
     {"dm2", "pc-jewel", "PC German/English JewelCase", "PC JewelCase", g_dm2GraphicsNames, "e52ab5e01715042b16a4dcff02052e5d", M12_ARCH_PC},
-    {"dm2", "pc98-ja-demo", "PC-9801 Japanese Demo", "PC-98 Demo", g_dm2GraphicsNames, "a0277195099b2ace51d4e085f7eef835", M12_ARCH_PC98}
+    {"dm2", "pc98-ja-demo", "PC-9801 Japanese Demo", "PC-98 Demo", g_dm2GraphicsNames, "a0277195099b2ace51d4e085f7eef835", M12_ARCH_PC98},
+    {"dm2", "fmtowns-ja", "FM Towns Japanese", "FM Towns JP", g_dm2GraphicsNames, "027ff3b8ddc2c4c4cdda7ada0b0bc46c", M12_ARCH_FM_TOWNS},
+    {"dm2", "amiga-en", "Amiga AGA English", "Amiga EN", g_dm2GraphicsNames, "1c940ea95703eaea0ecdf84d17e954b9", M12_ARCH_AMIGA}
 };
 
 static const M12_VersionSpec g_nexusVersions[] = {
@@ -2270,6 +2272,32 @@ static const M12_AssetVersionStatus* m12_first_matched_required_version(
     return NULL;
 }
 
+/* DM2 retail ports do not share one dungeon payload hash.  The graphics
+ * identity selects the byte order and therefore the only valid companion:
+ * PC is little-endian, FM Towns has its own G1 payload, and Amiga shares the
+ * authenticated 68k big-endian dungeon with the Macintosh release. */
+static const char* m12_dm2_dungeon_md5_for_matched_version(
+    const M12_AssetStatus* status,
+    int gameIndex,
+    const M12_RequiredFileSpec* required) {
+    const M12_AssetVersionStatus* version;
+    if (!status || !required || strcmp(required->gameId, "dm2") != 0 ||
+        strcmp(required->roleId, "dungeon") != 0) {
+        return m12_effective_required_md5(required);
+    }
+    version = m12_first_matched_required_version(status, gameIndex, required);
+    if (!version || !version->versionId) {
+        return m12_effective_required_md5(required);
+    }
+    if (strcmp(version->versionId, "fmtowns-ja") == 0) {
+        return "74c7549f174574201988bf936385841a";
+    }
+    if (strcmp(version->versionId, "amiga-en") == 0) {
+        return "719ae78bc124027806c65491a256827d";
+    }
+    return m12_effective_required_md5(required);
+}
+
 static int m12_required_hash_matches_any_root(const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
                                               size_t rootCount,
                                               const char* md5,
@@ -2368,6 +2396,7 @@ static int m12_fill_required_files(M12_AssetStatus* status,
     for (i = 0U; g_requiredFiles[i].gameId != NULL; ++i) {
         const M12_RequiredFileSpec* spec = &g_requiredFiles[i];
         M12_AssetRequiredFileStatus* fileStatus;
+        const char* requiredMd5;
         if (strcmp(spec->gameId, gameId) != 0) {
             continue;
         }
@@ -2379,6 +2408,9 @@ static int m12_fill_required_files(M12_AssetStatus* status,
         fileStatus->gameId = spec->gameId;
         fileStatus->roleId = spec->roleId;
         fileStatus->label = spec->label;
+        requiredMd5 = m12_dm2_dungeon_md5_for_matched_version(status,
+                                                               gameIndex,
+                                                               spec);
         /* Every required-files entry is part of the gate.
          * The matchAnyVersion flag changes HOW we compute matched
          * (surface the version's matchedPath for filename-only
@@ -2413,12 +2445,12 @@ static int m12_fill_required_files(M12_AssetStatus* status,
                        roots,
                        rootCount,
                        spec,
-                       m12_effective_required_md5(spec),
+                       requiredMd5,
                        fileStatus->matchedPath,
                        fileStatus->matchedHash) ||
                    m12_required_hash_matches_any_root(roots,
                                                       rootCount,
-                                                      m12_effective_required_md5(spec),
+                                                      requiredMd5,
                                                       fileStatus->matchedPath,
                                                       fileStatus->matchedHash,
                                                       looseFilesOnly)) {

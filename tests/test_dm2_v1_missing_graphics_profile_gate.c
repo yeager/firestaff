@@ -183,8 +183,8 @@ static void check_dm2_pc98_demo_classifies_without_satisfying_launch_graphics(
     dungeon = required_file_by_role(&status, "dungeon");
 
     CHECK(pc98Index == 3);
-    CHECK(M12_AssetStatus_GetVersionCount("dm2") == 4U);
-    CHECK(M12_AssetStatus_GameKnownHashCount("dm2") == 4U);
+    CHECK(M12_AssetStatus_GetVersionCount("dm2") == 6U);
+    CHECK(M12_AssetStatus_GameKnownHashCount("dm2") == 6U);
     CHECK(M12_AssetStatus_GameRequiredFileCount("dm2") == 2U);
     CHECK(M12_AssetStatus_GameAvailable(&status, "dm2") == 0);
 

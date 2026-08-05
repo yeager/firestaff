@@ -14,7 +14,10 @@ extern "C" {
 enum {
     M12_ASSET_DATA_DIR_CAPACITY = 512,
     M12_ASSET_MD5_CAPACITY = 33,
-    M12_ASSET_MAX_VERSIONS_PER_GAME = 5,
+    /* DM2 alone has six source-verified launch identities: PC EN/FR/Jewel,
+     * PC-9801 demo, FM Towns and Amiga.  Keep room for the complete catalog
+     * instead of silently dropping platform rows from the launcher. */
+    M12_ASSET_MAX_VERSIONS_PER_GAME = 6,
     M12_ASSET_MAX_REQUIRED_FILES_PER_GAME = 4,
     M12_ASSET_GAME_COUNT = 5  /* DM1, CSB, DM2, Nexus, Theron */
 

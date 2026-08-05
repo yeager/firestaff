@@ -5,6 +5,13 @@
   regression. This removes real-data truncation only; creature VDP1 rendering,
   texture palette ownership, and runtime actor presentation remain open.
 
+- ✅ 2026-08-06 DM2 platform catalog gate: M12 now exposes the authenticated
+  FM Towns Japanese and Amiga AGA English GRAPHICS.DAT identities rather than
+  silently omitting them after the former five-version limit. The required
+  dungeon hash follows the selected port: FM Towns G1 and Amiga's 68k
+  big-endian payload are accepted only with their matching graphics identity.
+  The existing missing/wrong-graphics launch gate remains green.
+
 - ✅ 2026-08-05 Nexus MENU.BPK PRS3 surface semantics: PRS3 mode tags are now
   treated as opaque format fields, while decoded retail output is 8-bit indexed
   data for all 162 real MENU.BPK surfaces. Stored non-PRS3 entries retain their
