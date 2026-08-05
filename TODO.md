@@ -48,6 +48,9 @@
   derived from the verified CG region; it no longer allocates 14 zero-filled
   glyph placeholders. The remaining text gap is the original Saturn
   code/attribute-to-screen owner, not another guessed glyph count.
+  ISO-only Nexus roots now remain on the ISO source route when hash discovery
+  returns virtual `disc.iso::...` entries; do not classify container members as
+  loose extracted files or retry them as `data_dir/LEV00.DGN`.
   The legacy public PRS3 API now follows the same DMWeb forward/negative
   window rule as the active decoder; the pinned retail MENU.BPK test decodes
   all 162 PRS3 surfaces as indexed 8bpp; PRS3 mode tags are not host RGB

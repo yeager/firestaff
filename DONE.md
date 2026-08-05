@@ -1,3 +1,10 @@
+- ✅ 2026-08-05 Nexus ISO-only startup source fix: `has_extracted()` now
+  rejects virtual `container::entry` hash matches when deciding whether a
+  root contains loose extracted DM.BIN and LEV00.DGN files. A directory that
+  only contains the real ISO/CUE therefore enters through the ISO reader and
+  loads the real LEV00.DGN entry instead of failing on a fabricated host path.
+  The change does not materialize or alter user-supplied game data.
+
 - ✅ 2026-08-05 Nexus FONT256 synthetic-glyph removal: corrected the S2D
   loader to distinguish DMWeb's 2048-entry page tilemap capacity from the
   character-generator region. It now derives 242 real 8×8/8-bit tiles from

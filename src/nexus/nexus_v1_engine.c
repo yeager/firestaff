@@ -2399,18 +2399,24 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
 
 /* Check if extracted files exist */
 static int has_extracted(const char *dir) {
-    char path[512];
     const char *dm_bin_md5 = nexus_known_boot_file_md5("DM.BIN");
     const char *lev00_md5 = nexus_known_boot_file_md5("LEV00.DGN");
+    char path[ASSET_PATH_MAX];
     if (!dir || !dm_bin_md5 || !lev00_md5) return 0;
 
-    /* An extracted root may be nested or archived, but it must contain both
-     * canonical boot program and first DGN bytes. Names alone are not enough
-     * to admit a source that will later own DGN runtime data. */
+    /* A hash scan can return virtual paths such as `disc.iso::DM.BIN`.
+     * Those prove that a container is present, but they are not ordinary
+     * extracted files and cannot be opened by nexus_v1_read_extracted_file().
+     * Keep ISO-only roots on the ISO source path so LEV00.DGN is read through
+     * the ISO reader rather than treated as data_dir/LEV00.DGN. */
     if (!asset_find_by_md5(dir, dm_bin_md5, path, (int)sizeof(path), 8)) {
         return 0;
     }
-    return asset_find_by_md5(dir, lev00_md5, path, (int)sizeof(path), 8);
+    if (strstr(path, "::") != NULL) return 0;
+    if (!asset_find_by_md5(dir, lev00_md5, path, (int)sizeof(path), 8)) {
+        return 0;
+    }
+    return strstr(path, "::") == NULL;
 }
 
 static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
