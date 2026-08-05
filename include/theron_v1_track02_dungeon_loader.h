@@ -17,6 +17,9 @@ typedef struct {
     int creatures_placed;
     int champions_placed;
     int items_placed;
+    int source_records_decoded;
+    int unbound_item_refs;
+    int raw_only_item_refs;
 } Theron_DungeonLoadResult;
 
 int theron_v1_track02_load_full_dungeon(

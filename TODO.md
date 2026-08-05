@@ -24255,6 +24255,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   chests, and misc across every populated record in the real US corpus.
   Categories 14/15 remain raw-only until a source consumer proves missile or
   cloud semantics; no item is published into the runtime object model yet.
+- 2026-08-06 update: the full Track 02 dungeon loader now consumes those
+  source-bound records and follows their authentic next-reference chains on
+  all seven US dungeons. It reports decoded/unbound records separately and
+  leaves `Theron_V1_Object` untouched for categories whose host owner is not
+  proven. The remaining handoff is the original object-kind/item-index
+  consumer, not raw media intake or chain traversal.
 
 - 2026-07-15: Runtime level-bank selection now retains the authenticated
   startup bitmap's Track 02 MD5 and raw/user-data sector envelope. Remaining:

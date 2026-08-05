@@ -203,16 +203,38 @@ int theron_v1_track02_load_full_dungeon(
                 result->actuators_placed++;
                 break;
             }
-            /* Categories 14 (missile) and 15 (cloud) do not appear in the
-             * current ground-ref chains. TQ places monsters via per-map
-             * creature_count and the source-bound monster/type tables (see
-             * theron_v1_track02_creature.h).
-             *
-             * The remaining item categories have real bytes in Track 02, but
-             * their runtime object-kind/item-index ownership is not decoded
-             * here yet. Never turn an unbound category into the old synthetic
-             * `0x10 + cat` host type: reject the source load instead of
-             * publishing a plausible-looking fake object. */
+            case THERON_CAT_MONSTER:
+            case THERON_CAT_WEAPON:
+            case THERON_CAT_CLOTHING:
+            case THERON_CAT_SCROLL:
+            case THERON_CAT_POTION:
+            case THERON_CAT_CHEST:
+            case THERON_CAT_MISC: {
+                Theron_Track02ItemRecord record;
+                const uint8_t *raw =
+                    &td->items[cat][id * theron_item_bytes[cat]];
+                if (!theron_v1_track02_item_record_decode(
+                        cat, raw, theron_item_bytes[cat], &record)) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
+                /* Source record and chain are real and consumed. The host
+                 * object kind/item-index owner is not yet proven, so keep
+                 * the record out of Theron_V1_Object and continue the chain. */
+                result->source_records_decoded++;
+                result->unbound_item_refs++;
+                place = 0;
+                break;
+            }
+            case THERON_CAT_MISSILE:
+            case THERON_CAT_CLOUD:
+                /* The two-byte source next-ref is authenticated, but the
+                 * remaining missile/cloud fields have no decoded consumer. */
+                result->raw_only_item_refs++;
+                result->unbound_item_refs++;
+                place = 0;
+                break;
             default:
                 free(pos_table);
                 free(td);

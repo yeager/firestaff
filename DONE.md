@@ -50325,3 +50325,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   clothing, scroll, potion, chest, and misc bitfields. Every populated record
   in all seven real US quest blocks is decoded and checked; missile/cloud
   records remain raw-only and no guessed runtime item semantics were enabled.
+- ✅ 2026-08-06 Theron Track 02 loader handoff boundary: the full real-data
+  dungeon loader now decodes and traverses authentic category 4–10 records on
+  all seven US dungeons, reporting source-record and unbound-reference counts
+  while refusing to manufacture `Theron_V1_Object` kinds or item indexes.
+  The loader regression uses the supplied `TQUS02.bin` directly and passes
+  with real map/door/teleporter/actuator chains intact.

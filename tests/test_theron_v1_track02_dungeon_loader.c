@@ -32,14 +32,26 @@ static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
 }
 
 static const char *find_track02(void) {
+    const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
     const char *home = getenv("HOME");
-    if (!home) return NULL;
     static char path[512];
-    snprintf(path, sizeof(path),
-        "%s/.firestaff/data/theron/raw-us/"
-        "Dungeon Master - Theron's Quest (USA) (Track 02).bin", home);
-    FILE *fp = fopen(path, "rb");
-    if (fp) { fclose(fp); return path; }
+    const char *candidates[3] = { explicit_path, NULL, NULL };
+    if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQUS02.bin",
+                 home);
+        candidates[1] = path;
+        snprintf(path + 256, sizeof(path) - 256,
+                 "%s/.firestaff/data/theron/raw-us/"
+                 "Dungeon Master - Theron's Quest (USA) (Track 02).bin",
+                 home);
+        candidates[2] = path + 256;
+    }
+    for (unsigned int i = 0; i < 3u; ++i) {
+        FILE *fp;
+        if (!candidates[i] || !candidates[i][0]) continue;
+        fp = fopen(candidates[i], "rb");
+        if (fp) { fclose(fp); return candidates[i]; }
+    }
     return NULL;
 }
 
@@ -60,8 +72,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(rc == 0);
 
         printf("  %s: %d levels, %d things placed "
-               "(%d doors, %d telep, %d act[%d fixed], %d cret, %d chmp, %d items) "
-               "%d refs linked\n",
+               "(%d doors, %d telep, %d act[%d fixed], %d source records, "
+               "%d unbound, %d raw-only) %d refs linked\n",
                names[d],
                result.levels_loaded,
                result.total_things_placed,
@@ -69,13 +81,16 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
                result.teleporters_placed,
                result.actuators_placed,
                result.actuator_value_fixes,
-               result.creatures_placed,
-               result.champions_placed,
-               result.items_placed,
+               result.source_records_decoded,
+               result.unbound_item_refs,
+               result.raw_only_item_refs,
                result.ground_refs_linked);
 
         assert(result.levels_loaded > 0);
         assert(result.total_things_placed > 0);
+        assert(result.source_records_decoded > 0);
+        assert(result.unbound_item_refs == result.source_records_decoded +
+               result.raw_only_item_refs);
         /* Champions and creatures are linked through actuators (champion
          * mirror type 127), not directly through ground refs. */
         assert(world->object_count == result.total_things_placed);
