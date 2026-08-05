@@ -2511,6 +2511,38 @@ static void nexus_v1_load_startup_surfaces(Nexus_V1_Engine *engine) {
                                        nexus_ui_load_stabg);
 }
 
+static void nexus_v1_load_champion_panel_geometry(Nexus_V1_Engine *engine)
+{
+    uint8_t *data;
+    int size = 0;
+
+    if (!engine) return;
+    memset(&engine->champion_panel_source, 0,
+           sizeof(engine->champion_panel_source));
+    memset(engine->champion_panel_stat_bars, 0,
+           sizeof(engine->champion_panel_stat_bars));
+    memset(engine->champion_panel_inv_slots, 0,
+           sizeof(engine->champion_panel_inv_slots));
+    memset(engine->champion_panel_equip_slots, 0,
+           sizeof(engine->champion_panel_equip_slots));
+    engine->champion_panel_geometry_bound = 0;
+    if (nexus_v1_level_aux_source_receipt(
+            engine, "DM.BIN", &engine->champion_panel_source) != 0 ||
+        !engine->champion_panel_source.canonical_hash_verified) {
+        return;
+    }
+    data = nexus_v1_read_file(engine, "DM.BIN", &size);
+    if (!data) return;
+    if (nexus_v1_champion_panel_parse_dm_bin(
+            data, (size_t)size,
+            engine->champion_panel_stat_bars,
+            engine->champion_panel_inv_slots,
+            engine->champion_panel_equip_slots) == 0) {
+        engine->champion_panel_geometry_bound = 1;
+    }
+    free(data);
+}
+
 static void nexus_v1_load_menu_bpk_decode_receipt(Nexus_V1_Engine *engine) {
     int size = 0;
     int dm_bin_size = 0;
@@ -2797,6 +2829,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_ui_manager_init(&engine->ui);
     nexus_v1_load_startup_surfaces(engine);
     nexus_v1_load_startup_faces(engine);
+    nexus_v1_load_champion_panel_geometry(engine);
     nexus_v1_load_menu_bpk_decode_receipt(engine);
 
     /* Init creature manager and load real stats from RLOWFIX.BIN CRET. */
@@ -10288,6 +10321,31 @@ int nexus_v1_startup_surfaces_ready(const Nexus_V1_Engine *engine) {
            engine->ui_startup_surfaces_fallback == 0 &&
            engine->ui_startup_surfaces_loaded ==
                engine->ui_startup_surfaces_expected;
+}
+
+int nexus_v1_champion_panel_geometry_ready(const Nexus_V1_Engine *engine)
+{
+    return engine && engine->champion_panel_geometry_bound &&
+           engine->champion_panel_source.canonical_hash_verified;
+}
+
+int nexus_v1_champion_panel_geometry(
+    const Nexus_V1_Engine *engine,
+    Nexus_PanelRect stat_bars[NEXUS_STAT_BAR_RECT_COUNT],
+    Nexus_PanelRect inv_slots[NEXUS_INV_SLOT_RECT_COUNT],
+    Nexus_PanelRect equip_slots[NEXUS_EQUIP_SLOT_RECT_COUNT])
+{
+    if (!nexus_v1_champion_panel_geometry_ready(engine) ||
+        !stat_bars || !inv_slots || !equip_slots) {
+        return -1;
+    }
+    memcpy(stat_bars, engine->champion_panel_stat_bars,
+           sizeof(engine->champion_panel_stat_bars));
+    memcpy(inv_slots, engine->champion_panel_inv_slots,
+           sizeof(engine->champion_panel_inv_slots));
+    memcpy(equip_slots, engine->champion_panel_equip_slots,
+           sizeof(engine->champion_panel_equip_slots));
+    return 0;
 }
 
 int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine) {

@@ -15,6 +15,15 @@
   are connected; packaged macOS pointer/capture comparison remains open.
   Verification: `test_m11_dm1_real_object_names`, 169 cursor pixels.
 
+- ✅ 2026-08-06 Nexus HUD engine handoff: the verified DM.BIN champion-panel
+  geometry is now loaded during `nexus_v1_init()` from the canonical source,
+  retained with its source receipt, and exposed through a copy-out API for
+  future HUD consumers. The API refuses uninitialized engines and does not
+  promote geometry to pixels or VDP1/VDP2 placement. Engine-backed verification
+  matches the real 12/4/8 panel records from the European corpus.
+  Removed the unused static HUD position macros as well; callers must consume
+  parsed DM.BIN entries rather than a compiled coordinate fallback.
+
 - ✅ 2026-08-06 Nexus champion-panel HUD source binding: removed the
   process-static stat-bar, inventory-slot and equipment-slot tables from
   production. `nexus_v1_champion_panel_parse_dm_bin()` now parses the three

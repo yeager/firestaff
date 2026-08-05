@@ -53,6 +53,7 @@ typedef struct Nexus_V1_Structure1FPlacementBindingReceipt
 #include "nexus_v1_containers.h"
 #include "nexus_v1_save.h"
 #include "nexus_v1_ui_surfaces.h"
+#include "nexus_v1_champion_panel.h"
 #include "nexus_v1_bpk_archive.h"
 #include "nexus_v1_prs3_capture_trace_schema.h"
 #include "nexus_v1_script_vm.h"
@@ -2541,6 +2542,14 @@ struct Nexus_V1_Engine {
     int ui_faces_loaded;
     int ui_faces_expected;
     int ui_faces_fallback;
+    /* Retail DM.BIN champion-panel geometry.  This is source-bound input for
+     * future HUD hit/render consumers; it does not authorize Saturn pixels or
+     * VDP1/VDP2 placement. */
+    Nexus_V1_LevelAuxSourceReceipt champion_panel_source;
+    Nexus_PanelRect champion_panel_stat_bars[NEXUS_STAT_BAR_RECT_COUNT];
+    Nexus_PanelRect champion_panel_inv_slots[NEXUS_INV_SLOT_RECT_COUNT];
+    Nexus_PanelRect champion_panel_equip_slots[NEXUS_EQUIP_SLOT_RECT_COUNT];
+    int champion_panel_geometry_bound;
     Nexus_V1_LevelAuxSourceReceipt menu_bpk_source;
     uint64_t menu_bpk_package_fnv1a64;
     int menu_bpk_prs3_execution_evidence_valid;
@@ -3158,6 +3167,12 @@ int nexus_v1_startup_surfaces_loaded_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_surfaces_expected_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_surfaces_fallback_count(const Nexus_V1_Engine *engine);
 int nexus_v1_startup_surfaces_ready(const Nexus_V1_Engine *engine);
+int nexus_v1_champion_panel_geometry_ready(const Nexus_V1_Engine *engine);
+int nexus_v1_champion_panel_geometry(
+    const Nexus_V1_Engine *engine,
+    Nexus_PanelRect stat_bars[NEXUS_STAT_BAR_RECT_COUNT],
+    Nexus_PanelRect inv_slots[NEXUS_INV_SLOT_RECT_COUNT],
+    Nexus_PanelRect equip_slots[NEXUS_EQUIP_SLOT_RECT_COUNT]);
 int nexus_v1_menu_bpk_decode_receipt_ready(const Nexus_V1_Engine *engine);
 /* Source identity for MENU.BPK. A parseable archive is not eligible for the
  * retail menu route until this receipt is hash-verified. */

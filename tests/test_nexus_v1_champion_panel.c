@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "nexus_v1_champion_panel.h"
+#include "nexus_v1_engine.h"
 
 int main(void) {
     int fail = 0;
@@ -38,6 +39,34 @@ int main(void) {
         free(data);
         fprintf(stderr, "FAIL: retail DM.BIN panel tables did not parse\n");
         return 1;
+    }
+
+    {
+        Nexus_V1_Engine engine;
+        Nexus_PanelRect engine_stats[NEXUS_STAT_BAR_RECT_COUNT];
+        Nexus_PanelRect engine_inv[NEXUS_INV_SLOT_RECT_COUNT];
+        Nexus_PanelRect engine_equip[NEXUS_EQUIP_SLOT_RECT_COUNT];
+        memset(&engine, 0, sizeof(engine));
+        if (nexus_v1_champion_panel_geometry_ready(&engine) ||
+            nexus_v1_champion_panel_geometry(
+                &engine, engine_stats, engine_inv, engine_equip) == 0) {
+            free(data);
+            fprintf(stderr, "FAIL: uninitialized engine exposed HUD geometry\n");
+            return 1;
+        }
+        if (nexus_v1_init(&engine, root) != 0 ||
+            !nexus_v1_champion_panel_geometry_ready(&engine) ||
+            nexus_v1_champion_panel_geometry(
+                &engine, engine_stats, engine_inv, engine_equip) != 0 ||
+            memcmp(engine_stats, stat_bars, sizeof(stat_bars)) != 0 ||
+            memcmp(engine_inv, inv_slots, sizeof(inv_slots)) != 0 ||
+            memcmp(engine_equip, equip_slots, sizeof(equip_slots)) != 0) {
+            nexus_v1_shutdown(&engine);
+            free(data);
+            fprintf(stderr, "FAIL: initialized engine did not expose retail HUD geometry\n");
+            return 1;
+        }
+        nexus_v1_shutdown(&engine);
     }
 
     /* Stat bar table — 12 entries from DM.BIN 0x038428 */

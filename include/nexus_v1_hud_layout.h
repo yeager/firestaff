@@ -45,31 +45,8 @@ typedef struct {
 /* Number of champion HP bar entries (one per champion slot). */
 #define NEXUS_HUD_HP_BAR_COUNT    4
 
-/* HP bar positions from the layout table (entries 12-15).
- * Source: DM.BIN 0x037730 — 4 × (0x0090, 0, x, 4). */
-#define NEXUS_HUD_HP_BAR_Y        4
-#define NEXUS_HUD_HP_BAR_X_0     64
-#define NEXUS_HUD_HP_BAR_X_1    128
-#define NEXUS_HUD_HP_BAR_X_2    192
-#define NEXUS_HUD_HP_BAR_X_3    256
-
-/* Viewport dimensions from entry 0. */
-#define NEXUS_HUD_VIEWPORT_X    256
-#define NEXUS_HUD_VIEWPORT_Y    125
-
-/* Champion portrait positions from entries 4-7. */
-#define NEXUS_HUD_PORTRAIT_X_0  272
-#define NEXUS_HUD_PORTRAIT_Y_0    9
-#define NEXUS_HUD_PORTRAIT_X_1  288
-#define NEXUS_HUD_PORTRAIT_Y_1    9
-#define NEXUS_HUD_PORTRAIT_X_2  272
-#define NEXUS_HUD_PORTRAIT_Y_2   25
-#define NEXUS_HUD_PORTRAIT_X_3  288
-#define NEXUS_HUD_PORTRAIT_Y_3   25
-
-/* Spell panel position from entry 16. */
-#define NEXUS_HUD_SPELL_X       288
-#define NEXUS_HUD_SPELL_Y        48
+/* Positions are authoritative only in parser output.  No static coordinate
+ * fallback is kept here. */
 
 /* Inventory grid positions from entries 31-34 (4 slots visible). */
 #define NEXUS_HUD_INV_SLOT_COUNT  4
