@@ -221,6 +221,22 @@ static void test_stairs_up_unregistered_blocks(void) {
           "unregistered stairs up leaves pending_level_change clear");
 }
 
+static void test_square_event_unregistered_stairs_blocks(void) {
+    int tx = 10;
+    int ty = 9;
+    int tl = 3;
+    int td = NEXUS_DIR_NORTH;
+    Nexus_SquareEvent event;
+
+    nexus_stairs_init();
+    event = nexus_process_square_event(NEXUS_SQUARE_STAIRS_DN, 10, 9,
+                                        &tx, &ty, &tl, &td);
+    CHECK(event == NEXUS_EVENT_BLOCKED,
+          "square-event route blocks an unregistered stair");
+    CHECK(tx == 10 && ty == 9 && tl == -1 && td == -1,
+          "blocked square-event route exposes no transition target");
+}
+
 static void test_stairs_up_with_target(void) {
     Nexus_V1_Engine engine;
     Nexus_MechanicsState st;
@@ -423,6 +439,7 @@ int main(void) {
     test_stairs_up_with_target();
     test_automap_write_remains_capture_gated();
     test_stairs_up_unregistered_blocks();
+    test_square_event_unregistered_stairs_blocks();
     test_exit_final_level_game_over();
     test_exit_non_final_level_no_game_over();
     test_square_event_chute_returns_chute_fall();

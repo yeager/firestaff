@@ -524,11 +524,9 @@ Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
             if (out_target_y) *out_target_y = ty;
             if (out_target_dir) *out_target_dir = td;
         } else {
-            /* Default: same coords, level+1 */
-            if (out_target_level) *out_target_level = -1; /* signal level down */
-            if (out_target_x) *out_target_x = x;
-            if (out_target_y) *out_target_y = y;
-            if (out_target_dir) *out_target_dir = -1;
+            /* A stair without a source-owned Structure1F/SDDRVS link has no
+             * transition semantics. Do not invent an adjacent-level route. */
+            return NEXUS_EVENT_BLOCKED;
         }
         return NEXUS_EVENT_STAIRS_DOWN;
 
@@ -539,10 +537,9 @@ Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
             if (out_target_y) *out_target_y = ty;
             if (out_target_dir) *out_target_dir = td;
         } else {
-            if (out_target_level) *out_target_level = -1; /* signal level up */
-            if (out_target_x) *out_target_x = x;
-            if (out_target_y) *out_target_y = y;
-            if (out_target_dir) *out_target_dir = -1;
+            /* A stair without a source-owned Structure1F/SDDRVS link has no
+             * transition semantics. Do not invent an adjacent-level route. */
+            return NEXUS_EVENT_BLOCKED;
         }
         return NEXUS_EVENT_STAIRS_UP;
 

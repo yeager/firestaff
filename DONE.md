@@ -41,6 +41,14 @@
   the character-generator atlas; source bytes remain available for decoder
   diagnostics.
 
+- ✅ 2026-08-05 Nexus stair placeholder removal: the public square-event route
+  and mechanics dispatcher no longer invent an adjacent-level,
+  same-coordinate transition when a stair lacks a source-owned
+  Structure1F/SDDRVS destination. The route returns `NEXUS_EVENT_BLOCKED` and
+  retains an invalid target receipt; registered real links remain supported.
+  `nexus_v1_pit_teleporter_runtime` passes with both registered and
+  unregistered stair coverage.
+
 - ✅ 2026-08-05 Nexus startup title fallback removal: the generic title
   renderer no longer copies a raw `TITLE.CG` character-generator atlas to the
   framebuffer when the Saturn MAPD/TIBG handoff is missing. TITLE.CG and

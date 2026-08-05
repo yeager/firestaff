@@ -989,10 +989,10 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 switch (sq_event) {
                 case NEXUS_EVENT_STAIRS_DOWN:
                 case NEXUS_EVENT_STAIRS_UP:
-                    /* Stairs: registered links supply exact target; unregistered
-                     * stairs fall back to the adjacent level in the correct
-                     * direction (down +1, up -1), keeping the party on the stair
-                     * square until the level change is consumed.
+                    /* Stairs: only registered links supply a target. The
+                     * movement gate rejects unregistered stairs, and the
+                     * square-event API also returns BLOCKED for them; neither
+                     * route may invent an adjacent-level transition.
                      * Source: DM1 CLIKMENU.C F0364_COMMAND_TakeStairs,
                      *         MOVESENS.C F0267/F0268 stairs sensor. */
                     if (tl >= 0) {
@@ -1000,14 +1000,6 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                         st->party_x = tx;
                         st->party_y = ty;
                         if (td >= 0) st->party_dir = td;
-                    } else if (sq_event == NEXUS_EVENT_STAIRS_DOWN) {
-                        st->pending_level_change = st->map_index + 1;
-                        if (st->pending_level_change > NEXUS_MAX_LEVEL)
-                            st->pending_level_change = NEXUS_MAX_LEVEL;
-                    } else {
-                        st->pending_level_change = st->map_index - 1;
-                        if (st->pending_level_change < 0)
-                            st->pending_level_change = 0;
                     }
                     nexus_sound_play(&engine->audio, NEXUS_SFX_STAIRS);
                     break;

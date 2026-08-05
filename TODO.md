@@ -61,6 +61,9 @@
   V1 movement no longer invents adjacent-level same-coordinate stairs or
   writes host radius-reveals into the retail automap state; source-owned
   Structure1F destinations and Saturn explored-state evidence remain needed.
+  The public square-event dispatcher and mechanics transition branch now also
+  fail closed for an unregistered stair instead of retaining the former
+  same-coordinate level +/- 1 fallback.
   Production HUD no longer injects fabricated script/fountain/save strings;
   bind these messages only through authenticated DMN text and SLEV consumers.
   FONT256.S2D loader now exposes only the 242 real character-generator tiles
