@@ -37,28 +37,28 @@ No voice format is implemented beyond potential FMV audio in AVI files.
 
 Located in Track 1 of the ISO (MODE1/2352, game data track).
 
-### SNDLEV*.SAL Files (290-460 KB each)
+### SNDLEV*.SAL Files (retail per-level banks)
 
 - 16 files: `SNDLEV00.SAL` through `SNDLEV15.SAL`
 - One per dungeon level
-- "SAL" likely stands for "Sound Allocation" or similar
-- Format: unknown binary (not SND3.DAT, not SONG.DAT)
-- Contains: sound effect samples for that specific level
-- 290-460 KB size range suggests compressed or structured data
+- Format: bounded DMWeb DataID 0 tone-bank directory plus additional data
+- Contains: per-level tone-bank data and other SAL regions
+- Firestaff decodes directory offsets and bounded 8/16-bit sample metadata;
+  it does not assume that every remaining region is PCM
 
 ### SNDLEV*.MAP Files (66-90 bytes each)
 
 - 16 files: `SNDLEV00.MAP` through `SNDLEV15.MAP`
 - Small index/mapping files
-- 66-90 bytes suggests a simple table (event ID → sample offset/size)
-- Purpose: maps game events to specific samples in the SAL bank
+- Records are parsed as raw selector/attribute/SAL offset/size fields
+- Purpose and event meaning are not assigned until Saturn evidence proves it
 
 ### Comparison with DM1
 
 | Aspect | DM1 | Nexus V1 |
 |--------|-----|----------|
 | SFX file | SND3.DAT (global) | SNDLEV00-15.SAL (per-level) |
-| SFX format | PCM 8-bit | Unknown (not PCM) |
+| SFX format | PCM 8-bit | DataID 0 directory and bounded 8/16-bit metadata decoded |
 | SFX size | ~28 KB | 290-460 KB per level |
 | Mapping file | None | SNDLEV00-15.MAP (66-90 B) |
 | Music | SONG.DAT (sequenced) | CD-DA tracks |
@@ -71,7 +71,8 @@ Per-level SFX allows different sound environments per dungeon depth — deeper l
 
 - "Sound DRiVerS TaSK" — Saturn SH-2 sound driver
 - 26 KB — compact driver binary
-- Loads and plays SNDLEV*.SAL samples based on SNDLEV*.MAP triggers
+- Loads SNDLEV*.SAL and retains bounded MAP windows; event playback is gated
+  until the Saturn event-to-selector and driver handoff are authenticated
 - Handles music track selection (CD audio)
 - Likely a lightweight RTOS task on the Saturn
 
@@ -112,7 +113,7 @@ Current state: track number is computed and stored, but actual audio playback is
 | Audio Type | Format | Location | Status |
 |-----------|--------|----------|--------|
 | Music tracks | CD-DA (Red Book) | CD tracks 2-9 | Track switching implemented; playback TODO |
-| SFX banks | SAL format (unknown codec) | ISO Track 1 (SNDLEV*.SAL) | Real files loaded/provenance-bound; playback blocked |
+| SFX banks | SAL DataID 0 directory + bounded tone metadata | ISO Track 1 (SNDLEV*.SAL) | Real files loaded/provenance-bound; playback blocked |
 | SFX mapping | MAP format (66-90 B) | ISO Track 1 (SNDLEV*.MAP) | Bounded record parsing; event semantics unproven |
 | Sound driver | SH-2 binary | SDDRVS.TSK | Not reverse-engineered |
 | FMV audio | Saturn AVI codec | DMV*.AVI | Not implemented |

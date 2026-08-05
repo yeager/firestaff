@@ -1,3 +1,10 @@
+- ✅ 2026-08-05 Nexus SAL/MAP documentation correction: documented the
+  verified retail 16-level corpus, bounded MAP record route, and DMWeb DataID
+  0 tone-bank metadata decode. Corrected stale claims that Nexus SFX data was
+  wholly unknown or absent from the source. Event-to-selector meaning,
+  SDDRVS handoff, and production playback remain explicitly blocked pending
+  Saturn disassembly or authenticated capture evidence.
+
 - ✅ 2026-08-06 Theron Track19 startup envelope receipt: real US and JP
   Track19 ISOs now validate the exact 32×27, 876-byte envelope at `0x5a9114`
   with FNV-1a `0x54fce0a0`; its bytes match the canonical retail Track02
