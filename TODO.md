@@ -967,7 +967,11 @@
   The runtime tick also no longer advances the fixture-only global creature
   pool after source timers: that second clock had no DB4 allocation, linked
   record chain, RNG or CCM command-stream owner. Only a fully bound 0x21/0x22
-  source timer may reopen creature mutation.
+  source timer may reopen creature mutation. **2026-08-06 update:** the
+  disconnected `c_1c9a` callback audit, including 24 explicitly fail-closed
+  AI bodies, is now compiled only by its named regression target rather than
+  by either production archive. Re-admit individual functions only when the
+  live DB4/CAII/CCM owners are imported together.
 
 - **DM2-LEGACY-GAME-LOOP-DATA-ADMISSION:** `src/engine/firestaff_game_loop.c`
   is not part of the built M11 DM2 launch route and still contains diagnostic

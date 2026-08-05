@@ -49854,3 +49854,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   scanning nonzero VRAM and forcing palette group 0. Regression coverage now
   verifies three tile/group bindings and their source VRAM indices; Track 02
   runtime admission remains capture-gated.
+
+- ✅ 2026-08-06 DM2 c_1c9a placeholder isolation: removed the disconnected
+  callback-contract implementation from both production CMake globs. Its 24
+  unported creature-AI bodies remain available solely to
+  `test_dm2_v1_1c9a_pc34_compat`, which now compiles the source explicitly.
+  M11 and `firestaff_dm2` cannot link an unowned AI movement, combat, spawn,
+  pathfinding or damage stub. Verification: production rebuild, focused
+  c_1c9a regression, and real PC-DM2 M11 startup gate.
