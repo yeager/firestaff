@@ -50441,6 +50441,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   verified. Copy-out getters refuse uninitialized/unverified engines; these
   coordinates remain input/HUD provenance, not framebuffer or VDP placement.
 
+- ✅ 2026-08-06 Theron later-record probe discovery: the real Track 02
+  JP/US BINs are now autodiscovered from `~/.firestaff/data/theron/` when no
+  override is supplied, while explicit CI/local paths still take precedence.
+  The probe remains hash-gated and keeps level/object semantics opaque.
+
 - ✅ 2026-08-06 DM2 SKSAVE record container-map fidelity: corrected the
   isolated `READ_RECORD_CHECKCODE` port to preserve unmasked `c_record` bits
   during `DM2_SUPPRESS_READER(..., false)` and to select the source map-

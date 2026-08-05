@@ -414,6 +414,21 @@ static uint8_t *read_file_bytes(const char *path, size_t *out_size) {    FILE *f
     return bytes;
 }
 
+static const char *track02_source_path(char out[512], const char *env_name,
+                                       const char *file_name) {
+    const char *configured = getenv(env_name);
+    const char *home;
+
+    if (configured && configured[0]) return configured;
+    home = getenv("HOME");
+    if (!home || !home[0] ||
+        snprintf(out, 512, "%s/.firestaff/data/theron/%s", home,
+                 file_name) >= 512) {
+        return NULL;
+    }
+    return out;
+}
+
 static int inspect(const char *path,
                    const char *md5_hex,
                    Theron_V1LaterRecordCorrelation *out_correlation) {
@@ -497,8 +512,12 @@ static int inspect_topology(const char *path,
 }
 
 int main(void) {
-    const char *jp_path = getenv("FIRESTAFF_THERON_TRACK02_JP_BIN");
-    const char *us_path = getenv("FIRESTAFF_THERON_TRACK02_US_BIN");
+    char jp_path_fallback[512];
+    char us_path_fallback[512];
+    const char *jp_path = track02_source_path(
+        jp_path_fallback, "FIRESTAFF_THERON_TRACK02_JP_BIN", "TQJP02.bin");
+    const char *us_path = track02_source_path(
+        us_path_fallback, "FIRESTAFF_THERON_TRACK02_US_BIN", "TQUS02.bin");
     Theron_V1LaterRecordCorrelation jp;
     Theron_V1LaterRecordCorrelation us;
     Theron_V1Stage3ManifestEvidence us_manifest;
