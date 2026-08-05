@@ -37,6 +37,7 @@ static void test_probe_null(void) {
 
 static void test_real_portraits(void) {
     const char *home = getenv("HOME");
+    const char *portrait_dir = getenv("FIRESTAFF_CSB_FMTOWNS_PORTRAIT_DIR");
     char path[512];
     const char *names[] = {
         "ALEX", "AZIZI", "BORIS", "CHANI", "DAROOU", "ELIJA",
@@ -46,7 +47,10 @@ static void test_real_portraits(void) {
     };
     int decoded = 0, i;
 
-    if (!home) { printf("SKIP: HOME not set\n"); return; }
+    if ((!portrait_dir || portrait_dir[0] == '\0') && !home) {
+        printf("SKIP: HOME not set\n");
+        return;
+    }
 
     for (i = 0; i < 24; i++) {
         uint8_t *data;
@@ -54,9 +58,13 @@ static void test_real_portraits(void) {
         uint8_t pixels[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
         CSB_V1_FmtownsPortraitReceipt receipt;
 
-        snprintf(path, sizeof(path),
-                 "%s/.firestaff/data/csb/fmtowns/PORTRAIT/%s.CMP",
-                 home, names[i]);
+        if (portrait_dir && portrait_dir[0] != '\0') {
+            snprintf(path, sizeof(path), "%s/%s.CMP", portrait_dir, names[i]);
+        } else {
+            snprintf(path, sizeof(path),
+                     "%s/.firestaff/data/csb/fmtowns/PORTRAIT/%s.CMP",
+                     home, names[i]);
+        }
         data = load_file(path, &size);
         if (!data) {
             printf("SKIP: %s not available\n", names[i]);

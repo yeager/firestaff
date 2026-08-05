@@ -372,11 +372,12 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     char cachedFmtownsTitle[512];
     char cachedFmtownsStory[512];
     char cachedFmtownsEnding[512];
+    char cachedFmtownsPortrait[512];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
     const char* runtimeDir;
-    TestZipEntry zipEntries[20];
+    TestZipEntry zipEntries[21];
     M12_AssetStatus status;
 
     memset(csbCacheDir, 0, sizeof(csbCacheDir));
@@ -399,6 +400,7 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     memset(cachedFmtownsTitle, 0, sizeof(cachedFmtownsTitle));
     memset(cachedFmtownsStory, 0, sizeof(cachedFmtownsStory));
     memset(cachedFmtownsEnding, 0, sizeof(cachedFmtownsEnding));
+    memset(cachedFmtownsPortrait, 0, sizeof(cachedFmtownsPortrait));
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_graphics.zip"),
               "positive ZIP path should fit");
     check_int(join_path(isoPath, sizeof(isoPath), root, "csb_required.iso"),
@@ -444,6 +446,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     zipEntries[18].payload = "original FM Towns CSB story animation";
     zipEntries[19].name = "archive/ENDING.ANM";
     zipEntries[19].payload = "original FM Towns CSB ending animation";
+    zipEntries[20].name = "archive/PORTRAIT/ALEX.CMP";
+    zipEntries[20].payload = "original FM Towns CSB ALEX portrait";
     check_int(write_stored_zip_entries(zipPath,
                                        zipEntries,
                                        sizeof(zipEntries) / sizeof(zipEntries[0])),
@@ -547,7 +551,10 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                   FSP_JoinPath(cachedFmtownsStory, sizeof(cachedFmtownsStory),
                                csbCacheDir, "STORY.ANM") &&
                   FSP_JoinPath(cachedFmtownsEnding, sizeof(cachedFmtownsEnding),
-                               csbCacheDir, "ENDING.ANM"),
+                               csbCacheDir, "ENDING.ANM") &&
+                  FSP_JoinPath(cachedFmtownsPortrait,
+                               sizeof(cachedFmtownsPortrait), csbCacheDir,
+                               "PORTRAIT/ALEX.CMP"),
               "CSB optional startup cache paths should resolve");
     check_int(file_matches_payload(cachedBonusDungeon, kCsbBonusDungeonPayload),
               "archive-backed CSB bonus dungeon should be materialized next to GRAPHICS.DAT");
@@ -586,6 +593,9 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                   file_matches_payload(cachedFmtownsEnding,
                                        "original FM Towns CSB ending animation"),
               "archive-backed CSB FM Towns ANM media should be materialized with its package");
+    check_int(file_matches_payload(cachedFmtownsPortrait,
+                                   "original FM Towns CSB ALEX portrait"),
+              "archive-backed CSB FM Towns portrait should retain its source directory");
     check_int(!path_exists(cachedAmigaTitle) && !path_exists(cachedAmigaEnd) &&
                   !path_exists(cachedAmigaKaos) && !path_exists(cachedAmigaSwsh),
               "name-matched synthetic Amiga title sidecars must not be materialized as source media");
@@ -618,6 +628,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                       !path_exists(cachedFmtownsStory) &&
                       !path_exists(cachedFmtownsEnding),
                   "missing FM Towns ANM media should remove stale cache copies");
+        check_int(!path_exists(cachedFmtownsPortrait),
+                  "missing FM Towns portrait should remove its stale cache copy");
     }
 }
 

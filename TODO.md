@@ -3074,6 +3074,12 @@ that its exact runtime path is not already source-locked and tested.
    without promoting optional media to a launch requirement or borrowing a
    different platform's presentation sequence. The real-cache parser probe
    verifies 320x200 4bpp data for title/story/ending (31/844/285 deltas).
+   2026-08-05: The ISO hash scanner and extractor now preserve relative
+   directory paths, so the CD's `PORTRAIT/*.CMP` corpus is cacheable rather
+   than silently flattened to an unresolvable basename. A fresh raw-CD scan
+   reports CSB READY and materializes all 24 original portraits; the decoder
+   validates 22,395 source-pixel/name/title assertions with no replacement
+   portrait data.
    2026-07-30 source audit: the hash-verified local PC3.4 package passed the
    C001-C005/C017/C040 runtime probe (75 checks), including all 31 original
    C004/C002/C003 opening pages. The Atari M12/M11 handoff also passed 589

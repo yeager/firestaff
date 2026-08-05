@@ -1234,6 +1234,20 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * launch.  See Greatstone's FM Towns file inventory and the local
          * CD parser's TITLE.ANM/STORY.ANM/ENDING.ANM catalogue. */
         "TITLE.ANM", "STORY.ANM", "ENDING.ANM",
+        /* The same CD's 24 original champion records are individual CMP
+         * files under PORTRAIT/.  Preserve their directory in the cache:
+         * the FM Towns decoder reads the embedded name/title and 4bpp pixels,
+         * so a generic PC portrait or a generated face is not an equivalent
+         * substitute.  The names are the ISO9660 inventory from the retail
+         * Victor disc (also catalogued by Greatstone). */
+        "PORTRAIT/ALEX.CMP", "PORTRAIT/AZIZI.CMP", "PORTRAIT/BORIS.CMP",
+        "PORTRAIT/CHANI.CMP", "PORTRAIT/DAROOU.CMP", "PORTRAIT/ELIJA.CMP",
+        "PORTRAIT/GANDO.CMP", "PORTRAIT/GOTHMOG.CMP", "PORTRAIT/HALK.CMP",
+        "PORTRAIT/HAWK.CMP", "PORTRAIT/HISSSSA.CMP", "PORTRAIT/IAIDO.CMP",
+        "PORTRAIT/LEIF.CMP", "PORTRAIT/LEYLA.CMP", "PORTRAIT/LINFLAS.CMP",
+        "PORTRAIT/MOPHUS.CMP", "PORTRAIT/NABI.CMP", "PORTRAIT/SONJA.CMP",
+        "PORTRAIT/STAMM.CMP", "PORTRAIT/SYRA.CMP", "PORTRAIT/TIGGY.CMP",
+        "PORTRAIT/WUTSE.CMP", "PORTRAIT/WUUF.CMP", "PORTRAIT/ZED.CMP",
         /* DMWeb Saved Game Files: MINI.DAT is the original Atari ST/Amiga
          * CSB campaign save; the Amiga multilingual Utility Disk instead
          * carries its French and German campaigns as MINIF.DAT / MINIG.DAT.
@@ -1251,7 +1265,16 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
     }
     for (i = 0U; i < sizeof(labels) / sizeof(labels[0]); ++i) {
         char outPath[M12_ASSET_DATA_DIR_CAPACITY];
+        char outParent[M12_ASSET_DATA_DIR_CAPACITY];
         if (!FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, labels[i])) {
+            continue;
+        }
+        /* The PORTRAIT directory's CMP files keep a source-owned relative
+         * path, not a flattened
+         * filename.  Create its cache parent before extracting from an ISO,
+         * ZIP or nested ADF container. */
+        if (!FSP_ParentDir(outParent, sizeof(outParent), outPath) ||
+            !FSP_CreateDirectoryRecursive(outParent)) {
             continue;
         }
         if (!(m12_csb_amiga_sidecar_expected_md5(labels[i]) != NULL

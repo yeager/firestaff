@@ -1371,13 +1371,14 @@ static int iso_parse_dir_record(const unsigned char *sector, int offset,
 
 static int scan_iso_dir_by_md5(FILE *fp, int raw2352, uint32_t dirLba,
                                uint32_t dirSize, int depth,
+                               const char *directory,
                                const char *expectedMd5,
                                const char *isoPath,
                                char *outPath, int outPathLen) {
     unsigned char sector[ASSET_ISO_SECTOR_SIZE];
     uint32_t sectors = (dirSize + ASSET_ISO_SECTOR_SIZE - 1U) / ASSET_ISO_SECTOR_SIZE;
     uint32_t s;
-    char bestName[128];
+    char bestName[256];
     int hasMatch = 0;
     if (depth > ASSET_ISO_MAX_DIR_DEPTH) return 0;
     bestName[0] = '\0';
@@ -1389,12 +1390,25 @@ static int scan_iso_dir_by_md5(FILE *fp, int raw2352, uint32_t dirLba,
             int isDir;
             int recLen;
             char name[128];
+            char fullName[256];
             recLen = iso_parse_dir_record(sector, offset, &lba, &size, &isDir, name);
             if (recLen == 0) break;
             if (name[0] != '\0' && name[0] != 1) {
+                if (directory && directory[0] != '\0') {
+                    if (snprintf(fullName, sizeof(fullName), "%s/%s",
+                                 directory, name) >= (int)sizeof(fullName)) {
+                        return 0;
+                    }
+                } else {
+                    if (snprintf(fullName, sizeof(fullName), "%s", name) >=
+                        (int)sizeof(fullName)) {
+                        return 0;
+                    }
+                }
                 if (isDir) {
                     if (scan_iso_dir_by_md5(fp, raw2352, lba, size, depth + 1,
-                                            expectedMd5, isoPath, outPath, outPathLen)) {
+                                            fullName, expectedMd5, isoPath,
+                                            outPath, outPathLen)) {
                         return 1;
                     }
                 } else if (size >= 16U && size <= ASSET_ZIP_MAX_ENTRY_BYTES) {
@@ -1408,10 +1422,10 @@ static int scan_iso_dir_by_md5(FILE *fp, int raw2352, uint32_t dirLba,
                      * case-insensitively at the filesystem level). */
                     if (iso_file_md5(fp, raw2352, lba, size, hex) &&
                         strcmp(hex, expectedMd5) == 0 &&
-                        is_better_iso_entry(name, hasMatch ? bestName : NULL)) {
-                        size_t nameLen = strlen(name);
+                        is_better_iso_entry(fullName, hasMatch ? bestName : NULL)) {
+                        size_t nameLen = strlen(fullName);
                         if (nameLen < sizeof(bestName)) {
-                            memcpy(bestName, name, nameLen + 1U);
+                            memcpy(bestName, fullName, nameLen + 1U);
                             hasMatch = 1;
                         }
                     }
@@ -1426,6 +1440,7 @@ static int scan_iso_dir_by_md5(FILE *fp, int raw2352, uint32_t dirLba,
 
 static int scan_iso_dir_by_md5_list(FILE *fp, int raw2352, uint32_t dirLba,
                                     uint32_t dirSize, int depth,
+                                    const char *directory,
                                     const char *const *md5List,
                                     int md5Count,
                                     const char *isoPath,
@@ -1438,7 +1453,7 @@ static int scan_iso_dir_by_md5_list(FILE *fp, int raw2352, uint32_t dirLba,
     /* The old four-slot bound predates CSB's English and Japanese FM Towns
      * profiles and skipped their MD5 slots during one-pass ISO scans. */
     enum { ASSET_ISO_LIST_BEST_MAX = 16 };
-    char bestNames[ASSET_ISO_LIST_BEST_MAX][128];
+    char bestNames[ASSET_ISO_LIST_BEST_MAX][256];
     int hasBest[ASSET_ISO_LIST_BEST_MAX];
     int i;
     for (i = 0; i < ASSET_ISO_LIST_BEST_MAX; ++i) {
@@ -1454,12 +1469,24 @@ static int scan_iso_dir_by_md5_list(FILE *fp, int raw2352, uint32_t dirLba,
             int isDir;
             int recLen;
             char name[128];
+            char fullName[256];
             recLen = iso_parse_dir_record(sector, offset, &lba, &size, &isDir, name);
             if (recLen == 0) break;
             if (name[0] != '\0' && name[0] != 1) {
+                if (directory && directory[0] != '\0') {
+                    if (snprintf(fullName, sizeof(fullName), "%s/%s",
+                                 directory, name) >= (int)sizeof(fullName)) {
+                        return foundCount;
+                    }
+                } else {
+                    if (snprintf(fullName, sizeof(fullName), "%s", name) >=
+                        (int)sizeof(fullName)) {
+                        return foundCount;
+                    }
+                }
                 if (isDir) {
                     foundCount += scan_iso_dir_by_md5_list(fp, raw2352, lba, size,
-                                                           depth + 1, md5List,
+                                                           depth + 1, fullName, md5List,
                                                            md5Count, isoPath,
                                                            outPaths, matched);
                     if (foundCount >= md5Count) return foundCount;
@@ -1469,10 +1496,10 @@ static int scan_iso_dir_by_md5_list(FILE *fp, int raw2352, uint32_t dirLba,
                     if (iso_file_md5(fp, raw2352, lba, size, hex)) {
                         matchIndex = md5_list_match_index(hex, md5List, matched, md5Count);
                         if (matchIndex >= 0 && matchIndex < ASSET_ISO_LIST_BEST_MAX &&
-                            is_better_iso_entry(name, hasBest[matchIndex] ? bestNames[matchIndex] : NULL)) {
-                            size_t nameLen = strlen(name);
+                            is_better_iso_entry(fullName, hasBest[matchIndex] ? bestNames[matchIndex] : NULL)) {
+                            size_t nameLen = strlen(fullName);
                             if (nameLen < sizeof(bestNames[matchIndex])) {
-                                memcpy(bestNames[matchIndex], name, nameLen + 1U);
+                                memcpy(bestNames[matchIndex], fullName, nameLen + 1U);
                                 hasBest[matchIndex] = 1;
                             }
                         }
@@ -1514,6 +1541,7 @@ static int scan_iso_dir_by_md5_list(FILE *fp, int raw2352, uint32_t dirLba,
 
 static int iso_extract_entry_in_dir(FILE *fp, int raw2352, uint32_t dirLba,
                                     uint32_t dirSize, int depth,
+                                    const char *directory,
                                     const char *entryName,
                                     const char *outFilePath) {
     unsigned char sector[ASSET_ISO_SECTOR_SIZE];
@@ -1528,15 +1556,27 @@ static int iso_extract_entry_in_dir(FILE *fp, int raw2352, uint32_t dirLba,
             int isDir;
             int recLen;
             char name[128];
+            char fullName[256];
             recLen = iso_parse_dir_record(sector, offset, &lba, &size, &isDir, name);
             if (recLen == 0) break;
             if (name[0] != '\0' && name[0] != 1) {
+                if (directory && directory[0] != '\0') {
+                    if (snprintf(fullName, sizeof(fullName), "%s/%s",
+                                 directory, name) >= (int)sizeof(fullName)) {
+                        return 0;
+                    }
+                } else {
+                    if (snprintf(fullName, sizeof(fullName), "%s", name) >=
+                        (int)sizeof(fullName)) {
+                        return 0;
+                    }
+                }
                 if (isDir) {
                     if (iso_extract_entry_in_dir(fp, raw2352, lba, size, depth + 1,
-                                                 entryName, outFilePath)) {
+                                                 fullName, entryName, outFilePath)) {
                         return 1;
                     }
-                } else if (asset_casecmp(name, entryName) == 0) {
+                } else if (asset_casecmp(fullName, entryName) == 0) {
                     return iso_extract_file(fp, raw2352, lba, size, outFilePath);
                 }
             }
@@ -1559,7 +1599,7 @@ static int iso_extract_entry_to_path(const char *isoPath, const char *entryName,
         rootLba = read_u32le(pvd + 158);
         rootSize = read_u32le(pvd + 166);
         if (iso_extract_entry_in_dir(fp, raw, rootLba, rootSize, 0,
-                                     entryName, outFilePath)) {
+                                     "", entryName, outFilePath)) {
             fclose(fp);
             return 1;
         }
@@ -1583,7 +1623,7 @@ static int scan_iso_by_md5(const char *isoPath, const char *expectedMd5,
         rootLba = read_u32le(pvd + 158);
         rootSize = read_u32le(pvd + 166);
         if (scan_iso_dir_by_md5(fp, raw, rootLba, rootSize, 0,
-                                expectedMd5, isoPath, outPath, outPathLen)) {
+                                "", expectedMd5, isoPath, outPath, outPathLen)) {
             fclose(fp);
             return 1;
         }
@@ -1622,7 +1662,7 @@ static int scan_iso_by_md5_list(const char *isoPath, const char *const *md5List,
         rootLba = read_u32le(pvd + 158);
         rootSize = read_u32le(pvd + 166);
         foundCount += scan_iso_dir_by_md5_list(fp, raw, rootLba, rootSize, 0,
-                                               md5List, md5Count, isoPath,
+                                               "", md5List, md5Count, isoPath,
                                                outPaths, matched);
         if (foundCount >= md5Count) {
             fclose(fp);
