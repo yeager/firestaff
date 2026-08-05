@@ -3618,6 +3618,12 @@ that its exact runtime path is not already source-locked and tested.
     (`EYE OF TIME`) from actual `GRAPHICS.DAT`/`DUNGEON.DAT`; incorrect-name
     reports should therefore be investigated in icon/Thing identity or the
     interaction route, not fixed with another handwritten name table.
+    2026-08-06: the expanded real-object corpus test now covers 611 live
+    weapon, armour, scroll, potion, container, and junk records. Every record
+    has a raw PC34 Thing record, non-generic M564 name, direction-aware icon
+    index, and authenticated 16x16 source zone. Remaining gaps are runtime
+    pickup/placement behavior and real Mac cursor/panel capture, not the
+    production name/icon corpus.
     2026-08-06: corrected the C508/action-hand destination mask to
     ReDMCSB's `MASK0x0200_HANDS`; the previous `0x0002` was the head mask and
     rejected valid hand placement. Focused inventory-panel runtime coverage

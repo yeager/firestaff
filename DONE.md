@@ -50293,3 +50293,14 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   0x0c-byte `c_tim` rows. All four saves and four backups pass without
   materializing a playable session; `DM2_READ_SKSAVE_DUNGEON` remains
   explicitly fail-closed. Verification: authentic corpus suite 35/35.
+
+- ✅ 2026-08-06 DM1 real object corpus: added
+  `test_m11_dm1_real_object_corpus`, which launches from the supplied real
+  PC3.4 `GRAPHICS.DAT`/`DUNGEON.DAT` and verifies 611 weapon, armour, scroll,
+  potion, container, and junk records. Each record resolves through the
+  authenticated Thing identity, M564 name table, direction-aware icon lookup,
+  and a loaded 16x16 source zone; no generic `WEAPON n`/`ARMOUR n`/`POTION n`/
+  `JUNK n` fallback names are accepted. Verification: Ninja build and
+  `FIRESTAFF_DM1_DATA_DIR=/tmp/firestaff-dm1-real-20260805`
+  `test_m11_dm1_real_object_corpus` passed (611/611). Runtime placement and
+  real Mac cursor/panel capture remain separate open work.
