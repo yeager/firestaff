@@ -13,6 +13,9 @@
 
 static int mock_draw_count = 0;
 static int mock_fill_count = 0;
+static int mock_menu_visible = 0;
+static int16_t mock_menu_event = 0xff;
+static int16_t mock_menu_pending_event = 0xff;
 
 /* ── Mock callbacks ─────────────────────────────────────────────────── */
 
@@ -76,11 +79,25 @@ static void mock_void_i(void *ctx, int a) { (void)ctx; (void)a; }
 static void mock_set_i16(void *ctx, int16_t v) { (void)ctx; (void)v; }
 static int16_t mock_get_bbw(void *ctx) { (void)ctx; return 320; }
 static int16_t mock_get_bbh(void *ctx) { (void)ctx; return 200; }
+static int32_t mock_mode_i32(void *ctx, int16_t mode)
+{ (void)ctx; (void)mode; return 0; }
+static void mock_void(void *ctx) { (void)ctx; }
 static const char *mock_v1d1044(void *ctx) { (void)ctx; return "Title"; }
 static int16_t mock_table_val(void *ctx, int idx) { (void)ctx; return (int16_t)(0x100 + idx); }
 static int32_t mock_bigpool(void *ctx) { (void)ctx; return 0; }
 static void mock_draw_to_screen(void *ctx) { (void)ctx; }
 static void mock_fade(void *ctx, int m) { (void)ctx; (void)m; }
+static bool mock_menu_is_visible(void *ctx) { (void)ctx; return mock_menu_visible != 0; }
+static void mock_menu_show(void *ctx) { (void)ctx; mock_menu_visible = 1; }
+static void mock_menu_hide(void *ctx) { (void)ctx; mock_menu_visible = 0; }
+static void mock_menu_set_event(void *ctx, int16_t event) { (void)ctx; mock_menu_event = event; }
+static int16_t mock_menu_get_event(void *ctx) { (void)ctx; return mock_menu_event; }
+static void mock_menu_event_loop(void *ctx)
+{
+    (void)ctx;
+    if (mock_menu_event == 0xff) mock_menu_event = mock_menu_pending_event;
+}
+static void mock_menu_wait(void *ctx) { (void)ctx; }
 
 /* ── Test dialogue part drawing (palette path) ──────────────────────── */
 
@@ -104,6 +121,44 @@ static void test_draw_part_palette(void)
     assert(mock_fill_count == 1);
 
     printf("  PASS: draw_part_palette\n");
+}
+
+/* c_0aaf.cpp writes choice bytes at tarr_00+0x28 and reads choice event n
+ * from 0x26 + 2*n. The original UI ordinal is one-based. */
+static void test_menu_selection_uses_source_stack_offset(void)
+{
+    DM2_V1_0aafCallbacks cb;
+    DM2_V1_0aafMenuReceipt receipt;
+
+    memset(&cb, 0, sizeof(cb));
+    cb.query_gdat_text = mock_query_gdat_text;
+    cb.query_gdat_entry_data_index = mock_query_gdat_entry_data_index;
+    cb.set_v1e0204 = mock_set_i16;
+    cb.mode_1031_0675 = mock_mode_i32;
+    cb.is_mouse_visible = mock_menu_is_visible;
+    cb.show_mouse = mock_menu_show;
+    cb.hide_mouse = mock_menu_hide;
+    cb.set_event_unk06 = mock_menu_set_event;
+    cb.get_event_unk06 = mock_menu_get_event;
+    cb.event_loop = mock_menu_event_loop;
+    cb.wait_screen_refresh = mock_menu_wait;
+    cb.has_key = mock_false;
+    cb.set_backbuff2 = mock_set_i16;
+    cb.mode_1031_06a5 = mock_void;
+
+    mock_menu_visible = 0;
+    mock_menu_pending_event = 1;
+    receipt = dm2_v1_0aaf_menu_select(&cb, 0);
+    assert(receipt.selection == 1);
+
+    /* An event outside the source's one-based item ordinal cannot borrow
+     * stack bytes as a fake menu result. */
+    mock_menu_visible = 0;
+    mock_menu_pending_event = 4;
+    receipt = dm2_v1_0aaf_menu_select(&cb, 0);
+    assert(receipt.selection == -1);
+
+    printf("  PASS: menu_selection_uses_source_stack_offset\n");
 }
 
 /* ── Test dialogue construction ─────────────────────────────────────── */
@@ -168,6 +223,7 @@ int main(void)
     printf("test_dm2_v1_0aaf_pc34_compat:\n");
     test_null_safety();
     test_draw_part_palette();
+    test_menu_selection_uses_source_stack_offset();
     test_construct_dialogue();
     printf("All 0AAF tests passed.\n");
     return 0;

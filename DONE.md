@@ -32,6 +32,13 @@
   reaches 757 passing assertions but retains two pre-existing failures in the
   independent C06 local-effect sensor fixture.
 
+- ✅ 2026-08-05 DM2 0AAF menu-table parity: corrected the legacy source
+  dialogue adapter's choice-table placement to SKProject
+  `c_0aaf.cpp::DM2_0aaf_0067`: bytes live at `tarr_00 + 0x28` and UI choice
+  events are one-based. Invalid ordinals now fail closed instead of reading
+  beyond the stack buffer. The focused regression covers the first original
+  choice offset and an invalid ordinal.
+
 - ✅ 2026-08-05 DM2 input placeholder removal: removed the unused, exported
   zero-filled `table1d3efd[236]` fixture from the production input module and
   its size-only test. It has no counterpart or consumer in SKProject; the

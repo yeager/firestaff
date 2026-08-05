@@ -33,7 +33,10 @@ DM2_V1_0aafMenuReceipt dm2_v1_0aaf_menu_select(
     int16_t last_valid = -1;
     int32_t last_type = 0; (void)last_type;
     char text_buf[DM2_V1_0AAF_TEXT_BUF_SIZE];
-    uint8_t entry_data[DM2_V1_0AAF_MAX_TEXT_ENTRIES * 2];
+    /* c_0aaf.cpp keeps the selection bytes in tarr_00 at +0x28.  The
+     * source event ordinal is one-based, so EVENT 1 reads tarr_00[0x28]
+     * through the 0x26 + 2 * event expression below. */
+    uint8_t entry_data[DM2_V1_0AAF_TEXT_BUF_SIZE];
     int show_count = 0;
 
     memset(entry_data, 0, sizeof(entry_data));
@@ -48,12 +51,12 @@ DM2_V1_0aafMenuReceipt dm2_v1_0aaf_menu_select(
             uint8_t lo = (uint8_t)(data_idx & 0xFF);
             uint8_t hi = (uint8_t)((data_idx >> 8) & 0xFF);
 
-            entry_data[item_count * 2]     = (lo == 0) ? sub : lo;
-            entry_data[item_count * 2 + 1] = hi;
+            entry_data[0x28 + item_count * 2]     = (lo == 0) ? sub : lo;
+            entry_data[0x28 + item_count * 2 + 1] = hi;
 
             if (hi != 0) {
                 last_valid = (int16_t)item_count;
-                last_type  = (int32_t)entry_data[item_count * 2];
+                last_type  = (int32_t)entry_data[0x28 + item_count * 2];
             }
             item_count++;
         }
@@ -106,7 +109,14 @@ DM2_V1_0aafMenuReceipt dm2_v1_0aaf_menu_select(
         evt = cb->get_event_unk06(cb->ctx);
         if (evt != 0xFF) {
             if (type_byte != (uint8_t)0x87) {
-                result = entry_data[0x26 + 2 * evt];
+                /* c_0aaf.cpp m_A2F4: event_unk06 is a one-based item
+                 * ordinal. Reject a malformed source event instead of
+                 * indexing past the 80-byte source stack buffer. */
+                if (evt < 1 || evt > item_count) {
+                    result = -1;
+                } else {
+                    result = entry_data[0x26 + 2 * evt];
+                }
             } else {
                 result = cb->get_event_unk0a(cb->ctx);
             }
