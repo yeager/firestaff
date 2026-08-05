@@ -50243,3 +50243,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   startup, HUD, dungeon-material, palette/light, and V2-no-fallback check
   reproducible without copying, unpacking, or staging original game files.
   Verification: real PC boot-profile suite 95/95.
+- ✅ 2026-08-06 DM2 authentic SKSave corpus regression: replaced the stale
+  real-data test's fabricated “champion name” header interpretation and
+  obsolete path with direct, read-only corpus checks. All eight supplied
+  PC-DOS `sksave0..3.dat/.bak` files now prove their DM2 container header and
+  source-owned raw saved-dungeon prefix; the incomplete SUPPRESS tail remains
+  explicitly unplayable. Verification: real SKSave suite 27/27 and the
+  external corpus census 25/25.
