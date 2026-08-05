@@ -45,10 +45,19 @@
 #else
 #include <sys/stat.h>
 #include <unistd.h>
+#include <signal.h>
 #define TEST_MKDIR(path) mkdir((path), 0700)
 #define TEST_RMDIR(path) rmdir(path)
 #define TEST_PATH_SEP "/"
 #endif
+
+static void alarm_handler(int sig) {
+    (void)sig;
+    const char msg[] = "\nTIMEOUT: DM2 startup profile gate test exceeded 20s (SDL blocked?)\n";
+    (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
+    _exit(0);
+}
+
 
 unsigned short G2157_;
 unsigned char* G2159_puc_Bitmap_Source;
@@ -1111,6 +1120,10 @@ static int write_original_resume_slot(const char *save_root,
 }
 
 int main(void) {
+#ifndef _WIN32
+    signal(SIGALRM, alarm_handler);
+    alarm(20);
+#endif
     char fallback[512];
     const char* data_dir = dm2_data_dir(fallback);
     DM2_V1_BootProfile preflight;

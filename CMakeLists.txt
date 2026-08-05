@@ -4120,6 +4120,17 @@ if(NOT MSVC)
     target_compile_options(firestaff_fmtowns_disc PRIVATE -Wall -Wextra -O2)
 endif()
 
+# ── Scan cache ──────────────────────────────────────────────────────
+add_library(firestaff_scan_cache STATIC
+    src/shared/firestaff_scan_cache.c
+)
+target_include_directories(firestaff_scan_cache PUBLIC
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+if(NOT MSVC)
+    target_compile_options(firestaff_scan_cache PRIVATE -Wall -Wextra -O2)
+endif()
+
 # ── RetroAchievements adapter ────────────────────────────────────────
 add_library(firestaff_retroachievements STATIC
     src/shared/firestaff_retroachievements.c
@@ -4266,7 +4277,7 @@ if(APPLE)
         "-framework CoreMIDI"
         "-framework CoreFoundation")
 endif()
-target_link_libraries(firestaff_m10 PUBLIC firestaff_zip_extract firestaff_fmtowns_disc)
+target_link_libraries(firestaff_m10 PUBLIC firestaff_zip_extract firestaff_fmtowns_disc firestaff_scan_cache)
 target_compile_definitions(firestaff_m10 PUBLIC
     COMPILE_H
     STATICFUNCTION=static
@@ -4396,7 +4407,7 @@ if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES}
         src/shared/asset_find_by_hash.c)
     target_include_directories(firestaff_nexus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(firestaff_nexus PUBLIC m)
+    target_link_libraries(firestaff_nexus PUBLIC m firestaff_scan_cache)
     if(NOT MSVC)
         target_compile_options(firestaff_nexus PRIVATE -Wall -Wextra -O2)
     endif()
@@ -4882,7 +4893,7 @@ set(M12_SOURCES
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2 firestaff_retroachievements)
+target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2 firestaff_retroachievements firestaff_scan_cache)
 firestaff_link_zlib(firestaff_m12 PUBLIC)
 # Asset-status test hooks are deliberately excluded from the production M12
 # archive. Data-free scanner tests compile asset_status_m12.c themselves with
@@ -16272,6 +16283,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_save_load.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_weather_gdat.c
