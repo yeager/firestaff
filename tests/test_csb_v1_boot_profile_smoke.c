@@ -203,8 +203,8 @@ static void test_enter_handoff_state(void)
           "runtime starts at the CSB title/entrance state");
     CHECK(p.runtime.variant_id == CSB_V1_VARIANT_PC34_EN,
           "runtime receives the verified CSB variant");
-    CHECK(p.runtime.difficulty == CSB_V1_DIFFICULTY_HARD,
-          "runtime handoff uses the CSB hard default");
+    CHECK(p.runtime.difficulty == CSB_V1_DIFFICULTY_UNBOUND,
+          "failed runtime handoff leaves map difficulty source-unbound");
     CHECK(p.runtime.data_dir == p.asset_root,
           "runtime data_dir points at the verified asset root");
     CHECK(p.runtime.save_dir == p.save_root,

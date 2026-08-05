@@ -87,7 +87,7 @@
  *   ReDMCSB COMMAND.C F0380 lines 2075-2127, 2150-2156 (input queue)
  *   ReDMCSB VIEWPORT.C M091_BITPLANE_SIZE(224, 136) viewport sub-region
  *   ReDMCSB DUNVIEW.C F0128 lines 8318-8542 (shared DM1/CSB draw core)
- *   ReDMCSB PROJEXPL.C F0217 + CSBWin Character.cpp 3-champion difficulty
+ *   ReDMCSB DEFS.H MAP.C + PANEL.C F0337 (current-map difficulty nibble)
  *   CSBWin/CSBCode.cpp:6800-6950 LoadDungeon
  *   CSBWin/CSBCode.cpp:26 CustomBackgrounds
  *   CSBWin/Viewport.cpp:7290 lines (viewport draw stack)
@@ -491,8 +491,8 @@ static void probe_first_viewport_frame(CSB_V1_BootProfile *profile,
           "runtime keeps the source-owned CSB start pose");
     CHECK(profile->runtime.chaos_magic.magic_initialized == 1,
           "CSB chaos magic is initialized at handoff");
-    CHECK(profile->runtime.difficulty == CSB_V1_DIFFICULTY_HARD,
-          "CSB runtime difficulty is hard (3-champion default, ReDMCSB PROJEXPL.C F0217)");
+    CHECK(profile->runtime.difficulty == 0,
+          "CSB runtime carries the source map difficulty");
     CHECK(profile->runtime.dungeon_asset.path[0] != '\0' &&
           strcmp(profile->runtime.dungeon_asset.path,
                  profile->dungeon_path) == 0,

@@ -1137,25 +1137,19 @@ static int __attribute__((unused)) csb_v1_file_md5_hex (const char *path, char *
     return -1;
 }
 
-/* ── Difficulty helpers ─────────────────────────────────────────────── */
-
-int csb_v1_runtime_calc_difficulty(int champion_count)
+static void csb_v1_runtime_sync_map_difficulty(
+    CSB_V1_RuntimeProfile *profile)
 {
-    int x100;
-    if (champion_count < 1) champion_count = 1;
-    if (champion_count > 4) champion_count = 4;
-    x100 = CSB_V1_DIFFICULTY_BASE + (champion_count - 1) * CSB_V1_DIFFICULTY_PER_CHAMP;
-    return x100;
-}
-
-const char *csb_v1_runtime_difficulty_str(int difficulty_x100)
-{
-    switch (difficulty_x100) {
-        case 100: return "Easy (1 champion)";
-        case 125: return "Normal (2 champions)";
-        case 150: return "Hard (3 champions)";
-        case 200: return "Extreme (4 champions)";
-        default:  return "Unknown";
+    const CSB_V1_DungeonData *dungeon;
+    int difficulty;
+    if (!profile || !profile->dungeon_handle || profile->current_level < 0) {
+        return;
+    }
+    dungeon = (const CSB_V1_DungeonData *)profile->dungeon_handle;
+    if (profile->current_level >= dungeon->level_count) return;
+    difficulty = dungeon->map_difficulty[profile->current_level];
+    if (difficulty >= 0 && difficulty <= 15) {
+        profile->difficulty = (CSB_V1_Difficulty)difficulty;
     }
 }
 
@@ -1806,11 +1800,15 @@ static int csb_v1_runtime_apply_save_image(
      * this POD runtime image; asset paths and the loaded dungeon handle stay
      * with the caller's already booted profile. */
     profile->variant_id = (CSB_V1_VariantId)image->variant_id;
-    profile->difficulty = (CSB_V1_Difficulty)image->difficulty;
+    /* A Firestaff profile image predates the source-bound map field and may
+     * contain the retired champion-count multiplier. MAP.C from the already
+     * verified dungeon is the only admissible source when it is available. */
+    profile->difficulty = CSB_V1_DIFFICULTY_UNBOUND;
     profile->dungeon_seed = image->dungeon_seed;
     profile->dungeon_game_id = image->dungeon_game_id;
     profile->current_level = image->current_level;
     csb_v1_dungeon_set_current_level(profile->current_level);
+    csb_v1_runtime_sync_map_difficulty(profile);
     profile->current_world = image->current_world;
     profile->level_count = image->level_count;
     profile->world_count = image->world_count;
@@ -2011,8 +2009,10 @@ int csb_v1_runtime_import_csbgame_roster_from_path(
     profile->party_dir = pose_dir;
     profile->current_level = pose_level;
     csb_v1_dungeon_set_current_level(profile->current_level);
-    profile->difficulty =
-        (CSB_V1_Difficulty)csb_v1_runtime_calc_difficulty(imported);
+    /* The raw CSBGAME roster body does not carry MAP.C. ReDMCSB
+     * LOADSAVE.C F0435 retains the already loaded dungeon/current map, so
+     * champion count must not invent a difficulty multiplier here. */
+    csb_v1_runtime_sync_map_difficulty(profile);
     profile->party_state.PartyMapX = pose_x;
     profile->party_state.PartyMapY = pose_y;
     profile->party_state.PartyDirection = (uint8_t)pose_dir;
@@ -19033,7 +19033,7 @@ void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir)
     memset(profile, 0, sizeof(*profile));
 
     profile->variant_id     = CSB_V1_VARIANT_UNKNOWN;
-    profile->difficulty    = CSB_V1_DIFFICULTY_HARD; /* default: 3 champions */
+    profile->difficulty    = CSB_V1_DIFFICULTY_UNBOUND;
     profile->current_level = 0;
     profile->current_world = 0;
     profile->level_count   = 1;
@@ -19283,6 +19283,7 @@ static int csb_v1_runtime_replace_dungeon_handle(CSB_V1_RuntimeProfile *profile,
     profile->dungeon_path = path;
     csb_v1_dungeon_set_current(dungeon);
     csb_v1_dungeon_set_current_level(0);
+    csb_v1_runtime_sync_map_difficulty(profile);
     return 1;
 }
 
@@ -30689,6 +30690,7 @@ int csb_v1_runtime_boot(CSB_V1_RuntimeProfile *profile,
             profile->dungeon_handle = dungeon;
             csb_v1_dungeon_set_current(dungeon); /* singleton now points to heap */
             csb_v1_dungeon_set_current_level(profile->current_level);
+            csb_v1_runtime_sync_map_difficulty(profile);
             /* ReDMCSB LOADSAVE.C F0435 derives a new game's pose from the
              * loaded DUNGEON_HEADER, never from a fixed host coordinate. */
             if (profile->party_state_valid) {

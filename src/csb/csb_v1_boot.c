@@ -8359,7 +8359,7 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
     csb_v1_runtime_cleanup(&profile->runtime);
     csb_v1_runtime_init(&profile->runtime, profile->asset_root);
     profile->runtime.variant_id = profile->variant_id;
-    profile->runtime.difficulty = CSB_V1_DIFFICULTY_HARD;
+    profile->runtime.difficulty = CSB_V1_DIFFICULTY_UNBOUND;
     profile->runtime.save_dir = profile->save_root;
     profile->runtime.dungeon_path = profile->dungeon_path;
     profile->runtime.graphics_path = profile->graphics_path;
@@ -8427,6 +8427,9 @@ int csb_v1_boot_enter_game(CSB_V1_BootProfile *profile)
             profile->runtime.dungeon_handle = dungeon;
             csb_v1_dungeon_set_current(dungeon);
             csb_v1_dungeon_set_current_level(profile->runtime.current_level);
+            profile->runtime.difficulty =
+                (CSB_V1_Difficulty)dungeon->map_difficulty[
+                    profile->runtime.current_level];
             /* LOADSAVE.C F0435 promotes the decoded dungeon-header pose into
              * both runtime views before M11 can draw the first dungeon frame.
              * A fixed (5,5) would make the HUD and viewport disagree about

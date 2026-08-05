@@ -309,8 +309,8 @@ int main(void) {
               runtime.party_state.PartyMapY == 7 &&
               runtime.party_state.PartyDirection == 2,
               "runtime CSBGAME import reanchors party snapshot to runtime pose");
-        CHECK(runtime.difficulty == CSB_V1_DIFFICULTY_HARD,
-              "runtime CSBGAME import recalculates difficulty for 3 champions");
+        CHECK(runtime.difficulty == CSB_V1_DIFFICULTY_UNBOUND,
+              "runtime CSBGAME import leaves difficulty unbound without a loaded map");
 
         csb_v1_runtime_init(&runtime, NULL);
         runtime.party_x = 6;

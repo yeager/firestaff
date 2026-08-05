@@ -971,8 +971,8 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
           "runtime state machine is CSB_STATE_TITLE (ReDMCSB ENTRANCE.C F0806)");
     CHECK(p.runtime.variant_id == CSB_V1_VARIANT_PC34_EN,
           "runtime inherits the boot profile variant id");
-    CHECK(p.runtime.difficulty == CSB_V1_DIFFICULTY_HARD,
-          "runtime keeps the CSB V1 default difficulty");
+    CHECK(p.runtime.difficulty == 0,
+          "runtime binds the source map difficulty");
     CHECK(p.runtime.entrance_map_index == 255U,
           "runtime entrance map matches boot profile (C255_MAP_INDEX_ENTRANCE)");
     CHECK(p.runtime.start_map_index == 0U,

@@ -402,27 +402,12 @@ typedef struct {
 #define CSB_V1_ACTION_SET_COUNT 44
 #define CSB_V1_ACTION_SET_BYTES 6
 
-/* ── Difficulty ───────────────────────────────────────────────────────── */
-/*
- * CSB difficulty scale: each champion fight gets +25% effective stats.
- * Base multiplier is 1.0 (same as DM1).  Escalates per champion count.
- * ReDMCSB: PROJEXPL.C projectile + CSBWin Character.cpp difficulty scale
- *
- *   Champions in party | Effective difficulty (x100%)
- *   ------------------+--------------------------------
- *     1                |  1.00 (Easy)
- *     2                |  1.25 (+25% Normal)
- *     3                |  1.50 (+50% Hard — default)
- *     4                |  2.00 (+100% Extreme)
- */
-#define CSB_V1_DIFFICULTY_BASE        100   /* base percent, x100 scale */
-#define CSB_V1_DIFFICULTY_PER_CHAMP    25   /* extra % x100 per champion */
-
+/* ── Current map difficulty ───────────────────────────────────────────── */
+/* ReDMCSB DEFS.H MAP.C stores this in the high nibble of each map
+ * descriptor. PANEL.C F0337, CHAMPION.C and PROJEXPL.C consume that map
+ * value; it is not derived from the number of selected champions. */
 typedef enum {
-    CSB_V1_DIFFICULTY_EASY   = 100,
-    CSB_V1_DIFFICULTY_NORMAL = 125,  /* 2 champions */
-    CSB_V1_DIFFICULTY_HARD   = 150,  /* 3 champions (default) */
-    CSB_V1_DIFFICULTY_EXTREME = 200  /* 4 champions */
+    CSB_V1_DIFFICULTY_UNBOUND = -1
 } CSB_V1_Difficulty;
 
 /* ── Asset discovery namespace ───────────────────────────────────────── */
@@ -1249,7 +1234,7 @@ typedef struct {
 /* ── Runtime profile API ─────────────────────────────────────────────── */
 
 /* Initialize a fresh runtime profile with CSB defaults.
- * Sets difficulty, start position, and NULL paths.
+ * Sets source-unbound map difficulty, start position, and NULL paths.
  * Does NOT boot the dungeon or initialize Chaos Magic. */
 void csb_v1_runtime_init(CSB_V1_RuntimeProfile *profile, const char *data_dir);
 
@@ -2718,10 +2703,6 @@ int csb_v1_runtime_detect_variant(const char *gfx_path,
                                     const char *dungeon_path,
                                     const char *md5_gfx,
                                     const char *md5_dungeon);
-
-/* ── Difficulty helpers ─────────────────────────────────────────────── */
-int csb_v1_runtime_calc_difficulty(int champion_count);
-const char *csb_v1_runtime_difficulty_str(int difficulty_x100);
 
 /* ── Asset discovery ────────────────────────────────────────────────── */
 
