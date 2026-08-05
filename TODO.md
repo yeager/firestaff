@@ -24271,6 +24271,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   proven. The remaining handoff is the original object-kind/item-index
   consumer, not raw media intake or chain traversal.
 
+## Theron Track 19 remaining evidence
+
+- 2026-08-06 update: the real US and JP Track 19 startup envelope now has a
+  bounded structural reader: big-endian 32×27 dimensions, six retained raw
+  header words, and an 864-byte borrowed payload span are checked against the
+  authenticated envelope hash. The payload remains opaque; tile/object
+  ownership and later-level consumer semantics still require disassembly.
+
 - 2026-07-15: Runtime level-bank selection now retains the authenticated
   startup bitmap's Track 02 MD5 and raw/user-data sector envelope. Remaining:
   obtain original loader/CD-read evidence that binds a post-startup bitmap or

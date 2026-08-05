@@ -96,3 +96,46 @@ int theron_v1_track19_startup_level_envelope_validate(
     if (out_fnv1a) *out_fnv1a = hash;
     return 1;
 }
+
+int theron_v1_track19_startup_level_envelope_read(
+        const uint8_t *iso, size_t iso_size,
+        Theron_Track19LevelEnvelope *out) {
+    uint32_t payload_hash = 2166136261u;
+    size_t payload_offset;
+
+    if (!out || !theron_v1_track19_startup_level_envelope_validate(
+            iso, iso_size, NULL, NULL, NULL))
+        return 0;
+
+    memset(out, 0, sizeof(*out));
+    payload_offset = THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET +
+                     THERON_TRACK19_STARTUP_LEVEL_HEADER_BYTES;
+    out->envelope_offset = THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET;
+    out->envelope_bytes = THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES;
+    out->envelope_fnv1a = THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_FNV1A;
+    out->width = (uint16_t)iso[out->envelope_offset] << 8 |
+                 iso[out->envelope_offset + 1u];
+    out->height = (uint16_t)iso[out->envelope_offset + 2u] << 8 |
+                  iso[out->envelope_offset + 3u];
+    if (out->width != THERON_TRACK19_STARTUP_LEVEL_WIDTH ||
+        out->height != THERON_TRACK19_STARTUP_LEVEL_HEIGHT ||
+        out->width * out->height !=
+            THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES -
+            THERON_TRACK19_STARTUP_LEVEL_HEADER_BYTES)
+        return 0;
+    for (size_t i = 0u; i < 6u; ++i) {
+        out->header_words[i] =
+            (uint16_t)iso[out->envelope_offset + i * 2u] << 8 |
+            iso[out->envelope_offset + i * 2u + 1u];
+    }
+    out->payload = iso + payload_offset;
+    out->payload_bytes = out->width * out->height;
+    for (size_t i = 0u; i < out->payload_bytes; ++i) {
+        uint8_t byte = out->payload[i];
+        if (byte != 0u) ++out->nonzero_payload_bytes;
+        payload_hash ^= byte;
+        payload_hash *= 16777619u;
+    }
+    out->payload_fnv1a = payload_hash;
+    return 1;
+}

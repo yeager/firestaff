@@ -20,6 +20,7 @@ static int verify_real_us_item_table(void) {
     size_t envelope_offset;
     size_t envelope_bytes;
     uint32_t envelope_fnv1a;
+    Theron_Track19LevelEnvelope envelope;
     unsigned int i;
     char name[64];
 
@@ -44,6 +45,14 @@ static int verify_real_us_item_table(void) {
         envelope_offset != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET ||
         envelope_bytes != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES ||
         envelope_fnv1a != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_FNV1A) {
+        free(bytes);
+        return 0;
+    }
+    if (!theron_v1_track19_startup_level_envelope_read(
+            bytes, (size_t)size, &envelope) || envelope.width != 32u ||
+        envelope.height != 27u || envelope.payload_bytes != 864u ||
+        envelope.payload != bytes + envelope_offset + 12u ||
+        envelope.nonzero_payload_bytes == 0u) {
         free(bytes);
         return 0;
     }
@@ -129,6 +138,7 @@ static int verify_real_jp_item_table(void) {
     size_t envelope_offset;
     size_t envelope_bytes;
     uint32_t envelope_fnv1a;
+    Theron_Track19LevelEnvelope envelope;
     unsigned int i;
 
     if (!path || !path[0]) return 1;
@@ -152,6 +162,14 @@ static int verify_real_jp_item_table(void) {
         envelope_offset != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_OFFSET ||
         envelope_bytes != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES ||
         envelope_fnv1a != THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_FNV1A) {
+        free(bytes);
+        return 0;
+    }
+    if (!theron_v1_track19_startup_level_envelope_read(
+            bytes, (size_t)size, &envelope) || envelope.width != 32u ||
+        envelope.height != 27u || envelope.payload_bytes != 864u ||
+        envelope.payload != bytes + envelope_offset + 12u ||
+        envelope.nonzero_payload_bytes == 0u) {
         free(bytes);
         return 0;
     }

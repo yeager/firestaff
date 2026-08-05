@@ -50350,3 +50350,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `26ccd1591ccf6ec9e53186e994f73924185143f82055312cafd474ed7abc9437` and
   `ab7bb4a34b77bba033d7b6c31db32e7198a962b0e55c0644c0486f50bb361ecb`.
   Broader C13 corpus and packaged Mac/app capture remain open.
+
+- ✅ 2026-08-06 Theron Track 19 level-envelope structure: added a real-data
+  reader for both US and JP ISOs that verifies the authenticated 12-byte
+  header, 32×27 dimensions, six raw header words, and bounded 864-byte
+  payload span. The inventory probe passes against `TQUS19.iso` and
+  `TQJP19.iso`; no tile, object, palette, or runtime level semantics were
+  inferred from the opaque payload.
