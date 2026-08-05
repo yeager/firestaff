@@ -31964,7 +31964,8 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                                         int fbW,
                                         int fbH,
                                         int maxVisibleForwardLimit,
-                                        const M11_ViewportCell cells[3][3]) {
+                                        const M11_ViewportCell cells[3][3],
+                                        int centerOnly) {
     int i;
     int maxVisibleForward = 3;
     if (!state || !state->assetsAvailable) {
@@ -32001,6 +32002,9 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         memset(&inscription, 0, sizeof(inscription));
         memset(&mirrorProjection, 0, sizeof(mirrorProjection));
         if (!dm1_v1_wall_ornament_view_spec_pc34(i, &spec)) {
+            continue;
+        }
+        if (centerOnly && spec.relSide != 0) {
             continue;
         }
         if (spec.relForward > maxVisibleForward) {
@@ -46259,7 +46263,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                             &visibility);
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                  maxVisibleForward, cells);
+                                  maxVisibleForward, cells, 0);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
         state, framebuffer, framebufferWidth, framebufferHeight, cells);
     m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
@@ -46296,7 +46300,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
             m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth, framebufferHeight,
                                     nearMaxVisibleForward, &visibility);
             m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth, framebufferHeight,
-                                        nearMaxVisibleForward, cells);
+                                        nearMaxVisibleForward, cells, 0);
             m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
                 state, framebuffer, framebufferWidth, framebufferHeight,
                 nearMaxVisibleForward, cells);
@@ -46404,7 +46408,7 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_side_walls(state, framebuffer, framebufferWidth,
                             framebufferHeight, maxVisibleForward, &visibility);
     m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
-                                 framebufferHeight, maxVisibleForward, cells);
+                                 framebufferHeight, maxVisibleForward, cells, 0);
     m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
         state, framebuffer, framebufferWidth, framebufferHeight,
         maxVisibleForward, cells);
@@ -46423,6 +46427,11 @@ static void m11_draw_viewport(const M11_GameViewState* state,
      * occlusion repair, not a synthetic mask or a replacement bitmap. */
     m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth,
                              framebufferHeight, cells);
+    /* Restore only centre-wall ornaments after the occluding wall replay.
+     * Replaying side ornaments here would let distant material cross the
+     * nearer wall boundary again. */
+    m11_draw_dm1_wall_ornaments(state, framebuffer, framebufferWidth,
+                                framebufferHeight, maxVisibleForward, cells, 1);
     m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
                                     framebufferWidth, framebufferHeight);
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,

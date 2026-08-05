@@ -1,15 +1,3 @@
-- ✅ 2026-08-05 Theron production-link verification after packed teleporter
-  handoff: full `firestaff` target and `firestaff_m11_phase_a_probe` build
-  cleanly for the changed route; Phase A passes 24/24. Existing non-Theron
-  warning-only diagnostics remain unchanged.
-
-- ✅ 2026-08-05 Theron Track 02 teleporter parity: the dungeon loader now
-  marks packed level/y/x links explicitly instead of exposing them as host
-  object IDs. Runtime resolution follows the source coordinates, supports a
-  validated cross-level transition, and rejects missing source targets rather
-  than using the clicked-square fallback. The legacy object-ID chain remains
-  available only for fixture/probe objects. Teleporter probe passes.
-
 - ✅ 2026-08-05 Theron dungeon-map record integrity: hardened the Track 02
   map/table loader with overflow-safe range checks for dimension tables,
   cumulative column records, descriptor bytes, and map tiles. Added a
@@ -48463,8 +48451,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   missing asset from masquerading as a corridor opening or fabricated wall.
   Verified with the DM1 wall-ornament (`121/121`) and inventory placement
   (`156/156`) tests plus a successful Ninja `firestaff` build on 2026-08-05.
-- ✅ 2026-08-05 Nexus palette source-lock correction: aligned the Phase 4
-  rendering documentation with the actual fail-closed `STONE.BIN` loader.
-  Short palettes clear and remain unavailable; they do not receive the old
-  inferred `g_npal_default` colour table. Verified by the real-data DGN
-  geometry readiness gate against `/Users/bosse/.firestaff/data/nexus`.
+## DM1 centre-wall ornament restoration
+
+- **DM1-VIEWPORT-003**: Prevented the final nearest-wall occlusion replay from
+  erasing authentic centre-wall inscriptions and alcove material. The replay
+  now restores only source-owned centre ornaments after the wall bitmap, then
+  hands the live champion mirror route back to the renderer; side ornaments
+  are not replayed across the occlusion boundary. Verified with the DM1 wall
+  ornament (`121/121`) and inventory placement (`156/156`) tests and a clean
+  Ninja build on 2026-08-05.
