@@ -398,6 +398,8 @@ int main(int argc, char **argv) {
         uint8_t *seen_images = calloc(loader.raw_data_count, 1u);
         unsigned int image_raw_count = 0u;
         unsigned int decoded_image_raw_count = 0u;
+        unsigned int fnt1_entry_count = 0u;
+        unsigned int fnt1_main_screen_entry_count = 0u;
         uint16_t entry_ordinal;
         PROBE_ASSERT(seen_images != NULL,
                      "allocates PC English raw-image audit bitmap");
@@ -409,6 +411,21 @@ int main(int argc, char **argv) {
                     &loader.entries[entry_ordinal];
                 uint16_t raw_index =
                     (uint16_t)(entry->data_index & 0x7fffu);
+                /* Greatstone names raw 0203 "Interface - Main Screen 0
+                 * (font for scroll)".  It is FNT1/dtRaw7 metadata, not an
+                 * IMG record.  SKProject's normal PC HUD/startup font is a
+                 * different source payload: INTERFACE_GENERAL/0/dt07/0,
+                 * loaded by SkWinCore::_3929_0e16_FONT_LOAD.  Keep the
+                 * catalogue entry auditable without accidentally promoting
+                 * it to a generic image or a generated replacement font. */
+                if (raw_index == 203u &&
+                    entry->cls3 == DM2_GDAT_ENTRY_TYPE_RAW7) {
+                    ++fnt1_entry_count;
+                    if (entry->cls1 == DM2_GDAT_CATEGORY_INTERFACE_GENERAL &&
+                        entry->cls2 == 0u) {
+                        ++fnt1_main_screen_entry_count;
+                    }
+                }
                 if ((entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE ||
                      (raw_index == 203u &&
                       entry->cls3 == DM2_GDAT_ENTRY_TYPE_RAW7)) &&
@@ -439,6 +456,10 @@ int main(int argc, char **argv) {
             PROBE_ASSERT(image_raw_count - decoded_image_raw_count == 1u,
                          "only Greatstone's FNT1 record remains non-raster: %u",
                          image_raw_count - decoded_image_raw_count);
+            PROBE_ASSERT(fnt1_entry_count == 1u &&
+                             fnt1_main_screen_entry_count == 1u,
+                         "FNT1 raw 0203 is the one Interface/Main Screen 0 font record, not a HUD fallback: %u/%u",
+                         fnt1_entry_count, fnt1_main_screen_entry_count);
             free(seen_images);
         }
     }

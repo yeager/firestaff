@@ -49214,6 +49214,19 @@ not a raster fallback. Verification: `probe_dm2_v1_asset_loader` 35/35 PASS
 against MD5 `25247ede4dabb6a71e5dabdfbcd5907d`; PC English boot probe PASS.
 Source: `SKWINSPX/src/v4/DME.h::IMG3::Getpf` and
 `c_gfx_decode.cpp::EXTRACT_GDAT_IMAGE`.
+
+# ✅ 2026-08-06 DM2 PC Greatstone FNT1 ownership audit
+
+Greatstone's sole non-raster visual entry, raw `0203.FNT1`, is now checked as
+the single `INTERFACE_GENERAL`/Main Screen 0 `dtRaw7` record. It is retained
+as source metadata only. It is not promoted to an image and cannot become a
+fallback font: original `SkWinCore::_3929_0e16_FONT_LOAD` instead loads the
+PC startup/HUD glyph rows from `INTERFACE_GENERAL/0/dt07/0` (exactly 0x300
+bytes). Verification: the real-PC `probe_dm2_v1_asset_loader` checks both
+the catalogue count and ownership; the boot-profile smoke test verifies the
+six original 128-glyph rows. Sources: Greatstone PC 1.0 catalogue,
+`SKWINSPX/src/v4/skcore.cpp::_3929_0e16_FONT_LOAD`, and
+`SKWINSPX/src/v4/sktext.cpp::QUERY_FONT`.
 - ✅ 2026-08-05 Theron Track02 static consumer disassembly: added a
   byte-backed HuC6280 bank-$1f fragment for `$243e–$24b0`, extracted from
   the hash-locked US retail ISO with da65. It records the real bitstream and
