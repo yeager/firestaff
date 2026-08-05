@@ -79,6 +79,7 @@ typedef struct {
 static void dm2_md5_init(DM2_Md5Ctx *ctx);
 static void dm2_md5_update(DM2_Md5Ctx *ctx, const unsigned char *input, unsigned int len);
 static void dm2_md5_final(DM2_Md5Ctx *ctx, char outHex[33]);
+static int path_md5_hex(const char *path, char out_hex[33]);
 
 typedef struct {
     uint8_t *bytes;
@@ -426,6 +427,19 @@ static void dm2_md5_bytes_hex(const uint8_t *bytes,
         }
     }
     dm2_md5_final(&ctx, out_hex);
+}
+
+static int dm2_v1_boot_recheck_asset_md5(const uint8_t *memory,
+                                         size_t memory_size,
+                                         const char *path,
+                                         char out_md5[33])
+{
+    if (memory) {
+        if (memory_size == 0u) return 0;
+        dm2_md5_bytes_hex(memory, memory_size, out_md5);
+        return 1;
+    }
+    return path_md5_hex(path, out_md5);
 }
 
 static int dm2_v1_boot_read_asset_bytes(const char *path,
@@ -1477,8 +1491,14 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
      * READ_DUNGEON_STRUCTURE only with the mounted original media. */
     if (profile->graphics_path[0] == '\0' || profile->dungeon_path[0] == '\0' ||
         profile->graphics_md5[0] == '\0' || profile->dungeon_md5[0] == '\0' ||
-        !path_md5_hex(profile->graphics_path, current_graphics_md5) ||
-        !path_md5_hex(profile->dungeon_path, current_dungeon_md5) ||
+        !dm2_v1_boot_recheck_asset_md5(profile->graphics_mem,
+                                        profile->graphics_mem_size,
+                                        profile->graphics_path,
+                                        current_graphics_md5) ||
+        !dm2_v1_boot_recheck_asset_md5(profile->dungeon_mem,
+                                        profile->dungeon_mem_size,
+                                        profile->dungeon_path,
+                                        current_dungeon_md5) ||
         !md5_matches(current_graphics_md5, profile->graphics_md5) ||
         !md5_matches(current_dungeon_md5, profile->dungeon_md5)) {
         return -1;
@@ -1505,7 +1525,18 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
      * original DM2 runtime format and must never cross this boot boundary.
      * SKProject/SKWIN/DME.h File_header and SkWinCore.cpp::READ_DUNGEON_STRUCTURE
      * consume the byte-square G1 payload before INIT can place the party. */
-    if (profile->dungeon_path[0]) {
+    if (profile->dungeon_mem && profile->dungeon_mem_size > 0u) {
+        uint8_t *dat = profile->dungeon_mem;
+        size_t dat_size = profile->dungeon_mem_size;
+        size_t n = dat_size < 64u ? dat_size : 64u;
+        if (n >= 12u) dm2_v1_boot_build_deterministic_config(profile, dat, (int)n);
+        if (dm2_v1_dungeon_load(dd, dat, (int)dat_size) != 0 || dd->square_bytes != 1) {
+            dm2_v1_dungeon_free(dd);
+            free(dd);
+            free(gs);
+            return -1;
+        }
+    } else if (profile->dungeon_path[0]) {
         uint8_t *dat = NULL;
         size_t dat_size = 0u;
         if (dm2_v1_boot_read_asset_bytes(profile->dungeon_path,
@@ -11110,6 +11141,15 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
         free(profile->dm2_state);
         profile->dm2_state = NULL;
     }
+    free(profile->graphics_mem);
+    profile->graphics_mem = NULL;
+    profile->graphics_mem_size = 0u;
+    free(profile->dungeon_mem);
+    profile->dungeon_mem = NULL;
+    profile->dungeon_mem_size = 0u;
+    free(profile->fmtowns_disc_image);
+    profile->fmtowns_disc_image = NULL;
+    profile->fmtowns_disc_image_size = 0u;
     profile->graphics_path[0] = '\0';
     profile->dungeon_path[0] = '\0';
 }

@@ -1056,6 +1056,9 @@ static void test_fmtowns_zip_real_media(void)
           "FM Towns DUNGEON.DAT hash is recorded from disc payload");
     CHECK(p.cdda_cd_dat_verified == 1,
           "FM Towns original CD.DAT is retained for CDDA routing");
+    CHECK(dm2_v1_boot_enter_game(&p) == 0,
+          "FM Towns in-memory source bytes pass the boot recheck");
+    dm2_v1_boot_cleanup(&p);
 }
 
 int main(void)

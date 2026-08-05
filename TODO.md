@@ -4,9 +4,11 @@
   identity-first and in-memory for container media. FM Towns HME-242 now
   admits its real CUE/IMG payload without disk extraction, while M12 now
   catalogs loose, verified FM Towns and Amiga pairs with their correct dungeon
-  identities. Complete M12 menu admission for that CD image and the nested
-  Amiga floppy corpus only after their original GRAPHICS.DAT/DUNGEON.DAT pairs
-  can be verified together.
+  identities. The supplied Amiga archive is an installer corpus: Disk 1 holds
+  only installer scripts and `dm2_arcsplit1`, not launch files. Recover its
+  original installer/archive semantics in memory before admitting it. Complete
+  M12 menu admission for that CD image and the nested Amiga floppy corpus only
+  after their original GRAPHICS.DAT/DUNGEON.DAT pairs can be verified together.
   Do not synthesize a compatible install, palette, dungeon, music map or save
   corpus for any platform.
 

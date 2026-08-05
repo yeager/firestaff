@@ -40,6 +40,12 @@
   from falling back to the PC profile; the opt-in real-media receipt verifies
   the user's unmodified ZIP without unpacking game data onto disk.
 
+- ✅ 2026-08-06 DM2 in-memory launch recheck: FM Towns' authenticated GDAT
+  and G1 buffers are now rehashed from memory at the title-to-game boundary;
+  boot no longer attempts to hash their display label as though it were a host
+  file. Cleanup also releases all retained FM Towns source buffers. The
+  opt-in original-media receipt reaches game entry without unpacking data.
+
 - ✅ 2026-08-05 Nexus startup prompt placeholder removal: suppressed the
   host-generated 12-frame title-prompt blink from production receipts and
   updated startup gates to report no prompt until the original Saturn text/HUD
