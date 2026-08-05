@@ -1,36 +1,8 @@
-- ✅ 2026-08-05 CSB optional-media provenance: verbose `--scan-data` now
-  computes each materialized Utility Disk file's MD5 and consults the shared
-  CSB fingerprint catalog. A real Atari ST package reports `HCSB.DAT`
-  (`708e113c869ab922633e885aa72a3c77`) and `ANIMATE.DAT`
-  (`9f8feb269c959c9fe722ac08f99d9c35`) as verified source media; unlisted
-  optional companions remain explicitly unclassified rather than being
-  presented as verified. Verified by the fingerprint unit, the CSB archive
-  regression, and a scan of the local original package.
-
 - ✅ 2026-08-05 Nexus boot-library corpus verification: the materialized
   original `0DMSTRT.BIN` now passes the real-file structure-admission gate
   (`test_nexus_v1_0dmstrt_structure_admission .../0DMSTRT.BIN`). Its fixup,
   zero-gap, version-stamp, and ISO-stub facts are admitted as opaque source
   structure only; no boot semantics or generated substitute is inferred.
-
-- ✅ 2026-08-05 CSB scanner report: `--scan-data` now distinguishes the
-  mandatory `GRAPHICS.DAT`/`DUNGEON.DAT` launch pair from discovered CSB
-  Utility Disk media. It reports `HCSB.HTC`, `HCSB.DAT`, `HINT.FTL`,
-  `ANIMATE.DAT` and `SWITCH.DAT` only when they are actually present in the
-  selected data tree or archive-materialized CSB cache. Verified against an
-  extracted original Atari ST package: the report shows the two start files
-  plus the real `HCSB.HTC` and `HCSB.DAT` sidecars.
-
-- ✅ 2026-08-05 CSB archive scanner: Utility Disk companions now survive
-  archive-backed discovery alongside the hash-verified launch pair.
-  `HCSB.DAT`, `HINT.FTL`, `ANIMATE.DAT`, `ANIMATE.SCR` and `SWITCH.DAT` are
-  recognised as original CSB candidates and materialized into the ordinary
-  runtime cache when present next to a verified `GRAPHICS.DAT`. `HCSB.DAT`
-  is source-backed Hint/Oracle material (ReDMCSB `HINTLOAD.C` lines 15-18 and
-  `HINTTEXT.C` line 28), not a launch requirement. The launch gate remains
-  correctly limited to verified `GRAPHICS.DAT` and `DUNGEON.DAT`. Verified by
-  `test_csb_archive_required_split` with a split ZIP/ISO package and an
-  archive-backed `HCSB.DAT` sidecar.
 
 - ✅ 2026-08-05 Nexus automap/RES retail follow-up: materialized the
   original `SMAP00.BIN`–`SMAP15.BIN`, `STONE.BIN`, `RHIFIX.BIN`, and
@@ -39,12 +11,6 @@
   passes TITLE, RHIFIX, and POTEFT. Legacy generic automap colors and the
   unused palette constants remain outside the production source-bound route;
   no synthetic pixels were promoted.
-- ✅ 2026-08-05 Theron BIN/CUE/ISO intake hardening: CUE `FILE`, `TRACK`,
-  `INDEX`, and `PREGAP` fields now reject non-whitespace trailing tokens and
-  malformed MSF suffixes before verified-layout/hash admission. Added a
-  regression for trailing CUE tokens. Focused raw-media intake test passes;
-  no local full Track 02 payload is available, so the real-media branch
-  remains an honest skip.
 
 - ✅ 2026-08-05 Nexus secondary retail media corpus materialized: extracted
   original `SMAP00.BIN`–`SMAP15.BIN`, `STONE.BIN`, `RHIFIX.BIN`, `POTEFT.BIN`,
@@ -6901,6 +6867,17 @@
       real-data/capture paths unrelated to this mechanics change.
 
 # Firestaff DONE - Completed Work
+
+- ✅ 2026-08-05 DM2 hash-verified PC-DOS boot repair: expanded the temporary
+  DM2 identity list so all supported `GRAPHICS.DAT` identities and every
+  `DUNGEON.DAT` identity are scanned together. The prior seven-entry limit
+  was exhausted by graphics variants after PC-9821 support, silently omitting
+  every dungeon hash and blocking a valid PC-DOS launch. The real
+  `graphics.dat`/`dungeon.dat` corpus now enters the M11 GDAT-HUD command plan
+  (nine source-backed commands) with no visual fallback. Verification:
+  `dm2_v1_gdat_hud_m11_command_real_data`,
+  `dm2_v1_m11_startup_profile_gate`, `dm2_v1_save_load`, and
+  `dm2_v1_quicksave_original_writer_gate` pass against mounted original data.
 
 - ✅ 2026-08-05 DM2 DOS SKSave header and raw-prefix corpus: added the
   authenticated PC-DOS header admission rule (version word plus bounded ASCII
@@ -48403,13 +48380,20 @@ the supplied root and selected MD5 to prove this without shipping game data.
   instead of the total viewport no-op. Dungeon tiles, unverified chrome, and
   inferred mappings remain fail-closed; the verified Track 02 font and future
   authenticated palette/VRAM routes are now reachable by the real M11 path.
-- ✅ 2026-08-05 Theron VRAM-trace intake hardening: validate the requested
-  64×32 PCE BAT window (2048 words) before accepting an authenticated trace
-  for tile population. Negative start, oversized rectangle, and out-of-range
-  window regressions pass; tile/palette semantics remain unchanged and no
-  inferred BAT mapping is promoted.
-- ✅ 2026-08-05 Theron VRAM-trace intake hardening: validate the requested
-  64×32 PCE BAT window (2048 words) before accepting an authenticated trace
-  for tile population. Negative start, oversized rectangle, and out-of-range
-  window regressions pass; tile/palette semantics remain unchanged and no
-  inferred BAT mapping is promoted.
+- ✅ 2026-08-05 DM1 HoC object presentation: restored ReDMCSB's D2 palette
+  remap for D1/D0 wall ornaments, preventing authentic torch-holder and
+  ornament pixels from becoming black silhouettes. Corrected the C00/C01
+  ready/action hand slot masks so valid objects can be placed in either hand.
+
+- ✅ 2026-08-05 DM1 leader-hand cursor: after pickup, the framebuffer draws
+  the source PC34 16x16 object icon at the tracked pointer position, using
+  the same F0033/F0038 icon resolver as inventory and action cells.
+## DM1 HoC viewport occlusion
+
+- **DM1-VIEWPORT-001**: Fixed the corridor-through-wall artifact in the live
+  M11 renderer. ReDMCSB F0128 draws center walls as part of each square before
+  visiting nearer squares; Firestaff's deferred F0115 batch could otherwise
+  paint deeper corridor content over a nearer wall. The final source-backed
+  center-wall pass now restores the wall and then replays the D1C champion
+  mirror route. Verified with the DM1 wall-ornament and inventory placement
+  tests plus a clean `firestaff` Ninja build on 2026-08-05.

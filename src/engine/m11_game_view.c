@@ -46418,6 +46418,16 @@ static void m11_draw_viewport(const M11_GameViewState* state,
     m11_draw_dm1_side_destroyed_door_masks(state, framebuffer,
                                            framebufferWidth, framebufferHeight,
                                            maxVisibleForward, cells);
+    /* ReDMCSB F0128 draws each center wall as part of its square before the
+     * next nearer square is visited.  M11's deferred F0115 loop can otherwise
+     * leave a far corridor/object visible through a nearer D1C/D2C/D3C wall.
+     * Re-emit only the source-owned center wall envelope after that deferred
+     * loop, then restore the wall-owned champion mirror route.  This is an
+     * occlusion repair, not a synthetic mask or a replacement bitmap. */
+    m11_draw_dm1_front_walls(state, framebuffer, framebufferWidth,
+                             framebufferHeight, cells);
+    m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
+                                    framebufferWidth, framebufferHeight);
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);

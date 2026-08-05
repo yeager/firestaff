@@ -24873,7 +24873,3 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - [ ] DM1-HOC-OBJECTS-002 Capture a real PC34 HoC pickup/placement round trip
   for weapon, potion, scroll, container and junk objects. Confirm M564 names,
   C00/C01 hand masks and backpack ownership remain source-backed.
-- [ ] DM1-VIEWPORT-001 Verify nearest-wall occlusion on real HoC corridor
-  captures. A corridor can currently appear to continue through the wall;
-  compare the F0107/F0115 draw order with the PC34 viewport capture before
-  changing geometry or adding a synthetic mask.
