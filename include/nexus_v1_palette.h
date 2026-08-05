@@ -16,16 +16,9 @@
  * DGN geometry blob encodes per-square palette indices, allowing
  * texture lookup without loading full texture bitmaps.
  *
- * Nexus uses the same 256-color indexed palette as DM1/CSB but with
- * a different master palette optimized for Saturn's color space.
- *
- * Palette slots:
- *   0       = transparency / black
- *   1-15    = dungeon base (stone/wall tones)
- *   16-31   = creature/character colors
- *   32-63   = object/pickup colors
- *   64-127  = UI / HUD colors
- *   128-255 = extended dungeon (ornaments, effects, lava, water) */
+ * No global slot ownership is inferred here. Retail Nexus assets carry
+ * image-local palettes or Saturn-owned CLUT state; a palette becomes usable
+ * only after an authenticated source span has bound it. */
 
 /* Number of palette entries and texture slots */
 #define NEXUS_PALETTE_SIZE     256

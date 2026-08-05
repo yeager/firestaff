@@ -9,11 +9,11 @@
 
 ## Overview
 
-Nexus V1 has **no menu system implemented** in the Firestaff codebase.
-`nexus_v1_engine.c` handles initialization, file loading, level loading, and
-game tick — but no menu, dialog, or front-end state machine exists in
-`src/nexus/`. The front-end files implement DM1 V1 (PC 3.4) compatible menus only.
-No Nexus-specific menu front-end has been written.
+Nexus V1 has a host-side startup state/input route in
+`src/nexus/nexus_v1_startup_menu.c`, with asset gating in
+`src/nexus/nexus_v1_launcher.c`. It covers save/new-game selection, champion
+selection, input receipts, and engine transition. This does not claim that the
+retail Saturn menu pixels, CLUT ownership, or VDP1/VDP2 placement are known.
 
 ## DM1 Menu System Reference
 
@@ -32,19 +32,20 @@ Menu flow: Title -> Entrance (New/Continue) -> Party creation -> Dungeon load ->
 ## Nexus-Specific Menu Considerations
 
 ### Title Screen
-Nexus title screen displays a 3D dungeon logo (different from DM1s 2D logo).
-The Saturn version has a unique animated title rendered as a 3D scene,
-not a static bitmap. No Nexus title screen implementation exists.
+Real TITLE.BIN/TITLE.CG and WARNING/GAMEOVER assets are loaded and structurally
+decoded. The Saturn tilemap/CLUT/runtime placement remains capture-gated; no
+3D title interpretation is claimed without that evidence.
 
 ### Menu State Machine
 A Nexus menu system needs states for:
 - Title/Start: 3D animated logo, New Game / Continue / Options
-- Champion Select: 8 Japanese champions (Syra, Leyla, Nabi, etc.)
+- Champion Select: source-owned champion records (20 live PLRD/TABL records)
 - Options: Display mode (fullscreen/windowed), audio levels
 - In-Game Menu: ESC pause with stats, inventory, spells, save
 - End Game / Credits: DMV0-2.AVI cutscenes
 
-No nexus_v1_menu.c or equivalent exists yet.
+There is no separate `nexus_v1_menu.c`; the startup route is intentionally
+split between the startup menu, layout helpers, and launcher.
 
 ### DM1 Logic vs Saturn UI
 Nexus inherits DM1 game logic but the Saturn UI runs on SH-2 with VDP1/VDP2
@@ -55,20 +56,20 @@ Nexus engine (3D viewport + logic).
 ### Champion Roster (nexus_v1_champions.c)
 Nexus champion names and count come from the real PLRD/TABL resource
 records: 20 live records, with 24 slots retained only for storage capacity.
-No champion selection UI exists in the codebase.
+Champion selection state/input exists; Saturn presentation remains blocked.
 
 ## What Exists vs Whats Missing
 
 Implemented:
 - Engine initialization with font loading (nexus_v1_init)
 - Level loading from LEV*.DGN files
-- 3D viewport renderer (nexus_v1_viewport_render)
+- 3D viewport source/material plan and fail-closed renderer route
 - DMDF model loading for creatures
-- CD audio track management (no playback yet)
+- CD audio/SAL provenance and selection management (playback remains capture-gated)
 
-Not Yet Implemented:
-- Title screen / start menu
-- Champion selection screen (party creation)
+Still blocked or incomplete:
+- Saturn title/start-menu renderer and VDP1/VDP2 placement
+- Champion selection Saturn presentation (party creation pixels)
 - In-game ESC menu
 - Save/load menu (Saturn SRAM format)
 - Options/settings menu
@@ -79,19 +80,19 @@ Not Yet Implemented:
 
 | Feature | DM1 | Nexus V1 |
 |---------|-----|----------|
-| Title screen | 2D bitmap logo | 3D animated (not impl) |
-| Start menu options | New Game / Continue | TBD |
+| Title screen | 2D bitmap logo | Real source decode; Saturn placement blocked |
+| Start menu options | New Game / Continue | Host state/input route implemented |
 | Champion roster | Western names (24) | 20 PLRD records |
-| Champion select UI | Sprite-based | Not impl |
+| Champion select UI | Sprite-based | State/input route; Saturn presentation blocked |
 | In-game menu | ESC key, 2D panel | Not impl |
 | Save/load | Binary slot files | Saturn SRAM |
 | Credits | Static bitmap | AVI cutscenes |
 | Menu rendering | SDL blit | VDP1/VDP2 (not impl) |
 
 ## Next Steps
-1. Define nexus_v1_menu_state_t enum and state machine
-2. Implement title screen renderer
-3. Implement champion selection UI
-4. Bridge menu state machine with nexus_v1_engine game loop
-5. Implement save/load using Saturn SRAM format (SRAM.BIN)
-6. Add FMV playback for DMV0-2.AVI cutscenes
+1. Authenticate Saturn menu command/palette/placement capture
+2. Bind the existing startup state/input route to that capture
+3. Authenticate champion portrait and HUD VDP1 ownership
+4. Bridge only source-proven menu transitions into the engine game loop
+5. Implement save/load using an authenticated Saturn SRAM format
+6. Add FMV playback only after authentic DMV0-2.AVI ownership is proven

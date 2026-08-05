@@ -66,6 +66,10 @@
   remains available, but use and equipment-to-inventory mutation are no-op
   until the Saturn action dispatcher is source-bound. Floor-item records remain
   provenance-only until the same dispatcher proves pickup/slot semantics.
+  Startup state/input and DM.BIN champion-panel geometry are source-bound host
+  handoffs only; their compatibility hit regions must not be described as
+  retail Saturn screen coordinates. Unsupported Japanese double-byte text
+  remains unavailable until a real JIS table and consumer are authenticated.
   The mechanics tick now applies the same gate to floor pickup, DROP_ITEM and
   THROW; no live inventory/floor mutation occurs from unproven ITEM/action
   semantics.

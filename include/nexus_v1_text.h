@@ -6,8 +6,9 @@
 #include "nexus_v1_rasterizer.h"
 #include "nexus_v1_s2d_text_layout.h"
 
-/* Shift-JIS text extraction from Nexus Saturn data.
- * Japanese text in DM.BIN, SLEV*.BIN, and DGN files. */
+/* Source-bound text extraction from Nexus Saturn data.
+ * ASCII and half-width katakana are converted. Unsupported JIS X 0208
+ * double-byte text returns -1; no replacement glyph is synthesized. */
 
 int nexus_v1_sjis_to_utf8(const uint8_t *sjis, int sjis_len,
     char *utf8_out, int utf8_max);

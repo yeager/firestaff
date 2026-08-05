@@ -11,12 +11,16 @@
 
 ## 1. Menu System Overview
 
-**Nexus V1 has no menu system implemented in the Firestaff codebase.**
+The startup state machine is implemented in `src/nexus/nexus_v1_startup_menu.c`
+and is exercised by the Nexus startup tests. It owns save-slot discovery,
+new-game/continue selection, champion selection, input receipts, and the
+transition into the engine. `src/nexus/nexus_v1_launcher.c` owns the real-data
+asset gate.
 
-The engine (nexus_v1_engine.c) handles initialization, file loading, level
-loading, and game tick — but no menu, dialog, or front-end state machine
-exists in src/nexus/. The front-end files implement DM1 V1 (PC 3.4) compatible
-menus only. No Nexus-specific menu front-end has been written.
+This is a host-side state/input route, not proof of Saturn menu presentation.
+The current startup layout helpers are compatibility hit regions; they are
+not claimed as retail screen coordinates. `MENU.BPK`, FONT256/S2D mapping,
+palette ownership, and VDP1/VDP2 placement remain capture-gated.
 
 ---
 
@@ -37,9 +41,10 @@ Title Screen (3D animated)
 ## 3. Required Menu States
 
 ### Title/Start State
-- 3D animated logo (see nexus_title.md)
-- New Game / Continue / Options buttons
-- No FMV before title (Nexus has no boot-time intro)
+- Real TITLE.BIN/TITLE.CG and WARNING/GAMEOVER source loading is present.
+- New Game / Continue and champion-selection state transitions are present.
+- Saturn tilemap/CLUT placement and final pixels remain blocked without an
+  authenticated original capture.
 
 ### Champion Select State
 - 24 Japanese champions (Syra, Leyla, Nabi, etc.)
@@ -93,15 +98,17 @@ A Nexus menu layer must bridge:
 - Game state machine (engine concern)
 - 3D viewport rendering (engine renders, front-end composites)
 
-No nexus_v1_menu.c or equivalent exists yet.
+There is no separate `nexus_v1_menu.c`; the startup menu is deliberately
+split between `nexus_v1_startup_menu.c`, `nexus_v1_startup_layout.c`, and the
+launcher. This keeps state transitions testable without pretending that host
+rectangles are Saturn VDP coordinates.
 
 ---
 
-## 6. Not Yet Implemented
+## 6. Still blocked or incomplete
 
-- nexus_v1_menu_state_t enum and state machine
-- Title screen renderer (nexus_v1_title_render)
-- Champion selection UI (3D portraits, party formation)
+- Authenticated Saturn menu renderer and VDP1/VDP2 placement
+- Champion-selection Saturn presentation (3D/VDP1 portraits, party formation)
 - In-game ESC menu
 - Save/load menu (Saturn SRAM format)
 - Options/settings menu
@@ -114,10 +121,10 @@ No nexus_v1_menu.c or equivalent exists yet.
 
 | Feature | DM1 | Nexus V1 |
 |---------|-----|----------|
-| Title screen | 2D bitmap logo | 3D animated (not impl) |
-| Start menu options | New Game / Continue | TBD |
+| Title screen | 2D bitmap logo | Real source decode; Saturn placement blocked |
+| Start menu options | New Game / Continue | Host state/input route implemented |
 | Champion roster | Western names (24) | 20 PLRD records |
-| Champion select UI | Sprite-based | Not impl |
+| Champion select UI | Sprite-based | State/input route; Saturn presentation blocked |
 | In-game menu | ESC key, 2D panel | Not impl |
 | Save/load | Binary slot files | Saturn SRAM |
 | Credits | Static bitmap | AVI cutscenes |

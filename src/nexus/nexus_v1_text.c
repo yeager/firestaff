@@ -3,9 +3,10 @@
 #include <string.h>
 #include <stdio.h>
 
-/* Basic Shift-JIS to UTF-8 converter.
- * Handles ASCII (0x20-0x7E) and katakana (0xA1-0xDF).
- * Full JIS X 0208 conversion would require lookup tables. */
+/* Bounded source conversion only.
+ * Handles ASCII (0x20-0x7E) and half-width katakana (0xA1-0xDF).
+ * Full JIS X 0208 conversion requires an authenticated lookup table. Do not
+ * replace an unhandled double-byte code with a fabricated '?' glyph. */
 int nexus_v1_sjis_to_utf8(const uint8_t *sjis, int sjis_len,
     char *utf8_out, int utf8_max)
 {
@@ -28,9 +29,9 @@ int nexus_v1_sjis_to_utf8(const uint8_t *sjis, int sjis_len,
             utf8_out[ui++] = (char)(0x80 | (cp & 0x3F));
             si++;
         } else if ((b >= 0x81 && b <= 0x9F) || (b >= 0xE0 && b <= 0xEF)) {
-            /* Double-byte Shift-JIS (skip for now — needs lookup table) */
-            utf8_out[ui++] = '?';
-            si += 2;
+            /* JIS X 0208 ownership is not proven by this small converter.
+             * Fail closed rather than inventing a replacement character. */
+            return -1;
         } else {
             si++;
         }
@@ -56,8 +57,11 @@ int nexus_v1_extract_strings(const uint8_t *data, int size,
             i++;
         if (i - start >= 4) {
             static char buf[256];
-            nexus_v1_sjis_to_utf8(data + start, i - start, buf, sizeof(buf));
-            out_strings[count++] = buf; /* Note: reuses buffer — copy in real use */
+            int converted = nexus_v1_sjis_to_utf8(
+                data + start, i - start, buf, sizeof(buf));
+            if (converted >= 0) {
+                out_strings[count++] = buf;
+            }
         }
         i++;
     }

@@ -13,6 +13,13 @@
   build passes; `test_dm1_v1_command_movement_sensor_timing_pc34_compat` and
   `test_dm1_v1_movement_pipeline_pc34_compat` pass (403/403), together with
   the real PC34 object/name regressions.
+- ✅ 2026-08-06 Nexus placeholder audit: removed the synthetic `?` replacement
+  from the narrow Shift-JIS utility; unsupported JIS X 0208 bytes now fail
+  closed and string extraction drops unproven text instead of manufacturing a
+  glyph. Corrected stale Nexus menu/input/HUD documentation to distinguish the
+  implemented startup state/input and retail DM.BIN geometry handoffs from the
+  still capture-gated Saturn pixels, CLUTs, and VDP1/VDP2 placement. No game
+  data was added to the repository.
 
 - ✅ 2026-08-06 DM1 real HoC pickup/placement proof: extended the real
   PC3.4 alcove-object runtime test through the source inventory route. A

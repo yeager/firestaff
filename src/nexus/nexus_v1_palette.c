@@ -19,7 +19,8 @@
 
 /* ── BGR555 → RGBA ─────────────────────────────────────────────────── */
 
-/* Saturn VDP1: Color RAM 16-bit BGR555
+/* Saturn VDP1: Color RAM 16-bit BGR555. This conversion is useful only
+ * after the caller has authenticated ownership of the source CLUT.
  *   bits [14:10] = R (5 bits)
  *   bits [ 9: 5] = G (5 bits)
  *   bits [ 4: 0] = B (5 bits)

@@ -99,19 +99,23 @@ Firestaff command queue. nexus_v1_tick() is called each frame by the game
 loop — input is processed before nexus_v1_tick().
 
 ### Menu Navigation
-No menu system exists yet for Nexus. When implemented, will need:
-- Title screen: D-pad / arrow keys to navigate, A/Start to confirm
-- Champion select: D-pad to scroll roster, A to select
-- In-game menu: ESC/Y to open, D-pad to navigate, B to cancel
+The Nexus startup state machine in `src/nexus/nexus_v1_startup_menu.c` now
+handles title idle/start, save/new-game selection, and champion selection.
+The corresponding mouse hit helpers are in `nexus_v1_startup_layout.c`; they
+are host compatibility regions, not authenticated Saturn coordinates.
+
+The in-game ESC/pause menu and Saturn-owned menu presentation remain blocked
+until their original runtime command/VDP ownership is captured.
 
 ## Whats Implemented vs Whats Missing
 
 Implemented: Keyboard command mapping, input queue FIFO, touch-to-mouse
-gesture system, SDL gamepad mapping, ESC/Tab/Space action keys, WASD toggle.
+gesture system, SDL gamepad mapping, startup save/champion state input,
+ESC/Tab/Space action keys, and WASD toggle.
 
-Not yet implemented: Nexus menu input routing, mouse click-to-square
-routing in 3D viewport, champion portrait click, inventory drag-and-drop,
-key binding customization, pause menu (ESC routed but no menu exists).
+Not yet implemented: authenticated mouse click-to-square routing in the 3D
+viewport, Saturn-owned champion portrait click/presentation, inventory
+drag-and-drop, key binding customization, and the in-game pause menu.
 
 ## Next Steps
 1. Implement mouse click-to-square routing in 3D viewport

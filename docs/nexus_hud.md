@@ -96,9 +96,11 @@ launcher or engine production path calls these functions.
 Implemented only in the isolated diagnostic: compass rose, movement arrows,
 message queue with timed dismiss, and food/water warning icons.
 
-Nexus production still lacks authenticated champion stat bars, portrait display,
-spell symbol area, inventory panel, status effect indicators, VDP2 minimap
-placement, and Saturn-owned message text binding.
+Nexus production now has authenticated champion-panel geometry from retail
+`DM.BIN` (12 stat bars, 4 inventory slots, 8 equipment slots) exposed through
+the engine handoff. It still lacks authenticated pixel/CLUT ownership for
+stat bars, portraits, spell symbols, inventory art, status effects, VDP2
+minimap placement, and Saturn-owned message text binding.
 
 ## Next Steps
 1. Bind HUD widget ownership and placement from an authenticated Saturn capture.
