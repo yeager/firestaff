@@ -13,9 +13,6 @@
 #include <stdint.h>
 #include <string.h>
 
-/* TODO: fill from skproject c_input.cpp table1d3efd */
-const int8_t dm2_v1_table1d3efd[236] = {0};
-
 void dm2_v1_handle_ui_event(
     const DM2_V1_HandleUiEventCallbacks *cb,
     void *ctx,
@@ -357,4 +354,3 @@ int16_t dm2_v1_1031_03f2(
 
     return -1;
 }
-

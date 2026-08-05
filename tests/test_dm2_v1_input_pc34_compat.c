@@ -253,13 +253,6 @@ static void test_exec_event_null_safety(void)
     printf("  PASS: exec_event_null_safety\n");
 }
 
-static void test_table1d3efd_size(void)
-{
-    assert(sizeof(dm2_v1_table1d3efd) == 236);
-
-    printf("  PASS: table1d3efd_size\n");
-}
-
 static void test_1031_03f2_basic(void)
 {
     int16_t tree[] = {10, 20, 30, 40, 50};
@@ -337,11 +330,10 @@ int main(void)
     test_exec_event_terminate();
     test_exec_event_set_delay();
     test_exec_event_null_safety();
-    test_table1d3efd_size();
     test_1031_03f2_basic();
     test_handle_ui_event_spell();
     test_handle_ui_event_viewport();
 
-    printf("All 13 tests passed.\n");
+    printf("All 12 tests passed.\n");
     return 0;
 }

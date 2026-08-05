@@ -103,10 +103,6 @@ typedef struct {
     int16_t events_processed;
 } DM2_V1_InputCheckReceipt;
 
-/* ── bytecode event routing table ────────────────────────────────── */
-
-extern const int8_t dm2_v1_table1d3efd[236];
-
 /* ── function declarations ───────────────────────────────────────── */
 
 void dm2_v1_handle_ui_event(

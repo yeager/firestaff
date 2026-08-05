@@ -23,6 +23,12 @@
   reaches 757 passing assertions but retains two pre-existing failures in the
   independent C06 local-effect sensor fixture.
 
+- ✅ 2026-08-05 DM2 input placeholder removal: removed the unused, exported
+  zero-filled `table1d3efd[236]` fixture from the production input module and
+  its size-only test. It has no counterpart or consumer in SKProject; the
+  original input queue resolves its event geometry through the source-owned
+  ten-entry `table1d3ed5` tree. No invented bytecode-routing data remains.
+
 - ✅ 2026-08-05 Nexus `MENU.BPK` ISO-revision provenance: verified that the
   local English retail file is the exact ISO entry (87,684 bytes,
   `a6f2272a4f6cb3c6b3b33012bc5b15ed` MD5) and recorded the separate French

@@ -3698,6 +3698,9 @@ that its exact runtime path is not already source-locked and tested.
 47. **DM2-INPUT-CONTROLLER-TOUCH:** Complete mouse, keyboard, controller,
     Steam Deck, touch, focus, scaling, hit-testing, and command translation
     for the real DM2 menu/HUD/gameplay routes.
+    **2026-08-05 inventory:** removed an unused exported 236-byte all-zero
+    input-table fixture. SKProject routes this input path through the real
+    ten-entry `table1d3ed5` event tree; no replacement bytes were inferred.
 48. **DM2-MAC-RELEASE-CAPTURE:** Complete packaged macOS/app captures and
     source-data visual evidence for title, menu, HUD, dungeon, doors,
     creatures, weather, saves, and input.
