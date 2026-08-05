@@ -5,6 +5,13 @@
   SDDRVS handoff, and production playback remain explicitly blocked pending
   Saturn disassembly or authenticated capture evidence.
 
+- ✅ 2026-08-05 Nexus HUD placeholder removal: removed the fabricated
+  `[Script message N]`, `DRINK`, and `GAME SAVED` strings from production
+  paths. SLEV message ownership and the DMN text-table lookup are not yet
+  authenticated, so these actions now remain silent instead of injecting
+  non-retail English text into the HUD. Real message rendering remains open
+  until the original text consumer is bound.
+
 - ✅ 2026-08-06 Theron Track19 startup envelope receipt: real US and JP
   Track19 ISOs now validate the exact 32×27, 876-byte envelope at `0x5a9114`
   with FNV-1a `0x54fce0a0`; its bytes match the canonical retail Track02

@@ -2669,9 +2669,11 @@ static void nexus_engine_script_handler(const Nexus_ScriptAction *action,
         break;
     }
     case NEXUS_OP_DISPLAY_MESSAGE: {
-        char msg[64];
-        snprintf(msg, sizeof(msg), "[Script message %d]", action->message_id);
-        nexus_v1_message_push(&engine->messages, msg);
+        /* Real SLEV action ownership and the DMN text-table lookup are not
+         * source-authenticated yet. Never place a fabricated message ID in
+         * the production HUD; the script runtime remains fail-closed until
+         * its original consumer is recovered. */
+        (void)action->message_id;
         break;
     }
     case NEXUS_OP_SET_FLAG:

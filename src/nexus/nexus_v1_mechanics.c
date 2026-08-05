@@ -814,7 +814,9 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     needs_redraw = 1;
                 } else if (fnt_idx >= 0) {
                     nexus_v1_fountain_drink(&engine->fountains, fnt_idx, leader);
-                    nexus_v1_message_push(&engine->messages, "DRINK");
+                    /* Nexus HUD text ownership is not established by the
+                     * retail fountain record. Do not substitute the DM1
+                     * English action label in the production HUD. */
                     needs_redraw = 1;
                 } else if (altar_state != 0) {
                     /* Altar square: attempt ritual.  Real effect is blocked
@@ -1446,7 +1448,8 @@ int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
                            st->party_x, st->party_y, st->party_dir,
                            (uint32_t)engine->game.tick_count,
                            0, &engine->champions, NULL);
-        nexus_v1_message_push(&engine->messages, "GAME SAVED");
+        /* Save success has no authenticated Nexus text owner yet. Avoid
+         * presenting a fabricated English HUD string. */
         return 0;
     case NEXUS_UI_EVENT_SET_LEADER:
         nexus_mechanics_set_leader_slot(st, param);

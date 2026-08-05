@@ -20,6 +20,8 @@
   V1 movement no longer invents adjacent-level same-coordinate stairs or
   writes host radius-reveals into the retail automap state; source-owned
   Structure1F destinations and Saturn explored-state evidence remain needed.
+  Production HUD no longer injects fabricated script/fountain/save strings;
+  bind these messages only through authenticated DMN text and SLEV consumers.
 
 - **DUNGEON-STUDIO-FSDUNG:** Dungeon Studio: import original dungeons from
   all five games (DM1, CSB, DM2, Theron's Quest, DM Nexus) and export to a
