@@ -48350,3 +48350,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
   16-bit receipt field or calculating the copy span. Regression coverage now
   proves the overflow boundary fails closed; no real-data semantics are
   inferred or promoted.
+- ✅ 2026-08-05 Theron M11 integration: production `firestaff_theron` now
+  links the source-bound `theron_v1_viewport.c` lifecycle/presentation path
+  instead of the total viewport no-op. Dungeon tiles, unverified chrome, and
+  inferred mappings remain fail-closed; the verified Track 02 font and future
+  authenticated palette/VRAM routes are now reachable by the real M11 path.

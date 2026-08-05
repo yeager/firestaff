@@ -19,8 +19,9 @@
   remain blocked until the complete SKProject read order is recovered.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
-  structural no-op seam. Reconnect the real Track 02 level handoff only after
-  the authenticated tile/material/UI banks and square mapping are decoded.
+  source-bound lifecycle/presentation path with a structural fail-closed seam.
+  Reconnect the real Track 02 level handoff only after the authenticated
+  tile/material/UI banks and square mapping are decoded.
   Keep BIN/CUE/ISO receipt normalization and later object/level records on
   the same verified-media path.
 

@@ -226,9 +226,9 @@ static void tqr_ui_draw_char(TQR_PlanarFramebuffer *fb,
                              char ch,
                              uint8_t color) {
     if (!fb || !fb->data) return;
-    for (int row = 0; row < THERON_TRACK02_FONT_GLYPH_HEIGHT; row++) {
+    for (int row = 0; row < (int)THERON_TRACK02_FONT_GLYPH_HEIGHT; row++) {
         uint8_t bits = tqr_ui_glyph_row(ch, row);
-        for (int col = 0; col < THERON_TRACK02_FONT_GLYPH_WIDTH; col++) {
+        for (int col = 0; col < (int)THERON_TRACK02_FONT_GLYPH_WIDTH; col++) {
             if ((bits & (uint8_t)(1u << (7 - col))) == 0) continue;
             int px = x + col;
             int py = y + row;
