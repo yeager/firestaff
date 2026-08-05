@@ -49188,6 +49188,20 @@ their compatibility coverage. Verification: `test_dm2_v1_teleporter_material_gat
 PASS and PC English boot probe PASS with original `graphics.dat` MD5
 `25247ede4dabb6a71e5dabdfbcd5907d`. Source: `SKWINSPX/src/v4/c_gui_vp.cpp::DRAW_TELEPORTER_TILE`
 and `kskval1.h` teleporter tables.
+
+# ✅ 2026-08-06 DM2 PC Greatstone full raster decode audit
+
+The PC English GDAT loader now follows `DME.h IMG3::Getpf`'s `OffsetY ==
+-32` branch before selecting IMG9 decoding. Greatstone's four records marked
+IMG11 (`0642`, `2691`, `2781`, `2894`) are the original uncompressed U8
+payload form: their pixels begin at `IMG3 + 10`, rather than an IMG9 command
+stream. The shared extraction receipt now decodes them correctly and the
+catalogue audit proves actual decoded pixel hashes for all 4,031 IMG3/IMG9/
+IMG11 rasters in the PC `GRAPHICS.DAT`; only FNT1 0203 remains a font record,
+not a raster fallback. Verification: `probe_dm2_v1_asset_loader` 35/35 PASS
+against MD5 `25247ede4dabb6a71e5dabdfbcd5907d`; PC English boot probe PASS.
+Source: `SKWINSPX/src/v4/DME.h::IMG3::Getpf` and
+`c_gfx_decode.cpp::EXTRACT_GDAT_IMAGE`.
 - ✅ 2026-08-05 Theron Track02 static consumer disassembly: added a
   byte-backed HuC6280 bank-$1f fragment for `$243e–$24b0`, extracted from
   the hash-locked US retail ISO with da65. It records the real bitstream and

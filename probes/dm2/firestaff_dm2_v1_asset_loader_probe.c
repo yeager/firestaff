@@ -424,9 +424,7 @@ int main(int argc, char **argv) {
                                 &image_receipt) && image_receipt.valid &&
                             image_receipt.width > 0u &&
                             image_receipt.height > 0u &&
-                            image_receipt.decoded_pixel_hash != 0u &&
-                            (image_receipt.decode_img3_underlay ||
-                             image_receipt.decode_img9)) {
+                            image_receipt.decoded_pixel_hash != 0u) {
                             ++decoded_image_raw_count;
                         }
                     }
@@ -435,15 +433,11 @@ int main(int argc, char **argv) {
             PROBE_ASSERT(image_raw_count == 4032u,
                          "PC English image raw records match Greatstone PNG catalogue: %u",
                          image_raw_count);
-            /* Greatstone labels four records IMG11 (0642, 2691, 2781, 2894).
-             * They retain their source metadata but are deliberately no-draw
-             * until an IMG11 decoder exists; every IMG3/IMG9 raster must
-             * produce actual decoded pixels. */
-            PROBE_ASSERT(decoded_image_raw_count == 4027u,
-                         "all Greatstone IMG3/IMG9 rasters have decoded pixels: %u",
+            PROBE_ASSERT(decoded_image_raw_count == 4031u,
+                         "all Greatstone IMG3/IMG9/IMG11 rasters have decoded pixels: %u",
                          decoded_image_raw_count);
-            PROBE_ASSERT(image_raw_count - decoded_image_raw_count == 5u,
-                         "only Greatstone's four IMG11 records plus FNT1 remain non-raster: %u",
+            PROBE_ASSERT(image_raw_count - decoded_image_raw_count == 1u,
+                         "only Greatstone's FNT1 record remains non-raster: %u",
                          image_raw_count - decoded_image_raw_count);
             free(seen_images);
         }

@@ -1950,21 +1950,23 @@ int dm2_v1_extract_gdat_image_receipt(
         receipt.uses_underlay = 1u;
         receipt.decode_img3_overlay = 1u;
         receipt.underlay_raw_index = (uint16_t)underlay_raw;
+    } else if (dm2_img3_signed_offset(cy) == -32) {
+        /* DME.h IMG3::Getpf routes OffsetY == -32 through the native
+         * uncompressed U4/U8 payload, before the IMG9 branch.  Greatstone's
+         * four IMG11 records are the U8 form: their bpp word is 8 but their
+         * pixels start directly at IMG3+10, not in an IMG9 command stream. */
+        pixels = dm2_decode_uncompressed_image(raw, raw_size,
+                                               receipt.width,
+                                               receipt.height,
+                                               bpp, &fmt);
     } else if (bpp == 8u) {
         receipt.decode_img9 = 1u;
         pixels = dm2_decode_img9_c8(raw, raw_size, receipt.width,
                                     receipt.height, &fmt);
     } else {
         receipt.decode_img3_underlay = 1u;
-        if (dm2_img3_signed_offset(cy) == -32) {
-            pixels = dm2_decode_uncompressed_image(raw, raw_size,
-                                                   receipt.width,
-                                                   receipt.height,
-                                                   bpp, &fmt);
-        } else {
-            pixels = dm2_decode_img3_c4(raw, raw_size, receipt.width,
-                                        receipt.height, &fmt);
-        }
+        pixels = dm2_decode_img3_c4(raw, raw_size, receipt.width,
+                                    receipt.height, &fmt);
     }
 
     row_bytes = bpp == 4u ? (uint32_t)(((receipt.width + 1u) & 0xfffeu) >> 1)
