@@ -23777,10 +23777,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - Nexus Structure1F multi-level capture remains no-draw: LEV00--LEV15 now
   require one exact package identity and per-level DGN, descriptor, mesh, and
   face candidate identities before a Saturn trace target can be emitted.
-  Local positive corpus evidence is currently missing: this workspace has no
-  `FIRESTAFF_NEXUS_DATA_DIR` and no authenticated `LEV00.DGN`--`LEV15.DGN`
-  files, so the parser-backed Structure1F/2/3 no-draw acceptance remains
-  skip-safe rather than retail-positive here. The M11 direct-LEV no-draw
+  The local English retail ISO has now been materialized into the configured
+  Nexus data root and all `LEV00.DGN`--`LEV15.DGN` files parse positively.
+  This proves the parser-backed source envelopes only; Structure1F/2/3
+  material, capture and draw semantics remain no-draw. The M11 direct-LEV
+  no-draw
   lifecycle now rehashes its selected ordinary source file and rejects level,
   epoch, MD5, size, FNV, buffer, source-file, and geometry drift. It also
   requires parser-observed DGN container-header and bounded counted
@@ -23802,7 +23803,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   Structure1F row must all agree at consumption. This is capture-required
   topology framing only: it proves no surface, winding, transform, material,
   texture, palette, VDP1, or draw behavior. Retail-positive confirmation
-  remains unavailable without the authenticated direct LEV corpus.
+  remains unavailable without an authenticated Saturn material/VDP1 capture.
   An operator-only M11
   capture-replay target now rehashes and freezes the selected direct source,
   card/package/epoch, face/descriptor and candidate identities before it can
@@ -23952,11 +23953,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   original Saturn trace observations; mesh/face geometry and all
   pixel/palette semantics stay uninterpreted.
 
-- The direct SLEV/SAL/MAP/SDDRVS discovery route has fixture evidence for
-  hash/identity and M11 no-runtime rejection behavior, but this workspace has
-  not admitted a full authentic auxiliary corpus through
-  `FIRESTAFF_NEXUS_DATA_DIR`. Retail-positive script/audio trace evidence,
-  dispatch, decoding, and playback remain blocked. The direct SDDRVS dungeon
+- The direct SLEV/SAL/MAP/SDDRVS discovery route now has the materialized
+  English retail auxiliary corpus with positive hash/identity and bounded
+  parser receipts. Retail-positive script/audio trace evidence, dispatch,
+  decoding, and playback remain blocked. The direct SDDRVS dungeon
   admission also revalidates its direct file at consumption, but it still
   awaits authentic package/level/trace evidence before any script claim. The
   matching direct SAL/SLEV/MAP dungeon route now has the same identity-only
