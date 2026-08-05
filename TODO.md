@@ -674,7 +674,10 @@
   now requires the `CREATURES[type].word(0x05)` plus per-field GDAT route.
   Spawn, attack, spell, HP and projectile paths reject an unowned row. Bind
   the live DB4 creature record and active loader through the remaining CCM
-  and field-runtime consumers.
+  and field-runtime consumers. **2026-08-05 update:** an unresolved CCM
+  body now consumes its 0x21/0x22 timer without scheduling a coordinate-only
+  retry. The former re-queue could keep a creature active without the
+  original command stream, and is removed pending complete CCM ownership.
 
 - **DM2-LEGACY-GAME-LOOP-DATA-ADMISSION:** `src/engine/firestaff_game_loop.c`
   is not part of the built M11 DM2 launch route and still contains diagnostic

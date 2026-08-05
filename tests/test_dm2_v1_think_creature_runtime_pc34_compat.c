@@ -150,8 +150,8 @@ static void test_runtime_per_cell_think_resolution(void)
           "creature record resolved at the 0x21 cell");
     CHECK(receipt.no_creature_at_cell == 1,
           "0x22 cell without a creature took the source early return");
-    CHECK(receipt.body_consumed == 1,
-          "think body consumed the resolved creature timer");
+    CHECK(receipt.body_consumed == 0 && receipt.body_rejected == 1,
+          "unbound CCM body consumes the timer without rescheduling a creature");
     CHECK(receipt.last_creature_type == 0x0C,
           "resolved record exposes the DB4 creature type byte");
     CHECK(receipt.last_map == 0 &&

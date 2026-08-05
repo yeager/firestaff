@@ -4077,9 +4077,9 @@ static int dm2_runtime_delete_creature_full(
  *
  * When the asset loader and CAII are available, invokes the CCM message
  * loop (DM2_13e4_0982) which runs the creature's AI behavior script.
- * The CCM loop handles animation, movement commands, and timer re-queue.
- * When the CCM loop is not available or fails closed, falls back to
- * simple timer re-queue so creatures stay active.
+ * The CCM loop owns animation, movement commands and timer re-queue.  An
+ * incomplete CCM handoff consumes the dispatched timer without mutation;
+ * re-queuing a creature from its coordinate alone would invent source state.
  */
 static int dm2_runtime_think_body(
     void *context,
@@ -4088,10 +4088,11 @@ static int dm2_runtime_think_body(
     int map, int x, int y, int think_type)
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)context;
-    DM2_V1_CreatureScheduleReceipt sched_receipt;
     const DM2_V1_AssetLoader *loader;
 
     if (!rt || !timer) return 0;
+    (void)x;
+    (void)y;
     (void)think_type;
 
     loader = rt->boot ? dm2_v1_boot_asset_loader(rt->boot) : NULL;
@@ -4152,15 +4153,10 @@ static int dm2_runtime_think_body(
         }
     }
 
-    /* Fallback: simple re-queue to keep creature active. */
-    dm2_v1_creature_schedule_at(
-        &rt->record_pools,
-        rt->boot ? (const DM2_V1_DungeonData *)rt->boot->dungeon_data : NULL,
-        &rt->timer_queue,
-        map, (unsigned long)rt->tick_count,
-        x, y, &sched_receipt);
-
-    return sched_receipt.valid ? 1 : 0;
+    /* SKProject's DM2_THINK_CREATURE re-queue belongs to the completed CCM
+     * execution.  There is no source-authorized coordinate-only retry path:
+     * acknowledge this timer while preserving the record pools and queue. */
+    return 0;
 }
 
 static void dm2_runtime_ensure_think_binding(DM2_V1_RuntimeState *rt) {
