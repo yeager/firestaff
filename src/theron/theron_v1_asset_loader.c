@@ -21,8 +21,6 @@
 #include <stdint.h>
 
 /* ── Track magic signatures ──────────────────────────────────────── */
-#define TR_MAGIC_THG3  0x33475448UL  /* "THG3" little-endian */
-#define TR_MAGIC_THS4  0x34535448UL  /* "THS4" little-endian */
 #define TR_MAGIC_THQ   0x31515448UL  /* "THQ1" — HuCard ROM marker */
 
 /* ── Hash verification (Phase 2) ───────────────────────────────── */
@@ -37,19 +35,10 @@
 /*
  * tr_asset_parse_track03 — parse Track 03 tile data.
  *
- * Header format:
- *   offset 0:  magic "THG3" (4 bytes)
- *   offset 4:  tile_count (2 bytes LE)
- *   offset 6:  tile_data_size (2 bytes LE)
- *   offset 8:  first_wall_tile (2 bytes LE)
- *   offset 10: first_floor_tile (2 bytes LE)
- *   offset 12: first_object_tile (2 bytes LE)
- *   offset 14: first_creature_tile (2 bytes LE)
- *   offset 16: first_font_tile (2 bytes LE)
- *   offset 18: header_size (2 bytes LE) = 20
- *   offset 20+: tile data (2bpp planar, 16 bytes each)
- *
- * Source: THQUEST.ASM T410.
+ * The old THG3 marker format was a Firestaff-only guess. Retail CUEs
+ * declare tracks 03--18 as audio, and no original Track 02 loader/CD
+ * capture has identified a tile-bank byte span or ownership route.
+ * THQUEST.ASM T410 remains an audit anchor only.
  */
 int tr_asset_parse_track03(TrAssetBundle *bundle,
                             const uint8_t *track03,
@@ -71,16 +60,10 @@ int tr_asset_parse_track03(TrAssetBundle *bundle,
 /*
  * tr_asset_parse_track04 — parse Track 04 sound data.
  *
- * Header format:
- *   offset 0:  magic "THS4" (4 bytes)
- *   offset 4:  sample_count (2 bytes LE)
- *   offset 6:  sequence_count (2 bytes LE)
- *   offset 8:  sample_data_offset (2 bytes LE)
- *   offset 10: sequence_data_offset (2 bytes LE)
- *   offset 12: header_size (2 bytes LE)
- *   offset 14+: ADPCM sample data + sequence data
- *
- * Source: THQUEST.ASM T420.
+ * The old THS4 marker format was a Firestaff-only guess. Retail CUEs
+ * declare tracks 03--18 as audio, and no original Track 02 loader/CD
+ * capture has identified an audio byte grammar or playback ownership.
+ * THQUEST.ASM T420 remains an audit anchor only.
  */
 TrAssetResult tr_asset_parse_track04(TrAssetBundle *bundle,
                                       const uint8_t *track04,
@@ -88,42 +71,9 @@ TrAssetResult tr_asset_parse_track04(TrAssetBundle *bundle,
     (void)bundle;
     (void)track04;
     (void)track04_size;
-    /* No original audio data track or loader route has been proven for this
-     * guessed format. Keep audio ownership outside the runtime. */
+    /* No original audio data track or loader route has been proven. Keep
+     * audio ownership outside the runtime. */
     return TR_ASSET_ERR_TR04;
-
-    if (!bundle || !track04 || track04_size < 16) {
-        return TR_ASSET_ERR_TR04;
-    }
-
-    /* Verify magic */
-    uint32_t magic = track04[0] | ((uint32_t)track04[1] << 8) |
-                     ((uint32_t)track04[2] << 16) | ((uint32_t)track04[3] << 24);
-    if (magic != TR_MAGIC_THS4) {
-        uint32_t magic_be = ((uint32_t)track04[0] << 24) | ((uint32_t)track04[1] << 16) |
-                            ((uint32_t)track04[2] << 8) | (uint32_t)track04[3];
-        if (magic_be != TR_MAGIC_THS4) {
-            return TR_ASSET_ERR_TR04;
-        }
-    }
-
-    uint16_t sample_count    = track04[4] | ((uint16_t)track04[5] << 8);
-    uint16_t sequence_count  = track04[6] | ((uint16_t)track04[7] << 8);
-    uint16_t sample_offset   = track04[8] | ((uint16_t)track04[9] << 8);
-    uint16_t sequence_offset = track04[10] | ((uint16_t)track04[11] << 8);
-    uint16_t header_size    = track04[12] | ((uint16_t)track04[13] << 8);
-
-    (void)sample_count;
-    (void)sequence_count;
-    (void)sample_offset;
-    (void)sequence_offset;
-    (void)header_size;
-
-    printf("[TQR] Track 04 loaded: %u samples, %u sequences "
-           "(sound subsystem ready)\n",
-           sample_count, sequence_count);
-
-    return TR_ASSET_OK;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

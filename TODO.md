@@ -93,6 +93,9 @@
   rejected; future real bitmap/palette work must enter through an
   authenticated Track 02 loader route.
 
+  The dead implementation body is now also removed from the C source; only
+  the explicit rejected API and diagnostic wording remain.
+
 - **THERON-QUEST-BLOCK-RECORDS:** v3.0.215: Binary analysis proves blocks 2-5
   contain graphics/tile data (225-227 KiB nonzero each), block 1 is System
   Card BIOS + credits, block 6 is 0xFF padding, block 0 is empty. Level data

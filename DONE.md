@@ -48679,7 +48679,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   transition or place the party at the clicked square. Transition and party
   state remain unchanged until a real terminal object record resolves;
   missing-target and cycle regressions now assert rejection.
-
 - ✅ 2026-08-05 CSB Utility Disk CMP disk-format correction: replaced the
   synthetic 496-byte portrait layout with ReDMCSB's actual 508-byte `CMP`
   record. The decoder now reads the big-endian `Magic`, dungeon-id, platform,
@@ -48688,3 +48687,7 @@ the supplied root and selected MD5 to prove this without shipping game data.
   exactly 508 bytes. The extracted original Atari ST `PORTRAIT/HALK.CMP`
   decodes as HALK, THE BARBARIAN; CMP import, portrait-handoff and title/import
   regressions pass without allowing a portrait-only file to invent party state.
+- ✅ 2026-08-05 Theron legacy asset-parser cleanup completed: removed the
+  unreachable THS4 sound parser body and its guessed marker constants from
+  the implementation. The public diagnostic APIs remain explicit rejection
+  seams; no Firestaff-only THG3/THS4 bytes can become runtime media.
