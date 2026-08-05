@@ -188,6 +188,11 @@ int main(void) {
         (!theron_v1_track19_inventory_file(real_iso, &file_receipt) ||
          !file_receipt.item_name_table_verified ||
          !file_receipt.level_label_table_verified ||
+         !file_receipt.item_property_table_verified ||
+         file_receipt.item_property_table_offset !=
+             THERON_TRACK19_ITEM_PROPERTY_TABLE_US_OFFSET ||
+         file_receipt.item_property_table_bytes !=
+             THERON_TRACK19_ITEM_PROPERTY_TABLE_BYTES ||
          !file_receipt.opaque_record_window_verified ||
          file_receipt.opaque_record_window_offset !=
              THERON_TRACK19_OPAQUE_RECORD_WINDOW_US_OFFSET ||
@@ -198,6 +203,11 @@ int main(void) {
         (!theron_v1_track19_inventory_file(real_jp_iso, &file_receipt) ||
          !file_receipt.item_name_table_verified ||
          !file_receipt.level_label_table_verified ||
+         !file_receipt.item_property_table_verified ||
+         file_receipt.item_property_table_offset !=
+             THERON_TRACK19_ITEM_PROPERTY_TABLE_JP_OFFSET ||
+         file_receipt.item_property_table_bytes !=
+             THERON_TRACK19_ITEM_PROPERTY_TABLE_BYTES ||
          !file_receipt.opaque_record_window_verified ||
          file_receipt.opaque_record_window_offset !=
              THERON_TRACK19_OPAQUE_RECORD_WINDOW_JP_OFFSET ||

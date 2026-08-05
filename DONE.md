@@ -6,12 +6,12 @@
   receipt until their party and RNG owners are wired. Focused regressions
   verify that neither path can report a movement success.
 
-- ✅ 2026-08-05 Theron Track 19 opaque record-window provenance: the US and
-  JP ISOs now authenticate the same 502-byte span immediately after their
-  variant-specific item-name tables (`0x0E951E` / `0x0E955E`, FNV-1a
-   `C48424F2`). The inventory records the verified offset and length while
-   keeping the bytes opaque; no map, object, item-property, bitmap or palette
-   semantics are promoted. Real US/JP inventory probes pass.
+- ✅ 2026-08-05 Theron Track 19 item-property provenance correction: the real
+  US/JP ISOs now authenticate the full 66×6-byte item-property table at
+  `0x0E951D` / `0x0E955D`, byte-for-byte against the source-bound Track 02
+  records. The existing overlapping 502-byte FNV receipt remains structural
+  evidence only; its unclassified remainder is not promoted to map/object,
+  bitmap or palette semantics. Real US/JP inventory probes pass.
 
 - ✅ 2026-08-05 Theron JP Track 19 level-label provenance: the real
   `TQJP19.iso` selector table is now bound at `0x203A7E–0x203B8C` as 15

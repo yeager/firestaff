@@ -98,10 +98,12 @@
   fixed 16-byte Shift-JIS records at UD 0x203A7E, including its 0x8197
   delimiters; this remains metadata only and does not admit maps or objects.
 
-  A byte-identical 502-byte window immediately following the US/JP item
-  tables is now authenticated as opaque record evidence (US UD 0x0E951E,
-  JP UD 0x0E955E). It is deliberately not classified as map/object/property
-  data until the original consumer/disassembly binds its record grammar.
+  The first 396 bytes of the Track 19 follow-on span are now authenticated as
+  the real 66×6-byte item-property table (US UD 0x0E951D, JP UD 0x0E955D),
+  byte-identical to the source-bound Track 02 records. The older 502-byte
+  window (US 0x0E951E, JP 0x0E955E) remains an overlapping structural receipt;
+  its unclassified remainder is not promoted to map/object/bitmap/palette
+  semantics until the original consumer/disassembly binds it.
 
   File-backed Track 19 inventory now carries the authenticated source hash and
   both metadata-verification flags; later record semantics remain closed.

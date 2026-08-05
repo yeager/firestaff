@@ -18,6 +18,9 @@ typedef struct {
     const char *variant;
     int item_name_table_verified;
     int level_label_table_verified;
+    int item_property_table_verified;
+    size_t item_property_table_offset;
+    size_t item_property_table_bytes;
     int opaque_record_window_verified;
     size_t opaque_record_window_offset;
     size_t opaque_record_window_bytes;

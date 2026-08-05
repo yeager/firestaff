@@ -146,6 +146,14 @@ int theron_v1_track19_inventory_file(
         free(data);
         return 0;
     }
+    if (!theron_v1_track19_item_property_table_validate(
+            data, bytes, strcmp(out->variant, "jp") == 0,
+            &out->item_property_table_offset,
+            &out->item_property_table_bytes)) {
+        free(data);
+        return 0;
+    }
+    out->item_property_table_verified = 1;
     out->opaque_record_window_verified = 1;
     free(data);
     return 1;
