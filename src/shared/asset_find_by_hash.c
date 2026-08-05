@@ -278,8 +278,10 @@ static void scache_put(ScanCache_I *c,
     }
     if (c->count < SCAN_CACHE_MAX) {
         ScanCacheEntry_I *e = &c->entries[c->count++];
-        strncpy(e->path, path, sizeof(e->path)-1);
-        e->path[sizeof(e->path)-1] = '\0';
+        size_t pathLen = strlen(path);
+        if (pathLen >= sizeof(e->path)) pathLen = sizeof(e->path) - 1;
+        memcpy(e->path, path, pathLen);
+        e->path[pathLen] = '\0';
         e->mtime = mt; e->size = sz;
         memcpy(e->md5, md5, 33);
         c->dirty = 1;

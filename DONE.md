@@ -48512,7 +48512,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `ALLOC_NEW_DBITEM` ownership chains. Verified by the focused actuator and
   runtime gates plus the mounted real-data startup, HUD, material,
   scene/weather and original-save-writer gates.
-
 - ✅ 2026-08-05 Nexus rasterizer provenance cleanup: corrected the Phase 4
   source-lock record to describe the actual production boundary. Flat-color
   geometry, unsupported 3D assets, and missing surfaces/textures remain
@@ -48535,3 +48534,13 @@ the supplied root and selected MD5 to prove this without shipping game data.
   grammar, palette lane, and placement. Verified with the real FACE.BIN
   structural probe, updated Track 1 launch probe (57/57), and the focused
   Nexus build.
+
+## DM1 combat-log source font guard
+
+- **DM1-UI-001**: The normal verified DM1 catalog launch no longer renders
+  the built-in mini-font when the original `GRAPHICS.DAT` font is unavailable.
+  It now fails closed until the source font is bound; the mini-font remains
+  available only for explicitly non-catalog diagnostic callers. This removes
+  a synthetic production visual without changing the source-backed font path.
+  Verified with a successful Ninja `firestaff` build and combat-log contract
+  test (`5/5`) on 2026-08-05.

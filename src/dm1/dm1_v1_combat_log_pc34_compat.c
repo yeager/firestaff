@@ -208,6 +208,15 @@ void DM1_CombatLog_Render(M11_GameViewState* state,
     if (!M11_QolRuntime_GetCombatLogEnabled()) return;
     if (g_count <= 0) return;
 
+    /* The normal DM1 launch is source-owned: a missing GRAPHICS.DAT font is
+     * an asset failure, not permission to manufacture a replacement glyph
+     * set. Keep the mini-font available only to non-catalog diagnostic
+     * callers, where it is explicitly a QoL fallback. */
+    if (state && state->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG &&
+        !state->originalFontAvailable) {
+        return;
+    }
+
     if (state && state->originalFontAvailable) {
         useOriginalFont = 1;
         lineH = 7; /* DM1 font is roughly 5 wide x 6 tall + spacing */
