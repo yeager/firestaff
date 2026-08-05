@@ -50013,3 +50013,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   production archive continues to use the no-op seam. No synthetic pixel path
   was promoted. Verification: `git diff --check` plus the existing production
   archive audit and Theron rendering/VRAM tests.
+- ✅ 2026-08-06 DM1 ReDMCSB F0302 action-hand placement mask: corrected the
+  C508/action-hand destination from `0x0002` (head) to source
+  `MASK0x0200_HANDS`, matching ReDMCSB `DEFS.H` and `DUNGEON.C` object
+  admission. Inventory-panel mouse regression passes 372/372; real Mac
+  pickup/placement and held-cursor capture remain tracked under
+  DM1-HOC-OBJECTS-002/003.
