@@ -137,10 +137,23 @@ int main(void)
         int track;
         for (track = 0; track < DM2_MUSIC_TRACK_COUNT; ++track) {
             DM2_V1_GdatEntryQueryReceipt entry;
+            DM2_V1_MusicQueueReceipt music;
+            char expected_path[sizeof(music.asset_path)];
             assert(dm2_v1_query_gdat_entry(
                 &loader, DM2_GDAT_CATEGORY_MUSICS, track,
                 DM2_GDAT_ENTRY_TYPE_HMP, 0, &entry) == 1);
             assert(entry.loadable_raw && entry.raw_length > 0u);
+            /* Every original HMP payload must remain source-resolved but
+             * fail-closed. A valid-looking header in any non-title track
+             * cannot reopen the unproven direct-HMP scheduler path. */
+            snprintf(expected_path, sizeof(expected_path),
+                     "GRAPHICS.DAT::GDAT(04,%02x,03,00)", track);
+            assert(dm2_v1_sound_queue_music(track, 1, &music) ==
+                   DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE);
+            assert(music.asset_resolved && !music.decoder_proven);
+            assert(!music.schedule_handoff_ready);
+            assert(music.schedule_event_count == 0u);
+            assert(strcmp(music.asset_path, expected_path) == 0);
         }
     }
 
@@ -148,16 +161,7 @@ int main(void)
      * MUSICS/0/dtHMP/0.  It must come from the admitted PC GRAPHICS.DAT,
      * never a loose 00.hmp.mid sidecar.  A platform without a native MIDI
      * backend remains honestly silent after proving this source payload. */
-    {
-        DM2_V1_MusicQueueReceipt music;
-        int queue_result = dm2_v1_sound_queue_music(0, 1, &music);
-        assert(queue_result == DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE);
-        assert(music.asset_resolved && !music.decoder_proven);
-        assert(!music.schedule_handoff_ready);
-        assert(music.schedule_event_count == 0u);
-        assert(strcmp(music.asset_path,
-                      "GRAPHICS.DAT::GDAT(04,00,03,00)") == 0);
-    }
+    /* Track 00 is covered as part of the complete source corpus above. */
 
     /* ── DM2_SOUND9 populates the seven-byte xsndptr2 runtime queue ── */
     dm2_v1_sound_queue_state_init(&state, 8);

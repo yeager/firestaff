@@ -1,7 +1,8 @@
 - ✅ 2026-08-05 DM2 HMP false-playback removal: a bounded structural read of
   original `HMIMIDIP013195` bytes can no longer mark the stream schedulable or
   hand its guessed event walk to the MIDI backend. The 29 real GDAT HMP
-  records remain identified and auditable, but queueing them is explicitly
+  records remain identified and auditable, but queueing every one of the 29
+  verified PC payloads is explicitly
   unavailable until a direct source-format decoder proves track and timing
   semantics. The real-data sound gate continues to verify that title music is
   resolved from `GRAPHICS.DAT`, not from converted SKProject sidecars.
