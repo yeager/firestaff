@@ -48317,3 +48317,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - Recorded the remaining raw-ordinal `65/80` water/fire gate and dormant gold
   helper as explicit gaps in `TODO.md`. No guessed item meaning or synthetic
   loot/HUD label was promoted.
+# 2026-08-05 Nexus MNS retail corpus verification
+
+- Materialized the original English ISO's MNS model files into the configured
+  local Nexus data root; all 30 documented roster models decode as DMDF.
+- The real MNS test rendered 452 source textures and exercised OBAKE MOTN
+  animation, transforming 75 vertices with `0` failures.
+- No MNS pixels were promoted into the blocked DGN/VDP1 viewport route.

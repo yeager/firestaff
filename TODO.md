@@ -5317,9 +5317,9 @@ will feed into cycle 15.
   (`nexus_v1_creature_bind_actor_model`, `nexus_v1_creature_actor_type_for`,
   `nexus_v1_creature_rebind_unbound`); unbound/hidden actors cannot move,
   attack, be targeted, or be alerted.  Roster types bind to real `*.MNS`
-  model metadata (DMDF magic + size + FNV-1a64) where the documented files
-  exist (5/8 roster MNS files present in the retail extraction: SCORPION,
-  MUMMY, GHOST, WORM, GOLEM).  The playability probe verifies per-level real
+  model metadata (DMDF magic + size + FNV-1a64) from the materialized English
+  retail extraction (30/30 documented roster MNS files).  The playability
+  probe verifies per-level real
   spawn counts/provenance/hidden split, runs real-data melee/death/XP/drop
   combat against real-spawned actors through the INTERACT path
   (deterministic srand per engagement, unkillable probe leader, bounded
