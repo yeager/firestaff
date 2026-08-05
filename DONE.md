@@ -128,6 +128,11 @@
   the Saturn ITEM/action dispatcher is unproven. DGN/ITEM.IBS declarations
   remain read-only provenance; the existing action-semantics gate stays closed.
 
+- ✅ 2026-08-06 Nexus gold-loot mutation gate: movement no longer transfers or
+  removes a gold pile from the live party state while Saturn drop/pickup
+  semantics are unproven. The generic gold container remains available only as
+  explicit diagnostic storage; no creature drop table is admitted.
+
 - ✅ 2026-08-06 Nexus V2 HUD placeholder removal: procedural compass, depth,
   gold, champion bars, action icons and panel markers no longer write pixels or
   advance animation state. The diagnostic state API remains available, while

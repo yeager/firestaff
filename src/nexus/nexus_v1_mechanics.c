@@ -1337,7 +1337,8 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
 
     /* Gold pickup — only if party is alive.
      * Source: DM1 GOLDDROP.C gold pile pickup on move result. */
-    if (engine->champions.party_count > 0) {
+    if (nexus_v1_action_semantics_proven() &&
+        engine->champions.party_count > 0) {
         int gold = nexus_gold_at(st->party_x, st->party_y);
         if (gold > 0) {
             st->gold_pieces += gold;

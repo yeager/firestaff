@@ -61,6 +61,8 @@
   The mechanics tick now applies the same gate to floor pickup, DROP_ITEM and
   THROW; no live inventory/floor mutation occurs from unproven ITEM/action
   semantics.
+  Gold-pile pickup is also held behind the same Saturn action/drop gate;
+  generic storage remains diagnostic and no retail drop record is fabricated.
   The Nexus mechanics and engine tick paths now share an explicit closed
   action-semantics gate: inherited melee, spell dispatch, creature attack,
   ranged projectile launch, and projectile damage cannot mutate live state
