@@ -65,6 +65,14 @@
   280/0 and a real verbose scan now identifies the animation script and Hint
   Oracle executable without treating their names as proof.
 
+- ✅ 2026-08-05 CSB Atari ST `MINI.DAT` runtime regression: corrected the
+  real-save M11 gate so Atari saves follow `ANIM.C` through its source-owned
+  `FTLCODE` handoff and validate the Atari C232/viewport path, rather than
+  incorrectly requiring PC3.4 C013/C017 HUD records. ReDMCSB `ANIM.C:67-94`
+  and `STARTUP1.C:162-168` establish the ordering. The extracted local Atari
+  package passes the complete save-to-runtime regression with HALK's restored
+  pose and non-empty source viewport pixels.
+
 - ✅ 2026-08-05 CSB optional-media provenance: verbose `--scan-data` now
   computes each materialized Utility Disk file's MD5 and consults the shared
   CSB fingerprint catalog. A real Atari ST package reports `HCSB.DAT`

@@ -228,6 +228,38 @@ int main(void)
                   view.world.party.mapX == 22 && view.world.party.mapY == 18 &&
                   view.world.party.direction == 2 && view.world.party.mapIndex == 4,
               "M11 party mirror consumes the real Atari MINI.DAT champion state");
+        /* Atari ST executes ANIM.C before it transfers to FTLCODE. MINI.DAT
+         * supplies the restored GAMEBLOCK but does not replace that original
+         * program boundary with the PC3.4 C013/C017 HUD route. ReDMCSB
+         * ANIM.C:67-94 opens ANIMATE.DAT/SCR and names FTLCODE; STARTUP1.C:
+         * 162-168 likewise enters through the source startup loop before
+         * F0435 LOADSAVE succeeds. */
+        if (profile && (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
+                        profile->variant_id == CSB_V1_VARIANT_ST21_EN)) {
+            for (tick = 0; tick < 800 && view.csbState.startup_title_active;
+                 ++tick) {
+                (void)M11_GameView_AdvanceIdleTick(&view);
+            }
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, 320, 200);
+            for (y = 33; y < 169; ++y) {
+                for (x = 48; x < 272; ++x) {
+                    if (framebuffer[y * 320 + x] != 0u) {
+                        ++viewport_nonblack;
+                    }
+                }
+            }
+            CHECK(!view.csbState.startup_title_active &&
+                      view.csbAtariStRuntimeHandoffComplete &&
+                      view.csbState.level_loaded,
+                  "real Atari MINI.DAT crosses the original ANIM.C FTLCODE handoff");
+            CHECK(viewport_nonblack > 0,
+                  "real Atari MINI.DAT consumes source-owned Atari ST viewport material");
+            M11_GameView_Shutdown(&view);
+            if (failures) return 1;
+            puts("PASS: real Atari MINI.DAT reaches live Atari ST M11 runtime");
+            return 0;
+        }
         memset(framebuffer, 0, sizeof(framebuffer));
         M11_GameView_Draw(&view, framebuffer, 320, 200);
         for (y = 33; y < 169; ++y) {
