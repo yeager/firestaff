@@ -35,6 +35,13 @@
   `test_nexus_v1_hud_layout` parses all 80 entries and matches the recorded
   values byte-for-byte. This is geometry provenance only; M11 HUD pixels and
   VDP placement remain capture-gated.
+- ✅ 2026-08-06 DM1 stair asset admission: the active M11 stairs helper now
+  requires a decoded source surface (`loaded` plus `pixels`) before it reports
+  a GRAPHICS.DAT stair draw. Dimension-only cache entries can no longer paint
+  an invalid surface over an authentic PC34 wall/floor. Verification: Ninja
+  build, ReDMCSB F0104/F0115 dispatch tests (73/73 and 124/124 assertions),
+  real DM1 all-map render probe (14/14 maps, 24,416/24,416 poses, zero blank
+  viewport failures). Packaged Mac stair capture remains open in TODO.
 
 - ✅ 2026-08-06 Nexus MENU.BPK stored-surface provenance: the legacy runtime
   render receipt no longer sets `fallback_visuals_permitted` for a bounded

@@ -25576,6 +25576,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   reachable, so capture must distinguish reachability from a missing object.
   The manual does not replace the required original PC34 runtime capture or
   the M564 name/slot evidence.
+- 2026-08-06 update: the active legacy stairs helper now rejects dimension-only
+  cache entries unless the authentic GRAPHICS.DAT surface is decoded
+  (`loaded` and `pixels` are both present). This prevents an invalid stair
+  cache record from reporting a successful draw and covering the source wall
+  or floor. Real Mac capture of each visible stair depth is still required.
 - [ ] DM1-HOC-OBJECTS-003 Capture the live held-object cursor on the host window
   after pickup and during movement. The source framebuffer now invalidates on
   pointer motion and hides the host arrow while G4055 is occupied; close only

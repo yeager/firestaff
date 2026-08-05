@@ -33932,7 +33932,12 @@ static int m11_draw_stairs_asset(const M11_GameViewState* state,
     stairIdx = m11_wallset_graphic_index_for_state(state, stairIdx);
     if (stairIdx == M11_GFX_UNAVAILABLE) return 0;
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, stairIdx);
-    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    /* A dimension-only cache entry is not a decoded GRAPHICS.DAT bitmap.
+     * ReDMCSB draws stairs only after the source graphic has been decoded;
+     * accepting the placeholder lets this pass report success and obscure
+     * the real wall/floor with an invalid surface. */
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) return 0;
     M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
                                rect->x + 2, rect->y + 2,
                                rect->w - 4, rect->h - 4, 0);
