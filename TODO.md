@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-SATURN-PRESENTATION-HANDOFF:** Nexus production no longer contains
+  the old inferred master palette or partial-texture fallback. Continue from
+  the real `/Users/bosse/.firestaff/data/nexus` corpus: authenticate PRS3
+  pixel/palette semantics, DGN/MNS face-material ownership, Saturn VDP1/VDP2
+  placement, and runtime HUD/menu binding through an instrumented Saturn or
+  Mednafen capture. Keep FACE/MENU/STABG/viewport presentation blocked until
+  the capture binds bytes, palette, command order, and runtime state together;
+  do not replace the missing BIOS/capture artifact with synthetic data.
+
 - **DUNGEON-STUDIO-FSDUNG:** Dungeon Studio: import original dungeons from
   all five games (DM1, CSB, DM2, Theron's Quest, DM Nexus) and export to a
   custom binary `.fsdung` format. The format is a superset of all games'

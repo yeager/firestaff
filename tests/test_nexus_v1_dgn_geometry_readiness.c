@@ -5671,6 +5671,23 @@ static void test_palette_source_gate(void) {
           "a truncated palette source withdraws the renderable palette");
 }
 
+static void test_texture_source_gate(void) {
+    Nexus_PaletteState palette;
+    uint8_t partial[3] = {0x01U, 0x02U, 0x03U};
+
+    nexus_palette_init_defaults(&palette);
+    CHECK(nexus_texture_load_from_surface(
+              &palette, partial, (int)sizeof(partial), 0, 0, 2, 2,
+              0, 16, "REAL.BIN", "partial") == -1 &&
+          palette.texture_count == 0,
+          "a partial source surface cannot create zero-filled texture pixels");
+    CHECK(nexus_texture_load_from_surface(
+              &palette, partial, (int)sizeof(partial), -1, 0, 1, 1,
+              0, 16, "REAL.BIN", "negative-origin") == -1 &&
+          palette.texture_count == 0,
+          "a negative source origin cannot enter the texture atlas");
+}
+
 static void test_owner_material_capture_target_blocks_without_canonical_lev(void) {
     Nexus_V1_DgnStructure1AStructure3MaterialCaptureTarget target;
     Nexus_V1_DgnStructure1AStructure3CaptureTargetRouteReceipt route;
@@ -6324,6 +6341,7 @@ int main(void) {
     test_real_structure1f_direct_cell_corpus();
     test_vdp1_command_sidecar_stays_no_draw();
     test_palette_source_gate();
+    test_texture_source_gate();
     test_owner_material_capture_target_blocks_without_canonical_lev();
     test_menu_bpk_missing_handoff_blocks_fallback();
     test_menu_bpk_palette_trailer_stays_opaque();

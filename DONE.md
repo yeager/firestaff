@@ -14,6 +14,14 @@
   authenticated Track 02 T900 record and leaves the object table unchanged.
   The category decoder remains available for later source binding.
 
+- ✅ 2026-08-05 Nexus synthetic palette/texture fallback removal: deleted the
+  unused hand-authored 256-entry master palettes from `nexus_v1_palette.c`;
+  they were inferred from comments and file size rather than retail bytes.
+  The surface texture loader now rejects negative origins, arithmetic overflow,
+  missing input, and partial source spans before allocating an atlas entry;
+  it never publishes zero-filled or truncated texture pixels. Added focused
+  regressions to the DGN readiness test; the real Nexus corpus still passes.
+
 - ✅ 2026-08-05 Theron scripted-creature stat boundary: THIEF/DEMON no longer
   fall back to approximated host base stats when their Track 02 scripted
   encounter records are unavailable. Spawn rejects before publishing state;
