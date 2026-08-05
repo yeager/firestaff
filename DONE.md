@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus startup text no-draw correction: the real
+  `FONT256.S2D` path in `nexus_v1_screen_text_draw_s2d_bytes()` no longer
+  reports successful text rendering through the obsolete flat glyph stream.
+  Until Saturn page/tilemap/attribute-to-character ownership is proven, it
+  returns `GLYPH_MAP` without touching the framebuffer. Synthetic
+  `draw_indexed` layout coverage remains diagnostic; the real-font probe now
+  verifies the no-draw contract.
+
 - ✅ 2026-08-06 Nexus S2D glyph-window provenance: the section-aware
   `nexus_v1_s2d_glyph_decode` path now rejects forged range-map redirects,
   ranges that exceed a parsed SCR section, invalid section indices, offset

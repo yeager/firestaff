@@ -100,6 +100,9 @@
   The section-aware S2D glyph-byte map now also verifies every caller-supplied
   range against the parsed SCR section identity and byte budget; keep the
   actual Saturn code/attribute mapping and screen placement capture-gated.
+  The real-SCR screen-text helper now fails closed instead of routing
+  FONT256.S2D through the obsolete flat glyph stream; restore it only after
+  the page/tilemap/attribute-to-character mapping is bound from Saturn data.
   ISO-only Nexus roots now remain on the ISO source route when hash discovery
   returns virtual `disc.iso::...` entries; do not classify container members as
   loose extracted files or retry them as `data_dir/LEV00.DGN`.

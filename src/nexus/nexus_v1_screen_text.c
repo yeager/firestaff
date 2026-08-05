@@ -168,15 +168,21 @@ int nexus_v1_screen_text_draw_s2d_bytes(
         return NEXUS_V1_SCREEN_TEXT_ERR_INVALID_ARG;
     }
 
-    /* The retail Saturn SCR is a multi-region FONT256 asset.  Until DMWeb's
-     * page-to-character mapping is bound, refuse to route it through the old
-     * flat 1bpp helper, which would render guessed glyphs. */
+    /* The retail Saturn SCR is a multi-region FONT256 asset.  Its
+     * page/tilemap/attribute-to-character mapping is not yet bound.  Do not
+     * route a real asset through the old flat 1bpp helper: that would report
+     * success while drawing bytes from the wrong source window.  The caller
+     * supplied `draw_indexed` API remains available for isolated synthetic
+     * layout tests, but a real SCR byte stream is no-draw until its mapping
+     * receipt is source-bound. */
     {
         Nexus_V1_FontS2dDecodeResult retail_regions;
         if (nexus_v1_font_s2d_decode(s2d_data, s2d_size, &retail_regions) == 0) {
             clear_receipt(receipt, NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP);
             return NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP;
         }
+        clear_receipt(receipt, NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP);
+        return NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP;
     }
 
     memset(&font, 0, sizeof(font));

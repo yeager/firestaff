@@ -288,6 +288,7 @@ static void run_optional_real_asset_gate(void)
         enum { FB_W = 160, FB_H = 32, FB_STRIDE = 160 };
         uint8_t fb[FB_STRIDE * FB_H];
         uint8_t fb2[FB_STRIDE * FB_H];
+        uint8_t blank[FB_STRIDE * FB_H];
         Nexus_V1_ScreenTextStyle style;
         Nexus_V1_ScreenTextReceipt a;
         Nexus_V1_ScreenTextReceipt b;
@@ -303,6 +304,7 @@ static void run_optional_real_asset_gate(void)
         style.bytes_per_glyph = 8;
 
         memset(fb, 0, sizeof(fb));
+        memset(blank, 0, sizeof(blank));
         drawn_a = nexus_v1_screen_text_draw_s2d_bytes(
             data, (int)size, fb, FB_W, FB_H, FB_STRIDE,
             "NEXUS", &style, &a);
@@ -311,16 +313,16 @@ static void run_optional_real_asset_gate(void)
             data, (int)size, fb2, FB_W, FB_H, FB_STRIDE,
             "NEXUS", &style, &b);
 
-        CHECK(drawn_a == 5 && drawn_b == 5,
-              "real FONT256.S2D screen-text bridge draws 5 glyphs twice");
-        CHECK(a.status == NEXUS_V1_SCREEN_TEXT_OK &&
-              b.status == NEXUS_V1_SCREEN_TEXT_OK,
-              "real FONT256.S2D screen-text receipts OK");
-        CHECK(a.char_count == 256 && b.char_count == 256,
-              "real FONT256.S2D screen-text char_count == 256");
-        CHECK(a.writes > 0, "real FONT256.S2D screen-text writes > 0");
-        CHECK(a.framebuffer_hash == b.framebuffer_hash,
-              "real FONT256.S2D screen-text hash deterministic");
+        CHECK(drawn_a == NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP &&
+              drawn_b == NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP,
+              "real FONT256.S2D screen-text bridge blocks unbound glyph mapping");
+        CHECK(a.status == NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP &&
+              b.status == NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP,
+              "real FONT256.S2D screen-text receipts remain no-draw");
+        CHECK(a.writes == 0 && b.writes == 0 &&
+              memcmp(fb, blank, sizeof(fb)) == 0 &&
+              memcmp(fb2, blank, sizeof(fb2)) == 0,
+              "blocked real FONT256.S2D text leaves framebuffer untouched");
     }
 
     free(data);
