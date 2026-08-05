@@ -167,7 +167,7 @@ static int count_diff_pixels(const unsigned char* a,
     return diff;
 }
 
-static void expect_title_render_is_frame_dependent(void) {
+static void expect_unbound_title_render_is_blank(void) {
     Nexus_TitleScreen title;
     Nexus_Framebuffer frame0;
     Nexus_Framebuffer frame16;
@@ -187,12 +187,12 @@ static void expect_title_render_is_frame_dependent(void) {
     nexus_render_title(&title, &frame0, 0);
     nexus_render_title(&title, &frame16, 16);
     expect_true(count_nonzero_pixels(frame0.color_buffer,
-                                     sizeof(frame0.color_buffer)) > 500,
-                "Nexus title reveal frame 0 remains visible");
+                                     sizeof(frame0.color_buffer)) == 0,
+                "unbound TITLE.CG atlas does not become a title framebuffer");
     expect_true(count_diff_pixels(frame0.color_buffer,
                                   frame16.color_buffer,
-                                  sizeof(frame0.color_buffer)) > 500,
-                "Nexus title render changes across startup frames");
+                                  sizeof(frame0.color_buffer)) == 0,
+                "blocked title route remains blank at every boot frame");
 }
 
 static void expect_title_sequence_contract(void) {
@@ -825,7 +825,7 @@ int main(void) {
     expect_face_loader_counts_real_vs_fallback();
     expect_bpk_runtime_surface_import();
     expect_title_sequence_contract();
-    expect_title_render_is_frame_dependent();
+    expect_unbound_title_render_is_blank();
     expect_startup_layout_contract();
     expect_champion_startup_selection_contract();
 

@@ -34,6 +34,13 @@
   `test_dm1_v1_f0190_moving_killed_all_m10_handoff_pc34_compat`, and
   `test_dm1_v1_f0190_c040_m11_integration_audit` passed.
 
+- ✅ 2026-08-05 Nexus startup title fallback removal: the generic title
+  renderer no longer copies a raw `TITLE.CG` character-generator atlas to the
+  framebuffer when the Saturn MAPD/TIBG handoff is missing. TITLE.CG and
+  decoded MAPD/TIBG maps remain source receipts; the title route stays blank
+  until VDP1/VDP2 placement and composition are captured. Real warning
+  DGT2/CLUT rendering and title decode tests remain green.
+
 - ✅ 2026-08-05 Nexus SLEV/SAL dispatch gate: canonical SAL/MAP decoding and
   `SDDRVS.TSK` identity no longer imply a playable SFX runtime. The receipt
   now reports `blocked-event-dispatch` and `nexus_sound_play()` remains

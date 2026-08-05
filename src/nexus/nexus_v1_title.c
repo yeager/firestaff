@@ -337,13 +337,12 @@ static void nexus_title_plan_reset(Nexus_V1_TitleRenderPlan *plan)
 
 static int nexus_title_screen_surface_ready(const Nexus_TitleScreen *title)
 {
-    return title && title->loaded && title->pixels &&
-           title->width >= NEXUS_FB_W && title->height >= NEXUS_FB_H &&
-           /* Once the real MAPD/TIBG source is decoded, the raw TITLE.CG
-            * atlas is no longer an admissible presentation surface. The
-            * five decoded maps still need an authenticated Saturn
-            * VDP1/VDP2 selection and placement before any one may be drawn. */
-           !title->decoded_map_source_bound;
+    (void)title;
+    /* TITLE.CG is a character-generator atlas, not a framebuffer. Copying
+     * it as a full-screen title invents the missing Saturn VDP1/VDP2 tile-map
+     * selection and placement. TITLE.BIN MAPD/TIBG decoding remains a
+     * receipt until an original title capture supplies that handoff. */
+    return 0;
 }
 
 int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
@@ -437,11 +436,8 @@ static void nexus_render_title_plan(const Nexus_TitleScreen *title,
         return;
     }
     if (plan->kind == NEXUS_V1_TITLE_RENDER_PLAN_TITLE_ART) {
-        /* Nexus boot presentation: keep the real TITLE.CG artwork, but make
-         * startup title presentation frame-owned by Nexus title code until the
-         * original VDP1/VDP2 title program is separately authenticated. The
-         * supplied corpus has no NEXUS.BIN, so TITLE.CG remains the only
-         * admitted title pixel source. */
+        /* Unreachable for the unadmitted TITLE.CG/MAPD route. Keep this
+         * branch source-only if a future Saturn capture opens it. */
         if (title && title->pixels && title->width > 0 && title->height > 0) {
             for (y = plan->reveal_y0;
                  y < plan->reveal_y1 && y < plan->copy_height &&
