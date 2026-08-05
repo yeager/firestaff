@@ -73,6 +73,7 @@ typedef struct {
     int bootProbeExpectTitleReady; /* -1 ignore, otherwise exact 0/1. */
     int bootProbeExpectDm1HoCFullGraphics; /* Require complete DM1 HoC receipt. */
     int bootProbeExpectDm1HoCReleaseAppCapture; /* Require launcher/release HoC route. */
+    int verbose;
     int retroAchievementsEnabled;
     int showFpsOverlay;
     int retroAchievementsHardcore;

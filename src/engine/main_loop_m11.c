@@ -31,6 +31,7 @@
 #include "title_frontend_v1.h"
 #include "firestaff/dm1/v1/startup_sequence_pc34_compat.h"
 #include "asset_status_m12.h"
+#include "m11_game_text_ttf_renderer_pc34_compat.h"
 #include "fs_portable_compat.h"
 #include "dm1_v1_vblank_timing.h"
 #include "entrance_frontend_pc34_compat.h"
@@ -261,6 +262,23 @@ static int m11_present_launcher(unsigned char* launcherFramebuffer,
     return M11_Render_PresentIndexed(launcherFramebuffer,
                                      M11_LAUNCHER_FB_WIDTH,
                                      M11_LAUNCHER_FB_HEIGHT);
+}
+
+typedef struct {
+    unsigned char* framebuffer;
+    int width;
+    int height;
+} M11_ScanProgressContext;
+
+static int m11_scan_progress_callback(const M12_AssetScanProgress* progress,
+                                      void* userData) {
+    M11_ScanProgressContext* ctx = (M11_ScanProgressContext*)userData;
+    if (!ctx || !ctx->framebuffer) return 1;
+    M12_StartupMenu_DrawScanProgress(progress, ctx->framebuffer,
+                                     ctx->width, ctx->height);
+    M11_Render_PresentIndexed(ctx->framebuffer, ctx->width, ctx->height);
+    if (M11_Render_PumpEvents()) return 0;
+    return 1;
 }
 
 static int m11_play_firestaff_startup_intro(void) {
@@ -4998,17 +5016,29 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
         M11_Render_Shutdown();
         return M11_RENDER_ERR_TEXTURE;
     }
+    /* Present a black frame and pump events before the potentially slow
+     * asset scan so macOS does not flag the window as unresponsive. */
+    {
+        memset(launcherFramebuffer, 0,
+               (size_t)M11_LAUNCHER_FB_WIDTH * (size_t)M11_LAUNCHER_FB_HEIGHT);
+        M11_Render_PresentIndexed(launcherFramebuffer,
+                                  M11_LAUNCHER_FB_WIDTH, M11_LAUNCHER_FB_HEIGHT);
+        M11_Render_PumpEvents();
+    }
     {
         M12_StartupMenuInitOptions menuInitOptions;
+        M11_ScanProgressContext scanCtx;
+        m11_ttf_renderer_init();
         memset(&menuInitOptions, 0, sizeof(menuInitOptions));
         menuInitOptions.skipScreenshotGalleryScan = o->bootProbe ? 1 : 0;
-        /* A caller-supplied game-data path is authoritative, including a
-         * .7z/.zip/.iso container.  Boot probes still avoid the unrelated
-         * screenshot walk, but must not quietly discard archive contents and
-         * fall back to a different installed release. */
         menuInitOptions.looseFilesOnlyAssetScan =
             (o->bootProbe && (!o->dataDir || !o->dataDir[0])) ? 1 : 0;
-    M12_StartupMenu_InitWithOptions(&menuState,
+        scanCtx.framebuffer = launcherFramebuffer;
+        scanCtx.width = M11_LAUNCHER_FB_WIDTH;
+        scanCtx.height = M11_LAUNCHER_FB_HEIGHT;
+        menuInitOptions.scanProgressFn = m11_scan_progress_callback;
+        menuInitOptions.scanProgressUserData = &scanCtx;
+        M12_StartupMenu_InitWithOptions(&menuState,
                                         o->dataDir,
                                         o->gameId,
                                         &menuInitOptions);

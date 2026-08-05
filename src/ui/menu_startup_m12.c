@@ -1,6 +1,7 @@
 #include "menu_startup_m12.h"
 #include <SDL3/SDL.h>
 #include "firestaff_l10n.h"
+#include "m11_game_text_ttf_renderer_pc34_compat.h"
 #include "artpack_admission_m12.h"
 #include "firestaff_po_loader.h"
 #include "firestaff_startup.h"
@@ -349,7 +350,9 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                           M12_Config* config,
                                           int hasExplicitDataDirOverride,
                                           const char* gameId,
-                                          int looseFilesOnlyAssetScan);
+                                          int looseFilesOnlyAssetScan,
+                                          M12_AssetStatusScanProgressFn progressFn,
+                                          void* progressUserData);
 static int m12_startup_data_dir_is_game_leaf(const char* dataDir);
 static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                     const char* dataDirOverride,
@@ -3466,15 +3469,19 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                           M12_Config* config,
                                           int hasExplicitDataDirOverride,
                                           const char* gameId,
-                                          int looseFilesOnlyAssetScan) {
+                                          int looseFilesOnlyAssetScan,
+                                          M12_AssetStatusScanProgressFn progressFn,
+                                          void* progressUserData) {
     M12_AssetStatusScanOptions gameScanOptions;
-    const M12_AssetStatusScanOptions* gameScan =
-        looseFilesOnlyAssetScan ? &gameScanOptions : NULL;
+    const M12_AssetStatusScanOptions* gameScan;
     if (!state || !config) {
         return;
     }
     memset(&gameScanOptions, 0, sizeof(gameScanOptions));
     gameScanOptions.looseFilesOnly = looseFilesOnlyAssetScan ? 1 : 0;
+    gameScanOptions.progressFn = progressFn;
+    gameScanOptions.progressUserData = progressUserData;
+    gameScan = (looseFilesOnlyAssetScan || progressFn) ? &gameScanOptions : NULL;
     if (hasExplicitDataDirOverride) {
         if (gameId && gameId[0] != '\0') {
             M12_AssetStatus_ScanGameWithOptions(&state->assetStatus,
@@ -3485,11 +3492,23 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
         }
         if ((!gameId || gameId[0] == '\0') &&
             m12_startup_data_dir_is_game_leaf(config->dataDir)) {
-            M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
+            if (progressFn) {
+                M12_AssetStatusScanOptions scanOptions;
+                memset(&scanOptions, 0, sizeof(scanOptions));
+                scanOptions.progressFn = progressFn;
+                scanOptions.progressUserData = progressUserData;
+                (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
+                                                      config->dataDir,
+                                                      &scanOptions);
+            } else {
+                M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
+            }
         } else {
             M12_AssetStatusScanOptions scanOptions;
             memset(&scanOptions, 0, sizeof(scanOptions));
             scanOptions.honorRequestedDataDir = 1;
+            scanOptions.progressFn = progressFn;
+            scanOptions.progressUserData = progressUserData;
             (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
                                                   config->dataDir,
                                                   &scanOptions);
@@ -3502,7 +3521,17 @@ static void m12_scan_startup_asset_status(M12_StartupMenuState* state,
                                             gameId,
                                             gameScan);
     } else {
-        M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
+        if (progressFn) {
+            M12_AssetStatusScanOptions scanOptions;
+            memset(&scanOptions, 0, sizeof(scanOptions));
+            scanOptions.progressFn = progressFn;
+            scanOptions.progressUserData = progressUserData;
+            (void)M12_AssetStatus_ScanWithOptions(&state->assetStatus,
+                                                  config->dataDir,
+                                                  &scanOptions);
+        } else {
+            M12_AssetStatus_Scan(&state->assetStatus, config->dataDir);
+        }
     }
     {
         M12_AssetStatus defaultStatus;
@@ -3841,7 +3870,9 @@ static void m12_apply_loaded_config(M12_StartupMenuState* state,
                                   &config,
                                   hasExplicitDataDirOverride,
                                   gameId,
-                                  options && options->looseFilesOnlyAssetScan);
+                                  options && options->looseFilesOnlyAssetScan,
+                                  options ? options->scanProgressFn : NULL,
+                                  options ? options->scanProgressUserData : NULL);
     {
         char canonicalDataDir[M12_ASSET_DATA_DIR_CAPACITY];
         const char* scannedDataDir = M12_AssetStatus_GetDataDir(&state->assetStatus);
@@ -11619,6 +11650,62 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
         changed = 1;
     }
     return changed;
+}
+
+void M12_StartupMenu_DrawScanProgress(const M12_AssetScanProgress* progress,
+                                      unsigned char* framebuffer,
+                                      int framebufferWidth,
+                                      int framebufferHeight) {
+    size_t pct = 0U;
+    int barX, barY, barW, barH, fillW;
+    char line1[64];
+    char line2[128];
+    if (!framebuffer || framebufferWidth <= 0 || framebufferHeight <= 0) {
+        return;
+    }
+    memset(framebuffer, 0,
+           (size_t)framebufferWidth * (size_t)framebufferHeight);
+    if (progress && progress->totalSteps > 0U) {
+        pct = (progress->completedSteps * 100U) / progress->totalSteps;
+        if (pct > 100U) pct = 100U;
+    }
+    snprintf(line1, sizeof(line1), "SCANNING GAME DATA  %zu%%", pct);
+    if (progress && progress->currentGameId[0] != '\0') {
+        snprintf(line2, sizeof(line2), "%s  %s",
+                 progress->currentGameId, progress->currentTask);
+    } else if (progress && progress->currentTask[0] != '\0') {
+        snprintf(line2, sizeof(line2), "%s", progress->currentTask);
+    } else {
+        line2[0] = '\0';
+    }
+    if (m11_ttf_renderer_is_active()) {
+        m11_ttf_render_string(framebuffer, framebufferWidth, framebufferHeight,
+                              10, framebufferHeight / 2 - 24, line1, 14, 15);
+        if (line2[0] != '\0') {
+            m11_ttf_render_string(framebuffer, framebufferWidth, framebufferHeight,
+                                  10, framebufferHeight / 2 - 4, line2, 11, 7);
+        }
+    } else {
+        m12_draw_text_raw(framebuffer, framebufferWidth, framebufferHeight,
+                          10, framebufferHeight / 2 - 20, line1,
+                          1, 1, 15);
+        if (line2[0] != '\0') {
+            m12_draw_text_raw(framebuffer, framebufferWidth, framebufferHeight,
+                              10, framebufferHeight / 2 - 6, line2,
+                              1, 1, 7);
+        }
+    }
+    barX = 10;
+    barY = framebufferHeight / 2 + 8;
+    barW = framebufferWidth - 20;
+    barH = 6;
+    m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                  barX, barY, barW, barH, 3);
+    fillW = (int)((size_t)barW * pct / 100U);
+    if (fillW > 0) {
+        m12_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                      barX, barY, fillW, barH, 15);
+    }
 }
 
 void M12_StartupMenu_Destroy(M12_StartupMenuState* state) {

@@ -327,11 +327,11 @@ typedef struct {
     void (*show_mouse)(void *ctx);
     void (*process_item_bonus_release)(void *ctx, int event_hero_idx, uint16_t item);
     void (*relink_item_to_view_tile)(void *ctx, uint16_t item);
-} DM2_V1_RemoveFromHandCallbacks;
+} DM2_V1_RemoveFromHandExCallbacks;
 
 int32_t dm2_v1_remove_object_from_hand_ex(
     DM2_V1_RemoveFromHandState *state, int event_hero_idx,
-    const DM2_V1_RemoveFromHandCallbacks *cb, void *ctx);
+    const DM2_V1_RemoveFromHandExCallbacks *cb, void *ctx);
 
 /* ---- DM2_PLAYER_DEFEATED (c_hero.cpp:2636) ----
  * Handle a hero reaching 0 HP: refresh the squad-hands panel if the

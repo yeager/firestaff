@@ -577,40 +577,10 @@ typedef struct {
 int16_t dm2_v1_remove_object_from_hand(
     const DM2_V1_RemoveFromHandCallbacks *cb, void *ctx);
 
-/* ---- DM2_PROCESS_PLAYERS_DAMAGE (c_hero.cpp:2777) ----
- * Apply pending damage to all heroes. */
-typedef struct {
-    int hero_count;
-    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx);
-    int16_t *pending_damage;  /* ddat.v1e0bb0[hero_idx] */
-    uint16_t *pending_wounds; /* ddat.v1e0ba8[hero_idx] */
-    void (*player_defeated)(void *ctx, int hero_idx);
-    void (*queue_damage_timer)(void *ctx, int hero_idx, int16_t damage);
-} DM2_V1_ProcessDamageCallbacks;
-
-void dm2_v1_process_players_damage(
-    const DM2_V1_ProcessDamageCallbacks *cb, void *ctx);
-
-/* ---- DM2_PLAYER_DEFEATED (c_hero.cpp:2636) ----
- * Handle hero death. */
-typedef struct {
-    int hero_count;
-    DM2_V1_HeroState *(*get_hero)(void *ctx, int idx);
-    void (*drop_items)(void *ctx, int hero_idx);
-    void (*create_bones)(void *ctx, int hero_idx, uint8_t party_pos);
-    void (*cure_poison)(void *ctx, int hero_idx);
-    void (*select_leader)(void *ctx, int hero_idx);
-    void (*recompute_position)(void *ctx);
-    void (*on_all_dead)(void *ctx);
-    void (*post_defeat)(void *ctx, int hero_idx);
-    int16_t event_heroidx;
-    uint8_t party_dir;       /* ddat.v1e0258 */
-    int16_t v1e00b8;         /* pending position swap */
-} DM2_V1_PlayerDefeatedCallbacks;
-
-void dm2_v1_player_defeated(
-    int hero_idx,
-    const DM2_V1_PlayerDefeatedCallbacks *cb, void *ctx);
+/* DM2_PROCESS_PLAYERS_DAMAGE and DM2_PLAYER_DEFEATED are declared in
+ * dm2_v1_runtime_narrow_pc34_compat.h with their authoritative callback
+ * structs (DM2_V1_ProcessPlayersDamageCallbacks, DM2_V1_PlayerDefeatedInfo,
+ * DM2_V1_PlayerDefeatedCallbacks). Include that header for those APIs. */
 
 /* ---- DM2_USE_DEXTERITY_ATTRIBUTE (c_hero.cpp:2026) ----
  * Compute effective dexterity check value. Pure computation. */

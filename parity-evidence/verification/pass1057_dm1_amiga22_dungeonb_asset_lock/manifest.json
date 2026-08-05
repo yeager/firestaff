@@ -1,16 +1,20 @@
 {
   "coverage": {
-    "dm1_ready": 14,
-    "ok": true,
+    "dm1_ready": 0,
+    "ok": false,
     "returncode": 0,
     "row": {
       "game": "dm1",
-      "have_files": 3,
-      "in_registry": 3,
+      "have_files": 0,
+      "in_registry": 0,
       "need_files": 3,
-      "notes": [],
+      "notes": [
+        "missing GRAPHICS.DAT",
+        "missing DUNGEON.DAT",
+        "missing DUNGEONB.DAT"
+      ],
       "platform": "Amiga",
-      "status": "READY",
+      "status": "MISSING",
       "variant": "2.2 English (kid)"
     },
     "stderr": ""
@@ -19,33 +23,11 @@
     "checklist_marks_amiga22_ready": true,
     "variants_bonus_mentions_amiga22_candidate": true
   },
-  "generated_at": "2026-08-04T10:11:24.931197+00:00",
+  "generated_at": "2026-08-05T09:38:04.782075+00:00",
   "local_asset": {
-    "case_variants": [
-      {
-        "exists": true,
-        "name": "DUNGEONB.DAT",
-        "sha256": "9bac133b4d8d6ca88abad70ff4a3a6436f264e3ae3a7503e0b40a8a6b4007730",
-        "size": 4806
-      },
-      {
-        "exists": true,
-        "name": "DungeonB.dat",
-        "sha256": "9bac133b4d8d6ca88abad70ff4a3a6436f264e3ae3a7503e0b40a8a6b4007730",
-        "size": 4806
-      },
-      {
-        "exists": true,
-        "name": "dungeonb.dat",
-        "sha256": "9bac133b4d8d6ca88abad70ff4a3a6436f264e3ae3a7503e0b40a8a6b4007730",
-        "size": 4806
-      }
-    ],
-    "md5": "d42915cf346494efa0ed78cfbbb4c2b5",
     "path": "/Users/bosse/.firestaff/data/dm1-extras/amiga-2.2-en/DUNGEONB.DAT",
-    "sha256": "9bac133b4d8d6ca88abad70ff4a3a6436f264e3ae3a7503e0b40a8a6b4007730",
-    "size": 4806,
-    "status": "PASS"
+    "reason": "missing /Users/bosse/.firestaff/data/dm1-extras/amiga-2.2-en/DUNGEONB.DAT",
+    "status": "FAIL"
   },
   "registry": {
     "has_expected_path": true,
@@ -53,5 +35,5 @@
     "has_expected_size": true
   },
   "schema": "firestaff.parity.pass1057_dm1_amiga22_dungeonb_asset_lock.v1",
-  "status": "PASS"
+  "status": "FAIL"
 }

@@ -338,8 +338,13 @@ int dm1_v1_wall_ornament_render_plan_pc34(
     outPlan->paletteMapValid = 1;
     if (viewWallIndex <= 4) {
         copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD3);
-    } else {
+    } else if (viewWallIndex <= 9) {
         copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD2);
+    } else {
+        /* D1/D0: no palette remap — ornaments use native colors */
+        int pi;
+        for (pi = 0; pi < 16; ++pi) outPlan->paletteMap[pi] = (unsigned char)pi;
+        outPlan->paletteMapValid = 0;
     }
     outPlan->isAlcove =
         dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);

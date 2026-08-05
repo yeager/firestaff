@@ -1,9 +1,9 @@
 {
   "schema": "firestaff.parity.pass475_dm1_v1_f0365_f0366_runtime_followup.v1",
-  "timestampUtc": "2026-08-04T10:11:56.157230+00:00",
+  "timestampUtc": "2026-08-05T09:58:27.745388+00:00",
   "status": "PASS475_FIRESTAFF_DM1_V1_INPUT_TO_F0365_F0366_ROUTE_CLOSED",
   "branch": "main",
-  "head": "a972d8e3286642b457794583fc2827dfa970bb5a",
+  "head": "d3eae85cd666e97de006de87876f3215066135c5",
   "redmcsbRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
   "closedBlocker": "Firestaff live M11 movement input now has a source-locked and regression-tested route through command ids into the F0380 -> F0365/F0366 compat boundary; no direct-move bypass remains in this seam.",
   "sourceAudit": [
@@ -90,7 +90,7 @@
         "-j2"
       ],
       "returncode": 0,
-      "tail": "[0/2] Re-checking globbed directories...\n[1/5] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[2/5] Linking C executable test_dm1_v1_movement_command_core_pc34_compat\n[3/5] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat\n[4/5] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat\n"
+      "tail": "lding C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_spell_casting_pc34_compat.c.o\n[1759/1769] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_stairs_level_pc34_compat.c.o\n[1760/1769] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o\n[1761/1769] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o\n[1762/1769] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_teleporter_pit_pc34_compat.c.o\n[1763/1769] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_light_pc34_compat.c.o\n[1764/1769] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/shared/fs_portable_compat.c.o\n[1765/1769] Linking C executable test_dm1_v1_input_command_queue_pc34_compat\n[1766/1769] Linking C executable test_dm1_v1_movement_command_core_pc34_compat\n[1767/1769] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat\n[1768/1769] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat\n"
     },
     {
       "command": [
@@ -102,7 +102,7 @@
         "dm1_v1_input_command_queue_pc34_compat|dm1_v1_movement_command_core_pc34_compat|dm1_v1_movement_pipeline_pc34_compat|dm1_v1_command_movement_sensor_timing_pc34_compat"
       ],
       "returncode": 0,
-      "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1388: dm1_v1_input_command_queue_pc34_compat\n1/4 Test #1388: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.27 sec\n    Start 1397: dm1_v1_movement_command_core_pc34_compat\n2/4 Test #1397: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.62 sec\n    Start 1540: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/4 Test #1540: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.60 sec\n    Start 1696: dm1_v1_movement_pipeline_pc34_compat\n4/4 Test #1696: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.45 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   2.00 sec\n"
+      "tail": "Test project /Volumes/Extern-disk/firestaff-claude/build\n    Start 1415: dm1_v1_input_command_queue_pc34_compat\n1/4 Test #1415: dm1_v1_input_command_queue_pc34_compat ..............   Passed    0.38 sec\n    Start 1424: dm1_v1_movement_command_core_pc34_compat\n2/4 Test #1424: dm1_v1_movement_command_core_pc34_compat ............   Passed    0.33 sec\n    Start 1567: dm1_v1_command_movement_sensor_timing_pc34_compat\n3/4 Test #1567: dm1_v1_command_movement_sensor_timing_pc34_compat ...   Passed    0.45 sec\n    Start 1723: dm1_v1_movement_pipeline_pc34_compat\n4/4 Test #1723: dm1_v1_movement_pipeline_pc34_compat ................   Passed    0.51 sec\n\n100% tests passed out of 4\n\nTotal Test time (real) =   2.13 sec\n"
     },
     {
       "command": [

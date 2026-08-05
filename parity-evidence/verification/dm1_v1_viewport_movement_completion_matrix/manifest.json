@@ -15,23 +15,26 @@
         "-j2"
       ],
       "outputTail": [
-        "[0/2] Re-checking globbed directories...",
-        "[1/2] Re-running CMake...",
-        "-- Found SDL3",
-        "-- Found zlib via bundled miniz - ZIP/gzip inflate paths enabled",
-        "-- Configuring done (0.8s)",
-        "-- Generating done (3.9s)",
-        "-- Build files have been written to: /Volumes/Extern-disk/firestaff-claude/build",
-        "[0/4] Re-checking globbed directories...",
-        "[1/12] Building C object CMakeFiles/firestaff_m10.dir/src/shared/fs_portable_compat.c.o",
-        "[2/12] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/shared/fs_portable_compat.c.o",
-        "[3/12] Linking C static library libfirestaff_m10.a",
-        "[4/12] Linking C executable test_dm1_v1_movement_core_pc34_compat",
-        "[5/12] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
-        "[6/12] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
-        "[7/12] Linking C executable test_dm1_v1_turning_presentation_pc34_compat",
-        "[8/12] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
-        "[9/12] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat"
+        "[1755/1771] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_champion_stats_pc34_compat.c.o",
+        "[1756/1771] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/csb/csb_v1_save_load_pc34_compat.c.o",
+        "/Volumes/Extern-disk/firestaff-claude/src/csb/csb_v1_save_load_pc34_compat.c:302:9: warning: variable 'ki' set but not used [-Wunused-but-set-variable]",
+        "  302 |     int ki;",
+        "      |         ^",
+        "1 warning generated.",
+        "[1757/1771] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_inventory_pc34_compat.c.o",
+        "[1758/1771] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_spell_casting_pc34_compat.c.o",
+        "[1759/1771] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_stairs_level_pc34_compat.c.o",
+        "[1760/1771] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_text_message_pc34_compat.c.o",
+        "[1761/1771] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_sound_pc34_compat.c.o",
+        "[1762/1771] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_teleporter_pit_pc34_compat.c.o",
+        "[1763/1771] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/dm1/dm1_v1_light_pc34_compat.c.o",
+        "[1764/1771] Building C object CMakeFiles/test_dm1_v1_movement_pipeline_pc34_compat.dir/src/shared/fs_portable_compat.c.o",
+        "[1765/1771] Linking C executable test_dm1_v1_input_command_queue_pc34_compat",
+        "[1766/1771] Linking C executable test_dm1_v1_movement_core_pc34_compat",
+        "[1767/1771] Linking C executable test_dm1_v1_movement_command_core_pc34_compat",
+        "[1768/1771] Linking C executable test_dm1_v1_command_movement_sensor_timing_pc34_compat",
+        "[1769/1771] Linking C executable test_dm1_v1_turning_presentation_pc34_compat",
+        "[1770/1771] Linking C executable test_dm1_v1_movement_pipeline_pc34_compat"
       ],
       "passed": true,
       "returncode": 0
@@ -154,7 +157,7 @@
       "outputTail": [
         "PASS406_DM1_V1_GAME_LOOP_REDRAW_CADENCE_SOURCE_LOCKED",
         "- ReDMCSB: GAMELOOP.C:35-219; COMMAND.C:2045-2829; DUNVIEW.C:8318-8618; DRAWVIEW.C:709-722",
-        "- Firestaff: m11_game_view.c:20821-21020; main_loop_m11.c:5752-5769; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
+        "- Firestaff: m11_game_view.c:20821-21020; main_loop_m11.c:5782-5799; dm1_v1_movement_pipeline_pc34_compat.c:244-443",
         "- report: parity-evidence/pass406_dm1_v1_game_loop_redraw_cadence.md",
         "- manifest: parity-evidence/verification/pass406_dm1_v1_game_loop_redraw_cadence/manifest.json"
       ],
@@ -254,7 +257,7 @@
       "outputTail": [
         "V1 viewport field zone/aspect clip gate passed",
         "- Firestaff field rows/zones (DM1-owned): /Volumes/Extern-disk/firestaff-claude/src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c:19",
-        "- Firestaff source viewport draw order: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:46071",
+        "- Firestaff source viewport draw order: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:46077",
         "- ReDMCSB DUNVIEW.C:377 char G2035_ac_ViewSquareIndexToFieldAspectIndex[23] = { 13, 14, 15, 10, 11, 12, 7, 8, 9, 5, 6, 2, 3, 4, 0, 1, -1, -1, -1, -1, -1, -1, -1 };",
         "- ReDMCSB DUNVIEW.C:465 unsigned char G0188_aauc_Graphic558_FieldAspects[12][8];",
         "- ReDMCSB DUNVIEW.C:6219 F0113_DUNGEONVIEW_DrawField(L0198_auc_FieldAspect, C702_ZONE_WALL_D3L2 + L2482_i_FieldAspectIndex);",
@@ -282,7 +285,7 @@
       "outputTail": [
         "V1 viewport palette source-lock gate passed",
         "- Firestaff palette compute: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:13462",
-        "- Firestaff palette apply: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:29920",
+        "- Firestaff palette apply: /Volumes/Extern-disk/firestaff-claude/src/engine/m11_game_view.c:29925",
         "- ReDMCSB F0337: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/PANEL.C:329",
         "- ReDMCSB light tables: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DATA.C:45",
         "- ReDMCSB DRAWVIEW palette install: /Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/DRAWVIEW.C:768"
@@ -414,5 +417,5 @@
       "source": "DRAWVIEW.C:709-900"
     }
   ],
-  "timestampUtc": "2026-08-04T09:57:15.642736+00:00"
+  "timestampUtc": "2026-08-05T09:15:06.703922+00:00"
 }

@@ -2,6 +2,7 @@
 
 #include "dm2_v1_hero_ops_pc34_compat.h"
 #include "dm2_v1_hero_stats_pc34_compat.h"
+#include "dm2_v1_runtime_narrow_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
 #include <string.h>
@@ -262,65 +263,117 @@ static void test_remove_object_from_hand(void)
 
 /* ---- process_players_damage ---- */
 static int g_defeated_hero;
-static void mock_defeated(void *ctx, int idx) { (void)ctx; g_defeated_hero = idx; }
-static void mock_damage_timer(void *ctx, int idx, int16_t dmg) { (void)ctx; (void)idx; (void)dmg; }
+static int16_t g_pending_damage[4];
+static uint16_t g_pending_body_status[4];
+static int g_damage_timer_count;
+
+static uint16_t ppd_take_body_status(void *ctx, int hi)
+{
+    (void)ctx;
+    uint16_t s = g_pending_body_status[hi];
+    g_pending_body_status[hi] = 0;
+    return s;
+}
+static void ppd_merge_body_status(void *ctx, int hi, uint16_t s)
+{
+    (void)ctx; (void)hi; (void)s;
+}
+static int16_t ppd_take_pending_damage(void *ctx, int hi)
+{
+    (void)ctx;
+    int16_t d = g_pending_damage[hi];
+    g_pending_damage[hi] = 0;
+    return d;
+}
+static int16_t ppd_get_cur_hp(void *ctx, int hi)
+{
+    (void)ctx;
+    return g_heroes[hi].cur_hp;
+}
+static void ppd_set_cur_hp(void *ctx, int hi, int16_t v)
+{
+    (void)ctx;
+    g_heroes[hi].cur_hp = v;
+}
+static void ppd_set_damage_suffered(void *ctx, int hi, int16_t v)
+{
+    (void)ctx; (void)hi; (void)v;
+}
+static void ppd_mark_dirty(void *ctx, int hi) { (void)ctx; (void)hi; }
+static int ppd_get_hero_timer(void *ctx, int hi) { (void)ctx; (void)hi; return -1; }
+static void ppd_rearm_hero_timer(void *ctx, int hi, int ti, int32_t d)
+{
+    (void)ctx; (void)hi; (void)ti; (void)d;
+}
+static void ppd_queue_hit_timer(void *ctx, int hi, int32_t d)
+{
+    (void)ctx; (void)hi; (void)d;
+    g_damage_timer_count++;
+}
+static void ppd_defeated(void *ctx, int hi) { (void)ctx; g_defeated_hero = hi; }
 
 static void test_process_players_damage(void)
 {
     reset_heroes();
-    int16_t pending[4] = {0, 50, 0, 300};
-    uint16_t wounds[4] = {0, 0, 0, 0};
+    g_pending_damage[0] = 0;
+    g_pending_damage[1] = 50;
+    g_pending_damage[2] = 0;
+    g_pending_damage[3] = 300;
+    memset(g_pending_body_status, 0, sizeof(g_pending_body_status));
     g_defeated_hero = -1;
-    DM2_V1_ProcessDamageCallbacks cb = {
-        4, mock_get_hero, pending, wounds, mock_defeated, mock_damage_timer
+    g_damage_timer_count = 0;
+    DM2_V1_ProcessPlayersDamageCallbacks cb = {
+        4,
+        ppd_take_body_status, ppd_merge_body_status,
+        ppd_take_pending_damage, ppd_get_cur_hp, ppd_set_cur_hp,
+        ppd_set_damage_suffered, ppd_mark_dirty,
+        ppd_get_hero_timer, ppd_rearm_hero_timer,
+        ppd_queue_hit_timer, ppd_defeated
     };
     dm2_v1_process_players_damage(&cb, NULL);
-    /* Hero 1: 100-50=50 → survives */
+    /* Hero 1: 100-50=50 -> survives */
     assert(g_heroes[1].cur_hp == 50);
-    /* Hero 3: 100-300<0 → defeated */
+    /* Hero 3: 100-300<0 -> defeated */
     assert(g_defeated_hero == 3);
     /* Pending cleared */
-    assert(pending[1] == 0);
-    assert(pending[3] == 0);
+    assert(g_pending_damage[1] == 0);
+    assert(g_pending_damage[3] == 0);
     printf("  PASS: process_players_damage\n");
 }
 
-/* ---- player_defeated ---- */
-static int g_drop_called, g_bones_called, g_cure_called;
-static int g_leader_selected;
-static int g_all_dead;
+/* ---- player_defeated ----
+ * The runtime_narrow version handles UI-level cleanup on hero death:
+ * squad panel refresh, mouse capture release, item drop, dead marking. */
+static int g_drop_called, g_dead_marked;
 
-static void mock_drop(void *ctx, int idx) { (void)ctx; (void)idx; g_drop_called = 1; }
-static void mock_bones(void *ctx, int idx, uint8_t pos) { (void)ctx; (void)idx; (void)pos; g_bones_called = 1; }
-static void mock_cure(void *ctx, int idx) { (void)ctx; (void)idx; g_cure_called = 1; }
-static void mock_select(void *ctx, int idx) { (void)ctx; g_leader_selected = idx; }
-static void mock_all_dead(void *ctx) { (void)ctx; g_all_dead = 1; }
+static void pd_drop(void *ctx, int idx) { (void)ctx; (void)idx; g_drop_called = 1; }
+static void pd_mark_dead(void *ctx, int idx) { (void)ctx; (void)idx; g_dead_marked = 1; }
 
 static void test_player_defeated(void)
 {
-    reset_heroes();
-    g_heroes[0].poisoned_count = 2;
-    g_drop_called = g_bones_called = g_cure_called = 0;
-    g_leader_selected = -1;
-    g_all_dead = 0;
-    DM2_V1_PlayerDefeatedCallbacks cb = {
-        4, mock_get_hero, mock_drop, mock_bones, mock_cure,
-        mock_select, NULL, mock_all_dead, NULL, 0, 0, 0
+    g_drop_called = 0;
+    g_dead_marked = 0;
+    DM2_V1_PlayerDefeatedInfo info = {
+        0,    /* hero_idx */
+        0,    /* is_active_hero */
+        0,    /* is_last_visible_champion */
+        0,    /* is_mouse_drag_capture */
+        0,    /* is_mouse_select_capture */
+        0     /* is_event_capture */
     };
-    dm2_v1_player_defeated(0, &cb, NULL);
-    assert(g_heroes[0].cur_hp == 0);
-    assert(g_drop_called == 1);
-    assert(g_bones_called == 1);
-    assert(g_cure_called == 1); /* was poisoned */
-    assert(g_leader_selected == 1); /* next alive hero */
-    assert(g_all_dead == 0);
+    DM2_V1_PlayerDefeatedCallbacks cb;
+    memset(&cb, 0, sizeof(cb));
+    cb.drop_player_items = pd_drop;
+    cb.mark_hero_dead = pd_mark_dead;
 
-    /* All dead */
-    for (int i = 0; i < 4; i++) g_heroes[i].cur_hp = 0;
-    g_heroes[2].cur_hp = 50;
-    g_all_dead = 0;
-    dm2_v1_player_defeated(2, &cb, NULL);
-    assert(g_all_dead == 1);
+    dm2_v1_player_defeated(&info, &cb, NULL);
+    assert(g_drop_called == 1);
+    assert(g_dead_marked == 1);
+
+    /* NULL info: no crash, no side effects */
+    g_drop_called = 0;
+    dm2_v1_player_defeated(NULL, &cb, NULL);
+    assert(g_drop_called == 0);
     printf("  PASS: player_defeated\n");
 }
 

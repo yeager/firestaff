@@ -15,9 +15,9 @@
         "note": "identical source BMP sha256 across multiple readiness rows is a strong indicator of a shared placeholder fixture rather than independent runtime captures",
         "rows": [
           "canonical_pcengine_root",
-          "jp_extras_track02_bin"
+          "us_extras_track02_bin"
         ],
-        "sha256": "9d3c75eb5dec53367015681dffc7e47c0ef5db330f75b39d1bd58b3017cef88b"
+        "sha256": "eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8"
       }
     ]
   },
@@ -61,7 +61,7 @@
     "presented BMP is a valid 320x200 24-bit BMP with >200 non-black pixels",
     "operator-local reviewer sign-off reports reviewed=true with non-empty reviewer and review_date"
   ],
-  "generated_at": "2026-08-04T10:17:42.683190+00:00",
+  "generated_at": "2026-08-05T10:03:52.762404+00:00",
   "nonClaims": [
     "No Theron screenshot is promoted into README, verification-screens/, or docs/compare/ by this checklist.",
     "No generated, illustrated, or mock Theron image is created or copied.",
@@ -105,7 +105,7 @@
         {
           "key": "unique_source_bmp",
           "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 9d3c75eb5dec53367015681dffc7e47c0ef5db330f75b39d1bd58b3017cef88b duplicated across rows",
+          "note": "source sha256 eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8 duplicated across rows",
           "verdict": "FAIL"
         },
         {
@@ -124,7 +124,7 @@
       "classification": "REVIEW_CHECKLIST_INELIGIBLE",
       "label": "Theron canonical PC Engine root",
       "machine_eligible": false,
-      "presented_sha256": "2533d1b32ea16200bf2653efc3d5f93e920e527dfe88f390fc6550a329faa8c0",
+      "presented_sha256": "f34244164e175cb64e7507c87052e791db124a726a7f4c7567a8ff7b74b61c3b",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON STARTUP",
@@ -134,7 +134,7 @@
       },
       "reviewer_signed_off": false,
       "reviewer_signoff_record": null,
-      "source_sha256": "9d3c75eb5dec53367015681dffc7e47c0ef5db330f75b39d1bd58b3017cef88b"
+      "source_sha256": "eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8"
     },
     {
       "case_id": "jp_extras_track02_bin",
@@ -166,8 +166,8 @@
         {
           "key": "unique_source_bmp",
           "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 9d3c75eb5dec53367015681dffc7e47c0ef5db330f75b39d1bd58b3017cef88b duplicated across rows",
-          "verdict": "FAIL"
+          "note": "source sha256 925d16899cce83c49abd7725858b3fa9fd81b040fad0340c2994d4d1dfa756a6 unique",
+          "verdict": "PASS"
         },
         {
           "key": "presented_bmp_geometry",
@@ -185,7 +185,7 @@
       "classification": "REVIEW_CHECKLIST_INELIGIBLE",
       "label": "Theron JP extras Track 02",
       "machine_eligible": false,
-      "presented_sha256": "2533d1b32ea16200bf2653efc3d5f93e920e527dfe88f390fc6550a329faa8c0",
+      "presented_sha256": "469e6cf3c3ee2803bf4bff857a459efc1930a19a91c618f3228b4aa43731fba2",
       "probe_summary": {
         "gameTick": 0,
         "lastOutcome": "THERON STARTUP",
@@ -195,7 +195,7 @@
       },
       "reviewer_signed_off": false,
       "reviewer_signoff_record": null,
-      "source_sha256": "9d3c75eb5dec53367015681dffc7e47c0ef5db330f75b39d1bd58b3017cef88b"
+      "source_sha256": "925d16899cce83c49abd7725858b3fa9fd81b040fad0340c2994d4d1dfa756a6"
     },
     {
       "case_id": "us_extras_track02_bin",
@@ -227,8 +227,8 @@
         {
           "key": "unique_source_bmp",
           "label": "source BMP sha256 is unique across all rows (duplicate sha256s indicate a shared placeholder fixture)",
-          "note": "source sha256 eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8 unique",
-          "verdict": "PASS"
+          "note": "source sha256 eac12a9fad17bf8c14ea31ad281e16631177f5159340867cb8b3269e8b1f0de8 duplicated across rows",
+          "verdict": "FAIL"
         },
         {
           "key": "presented_bmp_geometry",

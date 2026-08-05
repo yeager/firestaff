@@ -16,7 +16,7 @@ and it does not rewrite public docs.
 | Case | Status | Probe | Valid no-draw BMPs | Non-black (first BMP) | SHA-deterministic |
 |---|---:|---:|---:|---:|---:|
 | Nexus extracted Track 1 root | PASS | yes | `0` | `0` | yes |
-| Nexus saturn-ja Track 1 .bin | PASS | yes | `0` | `0` | yes |
+| Nexus saturn-ja Track 1 .bin | SKIP | no | `0` | `0` | no |
 
 ## Public Screenshot Boundary
 

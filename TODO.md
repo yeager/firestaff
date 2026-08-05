@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **DUNGEON-STUDIO-FSDUNG:** Dungeon Studio: import original dungeons from
+  all five games (DM1, CSB, DM2, Theron's Quest, DM Nexus) and export to a
+  custom binary `.fsdung` format. The format is a superset of all games'
+  dungeon structures (maps, things, tiles, creatures, items, sensors, doors).
+  Importers per game read from DUNGEON.DAT (DM1/CSB), DM2 DUNGEON.DAT
+  (skproject layout), Theron Track 02 level records, and Nexus .DGN files.
+  Export produces a single portable binary file.
+
 - **DM2-REAL-RUNTIME-CORPUS:** The former runtime-handoff smoke fixture is
   deliberately outside the active test suite because it fabricated dungeon,
   actor, weather, trigger and shop state. Extend the real-data M11/GDAT gates

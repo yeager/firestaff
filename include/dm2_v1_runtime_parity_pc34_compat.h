@@ -105,14 +105,9 @@ void dm2_v1_set_itemtype(
     int32_t record_word, int32_t new_type,
     const DM2_V1_SetItemtypeCallbacks *cb, void *ctx);
 
-typedef struct {
-    uint8_t *(*get_record_address)(void *ctx, uint16_t record_word);
-    int16_t (*get_tile_record_link)(void *ctx, int obj_idx);
-} DM2_V1_WallTileRecordCallbacks;
-
-int16_t dm2_v1_get_wall_tile_anyitem_record(
-    int16_t first_record,
-    const DM2_V1_WallTileRecordCallbacks *cb, void *ctx);
+/* dm2_v1_get_wall_tile_anyitem_record is declared in
+ * dm2_v1_record_ops_pc34_compat.h with its authoritative signature
+ * (map_x, map_y, DM2_V1_TileRecordWalkCallbacks). */
 
 typedef struct {
     uint8_t *(*get_record_address)(void *ctx, uint16_t record_word);

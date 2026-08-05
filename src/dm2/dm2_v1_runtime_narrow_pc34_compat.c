@@ -546,7 +546,7 @@ int dm2_v1_wield_weapon(
 /* DM2_REMOVE_OBJECT_FROM_HAND — c_hero.cpp:2354 */
 int32_t dm2_v1_remove_object_from_hand_ex(
     DM2_V1_RemoveFromHandState *state, int event_hero_idx,
-    const DM2_V1_RemoveFromHandCallbacks *cb, void *ctx)
+    const DM2_V1_RemoveFromHandExCallbacks *cb, void *ctx)
 {
     if (!state)
         return -1;

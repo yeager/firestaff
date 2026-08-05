@@ -1,6 +1,6 @@
 # Pass610 - DM1 V1 Firestaff viewport crop capture gate
 
-Status: PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE_LOCKED
+Status: FAIL_PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE
 
 This gate locks the Firestaff-side 224x136 viewport crop artifacts needed before any later same-viewport original/Firestaff comparison can be promoted.
 
@@ -10,13 +10,12 @@ Source evidence:
 - DRAWVIEW.C:842-857 ok=True - F0097 presents G0296 through C007_ZONE_VIEWPORT, so the crop is the compare boundary.
 
 Runtime crops:
-- 01_start_south_1_3 map=0 x=1 y=3 dir=2 crop=01_start_south_1_3_viewport_224x136.ppm sha256=c4a2fd67d88aa5b7872da33af2e969670fd2082d1b8c3547d6295f583daae2c2
-- 02_turn_right_west_1_3 map=0 x=1 y=3 dir=3 crop=02_turn_right_west_1_3_viewport_224x136.ppm sha256=422bd3f07cf39aaf2934bfc3a61ca7c8aaf3caa7b97a38e158e11cd908b91208
-- 03_blocked_west_wall_1_3 map=0 x=1 y=3 dir=3 crop=03_blocked_west_wall_1_3_viewport_224x136.ppm sha256=422bd3f07cf39aaf2934bfc3a61ca7c8aaf3caa7b97a38e158e11cd908b91208
-- 04_forward_south_1_4 map=0 x=1 y=4 dir=2 crop=04_forward_south_1_4_viewport_224x136.ppm sha256=99f4f2903fcdb28c5375c3fbc2aaf4352aede055f194ecbde95192d367d5dd8e
 
 Non-claims:
 - no original PC34 frame was captured
 - no original-vs-Firestaff pixel parity is promoted
 - the crop hashes are Firestaff capture-readiness evidence only
 - no TODO.md update
+
+Problems:
+- Command '['/Volumes/Extern-disk/firestaff-claude/build/firestaff_m11_wall_collision_capture_probe', '/Users/bosse/.firestaff/data', '/Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate']' timed out after 180 seconds

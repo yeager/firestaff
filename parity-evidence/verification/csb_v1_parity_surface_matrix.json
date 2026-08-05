@@ -369,41 +369,41 @@
       "id": "atari_v20_graphics",
       "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/GRAPHICS.DAT",
       "expected_size": 319080,
-      "actual_size": 319080,
+      "actual_size": null,
       "expected_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
-      "actual_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+      "actual_sha256": null,
       "ok": true,
-      "skippedHostMissingLicensedAsset": false
+      "skippedHostMissingLicensedAsset": true
     },
     {
       "id": "atari_v20_dungeon",
       "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_extracted/csb-atari/HardDisk/2009-02-22 PP/DUNGEON.DAT",
       "expected_size": 2098,
-      "actual_size": 2098,
+      "actual_size": null,
       "expected_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
-      "actual_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "actual_sha256": null,
       "ok": true,
-      "skippedHostMissingLicensedAsset": false
+      "skippedHostMissingLicensedAsset": true
     },
     {
       "id": "canonical_atari_graphics",
       "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-GRAPHICS.DAT",
       "expected_size": 319080,
-      "actual_size": 319080,
+      "actual_size": null,
       "expected_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
-      "actual_sha256": "33f672bf644763411cc465e3553e0605de77e6128070dbd27868813e2a21d9af",
+      "actual_sha256": null,
       "ok": true,
-      "skippedHostMissingLicensedAsset": false
+      "skippedHostMissingLicensedAsset": true
     },
     {
       "id": "canonical_atari_dungeon",
       "path": "/Users/bosse/.openclaw/data/firestaff-original-games/DM/_canonical/csb/atari-DUNGEON.DAT",
       "expected_size": 2098,
-      "actual_size": 2098,
+      "actual_size": null,
       "expected_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
-      "actual_sha256": "3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba",
+      "actual_sha256": null,
       "ok": true,
-      "skippedHostMissingLicensedAsset": false
+      "skippedHostMissingLicensedAsset": true
     }
   ],
   "git_refs": [

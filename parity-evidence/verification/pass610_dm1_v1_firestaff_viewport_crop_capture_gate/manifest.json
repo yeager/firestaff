@@ -5,67 +5,12 @@
     "the crop hashes are Firestaff capture-readiness evidence only",
     "no TODO.md update"
   ],
-  "ok": true,
-  "probeStdoutTail": "LOADING DUNGEON: [/Users/bosse/.firestaff/data/dm1-extras/legacy-dos/DungeonMasterPC34/DATA/DUNGEON.DAT]\nwrote /Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.json and /Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate/dm1_v1_wall_collision_runtime_capture.md\nPASS dm1_v1_wall_collision_runtime_capture rows=4 out=/Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
-  "problems": [],
-  "runtime": {
-    "distinctViewportCropHashes": 3,
-    "outDir": "/Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate",
-    "rows": [
-      {
-        "label": "01_start_south_1_3",
-        "party": {
-          "direction": 2,
-          "mapIndex": 0,
-          "mapX": 1,
-          "mapY": 3
-        },
-        "screenshot": "01_start_south_1_3.ppm",
-        "screenshotSha256": "290142cd2a602d8c407606e99a763e44611e2838754c2c3f17d3e9a9eb5d9c2c",
-        "viewportCrop": "01_start_south_1_3_viewport_224x136.ppm",
-        "viewportCropSha256": "c4a2fd67d88aa5b7872da33af2e969670fd2082d1b8c3547d6295f583daae2c2"
-      },
-      {
-        "label": "02_turn_right_west_1_3",
-        "party": {
-          "direction": 3,
-          "mapIndex": 0,
-          "mapX": 1,
-          "mapY": 3
-        },
-        "screenshot": "02_turn_right_west_1_3.ppm",
-        "screenshotSha256": "afd3a70f62fe06bbbd6223b6ebe83672684a072c360fb2e7fa27e6236b8a11ff",
-        "viewportCrop": "02_turn_right_west_1_3_viewport_224x136.ppm",
-        "viewportCropSha256": "422bd3f07cf39aaf2934bfc3a61ca7c8aaf3caa7b97a38e158e11cd908b91208"
-      },
-      {
-        "label": "03_blocked_west_wall_1_3",
-        "party": {
-          "direction": 3,
-          "mapIndex": 0,
-          "mapX": 1,
-          "mapY": 3
-        },
-        "screenshot": "03_blocked_west_wall_1_3.ppm",
-        "screenshotSha256": "88d9bdb79ee006bf8e84585929a7aabe730e47e83b66380980c85c52e7833586",
-        "viewportCrop": "03_blocked_west_wall_1_3_viewport_224x136.ppm",
-        "viewportCropSha256": "422bd3f07cf39aaf2934bfc3a61ca7c8aaf3caa7b97a38e158e11cd908b91208"
-      },
-      {
-        "label": "04_forward_south_1_4",
-        "party": {
-          "direction": 2,
-          "mapIndex": 0,
-          "mapX": 1,
-          "mapY": 4
-        },
-        "screenshot": "04_forward_south_1_4.ppm",
-        "screenshotSha256": "1c5975b7b3947e4e58b89792757a8dc2f346bdc376cc5c72927ea29e45952e16",
-        "viewportCrop": "04_forward_south_1_4_viewport_224x136.ppm",
-        "viewportCropSha256": "99f4f2903fcdb28c5375c3fbc2aaf4352aede055f194ecbde95192d367d5dd8e"
-      }
-    ]
-  },
+  "ok": false,
+  "probeStdoutTail": "",
+  "problems": [
+    "Command '['/Volumes/Extern-disk/firestaff-claude/build/firestaff_m11_wall_collision_capture_probe', '/Users/bosse/.firestaff/data', '/Volumes/Extern-disk/firestaff-claude/build/pass610_dm1_v1_firestaff_viewport_crop_capture_gate']' timed out after 180 seconds"
+  ],
+  "runtime": {},
   "schema": "firestaff.parity.pass610_dm1_v1_firestaff_viewport_crop_capture_gate.v1",
   "sourceEvidence": [
     {
@@ -91,5 +36,5 @@
     }
   ],
   "sourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
-  "status": "PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE_LOCKED"
+  "status": "FAIL_PASS610_DM1_V1_FIRESTAFF_VIEWPORT_CROP_CAPTURE"
 }

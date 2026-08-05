@@ -4277,7 +4277,7 @@ if(APPLE)
         "-framework CoreMIDI"
         "-framework CoreFoundation")
 endif()
-target_link_libraries(firestaff_m10 PUBLIC firestaff_zip_extract firestaff_fmtowns_disc firestaff_scan_cache)
+target_link_libraries(firestaff_m10 PUBLIC firestaff_zip_extract firestaff_fmtowns_disc)
 target_compile_definitions(firestaff_m10 PUBLIC
     COMPILE_H
     STATICFUNCTION=static
@@ -4407,7 +4407,7 @@ if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES}
         src/shared/asset_find_by_hash.c)
     target_include_directories(firestaff_nexus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
-    target_link_libraries(firestaff_nexus PUBLIC m firestaff_scan_cache)
+    target_link_libraries(firestaff_nexus PUBLIC m)
     if(NOT MSVC)
         target_compile_options(firestaff_nexus PRIVATE -Wall -Wextra -O2)
     endif()
@@ -4893,7 +4893,7 @@ set(M12_SOURCES
 
 add_library(firestaff_m12 STATIC ${M12_SOURCES})
 target_include_directories(firestaff_m12 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2 firestaff_retroachievements firestaff_scan_cache)
+target_link_libraries(firestaff_m12 PUBLIC firestaff_m11 firestaff_v2 firestaff_retroachievements)
 firestaff_link_zlib(firestaff_m12 PUBLIC)
 # Asset-status test hooks are deliberately excluded from the production M12
 # archive. Data-free scanner tests compile asset_status_m12.c themselves with
@@ -14658,6 +14658,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_runtime.c
@@ -14746,6 +14748,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_runtime.c
@@ -14834,6 +14838,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_runtime.c
@@ -16283,6 +16289,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_save_load.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
@@ -16467,6 +16475,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
@@ -16551,6 +16561,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
@@ -16635,6 +16647,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
@@ -16719,6 +16733,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
@@ -16803,6 +16819,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
@@ -16889,6 +16907,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
@@ -16970,6 +16990,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
@@ -17072,6 +17094,8 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_game.c
@@ -19524,6 +19548,7 @@ if(BUILD_TESTING)
         src/dm2/dm2_v1_weather.c
         src/shared/fs_portable_compat.c
         src/shared/asset_find_by_hash.c
+        src/shared/firestaff_scan_cache.c
         src/dm2/dm2_v1_creature.c
         src/dm2/dm2_v1_creature_tables.c
         src/dm2/dm2_v1_projectile_pc34_compat.c
@@ -19538,6 +19563,8 @@ if(BUILD_TESTING)
         src/memory/memory_combat_pc34_compat.c
         src/csb/csb_v1_projectile_speed_pc34_compat.c
         src/dm2/dm2_v1_midi_backend.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/memory/memory_timeline_pc34_compat.c
     )
     target_include_directories(probe_dm2_v1_world_state PRIVATE
@@ -48537,6 +48564,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_cdda_music.c
+        src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_runtime.c
@@ -48622,7 +48651,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_record_ops_pc34_compat.c
     )
     if(NOT MSVC)
-        target_link_libraries(test_dm2_v1_scene_light_control PRIVATE m)
+        target_link_libraries(test_dm2_v1_scene_light_control PRIVATE firestaff_zip_extract firestaff_fmtowns_disc m)
     endif()
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_scene_light_control PRIVATE -Wall -Wextra -O2)

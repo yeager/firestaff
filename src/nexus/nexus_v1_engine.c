@@ -4558,11 +4558,13 @@ static int nexus_v1_find_descriptor_capture_anchor(
 
     if (!search || !packet || !packet->valid || !packet->no_draw_only ||
         packet->fallback_visuals_permitted ||
-        !packet->blocks_real_dgn_mesh_render ||
-        packet->descriptor_index != search->descriptor_index ||
+        !packet->blocks_real_dgn_mesh_render) {
+        return -1;
+    }
+    if (packet->descriptor_index != search->descriptor_index ||
         packet->candidate_byte_count == 0U ||
         packet->next_anchor_offset <= packet->payload_anchor_offset) {
-        return -1;
+        return 0;
     }
     if (!packet->palette_anchor &&
         packet->payload_anchor_offset == search->image_offset) {
@@ -4602,8 +4604,6 @@ int nexus_v1_engine_build_structure2_descriptor_capture_target(
         return 0;
     }
     level = &engine->current_level;
-    if (level->structure2_payload.material_or_image_data_proven)
-        return 0;
     data = engine->current_level_dgn_data;
     size = engine->current_level_dgn_size;
     if (!data || size < 0x18 ||
@@ -5176,12 +5176,14 @@ static int nexus_v1_find_static_material_payload_anchor(
 
     if (!search || !packet || !packet->valid || !packet->no_draw_only ||
         packet->fallback_visuals_permitted ||
-        !packet->blocks_real_dgn_mesh_render ||
-        packet->descriptor_index != search->descriptor_index ||
+        !packet->blocks_real_dgn_mesh_render) {
+        return -1;
+    }
+    if (packet->descriptor_index != search->descriptor_index ||
         !packet->package_fnv1a64 || packet->package_fnv1a64 != packet->source_bytes_fnv1a64 || !packet->descriptor_length || !packet->descriptor_fnv1a64 || packet->descriptor_offset > (uint32_t)packet->source_byte_count || packet->descriptor_length > (uint32_t)packet->source_byte_count - packet->descriptor_offset ||
         packet->candidate_byte_count == 0U ||
         packet->next_anchor_offset <= packet->payload_anchor_offset) {
-        return -1;
+        return 0;
     }
     if (!packet->palette_anchor &&
         packet->payload_anchor_offset == search->image_offset) {
@@ -6206,9 +6208,11 @@ static int nexus_v1_find_animated_image_payload_anchor(
 
     if (!search || !packet || !packet->valid || !packet->no_draw_only ||
         packet->fallback_visuals_permitted ||
-        !packet->blocks_real_dgn_mesh_render ||
-        packet->descriptor_index != search->descriptor_index) {
+        !packet->blocks_real_dgn_mesh_render) {
         return -1;
+    }
+    if (packet->descriptor_index != search->descriptor_index) {
+        return 0;
     }
     if (!packet->palette_anchor &&
         packet->payload_anchor_offset == search->image_offset) {

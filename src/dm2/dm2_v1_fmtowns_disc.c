@@ -48,7 +48,6 @@ static int scan_directory(const uint8_t *image, size_t image_size,
             char name[64];
             uint32_t file_lba, file_size;
             uint8_t flags;
-            const char *bare;
             size_t bare_len;
 
             if (rec_len == 0) break;
@@ -65,7 +64,6 @@ static int scan_directory(const uint8_t *image, size_t image_size,
             flags     = dirbuf[pos + 25];
 
             /* Strip ";1" version suffix */
-            bare = name;
             bare_len = strlen(name);
             if (bare_len > 2 && name[bare_len - 2] == ';')
                 name[bare_len - 2] = '\0';

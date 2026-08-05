@@ -13,6 +13,9 @@ Requires Python 3.10+ and Tk 8.6+.
 """
 
 from __future__ import annotations
+
+SAVEGAME_EDITOR_VERSION = "0.1"
+
 import gettext, os, struct, sys
 from pathlib import Path
 from typing import Any

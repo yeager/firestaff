@@ -25,6 +25,7 @@
 
 #ifdef _WIN32
 #include <windows.h>
+#include <direct.h>
 #else
 #include <dirent.h>
 #include <unistd.h>
@@ -151,7 +152,143 @@ static void md5_body(AssetMd5Ctx *ctx, const unsigned char *block) {
 
 /* ── File MD5 helper ──────────────────────────────────────────── */
 
-static int file_md5(const char *path, char outHex[33]) {
+/* ── Inline scan cache (avoids external library dependency) ───── */
+
+#define SCAN_CACHE_MAX 4096
+
+typedef struct {
+    char     path[512];
+    int64_t  mtime;
+    int64_t  size;
+    char     md5[33];
+} ScanCacheEntry_I;
+
+typedef struct {
+    ScanCacheEntry_I entries[SCAN_CACHE_MAX];
+    int count;
+    int dirty;
+} ScanCache_I;
+
+static const char *scache_home(void) {
+    const char *h = getenv("HOME");
+#ifdef _WIN32
+    if (!h) h = getenv("USERPROFILE");
+#endif
+    return h;
+}
+
+static int scache_path(char *buf, size_t len) {
+    const char *h = scache_home();
+    if (!h) return -1;
+    snprintf(buf, len, "%s/.firestaff/cache/asset_scan_cache.dat", h);
+    return 0;
+}
+
+static void scache_ensure_dir(void) {
+    char dir[512];
+    const char *h = scache_home();
+    if (!h) return;
+    snprintf(dir, sizeof(dir), "%s/.firestaff", h);
+#ifdef _WIN32
+    _mkdir(dir);
+#else
+    mkdir(dir, 0755);
+#endif
+    snprintf(dir, sizeof(dir), "%s/.firestaff/cache", h);
+#ifdef _WIN32
+    _mkdir(dir);
+#else
+    mkdir(dir, 0755);
+#endif
+}
+
+static void scache_init(ScanCache_I *c) { memset(c, 0, sizeof(*c)); }
+
+static int scache_load(ScanCache_I *c) {
+    char p[512]; FILE *f; char line[640];
+    scache_init(c);
+    if (scache_path(p, sizeof(p)) != 0) return -1;
+    f = fopen(p, "rb");
+    if (!f) return -1;
+    while (c->count < SCAN_CACHE_MAX && fgets(line, sizeof(line), f)) {
+        ScanCacheEntry_I *e = &c->entries[c->count];
+        char *t1 = strchr(line, '\t');
+        if (!t1) continue;
+        char *t2 = strchr(t1+1, '\t');
+        if (!t2) continue;
+        char *t3 = strchr(t2+1, '\t');
+        if (!t3) continue;
+        size_t pl = (size_t)(t1 - line);
+        if (pl >= sizeof(e->path)) continue;
+        memcpy(e->path, line, pl); e->path[pl] = '\0';
+        e->mtime = strtoll(t1+1, NULL, 10);
+        e->size = strtoll(t2+1, NULL, 10);
+        size_t ml = strlen(t3+1);
+        while (ml > 0 && (t3[ml]=='\n'||t3[ml]=='\r')) ml--;
+        if (ml < 32) continue;
+        memcpy(e->md5, t3+1, 32); e->md5[32] = '\0';
+        c->count++;
+    }
+    fclose(f);
+    return 0;
+}
+
+static int scache_save(const ScanCache_I *c) {
+    char p[512]; FILE *f; int i;
+    if (!c->dirty) return 0;
+    if (scache_path(p, sizeof(p)) != 0) return -1;
+    scache_ensure_dir();
+    f = fopen(p, "wb");
+    if (!f) return -1;
+    for (i = 0; i < c->count; i++) {
+        const ScanCacheEntry_I *e = &c->entries[i];
+        fprintf(f, "%s\t%lld\t%lld\t%s\n",
+                e->path, (long long)e->mtime, (long long)e->size, e->md5);
+    }
+    fclose(f);
+    return 0;
+}
+
+static int scache_lookup(const ScanCache_I *c,
+                         const char *path, int64_t mt, int64_t sz,
+                         char out[33]) {
+    int i;
+    for (i = 0; i < c->count; i++) {
+        if (strcmp(c->entries[i].path, path) == 0 &&
+            c->entries[i].mtime == mt && c->entries[i].size == sz) {
+            memcpy(out, c->entries[i].md5, 33);
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void scache_put(ScanCache_I *c,
+                       const char *path, int64_t mt, int64_t sz,
+                       const char *md5) {
+    int i;
+    for (i = 0; i < c->count; i++) {
+        if (strcmp(c->entries[i].path, path) == 0) {
+            c->entries[i].mtime = mt;
+            c->entries[i].size = sz;
+            memcpy(c->entries[i].md5, md5, 33);
+            c->dirty = 1;
+            return;
+        }
+    }
+    if (c->count < SCAN_CACHE_MAX) {
+        ScanCacheEntry_I *e = &c->entries[c->count++];
+        strncpy(e->path, path, sizeof(e->path)-1);
+        e->path[sizeof(e->path)-1] = '\0';
+        e->mtime = mt; e->size = sz;
+        memcpy(e->md5, md5, 33);
+        c->dirty = 1;
+    }
+}
+
+static ScanCache_I *s_scan_cache;
+
+static int file_md5_raw(const char *path, char outHex[33]) {
     unsigned char buf[8192];
     AssetMd5Ctx ctx;
     FILE *fp = fopen(path, "rb");
@@ -165,6 +302,26 @@ static int file_md5(const char *path, char outHex[33]) {
     if (!ok) return 0;
     md5_final(&ctx, outHex);
     return 1;
+}
+
+static int file_md5(const char *path, char outHex[33]) {
+    if (s_scan_cache) {
+        struct stat st;
+        if (stat(path, &st) == 0) {
+            if (scache_lookup(s_scan_cache, path,
+                              (int64_t)st.st_mtime, (int64_t)st.st_size,
+                              outHex))
+                return 1;
+            if (file_md5_raw(path, outHex)) {
+                scache_put(s_scan_cache, path,
+                           (int64_t)st.st_mtime, (int64_t)st.st_size,
+                           outHex);
+                return 1;
+            }
+            return 0;
+        }
+    }
+    return file_md5_raw(path, outHex);
 }
 
 int asset_file_matches_md5(const char *path, const char *expectedMd5) {
@@ -3470,25 +3627,48 @@ static int scan_dir(const char *dir, const char *expectedMd5,
 }
 #endif
 
+/* ── Scan cache lifecycle ─────────────────────────────────────── */
+
+static ScanCache_I s_scan_cache_storage;
+static int s_scan_cache_active;
+
+static void scan_cache_begin(void) {
+    if (s_scan_cache_active) return;
+    scache_init(&s_scan_cache_storage);
+    scache_load(&s_scan_cache_storage);
+    s_scan_cache = &s_scan_cache_storage;
+    s_scan_cache_active = 1;
+}
+
+static void scan_cache_end(void) {
+    if (!s_scan_cache_active) return;
+    scache_save(&s_scan_cache_storage);
+    s_scan_cache = NULL;
+    s_scan_cache_active = 0;
+}
+
 /* ── Public API ───────────────────────────────────────────────── */
 
 int asset_find_by_md5(const char *searchDir, const char *expectedMd5,
                       char *outPath, int outPathLen, int maxDepth) {
     char normalizedMd5[33];
+    int result;
     if (!searchDir || !expectedMd5 || !outPath || outPathLen <= 0) return 0;
     if (!normalize_md5(expectedMd5, normalizedMd5)) return 0;
     if (maxDepth < 0) maxDepth = 3;
-    /* A launcher may pass a selected archive directly rather than its parent
-     * directory. Test the path as a container first; scan_dir() intentionally
-     * only accepts directories. */
+    scan_cache_begin();
     if (scan_container_by_md5(searchDir, normalizedMd5, outPath, outPathLen)) {
+        scan_cache_end();
         return 1;
     }
     if (file_md5(searchDir, normalizedMd5) &&
         copy_match_path(searchDir, outPath, outPathLen)) {
+        scan_cache_end();
         return 1;
     }
-    return scan_dir(searchDir, normalizedMd5, outPath, outPathLen, 0, maxDepth);
+    result = scan_dir(searchDir, normalizedMd5, outPath, outPathLen, 0, maxDepth);
+    scan_cache_end();
+    return result;
 }
 
 int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
@@ -3508,6 +3688,7 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
         ++inputCount;
     }
     if (inputCount == 0) return 0;
+    scan_cache_begin();
     normalized = (char (*)[33])calloc((size_t)inputCount, sizeof(*normalized));
     normalizedPtrs = (const char**)calloc((size_t)inputCount + 1U, sizeof(*normalizedPtrs));
     foundPaths = (char (*)[ASSET_PATH_MAX])calloc((size_t)inputCount, sizeof(*foundPaths));
@@ -3519,6 +3700,7 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
         free(foundPaths);
         free(matched);
         free(originalIndices);
+        scan_cache_end();
         return 0;
     }
     for (i = 0; i < inputCount; ++i) {
@@ -3557,6 +3739,7 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
                 free(foundPaths);
                 free(matched);
                 free(originalIndices);
+                scan_cache_end();
                 return 1;
             }
         }
@@ -3566,6 +3749,7 @@ int asset_find_by_md5_list(const char *searchDir, const char *const *md5List,
     free(foundPaths);
     free(matched);
     free(originalIndices);
+    scan_cache_end();
     return 0;
 }
 
@@ -3665,8 +3849,12 @@ int asset_find_all_by_md5_list(const char *searchDir, const char *const *md5List
                                char outPaths[][ASSET_PATH_MAX],
                                int *outMatched, int maxMatches,
                                int maxDepth) {
-    return asset_find_all_by_md5_list_internal(searchDir, md5List, outPaths,
-                                               outMatched, maxMatches, maxDepth, 1);
+    int result;
+    scan_cache_begin();
+    result = asset_find_all_by_md5_list_internal(searchDir, md5List, outPaths,
+                                                  outMatched, maxMatches, maxDepth, 1);
+    scan_cache_end();
+    return result;
 }
 
 int asset_find_all_files_by_md5_list(const char *searchDir,
@@ -3674,8 +3862,12 @@ int asset_find_all_files_by_md5_list(const char *searchDir,
                                      char outPaths[][ASSET_PATH_MAX],
                                      int *outMatched, int maxMatches,
                                      int maxDepth) {
-    return asset_find_all_by_md5_list_internal(searchDir, md5List, outPaths,
-                                               outMatched, maxMatches, maxDepth, 0);
+    int result;
+    scan_cache_begin();
+    result = asset_find_all_by_md5_list_internal(searchDir, md5List, outPaths,
+                                                  outMatched, maxMatches, maxDepth, 0);
+    scan_cache_end();
+    return result;
 }
 
 int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath) {

@@ -62,6 +62,7 @@ static void usage(const char* prog) {
             "  --boot-probe-expect-title-ready <0|1> Fail unless title-ready flag matches\n"
             "  --boot-probe-expect-dm1-hoc-full-graphics Fail unless DM1 HoC full graphics receipt is ready\n"
             "  --boot-probe-expect-dm1-hoc-release-app-capture Fail unless DM1 HoC release/app capture is ready\n"
+            "  --verbose, -v       Show detailed information during operations\n"
             "  --fullscreen        Run in fullscreen mode\n"
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
@@ -95,7 +96,8 @@ static int parse_party_triplet(const char* text,
 
 static void print_scan_game(const M12_AssetStatus* status,
                             const char* gameId,
-                            const char* title) {
+                            const char* title,
+                            int verbose) {
     size_t count;
     size_t i;
     int ready;
@@ -114,6 +116,9 @@ static void print_scan_game(const M12_AssetStatus* status,
         printf("  %-28s %s", file->label, file->matched ? "FOUND" : "MISSING");
         if (file->matched) {
             printf("  %s", file->matchedPath);
+            if (verbose && file->matchedHash[0] != '\0') {
+                printf("\n    md5: %s", file->matchedHash);
+            }
         }
         printf("\n");
     }
@@ -150,10 +155,35 @@ static void print_scan_game(const M12_AssetStatus* status,
     }
 }
 
-static int run_data_scan(const char* dataDir) {
+static int verbose_scan_progress(const M12_AssetScanProgress* progress,
+                                 void* userData) {
+    (void)userData;
+    if (!progress) return 1;
+    if (progress->currentGameId[0] != '\0') {
+        printf("  [%s] %s", progress->currentGameId, progress->currentTask);
+        if (progress->currentPath[0] != '\0') {
+            printf(": %s", progress->currentPath);
+        }
+        printf("\n");
+    }
+    return 1;
+}
+
+static int run_data_scan(const char* dataDir, int verbose) {
     M12_AssetStatus status;
     asset_scan_clear_missing_extractor_diagnostics();
-    if (dataDir && dataDir[0] != '\0') {
+    if (verbose) {
+        M12_AssetStatusScanOptions scanOptions;
+        memset(&scanOptions, 0, sizeof(scanOptions));
+        scanOptions.progressFn = verbose_scan_progress;
+        if (dataDir && dataDir[0] != '\0') {
+            scanOptions.honorRequestedDataDir = 1;
+        }
+        printf("Firestaff game-data scan (verbose)\n");
+        printf("Scanning...\n");
+        (void)M12_AssetStatus_ScanWithOptions(&status,
+                                              dataDir ? dataDir : "", &scanOptions);
+    } else if (dataDir && dataDir[0] != '\0') {
         M12_AssetStatusScanOptions scanOptions;
         memset(&scanOptions, 0, sizeof(scanOptions));
         scanOptions.honorRequestedDataDir = 1;
@@ -161,13 +191,28 @@ static int run_data_scan(const char* dataDir) {
     } else {
         M12_AssetStatus_Scan(&status, dataDir);
     }
-    printf("Firestaff game-data scan\n");
-    printf("Data dir: %s\n\n", M12_AssetStatus_GetDataDir(&status));
-    print_scan_game(&status, "dm1", "Dungeon Master");
-    print_scan_game(&status, "csb", "Chaos Strikes Back");
-    print_scan_game(&status, "dm2", "Dungeon Master II");
-    print_scan_game(&status, "nexus", "DM Nexus");
-    print_scan_game(&status, "theron", "Theron's Quest");
+    if (!verbose) {
+        printf("Firestaff game-data scan\n");
+    }
+    printf("Data dir: %s\n", M12_AssetStatus_GetDataDir(&status));
+    if (verbose) {
+        const char* dirs[] = {"dm1", "csb", "dm2", "nexus", "theron"};
+        const char* names[] = {"Dungeon Master", "Chaos Strikes Back",
+                               "Dungeon Master II", "DM Nexus", "Theron's Quest"};
+        size_t gi;
+        printf("Version: " FIRESTAFF_VERSION_STRING "\n");
+        printf("\n");
+        for (gi = 0; gi < 5; ++gi) {
+            print_scan_game(&status, dirs[gi], names[gi], verbose);
+        }
+    } else {
+        printf("\n");
+        print_scan_game(&status, "dm1", "Dungeon Master", 0);
+        print_scan_game(&status, "csb", "Chaos Strikes Back", 0);
+        print_scan_game(&status, "dm2", "Dungeon Master II", 0);
+        print_scan_game(&status, "nexus", "DM Nexus", 0);
+        print_scan_game(&status, "theron", "Theron's Quest", 0);
+    }
     printf("\nNon-essential intro/title files are optional and do not block launch.\n");
     {
         int missing = asset_scan_missing_extractor_count();
@@ -212,6 +257,7 @@ static int parse_presentation_mode(const char* value, int* out_mode) {
 int main(int argc, char** argv) {
     M11_PhaseA_Options opts;
     int scanData = 0;
+    int verbose = 0;
     M11_PhaseA_SetDefaultOptions(&opts);
 
     for (int i = 1; i < argc; ++i) {
@@ -243,6 +289,10 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--scan-data") == 0 ||
             strcmp(a, "--scan-game-data") == 0) {
             scanData = 1;
+            continue;
+        }
+        if (strcmp(a, "--verbose") == 0 || strcmp(a, "-v") == 0) {
+            verbose = 1;
             continue;
         }
         if (strcmp(a, "--boot-probe") == 0) {
@@ -426,8 +476,10 @@ int main(int argc, char** argv) {
         return 2;
     }
 
+    opts.verbose = verbose;
+
     if (scanData) {
-        return run_data_scan(opts.dataDir);
+        return run_data_scan(opts.dataDir, verbose);
     }
 
     if (opts.bootProbe && !opts.gameId) {

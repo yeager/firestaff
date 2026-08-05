@@ -37,8 +37,8 @@ contract are satisfied for at least one row.
 | Case | Classification | Machine | Reviewer | Items |
 |---|---|---|---|---|
 | canonical_pcengine_root | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=PASS, tqr_level_load_marker=PASS, semantic_track02_evidence=PASS, unique_source_bmp=FAIL, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
-| jp_extras_track02_bin | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=PASS, tqr_level_load_marker=PASS, semantic_track02_evidence=PASS, unique_source_bmp=FAIL, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
-| us_extras_track02_bin | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=PASS, tqr_level_load_marker=PASS, semantic_track02_evidence=PASS, unique_source_bmp=PASS, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
+| jp_extras_track02_bin | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=PASS, tqr_level_load_marker=PASS, semantic_track02_evidence=PASS, unique_source_bmp=PASS, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
+| us_extras_track02_bin | `REVIEW_CHECKLIST_INELIGIBLE` | — | — | real_runtime_capture=PASS, no_fallback_assets=PASS, tqr_level_load_marker=PASS, semantic_track02_evidence=PASS, unique_source_bmp=FAIL, presented_bmp_geometry=FAIL, reviewer_signoff=PENDING_REVIEWER |
 
 ## Aggregate
 

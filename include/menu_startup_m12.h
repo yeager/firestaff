@@ -676,6 +676,8 @@ typedef struct M12_StartupMenuState {
 typedef struct M12_StartupMenuInitOptions {
     int skipScreenshotGalleryScan;
     int looseFilesOnlyAssetScan;
+    M12_AssetStatusScanProgressFn scanProgressFn;
+    void* scanProgressUserData;
 } M12_StartupMenuInitOptions;
 
 void M12_StartupMenu_Init(M12_StartupMenuState* state);
@@ -733,6 +735,10 @@ void M12_StartupMenu_Draw(const M12_StartupMenuState* state,
                           unsigned char* framebuffer,
                           int framebufferWidth,
                           int framebufferHeight);
+void M12_StartupMenu_DrawScanProgress(const M12_AssetScanProgress* progress,
+                                      unsigned char* framebuffer,
+                                      int framebufferWidth,
+                                      int framebufferHeight);
 
 int M12_StartupMenu_GetEntryCount(void);
 const M12_MenuEntry* M12_StartupMenu_GetEntry(const M12_StartupMenuState* state,

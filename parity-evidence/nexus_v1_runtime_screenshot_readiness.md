@@ -11,7 +11,7 @@ receipts only; it does not add screenshots to public docs.
 | Case | Status | Boot marker | Runtime source | Data source | Source BMP | Presented BMP |
 |---|---:|---:|---|---|---:|---:|
 | Nexus canonical extracted Track 1 root | PASS | yes | `nexus` | `` | `1` | `1` |
-| Nexus Saturn JA Track 1 ISO/CUE root | PASS | yes | `nexus` | `` | `1` | `1` |
+| Nexus Saturn JA Track 1 ISO/CUE root | SKIP | no | `` | `` | `0` | `0` |
 
 ## Public Screenshot Boundary
 

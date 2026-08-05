@@ -260,7 +260,8 @@ int nexus_v1_startup_launch_from_host_facts_with_receipt(
     out_receipt->host_receipt.mode_update.set_title_active = 1;
     out_receipt->host_receipt.mode_update.title_active = 1;
     out_receipt->host_receipt.mode_update.set_title_frame = 1;
-    out_receipt->host_receipt.mode_update.title_frame = 0;
+    out_receipt->host_receipt.mode_update.title_frame =
+        nexus_v1_boot_warning_frames();
     out_receipt->host_receipt.input_result =
         NEXUS_V1_STARTUP_HOST_INPUT_REDRAW;
     out_receipt->host_receipt.status_scope = "BOOT";
