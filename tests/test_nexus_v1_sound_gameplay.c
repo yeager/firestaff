@@ -98,6 +98,24 @@ static void test_cd_track_does_not_submit_empty_path(void) {
     nexus_sound_shutdown(&eng);
 }
 
+static void test_event_selector_is_instance_local(void) {
+    Nexus_SoundEngine first;
+    Nexus_SoundEngine second;
+    memset(&first, 0, sizeof(first));
+    memset(&second, 0, sizeof(second));
+
+    nexus_sound_init(&first);
+    nexus_sound_set_event_selector(&first, NEXUS_SFX_DOOR_OPEN, 2);
+    expect(first.event_selector[NEXUS_SFX_DOOR_OPEN] == 2,
+           "diagnostic selector is stored on its owning engine");
+    nexus_sound_shutdown(&first);
+
+    nexus_sound_init(&second);
+    expect(second.event_selector[NEXUS_SFX_DOOR_OPEN] == -1,
+           "diagnostic selector does not leak into a new engine");
+    nexus_sound_shutdown(&second);
+}
+
 static void test_event_names(void) {
     /* Verify all major event names resolve to non-NULL strings */
     const Nexus_SoundEvent events[] = {
@@ -150,6 +168,7 @@ int main(void) {
     test_mix_silence();
     test_cd_callbacks();
     test_cd_track_does_not_submit_empty_path();
+    test_event_selector_is_instance_local();
     test_event_names();
     test_sfx_music_toggle();
 

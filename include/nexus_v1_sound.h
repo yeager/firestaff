@@ -68,6 +68,7 @@ typedef struct {
 #define NEXUS_SFX_MAP_HEADER_BYTES 24
 #define NEXUS_SFX_MAP_RECORD_BYTES 8
 #define NEXUS_SAL_CONTAINER_PREAMBLE_BYTES 8
+#define NEXUS_SFX_EVENT_SELECTOR_COUNT 32
 
 /* ═══════════════════════════════════════════════════════════════════
  * Sound engine
@@ -91,6 +92,9 @@ typedef struct {
     /* Global SDDRVS.TSK source identity. It does not imply an understood
      * driver ABI, decoder, or playback route. */
     int sound_driver_canonical_source_verified;
+    /* Host diagnostic bindings are owned by this engine instance.  They
+     * must not leak across shutdown/init or between simultaneous instances. */
+    int event_selector[NEXUS_SFX_EVENT_SELECTOR_COUNT];
     /* Direct byte-to-event routing is deliberately unavailable. MAP records
      * are retained as bounded opaque windows until Saturn dispatch evidence
      * proves their event-ID semantics. */

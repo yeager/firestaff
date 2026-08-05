@@ -6,6 +6,13 @@
   are connected; packaged macOS pointer/capture comparison remains open.
   Verification: `test_m11_dm1_real_object_names`, 169 cursor pixels.
 
+- ✅ 2026-08-06 Nexus SFX selector ownership: moved the explicitly bound
+  diagnostic event→MAP selector table from process-global state into each
+  `Nexus_SoundEngine`. Shutdown/init and simultaneous engine instances now
+  remain fail-closed and isolated; no Saturn event mapping or playback was
+  inferred. Verification: `test_nexus_v1_sound_gameplay` (74/74) plus the
+  real SAL/MAP runtime receipt, decode, corpus, and provenance regressions.
+
 - ✅ 2026-08-06 Nexus SAL decode admission correction: `NEXUS_V1_AUDIO_KIND_SAL_BANK`
   no longer advertises supported runtime decode from the heuristic host
   tone-bank parser. The parser may still retain bounded diagnostic PCM

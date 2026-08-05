@@ -40,25 +40,22 @@ static const char *g_event_names[] = {
  * When a real verified corpus supplies a proven mapping, callers can bind
  * selectors with nexus_sound_set_event_selector(); until then, the dispatch
  * path records the lookup attempt and stays blocked. */
-static int g_event_selector[EVENT_COUNT];
-static int g_event_selector_initialized = 0;
-
-static void ensure_event_selector_init(void) {
+static void ensure_event_selector_init(Nexus_SoundEngine *eng) {
     size_t i;
-    if (g_event_selector_initialized) return;
-    for (i = 0; i < EVENT_COUNT; i++) g_event_selector[i] = -1;
+    if (!eng) return;
+    for (i = 0; i < NEXUS_SFX_EVENT_SELECTOR_COUNT; i++) {
+        eng->event_selector[i] = -1;
+    }
     /* No Saturn event-to-MAP selector binding is authenticated yet. Keep the
      * table fail-closed; only an explicit source/capture-backed setter may
      * establish a runtime association. */
-    g_event_selector_initialized = 1;
 }
 
 void nexus_sound_set_event_selector(Nexus_SoundEngine *eng,
                                     Nexus_SoundEvent event, int selector) {
-    ensure_event_selector_init();
     if (!eng || !eng->initialized) return;
     if (event <= NEXUS_SFX_NONE || event >= EVENT_COUNT) return;
-    g_event_selector[event] = selector;
+    eng->event_selector[event] = selector;
 }
 
 /* The 16 hash-verified Japanese Track 1 SAL banks begin with these literal
@@ -628,6 +625,7 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
     eng->music_enabled = 1;
     eng->current_cd_track = 2;
     eng->current_level = -1;
+    ensure_event_selector_init(eng);
     clear_map_route(eng);
     clear_sal_profile(eng);
     /* SH-2 binary analysis (pass 216) proves the SDDRVS.TSK ABI:
@@ -1049,7 +1047,6 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     Nexus_SoundMapWindow window;
     int looked_up = 0;
 
-    ensure_event_selector_init();
     if (!eng || !eng->initialized) return;
     if (!eng->sfx_enabled) return;
     if (event <= NEXUS_SFX_NONE || event >= EVENT_COUNT) return;
@@ -1077,7 +1074,7 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     /* Source-locked dispatch: attempt a MAP lookup only when the selector
      * table has an explicit binding.  The default unmapped state keeps the
      * path fail-closed. */
-    selector = g_event_selector[event];
+    selector = eng->event_selector[event];
     if (selector >= 0 &&
         nexus_sound_map_lookup_raw_selector(eng, selector, &window) == 0) {
         looked_up = record_event_window(eng, &window);
