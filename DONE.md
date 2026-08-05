@@ -7359,6 +7359,15 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-06 DM1 authenticated viewport fallback gate: M11 no longer
+  paints synthetic primitive doors or stairs after a real PC34 source session
+  fails to resolve its bitmap. Authenticated raw Thing data now fails closed,
+  while compact/legacy test worlds retain the isolated compatibility fallback.
+  Verification: `test_dm1_v1_f0190_c040_m11_integration_audit`,
+  `test_dm1_v1_f0190_moving_killed_all_m10_handoff_pc34_compat`, and
+  `git diff --check` pass. Real bitmap binding and packaged macOS capture
+  remain tracked in `DM1-VIEWPORT-WALLS-DOORS`.
+
 - ✅ 2026-08-05 DM2 SKSave game-state wire-layout correction: replaced the
   fabricated byte-22 `rain_state[8]` and broad 56-byte mask with SKProject
   `skload_table_60`'s exact fields and `SKWIN/SkGlobal.cpp::_4976_395a` mask,

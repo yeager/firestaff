@@ -3018,6 +3018,11 @@ that its exact runtime path is not already source-locked and tested.
    2026-07-28: V2.2 no longer drops the final source M648 inscription pass.
    Its artpack has no reviewed inscription replacement, so the real PC34
    font is repainted after V22 art just as it is in V2.0/V2.1.
+   2026-08-06: authenticated DM1 source sessions no longer draw the
+   procedural yellow/brown door or stair primitives when a real PC34 bitmap
+   cannot be resolved. The surface is left unpainted instead; legacy/test
+   worlds without authenticated raw Thing data retain their isolated fallback.
+   Real door/stair bitmap binding and packaged macOS capture remain open.
 2. **DM1-PC34-FULL-ASSET-VISUAL-AUDIT:** Compare every one of the 713
    hash-verified PC 3.4 `GRAPHICS.DAT` records against Greatstone/SCK decoded
    references and capture the packaged macOS app. The current source lock and

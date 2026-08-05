@@ -29472,6 +29472,25 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
 
 /* NOTE: g_drawState forward-declared near file top. */
 
+static int m11_dm1_authenticated_viewport_source_active(void)
+{
+    int thingType;
+    const M11_GameViewState* state = g_drawState;
+
+    if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
+        !state->assetsAvailable || !state->world.things ||
+        !state->world.things->loaded) {
+        return 0;
+    }
+    for (thingType = 0; thingType < DUNGEON_THING_TYPE_COUNT; ++thingType) {
+        if (state->world.things->rawThingData[thingType] &&
+            state->world.things->thingCounts[thingType] > 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
 /* Forward declarations for asset-backed rendering helpers */
 static int m11_draw_door_frame_asset(const M11_GameViewState* state,
                                      unsigned char* framebuffer,
@@ -29577,7 +29596,11 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
                                           rect, depthIndex)) {
                 break; /* Real asset drawn successfully */
             }
-            /* Fallback: primitive door frame + gate.
+            /* A real PC34 session must not receive a synthetic door. */
+            if (m11_dm1_authenticated_viewport_source_active()) {
+                break;
+            }
+            /* Legacy/test fallback: primitive door frame + gate.
              * ReDMCSB: door frame always visible.  Gate height scales
              * with doorState: 0 = fully open, 4 = fully closed.
              * Frame persists at all states so the door never disappears. */
@@ -29614,13 +29637,15 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
                     break;
                 }
             }
-            /* Fallback: primitive stair lines */
-            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                           faceX + 4, faceX + faceW - 5, faceY + faceH - 5, M11_COLOR_YELLOW);
-            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                           faceX + 8, faceX + faceW - 9, faceY + faceH - 10, M11_COLOR_YELLOW);
-            m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
-                           faceX + 12, faceX + faceW - 13, faceY + faceH - 15, M11_COLOR_YELLOW);
+            if (!m11_dm1_authenticated_viewport_source_active()) {
+                /* Legacy/test fallback: primitive stair lines. */
+                m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                               faceX + 4, faceX + faceW - 5, faceY + faceH - 5, M11_COLOR_YELLOW);
+                m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                               faceX + 8, faceX + faceW - 9, faceY + faceH - 10, M11_COLOR_YELLOW);
+                m11_draw_hline(framebuffer, framebufferWidth, framebufferHeight,
+                               faceX + 12, faceX + faceW - 13, faceY + faceH - 15, M11_COLOR_YELLOW);
+            }
             break;
         case DUNGEON_ELEMENT_PIT:
             /* ReDMCSB DUNGEON.C F0172: closed pit renders as corridor.
