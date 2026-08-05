@@ -287,10 +287,10 @@ int dm2_v1_session_import_original_payload(DM2_V1_SessionState *session,
                                            const uint8_t *buf,
                                            size_t buf_size);
 
-/* Import a raw original-style SKSave body after the 42-byte slot header has
- * been stripped. This bounded bridge locates the documented dungeon prefix,
- * imports the game-state/champion/global/timer SUPPRESS stream, and leaves
- * full dungeon DB reconstruction to the DM2 dungeon loader path. */
+/* Validate a raw original-style SKSave body after the 42-byte slot header has
+ * been stripped for the resume boundary. It deliberately rejects publication
+ * until the complete SKProject DM2_GAME_LOAD order (raw dungeon plus the
+ * continuous SUPPRESS and READ_SKSAVE_DUNGEON stream) has a live owner. */
 int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size);

@@ -49006,7 +49006,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   existing 22-record SCK/Greatstone pixel comparison remains zero-difference.
   Title cadence/palette tests pass. Full 713-record visual comparison and
   packaged macOS capture remain explicitly open in `TODO.md`.
-
 - ✅ 2026-08-05 DM1 legacy synthetic viewport removal: the unowned
   `firestaff_viewport_renderer` bridge no longer paints coloured rectangles
   for missing walls, floors, ceilings, side walls or doors. It now draws only
@@ -49020,3 +49019,15 @@ the supplied root and selected MD5 to prove this without shipping game data.
   bar when the authenticated C009/C010/C011 surfaces are unavailable. Those
   paths remain explicitly limited to debug/non-source sessions; missing DM1
   source material is now no-draw.
+
+# ✅ 2026-08-05 DM2 raw-SKSave pseudo-import removal
+
+The former raw-SKSave bridge was removed from the playable path. It treated
+the original continuous `DM2_GAME_LOAD` SUPPRESS stream as a different
+GameStateBlock and accepted a Firestaff-only inventory/minion tail, which
+could admit a fabricated save. Raw original saves now retain only their
+hash-bound dungeon-prefix receipt and fail closed until the complete
+SKProject read order, including `DM2_READ_SKSAVE_DUNGEON`, is materialised.
+The regression proves the prior synthetic tail cannot be accepted by either
+the candidate or slot loader. Source:
+`SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD` (1476-1526).

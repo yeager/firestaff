@@ -1037,115 +1037,27 @@ int dm2_v1_session_import_raw_sksave_payload(DM2_V1_SessionState *session,
                                              const uint8_t *buf,
                                              size_t buf_size)
 {
-    DM2_V1_SessionState candidate;
-    DM2_GameStateBlock gs;
     DM2_V1_OriginalRawDungeonReceipt dungeon_receipt;
-    size_t pos = 0u;
-    int decoded;
 
     if (!session || !buf) return -1;
     if (!dm2_v1_parse_raw_sksave_dungeon_prefix(buf, buf_size,
                                                 &dungeon_receipt)) {
         return -1;
     }
-    pos = dungeon_receipt.suppress_state_offset;
 
-    memset(&gs, 0, sizeof(gs));
-    decoded = dm2_suppress_decode_gamestate(buf + pos, buf_size - pos,
-                                            &gs, 0);
-    if (decoded <= 0) return -1;
-    pos += (size_t)decoded;
-
-    /* SKProject GAME_LOAD restores into a rebuilt game state only after its
-     * save sections have been accepted. Keep the Firestaff raw importer
-     * transactional too: a truncated later SUPPRESS section must not leave
-     * an existing live session partly overwritten. */
-    memset(&candidate, 0, sizeof(candidate));
-    dm2_v1_apply_original_gamestate(&candidate, &gs);
-
-    decoded = dm2_suppress_decode_global_flags(buf + pos, buf_size - pos,
-                                               candidate.original_global_flags,
-                                               0);
-    if (decoded <= 0) return -1;
-    pos += (size_t)decoded;
-
-    decoded = dm2_suppress_decode_global_bytes(buf + pos, buf_size - pos,
-                                               candidate.original_global_bytes,
-                                               0);
-    if (decoded <= 0) return -1;
-    pos += (size_t)decoded;
-
-    decoded = dm2_suppress_decode_global_words(buf + pos, buf_size - pos,
-                                               candidate.original_global_words,
-                                               0);
-    if (decoded <= 0) return -1;
-    pos += (size_t)decoded;
-
-    if (dm2_v1_decode_original_champions(&candidate, buf, buf_size, &pos, 0,
-                                         (int)gs.wChampionsCount) != 0) {
-        return -1;
-    }
-
-    decoded = dm2_suppress_decode_spell_effects(buf + pos, buf_size - pos,
-                                                candidate.original_spell_effects,
-                                                0);
-    if (decoded <= 0) return -1;
-    pos += (size_t)decoded;
-
-    candidate.original_timer_count = 0;
-    if (gs.wTimersCount > 0u) {
-        int timer_count = (int)gs.wTimersCount;
-        if (timer_count > DM2_MAX_TIMERS) timer_count = DM2_MAX_TIMERS;
-        for (int i = 0; i < timer_count; i++) {
-            decoded = dm2_suppress_decode_timer(buf + pos, buf_size - pos,
-                                                &candidate.original_timers[i],
-                                                0);
-            if (decoded <= 0) return -1;
-            pos += (size_t)decoded;
-            candidate.original_timer_count++;
-        }
-    }
-
-    if (candidate.champion_count > 0u) {
-        const size_t inv_bytes =
-            (size_t)candidate.champion_count *
-            (size_t)DM2_CHAMPION_INVENTORY_SLOTS * 4u;
-        if (inv_bytes > buf_size - pos) return -1;
-        for (int c = 0; c < (int)candidate.champion_count; c++) {
-            DM2_ChampionRecord *champ =
-                (DM2_ChampionRecord *)candidate.champion_data[c];
-            for (int slot = 0; slot < DM2_CHAMPION_INVENTORY_SLOTS;
-                 slot++) {
-                champ->inventory[slot] =
-                    dm2_v1_read_u32_le_at(buf, pos);
-                pos += 4u;
-            }
-        }
-    }
-    if (buf_size - pos < 4u) return -1;
-    candidate.original_leader_hand_object = dm2_v1_read_u32_le_at(buf, pos);
-    pos += 4u;
-    if (pos < buf_size) {
-        const uint8_t count = buf[pos++];
-        if (count > DM2_MAX_MINIONS ||
-            (size_t)count * 8u > buf_size - pos) {
-            return -1;
-        }
-        memset(&candidate.original_minions, 0,
-               sizeof(candidate.original_minions));
-        candidate.original_minions.count = count;
-        for (int i = 0; i < (int)count; i++) {
-            candidate.original_minions.entries[i].object_id =
-                dm2_v1_read_u32_le_at(buf, pos);
-            candidate.original_minions.entries[i].owner_champion =
-                dm2_v1_read_u32_le_at(buf, pos + 4u);
-            pos += 8u;
-        }
-    }
-
-    if (pos != buf_size || !dm2_v1_session_validate(&candidate)) return -1;
-    *session = candidate;
-    return 0;
+    /* SKProject/SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD (1476-1526)
+     * reads c_hex2a, the complete raw dungeon structure, then one continuous
+     * SUPPRESS stream beginning with s_savegamebuffer.  The former bridge
+     * treated that stream as an unrelated GameStateBlock and appended a
+     * Firestaff-only inventory/minion tail.  It could therefore admit a
+     * fabricated byte sequence while not decoding an original SKSave.
+     *
+     * Retain the authenticated prefix receipt above, but do not publish any
+     * session until the complete source order (including
+     * DM2_READ_SKSAVE_DUNGEON) has a live owner.  The caller's session stays
+     * untouched, as required for a failed resume. */
+    (void)dungeon_receipt;
+    return -1;
 }
 
 int dm2_v1_session_parse_save_candidate(DM2_V1_SaveCandidate *out_candidate,

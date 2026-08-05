@@ -41,6 +41,12 @@
   only and is not a serializer: complete original dungeon/DB write ordering
   from `SKProject/SKULLWIN/c_savegame.cpp` remains required before save output
   can be offered to players.
+  2026-08-05: removed the former raw-SKSave pseudo-importer. It decoded a
+  fabricated `GameStateBlock`/inventory tail instead of SKProject's continuous
+  `s_savegamebuffer` SUPPRESS stream and could therefore admit non-original
+  data. Raw SKSave resume remains fail-closed after its real dungeon-prefix
+  receipt until `DM2_GAME_LOAD` and `DM2_READ_SKSAVE_DUNGEON` are materialised
+  in source order.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   source-bound lifecycle/presentation path with a structural fail-closed seam.
