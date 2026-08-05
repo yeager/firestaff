@@ -1163,10 +1163,14 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * SWITCH.DAT.  They are optional and never affect the launch gate. */
         "HCSB.DAT", "HINT.FTL", "ANIMATE.DAT", "ANIMATE.SCR", "ANIMATE.FTL",
         "CHAOS.FTL", "FTLCODE", "SWITCH.DAT",
-        /* MINI.DAT is the original Atari ST/Amiga CSB campaign save.  Keep
-         * it with an archive-backed installation so Resume can hand its
-         * authenticated GAMEBLOCK payload to the native CSB runtime. */
-        "MINI.DAT", "CSBGAME.DAT", "CSBGAME1.DAT", "CSBGAME2.DAT",
+        /* DMWeb Saved Game Files: MINI.DAT is the original Atari ST/Amiga
+         * CSB campaign save; the Amiga multilingual Utility Disk instead
+         * carries its French and German campaigns as MINIF.DAT / MINIG.DAT.
+         * Keep every original campaign member with an archive-backed
+         * installation so Resume can hand its authenticated GAMEBLOCK
+         * payload to the native CSB runtime. */
+        "MINI.DAT", "MINIF.DAT", "MINIG.DAT",
+        "CSBGAME.DAT", "CSBGAME1.DAT", "CSBGAME2.DAT",
         "CSBGAME3.DAT", "CSBGAME4.DAT", "CSB.DAT", "CSBGRAPH.DAT"
     };
     size_t i;

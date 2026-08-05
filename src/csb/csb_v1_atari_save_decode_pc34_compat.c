@@ -10,6 +10,9 @@ enum {
     CSB_BLOCK3_BYTES = 128,
     CSB_ITEM16_BYTES = 16,
     CSB_CHARACTER_BYTES = 3328,
+    CSB_COMPACT_CHARACTER_BYTES = 1408,
+    CSB_CHARACTER_RECORD_BYTES = 800,
+    CSB_COMPACT_CHARACTER_RECORD_BYTES = 320,
     CSB_TIMER_BYTES = 10,
     CSB_TIMER_QUEUE_BYTES = 2,
     CSB_BLOCK1_BLOCK2_KEY_OFFSET = 58,
@@ -28,6 +31,19 @@ enum {
     CSB_BLOCK3_TIMER_CAPACITY_WORD = 14,
     CSB_BLOCK3_ITEM16_CAPACITY_WORD = 23
 };
+
+static size_t csb_initial_word_bytes(const uint8_t *bytes, size_t size)
+{
+    /* DMWeb Saved Game Files: these words occur only in original Amiga
+     * Utility Disk (0xDEAD) and X68000 / multilingual campaign (0x5223)
+     * saves and are explicitly ignored by the original loader. */
+    if (bytes && size >= 2u &&
+        ((bytes[0] == 0xdeu && bytes[1] == 0xadu) ||
+         (bytes[0] == 0x52u && bytes[1] == 0x23u))) {
+        return 2u;
+    }
+    return 0u;
+}
 
 static uint16_t read_be16(const uint8_t *p)
 {
@@ -146,15 +162,26 @@ int csb_v1_atari_save_decode_pc34_compat(const uint8_t *bytes,
     size_t item16_bytes;
     size_t timer_bytes;
     size_t queue_bytes;
+    size_t initial_bytes;
+    size_t character_bytes;
+    size_t character_record_bytes;
     uint16_t key;
     uint16_t checksum;
 
     if (!bytes || !out_info) return CSB_V1_ATARI_SAVE_ERR_NULL;
     memset(out_info, 0, sizeof(*out_info));
-    if (size < CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES + CSB_BLOCK3_BYTES) {
+    initial_bytes = csb_initial_word_bytes(bytes, size);
+    character_bytes = initial_bytes ? CSB_COMPACT_CHARACTER_BYTES
+                                    : CSB_CHARACTER_BYTES;
+    character_record_bytes = initial_bytes ? CSB_COMPACT_CHARACTER_RECORD_BYTES
+                                           : CSB_CHARACTER_RECORD_BYTES;
+    if (size < initial_bytes + CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES +
+                   CSB_BLOCK3_BYTES) {
         return CSB_V1_ATARI_SAVE_ERR_TRUNCATED;
     }
 
+    bytes += initial_bytes;
+    size -= initial_bytes;
     key = read_be16(bytes + CSB_BLOCK1_BLOCK2_KEY_OFFSET);
     (void)decrypt_words(bytes + CSB_BLOCK1_BYTES, CSB_BLOCK2_BYTES, key, block2);
     {
@@ -185,7 +212,7 @@ int csb_v1_atari_save_decode_pc34_compat(const uint8_t *bytes,
     queue_bytes = (size_t)block3[CSB_BLOCK3_TIMER_CAPACITY_WORD] * CSB_TIMER_QUEUE_BYTES;
     offset = CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES + CSB_BLOCK3_BYTES;
     if (!add_size(&offset, item16_bytes, 1u, size) ||
-        !add_size(&offset, CSB_CHARACTER_BYTES, 1u, size) ||
+        !add_size(&offset, character_bytes, 1u, size) ||
         !add_size(&offset, timer_bytes, 1u, size) ||
         !add_size(&offset, queue_bytes, 1u, size)) {
         return CSB_V1_ATARI_SAVE_ERR_TRUNCATED;
@@ -196,12 +223,12 @@ int csb_v1_atari_save_decode_pc34_compat(const uint8_t *bytes,
                              item16_bytes, block2[CSB_BLOCK2_ITEM16_KEY_WORD], NULL);
     if (checksum != block2[CSB_BLOCK2_ITEM16_CHECKSUM_WORD]) return CSB_V1_ATARI_SAVE_ERR_ITEM16_CHECKSUM;
     checksum = decrypt_words(bytes + CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES + CSB_BLOCK3_BYTES + item16_bytes,
-                             CSB_CHARACTER_BYTES, block2[CSB_BLOCK2_CHARACTER_KEY_WORD], NULL);
+                             character_bytes, block2[CSB_BLOCK2_CHARACTER_KEY_WORD], NULL);
     if (checksum != block2[CSB_BLOCK2_CHARACTER_CHECKSUM_WORD]) return CSB_V1_ATARI_SAVE_ERR_CHARACTER_CHECKSUM;
-    checksum = decrypt_words(bytes + CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES + CSB_BLOCK3_BYTES + item16_bytes + CSB_CHARACTER_BYTES,
+    checksum = decrypt_words(bytes + CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES + CSB_BLOCK3_BYTES + item16_bytes + character_bytes,
                              timer_bytes, block2[CSB_BLOCK2_TIMER_KEY_WORD], NULL);
     if (checksum != block2[CSB_BLOCK2_TIMER_CHECKSUM_WORD]) return CSB_V1_ATARI_SAVE_ERR_TIMER_CHECKSUM;
-    checksum = decrypt_words(bytes + CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES + CSB_BLOCK3_BYTES + item16_bytes + CSB_CHARACTER_BYTES + timer_bytes,
+    checksum = decrypt_words(bytes + CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES + CSB_BLOCK3_BYTES + item16_bytes + character_bytes + timer_bytes,
                              queue_bytes, block2[CSB_BLOCK2_TIMER_QUEUE_KEY_WORD], NULL);
     if (checksum != block2[CSB_BLOCK2_TIMER_QUEUE_CHECKSUM_WORD]) return CSB_V1_ATARI_SAVE_ERR_TIMER_QUEUE_CHECKSUM;
 
@@ -217,7 +244,10 @@ int csb_v1_atari_save_decode_pc34_compat(const uint8_t *bytes,
     out_info->item16_count = (int16_t)block3[CSB_BLOCK3_ITEM16_COUNT_WORD];
     out_info->timer_capacity = (int16_t)block3[CSB_BLOCK3_TIMER_CAPACITY_WORD];
     out_info->item16_capacity = (int16_t)block3[CSB_BLOCK3_ITEM16_CAPACITY_WORD];
-    out_info->dungeon_offset = offset;
+    out_info->initial_word_bytes = initial_bytes;
+    out_info->character_data_bytes = character_bytes;
+    out_info->character_record_bytes = character_record_bytes;
+    out_info->dungeon_offset = initial_bytes + offset;
     out_info->dungeon_size = size - offset;
     return CSB_V1_ATARI_SAVE_OK;
 }
@@ -241,16 +271,18 @@ int csb_v1_atari_save_decode_party_pc34_compat(
     if (info.champion_count < 1 || info.champion_count > CSB_V1_MAX_CHAMPIONS) {
         return CSB_V1_ATARI_SAVE_ERR_COUNTS;
     }
+    bytes += info.initial_word_bytes;
     (void)decrypt_words(bytes + CSB_BLOCK1_BYTES, CSB_BLOCK2_BYTES,
                         read_be16(bytes + CSB_BLOCK1_BLOCK2_KEY_OFFSET), block2);
     character_offset = CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES + CSB_BLOCK3_BYTES +
                        (size_t)info.item16_capacity * CSB_ITEM16_BYTES;
-    if (character_offset > size || CSB_CHARACTER_BYTES > size - character_offset) {
+    if (info.initial_word_bytes > size || character_offset > size - info.initial_word_bytes ||
+        info.character_data_bytes > size - info.initial_word_bytes - character_offset) {
         return CSB_V1_ATARI_SAVE_ERR_TRUNCATED;
     }
-    (void)decrypt_words(bytes + character_offset, CSB_CHARACTER_BYTES,
+    (void)decrypt_words(bytes + character_offset, info.character_data_bytes,
                         block2[CSB_BLOCK2_CHARACTER_KEY_WORD], character_words);
-    for (i = 0; i < (int)(CSB_CHARACTER_BYTES / 2u); ++i) {
+    for (i = 0; i < (int)(info.character_data_bytes / 2u); ++i) {
         characters[(size_t)i * 2u] = (uint8_t)(character_words[i] >> 8);
         characters[(size_t)i * 2u + 1u] = (uint8_t)character_words[i];
     }
@@ -264,7 +296,8 @@ int csb_v1_atari_save_decode_party_pc34_compat(
     out_party->LeaderIndex = 0;
     out_party->MagicCasterIndex = -1;
     for (i = 0; i < info.champion_count; ++i) {
-        const uint8_t *source = characters + (size_t)i * 800u;
+        const uint8_t *source = characters +
+            (size_t)i * info.character_record_bytes;
         CSB_V1_Champion *champion = &out_party->Champions[i];
         int stat;
         csb_v1_champion_init(champion);
@@ -437,10 +470,13 @@ static int csb_v1_atari_save_patch_gameblock2_internal(
     if (result != CSB_V1_ATARI_SAVE_OK) return result;
 
     memcpy(out_bytes, bytes, size);
-    (void)decrypt_words(bytes + CSB_BLOCK1_BYTES, CSB_BLOCK2_BYTES,
-                        read_be16(bytes + CSB_BLOCK1_BLOCK2_KEY_OFFSET),
+    (void)decrypt_words(bytes + info.initial_word_bytes + CSB_BLOCK1_BYTES,
+                        CSB_BLOCK2_BYTES,
+                        read_be16(bytes + info.initial_word_bytes +
+                                  CSB_BLOCK1_BLOCK2_KEY_OFFSET),
                         block2);
-    (void)decrypt_words(bytes + CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES,
+    (void)decrypt_words(bytes + info.initial_word_bytes + CSB_BLOCK1_BYTES +
+                        CSB_BLOCK2_BYTES,
                         CSB_BLOCK3_BYTES,
                         block2[CSB_BLOCK2_BLOCK3_KEY_WORD], block3);
 
@@ -459,41 +495,45 @@ static int csb_v1_atari_save_patch_gameblock2_internal(
     block3[9] = (uint16_t)patch->party_map_index;
 
     if (party) {
-        character_offset = CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES + CSB_BLOCK3_BYTES +
+        character_offset = info.initial_word_bytes + CSB_BLOCK1_BYTES +
+            CSB_BLOCK2_BYTES + CSB_BLOCK3_BYTES +
             (size_t)info.item16_capacity * CSB_ITEM16_BYTES;
-        (void)decrypt_words(bytes + character_offset, CSB_CHARACTER_BYTES,
+        (void)decrypt_words(bytes + character_offset, info.character_data_bytes,
                             block2[CSB_BLOCK2_CHARACTER_KEY_WORD], character_words);
-        for (i = 0u; i < CSB_CHARACTER_BYTES / 2u; ++i) {
+        for (i = 0u; i < info.character_data_bytes / 2u; ++i) {
             characters[i * 2u] = (uint8_t)(character_words[i] >> 8);
             characters[i * 2u + 1u] = (uint8_t)character_words[i];
         }
         for (i = 0u; i < (size_t)party->ChampionCount; ++i) {
             csb_v1_atari_save_write_owned_champion(
-                characters + i * 800u, &party->Champions[i]);
+                characters + i * info.character_record_bytes,
+                &party->Champions[i]);
         }
-        for (i = 0u; i < CSB_CHARACTER_BYTES / 2u; ++i) {
+        for (i = 0u; i < info.character_data_bytes / 2u; ++i) {
             character_words[i] = read_be16(characters + i * 2u);
         }
         block2[CSB_BLOCK2_CHARACTER_CHECKSUM_WORD] = encrypt_words(
-            character_words, CSB_CHARACTER_BYTES,
+            character_words, info.character_data_bytes,
             block2[CSB_BLOCK2_CHARACTER_KEY_WORD], out_bytes + character_offset);
     }
 
     block2[CSB_BLOCK2_BLOCK3_CHECKSUM_WORD] = encrypt_words(
         block3, CSB_BLOCK3_BYTES, block2[CSB_BLOCK2_BLOCK3_KEY_WORD],
-        out_bytes + CSB_BLOCK1_BYTES + CSB_BLOCK2_BYTES);
+        out_bytes + info.initial_word_bytes + CSB_BLOCK1_BYTES +
+        CSB_BLOCK2_BYTES);
     for (i = 0u; i < CSB_BLOCK2_BYTES / 2u; ++i) {
         block2_sum = (uint16_t)(block2_sum + block2[i]);
     }
     (void)encrypt_words(block2, CSB_BLOCK2_BYTES,
-                        read_be16(bytes + CSB_BLOCK1_BLOCK2_KEY_OFFSET),
-                        out_bytes + CSB_BLOCK1_BYTES);
+                        read_be16(bytes + info.initial_word_bytes +
+                                  CSB_BLOCK1_BLOCK2_KEY_OFFSET),
+                        out_bytes + info.initial_word_bytes + CSB_BLOCK1_BYTES);
 
     /* DMWeb Block1 checksum folds its final word with XOR. Preserve all
      * random source words and solve only that documented checksum word. */
-    write_be16(out_bytes + CSB_BLOCK1_BYTES - 2u, 0u);
-    header_base = block1_checksum(out_bytes);
-    write_be16(out_bytes + CSB_BLOCK1_BYTES - 2u,
+    write_be16(out_bytes + info.initial_word_bytes + CSB_BLOCK1_BYTES - 2u, 0u);
+    header_base = block1_checksum(out_bytes + info.initial_word_bytes);
+    write_be16(out_bytes + info.initial_word_bytes + CSB_BLOCK1_BYTES - 2u,
                (uint16_t)(header_base ^ block2_sum));
 
     result = csb_v1_atari_save_decode_pc34_compat(out_bytes, size, &verified);

@@ -3059,7 +3059,10 @@ static int m12_ascii_equal_ci(const char* a, const char* b) {
 
 static int m12_is_csb_original_save_basename(const char* name) {
     static const char* const names[] = {
-        "MINI.DAT",
+        /* DMWeb Saved Game Files: Amiga multilingual CSB utility media
+         * names its original campaign saves MINIF.DAT and MINIG.DAT.  They
+         * use the same authenticated native save path as MINI.DAT. */
+        "MINI.DAT", "MINIF.DAT", "MINIG.DAT",
         "CSBGAME.DAT", "CSBGAME.BAK",
         "CSBGAME1.DAT", "CSBGAME1.BAK",
         "CSBGAME2.DAT", "CSBGAME2.BAK",

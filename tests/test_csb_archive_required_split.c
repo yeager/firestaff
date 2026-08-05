@@ -49,6 +49,10 @@ static const char kCsbSavePayload[] =
     "Firestaff synthetic CSB utility CSBGAME fixture v1\n";
 static const char kCsbMiniSavePayload[] =
     "Firestaff synthetic CSB Atari MINI campaign fixture v1\n";
+static const char kCsbMiniFrenchSavePayload[] =
+    "Firestaff synthetic CSB Amiga MINIF campaign fixture v1\n";
+static const char kCsbMiniGermanSavePayload[] =
+    "Firestaff synthetic CSB Amiga MINIG campaign fixture v1\n";
 static const char kCsbAnimateModulePayload[] =
     "Firestaff synthetic CSB Atari ANIMATE FTL module fixture v1\n";
 static const char kCsbChaosModulePayload[] =
@@ -356,6 +360,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     char cachedHintData[512];
     char cachedSave[512];
     char cachedMiniSave[512];
+    char cachedMiniFrenchSave[512];
+    char cachedMiniGermanSave[512];
     char cachedAnimateModule[512];
     char cachedChaosModule[512];
     char cachedFtlCode[512];
@@ -363,7 +369,7 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
     const char* runtimeDir;
-    TestZipEntry zipEntries[11];
+    TestZipEntry zipEntries[13];
     M12_AssetStatus status;
 
     memset(csbCacheDir, 0, sizeof(csbCacheDir));
@@ -374,6 +380,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     memset(cachedHintData, 0, sizeof(cachedHintData));
     memset(cachedSave, 0, sizeof(cachedSave));
     memset(cachedMiniSave, 0, sizeof(cachedMiniSave));
+    memset(cachedMiniFrenchSave, 0, sizeof(cachedMiniFrenchSave));
+    memset(cachedMiniGermanSave, 0, sizeof(cachedMiniGermanSave));
     memset(cachedAnimateModule, 0, sizeof(cachedAnimateModule));
     memset(cachedChaosModule, 0, sizeof(cachedChaosModule));
     memset(cachedFtlCode, 0, sizeof(cachedFtlCode));
@@ -396,14 +404,18 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     zipEntries[5].payload = kCsbSavePayload;
     zipEntries[6].name = "archive/MINI.DAT";
     zipEntries[6].payload = kCsbMiniSavePayload;
-    zipEntries[7].name = "archive/HCSB.DAT";
-    zipEntries[7].payload = "original CSB Hint Oracle graphics data";
-    zipEntries[8].name = "archive/ANIMATE.FTL";
-    zipEntries[8].payload = kCsbAnimateModulePayload;
-    zipEntries[9].name = "archive/CHAOS.FTL";
-    zipEntries[9].payload = kCsbChaosModulePayload;
-    zipEntries[10].name = "archive/FTLCODE";
-    zipEntries[10].payload = kCsbFtlCodePayload;
+    zipEntries[7].name = "archive/MINIF.DAT";
+    zipEntries[7].payload = kCsbMiniFrenchSavePayload;
+    zipEntries[8].name = "archive/MINIG.DAT";
+    zipEntries[8].payload = kCsbMiniGermanSavePayload;
+    zipEntries[9].name = "archive/HCSB.DAT";
+    zipEntries[9].payload = "original CSB Hint Oracle graphics data";
+    zipEntries[10].name = "archive/ANIMATE.FTL";
+    zipEntries[10].payload = kCsbAnimateModulePayload;
+    zipEntries[11].name = "archive/CHAOS.FTL";
+    zipEntries[11].payload = kCsbChaosModulePayload;
+    zipEntries[12].name = "archive/FTLCODE";
+    zipEntries[12].payload = kCsbFtlCodePayload;
     check_int(write_stored_zip_entries(zipPath,
                                        zipEntries,
                                        sizeof(zipEntries) / sizeof(zipEntries[0])),
@@ -482,6 +494,12 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                                csbCacheDir, "CSBGAME.DAT") &&
                   FSP_JoinPath(cachedMiniSave, sizeof(cachedMiniSave),
                                csbCacheDir, "MINI.DAT") &&
+                  FSP_JoinPath(cachedMiniFrenchSave,
+                               sizeof(cachedMiniFrenchSave),
+                               csbCacheDir, "MINIF.DAT") &&
+                  FSP_JoinPath(cachedMiniGermanSave,
+                               sizeof(cachedMiniGermanSave),
+                               csbCacheDir, "MINIG.DAT") &&
                   FSP_JoinPath(cachedAnimateModule, sizeof(cachedAnimateModule),
                                csbCacheDir, "ANIMATE.FTL") &&
                   FSP_JoinPath(cachedChaosModule, sizeof(cachedChaosModule),
@@ -504,6 +522,12 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
               "archive-backed CSB CSBGAME.DAT utility save should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedMiniSave, kCsbMiniSavePayload),
               "archive-backed CSB MINI.DAT campaign save should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedMiniFrenchSave,
+                                   kCsbMiniFrenchSavePayload),
+              "archive-backed CSB MINIF.DAT campaign save should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedMiniGermanSave,
+                                   kCsbMiniGermanSavePayload),
+              "archive-backed CSB MINIG.DAT campaign save should be materialized next to GRAPHICS.DAT");
     /* ReDMCSB ANIM.C:67-72 loads ANIMATE.FTL and CHAOS.FTL, then transfers
      * to FTLCODE.  Preserve that original Atari startup family when the
      * verified GRAPHICS.DAT anchor originates in an archive. */
@@ -531,6 +555,10 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                   "missing archive-backed CSBGAME.DAT should remove stale cache save data");
         check_int(!path_exists(cachedMiniSave),
                   "missing archive-backed MINI.DAT should remove stale cache campaign data");
+        check_int(!path_exists(cachedMiniFrenchSave),
+                  "missing archive-backed MINIF.DAT should remove stale cache campaign data");
+        check_int(!path_exists(cachedMiniGermanSave),
+                  "missing archive-backed MINIG.DAT should remove stale cache campaign data");
     }
 }
 
