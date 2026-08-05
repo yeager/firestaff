@@ -24,6 +24,22 @@ static void test_set_step_cost(void)
     assert(state.step_cost == 3);
 }
 
+static void test_missing_step_cost_fails_closed(void)
+{
+    DM1_V1_MovementState state;
+    DM1_V1_CommandQueue queue;
+    int16_t command;
+    dm1v1_movement_init(&state, 0, 0, DM1_V1_DIR_NORTH);
+    dm1v1_command_queue_init(&queue);
+    assert(dm1v1_movement_poll_input(&queue, DM1_V1_COMMAND_MOVE_FORWARD) == 1);
+    command = dm1v1_movement_execute_step(&state, &queue);
+    assert(command == DM1_V1_COMMAND_NONE);
+    assert(state.pos_x == 0 && state.pos_y == 0);
+    assert(state.step_cost == 0);
+    dm1v1_movement_set_step_cost(&state, 0);
+    assert(state.step_cost == 0);
+}
+
 static void test_command_queue_init(void)
 {
     DM1_V1_CommandQueue queue;
@@ -100,6 +116,7 @@ int main(void)
 {
     test_init();
     test_set_step_cost();
+    test_missing_step_cost_fails_closed();
     test_command_queue_init();
     test_poll_input_enqueue();
     test_execute_step_empty_queue();

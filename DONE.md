@@ -1,7 +1,8 @@
 - ✅ 2026-08-05 DM2 HMP false-playback removal: a bounded structural read of
   original `HMIMIDIP013195` bytes can no longer mark the stream schedulable or
   hand its guessed event walk to the MIDI backend. The 29 real GDAT HMP
-  records remain identified and auditable, but queueing them is explicitly
+  records remain identified and auditable, but queueing every one of the 29
+  verified PC payloads is explicitly
   unavailable until a direct source-format decoder proves track and timing
   semantics. The real-data sound gate continues to verify that title music is
   resolved from `GRAPHICS.DAT`, not from converted SKProject sidecars.
@@ -48878,3 +48879,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   verkliga Atari ST-data från `Game,Chaos_Strikes_Back,Atari_ST,Software.7z`
   extraherades till en tillfällig katalog och proben passerade 30/30 genom
   boot, dungeon-handoff, tick, första viewport-frame och cleanup.
+- ✅ 2026-08-05 DM1 movement timing fail-closed: the isolated PC34
+  movement reference no longer assumes a synthetic two-tick default when
+  champion records are unavailable. It now requires the caller to provide
+  the ReDMCSB F0310 party timing result, leaves movement queued when absent,
+  and retains the exact active F0310 formula in the shared timing path.
+  Focused movement and timing tests pass.
