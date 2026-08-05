@@ -471,6 +471,23 @@ static void test_shape_for_cell(void) {
     params = m11_v22_shape_for_cell(0xFF, 0, 1, 0);
     CHECK(params.width_cm > 0, "unknown type width_cm > 0");
     CHECK(params.height_cm > 0, "unknown type height_cm > 0");
+
+    /* Diffuse bindings must point at real PC-34 GRAPHICS.DAT records.
+     * No shape may silently select graphic 0 as a placeholder. */
+    {
+        M11_V22_WallShape wall =
+            m11_v22_wall_shape_get(M11_V22_WALL_VARIANT_D1_CENTER);
+        M11_V22_FloorShape floor =
+            m11_v22_floor_shape_get(TEST_SQUARE_FLOOR, 0);
+        CHECK_EQ(wall.base_texture_id, 97,
+                 "D1 center wall uses PC-34 graphic 97");
+        CHECK_EQ(floor.base_texture_id, 78,
+                 "plain floor uses PC-34 graphic 78");
+        CHECK_EQ(m11_v22_shape_for_cell(TEST_SQUARE_DOOR, 0, 1, 0).texture_id,
+                 86, "door shape uses PC-34 door-frame graphic 86");
+        CHECK_EQ(m11_v22_shape_for_cell(TEST_SQUARE_FLOOR, 0, 1, 0).texture_id,
+                 78, "corridor shape uses PC-34 floor graphic 78");
+    }
 }
 
 /* ─────────────────────────────────────────────────────────────────

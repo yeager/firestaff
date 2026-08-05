@@ -13,8 +13,9 @@
  *                → M11_V22_WallShape / M11_V22_FloorShape
  *                → renderer batch draw
  *
- * Phase: V2.2 shapes are defined here; actual texture/material loading
- * and GPU rendering is deferred to the asset pipeline agent.
+ * Phase: diffuse bindings use authenticated PC-34 GRAPHICS.DAT records
+ * where an original equivalent exists. Unsupported modern maps remain
+ * unavailable until a reviewed V2.2 artpack supplies them.
  *
  * Source-lock anchors:
  *   ReDMCSB DUNGEON.C:2238-2246 square type → wall/corridor/door/stairs
@@ -225,7 +226,7 @@ typedef struct {
  *
  * Returns: filled M11_V22_ShapeParams with type, textures, materials, etc.
  *          For unimplemented shapes, returns the PLAIN default with
- *          placeholder texture IDs.
+ *          unavailable texture IDs rather than synthetic pixels.
  *
  * Source-lock: DUNGEON.C:2238-2246 square type decode, DUNGEON.C:35-44
  * direction step tables. */
@@ -241,7 +242,7 @@ M11_V22_ShapeParams m11_v22_shape_for_view_square(int view_square,
                                                    int direction);
 
 /* Get the wall shape variant for a given D3/D2/D1/D0 + lateral position.
- * Returns placeholder if variant not yet implemented. */
+ * Unsupported source records have an unavailable texture ID. */
 M11_V22_WallShape m11_v22_wall_shape_get(M11_V22_WallVariant variant);
 
 /* Get floor shape for a given cell type. */

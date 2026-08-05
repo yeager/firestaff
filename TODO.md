@@ -1215,6 +1215,15 @@ diagnostic; it must not silently fall back to a generated visual.
   instead of being filled with a synthetic ramp or grayscale. Verification:
   Ninja `firestaff` build and `git diff --check` pass.
 
+- **DM1-ORIGINAL-REPLACE-015:** Closed 2026-08-05. Replaced the DM1 V2.2
+  shape bridge's graphic-0 texture placeholders with the matching PC-34
+  GRAPHICS.DAT indices used by M11 for wall depths, floor, door frame,
+  stairs and teleporter field. Shape routes with no single authenticated
+  source record (D0 center wall, cracked/mossy/pit variants and modern
+  normal/specular/emission maps) now carry an unavailable ID and stay
+  source-fail-closed. Verification: `test_dm1_v22_verification` passes,
+  including the source-index assertions; no modern artpack is fabricated.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

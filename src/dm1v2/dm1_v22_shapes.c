@@ -22,66 +22,88 @@
 
 static int g_shapes_initialized = 0;
 
+/* PC-34 GRAPHICS.DAT source indices from ReDMCSB DEFS.H/DUNVIEW.C.
+ * V2.2 may replace these through a reviewed artpack, but the shape bridge
+ * must never use graphic 0 as an accidental placeholder. */
+enum {
+    DM1_GFX_FLOOR_SET0 = 78,
+    DM1_GFX_DOOR_FRAME_D0 = 86,
+    DM1_GFX_WALL_D0R = 93,
+    DM1_GFX_WALL_D0L = 94,
+    DM1_GFX_WALL_D1R = 95,
+    DM1_GFX_WALL_D1L = 96,
+    DM1_GFX_WALL_D1C = 97,
+    DM1_GFX_WALL_D2R = 100,
+    DM1_GFX_WALL_D2L = 101,
+    DM1_GFX_WALL_D2C = 102,
+    DM1_GFX_WALL_D3R = 105,
+    DM1_GFX_WALL_D3L = 106,
+    DM1_GFX_WALL_D3C = 107,
+    DM1_GFX_STAIRS_UP_D3C = 109,
+    DM1_GFX_STAIRS_DOWN_D3C = 116,
+    DM1_GFX_FIELD_TELEPORTER = 76
+};
+
 /* ── Material library ─────────────────────────────────────────────── */
 
-/* Builtin materials. The asset pipeline agent will add more
- * (loaded from textures/material definition files) but we provide
- * defaults here so the renderer always has something to bind. */
+/* Builtin material descriptors retain the real PC-34 source record where
+ * one exists. Normal/specular/emission maps stay unavailable until a
+ * reviewed V2.2 pack supplies them. */
 enum { M11_V22_MAT_STONE_WALL = 0, M11_V22_MAT_STONE_FLOOR, M11_V22_MAT_DOOR,
        M11_V22_MAT_METAL, M11_V22_MAT_MAGICAL, M11_V22_MAT_CRYSTAL,
        M11_V22_MAT_COUNT };
 
 static const M11_V22_Material g_builtin_materials[M11_V22_MAT_COUNT] = {
     [M11_V22_MAT_STONE_WALL] = {
-        .diffuse_texture_id = 0,
-        .normal_texture_id  = 0,
-        .specular_texture_id = 0,
-        .emission_texture_id = 0,
+        .diffuse_texture_id = DM1_GFX_WALL_D1C,
+        .normal_texture_id  = -1,
+        .specular_texture_id = -1,
+        .emission_texture_id = -1,
         .roughness = 0.85f,
         .metallic = 0.0f,
         .emission_strength = 0.0f
     },
     [M11_V22_MAT_STONE_FLOOR] = {
-        .diffuse_texture_id = 0,
-        .normal_texture_id  = 0,
-        .specular_texture_id = 0,
-        .emission_texture_id = 0,
+        .diffuse_texture_id = DM1_GFX_FLOOR_SET0,
+        .normal_texture_id  = -1,
+        .specular_texture_id = -1,
+        .emission_texture_id = -1,
         .roughness = 0.90f,
         .metallic = 0.0f,
         .emission_strength = 0.0f
     },
     [M11_V22_MAT_DOOR] = {
-        .diffuse_texture_id = 0,
-        .normal_texture_id  = 0,
-        .specular_texture_id = 0,
-        .emission_texture_id = 0,
+        .diffuse_texture_id = DM1_GFX_DOOR_FRAME_D0,
+        .normal_texture_id  = -1,
+        .specular_texture_id = -1,
+        .emission_texture_id = -1,
         .roughness = 0.60f,
         .metallic = 0.15f,
         .emission_strength = 0.0f
     },
     [M11_V22_MAT_METAL] = {
-        .diffuse_texture_id = 0,
-        .normal_texture_id  = 0,
-        .specular_texture_id = 0,
-        .emission_texture_id = 0,
+        .diffuse_texture_id = -1,
+        .normal_texture_id  = -1,
+        .specular_texture_id = -1,
+        .emission_texture_id = -1,
         .roughness = 0.30f,
         .metallic = 0.90f,
         .emission_strength = 0.0f
     },
     [M11_V22_MAT_MAGICAL] = {
-        .diffuse_texture_id = 0,
-        .normal_texture_id  = 0,
-        .specular_texture_id = 0,
-        .emission_texture_id = 0,
+        .diffuse_texture_id = DM1_GFX_FIELD_TELEPORTER,
+        .normal_texture_id  = -1,
+        .specular_texture_id = -1,
+        .emission_texture_id = -1,
         .roughness = 0.50f,
         .metallic = 0.0f,
         .emission_strength = 1.0f
     },
     [M11_V22_MAT_CRYSTAL] = {
-        .diffuse_texture_id = 0,
-        .normal_texture_id  = 0,
-        .specular_texture_id = 0,
-        .emission_texture_id = 0,
+        .diffuse_texture_id = -1,
+        .normal_texture_id  = -1,
+        .specular_texture_id = -1,
+        .emission_texture_id = -1,
         .roughness = 0.10f,
         .metallic = 0.0f,
         .emission_strength = 0.80f
@@ -90,96 +112,96 @@ static const M11_V22_Material g_builtin_materials[M11_V22_MAT_COUNT] = {
 
 /* ── Wall shape variants ──────────────────────────────────────────── */
 
-/* All wall variants use placeholder texture IDs.
- * The asset pipeline agent will wire real textures. */
+/* Wall variants use the matching source PC-34 GRAPHICS.DAT record.  The
+ * depth-specific IDs are the same records consumed by M11_GameView. */
 static const M11_V22_WallShape g_wall_shapes[M11_V22_WALL_VARIANT_COUNT] = {
     /* D3 left — farthest depth, left lateral */
     [M11_V22_WALL_VARIANT_D3_LEFT] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_WALL_D3L, .normal_map_id = -1,
         .normal_strength = 0.5f, .roughness = 0.85f, .ao_strength = 0.8f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 0, .inscription_slot = 0, .flipped = 0
     },
     /* D3 right */
     [M11_V22_WALL_VARIANT_D3_RIGHT] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_WALL_D3R, .normal_map_id = -1,
         .normal_strength = 0.5f, .roughness = 0.85f, .ao_strength = 0.8f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 0, .inscription_slot = 0, .flipped = 1
     },
     /* D3 center */
     [M11_V22_WALL_VARIANT_D3_CENTER] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_WALL_D3C, .normal_map_id = -1,
         .normal_strength = 0.6f, .roughness = 0.85f, .ao_strength = 0.9f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 0, .inscription_slot = 1, .flipped = 0
     },
     /* D2 left */
     [M11_V22_WALL_VARIANT_D2_LEFT] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_WALL_D2L, .normal_map_id = -1,
         .normal_strength = 0.6f, .roughness = 0.80f, .ao_strength = 0.7f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 0, .inscription_slot = 0, .flipped = 0
     },
     /* D2 right */
     [M11_V22_WALL_VARIANT_D2_RIGHT] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_WALL_D2R, .normal_map_id = -1,
         .normal_strength = 0.6f, .roughness = 0.80f, .ao_strength = 0.7f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 0, .inscription_slot = 0, .flipped = 1
     },
     /* D2 center */
     [M11_V22_WALL_VARIANT_D2_CENTER] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_WALL_D2C, .normal_map_id = -1,
         .normal_strength = 0.7f, .roughness = 0.80f, .ao_strength = 0.8f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 0, .inscription_slot = 0, .flipped = 0
     },
     /* D1 left — closest depth walls */
     [M11_V22_WALL_VARIANT_D1_LEFT] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_WALL_D1L, .normal_map_id = -1,
         .normal_strength = 0.8f, .roughness = 0.75f, .ao_strength = 0.6f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 0, .inscription_slot = 0, .flipped = 0
     },
     /* D1 right */
     [M11_V22_WALL_VARIANT_D1_RIGHT] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_WALL_D1R, .normal_map_id = -1,
         .normal_strength = 0.8f, .roughness = 0.75f, .ao_strength = 0.6f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 0, .inscription_slot = 0, .flipped = 1
     },
     /* D1 center */
     [M11_V22_WALL_VARIANT_D1_CENTER] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_WALL_D1C, .normal_map_id = -1,
         .normal_strength = 0.9f, .roughness = 0.75f, .ao_strength = 0.7f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 1, .inscription_slot = 0, .flipped = 0
     },
     /* D0 left — immediate proximity */
     [M11_V22_WALL_VARIANT_D0_LEFT] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_WALL_D0L, .normal_map_id = -1,
         .normal_strength = 1.0f, .roughness = 0.70f, .ao_strength = 0.5f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 0, .inscription_slot = 0, .flipped = 0
     },
     /* D0 right */
     [M11_V22_WALL_VARIANT_D0_RIGHT] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_WALL_D0R, .normal_map_id = -1,
         .normal_strength = 1.0f, .roughness = 0.70f, .ao_strength = 0.5f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 0, .inscription_slot = 0, .flipped = 1
     },
     /* D0 center */
     [M11_V22_WALL_VARIANT_D0_CENTER] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = -1, .normal_map_id = -1,
         .normal_strength = 1.0f, .roughness = 0.70f, .ao_strength = 0.5f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 0, .inscription_slot = 0, .flipped = 0
     },
     /* Door frame */
     [M11_V22_WALL_VARIANT_DOOR] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_DOOR_FRAME_D0, .normal_map_id = -1,
         .normal_strength = 0.9f, .roughness = 0.60f, .ao_strength = 0.4f,
         .depth_offset = 0.0f, .corner_bevel = 0.0f,
         .corner_style = 0, .door_frame_present = 1, .inscription_slot = 0, .flipped = 0
@@ -190,49 +212,49 @@ static const M11_V22_WallShape g_wall_shapes[M11_V22_WALL_VARIANT_COUNT] = {
 
 static const M11_V22_FloorShape g_floor_shapes[FLOOR_SHAPE_COUNT] = {
     [FLOOR_SHAPE_PLAIN] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_FLOOR_SET0, .normal_map_id = -1,
         .tile_pattern = M11_V22_FLOOR_TILE_PLAIN,
         .pit_present = 0, .stairs_present = 0, .stairs_direction = 0,
         .depth_offset = 0.0f, .ao_strength = 0.9f, .roughness = 0.90f
     },
     [FLOOR_SHAPE_CRACKED] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = -1, .normal_map_id = -1,
         .tile_pattern = M11_V22_FLOOR_TILE_CRACKED,
         .pit_present = 0, .stairs_present = 0, .stairs_direction = 0,
         .depth_offset = 0.0f, .ao_strength = 0.85f, .roughness = 0.90f
     },
     [FLOOR_SHAPE_MOSSY] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = -1, .normal_map_id = -1,
         .tile_pattern = M11_V22_FLOOR_TILE_MOSSY,
         .pit_present = 0, .stairs_present = 0, .stairs_direction = 0,
         .depth_offset = 0.0f, .ao_strength = 0.80f, .roughness = 0.95f
     },
     [FLOOR_SHAPE_PIT] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = -1, .normal_map_id = -1,
         .tile_pattern = M11_V22_FLOOR_TILE_PLAIN,
         .pit_present = 1, .stairs_present = 0, .stairs_direction = 0,
         .depth_offset = -20.0f, .ao_strength = 1.0f, .roughness = 1.0f
     },
     [FLOOR_SHAPE_STAIRS_UP] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_STAIRS_UP_D3C, .normal_map_id = -1,
         .tile_pattern = M11_V22_FLOOR_TILE_PLAIN,
         .pit_present = 0, .stairs_present = 1, .stairs_direction = 0,
         .depth_offset = 0.0f, .ao_strength = 0.8f, .roughness = 0.85f
     },
     [FLOOR_SHAPE_STAIRS_DOWN] = {
-        .base_texture_id = 0, .normal_map_id = 0,
+        .base_texture_id = DM1_GFX_STAIRS_DOWN_D3C, .normal_map_id = -1,
         .tile_pattern = M11_V22_FLOOR_TILE_PLAIN,
         .pit_present = 0, .stairs_present = 1, .stairs_direction = 1,
         .depth_offset = 0.0f, .ao_strength = 0.8f, .roughness = 0.85f
     }
 };
 
-/* ── Default shape params (placeholder) ─────────────────────────── */
+/* ── Default shape params ────────────────────────────────────────── */
 
 static const M11_V22_ShapeParams g_default_shape = {
     .type = M11_V22_SHAPE_WALL_STRAIGHT,
-    .texture_id = 0,
-    .normal_map_id = 0,
+    .texture_id = -1,
+    .normal_map_id = -1,
     .material_id = M11_V22_MAT_STONE_WALL,
     .color_tint = { 255, 255, 255, 255 },
     .lighting_mode = M11_V22_LIGHT_DUNGEON_AMBIENT,
@@ -346,6 +368,7 @@ M11_V22_ShapeParams m11_v22_shape_for_cell(int dungeon_cell_type,
         p = params_from_wall(&ws, M11_V22_SHAPE_WALL_STRAIGHT, M11_V22_LIGHT_DUNGEON_AMBIENT);
     } else if (type == 1) { /* corridor */
         p.type = M11_V22_SHAPE_FLOOR_PLAIN;
+        p.texture_id = DM1_GFX_FLOOR_SET0;
         p.material_id = M11_V22_MAT_STONE_FLOOR;
         p.lighting_mode = M11_V22_LIGHT_DUNGEON_AMBIENT;
     } else if (type == 2) { /* pit */
@@ -355,17 +378,20 @@ M11_V22_ShapeParams m11_v22_shape_for_cell(int dungeon_cell_type,
     } else if (type == 3) { /* stairs */
         int stairs_dir = (dungeon_cell_type >> 3) & 1;
         p.type = stairs_dir ? M11_V22_SHAPE_FLOOR_STAIRS_DOWN : M11_V22_SHAPE_FLOOR_STAIRS_UP;
+        p.texture_id = stairs_dir ? DM1_GFX_STAIRS_DOWN_D3C : DM1_GFX_STAIRS_UP_D3C;
         p.material_id = M11_V22_MAT_STONE_FLOOR;
         p.lighting_mode = M11_V22_LIGHT_DUNGEON_AMBIENT;
     } else if (type == 4) { /* door */
         p.type = M11_V22_SHAPE_WALL_DOORWAY;
+        p.texture_id = DM1_GFX_DOOR_FRAME_D0;
         p.material_id = M11_V22_MAT_DOOR;
         p.lighting_mode = M11_V22_LIGHT_DUNGEON_AMBIENT;
     } else if (type == 5) { /* teleporter */
         p.type = M11_V22_SHAPE_FIELD_TELEPORTER;
+        p.texture_id = DM1_GFX_FIELD_TELEPORTER;
         p.material_id = M11_V22_MAT_MAGICAL;
         p.lighting_mode = M11_V22_LIGHT_MAGICAL_GLOW;
-        p.color_tint[0] = 200; p.color_tint[1] = 100; p.color_tint[2] = 255; p.color_tint[3] = 255;
+        p.color_tint[0] = 255; p.color_tint[1] = 255; p.color_tint[2] = 255; p.color_tint[3] = 255;
     } else if (type == 6) { /* fake wall */
         p.type = M11_V22_SHAPE_WALL_STRAIGHT;
         p.material_id = M11_V22_MAT_STONE_WALL;
@@ -387,18 +413,22 @@ M11_V22_ShapeParams m11_v22_shape_for_view_square(int view_square,
         p = params_from_wall(&ws, M11_V22_SHAPE_WALL_STRAIGHT, M11_V22_LIGHT_DUNGEON_AMBIENT);
     } else if (element == DM1_V2_ELEMENT_DOOR_FRONT) {
         p.type = M11_V22_SHAPE_WALL_DOORWAY;
+        p.texture_id = DM1_GFX_DOOR_FRAME_D0;
         p.material_id = M11_V22_MAT_DOOR;
         p.lighting_mode = M11_V22_LIGHT_TORCH_LIT;
     } else if (element == DM1_V2_ELEMENT_DOOR_SIDE) {
         p.type = M11_V22_SHAPE_WALL_STRAIGHT;
+        p.texture_id = DM1_GFX_DOOR_FRAME_D0;
         p.material_id = M11_V22_MAT_DOOR;
         p.lighting_mode = M11_V22_LIGHT_DUNGEON_AMBIENT;
     } else if (element == DM1_V2_ELEMENT_STAIRS_FRONT) {
         p.type = M11_V22_SHAPE_FLOOR_STAIRS_UP;
+        p.texture_id = DM1_GFX_STAIRS_UP_D3C;
         p.material_id = M11_V22_MAT_STONE_FLOOR;
         p.lighting_mode = M11_V22_LIGHT_DUNGEON_AMBIENT;
     } else if (element == DM1_V2_ELEMENT_STAIRS_SIDE) {
         p.type = M11_V22_SHAPE_WALL_STRAIGHT;
+        p.texture_id = DM1_GFX_WALL_D1L;
         p.material_id = M11_V22_MAT_STONE_WALL;
         p.lighting_mode = M11_V22_LIGHT_DUNGEON_AMBIENT;
     } else if (element == DM1_V2_ELEMENT_PIT) {
@@ -411,6 +441,7 @@ M11_V22_ShapeParams m11_v22_shape_for_view_square(int view_square,
         p.lighting_mode = M11_V22_LIGHT_MAGICAL_GLOW;
     } else if (element == DM1_V2_ELEMENT_CORRIDOR) {
         p.type = M11_V22_SHAPE_FLOOR_PLAIN;
+        p.texture_id = DM1_GFX_FLOOR_SET0;
         p.material_id = M11_V22_MAT_STONE_FLOOR;
         p.lighting_mode = M11_V22_LIGHT_DUNGEON_AMBIENT;
     }
@@ -451,6 +482,7 @@ const char* m11_v22_shapes_source_evidence(void) {
         "  - flipped (alternating wall bitmap per DUNGEON.C:1371 parity rule)\n"
         "  - inscription_slot / door_frame_present (conditional on cell content)\n"
         "\n"
-        "Phase contract: placeholder textures/materials for now; asset pipeline\n"
-        "agent will wire real texture IDs and PBR material parameters.\n";
+        "Source contract: diffuse bindings above use PC-34 GRAPHICS.DAT\n"
+        "indices; unsupported modern normal/specular/emission maps remain\n"
+        "unavailable until a reviewed V2.2 artpack supplies them.\n";
 }

@@ -49111,3 +49111,10 @@ http://greatstone.free.fr/dm/db_data/dm2_pc10_en/graphics.dat/graphics.dat.html.
 This is an identity/catalogue gate, not a claim that all 4,032 PNGs have
 already received pixel-for-pixel comparison; that remaining audit is tracked
 in `TODO.md` and cannot be satisfied with substitute art.
+- ✅ 2026-08-05 DM1 V2.2 source-shape binding: replaced graphic-0 texture
+  placeholders in the shape bridge with the authenticated PC-34
+  GRAPHICS.DAT records for depth-specific walls, floor, door frame, stairs
+  and teleporter field. Unsupported variants and unreviewed modern maps now
+  remain unavailable instead of selecting substitute pixels. The focused
+  `test_dm1_v22_verification` passes with source-index assertions. Tracked as
+  `DM1-ORIGINAL-REPLACE-015`.
