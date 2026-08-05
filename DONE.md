@@ -48319,3 +48319,8 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - The real MNS test rendered 452 source textures and exercised OBAKE MOTN
   animation, transforming 75 vertices with `0` failures.
 - No MNS pixels were promoted into the blocked DGN/VDP1 viewport route.
+- ✅ 2026-08-05 Theron Track 02 thing-data loader hardening: reject an
+  oversized ground-reference count before narrowing it into the source-shaped
+  16-bit receipt field or calculating the copy span. Regression coverage now
+  proves the overflow boundary fails closed; no real-data semantics are
+  inferred or promoted.

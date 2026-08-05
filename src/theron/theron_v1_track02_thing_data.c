@@ -49,7 +49,8 @@ int theron_v1_track02_thing_data_load(
     unsigned int ground_ref_count,
     Theron_ThingData *out)
 {
-    if (!ud_data || !out || !object_counts || dungeon_index >= 7)
+    if (!ud_data || !out || !object_counts || dungeon_index >= 7 ||
+        ground_ref_count > THERON_MAX_GROUND_REFS)
         return 0;
 
     memset(out, 0, sizeof(*out));
@@ -64,7 +65,6 @@ int theron_v1_track02_thing_data_load(
     size_t gref_abs = UD_BASE + qb.ground_refs_offset;
     size_t gref_bytes = (size_t)ground_ref_count * 2;
     if (gref_abs + gref_bytes > ud_size) return 0;
-    if (ground_ref_count > THERON_MAX_GROUND_REFS) return 0;
     memcpy(out->ground_refs, ud_data + gref_abs, gref_bytes);
 
     unsigned int split = get_items_split_index(dungeon_index);
