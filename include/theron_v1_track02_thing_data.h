@@ -46,6 +46,74 @@ typedef struct {
     uint16_t   text_data[1024];
 } Theron_ThingData;
 
+typedef struct {
+    uint16_t next_ref;
+    uint8_t type;
+    uint8_t position;
+    uint16_t health[4];
+    uint8_t number;
+    uint8_t direction_flags;
+} Theron_Track02MonsterRecord;
+
+typedef struct {
+    uint8_t type;
+    uint8_t keep;
+    uint8_t cursed;
+    uint8_t poisoned;
+    uint8_t charges;
+    uint8_t broken;
+    uint8_t unknown;
+} Theron_Track02WeaponRecord;
+
+typedef struct {
+    uint8_t type;
+    uint8_t keep;
+    uint8_t cursed;
+    uint8_t dump;
+    uint8_t broken;
+    uint8_t unknown;
+} Theron_Track02ClothingRecord;
+
+typedef struct {
+    uint16_t reftxt;
+    uint8_t closed;
+    uint8_t type;
+} Theron_Track02ScrollRecord;
+
+typedef struct {
+    uint8_t power;
+    uint8_t type;
+    uint8_t unknown;
+    uint8_t keep;
+} Theron_Track02PotionRecord;
+
+typedef struct {
+    int16_t chested;
+    uint16_t data1;
+    uint16_t unknown;
+} Theron_Track02ChestRecord;
+
+typedef struct {
+    uint8_t type;
+    uint8_t keep;
+    uint8_t unknown;
+    uint8_t capacity;
+} Theron_Track02MiscRecord;
+
+typedef struct {
+    unsigned int category;
+    uint16_t next_ref;
+    union {
+        Theron_Track02MonsterRecord monster;
+        Theron_Track02WeaponRecord weapon;
+        Theron_Track02ClothingRecord clothing;
+        Theron_Track02ScrollRecord scroll;
+        Theron_Track02PotionRecord potion;
+        Theron_Track02ChestRecord chest;
+        Theron_Track02MiscRecord misc;
+    } value;
+} Theron_Track02ItemRecord;
+
 int theron_v1_track02_thing_data_load(
     const uint8_t *ud_data,
     size_t ud_size,
@@ -57,5 +125,13 @@ int theron_v1_track02_thing_data_load(
 unsigned int theron_v1_track02_compute_ground_ref_count(
     const uint8_t *tiles_flat,
     unsigned int total_tiles);
+
+/* Decodes the source-bound fields for categories 4..10. Categories 14/15
+ * intentionally remain raw-only until their source consumers are identified. */
+int theron_v1_track02_item_record_decode(
+    unsigned int category,
+    const uint8_t *raw,
+    size_t raw_size,
+    Theron_Track02ItemRecord *out);
 
 #endif

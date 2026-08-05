@@ -50309,3 +50309,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `s_savegamebuffer` (0x3c) and `c_tim` (0x0c) sections. The documented
   order now keeps `STORE_EXTRA_DUNGEON_DATA` after inventory/leader links and
   records that all sections share the MSB-first SUPPRESS stream.
+
+- ✅ 2026-08-06 Theron Track 02 raw item-record decoder: added a portable
+  little-endian decoder for the source-bound category 4–10 records, including
+  the universal next-reference prefix and the documented monster, weapon,
+  clothing, scroll, potion, chest, and misc bitfields. Every populated record
+  in all seven real US quest blocks is decoded and checked; missile/cloud
+  records remain raw-only and no guessed runtime item semantics were enabled.

@@ -151,8 +151,9 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
                names[d], gref_count, total_chain_items, max_chain_depth, fixed);
         printf("    cats:");
         const char *cat_names[] = {
-            "door","telep","text","act","weap","cloth","scrl","pot",
-            "cont","misc","miss","?","?","?","cret","chmp"
+            "door","telep","text","act","monster","weapon","clothing",
+            "scroll","potion","chest","misc","unused","unused","unused",
+            "missile","cloud"
         };
         for (int c = 0; c < 16; c++) {
             if (cat_visit_counts[c] > 0)

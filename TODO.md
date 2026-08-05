@@ -24246,6 +24246,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   tables and requires nonzero copied payload for every populated category.
   This is raw record provenance only; runtime item/monster publication and
   combat/render semantics remain closed until their consumers are bound.
+- 2026-08-06 update: categories 4–10 now have a portable little-endian raw
+  record decoder. It binds the two-byte next-reference prefix and the
+  DMBUILDER field layouts for monsters, weapons, clothing, scrolls, potions,
+  chests, and misc across every populated record in the real US corpus.
+  Categories 14/15 remain raw-only until a source consumer proves missile or
+  cloud semantics; no item is published into the runtime object model yet.
 
 - 2026-07-15: Runtime level-bank selection now retains the authenticated
   startup bitmap's Track 02 MD5 and raw/user-data sector envelope. Remaining:

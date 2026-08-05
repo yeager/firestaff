@@ -146,6 +146,19 @@ static void test_real_item_records(const Theron_ThingData *td,
             }
         }
         assert(has_payload);
+
+        if (cat >= THERON_CAT_MONSTER) {
+            for (unsigned int id = 0; id < td->object_counts[cat]; ++id) {
+                Theron_Track02ItemRecord record;
+                const uint8_t *raw =
+                    &td->items[cat][id * theron_item_bytes[cat]];
+                assert(theron_v1_track02_item_record_decode(
+                    cat, raw, theron_item_bytes[cat], &record));
+                assert(record.category == cat);
+                assert(record.next_ref ==
+                       ((uint16_t)raw[0] | ((uint16_t)raw[1] << 8)));
+            }
+        }
     }
 }
 

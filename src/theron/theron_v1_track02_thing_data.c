@@ -33,6 +33,95 @@ static unsigned int get_items_split_index(unsigned int dungeon_index) {
     }
 }
 
+static uint16_t read_le16(const uint8_t *p) {
+    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+int theron_v1_track02_item_record_decode(
+    unsigned int category,
+    const uint8_t *raw,
+    size_t raw_size,
+    Theron_Track02ItemRecord *out)
+{
+    if (!raw || !out || category < THERON_CAT_MONSTER ||
+        category > THERON_CAT_MISC ||
+        raw_size < theron_item_bytes[category])
+        return 0;
+
+    memset(out, 0, sizeof(*out));
+    out->category = category;
+    out->next_ref = read_le16(raw);
+
+    switch (category) {
+    case THERON_CAT_MONSTER: {
+        uint16_t flags;
+        uint16_t unknown;
+        out->value.monster.next_ref = out->next_ref;
+        out->value.monster.type = raw[2];
+        out->value.monster.position = raw[3];
+        for (unsigned int i = 0; i < 4u; ++i)
+            out->value.monster.health[i] = read_le16(raw + 4u + i * 2u);
+        flags = read_le16(raw + 12u);
+        unknown = read_le16(raw + 14u);
+        out->value.monster.number = (uint8_t)((flags >> 5) & 0x03u);
+        out->value.monster.direction_flags = (uint8_t)(unknown >> 8);
+        break;
+    }
+    case THERON_CAT_WEAPON: {
+        uint16_t w = read_le16(raw + 2u);
+        out->value.weapon.type = (uint8_t)(w & 0x7Fu);
+        out->value.weapon.keep = (uint8_t)((w >> 7) & 1u);
+        out->value.weapon.cursed = (uint8_t)((w >> 8) & 1u);
+        out->value.weapon.poisoned = (uint8_t)((w >> 9) & 1u);
+        out->value.weapon.charges = (uint8_t)((w >> 10) & 0x0Fu);
+        out->value.weapon.broken = (uint8_t)((w >> 14) & 1u);
+        out->value.weapon.unknown = (uint8_t)((w >> 15) & 1u);
+        break;
+    }
+    case THERON_CAT_CLOTHING: {
+        uint16_t w = read_le16(raw + 2u);
+        out->value.clothing.type = (uint8_t)(w & 0x7Fu);
+        out->value.clothing.keep = (uint8_t)((w >> 7) & 1u);
+        out->value.clothing.cursed = (uint8_t)((w >> 8) & 1u);
+        out->value.clothing.dump = (uint8_t)((w >> 9) & 0x1Fu);
+        out->value.clothing.broken = (uint8_t)((w >> 14) & 1u);
+        out->value.clothing.unknown = (uint8_t)((w >> 15) & 1u);
+        break;
+    }
+    case THERON_CAT_SCROLL: {
+        uint16_t w = read_le16(raw + 2u);
+        out->value.scroll.reftxt = (uint16_t)(w & 0x03FFu);
+        out->value.scroll.closed = (uint8_t)((w >> 10) & 1u);
+        out->value.scroll.type = (uint8_t)((w >> 11) & 0x1Fu);
+        break;
+    }
+    case THERON_CAT_POTION: {
+        uint16_t w = read_le16(raw + 2u);
+        out->value.potion.power = (uint8_t)(w & 0xFFu);
+        out->value.potion.type = (uint8_t)((w >> 8) & 0x1Fu);
+        out->value.potion.unknown = (uint8_t)((w >> 13) & 0x03u);
+        out->value.potion.keep = (uint8_t)((w >> 15) & 1u);
+        break;
+    }
+    case THERON_CAT_CHEST:
+        out->value.chest.chested = (int16_t)read_le16(raw + 2u);
+        out->value.chest.data1 = read_le16(raw + 4u);
+        out->value.chest.unknown = read_le16(raw + 6u);
+        break;
+    case THERON_CAT_MISC: {
+        uint16_t w = read_le16(raw + 2u);
+        out->value.misc.type = (uint8_t)(w & 0x7Fu);
+        out->value.misc.keep = (uint8_t)((w >> 7) & 1u);
+        out->value.misc.unknown = (uint8_t)((w >> 8) & 0x3Fu);
+        out->value.misc.capacity = (uint8_t)((w >> 14) & 0x03u);
+        break;
+    }
+    default:
+        return 0;
+    }
+    return 1;
+}
+
 unsigned int theron_v1_track02_compute_ground_ref_count(
     const uint8_t *tiles_flat,
     unsigned int total_tiles)
