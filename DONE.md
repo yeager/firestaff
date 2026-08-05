@@ -50173,3 +50173,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   regions and rejects non-sector-aligned raw input. Result: all seven real
   regions pass with 190–264 ground refs and 871–1132 items; no synthetic
   records or presentation semantics were promoted.
+- ✅ 2026-08-06 DM2 CCM synthetic-execution closure: removed
+  `dm2_v1_ccm.c` from both production archives and retired creature-tick
+  flag-to-action writeback. The compact opcode interpreter lacks the original
+  DB4/CAII command-stream owner and live dungeon/timer/party callbacks, so
+  production now records an unexecuted CCM receipt while retaining authentic
+  GDAT creature data/rendering. The isolated CCM tests remain explicit.

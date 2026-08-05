@@ -416,6 +416,7 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
 
 int dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader,
                                                 int field) {
+#if defined(FIRESTAFF_DM2_CREATURE_TESTING)
     int loaded = 0;
     int i;
 
@@ -445,6 +446,15 @@ int dm2_v1_creature_load_ccm_programs_from_gdat(const DM2_V1_AssetLoader *loader
     g_ccm_program_count = loaded;
     g_ccm_program_field = loaded > 0 ? field : -1;
     return loaded;
+#else
+    (void)loader;
+    (void)field;
+    /* The source does not establish a CREATURE_AI field as a CCM bytecode
+     * container.  Pattern-decoding raw GDAT fields is a test diagnostic, not
+     * an admissible player-session data path. */
+    dm2_v1_creature_reset_ccm_programs();
+    return 0;
+#endif
 }
 
 int dm2_v1_creature_load_ccm_programs_from_gdat_auto(
@@ -518,6 +528,7 @@ int dm2_v1_creature_door_open_pct_from_state(int door_state) {
     return (4 - door_state) * 25;
 }
 
+#if 0 /* Former synthetic CCM walk bridge; no production caller. */
 static int dm2_v1_creature_door_blocks_creature(int door_state,
                                                 uint16_t door_attributes,
                                                 int creature_nonmaterial) {
@@ -528,6 +539,7 @@ static int dm2_v1_creature_door_blocks_creature(int door_state,
     }
     return 1;
 }
+#endif
 
 static int dm2_v1_creature_attack_flags_are_ranged(uint16_t flags) {
     return (flags & (AI_ATTACK_FLAGS__SHOOT |
@@ -948,6 +960,13 @@ void dm2_v1_creature_reset_ccm_tick_observer(void) {
     memset(&g_last_ccm_tick, 0, sizeof(g_last_ccm_tick));
 }
 
+/* This former bridge is retained as source research only.  It reconstructed
+ * an executable command from reduced CreatureInstance fields and converted
+ * private interpreter flags into world mutations.  SKProject instead owns
+ * the stream in live DB4/CAII records and invokes handlers with dungeon,
+ * timer and party callbacks.  Do not compile the reconstruction into a
+ * player build. */
+#if 0
 static int dm2_v1_creature_ccm_argc(int opcode) {
     const DM2_V1_CCMOpcodeDef *def = dm2_v1_ccm_get_opcode_def(opcode);
     return def ? def->arg_count : 0;
@@ -1180,6 +1199,31 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
 
     g_last_ccm_tick.after_b_1a = c->b_1a;
     g_last_ccm_tick.direction_after = c->direction;
+    g_last_ccm_tick.attack_cooldown_after = c->attack_cooldown;
+}
+
+#endif
+
+static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
+                                         int slot) {
+    if (!c) return;
+
+    /* Missing source-owned DB4/CAII command-stream and handler callbacks
+     * means execution must remain unavailable.  Real GDAT-backed creature
+     * data and rendering are kept separate from this fail-closed seam. */
+    memset(&g_last_ccm_tick, 0, sizeof(g_last_ccm_tick));
+    g_last_ccm_tick.valid = 1;
+    g_last_ccm_tick.instance_id = slot;
+    g_last_ccm_tick.ai_index = c->ai_index;
+    g_last_ccm_tick.before_b_1a = c->b_1a;
+    g_last_ccm_tick.ccm_opcode = c->b_1a;
+    g_last_ccm_tick.ccm_result = -1;
+    g_last_ccm_tick.program_pc_before = -1;
+    g_last_ccm_tick.program_pc_after = -1;
+    g_last_ccm_tick.after_b_1a = c->b_1a;
+    g_last_ccm_tick.direction_before = c->direction;
+    g_last_ccm_tick.direction_after = c->direction;
+    g_last_ccm_tick.attack_cooldown_before = c->attack_cooldown;
     g_last_ccm_tick.attack_cooldown_after = c->attack_cooldown;
 }
 

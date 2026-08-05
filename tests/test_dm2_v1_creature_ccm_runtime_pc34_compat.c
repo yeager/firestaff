@@ -1,8 +1,8 @@
 /* test_dm2_v1_creature_ccm_runtime_pc34_compat.c
  *
- * DM2 V1 CCM runtime bridge: creature_tick now executes the real CCM
- * interpreter for the instance b_1a state and writes back the runtime
- * attack/cooldown state.
+ * DM2 V1 CCM runtime boundary: creature_tick must not execute the compact
+ * interpreter from reduced instance fields.  Original execution requires
+ * the live DB4/CAII command stream and its dungeon/timer/party callbacks.
  *
  * Source-lock anchors:
  *   skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM
@@ -14,6 +14,7 @@
 #include <stdio.h>
 #include <string.h>
 
+#if 0 /* Superseded synthetic bridge expectations; retained as research. */
 static int g_run;
 static int g_pass;
 static int g_test_door_state;
@@ -349,5 +350,39 @@ int main(void) {
     if (!test_ccm_walk_field_door_writeback()) return 1;
     if (!test_ccm_path_rotation_and_item_writeback()) return 1;
     printf("%d/%d checks passed\n", g_pass, g_run);
+    return 0;
+}
+#endif
+
+int main(void) {
+    DM2_AIDefinition spec;
+    DM2_V1_CreatureCCMTickObserver observer;
+    const DM2_V1_CreatureInstance *before;
+    const DM2_V1_CreatureInstance *after;
+    int slot;
+
+    memset(&spec, 0, sizeof(spec));
+    spec.BaseHP = 16;
+    spec.AttacksSpells = AI_ATTACK_FLAGS__MELEE;
+    dm2_v1_creature_test_reset_instances();
+    dm2_v1_creature_test_set_ai_spec(DM2_AI_CAVE_BAT, &spec);
+    slot = dm2_v1_creature_spawn(DM2_AI_CAVE_BAT, 7, 7, 0, 0, 8);
+    if (slot < 0) return 1;
+    dm2_v1_creature_test_set_ccm_state(slot, DM2_CCM_SHOOT_ITEM, 81, 5, 6);
+    before = dm2_v1_creature_get_instance(slot);
+    if (!before) return 1;
+
+    dm2_v1_creature_tick();
+    after = dm2_v1_creature_get_instance(slot);
+    if (!after || !dm2_v1_creature_last_ccm_tick(&observer)) return 1;
+    if (observer.ccm_result != -1 || observer.ccm_flag_walk != 0 ||
+        observer.ccm_flag_shoot != 0 || observer.ccm_stack_top != 0 ||
+        observer.before_b_1a != DM2_CCM_SHOOT_ITEM ||
+        observer.after_b_1a != DM2_CCM_SHOOT_ITEM ||
+        after->world_x != 7 || after->world_y != 7 ||
+        after->direction != 0 || after->attack_cooldown != 0) {
+        return 1;
+    }
+    printf("PASS: DM2 CCM production boundary rejects synthetic execution\n");
     return 0;
 }

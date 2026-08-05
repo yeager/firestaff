@@ -4249,6 +4249,13 @@ list(REMOVE_ITEM M10_SOURCES
 # SND/music runtime; keep its isolated unit contract only.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_sfx_pc34_compat.c")
+# The compact CCM interpreter reconstructs actions from reduced b_1a/b_17
+# fields and has no DB4/CAII command-stream or callback owner. Production
+# creature ticks retain only a fail-closed receipt; compile this opcode
+# research harness solely in its explicit tests until the original chain is
+# available.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_ccm.c")
 # This contract probe seeds a 10x10 synthetic room-skin fixture and is used
 # exclusively by its unit test.  Keep it out of the production M10 archive:
 # the live CSB viewport must consume only source-bound dungeon/material data.
@@ -4324,7 +4331,6 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c
     src/dm1/dm1_v1_actuator_execution_pc34_compat.c
     src/dm1/dm1_v1_throw_shoot_pc34_compat.c
-    src/dm2/dm2_v1_ccm.c
     src/dm2/dm2_v1_creature.c
     src/dm2/dm2_v1_creature_tables.c
     src/dm2/dm2_v1_party.c
@@ -4410,7 +4416,8 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_vp_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_querydb_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gdatfile_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_sfx_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_sfx_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_ccm.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

@@ -216,6 +216,10 @@
   The only active source-bounded subset, SKProject's `ddat` global-variable
   store, now lives in `dm2_v1_glob_var.c`; all other bodies remain available
   only to their explicit audit targets.
+  **2026-08-06 CCM execution boundary:** `dm2_v1_ccm.c` is now test-only and
+  creature ticks no longer turn reduced `b_1a`/`b_17` fields into movement,
+  attacks, direction changes or cooldowns. Reconnect only with the complete
+  SKProject DB4/CAII command stream and live dungeon/timer/party callbacks.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   source-bound lifecycle/presentation path with a structural fail-closed seam.
