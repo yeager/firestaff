@@ -6,6 +6,13 @@
   receipt until their party and RNG owners are wired. Focused regressions
   verify that neither path can report a movement success.
 
+- ✅ 2026-08-05 Theron Track 19 opaque record-window provenance: the US and
+  JP ISOs now authenticate the same 502-byte span immediately after their
+  variant-specific item-name tables (`0x0E951E` / `0x0E955E`, FNV-1a
+   `C48424F2`). The inventory records the verified offset and length while
+   keeping the bytes opaque; no map, object, item-property, bitmap or palette
+   semantics are promoted. Real US/JP inventory probes pass.
+
 - ✅ 2026-08-05 Theron JP Track 19 level-label provenance: the real
   `TQJP19.iso` selector table is now bound at `0x203A7E–0x203B8C` as 15
   fixed 16-byte Shift-JIS records with source `0x8197` delimiters. The exact
@@ -48832,3 +48839,14 @@ the supplied root and selected MD5 to prove this without shipping game data.
   compatibility entry point now clears its coordinates and fails closed;
   active PC34 rendering continues to consume the authenticated G0205 table
   from `GRAPHICS.DAT`. The focused wall-ornament test passes 127/127.
+
+- ✅ 2026-08-05 CSB archive save-cache provenance: optional CSB archive
+  sidecars now form an exact view of the hash-selected package.  If a newly
+  scanned package lacks `MINI.DAT` or `CSBGAME*.DAT`, an older cached member
+  is removed rather than being offered as authentic Resume data.  DMWeb's
+  Saved Game Files reference confirms that `MINI.DAT` is the original CSB
+  campaign saved-game image, while `CSBGAME.DAT` is a player save and
+  `DUNGEON.DAT` contains only the Prison.  Regression coverage first
+  materializes both archive members, rescans a GRAPHICS-only replacement, and
+  verifies that neither stale save remains.  The focused archive split test
+  passes.

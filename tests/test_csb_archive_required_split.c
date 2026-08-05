@@ -97,6 +97,19 @@ static int join_path(char* out, size_t outSize,
     return rc > 0 && (size_t)rc < outSize;
 }
 
+static int path_exists(const char* path) {
+    FILE* fp;
+    if (!path) {
+        return 0;
+    }
+    fp = fopen(path, "rb");
+    if (!fp) {
+        return 0;
+    }
+    fclose(fp);
+    return 1;
+}
+
 static void put16(unsigned char* p, unsigned int v) {
     p[0] = (unsigned char)(v & 0xffU);
     p[1] = (unsigned char)((v >> 8U) & 0xffU);
@@ -500,6 +513,25 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
               "archive-backed CSB CHAOS.FTL startup module should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedFtlCode, kCsbFtlCodePayload),
               "archive-backed CSB FTLCODE runtime module should be materialized next to GRAPHICS.DAT");
+
+    /* Re-scan the same required package without its optional save members.
+     * A cache must not retain MINI.DAT/CSBGAME.DAT from an earlier archive:
+     * DMWeb's Saved Game Files specification identifies MINI.DAT as source
+     * campaign data, while CSBGAME.DAT is a player save.  Either stale file
+     * would falsely look like authentic resume material. */
+    {
+        TestZipEntry graphicsOnly[1];
+        memset(graphicsOnly, 0, sizeof(graphicsOnly));
+        graphicsOnly[0].name = "archive/GRAPHICS.DAT";
+        graphicsOnly[0].payload = kCsbGraphicsPayload;
+        check_int(write_stored_zip_entries(zipPath, graphicsOnly, 1U),
+                  "replacement CSB GRAPHICS ZIP without optional saves should be written");
+        M12_AssetStatus_Scan(&status, root);
+        check_int(!path_exists(cachedSave),
+                  "missing archive-backed CSBGAME.DAT should remove stale cache save data");
+        check_int(!path_exists(cachedMiniSave),
+                  "missing archive-backed MINI.DAT should remove stale cache campaign data");
+    }
 }
 
 static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {

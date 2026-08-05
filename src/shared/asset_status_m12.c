@@ -1179,9 +1179,16 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
         if (!FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, labels[i])) {
             continue;
         }
-        (void)m12_materialize_optional_for_cache_seed(seedPath,
-                                                      labels[i],
-                                                      outPath);
+        if (!m12_materialize_optional_for_cache_seed(seedPath, labels[i],
+                                                     outPath)) {
+            /* The cache is a materialized view of this exact package, not a
+             * sidecar store.  In particular, DMWeb's Saved Game Files
+             * reference distinguishes MINI.DAT (the original CSB campaign
+             * save) from a player-created CSBGAME.DAT.  If either member is
+             * absent from the package currently selected by hash, a stale
+             * cache file must not be offered as real resume data. */
+            (void)remove(outPath);
+        }
     }
 }
 
