@@ -10,6 +10,9 @@ int main(void)
     M11_GameViewState state;
     unsigned short thing;
     char name[64];
+    unsigned char framebuffer[320 * 200];
+    size_t cursorPixels = 0u;
+    int y;
 
     if (!data_dir || !data_dir[0]) {
         puts("skip: FIRESTAFF_DM1_DATA_DIR is not set");
@@ -50,7 +53,33 @@ int main(void)
         return 1;
     }
 
+    /* ReDMCSB IO.C F0702 replaces the host arrow with the held source
+     * object. Verify the final indexed framebuffer, not merely the transient
+     * leader-hand state or the name resolver. */
+    memset(framebuffer, 0, sizeof(framebuffer));
+    state.pointerPositionKnown = 1;
+    state.pointerX = 120;
+    state.pointerY = 80;
+    M11_GameView_DrawLeaderHandCursor(&state, framebuffer,
+                                      320, 200);
+    for (y = state.pointerY;
+         y < state.pointerY + 18 && y < 200; ++y) {
+        int x;
+        for (x = state.pointerX;
+             x < state.pointerX + 18 && x < 320; ++x) {
+            if (framebuffer[y * 320 + x] != 0u) {
+                ++cursorPixels;
+            }
+        }
+    }
+    if (cursorPixels == 0u) {
+        fprintf(stderr, "real F0702 held-object cursor did not write pixels\n");
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+
     M11_GameView_Shutdown(&state);
-    printf("ok: real DM1 M564 leader-hand object name = %s\n", name);
+    printf("ok: real DM1 M564 leader-hand name = %s; F0702 cursor pixels=%zu\n",
+           name, cursorPixels);
     return 0;
 }

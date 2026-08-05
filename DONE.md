@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 DM1 F0702 cursor framebuffer proof: extended the real PC3.4
+  object-name test to call `M11_GameView_DrawLeaderHandCursor()` after moving
+  `EYE OF TIME` into the transient leader hand and require non-zero pixels in
+  the source 18x18 cursor rectangle. This proves the authenticated
+  GRAPHICS.DAT icon, ReDMCSB IO.C F0702 builder, and final framebuffer consumer
+  are connected; packaged macOS pointer/capture comparison remains open.
+  Verification: `test_m11_dm1_real_object_names`, 169 cursor pixels.
+
 - ✅ 2026-08-06 Nexus SAL decode admission correction: `NEXUS_V1_AUDIO_KIND_SAL_BANK`
   no longer advertises supported runtime decode from the heuristic host
   tone-bank parser. The parser may still retain bounded diagnostic PCM

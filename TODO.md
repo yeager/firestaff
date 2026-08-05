@@ -25617,7 +25617,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   after pickup and during movement. The source framebuffer now invalidates on
   pointer motion and hides the host arrow while G4055 is occupied; close only
   after a real Mac capture proves the object-shaped pointer remains visible at
-  the mapped pointer position.
+  the mapped pointer position. 2026-08-06 source-side proof: the real-data
+  `test_m11_dm1_real_object_names` now verifies 169 non-zero F0702 pixels for
+  `EYE OF TIME`; only the packaged macOS/window capture remains.
 - Theron teleporter resolution now rejects unresolved object-ID links and
   cycles; restore positive legacy links only when backed by an authenticated
   Track 02/T900 record corpus.
