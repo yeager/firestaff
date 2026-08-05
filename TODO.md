@@ -25347,7 +25347,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   of silently rendering subtype-0 artwork. Mouse-up now also consumes the
   separate C211..C218 status-hand route, so dragging into another champion's
   hand no longer stops at the leader hand. Real Mac pickup/placement capture
-  is still required.
+  is still required. The supplied `Dungeon-Master_Misc_DOS_EN_TXT-doc.zip`
+  (`Dungeon Master.txt`, chapter 1) is an additional behavioral reference:
+  champion mirrors are opened with left click; the pointer must change into
+  the held object's hand-shaped cursor; objects must be placeable in valid
+  hand, sheath, pouch and backpack slots; and placing onto an occupied slot
+  swaps the objects. It also states that some distant dungeon objects are not
+  reachable, so capture must distinguish reachability from a missing object.
+  The manual does not replace the required original PC34 runtime capture or
+  the M564 name/slot evidence.
 - [ ] DM1-HOC-OBJECTS-003 Capture the live held-object cursor on the host window
   after pickup and during movement. The source framebuffer now invalidates on
   pointer motion and hides the host arrow while G4055 is occupied; close only
