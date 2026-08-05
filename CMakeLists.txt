@@ -393,6 +393,14 @@ target_link_libraries(test_nexus_v1_sal_decode PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_sal_decode COMMAND test_nexus_v1_sal_decode)
 set_tests_properties(nexus_v1_sal_decode PROPERTIES LABELS "nexus;audio;tier4")
 
+add_executable(test_nexus_v1_drops_gate
+    tests/test_nexus_v1_drops_gate.c)
+target_include_directories(test_nexus_v1_drops_gate PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_drops_gate PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_drops_gate COMMAND test_nexus_v1_drops_gate)
+set_tests_properties(nexus_v1_drops_gate PROPERTIES LABELS "nexus;loot;tier4")
+
 add_executable(test_nexus_v1_leader_switch
     tests/test_nexus_v1_leader_switch.c)
 target_include_directories(test_nexus_v1_leader_switch PRIVATE

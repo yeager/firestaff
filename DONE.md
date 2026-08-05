@@ -49392,3 +49392,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   pickup without inventing cursor art. Verification: Ninja `firestaff` build,
   `test_m11_dm1_source_item_name_guard` (including held-object pointer redraw),
   and the real PC3.4 `test_m11_dm1_real_alcove_item_runtime_pc34` all pass.
+- ✅ 2026-08-05 Nexus loot placeholder removal: removed the stale hard-coded
+  DM.BIN/DM1-compatible creature-drop table from the public Nexus drop API.
+  `nexus_drops_for_type()` and `nexus_drops_roll()` now return no loot until
+  the Saturn creature/category/item dispatcher is proven; explicit generic
+  gold-pile storage remains available for a future source-owned producer.
+  Added `test_nexus_v1_drops_gate` covering the no-materialization contract.

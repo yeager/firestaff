@@ -4,93 +4,32 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-/* Nexus V1 creature drops.
- * DM1-compatible drop tables per creature type.
- * Source: DM1 creature drop tables, nexus_v1_combat.c,
- * docs/nexus_combat_creatures.md.
- *
- * Each creature type has a drop table (gold + items).
- * Gold is always dropped as a pile; items have drop chance.
- * Source: DM1 KILLMON.C drop roll, GOLDDROP.C gold generation. */
-
-/* DM.BIN 0x3B608: gold amounts per creature category (4 categories).
- * Source: SH-2 disassembly of yam\cresub.c GetItem function at
- * DM.BIN file offset 0x1FB9E, referencing data at 0x3B608. */
-static const int nexus_gold_by_category[4] = { 32, 16, 8, 4 };
-
-/* DM.BIN 0x3B600: base_table[8] — slot-to-item-index mapping used
- * by GetItem's drop loop.  Source: DM.BIN file offset 0x3B600. */
-static const uint8_t nexus_drop_base_table[8] = { 6, 0, 2, 3, 6, 1, 1, 5 };
-
-/* DM.BIN 0x3B620: item pair table — 6 pairs of 16-bit BE item IDs + null pair.
- * base_table[slot] indexes into this array. Pair {0,0} = empty slot.
- * Source: DM.BIN file offset 0x3B620. */
-static const int nexus_drop_item_pairs[7][2] = {
-    {0, 74}, {72, 144}, {80, 158}, {80, 174}, {104, 145}, {138, 165}, {0, 0}
-};
-#define NEXUS_DROP_PAIR_COUNT 7
-
-/* DM.BIN 0x3B608: gold entry from category table, plus item slots via base_table. */
+/* No creature drop table is admitted yet.  The historical implementation
+ * below used a hard-coded table copied from an uncorrelated DM.BIN reading;
+ * it did not prove the Nexus creature-type/category relation, item-ID
+ * namespace, or the Saturn drop dispatcher.  Keep this API fail-closed until
+ * those facts are bound from DMWeb plus an authenticated retail capture. */
 int nexus_drops_for_type(int creature_type_idx,
                           Nexus_DropEntry *out_table,
                           int max_entries) {
-    int gold_amount, count = 0, slot;
-    if (!out_table || max_entries < 1) return 0;
-    if (creature_type_idx < 0) return 0;
-
-    gold_amount = nexus_gold_by_category[creature_type_idx % 4];
-    out_table[0].item_id = -1;
-    out_table[0].min_qty = gold_amount / 2;
-    out_table[0].max_qty = gold_amount;
-    out_table[0].chance = 100;
-    count = 1;
-
-    for (slot = 0; slot < 8 && count < max_entries; slot++) {
-        int pair_idx = nexus_drop_base_table[slot];
-        if (pair_idx < NEXUS_DROP_PAIR_COUNT) {
-            int a = nexus_drop_item_pairs[pair_idx][0];
-            int b = nexus_drop_item_pairs[pair_idx][1];
-            if (a > 0 || b > 0) {
-                out_table[count].item_id = (a > 0) ? a : b;
-                out_table[count].min_qty = 1;
-                out_table[count].max_qty = 1;
-                out_table[count].chance = 12;
-                count++;
-            }
-        }
-    }
-    return count;
+    (void)creature_type_idx;
+    (void)out_table;
+    (void)max_entries;
+    return 0;
 }
 
-/* DM.BIN 0x01FB9E: GetItem drop logic uses base_table to route 8 slots
- * to item pairs. Each slot yields one of two items from the pair. */
+/* A real Nexus drop capture must also establish where gold is materialized;
+ * do not manufacture a gold pile from a DM1-compatible random roll. */
 int nexus_drops_roll(int creature_type_idx, int x, int y,
                       int *out_item_ids, int *out_quantities,
                       int max_drops) {
-    int gold_amount, item_count = 0;
-    int slot, pair_idx, item_id;
-
-    if (creature_type_idx < 0) return 0;
-    if (!out_item_ids || !out_quantities || max_drops < 1) return 0;
-
-    gold_amount = nexus_gold_by_category[creature_type_idx % 4];
-    gold_amount = gold_amount / 2 + nexus_v1_combat_random(gold_amount / 2 + 1);
-    if (gold_amount > 0) {
-        nexus_gold_add(x, y, gold_amount);
-    }
-
-    slot = nexus_v1_combat_random(8);
-    pair_idx = nexus_drop_base_table[slot];
-    if (pair_idx < NEXUS_DROP_PAIR_COUNT) {
-        item_id = nexus_drop_item_pairs[pair_idx][nexus_v1_combat_random(2)];
-        if (item_id > 0 && max_drops > 0) {
-            out_item_ids[0] = item_id;
-            out_quantities[0] = 1;
-            item_count = 1;
-        }
-    }
-
-    return item_count;
+    (void)creature_type_idx;
+    (void)x;
+    (void)y;
+    (void)out_item_ids;
+    (void)out_quantities;
+    (void)max_drops;
+    return 0;
 }
 
 /* ═══════════════════════════════════════════════════════════════════
