@@ -20,34 +20,43 @@
 
 static uint8_t *g_us_data;
 static size_t g_us_size;
+static uint8_t *g_jp_data;
+static size_t g_jp_size;
 
-static int load_track02(void)
+static int load_track02_file(const char *path, uint8_t **out_data,
+                             size_t *out_size)
 {
-    const char *path = NULL;
-    const char *home = getenv("HOME");
-    char buf[512];
     FILE *f;
 
-    if (home) {
-        snprintf(buf, sizeof(buf),
-                 "%s/.firestaff/data/theron/TQUS02.bin", home);
-        path = buf;
-    }
     if (!path) return 0;
     f = fopen(path, "rb");
     if (!f) return 0;
     fseek(f, 0, SEEK_END);
-    g_us_size = (size_t)ftell(f);
+    *out_size = (size_t)ftell(f);
     fseek(f, 0, SEEK_SET);
-    g_us_data = malloc(g_us_size);
-    if (!g_us_data) { fclose(f); return 0; }
-    if (fread(g_us_data, 1, g_us_size, f) != g_us_size) {
-        free(g_us_data);
-        g_us_data = NULL;
+    *out_data = malloc(*out_size);
+    if (!*out_data) { fclose(f); return 0; }
+    if (fread(*out_data, 1, *out_size, f) != *out_size) {
+        free(*out_data);
+        *out_data = NULL;
         fclose(f);
         return 0;
     }
     fclose(f);
+    return 1;
+}
+
+static int load_track02(void)
+{
+    const char *home = getenv("HOME");
+    char us_path[512];
+    char jp_path[512];
+
+    if (!home) return 0;
+    snprintf(us_path, sizeof(us_path), "%s/.firestaff/data/theron/TQUS02.bin", home);
+    snprintf(jp_path, sizeof(jp_path), "%s/.firestaff/data/theron/TQJP02.bin", home);
+    if (!load_track02_file(us_path, &g_us_data, &g_us_size)) return 0;
+    (void)load_track02_file(jp_path, &g_jp_data, &g_jp_size);
     return 1;
 }
 
@@ -72,6 +81,32 @@ static void test_ipl_loader(void)
     printf("  PASS: ipl_loader\n");
 }
 
+static void test_ipl_loader_jp(void)
+{
+    Theron_Track02IplLoaderReceipt receipt;
+    Theron_Track02SignalStatus status;
+
+    status = theron_v1_track02_find_ipl_loader(
+        g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_OK);
+    assert(receipt.valid == 1);
+    assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+    assert(receipt.load_address == 0x4000u);
+    assert(receipt.entry_address == 0x4000u);
+    assert(receipt.stage2_record == THERON_TRACK02_IPL_STAGE2_RECORD);
+    assert(receipt.stage2_sector_count == THERON_TRACK02_IPL_STAGE2_SECTOR_COUNT);
+    assert(receipt.stage2_cd_read_record ==
+           THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP);
+    assert(receipt.stage2_cd_read_raw_sector ==
+           THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP);
+    assert(receipt.cd_read_table_load_proven == 1);
+    assert(receipt.stage2_seed_call_sites_proven == 1);
+    assert(receipt.stage2_cd_read_record_proven == 1);
+    assert(receipt.stage2_cd_read_dynamic_boundary_valid == 1);
+    printf("  PASS: ipl_loader_jp (record=0x%04x)\n",
+           receipt.stage2_cd_read_record);
+}
+
 static void test_stage2_dynamic_payload(void)
 {
     Theron_Track02Stage2DynamicPayloadReceipt receipt;
@@ -85,6 +120,26 @@ static void test_stage2_dynamic_payload(void)
     assert(receipt.manifest_entry_count ==
            THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT);
     printf("  PASS: stage2_dynamic_payload\n");
+}
+
+static void test_stage2_dynamic_payload_jp(void)
+{
+    Theron_Track02Stage2DynamicPayloadReceipt receipt;
+    Theron_Track02SignalStatus status;
+
+    status = theron_v1_track02_inspect_stage2_dynamic_payload(
+        g_jp_data, g_jp_size, THERON_TRACK02_MD5_JP_BIN, &receipt);
+    assert(status == THERON_TRACK02_SIGNAL_OK);
+    assert(receipt.valid == 1);
+    assert(receipt.variant == THERON_TRACK02_VARIANT_JP_BIN);
+    assert(receipt.track02_record == THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP);
+    assert(receipt.raw_sector == THERON_TRACK02_IPL_STAGE2_CD_READ_RECORD_JP);
+    assert(receipt.header_word0 == 0x00ffu);
+    assert(receipt.header_word1 == 0x0308u);
+    assert(receipt.manifest_entry_count ==
+           THERON_TRACK02_IPL_STAGE2_DYNAMIC_MANIFEST_ENTRY_COUNT);
+    printf("  PASS: stage2_dynamic_payload_jp (raw-sector=0x%04zx)\n",
+           receipt.raw_sector);
 }
 
 static void test_stage2_entry_path(void)
@@ -562,7 +617,9 @@ int main(void)
     }
 
     test_ipl_loader();
+    if (g_jp_data) test_ipl_loader_jp();
     test_stage2_dynamic_payload();
+    if (g_jp_data) test_stage2_dynamic_payload_jp();
     test_stage2_entry_path();
     test_stage2_call_graph();
     test_stage2_dispatch_machine();
@@ -585,6 +642,7 @@ int main(void)
     test_vdc_cr_write_l4932();
 
     free(g_us_data);
+    free(g_jp_data);
     printf("All stage-2 disassembly chain tests passed.\n");
     return 0;
 }

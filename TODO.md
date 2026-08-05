@@ -22121,6 +22121,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   loader code to a VCE palette write or VDC VRAM destination, including the
   loaded byte count; only that can bind a candidate to graphics, a palette,
   or a compression routine.
+- 🔧 2026-08-06 JP Stage-2 disassembly follow-up: the authentic JP Track 02
+  BIN is now materialised as `~/.firestaff/data/theron/TQJP02.bin` and its
+  IPL loader plus dynamic `$3800` payload receipt pass against record `0x4df`.
+  The later static Stage-2 byte windows remain US-only because the JP image
+  has region-specific bytes; do not widen those verifier gates until a JP
+  disassembly identifies equivalent instruction/data spans and their callers.
 - 🔧 2026-07-11 IPL-loader provenance update: original CUE sheets prove Track
   01 is CD-DA narration, while Track 02 is the MODE1 code track. The
   hash-gated JP/US Track 02 IPL information block at logical sector 1 selects

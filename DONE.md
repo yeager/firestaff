@@ -49602,3 +49602,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   test pass; the existing inventory-panel test still has its unrelated
   pre-existing object-description fixture failures. Real macOS capture remains
   open in `DM1-HOC-OBJECTS-002`.
+
+- ✅ 2026-08-06 Theron JP IPL/Stage-2 provenance: materialised the authentic
+  JP Track 02 BIN from the supplied archive under the local Theron data root
+  (MD5 `b7afb338ad31be1025b53f9aff12d73a`) and extended
+  `test_theron_v1_stage2_disassembly_chain` to validate the JP IPL loader and
+  dynamic `$3800` payload receipt. The real JP path resolves the dynamic
+  payload to record/raw sector `0x4df`; US-specific later disassembly windows
+  remain fail-closed and are not mislabeled as JP parity.
