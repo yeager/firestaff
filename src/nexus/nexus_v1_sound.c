@@ -1172,7 +1172,11 @@ int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
     eng->current_cd_track = track_number;
     nexus_cd_build_track_path(eng, track_number);
 
-    if (eng->music_enabled && eng->cd_play_callback) {
+    /* Do not hand an empty path to the host: raw Saturn Red Book audio has
+     * not been materialized into a host file, so this route must remain a
+     * selection-only no-op until a verified CD/decoder handoff exists. */
+    if (eng->music_enabled && eng->cd_play_callback &&
+        eng->cd_track_path[0] != '\0') {
         int result = eng->cd_play_callback(eng->cd_track_path,
                                             eng->cd_callback_userdata);
         if (result == 0) {

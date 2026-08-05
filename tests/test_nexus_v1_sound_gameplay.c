@@ -73,6 +73,31 @@ static void test_cd_callbacks(void) {
     nexus_sound_shutdown(&eng);
 }
 
+static void test_cd_track_does_not_submit_empty_path(void) {
+    Nexus_SoundEngine eng;
+    memset(&eng, 0, sizeof(eng));
+    nexus_sound_init(&eng);
+    nexus_sound_set_cd_callbacks(&eng, dummy_cd_play, dummy_cd_stop, NULL);
+
+    const char *old_home = getenv("HOME");
+    char old_home_copy[512];
+    if (old_home) {
+        snprintf(old_home_copy, sizeof(old_home_copy), "%s", old_home);
+    }
+    setenv("HOME", "/tmp/firestaff-nexus-no-cd", 1);
+    dummy_cd_play_called = 0;
+    expect(nexus_sound_cd_track(&eng, 2) == 0,
+           "missing CD track remains a successful selection");
+    expect(dummy_cd_play_called == 0,
+           "missing CD track is not submitted with an empty path");
+    expect(eng.cd_playing == 0,
+           "missing CD track does not enter playing state");
+    if (old_home) setenv("HOME", old_home_copy, 1);
+    else unsetenv("HOME");
+
+    nexus_sound_shutdown(&eng);
+}
+
 static void test_event_names(void) {
     /* Verify all major event names resolve to non-NULL strings */
     const Nexus_SoundEvent events[] = {
@@ -124,6 +149,7 @@ int main(void) {
     test_init_shutdown();
     test_mix_silence();
     test_cd_callbacks();
+    test_cd_track_does_not_submit_empty_path();
     test_event_names();
     test_sfx_music_toggle();
 

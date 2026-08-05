@@ -49341,3 +49341,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   unbound V2 effects now fail closed without advancing or painting pixels.
   Focused enhanced-effects, spell-overlay and extended-field tests pass.
   Tracked as `DM1-ORIGINAL-REPLACE-020`.
+
+- ✅ 2026-08-05 Nexus CD callback empty-path guard: `nexus_sound_cd_track()`
+  now requires a materialized host audio path before invoking the external
+  callback. A missing Red Book track remains a selection-only state and does
+  not enter `cd_playing`; the focused gameplay test covers the no-empty-path
+  contract. SAL/MAP event dispatch and authentic CD presentation remain
+  blocked pending Saturn capture/decoder proof.
