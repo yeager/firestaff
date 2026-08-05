@@ -392,7 +392,7 @@ static void test_creature_spawn_and_attack(Theron_V1_World *world,
     world->party.leader_y = sy;
 
     /* Spawn a weak creature on the adjacent floor square. */
-    cid = theron_v1_creature_spawn(world, THERON_CREATURE_KOBOLD,
+    cid = theron_v1_creature_spawn(world, THERON_CREATURE_SHADO,
                                    world->current_dungeon,
                                    world->current_level, fx, fy);
     CHECK_INT("creature spawn returns positive id", cid > 0, 1);
@@ -431,7 +431,7 @@ static void test_creature_drop(Theron_V1_World *world,
     object_before = world->object_count;
 
     /* Spawn and kill a creature that drops gold/items. */
-    cid = theron_v1_creature_spawn(world, THERON_CREATURE_GOBLIN,
+    cid = theron_v1_creature_spawn(world, THERON_CREATURE_AKUTUBA,
                                    world->current_dungeon,
                                    world->current_level, fx, fy);
     theron_v1_creature_kill(world, cid);

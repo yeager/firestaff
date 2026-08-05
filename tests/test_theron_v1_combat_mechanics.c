@@ -101,7 +101,7 @@ static void test_creature_spawn_and_lookup(void) {
     Theron_V1_World w;
     make_world(&w);
 
-    int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_GOBLIN,
+    int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_AKUTUBA,
                                        w.current_dungeon, w.current_level,
                                        9, 8);
     CHECK_INT("spawn returns positive id", cid > 0, 1);
@@ -111,7 +111,7 @@ static void test_creature_spawn_and_lookup(void) {
     Theron_V1_Creature *c = theron_v1_creature_at(&w, w.current_level, 9, 8);
     CHECK(c != NULL, "creature_at finds spawned creature");
     if (c) {
-        CHECK_INT("creature type is goblin", c->type, THERON_CREATURE_GOBLIN);
+        CHECK_INT("creature type is AKUTUBA", c->type, THERON_CREATURE_AKUTUBA);
         CHECK_INT("creature is active", (c->flags & THERON_CF_ACTIVE) != 0, 1);
     }
 
@@ -168,7 +168,7 @@ static void test_creature_attack_champion(void) {
     Theron_V1_World w;
     make_world(&w);
 
-    int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_ORC,
+    int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_DRATOR,
                                        w.current_dungeon, w.current_level,
                                        9, 8);
     int hp_before = w.party.champions[0].health;
@@ -184,7 +184,7 @@ static void test_creature_drop_loot(void) {
     make_world(&w);
 
     int before = w.object_count;
-    int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_GOBLIN,
+    int cid = theron_v1_creature_spawn(&w, THERON_CREATURE_AKUTUBA,
                                        w.current_dungeon, w.current_level,
                                        9, 8);
     CHECK_INT("unbound Track 02 drop record is rejected",

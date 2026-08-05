@@ -1,3 +1,8 @@
+- ✅ 2026-08-05 Theron creature-name provenance cleanup: removed the public
+  Goblin/Orc/Kobold/Boss/FIREBALL aliases that mapped synthetic names onto
+  real creatures. Tests and probes now use the seven Track 02 dungeon names
+  directly; no production behavior changed.
+
 - ✅ 2026-08-05 Theron loot provenance boundary: removed the inferred creature
   gold ranges, synthetic category drop lists and host `rand()` loot path from
   production spawn/death. `theron_v1_drop_loot()` now rejects without an
