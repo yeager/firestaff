@@ -35,6 +35,15 @@
   `test_nexus_v1_hud_layout` parses all 80 entries and matches the recorded
   values byte-for-byte. This is geometry provenance only; M11 HUD pixels and
   VDP placement remain capture-gated.
+- ✅ 2026-08-06 DM1 decoded-surface admission: tightened the active shared
+  zone-blit and door-material consumers so stairs, door ornaments, destroyed
+  door masks, Thieves' Eye masks, and door buttons require both `loaded` and
+  `pixels` from the authentic GRAPHICS.DAT asset slot. Dimension-only cache
+  records now fail closed instead of reaching the framebuffer. Verification:
+  Ninja build; real PC34 HoC wall, object-name and alcove tests all pass;
+  all-map render probe passes 14/14 maps and 24,416/24,416 poses with zero
+  blank viewport failures. Packaged Mac capture remains open in TODO.
+
 - ✅ 2026-08-06 DM1 stair asset admission: the active M11 stairs helper now
   requires a decoded source surface (`loaded` plus `pixels`) before it reports
   a GRAPHICS.DAT stair draw. Dimension-only cache entries can no longer paint

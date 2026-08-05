@@ -30511,7 +30511,8 @@ static int m11_draw_dm1_zone_blit(const M11_GameViewState* state,
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 graphic_index);
-    if (!slot || slot->width <= 0 || slot->height <= 0) {
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width <= 0 || slot->height <= 0) {
         return 0;
     }
     if (blit->srcX < 0 || blit->srcY < 0 ||
@@ -30865,7 +30866,8 @@ static void m11_draw_dm1_door_ornament_on_panel(const M11_GameViewState* state,
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 (unsigned int)graphicIndex);
-    if (!slot || slot->width <= 0 || slot->height <= 0) {
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width <= 0 || slot->height <= 0) {
         return;
     }
     ornamentPanel.srcY = panel->srcY;
@@ -30957,7 +30959,8 @@ static void m11_draw_dm1_destroyed_door_mask_on_panel(const M11_GameViewState* s
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 M11_GFX_DOOR_MASK_DESTROYED);
-    if (!slot || slot->width <= 0 || slot->height <= 0) {
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width <= 0 || slot->height <= 0) {
         return;
     }
     /* F0111 draws C15_DOOR_ORNAMENT_DESTROYED_MASK into the temporary
@@ -32736,7 +32739,8 @@ static void m11_draw_dm1_center_thieves_eye_mask(const M11_GameViewState* state,
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 M11_GFX_DOOR_MASK_THIEVES_EYE);
-    if (!slot || slot->width <= 0 || slot->height <= 0) {
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width <= 0 || slot->height <= 0) {
         return;
     }
     /* ReDMCSB STARTUP2.C maps C16_DOOR_ORNAMENT_THIEVES_EYE_MASK to
@@ -32829,7 +32833,8 @@ static void m11_draw_dm1_center_door_buttons(const M11_GameViewState* state,
         }
         slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                     M11_GFX_DOOR_BUTTON_BASE);
-        if (!slot || slot->width <= 0 || slot->height <= 0) {
+        if (!slot || !slot->loaded || !slot->pixels ||
+            slot->width <= 0 || slot->height <= 0) {
             return;
         }
         viewIndex = depth == 0 ? DM1_VIEW_DOOR_BUTTON_D1C :
@@ -32886,7 +32891,8 @@ static void m11_draw_dm1_d3r_door_button(const M11_GameViewState* state,
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                 M11_GFX_DOOR_BUTTON_BASE);
-    if (!slot || slot->width <= 0 || slot->height <= 0) {
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width <= 0 || slot->height <= 0) {
         return;
     }
     frame = dm1_v1_viewport_get_door_button_frame_pc34(1,
