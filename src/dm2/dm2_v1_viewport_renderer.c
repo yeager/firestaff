@@ -4286,6 +4286,20 @@ void dm2_v1_render_teleporter_fields(DM2_V1_ViewportState *s)
     }
     if (!found) return;
 
+    /* SKWINSPX c_gui_vp.cpp::DRAW_TELEPORTER_TILE does not use a fixed
+     * viewport rectangle: tblGraphicsTeleporterWords selects RAW4 rect
+     * 0x2be..0x2cd and tblGraphicsTeleporterBytes4 contributes per-cell
+     * field, copy/flip and X/Y offsets before QUERY_BLIT_RECT.  The compact
+     * placements[] table below predates that source route.  It is not allowed
+     * to stand in for original geometry once an active G1/GDAT scene is
+     * present; wait for the full source command instead of painting a
+     * correctly decoded image at an invented location. */
+    if (s->source_materials_required && s->gdat_scene_control_ready) {
+        dm2_v1_block_source_material(
+            s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_TELEPORTER);
+        return;
+    }
+
     /* SKProject DRAW_MAP_CHIP selects TELEPORTERS/0/F9 and advances its
      * horizontal map-chip frame with the live game tick. */
     if (dm2_v1_fetch_viewport_local_material(

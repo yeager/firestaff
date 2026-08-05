@@ -49162,3 +49162,16 @@ authenticated in-place renderer is the only route allowed to draw V2.2 art.
 The focused test now proves that both an empty cache and a populated V2.2
 cache leave the framebuffer byte-for-byte unchanged. Tracked as
 `DM1-ORIGINAL-REPLACE-016`.
+
+# ✅ 2026-08-06 DM2 source-teleporter compact-placement removal
+
+The live G1/GDAT viewport no longer paints a teleporter field with the old
+compact placement table. SKProject `DRAW_TELEPORTER_TILE` owns placement via
+`tblGraphicsTeleporterWords`, `tblGraphicsTeleporterBytes4`, and the selected
+RAW4 rectangle, including its per-cell copy/flip and offsets. Until that
+complete source command is materialized, a source-bound field is explicitly
+no-draw and records a blocked teleporter material; data-free diagnostics keep
+their compatibility coverage. Verification: `test_dm2_v1_teleporter_material_gate`
+PASS and PC English boot probe PASS with original `graphics.dat` MD5
+`25247ede4dabb6a71e5dabdfbcd5907d`. Source: `SKWINSPX/src/v4/c_gui_vp.cpp::DRAW_TELEPORTER_TILE`
+and `kskval1.h` teleporter tables.

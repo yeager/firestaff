@@ -78,6 +78,29 @@ int main(void)
         fputs("FAIL: missing teleporter material produced a visual fallback\n", stderr);
         return 1;
     }
+
+    /* A live G1/GDAT scene must not use the old compact placement table.
+     * DRAW_TELEPORTER_TILE owns placement through the original per-cell
+     * tblGraphicsTeleporterWords/Bytes4 + RAW4 route, which is not yet fully
+     * materialized here. */
+    memset(framebuffer, 0x5a, sizeof(framebuffer));
+    dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, 1, 0x54454c50u,
+        0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u, 0u);
+    dm2_v1_viewport_set_asset_provider(&viewport, fetch_asset, NULL);
+    dm2_v1_viewport_set_asset_palette_provider(&viewport, fetch_palette, NULL);
+    viewport.squares[DM2_SQ_D1C].square_type = DM2_SQUARE_TELEPORTER;
+    withhold_material = 0;
+    dm2_v1_render_teleporter_fields(&viewport);
+    if (viewport.asset_teleporter_drawn_count != 0 ||
+        framebuffer[78 * DM2_VP_WIDTH + 74] != 0x5au ||
+        (viewport.blocked_material_mask &
+         DM2_V1_VIEWPORT_BLOCKED_MATERIAL_TELEPORTER) == 0u) {
+        fputs("FAIL: source teleporter accepted compact placement fallback\n", stderr);
+        return 1;
+    }
     puts("PASS: teleporter fields consume only TELEPORTERS/0/F9 source material");
     return 0;
 }
