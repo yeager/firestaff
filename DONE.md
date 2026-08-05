@@ -49885,3 +49885,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   M11 and `firestaff_dm2` cannot link an unowned AI movement, combat, spawn,
   pathfinding or damage stub. Verification: production rebuild, focused
   c_1c9a regression, and real PC-DM2 M11 startup gate.
+
+- ✅ 2026-08-06 DM2 c_0aaf dialogue placeholder isolation: removed the
+  disconnected callback-contract dialogue/menu renderer from both production
+  CMake globs. It remains available only to `test_dm2_v1_0aaf_pc34_compat`;
+  no M11 or DM2 production archive can use its unresolved original selector
+  or simplified dialogue-image placement. Verification: production rebuild,
+  focused c_0aaf regression, and real PC-DM2 M11 startup gate.

@@ -1065,7 +1065,10 @@
   `DIALOG_BOXES/0x81/dtText` records. **2026-07-31 update:** the former
   fixture-only “missing means unencrypted” branch is closed; an incomplete
   GDAT transaction now blocks the dialogue rather than displaying guessed
-  text.
+  text. **2026-08-06 update:** the disconnected `c_0aaf` callback dialogue
+  audit is excluded from production while it lacks the original menu selector
+  and source rectangle placement; its explicit unit-test target remains the
+  only consumer until this owner is bound.
 
 - **DM2-V22-REAL-MATERIAL-HANDOFF:** Missing V2.2 art now returns no pixels.
   Bind any future enhanced art only through verified original V1 GDAT material
