@@ -729,6 +729,9 @@
   `skload_table_60` field order and `_4976_395a` 56-byte SUPPRESS mask;
   `bRainStrength` is retained only as decoded corpus evidence, not as a
   license to start an unowned weather/session chain.
+  **2026-08-05 follow-up:** the legacy `DM2_WorldState` projection now also
+  leaves every per-level selector explicitly unavailable. It no longer maps
+  `rain_intensity` to Rain/Clear or calls unowned new-game levels Clear.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

@@ -6,6 +6,15 @@
   without falling back to a path-only payload. The delivered JP CUE reaches
   the real receipt path and retains the canonical ISO identity.
 
+- ✅ 2026-08-05 DM2 world-state weather ownership: removed the legacy
+  `rain_intensity != 0 ? Rain : Clear` projection and the fabricated
+  clear-weather default for every new-game map. `bRainStrength` remains a
+  decoded SKSave corpus byte only; without the exact source-owned
+  c_weather/environment chain, each world-state selector is explicitly
+  unavailable. The real PC-English `DUNGEON.DAT` probe verifies that boundary,
+  and the supplied unsupported retail `SKSAVE0.DAT` is rejected rather than
+  manufacturing a partial session.
+
 - ✅ 2026-08-06 Nexus retail-revision inventory: verified all eight local
   English-ISO hash mismatches (`FONT256.S2D`, `ITEM.IBS`, `LOGOBG.DG2`,
   `MENU.BPK`, `RHIFIX.BIN`, `RLOWFIX.BIN`, `TITLE.BIN`, `WARNING.BIN`) against

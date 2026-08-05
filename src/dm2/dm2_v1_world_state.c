@@ -29,6 +29,18 @@ static int dm2_v1_world_state_has_slot_header(const uint8_t *data, size_t size)
            data[40] == 0xDEu && data[41] == 0xADu;
 }
 
+static void dm2_v1_world_state_init_weather_unavailable(DM2_WorldState *state)
+{
+    int i;
+
+    if (!state) return;
+    for (i = 0; i < 30; ++i) {
+        state->weather_by_level[i].weather_type = DM2_WORLD_WEATHER_UNAVAILABLE;
+        state->weather_by_level[i].intensity = 0;
+        state->weather_by_level[i].duration = 0;
+    }
+}
+
 static void dm2_v1_world_state_apply_session(DM2_WorldState *state,
                                              const DM2_V1_SessionState *session)
 {
@@ -51,12 +63,12 @@ static void dm2_v1_world_state_apply_session(DM2_WorldState *state,
     memcpy(state->global_flags, session->original_global_flags,
            DM2_GLOBAL_FLAGS_SIZE);
 
-    if (state->current_level < 30) {
-        state->weather_by_level[state->current_level].intensity =
-            session->rain_intensity;
-        state->weather_by_level[state->current_level].weather_type =
-            session->rain_intensity ? DM2_WEATHER_RAIN : DM2_WEATHER_CLEAR;
-    }
+    /* SKProject's bRainStrength is a decoded byte, not a c_weather selector,
+     * timer chain, duration, or per-level ownership receipt. Nonzero must not
+     * be promoted to Rain and zero must not be called Clear. Keep this
+     * projection unavailable until the v1e14xx environment/save owner is
+     * imported. See SKProject c_weather.cpp and TODO
+     * DM2-SKSAVE-SESSION-OWNER-HANDOFF. */
     for (uint8_t i = 0u; i < champion_count; ++i) {
         const DM2_ChampionRecord *source =
             (const DM2_ChampionRecord *)session->champion_data[i];
@@ -97,6 +109,7 @@ static DM2_WorldState *dm2_v1_world_state_from_candidate(
     }
     memcpy(state->raw_save, payload, payload_size);
     state->raw_save_size = payload_size;
+    dm2_v1_world_state_init_weather_unavailable(state);
     dm2_v1_world_state_apply_session(state, &candidate.session);
     return state;
 }
@@ -155,12 +168,9 @@ DM2_WorldState *dm2_v1_world_state_new_from_dungeon(const uint8_t *dungeon_data,
         state->party.champions[i].condition = DM2_CHAMP_CONDITION_HEALTHY;
     }
 
-    /* Initialize weather for each level */
-    for (int i = 0; i < 30; i++) {
-        state->weather_by_level[i].weather_type = DM2_WEATHER_CLEAR;
-        state->weather_by_level[i].intensity = 0;
-        state->weather_by_level[i].duration = 0;
-    }
+    /* DUNGEON.DAT alone does not own the live environment chain. Do not
+     * invent clear weather for a new game merely because calloc produced 0. */
+    dm2_v1_world_state_init_weather_unavailable(state);
 
     /* Count outdoor levels */
     int outdoor_count = 0;

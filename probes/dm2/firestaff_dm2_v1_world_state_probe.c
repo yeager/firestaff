@@ -55,14 +55,16 @@ static uint8_t *load_file(const char *path, int *out_size) {
 
 int main(int argc, char **argv) {
     const char *dungeon_path;
+    const char *save_path = NULL;
     int file_size = 0;
     uint8_t *raw;
 
     if (argc < 2) {
-        fprintf(stderr, "Usage: %s <DUNGEON.DAT path>\n", argv[0]);
+        fprintf(stderr, "Usage: %s <DUNGEON.DAT path> [SKSAVE.DAT path]\n", argv[0]);
         return 1;
     }
     dungeon_path = argv[1];
+    if (argc >= 3) save_path = argv[2];
 
     fprintf(stderr, "=== DM2 V1 World State Probe ===\n");
     fprintf(stderr, "Source: docs/dm2_save_format.md — SUPPRESS compression\n");
@@ -96,6 +98,9 @@ int main(int argc, char **argv) {
                      "New game: timer_count = 0");
         PROBE_ASSERT(state->current_level >= 0,
                      "current_level >= 0 (got %d)", state->current_level);
+        PROBE_ASSERT(state->weather_by_level[0].weather_type ==
+                         DM2_WORLD_WEATHER_UNAVAILABLE,
+                     "DUNGEON.DAT alone leaves level-0 weather unavailable");
 
         /* Initial party position from DUNGEON.DAT */
         fprintf(stderr, "  outdoor_level_count=%d current_level=%d\n",
@@ -149,6 +154,16 @@ int main(int argc, char **argv) {
 
     dm2_v1_world_state_free(NULL); /* must not crash */
     dm2_v1_world_state_free(state);
+
+    /* The supplied retail SKSave is admitted only if its original SUPPRESS
+     * route is decoded. The bounded projection must reject an unsupported
+     * stream rather than inventing state from bRainStrength or its bytes. */
+    if (save_path) {
+        DM2_WorldState *saved_state = dm2_v1_world_state_load_from_file(save_path);
+        PROBE_ASSERT(saved_state == NULL,
+                     "unsupported original SKSave stays fail-closed");
+        dm2_v1_world_state_free(saved_state);
+    }
 
     /* ── Source evidence ── */
     const char *evidence = dm2_v1_world_state_source_evidence();

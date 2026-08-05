@@ -113,9 +113,15 @@ typedef enum {
     DM2_WEATHER_STORM   = 3,
 } DM2_WeatherType;
 
+/* No decoded SKSave/ENVIRONMENT owner has yet established a per-map weather
+ * selector. Zero means Clear in the original enum and must never double as
+ * an "unknown" default. Source boundary: SKProject c_weather.cpp;
+ * TODO DM2-SKSAVE-SESSION-OWNER-HANDOFF. */
+#define DM2_WORLD_WEATHER_UNAVAILABLE (-1)
+
 typedef struct {
-    int       weather_type;   /* DM2_WEATHER_* */
-    int       intensity;      /* 0-100 */
+    int       weather_type;   /* DM2_WEATHER_* or DM2_WORLD_WEATHER_UNAVAILABLE */
+    int       intensity;      /* 0-100 only when the source selector is known */
     int       duration;       /* in-game ticks remaining */
 } DM2_WeatherState;
 
