@@ -37,19 +37,27 @@ static void test_probe_null(void) {
 
 static void test_real_anm(void) {
     const char *home = getenv("HOME");
+    const char *anm_dir = getenv("FIRESTAFF_CSB_FMTOWNS_ANM_DIR");
     char path[512];
     const char *files[] = {"TITLE.ANM", "STORY.ANM", "ENDING.ANM"};
     int i;
 
-    if (!home) { printf("SKIP: HOME not set\n"); return; }
+    if ((!anm_dir || anm_dir[0] == '\0') && !home) {
+        printf("SKIP: HOME not set\n");
+        return;
+    }
 
     for (i = 0; i < 3; i++) {
         uint8_t *data;
         size_t size;
         CSB_V1_FmtownsAnmReceipt receipt;
 
-        snprintf(path, sizeof(path),
-                 "%s/.firestaff/data/csb/fmtowns/%s", home, files[i]);
+        if (anm_dir && anm_dir[0] != '\0') {
+            snprintf(path, sizeof(path), "%s/%s", anm_dir, files[i]);
+        } else {
+            snprintf(path, sizeof(path),
+                     "%s/.firestaff/data/csb/fmtowns/%s", home, files[i]);
+        }
         data = load_file(path, &size);
         if (!data) {
             printf("SKIP: %s not available\n", files[i]);

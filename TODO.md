@@ -3063,7 +3063,8 @@ that its exact runtime path is not already source-locked and tested.
    FM Towns `TITLE.ANM`, `STORY.ANM` and `ENDING.ANM` sidecars with the
    selected CDATA/CJDATA package. This removes the scanner-only-DAT boundary
    without promoting optional media to a launch requirement or borrowing a
-   different platform's presentation sequence.
+   different platform's presentation sequence. The real-cache parser probe
+   verifies 320x200 4bpp data for title/story/ending (31/844/285 deltas).
    2026-07-30 source audit: the hash-verified local PC3.4 package passed the
    C001-C005/C017/C040 runtime probe (75 checks), including all 31 original
    C004/C002/C003 opening pages. The Atari M12/M11 handoff also passed 589
