@@ -1,3 +1,10 @@
+- ✅ 2026-08-05 Nexus SMAP runtime binding: added MD5 identity entries for all
+  16 retail SMAP*.BIN files and bind the active level's LVMP source through the
+  engine. The runtime retains the deterministically decoded 640×608 RGBA
+  surface and exposes a receipt for HUD integration, while VDP2 placement,
+  explored-state writes, and fallback visuals remain explicitly prohibited.
+  The real external corpus test passes against SMAP00.BIN through SMAP15.BIN.
+
 - ✅ 2026-08-05 Nexus SMAP/LVMP stale-gate correction: the existing
   source decoder is now documented against the verified DMWeb LVMP layout
   (80×76 16-bit tilemap, 256-entry BGR555 palette, 8×8 indexed tiles), and

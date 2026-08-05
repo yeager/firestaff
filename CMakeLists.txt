@@ -37887,6 +37887,16 @@ add_test(NAME nexus_v1_smap_bin COMMAND test_nexus_v1_smap_bin)
 set_tests_properties(nexus_v1_smap_bin PROPERTIES
     ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
     LABELS "nexus;saturn;automap;real-media;skip_safe")
+add_executable(test_nexus_v1_smap_runtime_binding
+    tests/test_nexus_v1_smap_runtime_binding.c)
+target_include_directories(test_nexus_v1_smap_runtime_binding PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_smap_runtime_binding PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_smap_runtime_binding
+    COMMAND test_nexus_v1_smap_runtime_binding)
+set_tests_properties(nexus_v1_smap_runtime_binding PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    LABELS "nexus;saturn;automap;real-media;skip_safe")
 add_executable(test_nexus_v1_face_bin tests/test_nexus_v1_face_bin.c)
 target_include_directories(test_nexus_v1_face_bin PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_face_bin PRIVATE firestaff_nexus)

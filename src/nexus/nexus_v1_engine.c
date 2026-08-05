@@ -52,6 +52,22 @@ static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"WARNING.BIN", "9002866163ad733a75346547a4c7e0b5"},
     {"GAMEOVER.BIN", "0426cb045a495c151a138fd2c77370e2"},
     {"STABG.BIN", "e77d4dd48dd280ec299cfc8ee8851114"},
+    {"SMAP00.BIN", "6e8e582d6ceb4b482dc994e7faa448d6"},
+    {"SMAP01.BIN", "7d8379ea25ef2c4f4f591c5b0fc96a47"},
+    {"SMAP02.BIN", "0accda60ebff223cf4c101694ff77b88"},
+    {"SMAP03.BIN", "f2e2d64619a6299f83beed56a7ed4dc0"},
+    {"SMAP04.BIN", "cb1f80fbca6249fd3163ec369518f04f"},
+    {"SMAP05.BIN", "515afc77c702066a5d9c316a50ae4e16"},
+    {"SMAP06.BIN", "74d2c16051225d194b614dada0d22f01"},
+    {"SMAP07.BIN", "d04eaf63e72a66c630dac866e925470b"},
+    {"SMAP08.BIN", "66e43e3ba88ebc4a6e820d879c305313"},
+    {"SMAP09.BIN", "8f2ef4ea2e145062d72b5522cd77f7b7"},
+    {"SMAP10.BIN", "5fdb45e5a727cf3d3fb018533c567803"},
+    {"SMAP11.BIN", "1f072332769f0198e673d01d7df9c00e"},
+    {"SMAP12.BIN", "bb81dac9241319617bc71b2e9b5b5735"},
+    {"SMAP13.BIN", "c1a8e374ad3010f69f47b8e5d4a81875"},
+    {"SMAP14.BIN", "78af8eecb251ecb9d2f752387bf1dda0"},
+    {"SMAP15.BIN", "be63ff7a94e4e7e79ce0a354ef51054d"},
     {"FACE.BIN", "bd9ca16ea68043984e2804067b6cd66f"},
     {"FONT256.S2D", "427735a9997e692d85f2d81158dba423"},
     {"FONT256.S2D", "7bea3db1ccfe7cd8f32e364685cb0937"},
@@ -4075,6 +4091,49 @@ int nexus_v1_current_level_dgn_renderer_source_receipt(
     return 1;
 }
 
+static void nexus_v1_load_smap_runtime(Nexus_V1_Engine *engine, int level)
+{
+    char name[32];
+    int size = 0;
+    uint8_t *data;
+    uint32_t *pixels;
+
+    if (!engine) return;
+    free(engine->smap_rgba);
+    engine->smap_rgba = NULL;
+    memset(&engine->smap_runtime_receipt, 0,
+           sizeof(engine->smap_runtime_receipt));
+    engine->smap_runtime_receipt.level_index = level;
+    engine->smap_runtime_receipt.no_draw_only = 1;
+    engine->smap_runtime_receipt.fallback_visuals_permitted = 0;
+    snprintf(name, sizeof(name), "SMAP%02d.BIN", level);
+    (void)nexus_v1_level_aux_source_receipt(
+        engine, name, &engine->smap_runtime_receipt.source);
+    if (!engine->smap_runtime_receipt.source.canonical_hash_verified)
+        return;
+
+    data = nexus_v1_read_file(engine, name, &size);
+    if (!data || size <= 0) {
+        free(data);
+        return;
+    }
+    pixels = (uint32_t *)malloc((size_t)NEXUS_SMAP_PIXEL_WIDTH *
+                                (size_t)NEXUS_SMAP_PIXEL_HEIGHT *
+                                sizeof(*pixels));
+    if (pixels && nexus_v1_smap_parse_header(
+            data, size, &engine->smap_runtime_receipt.header) &&
+        nexus_v1_smap_decode(data, size, pixels,
+            NEXUS_SMAP_PIXEL_WIDTH * NEXUS_SMAP_PIXEL_HEIGHT,
+            &engine->smap_runtime_receipt.decode)) {
+        engine->smap_runtime_receipt.valid = 1;
+        engine->smap_runtime_receipt.decoded_pixels_retained = 1;
+        engine->smap_rgba = pixels;
+        pixels = NULL;
+    }
+    free(pixels);
+    free(data);
+}
+
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     char name[32];
     char script_name[32];
@@ -4096,6 +4155,10 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     /* A reload may replace the same numeric level with fresh source bytes.
      * Retained capture evidence is therefore never valid across this boundary. */
     nexus_v1_engine_clear_external_prs3_placement_receipt(engine);
+    free(engine->smap_rgba);
+    engine->smap_rgba = NULL;
+    memset(&engine->smap_runtime_receipt, 0,
+           sizeof(engine->smap_runtime_receipt));
     engine->m11_direct_lev_dungeon_no_draw_valid = 0;
     engine->m11_direct_lev_dungeon_route_epoch = 0U;
     memset(&engine->m11_direct_lev_dungeon, 0,
@@ -4181,6 +4244,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     }
 
     engine->level_loaded = 1;
+    nexus_v1_load_smap_runtime(engine, level);
     if (engine->mechanics) {
         nexus_v1_mechanics_load_level(engine, level);
     }
@@ -8350,6 +8414,20 @@ int nexus_v1_current_level_aux_runtime_receipt(
     out_receipt->fallback_visuals_permitted = 0;
     if (!engine || !engine->level_loaded) return 0;
     *out_receipt = engine->level_aux_runtime_receipt;
+    return 0;
+}
+
+int nexus_v1_current_level_smap_runtime_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_SmapRuntimeReceipt *out_receipt)
+{
+    if (!out_receipt) return -1;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    out_receipt->level_index = -1;
+    out_receipt->no_draw_only = 1;
+    out_receipt->fallback_visuals_permitted = 0;
+    if (!engine || !engine->level_loaded) return 0;
+    *out_receipt = engine->smap_runtime_receipt;
     return 0;
 }
 

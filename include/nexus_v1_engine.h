@@ -27,6 +27,7 @@ typedef struct Nexus_V1_Structure1FPlacementBindingReceipt
 #include "nexus_v1_creatures.h"
 #include "nexus_v1_projectiles.h"
 #include "nexus_v1_automap.h"
+#include "nexus_v1_smap_bin.h"
 #include "nexus_v1_light.h"
 #include "nexus_v1_status.h"
 #include "nexus_v1_triggers.h"
@@ -1909,6 +1910,23 @@ typedef struct {
     int fallback_visuals_permitted;
 } Nexus_V1_LevelAuxRuntimeReceipt;
 
+/* The retail SMAP*.BIN/LVMP image is a source-bound automap surface.  Its
+ * pixels may be decoded for inspection, but DMWeb plus the current corpus do
+ * not establish VDP2 placement or the Saturn explored-state write path.
+ * Consequently this receipt never authorizes HUD presentation. */
+typedef struct {
+    int valid;
+    int level_index;
+    Nexus_V1_LevelAuxSourceReceipt source;
+    Nexus_V1_SmapHeader header;
+    Nexus_V1_SmapDecodeResult decode;
+    int decoded_pixels_retained;
+    int vdp2_placement_proven;
+    int explored_state_write_proven;
+    int no_draw_only;
+    int fallback_visuals_permitted;
+} Nexus_V1_SmapRuntimeReceipt;
+
 /* Joins the active level's hash-bound SLEV/SAL/MAP/SDDRVS sources with their
  * bounded runtime profiles. It is deliberately a no-runtime boundary: task
  * dispatch, SAL decode, playback, and fallback visuals remain unavailable. */
@@ -2563,6 +2581,8 @@ struct Nexus_V1_Engine {
     Nexus_V1_LevelSoundTraceHostReceipt sound_trace_host_receipt;
     Nexus_V1_SalDispatchEvidenceReceipt sound_dispatch_evidence;
     Nexus_V1_LevelAuxRuntimeReceipt level_aux_runtime_receipt;
+    Nexus_V1_SmapRuntimeReceipt smap_runtime_receipt;
+    uint32_t *smap_rgba;
     Nexus_V1_LevelAuxSourceReceipt sound_driver_source;
 
     /* Creature manager */
@@ -2989,6 +3009,9 @@ int nexus_v1_engine_dm_bin_vdp1_state_write_receipt(
 int nexus_v1_current_level_aux_runtime_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxRuntimeReceipt *out_receipt);
+int nexus_v1_current_level_smap_runtime_receipt(
+    const Nexus_V1_Engine *engine,
+    Nexus_V1_SmapRuntimeReceipt *out_receipt);
 int nexus_v1_current_level_aux_admission_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_LevelAuxAdmissionReceipt *out_receipt);
