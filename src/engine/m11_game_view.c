@@ -30909,14 +30909,11 @@ static void m11_draw_dm1_front_walls(const M11_GameViewState* state,
                                                      fbW, fbH,
                                                      &kFrontBlits[depth]);
             }
-            if (!drawn) {
-                m11_fill_rect(framebuffer, fbW, fbH,
-                              M11_VIEWPORT_X + kFrontBlits[depth].dstX,
-                              M11_VIEWPORT_Y + kFrontBlits[depth].dstY,
-                              kFrontBlits[depth].width,
-                              kFrontBlits[depth].height,
-                              M11_COLOR_BLACK);
-            }
+            /* A missing GRAPHICS.DAT wall is a source-data failure, not a
+             * black bitmap.  ReDMCSB's wall route has no generated fill;
+             * leave the already-cleared/background pixels untouched and let
+             * the authenticated asset scanner report the missing material. */
+            (void)drawn;
             occluded = 1;
         }
     }

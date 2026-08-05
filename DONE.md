@@ -48442,3 +48442,12 @@ the supplied root and selected MD5 to prove this without shipping game data.
   center-wall pass now restores the wall and then replays the D1C champion
   mirror route. Verified with the DM1 wall-ornament and inventory placement
   tests plus a clean `firestaff` Ninja build on 2026-08-05.
+## DM1 source-data fail-closed wall rendering
+
+- **DM1-VIEWPORT-002**: Removed the synthetic black rectangle used when a
+  center wall bitmap could not be loaded. The ReDMCSB wall path now leaves the
+  cleared/background pixels unchanged and reports the missing authenticated
+  GRAPHICS.DAT material through the existing asset route. This prevents a
+  missing asset from masquerading as a corridor opening or fabricated wall.
+  Verified with the DM1 wall-ornament (`121/121`) and inventory placement
+  (`156/156`) tests plus a successful Ninja `firestaff` build on 2026-08-05.
