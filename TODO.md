@@ -682,6 +682,10 @@
   body now consumes its 0x21/0x22 timer without scheduling a coordinate-only
   retry. The former re-queue could keep a creature active without the
   original command stream, and is removed pending complete CCM ownership.
+  The runtime tick also no longer advances the fixture-only global creature
+  pool after source timers: that second clock had no DB4 allocation, linked
+  record chain, RNG or CCM command-stream owner. Only a fully bound 0x21/0x22
+  source timer may reopen creature mutation.
 
 - **DM2-LEGACY-GAME-LOOP-DATA-ADMISSION:** `src/engine/firestaff_game_loop.c`
   is not part of the built M11 DM2 launch route and still contains diagnostic

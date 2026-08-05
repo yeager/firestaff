@@ -5963,11 +5963,18 @@ void dm2_v1_runtime_tick(void) {
             1, (uint32_t)rt->tick_count, &rt->set_timer_weather);
     }
 
-    /* Phase 5+ extension: advance active CCM creature instances once per
-     * tick.  skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM reads the
-     * field door state through the bound runtime bridge, so the creature
-     * pool stays consistent with the visible dungeon square. */
-    dm2_v1_creature_tick();
+    /* Do not advance the legacy standalone creature pool here.  Its only
+     * producer is explicitly fixture-only: SKProject ALLOC_NEW_CREATURE
+     * instead allocates and links a live DB4 record before its CCM command
+     * stream can execute.  Production creature changes therefore belong
+     * exclusively to the source-ordered 0x21/0x22 handler above, after that
+     * handler has bound the DB4 record, CAII row and command stream.  Calling
+     * dm2_v1_creature_tick() here would revive the discarded host-side pool
+     * as a second, unowned simulation clock.
+     *
+     * Source: skproject/SKULLWIN/c_tim_proc.cpp:3980-4230
+     *         (DM2_PROCEED_TIMERS), c_ai.cpp (DM2_THINK_CREATURE),
+     *         skcrture.cpp:6380-6430 (ALLOC_NEW_CREATURE). */
 
     /* Phase 5+ extension: step then drain DM2 projectile list into
      * M11-ready cache.  The step path applies the STEP_MISSILE

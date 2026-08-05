@@ -6944,6 +6944,14 @@
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-05 DM2 unowned creature-clock removal: `dm2_v1_runtime_tick()`
+  no longer advances the legacy global creature fixture pool after the
+  source-order timer dispatcher. The only production-capable creature route
+  remains the bound 0x21/0x22 DB4/CAII/CCM handler; callers cannot fabricate a
+  standalone creature, and the production gate now proves a general runtime
+  tick does not advance that fixture clock. Focused production gate and
+  source-timer regression pass against the real PC-DOS corpus.
+
 - ✅ 2026-08-05 DM2 G1 boot-summary truthfulness: moved the DM2 profile
   summary until after hash-verified `DUNGEON.DAT` admission, so it reports
   the original PC-DOS G1 values (`seed=257`, `levels=28`) instead of the
