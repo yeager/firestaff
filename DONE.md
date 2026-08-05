@@ -12,6 +12,13 @@
   non-retail English text into the HUD. Real message rendering remains open
   until the original text consumer is bound.
 
+- ✅ 2026-08-05 Nexus FONT256 source-count binding: the S2D font loader now
+  consumes the bounded character-generator tile count reported by the real
+  DMWeb decoder instead of hardcoding the current retail count (242). Counts
+  outside the 256-entry table are rejected, so a future source revision cannot
+  silently turn zero-filled glyph slots into runtime data. Real FONT256
+  screen-text, layout, and glyph-decode probes pass.
+
 - ✅ 2026-08-06 Theron Track19 startup envelope receipt: real US and JP
   Track19 ISOs now validate the exact 32×27, 876-byte envelope at `0x5a9114`
   with FNV-1a `0x54fce0a0`; its bytes match the canonical retail Track02

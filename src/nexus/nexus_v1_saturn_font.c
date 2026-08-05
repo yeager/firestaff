@@ -48,7 +48,12 @@ int nexus_v1_font_load_from_s2d(Nexus_V1_Font *font,
 
     memset(font, 0, sizeof(*font));
 
-    tile_count = 242;
+    /* Use the tile count from the bounded DMWeb decoder. The retail
+     * FONT256.S2D currently reports 242 tiles, but keeping that number here
+     * as a literal would make a different source revision silently consume
+     * invented/zero-filled glyph slots. */
+    tile_count = decoded->tile_count;
+    if (tile_count <= 0 || tile_count > 256) return -1;
     if (decoded->character_generator_size < 16U + (uint32_t)tile_count * 64U)
         return -1;
 

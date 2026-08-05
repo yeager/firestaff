@@ -22,6 +22,9 @@
   Structure1F destinations and Saturn explored-state evidence remain needed.
   Production HUD no longer injects fabricated script/fountain/save strings;
   bind these messages only through authenticated DMN text and SLEV consumers.
+  FONT256.S2D loader now binds its real decoder-reported tile count; the
+  remaining text gap is the original Saturn code/attribute-to-screen owner,
+  not another hardcoded glyph count.
 
 - **DUNGEON-STUDIO-FSDUNG:** Dungeon Studio: import original dungeons from
   all five games (DM1, CSB, DM2, Theron's Quest, DM Nexus) and export to a
