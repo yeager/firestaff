@@ -19019,6 +19019,23 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_gdatfile_pc34_compat
     )
 
+    # ── DM2: GDAT entry data builder + sound decode (c_gdatfile.cpp:674,850,932) ──
+    add_executable(test_dm2_v1_gdatfile_build_entry_data
+        tests/test_dm2_v1_gdatfile_build_entry_data.c
+        src/dm2/dm2_v1_gdatfile_pc34_compat.c
+    )
+    target_include_directories(test_dm2_v1_gdatfile_build_entry_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_gdatfile_build_entry_data
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_gdatfile_build_entry_data
+        COMMAND test_dm2_v1_gdatfile_build_entry_data
+    )
+
     # ── DM2-002: DELETE_CREATURE_RECORD mutating tail ──
     add_executable(test_dm2_v1_delete_creature_tail_pc34_compat
         tests/test_dm2_v1_delete_creature_tail_pc34_compat.c

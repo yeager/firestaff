@@ -309,6 +309,95 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
                                          void *ctx,
                                          DM2_V1_GdatReadStructureReceipt *out);
 
+/* ========================================================================
+ * GDAT entry data builder — skproject c_gdatfile.cpp:674
+ * DM2_BUILD_GDAT_ENTRY_DATA
+ *
+ * Builds the three-level lookup table (GdatTable) from raw GDAT entries.
+ * Iterates all GDAT entries, classifies by category/subcategory, allocates
+ * the index tables (w_table1, w_table2, u31p_08), and populates them.
+ * ======================================================================== */
+
+typedef struct DM2_V1_GdatBuildCallbacks {
+    int16_t total_entries;
+    bool    (*is_valid_entry)(void *ctx, int16_t idx);
+    int32_t (*query_entry_value)(void *ctx, int16_t idx, int16_t field);
+    int16_t *(*alloc_hibigpool)(void *ctx, int32_t size);
+    void     (*dealloc_hibigpool)(void *ctx, int32_t size);
+    int16_t *(*alloc_freepool_w)(void *ctx, int32_t size);
+    DM2_V1_GdatBBW *(*alloc_freepool_bbw)(void *ctx, int32_t size);
+    void     (*zero_memory)(void *ctx, void *dest, int32_t len);
+    const int8_t *field_sizes;
+    int8_t   field_count;
+} DM2_V1_GdatBuildCallbacks;
+
+int dm2_v1_gdat_build_entry_data(DM2_V1_GdatTable *table,
+                                  const int8_t *extra_fields,
+                                  const DM2_V1_GdatBuildCallbacks *cb,
+                                  void *ctx);
+
+/* ========================================================================
+ * Sound sample XOR decode — skproject c_gdatfile.cpp:850
+ * DM2_47eb_00a4
+ *
+ * Decodes sound sample data by XORing each byte with 0x80.
+ * Manages a linked list of decoded sample descriptors.
+ * ======================================================================== */
+
+typedef struct DM2_V1_GdatSampleDesc {
+    uint8_t *xp_00;
+    int16_t  w_04;
+    int16_t  w_06;
+    struct DM2_V1_GdatSampleDesc *next;
+} DM2_V1_GdatSampleDesc;
+
+typedef struct DM2_V1_GdatSampleDecodeReceipt {
+    bool decoded;
+} DM2_V1_GdatSampleDecodeReceipt;
+
+void dm2_v1_gdat_decode_sound_sample(DM2_V1_GdatSampleDesc *desc,
+                                      DM2_V1_GdatSampleDesc **list_head,
+                                      DM2_V1_GdatSampleDecodeReceipt *out);
+
+/* ========================================================================
+ * Deferred sound queue resolver — skproject c_gdatfile.cpp:932
+ * DM2_482b_0684
+ *
+ * Resolves deferred sound queue entries (w_05 == -1) by looking up
+ * their GDAT data index and binding the raw sample data.
+ * ======================================================================== */
+
+typedef struct DM2_V1_GdatSoundEntry {
+    int16_t w_00;
+    int8_t  b_02;
+    int8_t  b_03;
+    int8_t  b_04;
+    int16_t w_05;
+} DM2_V1_GdatSoundEntry;
+
+typedef struct DM2_V1_GdatResolveSoundCallbacks {
+    int16_t (*query_entry_data_index)(void *ctx, int8_t c1, int8_t c2,
+                                      int8_t type, int8_t idx);
+    uint16_t (*sound7_lookup)(void *ctx, int16_t id);
+    uint8_t *(*query_entry_data_ptr)(void *ctx, int8_t c1, int8_t c2,
+                                      int8_t type, int8_t idx);
+    int32_t  (*query_entry_data_length)(void *ctx, int8_t c1, int8_t c2,
+                                         int8_t type, int8_t idx);
+} DM2_V1_GdatResolveSoundCallbacks;
+
+typedef struct DM2_V1_GdatResolveSoundReceipt {
+    int16_t resolved_count;
+} DM2_V1_GdatResolveSoundReceipt;
+
+int dm2_v1_gdat_resolve_deferred_sounds(
+    DM2_V1_GdatSoundEntry *queue, uint16_t queue_count,
+    uint8_t *sample_pool, uint16_t sample_pool_stride,
+    uint16_t *active_count, uint16_t max_active,
+    int16_t sound_format,
+    DM2_V1_GdatSampleDesc **list_head,
+    const DM2_V1_GdatResolveSoundCallbacks *cb, void *ctx,
+    DM2_V1_GdatResolveSoundReceipt *out);
+
 #ifdef __cplusplus
 }
 #endif

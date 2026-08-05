@@ -618,6 +618,255 @@ int dm2_v1_gdat_track_underlay(uint16_t dbidx,
     }
 }
 
+/* ================================================================
+ * DM2_BUILD_GDAT_ENTRY_DATA — c_gdatfile.cpp:674-815
+ *
+ * Builds the three-level GDAT lookup table:
+ *   w_table1[category] -> w_table2[subcat] -> u31p_08[entry]
+ *
+ * Pass 1: count entries per (category, subcategory) pair using a
+ *         temporary 29x16 histogram (0x3A0 bytes).
+ * Pass 2: build index tables from histogram.
+ * Pass 3: populate entry records (b_00, b_01, w_02) from raw data.
+ * ================================================================ */
+int dm2_v1_gdat_build_entry_data(DM2_V1_GdatTable *table,
+                                  const int8_t *extra_fields,
+                                  const DM2_V1_GdatBuildCallbacks *cb,
+                                  void *ctx)
+{
+    if (!table || !cb) return 0;
+
+    int16_t *wp = cb->alloc_hibigpool(ctx, 0x3A0);
+    if (!wp) return 0;
+
+    table->entries = 0;
+    table->w_10 = 0;
+
+    /* Pass 1: histogram. wp is 29 rows x 16 columns of int16_t.
+     * Row r: columns 0..14 are per-subcategory counts, column 15
+     * is the max subcategory index + 1 for that row. */
+    for (int16_t i = 0; i < cb->total_entries; i++) {
+        if (!cb->is_valid_entry(ctx, i)) continue;
+
+        int32_t v0 = cb->query_entry_value(ctx, i, 0);
+        int8_t cat = (int8_t)(v0 & 0xFF);
+        int8_t sub = (int8_t)(cb->query_entry_value(ctx, i, 2) & 0xFF);
+
+        if ((uint8_t)cat > 0x1C || (uint8_t)sub > 0x0E) continue;
+
+        table->w_10++;
+        if ((int16_t)(uint8_t)cat > table->entries)
+            table->entries = (int16_t)(uint8_t)cat;
+
+        wp[16 * (uint8_t)cat + (uint8_t)sub]++;
+
+        int16_t *row = &wp[(uint8_t)cat * 16];
+        if ((uint8_t)sub >= (uint16_t)row[15])
+            row[15] = (int16_t)((uint8_t)sub + 1);
+    }
+
+    /* Compute w_0e: total subcategory slots */
+    int16_t total_subcats = 0;
+    for (int8_t c = 0; (uint8_t)c <= (uint16_t)table->entries; c++)
+        total_subcats += wp[(uint8_t)c * 16 + 15];
+    table->w_0e = total_subcats;
+
+    /* Set up field offset table */
+    table->w_12 = 0;
+    table->w_14 = 0;
+    for (int i = 0; i < 7; i++) {
+        if (i > 4) {
+            if (extra_fields[i] != 0) {
+                table->warr_16[i] = table->w_12;
+                table->barr_24[i] = (int8_t)cb->field_sizes[i];
+                table->w_12 += (int16_t)(uint8_t)cb->field_sizes[i];
+                table->w_14++;
+            }
+        } else {
+            table->barr_24[i] = extra_fields[i];
+            table->w_12 += (int16_t)(uint8_t)extra_fields[i];
+            table->warr_16[i] = -1;
+            if ((uint8_t)extra_fields[i] > 0)
+                table->w_14++;
+        }
+    }
+
+    /* Allocate index tables */
+    table->w_table1 = cb->alloc_freepool_w(ctx,
+        (int32_t)sizeof(int16_t) * ((int32_t)table->entries + 2));
+    table->w_table2 = cb->alloc_freepool_w(ctx,
+        (int32_t)sizeof(int16_t) * ((int32_t)table->w_0e + 1));
+    table->u31p_08 = cb->alloc_freepool_bbw(ctx,
+        (int32_t)sizeof(DM2_V1_GdatBBW) * (int32_t)table->w_10);
+
+    /* Pass 2: build index tables */
+    int16_t cat_acc = 0;
+    int16_t entry_acc = 0;
+    for (int8_t c = 0; (uint8_t)c <= (uint16_t)table->entries; c++) {
+        table->w_table1[(uint8_t)c] = cat_acc;
+        int16_t num_subs = wp[(uint8_t)c * 16 + 15];
+        for (int8_t s = 0; (uint8_t)s < (uint16_t)num_subs; s++) {
+            table->w_table2[cat_acc++] = entry_acc;
+            entry_acc += wp[(uint8_t)c * 16 + (uint8_t)s];
+        }
+    }
+    table->w_table1[(uint16_t)table->entries + 1] = cat_acc;
+    table->w_table2[table->w_0e] = table->w_10;
+
+    /* Clear histogram and entry records */
+    cb->zero_memory(ctx, wp, 0x3A0);
+    cb->zero_memory(ctx, table->u31p_08,
+                    (int32_t)sizeof(DM2_V1_GdatBBW) * (int32_t)table->w_10);
+
+    /* Pass 3: populate entries */
+    for (int16_t i = 0; i < cb->total_entries; i++) {
+        if (!cb->is_valid_entry(ctx, i)) continue;
+
+        int32_t v0 = cb->query_entry_value(ctx, i, 0);
+        int8_t cat = (int8_t)(v0 & 0xFF);
+        int8_t sub = (int8_t)(cb->query_entry_value(ctx, i, 2) & 0xFF);
+
+        if ((uint8_t)cat > 0x1C || (uint8_t)sub > 0x0E) continue;
+
+        int16_t slot = wp[16 * (uint8_t)cat + (uint8_t)sub]++;
+        int16_t base_idx = table->w_table1[(uint8_t)cat];
+        int16_t sub_base = table->w_table2[base_idx + (uint8_t)sub];
+        DM2_V1_GdatBBW *e = &table->u31p_08[sub_base + slot];
+
+        e->b_00 = (int8_t)(cb->query_entry_value(ctx, i, 1) & 0xFF);
+        e->b_01 = (int8_t)(cb->query_entry_value(ctx, i, 3) & 0xFF);
+        e->w_02 = (int16_t)(cb->query_entry_value(ctx, i, 4) & 0xFFFF);
+        if ((uint8_t)(cb->query_entry_value(ctx, i, 6) & 0xFF) == 1)
+            e->w_02 |= (int16_t)0x8000;
+    }
+
+    cb->dealloc_hibigpool(ctx, 0x3A0);
+    return 1;
+}
+
+/* ================================================================
+ * DM2_47eb_00a4 — c_gdatfile.cpp:850-882
+ *
+ * Decode a sound sample descriptor. XOR all sample bytes with 0x80
+ * (signed-to-unsigned PCM conversion). Insert into a linked list.
+ *
+ * The 6-byte header preceding xp_00 controls decode behavior:
+ *   header[4..5] (int16_t w_04): 0 = check bit 0 of header[3],
+ *   1 = already decoded, other = set to 1 and decode.
+ * ================================================================ */
+void dm2_v1_gdat_decode_sound_sample(DM2_V1_GdatSampleDesc *desc,
+                                      DM2_V1_GdatSampleDesc **list_head,
+                                      DM2_V1_GdatSampleDecodeReceipt *out)
+{
+    if (!desc || !list_head) {
+        if (out) out->decoded = false;
+        return;
+    }
+
+    desc->next = *list_head;
+    *list_head = desc;
+
+    uint8_t *header = desc->xp_00 - 6;
+    int16_t control = (int16_t)(header[4] | (header[5] << 8));
+
+    if (control == 1) {
+        if (out) out->decoded = false;
+        return;
+    }
+
+    bool do_decode;
+    if (control != 0) {
+        header[4] = 1;
+        header[5] = 0;
+        do_decode = true;
+    } else {
+        if ((header[3] & 0x01) == 0) {
+            if (out) out->decoded = false;
+            return;
+        }
+        header[3] &= 0xFE;
+        do_decode = true;
+    }
+
+    if (do_decode) {
+        int16_t count = desc->w_04;
+        uint8_t *p = desc->xp_00;
+        while (count-- > 0)
+            *p++ ^= 0x80;
+    }
+
+    if (out) out->decoded = true;
+}
+
+/* ================================================================
+ * DM2_482b_0684 — c_gdatfile.cpp:932-975
+ *
+ * Resolve deferred sound queue entries. Entries with w_05 == -1
+ * have not yet been bound to a GDAT sample. For each:
+ *   1. Query GDAT entry data index for (b_02, b_03, 2, b_04).
+ *   2. Check if that index is already loaded (via sound7_lookup).
+ *   3. If not loaded and room in the pool, bind the raw data and
+ *      decode the sample.
+ *   4. If already loaded, share the existing pool slot.
+ * ================================================================ */
+int dm2_v1_gdat_resolve_deferred_sounds(
+    DM2_V1_GdatSoundEntry *queue, uint16_t queue_count,
+    uint8_t *sample_pool, uint16_t sample_pool_stride,
+    uint16_t *active_count, uint16_t max_active,
+    int16_t sound_format,
+    DM2_V1_GdatSampleDesc **list_head,
+    const DM2_V1_GdatResolveSoundCallbacks *cb, void *ctx,
+    DM2_V1_GdatResolveSoundReceipt *out)
+{
+    if (!queue || !cb) return 0;
+    int16_t resolved = 0;
+
+    for (uint16_t i = 0; i < queue_count; i++) {
+        DM2_V1_GdatSoundEntry *e = &queue[i];
+        if (e->w_05 != -1) continue;
+
+        int16_t data_idx = cb->query_entry_data_index(ctx,
+            e->b_02, e->b_03, 2, e->b_04);
+        uint16_t existing = cb->sound7_lookup(ctx, data_idx);
+
+        if (existing == 0) {
+            if (*active_count >= max_active) {
+                if (out) out->resolved_count = resolved;
+                return 1;
+            }
+            e->w_05 = data_idx;
+            e->w_00 = (int16_t)*active_count;
+
+            int16_t header_skip = (sound_format == 0) ? 2 : 6;
+            DM2_V1_GdatSampleDesc *desc = (DM2_V1_GdatSampleDesc *)(void *)
+                (sample_pool + sample_pool_stride * (uint16_t)e->w_00);
+
+            uint8_t *raw = cb->query_entry_data_ptr(ctx,
+                e->b_02, e->b_03, 2, e->b_04);
+            int32_t raw_len = cb->query_entry_data_length(ctx,
+                e->b_02, e->b_03, 2, e->b_04);
+
+            desc->xp_00 = raw + header_skip;
+            desc->w_04 = (int16_t)(raw_len - header_skip);
+
+            if (sound_format == 0)
+                desc->w_06 = 0x157C;
+            else
+                desc->w_06 = (int16_t)(raw[0] | (raw[1] << 8));
+
+            dm2_v1_gdat_decode_sound_sample(desc, list_head, NULL);
+            (*active_count)++;
+            resolved++;
+        } else {
+            e->w_00 = queue[existing - 1].w_00;
+            e->w_05 = data_idx;
+        }
+    }
+
+    if (out) out->resolved_count = resolved;
+    return 1;
+}
+
 /* skproject: DM2_READ_GRAPHICS_STRUCTURE (c_gdatfile.cpp:1026-1128)
  * Stub — full implementation requires many subsystems (dballoc, ulp, etc.) */
 int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
