@@ -16,7 +16,10 @@
  *  4. Every non-NONE source byte 0x00-0x55 has a legacy table row.
  *  5. Row names equal the dispatch module's group names.
  *  6. HALT (0xFF) is the only row without a source group.
- *  7. Source evidence is present in both modules.
+ *  7. Every source-owned row is marked implemented in the public table;
+ *     actual execution remains callback-bound and fails closed without a
+ *     live command stream/record owner.
+ *  8. Source evidence is present in both modules.
  */
 
 #include "dm2_v1_ccm.h"
@@ -139,6 +142,16 @@ static int test_halt_is_only_internal_row(void) {
     return 1;
 }
 
+static int test_source_rows_are_not_stale_stubs(void) {
+    for (int i = 0; i < DM2_CCM_MAX_OPCODES; i++) {
+        int byte = g_table_bytes[i];
+        const DM2_V1_CCMOpcodeDef *def = dm2_v1_ccm_get_opcode_def(byte);
+        if (!def) return 0;
+        if (byte != 0xFF && def->stubbed != 0) return 0;
+    }
+    return 1;
+}
+
 static int test_source_evidence_present(void) {
     const char *a = dm2_v1_ccm_source_evidence();
     const char *b = dm2_v1_ccm_dispatch_source_evidence();
@@ -156,6 +169,7 @@ int main(void) {
     TEST(every_handled_source_byte_has_row);
     TEST(row_names_match_group_names);
     TEST(halt_is_only_internal_row);
+    TEST(source_rows_are_not_stale_stubs);
     TEST(source_evidence_present);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);

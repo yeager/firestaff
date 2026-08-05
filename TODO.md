@@ -79,6 +79,11 @@
   raw-tail local palette, while Greatstone expands the nibbles to greyscale.
   Do not alter the original palette path or add downloaded/generated artwork
   merely to imitate that third-party export.
+  **2026-08-06 CCM inventory correction:** the public opcode table now
+  accurately labels CCM0B/CCM0C, wall activation, ladder/hole, transform and
+  1B7D5 as callback-bound SKProject handler ports rather than stubs. This
+  does not admit a live creature path: production still rejects absent
+  command-stream, DB4/CAII and callback ownership.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   source-bound lifecycle/presentation path with a structural fail-closed seam.

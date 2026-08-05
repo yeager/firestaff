@@ -570,7 +570,8 @@ const char *dm2_v1_ccm_source_evidence(void) {
         "  CCM03, JUMPS, TAKES_ITEM, PUTS_DOWN_ITEM, TRANSFORM,\n"
         "  EXPLODE_OR_SUMMON, 1B7D5, CCM0B, CCM0C, ACTIVATES_WALL,\n"
         "  USES_LADDER_HOLE\n"
-        "All 48 source opcodes now live (flags 16-23 for bridge dispatch)\n"
+        "All 48 source opcode rows are classified; production execution still\n"
+        "requires the authenticated command stream and live-record callbacks.\n"
         "No-handler bytes (source 'no branch taken') return UNKNOWN_OPCODE:\n"
         "  0x00, 0x10-0x12, 0x14, 0x1B-0x25, 0x32-0x34, 0x41-0x54, 0x56-0xFE\n"
         "V1 invariant: CCM NEVER mutates party state directly.\n";

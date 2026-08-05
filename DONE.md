@@ -49281,6 +49281,18 @@ PASS. Sources: Greatstone PC 1.0 catalogue,
 `SKULLWIN/c_querydb.cpp::DM2_QUERY_GDAT_IMAGE_LOCALPAL`, and
 `SKULLWIN/c_gdatfile.cpp::DM2_EXTRACT_GDAT_IMAGE`.
 
+# ✅ 2026-08-06 DM2 CCM handler-status inventory correction
+
+The public CCM opcode catalog no longer calls the already ported CCM0B,
+CCM0C, wall-activation, ladder/hole, transform and `DM2_1B7D5` handler bodies
+"stubs". Each is dispatched only through the callback-bound advanced port in
+`dm2_v1_ccm_execute_advanced`; no handler is admitted without the source
+command stream, live DB4/CAII record owner and mandatory callbacks. The CCM
+source-alignment test now verifies that every source command-table row is
+marked implemented, while the real boot probe continues to use the
+hash-verified PC English corpus. Sources: `SKULLWIN/c_creature.cpp`
+`DM2_PROCEED_CCM` (2930-3212) and the handler bodies at 1709-2928.
+
 # ✅ 2026-08-06 DM2 source wall-button fallback removal
 
 The local DB2/DB3 wall-button walkers are now available only to isolated

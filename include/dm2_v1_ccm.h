@@ -31,8 +31,8 @@
  *   0x06/0x07      CCM06
  *   0x08/0x26      CREATURE_ATTACKS_PARTY (skip00388)
  *   0x0A           STEAL_FROM_CHAMPION
- *   0x0B           CCM0B (stub: handler body unproven)
- *   0x0C/0x0D      CCM0C (stub: handler body unproven)
+ *   0x0B           CCM0B (callback-bound advanced handler)
+ *   0x0C/0x0D      CCM0C (callback-bound advanced handler)
  *   0x0E/0x0F      SHOOT_ITEM
  *   0x13           KILL_ON_TIMER_POSITION
  *   0x15/0x16      ROTATES_TARGET_CREATURE
@@ -41,11 +41,11 @@
  *   0x19/0x29/0x2A/0x2D/0x2E PUTS_DOWN_ITEM (skip00386)
  *   0x1A/0x2B/0x2C TAKES_ITEM (skip00389)
  *   0x27/0x28      CAST_SPELL
- *   0x2F-0x31      ACTIVATES_WALL (stub)
- *   0x35-0x3A      USES_LADDER_HOLE (stub)
- *   0x3B/0x3C      TRANSFORM (stub)
+ *   0x2F-0x31      ACTIVATES_WALL (callback-bound advanced handler)
+ *   0x35-0x3A      USES_LADDER_HOLE (callback-bound advanced handler)
+ *   0x3B/0x3C      TRANSFORM (callback-bound advanced handler)
  *   0x3D-0x40      EXPLODE_OR_SUMMON
- *   0x55           DM2_1B7D5 (stub)
+ *   0x55           DM2_1B7D5 (callback-bound advanced handler)
  *
  * Bytes the source compare chain routes to NO handler (0x00, 0x10-0x12,
  * 0x14, 0x1B-0x25, 0x32-0x34, 0x41-0x54, 0x56-0xFE) are not table
@@ -84,9 +84,9 @@ typedef enum {
     DM2_CCM_OP_ATTACKS_PARTY     = 0x08,  /* DM2_CREATURE_ATTACKS_PARTY (skip00388) */
     DM2_CCM_OP_WALK_NOW_09       = 0x09,  /* WALK_NOW (skip00387) */
     DM2_CCM_OP_STEAL_FROM_CHAMPION = 0x0A, /* DM2_CREATURE_STEAL_FROM_CHAMPION */
-    DM2_CCM_OP_CCM0B             = 0x0B,  /* DM2_CREATURE_CCM0B (stub) */
-    DM2_CCM_OP_CCM0C             = 0x0C,  /* DM2_CREATURE_CCM0C (stub) */
-    DM2_CCM_OP_CCM0C_ALT         = 0x0D,  /* DM2_CREATURE_CCM0C (stub) */
+    DM2_CCM_OP_CCM0B             = 0x0B,  /* DM2_CREATURE_CCM0B */
+    DM2_CCM_OP_CCM0C             = 0x0C,  /* DM2_CREATURE_CCM0C */
+    DM2_CCM_OP_CCM0C_ALT         = 0x0D,  /* DM2_CREATURE_CCM0C */
     DM2_CCM_OP_SHOOT_ITEM        = 0x0E,  /* DM2_CREATURE_SHOOT_ITEM */
     DM2_CCM_OP_SHOOT_ITEM_ALT    = 0x0F,  /* DM2_CREATURE_SHOOT_ITEM */
     DM2_CCM_OP_KILL_ON_TIMER_POSITION = 0x13, /* DM2_CREATURE_KILL_ON_TIMER_POSITION */
@@ -105,22 +105,22 @@ typedef enum {
     DM2_CCM_OP_TAKES_ITEM_2C     = 0x2C,  /* TAKES_ITEM (skip00389) */
     DM2_CCM_OP_PUTS_DOWN_ITEM_2D = 0x2D,  /* PUTS_DOWN_ITEM (skip00386) */
     DM2_CCM_OP_PUTS_DOWN_ITEM_2E = 0x2E,  /* PUTS_DOWN_ITEM (skip00386) */
-    DM2_CCM_OP_ACTIVATES_WALL    = 0x2F,  /* DM2_CREATURE_ACTIVATES_WALL (stub) */
-    DM2_CCM_OP_ACTIVATES_WALL_30 = 0x30,  /* ACTIVATES_WALL (stub) */
-    DM2_CCM_OP_ACTIVATES_WALL_31 = 0x31,  /* ACTIVATES_WALL (stub) */
-    DM2_CCM_OP_USES_LADDER_HOLE  = 0x35,  /* DM2_CREATURE_USES_LADDER_HOLE (stub) */
-    DM2_CCM_OP_USES_LADDER_HOLE_36 = 0x36, /* USES_LADDER_HOLE (stub) */
-    DM2_CCM_OP_USES_LADDER_HOLE_37 = 0x37, /* USES_LADDER_HOLE (stub) */
-    DM2_CCM_OP_USES_LADDER_HOLE_38 = 0x38, /* USES_LADDER_HOLE (stub) */
-    DM2_CCM_OP_USES_LADDER_HOLE_39 = 0x39, /* USES_LADDER_HOLE (stub) */
-    DM2_CCM_OP_USES_LADDER_HOLE_3A = 0x3A, /* USES_LADDER_HOLE (stub) */
-    DM2_CCM_OP_TRANSFORM         = 0x3B,  /* DM2_CREATURE_TRANSFORM (stub) */
-    DM2_CCM_OP_TRANSFORM_3C      = 0x3C,  /* TRANSFORM (stub) */
+    DM2_CCM_OP_ACTIVATES_WALL    = 0x2F,  /* DM2_CREATURE_ACTIVATES_WALL */
+    DM2_CCM_OP_ACTIVATES_WALL_30 = 0x30,  /* ACTIVATES_WALL */
+    DM2_CCM_OP_ACTIVATES_WALL_31 = 0x31,  /* ACTIVATES_WALL */
+    DM2_CCM_OP_USES_LADDER_HOLE  = 0x35,  /* DM2_CREATURE_USES_LADDER_HOLE */
+    DM2_CCM_OP_USES_LADDER_HOLE_36 = 0x36, /* USES_LADDER_HOLE */
+    DM2_CCM_OP_USES_LADDER_HOLE_37 = 0x37, /* USES_LADDER_HOLE */
+    DM2_CCM_OP_USES_LADDER_HOLE_38 = 0x38, /* USES_LADDER_HOLE */
+    DM2_CCM_OP_USES_LADDER_HOLE_39 = 0x39, /* USES_LADDER_HOLE */
+    DM2_CCM_OP_USES_LADDER_HOLE_3A = 0x3A, /* USES_LADDER_HOLE */
+    DM2_CCM_OP_TRANSFORM         = 0x3B,  /* DM2_CREATURE_TRANSFORM */
+    DM2_CCM_OP_TRANSFORM_3C      = 0x3C,  /* TRANSFORM */
     DM2_CCM_OP_EXPLODE_OR_SUMMON = 0x3D,  /* DM2_CREATURE_EXPLODE_OR_SUMMON */
     DM2_CCM_OP_EXPLODE_OR_SUMMON_3E = 0x3E, /* EXPLODE_OR_SUMMON */
     DM2_CCM_OP_EXPLODE_OR_SUMMON_3F = 0x3F, /* EXPLODE_OR_SUMMON */
     DM2_CCM_OP_EXPLODE_OR_SUMMON_40 = 0x40, /* EXPLODE_OR_SUMMON */
-    DM2_CCM_OP_1B7D5             = 0x55,  /* DM2_1B7D5 (stub) */
+    DM2_CCM_OP_1B7D5             = 0x55,  /* DM2_1B7D5 */
     /* Firestaff-internal control byte, not a source b_1a value. */
     DM2_CCM_OP_HALT              = 0xFF,
 } DM2_CCM_Opcode;
