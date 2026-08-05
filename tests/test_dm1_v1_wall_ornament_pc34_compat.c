@@ -183,6 +183,8 @@ int main(void)
                dm1_v1_wall_ornament_render_plan_pc34(0, 12, 0, NULL), 0);
     expect_int("plan.bad_global",
                dm1_v1_wall_ornament_render_plan_pc34(-1, 12, 0, &plan), 0);
+    expect_int("plan.bad_global.after_g0194",
+               dm1_v1_wall_ornament_render_plan_pc34(60, 12, 0, &plan), 0);
     expect_int("plan.bad_view",
                dm1_v1_wall_ornament_render_plan_pc34(0, 13, 0, &plan), 0);
 

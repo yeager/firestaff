@@ -49424,3 +49424,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   the host planner. State and hit-test metadata remain available, while menu
   chrome stays no-draw until `MENU.BPK`/`STABG.BIN` palette and VDP1 placement
   are authenticated from Saturn capture.
+
+- ✅ 2026-08-06 DM1 wall-ornament index guard: the PC34 wall-ornament render
+  plan now admits only the 60 global indices present in ReDMCSB G0194. A
+  corrupt or unresolved map-local index can no longer become an arbitrary
+  GRAPHICS.DAT lookup, which prevented stray wall pixels from masquerading as
+  torches, holders, or other HoC ornaments. Verification: Ninja
+  `test_dm1_v1_wall_ornament_pc34_compat` (128 assertions), `firestaff`, and
+  real PC3.4 `test_m11_dm1_real_alcove_item_runtime_pc34` pass.

@@ -25226,7 +25226,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   source mapping is now corrected to ReDMCSB I34E `G0194` (DUNVIEW.C:932-1007)
   and the exact `G0198`/`G0199` palette/depth route remains source-bound; close
   only after a real app capture proves the torch and holder pixels at each
-  visible depth. No synthetic black ornament is admitted.
+  visible depth. No synthetic black ornament is admitted. Invalid global
+  ornament indices outside the 60-entry G0194 table now fail closed; the
+  real capture is still required.
 - [ ] DM1-HOC-OBJECTS-002 Capture a real PC34 HoC pickup/placement round trip
   for weapon, potion, scroll, container and junk objects. Confirm M564 names,
   C00/C01 hand masks and backpack ownership remain source-backed.

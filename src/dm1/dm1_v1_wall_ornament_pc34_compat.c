@@ -22,6 +22,10 @@ enum {
     DM1_PORTRAIT_ATLAS_ROWS_PC34 = 3,
     DM1_PORTRAIT_ATLAS_COUNT_PC34 =
         DM1_PORTRAIT_ATLAS_COLS_PC34 * DM1_PORTRAIT_ATLAS_ROWS_PC34,
+    /* G0194 contains 60 coordinate-set entries: global wall-ornament
+     * indices 0..59.  Values outside that source table are not a wall
+     * ornament and must never become a GRAPHICS.DAT lookup. */
+    DM1_WALL_ORNAMENT_GLOBAL_COUNT_PC34 = 60,
     DM1_PORTRAIT_DST_X_PC34 = 96,
     DM1_PORTRAIT_DST_Y_PC34 = 35,
     DM1_PORTRAIT_TRANSPARENT_COLOR_PC34 = 1,
@@ -268,7 +272,8 @@ int dm1_v1_wall_ornament_render_plan_pc34(
     DM1_WallOrnamentZoneBlitPc34 blit;
     int coordSet;
     int nativeOffset;
-    if (!outPlan || globalIndex < 0) {
+    if (!outPlan || globalIndex < 0 ||
+        globalIndex >= DM1_WALL_ORNAMENT_GLOBAL_COUNT_PC34) {
         return 0;
     }
     coordSet = dm1_v1_wall_ornament_coord_set_index_pc34(globalIndex);
