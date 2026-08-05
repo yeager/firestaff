@@ -35,6 +35,19 @@ SHA256 checksums for known-good original game data files.
 | dm2-fmtowns-ja | DUNGEON.DAT | `d1d608a1d59aaba683a381f52613fa42af5a4be61d287f56fa3a4cdd4d8234b4` | 37,954 |
 | nexus | DM.BIN | `3bbca125e0bfb486897e4926541e7c31adbff010d01a9b0c736637f432aad124` | 555,144 |
 
+### Nexus MENU.BPK retail revisions
+
+The canonical capture revision remains the 89,060-byte SHA-256 entry listed
+below.  The English and French Saturn ISO images in the real Nexus corpus
+also carry distinct, ISO-bound retail revisions.  These are accepted for
+bounded structural inspection only; they do not satisfy the canonical
+`MENU.BPK` identity required by the PRS3/VDP1 capture route.
+
+| Region/source | File | MD5 | SHA256 | Size |
+|---|---|---|---|---:|
+| English Saturn ISO | `MENU.BPK` | `a6f2272a4f6cb3c6b3b33012bc5b15ed` | `f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca` | 87,684 |
+| French Saturn ISO | `MENU.BPK` | `fcf8a00fbb92593ed9ae908f8e285cda` | `c4e2427f54083e92cdf38f3b1f296e135bdb007de227431be690cc41381fd543` | 87,820 |
+
 ## All Files
 
 - `csb/DUNGEON.DAT` (2,098 bytes): `3cafd2fb9f255df93e99ae27d4bf60ff22cc8e43cfa90de7d29c04172b2542ba`
