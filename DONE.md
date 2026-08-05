@@ -23,6 +23,13 @@
   INDEX 01, duplicate-index and trailing-token rejection remains intact;
   focused CUE layout and resolver tests pass.
 
+- ✅ 2026-08-05 DM2 startup NEW-click real-data regression: the public M11
+  pointer path now has a real-data regression that derives the `0xD7` NEW
+  rectangle from hash-verified `GRAPHICS.DAT` GDAT and clicks its centre
+  through the active M11 route. It reaches the source-owned `GAME_LOAD` gate
+  without an invented menu surface, save, or session fixture. The gate stays
+  active until original new-game initialization is implemented.
+
 - ✅ 2026-08-05 DM2 HMP false-playback removal: a bounded structural read of
   original `HMIMIDIP013195` bytes can no longer mark the stream schedulable or
   hand its guessed event walk to the MIDI backend. The 29 real GDAT HMP

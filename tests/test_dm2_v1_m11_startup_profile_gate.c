@@ -1266,6 +1266,30 @@ int main(void) {
     expect_true(profile != NULL && profile->deterministic.max_levels == 28u &&
                     profile->deterministic.dungeon_seed == 257u,
                 "M11 DM2 launch retains the PC-DOS G1 level count and seed");
+    if (profile) {
+        DM2_V1_StartupMenuPointerLayout pointer_layout;
+        int source_x;
+        int source_y;
+
+        memset(&pointer_layout, 0, sizeof(pointer_layout));
+        expect_true(dm2_v1_boot_startup_menu_pointer_layout(
+                        profile, &pointer_layout) &&
+                        pointer_layout.valid &&
+                        pointer_layout.new_game.w > 0 &&
+                        pointer_layout.new_game.h > 0,
+                    "M11 DM2 obtains the NEW GAME click rectangle from verified GDAT");
+        source_x = pointer_layout.new_game.x + pointer_layout.new_game.w / 2;
+        source_y = pointer_layout.new_game.y + pointer_layout.new_game.h / 2;
+        /* SKProject startend.cpp HANDLE_UI_EVENT: event 0xD7 is NEW GAME.
+         * Exercise the real GDAT-derived source coordinate through the
+         * public M11 pointer route.  No save or menu fixture is admitted. */
+        expect_true(M11_GameView_HandlePointerButton(
+                        &view, source_x, source_y,
+                        DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
+                        view.dm2State.startup_menu_active == 1 &&
+                        strstr(view.lastOutcome, "DM2 GAME_LOAD") != NULL,
+                    "M11 DM2 source NEW GAME click reaches the source-owned load gate");
+    }
     if (profile && profile->graphics_dat) {
         DM2_V1_BootRuntimeStartupSnapshot startup_snapshot;
         DM2_V1_BootStartupViewModel startup_view_model;

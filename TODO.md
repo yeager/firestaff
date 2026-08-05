@@ -3653,6 +3653,11 @@ that its exact runtime path is not already source-locked and tested.
 40. **DM2-MENU-STARTUP-COMPLETE:** Complete skproject title/menu state machine,
     clickable buttons, palette, animation, audio, save selection, new game,
     options, error states, and first HUD handoff.
+    **2026-08-05 verification:** the active M11 pointer route is now exercised
+    from the verified GDAT `0xD7` NEW rectangle itself, not a fixture geometry.
+    It correctly reaches the source-owned `GAME_LOAD` gate. The remaining
+    original new-game initialization, save selection, options, and full menu
+    state machine are still open.
 41. **DM2-PARTY-INVENTORY-SPELLS:** Complete real champion, inventory, item,
     skill, action, spell, damage, condition, and UI mutation paths through
     the source runtime.
