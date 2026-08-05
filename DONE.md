@@ -12,6 +12,12 @@
   non-retail English text into the HUD. Real message rendering remains open
   until the original text consumer is bound.
 
+- ✅ 2026-08-05 Nexus HUD/title documentation audit: corrected stale claims
+  that the isolated `src/ui/firestaff_hud.c` diagnostic was the production
+  Nexus HUD and that the title was proven to be a 3D animated scene. The docs
+  now distinguish real TITLE.CG/STABG/FONT256 source decodes from the still
+  capture-gated Saturn placement, palette, text, and VDP1/VDP2 consumers.
+
 - ✅ 2026-08-05 Nexus FONT256 source-count binding: the S2D font loader now
   consumes the bounded character-generator tile count reported by the real
   DMWeb decoder instead of hardcoding the current retail count (242). Counts

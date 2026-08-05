@@ -122,15 +122,17 @@ Firestaff nexus_v1_rasterizer.c implements the software rasterizer:
 
 ## 9. Firestaff Implementation Status
 
-Implemented:
-- DMDF header parser (nexus_v1_dmdf_model.c)
-- 3D math (nexus_v1_math3d.c)
-- Software rasterizer (nexus_v1_rasterizer.c)
-- Viewport renderer (nexus_v1_viewport.c)
-- DGN grid parser (nexus_v1_dungeon.c, partial)
+Implemented as source-bound diagnostics:
+- DMDF header/mesh envelope parser (`nexus_v1_dmdf_model.c`)
+- 3D math and bounded software-raster primitives
+- DGN Structure1B/Structure1C/Structure1F/Structure2/Structure3 source
+  accounting (`nexus_v1_dungeon.c`)
+- Real MNS/DGN texture and face relationships retained without an inferred
+  Saturn material or draw command
 
-Not yet implemented:
-- DGN 3D geometry blob parser (wall/floor polygon extraction)
-- SDDRVS.TSK script VM
-- DMDF texture decompression
-- Creature billboard alignment to camera
+Still capture-gated in production:
+- DGN-to-VDP1 command order and camera/transform semantics
+- PRS3 pixel/palette consumer and VDP1 texture upload
+- DMDF texture palette ownership and creature draw placement
+- VDP2 floor/HUD/automap placement and explored-state writes
+- SDDRVS/SLEV runtime consumers

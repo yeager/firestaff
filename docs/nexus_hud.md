@@ -9,13 +9,14 @@
 
 ## Overview
 
-Nexus V1 HUD is implemented in `src/ui/firestaff_hud.c` as part of Firestaffs
-cross-game UI layer. The HUD renders over the 3D viewport and provides
-party status, navigation, and message display. The HUD is decoupled from
-the Nexus engine — it reads game state from Nexus_V1_Engine and renders to
-the same framebuffer as the 3D viewport.
+The cross-game `src/ui/firestaff_hud.c` module is not wired to the Nexus V1
+engine and must not be presented as a retail Nexus HUD. Its procedural arrows,
+compass, warning blocks, and message layout remain an isolated diagnostic
+surface. Nexus production currently retains source-owned STABG pixels and
+FONT256 data, but VDP2 placement, text/attribute ownership, and runtime HUD
+composition remain gated pending Saturn evidence.
 
-## HUD Implementation: FS_HUD
+## Isolated host diagnostic: FS_HUD
 
 Defined in `src/ui/firestaff_hud.h`. Main struct:
 
@@ -36,6 +37,9 @@ typedef struct {
 ```
 
 Message queue: HUD_MSG_QUEUE = 8, HUD_MSG_MAX_LEN = 128. Message duration: 3.0 seconds.
+
+The following elements belong only to the isolated host diagnostic and are not
+claims about Saturn coordinates, palette ownership, or retail widget meaning.
 
 ## HUD Elements
 
@@ -62,7 +66,7 @@ Message queue: HUD_MSG_QUEUE = 8, HUD_MSG_MAX_LEN = 128. Message duration: 3.0 s
 - Food warning: x=295, y=2, 6x6 px, color 6 (brown)
 - Water warning: x=305, y=2, 6x6 px, color 13 (light cyan/blue)
 
-## HUD Update Cycle
+## HUD Update Cycle (diagnostic only)
 
 ```c
 void fs_hud_init(FS_HUD *hud)       // zero-init, set msg_duration=3.0f
@@ -71,33 +75,33 @@ void fs_hud_render(const FS_HUD *h, uint8_t *fb)  // blit to 320x200 fb
 void fs_hud_message(FS_HUD *h, const char *text)  // enqueue a message
 ```
 
-Render target: 320x200 8-bit indexed framebuffer with palette system.
+Render target: 320x200 8-bit indexed framebuffer with palette system. No Nexus
+launcher or engine production path calls these functions.
 
 ## DM1 vs Nexus HUD Comparison
 
 | Feature | DM1 | Nexus V1 (Firestaff) |
 |---------|-----|-----------------------|
 | Health display | Text overlay in right panel | champ_hp[] (not rendered yet) |
-| Compass | ASCII directional | 24x24 pixel compass rose |
-| Movement arrows | Sprite bitmap | Hard-coded filled rects |
-| Messages | Bottom text line | Message queue + 3s timer |
-| Food/water warnings | Numeric text | 6x6 icon blocks |
-| Champion portraits | GDAT portrait sprites | Not rendered in HUD |
+| Compass | ASCII directional | Diagnostic-only procedural rose |
+| Movement arrows | Sprite bitmap | Diagnostic-only hard-coded rectangles |
+| Messages | Bottom text line | Diagnostic queue; no Nexus event owner |
+| Food/water warnings | Numeric text | Diagnostic-only icon blocks |
+| Champion portraits | GDAT portrait sprites | FACE.BIN route blocked pending capture |
 | Stamina/mana bars | Text in DM1 | Tracked (not rendered) |
 | Panel system | Right-side dynamic panels | Single HUD overlay |
 
 ## Whats Implemented vs Whats Missing
 
-Implemented: Compass rose, movement arrows, message queue with timed dismiss,
-food/water warning icons.
+Implemented only in the isolated diagnostic: compass rose, movement arrows,
+message queue with timed dismiss, and food/water warning icons.
 
-Not yet implemented: Champion stat bars (HP/Stamina/Mana), portrait display,
-spell symbol area, inventory panel, status effect indicators (poison/plague),
-3D minimap overlay (SMAP00-15.BIN), text renderer for messages.
+Nexus production still lacks authenticated champion stat bars, portrait display,
+spell symbol area, inventory panel, status effect indicators, VDP2 minimap
+placement, and Saturn-owned message text binding.
 
 ## Next Steps
-1. Implement champion stat bars rendering in fs_hud_render
-2. Implement portrait area (FACE.BIN loading and blit)
-3. Implement text renderer using FONT256.S2D glyph data
-4. Implement spell symbol area rendering
-5. Design minimap overlay using SMAP00-15.BIN data
+1. Bind HUD widget ownership and placement from an authenticated Saturn capture.
+2. Bind FACE.BIN palette/VDP1 command ownership before portrait blit.
+3. Bind FONT256/SLEV text and attribute consumers before message rendering.
+4. Bind SMAP00-15 VDP2 placement and explored-state writes.
