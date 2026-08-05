@@ -63,7 +63,9 @@ typedef enum {
     /* Atari ST loadable FTL modules.  These are executable source media,
      * not generic host-program placeholders. */
     FIRESTAFF_FILE_CSB_FTL_MODULE = 20,
-    FIRESTAFF_FILE_CSB_PORTRAIT_CMP = 21
+    FIRESTAFF_FILE_CSB_PORTRAIT_CMP = 21,
+    /* Amiga's KAOS.FTL carries title/entrance palette and code media. */
+    FIRESTAFF_FILE_KAOS_FTL = 22
 } FirestaffFileType;
 
 typedef struct {
@@ -81,7 +83,7 @@ typedef struct {
     const FirestaffGameDataFingerprint *entry;
 } FirestaffGameDataClassifyResult;
 
-#define FIRESTAFF_FINGERPRINT_COUNT 112
+#define FIRESTAFF_FINGERPRINT_COUNT 113
 
 extern const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERPRINT_COUNT];
 

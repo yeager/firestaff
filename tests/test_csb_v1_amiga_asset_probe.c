@@ -77,6 +77,13 @@ int main(void)
                       FIRESTAFF_PLATFORM_AMIGA,
                       FIRESTAFF_FILE_ENDA_DAT);
 
+    /* CSB Amiga 3.1 original KAOS.FTL, extracted from the original ADF. */
+    test_classify_hex("KAOS.FTL",
+                      "dbb79832c9cc3db82886ba8d3f72748a",
+                      FIRESTAFF_GAME_CSB,
+                      FIRESTAFF_PLATFORM_AMIGA,
+                      FIRESTAFF_FILE_KAOS_FTL);
+
     /* CSB Amiga v3.3 SWSH.FTL */
     test_classify_hex("SWSH.FTL",
                       "ff3872baaed8ee4e83ee3c0684b2eeec",
@@ -109,6 +116,6 @@ int main(void)
     assert(FIRESTAFF_FILE_ENDA_DAT == 13);
     assert(FIRESTAFF_FILE_SWSH_FTL == 14);
 
-    puts("ok: CSB Amiga asset probe (10 fingerprints verified)");
+    puts("ok: CSB Amiga asset probe (11 fingerprints verified)");
     return 0;
 }

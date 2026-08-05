@@ -42,6 +42,7 @@
 #define F_MINI FIRESTAFF_FILE_MINI_DAT
 #define F_MOD  FIRESTAFF_FILE_CSB_FTL_MODULE
 #define F_CMP  FIRESTAFF_FILE_CSB_PORTRAIT_CMP
+#define F_KAOS FIRESTAFF_FILE_KAOS_FTL
 
 #define MD5(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) \
     {0x##a,0x##b,0x##c,0x##d,0x##e,0x##f,0x##g,0x##h, \
@@ -72,9 +73,16 @@ const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERP
     {MD5(66,95,D2,AC,EB,CE,49,F9,5D,B1,D8,F3,A5,C7,33,DE), G_CSB, P_AMI, L_EN, F_DNG, "3.3", "CSB Amiga 3.3 Dungeon.DAT (English default)"},
     {MD5(5E,CE,62,70,66,96,93,F7,F4,8B,D2,E1,E3,50,CD,B6), G_CSB, P_AMI, L_FR, F_DNG, "3.3", "CSB Amiga 3.3 French DungeonF.DAT"},
     {MD5(79,26,A4,14,66,C7,11,3C,08,2A,8D,76,6B,2E,5A,16), G_CSB, P_AMI, L_DE, F_DNG, "3.3", "CSB Amiga 3.3 German DungeonG.DAT"},
-    {MD5(5B,59,0E,A3,A6,F5,EE,D5,13,B5,67,8B,01,46,8E,E4), G_CSB, P_AMI, L_ML, F_TITL, "3.3", "CSB Amiga 3.3 TITL.DAT"},
-    {MD5(9F,2B,73,FF,73,AD,00,32,81,0D,79,02,1C,90,0C,A9), G_CSB, P_AMI, L_ML, F_ENDA, "3.3", "CSB Amiga 3.3 ENDA.DAT"},
-    {MD5(FF,38,72,BA,AE,D8,EE,4E,83,EE,3C,06,84,B2,EE,EC), G_CSB, P_AMI, L_ML, F_SWSH, "3.3", "CSB Amiga 3.3 SWSH.FTL"},
+    /* These title sidecars are byte-identical on the original Amiga 3.1
+     * EN/FR/GE ADF and the later 3.3 disk set. */
+    {MD5(5B,59,0E,A3,A6,F5,EE,D5,13,B5,67,8B,01,46,8E,E4), G_CSB, P_AMI, L_ML, F_TITL, "3.1/3.3", "CSB Amiga 3.1 original and 3.3 TITL.DAT"},
+    {MD5(9F,2B,73,FF,73,AD,00,32,81,0D,79,02,1C,90,0C,A9), G_CSB, P_AMI, L_ML, F_ENDA, "3.1/3.3", "CSB Amiga 3.1 original and 3.3 ENDA.DAT"},
+    /* Greatstone's original CSB Amiga 3.1 EN/FR/GE catalogue identifies
+     * KAOS.FTL as the title, credits and entrance palette/code container.
+     * This MD5 was read directly from the corresponding original ADF, not
+     * from the separately available hacked Amiga 3.3 disk set. */
+    {MD5(DB,B7,98,32,C9,CC,3D,B8,28,86,BA,8D,3F,72,74,8A), G_CSB, P_AMI, L_ML, F_KAOS, "3.1", "CSB Amiga 3.1 original KAOS.FTL"},
+    {MD5(FF,38,72,BA,AE,D8,EE,4E,83,EE,3C,06,84,B2,EE,EC), G_CSB, P_AMI, L_ML, F_SWSH, "3.1/3.3", "CSB Amiga 3.1 original and 3.3 SWSH.FTL"},
     /* CSB Atari ST */
     {MD5(EB,F6,A5,7A,F3,F2,77,82,E3,58,C0,49,0B,FD,2F,2E), G_CSB, P_ST, L_EN, F_GFX, "2.0/2.1", "CSB Atari ST 2.0 and 2.1 English GRAPHICS.DAT"},
     {MD5(9F,8F,EB,26,9C,95,9C,9F,E7,22,AC,08,F9,9D,9C,35), G_CSB, P_ST, L_EN, F_ANIM, NULL, "CSB Atari ST Utility Disk English ANIMATE.DAT"},

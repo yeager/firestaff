@@ -75,6 +75,12 @@ static void test_classify_known_hashes(void) {
     r = firestaff_game_data_classify_hex("531EA104A2FBC2011EA73D11F274C57D");
     ASSERT(r.valid && r.entry->file_type == FIRESTAFF_FILE_MINI_DAT,
            "CSB Atari campaign MINI.DAT source hash found");
+
+    r = firestaff_game_data_classify_hex("DBB79832C9CC3DB82886BA8D3F72748A");
+    ASSERT(r.valid && r.entry->game == FIRESTAFF_GAME_CSB &&
+           r.entry->platform == FIRESTAFF_PLATFORM_AMIGA &&
+           r.entry->file_type == FIRESTAFF_FILE_KAOS_FTL,
+           "CSB Amiga original KAOS.FTL source hash found");
 }
 
 static void test_classify_unknown(void) {
