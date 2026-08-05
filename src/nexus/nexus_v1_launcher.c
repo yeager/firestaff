@@ -3120,6 +3120,7 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
     Nexus_V1_BpkRuntimeUploadReceipt bpk;
     Nexus_V1_BpkRuntimeUploadRow rows[NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS];
     Nexus_SfxRuntimeReceipt sfx;
+    int title_capture_source_ready;
 
     if (!receipt) {
         return;
@@ -3151,6 +3152,14 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
     receipt->faces_loaded = nexus_v1_startup_faces_loaded_count(engine);
     receipt->faces_expected = nexus_v1_startup_faces_expected_count(engine);
     receipt->faces_fallback = nexus_v1_startup_faces_fallback_count(engine);
+    /* The verified TITLE.CG loader produces an indexed character-generator
+     * atlas. It is useful source evidence, but it is not the Saturn title
+     * framebuffer. A title capture handoff must replace that source before
+     * the startup asset receipt can advertise a drawable title route. */
+    title_capture_source_ready =
+        !engine->ui.surfaces[NEXUS_SURFACE_TITLE].source ||
+        strcmp(engine->ui.surfaces[NEXUS_SURFACE_TITLE].source,
+               "TITLE.CG/4bpp-atlas") != 0;
 
     memset(&bpk, 0, sizeof(bpk));
     memset(rows, 0, sizeof(rows));
@@ -3208,10 +3217,12 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
 
     receipt->startup_assets_ready =
         receipt->title_screen_loaded &&
+        title_capture_source_ready &&
         nexus_v1_startup_surfaces_ready(engine) &&
         nexus_v1_startup_faces_ready(engine);
     receipt->title_route_ready =
         receipt->title_screen_loaded &&
+        title_capture_source_ready &&
         nexus_v1_startup_surfaces_ready(engine);
     receipt->real_menu_surface_route_ready =
         receipt->menu_bpk_upload_receipt_valid &&
@@ -3221,7 +3232,10 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         !receipt->menu_bpk_blocks_real_menu_surface_render;
     receipt->real_menu_surface_route_blocked =
         receipt->real_menu_surface_route_ready ? 0 : 1;
-    if (!nexus_v1_startup_surfaces_ready(engine)) {
+    if (!title_capture_source_ready) {
+        receipt->real_menu_surface_blocker = "title-vdp-capture-required";
+        receipt->startup_menu_asset_route = "blocked-title-vdp-capture";
+    } else if (!nexus_v1_startup_surfaces_ready(engine)) {
         receipt->real_menu_surface_blocker = "startup-surfaces";
         receipt->startup_menu_asset_route = "blocked-startup-surfaces";
     } else if (!nexus_v1_startup_faces_ready(engine)) {

@@ -34,6 +34,13 @@
   `test_dm1_v1_f0190_moving_killed_all_m10_handoff_pc34_compat`, and
   `test_dm1_v1_f0190_c040_m11_integration_audit` passed.
 
+- ✅ 2026-08-05 Nexus startup asset receipt gate: a real
+  `TITLE.CG/4bpp-atlas` surface no longer satisfies `title_route_ready` or
+  `startup_assets_ready`. Launcher receipts report
+  `blocked-title-vdp-capture` until a Saturn title VDP1/VDP2 handoff replaces
+  the character-generator atlas; source bytes remain available for decoder
+  diagnostics.
+
 - ✅ 2026-08-05 Nexus startup title fallback removal: the generic title
   renderer no longer copies a raw `TITLE.CG` character-generator atlas to the
   framebuffer when the Saturn MAPD/TIBG handoff is missing. TITLE.CG and

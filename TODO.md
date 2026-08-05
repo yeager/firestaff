@@ -96,7 +96,9 @@
   the real MAPD/TIBG source is present, so no unbound atlas copy can masquerade
   as the retail title composition. The generic title renderer now also stays
   blank when MAPD/TIBG is absent; missing title composition evidence cannot
-  reopen the raw-atlas fallback.
+  reopen the raw-atlas fallback. Startup asset receipts now also reject the
+  real `TITLE.CG/4bpp-atlas` source as a drawable title route and report the
+  missing Saturn title-capture handoff explicitly.
   CD-DA startup no longer manufactures WAV files from raw track bytes;
   authenticated CD image/decoder handoff remains required for music playback.
   Title timing remains a host state receipt only; the former synthetic edge
