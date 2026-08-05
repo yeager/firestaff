@@ -49566,3 +49566,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   (`0x90`, lit), matching ReDMCSB `DATA.C G0029` and the expected icon band.
   `test_dm1_v1_viewport_floor_ceiling_items_pc34_compat` 179/179 and
   `test_m11_dm1_f0033_raw_inventory_icon_gate` 6/6 pass.
+- ✅ 2026-08-06 DM1 sensor-message fallback removal: movement-triggered
+  sensor text now goes through the decoded DUNGEON.DAT text table and the
+  existing source message queue. The old host dialog and synthetic `TEXT #N`
+  label were removed; missing or malformed source text is fail-closed. The
+  DM1 sensor-timing integration and `firestaff_m11` Ninja build pass.

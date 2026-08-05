@@ -3005,6 +3005,11 @@ that its exact runtime path is not already source-locked and tested.
    M11. Creature attack sounds route through m11_audio_emit_creature_attack_sound_ex;
    general sound requests route through m11_audio_emit_source_sound. Remaining:
    EMIT_SENSOR_EFFECT handler for sensor walk-on/walk-off presentation effects.
+   2026-08-06: decoded sensor text now uses the source F0507/TEXT.C message
+   route in both movement and orchestrator emission paths; malformed text no
+   longer becomes a synthetic `TEXT #N` dialog. Remaining sensor work is
+   source-backed mutation/effect coverage beyond the currently modeled
+   teleport/text families.
 3. **CSB-DSA-RUNTIME:** Complete the CSBWin DSA execution path for authenticated
    saved actions, including supported control flow and live monster/filter
    effects, with transactional save/runtime handoff and fail-closed unsupported

@@ -9986,6 +9986,32 @@ static void m11_disable_champion_action_f0328_throw(
  * teleporter toggles, text display).
  *
  * Ref: ReDMCSB MOVESENS.C F0268/F0272 effect dispatch. */
+static int m11_print_dm1_sensor_message(M11_GameViewState* state,
+                                        int textIndex) {
+    char decoded[96];
+    unsigned int wordOffset;
+
+    if (!state || !state->world.things ||
+        !state->world.things->textData ||
+        state->world.things->textDataWordCount <= 0 ||
+        !state->world.things->textStrings || textIndex < 0 ||
+        textIndex >= state->world.things->textStringCount) {
+        return 0;
+    }
+    wordOffset = state->world.things->textStrings[textIndex].textDataWordOffset;
+    if (F0507_DUNGEON_DecodeTextAtOffset_Compat(
+            state->world.things->textData,
+            state->world.things->textDataWordCount,
+            wordOffset, decoded, sizeof(decoded)) < 0 || decoded[0] == '\0') {
+        return 0;
+    }
+    dm1_v1_text_set_game_time(&state->dm1V1TextMessage,
+                              (long)state->world.gameTick);
+    dm1_v1_text_print_message(&state->dm1V1TextMessage,
+                              DM1_V1_COLOR_WHITE, decoded);
+    return 1;
+}
+
 static void m11_apply_sensor_effects(M11_GameViewState* state,
                                      const struct SensorEffectList_Compat* effects) {
     int i;
@@ -10006,40 +10032,9 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
             break;
 
         case SENSOR_EFFECT_SHOW_TEXT: {
-            /* Display decoded text from dungeon text table.
-             * e->textIndex = index into things->textStrings[].
-             * F0507_DUNGEON_DecodeTextAtOffset_Compat decodes the
-             * compressed text data at the stored word offset. */
-            char decoded[96];
-            int decodeOk = 0;
-
-            if (state->world.things &&
-                state->world.things->textData &&
-                state->world.things->textDataWordCount > 0 &&
-                state->world.things->textStrings &&
-                e->textIndex >= 0 &&
-                e->textIndex < state->world.things->textStringCount) {
-                unsigned int wordOffset =
-                    state->world.things->textStrings[e->textIndex].textDataWordOffset;
-                if (F0507_DUNGEON_DecodeTextAtOffset_Compat(
-                        state->world.things->textData,
-                        state->world.things->textDataWordCount,
-                        wordOffset, decoded, sizeof(decoded)) >= 0 &&
-                    decoded[0] != '\0') {
-                    decodeOk = 1;
-                }
-            }
-
-            snprintf(state->inspectTitle, sizeof(state->inspectTitle),
-                     "MESSAGE");
-            if (decodeOk) {
-                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                         "%s", decoded);
-            } else {
-                snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                         "TEXT #%d", e->textIndex);
-            }
-            M11_GameView_ShowDialogOverlay(state, state->inspectDetail);
+            /* ReDMCSB TEXT.C owns this path. Do not replace a missing or
+             * malformed source string with a host label such as TEXT #N. */
+            (void)m11_print_dm1_sensor_message(state, e->textIndex);
             break;
         }
 
