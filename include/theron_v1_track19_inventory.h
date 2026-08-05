@@ -18,6 +18,9 @@ typedef struct {
     const char *variant;
     int item_name_table_verified;
     int level_label_table_verified;
+    int opaque_record_window_verified;
+    size_t opaque_record_window_offset;
+    size_t opaque_record_window_bytes;
     char source_md5[33];
 } Theron_V1Track19InventoryReceipt;
 

@@ -3,6 +3,7 @@
 #include "theron_v1_track19_jp_item_names.h"
 #include "theron_v1_track19_jp_level_labels.h"
 #include "theron_v1_track19_level_labels.h"
+#include "theron_v1_track19_record_window.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -187,11 +188,21 @@ int main(void) {
         (!theron_v1_track19_inventory_file(real_iso, &file_receipt) ||
          !file_receipt.item_name_table_verified ||
          !file_receipt.level_label_table_verified ||
+         !file_receipt.opaque_record_window_verified ||
+         file_receipt.opaque_record_window_offset !=
+             THERON_TRACK19_OPAQUE_RECORD_WINDOW_US_OFFSET ||
+         file_receipt.opaque_record_window_bytes !=
+             THERON_TRACK19_OPAQUE_RECORD_WINDOW_BYTES ||
          file_receipt.source_md5[0] == '\0')) return 1;
     if (real_jp_iso && real_jp_iso[0] &&
         (!theron_v1_track19_inventory_file(real_jp_iso, &file_receipt) ||
          !file_receipt.item_name_table_verified ||
          !file_receipt.level_label_table_verified ||
+         !file_receipt.opaque_record_window_verified ||
+         file_receipt.opaque_record_window_offset !=
+             THERON_TRACK19_OPAQUE_RECORD_WINDOW_JP_OFFSET ||
+         file_receipt.opaque_record_window_bytes !=
+             THERON_TRACK19_OPAQUE_RECORD_WINDOW_BYTES ||
          file_receipt.source_md5[0] == '\0')) return 1;
     return 0;
 }

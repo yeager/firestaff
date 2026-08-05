@@ -4,6 +4,7 @@
 #include "theron_v1_track19_jp_item_names.h"
 #include "theron_v1_track19_jp_level_labels.h"
 #include "theron_v1_track19_level_labels.h"
+#include "theron_v1_track19_record_window.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -138,6 +139,14 @@ int theron_v1_track19_inventory_file(
         }
         out->level_label_table_verified = 1;
     }
+    if (!theron_v1_track19_opaque_record_window_validate(
+            data, bytes, strcmp(out->variant, "jp") == 0,
+            &out->opaque_record_window_offset,
+            &out->opaque_record_window_bytes)) {
+        free(data);
+        return 0;
+    }
+    out->opaque_record_window_verified = 1;
     free(data);
     return 1;
 }

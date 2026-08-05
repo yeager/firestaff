@@ -98,6 +98,11 @@
   fixed 16-byte Shift-JIS records at UD 0x203A7E, including its 0x8197
   delimiters; this remains metadata only and does not admit maps or objects.
 
+  A byte-identical 502-byte window immediately following the US/JP item
+  tables is now authenticated as opaque record evidence (US UD 0x0E951E,
+  JP UD 0x0E955E). It is deliberately not classified as map/object/property
+  data until the original consumer/disassembly binds its record grammar.
+
   File-backed Track 19 inventory now carries the authenticated source hash and
   both metadata-verification flags; later record semantics remain closed.
 
