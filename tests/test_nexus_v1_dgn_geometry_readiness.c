@@ -5654,6 +5654,7 @@ static void test_vdp1_command_sidecar_stays_no_draw(void) {
 static void test_palette_source_gate(void) {
     Nexus_PaletteState palette;
     uint8_t source[NEXUS_PALETTE_SIZE * 2];
+    uint8_t surface[4] = {0x34U, 0x12U, 0x78U, 0x56U};
     int i;
 
     for (i = 0; i < (int)sizeof(source); ++i)
@@ -5669,6 +5670,14 @@ static void test_palette_source_gate(void) {
     CHECK(nexus_palette_load_stone(&palette, source, 2) == 0 &&
           !palette.source_palette_bound && nexus_palette_lookup(&palette, 7U) == 0U,
           "a truncated palette source withdraws the renderable palette");
+    CHECK(nexus_palette_load_surface(&palette, surface, (int)sizeof(surface),
+                                     0, 3, 0) == 0 &&
+          !palette.source_palette_bound && palette.entries[0] == 0,
+          "a short surface palette span is rejected without zero-fill or promotion");
+    CHECK(nexus_palette_load_surface(&palette, surface, (int)sizeof(surface),
+                                     -1, 1, 0) == 0 &&
+          !palette.source_palette_bound && palette.entries[0] == 0,
+          "an invalid surface palette offset is rejected without mutation");
 }
 
 static void test_texture_source_gate(void) {

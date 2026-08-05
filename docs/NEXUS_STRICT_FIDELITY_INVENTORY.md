@@ -201,6 +201,12 @@ levererade mediet, men bevisar inte ensamt Saturns VDP-placering eller
 placeringsflöde. Därför förblir STMP-pixeltolkningen och meny-layouten
 evidens-only tills motsvarande byte-/pixelbevis är säkrade.
 
+Ytterligare palette-spans från ytor är nu fail-closed: negativa offsets,
+överskridna paletteintervall och för korta källor avvisas före läsning.
+Rutinen nollfyller inte längre saknade poster och en partiell yta kan inte
+ensam markera hela palette-state som renderbar. Det ändrar inte den öppna
+VDP1/VDP2-bindningen; den kräver fortfarande verklig Saturn-capture.
+
 DM.BIN har dessutom en separat källbunden VDP1-register-/VRAM-state receipt:
 den verifierar den unika statiska registertabellen och SH-2-literalflödet till
 VDP1-registerfönstret och VDP1-VRAM-baskandidaten. Den bevisar inte en

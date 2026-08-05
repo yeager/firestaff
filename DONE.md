@@ -1,3 +1,9 @@
+- ✅ 2026-08-05 Nexus palette-span provenance: `nexus_palette_load_surface()`
+  now rejects invalid, truncated, and overflow-prone source spans without
+  zero-filling palette entries or promoting a partial surface to a complete
+  renderable palette. Added regressions to the real-data DGN geometry gate;
+  the Nexus corpus remains green.
+
 - ✅ 2026-08-05 Theron portrait provenance boundary: roster initialization no
   longer turns the party slot into a fabricated portrait index. Portraits
   remain explicitly unbound until Track 02 portrait tile records are decoded;

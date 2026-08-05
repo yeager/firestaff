@@ -71,21 +71,27 @@ int nexus_palette_load_surface(Nexus_PaletteState *pal,
 {
     int i;
     if (!pal || !data) return 0;
-    if (pal_start + count > NEXUS_PALETTE_SIZE)
-        count = NEXUS_PALETTE_SIZE - pal_start;
-    if (offset + count * 2 > size) {
-        printf("Nexus palette: surface data short (%d < %d) "
-               "for entries [%d-%d] — zero-fill\n",
-               size, offset + count * 2, pal_start, pal_start + count - 1);
-        for (i = 0; i < count; i++) pal->entries[pal_start + i] = 0;
-        pal->source_palette_bound = 0;
-        nexus_palette_expand_rgba(pal);
+    /* A surface span is source data, not a palette initializer.  Do not
+     * clamp, zero-fill, or perform offset+length arithmetic before the
+     * bounds have been proven: any of those would manufacture Saturn
+     * palette entries from an incomplete asset. */
+    if (size < 0 || offset < 0 || count <= 0 ||
+        (int)pal_start >= NEXUS_PALETTE_SIZE ||
+        count > NEXUS_PALETTE_SIZE - (int)pal_start ||
+        offset > size || count > (size - offset) / 2) {
+        printf("Nexus palette: incomplete/invalid surface span "
+               "offset=%d count=%d size=%d start=%u — source palette unchanged\n",
+               offset, count, size, (unsigned)pal_start);
         return 0;
     }
     for (i = 0; i < count; i++)
         pal->entries[pal_start + i] =
             (uint16_t)data[offset + i*2] | ((uint16_t)data[offset + i*2+1] << 8);
-    pal->source_palette_bound = 1;
+    /* A partial surface span may extend an already authenticated palette,
+     * but cannot authenticate one by itself.  Only a complete 256-entry
+     * source span may promote an unbound palette. */
+    if (pal_start == 0 && count == NEXUS_PALETTE_SIZE)
+        pal->source_palette_bound = 1;
     nexus_palette_expand_rgba(pal);
     printf("Nexus palette: loaded %d entries at offset %d [start=%d]\n",
            count, offset, pal_start);
