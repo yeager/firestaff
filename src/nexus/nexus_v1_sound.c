@@ -48,35 +48,9 @@ static void ensure_event_selector_init(void) {
     size_t i;
     if (g_event_selector_initialized) return;
     for (i = 0; i < EVENT_COUNT; i++) g_event_selector[i] = -1;
-    /* Bind events directly to decoded tone indices.
-     * The global tone bank has 45 tones (indices 0-44).
-     * Assignments based on tone duration and SFX character analysis. */
-    g_event_selector[NEXUS_SFX_FOOTSTEP]       = 0;  /* 122ms — short step */
-    g_event_selector[NEXUS_SFX_DOOR_OPEN]       = 7;  /* 335ms — mechanical */
-    g_event_selector[NEXUS_SFX_DOOR_CLOSE]      = 6;  /* 193ms — shorter close */
-    g_event_selector[NEXUS_SFX_ATTACK_HIT]      = 3;  /* 118ms — impact */
-    g_event_selector[NEXUS_SFX_ATTACK_MISS]     = 1;  /* 76ms — swish */
-    g_event_selector[NEXUS_SFX_CHAMPION_HURT]   = 9;  /* 268ms — pain */
-    g_event_selector[NEXUS_SFX_CREATURE_DEATH]  = 14; /* 328ms — death */
-    g_event_selector[NEXUS_SFX_CREATURE_ATTACK] = 13; /* 128ms — attack */
-    g_event_selector[NEXUS_SFX_SPELL_CAST]      = 17; /* 407ms — magic */
-    g_event_selector[NEXUS_SFX_SPELL_IMPACT]    = 42; /* 349ms — explosion */
-    g_event_selector[NEXUS_SFX_PICKUP_ITEM]     = 5;  /* 45ms — click */
-    g_event_selector[NEXUS_SFX_DROP_ITEM]       = 10; /* 39ms — thud */
-    g_event_selector[NEXUS_SFX_STAIRS]          = 11; /* 107ms — step */
-    g_event_selector[NEXUS_SFX_TELEPORT]        = 41; /* 575ms — whoosh */
-    g_event_selector[NEXUS_SFX_ALARM]           = 19; /* 812ms — alarm */
-    g_event_selector[NEXUS_SFX_PIT_FALL]        = 31; /* 398ms — fall */
-    g_event_selector[NEXUS_SFX_MENU_SELECT]     = 25; /* 56ms — UI */
-    g_event_selector[NEXUS_SFX_MENU_CONFIRM]    = 8;  /* 66ms — UI */
-    g_event_selector[NEXUS_SFX_MENU_CANCEL]     = 26; /* 39ms — UI */
-    g_event_selector[NEXUS_SFX_GOLD_PICKUP]     = 12; /* 107ms — clink */
-    g_event_selector[NEXUS_SFX_EXIT_REACHED]    = 17; /* 407ms — fanfare */
-    g_event_selector[NEXUS_SFX_PARTY_HURT]      = 2;  /* 89ms — hurt */
-    g_event_selector[NEXUS_SFX_LEVEL_UP]        = 36; /* 238ms — chime */
-    g_event_selector[NEXUS_SFX_MAGIC_SHIELD]    = 35; /* 118ms — shield */
-    g_event_selector[NEXUS_SFX_MAGIC_HEAL]      = 18; /* 278ms — heal */
-    g_event_selector[NEXUS_SFX_MAGIC_DAMAGE]    = 4;  /* 89ms — damage */
+    /* No Saturn event-to-MAP selector binding is authenticated yet. Keep the
+     * table fail-closed; only an explicit source/capture-backed setter may
+     * establish a runtime association. */
     g_event_selector_initialized = 1;
 }
 
@@ -666,7 +640,7 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
      * until a MAP record lookup succeeds with a verified selector. */
     nexus_cd_ensure_wav_tracks();
     printf("Nexus sound: initialized (SAL decode ready, "
-           "event selectors bound, CD tracks extracted)\n");
+           "event selectors fail-closed, CD tracks extracted)\n");
     return 0;
 }
 
