@@ -9628,11 +9628,13 @@ int main(void)
         CHECK(ret == 0 && r381c.valid, "381c null returns 0");
     }
 
-    /* batch-19a: 38a8 null state returns 0 */
+    /* batch-19a: 38a8 has no source s350/CAII/action-list owner here, so it
+       must not impersonate the original routine's genuine zero outcome. */
     {
         DM2_V1_Skproject38a8Receipt r38a8;
         int32_t ret = dm2_v1_skproject_1c9a_38a8(NULL, &r38a8);
-        CHECK(ret == 0 && r38a8.valid, "38a8 null returns 0");
+        CHECK(ret == -1 && !r38a8.valid && r38a8.rejected_unbound_state,
+              "38a8 unbound state rejected");
     }
 
     /* batch-19a: fill_caii_cur_map null returns 0 */

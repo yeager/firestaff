@@ -9186,6 +9186,12 @@ lane is carried forward in the sections below.
     Remaining adjacent work is live pixel blitting, palette/blitter ownership,
     dynamic `.Z000`--`.Z028`/0x01 substitutions, scrollbox screen mutation, and wiring
     these receipts to real runtime HUD/menu consumers without fallback visuals.
+  - **2026-08-05 CAII inventory update:** both linked narrow
+    `DM2_1c9a_38a8` adapters formerly returned the original routine's valid
+    zero result without its `s350` action list, live CAII records, or
+    `DM2_FIND_WALK_PATH` owner. They now reject explicitly. Port the complete
+    source state and callback chain from `c_1c9a.cpp:9748-9894` before a
+    runtime path-search result can be admitted.
   - 2026-07-16 DM2 graphics-data file lifecycle update: skproject
     `DM2_GRAPHICS_DATA_OPEN`, `DM2_GRAPHICS_DATA_CLOSE`, and
     `DM2_GRAPHICS_DATA_READ` now have bounded file-counter and split-read

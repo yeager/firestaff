@@ -639,10 +639,10 @@ TEST(381c_stub) {
     assert(r == -1);
 }
 
-TEST(38a8_stub) {
+TEST(38a8_unbound_state_rejected) {
     DM2_V1_1c9aCallbacks cb = make_callbacks();
     int32_t r = dm2_v1_1c9a_38a8(&cb, NULL);
-    assert(r == 0);
+    assert(r == -1);
 }
 
 TEST(fill_caii_cur_map_stub) {
@@ -810,7 +810,7 @@ int main(void) {
     RUN(damage_stub);
     RUN(heal_stub);
     RUN(381c_stub);
-    RUN(38a8_stub);
+    RUN(38a8_unbound_state_rejected);
     RUN(fill_caii_cur_map_stub);
     RUN(fill_orphan_caii_stub);
     RUN(0891_stub);

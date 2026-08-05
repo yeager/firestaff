@@ -7083,6 +7083,13 @@
   a non-playable save. Source: `SKULLWIN/dm2data.h:150-159`,
   `c_dialog.cpp:115-117,199-202,337-343`, `c_savegame.cpp:2169-2204`.
 
+- ✅ 2026-08-05 DM2 CAII false-success removal: both linked
+  `DM2_1c9a_38a8` narrow adapters now reject unbound source state instead of
+  returning the original routine's meaningful zero/no-path result. The
+  placeholder state field is removed; receipts explicitly record the missing
+  live `s350`/CAII/action-list owner. Regression coverage locks both public
+  boundaries. Source: `SKULLWIN/c_1c9a.cpp:9748-9894`.
+
 - ✅ 2026-08-05 DM2 FORMAT_SKSTR synthetic-substitution removal: the linked
   narrow text adapter no longer invents alphabetic `.Za`--`.Zz` substitutions.
   It preserves source bytes literally until the genuine numeric

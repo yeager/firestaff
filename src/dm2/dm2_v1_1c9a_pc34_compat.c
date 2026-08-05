@@ -1007,16 +1007,18 @@ int32_t dm2_v1_1c9a_381c(
 }
 
 /* ========================================================================
- * DM2_1c9a_38a8 — CAII table compaction
+ * DM2_1c9a_38a8 — CAII/action-list walk-path dispatch
  * skproject c_1c9a.cpp:9749-9894
- * Stub: returns 0
+ * Requires the source-owned s350/CAII/action-list state.  Return an explicit
+ * unavailable result; source return value zero is a real no-path outcome and
+ * must not be forged by this compatibility shim.
  * ======================================================================== */
 
 int32_t dm2_v1_1c9a_38a8(
     const DM2_V1_1c9aCallbacks *cb, void *ctx)
 {
     (void)cb; (void)ctx;
-    return 0;
+    return -1;
 }
 
 /* ========================================================================

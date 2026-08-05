@@ -19878,7 +19878,9 @@ int32_t dm2_v1_skproject_1c9a_381c(
 
 /* SKULLWIN/c_1c9a.cpp:9748 DM2_1c9a_38a8 — belongs to DM2_14cd_0389;
    calls SET_CURRENT_THINKING_CREATURE_WALK_PATH then searches the creature
-   action list for a matching entry and dispatches DM2_FIND_WALK_PATH. */
+   action list for a matching entry and dispatches DM2_FIND_WALK_PATH.
+   Do not report a source-like zero result without the live s350/CAII/action
+   state: zero is a genuine source outcome, not an availability sentinel. */
 int32_t dm2_v1_skproject_1c9a_38a8(
     const DM2_V1_Skproject38a8State *state,
     DM2_V1_Skproject38a8Receipt *out_receipt)
@@ -19888,20 +19890,10 @@ int32_t dm2_v1_skproject_1c9a_38a8(
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     memset(&receipt, 0, sizeof(receipt));
 
-    if (!state) {
-        receipt.valid = 1;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
-    }
-
-    /* Searches s350.v1e0678[] for matching b_03/w_04 entry */
-    receipt.searched_action_list = 1;
-
-    /* The function dispatches FIND_WALK_PATH and processes the result.
-       Full reimplementation deferred — receipt captures control flow. */
-    receipt.valid = 1;
+    (void)state;
+    receipt.rejected_unbound_state = 1;
     if (out_receipt) *out_receipt = receipt;
-    return 0;
+    return -1;
 }
 
 /* SKULLWIN/c_1c9a.cpp:9895 DM2_FILL_CAII_CUR_MAP — iterates all tiles

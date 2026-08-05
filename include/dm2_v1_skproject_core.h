@@ -7775,12 +7775,15 @@ int32_t dm2_v1_skproject_1c9a_381c(
 
 /* SKULLWIN/c_1c9a.cpp:9748 DM2_1c9a_38a8 */
 typedef struct {
-    int placeholder;
+    /* The original routine consumes the live s350/CAII/action-list state.
+     * A standalone narrow state must never stand in for those records. */
+    const void *source_state;
 } DM2_V1_Skproject38a8State;
 
 typedef struct {
     int valid;
     int searched_action_list;
+    int rejected_unbound_state;
 } DM2_V1_Skproject38a8Receipt;
 
 int32_t dm2_v1_skproject_1c9a_38a8(
