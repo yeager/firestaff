@@ -44,8 +44,9 @@ int main(void)
             DM2_V1_MUSIC_INSPECT_OK ||
         receipt.format != DM2_V1_MUSIC_FORMAT_HMP_V1 ||
         receipt.track_count != 1 || receipt.event_count != 1 ||
-        receipt.channel_event_count != 1 || receipt.midi_handoff_ready != 1) {
-        fprintf(stderr, "native HMP event stream was not accepted\n");
+        receipt.channel_event_count != 1 || receipt.midi_handoff_ready != 0 ||
+        receipt.schedule_handoff_ready != 0 || receipt.schedule_event_count != 0) {
+        fprintf(stderr, "native HMP diagnostic incorrectly opened MIDI handoff\n");
         return 1;
     }
 
@@ -55,6 +56,6 @@ int main(void)
         fprintf(stderr, "malformed HMP event was accepted\n");
         return 1;
     }
-    puts("PASS DM2 bounded HMP/SMF parser establishes MIDI-only handoff");
+    puts("PASS DM2 HMP inspection remains diagnostic while SMF can hand off");
     return 0;
 }

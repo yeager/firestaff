@@ -3681,6 +3681,10 @@ that its exact runtime path is not already source-locked and tested.
     labels (such as "Dungeon Ambient" and "Boss Encounter") from the active
     sound module. DMWeb proves only the `0x00..0x1c` HMP identities and their
     `SONGLIST.DAT` selectors; names must not be inferred from a track number.
+    **2026-08-05 HMP admission correction:** a structurally recognised HMP
+    stream is now diagnostic-only and clears all scheduler/MIDI handoff state.
+    SKProject's MIDI code accepts converted sidecars, not original GDAT HMP;
+    a generic MIDI event walk must not be promoted to playback proof.
     Remaining work is original-HMP stream decoding and backend scheduling. Do
     not claim a cue played until that source chain and backend have both
     succeeded.
