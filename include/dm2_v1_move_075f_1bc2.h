@@ -18,7 +18,10 @@ typedef enum {
     DM2_V1_MOVE_075F_1BC2_BLOCK_CLOSED_DOOR,
     DM2_V1_MOVE_075F_1BC2_BLOCK_PIT,
     DM2_V1_MOVE_075F_1BC2_BLOCK_LAVA,
-    DM2_V1_MOVE_075F_1BC2_BLOCK_INACCESSIBLE
+    DM2_V1_MOVE_075F_1BC2_BLOCK_INACCESSIBLE,
+    /* c_move.cpp:2861 needs party-position and RNG owners.  It is not a
+     * dungeon collision routine, so never substitute a target-tile result. */
+    DM2_V1_MOVE_075F_1BC2_BLOCK_SOURCE_STATE_UNBOUND
 } DM2_V1_Move075f1bc2BlockReason;
 
 typedef enum {
@@ -29,6 +32,7 @@ typedef enum {
 
 typedef struct {
     int valid;
+    int source_state_unbound;
     int accepted;
     int blocked;
     DM2_V1_Move075f1bc2BlockReason block_reason;

@@ -19,6 +19,7 @@ typedef enum {
 
 typedef struct {
     int valid;
+    int source_state_unbound;
     int committed;
     int blocked;
     DM2_V1_Move2c1d028cOutcome outcome;

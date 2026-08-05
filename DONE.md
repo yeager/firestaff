@@ -1,3 +1,11 @@
+- ✅ 2026-08-05 DM2 c_move synthetic-receipt removal: `DM2_move_075f_1bc2`
+  and `DM2_move_2c1d_028c` no longer turn loaded dungeon tiles into invented
+  target/commit results. SKProject `c_move.cpp:2861` constructs randomized
+  player-position candidates, while `:2914` returns an adjacent party-member
+  index. Both adapters now reject with an explicit unbound-source-state
+  receipt until their party and RNG owners are wired. Focused regressions
+  verify that neither path can report a movement success.
+
 - ✅ 2026-08-05 Theron JP Track 19 level-label provenance: the real
   `TQJP19.iso` selector table is now bound at `0x203A7E–0x203B8C` as 15
   fixed 16-byte Shift-JIS records with source `0x8197` delimiters. The exact

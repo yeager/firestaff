@@ -19302,22 +19302,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     synthetic gameplay data. Remaining projectile work is full missile impact
     integration through object/group/champion runtime effects, timing, audio,
     and record ownership.
-  - 2026-07-16 update: `DM2_move_075f_1bc2` now has a DM2-owned
-    source-named target-cell receipt for the `c_move.cpp:2861` boundary. It
-    normalizes the move direction, reads source and target square facts from
-    loaded `DUNGEON.DAT`, records raw tile, square type, first thing link,
-    door-state field, outdoor flag, vertical stair direction, passability, and
-    a stable movement hash. It is deliberately non-mutating and does not
-    fabricate chained object/group movement, sensors, teleports, or cross-map
-    relocation before the original record ownership path is proven.
-  - 2026-07-16 update: `DM2_move_2c1d_028c` now has a DM2-owned
-    source-named commit receipt for the `c_move.cpp:2914` boundary. It
-    consumes the already bounded `DM2_move_075f_1bc2` target-cell receipt,
-    preserves facing, advances only for accepted targets, keeps the source pose
-    when blocked, records stair vertical intent, and marks target thing links
-    or stairs as post-step chain work. It still does not mutate runtime state
-    or synthesize sensors, teleports, record traversal, timing, or cross-map
-    relocation.
+  - **2026-08-05 c_move inventory correction:** the former
+    `DM2_move_075f_1bc2` target-cell and `DM2_move_2c1d_028c` commit receipts
+    were synthetic. In SKProject `c_move.cpp:2861` selects four candidate
+    player positions using party state and `DM2_RANDBIT`; `:2914` searches an
+    adjacent party member and returns its index or `-1`. Neither routine is
+    collision nor movement commit. Both adapters now reject explicitly until
+    the real party-position, RNG, and caller state are bound. Keep collision
+    in the separately source-scoped runtime route; do not reuse these names
+    to admit a DUNGEON.DAT movement result.
   - 2026-07-16 update: `DM2_move_2fcf_0434` now has a DM2-owned
     source-named teleporter transition gate for the `c_move.cpp:2152`
     boundary. It consumes either loaded `DUNGEON.DAT` square facts or explicit
