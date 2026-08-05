@@ -126,15 +126,15 @@ int nexus_stairs_count(void);
 
 /* Pit / chute resolution
  * DM1 MOVESENS.C F0267/F0268: chute squares force a level transition to a
- * registered target cell.  When no real target is registered the default is
- * one level down at the same (x,y).
+ * registered target cell. A missing Structure1F destination is not a valid
+ * runtime target and must remain blocked.
  * Source: DMWeb DGN Structure1F floor-sensor destination fields. */
 #define NEXUS_MAX_PITS 64
 
 typedef struct {
     int x, y;
     int target_x, target_y;
-    int target_level;    /* -1 = default one level down */
+    int target_level;    /* authenticated destination level, never implicit */
 } Nexus_PitLink;
 
 void nexus_pits_init(void);

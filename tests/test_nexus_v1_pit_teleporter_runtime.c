@@ -66,6 +66,7 @@ static void reset_engine_for_square_tests(Nexus_V1_Engine *engine,
 
     nexus_teleporters_init();
     nexus_stairs_init();
+    nexus_pits_init();
     nexus_doors_init();
 }
 
@@ -76,15 +77,16 @@ static void test_chute_step_pending_level_change(void) {
     reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
     engine.current_level.squares[9][10] = NEXUS_SQUARE_CHUTE;
     engine.current_level.collision_refs[9][10] = 0;
+    nexus_pits_register(10, 9, 11, 12, 4);
 
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     int redraw = nexus_mechanics_tick(&st, &engine);
 
     CHECK(redraw == 1, "chute step requests redraw");
-    CHECK(st.party_x == 10 && st.party_y == 9,
-          "party moved onto chute square");
+    CHECK(st.party_x == 11 && st.party_y == 12,
+          "party moved to the registered chute target");
     CHECK(st.pending_level_change == 4,
-          "chute sets pending_level_change to current level + 1");
+          "chute sets pending_level_change to the registered target level");
 }
 
 static void test_chute_at_max_level_clamps(void) {
@@ -94,12 +96,13 @@ static void test_chute_at_max_level_clamps(void) {
     reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 15);
     engine.current_level.squares[9][10] = NEXUS_SQUARE_CHUTE;
     engine.current_level.collision_refs[9][10] = 0;
+    nexus_pits_register(10, 9, 11, 12, 15);
 
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     nexus_mechanics_tick(&st, &engine);
 
     CHECK(st.pending_level_change == 15,
-          "chute at level 15 clamps pending_level_change to 15");
+          "chute at level 15 preserves the registered target level");
 }
 
 static void test_teleporter_same_level(void) {
@@ -307,15 +310,30 @@ static void test_exit_non_final_level_no_game_over(void) {
 
 static void test_square_event_chute_returns_chute_fall(void) {
     int tx = -1, ty = -1, tl = -2, td = -2;
+    nexus_pits_init();
+    nexus_pits_register(10, 9, 21, 22, 6);
     Nexus_SquareEvent ev = nexus_process_square_event(
         NEXUS_SQUARE_CHUTE, 10, 9, &tx, &ty, &tl, &td);
 
     CHECK(ev == NEXUS_EVENT_CHUTE_FALL,
           "chute square returns NEXUS_EVENT_CHUTE_FALL");
-    CHECK(tx == 10 && ty == 9,
-          "chute event keeps coordinates");
-    CHECK(tl == -1,
-          "chute event signals default level transition (-1)");
+    CHECK(tx == 21 && ty == 22,
+          "chute event exposes the registered coordinates");
+    CHECK(tl == 6,
+          "chute event exposes the registered level");
+}
+
+static void test_square_event_unregistered_chute_blocks(void) {
+    int tx = 10, ty = 9, tl = 3, td = NEXUS_DIR_NORTH;
+    Nexus_SquareEvent ev;
+
+    nexus_pits_init();
+    ev = nexus_process_square_event(NEXUS_SQUARE_CHUTE, 10, 9,
+                                    &tx, &ty, &tl, &td);
+    CHECK(ev == NEXUS_EVENT_BLOCKED,
+          "square-event route blocks an unregistered chute");
+    CHECK(tx == 10 && ty == 9 && tl == -1 && td == -1,
+          "blocked chute exposes no implicit transition target");
 }
 
 static void test_square_event_teleport_returns_teleport(void) {
@@ -443,6 +461,7 @@ int main(void) {
     test_exit_final_level_game_over();
     test_exit_non_final_level_no_game_over();
     test_square_event_chute_returns_chute_fall();
+    test_square_event_unregistered_chute_blocks();
     test_square_event_teleport_returns_teleport();
     test_water_blocked_without_rope();
     test_water_crossed_with_rope();

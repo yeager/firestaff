@@ -64,6 +64,8 @@
   The public square-event dispatcher and mechanics transition branch now also
   fail closed for an unregistered stair instead of retaining the former
   same-coordinate level +/- 1 fallback.
+  Pit/chute destinations likewise require an authenticated Structure1F target;
+  the old implicit same-coordinate next-level route is removed.
   Production HUD no longer injects fabricated script/fountain/save strings;
   bind these messages only through authenticated DMN text and SLEV consumers.
   FONT256.S2D loader now exposes only the 242 real character-generator tiles

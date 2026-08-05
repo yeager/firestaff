@@ -356,7 +356,7 @@ void nexus_pits_init(void) {
 }
 
 int nexus_pits_register(int x, int y, int target_x, int target_y, int target_level) {
-    if (g_pit_count >= NEXUS_MAX_PITS) return -1;
+    if (g_pit_count >= NEXUS_MAX_PITS || target_level < 0) return -1;
     g_pits[g_pit_count].x = x;
     g_pits[g_pit_count].y = y;
     g_pits[g_pit_count].target_x = target_x;
@@ -561,14 +561,15 @@ Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
         return NEXUS_EVENT_ALARM_TRIGGER;
 
     case NEXUS_SQUARE_CHUTE:
-        /* Chute: party forced to a registered target or one level down.
+        /* Chute: party is forced only to a registered source-owned target.
          * Source: DM1 MOVESENS.C F0267/F0268 pit/chute sensor. */
         if (nexus_pits_resolve(x, y, &tx, &ty, &tl) == 0) {
             if (out_target_x) *out_target_x = tx;
             if (out_target_y) *out_target_y = ty;
             if (out_target_level) *out_target_level = tl;
         } else {
-            if (out_target_level) *out_target_level = -1;
+            /* Do not invent a same-coordinate adjacent-level transition. */
+            return NEXUS_EVENT_BLOCKED;
         }
         return NEXUS_EVENT_CHUTE_FALL;
 

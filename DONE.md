@@ -57,6 +57,13 @@
   `nexus_v1_pit_teleporter_runtime` passes with both registered and
   unregistered stair coverage.
 
+- ✅ 2026-08-05 Nexus pit/chute placeholder removal: chute dispatch now
+  requires a registered source-owned destination level and coordinates.
+  Missing Structure1F targets return `NEXUS_EVENT_BLOCKED`; no
+  same-coordinate `map_index + 1` fallback or loader-side guessed target is
+  retained. The runtime regression covers registered and unregistered chute
+  routes.
+
 - ✅ 2026-08-05 Nexus startup title fallback removal: the generic title
   renderer no longer copies a raw `TITLE.CG` character-generator atlas to the
   framebuffer when the Saturn MAPD/TIBG handoff is missing. TITLE.CG and

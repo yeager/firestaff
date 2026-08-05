@@ -406,10 +406,9 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
                 nexus_teleporters_register(sx, sy, dx, dy, level_index);
                 break;
             case NEXUS_SQUARE_CHUTE:
-                nexus_pits_register(sx, sy,
-                    (dx || dy) ? dx : sx,
-                    (dx || dy) ? dy : sy,
-                    (dl >= 0) ? dl : -1);
+                if (dl >= 0) {
+                    nexus_pits_register(sx, sy, dx, dy, dl);
+                }
                 break;
             case NEXUS_SQUARE_STAIRS_DN:
                 nexus_stairs_register(sx, sy,
@@ -1008,13 +1007,13 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     break;
                 case NEXUS_EVENT_PIT_FALL:
                 case NEXUS_EVENT_CHUTE_FALL:
-                    /* Pit/chute forces the party to the next lower level.
-                     * tl == -1 means "one level down" (same x,y).
+                    /* Pit/chute forces the party to the authenticated target.
+                     * An absent target is rejected by the square-event route;
+                     * no adjacent-level fallback is permitted here.
                      * Source: DM1 MOVESENS.C F0267/F0268 chute/pit sensor;
                      *         CLIKMENU.C:264-276 stairs special cases. */
+                    if (tl < 0) break;
                     st->pending_level_change = tl;
-                    if (st->pending_level_change < 0)
-                        st->pending_level_change = st->map_index + 1;
                     if (st->pending_level_change > NEXUS_MAX_LEVEL)
                         st->pending_level_change = NEXUS_MAX_LEVEL;
                     st->party_x = tx;
