@@ -4817,40 +4817,24 @@ static int dm2_runtime_actuate_floor_mecha(void *user,
 }
 
 /*
- * dm2_runtime_actuate_wall_mecha — DM2-owned class-0 handler for the 0x04
- * actuator tile subdispatch (Lane B, cycle 8).
- *
- * skproject/SKULLWIN/c_tim_proc.cpp:4214 dispatches square class 0 to
- * DM2_ACTUATE_WALL_MECHA (c_tim_proc.cpp:1923).  The full source body walks
- * wall-actuator records and may trigger relays, ornate animators, flags,
- * shooters and tick generators; that CCM tail is not yet source-bound in
- * Firestaff.  The bounded handler consumes the timer in source order and
- * increments a fail-closed counter so the dispatcher never substitutes
- * behavior.
- *
  * dm2_runtime_process_0c_timer — 0x0C timer handler.
- * Source: c_tim_proc.cpp:4025 DM2_PROCESS_TIMER_0C.
- * Fail-closed: requires actuator record byte mutation chain.
+ * Source: SKProject/SKULLWIN/c_tim_proc.cpp:25-31 DM2_PROCESS_TIMER_0C.
+ *
+ * The original clears a 16-bit c_hero::timeridx and, for a living hero,
+ * sets the distinct 16-bit c_hero::heroflag bit 0x0800. The bounded session
+ * surrogate has byte-sized timer_index/hero_flag fields, so its former 0x08
+ * write was not a truncation-safe implementation of the source operation.
+ * Keep ordered dispatch but make no state change until c_hero is imported.
  */
 static int dm2_runtime_process_0c_timer(void *user,
                                         const DM2_V1_SourceTimer *timer,
                                         uint16_t source_index,
                                         DM2_V1_ProceedTimersReceipt *receipt) {
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    int ci;
-    DM2_ChampionRecord *champ;
+    (void)user;
+    (void)timer;
     (void)source_index;
     (void)receipt;
 
-    if (!rt || !rt->session_snapshot_valid)
-        return 1;
-    ci = (int)(timer->actor & 0xff);
-    if (ci < 0 || ci >= rt->session_snapshot.champion_count || ci >= 4)
-        return 1;
-    champ = (DM2_ChampionRecord *)rt->session_snapshot.champion_data[ci];
-    champ->timer_index = 0xff;
-    if (champ->cur_hp != 0)
-        champ->hero_flag |= 0x08;
     return 1;
 }
 

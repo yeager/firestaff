@@ -21,6 +21,9 @@
   revive a champion, clear inventory, or fabricate the cloud from a partial
   save/session receipt. Source: `SKULLWIN/c_tim_proc.cpp:39-124` and
   `SKULLWIN/c_hero.cpp::DM2_BRING_CHAMPION_TO_LIFE`.
+  The same ownership gate covers type-0x0C: its source writes 16-bit
+  `c_hero::timeridx` and flag `0x0800`, neither of which can be represented
+  by the session surrogate's byte fields.
 
 - **NEXUS-SATURN-PRESENTATION-HANDOFF:** Nexus production no longer contains
   the old inferred master palette or partial-texture fallback. Continue from

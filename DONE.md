@@ -49746,3 +49746,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   resurrection remains tracked in `DM2-RESURRECTION-OWNERSHIP`. Sources:
   `SKULLWIN/c_tim_proc.cpp:39-124`, `SKULLWIN/c_hero.h:40-130`, and
   `SKULLWIN/c_hero.cpp:916-953`.
+
+- ✅ 2026-08-06 DM2 hero-timer flag truncation removal: type-0x0C used to
+  write `0x08` into the byte-sized session `hero_flag` while the source sets
+  the distinct 16-bit `c_hero::heroflag` bit `0x0800`, and also clears a
+  16-bit timer index. It now remains ordered but non-mutating alongside
+  type-0x0D. The CTest gate covers both handlers and rejects any read or
+  write of the non-source surrogate fields. Source:
+  `SKULLWIN/c_tim_proc.cpp:25-31` and `SKULLWIN/c_hero.h:58-63`.
