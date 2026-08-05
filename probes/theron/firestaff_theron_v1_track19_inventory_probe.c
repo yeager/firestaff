@@ -1,5 +1,6 @@
 #include "theron_v1_track19_inventory.h"
 #include "theron_v1_track19_item_names.h"
+#include "theron_v1_track19_jp_item_names.h"
 #include "theron_v1_track19_level_labels.h"
 
 #include <stdio.h>
@@ -75,10 +76,53 @@ static int verify_real_us_item_table(void) {
     return 1;
 }
 
+static int verify_real_jp_item_table(void) {
+    const char *path = getenv("THERON_TRACK19_JP_ISO");
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+    uint8_t name[128];
+    size_t name_size;
+    unsigned int i;
+
+    if (!path || !path[0]) return 1;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0 || size > 64L * 1024L * 1024L ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    for (i = 0u; i < THERON_TRACK19_JP_ITEM_NAME_COUNT; ++i) {
+        if (!theron_v1_track19_jp_item_name_from_iso(
+                bytes, (size_t)size, i, name, sizeof(name), &name_size) ||
+            name_size == 0u) {
+            free(bytes);
+            return 0;
+        }
+    }
+    bytes[THERON_TRACK19_JP_ITEM_NAME_OFFSET] ^= 1u;
+    if (theron_v1_track19_jp_item_name_from_iso(
+            bytes, (size_t)size, 0u, name, sizeof(name), &name_size)) {
+        free(bytes);
+        return 0;
+    }
+    free(bytes);
+    return 1;
+}
+
 int main(void) {
     Theron_V1Track19InventoryReceipt receipt;
     Theron_V1Track19InventoryReceipt file_receipt;
     const char *real_iso = getenv("THERON_TRACK19_US_ISO");
+    const char *real_jp_iso = getenv("THERON_TRACK19_JP_ISO");
 
     if (!theron_v1_track19_inventory(
             "51b40a17b92a30339957ba564aa0015c",
@@ -106,10 +150,16 @@ int main(void) {
         return 1;
     }
     if (!verify_real_us_item_table()) return 1;
+    if (!verify_real_jp_item_table()) return 1;
     if (real_iso && real_iso[0] &&
         (!theron_v1_track19_inventory_file(real_iso, &file_receipt) ||
          !file_receipt.item_name_table_verified ||
          !file_receipt.level_label_table_verified ||
+         file_receipt.source_md5[0] == '\0')) return 1;
+    if (real_jp_iso && real_jp_iso[0] &&
+        (!theron_v1_track19_inventory_file(real_jp_iso, &file_receipt) ||
+         !file_receipt.item_name_table_verified ||
+         file_receipt.level_label_table_verified ||
          file_receipt.source_md5[0] == '\0')) return 1;
     return 0;
 }

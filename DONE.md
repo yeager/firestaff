@@ -1,3 +1,11 @@
+- ✅ 2026-08-05 Theron JP Track 19 item-name provenance: the real
+  `TQJP19.iso` table is now bound at `0x0E92B1–0x0E955D` as 69 raw Shift-JIS
+  records. The exact span hash is checked before any record is returned, and
+  the authenticated file inventory now verifies the JP table as well as the
+  existing US ASCII table. No host-language translation or inferred item
+  semantics were added; JP level-selector labels remain closed pending their
+  fixed-record layout proof. The data-free and real US/JP inventory probes pass.
+
 - ✅ 2026-08-05 Nexus STONE.BIN provenance boundary: the legacy global
   256-entry `nexus_palette_load_stone()` path is now blocked. Retail STONE is
   eight image-local 550-byte `pp` records per DMWeb; production must use the
@@ -48761,3 +48769,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   den lokala Atari ST 2.0-katalogen med original-MD5. Källor: ReDMCSB
   `ANIM.C:67-72,94`, `COMPILE.H:609-620` samt DMWebs Animation Script- och
   Animationsformatdokumentation.
+- ✅ 2026-08-05 CSB map-difficulty provenance: removed the invented
+  champion-count percentage scale and its hard-coded three-champion default.
+  A loaded CSB profile now takes the current map's authenticated `MAP.C`
+  high-nibble difficulty from `DUNGEON.DAT`; a roster-only or failed handoff
+  stays explicitly unbound. Runtime-image restore no longer revives the old
+  synthetic multiplier. Source-lock: ReDMCSB `DEFS.H` `MAP.C`, `PANEL.C`
+  F0337, `CHAMPION.C` and `PROJEXPL.C`; covered by CSB boot and save tests.
