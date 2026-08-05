@@ -44,6 +44,17 @@ int theron_v1_champion_attack(Theron_V1_World *world,
     (void)world; (void)attacking_slot; (void)target_creature_id; return -1;
 }
 
+int theron_v1_champion_cast_spell(Theron_V1_World *world,
+                                  int casting_slot,
+                                  unsigned int spell_index,
+                                  int target_creature_id) {
+    (void)world;
+    (void)casting_slot;
+    (void)spell_index;
+    (void)target_creature_id;
+    return -1;
+}
+
 Theron_CombatResult theron_v1_creature_attack_champion(
     Theron_V1_World *world, int creature_id, int champion_slot) {
     (void)world; (void)creature_id; (void)champion_slot;

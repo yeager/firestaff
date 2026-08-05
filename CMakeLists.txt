@@ -4415,7 +4415,10 @@ endif()
 
 # ── Theron V1 static library ─────────────────────────────────────────
 file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/theron/theron_v2_*.c" "src/theron/theron_v22_*.c")
-# theron_v1_compat.c is now required by theron_v1_world.c (creature_at, creature_spawn)
+# The former compatibility combat implementation contains inferred creature
+# speed/AI/attack data. Keep it out of production until the Track 02 T900
+# consumer is decoded; fixture targets add it explicitly where needed.
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_compat\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_combat_runtime_noop\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shape_cache_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shapes\\.c$")
@@ -4428,7 +4431,7 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_startup_receipt\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_overlay_pc34\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
-        src/theron/theron_v1_compat.c
+        src/theron/theron_v1_combat_runtime_noop.c
         src/theron/theron_v1_track02_text_decode.c
         src/theron/theron_v1_track02_item_properties.c
         src/theron/theron_v1_track02_creature_spawn.c
@@ -39503,6 +39506,19 @@ endif()
 
 # ── Theron V1 Phase 5 — Combat Mechanics Regression Test ───────────────
 if(BUILD_TESTING AND THERON_SOURCES)
+    add_executable(test_theron_v1_combat_runtime_noop
+        tests/test_theron_v1_combat_runtime_noop.c)
+    target_link_libraries(test_theron_v1_combat_runtime_noop PRIVATE
+        firestaff_theron)
+    target_include_directories(test_theron_v1_combat_runtime_noop PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_combat_runtime_noop PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_combat_runtime_noop
+        COMMAND test_theron_v1_combat_runtime_noop)
+
     add_executable(test_theron_v1_combat_mechanics
         tests/test_theron_v1_combat_mechanics.c
         src/theron/theron_v1_compat.c
@@ -46652,7 +46668,7 @@ endif()
 # Theron Track 02 full dungeon loader (tiles + ground refs + items + actuator fix)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_loader.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_loader.c")
-    add_executable(test_theron_v1_track02_dungeon_loader
+        add_executable(test_theron_v1_track02_dungeon_loader
         tests/test_theron_v1_track02_dungeon_loader.c
         src/theron/theron_v1_track02_dungeon_loader.c
         src/theron/theron_v1_track02_actuator.c

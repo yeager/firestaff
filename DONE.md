@@ -49660,6 +49660,14 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   metadata, while `theron_v1_drop_loot()` continues to reject publication
   until an original drop consumer and selection record are proven. The item
   category regression passes without synthetic drop assertions.
+- ✅ 2026-08-05 Theron production combat placeholder isolation: the production
+  `firestaff_theron` archive no longer links `theron_v1_compat.c`, whose
+  creature speed/AI/attack table was not backed by a decoded T900 consumer.
+  It now links the fail-closed runtime adapter; fixture targets retain the
+  compatibility implementation explicitly. Added
+  `test_theron_v1_combat_runtime_noop` to prove production spawn, combat,
+  spell, drop and sound publication stays blocked. Production build plus the
+  raw-media intake, combat fixture and mechanics regressions pass.
 - ✅ 2026-08-06 DM1 sensor effect ownership: F0718 floor and stairs sensor
   effects now carry the authenticated PC34 common-word SET/CLEAR/TOGGLE/HOLD
   field instead of forcing a synthetic TOGGLE. HOLD resolves to SET for the
