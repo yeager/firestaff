@@ -13,6 +13,8 @@
 static uint32_t g_full_vga_palette[256];
 static int g_palette_extracted = 0;
 
+extern const uint32_t g_dm1_vga_palette[16];
+
 int fs_extract_vga_palette(const uint8_t *gfx_data, int gfx_size, uint32_t *palette_out) {
     int offset, count, i;
     const uint8_t *pal;
@@ -85,27 +87,11 @@ void fs_dm1_get_full_palette(uint32_t *out256) {
     if (g_palette_extracted) {
         memcpy(out256, g_full_vga_palette, 256 * sizeof(uint32_t));
     } else {
-        /* Default DM1 palette (first 16 + grays) */
+        /* Default DM1 palette.  Do not invent colours for unavailable
+         * indices: PC-34 dungeon graphics are 4bpp. */
         int i;
         memset(out256, 0, 256 * sizeof(uint32_t));
-        out256[0]  = 0xFF000000;
-        out256[1]  = 0xFF000088;
-        out256[2]  = 0xFF008800;
-        out256[3]  = 0xFF008888;
-        out256[4]  = 0xFF880000;
-        out256[5]  = 0xFF880088;
-        out256[6]  = 0xFF885500;
-        out256[7]  = 0xFFAAAAAA;
-        out256[8]  = 0xFF555555;
-        out256[9]  = 0xFF0000FF;
-        out256[10] = 0xFF00FF00;
-        out256[11] = 0xFF00FFFF;
-        out256[12] = 0xFFFF0000;
-        out256[13] = 0xFFFF00FF;
-        out256[14] = 0xFFFFFF00;
-        out256[15] = 0xFFFFFFFF;
-        for (i = 16; i < 256; i++)
-            out256[i] = 0xFF000000 | ((i & 0xFF) << 16) | ((i & 0xFF) << 8) | (i & 0xFF);
+        for (i = 0; i < 16; i++) out256[i] = g_dm1_vga_palette[i];
     }
 }
 
@@ -124,4 +110,3 @@ int fs_dm1_load_palette_from_file(const char *gfx_path) {
     if (r > 0) g_palette_extracted = 1;
     return r;
 }
-

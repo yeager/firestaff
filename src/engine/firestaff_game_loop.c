@@ -79,38 +79,12 @@ static uint32_t g_rgba_buffer[FS_FB_W * 4 * FS_FB_H * 4]; /* up to 4x */
 static uint32_t g_vga_palette[256];
 static int g_palette_loaded = 0;
 
-/* Default DM1 VGA palette (first 16 colors for testing) */
-extern const uint32_t g_dm1_vga_palette[16];
 extern void fs_dm1_get_full_palette(uint32_t *out256);
 
 void fs_init_default_palette(void) {
     if (g_palette_loaded) return;
     /* Use real DM1 VGA palette */
     fs_dm1_get_full_palette(g_vga_palette);
-    g_palette_loaded = 1;
-    return; /* skip hardcoded palette below */
-    if (g_palette_loaded) return;
-    g_vga_palette[0]  = 0xFF000000; /* black */
-    g_vga_palette[1]  = 0xFF000088; /* dark blue */
-    g_vga_palette[2]  = 0xFF008800; /* dark green */
-    g_vga_palette[3]  = 0xFF008888; /* dark cyan */
-    g_vga_palette[4]  = 0xFF880000; /* dark red */
-    g_vga_palette[5]  = 0xFF880088; /* dark magenta */
-    g_vga_palette[6]  = 0xFF885500; /* brown */
-    g_vga_palette[7]  = 0xFFAAAAAA; /* light gray */
-    g_vga_palette[8]  = 0xFF555555; /* dark gray */
-    g_vga_palette[9]  = 0xFF5555FF; /* blue */
-    g_vga_palette[10] = 0xFF55FF55; /* green */
-    g_vga_palette[11] = 0xFF55FFFF; /* cyan */
-    g_vga_palette[12] = 0xFFFF5555; /* red */
-    g_vga_palette[13] = 0xFFFF55FF; /* magenta */
-    g_vga_palette[14] = 0xFFFFFF55; /* yellow */
-    g_vga_palette[15] = 0xFFFFFFFF; /* white */
-    /* Fill rest with grays */
-    for (int i = 16; i < 256; i++) {
-        uint8_t v = (uint8_t)(i);
-        g_vga_palette[i] = 0xFF000000 | ((uint32_t)v << 16) | ((uint32_t)v << 8) | v;
-    }
     g_palette_loaded = 1;
 }
 

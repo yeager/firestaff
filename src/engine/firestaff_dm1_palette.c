@@ -25,14 +25,11 @@ const uint32_t g_dm1_vga_palette[16] = {
     0xFFCCCCCC,  /* 15: white (bright highlights, text) */
 };
 
-/* Extended 256-color palette for V2 rendering.
- * Indices 16-255 are grayscale ramp for smooth shading. */
+/* The original PC-34 dungeon art is 4bpp.  There is no authenticated
+ * source palette for indices 16-255, so those entries remain unavailable. */
 void fs_dm1_get_full_palette(uint32_t *out256) {
     int i;
     if (!out256) return;
     for (i = 0; i < 16; i++) out256[i] = g_dm1_vga_palette[i];
-    for (i = 16; i < 256; i++) {
-        uint8_t v = (uint8_t)((i - 16) * 255 / 239);
-        out256[i] = 0xFF000000 | ((uint32_t)v << 16) | ((uint32_t)v << 8) | v;
-    }
+    for (i = 16; i < 256; i++) out256[i] = 0;
 }

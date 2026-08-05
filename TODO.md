@@ -1199,6 +1199,14 @@ diagnostic; it must not silently fall back to a generated visual.
   `firestaff` target and `test_dm1_v1_creature_render_pc34_compat_integration`
   pass.
 
+- **DM1-ORIGINAL-REPLACE-014:** Closed 2026-08-05. Removed generated DM1
+  palette colours from the legacy GRAPHICS.DAT reader, the full-palette
+  fallback and the unreachable game-loop fallback. PC-34 is 4bpp here: the
+  authenticated 16-colour palette remains available, extracted VGA data is
+  still used when present, and indices 16-255 now remain unavailable/no-draw
+  instead of being filled with a synthetic ramp or grayscale. Verification:
+  Ninja `firestaff` build and `git diff --check` pass.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

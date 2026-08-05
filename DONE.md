@@ -49078,3 +49078,10 @@ Source: `SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD` and
   replacement targets after the G0221/G0222 depth mapping. No-replacement
   creatures keep the original palette. Ninja target and the DM1 creature
   rendering integration test pass.
+
+- ✅ 2026-08-05 DM1 generated-palette removal: removed the legacy GRAPHICS.DAT
+  reader's synthetic 16-255 colour ramp, the duplicate full-palette grayscale
+  fallback and the unreachable game-loop fallback. The authenticated PC-34
+  16-colour palette is retained; extracted VGA palettes still take precedence;
+  unavailable entries now remain no-draw. Ninja `firestaff` and
+  `git diff --check` pass. Tracked as `DM1-ORIGINAL-REPLACE-014`.

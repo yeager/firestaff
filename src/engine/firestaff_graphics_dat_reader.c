@@ -101,6 +101,12 @@ int fs_gfx_get_bitmap(const FS_GraphicsDat *gfx, int index,
 int fs_gfx_get_palette(const FS_GraphicsDat *gfx, uint32_t *rgba_out) {
     if (!rgba_out) return -1;
 
+    /* PC-34 GRAPHICS.DAT has no authenticated 256-colour extension here.
+     * Keep unavailable entries transparent/no-draw instead of manufacturing
+     * colours that can be mistaken for source artwork. */
+    (void)gfx;
+    memset(rgba_out, 0, 256 * sizeof(*rgba_out));
+
 
     /* PC-34 VGA palette from ReDMCSB I34E DATA.C G0019_aui_Graphic560_Palette.
      * VGA DAC uses 6-bit values (0-63), scaled to 8-bit: val * 255 / 63. */
@@ -127,29 +133,6 @@ int fs_gfx_get_palette(const FS_GraphicsDat *gfx, uint32_t *rgba_out) {
     };
 
     memcpy(rgba_out, dm1_palette, 16 * sizeof(uint32_t));
-
-    /* DM1 uses 4bpp (16 colors). Fill remaining 240 entries as dark variants
-     * for V2 enhanced rendering effects */
-    for (int i = 16; i < 256; i++) {
-        /* Generate smooth ramp for extended palette */
-        int base = i % 16;
-        int bright = (i / 16) * 4;
-        uint32_t c = dm1_palette[base];
-        int r = ((c >> 16) & 0xFF) + bright;
-        int g = ((c >> 8) & 0xFF) + bright;
-        int b = (c & 0xFF) + bright;
-        if (r > 255) r = 255;
-        if (g > 255) g = 255;
-        if (b > 255) b = 255;
-        rgba_out[i] = 0xFF000000 | (r << 16) | (g << 8) | b;
-    }
-
-    /* If GRAPHICS.DAT is available, try to extract the actual palette
-     * from the graphic data (graphic 562 area contains palette info) */
-    if (gfx && gfx->loaded && gfx->graphic_count > 562) {
-        /* Graphic 562 (15x13, 55 bytes) — contains palette modification data.
-         * For now, the hardcoded palette above is the correct DM1 dungeon palette. */
-    }
 
     return 16;
 }
