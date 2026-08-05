@@ -137,7 +137,15 @@ int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
                                         int bat_start_word,
                                         int bat_w, int bat_h) {
     if (!vp || !vp->vram_trace_loaded || !vp->vram_trace_data) return -1;
-    if (bat_w <= 0 || bat_h <= 0) return -1;
+    /* The PCE BAT occupies 2048 words (64 columns × 32 rows).  The
+     * current atlas population still loads the complete authenticated BG
+     * tile span, but reject an invalid caller window before treating the
+     * trace as a usable VRAM binding. */
+    if (bat_start_word < 0 || bat_w <= 0 || bat_h <= 0 ||
+        bat_w > 64 || bat_h > 32 || bat_start_word >= 2048 ||
+        bat_start_word + (bat_h - 1) * 64 + (bat_w - 1) >= 2048) {
+        return -1;
+    }
 
     const uint8_t *vram = vp->vram_trace_data;
 

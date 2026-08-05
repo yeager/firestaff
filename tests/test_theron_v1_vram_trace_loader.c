@@ -61,6 +61,10 @@ static void test_populate_tiles(void) {
     assert(loaded == 3);
     assert(vp.palette.tile_count == 3);
 
+    assert(theron_v1_vram_trace_populate_tiles(&vp, -1, 32, 32) == -1);
+    assert(theron_v1_vram_trace_populate_tiles(&vp, 0, 65, 1) == -1);
+    assert(theron_v1_vram_trace_populate_tiles(&vp, 1900, 8, 4) == -1);
+
     theron_v1_vram_trace_unload(&vp);
     printf("PASS: test_populate_tiles\n");
 }
