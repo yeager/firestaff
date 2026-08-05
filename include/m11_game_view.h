@@ -1833,6 +1833,11 @@ int M11_GameView_Dm1V1SourceTickReadyForInput(const M11_GameViewState* state);
 uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* state,
                                          int speedMultiplier);
 
+/* TITLE.C and ENTRANCE.C present one source-owned page per VBlank.  Do not
+ * replay an accumulated host stall as a burst of invisible startup frames;
+ * normal dungeon simulation still uses its ordinary catch-up loop. */
+int M11_GameView_DropsIdleCatchupForStartup(const M11_GameViewState* state);
+
 M11_GameInputResult M11_GameView_HandlePointer(M11_GameViewState* state,
                                                int x,
                                                int y,

@@ -124,6 +124,13 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
     return (uint32_t)((200 * 100 + speedMultiplier / 2) / speedMultiplier);
 }
 
+int M11_GameView_DropsIdleCatchupForStartup(const M11_GameViewState* gameView)
+{
+    return gameView && gameView->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        (gameView->csbState.startup_title_active ||
+         gameView->csbState.startup_entrance_active);
+}
+
 static int m11_should_use_modern_launcher(const M12_StartupMenuState* menuState) {
     /* The startup menu is Firestaff's shared product front door for every
      * presentation mode, including V1 original.  V1 parity begins after the
@@ -6129,6 +6136,17 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 gameFrameNeedsPresent = 1;
             }
             idleAccumulatorMs -= (uint32_t)gameTickInterval;
+            /* ReDMCSB TITLE.C F0437 and ENTRANCE.C F0806 place a visible
+             * raster between source VBlank waits.  If a host stall left a
+             * large accumulator, consuming it here would advance several
+             * title/door pages before the next present and make the sequence
+             * appear too fast.  Keep the one visible source step, discard
+             * the stale host debt, and resume from a fresh cadence interval.
+             * Gameplay remains allowed to catch up normally. */
+            if (M11_GameView_DropsIdleCatchupForStartup(&gameView)) {
+                idleAccumulatorMs = 0;
+                break;
+            }
         }
         if (gameView.active) {
             /* Static DM1 V1 frames do not need a 60 Hz full redraw/present.

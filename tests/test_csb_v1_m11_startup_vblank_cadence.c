@@ -42,6 +42,10 @@ int main(void) {
     view.csbState.startup_title_active = 1;
     view.csbState.startup_title_source_step = 1;
     view.csbState.startup_title_frame = 0;
+    if (!M11_GameView_DropsIdleCatchupForStartup(&view)) {
+        fprintf(stderr, "FAIL: CSB title must not batch invisible catch-up frames\n");
+        ++failures;
+    }
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 55u,
                     "CSB PRESENTS keeps its PC34 source cadence");
 
@@ -66,6 +70,10 @@ int main(void) {
 
     view.csbState.startup_title_active = 0;
     view.csbState.startup_entrance_active = 1;
+    if (!M11_GameView_DropsIdleCatchupForStartup(&view)) {
+        fprintf(stderr, "FAIL: CSB entrance must not batch invisible catch-up frames\n");
+        ++failures;
+    }
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 400), 55u,
                     "CSB entrance startup does not inherit QoL game speed");
 
@@ -89,6 +97,10 @@ int main(void) {
     }
 
     view.csbState.startup_entrance_active = 0;
+    if (M11_GameView_DropsIdleCatchupForStartup(&view)) {
+        fprintf(stderr, "FAIL: CSB runtime must retain normal catch-up behavior\n");
+        ++failures;
+    }
     expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 200u,
                     "CSB runtime returns to ordinary gameplay cadence");
 
