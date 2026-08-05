@@ -24,6 +24,10 @@
   ITEM.IBS diagnostics now also honor the external data-root environment and
   verify the real 243/223/109 item-image corpus; item draw authorization still
   requires the missing original Saturn VDP1 command receipt.
+  The live inventory-use route no longer runs the inherited DM1 consumable /
+  equipment catalog when ITEM.IBS action semantics are absent; click dispatch
+  remains available, but use is no-op until the Saturn action dispatcher is
+  source-bound.
   SMAP00-15 are now loaded and decoded from hash-verified retail bytes when a
   level becomes active; the retained pixels remain HUD/VDP2 no-draw until the
   Saturn placement and explored-state write path are captured.

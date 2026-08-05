@@ -510,96 +510,6 @@ static int get_champion_defense(Nexus_V1_ChampionPool *pool) {
     return total_def > 0 ? total_def : 1;
 }
 
-/* Apply a used item to the party leader.
- * Consumables restore stats; equippables move to the matching equipment slot.
- * Returns 1 if the item was consumed/used, 0 if no effect.
- * Source: DM1 COMMAND.C item use / CLIKMENU.C action dispatch;
- *         CHAMPION.C F0309 equipment slot layout.
- * Nexus V1 uses the same item catalog as DM1 (nexus_v1_inventory.c).
- * The helper remains for isolated compatibility fixtures only; the live
- * Nexus path must not call it until Saturn ITEM.IBS action semantics are
- * source-bound. */
-static int apply_use_item(Nexus_V1_Champion *leader, int item_id) {
-    const Nexus_ItemDef *def;
-    int target_slot;
-
-    if (!leader || !leader->alive || item_id < 0) return 0;
-    def = nexus_itemdef_get(item_id);
-    if (!def) return 0;
-
-    if (def->flags & NEXUS_ITEMF_CONSUMABLE) {
-        switch (item_id) {
-        case 30: /* Health Potion */
-            if (leader->health < leader->max_health) {
-                leader->health += 25;
-                if (leader->health > leader->max_health)
-                    leader->health = leader->max_health;
-            }
-            break;
-        case 31: /* Mana Potion */
-            if (leader->mana < leader->max_mana) {
-                leader->mana += 25;
-                if (leader->mana > leader->max_mana)
-                    leader->mana = leader->max_mana;
-            }
-            break;
-        case 32: /* Stamina Potion */
-            if (leader->stamina < leader->max_stamina) {
-                leader->stamina += 25;
-                if (leader->stamina > leader->max_stamina)
-                    leader->stamina = leader->max_stamina;
-            }
-            break;
-        case 33: /* Antidote */
-            leader->wounds = 0;
-            break;
-        case 63: /* Corn */
-            if (leader->food < 100) {
-                leader->food += 25;
-                if (leader->food > 100) leader->food = 100;
-            }
-            break;
-        case 64: /* Water Flask */
-            if (leader->water < 100) {
-                leader->water += 25;
-                if (leader->water > 100) leader->water = 100;
-            }
-            break;
-        default:
-            return 0; /* unknown consumable */
-        }
-        return 1;
-    }
-
-    if ((def->flags & NEXUS_ITEMF_EQUIPPABLE) && def->category == NEXUS_ITEM_WEAPON) {
-        /* Weapon (including weapons with a defense bonus like Sword/Slayer). */
-        leader->slots[NEXUS_SLOT_WEAPON - 1] = item_id;
-        return 1;
-    }
-
-    if ((def->flags & NEXUS_ITEMF_EQUIPPABLE) && def->category == NEXUS_ITEM_ARMOR) {
-        /* Armor — map by item ID, same logic as nexus_inventory_equip(). */
-        if (item_id >= 20 && item_id <= 22) {
-            target_slot = NEXUS_SLOT_TORSO;
-        } else if (item_id == 23) {
-            target_slot = NEXUS_SLOT_SHIELD;
-        } else if (item_id == 24) {
-            target_slot = NEXUS_SLOT_HEAD;
-        } else if (item_id == 25) {
-            target_slot = NEXUS_SLOT_FEET;
-        } else if (item_id == 26) {
-            target_slot = NEXUS_SLOT_HANDS;
-        } else {
-            target_slot = NEXUS_SLOT_TORSO;
-        }
-        leader->slots[target_slot - 1] = item_id;
-        return 1;
-    }
-
-    /* Keys, runes, and other items have no V1 use effect here. */
-    return 0;
-}
-
 /* Return the champion pool index of the current party leader, or -1. */
 static int mechanics_party_leader_index(const Nexus_V1_Engine *engine) {
     int idx;
@@ -772,14 +682,15 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 st->use_item_slot >= 0 && st->use_item_slot < 30) {
                 Nexus_V1_Champion *leader = &engine->champions.champions[leader_idx];
                 int item_id = leader->inventory[st->use_item_slot];
-                if (!engine->item_ibs_runtime_source.source_bound &&
-                    apply_use_item(leader, item_id)) {
-                    leader->inventory[st->use_item_slot] = (uint8_t)-1;
-                    nexus_champion_recalc_load(leader);
-                    nexus_sound_play(&engine->audio, NEXUS_SFX_PICKUP_ITEM);
-                    nexus_script_on_item_used(&engine->script_vm, item_id);
-                    needs_redraw = 1;
-                }
+                /* ITEM.IBS proves declaration/icon bytes and the DGN item
+                 * reference, not the Saturn action/use ABI.  The previous
+                 * condition was inverted and ran the DM1 compatibility
+                 * catalog exactly when the real IBS source was absent,
+                 * manufacturing consumable/equipment effects in Nexus.
+                 * Keep this runtime route no-op until a Saturn action
+                 * dispatcher and item-semantics receipt are bound. */
+                (void)leader;
+                (void)item_id;
             }
         } else if (cmd == NEXUS_CMD_INTERACT) {
             /* Click-route interaction: pick up a floor item at the party's

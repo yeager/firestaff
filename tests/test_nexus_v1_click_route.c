@@ -4,6 +4,8 @@
  * Nexus V1 mouse click-route dispatch regression.
  * Verifies that inventory, world-square, door, and floor-item clicks are
  * translated into the same command queue consumed by nexus_mechanics_tick().
+ * Inventory-use execution remains explicitly no-op until Saturn ITEM.IBS
+ * action semantics are source-bound.
  *
  * Source: DM1 COMMAND.C mouse/click dispatch; CLIKMENU.C F0366 command queue;
  *         CHAMPION.C F0309 equipment slot layout.
@@ -75,14 +77,14 @@ static void test_inventory_slot_click_use_item(void) {
     engine.champions.champions[0].max_health = 100;
 
     target = nexus_click_target_inventory_slot(0, 2);
-    CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_OK,
-          "inventory slot click dispatches OK");
-    CHECK(nexus_mechanics_tick(&st, &engine) == 1,
-          "use-item command is consumed and requests redraw");
-    CHECK(engine.champions.champions[0].health == 35,
-          "health potion restored 25 HP via click route");
-    CHECK(engine.champions.champions[0].inventory[2] == 0xFFU,
-          "consumed inventory slot cleared");
+    CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_NO_ACTION,
+          "inventory slot click is blocked without Saturn item semantics");
+    CHECK(nexus_mechanics_tick(&st, &engine) == 0,
+          "use-item command is consumed without synthetic redraw");
+    CHECK(engine.champions.champions[0].health == 10,
+          "health potion has no unverified Saturn use effect");
+    CHECK(engine.champions.champions[0].inventory[2] == 30,
+          "unverified item remains in inventory");
 }
 
 static void test_inventory_slot_click_empty_noop(void) {

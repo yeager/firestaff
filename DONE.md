@@ -1,3 +1,11 @@
+- ✅ 2026-08-05 Nexus ITEM.IBS action-use gate: removed the inverted live
+  mechanics condition that executed the inherited DM1 consumable/equipment
+  catalog when the real ITEM.IBS source was absent. Inventory clicks now stay
+  no-action and preserve the item until Saturn action-dispatch and item-use
+  semantics are source-bound; declaration/icon parsing and floor-item
+  provenance remain available. `nexus_v1_click_route`, `nexus_v1_item_use`,
+  DGN geometry, title MAPD, and real MNS corpus tests pass.
+
 - ✅ 2026-08-05 Nexus startup title presentation gate: when the real
   `TITLE.BIN` MAPD/TIBG source is decoded, the renderer no longer copies the
   raw `TITLE.CG` atlas directly to the framebuffer. The five decoded maps are
