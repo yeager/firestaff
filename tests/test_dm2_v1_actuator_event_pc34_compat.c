@@ -182,6 +182,37 @@ static void test_null_safety(void)
     printf("  PASS: null_safety\n");
 }
 
+/* The generic generator used to manufacture a DB4 record with a fixed
+ * health multiplier/base HP and a tick-derived direction.  A real actuator
+ * record does not own those values; until the complete ALLOC_NEW_CREATURE
+ * handoff is bound, even structurally present inputs must leave every pool
+ * and timer unchanged. */
+static void test_creature_generator_fails_closed(void)
+{
+    DM2_V1_RecordPoolSet pools;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_CreatureGeneratorReceipt receipt;
+    uint8_t actu[8];
+
+    memset(&pools, 0, sizeof(pools));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(actu, 0, sizeof(actu));
+    actu[2] = DM2_ACTU_CREATURE_GENERATOR;
+    dm2_actu_set_data(actu, 7u);
+    dm2_v1_source_timer_queue_init(&queue);
+
+    assert(dm2_v1_creature_generator(&pools, &dungeon, &queue, actu,
+                                      0, 123u, &receipt) == 0);
+    assert(receipt.fail_closed == 1);
+    assert(receipt.creature_allocated == 0);
+    assert(receipt.creature_placed == 0);
+    assert(queue.count == 0);
+
+    printf("  PASS: creature_generator_fails_closed\n");
+}
+
 /* ── Handle helpers ────────────────────────────────────────────────── */
 
 static void test_handle_helpers(void)
@@ -350,6 +381,7 @@ int main(void)
     test_activate_tick_generator();
     test_activate_relay1();
     test_null_safety();
+    test_creature_generator_fails_closed();
     test_handle_helpers();
     test_new_actuator_types();
     test_creature_killer();

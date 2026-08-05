@@ -289,14 +289,11 @@ int dm2_v1_push_button_switch(DM2_V1_RecordPoolSet *pool_set,
 /* ── CREATURE_GENERATOR ───────────────────────────────────────────── */
 
 /* Source: skevent.cpp:1740-1759 (dispatch), skcrture.cpp:6311-6362
- * (ALLOC_NEW_CREATURE).  Allocates a creature record from the pool,
- * sets its type, HP, direction, and places it at the actuator's
- * (Xcoord, Ycoord).
- *
- * HP formula: healthMultiplier (capped to 31) * baseHP >> 3, then
- * final HP = rand(HP/8+1) + HP.  Without live AI specs, we use
- * multiplier=7 (the hardcoded value from the dispatch) and default
- * baseHP=40, yielding HP = 7*40/8 = 35, +rand(5) = 35-39. */
+ * (ALLOC_NEW_CREATURE).  The source allocation is not just a DB4 record
+ * insertion: it obtains its AI row, health multiplier, RAND02 direction,
+ * animation state and timer ownership through the live game state.  The
+ * compatibility API therefore deliberately does not manufacture a creature
+ * from an actuator's type/coordinates alone. */
 int dm2_v1_creature_generator(DM2_V1_RecordPoolSet *pool_set,
                               DM2_V1_DungeonData *dungeon,
                               DM2_V1_SourceTimerQueue *queue,
@@ -305,99 +302,17 @@ int dm2_v1_creature_generator(DM2_V1_RecordPoolSet *pool_set,
                               DM2_V1_CreatureGeneratorReceipt *receipt)
 {
     DM2_V1_CreatureGeneratorReceipt local;
-    int16_t creature_handle;
-    int target_x, target_y;
-    uint16_t creature_type;
-    uint8_t direction;
-    uint16_t health_mult;
-    uint16_t base_hp;
-    uint16_t hp;
-    uint8_t *creature_rec;
-    DM2_V1_MoveRecordToReceipt move_receipt;
 
     memset(&local, 0, sizeof(local));
     if (receipt == NULL) receipt = &local;
-
-    if (pool_set == NULL || dungeon == NULL || actu_record == NULL) {
-        receipt->fail_closed = 1;
-        return 0;
-    }
-
-    creature_type = dm2_actu_data(actu_record);
-    target_x = (int)dm2_actu_xcoord(actu_record);
-    target_y = (int)dm2_actu_ycoord(actu_record);
-
-    /* Direction: once_only ? action_type : random 0-2
-     * Without RAND02, use direction 0 as deterministic fallback. */
-    if (dm2_actu_once_only(actu_record) != 0) {
-        direction = (uint8_t)(dm2_actu_action_type(actu_record) & 3u);
-    } else {
-        direction = (uint8_t)(game_tick & 3u);
-    }
-
-    /* Allocate creature record (dbCreature = pool 4) */
-    creature_handle = dm2_v1_record_pool_alloc_new_record(pool_set, 4);
-    if (creature_handle < 0) {
-        receipt->fail_closed = 1;
-        return 0;
-    }
-    receipt->creature_allocated = 1;
-
-    /* Set creature type and direction in the record */
-    creature_rec = dm2_v1_record_pool_address_mut(pool_set, creature_handle);
-    if (creature_rec == NULL) {
-        receipt->fail_closed = 1;
-        return 0;
-    }
-
-    /* Creature record layout (dme.h):
-     * w0 (bytes 0-1): next link
-     * w2 (bytes 2-3): bits 0-6 = creature type
-     * b15 (byte 15): bits 0-1 = direction, init to 0xFB */
-    {
-        uint16_t w2 = (uint16_t)creature_rec[2] | ((uint16_t)creature_rec[3] << 8);
-        w2 = (w2 & ~0x7Fu) | (creature_type & 0x7Fu);
-        creature_rec[2] = (uint8_t)(w2 & 0xFFu);
-        creature_rec[3] = (uint8_t)(w2 >> 8);
-    }
-    creature_rec[15] = (uint8_t)(0xFB & ~3u) | (direction & 3u);
-
-    /* HP: multiplier=7 (hardcoded in dispatch), base=40 (default).
-     * hp = (min(7,31) * 40) >> 3 = 35.  Final = 35 + rand(5).
-     * Deterministic: use 35. */
-    health_mult = 7;
-    base_hp = 40;
-    hp = (uint16_t)((health_mult * base_hp) >> 3);
-    /* Store HP in creature record.  HP fields vary by version;
-     * use bytes 4-5 as HP1 (common layout). */
-    creature_rec[4] = (uint8_t)(hp & 0xFFu);
-    creature_rec[5] = (uint8_t)(hp >> 8);
-
-    /* Place creature on tile via MOVE_RECORD_TO */
-    memset(&move_receipt, 0, sizeof(move_receipt));
-    if (dm2_v1_move_record_to(pool_set, dungeon, queue,
-                               creature_handle,
-                               -1, 0,
-                               (int16_t)target_x, (int16_t)target_y,
-                               (int16_t)direction,
-                               map, game_tick,
-                               &move_receipt) == 1) {
-        receipt->creature_placed = 1;
-    } else {
-        receipt->fail_closed = 1;
-    }
-
-    /* Override iAnimSeq if actuator has revert_effect set */
-    if (dm2_actu_revert_effect(actu_record) != 0 && creature_rec != NULL) {
-        uint16_t anim_seq = (uint16_t)dm2_actu_delay(actu_record);
-        /* iAnimSeq at byte offset 12-13 (common layout) */
-        creature_rec[12] = (uint8_t)(anim_seq & 0xFFu);
-        creature_rec[13] = (uint8_t)(anim_seq >> 8);
-        receipt->anim_seq_set = 1;
-    }
-
-    receipt->valid = 1;
-    return 1;
+    (void)pool_set;
+    (void)dungeon;
+    (void)queue;
+    (void)actu_record;
+    (void)map;
+    (void)game_tick;
+    receipt->fail_closed = 1;
+    return 0;
 }
 
 /* ── ACTIVATE_SHOOTER ─────────────────────────────────────────────── */
@@ -1123,20 +1038,12 @@ static int wall_mecha_visitor(void *context,
 
     /* ── ITEM_GENERATOR (0x3c) skevent.cpp:1978-1997 ────────────── */
     case DM2_ACTU_ITEM_GENERATOR: {
-        int16_t new_item = dm2_v1_alloc_new_dbitem(ctx->pool_set, actu_data);
         r->item_generator_invoked++;
-        if (new_item >= 0) {
-            DM2_V1_MoveRecordToReceipt move_r;
-            memset(&move_r, 0, sizeof(move_r));
-            dm2_v1_move_record_to(ctx->pool_set, ctx->dungeon, ctx->queue,
-                new_item, -1, 0,
-                (int16_t)dm2_actu_xcoord(record),
-                (int16_t)dm2_actu_ycoord(record),
-                (int16_t)dm2_actu_direction(record),
-                ctx->map, ctx->game_tick, &move_r);
-        } else {
-            r->fail_closed++;
-        }
+        /* ReDMCSB's ITEM_GENERATOR reaches ALLOC_NEW_DBITEM with a live
+         * dballoc handler and source-owned item state.  `actu_data` alone
+         * cannot prove an item record, quantity or placement, so do not
+         * create the former generic record here. */
+        r->fail_closed++;
         break;
     }
 

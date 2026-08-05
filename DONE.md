@@ -48460,3 +48460,18 @@ the supplied root and selected MD5 to prove this without shipping game data.
   are not replayed across the occlusion boundary. Verified with the DM1 wall
   ornament (`121/121`) and inventory placement (`156/156`) tests and a clean
   Ninja build on 2026-08-05.
+
+- ✅ 2026-08-05 Nexus palette source-lock correction: aligned the Phase 4
+  rendering documentation with the actual fail-closed `STONE.BIN` loader.
+  Short palettes clear and remain unavailable; they do not receive the old
+  inferred `g_npal_default` colour table. Verified by the real-data DGN
+  geometry readiness gate against `/Users/bosse/.firestaff/data/nexus`.
+
+- ✅ 2026-08-05 DM2 actuator generator provenance hardening: removed the
+  remaining live wall-mecha generator mutations. Creature generation no
+  longer invents a fixed HP/base value or tick-derived direction, and item
+  generation no longer allocates a generic DB item from actuator data alone.
+  Both remain fail-closed pending the complete source `ALLOC_NEW_CREATURE` /
+  `ALLOC_NEW_DBITEM` ownership chains. Verified by the focused actuator and
+  runtime gates plus the mounted real-data startup, HUD, material,
+  scene/weather and original-save-writer gates.

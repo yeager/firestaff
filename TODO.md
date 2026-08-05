@@ -691,7 +691,12 @@
 - **DM2-ACTUATOR-GENERATOR-OWNER-HANDOFF:** Creature and item generator
   defaults are closed. Port the DB14/DB-record allocation, payload and timer
   ownership from `DM2_INVOKE_ACTUATOR` before any generator can create an
-  object or creature from original records.
+  object or creature from original records. **2026-08-05 update:** the
+  remaining wall-mecha compatibility calls are fail-closed too: neither the
+  generic creature generator's former fixed HP/tick-direction path nor the
+  item generator's generic DB allocation can mutate the live record pools.
+  The production runtime now consumes those incomplete generator records
+  without inventing a creature, item, placement or timer.
 
 - **DM2-ACTUATOR-RECORD-HANDOFF:** Generic type/coordinate/flag entry and
   square-local DB3 traversal are closed. Port `DM2_INVOKE_ACTUATOR` with the
