@@ -78,6 +78,6 @@ the title is a 3D animation or that a particular DMV file precedes it.
 |--------|-----|----------|
 | Title type | Static 2D bitmap | `TITLE.CG` source atlas; final composition unproven |
 | Source | TITLE.C asset | Rendered by VDP1 rasterizer |
-| Animation | None (static) | Camera dolly/rotate |
+| Animation | None (static) | Not proven; executable/capture route remains gated |
 | Language | English | Japanese (Shift-JIS) |
 | Impl status | Complete (ReDMCSB) | Source decode exists; Saturn presentation remains gated |

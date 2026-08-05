@@ -215,7 +215,7 @@ static void expect_title_sequence_contract(void) {
                     frame0.reveal_h == 80 &&
                     frame0.reveal_y0 == (NEXUS_FB_H - 80) / 2 &&
                     frame0.reveal_y1 == (NEXUS_FB_H - 80) / 2 + 80 &&
-                    frame0.edge_color == 12 &&
+                    frame0.edge_color == 0 &&
                     !frame0.boot_reveal_complete,
                 "Nexus title sequence frame 0 reveal contract is stable");
     expect_true(nexus_v1_title_frame(16, NEXUS_FB_H, &frame16) &&
@@ -225,7 +225,7 @@ static void expect_title_sequence_contract(void) {
                     frame16.reveal_h == 144 &&
                     frame16.reveal_y0 == (NEXUS_FB_H - 144) / 2 &&
                     frame16.reveal_y1 == (NEXUS_FB_H - 144) / 2 + 144 &&
-                    frame16.edge_color == 16 &&
+                    frame16.edge_color == 0 &&
                     !frame16.boot_reveal_complete,
                 "Nexus title sequence frame 16 reveal contract is stable");
     expect_true(nexus_v1_title_frame(30, NEXUS_FB_H, &frame30) &&

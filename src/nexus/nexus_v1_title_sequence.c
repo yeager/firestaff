@@ -78,7 +78,9 @@ int nexus_v1_title_frame(int frame,
     out_frame->reveal_h = reveal_h;
     out_frame->reveal_y0 = (framebuffer_height - reveal_h) / 2;
     out_frame->reveal_y1 = out_frame->reveal_y0 + reveal_h;
-    out_frame->edge_color = (uint8_t)(12 + ((frame / 4) & 7));
+    /* No Saturn capture binds a title-edge palette entry. Keep the receipt
+     * explicitly unknown instead of exporting a host-generated colour ramp. */
+    out_frame->edge_color = 0;
     out_frame->boot_reveal_complete =
         frame >= NEXUS_V1_TITLE_MIN_BOOT_FRAMES;
     out_frame->hold_frame = out_frame->boot_reveal_complete

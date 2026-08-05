@@ -30,6 +30,8 @@
   capture-gated.
   CD-DA startup no longer manufactures WAV files from raw track bytes;
   authenticated CD image/decoder handoff remains required for music playback.
+  Title timing remains a host state receipt only; the former synthetic edge
+  colour ramp is now explicitly unknown until Saturn palette/capture evidence.
 
 - **DUNGEON-STUDIO-FSDUNG:** Dungeon Studio: import original dungeons from
   all five games (DM1, CSB, DM2, Theron's Quest, DM Nexus) and export to a

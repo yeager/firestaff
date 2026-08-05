@@ -1,3 +1,8 @@
+- ✅ 2026-08-05 Nexus startup title placeholder removal: removed the
+  host-generated title-edge colour ramp and corrected stale documentation that
+  called the unproven title route a camera animation. The field now remains
+  zero/unknown until Saturn palette and composition evidence binds it.
+
 - ✅ 2026-08-05 Nexus CD-DA synthetic metadata removal: deleted the startup
   path that wrapped raw track bytes in an invented 44.1 kHz stereo WAV header.
   The runtime now selects only existing host audio formats or an external CD
