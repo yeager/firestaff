@@ -1,3 +1,10 @@
+- ✅ 2026-08-05 Theron synthetic item-object removal: the full Track 02
+  dungeon loader no longer publishes unknown weapon/clothing/scroll/potion/
+  container/misc/missile categories as fabricated `0x10 + category` types.
+  It fails closed until their real object-kind and item-index semantics are
+  decoded. Focused loader and combat tests build/pass; full BIN path remains
+  an honest skip without staged Track 02 media.
+
 - ✅ 2026-08-05 Theron full-dungeon loader integrity: zero ground-reference
   dungeons no longer fail because of `calloc(0)`, and failed object placement
   now aborts the load instead of returning a partial-success receipt. Focused

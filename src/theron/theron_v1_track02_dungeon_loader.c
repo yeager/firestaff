@@ -205,11 +205,17 @@ int theron_v1_track02_load_full_dungeon(
             }
             /* Categories 14 (creature) and 15 (champion) never appear in ground
              * ref chains. TQ places creatures via per-map creature_count and ROM
-             * creature type tables (see theron_v1_track02_creature.h). */
+             * creature type tables (see theron_v1_track02_creature.h).
+             *
+             * The remaining item categories have real bytes in Track 02, but
+             * their runtime object-kind/item-index ownership is not decoded
+             * here yet. Never turn an unbound category into the old synthetic
+             * `0x10 + cat` host type: reject the source load instead of
+             * publishing a plausible-looking fake object. */
             default:
-                obj.type = (uint8_t)(0x10 + cat);
-                result->items_placed++;
-                break;
+                free(pos_table);
+                free(td);
+                return -1;
             }
 
             if (place) {
