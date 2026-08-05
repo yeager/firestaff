@@ -49344,6 +49344,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   layout and portrait binding remain blocked until Track 02 ownership is
   captured.
 
+- ✅ 2026-08-06 Theron inferred tile-renderer removal: deleted the obsolete
+  fixture-only square/depth table, synthetic tile decoder/rasterizer and its
+  synthetic probe. The production tile seam remains the existing no-op until
+  an authenticated Track 02 tile-bank/material binding is available, so no
+  generated tile surface can be mistaken for real dungeon graphics.
+
 - ✅ 2026-08-06 Theron Main-RAM loader capture receipt: the supplied real
   Mednafen sidecar is now parsed as a strict regular-file receipt. It verifies
   the observed TIA transfer from `$c800` to `$0404` (128 bytes), loader PC

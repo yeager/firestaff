@@ -4413,7 +4413,6 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shape_cache_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shapes\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_widget_assets_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_ui_chrome\\.c$")
-list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_tile_renderer\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_inplace_draw_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_modern_assets_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_startup_receipt\\.c$")
@@ -5063,7 +5062,6 @@ add_executable(firestaff_theron_v1_mechanics_champions_probe
     src/theron/theron_v1_shop.c
     src/theron/theron_v1_viewport.c
     src/theron/theron_v1_vram_trace_loader.c
-    src/theron/theron_v1_tile_renderer.c
     src/theron/theron_v1_dungeon_progression.c)
 target_include_directories(firestaff_theron_v1_mechanics_champions_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -7601,7 +7599,6 @@ add_executable(firestaff_theron_v1_first_room_runtime_probe
     src/theron/theron_v1_track02_spell_descriptors.c
     src/theron/theron_v1_dungeon_progression.c
     src/theron/theron_v1_palette.c
-    src/theron/theron_v1_tile_renderer.c
     src/theron/theron_v1_viewport.c
     src/theron/theron_v1_vram_trace_loader.c
     src/theron/theron_v1_asset_loader.c
@@ -39734,24 +39731,6 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND firestaff_theron_v1_viewport_renderer_probe
     )
 
-    add_executable(firestaff_theron_v1_tile_renderer_probe
-        probes/theron/firestaff_theron_v1_tile_renderer_probe.c
-        src/theron/theron_v1_tile_renderer.c
-    )
-    target_link_libraries(firestaff_theron_v1_tile_renderer_probe PRIVATE
-        firestaff_theron
-    )
-    target_include_directories(firestaff_theron_v1_tile_renderer_probe PRIVATE
-        ${CMAKE_CURRENT_SOURCE_DIR}/include
-        ${CMAKE_CURRENT_SOURCE_DIR}/src/theron
-    )
-    if(NOT MSVC)
-        target_compile_options(firestaff_theron_v1_tile_renderer_probe PRIVATE -Wall -Wextra -O2 -fcommon)
-    endif()
-    add_test(
-        NAME theron_v1_tile_renderer
-        COMMAND firestaff_theron_v1_tile_renderer_probe
-    )
 endif()
 
 # ── Theron V1 Phase 4 — Rendering Pipeline Test ───────────────────

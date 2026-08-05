@@ -1,11 +1,10 @@
 /*
  * Production seam for Theron V1 tile rendering.
  *
- * The former renderer contains an inferred square-type/depth tile table.
  * Track 02 currently proves only the initial grid bytes, not tile-bank
  * semantics, so production exposes no tile pixels until that handoff is
- * decoded.  The former implementation remains explicit in its diagnostic
- * probe.
+ * decoded. The former inferred renderer and its synthetic probe have been
+ * retired; this is the only implementation of the seam.
  */
 
 #include "theron_v1_tile_renderer.h"

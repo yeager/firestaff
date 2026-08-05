@@ -234,7 +234,10 @@
   table is now fixture-only. Production exposes no tile selection, decode or
   raster pixels until Track 02 tile-bank semantics are decoded. The viewport
   helper now also returns no tile in production instead of exposing the
-  inferred table through a public utility call.
+  inferred table through a public utility call. The obsolete fixture-only
+  tile renderer and its synthetic probe are now removed; remaining work is
+  an authenticated Track 02 tile-bank/material binding, not another inferred
+  decoder or generated tile surface.
 
 - **THERON-V22-LOCAL-ART-REAL-DATA:** The local modern-art manifest/cache
   and inplace rectangle renderer are now fixture-only. Do not reconnect them
