@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 DM1 HoC stairs overpaint ordering: the exact ReDMCSB
+  F0104/F0105 PC34 stairs pass now runs after M11's final F0128 center-wall
+  occlusion replay for D3..D1. Previously that replay could paint over an
+  already-correct stairs bitmap, leaving the steps missing or malformed.
+  The D0 pass remains at its original final position. Verification: Ninja
+  rebuild, stairs-plan test 111/111, real DM1 HoC floor probe 6/6, and the
+  24-mirror/click probe 241/241.
+
 - ✅ 2026-08-05 DM1/ReDMCSB F0702 held-object cursor: the live leader-hand
   cursor now consumes the real GRAPHICS.DAT 16x16 icon rectangle and the
   audited F0702 builder, producing the original 18x18 result with offset

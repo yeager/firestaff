@@ -46434,8 +46434,6 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                   maxVisibleForward, cells, 0);
     m11_draw_dm1_thieves_eye_d1c_wall_material(
         state, framebuffer, framebufferWidth, framebufferHeight, cells);
-    m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
-                        1, 3, cells);
     m11_draw_dm1_teleporter_fields(state, framebuffer, framebufferWidth, framebufferHeight,
                                   1, 3, cells);
     m11_draw_dm1_d3l2_d3r2_f0111_door_fronts(
@@ -46602,6 +46600,11 @@ static void m11_draw_viewport(const M11_GameViewState* state,
                                 framebufferHeight, maxVisibleForward, cells, 1);
     m11_draw_dm1_front_mirror_route(state, &cells[0][1], framebuffer,
                                     framebufferWidth, framebufferHeight);
+    /* The final F0128 center-wall replay is an occlusion repair.  F0104's
+     * floor-feature pass must follow it, otherwise an exact stairs bitmap on
+     * an open square can be painted over by the replayed wall envelope. */
+    m11_draw_dm1_stairs(state, framebuffer, framebufferWidth, framebufferHeight,
+                        1, 3, cells);
     m11_draw_dm1_deferred_explosion_pass(state, framebuffer,
                                          framebufferWidth, framebufferHeight,
                                          frames, cells);
