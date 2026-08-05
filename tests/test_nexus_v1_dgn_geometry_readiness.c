@@ -5934,9 +5934,23 @@ static void test_menu_bpk_palette_trailer_stays_opaque(void) {
         file = fopen(path, "rb");
         CHECK(file != NULL, "real MENU.BPK PALT source opens");
         if (!file) return;
-        CHECK(asset_file_matches_md5(path, "c2776768ff25287c79013a1452253ca0"),
-              "real MENU.BPK PALT source matches canonical MD5");
-        if (!asset_file_matches_md5(path, "c2776768ff25287c79013a1452253ca0") ||
+        /* The capture target remains bound to its 89,060-byte canonical
+         * revision, but the user's real English retail ISO carries a
+         * distinct 87,684-byte MENU.BPK revision.  DMWeb's file-name
+         * contract does not make those revisions interchangeable; accept
+         * the known ISO-bound source for structural inspection while still
+         * keeping the renderer/capture path fail-closed on the canonical
+         * identity. */
+        {
+            int canonical_identity = asset_file_matches_md5(
+                path, "c2776768ff25287c79013a1452253ca0");
+            int english_iso_identity = asset_file_matches_md5(
+                path, "a6f2272a4f6cb3c6b3b33012bc5b15ed");
+            CHECK(canonical_identity || english_iso_identity,
+                  "real MENU.BPK PALT source matches a verified retail identity");
+        }
+        if ((!asset_file_matches_md5(path, "c2776768ff25287c79013a1452253ca0") &&
+             !asset_file_matches_md5(path, "a6f2272a4f6cb3c6b3b33012bc5b15ed")) ||
             fseek(file, 0, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
             fseek(file, 0, SEEK_SET) != 0 ||
             !(real_archive = (uint8_t *)malloc((size_t)size))) {

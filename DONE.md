@@ -1,3 +1,11 @@
+- ✅ 2026-08-05 Nexus `MENU.BPK` ISO-revision provenance: verified that the
+  local English retail file is the exact ISO entry (87,684 bytes,
+  `a6f2272a4f6cb3c6b3b33012bc5b15ed` MD5) and recorded the separate French
+  87,820-byte revision. The real DGN gate now accepts these explicitly
+  verified retail identities for bounded PALT/archive inspection while the
+  89,060-byte canonical identity remains mandatory for PRS3/VDP1 capture;
+  no decoder or renderer promotion was widened.
+
 - ✅ 2026-08-05 DM2 HMP false-playback removal: a bounded structural read of
   original `HMIMIDIP013195` bytes can no longer mark the stream schedulable or
   hand its guessed event walk to the MIDI backend. The 29 real GDAT HMP
