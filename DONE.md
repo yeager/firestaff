@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus click-route placeholder isolation: removed the unused
+  `nexus_click_route_resolve_screen()` adapter from the production API. It had
+  no callers and mapped raw screen coordinates through compatibility-only
+  static panel/HUD rectangles without a package/epoch-bound DM.BIN handoff.
+  Logical target dispatch remains available and its focused test passes
+  31/31; the real DM.BIN hit-rectangle parser remains diagnostic provenance
+  until a Saturn capture-backed screen-input consumer exists.
+
 - ✅ 2026-08-06 Nexus HUD hit-test source binding: added a bounds-checked
   big-endian parser for the retail `DM.BIN` ring-menu rectangles at
   `0x38000` (40 entries × 8 bytes). The mounted European corpus parses all

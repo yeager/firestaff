@@ -2,8 +2,6 @@
 #include "nexus_v1_movement.h"
 #include "nexus_v1_inventory.h"
 #include "nexus_v1_squares.h"
-#include "nexus_v1_hud_hit_rects.h"
-#include "nexus_v1_champion_panel.h"
 #include <stdlib.h>
 
 /* Nexus V1 mouse click-route dispatch.
@@ -244,48 +242,4 @@ Nexus_ClickResult nexus_click_route_dispatch(Nexus_MechanicsState *st,
         return click_route_floor_item(st, engine, target);
     }
     return NEXUS_CLICK_RESULT_INVALID;
-}
-
-Nexus_ClickTarget nexus_click_route_resolve_screen(int screen_x, int screen_y,
-                                                    int active_champion) {
-    Nexus_ClickTarget t;
-    const Nexus_PanelRect *hit;
-    int hud_hit;
-
-    t.kind = NEXUS_CLICK_TARGET_NONE;
-    t.champion_index = 0;
-    t.slot = 0;
-    t.x = 0;
-    t.y = 0;
-    t.floor_item_idx = -1;
-
-    hit = nexus_v1_panel_hit_test(nexus_v1_equip_slot_rects(),
-                                  NEXUS_EQUIP_SLOT_RECT_COUNT,
-                                  screen_x, screen_y);
-    if (hit) {
-        t.kind = NEXUS_CLICK_TARGET_EQUIPMENT_SLOT;
-        t.champion_index = active_champion;
-        t.slot = hit->param;
-        return t;
-    }
-
-    hit = nexus_v1_panel_hit_test(nexus_v1_inv_slot_rects(),
-                                  NEXUS_INV_SLOT_RECT_COUNT,
-                                  screen_x, screen_y);
-    if (hit) {
-        t.kind = NEXUS_CLICK_TARGET_INVENTORY_SLOT;
-        t.champion_index = active_champion;
-        t.slot = hit->param;
-        return t;
-    }
-
-    hud_hit = nexus_v1_hud_hit_test(screen_x, screen_y);
-    if (hud_hit == NEXUS_HIT_VIEWPORT || hud_hit == NEXUS_HIT_LOWER_VIEWPORT) {
-        t.kind = NEXUS_CLICK_TARGET_WORLD_SQUARE;
-        t.x = screen_x;
-        t.y = screen_y;
-        return t;
-    }
-
-    return t;
 }

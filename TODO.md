@@ -25452,9 +25452,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   HUD pixels.
 - 🔧 Nexus HUD click-route binding: the real `DM.BIN` ring-menu rectangle
   section at `0x38000` now parses and matches all 40 entries. Replace the
-  compatibility-only static hit-test accessor in the live click route with
-  an epoch/package-bound mounted-table handoff before treating screen clicks
-  as retail HUD interaction.
+  compatibility-only static hit-test accessor in a future live click route
+  only after an epoch/package-bound mounted-table handoff and an authenticated
+  Saturn screen-input capture exist. The old unbound screen-coordinate adapter
+  is now removed from production.
 - 🔧 Nexus champion follow-up: PLRD equipment ordinals now bind to the real
   `ITEM.IBS` declaration category/weight lane. Bind the remaining ITEM.IBS
   text/action/combat semantics before exposing item names, attack, defense or
