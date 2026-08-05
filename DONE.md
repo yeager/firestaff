@@ -50137,6 +50137,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   public queries now clear their outputs and fail closed until the real
   `DRAW_ITEM_ICON` route is decoded. The real PC-DOS startup/runtime test
   proves no placeholder zone is exposed.
+- ✅ 2026-08-06 Theron real map/object regression discovery: moved the
+  dungeon-map, ground-reference and door/teleporter real-data tests off their
+  stale `raw-us/...`-only lookup. They now use the explicit
+  `FIRESTAFF_THERON_TRACK02_RAW`, then the supplied standard `TQUS02.bin`,
+  with the old path retained only as fallback. The authentic US Track 02 run
+  passes all seven map groups, ground-reference chains, doors and teleporters;
+  no JP map layout was guessed or promoted.
 - ✅ 2026-08-06 DM2 incomplete SKSAVE load-orchestrator isolation: removed
   the unbound `dm2_v1_load_orchestrator_pc34_compat.c` transcript from both
   production source globs. It had no live caller and skipped original
