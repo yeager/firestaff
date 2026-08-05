@@ -1070,7 +1070,8 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
         looked_up = record_event_window(eng, &window);
     }
 
-    if (eng->sal_decode_ready && selector >= 0 &&
+    if (!receipt.blocks_real_sfx_playback && eng->sal_decode_ready &&
+        selector >= 0 &&
         selector < eng->sal_decoded_tone_count) {
         nexus_sound_trigger_tone(eng, selector);
         return;
@@ -1119,7 +1120,8 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
         looked_up = record_event_window(eng, &window);
     }
 
-    if (eng->sal_decode_ready && sample_index >= 0 &&
+    if (!receipt.blocks_real_sfx_playback && eng->sal_decode_ready &&
+        sample_index >= 0 &&
         sample_index < eng->sal_decoded_tone_count) {
         nexus_sound_trigger_tone(eng, sample_index);
         return;

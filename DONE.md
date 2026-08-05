@@ -48542,7 +48542,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   grammar, palette lane, and placement. Verified with the real FACE.BIN
   structural probe, updated Track 1 launch probe (57/57), and the focused
   Nexus build.
-
 ## DM1 combat-log source font guard
 
 - **DM1-UI-001**: The normal verified DM1 catalog launch no longer renders
@@ -48552,3 +48551,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   a synthetic production visual without changing the source-backed font path.
   Verified with a successful Ninja `firestaff` build and combat-log contract
   test (`5/5`) on 2026-08-05.
+
+- ✅ 2026-08-05 Nexus SAL playback gate correction: real SAL tone decoding
+  can now populate diagnostic receipts, but `nexus_sound_play_event()` and
+  `nexus_sound_play_idx()` check the complete runtime receipt before invoking
+  the tone trigger. Decoded bytes cannot bypass the unresolved SDDRVS/event
+  ABI gate. Verified with the real-corpus sound runtime receipt test.
