@@ -50459,3 +50459,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   round-trip tests still compile the source explicitly, but no M11/runtime
   path can present their unowned raw-block, GDAT, record-link or possession
   handling as a playable original save.
+- ✅ 2026-08-06 DM2 startup timer provenance regression: reinstated the
+  no-synthetic-startup-timers test on the current SKProject-shaped `c_tim`
+  source queue. An empty presentation boot now proves that no timer is due,
+  popped, or dispatched before an original dungeon/session supplies timer
+  rows. Verification: timer guard, real PC-DOS boot profile 95/95, startup
+  menu action contract 103/103, and GDAT RAW4 pointer contract all pass.

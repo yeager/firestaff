@@ -48408,8 +48408,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_midi_backend_capability
     )
 endif()
 
-# DISABLED: test references unimplemented timeline API (old naming)
-if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_no_synthetic_startup_timers.c"
+# DM2 startup receives no timer rows until an original dungeon/session has
+# supplied them; guard against manufactured host-side menu/credits timers.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_no_synthetic_startup_timers.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timeline.c")
     add_executable(test_dm2_v1_no_synthetic_startup_timers
         tests/test_dm2_v1_no_synthetic_startup_timers.c
