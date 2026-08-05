@@ -1,3 +1,9 @@
+- ✅ 2026-08-05 Theron creature-stat fail-closed boundary: unknown Track 02
+  spawn categories no longer receive fabricated fallback HP/attack/defense
+  values. The stat API reports rejection and clears its output; creature
+  creation aborts before publishing state. Categories 0-3 remain backed by
+  the disassembly formulas. Focused spawn tests pass.
+
 - ✅ 2026-08-05 Theron synthetic item-object removal: the full Track 02
   dungeon loader no longer publishes unknown weapon/clothing/scroll/potion/
   container/misc/missile categories as fabricated `0x10 + category` types.

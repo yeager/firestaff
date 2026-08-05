@@ -47,6 +47,10 @@
   synthetic `0x10 + category` host objects. Bind real item kind/index records
   before reopening that branch.
 
+  Unknown creature-stat categories are now rejected as well; the runtime no
+  longer invents fallback HP/attack/defense values outside the four
+  disassembly-backed formulas.
+
 - **THERON-FIXTURE-HELPER-ARCHIVE:** Closed 2026-07-31. Synthetic first-room
   constructors are now compiled only into explicit fixture targets; the
   production Theron archive exports no generated level-buffer helpers.

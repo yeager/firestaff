@@ -117,8 +117,11 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
     if (zone) {
         Theron_SpawnStats stats;
         uint16_t seed = (uint16_t)(world->world_tick ^ (unsigned)(x * 31 + y * 17));
-        theron_v1_track02_compute_spawn_stats(
-            zone->category, zone->param1, zone->param2, seed, &stats);
+        if (!theron_v1_track02_compute_spawn_stats(
+                zone->category, zone->param1, zone->param2, seed, &stats)) {
+            /* Track 02 has no source-backed fallback for an unknown category. */
+            return -1;
+        }
         c->hp = stats.hp;
         c->max_hp = stats.hp;
         c->attack = stats.attack;

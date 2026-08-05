@@ -56,11 +56,14 @@ const Theron_CreaturePointerEntry *theron_v1_track02_creature_pointer(unsigned i
 /* Category-based stat computation from disassembly at UD 0x0870E5.
  * param1/param2 come from the spawn zone descriptor.
  * rand_seed provides determinism (original uses PCE rand). */
-void theron_v1_track02_compute_spawn_stats(
+int theron_v1_track02_compute_spawn_stats(
     unsigned int category, uint8_t param1, uint8_t param2,
     uint16_t rand_seed, Theron_SpawnStats *out)
 {
-    if (!out) return;
+    if (!out) return 0;
+    out->hp = 0;
+    out->attack = 0;
+    out->defense = 0;
     int hp = 0, atk = 0, def = 0;
     int r = (int)(rand_seed & 0xFF);
 
@@ -86,10 +89,8 @@ void theron_v1_track02_compute_spawn_stats(
         def = ((r % 4) + 1) + param2;
         break;
     default:
-        hp = param1;
-        atk = 3;
-        def = 1;
-        break;
+        /* No disassembly-backed formula exists outside categories 0-3. */
+        return 0;
     }
 
     if (hp > THERON_CREATURE_HP_CAP) hp = THERON_CREATURE_HP_CAP;
@@ -100,4 +101,5 @@ void theron_v1_track02_compute_spawn_stats(
     out->hp = (int16_t)hp;
     out->attack = (int16_t)atk;
     out->defense = (int16_t)def;
+    return 1;
 }

@@ -69,7 +69,8 @@ typedef struct {
     int16_t defense;
 } Theron_SpawnStats;
 
-void theron_v1_track02_compute_spawn_stats(
+/* Returns 1 when the category is source-backed, otherwise 0. */
+int theron_v1_track02_compute_spawn_stats(
     unsigned int category, uint8_t param1, uint8_t param2,
     uint16_t rand_seed, Theron_SpawnStats *out);
 
