@@ -3566,6 +3566,10 @@ that its exact runtime path is not already source-locked and tested.
     (`EYE OF TIME`) from actual `GRAPHICS.DAT`/`DUNGEON.DAT`; incorrect-name
     reports should therefore be investigated in icon/Thing identity or the
     interaction route, not fixed with another handwritten name table.
+    2026-08-06: corrected the C508/action-hand destination mask to
+    ReDMCSB's `MASK0x0200_HANDS`; the previous `0x0002` was the head mask and
+    rejected valid hand placement. Focused inventory-panel runtime coverage
+    now passes 372/372. Remaining: real Mac pickup/placement/cursor capture.
 17. **DM1-SOUND-MUSIC-STARTUP:** Complete original DM1 sound/music playback,
     title/swoosh/entrance cadence, palette transitions, and runtime sound
     events with real media and no generated timing.

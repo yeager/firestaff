@@ -144,6 +144,14 @@ static void seed_panel_view(M11_GameViewState* state,
     state->world.party.champions[0].present = 1;
     state->world.party.champions[0].hp.current = 100;
     state->world.party.champions[0].hp.maximum = 100;
+    /* The production DM1 route is source-locked to M564's icon-indexed
+     * names.  This data-free fixture must bind the two real PC34 names it
+     * exercises instead of relying on the retired subtype fallback. */
+    state->dm1ObjectNameTableValid = 1;
+    snprintf(state->dm1ObjectNames[20], sizeof(state->dm1ObjectNames[20]),
+             "STAFF OF CLAWS");
+    snprintf(state->dm1ObjectNames[154], sizeof(state->dm1ObjectNames[154]),
+             "ROS POTION");
     for (i = 0; i < CHAMPION_SLOT_COUNT; ++i) {
         state->world.party.champions[0].inventory[i] = THING_NONE;
     }
