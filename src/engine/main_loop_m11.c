@@ -5522,6 +5522,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                   M11_Render_GetFramebuffer(),
                                   M11_FB_WIDTH,
                                   M11_FB_HEIGHT);
+                M11_GameView_DrawLeaderHandCursor(
+                    &gameView, M11_Render_GetFramebuffer(),
+                    M11_FB_WIDTH, M11_FB_HEIGHT);
                 M11_GameView_RecordPresentedFrame(&gameView, SDL_GetTicks());
                 M11_GameView_DrawFpsOverlay(&gameView,
                                              M11_Render_GetFramebuffer(),
@@ -6118,6 +6121,9 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                 M11_GameView_DrawGraphicsPopup(&gameView,
                                                 M11_Render_GetFramebuffer(),
                                                 M11_FB_WIDTH, M11_FB_HEIGHT);
+                M11_GameView_DrawLeaderHandCursor(
+                    &gameView, M11_Render_GetFramebuffer(),
+                    M11_FB_WIDTH, M11_FB_HEIGHT);
                 M11_GameView_RecordPresentedFrame(&gameView, SDL_GetTicks());
                 M11_GameView_DrawFpsOverlay(&gameView,
                                              M11_Render_GetFramebuffer(),

@@ -341,10 +341,11 @@ int dm1_v1_wall_ornament_render_plan_pc34(
     } else if (viewWallIndex <= 9) {
         copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD2);
     } else {
-        /* D1/D0: no palette remap — ornaments use native colors */
-        int pi;
-        for (pi = 0; pi < 16; ++pi) outPlan->paletteMap[pi] = (unsigned char)pi;
-        outPlan->paletteMapValid = 0;
+        /* ReDMCSB F0107 still applies the D2 wall palette to the D1/D0
+         * ornament pass.  Keeping the native indices here turns the real
+         * torch-holder/material pixels into black silhouettes on HoC walls. */
+        copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD2);
+        outPlan->paletteMapValid = 1;
     }
     outPlan->isAlcove =
         dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
