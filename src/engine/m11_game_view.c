@@ -32137,6 +32137,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
         int mapIdx;
         int maxHeight = 0;
         int ornGlobalIdx = -1;
+        int isInscription = 0;
         int hasMirrorProjection = 0;
         DM1_V1_ChampionMirrorViewportProjectionReceiptPc34 mirrorProjection;
         memset(&inscription, 0, sizeof(inscription));
@@ -32210,6 +32211,8 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                 continue;
             }
         } else {
+            int localOrdinal;
+            int wallOrnamentCount;
             if (cell.wallOrnamentOrdinal <= 0) {
                 continue;
             }
@@ -32219,6 +32222,17 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
              * table: DUNVIEW selects C346 directly from the sensor route. */
             m11_dm1_wire_current_map_alcove_list((M11_GameViewState*)state,
                                                  mapIdx);
+            localOrdinal = cell.wallOrnamentOrdinal - 1;
+            wallOrnamentCount =
+                (state->world.dungeon && mapIdx >= 0 && mapIdx < 32)
+                    ? (int)state->world.dungeon->maps[mapIdx].wallOrnamentCount
+                    : -1;
+            /* ReDMCSB keeps C0_WALL_ORNAMENT_INSCRIPTION as the synthetic
+             * final local G0261 slot.  Global ornament id 0 is still a real
+             * drawable ornament and must not enter the inscription route. */
+            isInscription = localOrdinal >= 0 &&
+                            wallOrnamentCount >= 0 &&
+                            localOrdinal == wallOrnamentCount;
             if (mapIdx < 0 || mapIdx >= 32 ||
                 !dm1_v1_ornament_cache_global_index_pc34(
                     state->ornamentCacheLoaded[mapIdx] ? 1 : 0,
@@ -32227,11 +32241,11 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                 continue;
             }
         }
-        if (ornGlobalIdx == 0) {
+        if (isInscription) {
             (void)m11_dm1_visible_wall_inscription_presentation(
                 state, &cell, &inscription);
         }
-        if (ornGlobalIdx == 0 && spec.viewWallIndex != 12 &&
+        if (isInscription && spec.viewWallIndex != 12 &&
             inscription.valid) {
             int unreadableHeight =
                 m11_dm1_unreadable_inscription_box_height(
@@ -32253,7 +32267,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
              * unreadable inscription bitmap is only the distant/side ornament
             * when there is decoded front text; drawing it under that readable
             * text makes Hall inscriptions look double-exposed and illegible. */
-            if (ornGlobalIdx == 0 && spec.viewWallIndex == 12 &&
+            if (isInscription && spec.viewWallIndex == 12 &&
                 inscription.valid) {
                 /* M11 applies its source palette map after this wall batch.
                  * M648 must therefore be emitted exactly once by the final
@@ -32271,7 +32285,7 @@ static void m11_draw_dm1_wall_ornaments(const M11_GameViewState* state,
                         mirrorProjection.suppressChampionPortrait,
                         mirrorProjection.suppressHostFallbackVisuals);
                 }
-                if (ornGlobalIdx == 0 && spec.viewWallIndex != 12 &&
+                if (isInscription && spec.viewWallIndex != 12 &&
                     inscription.valid && maxHeight > 0) {
                     /* ReDMCSB DUNVIEW.C F0107:3864-3901: side/depth views
                      * retain original ornament pixels, with TextString line

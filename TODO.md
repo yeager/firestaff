@@ -25263,7 +25263,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   only after a real app capture proves the torch and holder pixels at each
   visible depth. No synthetic black ornament is admitted. Invalid global
   ornament indices outside the 60-entry G0194 table now fail closed; the
-  real capture is still required.
+  real capture is still required. Runtime now distinguishes the synthetic
+  final local inscription slot from real global ornament 0, so a real
+  ornament-0 torch/holder cannot enter the inscription path.
 - [ ] DM1-HOC-OBJECTS-002 Capture a real PC34 HoC pickup/placement round trip
   for weapon, potion, scroll, container and junk objects. Confirm M564 names,
   C00/C01 hand masks and backpack ownership remain source-backed. The F0033

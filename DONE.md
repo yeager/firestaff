@@ -49514,3 +49514,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   framed and opcode-prefix evaluators diagnostic-only. The real-corpus tests
   now pass for all MENU.BPK payloads; this proves DMWeb byte decoding only,
   not Saturn palette, VDP1 upload, or screen placement.
+- ✅ 2026-08-05 DM1 HoC ornament-0 routing: corrected the live wall renderer
+  to identify inscriptions by the synthetic final local `G0261` slot, as in
+  ReDMCSB `DUNGEON.C F0173`, rather than by global ornament id 0. Global
+  ornament 0 is valid source material and must remain on the normal
+  `G0194/G0205` wall-ornament path. The real PC34 HoC wall-material probe
+  still passes, including C346/C026 mirror presentation; focused Ninja
+  build, wall-plan tests, and `git diff --check` pass. Real macOS torch/holder
+  capture remains open in `DM1-HOC-OBJECTS-001`.
