@@ -2672,16 +2672,20 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     memset(engine, 0, sizeof(*engine));
     strncpy(engine->data_dir, data_dir, sizeof(engine->data_dir) - 1);
 
-    /* Priority: ISO first, extracted files second */
-    if (nexus_path_is_file(data_dir)) {
-        (void)nexus_try_open_disc_path(engine, data_dir);
-    } else if (find_iso(data_dir, disc_path, sizeof(disc_path))) {
-        (void)nexus_try_open_disc_path(engine, disc_path);
-    }
-
-    if (engine->source == NEXUS_SRC_NONE && has_extracted(data_dir)) {
+    /* Prefer a complete hash-verified extracted corpus when present. This
+     * lets materialized retail files win over a parallel ISO entry whose
+     * sector payload may be a different revision. ISO remains the fallback
+     * for users who keep the disc image only. */
+    if (has_extracted(data_dir)) {
         engine->source = NEXUS_SRC_EXTRACTED;
         printf("Nexus: using extracted files from %s\n", data_dir);
+    }
+
+    if (engine->source == NEXUS_SRC_NONE && nexus_path_is_file(data_dir)) {
+        (void)nexus_try_open_disc_path(engine, data_dir);
+    } else if (engine->source == NEXUS_SRC_NONE &&
+               find_iso(data_dir, disc_path, sizeof(disc_path))) {
+        (void)nexus_try_open_disc_path(engine, disc_path);
     }
 
     if (engine->source == NEXUS_SRC_NONE) {

@@ -1,3 +1,12 @@
+- ✅ 2026-08-05 Nexus startup retail media materialization and source priority:
+  extracted the original English ISO `TITLE.CG`, `TITLE.BIN`, `WARNING.BIN`,
+  `GAMEOVER.BIN`, and `STABG.BIN` into the user-owned Nexus data root. Engine
+  init now prefers a complete hash-verified extracted corpus over a parallel
+  ISO entry, keeping ISO as fallback; this prevents a different ISO revision
+  from shadowing the verified materialized files. The real-data Track 1
+  phase-launch probe passes 57/57, including title surfaces, 256-glyph
+  `FONT256.S2D` handoff, FACE roster, LEV00, SAL/MAP, and MNS loading.
+
 - ✅ 2026-08-05 Theron HUD text bound to real Track 02 glyphs: replaced the
   viewport's hand-written synthetic 3×5 font with the 120-glyph 8×6 bitmap
   table extracted from US Track 02 UD 0x09A000. ASCII case normalization,
