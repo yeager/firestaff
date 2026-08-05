@@ -804,6 +804,8 @@ static const char *const g_csb_graphics_hashes[] = {
     "e0ce7ac5160ca5540e90cf09ab9fad49", /* CSB Atari ST 2.x hard-disk */
     "291e1bc6803e3dc4b974c60117ca5d68", /* CSB Amiga 3.5 English */
     "cefaddfdf5651df2c91f61b5611a8362", /* CSB Amiga 3.5 Multilanguage */
+    "405b757038eea3c263e60f240854d6de", /* CSB FM Towns English CDATA */
+    "761d6fc588b31aeaaa9caf3725e111b9", /* CSB FM Towns Japanese CJDATA */
     NULL
 };
 
@@ -890,10 +892,26 @@ static const CSB_V1_VariantInfo g_csb_variants[CSB_V1_VARIANT_COUNT] = {
         "ebf6a57af3f27782e358c0490bfd2f2e",
         "ebf6a57af3f27782e358c0490bfd2f2e",
         "6695d2acebce49f95db1d8f3a5c733de"
+    },
+    [CSB_V1_VARIANT_FMTOWNS_EN] = {
+        CSB_V1_VARIANT_FMTOWNS_EN,
+        "FM Towns English",
+        "MEDIA669:F31E CDATA",
+        "405b757038eea3c263e60f240854d6de",
+        "405b757038eea3c263e60f240854d6de",
+        "83c56cf1b779e7460a55c9299ebeb04b"
+    },
+    [CSB_V1_VARIANT_FMTOWNS_JA] = {
+        CSB_V1_VARIANT_FMTOWNS_JA,
+        "FM Towns Japanese",
+        "MEDIA687:F31J CJDATA",
+        "761d6fc588b31aeaaa9caf3725e111b9",
+        "761d6fc588b31aeaaa9caf3725e111b9",
+        "7ca51c17ef8bd542ca5f0273672ec1a5"
     }
 };
 
-_Static_assert(CSB_V1_VARIANT_ST_F20E == CSB_V1_VARIANT_COUNT - 1,
+_Static_assert(CSB_V1_VARIANT_FMTOWNS_JA == CSB_V1_VARIANT_COUNT - 1,
                "CSB_V1_VARIANT_COUNT must match last enum value");
 
 /* ── Platform-specific save dir ────────────────────────────────────── */

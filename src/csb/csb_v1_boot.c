@@ -37,6 +37,8 @@ static const char *const g_csb_boot_graphics_hashes[] = {
     "e0ce7ac5160ca5540e90cf09ab9fad49",
     "291e1bc6803e3dc4b974c60117ca5d68",
     "cefaddfdf5651df2c91f61b5611a8362",
+    "405b757038eea3c263e60f240854d6de", /* F31E CDATA */
+    "761d6fc588b31aeaaa9caf3725e111b9", /* F31J CJDATA */
     NULL
 };
 
@@ -45,7 +47,9 @@ static const CSB_V1_VariantId g_csb_boot_graphics_variants[] = {
     CSB_V1_VARIANT_ST21_EN,
     CSB_V1_VARIANT_ST21_EN,
     CSB_V1_VARIANT_AMIGA35_EN,
-    CSB_V1_VARIANT_AMIGA35_MULTI
+    CSB_V1_VARIANT_AMIGA35_MULTI,
+    CSB_V1_VARIANT_FMTOWNS_EN,
+    CSB_V1_VARIANT_FMTOWNS_JA
 };
 
 static uint32_t csb_v1_boot_packaged_capture_hash_step_pc34(uint32_t hash,
@@ -106,6 +110,8 @@ static int csb_v1_boot_count_unique_hashes_pc34(const uint32_t *hashes,
 
 static const char *const g_csb_boot_dungeon_hashes[] = {
     "6695d2acebce49f95db1d8f3a5c733de",
+    "83c56cf1b779e7460a55c9299ebeb04b", /* F31E CDATA */
+    "7ca51c17ef8bd542ca5f0273672ec1a5", /* F31J CJDATA */
     NULL
 };
 
@@ -114,6 +120,8 @@ static const char *const g_csb_boot_fast_scan_subdirs[] = {
     "csb-atari-st-2x",
     "csb-amiga-35-en",
     "csb-amiga-35-multilingual",
+    "csb-fmtowns-en",
+    "csb-fmtowns-ja",
     "csb-extras",
     NULL
 };
@@ -8558,11 +8566,15 @@ static const char *const g_csb_m11_entry_graphics_hashes[] = {
     "e0ce7ac5160ca5540e90cf09ab9fad49", /* Atari ST 2.x hard-disk     MEDIA332 */
     "291e1bc6803e3dc4b974c60117ca5d68", /* Amiga 3.5 English          MEDIA529 */
     "cefaddfdf5651df2c91f61b5611a8362", /* Amiga 3.5 Multilanguage    MEDIA529 */
+    "405b757038eea3c263e60f240854d6de", /* FM Towns English            MEDIA669 */
+    "761d6fc588b31aeaaa9caf3725e111b9", /* FM Towns Japanese           MEDIA687 */
     NULL
 };
 
 static const char *const g_csb_m11_entry_dungeon_hashes[] = {
     "6695d2acebce49f95db1d8f3a5c733de", /* shared CSB V1 DUNGEON.DAT  MEDIA278/332/529 */
+    "83c56cf1b779e7460a55c9299ebeb04b", /* FM Towns English CDATA     MEDIA669 */
+    "7ca51c17ef8bd542ca5f0273672ec1a5", /* FM Towns Japanese CJDATA   MEDIA687 */
     NULL
 };
 

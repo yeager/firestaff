@@ -276,6 +276,34 @@ static void test_source_evidence(void)
           "source evidence cites LOADSAVE.C F0435");
 }
 
+static void test_fmtowns_media_registry(void)
+{
+    const CSB_V1_VariantInfo *english;
+    const CSB_V1_VariantInfo *japanese;
+    char reason[256];
+
+    english = csb_v1_runtime_get_variant_info(CSB_V1_VARIANT_FMTOWNS_EN);
+    japanese = csb_v1_runtime_get_variant_info(CSB_V1_VARIANT_FMTOWNS_JA);
+    CHECK(english && strcmp(english->md5_gfx,
+                            "405b757038eea3c263e60f240854d6de") == 0 &&
+          strcmp(english->md5_dungeon,
+                 "83c56cf1b779e7460a55c9299ebeb04b") == 0,
+          "FM Towns English profile carries the original CDATA hashes");
+    CHECK(japanese && strcmp(japanese->md5_gfx,
+                             "761d6fc588b31aeaaa9caf3725e111b9") == 0 &&
+          strcmp(japanese->md5_dungeon,
+                 "7ca51c17ef8bd542ca5f0273672ec1a5") == 0,
+          "FM Towns Japanese profile carries the original CJDATA hashes");
+    CHECK(csb_v1_boot_graphics_dungeon_m11_entry_gate(
+              english->md5_gfx, english->md5_dungeon,
+              reason, sizeof(reason)) == 1,
+          "M11 gate accepts the authenticated FM Towns English pair");
+    CHECK(csb_v1_boot_graphics_dungeon_m11_entry_gate(
+              japanese->md5_gfx, japanese->md5_dungeon,
+              reason, sizeof(reason)) == 1,
+          "M11 gate accepts the authenticated FM Towns Japanese pair");
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot Profile Smoke Test ===\n\n");
@@ -288,6 +316,7 @@ int main(void)
     test_enter_handoff_state();
     test_enter_loads_verified_dungeon_context();
     test_source_evidence();
+    test_fmtowns_media_registry();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
 }

@@ -465,6 +465,10 @@ typedef enum {
     CSB_V1_VARIANT_AMIGA35_MULTI      = 6,   /* Amiga 3.5 Multilanguage MEDIA529 */
     CSB_V1_VARIANT_ST_F20J           = 7,   /* Atari ST TT (F20J)     MEDIA529 */
     CSB_V1_VARIANT_ST_F20E          = 8,   /* Atari ST (F20E)        MEDIA529 */
+    /* ReDMCSB MEMORY.C:1253-1257 opens CDATA/CJDATA for these releases;
+     * IMAGE2.C F0689 supplies their IMG2 expansion path. */
+    CSB_V1_VARIANT_FMTOWNS_EN        = 9,   /* FM Towns English        MEDIA669 F31E */
+    CSB_V1_VARIANT_FMTOWNS_JA        = 10,  /* FM Towns Japanese       MEDIA687 F31J */
     CSB_V1_VARIANT_COUNT
 } CSB_V1_VariantId;
 
