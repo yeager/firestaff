@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Theron retail-US ISO bank profile: the canonical hash-verified
+  `TQUS19.iso + TQUS02End.iso` image now admits its three exact descriptor/span
+  pairs at `0x5b2406/0x5b4406/0x5b6584` and
+  `0x207000/0x378000/0x5b8000`. This is bounded transport/layout evidence
+  that unlocks real bitmap sampling; descriptor semantics, palette ownership,
+  level/object records and runtime viewport promotion remain fail-closed. The
+  legacy `0x1584` profile remains available for its separate corpus.
+
 - ✅ 2026-08-06 Theron startup-receipt CUE handoff: the real startup receipt
   now consumes the authenticated Track 02 raw-media intake for `.cue` input.
   Supplied US/JP sheets with missing `TQUS02.iso`/`TQJP02.iso` aliases are

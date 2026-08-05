@@ -12,10 +12,10 @@
 #define THERON_TRACK02_QUEST_BLOCK_BYTES 0x40000u
 
 /* Maximum number of entries the documented 9-word stride table can hold.
- * The 0x1584 descriptor observed in the hash-verified US Track 02 ISO and
- * the three replicated anchors in the JP/US raw Track 02 BINs all carry
- * exactly 9 little-endian uint16 words; this constant bounds the decoder
- * table size and the synthetic-fixture/negative-fixture tests. */
+ * The legacy 0x1584 profile and the three replicated raw-BIN anchors carry
+ * exactly 9 little-endian uint16 words.  The supplied retail US ISO now has
+ * the same shape at three separate, hash-bound offsets; this constant bounds
+ * the decoder table size and fixture/negative-fixture tests. */
 #define THERON_TRACK02_MAX_DESCRIPTOR_TABLE_ENTRIES 9u
 
 #define THERON_TRACK02_MD5_JP_BIN      "b7afb338ad31be1025b53f9aff12d73a"
@@ -186,8 +186,9 @@ typedef struct {
      * which we have observed to encode a 2352-byte CD sector pointer at all
      * three anchors in both US and JP raw Track 02 BINs.  Populated only for
      * raw BIN variants (THERON_TRACK02_VARIANT_US_BIN / JP_BIN); zeroed for
-     * the US Track 02 ISO (partial extract, no anchors present) and for the
-     * JP Rev 1 ISO (zero-filled image).
+     * the legacy US Track 02 ISO profile and for the JP Rev 1 ISO
+     * (zero-filled image).  Retail US ISO anchors are byte-layout evidence
+     * only and likewise carry no raw-sector audio marker.
      *
      * Source/evidence:
      *   src/theron/theron_v1_track02.c (this module, post-boundary span
@@ -570,8 +571,9 @@ const char *theron_v1_track02_source_evidence(void);
 
 /* Semantic dungeon-descriptor table decoding.
  *
- * The 0x1584 descriptor block (US Track 02 ISO) and the three replicated
- * raw BIN anchors in JP/US Track 02 BINs each carry the same nine
+ * The legacy 0x1584 descriptor block, the three replicated raw BIN anchors
+ * in JP/US Track 02 BINs, and the three retail-US-ISO descriptor anchors
+ * each carry the same nine
  * little-endian uint16 words `0x0020, 0x0420, 0x0820, 0x0c20, 0x1020,
  * 0x1420, 0x1820, 0x1c20, 0x2020` with stride `0x0400`.  This struct
  * and decoder lock the shape that has been observed:

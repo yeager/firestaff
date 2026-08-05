@@ -9,12 +9,27 @@ a dungeon map-grid parser, a dungeon descriptor table, or loader parity.
 
 | Variant | File checked | MD5 | Result |
 |---------|--------------|-----|--------|
-| US Track 02 ISO | `TQUS02End.iso` | `3d8b78571dcd0e6eb8eb4b01eeb7fbba` | One unique bank-stride descriptor candidate found, with a zero-fill boundary to a unique opaque post-boundary span. |
+| US Track 02 ISO | `TQUS19.iso + TQUS02End.iso` | `ceb02343868f80cec899e9b239aff2da` | Supplied retail image contains three exact descriptor/span pairs; the tail alone is not a Track 02 image. |
 | US Track 02 raw BIN | `Dungeon Master - Theron's Quest (USA) (Track 02).bin` | `f23601102138f87c33025877767ebf76` | Three exact raw-sector bank anchors found. |
 | JP Track 02 raw BIN | `Dungeon Master - Theron's Quest (Japan) (Track 02).bin` | `b7afb338ad31be1025b53f9aff12d73a` | Three exact raw-sector bank anchors found, one raw CD sector earlier than the US anchors. |
 | JP Rev 1 Track 02 ISO | `TQJP02End.iso` | `397039af02d50d15c70b74088eb8a1cb` | Image is zero-filled in the available asset, so no dungeon-bank offset is claimed. |
 
-## US ISO Signal
+## Supplied Retail US ISO Signal
+
+The supplied retail archive's canonical concatenation has three exact copies of
+the descriptor and post-boundary span. The descriptor offsets are `0x5b2406`,
+`0x5b4406`, and `0x5b6584`; the corresponding span offsets are `0x207000`,
+`0x378000`, and `0x5b8000`. Each descriptor is the same 18-byte little-endian
+sequence shown below, and each span is the same 44-byte sequence. This signal
+is transport/layout evidence for real bitmap sampling only. It does not bind a
+dungeon seed, object table, palette, or square-to-tile meaning.
+
+The production detector requires the full US MD5, all three descriptor offsets,
+all three span offsets, and exact occurrence counts. The older `0x1584` /
+`0x3000` profile remains available for its separately documented corpus, but is
+not substituted for this supplied retail image.
+
+## Legacy US ISO Signal
 
 At byte offset `0x1584`, the US ISO contains one unique little-endian
 9-word stride sequence:
@@ -30,7 +45,7 @@ Interpreted as little-endian words, this is:
 ```
 
 The stride is `0x0400`, the descriptor is 18 bytes long, and the exact byte
-sequence occurs once in the verified US Track 02 ISO.
+sequence occurs once in the legacy verified US Track 02 ISO corpus.
 
 Immediately after the descriptor, bytes `0x1596..0x2fff` are zero. The next
 nonzero run starts at byte offset `0x3000`.
@@ -43,7 +58,7 @@ be 80 fe 80 34 81 76 81 d0 81 2a 80 2b 80 38 80
 aa 80 af 80 b4 80 b9 80 93 80 00 3f
 ```
 
-The span occurs once in the verified US Track 02 ISO. The probe treats it as a
+The span occurs once in the legacy verified US Track 02 ISO corpus. The probe treats it as a
 boundary signal only: it narrows false positives for the `0x1584` descriptor,
 but it does not identify the later table's semantic type or claim map parity.
 
@@ -159,7 +174,9 @@ non-corpus media and does not permit fallback visuals.
 
 `firestaff_theron_v1_track02_bank_probe` verifies:
 
-- the US file MD5 before asserting offset `0x1584`
+- the supplied retail US file MD5 before asserting its three descriptor/span
+  offsets
+- the legacy US file MD5 before asserting offset `0x1584`
 - the 9-word `0x0400` stride sequence
 - uniqueness of the descriptor bytes within the US ISO
 - zero-fill after the descriptor through the next nonzero run at `0x3000`

@@ -26,6 +26,13 @@
 #define TQR_US_ISO_BANK_BOUNDARY_OFFSET 0x3000u
 #define TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES 16u
 #define TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES 44u
+#define TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT 3u
+#define TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_0 0x5b2406u
+#define TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_1 0x5b4406u
+#define TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_2 0x5b6584u
+#define TQR_US_ISO_RETAIL_SPAN_OFFSET_0 0x207000u
+#define TQR_US_ISO_RETAIL_SPAN_OFFSET_1 0x378000u
+#define TQR_US_ISO_RETAIL_SPAN_OFFSET_2 0x5b8000u
 #define TQR_US_BIN_FIRST_QUEST_BLOCK_OFFSET 0xa9f90u
 #define TQR_JP_BIN_FIRST_QUEST_BLOCK_OFFSET 0xa9660u
 #define TQR_RAW_SECTOR_BYTES THERON_TRACK02_RAW_SECTOR_BYTES
@@ -99,6 +106,20 @@ static const uint8_t g_us_iso_post_boundary_span[TQR_US_ISO_POST_BOUNDARY_SPAN_B
     0x79, 0x80, 0x86, 0x80, 0xa0, 0x80, 0xa5, 0x80,
     0xaa, 0x80, 0xaf, 0x80, 0xb4, 0x80, 0xb9, 0x80,
     0x93, 0x80, 0x00, 0x3f
+};
+
+static const size_t g_us_iso_retail_descriptor_offsets[
+    TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT] = {
+    TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_0,
+    TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_1,
+    TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_2
+};
+
+static const size_t g_us_iso_retail_span_offsets[
+    TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT] = {
+    TQR_US_ISO_RETAIL_SPAN_OFFSET_0,
+    TQR_US_ISO_RETAIL_SPAN_OFFSET_1,
+    TQR_US_ISO_RETAIL_SPAN_OFFSET_2
 };
 
 /* 12-byte sentinel that immediately precedes the 4-byte audio-bank id word
@@ -2648,6 +2669,72 @@ static Theron_Track02SignalStatus find_raw_bin_bank_signal(
         : THERON_TRACK02_SIGNAL_NOT_FOUND;
 }
 
+/* The supplied retail US image is the canonical concatenated ISO, but its
+ * bank evidence is not the older one-anchor profile above.  It contains
+ * three exact descriptor/span pairs at the source-locked offsets below.
+ * Keep this as a distinct transport-level profile: it authenticates the
+ * repeated byte layout for bitmap sampling, but does not infer dungeon or
+ * object semantics from the descriptor bytes. */
+static Theron_Track02SignalStatus find_us_iso_retail_bank_signal(
+    const uint8_t *track02_data,
+    size_t track02_size,
+    Theron_Track02BankSignal *out_signal) {
+    size_t descriptor_occurrences;
+    size_t span_occurrences;
+
+    if (!track02_data || !out_signal ||
+        TQR_US_ISO_RETAIL_SPAN_OFFSET_2 +
+            TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES > track02_size) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+    descriptor_occurrences = count_pattern_occurrences(
+        track02_data, track02_size, g_us_iso_bank_stride_descriptor,
+        TQR_US_ISO_BANK_STRIDE_BYTES);
+    span_occurrences = count_pattern_occurrences(
+        track02_data, track02_size, g_us_iso_post_boundary_span,
+        TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES);
+    if (descriptor_occurrences != TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT ||
+        span_occurrences != TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT ||
+        !pattern_matches_at_offsets(
+            track02_data, track02_size, g_us_iso_bank_stride_descriptor,
+            TQR_US_ISO_BANK_STRIDE_BYTES,
+            g_us_iso_retail_descriptor_offsets,
+            TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT) ||
+        !pattern_matches_at_offsets(
+            track02_data, track02_size, g_us_iso_post_boundary_span,
+            TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES,
+            g_us_iso_retail_span_offsets,
+            TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT)) {
+        return THERON_TRACK02_SIGNAL_NOT_FOUND;
+    }
+
+    out_signal->anchor_count = TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT;
+    out_signal->descriptor_offset = g_us_iso_retail_descriptor_offsets[0];
+    out_signal->descriptor_size = TQR_US_ISO_BANK_STRIDE_BYTES;
+    copy_offsets(out_signal->descriptor_offsets,
+                 g_us_iso_retail_descriptor_offsets,
+                 TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT);
+    out_signal->occurrence_count = descriptor_occurrences;
+    out_signal->first_value = rd16le(g_us_iso_bank_stride_descriptor);
+    out_signal->last_value = rd16le(
+        g_us_iso_bank_stride_descriptor + TQR_US_ISO_BANK_STRIDE_BYTES - 2u);
+    out_signal->stride = TQR_US_ISO_BANK_STRIDE_STEP;
+    out_signal->value_count = TQR_US_ISO_BANK_STRIDE_COUNT;
+    out_signal->next_nonzero_offset = g_us_iso_retail_span_offsets[0];
+    out_signal->boundary_prefix_size = TQR_US_ISO_BANK_BOUNDARY_PREFIX_BYTES;
+    out_signal->boundary_prefix_occurrence_count = span_occurrences;
+    out_signal->post_boundary_span_size = TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES;
+    copy_offsets(out_signal->post_boundary_span_offsets,
+                 g_us_iso_retail_span_offsets,
+                 TQR_US_ISO_RETAIL_BANK_ANCHOR_COUNT);
+    out_signal->post_boundary_span_occurrence_count = span_occurrences;
+    out_signal->post_boundary_span_first_word =
+        rd16le(g_us_iso_post_boundary_span);
+    out_signal->post_boundary_span_last_word = rd16le(
+        g_us_iso_post_boundary_span + TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES - 2u);
+    return THERON_TRACK02_SIGNAL_OK;
+}
+
 Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
     const uint8_t *track02_data,
     size_t track02_size,
@@ -2694,6 +2781,10 @@ Theron_Track02SignalStatus theron_v1_track02_find_bank_signal(
         return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
     }
 
+    if (find_us_iso_retail_bank_signal(track02_data, track02_size,
+                                       out_signal) == THERON_TRACK02_SIGNAL_OK) {
+        return THERON_TRACK02_SIGNAL_OK;
+    }
     if (track02_size < TQR_US_ISO_BANK_BOUNDARY_OFFSET + TQR_US_ISO_POST_BOUNDARY_SPAN_BYTES) {
         return THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
@@ -2803,9 +2894,9 @@ Theron_Track02SignalStatus theron_v1_track02_find_audio_bank_marker(
             ? THERON_TRACK02_SIGNAL_OK
             : THERON_TRACK02_SIGNAL_NOT_FOUND;
     }
-    /* US ISO is a partial extract and JP Rev 1 ISO is zero-filled; both
-     * lack the post-boundary span audio-bank anchors, so the marker is
-     * unsupported on those variants rather than missing. */
+    /* ISO profiles do not expose the raw-BIN audio-bank marker.  The retail
+     * US ISO bank signal above is bitmap/layout evidence only; do not turn
+     * it into a fabricated CDDA or raw-sector marker. */
     return THERON_TRACK02_SIGNAL_UNSUPPORTED_VARIANT;
 }
 
@@ -2845,7 +2936,10 @@ const char *theron_v1_track02_variant_name(Theron_Track02Variant variant) {
 const char *theron_v1_track02_source_evidence(void) {
     return "theron_v1_track02.c: US Track 02 ISO MD5 "
            THERON_TRACK02_MD5_US_ISO
-           " has a unique little-endian bank-stride descriptor at offset "
+           " has three retail little-endian bank-stride descriptor anchors "
+           "at offsets 0x5b2406, 0x5b4406, 0x5b6584 and matching opaque "
+           "spans at 0x207000, 0x378000, 0x5b8000; the legacy profile has "
+           "a unique little-endian bank-stride descriptor at offset "
            "0x1584 (9 words, 0x0020..0x2020, stride 0x0400), followed by "
            "zero-fill through a unique opaque 44-byte boundary span at offset "
            "0x3000; raw US Track 02 BIN "

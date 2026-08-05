@@ -499,6 +499,39 @@ static void check_iso_signal(const Theron_Track02BankSignal *signal) {
               0x3f00u);
 }
 
+static void check_retail_iso_signal(const Theron_Track02BankSignal *signal) {
+    static const size_t descriptor_offsets[] = {
+        0x5b2406u, 0x5b4406u, 0x5b6584u
+    };
+    static const size_t span_offsets[] = {
+        0x207000u, 0x378000u, 0x5b8000u
+    };
+    size_t i;
+
+    check_int("retail ISO variant", signal->variant,
+              THERON_TRACK02_VARIANT_US_ISO);
+    check_size("retail ISO anchor count", signal->anchor_count, 3u);
+    check_size("retail ISO descriptor size", signal->descriptor_size, 18u);
+    check_size("retail ISO descriptor occurrence count",
+               signal->occurrence_count, 3u);
+    check_size("retail ISO descriptor value count", signal->value_count, 9u);
+    check_u16("retail ISO first descriptor value", signal->first_value, 0x0020u);
+    check_u16("retail ISO last descriptor value", signal->last_value, 0x2020u);
+    check_u16("retail ISO descriptor stride", signal->stride, 0x0400u);
+    check_size("retail ISO boundary prefix size", signal->boundary_prefix_size, 16u);
+    check_size("retail ISO boundary prefix occurrence count",
+               signal->boundary_prefix_occurrence_count, 3u);
+    check_size("retail ISO span size", signal->post_boundary_span_size, 44u);
+    check_size("retail ISO span occurrence count",
+               signal->post_boundary_span_occurrence_count, 3u);
+    for (i = 0u; i < 3u; ++i) {
+        check_size("retail ISO descriptor anchor", signal->descriptor_offsets[i],
+                   descriptor_offsets[i]);
+        check_size("retail ISO span anchor", signal->post_boundary_span_offsets[i],
+                   span_offsets[i]);
+    }
+}
+
 static void check_raw_signal(const char *label,
                              const Theron_Track02BankSignal *signal,
                              Theron_Track02Variant variant,
@@ -1153,7 +1186,12 @@ static void probe_track(const char *label,
                signal.post_boundary_span_size,
                signal.post_boundary_span_occurrence_count);
         if (signal.variant == THERON_TRACK02_VARIANT_US_ISO) {
-            check_iso_signal(&signal);
+            if (signal.anchor_count == 3u &&
+                signal.descriptor_offset == 0x5b2406u) {
+                check_retail_iso_signal(&signal);
+            } else {
+                check_iso_signal(&signal);
+            }
         } else if (signal.variant == THERON_TRACK02_VARIANT_US_BIN) {
             check_raw_signal("US raw",
                              &signal,
