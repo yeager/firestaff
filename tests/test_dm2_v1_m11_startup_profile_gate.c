@@ -404,29 +404,13 @@ static void expect_dm2_startup_layout_contract(void) {
                     &last_session),
                 "DM2 startup rejects out-of-range SKSave slot paths");
 
-    expect_true(dm2_v1_startup_panel_rect(&rect) &&
-                    rect.x == 78 && rect.y == 50 &&
-                    rect.w == 164 && rect.h == 122,
-                "DM2 startup panel rect is owned by DM2 layout module");
-    expect_true(dm2_v1_startup_row_rect(0, &rect) &&
-                    rect.x == 92 && rect.y == 76 &&
-                    rect.w == 136 && rect.h == 12,
-                "DM2 startup row 0 hit rect is stable");
-    expect_true(dm2_v1_startup_row_highlight_rect(1, &rect) &&
-                    rect.x == 90 && rect.y == 90 &&
-                    rect.w == 140 && rect.h == 12,
-                "DM2 startup row highlight keeps row cadence");
-    expect_true(dm2_v1_startup_hit(2, 100, 78, &hit) &&
-                    hit.kind == DM2_V1_STARTUP_HIT_ROW &&
-                    hit.row == 0,
-                "DM2 startup hit resolves row zero");
-    expect_true(dm2_v1_startup_hit(2, 82, 54, &hit) &&
-                    hit.kind == DM2_V1_STARTUP_HIT_PANEL &&
-                    hit.row == -1,
-                "DM2 startup hit consumes panel whitespace");
-    expect_true(!dm2_v1_startup_hit(2, 4, 4, &hit) &&
-                    hit.kind == DM2_V1_STARTUP_HIT_NONE,
-                "DM2 startup hit ignores outside panel");
+    expect_true(!dm2_v1_startup_panel_rect(&rect) &&
+                    !dm2_v1_startup_row_rect(0, &rect) &&
+                    !dm2_v1_startup_row_highlight_rect(1, &rect),
+                "DM2 startup rejects obsolete host panel and row geometry");
+    expect_true(!dm2_v1_startup_hit(2, 100, 78, &hit) &&
+                    hit.kind == DM2_V1_STARTUP_HIT_NONE && hit.row == -1,
+                "DM2 startup rejects host-coordinate hit testing");
 
     dm2_v1_startup_menu_init(&menu, "/tmp/firestaff-dm2-test-saves");
     expect_true(dm2_v1_startup_menu_refresh(&menu, 1, (1u << 3)),
@@ -913,18 +897,16 @@ static void expect_dm2_startup_layout_contract(void) {
                     action.row == 1 &&
                     action.slot == 3,
                 "DM2 startup menu row hit activates through DM2 API");
-    expect_true(dm2_v1_startup_row_label(DM2_V1_STARTUP_ROW_CONTINUE,
-                                         -1,
-                                         label,
-                                         (int)sizeof(label)) &&
-                    strcmp(label, "CONTINUE") == 0,
-                "DM2 startup presentation owns CONTINUE row label");
-    expect_true(dm2_v1_startup_row_label(DM2_V1_STARTUP_ROW_SLOT,
-                                         3,
-                                         label,
-                                         (int)sizeof(label)) &&
-                    strcmp(label, "LOAD SLOT 03") == 0,
-                "DM2 startup presentation owns slot row label");
+    expect_true(!dm2_v1_startup_row_label(DM2_V1_STARTUP_ROW_CONTINUE,
+                                          -1,
+                                          label,
+                                          (int)sizeof(label)) &&
+                    label[0] == '\0' &&
+                    !dm2_v1_startup_row_label(DM2_V1_STARTUP_ROW_SLOT,
+                                               3,
+                                               label,
+                                               (int)sizeof(label)),
+                "DM2 startup rejects host-authored row labels");
     command_count = dm2_v1_startup_presentation_build(
         &menu,
         commands,

@@ -3883,6 +3883,10 @@ that its exact runtime path is not already source-locked and tested.
     table has yet been ported. Source pointer rectangles remain the only live
     menu actions. Import `c_0aaf`/`c_input` translation before enabling any
     keyboard/controller mapping.
+    **2026-08-06 geometry correction:** the obsolete 78×50 host panel,
+    row rectangles, English labels and generic pointer wrappers are now
+    fail-closed in the production API. Only `dm2_v1_boot` may expose a menu
+    hit after decoding the mounted GDAT RAW4 matrix.
 41. **DM2-PARTY-INVENTORY-SPELLS:** Complete real champion, inventory, item,
     skill, action, spell, damage, condition, and UI mutation paths through
     the source runtime.

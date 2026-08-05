@@ -29,6 +29,9 @@ enum {
     DM2_V1_STARTUP_FOOTER_Y = 158
 };
 
+/* Legacy host-layout queries intentionally fail closed. DM2's live title
+ * menu uses the source RAW4 click matrix via dm2_v1_boot, not these guessed
+ * panel/row values. */
 int dm2_v1_startup_panel_rect(DM2_V1_StartupRect *out_rect);
 int dm2_v1_startup_row_rect(int row, DM2_V1_StartupRect *out_rect);
 int dm2_v1_startup_row_highlight_rect(int row,

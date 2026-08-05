@@ -404,27 +404,9 @@ int main(void)
         &menu,
         rows,
         (int)(sizeof(rows) / sizeof(rows[0])));
-    check(row_count == 3 &&
-              rows[0].kind == DM2_V1_STARTUP_ROW_CONTINUE &&
-              rows[0].selected == 1 &&
-              rows[0].rect.x == 92 &&
-              rows[0].rect.y == 76 &&
-              rows[0].highlight_rect.w == 140 &&
-              rows[0].text_x == DM2_V1_STARTUP_ROW_TEXT_X &&
-              rows[0].text_y == 78 &&
-              rows[0].label[0] == 'C',
-          "render rows expose selected Continue presentation");
-    check(rows[1].kind == DM2_V1_STARTUP_ROW_SLOT &&
-              rows[1].slot == 2 &&
-              rows[1].rect.y == 90 &&
-              rows[1].selected == 0 &&
-              rows[1].label[0] == 'L',
-          "render rows expose slot presentation");
-    check(rows[2].kind == DM2_V1_STARTUP_ROW_NEW_GAME &&
-              rows[2].slot == -1 &&
-              rows[2].rect.y == 104 &&
-              rows[2].label[0] == 'N',
-          "render rows expose New Game presentation");
+    check(row_count == 0 && rows[0].kind == DM2_V1_STARTUP_ROW_NONE &&
+              rows[0].label[0] == '\0',
+          "render rows reject unowned host geometry and labels");
     row_count = dm2_v1_startup_presentation_build(
         &menu,
         commands,
@@ -1317,98 +1299,40 @@ int main(void)
               action.slot == 2 &&
               menu.selected_row == 1,
           "pointer row hit returns Load Slot action directly");
-    check(dm2_v1_startup_panel_rect(&panel_rect) &&
+    check(!dm2_v1_startup_panel_rect(&panel_rect) &&
               dm2_v1_startup_menu_snapshot_from_menu(&snapshot, &menu) &&
-              dm2_v1_startup_menu_snapshot_handle_pointer(
-                  &snapshot,
-                  snapshot.row_count,
-                  panel_rect.x + 8,
-                  panel_rect.y + 8,
-                  &action) &&
+              !dm2_v1_startup_menu_snapshot_handle_pointer(
+                  &snapshot, snapshot.row_count, 100, 78, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE,
-          "snapshot pointer helper owns pointer hit-test and action");
-    check(dm2_v1_startup_menu_handle_pointer_from_facts(
-              &snapshot,
-              "",
-              "/tmp/firestaff-dm2-startup",
-              1,
-              (1u << 2),
-              0,
-              panel_rect.x + 8,
-              panel_rect.y + 8,
-              &action) &&
-              snapshot.save_root[0] == '/' &&
-              snapshot.row_count == 3 &&
-              snapshot.selected_row == 0 &&
+          "snapshot pointer helper rejects obsolete host hit geometry");
+    check(!dm2_v1_startup_menu_handle_pointer_from_facts(
+              &snapshot, "", "/tmp/firestaff-dm2-startup", 1, (1u << 2),
+              0, 100, 78, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE,
-          "snapshot facts pointer helper owns M11 pointer snapshot construction");
-    check(dm2_v1_startup_menu_handle_pointer_from_facts_with_receipt(
-              &state_receipt,
-              "",
-              "/tmp/firestaff-dm2-startup",
-              1,
-              (1u << 2),
-              0,
-              panel_rect.x + 8,
-              panel_rect.y + 8,
-              &action) &&
-              strcmp(state_receipt.save_root, "/tmp/firestaff-dm2-startup") == 0 &&
-              state_receipt.row_count == 3 &&
-              state_receipt.selected_row == 0 &&
+          "snapshot facts pointer helper rejects unowned host coordinates");
+    check(!dm2_v1_startup_menu_handle_pointer_from_facts_with_receipt(
+              &state_receipt, "", "/tmp/firestaff-dm2-startup", 1,
+              (1u << 2), 0, 100, 78, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE,
-          "state receipt pointer helper owns M11 pointer state copy contract");
+          "state receipt pointer helper rejects unowned host coordinates");
     host_facts.resume_available = 1;
     host_facts.slot_mask = (1u << 2);
     host_facts.selected_row = 0;
-    check(dm2_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
-              &state_receipt,
-              &host_facts,
-              panel_rect.x + 8,
-              panel_rect.y + 8,
-              &action) &&
-              state_receipt.row_count == 3 &&
-              state_receipt.selected_row == 0 &&
+    check(!dm2_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
+              &state_receipt, &host_facts, 100, 78, &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE,
-          "state receipt host facts pointer helper owns M11 pointer state copy contract");
+          "host facts pointer helper rejects unowned host coordinates");
     host_facts.resume_available = 1;
     host_facts.slot_mask = (1u << 2);
     host_facts.selected_row = 0;
     g_apply_calls = 0;
     g_apply_result = 1;
     memset(&g_applied_session, 0, sizeof(g_applied_session));
-    check(dm2_v1_startup_row_rect(2, &row_rect) &&
-              dm2_v1_startup_execute_pointer_from_host_facts_with_receipt(
-                  &host_facts,
-                  row_rect.x + 4,
-                  row_rect.y + 4,
-                  test_apply_session,
-                  NULL,
-                  &execution,
-                  &host_action_receipt) &&
-              g_apply_calls == 0 &&
-              host_action_receipt.host_receipt.input_result ==
-                  DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
-              !host_action_receipt.host_receipt.mode_update.set_startup_menu_active &&
-              host_action_receipt.menu_state_receipt_valid &&
-              host_action_receipt.menu_state_receipt.selected_row == 2 &&
-              host_action_receipt.input_route.valid &&
-              host_action_receipt.input_route.source_kind == 2 &&
-              host_action_receipt.input_route.pointer_x == row_rect.x + 4 &&
-              host_action_receipt.input_route.pointer_y == row_rect.y + 4 &&
-              host_action_receipt.input_route.selected_row_before == 0 &&
-              host_action_receipt.input_route.selected_row_after == 2 &&
-              host_action_receipt.input_route.action_kind ==
-                  DM2_V1_STARTUP_ACTION_NEW_GAME &&
-              host_action_receipt.input_route.action_row == 2 &&
-              host_action_receipt.input_route.action_slot == -1 &&
-              host_action_receipt.host_menu_route.valid &&
-              host_action_receipt.host_menu_route.close_startup_menu == 0 &&
-              host_action_receipt.host_menu_route.apply_session == 0 &&
-              host_action_receipt.host_menu_route.selected_row_after == 2 &&
-              host_action_receipt.host_menu_route.runtime_menu_ready == 1 &&
-              host_action_receipt.host_menu_route.runtime_action_ready == 0 &&
-              host_action_receipt.host_menu_route.first_hud_frame_ready == 0,
-          "host facts pointer wrapper preserves the GAME_LOAD title gate");
+    check(!dm2_v1_startup_row_rect(2, &row_rect) &&
+              !dm2_v1_startup_execute_pointer_from_host_facts_with_receipt(
+                  &host_facts, 100, 104, test_apply_session, NULL, &execution,
+                  &host_action_receipt) && g_apply_calls == 0,
+          "host pointer wrapper rejects synthetic New Game geometry");
     check(!dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_NONE, &action),
           "idle input is ignored");
@@ -1438,8 +1362,8 @@ int main(void)
     check(!dm2_v1_startup_menu_handle_pointer_from_host_facts_with_receipt(
               &state_receipt,
               &host_facts,
-              panel_rect.x + 8,
-              panel_rect.y + 8,
+              100,
+              78,
               &action) &&
               action.kind == DM2_V1_STARTUP_ACTION_NONE,
           "inactive DM2 menu rejects host pointer consumption");

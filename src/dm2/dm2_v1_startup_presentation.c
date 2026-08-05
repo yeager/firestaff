@@ -52,21 +52,10 @@ int dm2_v1_startup_row_label(DM2_V1_StartupRowKind kind,
         return 0;
     }
     out_label[0] = '\0';
-    if (kind == DM2_V1_STARTUP_ROW_CONTINUE) {
-        snprintf(out_label, (size_t)out_label_size, "CONTINUE");
-        return 1;
-    }
-    if (kind == DM2_V1_STARTUP_ROW_SLOT) {
-        if (slot < 0) {
-            return 0;
-        }
-        snprintf(out_label, (size_t)out_label_size, "LOAD SLOT %02d", slot);
-        return 1;
-    }
-    if (kind == DM2_V1_STARTUP_ROW_NEW_GAME) {
-        snprintf(out_label, (size_t)out_label_size, "NEW GAME");
-        return 1;
-    }
+    (void)kind;
+    (void)slot;
+    /* Do not substitute host-authored English text for SHOW_MENU_SCREEN's
+     * source bitmap. A future text route must read its selected GDAT bytes. */
     return 0;
 }
 

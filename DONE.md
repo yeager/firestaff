@@ -49498,3 +49498,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   to an unproven 320×224 top-left destination. TITLE.CG/TITLE.BIN remain
   byte-decoded source receipts; M11 startup presentation stays no-draw until
   Saturn VDP1/VDP2 placement and composition are authenticated.
+
+- ✅ 2026-08-06 DM2 startup host-layout removal: removed the last production
+  output from the obsolete fixed 78×50 panel, 14-pixel row cadence, English
+  `CONTINUE`/`LOAD SLOT`/`NEW GAME` labels, and generic pointer hit-test.
+  These values had no `SHOW_MENU_SCREEN` or GDAT owner. The legacy accessors
+  now return no geometry/text/action, so callers must use the mounted RAW4
+  click matrix through `dm2_v1_boot_startup_menu_pointer_hit`. Verification:
+  `test_dm2_v1_startup_menu_action_contract` 98/98 and the real-PC
+  `test_dm2_v1_m11_startup_profile_gate` pass. Sources:
+  `SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN` and `HANDLE_UI_EVENT`.

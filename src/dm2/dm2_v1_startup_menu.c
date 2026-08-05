@@ -1812,39 +1812,15 @@ int dm2_v1_startup_menu_build_render_rows(
     DM2_V1_StartupRenderRow *rows,
     int max_rows)
 {
-    int row;
-    int count = 0;
-
     if (!menu || !rows || max_rows <= 0) {
         return 0;
     }
+    /* SHOW_MENU_SCREEN owns menu pixels in TITLE/0/dt07/4.  The historical
+     * host rows carried invented English labels and geometry, so an unbound
+     * caller receives no presentation until an original menu text/layout
+     * path is imported. */
     memset(rows, 0, (size_t)max_rows * sizeof(rows[0]));
-    for (row = 0; row < menu->row_count && count < max_rows; ++row) {
-        DM2_V1_StartupRowKind kind = DM2_V1_STARTUP_ROW_NONE;
-        int slot = -1;
-        DM2_V1_StartupRenderRow *out = &rows[count];
-
-        if (!dm2_v1_startup_menu_row_at(menu, row, &kind, &slot) ||
-            !dm2_v1_startup_row_rect(row, &out->rect)) {
-            continue;
-        }
-        (void)dm2_v1_startup_row_highlight_rect(row, &out->highlight_rect);
-        out->kind = kind;
-        out->row = row;
-        out->slot = slot;
-        out->selected = (row == menu->selected_row) ? 1 : 0;
-        out->text_x = DM2_V1_STARTUP_ROW_TEXT_X;
-        out->text_y = out->rect.y + 2;
-        if (kind == DM2_V1_STARTUP_ROW_CONTINUE) {
-            snprintf(out->label, sizeof(out->label), "CONTINUE");
-        } else if (kind == DM2_V1_STARTUP_ROW_SLOT) {
-            snprintf(out->label, sizeof(out->label), "LOAD SLOT %02d", slot);
-        } else if (kind == DM2_V1_STARTUP_ROW_NEW_GAME) {
-            snprintf(out->label, sizeof(out->label), "NEW GAME");
-        }
-        ++count;
-    }
-    return count;
+    return 0;
 }
 
 int dm2_v1_startup_receipt_phase(int startup_menu_active,
