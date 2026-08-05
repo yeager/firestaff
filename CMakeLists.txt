@@ -4202,6 +4202,13 @@ list(REMOVE_ITEM M10_SOURCES
 # for a production DM2 session; its two unit targets compile it explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_narrow_pc34_compat.c")
+# The broad `c_gui_draw` callback transcription has no M11 caller and still
+# substitutes dimensions, coin placement and glyph/UI decisions for the
+# source-owned GDAT and buttongroup state.  The live HUD uses the gated
+# viewport/HUD route instead; retain this solely for its explicit contract
+# test until its full original-data owner is available.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_draw_pc34_compat.c")
 # This contract probe seeds a 10x10 synthetic room-skin fixture and is used
 # exclusively by its unit test.  Keep it out of the production M10 archive:
 # the live CSB viewport must consume only source-bound dungeon/material data.
@@ -4356,7 +4363,8 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_outdoor_renderer.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_1c9a_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_0aaf_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_narrow_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_runtime_narrow_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gui_draw_pc34_compat.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -18565,6 +18573,7 @@ if(BUILD_TESTING)
     # ── DM2: GUI drawing (c_gui_draw.cpp) ──
     add_executable(test_dm2_v1_gui_draw_pc34_compat
         tests/test_dm2_v1_gui_draw_pc34_compat.c
+        src/dm2/dm2_v1_gui_draw_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_gui_draw_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

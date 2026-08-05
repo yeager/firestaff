@@ -49920,3 +49920,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   name-entry UI and its moverec/light exports overlap separate implementations.
   The two focused unit targets compile it explicitly; M11 and the DM2 archive
   cannot select it while the real owner-backed runtime remains unfinished.
+
+- ✅ 2026-08-06 DM2 c_gui_draw placeholder isolation: removed the disconnected
+  callback HUD renderer from both production CMake globs. It has no M11
+  caller and substitutes buttongroup dimensions, coin placement and UI glyph
+  decisions for original GDAT/runtime state. Its explicit test target remains;
+  the live M11 HUD stays on the source-gated viewport path.

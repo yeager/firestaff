@@ -4066,7 +4066,11 @@ that its exact runtime path is not already source-locked and tested.
    `DM2_hero_39796` substitute is not the source name-entry UI at
    `c_hero.cpp:464`, and some of its moverec/light exports duplicate separate
    source-bound modules. Its isolated test contracts remain until a complete
-   owner-backed runtime route is wired.
+   owner-backed runtime route is wired. **2026-08-06 HUD update:** the
+   disconnected `c_gui_draw` callback transcription is also test-only. It
+   guesses buttongroup dimensions, coin placement and UI glyph decisions;
+   M11 must keep using the provenance-gated viewport/HUD route until those
+   original GDAT and runtime owners are fully bound.
 42. **DM2-CREATURE-AI-COMBAT:** Complete skproject creature AI, movement,
     combat, projectiles, cloud effects, drops, occupancy, and timeline-driven
     behavior from raw original records.
