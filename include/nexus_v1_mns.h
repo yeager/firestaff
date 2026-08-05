@@ -10,7 +10,11 @@
 #define NEXUS_MNS_MESH_DESC_SIZE 24
 #define NEXUS_MNS_VERTEX_SIZE    12
 #define NEXUS_MNS_FACE_SIZE      12
-#define NEXUS_MNS_MAX_JOINTS     32
+/* Retail DMDF/MNS uses more than 32 joints: SCORPION.MNS has 33 and
+ * ROCKPILE.MNS has 37 in the verified corpus. Keep the parser bounded while
+ * preserving every observed retail joint instead of silently truncating the
+ * skeleton at an inferred 32-joint limit. */
+#define NEXUS_MNS_MAX_JOINTS     64
 #define NEXUS_MNS_MAX_VERTICES   512
 #define NEXUS_MNS_MAX_FACES      512
 #define NEXUS_MNS_MAX_TEXTURES   16

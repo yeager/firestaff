@@ -37,6 +37,9 @@
   window rule as the active decoder; the pinned retail MENU.BPK test decodes
   all 162 PRS3 surfaces as indexed 8bpp; PRS3 mode tags are not host RGB
   widths. VDP1 pixel/CLUT/palette admission remains capture-gated.
+  The real MNS decoder now retains the observed 33-joint SCORPION and
+  37-joint ROCKPILE skeletons instead of truncating them at 32; visible
+  creature rendering and VDP1 texture/palette handoff remain open.
   The legacy Nexus door raster API is now no-draw: its former DM1-derived
   gap geometry and palette guesses were removed. Bind Saturn door materials,
   animation frames, and VDP1 destinations before restoring door pixels.

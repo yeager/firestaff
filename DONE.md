@@ -1,3 +1,10 @@
+- ✅ 2026-08-05 Nexus MNS skeleton bound: raised the bounded parser capacity
+  from the inferred 32-joint limit to 64 after measuring the real corpus.
+  `SCORPION.MNS` retains 33 joints and `ROCKPILE.MNS` retains 37; all 30
+  verified MNS files and 452 source texture records still decode/render in the
+  regression. This removes real-data truncation only; creature VDP1 rendering,
+  texture palette ownership, and runtime actor presentation remain open.
+
 - ✅ 2026-08-05 Nexus MENU.BPK PRS3 surface semantics: PRS3 mode tags are now
   treated as opaque format fields, while decoded retail output is 8-bit indexed
   data for all 162 real MENU.BPK surfaces. Stored non-PRS3 entries retain their

@@ -38,6 +38,7 @@ static int test_all_mns(void) {
     DIR *d;
     struct dirent *ent;
     int decoded = 0, rendered = 0, fail = 0;
+    int scorpion_joints = 0, rockpile_joints = 0;
 
     if (!home) { printf("  SKIP all_mns (no HOME)\n"); return 0; }
     snprintf(dirpath, sizeof(dirpath), "%s/.firestaff/data/nexus", home);
@@ -90,6 +91,8 @@ static int test_all_mns(void) {
             printf(" render=%s", fail ? "CHECKED" : "PASS");
         }
         printf("\n");
+        if (strcmp(name, "SCORPION.MNS") == 0) scorpion_joints = result.joint_count;
+        if (strcmp(name, "ROCKPILE.MNS") == 0) rockpile_joints = result.joint_count;
         decoded++;
         free(data);
     }
@@ -97,6 +100,22 @@ static int test_all_mns(void) {
 
     printf("  decoded %d MNS files, rendered %d source textures\n",
            decoded, rendered);
+    if (decoded > 0) {
+        if (scorpion_joints != 33) {
+            printf("  FAIL SCORPION.MNS: joints=%d (expected retail 33)\n",
+                   scorpion_joints);
+            ++fail;
+        } else {
+            printf("  PASS SCORPION.MNS: retained 33 retail joints\n");
+        }
+        if (rockpile_joints != 37) {
+            printf("  FAIL ROCKPILE.MNS: joints=%d (expected retail 37)\n",
+                   rockpile_joints);
+            ++fail;
+        } else {
+            printf("  PASS ROCKPILE.MNS: retained 37 retail joints\n");
+        }
+    }
     if (decoded == 0) printf("  SKIP (no MNS files found)\n");
     return fail;
 }
