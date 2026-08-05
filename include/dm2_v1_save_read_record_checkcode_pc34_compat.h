@@ -37,10 +37,17 @@ typedef int (*DM2_ReadRecordSetDataFn)(void *ctx, uint16_t record_link,
 typedef int (*DM2_ReadRecordChainFn)(void *ctx, uint16_t prev_link,
                                      uint16_t new_link);
 
+/* Source: sksvgame.cpp::DM2_ADD_INDEX_TO_POSSESSION_INDICES. Map containers
+ * and creature-owned type 0xE records retain their source-owned possession
+ * continuation through this callback instead of manufacturing a chain. */
+typedef void (*DM2_ReadRecordAddPossessionIndexFn)(void *ctx,
+                                                    uint16_t record_link);
+
 typedef struct {
     DM2_ReadRecordAllocFn alloc_record;
     DM2_ReadRecordSetDataFn set_data;
     DM2_ReadRecordChainFn chain_record;
+    DM2_ReadRecordAddPossessionIndexFn add_possession_index;
     void *ctx;
 } DM2_ReadRecordCallbacks;
 
@@ -52,6 +59,8 @@ typedef struct {
     int records_read;
     int creatures_read;
     int containers_read;
+    int map_containers_read;
+    int possessions_read;
     int nested_creature;
     int nested_type_0e;
     int error;

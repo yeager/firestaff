@@ -50413,3 +50413,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   table at `DM.BIN+0x38000` only after the exact real `DM.BIN` hash receipt is
   verified. Copy-out getters refuse uninitialized/unverified engines; these
   coordinates remain input/HUD provenance, not framebuffer or VDP placement.
+
+- ✅ 2026-08-06 DM2 SKSAVE record container-map fidelity: corrected the
+  isolated `READ_RECORD_CHECKCODE` port to preserve unmasked `c_record` bits
+  during `DM2_SUPPRESS_READER(..., false)` and to select the source map-
+  container branch from `b_04` bits 1–2. Map containers now consume the
+  one-bit possession continuation rather than recursively reading a fabricated
+  child chain. Verification: record-checkcode and extra-dungeon-data round
+  trips, including a source-shaped map-container possession case.

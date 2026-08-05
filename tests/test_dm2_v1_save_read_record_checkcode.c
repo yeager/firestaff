@@ -72,6 +72,8 @@ typedef struct {
 typedef struct {
     ReadRecord records[MAX_READ_RECORDS];
     int count;
+    int possession_count;
+    uint16_t last_possession_link;
 } ReadPool;
 
 static uint16_t read_alloc(void *ctx, int record_type)
@@ -100,6 +102,13 @@ static int read_chain(void *ctx, uint16_t prev, uint16_t next)
     return 0;
 }
 
+static void read_add_possession(void *ctx, uint16_t link)
+{
+    ReadPool *pool = (ReadPool *)ctx;
+    pool->possession_count++;
+    pool->last_possession_link = link;
+}
+
 /* ---- Helpers ---- */
 
 static DM2_WriteRecordCallbacks make_writer_cb(void)
@@ -118,9 +127,11 @@ static DM2_WriteRecordCallbacks make_writer_cb(void)
 static DM2_ReadRecordCallbacks make_reader_cb(ReadPool *pool)
 {
     DM2_ReadRecordCallbacks cb;
+    memset(&cb, 0, sizeof(cb));
     cb.alloc_record = read_alloc;
     cb.set_data = read_set_data;
     cb.chain_record = read_chain;
+    cb.add_possession_index = read_add_possession;
     cb.ctx = pool;
     return cb;
 }
@@ -288,6 +299,37 @@ static void test_round_trip_chain(void)
     printf("  PASS: round_trip_chain\n");
 }
 
+static void test_round_trip_map_container(void)
+{
+    uint8_t buf[256];
+    DM2_ReadRecordSession rd;
+    DM2_ReadRecordCallbacks rcb;
+    ReadPool pool;
+    size_t written;
+
+    mock_init();
+    /* SKProject DM2_IS_CONTAINER_MAP: (word@4 & 6) == 2. The source emits
+     * only a possession bit for this container; it must not recurse into the
+     * apparent word_02 link. */
+    g_mock_records[0][2] = 0x00u;
+    g_mock_records[0][3] = 0x00u;
+    g_mock_records[0][4] = 0x02u;
+    written = write_and_flush(9, 0, 1, buf, sizeof(buf));
+    assert(written > 0u);
+
+    memset(&pool, 0, sizeof(pool));
+    dm2_v1_read_record_session_init(&rd, buf, written);
+    rcb = make_reader_cb(&pool);
+    assert(dm2_v1_read_record_checkcode(&rd, &rcb, 0, 1) == 0);
+    assert(pool.count == 1);
+    assert(pool.records[0].type == 9);
+    assert((pool.records[0].data[4] & 0x06u) == 0x02u);
+    assert(pool.possession_count == 1);
+    assert(rd.map_containers_read == 1);
+    assert(rd.possessions_read == 1);
+    printf("  PASS: round_trip_map_container\n");
+}
+
 static void test_session_counters(void)
 {
     DM2_ReadRecordSession rd;
@@ -309,6 +351,7 @@ int main(void)
     test_round_trip_type5();
     test_round_trip_type6();
     test_round_trip_chain();
+    test_round_trip_map_container();
     test_session_counters();
     printf("All read_record_checkcode tests passed.\n");
     return 0;

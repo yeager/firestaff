@@ -131,6 +131,7 @@ static void test_empty_dungeon_round_trip(void)
     dm2_v1_read_record_session_init(&rd, buf, wr.out_written);
 
     DM2_ReadRecordCallbacks rcb;
+    memset(&rcb, 0, sizeof(rcb));
     rcb.alloc_record = read_alloc;
     rcb.set_data = read_set_data;
     rcb.chain_record = read_chain;

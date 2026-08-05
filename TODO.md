@@ -235,6 +235,12 @@
   position where `DM2_READ_SKSAVE_DUNGEON` begins for all eight PC-DOS saves;
   inventory, tile record chains and possession indices remain unowned and
   continue to block resume.
+  2026-08-06: `READ_RECORD_CHECKCODE` now preserves source record bytes for
+  `DM2_SUPPRESS_READER(..., false)` and derives the map-container branch from
+  `c_record::b_04` bits 1..2, including its possession-index bit. This closes
+  a false recursive-chain interpretation in the isolated decoder; the full
+  raw-corpus route is still blocked because creature AI and moneybox decisions
+  require the authentic GDAT providers and live record allocation/ownership.
   2026-08-06: D2RS decoder envelopes are now rejected by both public slot
   loaders. They remain explicit diagnostic inputs only; a player-facing
   Continue/slot action can admit neither a Firestaff private envelope nor the

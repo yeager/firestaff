@@ -30,6 +30,44 @@ static int read_suppress(DM2_ReadRecordSession *s,
     return dm2_suppress_reader_read(&s->reader, mask, count, data, 0x00);
 }
 
+/* sksvgame.cpp::DM2_SUPPRESS_READER(..., argflag=false) starts each byte
+ * from *xeaxp and replaces only selected mask bits. Record bodies use that
+ * form after type-specific fields have been prepared. The general reader's
+ * zero-fill mode models argflag=true, so do the preserving variant here
+ * rather than losing c_record state such as container b_04 bits 1..2. */
+static int read_suppress_preserving(DM2_ReadRecordSession *s,
+                                    uint8_t *data,
+                                    const uint8_t *mask,
+                                    size_t count)
+{
+    size_t i;
+
+    if (!s || !data || !mask) return -1;
+    for (i = 0u; i < count; ++i) {
+        int bit;
+        for (bit = 7; bit >= 0; --bit) {
+            const uint8_t bit_mask = (uint8_t)(1u << bit);
+            if ((mask[i] & bit_mask) == 0u) continue;
+            if (s->reader.bits_remaining == 0u) {
+                if (!s->reader.data || s->reader.position >= s->reader.size) {
+                    return -1;
+                }
+                s->reader.current_byte =
+                    s->reader.data[s->reader.position++];
+                s->reader.bits_remaining = 8u;
+            }
+            if ((s->reader.current_byte & 0x80u) != 0u) {
+                data[i] |= bit_mask;
+            } else {
+                data[i] &= (uint8_t)~bit_mask;
+            }
+            s->reader.current_byte <<= 1;
+            --s->reader.bits_remaining;
+        }
+    }
+    return 0;
+}
+
 int dm2_v1_read_record_checkcode(
     DM2_ReadRecordSession *session,
     const DM2_ReadRecordCallbacks *cb,
@@ -110,10 +148,18 @@ int dm2_v1_read_record_checkcode(
             rec_data[4] = b04;
             session->creatures_read++;
         } else if (record_type == 9) {
-            /* Container: read 2-bit field. */
+            /* sksvgame.cpp::DM2_IS_CONTAINER_MAP tests c_record b_04
+             * directly: ((word@4 & 6) == 2). Preserve the two source bits
+             * before selecting the body mask. */
             uint8_t cont_byte = 0;
             uint8_t cont_mask = 3;
             if (read_suppress(session, &cont_byte, &cont_mask, 1)) return 1;
+            rec_data[4] = (uint8_t)((cont_byte << 1) & 0x03u);
+            if ((rec_data[4] & 0x06u) == 0x02u) {
+                mask = dm2_v1_save_record_mask_container_map();
+                is_map_or_nested = 1;
+                session->map_containers_read++;
+            }
             session->containers_read++;
         } else if (record_type == 0xe) {
             if (session->nested_creature) {
@@ -127,7 +173,8 @@ int dm2_v1_read_record_checkcode(
             const uint8_t *sizes = dm2_v1_save_record_sizes();
             size_t rec_size = sizes[record_type];
             if (rec_size > 0 && rec_size <= sizeof(rec_data)) {
-                if (read_suppress(session, rec_data, mask, rec_size)) return 1;
+                if (read_suppress_preserving(session, rec_data, mask,
+                                             rec_size)) return 1;
             }
         }
 
@@ -161,9 +208,20 @@ int dm2_v1_read_record_checkcode(
                 /* Map container: read 1-bit has-contents. */
                 int has = 0;
                 if (read_bit(session, &has)) return 1;
+                if (has) {
+                    if (cb->add_possession_index) {
+                        cb->add_possession_index(cb->ctx, record_link);
+                    }
+                    session->possessions_read++;
+                }
             }
         } else if (record_type == 0xe) {
-            if (!is_map_or_nested) {
+            if (is_map_or_nested) {
+                if (cb->add_possession_index) {
+                    cb->add_possession_index(cb->ctx, record_link);
+                }
+                session->possessions_read++;
+            } else {
                 int saved = session->nested_type_0e;
                 session->nested_type_0e = 1;
                 int rc = dm2_v1_read_record_checkcode(session, cb, 0, 0);

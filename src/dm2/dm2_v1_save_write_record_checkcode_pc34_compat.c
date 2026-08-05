@@ -157,9 +157,10 @@ int dm2_v1_write_record_checkcode(
             uint8_t cont_byte = (uint8_t)((rec.word_04 << 13) >> 14);
             uint8_t cont_mask = 3;
             if (write_suppress(session, &cont_byte, &cont_mask, 1)) return 1;
-            /* Check if map container. */
-            if (cb->is_container_map &&
-                cb->is_container_map(cb->ctx, record_link)) {
+            /* sksvgame.cpp::DM2_IS_CONTAINER_MAP reads c_record b_04:
+             * ((word@4 & 6) == 2). This is source data, not a host
+             * classification callback. */
+            if ((rec.byte_04 & 0x06u) == 0x02u) {
                 mask = dm2_v1_save_record_mask_container_map();
                 is_map_or_nested = 1;
             }
