@@ -17,6 +17,9 @@
   SMAP00-15 are now loaded and decoded from hash-verified retail bytes when a
   level becomes active; the retained pixels remain HUD/VDP2 no-draw until the
   Saturn placement and explored-state write path are captured.
+  V1 movement no longer invents adjacent-level same-coordinate stairs or
+  writes host radius-reveals into the retail automap state; source-owned
+  Structure1F destinations and Saturn explored-state evidence remain needed.
 
 - **DUNGEON-STUDIO-FSDUNG:** Dungeon Studio: import original dungeons from
   all five games (DM1, CSB, DM2, Theron's Quest, DM Nexus) and export to a

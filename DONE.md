@@ -1,3 +1,11 @@
+- ✅ 2026-08-05 Nexus synthetic transition cleanup: removed the Structure1B
+  square-grid fallback that invented stairs links to the adjacent level at
+  the same coordinates. Stairs now require an authenticated Structure1F
+  sensor/script destination; missing ownership blocks movement. Also removed
+  the empty-inventory door substitute and gated the host automap's radius
+  reveal behind the still-unproven Saturn explored-state write receipt.
+  Updated the real-runtime regression to assert both fail-closed boundaries.
+
 - ✅ 2026-08-05 Nexus SMAP runtime binding: added MD5 identity entries for all
   16 retail SMAP*.BIN files and bind the active level's LVMP source through the
   engine. The runtime retains the deterministically decoded 640×608 RGBA

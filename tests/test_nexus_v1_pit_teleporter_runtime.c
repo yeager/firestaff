@@ -185,40 +185,40 @@ static void test_stairs_down_with_target(void) {
           "stairs down apply registered facing");
 }
 
-static void test_stairs_down_unregistered_fallback(void) {
+static void test_stairs_down_unregistered_blocks(void) {
     Nexus_V1_Engine engine;
     Nexus_MechanicsState st;
 
     reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
     engine.current_level.squares[9][10] = NEXUS_SQUARE_STAIRS_DN;
     engine.current_level.collision_refs[9][10] = 0;
-    /* No stairs registered: fallback goes down one level. */
+    /* No source-owned stairs destination: movement must remain blocked. */
 
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     nexus_mechanics_tick(&st, &engine);
 
-    CHECK(st.party_x == 10 && st.party_y == 9,
-          "unregistered stairs down keeps party on stair square");
-    CHECK(st.pending_level_change == 4,
-          "unregistered stairs down sets pending_level_change to current+1");
+    CHECK(st.party_x == 10 && st.party_y == 10,
+          "unregistered stairs down does not move party");
+    CHECK(st.pending_level_change == -1,
+          "unregistered stairs down leaves pending_level_change clear");
 }
 
-static void test_stairs_up_unregistered_fallback(void) {
+static void test_stairs_up_unregistered_blocks(void) {
     Nexus_V1_Engine engine;
     Nexus_MechanicsState st;
 
     reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
     engine.current_level.squares[9][10] = NEXUS_SQUARE_STAIRS_UP;
     engine.current_level.collision_refs[9][10] = 0;
-    /* No stairs registered: fallback goes up one level. */
+    /* No source-owned stairs destination: movement must remain blocked. */
 
     nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
     nexus_mechanics_tick(&st, &engine);
 
-    CHECK(st.party_x == 10 && st.party_y == 9,
-          "unregistered stairs up keeps party on stair square");
-    CHECK(st.pending_level_change == 2,
-          "unregistered stairs up sets pending_level_change to current-1");
+    CHECK(st.party_x == 10 && st.party_y == 10,
+          "unregistered stairs up does not move party");
+    CHECK(st.pending_level_change == -1,
+          "unregistered stairs up leaves pending_level_change clear");
 }
 
 static void test_stairs_up_with_target(void) {
@@ -239,6 +239,18 @@ static void test_stairs_up_with_target(void) {
           "stairs up set pending_level_change to registered target level");
     CHECK(st.party_dir == NEXUS_DIR_EAST,
           "stairs up apply registered facing");
+}
+
+static void test_automap_write_remains_capture_gated(void) {
+    Nexus_V1_Engine engine;
+    Nexus_MechanicsState st;
+
+    reset_engine_for_square_tests(&engine, &st, 10, 10, NEXUS_DIR_NORTH, 3);
+    nexus_mechanics_push_command(&st, NEXUS_CMD_FORWARD);
+    nexus_mechanics_tick(&st, &engine);
+
+    CHECK(nexus_v1_automap_explored_count(&engine.automap, 3) == 0,
+          "retail automap does not synthesize explored cells without Saturn evidence");
 }
 
 static void test_exit_final_level_game_over(void) {
@@ -407,9 +419,10 @@ int main(void) {
     test_teleporter_cross_level();
     test_teleporter_unregistered_no_effect();
     test_stairs_down_with_target();
-    test_stairs_down_unregistered_fallback();
+    test_stairs_down_unregistered_blocks();
     test_stairs_up_with_target();
-    test_stairs_up_unregistered_fallback();
+    test_automap_write_remains_capture_gated();
+    test_stairs_up_unregistered_blocks();
     test_exit_final_level_game_over();
     test_exit_non_final_level_no_game_over();
     test_square_event_chute_returns_chute_fall();

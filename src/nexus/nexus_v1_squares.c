@@ -505,22 +505,12 @@ Nexus_SquareEvent nexus_process_square_event(int type, int x, int y,
         return NEXUS_EVENT_MOVE_OK;
 
     case NEXUS_SQUARE_DOOR: {
+        /* Inventory ownership belongs to the mechanics caller. That caller
+         * performs the source-bound key check before movement; this event
+         * stage must not manufacture an empty inventory as a substitute. */
         if (!nexus_doors_is_open(x, y)) {
-            /* Get champion pool inventory to check for key.
-             * If no key is required, door always opens.
-             * If key is required, check party leader's inventory.
-             * Source: DM1 door processing — key check against required key. */
-            const uint8_t *inv = NULL;
-            uint8_t dummy_inv[30] = {[0 ... 29] = (uint8_t)-1};
-            /* NOTE: engine doesn't have a direct pointer here.
-             * Door-can-open check is delegated to the mechanics tick
-             * which has engine access. The can_open function also
-             * returns 1 for unregistered doors (always passable). */
-            (void)inv;
-            if (nexus_doors_can_open(x, y, dummy_inv) == 0) {
-                /* Locked and no key in empty inventory — blocked */
+            if (!nexus_doors_can_open(x, y, NULL))
                 return NEXUS_EVENT_DOOR_BLOCKED;
-            }
             nexus_doors_open(x, y);
             return NEXUS_EVENT_DOOR_OPEN;
         }

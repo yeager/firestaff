@@ -436,17 +436,15 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
         }
     }
 
-    /* Register doors and stairs from the real Structure1B grid.  These are
-     * not synthetic fallbacks — they are the authenticated square-type data. */
+    /* Register doors from the authenticated Structure1B grid. Stairs are
+     * intentionally absent here: their destination belongs to a real
+     * Structure1F sensor/script record, and a same-coordinate adjacent-level
+     * link would be synthetic. */
     for (y = 0; y < level->height; ++y) {
         for (x = 0; x < level->width; ++x) {
             int sq = level->squares[y][x];
             if (sq == NEXUS_SQUARE_DOOR) {
                 nexus_doors_register(x, y);
-            } else if (sq == NEXUS_SQUARE_STAIRS_DN) {
-                nexus_stairs_register(x, y, level_index + 1, x, y, -1);
-            } else if (sq == NEXUS_SQUARE_STAIRS_UP) {
-                nexus_stairs_register(x, y, level_index - 1, x, y, -1);
             }
         }
     }
@@ -993,6 +991,16 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 sq = 0;
             }
 
+            /* A staircase without an authenticated Structure1F destination
+             * is not a license to invent an adjacent-level same-coordinate
+             * link. Keep the party on the source square until the real
+             * sensor/script owner is decoded. */
+            if ((sq == NEXUS_SQUARE_STAIRS_DN ||
+                 sq == NEXUS_SQUARE_STAIRS_UP) &&
+                nexus_stairs_resolve(t_x, t_y, NULL, NULL, NULL, NULL) != 0) {
+                sq = 0;
+            }
+
             if (sq != 0 && nexus_v1_level_move_allowed(&engine->current_level,
                                                        st->party_x, st->party_y,
                                                        t_x, t_y)) {
@@ -1131,10 +1139,14 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
         }
     }
 
-    /* Automap — reveal party position and adjacent squares each tick */
-    nexus_v1_automap_reveal_radius(&engine->automap, st->map_index,
-                                    st->party_x, st->party_y, 1);
-    nexus_v1_automap_set_level(&engine->automap, st->map_index);
+    /* The host automap storage is retained for isolated state tests, but the
+     * retail Saturn explored-state write path is not yet authenticated. Do
+     * not turn a host radius reveal into a claimed Nexus HUD behavior. */
+    if (engine->smap_runtime_receipt.explored_state_write_proven) {
+        nexus_v1_automap_reveal_radius(&engine->automap, st->map_index,
+                                        st->party_x, st->party_y, 1);
+        nexus_v1_automap_set_level(&engine->automap, st->map_index);
+    }
 
     /* Creature AI tick */
     if (engine->creatures.type_count > 0 && engine->level_loaded) {
