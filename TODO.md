@@ -2754,7 +2754,13 @@ that its exact runtime path is not already source-locked and tested.
    2026-07-28: V2.2 no longer drops the final source M648 inscription pass.
    Its artpack has no reviewed inscription replacement, so the real PC34
    font is repainted after V22 art just as it is in V2.0/V2.1.
-2. **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
+2. **DM1-PC34-FULL-ASSET-VISUAL-AUDIT:** Compare every one of the 713
+   hash-verified PC 3.4 `GRAPHICS.DAT` records against Greatstone/SCK decoded
+   references and capture the packaged macOS app. The current source lock and
+   22-record pixel comparison pass, but they do not prove all records or the
+   final app presentation. Keep C001 title timing/palette tied to ReDMCSB
+   `TITLE.C`; do not replace missing references with generated pixels.
+3. **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
    live group, line-of-sight, projectile-impact, teleporter, and spell-tick
    runtime paths using raw C04/C05/C14/C15 ownership and source scheduling.
    2026-08-03: Creature behavior event bootstrap module added. On the first

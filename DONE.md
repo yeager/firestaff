@@ -48982,3 +48982,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
 # floor images. Nexus HUD documentation now identifies the procedural V2
 # overlay as test/probe-only; production remains on the no-op boundary until
 # retail Saturn widget ownership and VDP1/VDP2 placement are captured.
+
+- ✅ 2026-08-05 DM1 PC 3.4 Greatstone/DMWeb asset audit: verified the local
+  `GRAPHICS.DAT` (713 records) and `TITLE` (59-record/53-frame) identities,
+  confirmed the normal runtime consumes real C001 title graphics, and the
+  existing 22-record SCK/Greatstone pixel comparison remains zero-difference.
+  Title cadence/palette tests pass. Full 713-record visual comparison and
+  packaged macOS capture remain explicitly open in `TODO.md`.
