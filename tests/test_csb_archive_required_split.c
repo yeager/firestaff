@@ -561,18 +561,9 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
               "archive-backed CSB CHAOS.FTL startup module should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedFtlCode, kCsbFtlCodePayload),
               "archive-backed CSB FTLCODE runtime module should be materialized next to GRAPHICS.DAT");
-    check_int(file_matches_payload(cachedAmigaTitle,
-                                   "original Amiga CSB TITL animation bank"),
-              "archive-backed Amiga CSB TITL.DAT title animation should be materialized next to GRAPHICS.DAT");
-    check_int(file_matches_payload(cachedAmigaEnd,
-                                   "original Amiga CSB ENDA animation bank"),
-              "archive-backed Amiga CSB ENDA.DAT end animation should be materialized next to GRAPHICS.DAT");
-    check_int(file_matches_payload(cachedAmigaKaos,
-                                   "original Amiga CSB KAOS title palette"),
-              "archive-backed Amiga CSB KAOS.FTL title palette should be materialized next to GRAPHICS.DAT");
-    check_int(file_matches_payload(cachedAmigaSwsh,
-                                   "original Amiga CSB SWSH logo media"),
-              "archive-backed Amiga CSB SWSH.FTL logo media should be materialized next to GRAPHICS.DAT");
+    check_int(!path_exists(cachedAmigaTitle) && !path_exists(cachedAmigaEnd) &&
+                  !path_exists(cachedAmigaKaos) && !path_exists(cachedAmigaSwsh),
+              "name-matched synthetic Amiga title sidecars must not be materialized as source media");
 
     /* Re-scan the same required package without its optional save members.
      * A cache must not retain MINI.DAT/CSBGAME.DAT from an earlier archive:

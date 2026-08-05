@@ -1145,6 +1145,37 @@ static void m12_materialize_dm1_startup_optional_cache(const char* seedPath,
     }
 }
 
+/* The four Amiga presentation sidecars are executable/animation media, not
+ * filename conventions.  Greatstone's Amiga 3.1 catalogue identifies their
+ * roles, while the fingerprint registry records the accepted original bytes.
+ * Never place a name-matched archive member in the runtime cache: that would
+ * let a synthetic TITL/ENDA/KAOS/SWSH file impersonate source media. */
+static const char* m12_csb_amiga_sidecar_expected_md5(const char* label) {
+    if (!label) {
+        return NULL;
+    }
+    if (strcmp(label, "TITL.DAT") == 0) return "5b590ea3a6f5eed513b5678b01468ee4";
+    if (strcmp(label, "ENDA.DAT") == 0) return "9f2b73ff73ad0032810d79021c900ca9";
+    if (strcmp(label, "KAOS.FTL") == 0) return "dbb79832c9cc3db82886ba8d3f72748a";
+    if (strcmp(label, "SWSH.FTL") == 0) return "ff3872baaed8ee4e83ee3c0684b2eeec";
+    return NULL;
+}
+
+static int m12_materialize_authenticated_csb_amiga_sidecar(
+    const char* seedPath, const char* label, const char* outPath) {
+    const char* expectedMd5 = m12_csb_amiga_sidecar_expected_md5(label);
+    char md5[M12_ASSET_MD5_CAPACITY];
+    if (!expectedMd5 ||
+        !m12_materialize_optional_for_cache_seed(seedPath, label, outPath)) {
+        return 0;
+    }
+    if (!m12_file_md5_hex(outPath, md5) || strcmp(md5, expectedMd5) != 0) {
+        (void)remove(outPath);
+        return 0;
+    }
+    return 1;
+}
+
 static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
                                                        const char* gameCacheDir) {
     static const char* const labels[] = {
@@ -1193,8 +1224,11 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
         if (!FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, labels[i])) {
             continue;
         }
-        if (!m12_materialize_optional_for_cache_seed(seedPath, labels[i],
-                                                     outPath)) {
+        if (!(m12_csb_amiga_sidecar_expected_md5(labels[i]) != NULL
+                  ? m12_materialize_authenticated_csb_amiga_sidecar(
+                        seedPath, labels[i], outPath)
+                  : m12_materialize_optional_for_cache_seed(seedPath,
+                                                            labels[i], outPath))) {
             /* The cache is a materialized view of this exact package, not a
              * sidecar store.  In particular, DMWeb's Saved Game Files
              * reference distinguishes MINI.DAT (the original CSB campaign
