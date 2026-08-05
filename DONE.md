@@ -50158,6 +50158,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   with the old path retained only as fallback. The authentic US Track 02 run
   passes all seven map groups, ground-reference chains, doors and teleporters;
   no JP map layout was guessed or promoted.
+- ✅ 2026-08-06 Theron real text/actuator/creature regression discovery: three
+  additional Track 02 tests now use the explicit raw-media path or standard
+  `TQUS02.bin` before the legacy fixture fallback. All seven US dungeon regions
+  pass text decoding, actuator inventory and creature-count checks. The full
+  runtime loader remains fail-closed on unbound item categories, so no guessed
+  object kind was promoted.
 - ✅ 2026-08-06 DM2 incomplete SKSAVE load-orchestrator isolation: removed
   the unbound `dm2_v1_load_orchestrator_pc34_compat.c` transcript from both
   production source globs. It had no live caller and skipped original

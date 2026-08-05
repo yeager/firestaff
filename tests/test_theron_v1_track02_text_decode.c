@@ -35,14 +35,24 @@ static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
 }
 
 static const char *find_track02(void) {
+    const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
     const char *home = getenv("HOME");
-    if (!home) return NULL;
     static char path[512];
-    snprintf(path, sizeof(path),
-        "%s/.firestaff/data/theron/raw-us/"
-        "Dungeon Master - Theron's Quest (USA) (Track 02).bin", home);
-    FILE *fp = fopen(path, "rb");
-    if (fp) { fclose(fp); return path; }
+    const char *candidates[3] = { explicit_path, NULL, NULL };
+    if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQUS02.bin", home);
+        candidates[1] = path;
+        snprintf(path + 256, sizeof(path) - 256,
+                 "%s/.firestaff/data/theron/raw-us/"
+                 "Dungeon Master - Theron's Quest (USA) (Track 02).bin", home);
+        candidates[2] = path + 256;
+    }
+    for (unsigned int i = 0; i < 3u; ++i) {
+        FILE *fp;
+        if (!candidates[i] || !candidates[i][0]) continue;
+        fp = fopen(candidates[i], "rb");
+        if (fp) { fclose(fp); return candidates[i]; }
+    }
     return NULL;
 }
 
