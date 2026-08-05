@@ -48937,3 +48937,9 @@ the supplied root and selected MD5 to prove this without shipping game data.
   the ReDMCSB F0310 party timing result, leaves movement queued when absent,
   and retains the exact active F0310 formula in the shared timing path.
   Focused movement and timing tests pass.
+
+# Nexus FACE.BIN diagnostics now honor `FIRESTAFF_NEXUS_DATA_DIR`; the real
+# corpus path is no longer silently replaced by `$HOME/.firestaff/data/nexus`.
+# Documentation now distinguishes the reviewed bounded PRS3 decoder and its
+# 20/20 real FACE.BIN result from the still-blocked Saturn VDP1 presentation
+# route. No startup pixels or synthetic fallback were enabled.

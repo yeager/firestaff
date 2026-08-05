@@ -33,6 +33,7 @@ static int test_synthetic_header(void) {
 }
 
 static int test_real_decode(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
@@ -41,8 +42,14 @@ static int test_real_decode(void) {
     Nexus_V1_FaceBinDecodeResult result;
     int i;
 
-    if (!home) { printf("  SKIP real_decode (no HOME)\n"); return 0; }
-    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/FACE.BIN", home);
+    if (data_dir && data_dir[0] != '\0') {
+        snprintf(path, sizeof(path), "%s/FACE.BIN", data_dir);
+    } else if (home) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/FACE.BIN", home);
+    } else {
+        printf("  SKIP real_decode (no data directory)\n");
+        return 0;
+    }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP real_decode (no FACE.BIN)\n"); return 0; }
 

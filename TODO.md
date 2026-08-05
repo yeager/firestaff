@@ -8,6 +8,9 @@
   Mednafen capture. Keep FACE/MENU/STABG/viewport presentation blocked until
   the capture binds bytes, palette, command order, and runtime state together;
   do not replace the missing BIOS/capture artifact with synthetic data.
+  2026-08-05: bounded DMWeb PRS3 byte decoding is verified against all 20
+  real FACE.BIN frames; this only advances diagnostics. Startup FACE, MENU,
+  STABG, HUD, and viewport presentation remain blocked pending Saturn capture.
 
 - **DUNGEON-STUDIO-FSDUNG:** Dungeon Studio: import original dungeons from
   all five games (DM1, CSB, DM2, Theron's Quest, DM Nexus) and export to a

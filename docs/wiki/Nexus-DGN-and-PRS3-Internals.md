@@ -104,14 +104,18 @@ reach rasterization.
 ## PRS3 Loader Evidence
 
 `MENU.BPK` exposes bounded PRS3 entry topology, mode, dimensions, packed span,
-and a directory-trailer record. Original `DM.BIN` analysis currently proves
-that the PRS3 v1 loader reads payload bytes through `@R12+`, decrements R14,
-and uses R2=`0x0100` with R9=`0x0000ff00` in R11 refill/control state.
+and a directory-trailer record. The reviewed DMWeb `DecodePRS3` grammar is now
+implemented for bounded source inspection: control bits are consumed
+least-significant-bit first; a one bit copies one literal byte; a zero bit reads
+a 12-bit window position and a four-bit length; and the DMWeb negative-window
+adjustment is applied before bounded output.
 
-These facts are deliberately insufficient for decompression. They do not prove
-bit order, opcode grammar, literal/back-reference layout, output size handling,
-or palette semantics. No synthetic or retail PRS3 surface is materialized from
-them.
+The implementation is admitted as a byte decoder, not as a Saturn presentation
+route. Real `FACE.BIN` decodes all 20 retail 56x56 PRS3 frames and their 64-entry
+BGR555 palettes in `test_nexus_v1_face_bin`. `MENU.BPK` remains no-draw because
+the decoder result is not yet joined to the original Saturn VDP1 upload,
+palette lane, placement, and command order. No synthetic or fallback PRS3
+surface is materialized.
 
 ## Title/Menu Route Status
 
@@ -123,9 +127,10 @@ Saturn evidence:
 
 * `nexus_ui_load_stabg` (STABG.BIN cell decode) — inert until original Saturn
   evidence proves pixel order.
-* `nexus_ui_expand_face_record_48x48` (FACE.BIN PRS3 portrait decode) —
-  blocked until PRS3 opcode grammar is proven (FACE PRS3 capture campaign,
-  ledgered under commits `acc5abbc6`/`11c856653`/`bc102aa4b`).
+* `nexus_ui_load_face_record` (FACE.BIN startup presentation) —
+  decoded bytes remain diagnostic-only; promotion is blocked until the
+  original Saturn capture binds the PRS3 output to the VDP1 palette lane,
+  placement, and command order.
 * Title capture-surface plus Saturn timing/frame capture evidence.
 
 These are class-(c) blocks, not fixture gaps: do not relax probe assertions
@@ -183,5 +188,6 @@ before they reach host drawing.
 ./build/test_nexus_v1_bpk_surface_class
 ./build/firestaff_nexus_v1_prs3_loader_media_probe
 ./build/firestaff_nexus_v1_dgn_material_corpus_probe
+FIRESTAFF_NEXUS_DATA_DIR=/path/to/nexus ./build/test_nexus_v1_face_bin
 FIRESTAFF_NEXUS_DATA_DIR=/path/to/nexus ./build/test_nexus_v1_script_vm
 ```
