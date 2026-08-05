@@ -239,6 +239,10 @@ typedef enum {
 #define THERON_OBJ_F_DESTROYED   (1U << 3)
 #define THERON_OBJ_F_LOCKED      (1U << 4)
 #define THERON_OBJ_F_USED        (1U << 5)
+/* Track 02 teleporter records store linked_id as packed level/y/x fields,
+ * not as a host object-table id.  Fixture object chains omit this bit and
+ * retain the explicit object-id contract. */
+#define THERON_OBJ_F_TRACK02_COORD_LINK (1U << 6)
 
 typedef struct {
     int      id;

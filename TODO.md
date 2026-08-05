@@ -31,6 +31,11 @@
   media/hash intake. Keep BIN/CUE/ISO receipt normalization and later
   object/level records on the same verified-media path.
 
+  Real Track 02 teleporter records now retain their packed level/y/x target
+  link and execute validated cross-level transitions. Missing source-bound
+  targets reject instead of falling back to the clicked square. Tile/material
+  and full bitmap semantics remain separately blocked.
+
 - **THERON-FIXTURE-HELPER-ARCHIVE:** Closed 2026-07-31. Synthetic first-room
   constructors are now compiled only into explicit fixture targets; the
   production Theron archive exports no generated level-buffer helpers.

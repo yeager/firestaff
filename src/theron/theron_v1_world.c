@@ -660,7 +660,25 @@ int theron_v1_transition_execute(Theron_V1_World *world) {
         break;
 
     case THERON_TRANSITION_TELEPORTER:
-        /* Teleporter resolution already moved the party; just commit. */
+        if (world->transition_target_level < 0 ||
+            world->transition_target_level >= THERON_MAX_LEVELS_PER_DUNGEON ||
+            dungeon_slot < 0 || dungeon_slot >= THERON_DUNGEON_COUNT ||
+            !world->level_loaded[dungeon_slot][world->transition_target_level]) {
+            world->transition_pending = 0;
+            return -1;
+        }
+        world->current_level = world->transition_target_level;
+        target_level = &world->levels[dungeon_slot][world->current_level];
+        if (world->transition_spawn_x < 0 ||
+            world->transition_spawn_x >= target_level->width ||
+            world->transition_spawn_y < 0 ||
+            world->transition_spawn_y >= target_level->height) {
+            world->party.leader_x = target_level->start_x;
+            world->party.leader_y = target_level->start_y;
+        } else {
+            world->party.leader_x = world->transition_spawn_x;
+            world->party.leader_y = world->transition_spawn_y;
+        }
         break;
 
     case THERON_TRANSITION_EXIT:

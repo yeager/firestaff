@@ -1,3 +1,10 @@
+- ✅ 2026-08-05 Theron Track 02 teleporter parity: the dungeon loader now
+  marks packed level/y/x links explicitly instead of exposing them as host
+  object IDs. Runtime resolution follows the source coordinates, supports a
+  validated cross-level transition, and rejects missing source targets rather
+  than using the clicked-square fallback. The legacy object-ID chain remains
+  available only for fixture/probe objects. Teleporter probe passes.
+
 - ✅ 2026-08-05 Theron dungeon-map record integrity: hardened the Track 02
   map/table loader with overflow-safe range checks for dimension tables,
   cumulative column records, descriptor bytes, and map tiles. Added a

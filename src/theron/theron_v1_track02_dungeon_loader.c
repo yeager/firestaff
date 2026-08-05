@@ -157,7 +157,8 @@ int theron_v1_track02_load_full_dungeon(
                 obj.quantity = tp.rotation;
                 obj.flags = (uint32_t)pos |
                             ((uint32_t)tp.absolute << 8) |
-                            ((uint32_t)tp.sound << 9);
+                            ((uint32_t)tp.sound << 9) |
+                            THERON_OBJ_F_TRACK02_COORD_LINK;
                 obj.linked_id = (int)((tp.level_dest << 10) |
                                        (tp.y_dest << 5) |
                                        tp.x_dest);

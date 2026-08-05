@@ -278,6 +278,42 @@ int main(void)
         check_int("spawn y", world.transition_spawn_y, 5);
     }
 
+    /* ── Test 4: real Track 02 packed level/y/x link ── */
+    {
+        Theron_V1_World world;
+        memset(&world, 0, sizeof(world));
+        world.current_dungeon = THERON_DUNGEON_1_AKUTUBA;
+        world.current_level = 0;
+        world.level_loaded[0][0] = 1;
+        world.level_loaded[0][1] = 1;
+        world.levels[0][0].width = world.levels[0][0].height = 8;
+        world.levels[0][1].width = world.levels[0][1].height = 8;
+        world.objects[0] = (Theron_V1_Object){
+            .id = 1, .type = THERON_OBJTYPE_TELEPORTER,
+            .x = 1, .y = 1, .level = 0, .dungeon_id = 1,
+            .linked_id = (1 << 10) | (3 << 5) | 4,
+            .flags = THERON_OBJ_F_TRACK02_COORD_LINK
+        };
+        world.objects[1] = (Theron_V1_Object){
+            .id = 2, .type = THERON_OBJTYPE_CHEST,
+            .x = 4, .y = 3, .level = 1, .dungeon_id = 1
+        };
+        world.object_count = 2;
+        world.levels[0][0].squares[1][1] = THERON_SQUARE_TELEPORTER;
+
+        printf("[test:track02-packed-level-link]\n");
+        check_int("packed link resolves",
+                  theron_v1_teleporter_resolve(&world, 1, 1), 0);
+        check_int("packed link target level", world.transition_target_level, 1);
+        check_int("packed link target x", world.transition_spawn_x, 4);
+        check_int("packed link target y", world.transition_spawn_y, 3);
+        check_int("packed link transition executes",
+                  theron_v1_transition_execute(&world), 0);
+        check_int("packed link current level", world.current_level, 1);
+        check_int("packed link party x", world.party.leader_x, 4);
+        check_int("packed link party y", world.party.leader_y, 3);
+    }
+
     printf("\n=== SUMMARY ===\n");
     printf("probe_ok=%d\n", probe_ok ? 1 : 0);
     printf("locks=movement_features.md(MOVESENS.C:475-537),THQUEST.ASM:T600\n");
