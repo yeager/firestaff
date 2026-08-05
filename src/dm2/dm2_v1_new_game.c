@@ -26,6 +26,8 @@
 
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_save_load.h"
+#include "dm2_v1_save_record_masks_pc34_compat.h"
+#include "dm2_v1_save_suppress_masks_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_dungeon_loader.h"
 #include <string.h>
@@ -669,6 +671,20 @@ static uint32_t dm2_v1_raw_sksave_hash(const uint8_t *data, size_t size)
     return hash ? hash : 1u;
 }
 
+static uint32_t dm2_v1_raw_sksave_hash_extend(uint32_t hash,
+                                               const uint8_t *data,
+                                               size_t size)
+{
+    size_t i;
+
+    if (!data) return 0u;
+    for (i = 0u; i < size; ++i) {
+        hash ^= data[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 static int dm2_v1_parse_raw_sksave_dungeon_prefix(
     const uint8_t *buf,
     size_t buf_size,
@@ -788,6 +804,140 @@ int dm2_v1_original_raw_sksave_dungeon_receipt(
 {
     return dm2_v1_parse_raw_sksave_dungeon_prefix(buf, buf_size,
                                                    out_receipt);
+}
+
+int dm2_v1_original_raw_sksave_fixed_state_receipt(
+    const uint8_t *buf, size_t buf_size,
+    DM2_V1_OriginalRawSaveStateReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawSaveStateReceipt candidate;
+    DM2_SuppressReader reader;
+    uint8_t savegame_buffer[60];
+    uint8_t full_mask[2] = { 0xffu, 0xffu };
+    uint8_t v1e0104[8];
+    uint8_t globalb[64];
+    uint8_t globalw[128];
+    uint8_t hero[263];
+    uint8_t save_state[6];
+    uint8_t timer[12];
+    const uint8_t *hero_mask;
+    const uint8_t *save_state_mask;
+    const uint8_t *timer_mask;
+    size_t timer_mask_size = 0u;
+    uint32_t fixed_hash = 2166136261u;
+    uint32_t heroes_hash = 2166136261u;
+    uint32_t timers_hash = 2166136261u;
+    uint16_t hero_count;
+    uint16_t timer_count;
+    uint16_t i;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!buf || !out_receipt ||
+        !dm2_v1_parse_raw_sksave_dungeon_prefix(buf, buf_size,
+                                                &candidate.dungeon) ||
+        !candidate.dungeon.valid ||
+        candidate.dungeon.suppress_state_offset >= buf_size) {
+        return 0;
+    }
+    hero_mask = dm2_v1_save_mask_hero();
+    save_state_mask = dm2_v1_save_mask_save_state();
+    timer_mask = dm2_v1_save_vsgame_raw(&timer_mask_size);
+    if (!hero_mask || !save_state_mask || !timer_mask || timer_mask_size < sizeof(timer)) {
+        return 0;
+    }
+
+    /* ReDMCSB/SKProject sksvgame.cpp::DM2_GAME_LOAD lines 1482-1525:
+     * every read below deliberately shares this one MSB-first reader. */
+    dm2_suppress_reader_init(&reader,
+                             buf + candidate.dungeon.suppress_state_offset,
+                             buf_size - candidate.dungeon.suppress_state_offset);
+    if (dm2_suppress_reader_read(&reader,
+                                 dm2_v1_save_mask_savegame_buffer(),
+                                 sizeof(savegame_buffer), savegame_buffer,
+                                 0u) != 0) {
+        return 0;
+    }
+    hero_count = dm2_v1_read_u16_le_at(savegame_buffer, 8u);
+    timer_count = dm2_v1_read_u16_le_at(savegame_buffer, 20u);
+    /* The original party is limited to four. Keep timer work bounded for a
+     * malformed external file; this receipt is never a resume admission. */
+    if (hero_count > 4u || timer_count > 4096u) return 0;
+    candidate.game_tick = (uint32_t)savegame_buffer[0] |
+                          ((uint32_t)savegame_buffer[1] << 8) |
+                          ((uint32_t)savegame_buffer[2] << 16) |
+                          ((uint32_t)savegame_buffer[3] << 24);
+    candidate.random_seed = (uint32_t)savegame_buffer[4] |
+                            ((uint32_t)savegame_buffer[5] << 8) |
+                            ((uint32_t)savegame_buffer[6] << 16) |
+                            ((uint32_t)savegame_buffer[7] << 24);
+    candidate.champion_count = hero_count;
+    candidate.party_x = dm2_v1_read_u16_le_at(savegame_buffer, 10u);
+    candidate.party_y = dm2_v1_read_u16_le_at(savegame_buffer, 12u);
+    candidate.party_direction = dm2_v1_read_u16_le_at(savegame_buffer, 14u);
+    candidate.party_map = dm2_v1_read_u16_le_at(savegame_buffer, 16u);
+    candidate.leader_index = dm2_v1_read_u16_le_at(savegame_buffer, 18u);
+    candidate.timer_count = timer_count;
+    fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, savegame_buffer,
+                                                sizeof(savegame_buffer));
+
+    if (dm2_suppress_reader_read(&reader, full_mask, 1u, v1e0104, 0u) != 0 ||
+        dm2_suppress_reader_read(&reader, full_mask, 1u, globalb, 0u) != 0 ||
+        dm2_suppress_reader_read(&reader, full_mask, 2u, globalw, 0u) != 0) {
+        return 0;
+    }
+    candidate.v1e0104_hash = dm2_v1_raw_sksave_hash(v1e0104, sizeof(v1e0104));
+    candidate.globalb_hash = dm2_v1_raw_sksave_hash(globalb, sizeof(globalb));
+    candidate.globalw_hash = dm2_v1_raw_sksave_hash(globalw, sizeof(globalw));
+    fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, v1e0104,
+                                                sizeof(v1e0104));
+    fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, globalb,
+                                                sizeof(globalb));
+    fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, globalw,
+                                                sizeof(globalw));
+    for (i = 0u; i < hero_count; ++i) {
+        if (dm2_suppress_reader_read(&reader, hero_mask, sizeof(hero), hero,
+                                     0u) != 0) {
+            return 0;
+        }
+        fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, hero,
+                                                    sizeof(hero));
+        heroes_hash = dm2_v1_raw_sksave_hash_extend(heroes_hash, hero,
+                                                     sizeof(hero));
+    }
+    candidate.heroes_hash = heroes_hash ? heroes_hash : 1u;
+    if (dm2_suppress_reader_read(&reader, save_state_mask, sizeof(save_state),
+                                 save_state, 0u) != 0) {
+        return 0;
+    }
+    candidate.save_state_hash = dm2_v1_raw_sksave_hash(save_state,
+                                                        sizeof(save_state));
+    fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, save_state,
+                                                sizeof(save_state));
+    for (i = 0u; i < timer_count; ++i) {
+        if (dm2_suppress_reader_read(&reader, timer_mask, sizeof(timer), timer,
+                                     0u) != 0) {
+            return 0;
+        }
+        fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, timer,
+                                                    sizeof(timer));
+        timers_hash = dm2_v1_raw_sksave_hash_extend(timers_hash, timer,
+                                                     sizeof(timer));
+    }
+    candidate.timers_hash = timers_hash ? timers_hash : 1u;
+    candidate.fixed_sections_hash = fixed_hash ? fixed_hash : 1u;
+    candidate.record_link_bitstream_offset =
+        candidate.dungeon.suppress_state_offset + reader.position;
+    candidate.record_link_bitstream_bits_remaining = reader.bits_remaining;
+    candidate.valid = candidate.v1e0104_hash != 0u &&
+                      candidate.globalb_hash != 0u &&
+                      candidate.globalw_hash != 0u &&
+                      candidate.save_state_hash != 0u &&
+                      candidate.fixed_sections_hash != 0u &&
+                      candidate.record_link_bitstream_offset <= buf_size;
+    if (!candidate.valid) return 0;
+    *out_receipt = candidate;
+    return 1;
 }
 
 int dm2_v1_original_raw_sksave_db_record_receipt(

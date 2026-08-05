@@ -50374,3 +50374,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   verified bytes for receipts and diagnostics, while presentation remains
   explicitly no-draw until Saturn VDP1/VDP2 command, palette-bank, and
   destination capture is bound.
+
+- ✅ 2026-08-06 DM2 original SKSAVE fixed-state receipt: promoted the real
+  PC-DOS corpus decoder for the exact `DM2_GAME_LOAD` fixed SUPPRESS sequence
+  into `dm2_v1_original_raw_sksave_fixed_state_receipt()`. It reads the
+  source-sized 0x3c `s_savegamebuffer`, globals, heroes, `c_wbbb`, and 0x0c
+  timers on one MSB-first reader, then records the precise record-link
+  boundary for `DM2_READ_SKSAVE_DUNGEON`. All eight supplied primary/backup
+  saves pass; no incomplete session is admitted or made playable.

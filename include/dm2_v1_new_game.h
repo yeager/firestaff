@@ -145,6 +145,35 @@ typedef struct {
     size_t suppress_state_offset;
 } DM2_V1_OriginalRawDungeonReceipt;
 
+/* Read-only receipt for the source-owned fixed SUPPRESS sections directly
+ * after an original raw SKSave dungeon structure. SKProject
+ * sksvgame.cpp::DM2_GAME_LOAD reads these fields before
+ * DM2_READ_SKSAVE_DUNGEON. This receipt deliberately stops at that exact
+ * shared-bitstream boundary: it is evidence for an original body, not a
+ * substitute for restoring the later record links, objects, or session. */
+typedef struct {
+    int valid;
+    DM2_V1_OriginalRawDungeonReceipt dungeon;
+    uint32_t game_tick;
+    uint32_t random_seed;
+    uint16_t champion_count;
+    uint16_t party_x;
+    uint16_t party_y;
+    uint16_t party_direction;
+    uint16_t party_map;
+    uint16_t leader_index;
+    uint16_t timer_count;
+    uint32_t v1e0104_hash;
+    uint32_t globalb_hash;
+    uint32_t globalw_hash;
+    uint32_t heroes_hash;
+    uint32_t save_state_hash;
+    uint32_t timers_hash;
+    uint32_t fixed_sections_hash;
+    size_t record_link_bitstream_offset;
+    uint8_t record_link_bitstream_bits_remaining;
+} DM2_V1_OriginalRawSaveStateReceipt;
+
 /* A decoded save candidate. dungeon_bytes aliases the caller-owned input and
  * is populated only for an original raw SKSave body. Its receipt is the
  * source-owned byte-layout proof that runtime must match before publishing
@@ -302,6 +331,16 @@ int dm2_v1_original_raw_sksave_dungeon_receipt(
     const uint8_t *buf,
     size_t buf_size,
     DM2_V1_OriginalRawDungeonReceipt *out_receipt);
+
+/* Decode exactly s_savegamebuffer, v1e0104, globalb, globalw, c_hero,
+ * c_wbbb and c_tim from the one shared SUPPRESS stream. Source: SKProject
+ * SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD lines 1482-1525. No
+ * player-facing importer may treat this as complete until the following
+ * DM2_READ_SKSAVE_DUNGEON and possession-index stream has a live owner. */
+int dm2_v1_original_raw_sksave_fixed_state_receipt(
+    const uint8_t *buf,
+    size_t buf_size,
+    DM2_V1_OriginalRawSaveStateReceipt *out_receipt);
 int dm2_v1_original_raw_sksave_db_record_receipt(
     const uint8_t *buf,
     size_t buf_size,

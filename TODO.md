@@ -217,6 +217,12 @@
   state/10-byte timer diagnostic assumption at this boundary only; the
   following `DM2_READ_SKSAVE_DUNGEON` record-link stream remains unowned and
   must stay blocked from resume until it is ported in source order.
+  2026-08-06: this fixed-state decode is now a production read-only receipt
+  (`dm2_v1_original_raw_sksave_fixed_state_receipt`) rather than a test-local
+  parser. It exposes source fields/hashes and the precise shared-bitstream
+  position where `DM2_READ_SKSAVE_DUNGEON` begins for all eight PC-DOS saves;
+  inventory, tile record chains and possession indices remain unowned and
+  continue to block resume.
   2026-08-06: D2RS decoder envelopes are now rejected by both public slot
   loaders. They remain explicit diagnostic inputs only; a player-facing
   Continue/slot action can admit neither a Firestaff private envelope nor the

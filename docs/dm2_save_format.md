@@ -59,6 +59,13 @@ SUPPRESS stream must parse before a save is admitted.
 18. **Possession indices** (source `DM2_WRITE_POSSESSION_INDICES` /
     `DM2_2066_062b` continuation)
 
+`dm2_v1_original_raw_sksave_fixed_state_receipt()` is the read-only boundary
+used for original-corpus validation. It decodes sections 8–14 in the one
+continuous bitstream and records the precise byte/bit state at the first
+`READ_SKSAVE_DUNGEON` record-link operation. It does not restore any inventory
+or tile chain and cannot make a save playable; that requires sections 15–18 in
+the exact source order.
+
 ## Compression: SUPPRESS (Bit-level RLE)
 `SUPPRESS_WRITER` writes selected source bits using per-field masks. Fields
 with mask=0 are skipped. Set mask bits are scanned from bit 7 to bit 0 and
