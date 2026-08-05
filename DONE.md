@@ -208,6 +208,12 @@
   leaves the framebuffer untouched until Saturn explored-state and VDP2
   placement evidence is authenticated.
 
+- ✅ 2026-08-06 Nexus FACE loader cleanup: removed the dead `#if 0`
+  48×48/PRS3 surface loader from the production UI module. `FACE.BIN` keeps
+  its real 56×56/20-frame decoder and source-only capture receipts, while the
+  runtime portrait loader remains an explicit no-draw failure until Saturn
+  destination and palette/VDP placement are authenticated.
+
 - ✅ 2026-08-06 Nexus SAL provenance wording: real SNDLEV00–15 banks still
   retain 45 bounded tone candidates per bank for diagnostics, but runtime
   logs now label them as candidates/metadata rather than decoded playable
