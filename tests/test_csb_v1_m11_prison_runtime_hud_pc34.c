@@ -9,6 +9,7 @@
 #include "m11_game_view.h"
 #include "asset_loader_m11.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_csbwin_layout_0232.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,6 +35,68 @@ static const char *csb_data_dir(char *fallback, size_t fallback_size)
     if (!home || !home[0] || !fallback || fallback_size == 0u) return NULL;
     snprintf(fallback, fallback_size, "%s/.firestaff/data/csb", home);
     return fallback;
+}
+
+/* CSBWin's C232 record owns the Atari ST HUD page.  Compare every source
+ * row after M11 has drawn it, rather than accepting a merely non-black
+ * lower screen.  This keeps the real-data capture tied to the exact
+ * package-selected layout and graphic records. */
+static int check_atari_st_c232_hud_frame(const char *graphics_path,
+                                         const unsigned char *framebuffer)
+{
+    CSB_V1_CSBWinLayout0232 layout;
+    CSB_V1_CSBWinHudMaterialPlan0232 plan;
+    unsigned char expected[320 * 200];
+    unsigned char covered[320 * 200];
+    size_t index;
+    int matched = 0;
+
+    if (!graphics_path || !graphics_path[0] || !framebuffer ||
+        !csb_v1_csbwin_layout_0232_read_graphics_dat(graphics_path, &layout) ||
+        !csb_v1_csbwin_layout_0232_build_hud_material_plan(&layout, &plan)) {
+        return 0;
+    }
+    memset(expected, 0, sizeof(expected));
+    memset(covered, 0, sizeof(covered));
+    for (index = 0u; index < plan.count; ++index) {
+        const CSB_V1_CSBWinHudMaterial0232 *entry = &plan.entries[index];
+        CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
+        unsigned char *source = NULL;
+        int source_width = 0;
+        int source_height = 0;
+        int destination_width = entry->destination.x2 - entry->destination.x1 + 1;
+        int destination_height = entry->destination.y2 - entry->destination.y1 + 1;
+        int row;
+
+        memset(&receipt, 0, sizeof(receipt));
+        if (!csb_v1_boot_decode_atari_st_graphics_dat_asset_pc34(
+                graphics_path, entry->graphic_index, &source, &source_width,
+                &source_height, &receipt) || !receipt.valid || !source ||
+            entry->source_x > (uint16_t)source_width ||
+            destination_width > source_width - (int)entry->source_x ||
+            destination_height > source_height) {
+            free(source);
+            return 0;
+        }
+        for (row = 0; row < destination_height; ++row) {
+            const unsigned char *source_row = source +
+                (size_t)row * (size_t)source_width + entry->source_x;
+            unsigned char *expected_row = expected +
+                (size_t)(entry->destination.y1 + row) * 320u +
+                entry->destination.x1;
+            unsigned char *covered_row = covered +
+                (size_t)(entry->destination.y1 + row) * 320u +
+                entry->destination.x1;
+            memcpy(expected_row, source_row, (size_t)destination_width);
+            memset(covered_row, 1, (size_t)destination_width);
+        }
+        free(source);
+        ++matched;
+    }
+    for (index = 0u; index < sizeof(expected); ++index) {
+        if (covered[index] && framebuffer[index] != expected[index]) return 0;
+    }
+    return plan.valid && matched == CSB_V1_CSBWIN_LAYOUT_0232_HUD_MATERIAL_COUNT;
 }
 
 int main(void)
@@ -255,6 +318,9 @@ int main(void)
                   "real Atari MINI.DAT crosses the original ANIM.C FTLCODE handoff");
             CHECK(viewport_nonblack > 0,
                   "real Atari MINI.DAT consumes source-owned Atari ST viewport material");
+            CHECK(check_atari_st_c232_hud_frame(profile->graphics_path,
+                                                 framebuffer),
+                  "real Atari MINI.DAT framebuffer contains all C232-owned HUD material");
             M11_GameView_Shutdown(&view);
             if (failures) return 1;
             puts("PASS: real Atari MINI.DAT reaches live Atari ST M11 runtime");
