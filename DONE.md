@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 DM1 sensor-message duplicate fix: `EMIT_SENSOR_EFFECT` is
+  now telemetry only. The source F0276 movement effect path remains the sole
+  renderer for authenticated sensor text, preventing a second white copy of
+  the same walk-on message and preserving the source text presentation. Ninja
+  build passes; `test_dm1_v1_command_movement_sensor_timing_pc34_compat` and
+  `test_dm1_v1_movement_pipeline_pc34_compat` pass (403/403), together with
+  the real PC34 object/name regressions.
+
 - ✅ 2026-08-06 DM1 real HoC pickup/placement proof: extended the real
   PC3.4 alcove-object runtime test through the source inventory route. A
   rendered object enters the transient ReDMCSB G4055 hand, the inventory

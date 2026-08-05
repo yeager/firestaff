@@ -15411,23 +15411,14 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                 /* ReDMCSB TIMELINE.C F0245:972-986 handles sensor
                  * walk-on/walk-off effects emitted by F0718.
                  * payload[0]=kind, [1]=sensorType, [2]=triggerEvent,
-                 * [3]=textIndex or destMapIndex. */
-                int sKind = (int)e->payload[0];
-                if (sKind == SENSOR_EFFECT_SHOW_TEXT) {
-                    char decoded[256];
-                    int textIdx = (int)e->payload[3];
-                    if (F0508_DUNGEON_DecodeTextStringThing_Compat(
-                            state->world.things, textIdx,
-                            DUNGEON_TEXT_TYPE_MESSAGE, decoded,
-                            (int)sizeof(decoded)) > 0) {
-                        dm1_v1_text_set_game_time(
-                            &state->dm1V1TextMessage,
-                            (long)state->world.gameTick);
-                        dm1_v1_text_print_message(
-                            &state->dm1V1TextMessage,
-                            DM1_V1_COLOR_WHITE, decoded);
-                    }
-                }
+                 * [3]=textIndex or destMapIndex.
+                 *
+                 * This emission is an observation receipt only.  The
+                 * source-owned movement pipeline applies the corresponding
+                 * F0276 effect immediately after the timeline dispatch;
+                 * rendering SHOW_TEXT here would print every walk-on message
+                 * twice and would force it through the wrong presentation
+                 * color. */
                 break;
             }
             default:

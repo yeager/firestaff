@@ -3191,11 +3191,12 @@ that its exact runtime path is not already source-locked and tested.
    without raw Thing bytes, so malformed or stale HoC projectile/smoke state
    cannot create an unowned visual. Broader C15/C25 corpus and spell-tick
    coverage remain open.
-   2026-08-06: decoded sensor text now uses the source F0507/TEXT.C message
-   route in both movement and orchestrator emission paths; malformed text no
-   longer becomes a synthetic `TEXT #N` dialog. Remaining sensor work is
-   source-backed mutation/effect coverage beyond the currently modeled
-   teleport/text families.
+   2026-08-06: decoded sensor text uses the source F0507/TEXT.C message route
+   in the movement path; `EMIT_SENSOR_EFFECT` is now an observation receipt
+   only, so walk-on text is not rendered twice or forced through a white host
+   color. Malformed text no longer becomes a synthetic `TEXT #N` dialog.
+   Remaining sensor work is source-backed mutation/effect coverage beyond the
+   currently modeled teleport/text families.
    2026-08-06: F0718 floor/stairs sensor effects now preserve the real PC34
    common-word SET/CLEAR/TOGGLE/HOLD field (HOLD resolves to SET on walk-on)
    instead of forcing a synthetic TOGGLE. Runtime generator and broader
