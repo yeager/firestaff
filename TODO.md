@@ -13,6 +13,15 @@
   Do not synthesize a compatible install, palette, dungeon, music map or save
   corpus for any platform.
 
+- **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
+  deliberately non-mutating until the original 263-byte `c_hero` layout,
+  its 16-bit hero/item fields, the phase-1 tombstone record chain, and the
+  phase-2 `CREATE_CLOUD` owner are imported together. The current 261-byte
+  session persistence surrogate cannot stand in for those structures. Do not
+  revive a champion, clear inventory, or fabricate the cloud from a partial
+  save/session receipt. Source: `SKULLWIN/c_tim_proc.cpp:39-124` and
+  `SKULLWIN/c_hero.cpp::DM2_BRING_CHAMPION_TO_LIFE`.
+
 - **NEXUS-SATURN-PRESENTATION-HANDOFF:** Nexus production no longer contains
   the old inferred master palette or partial-texture fallback. Continue from
   the real `/Users/bosse/.firestaff/data/nexus` corpus: authenticate PRS3

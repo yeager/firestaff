@@ -17095,6 +17095,14 @@ if(BUILD_TESTING)
     )
     endif()
 
+    if(Python3_EXECUTABLE)
+        add_test(
+            NAME dm2_v1_resurrection_surrogate_gate
+            COMMAND ${Python3_EXECUTABLE}
+                    ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm2_v1_resurrection_surrogate_gate.py
+        )
+    endif()
+
     # -- DM1 V1 M12/M11 Launcher Handoff Boundary ------------------
     # Skip-safe gate: M12 launch intent routes the DM1 catalog entry,
     # and real staged DM1 data must enter M11 through the production

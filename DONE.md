@@ -49718,3 +49718,15 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   its `dm2` directory. The archive remains in place; GDAT, G1 and CD.DAT are
   still admitted from memory only. The opt-in real-media regression verifies
   both root forms.
+
+- ✅ 2026-08-06 DM2 resurrection surrogate mutation removal: removed the
+  runtime type-0x0D final-phase write that treated Firestaff's bounded
+  261-byte session record as SKProject's 263-byte `c_hero`. The old path
+  truncated the original 16-bit hero flag and skipped the source tombstone
+  and cloud phases. Runtime now consumes the source timer without mutating
+  a non-source champion surrogate; the CTest source gate proves the handler
+  remains ordered but cannot read or write the surrogate's HP, flags, or
+  inventory. Full source-owned
+  resurrection remains tracked in `DM2-RESURRECTION-OWNERSHIP`. Sources:
+  `SKULLWIN/c_tim_proc.cpp:39-124`, `SKULLWIN/c_hero.h:40-130`, and
+  `SKULLWIN/c_hero.cpp:916-953`.

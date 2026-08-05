@@ -42,7 +42,6 @@
 #include "dm2_v1_trigger.h"
 #include "dm2_v1_world_model.h"
 #include "dm2_v1_i18n.h"
-#include "dm2_v1_champion_lifecycle_pc34_compat.h"
 #include "dm2_v1_move_record_to_pc34_compat.h"
 #include "dm2_v1_record_ops_pc34_compat.h"
 #include "dm2_v1_save_load.h"
@@ -4861,49 +4860,28 @@ static int dm2_runtime_process_0c_timer(void *user,
  * Three phases (yB countdown):
  *   yB==2: create cloud effect at position (fail-closed: needs CREATE_CLOUD)
  *   yB==1: walk tile records, dealloc tombstone (fail-closed: needs record walk)
- *   yB==0: final phase — call BRING_CHAMPION_TO_LIFE(actor) — LIVE
+ *   yB==0: final phase — call BRING_CHAMPION_TO_LIFE(actor).
+ *
+ * The bounded session record is not SKProject's c_hero: its 261-byte
+ * persistence surrogate has a byte-sized hero_flag and 32-bit inventory
+ * handles, whereas c_hero is 263 bytes and owns 16-bit hero flags and item
+ * records.  It also has no source-bound tombstone chain or CREATE_CLOUD
+ * owner for phases 1 and 2.  Do not apply just the final formula to that
+ * surrogate: that would create a champion without the preceding source
+ * state transitions.  Consume the timer in source order until the complete
+ * c_hero/tile-record implementation is available.
+ *
+ * Source: SKProject/SKULLWIN/c_tim_proc.cpp:39-124
+ *         SKProject/SKULLWIN/c_hero.h:40-130, 916-953
  */
 static int dm2_runtime_resurrection_timer(void *user,
                                           const DM2_V1_SourceTimer *timer,
                                           uint16_t source_index,
                                           DM2_V1_ProceedTimersReceipt *receipt) {
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    int ci;
-    uint8_t phase;
+    (void)user;
+    (void)timer;
     (void)source_index;
     (void)receipt;
-
-    if (!rt || !rt->session_snapshot_valid || !timer)
-        return 1;
-
-    ci = (int)(timer->actor & 0xff);
-    phase = (uint8_t)(timer->value_b & 0xff);
-
-    if (phase == 0) {
-        DM2_V1_BringChampionToLifeRequest req;
-        DM2_V1_BringChampionToLifeReceipt res;
-        DM2_ChampionRecord *champ;
-
-        if (ci < 0 || ci >= 4)
-            return 1;
-        champ = (DM2_ChampionRecord *)rt->session_snapshot.champion_data[ci];
-        if (!champ)
-            return 1;
-
-        req.hero_index = (int16_t)ci;
-        req.current_max_hp = (int16_t)champ->max_hp;
-        if (dm2_v1_bring_champion_to_life(&req, &res) && res.champion_revived) {
-            champ->max_hp = (uint16_t)res.new_max_hp;
-            champ->cur_hp = (uint16_t)res.new_cur_hp;
-            if (res.heroflag_set_bits)
-                champ->hero_flag |= (uint8_t)(res.heroflag_set_bits >> 8);
-            if (res.clear_item_slots) {
-                int s;
-                for (s = 0; s < (int)res.item_slot_count && s < DM2_CHAMPION_INVENTORY_SLOTS; s++)
-                    champ->inventory[s] = 0xFFFFFFFF;
-            }
-        }
-    }
     return 1;
 }
 
