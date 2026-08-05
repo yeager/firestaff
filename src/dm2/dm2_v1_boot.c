@@ -889,22 +889,30 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
                                            DM2_FMTOWNS_CDDA_FIRST_TRACK + 1);
 
     /* Extract game files from the disc image if not already found */
-    FmtownsDiscProbeResult probe;
-    if (fmtowns_disc_probe(img_data, img_size, FMTOWNS_SECTOR_2352,
-                            &probe) == 0) {
+    /* DM2's HME-242 image has its own audited raw-sector ISO reader.
+     * Do not route it through the generic FM Towns iterator: that reader is
+     * shared with DM1, while this receipt is what establishes the exact DM2
+     * DATA/ file identities used below. */
+    DM2_V1_FmtownsDiscReceipt probe;
+    if (dm2_v1_fmtowns_disc_probe(img_data, img_size, &probe) == 0) {
         if (!profile->graphics_path[0]) {
-            const FmtownsIsoEntry *gfx =
-                fmtowns_disc_find(&probe, "DATA/GRAPHICS.DAT");
-            if (gfx) {
-                fmtowns_disc_extract_alloc(img_data, img_size,
-                    FMTOWNS_SECTOR_2352, gfx,
+            if (probe.has_graphics_dat) {
+                dm2_v1_fmtowns_disc_extract_alloc(img_data, img_size,
+                    &probe.graphics_dat,
                     &profile->graphics_mem, &profile->graphics_mem_size);
                 if (profile->graphics_mem) {
                     profile->graphics_size = profile->graphics_mem_size;
+                    /* The source image is a real CD-ROM container rather
+                     * than a loose host file.  Admit its extracted payload
+                     * by the same known GRAPHICS.DAT identity used for every
+                     * other DM2 platform; otherwise the later common
+                     * verification pass incorrectly resets this to PC. */
+                    dm2_md5_bytes_hex(profile->graphics_mem,
+                                      profile->graphics_mem_size,
+                                      profile->graphics_md5);
                     snprintf(profile->graphics_path,
                              sizeof(profile->graphics_path),
                              "%s (FM Towns disc image)", zip_path);
-                    profile->assets_verified = 1;
                     profile->platform = DM2_PLATFORM_FMTOWNS_JA;
                     strncpy(profile->platform_label, "FM Towns Japanese",
                             sizeof(profile->platform_label) - 1);
@@ -914,14 +922,15 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
             }
         }
         if (!profile->dungeon_path[0]) {
-            const FmtownsIsoEntry *dgn =
-                fmtowns_disc_find(&probe, "DATA/DUNGEON.DAT");
-            if (dgn) {
-                fmtowns_disc_extract_alloc(img_data, img_size,
-                    FMTOWNS_SECTOR_2352, dgn,
+            if (probe.has_dungeon_dat) {
+                dm2_v1_fmtowns_disc_extract_alloc(img_data, img_size,
+                    &probe.dungeon_dat,
                     &profile->dungeon_mem, &profile->dungeon_mem_size);
                 if (profile->dungeon_mem) {
                     profile->dungeon_size = profile->dungeon_mem_size;
+                    dm2_md5_bytes_hex(profile->dungeon_mem,
+                                      profile->dungeon_mem_size,
+                                      profile->dungeon_md5);
                     snprintf(profile->dungeon_path,
                              sizeof(profile->dungeon_path),
                              "%s (FM Towns disc image)", zip_path);
@@ -929,13 +938,11 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
             }
         }
         if (!profile->cdda_cd_dat_verified) {
-            const FmtownsIsoEntry *cd =
-                fmtowns_disc_find(&probe, "DATA/CD.DAT");
-            if (cd && cd->size == 40u) {
+            if (probe.has_cd_dat && probe.cd_dat.size == 40u) {
                 uint8_t *cd_data = NULL;
                 size_t cd_size = 0;
-                if (fmtowns_disc_extract_alloc(img_data, img_size,
-                        FMTOWNS_SECTOR_2352, cd,
+                if (dm2_v1_fmtowns_disc_extract_alloc(img_data, img_size,
+                        &probe.cd_dat,
                         &cd_data, &cd_size) == 0 && cd_size == 40u) {
                     memcpy(profile->cdda_cd_dat_data, cd_data, 40u);
                     profile->cdda_cd_dat_size = 40u;

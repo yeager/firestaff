@@ -220,13 +220,17 @@ int fmtowns_cue_parse_track_starts(const char *cue, size_t cue_size,
         if (strncmp(buf, "TRACK", 5) == 0) {
             current_track = atoi(buf + 5);
         } else {
-            char *idx = strstr(buf, "INDEX 01");
-            if (!idx) continue;
-            char *ts = idx + 8;
-            while (*ts == ' ' || *ts == '\t') ts++;
+            char *idx = strstr(buf, "INDEX");
+            int index = 0;
             int mm = 0, ss = 0, ff = 0;
-            if (sscanf(ts, "%d:%d:%d", &mm, &ss, &ff) == 3 &&
-                current_track >= 0 && current_track < max_tracks) {
+            /* Real HME-242 CUE sheets spell the index as `INDEX 1`, while
+             * other dumpers preserve the zero-padded `INDEX 01`.  Both are
+             * the same CUE index and must identify the original data track
+             * without requiring the media to be unpacked. */
+            if (!idx ||
+                sscanf(idx, "INDEX %d %d:%d:%d", &index, &mm, &ss, &ff) != 4 ||
+                index != 1) continue;
+            if (current_track >= 0 && current_track < max_tracks) {
                 track_starts[current_track] =
                     (uint32_t)(mm * 60 * 75 + ss * 75 + ff);
                 if (current_track + 1 > count)

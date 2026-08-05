@@ -4,6 +4,14 @@
   mode-derived bpp/surface classes. Updated synthetic and real-corpus regressions;
   Saturn CLUT/palette, VDP1 upload, and placement remain blocked pending capture.
 
+- ✅ 2026-08-06 DM2 FM Towns in-memory media admission: the HME-242 CUE/IMG
+  route now accepts both standard `INDEX 01` and the original disc's `INDEX 1`
+  spelling, reads the CUE, raw CD image, GDAT, G1 dungeon and CD.DAT only into
+  memory, and records MD5 identities for the extracted original payloads
+  before the common launch gate. This prevents an authenticated FM Towns boot
+  from falling back to the PC profile; the opt-in real-media receipt verifies
+  the user's unmodified ZIP without unpacking game data onto disk.
+
 - ✅ 2026-08-05 Nexus startup prompt placeholder removal: suppressed the
   host-generated 12-frame title-prompt blink from production receipts and
   updated startup gates to report no prompt until the original Saturn text/HUD

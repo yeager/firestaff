@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **DM2-PLATFORM-MEDIA:** Keep the DOS, FM Towns and Amiga boot paths
+  identity-first and in-memory for container media. FM Towns HME-242 now
+  admits its real CUE/IMG payload without disk extraction; complete M12 menu
+  admission for that CD image and the nested Amiga floppy corpus only after
+  their original GRAPHICS.DAT/DUNGEON.DAT pairs can be verified together.
+  Do not synthesize a compatible install, palette, dungeon, music map or save
+  corpus for any platform.
+
 - **NEXUS-SATURN-PRESENTATION-HANDOFF:** Nexus production no longer contains
   the old inferred master palette or partial-texture fallback. Continue from
   the real `/Users/bosse/.firestaff/data/nexus` corpus: authenticate PRS3

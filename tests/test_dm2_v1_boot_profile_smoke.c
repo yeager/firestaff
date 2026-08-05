@@ -1027,6 +1027,37 @@ static void test_source_evidence(void)
           "source evidence cites DM2 PC English GRAPHICS hash");
 }
 
+/* Opt-in integration receipt for the original FM Towns CD image.  The test
+ * never creates media: set FIRESTAFF_DM2_FMTOWNS_ROOT to a data root whose
+ * dm2/ directory contains only Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip.
+ * This isolates the platform receipt from a concurrently installed PC copy. */
+static void test_fmtowns_zip_real_media(void)
+{
+    const char *root = getenv("FIRESTAFF_DM2_FMTOWNS_ROOT");
+    DM2_V1_BootProfile p;
+
+    if (!root || !root[0]) {
+        printf("  SKIP: FIRESTAFF_DM2_FMTOWNS_ROOT not set\n");
+        return;
+    }
+
+    dm2_v1_boot_profile_init(&p);
+    CHECK(dm2_v1_boot_scan_assets(&p, root) == 0,
+          "FM Towns ZIP provides both authenticated game files");
+    CHECK(p.assets_verified == 1,
+          "FM Towns ZIP payload hashes satisfy the DM2 launch gate");
+    CHECK(p.platform == DM2_PLATFORM_FMTOWNS_JA,
+          "FM Towns ZIP remains FM Towns after common verification");
+    CHECK(strcmp(p.version_id, "fmtowns-ja") == 0,
+          "FM Towns ZIP selects fmtowns-ja profile");
+    CHECK(strcmp(p.graphics_md5, "027ff3b8ddc2c4c4cdda7ada0b0bc46c") == 0,
+          "FM Towns GRAPHICS.DAT hash is recorded from disc payload");
+    CHECK(strcmp(p.dungeon_md5, "74c7549f174574201988bf936385841a") == 0,
+          "FM Towns DUNGEON.DAT hash is recorded from disc payload");
+    CHECK(p.cdda_cd_dat_verified == 1,
+          "FM Towns original CD.DAT is retained for CDDA routing");
+}
+
 int main(void)
 {
     printf("=== DM2 V1 Boot Profile Smoke Test ===\n\n");
@@ -1071,6 +1102,8 @@ int main(void)
 /* ── source evidence --─ */
     printf("\n--- test_source_evidence ---\n");
     test_source_evidence();
+    printf("\n--- test_fmtowns_zip_real_media ---\n");
+    test_fmtowns_zip_real_media();
 
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
