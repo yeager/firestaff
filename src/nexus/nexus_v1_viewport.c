@@ -39,19 +39,41 @@ static uint32_t viewport_dgn_frame_hash(const Nexus_Framebuffer *fb)
 static const Nexus_DMDFTextureSurface *viewport_plan_surface(
     const Nexus_V1_Engine *engine, const Nexus_V1_DgnRenderCommand *command)
 {
+    const Nexus_DMDFMaterialBank *bank;
+    int material_id;
+    if (!engine || !command) return NULL;
     if (command->animated_texture_declared &&
         command->animated_texture_structure2_image_valid &&
         engine->animated_floor_material_route_valid) {
+        if (engine->animated_floor_materials.surface_count <= 0 ||
+            engine->animated_floor_materials.surface_count >
+                NEXUS_DMDF_MATERIAL_COUNT ||
+            command->animated_texture_structure2_image_id >=
+                (unsigned int)engine->animated_floor_materials.surface_count) {
+            /* DMWeb's Structure1G/Structure2 identity is not interchangeable
+             * with the static Structure1B material index. Never substitute a
+             * static tile when the authenticated animated image is absent. */
+            return NULL;
+        }
         const Nexus_DMDFTextureSurface *animated =
             &engine->animated_floor_materials.surfaces[
                 command->animated_texture_structure2_image_id];
-        if (animated->valid) return animated;
+        if (animated->valid && animated->pixels && animated->width > 0 &&
+            animated->height > 0) return animated;
+        return NULL;
     }
-    const Nexus_DMDFMaterialBank *bank =
+    bank =
         (command->kind == NEXUS_V1_DGN_RENDER_COMMAND_FLOOR ||
          command->kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
             ? &engine->floor_materials : &engine->wall_materials;
-    return &bank->surfaces[command->material_id];
+    material_id = (int)command->material_id;
+    if (!bank->valid || material_id >= bank->surface_count ||
+        material_id >= NEXUS_DMDF_MATERIAL_COUNT) return NULL;
+    if (!bank->surfaces[material_id].valid ||
+        !bank->surfaces[material_id].pixels ||
+        bank->surfaces[material_id].width <= 0 ||
+        bank->surfaces[material_id].height <= 0) return NULL;
+    return &bank->surfaces[material_id];
 }
 
 static int viewport_find_palette_index(const uint32_t palette[256],
@@ -96,6 +118,10 @@ static int viewport_sync_dgn_material_palette(
         const Nexus_DMDFTextureSurface *surface =
             viewport_plan_surface(engine, &plan->commands[i]);
         int color_index;
+        if (!surface) {
+            vp->material_palette_valid = 0;
+            return 0;
+        }
         for (color_index = 0; color_index < 256; ++color_index) {
             uint32_t rgba = surface->palette[color_index];
             int mapped_index;
@@ -729,8 +755,20 @@ void nexus_viewport_render(Nexus_Viewport *vp, Nexus_V1_Engine *engine) {
             const Nexus_DMDFTextureSurface *surface;
             uint8_t texel_map[256];
             surface = viewport_plan_surface(engine, command);
+            if (!surface) {
+                vp->last_dgn_render_receipt.missing_material_count++;
+                if (vp->last_dgn_render_receipt.missing_material_count == 1) {
+                    vp->last_dgn_render_receipt.first_missing_material_id =
+                        command->material_id;
+                    vp->last_dgn_render_receipt.first_missing_material_kind =
+                        command->kind;
+                }
+                vp->last_dgn_render_receipt.blocked = 1;
+                vp->last_dgn_render_receipt.fallback_visuals_permitted = 0;
+                return;
+            }
             viewport_surface_palette_map(vp, surface, texel_map);
-            if (surface && surface->valid) {
+            if (surface->valid) {
                 vp->last_dgn_render_receipt.material_surface_count++;
                 if (surface->from_bpk) {
                     vp->last_dgn_render_receipt.bpk_material_surface_count++;

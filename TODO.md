@@ -25113,6 +25113,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `ITEM.IBS` declaration category/weight lane. Bind the remaining ITEM.IBS
   text/action/combat semantics before exposing item names, attack, defense or
   key flags; the compatibility fixture still belongs only to isolated tests.
+- 🔧 Nexus viewport material admission: the DGN host now fails closed for
+  out-of-range or incomplete MNS/BPK/Structure2 surfaces. The remaining gap is
+  still the authenticated Saturn PRS3 pixel/palette and VDP1 placement route;
+  no replacement texture or procedural viewport may be added.
 # Theron V2 HUD widget pixels remain blocked in production: the manifest parser is fixture-only and the runtime now fails closed until all seven slots resolve to decoded Track 02 source assets.
 
 - 🔧 CSB V2.2 artpack follow-up: the hand-authored per-cell asset-id catalog is

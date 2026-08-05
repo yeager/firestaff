@@ -48825,6 +48825,18 @@ the supplied root and selected MD5 to prove this without shipping game data.
 - The real MNS test rendered 452 source textures and exercised OBAKE MOTN
   animation, transforming 75 vertices with `0` failures.
 - No MNS pixels were promoted into the blocked DGN/VDP1 viewport route.
+
+# 2026-08-05 Nexus DGN material-surface admission hardening
+
+- ✅ The real DGN viewport now validates every selected MNS/BPK/Structure2
+  surface before palette access or rasterization: bank bounds, `valid`, pixel
+  ownership and positive dimensions are required. An authenticated animated
+  Structure1G/Structure2 reference cannot silently fall back to a static
+  Structure1B tile when its image is absent. Invalid material admission leaves
+  the route blocked with no procedural substitute and records the first missing
+  material command.
+- Verification: `test_nexus_v1_dgn_material_raster` and
+  `git diff --check` pass; no game data was added to the repository.
 - ✅ 2026-08-05 Theron Track 02 thing-data loader hardening: reject an
   oversized ground-reference count before narrowing it into the source-shaped
   16-bit receipt field or calculating the copy span. Regression coverage now
