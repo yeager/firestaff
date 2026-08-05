@@ -1006,8 +1006,8 @@ int main(void) {
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
             if (visual_raster_available) {
-                expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 500,
-                            "real Nexus champion selection draws a nonblank frame");
+                expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                            "real Nexus champion selection remains no-draw before menu placement proof");
             }
             expect_true(view.nexusEngine &&
                             nexus_v1_startup_faces_loaded_count(view.nexusEngine) > 0,
@@ -1023,8 +1023,8 @@ int main(void) {
                         "real Nexus startup FACE.BIN surfaces cover the 24-row roster");
             if (visual_raster_available) {
                 expect_true(count_nonzero_region(framebuffer, 320, 200,
-                                                 22, 38, 10, 10) > 0,
-                            "real Nexus champion selection draws FACE.BIN portrait pixels");
+                                                 22, 38, 10, 10) == 0,
+                            "real Nexus champion selection does not place FACE.BIN without VDP proof");
             }
             expect_true(M11_GameView_HandlePointer(&view, 24, 24, 1) ==
                             M11_GAME_INPUT_REDRAW,
@@ -1204,8 +1204,8 @@ int main(void) {
                         M11_GameView_Draw(&view, framebuffer, 320, 200);
                         if (visual_raster_available) {
                             expect_true(count_nonzero_pixels(framebuffer,
-                                                             sizeof(framebuffer)) > 500,
-                                        "M11 Nexus startup save selection draws nonblank frame");
+                                                             sizeof(framebuffer)) == 0,
+                                        "M11 Nexus startup save selection remains no-draw before menu placement proof");
                         }
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_BACK) ==
@@ -1303,8 +1303,8 @@ int main(void) {
                         M11_GameView_Draw(&view, framebuffer, 320, 200);
                         if (visual_raster_available) {
                             expect_true(count_nonzero_pixels(framebuffer,
-                                                             sizeof(framebuffer)) > 500,
-                                        "M11 Nexus save-slot NEW GAME path draws champion select");
+                                                             sizeof(framebuffer)) == 0,
+                                        "M11 Nexus save-slot NEW GAME path remains no-draw before menu placement proof");
                         }
                         expect_true(M11_GameView_HandleInput(
                                         &view, M12_MENU_INPUT_BACK) ==

@@ -44423,35 +44423,6 @@ static int m11_nexus_startup_title_receipt_ready(
            command->title_frame == title_frame;
 }
 
-static void m11_draw_nexus_portrait_scaled(const Nexus_UI_Surface* surface,
-                                           unsigned char* framebuffer,
-                                           int framebufferWidth,
-                                           int framebufferHeight,
-                                           int dstX,
-                                           int dstY,
-                                           int dstW,
-                                           int dstH) {
-    int y;
-    if (!surface || !surface->data || !framebuffer ||
-        surface->w <= 0 || surface->h <= 0 ||
-        dstW <= 0 || dstH <= 0) {
-        return;
-    }
-    for (y = 0; y < dstH; ++y) {
-        const int sy = (y * surface->h) / dstH;
-        int x;
-        const int py = dstY + y;
-        if (py < 0 || py >= framebufferHeight) continue;
-        for (x = 0; x < dstW; ++x) {
-            const int sx = (x * surface->w) / dstW;
-            const int px = dstX + x;
-            if (px < 0 || px >= framebufferWidth) continue;
-            framebuffer[py * framebufferWidth + px] =
-                surface->data[sy * surface->w + sx];
-        }
-    }
-}
-
 static void m11_nexus_startup_exec_title_background(
     void *userdata,
     const Nexus_V1_StartupDrawCommand *command)
@@ -44607,29 +44578,11 @@ static void m11_nexus_startup_exec_portrait(
     void *userdata,
     const Nexus_V1_StartupDrawCommand *command)
 {
-    M11_NexusStartupDrawContext *context =
-        (M11_NexusStartupDrawContext*)userdata;
-    const Nexus_UI_Surface *face;
-    int portraitIndex;
-    if (!context || !context->state || !context->state->nexusEngine ||
-        !command) {
-        return;
-    }
-    portraitIndex = command->portrait_index;
-    if (context->state->nexusEngine->ui_faces_loaded <= 0 ||
-        portraitIndex < 0 || portraitIndex >= 24) {
-        return;
-    }
-    face = &context->state->nexusEngine->ui.surfaces[
-        NEXUS_SURFACE_FACE0 + portraitIndex];
-    m11_draw_nexus_portrait_scaled(face,
-                                   context->framebuffer,
-                                   context->framebufferWidth,
-                                   context->framebufferHeight,
-                                   command->rect.x,
-                                   command->rect.y,
-                                   command->rect.w,
-                                   command->rect.h);
+    /* FACE.BIN bytes are authenticated as portrait assets, but the startup
+     * roster index, destination rectangle and Saturn VDP placement are not.
+     * Do not turn the planner's guessed 10x10 rectangle into live pixels. */
+    (void)userdata;
+    (void)command;
 }
 
 static void m11_draw_nexus_startup_commands(

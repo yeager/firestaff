@@ -49432,3 +49432,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   torches, holders, or other HoC ornaments. Verification: Ninja
   `test_dm1_v1_wall_ornament_pc34_compat` (128 assertions), `firestaff`, and
   real PC3.4 `test_m11_dm1_real_alcove_item_runtime_pc34` pass.
+- ✅ 2026-08-05 Nexus startup portrait placement guard: M11 now retains the
+  authenticated `FACE.BIN` loader/receipt but does not blit portraits through
+  the planner's guessed 10×10 rectangles. Champion-index and VDP destination
+  remain no-draw until Saturn placement evidence is available; the M11 startup
+  gate regression now asserts the blocked pixel route.
