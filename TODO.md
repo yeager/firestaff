@@ -241,6 +241,11 @@
   a false recursive-chain interpretation in the isolated decoder; the full
   raw-corpus route is still blocked because creature AI and moneybox decisions
   require the authentic GDAT providers and live record allocation/ownership.
+  2026-08-06: the callback-only save/load orchestrator and its record-chain
+  helper cluster are explicitly test-only again. They have no M11/runtime
+  caller and cannot be linked into either production archive as an accidental
+  Firestaff-private SKSAVE reader or writer while those original owners remain
+  incomplete.
   2026-08-06: D2RS decoder envelopes are now rejected by both public slot
   loaders. They remain explicit diagnostic inputs only; a player-facing
   Continue/slot action can admit neither a Firestaff private envelope nor the

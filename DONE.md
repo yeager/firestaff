@@ -50429,3 +50429,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   one-bit possession continuation rather than recursively reading a fabricated
   child chain. Verification: record-checkcode and extra-dungeon-data round
   trips, including a source-shaped map-container possession case.
+- ✅ 2026-08-06 DM2 incomplete SKSAVE orchestrator isolation: removed the
+  callback-only save/load orchestrator, record-checkcode and extra-dungeon
+  helper cluster from the M10 and DM2 production archives. Their focused
+  round-trip tests still compile the source explicitly, but no M11/runtime
+  path can present their unowned raw-block, GDAT, record-link or possession
+  handling as a playable original save.
