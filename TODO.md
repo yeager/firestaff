@@ -68,6 +68,8 @@
   the old implicit same-coordinate next-level route is removed.
   Production HUD no longer injects fabricated script/fountain/save strings;
   bind these messages only through authenticated DMN text and SLEV consumers.
+  Startup runtime receipts now also keep `hud_ready` clear after a DGN handoff;
+  level-loaded state alone cannot promote an unbound Saturn HUD consumer.
   FONT256.S2D loader now exposes only the 242 real character-generator tiles
   derived from the verified CG region; it no longer allocates 14 zero-filled
   glyph placeholders. The remaining text gap is the original Saturn

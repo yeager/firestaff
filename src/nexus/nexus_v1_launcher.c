@@ -5731,7 +5731,11 @@ int nexus_v1_launcher_startup_runtime_handoff_from_champion_execution(
     out_receipt->runtime_ready = 1;
     out_receipt->dgn_render_ready = 1;
     out_receipt->dgn_viewport_render_ready = 1;
-    out_receipt->hud_ready = out_receipt->level_loaded ? 1 : 0;
+    /* A loaded level is not proof of the Saturn HUD consumer.  The real
+     * Nexus HUD still needs its VDP1/VDP2 placement, palette and text/SLEV
+     * binding capture; do not let a successful DGN handoff promote the host
+     * HUD placeholder to ready. */
+    out_receipt->hud_ready = 0;
     out_receipt->dgn_render_blocked = 0;
     out_receipt->party_x = state->engine->game.party_x;
     out_receipt->party_y = state->engine->game.party_y;

@@ -64,6 +64,12 @@
   retained. The runtime regression covers registered and unregistered chute
   routes.
 
+- ✅ 2026-08-06 Nexus HUD readiness hardening: a successful level/DGN runtime
+  handoff no longer sets `hud_ready` merely because a level is loaded. The
+  flag remains clear until Saturn HUD VDP1/VDP2 placement and text/SLEV
+  consumer evidence are authenticated; the host HUD placeholder cannot leak
+  through the runtime receipt.
+
 - ✅ 2026-08-05 Nexus startup title fallback removal: the generic title
   renderer no longer copies a raw `TITLE.CG` character-generator atlas to the
   framebuffer when the Saturn MAPD/TIBG handoff is missing. TITLE.CG and
