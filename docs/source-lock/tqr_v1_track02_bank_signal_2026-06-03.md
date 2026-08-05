@@ -29,6 +29,27 @@ all three span offsets, and exact occurrence counts. The older `0x1584` /
 `0x3000` profile remains available for its separately documented corpus, but is
 not substituted for this supplied retail image.
 
+## Supplied Retail US ISO Initial Level Envelope
+
+The same hash-verified retail concatenation contains one exact startup-level
+header at `0x5a9114`:
+
+```text
+00 20 00 1b 01 08 e9 38 00 26 01 03
+```
+
+The header is followed by the complete `32 x 27` (`0x360` byte) grid and
+loads through the existing bounded Track 02 level parser. It is related to
+the first retail descriptor at `0x5b2406` by exactly `0x92f2` bytes. The
+production handoff admits only this first retail descriptor/header pair as a
+real level-envelope receipt; the other two retail anchors remain opaque.
+
+This is a level-record binding, not full dungeon parity. The retail descriptor
+window used for the existing seed-table hypothesis is zero-fill, so the
+semantic startup handoff still does not authorize runtime dungeon drawing,
+tile/material selection, palette ownership, object records, or cross-level
+publication from this envelope alone.
+
 ## Legacy US ISO Signal
 
 At byte offset `0x1584`, the US ISO contains one unique little-endian
@@ -189,6 +210,8 @@ non-corpus media and does not permit fallback visuals.
 - the JP Rev 1 zero-filled image outcome as insufficient evidence
 - the US raw Track 02 BIN descriptor/span anchors at three exact offsets
 - the JP raw Track 02 BIN descriptor/span anchors at three exact offsets
+- the retail US ISO startup-level header at `0x5a9114`, its `0x92f2`
+  descriptor relation, and its bounded 32x27 load
 - raw 2352-byte sector coordinates for every JP/US raw BIN anchor
 - synthetic no-data positive fixtures for both raw BIN layouts
 - a negative raw fixture where one of the three descriptor anchors is missing

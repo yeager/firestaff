@@ -67,6 +67,11 @@
   remaining handoff work is the authenticated non-startup level/object
   corpus and real bitmap/palette capture.
 
+  The supplied retail US ISO now contributes one bounded real startup-level
+  envelope at `0x5a9114`, linked to the first retail descriptor by `0x92f2`.
+  Its seed-table window is still zero-fill, so this proves the level record
+  only; runtime dungeon draw and full semantic handoff remain gated.
+
   Full-dungeon loading now accepts a valid zero-ground-reference map and
   rejects object-capacity exhaustion instead of reporting a partial success.
 

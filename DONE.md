@@ -15,6 +15,14 @@
   item-id derivation to use the source-bound slot identity; no attack,
   defence, or equippability semantics were inferred.
 
+- ✅ 2026-08-06 Theron retail-US ISO initial level envelope: the supplied
+  canonical `TQUS19.iso + TQUS02End.iso` image now binds the exact 32×27
+  startup header at `0x5a9114` to the first retail descriptor at `0x5b2406`
+  with the verified `0x92f2` delta. The level grid is loaded as a bounded
+  real-media receipt; seed-table, tile/material, palette, object and runtime
+  dungeon-draw promotion remain closed until their original consumers are
+  proven.
+
 - ✅ 2026-08-06 Theron retail-US ISO bank profile: the canonical hash-verified
   `TQUS19.iso + TQUS02End.iso` image now admits its three exact descriptor/span
   pairs at `0x5b2406/0x5b4406/0x5b6584` and

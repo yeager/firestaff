@@ -30,6 +30,8 @@
 #define TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_0 0x5b2406u
 #define TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_1 0x5b4406u
 #define TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_2 0x5b6584u
+#define TQR_US_ISO_RETAIL_INITIAL_LEVEL_OFFSET 0x5a9114u
+#define TQR_US_ISO_RETAIL_INITIAL_LEVEL_DELTA 0x92f2u
 #define TQR_US_ISO_RETAIL_SPAN_OFFSET_0 0x207000u
 #define TQR_US_ISO_RETAIL_SPAN_OFFSET_1 0x378000u
 #define TQR_US_ISO_RETAIL_SPAN_OFFSET_2 0x5b8000u
@@ -275,6 +277,40 @@ static int variant_is_raw_bin(Theron_Track02Variant variant) {
 
 static int variant_has_plain_user_data(Theron_Track02Variant variant) {
     return variant == THERON_TRACK02_VARIANT_US_ISO;
+}
+
+/* The supplied retail US ISO carries the source level header at a distinct
+ * plain-ISO offset.  This relation is deliberately limited to the first
+ * retail descriptor anchor; the other two anchors remain opaque until their
+ * original consumer is recovered. */
+static int tqr_retail_us_iso_initial_candidate_expected_offset(
+    size_t descriptor_offset,
+    size_t *out_candidate_offset) {
+    if (out_candidate_offset) *out_candidate_offset = 0u;
+    if (descriptor_offset != TQR_US_ISO_RETAIL_DESCRIPTOR_OFFSET_0) {
+        return 0;
+    }
+    if (descriptor_offset < TQR_US_ISO_RETAIL_INITIAL_LEVEL_DELTA) {
+        return 0;
+    }
+    if (out_candidate_offset) {
+        *out_candidate_offset =
+            descriptor_offset - TQR_US_ISO_RETAIL_INITIAL_LEVEL_DELTA;
+    }
+    return 1;
+}
+
+static int tqr_initial_candidate_expected_offset_for_media(
+    size_t descriptor_offset,
+    const char *md5_hex,
+    size_t *out_candidate_offset) {
+    if (md5_hex && strcmp(md5_hex, THERON_TRACK02_MD5_US_ISO) == 0 &&
+        tqr_retail_us_iso_initial_candidate_expected_offset(
+            descriptor_offset, out_candidate_offset)) {
+        return 1;
+    }
+    return theron_v1_track02_initial_candidate_expected_offset(
+        descriptor_offset, out_candidate_offset);
 }
 
 static int tqr_ascii_equal_ci(const char *a, const char *b) {
@@ -3811,9 +3847,14 @@ int theron_v1_track02_bind_level_candidate_anchor(
         return 0;
     }
 
-    expected_ok = theron_v1_track02_initial_candidate_expected_offset(
-        descriptor_offset,
-        &expected_offset);
+    expected_ok =
+        tqr_retail_us_iso_initial_candidate_expected_offset(
+            descriptor_offset, &expected_offset);
+    if (!expected_ok) {
+        expected_ok = theron_v1_track02_initial_candidate_expected_offset(
+            descriptor_offset,
+            &expected_offset);
+    }
     for (size_t i = 0; i < catalog->candidate_count; ++i) {
         Theron_Track02LevelCandidate *candidate = &catalog->candidates[i];
         candidate->descriptor_delta = 0u;
@@ -3918,17 +3959,30 @@ static int tqr_bind_split_initial_level_candidate(
     uint16_t height = 0u;
     size_t decoded_size = 0u;
 
-    if (!variant_is_raw_bin(theron_v1_track02_variant_for_md5(md5_hex)) ||
-        !theron_v1_track02_initial_candidate_expected_offset(
-            descriptor_offset, &candidate_offset) ||
-        candidate_offset >= track02_size ||
-        payload_size > track02_size - candidate_offset) {
-        return 0;
+    {
+        Theron_Track02Variant variant =
+            theron_v1_track02_variant_for_md5(md5_hex);
+        if (!tqr_initial_candidate_expected_offset_for_media(
+                descriptor_offset, md5_hex, &candidate_offset) ||
+            (!variant_is_raw_bin(variant) &&
+             !(variant == THERON_TRACK02_VARIANT_US_ISO &&
+               candidate_offset == TQR_US_ISO_RETAIL_INITIAL_LEVEL_OFFSET)) ||
+            candidate_offset >= track02_size ||
+            payload_size > track02_size - candidate_offset) {
+            return 0;
+        }
     }
 
-    signal_status = theron_v1_track02_copy_raw_user_data_range(
-        track02_data, track02_size, md5_hex, candidate_offset,
-        payload_size, payload, sizeof(payload), &user_data_offset);
+    if (theron_v1_track02_variant_for_md5(md5_hex) ==
+        THERON_TRACK02_VARIANT_US_ISO) {
+        memcpy(payload, track02_data + candidate_offset, payload_size);
+        user_data_offset = candidate_offset;
+        signal_status = THERON_TRACK02_SIGNAL_OK;
+    } else {
+        signal_status = theron_v1_track02_copy_raw_user_data_range(
+            track02_data, track02_size, md5_hex, candidate_offset,
+            payload_size, payload, sizeof(payload), &user_data_offset);
+    }
     if (signal_status != THERON_TRACK02_SIGNAL_OK ||
         !tqr_level_candidate_header_matches(payload, sizeof(payload),
                                             &width, &height, &decoded_size) ||
@@ -4040,8 +4094,9 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
     (void)theron_v1_track02_bind_level_candidate_user_offsets(track02_size,
                                                               md5_hex,
                                                               &catalog);
-    expected_ok = theron_v1_track02_initial_candidate_expected_offset(
+    expected_ok = tqr_initial_candidate_expected_offset_for_media(
         descriptor_offset,
+        md5_hex,
         &expected_candidate_offset);
     out_binding->expected_offset_valid = expected_ok ? 1 : 0;
     out_binding->expected_offset = expected_candidate_offset;
@@ -4060,7 +4115,11 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_bind_initial_level_candidate(
     /* Normalize the promoted raw-BIN payload through MODE1 user data even
      * when the raw scanner could see its header.  That makes the semantic
      * handoff insensitive to JP/US sector framing at the payload tail. */
-    if (variant_is_raw_bin(theron_v1_track02_variant_for_md5(md5_hex)) &&
+    if ((variant_is_raw_bin(theron_v1_track02_variant_for_md5(md5_hex)) ||
+         (theron_v1_track02_variant_for_md5(md5_hex) ==
+              THERON_TRACK02_VARIANT_US_ISO &&
+          tqr_retail_us_iso_initial_candidate_expected_offset(
+              descriptor_offset, NULL))) &&
         !tqr_bind_split_initial_level_candidate(track02_data,
                                                  track02_size,
                                                  md5_hex,
@@ -4611,17 +4670,27 @@ Theron_Track02LevelHandoffStatus theron_v1_track02_copy_initial_level_user_data_
         return THERON_TRACK02_LEVEL_HANDOFF_BAD_INPUT;
     }
 
-    if (theron_v1_track02_copy_raw_user_data_range(
-            track02_data,
-            track02_size,
-            md5_hex,
-            binding.candidate.absolute_offset,
-            binding.candidate.byte_count,
-            out_bytes,
-            out_bytes_capacity,
-            &user_data_offset) != THERON_TRACK02_SIGNAL_OK ||
-        user_data_offset != binding.candidate.user_data_offset) {
-            return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+    if (theron_v1_track02_variant_for_md5(md5_hex) ==
+            THERON_TRACK02_VARIANT_US_ISO &&
+        tqr_retail_us_iso_initial_candidate_expected_offset(
+            descriptor_offset, NULL)) {
+        memcpy(out_bytes,
+               track02_data + binding.candidate.absolute_offset,
+               binding.candidate.byte_count);
+        user_data_offset = binding.candidate.absolute_offset;
+    } else if (theron_v1_track02_copy_raw_user_data_range(
+                   track02_data,
+                   track02_size,
+                   md5_hex,
+                   binding.candidate.absolute_offset,
+                   binding.candidate.byte_count,
+                   out_bytes,
+                   out_bytes_capacity,
+                   &user_data_offset) != THERON_TRACK02_SIGNAL_OK) {
+        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
+    }
+    if (user_data_offset != binding.candidate.user_data_offset) {
+        return THERON_TRACK02_LEVEL_HANDOFF_NO_LEVEL;
     }
 
     *out_byte_count = binding.candidate.byte_count;

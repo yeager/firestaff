@@ -982,14 +982,8 @@ static void check_real_asset_path(void) {
               "boot profile carries the documented 4 max champions");
         check(r.boot_profile_dungeon_count == 7u,
               "boot profile carries the documented 7 mini-dungeons");
-        if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_ISO) != 0 ||
-            r.descriptor_offset != 0x5b2406u) {
-            check(r.boot_profile_dungeon_seed != 0u,
-                  "boot profile carries a non-zero dungeon_seed");
-        } else {
-            check(r.boot_profile_dungeon_seed == 0u,
-                  "retail US ISO keeps unbound dungeon_seed zero");
-        }
+        check(r.boot_profile_dungeon_seed != 0u,
+              "boot profile carries a non-zero dungeon_seed");
         check_startup_mirror_summary(&r, "real receipt startup");
         check_startup_chapter_real(&r, "real receipt startup");
         /* JP Rev 1 ISO is allowed to be a zero-fill and we still want
@@ -1259,6 +1253,27 @@ static void check_real_asset_path(void) {
                                        "JP raw Track 02 rendered line names decoded labels");
                 }
             }
+        } else if (strcmp(c->expected_md5, THERON_TRACK02_MD5_US_ISO) == 0 &&
+                   r.descriptor_offset == 0x5b2406u) {
+            check(r.initial_candidate_found == 1,
+                  "retail US ISO receipt has an initial candidate");
+            check(r.initial_candidate_count == 1u &&
+                      r.initial_candidate_binding_status ==
+                          THERON_TRACK02_LEVEL_HANDOFF_OK,
+                  "retail US ISO initial candidate binding is OK");
+            check(r.initial_candidate_offset == 0x5a9114u &&
+                      r.initial_candidate_expected_offset == 0x5a9114u,
+                  "retail US ISO initial candidate offset is source-locked");
+            check(r.initial_candidate_descriptor_delta == 0x92f2u,
+                  "retail US ISO initial candidate delta is source-locked");
+            check(r.initial_candidate_width == 32u &&
+                      r.initial_candidate_height == 27u &&
+                      r.initial_candidate_seed == 0x0108e938u &&
+                      r.initial_candidate_level_index == 0x0026u,
+                  "retail US ISO initial candidate header is source-locked");
+            check(r.initial_candidate_user_data_offset_valid == 1 &&
+                      r.initial_candidate_user_data_offset == 0x5a9114u,
+                  "retail US ISO initial candidate uses plain ISO offset");
         } else {
             check(r.initial_candidate_found == 0,
                   "non-raw Track 02 receipt makes no initial candidate claim");

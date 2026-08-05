@@ -7,10 +7,10 @@
  * Scope:
  *   This probe proves a narrow API bridge: a decoded Track 02 descriptor
  *   table window can be selected, classified as DATA, and handed to the
- *   existing theron_v1_level_load() parser.  Synthetic fixtures provide the
- *   only positive level load.  Real Track 02 fixtures, when staged locally,
- *   are allowed to report "not a level yet"; that is the current honest
- *   state until the dungeon record format is known.
+ *   existing theron_v1_level_load() parser.  Synthetic fixtures and the
+ *   hash-verified retail US ISO startup envelope provide the only positive
+ *   level loads; all other real-media descriptor windows remain no-claim
+ *   until the dungeon record format is known.
  */
 
 #include "asset_status_m12.h"
@@ -1464,6 +1464,41 @@ static void probe_real_data_handoff(const char *label,
         ++g_fail;
         free(data);
         return;
+    }
+
+    if (strcmp(md5_hex, THERON_TRACK02_MD5_US_ISO) == 0) {
+        enum { retail_level_bytes = 12u + 32u * 27u };
+        uint8_t copied[retail_level_bytes];
+        size_t copied_size = 0u;
+        size_t copied_user_offset = 0u;
+        Theron_V1_Level level;
+        Theron_Track02LevelHandoff handoff;
+        Theron_Track02LevelHandoffStatus status;
+
+        status = theron_v1_track02_load_initial_level_candidate(
+            data, size, local_md5, signal.descriptor_offsets[0],
+            THERON_DUNGEON_1_AKUTUBA, 0, &level, &handoff);
+        check_int("retail US ISO initial level status", status,
+                  THERON_TRACK02_LEVEL_HANDOFF_OK);
+        check_size("retail US ISO initial level offset",
+                   handoff.absolute_offset, 0x5a9114u);
+        check_size("retail US ISO initial level descriptor delta",
+                   handoff.descriptor_delta, 0x92f2u);
+        check_size("retail US ISO initial level bytes",
+                   handoff.byte_count, retail_level_bytes);
+        check_int("retail US ISO initial level width", level.width, 32);
+        check_int("retail US ISO initial level height", level.height, 27);
+        status = theron_v1_track02_copy_initial_level_user_data_window(
+            data, size, local_md5, signal.descriptor_offsets[0], copied,
+            sizeof(copied), &copied_size, &copied_user_offset);
+        check_int("retail US ISO initial level copy status", status,
+                  THERON_TRACK02_LEVEL_HANDOFF_OK);
+        check_size("retail US ISO initial level copy size", copied_size,
+                   retail_level_bytes);
+        check_size("retail US ISO initial level copy offset",
+                   copied_user_offset, 0x5a9114u);
+        check_int("retail US ISO initial level copy bytes",
+                  memcmp(copied, data + 0x5a9114u, retail_level_bytes), 0);
     }
 
     for (size_t anchor = 0; anchor < signal.anchor_count; ++anchor) {
