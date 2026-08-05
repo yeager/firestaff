@@ -73,11 +73,9 @@ void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
 
 void nexus_v1_creatures_init_production(Nexus_V1_CreatureManager *mgr) {
     if (!mgr) return;
-    /* Seed the roster from the fixture table (names, MNS files, AI func
-     * pointers), then override stats from RLOWFIX.BIN CRET section when
-     * the data file is available.  CRET stats are Saturn-owned — the
-     * fixture table health/attack/defense/speed values are only used as
-     * fallback when RLOWFIX.BIN is absent. */
+    /* Seed source-owned names, MNS files and AI pointers, then bind CRET
+     * statistics from RLOWFIX.BIN.  No fixture statistics are used when the
+     * retail CRET resource is absent; unbound actors remain fail-closed. */
     nexus_v1_creatures_init(mgr);
 }
 

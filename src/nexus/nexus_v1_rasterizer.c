@@ -629,54 +629,12 @@ void nexus_raster_projectile(Nexus_Framebuffer *fb,
      * Lightning: DDA with per-step jitter (±3 pixels horizontal).
      * Poison cloud: filled circle blit in screen space.
      * Grabber bolt: multi-point quadratic Bézier arc.               */
-    int dx, dy, dz, steps, i;
-    float sx, sy, sz, step_x, step_y, step_z;
-    int pal_base, jitter, sx_out, sy_out;
-    Vec2i sp;
     (void)arc_points; (void)n_points;
 
     if (!fb || !cam || !palette) return;
 
-    /* The legacy body below synthesizes spell pixels from palette indices
-     * and host rand() jitter.  No verified Saturn effect stream or VDP1
-     * binding exists for it, so Nexus must emit no projectile pixels here. */
-    return;
-
-    switch (type) {
-    case NEXUS_PROJ_FIREBALL:    pal_base = 96;  break;
-    case NEXUS_PROJ_LIGHTNING:   pal_base = 108; break;
-    case NEXUS_PROJ_POISON_CLOUD:pal_base = 112; break;
-    case NEXUS_PROJ_GRABBER_BOLT:pal_base = 144; break;
-    default:                     pal_base = 96;
-    }
-
-    dx = (int)floor(end.x - start.x + 0.5f);
-    dy = (int)floor(end.y - start.y + 0.5f);
-    dz = (int)floor(end.z - start.z + 0.5f);
-    steps = (dx>=0?dx:-dx) > (dy>=0?dy:-dy)
-          ? ((dx>=0?dx:-dx) > (dz>=0?dz:-dz) ? (dx>=0?dx:-dx) : (dz>=0?dz:-dz))
-          : ((dy>=0?dy:-dy) > (dz>=0?dz:-dz) ? (dy>=0?dy:-dy) : (dz>=0?dz:-dz));
-    if (steps <= 0) steps = 1;
-
-    step_x = (float)dx / (float)steps;
-    step_y = (float)dy / (float)steps;
-    step_z = (float)dz / (float)steps;
-    sx = start.x; sy = start.y; sz = start.z;
-
-    for (i = 0; i <= steps; i++) {
-        Vec3 pos = {sx, sy, sz};
-        sp = v3_project(pos, cam->view_proj, NEXUS_FB_W, NEXUS_FB_H);
-        sx_out = sp.x;
-        sy_out = sp.y;
-        jitter = (type == NEXUS_PROJ_LIGHTNING) ? (rand() % 7) - 3 : 0;
-        sx_out += jitter;
-        if (sx_out >= 0 && sx_out < NEXUS_FB_W &&
-            sy_out >= 0 && sy_out < NEXUS_FB_H) {
-            int color_idx = pal_base + ((i * 7) / steps) % 8;
-            fb->color_buffer[sy_out * NEXUS_FB_W + sx_out] =
-                (uint8_t)color_idx;
-            fb->z_buffer[sy_out * NEXUS_FB_W + sx_out] = 0.0f;
-        }
-        sx += step_x; sy += step_y; sz += step_z;
-    }
+    /* No verified Saturn effect stream or VDP1 binding exists, so Nexus
+     * deliberately emits no projectile pixels.  Keep this boundary explicit
+     * until an original effect asset/capture supplies the pixel owner. */
+    (void)start; (void)end; (void)type;
 }

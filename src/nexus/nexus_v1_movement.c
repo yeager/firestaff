@@ -118,18 +118,14 @@ int nexus_square_is_door(int sq) {
 }
 
 int nexus_square_is_water(int sq) {
-    /* Type 21 = water square (needs rope to cross).
-     * The movement result remains source-specific; inventory ownership is
-     * resolved by the mechanics owner before this standalone route is used.
-     * Source: DM1 water square behavior (NEXUS_SQUARE_WATER). */
+    /* Type 21 = water square; DM.BIN movement code leaves it passable.
+     * Source: DM.BIN movement-path disassembly, pass 216. */
     return sq == 21;
 }
 
 int nexus_square_is_fire(int sq) {
-    /* Type 22 = fire square (needs protect-from-fire rune).
-     * The movement result remains source-specific; rune ownership is
-     * resolved by the mechanics owner before this standalone route is used.
-     * Source: DM1 fire square behavior (NEXUS_SQUARE_FIRE). */
+    /* Type 22 = fire square; passability is gated by the source fire-shield
+     * state in the mechanics owner. Source: DM.BIN 0x0603C386. */
     return sq == 22;
 }
 
@@ -258,15 +254,9 @@ int nexus_try_move(int dir, int forward,
         if (out_result) *out_result = NEXUS_MOVE_STAIRS_UP;
         return 1;
     }
-    /* Check water (type 21) and fire (type 22) — impassable in V1
-     * until rope/protect-rune is used.
-     * Source: nexus_squares.h NEXUS_SQUARE_WATER/FIRE stub. */
-    if (sq == 21) {
-        if (out_result) *out_result = NEXUS_MOVE_BLOCKED_WATER;
-        if (out_new_map_x) *out_new_map_x = *in_out_map_x;
-        if (out_new_map_y) *out_new_map_y = *in_out_map_y;
-        return 0;
-    }
+    /* The standalone movement helper cannot own the mechanics fire-shield
+     * state. Water is handled by the DM.BIN passable path; fire is resolved
+     * by the mechanics owner before this helper is called. */
     if (sq == 22) {
         if (out_result) *out_result = NEXUS_MOVE_BLOCKED_FIRE;
         if (out_new_map_x) *out_new_map_x = *in_out_map_x;
