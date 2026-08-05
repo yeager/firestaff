@@ -49362,6 +49362,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   an authenticated Track 02 tile-bank/material binding is available, so no
   generated tile surface can be mistaken for real dungeon graphics.
 
+- ✅ 2026-08-06 Theron production viewport gate: excluded the legacy
+  procedural `theron_v1_viewport.c` pixel implementation from the
+  `firestaff_theron` library. The runtime now resolves the existing
+  `theron_v1_viewport_runtime_noop.c` seam until Track 02 tile/material and
+  palette ownership is authenticated; fixture-only target linkages remain
+  isolated for later migration.
+
 - ✅ 2026-08-06 Theron Main-RAM loader capture receipt: the supplied real
   Mednafen sidecar is now parsed as a strict regular-file receipt. It verifies
   the observed TIA transfer from `$c800` to `$0404` (128 bytes), loader PC

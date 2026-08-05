@@ -234,7 +234,9 @@
   existing no-draw gate until original loader/VRAM evidence identifies the
   dungeon tile bank and palette mapping. The verified level header seed is
   now retained in the level record, together with the opaque header level
-  index; tile semantics remain unresolved.
+  index; tile semantics remain unresolved. The procedural viewport source is
+  now excluded from `firestaff_theron`; production resolves the dedicated
+  no-op seam until an authenticated tile/material/palette route exists.
 - **THERON-V1-TILE-RENDERER-REAL-DATA:** The inferred square/depth tile
   table is now fixture-only. Production exposes no tile selection, decode or
   raster pixels until Track 02 tile-bank semantics are decoded. The viewport
