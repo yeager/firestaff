@@ -1,6 +1,69 @@
 #include "theron_v1_track02_level_data_blocks.h"
 #include <assert.h>
+#include <stdint.h>
+#include <stdlib.h>
 #include <stdio.h>
+
+/*
+ * Re-check the descriptor table against an authentic MODE1/2352 Track 02
+ * dump when a data host supplies FIRESTAFF_THERON_TRACK02_RAW.  The source
+ * loader's raw-sector contract is 2048 user bytes at raw-sector offset 16;
+ * this test deliberately validates bytes only and does not infer tile or
+ * dungeon semantics from them.
+ */
+static int read_raw_user_byte(FILE *file, size_t user_offset, uint8_t *out) {
+    const size_t raw_offset = (user_offset / 2048u) * 2352u + 16u +
+                              (user_offset % 2048u);
+    if (fseek(file, (long)raw_offset, SEEK_SET) != 0 ||
+        fread(out, 1u, 1u, file) != 1u) {
+        return 0;
+    }
+    return 1;
+}
+
+static void verify_real_track02_level_blocks(void) {
+    const char *path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
+    FILE *file;
+    long file_size;
+    uint8_t shared[THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE];
+
+    if (!path || !path[0]) {
+        puts("SKIP: no FIRESTAFF_THERON_TRACK02_RAW real-data path");
+        return;
+    }
+    file = fopen(path, "rb");
+    assert(file != NULL);
+    assert(fseek(file, 0L, SEEK_END) == 0);
+    file_size = ftell(file);
+    assert(file_size > 0L);
+    assert((file_size % 2352L) == 0L);
+    assert(fseek(file, 0L, SEEK_SET) == 0);
+
+    for (size_t i = 0; i < THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE; ++i) {
+        assert(read_raw_user_byte(file,
+                                  theron_v1_track02_level_data_block(0)->ud_offset + i,
+                                  &shared[i]));
+    }
+    for (unsigned int level = 0; level < THERON_TRACK02_LEVEL_COUNT; ++level) {
+        const Theron_LevelDataBlockDesc *block =
+            theron_v1_track02_level_data_block(level);
+        for (size_t i = 0; i < THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE; ++i) {
+            uint8_t byte;
+            assert(read_raw_user_byte(file, block->ud_offset + i, &byte));
+            assert(byte == shared[i]);
+        }
+        for (size_t i = 0; i < sizeof(block->per_level_meta); ++i) {
+            uint8_t byte;
+            assert(read_raw_user_byte(file,
+                                      block->ud_offset +
+                                          THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE + i,
+                                      &byte));
+            assert(byte == block->per_level_meta[i]);
+        }
+    }
+    fclose(file);
+    puts("PASS: authentic US Track 02 level-block prologues and metadata");
+}
 
 int main(void) {
     /* 7 levels */
@@ -34,6 +97,8 @@ int main(void) {
         const Theron_LevelDataBlockDesc *b = theron_v1_track02_level_data_block(i);
         assert(b->ud_offset > 0);
     }
+
+    verify_real_track02_level_blocks();
 
     printf("PASS: theron_v1_track02_level_data_blocks\n");
     return 0;

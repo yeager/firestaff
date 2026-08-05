@@ -49528,3 +49528,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   still passes, including C346/C026 mirror presentation; focused Ninja
   build, wall-plan tests, and `git diff --check` pass. Real macOS torch/holder
   capture remains open in `DM1-HOC-OBJECTS-001`.
+
+- ✅ 2026-08-06 Theron real Track 02 level-bank receipt: extended
+  `test_theron_v1_track02_level_data_blocks` with an optional
+  `FIRESTAFF_THERON_TRACK02_RAW` path. Against the supplied authentic US
+  MODE1/2352 BIN it re-read all seven documented level offsets, verified the
+  shared 0xE8-byte prologue and all per-level metadata bytes, and passed.
+  This is raw-data provenance only; tile, palette, map and object semantics
+  remain correctly fail-closed.

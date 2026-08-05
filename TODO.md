@@ -123,6 +123,14 @@
   Its seed-table window is still zero-fill, so this proves the level record
   only; runtime dungeon draw and full semantic handoff remain gated.
 
+  **2026-08-06 real Track 02 level-bank receipt:** the level-block test now
+  accepts `FIRESTAFF_THERON_TRACK02_RAW` and re-reads the supplied authentic
+  US MODE1/2352 BIN using the source raw-sector user-data rule (offset 16).
+  It verifies all seven documented block offsets, the shared 0xE8-byte
+  prologue and every eight-byte per-level metadata record. This closes the
+  old hardcoded-only test gap while deliberately promoting no tile, palette,
+  map or object semantics.
+
   The real Mednafen `*.trace.cd` sidecar now has a strict opaque receipt path:
   it validates the source marker, 51 SCSI READ commands, 157 MODE1/2352 raw
   sectors and all 157 command-to-sector bindings from the captured app run.
