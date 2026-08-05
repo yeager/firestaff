@@ -4090,6 +4090,9 @@ that its exact runtime path is not already source-locked and tested.
    inactive legacy `c_gdatfile` adapter is test-only too. Its
    `READ_GRAPHICS_STRUCTURE` success result does not decode the original
    structure, so it cannot substitute for the mounted GRAPHICS.DAT owner.
+   **2026-08-06 sound update:** the inactive `c_sfx` callback queue is
+   test-only because it omits the original level-geometry transform; live
+   audio must use the real SND/music runtime owner.
 42. **DM2-CREATURE-AI-COMBAT:** Complete skproject creature AI, movement,
     combat, projectiles, cloud effects, drops, occupancy, and timeline-driven
     behavior from raw original records.

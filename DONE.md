@@ -49964,3 +49964,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   structure routine reported success without decoding the original structure;
   focused tests still compile the adapter explicitly, while production cannot
   use it instead of the mounted GRAPHICS.DAT data owner.
+
+- ✅ 2026-08-06 DM2 c_sfx placeholder isolation: removed the inactive
+  callback sound queue from both production CMake globs. Its position handling
+  omits the original level-geometry transform; the explicit test remains while
+  production cannot use it instead of the real SND/music runtime owner.
