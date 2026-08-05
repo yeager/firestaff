@@ -49652,3 +49652,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   field to the sensor enumeration handoff and covered SET, CLEAR, TOGGLE and
   HOLD in `test_dm1_v1_sensor_trigger_pc34_compat` (287/287 pass). Runtime
   group-generator and broader actuator ownership remain open.
+
+- ✅ 2026-08-06 DM2 champion-selection placeholder removal:
+  `dm2_v1_select_champion()` no longer reports success from coordinates and a
+  party count alone. It now returns failure until the live DB3 subtype-0x7E
+  mirror record, hero record and possession chain reach the real
+  `DM2_SELECT_CHAMPION`/`REVIVE_PLAYER` path. The focused lifecycle test now
+  proves that a structurally valid request remains non-mutating and
+  fail-closed. Source: `SKULLWIN/c_hero.cpp::DM2_SELECT_CHAMPION`
+  (1052-1200).

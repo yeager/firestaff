@@ -47,7 +47,9 @@ typedef struct {
     int16_t heroes_in_party;
 } DM2_V1_SelectChampionRequest;
 
-/* SELECT_CHAMPION receipt */
+/* SELECT_CHAMPION receipt. A valid request is not a selected champion:
+ * selection remains fail-closed until the live DB3 mirror and hero records
+ * are supplied by the GAME_LOAD runtime. */
 typedef struct {
     int valid;
     int fail_closed;

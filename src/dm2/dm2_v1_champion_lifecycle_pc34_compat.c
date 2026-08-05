@@ -56,13 +56,13 @@ int dm2_v1_select_champion(
 
     receipt->hero_index = request->heroes_in_party;
 
-    /* Tile record walk (GET_TILE_RECORD_LINK, GET_NEXT_RECORD_LINK),
-     * REVIVE_PLAYER, and UI updates require live dungeon + hero data.
-     * Fail-closed. */
+    /* SKProject c_hero.cpp::DM2_SELECT_CHAMPION (1052-1200) cannot succeed
+     * until GET_TILE_RECORD_LINK/GET_NEXT_RECORD_LINK find the live DB3
+     * subtype-0x7E mirror record and REVIVE_PLAYER transfers its possessions.
+     * This bounded request has none of those source-owned records, so it may
+     * validate the requested party slot but must never announce a selection. */
     receipt->fail_closed = 1;
-    receipt->champion_selected = 1;
-
-    return 1;
+    return 0;
 }
 
 int dm2_v1_bring_champion_to_life(

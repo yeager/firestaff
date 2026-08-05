@@ -27,7 +27,7 @@ static void test_select_party_full(void)
     printf("  PASS: select_party_full\n");
 }
 
-static void test_select_valid(void)
+static void test_select_without_source_record_fails_closed(void)
 {
     DM2_V1_SelectChampionReceipt receipt;
     DM2_V1_SelectChampionRequest req;
@@ -38,12 +38,12 @@ static void test_select_valid(void)
     req.map_level = 0;
     req.heroes_in_party = 0;
     int r = dm2_v1_select_champion(&req, &receipt);
-    assert(r == 1);
+    assert(r == 0);
     assert(receipt.valid == 1);
-    assert(receipt.champion_selected == 1);
+    assert(receipt.champion_selected == 0);
     assert(receipt.hero_index == 0);
     assert(receipt.fail_closed == 1);
-    printf("  PASS: select_valid\n");
+    printf("  PASS: select_without_source_record_fails_closed\n");
 }
 
 static void test_select_second_hero(void)
@@ -53,8 +53,10 @@ static void test_select_second_hero(void)
     memset(&req, 0, sizeof(req));
     req.heroes_in_party = 2;
     int r = dm2_v1_select_champion(&req, &receipt);
-    assert(r == 1);
+    assert(r == 0);
     assert(receipt.hero_index == 2);
+    assert(receipt.champion_selected == 0);
+    assert(receipt.fail_closed == 1);
     printf("  PASS: select_second_hero\n");
 }
 
@@ -132,7 +134,7 @@ int main(void)
     printf("test_dm2_v1_champion_lifecycle_pc34_compat:\n");
     test_select_null_safety();
     test_select_party_full();
-    test_select_valid();
+    test_select_without_source_record_fails_closed();
     test_select_second_hero();
     test_revive_null_safety();
     test_revive_invalid_index();

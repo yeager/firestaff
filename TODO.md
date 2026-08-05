@@ -789,6 +789,10 @@
   A verified New Game reload now also clears stale resume portraits,
   inventory and leader hand before source mirror selection; it still cannot
   create a replacement party or enter runtime.
+  The bounded `dm2_v1_select_champion()` receipt also remains deliberately
+  non-mutating: request coordinates without the live DB3 subtype-0x7E mirror,
+  hero record and inventory chain now return failure rather than a synthetic
+  champion-selection success.
   **2026-07-31 update:** the boot profile no longer preloads the PC-English
   G1 seed (`257`) or level count (`28`). Both remain zero until the
   hash-verified `DUNGEON.DAT` header supplies the real values.
