@@ -927,3 +927,114 @@ const char* csb_v22_inplace_route_source_evidence(void) {
         "  chaos_runes, dsa_scrolls (all optional for graceful degradation)";
 }
 #endif /* CSB_V22_ROUTE_CONTRACT_ONLY */
+
+#ifndef CSB_V22_ROUTE_CONTRACT_ONLY
+/*
+ * The historical 3x3 router above assigns names such as
+ * "wall_dungeon_d1_01" from a synthetic cell classification.  Those names
+ * are useful to exercise the old contract in isolation, but a dungeon cell
+ * alone does not identify an original F0128 bitmap, its palette, projection
+ * rectangle, or Thing ordering.  Product code must therefore never turn the
+ * compatibility API into an art selection.  The only live V2.2 admissions in
+ * this translation unit are the F0128 projection functions above, each of
+ * which requires an authenticated GRAPHICS.DAT record receipt.
+ *
+ * Keep the legacy entry points linkable and fail closed.  This is important
+ * for old probes as well as for future callers: an unresolved declaration can
+ * silently tempt a separate, less strict implementation, whereas these
+ * answers make the source-material boundary observable.
+ */
+static void csb_v22_product_route_clear(CSB_V22_AssetRouteDecision* out,
+                                        const char* reason)
+{
+    if (!out) return;
+    memset(out, 0, sizeof(*out));
+    out->shape_type = -1;
+    copy_str(out->fallback_reason, sizeof(out->fallback_reason), reason);
+}
+
+void csb_v22_inplace_route_reset(void)
+{
+    /* Product routing is stateless and has no synthetic cache to reset. */
+}
+
+void csb_v22_inplace_route_cell(int depth,
+                                 int lateral,
+                                 int cell_type,
+                                 int v22_active,
+                                 CSB_V22_AssetRouteDecision* out)
+{
+    (void)depth;
+    (void)lateral;
+    (void)cell_type;
+    (void)v22_active;
+    csb_v22_product_route_clear(out,
+                                "v1_original_material_unbound_raw_cell");
+}
+
+void csb_v22_inplace_route_square_element_pc34(
+    int depth,
+    int lateral,
+    int square_element,
+    int v22_active,
+    CSB_V22_AssetRouteDecision* out)
+{
+    (void)depth;
+    (void)lateral;
+    (void)square_element;
+    (void)v22_active;
+    csb_v22_product_route_clear(
+        out, "v1_original_material_unbound_square_element");
+}
+
+int csb_v22_inplace_route_for_shape(int shape_type,
+                                     int v22_local,
+                                     char* out_asset_id,
+                                     size_t out_asset_id_size,
+                                     char* out_category,
+                                     size_t out_category_size,
+                                     char* out_reason,
+                                     size_t out_reason_size)
+{
+    const char* reason = "v1_original_material_unbound_shape";
+
+    (void)v22_local;
+    if (shape_type == CSB_V22_SHAPE_CEILING_PLAIN ||
+        shape_type == CSB_V22_SHAPE_CEILING_VAULTED) {
+        reason = "v1_original_material_unbound_ceiling";
+    } else if (shape_type == CSB_V22_SHAPE_ITEM ||
+               shape_type == CSB_V22_SHAPE_ITEM_FLOOR ||
+               shape_type == CSB_V22_SHAPE_ITEM_PROJECTILE) {
+        reason = "v1_original_material_unbound_item";
+    } else if (shape_type == CSB_V22_SHAPE_FIELD_TELEPORTER) {
+        reason = "v1_original_material_unbound_field_teleporter";
+    }
+
+    if (out_asset_id && out_asset_id_size > 0u) out_asset_id[0] = '\0';
+    if (out_category && out_category_size > 0u) out_category[0] = '\0';
+    if (out_reason && out_reason_size > 0u) {
+        copy_str(out_reason, out_reason_size, reason);
+    }
+    return 0;
+}
+
+int csb_v22_inplace_route_pair_recognized(const char* category,
+                                            const char* asset_id)
+{
+    (void)category;
+    (void)asset_id;
+    return 0;
+}
+
+int csb_v22_inplace_route_pair_count(void)
+{
+    return 0;
+}
+
+const char* csb_v22_inplace_route_source_evidence(void)
+{
+    return "CSB V2.2 product route gate: ReDMCSB DUNVIEW.C F0128 composes "
+           "authenticated GRAPHICS.DAT bitmaps. The historical 3x3 asset "
+           "catalog is test-only; raw cells and shape names admit no pixels.";
+}
+#endif /* !CSB_V22_ROUTE_CONTRACT_ONLY */

@@ -1,5 +1,6 @@
 #include "csb_v1_boot.h"
 #include "csb_v22_inplace_route_pc34.h"
+#include "csb_v22_shapes.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -138,6 +139,42 @@ static void check_fail_closed_contract(void)
     CHECK(!projection.valid);
 }
 
+static void check_legacy_route_api_is_product_no_draw(void)
+{
+    CSB_V22_AssetRouteDecision decision;
+    char asset_id[CSB_V22_ASSET_ID_MAX];
+    char category[CSB_V22_CATEGORY_MAX];
+    char reason[CSB_V22_REASON_MAX];
+    const char* evidence;
+
+    memset(&decision, 0xA5, sizeof(decision));
+    csb_v22_inplace_route_cell(0, 0, 0x00, 1, &decision);
+    CHECK(!decision.use_v22);
+    CHECK(decision.asset_id[0] == '\0' && decision.category[0] == '\0');
+    CHECK(decision.shape_type == -1);
+    CHECK(strcmp(decision.fallback_reason,
+                 "v1_original_material_unbound_raw_cell") == 0);
+
+    csb_v22_inplace_route_square_element_pc34(0, 0, 0, 1, &decision);
+    CHECK(!decision.use_v22);
+    CHECK(strcmp(decision.fallback_reason,
+                 "v1_original_material_unbound_square_element") == 0);
+
+    memset(asset_id, 0xA5, sizeof(asset_id));
+    memset(category, 0xA5, sizeof(category));
+    memset(reason, 0xA5, sizeof(reason));
+    CHECK(!csb_v22_inplace_route_for_shape(
+        CSB_V22_SHAPE_CEILING_PLAIN, 1, asset_id, sizeof(asset_id),
+        category, sizeof(category), reason, sizeof(reason)));
+    CHECK(asset_id[0] == '\0' && category[0] == '\0');
+    CHECK(strcmp(reason, "v1_original_material_unbound_ceiling") == 0);
+    CHECK(csb_v22_inplace_route_pair_count() == 0);
+    CHECK(!csb_v22_inplace_route_pair_recognized(
+        "wall_shapes", "wall_dungeon_d0_01"));
+    evidence = csb_v22_inplace_route_source_evidence();
+    CHECK(evidence && strstr(evidence, "test-only"));
+}
+
 static const char* real_graphics_path(void)
 {
     static char path[1024];
@@ -204,6 +241,7 @@ int main(void)
 
     check_projection_contract();
     check_fail_closed_contract();
+    check_legacy_route_api_is_product_no_draw();
     CHECK(evidence && strstr(evidence, "F0095_LoadWallSet"));
     CHECK(strstr(evidence, "C712_ZONE_WALL_D1C"));
     CHECK(strstr(evidence, "C709_ZONE_WALL_D2C"));

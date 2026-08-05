@@ -29,7 +29,7 @@
  *     rune / dsa / lord_order art entries that should be used
  *     instead of wall_dungeon_01.
  *
- * This module adds a per-cell material-routing gate that takes
+ * The historical contract probe adds a per-cell material-routing gate that takes
  * (depth, lateral, cell_type) and returns a structured
  * CSB_V22_AssetRouteDecision. The decision is consumed by
  * csb_v22_inplace_draw_pc34.c (its get_cell_asset_id /
@@ -41,11 +41,11 @@
  *   use_v22 == 0  -> caller MUST render V1. The V22 active bit
  *                    is off for this cell, or the gate refused
  *                    to assign an asset.
- *   use_v22 == 1  -> caller SHOULD render V22 via the asset_id
+ *   use_v22 == 1  -> contract probes may exercise a hypothetical V22 asset_id
  *                    and category returned. If the bitmap cache
  *                    does not contain (category, asset_id), the
- *                    in-place draw pass naturally falls back to
- *                    V1 (a NULL bitmap short-circuits the blit).
+ *                    Production never obtains this result from a raw cell:
+ *                    it requires a source F0128 projection receipt instead.
  *   fallback_reason is a static short string that names the
  *                    contract that was applied (e.g.
  *                    "wall_dungeon_by_depth",
@@ -119,7 +119,7 @@ typedef struct {
     int draw_order;
 } CSB_V22_F0128ProjectionCommandPc34;
 
-/* Per-cell material-routing gate.
+/* Per-cell material-routing compatibility API.
  *
  * depth  in {0, 1, 2}        — D0 closest, D2 farthest.
  * lateral in {-1, 0, +1}     — left, center, right.
@@ -127,9 +127,10 @@ typedef struct {
  *   decodes this into CSB_V22_ShapeType; this gate re-uses the same
  *   decode so callers can pass the raw cell type without first calling
  *   the shape book).
- * v22_active is 1 when CSB V2.2 is the active presentation mode and
- *   the V22 in-place cache is loaded; the gate respects it and
- *   short-circuits to use_v22=0 outside V22.
+ * In the product this always fails closed because a raw cell cannot establish
+ * an original raster's F0128 order, clip, palette or GRAPHICS.DAT receipt.
+ * The hand-authored positive routes exist only when
+ * CSB_V22_ROUTE_CONTRACT_ONLY is defined for the isolated contract test.
  *
  * Out-params: `out` is always set; on success use_v22=1 and
  * asset_id/category hold a non-empty string. On V22-inactive or
@@ -147,7 +148,8 @@ void csb_v22_inplace_route_cell(int depth,
  * deliberately not inferred from a square byte; their draw order belongs to
  * the real F0115 Thing chain.  This boundary lets a live M11 caller use
  * original dungeon data without reusing the legacy presentation-only cell
- * encoding accepted by csb_v22_inplace_route_cell(). */
+ * encoding accepted by csb_v22_inplace_route_cell(). It is no-draw in the
+ * product until it is paired with a source F0128 command receipt. */
 void csb_v22_inplace_route_square_element_pc34(
     int depth,
     int lateral,
