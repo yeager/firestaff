@@ -34,21 +34,13 @@ typedef struct {
 #define NEXUS_HIT_RECT_DM_BIN_OFFSET  0x38000U
 #define NEXUS_HIT_RECT_ENTRY_BYTES    8U
 
-/* Retrieve the hit rectangle table.  Returns NEXUS_HIT_RECT_COUNT. */
-int nexus_v1_hud_hit_rects(const Nexus_HitRect **out);
-
-/* Parse the retail ring-menu rectangles directly from DM.BIN.  The static
- * accessor remains compatibility-only; runtime handoffs must use this
- * source-bound form when a mounted Saturn package is available. */
+/* Parse the retail ring-menu rectangles directly from DM.BIN. There is no
+ * static fallback table: callers must provide the mounted Saturn binary. */
 int nexus_v1_hud_hit_rects_parse_dm_bin(
     const uint8_t *data,
     size_t data_size,
     Nexus_HitRect *out,
     size_t out_capacity,
     size_t *out_count);
-
-/* Hit-test a screen coordinate against all rectangles.
- * Returns the index of the first matching rectangle, or -1 if none. */
-int nexus_v1_hud_hit_test(int screen_x, int screen_y);
 
 #endif

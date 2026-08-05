@@ -74,23 +74,13 @@ typedef struct {
 /* Inventory grid positions from entries 31-34 (4 slots visible). */
 #define NEXUS_HUD_INV_SLOT_COUNT  4
 
-/* Retrieve the full HUD layout table.  Returns count of entries (including
- * sentinel entries where element_id == 0xFFFF).
- * Source: DM.BIN yam\menuctrl.c 0x0376D0. */
-int nexus_v1_hud_layout(const Nexus_HudElement **out);
-
-/* Parse the retail menuctrl layout directly from DM.BIN.  The static accessor
- * above is retained for legacy callers; new runtime handoffs must use this
- * source-bound parser so the HUD geometry cannot silently drift from the
- * mounted Saturn binary. */
+/* Parse the retail menuctrl layout directly from DM.BIN. There is no static
+ * fallback table: callers must provide the mounted Saturn binary. */
 int nexus_v1_hud_layout_parse_dm_bin(
     const uint8_t *data,
     size_t data_size,
     Nexus_HudElement *out,
     size_t out_capacity,
     size_t *out_count);
-
-/* Retrieve HP bar X positions for champion slots 0-3. */
-const uint16_t *nexus_v1_hud_hp_bar_positions(void);
 
 #endif

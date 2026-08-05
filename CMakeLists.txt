@@ -119,7 +119,9 @@ target_include_directories(test_nexus_v1_hud_layout PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_hud_layout PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_hud_layout COMMAND test_nexus_v1_hud_layout)
-set_tests_properties(nexus_v1_hud_layout PROPERTIES LABELS "nexus;hud;tier4")
+set_tests_properties(nexus_v1_hud_layout PROPERTIES
+    LABELS "nexus;hud;tier4;real_data;skip_safe"
+    SKIP_RETURN_CODE 77)
 
 add_executable(test_nexus_v1_spell_cast_mechanics
     tests/test_nexus_v1_spell_cast_mechanics.c)
@@ -143,7 +145,9 @@ target_include_directories(test_nexus_v1_hud_hit_rects PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_hud_hit_rects PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_hud_hit_rects COMMAND test_nexus_v1_hud_hit_rects)
-set_tests_properties(nexus_v1_hud_hit_rects PROPERTIES LABELS "nexus;hud;tier4")
+set_tests_properties(nexus_v1_hud_hit_rects PROPERTIES
+    LABELS "nexus;hud;tier4;real_data;skip_safe"
+    SKIP_RETURN_CODE 77)
 
 add_executable(test_nexus_v1_champion_panel
     tests/test_nexus_v1_champion_panel.c)

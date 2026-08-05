@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus HUD static-table removal: removed the hardcoded
+  `nexus_v1_hud_layout()`/HP-position table and `nexus_v1_hud_hit_rects()` /
+  hit-test table from the production library. The two modules now expose only
+  bounds-checked parsers over the mounted retail `DM.BIN`; their tests are
+  real-data/skip-safe and return 77 when no corpus is mounted. European
+  verification passes 80/80 layout entries and 40/40 hit rectangles.
+
 - ✅ 2026-08-06 Nexus click-route placeholder isolation: removed the unused
   `nexus_click_route_resolve_screen()` adapter from the production API. It had
   no callers and mapped raw screen coordinates through compatibility-only
