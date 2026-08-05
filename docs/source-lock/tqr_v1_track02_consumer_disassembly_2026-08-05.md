@@ -13,6 +13,12 @@ synthetic fixture:
 - CPU: HuC6280;
 - disassembler: da65 V2.18.
 
+The same 134-byte fragment at `$1f0000+$243e` is byte-identical in the
+hash-locked JP retail image `TQJP19.iso` (MD5
+`f9f069a5e489b91207f3156059b756f1`, size `0x600000`). This is a regional
+static-bank receipt only; it does not turn the absent post-CD `$2600` RAM
+consumer into a static disassembly.
+
 ## What the fragment proves
 
 The `$2450–$24b0` region is real code. It performs a bounded byte/bitstream

@@ -260,6 +260,13 @@
   provenance receipt only; the original consumer for objects, tiles, palettes,
   and later-level records remains unproven, so runtime publication stays closed.
 
+  The static bank-$1f consumer window at file offset `$1f0000+$243e` is now
+  byte-identical in the real US and JP Track 19 images (134 bytes, with exact
+  MD5/size gates). This confirms the helper is shared across both regional
+  static banks, but it still does not supply the post-CD `$2600` RAM consumer
+  bytes or its source-LBA join. Keep object, tile, palette, and later-level
+  publication blocked until that live RAM/PC capture exists.
+
   Track 02 object-data and dungeon-map bounds are now overflow-safe; truncated
   sources are rejected before ground-reference or item records can be
   admitted. This is a loader-integrity fix only, not semantic promotion of

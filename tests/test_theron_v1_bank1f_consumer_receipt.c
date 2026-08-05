@@ -5,7 +5,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-#define TRACK19_BYTES 5984256u
 #define BANK1F_FILE_OFFSET 0x1f0000u
 #define CONSUMER_OFFSET 0x243eu
 
@@ -24,47 +23,65 @@ static const uint8_t k_consumer_bytes[] = {
     0xb1,0x36
 };
 
-static const char *source_path(char out[512]) {
-    const char *configured = getenv("FIRESTAFF_THERON_US_TRACK19_ISO");
+static const char *source_path(char out[512], const char *env_name,
+                               const char *file_name) {
+    const char *configured = getenv(env_name);
     const char *home;
     if (configured && configured[0]) return configured;
     home = getenv("HOME");
     if (!home || !home[0]) return NULL;
-    if (snprintf(out, 512, "%s/.firestaff/data/theron/TQUS19.iso", home) >= 512)
+    if (snprintf(out, 512, "%s/.firestaff/data/theron/%s", home, file_name) >= 512)
         return NULL;
     return out;
 }
 
-int main(void) {
+static int verify_variant(const char *env_name, const char *file_name,
+                          const char *expected_md5,
+                          long expected_size) {
     char fallback[512];
-    const char *path = source_path(fallback);
+    const char *path = source_path(fallback, env_name, file_name);
     char md5[33];
     FILE *file;
     uint8_t bytes[sizeof(k_consumer_bytes)];
 
     if (!path || !m12_file_md5_hex(path, md5)) {
-        puts("SKIP: authentic TQUS19.iso is not staged");
-        return 77;
+        printf("SKIP: authentic %s is not staged\n", file_name);
+        return 0;
     }
-    if (strcmp(md5, "51b40a17b92a30339957ba564aa0015c") != 0) {
-        fprintf(stderr, "FAIL: unexpected TQUS19.iso MD5 %s\n", md5);
-        return 1;
+    if (strcmp(md5, expected_md5) != 0) {
+        fprintf(stderr, "FAIL: unexpected %s MD5 %s\n", file_name, md5);
+        return -1;
     }
     if (!(file = fopen(path, "rb")) || fseek(file, 0L, SEEK_END) != 0 ||
-        (long)ftell(file) != (long)TRACK19_BYTES ||
+        ftell(file) != expected_size ||
         fseek(file, (long)(BANK1F_FILE_OFFSET + CONSUMER_OFFSET), SEEK_SET) != 0 ||
         fread(bytes, 1, sizeof(bytes), file) != sizeof(bytes)) {
         if (file) fclose(file);
-        fprintf(stderr, "FAIL: TQUS19.iso bank-$1f consumer window\n");
-        return 1;
+        fprintf(stderr, "FAIL: %s bank-$1f consumer window\n", file_name);
+        return -1;
     }
     fclose(file);
     if (memcmp(bytes, k_consumer_bytes, sizeof(bytes)) != 0) {
-        fprintf(stderr, "FAIL: bank-$1f consumer bytes differ\n");
-        return 1;
+        fprintf(stderr, "FAIL: %s bank-$1f consumer bytes differ\n", file_name);
+        return -1;
     }
-    printf("PASS: TQUS19 MD5=%s bank=$1f offset=$%x bytes=%zu "
-           "ram_consumer_2600=not_present\n", md5, CONSUMER_OFFSET,
-           sizeof(bytes));
-    return 0;
+    printf("PASS: %s MD5=%s bank=$1f offset=$%x bytes=%zu "
+           "ram_consumer_2600=not_present\n", file_name, md5,
+           CONSUMER_OFFSET, sizeof(bytes));
+    return 1;
+}
+
+int main(void) {
+    int checked = 0;
+    int rc;
+
+    rc = verify_variant("FIRESTAFF_THERON_US_TRACK19_ISO", "TQUS19.iso",
+                        "51b40a17b92a30339957ba564aa0015c", 5984256L);
+    if (rc < 0) return 1;
+    checked |= rc;
+    rc = verify_variant("FIRESTAFF_THERON_JP_TRACK19_ISO", "TQJP19.iso",
+                        "f9f069a5e489b91207f3156059b756f1", 6291456L);
+    if (rc < 0) return 1;
+    checked |= rc;
+    return checked ? 0 : 77;
 }

@@ -164,6 +164,15 @@
   envelope. This remains provenance-only: object, tile, palette, later-level,
   and runtime dungeon publication remain fail-closed.
 
+- ✅ 2026-08-06 Theron bank-$1f regional consumer receipt: the bank-$1f
+  consumer test now validates the exact 134-byte static HuC6280 fragment in
+  both authentic Track19 images: US `TQUS19.iso` and JP `TQJP19.iso`, with
+  exact regional MD5 and size gates. The two fragments are byte-identical;
+  the later RAM-loaded `$2600` consumer remains explicitly absent and no
+  semantic object/tile/palette promotion was made. Theron rendering tests now
+  resolve real Track02 data through environment or `$HOME`, with no developer
+  machine path embedded.
+
 - ✅ 2026-08-05 Nexus synthetic transition cleanup: removed the Structure1B
   square-grid fallback that invented stairs links to the adjacent level at
   the same coordinates. Stairs now require an authenticated Structure1F

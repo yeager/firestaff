@@ -63,6 +63,22 @@ static int g_failures     = 0;
     if (!(cond)) { FAIL(msg); return 0; }                           \
 } while (0)
 
+static const char *theron_track02_data_path(char out[512],
+                                             const char *env_name,
+                                             const char *file_name) {
+    const char *configured = getenv(env_name);
+    const char *home;
+
+    if (configured && configured[0]) return configured;
+    home = getenv("HOME");
+    if (!home || !home[0] ||
+        snprintf(out, 512, "%s/.firestaff/data/theron/%s", home,
+                 file_name) >= 512) {
+        return NULL;
+    }
+    return out;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Compile-time assertion tests
  * ══════════════════════════════════════════════════════════════════════ */
@@ -678,17 +694,21 @@ static int test_asset_verified_track02_blocks_synthetic_rendering(void) {
     static const char *jp_md5 = "b7afb338ad31be1025b53f9aff12d73a";
     static const char *bad_md5 = "00000000000000000000000000000000";
 
-    const char *us_path = "/Users/bosse/.firestaff/data/theron/TQUS02.bin";
-    const char *jp_path = "/Users/bosse/.firestaff/data/theron/TQJP02.bin";
+    char us_fallback[512];
+    char jp_fallback[512];
+    const char *us_path = theron_track02_data_path(
+        us_fallback, "FIRESTAFF_THERON_US_TRACK02_BIN", "TQUS02.bin");
+    const char *jp_path = theron_track02_data_path(
+        jp_fallback, "FIRESTAFF_THERON_JP_TRACK02_BIN", "TQJP02.bin");
     const char *path = us_path;
     const char *md5 = us_md5;
     struct stat st;
 
     /* Prefer whichever real Track 02 file is present. */
-    if (stat(us_path, &st) != 0 || st.st_size == 0) {
+    if (!us_path || stat(us_path, &st) != 0 || st.st_size == 0) {
         path = jp_path;
         md5 = jp_md5;
-        if (stat(jp_path, &st) != 0 || st.st_size == 0) {
+        if (!jp_path || stat(jp_path, &st) != 0 || st.st_size == 0) {
             printf("SKIP: no real Track 02 media present\n");
             PASS();
             return 1;
@@ -869,14 +889,18 @@ static int test_runtime_render_frame_blocks_verified_track02(void) {
 
     static const char *us_md5 = "f23601102138f87c33025877767ebf76";
     static const char *jp_md5 = "b7afb338ad31be1025b53f9aff12d73a";
-    const char *path = "/Users/bosse/.firestaff/data/theron/TQUS02.bin";
+    char us_fallback[512];
+    char jp_fallback[512];
+    const char *path = theron_track02_data_path(
+        us_fallback, "FIRESTAFF_THERON_US_TRACK02_BIN", "TQUS02.bin");
     const char *md5 = us_md5;
     struct stat st;
 
-    if (stat(path, &st) != 0 || st.st_size == 0) {
-        path = "/Users/bosse/.firestaff/data/theron/TQJP02.bin";
+    if (!path || stat(path, &st) != 0 || st.st_size == 0) {
+        path = theron_track02_data_path(
+            jp_fallback, "FIRESTAFF_THERON_JP_TRACK02_BIN", "TQJP02.bin");
         md5 = jp_md5;
-        if (stat(path, &st) != 0 || st.st_size == 0) {
+        if (!path || stat(path, &st) != 0 || st.st_size == 0) {
             printf("SKIP: no real Track 02 media present\n");
             PASS();
             return 1;
