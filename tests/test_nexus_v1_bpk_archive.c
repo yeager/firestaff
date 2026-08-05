@@ -165,6 +165,7 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
 }
 
 static void test_optional_local_menu_bpk(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[2048];
     uint8_t *data = NULL;
@@ -177,12 +178,17 @@ static void test_optional_local_menu_bpk(void) {
     uint32_t prs3_seen;
     uint32_t pix_matches;
 
-    if (!home || !home[0]) {
-        puts("SKIP: HOME is unset; no local Nexus MENU.BPK check");
-        return;
-    }
-    if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
-                 home) < 0) {
+    if (data_dir && data_dir[0]) {
+        if (snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) < 0) {
+            return;
+        }
+    } else if (home && home[0]) {
+        if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
+                     home) < 0) {
+            return;
+        }
+    } else {
+        puts("SKIP: Nexus data root is unset; no local MENU.BPK check");
         return;
     }
     if (!read_file(path, &data, &size)) {
@@ -192,8 +198,13 @@ static void test_optional_local_menu_bpk(void) {
 
     expect(nexus_v1_bpk_archive_parse(data, size, &info) == 0,
            "local MENU.BPK BPPK/BMPD directory parses");
-    expect(info.outer_size == 89060U, "local MENU.BPK outer size");
-    expect(info.bmpd_size == 88524U, "local MENU.BPK BMPD size");
+    /* The verified corpus contains the 89,060-byte capture revision and the
+     * 87,684-byte European revision. Their directory grammar is identical;
+     * the final candidate offset is the only framing value that differs. */
+    expect(info.outer_size == 89060U || info.outer_size == 87684U,
+           "local MENU.BPK outer size is a verified retail revision");
+    expect(info.bmpd_size == info.outer_size - 536U,
+           "local MENU.BPK BMPD size follows verified framing");
     expect(info.entry_count_hint == 163U, "local MENU.BPK count hint");
     expect(info.candidate_offset_count == 163U,
            "local MENU.BPK candidate count");
@@ -202,7 +213,8 @@ static void test_optional_local_menu_bpk(void) {
     expect(info.raw_payload_count == 1U, "local MENU.BPK raw candidate count");
     expect(info.first_candidate_offset == 0x29CU,
            "local MENU.BPK first candidate offset");
-    expect(info.last_candidate_offset == 0x15980U,
+    expect(info.last_candidate_offset ==
+               (info.outer_size == 87684U ? 0x15420U : 0x15980U),
            "local MENU.BPK last candidate offset");
 
     expect(nexus_v1_bpk_archive_get_entry(data, size, 1, &entry) == 0,

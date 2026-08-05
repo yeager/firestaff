@@ -2186,16 +2186,22 @@ static uint8_t *nexus_v1_read_extracted_file(Nexus_V1_Engine *engine,
                                              const char *name,
                                              int *out_size) {
     char path[512];
-    const char *md5;
+    int i;
     if (!engine || !name) return NULL;
     snprintf(path, sizeof(path), "%s/%s", engine->data_dir, name);
     if (nexus_path_is_file(path)) {
         return nexus_read_host_file(path, out_size);
     }
-    md5 = nexus_known_boot_file_md5(name);
-    if (md5 &&
-        asset_find_by_md5(engine->data_dir, md5, path, (int)sizeof(path), 8)) {
-        return nexus_read_host_file(path, out_size);
+    /* Keep hash discovery aligned with the source receipt. Several retail
+     * files, notably MENU.BPK, have verified revision hashes; using only the
+     * first table entry would authenticate an alternate revision and then
+     * fail to materialize it when the source entry is renamed. */
+    for (i = 0; g_nexus_known_boot_files[i].name; ++i) {
+        if (strcasecmp(g_nexus_known_boot_files[i].name, name) == 0 &&
+            asset_find_by_md5(engine->data_dir, g_nexus_known_boot_files[i].md5,
+                              path, (int)sizeof(path), 8)) {
+            return nexus_read_host_file(path, out_size);
+        }
     }
     if (nexus_v1_find_dmdf_family_file(engine->data_dir, name, path,
                                        (int)sizeof(path))) {

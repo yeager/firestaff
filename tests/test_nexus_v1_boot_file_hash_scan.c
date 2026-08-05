@@ -135,7 +135,9 @@ static int write_iso_payload_fixture(const char* dst,
 }
 
 int main(void) {
+    const char* data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char* home = getenv("HOME");
+    char data_root[FSP_PATH_MAX];
     char root[FSP_PATH_MAX];
     char src[FSP_PATH_MAX];
     char dst[FSP_PATH_MAX];
@@ -177,11 +179,21 @@ int main(void) {
     int slev00_copied = 0;
     int sndlev00_copied = 0;
 
-    if (!home || !home[0]) {
-        puts("SKIP: HOME unset");
+    if (data_dir && data_dir[0]) {
+        if (snprintf(data_root, sizeof(data_root), "%s", data_dir) >=
+            (int)sizeof(data_root)) {
+            puts("SKIP: configured Nexus data root is too long");
+            return 0;
+        }
+    } else if (home && home[0] &&
+               FSP_JoinPath(data_root, sizeof(data_root), home,
+                            ".firestaff/data/nexus")) {
+        /* Preserve the historical default when no explicit data root is set. */
+    } else {
+        puts("SKIP: Nexus data root is unset");
         return 0;
     }
-    if (!FSP_JoinPath(src, sizeof(src), home, ".firestaff/data/nexus/TITLE.CG") ||
+    if (!FSP_JoinPath(src, sizeof(src), data_root, "TITLE.CG") ||
         !local_file_exists(src)) {
         puts("SKIP: local Nexus TITLE.CG not present");
         return 0;
@@ -317,17 +329,16 @@ int main(void) {
         }
     }
 
-    if (FSP_JoinPath(dm_bin_src, sizeof(dm_bin_src), home, ".firestaff/data/nexus/DM.BIN") &&
+    if (FSP_JoinPath(dm_bin_src, sizeof(dm_bin_src), data_root, "DM.BIN") &&
         local_file_exists(dm_bin_src) &&
         FSP_JoinPath(dm_bin_dst, sizeof(dm_bin_dst), root, "renamed-saturn-data.payload") &&
         copy_file_bytes(dm_bin_src, dm_bin_dst) &&
-        FSP_JoinPath(level_src, sizeof(level_src), home,
-                     ".firestaff/data/nexus/LEV00.DGN") &&
+        FSP_JoinPath(level_src, sizeof(level_src), data_root, "LEV00.DGN") &&
         local_file_exists(level_src) &&
         FSP_JoinPath(level_dst, sizeof(level_dst), root,
                      "renamed-level-zero.payload") &&
         copy_file_bytes(level_src, level_dst)) {
-        if (FSP_JoinPath(menu_bpk_src, sizeof(menu_bpk_src), home, ".firestaff/data/nexus/MENU.BPK") &&
+        if (FSP_JoinPath(menu_bpk_src, sizeof(menu_bpk_src), data_root, "MENU.BPK") &&
             local_file_exists(menu_bpk_src) &&
             FSP_JoinPath(menu_bpk_dst, sizeof(menu_bpk_dst), root, "renamed-menu-bpk.payload") &&
             copy_file_bytes(menu_bpk_src, menu_bpk_dst)) {
@@ -371,7 +382,7 @@ int main(void) {
             check_int(nexus_v1_menu_bpk_decode_receipt(&engine, &receipt) == 0,
                       "Nexus engine exposes MENU.BPK decode receipt");
             check_int(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED,
-                      "Nexus MENU.BPK runtime route blocks unsupported PRS3 surfaces");
+                      "Nexus MENU.BPK runtime route accepts verified PRS3 surfaces");
             check_int(receipt.blocked_prs3_surfaces == 162U,
                       "Nexus MENU.BPK receipt preserves PRS3 source surface count");
             check_int(receipt.prs3_decode_successes == 162U &&
@@ -379,7 +390,7 @@ int main(void) {
                           receipt.decode_blocked == 0 &&
                           receipt.prs3_decoder_promoted == 1 &&
                           receipt.prs3_decoded_pixels_emitted > 0U,
-                      "Nexus MENU.BPK receipt records the PRS3 decoder blocker");
+                      "Nexus MENU.BPK receipt records bounded PRS3 decode success");
             memset(&upload_receipt, 0, sizeof(upload_receipt));
             memset(upload_rows, 0, sizeof(upload_rows));
             check_int(nexus_v1_menu_bpk_upload_plan_receipt(
@@ -388,11 +399,11 @@ int main(void) {
                       "Nexus engine exposes MENU.BPK upload plan receipt");
             check_int(upload_receipt.route ==
                           NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED,
-                      "Nexus MENU.BPK upload plan blocks unsupported PRS3 surfaces");
+                      "Nexus MENU.BPK upload plan accepts decoded PRS3 surfaces");
             check_int(upload_receipt.ready_uploads == 162U &&
                           upload_receipt.blocked_prs3_uploads == 0U &&
                           upload_receipt.planned_rows == 162U,
-                      "Nexus MENU.BPK upload plan records every blocked surface");
+                      "Nexus MENU.BPK upload plan records every decoded surface");
             check_int(upload_receipt.fallback_visuals_permitted == 0,
                       "Nexus MENU.BPK upload plan forbids unsupported rendering");
             check_int(nexus_v1_menu_bpk_upload_plan_rows(
@@ -405,7 +416,7 @@ int main(void) {
                           upload_rows[0].upload_ready == 1 &&
                           upload_rows[0].decode_blocked == 0 &&
                           upload_rows[0].stream_offset > 0U,
-                      "Nexus MENU.BPK upload row carries blocked PRS3 stream data");
+                      "Nexus MENU.BPK upload row carries decoded PRS3 stream data");
             memset(&handoff, 0, sizeof(handoff));
             check_int(nexus_v1_menu_bpk_renderer_handoff_receipt(
                           &engine,
@@ -413,7 +424,7 @@ int main(void) {
                       "Nexus engine emits MENU.BPK renderer handoff receipt");
             check_int(handoff.status ==
                           NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_DECODED,
-                      "Nexus MENU.BPK renderer handoff blocks unsupported PRS3 surfaces");
+                      "Nexus MENU.BPK renderer handoff accepts decoded PRS3 surfaces");
             check_int(handoff.can_render_stored_surfaces == 1 &&
                           handoff.blocks_real_menu_surface_render == 0 &&
                           handoff.fallback_visuals_permitted == 0,
@@ -450,18 +461,18 @@ int main(void) {
         puts("SKIP: local Nexus DM.BIN/LEV00.DGN not present for init hash test");
     }
 
-    if (FSP_JoinPath(level_src, sizeof(level_src), home, ".firestaff/data/nexus/LEV00.DGN") &&
+    if (FSP_JoinPath(level_src, sizeof(level_src), data_root, "LEV00.DGN") &&
         local_file_exists(level_src) &&
         FSP_JoinPath(level_dst, sizeof(level_dst), root, "renamed-level-zero.payload") &&
         copy_file_bytes(level_src, level_dst)) {
-        if (FSP_JoinPath(slev00_src, sizeof(slev00_src), home, ".firestaff/data/nexus/SLEV00.BIN") &&
+        if (FSP_JoinPath(slev00_src, sizeof(slev00_src), data_root, "SLEV00.BIN") &&
             local_file_exists(slev00_src) &&
             FSP_JoinPath(slev00_dst, sizeof(slev00_dst), root, "renamed-script-level-zero.payload") &&
             copy_file_bytes(slev00_src, slev00_dst)) {
             slev00_copied = 1;
         }
-        if (FSP_JoinPath(sal00_src, sizeof(sal00_src), home, ".firestaff/data/nexus/SNDLEV00.SAL") &&
-            FSP_JoinPath(map00_src, sizeof(map00_src), home, ".firestaff/data/nexus/SNDLEV00.MAP") &&
+        if (FSP_JoinPath(sal00_src, sizeof(sal00_src), data_root, "SNDLEV00.SAL") &&
+            FSP_JoinPath(map00_src, sizeof(map00_src), data_root, "SNDLEV00.MAP") &&
             local_file_exists(sal00_src) &&
             local_file_exists(map00_src) &&
             FSP_JoinPath(sal00_dst, sizeof(sal00_dst), root, "renamed-sound-level-zero.sal-payload") &&
