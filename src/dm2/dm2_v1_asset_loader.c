@@ -319,7 +319,14 @@ static int dm2_img3_bits_per_pixel(uint16_t cy, uint16_t bpp_word,
         if (out_bpp) *out_bpp = bpp_word;
         return 1;
     }
-    return 0;
+    /* SKWINSPX c_gfx_decode.cpp::DECODE_IMG3 reads the compressed command
+     * stream after the six-byte header; it does not require this word to be
+     * the literal value 4.  Real PC DM2 IMG3 records such as Greatstone raw
+     * 0003 (224x136, control word 0x578a) store their compression control
+     * here.  They remain 4-bit local-palette images unless the source's
+     * signed-height IMG9 marker above selected the 8-bit route. */
+    if (out_bpp) *out_bpp = 4u;
+    return 1;
 }
 
 static uint16_t img_rd16(const uint8_t *p, int be) {

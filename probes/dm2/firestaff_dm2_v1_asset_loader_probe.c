@@ -175,6 +175,15 @@ int main(int argc, char **argv) {
     if (raw) {
         int w = 0, h = 0;
         DM2_ImageFormat fmt = DM2_IMG_FMT_UNKNOWN;
+        DM2_V1_GdatImageExtractReceipt compressed_img3;
+        memset(&compressed_img3, 0, sizeof(compressed_img3));
+        PROBE_ASSERT(
+            dm2_v1_extract_gdat_image_receipt(
+                &loader, 3u, 1, 0, NULL, 0u, &compressed_img3) &&
+                compressed_img3.valid && compressed_img3.width == 224u &&
+                compressed_img3.height == 136u && compressed_img3.bpp == 4u &&
+                compressed_img3.decode_img3_underlay,
+            "Greatstone raw 0003 compressed IMG3 realizes as 224x136 4bpp");
         uint8_t *pixels = dm2_v1_asset_load_image_field(
             &loader,
             DM2_GDAT_CATEGORY_GRAPHICSSET,
@@ -388,6 +397,7 @@ int main(int argc, char **argv) {
          * rather than metadata rows. */
         uint8_t *seen_images = calloc(loader.raw_data_count, 1u);
         unsigned int image_raw_count = 0u;
+        unsigned int decoded_image_raw_count = 0u;
         uint16_t entry_ordinal;
         PROBE_ASSERT(seen_images != NULL,
                      "allocates PC English raw-image audit bitmap");
@@ -406,11 +416,35 @@ int main(int argc, char **argv) {
                     !seen_images[raw_index]) {
                     seen_images[raw_index] = 1u;
                     ++image_raw_count;
+                    if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE) {
+                        DM2_V1_GdatImageExtractReceipt image_receipt;
+                        memset(&image_receipt, 0, sizeof(image_receipt));
+                        if (dm2_v1_extract_gdat_image_receipt(
+                                &loader, raw_index, 1, 0, NULL, 0u,
+                                &image_receipt) && image_receipt.valid &&
+                            image_receipt.width > 0u &&
+                            image_receipt.height > 0u &&
+                            image_receipt.decoded_pixel_hash != 0u &&
+                            (image_receipt.decode_img3_underlay ||
+                             image_receipt.decode_img9)) {
+                            ++decoded_image_raw_count;
+                        }
+                    }
                 }
             }
             PROBE_ASSERT(image_raw_count == 4032u,
                          "PC English image raw records match Greatstone PNG catalogue: %u",
                          image_raw_count);
+            /* Greatstone labels four records IMG11 (0642, 2691, 2781, 2894).
+             * They retain their source metadata but are deliberately no-draw
+             * until an IMG11 decoder exists; every IMG3/IMG9 raster must
+             * produce actual decoded pixels. */
+            PROBE_ASSERT(decoded_image_raw_count == 4027u,
+                         "all Greatstone IMG3/IMG9 rasters have decoded pixels: %u",
+                         decoded_image_raw_count);
+            PROBE_ASSERT(image_raw_count - decoded_image_raw_count == 5u,
+                         "only Greatstone's four IMG11 records plus FNT1 remain non-raster: %u",
+                         image_raw_count - decoded_image_raw_count);
             free(seen_images);
         }
     }
