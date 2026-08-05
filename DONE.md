@@ -1,3 +1,15 @@
+- ✅ 2026-08-06 DM1 floor pickup ownership: corrected
+  `M11_GameView_PickupItem()` so a floor object first enters the transient
+  ReDMCSB `G4055_s_LeaderHandObject`, instead of being silently assigned to
+  the first empty champion inventory slot. This matches CLIKVIEW.C F0373 and
+  the supplied DOS manual's pointer interaction: the held source icon can
+  then be placed into a legal hand, quiver, pouch or backpack slot by the
+  existing F0302 route. Verification with the real PC3.4 corpus: a decoded
+  weapon is dropped to the real dungeon chain and picked back into the mouse
+  hand; `test_m11_dm1_real_object_names` passes alongside the 611-record
+  object corpus and real HoC alcove placement tests. Packaged macOS pointer
+  and panel capture remains open.
+
 - ✅ 2026-08-06 Nexus MENU.BPK retail-revision binding: added explicit
   source-bound marker identities for the real English (87,684-byte) and French
   (87,820-byte) ISO revisions documented in `docs/VERIFIED_HASHES.md`. They are

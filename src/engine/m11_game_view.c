@@ -12113,10 +12113,8 @@ int M11_GameView_ProbeF0352PotionEyeDescription(
 
 int M11_GameView_PickupItem(M11_GameViewState* state) {
     unsigned short item;
-    int targetSlot;
     struct ChampionState_Compat* champ;
     char itemName[48];
-    char champName[16];
 
     if (!state || !state->active || state->partyDead) {
         return 0;
@@ -12174,12 +12172,15 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
         return 0;
     }
 
-    targetSlot = m11_find_empty_slot(champ, state->world.things, item);
-    if (targetSlot < 0) {
-        m11_set_status(state, "PICKUP", "INVENTORY FULL");
-        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "HANDS FULL");
+    /* ReDMCSB CLIKVIEW.C F0373 removes the visible pile-top object and
+     * calls F0297, which owns G4055_s_LeaderHandObject.  A floor pickup is
+     * therefore independent of free inventory capacity: the object follows
+     * the pointer until F0302 places it in a legal hand/container slot. */
+    if (DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state) != THING_NONE) {
+        m11_set_status(state, "PICKUP", "LEADER HAND FULL");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "HAND FULL");
         snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                 "DROP SOMETHING FIRST (P KEY)");
+                 "PLACE THE HELD OBJECT FIRST");
         return 0;
     }
 
@@ -12192,16 +12193,22 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
         return 0;
     }
 
-    champ->inventory[targetSlot] = item;
+    if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, item)) {
+        (void)m11_prepend_thing_to_square(&state->world,
+                                          state->world.party.mapIndex,
+                                          state->world.party.mapX,
+                                          state->world.party.mapY,
+                                          item);
+        m11_set_status(state, "PICKUP", "HAND ROUTE FAILED");
+        return 0;
+    }
     m11_get_source_item_name(state, state->world.things, item, itemName, sizeof(itemName));
-    m11_format_champion_name(champ->name, champName, sizeof(champName));
-
-    m11_log_event(state, M11_COLOR_LIGHT_GREEN, "T%u: %s TOOK %s",
-                  (unsigned int)state->world.gameTick, champName, itemName);
-    m11_set_status(state, "PICKUP", "ITEM TAKEN");
+    m11_log_event(state, M11_COLOR_LIGHT_GREEN, "T%u: HELD %s",
+                  (unsigned int)state->world.gameTick, itemName);
+    m11_set_status(state, "PICKUP", "ITEM IN HAND");
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "PICKED UP");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-             "%s -> %s SLOT %d", itemName, champName, targetSlot);
+             "%s -> MOUSE HAND", itemName);
     m11_refresh_hash(state);
     return 1;
 }

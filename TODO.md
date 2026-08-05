@@ -3652,7 +3652,12 @@ that its exact runtime path is not already source-locked and tested.
     2026-08-06: corrected the C508/action-hand destination mask to
     ReDMCSB's `MASK0x0200_HANDS`; the previous `0x0002` was the head mask and
     rejected valid hand placement. Focused inventory-panel runtime coverage
-    now passes 372/372. Remaining: real Mac pickup/placement/cursor capture.
+    now passes 372/372. 2026-08-06: `M11_GameView_PickupItem()` now follows
+    ReDMCSB CLIKVIEW.C F0373 and places a floor pickup in the transient
+    G4055 mouse/leader hand before any inventory slot is chosen. The real
+    PC34 object test proves a decoded weapon roundtrip floor -> mouse hand;
+    placement into legal hand/container slots remains covered by the real
+    alcove test. Remaining: real Mac pickup/placement/cursor/panel capture.
 17. **DM1-SOUND-MUSIC-STARTUP:** Complete original DM1 sound/music playback,
     title/swoosh/entrance cadence, palette transitions, and runtime sound
     events with real media and no generated timing.

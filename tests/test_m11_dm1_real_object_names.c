@@ -77,9 +77,36 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&state);
+
+    /* ReDMCSB CLIKVIEW.C F0373 puts a floor pickup in the transient mouse
+     * hand first.  Use a real decoded weapon record to verify the keyboard
+     * pickup route does not skip that hand and silently write an inventory
+     * slot. */
+    state.world.party.championCount = 1;
+    state.world.party.activeChampionIndex = 0;
+    state.world.party.champions[0].present = 1;
+    state.world.party.champions[0].hp.current = 100;
+    state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = thing;
+    {
+        int dropped = M11_GameView_DropItem(&state);
+        if (!dropped ||
+            state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] !=
+                THING_NONE ||
+            !M11_GameView_PickupItem(&state) ||
+            DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) != thing) {
+            fprintf(stderr,
+                    "real floor pickup skipped the source mouse-hand route drop=%d map=%d x=%d y=%d detail=%s\n",
+                    dropped, state.world.party.mapIndex, state.world.party.mapX,
+                    state.world.party.mapY, state.inspectDetail);
+            M11_GameView_Shutdown(&state);
+            return 1;
+        }
+    }
 
     M11_GameView_Shutdown(&state);
-    printf("ok: real DM1 M564 leader-hand name = %s; F0702 cursor pixels=%zu\n",
+    printf("ok: real DM1 M564 leader-hand name = %s; F0702 cursor pixels=%zu; floor pickup -> mouse hand\n",
            name, cursorPixels);
     return 0;
 }
