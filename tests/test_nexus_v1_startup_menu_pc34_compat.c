@@ -259,7 +259,7 @@ int main(void)
            m12_package_receipt.boot_warning_frames == 48 &&
            m12_package_receipt.boot_start_ready_frames == 102 &&
            m12_package_receipt.title_frame_max == 102 &&
-           m12_package_receipt.title_prompt_visible == 1 &&
+           m12_package_receipt.title_prompt_visible == 0 &&
            m12_package_receipt.saturn_warning_frame == 0 &&
            m12_package_receipt.saturn_title_capture_frame == 48 &&
            m12_package_receipt.saturn_save_capture_frame == -1 &&
@@ -2171,7 +2171,7 @@ int main(void)
                full_start_package_receipt.boot_frame_in_phase == 54 &&
                full_start_package_receipt.title_frames_until_ready == 0 &&
                full_start_package_receipt.title_hold_frame == 24 &&
-               full_start_package_receipt.title_prompt_visible == 1 &&
+               full_start_package_receipt.title_prompt_visible == 0 &&
                full_start_package_receipt.title_reveal_y0 == 0 &&
                full_start_package_receipt.title_reveal_y1 == NEXUS_FB_H &&
                full_start_package_receipt.title_reveal_h == NEXUS_FB_H &&
@@ -2288,7 +2288,7 @@ int main(void)
                    NEXUS_V1_STARTUP_CAPTURE_TITLE &&
                startup_bundle_receipt.command_count > 0 &&
                startup_bundle_receipt.warning_visible == 0 &&
-               startup_bundle_receipt.prompt_visible == 1 &&
+               startup_bundle_receipt.prompt_visible == 0 &&
                startup_bundle_receipt.timing_ready == 1 &&
                strcmp(startup_bundle_receipt.route_label,
                       "title-warning") == 0 &&

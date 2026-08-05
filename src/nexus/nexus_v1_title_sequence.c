@@ -103,8 +103,10 @@ int nexus_v1_title_frame(int frame,
         out_frame->start_ready
             ? 0
             : NEXUS_V1_TITLE_START_READY_FRAMES - frame;
-    out_frame->prompt_visible =
-        out_frame->boot_reveal_complete && (((frame / 12) & 1) == 0);
+    /* The retail prompt glyph, palette and blink cadence are not bound to a
+     * verified Saturn consumer. Do not publish a host-generated visibility
+     * signal as if it were startup HUD evidence. */
+    out_frame->prompt_visible = 0;
     return 1;
 }
 

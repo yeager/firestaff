@@ -32,6 +32,9 @@
   authenticated CD image/decoder handoff remains required for music playback.
   Title timing remains a host state receipt only; the former synthetic edge
   colour ramp is now explicitly unknown until Saturn palette/capture evidence.
+  The host-blinked title prompt flag is also suppressed; real prompt glyph,
+  palette and cadence remain unbound until the Saturn text/HUD consumer is
+  captured.
 
 - **DUNGEON-STUDIO-FSDUNG:** Dungeon Studio: import original dungeons from
   all five games (DM1, CSB, DM2, Theron's Quest, DM Nexus) and export to a

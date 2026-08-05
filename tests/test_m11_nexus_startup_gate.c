@@ -238,7 +238,7 @@ static void expect_title_sequence_contract(void) {
                     frame30.boot_reveal_complete &&
                     frame30.hold_frame == 0 &&
                     !frame30.start_ready &&
-                    frame30.prompt_visible,
+                    !frame30.prompt_visible,
                 "Nexus title sequence reaches full reveal at boot gate");
     expect_true(nexus_v1_title_frame(54, NEXUS_FB_H, &frame54) &&
                     frame54.phase == NEXUS_V1_TITLE_PHASE_START_READY &&

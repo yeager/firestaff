@@ -1,3 +1,8 @@
+- ✅ 2026-08-05 Nexus startup prompt placeholder removal: suppressed the
+  host-generated 12-frame title-prompt blink from production receipts and
+  updated startup gates to report no prompt until the original Saturn text/HUD
+  consumer and cadence are authenticated.
+
 - ✅ 2026-08-05 Nexus startup title placeholder removal: removed the
   host-generated title-edge colour ramp and corrected stale documentation that
   called the unproven title route a camera animation. The field now remains
