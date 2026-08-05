@@ -49299,6 +49299,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   Verification: `ninja -C /tmp/firestaff-title-build test_dm1_v22_asset_pipeline`
   and the focused test both pass. Tracked as `DM1-ORIGINAL-REPLACE-019`.
 
+- ✅ 2026-08-06 Theron V2.2 dead placeholder removal: removed the unused
+  16×16 magenta checkerboard pixel array from the fixture-only modern-art
+  module. The compatibility accessor still returns an empty result, so a
+  missing asset cannot draw synthetic pixels; real Track 02 tile/palette
+  ownership remains blocked pending loader/VRAM evidence.
+
 - ✅ 2026-08-06 Theron Main-RAM loader capture receipt: the supplied real
   Mednafen sidecar is now parsed as a strict regular-file receipt. It verifies
   the observed TIA transfer from `$c800` to `$0404` (128 bytes), loader PC

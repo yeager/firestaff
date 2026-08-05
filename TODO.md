@@ -232,6 +232,9 @@
 - **THERON-V22-LOCAL-ART-REAL-DATA:** The local modern-art manifest/cache
   and inplace rectangle renderer are now fixture-only. Do not reconnect them
   until source-owned Track 02 V2.2 records and pixel assets are decoded.
+  The retired magenta checkerboard bytes have been removed; missing art now
+  remains an explicit no-draw result. The remaining work is real Track 02
+  tile/palette ownership and loader/VRAM evidence, not another fallback image.
 
 - **THERON-V1-VIEWPORT-MAPPING-REAL-DATA:** The viewport's duplicate inferred
   tile table is now behind an unconditional source-mapping gate. Bind the
