@@ -9,6 +9,14 @@
   hand; `test_m11_dm1_real_object_names` passes alongside the 611-record
   object corpus and real HoC alcove placement tests. Packaged macOS pointer
   and panel capture remains open.
+- ✅ 2026-08-06 Theron real app-capture discovery: the Main-RAM loader
+  receipt test now automatically searches the user's
+  `.firestaff/firestaff-probe-screenshots` directory for a valid
+  `*.trace.main-ram-loader` sidecar when no override is supplied. The real
+  capture still proves only the `$c800 -> $0404` transfer and loader return;
+  `$2600`, level/object semantics, and visual publication remain blocked.
+  Verification: real `theron-mainram-hid-20260727-173852` capture,
+  `theron_v1_mednafen_main_ram_trace` CTest passed.
 
 - ✅ 2026-08-06 Nexus MENU.BPK retail-revision binding: added explicit
   source-bound marker identities for the real English (87,684-byte) and French
