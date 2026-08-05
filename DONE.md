@@ -49969,3 +49969,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   callback sound queue from both production CMake globs. Its position handling
   omits the original level-geometry transform; the explicit test remains while
   production cannot use it instead of the real SND/music runtime owner.
+- ✅ 2026-08-06 Theron viewport placeholder boundary cleanup: the public V1
+  viewport contract now states that tile-bank, square-to-tile, UI-chrome,
+  palette-material, and screen-offset claims are capture-gated. The retained
+  `theron_v1_viewport.c` implementation is documented as fixture-only; its
+  inferred tile indices and fallback geometry are not retail parity and the
+  production archive continues to use the no-op seam. No synthetic pixel path
+  was promoted. Verification: `git diff --check` plus the existing production
+  archive audit and Theron rendering/VRAM tests.

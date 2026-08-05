@@ -1,22 +1,26 @@
 /*
- * theron_v1_viewport.c — Theron's Quest V1 Phase 4: Rendering Pipeline
+ * theron_v1_viewport.c — Theron's Quest V1 fixture renderer
  *
- * Implementations for:
+ * Fixture implementations for:
  *   1. Theron viewport rendering (PC Engine 256×224 planar framebuffer)
  *   2. UI chrome rendering (top bar, right panel, bottom champion slots, message)
- *   3. Asset selection wiring (TQR tile/palette system from Track 02)
+ *   3. Historical asset-selection experiments (not Track 02 provenance)
  *   4. Planar-to-M11 framebuffer presentation
  *
- * Architecture mirrors nexus_v1_viewport.c:
+ * This file is intentionally excluded from the production Theron archive.
+ * Its tables and chrome are retained only for bounded fixture probes; none
+ * of its inferred tile indices, fallback colors, or draw geometry establish
+ * retail parity. Production uses theron_v1_viewport_runtime_noop.c until
+ * the original consumer/capture route is decoded.
+ *
+ * Historical fixture architecture:
  *   - Local planar framebuffer (indexed pixels)
  *   - View cone rendering (D0..D3 depth, left/center/right columns)
  *   - TQR tile/palette system for dungeon graphics
  *   - UI chrome composited from world state
  *
- * Source references:
- *   THQUEST.ASM T400   — tile bank loading
- *   THQUEST.ASM T520   — dungeon viewport tile selection
- *   THQUEST.ASM T600   — UI overlay zones
+ * Candidate source references (not semantic proof):
+ *   THQUEST.ASM T400/T520/T600
  *   HuC6260/HuC6270 datasheet — VDC/VCE rendering
  *   docs/source-lock/tqr_v1_phase2_data_formats_H2339.md §7
  */
@@ -50,13 +54,12 @@ static const int8_t g_left_dy[4] = { 0, -1,  0,  1};
  *
  * tile_index meanings:
  *   >= 0:  tile index into TQR_PaletteState tile atlas
- *   -1:    flat-color fallback (palette entry 7 mid-gray)
+ *   -1:    unavailable fixture tile
  *
- * Source: THQUEST.ASM T520 — tile bank loading uses dungeon_seed to
- * select which tile sub-bank to use.  Here we use the simplified
- * deterministic mapping: floor/wall type + distance → tile index.
+ * This is an inferred fixture mapping only. It is deliberately not part of
+ * the production build and must not be described as a T520 decode.
  *
- * Tile bank layout (from T520 and Track 02 format docs):
+ * Historical fixture tile layout (not a verified retail bank layout):
  *   tiles 0-127:    wall tiles (2bpp, palette group 0)
  *   tiles 128-255:  floor tiles (2bpp, palette group 0)
  *   tiles 256-383:  object tiles (2bpp, palette group 2)

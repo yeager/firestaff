@@ -9,18 +9,20 @@
 /*
  * theron_v1_viewport.h — Theron's Quest V1 Phase 4: Rendering Pipeline
  *
- * Theron viewport renderer, UI chrome, and asset-wired presentation.
+ * Theron viewport lifecycle and presentation seam. The production target
+ * intentionally remains no-draw until an original Track 02 consumer binds
+ * the tile/material and UI banks. The historical renderer is fixture-only.
  *
- * Architecture mirrors nexus_v1_viewport.c: the viewport owns a local
- * framebuffer (PlanarFramebuffer) and renders the dungeon view from the
- * world state using the TQR tile/palette system.
+ * The viewport owns a local framebuffer (PlanarFramebuffer), but a world
+ * state alone is not sufficient to authorize pixels. A source-bound tile
+ * bank, palette route, and square-to-tile consumer receipt are required.
  *
  * PC Engine viewport:
  *   Resolution:  256×224 (NTSC native, Theron standard)
  *   Tile size:  8×8 pixels (2bpp walls/floors, 4bpp sprites)
  *   Framebuffer: planar indexed bitmap, one byte per pixel (palette index)
  *
- * UI chrome zones (320×240 layout, Theron-specific):
+ * Historical fixture geometry (not an admitted retail layout):
  *   Top bar:      y=0..23   — dungeon name, quest item count
  *   Viewport:     x=32, y=24, 192×160 — dungeon view (letterboxed)
  *   Right panel:  x=224, y=24, 96×160  — Theron stats + compass
@@ -28,15 +30,13 @@
  *   Message bar:  y=184..199         — single-line message area
  *
  * Asset wiring:
- *   TQR_PaletteState carries the loaded tile atlas from Track 02.
- *   Viewport queries tiles via tile index + palette group.
- *   Source-only gate: unloaded or unbound tiles leave the existing surface
- *   untouched until an original Track 02 tile-bank mapping is proven.
+ *   TQR_PaletteState accepts caller-supplied decoded bytes. It does not
+ *   identify or infer a Track 02 tile bank. Unloaded or unbound tiles leave
+ *   the existing surface untouched until the original mapping is proven.
  *
  * Source references:
- *   THQUEST.ASM T400   — tile bank loading
- *   THQUEST.ASM T520   — dungeon viewport tile selection
- *   THQUEST.ASM T600   — UI overlay zones
+ *   THQUEST.ASM T400/T520/T600 — candidate routines retained for future
+ *       disassembly correlation; these labels do not authorize a decoder.
  *   HuC6260/HuC6270 datasheet — VDC/VCE rendering
  *   docs/source-lock/tqr_v1_phase2_data_formats_H2339.md §7
  */
@@ -160,7 +160,7 @@ void theron_vp_set_synthetic_rendering_blocked(Theron_V1_Viewport *vp,
  *
  * Missing or unbound tiles are no-draw and preserve the existing surface.
  *
- * Source: THQUEST.ASM T520 (tile selection), T400 (tile bank loading).
+ * Candidate source locations only; no tile-selection semantics are admitted.
  */
 void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
                               const Theron_V1_World *world);
@@ -192,8 +192,7 @@ void theron_vp_render_ui(Theron_V1_Viewport *vp,
  * pal_index: palette entry to use for the filled portion.
  * bg_index: palette entry for the empty portion background.
  *
- * Bar style: Theron's Quest uses the PC Engine dungeon stone palette,
- * with a filled portion in the active color and a dark background.
+ * Palette indices are caller-owned and have no retail-material meaning here.
  */
 void theron_vp_draw_bar(TQR_PlanarFramebuffer *fb,
                         int x, int y, int w, int h,
@@ -235,7 +234,7 @@ void theron_vp_draw_champion_slot(TQR_PlanarFramebuffer *fb,
  * The 256-wide planar fb is centered in the 320-wide M11 fb:
  *   margin_x = (320 - 256) / 2 = 32
  *
- * Source: THQUEST.ASM T520 (viewport offset), HuC6260 datasheet.
+ * Candidate viewport reference; the retail offset remains capture-gated.
  */
 void theron_vp_present(const Theron_V1_Viewport *vp,
                        const TQR_PaletteState *palette,
@@ -253,10 +252,9 @@ void theron_vp_present(const Theron_V1_Viewport *vp,
  * square_type: THERON_SQUARE_* value.
  * is_wall: 1 if this square is a solid wall.
  *
- * Tile selection is deterministic based on square type + depth
- * (THQUEST.ASM T520).  Fallback tile = 0 (first tile in atlas).
+ * The fixture table is not source-proven and has no fallback tile.
  *
- * Returns: tile index (>=0), or -1 for fallback-to-flat.
+ * Returns: fixture-only tile index (>=0), or -1 when unavailable.
  */
 int theron_vp_tile_for_square(int square_type, int depth, int is_wall);
 

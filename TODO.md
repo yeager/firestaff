@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **THERON-V1-VIEWPORT-REAL-DATA:** the old inferred viewport renderer is now
+  explicitly fixture-only and excluded from the production archive. Replace
+  its no-op seam only after one original Track 02 capture binds the actual
+  square-to-tile/map consumer, tile-bank bytes, VCE palette route, UI chrome,
+  and viewport destination together. The existing level grid and font bytes
+  are not sufficient evidence; do not revive the fixture tile table or its
+  fallback geometry.
+
 - **DM2-PLATFORM-MEDIA:** Keep the DOS, FM Towns and Amiga boot paths
   identity-first and in-memory for container media. FM Towns HME-242 now
   admits its real CUE/IMG payload without disk extraction, while M12 now
