@@ -3,7 +3,7 @@
  * ReDMCSB: SKULL.ASM, skproject/SKULLWIN/c_sound.h/cpp, c_sfx.cpp
  * docs/dm2_audio.md, docs/dm2_sound_system.md, docs/dm2_sound_combat.md
  *
- * DM2 audio: 16-slot SFX ring buffer, SoundBlaster, 28 MIDI tracks.
+ * DM2 audio: 16-slot SFX ring buffer, SoundBlaster, 29 HMP tracks.
  * DM1 audio: 3-4 voices, AdLib FM, ~10 tracks.
  * New in DM2: SOUND_STD_EXPLOSION (bombs), ambient weather, spatial queue.
  */
@@ -50,33 +50,6 @@ static const char *const g_creature_sound_names[] = {
     [0x10] = "Creature Spawn",
     [0x11] = "Creature Death",
     [0x12] = "Creature Attack 2",
-};
-
-/* ── Music track names ─────────────────────────────────────────────────────
- * Source: original PC GRAPHICS.DAT GDAT MUSICS/dtHMP (29 tracks 00-1c.hex)
- * and SONGLIST.DAT map selectors.  Port-side converted MIDI/OGG files are
- * reference material only and must not become a Firestaff runtime source. */
-
-static const char *const g_music_track_names[DM2_MUSIC_TRACK_COUNT] = {
-    /* clang-format off */
-    [0]  = "00 - Title/Intro",
-    [1]  = "01 - Dungeon Ambient A",
-    [2]  = "02 - Dungeon Ambient B",
-    [3]  = "03 - Combat",
-    [4]  = "04 - Shop/NPC",
-    [5]  = "05 - Dungeon Safe",
-    [6]  = "06 - Boss Encounter",
-    [7]  = "07 - Victory",
-    [8]  = "08 - Death",
-    [9]  = "09 - Outdoor Day",
-    [10] = "0a - Outdoor Night",
-    [11] = "0b - Weather Rain",
-    [12] = "0c - Weather Storm",
-    [13] = "0d - Magic Cast",
-    [14] = "0e - Treasure",
-    [15] = "0f - Puzzle/Secret",
-    /* clang-format on */
-    /* Tracks 16-27 (0x10-0x1b) additional dungeon/building themes */
 };
 
 static const uint16_t g_skproject_sound_bearing_table[24] = {
@@ -1684,8 +1657,4 @@ const char *dm2_v1_sound_source_evidence(void) {
         "DM1 comparison: AdLib FM, 3-4 voices, ~10 tracks, no positional audio\n"
         "DM2 comparison: SoundBlaster, 16-slot buffer, 29 tracks, world-coordinate spatial queue\n"
         "DM2 new: SOUND_STD_EXPLOSION (0x81), glbXAmbientSoundActivated, DM2_QUEUE_NOISE_GEN1/GEN2\n";
-}
-/* Suppress unused variable warning for g_music_track_names */
-static void __attribute__((unused)) dm2_v1_sound_suppress_unused(void) {
-    (void)g_music_track_names;
 }

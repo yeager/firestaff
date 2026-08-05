@@ -3662,6 +3662,10 @@ that its exact runtime path is not already source-locked and tested.
     and rejects absent, altered, sentinel and out-of-range routes. Runtime
     map-context refresh now dispatches that verified selector and exposes a
     receipt that remains `playback_started = 0` until real decoding succeeds.
+    **2026-08-05 inventory update:** removed the unused invented per-track
+    labels (such as "Dungeon Ambient" and "Boss Encounter") from the active
+    sound module. DMWeb proves only the `0x00..0x1c` HMP identities and their
+    `SONGLIST.DAT` selectors; names must not be inferred from a track number.
     Remaining work is original-HMP stream decoding and backend scheduling. Do
     not claim a cue played until that source chain and backend have both
     succeeded.
