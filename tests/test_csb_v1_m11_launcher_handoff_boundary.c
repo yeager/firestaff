@@ -1688,6 +1688,7 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
         unsigned char framebuffer[320 * 200];
         const int requested = requested_modes[mode_index];
         int tick;
+        unsigned int last_vbl = 0u;
         int animation_pixels_visible = 0;
         int runtime_hud_pixels_visible = 0;
         int runtime_viewport_pixels_visible = 0;
@@ -1720,12 +1721,26 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                     "M11 opens the Atari ST CSB package through M12");
         for (tick = 0; tick < 800 && view.csbState.startup_title_active;
              ++tick) {
+            const unsigned int expected_vbl =
+                (unsigned int)(((unsigned long)(tick + 1) * 55u * 50u) /
+                               1000u);
             memset(framebuffer, 0, sizeof(framebuffer));
             M11_GameView_Draw(&view, framebuffer, 320, 200);
             if (count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0) {
                 animation_pixels_visible = 1;
             }
             (void)M11_GameView_AdvanceIdleTick(&view);
+            /* ANIM.C waits source VBlanks (not host render frames). M11's
+             * 55ms V1 clock therefore advances the Atari script at exactly
+             * floor(ticks * 55ms * 50Hz), with the preserved remainder.
+             * This catches a second per-frame advance or a shortened title
+             * before the FTLCODE handoff is allowed. */
+            expect_true(view.csbAtariStAnimationVbl == expected_vbl ||
+                            !view.csbState.startup_title_active,
+                        "Atari ST title retains its 50Hz source VBlank cadence");
+            expect_true(view.csbAtariStAnimationVbl >= last_vbl,
+                        "Atari ST title VBlank clock never regresses");
+            last_vbl = view.csbAtariStAnimationVbl;
         }
         expect_true(animation_pixels_visible,
                     "Atari ST ANIMATE.SCR presents source-backed animation frames");
@@ -1733,6 +1748,11 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
                         view.csbState.level_loaded &&
                         view.csbAtariStRuntimeHandoffComplete,
                     "Atari ST ANIMATE.SCR reaches its source-owned FTLCODE handoff");
+        expect_true(view.csbAtariStAnimationVbl >=
+                        view.csbAtariStAnimationEndVbl &&
+                        view.csbAtariStAnimationVbl <
+                            view.csbAtariStAnimationEndVbl + 3u,
+                    "Atari ST handoff occurs on the final source VBlank boundary");
         expect_true(strcmp(view.lastOutcome, "ATARI RUNTIME READY") != 0,
                     "Atari ST handoff does not publish a host readiness message");
         memset(framebuffer, 0, sizeof(framebuffer));

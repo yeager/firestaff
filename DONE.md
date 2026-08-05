@@ -48599,7 +48599,6 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `nexus_sound_play_idx()` check the complete runtime receipt before invoking
   the tone trigger. Decoded bytes cannot bypass the unresolved SDDRVS/event
   ABI gate. Verified with the real-corpus sound runtime receipt test.
-
 ## DM1 HoC source item-name guard
 
 - **DM1-HOC-OBJECTS-003**: DM1 item labels now require the authenticated
@@ -48609,3 +48608,20 @@ the supplied root and selected MD5 to prove this without shipping game data.
   fallback catalog remains available only outside DM1 source-owned routes.
   Verified with a successful Ninja `firestaff` and real-alcove target build,
   plus `git diff --check`, on 2026-08-05.
+
+- ✅ 2026-08-05 CSB scanner inventory clarity: `--scan-data` now labels
+  `GRAPHICS.DAT` and `DUNGEON.DAT` explicitly as launch requirements, then
+  recursively reports every other hash-catalogued CSB source medium it finds,
+  including entries inside supported archives. This keeps the two-file launch
+  gate intact while exposing verified `ANIMATE.*`, Hint Oracle, Utility Disk,
+  `MINI.DAT`, and platform sidecars from the real data rather than relying on
+  a small fixed list of loose filenames. The shared fingerprint test passes
+  284/0.
+
+- ✅ 2026-08-05 CSB Atari ST title cadence: the real `ANIMATE.SCR` M11
+  handoff regression now proves that each 55 ms V1 tick becomes the correct
+  accumulated 50 Hz source-VBlank count, never regresses, and reaches the
+  `FTLCODE` handoff only at the script-derived terminal boundary. This guards
+  against a title that advances too quickly. ReDMCSB `ANIM.C:67-72` and its
+  VBlank waits establish the source timing; the extracted local Atari ST
+  package passes the focused handoff test.

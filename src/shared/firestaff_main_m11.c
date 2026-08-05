@@ -97,49 +97,64 @@ static int parse_party_triplet(const char* text,
 }
 
 /* These files are deliberately reported separately from the two-file CSB
- * launch gate.  ReDMCSB HINTLOAD.C lines 15-18 and ANIM.C line 67 show that
- * they are genuine Utility Disk media, but a missing tool companion must
- * never make the base game appear unavailable. */
-static int find_csb_optional_media(const M12_AssetStatus* status,
-                                   const char* label,
-                                   char outPath[512]) {
-    const char* runtimeRoot;
-    const char* dataRoot;
-    char csbDir[512];
-    if (!status || !label || !outPath) {
-        return 0;
+ * launch gate. ReDMCSB HINTLOAD.C:15-18, ANIM.C:67-72 and SWITCH.C:473
+ * establish that they are genuine source media, but missing tool companions
+ * must not make the base game unavailable. Search by their catalogued hashes,
+ * not by a handful of loose filenames: this also reports a verified member
+ * within the user's archive. */
+static void csb_md5_hex(const unsigned char md5[16], char out[33]) {
+    static const char digits[] = "0123456789abcdef";
+    size_t i;
+    for (i = 0U; i < 16U; ++i) {
+        out[i * 2U] = digits[(md5[i] >> 4) & 0x0fU];
+        out[i * 2U + 1U] = digits[md5[i] & 0x0fU];
     }
-    outPath[0] = '\0';
-    runtimeRoot = M12_AssetStatus_GetRuntimeDataDir(status, "csb");
-    if (runtimeRoot && FSP_JoinPath(csbDir, sizeof(csbDir), runtimeRoot, "csb") &&
-        FSP_JoinPath(outPath, 512U, csbDir, label) && FSP_FileExists(outPath)) {
-        return 1;
-    }
-    dataRoot = M12_AssetStatus_GetDataDir(status);
-    if (dataRoot && FSP_JoinPath(outPath, 512U, dataRoot, label) &&
-        FSP_FileExists(outPath)) {
-        return 1;
-    }
-    if (dataRoot && FSP_JoinPath(csbDir, sizeof(csbDir), dataRoot, "csb") &&
-        FSP_JoinPath(outPath, 512U, csbDir, label) && FSP_FileExists(outPath)) {
-        return 1;
-    }
-    outPath[0] = '\0';
-    return 0;
+    out[32] = '\0';
 }
 
-static const char* csb_optional_media_provenance(const char* path,
-                                                 char md5[33]) {
-    FirestaffGameDataClassifyResult classified;
-    if (!path || !md5 || !asset_file_md5_hex(path, md5)) {
-        return NULL;
+static void print_csb_verified_source_media(const M12_AssetStatus* status) {
+    char hashes[FIRESTAFF_FINGERPRINT_COUNT][33];
+    const char* hashList[FIRESTAFF_FINGERPRINT_COUNT + 1U];
+    char paths[FIRESTAFF_FINGERPRINT_COUNT][ASSET_PATH_MAX];
+    int matched[FIRESTAFF_FINGERPRINT_COUNT];
+    size_t tableIndices[FIRESTAFF_FINGERPRINT_COUNT];
+    const char* dataRoot;
+    size_t count = 0U;
+    size_t i;
+    int found;
+
+    if (!status || !(dataRoot = M12_AssetStatus_GetDataDir(status))) {
+        return;
     }
-    classified = firestaff_game_data_classify_hex(md5);
-    if (!classified.valid || !classified.entry ||
-        classified.entry->game != FIRESTAFF_GAME_CSB) {
-        return NULL;
+    for (i = 0U; i < FIRESTAFF_FINGERPRINT_COUNT; ++i) {
+        const FirestaffGameDataFingerprint* entry =
+            &firestaff_fingerprint_table[i];
+        if (entry->game != FIRESTAFF_GAME_CSB ||
+            entry->file_type == FIRESTAFF_FILE_GRAPHICS_DAT ||
+            entry->file_type == FIRESTAFF_FILE_DUNGEON_DAT) {
+            continue;
+        }
+        csb_md5_hex(entry->md5, hashes[count]);
+        hashList[count] = hashes[count];
+        tableIndices[count] = i;
+        ++count;
     }
-    return classified.entry->description;
+    hashList[count] = NULL;
+    memset(paths, 0, sizeof(paths));
+    memset(matched, 0, sizeof(matched));
+    found = asset_find_all_by_md5_list(dataRoot, hashList, paths, matched,
+                                       (int)count, 16);
+    if (found <= 0) {
+        return;
+    }
+    printf("  Verified CSB source media (does not block start):\n");
+    for (i = 0U; i < count; ++i) {
+        if (matched[i]) {
+            const FirestaffGameDataFingerprint* entry =
+                &firestaff_fingerprint_table[tableIndices[i]];
+            printf("    %-26s FOUND  %s\n", entry->description, paths[i]);
+        }
+    }
 }
 
 static void print_scan_game(const M12_AssetStatus* status,
@@ -155,6 +170,7 @@ static void print_scan_game(const M12_AssetStatus* status,
     ready = M12_AssetStatus_GameAvailable(status, gameId);
     count = M12_AssetStatus_GetRequiredFileCount(status, gameId);
     printf("%-22s %s\n", title, ready ? "READY" : "MISSING");
+    printf("  Launch requirements:\n");
     for (i = 0U; i < count; ++i) {
         const M12_AssetRequiredFileStatus* file =
             M12_AssetStatus_GetRequiredFile(status, gameId, i);
@@ -171,26 +187,7 @@ static void print_scan_game(const M12_AssetStatus* status,
         printf("\n");
     }
     if (strcmp(gameId, "csb") == 0) {
-        static const char* const optionalLabels[] = {
-            "SWOOSH", "SWOOSH.DAT", "SWSHSND.C", "SWSHSND.DAT",
-            "HCSB.HTC", "HCSB.DAT", "HINT.FTL", "ANIMATE.DAT",
-            "ANIMATE.SCR", "SWITCH.DAT", "MINI.DAT"
-        };
-        for (i = 0U; i < sizeof(optionalLabels) / sizeof(optionalLabels[0]); ++i) {
-            char path[512];
-            if (find_csb_optional_media(status, optionalLabels[i], path)) {
-                printf("  %-28s FOUND  %s\n", optionalLabels[i], path);
-                if (verbose) {
-                    char md5[33];
-                    const char* provenance = csb_optional_media_provenance(path, md5);
-                    if (provenance) {
-                        printf("    md5: %s  verified: %s\n", md5, provenance);
-                    } else if (asset_file_md5_hex(path, md5)) {
-                        printf("    md5: %s  unclassified optional media\n", md5);
-                    }
-                }
-            }
-        }
+        print_csb_verified_source_media(status);
     }
     if (strcmp(gameId, "nexus") == 0) {
         const M12_NexusBpkTrailerMetadata* bpk =
