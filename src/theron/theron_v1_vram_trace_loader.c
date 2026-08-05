@@ -148,31 +148,47 @@ int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
     }
 
     const uint8_t *vram = vp->vram_trace_data;
+    int tile_map[2048][TQR_PALETTE_GROUPS];
+
+    /* A BAT word is the source-owned VDC mapping: bits 0..10 select the
+     * background tile and bits 12..15 select its palette group.  Keep one
+     * atlas entry per (tile, palette) pair because the same source tile can
+     * be displayed with multiple VCE groups.  Do not scan the whole VRAM or
+     * invent group 0 for every non-zero tile; that loses the actual scene
+     * binding carried by the captured BAT. */
+    for (int tile = 0; tile < 2048; ++tile) {
+        for (int group = 0; group < TQR_PALETTE_GROUPS; ++group) {
+            tile_map[tile][group] = -1;
+        }
+    }
 
     /* BG tiles start at VRAM word $0800 = byte offset $1000 */
     int tile_base_byte = 0x1000;
-    /* Max tile index: (SAT start - tile base) / 32 */
-    int max_tiles = (0xFE00 - tile_base_byte) / THERON_VRAM_TILE_BYTES;
-
     tqr_palette_free_tiles(&vp->palette);
 
     int loaded = 0;
-    for (int i = 0; i < max_tiles && i < TQR_MAX_TILES; i++) {
-        int off = tile_base_byte + i * THERON_VRAM_TILE_BYTES;
-        if (off + THERON_VRAM_TILE_BYTES > THERON_VRAM_SIZE) break;
+    for (int y = 0; y < bat_h; ++y) {
+        for (int x = 0; x < bat_w; ++x) {
+            int bat_word = bat_start_word + y * 64 + x;
+            uint16_t bat = (uint16_t)vram[bat_word * 2] |
+                           ((uint16_t)vram[bat_word * 2 + 1] << 8);
+            int tile_index = (int)(bat & 0x07FFu);
+            int pal_group = (int)((bat >> 12) & 0x0Fu);
+            int off = tile_base_byte + tile_index * THERON_VRAM_TILE_BYTES;
+            int atlas_index;
 
-        /* Check if tile is non-empty */
-        int empty = 1;
-        for (int b = 0; b < THERON_VRAM_TILE_BYTES; b++) {
-            if (vram[off + b] != 0) { empty = 0; break; }
+            if (off < tile_base_byte ||
+                off + THERON_VRAM_TILE_BYTES > 0xFE00 ||
+                tile_map[tile_index][pal_group] >= 0) {
+                continue;
+            }
+            atlas_index = tqr_tile_load_from_data(
+                &vp->palette, vram + off, 4, pal_group, "vram_trace");
+            if (atlas_index < 0) return -1;
+            vp->palette.tiles[atlas_index].vram_index = (uint16_t)tile_index;
+            tile_map[tile_index][pal_group] = atlas_index;
+            ++loaded;
         }
-        if (empty) continue;
-
-        /* BAT entries encode palette group in bits 12-15 */
-        int pal_group = 0;
-        tqr_tile_load_from_data(&vp->palette,
-                                vram + off, 4, pal_group, "vram_trace");
-        loaded++;
     }
 
     return loaded;

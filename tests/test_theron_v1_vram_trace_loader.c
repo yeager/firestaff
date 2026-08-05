@@ -14,7 +14,11 @@ static void test_load_raw(void) {
     memset(vram, 0, sizeof(vram));
     memset(vce, 0, sizeof(vce));
 
-    /* Put a non-zero tile at VRAM byte 0x1000 (tile 0 at word $0800) */
+    /* BAT words select tile 0/1/2 and palette groups 3/4/5. */
+    vram[0] = 0x00; vram[1] = 0x38;
+    vram[2] = 0x01; vram[3] = 0x48;
+    vram[4] = 0x02; vram[5] = 0x58;
+    /* Put a non-zero tile at VRAM byte 0x1000 (tile 0 at word $0800). */
     for (int i = 0; i < 32; i++) vram[0x1000 + i] = (uint8_t)(i + 1);
 
     /* Put a BGR333 color in VCE entry 1: R=7, G=0, B=0 → 0x0007 LE */
@@ -48,7 +52,11 @@ static void test_populate_tiles(void) {
     memset(vram, 0, sizeof(vram));
     memset(vce, 0, sizeof(vce));
 
-    /* Create 3 non-empty tiles */
+    /* BAT words select three source tiles with distinct palette groups. */
+    vram[0] = 0x00; vram[1] = 0x38;
+    vram[2] = 0x01; vram[3] = 0x48;
+    vram[4] = 0x02; vram[5] = 0x58;
+    /* Create 3 source tiles. */
     for (int t = 0; t < 3; t++)
         for (int i = 0; i < 32; i++)
             vram[0x1000 + t * 32 + i] = (uint8_t)(t + 1);
@@ -57,9 +65,15 @@ static void test_populate_tiles(void) {
                                             vce, THERON_VCE_SIZE);
     assert(rc == 0);
 
-    int loaded = theron_v1_vram_trace_populate_tiles(&vp, 0, 32, 32);
+    int loaded = theron_v1_vram_trace_populate_tiles(&vp, 0, 3, 1);
     assert(loaded == 3);
     assert(vp.palette.tile_count == 3);
+    assert(vp.palette.tiles[0].vram_index == 0);
+    assert(vp.palette.tiles[0].pal_group == 3);
+    assert(vp.palette.tiles[1].vram_index == 1);
+    assert(vp.palette.tiles[1].pal_group == 4);
+    assert(vp.palette.tiles[2].vram_index == 2);
+    assert(vp.palette.tiles[2].pal_group == 5);
 
     assert(theron_v1_vram_trace_populate_tiles(&vp, -1, 32, 32) == -1);
     assert(theron_v1_vram_trace_populate_tiles(&vp, 0, 65, 1) == -1);

@@ -49843,3 +49843,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `.firestaff/data/theron/TQUS02.bin` and `TQJP02.bin` paths automatically,
   with environment variables retained as overrides. This removes the local
   false-skip while keeping graphics/tile semantic publication fail-closed.
+- ✅ 2026-08-06 Theron VRAM trace BAT mapping: corrected the trace loader to
+  consume source VDC BAT tile indices and palette-group bits instead of
+  scanning nonzero VRAM and forcing palette group 0. Regression coverage now
+  verifies three tile/group bindings and their source VRAM indices; Track 02
+  runtime admission remains capture-gated.

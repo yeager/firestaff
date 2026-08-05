@@ -204,6 +204,10 @@
   retaining explicit environment overrides. Real media is therefore scanned
   automatically when supplied; the graphics decoder and runtime handoff stay
   blocked because the HuC6280 consumer still does not bind the bank semantics.
+  The independent VRAM-trace diagnostic now maps captured VDC BAT words to
+  the actual tile index and VCE palette group, including separate atlas entries
+  when one tile is used with multiple groups. This is capture-side parity only;
+  no Track 02 tile-bank or runtime viewport admission is implied.
 
   The real Mednafen `*.trace.cd` sidecar now has a strict opaque receipt path:
   it validates the source marker, 51 SCSI READ commands, 157 MODE1/2352 raw
