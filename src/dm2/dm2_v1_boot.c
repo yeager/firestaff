@@ -7425,11 +7425,13 @@ int dm2_v1_boot_startup_menu_pointer_layout(
     for (size_t i = 0; i < raw_size; ++i) {
         hash = dm2_v1_boot_packaged_capture_hash_step(hash, raw[i]);
     }
-    /* skproject _098d_1208 -> LOAD_RECTS_AND_COMPRESS loads raw4, then
-     * HANDLE_UI_EVENT uses the title-menu event codes 0xD7 and 0xD9. */
-    if (!dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x00d7u,
+    /* skproject skval1.h::_4976_0d9e binds input event 0xD7 to rectangle
+     * 0x0197 and event 0xD9 to 0x0199. QUERY_RECT consumes the rectangle id,
+     * not the event code; accepting the latter here merely hid the error
+     * behind M11's retired fixed-coordinate click matrix. */
+    if (!dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x0197u,
                                              &out_layout->new_game) ||
-        !dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x00d9u,
+        !dm2_v1_boot_startup_menu_event_rect(raw, raw_size, 0x0199u,
                                              &out_layout->resume_game)) {
         dm2_v1_boot_graphics_free(owned_gfx);
         return 0;

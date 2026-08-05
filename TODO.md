@@ -648,6 +648,10 @@
   (ids `0x019b`, `0x01b2`, `0x0002`) from the mounted, hash-verified PC
   `GRAPHICS.DAT`. M11 does not replay the old fixed coordinate matrix for
   those actions; absent or undecodable RAW4 data leaves them inert.
+  **2026-08-06 follow-up:** New Game and Resume now likewise use their real
+  RAW4 ids (`0x0197` and `0x0199`), rather than mistakenly passing their
+  input events (`0xD7`/`0xD9`) to `QUERY_RECT`. The last M11 dependency on
+  the fixed DM2 click-zone matrix has been removed.
   **2026-07-31 update:** the M12 settings catalogue now has one explicit
   sixteen-row two-column capacity shared by the renderer, hit-test contract
   and regression suite; the renderer/brightness additions no longer leave a

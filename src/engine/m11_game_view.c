@@ -57,7 +57,6 @@
 #include "dm2_v1_startup_layout.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
-#include "dm2_touch_click_zone_matrix_pc34_compat.h"
 #include "dm2_v1_tech_magic.h"
 #include "dm2_v2_hud_runtime.h"
 #include "dm2_v2_phase_gate.h"
@@ -24854,62 +24853,6 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
                               aux_layout.quit_game.h)) {
             /* SKProject HANDLE_UI_EVENT 0xE0 → QUIT. */
             return M11_GAME_INPUT_RETURN_TO_MENU;
-        }
-    }
-    {
-        Dm2TouchClickZonePc34Compat zone;
-        if (DM2_TOUCHCLICK_Compat_HitTestInView(
-                DM2_TOUCH_CLICK_VIEW_MAIN_MENU_PC34_COMPAT, x, y,
-                TOUCH_CLICK_BUTTON_LEFT_PC34_COMPAT, &zone)) {
-            if (zone.commandId == 215u) {
-                /* SKProject HANDLE_UI_EVENT 0xD7 → NEW GAME */
-                DM2_V1_StartupAction action;
-                DM2_V1_BootRuntimeStartupSnapshot snapshot;
-                DM2_V1_StartupHostFacts facts;
-                m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-                if (dm2_v1_boot_startup_host_facts_from_runtime_state(
-                        snapshot.profile, snapshot.startup_menu_active,
-                        snapshot.startup_save_root, snapshot.resume_available,
-                        snapshot.slot_mask, snapshot.selected_row, &facts)) {
-                    memset(&action, 0, sizeof(action));
-                    action.kind = DM2_V1_STARTUP_ACTION_NEW_GAME;
-                    action.row = -1;
-                    action.slot = -1;
-                    if (dm2_v1_startup_execute_action_from_host_facts_with_receipt(
-                            &action, &facts,
-                            m11_dm2_startup_apply_session_callback, state,
-                            &execution, &action_receipt)) {
-                        return m11_dm2_startup_apply_host_action_receipt(
-                            state, &action_receipt);
-                    }
-                }
-                return M11_GAME_INPUT_IGNORED;
-            }
-            if (zone.commandId == 217u) {
-                /* SKProject HANDLE_UI_EVENT 0xD9 → RESUME GAME */
-                DM2_V1_StartupAction action;
-                DM2_V1_BootRuntimeStartupSnapshot snapshot;
-                DM2_V1_StartupHostFacts facts;
-                m11_dm2_boot_runtime_startup_snapshot(state, &snapshot);
-                if (dm2_v1_boot_startup_host_facts_from_runtime_state(
-                        snapshot.profile, snapshot.startup_menu_active,
-                        snapshot.startup_save_root, snapshot.resume_available,
-                        snapshot.slot_mask, snapshot.selected_row, &facts) &&
-                    facts.resume_available) {
-                    memset(&action, 0, sizeof(action));
-                    action.kind = DM2_V1_STARTUP_ACTION_CONTINUE;
-                    action.row = -1;
-                    action.slot = -1;
-                    if (dm2_v1_startup_execute_action_from_host_facts_with_receipt(
-                            &action, &facts,
-                            m11_dm2_startup_apply_session_callback, state,
-                            &execution, &action_receipt)) {
-                        return m11_dm2_startup_apply_host_action_receipt(
-                            state, &action_receipt);
-                    }
-                }
-                return M11_GAME_INPUT_IGNORED;
-            }
         }
     }
     if (!m11_dm2_boot_runtime_startup_pointer(

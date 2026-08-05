@@ -1905,8 +1905,9 @@ typedef struct {
 } DM2_V1_StartupMenuAuxPointerLayout;
 
 /* skproject SHOW_MENU_SCREEN installs the title-menu rectangle table before
- * HANDLE_UI_EVENT dispatches event 0xD7 (NEW) or 0xD9 (RESUME). Both routes
- * retain their source-owned GDAT hit rectangles. RESUME stays fail-closed
+ * HANDLE_UI_EVENT dispatches event 0xD7 (NEW, rect 0x0197) or 0xD9 (RESUME,
+ * rect 0x0199). Both routes retain their source-owned GDAT hit rectangles.
+ * RESUME stays fail-closed
  * until the boot-owned save scan admits a real SKSave.dat session. */
 typedef enum {
     DM2_V1_STARTUP_POINTER_TARGET_NONE = 0,

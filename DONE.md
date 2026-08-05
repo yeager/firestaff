@@ -50081,3 +50081,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   original data yields no action. The real PC-DOS corpus regression uses the
   decoded rectangles for the complete Credits enter/draw/countdown/dismiss
   route; focused boot/global-variable regressions also pass.
+- ✅ 2026-08-06 DM2 startup New/Resume RAW4 correction: mapped SKProject's
+  `0xD7 → 0x0197` and `0xD9 → 0x0199` table bindings before querying the
+  mounted `INTERFACE_GENERAL/0/RAW4/0` rectangle table. M11 no longer links
+  or dispatches through the fixed `dm2_touch_click_zone_matrix` production
+  path; real PC-DOS New Game now reaches the source-owned GAME_LOAD gate
+  through the decoded GDAT rectangle.
