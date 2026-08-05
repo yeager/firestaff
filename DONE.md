@@ -49269,3 +49269,11 @@ six original 128-glyph rows. Sources: Greatstone PC 1.0 catalogue,
   substitute art. `firestaff_v2` now links the existing zlib provider.
   Verification: `ninja -C /tmp/firestaff-title-build test_dm1_v22_asset_pipeline`
   and the focused test both pass. Tracked as `DM1-ORIGINAL-REPLACE-019`.
+
+- ✅ 2026-08-06 Theron Main-RAM loader capture receipt: the supplied real
+  Mednafen sidecar is now parsed as a strict regular-file receipt. It verifies
+  the observed TIA transfer from `$c800` to `$0404` (128 bytes), loader PC
+  `$2286` / physical `$1f0286`, the RTS at `$228d`, and the post-RTS opcode.
+  The receipt deliberately exposes no `$2600` bytes and cannot publish level,
+  object, or viewport semantics; the remaining gap is the executing consumer
+  RAM window joined back to the CD source-LBA.

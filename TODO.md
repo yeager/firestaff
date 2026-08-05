@@ -105,6 +105,13 @@
   consumer bytes and level/object semantics still require a RAM-window
   capture with executing PC and source-LBA provenance.
 
+  The real Main-RAM loader sidecar now adds a strict loader-boundary receipt:
+  it verifies the observed TIA transfer `$c800 -> $0404`, length `0x80`,
+  logical PC `$2286`, physical PC `$1f0286`, the loader RTS, and the post-RTS
+  opcode. This still contains no `$2600` RAM bytes or source-LBA join, so the
+  consumer entry, object/level records, and semantic publication remain
+  blocked.
+
   Full-dungeon loading now accepts a valid zero-ground-reference map and
   rejects object-capacity exhaustion instead of reporting a partial success.
 
