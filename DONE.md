@@ -48633,3 +48633,10 @@ the supplied root and selected MD5 to prove this without shipping game data.
   against a title that advances too quickly. ReDMCSB `ANIM.C:67-72` and its
   VBlank waits establish the source timing; the extracted local Atari ST
   package passes the focused handoff test.
+- ✅ 2026-08-05 CSB Atari ST executable-media inventory: corrected the
+  `SWITCH.DAT` fingerprint to the bytes in the original hard-disk package and
+  added hash identities for `ANIMATE.FTL`, `CHAOS.FTL`, and `FTLCODE`.
+  ReDMCSB `COMPILE.H:609-620` identifies the three modules and `ANIM.C:94`
+  makes the `FTLCODE` transfer explicit. They are reported as verified source
+  media without changing the `GRAPHICS.DAT`/`DUNGEON.DAT` start gate. The
+  fingerprint suite passes 294/0 against the extracted local package.

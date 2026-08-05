@@ -60,9 +60,13 @@ static void test_classify_known_hashes(void) {
     ASSERT(r.valid && r.entry->file_type == FIRESTAFF_FILE_HINT_FTL,
            "CSB Atari Hint Oracle HINT.FTL source hash found");
 
-    r = firestaff_game_data_classify_hex("B1FC60F2C0D8F8A89E5D4E295E93AE42");
+    r = firestaff_game_data_classify_hex("B1FC60F2C0D8F8A89E5D4F295E93AE42");
     ASSERT(r.valid && r.entry->file_type == FIRESTAFF_FILE_SWITCH_DAT,
            "CSB Atari Utility Disk SWITCH.DAT source hash found");
+
+    r = firestaff_game_data_classify_hex("18ABDF771F37E8953BF95BA2F462469D");
+    ASSERT(r.valid && r.entry->file_type == FIRESTAFF_FILE_CSB_FTL_MODULE,
+           "CSB Atari FTLCODE runtime module source hash found");
 
     r = firestaff_game_data_classify_hex("531EA104A2FBC2011EA73D11F274C57D");
     ASSERT(r.valid && r.entry->file_type == FIRESTAFF_FILE_MINI_DAT,

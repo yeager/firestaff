@@ -40,6 +40,7 @@
 #define F_HINT FIRESTAFF_FILE_HINT_FTL
 #define F_SWCH FIRESTAFF_FILE_SWITCH_DAT
 #define F_MINI FIRESTAFF_FILE_MINI_DAT
+#define F_MOD  FIRESTAFF_FILE_CSB_FTL_MODULE
 
 #define MD5(a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p) \
     {0x##a,0x##b,0x##c,0x##d,0x##e,0x##f,0x##g,0x##h, \
@@ -84,7 +85,14 @@ const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERP
      * executable, while SWITCH.C line 473 loads SWITCH.DAT for the Utility
      * Disk switcher. Greatstone's CSB file inventory names both files. */
     {MD5(67,00,7E,79,43,F9,EF,6F,0B,12,FF,4B,D1,BE,F3,D1), G_CSB, P_ST, L_EN, F_HINT, "2.x", "CSB Atari ST 2.x Hint Oracle HINT.FTL"},
-    {MD5(B1,FC,60,F2,C0,D8,F8,A8,9E,5D,4E,29,5E,93,AE,42), G_CSB, P_ST, L_EN, F_SWCH, "2.x", "CSB Atari ST 2.x Utility Disk SWITCH.DAT"},
+    {MD5(B1,FC,60,F2,C0,D8,F8,A8,9E,5D,4F,29,5E,93,AE,42), G_CSB, P_ST, L_EN, F_SWCH, "2.x", "CSB Atari ST 2.x Utility Disk SWITCH.DAT"},
+    /* The original Atari hard-disk set retains the three executable modules
+     * named by ReDMCSB COMPILE.H:609-620. ANIM.C:94 transfers to FTLCODE;
+     * their identities let the scanner distinguish real startup/runtime
+     * media from a filename-only loose companion. */
+    {MD5(E7,DE,DC,FF,05,5C,06,9E,22,D0,83,B8,01,5B,48,E0), G_CSB, P_ST, L_EN, F_MOD, "2.0", "CSB Atari ST 2.0 ANIMATE.FTL startup module"},
+    {MD5(B1,70,B7,4C,FC,CA,42,9D,D5,4B,07,BB,DC,79,54,84), G_CSB, P_ST, L_EN, F_MOD, "2.0", "CSB Atari ST 2.0 CHAOS.FTL startup module"},
+    {MD5(18,AB,DF,77,1F,37,E8,95,3B,F9,5B,A2,F4,62,46,9D), G_CSB, P_ST, L_EN, F_MOD, "2.0", "CSB Atari ST 2.0 FTLCODE runtime module"},
     /* DMWeb describes MINI.DAT as CSB's native campaign save. ReDMCSB
      * STARTUP1.C enters F0435 after the original startup sequence; the local
      * Atari 2.x package's size and SHA-256 are locked by Phase 0 provenance. */
