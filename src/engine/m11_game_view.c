@@ -44516,6 +44516,9 @@ static int m11_nexus_startup_title_receipt_ready(
         !command) {
         return 0;
     }
+    if (command->kind != NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME) {
+        return 0;
+    }
     package = context->startup_package;
     title_frame = context->state->nexusState.title_frame -
                   package->boot_warning_frames;

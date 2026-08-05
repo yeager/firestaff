@@ -208,6 +208,12 @@
   leaves the framebuffer untouched until Saturn explored-state and VDP2
   placement evidence is authenticated.
 
+- ✅ 2026-08-06 Nexus startup command-kind gate: the shared title-capture
+  receipt now admits only `BOOT_TITLE_FRAME` commands. A stale or misclassified
+  `TITLE_BACKGROUND` command cannot reuse boot timing/capture metadata to copy
+  `TITLE.CG` into the framebuffer; save/champion startup remains no-draw until
+  its own Saturn menu placement receipt exists.
+
 - ✅ 2026-08-06 Nexus MENU.BPK PRS3 real-corpus regression: the BPK surface
   test now accepts `FIRESTAFF_NEXUS_DATA_DIR` explicitly and verifies the
   mounted retail `MENU.BPK` rather than depending on an implicit home path.
