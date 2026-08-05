@@ -173,7 +173,14 @@ def run_case(firestaff: Path, case: dict[str, Any]) -> dict[str, Any]:
             or "Nexus level 0: 64x64 Structure1B" in combined
         )
         row["uses_extracted_source"] = "Nexus: using extracted files" in combined
-        row["uses_iso_source"] = "Nexus: opened ISO" in combined
+        # The runtime deliberately calls ISO 9660/CUE-backed media a "disc
+        # image". Keep this receipt tied to the actual source-selection log;
+        # the old "opened ISO" wording made an otherwise valid ISO launch
+        # appear to use an unknown source.
+        row["uses_iso_source"] = (
+            "Nexus: opened disc image" in combined
+            or "Nexus: opened ISO" in combined
+        )
         if probe_path.exists():
             row["probe"] = json.loads(probe_path.read_text(encoding="utf-8"))
         row["screenshots"] = screenshot_rows(screenshot_dir)

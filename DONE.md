@@ -1,3 +1,9 @@
+- ✅ 2026-08-05 Nexus runtime readiness source receipt: the screenshot
+  readiness verifier now recognizes the engine's actual `opened disc image`
+  ISO log, while retaining the legacy wording for compatibility. This fixes
+  only ISO/extracted source classification; the non-black-pixel gate remains
+  strict until a reviewed Saturn capture binds the viewport.
+
 - ✅ 2026-08-05 Nexus ISO-only startup source fix: `has_extracted()` now
   rejects virtual `container::entry` hash matches when deciding whether a
   root contains loose extracted DM.BIN and LEV00.DGN files. A directory that
