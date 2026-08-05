@@ -50,6 +50,11 @@
   data. Raw SKSave resume remains fail-closed after its real dungeon-prefix
   receipt until `DM2_GAME_LOAD` and `DM2_READ_SKSAVE_DUNGEON` are materialised
   in source order.
+  2026-08-06: Greatstone's PC 1.0 `GRAPHICS.DAT` catalogue is now bound to
+  the original file's 5,624-entry raw table. Complete per-image visual
+  comparison against Greatstone's 4,032 published PNGs remains open; it must
+  compare decoded original pixels and palette semantics, never introduce
+  downloaded or generated replacement artwork.
 
 - **THERON-V1-TRACK02-HANDOFF:** The production viewport now has a
   source-bound lifecycle/presentation path with a structural fail-closed seam.

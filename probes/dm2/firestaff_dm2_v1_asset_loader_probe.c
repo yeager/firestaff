@@ -370,6 +370,15 @@ int main(int argc, char **argv) {
 
     /* ── Test category entry count ── */
     fprintf(stderr, "\n--- Testing dm2_v1_asset_category_entry_count --- \n");
+    /* Greatstone's PC 1.0 English GRAPHICS.DAT extraction enumerates raw
+     * records 0000 through 5623.  In the native GDAT header this is the raw
+     * data table count, not the larger ENT1 metadata-row count.  Both layers
+     * are needed to address an original asset; neither may be synthesized.
+     * Source: http://greatstone.free.fr/dm/db_data/dm2_pc10_en/graphics.dat/graphics.dat.html
+     */
+    PROBE_ASSERT(loader.raw_data_count == 5624u,
+                 "PC English raw table matches Greatstone records 0000-5623: %u",
+                 loader.raw_data_count);
     int count = dm2_v1_asset_category_entry_count(&loader, DM2_GDAT_CATEGORY_GRAPHICSSET);
     PROBE_ASSERT(count > 0,
                  "GDAT graphics-set category has indexed entries: %d", count);

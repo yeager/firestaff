@@ -49085,3 +49085,19 @@ Source: `SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD` and
   16-colour palette is retained; extracted VGA palettes still take precedence;
   unavailable entries now remain no-draw. Ninja `firestaff` and
   `git diff --check` pass. Tracked as `DM1-ORIGINAL-REPLACE-014`.
+
+# ✅ 2026-08-06 DM2 PC English Greatstone raw-asset catalogue gate
+
+The DM2 V1 asset-loader probe now verifies that the hash-verified PC English
+`GRAPHICS.DAT` raw-data table has exactly 5,624 records, matching Greatstone's
+PC 1.0 catalogue IDs `0000` through `5623`. The audit also establishes that
+Greatstone publishes 4,032 visual records (860 IMG3, 3,167 IMG9, 4 IMG11, and
+1 FNT1); the file's separate 11,854-row ENT1 table is metadata, not a
+conflicting asset count. The probe continues to decode source-owned floor,
+ceiling, title, door and interface images only from the original file.
+Verified against `/Users/bosse/.firestaff/data/dm2/dos_extract/data/graphics.dat`
+(MD5 `25247ede4dabb6a71e5dabdfbcd5907d`): 30/30 passes. Source:
+http://greatstone.free.fr/dm/db_data/dm2_pc10_en/graphics.dat/graphics.dat.html.
+This is an identity/catalogue gate, not a claim that all 4,032 PNGs have
+already received pixel-for-pixel comparison; that remaining audit is tracked
+in `TODO.md` and cannot be satisfied with substitute art.
