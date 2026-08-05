@@ -173,6 +173,66 @@ static int write_synthetic_iso(const char* path,
     return fclose(fp) == 0;
 }
 
+/* A real FM Towns CSB image keeps GRAPHICS.DAT below CDATA/ and champion
+ * art below PORTRAIT/.  This compact ISO9660 fixture keeps one such nested
+ * record, so hash discovery and virtual-path extraction must preserve the
+ * directory component rather than returning only ALEX.CMP. */
+static int write_nested_synthetic_iso(const char* path) {
+    FILE* fp = fopen(path, "wb");
+    unsigned char zero[2048] = {0};
+    unsigned char pvd[2048] = {0};
+    unsigned char root[2048] = {0};
+    unsigned char portrait[2048] = {0};
+    unsigned char payload[2048] = {0};
+    unsigned char dot = 0;
+    unsigned char dotdot = 1;
+    const unsigned char dirName[] = "PORTRAIT";
+    const unsigned char fileName[] = "ALEX.CMP;1";
+    int offset;
+    int recLen;
+    int sector;
+
+    if (!fp) return 0;
+    for (sector = 0; sector < 16; ++sector) {
+        if (fwrite(zero, 1U, sizeof(zero), fp) != sizeof(zero)) goto fail;
+    }
+    pvd[0] = 1;
+    memcpy(pvd + 1, "CD001", 5);
+    pvd[6] = 1;
+    if (!write_iso_dir_record(pvd, 156, 20U, 2048U, 1, &dot, 1) ||
+        fwrite(pvd, 1U, sizeof(pvd), fp) != sizeof(pvd)) goto fail;
+    for (sector = 17; sector < 20; ++sector) {
+        if (fwrite(zero, 1U, sizeof(zero), fp) != sizeof(zero)) goto fail;
+    }
+    offset = 0;
+    recLen = write_iso_dir_record(root, offset, 20U, 2048U, 1, &dot, 1);
+    if (!recLen) goto fail;
+    offset += recLen;
+    recLen = write_iso_dir_record(root, offset, 20U, 2048U, 1, &dotdot, 1);
+    if (!recLen) goto fail;
+    offset += recLen;
+    if (!write_iso_dir_record(root, offset, 21U, 2048U, 1, dirName,
+                              (int)strlen((const char*)dirName)) ||
+        fwrite(root, 1U, sizeof(root), fp) != sizeof(root)) goto fail;
+    offset = 0;
+    recLen = write_iso_dir_record(portrait, offset, 21U, 2048U, 1, &dot, 1);
+    if (!recLen) goto fail;
+    offset += recLen;
+    recLen = write_iso_dir_record(portrait, offset, 20U, 2048U, 1, &dotdot, 1);
+    if (!recLen) goto fail;
+    offset += recLen;
+    if (!write_iso_dir_record(portrait, offset, 22U,
+                              (unsigned int)(sizeof(kIsoPayload) - 1U), 0,
+                              fileName, (int)strlen((const char*)fileName)) ||
+        fwrite(portrait, 1U, sizeof(portrait), fp) != sizeof(portrait)) goto fail;
+    memcpy(payload, kIsoPayload, sizeof(kIsoPayload) - 1U);
+    if (fwrite(payload, 1U, sizeof(payload), fp) != sizeof(payload)) goto fail;
+    return fclose(fp) == 0;
+fail:
+    fclose(fp);
+    return 0;
+}
+
 /* ---- Regression 1: case-insensitive virtual-path reporting ----
  *
  * Two ISO directory records that BOTH point to the same payload but
@@ -368,6 +428,41 @@ static void check_iso_duplicate_hash_tiebreak(const char* root) {
     }
 }
 
+static void check_iso_nested_virtual_path(const char* root) {
+    char isoPath[512];
+    char outPath[ASSET_PATH_MAX];
+    char extractedPath[512];
+    char bytes[128];
+    FILE* fp;
+    size_t count;
+
+    if (snprintf(isoPath, sizeof(isoPath), "%s/nested_path.iso", root) >=
+            (int)sizeof(isoPath) ||
+        snprintf(extractedPath, sizeof(extractedPath), "%s/nested_path.cmp",
+                 root) >= (int)sizeof(extractedPath)) {
+        check_int(0, "nested ISO fixture paths should fit");
+        return;
+    }
+    check_int(write_nested_synthetic_iso(isoPath),
+              "nested ISO fixture should be written");
+    memset(outPath, 0, sizeof(outPath));
+    check_int(asset_find_by_md5(root, kIsoPayloadMd5, outPath,
+                                (int)sizeof(outPath), 2) &&
+                  strstr(outPath, "nested_path.iso::PORTRAIT/ALEX.CMP") != NULL,
+              "nested ISO hash lookup must retain the relative entry path");
+    check_int(asset_extract_virtual_path(outPath, extractedPath),
+              "nested ISO virtual path must extract its exact entry");
+    fp = fopen(extractedPath, "rb");
+    check_int(fp != NULL, "nested ISO extracted entry should exist");
+    if (fp) {
+        count = fread(bytes, 1U, sizeof(bytes), fp);
+        fclose(fp);
+        check_int(count == sizeof(kIsoPayload) - 1U &&
+                      memcmp(bytes, kIsoPayload, sizeof(kIsoPayload) - 1U) == 0,
+                  "nested ISO extracted entry should match its payload");
+    }
+}
+
 static int make_isolated_root(char* out, size_t outSize) {
 #ifdef _WIN32
     int rc = snprintf(out, outSize, ".\\firestaff_iso_case_duplicate_%lu",
@@ -386,7 +481,7 @@ static int make_isolated_root(char* out, size_t outSize) {
 }
 
 static void cleanup_root(const char* root) {
-    char p1[512], p2[512], p3[512], p4[512];
+    char p1[512], p2[512], p3[512], p4[512], p5[512], p6[512];
     if (snprintf(p1, sizeof(p1), "%s/case_insensitive.iso", root) <
         (int)sizeof(p1)) {
         remove(p1);
@@ -403,28 +498,40 @@ static void cleanup_root(const char* root) {
         (int)sizeof(p4)) {
         remove(p4);
     }
+    if (snprintf(p5, sizeof(p5), "%s/nested_path.iso", root) <
+        (int)sizeof(p5)) {
+        remove(p5);
+    }
+    if (snprintf(p6, sizeof(p6), "%s/nested_path.cmp", root) <
+        (int)sizeof(p6)) {
+        remove(p6);
+    }
     RMDIR(root);
 }
 
 int main(void) {
     char root1[512];
     char root2[512];
+    char root3[512];
 
     /* Each check gets its OWN isolated root so the MD5-match scan does
      * not see fixtures from the other check. Without this, the scanner
      * could find the same MD5 in both fixtures' .iso files and the
      * virtual-path reporting would race across checks. */
     if (!make_isolated_root(root1, sizeof(root1)) ||
-        !make_isolated_root(root2, sizeof(root2))) {
+        !make_isolated_root(root2, sizeof(root2)) ||
+        !make_isolated_root(root3, sizeof(root3))) {
         fprintf(stderr, "fixture environment setup failed\n");
         return 1;
     }
 
     check_iso_case_insensitive_virtual_path(root1);
     check_iso_duplicate_hash_tiebreak(root2);
+    check_iso_nested_virtual_path(root3);
 
     cleanup_root(root1);
     cleanup_root(root2);
+    cleanup_root(root3);
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);
