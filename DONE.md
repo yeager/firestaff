@@ -49544,3 +49544,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   shared 0xE8-byte prologue and all per-level metadata bytes, and passed.
   This is raw-data provenance only; tile, palette, map and object semantics
   remain correctly fail-closed.
+- ✅ 2026-08-06 DM1 invalid Thing subtype guard: `dm1_item_aspect_index()`
+  now rejects out-of-range weapon, armour, potion, junk, scroll, and
+  container subtypes instead of coercing them to subtype 0. This prevents a
+  malformed or stale PC34 Thing from displaying an unrelated HoC junk icon.
+  Corrected the raw-torch regression fixture to use PC34 ChargeCount 4
+  (`0x90`, lit), matching ReDMCSB `DATA.C G0029` and the expected icon band.
+  `test_dm1_v1_viewport_floor_ceiling_items_pc34_compat` 179/179 and
+  `test_m11_dm1_f0033_raw_inventory_icon_gate` 6/6 pass.
