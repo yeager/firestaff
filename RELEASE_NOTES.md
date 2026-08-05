@@ -1,5 +1,12 @@
 
 
+# Firestaff v3.0.288
+- Asset scanner caching: scan results persisted to ~/.firestaff/cache/asset_scan_cache.dat
+  so unchanged files skip MD5 re-hashing on repeat scans
+- FM Towns disc image support: ZIP/ISO 9660/CDDA extraction pipeline for DM1 and DM2
+- In-memory GRAPHICS.DAT loading via fmemopen for FM Towns archive support
+- Windows compatibility for scan cache (USERPROFILE fallback, _mkdir)
+
 # Firestaff v3.0.282
 - CI fix: iOS IPA packaging path duplication (absolute RELEASE_DIR + OLDPWD)
 

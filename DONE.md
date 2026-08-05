@@ -1,3 +1,9 @@
+- ✅ 2026-08-05 v3.0.288 Asset scanner caching + FM Towns disc image support
+  Scan cache: file MD5 results persisted to ~/.firestaff/cache/asset_scan_cache.dat
+  keyed by (path, mtime, size). Unchanged files skip re-hashing on repeat scans.
+  FM Towns: ZIP → disc image → ISO 9660 → file extraction pipeline. CUE sheet
+  parsing for CDDA track sector offsets. In-memory GRAPHICS.DAT loading via
+  fmemopen. DM2 FM Towns CDDA playback from archive. Windows compat.
 - ✅ 2026-08-04 v3.0.277 DM1: complete G0243 struct decode from PC 3.4 binary
   Full 26-byte struct layout mapped. sightRange/smellRange decoded from nibble-
   packed bytes 14-15, attackType from byte 24, woundProbabilities from offset
