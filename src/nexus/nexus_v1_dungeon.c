@@ -2065,7 +2065,7 @@ int nexus_v1_dgn_geometry_info(Nexus_V1_DgnGeometryInfo *out_info,
      * DMWeb DGN Structure1B source-lock:
      * bytes 5..7 pack two 12-bit values; Firestaff's current renderer needs
      * the low collision descriptor reference to be bounded before a real
-     * Structure1C/mesh reader can replace the procedural fallback.
+     * Structure1C/mesh reader can replace the current no-draw handoff.
      */
     memset(seen_refs, 0, sizeof(seen_refs));
     memset(seen_post_grid_0x30_refs, 0, sizeof(seen_post_grid_0x30_refs));

@@ -50331,3 +50331,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   while refusing to manufacture `Theron_V1_Object` kinds or item indexes.
   The loader regression uses the supplied `TQUS02.bin` directly and passes
   with real map/door/teleporter/actuator chains intact.
+- ✅ 2026-08-06 Nexus DGN Structure2 provenance tightened: the DMWeb texture
+  decoder now reports format decode only and no longer self-asserts
+  `source_verified` for arbitrary buffers. Retail identity remains owned by
+  the hash-verified LEV00--LEV15 admission route; the real LEV00 diagnostic
+  still decodes indexed-4bpp and direct-555 surfaces, but neither reaches
+  viewport/VDP1 drawing.

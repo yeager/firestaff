@@ -69,7 +69,12 @@ int nexus_v1_dgn_texture_decode(const uint8_t *dgn, int dgn_size,
     }
     out->encoding = encoding; out->width = width; out->height = height;
     out->image_offset = image_rel; out->image_bytes = image_bytes; out->palette_offset = palette_rel;
-    out->source_verified = 1; out->decoded = 1;
+    /* DMWeb's Structure2 grammar proves the decode, not the identity of the
+     * bytes.  The caller must bind a hash-verified LEV00..LEV15 receipt before
+     * any source-verification bit can be asserted; this standalone diagnostic
+     * decoder deliberately never promotes an arbitrary buffer to retail data. */
+    out->source_verified = 0;
+    out->decoded = 1;
     (void)palette_id;
     return NEXUS_V1_DGN_TEXTURE_DECODE_OK;
 }

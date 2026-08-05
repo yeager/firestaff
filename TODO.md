@@ -106,6 +106,9 @@
   MENU.BPK English/French ISO revisions are now recognized as real alternate
   identities for bounded inspection; do not treat their opaque mode tags as
   host RGB formats or promote them to PRS3/VDP1 output without capture proof.
+  DGN Structure2 texture decode is format evidence only; keep retail source
+  verification on the hash-bound LEV00--LEV15 route and do not promote decoded
+  pixels to viewport/VDP1 without Saturn capture proof.
   Startup runtime receipts now also keep `hud_ready` clear after a DGN handoff;
   level-loaded state alone cannot promote an unbound Saturn HUD consumer.
   FONT256.S2D loader now exposes only the 242 real character-generator tiles
