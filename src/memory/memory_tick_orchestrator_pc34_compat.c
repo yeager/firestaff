@@ -8041,10 +8041,31 @@ static int orch_create_explosion_with_fallback_compat(
     const struct ExplosionCreateInput_Compat* input,
     int c15Cell)
 {
-    if (world->things && world->things->loaded &&
-        orch_publish_source_c15_c25_explosion_compat(world, input, c15Cell)) {
-        return 1;
+    int hasAuthenticatedRawThings = 0;
+    int thingType;
+
+    if (world && world->things && world->things->loaded) {
+        for (thingType = 0; thingType < DUNGEON_THING_TYPE_COUNT; ++thingType) {
+            if (world->things->rawThingData[thingType] &&
+                world->things->thingCounts[thingType] > 0) {
+                hasAuthenticatedRawThings = 1;
+                break;
+            }
+        }
     }
+    if (hasAuthenticatedRawThings) {
+        /* A loaded PC34 Thing table is authoritative.  ReDMCSB F0217/F0220
+         * always publishes the effect through its C14/C15/C25 owner; making
+         * an unowned host explosion here produces the exact false projectile
+         * and smoke artifacts seen in HoC when a raw owner is malformed or
+         * stale.  Real-data sessions therefore fail closed. */
+        return orch_publish_source_c15_c25_explosion_compat(
+            world, input, c15Cell);
+    }
+
+    /* Unit probes and legacy callers without authenticated raw Thing bytes do
+     * not have a source owner to publish. Retain their isolated runtime
+     * exercise path, but never allow it to run beside real PC34 data. */
     {
         struct TimelineEvent_Compat adv;
         int slot = -1;

@@ -18,6 +18,14 @@
   nominal SCR character slots. Engine `font_loaded` stays clear while the
   original page/attribute character mapping is still unknown. Real FONT256,
   font-render, determinism and text-layout regressions pass.
+- ✅ 2026-08-06 DM1 C15/C25 synthetic explosion fallback gate: when a real
+  PC34 Thing table contains authenticated raw records, the M10 F0217/F0220
+  path now fails closed if it cannot publish the explosion through its raw
+  C15/C25 owner. This prevents unowned projectile/smoke visuals in HoC. The
+  isolated fallback remains available only to compact test/legacy worlds that
+  have no raw Thing bytes. Verification: `git diff --check`, Ninja rebuild,
+  `test_dm1_v1_f0190_moving_killed_all_m10_handoff_pc34_compat`, and
+  `test_dm1_v1_f0190_c040_m11_integration_audit` passed.
 
 - ✅ 2026-08-05 Nexus raw SFX selector gate: `nexus_sound_play_idx()` no
   longer starts a decoded SAL tone from an unproven integer sample index. The

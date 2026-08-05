@@ -3040,6 +3040,12 @@ that its exact runtime path is not already source-locked and tested.
    M11. Creature attack sounds route through m11_audio_emit_creature_attack_sound_ex;
    general sound requests route through m11_audio_emit_source_sound. Remaining:
    EMIT_SENSOR_EFFECT handler for sensor walk-on/walk-off presentation effects.
+   2026-08-06: real PC34 sessions now fail closed if F0217/F0220 cannot
+   publish an explosion through an authenticated raw C15/C25 owner. The
+   former host explosion fallback remains only for compact test/legacy worlds
+   without raw Thing bytes, so malformed or stale HoC projectile/smoke state
+   cannot create an unowned visual. Broader C15/C25 corpus and spell-tick
+   coverage remain open.
    2026-08-06: decoded sensor text now uses the source F0507/TEXT.C message
    route in both movement and orchestrator emission paths; malformed text no
    longer becomes a synthetic `TEXT #N` dialog. Remaining sensor work is
