@@ -3152,7 +3152,6 @@ static int csb_v1_runtime_decode_destination_teleporter(
     CSB_V1_TeleporterRotationRuntimeTeleporterPc34 *out_teleporter,
     int *out_scope)
 {
-    int raw_square;
     int first_thing;
     int thing_type;
     int thing_size;
@@ -5403,6 +5402,11 @@ static void csb_v1_runtime_apply_group_behavior_timeline_record(
             creature_size = creature_profile
                 ? (int)(creature_profile->attributes & 0x0003u)
                 : 0;
+            /* ReDMCSB GROUP.C F0209 reads CreatureInfo.MovementTicks before
+             * every C37 reschedule; use the same source-locked table as the
+             * other C37/C38 scheduling paths in this runtime. */
+            movement_ticks = csb_v1_runtime_creature_movement_ticks(
+                (int)thing_record[4]);
             if ((behavior == 0 || behavior == 2 || behavior == 3) &&
                 (distance_x != 0 && distance_y != 0)) {
                 int wander_dir = (int)(flags >> 14) & 0x03;
@@ -7598,8 +7602,8 @@ static int csb_v1_runtime_dsa_move_object(
         return 1; /* MoveObject returns an ignored source/destination error. */
     }
     if (destination_depth != 0u ||
-        source_level == destination_level && source_x == destination_x &&
-            source_y == destination_y) {
+        (source_level == destination_level && source_x == destination_x &&
+         source_y == destination_y)) {
         return 1;
     }
     if (source_position_bits == UINT32_MAX) {
@@ -18382,7 +18386,6 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
         uint16_t flags_word;
         uint16_t target_word;
         int sensor_type;
-        int sensor_data;
         int target_x;
         int target_y;
         int target_cell;
@@ -18418,7 +18421,6 @@ static void csb_v1_runtime_apply_wall_sensor_timeline_record(
             flags_word = csb_v1_runtime_read_u16(sensor + 4);
             target_word = csb_v1_runtime_read_u16(sensor + 6);
             sensor_type = (int)(type_data & 0x007Fu);
-            sensor_data = (int)(type_data >> 7);
             once_only = (int)((flags_word >> 2) & 0x01u);
             local_effect = (int)((flags_word >> 11) & 0x01u);
             local_multiple = (int)(target_word & 0x0FFFu);

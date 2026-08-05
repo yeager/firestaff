@@ -1,3 +1,14 @@
+- ✅ 2026-08-05 CSB C37 movement-tick initialization: the live C37 group
+  behavior bridge now loads the source-locked creature movement cadence before
+  it reschedules diagonal wandering or flee behavior.  Those branches had
+  used an uninitialized local value, making the next group event
+  nondeterministic.  The value comes from the same PC34 creature movement
+  table used by the other C37/C38 schedulers, matching ReDMCSB `GROUP.C`
+  F0209.  Also removed three dead locals and made the DSA same-square guard
+  unambiguous.  The focused first-viewport CTest passes; the broad C37 test
+  reaches 757 passing assertions but retains two pre-existing failures in the
+  independent C06 local-effect sensor fixture.
+
 - ✅ 2026-08-05 Nexus `MENU.BPK` ISO-revision provenance: verified that the
   local English retail file is the exact ISO entry (87,684 bytes,
   `a6f2272a4f6cb3c6b3b33012bc5b15ed` MD5) and recorded the separate French
