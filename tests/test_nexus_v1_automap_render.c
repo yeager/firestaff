@@ -9,15 +9,16 @@ static void expect(int c, const char *m) {
 }
 
 int main(void) {
-    /* Test 1: default config */
+    /* Test 1: no synthetic default palette */
     {
         Nexus_AutomapRenderConfig cfg;
         nexus_v1_automap_default_config(&cfg);
-        expect(cfg.cell_size == 4 && cfg.party_color == 0xFF00FF00u,
-               "default config");
+        expect(cfg.cell_size == 0 && cfg.wall_color == 0 &&
+               cfg.floor_color == 0 && cfg.party_color == 0 && cfg.bg_color == 0,
+               "default config stays inert");
     }
 
-    /* Test 2: render explored floor cell */
+    /* Test 2: explored data does not enter a synthetic host renderer */
     {
         Nexus_Automap map;
         uint8_t sq[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
@@ -31,14 +32,14 @@ int main(void) {
         nexus_v1_automap_default_config(&cfg);
         cfg.cell_size = 2;
         memset(pixels, 0, sizeof(pixels));
+        memset(pixels, 0x5a, sizeof(pixels));
         drawn = nexus_v1_automap_render(&map, sq, -1, -1, &cfg,
                                          pixels, 16, 16);
-        expect(drawn > 0, "render drew explored cell");
-        expect(pixels[2 * 2 * 16 + 3 * 2] == cfg.floor_color,
-               "floor cell has floor color");
+        expect(drawn == 0, "render remains blocked without Saturn placement");
+        expect(pixels[0] == 0x5a5a5a5au, "blocked render leaves framebuffer intact");
     }
 
-    /* Test 3: unexplored cell stays background */
+    /* Test 3: unexplored cell remains untouched */
     {
         Nexus_Automap map;
         uint8_t sq[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
@@ -48,12 +49,12 @@ int main(void) {
         memset(sq, 1, sizeof(sq));
         nexus_v1_automap_default_config(&cfg);
         cfg.cell_size = 1;
-        memset(pixels, 0, sizeof(pixels));
+        memset(pixels, 0x5a, sizeof(pixels));
         nexus_v1_automap_render(&map, sq, -1, -1, &cfg, pixels, 16, 16);
-        expect(pixels[0] == cfg.bg_color, "unexplored is background");
+        expect(pixels[0] == 0x5a5a5a5au, "blocked render leaves background intact");
     }
 
-    /* Test 4: wall cell renders wall color */
+    /* Test 4: wall cell does not synthesize a wall color */
     {
         Nexus_Automap map;
         uint8_t sq[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
@@ -64,12 +65,12 @@ int main(void) {
         nexus_v1_automap_reveal(&map, 0, 1, 1);
         nexus_v1_automap_default_config(&cfg);
         cfg.cell_size = 1;
-        memset(pixels, 0, sizeof(pixels));
+        memset(pixels, 0x5a, sizeof(pixels));
         nexus_v1_automap_render(&map, sq, -1, -1, &cfg, pixels, 16, 16);
-        expect(pixels[1 * 16 + 1] == cfg.wall_color, "wall cell color");
+        expect(pixels[1 * 16 + 1] == 0x5a5a5a5au, "wall remains untouched");
     }
 
-    /* Test 5: party marker */
+    /* Test 5: party marker does not synthesize a host marker */
     {
         Nexus_Automap map;
         uint8_t sq[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
@@ -80,10 +81,10 @@ int main(void) {
         nexus_v1_automap_reveal(&map, 0, 3, 3);
         nexus_v1_automap_default_config(&cfg);
         cfg.cell_size = 2;
-        memset(pixels, 0, sizeof(pixels));
+        memset(pixels, 0x5a, sizeof(pixels));
         nexus_v1_automap_render(&map, sq, 3, 3, &cfg, pixels, 32, 32);
-        expect(pixels[3 * 2 * 32 + 3 * 2] == cfg.party_color,
-               "party marker drawn");
+        expect(pixels[3 * 2 * 32 + 3 * 2] == 0x5a5a5a5au,
+               "party marker remains untouched");
     }
 
     /* Test 6: NULL safety */

@@ -58,6 +58,9 @@
   SMAP00-15 are now loaded and decoded from hash-verified retail bytes when a
   level becomes active; the retained pixels remain HUD/VDP2 no-draw until the
   Saturn placement and explored-state write path are captured.
+  The public host automap renderer no longer paints a guessed gray/green grid
+  or party marker; its compatibility config and draw call remain inert until
+  the authentic SMAP/VDP2 consumer is bound.
   V1 movement no longer invents adjacent-level same-coordinate stairs or
   writes host radius-reveals into the retail automap state; source-owned
   Structure1F destinations and Saturn explored-state evidence remain needed.

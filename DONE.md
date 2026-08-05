@@ -108,6 +108,12 @@
   sets the new bit until the original event ABI is captured. The focused SLEV
   regression covers this fail-closed boundary.
 
+- ✅ 2026-08-06 Nexus automap placeholder removal: removed the host-colored
+  gray/green grid and party-marker renderer from the public Nexus path. The
+  real SMAP00-15 bytes remain available as source data, while rendering now
+  leaves the framebuffer untouched until Saturn explored-state and VDP2
+  placement evidence is authenticated.
+
 - ✅ 2026-08-05 Nexus startup title fallback removal: the generic title
   renderer no longer copies a raw `TITLE.CG` character-generator atlas to the
   framebuffer when the Saturn MAPD/TIBG handoff is missing. TITLE.CG and
