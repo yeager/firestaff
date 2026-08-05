@@ -25029,6 +25029,10 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     int x,
     int y,
     int buttonMask) {
+    int space;
+    int zoneId;
+    int command;
+    int destinationAccepted;
     if (!state || !state->active ||
         (buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
         return M11_GAME_INPUT_IGNORED;
@@ -25045,8 +25049,27 @@ M11_GameInputResult M11_GameView_HandlePointerButtonRelease(
     }
     state->v1InventoryDragActive = 0;
     state->v1InventoryDragSourceSlotBox = 0;
-    if (!state->inventoryPanelActive || state->showDebugHUD ||
-        !m11_process_v1_inventory_pointer_target(state, x, y, NULL)) {
+    if (!state->inventoryPanelActive || state->showDebugHUD) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    /* The C211..C218 status-hand boxes are a separate ReDMCSB COMMAND.C
+     * route from the C507..C544 inventory boxes. The mouse-down path already
+     * handled them, but mouse-up used to consult only the inventory list, so
+     * a held object could never be placed into another champion's hand after
+     * dragging. */
+    space = DM1_V1_MOUSE_SPACE_NONE_PC34;
+    zoneId = 0;
+    command = DM1_V1_MouseRoutes_CommandForScreenPointPc34Compat(
+        DM1_V1_MOUSE_LIST_INTERFACE_PC34, x, y,
+        DM1_V1_MOUSE_MASK_LEFT_PC34, &space, &zoneId);
+    destinationAccepted = command >= 20 && command <= 27 &&
+        zoneId >= 211 && zoneId <= 218 &&
+        m11_process_v1_status_hand_slot_box_click(state, command - 20);
+    if (!destinationAccepted) {
+        destinationAccepted = m11_process_v1_inventory_pointer_target(
+            state, x, y, NULL);
+    }
+    if (!destinationAccepted) {
         return M11_GAME_INPUT_IGNORED;
     }
     return M11_GAME_INPUT_REDRAW;

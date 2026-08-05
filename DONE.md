@@ -49577,7 +49577,6 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   existing source message queue. The old host dialog and synthetic `TEXT #N`
   label were removed; missing or malformed source text is fail-closed. The
   DM1 sensor-timing integration and `firestaff_m11` Ninja build pass.
-
 - ✅ 2026-08-06 Theron JP Track 02 level-bank receipt: added the separate
   authenticated Japanese MODE1/2352 table (MD5
   `b7afb338ad31be1025b53f9aff12d73a`) with all seven real user-data offsets
@@ -49585,3 +49584,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `FIRESTAFF_THERON_TRACK02_JP_RAW` and passes against both supplied US and
   JP BINs; ISO/unknown variants remain rejected and no tile/map/object
   semantics were promoted.
+- ✅ 2026-08-06 DM1 inventory drag hand destination: mouse-up now dispatches
+  ReDMCSB `COMMAND.C` C211..C218 status-hand zones before the C507..C544
+  inventory/chest route. Previously a floor or inventory pickup could remain
+  in the transient G4055 leader hand when dragged onto another champion's
+  hand, because release handling consulted only the inventory list. The
+  source-owned F0302 swap path is now reached for both mouse-down and
+  mouse-up. Ninja `firestaff_m11` build and the real PC3.4 alcove item runtime
+  test pass; the existing inventory-panel test still has its unrelated
+  pre-existing object-description fixture failures. Real macOS capture remains
+  open in `DM1-HOC-OBJECTS-002`.

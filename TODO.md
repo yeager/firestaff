@@ -25305,7 +25305,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   torch charge and scroll Closed state. Pickup now selects the rendered pile
   top and enforces F0302/G0038 AllowedSlots before moving an object into a
   hand, pouch or backpack. Invalid decoded subtypes now fail closed instead
-  of silently rendering subtype-0 artwork; real Mac pickup/placement capture
+  of silently rendering subtype-0 artwork. Mouse-up now also consumes the
+  separate C211..C218 status-hand route, so dragging into another champion's
+  hand no longer stops at the leader hand. Real Mac pickup/placement capture
   is still required.
 - [ ] DM1-HOC-OBJECTS-003 Capture the live held-object cursor on the host window
   after pickup and during movement. The source framebuffer now invalidates on
