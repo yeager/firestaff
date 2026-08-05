@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 DM1 side-door source gate: authenticated PC34 sessions now
+  require a loaded pixel surface for side-door wall-set material. Dimension-only
+  cache entries no longer reach `M11_AssetLoader_BlitScaled`, and the legacy
+  yellow procedural pillar is suppressed for authenticated DM1/CSB views.
+  This removes a real synthetic fallback from the F0111 side-door route.
+  Verification: Ninja build, `test_m11_dm1_hoc_wall_material_receipt_pc34`,
+  and real DM1 all-map render probe: 14/14 maps, 24,416/24,416 poses,
+  2,805 door poses.
+
 - ✅ 2026-08-06 DM1 real object-name handoff: added a corpus-backed runtime
   test that launches from the real PC3.4 `GRAPHICS.DAT`/`DUNGEON.DAT`, checks
   the authenticated M564 C199 name table, and resolves a real dungeon weapon

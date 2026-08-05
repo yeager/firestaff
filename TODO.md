@@ -3519,6 +3519,9 @@ that its exact runtime path is not already source-locked and tested.
 13. **DM1-VIEWPORT-WALLS-DOORS:** Complete F0107-F0115 wall, door, floor,
     ceiling, ornament, mirror, item, creature, projectile, and explosion
     material routing for all visible dungeon depths from PC34 assets.
+    2026-08-06: authenticated side-door views now reject dimension-only
+    cache entries and no longer draw the old yellow procedural pillar.
+    Remaining: broader real Mac/app pixel capture and source comparison.
 14. **DM1-DOOR-SENSOR-LIVE:** Complete source-owned door animations, buttons,
     fakewalls, pits, teleporters, and sensor-triggered object/party movement
     with raw Thing ownership and timeline correctness.

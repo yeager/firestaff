@@ -33290,7 +33290,12 @@ static int m11_draw_door_side_asset(const M11_GameViewState* state,
         default: return 0;
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, sideIdx);
-    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    /* A dimension-only cache entry is not a source surface.  Accepting it
+     * here lets the caller fall through to a host-drawn yellow pillar even
+     * during an authenticated DM1 session.  ReDMCSB F0111 consumes the
+     * decoded wall-set bitmap or draws no side material. */
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) return 0;
     M11_AssetLoader_BlitScaled(slot, framebuffer, fbW, fbH,
                                x, y, w, h, 0);
     return 1;
@@ -34344,8 +34349,13 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
             !m11_draw_door_side_asset(g_drawState, framebuffer,
                                       framebufferWidth, framebufferHeight,
                                       paneX, paneY, paneW, paneH, depthIndex)) {
-            m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
-                           paneX + paneW / 2, paneY + 2, paneY + paneH - 3, M11_COLOR_YELLOW);
+            /* Authenticated DM1/CSB views must fail closed when the original
+             * side-door bitmap is unavailable.  The yellow line is retained
+             * only for the non-source diagnostic renderer. */
+            if (!m11_dm1_authenticated_viewport_source_active()) {
+                m11_draw_vline(framebuffer, framebufferWidth, framebufferHeight,
+                               paneX + paneW / 2, paneY + 2, paneY + paneH - 3, M11_COLOR_YELLOW);
+            }
         }
         /* Draw door ornament on side-visible doors.
          * DM1 renders door ornaments on the side-view door frame
