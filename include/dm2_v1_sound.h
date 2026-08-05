@@ -485,6 +485,9 @@ int dm2_v1_skproject_sound6_sndptr6_allocation(
  * bound exclusively with dm2_v1_sound_bind_gdat_loader(). */
 void dm2_v1_sound_bind_verified_music_assets(const char *asset_root,
                                              int primary_assets_verified);
+/* SMF inspection can produce a scheduler handoff. Original HMP inspection is
+ * diagnostic only and always leaves the handoff fields clear until a direct
+ * source-format decoder exists. */
 int  dm2_v1_sound_inspect_music_data(const uint8_t *data, size_t size,
                                      DM2_V1_MusicStreamReceipt *out_receipt);
 int  dm2_v1_sound_queue_music(int track, int loop,

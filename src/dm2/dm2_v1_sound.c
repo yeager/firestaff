@@ -308,9 +308,16 @@ static int dm2_inspect_hmp(const uint8_t *data,
     }
     receipt->duration_ticks = tick;
     receipt->loop_duration_us = dm2_music_ticks_to_us(tick, 96u);
-    receipt->schedule_event_count = (uint16_t)receipt->event_count;
-    receipt->schedule_handoff_ready = receipt->channel_event_count > 0u;
-    receipt->midi_handoff_ready = receipt->schedule_handoff_ready;
+    /* The HMP header is sufficient for a bounded diagnostic, but not for a
+     * source-faithful player. Unlike SMF, HMP has its own track-directory
+     * and timing semantics. SKProject's MIDI code consumes converted
+     * sidecars, not the original GDAT HMP bytes. Never hand this tentative
+     * event walk to the live MIDI scheduler. */
+    memset(g_dm2_music_events, 0, sizeof(g_dm2_music_events));
+    g_dm2_music_event_count = 0;
+    receipt->schedule_event_count = 0u;
+    receipt->schedule_handoff_ready = 0;
+    receipt->midi_handoff_ready = 0;
     receipt->pcm_handoff_ready = 0;
     receipt->valid = 1;
     return DM2_V1_MUSIC_INSPECT_OK;
@@ -1465,6 +1472,19 @@ int dm2_v1_sound_queue_music(int track, int loop,
     inspect_result = dm2_v1_sound_inspect_music_data(data, size, &stream);
     if (inspect_result != DM2_V1_MUSIC_INSPECT_OK)
         return DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE;
+
+    /* The verified PC corpus is HMP, not SMF.  A successful structural
+     * inspection is deliberately not decoder proof: no original HMP payload
+     * may reach the generic MIDI backend until a direct HMP decoder owns its
+     * timing and track semantics. */
+    if (!stream.midi_handoff_ready) {
+        if (out_receipt) {
+            out_receipt->decoder_proven = 0;
+            out_receipt->schedule_handoff_ready = 0;
+            out_receipt->schedule_event_count = 0u;
+        }
+        return DM2_V1_MUSIC_QUEUE_DECODER_BACKEND_UNAVAILABLE;
+    }
 
     g_dm2_music_loop_enabled = loop ? 1 : 0;
     g_dm2_music_loop_duration_us = stream.loop_duration_us;
