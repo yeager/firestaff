@@ -1,13 +1,47 @@
 
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "nexus_v1_champion_panel.h"
 
 int main(void) {
     int fail = 0;
+    const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char path[1024];
+    FILE *file;
+    long size;
+    uint8_t *data;
+    Nexus_PanelRect stat_bars[NEXUS_STAT_BAR_RECT_COUNT];
+    Nexus_PanelRect inv_slots[NEXUS_INV_SLOT_RECT_COUNT];
+    Nexus_PanelRect equip_slots[NEXUS_EQUIP_SLOT_RECT_COUNT];
     const Nexus_PanelRect* r;
 
+    if (!root || !root[0]) root = ".firestaff/data/nexus";
+    if (snprintf(path, sizeof(path), "%s/DM.BIN", root) >= (int)sizeof(path))
+        return 77;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0 ||
+        fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        puts("SKIP: retail Nexus DM.BIN is not mounted");
+        return 77;
+    }
+    data = (uint8_t *)malloc((size_t)size);
+    if (!data || fread(data, 1U, (size_t)size, file) != (size_t)size) {
+        free(data);
+        fclose(file);
+        return 77;
+    }
+    fclose(file);
+    if (nexus_v1_champion_panel_parse_dm_bin(
+            data, (size_t)size, stat_bars, inv_slots, equip_slots) != 0) {
+        free(data);
+        fprintf(stderr, "FAIL: retail DM.BIN panel tables did not parse\n");
+        return 1;
+    }
+
     /* Stat bar table — 12 entries from DM.BIN 0x038428 */
-    r = nexus_v1_stat_bar_rects();
+    r = stat_bars;
     if (r[0].x1 != 32 || r[0].y1 != 25 || r[0].x2 != 48 || r[0].y2 != 41 ||
         r[0].action != 0x2D || r[0].param != 0) {
         fprintf(stderr, "FAIL: stat bar [0]\n"); fail++;
@@ -21,7 +55,7 @@ int main(void) {
     }
 
     /* Inventory grid — 4 entries, 2x2 at (192,152)-(224,184) */
-    r = nexus_v1_inv_slot_rects();
+    r = inv_slots;
     if (r[0].x1 != 192 || r[0].y1 != 152 || r[0].action != 0x29) {
         fprintf(stderr, "FAIL: inv slot [0]\n"); fail++;
     }
@@ -30,7 +64,7 @@ int main(void) {
     }
 
     /* Equipment slots — 8 entries around champion portrait */
-    r = nexus_v1_equip_slot_rects();
+    r = equip_slots;
     if (r[0].x1 != 257 || r[0].action != 0x2C || r[0].param != 0) {
         fprintf(stderr, "FAIL: equip slot [0]\n"); fail++;
     }
@@ -41,7 +75,7 @@ int main(void) {
     /* Hit test — click inside stat bar 0 */
     {
         const Nexus_PanelRect* hit = nexus_v1_panel_hit_test(
-            nexus_v1_stat_bar_rects(), NEXUS_STAT_BAR_RECT_COUNT, 40, 30);
+            stat_bars, NEXUS_STAT_BAR_RECT_COUNT, 40, 30);
         if (!hit || hit->param != 0) {
             fprintf(stderr, "FAIL: hit test stat bar 0\n"); fail++;
         }
@@ -50,7 +84,7 @@ int main(void) {
     /* Hit test — click inside equip slot 5 */
     {
         const Nexus_PanelRect* hit = nexus_v1_panel_hit_test(
-            nexus_v1_equip_slot_rects(), NEXUS_EQUIP_SLOT_RECT_COUNT, 280, 140);
+            equip_slots, NEXUS_EQUIP_SLOT_RECT_COUNT, 280, 140);
         if (!hit || hit->param != 5) {
             fprintf(stderr, "FAIL: hit test equip slot 5\n"); fail++;
         }
@@ -59,11 +93,13 @@ int main(void) {
     /* Hit test — miss */
     {
         const Nexus_PanelRect* hit = nexus_v1_panel_hit_test(
-            nexus_v1_inv_slot_rects(), NEXUS_INV_SLOT_RECT_COUNT, 0, 0);
+            inv_slots, NEXUS_INV_SLOT_RECT_COUNT, 0, 0);
         if (hit) {
             fprintf(stderr, "FAIL: hit test should miss\n"); fail++;
         }
     }
+
+    free(data);
 
     /* NULL safety */
     {

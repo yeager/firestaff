@@ -155,7 +155,10 @@ target_include_directories(test_nexus_v1_champion_panel PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_champion_panel PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_champion_panel COMMAND test_nexus_v1_champion_panel)
-set_tests_properties(nexus_v1_champion_panel PROPERTIES LABELS "nexus;hud;tier4")
+set_tests_properties(nexus_v1_champion_panel PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=$ENV{HOME}/.firestaff/data/nexus"
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;hud;real-media;tier4")
 
 add_executable(test_nexus_v1_creature_names
     tests/test_nexus_v1_creature_names.c)

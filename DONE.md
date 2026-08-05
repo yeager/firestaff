@@ -6,6 +6,14 @@
   are connected; packaged macOS pointer/capture comparison remains open.
   Verification: `test_m11_dm1_real_object_names`, 169 cursor pixels.
 
+- ✅ 2026-08-06 Nexus champion-panel HUD source binding: removed the
+  process-static stat-bar, inventory-slot and equipment-slot tables from
+  production. `nexus_v1_champion_panel_parse_dm_bin()` now parses the three
+  retail DM.BIN big-endian rectangle blocks at `0x38428`, `0x384D0` and
+  `0x3850C`, with bounds and rectangle validation. Verification against the
+  European corpus passes the 12/4/8 real records; adjacent HUD, automap and
+  ITEM.IBS regressions also pass.
+
 - ✅ 2026-08-06 Nexus SFX selector ownership: moved the explicitly bound
   diagnostic event→MAP selector table from process-global state into each
   `Nexus_SoundEngine`. Shutdown/init and simultaneous engine instances now
