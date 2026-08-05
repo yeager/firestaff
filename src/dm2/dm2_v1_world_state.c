@@ -25,8 +25,25 @@
 
 static int dm2_v1_world_state_has_slot_header(const uint8_t *data, size_t size)
 {
-    return data && size >= 42u && data[38] == 0xBEu && data[39] == 0xEFu &&
-           data[40] == 0xDEu && data[41] == 0xADu;
+    size_t i;
+
+    /* DM2_GAME_LOAD first consumes c_hex2a (42 bytes) with SKLOAD_READ.
+     * The four final bytes are saved dungeon metadata, not a BE/EF/DE/AD
+     * magic value.  Match the bounded header admission used by the source
+     * slot reader: version 1, a printable NUL-terminated label at byte 2,
+     * and reject only the in-memory missing-slot 0xdeadbeef sentinel.
+     *
+     * SKProject: SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD (1415-1483),
+     *           SKULLWIN/dm2data.h::c_hex2a.
+     */
+    if (!data || size < 42u || data[0] != 1u || data[1] != 0u) return 0;
+    if (data[38] == 0xefu && data[39] == 0xbeu &&
+        data[40] == 0xadu && data[41] == 0xdeu) return 0;
+    for (i = 2u; i < 38u; ++i) {
+        if (data[i] == 0u) return i != 2u;
+        if (data[i] < 0x20u || data[i] > 0x7eu) return 0;
+    }
+    return 0;
 }
 
 static void dm2_v1_world_state_init_weather_unavailable(DM2_WorldState *state)

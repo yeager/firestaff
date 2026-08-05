@@ -6,6 +6,15 @@
   level/object records and runtime viewport promotion remain fail-closed. The
   legacy `0x1584` profile remains available for its separate corpus.
 
+- ✅ 2026-08-05 DM2 world-state slot-envelope parity: corrected the legacy
+  world-state reader's false `BE EF DE AD` header test. It now consumes the
+  exact source-shaped 42-byte `c_hex2a` envelope — version one, printable
+  label, and only the little-endian `0xdeadbeef` missing-slot sentinel —
+  before handing the remaining bytes to the raw/SUPPRESS parser. The local
+  PC-English corpus verifies eight authentic raw dungeon prefixes. Its still
+  unparsed full SUPPRESS streams remain fail-closed rather than becoming a
+  partial world state.
+
 - ✅ 2026-08-06 Theron startup-receipt CUE handoff: the real startup receipt
   now consumes the authenticated Track 02 raw-media intake for `.cue` input.
   Supplied US/JP sheets with missing `TQUS02.iso`/`TQJP02.iso` aliases are

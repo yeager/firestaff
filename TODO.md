@@ -732,6 +732,12 @@
   **2026-08-05 follow-up:** the legacy `DM2_WorldState` projection now also
   leaves every per-level selector explicitly unavailable. It no longer maps
   `rain_intensity` to Rain/Clear or calls unowned new-game levels Clear.
+  **2026-08-05 follow-up:** its slot-envelope admission now matches the
+  source `c_hex2a` header (42 bytes: version, printable label and only the
+  `0xdeadbeef` missing-slot rejection). It no longer mistakes the final
+  saved-dungeon metadata for a BE/EF/DE/AD magic number. The mounted eight
+  original PC saves pass raw-prefix validation; full SUPPRESS world-state
+  import remains blocked until the complete source graph is decoded.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

@@ -156,12 +156,12 @@ int main(int argc, char **argv) {
     dm2_v1_world_state_free(state);
 
     /* The supplied retail SKSave is admitted only if its original SUPPRESS
-     * route is decoded. The bounded projection must reject an unsupported
+     * route is fully decoded. The bounded projection must reject an unparsed
      * stream rather than inventing state from bRainStrength or its bytes. */
     if (save_path) {
         DM2_WorldState *saved_state = dm2_v1_world_state_load_from_file(save_path);
         PROBE_ASSERT(saved_state == NULL,
-                     "unsupported original SKSave stays fail-closed");
+                     "unparsed original SKSave stays fail-closed");
         dm2_v1_world_state_free(saved_state);
     }
 
