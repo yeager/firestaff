@@ -49682,6 +49682,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `test_theron_v1_combat_runtime_noop` to prove production spawn, combat,
   spell, drop and sound publication stays blocked. Production build plus the
   raw-media intake, combat fixture and mechanics regressions pass.
+- ✅ 2026-08-05 Theron bank-$1f static consumer receipt: materialised the real
+  `TQUS19.iso` from the supplied archive (MD5
+  `51b40a17b92a30339957ba564aa0015c`) and added
+  `test_theron_v1_bank1f_consumer_receipt`. It checks the exact 134 bytes at
+  file offset `$1f0000+$243e` against the source-locked HuC6280 fragment and
+  keeps the later RAM-loaded `$2600` consumer explicitly absent. The focused
+  combat-boundary, stage-2, raw-media and bank-consumer tests pass 4/4.
 - ✅ 2026-08-06 DM1 sensor effect ownership: F0718 floor and stairs sensor
   effects now carry the authenticated PC34 common-word SET/CLEAR/TOGGLE/HOLD
   field instead of forcing a synthetic TOGGLE. HOLD resolves to SET for the

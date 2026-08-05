@@ -22648,6 +22648,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   published from guessed records. Compatibility mechanics remain explicit in
   fixture/probe targets. The next replacement is still the authenticated
   Track 02 T500/T600/T900 consumer, not a new host-side table.
+- 🔧 2026-08-05 Theron static consumer receipt: the authenticated US Track 19
+  image now has a byte/MD5-locked regression for bank `$1f` `$243e–$24c3`.
+  It proves the existing HuC6280 bitstream/register-map fragment against the
+  real `TQUS19.iso` and explicitly records that the `$2600` consumer is absent
+  from static ROM. The next step remains a real post-CD RAM capture with PC
+  and source-LBA provenance; no RAM bytes or level/object semantics are
+  inferred from this receipt.
 - 🔧 Startup presentation hardening: stage/Soul Room render rows, enriched startup layout labels, and Track 02 descriptor-role receipt summaries are now test-visible; remaining work is real Track 02 startup art/audio decoding and pixel evidence instead of fallback text presentation.
 - ✅ 2026-07-22: Theron boot now owns the runtime input/idle facade (`theron_v1_boot_runtime_handle_m12_input` / `theron_v1_boot_runtime_handle_idle_tick`); M11 Track 02 runtime path no longer calls `theron_v1_boot_runtime_tick_world`, `theron_v1_boot_runtime_turn_party`, or `theron_v1_boot_runtime_move_party` directly. Regression test `test_theron_v1_boot_runtime_input` passes 12/12; related probes (`theron_v1_rendering`, `theron_v1_startup_flow_probe`, `theron_v1_m11_direct_launch`, `m11_phase_a`) pass.
 - ✅ 2026-07-23: Theron boot now owns the startup host-receipt apply facade (`theron_v1_boot_apply_startup_host_receipt`); M11 no longer maps `Theron_StartupHostReceipt` fields to `m11_set_status`, `m11_set_inspect_readout`, `m11_log_event`, or input-result actions directly. M11 provides a small callback table (`set_status` / `set_inspect` / `log_event`) and the facade owns the decision order and semantics. This closes the chapter-inspect wiring and startup host-receipt apply items from the 2026-07-22 remaining work. Regression test `test_theron_v1_boot_host_receipt` passes 14/14; related probes (`theron_v1_rendering`, `theron_v1_startup_flow_probe`, `theron_v1_m11_direct_launch`, `theron_v1_m11_launcher_handoff_boundary`, `m11_phase_a`) pass.
