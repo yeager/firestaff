@@ -317,22 +317,34 @@ static void test_fmtowns_startup_surface_decode(void)
         printf("  SKIP: FIRESTAFF_CSB_FMTOWNS_GRAPHICS not set\n");
         return;
     }
-    memset(&receipt, 0, sizeof(receipt));
-    CHECK(csb_v1_boot_decode_graphics_dat_asset_pc34(
-              path, 1u, &pixels, &width, &height, &receipt) &&
-          pixels && width == 320 && height == 153 && receipt.valid &&
-          receipt.indexed_colors_are_4bit &&
-          receipt.compressed_record_sha256[0] != '\0',
-          "FM Towns C001 reaches the startup IMG2 surface route");
-    free(pixels);
-    pixels = NULL;
-    memset(&receipt, 0, sizeof(receipt));
-    CHECK(csb_v1_boot_decode_graphics_dat_asset_pc34(
-              path, 4u, &pixels, &width, &height, &receipt) &&
-          pixels && width == 320 && height == 200 && receipt.valid &&
-          receipt.compressed_record_sha256[0] != '\0',
-          "FM Towns C004 reaches the entrance IMG2 surface route");
-    free(pixels);
+#define CHECK_FMTOWNS_STARTUP_SURFACE(index, expected_width, expected_height, label) \
+    do {                                                                  \
+        memset(&receipt, 0, sizeof(receipt));                            \
+        CHECK(csb_v1_boot_decode_graphics_dat_asset_pc34(                \
+                  path, (index), &pixels, &width, &height, &receipt) && \
+              pixels && width == (expected_width) &&                     \
+              height == (expected_height) && receipt.valid &&           \
+              receipt.ended_at_record_boundary &&                        \
+              receipt.indexed_colors_are_4bit &&                         \
+              receipt.compressed_record_sha256[0] != '\0',              \
+              (label));                                                   \
+        free(pixels);                                                     \
+        pixels = NULL;                                                    \
+    } while (0)
+
+    /* ReDMCSB ENTRANCE.C F0806/F0442 selects C002..C005.  These exact
+     * dimensions come from the authenticated 728-item FM Towns table. */
+    CHECK_FMTOWNS_STARTUP_SURFACE(
+        1u, 320, 153, "FM Towns C001 reaches the startup IMG2 surface route");
+    CHECK_FMTOWNS_STARTUP_SURFACE(
+        2u, 105, 161, "FM Towns C002 reaches the left-door IMG2 surface route");
+    CHECK_FMTOWNS_STARTUP_SURFACE(
+        3u, 128, 161, "FM Towns C003 reaches the right-door IMG2 surface route");
+    CHECK_FMTOWNS_STARTUP_SURFACE(
+        4u, 320, 200, "FM Towns C004 reaches the entrance IMG2 surface route");
+    CHECK_FMTOWNS_STARTUP_SURFACE(
+        5u, 320, 200, "FM Towns C005 reaches the credits IMG2 surface route");
+#undef CHECK_FMTOWNS_STARTUP_SURFACE
 }
 
 int main(void)
