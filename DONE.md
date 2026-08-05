@@ -1,3 +1,8 @@
+- ✅ 2026-08-05 Theron scripted-creature stat boundary: THIEF/DEMON no longer
+  fall back to approximated host base stats when their Track 02 scripted
+  encounter records are unavailable. Spawn rejects before publishing state;
+  the regression covers both dungeon IDs.
+
 - ✅ 2026-08-05 Theron creature-stat fail-closed boundary: unknown Track 02
   spawn categories no longer receive fabricated fallback HP/attack/defense
   values. The stat API reports rejection and clears its output; creature

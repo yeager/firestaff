@@ -51,6 +51,9 @@
   longer invents fallback HP/attack/defense values outside the four
   disassembly-backed formulas.
 
+  THIEF/DEMON scripted encounters no longer use approximated template stats;
+  bind their source encounter records before admitting them to combat.
+
 - **THERON-FIXTURE-HELPER-ARCHIVE:** Closed 2026-07-31. Synthetic first-room
   constructors are now compiled only into explicit fixture targets; the
   production Theron archive exports no generated level-buffer helpers.

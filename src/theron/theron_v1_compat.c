@@ -34,12 +34,11 @@
 /* 7 real creature types from Track 02 UD 0x2741EF, one per dungeon.
  * Theron has NO per-type stat table (unlike DM1 G0243). Stats come from
  * category-based formulas at spawn (see theron_v1_track02_creature_spawn.h).
- * Values below are runtime approximations for the combat system. */
+ * The category formula supplies stats for regular Track 02 spawns.  Scripted
+ * THIEF/DEMON encounters have no decoded stat record yet and are rejected
+ * below instead of receiving host-invented base values. */
 typedef struct {
     Theron_CreatureType type;
-    int base_hp;
-    int base_attack;
-    int base_defense;
     int speed;
     Theron_AIBehaviour ai;
     Theron_AttackType primary;
@@ -50,19 +49,19 @@ typedef struct {
 } Theron_CreatureTemplate;
 
 static const Theron_CreatureTemplate g_creature_templates[] = {
-    { THERON_CREATURE_AKUTUBA, 12,  4, 1, 3, THERON_AI_GUARD,
+    { THERON_CREATURE_AKUTUBA, 3, THERON_AI_GUARD,
       THERON_ATTACK_SLASH, THERON_ATTACK_NONE, 1,  5,  { THERON_ITEM_FOOD, 0, 0, 0 } },
-    { THERON_CREATURE_DRATOR,  20,  6, 2, 3, THERON_AI_CHASE,
+    { THERON_CREATURE_DRATOR,  3, THERON_AI_CHASE,
       THERON_ATTACK_SLASH, THERON_ATTACK_NONE, 2,  8,  { THERON_ITEM_WEAPON, 0, 0, 0 } },
-    { THERON_CREATURE_FORMIC,  18,  5, 2, 4, THERON_AI_CHASE,
+    { THERON_CREATURE_FORMIC,  4, THERON_AI_CHASE,
       THERON_ATTACK_PIERCE, THERON_ATTACK_NONE, 1, 6,  { THERON_ITEM_POTION, 0, 0, 0 } },
-    { THERON_CREATURE_SARMON,  24,  5, 1, 2, THERON_AI_CHASE,
+    { THERON_CREATURE_SARMON,  2, THERON_AI_CHASE,
       THERON_ATTACK_POISON, THERON_ATTACK_NONE, 1, 4,  { 0, 0, 0, 0 } },
-    { THERON_CREATURE_SHADO,   10,  3, 1, 3, THERON_AI_GUARD,
+    { THERON_CREATURE_SHADO,   3, THERON_AI_GUARD,
       THERON_ATTACK_SLASH, THERON_ATTACK_NONE, 1, 3,  { 0, 0, 0, 0 } },
-    { THERON_CREATURE_THIEF,   35,  8, 3, 2, THERON_AI_CHASE,
+    { THERON_CREATURE_THIEF,   2, THERON_AI_CHASE,
       THERON_ATTACK_SLASH, THERON_ATTACK_NONE, 5, 15, { THERON_ITEM_ARMOR, 0, 0, 0 } },
-    { THERON_CREATURE_DEMON,   40, 10, 4, 3, THERON_AI_CHASE,
+    { THERON_CREATURE_DEMON,   3, THERON_AI_CHASE,
       THERON_ATTACK_MAGIC, THERON_ATTACK_BLAST, 8, 25, { 0, 0, 0, 0 } },
 };
 
@@ -127,10 +126,9 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
         c->attack = stats.attack;
         c->defense = stats.defense;
     } else {
-        c->hp = tmpl->base_hp;
-        c->max_hp = tmpl->base_hp;
-        c->attack = tmpl->base_attack;
-        c->defense = tmpl->base_defense;
+        /* THIEF/DEMON have scripted encounters, not decoded regular spawn
+         * stat records. Do not publish fabricated combat state. */
+        return -1;
     }
     c->speed = tmpl->speed;
     c->ai = tmpl->ai;

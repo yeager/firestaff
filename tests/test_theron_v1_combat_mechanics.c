@@ -119,6 +119,26 @@ static void test_creature_spawn_and_lookup(void) {
     CHECK(missing == NULL, "creature_at returns NULL for empty square");
 }
 
+static void test_scripted_creature_spawn_requires_source_stats(void) {
+    printf("[test:scripted_creature_spawn_requires_source_stats]\n");
+    Theron_V1_World w;
+    make_world(&w);
+    w.current_dungeon = THERON_DUNGEON_6_THIEF;
+
+    int thief = theron_v1_creature_spawn(&w, THERON_CREATURE_THIEF,
+                                         w.current_dungeon, w.current_level,
+                                         9, 8);
+    CHECK_INT("THIEF without decoded scripted stats is rejected", thief, -1);
+    CHECK_INT("rejected THIEF does not publish a creature", w.creature_count, 0);
+
+    w.current_dungeon = THERON_DUNGEON_7_DEMON;
+    int demon = theron_v1_creature_spawn(&w, THERON_CREATURE_DEMON,
+                                         w.current_dungeon, w.current_level,
+                                         9, 8);
+    CHECK_INT("DEMON without decoded scripted stats is rejected", demon, -1);
+    CHECK_INT("rejected DEMON does not publish a creature", w.creature_count, 0);
+}
+
 static void test_champion_attack_kills_creature(void) {
     printf("[test:champion_attack_kills_creature]\n");
     Theron_V1_World w;
@@ -659,6 +679,7 @@ int main(void) {
 
     test_sound_validation();
     test_creature_spawn_and_lookup();
+    test_scripted_creature_spawn_requires_source_stats();
     test_champion_attack_kills_creature();
     test_creature_attack_champion();
     test_creature_drop_loot();
