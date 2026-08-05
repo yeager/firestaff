@@ -50337,3 +50337,16 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   the hash-verified LEV00--LEV15 admission route; the real LEV00 diagnostic
   still decodes indexed-4bpp and direct-555 surfaces, but neither reaches
   viewport/VDP1 drawing.
+
+
+- ✅ 2026-08-06 DM1 external original-save corpus: verified the two
+  operator-staged PC34 files `DMSAVE.DAT` and `DMSAVE (1).DAT` from
+  `/Users/bosse/Downloads` against the real PC3.4 dungeon backing. Both
+  48,561-byte files pass the checksum-qualified original-save classifier and
+  the production F0435 import -> live runtime -> F0433 export -> second F0435
+  import route. `test_dm1_v1_original_save_pc34_backed_corpus_roundtrip`
+  passes 2/2 with the real `DUNGEON.DAT`; no save bytes were added to git.
+  SHA-256 identities:
+  `26ccd1591ccf6ec9e53186e994f73924185143f82055312cafd474ed7abc9437` and
+  `ab7bb4a34b77bba033d7b6c31db32e7198a962b0e55c0644c0486f50bb361ecb`.
+  Broader C13 corpus and packaged Mac/app capture remain open.

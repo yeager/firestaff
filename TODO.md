@@ -10925,15 +10925,21 @@ lane is carried forward in the sections below.
   one of its bounded full-file slots. Unrelated media cannot hide a later
   arbitrary-named PC34 save; discovery receipts retain only header-qualified
   ReDMCSB save material. The fixture-free real-corpus probe is now a CMake
-  target. Local evidence: `data/dm1` scanned 40 files with zero qualified
-  PC34 candidates; its PC 3.4 archives list disk images/raw tracks only, not
-  `DMSAVE`/`DMGAME` payloads. Remaining verification is a positive
-  operator-staged
-  `FIRESTAFF_DM1_PC34_SAVE_CORPUS` plus `FIRESTAFF_DM1_PC_DATA` run; the local
-  machine currently has no real DM1 PC34 save corpus, so CTest proves the
-  route and skip safety but does not claim admitted original-save evidence.
-  Keep corpus promotion limited to external F0435-qualified PC34 files;
-  Firestaff-manifest exports remain rejected as corpus evidence.
+  target. The local `data/dm1` archives still contain no save payload, but
+  the operator-staged files `/Users/bosse/Downloads/DMSAVE.DAT` and
+  `/Users/bosse/Downloads/DMSAVE (1).DAT` are now positive original PC34
+  corpus evidence: both are 48,561 bytes and classify as checksum-qualified
+  DM1 PC34 envelopes. Keep corpus promotion limited to external
+  F0435-qualified PC34 files; Firestaff-manifest exports remain rejected as
+  corpus evidence.
+  Verification on 2026-08-06: with
+  `FIRESTAFF_DM1_PC34_SAVE_CORPUS=/Users/bosse/Downloads` and
+  `FIRESTAFF_DM1_PC_DATA=/tmp/firestaff-dm1-real-20260805`,
+  `test_dm1_v1_original_save_pc34_backed_corpus_roundtrip` passed 2/2,
+  including import, runtime adoption, F0433 export, and second F0435 import.
+  SHA-256: `26ccd1591ccf6ec9e53186e994f73924185143f82055312cafd474ed7abc9437`
+  and `ab7bb4a34b77bba033d7b6c31db32e7198a962b0e55c0644c0486f50bb361ecb`.
+  Remaining: broader C13-bearing corpus and packaged Mac/app capture.
   - 2026-07-23 update: the public `DM1_SaveGamePC34()` path now emits an
     untagged PC3.4 envelope through F0803; the former manifest-bearing F0802
     route remains diagnostic-only. The focused F0435 handoff regression proves
