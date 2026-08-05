@@ -143,7 +143,12 @@ static void print_csb_verified_source_media(const M12_AssetStatus* status) {
         "SWOOSH", "SWOOSH.DAT", "SWSHSND.C", "SWSHSND.DAT",
         "HCSB.HTC", "HCSBF.HTC", "HCSBG.HTC", "HCSB.DAT", "HINT.FTL",
         "ANIMATE.DAT", "ANIMATE.SCR", "ANIMATE.FTL", "CHAOS.FTL",
-        "FTLCODE", "SWITCH.DAT", "MINI.DAT"
+        "FTLCODE", "SWITCH.DAT", "MINI.DAT",
+        /* Greatstone's Amiga 3.1 catalogue: these are independent title,
+         * credits, palette/code and logo-media files, not GRAPHICS.DAT
+         * aliases. The cache accepts them only after their exact source MD5
+         * is verified in asset_status_m12.c. */
+        "TITL.DAT", "ENDA.DAT", "KAOS.FTL", "SWSH.FTL"
     };
     size_t i;
     int heading_printed = 0;
