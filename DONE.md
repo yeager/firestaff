@@ -7076,6 +7076,13 @@
   a non-playable save. Source: `SKULLWIN/dm2data.h:150-159`,
   `c_dialog.cpp:115-117,199-202,337-343`, `c_savegame.cpp:2169-2204`.
 
+- ✅ 2026-08-05 DM2 music-label synthetic-data removal: deleted the unused
+  invented HMP track-name table from the active sound module and corrected its
+  source count to 29 tracks. Playback continues to use only the authenticated
+  `SONGLIST.DAT` selector and `GRAPHICS.DAT::MUSICS/<0x00..0x1c>/dtHMP/0`
+  identity; no semantic name is inferred from an index. Source: DMWeb
+  "Dungeon Master II Music Triggers" and "Data Files".
+
 - ✅ 2026-08-05 DM2 hero-progression RNG placeholder removal: the linked
   callback-compatible `dm2_v1_adjust_skills()` path no longer substitutes
   `DM2_RANDDIR()` with zero for wizard/priest level-up mana or antimagic. It
