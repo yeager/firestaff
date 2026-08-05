@@ -54,6 +54,40 @@ static uint8_t tile_type_at(const Theron_DungeonData *dd,
     return theron_tile_type(dd->maps[map].tiles[x][y]);
 }
 
+static int retain_source_object_occurrence(
+    Theron_DungeonLoadResult *result,
+    uint16_t source_ref,
+    unsigned int category,
+    unsigned int source_index,
+    unsigned int position,
+    const uint8_t *raw,
+    size_t raw_size,
+    unsigned int map,
+    unsigned int x,
+    unsigned int y)
+{
+    Theron_Track02SourceObjectOccurrence *occurrence;
+
+    if (!result || !raw || category >= THERON_ITEM_CATEGORY_COUNT ||
+        source_index > UINT8_MAX || position > UINT8_MAX ||
+        raw_size == 0u || raw_size > sizeof(occurrence->raw) ||
+        result->source_object_count >= THERON_TRACK02_SOURCE_OBJECT_MAX)
+        return 0;
+    occurrence = &result->source_objects[result->source_object_count++];
+    memset(occurrence, 0, sizeof(*occurrence));
+    occurrence->source_ref = source_ref;
+    occurrence->next_ref = (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
+    occurrence->category = (uint8_t)category;
+    occurrence->source_index = (uint8_t)source_index;
+    occurrence->position = (uint8_t)position;
+    occurrence->raw_size = (uint8_t)raw_size;
+    memcpy(occurrence->raw, raw, raw_size);
+    occurrence->map = (uint16_t)map;
+    occurrence->x = (uint16_t)x;
+    occurrence->y = (uint16_t)y;
+    return 1;
+}
+
 int theron_v1_track02_load_full_dungeon(
     Theron_V1_World *world,
     int dungeon_id,
@@ -219,6 +253,13 @@ int theron_v1_track02_load_full_dungeon(
                     free(td);
                     return -1;
                 }
+                if (!retain_source_object_occurrence(
+                        result, ref, cat, id, pos, raw, theron_item_bytes[cat],
+                        map, tx, ty)) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
                 /* Source record and chain are real and consumed. The host
                  * object kind/item-index owner is not yet proven, so keep
                  * the record out of Theron_V1_Object and continue the chain. */
@@ -231,6 +272,14 @@ int theron_v1_track02_load_full_dungeon(
             case THERON_CAT_CLOUD:
                 /* The two-byte source next-ref is authenticated, but the
                  * remaining missile/cloud fields have no decoded consumer. */
+                if (!retain_source_object_occurrence(
+                        result, ref, cat, id, pos, &td->items[cat][id *
+                        theron_item_bytes[cat]], theron_item_bytes[cat],
+                        map, tx, ty)) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
                 result->raw_only_item_refs++;
                 result->unbound_item_refs++;
                 place = 0;

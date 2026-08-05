@@ -9,6 +9,14 @@
   hand; `test_m11_dm1_real_object_names` passes alongside the 611-record
   object corpus and real HoC alcove placement tests. Packaged macOS pointer
   and panel capture remains open.
+- ✅ 2026-08-06 Theron Track 02 object-record handoff: the real dungeon
+  loader now retains every decoded category-4..10 occurrence, plus raw
+  missile/cloud occurrences, with source reference, category/index, map
+  position, next-link and exact source bytes in a bounded receipt. The host
+  object table remains unchanged: no guessed inventory or gameplay type is
+  published. Verification: all seven authentic US dungeons, 640 retained
+  source occurrences, and raw next-link/size checks passed.
+
 - ✅ 2026-08-06 Theron real app-capture discovery: the Main-RAM loader
   receipt test now automatically searches the user's
   `.firestaff/firestaff-probe-screenshots` directory for a valid

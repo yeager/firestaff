@@ -1,4 +1,5 @@
 #include "theron_v1_track02_dungeon_loader.h"
+#include "theron_v1_track02_thing_data.h"
 #include "theron_v1_world.h"
 #include <assert.h>
 #include <stdio.h>
@@ -91,6 +92,20 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.source_records_decoded > 0);
         assert(result.unbound_item_refs == result.source_records_decoded +
                result.raw_only_item_refs);
+        assert(result.source_object_count ==
+               (unsigned int)result.unbound_item_refs);
+        for (unsigned int i = 0; i < result.source_object_count; ++i) {
+            const Theron_Track02SourceObjectOccurrence *occ =
+                &result.source_objects[i];
+            assert(occ->category == THERON_CAT_MONSTER ||
+                   (occ->category >= THERON_CAT_WEAPON &&
+                    occ->category <= THERON_CAT_MISC) ||
+                   occ->category == THERON_CAT_MISSILE ||
+                   occ->category == THERON_CAT_CLOUD);
+            assert(occ->raw_size == theron_item_bytes[occ->category]);
+            assert(occ->next_ref ==
+                   ((uint16_t)occ->raw[0] | ((uint16_t)occ->raw[1] << 8)));
+        }
         /* Champions and creatures are linked through actuators (champion
          * mirror type 127), not directly through ground refs. */
         assert(world->object_count == result.total_things_placed);

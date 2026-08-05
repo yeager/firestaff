@@ -350,6 +350,12 @@
   synthetic `0x10 + category` host objects. Bind real item kind/index records
   before reopening that branch.
 
+  The loader now retains each real category-4..10 and raw category-14/15
+  occurrence in a bounded source receipt with its packed reference, raw
+  next-link, category/index, map position and exact bytes. This is an opaque
+  handoff only; the original consumer still has to bind item kind/index to
+  host inventory semantics before these records may become live objects.
+
   Unknown creature-stat categories are now rejected as well; the runtime no
   longer invents fallback HP/attack/defense values outside the four
   disassembly-backed formulas.
