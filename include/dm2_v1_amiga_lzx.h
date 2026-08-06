@@ -62,6 +62,14 @@ const DM2_V1_AmigaLzxEntry *dm2_v1_amiga_lzx_find(
  * original-hash verification. */
 int dm2_v1_amiga_lzx_has_install_payload(const DM2_V1_AmigaLzxArchive *archive);
 
+/* Decodes one declared file entirely in RAM.  The archive's LZX CRC is
+ * verified before success.  The caller owns the returned bytes and releases
+ * them with dm2_v1_amiga_lzx_free(). */
+int dm2_v1_amiga_lzx_extract_entry(const DM2_V1_AmigaLzxArchive *archive,
+                                   const uint8_t *archive_bytes,
+                                   const DM2_V1_AmigaLzxEntry *entry,
+                                   uint8_t **out_bytes, size_t *out_size);
+
 #ifdef __cplusplus
 }
 #endif

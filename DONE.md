@@ -1,3 +1,13 @@
+- ✅ 2026-08-06 DM2 Amiga LZX in-memory decoder: implemented the bounded
+  64 KiB-window LZX solid-stream decoder required by the authentic Amiga
+  installer archive. It honors the original swapped-byte bitstream, block
+  modes, delta Huffman tables and per-entry CRC before releasing any decoded
+  bytes to the caller. The real six-disk corpus now decodes `GRAPHICS.DAT`
+  (3,493,879 bytes), `DUNGEON.DAT` (39,411 bytes) and `CD.DAT` (176 bytes) in
+  RAM; `CD.DAT` also reaches the existing original MOD-map parser. The media
+  remains non-launchable until M12 applies its existing MD5 identity gate to
+  these in-memory outputs. No game data was unpacked, copied or tracked.
+
 - ✅ 2026-08-06 DM2 Amiga installer-media index: Firestaff now joins the
   authentic `dm2_arcsplit1`…`dm2_arcsplit6` corpus strictly in RAM and parses
   its original `DM2_archive.LZX` index without extracting or publishing a

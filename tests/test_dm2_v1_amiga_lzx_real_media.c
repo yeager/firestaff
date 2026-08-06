@@ -6,6 +6,7 @@
  * user supplied. */
 
 #include "dm2_v1_amiga_lzx.h"
+#include "dm2_v1_amiga_cd_dat.h"
 #include "firestaff_amiga_adf.h"
 
 #include <assert.h>
@@ -129,10 +130,13 @@ static void test_original_installer_media(void) {
     const char *archive_path = amiga_archive_path();
     DM2_V1_AmigaLzxPart parts[DM2_V1_AMIGA_LZX_PART_COUNT] = {{0}};
     DM2_V1_AmigaLzxArchive archive;
+    DM2_V1_AmigaCdDat cd_map;
     const DM2_V1_AmigaLzxEntry *graphics;
     const DM2_V1_AmigaLzxEntry *dungeon;
     const DM2_V1_AmigaLzxEntry *cd_dat;
     uint8_t *joined = NULL;
+    uint8_t *decoded = NULL;
+    size_t decoded_size = 0u;
     size_t joined_size = 0u;
     unsigned int i;
     FILE *file;
@@ -158,8 +162,24 @@ static void test_original_installer_media(void) {
     assert(dungeon && dungeon->uncompressed_size == 39411u &&
            dungeon->compressed_size == 0u && dungeon->method == 2u);
     assert(cd_dat && cd_dat->uncompressed_size == 176u && cd_dat->method == 2u);
+    assert(dm2_v1_amiga_lzx_extract_entry(&archive, joined, dungeon,
+                                          &decoded, &decoded_size) == 1);
+    assert(decoded_size == dungeon->uncompressed_size);
+    dm2_v1_amiga_lzx_free(decoded);
+    decoded = NULL;
+    assert(dm2_v1_amiga_lzx_extract_entry(&archive, joined, graphics,
+                                          &decoded, &decoded_size) == 1);
+    assert(decoded_size == graphics->uncompressed_size);
+    dm2_v1_amiga_lzx_free(decoded);
+    decoded = NULL;
+    assert(dm2_v1_amiga_lzx_extract_entry(&archive, joined, cd_dat,
+                                          &decoded, &decoded_size) == 1);
+    assert(decoded_size == 176u);
+    assert(dm2_v1_amiga_cd_dat_parse(&cd_map, decoded, decoded_size) == 1);
+    assert(dm2_v1_amiga_cd_dat_mod_for_map(&cd_map, 0) == 3);
+    dm2_v1_amiga_lzx_free(decoded);
     printf("  PASS: six original parts index %u LZX entries in RAM\n", archive.entry_count);
-    printf("  PASS: original GRAPHICS.DAT/DUNGEON.DAT/CD.DAT receipts found\n");
+    printf("  PASS: original GRAPHICS.DAT, DUNGEON.DAT and CD.DAT decode in RAM\n");
     dm2_v1_amiga_lzx_free(joined);
     for (i = 0u; i < DM2_V1_AMIGA_LZX_PART_COUNT; ++i) free((void *)parts[i].bytes);
 }
