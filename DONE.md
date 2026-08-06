@@ -1,3 +1,12 @@
+# DM1 C175 inventory-portrait synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C175 portrait-click guard from M10. It
+  fabricates party, hand and candidate state, has no original DM1 data input
+  or M11/runtime caller, and its explicit regression compiles it directly.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat`
+  passes with 83 assertions; the source object is absent from both M10 and M11
+  archives.
+
 # DM1 C040/C162/C127 same-tick synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only cancel-then-reopen fixture from M10. It

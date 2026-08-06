@@ -4822,6 +4822,12 @@ list(REMOVE_ITEM M10_SOURCES
 # its generated mirror regression compiles it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat.c")
+# `dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat.c` is a
+# contract-only C175 portrait-click guard with synthetic party, hand and
+# candidate state. It has no original DM1 data input or M11/runtime caller;
+# its explicit regression compiles it directly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat.c")
 # `dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c`
 # is a deterministic C040/chest/rotation scenario fixture. It reads no
 # original DM1 data and has no M11/runtime caller; its explicit regression
@@ -53642,7 +53648,9 @@ add_executable(test_dm1_v1_mirror_candidate_inventory_click_during_rotation_pc34
 target_include_directories(test_dm1_v1_mirror_candidate_inventory_click_during_rotation_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_inventory_click_during_rotation_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_inventory_click_during_rotation_pc34_compat COMMAND test_dm1_v1_mirror_candidate_inventory_click_during_rotation_pc34_compat)
-add_executable(test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat tests/test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat.c)
+add_executable(test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat
+    tests/test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat.c
+    src/dm1/dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat.c)
 target_include_directories(test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat COMMAND test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat)
