@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHEST-C061-ROTATION-SYNTHETIC-AUDIT:** This C061/C540 queue fixture
+  fabricates chest, hand, load and rotation state. It loads no original DM1
+  data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound command-queue owner is recovered.
+
 - **DM1-CHEST-MID-CLOSE-HAND-SWAP-SYNTHETIC-AUDIT:** This manual chest-close
   fixture fabricates linked items, slots and hand state. It loads no original
   DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
