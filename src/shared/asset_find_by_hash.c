@@ -3422,31 +3422,6 @@ static int external_extract_entry_to_path(const char *archivePath,
     return 0;
 }
 
-/* The Windows scanner intentionally keeps external command-backed archive
- * extraction disabled.  Keep the nested ADF helpers available to the
- * Windows compiler as fail-closed stubs as well; otherwise the ADF call sites
- * below become implicit declarations under UCRT64. */
-static uint8_t *external_read_entry_bytes(const char *archivePath,
-                                          const char *entryName,
-                                          size_t *outSize) {
-    (void)archivePath;
-    (void)entryName;
-    (void)outSize;
-    return NULL;
-}
-
-static int copy_nested_virtual_match_path(const char *archive,
-                                          const char *adf,
-                                          const char *entry,
-                                          char *outPath,
-                                          int outPathLen) {
-    (void)archive;
-    (void)adf;
-    (void)entry;
-    (void)outPath;
-    (void)outPathLen;
-    return 0;
-}
 #endif
 
 /* ── Missing-extractor diagnostics ───────────────────────────────
