@@ -4722,6 +4722,11 @@ list(REMOVE_ITEM M10_SOURCES
 # in its explicit regression target.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_pc34_compat.c")
+# `dm1_v1_chest_action_hand_owner_change_pc34_compat.c` is a synthetic
+# contract-only state machine. Its explicit regression target already compiles
+# it, and no M11 or live DM1 path calls it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_action_hand_owner_change_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
