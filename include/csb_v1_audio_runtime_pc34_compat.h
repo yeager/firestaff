@@ -117,6 +117,14 @@ typedef struct CsbV1StSoundDecodeResult {
     size_t encodedBytesConsumed;
 } CsbV1StSoundDecodeResult;
 
+/* ReDMCSB SOUND.C F1051 / F0709 (Amiga 3.1/3.3): a decompressed sound
+ * graphic begins with its big-endian byte count; exactly that many signed
+ * 8-bit samples follow.  It is deliberately separate from PC/Atari F0060. */
+typedef struct CsbV1AmigaSoundPayloadView {
+    const uint8_t* samples;
+    size_t byteCount;
+} CsbV1AmigaSoundPayloadView;
+
 /* F0061 selects all three PSG amplitude registers from its loud table. */
 typedef struct CsbV1PsgChannelAmplitudes {
     uint8_t channelA;
@@ -181,6 +189,10 @@ int csb_v1_audio_runtime_decode_st_sound(const uint8_t* encoded,
                                          uint8_t* outLevels,
                                          size_t outLevelCapacity,
                                          CsbV1StSoundDecodeResult* outResult);
+
+int csb_v1_audio_runtime_amiga_sound_payload_view(
+    const uint8_t* decompressedRecord, size_t recordSize,
+    CsbV1AmigaSoundPayloadView* outView);
 
 const char* csb_v1_audio_runtime_source_evidence(void);
 

@@ -42,6 +42,23 @@ static uint16_t csb_v1_audio_read_be16(const uint8_t* bytes)
     return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
 }
 
+int csb_v1_audio_runtime_amiga_sound_payload_view(
+    const uint8_t* decompressedRecord, size_t recordSize,
+    CsbV1AmigaSoundPayloadView* outView)
+{
+    uint16_t byteCount;
+    if (!decompressedRecord || !outView || recordSize < 2u) return 0;
+    memset(outView, 0, sizeof(*outView));
+    byteCount = csb_v1_audio_read_be16(decompressedRecord);
+    /* F1051 subtracts two from the decompressed graphic size, then F0709
+     * uses the following bytes unchanged.  Any tail would be a different
+     * record format, not valid Amiga PCM evidence. */
+    if ((size_t)byteCount + 2u != recordSize) return 0;
+    outView->samples = decompressedRecord + 2u;
+    outView->byteCount = byteCount;
+    return 1;
+}
+
 static int csb_v1_audio_read_nibble(const uint8_t* encoded,
                                     size_t encodedSize,
                                     size_t* nibbleIndex,

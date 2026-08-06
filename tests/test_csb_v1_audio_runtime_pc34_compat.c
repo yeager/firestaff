@@ -71,6 +71,18 @@ static void test_pc34_source_sound_table(void)
           "out-of-range source sound index is rejected");
 }
 
+static void test_amiga_source_sound_record(void)
+{
+    const uint8_t record[] = { 0x00, 0x04, 0x80, 0x00, 0x7f, 0xff };
+    CsbV1AmigaSoundPayloadView view;
+    CHECK(csb_v1_audio_runtime_amiga_sound_payload_view(record, sizeof(record), &view) == 1,
+          "Amiga F1051 sound record admits exact length");
+    CHECK(view.byteCount == 4u && view.samples == record + 2u,
+          "Amiga payload skips its source length word");
+    CHECK(csb_v1_audio_runtime_amiga_sound_payload_view(record, sizeof(record) - 1u, &view) == 0,
+          "Amiga sound record rejects a truncated payload");
+}
+
 static void test_pc34_source_sound_payload(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_PC34_GRAPHICS_DAT");
@@ -273,6 +285,7 @@ int main(void)
 {
     test_init_contract();
     test_pc34_source_sound_table();
+    test_amiga_source_sound_record();
     test_pc34_source_sound_payload();
     test_rejections();
     test_completed_play_history();
