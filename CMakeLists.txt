@@ -4327,6 +4327,12 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
 # archive until a source-material consumer owns the frame.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0117_pc34_compat.c")
+# `dm1_v1_g0212_pc34_compat.c` is a generated copy of the smoke palette map
+# and has no production caller.  The data-owned F0663 smoke-material route
+# is the live consumer, binding this map to authenticated GRAPHICS.DAT
+# surfaces; keep G0212's duplicate only in its direct source-lock test.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0212_pc34_compat.c")
 # `dm1_v1_chest_open_while_another_open_pc34_compat.c` is a source-locked
 # scenario fixture with fixed Thing ordinals and a local Next-array model.
 # It reads no original DM1 data and has no M11/runtime caller; its dedicated

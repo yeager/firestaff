@@ -10,6 +10,12 @@
   made its direct regression compile the source explicitly. It loads no
   original DM1 data and has no M11/runtime caller.
 
+# DM1 G0212 smoke-palette synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the duplicate source-lock smoke palette table from M10. The live
+  F0663 material route owns the same palette map and admits it only with
+  authenticated `GRAPHICS.DAT` smoke surfaces; G0212 remains a direct test.
+
 # DM1 G0117 stair-frame synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the generated, source-locked Graphic558 D1C stair-frame table
