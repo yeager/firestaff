@@ -269,9 +269,10 @@ static int load_real_creature_ai_table(const char *root,
         return 0;
     }
     /* c_querydb.cpp::DM2_QUERY_GDAT_CREATURE_WORD_VALUE falls back to this
-     * exact category/index/dtWordValue query after its short cache. Record
-     * the mounted profile's absence explicitly; it is evidence for the
-     * SKSAVE reader's fail-closed result, never a replacement value. */
+     * exact category/index/dtWordValue query after its short cache.  The
+     * source query's scalar result for an absent word is zero, which selects
+     * authenticated table1d296c[0]; retain the raw absence as a regression
+     * receipt rather than inventing a GDAT row. */
     {
         uint16_t ignored = 0u;
         if (out_type54_absent) {
@@ -404,8 +405,8 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
                 ++direct_roots->malformed;
             }
         }
-        CHECK(direct_root_result != 0,
-          "real SKSave direct roots decode or stop at an absent source AI mapping");
+        CHECK(direct_root_result == 1,
+              "real SKSave direct roots decode through the source AI lookup");
     }
     CHECK(verify_real_runtime_resume_is_blocked(bytes + 42u, byte_count - 42u),
           "real SKSave cannot publish a partial GAME_LOAD runtime state");
@@ -514,7 +515,7 @@ int main(void)
     CHECK(load_real_creature_ai_table(root, &type54_absent, &type127_absent),
           "real CREATURES rows bind the original v1d296c AI table before SKSave decode");
     CHECK(type54_absent && type127_absent,
-          "mounted PC-DOS GRAPHICS.DAT has no invented row-5 mapping for types 54 or 127");
+          "mounted PC-DOS GRAPHICS.DAT omits row 5 for types 54 and 127; source uses scalar-zero AI row");
 
     memset(&corpus, 0, sizeof(corpus));
     CHECK(dm2_v1_sksave_corpus_scan(root, &corpus),
@@ -540,10 +541,10 @@ int main(void)
     }
     CHECK(found == 8u,
           "the supplied PC-DOS corpus retains all four primary/backup saves");
-    CHECK(direct_roots.decoded == 5u &&
-              direct_roots.blocked_missing_ai_mapping == 3u &&
+    CHECK(direct_roots.decoded == 8u &&
+              direct_roots.blocked_missing_ai_mapping == 0u &&
               direct_roots.malformed == 0u,
-          "all eight real direct-root streams have the expected source-owned AI outcome");
+          "all eight real direct-root streams decode through the source-owned AI lookup");
     CHECK(corpus.valid_slot_count == 4u && corpus.valid_slot_mask == 0x000fu,
           "scanner preserves lower-case, single-digit original slots in the data root");
     CHECK(corpus.valid_slot_backup_count == 4u,

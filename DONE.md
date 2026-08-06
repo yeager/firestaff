@@ -794,15 +794,15 @@
   `c_record.cpp::DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD`. The
   `CREATURES[type & 0xff].word(0x05)` mapping now accepts all 256 original
   record type keys without expanding or fabricating the 63-row AI table.
-  In the mounted eight-file PC-DOS corpus this lets five direct-root streams
-  decode with their source masks; three still stop safely because types 54
-  (twice) and 127 lack a row-5 entry in that original `GRAPHICS.DAT`.
-  The real-data regression now asserts both absent fields and the exact 5/3/0
-  decoded/blocked/malformed corpus outcome, preventing a default mask or
-  fabricated mapping from silently promoting those streams.
+  In the mounted eight-file PC-DOS corpus all eight direct-root streams now
+  decode with their source masks. `c_querydb.cpp::DM2_QUERY_GDAT_CREATURE_WORD_VALUE`
+  returns scalar zero for the absent type-54 (twice) and type-127 row-5
+  fields, which selects the genuine `v1d296c[0]` table row; no GDAT mapping
+  is fabricated. The real-data regression asserts both raw absences and the
+  exact 8/0/0 decoded/blocked/malformed corpus outcome.
   Verification: `test_dm2_v1_drops_gdat_real_data`,
   `test_dm2_v1_creature_animation_gdat_real_data`,
-  `test_dm2_v1_save_load_real_data` (83/83), and `test_dm2_v1_save_load`
+  `test_dm2_v1_save_load_real_data` (85/85), and `test_dm2_v1_save_load`
   pass. No
   game data is copied, unpacked, or used to admit runtime resume.
 

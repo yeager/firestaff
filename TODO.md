@@ -1555,13 +1555,13 @@ level or consumer bindings.
   through `CREATURES[type & 0xff].word(0x05)`; optional `CREATURE_AI` is an
   override, not the PC-DOS baseline. The reader now represents all 256 source
   type keys while retaining that 63-row table. Against the mounted eight-file
-  PC-DOS corpus five direct-root streams now decode fully; three stop
-  fail-closed because this `GRAPHICS.DAT` has no row-5 entry for type 54
-  (twice) or 127. All remain non-resumable. The next work is to locate their
-  original active-profile owner and to bind allocation/possession/tile owners,
-  not to assign a default mask. The real-data regression locks both absent
-  rows and the exact five-decoded/three-blocked/no-malformed outcome so this
-  boundary cannot be replaced by a default mask in a later refactor.
+  PC-DOS corpus all eight direct-root streams now decode. SKProject's scalar
+  result for a missing word is zero, so absent row-5 fields for type 54
+  (twice) and 127 select the authenticated `v1d296c[0]` rather than blocking
+  the stream or inventing a GDAT row. All remain non-resumable. The next work
+  is to locate their original active-profile owner and to bind
+  allocation/possession/tile owners. The real-data regression locks both raw
+  absences and the exact eight-decoded/zero-blocked/zero-malformed outcome.
   **2026-08-06 follow-up:** the remaining `FS2RT01` live-runtime sidecar
   serializer/deserializer is removed from the production archive and public
   API. It wrote Firestaff's session, creature cache, mutable dungeon bytes and
@@ -27829,9 +27829,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   a raw-save reader: SKProject `sksvgame.cpp:880-881` selects the DB4 record
   SUPPRESS mask through `DM2_QUERY_CREATURE_AI_SPEC_FLAGS` (the authenticated
   `CREATURES[type].word(5) → v1d296c` chain, with optional GDAT override).
-  The reader now fails closed when that source lookup is unavailable: five
-  supplied PC-DOS direct-root streams decode fully, while three stop at the
-  exact absent mapping (type 54 twice and type 127 once).
+  `c_querydb.cpp::DM2_QUERY_GDAT_CREATURE_WORD_VALUE` returns scalar zero
+  when that word is absent, so all eight supplied PC-DOS direct-root streams
+  decode through the genuine `v1d296c[0]` row. The raw absence remains
+  asserted for type 54 twice and type 127 once; it is not replaced with a
+  GDAT mapping.
   The real-data creature-animation probe now opens the canonical DOS spelling
   `GRAPHICS.DAT` after the lowercase attempt fails, so this conclusion comes
   from parsed mounted media rather than an accidental filename-only skip.
