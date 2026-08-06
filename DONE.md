@@ -56584,6 +56584,11 @@ alcove runtime and archive-media tests passed (4/4).
   byte-4/5 padding. The first authentic F31 MINI map therefore retains its
   real origin `(17,14)` in the Game receipt instead of a synthetic `(0,0)`.
 
+- ✅ 2026-08-06 CSB FM Towns MINI dungeon consumer: the F7063-authenticated
+  tail is now copied only through a receipt-bound API and opens in the real
+  CSB dungeon loader. The F31E corpus proves all 11 maps and its first map's
+  `(17,14)` origin; no raw save bytes are promoted to a live resumed world.
+
 - ✅ 2026-08-06 CSB FM Towns Utility P3 boundary: `UTILE.EXP` and
   `UTILJ.EXP` now must pass their original Phar Lap level-1 P3 envelope in
   addition to the full-file identity gate. The receipt records the real

@@ -8,6 +8,7 @@
 #include "m11_game_view.h"
 #include "asset_status_m12.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_dungeon_loader_pc34_compat.h"
 #include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_switch.h"
 #include "vga_palette_pc34_compat.h"
@@ -55,6 +56,8 @@ int main(void)
     CSB_V1_StartupRuntimeAssetSession_PC34 direct_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
+    CSB_V1_DungeonData mini_dungeon;
+    uint8_t *mini_dungeon_bytes = NULL;
     CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
@@ -188,6 +191,23 @@ int main(void)
               csb_v1_fmtowns_game_music_track_at(&direct_handoff, 0u, 2u, 0u,
                                                   &music_track),
           "verified F31 profile resolves its language-owned Game program and MINI.DAT");
+    memset(&mini_dungeon, 0, sizeof(mini_dungeon));
+    mini_dungeon_bytes = (uint8_t *)malloc(
+        direct_handoff.startup_mini_dungeon_tail_size);
+    CHECK(mini_dungeon_bytes &&
+              csb_v1_fmtowns_game_copy_verified_dungeon_tail(
+                  &direct_handoff, mini_dungeon_bytes,
+                  direct_handoff.startup_mini_dungeon_tail_size) &&
+              csb_v1_dungeon_load(
+                  &mini_dungeon, mini_dungeon_bytes,
+                  (int)direct_handoff.startup_mini_dungeon_tail_size) == 0 &&
+              mini_dungeon.level_count == 11 &&
+              mini_dungeon.map_offset_x[0] == 17 &&
+              mini_dungeon.map_offset_y[0] == 14,
+          "F31 MINI.DAT dungeon tail opens through the real CSB dungeon loader");
+    csb_v1_dungeon_free(&mini_dungeon);
+    free(mini_dungeon_bytes);
+    mini_dungeon_bytes = NULL;
     memset(&utility_handoff, 0, sizeof(utility_handoff));
     CHECK(csb_v1_fmtowns_utility_handoff_open(
               (const CSB_V1_BootProfile *)view.csbBootProfile,

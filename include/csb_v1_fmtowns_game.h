@@ -1,6 +1,7 @@
 #ifndef FIRESTAFF_CSB_V1_FMTOWNS_GAME_H
 #define FIRESTAFF_CSB_V1_FMTOWNS_GAME_H
 
+#include <stddef.h>
 #include <stdint.h>
 
 #include "csb_v1_boot.h"
@@ -96,6 +97,8 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     uint16_t startup_mini_dungeon_tail_checksum;
     uint8_t startup_mini_first_map_offset_x;
     uint8_t startup_mini_first_map_offset_y;
+    uint32_t startup_mini_dungeon_tail_offset;
+    uint32_t startup_mini_dungeon_tail_size;
     int music_table_verified;
     uint32_t music_table_source_offset;
     uint32_t music_table_size;
@@ -159,6 +162,13 @@ int csb_v1_fmtowns_game_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsGameHandoffReceipt *out_receipt);
+
+/* Copy only the F7063-verified dungeon bytes, excluding the trailing F7059
+ * checksum word. This does not transfer ownership to a runtime or imply that
+ * F31 save restoration is complete. */
+int csb_v1_fmtowns_game_copy_verified_dungeon_tail(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    uint8_t *out_bytes, size_t out_size);
 
 int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,

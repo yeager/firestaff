@@ -180,8 +180,27 @@ static int csb_v1_fmtowns_game_startup_mini_dungeon_tail_open(
     receipt->startup_mini_dungeon_tail_checksum = checksum;
     receipt->startup_mini_first_map_offset_x = maps[6u];
     receipt->startup_mini_first_map_offset_y = maps[7u];
+    receipt->startup_mini_dungeon_tail_offset =
+        receipt->startup_mini_verified_save_body_offset +
+        CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_BYTES *
+            CSB_V1_FMTOWNS_EXTERNAL_PORTRAIT_COUNT;
+    receipt->startup_mini_dungeon_tail_size = offset -
+        receipt->startup_mini_dungeon_tail_offset;
     receipt->startup_mini_dungeon_tail_verified = 1;
     return 1;
+}
+
+int csb_v1_fmtowns_game_copy_verified_dungeon_tail(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    uint8_t *out_bytes, size_t out_size)
+{
+    if (!receipt || !receipt->valid || !receipt->startup_mini_verified ||
+        !receipt->startup_mini_dungeon_tail_verified || !out_bytes ||
+        receipt->startup_mini_dungeon_tail_size == 0u ||
+        out_size != receipt->startup_mini_dungeon_tail_size) return 0;
+    return csb_v1_fmtowns_game_read_span(
+        receipt->startup_mini_path, receipt->startup_mini_dungeon_tail_offset,
+        out_bytes, out_size);
 }
 
 static int csb_v1_fmtowns_game_startup_mini_save_parts_open(
