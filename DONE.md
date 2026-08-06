@@ -50914,3 +50914,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   dimensions; the SHADODAN item-part boundary is derived from the same source
   record layout rather than a guessed offset. ISO variants remain fail-closed
   until their own container-specific table is verified.
+- ✅ 2026-08-06 DM1 F0190 source-owned death smoke: M11 now uses the shared
+  ReDMCSB F0213/F0220 transaction for authenticated worlds, reserving/linking
+  the real C15 and publishing the C25 timeline receipt before exposing C040.
+  Runtime smoke updates the raw C15 attack while it persists and unlinks the
+  exact cell owner on despawn; ownerless F0821 remains limited to worlds with
+  no raw Thing table. Focused source-publication and moving-killed-all tests
+  pass.

@@ -37542,12 +37542,16 @@ static int m11_spawn_f0190_death_smoke(
         !smokePlan.valid || !smokePlan.shouldCreate) {
         return 0;
     }
-    if (!F0821_EXPLOSION_Create_Compat(&smokePlan.createInput,
-                                       &state->world.explosions,
-                                       &slot, &eFirst)) {
-        return 0;
-    }
-    return F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &eFirst);
+    /* M10 and M11 must publish the same original owner chain.  In a loaded
+     * PC34 world this reserves C15, publishes C25, and only then exposes the
+     * decoded runtime C040.  The helper retains its bounded ownerless route
+     * solely for legacy/probe worlds without raw Thing data. */
+    (void)slot;
+    (void)eFirst;
+    return F0887_ORCH_CreateSourceExplosion_Compat(
+        &state->world,
+        &smokePlan.createInput,
+        smokePlan.createInput.centered ? 0 : smokePlan.createInput.cell);
 }
 
 static void m11_cleanup_f0190_creature_events(
@@ -40428,6 +40432,70 @@ static void m11_explosion_apply_tick_result(
     }
 }
 
+/* Keep an M11 C040 projection and its original PC34 C15 owner in one
+ * lifecycle. Persistent smoke rewrites C15.Attack; despawn unlinks the exact
+ * cell-bearing Thing through F0515. A source fingerprint must never become
+ * an orphaned raw record. */
+static int m11_sync_source_explosion_owner(
+    M11_GameViewState* state,
+    const struct ExplosionInstance_Compat* explosion,
+    int newAttack,
+    int removeOwner,
+    uint32_t* outFingerprint) {
+    unsigned short thing;
+    int safety = 0;
+
+    if (outFingerprint) *outFingerprint = 0;
+    if (!explosion || explosion->sourceC15Fingerprint == 0u) return 1;
+    if (!state || !state->world.dungeon || !state->world.things ||
+        !state->world.things->loaded ||
+        !state->world.things->rawThingData[THING_TYPE_EXPLOSION] ||
+        !state->world.things->explosions || explosion->mapIndex < 0 ||
+        explosion->mapX < 0 || explosion->mapY < 0) {
+        return 0;
+    }
+
+    thing = F0511_DUNGEON_GetSquareFirstThing_Compat(
+        state->world.dungeon, state->world.things,
+        explosion->mapIndex, explosion->mapX, explosion->mapY);
+    while (thing != THING_NONE && thing != THING_ENDOFLIST && safety++ < 64) {
+        int index;
+        unsigned char* raw;
+        unsigned short target;
+        if (THING_GET_TYPE(thing) != THING_TYPE_EXPLOSION) {
+            thing = F0512_DUNGEON_GetThingNext_Compat(state->world.things, thing);
+            continue;
+        }
+        index = THING_GET_INDEX(thing);
+        if (index < 0 || index >= state->world.things->explosionCount ||
+            index >= state->world.things->thingCounts[THING_TYPE_EXPLOSION]) {
+            return 0;
+        }
+        raw = state->world.things->rawThingData[THING_TYPE_EXPLOSION] +
+            (size_t)index * 4u;
+        if (dm1_v1_c15_layout_fingerprint_pc34(raw, 4u) !=
+            explosion->sourceC15Fingerprint) {
+            thing = F0512_DUNGEON_GetThingNext_Compat(state->world.things, thing);
+            continue;
+        }
+        target = (unsigned short)(thing |
+            ((unsigned short)(explosion->cell & 3) << 14));
+        if (removeOwner) {
+            return m11_unlink_thing_from_square(
+                &state->world, explosion->mapIndex,
+                explosion->mapX, explosion->mapY, target);
+        }
+        if (newAttack < 0 || newAttack > 255) return 0;
+        raw[3] = (unsigned char)newAttack;
+        state->world.things->explosions[index].attack = (unsigned char)newAttack;
+        if (outFingerprint) {
+            *outFingerprint = dm1_v1_c15_layout_fingerprint_pc34(raw, 4u);
+        }
+        return outFingerprint && *outFingerprint != 0u;
+    }
+    return 0;
+}
+
 /* V1 explosion tick advance — drives F0822 per live explosion whose
  * scheduledAtTick has arrived.  Called once per orchestrator tick
  * (right after the projectile advance) so a fireball detonation
@@ -40461,6 +40529,7 @@ static void m11_advance_explosions_v1(M11_GameViewState* state) {
         if (!F0822_EXPLOSION_Advance_Compat(e, &digest, now,
                                              &state->world.masterRng,
                                              &newState, &result)) {
+            (void)m11_sync_source_explosion_owner(state, e, 0, 1, NULL);
             F0824_EXPLOSION_Despawn_Compat(&state->world.explosions, i);
             continue;
         }
@@ -40469,6 +40538,7 @@ static void m11_advance_explosions_v1(M11_GameViewState* state) {
         m11_explosion_apply_tick_result(state, e, &result);
 
         if (result.despawn) {
+            (void)m11_sync_source_explosion_owner(state, e, 0, 1, NULL);
             F0824_EXPLOSION_Despawn_Compat(&state->world.explosions, i);
         } else {
             /* Commit advanced state (new frame, possibly reduced attack,
@@ -40481,6 +40551,13 @@ static void m11_advance_explosions_v1(M11_GameViewState* state) {
             newState.reserved0 = 1; /* preserve occupied flag */
             newState.slotIndex = i;
             newState.scheduledAtTick = (int)now + delay;
+            if (e->sourceC15Fingerprint != 0u &&
+                !m11_sync_source_explosion_owner(
+                    state, e, newState.attack, 0,
+                    &newState.sourceC15Fingerprint)) {
+                F0824_EXPLOSION_Despawn_Compat(&state->world.explosions, i);
+                continue;
+            }
             *e = newState;
         }
     }

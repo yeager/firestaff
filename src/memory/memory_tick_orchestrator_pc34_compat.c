@@ -7965,7 +7965,7 @@ static int orch_validate_f0217_thrown_potion_receipt_compat(
     return 0;
 }
 
-static int orch_publish_source_c15_c25_explosion_compat(
+int F0887_ORCH_CreateSourceExplosion_Compat(
     struct GameWorld_Compat* world,
     const struct ExplosionCreateInput_Compat* sourceInput,
     int c15Cell)
@@ -8059,7 +8059,7 @@ static int orch_create_explosion_with_fallback_compat(
          * an unowned host explosion here produces the exact false projectile
          * and smoke artifacts seen in HoC when a raw owner is malformed or
          * stale.  Real-data sessions therefore fail closed. */
-        return orch_publish_source_c15_c25_explosion_compat(
+        return F0887_ORCH_CreateSourceExplosion_Compat(
             world, input, c15Cell);
     }
 
@@ -8108,7 +8108,7 @@ static int orch_materialize_projectile_tick_explosion_compat(
     }
 
     if (world->things && world->things->loaded) {
-        return orch_publish_source_c15_c25_explosion_compat(
+        return F0887_ORCH_CreateSourceExplosion_Compat(
             world, &explosionIn, c15Cell);
     }
     {

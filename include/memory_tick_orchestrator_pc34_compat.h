@@ -507,6 +507,16 @@ int F0887_ORCH_DispatchTimelineEvents_Compat(
     struct GameWorld_Compat* world,
     struct TickResult_Compat* result);
 
+/* ReDMCSB PROJEXPL.C F0213/F0220: publish a runtime explosion only after
+ * reserving and linking its authenticated PC34 C15 owner and C25 event.
+ * Worlds with raw Thing data fail closed when that transaction cannot be
+ * completed; ownerless fallback is retained only for synthetic/legacy worlds
+ * that carry no raw Thing table. */
+int F0887_ORCH_CreateSourceExplosion_Compat(
+    struct GameWorld_Compat* world,
+    const struct ExplosionCreateInput_Compat* sourceInput,
+    int c15Cell);
+
 /* ReDMCSB TIMELINE.C F0255: dispatches every due C13 Vi Altar rebirth
  * event and runs its source state machine (step 2 explosion, step 1
  * bones consumption, step 0 REVIVE.C F0283).  Live hosts call this
