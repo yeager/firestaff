@@ -1029,6 +1029,16 @@
   PC34 floppy data was invented or copied.
 - ✅ No game data was copied or committed.
 
+# DM1 G0601-G0650 owner-audit isolation (2026-08-06)
+
+- ✅ Removed the metadata-only G0601–G0650 source-owner inventory from the
+  broad M10 source glob. Its dedicated inventory target already compiles the
+  table explicitly, and no runtime caller consumes the audit object.
+- ✅ Preserved the mapping to the existing mouse, champion, GRAPHICS.DAT,
+  runtime-memory and platform-boundary owners without treating the inventory
+  table as a production implementation.
+- ✅ No game data was copied or committed.
+
 # CSB FM Towns graphics real-cache regression (2026-08-06)
 
 - ✅ `test_csb_v1_fmtowns_graphics_dat` now takes

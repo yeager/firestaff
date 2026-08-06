@@ -4281,6 +4281,12 @@ list(REMOVE_ITEM M10_SOURCES
 # Keep the fail-closed audit out of the broad M10 production archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat.c")
+# `dm1_v1_g0601_g0650_mouse_graphics_memory_source_audit_pc34_compat.c`
+# inventories existing owners but is not itself a runtime owner.  Its
+# dedicated inventory target compiles the source explicitly; keep this
+# metadata-only audit out of the broad M10 production archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0601_g0650_mouse_graphics_memory_source_audit_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part

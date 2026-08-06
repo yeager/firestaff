@@ -59,6 +59,11 @@
   source evidence test-only until a real platform-specific media consumer is
   identified; never synthesize PC34 floppy availability.
 
+- **DM1-G0601-G0650-OWNER-AUDIT:** The G0601–G0650 table is metadata-only
+  source-owner inventory. It must remain separate from production consumers;
+  the actual mouse, champion, GRAPHICS.DAT and runtime-memory owners are the
+  modules named by its rows.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The
