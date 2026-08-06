@@ -4599,10 +4599,10 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_s2d_glyph_decode\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_screen_text\\.c$")
 # The SCR loader's indexed glyph writer is a host framebuffer fixture.  The
 # retail FONT256 path currently has no authenticated Saturn page/tilemap,
-# attribute, CLUT or VDP2 destination capture, so do not export this draw seam
-# from firestaff_nexus.  The source is added explicitly to its deterministic
-# parser/render probes below.
-list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_saturn_font\\.c$")
+# attribute, CLUT or VDP2 destination capture, so compile only the existing
+# source-format section parser into firestaff_nexus.  The production define
+# excludes the flat loader and framebuffer writer; explicit probes compile the
+# same translation unit without that define for their isolated render checks.
 # The CPU textured rasterizer is a host-material fixture.  It can consume a
 # caller-supplied surface, but no current Saturn capture proves VDP1 command
 # order, CLUT/VRAM destination, or DGN/MNS ownership.  Production links the
@@ -4645,6 +4645,7 @@ if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES}
         src/shared/asset_find_by_hash.c)
     target_include_directories(firestaff_nexus PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_compile_definitions(firestaff_nexus PRIVATE FIRESTAFF_NEXUS_PRODUCTION=1)
     target_link_libraries(firestaff_nexus PUBLIC m)
     if(NOT MSVC)
         target_compile_options(firestaff_nexus PRIVATE -Wall -Wextra -O2)

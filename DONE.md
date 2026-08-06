@@ -55342,3 +55342,16 @@ alcove runtime and archive-media tests passed (4/4).
   event dispatch and playback remain fail-closed.
 - ⚠️ The aggregate build remains blocked by the pre-existing Font256 S2D
   unresolved-symbol gap recorded in `TODO.md`.
+# Nexus Font256 production section-parser link (2026-08-06)
+
+- ✅ `firestaff_nexus` now links the existing real SEGA SATURN SCR section
+  parser required by Font256 admission.
+- ✅ `FIRESTAFF_NEXUS_PRODUCTION` compiles out the unproven flat glyph loader
+  and host framebuffer writer; no synthetic text pixels enter production.
+- ✅ Font256 section-witness, first-section and corpus targets build, and the
+  real 25,012-byte `FONT256.S2D` section-table probe passes 55/55.
+- ✅ The production-source boundary verifier now checks the compile guard and
+  parser inclusion instead of requiring the whole translation unit to be
+  excluded.
+- ℹ️ The aggregate project build now passes the Nexus archive and stops later
+  at an unrelated DM2 FM-Towns animation-stream link gap.

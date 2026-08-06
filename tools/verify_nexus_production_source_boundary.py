@@ -34,7 +34,6 @@ for exclusion in (
     r"nexus_v1_s2d_text_layout\\.c$",
     r"nexus_v1_s2d_glyph_decode\\.c$",
     r"nexus_v1_screen_text\\.c$",
-    r"nexus_v1_saturn_font\\.c$",
     r"nexus_v1_rasterizer\\.c$",
     r"nexus_v1_item_ibs\\.c$",
     r"nexus_v1_title_cg\\.c$",
@@ -44,6 +43,21 @@ for exclusion in (
 ):
     if f'EXCLUDE REGEX "{exclusion}"' not in body:
         fail(f"missing production exclusion: {exclusion}")
+
+# The SCR section-table parser is source-format admission code and must remain
+# available to the production archive.  The same translation unit also holds
+# the unproven flat glyph/framebuffer path; FIRESTAFF_NEXUS_PRODUCTION must
+# compile that path out rather than excluding the parser or exporting a host
+# renderer.
+if 'target_compile_definitions(firestaff_nexus PRIVATE FIRESTAFF_NEXUS_PRODUCTION=1)' not in text:
+    fail("production Nexus library does not define FIRESTAFF_NEXUS_PRODUCTION")
+saturn_font = (ROOT / "src/nexus/nexus_v1_saturn_font.c").read_text(
+    encoding="utf-8"
+)
+if "#ifndef FIRESTAFF_NEXUS_PRODUCTION" not in saturn_font:
+    fail("Saturn font source lacks the production glyph-renderer guard")
+if "#endif /* !FIRESTAFF_NEXUS_PRODUCTION */" not in saturn_font:
+    fail("Saturn font source lacks the production glyph-renderer guard terminator")
 
 runtime_match = re.search(
     r"set\(NEXUS_M11_RUNTIME_SOURCES(?P<body>.*?)\n\)", text, re.DOTALL

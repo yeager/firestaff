@@ -1,12 +1,12 @@
 # Firestaff TODO - Open Work
 
-- **NEXUS-FULL-BUILD-FONT256-LINK-GAP:** The focused Nexus sound/mechanics
-  targets build and the real 16-level SAL/MAP tests pass, but the current
-  aggregate build still cannot link several Font256 S2D targets because the
-  production archive references `nexus_v1_font_get_section`,
-  `nexus_v1_font_load_sections`, and `nexus_v1_font_section_in_bounds` without
-  linked implementations. Resolve that existing build gap before treating a
-  full Firestaff build as green; do not bypass it with synthetic font data.
+- **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
+  links the real SCR section-table parser while compiling out the unproven
+  flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The
+  aggregate Firestaff build currently stops later in an unrelated DM2
+  FM-Towns link (`dm2_v1_fmtowns_anim_stream_*`); keep that separate from the
+  remaining Nexus Saturn page/tilemap/VDP2 gap and do not bypass either with
+  synthetic data.
 
 - **CSB-FMTOWNS-C06-UTILITY-TRANSACTIONS:** The F31E empty editor frame now
   reaches M11 from SWITCHTW with original C06 coordinates, UTILE strings,
