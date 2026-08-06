@@ -407,8 +407,11 @@ static int validate_csb_original_save_import_path(const char* path) {
     if (!discovery.filename_candidate) {
         return 0;
     }
-    if (!discovery.should_attempt_import &&
-        !discovery.xor512_body_valid) {
+    /* The compact CSBGAME roster contract is a parser test boundary, not
+     * an original resumable save. ReDMCSB LOADSAVE.C F0435 and CSBWin
+     * SaveGame.cpp both require the complete GAMEBLOCK body before a save
+     * may enter the launcher data root. */
+    if (!discovery.xor512_body_valid) {
         return 0;
     }
 
@@ -756,8 +759,7 @@ static int try_parse_csbwin_boundary_entry(M12_SaveBrowserEntry* entry) {
     memset(&discovery, 0, sizeof(discovery));
     if (csb_v1_csbwin_save_loader_boundary_classify_file(
             entry->fullPath, 0u, &discovery) != 0 ||
-        !discovery.filename_candidate ||
-        (!discovery.should_attempt_import && !discovery.xor512_body_valid)) {
+        !discovery.filename_candidate || !discovery.xor512_body_valid) {
         return 0;
     }
     snprintf(entry->gameId, sizeof(entry->gameId), "csb");

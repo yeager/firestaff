@@ -7794,8 +7794,12 @@ int csb_v1_boot_runtime_save_import_receipt_pc34(
         out_receipt->csbwin_file_kind = csbwin.file_kind;
         out_receipt->csbwin_filename_candidate =
             csbwin.filename_candidate ? 1 : 0;
+        /* A compact roster header is useful only to the isolated importer
+         * contract. ReDMCSB LOADSAVE.C F0435 / CSBWin SaveGame.cpp adopt
+         * GAMEBLOCK state atomically, so boot may attempt a live handoff
+         * only after the full verified 512-byte body is present. */
         out_receipt->csbwin_should_attempt_import =
-            csbwin.should_attempt_import ? 1 : 0;
+            csbwin.xor512_body_valid ? 1 : 0;
         out_receipt->csbwin_loader_code = csbwin_rc;
         out_receipt->csbwin_contract_match =
             csbwin.loader.contract_match ? 1 : 0;

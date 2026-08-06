@@ -1,4 +1,5 @@
 #include "save_browser_m12.h"
+#include "csb_v1_save_import_path_pc34_compat.h"
 #include "csbwin_resume_fixture.h"
 #include "dm1_v1_original_save_pc34_handoff.h"
 #include "dm1_v1_save_load.h"
@@ -74,6 +75,25 @@ static int write_blob(const char* path, const unsigned char* bytes, int len) {
     }
     fclose(fp);
     return 1;
+}
+
+/* Parser-valid compact roster data is deliberately not a runtime save.  The
+ * launcher must require the full CSBWin GAMEBLOCK body (ReDMCSB LOADSAVE.C
+ * F0435; CSBWin SaveGame.cpp) before copying an original-name CSB save. */
+static int write_compact_csbgame_roster(const char* path) {
+    unsigned char bytes[CSB_SAVE_HEADER_SIZE + CSB_SAVE_CHAMP_SIZE];
+    unsigned char* champion = bytes + CSB_SAVE_HEADER_SIZE;
+
+    memset(bytes, 0, sizeof(bytes));
+    memcpy(bytes, "CSBGAME\0", CSB_SAVE_MAGIC_LEN);
+    bytes[CSB_SAVE_HDR_OFF_VERSION] = (unsigned char)CSB_SAVE_VERSION_V20;
+    bytes[CSB_SAVE_HDR_OFF_CHAMP_COUNT] = 1u;
+    memcpy(champion + CSB_SAVE_CH_OFF_NAME, "COMPACT", 7u);
+    champion[CSB_SAVE_CH_OFF_CUR_HP] = 100u;
+    champion[CSB_SAVE_CH_OFF_MAX_HP] = 100u;
+    champion[CSB_SAVE_CH_OFF_STAT_CUR] = 60u;
+    champion[CSB_SAVE_CH_OFF_STAT_MAX] = 60u;
+    return write_blob(path, bytes, (int)sizeof(bytes));
 }
 
 static int append_blob(unsigned char* dst, size_t cap, size_t* pos,
@@ -628,6 +648,12 @@ int main(void) {
     check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
                                      (int)sizeof(outPath)) == -1,
           "DM1 raw save under CSB basename rejected before copy");
+    snprintf(badPath, sizeof(badPath), "%s/CSBGAME.DAT", backupDir);
+    check(write_compact_csbgame_roster(badPath),
+          "wrote compact CSBGAME roster import fixture");
+    check(M12_SaveBrowser_ImportFile(dataDir, badPath, outPath,
+                                     (int)sizeof(outPath)) == -1,
+          "compact CSBGAME roster rejected before copy");
     snprintf(badPath, sizeof(badPath), "%s/DMSAVE.DAT", backupDir);
     check(firestaff_test_write_csbwin_resume_fixture(badPath, 0),
           "wrote valid CSBWin DMSAVE import fixture");

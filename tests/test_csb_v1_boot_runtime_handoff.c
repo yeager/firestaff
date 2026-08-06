@@ -1168,7 +1168,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
               save_import_receipt.dm1_import_path_present &&
               save_import_receipt.csbwin_path_present &&
               save_import_receipt.csbwin_filename_candidate &&
-              save_import_receipt.csbwin_should_attempt_import &&
+              !save_import_receipt.csbwin_should_attempt_import &&
               save_import_receipt.csbwin_contract_match &&
               save_import_receipt.csbwin_shape ==
                   CSB_V1_CSBWIN_SHAPE_CSBGAME_V20 &&
@@ -1184,7 +1184,7 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
                      "reject_dsa_corpus_no_extended_features") == 0 &&
               strstr(save_import_receipt.source_evidence,
                      "LOADSAVE.C F0433/F0435") != NULL,
-          "boot save/import receipt owns runtime save, resume, DM1 import, CSBWin CSBGAME, and fail-closed DSA corpus gates");
+          "boot save/import receipt keeps compact CSBGAME outside the runtime and DSA handoff gates");
     CHECK(csb_v1_boot_runtime_load_original_save_receipt_pc34(
               &p, save_path, &original_save_receipt) == 1 &&
               original_save_receipt.valid &&
@@ -1203,41 +1203,34 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
     CHECK(csb_v1_boot_runtime_import_csbwin_save_from_path_pc34(
               &p,
               csbwin_save_path,
-              &save_import_receipt) == 1 &&
+              &save_import_receipt) == 0 &&
               save_import_receipt.valid &&
-              save_import_receipt.csbwin_runtime_load_attempted &&
-              save_import_receipt.csbwin_runtime_load_succeeded &&
+              !save_import_receipt.csbwin_runtime_load_attempted &&
+              !save_import_receipt.csbwin_runtime_load_succeeded &&
               save_import_receipt.csbwin_runtime_load_code ==
-                  CSB_V1_LOAD_OK &&
+                  CSB_V1_LOAD_ERR_UNREADABLE &&
               save_import_receipt.csbwin_shape ==
                   CSB_V1_CSBWIN_SHAPE_CSBGAME_V20 &&
               save_import_receipt.csbwin_file_kind ==
                   CSB_V1_CSBWIN_SAVE_FILE_CSBGAME_DAT &&
-              save_import_receipt.runtime_party_loaded_after &&
-              save_import_receipt.runtime_import_source_after ==
-                  CSB_SAVE_IMPORT_SOURCE &&
-              save_import_receipt.runtime_champion_count_after > 0 &&
-              save_import_receipt.runtime_champion_count_after <=
-                  CSB_V1_MAX_CHAMPIONS &&
-              save_import_receipt.runtime_game_time_after ==
-                  p.runtime.game_time,
-          "boot CSBWin import path runs the runtime loader and publishes imported party state");
+              !save_import_receipt.runtime_party_loaded_after &&
+              save_import_receipt.runtime_champion_count_after == 0,
+          "boot keeps compact CSBGAME out of the live runtime");
     CHECK(csb_v1_boot_runtime_dsa_save_handoff_receipt_pc34(
               &save_import_receipt,
               &dsa_handoff_receipt) == 0 &&
               !dsa_handoff_receipt.valid &&
               dsa_handoff_receipt.save_import_receipt_consumed &&
-              dsa_handoff_receipt.runtime_load_consumed &&
+              !dsa_handoff_receipt.runtime_load_consumed &&
               !dsa_handoff_receipt.dsa_corpus_positive &&
               !dsa_handoff_receipt.dsa_runtime_handoff_ready &&
-              dsa_handoff_receipt.runtime_party_loaded &&
-              dsa_handoff_receipt.runtime_import_source_after ==
-                  CSB_SAVE_IMPORT_SOURCE &&
+              !dsa_handoff_receipt.runtime_party_loaded &&
+              dsa_handoff_receipt.runtime_import_source_after == 0 &&
               strcmp(dsa_handoff_receipt.decision_label,
                      "reject_dsa_corpus_no_extended_features") == 0 &&
               strstr(dsa_handoff_receipt.source_evidence,
                      "Extended Features DSA") != NULL,
-          "loader-ready CSBGAME import cannot masquerade as a DSA save-runtime handoff");
+          "compact CSBGAME cannot enter the DSA save-runtime handoff");
 
     /* Cleanup: the boot profile owns the handoff runtime and must clear the
      * global current-dungeon context that mirrors ReDMCSB's current map globals.
