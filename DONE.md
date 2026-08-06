@@ -40,6 +40,18 @@
   passes with 166 assertions; the source object is absent from both M10 and
   M11 archives.
 
+# CSB FM Towns source-bound runtime guide (2026-08-06)
+
+- ✅ Added `docs/wiki/CSB-FMTowns-Guide.md` from the verified F31 media and
+  program receipts. It records the distinct title/Switch/Game/Utility program
+  graph, the selected-language cache rule, CSB's own CD-DA layout, and the
+  native C5 `MINI.DAT` boundary.
+- ✅ The guide explicitly prevents a partial `MINI.DAT` restore: F31
+  champion bodies, external portraits, active groups, events and timeline
+  must be owned together before a runtime handoff. This keeps source-backed
+  dungeon-tail and party-pose evidence from becoming a synthetic mixed save.
+- ✅ Linked the guide from the wiki home row for CSB.
+
 # DM1 C040/C537 double-open-close synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040/C537 lifecycle fixture from M10. It

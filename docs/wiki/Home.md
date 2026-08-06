@@ -13,7 +13,7 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 | Game | Platform | Reference Source | Wiki Pages |
 |------|----------|-----------------|------------|
 | [Dungeon Master (DM1)](DM1-Technical-Reference) | DOS PC 3.4 | ReDMCSB | [Technical Reference](DM1-Technical-Reference), [PC34 Internals](DM1-PC34-Internals), [RE Documentation](DM1-Reverse-Engineering) |
-| [Chaos Strikes Back (CSB)](CSB-Technical-Reference) | DOS PC 3.4 | ReDMCSB | [Technical Reference](CSB-Technical-Reference), [DSA and Save Internals](CSB-DSA-and-Save-Internals), [RE Documentation](CSB-Reverse-Engineering) |
+| [Chaos Strikes Back (CSB)](CSB-Technical-Reference) | DOS PC 3.4 | ReDMCSB | [Technical Reference](CSB-Technical-Reference), [FM Towns guide](CSB-FMTowns-Guide), [DSA and Save Internals](CSB-DSA-and-Save-Internals), [RE Documentation](CSB-Reverse-Engineering) |
 | [Dungeon Master II (DM2)](DM2-Technical-Reference) | DOS | skproject | [Technical Reference](DM2-Technical-Reference), [GDAT Internals](DM2-GDAT-Internals), [RE Documentation](DM2-Reverse-Engineering) |
 | [Theron's Quest](Therons-Quest-Technical-Reference) | PC Engine CD | PC Engine disassembly and CD analysis | [Technical Reference](Therons-Quest-Technical-Reference), [Track 02 Internals](Therons-Quest-Track02-Internals), [RE Documentation](Therons-Quest-Reverse-Engineering) |
 | [DM Nexus](Nexus-Technical-Reference) | Sega Saturn | Saturn SH-2 disassembly and retail media analysis | [Technical Reference](Nexus-Technical-Reference), [DGN/PRS3 Internals](Nexus-DGN-and-PRS3-Internals), [SAL/MAP Internals](Nexus-SAL-MAP-Internals), [RE Documentation](Nexus-Reverse-Engineering) |
