@@ -5,6 +5,11 @@
   data and has no M11/runtime caller; retain it only as explicit ReDMCSB
   coverage until a source-bound interaction owner is recovered.
 
+- **DM1-MIRROR-HUD-EXIT-SYNTHETIC-AUDIT:** This C040 inventory-exit HUD model
+  fabricates party, panel, chest and overlay state. It has no original DM1
+  data input or M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound interaction owner is recovered.
+
 - **DM1-MIRROR-CHEST-OPEN-PENDING-SYNTHETIC-AUDIT:** This C040/F0333/F0282
   fixture fabricates candidate, chest and slot state. It loads no original
   DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB

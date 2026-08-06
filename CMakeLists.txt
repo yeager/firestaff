@@ -4407,6 +4407,12 @@ list(REMOVE_ITEM M10_SOURCES
 # its direct ReDMCSB regression is its only intended build owner.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat.c")
+# `dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_pc34_compat.c`
+# is a contract-only HUD stability fixture. It fabricates party, C040 panel,
+# chest and overlay state, reads no original DM1 data, and has no M11/runtime
+# caller; keep its direct ReDMCSB regression as its only build owner.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_auto_mirror_candidate_inventory_exit_restore_hud_pc34_compat.c")
 # `dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c` contains only the
 # asset-free D3C stairs/pit dispatch and transparent-byte fixture contract;
 # no M11/runtime caller consumes it.  Keep its source-lock test explicit and

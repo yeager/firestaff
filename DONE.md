@@ -6,6 +6,12 @@
 - ✅ Verification: `test_dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 mirror inventory-exit HUD synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C040 inventory-exit HUD fixture from M10. Its
+  direct ReDMCSB regression continues to compile the fabricated overlay model
+  explicitly.
+
 # DM1 mirror chest-open-during-pending synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040/F0333/F0282 fixture from M10 and wired
