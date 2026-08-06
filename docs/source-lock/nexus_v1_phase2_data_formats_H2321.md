@@ -25,6 +25,26 @@ byte layout, Provenance Gate reference, and known gaps per data category.
 > 2048-byte block containers with a 64x64 Structure1B grid. Treat raw 32x32
 > offset-0 claims in this document as historical notes only.
 
+> **Current-status fence (2026-08-06):** This is a historical Phase 2
+> snapshot, not the current implementation matrix. Do not use its later
+> `NOT PARSED`, `RAW READ ONLY`, `STUB`, or inferred consumer rows as current
+> claims. The retail corpus is now available and the following bounded
+> receipts supersede those rows: all 16 `LEV*.DGN` Structure1B loads and
+> `SMAP*.BIN` LVMP parses; 16 `SNDLEV*.MAP` byte-zero/terminator parses with
+> in-bounds SAL windows; 16 `SLEV*.BIN` entry-spine receipts; real
+> `ITEM.IBS` declarations/icons; 20 `FACE.BIN` portraits; `STABG.BIN`
+> STMP planes/palette; five `TITLE.BIN` MAPD/TIBG maps; 162 `MENU.BPK`
+> PRS3 surface receipts; and `FONT256.S2D` SCR/CG-tile parsing. See
+> `docs/NEXUS_STRICT_FIDELITY_INVENTORY.md`, `docs/nexus_startup.md`,
+> `docs/nexus_menu.md`, `docs/nexus_audio_format.md`, and
+> `docs/nexus_trigger_script_model_status.md` for the current evidence.
+> These receipts do **not** prove Saturn VDP1/VDP2 placement, text layout,
+> event/action dispatch, SLEV task semantics, SAL playback, or full runtime
+> playability; those remain capture-gated and must not be inferred from the
+> old hypotheses in this file. In particular, the historical final-row claim
+> that a per-level CD track map is implemented is obsolete: current code
+> returns unbound until the Saturn music consumer is captured.
+
 ---
 
 ## 1. Game / Platform Identification

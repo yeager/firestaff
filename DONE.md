@@ -1,3 +1,18 @@
+# Nexus retail readiness and historical-format fence (2026-08-06)
+
+- ✅ Built the actual `firestaff` executable and ran the runtime screenshot
+  readiness gate against `/Users/bosse/.firestaff/data/nexus`. The real
+  Track 1 launch is authenticated and reaches the Nexus runtime; the result
+  is correctly `BLOCKED_CAPTURE` with valid 320×200/960×540 BMP geometry and
+  zero pixels because Saturn VDP1/VDP2 presentation evidence is absent.
+- ✅ Marked the old H2321 format report as a historical snapshot and listed
+  the current bounded retail receipts for DGN, SMAP, MAP/SAL, SLEV, ITEM,
+  FACE, STABG, TITLE, MENU.BPK and FONT256. The note explicitly preserves
+  the remaining capture gates and removes the obsolete CD-track-map claim.
+- ✅ Focused tests: `nexus_production_source_boundary` and
+  `nexus_v1_track1_real_screen_capture_readiness` passed; the runtime gate
+  returned `BLOCKED_CAPTURE` rather than a false failure or promotion.
+
 # Nexus production text-raster fence (2026-08-06)
 
 # CSB Amiga runtime sound-table admission (2026-08-06)
