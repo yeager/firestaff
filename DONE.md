@@ -55148,12 +55148,13 @@ alcove runtime and archive-media tests passed (4/4).
   (13 and 59 indexed pixels), prevents early SKULL input, and reaches TITLE.
   No file is unpacked and no PC GDAT screen substitutes for either stream.
 
-- ✅ 2026-08-06 DM2 FM Towns SKULL fallback fence: after the source TITLE
-  completes, M11 now stays black and ignores menu input until the native
-  `SKULL.EXP` menu renderer has an original execution/capture binding. It can
-  no longer show the PC GDAT menu as a platform substitute. The real-CD M11
-  regression covers this completion-state fence; this does not claim a usable
-  FM Towns menu yet.
+- ✅ 2026-08-06 DM2 FM Towns SKULL fallback fence (superseded by the verified
+  IMG2 handoff): the temporary black completion state rejected PC GDAT as a
+  platform substitute. M11 now presents only the selected HME-242
+  `TITLE/0/dtImage+dtPalIRGB/4` IMG2 surface after TITLE, using its native
+  local palette and `dt04/0` NEW GAME/RESUME rectangles. Native `SKULL.EXP`
+  P3 execution, keyboard routing and continuation semantics remain closed;
+  see `parity-evidence/dm2_fmtowns_startup_p3_gdat_boundary.md`.
 
 - ✅ 2026-08-06 DM2 FM Towns CDDA mapping correction: removed the former
   hard-coded HMP→CDDA source literal. Boot now extracts the selected

@@ -1331,8 +1331,11 @@ level or consumer bindings.
   authenticated HME-242 MD5 as well as pass its bounded Phar Lap P3 header
   receipt in RAM, including the declared load image, relocation range and
   entry point, before the startup media is retained. This remains an
-  executable identity gate only: native P3/TBIOS execution, menu pixels and
-  input still need capture.
+  executable identity gate only: native P3/TBIOS execution and its own input
+  loop still need capture. M11's separately authenticated GDAT-v4 IMG2 menu
+  presentation is documented in
+  `parity-evidence/dm2_fmtowns_startup_p3_gdat_boundary.md`; it is not a
+  claim that the P3 program itself executes.
   **2026-08-06 TWANIM update:** the player for the visible SWOOSH/TITLE/END
   stages now has the same in-memory P3 ownership requirement. The selected
   HME-242 TWANIM.EXP must match its retail MD5 and bounded Phar Lap header
