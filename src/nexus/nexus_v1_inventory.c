@@ -378,7 +378,14 @@ void nexus_floor_init(void) {
 }
 
 int nexus_floor_drop(int x, int y, int item_id, int qty) {
-    return nexus_floor_drop_source(x, y, item_id, qty, 0U, 0U, -1);
+    /* A caller-supplied drop has no authenticated Nexus owner.  Real floor
+     * admission must come from DGN Structure1Fa through
+     * nexus_floor_drop_source(); action/loot writeback remains capture-gated. */
+    (void)x;
+    (void)y;
+    (void)item_id;
+    (void)qty;
+    return -1;
 }
 
 int nexus_floor_drop_source(int x, int y, int item_id, int qty,

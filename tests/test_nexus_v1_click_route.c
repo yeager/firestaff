@@ -198,7 +198,8 @@ static void test_floor_item_pickup_at_current_square(void) {
 
     nexus_floor_init();
     reset_engine_for_click_tests(&engine, &st);
-    nexus_floor_drop(10, 10, 63, 1); /* Corn at party position */
+    nexus_floor_drop_source(10, 10, 63, 1, 0U, 0U, -1);
+    /* Corn at party position: explicit fixture/source-admission lane. */
 
     target = nexus_click_target_floor_item(10, 10, 0);
     CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_OK,
@@ -224,7 +225,8 @@ static void test_floor_item_far_away_moves_toward(void) {
 
     nexus_floor_init();
     reset_engine_for_click_tests(&engine, &st);
-    nexus_floor_drop(10, 8, 63, 1); /* Corn north of party */
+    nexus_floor_drop_source(10, 8, 63, 1, 0U, 0U, -1);
+    /* Corn north of party: explicit fixture/source-admission lane. */
 
     target = nexus_click_target_floor_item(10, 8, 0);
     CHECK(nexus_click_route_dispatch(&st, &engine, &target) == NEXUS_CLICK_RESULT_OK,

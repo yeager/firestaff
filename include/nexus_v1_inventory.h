@@ -175,6 +175,7 @@ int nexus_cursor_place(Nexus_CursorItem *cursor);
 
 /* Floor item management */
 void nexus_floor_init(void);
+/* Caller-supplied loot/drop mutation is not a retail Nexus route. */
 int nexus_floor_drop(int x, int y, int item_id, int qty);
 /* Source-preserving floor admission.  The two attributes are retained as
  * raw DGN bytes; they are not interpreted as gameplay until the Saturn

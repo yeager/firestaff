@@ -1083,6 +1083,10 @@ level or consumer bindings.
   accepting descriptor/ floor-image coverage. Continue binding the raw DGN
   item declaration to the Saturn action/slot consumer; source bytes alone do
   not prove loot or pickup semantics.
+  2026-08-06 follow-up: the generic caller-supplied `nexus_floor_drop()`
+  mutator is now fail-closed; only explicit DGN Structure1Fa source admission
+  can populate the diagnostic floor corpus, while pickup/drop writeback still
+  requires Saturn action capture.
 - **DM1-FMTOWNS-STARTUP-ANIMATION-MENU:** The real DM1 FM Towns BIN/CUE is
   now hash-admitted for both `DATA`/English and `JDATA`/Japanese, and the
   runtime cache preserves `EDM.EXP`, `JDM.EXP`, `TMENU.EXP`, `TMENU.ICN`, the

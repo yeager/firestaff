@@ -181,11 +181,11 @@ static void test_container_locked(void) {
 static void test_floor_items(void) {
     nexus_floor_init();
 
-    int idx = nexus_floor_drop(4, 4, 10, 1);
+    int idx = nexus_floor_drop_source(4, 4, 10, 1, 0U, 0U, -1);
     expect(idx >= 0, "floor drop returns valid index");
     expect(nexus_floor_count_at(4, 4) == 1, "1 item at (4,4)");
 
-    nexus_floor_drop(4, 4, 11, 3);
+    nexus_floor_drop_source(4, 4, 11, 3, 0U, 0U, -1);
     expect(nexus_floor_count_at(4, 4) == 2, "2 items at (4,4)");
 
     int item_id = -1, qty = -1;
@@ -195,6 +195,8 @@ static void test_floor_items(void) {
         expect(item_id == 10, "picked up item_id 10");
         expect(qty == 1, "picked up qty 1");
     }
+    expect(nexus_floor_drop(4, 4, 12, 1) == -1,
+           "caller-supplied floor drop remains capture-gated");
 }
 
 static void test_raw_item_declaration_does_not_infer_gameplay_flags(void) {

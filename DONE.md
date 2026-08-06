@@ -29,6 +29,15 @@
 - ✅ `test_nexus_v1_dgn_scene_runtime_plan` now sets the legacy flag and proves
   that texture and raster submission remain blocked.
 
+# Nexus generic loot-drop quarantine (2026-08-06)
+
+- ✅ Caller-supplied `nexus_floor_drop()` no longer creates a live floor item.
+- ✅ Real floor records continue to enter only through
+  `nexus_floor_drop_source()` from authenticated DGN Structure1Fa data, with
+  raw attributes and source entry ordinal retained.
+- ✅ Inventory and click-route fixtures now call the explicit source-admission
+  lane and verify the generic drop mutator remains blocked.
+
 # Theron startup font presentation gate (2026-08-06)
 
 # CSB FM Towns C06 Utility palette material (2026-08-06)
