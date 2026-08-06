@@ -1289,7 +1289,9 @@
   FNV-1a `494999c9`; `CJDATA/MINI.DAT`, 43 208 bytes, FNV-1a `284799d1`),
   and validates their native C5 header through `F7061` with key word 29,
   language-owned F7/F8 platform and C13 CSB-Game dungeon identity, but
-  user-save body decoding, persistence and runtime restoration remain open.
+  the following five F7057-checked save parts now also have real-corpus
+  receipts. User-save dungeon-tail decoding, persistence and runtime
+  restoration remain open.
   2026-08-06: the F31E `CDATA/GRAPHICS.DAT` and `DUNGEON.DAT` pair now
   opens the source-bound C001--C005 entrance and C017/C040 HUD session only
   after both original CD hashes admit. M11 binds its package-language Switch

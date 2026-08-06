@@ -79,6 +79,14 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     uint8_t startup_mini_header_format_id;
     uint16_t startup_mini_header_platform;
     uint16_t startup_mini_header_dungeon_id;
+    /* CEDTINCD.C F7051 then reads these five native F31 save parts.  Their
+     * checksums are verified here as corpus evidence only; the dungeon tail
+     * and live Resume handoff remain deliberately unavailable. */
+    int startup_mini_save_parts_verified;
+    uint16_t startup_mini_party_champion_count;
+    uint16_t startup_mini_event_maximum_count;
+    uint16_t startup_mini_active_group_capacity;
+    uint32_t startup_mini_verified_save_body_offset;
     int music_table_verified;
     uint32_t music_table_source_offset;
     uint32_t music_table_size;

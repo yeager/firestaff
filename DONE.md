@@ -56425,6 +56425,13 @@ alcove runtime and archive-media tests passed (4/4).
   This makes the bootstrap receipt reject a language-crossed or wrong-dungeon
   header before any later save-body work.
 
+- ✅ 2026-08-06 CSB FM Towns MINI.DAT save-part receipt: after the native
+  header, the Game handoff verifies the original F7057 checksums for
+  GlobalData, active groups, champion/party data, events and timeline. Both
+  retail files expose one party champion, 60 active-group slots, 436 event
+  slots and end the authenticated part sequence at byte 8 236. This is a
+  source-backed corpus check, not a dungeon-tail decoder or Resume path.
+
 - ✅ 2026-08-06 CSB FM Towns Utility P3 boundary: `UTILE.EXP` and
   `UTILJ.EXP` now must pass their original Phar Lap level-1 P3 envelope in
   addition to the full-file identity gate. The receipt records the real

@@ -1,8 +1,10 @@
 #include "csb_v1_fmtowns_game.h"
 
 #include "redmcsb_f7061_save_header_pc34_compat.h"
+#include "redmcsb_f7055_saveutil_pc34_compat.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 enum {
@@ -24,8 +26,18 @@ enum {
     CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_OFFSET = 0x12du,
     CSB_V1_FMTOWNS_SAVE_HEADER_PLATFORM_OFFSET = 0x178u,
     CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_ID_OFFSET = 0x17au,
+    CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET = 0x138u,
+    CSB_V1_FMTOWNS_SAVE_HEADER_CHECKSUMS_OFFSET = 0x158u,
     CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_C5 = 5u,
     CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_CSB_GAME = 13u,
+    CSB_V1_FMTOWNS_GLOBAL_DATA_BYTES = 128u,
+    CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES = 16u,
+    CSB_V1_FMTOWNS_CHAMPION_PARTY_BYTES = 1404u,
+    CSB_V1_FMTOWNS_EVENT_BYTES = 10u,
+    CSB_V1_FMTOWNS_TIMELINE_ENTRY_BYTES = 2u,
+    CSB_V1_FMTOWNS_GLOBAL_PARTY_CHAMPION_COUNT_OFFSET = 10u,
+    CSB_V1_FMTOWNS_GLOBAL_EVENT_MAXIMUM_COUNT_OFFSET = 28u,
+    CSB_V1_FMTOWNS_GLOBAL_ACTIVE_GROUP_CAPACITY_OFFSET = 46u,
     CSB_V1_FMTOWNS_UTILE_MENU_VIRTUAL_OFFSET = 0x11578u,
     CSB_V1_FMTOWNS_UTILJ_MENU_VIRTUAL_OFFSET = 0x11628u,
     CSB_V1_FMTOWNS_UTILE_MENU_BYTES = 76u,
@@ -44,6 +56,66 @@ enum {
 static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
                                          unsigned char *bytes, size_t size);
 static uint16_t csb_v1_fmtowns_game_read_le16(const unsigned char *bytes);
+
+static int csb_v1_fmtowns_game_startup_mini_save_parts_open(
+    const char *path, uint32_t file_size, const unsigned char *header,
+    CSB_V1_FmtownsGameHandoffReceipt *receipt)
+{
+    uint16_t keys[5];
+    uint16_t checksums[5];
+    uint32_t part_sizes[5];
+    unsigned char global_data[CSB_V1_FMTOWNS_GLOBAL_DATA_BYTES];
+    unsigned char *part_data = NULL;
+    uint32_t offset = CSB_V1_FMTOWNS_SAVE_HEADER_BYTES;
+    uint32_t index;
+    uint16_t event_maximum_count;
+    uint16_t active_group_capacity;
+
+    if (!path || !header || !receipt ||
+        !csb_v1_fmtowns_game_read_span(path, offset, global_data,
+                                       sizeof(global_data))) return 0;
+    for (index = 0u; index < 5u; ++index) {
+        keys[index] = csb_v1_fmtowns_game_read_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_KEYS_OFFSET + index * 2u);
+        checksums[index] = csb_v1_fmtowns_game_read_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_CHECKSUMS_OFFSET + index * 2u);
+    }
+    if (!redmcsb_f7057_read_save_part_with_checksum_pc34(
+            global_data, sizeof(global_data), keys[0], checksums[0])) return 0;
+    event_maximum_count = csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_EVENT_MAXIMUM_COUNT_OFFSET);
+    active_group_capacity = csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_ACTIVE_GROUP_CAPACITY_OFFSET);
+    if (event_maximum_count == 0u || active_group_capacity == 0u) return 0;
+    part_sizes[0] = CSB_V1_FMTOWNS_GLOBAL_DATA_BYTES;
+    part_sizes[1] = active_group_capacity * CSB_V1_FMTOWNS_ACTIVE_GROUP_BYTES;
+    part_sizes[2] = CSB_V1_FMTOWNS_CHAMPION_PARTY_BYTES;
+    part_sizes[3] = event_maximum_count * CSB_V1_FMTOWNS_EVENT_BYTES;
+    part_sizes[4] = event_maximum_count * CSB_V1_FMTOWNS_TIMELINE_ENTRY_BYTES;
+    offset += part_sizes[0];
+    for (index = 1u; index < 5u; ++index) {
+        if (offset > file_size || part_sizes[index] > file_size - offset ||
+            (part_sizes[index] & 1u) != 0u ||
+            !(part_data = (unsigned char *)malloc(part_sizes[index])) ||
+            !csb_v1_fmtowns_game_read_span(path, offset, part_data,
+                                            part_sizes[index]) ||
+            !redmcsb_f7057_read_save_part_with_checksum_pc34(
+                part_data, part_sizes[index], keys[index], checksums[index])) {
+            free(part_data);
+            return 0;
+        }
+        free(part_data);
+        part_data = NULL;
+        offset += part_sizes[index];
+    }
+    receipt->startup_mini_party_champion_count = csb_v1_fmtowns_game_read_le16(
+        global_data + CSB_V1_FMTOWNS_GLOBAL_PARTY_CHAMPION_COUNT_OFFSET);
+    receipt->startup_mini_event_maximum_count = event_maximum_count;
+    receipt->startup_mini_active_group_capacity = active_group_capacity;
+    receipt->startup_mini_verified_save_body_offset = offset;
+    receipt->startup_mini_save_parts_verified = 1;
+    return 1;
+}
 
 static int csb_v1_fmtowns_game_startup_mini_header_open(
     const char *path, uint16_t expected_platform,
@@ -83,7 +155,8 @@ static int csb_v1_fmtowns_game_startup_mini_header_open(
     receipt->startup_mini_header_dungeon_id = csb_v1_fmtowns_game_read_le16(
         header + CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_ID_OFFSET);
     receipt->startup_mini_header_verified = 1;
-    return 1;
+    return csb_v1_fmtowns_game_startup_mini_save_parts_open(
+        path, receipt->startup_mini_size, header, receipt);
 }
 
 static int csb_v1_fmtowns_utility_icon_palette_open(
@@ -357,7 +430,8 @@ int csb_v1_fmtowns_game_handoff_open(
     out_receipt->source_evidence =
         "ReDMCSB COMPILE.H EXEID 60/61 lines 367-375; "
         "STARTUP1.C F0435 line 163; CEDTDATA.C G2297 lines 380-387/F7051 "
-        "lines 211-255; CEDTINC6.C F7061; DEFS.H C5/F7/F8/C13; "
+        "lines 211-255; CEDTINC6.C F7061/F7057; CEDTINCT.C F7054; "
+        "DEFS.H C5/F7/F8/C13; "
         "ENTRANCE.C F0807 line 85; "
         "MUSIC.C G4099 line 6/F0743 lines 632-646";
     out_receipt->valid = 1;

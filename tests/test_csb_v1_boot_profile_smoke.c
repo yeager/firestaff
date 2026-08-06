@@ -489,6 +489,11 @@ static void test_fmtowns_game_program_handoff(void)
                   receipt.startup_mini_header_format_id == 5u &&
                   receipt.startup_mini_header_platform == 7u &&
                   receipt.startup_mini_header_dungeon_id == 13u &&
+                  receipt.startup_mini_save_parts_verified &&
+                  receipt.startup_mini_party_champion_count == 1u &&
+                  receipt.startup_mini_event_maximum_count == 436u &&
+                  receipt.startup_mini_active_group_capacity == 60u &&
+                  receipt.startup_mini_verified_save_body_offset == 8236u &&
                   receipt.music_table_verified &&
                   receipt.music_table_source_offset == 271144u &&
                   receipt.music_table_size ==

@@ -174,6 +174,11 @@ int main(void)
               direct_handoff.startup_mini_header_platform ==
                   expected_mini_header_platform &&
               direct_handoff.startup_mini_header_dungeon_id == 13u &&
+              direct_handoff.startup_mini_save_parts_verified &&
+              direct_handoff.startup_mini_party_champion_count == 1u &&
+              direct_handoff.startup_mini_event_maximum_count == 436u &&
+              direct_handoff.startup_mini_active_group_capacity == 60u &&
+              direct_handoff.startup_mini_verified_save_body_offset == 8236u &&
               direct_handoff.music_table_verified &&
               csb_v1_fmtowns_game_music_track_at(&direct_handoff, 0u, 2u, 0u,
                                                   &music_track),
