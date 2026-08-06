@@ -2407,6 +2407,13 @@ diagnostic; it must not silently fall back to a generated visual.
   `dm1_v2_per_mode_material_signatures_pc34` pass; no generated palette
   remains in this route.
 
+- **DM1-ORIGINAL-REPLACE-022:** Closed 2026-08-06. Removed M11's duplicate
+  27-entry creature display-name table and routed runtime creature names
+  through the ReDMCSB source-owned `dm1_creature_type_name()` implementation.
+  Invalid type IDs now fail closed as `UNKNOWN` instead of inventing a
+  creature label. Verification: `test_dm1_v1_creature_render_pc34_compat`
+  passes 14/14 and `m11_dm1_runtime_source_capture_receipt` passes.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

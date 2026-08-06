@@ -11310,42 +11310,9 @@ static const char* const s_containerTypeNames[] = {
     "CHEST", "OPEN CHEST", "OPEN CHEST"
 };
 
-/* Creature type name table (C00..C26, matching g_profiles order). */
-static const char* const s_creatureTypeNames[27] = {
-    "GIANT SCORPION",  /* C00 */
-    "SWAMP SLIME",     /* C01 */
-    "GIGGLER",         /* C02 */
-    "WIZARD EYE",      /* C03 */
-    "PAIN RAT",        /* C04 */
-    "RUSTER",          /* C05 */
-    "SCREAMER",        /* C06 */
-    "ROCKPILE",        /* C07 */
-    "GHOST",           /* C08 */
-    "STONE GOLEM",     /* C09 */
-    "MUMMY",           /* C10 */
-    "BLACK FLAME",     /* C11 */
-    "SKELETON",        /* C12 */
-    "COUATL",          /* C13 */
-    "VEXIRK",          /* C14 */
-    "MAGENTA WORM",    /* C15 */
-    "TROLIN",          /* C16 */
-    "GIANT WASP",      /* C17 */
-    "ANIMATED ARMOUR", /* C18 */
-    "MATERIALIZER",    /* C19 */
-    "WATER ELEMENTAL", /* C20 */
-    "OITU",            /* C21 */
-    "DEMON",           /* C22 */
-    "LORD CHAOS",      /* C23 */
-    "RED DRAGON",      /* C24 */
-    "LORD ORDER",      /* C25 */
-    "GREY LORD"        /* C26 */
-};
-
 static const char* m11_creature_name(int creatureType) {
-    if (creatureType >= 0 && creatureType < 27) {
-        return s_creatureTypeNames[creatureType];
-    }
-    return "UNKNOWN CREATURE";
+    const char* name = dm1_creature_type_name(creatureType);
+    return (name && name[0] != '\0') ? name : "UNKNOWN";
 }
 
 static void m11_get_item_name(const struct DungeonThings_Compat* things,

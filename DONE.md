@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 DM1 creature-name source ownership: removed M11's duplicate
+  27-entry display-name table and routed runtime names through the ReDMCSB
+  source-locked creature-render module. Invalid type IDs now report `UNKNOWN`
+  without inventing a creature label. Verification:
+  `test_dm1_v1_creature_render_pc34_compat` 14/14 and
+  `m11_dm1_runtime_source_capture_receipt` pass.
+
 - ✅ 2026-08-06 Nexus MNS runtime admission: added canonical MD5 identities for
   all 30 retail MNS files. The real readiness probe now loads
   `SCORPION.MNS` into the DMDF model pool and passes 17/17 checks; the prior
