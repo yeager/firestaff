@@ -13464,6 +13464,24 @@ static int m11_cast_nexus_light_spell(M11_GameViewState* state) {
     int lightPower;
     Nexus_V1_LightOverflowKind classification;
     if (!state) return 0;
+    /* DM.BIN/DMWeb spell tables identify candidate data, but do not bind the
+     * Saturn command queue, caster-state write, event-70 producer, or
+     * SLEV/SDDRVS side effect. Keep this bridge closed until that owner is
+     * captured; recognized runes must not mutate Nexus state through the
+     * shared DM1-shaped light timeline. */
+    if (!nexus_v1_action_semantics_proven()) {
+        m11_log_event(state, M11_COLOR_LIGHT_RED,
+                      "T%u: NEXUS SPELL ACTION CAPTURE REQUIRED",
+                      (unsigned int)state->nexusState.tick_count);
+        m11_set_status(state, "CAST", "NEXUS SPELL NOT READY");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
+                 "NEXUS SPELL");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "SATURN ACTION DISPATCH CAPTURE REQUIRED");
+        M11_GameView_ClearSpell(state);
+        state->spellPanelOpen = 0;
+        return 1;
+    }
     if (!m11_nexus_light_spell_from_runes(&state->spellBuffer,
                                           &kind,
                                           &powerOrdinal)) {

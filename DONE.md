@@ -109,6 +109,14 @@
   status or host voice, until Saturn event-dispatch and SDDRVS ownership are
   captured.
 
+# Nexus spell action capture gate (2026-08-06)
+
+- ✅ Closed the M11 Nexus Light/Torch/Darkness bridge while Saturn spell
+  action ownership remains uncaptured. Recognized rune sequences no longer
+  mutate the shared compatibility light timeline; the regression now proves
+  that the runtime preserves `MagicalLightAmount` and reports the missing
+  Saturn action-dispatch capture.
+
 # Nexus SLEV/SAL/MAP retail identity gate (2026-08-06)
 
 - ✅ Hardened the 16-level SLEV/SAL/MAP corpus regression with the production

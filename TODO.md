@@ -645,6 +645,11 @@
   `nexus_sound_level_runtime_receipt()` after each authenticated pair load and
   proves that metadata consumption cannot promote SFX playback without the
   Saturn event-dispatch/SDDRVS route.
+  2026-08-06 follow-up: the M11 Light/Torch/Darkness bridge now checks the
+  same action-semantics gate before touching its compatibility light timeline;
+  recognized rune shapes remain input-only until the Saturn spell command,
+  caster-state write, event-70 producer and SLEV/SDDRVS side effects are
+  captured.
 
 - **NEXUS-PALETTE-CAPTURE:** The retail SMAP/FACE/ITEM/MNS palette decoders
   now share the Saturn BGR555 channel order. Remaining work is an independent
