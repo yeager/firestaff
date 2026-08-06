@@ -3266,6 +3266,29 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
     selectedDirectory = strcmp(version->versionId, "fmtowns-en") == 0
         ? "CDATA" : "CJDATA";
     if (!m12_csb_fmtowns_archive_stage(archivePath, imagePath, sizeof(imagePath), &layout)) return 0;
+    /* This cache leaf is shared by the selected CSB release.  The regular
+     * archive materializer removes an optional member that is absent from the
+     * current package, but the FM Towns path returns after extracting its CD
+     * inventory.  Remove these hash-pinned Amiga-only title sidecars here so
+     * a previous Amiga scan cannot pair TITL.DAT/ENDA.DAT/KAOS.FTL/SWSH.FTL
+     * with CDATA or CJDATA GRAPHICS.DAT.  Greatstone's per-platform catalog
+     * and ReDMCSB's distinct Amiga animation path make that combination
+     * invalid source media, not a useful fallback. */
+    {
+        static const char* const amigaOnlySidecars[] = {
+            "TITL.DAT", "ENDA.DAT", "KAOS.FTL", "SWSH.FTL"
+        };
+        size_t sidecarIndex;
+        for (sidecarIndex = 0U;
+             sidecarIndex < sizeof(amigaOnlySidecars) / sizeof(amigaOnlySidecars[0]);
+             ++sidecarIndex) {
+            char stalePath[M12_ASSET_DATA_DIR_CAPACITY];
+            if (FSP_JoinPath(stalePath, sizeof(stalePath), gameCacheDir,
+                             amigaOnlySidecars[sidecarIndex])) {
+                (void)remove(stalePath);
+            }
+        }
+    }
     for (i = 0; i < 2; ++i) {
         const char* name = i == 0 ? "GRAPHICS.DAT" : "DUNGEON.DAT";
         char outPath[M12_ASSET_DATA_DIR_CAPACITY];

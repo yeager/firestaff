@@ -53069,6 +53069,14 @@ The scene-light test target now links the champion-stat bridge already used by
 corpus candidate receipt now retains its canonical `SKSave` filename helper on
 Windows even though recursive directory walking is POSIX-only, removing the
 Windows implicit declaration. No runtime or save-format behavior changed.
+
+# 2026-08-06 — CSB cache platform isolation
+
+The FM Towns CSB cache installer now removes the four hash-pinned Amiga title
+sidecars before materializing the selected CD image. This prevents a prior
+Amiga scan from pairing `TITL.DAT`, `ENDA.DAT`, `KAOS.FTL` or `SWSH.FTL` with
+FM Towns `GRAPHICS.DAT`; each title route now remains tied to one original
+platform package.
 - 2026-08-06 Nexus save round-trip test stability: moved the large native
   `Nexus_V1_World` and champion-pool test objects from the small process stack
   to heap-owned state. The test now reaches and passes its existing
