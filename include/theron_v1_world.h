@@ -197,6 +197,10 @@ typedef struct {
     Theron_RuntimeLevelDataBlockReceipt later_level_data;
     int startup_palette_valid;
     uint8_t startup_palette_rgb8[16][3];
+    /* Candidate bitmap routes and palette bytes are source receipts only.
+     * This flag stays clear until a captured VDC/VCE consumer binds the
+     * screen destination and semantic route together. */
+    int startup_presentation_allowed;
 } Theron_RuntimeLevelMedia;
 
 /* ── Square tile types ────────────────────────────────────────────── */

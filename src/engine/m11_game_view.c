@@ -53065,7 +53065,8 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                   0, 0, framebufferWidth, framebufferHeight,
                   plan->background_color);
 
-    if (world && world->runtime_media.startup_palette_valid &&
+    if (world && world->runtime_media.startup_presentation_allowed &&
+        world->runtime_media.startup_palette_valid &&
         state->theronState.startup_bitmap_atlas_ready) {
         const Theron_Track02StartupBitmapAtlas *atlas =
             &state->theronState.startup_bitmap_atlas;

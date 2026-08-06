@@ -52,6 +52,13 @@
 - ✅ Real US/JP palette-window regressions verify the candidate bytes while
   confirming that runtime presentation remains gated.
 
+# Theron startup VDC/VCE presentation gate (2026-08-06)
+
+- ✅ Candidate startup atlas pixels require an explicit presentation-route
+  proof in addition to source media and palette state.
+- ✅ M11 remains no-draw when only a palette candidate is present; the gate
+  awaits a captured VDC/VCE destination and semantic route.
+
 # Theron JP startup roster real-data regression (2026-08-06)
 
 - ✅ The startup-media regression now reads the authenticated local

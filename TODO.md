@@ -176,6 +176,9 @@
   later-level record until a captured original consumer read joins the source
   LBA/span to the executing HuC6280 code. See
   `docs/source-lock/tqr_v1_bitmap_route_provenance_audit_2026-08-06.md`.
+  2026-08-06 follow-up: M11 now has an independent startup presentation gate;
+  even a palette flag cannot draw candidate atlas pixels until a captured
+  VDC/VCE destination and semantic route are explicitly bound.
 
 - **THERON-US-ROSTER-CONSUMER:** The production startup receipt no longer
   copies the eight JP roster literals into an authenticated US Track 02
