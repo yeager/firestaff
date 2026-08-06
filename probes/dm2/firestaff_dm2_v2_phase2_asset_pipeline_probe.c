@@ -44,6 +44,7 @@
 
 #include "dm2_v2_phase_gate.h"
 #include "dm2_v2_asset_pipeline.h"
+#include "vga_palette_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -486,11 +487,44 @@ static void test_pipeline_process(void)
 
 static void test_palette_lut(void)
 {
+    DM2_V2_AssetPipelineConfig config;
+    uint8_t source_pixel = 0x0fu;
+    uint32_t neutral_pixel = 0u;
+    uint32_t dimmed_pixel = 0u;
+    int output_width = 0;
+    int output_height = 0;
+
     sec("Palette LUT invalidation and rebuild");
 
+    memset(&config, 0, sizeof(config));
+    config.palette_enhanced = 1;
+    dm2_v2_asset_pipeline_configure(&config);
     dm2_v2_asset_invalidate_cached_palette();  /* must not crash */
-    int rc = dm2_v2_asset_rebuild_palette_lut(100, 0, 0);  /* stub returns 0 */
-    CHECK("rebuild_palette_lut: returns 0 (stub)", rc == 0);
+    int rc = dm2_v2_asset_rebuild_palette_lut(100, 0, 0);
+    CHECK("rebuild_palette_lut: neutral source-palette transform succeeds", rc == 0);
+    CHECK("rebuild_palette_lut: neutral transform preserves source RGB",
+          dm2_v2_asset_pipeline_process(DM2_V2_SURFACE_WALL_BACK,
+                                         &source_pixel, 1, 1, 0,
+                                         &neutral_pixel, &output_width,
+                                         &output_height) == 0 &&
+          neutral_pixel == (0xff000000u |
+              ((uint32_t)G9010_auc_VgaPaletteAll_Compat[0][15][0] << 16) |
+              ((uint32_t)G9010_auc_VgaPaletteAll_Compat[0][15][1] << 8) |
+              G9010_auc_VgaPaletteAll_Compat[0][15][2]));
+    CHECK("rebuild_palette_lut: dimmed transform changes only presentation output",
+          dm2_v2_asset_rebuild_palette_lut(100, -50, 0) == 0 &&
+          dm2_v2_asset_pipeline_process(DM2_V2_SURFACE_WALL_BACK,
+                                         &source_pixel, 1, 1, 0,
+                                         &dimmed_pixel, &output_width,
+                                         &output_height) == 0 &&
+          dimmed_pixel != neutral_pixel);
+    CHECK("rebuild_palette_lut: rejects invalid gamma",
+          dm2_v2_asset_rebuild_palette_lut(79, 0, 0) == -1);
+    CHECK("rebuild_palette_lut: rejects invalid brightness",
+          dm2_v2_asset_rebuild_palette_lut(100, 51, 0) == -1);
+    CHECK("rebuild_palette_lut: rejects invalid contrast",
+          dm2_v2_asset_rebuild_palette_lut(100, 0, -51) == -1);
+    (void)dm2_v2_asset_rebuild_palette_lut(100, 0, 0);
     dm2_v2_asset_invalidate_cached_palette();  /* must not crash */
 }
 

@@ -370,19 +370,52 @@ int dm2_v2_asset_pipeline_process(DM2_V2_SurfaceCategory category,
     return 0;
 }
 
-/* ── Palette LUT (stub — gamma/brightness/contrast correction) ────── */
+/* ── Palette LUT (presentation-only correction) ───────────────────── */
 
 int dm2_v2_asset_rebuild_palette_lut(int gamma100, int brightness, int contrast) {
-    /* Stub: palette correction not yet implemented for DM2.
-     * When the V2.0 FILTERED mode is activated, this function should
-     * apply gamma/brightness/contrast to G9010 source palette entries
-     * and store results in s_corrected_palette[].
-     * Until then, s_corrected_lut_valid stays 0 and the pipeline
-     * uses G9010_auc_VgaPaletteAll_Compat directly. */
-    (void)gamma100; (void)brightness; (void)contrast;
-    /* Mark as valid when implemented */
-    /* s_corrected_lut_valid = 1; */
-    (void)s_corrected_palette; /* suppress unused-var warning until implemented */
+    int level;
+    int index;
+
+    /* The corrected table is only a V2 presentation transform. Its input is
+     * always the immutable source palette; a neutral request copies every
+     * source channel byte exactly and no generated image or fallback palette
+     * can enter the V1 route. */
+    if (gamma100 < 80 || gamma100 > 260 ||
+        brightness < -50 || brightness > 50 ||
+        contrast < -50 || contrast > 50) {
+        return -1;
+    }
+    for (level = 0; level < DM2_V2_PALETTE_LEVELS; ++level) {
+        const uint8_t floor = DM2_V2_k_SourcePaletteLightFloor[level];
+        for (index = 0; index < 16; ++index) {
+            float channel[3];
+            int component;
+
+            for (component = 0; component < 3; ++component) {
+                float value = (float)G9010_auc_VgaPaletteAll_Compat
+                    [level][index][component];
+                const float contrast_factor =
+                    1.0f + (float)contrast / 50.0f;
+                int corrected;
+
+                value += (float)brightness;
+                value = 128.0f + contrast_factor * (value - 128.0f);
+                if (gamma100 != 100) {
+                    const float normalized = value / 255.0f;
+                    value = powf(normalized > 0.0f ? normalized : 1e-6f,
+                                 100.0f / (float)gamma100) * 255.0f;
+                }
+                corrected = (int)(value < 0.0f ? 0.0f :
+                                  (value > 255.0f ? 255.0f : value));
+                if (corrected < (int)floor) corrected = (int)floor;
+                channel[component] = (float)corrected;
+            }
+            s_corrected_palette[level][index][0] = (uint8_t)channel[0];
+            s_corrected_palette[level][index][1] = (uint8_t)channel[1];
+            s_corrected_palette[level][index][2] = (uint8_t)channel[2];
+        }
+    }
+    s_corrected_lut_valid = 1;
     return 0;
 }
 

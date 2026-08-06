@@ -1,3 +1,12 @@
+# DM2 V2 source-palette correction (2026-08-06)
+
+- ✅ Replaced the DM2 V2 palette-LUT stub with bounded gamma, brightness and
+  contrast processing over the immutable V1 source palette. Neutral settings
+  preserve each source RGB value exactly; adjusted settings change only the
+  V2 presentation copy, never a game-data byte or a source-owned V1 frame.
+  `firestaff_dm2_v2_phase2_asset_pipeline_probe` verifies the neutral path,
+  an adjusted output and invalid-parameter rejection (94/94).
+
 # Nexus startup animation capture gate (2026-08-06)
 
 - ✅ Startup animation readiness now has a separate
