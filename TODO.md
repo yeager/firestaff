@@ -12,6 +12,11 @@
   event→MAP selector trace and SDDRVS playback consumer; do not infer those
   semantics from row order or decoded tone candidates.
 
+- **NEXUS-SLEV-TASK-CORPUS-RECEIPT:** The real `SLEV00.BIN` through
+  `SLEV15.BIN` corpus now passes the common SH-2 entry-spine and bounded
+  PC-relative literal checks. Continue with execution-capture proof of task
+  body, callback owner and event semantics; no task opcode is executable yet.
+
 - **NEXUS-STALE-ISSUE-PAGES:** The three historical Nexus issue pages are now
   explicitly labelled as snapshots. Keep the strict-fidelity inventory and
   capture gates authoritative when further format or runtime gaps are found.

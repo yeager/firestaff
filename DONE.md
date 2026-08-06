@@ -21,6 +21,12 @@
   windows. The decoder retains 720 tone candidates as diagnostic source
   evidence; event dispatch, SDDRVS ownership and host playback remain gated.
 
+- ✅ 2026-08-06 Nexus SLEV retail task-profile verification: `test_nexus_v1_script_vm`
+  passes the complete real `SLEV00.BIN`–`SLEV15.BIN` corpus. Each file retains
+  the same 36-byte SH-2 entry spine and bounds-checked in-file literal
+  receipts; task-body opcodes, callback ownership and dispatch remain opaque
+  and fail-closed.
+
 - ✅ 2026-08-06 Nexus DGN corpus geometry receipt: fixed
   `nexus_v1_inspect_dgn_material_corpus()` to count the real Structure3 mesh
   extraction receipt instead of the unrelated post-grid/collision
