@@ -113,6 +113,12 @@
   pixel or production-runtime input. Keep it test-only until the live chest
   transaction and original masked bitmap owner are bound.
 
+- **DM1-CHEST-PARTIAL-DROP-SYNTHETIC-AUDIT:** The partial-drop-to-floor probe
+  creates its chest stack, leader hand, floor link and coordinates locally.
+  It has no M11/runtime caller and consumes no original DM1 save, dungeon or
+  graphics data; keep it test-only until a live source-backed chest
+  transaction owns the behavior.
+
 - **DM1-MIRROR-RESURRECT-CROSS-CANDIDATE-SYNTHETIC-AUDIT:** This helper
   models stale mirror-panel state during resurrection with synthetic
   champions and has no production caller or original-data input. Keep the

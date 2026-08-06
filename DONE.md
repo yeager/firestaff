@@ -28,6 +28,15 @@
 - ✅ Verification: `test_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 chest partial-drop synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the chest partial-drop-to-floor probe from M10. It locally
+  fabricates chest contents, leader-hand state, a floor link and map
+  coordinates; it reads no original DM1 input and has no runtime caller.
+  Its explicit ReDMCSB regression now compiles the probe source directly.
+- ✅ Verification: `test_dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat`
+  passes; the source object is absent from M10.
+
 # DM1 D1L/D1R F0107 wall synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the D1L/D1R F0107 wall-ornament probe from M10. It hard-codes
