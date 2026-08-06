@@ -4233,6 +4233,12 @@ list(REMOVE_ITEM M10_SOURCES
 # the broad M10 compatibility glob cannot expose those values in production.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat.c")
+# `dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat.c` is likewise a
+# contract-only synthetic-framebuffer audit.  It has no M11/runtime caller
+# and reads no authenticated GRAPHICS.DAT material; compile it only into its
+# dedicated test rather than exposing its probe pixels through M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
@@ -53110,7 +53116,9 @@ add_executable(test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat tests/test_dm1_v1
 target_include_directories(test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat COMMAND test_dm1_v1_viewport_d0l2_d0r2_wall_pc34_compat)
-add_executable(test_dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat tests/test_dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat
+    tests/test_dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat COMMAND test_dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat)

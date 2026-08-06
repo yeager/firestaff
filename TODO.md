@@ -8,6 +8,12 @@
   are recovered from disassembly/capture; do not expose its synthetic values
   through M10.
 
+- **DM1-D0L-D0R-F0107-SYNTHETIC-AUDIT:** The D0L/D0R F0107 wall-ornament
+  helper is a contract-only synthetic-framebuffer audit with no authenticated
+  bitmap input or production caller. Its ReDMCSB dispatch notes remain useful
+  for parity work, but the real D0L/D0R GRAPHICS.DAT consumer and pixel
+  ownership must be recovered before any runtime rendering claim.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

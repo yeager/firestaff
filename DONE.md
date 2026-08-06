@@ -841,6 +841,18 @@
 - ✅ Verification target: M10/M11 archive-symbol audit plus the focused
   D0C/F0108 contract test; no game data was copied or committed.
 
+# DM1 D0L/D0R F0107 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only
+  `dm1_v1_viewport_d0l_d0r_f0107_wall_ornament_pc34_compat.c` from the broad
+  M10 source glob. Its source evidence explicitly says it uses a synthetic
+  framebuffer, reads no `GRAPHICS.DAT`, and claims no original pixel parity;
+  repository-wide caller search found only the dedicated test.
+- ✅ The focused test now compiles the audit source explicitly, preserving the
+  ReDMCSB dispatch/ordering contract without allowing probe pixels into M10.
+  Real D0L/D0R bitmap ownership remains open.
+- ✅ No game data was copied or committed.
+
 # CSB FM Towns graphics real-cache regression (2026-08-06)
 
 - ✅ `test_csb_v1_fmtowns_graphics_dat` now takes
