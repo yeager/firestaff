@@ -51917,3 +51917,8 @@ and `firestaff` build pass.
   the generic non-wall passability helper to send a projectile through a
   closed door. The focused regression covers the fail-closed route; open-door
   passage remains capture/state-gated.
+- ✅ 2026-08-06 Nexus real ITEM.IBS floor provenance: the boot regression now
+  loads retail LEV01 and verifies that its eight authenticated Structure1F
+  item records materialize exactly eight floor items through the hash-bound
+  ITEM.IBS association table. No creature-drop, gold, name, action, combat or
+  HUD semantics are inferred from that handoff.

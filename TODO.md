@@ -26249,7 +26249,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - 🔧 Nexus item provenance: identify and bind the Saturn item-definition
   records before re-enabling inventory names, combat stats, or HUD item text;
   the former DM1 catalog remains reference-only and no synthetic replacement
-  is permitted.
+  is permitted. The real ITEM.IBS → DGN Structure1F floor-item handoff is
+  now regression-covered on retail LEV01 (eight declared records); this does
+  not prove names, actions, combat stats, or HUD text.
 - 🔧 Nexus door-state provenance: bind SDDRVS.TSK/retail door state and its
   open transition before allowing movement through type-8 squares. Missing
   registration now fails closed in both passability and square-event routes;

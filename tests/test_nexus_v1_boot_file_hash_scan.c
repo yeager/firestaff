@@ -80,6 +80,18 @@ static int local_file_exists(const char* path) {
     return 1;
 }
 
+static int count_real_floor_items(void) {
+    int x;
+    int y;
+    int count = 0;
+    for (y = 0; y < NEXUS_MAX_MAP_SIZE; ++y) {
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE; ++x) {
+            count += nexus_floor_count_at(x, y);
+        }
+    }
+    return count;
+}
+
 static int diag_details_contain(const Nexus_V1_Diagnostic* diags,
                                 size_t count,
                                 const char* needle) {
@@ -650,6 +662,35 @@ int main(void) {
             }
         } else {
             puts("SKIP: local Nexus SNDLEV00.SAL/.MAP not present for SFX runtime receipt");
+        }
+
+        /* Real ITEM.IBS provenance must reach only the DGN's declared floor
+         * items.  This exercises the production handoff (hash-bound
+         * ITEM.IBS -> Structure1F item declarations -> floor registry) on a
+         * level with known retail item records; it must not synthesize loot
+         * from empty cells or an unverified catalog. */
+        if (data_root[0] != '\0' && local_file_exists(data_root)) {
+            Nexus_V1_Engine item_engine;
+            int declared_items = 0;
+            int i;
+            memset(&item_engine, 0, sizeof(item_engine));
+            check_int(nexus_v1_init(&item_engine, data_root) == 0 &&
+                          nexus_v1_load_level(&item_engine, 1) == 0,
+                      "real LEV01 loads for ITEM.IBS floor provenance");
+            if (item_engine.level_loaded) {
+                for (i = 0; i < item_engine.current_level.structure1f_entry_count; ++i) {
+                    if (item_engine.current_level.structure1f_entries[i].family ==
+                            NEXUS_V1_DGN_STRUCTURE1F_ITEMS) {
+                        ++declared_items;
+                    }
+                }
+                check_int(item_engine.item_ibs_runtime_source.source_bound == 1 &&
+                              item_engine.item_ibs_bank.valid == 1,
+                          "real ITEM.IBS is source-bound before floor materialization");
+                check_int(declared_items == 8 && count_real_floor_items() == declared_items,
+                          "real LEV01 materializes exactly its eight DGN floor-item records");
+            }
+            nexus_v1_shutdown(&item_engine);
         }
         nexus_v1_shutdown(&engine);
 
