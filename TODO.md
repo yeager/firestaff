@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHEST-MID-CLOSE-HAND-SWAP-SYNTHETIC-AUDIT:** This manual chest-close
+  fixture fabricates linked items, slots and hand state. It loads no original
+  DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound chest owner is recovered.
+
 - **DM1-AUTO-CHEST-ACTION-HAND-SWAP-SYNTHETIC-AUDIT:** This chest close/swap
   fixture fabricates linked items, slots and hand state. It loads no original
   DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
