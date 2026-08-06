@@ -950,9 +950,10 @@
   consumes the real PC34 map ornament counts, seed, square attributes and
   F0169/F0170 random wall/floor ordinal formulas. The real PC34 map-0 receipt
   verifies wall ordinal 3 and floor ordinal 3. The D1/D0 native-palette
-  regression is fixed; remaining work is the broader M11 sensor override path
-  and external Mac/app viewport capture for every wall, inscription, torch,
-  alcove, stairs and floor ornament.
+  regression is fixed; M11 now also rejects calculated random wall/floor
+  ordinals on a Thing-list square unless its original C03 sensor supplies the
+  replacement. Remaining work is external Mac/app viewport capture for every
+  wall, inscription, torch, alcove, stairs and floor ornament.
 
 - **DM1-DIRECT-LOOP-CAPTURE:** The legacy direct DM1 loop now rejects missing
   or unparsable hash-verified GRAPHICS.DAT/DUNGEON.DAT instead of continuing

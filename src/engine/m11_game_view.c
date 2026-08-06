@@ -11078,7 +11078,8 @@ static int m11_compute_floor_ornament_ordinal(
      * The map's real metadata and seed decide whether a tile is decorated;
      * a Firestaff-specific HoC suppression would hide legitimate plates,
      * grates, and other floor ornaments. */
-    if (randomAllowed && randomFloorOrnCount > 0) {
+    if ((square & DUNGEON_SQUARE_MASK_THING_LIST) == 0 &&
+        randomAllowed && randomFloorOrnCount > 0) {
         /* value2 = 3000 + (mapIndex << 6) + mapWidth + mapHeight
          * Ref: ReDMCSB F0170 call from F0172 */
         value2 = (unsigned int)(3000 + (mapIndex << 6) +
@@ -30062,6 +30063,7 @@ static int m11_sample_viewport_cell(const M11_GameViewState* state,
      * ────────────────────────────────────────────────────────────────── */
     if (cell.elementType == DUNGEON_ELEMENT_WALL &&
         cell.wallOrnamentOrdinal < 0 &&
+        (square & DUNGEON_SQUARE_MASK_THING_LIST) == 0 &&
         state->world.dungeon &&
         state->world.party.mapIndex >= 0 &&
         state->world.party.mapIndex < (int)state->world.dungeon->header.mapCount) {
