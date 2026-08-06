@@ -3428,7 +3428,8 @@ static int nested_disk_find_list_visitor(const char *name, const uint8_t *bytes,
     md5_init(&ctx);
     md5_update(&ctx, bytes, (unsigned int)byte_count);
     md5_final(&ctx, hex);
-    index = md5_list_match_index(hex, matches->md5_list, NULL, matches->md5_count);
+    index = md5_list_match_index(hex, matches->md5_list, matches->matched,
+                                 matches->md5_count);
     if (index >= 0 && !matches->matched[index] &&
         copy_nested_virtual_match_path(matches->archive, matches->disk, name,
                                        matches->out_paths[index], ASSET_PATH_MAX)) {
@@ -3708,6 +3709,7 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
     int hasEntry = 0;
     int isFolder = 0;
     int foundCount = 0;
+    int diskImageOnly = md5Count > 1;
     int i;
     FILE *pipe;
     const char *tool = external_archive_tool_for_path(archivePath);
@@ -3716,6 +3718,13 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
         return 0;
     }
     if (!external_list_command(cmd, sizeof(cmd), tool, archivePath)) return 0;
+    /* A repeated digest list is an occurrence query.  M12 uses this only
+     * for Amiga package TITL.DAT, where the relevant occurrence is inside an
+     * ADF/ST/MSA image.  Do not stream every unrelated CD track from a large
+     * external archive merely to collect those disk-image candidates. */
+    for (i = 1; i < md5Count && diskImageOnly; ++i) {
+        if (strcmp(md5List[0], md5List[i]) != 0) diskImageOnly = 0;
+    }
     memset(bestNames, 0, sizeof(bestNames));
     memset(hasBest, 0, sizeof(hasBest));
     pipe = popen(cmd, "r");
@@ -3740,7 +3749,7 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
                 }
                 char hex[33];
                 int matchIndex;
-                if (!is_kryoflux_raw_track_path(line) &&
+                if (!diskImageOnly && !is_kryoflux_raw_track_path(line) &&
                     external_entry_md5(archivePath, line, hex)) {
                     matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
                     if (matchIndex >= 0 &&
@@ -3772,7 +3781,7 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
             }
             char hex[33];
             int matchIndex;
-            if (!is_kryoflux_raw_track_path(entryName) &&
+            if (!diskImageOnly && !is_kryoflux_raw_track_path(entryName) &&
                 external_entry_md5(archivePath, entryName, hex)) {
                 matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
                 if (matchIndex >= 0 &&
@@ -3813,7 +3822,7 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
         }
         char hex[33];
         int matchIndex;
-        if (!is_kryoflux_raw_track_path(entryName) &&
+        if (!diskImageOnly && !is_kryoflux_raw_track_path(entryName) &&
             external_entry_md5(archivePath, entryName, hex)) {
             matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
             if (matchIndex >= 0 &&
@@ -4258,7 +4267,8 @@ static int adf_find_list_visitor(const char *name, const uint8_t *bytes,
     md5_init(&ctx);
     md5_update(&ctx, bytes, (unsigned int)byte_count);
     md5_final(&ctx, hex);
-    index = md5_list_match_index(hex, matches->md5_list, NULL, matches->md5_count);
+    index = md5_list_match_index(hex, matches->md5_list, matches->matched,
+                                 matches->md5_count);
     if (index >= 0) {
         int should_update = !matches->matched[index];
         if (!should_update) {
@@ -4536,7 +4546,8 @@ static int external_adf_find_list_visitor(const char *name, const uint8_t *bytes
     md5_init(&ctx);
     md5_update(&ctx, bytes, (unsigned int)byte_count);
     md5_final(&ctx, hex);
-    index = md5_list_match_index(hex, matches->md5_list, NULL, matches->md5_count);
+    index = md5_list_match_index(hex, matches->md5_list, matches->matched,
+                                 matches->md5_count);
     if (index >= 0 && !matches->matched[index] &&
         copy_nested_virtual_match_path(matches->archive, matches->adf, name,
                                        matches->out_paths[index], ASSET_PATH_MAX)) {

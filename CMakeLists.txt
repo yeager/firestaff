@@ -4624,6 +4624,7 @@ if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
         src/theron/theron_v1_combat_runtime_source.c
         src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_track02_item_properties.c
         src/theron/theron_v1_track02_creature_spawn.c
         src/theron/theron_v1_track02_item_categories.c
@@ -22676,6 +22677,7 @@ endif()
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
+        src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_track02_item_properties.c
         src/theron/theron_v1_track02_creature_spawn.c
         src/theron/theron_v1_track02_item_categories.c

@@ -14,6 +14,7 @@
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "firestaff/csb/v1/startup_entrance_pointer_pc34_compat.h"
+#include "fs_portable_compat.h"
 #include "swsh_frontend_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
@@ -8336,6 +8337,20 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
                          g_csb_boot_graphics_hashes[graphics_match]);
         profile->graphics_kind = csb_v1_boot_graphics_kind(graphics_path);
         profile->variant_id = g_csb_boot_graphics_variants[graphics_match];
+        /* A31E reuses PC34's GRAPHICS.DAT digest.  M12 admitted that
+         * edition only after proving TITL.DAT from the same original ADF;
+         * after materialization the sidecar remains beside GRAPHICS.DAT and
+         * is the only source-owned discriminator.  ReDMCSB APPA.C:51-53
+         * enters SWSH/ANIM FTL_TITL for this package, never TITLE.C. */
+        if (profile->variant_id == CSB_V1_VARIANT_PC34_EN) {
+            char amigaTitlePath[ASSET_PATH_MAX];
+            if (FSP_JoinPath(amigaTitlePath, sizeof(amigaTitlePath), root,
+                             "TITL.DAT") &&
+                asset_file_matches_md5(amigaTitlePath,
+                                       "5b590ea3a6f5eed513b5678b01468ee4")) {
+                profile->variant_id = CSB_V1_VARIANT_AMIGA31_EN;
+            }
+        }
     }
     if (profile->dungeon_verified) {
         csb_v1_boot_copy(profile->dungeon_path, sizeof(profile->dungeon_path),

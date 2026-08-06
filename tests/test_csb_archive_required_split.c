@@ -809,11 +809,46 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
               "selected FM Towns Japanese version receives only its authenticated CJDATA pair");
 }
 
+static void check_csb_amiga31_real_archive_when_available(const char* root) {
+    M12_AssetStatus status;
+    const M12_AssetVersionStatus* amiga;
+    char runtimeRoot[ASSET_PATH_MAX], graphicsPath[ASSET_PATH_MAX];
+    char dungeonPath[ASSET_PATH_MAX], titlePath[ASSET_PATH_MAX];
+    char sourceTitlePath[ASSET_PATH_MAX];
+    int index;
+    if (!root || root[0] == '\0') {
+        puts("skip: FIRESTAFF_CSB_AMIGA31_DATA_DIR not set");
+        return;
+    }
+    /* The synthetic ZIP/ISO cases above override the two launch hashes.
+     * Restore production fingerprints before inspecting owner-supplied ADF. */
+    M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, NULL);
+    check_int(asset_find_by_md5(root, "5b590ea3a6f5eed513b5678b01468ee4",
+                                sourceTitlePath, (int)sizeof(sourceTitlePath), 32),
+              "real Amiga 3.1 ADF exposes its authenticated TITL.DAT hash");
+    M12_AssetStatus_ScanGame(&status, root, "csb");
+    index = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    amiga = index >= 0 ? M12_AssetStatus_GetVersion(&status, "csb", (size_t)index) : NULL;
+    check_int(amiga && amiga->matched &&
+                  strcmp(amiga->matchedMd5, "61fbfd56887c94adc26888a9491c6611") == 0,
+              "real Amiga 3.1 ADF should be admitted by its paired TITL.DAT identity");
+    check_int(M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                  &status, "amiga31-en", runtimeRoot, sizeof(runtimeRoot)) &&
+                  FSP_JoinPath(graphicsPath, sizeof(graphicsPath), runtimeRoot, "GRAPHICS.DAT") &&
+                  FSP_JoinPath(dungeonPath, sizeof(dungeonPath), runtimeRoot, "DUNGEON.DAT") &&
+                  FSP_JoinPath(titlePath, sizeof(titlePath), runtimeRoot, "TITL.DAT") &&
+                  asset_file_matches_md5(graphicsPath, "61fbfd56887c94adc26888a9491c6611") &&
+                  asset_file_matches_md5(dungeonPath, "6695d2acebce49f95db1d8f3a5c733de") &&
+                  asset_file_matches_md5(titlePath, "5b590ea3a6f5eed513b5678b01468ee4"),
+              "selected Amiga 3.1 cache should retain the authenticated title package");
+}
+
 int main(void) {
     char home[512];
     char positiveRoot[512];
     char negativeRoot[512];
     const char* realFmtownsRoot = getenv("FIRESTAFF_CSB_FMTOWNS_DATA_DIR");
+    const char* realAmiga31Root = getenv("FIRESTAFF_CSB_AMIGA31_DATA_DIR");
 
     if (!make_isolated_home(home, sizeof(home)) ||
         !join_path(positiveRoot, sizeof(positiveRoot), home, "positive-data") ||
@@ -834,6 +869,7 @@ int main(void) {
     check_csb_wrong_archive_graphics_blocks_launch(negativeRoot);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
     check_csb_fmtowns_real_archive_when_available(realFmtownsRoot);
+    check_csb_amiga31_real_archive_when_available(realAmiga31Root);
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

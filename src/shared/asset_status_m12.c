@@ -2854,6 +2854,104 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
     }
 }
 
+/* CSB Amiga 3.1 shares PC34's GRAPHICS.DAT bytes.  Greatstone's original
+ * A31E disk catalogue instead identifies the executable presentation package
+ * through TITL.DAT.  Require both source files from the same outer/inner
+ * container; a nearby PC GRAPHICS.DAT or an unpaired title file is not an
+ * Amiga launch profile. */
+static void m12_admit_csb_amiga31_title_package(
+    M12_AssetStatus* status, int gameIndex,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount) {
+    const char* const titleMd5 = "5b590ea3a6f5eed513b5678b01468ee4";
+    const char* const graphicsMd5 = "61fbfd56887c94adc26888a9491c6611";
+    int versionIndex;
+    size_t rootIndex;
+    if (!status || gameIndex < 0 ||
+        strcmp(g_games[gameIndex].gameId, "csb") != 0) return;
+    versionIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    if (versionIndex < 0) return;
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        enum { M12_AMIGA31_TITLE_CANDIDATE_LIMIT = 8 };
+        const char* titleHashes[M12_AMIGA31_TITLE_CANDIDATE_LIMIT + 1U];
+        char titlePaths[M12_AMIGA31_TITLE_CANDIDATE_LIMIT][ASSET_PATH_MAX];
+        int titleMatched[M12_AMIGA31_TITLE_CANDIDATE_LIMIT];
+        int titleIndex;
+        for (titleIndex = 0; titleIndex < M12_AMIGA31_TITLE_CANDIDATE_LIMIT;
+             ++titleIndex) {
+            titleHashes[titleIndex] = titleMd5;
+        }
+        titleHashes[M12_AMIGA31_TITLE_CANDIDATE_LIMIT] = NULL;
+        memset(titlePaths, 0, sizeof(titlePaths));
+        memset(titleMatched, 0, sizeof(titleMatched));
+        (void)asset_find_all_by_md5_list(
+            roots[rootIndex], titleHashes, titlePaths, titleMatched,
+            M12_AMIGA31_TITLE_CANDIDATE_LIMIT, 32);
+        for (titleIndex = 0; titleIndex < M12_AMIGA31_TITLE_CANDIDATE_LIMIT;
+             ++titleIndex) {
+        const char* titlePath = titlePaths[titleIndex];
+        const char* separator;
+        const char* nextSeparator;
+        size_t prefixLength;
+        if (!titleMatched[titleIndex] || titlePath[0] == '\0') continue;
+        if (m12_path_is_virtual_asset(titlePath)) {
+            /* A nested ADF receipt is archive.7z::disk.adf::TITL.DAT.
+             * Use the final virtual separator: strrchr(':') points at the
+             * second colon and would reject every nested-disk title. */
+            separator = strstr(titlePath, "::");
+            if (!separator) continue;
+            while ((nextSeparator = strstr(separator + 2, "::")) != NULL) {
+                separator = nextSeparator;
+            }
+            if (separator == titlePath || separator[2] == '\0') continue;
+            prefixLength = (size_t)(separator - titlePath) + 2U;
+        }
+        {
+            /* AmigaDOS itself is case-insensitive, but an archive receipt is
+             * case-preserving.  The retail A31E disk uses graphics.dat;
+             * retain the PC spelling as a second valid source receipt. */
+            static const char* const graphicsNames[] = {
+                "graphics.dat", "Graphics.DAT", NULL
+            };
+            int nameIndex;
+            for (nameIndex = 0; graphicsNames[nameIndex] != NULL; ++nameIndex) {
+                char graphicsPath[ASSET_PATH_MAX];
+                char stagePath[ASSET_PATH_MAX] = {0};
+                char md5[M12_ASSET_MD5_CAPACITY];
+                if (m12_path_is_virtual_asset(titlePath)) {
+                    if (snprintf(graphicsPath, sizeof(graphicsPath), "%.*s%s",
+                                 (int)prefixLength, titlePath,
+                                 graphicsNames[nameIndex]) >=
+                        (int)sizeof(graphicsPath)) continue;
+                } else {
+                    char parent[M12_ASSET_DATA_DIR_CAPACITY];
+                    if (!FSP_ParentDir(parent, sizeof(parent), titlePath) ||
+                        !FSP_JoinPath(graphicsPath, sizeof(graphicsPath), parent,
+                                      graphicsNames[nameIndex])) continue;
+                }
+                if (!m12_csb_fmtowns_make_stage_path(stagePath, sizeof(stagePath)) ||
+                    !(m12_path_is_virtual_asset(graphicsPath)
+                          ? asset_extract_virtual_path(graphicsPath, stagePath)
+                          : m12_copy_file_to_path(graphicsPath, stagePath)) ||
+                    !m12_file_md5_hex(stagePath, md5) || strcmp(md5, graphicsMd5) != 0) {
+                    if (stagePath[0]) (void)remove(stagePath);
+                    continue;
+                }
+                (void)remove(stagePath);
+                status->versions[gameIndex][versionIndex].matched = 1;
+                m12_copy_string(status->versions[gameIndex][versionIndex].matchedPath,
+                                sizeof(status->versions[gameIndex][versionIndex].matchedPath),
+                                graphicsPath);
+                m12_copy_string(status->versions[gameIndex][versionIndex].matchedMd5,
+                                sizeof(status->versions[gameIndex][versionIndex].matchedMd5),
+                                graphicsMd5);
+                return;
+            }
+        }
+        }
+    }
+}
+
 static size_t m12_required_file_count_for_game(const char* gameId) {
     size_t i;
     size_t count = 0U;
@@ -4133,6 +4231,9 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
                                &dataDirResolvedToMatchedRoot,
                                userExplicitDataDir,
                                csbFmtownsAdmitted);
+        if (strcmp(g_games[i].gameId, "csb") == 0) {
+            m12_admit_csb_amiga31_title_package(status, i, roots, rootCount);
+        }
         if (strcmp(g_games[i].gameId, "dm2") == 0) {
             (void)m12_admit_dm2_fmtowns_archive(status, i, roots, rootCount,
                                                 requestedDataDir);
@@ -4386,6 +4487,10 @@ void M12_AssetStatus_ScanGameWithOptions(
                                &dataDirResolvedToMatchedRoot,
                                (requestedDataDir && requestedDataDir[0] != '\0'),
                                (options && options->looseFilesOnly) || csbFmtownsAdmitted);
+        if (strcmp(g_games[gameIndex].gameId, "csb") == 0) {
+            m12_admit_csb_amiga31_title_package(status, gameIndex, roots,
+                                                 rootCount);
+        }
         /* m12_fill_game_versions refreshes the game's status rows.  Restore
          * the verified nested-CD rows afterwards while retaining the
          * archive-free pass above for this multi-hundred-megabyte ZIP. */
@@ -4647,6 +4752,44 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     m12_copy_string(selectedGraphics.matchedPath,
                     sizeof(selectedGraphics.matchedPath),
                     version->matchedPath);
+    /* A31E's graphics digest is shared with PC34, so its dungeon must be
+     * materialized from the same ADF receipt.  Selecting the first matching
+     * required-file row could otherwise cross-bind a different CSB package.
+     * ReDMCSB COMPILE.H:199-243 keeps those media families distinct. */
+    if (strcmp(versionId, "amiga31-en") == 0) {
+        static const char* const dungeonNames[] = {
+            "Dungeon.DAT", "dungeon.dat", NULL
+        };
+        int dungeonNameIndex;
+        if (!FSP_JoinPath(graphicsPath, sizeof(graphicsPath), outPath,
+                          "GRAPHICS.DAT") ||
+            !FSP_JoinPath(dungeonPath, sizeof(dungeonPath), outPath,
+                          "DUNGEON.DAT") ||
+            !m12_materialize_required_file(&selectedGraphics, graphicsPath) ||
+            !m12_file_md5_hex(graphicsPath, copiedMd5) ||
+            strcmp(copiedMd5, version->matchedMd5) != 0) {
+            (void)remove(graphicsPath);
+            outPath[0] = '\0';
+            return 0;
+        }
+        for (dungeonNameIndex = 0;
+             dungeonNames[dungeonNameIndex] != NULL;
+             ++dungeonNameIndex) {
+            if (m12_materialize_optional_for_cache_seed(
+                    version->matchedPath, dungeonNames[dungeonNameIndex],
+                    dungeonPath) &&
+                m12_file_md5_hex(dungeonPath, copiedMd5) &&
+                strcmp(copiedMd5, expectedDungeonMd5) == 0) {
+                m12_materialize_csb_startup_optional_cache(version->matchedPath,
+                                                           outPath);
+                return 1;
+            }
+            (void)remove(dungeonPath);
+        }
+        (void)remove(graphicsPath);
+        outPath[0] = '\0';
+        return 0;
+    }
     if (!dungeon ||
         !FSP_JoinPath(graphicsPath, sizeof(graphicsPath), outPath,
                       "GRAPHICS.DAT") ||

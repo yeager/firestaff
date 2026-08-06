@@ -9265,6 +9265,13 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-06 CSB Amiga 3.1 package binding: the scanner now distinguishes
+  the retail A31E disk from PC 3.4 and other Amiga disks that share
+  `GRAPHICS.DAT` or `TITL.DAT` bytes. It collects bounded title occurrences,
+  proves `graphics.dat` from the same nested ADF receipt, and materializes
+  both graphics and `DUNGEON.DAT` from that exact package. The real local
+  7z→ADF regression and the CSB boot-profile smoke test pass.
+
 - ✅ 2026-08-06 Windows nested-Atari archive guard: the Windows fallback
   branch now defines fail-closed nested `.adf`, `.st` and `.msa` extraction
   paths. Direct Atari disk images remain in-process; an external archive
