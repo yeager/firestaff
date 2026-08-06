@@ -56060,3 +56060,11 @@ alcove runtime and archive-media tests passed (4/4).
   so this is source-state recovery rather than a viewport-parity claim.
 - Regression: real PC34 `DUNGEON.DAT` asserts map-0's wall `(0,12)`/west
   ordinal `2` and floor `(4,2)` ordinal `3`.
+
+# 2026-08-06 CSB FM Towns TITLE Timer-A hold
+
+- ✅ The real F31 title regression now proves the final `TITLE.ANM` frame
+  stays visible through 605 source Timer-A ticks. `SWITCHTW` may bind only on
+  tick 606, using the original `18 * (1024 - 100)` microsecond Timer-A period
+  rather than the 16 ms host wake. The following 60-VBlank switch-page delay
+  remains independently checked for both English and Japanese retail media.

@@ -119,11 +119,18 @@ int main(void)
     CHECK(view.csbFmtownsTitleBound && !view.csbStartupRuntimeAssetSession,
           "FM Towns title remains separate from the Game entrance session");
 
-    /* TITLE.ANM has 606 Timer-A ticks. The M11 title owner advances once per
-     * 16 ms wake; SWITCH.C then waits its source sixty VBlanks. */
-    for (tick = 0u; tick < 700u && !view.csbFmtownsSwitchBound; ++tick) {
+    /* TITLE.ANM has 606 Timer-A ticks. Timer A expires at 18*(1024-100) us,
+     * not once per 16 ms M11 wake. At 629 wakes only 605 source ticks have
+     * elapsed, so the last native title frame must still be displayed. */
+    for (tick = 0u; tick < 629u; ++tick) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
+    CHECK(view.csbFmtownsTitleBound && !view.csbFmtownsSwitchBound,
+          "TITLE.ANM cannot advance at the host 16 ms wake cadence");
+    (void)M11_GameView_AdvanceIdleTick(&view);
+    CHECK(view.csbFmtownsSwitchBound &&
+              view.csbFmtownsSwitchVblanksRemaining == 60u,
+          "TITLE.ANM reaches SWITCHTW only after its 606th Timer-A tick");
     for (tick = 0u; tick < 80u &&
                        view.csbFmtownsSwitchVblanksRemaining != 0u; ++tick) {
         (void)M11_GameView_AdvanceIdleTick(&view);

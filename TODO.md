@@ -1035,6 +1035,10 @@
   profile inventory now continues after a fast-path match, so an Atari ST
   `.7z` or other authenticated platform package in the same data root remains
   visible instead of being hidden by a cached or loose CSB pair.
+  The real-media F31 title regression holds the final title frame through the
+  605th Timer-A tick and admits SWITCHTW only on tick 606, preventing a
+  future 16 ms host-wake shortcut from making the original animation run too
+  quickly.
   2026-08-06: PC 3.4 and Amiga 3.1 share one `GRAPHICS.DAT` identity, so the
   scanner now checks the paired, hash-verified A31E `TITL.DAT` receipt before
   publishing the PC row. An A31 disk can no longer be mislabeled as PC 3.4;
