@@ -1,4 +1,5 @@
 #include "csb_v1_boot.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "vga_palette_pc34_compat.h"
 
 #include <string.h>
@@ -19,7 +20,7 @@ int csb_v1_boot_startup_complete_timeline_receipt_from_session_pc34(
         /* TITLE.C F0437's frame-80 STRIKES boundary publishes the completed
          * four-bit C001 phase mask. F0807 may not expose C017/C040 until all
          * of PRESENTS, CHAOS, hold, and STRIKES have been consumed. */
-        session->playback.title_phase_mask != 0x0f ||
+        !csb_v1_startup_session_title_handoff_complete_pc34(session) ||
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34 ||
         !session->playback.entrance_complete ||
         (session->playback.credits_scene_presented &&

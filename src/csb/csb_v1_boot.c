@@ -2511,8 +2511,8 @@ static int csb_v1_boot_startup_terminal_hud_matches_profile_pc34(
      * run. The terminal handoff is therefore not allowed to validate C017/C040
      * in isolation; otherwise a stale title phase or swapped door strip can
      * open the runtime HUD through an old wrapper path. */
-    if (session->playback.title_phase_mask != 0x0f ||
-        !csb_v1_startup_session_full_surface_contract_pc34(session)) {
+    if (!csb_v1_startup_session_title_handoff_complete_pc34(session) ||
+        !session->surfaces.valid || !session->surfaces.hud_surfaces_ready) {
         return 0;
     }
 

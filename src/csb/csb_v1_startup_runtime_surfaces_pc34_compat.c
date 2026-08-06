@@ -1,4 +1,5 @@
 #include "csb_v1_boot.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "csb_v1_f0347_inventory_draw_panel_pc34_compat.h"
 
 #include "memory_frontend_pc34_compat.h"
@@ -1725,7 +1726,7 @@ int csb_v1_boot_startup_door_opening_capture_from_session_pc34(
         !session->rejects_legacy_wrappers ||
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
         !session->playback.entrance_music_active ||
-        session->playback.title_phase_mask != 0x0f ||
+        !csb_v1_startup_session_title_handoff_complete_pc34(session) ||
         first_source_tick > UINT32_MAX -
             CSB_V1_STARTUP_DOOR_OPENING_CAPTURE_FRAME_COUNT_PC34 + 1u) {
         return 0;

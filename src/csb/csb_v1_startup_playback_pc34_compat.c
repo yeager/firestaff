@@ -1,4 +1,5 @@
 #include "csb_v1_boot.h"
+#include "csb_v1_startup_session_contract_pc34_compat.h"
 #include "firestaff/csb/v1/startup_sequence_pc34_compat.h"
 
 #include <string.h>
@@ -197,7 +198,7 @@ int csb_v1_boot_startup_playback_complete_entrance_pc34(
 {
     if (!csb_v1_startup_playback_session_owned_pc34(session) ||
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34 ||
-        session->playback.title_phase_mask != 0x0f ||
+        !csb_v1_startup_session_title_handoff_complete_pc34(session) ||
         !session->playback.entrance_music_active ||
         (session->playback.credits_scene_presented &&
          (!session->playback.credits_return_presented ||

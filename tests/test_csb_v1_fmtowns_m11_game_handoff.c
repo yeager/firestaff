@@ -32,10 +32,12 @@ int main(void)
     unsigned int tick;
     int result;
     int door_frame_seen = 0;
+    int live_frame_nonblack = 0;
     CSB_V1_FmtownsSwitchInputReceipt switch_input;
     CSB_V1_StartupRuntimeAssetSession_PC34 direct_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
+    CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
 
     if (!data_dir || !data_dir[0]) {
         puts("SKIP: FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR not set");
@@ -137,6 +139,22 @@ int main(void)
           "F31 Prison transition draws a source-owned C002/C003 door frame");
     CHECK(!view.csbState.startup_entrance_active && view.csbState.level_loaded,
           "F31 Prison door handoff reaches the live CSB runtime");
+    memset(&terminal, 0, sizeof(terminal));
+    CHECK(csb_v1_startup_session_terminal_receipt_pc34(
+              (CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                  view.csbStartupRuntimeAssetSession, &terminal) &&
+              terminal.valid && terminal.c017_ready && terminal.c040_ready,
+          "F31 title, Switch and Game handoff reaches the real C017/C040 terminal session");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    for (tick = 0u; tick < sizeof(framebuffer); ++tick) {
+        if (framebuffer[tick] != 0u) {
+            live_frame_nonblack = 1;
+            break;
+        }
+    }
+    CHECK(live_frame_nonblack,
+          "F31 C017 HUD and F0128 viewport draw a real live frame after Prison");
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     puts("PASS: real FM Towns SWITCHTW -> CHTWE entrance handoff");

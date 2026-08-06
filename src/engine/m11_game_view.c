@@ -6690,6 +6690,23 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
                 &opening);
             return;
         }
+        /* Record the exact C004 presentation in the same session that will
+         * later consume C002/C003 and C017/C040.  The direct F31 raster path
+         * above is only presentation; this frame receipt carries ENTRANCE.C
+         * F0807's source event into the terminal handoff. */
+        memset(&render_state, 0, sizeof(render_state));
+        memset(&render_plan, 0, sizeof(render_plan));
+        render_state.entrance_active = 1;
+        render_state.entrance_source_step =
+            state->csbState.startup_entrance_source_step;
+        if (!csb_v1_startup_source_render_plan_from_state_pc34(
+                &render_state, &render_plan) ||
+            render_plan.surface != CSB_V1_STARTUP_RENDER_ENTRANCE_CLOSED_PC34 ||
+            !csb_v1_boot_startup_runtime_asset_session_frame_pc34(
+                (CSB_V1_StartupRuntimeAssetSession_PC34 *)fmtowns_session,
+                &render_plan, m11_csb_startup_source_tick(state), &opening.frame)) {
+            return;
+        }
         m11_csb_present_startup_raster(entrance->pixels, framebuffer,
                                        framebufferWidth, framebufferHeight);
         return;
@@ -7165,6 +7182,20 @@ static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
     }
     session->csbStartupPackageIdentity =
         state->csbStartupExpectedPackageIdentity;
+    if (!state->csbFmtownsSwitchReceipt.valid) {
+        csb_v1_boot_startup_runtime_asset_session_release_pc34(session);
+        free(session);
+        return 0;
+    }
+    session->fmtowns_standalone_title_handoff_verified = 1;
+    session->fmtowns_standalone_title_handoff_hash =
+        handoff.executable_fnv1a ^ state->csbFmtownsSwitchReceipt.executable_fnv1a ^
+        session->generation;
+    if (session->fmtowns_standalone_title_handoff_hash == 0u)
+        session->fmtowns_standalone_title_handoff_hash = 1u;
+    session->playback.stage = CSB_V1_STARTUP_PLAYBACK_STAGE_ENTRANCE_PC34;
+    session->playback.entrance_music_active = 1;
+    session->playback.no_fallback_routes = 1;
     state->csbStartupRuntimeAssetSession = session;
     gate = state->csbStartupAssetGateReceipt;
     /* The F31 title is owned by ANIMTW rather than TITLE.C, so the launch

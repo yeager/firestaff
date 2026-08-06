@@ -263,22 +263,33 @@ int csb_v1_startup_session_full_surface_contract_pc34(
         csb_v1_startup_session_hud_surface_contract_pc34(session);
 }
 
+int csb_v1_startup_session_title_handoff_complete_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session)
+{
+    if (!session || !session->valid || !session->real_asset_matched ||
+        !session->playback.no_fallback_routes) return 0;
+    if (session->fmtowns_standalone_title_handoff_verified)
+        return session->fmtowns_standalone_title_handoff_hash != 0u;
+    return session->title_presents_ready && session->title_chaos_ready &&
+        session->title_strikes_back_ready &&
+        session->playback.title_phase_mask == 0x0f &&
+        csb_v1_startup_session_c001_title_contract_pc34(session);
+}
+
 int csb_v1_startup_session_terminal_receipt_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session,
     CSB_V1_StartupSessionTerminalReceipt_PC34 *out_receipt)
 {
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!session || !out_receipt || !session->valid ||
-        !session->real_asset_matched || !session->title_presents_ready ||
-        !session->title_chaos_ready || !session->title_strikes_back_ready ||
+        !session->real_asset_matched ||
         !session->entrance_assets_ready || !session->door_assets_ready ||
         !session->rejects_legacy_wrappers ||
         !session->playback.no_fallback_routes ||
-        session->playback.title_phase_mask != 0x0f ||
+        !csb_v1_startup_session_title_handoff_complete_pc34(session) ||
         session->playback.stage != CSB_V1_STARTUP_PLAYBACK_STAGE_HUD_PC34 ||
         !session->playback.entrance_complete ||
         !session->hud_assets_bound || session->generation == 0u ||
-        !csb_v1_startup_session_c001_title_contract_pc34(session) ||
         !csb_v1_startup_session_opening_surface_contract_pc34(session) ||
         !csb_v1_startup_session_hud_surface_contract_pc34(session)) return 0;
     out_receipt->valid = 1;

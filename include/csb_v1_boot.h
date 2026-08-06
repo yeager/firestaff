@@ -959,6 +959,8 @@ struct CSB_V1_StartupRuntimeAssetSession_PC34 {
     uint32_t generation;
     uint32_t csbSaveCandidateIdentity;
     uint32_t csbStartupPackageIdentity;
+    int fmtowns_standalone_title_handoff_verified;
+    uint32_t fmtowns_standalone_title_handoff_hash;
     /* LOADSAVE.C F0435 enters live dungeon state without replaying the
      * TITLE.C/ENTRANCE.C terminal surface transaction. */
     int direct_resume_loaded;

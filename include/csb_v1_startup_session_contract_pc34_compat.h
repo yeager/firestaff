@@ -26,6 +26,8 @@ int csb_v1_startup_session_hud_surface_contract_pc34(
  * have already mutated to HUD. */
 int csb_v1_startup_session_full_surface_contract_pc34(
     const CSB_V1_StartupRuntimeAssetSession_PC34 *session);
+int csb_v1_startup_session_title_handoff_complete_pc34(
+    const CSB_V1_StartupRuntimeAssetSession_PC34 *session);
 
 /* The terminal F0807 handoff is only usable when the complete C001 title and
  * C017/C040 HUD package was consumed from the same hash-verified session. */
