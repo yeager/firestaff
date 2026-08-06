@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-C160-F0284-SYNTHETIC-AUDIT:** This C160/F0284 fixture
+  fabricates party and panel state. It loads no original DM1 data and has no
+  M11/runtime caller; retain it only as explicit ReDMCSB coverage until a
+  source-bound interaction owner is recovered.
+
 - **DM1-MIRROR-C040-F0284-SYNTHETIC-AUDIT:** This C040/F0284 fixture
   fabricates party and panel state. It loads no original DM1 data and has no
   M11/runtime caller; retain it only as explicit ReDMCSB coverage until a
