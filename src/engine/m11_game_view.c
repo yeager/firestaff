@@ -3930,6 +3930,12 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
         }
     }
     state->assetsAvailable = 1;
+    /* ReDMCSB F0060 reads the SND3 bank from the same verified PC34
+     * GRAPHICS.DAT installation as the visual assets. M11_Audio_Init runs
+     * before this startup receipt is applied, so explicitly bind the audio
+     * bank here instead of allowing a different default search root to win. */
+    (void)M11_Audio_BindOriginalSnd3Path(
+        &state->audioState, state->assetLoader.graphicsDatPath);
     (void)m11_dm1_load_object_names_m564(state);
     M11_Font_Init(&state->originalFont);
     if (M11_Font_LoadFromGraphicsDat(

@@ -166,6 +166,11 @@ int M11_Audio_PlayTitleMusic(M11_AudioState* state);
 int M11_Audio_OriginalSnd3Available(const M11_AudioState* state);
 int M11_Audio_OriginalSongAvailable(const M11_AudioState* state);
 int M11_Audio_SoundPackAvailable(const M11_AudioState* state);
+/* Rebind DM1's source SND3 bank to the exact GRAPHICS.DAT path admitted by
+ * the startup asset receipt. This avoids using an unrelated default file
+ * when the launcher selected a different verified installation. */
+int M11_Audio_BindOriginalSnd3Path(M11_AudioState* state,
+                                   const char* graphicsDatPath);
 
 /* CDDA playback for FM Towns: push raw 16-bit signed LE stereo 44100Hz PCM
  * to the dedicated CDDA audio stream. Returns 1 on success, 0 if unavailable. */

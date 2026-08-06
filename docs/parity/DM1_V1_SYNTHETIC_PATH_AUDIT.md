@@ -19,6 +19,7 @@ is ReDMCSB's PC 3.4 path, especially `OBJECT.C`, `DUNVIEW.C`, `PANEL.C`, and
 | Wall ornaments, doors, stairs and inscriptions | F0107-F0115 source material receipts and decoded GRAPHICS.DAT pixels | No active fallback in authenticated M11 | Missing material is no-draw |
 | Champion mirrors | C127 sensor data, C026 portrait atlas and source wall-cell geometry | No | Real HoC orientation and portrait probes |
 | Held-object cursor | F0702 object icon pixels from the active source asset | No | `test_m11_dm1_real_object_names` |
+| Runtime SND3 sound bank | ReDMCSB F0060 event index mapped to the startup-admitted PC34 `GRAPHICS.DAT` | No for authenticated DM1 events | `m11_dm1_real_object_names`, `dm1_v1_sound_music_source_lock`, `dm1_v1_swsh_psg_audio_pc34_compat` |
 | Legacy generic viewport | `src/engine/firestaff_viewport_renderer.c` | Not linked into the `firestaff` M11 target | Ninja target command audit |
 
 ## Non-production synthetic code
@@ -53,6 +54,9 @@ Against the local real DM1 data:
 ```text
 test_m11_dm1_real_object_corpus  PASS (611 records)
 test_m11_dm1_real_object_names   PASS (M564 name, F0702 cursor, pickup/drop)
+dm1_v1_sound_music_source_lock  PASS
+dm1_v1_creature_sound_source_lock PASS
+dm1_v1_swsh_psg_audio_pc34_compat PASS
 dm1_v1_original_save_pc34_external_corpus       PASS
 dm1_v1_original_save_pc34_backed_corpus_roundtrip PASS
 ```

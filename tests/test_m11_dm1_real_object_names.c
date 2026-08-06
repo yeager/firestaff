@@ -30,6 +30,14 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
+    if (state.audioState.originalSnd3LoadedCount != M11_AUDIO_ORIGINAL_SOUND_COUNT) {
+        fprintf(stderr,
+                "DM1 real GRAPHICS.DAT did not bind all SND3 sounds: %d/%d\n",
+                state.audioState.originalSnd3LoadedCount,
+                M11_AUDIO_ORIGINAL_SOUND_COUNT);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
     if (!state.world.things || state.world.things->weaponCount <= 0) {
         fprintf(stderr, "DM1 real DUNGEON.DAT contains no weapon record\n");
         M11_GameView_Shutdown(&state);

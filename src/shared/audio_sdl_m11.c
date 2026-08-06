@@ -741,17 +741,20 @@ static void m11_try_load_original_song(M11_AudioState* state) {
     }
 }
 
-static void m11_try_load_original_snd3(M11_AudioState* state) {
-    char homePath[1024];
-    const char* path;
+static int m11_load_original_snd3_path(M11_AudioState* state,
+                                       const char* path) {
     V1_GraphicsSnd3Manifest manifest;
     char err[256];
     unsigned int i;
-    if (!state) return;
-    if (getenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3")) return;
-    path = m11_find_graphics_dat_path(homePath, sizeof(homePath));
-    if (!path) return;
-    if (!V1_GraphicsSnd3_ParseManifest(path, &manifest, err, sizeof(err))) return;
+    if (!state || !path || !path[0] ||
+        !V1_GraphicsSnd3_ParseManifest(path, &manifest, err, sizeof(err))) {
+        return 0;
+    }
+    for (i = 0; i < M11_AUDIO_ORIGINAL_SOUND_COUNT; ++i) {
+        m11_sound_free(&state->originalSounds[i]);
+    }
+    state->originalSnd3LoadedCount = 0;
+    state->originalSnd3Available = 0;
     for (i = 0; i < V1_DM_SOUND_EVENT_COUNT && i < M11_AUDIO_ORIGINAL_SOUND_COUNT; ++i) {
         const V1_SoundEventSnd3MapEntry* entry = V1_SoundEventSnd3_Find((int)i);
         V1_GraphicsSnd3Buffer raw;
@@ -767,6 +770,16 @@ static void m11_try_load_original_snd3(M11_AudioState* state) {
         }
     }
     state->originalSnd3Available = (state->originalSnd3LoadedCount == M11_AUDIO_ORIGINAL_SOUND_COUNT) ? 1 : 0;
+    return state->originalSnd3LoadedCount > 0 ? 1 : 0;
+}
+
+static void m11_try_load_original_snd3(M11_AudioState* state) {
+    char homePath[1024];
+    const char* path;
+    if (!state || getenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3")) return;
+    path = m11_find_graphics_dat_path(homePath, sizeof(homePath));
+    if (!path) return;
+    (void)m11_load_original_snd3_path(state, path);
 }
 
 static void m11_try_load_sound_pack(M11_AudioState* state) {
@@ -1476,6 +1489,23 @@ int M11_Audio_OriginalSnd3Available(const M11_AudioState* state) {
 
 int M11_Audio_OriginalSongAvailable(const M11_AudioState* state) {
     return (state && state->originalSongAvailable) ? 1 : 0;
+}
+
+int M11_Audio_BindOriginalSnd3Path(M11_AudioState* state,
+                                   const char* graphicsDatPath) {
+    unsigned int i;
+    if (!state || !state->initialized ||
+        getenv("FIRESTAFF_AUDIO_DISABLE_ORIGINAL_SND3")) {
+        return 0;
+    }
+    /* A startup receipt for a non-PC34/invalid source must not leave the
+     * earlier default bank active for the newly selected game. */
+    for (i = 0; i < M11_AUDIO_ORIGINAL_SOUND_COUNT; ++i) {
+        m11_sound_free(&state->originalSounds[i]);
+    }
+    state->originalSnd3LoadedCount = 0;
+    state->originalSnd3Available = 0;
+    return m11_load_original_snd3_path(state, graphicsDatPath);
 }
 
 int M11_Audio_SoundPackAvailable(const M11_AudioState* state) {

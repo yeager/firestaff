@@ -23,6 +23,14 @@ were corrected to stop presenting DM1 provisions as Nexus data.
   This fixes test setup only; fixture-free original saves containing C13 events
   are still required.
 
+- ✅ 2026-08-06 DM1 source SND3 binding: M11 now rebinds the original 35-event
+  SND3 bank to the exact hash-admitted PC3.4 `GRAPHICS.DAT` path when the DM1
+  startup graphics receipt is applied. This prevents an unrelated default
+  search-root file from supplying sound while the visual runtime uses another
+  installation. Missing or malformed source samples remain silent; no
+  procedural marker is used by authenticated DM1 events. Real DM1 object/audio
+  regressions pass against the extracted PC3.4 data.
+
 - ✅ 2026-08-06 Nexus creature runtime quarantine: production mechanics and
   engine ticks now keep creature AI, spawner admission, and projectile motion
   fail-closed while `nexus_v1_action_semantics_proven()` is false. Direct

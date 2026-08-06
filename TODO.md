@@ -4956,7 +4956,12 @@ that its exact runtime path is not already source-locked and tested.
     extracted original corpus.
 17. **DM1-SOUND-MUSIC-STARTUP:** Complete original DM1 sound/music playback,
     title/swoosh/entrance cadence, palette transitions, and runtime sound
-    events with real media and no generated timing.
+    events with real media and no generated timing. 2026-08-06: M11 now
+    rebinds the 35-event SND3 bank to the same verified PC3.4 `GRAPHICS.DAT`
+    path used by the visual asset receipt, so a default search-root sound bank
+    cannot override the selected installation. Authenticated DM1 misses remain
+    silent instead of using procedural markers. Remaining: original packaged
+    macOS playback/cadence capture and broader source-event coverage.
 18. **DM1-INPUT-NAVIGATION:** Complete source-owned keyboard, mouse, touch,
     controller, turn/strafe, click targets, focus, and fullscreen coordinate
     mapping across HoC, HUD, inventory, dialogs, and dungeon gameplay.
