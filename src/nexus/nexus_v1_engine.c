@@ -10372,6 +10372,15 @@ int nexus_v1_load_model(Nexus_V1_Engine *engine, const char *name) {
  * Source: DM1 CLIKMENU.C F0364 — stairs/chute level load. */
 int nexus_v1_engine_level_change(Nexus_V1_Engine *engine, int *out_new_level) {
     if (!engine || !out_new_level) return -1;
+    /* A pending level is only a compatibility-state request until the
+     * Saturn SLEV/SDDRVS transition owner is captured.  The tick path already
+     * applies the same gate; keep this public helper fail-closed as well so a
+     * caller cannot bypass it and load a synthetic retail transition. */
+    if (engine->source != NEXUS_SRC_NONE &&
+        !nexus_v1_action_semantics_proven()) {
+        *out_new_level = -1;
+        return -1;
+    }
     *out_new_level = engine->mechanics->pending_level_change;
     if (engine->mechanics->pending_level_change < 0) return -1;
     /* Load new level */

@@ -28903,6 +28903,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   producer, queue and state-write contract is captured. The source-less fixture
   lane remains available for isolated tests. Bind the original event route before
   admitting automap, inventory, save, leader, throw or drop mutations.
+- **NEXUS-LEVEL-TRANSITION-CAPTURE:** The public level-transition helper now
+  rejects ISO/extracted transitions until the Saturn SLEV/SDDRVS owner is
+  captured; the tick gate alone was insufficient because callers could invoke
+  the helper directly. Bind the original transition producer, destination
+  fields and level-load timing before enabling retail level changes.
 - **NEXUS-BPK-NO-DRAW-REGRESSION:** The bounded PRS3 presentation receipt must
   continue to admit exact retail-shaped rows only as opaque no-draw evidence;
   decoder drift, payload/hash drift, unknown modes and malformed spans must

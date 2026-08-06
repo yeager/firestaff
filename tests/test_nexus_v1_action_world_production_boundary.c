@@ -23,6 +23,7 @@ int main(void)
     Nexus_MechanicsState mechanics;
     Nexus_MechanicsState mechanics_before;
     Nexus_V1_Engine engine;
+    int new_level = 99;
 
     memset(&timers, 0x1a, sizeof(timers));
     memset(&doors, 0x2b, sizeof(doors));
@@ -67,6 +68,8 @@ int main(void)
         nexus_mechanics_dispatch_event(&mechanics, &engine,
                                        NEXUS_UI_EVENT_INVENTORY, 3) != -1 ||
         memcmp(&mechanics, &mechanics_before, sizeof(mechanics)) != 0 ||
+        nexus_v1_engine_level_change(&engine, &new_level) != -1 ||
+        new_level != -1 ||
         nexus_doors_open(1, 2) != -1 ||
         nexus_doors_close(1, 2) != -1 ||
         nexus_doors_lock(1, 2, 66) != -1 ||

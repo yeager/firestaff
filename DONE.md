@@ -56928,3 +56928,7 @@ alcove runtime and archive-media tests passed (4/4).
   retaining the source-less compatibility lane.
 - ✅ Added the production-boundary regression for automap and command-state
   immutability.
+- ✅ The public level-transition helper now shares the same retail gate, so a
+  pending compatibility transition cannot bypass the tick boundary and load a
+  synthetic retail DGN level. The production regression covers the rejected
+  call and output state.
