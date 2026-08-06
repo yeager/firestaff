@@ -51147,7 +51147,6 @@ STX extraction remain explicitly open in TODO.
   platform even beside a PC install. The real-media boot and M12 regressions
   both pass against the supplied archive; no game data was unpacked, copied or
   tracked.
-
 # ✅ 2026-08-06 DM1 blocked-step audio and damage HUD correction
 
 DM1 blocked forward/backward steps now emit the source `C00_SOUND_METALLIC_THUD`
@@ -51158,3 +51157,11 @@ inside the C015/C016 damage surface instead of painting over champion names.
 The DM1 Atari GRAPHICS.DAT contract was also corrected to DMWeb's real 563
 records. `firestaff` builds successfully; packaged Mac capture remains an open
 verification item.
+
+- ✅ 2026-08-06 DM2 PC-DOS startup/menu real-corpus verification: ran the
+  complete 102-case startup action contract and the M11 startup/profile gate
+  against the user's existing `dos_extract` corpus. The checks consume the
+  actual 320×200 decoded title/menu GDAT records and package palette/HUD
+  handoff, while New Game remains blocked at original `GAME_LOAD` instead of
+  fabricating a playable session. The verification was read-only; no game
+  data was unpacked, copied or tracked.
