@@ -14031,6 +14031,29 @@ if(BUILD_TESTING)
         COMMAND test_dm2_v1_startup_menu_action_contract
     )
 
+    # Opt-in: scans the user's original FM Towns ZIP in memory and proves M12
+    # preserves virtual provenance for the DM2 boot owner.  It is a clean skip
+    # without FIRESTAFF_DM2_FMTOWNS_ROOT and never unpacks game data to disk.
+    if(TARGET firestaff_m12)
+        add_executable(test_dm2_fmtowns_m12_real_media
+            tests/test_dm2_fmtowns_m12_real_media.c
+        )
+        target_include_directories(test_dm2_fmtowns_m12_real_media PRIVATE
+            ${CMAKE_CURRENT_SOURCE_DIR}/include
+        )
+        target_link_libraries(test_dm2_fmtowns_m12_real_media PRIVATE
+            firestaff_m12
+        )
+        if(NOT MSVC)
+            target_compile_options(test_dm2_fmtowns_m12_real_media PRIVATE
+                -Wall -Wextra -Werror -O2)
+        endif()
+        add_test(
+            NAME dm2_fmtowns_m12_real_media
+            COMMAND test_dm2_fmtowns_m12_real_media
+        )
+    endif()
+
     add_executable(test_dm2_v1_anim_bootstrap
         tests/test_dm2_v1_anim_bootstrap.c
     )

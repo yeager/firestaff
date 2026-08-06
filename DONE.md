@@ -50316,8 +50316,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   platform-bound GDAT and G1 MD5 pair, and reports their virtual
   `ZIP::DATA/...` provenance. It hands the untouched archive root to the
   existing memory-owned DM2 boot reader rather than creating an asset cache.
-  Real-media scan and boot probes reach `dm2-startup-menu`; ordinary virtual
-  DM2 ISO media remains blocked unless it has a dedicated in-memory owner.
+  The opt-in `dm2_fmtowns_m12_real_media` regression verifies both global and
+  direct `dm2/` roots; real-media scan and boot probes reach
+  `dm2-startup-menu`. Ordinary virtual DM2 ISO media remains blocked unless it
+  has a dedicated in-memory owner.
 
 - ✅ 2026-08-06 DM2 resurrection surrogate mutation removal: removed the
   runtime type-0x0D final-phase write that treated Firestaff's bounded
