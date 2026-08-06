@@ -1835,10 +1835,13 @@ level or consumer bindings.
   source-less facade path; the save-resume structured-receipt contract is now
   green at `325/325`.
 
-- **THERON-CREATURE-COMBAT-REAL-DATA:** *(Resolved v3.0.240)*
-  Category-based formula system wired into combat runtime via
-  `theron_v1_track02_compute_spawn_stats()`. 4 categories with real
-  param1/param2 from spawn zone descriptors. HP capped at 900.
+- **THERON-CREATURE-COMBAT-REAL-DATA:** *(Open — RNG consumer missing)*
+  The real Track 02 category/spawn-zone descriptors and monster occurrences
+  are retained as source receipts, but production must not use
+  `theron_v1_track02_compute_spawn_stats()` until the PCE bank-switched RNG
+  call at overlay `$4644/$4667` is disassembled and bound. The former
+  dungeon/coordinate replay seed was synthetic and is now removed from the
+  live spawn path; diagnostic formula tests remain fixture-only.
   THIEF/DEMON scripted stats are blocked until their encounter records bind.
   Category formulas wired into spawn path via dungeon_id-based zone lookup.
   Legacy DMWeb generator respawn is no longer a production route; generator
@@ -1849,9 +1852,8 @@ level or consumer bindings.
   PCE rand() lives in bank-switched overlay ($4644/$4667) — not statically
   resolvable; current LCG assumption unconfirmed but unrefuted.
   2026-08-06 production-boundary update: the five regular Track 02 spawn
-  zones now create live records only after a source-header-verified level and
-  matching source-monster ledger occurrence are loaded, using the
-  disassembly-bound category HP/attack/defense formulas.
+  zones now retain source-header-verified monster occurrences but refuse live
+  creature publication while the original RNG consumer is missing.
   Scripted Thief/Demon records, AI/attack behavior, T900 loot and sound stay
   closed until their source consumers are captured.
   2026-08-06 generator-integrity update: a rejected legacy generator label no

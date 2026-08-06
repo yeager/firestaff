@@ -358,6 +358,15 @@
   source-bound descriptor module; no runtime behavior or fixture route was
   changed.
 
+- ✅ 2026-08-06 Theron synthetic combat-spawn quarantine: removed the
+  dungeon/coordinate replay seed from the production spawn path. Authenticated
+  Track 02 monster records remain in the source ledger, while live creature
+  publication stays blocked until the original PCE bank-switched RNG consumer
+  at overlay `$4644/$4667` is bound. The diagnostic category formula helper
+  remains available only to isolated tests. The combat regression now proves
+  that a real occurrence cannot become a synthetic live creature, and the
+  production combat archive keeps its required link symbols.
+
 `RLOWFIX.BIN/PLRD` is now treated as the source of its authenticated raw
 name/TABL references, statistics and equipment ordinals only. The production
 parser no longer seeds food/water with the inherited DM1 value `1500`; those

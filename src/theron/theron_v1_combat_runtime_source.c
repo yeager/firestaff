@@ -37,11 +37,6 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
                              Theron_CreatureType type,
                              int dungeon_id, int level, int x, int y) {
     Theron_V1_Level *source_level;
-    const Theron_SpawnZoneDesc *zone;
-    Theron_SpawnStats stats;
-    Theron_V1_Creature *creature;
-    uint16_t seed;
-    int zone_index;
 
     /* Only a loaded, source-header-verified level and a matching authentic
      * Track 02 monster occurrence may create a creature. A header alone is
@@ -61,44 +56,13 @@ int theron_v1_creature_spawn(Theron_V1_World *world,
         !theron_v1_source_monster_record_at(world, dungeon_id, level, x, y)) {
         return -1;
     }
-    zone_index = (int)type - (int)THERON_CREATURE_AKUTUBA;
-    zone = theron_v1_track02_spawn_zone((unsigned int)zone_index);
-    if (!zone) {
-        return -1;
-    }
-
-    /* The reviewed routine supplies the category formula and the runtime
-     * supplies a deterministic replay seed.  This does not claim the PCE
-     * bank-switched RNG has been recovered; it only publishes the exact
-     * category-derived HP/attack/defense fields. */
-    seed = (uint16_t)(source_level->dungeon_seed ^
-                      (uint32_t)world->world_tick ^
-                      (unsigned)(x * 31 + y * 17));
-    if (!theron_v1_track02_compute_spawn_stats(
-            zone->category, zone->param1, zone->param2, seed, &stats)) {
-        return -1;
-    }
-
-    creature = &world->creatures[world->creature_count];
-    memset(creature, 0, sizeof(*creature));
-    creature->id = world->creature_count + 1;
-    creature->type = (uint8_t)type;
-    creature->level = (uint8_t)level;
-    creature->dungeon_id = dungeon_id;
-    creature->x = x;
-    creature->y = y;
-    creature->hp = stats.hp;
-    creature->max_hp = stats.hp;
-    creature->attack = stats.attack;
-    creature->defense = stats.defense;
-    creature->flags = THERON_CF_ACTIVE;
-    /* Movement/attack ownership is not in the regular spawn record. Keep
-     * those fields neutral until the original behavior consumer is bound. */
-    creature->ai = THERON_AI_PASSIVE;
-    creature->primary_attack = THERON_ATTACK_NONE;
-    creature->secondary_attack = THERON_ATTACK_NONE;
-    ++world->creature_count;
-    return creature->id;
+    /* The source ledger is real, but the PCE bank-switched RNG call used by
+     * the category formulas is not recovered. A host tick/coordinate seed
+     * would be synthetic gameplay state, so retain the decoded occurrence
+     * and refuse live publication until the original RNG consumer is bound.
+     * Source: THQUEST.ASM spawn overlay $4644/$4667; the static category
+     * table remains available to diagnostic tests only. */
+    return -1;
 }
 
 int theron_v1_creature_kill(Theron_V1_World *world, int creature_id) {
