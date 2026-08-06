@@ -623,11 +623,6 @@
   Keep the fixture out of production and retain original-data capture work
   for full D2C pixel parity.
 
-- **DM1-F0241-F0260-SOURCE-RECEIPT-AUDIT:** The raw F0241–F0260 timeline
-  receipt is currently an admission audit with no live caller. Keep its
-  source fingerprint and F0256 platform boundary test-only until a real
-  timeline event consumer is bound to authenticated DM1 runtime state.
-
 - **DM1-CHEST-PARTIAL-MASK-SYNTHETIC-AUDIT:** The chest partial-mask swap
   helper is a contract-only synthetic regression with no real asset, savegame,
   pixel or production-runtime input. Keep it test-only until the live chest
