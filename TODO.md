@@ -26067,12 +26067,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## DM1 original-save corpus follow-up
 
-- [ ] Keep the DM1 boot receipt fail-closed when no original save corpus is
+- [x] 2026-08-06 Keep the DM1 boot receipt fail-closed when no original save corpus is
   configured. A normal GRAPHICS.DAT/DUNGEON.DAT HoC boot must not infer the
   five save parts, four champion portraits, save header, dungeon payload, or
-  required save hashes from the live dungeon. The boot-probe correction now
-  leaves those fields unset; the remaining work is still a real PC34 save
-  corpus plus an original-save roundtrip verified on the target host.
+  required save hashes from the live dungeon. The boot-probe correction leaves
+  those fields unset. The staged real PC34 corpus now passes the original-save
+  roundtrip against the authenticated original DUNGEON.DAT; no live dungeon
+  bytes are promoted into save metadata. Verification: `test_dm1_v1_original_save_pc34_backed_corpus_roundtrip`
+  passed for both operator-supplied `DMSAVE.DAT` files from `/Users/bosse/Downloads`
+  with `FIRESTAFF_DM1_PC_DATA=/Volumes/Extern-disk/Firestaff-tmp-dm1`.
 
 - [x] Stage an operator-supplied, original PC34 save corpus and run the
   fixture-free F0435 -> F0433 -> F0435 admission target. The implementation

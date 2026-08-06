@@ -1,3 +1,14 @@
+- ✅ 2026-08-06 DM1 original PC34 save corpus backed roundtrip: both
+  operator-supplied `DMSAVE.DAT` files were classified as authentic PC34
+  saves, loaded through F0435 against the hash-verified original
+  `DUNGEON.DAT`, exported through F0433, and loaded again through F0435.
+  Party position/direction, champion roster, game tick, creature-AI count,
+  active-group count and timeline count survived the roundtrip. The boot
+  receipt remains fail-closed when no save corpus is configured; no save
+  parts or hashes are inferred from a live dungeon. Verification:
+  `test_dm1_v1_original_save_pc34_backed_corpus_roundtrip` passed with 2/2
+  candidates.
+
 - ✅ 2026-08-06 DM2 inventory HUD original-data receipts: restored and
   activated the previously missing `DRAW_HAND_ACTION_ICONS` and
   `DRAW_ITEM_SURVEY` material receipts. They now bind the exact
