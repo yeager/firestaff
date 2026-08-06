@@ -2,18 +2,15 @@
 
 **Five Dungeon Master games. One engine. Your original data.**
 
-Firestaff is a source-faithful reimplementation of the major Dungeon Master
-game engines, built from scratch in portable C for macOS, Windows, Linux,
-Steam Deck, iOS and Android. It uses your legally owned game files on modern
-hardware with pixel-perfect **Original** rendering or selectable **Custom**
-presentation at resolutions from 640×400 up to 4K. DM1 is the strongest
-playable target; the other games are brought up behind explicit source-lock
-and real-data verification gates.
+Firestaff is a source-faithful reimplementation of Dungeon Master engines,
+built from scratch in portable C. **The only currently available playable
+game is Dungeon Master v1 (PC DOS 3.4).** CSB, DM2, Theron's Quest and DM
+Nexus are development targets and are not presented as finished games.
 
 [![Release](https://img.shields.io/github/v/release/yeager/firestaff)](https://github.com/yeager/firestaff/releases/latest)
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
 [![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
-[![Platforms](https://img.shields.io/badge/platforms-macOS%20%7C%20Windows%20%7C%20Linux%20%7C%20Steam%20Deck%20%7C%20iOS%20%7C%20Android-orange)]()
+[![Current game](https://img.shields.io/badge/current%20game-DM1%20v1-blue)]()
 
 <p align="center">
   <img src="assets/branding/firestaff-logo.png" alt="Firestaff logo" width="360">
@@ -23,21 +20,25 @@ and real-data verification gates.
 
 | Game | Platform | Reference Source | Status |
 |------|----------|-----------------|--------|
-| **Dungeon Master** | DOS PC 3.4 | ReDMCSB | Playable, source-locked |
-| **Chaos Strikes Back** | DOS PC 3.4 | ReDMCSB / CSBWin | Source-locked slices, runtime hardening |
-| **Dungeon Master II: Skullkeep** | DOS | skproject | Source-locked slices, real-data hardening |
-| **DM Nexus** | Sega Saturn | SH-2 disassembly | Parsing/runtime slices, real-asset handoff active |
-| **Theron's Quest** | PC Engine | PC Engine disassembly and CD analysis | Parser/runtime slices; Track 02 dungeon handoff active |
+| **Dungeon Master v1** | PC DOS 3.4 data | ReDMCSB / DMWeb | **Available and playable** |
+| **Chaos Strikes Back** | PC DOS 3.4 data | ReDMCSB / CSBWin | Development only |
+| **Dungeon Master II: Skullkeep** | DOS data | skproject | Development only |
+| **DM Nexus** | Sega Saturn data | Saturn disassembly | Development only |
+| **Theron's Quest** | PC Engine CD data | PC Engine disassembly | Development only |
 
 ## Screenshots
 
-Only real runtime captures appear here — no mock-ups or placeholder art.
+Only real runtime captures appear here. The captures below are from the
+currently available DM1 v1 PC34 runtime and original game data.
 
 ### Dungeon Master
 
-| Original | Custom |
-|----------|--------|
-| ![Dungeon Master Original Hall of Champions capture at 320×200](verification-screens/pass1053-dm1-original-champion-candidate-panel/start_before_portrait_click.png) | Coming soon |
+| DM1 v1 dungeon | DM1 v1 HUD / HoC route |
+|----------------|------------------------|
+| ![Dungeon Master v1 dungeon runtime capture](docs/screenshots/dm1-v1-runtime-dungeon.png) | ![Dungeon Master v1 HUD runtime capture](docs/screenshots/dm1-v1-runtime-hud.png) |
+
+Screenshots for CSB, DM2, Theron's Quest, DM Nexus and future custom art are
+**Coming soon** because those game versions are not currently available.
 
 ## Why Firestaff?
 
@@ -75,12 +76,13 @@ source-reference boundaries for all five games.
 3. **Drop your game files** anywhere under the data directory.
 4. **Launch.** The scanner finds your data and shows which games are ready.
 
-| Platform | Data directory |
-|----------|---------------|
-| macOS / Linux | `~/.firestaff/data/` |
-| Windows | `%USERPROFILE%\.firestaff\data\` |
-| iOS | Files app > On My iPhone > Firestaff > data/ |
-| Android | `/sdcard/Documents/Firestaff/data/` |
+| Platform | Status | Data directory |
+|----------|--------|---------------|
+| macOS | DM1 v1 development/release builds | `~/.firestaff/data/` |
+| Linux | DM1 v1 build target | `~/.firestaff/data/` |
+| Windows | DM1 v1 build target | `%USERPROFILE%\.firestaff\data\` |
+| Steam Deck | Linux/AppImage packaging target; DM1 v1 only | `~/.firestaff/data/` |
+| iOS / Android | Not currently available | Coming soon |
 
 Suggested layout:
 
@@ -104,56 +106,40 @@ for the complete control list and source-data boundaries.
 
 ## Download
 
-| Platform | Package |
-|----------|---------|
-| macOS (arm64 / x86_64) | DMG and ZIP |
-| Windows (x86_64) | Installer and ZIP |
-| Linux (x86_64 / arm64) | DEB and RPM |
-| Steam Deck | pacman `.pkg.tar.zst` and AppImage |
-| iOS (arm64) | IPA (AltStore Classic sideload) |
-| Android (arm64) | APK (sideload) |
+The current playable scope is **DM1 v1**. Package availability follows the
+release workflow for the target platform; a package does not imply that CSB,
+DM2, Theron's Quest or DM Nexus is playable. iOS and Android packages are not
+currently available.
 
 ## Game Status
 
 ### Dungeon Master (PC 3.4)
 
-Playable and source-locked against ReDMCSB. Viewport rendering, combat, spells,
-movement, inventory, Hall of Champions, save/load, title sequence, entrance
-animation, music, and HUD are all verified. The strongest runtime target.
+Available and source-locked against ReDMCSB for the PC DOS 3.4 data path.
+The current runtime includes the title/entrance route, dungeon viewport,
+movement, HUD, Hall of Champions and original-data asset loading. Save corpus
+coverage and broader external capture verification remain active work; this
+README does not claim complete parity.
 
 ### Chaos Strikes Back (PC 3.4)
 
-Full engine coverage: DSA opcode interpreter, monster and world execution,
-startup presentation, entrance and credits sequences, HUD and champion panels,
-viewport geometry, thing and sensor runtime, combat and movement systems,
-original save format and Utility Disk support. End-to-end playability hardening
-is active.
+The source and runtime work is active, but CSB is not currently available as a
+finished playable release. No completed-playability claim is made here.
 
 ### Dungeon Master II: Skullkeep
 
-Source-locked against skproject across GDAT, material families, map/record
-runtime, save interop, menu/title, party/inventory, spells, creature AI,
-combat, world scripts and outdoor-scene slices. End-to-end V1 parity and
-remaining real-data passes are still active work.
+DM2 bring-up work references skproject. It is not currently available as a
+finished playable release.
 
 ### DM Nexus (Sega Saturn)
 
-Saturn DGN geometry, RLOWFIX.BIN resource archive, ITEM.IBS item definitions,
-bounded PRS3 topology, SAL/MAP sound banks and SDDRVS.TSK sound-driver
-receipts are covered. SH-2 disassembly has proven selected VDP1/VDP2 register
-initialization, SCSP sound communication, FONT012 text rendering and original
-IWA source-module names extracted from the binary. Positive real-asset handoff
-and full visible-material playability remain active work.
+DM Nexus analysis and runtime bring-up are active. It is not currently
+available as a finished playable release.
 
 ### Theron's Quest (PC Engine)
 
-JP and US Track 02 provenance is hash-verified. The CD record chain,
-218-entry opaque asset manifest, startup envelope, authenticated 53-entry
-descriptor receipt and SRM save boundary are covered by focused tests. A fresh authentic US Track 02 capture reaches the
-System Card and BIOS CD-read path, but has not yet produced a game-owned
-`$E009` data read. Object records, semantic later-level decoding,
-bitmap/palette binding and the real Track 02 dungeon handoff therefore remain
-open. See
+Theron's Quest analysis and Track 02 bring-up are active. It is not currently
+available as a finished playable release. See
 [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md).
 
 The cross-game status and evidence boundary are kept in
@@ -264,7 +250,7 @@ Launcher UI (M12)
 | Automated checks | Thousands |
 | Parity-evidence documents | Thousands |
 | Verified game-data hashes | Cross-game catalog |
-| Localization languages | 19 |
+| Currently verified game-language scope | DM1 v1 English |
 
 ## Source References
 
@@ -276,12 +262,12 @@ Launcher UI (M12)
 
 ## Localization
 
-The launcher supports 19 languages via gettext PO files: English, Swedish,
-German, French, Spanish, Italian, Portuguese, Dutch, Polish, Czech, Russian,
-Japanese, Korean, Chinese, Danish, Norwegian, Finnish, Hungarian and Turkish.
-
-The game-text pipeline includes 28 hand-drawn Latin Extended-A glyphs and a TTF
-font cache with system-font fallback for Cyrillic, Greek, CJK and Hangul.
+The launcher contains gettext catalogs and language-selection plumbing for
+multiple languages, including Swedish, but the currently available DM1 v1
+playable scope is verified in English. Do not interpret the presence of PO
+files as proof that every game and every string is fully localized. Swedish
+and the other language targets remain incomplete until their runtime coverage
+is verified.
 
 ## Wiki
 
