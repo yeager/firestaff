@@ -885,12 +885,66 @@ static void check_csb_amiga31_real_archive_when_available(const char* root) {
               "selected Amiga 3.1 cache should retain the authenticated title package");
 }
 
+/* Exercise the real Atari ST package separately from the synthetic archive
+ * fixtures.  ANIM.C/HINTLOAD.C/SWITCH.C consume these as source media, so a
+ * cache may only retain bytes found through the selected container's known
+ * fingerprints; archive entry names are not enough evidence. */
+static void check_csb_atari_real_archive_when_available(const char* root) {
+    static const struct {
+        const char* name;
+        const char* md5;
+    } requiredSidecars[] = {
+        { "HCSB.HTC", "8ce69b54cf255a15e98e909bb45b9742" },
+        { "HCSB.DAT", "708e113c869ab922633e885aa72a3c77" },
+        { "HINT.FTL", "67007e7943f9ef6f0b12ff4bd1bef3d1" },
+        { "ANIMATE.DAT", "9f8feb269c959c9fe722ac08f99d9c35" },
+        { "ANIMATE.SCR", "4174d6de5384323072b185640ed31723" },
+        { "ANIMATE.FTL", "e7dedcff055c069e22d083b8015b48e0" },
+        { "CHAOS.FTL", "b170b74cfcca429dd54b07bbdc795484" },
+        { "FTLCODE", "18abdf771f37e8953bf95ba2f462469d" },
+        { "SWITCH.DAT", "b1fc60f2c0d8f8a89e5d4f295e93ae42" },
+        { "MINI.DAT", "531ea104a2fbc2011ea73d11f274c57d" }
+    };
+    M12_AssetStatus status;
+    const M12_AssetVersionStatus* atari;
+    char runtimeRoot[ASSET_PATH_MAX];
+    char graphicsPath[ASSET_PATH_MAX], dungeonPath[ASSET_PATH_MAX];
+    size_t i;
+    int index;
+    if (!root || root[0] == '\0') {
+        puts("skip: FIRESTAFF_CSB_ATARI_DATA_DIR not set");
+        return;
+    }
+    M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, NULL);
+    M12_AssetStatus_ScanGame(&status, root, "csb");
+    index = M12_AssetStatus_FindVersionIndex("csb", "st20-21-hd-en");
+    atari = index >= 0 ? M12_AssetStatus_GetVersion(&status, "csb", (size_t)index) : NULL;
+    check_int(atari && atari->matched &&
+                  strcmp(atari->matchedMd5, "e0ce7ac5160ca5540e90cf09ab9fad49") == 0,
+              "real Atari ST archive should select its hash-identified hard-disk profile");
+    check_int(M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                  &status, "st20-21-hd-en", runtimeRoot, sizeof(runtimeRoot)) &&
+                  FSP_JoinPath(graphicsPath, sizeof(graphicsPath), runtimeRoot, "GRAPHICS.DAT") &&
+                  FSP_JoinPath(dungeonPath, sizeof(dungeonPath), runtimeRoot, "DUNGEON.DAT") &&
+                  asset_file_matches_md5(graphicsPath, "e0ce7ac5160ca5540e90cf09ab9fad49") &&
+                  asset_file_matches_md5(dungeonPath, "6695d2acebce49f95db1d8f3a5c733de"),
+              "selected Atari ST cache should materialize its authenticated launch pair");
+    for (i = 0U; i < sizeof(requiredSidecars) / sizeof(requiredSidecars[0]); ++i) {
+        char sidecarPath[ASSET_PATH_MAX];
+        check_int(FSP_JoinPath(sidecarPath, sizeof(sidecarPath), runtimeRoot,
+                               requiredSidecars[i].name) &&
+                      asset_file_matches_md5(sidecarPath, requiredSidecars[i].md5),
+                  "selected Atari ST cache should retain every authenticated startup and utility sidecar");
+    }
+}
+
 int main(void) {
     char home[512];
     char positiveRoot[512];
     char negativeRoot[512];
     const char* realFmtownsRoot = getenv("FIRESTAFF_CSB_FMTOWNS_DATA_DIR");
     const char* realAmiga31Root = getenv("FIRESTAFF_CSB_AMIGA31_DATA_DIR");
+    const char* realAtariRoot = getenv("FIRESTAFF_CSB_ATARI_DATA_DIR");
 
     if (!make_isolated_home(home, sizeof(home)) ||
         !join_path(positiveRoot, sizeof(positiveRoot), home, "positive-data") ||
@@ -912,6 +966,7 @@ int main(void) {
     (void)test_setenv("FIRESTAFF_DATA", NULL);
     check_csb_fmtowns_real_archive_when_available(realFmtownsRoot);
     check_csb_amiga31_real_archive_when_available(realAmiga31Root);
+    check_csb_atari_real_archive_when_available(realAtariRoot);
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

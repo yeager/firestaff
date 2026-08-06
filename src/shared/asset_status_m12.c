@@ -1871,11 +1871,41 @@ static int m12_materialize_authenticated_csb_atari_sidecar(
     const char* seedPath, const char* label, const char* outPath) {
     const char* expectedMd5 = m12_csb_atari_sidecar_expected_md5(label);
     char md5[M12_ASSET_MD5_CAPACITY];
-    if (!expectedMd5 ||
-        !m12_materialize_optional_for_cache_seed(seedPath, label, outPath)) {
+    char sourcePath[M12_ASSET_DATA_DIR_CAPACITY];
+    char container[M12_ASSET_DATA_DIR_CAPACITY];
+    const char* sep;
+    int copied = 0;
+    if (!expectedMd5) {
         return 0;
     }
-    if (!m12_file_md5_hex(outPath, md5) || strcmp(md5, expectedMd5) != 0) {
+    copied = m12_materialize_optional_for_cache_seed(seedPath, label, outPath);
+    if (copied && m12_file_md5_hex(outPath, md5) &&
+        strcmp(md5, expectedMd5) == 0) {
+        return 1;
+    }
+    /* The filename sibling is merely a convenience.  A 7z/RAR extraction
+     * that yields different bytes must be retried through the exact selected
+     * container's registered MD5, never accepted as an optional fallback.
+     * ReDMCSB ANIM.C/HINTLOAD.C/SWITCH.C load executable/save-bearing media,
+     * so a same-name sibling is not interchangeable source data. */
+    (void)remove(outPath);
+    sep = seedPath ? strstr(seedPath, "::") : NULL;
+    if (sep) {
+        size_t length = (size_t)(sep - seedPath);
+        if (length == 0U || length >= sizeof(container)) {
+            return 0;
+        }
+        memcpy(container, seedPath, length);
+        container[length] = '\0';
+    } else if (!FSP_ParentDir(container, sizeof(container), seedPath)) {
+        return 0;
+    }
+    if (!asset_find_by_md5(container, expectedMd5, sourcePath,
+                           (int)sizeof(sourcePath), 32) ||
+        !(m12_path_is_virtual_asset(sourcePath)
+              ? asset_extract_virtual_path(sourcePath, outPath)
+              : m12_copy_file_to_path(sourcePath, outPath)) ||
+        !m12_file_md5_hex(outPath, md5) || strcmp(md5, expectedMd5) != 0) {
         (void)remove(outPath);
         return 0;
     }
