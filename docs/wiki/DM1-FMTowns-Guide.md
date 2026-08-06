@@ -22,6 +22,18 @@ see the JDM section below.
 - [`dm1_fmtowns_jdm_structural_map.md`](../../parity-evidence/dm1_fmtowns_jdm_structural_map.md) — Japanese `JDM.EXP` P3
   header, Shift-JIS label pool, initial-EIP fingerprint match with
   EDM, EGB-trampoline recovery plan.
+- [`dm1_fmtowns_jdm_symbol_recovery.md`](../../parity-evidence/dm1_fmtowns_jdm_symbol_recovery.md) — 19 JDM.EXP symbols
+  recovered by masked byte-fingerprint (10 code + 8 EGB
+  trampolines + 1 data pool); per-.OBJ non-uniform shifts.
+- [`dm1_fmtowns_jdm_bss_triangulation.md`](../../parity-evidence/dm1_fmtowns_jdm_bss_triangulation.md) — 18 BSS scalars
+  recovered by XREF triangulation + neighbor-delta derivation.
+- [`dm1_fmtowns_font_asset.md`](../../parity-evidence/dm1_fmtowns_font_asset.md) — INIT_TEXT + GET_MY_DECODED
+  decode; menu font = picture-library index 557, direct-to-buffer
+  + no-header bits, 768-byte allocation.
+- [`dm1_fmtowns_pic_library_format.md`](../../parity-evidence/dm1_fmtowns_pic_library_format.md) — `DATA/GRAPHICS.DAT`
+  container (575 assets, 2 + 575×4-byte header + payload) plus
+  DECODEGRAPHIC RLE decoder with byte-verified leaf-helper decodes
+  and round-trip vectors.
 
 ## 1. Retail media
 
@@ -357,6 +369,120 @@ anchored deltas → EGB-trampoline pattern enumeration → bind the
 Japanese label pool and `JDATA/` path fixup. Full recipe in
 [`parity-evidence/dm1_fmtowns_jdm_structural_map.md`](../../parity-evidence/dm1_fmtowns_jdm_structural_map.md).
 
+### JDM.EXP recovered symbol map
+
+Two follow-up passes ship JDM-side vaddrs so a JDM-selected runtime
+can reach the same features EDM has:
+
+- **19 code + EGB-trampoline vaddrs** recovered by masked byte-
+  fingerprint match (evidence:
+  [`dm1_fmtowns_jdm_symbol_recovery.md`](../../parity-evidence/dm1_fmtowns_jdm_symbol_recovery.md)). All 8 EGB trampolines
+  share a uniform `+0x26c` shift; menu / drawing / text code
+  symbols shift per linked .OBJ (`+0x78`, `+0xb4`, `+0xc0`,
+  `+0x1f0`, `+0x2c8` observed). Encoded in
+  `include/dm1_v1_fmtowns_jdm_symbols.h`; lookup via
+  `dm1_v1_fmtowns_jdm_symbol_vaddr_pc34("NAME")`.
+- **18 BSS-scalar vaddrs** recovered by XREF triangulation and
+  contiguous-block neighbor-delta derivation (evidence:
+  [`dm1_fmtowns_jdm_bss_triangulation.md`](../../parity-evidence/dm1_fmtowns_jdm_bss_triangulation.md)). Block shifts:
+  menu-owner `+0x228`, screen/icon `+0x264`, character-metrics
+  `+0x276`, party state `+0x26c` — non-uniform confirms the
+  same-source-different-link finding. Encoded in
+  `include/dm1_v1_fmtowns_jdm_bss.h`; lookup via
+  `dm1_v1_fmtowns_jdm_bss_vaddr_pc34("NAME")`.
+
+## 6b. Font asset identity (INIT_TEXT / GET_MY_DECODED)
+
+`INIT_TEXT` (EDM.EXP 0x1ae54) allocates a 768-byte buffer and calls
+`GET_MY_DECODED(0xffffc22d, buf, 0, 0)`. Disassembling
+`GET_MY_DECODED` (EDM.EXP 0x9f04) reveals the encoded id:
+
+```
+0xc22d  = 0x8000 (direct-to-buffer) | 0x4000 (skip size header)
+                | 0x022d (picture-library index 557)
+```
+
+So the FM Towns DM1 menu font is **picture-library asset 557**,
+decoded in *direct-to-caller-buffer, no-header* mode. The
+GET_MY_DECODED grammar (bit 15 = direct, bit 14 = no-header,
+bits 13..0 = index) is encoded in
+`include/dm1_v1_fmtowns_font_asset.h`. Full evidence in
+[`parity-evidence/dm1_fmtowns_font_asset.md`](../../parity-evidence/dm1_fmtowns_font_asset.md).
+
+## 6c. Picture-library container — `DATA/GRAPHICS.DAT`
+
+The FM Towns DM1 picture library is `DATA/GRAPHICS.DAT` on the
+extracted disc. **This is a distinct file format from the DM1 PC 3.4
+`GRAPHICS.DAT` LZW container** — different asset count, different
+compression, different header. Do not reuse the PC34 loader here.
+
+- **Total size**: 396,970 bytes
+- **Header**: `u16 asset_count` followed by `asset_count × u32
+  size` size table. Byte-verified `asset_count = 575`, so the
+  header is `2 + 575 × 4 = 2,302` bytes.
+- **Payload**: 394,668 bytes = Σ `size_table[i]` for i = 0..574
+  (byte-exact match, no gaps or padding).
+- **Asset span** for index N begins at `2 + 575*4 + Σ
+  size_table[0..N-1]` and runs for `size_table[N]` bytes.
+
+Encoded in `include/dm1_v1_fmtowns_pic_library.h`. The API returns
+zero-copy views into a caller-owned buffer that already contains
+`GRAPHICS.DAT`; no I/O is performed by the module itself. Full
+evidence in
+[`parity-evidence/dm1_fmtowns_pic_library_format.md`](../../parity-evidence/dm1_fmtowns_pic_library_format.md).
+
+The menu font at index 557 is exactly 768 bytes and stored
+uncompressed — it takes the DIRECT+NO_HDR path that bypasses
+DECODEGRAPHIC entirely (raw span memcpy'd into the caller buffer).
+`load_raw_asset_pc34` implements this path.
+
+## 6d. DECODEGRAPHIC RLE decoder — round-trip verified
+
+`DECODEGRAPHIC` (EDM.EXP 0x1f63c) turns a compressed asset span
+into a nibble-packed 4bpp pixel matrix. Ported to Firestaff with
+byte-verified disassembly of all four leaf helpers: `0x1f4c4`
+(put_pixel), `0x1f518` (raw stream copy), `0x1f578` (nibble fill),
+`0x1f5d8` (row copy).
+
+**Per-asset header** (first 4 bytes of every asset span):
+
+```
++0  u16 width_pixels
++2  u16 height_pixels
+```
+
+**Row stride**: `padded_width = (width + 0x1f) & ~0x1f` (32-pixel
+alignment), `row_bytes = padded_width / 2` (2 pixels per byte).
+When `width == padded_width` a fast-copy branch at 0x1f85f emits
+the on-disk bytes verbatim; otherwise the RLE loop runs.
+
+**RLE control-byte grammar**:
+
+| bit 7 | bit 6 | count encoding                     |
+|-------|-------|------------------------------------|
+| 0     | –     | `(ctrl >> 4) + 1` pixels literal   |
+| 1     | 0     | `next-byte + 1`                    |
+| 1     | 1     | `next-two-bytes-BE + 1`            |
+
+Bits 5..4 pick the mode: `00` raw stream copy (0x1f734), `01`
+single-pixel fill using `ctrl & 0x0f` (0x1f775), `11` row-copy
+with pixel nibble from stream (0x1f7f3).
+
+**Round-trip verification** against the real
+`DATA/GRAPHICS.DAT`: 347 of 347 RLE-branch assets round-trip
+byte-exact — decoder consumes exactly `size_table[index]` source
+bytes and emits exactly `padded_width/2 × height` destination
+bytes for every asset. Two representative vectors in the test:
+
+- Asset 6: 80 × 14 pixels, consumes 185 source bytes
+- Asset 25: 144 × 73 pixels, consumes 565 source bytes
+
+**API**: `dm1_v1_fmtowns_pic_library_decode_asset_pc34()` returns
+the 4bpp matrix and its `(padded_width, height)` dimensions.
+Test `test_real_graphics_dat_rle_roundtrip` is gated on the
+`FIRESTAFF_DM1_FMTOWNS_GRAPHICS_DAT` env var and skips silently
+when the file is absent — no game bytes are bundled.
+
 ## 7. What is wired, what is open
 
 **Wired (real-data only, gated on the receipt):**
@@ -372,33 +498,70 @@ Japanese label pool and `JDATA/` path fixup. Full recipe in
   `SWSH → TITLE → ENTRANCE` transaction — no PC34 presentation
   fallback.
 
-**Decoded, awaiting implementation (not blocked on synthesis):**
+**Decoded and shipping as source-locked C** (available today —
+just call the API, no re-lifting from the executable required):
 
-- `DRAW_DMENU` / `DYNAMENU` visible menu rendering. The whole draw
-  chain is now decoded end-to-end: symbol table → region table →
-  panel/label draw → text rasteriser → EGB primitives → TownsOS EGB
-  library. What remains is authoring an EGB shim in Firestaff that
-  binds these decoded coordinates and rasters to the M11
-  framebuffer. Concrete steps that can be executed today:
-  1. Encode regions 10 and 11 (see section 3a) as source-locked
-     C constants in `include/dm1_v1_fmtowns_menu_regions.h`.
-  2. Provide software implementations of `EGB_RECTANGLE` (colour
-     fill) and `EGB_PUTBLOCKCOLOR` (raster copy) against the M11
-     framebuffer.
-  3. Bind the `TEXT_SIZE` font raster loaded at INIT_TEXT and the
-     `text_colourise` 1bpp → 4bpp expansion (section 4a).
-  4. Drive the three-slot dynamic menu from `DYNAMENU[+1..+3]`
-     via the `GET_LABEL` walk into `DYNA_BUTTONS`.
-- `TMENU` interactive icon/layout rendering and mouse routes
-  (TownsOS shell layer, above the game executable).
+| Layer                       | Module                                  |
+|-----------------------------|-----------------------------------------|
+| Region geometry             | `dm1_v1_fmtowns_menu_regions`           |
+| DYNAMENU 8-byte record      | `dm1_v1_fmtowns_dynamenu`               |
+| English 44-label pool       | `dm1_v1_fmtowns_dyna_buttons`           |
+| Japanese 44-label pool      | `dm1_v1_fmtowns_dyna_buttons_ja`        |
+| Text/screen/icon geometry   | `dm1_v1_fmtowns_text_geometry`          |
+| Software EGB shim           | `dm1_v1_fmtowns_egb_shim` (fill / put)  |
+| JDM code + EGB trampolines  | `dm1_v1_fmtowns_jdm_symbols` (19 syms)  |
+| JDM BSS scalars             | `dm1_v1_fmtowns_jdm_bss` (18 scalars)   |
+| Font asset identity         | `dm1_v1_fmtowns_font_asset`             |
+| Picture library container   | `dm1_v1_fmtowns_pic_library` (575 ids)  |
+| DECODEGRAPHIC RLE decoder   | `dm1_v1_fmtowns_pic_library` (347/347)  |
 
-**Blocked (needs additional real-data recovery):**
+**What remains for the visible menu**: bind the ten modules above
+into the M11 main loop. The bounded consumer skeleton is:
 
-- Japanese `JDM.EXP` symbol map. Not fabricable — see the
-  structural map in section 6a for the byte-fingerprint recovery
-  plan against EDM.EXP.
-- Physical 2-D layout of the font raster (loaded by `INIT_TEXT`,
-  not stored inline in the executable).
+```c
+/* Look up the region rectangle */
+DM1_V1_FmtownsRegionRecord panel, anchor;
+dm1_v1_fmtowns_region_menu_panel_pc34(&panel);
+dm1_v1_fmtowns_region_menu_clear_area_pc34(&anchor);
+
+/* Compose the panel-colour and slot indices from live state */
+uint8_t rec[DM1_V1_FMTOWNS_DYNAMENU_BYTES] = {...};
+uint8_t col = dm1_v1_fmtowns_dynamenu_panel_colour_pc34(rec);
+
+/* Fill the panel via the software EGB shim */
+dm1_v1_fmtowns_egb_fill_rect_pc34(fb, W, H, W,
+    anchor.a - panel.a, anchor.b,
+    anchor.a - 1,       anchor.b + panel.b - 1, col);
+
+/* Draw three labels */
+for (int i = 0; i < 3; ++i) {
+    uint8_t ix = dm1_v1_fmtowns_dynamenu_slot_label_pc34(rec, i);
+    const char *s = language == JP
+        ? dm1_v1_fmtowns_dyna_button_label_ja_pc34(ix)
+        : dm1_v1_fmtowns_dyna_button_label_pc34(ix);
+    /* rasterise s at (anchor.a - panel.a + PAD, anchor.b + 20*i)
+     * using the font raster loaded from GRAPHICS.DAT index 557 */
+}
+```
+
+**Remaining bounded next steps** (all non-synthetic):
+
+- Bind the picture-library decoder into the M11 asset pipeline so
+  it opens `~/.firestaff/data/dm1/...` (materialised cache) rather
+  than requiring the caller to supply the GRAPHICS.DAT bytes.
+- Load font index 557 at boot into a persistent M11 slot; wire
+  the text rasteriser subtree (section 4a) to sample from it.
+- Compose live `DYNAMENU` records from the current champion's
+  action-hand state and drive the shim.
+- `TMENU` (TownsOS shell) interactive icon/layout rendering and
+  mouse routes — separate scope, above the game executable.
+
+**Genuinely blocked (require external evidence):**
+
+- No item in the menu-draw chain remains genuinely blocked. Every
+  constant and format reachable via disassembly of the
+  hash-verified `EDM.EXP` / `JDM.EXP` / `DATA/GRAPHICS.DAT` is
+  now shipping source-locked C with tests.
 
 ## 8. Extracting data during development
 
@@ -475,6 +638,20 @@ for i in md.disasm(p[load_off+start_v : load_off+end_v], start_v):
 | Region table evidence      | `parity-evidence/dm1_fmtowns_region_table.md`   |
 | Text rasteriser evidence   | `parity-evidence/dm1_fmtowns_text_rasteriser.md` |
 | JDM.EXP structural map     | `parity-evidence/dm1_fmtowns_jdm_structural_map.md` |
+| JDM.EXP symbol recovery    | `parity-evidence/dm1_fmtowns_jdm_symbol_recovery.md` |
+| JDM.EXP BSS triangulation  | `parity-evidence/dm1_fmtowns_jdm_bss_triangulation.md` |
+| Font asset identity        | `parity-evidence/dm1_fmtowns_font_asset.md`     |
+| Picture library + RLE      | `parity-evidence/dm1_fmtowns_pic_library_format.md` |
+| Menu region constants      | `include/dm1_v1_fmtowns_menu_regions.h`, `src/dm1/dm1_v1_fmtowns_menu_regions.c` |
+| DYNAMENU record helpers    | `include/dm1_v1_fmtowns_dynamenu.h`, `src/dm1/dm1_v1_fmtowns_dynamenu.c` |
+| English label pool         | `include/dm1_v1_fmtowns_dyna_buttons.h`, `src/dm1/dm1_v1_fmtowns_dyna_buttons.c` |
+| Japanese label pool        | `include/dm1_v1_fmtowns_dyna_buttons_ja.h`, `src/dm1/dm1_v1_fmtowns_dyna_buttons_ja.c` |
+| Text/screen/icon geometry  | `include/dm1_v1_fmtowns_text_geometry.h`, `src/dm1/dm1_v1_fmtowns_text_geometry.c` |
+| Software EGB shim          | `include/dm1_v1_fmtowns_egb_shim.h`, `src/dm1/dm1_v1_fmtowns_egb_shim.c` |
+| JDM symbol vaddr map       | `include/dm1_v1_fmtowns_jdm_symbols.h`, `src/dm1/dm1_v1_fmtowns_jdm_symbols.c` |
+| JDM BSS vaddr map          | `include/dm1_v1_fmtowns_jdm_bss.h`, `src/dm1/dm1_v1_fmtowns_jdm_bss.c` |
+| Font asset identity        | `include/dm1_v1_fmtowns_font_asset.h`, `src/dm1/dm1_v1_fmtowns_font_asset.c` |
+| Picture library + RLE      | `include/dm1_v1_fmtowns_pic_library.h`, `src/dm1/dm1_v1_fmtowns_pic_library.c` |
 | Tests                      | `tests/test_dm1_v1_fmtowns_cd_audio.c`, `tests/test_dm1_v1_fmtowns_title.c`, `tests/test_firestaff_fmtowns_disc.c` |
 
 ## 11. Cross-references
