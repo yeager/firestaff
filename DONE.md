@@ -140,6 +140,14 @@
 - ✅ Verification: `test_dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 D1L/D1R F0108 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the D1 side-view F0108 contract from M10. It hard-codes zones,
+  seeds and probe pixels, reads no original DM1 bytes and has no M11/runtime
+  caller; its explicit ReDMCSB regression now compiles the fixture directly.
+- ✅ Verification: `test_dm1_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the

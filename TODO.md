@@ -130,6 +130,11 @@
   its explicit contract tests until a real F0115 D3L2/D3R2 consumer is bound
   to authenticated GRAPHICS.DAT and live Thing records.
 
+- **DM1-D1L-D1R-F0108-SYNTHETIC-AUDIT:** This D1 side-view F0108 contract
+  hard-codes zones, seeds and probe pixels. It has no M11/runtime caller and
+  reads no original DM1 data; retain it only in its explicit regression until
+  a live F0108 consumer is bound to authenticated GRAPHICS.DAT material.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The
