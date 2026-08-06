@@ -1423,6 +1423,12 @@
   health words, number and direction flags. Synthetic random level placement
   is closed for verified Track 02 dungeons; the ledger remains data-only until
   the original type-to-graphics, AI and live-combat consumers are proven.
+  2026-08-06 generator-record update: map-reachable type-6 floor actuator
+  records are now retained with their exact source chain, coordinates, value,
+  effect/timing flags and target. The old static generator table and random
+  placement are bypassed for verified Track 02 worlds; source generator timing,
+  re-enable and spawn consumers remain closed until the original route is
+  bound.
 
 - **THERON-FORCEFIELD-MENU:** Closed 2026-08-06. `ENTER FORCEFIELD` is now
   enabled for both the Soul Room and READY phases, including a party with

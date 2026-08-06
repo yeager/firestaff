@@ -1,6 +1,7 @@
 #include "theron_v1_track02_dungeon_loader.h"
 #include "theron_v1_track02_dungeon_map.h"
 #include "theron_v1_track02_thing_data.h"
+#include "theron_v1_track02_actuator.h"
 #include "theron_v1_world.h"
 #include <assert.h>
 #include <stdio.h>
@@ -129,6 +130,10 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
     const char *names[] = {
         "AKUTUBA","DRATOR","FORMICIA","SARMON","SHADODAN","THIEVES","DEMON"
     };
+    /* Only generators reachable from real ground-reference chains are
+     * placed in the world ledger; the remaining category-3 records are
+     * source table entries without a map occurrence. */
+    const unsigned int expected_source_generators[] = {3, 7, 9, 2, 1, 14, 10};
 
     for (int d = 0; d < 7; d++) {
         Theron_V1_World *world = calloc(1, sizeof(Theron_V1_World));
@@ -207,7 +212,14 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
                (unsigned int)result.unbound_item_refs);
         assert(world->source_monster_count ==
                result.source_category_counts[THERON_CAT_MONSTER]);
+        assert(world->source_generator_count == expected_source_generators[d]);
         assert(world->creature_count == 0);
+        theron_v1_world_init_generators(world);
+        world->world_tick = 60;
+        theron_v1_world_tick_generators(world);
+        assert(world->creature_count == 0);
+        for (int i = 0; i < world->generator_active_count; ++i)
+            assert(world->generator_spawn_count[i] == 0);
         assert_source_category_census(&result);
         assert_source_type_census(&result);
         for (unsigned int i = 0; i < result.source_object_count; ++i) {
@@ -255,6 +267,16 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
                    source->decoded.value.monster.direction_flags);
             assert(memcmp(monster->health, source->decoded.value.monster.health,
                           sizeof(monster->health)) == 0);
+        }
+        for (unsigned int i = 0; i < world->source_generator_count; ++i) {
+            const Theron_V1_SourceGeneratorRecord *generator =
+                &world->source_generators[i];
+            assert(generator->dungeon_id == d + 1);
+            assert(generator->level >= 0 &&
+                   generator->level < THERON_MAX_LEVELS_PER_DUNGEON);
+            assert(generator->x < THERON_MAX_MAP_SIZE);
+            assert(generator->y < THERON_MAX_MAP_SIZE);
+            assert(generator->type == TQ_ACT_FLOOR_MONSTER_GEN);
         }
         /* Champions and creatures are linked through actuators (champion
          * mirror type 127), not directly through ground refs. */

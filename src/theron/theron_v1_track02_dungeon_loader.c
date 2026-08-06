@@ -271,6 +271,17 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                     }
                 }
 
+                if (!is_wall && act.type == TQ_ACT_FLOOR_MONSTER_GEN &&
+                    theron_v1_world_bind_track02_generator(
+                        world, dungeon_id, (int)map, ref, id, (int)tx, (int)ty,
+                        act.type, act.value, act.once, act.effect, act.sound,
+                        act.delay, act.inactive, act.graphism,
+                        act.target_x, act.target_y, act.target_facing) != 0) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
+
                 obj.type = 0x04;
                 obj.state = act.type;
                 obj.quantity = act.value;

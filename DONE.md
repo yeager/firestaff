@@ -5,6 +5,13 @@
   synthetic random placement/type table; live creature promotion remains
   closed until the original graphics, AI and combat consumers are bound.
 
+- ✅ 2026-08-06 Theron Track 02 generator source ledger: map-reachable
+  category-3 actuator type-6 records are now retained with source references,
+  coordinates, value, effect/timing flags and targets. Verified worlds no
+  longer consult the legacy DMWeb/DM1 generator table or random placement;
+  generator execution remains closed pending the original timing, re-enable
+  and spawn consumer.
+
 - ✅ 2026-08-06 Theron forcefield menu admission: the startup layout now keeps
   `ENTER FORCEFIELD` actionable in both Soul Room and READY, so starting with
   Theron alone no longer gets trapped on the mirror list. The runtime still

@@ -319,6 +319,31 @@ typedef struct {
     uint16_t health[4];
 } Theron_V1_SourceMonsterRecord;
 
+/* Track 02 actuator type 6 is the source's floor monster-generator record.
+ * Keep its decoded fields opaque to the live spawn path until the original
+ * generator consumer and re-enable/timing semantics are bound. */
+#define THERON_MAX_SOURCE_GENERATORS 64
+
+typedef struct {
+    int dungeon_id;
+    int level;
+    int x;
+    int y;
+    uint16_t source_ref;
+    uint16_t source_index;
+    uint8_t type;
+    uint16_t value;
+    uint8_t once;
+    uint8_t effect;
+    uint8_t sound;
+    uint8_t delay;
+    uint8_t inactive;
+    uint8_t graphism;
+    uint8_t target_x;
+    uint8_t target_y;
+    uint8_t target_facing;
+} Theron_V1_SourceGeneratorRecord;
+
 /* ── Timer system ─────────────────────────────────────────────────── */
 typedef enum {
     THERON_TIMER_ONESHOT   = 0,
@@ -396,6 +421,9 @@ struct Theron_V1_World {
      * dungeon.  These are source data, not yet live creatures. */
     Theron_V1_SourceMonsterRecord source_monsters[THERON_MAX_SOURCE_MONSTERS];
     unsigned int source_monster_count;
+    Theron_V1_SourceGeneratorRecord
+        source_generators[THERON_MAX_SOURCE_GENERATORS];
+    unsigned int source_generator_count;
 
     /* Generator state (current dungeon, current level only) */
     int generator_spawn_count[5];
@@ -544,6 +572,25 @@ int theron_v1_world_bind_track02_monster(
     const uint16_t health[4],
     uint8_t number,
     uint8_t direction_flags);
+int theron_v1_world_bind_track02_generator(
+    Theron_V1_World *world,
+    int dungeon_id,
+    int level_index,
+    uint16_t source_ref,
+    uint16_t source_index,
+    int x,
+    int y,
+    uint8_t type,
+    uint16_t value,
+    uint8_t once,
+    uint8_t effect,
+    uint8_t sound,
+    uint8_t delay,
+    uint8_t inactive,
+    uint8_t graphism,
+    uint8_t target_x,
+    uint8_t target_y,
+    uint8_t target_facing);
 void theron_v1_world_init_generators(Theron_V1_World *world);
 void theron_v1_world_tick_generators(Theron_V1_World *world);
 

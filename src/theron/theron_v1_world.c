@@ -150,10 +150,12 @@ void theron_v1_world_reset_for_dungeon(Theron_V1_World *world,
     world->object_count              = 0;
     world->creature_count            = 0;
     world->source_monster_count      = 0;
+    world->source_generator_count    = 0;
     world->timer_count               = 0;
     memset(world->objects, 0, sizeof(world->objects));
     memset(world->creatures, 0, sizeof(world->creatures));
     memset(world->source_monsters, 0, sizeof(world->source_monsters));
+    memset(world->source_generators, 0, sizeof(world->source_generators));
     memset(world->timers,  0, sizeof(world->timers));
 }
 
@@ -266,7 +268,9 @@ int theron_v1_world_load_track02_dungeon(
     int loaded = 0;
 
     world->source_monster_count = 0;
+    world->source_generator_count = 0;
     memset(world->source_monsters, 0, sizeof(world->source_monsters));
+    memset(world->source_generators, 0, sizeof(world->source_generators));
 
     memcpy(world->source_thing_descriptor_sizes[slot],
            dd->thing_descriptor_sizes,
@@ -801,6 +805,54 @@ int theron_v1_world_bind_track02_monster(
     return 0;
 }
 
+int theron_v1_world_bind_track02_generator(
+    Theron_V1_World *world,
+    int dungeon_id,
+    int level_index,
+    uint16_t source_ref,
+    uint16_t source_index,
+    int x,
+    int y,
+    uint8_t type,
+    uint16_t value,
+    uint8_t once,
+    uint8_t effect,
+    uint8_t sound,
+    uint8_t delay,
+    uint8_t inactive,
+    uint8_t graphism,
+    uint8_t target_x,
+    uint8_t target_y,
+    uint8_t target_facing)
+{
+    if (!world || dungeon_id < 1 ||
+        dungeon_id > THERON_DUNGEON_COUNT ||
+        level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        world->source_generator_count >= THERON_MAX_SOURCE_GENERATORS)
+        return -1;
+    Theron_V1_SourceGeneratorRecord *out =
+        &world->source_generators[world->source_generator_count++];
+    memset(out, 0, sizeof(*out));
+    out->dungeon_id = dungeon_id;
+    out->level = level_index;
+    out->x = x;
+    out->y = y;
+    out->source_ref = source_ref;
+    out->source_index = source_index;
+    out->type = type;
+    out->value = value;
+    out->once = once;
+    out->effect = effect;
+    out->sound = sound;
+    out->delay = delay;
+    out->inactive = inactive;
+    out->graphism = graphism;
+    out->target_x = target_x;
+    out->target_y = target_y;
+    out->target_facing = target_facing;
+    return 0;
+}
+
 /* ══════════════════════════════════════════════════════════════════════
  * Creature generators — DMWeb ChristopheF maps
  * ══════════════════════════════════════════════════════════════════════ */
@@ -819,6 +871,19 @@ void theron_v1_world_init_generators(Theron_V1_World *world) {
         world->generator_spawn_count[i] = 0;
         world->generator_next_tick[i] = 0;
     }
+    if (world->source_thing_directory_verified[di]) {
+        for (unsigned int i = 0; i < world->source_generator_count &&
+                                  world->generator_active_count < THERON_MAX_GENERATORS;
+             ++i) {
+            const Theron_V1_SourceGeneratorRecord *source =
+                &world->source_generators[i];
+            if (source->dungeon_id != world->current_dungeon ||
+                source->level != lvl)
+                continue;
+            world->generator_next_tick[world->generator_active_count++] = 0;
+        }
+        return;
+    }
     for (int i = 0; i < (int)dg->count; i++) {
         if (dg->gens[i].level == lvl) {
             int idx = world->generator_active_count++;
@@ -833,6 +898,9 @@ void theron_v1_world_tick_generators(Theron_V1_World *world) {
     if (!world || world->generator_active_count == 0) return;
     int di = world->current_dungeon - 1;
     if (di < 0 || di >= THERON_DUNGEON_COUNT) return;
+    /* Real actuator records are retained above, but the original generator
+     * consumer, timing and re-enable route are not yet source-bound. */
+    if (world->source_thing_directory_verified[di]) return;
 
     const Theron_DungeonGenerators *dg = &theron_dungeon_generators[di];
     int lvl = world->current_level;
