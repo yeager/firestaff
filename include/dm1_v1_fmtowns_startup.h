@@ -68,6 +68,30 @@ typedef struct {
     uint8_t entrance_track;
 } DM1_V1_FmtownsStartupReceipt;
 
+/* TMENU.INF is the retained 256-byte TownsOS launcher configuration.  Its
+ * two 128-byte records select JDM.EXP and EDM.EXP respectively.  Preserve
+ * the labels as raw source bytes until their Shift-JIS/Towns glyph route is
+ * decoded; this receipt only exposes the executable and DOS path that the
+ * original menu actually launches. */
+#define DM1_FMTOWNS_TMENU_ENTRY_COUNT 2u
+typedef struct {
+    int valid;
+    DM1_V1_FmtownsLang language;
+    char program_name[13]; /* Twelve-byte 8.3 field, without source padding. */
+    char program_path[16]; /* Original `\\JDM.EXP` / `\\EDM.EXP` field. */
+    uint8_t title_bytes[9]; /* Source-owned label bytes; not host-decoded. */
+} DM1_V1_FmtownsMenuEntry;
+
+typedef struct {
+    int valid;
+    DM1_V1_FmtownsMenuEntry entries[DM1_FMTOWNS_TMENU_ENTRY_COUNT];
+} DM1_V1_FmtownsMenuReceipt;
+
+/* Parse the authenticated TMENU.INF record layout. Returns 1 only for the
+ * exact two-launcher layout found on the HMA-240 English/Japanese disc. */
+int dm1_v1_fmtowns_menu_receipt(const uint8_t *menu_info, size_t menu_info_size,
+                                DM1_V1_FmtownsMenuReceipt *out);
+
 /* Validate the original root startup files from the HMA-240 retail disc.
  * All buffers are caller-owned and are never modified. Returns 1 only for
  * the verified English or Japanese program family, otherwise 0. */

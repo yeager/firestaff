@@ -92,16 +92,59 @@ static int contains_ascii(const uint8_t *bytes, size_t size, const char *needle)
     return 0;
 }
 
+int dm1_v1_fmtowns_menu_receipt(const uint8_t *menu_info, size_t menu_info_size,
+                                DM1_V1_FmtownsMenuReceipt *out)
+{
+    static const char k_programs[DM1_FMTOWNS_TMENU_ENTRY_COUNT][13] = {
+        "JDM     .EXP", "EDM     .EXP"
+    };
+    static const char k_paths[DM1_FMTOWNS_TMENU_ENTRY_COUNT][9] = {
+        "\\JDM.EXP", "\\EDM.EXP"
+    };
+    static const DM1_V1_FmtownsLang k_languages[
+        DM1_FMTOWNS_TMENU_ENTRY_COUNT] = {
+        DM1_FMTOWNS_LANG_JP, DM1_FMTOWNS_LANG_EN
+    };
+    size_t entry_index;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!menu_info || menu_info_size != 0x100u) return 0;
+
+    for (entry_index = 0u;
+         entry_index < DM1_FMTOWNS_TMENU_ENTRY_COUNT;
+         ++entry_index) {
+        const size_t base = entry_index * 0x80u;
+        DM1_V1_FmtownsMenuEntry *entry = &out->entries[entry_index];
+        /* HMA-240 TMENU.INF: an 8.3 program name begins each record and
+         * the absolute DOS path begins at byte 0x40.  Do not infer an
+         * arbitrary executable from printable bytes elsewhere in the file. */
+        if (memcmp(menu_info + base, k_programs[entry_index], 12u) != 0 ||
+            memcmp(menu_info + base + 0x40u, k_paths[entry_index], 8u) != 0) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        entry->valid = 1;
+        entry->language = k_languages[entry_index];
+        memcpy(entry->program_name, k_programs[entry_index], 12u);
+        entry->program_name[12] = '\0';
+        memcpy(entry->program_path, k_paths[entry_index], 8u);
+        entry->program_path[8] = '\0';
+        memcpy(entry->title_bytes, menu_info + base + 0x37u,
+               sizeof(entry->title_bytes));
+    }
+    out->valid = 1;
+    return 1;
+}
+
 static int menu_info_selects_program(const uint8_t *menu_info, size_t size,
                                      int english) {
-    static const char k_japanese_entry[] = "JDM     .EXP";
-    static const char k_english_entry[] = "EDM     .EXP";
-    const char *entry = english ? k_english_entry : k_japanese_entry;
-    size_t offset = english ? 0x80u : 0u;
-    size_t entry_size = 0x80u;
-    if (!menu_info || offset >= size) return 0;
-    if (entry_size > size - offset) entry_size = size - offset;
-    return contains_ascii(menu_info + offset, entry_size, entry);
+    DM1_V1_FmtownsMenuReceipt receipt;
+    const unsigned int expected_index = english ? 1u : 0u;
+    return dm1_v1_fmtowns_menu_receipt(menu_info, size, &receipt) &&
+           receipt.entries[expected_index].valid &&
+           receipt.entries[expected_index].language ==
+               (english ? DM1_FMTOWNS_LANG_EN : DM1_FMTOWNS_LANG_JP);
 }
 
 static uint16_t read_le16(const uint8_t *p) {

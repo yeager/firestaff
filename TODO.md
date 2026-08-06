@@ -1019,8 +1019,11 @@ level or consumer bindings.
   source order instead of a separate 320x80-to-48x12 approximation. The
   retained original CUE/BIN handoff now starts EDM's authenticated CDDA track
   02 before the first title frame, then the gameplay map dispatcher owns the
-  later transition. Exact wall-clock timing and TMENU input capture remain
-  open. M11 routes a selected FM Towns edition around the PC34
+  later transition. `TMENU.INF` is now parsed as its two real 128-byte
+  TownsOS launch records (`\\JDM.EXP`, `\\EDM.EXP`) instead of accepting any
+  matching text in the configuration. Its icon bitmap format, visible layout
+  and mouse input routes remain capture-gated. Exact wall-clock timing and
+  TMENU input capture remain open. M11 routes a selected FM Towns edition around the PC34
   `SWSH -> TITLE -> ENTRANCE` transaction. It opens only the selected
   hash-verified Towns data; do not restore the PC34 path as a presentation
   fallback.

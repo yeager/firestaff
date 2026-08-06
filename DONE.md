@@ -438,6 +438,16 @@
   `test_dm1_v1_fmtowns_cd_audio`, `cmake --build build --target firestaff`
   and `git diff --check`.
 
+- ✅ 2026-08-06 DM1 FM Towns TMENU record parser: startup admission now
+  structurally parses the original 256-byte `TMENU.INF` as its two TownsOS
+  launch records. It verifies the fixed 128-byte record boundaries and their
+  actual executable/path pairs, `JDM     .EXP` / `\\JDM.EXP` followed by
+  `EDM     .EXP` / `\\EDM.EXP`, while retaining the title bytes without
+  inventing a host glyph conversion. The old loose substring check is gone.
+  Verification: real HMA-240 cache through `test_dm1_v1_fmtowns_startup`,
+  `test_dm1_v1_fmtowns_title`, `cmake --build build --target firestaff` and
+  `git diff --check`.
+
 - ✅ DM1 FM Towns startup-owner gate: added a source-bound receipt for the
   real HMA-240 root startup chain. It verifies `AUTOEXEC.BAT`, the selected
   English `EDM.EXP` or Japanese `JDM.EXP` Phar Lap P3 owner, `TMENU.EXP`,
