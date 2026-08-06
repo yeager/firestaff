@@ -975,9 +975,11 @@ level or consumer bindings.
   back to PC34 when the receipt is absent. Japanese JDM remains blocked from
   this path because its pixel/TBIOS plan is not yet decoded. The native
   `DRAW_DMENU`/`DYNAMENU` menu and FM CD-audio handoff remain open.
-  Remaining work is decoding and consuming the FM Towns-owned
-  executable startup animation and menu in M11, with original timing/audio/
-  input capture. 2026-08-06: M11 now routes a selected FM Towns edition
+  2026-08-06: `dm1_v1_fmtowns_title` now composes the real GRAPHICS.DAT
+  graphic-1 title frames from the EDM.EXP receipt: PRESENTS, the native
+  18-frame reverse zoom (48x12 through 320x80) and TITLE_MASTER. Remaining
+  work is consuming this FM Towns-owned animation and TMENU in M11, with
+  original timing/audio/input capture. M11 now routes a selected FM Towns edition
   around the PC34 `SWSH -> TITLE -> ENTRANCE` transaction. It opens only the
   selected hash-verified Towns data while native title/menu playback remains
   explicitly unclaimed; do not restore the PC34 path as a presentation

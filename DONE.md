@@ -229,6 +229,19 @@
   executable animation/menu decoding and original capture remain tracked in
   `DM1-FMTOWNS-STARTUP-ANIMATION-MENU`.
 
+- ✅ 2026-08-06 DM1 FM Towns executable-title compositor: added a bounded
+  `dm1_v1_fmtowns_title` frame composer for the HMA-240 EDM.EXP
+  `DO_TITLE_ANIMATION` plan. It consumes only decoded original
+  `GRAPHICS.DAT` graphic 1 and the verified executable receipt, producing
+  PRESENTS at y=90, the 18 reverse zoom frames from 48x12 at (136,74) to
+  320x80 at (0,40), then TITLE_MASTER at y=118. The geometry comes from the
+  verified P3 load image (`EDM.EXP + 0xc3d1..0xc726`): SI/BX begin at 320/80,
+  decrement by 16/4 for 18 prepared bitmaps, and the source/destination
+  rectangles are checked by `dm1_v1_fmtowns_startup_receipt`. This is a
+  data-owned compositor, not the PC34 TITLE.DAT/C001 path. M11 timing,
+  CD-track-2 playback and TMENU interaction remain explicitly open.
+  Verification: `test_dm1_v1_fmtowns_title`.
+
 - ✅ DM1 FM Towns startup-owner gate: added a source-bound receipt for the
   real HMA-240 root startup chain. It verifies `AUTOEXEC.BAT`, the selected
   English `EDM.EXP` or Japanese `JDM.EXP` Phar Lap P3 owner, `TMENU.EXP`,
