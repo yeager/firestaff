@@ -4630,7 +4630,6 @@ if(THERON_SOURCES)
         src/theron/theron_v1_track02_creature_spawn.c
         src/theron/theron_v1_track02_item_categories.c
         src/theron/theron_v1_track02_spell_descriptors.c
-        src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v22_shapes_runtime_noop.c
         src/theron/theron_v2_hud_widget_assets_runtime_noop.c
         src/theron/theron_v1_ui_chrome_runtime_noop.c

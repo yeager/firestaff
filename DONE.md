@@ -28,6 +28,12 @@
   not only the legacy creature table. A future source binding must therefore
   be explicit and reviewable before it can enter the production library.
 
+- ✅ 2026-08-06 Theron production source list cleanup: removed the duplicate
+  `theron_v1_track02_spell_descriptors.c` entry from `firestaff_theron`.
+  The production archive now has one explicit source entry for that
+  source-bound descriptor module; no runtime behavior or fixture route was
+  changed.
+
 `RLOWFIX.BIN/PLRD` is now treated as the source of its authenticated raw
 name/TABL references, statistics and equipment ordinals only. The production
 parser no longer seeds food/water with the inherited DM1 value `1500`; those
