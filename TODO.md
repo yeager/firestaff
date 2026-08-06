@@ -27020,7 +27020,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   but still stops at the `DM2_READ_SKSAVE_DUNGEON` record-link boundary. Keep
   Continue and slot admission disabled until that complete source-owned
   record/object/possession restoration path is live; do not substitute D2RS
-  fixtures or inferred session state.
+  fixtures or inferred session state. **2026-08-06 audit:** the existing
+  callback-only `DM2_READ_RECORD_CHECKCODE` transcript cannot be promoted as
+  a raw-save reader: SKProject `sksvgame.cpp:880-881` selects the DB4 record
+  SUPPRESS mask through `DM2_QUERY_CREATURE_AI_SPEC_FLAGS` (the authenticated
+  `CREATURES[type] → AIDefinition` GDAT chain), whereas the transcript always
+  consumes the default mask. All eight supplied PC-DOS saves reject after the
+  champion-item/leader roots as a result. Its remaining source dependencies
+  also include the c_record allocator/append graph, container-moneybox mask
+  swap, timer links, `DM2_2066_062b` possession continuation and source
+  item-bonus pass. Bind those real owners before retrying corpus promotion.
 
 - [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
   source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw

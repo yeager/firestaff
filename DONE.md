@@ -5,6 +5,14 @@
   MODE1/2048 sectors), without promoting any dungeon or tile semantics.
   The real extracted US/JP CUE corpus passes the focused test.
 
+- ✅ 2026-08-06 DM2 original-SKSAVE record-link audit: traced the supplied
+  PC-DOS primary and backup corpus through SKProject
+  `sksvgame.cpp::DM2_READ_RECORD_CHECKCODE`. The existing callback transcript
+  is not admitted as a save reader: it omits the source DB4
+  `CREATURES → AIDefinition` mask selection at lines 880-881, which desyncs
+  every real stream after champion-item/leader roots. Continue and Load remain
+  correctly blocked; no partial record graph or inferred session was kept.
+
 - ✅ 2026-08-06 DM2 silent startup/action receipt regression: the real
   PC-DOS startup smoke route now verifies that boot preserves structured
   `ACTION` and startup handoff receipts while leaving their player-visible
