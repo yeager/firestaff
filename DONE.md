@@ -53218,3 +53218,9 @@ alcove runtime and archive-media tests passed (4/4).
   English Utility Disk 3 ADF was independently hash-checked as
   `85091454b3885a216f6bdbbe5c47cc75` (the registered original release 3) and
   passes the real-media lane, 79 checks total.
+- ✅ 2026-08-06 CSB real CMP decoder regression: `test_firestaff_cmp_decode`
+  now accepts `FIRESTAFF_CSB_CMP` for an opt-in original portrait check while
+  retaining its data-free self-test in CI. The authenticated FM Towns
+  `PORTRAIT/ALEX.CMP` cache member decodes successfully (MD5
+  `e2a889bdb8e1923cb7f83989f92b53a2`); this is portrait metadata/pixel
+  validation only and does not promote a portrait-only CMP to a party save.

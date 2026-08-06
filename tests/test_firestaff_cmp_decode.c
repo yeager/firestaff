@@ -18,6 +18,7 @@
 #include "firestaff_cmp_decode.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int verify_real_cmp(const char *path) {
@@ -48,8 +49,16 @@ static int verify_real_cmp(const char *path) {
 }
 
 int main(int argc, char **argv) {
+    const char *real_cmp = getenv("FIRESTAFF_CSB_CMP");
     int rc = FirestaffCmp_SelfTest();
-    if (rc == 0 && (argc == 1 || (argc == 2 && verify_real_cmp(argv[1])))) {
+    if (argc > 2 ||
+        (argc == 2 && real_cmp && real_cmp[0] != '\0') ||
+        (argc == 2 && !verify_real_cmp(argv[1])) ||
+        (argc == 1 && real_cmp && real_cmp[0] != '\0' &&
+         !verify_real_cmp(real_cmp))) {
+        rc = -1;
+    }
+    if (rc == 0) {
         printf("test_firestaff_cmp_decode: PASS\n");
         return 0;
     }
