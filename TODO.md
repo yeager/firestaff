@@ -597,6 +597,14 @@
   therefore return `NULL`. Bind a real selected-profile text consumer before
   showing spell or AI names.
 
+- **DM2-INVENTORY-TEXT-CONSUMER:** `defines.h`'s inventory-slot constants are
+  internal indices, not display strings. SKProject `DRAW_ITEM_SURVEY` renders
+  the selected record through `GET_ITEM_NAME()`, but that original text route
+  is not yet bound in Firestaff. The inventory helper therefore emits no
+  `ready_hand`, `EMPTY`, `POOL … INDEX …`, or `UNRESOLVED` fallback text.
+  Bind the selected profile's authenticated item-name record and font route
+  before presenting any inventory description.
+
 - **DM2-CDDA-OTHER-PLATFORM-MEDIA:** FM Towns CDDA now has a verified
   in-memory original-disc route only. Mega CD and PC-9821 still lack an
   equivalent selected-medium reader and therefore must remain silent rather

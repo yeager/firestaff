@@ -27,22 +27,14 @@ static int failed;
     else { ++failed; printf("  FAIL: %s\n", msg); } \
 } while (0)
 
-static void test_slot_names_and_equipment_flags(void)
+static void test_slot_text_boundary_and_equipment_flags(void)
 {
-    CHECK(strcmp(dm2_v1_inventory_slot_label(DM2_V1_INV_SLOT_LEADER_HAND),
-                 "leader_hand") == 0,
-          "leader hand label stable");
-    CHECK(strcmp(dm2_v1_inventory_slot_label(DM2_V1_INV_SLOT_ACTION_HAND),
-                 "action_hand") == 0,
-          "action hand label stable");
-    CHECK(strcmp(dm2_v1_inventory_slot_label(DM2_V1_INV_SLOT_HEAD),
-                 "head") == 0,
-          "head equipment label stable");
-    CHECK(strcmp(dm2_v1_inventory_slot_label(DM2_V1_INV_SLOT_BACKPACK_FIRST),
-                 "backpack_line1_1") == 0,
-          "first backpack label stable");
-    CHECK(strcmp(dm2_v1_inventory_slot_label(30), "invalid") == 0,
-          "out-of-range slot label is invalid");
+    CHECK(dm2_v1_inventory_slot_label(DM2_V1_INV_SLOT_LEADER_HAND) == NULL &&
+              dm2_v1_inventory_slot_label(DM2_V1_INV_SLOT_ACTION_HAND) == NULL &&
+              dm2_v1_inventory_slot_label(DM2_V1_INV_SLOT_HEAD) == NULL &&
+              dm2_v1_inventory_slot_label(DM2_V1_INV_SLOT_BACKPACK_FIRST) == NULL &&
+              dm2_v1_inventory_slot_label(30) == NULL,
+          "slot constants do not expose host-authored display text");
 
     CHECK(dm2_v1_inventory_slot_is_equipment(DM2_V1_INV_SLOT_LEADER_HAND),
           "leader hand is equipment display");
@@ -166,8 +158,8 @@ static void test_empty_invalid_and_unresolved_slots(void)
           "empty backpack selection succeeds");
     CHECK(view.has_object == 0 && view.object_id == 0,
           "empty backpack reports no object");
-    CHECK(strcmp(view.description, "EMPTY") == 0,
-          "empty backpack description stable");
+    CHECK(view.description[0] == '\0',
+          "empty backpack has no host-authored description");
 
     CHECK(!dm2_v1_inventory_panel_select_item(
               &champ, &leader_hand, -2, &db, NULL, 0, &view),
@@ -192,8 +184,8 @@ static void test_empty_invalid_and_unresolved_slots(void)
           "unresolved neck-slot selection succeeds");
     CHECK(view.has_object == 1 && view.db_resolved == 0,
           "unresolved neck-slot object does not fake DB resolution");
-    CHECK(strcmp(view.description, "UNRESOLVED") == 0,
-          "unresolved neck-slot description stable");
+    CHECK(view.description[0] == '\0',
+          "unresolved neck slot has no host-authored description");
 }
 
 static void test_source_evidence(void)
@@ -215,7 +207,7 @@ int main(void)
 {
     printf("=== DM2 V1 inventory/item panel gate ===\n\n");
 
-    test_slot_names_and_equipment_flags();
+    test_slot_text_boundary_and_equipment_flags();
     test_inventory_selection_and_description();
     test_empty_invalid_and_unresolved_slots();
     test_source_evidence();

@@ -6,6 +6,17 @@
 - ✅ Verification: `test_dm1_v1_viewport_d2c_f0111_door_pc34_compat` passes;
   the source object is absent from both M10 and M11 archives.
 
+# DM2 inventory debug-text boundary (2026-08-06)
+
+- ✅ Removed host-authored inventory slot names and empty/unresolved DB
+  descriptions from the production helper. The source only owns slot indices;
+  SKProject renders a real item name through `DRAW_ITEM_SURVEY` →
+  `GET_ITEM_NAME()`.
+- ✅ Item descriptions remain available only when their caller supplies an
+  authenticated text owner; otherwise the item view stays textless.
+- ✅ Verification: `test_dm2_v1_inventory_item_panel_gate` and the production
+  placeholder-boundary verifier pass.
+
 # DM1 D2L/D2R F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D2L/D2R F0111 framebuffer simulation from M10.

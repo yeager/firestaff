@@ -101,9 +101,14 @@ typedef struct {
     uint32_t identity_hash;
 } DM2_V1_InventoryPanelHudConsumptionReceipt;
 
+/* Fixed slot indices are mechanics, not retail display text. Returns NULL
+ * until the selected game's actual text owner is wired to the panel. */
 const char *dm2_v1_inventory_slot_label(int slot);
 int dm2_v1_inventory_slot_is_equipment(int slot);
 
+/* `descriptions` must come from an authenticated selected-profile text owner.
+ * Without one, the returned description buffer is empty: no DB pool/index,
+ * EMPTY, or UNRESOLVED host fallback is presented to the player. */
 int dm2_v1_inventory_panel_select_item(
     const DM2_ChampionRecord *champion,
     const DM2_LeaderPossession *leader_hand,

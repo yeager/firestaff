@@ -4,39 +4,6 @@
 #include <stdio.h>
 #include <string.h>
 
-static const char *const k_slot_labels[DM2_V1_INV_SLOT_COUNT] = {
-    "ready_hand",
-    "action_hand",
-    "head",
-    "torso",
-    "legs",
-    "feet",
-    "pouch_2",
-    "quiver_line2_1",
-    "quiver_line1_2",
-    "quiver_line2_2",
-    "neck",
-    "pouch_1",
-    "quiver_line1_1",
-    "backpack_line1_1",
-    "backpack_line2_2",
-    "backpack_line2_3",
-    "backpack_line2_4",
-    "backpack_line2_5",
-    "backpack_line2_6",
-    "backpack_line2_7",
-    "backpack_line2_8",
-    "backpack_line2_9",
-    "backpack_line1_2",
-    "backpack_line1_3",
-    "backpack_line1_4",
-    "backpack_line1_5",
-    "backpack_line1_6",
-    "backpack_line1_7",
-    "backpack_line1_8",
-    "backpack_line1_9"
-};
-
 static int slot_valid(int slot)
 {
     return slot == DM2_V1_INV_SLOT_LEADER_HAND ||
@@ -186,9 +153,11 @@ static int inventory_panel_consume_receipt(
 
 const char *dm2_v1_inventory_slot_label(int slot)
 {
-    if (slot == DM2_V1_INV_SLOT_LEADER_HAND) return "leader_hand";
-    if (slot < 0 || slot >= DM2_V1_INV_SLOT_COUNT) return "invalid";
-    return k_slot_labels[slot];
+    (void)slot;
+    /* Inventory slot constants in SKProject/defines.h are identifiers, not
+     * player-visible strings.  DRAW_ITEM_SURVEY calls GET_ITEM_NAME() for a
+     * selected record; do not turn internal slot/debug names into UI text. */
+    return NULL;
 }
 
 int dm2_v1_inventory_slot_is_equipment(int slot)
@@ -248,7 +217,7 @@ int dm2_v1_inventory_panel_select_item(
     out->object_id = object_id;
 
     if (object_id == 0u) {
-        snprintf(out->description, sizeof(out->description), "EMPTY");
+        /* The original view has no generic EMPTY string at this point. */
         return 1;
     }
 
@@ -259,13 +228,6 @@ int dm2_v1_inventory_panel_select_item(
     desc = lookup_description(object_id, descriptions, description_count);
     if (desc) {
         snprintf(out->description, sizeof(out->description), "%s", desc);
-    } else if (out->db_resolved) {
-        snprintf(out->description, sizeof(out->description),
-                 "POOL %u INDEX %lu",
-                 (unsigned)out->db_pool,
-                 (unsigned long)out->db_index);
-    } else {
-        snprintf(out->description, sizeof(out->description), "UNRESOLVED");
     }
 
     return 1;
