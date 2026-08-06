@@ -10,7 +10,7 @@ while (($#)); do case "$1" in --launch) launch=1;shift;; --operator-only) operat
 [[ -x "$mednafen" ]] && checkhash "$bios" "$bios_sha256" && checkhash "$disc" "$disc_sha256" || exit 1
 for n in route_epoch entry_index compressed_offset compressed_length declared_output; do dec "${!n}" || exit 1; done
 ((route_epoch>0 && compressed_length>0 && declared_output>0)) || exit 1; hx "$package_fnv" && hx "$card_fnv" && hx "$compressed_fnv" || exit 1
-case "$bios_region" in us) opt=-ss.bios_us_path;;jp) opt=-ss.bios_jp_path;;eu) opt=-ss.bios_eu_path;;*) exit 1;;esac
+case "$bios_region" in us|eu) opt=-ss.bios_na_eu;;jp) opt=-ss.bios_jp_path;;*) exit 1;;esac
 [[ ! -e "$capture" && ! -e "$manifest" && -d "$(dirname "$capture")" && -d "$(dirname "$manifest")" ]] || exit 1
 {
  printf 'FIRESTAFF_NEXUS_MEDNAFEN_PRS3_MATERIAL_CAPTURE_PLAN_V1\nNXSPRS3M\n';

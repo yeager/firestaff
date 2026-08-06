@@ -73,6 +73,13 @@
   the linked viewport remains no-draw without authenticated Saturn capture;
   no guessed asset or screenshot was promoted.
 
+- ✅ 2026-08-06 Nexus Mednafen launcher option audit: verified against the
+  Mednafen 1.32.1 Saturn source that the USA/Europe BIOS setting is
+  `ss.bios_na_eu`, then corrected the Nexus VDP1, PRS3, Structure3, SLEV/SAL
+  and replay launchers plus their shell regressions. Real retail CD startup
+  was confirmed with the extracted merged English CUE and the owned European
+  BIOS; the absent Firestaff capture hook still correctly blocks promotion.
+
 - ✅ 2026-08-06 Theron Track 02 monster source ledger: the authentic category-4
   thing-list records from all loaded dungeons are now copied into world state
   with source references, level coordinates, raw type/position, health words,

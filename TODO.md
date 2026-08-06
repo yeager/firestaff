@@ -377,6 +377,11 @@
   Capture launchers now reject stock Mednafen before creating a manifest when
   the required Firestaff trace hook is absent; a normal movie/screenshot is not
   promoted to SLEV/SAL evidence.
+  2026-08-06: all Nexus Mednafen launchers now use the real 1.32.1 Saturn
+  setting `ss.bios_na_eu` for USA/Europe BIOS input; the former
+  `ss.bios_us_path`/`ss.bios_eu_path` spellings could never start an
+  instrumented stock-derived build. The Firestaff hook and event consumer
+  capture remain open.
 
 - **NEXUS-PALETTE-CAPTURE:** The retail SMAP/FACE/ITEM/MNS palette decoders
   now share the Saturn BGR555 channel order. Remaining work is an independent

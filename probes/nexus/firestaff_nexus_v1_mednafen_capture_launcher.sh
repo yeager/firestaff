@@ -68,10 +68,10 @@ printf 'bios=%q\n' "$bios"
 printf 'disc=%q\n' "$disc"
 printf 'trace=%q\n' "$trace"
 printf 'manifest=%q\n' "$manifest"
-printf 'command=%q -ss.bios_us_path %q %q\n' "$mednafen" "$bios" "$disc"
+printf 'command=%q -ss.bios_na_eu %q %q\n' "$mednafen" "$bios" "$disc"
 ((launch)) || exit 0
 ((operator_only)) || exit 1
 
-FIRESTAFF_NEXUS_TRACE_OUTPUT="$trace" "$mednafen" -ss.bios_us_path "$bios" "$disc"
+FIRESTAFF_NEXUS_TRACE_OUTPUT="$trace" "$mednafen" -ss.bios_na_eu "$bios" "$disc"
 [[ -s "$trace" ]] || exit 1
 "$validator" "$trace" "$menu_bpk" "$dm_bin"

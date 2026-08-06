@@ -51,9 +51,9 @@ require_fnv "$package_fnv" && require_fnv "$card_fnv" && require_fnv "$dgn_fnv" 
   require_fnv "$vertex_fnv" && require_fnv "$vertex_rows_fnv" && \
   require_fnv "$normal_fnv" || exit 1
 case "$bios_region" in
-  us) bios_option=-ss.bios_us_path ;;
+  us) bios_option=-ss.bios_na_eu ;;
   jp) bios_option=-ss.bios_jp_path ;;
-  eu) bios_option=-ss.bios_eu_path ;;
+  eu) bios_option=-ss.bios_na_eu ;;
   *) exit 1 ;;
 esac
 [[ ! -e "$capture" && ! -e "$manifest" && "$capture" != "$manifest" && \
