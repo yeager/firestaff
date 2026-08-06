@@ -1352,6 +1352,8 @@
   language-owned F7/F8 platform and C13 CSB-Game dungeon identity, but
   the following five F7057-checked save parts now also have real-corpus
   receipts, followed by an F7063 byte-sum check of the native dungeon tail.
+  The shared dungeon reader now consumes MAP's real byte-6/7 coordinate
+  origin rather than its byte-4/5 unreferenced padding.
   User-save persistence and runtime restoration remain open.
   2026-08-06: the F31E `CDATA/GRAPHICS.DAT` and `DUNGEON.DAT` pair now
   opens the source-bound C001--C005 entrance and C017/C040 HUD session only

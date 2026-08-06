@@ -178,6 +178,8 @@ static int csb_v1_fmtowns_game_startup_mini_dungeon_tail_open(
     receipt->startup_mini_dungeon_map_count = map_count;
     receipt->startup_mini_dungeon_column_count = column_count;
     receipt->startup_mini_dungeon_tail_checksum = checksum;
+    receipt->startup_mini_first_map_offset_x = maps[6u];
+    receipt->startup_mini_first_map_offset_y = maps[7u];
     receipt->startup_mini_dungeon_tail_verified = 1;
     return 1;
 }

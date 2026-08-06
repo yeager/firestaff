@@ -179,6 +179,29 @@ static void test_map_floor_wall_door_nibble_decode(void)
     csb_v1_dungeon_free(&dungeon);
 }
 
+static void test_map_coordinate_origin_uses_source_offsets(void)
+{
+    uint8_t bytes[90] = {0};
+    CSB_V1_DungeonData dungeon;
+
+    /* ReDMCSB DEFS.H MAP: bytes 4/5 are bUnreferenced; OffsetMapX/Y are
+     * bytes 6/7. Keep distinct values so a padding-byte substitution cannot
+     * pass this source-format regression. */
+    bytes[4] = 1;
+    bytes[44 + 4] = 0x7e;
+    bytes[44 + 5] = 0x7f;
+    bytes[44 + 6] = 17;
+    bytes[44 + 7] = 14;
+    bytes[44 + 8] = 0x40;
+    bytes[44 + 9] = 0x02;
+    bytes[80] = 0x20;
+    memset(&dungeon, 0, sizeof(dungeon));
+    assert(csb_v1_dungeon_load(&dungeon, bytes, (int)sizeof(bytes)) == 0);
+    assert(dungeon.map_offset_x[0] == 17);
+    assert(dungeon.map_offset_y[0] == 14);
+    csb_v1_dungeon_free(&dungeon);
+}
+
 int main(void)
 {
     test_load_null_path();
@@ -199,7 +222,8 @@ int main(void)
     test_source_evidence();
     test_real_header_initial_party_pose();
     test_map_floor_wall_door_nibble_decode();
+    test_map_coordinate_origin_uses_source_offsets();
 
-    puts("ok: CSB dungeon loader (Q-CSB-04) 16 tests passed");
+    puts("ok: CSB dungeon loader (Q-CSB-04) 17 tests passed");
     return 0;
 }

@@ -182,6 +182,8 @@ int main(void)
               direct_handoff.startup_mini_dungeon_tail_verified &&
               direct_handoff.startup_mini_dungeon_map_count == 11u &&
               direct_handoff.startup_mini_dungeon_column_count == 296u &&
+              direct_handoff.startup_mini_first_map_offset_x == 17u &&
+              direct_handoff.startup_mini_first_map_offset_y == 14u &&
               direct_handoff.music_table_verified &&
               csb_v1_fmtowns_game_music_track_at(&direct_handoff, 0u, 2u, 0u,
                                                   &music_track),

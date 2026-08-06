@@ -498,6 +498,8 @@ static void test_fmtowns_game_program_handoff(void)
                   receipt.startup_mini_dungeon_map_count == 11u &&
                   receipt.startup_mini_dungeon_column_count == 296u &&
                   receipt.startup_mini_dungeon_tail_checksum == 0x62dfu &&
+                  receipt.startup_mini_first_map_offset_x == 17u &&
+                  receipt.startup_mini_first_map_offset_y == 14u &&
                   receipt.music_table_verified &&
                   receipt.music_table_source_offset == 271144u &&
                   receipt.music_table_size ==

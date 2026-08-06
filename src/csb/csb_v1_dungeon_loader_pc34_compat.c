@@ -207,8 +207,12 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
                                       &out->level_widths[i],
                                       &out->level_heights[i]);
             out->map_levels[i] = level_id;
-            out->map_offset_x[i] = (int)map_desc[4];
-            out->map_offset_y[i] = (int)map_desc[5];
+            /* ReDMCSB DEFS.H MAP: bytes 4..5 are bUnreferenced; the
+             * source F0154 level-change coordinates are OffsetMapX/Y at
+             * bytes 6..7. Reading the former turned every real F31 map
+             * origin into a placeholder zero. */
+            out->map_offset_x[i] = (int)map_desc[6];
+            out->map_offset_y[i] = (int)map_desc[7];
             /* ReDMCSB DEFS.H MAP.D for PC/I34E stores FloorSet, WallSet,
              * DoorSet0, DoorSet1 as low-to-high nibbles in the final map
              * descriptor word. F0094/F0095 consume the first two before

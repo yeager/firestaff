@@ -56552,6 +56552,11 @@ alcove runtime and archive-media tests passed (4/4).
   and their trailing F7059 byte-sum checksum (English `0x62df`, Japanese
   `0x6671`). The result remains an admission receipt, not a live save restore.
 
+- ✅ 2026-08-06 CSB MAP origin correction: the source loader now reads
+  ReDMCSB `DEFS.H` MAP `OffsetMapX/Y` from bytes 6/7, not the unrelated
+  byte-4/5 padding. The first authentic F31 MINI map therefore retains its
+  real origin `(17,14)` in the Game receipt instead of a synthetic `(0,0)`.
+
 - ✅ 2026-08-06 CSB FM Towns Utility P3 boundary: `UTILE.EXP` and
   `UTILJ.EXP` now must pass their original Phar Lap level-1 P3 envelope in
   addition to the full-file identity gate. The receipt records the real
