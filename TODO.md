@@ -1041,6 +1041,19 @@ level or consumer bindings.
   `SWSH -> TITLE -> ENTRANCE` transaction. It opens only the selected
   hash-verified Towns data; do not restore the PC34 path as a presentation
   fallback.
+  2026-08-06: FM Towns CD-audio is now wired end-to-end through the M11
+  runtime: title (track 2) dispatches from the launcher just before the
+  FM Towns title animation, Hall of Champions (track 3) dispatches when
+  the HoC presented-capture receipt first goes ready, and the entrance
+  micro-dungeon (track 5) dispatches at the redmcsb entrance transition.
+  Map transitions (stairs and teleporters), per-tick idle re-arming, the
+  game-over/game-won events and the music toggle also invoke the CDDA
+  dispatcher. All dispatch is gated on `dm1FmtownsStartupReceiptValid`
+  and reads from the retained BIN/CUE saved into the runtime cache
+  during materialization; playback is by real byte offset in the mixed
+  MODE1/2048 + AUDIO/2352 sector layout of the original disc. No PC34
+  synthesis. The `DRAW_DMENU`/`DYNAMENU` menu rendering itself remains
+  open (requires Phar Lap P3 disassembly at the recorded entry points).
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1
