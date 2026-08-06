@@ -57806,3 +57806,13 @@ alcove runtime and archive-media tests passed (4/4).
   rejects any future M10/M11 call into that model; authentic runtime sound
   remains owned by verified GDAT/DYN4 material, SDL playback, or FM Towns
   CDDA media.
+
+# DM2 selected-corpus i18n verification (2026-08-07)
+
+- ✅ Replaced the stale, skip-prone i18n smoke test with a selected-data-root
+  real-media test. It now fails when the requested PC-DOS `GRAPHICS.DAT`
+  cannot be opened, has too few text rows, rejects extraction, or cannot
+  return every loaded text key through the runtime lookup.
+- ✅ Verified against the mounted PC-DOS corpus: 8,639,757 bytes, 1,861 GDAT
+  text rows and 781 unique queryable text keys. No host-authored menu text or
+  filename-based fallback is admitted.

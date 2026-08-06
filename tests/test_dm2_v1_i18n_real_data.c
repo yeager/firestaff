@@ -59,8 +59,9 @@ static int count_text_entries(const uint8_t *gdat_data, size_t gdat_size) {
     return count;
 }
 
-static void test_gdat_text(const char *label, const char *path,
-                           DM2_Locale locale, int expect_min) {
+static int test_gdat_text(const char *label, const char *path,
+                          DM2_Locale locale, int expect_min,
+                          int required) {
     uint8_t *data;
     size_t data_size;
     DM2_V1_I18nContext ctx;
@@ -68,8 +69,8 @@ static void test_gdat_text(const char *label, const char *path,
 
     data = read_file(path, &data_size);
     if (!data) {
-        printf("  SKIP: %s — cannot read %s\n", label, path);
-        return;
+        printf("  %s: cannot read %s\n", label, path);
+        return required ? 0 : 1;
     }
 
     printf("  %s: %zu bytes\n", label, data_size);
@@ -80,7 +81,12 @@ static void test_gdat_text(const char *label, const char *path,
     if (text_count < 0) {
         printf("    FAIL: could not init GDAT loader\n");
         free(data);
-        return;
+        return 0;
+    }
+    if (text_count < expect_min) {
+        printf("    FAIL: expected at least %d text entries\n", expect_min);
+        free(data);
+        return 0;
     }
 
     dm2_v1_i18n_init(&ctx);
@@ -96,7 +102,32 @@ static void test_gdat_text(const char *label, const char *path,
     if (loaded) {
         printf("    i18n loaded: %u unique entries, pool %u bytes\n",
                ctx.entry_count, ctx.text_pool_size);
-        assert(ctx.entry_count > 0);
+        if (ctx.entry_count == 0 || ctx.text_pool_size == 0u) {
+            printf("    FAIL: i18n overlay contains no source text\n");
+            dm2_v1_i18n_destroy(&ctx);
+            free(data);
+            return 0;
+        }
+
+        /* Exercise the same keyed lookup used by the FM Towns companion
+         * bridge. A populated pool alone is not proof that source text can
+         * reach a menu or dialogue owner. */
+        for (uint16_t i = 0; i < ctx.entry_count; ++i) {
+            const DM2_V1_I18nTextEntry *entry = &ctx.entries[i];
+            size_t queried_size = 0u;
+            const uint8_t *queried = dm2_v1_i18n_query_text(
+                &ctx, entry->category, entry->index, entry->field,
+                &queried_size);
+            if (!queried || queried_size != entry->text_length ||
+                memcmp(queried, ctx.text_pool + entry->text_offset,
+                       queried_size) != 0) {
+                printf("    FAIL: source text key %u/%u/%u is not queryable\n",
+                       entry->category, entry->index, entry->field);
+                dm2_v1_i18n_destroy(&ctx);
+                free(data);
+                return 0;
+            }
+        }
 
         /* Sample some text entries */
         int samples = 0;
@@ -117,55 +148,40 @@ static void test_gdat_text(const char *label, const char *path,
         }
         printf("    PASS: %s text extraction\n", label);
     } else {
-        printf("    SKIP: i18n load returned 0 (may need EN base)\n");
+        printf("    FAIL: i18n load rejected readable source GDAT\n");
+        dm2_v1_i18n_destroy(&ctx);
+        free(data);
+        return 0;
     }
 
     dm2_v1_i18n_destroy(&ctx);
     free(data);
+    return 1;
 }
 
 int main(void) {
-    const char *home;
+    const char *data_dir;
     char path[512];
+    int passed = 1;
 
     printf("DM2 i18n real data tests:\n\n");
 
-    home = getenv("HOME");
-    if (!home) { printf("SKIP: HOME not set\n"); return 0; }
+    data_dir = getenv("FIRESTAFF_DM2_DATA_DIR");
+    if (!data_dir || !data_dir[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+        return 0;
+    }
 
-    /* PC EN */
+    /* The required corpus is the exact selected PC-DOS data root, not an
+     * obsolete convenience path under HOME. */
     snprintf(path, sizeof(path),
-             "%s/.firestaff/data/dm2/GRAPHICS.DAT", home);
-    test_gdat_text("PC EN", path, DM2_LOCALE_EN, 100);
+             "%s/graphics.dat", data_dir);
+    passed &= test_gdat_text("PC EN", path, DM2_LOCALE_EN, 1, 1);
 
-    /* PC FR */
-    snprintf(path, sizeof(path),
-             "%s/.firestaff/data/dm2-extras/pc-fr/DATA/GRAPHICS.DAT", home);
-    test_gdat_text("PC FR", path, DM2_LOCALE_FR, 100);
-
-    /* PC DE */
-    snprintf(path, sizeof(path),
-             "%s/.firestaff/data/dm2-extras/pc-de/DATA/GRAPHICS.DAT", home);
-    test_gdat_text("PC DE", path, DM2_LOCALE_DE, 100);
-
-    /* Mac FR */
-    snprintf(path, sizeof(path),
-             "%s/.firestaff/data/dm2-extras/mac-fr/Dungeon Master II/DMFiles/Graphics.dat",
-             home);
-    test_gdat_text("Mac FR", path, DM2_LOCALE_FR, 100);
-
-    /* FM Towns JP */
-    snprintf(path, sizeof(path),
-             "%s/.firestaff/data/dm2-extras/fm-towns-ja/extracted/GRAPHICS.DAT",
-             home);
-    test_gdat_text("FM Towns JP", path, DM2_LOCALE_JA, 0);
-
-    /* PC-9821 JP */
-    snprintf(path, sizeof(path),
-             "%s/.firestaff/data/dm2-extras/pc9821-jp-extracted/GRAPHICS.DAT",
-             home);
-    test_gdat_text("PC-9821 JP", path, DM2_LOCALE_JA, 0);
-
-    printf("\nAll DM2 i18n real data tests passed.\n");
+    if (!passed) {
+        puts("\nFAIL: DM2 i18n real-data verification failed.");
+        return 1;
+    }
+    puts("\nPASS: DM2 i18n uses the selected real PC-DOS corpus.");
     return 0;
 }

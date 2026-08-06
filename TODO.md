@@ -7915,6 +7915,11 @@ file and DONE.md after every completed job.
   production-boundary verifier now rejects one if added. Real sound remains
   limited to verified GDAT/DYN4, SDL playback and native FM Towns CDDA media.
 
+- **DM2 selected-corpus i18n verification (2026-08-07):** Done. The real-data
+  test now requires the selected PC-DOS `GRAPHICS.DAT` when configured and
+  verifies every extracted GDAT text key through its lookup route; stale
+  home-directory paths and success-after-skip output are removed.
+
 - **Lane C — DM2 real-data startup/dungeon gate repair (cycle 16):** Done
   (v3.0.181). Fixed 5 of 7 target tests: boot_profile_smoke,
   startup_audio_menu, dungeon_loader_first_map_gate, c_map_tile_access,
