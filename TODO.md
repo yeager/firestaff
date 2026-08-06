@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **THERON-REAL-CONSUMER-HANDOFF:** The authenticated US/JP Track 02 map,
+  object, ground, door, teleporter and creature-bank records are retained, but
+  a positive game-owned post-startup CD read is still missing. The current
+  text candidate emits unresolved control-code artifacts, so it must remain
+  diagnostic-only until an executing-PC/source-LBA payload proves the consumer
+  format. Do not enable production dungeon, object, tile, palette or viewport
+  semantics from those records alone.
+
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size
   receipt on each decoded surface. This proves which bytes the loader

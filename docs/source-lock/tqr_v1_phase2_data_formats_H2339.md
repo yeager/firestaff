@@ -1,7 +1,8 @@
 # Theron's Quest V1 Phase 2 — Data Formats: Source-Lock Document
 
 **Cron task:** `Theron_V1_Phase2_DataFormats_0527`
-**Status:** ✅ COMPLETE — all known formats documented; "light" subset constraint enforced
+**Status:** PARTIAL — authenticated Track 02 record bindings are documented; unresolved
+formats remain explicitly gated and are not runtime semantics.
 **Author:** Firestaff agent (cron)
 **Last revised:** 2026-05-27T06:17 UTC+2
 
@@ -73,11 +74,13 @@ Offset ???:    ADPCM audio data (non-CD-DA SFX)
 Dungeon loading: `THQUEST.ASM T560` — header parsing, `dungeon_seed` extraction.
 Bank loading: `THQUEST.ASM T400` — HuCard ROM mapping.
 
-**Critical gap:** The verified images now identify the initial Hall of Records
-candidate and the four startup bitmap routes, but exact byte offsets for the
-remaining six dungeon blocks are still unknown. Those blocks must be promoted
-only after their headers, level records, object tables, palette ownership and
-loader handoff agree. Do not infer them from the startup candidate.
+**Current evidence:** The authenticated US and JP Track 02 inputs now provide
+seven source-bound map groups, object-count tables, ground-reference tables,
+door/teleporter records, creature-graphics-bank fields, and item-record byte
+spans. These are retained as raw/decoded records. They do not yet prove the
+HuC6280 consumer handoff, tile/material ownership, dungeon-square rendering,
+palette ownership, or JP text ownership. Do not infer those semantics from the
+startup candidate.
 
 Source: Phase 0 provenance gate §2.3 · theron_v1_boot.c:24-33
 
@@ -97,7 +100,7 @@ Each of the 7 mini-dungeons occupies a separate data block within Track 02.
 The header layout (inferred from `theron_v1_boot.c:318-345`, mirroring DM2):
 
 ```c
-// Theron's Quest DUNGEON.DAT header (STUB — needs Track 02 extraction)
+// Historical working shape only; not a promoted TQ runtime header.
 struct TQR_DungeonHeader {
     uint16_t reserved;       // offset 0-1  — 0x0000
     uint16_t magic;          // offset 2-3  — "T1" (TQ magic; needs confirmation)
@@ -127,7 +130,7 @@ Source: theron_v1_boot.c:318-345 · theron_v1_dungeon_progression.c:38-110
 | Level count | 14–16 | 2–3 per mini-dungeon |
 | Total levels | ~16 | ~15–21 (7 dungeons × 2–3 levels) |
 
-**Hypothesis:** TQ mini-dungeons use smaller grids (8×8 or 9×9) because:
+**Unverified hypothesis:** TQ mini-dungeons may use smaller grids (8×8 or 9×9) because:
 1. PC Engine resolution is 256×224 — smaller visible area
 2. Each mini-dungeon must fit in less ROM space
 3. The 7-dungeon structure requires more levels but smaller maps
@@ -141,7 +144,9 @@ Source: nexus_v1_phase2_data_formats_H2321.md §3.3 · DM1 DUNGEON.C F0001 · ST
 
 ### 2.3 Square Type Table
 
-Square types use the **same 5-bit scheme as DM1**. Full DM1 type list:
+The current loader retains the authenticated one-byte map records, but no
+source-backed equivalence to DM1's square bit layout has been proven. The
+following comparison is therefore reference material, not a TQ binding:
 
 | Bits | Meaning | TQ Status |
 |------|---------|-----------|
@@ -150,7 +155,7 @@ Square types use the **same 5-bit scheme as DM1**. Full DM1 type list:
 | 5 | Door present | STUB — same |
 
 Full TQ tile type table will be documented after Track 02 extraction.
-**Hypothesis:** TQ uses approximately the same 20–30 tile types as DM1,
+**Unverified hypothesis:** TQ may use approximately the same 20–30 tile types as DM1,
 possibly with additional animated tile variants for PC Engine sprites.
 
 Source: DM1 DUNGEON.C · STUB for TQ-specific types
@@ -253,9 +258,10 @@ Source: ReDMCSB DEFS.H:1887–1951 · Phase 0 provenance gate · STUB
 | Languages | English (US), Japanese (JP) |
 | Encoding | PC Engine tile font (8×8 tiles, 1bpp or 2bpp planar) |
 | Text storage | Tile index arrays in Track 02 (not ASCII) |
-| UI text | Embedded in HuC6280 code as tile index sequences |
+| UI text | Track 02 candidate records exist; executing consumer/control codes unresolved |
 
-PC Engine CD-ROM uses a custom tile-based text system:
+PC Engine CD-ROM uses a custom text/font path, but the exact Theron's Quest
+consumer and control-code semantics are not yet source-locked:
 - Each character = 8×8 tile from the game font
 - Text rendered by sending tile indices to the VDC (video display controller)
 - Japanese version uses a larger font tile set (more tiles for kanji)
@@ -263,12 +269,15 @@ PC Engine CD-ROM uses a custom tile-based text system:
 
 ### 4.2 String Format
 
-Dungeon names, UI text, messages: stored as **tile index sequences**.
+Dungeon names, UI text, and messages: candidate byte/word regions are retained
+where their source offsets are authenticated; they are not promoted as a
+generic tile-index stream.
 No null-terminator convention visible — string length is implicit (known
 from the game code). This is the same approach used in DM1 (byte sequences
 read until a sentinel value).
 
-**STUB:** The exact tile index values for each string need Track 02 extraction.
+**STUB:** The exact consumer, control-code expansion, and JP/US string storage
+need a game-owned post-startup read with executing PC and source LBA/span.
 The dungeon names (Hall of Records, Crypt of Shadows, etc.) are confirmed from
 Lighthouse's RTC conversion documentation.
 
@@ -724,42 +733,38 @@ Source: theron_v1_dungeon_progression.c:38-110 · dmweb game description
 
 ---
 
-## 13. Phase 2 Completion Checklist
+## 13. Phase 2 Evidence Checklist
 
 ```
-[x] Dungeon format — mini-dungeon block header layout documented (STUB)
-[x] Dungeon format — grid encoding (5-bit type + attributes, little-endian uint16)
-[x] Dungeon format — 7 dungeon table with names, levels, quest items
-[x] Dungeon format — dungeon_seed extraction (THQUEST.ASM T560)
-[x] Item format — object record structure (STUB, mirrors DM1)
-[x] Item format — item type subset (30-50 types, 7 unique quest items)
+[x] Track 02 provenance — authenticated US and JP Track 02 inputs
+[x] Track 02 records — seven source-bound map groups and object-count tables
+[x] Track 02 records — ground, door, teleporter, creature-bank and item spans
+[x] Quest item names — source-bound strings/labels where independently verified
+[ ] Dungeon format — HuC6280 loader handoff and level-record consumer
+[ ] Dungeon format — TQ grid encoding and square-to-material mapping
+[ ] Item format — object-record ownership in the executing game loader
 [x] Item format — quest item names confirmed
-[x] Text format — PC Engine tile font encoding (JP/EN)
-[x] Text format — string storage as tile index sequences
+[ ] Text format — executing text consumer and control-code semantics
+[ ] Text format — JP text ownership and translated string storage
 [x] Champion format — party structure (Theron + 3, per-dungeon reset)
 [x] Champion format — champion record fields (STUB, mirrors DM1)
 [x] Champion format — Theron persistence (stats/skills, not inventory)
-[x] Creature format — creature type subset (15-20 of 27 DM1 types)
-[x] Creature format — creature spawn record structure (STUB)
-[x] Creature format — reduced spawn rates (TQ "easy" design)
-[x] Graphics format — PC Engine 8×8 tile/sprite system (HuC6270)
-[x] Graphics format — tile format (2bpp walls, 4bpp sprites, STUB)
-[x] Graphics format — sprite attribute table (OAM) format (STUB)
-[x] Spell format — spell subset (15-20 of 25 DM1 spells, STUB)
-[x] Spell format — Theron spellbook confirmed
+[ ] Creature format — source-backed TQ creature subset and spawn semantics
+[x] Graphics hardware — PC Engine VDC/VCE snapshot format is retained
+[ ] Graphics format — dungeon tile/material bindings and palette ownership
+[ ] Graphics format — sprite attribute table (OAM) semantics
+[ ] Spell format — source-backed spell subset and indices
+[ ] Spell format — executing spellbook consumer
 [x] Save format — between-dungeon save layout (64-byte header + data + footer)
 [x] Save format — XOR obfuscation scheme (light, per-slot seed)
 [x] Save format — persistence table (Theron stats, quest items, gold)
-[x] Audio format — CD-ROM track structure (18 tracks, Track 02 = data)
-[x] Audio format — ADPCM SFX in Track 02 (STUB)
-[x] "Light" version constraint — documented for items, creatures, spells
-[ ] Track 02 extraction (needed for exact byte offsets, item count, creature list)
-[ ] Verify TQ dungeon grid size (8×8 vs 9×9 vs 16×16)
-[ ] Confirm TQ magic bytes in dungeon header
-[ ] Confirm item/object ID range for quest items
+[x] Audio format — CD-ROM Track 02 identity and CUE/BIN/ISO intake gates
+[ ] Audio format — ADPCM data block offset and format
+[ ] Track 02 — executing post-startup consumer read with source LBA/span
+[ ] Verify TQ dungeon grid size and square-to-tile mapping
+[ ] Confirm TQ level-record decompression and object ownership
 [ ] Confirm spell table size and indices
-[ ] Confirm which 15-20 creature types are in TQ
-[ ] Confirm ADPCM data block offset and format
+[ ] Confirm TQ creature types and spawn semantics
 ```
 
 ---
@@ -785,15 +790,14 @@ Source: theron_v1_dungeon_progression.c:38-110 · dmweb game description
 
 ## 15. Next Steps
 
-1. **Download Track 02** from cdromance.org (JP and US CUE/BIN images)
-2. **Extract Track 02** as raw binary from CUE/BIN
-3. **Compute SHA256** hashes for both Track 02 files (Phase 0 completion)
-4. **Search Track 02** for 7 distinct dungeon blocks (magic "T1" at offset 2)
-5. **Confirm grid size** by finding repeating uint16 patterns per dungeon
-6. **Map item/object table** by identifying repeating 16-byte object records
-7. **Build item/creature/spell manifests** from extracted binary data
-8. **Phase 3:** Implement Theron's Quest dungeon loader, object database, and
-   text renderer from Phase 2 format evidence
+1. Capture a positive post-startup game-owned Track 02 read with executing PC,
+   source LBA, destination, and byte-exact payload.
+2. Correlate that read with the retained seven map groups and level records.
+3. Decode the consumer-owned level/object stream before enabling dungeon
+   handoff or production viewport drawing.
+4. Bind authenticated bitmap/VCE/VDC records only after their owner and
+   palette/material route is demonstrated.
+5. Promote JP text and later-level records independently; no US fallback.
 
 ---
 

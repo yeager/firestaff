@@ -51988,3 +51988,10 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   indexed pixel bytes, and the upload-plan regression requires the same hash.
   This is diagnostic source output only; palette interpretation and VDP1/VDP2
   presentation remain capture-gated.
+- ✅ 2026-08-06 Theron source-lock documentation correction: downgraded the
+  stale Phase 2 “complete” claims to the evidence actually supported by the
+  authenticated US/JP Track 02 records. The document now distinguishes
+  source-bound map/object/ground/door/creature-bank retention from unresolved
+  HuC6280 consumer handoff, level decoding, JP text ownership, tile/material
+  mapping and palette semantics. No runtime behavior or synthetic fallback was
+  changed.
