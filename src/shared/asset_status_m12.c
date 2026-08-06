@@ -3332,14 +3332,14 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         return 1;
     }
     if (strcmp(gameId, "dm2") == 0) {
-        /* DM2 archive payloads must stay in their user-supplied container.
-         * DM2's FM Towns boot path owns its verified CD files in memory;
-         * the PC archive reader has not yet been given an equivalent
-         * memory-backed GRAPHICS/DUNGEON owner.  Do not turn either variant
-         * into ordinary files under asset-cache: that silently unpacks game
-         * data to disk and makes a partial archive route look playable.
-         * Returning failure makes the normal required-file gate keep launch
-         * closed until the relevant in-memory reader is bound. */
+        /* DM2's FM Towns and Amiga readers own their native containers.
+         * PC-DOS archives, however, are ordinary installs wrapped in a ZIP
+         * and M11 opens GRAPHICS.DAT/DUNGEON.DAT as ordinary paths.  Once
+         * both hash-pinned required members have matched, materialize that
+         * complete pair into the per-user runtime cache just as DM1 and CSB
+         * do. This preserves virtual-path provenance on the version row
+         * while making a READY result launchable instead of reporting both
+         * members FOUND and then downgrading the game to MISSING. */
         {
             const M12_AssetVersionStatus* version =
                 m12_first_matched_version(status, gameIndex);
@@ -3354,7 +3354,6 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
                 return 1;
             }
         }
-        return 0;
     }
     if (!FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
         !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir, "asset-cache") ||

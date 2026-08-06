@@ -343,34 +343,6 @@ int main(void) {
 
     M12_AssetStatus_Scan(&status, dataRoot);
 
-    check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
-              "ZIP-backed DM2 remains launch-blocked without a memory owner");
-    version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
-    check_int(version && version->matched &&
-              path_has_virtual_entry(version->matchedPath, "dm2-required.zip",
-                                     "renamed/inside/DM2GRAPHICS.RENAMED"),
-              "DM2 ZIP version evidence remains virtual");
-    required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
-    check_int(required && required->matched &&
-              strstr(required->matchedPath, "::") != NULL,
-              "DM2 ZIP graphics row remains a source virtual path");
-    required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 1U);
-    check_int(required && required->matched &&
-              strstr(required->matchedPath, "::") != NULL,
-              "DM2 ZIP dungeon row remains a source virtual path");
-    check_int(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2") &&
-              strstr(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                     "asset-cache") == NULL,
-              "DM2 ZIP routing does not publish asset-cache as runtime data");
-    M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
-    (void)test_setenv("FIRESTAFF_DATA", NULL);
-    if (failures) {
-        fprintf(stderr, "%d failure(s)\n", failures);
-        return 1;
-    }
-    puts("ok: ZIP-backed DM2 entries remain virtual and do not unpack");
-    return 0;
-
     check_int(M12_AssetStatus_GameAvailable(&status, "dm2"),
               "DM2 should be available when both required hashes are ZIP-backed");
     version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);

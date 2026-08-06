@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 DM2 ZIP scan-to-launch handoff: a complete pair of
+  hash-verified PC-DOS archive members now materializes to ordinary
+  `asset-cache/dm2/GRAPHICS.DAT` and `DUNGEON.DAT` files. The scanner no
+  longer reports both rows FOUND and then labels DM2 MISSING. Focused ZIP
+  regressions cover renamed and nested-deflated members, cache paths and
+  byte-identical payloads.
+
 - ✅ 2026-08-06 CI latest-revision scheduling: restored the branch-scoped
   GitHub Actions concurrency guard with cancellation enabled. Rapid pushes to
   `main` now retain the newest full matrix instead of queuing obsolete commits
