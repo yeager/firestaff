@@ -167,9 +167,70 @@ static void test_lev00_start_cell_scene_plan(void)
     free(data);
 }
 
+static void test_lev01_owned_scene_plan(void)
+{
+    char path[1024];
+    uint8_t *data = NULL;
+    size_t size = 0U;
+    Nexus_V1_Level level;
+    Nexus_V1_DgnSceneRuntimePlanInput input;
+    Nexus_V1_DgnSceneRuntimePlanReceipt receipt;
+    int found = 0;
+    int y;
+
+    if (!nexus_path("LEV01.DGN", path, sizeof(path)) ||
+        !read_file(path, &data, &size)) {
+        puts("SKIP: local Nexus LEV01.DGN corpus not present");
+        free(data);
+        return;
+    }
+    CHECK(size == 280576U &&
+              nexus_v1_level_load(&level, data, (int)size, 1) == 0,
+          "LEV01.DGN parses before owned scene planning");
+    if (size != 280576U || nexus_v1_level_load(&level, data, (int)size, 1) != 0) {
+        free(data);
+        return;
+    }
+    memset(&input, 0, sizeof(input));
+    input.level = &level;
+    input.dgn_data = data;
+    input.dgn_size = (int)size;
+    input.level_index = 1;
+    input.dgn_source_hash_verified = 1;
+    for (y = 0; y < NEXUS_MAX_MAP_SIZE && !found; ++y) {
+        int x;
+        for (x = 0; x < NEXUS_MAX_MAP_SIZE && !found; ++x) {
+            if (nexus_v1_level_get_square(&level, x, y) < 0) continue;
+            input.party_x = x;
+            input.party_y = y;
+            input.party_dir = 0;
+            found = nexus_v1_dgn_scene_runtime_plan_build(
+                        &input, &receipt) == 1;
+        }
+    }
+    CHECK(found &&
+              receipt.status ==
+                  NEXUS_V1_DGN_SCENE_RUNTIME_PLAN_READY_GEOMETRY_NO_DRAW &&
+              receipt.structure1f_visible_owned_entry_count == 1 &&
+              receipt.structure1f_owned_source_count == 1 &&
+              receipt.selected_structure1f_entry_index >= 0 &&
+              receipt.selected_structure1a_index >= 0 &&
+              receipt.selected_structure3_model_index >= 0 &&
+              receipt.structure1f_face_selector_bound &&
+              receipt.structure1a_model_rotation_bound &&
+              receipt.mesh_entry_bound && receipt.geometry_consumer_ready &&
+              receipt.texture_submit_blocked && receipt.raster_submit_blocked &&
+              !receipt.m11_runtime_handoff_permitted &&
+              !receipt.fallback_geometry_permitted &&
+              !receipt.fallback_visuals_permitted,
+          "LEV01 scene plan uses a source-owned Structure1F to Structure3 chain without raster promotion");
+    free(data);
+}
+
 int main(void)
 {
     test_lev00_start_cell_scene_plan();
+    test_lev01_owned_scene_plan();
     if (failures) {
         fprintf(stderr, "Nexus DGN scene runtime plan: %d failure(s)\n",
                 failures);
