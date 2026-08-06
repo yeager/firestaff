@@ -901,7 +901,12 @@
   only with authenticated G1/GDAT/SKSave material; missing source owners must
   continue to block the corresponding runtime path. D2RS is now retained only
   as a decoder diagnostic and is rejected by slot, corpus and runtime resume;
-  the mounted PC-DOS corpus now verifies all eight real raw dungeon prefixes
+  the dead partial restore branch and its synthetic timer/session publication
+  helpers have been removed from the production runtime. The real PC-DOS
+  eight-save regression proves that an original payload leaves live party
+  state and raw-save handoff untouched when resume is rejected. Continue from
+  SKProject's complete GAME_LOAD ownership chain, not from a partial parser.
+  The mounted PC-DOS corpus now verifies all eight real raw dungeon prefixes
   after the authentic 42-byte header, but its later SUPPRESS session sections
   remain blocked until the complete SKProject read order is recovered. The
   original PC-DOS boot/HUD path again reaches the real GDAT command plan after

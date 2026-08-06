@@ -1,3 +1,13 @@
+- ✅ 2026-08-06 DM2 original-SKSAVE fail-closed cleanup: removed the
+  unreachable partial `GAME_LOAD` publication branch, including its
+  synthetic session, timer-owner and raw-dungeon handoff helpers. Public
+  resume now has one explicit no-mutation contract until the complete
+  SKProject `GAME_LOAD` record/hero/actuator/timer ownership chain is
+  implemented. The real PC-DOS eight-save corpus regression proves each
+  unmodified payload is still decoded for diagnostics but cannot change live
+  party state or create a raw-save handoff. Focused real-corpus and save/load
+  regressions pass.
+
 - ✅ 2026-08-06 DM2 no-disk-materialization enforcement: removed the stale
   M12 PC-DOS archive and renamed-loose-file cache path that could write
   `GRAPHICS.DAT`, `DUNGEON.DAT`, music and alternate dungeon sidecars under

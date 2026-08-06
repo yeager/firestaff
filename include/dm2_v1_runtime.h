@@ -1178,9 +1178,10 @@ int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
                                                  uint8_t slot,
                                                  uint32_t object);
 
-/* Restore a decoded SKSave payload into the active DM2 runtime. Original raw
- * candidates must carry a dungeon prefix exactly matching the booted dungeon;
- * malformed or incompatible inputs leave the live runtime untouched. */
+/* Original SKSave resume is deliberately unavailable until the complete
+ * SKProject GAME_LOAD record/hero/actuator/timer ownership chain is present.
+ * This entry point always returns -1 and leaves the live runtime untouched;
+ * callers may use the separate decoder receipts for diagnostics only. */
 int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
                                           size_t data_size);
 int dm2_v1_runtime_load_save_slot(const char *save_base, uint8_t slot);

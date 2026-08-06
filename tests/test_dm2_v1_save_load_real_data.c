@@ -8,6 +8,8 @@
  */
 
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_game.h"
+#include "dm2_v1_runtime.h"
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
@@ -242,6 +244,37 @@ static int verify_real_db_pool_receipts(const uint8_t *payload,
     return ok;
 }
 
+/* A real raw SKSAVE can be decoded for diagnostics, but it must never publish
+ * a partial GAME_LOAD state.  The sentinels are host control values only; the
+ * candidate passed to the runtime is the unmodified original DOS payload. */
+static int verify_real_runtime_resume_is_blocked(const uint8_t *payload,
+                                                 size_t payload_size)
+{
+    DM2_V1_BootProfile boot;
+    DM2_V1_GameState game;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_RuntimeRawSaveHandoffReceipt handoff;
+
+    if (!payload || payload_size == 0u) return 0;
+    memset(&boot, 0, sizeof(boot));
+    memset(&game, 0, sizeof(game));
+    memset(&dungeon, 0, sizeof(dungeon));
+    game.party_x = 23;
+    game.party_y = 17;
+    game.party_dir = 3;
+    game.current_level = 2;
+    game.gold = 777;
+    boot.dm2_state = &game;
+    boot.dungeon_data = &dungeon;
+    dm2_v1_runtime_init(&boot);
+    memset(&handoff, 0xff, sizeof(handoff));
+    return dm2_v1_runtime_restore_save_candidate(payload, payload_size) == -1 &&
+           game.party_x == 23 && game.party_y == 17 &&
+           game.party_dir == 3 && game.current_level == 2 && game.gold == 777 &&
+           !dm2_v1_runtime_last_raw_sksave_handoff_receipt(&handoff) &&
+           !handoff.valid;
+}
+
 static void test_real_raw_save(const char *path)
 {
     DM2_V1_OriginalRawDungeonReceipt receipt;
@@ -281,6 +314,8 @@ static void test_real_raw_save(const char *path)
     CHECK(verify_real_direct_record_roots(bytes + 42u, byte_count - 42u,
                                           &state_receipt),
           "real SKSave reads every source champion-item and party root without a fixture graph");
+    CHECK(verify_real_runtime_resume_is_blocked(bytes + 42u, byte_count - 42u),
+          "real SKSave cannot publish a partial GAME_LOAD runtime state");
     free(bytes);
 }
 
