@@ -804,7 +804,10 @@
   C002/C003, C017/F0128, then the complete 419-frame `ENDING.ANM` stream.
   The CLI scanner now reports every hash-verified CSB edition, including both
   F31 English and Japanese archive members, rather than implying that only
-  the selected cache's `GRAPHICS.DAT`/`DUNGEON.DAT` pair was found.
+  the selected cache's `GRAPHICS.DAT`/`DUNGEON.DAT` pair was found. The
+  profile inventory now continues after a fast-path match, so an Atari ST
+  `.7z` or other authenticated platform package in the same data root remains
+  visible instead of being hidden by a cached or loose CSB pair.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP

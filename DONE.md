@@ -1,5 +1,14 @@
 # Theron TQTR capture-offset correction (2026-08-06)
 
+# CSB complete cross-platform data inventory (2026-08-06)
+
+- ✅ The hash scanner now treats the recommended fast candidates as launch
+  shortcuts only, never as a reason to stop inventorying a data root.
+- ✅ A shared CSB corpus now reports its independently verified Atari ST
+  package, including nested `.7z` disk media, alongside cache, Amiga and FM
+  Towns matches. The real Atari archive regression materializes the original
+  launch pair and each authenticated startup/utility sidecar from that root.
+
 - ✅ TQTR containers with an extended declared VRAM segment now advance to the
   declared VCE offset before loading the palette snapshot. The previous path
   read VCE immediately after the 64 KiB Firestaff slice and could admit a

@@ -3060,7 +3060,7 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                                    int looseFilesOnly) {
     size_t i;
     size_t rootIndex;
-    int matchedAny = 0;
+    int matchedAny;
     const M12_GameVersionSpec* gameSpec;
     char rootMatchedPaths[M12_SEARCH_ROOT_COUNT][M12_ASSET_MAX_VERSIONS_PER_GAME][ASSET_PATH_MAX];
     int rootMatched[M12_SEARCH_ROOT_COUNT][M12_ASSET_MAX_VERSIONS_PER_GAME];
@@ -3075,7 +3075,10 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
      * normally clears every version row before matching loose/hash files;
      * retain those verified rows so it does not unpack the same 430 MiB
      * archive a second time.  ReDMCSB COMPILE.H owns F31E/F31J as distinct
-     * programs, so only those exact platform rows may survive this pass. */
+     * programs, so only those exact platform rows may survive this pass.  The
+     * generic inventory still walks containers: otherwise an admitted FM
+     * Towns ZIP would incorrectly suppress sibling Atari/Amiga archives in
+     * the same selected data root. */
     if (looseFilesOnly && strcmp(gameSpec->gameId, "csb") == 0) {
         memcpy(retainedFmtowns, status->versions[gameIndex],
                sizeof(retainedFmtowns));
@@ -3112,42 +3115,34 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                             sizeof(rootMatchedPaths[fastRootIndex][i]),
                             fastPath);
             rootMatched[fastRootIndex][i] = 1;
-            matchedAny = 1;
         }
     }
-    if (!matchedAny) {
-        for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-            const char* md5List[M12_ASSET_MAX_VERSIONS_PER_GAME + 1U];
-            size_t md5Index;
-            size_t md5Count;
-            for (md5Index = 0U;
-                 md5Index < gameSpec->versionCount &&
-                 md5Index < M12_ASSET_MAX_VERSIONS_PER_GAME;
-                 ++md5Index) {
-                md5List[md5Index] = m12_effective_version_md5(&gameSpec->versions[md5Index]);
-            }
-            md5Count = md5Index;
-            md5List[md5Index] = NULL;
-            if (looseFilesOnly) {
-#ifdef FIRESTAFF_ASSET_STATUS_TESTING
-                g_m12ScanMetrics.versionHashLookups++;
-#endif
-                (void)asset_find_all_files_by_md5_list(
-                    roots[rootIndex], md5List,
-                    rootMatchedPaths[rootIndex], rootMatched[rootIndex],
-                    (int)md5Count, 32);
-            } else {
-#ifdef FIRESTAFF_ASSET_STATUS_TESTING
-                g_m12ScanMetrics.versionHashLookups++;
-#endif
-                (void)asset_find_all_by_md5_list(roots[rootIndex],
-                                                  md5List,
-                                                  rootMatchedPaths[rootIndex],
-                                                  rootMatched[rootIndex],
-                                                  (int)md5Count,
-                                                  32);
-            }
+    /* Fast candidates seed the preferred launch path, but they are not an
+     * inventory result.  A single data root can contain multiple
+     * authenticated CSB editions, such as PC/Amiga files alongside a nested
+     * Atari ST .7z.  Keep scanning every root so --scan-data reports each
+     * verified profile instead of stopping at the first fast-path hit. */
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        const char* md5List[M12_ASSET_MAX_VERSIONS_PER_GAME + 1U];
+        size_t md5Index;
+        size_t md5Count;
+        for (md5Index = 0U;
+             md5Index < gameSpec->versionCount &&
+             md5Index < M12_ASSET_MAX_VERSIONS_PER_GAME;
+             ++md5Index) {
+            md5List[md5Index] = m12_effective_version_md5(&gameSpec->versions[md5Index]);
         }
+        md5Count = md5Index;
+        md5List[md5Index] = NULL;
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+        g_m12ScanMetrics.versionHashLookups++;
+#endif
+        (void)asset_find_all_by_md5_list(roots[rootIndex],
+                                          md5List,
+                                          rootMatchedPaths[rootIndex],
+                                          rootMatched[rootIndex],
+                                          (int)md5Count,
+                                          32);
     }
     matchedAny = 0;
     for (i = 0U; i < gameSpec->versionCount; ++i) {
