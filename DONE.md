@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 DM2 HMP source-document correction: replaced the stale
+  claim that SKProject directly parses original HMP or that Firestaff may use
+  WAV/OGG replacements. `SkWinMIDI.cpp` actually consumes external converted
+  Standard MIDI files, while the PC-DOS corpus contains 29 raw GDAT HMP
+  records (`00..1c`). The updated document retains direct original-byte HMP
+  playback as a blocker and rejects converted sidecars/generated audio.
+
 - ✅ 2026-08-06 DM2 coverage-document correction: replaced the obsolete DM2
   bootstrap document that claimed eleven untested stubs and zero DM2 tests.
   The revised `docs/dm2_test_coverage.md` describes the current 310-test CTest

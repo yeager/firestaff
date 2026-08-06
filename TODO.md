@@ -4308,6 +4308,10 @@ that its exact runtime path is not already source-locked and tested.
     stream is now diagnostic-only and clears all scheduler/MIDI handoff state.
     SKProject's MIDI code accepts converted sidecars, not original GDAT HMP;
     a generic MIDI event walk must not be promoted to playback proof.
+    **2026-08-06 source-audit correction:** `SkWinMIDI.cpp` is now documented
+    as a consumer of externally converted `.hmp.mid` files, not an original
+    HMP decoder. The real PC corpus contains 29 records (`00..1c`), not the
+    obsolete 28-track count. Continue to reject sidecars and generated audio.
     Remaining work is original-HMP stream decoding and backend scheduling. Do
     not claim a cue played until that source chain and backend have both
     succeeded.
