@@ -1,5 +1,14 @@
 # Nexus production text-raster fence (2026-08-06)
 
+# CSB Amiga runtime sound-table admission (2026-08-06)
+
+- ✅ Added the separate ReDMCSB Amiga `SOUND_DATA` table and a fail-closed
+  `GRAPHICS.DAT` payload loader. It preserves the Amiga Graphic 671–712
+  routing and hardware period, including the entries where Amiga differs from
+  PC3.4. The local Amiga 3.3 switch record is admitted as 130 original PCM
+  bytes at period 112. Verification: focused audio test, 76 passed checks.
+  No game data was copied or committed.
+
 - ✅ Removed the remaining production path that could paint host ASCII glyphs
   through the obsolete flat FONT256 bridge. The data-free layout probe keeps
   its explicit fixture raster lane; production now returns no-draw until the

@@ -13,6 +13,7 @@
 #include "memory_graphics_dat_select_pc34_compat.h"
 
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 
 /* ReDMCSB DATA.C:1260-1302, MEDIA719_I34E_I34M. The PC table is compiled
@@ -39,10 +40,26 @@ static const CsbV1Pc34SoundSpec csb_v1_pc34_sound_specs[CSB_V1_SOUND_COUNT] = {
     {712u, 150u,  22u, 0u, 4u}
 };
 
+/* ReDMCSB DATA.C:1264-1310 (MEDIA746 A31E/A31M/A33M/A35E/A35M).
+ * F0709 uses ioa_Period = 72800 / period, not the IBM PC PIT route. */
+static const CsbV1AmigaSoundSpec csb_v1_amiga_sound_specs[CSB_V1_SOUND_COUNT] = {
+    {671u, 112u}, {672u, 112u}, {673u, 112u}, {673u,  79u},
+    {674u, 112u}, {675u, 112u}, {675u, 112u}, {677u, 112u},
+    {678u, 112u}, {679u, 112u}, {680u, 112u}, {681u, 112u},
+    {682u, 112u}, {684u, 112u}, {685u, 112u}, {687u, 138u},
+    {683u, 112u}, {707u, 120u}, {704u,  86u}, {690u, 112u},
+    {691u, 112u}, {692u, 112u}, {693u, 112u}, {688u, 112u},
+    {708u, 138u}, {689u, 112u}, {709u, 138u}, {710u, 112u},
+    {701u, 138u}, {702u, 138u}, {703u, 138u}, {705u, 138u},
+    {706u, 138u}, {711u, 138u}, {712u, 150u}
+};
+
 static uint16_t csb_v1_audio_read_be16(const uint8_t* bytes)
 {
     return (uint16_t)(((uint16_t)bytes[0] << 8) | bytes[1]);
 }
+
+static int csb_v1_audio_valid_index(int16_t soundIndex);
 
 int csb_v1_audio_runtime_amiga_sound_payload_view(
     const uint8_t* decompressedRecord, size_t recordSize,
@@ -78,6 +95,55 @@ int csb_v1_audio_runtime_amiga_graphics_sound_view(
      * SOUND.C F1051 lines 286-291. */
     return csb_v1_audio_runtime_amiga_sound_payload_view(
         graphicsDat + item.dataOffset, item.decompressedByteCount, outView);
+}
+
+const CsbV1AmigaSoundSpec*
+csb_v1_audio_runtime_amiga_sound_spec(int16_t soundIndex)
+{
+    if (!csb_v1_audio_valid_index(soundIndex)) return NULL;
+    return &csb_v1_amiga_sound_specs[soundIndex];
+}
+
+void csb_v1_audio_runtime_amiga_sound_payload_free(
+    CsbV1AmigaSoundPayload* payload)
+{
+    if (!payload) return;
+    free(payload->bytes);
+    memset(payload, 0, sizeof(*payload));
+}
+
+int csb_v1_audio_runtime_load_amiga_sound_payload(
+    const char* graphicsDatPath, int16_t soundIndex,
+    CsbV1AmigaSoundPayload* outPayload)
+{
+    const CsbV1AmigaSoundSpec* spec;
+    CsbV1AmigaSoundPayloadView view;
+    FILE* file = NULL;
+    long fileSize;
+    uint8_t* graphics = NULL;
+    int result = 0;
+
+    if (!graphicsDatPath || !outPayload) return 0;
+    memset(outPayload, 0, sizeof(*outPayload));
+    spec = csb_v1_audio_runtime_amiga_sound_spec(soundIndex);
+    if (!spec || !(file = fopen(graphicsDatPath, "rb")) ||
+        fseek(file, 0, SEEK_END) != 0 || (fileSize = ftell(file)) <= 0 ||
+        fseek(file, 0, SEEK_SET) != 0) goto cleanup;
+    graphics = (uint8_t*)malloc((size_t)fileSize);
+    if (!graphics || fread(graphics, 1u, (size_t)fileSize, file) !=
+        (size_t)fileSize || !csb_v1_audio_runtime_amiga_graphics_sound_view(
+            graphics, (size_t)fileSize, spec->graphicIndex, &view)) goto cleanup;
+    outPayload->bytes = (uint8_t*)malloc(view.byteCount);
+    if (!outPayload->bytes) goto cleanup;
+    memcpy(outPayload->bytes, view.samples, view.byteCount);
+    outPayload->byteCount = view.byteCount;
+    outPayload->spec = *spec;
+    result = 1;
+cleanup:
+    if (file) fclose(file);
+    free(graphics);
+    if (!result) csb_v1_audio_runtime_amiga_sound_payload_free(outPayload);
+    return result;
 }
 
 static int csb_v1_audio_read_nibble(const uint8_t* encoded,

@@ -123,6 +123,7 @@ static void test_amiga_original_graphics_sound_view(void)
     long byteCount;
     uint8_t *bytes;
     CsbV1AmigaSoundPayloadView view;
+    CsbV1AmigaSoundPayload payload;
 
     if (!path || !*path) {
         CHECK(1, "Amiga original graphics test skipped without local original media");
@@ -151,6 +152,14 @@ static void test_amiga_original_graphics_sound_view(void)
     CHECK(view.samples != NULL && view.samples[0] == 0x00u,
           "original Amiga switch begins after its two source bytes");
     free(bytes);
+    memset(&payload, 0, sizeof(payload));
+    CHECK(csb_v1_audio_runtime_load_amiga_sound_payload(path,
+              CSB_V1_SOUND_SWITCH, &payload) == 1,
+          "original Amiga switch loads through its source table");
+    CHECK(payload.byteCount == 130u && payload.spec.graphicIndex == 672u &&
+              payload.spec.period == 112u && payload.bytes != NULL,
+          "original Amiga source table preserves record and period");
+    csb_v1_audio_runtime_amiga_sound_payload_free(&payload);
 }
 
 static void test_pc34_source_sound_payload(void)

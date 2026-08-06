@@ -126,6 +126,19 @@ typedef struct CsbV1AmigaSoundPayloadView {
     size_t byteCount;
 } CsbV1AmigaSoundPayloadView;
 
+/* ReDMCSB DATA.C:1264-1310, A31E/A31M/A33M/A35E/A35M branch. The Amiga
+ * hardware period differs from PC3.4's PIT divisor, so retain its own row. */
+typedef struct CsbV1AmigaSoundSpec {
+    uint16_t graphicIndex;
+    uint8_t period;
+} CsbV1AmigaSoundSpec;
+
+typedef struct CsbV1AmigaSoundPayload {
+    uint8_t *bytes;
+    size_t byteCount;
+    CsbV1AmigaSoundSpec spec;
+} CsbV1AmigaSoundPayload;
+
 /* F0061 selects all three PSG amplitude registers from its loud table. */
 typedef struct CsbV1PsgChannelAmplitudes {
     uint8_t channelA;
@@ -201,6 +214,14 @@ int csb_v1_audio_runtime_amiga_sound_payload_view(
 int csb_v1_audio_runtime_amiga_graphics_sound_view(
     const uint8_t* graphicsDat, size_t graphicsDatSize,
     uint16_t graphicIndex, CsbV1AmigaSoundPayloadView* outView);
+
+const CsbV1AmigaSoundSpec*
+csb_v1_audio_runtime_amiga_sound_spec(int16_t soundIndex);
+int csb_v1_audio_runtime_load_amiga_sound_payload(
+    const char* graphicsDatPath, int16_t soundIndex,
+    CsbV1AmigaSoundPayload* outPayload);
+void csb_v1_audio_runtime_amiga_sound_payload_free(
+    CsbV1AmigaSoundPayload* payload);
 
 const char* csb_v1_audio_runtime_source_evidence(void);
 
