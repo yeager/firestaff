@@ -325,6 +325,11 @@
   direct-555) with non-zero output checks. Keep decoded pixels/palettes as
   format receipts only until Structure3 face ownership and Saturn VDP1 CLUT,
   upload and command-order evidence are joined.
+  2026-08-06: the real LEV corpus census now uses the same bounded Structure3
+  mesh-extraction readiness receipt as the active viewport path. It reports
+  all 16 retail levels as geometry-ready without treating that as transform,
+  palette, VDP1 or drawable-frame evidence; the focused corpus probe now exits
+  successfully with material presentation still capture-gated.
 
 - **NEXUS-STONE-PP-VDP1-BINDING:** The missing image-local `STONE.BIN`
   decoder is now implemented from DMWeb `DecodeRawPPpp`: all eight retail

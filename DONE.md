@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus DGN corpus geometry receipt: fixed
+  `nexus_v1_inspect_dgn_material_corpus()` to count the real Structure3 mesh
+  extraction receipt instead of the unrelated post-grid/collision
+  `geometry_info.mesh_ready` bit. The European retail corpus now verifies
+  `readable=16 parsed=16 geometry=16`; floor/ceiling/wall material promotion
+  and VDP1 presentation remain blocked. `firestaff_nexus_v1_dgn_material_corpus_probe`
+  passes against `/Users/bosse/.firestaff/data/nexus`.
+
 - ✅ 2026-08-06 Nexus startup FONT256/TEXTTABL receipts: the real DM.BIN
   startup regression now verifies the literal-pool pointer at `0x18BF4` to
   retail `FONT256.S2D` and the adjacent `TEXTTABL` marker at `0x294C0`.

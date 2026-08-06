@@ -780,6 +780,7 @@ int nexus_v1_inspect_dgn_material_corpus(
         int loaded_bytes_canonical;
         int x;
         int y;
+        int structure3_face_total = 0;
         Nexus_V1_Level level;
         Nexus_V1_DgnStructure2SourceReceipt level_source;
         snprintf(name, sizeof(name), "LEV%02d.DGN", level_index);
@@ -806,6 +807,16 @@ int nexus_v1_inspect_dgn_material_corpus(
             !level_source.loaded_bytes_bound) {
             free(data);
             continue;
+        }
+        /* The generic geometry_info.mesh_ready bit describes the bounded
+         * post-grid/collision envelope. The viewport's real Structure3
+         * material path uses this extractor instead; use the same receipt for
+         * the corpus census so parsed retail mesh geometry is not reported as
+         * absent merely because Saturn transform/material semantics remain
+         * capture-gated. */
+        if (nexus_v1_level_structure3_mesh_geometry_ready(
+                &level, data, size, &structure3_face_total)) {
+            ++receipt.geometry_ready_level_count;
         }
         free(data);
         ++receipt.parsed_level_count;
