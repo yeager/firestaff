@@ -56047,3 +56047,16 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ The original F31E and F31J Game→Utility handoff test passes against the
   local retail FM Towns archive. Japanese text and C06 file/save/portrait
   transactions remain fail-closed pending their native owners.
+# 2026-08-06 DM1 legacy random-ornament source binding
+
+- The legacy DUNGEON.DAT bridge now retains the PC34 `OrnamentRandomSeed` and
+  per-map random wall/floor counts rather than inventing ordinals from fixed
+  constants. Object-free wall, corridor, pit and teleporter squares use the
+  F0170/F0171 30-way source calculation with their real map dimensions and
+  raw flag bits.
+- Any square with a Thing-list flag remains no-draw: F0172 lets a sensor
+  replace the calculated ordinal, and this legacy reader has not yet decoded
+  that compact chain. The bridge also has no authenticated graphics consumer,
+  so this is source-state recovery rather than a viewport-parity claim.
+- Regression: real PC34 `DUNGEON.DAT` asserts map-0's wall `(0,12)`/west
+  ordinal `2` and floor `(4,2)` ordinal `3`.

@@ -28,10 +28,13 @@ static uint8_t g_dungeon_grid[DQ_MAX_LEVELS][DQ_MAX_H][DQ_MAX_W];
 static uint8_t g_dungeon_attributes[DQ_MAX_LEVELS][DQ_MAX_H][DQ_MAX_W];
 static int g_dungeon_level_w[DQ_MAX_LEVELS];
 static int g_dungeon_level_h[DQ_MAX_LEVELS];
+static uint8_t g_dungeon_random_wall_ornament_count[DQ_MAX_LEVELS];
+static uint8_t g_dungeon_random_floor_ornament_count[DQ_MAX_LEVELS];
 static int g_dungeon_level_count = 0;
 static int g_current_level = 0;
 static int g_dungeon_loaded = 0;
 static int g_start_x = 0, g_start_y = 0, g_start_dir = 0;
+static uint16_t g_ornament_random_seed = 0;
 
 static uint16_t r16(const uint8_t *p) { return (uint16_t)p[0] | ((uint16_t)p[1] << 8); }
 
@@ -60,14 +63,20 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
     memset(g_dungeon_attributes, 0, sizeof(g_dungeon_attributes));
     memset(g_dungeon_level_w, 0, sizeof(g_dungeon_level_w));
     memset(g_dungeon_level_h, 0, sizeof(g_dungeon_level_h));
+    memset(g_dungeon_random_wall_ornament_count, 0,
+           sizeof(g_dungeon_random_wall_ornament_count));
+    memset(g_dungeon_random_floor_ornament_count, 0,
+           sizeof(g_dungeon_random_floor_ornament_count));
     g_current_level = 0;
     g_start_x = g_start_y = g_start_dir = 0;
+    g_ornament_random_seed = 0;
 
     if (!data || size < 44) return -1;
     level_count = data[4];
     if (level_count <= 0 || level_count > DQ_MAX_LEVELS) return -1;
 
     raw_map_byte_count = r16(data + 2);
+    g_ornament_random_seed = r16(data);
     text_word_count = r16(data + 6);
     sft_count = r16(data + 10);
     for (lv = 0; lv < 16; ++lv) {
@@ -119,7 +128,9 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
         int height = g_dungeon_level_h[lv];
         int creature_count = (r16(map + 12) >> 4) & 0x0F;
         int wall_count = r16(map + 10) & 0x0F;
+        int random_wall_count = (r16(map + 10) >> 4) & 0x0F;
         int floor_count = (r16(map + 10) >> 8) & 0x0F;
+        int random_floor_count = (r16(map + 10) >> 12) & 0x0F;
         int door_count = r16(map + 12) & 0x0F;
         size_t square_count = (size_t)width * (size_t)height;
         size_t map_span = square_count + (size_t)creature_count +
@@ -132,6 +143,10 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
             g_dungeon_loaded = 0;
             return -1;
         }
+        g_dungeon_random_wall_ornament_count[lv] =
+            (uint8_t)random_wall_count;
+        g_dungeon_random_floor_ornament_count[lv] =
+            (uint8_t)random_floor_count;
         for (col = 0; col < (size_t)width; ++col) {
             for (row = 0; row < (size_t)height; ++row) {
                 uint8_t square = data[raw_base + map_offset + col * (size_t)height + row];
@@ -174,23 +189,81 @@ int fs_dungeon_get_door_state(int x, int y) {
 }
 
 int fs_dungeon_get_wall_ornament(int x, int y, int dir) {
-    /* The former arithmetic here invented an ornament ordinal from map
-     * coordinates and magic constants.  F0170/F0172 select real ordinals
-     * through the original runtime's random state and aspect tables; this
-     * legacy bridge has neither receipt.  Do not paint a plausible wall.
-     * M11's source-owned viewport remains the only ornament consumer. */
-    (void)x;
-    (void)y;
-    (void)dir;
-    return 0;
+    static const uint8_t front_face_mask[4] = { 0x02, 0x01, 0x08, 0x04 };
+    uint8_t square;
+    uint16_t value1;
+    uint16_t value2;
+    uint32_t mixed;
+    int random_count;
+    int random_index;
+
+    if (!g_dungeon_loaded || x < 0 || y < 0 ||
+        x >= g_dungeon_level_w[g_current_level] ||
+        y >= g_dungeon_level_h[g_current_level] || dir < 0 || dir > 3) {
+        return 0;
+    }
+    square = (uint8_t)((g_dungeon_grid[g_current_level][y][x] << 5) |
+                       g_dungeon_attributes[g_current_level][y][x]);
+    /* F0172 lets sensor things replace random wall ordinals.  This legacy
+     * reader does not yet decode the compact Thing chain, so a square that
+     * owns one must remain no-draw rather than publishing an unverified
+     * random value. */
+    if ((square >> 5) != 0 || (square & 0x10) != 0 ||
+        (square & front_face_mask[dir]) == 0) {
+        return 0;
+    }
+    random_count = g_dungeon_random_wall_ornament_count[g_current_level];
+    if (random_count <= 0) return 0;
+
+    /* ReDMCSB DUNGEON.C F0171's front-face call is its second direction
+     * increment: sourceY=(y+1)*(((dir+2)&3)+1), then F0170 mixes it with
+     * the exact DUNGEON.DAT seed and current-map dimensions. */
+    value1 = (uint16_t)(2000 + x * 32 +
+                        (y + 1) * (((dir + 2) & 3) + 1));
+    value2 = (uint16_t)(3000 + g_current_level * 64 +
+                        g_dungeon_level_w[g_current_level] +
+                        g_dungeon_level_h[g_current_level]);
+    mixed = (((uint32_t)value1 * 31417u) >> 1) +
+            ((uint32_t)value2 * 11u) + g_ornament_random_seed;
+    random_index = (int)((mixed >> 2) % 30u);
+    return random_index < random_count ? random_index + 1 : 0;
 }
 
 int fs_dungeon_get_floor_ornament(int x, int y) {
-    /* See fs_dungeon_get_wall_ornament: without F0170/F0172's authenticated
-     * random/aspect state, no floor-ornament ordinal is source-owned. */
-    (void)x;
-    (void)y;
-    return 0;
+    uint8_t square;
+    uint16_t value1;
+    uint16_t value2;
+    uint32_t mixed;
+    int element;
+    int random_count;
+    int random_index;
+
+    if (!g_dungeon_loaded || x < 0 || y < 0 ||
+        x >= g_dungeon_level_w[g_current_level] ||
+        y >= g_dungeon_level_h[g_current_level]) {
+        return 0;
+    }
+    square = (uint8_t)((g_dungeon_grid[g_current_level][y][x] << 5) |
+                       g_dungeon_attributes[g_current_level][y][x]);
+    element = square >> 5;
+    /* F0172 admits random floor ornament only on corridor/pit/teleporter
+     * cells. A Thing-list square is held closed until its sensor override is
+     * decoded from the original compact chain. */
+    if ((element != 1 && element != 2 && element != 5) ||
+        (square & 0x08) == 0 || (square & 0x10) != 0) {
+        return 0;
+    }
+    random_count = g_dungeon_random_floor_ornament_count[g_current_level];
+    if (random_count <= 0) return 0;
+
+    value1 = (uint16_t)(2000 + x * 32 + y);
+    value2 = (uint16_t)(3000 + g_current_level * 64 +
+                        g_dungeon_level_w[g_current_level] +
+                        g_dungeon_level_h[g_current_level]);
+    mixed = (((uint32_t)value1 * 31417u) >> 1) +
+            ((uint32_t)value2 * 11u) + g_ornament_random_seed;
+    random_index = (int)((mixed >> 2) % 30u);
+    return random_index < random_count ? random_index + 1 : 0;
 }
 
 int fs_dungeon_get_width(void) {

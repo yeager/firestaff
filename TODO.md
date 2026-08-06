@@ -1,11 +1,13 @@
 # Firestaff TODO - Open Work
 
 - **DM1-LEGACY-DUNGEON-BRIDGE-ORNAMENT-OWNER:** The legacy
-  `firestaff_dungeon_state` bridge now deliberately emits no wall or floor
-  ornament ordinal. Its former coordinate/hash formula was synthetic and
-  could not stand in for the F0170/F0172 random/aspect state. Recover that
-  original runtime state and its authenticated GRAPHICS.DAT consumer before
-  re-enabling this bridge; the M11 source-owned viewport remains separate.
+  `firestaff_dungeon_state` bridge now derives F0170/F0171 random wall/floor
+  ordinals from the authenticated PC34 DUNGEON.DAT seed, map dimensions,
+  counts and raw square flags, but only for object-free squares. It still
+  lacks F0172's compact Thing-chain sensor override and an authenticated
+  GRAPHICS.DAT consumer. Keep Thing-list squares no-draw and recover those
+  owners before claiming complete ornament parity; M11's source-owned
+  viewport remains separate.
 
 - **NEXUS-SDDRVS-68K-EVENT-HANDOFF:** The authenticated `SDDRVS.TSK` is now
   byte-bound as a 26,610-byte 68000 sound-CPU image. Its entry, command-nibble

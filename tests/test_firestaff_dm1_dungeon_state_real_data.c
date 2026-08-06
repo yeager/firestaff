@@ -52,10 +52,12 @@ int main(int argc, char **argv)
     if (fs_dungeon_get_square_type(1, 2) != 4 ||
         fs_dungeon_get_door_type(1, 2) != 1 ||
         fs_dungeon_get_door_state(1, 2) != 4) ++failures;
-    /* The legacy bridge has no authenticated F0170/F0172 runtime state.
-     * It must not manufacture the previously guessed ordinal 3. */
-    if (fs_dungeon_get_wall_ornament(13, 8, 0) != 0 ||
-        fs_dungeon_get_floor_ornament(4, 2) != 0) ++failures;
+    /* Object-free cells use the real PC34 DUNGEON.DAT seed, dimensions,
+     * random-ornament counts and F0170/F0171 arithmetic. Map 0's raw
+     * wall at (0,12), viewed westward, selects ordinal 2; its corridor at
+     * (4,2) selects floor ordinal 3. */
+    if (fs_dungeon_get_wall_ornament(0, 12, 3) != 2 ||
+        fs_dungeon_get_floor_ornament(4, 2) != 3) ++failures;
     free(bytes);
     if (failures) {
         fprintf(stderr, "FAIL: real DM1 DUNGEON.DAT state checks (%d)\n", failures);
