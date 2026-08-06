@@ -991,12 +991,12 @@ VDP1 is the Saturn's second video display processor, capable of direct framebuff
 | `FONT256.S2D` | 24 KB | Saturn SCR | ✅ Header ✅ Glyph access |
 | `FACE.BIN` | 44 KB | Champion portraits (24 entries) | ❌ Format unknown |
 | `STONE.BIN` | 4 KB | Wall/stone texture base | ❌ Not analyzed |
-| `NBG3.BIN` | 7 KB | VDP2 background layer | ❌ Not analyzed |
+| `NBG3.BIN` | 7 KB | Candidate VDP2 background asset | ⚠️ Receipt only; owner/capture missing |
 | `POTEFT.BIN` | 3 KB | Potion effect graphics | ❌ Not analyzed |
 | `STABG.BIN` | 52 KB | Status area background | ❌ Not analyzed |
-| `SWTCHR.BIN` | 38 KB | Switch/lever graphics | ❌ Not analyzed |
+| `SWTCHR.BIN` | 38 KB | Candidate switch/lever graphics | ⚠️ Receipt only; owner/capture missing |
 | `ITEM.IBS` | 98 KB | Item icon/bitmap set | ❌ Not analyzed |
-| `TM.BIN` | 156 KB | Texture/tilemap data | ❌ Not analyzed |
+| `TM.BIN` | 156 KB | Candidate texture/tilemap data | ⚠️ Receipt only; owner/capture missing |
 | `MENU.BPK` | 87 KB | Menu graphics (packed) | ❌ Not analyzed |
 | `DEATH.BIN` | 4 KB | Death sequence data | ❌ Not analyzed |
 

@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-RAW-BIN-OWNER-CAPTURE:** The retail receipts for `DM.BIN`,
+  `NBG3.BIN`, `STONE.BIN`, `DEATH.BIN`, `SWTCHR.BIN`, `TM.BIN`, and
+  `SDDRVS.TSK` now deliberately report `UNKNOWN` content ownership. The
+  previous byte-frequency classifier mislabeled opcode-like data as SH-2 or
+  tilemap content. Recover each consumer from Saturn execution/VDP capture or
+  disassembly before admitting VDP1/VDP2 pixels, tilemaps, switch graphics,
+  or executable task semantics.
+
 - **THERON-PALETTE-ROUTE:** A raw verified Track 02 load now starts with an
   empty palette. The former procedural stone palette was not source evidence
   and could make an unbound bundle look renderable. Keep the runtime blocked

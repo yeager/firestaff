@@ -1,24 +1,6 @@
 #include "nexus_v1_raw_bin.h"
 #include <string.h>
 
-static uint32_t read_be32(const uint8_t *p) {
-    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
-           ((uint32_t)p[2] << 8) | (uint32_t)p[3];
-}
-
-static int detect_sh2_code(const uint8_t *data, int size) {
-    int sh2_ops = 0, i;
-    if (size < 32) return 0;
-    for (i = 0; i < size - 1 && i < 128; i += 2) {
-        uint8_t hi = data[i];
-        if (hi == 0xD0 || hi == 0xD1 || hi == 0x2F ||
-            hi == 0x4F || hi == 0x60 || hi == 0x61 ||
-            hi == 0xE0 || hi == 0xE1)
-            sh2_ops++;
-    }
-    return sh2_ops >= 8;
-}
-
 int nexus_v1_raw_bin_decode(const uint8_t *data, int data_size,
                              Nexus_V1_RawBinDecodeResult *out) {
     int i;
@@ -36,18 +18,23 @@ int nexus_v1_raw_bin_decode(const uint8_t *data, int data_size,
     }
 
     for (i = 0; i <= data_size - 4; i += 4) {
-        if (read_be32(data + i) == 0x50525333) {
+        if ((((uint32_t)data[i] << 24) | ((uint32_t)data[i + 1] << 16) |
+             ((uint32_t)data[i + 2] << 8) | (uint32_t)data[i + 3]) ==
+            0x50525333U) {
             out->prs3_offset = i;
             break;
         }
     }
 
-    if (data_size % 32 == 0 && data_size <= 65536 && !detect_sh2_code(data, data_size))
-        out->content_type = NEXUS_RAW_TYPE_TILEMAP;
-    else if (detect_sh2_code(data, data_size))
-        out->content_type = NEXUS_RAW_TYPE_SH2_CODE;
-    else
-        out->content_type = NEXUS_RAW_TYPE_VDP_DATA;
+    /*
+     * Strict-fidelity boundary: byte-frequency/signature heuristics cannot
+     * establish SH-2 ownership, VDP1/VDP2 format, or tilemap semantics.
+     * Keep this decoder as a bounded retail receipt (size, non-zero count,
+     * PRS3 marker, and hash) until Saturn capture or disassembly proves the
+     * consumer.  In particular, NBG3.BIN, SWTCHR.BIN, and TM.BIN must not be
+     * advertised as drawable data based on incidental opcode-like bytes.
+     */
+    out->content_type = NEXUS_RAW_TYPE_UNKNOWN;
 
     fnv = 0x811C9DC5U;
     for (i = 0; i < data_size; i++) {

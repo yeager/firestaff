@@ -49,8 +49,14 @@ static int test_file(const char *name) {
         return 1;
     }
 
-    printf("  PASS %s: type=%s size=%d nz=%d prs3=%d hash=0x%08X\n",
-           name, type_name(r.content_type), r.file_size,
+    if (r.content_type != NEXUS_RAW_TYPE_UNKNOWN) {
+        printf("  FAIL %s inferred unproven content type=%s\n",
+               name, type_name(r.content_type));
+        free(data);
+        return 1;
+    }
+    printf("  PASS %s: type=UNKNOWN (receipt-only) size=%d nz=%d prs3=%d hash=0x%08X\n",
+           name, r.file_size,
            r.non_zero_bytes, r.prs3_offset, r.data_hash);
     free(data);
     return 0;

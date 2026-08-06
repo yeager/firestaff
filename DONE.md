@@ -5080,12 +5080,20 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   Source: skproject/SKULLWIN/c_tim_proc.cpp:422-440, 1068-1074, 1077-1090,
   4219-4226, 4278-4280.
 
-- ✅ 2026-07-29 Nexus data file decoder coverage complete: all Nexus game
-  data formats now have decoders. Final batch: FONT256.S2D (SCR tilemap
-  font, 5 sections, 16×256 tilemap, 2048 tiles, 256-color palette),
-  STABG.BIN (STMP tilemap, 11 planes with 40×21 background + overlays),
-  LOGOBG.DG2 (8bpp 320×224 paletted image), and raw binary classifier
-  for DM.BIN/NBG3.BIN/STONE.BIN/DEATH.BIN/SWTCHR.BIN/TM.BIN/SDDRVS.TSK.
+- ✅ 2026-07-29 Nexus data-format receipts: FONT256.S2D (SCR tilemap font,
+  5 sections, 16×256 tilemap, 2048 tiles, 256-color palette), STABG.BIN
+  (STMP tilemap, 11 planes with 40×21 background + overlays), and LOGOBG.DG2
+  (8bpp 320×224 paletted image) have bounded decoders. The remaining raw
+  `DM.BIN`/`NBG3.BIN`/`STONE.BIN`/`DEATH.BIN`/`SWTCHR.BIN`/`TM.BIN`/
+  `SDDRVS.TSK` helper is receipt-only (size, non-zero count, PRS3 marker,
+  FNV-1a hash); no content owner is inferred.
+
+- ✅ 2026-08-06 Nexus raw-binary provenance correction: removed the
+  heuristic SH-2/tilemap classifier from the retail raw receipt. Opcode-like
+  bytes are not enough to establish Saturn consumer ownership, so every raw
+  binary now remains `UNKNOWN` until execution/disassembly or VDP capture
+  binds it. Real Nexus raw-bin regression passes with stable retail offsets
+  and hashes.
   DMV*.AVI are standard RIFF/AVI video, DMN_*.TXT are Shift-JIS text.
 
 - ✅ 2026-07-29 Nexus BPPK menu graphics decoder: MENU.BPK BPPK/BMPD
