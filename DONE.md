@@ -1,3 +1,17 @@
+- ✅ 2026-08-06 Nexus creature runtime quarantine: production mechanics and
+  engine ticks now keep creature AI, spawner admission, and projectile motion
+  fail-closed while `nexus_v1_action_semantics_proven()` is false. Direct
+  creature helpers remain available for diagnostics; integration tests now
+  verify that uncaptured actors do not move or damage the party. Stale combat
+  and creature docs are labelled historical/diagnostic instead of claiming
+  source-locked live parity.
+
+- ✅ 2026-08-06 Nexus real startup probe correction: the Track 1 probe now
+  accepts the complete 20-record FACE.BIN source receipt while separately
+  requiring VDP1 placement for drawing, and treats the retained FONT256.S2D
+  bytes as non-draw evidence (`font_loaded == 0`) until Saturn page/attribute
+  mapping is captured. Real-data launch probe: 57/57.
+
 - ✅ 2026-08-06 Nexus startup-menu text boundary: the runtime save-menu
   handoff now removes generic host ASCII `DRAW_TEXT` commands before M11/M12
   consumption. The layout builder remains available for isolated tests, while

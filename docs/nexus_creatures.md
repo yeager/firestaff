@@ -1,5 +1,10 @@
 # Dungeon Master Nexus V1 — Creatures vs DM1/DM2/CSB
 
+> Historical/diagnostic snapshot. The comparisons and sample stat tables are
+> not a current Nexus parity claim. Real MNS/CRET source records are retained
+> as receipts, while model ownership, actor dispatch and AI mutation remain
+> capture-gated.
+
 ## Sources
 - `src/nexus/nexus_v1_creatures.c` (creature type definitions + AI)
 - `docs/NEXUS_FILE_CLASSIFICATION.md` (.MNS file list)

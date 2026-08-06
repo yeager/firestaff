@@ -1009,8 +1009,12 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
         nexus_v1_automap_set_level(&engine->automap, st->map_index);
     }
 
-    /* Creature AI tick */
-    if (engine->creatures.type_count > 0 && engine->level_loaded) {
+    /* Creature AI is not a format fact.  Retail CRET bytes provide bounded
+     * fields, but the Saturn SLEV/DM.BIN dispatcher and actor-state writes are
+     * still uncaptured.  Keep direct AI helpers available to diagnostics while
+     * refusing to mutate production actors from the host model. */
+    if (nexus_v1_action_semantics_proven() &&
+        engine->creatures.type_count > 0 && engine->level_loaded) {
         nexus_v1_creatures_tick(&engine->creatures,
                                  st->party_x, st->party_y,
                                  engine->current_level.squares,
@@ -1118,7 +1122,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
         /* Projectile tick — move active projectiles and apply damage.
          * Source: DM1 OBJECTMAN.C F0258 projectile movement,
          *         PROJECTIL.C F0218 collision resolution. */
-        {
+        if (nexus_v1_action_semantics_proven()) {
             Nexus_ProjectileHit proj_hits[NEXUS_MAX_PROJECTILES];
             int n_hits = nexus_v1_projectiles_tick(&engine->projectiles,
                 engine->current_level.squares, proj_hits, NEXUS_MAX_PROJECTILES);

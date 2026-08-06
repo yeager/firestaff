@@ -1,5 +1,10 @@
 # Nexus V1 — Combat System vs DM1/DM2
 
+> Historical/diagnostic snapshot. The combat descriptions below document the
+> former host compatibility model, not authenticated Saturn gameplay. The
+> production action gate remains closed until attack dispatch, target/RNG
+> routing and effect writes are captured from the retail executable/runtime.
+
 ## Source
 - `src/nexus/nexus_v1_combat.c` — core combat resolver
 - `src/nexus/nexus_v1_creatures.c` — creature AI and spawning
@@ -96,10 +101,9 @@ Experience is awarded per damage dealt: `experience_gained = damage`
 
 ---
 
-## Status: PARTIALLY SOURCE-LOCKED
+## Status: HISTORICAL / DIAGNOSTIC ONLY
 
-- Combat formula: **source-locked** — explicit code in `nexus_v1_combat.c`
-- Stamina cost: **source-locked** — 3 hardcoded
-- Critical hit rate: **source-locked** — 5% hardcoded
-- Creature AI: **partial** — simplified chase/patrol; awareness system not implemented
+- Combat formula: diagnostic receipt only; not a live Saturn action route
+- Stamina cost and critical-hit rows: not authenticated as a runtime consumer
+- Creature AI: host diagnostic only; awareness/actor dispatch remains unknown
 - Class skills: **partial** — fighter_level used; ninja_level unused in combat

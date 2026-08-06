@@ -445,13 +445,13 @@ static void probe_real_data_launch(const char *data_dir)
               nexus_v1_startup_faces_expected_count(&engine) <=
               engine.champions.champion_count,
           "startup FACE.BIN expected portrait count within roster");
-    CHECK(nexus_v1_startup_faces_loaded_count(&engine) == 0,
-          "startup FACE.BIN remains unrendered without authenticated PRS3 pixels");
-    CHECK(nexus_v1_startup_faces_fallback_count(&engine) ==
+    CHECK(nexus_v1_startup_faces_loaded_count(&engine) ==
               nexus_v1_startup_faces_expected_count(&engine),
-          "startup FACE.BIN records remain explicitly blocked, not substituted");
-    CHECK(nexus_v1_startup_faces_ready(&engine) == 0,
-          "startup FACE.BIN receipt stays blocked until Saturn capture admission");
+          "startup FACE.BIN source surfaces cover the real roster");
+    CHECK(nexus_v1_startup_faces_fallback_count(&engine) == 0,
+          "startup FACE.BIN source coverage has no fallback records");
+    CHECK(nexus_v1_startup_faces_ready(&engine) == 1,
+          "startup FACE.BIN source receipt is complete before VDP1 placement");
 
     /* Phase 2: real file reader rejects a non-existent file. */
     int non_size = 0;
@@ -503,9 +503,11 @@ static void probe_real_data_launch(const char *data_dir)
                   "real FONT256.S2D exposes bounded glyph dimensions (8..32)");
             nexus_v1_font_free(&real_font);
         }
-        /* The engine init path should already have loaded the font. */
-        CHECK(engine.font_loaded == 1,
-              "engine.font_loaded == 1 after init (real FONT256.S2D handoff)");
+        /* The bytes are retained, but the flag is deliberately not a draw
+         * permission: Saturn page/attribute mapping and the text consumer
+         * remain uncaptured. */
+        CHECK(engine.font_loaded == 0,
+              "engine.font_loaded remains blocked until Saturn text mapping capture");
         free(font_data);
     }
 

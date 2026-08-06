@@ -169,8 +169,10 @@ int main(void) {
         expect(e->creatures.active[cid].x == 8, "creature at x=8");
 
         { int t; for (t = 0; t < 3; t++) nexus_v1_tick(e); }
-        expect(e->creatures.active[cid].state == 2, "creature chasing");
-        expect(e->creatures.active[cid].x < 8, "creature moved toward party");
+        expect(e->creatures.active[cid].state == 1,
+               "uncaptured creature AI remains in its source-bound spawn state");
+        expect(e->creatures.active[cid].x == 8,
+               "uncaptured creature AI does not move the production actor");
         destroy_engine(e);
     }
 
@@ -196,8 +198,8 @@ int main(void) {
         old_hp = e->champions.champions[0].health;
         for (i = 0; i < 20; i++)
             nexus_v1_tick(e);
-        expect(e->champions.champions[0].health <= old_hp,
-               "creature dealt damage to party");
+        expect(e->champions.champions[0].health == old_hp,
+               "uncaptured creature attack does not mutate the party");
         destroy_engine(e);
     }
 
@@ -252,9 +254,8 @@ int main(void) {
         expect(switch_idx == 0 &&
                    nexus_v1_switch_get_state(&e->switches, switch_idx) == 0,
                "unproven interaction does not toggle a real switch");
-        expect(container_idx == 0 &&
-                   !nexus_v1_container_is_open(&e->containers, container_idx),
-               "unproven interaction does not open a real container");
+        expect(container_idx < 0,
+               "unproven interaction rejects synthetic container admission");
         destroy_engine(e);
     }
 

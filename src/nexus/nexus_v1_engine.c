@@ -10419,7 +10419,7 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
         int ci;
         nexus_v1_rest_tick(&engine->rest, &engine->champions);
         nexus_v1_hunger_tick(&engine->hunger, &engine->champions);
-        {
+        if (nexus_v1_action_semantics_proven()) {
             Nexus_SpawnEvent spawn_events[8];
             int nspawn = nexus_v1_spawners_tick(&engine->spawners,
                 spawn_events, 8);
@@ -10438,12 +10438,14 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
         nexus_v1_action_timers_tick(&engine->action_timers);
         nexus_v1_door_tick(&engine->doors);
         nexus_v1_trap_tick(&engine->traps);
-        nexus_v1_creatures_tick(&engine->creatures,
-                                engine->mechanics->party_x,
-                                engine->mechanics->party_y,
-                                engine->current_level.squares,
-                                engine->mechanics->map_index);
-        {
+        if (nexus_v1_action_semantics_proven()) {
+            nexus_v1_creatures_tick(&engine->creatures,
+                                    engine->mechanics->party_x,
+                                    engine->mechanics->party_y,
+                                    engine->current_level.squares,
+                                    engine->mechanics->map_index);
+        }
+        if (nexus_v1_action_semantics_proven()) {
             Nexus_ProjectileHit hits[8];
             int nhits = nexus_v1_projectiles_tick(&engine->projectiles,
                                                    engine->current_level.squares,

@@ -109,6 +109,9 @@
   accounting until the real TEXT4/TABL/FONT012 consumer is captured.
   The runtime save-menu handoff now applies the same boundary and strips
   generic builder text commands before M11/M12 can consume the package.
+  The Track 1 real-data launch probe now distinguishes complete FACE.BIN
+  source coverage from uncaptured VDP1 placement and keeps `font_loaded` at
+  zero until Saturn text page/attribute mapping is captured.
 
 - **NEXUS-CREATURE-MNS-CONSUMER:** The 30-entry MNS filename roster is now
   authenticated byte-for-byte against European retail `DM.BIN` at `0x0385F0`.
@@ -157,6 +160,13 @@
   attack dispatcher, target admission, RNG and effect writes remain missing;
   `nexus_v1_action_semantics_proven()` must stay closed until those receipts
   are captured.
+
+- **NEXUS-CREATURE-AI-RUNTIME-GATE:** Retail CRET statistics and DGN actor
+  identities are now retained as source receipts, but production no longer
+  advances the host creature AI, spawner, or projectile loop while the
+  SLEV/DM.BIN actor/action consumer is uncaptured. Recover those state-write
+  and dispatch traces before enabling movement, spawn, ranged attacks, or
+  projectile ticks. The direct helper tests remain diagnostic only.
 
 - **NEXUS-CONTAINER-LOOT-CAPTURE:** The old DM1-shaped Nexus container helper
   accepted caller-supplied chest/crate contents despite the retail DGN corpus

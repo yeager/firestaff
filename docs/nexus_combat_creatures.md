@@ -1,5 +1,11 @@
 # Nexus V1 — Creature Combat
 
+> Historical/diagnostic snapshot. The roster/stat/AI tables below are not a
+> current Nexus parity claim. Retail CRET bytes are admitted from European
+> `RLOWFIX.BIN`, but Saturn actor dispatch, AI state writes and combat effects
+> remain capture-gated. Production engine ticks therefore do not run this
+> host AI until the SLEV/DM.BIN action consumer is authenticated.
+
 ## Source
 - `src/nexus/nexus_v1_creatures.c` — creature definitions, spawn, AI tick
 
@@ -87,10 +93,11 @@ DM2 added ~22 new creature types with more complex behaviors:
 
 ---
 
-## Status: PARTIALLY SOURCE-LOCKED
+## Status: HISTORICAL / DIAGNOSTIC ONLY
 
-- Creature stats (HP/ATK/DEF/SPD/XP): **source-locked** — hardcoded table
-- AI state machine: **source-locked** — 3-state patrol/chase/attack
+- Creature stats (HP/ATK/DEF/SPD/XP): diagnostic table only; use the
+  hash-verified `RLOWFIX.BIN` CRET receipt for real source bytes
+- AI state machine: host diagnostic only; no live Saturn actor consumer
 - Awareness/wary/terrain system: **absent**
 - Spell-casting creatures: **absent**
 - .MNS file list from ISO classification (`docs/NEXUS_FILE_CLASSIFICATION.md`)
