@@ -1,5 +1,9 @@
 # Firestaff project status
 
+**Last reviewed: 2026-08-06.** This page is the concise status source for the
+README and wiki. The full documentation map is in
+[`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md).
+
 This is the short, user-facing status summary for the whole project. Detailed
 source audits and capture receipts remain in the linked game documentation.
 
@@ -41,4 +45,5 @@ cross-platform determinism comparison. Rapid pushes to `main` cancel obsolete
 runs, so status must always be read from the newest commit.
 
 The [Firestaff wiki](https://github.com/yeager/firestaff/wiki) expands this
-summary with per-game format, hardware and reverse-engineering notes.
+summary with per-game format, hardware and reverse-engineering notes. The
+checked-in wiki source is under [`docs/wiki/`](wiki/).

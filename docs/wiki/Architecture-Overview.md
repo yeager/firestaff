@@ -1,5 +1,9 @@
 # Architecture Overview
 
+> **Status reviewed 2026-08-06.** The shared architecture applies to all five
+> games. Game-specific modules may publish a runtime receipt only after the
+> corresponding source or original-data boundary has passed.
+
 ## Layer Model
 
 Firestaff uses a strict four-layer ownership model. Each layer owns specific data and responsibilities; cross-layer access follows typed receipts rather than direct memory sharing.
@@ -25,8 +29,8 @@ src/
   frontend/     UI frontend, dialog, text rendering
   audio/        Audio decoding (SND, SONG.DAT)
 
-include/        All public headers (~2554 files)
-tests/          Test sources (~3138 files)
+include/        Public headers (count changes with the source tree)
+tests/          Test sources and focused gates
 parity-evidence/ Source-lock evidence documents
 ```
 

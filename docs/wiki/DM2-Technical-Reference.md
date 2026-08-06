@@ -1,5 +1,8 @@
 # Dungeon Master II: Skullkeep Technical Reference
 
+> **Status reviewed 2026-08-06.** DM2 has substantial skproject-anchored and
+> real-data slices, while V1 dungeon/render/mechanics parity remains active.
+
 ## Scope
 
 DM2 V1 follows skproject. It is independent from the DM1/CSB compatibility
@@ -26,7 +29,7 @@ not create procedural pixels without a verified original overlay asset.
 
 ## Feature queue status (Q-DM2-01 through Q-DM2-10)
 
-All ten DM2 feature lanes are complete:
+The ten DM2 feature lanes have focused coverage:
 
 | Lane | Scope | Evidence |
 |------|-------|----------|
@@ -41,7 +44,7 @@ All ten DM2 feature lanes are complete:
 | Q-DM2-09 | CCM and world scripts | 5 CCM tests pass |
 | Q-DM2-10 | Outdoor scenes and end-to-end play | 3 outdoor + 13 weather tests pass |
 
-With the feature queue closed, ongoing DM2 work runs as continuous lanes
+The work continues as continuous lanes
 (Lane A through E) rather than discrete queue items. Active lanes:
 
 - **Lane A — SkWinCore symbol audit.** Closes `MISSING` rows in

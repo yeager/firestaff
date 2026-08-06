@@ -1,5 +1,9 @@
 # Reverse Engineering Index
 
+> **Status reviewed 2026-08-06.** This index separates source-locked facts,
+> real-data receipts, runtime milestones and open handoff boundaries. Counts
+> are not feature-completeness claims; see the [documentation index](../DOCUMENTATION_INDEX.md).
+
 This section documents all functions, data structures, file formats, and other technical details recovered through disassembly and reconstruction of the five Dungeon Master game engines. The information is valuable for game preservation, future reverse engineering efforts, and understanding how these classic RPGs work at the binary level.
 
 ## Per-Game Documentation
@@ -9,8 +13,8 @@ This section documents all functions, data structures, file formats, and other t
 | [Dungeon Master (DM1)](DM1-Reverse-Engineering) | DOS PC 3.4 | ReDMCSB | [DM1 RE](DM1-Reverse-Engineering) | 1388 F-numbered | 1558 unique IDs | 764 pass documents |
 | [Chaos Strikes Back (CSB)](CSB-Reverse-Engineering) | DOS PC 3.4 | ReDMCSB + CSBWin | [CSB RE](CSB-Reverse-Engineering) | 1058 shared with DM1 | 28+ CSB-specific | 28 pass documents |
 | [Dungeon Master II (DM2)](DM2-Reverse-Engineering) | DOS | skproject | [DM2 RE](DM2-Reverse-Engineering) | 97+ named | 271 source files | 58 pass documents |
-| [Theron's Quest](Therons-Quest-Reverse-Engineering) | PC Engine CD | None | [Theron RE](Therons-Quest-Reverse-Engineering) | N/A (no ref source) | 157 headers | 7 pass documents |
-| [DM Nexus](Nexus-Reverse-Engineering) | Sega Saturn | None | [Nexus RE](Nexus-Reverse-Engineering) | N/A (no ref source) | 182 source files | 5 pass documents |
+| [Theron's Quest](Therons-Quest-Reverse-Engineering) | PC Engine CD | PC Engine disassembly and CD analysis | [Theron RE](Therons-Quest-Reverse-Engineering) | HuC6280 disassembly + retail media receipts | Track 02 loader and level-frame work | runtime handoff open |
+| [DM Nexus](Nexus-Reverse-Engineering) | Sega Saturn | Saturn SH-2 disassembly and retail media analysis | [Nexus RE](Nexus-Reverse-Engineering) | SH-2/VDP/SCSP receipts | DGN/MNS/PRS3/SAL/MAP work | full runtime handoff open |
 
 ## Reference Sources
 
@@ -93,7 +97,11 @@ Two distinct formats exist:
 
 ## Parity Evidence System
 
-The `parity-evidence/` directory contains 1071 source-lock documents that anchor specific behavioral claims to original source locations and runnable verification tests. Each document follows a standard format:
+The `parity-evidence/` directory contains the project's source-lock receipts.
+The current checked-in corpus is counted by the repository rather than copied
+into stale narrative numbers; each document anchors a behavioral claim to an
+original source location or binary offset and a runnable verification path.
+Each document follows a standard format:
 
 ```
 Status: *_LOCKED

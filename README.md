@@ -50,19 +50,22 @@ trace any behavior back to its reference.
 
 **Your data, verified.** Firestaff scans your game files by cryptographic hash,
 not by filename. Put files anywhere — loose, in ZIPs, in ISO/BIN disc images —
-and the scanner finds them. 165+ verified hashes cover original assets across
-all five games. Games with missing required data cannot launch; there is no
-guessing or silent fallback.
+and the scanner finds them. The checked-in hash catalog covers original assets
+across all five games and their documented variants. Games with missing
+required data cannot launch; there is no guessing or silent fallback.
 
-**Two ways to play.** Every game offers pixel-perfect **Original** rendering at
-the native resolution and source palette, plus **Custom** presentation modes
-with filtered, upscaled and modern targets up to 3840×2160. Custom always runs
-on top of the same source-locked engine — it never bypasses collision, timing,
-combat or inventory logic.
+**Two presentation paths.** Games with a verified runtime route offer
+pixel-perfect **Original** rendering at the native resolution and selectable
+**Custom** presentation modes with filtered, upscaled and modern targets up to
+3840×2160. Custom always runs on top of the same source-locked engine — it
+never bypasses collision, timing, combat or inventory logic. A game that has
+not passed its launch gate is documented as bring-up work, not as a finished
+playable target.
 
-**Preservation-grade documentation.** 1,090+ parity-evidence documents, 3,490+
-automated tests, and a [comprehensive wiki](https://github.com/yeager/firestaff/wiki)
-covering file formats, hardware architecture, reverse engineering details, and
+**Preservation-grade documentation.** Thousands of parity-evidence receipts,
+focused tests and a [complete documentation index](docs/DOCUMENTATION_INDEX.md)
+with a [comprehensive wiki](https://github.com/yeager/firestaff/wiki) covering
+file formats, hardware architecture, reverse engineering details and
 source-reference boundaries for all five games.
 
 ## Quick Start
@@ -119,18 +122,19 @@ is active.
 
 ### Dungeon Master II: Skullkeep
 
-Source-locked against skproject. GDAT renderer, material families, creature
-renderer, map and record runtime, save interop, menu and title, party and
-inventory, spells, creature AI and combat, world scripts, and outdoor scenes are
-all complete. Active work focuses on remaining real-data passes.
+Source-locked against skproject across GDAT, material families, map/record
+runtime, save interop, menu/title, party/inventory, spells, creature AI,
+combat, world scripts and outdoor-scene slices. End-to-end V1 parity and
+remaining real-data passes are still active work.
 
 ### DM Nexus (Sega Saturn)
 
 Saturn DGN geometry, RLOWFIX.BIN resource archive, ITEM.IBS item definitions,
-PRS3 sprite compression, SAL/MAP sound banks, and SDDRVS.TSK sound driver are
-all parsed and verified. SH-2 disassembly has proven VDP1/VDP2 register
-initialization, SCSP sound communication, FONT012 text rendering, and 19
-original IWA source module names extracted from the binary.
+bounded PRS3 topology, SAL/MAP sound banks and SDDRVS.TSK sound-driver
+receipts are covered. SH-2 disassembly has proven selected VDP1/VDP2 register
+initialization, SCSP sound communication, FONT012 text rendering and original
+IWA source-module names extracted from the binary. Positive real-asset handoff
+and full visible-material playability remain active work.
 
 ### Theron's Quest (PC Engine)
 
@@ -146,6 +150,8 @@ open. See
 The cross-game status and evidence boundary are kept in
 [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md). Presentation work follows
 the same order for every game: startup, menu, HUD, then viewport.
+The complete documentation map is in
+[`docs/DOCUMENTATION_INDEX.md`](docs/DOCUMENTATION_INDEX.md).
 
 ## Graphics Modes
 
@@ -235,20 +241,20 @@ Launcher UI (M12)
 | `src/nexus/` | DM Nexus Saturn runtime |
 | `src/tqr/` | Theron's Quest runtime |
 | `src/dm1v2/` | DM1 Custom presentation |
-| `tests/` | 3,490+ integration tests and source-lock gates |
-| `parity-evidence/` | 1,090+ verification documents |
+| `tests/` | Thousands of integration tests and source-lock gates |
+| `parity-evidence/` | Thousands of verification documents |
 
 ## The Engine in Numbers
 
 | Metric | Count |
 |--------|-------|
-| Lines of C | 1,250,000+ |
-| Source files | 2,596 |
-| Headers | 2,554 |
-| Test files | 3,138 |
-| Automated tests | 3,493 |
-| Parity-evidence documents | 1,090+ |
-| Verified game-data hashes | 165+ |
+| Lines of C | 1,000,000+ |
+| Source files | 2,600+ |
+| Headers | 2,500+ |
+| Test files | 3,200+ |
+| Automated checks | Thousands |
+| Parity-evidence documents | Thousands |
+| Verified game-data hashes | Cross-game catalog |
 | Localization languages | 19 |
 
 ## Source References

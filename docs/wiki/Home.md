@@ -1,5 +1,11 @@
 # Firestaff Wiki
 
+> **Status reviewed 2026-08-06.** Firestaff has five active game targets.
+> DM1 V1 is the strongest playable route; CSB, DM2, Nexus and Theron are
+> documented as source-locked or real-data bring-up work where the end-to-end
+> boundary is still open. See [Project status](../PROJECT_STATUS.md) and the
+> [documentation index](../DOCUMENTATION_INDEX.md) for the canonical matrix.
+
 Firestaff reimplements five classic Dungeon Master game engines with source-level parity to the originals. It is a pure C application targeting macOS, Linux, Windows, iOS (AltStore Classic sideload), and Android, rendering via SDL3.
 
 ## Supported Games
@@ -9,8 +15,8 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 | [Dungeon Master (DM1)](DM1-Technical-Reference) | DOS PC 3.4 | ReDMCSB | [Technical Reference](DM1-Technical-Reference), [PC34 Internals](DM1-PC34-Internals), [RE Documentation](DM1-Reverse-Engineering) |
 | [Chaos Strikes Back (CSB)](CSB-Technical-Reference) | DOS PC 3.4 | ReDMCSB | [Technical Reference](CSB-Technical-Reference), [DSA and Save Internals](CSB-DSA-and-Save-Internals), [RE Documentation](CSB-Reverse-Engineering) |
 | [Dungeon Master II (DM2)](DM2-Technical-Reference) | DOS | skproject | [Technical Reference](DM2-Technical-Reference), [GDAT Internals](DM2-GDAT-Internals), [RE Documentation](DM2-Reverse-Engineering) |
-| [Theron's Quest](Therons-Quest-Technical-Reference) | PC Engine | None | [Technical Reference](Therons-Quest-Technical-Reference), [Track 02 Internals](Therons-Quest-Track02-Internals), [RE Documentation](Therons-Quest-Reverse-Engineering) |
-| [DM Nexus](Nexus-Technical-Reference) | Sega Saturn | None | [Technical Reference](Nexus-Technical-Reference), [DGN/PRS3 Internals](Nexus-DGN-and-PRS3-Internals), [SAL/MAP Internals](Nexus-SAL-MAP-Internals), [RE Documentation](Nexus-Reverse-Engineering) |
+| [Theron's Quest](Therons-Quest-Technical-Reference) | PC Engine CD | PC Engine disassembly and CD analysis | [Technical Reference](Therons-Quest-Technical-Reference), [Track 02 Internals](Therons-Quest-Track02-Internals), [RE Documentation](Therons-Quest-Reverse-Engineering) |
+| [DM Nexus](Nexus-Technical-Reference) | Sega Saturn | Saturn SH-2 disassembly and retail media analysis | [Technical Reference](Nexus-Technical-Reference), [DGN/PRS3 Internals](Nexus-DGN-and-PRS3-Internals), [SAL/MAP Internals](Nexus-SAL-MAP-Internals), [RE Documentation](Nexus-Reverse-Engineering) |
 
 ## Platform Guides
 
@@ -36,6 +42,7 @@ Firestaff reimplements five classic Dungeon Master game engines with source-leve
 - [Release Process](Release-Process) — versioning, CI/CD, release artifacts
 - [Parity Evidence](Parity-Evidence) — how source-lock documents work
 - [Game Data](Game-Data) — what original data files are needed and where to place them
+- [Documentation Index](../DOCUMENTATION_INDEX) — complete cross-game status and page map
 
 ## Quick Links
 

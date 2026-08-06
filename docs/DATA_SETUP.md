@@ -4,7 +4,7 @@ Firestaff requires original game data files that you own. The engine does not in
 
 ## Directory Structure
 
-Place your game data in `~/.firestaff/data/` (or use `--data DIR`):
+Place your game data in `~/.firestaff/data/` (or use `--data-dir DIR`):
 
 ```
 ~/.firestaff/data/
@@ -23,7 +23,7 @@ Place your game data in `~/.firestaff/data/` (or use `--data DIR`):
     GRAPHICS.DAT
     DUNGEON.DAT
   nexus/
-    (extracted Saturn ISO files — see docs/NEXUS_PLAN.md)
+    (extracted Saturn files or a supported Saturn disc image)
   theron/
     TQUS-mednafen.cue
     TQUS02.bin
@@ -79,7 +79,7 @@ Run the built-in validator to check your data setup:
 
 ```bash
 firestaff --validate
-firestaff --validate --data /path/to/data
+firestaff --validate --data-dir /path/to/data
 ```
 
 ## Multi-Language Support

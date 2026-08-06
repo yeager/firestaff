@@ -1,5 +1,9 @@
 # Dungeon Master Nexus Technical Reference
 
+> **Status reviewed 2026-08-06.** Nexus real-data parsing and several runtime
+> slices are verified. Positive real-asset handoff and full playability remain
+> open, especially for source-bound visible materials.
+
 ## Scope
 
 Nexus targets the Saturn DMDF/DGN data family. The engine separates disc

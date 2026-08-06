@@ -1,5 +1,9 @@
 # Building and Installing
 
+> **Status reviewed 2026-08-06.** The supported build is CMake + SDL3 with a
+> C11 compiler. Release packages and source builds use the same hash-gated
+> original-data admission rules described in [Game Data](Game-Data).
+
 ## Build from Source
 
 ### Requirements
@@ -132,4 +136,7 @@ Run a subset:
 ctest --test-dir build -R "viewport" -j4 --output-on-failure
 ```
 
-There are approximately 3490 tests. Some viewport and boot tests require original game data files and will fail or timeout without them.
+The repository contains thousands of registered checks. Some viewport and
+boot checks require original game data and are intentionally skip-safe or
+data-dependent when those files are absent. Use the focused game commands in
+the relevant technical reference before interpreting a full-suite result.

@@ -1,5 +1,8 @@
 # Parity Evidence
 
+> **Status reviewed 2026-08-06.** Evidence is cross-game and bounded. A green
+> parser or fixture test is not automatically a real-media runtime claim.
+
 ## What Are Pass Documents?
 
 The `parity-evidence/` directory contains source-lock evidence documents, each named `pass{NNN}_{description}.md`. Each document anchors a specific behavioral claim to:
@@ -8,7 +11,9 @@ The `parity-evidence/` directory contains source-lock evidence documents, each n
 2. A binary offset or data table in the original executable
 3. A runnable verification path (test binary or probe command)
 
-Pass documents are numbered sequentially. As of the current release, the corpus contains over 1,090 documents.
+Pass documents are numbered sequentially. The repository currently contains
+thousands of checked-in evidence documents; use `git ls-files
+parity-evidence/ | wc -l` when an exact local count is needed.
 
 ## Purpose
 

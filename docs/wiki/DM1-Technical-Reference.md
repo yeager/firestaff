@@ -1,5 +1,9 @@
 # Dungeon Master (DM1) Technical Reference
 
+> **Status reviewed 2026-08-06.** DM1 PC 3.4 V1 is Firestaff's strongest
+> playable target. “Source-locked” describes the decision points covered by
+> ReDMCSB and tests; it does not make every original capture pixel-identical.
+
 ## Scope
 
 DM1 V1 targets the PC 3.4 data model. Behavior is source-locked to ReDMCSB:
@@ -42,7 +46,9 @@ leaves the active queue untouched.
 
 ## Q-DM1 Queue Status (Q-DM1-01 through Q-DM1-10)
 
-All ten items in the DM1 priority implementation queue are complete:
+The current DM1 priority queue is covered by source-lock and runtime checks.
+The queue is not a claim that every original-media capture or V2 visual pass
+is complete:
 
 - **Q-DM1-01** PC34 save corpus and round trip
 - **Q-DM1-02** HoC presented-frame consumer (6 material lanes: mirror,
@@ -116,8 +122,8 @@ presented-frame consumer.
 
 ## Parity Evidence Corpus
 
-`parity-evidence/` holds 1,090+ pass-numbered documents (`pass{NNN}_*.md`),
-764 of which are DM1-specific. They cover viewport wall/door/ornament
+`parity-evidence/` holds the cross-game pass-numbered corpus. The DM1-specific
+receipts cover viewport wall/door/ornament
 routing, movement completion (`pass402`, `pass406`, and the viewport
 movement completion matrix), inventory slot placement and drag/drop,
 combat timelines, champion panel material, and original-transcript

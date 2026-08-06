@@ -1,14 +1,18 @@
 # Chaos Strikes Back (CSB) Technical Reference
 
+> **Status reviewed 2026-08-06.** CSB has broad source-locked engine coverage,
+> but its end-to-end real-data runtime route is still being hardened.
+
 ## Scope
 
 CSB uses ReDMCSB as its main reference and CSBWin for CSB-specific save,
 DSA, champion, and input behavior. Launch needs hash-verified CSB graphics and
 dungeon data; missing title, entrance, door, or HUD art is not replaced.
 
-## Status: Q-CSB-01 through Q-CSB-10 complete
+## Status: Q-CSB-01 through Q-CSB-10 covered, runtime hardening active
 
-All ten CSB work-queue items (`TODO.md`) are complete:
+The ten CSB work-queue areas are covered by focused source-lock and runtime
+checks. They are not a claim of end-to-end real-data playability:
 
 | Item | Area | Evidence |
 |---|---|---|

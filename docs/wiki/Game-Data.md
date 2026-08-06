@@ -1,5 +1,10 @@
 # Game Data
 
+> **Status reviewed 2026-08-06.** Original data is user-supplied, hash-gated
+> and never included in Firestaff. The scanner accepts the documented loose
+> files and supported archive/disc containers; a recognized file is not by
+> itself proof that every later game route is playable.
+
 ## Overview
 
 Firestaff requires original game data files to run each game. These files are **not included** in the release and must be obtained from your own copies of the original games. Game data files must never be committed to the repository.
@@ -31,13 +36,17 @@ Files are identified by content hash, not filename. The recursive scanner will f
 | `GRAPHICS.DAT` | DM2 GDAT graphics data |
 | `DUNGEON.DAT` | DM2 G1 dungeon data (39,437 bytes for the PC version) |
 
-### Theron's Quest — PC Engine
+### Theron's Quest — PC Engine CD
 
 | File | Description |
 |------|-------------|
 | Track 02 BIN | Raw CD-ROM Track 02 binary (JP or US variant) |
 
-Theron's Quest uses record-based CD access, not an ISO filesystem. Firestaff requires the raw track binary from a CUE/BIN disc image. Both Japanese and US variants are supported with different stage-two record offsets (JP: 0x04df, US: 0x04e0).
+Theron's Quest uses record-based CD access, not an ISO filesystem. Firestaff
+requires the authenticated Track 02 raw media path from a CUE/BIN disc image.
+JP and US variants are supported with different stage-two record offsets (JP:
+0x04df, US: 0x04e0). ISO files can assist inspection, but do not replace the
+Track 02 handoff required for launch.
 
 ### DM Nexus — Sega Saturn
 

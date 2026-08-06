@@ -910,8 +910,10 @@ name-string assumptions baked into the reverse-engineered data layer.
 
 ## 8. Parity Evidence
 
-The `parity-evidence/` directory contains **1,071 pass documents** in
-total, of which **764 are DM1-specific** (`pass{NNN}_dm1_v1_*` files),
+The `parity-evidence/` directory contains the cross-game pass corpus. The
+exact current count is repository-derived rather than maintained as a
+narrative number; the DM1-specific subset is identified by
+`pass{NNN}_dm1_v1_*` filenames,
 following the naming convention `pass{NNN}_{description}.md` described in
 CLAUDE.md.
 

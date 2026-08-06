@@ -350,7 +350,9 @@ verified. The detailed gap-tracking queue is `REDMCSB-CSB-GAP-001` through
 
 ## 7. Parity Evidence
 
-`parity-evidence/` contains 1,071 pass documents project-wide. 28 are
+`parity-evidence/` contains the cross-game pass corpus. The exact current
+count is repository-derived rather than maintained as a narrative number. 28
+are
 CSB-specific (`pass*csb*` or explicit CSB-scope filenames), covering DSA
 opcode receipts, save loader boundaries, viewport element routing, IMG1
 graphics decode, and the CSBWin extended-save handoff contract.

@@ -1,5 +1,8 @@
 # Continuous integration
 
+**Last reviewed: 2026-08-06.** CI is a verification gate for the whole
+five-game tree; it does not require copyrighted game data to be committed.
+
 Firestaff's GitHub Actions workflow is defined in
 [`.github/workflows/verify.yml`](../.github/workflows/verify.yml). It runs on
 pushes to `main` and on pull requests.
@@ -57,3 +60,7 @@ gh run view <run-id> --repo yeager/firestaff --log-failed
 
 The repository must not contain original game data. CI intentionally runs the
 asset checks with an empty data directory.
+
+Documentation changes should also update the cross-game status in
+[`PROJECT_STATUS.md`](PROJECT_STATUS.md) and the page map in
+[`DOCUMENTATION_INDEX.md`](DOCUMENTATION_INDEX.md) when a public claim changes.

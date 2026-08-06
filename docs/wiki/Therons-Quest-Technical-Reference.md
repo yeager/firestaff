@@ -1,5 +1,9 @@
 # Theron's Quest Technical Reference
 
+> **Status reviewed 2026-08-06.** JP/US Track 02 identity and several loader
+> receipts are real-data verified. Game-owned dungeon handoff, object/level
+> semantics, bitmap/palette binding and packaged-app capture remain open.
+
 ## Scope
 
 Theron's Quest is a PC Engine CD target. Firestaff accepts original Track 02
