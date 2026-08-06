@@ -807,6 +807,10 @@
   without a GDAT image/local-palette receipt, together with their uncalled
   DM1-derived clip helper. Only the source-material consumer remains eligible
   to write a runtime viewport.
+  **2026-08-06 world-model update:** removed the retired, disabled 16-bit
+  descriptor/tile parser rather than retaining it as an apparent DM2 route.
+  The world model now has only the verified G1 byte-square loader; this does
+  not promote incomplete G1 record traversal to gameplay.
 
 - **DM2-SOUND-TEXT-CONSUMER:** `c_sound.cpp` binds class triples to GDAT sound
   payloads but does not supply a sound-name text producer. The production

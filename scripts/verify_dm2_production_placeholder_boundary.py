@@ -211,6 +211,19 @@ def verify(repo: Path) -> list[str]:
         if source_default not in hud:
             errors.append(f"HUD portrait source-default binding missing: {source_default}")
 
+    world_model_path = repo / "src/dm2/dm2_v1_world_model.c"
+    if not world_model_path.exists():
+        errors.append(f"missing {world_model_path}")
+        return errors
+    world_model = world_model_path.read_text(encoding="utf-8")
+    for forbidden in (
+            "dm2_parse_header((const dm2_dungeon_header_t *)decoded, world)",
+            "dm2_parse_tile(raw)",
+    ):
+        if forbidden in world_model:
+            errors.append(
+                "world model retains the retired inferred 16-bit dungeon fallback")
+
     viewport_path = repo / "src/dm2/dm2_v1_viewport_renderer.c"
     if not viewport_path.exists():
         errors.append(f"missing {viewport_path}")

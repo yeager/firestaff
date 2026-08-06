@@ -99,6 +99,14 @@
   placeholder. The HUD still rejects every other absent or malformed portrait
   material and does not create a host portrait.
 
+# DM2 inferred dungeon parser removal (2026-08-06)
+
+- ✅ Removed the retired 16-bit descriptor/tile parser from the world-model
+  source. It could only infer DM1-like map structure after the authentic G1
+  loader had rejected a buffer.
+- ✅ The production boundary now rejects restoration of that parser. The sole
+  remaining world route is the source-validated G1 byte-square loader.
+
 # DM1 mirror C040 panel-exit synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040 close/reopen panel fixture from M10. It
