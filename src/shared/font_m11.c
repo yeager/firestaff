@@ -361,6 +361,59 @@ int M11_Font_DrawString(
     return totalWidth;
 }
 
+int M11_Font_DrawF31CEDTAsciiString(
+    const M11_FontState* font,
+    unsigned char* framebuffer,
+    int fbWidth,
+    int fbHeight,
+    int dstX,
+    int baselineY,
+    const char* text,
+    unsigned char fgColor,
+    int bgColor)
+{
+    const unsigned char *cursor;
+    int totalWidth = 0;
+    int glyphTop;
+
+    if (!font || !font->loaded || !framebuffer || !text ||
+        fbWidth <= 0 || fbHeight <= 0 || bgColor < 0 || bgColor > 255) {
+        return 0;
+    }
+
+    /* ReDMCSB CEDTTXT.C F7338_: F31E calls F7337_ to colour the raw M653
+     * bitmap, then takes five pixels at ((ASCII - 0x20) * 8) + 3 and moves
+     * six pixels per character.  P3629 is the source baseline; F7338_ adds
+     * G7091=1, then draws the six-pixel glyph ending at that coordinate. */
+    glyphTop = baselineY - 4;
+    for (cursor = (const unsigned char *)text; *cursor; ++cursor) {
+        int fontX;
+        int row;
+        int col;
+
+        /* F7338_ receives only the CEDT ASCII label pool here.  The F31J
+         * Shift-JIS route is F0952_JAPANESE_Print and must stay separate. */
+        if (*cursor < 0x20u || *cursor > 0x65u) {
+            return 0;
+        }
+        fontX = ((int)*cursor - 0x20) * M11_FONT_CHAR_CELL_WIDTH + 3;
+        for (row = 0; row < M11_FONT_CHAR_VISIBLE_H; ++row) {
+            for (col = 0; col < 5; ++col) {
+                int x = dstX + totalWidth + col;
+                int y = glyphTop + row;
+                if (x < 0 || x >= fbWidth || y < 0 || y >= fbHeight) {
+                    continue;
+                }
+                framebuffer[y * fbWidth + x] =
+                    M11_Font_GetPixel(font, fontX + col, row)
+                        ? fgColor : (unsigned char)bgColor;
+            }
+        }
+        totalWidth += 6;
+    }
+    return totalWidth;
+}
+
 int M11_Font_MeasureString(const char* text) {
     int width = 0;
     if (!text) return 0;

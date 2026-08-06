@@ -1,4 +1,5 @@
 #include "csb_v1_fmtowns_graphics_dat.h"
+#include "font_m11.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -99,6 +100,34 @@ static void test_raw_record_copy(void) {
                data, size, item, raw, sizeof(raw), &receipt) == 0,
            "raw copy rejects compressed source data");
     free(data);
+}
+
+static void test_f31_cedt_ascii_font_metrics(void) {
+    M11_FontState font;
+    uint8_t bitmap[M11_FONT_BITMAP_BYTES];
+    uint8_t framebuffer[24 * 24];
+    const int glyph_x = ((int)'A' - 0x20) * 8 + 3;
+    int row;
+
+    memset(bitmap, 0, sizeof(bitmap));
+    for (row = 0; row < 6; ++row) {
+        bitmap[row * 128 + glyph_x / 8] |=
+            (uint8_t)(0x80u >> (glyph_x & 7));
+    }
+    M11_Font_Init(&font);
+    ASSERT(M11_Font_LoadFromRawBitmap(&font, 695, bitmap, sizeof(bitmap)) == 1,
+           "F31 CEDT metric fixture binds raw M653");
+    memset(framebuffer, 0x7eu, sizeof(framebuffer));
+    ASSERT(M11_Font_DrawF31CEDTAsciiString(
+               &font, framebuffer, 24, 24, 4, 12, "A", 15, 0) == 6,
+           "F31 CEDT advances six pixels per ASCII glyph");
+    ASSERT(framebuffer[8 * 24 + 4] == 15 &&
+           framebuffer[13 * 24 + 4] == 15 &&
+           framebuffer[8 * 24 + 5] == 0,
+           "F31 CEDT uses ASCII-minus-0x20, five pixels and baseline placement");
+    ASSERT(M11_Font_DrawF31CEDTAsciiString(
+               &font, framebuffer, 24, 24, 0, 8, "\x82", 15, 0) == 0,
+           "F31 CEDT ASCII route rejects Japanese bytes");
 }
 
 static void test_real_data(void) {
@@ -307,6 +336,7 @@ int main(void) {
     test_probe_wrong_marker();
     test_probe_wrong_count();
     test_raw_record_copy();
+    test_f31_cedt_ascii_font_metrics();
     test_real_data();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);

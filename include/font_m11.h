@@ -95,6 +95,23 @@ int M11_Font_DrawString(
     int bgColor,
     int scale
 );
+/* FM Towns C06_CEDT's F7338_ text path is not the PC34 inscription path:
+ * it addresses printable ASCII from character 0x20, draws five pixels from
+ * each eight-pixel cell, advances six pixels and receives a baseline Y.
+ * This entry point preserves those source metrics for F31 English CEDT
+ * surfaces. It rejects bytes outside the CEDT M653 source window rather
+ * than substituting a host glyph. */
+int M11_Font_DrawF31CEDTAsciiString(
+    const M11_FontState* font,
+    unsigned char* framebuffer,
+    int fbWidth,
+    int fbHeight,
+    int dstX,
+    int baselineY,
+    const char* text,
+    unsigned char fgColor,
+    int bgColor
+);
 int M11_Font_MeasureString(const char* text);
 
 #ifdef __cplusplus

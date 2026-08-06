@@ -629,7 +629,16 @@
   `FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR`, the scanner-materialized F31 runtime
   root, before considering the legacy private data layout. It verifies both
   `CDATA` and `CJDATA` on the real cache, including C695/M653's 768-byte raw
-  `NOT_EXPANDED` record. English and Japanese cache runs pass 36/36 checks.
+  `NOT_EXPANDED` record. English and Japanese cache runs pass 40/40 checks.
+
+# CSB FM Towns C06 text metrics (2026-08-06)
+
+- ✅ Added the separate F31E `CEDTTXT.C F7338_` renderer contract for C06:
+  printable-ASCII-minus-`0x20`, five source pixels, six-pixel advance and
+  baseline placement. It consumes only the admitted raw C695/M653 bitmap and
+  rejects Shift-JIS, which remains owned by the unbound
+  `F0952_JAPANESE_Print` path. The FM Towns graphics regression pins those
+  metrics and passes 40/40 checks against both real cache roots.
 
 - ✅ 2026-08-06 CSB FM Towns M653 font material: F31 `GRAPHICS.DAT` record
   C695 is now copied as its original 768-byte, one-bit `NOT_EXPANDED` font
