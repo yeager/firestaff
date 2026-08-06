@@ -11,6 +11,13 @@
   external CDDA files instead of being mistaken for a complete runnable disc;
   this is a readiness correction only and does not claim audio playback.
 
+- ✅ 2026-08-06 Nexus MENU.BPK prerequisite-status correction: a canonical
+  stored or bounded-decoded route remains blocked as `SATURN_PRESENTATION`
+  when the PALT/VDP1 capture is absent. The final handoff normalization no
+  longer relabels that route as `READY_STORED`; the dedicated renderer-handoff
+  regression covers both blocked routes and the explicitly admitted capture
+  route.
+
 - ✅ 2026-08-06 DM2 square-actuator failure contract: the public
   coordinate-only DB3 entry now returns failure when its original DB3/DB14
   payload, link and timer transaction are unavailable. It already made no

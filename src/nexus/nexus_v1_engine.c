@@ -11588,6 +11588,13 @@ nexus_v1_menu_bpk_prs3_prerequisite_from_handoff(
             ? NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_ARCHIVE_MISSING
             : NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SOURCE_UNVERIFIED;
     }
+    if (handoff->blocks_real_menu_surface_render &&
+        (handoff->status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED ||
+         handoff->status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_DECODED)) {
+        /* A source-authenticated surface still needs the Saturn
+         * presentation capture before it is a renderer handoff. */
+        return NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION;
+    }
     switch (handoff->status) {
     case NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED:
         return NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_READY_STORED;
@@ -11715,6 +11722,7 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
     /* Stored original bytes may be presented by their own route, but no
      * BPK status ever authorizes a generated replacement surface. */
     out_receipt->fallback_visuals_permitted = 0;
+    /* Preserve SATURN_PRESENTATION below when the source is not drawable. */
     out_receipt->prs3_prerequisite_status =
         nexus_v1_menu_bpk_prs3_prerequisite_from_handoff(out_receipt);
     return 0;

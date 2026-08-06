@@ -76,6 +76,12 @@ static void check_decode_route(Nexus_V1_BpkRuntimeDecodeRoute route,
            "renderable stored-surface flag follows the route");
     expect(receipt.blocks_real_menu_surface_render == blocks_render,
            "MENU.BPK routes expose the strict render blocker");
+    if (route == NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED ||
+        route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED) {
+        expect(receipt.prs3_prerequisite_status ==
+                   NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION,
+               "stored/decoded MENU.BPK routes retain the presentation blocker");
+    }
     expect(!receipt.fallback_visuals_permitted,
            "MENU.BPK renderer handoff never admits synthetic fallback");
 }

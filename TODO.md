@@ -115,6 +115,10 @@
   counts and hashes remain diagnostic evidence; no decoded pixels, upload row,
   renderer handoff or fallback surface is marked ready without the missing
   Saturn CLUT/VDP1 capture.
+  2026-08-06 follow-up: the renderer prerequisite normalizer no longer
+  overwrites a `SATURN_PRESENTATION` block with `READY_STORED` after a
+  source-authenticated stored/decoded route is found. The menu handoff now
+  preserves the missing-capture status all the way to the caller.
 
 - **NEXUS-PLRD-FIXTURE-QUARANTINE:** The inferred 24-name champion roster is
   no longer compiled into `firestaff_nexus`; it is isolated in the explicit
