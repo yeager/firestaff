@@ -478,6 +478,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/archive.lzh");
     remove("asset_find_by_hash_test_tmp/archive.tgz");
     remove("asset_find_by_hash_test_tmp/archive.7z");
+    remove("asset_find_by_hash_test_tmp/nested_amiga.adf.7z");
     remove("asset_find_by_hash_test_tmp/archive.dmg");
     remove("asset_find_by_hash_test_tmp/renamed_tar.payload");
     remove("asset_find_by_hash_test_tmp/packed_payload.bin");
@@ -491,6 +492,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/cue_b.payload");
     remove("asset_find_by_hash_test_tmp/split.cue");
     remove("asset_find_by_hash_test_tmp/chaos.adf");
+    remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
     RMDIR("asset_find_by_hash_test_tmp/nested");
     RMDIR("asset_find_by_hash_test_tmp");
 }
@@ -1113,6 +1115,34 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/amiga_disk.adf");
     remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT");
+
+    /* Real Amiga releases are commonly distributed as a 7z containing an
+     * OFS ADF. The scanner must hash the filesystem member, then materialize
+     * that same member rather than treating the disk image as an opaque file. */
+    if (write_adf_fixture("asset_find_by_hash_test_tmp/nested_amiga.adf") &&
+        system("command -v 7zz >/dev/null 2>&1 && "
+               "(cd asset_find_by_hash_test_tmp && "
+               "7zz a -t7z nested_amiga.adf.7z nested_amiga.adf >/dev/null 2>&1)") == 0) {
+        remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
+        memset(outPath, 0, sizeof(outPath));
+        if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                               outPath, (int)sizeof(outPath), 2) ||
+            !path_has_virtual_entry(outPath, "nested_amiga.adf.7z",
+                                    "nested_amiga.adf::GRAPHICS.DAT")) {
+            cleanup_fixture();
+            fprintf(stderr, "nested 7z/ADF filesystem lookup failed: %s\n", outPath);
+            return 1;
+        }
+        if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+            !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+            cleanup_fixture();
+            fprintf(stderr, "nested 7z/ADF filesystem extraction failed: %s\n", outPath);
+            return 1;
+        }
+        remove("asset_find_by_hash_test_tmp/extracted.dat");
+    }
+    remove("asset_find_by_hash_test_tmp/nested_amiga.adf.7z");
+    remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
 
     if (!write_iso_fixture("asset_find_by_hash_test_tmp/disc.iso")) {
         cleanup_fixture();
