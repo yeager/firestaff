@@ -1,3 +1,13 @@
+# DM1 C040 reshuffle synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C040 reshuffle fixture from M10. It fabricates
+  party, chest and leader-hand state, has no original DM1 data input or
+  M11/runtime caller, and its explicit regression now compiles the source
+  directly.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_reshuffle_panel_live_pc34_compat`
+  passes with 307 assertions; the source object is absent from both M10 and
+  M11 archives.
+
 # DM2 CREATURES AI-row ownership for absent profile fields (2026-08-12)
 
 - ✅ The production AI loader now requires the source-owned
