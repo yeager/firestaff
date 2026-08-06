@@ -8793,6 +8793,19 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-06 CSB Amiga 3.1 English ADF scanner admission: registered the
+  original A31E `GRAPHICS.DAT` MD5
+  `21197b1d4994fd835c403d5a33dcac2b` across the M12 profile catalog, runtime
+  discovery, boot profile mapping and M11 launch gate. This fixes the real
+  failure where a verified ADF yielded `DUNGEON.DAT` but was still reported as
+  CSB MISSING because its graphics identity had been omitted. The mapping is
+  source-bound to ReDMCSB `COMPILE.H:199-243` (`MEDIA 37`, A31E), keeps the
+  later A35E profile distinct, and is covered by the CSB boot-profile smoke
+  test. A fresh scan of the original 901,120-byte ADF now reports CSB READY
+  and materializes the authenticated graphics/dungeon pair to the local asset
+  cache. This establishes only source-media admission and handoff; title,
+  entrance, HUD and viewport parity remain independently capture-gated.
+
 - ✅ 2026-08-06 Theron regional font-tile intake: `test_theron_v1_font_tiles`
   now reads the supplied `TQUS02.bin` and `TQJP02.bin` automatically from
   `.firestaff/data/theron/`, with environment overrides preserved. It verifies

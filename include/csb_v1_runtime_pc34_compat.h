@@ -469,6 +469,9 @@ typedef enum {
      * IMAGE2.C F0689 supplies their IMG2 expansion path. */
     CSB_V1_VARIANT_FMTOWNS_EN        = 9,   /* FM Towns English        MEDIA669 F31E */
     CSB_V1_VARIANT_FMTOWNS_JA        = 10,  /* FM Towns Japanese       MEDIA687 F31J */
+    /* ReDMCSB COMPILE.H:199-243 selects the original A31E program/media
+     * family.  Keep this distinct from the later A35E title/runtime path. */
+    CSB_V1_VARIANT_AMIGA31_EN         = 11,  /* Amiga 3.1 English       MEDIA37 A31E */
     CSB_V1_VARIANT_COUNT
 } CSB_V1_VariantId;
 

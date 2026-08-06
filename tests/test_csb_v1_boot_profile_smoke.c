@@ -307,6 +307,28 @@ static void test_fmtowns_media_registry(void)
           "M11 gate accepts the authenticated FM Towns Japanese pair");
 }
 
+static void test_amiga31_media_registry(void)
+{
+    const CSB_V1_VariantInfo *amiga31;
+    char reason[256];
+
+    amiga31 = csb_v1_runtime_get_variant_info(CSB_V1_VARIANT_AMIGA31_EN);
+    CHECK(amiga31 && strcmp(amiga31->name, "Amiga 3.1 English") == 0 &&
+          strcmp(amiga31->media_ref, "MEDIA37:A31E") == 0 &&
+          strcmp(amiga31->md5_gfx,
+                 "21197b1d4994fd835c403d5a33dcac2b") == 0 &&
+          strcmp(amiga31->md5_dungeon,
+                 "6695d2acebce49f95db1d8f3a5c733de") == 0,
+          "Amiga 3.1 English profile preserves the original A31E hashes");
+    CHECK(csb_v1_runtime_variant_from_hint("amiga31_en") ==
+              CSB_V1_VARIANT_AMIGA31_EN,
+          "Amiga 3.1 launcher hint selects the A31E runtime profile");
+    CHECK(csb_v1_boot_graphics_dungeon_m11_entry_gate(
+              amiga31->md5_gfx, amiga31->md5_dungeon,
+              reason, sizeof(reason)) == 1,
+          "M11 gate accepts the authenticated Amiga 3.1 English pair");
+}
+
 static void test_fmtowns_startup_surface_decode(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_FMTOWNS_GRAPHICS");
@@ -476,6 +498,7 @@ int main(void)
     test_enter_loads_verified_dungeon_context();
     test_source_evidence();
     test_fmtowns_media_registry();
+    test_amiga31_media_registry();
     test_fmtowns_startup_surface_decode();
     test_fmtowns_authenticated_startup_session();
     test_fmtowns_game_program_handoff();

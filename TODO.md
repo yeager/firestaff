@@ -5,9 +5,11 @@
   into the launch cache instead of showing both files as FOUND and the game
   as MISSING. The M12 profile store now accommodates every declared profile,
   rather than truncating after seven entries. Continue the same real-media
-  audit for CSB's Amiga ADF, Atari ST and FM Towns packages, and report the
-  matched platform/profile whenever only a partial or unsupported package is
-  present.
+  audit for CSB's Atari ST and FM Towns packages, and report the matched
+  platform/profile whenever only a partial or unsupported package is present.
+  The verified original Amiga 3.1 English ADF (A31E) now materializes and
+  launches; keep the remaining title/entrance capture work separate from this
+  data-admission boundary.
 
 - **NEXUS-DGN-MATERIAL-ISO-RECEIPT:** The extracted European retail layout now
   authenticates `SN_FLOOR.MNS` and `SN_WALL.MNS` from the co-located Track 1

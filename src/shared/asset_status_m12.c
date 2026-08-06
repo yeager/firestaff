@@ -310,6 +310,10 @@ static const M12_VersionSpec g_dm1Versions[] = {
 
 static const M12_VersionSpec g_csbVersions[] = {
     {"csb", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_csbGraphicsNames, "61fbfd56887c94adc26888a9491c6611", M12_ARCH_PC},
+    /* ReDMCSB COMPILE.H:199-243: A31E is the original Amiga 3.1 English
+     * media family.  Its GRAPHICS.DAT identity is also recorded by the
+     * Amiga decoder and data validator; scanner and M11 must admit it. */
+    {"csb", "amiga31-en", "Amiga 3.1 English", "Amiga 3.1 EN", g_csbGraphicsNames, "21197b1d4994fd835c403d5a33dcac2b", M12_ARCH_AMIGA},
     {"csb", "st20-21-en", "Atari ST 2.0/2.1 English", "ST 2.1 EN", g_csbGraphicsNames, "ebf6a57af3f27782e358c0490bfd2f2e", M12_ARCH_ATARI_ST},
     {"csb", "st20-21-hd-en", "Atari ST 2.x English hard-disk", "ST 2.x HD", g_csbGraphicsNames, "e0ce7ac5160ca5540e90cf09ab9fad49", M12_ARCH_ATARI_ST},
     {"csb", "amiga35-en", "Amiga 3.5 English", "Amiga 3.5 EN", g_csbGraphicsNames, "291e1bc6803e3dc4b974c60117ca5d68", M12_ARCH_AMIGA},

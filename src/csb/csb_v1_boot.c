@@ -33,6 +33,8 @@
 
 static const char *const g_csb_boot_graphics_hashes[] = {
     "61fbfd56887c94adc26888a9491c6611",
+    /* ReDMCSB COMPILE.H:199-243: original A31E media family. */
+    "21197b1d4994fd835c403d5a33dcac2b",
     "ebf6a57af3f27782e358c0490bfd2f2e",
     "e0ce7ac5160ca5540e90cf09ab9fad49",
     "291e1bc6803e3dc4b974c60117ca5d68",
@@ -44,6 +46,7 @@ static const char *const g_csb_boot_graphics_hashes[] = {
 
 static const CSB_V1_VariantId g_csb_boot_graphics_variants[] = {
     CSB_V1_VARIANT_PC34_EN,
+    CSB_V1_VARIANT_AMIGA31_EN,
     CSB_V1_VARIANT_ST21_EN,
     CSB_V1_VARIANT_ST21_EN,
     CSB_V1_VARIANT_AMIGA35_EN,
@@ -8610,6 +8613,7 @@ void csb_v1_boot_print_summary(const CSB_V1_BootProfile *profile)
  *   load is gated on a hash-known dungeon header). */
 static const char *const g_csb_m11_entry_graphics_hashes[] = {
     "61fbfd56887c94adc26888a9491c6611", /* PC DOS 3.4 English         MEDIA278 */
+    "21197b1d4994fd835c403d5a33dcac2b", /* Amiga 3.1 English          MEDIA37 */
     "ebf6a57af3f27782e358c0490bfd2f2e", /* Atari ST 2.0/2.1 English   MEDIA332 */
     "e0ce7ac5160ca5540e90cf09ab9fad49", /* Atari ST 2.x hard-disk     MEDIA332 */
     "291e1bc6803e3dc4b974c60117ca5d68", /* Amiga 3.5 English          MEDIA529 */

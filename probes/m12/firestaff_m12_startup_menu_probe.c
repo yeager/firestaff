@@ -389,7 +389,7 @@ int main(void) {
                      M12_AssetStatus_GameHasCompleteHashSet("nexus") == 1 &&
                      M12_AssetStatus_GameHasCompleteHashSet("theron") == 1 &&
                      M12_AssetStatus_GameKnownHashCount("dm1") == 15U &&
-                     M12_AssetStatus_GameKnownHashCount("csb") == 7U &&
+                     M12_AssetStatus_GameKnownHashCount("csb") == 8U &&
                      M12_AssetStatus_GameKnownHashCount("dm2") == 6U &&
                      M12_AssetStatus_GameKnownHashCount("nexus") == 2U &&
                      M12_AssetStatus_GameKnownHashCount("theron") == 4U,

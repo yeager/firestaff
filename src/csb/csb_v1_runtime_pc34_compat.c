@@ -800,6 +800,7 @@ static int csb_v1_runtime_skin_cache_record_lookup(
  * layouts, CSB expansion sets) are found. */
 static const char *const g_csb_graphics_hashes[] = {
     "61fbfd56887c94adc26888a9491c6611", /* CSB PC 3.4 English GRAPHICS.DAT */
+    "21197b1d4994fd835c403d5a33dcac2b", /* CSB Amiga 3.1 English GRAPHICS.DAT */
     "ebf6a57af3f27782e358c0490bfd2f2e", /* CSB Atari ST 2.0/2.1 English */
     "e0ce7ac5160ca5540e90cf09ab9fad49", /* CSB Atari ST 2.x hard-disk */
     "291e1bc6803e3dc4b974c60117ca5d68", /* CSB Amiga 3.5 English */
@@ -908,10 +909,19 @@ static const CSB_V1_VariantInfo g_csb_variants[CSB_V1_VARIANT_COUNT] = {
         "761d6fc588b31aeaaa9caf3725e111b9",
         "761d6fc588b31aeaaa9caf3725e111b9",
         "7ca51c17ef8bd542ca5f0273672ec1a5"
+    },
+    [CSB_V1_VARIANT_AMIGA31_EN] = {
+        CSB_V1_VARIANT_AMIGA31_EN,
+        "Amiga 3.1 English",
+        /* ReDMCSB COMPILE.H:199-243: A31E media is 37. */
+        "MEDIA37:A31E",
+        "21197b1d4994fd835c403d5a33dcac2b",
+        "21197b1d4994fd835c403d5a33dcac2b",
+        "6695d2acebce49f95db1d8f3a5c733de"
     }
 };
 
-_Static_assert(CSB_V1_VARIANT_FMTOWNS_JA == CSB_V1_VARIANT_COUNT - 1,
+_Static_assert(CSB_V1_VARIANT_AMIGA31_EN == CSB_V1_VARIANT_COUNT - 1,
                "CSB_V1_VARIANT_COUNT must match last enum value");
 
 /* ── Platform-specific save dir ────────────────────────────────────── */
@@ -1179,6 +1189,7 @@ CSB_V1_VariantId csb_v1_runtime_variant_from_hint(const char *version_hint)
         { "st21_en",      CSB_V1_VARIANT_ST21_EN },
         { "amiga35_en",   CSB_V1_VARIANT_AMIGA35_EN },
         { "amiga35_multi", CSB_V1_VARIANT_AMIGA35_MULTI },
+        { "amiga31_en",   CSB_V1_VARIANT_AMIGA31_EN },
         { "st_f20j",      CSB_V1_VARIANT_ST_F20J },
         { "st_f20e",      CSB_V1_VARIANT_ST_F20E }
     };
