@@ -5202,6 +5202,15 @@ list(REMOVE_ITEM M10_SOURCES
 # available.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_ccm.c")
+# The projectile dispatch/step/collision studies own a private fixture list.
+# Runtime has no authenticated DB14 + CCM + timer producer yet, so linking
+# them would permit test-authored missile state to reach a game frame. Their
+# direct tests and probes compile them explicitly; product DM2 keeps the
+# projectile viewport empty until the original transaction is imported.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_step_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c")
 # This contract probe seeds a 10x10 synthetic room-skin fixture and is used
 # exclusively by its unit test.  Keep it out of the production M10 archive:
 # the live CSB viewport must consume only source-bound dungeon/material data.

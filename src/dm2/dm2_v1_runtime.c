@@ -30,8 +30,6 @@
 #include "dm2_v1_gdat_hud_m11_command.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_gdat_door_overlay_m11_command.h"
-#include "dm2_v1_projectile_pc34_compat.h"
-#include "dm2_v1_projectile_step_pc34_compat.h"
 #include "dm2_v1_actuator_event_pc34_compat.h"
 #include "dm2_v1_proceed_timers_pc34_compat.h"
 #include "dm2_v1_spell_timer_handlers_pc34_compat.h"
@@ -4642,18 +4640,13 @@ void dm2_v1_runtime_tick(void) {
      *         (DM2_PROCEED_TIMERS), c_ai.cpp (DM2_THINK_CREATURE),
      *         skcrture.cpp:6380-6430 (ALLOC_NEW_CREATURE). */
 
-    /* Phase 5+ extension: step then drain DM2 projectile list into
-     * M11-ready cache.  The step path applies the STEP_MISSILE
-     * energy-decay + despawn boundary (skproject/SKULLWIN/c_tim_proc.cpp
-     * m_7CE0/m_7D2A), so the drain reflects only post-step survivors.
-     * Without this step the cache would grow without bound and the
-     * runtime viewport would draw stale projectiles forever.
-     * Source: skproject/SKULLWIN/c_tim_proc.cpp:442-563   (DM2_STEP_MISSILE)
-     *         skproject/SKULLWIN/c_render.cpp              (projectile draw)
-     *         ReDMCSB DUNGEON.C:2362-2387                  (F0209 visible)
-     */
-    g_dm2_projectile_drain_count = dm2_v1_projectile_step_and_drain(
-        g_dm2_projectile_drain, DM2_DRAIN_MAX_PROJECTILES, NULL);
+    /* The former cache drained a module-private fixture list. No live G1
+     * DB14 record, CCM payload and timer transaction currently own a DM2
+     * projectile producer, so stepping it could only advance test-authored
+     * missiles. Keep the viewport empty until the original STEP_MISSILE
+     * owner is imported. Source: skproject/SKWIN/c_tim_proc.cpp
+     * DM2_STEP_MISSILE; c_creature.cpp DM2_PROCEED_CCM. */
+    g_dm2_projectile_drain_count = 0;
 }
 
 /*

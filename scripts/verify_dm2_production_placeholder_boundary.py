@@ -33,6 +33,9 @@ EXPECTED_REMOVALS = {
         "dm2_v1_gdatfile_pc34_compat.c",
         "dm2_v1_sfx_pc34_compat.c",
         "dm2_v1_ccm.c",
+        "dm2_v1_projectile_pc34_compat.c",
+        "dm2_v1_projectile_step_pc34_compat.c",
+        "dm2_v1_projectile_creature_collision_pc34_compat.c",
     },
     "DM2_SOURCES": {
         "dm2_v1_hud_panel_routing.c",

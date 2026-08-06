@@ -86,6 +86,13 @@
   authenticated byte-square DM2 media only (DOS, FM Towns, PC-9821, Mac,
   Amiga and Mega CD); unknown bytes fail closed rather than becoming a dungeon.
 
+# DM2 fixture projectile chain removed from the runtime (2026-08-07)
+
+- ✅ Removed the standalone projectile dispatch/step/collision fixture chain
+  from M10 and the runtime tick. It had no authenticated G1 DB14, CCM or
+  timer owner, so the production viewport remains empty instead of advancing
+  test-authored missiles.
+
 # DM1 mirror cancel-rotation synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C040/C162 rotation fixture from M10. Its
