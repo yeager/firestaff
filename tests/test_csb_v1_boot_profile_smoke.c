@@ -345,6 +345,29 @@ static void test_fmtowns_startup_surface_decode(void)
     CHECK_FMTOWNS_STARTUP_SURFACE(
         5u, 320, 200, "FM Towns C005 reaches the credits IMG2 surface route");
 #undef CHECK_FMTOWNS_STARTUP_SURFACE
+
+    /* ReDMCSB F31E/F31J ENTRANCE.C F0807 releases the title/door sequence
+     * into PANEL.C F0346/F0347, which consumes the real C017 and C040
+     * terminal surfaces.  Do not enable the separate CHTWE/CHTWJ Game
+     * handoff until both source records decode as bounded four-bit assets. */
+#define CHECK_FMTOWNS_HUD_SURFACE(index, label)                           \
+    do {                                                                   \
+        memset(&receipt, 0, sizeof(receipt));                             \
+        CHECK(csb_v1_boot_decode_graphics_dat_asset_pc34(                 \
+                  path, (index), &pixels, &width, &height, &receipt) &&  \
+              pixels && width > 0 && height > 0 && receipt.valid &&      \
+              receipt.ended_at_record_boundary &&                         \
+              receipt.indexed_colors_are_4bit &&                          \
+              receipt.compressed_record_sha256[0] != '\0',              \
+              (label));                                                    \
+        free(pixels);                                                      \
+        pixels = NULL;                                                     \
+    } while (0)
+    CHECK_FMTOWNS_HUD_SURFACE(
+        17u, "FM Towns C017 decodes as source-owned live HUD material");
+    CHECK_FMTOWNS_HUD_SURFACE(
+        40u, "FM Towns C040 decodes as source-owned panel material");
+#undef CHECK_FMTOWNS_HUD_SURFACE
 }
 
 int main(void)
