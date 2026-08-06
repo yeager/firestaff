@@ -34,9 +34,14 @@ placeholder or fallback image is presented as game evidence.
 
 ### Dungeon Master v1
 
-| Presents / startup | Entrance | Dungeon viewport | HUD / HoC route |
-|--------------------|----------|------------------|-----------------|
-| ![Dungeon Master v1 Presents runtime capture](docs/screenshots/dm1-v1-runtime-presents-macos.png) | ![Dungeon Master v1 Entrance runtime capture](docs/screenshots/dm1-v1-runtime-entrance-macos.png) | ![Dungeon Master v1 dungeon runtime capture](docs/screenshots/dm1-v1-runtime-dungeon-macos.png) | ![Dungeon Master v1 HUD runtime capture](docs/screenshots/dm1-v1-runtime-hud.png) |
+Fresh captures below are real Firestaff runtime frames from 6 August 2026,
+using the original PC DOS 3.4 `GRAPHICS.DAT`, `DUNGEON.DAT` and a real
+`DMSAVE.DAT`. They show the current playable DM1 v1 path, including movement
+and the in-game HUD.
+
+| Dungeon viewport | Movement / floor object | HUD / party |
+|------------------|-------------------------|-------------|
+| ![DM1 v1 real dungeon runtime capture](docs/screenshots/dm1-v1-readme-dungeon-real-20260806.png) | ![DM1 v1 real movement runtime capture](docs/screenshots/dm1-v1-readme-movement-real-20260806.png) | ![DM1 v1 real HUD runtime capture](docs/screenshots/dm1-v1-readme-hud-real-20260806.png) |
 
 Additional DM1 v1 in-game captures from the verified save/runtime routes:
 
@@ -91,7 +96,7 @@ source-reference boundaries for all five games.
 
 | Platform | Status | Data directory |
 |----------|--------|---------------|
-| macOS | DM1 v1 playable; Apple Silicon runtime-verified | `~/.firestaff/data/` |
+| macOS | **DM1 v1 playable; Apple Silicon runtime-verified** | `~/.firestaff/data/` |
 | Linux | Build target; packaged DM1 v1 runtime verification pending | `~/.firestaff/data/` |
 | Windows | Build target; packaged DM1 v1 runtime verification pending | `%USERPROFILE%\.firestaff\data\` |
 | Steam Deck | Linux/AppImage target; packaged DM1 v1 verification pending | `~/.firestaff/data/` |
@@ -276,7 +281,7 @@ Launcher UI (M12)
 ## Languages
 
 The only currently playable game is **DM1 v1**, and its verified runtime
-language is **English**. The launcher has gettext catalogs and
+language is **English**. The launcher has UTF-8/gettext catalog and
 language-selection plumbing, including Swedish, but that does not yet mean
 that every menu, runtime message, font and game asset is fully translated.
 Swedish and other languages remain development targets until complete runtime
@@ -285,7 +290,7 @@ playable language/runtime claim yet.
 
 | Language | Current status |
 |----------|----------------|
-| English | Verified for the DM1 v1 playable path on macOS |
+| English | **Verified for the DM1 v1 playable path on macOS** |
 | Swedish | Launcher/catalog plumbing present; full DM1 v1 runtime verification pending |
 | Other languages | Catalog and complete runtime verification pending |
 
