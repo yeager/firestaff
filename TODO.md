@@ -27710,14 +27710,17 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   Decompression and tile/map/object publication remain gated.
 
 - [ ] THERON-V1-TRACK02-VRAM-CONSUMER: bind the real VDC BAT/tile and VCE
-  palette snapshot to the source-owned square/material/UI consumer. A native
-  SDL2 Mednafen capture now emits exact 64 KiB VRAM and 1 KiB VCE snapshots;
-  the production viewport can explicitly mount that pair through
+  palette snapshot to the source-owned square/material/UI consumer. An
+  instrumented Mednafen replay now emits exact 64 KiB VRAM and 1 KiB VCE
+  snapshots; the production viewport can explicitly mount that pair through
   `FIRESTAFF_THERON_VRAM_SNAPSHOT` and `FIRESTAFF_THERON_VCE_SNAPSHOT`, and
-  verifies 219 BAT tile bindings plus 512 palette entries. This remains a
-  capture-side bank binding: `$2600` source-LBA joins, object/level records,
-  square-to-tile semantics, and production dungeon/UI admission remain
-  blocked until the HuC6280 consumer is disassembled and tied to Track 02.
+  the real-capture regression verifies non-zero BAT/tile data, 154 tile/palette
+  pairs and 512 palette entries. This remains a screen-space capture binding:
+  `$2600` source-LBA joins, object/level records, square-to-tile semantics,
+  and production dungeon/UI admission remain blocked until the HuC6280
+  consumer is disassembled and tied to Track 02. The current instrumented
+  build uses SDL 2.32.70 through `sdl2-compat` with dummy video, so it does
+  not claim native Quartz/SDL2 capture parity.
 
 - [ ] THERON-V1-HUC6280-RAM-CONSUMER: the real US/JP bank-$1f static support
   fragment at `$243e` is now byte-verified in both retail ISO projections.

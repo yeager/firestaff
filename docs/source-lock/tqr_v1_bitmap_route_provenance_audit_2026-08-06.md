@@ -47,14 +47,18 @@ inspection and tests, while color and viewport rendering remain fail-closed.
 
 The authenticated US capture now supplies a complete raw VDC VRAM snapshot
 (65,536 bytes) and VCE snapshot (1,024 bytes), alongside the expected US
-Track 02 MD5 `f23601102138f87c33025877767ebf76` and System Card MD5
+Track 02 MD5 `ceb02343868f80cec899e9b239aff2da` and System Card MD5
 `ff1a674273fe3540ccef576376407d1d`. The production viewport binds those
-snapshots only when both paths are explicitly supplied. The BAT window then
-binds 157 real tile/palette pairs and presents 10,014 non-zero indexed pixels
-to M11; the VCE snapshot contributes 512 palette entries.
+snapshots only when both paths are explicitly supplied. The capture-side
+regression observed 154 real tile/palette pairs and presented 9,954
+non-zero indexed pixels to M11; the VCE snapshot contributes 512 palette
+entries.
 
 This closes the old production no-op for a captured screen-space frame. It
 does not identify a dungeon square, object, level, or post-startup consumer:
 `theron_vp_render_dungeon()` replays the captured BAT window without assigning
 its cells to the world model, and the no-snapshot path remains no-draw. The
 consumer/handoff gate therefore stays closed for forcefield-to-dungeon entry.
+The operator replay used the instrumented Mednafen build with SDL 2.32.70
+through `sdl2-compat` and a dummy video driver; it is authentic emulator
+memory state, but not native Quartz/SDL2 capture evidence.

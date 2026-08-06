@@ -1,3 +1,18 @@
+# Theron authentic VDC/VCE screen-space capture (2026-08-06)
+
+- ✅ A clean SIGINT shutdown of the instrumented Mednafen replay now emits
+  the complete authentic US Track 02 VDC/VCE state: 65,536-byte VRAM and
+  1,024-byte VCE snapshots, from the hash-verified ISO and real System Card.
+- ✅ The production viewport already mounts both snapshots only through the
+  explicit `FIRESTAFF_THERON_VRAM_SNAPSHOT`/
+  `FIRESTAFF_THERON_VCE_SNAPSHOT` route. The real-capture regression reports
+  154 BAT tile/palette pairs, 512 palette entries and 9,954 non-zero indexed
+  pixels presented to M11; no inferred square/object meaning is published.
+- ✅ `capture_theron_mednafen_live_trace.sh` now defaults to SIGINT for the
+  bounded emulator shutdown, so the Mednafen snapshot hook runs on clean exit.
+  The capture used SDL 2.32.70 through `sdl2-compat` with dummy video; it is
+  authentic emulator memory evidence, not native Quartz/SDL2 evidence.
+
 # Theron real main-RAM loader capture parser correction (2026-08-06)
 
 - ✅ A fresh replay against the supplied hash-verified US Track 02 ISO and

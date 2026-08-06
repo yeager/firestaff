@@ -8,6 +8,7 @@ system_card=${THERON_SYSTEM_CARD:-}
 trace=${THERON_LIVE_TRACE_OUTPUT:-}
 seconds=${THERON_CAPTURE_SECONDS:-45}
 capture_startup_grace=${THERON_CAPTURE_STARTUP_GRACE:-30}
+capture_shutdown_signal=${THERON_CAPTURE_SHUTDOWN_SIGNAL:-INT}
 capture_sdl_video_driver=${THERON_CAPTURE_SDL_VIDEODRIVER:-dummy}
 configured_home=${THERON_MEDNAFEN_HOME:-}
 host_key=${THERON_CAPTURE_HOST_KEY:-}
@@ -199,6 +200,10 @@ if [[ ! "$capture_startup_grace" =~ ^[1-9][0-9]*$ ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_STARTUP_GRACE must be a positive integer' >&2
     exit 1
 fi
+if [[ "$capture_shutdown_signal" != INT && "$capture_shutdown_signal" != TERM ]]; then
+    printf '%s\n' 'FAIL: THERON_CAPTURE_SHUTDOWN_SIGNAL must be INT or TERM' >&2
+    exit 1
+fi
 if [[ -n "$configured_home" && ! -d "$configured_home" ]]; then
     printf '%s\n' 'FAIL: THERON_MEDNAFEN_HOME must name an existing Mednafen configuration directory' >&2
     exit 1
@@ -293,9 +298,9 @@ if [[ "$host_input_requested" == 1 ]]; then
     capture_timeout_seconds=$((seconds + capture_startup_grace))
 fi
 if command -v gtimeout >/dev/null 2>&1; then
-    timeout_command=(gtimeout "$capture_timeout_seconds")
+    timeout_command=(gtimeout -s "$capture_shutdown_signal" "$capture_timeout_seconds")
 elif command -v timeout >/dev/null 2>&1; then
-    timeout_command=(timeout "$capture_timeout_seconds")
+    timeout_command=(timeout -s "$capture_shutdown_signal" "$capture_timeout_seconds")
 else
     printf '%s\n' 'FAIL: timeout or gtimeout is required for bounded live capture' >&2
     exit 1
