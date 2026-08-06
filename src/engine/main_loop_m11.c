@@ -901,7 +901,7 @@ static int m11_present_game_frame(const M11_GameViewState* gameView,
 }
 
 static void m11_publish_dm1_hoc_presented_capture_to_m12(
-    const M11_GameViewState* gameView,
+    M11_GameViewState* gameView,
     M12_StartupMenuState* menuState) {
     M11_BootProbeReceipt boot;
     DM1_V1_StartupHoCPresentedCaptureHostExportReceipt_PC34 export_receipt;
@@ -935,6 +935,15 @@ static void m11_publish_dm1_hoc_presented_capture_to_m12(
     capture.chainHash = export_receipt.chain_hash;
     (void)M12_StartupMenu_SetDM1HoCPresentedCaptureReceipt(menuState,
                                                            &capture);
+
+    if (gameView->dm1FmtownsStartupReceiptValid &&
+        capture.presentedCaptureReady) {
+        int hocTrack = dm1_v1_fmtowns_cd_track_for_event(1);
+        if (hocTrack > 0 &&
+            gameView->dm1FmtownsCddaCurrentTrack != hocTrack) {
+            M11_GameView_PlayFmtownsCdda(gameView, hocTrack);
+        }
+    }
 }
 
 static int m11_running_from_macos_app_bundle(void)
@@ -1067,7 +1076,7 @@ static int m11_present_csb_v20_rgba_filter_if_enabled(
  * Capture may observe only a completed SDL presentation, never a pre-upload
  * framebuffer or a merely allocated window. */
 static int m11_present_game_frame_and_publish_startup_capture(
-    const M11_GameViewState* gameView,
+    M11_GameViewState* gameView,
     M12_StartupMenuState* menuState) {
     const unsigned char* presented_frame = NULL;
     const unsigned char* source_frame = NULL;
