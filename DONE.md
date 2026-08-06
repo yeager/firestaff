@@ -51359,6 +51359,12 @@ verification item.
   handoff, while New Game remains blocked at original `GAME_LOAD` instead of
   fabricating a playable session. The verification was read-only; no game
   data was unpacked, copied or tracked.
+- ✅ 2026-08-06 DM2 dialogue-selector audit: removed the false TODO for
+  `_476d_04ed` from the isolated `c_0aaf` compatibility audit. SkProject
+  `skgame.cpp:2575-2579` proves that routine is an intentional unconditional
+  zero-return no-op, so no auto-selection callback or synthetic behavior was
+  added. The callback audit remains outside production pending a real M11
+  dialogue/menu bridge.
 - ✅ 2026-08-06 DM2 M12 verified-launch handoff: extended the real-data M11
   startup gate through the actual M12 DM2 card, options and Launch action.
   A DOS install whose original files are under `DATA/` now has a regression

@@ -1490,9 +1490,13 @@
   fixture-only “missing means unencrypted” branch is closed; an incomplete
   GDAT transaction now blocks the dialogue rather than displaying guessed
   text. **2026-08-06 update:** the disconnected `c_0aaf` callback dialogue
-  audit is excluded from production while it lacks the original menu selector
-  and source rectangle placement; its explicit unit-test target remains the
-  only consumer until this owner is bound.
+  audit is excluded from production while it lacks a source-backed M11 menu
+  and dialogue-rectangle bridge; its explicit unit-test target remains the
+  only consumer until this owner is bound. **2026-08-06 audit correction:**
+  the apparent `_476d_04ed` TODO in that selector is not an unported menu
+  routine: SkProject `skgame.cpp:2575-2579` defines
+  `_476d_04ed_DOES_NOTHING` as an unconditional zero return. The compatibility
+  branch now documents that source no-op and does not invent auto-selection.
 
 - **DM2-V22-REAL-MATERIAL-HANDOFF:** Missing V2.2 art now returns no pixels.
   Bind any future enhanced art only through verified original V1 GDAT material

@@ -91,7 +91,10 @@ DM2_V1_0aafMenuReceipt dm2_v1_0aaf_menu_select(
 
         /* Check for auto-selection */
         if (last_valid != -1) {
-            /* TODO: SKW_476d_04ed call — currently stubbed */
+            /* SKProject SKWINSPX/src/v4/skgame.cpp:2575-2579 names
+             * _476d_04ed_DOES_NOTHING: it unconditionally returns zero.
+             * Keep the source branch explicit, but do not fabricate an
+             * auto-selection or a callback for a routine that is a no-op. */
         }
 
         /* Check for keyboard input */
