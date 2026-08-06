@@ -16,6 +16,17 @@ static size_t count_be32(const uint8_t *data, size_t size, uint32_t value)
     return count;
 }
 
+static uint64_t fnv1a64(const uint8_t *data, size_t size)
+{
+    uint64_t hash = UINT64_C(0xcbf29ce484222325);
+    size_t i;
+    for (i = 0U; i < size; ++i) {
+        hash ^= data[i];
+        hash *= UINT64_C(0x100000001b3);
+    }
+    return hash;
+}
+
 static int check_string(const uint8_t *data, size_t size, size_t offset,
     const char *text)
 {
@@ -62,7 +73,18 @@ int main(void)
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373B4)) != 1U ||
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373CC)) != 1U ||
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373D8)) != 1U ||
-        count_be32(data, (size_t)file_size, base + UINT32_C(0x373C0)) != 10U) {
+        count_be32(data, (size_t)file_size, base + UINT32_C(0x373C0)) != 10U ||
+        /* The SH-2 routine at 0x18B60 is followed by its literal pool. */
+        fnv1a64(data + 0x18B60U, 0x90U) !=
+            UINT64_C(0xf6d5cc046bab98c7) ||
+        ((uint32_t)data[0x18C00U] << 24 |
+            (uint32_t)data[0x18C01U] << 16 |
+            (uint32_t)data[0x18C02U] << 8 | data[0x18C03U]) !=
+            base + UINT32_C(0x373C0) ||
+        ((uint32_t)data[0x18C20U] << 24 |
+            (uint32_t)data[0x18C21U] << 16 |
+            (uint32_t)data[0x18C22U] << 8 | data[0x18C23U]) !=
+            base + UINT32_C(0x373D8)) {
         free(data);
         fprintf(stderr, "FAIL: DM.BIN startup/menu resource anchor mismatch\n");
         return 1;

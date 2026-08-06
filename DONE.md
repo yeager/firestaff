@@ -52208,3 +52208,5 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   `DM.BIN+0x373B4` through `DM.BIN+0x373D8`. Their exact SH-2 pointer-reference
   counts are 1/10/1/1. This records resource ownership only; it does not infer
   menu order, text semantics or Saturn VDP1/VDP2 composition.
+  The regression also pins the `0x18B60` SH-2 routine/literal-pool receipt
+  (`FNV-1a64 0xF6D5CC046BAB98C7`) and its `yam\\menu.c`/`STABG.BIN` targets.

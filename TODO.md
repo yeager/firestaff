@@ -223,6 +223,8 @@
   names at `0x373B4`–`0x373D8`, with pointer-reference counts 1/10/1/1.
   This is source ownership only; menu order, text consumer and VDP1/VDP2
   composition remain capture-gated.
+  The same receipt now pins the SH-2 routine at `0x18B60` and its literal
+  pool hash, including the `yam\\menu.c` and `STABG.BIN` address targets.
 
 - **NEXUS-MANIFEST-CONTAINER-COVERAGE:** The asset verifier now recognizes
   the authenticated English/French `MENU.BPK` and English `RLOWFIX.BIN`
