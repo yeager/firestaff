@@ -361,6 +361,11 @@
   handoff only; the original consumer still has to bind item kind/index to
   host inventory semantics before these records may become live objects.
 
+  The source receipt decoder now also reads the exact six-byte missile and
+  two-byte cloud payloads after their linked-list references, matching the
+  DMBUILDER `dm_missile`/`dm_cloud` layouts. This is still a source-data
+  receipt only; no projectile or cloud gameplay ownership is inferred.
+
   Unknown creature-stat categories are now rejected as well; the runtime no
   longer invents fallback HP/attack/defense values outside the four
   disassembly-backed formulas.

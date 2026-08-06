@@ -50452,6 +50452,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   override is supplied, while explicit CI/local paths still take precedence.
   The probe remains hash-gated and keeps level/object semantics opaque.
 
+- ✅ 2026-08-06 Theron Track 02 projectile records: added source-faithful
+  decoders for category 14 missile records (six payload bytes) and category 15
+  cloud records (two payload bytes), including linked-record references and
+  truncation rejection. The real seven-dungeon thing-data regression still
+  passes; these records remain outside host gameplay until their consumer is
+  proven.
+
 - ✅ 2026-08-06 DM2 SKSAVE record container-map fidelity: corrected the
   isolated `READ_RECORD_CHECKCODE` port to preserve unmasked `c_record` bits
   during `DM2_SUPPRESS_READER(..., false)` and to select the source map-

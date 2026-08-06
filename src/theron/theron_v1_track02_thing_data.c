@@ -43,8 +43,10 @@ int theron_v1_track02_item_record_decode(
     size_t raw_size,
     Theron_Track02ItemRecord *out)
 {
-    if (!raw || !out || category < THERON_CAT_MONSTER ||
-        category > THERON_CAT_MISC ||
+    if (!raw || !out ||
+        (category < THERON_CAT_MONSTER ||
+         (category > THERON_CAT_MISC && category != THERON_CAT_MISSILE &&
+          category != THERON_CAT_CLOUD)) ||
         raw_size < theron_item_bytes[category])
         return 0;
 
@@ -116,6 +118,18 @@ int theron_v1_track02_item_record_decode(
         out->value.misc.capacity = (uint8_t)((w >> 14) & 0x03u);
         break;
     }
+    case THERON_CAT_MISSILE:
+        out->value.missile.unknown1 = raw[2];
+        out->value.missile.spell = raw[3];
+        out->value.missile.power = raw[4];
+        out->value.missile.unknown2 = raw[5];
+        out->value.missile.zero = raw[6];
+        out->value.missile.e = raw[7];
+        break;
+    case THERON_CAT_CLOUD:
+        out->value.cloud.power = raw[2];
+        out->value.cloud.spell = raw[3];
+        break;
     default:
         return 0;
     }

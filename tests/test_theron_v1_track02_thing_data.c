@@ -118,6 +118,31 @@ static void test_source_category_layout(void) {
     printf("  source category order and record widths OK\n");
 }
 
+static void test_source_projectile_records(void) {
+    const uint8_t missile[] = {0x34, 0x12, 0x80, 0x05, 0x09, 0x44, 0x00, 0x7f};
+    const uint8_t cloud[] = {0x78, 0x56, 0x09, 0x03};
+    Theron_Track02ItemRecord record;
+
+    assert(theron_v1_track02_item_record_decode(
+        THERON_CAT_MISSILE, missile, sizeof(missile), &record));
+    assert(record.next_ref == 0x1234u &&
+           record.value.missile.unknown1 == 0x80u &&
+           record.value.missile.spell == 0x05u &&
+           record.value.missile.power == 0x09u &&
+           record.value.missile.unknown2 == 0x44u &&
+           record.value.missile.zero == 0x00u &&
+           record.value.missile.e == 0x7fu);
+    assert(theron_v1_track02_item_record_decode(
+        THERON_CAT_CLOUD, cloud, sizeof(cloud), &record));
+    assert(record.next_ref == 0x5678u && record.value.cloud.power == 0x09u &&
+           record.value.cloud.spell == 0x03u);
+    assert(!theron_v1_track02_item_record_decode(
+        THERON_CAT_MISSILE, missile, sizeof(missile) - 1u, &record));
+    assert(!theron_v1_track02_item_record_decode(
+        THERON_CAT_CLOUD, cloud, sizeof(cloud) - 1u, &record));
+    printf("  source missile/cloud record layouts OK\n");
+}
+
 static void test_real_item_records(const Theron_ThingData *td,
                                    unsigned int dungeon_index) {
     /* Authenticated object-count words from each real US quest block. */
@@ -222,6 +247,7 @@ int main(void) {
     test_truncated_source_rejected();
     test_truncated_map_source_rejected();
     test_source_category_layout();
+    test_source_projectile_records();
 
     const char *path = find_track02();
     if (!path) {

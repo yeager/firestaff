@@ -101,6 +101,20 @@ typedef struct {
 } Theron_Track02MiscRecord;
 
 typedef struct {
+    uint8_t unknown1;
+    uint8_t spell;
+    uint8_t power;
+    uint8_t unknown2;
+    uint8_t zero;
+    uint8_t e;
+} Theron_Track02MissileRecord;
+
+typedef struct {
+    uint8_t power;
+    uint8_t spell;
+} Theron_Track02CloudRecord;
+
+typedef struct {
     unsigned int category;
     uint16_t next_ref;
     union {
@@ -111,6 +125,8 @@ typedef struct {
         Theron_Track02PotionRecord potion;
         Theron_Track02ChestRecord chest;
         Theron_Track02MiscRecord misc;
+        Theron_Track02MissileRecord missile;
+        Theron_Track02CloudRecord cloud;
     } value;
 } Theron_Track02ItemRecord;
 
@@ -126,8 +142,10 @@ unsigned int theron_v1_track02_compute_ground_ref_count(
     const uint8_t *tiles_flat,
     unsigned int total_tiles);
 
-/* Decodes the source-bound fields for categories 4..10. Categories 14/15
- * intentionally remain raw-only until their source consumers are identified. */
+/* Decodes source-bound fields for categories 4..10, 14 and 15. The six-byte
+ * missile and two-byte cloud payloads follow their two-byte linked-list
+ * reference. Source: DMBUILDER6/src/dms.h:244-258. This remains a data
+ * receipt; it does not promote a record into host gameplay semantics. */
 int theron_v1_track02_item_record_decode(
     unsigned int category,
     const uint8_t *raw,
