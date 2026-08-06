@@ -1,3 +1,11 @@
+# DM1 mirror no-pending-resurrect synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only no-op C040/G0299 fixture from M10. It has no
+  original DM1 data input or M11/runtime caller; its explicit regression
+  continues to compile the source directly.
+- ✅ Verification: `dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 mirror C160/F0284 synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C160/F0284 party/panel fixture from M10. It
