@@ -17506,6 +17506,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     int rendererBackend = M12_RENDERER_BACKEND_AUTO;
     int gameOptionSlot = -1;
     char selectedCsbRuntimeDataDir[FSP_PATH_MAX] = {0};
+    char selectedDm2RuntimeDataDir[FSP_PATH_MAX] = {0};
     if (!state || !menuState) {
         return 0;
     }
@@ -17564,6 +17565,19 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                     selectedCsbRuntimeDataDir,
                     sizeof(selectedCsbRuntimeDataDir))) {
                 spec.dataDir = selectedCsbRuntimeDataDir;
+            }
+            /* DM2's PC, FM Towns and Amiga editions can all be present below
+             * one configured data root.  The selected edition owns its
+             * verified source path: FM Towns/Amiga retain their original ZIP
+             * handoff while DOS retains the directory containing its matched
+             * GRAPHICS.DAT.  Do not pass the generic first-match directory,
+             * which can silently boot a different edition. */
+            if (entry->gameId && strcmp(entry->gameId, "dm2") == 0 &&
+                M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+                    &menuState->assetStatus, entry->gameId, version->versionId,
+                    selectedDm2RuntimeDataDir,
+                    sizeof(selectedDm2RuntimeDataDir))) {
+                spec.dataDir = selectedDm2RuntimeDataDir;
             }
         } else {
             /* Selected version not matched (e.g. user pointed --data-dir at

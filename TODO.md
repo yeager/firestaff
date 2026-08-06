@@ -442,6 +442,14 @@
   M11/DM2 runtime consumer has authenticated an original animation stream.
   Re-admit it only with a selected-media hash receipt, decoded stream bounds,
   and an actual title/entrance execution handoff.
+  **2026-08-06 update:** a shared data root can now retain all three verified
+  DM2 editions at once. At M12→M11 launch, the selected DOS, FM Towns or
+  Amiga version resolves its own matched owner instead of inheriting the
+  scanner's first match. FM Towns and Amiga therefore pass their original ZIP
+  path to the existing RAM-only boot owners; DOS passes the directory holding
+  its authenticated loose pair. The real-media regressions cover both direct
+  archive and mixed-root scans. This is selection identity only, not a claim
+  of complete platform gameplay parity.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   deliberately non-mutating until the original 263-byte `c_hero` layout,

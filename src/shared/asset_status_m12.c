@@ -4529,6 +4529,46 @@ const char* M12_AssetStatus_GetRuntimeDataDir(const M12_AssetStatus* status,
     return status->runtimeDataDirs[gameIndex];
 }
 
+int M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+    const M12_AssetStatus* status,
+    const char* gameId,
+    const char* versionId,
+    char* outPath,
+    size_t outPathSize) {
+    int gameIndex;
+    int versionIndex;
+    const M12_AssetVersionStatus* version;
+    const char* separator;
+    size_t pathLength;
+    if (!outPath || outPathSize == 0U) {
+        return 0;
+    }
+    outPath[0] = '\0';
+    if (!status || !gameId || !versionId) {
+        return 0;
+    }
+    gameIndex = m12_game_index_from_id(gameId);
+    versionIndex = M12_AssetStatus_FindVersionIndex(gameId, versionId);
+    if (gameIndex < 0 || versionIndex < 0) {
+        return 0;
+    }
+    version = &status->versions[gameIndex][versionIndex];
+    if (!version->matched || version->matchedPath[0] == '\0') {
+        return 0;
+    }
+    separator = strstr(version->matchedPath, "::");
+    if (separator) {
+        pathLength = (size_t)(separator - version->matchedPath);
+        if (pathLength == 0U || pathLength >= outPathSize) {
+            return 0;
+        }
+        memcpy(outPath, version->matchedPath, pathLength);
+        outPath[pathLength] = '\0';
+        return 1;
+    }
+    return FSP_ParentDir(outPath, outPathSize, version->matchedPath);
+}
+
 int M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize) {

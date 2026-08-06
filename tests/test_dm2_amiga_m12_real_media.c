@@ -27,6 +27,7 @@ int main(void)
     const M12_AssetRequiredFileStatus *graphics;
     const M12_AssetRequiredFileStatus *dungeon;
     M12_AssetStatus status;
+    char selectedRuntime[512];
     int versionIndex;
 
     if (!root || root[0] == '\0') {
@@ -34,6 +35,7 @@ int main(void)
         return 0;
     }
     memset(&status, 0, sizeof(status));
+    memset(selectedRuntime, 0, sizeof(selectedRuntime));
     M12_AssetStatus_ScanGame(&status, root, "dm2");
     versionIndex = M12_AssetStatus_FindVersionIndex("dm2", "amiga-en");
     version = versionIndex >= 0
@@ -50,16 +52,25 @@ int main(void)
                strstr(version->matchedPath,
                       ".zip::DM2_archive.LZX/GRAPHICS.DAT") != NULL,
            "M12 records the original Amiga GDAT as nested virtual provenance");
-    expect(graphics && graphics->matched &&
-               strcmp(graphics->matchedHash,
-                      "1c940ea95703eaea0ecdf84d17e954b9") == 0 &&
-               dungeon && dungeon->matched &&
-               strcmp(dungeon->matchedHash,
-                      "719ae78bc124027806c65491a256827d") == 0,
-           "both required rows are backed by the verified LZX payload");
-    expect(strstr(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                  "Dungeon-Master-II-Skullkeep_Amiga_EN.zip") != NULL,
-           "M12 passes the unchanged archive to the memory-owned boot path");
+    /* Required rows describe the scan default.  A shared root can quite
+     * legitimately select DOS there; selected-edition ownership is tested
+     * through the resolver.  With an explicit Amiga archive there is no
+     * competing default, so retain the direct virtual-payload assertion. */
+    if (strstr(root, "Dungeon-Master-II-Skullkeep_Amiga_EN.zip") != NULL) {
+        expect(graphics && graphics->matched &&
+                   strcmp(graphics->matchedHash,
+                          "1c940ea95703eaea0ecdf84d17e954b9") == 0 &&
+                   dungeon && dungeon->matched &&
+                   strcmp(dungeon->matchedHash,
+                          "719ae78bc124027806c65491a256827d") == 0,
+               "direct Amiga required rows are backed by the verified LZX payload");
+    }
+    expect(M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+               &status, "dm2", "amiga-en", selectedRuntime,
+               sizeof(selectedRuntime)) &&
+               strstr(selectedRuntime,
+                      "Dungeon-Master-II-Skullkeep_Amiga_EN.zip") != NULL,
+           "selected Amiga edition retains its original archive handoff");
     if (failures != 0) {
         return 1;
     }

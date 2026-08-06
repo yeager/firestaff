@@ -9,6 +9,16 @@
   `dm1_v2_launch_smoke_pc34`, `dm1_v2_viewport_materials_pc34` and
   `dm1_v2_per_mode_material_signatures_pc34` (4/4 pass).
 
+- ✅ 2026-08-06 DM2 mixed-platform launch ownership: M12 now resolves the
+  selected matched version to its own original-media owner before the M11
+  handoff. A shared data root containing PC-DOS, FM Towns and Amiga media can
+  no longer boot the first catalogue match when the player has selected a
+  different verified edition. FM Towns and Amiga retain their user-owned ZIP
+  handoff for the existing RAM-only boot readers; DOS retains the directory
+  containing its hash-verified pair. The real FM Towns and Amiga M12 probes
+  pass against both direct archive paths and the shared DM2 data root. No
+  game data was unpacked, cached or staged.
+
 - ✅ 2026-08-06 DM1 original PC34 save corpus backed roundtrip: both
   operator-supplied `DMSAVE.DAT` files were classified as authentic PC34
   saves, loaded through F0435 against the hash-verified original

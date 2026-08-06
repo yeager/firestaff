@@ -29,6 +29,7 @@ int main(void)
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
     M12_AssetStatus status;
+    char selectedRuntime[512];
     int versionIndex;
 
     if (!root || root[0] == '\0') {
@@ -37,6 +38,7 @@ int main(void)
     }
 
     memset(&status, 0, sizeof(status));
+    memset(selectedRuntime, 0, sizeof(selectedRuntime));
     M12_AssetStatus_ScanGame(&status, root, "dm2");
     versionIndex = M12_AssetStatus_FindVersionIndex("dm2", "fmtowns-ja");
     version = versionIndex >= 0
@@ -53,20 +55,30 @@ int main(void)
                strstr(version->matchedPath,
                       ".zip::DATA/GRAPHICS.DAT") != NULL,
            "M12 records the verified FM Towns GDAT as virtual provenance");
-    expect(graphics && graphics->matched &&
-               strcmp(graphics->matchedHash,
-                      "027ff3b8ddc2c4c4cdda7ada0b0bc46c") == 0 &&
-               strstr(graphics->matchedPath,
-                      ".zip::DATA/GRAPHICS.DAT") != NULL,
-           "required GRAPHICS.DAT remains a virtual archive member");
-    expect(dungeon && dungeon->matched &&
-               strcmp(dungeon->matchedHash,
-                      "74c7549f174574201988bf936385841a") == 0 &&
-               strstr(dungeon->matchedPath,
-                      ".zip::DATA/DUNGEON.DAT") != NULL,
-           "required DUNGEON.DAT remains a virtual archive member");
-    expect(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"), root) == 0,
-           "M12 passes the unchanged archive root to the memory-owned boot path");
+    /* Required-file rows are the scan's default launch pair.  In a shared
+     * root that may correctly be PC-DOS, so edition-specific provenance is
+     * asserted through the resolver below.  A direct archive request has no
+     * competing edition and must publish its two virtual members directly. */
+    if (strstr(root, "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip") != NULL) {
+        expect(graphics && graphics->matched &&
+                   strcmp(graphics->matchedHash,
+                          "027ff3b8ddc2c4c4cdda7ada0b0bc46c") == 0 &&
+                   strstr(graphics->matchedPath,
+                          ".zip::DATA/GRAPHICS.DAT") != NULL,
+               "direct FM Towns GRAPHICS.DAT remains a virtual archive member");
+        expect(dungeon && dungeon->matched &&
+                   strcmp(dungeon->matchedHash,
+                          "74c7549f174574201988bf936385841a") == 0 &&
+                   strstr(dungeon->matchedPath,
+                          ".zip::DATA/DUNGEON.DAT") != NULL,
+               "direct FM Towns DUNGEON.DAT remains a virtual archive member");
+    }
+    expect(M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+               &status, "dm2", "fmtowns-ja", selectedRuntime,
+               sizeof(selectedRuntime)) &&
+               strstr(selectedRuntime,
+                      "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip") != NULL,
+           "selected FM Towns edition retains its original archive handoff");
 
     if (failures != 0) {
         return 1;

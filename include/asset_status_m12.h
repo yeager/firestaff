@@ -150,6 +150,18 @@ size_t M12_AssetStatus_GameRequiredFileCount(const char* gameId);
 const char* M12_AssetStatus_GetDataDir(const M12_AssetStatus* status);
 const char* M12_AssetStatus_GetRuntimeDataDir(const M12_AssetStatus* status,
                                               const char* gameId);
+/* Resolve the original-media owner for one matched edition.  This is used
+ * by a version picker at launch time: a selected DM2 FM Towns or Amiga
+ * archive must never inherit the first (often PC-DOS) match in a shared
+ * data root.  The function only returns a path for an already matched
+ * version.  Virtual archive provenance resolves to its user-owned archive;
+ * loose files resolve to their containing directory. */
+int M12_AssetStatus_ResolveRuntimeDataDirForVersion(
+    const M12_AssetStatus* status,
+    const char* gameId,
+    const char* versionId,
+    char* outPath,
+    size_t outPathSize);
 /* Materialize the selected FM Towns CSB CD into a version-private runtime
  * directory.  This prevents a PC/Atari/Amiga default cache from satisfying a
  * deliberate F31E/F31J launcher selection. */
