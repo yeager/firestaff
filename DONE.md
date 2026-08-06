@@ -52091,3 +52091,11 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   The real-data regression finds exactly 16 marker roots. This is evidence
   only: marker data has not been promoted to a fabricated champion or a
   playable entrance state.
+# 2026-08-06 Nexus mixed extracted/ISO runtime source
+
+- ✅ `nexus_v1_init()` now retains the hash-verified extracted corpus as the
+  authoritative source while admitting a co-located valid retail ISO as a
+  supplemental reader. Missing exact-name members are read from that ISO
+  without changing source identity or enabling synthetic fallbacks. The real
+  English root boot smoke verifies `DMN_ABS.TXT` (210 bytes) through this path;
+  the nested ISO inside the 7z archive remains intentionally uninspected.

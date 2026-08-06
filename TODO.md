@@ -206,6 +206,11 @@
   extraction. Nested ISO files inside a 7z archive remain uninspected until
   an explicit container traversal path is added.
 
+  2026-08-06: the runtime now keeps a valid co-located retail ISO as a
+  supplemental source when the hash-verified extracted corpus wins startup.
+  Exact missing members such as `DMN_ABS.TXT` are read from that ISO only;
+  loose files remain authoritative. Nested 7z traversal is still out of scope.
+
 - **NEXUS-PLRD-TABL-NAME-CONSUMER:** Production champion initialization is
   already fail-closed on the verified European `RLOWFIX.BIN` PLRD resource;
   the legacy hardcoded roster is test-fixture-only and must not populate live

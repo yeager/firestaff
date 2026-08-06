@@ -2454,6 +2454,11 @@ struct Nexus_V1_Engine {
     /* Data source */
     Nexus_DataSource source;
     Nexus_ISOReader iso;
+    /* An extracted retail corpus may be accompanied by its original ISO.
+     * Keep the extracted source authoritative, but allow authenticated
+     * container-only members to be read from this supplemental disc. */
+    Nexus_ISOReader supplemental_iso;
+    int supplemental_iso_valid;
     char data_dir[512];
 
     /* Game state */

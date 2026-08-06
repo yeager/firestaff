@@ -2254,9 +2254,26 @@ static uint8_t *nexus_v1_read_extracted_file(Nexus_V1_Engine *engine,
     return NULL;
 }
 
+static uint8_t *nexus_v1_read_iso_reader_file(
+    Nexus_ISOReader *reader, const Nexus_ISOFile *file, int *out_size) {
+    uint8_t *buf;
+    int n;
+    if (!reader || !file || file->size == 0U) return NULL;
+    buf = (uint8_t *)malloc(file->size);
+    if (!buf) return NULL;
+    n = nexus_iso_read_file(reader, file, buf, (int)file->size);
+    if (n < 0) {
+        free(buf);
+        return NULL;
+    }
+    if (out_size) *out_size = (int)file->size;
+    return buf;
+}
+
 static uint8_t *nexus_v1_read_iso_file(Nexus_V1_Engine *engine,
                                        const Nexus_ISOFile *file,
                                        int *out_size);
+static int find_iso(const char *dir, char *disc_path, int max_len);
 
 /* DGN material containers are deliberately narrower than the general asset
  * resolver. They must be an exact source entry named FLOORS.BPK or WALLS.BPK:
@@ -2269,8 +2286,15 @@ static uint8_t *nexus_v1_read_exact_material_container(
     if (!engine || !name) return NULL;
     if (engine->source == NEXUS_SRC_EXTRACTED) {
         snprintf(path, sizeof(path), "%s/%s", engine->data_dir, name);
-        return nexus_path_is_file(path) ? nexus_read_host_file(path, out_size)
-                                        : NULL;
+        if (nexus_path_is_file(path)) {
+            return nexus_read_host_file(path, out_size);
+        }
+        if (engine->supplemental_iso_valid) {
+            file = nexus_iso_find(&engine->supplemental_iso, name);
+            return nexus_v1_read_iso_reader_file(
+                &engine->supplemental_iso, file, out_size);
+        }
+        return NULL;
     }
     if (engine->source != NEXUS_SRC_ISO) return NULL;
     file = nexus_iso_find(&engine->iso, name);
@@ -2349,18 +2373,29 @@ static const Nexus_ISOFile *nexus_v1_find_iso_dmdf_family_file(
 static uint8_t *nexus_v1_read_iso_file(Nexus_V1_Engine *engine,
                                        const Nexus_ISOFile *file,
                                        int *out_size) {
-    uint8_t *buf;
+    return engine ? nexus_v1_read_iso_reader_file(&engine->iso, file,
+                                                   out_size) : NULL;
+}
+
+static void nexus_v1_try_open_supplemental_iso(Nexus_V1_Engine *engine) {
+    char disc_path[512];
     int n;
-    if (!engine || !file || file->size == 0U) return NULL;
-    buf = (uint8_t *)malloc(file->size);
-    if (!buf) return NULL;
-    n = nexus_iso_read_file(&engine->iso, file, buf, (int)file->size);
-    if (n < 0) {
-        free(buf);
-        return NULL;
+    if (!engine || engine->source != NEXUS_SRC_EXTRACTED ||
+        !find_iso(engine->data_dir, disc_path, sizeof(disc_path))) {
+        return;
     }
-    if (out_size) *out_size = (int)file->size;
-    return buf;
+    if (nexus_path_has_ext(disc_path, ".cue")) {
+        n = nexus_iso_open_cue(&engine->supplemental_iso, disc_path);
+    } else {
+        n = nexus_iso_open(&engine->supplemental_iso, disc_path);
+    }
+    if (n > 0 && nexus_iso_is_nexus(&engine->supplemental_iso)) {
+        engine->supplemental_iso_valid = 1;
+        printf("Nexus: supplemental retail ISO %s with %d files\n",
+               disc_path, n);
+        return;
+    }
+    nexus_iso_close(&engine->supplemental_iso);
 }
 
 static int nexus_try_open_disc_path(Nexus_V1_Engine *engine, const char *path) {
@@ -2429,22 +2464,25 @@ static int find_iso(const char *dir, char *disc_path, int max_len) {
 static int has_extracted(const char *dir) {
     const char *dm_bin_md5 = nexus_known_boot_file_md5("DM.BIN");
     const char *lev00_md5 = nexus_known_boot_file_md5("LEV00.DGN");
-    char path[ASSET_PATH_MAX];
+    const char *required[] = {dm_bin_md5, lev00_md5, NULL};
+    char paths[2][ASSET_PATH_MAX];
+    int matched[2] = {0, 0};
+    char direct_path[ASSET_PATH_MAX];
     if (!dir || !dm_bin_md5 || !lev00_md5) return 0;
 
-    /* A hash scan can return virtual paths such as `disc.iso::DM.BIN`.
-     * Those prove that a container is present, but they are not ordinary
-     * extracted files and cannot be opened by nexus_v1_read_extracted_file().
-     * Keep ISO-only roots on the ISO source path so LEV00.DGN is read through
-     * the ISO reader rather than treated as data_dir/LEV00.DGN. */
-    if (!asset_find_by_md5(dir, dm_bin_md5, path, (int)sizeof(path), 8)) {
-        return 0;
+    /* Fast path for the normal extracted layout. This also prevents a
+     * co-located ISO or external archive from changing source selection. */
+    snprintf(direct_path, sizeof(direct_path), "%s/DM.BIN", dir);
+    if (asset_file_matches_md5(direct_path, dm_bin_md5)) {
+        snprintf(direct_path, sizeof(direct_path), "%s/LEV00.DGN", dir);
+        if (asset_file_matches_md5(direct_path, lev00_md5)) return 1;
     }
-    if (strstr(path, "::") != NULL) return 0;
-    if (!asset_find_by_md5(dir, lev00_md5, path, (int)sizeof(path), 8)) {
-        return 0;
-    }
-    return strstr(path, "::") == NULL;
+
+    /* Use the ordinary-file scan explicitly. A mixed root may also contain
+     * an ISO whose virtual member would otherwise win traversal order. */
+    (void)asset_find_all_files_by_md5_list(
+        dir, required, paths, matched, 2, 8);
+    return matched[0] && matched[1];
 }
 
 static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
@@ -2832,6 +2870,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
      * for users who keep the disc image only. */
     if (has_extracted(data_dir)) {
         engine->source = NEXUS_SRC_EXTRACTED;
+        nexus_v1_try_open_supplemental_iso(engine);
         printf("Nexus: using extracted files from %s\n", data_dir);
     }
 
@@ -3061,6 +3100,14 @@ uint8_t *nexus_v1_read_file(Nexus_V1_Engine *engine, const char *name, int *out_
         buf = nexus_v1_read_iso_file(engine, f, out_size);
     } else if (engine->source == NEXUS_SRC_EXTRACTED) {
         buf = nexus_v1_read_extracted_file(engine, name, out_size);
+        if (!buf && engine->supplemental_iso_valid) {
+            const Nexus_ISOFile *f = nexus_iso_find(
+                &engine->supplemental_iso, name);
+            if (f) {
+                buf = nexus_v1_read_iso_reader_file(
+                    &engine->supplemental_iso, f, out_size);
+            }
+        }
     }
     return buf;
 }
@@ -10464,6 +10511,8 @@ void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
     nexus_v1_free_structure2_surfaces(engine);
     if (engine->source == NEXUS_SRC_ISO)
         nexus_iso_close(&engine->iso);
+    if (engine->supplemental_iso_valid)
+        nexus_iso_close(&engine->supplemental_iso);
     memset(engine, 0, sizeof(*engine));
     printf("Nexus V1 engine shut down\n");
 }
