@@ -13,14 +13,8 @@ enum { kSurfaceCount = 7 };
 static const char* graphics_path(char path[2048])
 {
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char* home;
-    if (root && root[0]) {
-        snprintf(path, 1024, "%s/GRAPHICS.DAT", root);
-        return path;
-    }
-    home = getenv("HOME");
-    if (!home || !home[0]) return 0;
-    snprintf(path, 1024, "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
+    if (!root || !root[0]) return 0;
+    snprintf(path, 1024, "%s/GRAPHICS.DAT", root);
     return path;
 }
 
@@ -53,12 +47,8 @@ int main(void)
 
     if (!graphics_path(path)) return 0;
     if (!M11_AssetLoader_Init(&loader, path)) {
-        if (getenv("FIRESTAFF_DM1_DATA_DIR")) {
-            fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
-            return 1;
-        }
-        puts("SKIP: PC34 GRAPHICS.DAT not installed");
-        return 0;
+        fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
+        return 1;
     }
     memset(surfaces, 0, sizeof(surfaces));
     for (i = 0; i < kSurfaceCount; ++i) {
