@@ -51886,3 +51886,8 @@ and `firestaff` build pass.
   path. M11 still keeps `startup_hud_ready=0`; Saturn element surfaces,
   palette, FONT256 text and VDP1/VDP2 destination capture remain required
   before any HUD pixels or input semantics are enabled.
+- ✅ 2026-08-06 Nexus unregistered-door placeholder removal: a type-8 square
+  without a source-owned door registration no longer defaults to passable or
+  openable. The square-event path now blocks it, while registered DGN doors
+  retain their bounded state machine. Regression coverage proves the missing
+  SDDRVS/DGN state cannot create a door transition or viewport movement.

@@ -26234,8 +26234,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the former DM1 catalog remains reference-only and no synthetic replacement
   is permitted.
 - 🔧 Nexus door-state provenance: bind SDDRVS.TSK/retail door state and its
-  open transition before allowing movement through type-8 squares; the
-  standalone route now fails closed instead of assuming open.
+  open transition before allowing movement through type-8 squares. Missing
+  registration now fails closed in both passability and square-event routes;
+  the remaining gap is binding the registered door's state transition and
+  animation to SDDRVS.TSK/retail capture rather than the bounded local state.
 - 🔧 Nexus FONT256 text binding: retail DMWeb map/page header facts are now
   exposed. The remaining gap is proving how page tilemap entries become
   runtime character codes before enabling text rendering.

@@ -444,6 +444,19 @@ static void test_square_event_fire_returns_cross_fire(void) {
           "fire square returns NEXUS_EVENT_CROSS_FIRE");
 }
 
+static void test_unregistered_door_fails_closed(void) {
+    nexus_doors_init();
+
+    CHECK(nexus_doors_is_passable(17, 19) == 0,
+          "unregistered door is not treated as an open placeholder");
+    CHECK(nexus_doors_can_open(17, 19, NULL) == 0,
+          "unregistered door cannot open without source-owned state");
+    CHECK(nexus_process_square_event(NEXUS_SQUARE_DOOR, 17, 19,
+                                     NULL, NULL, NULL, NULL) ==
+              NEXUS_EVENT_DOOR_BLOCKED,
+          "square-event route blocks an unregistered door");
+}
+
 int main(void) {
     printf("Nexus V1 pit/chute, teleporter, stairs, exit, water and fire runtime test\n");
 
@@ -469,6 +482,7 @@ int main(void) {
     test_fire_crossed_with_rune();
     test_square_event_water_returns_cross_water();
     test_square_event_fire_returns_cross_fire();
+    test_unregistered_door_fails_closed();
 
     printf("Results: %d PASS, %d FAIL\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

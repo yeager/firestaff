@@ -170,7 +170,9 @@ int nexus_doors_is_open(int x, int y) {
 
 int nexus_doors_is_passable(int x, int y) {
     int idx = nexus_doors_find(x, y);
-    if (idx < 0) return 1; /* unregistered door square: assume passable */
+    /* A type-8 square without a source-owned door record has no proven
+     * SDDRVS/DGN state.  Do not turn missing provenance into an open door. */
+    if (idx < 0) return 0;
     switch (g_doors[idx].door_state) {
     case NEXUS_DOOR_STATE_OPEN:
         return 1;
@@ -186,7 +188,9 @@ int nexus_doors_can_open(int x, int y, const uint8_t inventory[30]) {
     int idx = nexus_doors_find(x, y);
     int i;
 
-    if (idx < 0) return 1; /* unregistered door = always passable */
+    /* Missing registration is not an unlocked door: SDDRVS/DGN must first
+     * supply the state and key relation. */
+    if (idx < 0) return 0;
     if (g_doors[idx].door_state != NEXUS_DOOR_STATE_LOCKED) return 1; /* not locked */
 
     /* Locked door — check for required key */
