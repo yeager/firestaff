@@ -16,6 +16,13 @@
 
 # Nexus boot-profile capability audit (2026-08-06)
 
+# Nexus startup media retail identity gate (2026-08-06)
+
+- ✅ Added exact retail MD5 checks to the startup-media regression for
+  STABG.BIN, WARNING.BIN, GAMEOVER.BIN, TITLE.CG and LOGOBG.DG2. Their
+  STMP/DGT2/atlas format receipts and no-draw assertions still pass; no host
+  presentation path was reopened without Saturn VDP capture.
+
 # Nexus MENU.BPK retail identity gate (2026-08-06)
 
 - ✅ Hardened the real MENU.BPK archive regression with the authenticated

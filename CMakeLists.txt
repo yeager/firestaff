@@ -35879,6 +35879,7 @@ add_executable(test_nexus_v1_dgn_material_raster
 
     add_executable(test_nexus_v1_startup_media_gate
         tests/test_nexus_v1_startup_media_gate.c
+        src/shared/asset_find_by_hash.c
     )
     target_link_libraries(test_nexus_v1_startup_media_gate PRIVATE
         firestaff_nexus firestaff_m10

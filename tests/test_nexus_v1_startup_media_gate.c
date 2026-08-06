@@ -4,6 +4,7 @@
 #include "nexus_v1_title.h"
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_face_bin.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -34,17 +35,38 @@ static void expect_true(int condition, const char *message)
     }
 }
 
+static int local_nexus_path(const char *name, char *path, size_t path_size)
+{
+    const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    const char *home = getenv("HOME");
+    int written;
+
+    if (!name || !path || path_size == 0U) return 0;
+    if (!root || !root[0]) {
+        if (!home || !home[0]) return 0;
+        written = snprintf(path, path_size, "%s/.firestaff/data/nexus/%s",
+                           home, name);
+    } else {
+        written = snprintf(path, path_size, "%s/%s", root, name);
+    }
+    return written >= 0 && (size_t)written < path_size;
+}
+
+static int local_nexus_file_matches_md5(const char *name, const char *md5)
+{
+    char path[2048];
+    return local_nexus_path(name, path, sizeof(path)) &&
+        asset_file_matches_md5(path, md5);
+}
+
 static unsigned char *read_local_nexus_file(const char *name, size_t *out_size)
 {
-    const char *home = getenv("HOME");
     char path[2048];
     FILE *file;
     long size;
     unsigned char *data;
 
-    if (!home || !name || !out_size ||
-        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/%s", home, name) >=
-            (int)sizeof(path)) {
+    if (!out_size || !local_nexus_path(name, path, sizeof(path))) {
         return NULL;
     }
     file = fopen(path, "rb");
@@ -187,6 +209,9 @@ int main(void)
         if (!local_stabg) {
             puts("SKIP: local Nexus STABG.BIN not present");
         } else {
+            expect_true(local_nexus_file_matches_md5(
+                            "STABG.BIN", "e77d4dd48dd280ec299cfc8ee8851114"),
+                        "local STABG.BIN matches the authenticated retail source");
             expect_true(nexus_ui_stabg_stmp_framing_receipt(
                             local_stabg, (int)local_warning_size,
                             &stabg_framing) == 0 &&
@@ -245,6 +270,9 @@ int main(void)
     if (!local_warning) {
         puts("SKIP: local Nexus WARNING.BIN not present");
     } else {
+        expect_true(local_nexus_file_matches_md5(
+                        "WARNING.BIN", "eb246b67f7758f23310221ac9b9efe2d"),
+                    "local WARNING.BIN matches the authenticated retail source");
         Nexus_TitleScreen title;
         Nexus_Framebuffer framebuffer;
         nexus_ui_manager_init(&ui);
@@ -322,6 +350,9 @@ int main(void)
     if (!local_gameover) {
         puts("SKIP: local Nexus GAMEOVER.BIN not present");
     } else {
+        expect_true(local_nexus_file_matches_md5(
+                        "GAMEOVER.BIN", "0426cb045a495c151a138fd2c77370e2"),
+                    "local GAMEOVER.BIN matches the authenticated retail source");
         nexus_ui_manager_init(&ui);
         expect_true(nexus_ui_res_dgt2_pp_view(local_gameover, local_warning_size,
                                                0U, &warning_view) == 0 &&
@@ -345,6 +376,9 @@ int main(void)
     if (!local_title) {
         puts("SKIP: local Nexus TITLE.CG not present");
     } else {
+        expect_true(local_nexus_file_matches_md5(
+                        "TITLE.CG", "80fa961fa95d7a0cb57e9a62f48786c8"),
+                    "local TITLE.CG matches the authenticated retail source");
         nexus_ui_manager_init(&ui);
         expect_true(nexus_ui_load_title(&ui, local_title,
                                         (int)local_warning_size, NULL) > 0 &&
@@ -366,6 +400,9 @@ int main(void)
     if (!local_logobg) {
         puts("SKIP: local Nexus LOGOBG.DG2 not present");
     } else {
+        expect_true(local_nexus_file_matches_md5(
+                        "LOGOBG.DG2", "53916e61c9f1c19eb65dd5e8950f37ea"),
+                    "local LOGOBG.DG2 matches the authenticated retail source");
         nexus_ui_manager_init(&ui);
         expect_true(nexus_ui_load_logobg(&ui, local_logobg,
                                          (int)local_warning_size, NULL) > 0 &&

@@ -10,7 +10,9 @@
 - **NEXUS-UI-VDP1-VDP2-CAPTURE:** UI surface loaders retain verified source
   pixels and palettes, but the public blit, palette-remap and darken helpers
   are now no-draw/source-preserving. Recover Saturn command order, CLUT bank,
-  destination and brightness/composition ownership before restoring them.
+  destination and brightness/composition ownership before restoring them. The
+  startup-media regression now requires retail hashes for its STABG/WARNING/
+  GAMEOVER/TITLE/LOGOBG inputs before format receipts count.
 
 - **DM2-PRODUCTION-PLACEHOLDER-INVENTORY:** The source tree retains bounded
   compatibility studies, fixture readers and modern-art probes for direct
