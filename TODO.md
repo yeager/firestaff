@@ -283,6 +283,11 @@
   raw-tail local palette, while Greatstone expands the nibbles to greyscale.
   Do not alter the original palette path or add downloaded/generated artwork
   merely to imitate that third-party export.
+  2026-08-06: a callback-supplied fixture raster can no longer make the
+  runtime ownership receipt `full_gdat_frame_valid` (or its outdoor variant).
+  Only the mounted boot provider's raw and decoded `GRAPHICS.DAT` evidence
+  can publish a valid M11 frame; fixture blit tests remain isolated and
+  invalid by design.
   **2026-08-06 CCM inventory correction:** the public opcode table now
   accurately labels CCM0B/CCM0C, wall activation, ladder/hole, transform and
   1B7D5 as callback-bound SKProject handler ports rather than stubs. This

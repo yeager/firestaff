@@ -50632,3 +50632,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   the V22 overlay probe to assert the authenticated no-draw contract.
   Verification: full local CMake build reaches 100%; affected CTest probes
   pass.
+- ✅ 2026-08-06 DM2 source-frame receipt gate: stopped callback-injected
+  fixture pixels from being stamped as a valid/full GDAT frame. The runtime
+  now requires the mounted boot provider's raw and decoded `GRAPHICS.DAT`
+  evidence for both indoor and outdoor production-frame receipts. The
+  isolated synthetic-provider regression still exercises blitting, but proves
+  it cannot publish playable source ownership. Verified with the focused
+  runtime handoff test and the real PC-DOS boot-profile render regression;
+  no game data was copied or committed.

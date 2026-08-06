@@ -7443,30 +7443,36 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
      * A "full" DM2 runtime frame is only accepted when the mandatory HUD and
      * dungeon base layers are GDAT-backed and no visible runtime element fell
      * back to Firestaff's bounded placeholder paths. */
+    /* A callback can provide fixture pixels to the isolated viewport tests,
+     * but only dm2_v1_boot_viewport_asset_fetch carries the raw+decoded GDAT
+     * evidence from the mounted original GRAPHICS.DAT.  Do not let a clean
+     * fixture blit receipt become a playable DM2 frame merely because it has
+     * no fallback draws. */
     g_dm2_frame_ownership.outdoor_gdat_frame_valid =
         g_dm2_frame_ownership.is_outdoor &&
         g_dm2_frame_ownership.gdat_provider_bound &&
+        g_dm2_frame_ownership.real_gdat_evidence_valid &&
         g_dm2_frame_ownership.outdoor_sky_gdat_blits > 0 &&
         g_dm2_frame_ownership.outdoor_ground_gdat_blits > 0 &&
         g_dm2_frame_ownership.hud_gdat_blits > 0 &&
         g_dm2_frame_ownership.total_runtime_fallback_draws == 0;
     g_dm2_frame_ownership.full_gdat_frame_valid =
         g_dm2_frame_ownership.gdat_provider_bound &&
+        g_dm2_frame_ownership.real_gdat_evidence_valid &&
         g_dm2_frame_ownership.floor_ceiling_gdat_blits >= 2 &&
         (g_dm2_frame_ownership.is_outdoor ||
          g_dm2_frame_ownership.wall_gdat_blits > 0) &&
-        (!g_dm2_frame_ownership.real_gdat_evidence_valid ||
-         (g_dm2_frame_ownership.gdat_scene_control_ready &&
-          g_dm2_frame_ownership.gdat_scene_control_consumed > 0 &&
-          g_dm2_frame_ownership.gdat_scene_control_hash != 0u &&
-          g_dm2_frame_ownership.gdat_interface_palette_ready &&
-          g_dm2_frame_ownership.gdat_interface_palette_consumed > 0 &&
-          g_dm2_frame_ownership.gdat_material_palette_floor_ceiling_consumed > 0 &&
-          (g_dm2_frame_ownership.is_outdoor ||
-           g_dm2_frame_ownership.gdat_material_palette_wall_consumed > 0) &&
-          (viewport.asset_door_frame_drawn_count == 0 ||
-           g_dm2_frame_ownership.gdat_material_palette_door_frame_consumed > 0) &&
-          g_dm2_frame_ownership.gdat_interface_palette_hash != 0u)) &&
+        g_dm2_frame_ownership.gdat_scene_control_ready &&
+        g_dm2_frame_ownership.gdat_scene_control_consumed > 0 &&
+        g_dm2_frame_ownership.gdat_scene_control_hash != 0u &&
+        g_dm2_frame_ownership.gdat_interface_palette_ready &&
+        g_dm2_frame_ownership.gdat_interface_palette_consumed > 0 &&
+        g_dm2_frame_ownership.gdat_material_palette_floor_ceiling_consumed > 0 &&
+        (g_dm2_frame_ownership.is_outdoor ||
+         g_dm2_frame_ownership.gdat_material_palette_wall_consumed > 0) &&
+        (viewport.asset_door_frame_drawn_count == 0 ||
+         g_dm2_frame_ownership.gdat_material_palette_door_frame_consumed > 0) &&
+        g_dm2_frame_ownership.gdat_interface_palette_hash != 0u &&
         /* skproject SKWIN uses raw INTERFACE_GENERAL tables for the HUD
          * chrome/layout and CHAMPIONS images for the visible portrait panel.
          * Do not require Firestaff's primitive rect fills to be separate

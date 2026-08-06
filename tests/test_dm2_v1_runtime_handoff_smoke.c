@@ -819,11 +819,12 @@ static void test_first_tick_after_boot_profile_handoff(void)
               ownership.projectile_gdat_blits == 0 &&
               ownership.total_runtime_gdat_blits == 25 &&
               ownership.total_runtime_fallback_draws == 0 &&
-              ownership.full_gdat_frame_valid == 1 &&
               ownership.real_gdat_evidence_valid == 0 &&
+              ownership.full_gdat_frame_valid == 0 &&
+              ownership.valid == 0 &&
               ownership.gdat_scene_control_ready == 0 &&
               ownership.gdat_scene_control_consumed == 0,
-              "indoor runtime frame keeps provider-backed wall fetches distinct from boot-owned GDAT plan consumption");
+              "synthetic indoor provider cannot claim a source-owned GDAT frame");
         CHECK(framebuffer[0] != 0,
               "runtime asset-provider frame completes the shared viewport render pass");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
@@ -860,10 +861,11 @@ static void test_first_tick_after_boot_profile_handoff(void)
               ownership.gdat_scene_material_index == 0 &&
               ownership.gdat_scene_material_consumed == 2 &&
               ownership.wall_gdat_blits == 0 &&
-              ownership.outdoor_gdat_frame_valid == 1 &&
-              ownership.full_gdat_frame_valid == 1 &&
-              ownership.valid == 1,
-              "outdoor GDAT material route reaches the runtime host receipt");
+              ownership.real_gdat_evidence_valid == 0 &&
+              ownership.outdoor_gdat_frame_valid == 0 &&
+              ownership.full_gdat_frame_valid == 0 &&
+              ownership.valid == 0,
+              "synthetic outdoor provider cannot claim a source-owned GDAT frame");
         CHECK(framebuffer[40 * 320] == 12 && framebuffer[140 * 320] == 4,
               "outdoor scene pixels retain their GDAT material palette entries");
         dm2_v1_runtime_set_viewport_asset_provider(NULL, NULL);
