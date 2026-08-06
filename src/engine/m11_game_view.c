@@ -31508,8 +31508,14 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
             break;
         case DUNGEON_ELEMENT_PIT:
             /* ReDMCSB DUNGEON.C F0172: closed pit renders as corridor.
-             * Only open pits (MASK0x0008_PIT_OPEN) show the hole. */
-            if (cell->square & 0x08) { /* PIT_OPEN */
+             * Only open pits (MASK0x0008_PIT_OPEN) show the hole.  In an
+             * authenticated PC34 session F0104 owns the real pit bitmap
+             * and zone blit later in the viewport pass; this generic face
+             * branch must not paint a synthetic hole over that source
+             * material.  Keep the primitive branch for probe/test worlds
+             * that have no authenticated GRAPHICS.DAT owner. */
+            if (!m11_dm1_authenticated_viewport_source_active() &&
+                (cell->square & 0x08)) { /* PIT_OPEN */
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               faceX + 5, faceY + faceH / 2,
                               faceW - 10, faceH / 3, M11_COLOR_BLACK);

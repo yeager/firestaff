@@ -29,10 +29,12 @@
   live F0320 owner is bound to real runtime state.
 
 - **DM1-D3C-STAIRS-PIT-SYNTHETIC-AUDIT:** The D3C stairs/pit dispatch helper
-  is an asset-free contract fixture. It records ReDMCSB dispatch and C10
-  transparency rules but has no production caller or authenticated bitmap
-  input. Keep the fixture test-only until the live D3C consumer is bound to
-  real `GRAPHICS.DAT` records and capture evidence.
+  remains a test-only contract fixture for ReDMCSB dispatch/C10 rules. The
+  live M11 D3C route is now source-bound through the real floor-pit/stairs
+  zone plans and authenticated PC34 GRAPHICS.DAT loader; the generic
+  procedural pit face is suppressed whenever that owner is active. Keep the
+  fixture itself out of production and continue capture work for full
+  pixel-level D3C parity.
 
 - **DM1-D2C-CENTER-WALL-SYNTHETIC-AUDIT:** The D2C center-wall composition
   helper is an asset-free synthetic pixel trace with no production caller.

@@ -55690,6 +55690,16 @@ alcove runtime and archive-media tests passed (4/4).
   admission, host material receipt, creature tick receipt and 132 source-lock
   assertions pass.
 
+# 2026-08-06 DM1 D3C pit synthetic-face removal
+
+- Authenticated PC34 viewport sessions no longer receive the generic
+  black/brown procedural pit face from `m11_draw_wall_face`. Open D3C pits
+  are left to the real F0104 floor-pit plan and GRAPHICS.DAT zone blit;
+  unauthenticated probe worlds retain the diagnostic primitive path.
+- The D3C contract fixture stays test-only. Real floor-pit/stairs material
+  admission continues through the source-indexed plan and C10 transparency
+  gate.
+
 # 2026-08-06 DM1 FM Towns DRAW_DMENU backdrop binding
 
 - Bound the recovered EDM.EXP `DRAW_DMENU` backdrop order to the software
