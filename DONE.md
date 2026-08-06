@@ -58,6 +58,12 @@
   records now fail closed. Focused action/spell source-gate, F0342 and F0662
   tests pass.
 
+- ✅ 2026-08-06 DM1 inventory portrait source gate: authenticated DM1/CSB
+  inventory panels no longer draw the host-generated face silhouette when
+  C026 or save-owned M516 portrait pixels are unavailable. The panel now
+  uses only original portrait material or leaves that area untouched; the
+  fallback remains diagnostic-only for non-source fixtures.
+
 - ✅ 2026-08-06 F10 all-game runtime coverage: the compact graphics/cheats
   popup is now regression-covered for DM1, CSB, DM2, Theron's Quest and
   Nexus as distinct M11 source kinds. The test exercises live presentation

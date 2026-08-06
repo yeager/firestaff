@@ -2607,6 +2607,13 @@ diagnostic; it must not silently fall back to a generated visual.
   tests pass. A real-data run remains dependent on the local PC34 corpus
   being installed.
 
+- **DM1-ORIGINAL-REPLACE-025:** Closed 2026-08-06. Removed the last
+  production inventory portrait silhouette fallback for authenticated DM1
+  and CSB sessions. Inventory portraits now require the real saved M516
+  bitmap or GRAPHICS.DAT C026 material; missing source pixels leave the
+  portrait area untouched instead of drawing invented eyes/mouth pixels.
+  The diagnostic silhouette remains restricted to non-source fixtures.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

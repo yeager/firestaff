@@ -51459,8 +51459,15 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 }
             }
         }
+        if (!drewPortrait && (m11_is_dm1_source_kind(state->sourceKind) ||
+                             m11_source_is_csb(state))) {
+            /* ReDMCSB C026 or LOADSAVE.C M516 portrait pixels are the only
+             * valid DM1/CSB portrait owners.  A missing source portrait is
+             * an asset failure, not permission to paint a host silhouette. */
+            return;
+        }
         if (!drewPortrait) {
-            /* Fallback: minimal face silhouette */
+            /* Diagnostic fallback for non-source fixtures only. */
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           portX + 9,  portY + 8, 3, 3, M11_COLOR_WHITE);
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
