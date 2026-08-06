@@ -969,10 +969,9 @@ int dm2_v1_runtime_weather_chain_started(void);
 struct DM2_V1_UpdateWeatherState;
 int dm2_v1_runtime_weather_chain_snapshot(
     struct DM2_V1_UpdateWeatherState *out);
-/* DM2-007 cycle 12: route spell-cast failure feedback into M11's DM2 status
- * scope.  The note function consumes a DM2_V1_SpellCastApplyReceipt produced
- * by dm2_v1_spell_cast_player_apply(); the accessors return the last captured
- * scope/message/failure_class (NULL/0 when no failure is pending). */
+/* Records the source spell-failure class from a cast receipt. The original
+ * route updates panel globals and a GDAT image, not a host status string;
+ * scope/message therefore remain NULL until that source UI consumer is bound. */
 void dm2_v1_runtime_note_spell_cast_apply_receipt(
     const DM2_V1_SpellCastApplyReceipt *a);
 const char *dm2_v1_runtime_status_scope(void);

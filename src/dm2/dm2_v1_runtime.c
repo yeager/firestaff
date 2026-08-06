@@ -5810,19 +5810,6 @@ int dm2_v1_runtime_weather_chain_snapshot(DM2_V1_UpdateWeatherState *out)
     return 1;
 }
 
-/* DM2-007 cycle 12: capture spell-cast failure feedback for M11's DM2 status
- * scope.  The caller (future DM2 spell-cast UI) provides the apply receipt;
- * failure classes are mapped to source-named status strings. */
-static const char *dm2_runtime_spell_failure_status(int failure_class)
-{
-    switch (failure_class) {
-    case 0x10: return "DM2 SPELL FAILED";
-    case 0x20: return "DM2 UNKNOWN RUNES";
-    case 0x30: return "DM2 NEED FLASK";
-    default:   return "DM2 SPELL FAILED";
-    }
-}
-
 void dm2_v1_runtime_note_spell_cast_apply_receipt(
     const DM2_V1_SpellCastApplyReceipt *a)
 {
@@ -5833,9 +5820,13 @@ void dm2_v1_runtime_note_spell_cast_apply_receipt(
         return;
     }
     if (a->failure_feedback && a->failure_class != 0) {
-        g_dm2_runtime.last_spell_status_scope = "DM2 SPELL";
-        g_dm2_runtime.last_spell_status =
-            dm2_runtime_spell_failure_status(a->failure_class);
+        /* SKProject skgame.cpp::PROCEED_SPELL_FAILURE does not format a
+         * status string. It updates C068--C070/global panel state and, for
+         * class 0x30, draws INTERFACE_GENERAL/SPELLING/NEED_FLASK into rect
+         * 0x5c. Until that GDAT hint consumer is bound to the live session,
+         * preserve the source failure class but publish no invented text. */
+        g_dm2_runtime.last_spell_status_scope = NULL;
+        g_dm2_runtime.last_spell_status = NULL;
         g_dm2_runtime.last_spell_failure_class = a->failure_class;
     } else {
         g_dm2_runtime.last_spell_status_scope = NULL;

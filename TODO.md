@@ -178,6 +178,10 @@
   requiring an original session handoff before showing dynamic bars; the
   legacy 261-byte convenience view deliberately cannot substitute for the
   missing maxima.
+  2026-08-06 spell-feedback update: the retained C068--C070 failure class is
+  not yet a text owner. Bind `PROCEED_SPELL_FAILURE`'s panel-global update and
+  the class-0x30 `INTERFACE_GENERAL/SPELLING/NEED_FLASK` GDAT draw before
+  presenting any spell-failure feedback.
 
 - **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
   mirror side/depth, inscription/corridor invalidation and wall-material

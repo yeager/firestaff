@@ -52678,6 +52678,12 @@ no-draw/capture-gates är oförändrade.
   rule through the existing champion-stat bridge. The old convenience record
   never supplied the stamina/mana maxima, so it can no longer create an
   apparently complete dynamic HUD; unbound records remain no-draw.
+
+- ✅ 2026-08-06 DM2 spell-feedback text gate: removed the synthetic English
+  failure labels from the runtime status accessor. SKProject's
+  `PROCEED_SPELL_FAILURE` preserves C068--C070 panel state and draws the
+  NEED_FLASK GDAT image for class `0x30`; Firestaff now retains only that
+  source failure class until those original consumers are bound.
 ✅ 2026-08-06 Nexus startup menu text sanitization: production save/chrome
 builders no longer emit hoststrängarna `DUNGEON MASTER NEXUS`, `LOAD GAME`,
 `NEW GAME` eller `LOAD SLOT ##`. Riktig radgeometri och källans slot-identitet

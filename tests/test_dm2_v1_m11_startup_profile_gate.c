@@ -3188,6 +3188,22 @@ int main(void) {
     M11_GameView_Shutdown(&view);
     remove_temp_save_root(save_root);
 
+    {
+        DM2_V1_SpellCastApplyReceipt spell_failure;
+
+        memset(&spell_failure, 0, sizeof(spell_failure));
+        spell_failure.valid = 1;
+        spell_failure.failure_feedback = 1;
+        spell_failure.failure_class = 0x30;
+        dm2_v1_runtime_init(NULL);
+        dm2_v1_runtime_note_spell_cast_apply_receipt(&spell_failure);
+        expect_true(dm2_v1_runtime_last_spell_failure_class() == 0x30,
+                    "DM2 preserves the source spell-failure class");
+        expect_true(dm2_v1_runtime_status_scope() == NULL &&
+                    dm2_v1_runtime_status_message() == NULL,
+                    "DM2 spell failure does not publish synthetic status text");
+    }
+
     if (g_failures) {
         fprintf(stderr, "DM2 V1 M11 startup/profile gate FAILED (%d failures)\n",
                 g_failures);
