@@ -27,6 +27,23 @@ typedef struct {
     int active;
 } Theron_V1PendingCdRead;
 
+typedef struct {
+    uint32_t start_lba;
+    uint32_t sector_count;
+} Theron_V1CdRange;
+
+static int source_lba_in_range(const Theron_V1CdRange *ranges,
+                               size_t range_count,
+                               uint32_t source_lba) {
+    size_t i;
+    for (i = 0; i < range_count; ++i) {
+        if (source_lba >= ranges[i].start_lba &&
+            source_lba - ranges[i].start_lba < ranges[i].sector_count)
+            return 1;
+    }
+    return 0;
+}
+
 static int trace_line(FILE *file, char *line, size_t capacity) {
     size_t length;
     if (!fgets(line, capacity, file)) return 0;
@@ -66,6 +83,8 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
 {
     Theron_V1MednafenCdStateTraceReceipt receipt = {0};
     Theron_V1PendingCdRead pending = {0};
+    Theron_V1CdRange ranges[64] = {{0}};
+    size_t range_count = 0;
     struct stat info;
     FILE *file;
     char line[512];
@@ -105,6 +124,11 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
         uint32_t lba, bytes, sector_fnv1a, span_offset, span_bytes, span_fnv1a;
         uint32_t binding_generation, binding_start_lba, binding_sector_count;
         uint32_t binding_lba, sector_index;
+        uint32_t origin_lba, origin_offset, origin_reader_pc;
+        uint32_t origin_reader_physical_pc, origin_writer_pc;
+        uint32_t origin_writer_physical_pc, origin_destination;
+        uint32_t origin_physical, origin_read_value, origin_stored_value;
+        unsigned long long origin_fifo_sequence;
         char cdb[32];
 
         if (first_line) {
@@ -137,6 +161,35 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
             receipt.destination_candidate_count++;
             continue;
         }
+        if (sscanf(line,
+                   "pce_cd_origin_ram_receipt source_lba=%u source_offset=%u "
+                   "fifo_sequence=%llu reader_pc=%x reader_physical_pc=%x "
+                   "writer_pc=%x writer_physical_pc=%x logical_destination=%x "
+                   "physical=%x read_value=%x stored_value=%x%n",
+                   &origin_lba, &origin_offset, &origin_fifo_sequence,
+                   &origin_reader_pc, &origin_reader_physical_pc,
+                   &origin_writer_pc, &origin_writer_physical_pc,
+                   &origin_destination, &origin_physical, &origin_read_value,
+                   &origin_stored_value,
+                   &consumed) == 11 && line[consumed] == '\0') {
+            if (origin_offset >= THERON_V1_RAW_MODE1_2352_BYTES ||
+                !source_lba_in_range(ranges, range_count, origin_lba) ||
+                origin_reader_pc > 0xffffu ||
+                origin_writer_pc > 0xffffu ||
+                origin_reader_physical_pc > 0xffffffu ||
+                origin_writer_physical_pc > 0xffffffu ||
+                origin_destination > 0xffffu ||
+                origin_physical < 0x1f0000u ||
+                origin_physical >= 0x1f8000u ||
+                origin_read_value > 0xffu || origin_stored_value > 0xffu ||
+                origin_read_value != origin_stored_value) {
+                fclose(file);
+                return reject(&receipt);
+            }
+            receipt.origin_ram_receipt_count++;
+            receipt.origin_ram_source_verified = 1;
+            continue;
+        }
         if (known_observation_row(line, "main_ram_e009_enter ") ||
             known_observation_row(line, "main_ram_e009_register_write ") ||
             known_observation_row(line, "main_ram_e009_return ")) {
@@ -160,6 +213,13 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
             pending.active = 1;
             receipt.scsi_command_count++;
             receipt.requested_sector_count += sector_count;
+            if (range_count >= sizeof(ranges) / sizeof(ranges[0])) {
+                fclose(file);
+                return reject(&receipt);
+            }
+            ranges[range_count].start_lba = start_lba;
+            ranges[range_count].sector_count = sector_count;
+            range_count++;
             continue;
         }
         if (sscanf(line,

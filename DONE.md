@@ -51844,3 +51844,10 @@ and `firestaff` build pass.
   damage. The live mechanics path was already action-gated; focused magic and
   spell-cast tests now assert the no-mutation boundary. Saturn dispatcher,
   effect/target, RNG and SLEV/SFX capture remain open.
+- ✅ 2026-08-06 Theron FIFO-origin capture path: added a valid Mednafen 1.32.1
+  capture patch and wired it into the Theron build script. Each CD data byte is
+  retained with raw LBA, sector offset and FIFO sequence before the Firestaff
+  CD-to-RAM receipt; the parser accepts only source LBAs covered by authenticated
+  SCSI reads. The existing capture remains transport/loader evidence only until
+  the patched binary produces a fresh consumer trace; no runtime semantics or
+  synthetic viewport data were enabled.

@@ -25,10 +25,16 @@ int main(void) {
         return 1;
     }
     printf("PASS: md5=%s commands=%u requested=%u raw_sectors=%u bindings=%u "
-           "lba=%u..%u irq=%u destinations=%u semantic_publication=blocked\n",
+           "lba=%u..%u irq=%u destinations=%u origins=%u semantic_publication=blocked\n",
            receipt.source_trace_md5, receipt.scsi_command_count,
            receipt.requested_sector_count, receipt.raw_sector_count,
            receipt.sector_binding_count, receipt.first_lba, receipt.last_lba,
-           receipt.cd_irq_count, receipt.destination_candidate_count);
+           receipt.cd_irq_count, receipt.destination_candidate_count,
+           receipt.origin_ram_receipt_count);
+    if (receipt.origin_ram_receipt_count > 0u &&
+        !receipt.origin_ram_source_verified) {
+        fprintf(stderr, "FAIL: origin RAM receipt lost source verification\n");
+        return 1;
+    }
     return 0;
 }

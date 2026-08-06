@@ -31,6 +31,8 @@ typedef struct {
     uint32_t register_read_count;
     uint32_t register_write_count;
     uint32_t destination_candidate_count;
+    uint32_t origin_ram_receipt_count;
+    int origin_ram_source_verified;
     uint32_t first_lba;
     uint32_t last_lba;
     uint32_t first_sector_fnv1a;

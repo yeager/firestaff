@@ -1,0 +1,116 @@
+diff --git a/src/cdrom/scsicd.cpp b/src/cdrom/scsicd.cpp
+index 2171e30..e11d358 100644
+--- a/src/cdrom/scsicd.cpp
++++ b/src/cdrom/scsicd.cpp
+@@ -70,0 +71,37 @@ static uint32 TheronSCSIReadCommandSectorCount;
++struct TheronSCSIDataOrigin
++{
++ uint32 lba;
++ uint16 offset;
++ uint64 sequence;
++};
++static TheronSCSIDataOrigin TheronSCSIDataOrigins[65536];
++static uint32 TheronSCSIDataOriginRead;
++static uint32 TheronSCSIDataOriginWrite;
++static uint32 TheronSCSIDataOriginCount;
++static uint64 TheronSCSIDataOriginSequence;
++static TheronSCSIDataOrigin TheronSCSILastDataOrigin;
++static bool TheronSCSILastDataOriginValid;
++
++static void TheronSCSIQueueDataOrigin(uint32 lba, uint16 offset, uint32 length)
++{
++ for(uint32 i = 0; i < length; i++)
++ {
++  if(TheronSCSIDataOriginCount >= 65536)
++   break;
++  TheronSCSIDataOrigins[TheronSCSIDataOriginWrite] =
++      {lba, (uint16)(offset + i), TheronSCSIDataOriginSequence++};
++  TheronSCSIDataOriginWrite = (TheronSCSIDataOriginWrite + 1) & 0xffff;
++  TheronSCSIDataOriginCount++;
++ }
++}
++
++bool SCSICD_GetLastDataOrigin(uint32 *source_lba, uint16 *source_offset,
++                              uint64 *fifo_sequence)
++{
++ if(!TheronSCSILastDataOriginValid)
++  return false;
++ *source_lba = TheronSCSILastDataOrigin.lba;
++ *source_offset = TheronSCSILastDataOrigin.offset;
++ *fifo_sequence = TheronSCSILastDataOrigin.sequence;
++ return true;
++}
+@@ -2882,0 +2920 @@ static INLINE void RunCDRead(uint32 system_timestamp, int32 run_time)
++     {
+@@ -2883,0 +2922,2 @@ static INLINE void RunCDRead(uint32 system_timestamp, int32 run_time)
++      TheronSCSIQueueDataOrigin(SectorAddr, 24, 2048);
++     }
+@@ -2884,0 +2925 @@ static INLINE void RunCDRead(uint32 system_timestamp, int32 run_time)
++     {
+@@ -2885,0 +2927,2 @@ static INLINE void RunCDRead(uint32 system_timestamp, int32 run_time)
++      TheronSCSIQueueDataOrigin(SectorAddr, 16, 2048);
++     }
+@@ -3148,0 +3192,9 @@ uint32 SCSICD_Run(scsicd_timestamp_t system_timestamp)
++      if(TheronSCSIDataOriginCount)
++      {
++       TheronSCSILastDataOrigin = TheronSCSIDataOrigins[TheronSCSIDataOriginRead];
++       TheronSCSIDataOriginRead = (TheronSCSIDataOriginRead + 1) & 0xffff;
++       TheronSCSIDataOriginCount--;
++       TheronSCSILastDataOriginValid = true;
++      }
++      else
++       TheronSCSILastDataOriginValid = false;
+diff --git a/src/cdrom/scsicd.h b/src/cdrom/scsicd.h
+index 62719b7..7ab7e7e 100644
+--- a/src/cdrom/scsicd.h
++++ b/src/cdrom/scsicd.h
+@@ -100,0 +101,2 @@ void SCSICD_SetDisc(bool tray_open, CDInterface* cdif, bool no_emu_side_effects
++bool SCSICD_GetLastDataOrigin(uint32 *source_lba, uint16 *source_offset,
++                              uint64 *fifo_sequence);
+diff --git a/src/pce/pce.cpp b/src/pce/pce.cpp
+index 7d4efca..d9d9d43 100644
+--- a/src/pce/pce.cpp
++++ b/src/pce/pce.cpp
+@@ -114 +114,3 @@ static DECLFR(BaseRAMReadSGX)
+-extern bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc, uint8 *value);
++extern bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc,
++                                         uint8 *value, uint32 *source_lba,
++                                         uint16 *source_offset, uint64 *fifo_sequence);
+@@ -124,0 +127,3 @@ static void TheronTracePCECDDataDestination(uint32 physical, uint8 stored_value)
++ uint32 source_lba;
++ uint16 source_offset;
++ uint64 fifo_sequence;
+@@ -126 +131,2 @@ static void TheronTracePCECDDataDestination(uint32 physical, uint8 stored_value)
+- if(!TheronPCECDTraceTakeDataRead(&reader_pc, &reader_physical_pc, &read_value) || trace_count >= 256)
++ if(!TheronPCECDTraceTakeDataRead(&reader_pc, &reader_physical_pc, &read_value,
++                                  &source_lba, &source_offset, &fifo_sequence) || trace_count >= 256)
+@@ -145 +151,2 @@ if(read_value != stored_value)
+-         "pce_cd_data_destination_candidate reader_pc=%04x reader_physical_pc=%06x writer_pc=%04x writer_physical_pc=%06x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x\n",
++         "pce_cd_origin_ram_receipt source_lba=%u source_offset=%u fifo_sequence=%llu reader_pc=%04x reader_physical_pc=%06x writer_pc=%04x writer_physical_pc=%06x logical_destination=%04x physical=%08x read_value=%02x stored_value=%02x\n",
++         source_lba, source_offset, (unsigned long long)fifo_sequence,
+@@ -1307 +1313,0 @@ MDFN_HIDE extern const MDFNGI EmulatedPCE =
+-
+diff --git a/src/pce/pcecd.cpp b/src/pce/pcecd.cpp
+index dff5f70..ae1778d 100644
+--- a/src/pce/pcecd.cpp
++++ b/src/pce/pcecd.cpp
+@@ -104,0 +105,4 @@ static uint8 TheronPCECDDataReadValue;
++static bool TheronPCECDDataReadHasOrigin;
++static uint32 TheronPCECDDataReadLBA;
++static uint16 TheronPCECDDataReadOffset;
++static uint64 TheronPCECDDataReadFifoSequence;
+@@ -182 +186,3 @@ static void TheronTracePCECDCriticalState(const char *format, ...)
+-bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc, uint8 *value)
++bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc,
++                                  uint8 *value, uint32 *source_lba,
++                                  uint16 *source_offset, uint64 *fifo_sequence)
+@@ -190 +196,4 @@ bool TheronPCECDTraceTakeDataRead(uint16 *reader_pc, uint32 *reader_physical_pc,
+- return true;
++ *source_lba = TheronPCECDDataReadLBA;
++ *source_offset = TheronPCECDDataReadOffset;
++ *fifo_sequence = TheronPCECDDataReadFifoSequence;
++ return TheronPCECDDataReadHasOrigin;
+@@ -687,0 +697,3 @@ MDFN_FASTCALL uint8 PCECD_Read(uint32 timestamp, uint32 A, int32 &next_event, co
++     TheronPCECDDataReadHasOrigin = SCSICD_GetLastDataOrigin(
++         &TheronPCECDDataReadLBA, &TheronPCECDDataReadOffset,
++         &TheronPCECDDataReadFifoSequence);

@@ -65,13 +65,16 @@ patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_register_trace.patch"
 patch -d "$build_root/source" -p1 --batch --forward \
     < "$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch"
+patch -d "$build_root/source" -p1 --batch --forward \
+    < "$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch"
 git -C "$build_root/source" apply --recount --whitespace=nowarn \
     "$repo/scripts/mednafen_1.32.1_theron_vram_vce_snapshot.patch"
 
-# The older G4/FIFO-origin extensions target a different debugger hook and
-# remain research-only. The current consumer-read extension applies to this
-# coherent 1.32.1 path and records bounded game-owned main-RAM reads without
-# assigning any game-data semantics.
+# The FIFO-origin extension is capture-only. It carries raw LBA/offset/FIFO
+# provenance into the CD-transfer receipt; it does not assign level, object,
+# tile, palette, or viewport semantics and does not authorize runtime drawing.
+# Older G4/FIFO-origin extensions target a different debugger hook and remain
+# research-only.
 
 # The released Mednafen tree carries generated Makefile.in files. Copying it
 # into a fresh trace root can make make try to regenerate them, which would

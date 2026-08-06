@@ -22,6 +22,8 @@ main_ram_loader_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_loader_
 main_ram_e009_window_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_window_trace.patch
 main_ram_e009_critical_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_critical_trace.patch
 main_ram_e009_register_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_register_trace.patch
+main_ram_consumer_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_consumer_read_trace.patch
+fifo_origin_v2_patch_file=$repo/scripts/mednafen_1.32.1_theron_fifo_origin_main_ram_consumer_v2.patch
 main_ram_e009_dispatch_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_dispatch_trace.patch
 main_ram_e009_fifo_patch_file=$repo/scripts/mednafen_1.32.1_theron_main_ram_e009_fifo_trace.patch
 g4_main_ram_read_patch_file=$repo/scripts/mednafen_1.32.1_theron_g4_main_ram_read_trace.patch
@@ -290,7 +292,11 @@ if ! grep -Fq 'pce_cd_origin_main_ram_receipt sequence=%u generation=%u source_l
     exit 1
 fi
 if ! grep -Fq 'FIRESTAFF_MEDNAFEN_SDL2_PREFIX' "$build_script" ||
-   ! grep -Fq 'verify_theron_mednafen_sdl2_runtime.sh' "$build_script"; then
+   ! grep -Fq 'verify_theron_mednafen_sdl2_runtime.sh' "$build_script" ||
+   ! grep -Fq 'fifo_origin_main_ram_consumer_v2.patch' "$build_script" ||
+   ! grep -Fq 'TheronSCSIQueueDataOrigin' "$fifo_origin_v2_patch_file" ||
+   ! grep -Fq 'SCSICD_GetLastDataOrigin' "$fifo_origin_v2_patch_file" ||
+   ! grep -Fq 'pce_cd_origin_ram_receipt source_lba=%u source_offset=%u' "$fifo_origin_v2_patch_file"; then
     printf 'FAIL: trace build no longer gates capture on a real SDL2 runtime\n' >&2
     exit 1
 fi
@@ -318,4 +324,6 @@ patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_loader_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_window_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_critical_patch_file"
 patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_e009_register_patch_file"
-printf 'PASS: active Mednafen capture patches dry-run with controller, replay/host input, PCECD, main-RAM loader, and bounded e009 evidence\n'
+patch -d "$scratch/source" -p1 --batch --forward <"$main_ram_consumer_patch_file"
+patch -d "$scratch/source" -p1 --batch --forward <"$fifo_origin_v2_patch_file"
+printf 'PASS: active Mednafen capture patches dry-run with controller, replay/host input, PCECD, main-RAM loader, FIFO-origin, and bounded e009 evidence\n'

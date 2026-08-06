@@ -263,6 +263,14 @@
   under `.firestaff/firestaff-probe-screenshots` when no override is set.
   Remaining: run the consumer-read trace against an authentic Track 02 CUE with
   a real SDL2 runtime and join the observed reads to source-LBA/FIFO receipts.
+  **2026-08-06 FIFO-origin capture wiring:** the coherent 1.32.1 capture build
+  now has a valid FIFO-origin extension. It queues the exact raw user-data
+  `(LBA, sector offset, FIFO sequence)` for each authenticated CD transfer and
+  carries it into the CD-to-RAM receipt; the Firestaff CD sidecar parser
+  validates the source LBA against an authenticated SCSI-read range and keeps
+  semantic publication blocked. The existing capture has not been retroactively
+  promoted: it must be rerun with this instrumented binary before any `$2600`,
+  object, level, tile, palette, HUD, or viewport meaning is admitted.
 
 - **THERON-V1-VIEWPORT-REAL-DATA:** the old inferred viewport renderer is now
   explicitly fixture-only and excluded from the production archive. Replace
