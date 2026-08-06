@@ -191,6 +191,7 @@ def verify(repo: Path) -> list[str]:
             "dm2_runtime_actuate_wall_mecha",
             "dm2_runtime_actuate_teleporter",
             "dm2_runtime_actuate_floor_mecha",
+            "dm2_runtime_actuate_trickwall",
     ):
         if forbidden in runtime:
             errors.append(f"runtime retains timer-byte mutation study: {forbidden}")

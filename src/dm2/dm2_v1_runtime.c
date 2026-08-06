@@ -4434,109 +4434,6 @@ static int dm2_runtime_spell_timer_delegate(void *user,
  * dm2_runtime_spell_timer_delegate. */
 
 /*
- * dm2_runtime_actuate_trickwall — DM2-owned class-6 handler for the 0x04
- * actuator tile subdispatch (Lane B, cycle 8).
- *
- * skproject/SKULLWIN/c_tim_proc.cpp:4220 dispatches square class 6 to
- * DM2_ACTUATE_TRICKWALL (c_tim_proc.cpp:3875).  The source body toggles the
- * trickwall open/closed state and may update the visible wall set; the exact
- * byte layout is not yet source-bound in Firestaff.  The bounded handler
- * consumes the timer in source order and increments a fail-closed counter.
- *
- * Source: skproject/SKULLWIN/c_tim_proc.cpp:4220 (class-6 dispatch)
- *         skproject/SKULLWIN/c_tim_proc.cpp:3875 (DM2_ACTUATE_TRICKWALL)
- */
-static int dm2_runtime_actuate_trickwall(void *user,
-                                         const DM2_V1_SourceTimer *timer,
-                                         uint16_t source_index,
-                                         DM2_V1_ProceedTimersReceipt *receipt)
-{
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    DM2_V1_DungeonData *dungeon;
-    int x, y, raw;
-    uint16_t new_raw;
-
-    (void)source_index;
-    (void)receipt;
-
-    rt->actuator_tile_timers++;
-    rt->actuator_tile_trickwall++;
-
-    if (timer == NULL || rt->boot == NULL || rt->boot->dungeon_data == NULL)
-        return 1;
-    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-
-    x = (int)(int8_t)(timer->value_a & 0xff);
-    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
-
-    raw = dm2_v1_dungeon_get_tile_raw(dungeon, rt->dungeon_level, x, y);
-    if (raw < 0) return 1;
-
-    /* c_tim_proc.cpp:3896-3904 — yB==2: query tile bit 2 (0x4).
-     * Result 0 = passable (open), 1 = solid (closed). */
-    {
-        uint8_t yB = (uint8_t)((timer->value_b >> 8) & 0xff);
-        int action;
-        if (yB == 2) {
-            action = (raw & 0x04) ? 1 : 0;
-        } else {
-            action = (int)(yB & 0xff);
-        }
-
-        if (action != 1) {
-            /* c_tim_proc.cpp:3907-3908 — set bit 2 (make solid/wall). */
-            new_raw = (uint16_t)(raw | 0x04);
-            dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level,
-                                         x, y, new_raw);
-        } else {
-            /* c_tim_proc.cpp:3910-3941 — try to open (clear bit 2).
-             * Blocked if party is here or creature with AI flag bit 5
-             * clear is present — re-queue timer. */
-            int blocked = 0;
-
-            if (rt->session_snapshot_valid &&
-                rt->dungeon_level == (int)timer->ticks_and_map >> 24 &&
-                (int)rt->session_snapshot.party_x == x &&
-                (int)rt->session_snapshot.party_y == y) {
-                blocked = 1;
-            }
-
-            if (!blocked && rt->record_pools_valid) {
-                int16_t cr = dm2_v1_get_creature_at(
-                    &rt->record_pools, (const DM2_V1_DungeonData *)dungeon,
-                    rt->dungeon_level, x, y);
-                if (cr != DM2_V1_RECORD_HANDLE_NULL) {
-                    const uint8_t *crec = dm2_v1_record_pool_address(
-                        &rt->record_pools, cr);
-                    if (crec) {
-                        uint16_t flags = 0;
-                        dm2_v1_creature_ai_spec_flags(
-                            (int)crec[4], &flags);
-                        if ((flags & 0x20) == 0)
-                            blocked = 1;
-                    }
-                }
-            }
-
-            if (blocked) {
-                /* Re-queue: increment data (retry counter) and re-enqueue. */
-                DM2_V1_SourceTimer requeue;
-                requeue = *timer;
-                requeue.value_b = (int16_t)(timer->value_b + 1);
-                dm2_v1_runtime_enqueue_source_timer(&requeue, 0);
-            } else {
-                new_raw = (uint16_t)(raw & ~0x04);
-                dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level,
-                                             x, y, new_raw);
-            }
-        }
-    }
-
-    /* c_tim_proc.cpp:3944-3946 — viewport redraw flag. */
-    return 1;
-}
-
-/*
  * dm2_v1_runtime_tick — advance DM2 game state by one V1 tick.
  *
  * Called at 18.2 Hz (every ~55ms) from the Firestaff game loop.
@@ -4616,9 +4513,6 @@ void dm2_v1_runtime_tick(void) {
         dispatcher.tile_class_at = dm2_runtime_tile_class_at;
         /* No dispatcher.actuator_tile[] binding until the source transaction
          * above exists. */
-        /* Keep only the remaining bounded source studies explicit. These
-         * expressions take no action and do not install a callback. */
-        (void)dm2_runtime_actuate_trickwall;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
         /* STEP/DESTROY_DOOR likewise need the decoded DB0 direction,

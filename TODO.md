@@ -3791,6 +3791,9 @@ level or consumer bindings.
   Its uncalled floor-mecha target is removed too: a partial record walk and
   CAII activation cannot stand in for the complete original DB3/DB4/CAII/CCM
   transaction.
+  The class-6 trickwall study is removed as well: it changed G1 wall bits,
+  queried inferred creature state and requeued timers without the original
+  DB3/DB4/CCM transaction.
   The M11 Action-door shortcut now follows the same rule: it cannot rewrite
   a G1 tile from a coordinate-only query while the live DB0 door record,
   direction, collision, sound and follow-up timer transaction are absent.
