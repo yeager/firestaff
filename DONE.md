@@ -12,6 +12,14 @@ tracking game data. Verification: `firestaff_dm2` and `firestaff_m11` builds;
 `test_dm2_v1_graphics_data_open_receipt` 7/7 and
 `test_dm2_v1_weather_runtime_admission` 6/6.
 
+- ✅ 2026-08-06 Nexus retail MAP terminator hardening: the DMWeb retail
+  `SNDLEV*.MAP` parser now accepts only the observed two-byte `FF FF` end
+  marker. A truncated or synthetic `FF xx` suffix remains an unsupported
+  partial table and cannot expose a SAL window. The complete real corpus still
+  passes with 154 bounded records across all 16 levels. Verification:
+  `test_nexus_v1_sal_map_corpus` with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - ✅ 2026-08-06 DM2 production object-model isolation: removed
   `dm2_v1_object_model.c` from the broad `firestaff_dm2` source glob. The
   file's remaining sequential-pool parser is explicitly inferred and no M11

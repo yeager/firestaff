@@ -36,6 +36,36 @@ static unsigned char *read_file(const char *path, int *out_size) {
     return data;
 }
 
+static void test_retail_map_requires_ff_ff_terminator(void) {
+    static const unsigned char sal_data[] = { 0 };
+    unsigned char malformed_map[26];
+    Nexus_SoundEngine sound;
+    Nexus_SoundMapWindow window;
+
+    memset(malformed_map, 0, sizeof(malformed_map));
+    /* One observed-shaped record followed by a false FF 00 terminator. */
+    malformed_map[0] = 0x20;
+    malformed_map[1] = 0x00;
+    malformed_map[2] = 0xb0;
+    malformed_map[6] = 0x05;
+    malformed_map[7] = 0x40;
+    malformed_map[24] = 0xff;
+    malformed_map[25] = 0x00;
+
+    CHECK(nexus_sound_init(&sound) == 0,
+          "malformed retail MAP sound engine initializes");
+    CHECK(nexus_sound_load_canonical_level(&sound, 0, sal_data,
+                                            (int)sizeof(sal_data),
+                                            malformed_map,
+                                            (int)sizeof(malformed_map), 1, 1) == 0,
+          "malformed retail MAP loads as source bytes");
+    CHECK(sound.map_record_table_supported == 0,
+          "retail MAP rejects FF xx as a terminator");
+    CHECK(nexus_sound_map_lookup_raw_selector(&sound, 0x20, &window) == -1,
+          "malformed retail MAP cannot expose a partial window");
+    nexus_sound_shutdown(&sound);
+}
+
 int main(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     int level;
@@ -113,6 +143,8 @@ int main(void) {
 
     CHECK(record_total == 154,
           "retail SNDLEV00-15 MAP corpus exposes 154 bounded records");
+
+    test_retail_map_requires_ff_ff_terminator();
 
     return failures ? 1 : 0;
 }

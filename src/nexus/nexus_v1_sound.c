@@ -240,14 +240,16 @@ static void parse_map_record_table(Nexus_SoundEngine *eng) {
     if (eng->map_data[0] != 0x20U) goto legacy_map_parser;
     /* DMWeb DMNDataFileDecoder.vbs: MAP is a sequence of eight-byte
      * DataID/ID/start/L/area records from byte zero. Retail maps begin with
-     * 20h and terminate with FFh. Keep the older 24-byte fixture grammar
+     * 20h and terminate with the two-byte FF FF marker. Keep the older
+     * 24-byte fixture grammar
      * isolated for historical unit fixtures that do not carry a retail
      * signature. */
     {
         const int retail_dmweb_map = eng->map_data[0] == 0x20U;
         off = retail_dmweb_map ? 0 : NEXUS_SFX_MAP_HEADER_BYTES;
         while (off < eng->map_size) {
-            if (eng->map_data[off] == 0xffU) {
+            if (off + 1 < eng->map_size && eng->map_data[off] == 0xffU &&
+                eng->map_data[off + 1] == 0xffU) {
                 eng->map_record_terminator_offset = off;
                 eng->map_record_table_supported =
                     eng->map_record_count > 0 ? 1 : 0;
