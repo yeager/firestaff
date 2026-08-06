@@ -110,6 +110,16 @@ typedef struct CSB_V1_DungeonData {
  * Source: CSBWin/CSBCode.cpp TAG00332a lines 318-480 */
 int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_size);
 
+/* Load an in-memory original CSB dungeon payload. Unlike the historical
+ * compatibility entry above, this is a production boundary: it accepts only
+ * the ReDMCSB DUNGEON_HEADER/MAP one-byte-square layout after any required
+ * FTL decompression. The old 16-bit fixture layout exists solely for focused
+ * parser regressions and must never become a save/import runtime world.
+ *
+ * ReDMCSB DUNGEON.C F0237 and LOADSAVE.C F0435. */
+int csb_v1_dungeon_load_source_bytes(CSB_V1_DungeonData *out,
+                                     const uint8_t *dat, int dat_size);
+
 /* Load dungeon from a file path.
  * Reads the entire file into memory, then delegates to csb_v1_dungeon_load().
  * File-backed loading accepts only the original one-byte-square CSB format;

@@ -76,6 +76,19 @@
   passes with 166 assertions; the source object is absent from both M10 and
   M11 archives.
 
+# CSB source-byte dungeon admission (2026-08-06)
+
+- ✅ Added `csb_v1_dungeon_load_source_bytes()` as the strict in-memory
+  original-media/save boundary. It accepts only the ReDMCSB one-byte-square
+  `DUNGEON_HEADER`/`MAP` layout after FTL decompression and frees/rejects the
+  retired 16-bit synthetic fixture layout.
+- ✅ Routed Atari save dungeon restoration and the real-artifact save boundary
+  through that gate. File-backed loading now uses the same entry point.
+- ✅ Verification: `test_csb_v1_dungeon_loader_pc34_compat` and
+  `firestaff_csb_v1_save_real_artifact_boundary_probe` prove that a historical
+  fixture cannot produce a source-byte dungeon or a save artifact, while the
+  existing source-format map regressions remain covered.
+
 # CSB FM Towns source-bound runtime guide (2026-08-06)
 
 - ✅ Added `docs/wiki/CSB-FMTowns-Guide.md` from the verified F31 media and

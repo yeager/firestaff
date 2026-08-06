@@ -288,10 +288,12 @@ int csb_v1_save_real_artifact_boundary_check(
     effective_game_id = derived_game_id;
     out->derived_game_id = effective_game_id;
 
-    /* Step 1: parse the real DUNGEON.DAT. csb_v1_dungeon_load
-     * handles both FTL-compressed and decompressed inputs. */
+    /* Step 1: parse the real DUNGEON.DAT. The production byte boundary
+     * handles FTL-compressed and decompressed inputs while refusing the
+     * retired 16-bit fixture layout. ReDMCSB DUNGEON.C F0237. */
     memset(&dungeon, 0, sizeof(dungeon));
-    rc = csb_v1_dungeon_load(&dungeon, cfg->dat, cfg->dat_size);
+    rc = csb_v1_dungeon_load_source_bytes(&dungeon, cfg->dat,
+                                          cfg->dat_size);
     if (rc != 0 || dungeon.level_count < 1) {
         csb_v1_dungeon_free(&dungeon);
         out->parsed_level_count = 0;

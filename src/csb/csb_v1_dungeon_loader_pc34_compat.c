@@ -359,6 +359,24 @@ int csb_v1_dungeon_load(CSB_V1_DungeonData *out, const uint8_t *dat, int dat_siz
     return 0;
 }
 
+int csb_v1_dungeon_load_source_bytes(CSB_V1_DungeonData *out,
+                                     const uint8_t *dat, int dat_size)
+{
+    int result;
+
+    result = csb_v1_dungeon_load(out, dat, dat_size);
+    /* The generic loader predates the source-data boundary and retains a
+     * 16-bit-square fixture reader for isolated unit tests. ReDMCSB
+     * DUNGEON.C F0237 and LOADSAVE.C F0435 never admit that shape from an
+     * original save or media payload. Fail closed before an in-memory
+     * caller can publish it as a live CSB dungeon. */
+    if (result != 0 || !out || out->square_bytes != 1) {
+        if (out) csb_v1_dungeon_free(out);
+        return result == 0 ? -2 : result;
+    }
+    return 0;
+}
+
 /* ── File I/O ───────────────────────────────────────────────────────── */
 
 int csb_v1_dungeon_load_from_file(CSB_V1_DungeonData *out, const char *path) {
@@ -385,17 +403,12 @@ int csb_v1_dungeon_load_from_file(CSB_V1_DungeonData *out, const char *path) {
     nread = fread(buf, 1, (size_t)filesize, f);
     if (nread != (size_t)filesize) goto done;
 
-    ret = csb_v1_dungeon_load(out, buf, (int)filesize);
+    ret = csb_v1_dungeon_load_source_bytes(out, buf, (int)filesize);
     /* The in-memory parser retains the retired 16-bit layout only for
      * isolated compatibility fixtures. A file path is source media: per
      * ReDMCSB DUNGEON.C F0237/LOADSAVE.C F0435 it must materialize the
      * original one-byte square map and its DUNGEON_HEADER. Never publish a
      * filename-backed fixture as a dungeon to external/runtime callers. */
-    if (ret == 0 && out->square_bytes != 1) {
-        csb_v1_dungeon_free(out);
-        ret = -2;
-    }
-
 done:
     free(buf);
     fclose(f);

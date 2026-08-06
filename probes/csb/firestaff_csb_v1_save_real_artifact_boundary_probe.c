@@ -26,14 +26,14 @@
  * Skip-safe by design: hosts without a known PC CSB
  * DUNGEON.DAT (e.g. ~/.firestaff/data/csb/DUNGEON.DAT, or
  * the path passed via argv[1] / FIRESTAFF_CSB_PC_DATA) exit 0
- * with a SKIP message. The synthetic-fixture pass below runs
- * unconditionally so the gate's verdict contract is proven
- * even on hosts without user-staged data.
+ * with a SKIP message. The legacy-fixture rejection pass below runs
+ * unconditionally so the production boundary is proven even on hosts
+ * without user-staged data.
  *
- * Synthetic-fixture pass:
+ * Legacy-fixture rejection pass:
  *   Builds a small synthetic CSB-shape dungeon buffer
  *   (4 levels, width=15/height=8 each, no FTL compression)
- *   and drives it through the same boundary check. The
+ *   and proves that the same boundary rejects it. The
  *   width=15 deliberately exceeds CSB_V1_MAX_LEVELS (12) so
  *   the loader routes the fixture through the legacy
  *   synthetic-fixture branch (not the real-CSB branch).
@@ -170,19 +170,18 @@ static size_t build_synthetic_dungeon(uint8_t *buf, size_t buf_cap,
     return total;
 }
 
-/* ── Synthetic-fixture pass (always runs) ──────────────────────────── */
+/* ── Legacy-fixture rejection pass (always runs) ───────────────────── */
 
-static void run_synthetic_pass(char *out_path, size_t out_path_cap)
+static void run_legacy_fixture_rejection_pass(void)
 {
     uint8_t synth_dungeon[1024];
     size_t synth_size;
     CSB_V1_SaveRealArtifactConfig cfg;
     CSB_V1_SaveRealArtifactVerdict verdict;
-    const char *tmp = getenv("TMPDIR");
     uint16_t gid_a;
     uint16_t gid_b;
 
-    printf("\n--- Synthetic-fixture pass (4-level CSB-shape) ---\n");
+    printf("\n--- Legacy-fixture rejection pass (4-level CSB-shape) ---\n");
 
     synth_size = build_synthetic_dungeon(
         synth_dungeon, sizeof(synth_dungeon), 4);
@@ -199,16 +198,10 @@ static void run_synthetic_pass(char *out_path, size_t out_path_cap)
     CHECK(gid_a == gid_b, "derive_game_id deterministic across two calls");
     printf("  derived_game_id=0x%04X (deterministic)\n", (unsigned)gid_a);
 
-    /* Build a temporary save path under TMPDIR (or the cwd). */
-    if (!tmp || !tmp[0]) tmp = ".";
-    snprintf(out_path, out_path_cap,
-             "%s/firestaff_csb_v1_save_real_artifact_boundary_%u.fsav",
-             tmp, (unsigned)gid_a);
-
     memset(&cfg, 0, sizeof(cfg));
     cfg.dat               = synth_dungeon;
     cfg.dat_size          = (int)synth_size;
-    cfg.out_path          = out_path;
+    cfg.out_path          = NULL;
     cfg.prefix_size       = 64;
     cfg.expected_game_id  = gid_a;
 
@@ -236,36 +229,20 @@ static void run_synthetic_pass(char *out_path, size_t out_path_cap)
            (int)verdict.loaded_party_y,
            (int)verdict.loaded_party_z);
 
-    CHECK(verdict.status_code == CSB_V1_SAVE_REAL_OK,
-          "synthetic verdict status_code == OK");
-    CHECK(verdict.parsed_level_count == 4,
-          "synthetic dungeon parsed_level_count == 4");
-    CHECK(verdict.header_build_code == 0,
-          "synthetic header_build_code == 0");
-    CHECK(verdict.save_write_code == CSB_V1_SAVE_OK,
-          "synthetic save_write_code == CSB_V1_SAVE_OK");
-    CHECK(verdict.verify_same_code == CSB_V1_LOAD_OK,
-          "synthetic verify_same_code == CSB_V1_LOAD_OK");
-    CHECK(verdict.verify_same_match == 1,
-          "synthetic verify_same_match == 1");
-    CHECK(verdict.verify_foreign_code == CSB_V1_LOAD_ERR_DIFFERENT_GAME,
-          "synthetic verify_foreign_code == DIFFERENT_GAME");
-    CHECK(verdict.verify_foreign_match == 1,
-          "synthetic verify_foreign_match == 1");
-    CHECK(verdict.load_header_code == CSB_V1_LOAD_OK,
-          "synthetic load_header_code == CSB_V1_LOAD_OK");
-    CHECK(verdict.load_prefix_code == CSB_V1_LOAD_OK,
-          "synthetic load_prefix_code == CSB_V1_LOAD_OK");
-    CHECK(verdict.header_match == 1,
-          "synthetic header_match == 1 (F0435 field equality)");
-    CHECK(verdict.prefix_match == 1,
-          "synthetic prefix_match == 1 (byte-for-byte)");
+    CHECK(verdict.status_code == CSB_V1_SAVE_REAL_ERR_DUNGEON_PARSE,
+          "legacy fixture is rejected at the source-byte dungeon boundary");
+    CHECK(verdict.parsed_level_count == 0,
+          "legacy fixture does not publish parsed dungeon metadata");
+    CHECK(verdict.header_build_code == 0 && verdict.save_write_code == 0 &&
+          verdict.verify_same_code == 0 && verdict.load_header_code == 0 &&
+          verdict.header_match == 0 && verdict.prefix_match == 0,
+          "rejected fixture cannot reach header, save or load operations");
 
     /* Source-evidence citation. */
     {
         const char *ev = csb_v1_save_real_artifact_source_evidence();
         CHECK(ev != NULL && ev[0] != '\0',
-              "synthetic source_evidence() non-empty");
+              "rejection source_evidence() non-empty");
     }
 
     /* NULL-safety sanity: status_name covers the OK / -1..-11 range
@@ -325,8 +302,8 @@ static void run_real_asset_pass(int argc, char **argv)
     printf("  data_dir=%s\n", dir ? dir : "(none)");
 
     if (!dir || dir[0] == '\0') {
-        printf("  SKIP: no data_dir; synthetic pass already "
-               "proves the contract.\n");
+        printf("  SKIP: no data_dir; legacy-fixture rejection already "
+               "proves the boundary.\n");
         return;
     }
     snprintf(dungeon_path, sizeof(dungeon_path),
@@ -342,8 +319,8 @@ static void run_real_asset_pass(int argc, char **argv)
     found = read_file_into(dungeon_path, dungeon_buf, REAL_DUNGEON_BUF_BYTES,
                            &dungeon_size);
     if (!found) {
-        printf("  SKIP: %s not found or unreadable; synthetic "
-               "pass already proves the contract.\n", dungeon_path);
+        printf("  SKIP: %s not found or unreadable; legacy-fixture "
+               "rejection already proves the boundary.\n", dungeon_path);
         free(dungeon_buf);
         return;
     }
@@ -415,15 +392,9 @@ static void run_real_asset_pass(int argc, char **argv)
 
 int main(int argc, char **argv)
 {
-    char synthetic_out_path[1024] = {0};
-
     printf("=== CSB V1 save real-artifact boundary probe ===\n");
 
-    run_synthetic_pass(synthetic_out_path, sizeof(synthetic_out_path));
-
-    if (synthetic_out_path[0]) {
-        remove(synthetic_out_path);
-    }
+    run_legacy_fixture_rejection_pass();
 
     run_real_asset_pass(argc, argv);
 

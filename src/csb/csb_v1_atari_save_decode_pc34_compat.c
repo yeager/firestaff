@@ -364,8 +364,11 @@ int csb_v1_atari_save_load_dungeon_pc34_compat(
     if (!little_endian) return CSB_V1_ATARI_SAVE_ERR_TRUNCATED;
     memcpy(little_endian, bytes + info.dungeon_offset, info.dungeon_size);
     swap_atari_dungeon_words(little_endian, info.dungeon_size);
-    result = csb_v1_dungeon_load(out_dungeon, little_endian,
-                                 (int)info.dungeon_size);
+    /* This is a decoded original Atari save payload, not a unit fixture.
+     * The strict byte boundary rejects the retired 16-bit fixture layout
+     * after its Atari word-order normalization. ReDMCSB LOADSAVE.C F0435. */
+    result = csb_v1_dungeon_load_source_bytes(out_dungeon, little_endian,
+                                              (int)info.dungeon_size);
     free(little_endian);
     if (result != 0) return result;
     if (out_info) *out_info = info;

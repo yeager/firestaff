@@ -40,6 +40,19 @@ static void test_load_too_small(void)
     (void)rc;
 }
 
+static void test_source_bytes_reject_legacy_fixture(void)
+{
+    /* The historical 16-bit fixture shape starts with a LE level count.
+     * It remains accepted only by the compatibility loader, never by a
+     * production in-memory original-data handoff. */
+    uint8_t bytes[16] = {1u, 0u, 16u, 0u, 1u, 1u, 10u, 0u};
+    CSB_V1_DungeonData dungeon;
+    memset(&dungeon, 0, sizeof(dungeon));
+    assert(csb_v1_dungeon_load_source_bytes(
+               &dungeon, bytes, (int)sizeof(bytes)) != 0);
+    assert(dungeon.raw_data == NULL && dungeon.level_count == 0);
+}
+
 static void test_get_current_default(void)
 {
     const CSB_V1_DungeonData *d = csb_v1_dungeon_get_current();
@@ -149,7 +162,8 @@ static void test_real_header_initial_party_pose(void)
     bytes[44 + 9] = 0x02;
     bytes[80] = 0x20;
     memset(&dungeon, 0, sizeof(dungeon));
-    assert(csb_v1_dungeon_load(&dungeon, bytes, (int)sizeof(bytes)) == 0);
+    assert(csb_v1_dungeon_load_source_bytes(
+               &dungeon, bytes, (int)sizeof(bytes)) == 0);
     assert(csb_v1_dungeon_initial_party_pose_pc34(
                &dungeon, &map_index, &x, &y, &direction) == 1);
     assert(map_index == 0 && x == 9 && y == 0 && direction == 2);
@@ -208,6 +222,7 @@ int main(void)
     test_load_nonexistent();
     test_load_null_data();
     test_load_too_small();
+    test_source_bytes_reject_legacy_fixture();
     test_get_current_default();
     test_get_current_mutable_default();
     test_set_current_null();
