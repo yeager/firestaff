@@ -60,6 +60,23 @@ static int test_synthetic(void) {
     if (nexus_v1_smap_parse_header(valid, valid_size, &hdr)) {
         free(valid); return 1;
     }
+    valid[0x2fa0] = 0xfc;
+    valid[0x2fa1] = 0x00;
+    {
+        uint32_t *rgba = (uint32_t *)calloc(
+            (size_t)NEXUS_SMAP_PIXEL_WIDTH * NEXUS_SMAP_PIXEL_HEIGHT,
+            sizeof(*rgba));
+        Nexus_V1_SmapDecodeResult decoded;
+        if (!rgba || !nexus_v1_smap_decode(
+                valid, valid_size, rgba,
+                NEXUS_SMAP_PIXEL_WIDTH * NEXUS_SMAP_PIXEL_HEIGHT,
+                &decoded) || decoded.palette_rgba[0] != 0xFFF80000U) {
+            free(rgba);
+            free(valid);
+            return 1;
+        }
+        free(rgba);
+    }
     free(valid);
     printf("  PASS synthetic\n");
     return 0;

@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus Saturn BGR555 channel-order correction: the real
+  `SMAP00-15.BIN`, `FACE.BIN`, `ITEM.IBS` and `.MNS` palette decoders now map
+  Saturn BGR555 bits 14..10/9..5/4..0 to host R/G/B consistently with the
+  shared VDP1 palette path. Added a synthetic asymmetric-word regression and
+  reran all 16 real SMAP decodes, 20 FACE portraits, 243 ITEM declarations,
+  30 MNS models and the SMAP runtime binding. No capture or fallback gate was
+  opened; no game data was tracked.
+
 - ✅ 2026-08-06 Nexus ITEM equipment placeholder removal: deleted the old
   `20..26` item-ID armor mapping and the unknown-armor-to-torso fallback from
   the inventory helper. ITEM.IBS declarations remain source-owned, while

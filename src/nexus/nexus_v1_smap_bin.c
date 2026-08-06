@@ -11,9 +11,11 @@ static uint16_t read_be16(const uint8_t *p) {
 }
 
 static uint32_t bgr555_to_rgba(uint16_t c) {
-    int r = (c & 0x1F) << 3;
+    /* Saturn Color RAM BGR555 stores R in bits 14..10, G in 9..5 and
+     * B in 4..0; keep this aligned with nexus_v1_palette.c. */
+    int r = ((c >> 10) & 0x1F) << 3;
     int g = ((c >> 5) & 0x1F) << 3;
-    int b = ((c >> 10) & 0x1F) << 3;
+    int b = (c & 0x1F) << 3;
     return 0xFF000000U | ((uint32_t)r << 16) | ((uint32_t)g << 8) | (uint32_t)b;
 }
 

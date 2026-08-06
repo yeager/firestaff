@@ -21,9 +21,9 @@ static int range_in_file(uint32_t offset, uint64_t length, int data_size) {
 }
 
 static uint32_t bgr555_to_rgba(uint16_t c) {
-    int r = (c & 0x1F) << 3;
+    int r = ((c >> 10) & 0x1F) << 3;
     int g = ((c >> 5) & 0x1F) << 3;
-    int b = ((c >> 10) & 0x1F) << 3;
+    int b = (c & 0x1F) << 3;
     return 0xFF000000U | ((uint32_t)r << 16) | ((uint32_t)g << 8) | (uint32_t)b;
 }
 

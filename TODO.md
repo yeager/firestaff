@@ -20,6 +20,12 @@
   selector bindings fail-closed until the authentic SLEV/SDDRVS event
   consumer is captured; do not infer semantics from selector ordering.
 
+- **NEXUS-PALETTE-CAPTURE:** The retail SMAP/FACE/ITEM/MNS palette decoders
+  now share the Saturn BGR555 channel order. Remaining work is an independent
+  VDP1/VDP2 capture that proves each asset's upload/CLUT destination and final
+  display composition; decoded host surfaces are not themselves presentation
+  evidence.
+
 - **NEXUS-MENU-SEQUENCE-CAPTURE:** `docs/nexus_menu.md` no longer treats the
   DM1/CSB flow or a 24-champion roster as Nexus evidence. Bind the real
   startup/champion/menu order, text consumer and VDP1/VDP2 composition from
