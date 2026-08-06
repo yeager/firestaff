@@ -52608,3 +52608,10 @@ This fixes the source path for torch holders, mirrors, inscriptions and
 Hostenumret är kvar som intern begäran, medan retail-MAP-selectors förblir
 opaka tills en Saturn-capture binder event-dispatchen. Playback och övriga
 no-draw/capture-gates är oförändrade.
+
+- ✅ 2026-08-06 DM2 source-gated movement: removed the headless movement
+  fallback that had treated missing dungeon data as a generic floor. Runtime
+  move and turn now require the same hash-verified boot-owned GRAPHICS.DAT,
+  DUNGEON.DAT and GDAT callback binding used by the renderer; fixture-only
+  dungeons cannot alter party position or facing. The collision decoder stays
+  isolated and explicitly tested outside the live gameplay boundary.

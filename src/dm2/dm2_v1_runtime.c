@@ -8342,6 +8342,21 @@ int dm2_v1_runtime_can_move(void) {
     return (rt->move_cooldown_ticks == 0);
 }
 
+/* SKProject enters c_move only after DM2_GAME_LOAD has mounted both original
+ * owners and installed the GDAT callbacks. Keep input from manufacturing a
+ * traversable host grid when a caller has supplied only a fixture dungeon.
+ * This is deliberately the same source boundary as runtime_render_frame(). */
+static int dm2_runtime_gameplay_source_ready(const DM2_V1_RuntimeState *rt)
+{
+    return rt && rt->boot && rt->boot->assets_verified &&
+        rt->boot->graphics_dat && rt->boot->dungeon_data &&
+        rt->viewport_asset_fetch == dm2_v1_boot_viewport_asset_fetch &&
+        rt->viewport_asset_user == rt->boot &&
+        rt->viewport_asset_palette_fetch ==
+            dm2_v1_boot_viewport_asset_palette_fetch &&
+        rt->viewport_asset_palette_user == rt->boot;
+}
+
 int dm2_v1_runtime_last_perform_move_receipt(
     DM2_V1_PerformMoveReceipt *out_receipt) {
     if (!out_receipt || !g_dm2_last_perform_move.valid) {
@@ -8368,7 +8383,9 @@ int dm2_v1_runtime_move(int dir) {
     int nx, ny;
     int blocked = 0;
 
-    if (!rt->boot || !rt->boot->dm2_state) return -1;
+    if (!dm2_runtime_gameplay_source_ready(rt) || !rt->boot->dm2_state) {
+        return -1;
+    }
     gs = (DM2_V1_GameState *)rt->boot->dm2_state;
 
     /* Save pre-move position for smooth animation trigger */
@@ -8451,12 +8468,6 @@ int dm2_v1_runtime_move(int dir) {
             /* All other tile types (1=floor, 3=floor_ornate,
              * 8=teleporter, 10=water, etc.) are passable. */
         }
-    }
-    if (!rt->outdoor && !rt->boot->dungeon_data) {
-        /* Preserve the existing headless/no-data runtime path. Real dungeon
-         * launches still provide target_raw through dm2_v1_dungeon_load. */
-        move_request.target_raw_valid = 1;
-        move_request.target_square_type = 1;
     }
     if (rt->outdoor) {
         move_request.target_raw_valid = 1;
@@ -8544,7 +8555,9 @@ int dm2_v1_runtime_turn(int delta) {
     int old_dir;
     int new_dir;
 
-    if (!rt->boot || !rt->boot->dm2_state) return -1;
+    if (!dm2_runtime_gameplay_source_ready(rt) || !rt->boot->dm2_state) {
+        return -1;
+    }
     gs = (DM2_V1_GameState *)rt->boot->dm2_state;
     old_dir = gs->party_dir & 3;
     new_dir = (old_dir + (delta < 0 ? 3 : 1)) & 3;

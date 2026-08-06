@@ -800,6 +800,10 @@
   dungeon hash in one scan. Its post-admission diagnostic now also reports
   the real G1 seed and map count instead of the intentionally unavailable
   pre-load zeroes; this does not admit an incomplete save session.
+  2026-08-06: the live move and turn entry points now use the same verified
+  boot-owned GRAPHICS/DUNGEON/GDAT provider boundary as frame rendering.
+  A fixture-only dungeon or a headless profile cannot create a walkable floor
+  receipt, change direction, or enter the playable loop.
   The old low-level SKSave helper now emits the real `c_hex2a` header boundary
   only and is not a serializer: complete original dungeon/DB write ordering
   from `SKProject/SKULLWIN/c_savegame.cpp` remains required before save output

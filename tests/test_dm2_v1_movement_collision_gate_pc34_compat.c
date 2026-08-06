@@ -1,14 +1,12 @@
 /* test_dm2_v1_movement_collision_gate_pc34_compat.c
  *
- * Data-free DM2 V1 movement/collision regression.
+ * Data-free DM2 V1 collision-decoder regression.
  *
  * Covers:
  *  1. Wall / pit / lava / inaccessible square types block party movement.
  *  2. Ordinary traversable square types remain walkable.
  *  3. Out-of-bounds level/x/y lookups block movement and expose no tile.
- *  4. Runtime blocked-step state preserves grid position, turns to the
- *     attempted direction, suppresses the move callback, and applies
- *     the same one-tick movement gate as a successful dungeon step.
+ *  4. Fixture dungeons cannot enter live runtime movement or turn paths.
  *
  * Source-lock:
  *  ReDMCSB DEFS.H:1001-1013 defines square type extraction and the
@@ -31,8 +29,6 @@ static int tests_run = 0;
 static int tests_passed = 0;
 static int runtime_move_callbacks = 0;
 static int runtime_turn_callbacks = 0;
-static int runtime_last_turn_from = -1;
-static int runtime_last_turn_to = -1;
 
 enum {
     DM2_SYNTHETIC_TILE_DATA_START = 44 + 28 * 16,
@@ -132,9 +128,9 @@ static void on_runtime_move(int from_x, int from_y, int to_x, int to_y)
 
 static void on_runtime_turn(int from_dir, int to_dir)
 {
+    (void)from_dir;
+    (void)to_dir;
     runtime_turn_callbacks++;
-    runtime_last_turn_from = from_dir;
-    runtime_last_turn_to = to_dir;
 }
 
 static int test_blocking_square_types(void)
@@ -202,7 +198,7 @@ static int test_source_evidence_mentions_collision_anchors(void)
         && strstr(evidence, "square type constants") != NULL;
 }
 
-static int test_runtime_blocked_step_turn_state(void)
+static int test_runtime_rejects_fixture_dungeon(void)
 {
     DM2_V1_BootProfile profile;
     DM2_V1_GameState game;
@@ -219,40 +215,24 @@ static int test_runtime_blocked_step_turn_state(void)
     dm2_v1_runtime_set_outdoor(0);
     runtime_move_callbacks = 0;
     runtime_turn_callbacks = 0;
-    runtime_last_turn_from = -1;
-    runtime_last_turn_to = -1;
     dm2_v1_runtime_set_move_callback(on_runtime_move);
     dm2_v1_runtime_set_turn_callback(on_runtime_turn);
 
     ok = dm2_v1_runtime_move(0) == -1
         && dm2_v1_runtime_get_party_x() == 1
         && dm2_v1_runtime_get_party_y() == 1
-        && dm2_v1_runtime_get_party_dir() == 0
+        && dm2_v1_runtime_get_party_dir() == 1
         && runtime_move_callbacks == 0
-        && runtime_turn_callbacks == 1
-        && runtime_last_turn_from == 1
-        && runtime_last_turn_to == 0
-        && dm2_v1_runtime_can_move() == 0;
+        && runtime_turn_callbacks == 0
+        && dm2_v1_runtime_can_move() == 1;
 
     ok = ok
-        && dm2_v1_runtime_move(1) == -1
+        && dm2_v1_runtime_turn(-1) == -1
         && dm2_v1_runtime_get_party_x() == 1
         && dm2_v1_runtime_get_party_y() == 1
-        && dm2_v1_runtime_get_party_dir() == 0
-        && runtime_move_callbacks == 0
-        && runtime_turn_callbacks == 1;
-
-    dm2_v1_runtime_tick();
-    ok = ok
-        && dm2_v1_runtime_can_move() == 1
-        && dm2_v1_runtime_move(1) == 0
-        && dm2_v1_runtime_get_party_x() == 2
-        && dm2_v1_runtime_get_party_y() == 1
         && dm2_v1_runtime_get_party_dir() == 1
-        && runtime_move_callbacks == 1
-        && runtime_turn_callbacks == 2
-        && runtime_last_turn_from == 0
-        && runtime_last_turn_to == 1;
+        && runtime_move_callbacks == 0
+        && runtime_turn_callbacks == 0;
 
     dm2_v1_runtime_set_move_callback(NULL);
     dm2_v1_runtime_set_turn_callback(NULL);
@@ -260,7 +240,7 @@ static int test_runtime_blocked_step_turn_state(void)
     return ok;
 }
 
-static int test_runtime_turn_only_keeps_position(void)
+static int test_runtime_turn_rejects_fixture_dungeon(void)
 {
     DM2_V1_BootProfile profile;
     DM2_V1_GameState game;
@@ -277,30 +257,24 @@ static int test_runtime_turn_only_keeps_position(void)
     dm2_v1_runtime_set_outdoor(0);
     runtime_move_callbacks = 0;
     runtime_turn_callbacks = 0;
-    runtime_last_turn_from = -1;
-    runtime_last_turn_to = -1;
     dm2_v1_runtime_set_move_callback(on_runtime_move);
     dm2_v1_runtime_set_turn_callback(on_runtime_turn);
 
-    ok = dm2_v1_runtime_turn(-1) == 0
-        && dm2_v1_runtime_get_party_x() == 1
-        && dm2_v1_runtime_get_party_y() == 1
-        && dm2_v1_runtime_get_party_dir() == 0
-        && runtime_move_callbacks == 0
-        && runtime_turn_callbacks == 1
-        && runtime_last_turn_from == 1
-        && runtime_last_turn_to == 0
-        && dm2_v1_runtime_can_move() == 1;
-
-    ok = ok
-        && dm2_v1_runtime_turn(1) == 0
+    ok = dm2_v1_runtime_turn(-1) == -1
         && dm2_v1_runtime_get_party_x() == 1
         && dm2_v1_runtime_get_party_y() == 1
         && dm2_v1_runtime_get_party_dir() == 1
         && runtime_move_callbacks == 0
-        && runtime_turn_callbacks == 2
-        && runtime_last_turn_from == 0
-        && runtime_last_turn_to == 1
+        && runtime_turn_callbacks == 0
+        && dm2_v1_runtime_can_move() == 1;
+
+    ok = ok
+        && dm2_v1_runtime_turn(1) == -1
+        && dm2_v1_runtime_get_party_x() == 1
+        && dm2_v1_runtime_get_party_y() == 1
+        && dm2_v1_runtime_get_party_dir() == 1
+        && runtime_move_callbacks == 0
+        && runtime_turn_callbacks == 0
         && dm2_v1_runtime_can_move() == 1;
 
     dm2_v1_runtime_set_move_callback(NULL);
@@ -318,8 +292,8 @@ int main(void)
     TEST(grid_bounds_block_movement);
     TEST(out_of_bounds_type_sentinel);
     TEST(source_evidence_mentions_collision_anchors);
-    TEST(runtime_blocked_step_turn_state);
-    TEST(runtime_turn_only_keeps_position);
+    TEST(runtime_rejects_fixture_dungeon);
+    TEST(runtime_turn_rejects_fixture_dungeon);
 
     printf("\nDM2 V1 Movement Collision Gate: %d/%d passed\n",
            tests_passed, tests_run);
