@@ -122,6 +122,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.source_records_decoded > 0);
         assert(result.unbound_item_refs == result.source_records_decoded +
                result.raw_only_item_refs);
+        assert(result.raw_only_item_refs == 0);
         assert(result.source_object_count ==
                (unsigned int)result.unbound_item_refs);
         for (unsigned int i = 0; i < result.source_object_count; ++i) {
@@ -135,6 +136,9 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(occ->raw_size == theron_item_bytes[occ->category]);
             assert(occ->next_ref ==
                    ((uint16_t)occ->raw[0] | ((uint16_t)occ->raw[1] << 8)));
+            assert(occ->decoded_valid);
+            assert(occ->decoded.category == occ->category);
+            assert(occ->decoded.next_ref == occ->next_ref);
         }
         /* Champions and creatures are linked through actuators (champion
          * mirror type 127), not directly through ground refs. */

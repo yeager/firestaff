@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Theron Track 02 object-record handoff: full-dungeon loading now
+  retains decoded source records alongside every authentic category 4–10, 14
+  and 15 occurrence, including the missile/cloud payloads. Tests verify the
+  decoded category and linked reference against the raw record across all
+  seven real US dungeons. No host object or synthetic inventory mapping was
+  introduced.
+
 - ✅ 2026-08-06 Nexus STABG DMWeb table hardening: the retail
   `DecodeSTABGBIN`-shaped offset table must now show its zero terminator; a
   full bounded table without that marker is rejected instead of being

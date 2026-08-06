@@ -24432,8 +24432,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   record decoder. It binds the two-byte next-reference prefix and the
   DMBUILDER field layouts for monsters, weapons, clothing, scrolls, potions,
   chests, and misc across every populated record in the real US corpus.
-  Categories 14/15 remain raw-only until a source consumer proves missile or
-  cloud semantics; no item is published into the runtime object model yet.
+  Categories 14/15 now use the same source decoder for their six-/two-byte
+  payloads; no item is published into the runtime object model yet.
 - 2026-08-06 update: the full Track 02 dungeon loader now consumes those
   source-bound records and follows their authentic next-reference chains on
   all seven US dungeons. It reports decoded/unbound records separately and
@@ -24453,6 +24453,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   twelve-entry thing-descriptor-size table and aggregate column count from the
   map directory. This is source layout provenance only; object-kind mapping,
   graphics ownership and runtime publication remain closed.
+- 2026-08-06 update: every real category 4–10, 14 and 15 occurrence now carries
+  both its exact raw bytes and the decoded source record (including missile and
+  cloud payload fields) through the full-dungeon handoff. Host object-kind,
+  inventory and projectile/cloud ownership remain deliberately unbound; no
+  synthetic object is created.
 
 ## Theron Track 19 remaining evidence
 

@@ -4,14 +4,17 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "theron_v1_track02_thing_data.h"
+
 typedef struct Theron_V1_World Theron_V1_World;
 
 #define THERON_TRACK02_SOURCE_OBJECT_MAX 2048u
 
 /* Source-faithful object occurrence retained for the next consumer pass.
  * DMBUILDER6/src/dms.h documents the first two bytes as the linked-list
- * next-reference for every placable object.  The remaining bytes stay raw
- * here: this handoff does not invent a host inventory/object type. */
+ * next-reference for every placable object. `decoded` is the corresponding
+ * source record for the categories whose byte layout is known; it is not a
+ * host inventory/object type and does not authorize gameplay publication. */
 typedef struct {
     uint16_t source_ref;
     uint16_t next_ref;
@@ -23,6 +26,8 @@ typedef struct {
     uint16_t map;
     uint16_t x;
     uint16_t y;
+    int decoded_valid;
+    Theron_Track02ItemRecord decoded;
 } Theron_Track02SourceObjectOccurrence;
 
 typedef struct {

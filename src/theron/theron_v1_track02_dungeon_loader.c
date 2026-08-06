@@ -64,7 +64,8 @@ static int retain_source_object_occurrence(
     size_t raw_size,
     unsigned int map,
     unsigned int x,
-    unsigned int y)
+    unsigned int y,
+    const Theron_Track02ItemRecord *decoded)
 {
     Theron_Track02SourceObjectOccurrence *occurrence;
 
@@ -85,6 +86,10 @@ static int retain_source_object_occurrence(
     occurrence->map = (uint16_t)map;
     occurrence->x = (uint16_t)x;
     occurrence->y = (uint16_t)y;
+    if (decoded && decoded->category == category) {
+        occurrence->decoded_valid = 1;
+        occurrence->decoded = *decoded;
+    }
     return 1;
 }
 
@@ -255,7 +260,7 @@ int theron_v1_track02_load_full_dungeon(
                 }
                 if (!retain_source_object_occurrence(
                         result, ref, cat, id, pos, raw, theron_item_bytes[cat],
-                        map, tx, ty)) {
+                        map, tx, ty, &record)) {
                     free(pos_table);
                     free(td);
                     return -1;
@@ -270,20 +275,30 @@ int theron_v1_track02_load_full_dungeon(
             }
             case THERON_CAT_MISSILE:
             case THERON_CAT_CLOUD:
-                /* The two-byte source next-ref is authenticated, but the
-                 * remaining missile/cloud fields have no decoded consumer. */
-                if (!retain_source_object_occurrence(
-                        result, ref, cat, id, pos, &td->items[cat][id *
-                        theron_item_bytes[cat]], theron_item_bytes[cat],
-                        map, tx, ty)) {
+            {
+                Theron_Track02ItemRecord record;
+                const uint8_t *raw =
+                    &td->items[cat][id * theron_item_bytes[cat]];
+                if (!theron_v1_track02_item_record_decode(
+                        cat, raw, theron_item_bytes[cat], &record)) {
                     free(pos_table);
                     free(td);
                     return -1;
                 }
-                result->raw_only_item_refs++;
+                if (!retain_source_object_occurrence(
+                        result, ref, cat, id, pos, raw, theron_item_bytes[cat],
+                        map, tx, ty, &record)) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
+                /* Missile/cloud source layouts are now decoded as records,
+                 * but remain unbound from the host projectile/cloud owners. */
+                result->source_records_decoded++;
                 result->unbound_item_refs++;
                 place = 0;
                 break;
+            }
             default:
                 free(pos_table);
                 free(td);
