@@ -109,6 +109,16 @@
   XP calls cannot mutate champion or creature state without a Saturn action
   and writeback capture.
 
+# Nexus rest/status production boundary (2026-08-06)
+
+- ✅ Removed the DM1-shaped rest regeneration and poison/status mutation
+  implementations from `firestaff_nexus`. Their original source remains in
+  the explicit fixture library; production now links a state-preserving
+  fail-closed adapter.
+- ✅ Added a production-boundary regression proving rest timers, status
+  effects and champion state cannot mutate before Saturn action/timing/HUD
+  consumers are captured.
+
 # Nexus experience production boundary (2026-08-06)
 
 - ✅ Removed the DM.BIN-shaped XP award, level-up and class-table implementation

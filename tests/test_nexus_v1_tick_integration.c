@@ -79,7 +79,7 @@ int main(void) {
         destroy_engine(e);
     }
 
-    /* Test 2: poison ticks reduce health */
+    /* Test 2: the uncaptured retail status consumer remains closed. */
     {
         Nexus_V1_Engine *e = create_minimal_engine();
         int old_hp;
@@ -87,8 +87,9 @@ int main(void) {
                               NEXUS_STATUS_POISON, 10, 8);
         old_hp = e->champions.champions[0].health;
         nexus_v1_tick(e);
-        expect(e->champions.champions[0].health < old_hp,
-               "poison tick reduced health");
+        expect(e->champions.champions[0].health == old_hp &&
+               e->champion_status[0].ticks[NEXUS_STATUS_POISON] == 0,
+               "uncaptured retail poison does not mutate state");
         destroy_engine(e);
     }
 
@@ -113,7 +114,7 @@ int main(void) {
         destroy_engine(e);
     }
 
-    /* Test 5: dead champion not poisoned further */
+    /* Test 5: poison remains closed even at one health. */
     {
         Nexus_V1_Engine *e = create_minimal_engine();
         e->champions.champions[0].health = 1;
@@ -121,12 +122,13 @@ int main(void) {
         nexus_v1_status_apply(&e->champion_status[0],
                               NEXUS_STATUS_POISON, 50, 20);
         nexus_v1_tick(e);
-        expect(e->champions.champions[0].health == 0 &&
-               e->champions.champions[0].alive == 0,
-               "champion dies from poison");
+        expect(e->champions.champions[0].health == 1 &&
+               e->champions.champions[0].alive == 1,
+               "uncaptured retail poison does not kill champion");
         nexus_v1_tick(e);
-        expect(e->champions.champions[0].health == 0,
-               "dead champion not poisoned further");
+        expect(e->champions.champions[0].health == 1 &&
+               e->champion_status[0].ticks[NEXUS_STATUS_POISON] == 0,
+               "uncaptured retail poison remains unchanged");
         destroy_engine(e);
     }
 
@@ -301,7 +303,7 @@ int main(void) {
         expect(e->light.torch_ticks == 5 &&
                e->light.decay_timer == old_light_ticks,
                "uncaptured retail light does not mutate timer");
-        expect(e->champion_status[0].ticks[NEXUS_STATUS_POISON] == 5,
+        expect(e->champion_status[0].ticks[NEXUS_STATUS_POISON] == 0,
                "uncaptured retail status does not expire");
         destroy_engine(e);
     }

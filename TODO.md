@@ -691,6 +691,12 @@
   applies inherited starvation/dehydration damage before the Saturn
   start/save consumer is captured.
 
+  2026-08-06 follow-up: `nexus_v1_rest.c` and `nexus_v1_status.c` are now
+  excluded from `firestaff_nexus`; their original implementations remain in
+  the explicit fixture library and production links a state-preserving ABI
+  adapter. Do not restore them until Saturn action, timing and HUD ownership
+  is captured.
+
 - **NEXUS-RETAIL-TICK-STATE-GATE:** Retail ISO/extracted ticks now leave the
   unbound action cooldown, door animation, trap cooldown and DM1-derived
   step-stamina state unchanged. Movement over decoded floor geometry remains
