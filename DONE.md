@@ -1,3 +1,11 @@
+# DM1 D1L2/D1R2 F0111 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the partly-open D1L2/D1R2 side-door simulation from M10. It
+  reads no original material and has no M11/runtime caller; its dedicated DM1
+  ReDMCSB regression now compiles the source explicitly.
+- ✅ Verification: `test_dm1_v1_viewport_d1l2_d1r2_f0111_partly_open_door_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D2L2/D2R2 F0108 floor-ceiling synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the fixed-zone D2L2/D2R2 F0108 floor/ceiling contract from M10.
