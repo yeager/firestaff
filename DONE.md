@@ -1,5 +1,14 @@
 # DM2 class-0x30 spell-failure real GDAT binding (2026-08-13)
 
+- ✅ Bound SKProject `DM2_PROCEED_SPELL_FAILURE` class `0x30` to the exact
+  authenticated `INTERFACE_GENERAL/5/dtImage/0x0B` NEED_FLASK record and
+  source destination rect `0x5C`; runtime records decoded-pixel and local-
+  palette hashes and never publishes invented text or pixels.
+- ✅ Kept the receipt fail-closed (`no_draw`) until the M11 transparent-static-
+  pic surface consumer and C068--C070 panel-global update are source-owned.
+- ✅ The real-data M11 startup/profile regression passes against the mounted
+  PC-English DM2 corpus; no release was made.
+
 # DM1 mirror C040 panel-exit synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040 close/reopen panel fixture from M10. It
@@ -10,14 +19,14 @@
 
 # DM1 wound-probability placeholder audit (2026-08-06)
 
-- ✅ Bound SKProject `DM2_PROCEED_SPELL_FAILURE` class `0x30` to the exact
-  authenticated `INTERFACE_GENERAL/5/dtImage/0x0B` NEED_FLASK record and
-  source destination rect `0x5C`; runtime records decoded-pixel and local-
-  palette hashes and never publishes invented text or pixels.
-- ✅ Kept the receipt fail-closed (`no_draw`) until the M11 transparent-static-
-  pic surface consumer and C068--C070 panel-global update are source-owned.
-- ✅ The real-data M11 startup/profile regression passes against the mounted
-  PC-English DM2 corpus; no release was made.
+- ✅ Confirmed the FMTowns `DYNA_BUTTONS` `N`/`X` values are original media
+  bytes, not placeholders, and kept them unchanged. ReDMCSB `DATA.C:243`
+  independently confirms the wound-mask table `{0x20, 0x10, 0x08, 0x04}`.
+- ✅ Removed the wound-mask result's self-equality “future” placeholder; it
+  now reports only six independently evaluated invariants. The source-locked
+  audit is also test-only because no M11/runtime caller consumes it.
+- ✅ Verification: targeted CTest
+  `dm1_v1_wound_probability_index_to_mask_pc34_compat` passes.
 
 # DM2 CREATURES AI-row ownership for absent profile fields (2026-08-12)
 
