@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHEST-NINTH-ITEM-SYNTHETIC-AUDIT:** This hidden-tail chest model
+  fabricates item types, weights and a sentinel. It reads no original game
+  data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound chest owner is recovered.
+
 - **DM1-D1L2-D1R2-F0111-SYNTHETIC-AUDIT:** This partly-open D1 side-door
   model uses fixed zones and framebuffer pixels. It reads no original game
   data and has no M11/runtime caller; retain it only as explicit ReDMCSB
