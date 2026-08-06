@@ -13045,10 +13045,11 @@ lane is carried forward in the sections below.
   (`TITLE/0 dt07/4`): Firestaff now treats the menu as one static GDAT draw
   command owned by DM2 startup presentation; `TITLE/0 dt07/1` is retained as
   title/credit query receipt evidence, not a second host menu draw or
-  synthetic overlay. Verification so far: strict direct C11 syntax checks for
-  the touched DM2 presentation source and focused startup tests, plus
-  `git diff --check`; executable CTest remains blocked by the local missing
-  source/header build drift.
+  synthetic overlay. Verification is now executable: the current
+  `test_dm2_v1_m11_startup_profile_gate` passes against the hash-verified
+  PC-DOS data and `firestaff --game dm2 --boot-probe` reaches the active
+  `dm2-startup-menu` phase. An installed v3.0.288 app was inspected only as
+  a stale external comparison, not as evidence for this v3.0.290 build.
 - SKPROJECT-GAP-001 — `SKULLWIN/c_weather.cpp::DM2_SET_TIMER_WEATHER` and
   `DM2_UPDATE_WEATHER` identify scheduling but not a serialised timer-record
   layout or save offset. Risk: Firestaff could bind a random SKSave region as

@@ -50556,3 +50556,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   viewport provider. Verified with a full Ninja `firestaff` build, the real
   PC34 HoC inscription transition test, the 611-record object corpus, and
   real M564/F0702 pickup-cursor coverage.
+- ✅ 2026-08-06 DM2 startup executable verification: the current full
+  `test_dm2_v1_m11_startup_profile_gate` passes against hash-verified PC-DOS
+  data, including the real RAW4 pointer rectangles and TITLE credits/menu
+  surfaces. The v3.0.290 binary's direct boot probe also reaches
+  `dm2-startup-menu` with startup active, level 0 loaded, and no champion
+  fabricated. The installed v3.0.288 app was observed only to classify it as
+  stale and is not used as current-build capture evidence.
