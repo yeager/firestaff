@@ -22216,6 +22216,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     M11 runtime-frame gate accepts the resulting frame. This closes DM2-011;
     moved to DONE.md.
 - DM2-012 — `skproject/SKULLWIN/c_item.cpp`, `c_hero.cpp`, `c_dialog.cpp`, and `c_engage.cpp`: `src/dm2/dm2_v1_inventory_panel.c`, `dm2_v1_shop.c`, `dm2_v1_companion.c`, and M11 expose catalog-driven panels and simplified interactions. `c_dialog.cpp::DM2_dialog_2066_3820` now carries the real `DIALOG_BOXES/0x81/0` pixels and local palette to the viewport through its expanded `RECT_453` host command, and remains no-draw unless the source dialogue owner marks it active. Remaining: original modal state/event, text, button and cancellation semantics; no catalog panel or fallback dialogue may replace them.
+  - 2026-08-06 update: the exact static material half of inventory survey and
+    hand-action rendering is now real-data covered. The receipts accept only
+    `INTERFACE_CHARSHEET/0/dtImage/1` at `RECT_1EE` and
+    `INTERFACE_GENERAL/4/dtImage/2..5` at their source direction rectangles;
+    local palette, raw payload and decoded-pixel identity are rechecked when
+    consumed. `test_dm2_v1_inventory_gdat_real_data` verifies all 64 source
+    hand routes and the survey frame in the mounted PC English corpus. This
+    is not permission to reopen the M11 inventory panel: the original
+    layout/event/modal route is still incomplete and therefore remains
+    unavailable rather than falling back to a DM1 panel or host UI.
   - 2026-07-22 update: `dm2_v1_dialogue_open_panel_receipt` and `dm2_v1_dialogue_save_input_apply` now bind the save/load panel's source GDAT label receipt, state/event, text, button and cancellation semantics for synthetic fixtures. `dm2_dialogue_open_panel_text_decode` treats a missing GDAT 0/0/dtWordValue/0 as unencrypted, preserves the source payload size in the receipt, and rejects empty labels. `dm2_v1_asset_load_image_metadata` (dm2_v1_weather_gdat.c) now honours an explicit bpp_word of 4/8 while retaining the source's 4bpp default for compressed IMG3 records that store data in the bytes after cy (c_gdatfile.cpp:1205-1211). CTest `test_dm2_v1_dialogue_gdat_receipt` now passes 14/14.
   - 2026-07-22 update: `src/dm2/dm2_v1_boot.c` `dm2_v1_boot_parse_interface_action_table` now decodes INTERFACE_GENERAL/0/dt07/2 exactly like `skproject/SKWIN/SkWinCore.cpp` `LOAD_GDAT_INTERFACE_00_02`: a leading group-count byte, one length byte per group, the primary value block, the secondary value block, and then the command tail. `dm2_v1_interface_action_table_remap_palette` now uses the corrected tail offset and the 256 (group, threshold) pairs, matching `_0b36_037e`. CTest `test_dm2_v1_dialogue_box_viewport_real_data` now passes; `test_dm2_v1_boot_profile_smoke` now also passes the dt07/2 span materialization check. Remaining work is broader real-dialogue runtime wiring and consuming the remapped action palette in the live M11 text path.
   - 2026-07-15 update: removed the active M11 leader-hand cursor icon route.

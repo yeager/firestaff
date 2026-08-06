@@ -48628,14 +48628,18 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_interface_action_table.
     )
 endif()
 
-# DISABLED: test references unimplemented hand-slot-backdrop receipt API
-if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_hand_slot_backdrop_gate.c"
+# Source-backed hand-slot backdrop receipt: the test owns a minimal IMG3
+# fixture, while the production API accepts only the exact GDAT route/rect.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_hand_slot_backdrop_gate.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_inventory_panel.c")
     add_executable(test_dm2_v1_inventory_hand_slot_backdrop_gate
         tests/test_dm2_v1_inventory_hand_slot_backdrop_gate.c
         src/dm2/dm2_v1_inventory_panel.c
+        src/dm2/dm2_v1_hand_action_gdat.c
     )
     target_include_directories(test_dm2_v1_inventory_hand_slot_backdrop_gate PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_inventory_hand_slot_backdrop_gate
+        PRIVATE firestaff_dm2 firestaff_m10 m)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(test_dm2_v1_inventory_hand_slot_backdrop_gate PRIVATE -Wall -Wextra -O2)
     endif()
@@ -48645,14 +48649,17 @@ if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_han
     )
 endif()
 
-# DISABLED: test references unimplemented survey-frame receipt API
-if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_survey_frame_gate.c"
+# Source-backed DRAW_ITEM_SURVEY static-frame receipt.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_survey_frame_gate.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_inventory_panel.c")
     add_executable(test_dm2_v1_inventory_survey_frame_gate
         tests/test_dm2_v1_inventory_survey_frame_gate.c
         src/dm2/dm2_v1_inventory_panel.c
+        src/dm2/dm2_v1_hand_action_gdat.c
     )
     target_include_directories(test_dm2_v1_inventory_survey_frame_gate PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_inventory_survey_frame_gate
+        PRIVATE firestaff_dm2 firestaff_m10 m)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(test_dm2_v1_inventory_survey_frame_gate PRIVATE -Wall -Wextra -O2)
     endif()
@@ -48660,6 +48667,21 @@ if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_sur
         NAME dm2_v1_inventory_survey_frame_gate
         COMMAND test_dm2_v1_inventory_survey_frame_gate
     )
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_gdat_real_data.c")
+    add_executable(test_dm2_v1_inventory_gdat_real_data
+        tests/test_dm2_v1_inventory_gdat_real_data.c)
+    target_include_directories(test_dm2_v1_inventory_gdat_real_data PRIVATE
+        ${CMAKE_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_inventory_gdat_real_data PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
+        target_compile_options(test_dm2_v1_inventory_gdat_real_data PRIVATE
+            -Wall -Wextra -Werror)
+    endif()
+    add_test(NAME dm2_v1_inventory_gdat_real_data
+        COMMAND test_dm2_v1_inventory_gdat_real_data)
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_memory_mement_helpers.c"

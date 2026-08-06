@@ -1,3 +1,18 @@
+- ✅ 2026-08-06 DM2 inventory HUD original-data receipts: restored and
+  activated the previously missing `DRAW_HAND_ACTION_ICONS` and
+  `DRAW_ITEM_SURVEY` material receipts. They now bind the exact
+  `INTERFACE_GENERAL/4/dtImage/2..5` or `INTERFACE_CHARSHEET/0/dtImage/1`
+  source record, source-expanded rectangle, raw payload, decoded pixels and
+  16-colour local palette at both issue and consumption time. The new
+  in-place PC-English regression verifies all 64 hand/side/position/direction
+  combinations plus the survey frame (`identity-hash=be2f4362`); altered raw
+  bytes, a different rectangle, unsupported possession or a transparency mode
+  all fail closed. This adds no inventory layout, host icon or generated
+  pixels: M11 inventory presentation remains unavailable until its complete
+  original event/layout route is bound. Source: SKProject
+  `SKWIN/c_gui_draw.cpp::DM2_DRAW_HAND_ACTION_ICONS` (2341–2386) and
+  `DM2_DRAW_ITEM_SURVEY` (2072–2106).
+
 - ✅ 2026-08-06 DM2 M10 IMG9 decoder ownership: corrected a link boundary
   exposed by the full real GDAT census. `dm2_v1_asset_loader.c` is owned by
   `firestaff_m10`, but its source IMG9 decoder had only been emitted through
