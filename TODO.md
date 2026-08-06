@@ -2116,7 +2116,9 @@
   square-local DB3 traversal are closed. Port `DM2_INVOKE_ACTUATOR` with the
   live DB3/DB14 record, its links, target, direction, payload and timer
   handoff before enabling switches, relays, counters, teleports, shooters or
-  resurrection.
+  resurrection. The square-local public entry now returns an explicit failure
+  instead of a no-op success, so an unowned DB3 root cannot be reported as an
+  accepted game action.
   **2026-08-02 update:** the 0x56 CONTINUE_TICK_GENERATOR timer is now
   fully wired: resolves the actuator record from the timer's ObjectID via
   the record pool, handles ActionType==3 toggle mode and OnceOnly re-queue.

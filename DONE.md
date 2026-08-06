@@ -5,6 +5,12 @@
   external CDDA files instead of being mistaken for a complete runnable disc;
   this is a readiness correction only and does not claim audio playback.
 
+- ✅ 2026-08-06 DM2 square-actuator failure contract: the public
+  coordinate-only DB3 entry now returns failure when its original DB3/DB14
+  payload, link and timer transaction are unavailable. It already made no
+  mutation, but no longer reports a misleading successful no-op to a caller.
+  Real G1 actuator receipt and PC-DOS startup gates remain the active proof.
+
 - ✅ 2026-08-06 DM2 original-SKSAVE fail-closed cleanup: removed the
   unreachable partial `GAME_LOAD` publication branch, including its
   synthetic session, timer-owner and raw-dungeon handoff helpers. Public

@@ -9151,7 +9151,7 @@ int dm2_v1_runtime_invoke_square_actuators(int level, int x, int y) {
      * DM2_INVOKE_ACTUATOR. Do not infer a byte layout or transition from a
      * square-local fixture before that owner is ported.
      * Source: SKWINSPX/src/v5/c_tim_proc.cpp::DM2_INVOKE_ACTUATOR. */
-    return 0;
+    return -1;
 }
 
 /* ── i18n text overlay ────────────────────────────────────────────── */
