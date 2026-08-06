@@ -231,8 +231,15 @@ static void m11_set_launch_failed_message(M12_StartupMenuState* menuState) {
         menuState->messageLine1 = "THERON STARTUP FAILED";
         menuState->messageLine2 = "VERIFY CUE/BIN AND STARTUP DETAILS";
     } else if (gameId && strcmp(gameId, "dm2") == 0) {
-        menuState->messageLine1 = "DM2 LOAD FAILED";
-        menuState->messageLine2 = "CHECK GRAPHICS/DUNGEON DATA";
+        /* DM2's original startup/load path owns its dialogue surface.  No
+         * source-owned c_gui_draw producer is connected to this generic M11
+         * failure callback, so do not publish host-authored English text as
+         * if it were the game.  Keep the structured launch failure and view
+         * transition intact; the visible channel remains empty fail-closed. */
+        menuState->messageLine1 = "";
+        menuState->messageLine2 = "";
+        menuState->messageLine3 = "";
+        return;
     } else if (gameId && strcmp(gameId, "csb") == 0) {
         menuState->messageLine1 = "CSB LOAD FAILED";
         menuState->messageLine2 = "CHECK GRAPHICS/DUNGEON DATA";

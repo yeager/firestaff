@@ -29421,8 +29421,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   strings), the M11 DM2 startup/resume stderr substitutions, and the
   direct-start boot-profile stdout summary. Failure and resume receipts now
   retain structured results while leaving the visible status channel empty
-  until the original GUI producer is bound. The incomplete source-owned
-  status producer remains open.
+  until the original GUI producer is bound. **2026-08-13 generic-failure
+  cleanup:** the remaining `main_loop_m11.c` DM2 branch no longer injects
+  `DM2 LOAD FAILED` or data-path instructions into the message popup; it keeps
+  the structured launch-failure transition and clears all three visible
+  lines. The incomplete source-owned status producer remains open.
 - [ ] DM2 runtime action/save text ownership: action, shop, movement and save
   receipts are structurally silent until their matching original GUI/dialogue
   producer is connected. Bind that source-owned producer before rendering any

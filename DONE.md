@@ -1,3 +1,12 @@
+# DM2 startup status host-text removal (2026-08-13)
+
+- ✅ Removed the final generic M11 DM2 failure labels from
+  `main_loop_m11.c`; launch control flow and structured receipts remain, but
+  the visible status channel stays empty until an original `c_gui_draw`/
+  dialogue producer is connected.
+- ✅ `firestaff_m11` built successfully and the DM2 launcher handoff boundary
+  passed (33 passed, 1 fixture skip). No release was made.
+
 # DM2 champion mirror signed hero-type parity (2026-08-13)
 
 - ✅ Preserved SKProject `c_hero.cpp:1088` signed-byte semantics in the
