@@ -4501,6 +4501,12 @@ list(REMOVE_ITEM M10_SOURCES
 # its explicit regression until a source-bound D2C F0107 consumer is recovered.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2c_f0107_wall_ornament_pc34_compat.c")
+# `dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat.c` is a D3C-only
+# source-lock model with fixed probe pixels and geometry. It declares no
+# GRAPHICS.DAT input and has no M11/runtime caller, so compile it only into
+# its explicit regression rather than exposing probe material through M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat.c")
 # `dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat.c` is a
 # source-locked matrix of synthetic panel state, geometry and dirty-bit flows.
 # It reads no original DM1 data and has no M11/runtime caller; its explicit
@@ -53655,7 +53661,9 @@ add_executable(test_dm1_v1_viewport_d3c_door_ornament_thieves_eye_mask_pc34_comp
 target_include_directories(test_dm1_v1_viewport_d3c_door_ornament_thieves_eye_mask_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d3c_door_ornament_thieves_eye_mask_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d3c_door_ornament_thieves_eye_mask_pc34_compat COMMAND test_dm1_v1_viewport_d3c_door_ornament_thieves_eye_mask_pc34_compat)
-add_executable(test_dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat tests/test_dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat
+    tests/test_dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat COMMAND test_dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat)

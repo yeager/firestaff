@@ -160,6 +160,12 @@
   retain it only as an explicit ReDMCSB regression until a source-bound D2C
   F0107 consumer is recovered.
 
+- **DM1-D3C-F0107-WALL-ORNAMENT-SYNTHETIC-AUDIT:** This D3C-only F0107 model
+  fixes probe pixels, geometry and ornament ordinals, and explicitly reads no
+  GRAPHICS.DAT material. It has no M11/runtime caller; retain it only as an
+  explicit ReDMCSB regression until a live D3C F0107 material consumer is
+  bound to authentic graphics and Thing state.
+
 - **DM1-CHAMPION-PORTRAIT-BOX-REDRAW-SYNTHETIC-AUDIT:** This redraw-state
   matrix fabricates panel geometry, champion ownership and dirty-bit flows.
   It reads no original DM1 data and has no M11/runtime caller; retain it only

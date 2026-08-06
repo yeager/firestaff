@@ -82,6 +82,15 @@
 - ✅ Verification: `test_dm1_v1_viewport_d2c_f0107_wall_ornament_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 D3C F0107 wall-ornament synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the D3C F0107 wall-ornament model from M10. It has fixed probe
+  pixels and geometry, reads no authenticated `GRAPHICS.DAT` material, and
+  has no M11/runtime caller; its explicit ReDMCSB regression compiles it
+  directly.
+- ✅ Verification: `test_dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat`
+  passes; the source object is absent from M10.
+
 # DM1 M11 compact Thing-chain consumers (2026-08-06)
 
 - ✅ M11 endgame text and projectile door/teleporter inspection now obtain
