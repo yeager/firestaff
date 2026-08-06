@@ -1,3 +1,14 @@
+- ✅ 2026-08-06 Nexus retail Saturn boot receipt: the supplied European BIOS
+  (`96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`) and
+  the real English merged BIN/CUE from the user-owned archive booted in stock
+  Mednafen 1.32.1. The emulator identified SGID `T-9111G`, `DUNGEON MASTER
+  NEXUS`, region U, PAL scanlines and CD tracks 1–9. Firestaff's own scan over
+  `/Users/bosse/.firestaff/data/nexus` independently found the hash-verified
+  `DM.BIN` inside the English ISO and reported Nexus READY. This proves the
+  retail boot/media boundary only; stock Mednafen has no Firestaff VDP1/VDP2,
+  CRAM or SLEV/SAL trace hook, so presentation and runtime-consumer gates stay
+  closed.
+
 - ✅ 2026-08-06 CI Windows warning-as-error fix: confined the POSIX-only
   case-insensitive SKSave filename variant matcher to non-Windows builds.
   Windows no longer compiles an unused helper under `-Werror`; the focused
