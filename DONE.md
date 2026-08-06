@@ -1,3 +1,11 @@
+# DM1 mirror C545/C160 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C545/C160 party/panel/pixel fixture from M10.
+  It loads no original DM1 data and has no M11/runtime caller; the generated
+  mirror regression continues to compile the source explicitly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c545_accept_during_rotation_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 mirror C159/C160 synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C159/C160 party/panel/hand fixture from M10.
