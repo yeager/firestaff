@@ -1,3 +1,17 @@
+# ✅ 2026-08-06 DM2 unbound text and graphics-admission adapter isolation
+
+Removed the unconsumed `dm2_v1_gfx_str_pc34_compat` and standalone
+`dm2_v1_graphics_data_open` adapters from the production DM2 archive. M11
+receives text only through boot/dialogue GDAT receipts and GRAPHICS.DAT
+admission only through `dm2_v1_asset_loader`; their focused compatibility
+tests remain available without creating parallel live-data routes. The two
+real-data tests now accept `FIRESTAFF_DM2_DATA_DIR` as a mounted game directory
+and read the original `GRAPHICS.DAT` directly, without unpacking, copying, or
+tracking game data. Verification: `firestaff_dm2` and `firestaff_m11` builds;
+`test_dm2_v1_gfx_str_pc34_compat` 25/25; real PC-DOS
+`test_dm2_v1_graphics_data_open_receipt` 7/7 and
+`test_dm2_v1_weather_runtime_admission` 6/6.
+
 - ✅ 2026-08-06 DM2 production object-model isolation: removed
   `dm2_v1_object_model.c` from the broad `firestaff_dm2` source glob. The
   file's remaining sequential-pool parser is explicitly inferred and no M11

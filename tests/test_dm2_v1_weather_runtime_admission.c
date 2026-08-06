@@ -78,6 +78,7 @@ static int candidate_path(char *out, size_t out_size, const char *suffix)
 static int load_graphics(uint8_t **out_data, size_t *out_size,
                          char *path, size_t path_size)
 {
+    const char *dm2_data = getenv("FIRESTAFF_DM2_DATA_DIR");
     static const char *suffixes[] = {
         "dm2/GRAPHICS.DAT",
         "dm2/graphics.dat",
@@ -85,6 +86,18 @@ static int load_graphics(uint8_t **out_data, size_t *out_size,
         "dm2/DM2GRA.DAT"
     };
     size_t i;
+
+    /* FIRESTAFF_DM2_DATA_DIR names the mounted game directory itself;
+     * use its original file directly before checking parent-root layouts. */
+    if (dm2_data && dm2_data[0]) {
+        static const char *names[] = {
+            "GRAPHICS.DAT", "graphics.dat", "DM2GRAPHICS.DAT", "DM2GRA.DAT"
+        };
+        for (i = 0u; i < sizeof(names) / sizeof(names[0]); ++i) {
+            snprintf(path, path_size, "%s/%s", dm2_data, names[i]);
+            if (read_file(path, out_data, out_size)) return 1;
+        }
+    }
 
     for (i = 0u; i < sizeof(suffixes) / sizeof(suffixes[0]); ++i) {
         if (candidate_path(path, path_size, suffixes[i]) &&

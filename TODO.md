@@ -1069,6 +1069,10 @@
   champion light possessions, `v1e0974`, spell effects, rain modifiers and
   the source light modifier. Dynamic-map viewport frames must remain blocked
   until that state is recovered from original runtime/save records.
+  **2026-08-06 update:** the standalone `dm2_v1_graphics_data_open` adapter
+  is likewise excluded from the production archive. Runtime GRAPHICS.DAT
+  admission is owned solely by `dm2_v1_asset_loader`; no weather or viewport
+  path may use the duplicate test-only receipt as an alternate data route.
   **2026-07-31 update:** the disconnected outdoor facade also no longer
   seeds a noon value; temporal ENVIRONMENT selection remains unavailable
   until its source owner is imported.
@@ -1252,6 +1256,10 @@
   the decoded DB object and its original GDAT text/metadata route. The HUD
   must stay unnamed when that owner is absent; do not restore fixture IDs,
   English names, affinity/charge values, or diagnostic pool/index labels.
+  2026-08-06: `dm2_v1_gfx_str_pc34_compat` is no longer linked into the
+  production DM2 archive: M11 has no consumer for its standalone text adapter;
+  live text remains restricted to boot/dialogue GDAT receipts. Bind the actual
+  object owner before admitting leader-hand/item text.
   **2026-07-31 update:** M11 now has no residual DM2 ObjectID-to-local-name
   lookup at all. It returns no leader-hand name until the complete decoded
   DB-record to GDAT `dtText/0x18` and `FORMAT_SKSTR` ownership route exists.
