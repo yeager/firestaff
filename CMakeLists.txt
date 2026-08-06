@@ -48846,6 +48846,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_asset_loader.c
         src/dm2/dm2_v1_weather_gdat.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_amiga_lzx.c
         src/dm2/dm2_v1_fmtowns_cdda_music.c
         src/dm2/dm2_v1_fmtowns_disc.c
         src/dm2/dm2_v1_music_map.c
@@ -48871,6 +48872,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
     src/dm2/dm2_v1_timeline.c
         src/dm2/dm2_v1_new_game.c
         src/shared/fs_portable_compat.c
+        src/shared/firestaff_amiga_adf.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_save_load.c
         src/dm2/dm2_v1_glob_var.c
