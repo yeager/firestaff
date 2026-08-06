@@ -10,6 +10,11 @@
   input or M11/runtime caller; retain it as an explicit ReDMCSB regression
   while the separate source-bound inscription/wall-material paths own pixels.
 
+- **DM1-MIRROR-RESELECT-INVENTORY-SYNTHETIC-AUDIT:** This C040/C038 fixture
+  synthesizes champion and inventory state, reads no original DM1 data and has
+  no M11/runtime caller. Retain it only as an explicit ReDMCSB regression
+  until a source-bound interaction consumer is recovered.
+
 - **DM1-D2L-D2R-F0108-SYNTHETIC-AUDIT:** This contract-only D2 side model
   fixes zone and ordered-cell metadata without comparing original bitmap data.
   It has no M11/runtime caller; retain it as an explicit ReDMCSB regression

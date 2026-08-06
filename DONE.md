@@ -16,6 +16,14 @@
 - ✅ Verification: `dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 mirror reselect-inventory synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the C040/C038 reselect-with-inventory fixture from M10. It
+  synthesizes champion and inventory state, reads no original DM1 data and has
+  no M11/runtime caller; its explicit ReDMCSB regression compiles it directly.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_resurrect_reselect_with_inventory_pickup_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D2L/D2R F0108 floor-ceiling synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only D2L/D2R F0108 floor/ceiling/ornament table
