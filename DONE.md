@@ -53199,7 +53199,6 @@ platform package.
   now disables all external archive tools while proving nested ZIP→ADF lookup
   and extraction; the supplied `Chaos Strikes Back (FTL).zip` also reports
   CSB `READY` under an empty tool PATH.
-
 # DM1 original-data replacement: source gate for legacy wall primitives
 
 DM1 source sessions now suppress the legacy wall/door/stairs primitive path as
@@ -53212,3 +53211,10 @@ material consumer is ready.
 Verification: focused DM1 inventory/object/portrait/inscription/stairs/sound
 tests passed (27/27), and the real archive-backed object names, object corpus,
 alcove runtime and archive-media tests passed (4/4).
+- ✅ 2026-08-06 CSB Utility Disk real-media regression: the existing
+  utility/import CTest now has an opt-in `FIRESTAFF_CSB_UTILITY_DISK` lane
+  that drives the same ReDMCSB `UTIO.C F1991` Amiga volume-identity check as
+  production. It remains skip-safe in CI with no licensed media. The supplied
+  English Utility Disk 3 ADF was independently hash-checked as
+  `85091454b3885a216f6bdbbe5c47cc75` (the registered original release 3) and
+  passes the real-media lane, 79 checks total.

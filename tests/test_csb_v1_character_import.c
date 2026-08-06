@@ -462,6 +462,21 @@ static void test_utility_disk(void)
     remove(amiga_path);
 }
 
+/* Opt-in real-media regression.  The repository never carries a Utility
+ * Disk image, but a caller can point this at an extracted original ADF (for
+ * example the local English release 3 corpus) and prove the same UTIO.C
+ * identity branch used by the runtime. */
+static void test_real_utility_disk_if_supplied(void)
+{
+    const char *path = getenv("FIRESTAFF_CSB_UTILITY_DISK");
+    if (!path || path[0] == '\0') {
+        puts("  SKIP: FIRESTAFF_CSB_UTILITY_DISK is not set");
+        return;
+    }
+    CHECK_EQ(csb_v1_util_check_disk(path), 0,
+             "real CSB Utility Disk passes UTIO.C identity", "d");
+}
+
 /* ── Test 10: source evidence ───────────────────────────────────── */
 static void test_source_evidence(void)
 {
@@ -497,6 +512,8 @@ int main(void)
     test_import_buffer();
     printf("\n");
     test_utility_disk();
+    printf("\n");
+    test_real_utility_disk_if_supplied();
     printf("\n");
     test_source_evidence();
 
