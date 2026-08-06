@@ -2,9 +2,10 @@
 #ifndef NEXUS_V1_ITEM_USE_H
 #define NEXUS_V1_ITEM_USE_H
 
-/* Nexus V1 item use effects — consumable item actions.
- * Source: DM1 COMMAND.C F0412 item use dispatch, CHAMPION.C food/water/potion.
- * Nexus ITEM.IBS attribute field (Word36) carries the effect magnitude. */
+/* Nexus V1 item-use ABI boundary.
+ * ITEM.IBS proves declaration/icon/material data only. The Saturn action
+ * consumer is not authenticated, so the production helpers below remain
+ * no-op until an event/action trace binds their semantics. */
 
 #include "nexus_v1_champions.h"
 #include "nexus_v1_inventory.h"
@@ -28,26 +29,17 @@ typedef struct {
     int status_strength;
 } Nexus_ItemUseResult;
 
-/* Use a consumable item on a champion.
- * Checks item category and applies effect based on type:
- *   FOOD: restores food (attribute = amount)
- *   POTION: heals health or restores mana (attribute = amount)
- *   SCROLL: not consumed here (handled by spell system)
- * Returns result describing what happened. */
+/* Attempt an item use without mutating state. Returns NONE while the
+ * Saturn action consumer is unbound, or FAILED for invalid arguments. */
 Nexus_ItemUseResult nexus_v1_item_use(Nexus_V1_Champion *champion,
                                        Nexus_StatusEffects *status,
                                        const Nexus_ItemDef *item);
 
-/* Check if an item can be used (is consumable). */
+/* No item is advertised as usable until Saturn action semantics are bound. */
 int nexus_v1_item_can_use(const Nexus_ItemDef *item);
 
-/* Apply a potion effect. Sub-types based on item attribute:
- *   0-49:   health potion (restores attribute HP)
- *   50-99:  mana potion (restores attribute-50 MP)
- *   100-149: stamina potion (restores attribute-100 SP)
- *   150-199: antidote (removes poison)
- *   200-249: shield potion (applies shield status)
- *   250+:    haste potion (applies haste status) */
+/* Legacy ABI-shaped helper. It is intentionally no-op: ITEM.IBS Word36 is
+ * not an authenticated potion-effect encoding. */
 Nexus_ItemUseResult nexus_v1_potion_effect(Nexus_V1_Champion *champion,
                                             Nexus_StatusEffects *status,
                                             int attribute);

@@ -83,6 +83,9 @@
   item ownership and UI feedback still require the authentic Saturn
   action/event consumer. Do not treat the price catalog as proof of gameplay
   semantics.
+  The exported item-use helpers now also remain no-op/fail-closed; the old
+  DM1-derived food/potion magnitudes and status durations are not inferred from
+  the unproven `ITEM.IBS` Word36 field.
 
 - **NEXUS-MENU-SEQUENCE-CAPTURE:** `docs/nexus_menu.md` no longer treats the
   DM1/CSB flow or a 24-champion roster as Nexus evidence. Bind the real

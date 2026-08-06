@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus item-use provenance gate: removed the remaining DM1-derived
+  food/potion/status mutations and fallback magnitudes from the exported item
+  API. Real `ITEM.IBS` declarations remain available for source/material
+  receipts, but no item is advertised or consumed until the Saturn
+  action/event consumer is captured. `test_nexus_v1_item_use` now proves that
+  unbound declarations leave champion and status state unchanged.
+
 - ✅ 2026-08-06 Theron raw VDC/VCE exact-size admission: tightened the
   in-memory snapshot loader to require exactly 65,536 VRAM bytes and 1,024 VCE
   bytes, matching the file-backed capture boundary. Oversized concatenated
