@@ -1481,6 +1481,9 @@
   version-private runtime cache, even when it was the scanner's first match.
   The real A31E archive handoff retains `CSB_V1_VARIANT_AMIGA31_EN` and the
   `csb-amiga31-en` cache root rather than silently booting generic PC34 bytes.
+- ✅ The shared CSB launcher regression now treats an unavailable PC-only V2
+  corpus as a skip, rather than failing an independent real A31E handoff
+  because a materialized PC receipt happened to exist elsewhere on disk.
 
 - ✅ TQTR containers with an extended declared VRAM segment now advance to the
   declared VCE offset before loading the palette snapshot. The previous path

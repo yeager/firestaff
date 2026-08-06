@@ -3260,6 +3260,10 @@ level or consumer bindings.
     the scanner's first match. This keeps A31E's paired title/program media
     from inheriting generic PC34 cache bytes; remaining Amiga title/entrance
     presentation capture is tracked separately.
+  - 2026-08-07: The combined launcher regression now skips its PC-only V2
+    lane when the supplied root contains no M12-launchable PC34 package. A
+    pre-existing materialized PC receipt must not turn the independent A31E
+    selected-package handoff into a false test failure.
   - 2026-07-31: The unbound D0L2/D0R2 partly-open-door and D1L/D1R
     floor/ceiling-ornament contracts now compile only into their tests. Their
     source metadata stays available for verification, but live pixels still
