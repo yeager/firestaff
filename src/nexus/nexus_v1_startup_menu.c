@@ -2427,6 +2427,7 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
     int count = 0;
     int first_row = 0;
     int blink_on;
+    int host_label_fixture = 0;
 
     if (!pool || !rows || max_rows <= 0) {
         return 0;
@@ -2436,6 +2437,12 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
     }
     blink_on = ((frame / 12) & 1) == 0;
     memset(rows, 0, (size_t)max_rows * sizeof(rows[0]));
+    for (row = 0; row < pool->champion_count; ++row) {
+        if (pool->champions[row].name_ascii[0] != '\0') {
+            host_label_fixture = 1;
+            break;
+        }
+    }
     if (out_footer) {
         Nexus_V1_StartupRect footer_rect;
         memset(out_footer, 0, sizeof(*out_footer));
@@ -2444,11 +2451,17 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
         }
         out_footer->text_x = NEXUS_V1_STARTUP_FOOTER_X;
         out_footer->text_y = NEXUS_V1_STARTUP_FOOTER_Y;
-        snprintf(out_footer->label,
-                 sizeof(out_footer->label),
-                 "PARTY %d/%d  ACCEPT ADD  ACTION START",
-                 pool->party_count,
-                 NEXUS_MAX_PARTY);
+        /* Authenticated PLRD owns TABL/FONT256 glyph codes, not this
+         * host-invented English footer. Keep the legacy text only for the
+         * isolated ASCII roster fixture until the Saturn text consumer is
+         * captured. */
+        if (host_label_fixture) {
+            snprintf(out_footer->label,
+                     sizeof(out_footer->label),
+                     "PARTY %d/%d  ACCEPT ADD  ACTION START",
+                     pool->party_count,
+                     NEXUS_MAX_PARTY);
+        }
     }
     first_row = nexus_v1_startup_champion_visible_first_row(
         pool->champion_count, cursor, max_rows);

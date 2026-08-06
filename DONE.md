@@ -21,6 +21,12 @@
   switch/container state stays unchanged until an authenticated action trace
   binds the semantics.
 
+- ✅ 2026-08-06 Nexus PLRD footer provenance cleanup: the champion-start
+  footer no longer injects the host English `PARTY/ACCEPT/ADD/ACTION/START`
+  string for real European RLOWFIX/PLRD records. It remains available only
+  for the isolated ASCII compatibility roster; the real PLRD regression now
+  requires an empty footer until Saturn TEXT/FONT256 placement is captured.
+
 - ✅ 2026-08-06 Nexus DGN actor CRET provenance gate: a Structure1A/3 model
   signature no longer promotes an actor to a live creature type when its
   RLOWFIX CRET record is absent. Such actors remain untyped/idle instead of

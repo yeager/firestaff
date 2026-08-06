@@ -89,14 +89,17 @@ int main(void) {
         pool.champions[0].name_tabl_code[0] != 0x00c1) return 1;
     {
         Nexus_V1_StartupChampionRenderRow row;
+        Nexus_V1_StartupChampionFooterRender footer;
         memset(&row, 0, sizeof(row));
+        memset(&footer, 0, sizeof(footer));
         if (nexus_v1_startup_menu_build_champion_render_rows(
-                &pool, 0, &row, 1, NULL) != 1 ||
+                &pool, 0, &row, 1, &footer) != 1 ||
             !row.source_name_glyphs_valid ||
             row.source_name_glyph_count != 4 ||
             row.source_name_glyphs[0] != 0x00c1U ||
             row.source_name_glyphs[3] != 0x00d8U ||
-            row.label[0] != '\0') return 1;
+            row.label[0] != '\0' ||
+            footer.label[0] != '\0') return 1;
     }
     {
         FILE *item_file = fopen(item_path, "rb");
