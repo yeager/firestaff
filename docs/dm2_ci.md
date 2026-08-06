@@ -1,4 +1,8 @@
-# DM2 V1 — CI/CD: GitHub Actions Workflow for DM2
+# DM2 V1 — CI/CD: historical design notes
+
+> The workflow described here predates the current cross-platform CMake and
+> asset-hygiene jobs. Use [`CI.md`](CI.md) for the live workflow and keep this
+> page for the DM2-specific follow-up plan.
 
 ## Overview
 

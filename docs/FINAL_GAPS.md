@@ -1,4 +1,8 @@
-# Final Gaps — DM1 V1 (v2.7.22 snapshot)
+# Final Gaps — historical DM1 V1 snapshot
+
+> This file is a historical DM1-focused gap inventory, not the current
+> whole-project status. For the current state of DM1, CSB, DM2, Nexus and
+> Theron's Quest, see [`PROJECT_STATUS.md`](PROJECT_STATUS.md).
 
 Honest inventory of what remains between ReDMCSB source and
 Firestaff runtime as of 2026-06-15, after a verification pass

@@ -24,6 +24,10 @@ Place your game data in `~/.firestaff/data/` (or use `--data DIR`):
     DUNGEON.DAT
   nexus/
     (extracted Saturn ISO files — see docs/NEXUS_PLAN.md)
+  theron/
+    TQUS-mednafen.cue
+    TQUS02.bin
+    TQUS19.iso
 ```
 
 ## Required Files Per Game
@@ -57,6 +61,18 @@ Requires extracted files from the Sega Saturn disc image.
 See `docs/NEXUS_PLAN.md` for extraction instructions.
 Use `tools/extract_nexus_iso.py` to extract from your disc image.
 
+### Theron's Quest (PC Engine CD)
+
+Theron is record-based PC Engine CD media, not a normal ISO filesystem. Keep
+the original CUE and its referenced BIN files together when possible. An ISO
+may be useful for inspection, but it does not replace Track 02 for the
+authenticated loader path. The scanner accepts supported BIN/CUE/ISO
+containers and reports virtual paths; launch remains fail-closed until the
+required Track 02 identity is verified.
+
+For the current Track 02 capture and handoff boundary, see
+[`THERON_CAPTURE_READINESS.md`](THERON_CAPTURE_READINESS.md).
+
 ## Validation
 
 Run the built-in validator to check your data setup:
@@ -70,7 +86,7 @@ firestaff --validate --data /path/to/data
 
 For French and German dungeon text, use the PC-34 Multilingual version:
 - `DUNGEON.DAT` — English
-- `DUNGEONF.DAT` — French  
+- `DUNGEONF.DAT` — French
 - `DUNGEONG.DAT` — German
 
 Place these in `dm1-multilingual/`. Firestaff auto-selects based on language setting.

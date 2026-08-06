@@ -2,11 +2,13 @@
 
 **Five Dungeon Master games. One engine. Your original data.**
 
-Firestaff is a source-faithful reimplementation of every major Dungeon Master
-game engine, built from scratch in portable C for macOS, Windows, Linux,
-Steam Deck, iOS and Android. It plays your legally owned game files on modern
+Firestaff is a source-faithful reimplementation of the major Dungeon Master
+game engines, built from scratch in portable C for macOS, Windows, Linux,
+Steam Deck, iOS and Android. It uses your legally owned game files on modern
 hardware with pixel-perfect **Original** rendering or selectable **Custom**
-presentation at resolutions from 640×400 up to 4K.
+presentation at resolutions from 640×400 up to 4K. DM1 is the strongest
+playable target; the other games are brought up behind explicit source-lock
+and real-data verification gates.
 
 [![Release](https://img.shields.io/github/v/release/yeager/firestaff)](https://github.com/yeager/firestaff/releases/latest)
 [![CI](https://github.com/yeager/firestaff/actions/workflows/verify.yml/badge.svg)](https://github.com/yeager/firestaff/actions/workflows/verify.yml)
@@ -22,10 +24,10 @@ presentation at resolutions from 640×400 up to 4K.
 | Game | Platform | Reference Source | Status |
 |------|----------|-----------------|--------|
 | **Dungeon Master** | DOS PC 3.4 | ReDMCSB | Playable, source-locked |
-| **Chaos Strikes Back** | DOS PC 3.4 | ReDMCSB / CSBWin | Engine complete, hardening |
-| **Dungeon Master II: Skullkeep** | DOS | skproject | Engine complete, hardening |
-| **DM Nexus** | Sega Saturn | SH-2 disassembly | Parsing and runtime proven |
-| **Theron's Quest** | PC Engine | CD analysis | Parsing and runtime proven |
+| **Chaos Strikes Back** | DOS PC 3.4 | ReDMCSB / CSBWin | Source-locked slices, runtime hardening |
+| **Dungeon Master II: Skullkeep** | DOS | skproject | Source-locked slices, real-data hardening |
+| **DM Nexus** | Sega Saturn | SH-2 disassembly | Parsing/runtime slices, real-asset handoff active |
+| **Theron's Quest** | PC Engine | PC Engine disassembly and CD analysis | Parser/runtime slices; Track 02 dungeon handoff active |
 
 ## Screenshots
 
@@ -132,10 +134,13 @@ original IWA source module names extracted from the binary.
 
 ### Theron's Quest (PC Engine)
 
-JP and US Track 02 provenance is hash-verified. CD record chain, 218-entry
-asset manifest, startup level envelope, and SRM save boundary are proven.
-Parser, world state, viewport, mechanics, save/load, and shop-table guards have
-focused test coverage.
+JP and US Track 02 provenance is hash-verified. The CD record chain,
+218-entry opaque asset manifest, startup envelope and SRM save boundary are
+covered by focused tests. A fresh authentic US Track 02 capture reaches the
+System Card and BIOS CD-read path, but has not yet produced a game-owned
+`$E009` data read. Object records, later-level records, bitmap/palette binding
+and the real Track 02 dungeon handoff therefore remain open. See
+[`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md).
 
 ## Graphics Modes
 
@@ -193,6 +198,15 @@ ctest --test-dir build -j4 --output-on-failure
 ```
 
 Some tests require original game data to pass.
+
+### Continuous integration
+
+Every push to `main` runs strict warnings, asset hygiene, native CMake builds
+on Ubuntu, macOS and Windows, headless probes and cross-platform determinism.
+The workflow cancels an older `main` run when a newer commit is pushed. A
+cancelled run is not a failed test; inspect the newest run before debugging
+CI. See [`docs/CI.md`](docs/CI.md) for the checks and common failure
+signatures.
 
 ## Architecture
 

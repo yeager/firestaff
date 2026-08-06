@@ -1,5 +1,11 @@
 # Theron Capture Readiness
 
+**Last verified: 2026-08-06.** The fresh authentic US Track 02 capture used
+the real CUE/BIN and a real SDL2 Mednafen build. It observed 161 raw sectors,
+51 SCSI read commands and 25 CD IRQ callbacks, but zero game-owned `$E009`
+data reads. This is a useful negative boundary: the transport is real, while
+the dungeon handoff is not yet proven.
+
 Theron's Quest is not yet represented by README screenshots. The current public
 status should stay clear: Firestaff can hash-verify JP/US Track 02 data, lock
 raw bank-anchor offsets, validate the 9-word descriptor-table shape, and reach
