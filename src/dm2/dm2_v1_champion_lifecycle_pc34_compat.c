@@ -56,11 +56,31 @@ int dm2_v1_select_champion(
 
     receipt->hero_index = request->heroes_in_party;
 
-    /* SKProject c_hero.cpp::DM2_SELECT_CHAMPION (1052-1200) cannot succeed
-     * until GET_TILE_RECORD_LINK/GET_NEXT_RECORD_LINK find the live DB3
-     * subtype-0x7E mirror record and REVIVE_PLAYER transfers its possessions.
-     * This bounded request has none of those source-owned records, so it may
-     * validate the requested party slot but must never announce a selection. */
+    /* SKProject c_hero.cpp::DM2_SELECT_CHAMPION (1052-1200) first reaches
+     * the tile's DB3 subtype-0x7e marker before REVIVE_PLAYER. Bind that
+     * identity when the caller supplies the committed G1 census; a caller's
+     * coordinates alone are not evidence of a champion. */
+    if (request->source_mirrors && request->source_mirrors->committed) {
+        const DM2_V1_G1ChampionMirrorReceipt *mirrors =
+            request->source_mirrors;
+        for (int i = 0; i < mirrors->mirror_count; ++i) {
+            const DM2_V1_G1ChampionMirrorRoot *mirror = &mirrors->mirrors[i];
+            if (mirror->map != request->map_level ||
+                mirror->x != request->tile_x ||
+                mirror->y != request->tile_y) {
+                continue;
+            }
+            receipt->source_mirror_bound = 1;
+            receipt->source_actuator_data = mirror->actuator_data;
+            receipt->source_dynamic_load_id = mirror->dynamic_load_id;
+            receipt->hero_type = (int16_t)mirror->dynamic_hero_type;
+            break;
+        }
+    }
+
+    /* The source mirror is now identified, but selection still cannot
+     * publish until GET_NEXT_RECORD_LINK transfers possessions and the live
+     * REVIVE_PLAYER/session owners update the party. */
     receipt->fail_closed = 1;
     return 0;
 }

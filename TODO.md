@@ -29220,7 +29220,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   DYN4 selection and preserves the source's pool-capacity stop. The remaining
   owner is the real `sndptr4` descriptor pool, sample format/header handling,
   decode lifetime and playback scheduling; do not admit playback from the
-  binding receipt alone.
+  binding receipt alone. **2026-08-13 activation-boundary progress:** the
+  selection seam now requires the committed G1 mirror census to bind the
+  source DB3 marker, raw actuator data and `0x16ffffff` dynamic-load key
+  before returning its still-fail-closed result. It does not create a hero;
+  `REVIVE_PLAYER`, possession transfer and session mutation remain open.
 
 - [ ] DM2 delayed movement ownership: `PERFORM_MOVE`'s real
   `glbIsPlayerMoving` path retains the old party pose and derives its countdown

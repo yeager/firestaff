@@ -1,6 +1,7 @@
 /* Real-data-only champion mirror receipt for canonical PC DM2 G1. */
 
 #include "dm2_v1_dungeon_loader.h"
+#include "dm2_v1_champion_lifecycle_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -71,6 +72,8 @@ int main(int argc, char **argv)
     }
     for (int i = 0; i < mirrors.mirror_count; ++i) {
         const DM2_V1_G1ChampionMirrorRoot *mirror = &mirrors.mirrors[i];
+        DM2_V1_SelectChampionRequest select_request;
+        DM2_V1_SelectChampionReceipt select_receipt;
         if (mirror->map < 0 || mirror->map >= dungeon.level_count ||
             mirror->x < 0 || mirror->x >= dungeon.level_widths[mirror->map] ||
             mirror->y < 0 || mirror->y >= dungeon.level_heights[mirror->map] ||
@@ -79,6 +82,25 @@ int main(int argc, char **argv)
             mirror->dynamic_load_id != 0x16ffffffu) {
             dm2_v1_dungeon_free(&dungeon);
             fputs("FAIL: source champion mirror lost its dynamic-load key\n",
+                  stderr);
+            return 1;
+        }
+        select_request.tile_x = (int16_t)mirror->x;
+        select_request.tile_y = (int16_t)mirror->y;
+        select_request.direction = (int16_t)mirror->direction;
+        select_request.map_level = (int16_t)mirror->map;
+        select_request.heroes_in_party = 0;
+        select_request.source_mirrors = &mirrors;
+        if (dm2_v1_select_champion(&select_request, &select_receipt) != 0 ||
+            !select_receipt.valid || !select_receipt.fail_closed ||
+            !select_receipt.source_mirror_bound ||
+            select_receipt.source_actuator_data != mirror->actuator_data ||
+            select_receipt.source_dynamic_load_id !=
+                mirror->dynamic_load_id ||
+            select_receipt.hero_type != mirror->dynamic_hero_type ||
+            select_receipt.champion_selected) {
+            dm2_v1_dungeon_free(&dungeon);
+            fputs("FAIL: source mirror did not bind to fail-closed selection\n",
                   stderr);
             return 1;
         }

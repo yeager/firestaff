@@ -1,3 +1,14 @@
+# DM2 G1 champion-mirror selection source binding (2026-08-07)
+
+- ✅ The champion-selection seam now consumes the committed real G1 mirror
+  census before it can identify a candidate. It retains the DB3 actuator data,
+  dynamic hero type and `0x16ffffff` source dynamic-load key in the fail-closed
+  receipt; caller-supplied coordinates alone no longer imply a champion.
+  The canonical PC-DOS real-data regression exercises all 16 mirror roots and
+  confirms that selection remains rejected until `REVIVE_PLAYER`, possession
+  transfer and session mutation are source-bound. No synthetic champion or
+  inventory state was introduced.
+
 # DM2 delayed movement receipt ownership (2026-08-07)
 - ✅ The DM2 movement execution boundary now keeps the source-authenticated
   `DM2_CALC_PLAYER_WALK_DELAY` result while refusing to claim that the

@@ -34,6 +34,8 @@
 
 #include <stdint.h>
 
+#include "dm2_v1_dungeon_loader.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -45,6 +47,10 @@ typedef struct {
     int16_t direction;
     int16_t map_level;
     int16_t heroes_in_party;
+    /* Optional source-owned G1 mirror census. Without this receipt the
+     * request remains a slot-only compatibility check and cannot identify a
+     * real champion marker. */
+    const DM2_V1_G1ChampionMirrorReceipt *source_mirrors;
 } DM2_V1_SelectChampionRequest;
 
 /* SELECT_CHAMPION receipt. A valid request is not a selected champion:
@@ -58,6 +64,9 @@ typedef struct {
     int16_t hero_index;
     int16_t hero_type;
     int16_t hero_position;
+    int source_mirror_bound;
+    uint16_t source_actuator_data;
+    uint32_t source_dynamic_load_id;
 } DM2_V1_SelectChampionReceipt;
 
 /* BRING_CHAMPION_TO_LIFE request */

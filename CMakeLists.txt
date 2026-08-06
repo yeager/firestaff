@@ -15917,6 +15917,7 @@ endif()
         tests/test_dm2_v1_g1_champion_mirror_real_data.c
         src/dm2/dm2_v1_dungeon_loader.c
         src/dm2/dm2_v1_asset_loader.c
+        src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_g1_champion_mirror_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
