@@ -1019,7 +1019,9 @@ level or consumer bindings.
   `SWOOSH`, `TITLE`, `TWANIM.EXP`, `SKULL.EXP` and `END`; it decodes the
   original `SWOOSH -> TITLE -> SKULL -> END` order before any Towns session
   is admitted. The real-CD M12 regression covers the route without unpacking
-  a member. This is an authenticity gate, not an animation renderer.
+  a member. `SWOOSH`, `TITLE` and `END` are also checked against the published
+  HME-242 retail MD5 identities before their startup plan is accepted. This is
+  an authenticity gate, not an animation renderer.
   Re-admit actual TWANIM playback only with a selected-media hash receipt,
   decoded stream bounds,
   and an actual title/entrance execution handoff.

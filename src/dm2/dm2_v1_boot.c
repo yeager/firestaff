@@ -932,6 +932,20 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
     uint8_t *img_data = NULL;
     size_t img_size = 0;
 
+    /* DMWeb's animation inventory
+     * (http://dmweb.free.fr/community/documentation/file-formats/animations/)
+     * identifies these exact HME-242 streams:
+     * TITLE has 224 DL layers/five SO events, SWOOSH 18 DL layers, and END
+     * is the native exit animation.  Keep the documented identities next to
+     * the selected-media reader rather than accepting a filename-compatible
+     * host replacement. */
+    static const char fmtowns_swoosh_md5[] =
+        "ecec4d7ac081b099056531043191b55a";
+    static const char fmtowns_title_md5[] =
+        "d795bab0b392b61534f64163fbbedc38";
+    static const char fmtowns_end_md5[] =
+        "b4a6a38657ac3c1857872952a25964d4";
+
     /* A configured root may be the Firestaff data root or the user's DM2
      * directory itself.  The archive is retained in place and all following
      * extraction is memory-only; neither spelling authorizes a cache or an
@@ -940,6 +954,10 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
     memset(&profile->fmtowns_startup_plan, 0,
            sizeof(profile->fmtowns_startup_plan));
     profile->fmtowns_startup_media_verified = 0;
+    profile->fmtowns_animation_media_verified = 0;
+    profile->fmtowns_swoosh_md5[0] = '\0';
+    profile->fmtowns_title_md5[0] = '\0';
+    profile->fmtowns_end_md5[0] = '\0';
     /* M12 passes an explicitly selected retail archive verbatim.  Preserve
      * that choice: treating it as a directory would silently fall back to a
      * sibling PC install and change the selected platform. */
@@ -985,6 +1003,17 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
      * DATA/ file identities used below. */
     DM2_V1_FmtownsDiscReceipt probe;
     if (dm2_v1_fmtowns_disc_probe(img_data, img_size, &probe) == 0) {
+        const DM2_V1_FmtownsIsoEntry *animation_entries[3] = {
+            &probe.swoosh, &probe.title, &probe.end
+        };
+        const char *animation_md5s[3] = {
+            fmtowns_swoosh_md5, fmtowns_title_md5, fmtowns_end_md5
+        };
+        char *animation_actual_md5s[3] = {
+            profile->fmtowns_swoosh_md5, profile->fmtowns_title_md5,
+            profile->fmtowns_end_md5
+        };
+        int animation_index;
         /* HME-242 does not boot straight into SKULL: AUTOEXEC.BAT runs the
          * native TWANIM swoosh and title before SKULL, and again for END.
          * Refuse a partial/synthetic disc instead of presenting its data pair
@@ -1000,7 +1029,39 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
             profile->fmtowns_cdda_track_count = 0;
             return;
         }
+        for (animation_index = 0; animation_index < 3; ++animation_index) {
+            uint8_t *animation_data = NULL;
+            size_t animation_size = 0u;
+            if (dm2_v1_fmtowns_disc_extract_alloc(
+                    img_data, img_size, animation_entries[animation_index],
+                    &animation_data, &animation_size) != 0 ||
+                !animation_data || animation_size == 0u) {
+                free(animation_data);
+                break;
+            }
+            dm2_md5_bytes_hex(animation_data, animation_size,
+                              animation_actual_md5s[animation_index]);
+            free(animation_data);
+            if (!md5_matches(animation_actual_md5s[animation_index],
+                             animation_md5s[animation_index])) {
+                break;
+            }
+        }
+        if (animation_index != 3) {
+            free(profile->fmtowns_disc_image);
+            profile->fmtowns_disc_image = NULL;
+            profile->fmtowns_disc_image_size = 0u;
+            profile->fmtowns_zip_path[0] = '\0';
+            memset(profile->fmtowns_cdda_track_starts, 0,
+                   sizeof(profile->fmtowns_cdda_track_starts));
+            profile->fmtowns_cdda_track_count = 0;
+            profile->fmtowns_swoosh_md5[0] = '\0';
+            profile->fmtowns_title_md5[0] = '\0';
+            profile->fmtowns_end_md5[0] = '\0';
+            return;
+        }
         profile->fmtowns_startup_media_verified = 1;
+        profile->fmtowns_animation_media_verified = 1;
         if (!profile->graphics_path[0]) {
             if (probe.has_graphics_dat) {
                 dm2_v1_fmtowns_disc_extract_alloc(img_data, img_size,

@@ -54100,6 +54100,14 @@ alcove runtime and archive-media tests passed (4/4).
   ownership and blocks partial media; it does not claim that TWANIM frame
   playback has been implemented.
 
+- ✅ 2026-08-06 DM2 FM Towns animation-stream authentication: boot now checks
+  the selected in-memory HME-242 `SWOOSH`, `TITLE` and `END` streams against
+  the published retail MD5s before it accepts the AUTOEXEC animation plan.
+  This binds the actual 18-layer swoosh and 224-layer/5-sound title corpus to
+  the selected FM Towns CD rather than accepting name-compatible bytes. The
+  M12 real-media regression verifies all three identities with the Japanese
+  CD ZIP and English text companion, without extracting any game data to disk.
+
 - ✅ 2026-08-06 Theron raw-BIN HuC6280 disassembly intake: the static bank-$1f
   receipt now verifies authentic `TQUS02.bin` and `TQJP02.bin` Track 02 files
   in addition to the ISO projections. Their real MODE1/2352 bank-window

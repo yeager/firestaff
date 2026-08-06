@@ -194,6 +194,13 @@ typedef struct {
      * in-memory IMG.  A Towns session is not admitted without this media. */
     DM2_V1_FmtownsStartupPlan fmtowns_startup_plan;
     int      fmtowns_startup_media_verified;
+    /* Retail animation-stream identities, calculated from the selected IMG
+     * in RAM.  These prevent a name-compatible replacement TITLE/SWOOSH/END
+     * stream from being presented as the HME-242 startup. */
+    char     fmtowns_swoosh_md5[33];
+    char     fmtowns_title_md5[33];
+    char     fmtowns_end_md5[33];
+    int      fmtowns_animation_media_verified;
 
     /* ── Deterministic config ──────────────────────────────── */
     DM2_V1_DeterministicConfig deterministic;

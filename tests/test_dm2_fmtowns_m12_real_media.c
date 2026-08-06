@@ -159,6 +159,13 @@ int main(void)
                "FM Towns runtime keeps Japanese CD ownership and binds English text only");
         expect(launch.profile &&
                    launch.profile->fmtowns_startup_media_verified &&
+                   launch.profile->fmtowns_animation_media_verified &&
+                   strcmp(launch.profile->fmtowns_swoosh_md5,
+                          "ecec4d7ac081b099056531043191b55a") == 0 &&
+                   strcmp(launch.profile->fmtowns_title_md5,
+                          "d795bab0b392b61534f64163fbbedc38") == 0 &&
+                   strcmp(launch.profile->fmtowns_end_md5,
+                          "b4a6a38657ac3c1857872952a25964d4") == 0 &&
                    launch.profile->fmtowns_startup_plan.valid &&
                    launch.profile->fmtowns_startup_plan.stage_count == 4 &&
                    launch.profile->fmtowns_startup_plan.stages[0] ==
