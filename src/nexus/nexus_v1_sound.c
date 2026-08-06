@@ -1183,8 +1183,8 @@ int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
             return 0;
         }
     }
-    printf("Nexus music: CD track %d selected (no audio file at %s)\n",
-        track_number, eng->cd_track_path);
+    printf("Nexus music: CD track %d retained as selection-only; "
+           "Saturn CDDA handoff is not source-bound\n", track_number);
     return 0;
 }
 

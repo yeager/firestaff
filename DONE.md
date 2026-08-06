@@ -1,3 +1,11 @@
+# Nexus CDDA selection-only status (2026-08-06)
+
+- ✅ Corrected the Nexus sound runtime diagnostic so an unbound Saturn
+  Red-Book track is reported as `selection-only` rather than as a missing host
+  audio file. The real 16-level SAL/MAP corpus remains metadata-only and
+  SFX/CDDA playback stays gated. Verification: `test_nexus_v1_sound_runtime_receipt`
+  and `test_nexus_v1_sound_gameplay`; no game data was copied or committed.
+
 # Nexus startup TITLE.BIN truncation gate (2026-08-06)
 
 - ✅ Hardened `nexus_title_load` so an incomplete `TITLE.BIN` cannot reach the
