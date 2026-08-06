@@ -52120,3 +52120,10 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   `MISCELLANEOUS/254/dtImage/254` fallback. The real-data regression decodes
   that exact source payload; no portrait pixels, palette or GDAT row are
   fabricated.
+# 2026-08-06 Nexus startup/menu/viewport documentation correction
+
+- ✅ Replaced stale Nexus overview, language, startup, champion, feature,
+  title, menu and graphics documents with evidence-bound status. They now
+  distinguish real retail byte/format receipts from unproven Saturn VDP1/VDP2,
+  text, HUD, mesh, gameplay and audio consumers. The corrupt startup document
+  was replaced with valid UTF-8; no runtime claim was expanded.

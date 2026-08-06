@@ -87,7 +87,7 @@ the title is a 3D animation or that a particular DMV file precedes it.
 | Aspect | DM1 | Nexus V1 |
 |--------|-----|----------|
 | Title type | Static 2D bitmap | `TITLE.CG` source atlas; final composition unproven |
-| Source | TITLE.C asset | Rendered by VDP1 rasterizer |
+| Source | TITLE.C asset | `TITLE.CG` source atlas; VDP1/VDP2 consumer unproven |
 | Animation | None (static) | Not proven; executable/capture route remains gated |
-| Language | English | Japanese (Shift-JIS) |
+| Language | English | Per-revision text status; no global language claim |
 | Impl status | Complete (ReDMCSB) | Source decode exists; Saturn presentation remains gated |

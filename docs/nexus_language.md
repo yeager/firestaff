@@ -1,98 +1,42 @@
-# Nexus V1 — Language Variants
+# Dungeon Master Nexus — språk- och textstatus
 
-## Sources
-- `docs/nexus_text.md`
-- `docs/nexus_champions.md`
-- `docs/nexus_features.md`
-- `docs/nexus_overview.md`
-- `docs/NEXUS_PLAN.md`
-- `src/nexus/nexus_v1_saturn_font.c`, `nexus_v1_text.c`
-- `docs/NEXUS_FILE_CLASSIFICATION.md`
-- Extracted Saturn files: `DMN_ABS.TXT`, `DMN_BIB.TXT`, `DMN_CPY.TXT`, `FONT256.S2D`
+Det här dokumentet är en källtroget korrigerad statusrapport. Den tidigare
+versionen påstod japansk-only, Shift-JIS-namn och färdig text-rendering utan
+att det var bevisat för den lokala korpusen.
 
----
+## Verifierat i den lokala korpusen
 
-## 1. Only Japanese — No English Release
+- Den europeiska engelska ISO:n innehåller `DMN_ABS.TXT`, `DMN_BIB.TXT` och
+  `DMN_CPY.TXT`; deras bytesidentitet verifieras av
+  `scripts/verify_nexus_v1_asset_manifest.py`.
+- `RLOWFIX.BIN` innehåller en verifierad `PLRD`-resource med 20 poster à 64
+  byte. Varje post behåller sex `TABL`-index och de råa glyph-koderna från
+  `TABL`.
+- `FONT256.S2D` ger 242 verifierade 8×8-byte CG-tiles från riktiga SCR-
+  regioner.
 
-Dungeon Master Nexus was **Japanese language only**. There was no English localization — it was never released outside Japan.
+## Inte verifierat
 
-### Evidence
-- Disc product: T-9111G V1.003 — the G suffix indicates Japan (NTSCJ territory)
-- All UI text, menus, champion names, inscriptions are in Japanese
-- `DMN_BIB.TXT` (in-game text file) contains only Japanese Shift-JIS characters
-- `FONT256.S2D` is a 256-character font including Japanese katakana
-- `docs/nexus_overview.md`: "Exclusive to Sega Saturn, Japanese only"
+`TABL`-koderna är inte ännu bundna till ett Saturn-teckensnitt, en sida,
+attributtabell eller en VDP2-textkonsument. Firestaff får därför inte konvertera
+dem till gissade ASCII-, JIS- eller Unicode-namn. `name_ascii` och äldre
+språk-/rosterfält får endast förekomma i isolerade fixture-tester.
 
-### In-Game Text Samples
-`DMN_ABS.TXT` content (Shift-JIS, translated):
-> "The Dungeon Master will show you the way. The Ruin of this fortress has stood for centuries. The Dungeon Master and his minions wait within its depths..."
+Det går inte heller att dra slutsatsen att all speltext är japansk eller
+engelsk från en enskild ISO-metadatafil. Språkstatus måste bindas per källa,
+revision och textkonsument.
 
-`DMN_BIB.TXT` copyright notice:
-> "Copyright 1998 Victor Interactive Software Inc. / FTL Games"
+## Källor och implementation
 
----
+- DMWebs filformats- och datafildekoder används för `PLRD`/`TABL`, `FONT256`
+  och SCR-regionerna.
+- [NEXUS_STRICT_FIDELITY_INVENTORY.md](NEXUS_STRICT_FIDELITY_INVENTORY.md) är
+  den samlade statusen.
+- `src/nexus/nexus_v1_rlowfix_text.c` behåller råa TEXT/TABL-bytes.
+- `src/nexus/nexus_v1_saturn_font.c` behåller verkliga CG-tiles men markerar
+  glyph-mappningen som ej redo.
+- `src/nexus/nexus_v1_screen_text.c` avvisar riktig SCR-text tills mappingen
+  är källbunden. Den generiska indexed-textfunktionen är endast test-/fixture-
+  material och är inte en Nexus-textkonsument.
 
-## 2. Font and Text Rendering
-
-### FONT256.S2D — Sega Saturn SCR Font Format
-A 256-character bitmap font with Japanese support:
-- **Magic:** "SEGA SATURN SCR" (15 bytes)
-- **Glyph sizes:** 8×8, 12×12, or 16×16 px auto-detected
-- **Charset:** ASCII 0x20–0x7E + half-width katakana (0xA1–0xDF)
-- **Japanese mapping:** Half-width katakana → UTF-8 U+FF61–U+FF9F
-
-### Text Conversion: Shift-JIS to UTF-8
-From `nexus_v1_text.c`:
-- ASCII pass-through (0x20–0x7E → 1 byte → 1 byte)
-- Half-width katakana (0xA1–0xDF → 3-byte UTF-8)
-- No full-width kanji in the font (katakana only for UI/names)
-
-### No Kanji in Font
-The font is 256 chars total — insufficient for full kanji (thousands needed).
-Nexus uses **katakana transliteration** for Japanese text. Champion names are
-rendered in katakana (e.g., "シラ" = Syra, "レイラ" = Leyla, "ナビ" = Nabi).
-
----
-
-## 3. Champion Roster: Japanese Names
-
-The live champion labels are read from the DMWeb-defined `RLOWFIX.BIN`
-`PLRD`/`TABL` records. The source contains 20 records; the 24-slot array is
-not evidence of four additional retail records:
-
-| # | ASCII Name | Japanese | Class |
-|---|-----------|---------|-------|
-| 1 | Syra | シラ | Fighter |
-| 2 | Leyla | レイラ | Wizard |
-| 3 | Nabi | ナビ | Ninja |
-| 4 | Gando | ガンド | Priest |
-| 5 | Torham | トルハム | Fighter |
-| 6 | Elija | エリジャ | Wizard |
-| 7 | Wu Tse | ウー・ツエ | Ninja |
-| 8 | Stamm | スタム | Fighter |
-
-The ASCII names exist in the data as a parallel field (for debug/encoding compatibility), but the game displays only the Japanese katakana versions.
-
----
-
-## 4. No Multilingual Release
-
-Unlike DM1 CSB (which had separate Japanese GRAPHICS.DAT files for the JP localization) or DM2 (which at least had English-only binaries that could run on any locale), Nexus had:
-
-| Aspect | DM1 CSB | DM2 | Nexus |
-|--------|---------|-----|-------|
-| English version | Yes | Yes | **No** |
-| Japanese version | Yes (separate DAT files) | No | **Yes (only)** |
-| Language variants | EN + JP | EN only | **JP only** |
-| Multilingual binary | No (separate files) | N/A | **N/A** |
-
----
-
-## 5. Language Conclusion
-
-**One language: Japanese. One territory: Japan. One release: Saturn.**
-- No English text, no English menus, no English UI
-- Font supports ASCII + half-width katakana (no kanji)
-- All champion names in katakana
-- All in-game text in Japanese
-- The Firestaff reimplementation uses the same Japanese data but renders via Unicode/SDL (UTF-8 output)
+Ingen hosttext får ersätta en saknad eller obevisad Saturn-textyta.

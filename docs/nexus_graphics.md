@@ -44,17 +44,17 @@ DM1 sprite system: every creature has a sprite set in GRAPHICS.DAT.
 Sprites are 2D bitmaps, always facing the party (billboard). No vertex data,
 no polygon data. Rendering: SDL blit with scaling.
 
-## 3. Nexus V1 Graphics System: 3D Polygon Rendering
+## 3. Nexus V1 Graphics System: source and runtime boundary
 
-Nexus uses full 3D polygon rendering via the rasterizer pipeline.
+The retail files contain polygon/texture candidates, and Firestaff has bounded
+parsers and host raster primitives. That is not proof that the host pipeline
+matches Saturn VDP1 or that the route is production-renderable.
 
-Rendering pipeline (nexus_v2_render_pipeline.c):
-1. Load DGN file (grid plus 3D geometry blob)
-2. Parse embedded polygon data from geometry blob
-3. Transform vertices with camera matrix (nexus_v1_math3d.c)
-4. Project to 2D framebuffer via perspective divide
-5. Depth sort transparent faces (painter is algorithm)
-6. Rasterize with texture sampling (nexus_v1_rasterizer.c)
+The admitted pipeline is instead:
+1. Load and hash-bind real DGN/MNS/DMDF bytes.
+2. Record bounded Structure2/Structure3/texture evidence.
+3. Stop before an inferred transform, palette upload or VDP1 command is
+   promoted to the Nexus viewport.
 
 Wall geometry in DGN files: Pre-baked wall polygons per grid square per direction.
 Each wall face has vertex list plus texture ID plus normal.
@@ -74,21 +74,20 @@ per frame. vs. DM1 is 2D billboard sprites.
 - Camera projection (perspective divide)
 - Vertex transformation: model -> world -> view -> projection
 
-## 5. Rasterizer (nexus_v1_rasterizer.c)
+## 5. Raster primitives (nexus_v1_rasterizer.c)
 
-- Fixed-point or float polygon rasterization
-- Texture-mapped triangles (DMDF u,v coords)
-- Z-buffer for depth sorting
-- Framebuffer palette system (Nexus_Framebuffer)
+The file contains bounded host raster primitives and framebuffer types. They
+are not a Saturn-capture substitute and remain gated when source transform,
+texture palette or VDP1 command ownership is absent.
 
 ## 6. DM1 vs Nexus Graphics Comparison
 
 | Aspect           | DM1                     | Nexus V1                  |
 |------------------|-------------------------|---------------------------|
-| Rendering        | 2D raycasting           | 3D polygon rasterizer     |
-| Walls            | 2D scaled rectangles    | 3D polygon faces          |
-| Floor/ceiling    | Pre-baked BITMAP tiles  | 3D mesh projection        |
-| Creatures        | 2D billboard sprites    | 3D DMDF mesh models       |
+| Rendering        | 2D raycasting           | Source decode; Saturn presentation gated |
+| Walls            | 2D scaled rectangles    | DGN face candidates; draw ownership gated |
+| Floor/ceiling    | Pre-baked BITMAP tiles  | DGN material candidates; VDP2/VDP1 gated |
+| Creatures        | 2D billboard sprites    | DMDF/MNS source models; draw placement gated |
 | Items            | 2D sprite overlay       | 3D model or billboard    |
 | Textures         | BITMAP (PC CGA/EGA)     | BITMAP in DMDF            |
 | Z-buffer         | None                    | Z-buffer                  |
@@ -106,19 +105,18 @@ nexus_v1_dmdf_load() parses .MNS files:
 - Loads face index array
 - Loads embedded texture BITMAP data
 
-Model usage: nexus_viewport_render() calls nexus_draw_creature() for visible
-creatures. Creatures projected to screen via camera matrix. Scaled by distance.
-Billboard behavior: model always faces camera (DM1-style optimization).
+The model loader is a source/format receipt. A production creature draw is not
+admitted: viewport projection, camera transform, scale, palette and VDP1
+command ownership remain unknown.
 
 ## 8. Saturn-Specific Rendering Constraints
 
 Saturn hardware: Dual SH2 CPUs (master plus slave), framebuffer 16-bit RGBA
 or palette mode, texture memory limited and compressed, no dedicated 3D GPU.
 
-Firestaff nexus_v1_rasterizer.c implements the software rasterizer:
-- Runs on host CPU, renders to software framebuffer
-- Uploads to Saturn framebuffer via CD-ROM data streaming
-- For PC/Linux builds: renders directly to SDL framebuffer
+Firestaff contains host-side raster primitives for bounded tests. They do not
+upload to a Saturn framebuffer and must not be described as a VDP1 emulator or
+as parity evidence.
 
 ## 9. Firestaff Implementation Status
 

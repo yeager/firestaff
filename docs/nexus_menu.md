@@ -49,16 +49,14 @@ remain capture-gated.
   unavailable until a real text/VDP1 consumer trace binds them.
 
 ### Options State
-- Display mode (fullscreen / windowed)
-- Audio levels (music, SFX)
-- See nexus_options.md for full options audit
+
+Host option scaffolding is not evidence of a Saturn options screen. Display,
+audio and controller semantics remain outside the admitted Nexus menu route.
 
 ### In-Game ESC Menu
-- Champion stats panel
-- Inventory management
-- Spell list / casting
-- Save / Load
-- Return to game
+
+No Saturn-backed in-game menu consumer is admitted. The listed DM1-style
+panels are comparison scope only, not implemented Nexus behavior.
 
 ### End Game / Credits
 - DMV0-2.AVI cutscenes (NOT IMPLEMENTED)
@@ -125,4 +123,4 @@ rectangles are Saturn VDP coordinates.
 | Save/load | Binary slot files | Saturn SRAM |
 | Credits | Static bitmap | AVI cutscenes |
 | Menu rendering | SDL blit | VDP1/VDP2 (not impl) |
-| Font | ASCII | Japanese Shift-JIS |
+| Font | ASCII | FONT256 CG tiles; glyph mapping unproven |

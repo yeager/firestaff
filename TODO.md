@@ -27,6 +27,12 @@
   Saturn VDP1/VDP2 placement. Continue with capture-backed startup/menu
   handoff; do not promote these receipts into host rendering.
 
+  2026-08-06: the legacy Nexus overview/language/startup/champion/features
+  documents were corrected to stop publishing synthetic Japanese-only claims,
+  eight/24-name rosters, DM1-derived semantics, or completed renderer/audio
+  behavior. Remaining documentation outside the focused startup/menu/HUD/
+  viewport set still requires a full stale-claim sweep.
+
 - **DM2-REAL-DATA-RENDER-INVENTORY:** The PC English `GRAPHICS.DAT` corpus is
   hash-locked and its G1-referenced scene sets now decode through the original
   IMG9 mode-1/2/3 dispatcher. The full real `dtImage` census (5,676 ENT1
