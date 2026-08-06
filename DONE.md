@@ -24,6 +24,13 @@
   source-zone identity no longer consume generator capacity or create false
   respawn state. The focused source combat/runtime regression passes.
 
+- ✅ 2026-08-06 CSB Atari MSA admission: standard Magic Shadow Archiver
+  sector images now decode their documented big-endian header, track order and
+  RLE runs into the same bounded GEMDOS reader used for raw `.st` images.
+  This admits the supplied CSB Atari v2.0 original `.msa` even when nested in
+  a `.7z`, without renaming or synthetic disk content; raw and nested tests
+  cover discovery and materialization.
+
 - ✅ 2026-08-06 External archive cache regression: the hash-scanner fixture
   now runs under an isolated home and asserts that a real `.7z` member writes
   its complete virtual path to the persisted cache. Fixture cleanup also

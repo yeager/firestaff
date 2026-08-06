@@ -40,6 +40,11 @@ static void put16(unsigned char* p, unsigned int v) {
     p[1] = (unsigned char)((v >> 8U) & 0xffU);
 }
 
+static void putbe16(unsigned char* p, unsigned int v) {
+    p[0] = (unsigned char)((v >> 8U) & 0xffU);
+    p[1] = (unsigned char)(v & 0xffU);
+}
+
 static void put32(unsigned char* p, unsigned int v) {
     p[0] = (unsigned char)(v & 0xffU);
     p[1] = (unsigned char)((v >> 8U) & 0xffU);
@@ -112,6 +117,55 @@ static int write_atari_st_fixture(const char* path) {
     if (!fp) return 0;
     if (fwrite(image, 1U, sizeof(image), fp) != sizeof(image)) {
         fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
+/* One uncompressed MSA track containing the same FAT12 layout as the raw ST
+ * fixture. MSA's 0x0e0f header and per-track BE16 length are intentional. */
+static int write_atari_msa_fixture(const char* path) {
+    static const char payload[] = "Firestaff hash identity fixture v1\n";
+    unsigned char image[10U * 512U] = {0};
+    unsigned char header[12] = {0};
+    unsigned char packed[10U * 512U];
+    unsigned char* root = image + 3U * 512U;
+    FILE* fp;
+    size_t source = 0u, packed_size = 0u;
+    image[0] = 0x60U;
+    put16(image + 11U, 512U); image[13] = 1U;
+    put16(image + 14U, 1U); image[16] = 2U;
+    put16(image + 17U, 16U); put16(image + 19U, 10U);
+    image[21] = 0xf9U; put16(image + 22U, 1U);
+    memcpy(root, "GRAPHICS", 8U); memcpy(root + 8U, "DAT", 3U);
+    put16(root + 26U, 2U);
+    put32(root + 28U, (unsigned int)(sizeof(payload) - 1U));
+    image[512U] = 0xf0U; image[513U] = 0xffU; image[514U] = 0xffU;
+    image[1024U] = 0xf0U; image[1025U] = 0xffU; image[1026U] = 0xffU;
+    memcpy(image + 4U * 512U, payload, sizeof(payload) - 1U);
+    while (source < sizeof(image)) {
+        size_t run = 1u;
+        while (source + run < sizeof(image) && image[source + run] == image[source] &&
+               run < 65535u) ++run;
+        if (run >= 4u || image[source] == 0xe5u) {
+            packed[packed_size++] = 0xe5u;
+            packed[packed_size++] = image[source];
+            putbe16(packed + packed_size, (unsigned int)run);
+            packed_size += 2u;
+        } else {
+            memcpy(packed + packed_size, image + source, run);
+            packed_size += run;
+        }
+        source += run;
+    }
+    if (packed_size >= sizeof(image)) return 0;
+    putbe16(header, 0x0e0fU); putbe16(header + 2U, 10U);
+    putbe16(header + 4U, 0U); putbe16(header + 6U, 0U);
+    putbe16(header + 8U, 0U); putbe16(header + 10U, (unsigned int)packed_size);
+    fp = fopen(path, "wb");
+    if (!fp || fwrite(header, 1U, sizeof(header), fp) != sizeof(header) ||
+        fwrite(packed, 1U, packed_size, fp) != packed_size) {
+        if (fp) fclose(fp);
         return 0;
     }
     return fclose(fp) == 0;
@@ -510,6 +564,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/archive.tgz");
     remove("asset_find_by_hash_test_tmp/archive.7z");
     remove("asset_find_by_hash_test_tmp/nested_atari.st.7z");
+    remove("asset_find_by_hash_test_tmp/nested_atari.msa.7z");
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf.7z");
     remove("asset_find_by_hash_test_tmp/archive.dmg");
     remove("asset_find_by_hash_test_tmp/renamed_tar.payload");
@@ -525,6 +580,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/split.cue");
     remove("asset_find_by_hash_test_tmp/chaos.adf");
     remove("asset_find_by_hash_test_tmp/chaos.st");
+    remove("asset_find_by_hash_test_tmp/chaos.msa");
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
     RMDIR("asset_find_by_hash_test_tmp/nested");
     RMDIR("asset_find_by_hash_test_tmp");
@@ -729,6 +785,42 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/nested_atari.st.7z");
     remove("asset_find_by_hash_test_tmp/chaos.st");
+    if (!write_atari_msa_fixture("asset_find_by_hash_test_tmp/chaos.msa")) {
+        cleanup_fixture();
+        fprintf(stderr, "Atari MSA fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_entry(outPath, "chaos.msa", "GRAPHICS.DAT") ||
+        !asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "Atari MSA filesystem lookup/extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    if (system("command -v 7zz >/dev/null 2>&1 && "
+               "cd asset_find_by_hash_test_tmp && "
+               "7zz a -t7z nested_atari.msa.7z chaos.msa >/dev/null 2>&1") == 0) {
+        remove("asset_find_by_hash_test_tmp/chaos.msa");
+        memset(outPath, 0, sizeof(outPath));
+        if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                               outPath, (int)sizeof(outPath), 2) ||
+            !path_has_virtual_entry(outPath, "nested_atari.msa.7z",
+                                    "chaos.msa::GRAPHICS.DAT") ||
+            !asset_extract_virtual_path(outPath,
+                                        "asset_find_by_hash_test_tmp/extracted.dat") ||
+            !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+            cleanup_fixture();
+            fprintf(stderr, "nested Atari MSA lookup/extraction failed: %s\n", outPath);
+            return 1;
+        }
+        remove("asset_find_by_hash_test_tmp/extracted.dat");
+        remove("asset_find_by_hash_test_tmp/nested_atari.msa.7z");
+    }
+    remove("asset_find_by_hash_test_tmp/chaos.msa");
     if (!write_stored_zip_fixture("asset_find_by_hash_test_tmp/archive.zip")) {
         cleanup_fixture();
         fprintf(stderr, "ZIP fixture setup failed\n");
