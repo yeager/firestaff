@@ -53940,3 +53940,9 @@ alcove runtime and archive-media tests passed (4/4).
   checks. The focused test passes all four authentic US/JP BIN/ISO sources;
   runtime consumer and semantic level/object/palette/tile/viewport handoff
   remain capture-gated.
+
+- ✅ 2026-08-06 Theron forcefield-menu keyboard fix: M11's physical
+  left/right arrow tokens (`STRAFE_LEFT/STRAFE_RIGHT`) now move Theron's Soul
+  Room focus. Enter can therefore reach the FORCEFIELD action instead of
+  appearing inert; the source-owned capture gate still prevents an
+  unverified dungeon handoff.

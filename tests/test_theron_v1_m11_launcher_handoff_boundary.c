@@ -486,6 +486,15 @@ static void run_production_forcefield_transition_without_roster(void) {
                 "production Enter retains only the source-owned Theron slot");
 }
 
+static void run_keyboard_arrow_forcefield_focus_regression(void) {
+    expect_true(theron_v1_startup_input_from_firestaff_menu_code(5) ==
+                    THERON_STARTUP_INPUT_LEFT,
+                "Theron startup maps the M11 strafe-left token to menu focus-left");
+    expect_true(theron_v1_startup_input_from_firestaff_menu_code(6) ==
+                    THERON_STARTUP_INPUT_RIGHT,
+                "Theron startup maps the M11 strafe-right token to menu focus-right");
+}
+
 static void run_production_forcefield_binds_selected_records_without_names(void) {
     Theron_StartupFlow flow;
     Theron_DungeonProgression progression;
@@ -522,6 +531,7 @@ int main(void) {
     run_track02_startup_overlay_regression();
     run_explicit_real_cue_campaign_if_available();
     run_production_forcefield_transition_without_roster();
+    run_keyboard_arrow_forcefield_focus_regression();
     run_production_forcefield_binds_selected_records_without_names();
     run_real_launcher_handoff_if_available();
 

@@ -135,6 +135,11 @@ Theron_StartupInput theron_v1_startup_input_from_firestaff_menu_code(
         FIRESTAFF_MENU_INPUT_DOWN = 2,
         FIRESTAFF_MENU_INPUT_LEFT = 3,
         FIRESTAFF_MENU_INPUT_RIGHT = 4,
+        /* M11 maps the physical arrow keys to the gameplay-compatible
+         * strafe tokens before they reach the Theron startup menu.  Keep
+         * those tokens equivalent to the menu's left/right focus movement. */
+        FIRESTAFF_MENU_INPUT_STRAFE_LEFT = 5,
+        FIRESTAFF_MENU_INPUT_STRAFE_RIGHT = 6,
         FIRESTAFF_MENU_INPUT_TURN_LEFT = 7,
         FIRESTAFF_MENU_INPUT_TURN_RIGHT = 8,
         FIRESTAFF_MENU_INPUT_ACCEPT = 9,
@@ -148,9 +153,11 @@ Theron_StartupInput theron_v1_startup_input_from_firestaff_menu_code(
     case FIRESTAFF_MENU_INPUT_DOWN:
         return THERON_STARTUP_INPUT_DOWN;
     case FIRESTAFF_MENU_INPUT_LEFT:
+    case FIRESTAFF_MENU_INPUT_STRAFE_LEFT:
     case FIRESTAFF_MENU_INPUT_TURN_LEFT:
         return THERON_STARTUP_INPUT_LEFT;
     case FIRESTAFF_MENU_INPUT_RIGHT:
+    case FIRESTAFF_MENU_INPUT_STRAFE_RIGHT:
     case FIRESTAFF_MENU_INPUT_TURN_RIGHT:
         return THERON_STARTUP_INPUT_RIGHT;
     case FIRESTAFF_MENU_INPUT_ACCEPT:

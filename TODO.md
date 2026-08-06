@@ -652,6 +652,10 @@
   European corpus is 87,684 bytes; this corrects stale 89,060-byte probe
   expectations only. Menu drawing, text ownership and VDP1/VDP2 composition
   remain capture-gated.
+
+2026-08-06 Theron input follow-up: physical arrow keys arrive at M11 as
+`STRAFE_LEFT/STRAFE_RIGHT`; the startup adapter now treats those tokens as
+Soul Room focus movement. Keep the final dungeon handoff capture-gated.
   2026-08-06: a decoded real MENU.BPK route is now explicitly blocked until
   the admitted PALT memory, palette-state and VDP1-command capture exists;
   decoder success alone no longer reports a drawable menu.
