@@ -185,6 +185,50 @@ const char *nexus_v1_event_name(Nexus_EventType ev) {
     return g_event_names[ev];
 }
 
+int nexus_v1_event_table_receipt(const uint8_t *dm_bin, int dm_bin_size,
+                                 int *out_event_count) {
+    const int begin = 0x036D04;
+    /* EV_CONFIG starts at 0x037024; include its NUL and alignment padding. */
+    const int end = 0x037030;
+    int pos = begin;
+    int count = 0;
+
+    if (out_event_count) *out_event_count = 0;
+    if (!dm_bin || dm_bin_size < end) return 0;
+
+    while (pos < end) {
+        const char *expected;
+        int start;
+        int length;
+
+        /* The Saturn string pool pads each entry to its alignment with FF. */
+        while (pos < end && (dm_bin[pos] == 0xffU || dm_bin[pos] == 0U))
+            ++pos;
+        if (pos >= end) break;
+        if (count >= NEXUS_EV_COUNT || dm_bin[pos] != 'E' ||
+            pos + 3 >= end || dm_bin[pos + 1] != 'V' ||
+            dm_bin[pos + 2] != '_') return 0;
+
+        start = pos;
+        while (pos < end && dm_bin[pos] != 0U) {
+            if (dm_bin[pos] < 0x20U || dm_bin[pos] > 0x7eU) return 0;
+            ++pos;
+        }
+        if (pos >= end) return 0;
+        length = pos - start;
+        expected = g_event_names[count];
+        if ((int)strlen(expected) != length ||
+            memcmp(dm_bin + start, expected, (size_t)length) != 0)
+            return 0;
+        ++count;
+        ++pos;
+    }
+
+    if (count != NEXUS_EV_COUNT) return 0;
+    if (out_event_count) *out_event_count = count;
+    return 1;
+}
+
 int nexus_v1_event_to_command(Nexus_EventType ev) {
     (void)ev;
     /* The event string table is source evidence, not a command queue

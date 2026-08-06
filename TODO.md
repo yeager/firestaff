@@ -10,7 +10,8 @@
   HUD, VDP1, SLEV, or SAL artifact may be admitted from that binary.
 
 - **NEXUS-EVENT-DISPATCH-CAPTURE:** The 61 `DM.BIN` event names remain a
-  source receipt, but the former host event→command map and accepting
+  byte-exact source receipt at `0x36D04..0x3702F`, but the former host
+  event→command map and accepting
   dispatcher were synthetic DM1-shaped behavior. They are now unbound and
   state-free. Recover the Saturn event producer, command queue, SLEV callback
   and SDDRVS state writes before admitting movement, inventory, spell, save,

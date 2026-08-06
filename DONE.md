@@ -5122,6 +5122,13 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   The operator manifest is created without game-data copies; a launch attempt
   with stock Mednafen exits 78 at the missing Firestaff trace-hook check, so
   no unowned startup/menu/HUD/VDP1/SLEV/SAL artifact is admitted.
+
+- ✅ 2026-08-06 Nexus event-label retail receipt: added a bounded verifier for
+  the real European `DM.BIN` event-name pool at `0x36D04..0x3702F`. It checks
+  all 61 ASCII `EV_*` strings and alignment `0xFF` padding against the enum
+  labels while leaving event dispatch and command semantics capture-gated.
+  The event regression verifies the local retail file when present and stays
+  skip-safe when game data is absent.
   DMV*.AVI are standard RIFF/AVI video, DMN_*.TXT are Shift-JIS text.
 
 - ✅ 2026-07-29 Nexus BPPK menu graphics decoder: MENU.BPK BPPK/BMPD

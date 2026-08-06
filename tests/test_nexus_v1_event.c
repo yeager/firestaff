@@ -1,9 +1,45 @@
 #include "nexus_v1_game.h"
 #include "nexus_v1_movement.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int g_failures;
+
+static int load_retail_dm_bin(uint8_t **out_data, int *out_size) {
+    const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    const char *home = getenv("HOME");
+    char path[512];
+    FILE *f;
+    long size;
+    uint8_t *data;
+
+    if (!root || !root[0]) {
+        if (!home || !home[0]) return 0;
+        root = home;
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/DM.BIN", root);
+    } else {
+        snprintf(path, sizeof(path), "%s/DM.BIN", root);
+    }
+    f = fopen(path, "rb");
+    if (!f) return 0;
+    if (fseek(f, 0, SEEK_END) != 0) { fclose(f); return 0; }
+    size = ftell(f);
+    if (size <= 0 || size > 1024L * 1024L || fseek(f, 0, SEEK_SET) != 0) {
+        fclose(f);
+        return 0;
+    }
+    data = (uint8_t *)malloc((size_t)size);
+    if (!data || fread(data, 1, (size_t)size, f) != (size_t)size) {
+        free(data);
+        fclose(f);
+        return 0;
+    }
+    fclose(f);
+    *out_data = data;
+    *out_size = (int)size;
+    return 1;
+}
 
 static void expect(int cond, const char *msg) {
     if (!cond) { fprintf(stderr, "FAIL: %s\n", msg); ++g_failures; }
@@ -12,6 +48,9 @@ static void expect(int cond, const char *msg) {
 int main(void) {
     Nexus_V1_GameState state;
     Nexus_Event ev;
+    uint8_t *retail_dm_bin = NULL;
+    int retail_dm_bin_size = 0;
+    int retail_event_count = 0;
 
     nexus_v1_game_init(&state, "/tmp/test");
 
@@ -27,6 +66,17 @@ int main(void) {
 
     /* Event count matches DM.BIN (61 events) */
     expect(NEXUS_EV_COUNT == 61, "61 event types from DM.BIN");
+
+    if (load_retail_dm_bin(&retail_dm_bin, &retail_dm_bin_size)) {
+        expect(nexus_v1_event_table_receipt(
+                   retail_dm_bin, retail_dm_bin_size, &retail_event_count),
+               "retail DM.BIN event-name pool receipt");
+        expect(retail_event_count == 61,
+               "retail DM.BIN event-name pool has 61 names");
+        free(retail_dm_bin);
+    } else {
+        puts("note: retail DM.BIN absent; event-name receipt skipped");
+    }
 
     /* Event names are available, but dispatch is capture-gated. */
     memset(&ev, 0, sizeof(ev));

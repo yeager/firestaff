@@ -149,6 +149,12 @@ typedef struct {
 #define NEXUS_V1_EVENT_DISPATCH_UNBOUND (-2)
 
 const char *nexus_v1_event_name(Nexus_EventType ev);
+
+/* Verify the DM.BIN event-name string pool without admitting dispatch
+ * semantics. Source: European retail DM.BIN 0x036D04..0x03702F. */
+int nexus_v1_event_table_receipt(const uint8_t *dm_bin, int dm_bin_size,
+                                 int *out_event_count);
+
 int nexus_v1_event_dispatch(Nexus_V1_GameState *state, const Nexus_Event *ev);
 
 /* Event names are a DM.BIN receipt only.  No event→NEXUS_CMD_* mapping is
