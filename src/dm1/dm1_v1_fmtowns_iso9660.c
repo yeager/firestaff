@@ -76,9 +76,19 @@ static int parse_directory(const uint8_t *data_track, size_t track_size,
                                 prefix, out);
             }
         } else {
-            /* Only admit game data files */
+            /* The original FM Towns presentation is owned by the root
+             * AUTOEXEC/TMENU/EDM/JDM program family.  Retain its exact CD
+             * records with the language data pair; ReDMCSB's PC TITLE.C
+             * route is not a compatible substitute.  The names and byte
+             * sizes come from the locally verified HMA-240 retail disc. */
             if (strstr(raw_name, "GRAPHICS.DAT") != NULL ||
-                strstr(raw_name, "DUNGEON.DAT") != NULL) {
+                strstr(raw_name, "DUNGEON.DAT") != NULL ||
+                strcmp(raw_name, "AUTOEXEC.BAT") == 0 ||
+                strcmp(raw_name, "EDM.EXP") == 0 ||
+                strcmp(raw_name, "JDM.EXP") == 0 ||
+                strcmp(raw_name, "TMENU.EXP") == 0 ||
+                strcmp(raw_name, "TMENU.ICN") == 0 ||
+                strcmp(raw_name, "TMENU.INF") == 0) {
                 DM1_V1_FmtownsIsoEntry *e = &out->files[out->file_count];
                 snprintf(e->name, sizeof(e->name), "%s%s", parent_prefix, raw_name);
                 e->lba = extent;

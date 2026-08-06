@@ -248,6 +248,35 @@ static void test_extract_too_small_buffer(void) {
     free(img);
 }
 
+static void test_real_startup_inventory_when_available(void) {
+    const char *path = getenv("FIRESTAFF_DM1_FMTOWNS_ISO");
+    FILE *file;
+    long length;
+    uint8_t *image;
+    DM1_V1_FmtownsIsoLayout layout;
+    int found_autoexec = 0, found_tmenu = 0, found_edm = 0, found_jdm = 0;
+    if (!path || !path[0]) return;
+    file = fopen(path, "rb");
+    assert(file != NULL);
+    assert(fseek(file, 0, SEEK_END) == 0);
+    length = ftell(file);
+    assert(length > 0);
+    assert(fseek(file, 0, SEEK_SET) == 0);
+    image = (uint8_t *)malloc((size_t)length);
+    assert(image != NULL);
+    assert(fread(image, 1, (size_t)length, file) == (size_t)length);
+    fclose(file);
+    assert(dm1_v1_fmtowns_iso_parse(image, (size_t)length, &layout) == 0);
+    for (int i = 0; i < layout.file_count; ++i) {
+        found_autoexec |= strcmp(layout.files[i].name, "AUTOEXEC.BAT") == 0;
+        found_tmenu |= strcmp(layout.files[i].name, "TMENU.EXP") == 0;
+        found_edm |= strcmp(layout.files[i].name, "EDM.EXP") == 0;
+        found_jdm |= strcmp(layout.files[i].name, "JDM.EXP") == 0;
+    }
+    assert(found_autoexec && found_tmenu && found_edm && found_jdm);
+    free(image);
+}
+
 int main(void) {
     test_probe_null_rejects();
     test_probe_too_small_rejects();
@@ -256,6 +285,7 @@ int main(void) {
     test_parse_finds_game_files();
     test_extract_file();
     test_extract_too_small_buffer();
+    test_real_startup_inventory_when_available();
     printf("All dm1_v1_fmtowns_iso9660 tests passed.\n");
     return 0;
 }

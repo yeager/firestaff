@@ -22,14 +22,17 @@ extern "C" {
  *
  * Audio tracks 02-20 provide CD audio music.
  *
- * This module extracts game data files from the raw data track bytes
+ *   /AUTOEXEC.BAT             (original boot route)
+ *   /TMENU.EXP/.ICN/.INF      (original title/menu program and media)
+ *
+ * This module inventories source game data and startup/menu files from the raw data track bytes
  * (sector-aligned MODE1/2048 data, as found in a BIN/CUE image where
  * Track 01 is MODE1/2048). It does NOT perform CUE sheet parsing (use
  * firestaff_fmtowns_cd_classify.h for that). */
 
 #define DM1_FMTOWNS_ISO_SECTOR_SIZE    2048U
 #define DM1_FMTOWNS_ISO_PVD_SECTOR     16U
-#define DM1_FMTOWNS_ISO_MAX_FILES      8
+#define DM1_FMTOWNS_ISO_MAX_FILES      12
 #define DM1_FMTOWNS_ISO_MAX_NAME_LEN   32
 
 typedef struct {
@@ -55,9 +58,10 @@ typedef struct {
  * Returns 1 if recognized. */
 int dm1_v1_fmtowns_iso_probe(const uint8_t *data_track, size_t size);
 
-/* Parse the ISO 9660 directory structure and locate game data files.
- * Populates layout->files with entries for GRAPHICS.DAT and DUNGEON.DAT
- * found in DATA/ and JDATA/ subdirectories.
+/* Parse the ISO 9660 directory structure and locate the original game-data
+ * and startup/menu owners.  Alongside DATA/JDATA GRAPHICS.DAT/DUNGEON.DAT,
+ * layout->files retains AUTOEXEC.BAT, EDM.EXP, JDM.EXP and TMENU's EXP/ICN/INF
+ * records so callers can bind the FM Towns sequence without a PC34 substitute.
  * Returns 0 on success, -1 on error. */
 int dm1_v1_fmtowns_iso_parse(const uint8_t *data_track, size_t size,
                               DM1_V1_FmtownsIsoLayout *out);
