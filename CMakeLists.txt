@@ -4560,6 +4560,11 @@ list(REMOVE_ITEM M10_SOURCES
 # cancel state, reads no original DM1 data and has no M11/runtime caller.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat.c")
+# `dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c`
+# is a contract-only C040/G0299 command-state fixture with no game-data input
+# or M11/runtime caller; keep it in its direct source-lock regression.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c")
 # `dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c` is a
 # contract-only probe. It manufactures its chest stack, leader hand, floor
 # link and coordinates locally, reads no original save/dungeon/graphics data,

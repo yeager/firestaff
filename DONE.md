@@ -61,6 +61,12 @@
   regression already compiles the source explicitly; it loads no original DM1
   data and has no M11/runtime caller.
 
+# DM1 C040 status-box synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C040/G0299 status-box click fixture from M10.
+  It fabricates command and panel state, has no original-data input or runtime
+  caller, and its direct source-lock regression compiles the source.
+
 # DM1 C161 cancel-after-F0334 synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C161 cancel fixture from M10. It fabricates
