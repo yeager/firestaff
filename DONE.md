@@ -37,6 +37,16 @@ tracking game data. Verification: `firestaff_dm2` and `firestaff_m11` builds;
   `test_nexus_v1_sal_map_corpus` with
   `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
 
+# ✅ 2026-08-06 DM2 callback-only creature adapter isolation
+
+Excluded the unconsumed creature attack/combat and AI-specification adapters,
+plus the animation-chunk inspection parser, from the production DM2 archive.
+The former require host-supplied callbacks but no M11 or DM2 runtime route
+supplies the original DB4/CAII, timer, dungeon and hero ownership together;
+the parser has no source-owned runtime consumer. They therefore cannot become
+a synthetic combat or animation path. Their focused contract tests remain
+independently buildable; no game-data bytes were copied, unpacked or tracked.
+
 - ✅ 2026-08-06 DM2 production object-model isolation: removed
   `dm2_v1_object_model.c` from the broad `firestaff_dm2` source glob. The
   file's remaining sequential-pool parser is explicitly inferred and no M11

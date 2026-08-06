@@ -4421,6 +4421,11 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # live text reaches it through boot/dialogue GDAT receipts and live graphics
 # admission is implemented by dm2_v1_asset_loader.c. Keep their direct tests,
 # but do not ship duplicate, unaffiliated routes in the DM2 archive.
+# The creature combat/AI-spec adapters are callback-only source studies, and
+# the animation-chunk adapter is an unconsumed inspection parser. No DM2
+# runtime, M11 handoff, or source-owned DB4/CAII state binds their inputs, so
+# linking them would advertise a synthetic execution route. Their focused
+# contracts stay available outside the product archive.
 list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_panel_routing.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_survey_helpers.c"
@@ -4452,7 +4457,11 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_world_state.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_object_model.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gfx_str_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_graphics_data_open.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_graphics_data_open.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_creature_attacks_player_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_creature_combat_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_creature_ai_spec_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_anim_chunk_pc34_compat.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

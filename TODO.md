@@ -1260,6 +1260,11 @@
   production DM2 archive: M11 has no consumer for its standalone text adapter;
   live text remains restricted to boot/dialogue GDAT receipts. Bind the actual
   object owner before admitting leader-hand/item text.
+  **2026-08-06 update:** callback-only creature attack/combat and AI-spec
+  studies, plus the unconsumed animation-chunk inspection parser, are not
+  production runtime code. They remain outside `firestaff_dm2` until the
+  original DB4/CAII state, AI-table ownership and timer/dungeon callbacks can
+  be passed as one authenticated live route.
   **2026-07-31 update:** M11 now has no residual DM2 ObjectID-to-local-name
   lookup at all. It returns no leader-hand name until the complete decoded
   DB-record to GDAT `dtText/0x18` and `FORMAT_SKSTR` ownership route exists.
