@@ -51254,6 +51254,11 @@ verification item.
   frame gates, while unowned gameplay remains explicitly fail-closed. This is
   a provenance correction only; it does not promote partial save or gameplay
   state into a playable session.
+- ✅ 2026-08-06 DM2 legacy creature-fixture boundary: corrected the public
+  contract for `dm2_v1_creature_tick()`. It advances only its isolated test
+  pool and is not a `DM2_THINK_CREATURE`/CCM implementation or an M11 runtime
+  path. The production frame gate and the focused CCM test both confirm that
+  source-owned DB4/CAII/command-stream state is still required.
 # ✅ 2026-08-06 DM1 inventory fallback removal
 
 Authenticated DM1 inventory frames no longer draw a red host rectangle or a

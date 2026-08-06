@@ -1227,31 +1227,11 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     g_last_ccm_tick.attack_cooldown_after = c->attack_cooldown;
 }
 
-/* dm2_v1_creature_tick — advance all creature instances by one tick.
- * Source: SKULLWIN/c_ai.cpp: DM2_THINK_CREATURE, SKULLWIN/c_creature.cpp: DM2_PROCEED_CCM
- *
- * Per creature per tick:
- *   1. Tick attack_cooldown countdown
- *   2. Tick poison_ticks (apply PoisonDamage per tick, source: SkWinCore.cpp)
- *   3. DM2_THINK_CREATURE: decide next CCM action from b_1a state
- *   4. DM2_PROCEED_CCM: execute CCM dispatch
- *   5. If HP <= 0: creature_death_check → drop + spatial sound
- *
- * CCM dispatch (b_1a primary state register):
- *   0x00 WALK_NOW / 0x02 WALK_CONT → movement
- *   0x01 ATTACK_HANDLER → attack resolution
- *   0x05 SPECIAL_ACTION → CCM06/CCM0B/CCM0C (switch/trap/trigger)
- *   0x09 STEAL_ITEM → thief-type item theft
- *   0x0a MERCHANT_BEHAVIOR → shop/NPC behavior
- *   0x0d SHOOT_ITEM → ranged throw/pickup
- *   0x0f KILL_ON_TIMER_POS → delayed-position kill
- *   0x13 ROTATES_TARGET → reorient another creature
- *   0x15 CAST_SPELL → monster spellcasting
- *   0x17 CREATURE_ATTACKS_PARTY → fallback melee
- *   0x26 EXPLODE_OR_SUMMON → self-destruct or minion spawn
- *
- * Stub: advance cooldowns, poison, proximity check for attack state.
- * Real CCM requires GDAT creature definitions + party world-position. */
+/* Test-only legacy creature-fixture tick. It deliberately does not claim to
+ * implement DM2_THINK_CREATURE or DM2_PROCEED_CCM: the isolated pool has no
+ * live DB4 record, CAII row, current-map chain, command stream or source RNG.
+ * M11 never calls this helper; production creatures are owned by the
+ * source-ordered timer/DB4 path in dm2_v1_runtime.c. */
 void dm2_v1_creature_tick(void) {
     g_tick_counter++;
     for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; i++) {

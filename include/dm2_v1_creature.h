@@ -369,10 +369,10 @@ int dm2_v1_creature_door_open_pct_from_state(int door_state);
 int dm2_v1_creature_spawn(int ai_index, int world_x, int world_y,
                           int map_index, int direction, int health_multiplier);
 
-/* dm2_v1_creature_tick — advance all active creature instances by one tick.
- * Runs DM2_THINK_CREATURE (c_ai.cpp) and DM2_PROCEED_CCM (c_creature.cpp).
- * Updates CCM b_1a state, HP, attack cooldown, poison ticks.
- * Source: SKULLWIN/c_ai.cpp: DM2_THINK_CREATURE, SKULLWIN/c_creature.cpp */
+/* Test-only legacy creature-fixture tick. It is not a live DM2 runtime
+ * route: M11 requires source-owned DB4, CAII and command-stream state before
+ * DM2_THINK_CREATURE / DM2_PROCEED_CCM can run. This helper only advances the
+ * isolated fixture pool used by focused tests and probes. */
 void dm2_v1_creature_tick(void);
 
 int dm2_v1_creature_last_ccm_tick(DM2_V1_CreatureCCMTickObserver *out_observer);
