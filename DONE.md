@@ -874,6 +874,17 @@
   real runtime champion state.
 - ✅ No game data was copied or committed.
 
+# DM1 D3C stairs/pit synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free
+  `dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c` helper from the
+  broad M10 source glob. Caller search found no M11/runtime consumer; the
+  remaining references are the source-audit table and its dedicated test.
+- ✅ The focused target now compiles the audit source explicitly, preserving
+  the ReDMCSB dispatch/C10 contract while preventing its synthetic fixture
+  blit from entering production. Real D3C bitmap ownership remains open.
+- ✅ No game data was copied or committed.
+
 # CSB FM Towns graphics real-cache regression (2026-08-06)
 
 - ✅ `test_csb_v1_fmtowns_graphics_dat` now takes

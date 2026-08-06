@@ -20,6 +20,12 @@
   DM1 data, and it has no production caller. Keep it test-only until the
   live F0320 owner is bound to real runtime state.
 
+- **DM1-D3C-STAIRS-PIT-SYNTHETIC-AUDIT:** The D3C stairs/pit dispatch helper
+  is an asset-free contract fixture. It records ReDMCSB dispatch and C10
+  transparency rules but has no production caller or authenticated bitmap
+  input. Keep the fixture test-only until the live D3C consumer is bound to
+  real `GRAPHICS.DAT` records and capture evidence.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

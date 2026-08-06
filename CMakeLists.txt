@@ -4245,6 +4245,12 @@ list(REMOVE_ITEM M10_SOURCES
 # champion state through the broad M10 production archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_pending_wounds_tick_pc34_compat.c")
+# `dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c` contains only the
+# asset-free D3C stairs/pit dispatch and transparent-byte fixture contract;
+# no M11/runtime caller consumes it.  Keep its source-lock test explicit and
+# prevent the broad M10 glob from linking the synthetic blit helper.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
@@ -53272,7 +53278,9 @@ add_executable(test_dm1_v1_viewport_d3c_f0111_door_front_pair_pc34_compat tests/
 target_include_directories(test_dm1_v1_viewport_d3c_f0111_door_front_pair_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d3c_f0111_door_front_pair_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d3c_f0111_door_front_pair_pc34_compat COMMAND test_dm1_v1_viewport_d3c_f0111_door_front_pair_pc34_compat)
-add_executable(test_dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat tests/test_dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat
+    tests/test_dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat COMMAND test_dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat)
