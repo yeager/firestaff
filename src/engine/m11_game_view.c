@@ -9450,6 +9450,102 @@ static int m11_path_is_readable(const char *path)
     return 1;
 }
 
+/* Hash discovery returns archive members as virtual paths (archive::entry).
+ * The original loaders consume ordinary files, so materialize only the
+ * already hash-admitted DM1 pair into the per-user runtime cache.  Keeping
+ * the extracted bytes beside each other also lets the source startup binder
+ * derive GRAPHICS.DAT from the concrete DUNGEON.DAT path exactly as it does
+ * for a loose PC34 installation. */
+static int m11_materialize_dm1_virtual_asset(const char *virtual_path,
+                                             const char *role,
+                                             char *out_path,
+                                             size_t out_path_size)
+{
+    char user_data[FSP_PATH_MAX];
+    char cache_root[FSP_PATH_MAX];
+    char cache_dir[FSP_PATH_MAX];
+    if (!virtual_path || !role || !out_path || out_path_size == 0U) {
+        return 0;
+    }
+    if (!strstr(virtual_path, "::")) {
+        if (snprintf(out_path, out_path_size, "%s", virtual_path) <= 0 ||
+            strlen(virtual_path) >= out_path_size) {
+            out_path[0] = '\0';
+            return 0;
+        }
+        return 1;
+    }
+    if (!FSP_GetUserDataDir(user_data, sizeof(user_data)) ||
+        !FSP_JoinPath(cache_root, sizeof(cache_root), user_data,
+                      "asset-cache") ||
+        !FSP_JoinPath(cache_root, sizeof(cache_root), cache_root, "dm1") ||
+        !FSP_JoinPath(cache_dir, sizeof(cache_dir), cache_root, "runtime") ||
+        !FSP_CreateDirectoryRecursive(cache_dir) ||
+        !FSP_JoinPath(out_path, out_path_size, cache_dir, role) ||
+        !asset_extract_virtual_path(virtual_path, out_path)) {
+        out_path[0] = '\0';
+        return 0;
+    }
+    return 1;
+}
+
+static int m11_materialize_dm1_virtual_pair(char *dungeon_path,
+                                            size_t dungeon_path_size)
+{
+    char graphics_virtual[M11_GAME_VIEW_PATH_CAPACITY];
+    char materialized_dungeon[M11_GAME_VIEW_PATH_CAPACITY];
+    char materialized_graphics[M11_GAME_VIEW_PATH_CAPACITY];
+    char *separator;
+    const char *entry_start;
+    const char *last_slash;
+    const char *last_backslash;
+    size_t prefix_length;
+    if (!dungeon_path || dungeon_path_size == 0U) {
+        return 0;
+    }
+    separator = strstr(dungeon_path, "::");
+    if (!separator) {
+        return 1;
+    }
+    if (snprintf(graphics_virtual, sizeof(graphics_virtual), "%s",
+                 dungeon_path) <= 0) {
+        return 0;
+    }
+    separator = strstr(graphics_virtual, "::");
+    if (!separator) {
+        return 0;
+    }
+    entry_start = separator + 2;
+    last_slash = strrchr(entry_start, '/');
+    last_backslash = strrchr(entry_start, '\\');
+    if (!last_slash || (last_backslash && last_backslash > last_slash)) {
+        last_slash = last_backslash;
+    }
+    prefix_length = last_slash
+        ? (size_t)(last_slash - graphics_virtual) + 1U
+        : (size_t)(entry_start - graphics_virtual);
+    if (prefix_length + sizeof("GRAPHICS.DAT") > sizeof(graphics_virtual)) {
+        return 0;
+    }
+    memcpy(graphics_virtual + prefix_length, "GRAPHICS.DAT",
+           sizeof("GRAPHICS.DAT"));
+    if (
+        !m11_materialize_dm1_virtual_asset(dungeon_path, "DUNGEON.DAT",
+                                            materialized_dungeon,
+                                            sizeof(materialized_dungeon)) ||
+        !m11_materialize_dm1_virtual_asset(graphics_virtual, "GRAPHICS.DAT",
+                                            materialized_graphics,
+                                            sizeof(materialized_graphics))) {
+        return 0;
+    }
+    if (snprintf(dungeon_path, dungeon_path_size, "%s", materialized_dungeon) <= 0 ||
+        strlen(materialized_dungeon) >= dungeon_path_size) {
+        dungeon_path[0] = '\0';
+        return 0;
+    }
+    return 1;
+}
+
 static int m11_resolve_builtin_dungeon_path(char* out,
                                             size_t outSize,
                                             const char* dataDir,
@@ -16946,6 +17042,7 @@ static void m11_apply_launcher_options_handoff(
 
 int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec) {
     char dungeonPath[M11_GAME_VIEW_PATH_CAPACITY];
+    int dm1_dungeon_path_hash_resolved = 0;
     if (!state || !spec || !spec->title) {
         return 0;
     }
@@ -17309,13 +17406,16 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                      sizeof(dungeonPath),
                      "%s",
                      receipt.explicit_dungeon_path);
-        } else if (!receipt.resolve_builtin_path ||
-                   !spec->dataDir || spec->dataDir[0] == '\0' ||
-                   !m11_resolve_builtin_dungeon_path(dungeonPath,
-                                                    sizeof(dungeonPath),
-                                                    spec->dataDir,
-                                                    spec->gameId)) {
-            return 0;
+        } else {
+            if (!receipt.resolve_builtin_path ||
+                !spec->dataDir || spec->dataDir[0] == '\0' ||
+                !m11_resolve_builtin_dungeon_path(dungeonPath,
+                                                 sizeof(dungeonPath),
+                                                 spec->dataDir,
+                                                 spec->gameId)) {
+                return 0;
+            }
+            dm1_dungeon_path_hash_resolved = 1;
         }
     } else if (spec->sourceKind == M11_GAME_SOURCE_DIRECT_DUNGEON) {
         if (!spec->dungeonPath || spec->dungeonPath[0] == '\0') {
@@ -17329,6 +17429,12 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                                 sizeof(dungeonPath),
                                                 spec->dataDir,
                                                 spec->gameId)) {
+        return 0;
+    }
+    if (spec->gameId && strcmp(spec->gameId, "dm1") == 0 &&
+        dm1_dungeon_path_hash_resolved &&
+        !m11_materialize_dm1_virtual_pair(dungeonPath,
+                                          sizeof(dungeonPath))) {
         return 0;
     }
     {

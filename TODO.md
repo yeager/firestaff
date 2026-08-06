@@ -2452,6 +2452,14 @@ diagnostic; it must not silently fall back to a generated visual.
   creature label. Verification: `test_dm1_v1_creature_render_pc34_compat`
   passes 14/14 and `m11_dm1_runtime_source_capture_receipt` passes.
 
+- **DM1-ORIGINAL-REPLACE-023:** Closed 2026-08-06. Fixed the production DM1
+  launch path for hash-verified archive members. Real ZIP `DUNGEON.DAT` and
+  sibling `GRAPHICS.DAT` entries are now materialized into the DM1 runtime
+  cache before the ReDMCSB world and graphics loaders open them; filename-only
+  admission remains forbidden. Verification against
+  `~/.firestaff/data/dm1` passes `test_m11_dm1_real_object_names` and
+  `test_m11_dm1_real_object_corpus` (611 records).
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

@@ -41,6 +41,13 @@
   the decoded black/white endpoints. This proves the production US/JP offset
   selection is exercised with real media; VCE ownership and semantic render
   promotion remain capture-gated.
+- ✅ 2026-08-06 DM1 archive-backed runtime handoff: hash-discovered ZIP
+  members were previously passed directly to the ordinary-file ReDMCSB
+  loaders, so a real archive could be detected but not launched. M11 now
+  materializes the verified DM1 `DUNGEON.DAT` and sibling `GRAPHICS.DAT` into
+  the per-user runtime cache before startup. No filename-only fallback was
+  added. Verification against `~/.firestaff/data/dm1`: real M564 object-name
+  test passes and the 611-record object corpus passes.
 
 - ✅ 2026-08-06 DM1 creature-name source ownership: removed M11's duplicate
   27-entry display-name table and routed runtime names through the ReDMCSB
