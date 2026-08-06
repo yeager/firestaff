@@ -29234,7 +29234,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   two M11 DM2 inventory rejection paths no longer publish the host-authored
   `DM2 INVENTORY GDAT REQUIRED` label; they preserve the source ObjectID and
   silently reject until `CHANGE_VIEWPORT_TO_INVENTORY` owns the real
-  CHAMPIONS/INTERFACE_GENERAL surface and click route.
+  CHAMPIONS/INTERFACE_GENERAL surface and click route. **2026-08-07 action
+  boundary correction:** removed the remaining M11-only `DM2` inspect-title
+  fallback when a partial action receipt is returned; M11 now requires the
+  source dialogue producer to provide the complete title/text pair.
 - [ ] DM2 GDAT structure loader: `DM2_READ_GRAPHICS_STRUCTURE` remains
   unavailable until the source's complete GRAPHICS.DAT transaction is ported:
   header validation, ULP offsets, ENT1, optional underlay data and image

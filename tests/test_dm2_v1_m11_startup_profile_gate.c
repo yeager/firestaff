@@ -2245,6 +2245,9 @@ int main(void) {
                     "M11 DM2 action rejects an unowned door transaction");
         expect_true(view.lastOutcome[0] == '\0',
                     "M11 DM2 rejected action keeps host text unbound");
+        expect_true(view.inspectTitle[0] == '\0' &&
+                        view.inspectDetail[0] == '\0',
+                    "M11 DM2 rejected action keeps inspect text unbound");
         expect_true(dm2_v1_dungeon_get_tile_raw(
                         dungeon, door_level, door_party_x, door_party_y - 1) ==
                         raw_before,

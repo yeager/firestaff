@@ -26359,13 +26359,15 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             } else {
                 m11_set_status(state, NULL, NULL);
             }
-            if (receipt.inspect_title || receipt.inspect_text) {
+            /* The source dialogue producer owns both strings.  Do not let
+             * M11 manufacture a title when only one side of the receipt is
+             * present; DM2_dialog_OPEN_DIALOG_PANEL and its GDAT text route
+             * must provide the complete pair first. */
+            if (receipt.inspect_title && receipt.inspect_text) {
                 m11_set_inspect_readout(
                     state,
-                    receipt.inspect_title ? receipt.inspect_title
-                                          : "DM2",
-                    receipt.inspect_text ? receipt.inspect_text
-                                         : "");
+                    receipt.inspect_title,
+                    receipt.inspect_text);
             }
             m11_sync_dm2_state_from_runtime(state);
             return M11_GAME_INPUT_REDRAW;

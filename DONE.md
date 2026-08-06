@@ -84,6 +84,13 @@
 - ✅ Removed the contract-only F0433/F0435/C040 fixture from M10. Its
   generated regression compiles the source directly; it loads no original
   DM1 data and has no M11/runtime caller.
+# DM2 action receipt synthetic inspect-title removal (2026-08-07)
+
+- ✅ Removed the M11-only `DM2` inspect-title fallback from the DM2 action
+  route. Partial action receipts now remain silent until the source dialogue
+  producer supplies both title and text; the regression covers the rejected
+  door action with empty status and inspect channels.
+
 # CSB Atari ST runtime fail-closed session boundary (2026-08-07)
 
 - ✅ Atari ST's ANIM.C→FTLCODE route has no PC3.4 TITLE.C/C017 runtime
