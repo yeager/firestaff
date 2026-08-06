@@ -8,7 +8,8 @@ static uint16_t read_be16(const uint8_t *p)
 }
 
 static int parse_rects(const uint8_t *data, size_t data_size,
-                       size_t offset, Nexus_PanelRect *out, size_t count)
+                       size_t offset, Nexus_PanelRect *out, size_t count,
+                       int expected_action)
 {
     size_t i;
     size_t bytes = count * NEXUS_PANEL_RECT_BYTES;
@@ -23,7 +24,8 @@ static int parse_rects(const uint8_t *data, size_t data_size,
         out[i].y2 = (int)read_be16(record + 6U);
         out[i].action = (int)read_be16(record + 8U);
         out[i].param = (int)(int16_t)read_be16(record + 10U);
-        if (out[i].x2 <= out[i].x1 || out[i].y2 <= out[i].y1)
+        if (out[i].x2 <= out[i].x1 || out[i].y2 <= out[i].y1 ||
+            (expected_action >= 0 && out[i].action != expected_action))
             return -1;
     }
     return 0;
@@ -38,11 +40,14 @@ int nexus_v1_champion_panel_parse_dm_bin(
     if (!stat_bars || !inv_slots || !equip_slots)
         return -1;
     if (parse_rects(data, data_size, NEXUS_PANEL_STAT_OFFSET,
-                    stat_bars, NEXUS_STAT_BAR_RECT_COUNT) != 0 ||
+                    stat_bars, NEXUS_STAT_BAR_RECT_COUNT,
+                    NEXUS_PANEL_ACTION_STAT_BAR) != 0 ||
         parse_rects(data, data_size, NEXUS_PANEL_INV_OFFSET,
-                    inv_slots, NEXUS_INV_SLOT_RECT_COUNT) != 0 ||
+                    inv_slots, NEXUS_INV_SLOT_RECT_COUNT,
+                    NEXUS_PANEL_ACTION_INV_SLOT) != 0 ||
         parse_rects(data, data_size, NEXUS_PANEL_EQUIP_OFFSET,
-                    equip_slots, NEXUS_EQUIP_SLOT_RECT_COUNT) != 0)
+                    equip_slots, NEXUS_EQUIP_SLOT_RECT_COUNT,
+                    NEXUS_PANEL_ACTION_EQUIP_SLOT) != 0)
         return -1;
     return 0;
 }

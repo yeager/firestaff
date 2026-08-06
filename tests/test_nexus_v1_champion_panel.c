@@ -44,6 +44,32 @@ int main(void) {
         fprintf(stderr, "FAIL: retail DM.BIN panel tables did not parse\n");
         return 1;
     }
+    {
+        uint8_t *mutated = (uint8_t *)malloc((size_t)size);
+        if (!mutated) {
+            free(data);
+            return 77;
+        }
+        memcpy(mutated, data, (size_t)size);
+        mutated[NEXUS_PANEL_STAT_OFFSET + 8U] = 0;
+        mutated[NEXUS_PANEL_STAT_OFFSET + 9U] = 0x29;
+        if (nexus_v1_champion_panel_parse_dm_bin(
+                mutated, (size_t)size, stat_bars, inv_slots,
+                equip_slots) == 0) {
+            free(mutated);
+            free(data);
+            fprintf(stderr, "FAIL: HUD panel parser accepted wrong action family\n");
+            return 1;
+        }
+        free(mutated);
+        if (nexus_v1_champion_panel_parse_dm_bin(
+                data, (size_t)size, stat_bars, inv_slots,
+                equip_slots) != 0) {
+            free(data);
+            fprintf(stderr, "FAIL: retail HUD panel tables did not reparse\n");
+            return 1;
+        }
+    }
     if (nexus_v1_hud_layout_parse_dm_bin(
             data, (size_t)size, hud_layout, NEXUS_HUD_LAYOUT_ENTRY_COUNT,
             &hud_layout_count) != 0 ||

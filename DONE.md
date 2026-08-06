@@ -50819,6 +50819,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   en 4-byte-alignerad PRS3-header som inte ryms helt i källfilen. En riktad
   malformed-fixture täcker gränsen, och startup-media-gatet fortsätter passera
   med den riktiga Nexus-korpusen.
+- ✅ 2026-08-06 Nexus HUD DM.BIN action provenance: champion-paneladmissionen
+  kräver nu de källbundna actionfamiljerna `0x2D` (stat), `0x29` (inventory)
+  och `0x2C` (equipment) i respektive retailtabell. En muterad DM.BIN-rad
+  avvisas, medan de riktiga paneltabellerna och runtime-HUD-gatet passerar.
 - ✅ 2026-08-06 DM1 source-audio fallback removal: all authenticated DM1
   effect calls now use `M11_Audio_EmitSourceSoundIndex`, which accepts only
   the decoded original SND3 sample. Missing or malformed source audio is
