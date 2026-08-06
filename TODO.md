@@ -1119,6 +1119,12 @@
   not yet a text owner. Bind `PROCEED_SPELL_FAILURE`'s panel-global update and
   the class-0x30 `INTERFACE_GENERAL/SPELLING/NEED_FLASK` GDAT draw before
   presenting any spell-failure feedback.
+  **2026-08-09 render-inventory verification:** the authenticated PC-English
+  real-data boot/render checks pass for the complete M11 HUD command family,
+  the active DIALOG_BOXES save/load panel, the G1 scene/light controls and the
+  runtime frame ownership receipt. Their fallback counters remain zero. No
+  additional visible surface was promoted: the remaining spell-feedback class
+  still lacks its source-owned panel-global update and is deliberately blocked.
 
 - **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
   mirror side/depth, inscription/corridor invalidation and wall-material

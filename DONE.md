@@ -55,6 +55,15 @@
   directly.
 - ✅ Verification: `dm1_v1_champion_panel_portrait_pc34_compat` passes; the
   source object is absent from both M10 and M11 archives.
+# DM2 real-data render inventory verification (2026-08-09)
+
+- ✅ The canonical PC-English GRAPHICS.DAT/DUNGEON.DAT boot profile passed
+  96/96 checks, and the real-data HUD plus dialogue viewport regressions
+  passed. The M11 command family consumed source GDAT records, the dialogue
+  panel consumed its DIALOG_BOXES/0x81/0 material and source rectangles, and
+  the runtime scene, light and frame receipts reported no procedural fallback
+  draws. The remaining spell-failure feedback surface stays blocked until its
+  original INTERFACE_GENERAL owner is decoded.
 
 # DM1 D1C F0111 door synthetic audit isolation (2026-08-06)
 
