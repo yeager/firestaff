@@ -5916,7 +5916,10 @@ that its exact runtime path is not already source-locked and tested.
    87x45 `C013` movement-panel material from the verified package. No
    2026-08-06: the accompanying Atari ST Save Disk MSA image now has a strict
    in-memory decoder (header, per-track RLE and root FAT12 chains), verified
-   against the original 720 KiB image. Its individual user-save filenames and
+   against the original 720 KiB image. FAT12 boot fields are now read in the
+   actual volume's byte order (Atari or DOS), rather than assuming the MSA
+   container's big-endian order applies to its GEMDOS filesystem. Its
+   individual user-save filenames and
    their relation to the CEDT file picker are still unclassified, so this does
    not yet expose a new Resume candidate.
    generated party or HUD art participates in that route.

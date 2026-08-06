@@ -15,6 +15,23 @@ static uint32_t be32(const uint8_t *p) {
            ((uint32_t)p[2] << 8) | p[3];
 }
 
+static uint16_t le16(const uint8_t *p) {
+    return (uint16_t)((uint16_t)p[0] | ((uint16_t)p[1] << 8));
+}
+
+static uint32_t le32(const uint8_t *p) {
+    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+
+static uint16_t fat16(const uint8_t *p, int little) {
+    return little ? le16(p) : be16(p);
+}
+
+static uint32_t fat32(const uint8_t *p, int little) {
+    return little ? le32(p) : be32(p);
+}
+
 static int msa_decode(const uint8_t *msa, size_t msa_size, uint8_t **out_disk,
                       size_t *out_size, CSB_V1_AtariMsaReceipt *receipt) {
     uint16_t sectors, sides, first, last;
@@ -117,13 +134,16 @@ int csb_v1_atari_msa_extract_root_file(const uint8_t *msa, size_t msa_size,
     uint32_t file_size;
     size_t i, copied = 0u;
     CSB_V1_AtariMsaReceipt receipt;
+    int little;
 
     if (out_size) *out_size = 0u;
     if (!out_size || !msa_name83(name, wanted) ||
         !msa_decode(msa, msa_size, &disk, &disk_size, &receipt) || disk_size < 512u)
         return 0;
-    bps = be16(disk + 11); sectors_per_cluster = disk[13]; reserved = be16(disk + 14);
-    fats = disk[16]; root_entries = be16(disk + 17); sectors_per_fat = be16(disk + 22);
+    little = be16(disk + 11) != 512u && le16(disk + 11) == 512u;
+    bps = fat16(disk + 11, little); sectors_per_cluster = disk[13];
+    reserved = fat16(disk + 14, little); fats = disk[16];
+    root_entries = fat16(disk + 17, little); sectors_per_fat = fat16(disk + 22, little);
     if (bps != 512u || !sectors_per_cluster || !fats || !root_entries ||
         !sectors_per_fat) goto fail;
     root_offset = ((size_t)reserved + (size_t)fats * sectors_per_fat) * bps;
@@ -141,7 +161,7 @@ int csb_v1_atari_msa_extract_root_file(const uint8_t *msa, size_t msa_size,
             memcmp(candidate, wanted, 11u) == 0) entry = candidate;
     }
     if (!entry) goto fail;
-    cluster = be16(entry + 26); file_size = be32(entry + 28);
+    cluster = fat16(entry + 26, little); file_size = fat32(entry + 28, little);
     if (!file_size || cluster < 2u || file_size > disk_size ||
         (out_bytes && out_capacity < file_size)) goto fail;
     while (copied < file_size) {

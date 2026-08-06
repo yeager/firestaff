@@ -56347,3 +56347,13 @@ alcove runtime and archive-media tests passed (4/4).
 - Verification: a data-free 9-sector FAT12 regression passes, and the real
   `Chaos Strikes Back for Atari ST Save Disk.msa` from the local retail archive
   decodes to its declared 9-sector, two-sided, 80-track 720 KiB image.
+
+# 2026-08-06 CSB Atari MSA FAT byte-order handling
+
+- ✅ Corrected the MSA root-file reader to select the decoded GEMDOS/FAT12
+  boot-sector byte order independently of the big-endian MSA wrapper. This
+  keeps Atari-order images working and admits the little-endian FAT layout on
+  the authenticated blank retail Save Disk without fabricating a save record.
+- Verification: both synthetic Atari- and DOS-order FAT12 extraction paths,
+  plus full decoding of the original two-sided 720 KiB MSA image, pass in
+  `test_csb_v1_atari_msa`.

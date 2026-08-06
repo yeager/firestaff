@@ -13,6 +13,15 @@ static void put_be32(unsigned char *p, unsigned long value) {
     p[2] = (unsigned char)(value >> 8); p[3] = (unsigned char)value;
 }
 
+static void put_le16(unsigned char *p, unsigned int value) {
+    p[0] = (unsigned char)value; p[1] = (unsigned char)(value >> 8);
+}
+
+static void put_le32(unsigned char *p, unsigned long value) {
+    p[0] = (unsigned char)value; p[1] = (unsigned char)(value >> 8);
+    p[2] = (unsigned char)(value >> 16); p[3] = (unsigned char)(value >> 24);
+}
+
 int main(void) {
     enum { track_bytes = 9 * 512, image_bytes = 10 + 2 + track_bytes };
     unsigned char image[image_bytes], out[2];
@@ -36,6 +45,12 @@ int main(void) {
         receipt.sectors_per_track != 9u || receipt.root_file_count != 1u) {
         return 1;
     }
+    put_le16(disk + 11, 512); put_le16(disk + 14, 1); put_le16(disk + 17, 1);
+    put_le16(disk + 22, 1); put_le16(disk + 1024 + 26, 2);
+    put_le32(disk + 1024 + 28, 2);
+    if (!csb_v1_atari_msa_extract_root_file(image, sizeof(image), "save.dat",
+                                             out, sizeof(out), &out_size, NULL) ||
+        out_size != 2u || memcmp(out, "OK", 2u) != 0) return 1;
     image[10] = 0; image[11] = 4; image[12] = 0xe5; image[13] = 0;
     image[14] = 0xff; image[15] = 0xff;
     if (csb_v1_atari_msa_extract_root_file(image, sizeof(image), "SAVE.DAT",
