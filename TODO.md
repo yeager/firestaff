@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-STATUS-HAND-CLOSED-CHEST-SYNTHETIC-AUDIT:** This closed-chest status
+  hand probe fabricates party, chest and hand state. It loads no original DM1
+  data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound inventory interaction owner is recovered.
+
 - **DM1-INVENTORY-HAND-BELT-ROUND-TRIP-SYNTHETIC-AUDIT:** This hand/belt swap
   probe fabricates item types, weights and slot state. It loads no original
   DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
