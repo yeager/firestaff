@@ -84,6 +84,13 @@
   provides no source-defined tail. Rejection is transactional, so the caller
   retains its preceding real frame and no partial delta reaches presentation.
 
+- ✅ 2026-08-06 CSB Amiga TITL.DAT real-media gate: the title regression now
+  verifies the registered Amiga 3.1 MD5 before it accepts an extracted file.
+  The canonical `5b590ea3a6f5eed513b5678b01468ee4` member materialized from
+  the supplied ADF passes; an ADF image or same-shaped non-title input fails
+  before parsing. This keeps fixtures from being reported as genuine title
+  evidence.
+
 - ✅ 2026-08-06 Nexus startup FONT256/TEXTTABL receipts: the real DM.BIN
   startup regression now verifies the literal-pool pointer at `0x18BF4` to
   retail `FONT256.S2D` and the adjacent `TEXTTABL` marker at `0x294C0`.

@@ -1679,6 +1679,10 @@
   allocates exactly file size plus `ANIMDESC` through non-clearing MEM1, so
   there is no source-defined allocation padding to recover. Do not route it
   through PC IMG2/IMG3 or invent zero-padding for missing source bytes.
+  **2026-08-06 media-authentication update:** the real-media title regression
+  now verifies the extracted file's registered Amiga 3.1 MD5 before decoding.
+  A same-shaped fixture, renamed ADF or arbitrary `TITL.DAT` no longer counts
+  as title evidence.
 
 - **DM2-M11-GAME-LOAD-ORIGINAL-HANDOFF:** M11 now keeps New Game at the
   source `SHOW_MENU_SCREEN` → `GAME_LOAD` boundary rather than constructing

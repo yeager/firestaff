@@ -1,6 +1,7 @@
 /* Real-media verification for the Amiga TITL.DAT title timeline.
- * Set FIRESTAFF_CSB_AMIGA_TITL to an extracted TITL.DAT. */
+ * Set FIRESTAFF_CSB_AMIGA_TITL to the hash-verified extracted file. */
 
+#include "asset_find_by_hash.h"
 #include "csb_v1_amiga_titl_dat.h"
 
 #include <stdio.h>
@@ -34,6 +35,7 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
 int main(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_AMIGA_TITL");
+    char md5[33];
     CSB_V1_AmigaTitlPalette palette;
     CSB_V1_AmigaTitlDeltaReceipt delta;
     CSB_V1_AmigaTitlFrameReceipt frame;
@@ -49,6 +51,15 @@ int main(void)
     if (!path || !*path) {
         puts("skip: FIRESTAFF_CSB_AMIGA_TITL is not set");
         return 77;
+    }
+    /* Greatstone's CSB Amiga 3.1 catalogue identifies this exact TITL.DAT
+     * member.  Do not let a same-shaped fixture or a renamed title stream
+     * turn this real-media regression into a synthetic-data proof. */
+    if (!asset_file_md5_hex(path, md5) ||
+        strcmp(md5, "5b590ea3a6f5eed513b5678b01468ee4") != 0) {
+        fputs("FAIL: FIRESTAFF_CSB_AMIGA_TITL is not the original Amiga TITL.DAT\n",
+              stderr);
+        return 1;
     }
     if (read_file(path, &data, &size) != 0 ||
         csb_v1_amiga_titl_dat_decode(data, size, &schedule) != 0 ||
