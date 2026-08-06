@@ -326,6 +326,13 @@ struct Theron_V1_World {
     Theron_V1_Level levels[THERON_DUNGEON_COUNT][THERON_MAX_LEVELS_PER_DUNGEON];
     int level_loaded[THERON_DUNGEON_COUNT][THERON_MAX_LEVELS_PER_DUNGEON];
 
+    /* Real Track 02 map-directory metadata retained per dungeon. The
+     * descriptor widths and aggregate column count are source receipts only;
+     * they do not publish an object layout or graphics route. */
+    uint8_t source_thing_descriptor_sizes[THERON_DUNGEON_COUNT][12];
+    uint16_t source_column_thing_count_total[THERON_DUNGEON_COUNT];
+    uint8_t source_thing_directory_verified[THERON_DUNGEON_COUNT];
+
     /* Dungeon progression (quest items, dungeon sequence) */
     Theron_DungeonProgression progression;
 

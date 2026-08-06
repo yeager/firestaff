@@ -50712,6 +50712,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   thing-count from the real map directory. The US seven-dungeon loader test
   verifies both fields for every loaded map without promoting graphics or
   object semantics.
+- ✅ 2026-08-06 Theron Track 02 map-directory retention: world state now keeps
+  each dungeon's authentic twelve-entry thing-descriptor-size table and
+  aggregate column count. The real seven-dungeon loader test verifies the
+  complete directory receipt while object-kind and graphics semantics remain
+  fail-closed.
 - ✅ 2026-08-06 Theron Track 02 level-record retention: the world handoff now
   copies every decoded retail map-header byte into explicit source receipt
   fields without guessing seed, spawn direction or gameplay semantics.

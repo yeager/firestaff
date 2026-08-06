@@ -24440,6 +24440,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `creature_gfx_bank` and cumulative column thing-count from the Track 02 map
   directory. They remain raw level-record evidence; no creature graphics or
   object semantics are inferred from either field.
+- 2026-08-06 update: per-dungeon Track 02 world state now also retains the real
+  twelve-entry thing-descriptor-size table and aggregate column count from the
+  map directory. This is source layout provenance only; object-kind mapping,
+  graphics ownership and runtime publication remain closed.
 
 ## Theron Track 19 remaining evidence
 

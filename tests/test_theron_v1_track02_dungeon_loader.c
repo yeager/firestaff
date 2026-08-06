@@ -77,6 +77,12 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(theron_v1_track02_dungeon_map_load(
                    ud, ud_size, (unsigned int)d, &source_maps));
         assert(source_maps.map_count == (uint8_t)result.levels_loaded);
+        assert(world->source_thing_directory_verified[d] == 1);
+        assert(world->source_column_thing_count_total[d] ==
+               source_maps.column_thing_count_total);
+        assert(memcmp(world->source_thing_descriptor_sizes[d],
+                      source_maps.thing_descriptor_sizes,
+                      sizeof(source_maps.thing_descriptor_sizes)) == 0);
         for (unsigned int m = 0; m < source_maps.map_count; ++m) {
             const Theron_MapHeader *src = &source_maps.maps[m].header;
             const Theron_V1_Level *dst = &world->levels[d][m];

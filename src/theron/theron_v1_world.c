@@ -262,6 +262,13 @@ int theron_v1_world_load_track02_dungeon(
     int slot = dungeon_id - 1;
     int loaded = 0;
 
+    memcpy(world->source_thing_descriptor_sizes[slot],
+           dd->thing_descriptor_sizes,
+           sizeof(world->source_thing_descriptor_sizes[slot]));
+    world->source_column_thing_count_total[slot] =
+        dd->column_thing_count_total;
+    world->source_thing_directory_verified[slot] = 1;
+
     for (unsigned int m = 0; m < dd->map_count && m < THERON_MAX_LEVELS_PER_DUNGEON; m++) {
         const Theron_Map *tm = &dd->maps[m];
         Theron_V1_Level *lv = &world->levels[slot][m];
