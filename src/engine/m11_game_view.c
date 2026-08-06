@@ -127,6 +127,7 @@
 #include "dm1_v1_endgame_layout_pc34_compat.h"
 #include "dm1_v1_champion_status_layout_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_sound_pc34_compat.h"
 #include "dm1_v1_layout_zones_pc34_compat.h"
 #include "dm1_v1_inventory_slot_placement_pc34_compat.h"
 #include "dm1_v1_mouse_routes_pc34_compat.h"
@@ -3438,6 +3439,10 @@ static void m11_audio_emit_source_sound_with_volume(
     int soundIndex,
     int sourceVolume,
     M11_AudioMarker fallbackMarker);
+static void m11_audio_emit_source_sound(
+    M11_GameViewState* state,
+    int soundIndex,
+    M11_AudioMarker fallbackMarker);
 
 static void m11_sync_csb_state_from_boot_profile(M11_GameViewState *state,
                                                  const void *boot_profile)
@@ -5597,6 +5602,10 @@ static void m11_draw_v1_damage_number_text(unsigned char* framebuffer,
         !M11_Font_IsLoaded(g_activeOriginalFont)) {
         return;
     }
+    /* F0053 receives the text baseline.  M11_Font_DrawChar receives the
+     * first visible bitmap row; converting here keeps the number inside the
+     * C015/C016 source surface instead of painting over C159..C162 names. */
+    y -= (M11_FONT_CHAR_VISIBLE_H - 1);
     for (i = 0; i < 3; ++i) {
         if (!text || text[i] == '\0') {
             break;
@@ -20920,6 +20929,15 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
             &state->lastDm1V1MovementPipelineResult)) {
         m11_set_status(state, actionLabel, "PIPELINE REJECTED");
         return 0;
+    }
+
+    /* CLIKMENU.C blocked wall/door steps use the source metallic thud
+     * (C00_SOUND_METALLIC_THUD).  Emit it only for a dequeued step rejected
+     * by the source collision gate; turns and cooldown drops stay silent. */
+    if (state->lastDm1V1MovementPipelineResult.core.queue.dispatchedMove &&
+        state->lastDm1V1MovementPipelineResult.core.movementBlocked) {
+        m11_audio_emit_source_sound(state, DM1_SND_METALLIC_THUD,
+                                    M11_AUDIO_MARKER_FOOTSTEP);
     }
 
     state->world.gameTick++;
@@ -53081,25 +53099,9 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                       vx + vw - thickness, vy, thickness, vh, M11_COLOR_LIGHT_RED);
     }
 
-    /* ── Attack cue: diagonal slash marks when creature attacks ── */
-    if (state->attackCueTimer > 0) {
-        int cx = 110, cy = 78; /* centre of viewport face */
-        int len = 14;
-        int i;
-        /* Draw two crossing diagonal lines (X slash) */
-        for (i = 0; i < len; ++i) {
-            int px1 = cx - len / 2 + i;
-            int py1 = cy - len / 2 + i;
-            int px2 = cx + len / 2 - i;
-            int py2 = cy - len / 2 + i;
-            if (px1 >= 0 && px1 < framebufferWidth &&
-                py1 >= 0 && py1 < framebufferHeight)
-                framebuffer[py1 * framebufferWidth + px1] = M11_COLOR_YELLOW;
-            if (px2 >= 0 && px2 < framebufferWidth &&
-                py2 >= 0 && py2 < framebufferHeight)
-                framebuffer[py2 * framebufferWidth + px2] = M11_COLOR_YELLOW;
-        }
-    }
+    /* ReDMCSB has no yellow host-drawn attack-X here.  Creature attacks are
+     * represented by the authenticated C014/C015/C016 surfaces and audio;
+     * keep attackCueTimer as timing state only for existing receipts. */
 
     /* ── Creature-hit overlay: GRAPHICS.DAT graphic 14 on viewport ── */
     /* In the original DM1, when the party deals melee damage to a

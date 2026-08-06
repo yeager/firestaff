@@ -8,11 +8,11 @@
 extern "C" {
 #endif
 
-/* DM1 Atari ST GRAPHICS.DAT: DMCSB1-style BE size tables, 575 records.
+/* DM1 Atari ST GRAPHICS.DAT: DMCSB1-style BE size tables, 563 records.
  * The records are Atari-LZW or raw source bytes.  Pixel interpretation is
  * deliberately separate: DMWeb/ReDMCSB distinguish the ST IMG1/IMG2 path
  * from the PC34 IMG3 path. */
-#define DM1_V1_ATARI_ST_GRAPHICS_COUNT 575u
+#define DM1_V1_ATARI_ST_GRAPHICS_COUNT 563u
 
 typedef struct {
     uint16_t compressed_size;

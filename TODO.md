@@ -62,7 +62,7 @@
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1
-  big-endian 575-record table and Atari-LZW/raw record handoff. The production
+  big-endian 563-record table and Atari-LZW/raw record handoff. The production
   M11 renderer still lacks the final source-bound IMG1/IMG2 interpretation
   after that handoff. Keep these variants launch-blocked for gameplay rather
   than routing their bytes through the PC34 loader. 2026-08-06: the
@@ -72,6 +72,16 @@
   M11 caching. Their remaining dungeon/save/input/media capture gaps stay
   separate. Atari still needs the source-bound IMG1/IMG2 pixel decoder and
   reproducible STX protected-media extraction.
+
+- **DM1-BLOCKED-STEP-AUDIO-DAMAGE-HUD:** The DM1 runtime now owns the remaining
+  wall-step audio and damage-overlay corrections: blocked step commands emit
+  ReDMCSB `C00_SOUND_METALLIC_THUD` through authenticated source audio, the
+  host-drawn yellow attack-X is removed, and C015/C016 damage text is converted
+  from the original F0053 baseline to the native font's first-row coordinate.
+  Keep the packaged Mac capture open until a real wall bump and creature-hit
+  capture confirms the source sound and C015/C016 placement. The remaining red
+  viewport damage frame is not promoted as source behavior until ReDMCSB or an
+  original capture proves it; it is currently a host-only candidate.
 
 - **NEXUS-MNS-SATURN-RENDER-HANDOFF:** Retail MNS admission now validates
   DMDF block size plus MOTN/TEXT section envelopes, and the real corpus decodes

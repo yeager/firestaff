@@ -26,9 +26,9 @@ int main(void)
         bytes[header + i * payload + 2u] = 0xa5;
     }
     assert(dm1_v1_atari_st_graphics_open(bytes, sizeof(bytes), &dat));
-    assert(dat.records[574].offset == header + 574u * payload);
-    assert(dm1_v1_atari_st_graphics_read(&dat, 574, out, sizeof(out)) == 3);
-    assert(out[0] == (unsigned char)574 && out[1] == 0x5a && out[2] == 0xa5);
+    assert(dat.records[562].offset == header + 562u * payload);
+    assert(dm1_v1_atari_st_graphics_read(&dat, 562, out, sizeof(out)) == 3);
+    assert(out[0] == (unsigned char)562 && out[1] == 0x5a && out[2] == 0xa5);
     assert(!dm1_v1_atari_st_graphics_open(bytes, sizeof(bytes) - 1u, &dat));
     puts("PASS dm1_v1_atari_st_graphics_dat");
     return 0;
