@@ -410,27 +410,6 @@ int fs_game_load_assets(FS_GameState *state) {
             subdir, state->config.data_dir ? state->config.data_dir : ".", subdir);
     }
 
-    /* Start position is set from DUNGEON.DAT header when available.
-     * The M11 game view handles full asset loading via F0882. */
-    /* DM1 Hall of Champions start position.
-     * Source: ReDMCSB ENTRANCE.C — party enters at south end of hall.
-     * Level 0 = entrance/Hall of Champions.
-     * mapX=11, mapY=29, facing North (toward champion mirrors). */
-    state->current_level = 0;
-    /* Start position from DUNGEON.DAT header (ReDMCSB LOADSAVE.C:1941-1944) */
-    if (fs_dungeon_get_width() > 0) {
-        state->party_x = fs_dungeon_get_start_x();
-        state->party_y = fs_dungeon_get_start_y();
-        state->party_direction = fs_dungeon_get_start_dir();
-        printf("Start: (%d,%d) facing %d (from DUNGEON.DAT)\n",
-            state->party_x, state->party_y, state->party_direction);
-    } else {
-        state->party_x = 11;
-        state->party_y = 29;
-        state->party_direction = 0;
-        printf("Start: (11,29) facing North (fallback)\n");
-    }
-
     /* Load GRAPHICS.DAT and parse bitmap headers */
     if (state->config.data_dir) {
         FS_AssetBundle bundle;
@@ -439,25 +418,52 @@ int fs_game_load_assets(FS_GameState *state) {
             ? game_subdirs[state->config.game] : "dm1";
         if (fs_assets_load_game(&bundle, state->config.data_dir, subdir) == 0) {
             fs_gfx_load(&g_gfx_dat, bundle.graphics_data, bundle.graphics_size);
-            if (bundle.graphics_data) {
+            if (bundle.graphics_data && bundle.dungeon_data && bundle.dungeon_size > 0) {
                 fs_gfx_get_palette(&g_gfx_dat, g_vga_palette);
                 g_palette_loaded = 1;
                 g_assets_ready = 1;
-                /* Load DUNGEON.DAT */
-                if (bundle.dungeon_data && bundle.dungeon_size > 0) {
-                    fs_dungeon_load_dat(bundle.dungeon_data, bundle.dungeon_size);
-                    fs_dungeon_set_level(state->current_level);
-                    /* Set start position from DUNGEON.DAT header AFTER loading */
-                    state->party_x = fs_dungeon_get_start_x();
-                    state->party_y = fs_dungeon_get_start_y();
-                    state->party_direction = fs_dungeon_get_start_dir();
-                    printf("Firestaff: start (%d,%d) facing %d from DUNGEON.DAT\n",
-                        state->party_x, state->party_y, state->party_direction);
+                state->current_level = 0;
+                if (fs_dungeon_load_dat(bundle.dungeon_data, bundle.dungeon_size) <= 0) {
+                    fs_assets_free(&bundle);
+                    fs_set_error(&state->last_error, -2,
+                        "DM1 original dungeon data invalid",
+                        "The hash-verified DUNGEON.DAT could not be parsed as PC34 map data",
+                        "Select a supported original DM1 PC34 data set");
+                    state->running = 0;
+                    return -1;
                 }
+                fs_dungeon_set_level(state->current_level);
+                state->party_x = fs_dungeon_get_start_x();
+                state->party_y = fs_dungeon_get_start_y();
+                state->party_direction = fs_dungeon_get_start_dir();
+                printf("Firestaff: start (%d,%d) facing %d from DUNGEON.DAT\n",
+                    state->party_x, state->party_y, state->party_direction);
                 printf("Firestaff: %d graphics loaded from GRAPHICS.DAT\n",
                     g_gfx_dat.graphic_count);
+            } else if (state->config.game == FS_GAME_DM1) {
+                fs_assets_free(&bundle);
+                fs_set_error(&state->last_error, -2,
+                    "DM1 original data incomplete",
+                    "Hash-verified GRAPHICS.DAT and DUNGEON.DAT were not both materialized",
+                    "Install a supported original DM1 PC34 data set");
+                state->running = 0;
+                return -1;
             }
+        } else if (state->config.game == FS_GAME_DM1) {
+            fs_set_error(&state->last_error, -2,
+                "DM1 original data required",
+                "Hash-verified DM1 GRAPHICS.DAT and DUNGEON.DAT were not found",
+                "Install a supported original DM1 PC34 data set and select its data directory");
+            state->running = 0;
+            return -1;
         }
+    } else if (state->config.game == FS_GAME_DM1) {
+        fs_set_error(&state->last_error, -2,
+            "DM1 original data required",
+            "No DM1 data directory was selected for the direct game loop",
+            "Select the directory containing the verified original DM1 data");
+        state->running = 0;
+        return -1;
     }
 
     return 0;

@@ -7,6 +7,12 @@
   M11 sensor override path and external Mac/app viewport capture for every
   wall, inscription, torch, alcove, stairs and floor ornament.
 
+- **DM1-DIRECT-LOOP-CAPTURE:** The legacy direct DM1 loop now rejects missing
+  or unparsable hash-verified GRAPHICS.DAT/DUNGEON.DAT instead of continuing
+  with an invented Hall-of-Champions `(11,29,N)` pose. Capture the resulting
+  source-backed direct loop on macOS and compare its complete viewport/HUD
+  composition against ReDMCSB.
+
 - **CSB-FMTOWNS-RUNTIME-PARITY:** The authentic FM Towns CD's verified
   `CDATA`/`CJDATA` files, title animation, portraits and executables now reach
   the CSB runtime cache without synthetic replacements. Keep launch/runtime

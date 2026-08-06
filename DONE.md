@@ -31,6 +31,14 @@
   data was tracked. Sensor overrides and external Mac/app capture remain in
   `DM1-HOC-ORNAMENT-RENDER-CAPTURE`.
 
+- ✅ 2026-08-06 DM1 direct-loop synthetic start removal: `fs_game_load_assets`
+  no longer continues after missing, incomplete or unparsable DM1 media and
+  no longer installs the fixed `(11,29,N)` Hall-of-Champions fallback. The
+  direct loop now enters only after the source `DUNGEON.DAT` parser supplies
+  the initial party pose; failure is reported as a startup data error. Full
+  macOS viewport/HUD capture remains tracked separately in
+  `DM1-DIRECT-LOOP-CAPTURE`.
+
 - ✅ 2026-08-06 Nexus ITEM equipment placeholder removal: deleted the old
   `20..26` item-ID armor mapping and the unknown-armor-to-torso fallback from
   the inventory helper. ITEM.IBS declarations remain source-owned, while
