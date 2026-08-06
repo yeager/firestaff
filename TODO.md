@@ -3467,6 +3467,11 @@ that its exact runtime path is not already source-locked and tested.
    passes. This removes duplicate/misaligned door and stair surfaces; the
    generic yellow/brown fallback remains isolated to legacy/test worlds.
    Exact real door/stair bitmap binding and packaged macOS capture remain open.
+   2026-08-06: the PC34 G0237 object-aspect table was audited against the
+   ReDMCSB 180-row source table. Four missing tail rows (Lock Picks,
+   Magnifier, Zokathra Spell, Bones) were restored; the real-object corpus now
+   explicitly verifies those junk subtypes instead of accepting zero-filled
+   C initializers.
 2. **DM1-PC34-FULL-ASSET-VISUAL-AUDIT:** Compare every one of the 713
    hash-verified PC 3.4 `GRAPHICS.DAT` records against Greatstone/SCK decoded
    references and capture the packaged macOS app. 2026-08-06: the new real

@@ -1,6 +1,7 @@
 #include "m11_game_view.h"
 #include "dm1_v1_dungeon_thing_data_pc34_compat.h"
 #include "dm1_v1_graphic_ids_pc34_compat.h"
+#include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,6 +73,25 @@ int main(void)
         fprintf(stderr, "DM1 real object corpus failed to start\n");
         M11_GameView_Shutdown(&state);
         return 1;
+    }
+    /* ReDMCSB G0237 has 180 rows.  The last four junk records are easy to
+     * lose when hand-copying the aspect table and then silently render as
+     * object-0 art because C fills a short initializer with zeroes. */
+    {
+        static const int expectedTail[4] = { 77, 78, 74, 41 };
+        int i;
+        for (i = 0; i < 4; ++i) {
+            int subtype = 49 + i;
+            if (dm1_item_aspect_index(THING_TYPE_JUNK, subtype) !=
+                expectedTail[i]) {
+                fprintf(stderr,
+                        "invalid G0237 tail: junk subtype %d aspect=%d expected=%d\n",
+                        subtype,
+                        dm1_item_aspect_index(THING_TYPE_JUNK, subtype),
+                        expectedTail[i]);
+                ++failures;
+            }
+        }
     }
     failures += check_type(&state, THING_TYPE_WEAPON, "weapon", &checked);
     failures += check_type(&state, THING_TYPE_ARMOUR, "armour", &checked);

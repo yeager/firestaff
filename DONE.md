@@ -51,6 +51,13 @@
   host palette slot. Verification: Firestaff builds and the focused DM1
   damage, champion-layout, and sound tests pass.
 
+- ✅ 2026-08-06 DM1 G0237 object-aspect tail restoration: restored the four
+  missing ReDMCSB rows for junk subtypes 49..52 (`77, 78, 74, 41`), covering
+  Lock Picks, Magnifier, Zokathra Spell and Bones. The previous 176-value
+  initializer for the declared 180-row table silently zero-filled these
+  records and could select unrelated object art. The real PC3.4 corpus test
+  now asserts the four tail aspects and passes all 611 object records.
+
 - ✅ 2026-08-06 DM2 Amiga nested-media intake: the real-media receipt no
   longer shells out to `unzip` or `bsdtar`. A bounded ZIP reader now accepts
   an already-resident ZIP byte buffer, so the supplied outer archive, its
