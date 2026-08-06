@@ -2615,6 +2615,11 @@ struct Nexus_V1_Engine {
     /* Test/capture seam only: real startup remains zero until the TEXT4/TABL/
      * FONT012 Saturn text consumer and placement are externally admitted. */
     int startup_menu_text_consumer_capture_verified;
+    /* Test/capture seam only: TITLE.CG/TITLE.BIN source bytes do not prove
+     * Saturn VDP1/VDP2 tilemap, CLUT, destination, or command order. Real
+     * retail startup remains zero until an external title capture admits all
+     * of those facts. */
+    int startup_title_vdp_capture_verified;
 
     /* Per-level trigger/script runtime. SLEV*.BIN is real candidate data;
      * dispatch remains blocked until a source-locked parser exists. */

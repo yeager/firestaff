@@ -18,6 +18,14 @@
   to `docs/screenshots/` and README. HoC/HUD capture remains explicitly open;
   these frames are not promoted as proof for those outstanding routes.
 
+- ✅ 2026-08-06 Nexus title-capture admission: separated the decoded retail
+  TITLE.CG/TITLE.BIN source receipt from the missing Saturn VDP1/VDP2 title
+  capture. Production engines leave the explicit capture seam closed, so a
+  full-start package cannot advertise title capture or host display ownership
+  from atlas bytes and timing alone. The synthetic positive startup fixture
+  now names its external capture witness explicitly; the retail startup-menu
+  regression asserts title art loaded but title capture unavailable.
+
 - ✅ 2026-08-06 Theron US roster/text audit: real US Track 02 still proves
   only the `GO AWAY AND RESURRECT THERON` prompt at `0xa0722`; the JP ASCII
   roster cluster is absent from the US receipt. Real US Track 19 item names,

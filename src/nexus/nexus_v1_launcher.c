@@ -6483,7 +6483,8 @@ int nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
     out_receipt->warning_capture_surface_ready =
         out_receipt->warning_art_loaded;
     out_receipt->title_capture_surface_ready =
-        out_receipt->title_art_loaded && assets.title_route_ready;
+        out_receipt->title_art_loaded && assets.title_route_ready &&
+        state->engine->startup_title_vdp_capture_verified;
     out_receipt->gameover_capture_surface_ready =
         out_receipt->gameover_art_loaded;
     out_receipt->warning_status_ready = out_receipt->warning_art_loaded;
@@ -6492,7 +6493,8 @@ int nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
     out_receipt->boot_warning_title_ready =
         out_receipt->warning_art_loaded &&
         out_receipt->title_art_loaded &&
-        assets.title_route_ready;
+        assets.title_route_ready &&
+        state->engine->startup_title_vdp_capture_verified;
     out_receipt->startup_surfaces_real_ready =
         assets.startup_surfaces_expected > 0 &&
         assets.startup_surfaces_loaded == assets.startup_surfaces_expected &&
@@ -6890,7 +6892,8 @@ static void nexus_v1_launcher_finalize_full_start_package_saturn_receipt(
         receipt->saturn_capture_frames_exact;
     receipt->full_start_package_receipt_ready =
         title_capture_ready ||
-        (receipt->m11_ready &&
+        (receipt->capture_route != NEXUS_V1_STARTUP_CAPTURE_TITLE &&
+         receipt->m11_ready &&
          receipt->m12_ready &&
          receipt->graphics_ready &&
          receipt->saturn_timing_exact &&

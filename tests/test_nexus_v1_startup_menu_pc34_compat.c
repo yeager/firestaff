@@ -976,6 +976,9 @@ int main(void)
      * real Nexus engines leave the field zero until TEXT4/TABL/FONT012 and
      * Saturn text placement are captured. */
     synthetic_engine.startup_menu_text_consumer_capture_verified = 1;
+    /* This fixture explicitly models the separate Saturn title capture
+     * witness. Retail TITLE.CG alone must leave this zero. */
+    synthetic_engine.startup_title_vdp_capture_verified = 1;
     synthetic_engine.sfx_runtime_receipt.status =
         NEXUS_SFX_RUNTIME_READY_DECODED;
     synthetic_engine.sfx_runtime_receipt.level_index = 0;
@@ -4491,6 +4494,14 @@ int main(void)
                                    runtime_receipt.startup_assets.title_route_ready &&
                                startup_assets_receipt.startup_menu_asset_route != NULL,
                            "Nexus launcher runtime state exposes the blocked startup asset gate");
+                    expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
+                               &runtime_receipt,
+                               &runtime_state,
+                               &full_start_receipt) &&
+                               full_start_receipt.title_art_loaded == 1 &&
+                               full_start_receipt.title_capture_surface_ready == 0 &&
+                               full_start_receipt.boot_warning_title_ready == 0,
+                           "Nexus retail TITLE.CG does not masquerade as a Saturn title capture");
                     nexus_v1_launcher_runtime_startup_snapshot_clear(
                         &runtime_snapshot);
                     runtime_snapshot.runtime = runtime_state;

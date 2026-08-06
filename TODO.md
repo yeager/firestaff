@@ -559,6 +559,9 @@
   receipts cannot authorize a direct source-to-host framebuffer copy.
   WARNING DGT2 M11 callback modules are also excluded from the production
   library and remain explicit probe/test sources only.
+  2026-08-06: a separate title VDP capture-admission bit now gates the
+  full-start title-capture receipt; retail TITLE.CG/TITLE.BIN bytes alone
+  cannot make M11/M12 advertise a drawable title package.
 
 - **NEXUS-DGN-MATERIAL-VDP1-CAPTURE:** The real Structure2 decoder now
   has a 16-level census guard (1,678 textures: 1,553 indexed-4bpp and 125
