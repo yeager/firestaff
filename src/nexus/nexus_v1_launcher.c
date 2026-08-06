@@ -9179,6 +9179,7 @@ int nexus_v1_launcher_resume_from_save_path(
     Nexus_V1_World world;
     Nexus_V1_Engine *engine;
     Nexus_SaveResult result;
+    Nexus_V1_LightRuntime *runtime_for_load = NULL;
     char nglt_diagnostic[256];
     int level;
 
@@ -9192,12 +9193,20 @@ int nexus_v1_launcher_resume_from_save_path(
     memset(&world, 0, sizeof(world));
     memset(nglt_diagnostic, 0, sizeof(nglt_diagnostic));
 
+    /* The NGLT blob is a native Firestaff light model, not an authenticated
+     * Saturn save section.  Do not let resume rehydrate it while the Saturn
+     * action/state-write owner remains unbound.  The explicit light probes
+     * still exercise the ABI directly; retail M11 resume remains source-safe. */
+    if (nexus_v1_action_semantics_proven()) {
+        runtime_for_load = light_runtime;
+    }
+
     result = nexus_v1_load_full_from_path_with_runtime(
         save_path,
         &header,
         &champions,
         &world,
-        light_runtime,
+        runtime_for_load,
         &out_receipt->nglt_decoded,
         nglt_diagnostic,
         sizeof(nglt_diagnostic),

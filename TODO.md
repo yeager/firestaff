@@ -108,6 +108,11 @@
   that capture is admitted. The public mixer is also silence-only, even when
   diagnostic voice fields are manually populated.
 
+- **NEXUS-NGLT-RESUME-BOUNDARY:** Native FNXS/NGLT light state is no longer
+  rehydrated by the retail launcher resume path while Saturn action/state-write
+  ownership is unproven. The NGLT ABI remains available only to explicit study
+  probes; no native light model may stand in for a Saturn save section.
+
 - **NEXUS-V2-PROCEDURAL-PRESENTATION-BOUNDARY:** The production Nexus library
   no longer links the procedural V2 lighting, smooth-movement or touch/
   controller implementations. Their M11 adapters are fail-closed no-ops
