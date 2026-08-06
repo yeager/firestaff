@@ -646,7 +646,7 @@ int main(void) {
                           sfx_receipt.map_receipt.receipt_class ==
                               NEXUS_V1_AUDIO_RECEIPT_SIZE_MATCH,
                       "Nexus SFX receipt preserves SAL/MAP size receipts");
-            check_int(sfx_receipt.cd_track == 2 &&
+            check_int(sfx_receipt.cd_track == -1 &&
                           sfx_receipt.blocks_real_sfx_playback == 1 &&
                           sfx_receipt.fallback_visuals_permitted == 0,
                       "Nexus SFX receipt forbids fallback playback");

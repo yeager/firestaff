@@ -28,17 +28,10 @@ The Saturn CD contains the complete game in one release. The disc is structured 
 
 ### Audio Content (CD-DA Tracks)
 ```
-Track 2:  Level 0 music (Red Book CD-DA)
-Track 3:  Level 1 music
-Track 4:  Level 2 music
-Track 5:  Level 3 music
-Track 6:  Level 4 music
-Track 7:  Level 5 music
-Track 8:  Level 6 music
-Track 9:  Level 7 music
-(Note: Levels 8–15 may use replayed or looped tracks from earlier levels)
+Tracks 2–9: Red Book CD-DA tracks present in the retail disc layout.
 ```
-This is per-level music — 8 distinct CD audio tracks, one per disc track.
+The retained DM.BIN/disassembly does not authenticate a level-to-track
+selector, so no per-level mapping is inferred here.
 
 ### Video Content
 - **3 AVI cutscenes** (101 MB total): DMV0.AVI (intro, 34 MB), DMV1.AVI (28 MB), DMV2.AVI (ending, 39 MB)

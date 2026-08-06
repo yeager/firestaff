@@ -899,7 +899,9 @@ Level pairs:  0–1 → track 2
               14–15 → track 9
 ```
 
-**8 Red Book Audio CD-DA tracks** mapped to 8 level pairs.
+**8 Red Book Audio CD-DA tracks** are present in the disc layout. The older
+level-pair mapping is a planning claim, not an authenticated selector receipt;
+see `NEXUS_STALE_CLAIM_AUDIT.md`.
 
 ### 7.7 Sound Format Variants
 

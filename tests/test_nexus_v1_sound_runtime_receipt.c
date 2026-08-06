@@ -47,6 +47,13 @@ static void test_missing_assets_block_playback(void) {
     nexus_sound_shutdown(&eng);
 }
 
+static void test_level_cd_selector_stays_unbound(void) {
+    CHECK(nexus_v1_cd_track_for_level(0) == -1 &&
+          nexus_v1_cd_track_for_level(15) == -1 &&
+          nexus_v1_audio_cd_track_for_level_receipt(0) == -1,
+          "retail CDDA layout does not invent a level-to-track selector");
+}
+
 static void test_size_matched_assets_block_decode(void) {
     Nexus_SoundEngine eng;
     Nexus_V1_AudioReceipt sal_expected;
@@ -94,7 +101,7 @@ static void test_size_matched_assets_block_decode(void) {
           receipt.sound_driver_receipt.expected_size == 26610u &&
           strcmp(receipt.sound_driver_receipt.expected_name, "SDDRVS.TSK") == 0,
           "runtime receipt keeps the source-locked SDDRVS identity separate from SAL/MAP");
-    CHECK(receipt.cd_track == 2 &&
+    CHECK(receipt.cd_track == -1 &&
           receipt.level_index == 0 &&
           receipt.playback_enabled == 0,
           "runtime receipt exposes level 0 CD track without enabling playback");
@@ -747,6 +754,7 @@ static void test_mismatched_assets_block_playback(void) {
 }
 
 int main(void) {
+    test_level_cd_selector_stays_unbound();
     test_missing_assets_block_playback();
     test_size_matched_assets_block_decode();
     test_sal_package_profile_blocks_playback();

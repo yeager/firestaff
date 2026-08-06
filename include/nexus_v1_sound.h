@@ -9,7 +9,7 @@
  * docs/nexus_music.md, nexus_v1_engine.c CD track switching.
  *
  * Per-level SFX: SNDLEV00-15.SAL (sound banks) + SNDLEV00-15.MAP (event map).
- * CD audio: 8 tracks (2-9) mapped to level pairs, Red Book Audio.
+ * CD audio: 8 retail Red Book tracks (2-9); level selection is unbound.
  * Sound driver: SDDRVS.TSK (26 KB Saturn sound driver task).
  *
  * Saturn hardware (pass 216 SH-2 disassembly):

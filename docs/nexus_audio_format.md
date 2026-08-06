@@ -6,7 +6,7 @@
 ## Overview
 
 Dungeon Master Nexus audio consists of two distinct systems:
-1. **CD-DA music** — Red Book Audio tracks 2-9
+1. **CD-DA music** — Red Book Audio tracks 2-9 (disc-layout receipt only)
 2. **Per-level SFX banks** — SNDLEV*.SAL + SNDLEV*.MAP files
 
 No voice format is implemented beyond potential FMV audio in AVI files.
@@ -20,21 +20,16 @@ No voice format is implemented beyond potential FMV audio in AVI files.
 | Channels | Stereo |
 | Bit depth | 16-bit (standard CD audio) |
 | Track range | Tracks 2-9 (8 tracks total) |
-| Coverage | 2 levels per track |
+| Level selection | Not source-bound |
 | Data source | Tracks 2-9 on Saturn CD |
 
-### Track-to-Level Mapping
+### Track-to-level binding
 
-| Track | Levels | File (CUE) |
-|-------|--------|------------|
-| 2 | 0, 1 | Track 2 AUDIO |
-| 3 | 2, 3 | Track 3 AUDIO |
-| 4 | 4, 5 | Track 4 AUDIO |
-| 5 | 6, 7 | Track 5 AUDIO |
-| 6 | 8, 9 | Track 6 AUDIO |
-| 7 | 10, 11 | Track 7 AUDIO |
-| 8 | 12, 13 | Track 8 AUDIO |
-| 9 | 14, 15 | Track 9 AUDIO |
+The CUE/ISO receipt proves the existence and order of tracks 2–9. The
+available DM.BIN/disassembly and format references do not prove which track a
+dungeon level selects. Firestaff therefore keeps the level selector opaque and
+returns `-1` until an original Saturn consumer or authenticated runtime trace
+binds it.
 
 ## Per-Level SFX Banks
 
@@ -64,7 +59,7 @@ Located in Track 1 of the ISO (MODE1/2352, game data track).
 | SFX format | PCM 8-bit | DataID 0 directory and bounded 8/16-bit metadata decoded |
 | SFX size | ~28 KB | 290-460 KB per level |
 | Mapping file | None | SNDLEV00-15.MAP (66-90 B) |
-| Music | SONG.DAT (sequenced) | CD-DA tracks |
+| Music | SONG.DAT (sequenced) | CD-DA tracks 2–9; level selector unbound |
 
 Per-level SFX allows different sound environments per dungeon depth — deeper levels could have more ominous SFX.
 

@@ -16,7 +16,7 @@ implementerad eller källbunden.
 | `nexus_intro.md`, `nexus_title.md` | Host-rasterizern visar den ursprungliga titeln | TITLE/LOGOBG/WARNING är avkodade ytor; VDP2-lager, timing och placering saknas |
 | `nexus_hud.md`, `nexus_inventory.md` | Generiska HUD-/inventorywidgets är Nexus presentation | STABG/ITEM/FACE-data är receipts; Saturns HUD- och actionkonsument är inte fångad |
 | `nexus_text.md`, `nexus_language.md` | FONT256/SJIS-konvertering räcker för synlig text | RLOWFIX TEXT4/TABL och FONT012 är bundna som bytes; glyph consumer/page/attribute/VDP2 saknas |
-| `nexus_audio_format.md`, `nexus_sound.md`, `nexus_sfx.md` | CD-DA/SAL/MAP kan spelas genom hostantaganden | Track/SAL/MAP är metadata; SLEV/SDDRVS event→selector och playback är capture-gated |
+| `nexus_audio_format.md`, `nexus_music.md`, `nexus_sound.md`, `nexus_sfx.md` | CD-DA/SAL/MAP kan spelas genom hostantaganden eller att nivåpar automatiskt väljer spår | CDDA-spår 2–9 och SAL/MAP är metadata; nivå→CDDA, SLEV/SDDRVS event→selector och playback är capture-gated |
 | `nexus_input.md`, `nexus_sensors.md`, `nexus_squares.md` | DM1-lik input-, sensor- och square-semantik gäller Nexus | Endast bounded source records är upptagna; Saturn dispatch och state writes är obevisade |
 | `nexus_phase2_data_formats_H2321.md`, `nexus_test_coverage.md` | Historiska test-/stubmatriser beskriver dagens produktion | Äldre plan-/coverage-dokument överstyr inte aktuell CMake-exkludering och no-draw-gates |
 

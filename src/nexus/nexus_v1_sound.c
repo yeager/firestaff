@@ -14,7 +14,8 @@ static int nexus_file_exists(const char *path);
  *
  * Per-level SFX: SNDLEV00-15.SAL (sound banks, 290-460 KB each)
  *                SNDLEV00-15.MAP (event index, 66-90 bytes each)
- * CD audio: 8 tracks (2-9) mapped to level pairs.
+ * CD audio: 8 tracks (2-9) are present in the retail disc layout; the
+ * level-to-track selector remains opaque.
  * Sound driver: SDDRVS.TSK (26 KB Saturn sound driver task).
  *
  * DMWeb's DataID 0 tone-bank directory and PCM entry metadata are decoded;
@@ -627,7 +628,7 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
     eng->initialized = 1;
     eng->sfx_enabled = 1;
     eng->music_enabled = 1;
-    eng->current_cd_track = 2;
+    eng->current_cd_track = -1;
     eng->current_level = -1;
     ensure_event_selector_init(eng);
     clear_map_route(eng);
@@ -1146,8 +1147,8 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
 /* ═══════════════════════════════════════════════════════════════════
  * CD audio management
  * DM Nexus CD: tracks 2-9 are Red Book Audio music.
- * Level pairs: 0-1→track2, 2-3→track3, ..., 14-15→track9.
- * Source: docs/nexus_music.md, nexus_v1_game.c nexus_v1_cd_track_for_level().
+ * The CUE/ISO receipt proves the track range only. Level selection remains
+ * blocked until the Saturn music consumer or runtime capture binds it.
  * CD playback via host callback (set by M11 layer).
  * ═══════════════════════════════════════════════════════════════════ */
 

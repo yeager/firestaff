@@ -150,7 +150,8 @@ SH2 is big-endian; x86/ARM (PC builds) are little-endian.
 - 2D overhead map for in-game map display
 
 ### Sound File Format
-- **CD-DA tracks** (tracks 2–9): Red Book Audio, two levels per track
+- **CD-DA tracks** (tracks 2–9): Red Book Audio layout receipt; level
+  selection is not source-bound
 - **SFX format**: real SAL DataID-0 directory and bounded PCM metadata
 - **MAP**: real eight-byte records from offset zero, retained as opaque
   selector/attribute/SAL windows

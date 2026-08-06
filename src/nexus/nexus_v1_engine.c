@@ -4691,7 +4691,8 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
 
     /* Update CD audio track */
     int new_track = nexus_v1_cd_track_for_level(level);
-    if (new_track != engine->current_cd_track && engine->audio_enabled) {
+    if (new_track >= 0 && new_track != engine->current_cd_track &&
+        engine->audio_enabled) {
         engine->current_cd_track = new_track;
         (void)nexus_sound_cd_track(&engine->audio, new_track);
         printf("Nexus: CD track %d for level %d\n", new_track, level);

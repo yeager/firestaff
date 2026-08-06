@@ -149,11 +149,12 @@ int nexus_v1_game_load_level(Nexus_V1_GameState *state, int level) {
     return -1;
 }
 
-/* Map dungeon levels to CD audio tracks (Track 2-9).
- * 8 audio tracks for 16 levels — each track covers 2 levels. */
+/* The retail CUE/ISO receipt proves the CD-DA track layout, but the supplied
+ * DM.BIN/disassembly does not prove a dungeon-level-to-track selector. Keep
+ * this API fail-closed rather than promoting the old 2-level host guess. */
 int nexus_v1_cd_track_for_level(int level) {
-    if (level < 0 || level > 15) return 2;
-    return 2 + (level / 2);
+    (void)level;
+    return -1;
 }
 
 /* Event name table — matches DM.BIN string table at 0x036D04-0x037024.

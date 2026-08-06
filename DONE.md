@@ -52696,3 +52696,9 @@ konsument och placering är capture-bundna.
   materialplaneraren avvisar nu även framtida material-/Structure2-index utanför
   den dekoderade bankens bounded surface-count. Retail MNS/material-regression
   passerar.
+- ✅ 2026-08-06 Nexus CDDA selector quarantine: retail CUE/ISO evidence still
+  admits the eight CD-DA tracks (2–9), but no source-owned level selector was
+  found in the retained DM.BIN/disassembly. The former `level / 2` mapping was
+  removed from runtime and audio receipts; unknown level→track selection now
+  remains `-1` and playback stays gated. Related stale music docs are marked
+  metadata-only.

@@ -28,38 +28,18 @@ engine->audio_enabled = 1;  // set at init time
 
 The flag gates CD track changes — no track switch occurs if `audio_enabled` is false.
 
-### CD Track Switching
+### CD track selection
 
-```c
-/* Map dungeon levels to CD audio tracks (Track 2-9).
- * 8 audio tracks for 16 levels — each track covers 2 levels. */
-int nexus_v1_cd_track_for_level(int level) {
-    if (level < 0 || level > 15) return 2; /* default: track 2 */
-    return 2 + (level / 2);  /* Track 2-9 */
-}
-```
-
-Track → Level mapping:
-
-| Track | Levels |
-|-------|--------|
-| 2 | 0, 1 |
-| 3 | 2, 3 |
-| 4 | 4, 5 |
-| 5 | 6, 7 |
-| 6 | 8, 9 |
-| 7 | 10, 11 |
-| 8 | 12, 13 |
-| 9 | 14, 15 |
+The CUE/ISO receipt proves tracks 2–9, but the level-to-track selector is not
+source-bound. `nexus_v1_cd_track_for_level()` therefore returns `-1`; the old
+`2 + (level / 2)` table was removed as a host assumption.
 
 ### Track Change Flow
 
-1. `nexus_v1_load_level()` called with dungeon level 0-15
-2. `nexus_v1_cd_track_for_level()` computes target track (2-9)
-3. If `new_track != engine->current_cd_track && engine->audio_enabled`:
-   - Sets `engine->current_cd_track = new_track`
-   - Prints: `"Nexus: CD track %d for level %d\n"`
-4. **TODO**: Call SDL_mixer CD playback function
+1. `nexus_v1_load_level()` loads the authenticated level and its SAL/MAP pair.
+2. No CDDA track is selected from the level number.
+3. Playback remains blocked until the original selector and consumer are
+   captured.
 
 ### SDL_mixer TODO
 
@@ -86,7 +66,7 @@ No audio-specific data files in the V1 engine source. Audio is driven entirely b
 
 ## Status
 
-- [x] CD track mapping per level — implemented
+- [ ] CD track mapping per level — source selector not recovered
 - [ ] CD audio playback — **TODO** (SDL_mixer stub)
 - [ ] SFX system — **Not implemented**
 - [ ] Voice/dialogue — **Not implemented**

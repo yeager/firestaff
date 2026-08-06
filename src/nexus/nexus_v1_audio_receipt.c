@@ -297,12 +297,12 @@ int nexus_v1_audio_classify_cdda_layout(int data_track_count,
 }
 
 int nexus_v1_audio_cd_track_for_level_receipt(int level_index) {
-    if (level_index < 0 || level_index >= NEXUS_V1_AUDIO_LEVEL_COUNT) {
-        return -1;
-    }
-    /* Same documented mapping as src/nexus/nexus_v1_game.c:
-     * tracks 2-9, one CD-DA track for each pair of dungeon levels. */
-    return NEXUS_V1_AUDIO_CDDA_TRACK_FIRST + (level_index / 2);
+    /* The CUE receipt proves CD-DA tracks 2..9 exist. It does not prove that
+     * level N selects track 2 + N/2. Keep level selection opaque until the
+     * original Saturn music consumer or an authenticated runtime capture
+     * binds it. */
+    (void)level_index;
+    return -1;
 }
 
 int nexus_v1_audio_decode_supported(Nexus_V1_AudioKind kind) {
@@ -412,8 +412,8 @@ const char *nexus_v1_audio_source_evidence(void) {
         "docs/NEXUS_FILE_CLASSIFICATION.md: SNDLEV00-15.SAL/.MAP inventory\n"
         "docs/VERIFIED_HASHES.md:154-185 verified SAL/MAP sizes + SHA256\n"
         "docs/VERIFIED_HASHES.md:121 verified SDDRVS.TSK size + SHA256\n"
-        "docs/nexus_audio_format.md: CD-DA tracks 2-9, two levels per track\n"
-        "src/nexus/nexus_v1_game.c: nexus_v1_cd_track_for_level mapping\n"
+        "docs/nexus_audio_format.md: CD-DA track layout receipt only\n"
+        "src/nexus/nexus_v1_game.c: level-to-track selector remains opaque\n"
         "Boundary: receipt/classification plus bounded MAP event table parse; "
         "no SAL decode, CD sector read, or playback binding.\n";
 }
