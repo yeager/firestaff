@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus ITEM equipment placeholder removal: deleted the old
+  `20..26` item-ID armor mapping and the unknown-armor-to-torso fallback from
+  the inventory helper. ITEM.IBS declarations remain source-owned, while
+  armor-slot mutation now fails closed until Saturn action/slot evidence is
+  captured. Verification: real ITEM.IBS inventory regression and production
+  action gate remain green; no game data was tracked.
+
 - ✅ 2026-08-06 Nexus startup FACE receipt hardening: both launcher full-start
   receipt paths now require `faces_loaded == faces_expected` and zero fallback
   portraits. The former arithmetic `loaded + fallback == expected` could mark

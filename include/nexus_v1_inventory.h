@@ -144,7 +144,9 @@ int nexus_inventory_count_category(const Nexus_InventorySlot *inv, int count, Ne
 /* Find first slot containing item_id (or -1) */
 int nexus_inventory_find(const Nexus_InventorySlot *inv, int count, int item_id);
 
-/* Equip item from inventory slot. Returns slot that was cleared or -1. */
+/* Equip item from inventory slot. Returns slot that was cleared or -1.
+ * Armor-slot mutation remains unavailable until the Saturn action/slot
+ * dispatcher is source-bound; no inherited item-ID mapping is permitted. */
 int nexus_inventory_equip(Nexus_InventorySlot *inv, int slot,
                            int weapon_slot, int shield_slot,
                            int ring1_slot, int ring2_slot,

@@ -236,7 +236,6 @@ int nexus_inventory_equip(Nexus_InventorySlot *inv, int slot,
                            int legs_slot, int feet_slot, int hands_slot,
                            int amulet_slot) {
     const Nexus_ItemDef *def;
-    int item_id;
     int target_slot = -1;
     Nexus_InventorySlot old_item = { .item_id = -1, .quantity = 0 };
     (void)ring1_slot;
@@ -248,10 +247,6 @@ int nexus_inventory_equip(Nexus_InventorySlot *inv, int slot,
 
     def = nexus_inventory_get(inv, slot);
     if (!def) return -1;
-    /* Definition storage is source-bound and separate from the slot's
-     * identity. Never derive an item id through pointer subtraction. */
-    item_id = inv[slot].item_id;
-
     if (!(def->flags & NEXUS_ITEMF_EQUIPPABLE)) return -1;
 
     /* Determine target slot based on item category */
@@ -261,27 +256,16 @@ int nexus_inventory_equip(Nexus_InventorySlot *inv, int slot,
         old_item = inv[weapon_slot];
         inv[weapon_slot] = inv[slot];
     } else if (def->defense > 0 && def->attack == 0) {
-        /* Armor — map to specific slot by item ID. */
-        if (item_id >= 20 && item_id <= 22) {
-            /* Leather Jerkin, Mail Aketon, Plate Armor → torso */
-            target_slot = torso_slot; old_item = inv[torso_slot];
-        } else if (item_id == 23) {
-            /* Shield → shield slot */
-            target_slot = shield_slot; old_item = inv[shield_slot];
-        } else if (item_id == 24) {
-            /* Helmet → head slot */
-            target_slot = head_slot; old_item = inv[head_slot];
-        } else if (item_id == 25) {
-            /* Boots → feet slot */
-            target_slot = feet_slot; old_item = inv[feet_slot];
-        } else if (item_id == 26) {
-            /* Gauntlets → hands slot */
-            target_slot = hands_slot; old_item = inv[hands_slot];
-        } else {
-            /* Unknown armor → torso */
-            target_slot = torso_slot; old_item = inv[torso_slot];
-        }
-        inv[target_slot] = inv[slot];
+        /* ITEM.IBS does not prove the Saturn armor-slot dispatcher. The old
+         * implementation guessed slots from inherited DM1 item IDs 20..26
+         * and sent unknown armor to torso; keep this route fail-closed until
+         * a source-bound action/slot capture exists. */
+        (void)shield_slot;
+        (void)head_slot;
+        (void)torso_slot;
+        (void)feet_slot;
+        (void)hands_slot;
+        return -1;
     } else {
         return -1; /* not equippable as armor */
     }

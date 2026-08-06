@@ -81,6 +81,10 @@
   Keep DataID/selector entries opaque until Saturn SLEV/SDDRVS event
   dispatch is captured; do not bind the host sound enum or start playback
   from inferred selectors.
+
+  2026-08-06: ITEM.IBS inventory helpers no longer guess armor slots from
+  inherited DM1 item IDs; the remaining equipment mutation still requires the
+  authentic Saturn action/slot dispatcher capture.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1
