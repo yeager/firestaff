@@ -18,6 +18,15 @@
   passes with 63 assertions; the source object is absent from both M10 and M11
   archives.
 
+# DM1 chest another-open synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the F0333/F0334 another-open scenario fixture from M10. It
+  fabricates Thing ordinals, container chains and leader-hand state in a local
+  Next array, reads no original material, and has no M11/runtime caller; its
+  dedicated ReDMCSB regression now compiles the source explicitly.
+- ✅ Verification: `test_dm1_v1_chest_open_while_another_open_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 chest stack-split synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the local F0333 stack-split chain fixture from M10. It reads no

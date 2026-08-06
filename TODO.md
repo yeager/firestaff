@@ -11,6 +11,12 @@
   DM1 data input or M11/runtime caller; retain it only as explicit ReDMCSB
   coverage until a source-bound interaction owner is recovered.
 
+- **DM1-CHEST-ANOTHER-OPEN-SYNTHETIC-AUDIT:** This F0333/F0334 scenario
+  model fabricates Thing ordinals, container chains and leader-hand state in
+  a local Next array. It reads no original game data and has no M11/runtime
+  caller; retain it only as explicit ReDMCSB coverage until a source-bound
+  chest owner is recovered.
+
 - **DM1-CHEST-STACK-SPLIT-SYNTHETIC-AUDIT:** This F0333 chain model uses
   fixed sentinel item values and a local Next array. It reads no original game
   data and has no M11/runtime caller; retain it only as explicit ReDMCSB

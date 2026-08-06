@@ -4302,6 +4302,12 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
+# `dm1_v1_chest_open_while_another_open_pc34_compat.c` is a source-locked
+# scenario fixture with fixed Thing ordinals and a local Next-array model.
+# It reads no original DM1 data and has no M11/runtime caller; its dedicated
+# regression compiles the fixture explicitly rather than exposing it via M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_open_while_another_open_pc34_compat.c")
 # `dm1_v1_viewport_food_water_fill_pc34_compat.c` is an isolated F0344
 # planar-fill contract. Its only callers provide test-owned bitmap buffers;
 # the live source-bound HUD uses the champion status-box route instead. Keep
@@ -53254,7 +53260,9 @@ add_executable(test_dm1_v1_chest_open_visible_slots_pc34_compat tests/test_dm1_v
 target_include_directories(test_dm1_v1_chest_open_visible_slots_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_open_visible_slots_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_open_visible_slots_pc34_compat COMMAND test_dm1_v1_chest_open_visible_slots_pc34_compat)
-add_executable(test_dm1_v1_chest_open_while_another_open_pc34_compat tests/test_dm1_v1_chest_open_while_another_open_pc34_compat.c)
+add_executable(test_dm1_v1_chest_open_while_another_open_pc34_compat
+    tests/test_dm1_v1_chest_open_while_another_open_pc34_compat.c
+    src/dm1/dm1_v1_chest_open_while_another_open_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_open_while_another_open_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_open_while_another_open_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_open_while_another_open_pc34_compat COMMAND test_dm1_v1_chest_open_while_another_open_pc34_compat)
