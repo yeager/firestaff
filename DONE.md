@@ -52,6 +52,14 @@
   item/decoration/sensor census. The real corpus remains diagnostic evidence;
   Saturn object, loot, trigger and viewport consumers are still capture-gated.
 
+# Nexus Structure1F ITEM.IBS retail identity gate (2026-08-06)
+
+- ✅ Hardened the real Structure1F→ITEM.IBS coverage regression with the
+  authenticated European `ITEM.IBS` MD5 before accepting regular-item and
+  descriptor-0008 floor-image coverage. The retail item source remains
+  diagnostic/no-draw evidence; Saturn action, loot and pickup consumers remain
+  capture-gated.
+
 # Nexus startup media retail identity gate (2026-08-06)
 
 - ✅ Added exact retail MD5 checks to the startup-media regression for

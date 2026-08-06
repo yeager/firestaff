@@ -5525,6 +5525,14 @@ static void test_real_item_ibs_special_floor_corpus(void) {
     snprintf(path, sizeof(path), "%s/ITEM.IBS", data_dir);
     file = fopen(path, "rb");
     if (!file) return;
+    CHECK(asset_file_matches_md5(path,
+              "be3ea97919c7e802e5b151aad20fd6ec"),
+          "real ITEM.IBS corpus matches the authenticated European retail identity");
+    if (!asset_file_matches_md5(path,
+              "be3ea97919c7e802e5b151aad20fd6ec")) {
+        fclose(file);
+        return;
+    }
     data = (uint8_t *)malloc(NEXUS_V1_ITEM_IBS_BYTES);
     CHECK(data != NULL, "real ITEM.IBS corpus buffer allocates");
     if (!data) {
