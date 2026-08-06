@@ -768,16 +768,21 @@ Covered in §8.1 above. DMDF stores:
 - Face index arrays (uint16_t triangle/quad indices)
 - Embedded BITMAP texture data (format: Saturn VDP1 compressed)
 
-Firestaff reimplementation: loads 3D mesh into `Nexus_V1_Model`, transforms
-via `nexus_v1_math3d.c`, rasterizes via `nexus_v1_rasterizer.c`.
+Firestaff retains bounded mesh/texture receipts in `Nexus_V1_Model`. The
+transform/rasterizer implementation is compiled only into explicit material
+probes; the retail `firestaff_nexus` target uses a no-op presentation adapter
+until Saturn VDP1 command, CLUT/VRAM destination, and DGN/MNS ownership are
+captured.
 
 Source: `include/nexus_v1_dmdf_model.h`, `docs/nexus_graphics.md`
 
 ### 10.2 3D Rasterizer (`nexus_v1_rasterizer.c/h`)
 
-Software rasterizer for the Nexus viewport. Reads polygons from DMDF meshes
-and rasterizes with texture-mapped triangles. Z-buffer for depth sorting.
-Framebuffer: palette-indexed (Nexus_Framebuffer).
+The historical CPU rasterizer is a bounded fixture/probe implementation, not
+the retail Nexus viewport. Production retains the indexed framebuffer
+lifecycle and fails closed before host pixels are emitted. A future capture
+may authorize a source-owned adapter only after VDP1 command, CLUT/VRAM
+destination, and DGN/MNS ownership are joined.
 
 Pipeline:
 1. Transform vertices with camera matrix (`nexus_v1_math3d.c`)
@@ -827,8 +832,8 @@ Source: `docs/NEXUS_FILE_CLASSIFICATION.md`
 | Sub-format | Status | Evidence |
 |-----------|--------|---------|
 | DMDF model loading | ✅ Header+vertices+faces | `nexus_v1_dmdf_load()` |
-| DMDF texture BITMAP | ⚠️ Allocated | No decompression implemented |
-| 3D rasterization | ✅ Implemented | `nexus_v1_rasterizer.c` |
+| DMDF texture BITMAP | ⚠️ Receipt-only | Saturn pixel/CLUT ownership remains unproven |
+| 3D rasterization | ⏳ Probe-only/capture-gated | `nexus_v1_rasterizer.c` is excluded from `firestaff_nexus` |
 | Math3D transforms | ✅ Implemented | `nexus_v1_math3d.c` |
 | TITLE.BIN/CG surfaces | ⚠️ Raw read only | No VDP2 parser |
 | ITEM.IBS icons | ❌ NOT PARSED | Format unknown |

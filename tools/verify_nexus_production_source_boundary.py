@@ -32,6 +32,7 @@ for exclusion in (
     r"nexus_v1_s2d_glyph_decode\\.c$",
     r"nexus_v1_screen_text\\.c$",
     r"nexus_v1_saturn_font\\.c$",
+    r"nexus_v1_rasterizer\\.c$",
     r"nexus_v1_warning_dgt2_m11_presentation\\.c$",
     r"nexus_v1_mns\\.c$",
     r"nexus_v1_spell_effects\\.c$",
@@ -47,12 +48,18 @@ if not runtime_match:
 runtime_body = runtime_match.group("body")
 if "src/nexus/nexus_v2_hud_runtime_noop.c" not in runtime_body:
     fail("production HUD runtime is not the no-op implementation")
+if "src/nexus/nexus_v1_rasterizer_runtime_noop.c" not in runtime_body:
+    fail("production rasterizer runtime is not the no-op implementation")
+if "src/nexus/nexus_v1_saturn_font_runtime_noop.c" not in runtime_body:
+    fail("production font runtime is not the no-op implementation")
 for forbidden in (
+    "src/nexus/nexus_v2_hud_runtime.c",
     "src/nexus/nexus_v2_hud_runtime.c",
     "src/nexus/nexus_v2_hud_overlay.c",
     "src/nexus/nexus_v2_render_pipeline.c",
     "src/nexus/nexus_v2_particles.c",
     "src/nexus/nexus_v2_atmosphere.c",
+    "src/nexus/nexus_v1_rasterizer.c",
 ):
     if forbidden in runtime_body:
         fail(f"procedural presentation source entered runtime list: {forbidden}")

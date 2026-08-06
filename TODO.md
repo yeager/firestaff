@@ -897,6 +897,10 @@ level or consumer bindings.
   all 16 retail levels as geometry-ready without treating that as transform,
   palette, VDP1 or drawable-frame evidence; the focused corpus probe now exits
   successfully with material presentation still capture-gated.
+  2026-08-06 follow-up: the CPU textured rasterizer is now excluded from
+  `firestaff_nexus`; production links a lifecycle-safe no-op adapter and the
+  material raster test compiles the fixture explicitly. Keep the real VDP1
+  command/CLUT/VRAM and DGN/MNS owner capture open.
 
 - **NEXUS-STONE-PP-VDP1-BINDING:** The missing image-local `STONE.BIN`
   decoder is now implemented from DMWeb `DecodeRawPPpp`: all eight retail

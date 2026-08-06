@@ -1,3 +1,12 @@
+# Nexus CPU rasterizer production quarantine (2026-08-06)
+
+- ✅ Removed the textured host CPU rasterizer from `firestaff_nexus`; the
+  production viewport now links a lifecycle-safe no-op adapter that clears and
+  retains receipts but emits no DGN/MNS pixels.
+- ✅ Kept the real rasterizer only in the explicit material fixture target and
+  strengthened the source-boundary verifier. Retail DGN/MNS presentation
+  remains gated on Saturn VDP1 command, CLUT/VRAM and owner capture.
+
 # Nexus FONT256 host-draw seam quarantine (2026-08-06)
 
 - ✅ Removed `nexus_v1_saturn_font.c` from the retail `firestaff_nexus`

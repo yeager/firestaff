@@ -22,7 +22,7 @@ is not claimed until the required VDP1/VDP2 capture evidence exists.
 | `include/nexus_v1_palette.h` | Palette/texture header (BGR555, texture atlas) |
 | `src/nexus/nexus_v1_palette.c` | Palette load/expand (STONE.BIN, BGR555->RGBA) |
 | `include/nexus_v1_rasterizer.h` | Rasterizer header (V1 320×200 fb, primitives, dungeon calls) |
-| `src/nexus/nexus_v1_rasterizer.c` | Rasterizer impl (Z-buffer, triangle/quad, textured primitives, door states, billboards, projectiles) |
+| `src/nexus/nexus_v1_rasterizer.c` | Probe-only CPU rasterizer; retail links `nexus_v1_rasterizer_runtime_noop.c` until VDP1 capture |
 | `include/nexus_v1_ui_surfaces.h` | UI/title surface header |
 | `src/nexus/nexus_v1_ui_surfaces.c` | UI surface loader + blitter |
 

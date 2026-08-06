@@ -4584,6 +4584,11 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_screen_text\\.c$")
 # from firestaff_nexus.  The source is added explicitly to its deterministic
 # parser/render probes below.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_saturn_font\\.c$")
+# The CPU textured rasterizer is a host-material fixture.  It can consume a
+# caller-supplied surface, but no current Saturn capture proves VDP1 command
+# order, CLUT/VRAM destination, or DGN/MNS ownership.  Production links the
+# lifecycle-safe no-op adapter; material probes add the fixture explicitly.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer\\.c$")
 # These modules are source-format/host-presentation probes only.  Their M11
 # callbacks copy decoded WARNING.BIN planes into a host framebuffer, which is
 # not a Saturn VDP capture and must not be exported by firestaff_nexus.
@@ -4602,6 +4607,8 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_spell_effects\\.c$")
 # Keep the procedural V2 renderer modules out of the production library, but
 # retain the explicit lifecycle implementations needed to satisfy M11.
 set(NEXUS_M11_RUNTIME_SOURCES
+    src/nexus/nexus_v1_rasterizer_runtime_noop.c
+    src/nexus/nexus_v1_saturn_font_runtime_noop.c
     src/nexus/nexus_v2_hud_runtime_noop.c
     src/nexus/nexus_v2_lighting.c
     src/nexus/nexus_v2_lighting_runtime.c
@@ -35578,6 +35585,7 @@ if(BUILD_TESTING)
     # remapping, transparent texel clipping and no-flat-fallback behavior.
 add_executable(test_nexus_v1_dgn_material_raster
         tests/test_nexus_v1_dgn_material_raster.c
+        src/nexus/nexus_v1_rasterizer.c
         src/shared/asset_find_by_hash.c
     )
     target_link_libraries(test_nexus_v1_dgn_material_raster PRIVATE
