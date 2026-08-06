@@ -24776,6 +24776,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             Theron_V1_BootStartupFullStartReceipt full_start;
             Theron_StartupActionHostReceipt receipt;
 
+            /* Keep the failure path deterministic: the receipt is consumed
+             * below even when rebuilding the full-start package fails. */
+            theron_v1_startup_action_host_receipt_init(&receipt);
+
             if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
                 state->theronState.startup_title_animation_tick <
                     (M11_THERON_STARTUP_TITLE_FRAME_COUNT *
@@ -25370,6 +25374,8 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
     Theron_V1_BootStartupFullStartReceipt full_start;
     Theron_StartupActionHostReceipt receipt;
 
+    theron_v1_startup_action_host_receipt_init(&receipt);
+
     if (!state ||
         state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02 ||
         state->theronState.startup_phase == THERON_STARTUP_PHASE_IN_DUNGEON ||
@@ -25381,10 +25387,6 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
      * exists; that is an in-menu admission boundary, not a request to leave
      * the Theron launcher.  Let the boot receipt publish the precise status
      * and keep the user on the Soul Room screen. */
-    if (!m11_theron_startup_has_verified_runtime_surfaces(state)) {
-        m11_set_status(state, "STARTUP", "TRACK02 ATLAS ROUTES INVALID");
-        return M11_GAME_INPUT_RETURN_TO_MENU;
-    }
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
         state->theronState.startup_title_animation_tick <
             (M11_THERON_STARTUP_TITLE_FRAME_COUNT *
