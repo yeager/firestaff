@@ -1132,6 +1132,12 @@ level or consumer bindings.
   back to PC34 when the receipt is absent. Japanese JDM remains blocked from
   this path because its pixel/TBIOS plan is not yet decoded. The native
   `DRAW_DMENU`/`DYNAMENU` menu and FM CD-audio handoff remain open.
+  2026-08-06: the authenticated English EDM load image now also supplies the
+  exact 44-entry native action-label stream at `DYNAMENU+8` (including the
+  duplicate `STAB` and `X` entries). M11 consumes those receipt-owned labels
+  for an English FM Towns session; it no longer leaks the generic PC34 table
+  into the FM action rows. This closes label ownership only, not native
+  TMENU/DYNAMENU mouse/input or pixel/TBIOS rendering.
   2026-08-06: `dm1_v1_fmtowns_title` now composes the real GRAPHICS.DAT
   graphic-1 title frames from the EDM.EXP receipt: PRESENTS, the native
   18-frame reverse zoom (48x12 through 320x80) and TITLE_MASTER. M11 now

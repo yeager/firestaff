@@ -38658,6 +38658,15 @@ static const char *m11_action_name_for_state(
         return csb_v1_runtime_action_name_c699(
             profile ? &profile->runtime : NULL, action_index);
     }
+    /* FM Towns EDM's DRAW_DMENU indexes the authenticated native string
+     * table at load-image + 0x24194.  Consume that receipt for the selected
+     * English FM runtime; do not let a PC34/CSB label table leak into it. */
+    if (state && state->dm1FmtownsStartupReceiptValid &&
+        state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN &&
+        action_index < state->dm1FmtownsStartupReceipt.game_action_name_count &&
+        state->dm1FmtownsStartupReceipt.game_action_names[action_index][0] != '\0') {
+        return state->dm1FmtownsStartupReceipt.game_action_names[action_index];
+    }
     return M11_GameView_GetActionName(action_index);
 }
 

@@ -55324,6 +55324,15 @@ alcove runtime and archive-media tests passed (4/4).
   68-byte Shift-JIS pool from `0x11628`. The receipt keeps the Japanese text
   as original bytes and does not manufacture translated host labels. English
   and Japanese real-media handoff tests pass.
+
+# DM1 FM Towns native action-label consumer (2026-08-06)
+
+- ✅ The authenticated English EDM load image now verifies and retains all 44
+  native `DYNAMENU+8` action labels, including source duplicates such as
+  `STAB` and `X`. M11 uses this receipt-owned stream for English FM Towns
+  action rows instead of borrowing the generic PC34 table. The focused real
+  cache startup test verifies `PUNCH`, `WAR CRY` and `FUSE`; native TMENU/
+  DYNAMENU input and pixel/TBIOS rendering remain separate TODO items.
 # Nexus level-bound consistency (2026-08-06)
 
 - ✅ Nexus sound-bank loading and mechanics level admission now use the

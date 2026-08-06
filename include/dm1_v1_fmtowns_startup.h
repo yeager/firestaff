@@ -57,6 +57,11 @@ typedef struct {
     uint16_t game_title_swoosh_rect[4];
     uint16_t game_title_presents_rect[4];
     uint16_t game_title_master_rect[4];
+    /* EDM's native DRAW_DMENU indexes this source string table directly.
+     * Keep the admitted bytes with the startup receipt so the host action
+     * rows cannot silently fall back to a different game's labels. */
+    uint16_t game_action_name_count;
+    char game_action_names[44][16];
     uint32_t game_p3_header_size;
     uint32_t game_p3_load_image_offset;
     uint32_t game_p3_load_image_size;

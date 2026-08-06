@@ -283,6 +283,38 @@ static int parse_title_animation_plan(const uint8_t *program, size_t size,
     return 1;
 }
 
+static int parse_native_action_names(const uint8_t *program, size_t size,
+                                     uint32_t load_offset, uint32_t load_size,
+                                     DM1_V1_FmtownsStartupReceipt *out) {
+    static const char *const k_names[44] = {
+        "N", "BLOCK", "CHOP", "X", "BLOW HORN", "FLIP", "PUNCH",
+        "KICK", "WAR CRY", "STAB", "CLIMB DOWN", "FREEZE LIFE", "HIT",
+        "SWING", "STAB", "THRUST", "JAB", "PARRY", "HACK", "BERZERK",
+        "FIREBALL", "DISPELL", "CONFUSE", "LIGHTNING", "DISRUPT", "MELEE",
+        "X", "INVOKE", "SLASH", "CLEAVE", "BASH", "STUN", "SHOOT",
+        "SPELLSHIELD", "FIRESHIELD", "FLUXCAGE", "HEAL", "CALM", "LIGHT",
+        "WINDOW", "SPIT", "BRANDISH", "THROW", "FUSE"
+    };
+    size_t cursor;
+    size_t i;
+    if (!program || !out || load_offset > size || load_size > size - load_offset ||
+        load_size < 0x24194u) return 0;
+    cursor = (size_t)load_offset + 0x24194u;
+    for (i = 0; i < 44u; ++i) {
+        size_t length = strlen(k_names[i]);
+        if (length >= sizeof(out->game_action_names[i]) ||
+            !bytes_equal_at(program, size, cursor,
+                            (const uint8_t *)k_names[i], length) ||
+            cursor + length >= size || program[cursor + length] != 0u) {
+            return 0;
+        }
+        memcpy(out->game_action_names[i], k_names[i], length + 1u);
+        cursor += length + 1u;
+    }
+    out->game_action_name_count = 44u;
+    return 1;
+}
+
 /* Phar Lap's real SYM1 table is a compact sequence of
  * [name-length][name][DWORD value][WORD type] records.  The first PROGRAM
  * record occupies the format's fixed preamble; the regular sequence starts
@@ -444,6 +476,11 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
     out->game_menu_icons_entry = menuIcons.value;
     out->game_cd_level_song_entry = cdLevelSong.value;
     if (english && !parse_title_animation_plan(
+            game_program, game_program_size, gameLoadOffset, gameLoadSize, out)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
+    if (english && !parse_native_action_names(
             game_program, game_program_size, gameLoadOffset, gameLoadSize, out)) {
         memset(out, 0, sizeof(*out));
         return 0;
