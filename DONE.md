@@ -55,6 +55,13 @@
   regression already compiles the source explicitly; it loads no original DM1
   data and has no M11/runtime caller.
 
+# DM1 chest partial-mask synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only partial-mask chest swap model from M10. It
+  fabricates its chain, item values and slot masks locally, reads no original
+  DM1 input and has no M11/runtime caller; its direct regression now compiles
+  the source explicitly.
+
 # DM1 chest scroll-resurrect-confirmation synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C040/C545 confirmation fixture from M10 and

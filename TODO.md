@@ -617,11 +617,6 @@
   Keep the fixture out of production and retain original-data capture work
   for full D2C pixel parity.
 
-- **DM1-CHEST-PARTIAL-MASK-SYNTHETIC-AUDIT:** The chest partial-mask swap
-  helper is a contract-only synthetic regression with no real asset, savegame,
-  pixel or production-runtime input. Keep it test-only until the live chest
-  transaction and original masked bitmap owner are bound.
-
 - **DM1-CHEST-PARTIAL-DROP-SYNTHETIC-AUDIT:** The partial-drop-to-floor probe
   creates its chest stack, leader hand, floor link and coordinates locally.
   It has no M11/runtime caller and consumes no original DM1 save, dungeon or

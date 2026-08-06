@@ -4549,6 +4549,12 @@ list(REMOVE_ITEM M10_SOURCES
 # target instead of the production M10 archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat.c")
+# `dm1_v1_chest_partial_mask_swap_pc34_compat.c` is the sibling contract-only
+# chest model: it fabricates the C537..C544 chain, item values and slot masks
+# in local state, reads no original data and has no M11/runtime caller. Keep
+# it in the explicit regression target rather than the production M10 archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_partial_mask_swap_pc34_compat.c")
 # `dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c` is a
 # contract-only probe. It manufactures its chest stack, leader hand, floor
 # link and coordinates locally, reads no original save/dungeon/graphics data,
@@ -53804,7 +53810,9 @@ add_executable(test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_comp
 target_include_directories(test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat COMMAND test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat)
-add_executable(test_dm1_v1_chest_partial_mask_swap_pc34_compat tests/test_dm1_v1_chest_partial_mask_swap_pc34_compat.c)
+add_executable(test_dm1_v1_chest_partial_mask_swap_pc34_compat
+    tests/test_dm1_v1_chest_partial_mask_swap_pc34_compat.c
+    src/dm1/dm1_v1_chest_partial_mask_swap_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_partial_mask_swap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_partial_mask_swap_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_partial_mask_swap_pc34_compat COMMAND test_dm1_v1_chest_partial_mask_swap_pc34_compat)
