@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D2C-F0115-FRONT-REAR-SYNTHETIC-AUDIT:** This door-pass helper
+  hard-codes cell orders, zones and synthetic pixel composition. It reads no
+  original DM1 data and has no M11/runtime caller; retain it only as an
+  explicit ReDMCSB regression until a source-bound D2C door-pass consumer is
+  recovered.
+
 - **DM1-MINIMAP-SYNTHETIC-BOUNDARY:** The corner minimap is now blocked for
   authenticated PC34 DM1 source sessions because it is a host-drawn
   diagnostic surface, not an original game display. Keep it available only

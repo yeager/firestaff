@@ -1,3 +1,12 @@
+# DM1 D2C F0115 front-rear synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the D2C F0115 front/rear door-pass model from M10. It hard-codes
+  cell orders, zones and synthetic pixel composition, reads no original DM1
+  data and has no M11/runtime caller; its explicit ReDMCSB regression now
+  compiles the source directly.
+- ✅ Verification: `test_dm1_v1_viewport_d2c_f0115_front_rear_overlap_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM2 GDAT startup setup-word admission (2026-08-06)
 
 - ✅ The boot-owned v4/v5 GDAT loader now retains the exact
