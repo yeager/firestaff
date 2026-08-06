@@ -56130,3 +56130,12 @@ alcove runtime and archive-media tests passed (4/4).
   platform branches. The retail `T_OAK2.EXE` and `OAK2USR.DIC` do not prove a
   game-owned C06 bitmap font, so Japanese Utility drawing remains correctly
   fail-closed instead of borrowing a host font or an unrelated system file.
+
+# 2026-08-06 CMake DM2 world-state probe dependencies
+
+- ✅ Restored the two direct source dependencies of `probe_dm2_v1_world_state`:
+  the FM Towns animation-stream parser used by boot and the champion-stat
+  bridge used by the runtime. This resolves the identical undefined-symbol
+  failures reported by the macOS, Windows and Linux CMake jobs.
+- Verification: clean Release configuration, focused probe link and the
+  registered `dm2_v1_world` CTest pass locally.

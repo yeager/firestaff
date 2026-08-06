@@ -20226,6 +20226,7 @@ endif()
         src/dm2/dm2_v1_save_load.c
         src/dm2/dm2_v1_glob_var.c
         src/dm2/dm2_v1_boot.c
+        src/dm2/dm2_v1_fmtowns_anim_stream.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_weather_gdat.c
@@ -20238,6 +20239,7 @@ endif()
         src/dm2/dm2_v1_game.c
         src/dm2/dm2_v1_shop.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_stat_bridge.c
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c
