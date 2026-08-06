@@ -2791,6 +2791,32 @@ static int m11_dm1_selected_launch_mark_failed(void* user) {
     return 1;
 }
 
+/* The HMA-240 FM Towns executable owns DO_TITLE_ANIMATION and DYNAMENU.
+ * Its P3/TBIOS renderer has not been decoded yet, so it must never enter
+ * the PC34 SWSH -> TITLE -> ENTRANCE transaction merely because both games
+ * share the dm1 catalog slot.  The generic route still opens the selected,
+ * hash-verified Towns data; it just leaves native presentation unclaimed.
+ * See dm1_v1_fmtowns_startup.c and TODO DM1-FMTOWNS-STARTUP-ANIMATION-MENU. */
+static int m11_selected_dm1_is_fmtowns(const M12_StartupMenuState* menuState,
+                                       const M12_MenuEntry* entry) {
+    const M12_AssetVersionStatus* version;
+    int versionIndex;
+
+    if (!menuState || !entry || !entry->gameId ||
+        strcmp(entry->gameId, "dm1") != 0) {
+        return 0;
+    }
+    versionIndex = menuState->gameOptions[0].versionIndex;
+    if (versionIndex < 0) {
+        return 0;
+    }
+    version = M12_AssetStatus_GetVersion(&menuState->assetStatus, "dm1",
+                                         (size_t)versionIndex);
+    return version && version->versionId &&
+           (strcmp(version->versionId, "fmtowns-en") == 0 ||
+            strcmp(version->versionId, "fmtowns-ja") == 0);
+}
+
 static int m11_open_requested_launch(M11_GameViewState* gameView,
                                      M12_StartupMenuState* menuState,
                                      uint32_t* idleAccumulatorMs,
@@ -2858,7 +2884,10 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
         m11_dm1_selected_launch_mark_failed;
     launchEntry = M12_StartupMenu_GetEntry(menuState, menuState->activatedIndex);
     dm1RouteFacts.selected_game_id =
-        (launchEntry && launchEntry->gameId) ? launchEntry->gameId : NULL;
+        m11_selected_dm1_is_fmtowns(menuState, launchEntry)
+            ? "dm1-fmtowns"
+            : ((launchEntry && launchEntry->gameId) ? launchEntry->gameId
+                                                     : NULL);
     if (!dm1_v1_startup_selected_launch_route_receipt_pc34(
             &dm1RouteFacts,
             &dm1RouteReceipt)) {

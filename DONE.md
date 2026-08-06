@@ -180,6 +180,14 @@
 
 # DM1 production placeholder re-audit (2026-08-06)
 
+- ✅ DM1 FM Towns no longer borrows the PC34 startup presentation. A selected
+  `fmtowns-en` or `fmtowns-ja` edition is routed around the PC34
+  `SWSH -> TITLE -> ENTRANCE` transaction and opens only its selected,
+  hash-verified Towns payload. This is intentionally fail-closed for native
+  presentation: `EDM.EXP`/`JDM.EXP` remain the sole owners of title animation
+  and `TMENU.EXP` of the menu until their P3/TBIOS rendering, timing and input
+  are decoded. Verification: `test_dm1_v1_startup_intro_state_machine_gate`.
+
 - ✅ DM1 FM Towns discovery now admits the real `Dungeon-Master_FM-Towns_JA-EN.zip`
   only after the original MODE1/2048 ISO yields the registered English or
   Japanese `GRAPHICS.DAT` + `DUNGEON.DAT` MD5 pair. Required-file rows preserve

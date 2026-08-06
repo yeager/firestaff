@@ -982,6 +982,15 @@ static void check_dm1_launch_path_bypass_contract(void) {
                  route_receipt.use_dm1_transaction == 0 &&
                  route_receipt.use_generic_launch == 1,
              1);
+    route_facts.selected_game_id = "dm1-fmtowns";
+    expect_i("FM Towns selected launch does not borrow PC34 presentation",
+             dm1_v1_startup_selected_launch_route_receipt_pc34(&route_facts,
+                                                               &route_receipt) &&
+                 route_receipt.handled == 1 &&
+                 route_receipt.use_dm1_transaction == 0 &&
+                 route_receipt.use_generic_launch == 1 &&
+                 route_receipt.requires_source_visible_intro == 0,
+             1);
     route_facts.selected_game_id = NULL;
     expect_i("NULL selected launch route stays generic",
              dm1_v1_startup_selected_launch_route_receipt_pc34(&route_facts,

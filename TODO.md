@@ -952,7 +952,11 @@ level or consumer bindings.
   because its verified P3 image has none.
   Remaining work is decoding and consuming the FM Towns-owned
   executable startup animation and menu in M11, with original timing/audio/
-  input capture. Do not reuse the PC34 `TITLE`/`SWOOSH` path for this edition.
+  input capture. 2026-08-06: M11 now routes a selected FM Towns edition
+  around the PC34 `SWSH -> TITLE -> ENTRANCE` transaction. It opens only the
+  selected hash-verified Towns data while native title/menu playback remains
+  explicitly unclaimed; do not restore the PC34 path as a presentation
+  fallback.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1

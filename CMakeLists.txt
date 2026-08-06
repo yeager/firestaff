@@ -22527,6 +22527,27 @@ endif()
         LABELS "dm1;fmtowns;startup;menu;real_data;skip_safe"
     )
 
+    add_executable(test_dm1_v1_fmtowns_pc34_presentation_boundary
+        tests/test_dm1_v1_fmtowns_pc34_presentation_boundary.c
+    )
+    target_include_directories(test_dm1_v1_fmtowns_pc34_presentation_boundary PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_fmtowns_pc34_presentation_boundary PRIVATE
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_fmtowns_pc34_presentation_boundary
+            PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_fmtowns_pc34_presentation_boundary
+        COMMAND test_dm1_v1_fmtowns_pc34_presentation_boundary
+    )
+    set_tests_properties(dm1_v1_fmtowns_pc34_presentation_boundary PROPERTIES
+        LABELS "dm1;fmtowns;startup;presentation"
+    )
+
     add_executable(test_firestaff_zip_extract
         tests/test_firestaff_zip_extract.c
     )
