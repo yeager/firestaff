@@ -66,3 +66,39 @@ const Theron_LevelDescriptor *theron_v1_level_descriptor(unsigned int index) {
 size_t theron_v1_level_descriptor_count(void) {
     return THERON_LEVEL_DESCRIPTOR_COUNT;
 }
+
+int theron_v1_level_descriptor_read_us_track02(
+    const uint8_t *user_data,
+    size_t user_data_size,
+    Theron_LevelDescriptor *out,
+    size_t out_count) {
+    size_t i;
+
+    if (!user_data || !out || out_count < THERON_LEVEL_DESCRIPTOR_COUNT ||
+        THERON_LEVEL_DESCRIPTOR_USER_DATA_OFFSET > user_data_size ||
+        THERON_LEVEL_DESCRIPTOR_BYTES >
+            user_data_size - THERON_LEVEL_DESCRIPTOR_USER_DATA_OFFSET) {
+        return 0;
+    }
+
+    for (i = 0; i < THERON_LEVEL_DESCRIPTOR_COUNT; ++i) {
+        const uint8_t *p = user_data +
+            THERON_LEVEL_DESCRIPTOR_USER_DATA_OFFSET + i * 6u;
+        Theron_LevelDescriptor parsed = {
+            p[0], p[1], (uint16_t)p[2] | ((uint16_t)p[3] << 8), p[4], p[5]
+        };
+
+        /* The table is source-locked to the US BIN receipt above.  Reject a
+         * plausible-looking table from an unproven offset or another dump. */
+        if (parsed.flags != g_descriptors[i].flags ||
+            parsed.sector_count != g_descriptors[i].sector_count ||
+            parsed.data_size != g_descriptors[i].data_size ||
+            parsed.reserved != g_descriptors[i].reserved ||
+            parsed.cumulative_sector_offset !=
+                g_descriptors[i].cumulative_sector_offset) {
+            return 0;
+        }
+        out[i] = parsed;
+    }
+    return 1;
+}

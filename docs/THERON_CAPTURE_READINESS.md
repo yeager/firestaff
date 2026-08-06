@@ -8,7 +8,8 @@ the dungeon handoff is not yet proven.
 
 Theron's Quest is not yet represented by README screenshots. The current public
 status should stay clear: Firestaff can hash-verify JP/US Track 02 data, lock
-raw bank-anchor offsets, validate the 9-word descriptor-table shape, and reach
+raw bank-anchor offsets, read the authenticated US 53-entry descriptor table
+from its real MODE1 user-data offset, and reach
 the M11 Theron runtime, but per-entry semantic Track 02 dungeon-table binding,
 broader loader parity, runtime playability proof, and reviewed screenshot
 promotion are still active work.
@@ -37,6 +38,11 @@ The strongest current proof is:
   the 9-word stride sequence (entries 0x0020..0x2020, stride 0x0400) without
   claiming per-entry semantic type, dungeon-level binding, or loader
   handoff.
+- `theron_v1_level_descriptor`: reads all 53 six-byte descriptor records from
+  authenticated US Track 02 user data at UD `0x619900` and rejects a bytewise
+  mismatch against the source-locked table. This is a real-data receipt, not
+  a decoder for the referenced graphics blocks and not proof of dungeon-level,
+  object, tile-bank or palette semantics.
 - `theron_v1_runtime_screenshot_promotion_gate`: a bounded provenance gate
   that audits every row of the readiness manifest against an explicit
   README-eligibility contract (real Firestaff runtime capture, no

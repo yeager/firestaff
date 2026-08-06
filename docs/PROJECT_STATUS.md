@@ -9,7 +9,7 @@ source audits and capture receipts remain in the linked game documentation.
 | Chaos Strikes Back | Active hardening | Source-locked engine slices, dungeon model, mechanics, startup and utility/import paths | End-to-end real-data runtime proof |
 | Dungeon Master II: Skullkeep | Active hardening | Boot/profile, GDAT utilities, V2 presentation, lighting, HUD, movement and controller slices | V1 dungeon/render/mechanics parity with real assets |
 | DM Nexus | Active real-data bring-up | Saturn DMDF/DGN data, world/render/save/mechanics slices and V2 presentation | Positive real-asset runtime handoff and full playability |
-| Theron's Quest | Active real-media bring-up | JP/US Track 02 identity, parser, rendering, mechanics, progression, save/load and capture instrumentation | Game-owned Track 02 dungeon handoff, object/level records and real bitmap/palette bindings |
+| Theron's Quest | Active real-media bring-up | JP/US Track 02 identity, parser, authenticated US descriptor receipt, rendering, mechanics, progression, save/load and capture instrumentation | Game-owned Track 02 dungeon handoff, object records, semantic level decoding and real bitmap/palette bindings |
 
 ## Shared presentation priority
 

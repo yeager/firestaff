@@ -19,6 +19,11 @@
   2026-08-06 receipt-integrity update: source occurrences now retain a 16-bit
   category index, matching the 512-entry Track 02 category bound. Category
   to host item-kind/index ownership remains intentionally unbound.
+  2026-08-06 descriptor receipt update: the real US Track 02 MODE1 user-data
+  table at UD 0x619900 is now read and byte-verified as 53 six-byte records
+  from the authenticated BIN. This closes only the descriptor-byte receipt;
+  the referenced graphics blocks, object records, tile bank, palette and
+  game-owned consumer handoff remain blocked.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

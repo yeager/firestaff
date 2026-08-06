@@ -135,11 +135,12 @@ original IWA source module names extracted from the binary.
 ### Theron's Quest (PC Engine)
 
 JP and US Track 02 provenance is hash-verified. The CD record chain,
-218-entry opaque asset manifest, startup envelope and SRM save boundary are
-covered by focused tests. A fresh authentic US Track 02 capture reaches the
+218-entry opaque asset manifest, startup envelope, authenticated 53-entry
+descriptor receipt and SRM save boundary are covered by focused tests. A fresh authentic US Track 02 capture reaches the
 System Card and BIOS CD-read path, but has not yet produced a game-owned
-`$E009` data read. Object records, later-level records, bitmap/palette binding
-and the real Track 02 dungeon handoff therefore remain open. See
+`$E009` data read. Object records, semantic later-level decoding,
+bitmap/palette binding and the real Track 02 dungeon handoff therefore remain
+open. See
 [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md).
 
 The cross-game status and evidence boundary are kept in

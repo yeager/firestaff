@@ -52093,6 +52093,15 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   procedural and `gpt-image-2` Theron art pack is rejected by production and
   remains available only to fixture/reference inspection. The focused asset
   test passes 36/36.
+
+# 2026-08-06 Theron US Track 02 descriptor receipt
+
+- ✅ The production Theron source layer now reads all 53 six-byte level
+  descriptor records from UD `0x619900` in the authenticated US Track 02
+  MODE1 user-data stream. The focused test extracts the real BIN sectors,
+  verifies the source-locked bytes and rejects mismatched tables. This closes
+  descriptor-byte provenance only; it does not infer graphics compression,
+  object IDs, tile-bank ownership, palette binding or dungeon handoff.
 # 2026-08-06 DM2 G1 champion-mirror source inventory
 
 - ✅ The canonical PC G1 `DUNGEON.DAT` now has a source-locked receipt for
