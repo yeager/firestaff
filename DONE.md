@@ -3,6 +3,12 @@
   `main` now retain the newest full matrix instead of queuing obsolete commits
   ahead of it; pull-request runs remain isolated by ref.
 
+- ✅ 2026-08-06 Theron descriptor-role probe path correction: the real US/JP
+  raw BIN role probe now discovers `theron/TQUS02.bin` and `theron/TQJP02.bin`
+  from the standard data root. It verifies all six raw descriptor anchors,
+  RTS/zero-fill boundaries and MODE1/2352 user-data bridges with `fail=0`;
+  unsupported/absent ISO compositions remain explicit skips.
+
 - ✅ 2026-08-06 Theron startup real-asset probe path correction: the receipt
   probe now discovers the supplied authentic `theron/TQJP02.bin` and
   `theron/TQUS02.bin` files instead of obsolete `theron-extras` filenames.

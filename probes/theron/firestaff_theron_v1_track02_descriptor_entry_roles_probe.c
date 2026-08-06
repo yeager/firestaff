@@ -869,7 +869,7 @@ static void probe_real_data_descriptor_offset_index_invariant(void) {
     }
 
     /* US raw BIN anchors. */
-    default_data_path("theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin",
+        default_data_path("theron/TQUS02.bin",
                       path);
     if (!file_exists(path)) {
         printf("SKIP US raw BIN descriptor-offset-index-invariant: no file\n");
@@ -901,7 +901,7 @@ static void probe_real_data_descriptor_offset_index_invariant(void) {
     }
 
     /* JP raw BIN anchors. */
-    default_data_path("theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin",
+        default_data_path("theron/TQJP02.bin",
                       path);
     if (!file_exists(path)) {
         printf("SKIP JP raw BIN descriptor-offset-index-invariant: no file\n");
@@ -973,7 +973,7 @@ int main(void) {
             label,
             THERON_TRACK02_MD5_US_BIN,
             "FIRESTAFF_THERON_TRACK02_US_BIN",
-            "theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin",
+            "theron/TQUS02.bin",
             g_us_bin_descriptor_offsets[i],
             5,
             1,
@@ -990,7 +990,7 @@ int main(void) {
             label,
             THERON_TRACK02_MD5_JP_BIN,
             "FIRESTAFF_THERON_TRACK02_JP_BIN",
-            "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin",
+            "theron/TQJP02.bin",
             g_jp_bin_descriptor_offsets[i],
             5,
             1,
