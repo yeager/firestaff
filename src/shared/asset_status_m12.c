@@ -282,7 +282,20 @@ static const char* const g_nexusArchiveNames[] = {
 static const M12_VersionSpec g_dm1Versions[] = {
     {"dm1", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_dm1GraphicsNames, "fa6b1aa29e191418713bf2cda93d962e", M12_ARCH_PC},
     {"dm1", "pc34-multi", "PC 3.4 Multilanguage", "PC 3.4 ML", g_dm1GraphicsNames, "f934d97e43e1ba6e5159839acbcd0611", M12_ARCH_PC},
-    {"dm1", "st12-en", "Atari ST 1.2 English", "ST 1.2 EN", g_dm1GraphicsNames, "9ce2eaf7a9e78620e3f17594437caffa", M12_ARCH_ATARI_ST}
+    {"dm1", "st10a-en", "Atari ST 1.0 English (December 8)", "ST 1.0a EN", g_dm1GraphicsNames, "b3cfd84e44cdf07ce2eeba47e87f772b", M12_ARCH_ATARI_ST},
+    {"dm1", "st10b-en", "Atari ST 1.0 English (December 11)", "ST 1.0b EN", g_dm1GraphicsNames, "7eee396993745e8af212f44d75ff6c1a", M12_ARCH_ATARI_ST},
+    {"dm1", "st11-en", "Atari ST 1.1 English", "ST 1.1 EN", g_dm1GraphicsNames, "5095a13692702235d2e74f6b2b1367a9", M12_ARCH_ATARI_ST},
+    {"dm1", "st12-en", "Atari ST 1.2 English", "ST 1.2 EN", g_dm1GraphicsNames, "9ce2eaf7a9e78620e3f17594437caffa", M12_ARCH_ATARI_ST},
+    {"dm1", "st12-de", "Atari ST 1.2 German", "ST 1.2 DE", g_dm1GraphicsNames, "2bdc5f431f84c0ece738f54dbd787c3b", M12_ARCH_ATARI_ST},
+    {"dm1", "st13-fr", "Atari ST 1.3 French", "ST 1.3 FR", g_dm1GraphicsNames, "0d7af44dd14f383464288abdcec76afc", M12_ARCH_ATARI_ST},
+    {"dm1", "fmtowns-en", "FM Towns English", "FM Towns EN", g_dm1GraphicsNames, "c10c512f63461ebe79b5ac365115b61b", M12_ARCH_FM_TOWNS},
+    {"dm1", "fmtowns-ja", "FM Towns Japanese", "FM Towns JP", g_dm1GraphicsNames, "edf47d7da5de8184604d6d80477ef01f", M12_ARCH_FM_TOWNS},
+    {"dm1", "amiga20-en", "Amiga 2.0 English", "Amiga 2.0 EN", g_dm1GraphicsNames, "6a2f135b53c2220f0251fa103e2a6e7e", M12_ARCH_AMIGA},
+    {"dm1", "amiga20-fr", "Amiga 2.0 French", "Amiga 2.0 FR", g_dm1GraphicsNames, "dd373954b3fb127db7387946131ea322", M12_ARCH_AMIGA},
+    {"dm1", "amiga20-de", "Amiga 2.0/2.2 German", "Amiga 2.x DE", g_dm1GraphicsNames, "0679e39da9dcc2e855cb33c6c64ddcb5", M12_ARCH_AMIGA},
+    {"dm1", "amiga21-en", "Amiga 2.1/2.2 English", "Amiga 2.x EN", g_dm1GraphicsNames, "b35931b55db649a1bd2d415b61b29801", M12_ARCH_AMIGA},
+    {"dm1", "amiga36-multi", "Amiga 3.6 Multilanguage", "Amiga 3.6 ML", g_dm1GraphicsNames, "7f9458e4a3972d06e649a6fa85a7f34b", M12_ARCH_AMIGA},
+    {"dm1", "amiga-demo-en", "Amiga Demo English", "Amiga Demo EN", g_dm1GraphicsNames, "491ca939f9abb33ceeb26619b841fe91", M12_ARCH_AMIGA}
 };
 
 static const M12_VersionSpec g_csbVersions[] = {
@@ -364,7 +377,7 @@ static const M12_GameVersionSpec g_games[] = {
 
 static const M12_RequiredFileSpec g_requiredFiles[] = {
     {"dm1", "graphics", "GRAPHICS.DAT", NULL, 1},
-    {"dm1", "dungeon", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6", 0},
+    {"dm1", "dungeon", "DUNGEON.DAT", "766450c940651fc021c92fe5d0d0b3a6;3dc0a932d0e0adfe59878f07c51700c5;fe098f70ce83cfe3f2333565093daf35", 0},
     {"csb", "graphics", "GRAPHICS.DAT", NULL, 1},
     /* The three hashes are PC/Atari/Amiga, FM Towns CDATA and FM Towns
      * CJDATA respectively.  A required-file MD5 can be a semicolon-separated

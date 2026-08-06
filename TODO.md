@@ -6,6 +6,14 @@
   Keep DataID/selector entries opaque until Saturn SLEV/SDDRVS event
   dispatch is captured; do not bind the host sound enum or start playback
   from inferred selectors.
+- **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
+  graphics hashes are now catalogued and discovered from STX/archives, but
+  the production M11 renderer still lacks the final source-bound IMG1/IMG2
+  interpretation after the Atari LZW record handoff. Keep these variants
+  launch-blocked for gameplay rather than routing their big-endian/LZW bytes
+  through the PC34 loader. FM Towns legacy IMAGE2 and Amiga legacy IMAGE2
+  graphics are handled by the new endian-aware DM1 cache path; their remaining
+  dungeon/save/input/media capture gaps stay separate.
 
 - **NEXUS-MNS-SATURN-RENDER-HANDOFF:** Retail MNS admission now validates
   DMDF block size plus MOTN/TEXT section envelopes, and the real corpus decodes

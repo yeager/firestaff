@@ -50961,3 +50961,16 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   exposes an unverified text offset or reads candidate ASCII/fill windows as
   codons. US text decoding is unchanged; JP text remains blocked until its
   actual source block and consumer are identified.
+- ✅ 2026-08-06 DM1 legacy platform graphics handoff: added a real
+  endian-aware legacy `GRAPHICS.DAT` container and IMAGE2 decoder for the
+  original FM Towns (little-endian) and Amiga (big-endian) DM1 releases.
+  `M11_AssetLoader` now validates the 575-record size tables, reads embedded
+  dimensions, decodes source pixels, and caches them through the normal M11
+  asset slots instead of treating legacy bytes as PC34 IMG3. DM1 M12 version
+  inventory now includes the known FM Towns, Amiga, and Atari ST graphic
+  hashes; the two verified FM Towns DUNGEON.DAT hashes are accepted alongside
+  PC34. Verification: `test_dm1_v1_legacy_graphics_dat` passes both endian
+  fixtures, `firestaff_m11` builds, and the existing real PC34 G0194 gate
+  remains 377/377. Atari ST is intentionally documented as discovery-only
+  until its LZW-to-IMG1/IMG2 pixel handoff is complete; no synthetic Atari
+  gameplay path was enabled.

@@ -1,0 +1,32 @@
+#ifndef DM1_V1_LEGACY_GRAPHICS_DAT_H
+#define DM1_V1_LEGACY_GRAPHICS_DAT_H
+
+#include <stddef.h>
+#include <stdint.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* DM1 legacy GRAPHICS.DAT is the pre-0x8001 container used by FM Towns
+ * (little-endian) and Amiga (big-endian).  The table stores compressed and
+ * expanded record sizes; each record starts with an endian-native width and
+ * height followed by the IMAGE2 byte stream. */
+int dm1_v1_legacy_graphics_probe(const uint8_t *data, size_t size,
+                                 int big_endian);
+
+int dm1_v1_legacy_graphics_query(const uint8_t *data, size_t size,
+                                 int big_endian, uint16_t graphic_index,
+                                 uint16_t *out_width, uint16_t *out_height);
+
+int dm1_v1_legacy_graphics_decode(const uint8_t *data, size_t size,
+                                  int big_endian, uint16_t graphic_index,
+                                  uint8_t *indexed_pixels,
+                                  size_t pixel_capacity,
+                                  uint16_t *out_width, uint16_t *out_height);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif

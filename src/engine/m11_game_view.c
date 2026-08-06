@@ -3900,13 +3900,24 @@ static int m11_apply_dm1_startup_graphics_bind_receipt(
      * first, then fall back to in-memory FM Towns disc image buffer. */
     if (!M11_AssetLoader_Init(&state->assetLoader,
                               receipt->graphics_dat_path)) {
+        /* FM Towns and Amiga DM1 keep the original legacy IMAGE2 container;
+         * never reinterpret it as PC34 IMG3.  The loader validates the full
+         * record tables and selects endian order from the platform probe. */
+        int legacyLoaded =
+            M11_AssetLoader_InitDm1LegacyFromFile(
+                &state->assetLoader, receipt->graphics_dat_path, 0) ||
+            M11_AssetLoader_InitDm1LegacyFromFile(
+                &state->assetLoader, receipt->graphics_dat_path, 1);
         if (state->fmtownsGraphicsDat && state->fmtownsGraphicsDatSize > 0) {
-            if (!M11_AssetLoader_InitFromBuffer(&state->assetLoader,
+            if (!legacyLoaded && !M11_AssetLoader_InitFromBuffer(&state->assetLoader,
                     state->fmtownsGraphicsDat,
-                    (long)state->fmtownsGraphicsDatSize)) {
+                    (long)state->fmtownsGraphicsDatSize) &&
+                !M11_AssetLoader_InitDm1LegacyFromBuffer(
+                    &state->assetLoader, state->fmtownsGraphicsDat,
+                    (long)state->fmtownsGraphicsDatSize, 0)) {
                 return 0;
             }
-        } else {
+        } else if (!legacyLoaded) {
             return 0;
         }
     }

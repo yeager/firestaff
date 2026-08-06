@@ -53,6 +53,13 @@ typedef struct {
 
     unsigned short graphicCount; /* total graphics in file */
 
+    /* DM1 legacy IMG2 source.  Kept separate from the ReDMCSB PC34 IMG3
+     * state so a legacy record can never be misread as a PC record. */
+    unsigned char *legacyData;
+    long legacyDataSize;
+    int legacyBigEndian;
+    int legacyDm1;
+
     /* Cache */
     M11_AssetSlot cache[M11_ASSET_CACHE_SLOTS];
     int cacheUsed;
@@ -67,6 +74,15 @@ int M11_AssetLoader_Init(M11_AssetLoader* loader, const char* graphicsDatPath);
    Returns 1 on success, 0 on failure. */
 int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
                                    const unsigned char *data, long size);
+
+/* Initialize from a DM1 legacy FM Towns (LE) or Amiga (BE) GRAPHICS.DAT.
+ * The input is copied and therefore need not outlive the loader. */
+int M11_AssetLoader_InitDm1LegacyFromBuffer(M11_AssetLoader* loader,
+                                            const unsigned char *data,
+                                            long size, int big_endian);
+int M11_AssetLoader_InitDm1LegacyFromFile(M11_AssetLoader* loader,
+                                          const char *graphicsDatPath,
+                                          int big_endian);
 
 /* Shut down and free all cached data. */
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader);

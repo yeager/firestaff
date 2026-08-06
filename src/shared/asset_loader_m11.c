@@ -16,6 +16,7 @@
 #include "memory_graphics_dat_header_pc34_compat.h"
 #include "memory_frontend_pc34_compat.h"
 #include "graphics_dat_entry_classify_pc34_compat.h"
+#include "dm1_v1_legacy_graphics_dat.h"
 
 #include <stdlib.h>
 #include <stdint.h>
@@ -115,11 +116,54 @@ int M11_AssetLoader_InitFromBuffer(M11_AssetLoader* loader,
     return 1;
 }
 
+int M11_AssetLoader_InitDm1LegacyFromBuffer(M11_AssetLoader* loader,
+                                             const unsigned char *data,
+                                             long size, int big_endian) {
+    unsigned char *copy;
+    if (!loader || !data || size <= 0 ||
+        !dm1_v1_legacy_graphics_probe(data, (size_t)size, big_endian)) return 0;
+    copy = (unsigned char *)malloc((size_t)size);
+    if (!copy) return 0;
+    memcpy(copy, data, (size_t)size);
+    memset(loader, 0, sizeof(*loader));
+    loader->legacyData = copy;
+    loader->legacyDataSize = size;
+    loader->legacyBigEndian = big_endian ? 1 : 0;
+    loader->legacyDm1 = 1;
+    loader->graphicCount = 575u;
+    loader->initialized = 1;
+    snprintf(loader->graphicsDatPath, sizeof(loader->graphicsDatPath),
+             "(DM1 legacy %s, %ld bytes)", big_endian ? "Amiga" : "FM Towns", size);
+    return 1;
+}
+
+int M11_AssetLoader_InitDm1LegacyFromFile(M11_AssetLoader* loader,
+                                           const char *graphicsDatPath,
+                                           int big_endian) {
+    FILE *file;
+    long size;
+    unsigned char *data;
+    int ok;
+    if (!loader || !graphicsDatPath || !graphicsDatPath[0] ||
+        !(file = fopen(graphicsDatPath, "rb"))) return 0;
+    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0L ||
+        fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return 0; }
+    data = (unsigned char *)malloc((size_t)size);
+    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
+        free(data); fclose(file); return 0;
+    }
+    fclose(file);
+    ok = M11_AssetLoader_InitDm1LegacyFromBuffer(loader, data, size, big_endian);
+    free(data);
+    return ok;
+}
+
 void M11_AssetLoader_Shutdown(M11_AssetLoader* loader) {
     int i;
     if (!loader) {
         return;
     }
+    free(loader->legacyData);
     for (i = 0; i < M11_ASSET_CACHE_SLOTS; ++i) {
         if (loader->cache[i].loaded && loader->cache[i].pixels) {
             free(loader->cache[i].pixels);
@@ -150,6 +194,11 @@ int M11_AssetLoader_QuerySize(const M11_AssetLoader* loader,
     const struct MemoryGraphicsDatRuntimeState_Compat* rt;
     if (!loader || !loader->initialized) {
         return 0;
+    }
+    if (loader->legacyDm1) {
+        return dm1_v1_legacy_graphics_query(loader->legacyData,
+            (size_t)loader->legacyDataSize, loader->legacyBigEndian,
+            (uint16_t)graphicIndex, outWidth, outHeight);
     }
     rt = (const struct MemoryGraphicsDatRuntimeState_Compat*)loader->runtimeState;
     if (graphicIndex >= rt->graphicCount) {
@@ -255,6 +304,29 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
     slot = m11_find_cached(loader, graphicIndex);
     if (slot) {
         return slot;
+    }
+
+    if (loader->legacyDm1) {
+        uint16_t legacyWidth = 0u;
+        uint16_t legacyHeight = 0u;
+        size_t capacity = 1024u * 1024u;
+        unsigned char *legacyPixels = (unsigned char *)malloc(capacity);
+        int decoded = legacyPixels && dm1_v1_legacy_graphics_decode(
+            loader->legacyData, (size_t)loader->legacyDataSize,
+            loader->legacyBigEndian, (uint16_t)graphicIndex, legacyPixels,
+            capacity, &legacyWidth, &legacyHeight);
+        if (!decoded) {
+            free(legacyPixels);
+            return NULL;
+        }
+        if (!M11_AssetLoader_InstallDecodedPixels(loader, graphicIndex,
+                                                   legacyPixels, legacyWidth,
+                                                   legacyHeight)) {
+            free(legacyPixels);
+            return NULL;
+        }
+        free(legacyPixels);
+        return m11_find_cached(loader, graphicIndex);
     }
 
     rt = (const struct MemoryGraphicsDatRuntimeState_Compat*)loader->runtimeState;

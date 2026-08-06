@@ -4683,6 +4683,7 @@ set(M11_SOURCES
     src/csb/csb_v1_amiga_graphics_dat.c
     src/csb/csb_v1_amiga_titl_dat.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
+    src/dm1/dm1_v1_legacy_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
     src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_fmtowns_anm.c
@@ -52771,6 +52772,12 @@ add_executable(test_dm1_v1_fmtowns_graphics_dat
 )
 target_include_directories(test_dm1_v1_fmtowns_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_graphics_dat COMMAND test_dm1_v1_fmtowns_graphics_dat)
+
+add_executable(test_dm1_v1_legacy_graphics_dat
+    tests/test_dm1_v1_legacy_graphics_dat.c
+    src/dm1/dm1_v1_legacy_graphics_dat.c)
+target_include_directories(test_dm1_v1_legacy_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_legacy_graphics_dat COMMAND test_dm1_v1_legacy_graphics_dat)
 
 add_executable(test_dm1_v1_fmtowns_iso9660
     tests/test_dm1_v1_fmtowns_iso9660.c
