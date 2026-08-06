@@ -84,6 +84,11 @@
   and `$3004/$3005` destination plus `$3006/$3007` produced-length handoff
   (FNV-1a `46360d97`) for both retail variants. This is a static generic
   contract, not a level-specific Track 02 consumer receipt.
+  2026-08-06 regional-descriptor update: the authenticated 53×6-byte table
+  at logical UD `0x619900` now has a variant-aware receipt. US records are
+  admitted with FNV-1a `7aa82bc7`; the authentic JP span is recorded as
+  `ZERO_FILL` with FNV-1a `63d8ddfd` and cannot fall through the US decoder.
+  Referenced payloads and their executing consumer remain blocked.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size
@@ -1637,9 +1642,12 @@
   ReDMCSB `ANIM.C` F1181 owns that read. The distinct Amiga GRF1 decoder now
   expands the real `EN` base image through `EXPAND.C` F0466; its final command
   intentionally consumes six bytes from the following `DL` record because
-  the source expander receives no ByteCount. `DL` delta expansion remains
-  blocked until its source buffer-copy/flip path is likewise bound; do not
-  route it through the PC IMG2/IMG3 decoder or fill unexpanded pixels.
+  the source expander receives no ByteCount. The first 30 complete `DL`
+  streams now apply through the source buffer-copy/flip model. The final
+  282-VBL `DL` remains fail-closed: its GRF1 stream reaches the end of the
+  on-disk FTL item before filling the destination, and the allocation padding
+  used by the original has not yet been independently recovered. Do not route
+  it through PC IMG2/IMG3 or invent zero-padding for missing source bytes.
 
 - **DM2-M11-GAME-LOAD-ORIGINAL-HANDOFF:** M11 now keeps New Game at the
   source `SHOW_MENU_SCREEN` → `GAME_LOAD` boundary rather than constructing

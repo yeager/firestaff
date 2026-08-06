@@ -52,6 +52,15 @@ typedef struct {
     size_t decoded_pixel_count;
 } CSB_V1_AmigaTitlFrameReceipt;
 
+typedef struct {
+    uint16_t width;
+    uint16_t height;
+    uint16_t duration_vbl;
+    uint16_t delta_index;
+    size_t source_bytes_consumed;
+    size_t decoded_pixel_count;
+} CSB_V1_AmigaTitlDeltaReceipt;
+
 /* Decode the strict AN/PL/EN/DL.../DO record envelope and its real VBL
  * schedule.  Image and delta payloads stay opaque here; their decompression
  * belongs to the renderer once the IMGA delta operation is source-locked. */
@@ -68,6 +77,14 @@ int csb_v1_amiga_titl_dat_decode_palette(const uint8_t *data, size_t size,
 int csb_v1_amiga_titl_dat_decode_initial_frame(
     const uint8_t *data, size_t size, uint8_t *indexed_pixels,
     size_t indexed_pixel_capacity, CSB_V1_AmigaTitlFrameReceipt *out);
+
+/* Apply one real DL layer to the preceding indexed frame. ANIM.C F1205
+ * blits the displayed image to the draw buffer before GRF1_05 expands a DL,
+ * which is equivalent to this in-place update for the final indexed image. */
+int csb_v1_amiga_titl_dat_apply_delta(
+    const uint8_t *data, size_t size, uint16_t delta_index,
+    uint8_t *indexed_pixels, size_t indexed_pixel_capacity,
+    CSB_V1_AmigaTitlDeltaReceipt *out);
 
 #ifdef __cplusplus
 }

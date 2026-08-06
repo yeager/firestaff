@@ -34,11 +34,15 @@ int main(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_AMIGA_TITL");
     CSB_V1_AmigaTitlPalette palette;
+    CSB_V1_AmigaTitlDeltaReceipt delta;
     CSB_V1_AmigaTitlFrameReceipt frame;
     CSB_V1_AmigaTitlSchedule schedule;
     uint8_t *data;
     uint8_t *pixels;
     size_t size;
+    uint16_t delta_index;
+    uint64_t frame_hash = UINT64_C(1469598103934665603);
+    size_t pixel_index;
 
     if (!path || !*path) {
         puts("skip: FIRESTAFF_CSB_AMIGA_TITL is not set");
@@ -78,6 +82,34 @@ int main(void)
         free(pixels);
         free(data);
         fputs("FAIL: cannot decode real Amiga TITL.DAT EN frame\n", stderr);
+        return 1;
+    }
+    /* The first thirty DL records have complete source-backed command streams.
+     * The final record's source read continues beyond the on-disk FTL item and
+     * deliberately remains fail-closed until that allocation boundary is
+     * independently proven. ReDMCSB ANIM.C F1205 / EXPAND.C F0466. */
+    for (delta_index = 0u; delta_index < 30u; ++delta_index) {
+        if (!csb_v1_amiga_titl_dat_apply_delta(
+                data, size, delta_index, pixels, 320u * 200u, &delta) ||
+            delta.width != 320u || delta.height != 200u ||
+            delta.delta_index != delta_index || delta.duration_vbl == 0u ||
+            delta.decoded_pixel_count != 320u * 200u) {
+            free(pixels);
+            free(data);
+            fputs("FAIL: cannot apply real Amiga TITL.DAT DL frame\n", stderr);
+            return 1;
+        }
+    }
+    for (pixel_index = 0u; pixel_index < 320u * 200u; ++pixel_index) {
+        frame_hash ^= pixels[pixel_index];
+        frame_hash *= UINT64_C(1099511628211);
+    }
+    if (pixels[0] != 12u || pixels[28666u] != 11u ||
+        pixels[100u * 320u + 160u] != 1u ||
+        frame_hash != UINT64_C(0xeed602e590f79a0e)) {
+        free(pixels);
+        free(data);
+        fputs("FAIL: unexpected real Amiga TITL.DAT DL pixels\n", stderr);
         return 1;
     }
     free(pixels);

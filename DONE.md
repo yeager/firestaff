@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Theron regional level-descriptor receipt: the authenticated
+  logical Track 02 span at UD `0x619900` now distinguishes the real US
+  53-record table (`318` bytes, FNV-1a `7aa82bc7`) from the real JP
+  zero-filled span (`318` bytes, FNV-1a `63d8ddfd`). JP cannot be decoded
+  through the US table; the focused test verifies both outcomes from the
+  supplied MODE1/2352 BINs. Referenced payloads and runtime semantics remain
+  capture-gated.
+
 - ✅ 2026-08-06 Nexus supplemental ISO MNS source receipt: the extracted
   European retail boot now authenticates missing `SN_FLOOR.MNS` and
   `SN_WALL.MNS` directly inside its co-located Track 1 ISO before admitting
@@ -50,6 +58,16 @@
   bytes consumed from the following `DL` record because `ANIM.C` F1204 passes
   the expander only an address, not ByteCount. This does not claim `DL` delta
   frame expansion or M11 presentation binding, which remain open.
+
+- ✅ 2026-08-06 CSB Amiga TITL.DAT partial DL-frame receipt: the first 30
+  complete Amiga delta streams now apply to the preceding real frame through
+  the GRF1 F1205 copy-before-draw model. The decoder preserves `0xA?` and
+  `0xE?` transparent advances, replaces only commanded pixels, and supports
+  literals plus previous-line copies from ReDMCSB `EXPAND.C` F0466. The
+  real-media regression locks all 30 decoded frames to a final indexed-frame
+  hash, rather than accepting a fixture or generated pixels. The final
+  282-VBL DL remains deliberately rejected because it reads beyond the
+  on-disk FTL item; no padding was invented.
 
 - ✅ 2026-08-06 Nexus startup FONT256/TEXTTABL receipts: the real DM.BIN
   startup regression now verifies the literal-pool pointer at `0x18BF4` to

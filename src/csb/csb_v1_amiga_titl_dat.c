@@ -254,3 +254,149 @@ int csb_v1_amiga_titl_dat_decode_initial_frame(
                                           indexed_pixels,
                                           indexed_pixel_capacity, out);
 }
+
+/* ReDMCSB EXPAND.C F0466's DL branch recognizes 0xA?/0xE? as a transparent
+ * advance, not as a PC IMG copy operation.  F1205 has already copied the
+ * prior frame to the draw buffer, so an advance deliberately preserves the
+ * indexed pixel at that location. */
+static int csb_v1_amiga_grf1_apply_delta(const uint8_t *stream,
+                                         size_t stream_size,
+                                         uint8_t *pixels, size_t capacity,
+                                         CSB_V1_AmigaTitlDeltaReceipt *out)
+{
+    uint16_t width;
+    uint16_t height;
+    size_t source = 0u;
+    size_t pixel = 0u;
+    size_t total;
+
+    if (!stream || !pixels || stream_size < 6u) return 0;
+    while (source + 2u <= stream_size && stream[source] == 0xffu &&
+           stream[source + 1u] == 0x81u) {
+        source += 2u;
+    }
+    if (source + 4u > stream_size) return 0;
+    width = csb_v1_rd16be(stream + source);
+    height = csb_v1_rd16be(stream + source + 2u);
+    source += 4u;
+    if (width != CSB_V1_AMIGA_TITL_WIDTH ||
+        height != CSB_V1_AMIGA_TITL_HEIGHT ||
+        height > SIZE_MAX / width ||
+        (total = (size_t)width * height) > capacity) {
+        return 0;
+    }
+    while (pixel < total) {
+        uint8_t command;
+        uint8_t color;
+        size_t count;
+        size_t draw_count;
+
+        if (source >= stream_size) return 0;
+        command = stream[source++];
+        color = (uint8_t)(command & 0x0fu);
+        if ((command & 0x80u) != 0u && (command & 0x10u) == 0u &&
+            (command & 0x20u) != 0u) {
+            /* EXPAND.C @Tloc_10E56: transparent skip length. */
+            uint8_t encoded = color;
+            if ((command & 0x40u) != 0u) encoded = (uint8_t)(encoded + 16u);
+            if (encoded < 29u) {
+                count = (size_t)encoded + 1u;
+            } else if (encoded == 29u) {
+                if (source >= stream_size) return 0;
+                count = (size_t)stream[source++] + 1u;
+            } else if (encoded == 30u) {
+                if (source >= stream_size) return 0;
+                count = (size_t)stream[source++] + 257u;
+            } else {
+                if (source + 2u > stream_size) return 0;
+                count = (size_t)csb_v1_rd16be(stream + source) + 1u;
+                source += 2u;
+            }
+            pixel += count > total - pixel ? total - pixel : count;
+            continue;
+        }
+        if ((command & 0x80u) == 0u) {
+            count = (size_t)(command >> 4u) + 1u;
+        } else {
+            if (source >= stream_size) return 0;
+            count = (size_t)stream[source++] + 1u;
+            if ((command & 0x40u) != 0u) {
+                if (source >= stream_size) return 0;
+                count = (count - 1u) * 256u + (size_t)stream[source++] + 1u;
+            }
+        }
+        draw_count = count > total - pixel ? total - pixel : count;
+        if ((command & 0x80u) == 0u || (command & 0x10u) == 0u) {
+            memset(pixels + pixel, color, draw_count);
+        } else if ((command & 0x20u) == 0u) {
+            size_t written = 0u;
+            if ((draw_count & 1u) != 0u) {
+                pixels[pixel + written++] = color;
+            }
+            while (written < draw_count) {
+                uint8_t packed;
+                if (source >= stream_size) return 0;
+                packed = stream[source++];
+                pixels[pixel + written++] = (uint8_t)(packed >> 4u);
+                pixels[pixel + written++] = (uint8_t)(packed & 0x0fu);
+            }
+            pixel += draw_count;
+            continue;
+        } else {
+            size_t previous = (size_t)width;
+            size_t index;
+            if (pixel < previous) return 0;
+            for (index = 0u; index < draw_count; ++index) {
+                pixels[pixel + index] = pixels[pixel + index - previous];
+            }
+        }
+        pixel += draw_count;
+    }
+    if (out) {
+        out->width = width;
+        out->height = height;
+        out->source_bytes_consumed = source;
+        out->decoded_pixel_count = pixel;
+    }
+    return 1;
+}
+
+int csb_v1_amiga_titl_dat_apply_delta(
+    const uint8_t *data, size_t size, uint16_t delta_index,
+    uint8_t *indexed_pixels, size_t indexed_pixel_capacity,
+    CSB_V1_AmigaTitlDeltaReceipt *out)
+{
+    const uint8_t *payload;
+    uint16_t payload_size;
+    size_t offset = 0u;
+    uint16_t index;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!data || !indexed_pixels || delta_index >= CSB_V1_AMIGA_TITL_DELTA_COUNT ||
+        csb_v1_amiga_titl_take_record(data, size, &offset,
+                                      'A', 'N', &payload, &payload_size) != 0 ||
+        csb_v1_amiga_titl_take_record(data, size, &offset,
+                                      'P', 'L', &payload, &payload_size) != 0 ||
+        csb_v1_amiga_titl_take_record(data, size, &offset,
+                                      'E', 'N', &payload, &payload_size) != 0) {
+        return 0;
+    }
+    for (index = 0u; index <= delta_index; ++index) {
+        if (csb_v1_amiga_titl_take_record(data, size, &offset,
+                                          'D', 'L', &payload,
+                                          &payload_size) != 0 ||
+            payload_size < 6u) {
+            return 0;
+        }
+    }
+    if (!csb_v1_amiga_grf1_apply_delta(
+            payload + 2u, size - (size_t)((payload + 2u) - data),
+            indexed_pixels, indexed_pixel_capacity, out)) {
+        return 0;
+    }
+    if (out) {
+        out->delta_index = delta_index;
+        out->duration_vbl = csb_v1_rd16be(payload);
+    }
+    return 1;
+}
