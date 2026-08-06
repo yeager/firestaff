@@ -268,7 +268,7 @@ Source: `docs/NEXUS_PLAN.md` (similar scope), greatstone `g_dm2.html`
 | **Save game writing** | OPEN-BOUNDED — the public runtime path remains fail-closed until Firestaff can serialize SKProject's complete dungeon/DB record order. The low-level test helper now writes only the authentic `c_hex2a` header shape (version/name and retained opaque `l_26`); it cannot create a playable save. Source: SKProject `c_savegame.cpp:2169-2204`, `dm2data.h:150-159`. |
 | **Item shooter CUT_RECORD_FROM** | OPEN-BOUNDED — item shooters (0x0E, 0x0F actuator types) fail-closed in dm2_v1_actuator_event_pc34_compat.c:443 because CUT_RECORD_FROM (c_record.cpp:121) requires full record-chain infrastructure (GET_ADDRESS_OF_RECORD, mapdat, object index tables). |
 | **Recycler QUERY_CREATURES_ITEM_MASK** | OPEN-BOUNDED — recycler actuator path fails closed in dm2_v1_actuator_event_pc34_compat.c:623 because QUERY_CREATURES_ITEM_MASK requires creature DB record + item mask query infrastructure. |
-| **Launch-smoke gate** | FIXED — 2026-06-21: DM2 canonical `--game dm2 --data-dir ~/.firestaff/data/dm2` and DM2 PC extras `dm2-extras/dos-en`, `dm2-extras/dos-fr`, `dm2-extras/pc-fr`, and `dm2-extras/pc-de` emit `DM2 READY` through the M11 stderr-pipe and are covered by `tier1_strict_boot_probe`; broader non-PC/demo launch remains tracked under D3 |
+| **Launch-smoke gate** | FIXED — canonical DM2 and the listed PC extras are proven through structured boot receipts. The temporary M11 `DM2 READY` stderr marker was removed on 2026-08-06 because it was host-authored English output, not source-owned UI. Broader non-PC/demo launch remains tracked under D3. |
 
 ### D2. DM2 V2
 
@@ -815,7 +815,9 @@ Status 2026-06-21: DONE för PC extras. `dm2_v1_boot_scan_assets`
 accepterar nu extracted DOS-layouten `data/graphics.dat` +
 `data/dungeon.dat`, och `tier1_strict_boot_probe` kör DM2 canonical
 plus `dm2-extras/dos-en`, `dm2-extras/dos-fr`, `dm2-extras/pc-fr`
-och `dm2-extras/pc-de` till `DM2 READY`. Återstående DM2-versionsteg
+och `dm2-extras/pc-de` genom strukturerade boot-kvitton. Den tidigare
+`DM2 READY`-markören på stderr togs bort 2026-08-06 eftersom den inte
+är källägd UI. Återstående DM2-versionsteg
 ligger i D3: demo och icke-PC-versioner behöver separat klassning och
 eventuell container-/formatnormalisering innan de kan bli
 cross-version-regressionstäckning.

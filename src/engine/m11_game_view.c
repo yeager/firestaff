@@ -18544,15 +18544,6 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
          * DM2 SHOW_MENU_SCREEN owns this surface; clear that seed before the
          * source-owned title/menu frame is presented. */
         m11_set_status(state, NULL, NULL);
-        /* Tier 1 launch smoke: keep the DM2 direct-launch milestone
-         * observable to headless probes, matching the CSB stderr-pipe above.
-         * The boot itself stays owned by the DM2 V1 branch documented in
-         * dm2_v1_boot.h and firestaff_game_loop.c. */
-        fprintf(stderr,
-                (spec->savePath && spec->savePath[0] != '\0')
-                    ? "DM2 RESUMED: gameId=dm2 dataDir=%s\n"
-                    : "DM2 READY: gameId=dm2 dataDir=%s\n",
-                spec->dataDir ? spec->dataDir : "(null)");
         return 1;
     }
     if (spec->gameId && strcmp(spec->gameId, "dm1") == 0) {

@@ -333,7 +333,6 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
             g_fs_state = NULL;
             return -1;
         }
-        dm2_v1_boot_print_summary(&s_dm2_boot);
         /* Enter game only after the verified source pair has been admitted. */
         if (dm2_v1_boot_enter_game(&s_dm2_boot) != 0) {
             fs_set_error(&state->last_error, -2,

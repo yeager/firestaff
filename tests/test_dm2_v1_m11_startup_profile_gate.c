@@ -2159,8 +2159,8 @@ int main(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
                 "M11 DM2 direct-start SKSave.dat resume succeeds");
-    expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
-                "M11 DM2 direct-start SKSave.dat resume reports resumed status");
+    expect_true(view.lastOutcome[0] == '\0',
+                "M11 DM2 direct-start SKSave.dat resume keeps host status silent");
     expect_true(view.dm2State.party_x == 15 &&
                 view.dm2State.party_y == 15 &&
                 view.dm2State.party_dir == 0,
@@ -2624,8 +2624,8 @@ int main(void) {
         expect_true(M11_GameView_Start(&view, &spec),
                     "M11 DM2 live-mutated SKSave.dat resume succeeds");
         world = (DM2_V1_GameState*)view.dm2World;
-        expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
-                    "M11 DM2 live-mutated SKSave.dat resume reports resumed status");
+        expect_true(view.lastOutcome[0] == '\0',
+                    "M11 DM2 live-mutated SKSave.dat resume keeps host status silent");
         expect_true(world && world->gold == saved_gold &&
                     world->reputation == saved_reputation,
                     "M11 DM2 live-mutated SKSave.dat restores gold and reputation");
@@ -2823,8 +2823,8 @@ int main(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
                 "M11 DM2 savePath resume succeeds");
-    expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
-                "M11 DM2 savePath resume reports resumed status");
+    expect_true(view.lastOutcome[0] == '\0',
+                "M11 DM2 savePath resume keeps host status silent");
     expect_true(view.dm2State.party_x == 23 &&
                 view.dm2State.party_y == 11 &&
                 view.dm2State.party_dir == 2,
@@ -3114,8 +3114,8 @@ int main(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec),
                 "M11 DM2 SKSave.dat resume succeeds");
-    expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
-                "M11 DM2 SKSave.dat reports resumed status");
+    expect_true(view.lastOutcome[0] == '\0',
+                "M11 DM2 SKSave.dat resume keeps host status silent");
     expect_true(view.dm2State.party_x == 31 &&
                 view.dm2State.party_y == 9 &&
                 view.dm2State.party_dir == 3,

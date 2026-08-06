@@ -2352,9 +2352,6 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile);
 size_t dm2_v1_diagnostic_report(const DM2_V1_BootProfile *profile,
                                 char *buf, size_t buf_size);
 
-/* Print a one-line platform/version summary to stdout. */
-void dm2_v1_boot_print_summary(const DM2_V1_BootProfile *profile);
-
 /* Source evidence citation string.
  * Used in assert comments and debug output. */
 const char *dm2_v1_boot_source_evidence(void);

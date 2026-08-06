@@ -29177,10 +29177,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   drive control flow without visible replacement text.
   **2026-08-06 boundary correction:** removed the remaining boot-failure
   labels (`DM2 ASSETS MISSING`, `DM2 ASSETS UNVERIFIED`, and related launch
-  strings) plus the M11 DM2 startup/resume log substitutions. Failure and
-  resume receipts now retain structured results while leaving the visible
-  status channel empty until the original GUI producer is bound. The
-  incomplete source-owned status producer remains open.
+  strings), the M11 DM2 startup/resume stderr substitutions, and the
+  direct-start boot-profile stdout summary. Failure and resume receipts now
+  retain structured results while leaving the visible status channel empty
+  until the original GUI producer is bound. The incomplete source-owned
+  status producer remains open.
 - [ ] DM2 runtime action/save text ownership: action, shop, movement and save
   receipts are structurally silent until their matching original GUI/dialogue
   producer is connected. Bind that source-owned producer before rendering any

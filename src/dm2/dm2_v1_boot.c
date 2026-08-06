@@ -10862,11 +10862,6 @@ int dm2_v1_boot_startup_launch_alloc_with_language(
         return 0;
     }
     free(english_companion);
-    /* Print only after DUNGEON_Load has admitted the G1 header.  Before that
-     * point max_levels and dungeon_seed are deliberately unavailable rather
-     * than PC-English defaults, so an earlier summary falsely reported zero
-     * values for a successfully mounted original game. */
-    dm2_v1_boot_print_summary(profile);
     out_launch->profile = profile;
     out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_OK;
     out_launch->runtime_bound = 1;
@@ -12048,21 +12043,6 @@ size_t dm2_v1_diagnostic_report(const DM2_V1_BootProfile *profile,
     );
     if ((size_t)n >= buf_size) return buf_size;
     return (size_t)n;
-}
-
-void dm2_v1_boot_print_summary(const DM2_V1_BootProfile *profile) {
-    if (!profile) {
-        printf("DM2: no profile\n");
-        return;
-    }
-    printf("DM2: %-20s  seed=%-5u  levels=%-2u  tick=%ums  "
-           "move=0x%04x/0x%04x\n",
-           profile->platform_label,
-           profile->deterministic.dungeon_seed,
-           profile->deterministic.max_levels,
-           profile->deterministic.tick_ms,
-           profile->deterministic.dungeon_move_speed,
-           profile->deterministic.outdoor_move_speed);
 }
 
 const char *dm2_v1_boot_source_evidence(void) {
