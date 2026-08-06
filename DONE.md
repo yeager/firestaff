@@ -10,6 +10,17 @@
 - ✅ No synthetic animation frame, input route, or later-level decoder was
   promoted from this incomplete capture.
 
+# Theron US roster label quarantine (2026-08-06)
+
+- ✅ Audited the claimed US roster locator against the authenticated
+  `TQUS02.bin`; the old offset is executable code, not a champion text table.
+- ✅ Production retains the cross-checked numeric records needed by the
+  forcefield handoff but compiles out unbound US names/titles; the named
+  table is now explicit fixture/probe data only.
+- ✅ Added null-safe champion initialization and kept the real JP roster
+  cluster reader unchanged; production handoff, source-boundary, startup
+  media, mechanics and fixture probes remain green.
+
 # Theron TQTR capture-offset correction (2026-08-06)
 
 # DM2 FM Towns credits palette and handoff (2026-08-06)

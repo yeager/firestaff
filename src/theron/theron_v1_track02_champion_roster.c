@@ -1,8 +1,24 @@
 #include "theron_v1_track02_champion_roster.h"
 #include "theron_v1_champions.h"
 
-/* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
- * Champion records at UD 0x09D1D6 in PCE-specific packed format.
+#if defined(FIRESTAFF_THERON_PRODUCTION)
+/* The authenticated US BIN has no proven ASCII champion-name/title
+ * consumer. Keep source-bound numeric records available to the forcefield
+ * handoff, but never publish the DMWeb/fixture labels through production. */
+#define TQR_NAME(value)  NULL
+#define TQR_TITLE(value) NULL
+#else
+#define TQR_NAME(value)  value
+#define TQR_TITLE(value) value
+#endif
+
+/* Source: authenticated Track 02 record extraction (US MD5
+ * f23601102138f87c33025877767ebf76).
+ * The old UD 0x09D1D6 comment was not a valid US roster locator: that
+ * window is executable code in the supplied US BIN. Keep the cross-checked
+ * numeric record table for explicit fixture/probe work and the bounded
+ * forcefield record handoff, but do not treat its labels as a US text
+ * consumer. Production compiles those labels out above.
  * Base stats verified against Track 02 binary extraction.
  * Luck, skill sub-levels, and starting equipment from DMWeb encyclopaedia
  * (dmweb.free.fr/?q=node/201), cross-validated: base stats match Track 02
@@ -57,7 +73,7 @@
 
 static const Theron_ChampionRecord g_roster[THERON_TRACK02_CHAMPION_COUNT] = {
     /* 0: THERON — UD 0x09D1D6, protagonist (always in party) */
-    { "THERON", NULL, 'M',
+    { TQR_NAME("THERON"), NULL, 'M',
       175, 1500, 50, 80, 50, 40, 40, 45, 40, 45,
       .fighter_skills = {3, 0, 0, 0},
       .ninja_skills   = {0, 0, 0, 3},
@@ -69,7 +85,7 @@ static const Theron_ChampionRecord g_roster[THERON_TRACK02_CHAMPION_COUNT] = {
     },
 
     /* 1: MARA — UD 0x09D1FE, Priest/Wizard specialist */
-    { "MARA", "GUARDIAN OF WISDOM", 'F',
+    { TQR_NAME("MARA"), TQR_TITLE("GUARDIAN OF WISDOM"), 'F',
       250, 1500, 200, 60, 30, 45, 70, 40, 40, 30,
       .fighter_skills = {0, 0, 0, 0},
       .ninja_skills   = {0, 0, 0, 0},
@@ -81,7 +97,7 @@ static const Theron_ChampionRecord g_roster[THERON_TRACK02_CHAMPION_COUNT] = {
     },
 
     /* 2: LINOS — UD 0x09D22E, all-round Ninja/Priest */
-    { "LINOS", "THE RESOLUTE", 'M',
+    { TQR_NAME("LINOS"), TQR_TITLE("THE RESOLUTE"), 'M',
       300, 3000, 100, 30, 55, 40, 45, 70, 60, 55,
       .fighter_skills = {4, 3, 4, 5},
       .ninja_skills   = {3, 6, 7, 9},
@@ -93,7 +109,7 @@ static const Theron_ChampionRecord g_roster[THERON_TRACK02_CHAMPION_COUNT] = {
     },
 
     /* 3: HEXA — UD 0x09D25A, perfectly balanced */
-    { "HEXA", "LORD OF FEALTY", 'M',
+    { TQR_NAME("HEXA"), TQR_TITLE("LORD OF FEALTY"), 'M',
       350, 2500, 150, 50, 50, 50, 50, 50, 50, 50,
       .fighter_skills = {4, 4, 4, 4},
       .ninja_skills   = {4, 4, 4, 4},
@@ -105,7 +121,7 @@ static const Theron_ChampionRecord g_roster[THERON_TRACK02_CHAMPION_COUNT] = {
     },
 
     /* 4: HAKAR — UD 0x09D288, Master Fighter */
-    { "HAKAR", "THE BRAVE", 'M',
+    { TQR_NAME("HAKAR"), TQR_TITLE("THE BRAVE"), 'M',
       400, 2000, 50, 45, 60, 35, 40, 45, 70, 60,
       .fighter_skills = {7, 5, 9, 5},
       .ninja_skills   = {0, 8, 6, 6},
@@ -117,7 +133,7 @@ static const Theron_ChampionRecord g_roster[THERON_TRACK02_CHAMPION_COUNT] = {
     },
 
     /* 5: TIRAN — UD 0x09D2B2, pure Fighter */
-    { "TIRAN", "KNIGHT OF STRENGTH", 'M',
+    { TQR_NAME("TIRAN"), TQR_TITLE("KNIGHT OF STRENGTH"), 'M',
       450, 2750, 0, 40, 70, 30, 35, 55, 45, 45,
       .fighter_skills = {9, 8, 4, 7},
       .ninja_skills   = {0, 0, 0, 0},
@@ -129,7 +145,7 @@ static const Theron_ChampionRecord g_roster[THERON_TRACK02_CHAMPION_COUNT] = {
     },
 
     /* 6: DOTAN — UD 0x09D2E4, Ninja/Wizard (absent from Dungeon 1) */
-    { "DOTAN", "MASTER OF THE WIND", 'M',
+    { TQR_NAME("DOTAN"), TQR_TITLE("MASTER OF THE WIND"), 'M',
       200, 1000, 180, 55, 35, 70, 60, 20, 55, 40,
       .fighter_skills = {0, 0, 0, 7},
       .ninja_skills   = {8, 7, 6, 6},
@@ -141,7 +157,7 @@ static const Theron_ChampionRecord g_roster[THERON_TRACK02_CHAMPION_COUNT] = {
     },
 
     /* 7: PENTAI — UD 0x09D314, survivalist */
-    { "PENTAI", "THE SURVIVOR", 'F',
+    { TQR_NAME("PENTAI"), TQR_TITLE("THE SURVIVOR"), 'F',
       550, 2250, 120, 70, 40, 20, 30, 60, 30, 70,
       .fighter_skills = {0, 0, 0, 6},
       .ninja_skills   = {7, 5, 4, 3},

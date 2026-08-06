@@ -4722,6 +4722,7 @@ if(THERON_SOURCES)
         src/theron/theron_v2_hud_overlay_runtime_noop.c
         )
     target_include_directories(firestaff_theron PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_compile_definitions(firestaff_theron PRIVATE FIRESTAFF_THERON_PRODUCTION=1)
     # Theron's Track 01 CDDA bridge includes SDL3 directly.  Keep that
     # dependency on the owning target so standalone test targets configured
     # with Ninja receive SDL's headers as well as the final M11 executable.

@@ -300,13 +300,13 @@ carries them, but inventories reset each dungeon
 (`THERON_PERSIST_FULL` vs `THERON_PERSIST_PARTIAL`, macro
 `THERON_PERSISTENCE_FOR_SLOT`).
 
-`theron_v1_track02_champion_roster.h` documents the full 8-entry disc
-roster (`THERON_TRACK02_CHAMPION_COUNT = 8`) with name, title, sex, HP/
-stamina/mana, 6 base attributes (luck, strength, dexterity, wisdom,
-vitality, anti-magic, anti-fire), and 4 DM1-style skill sub-levels per
-class (Fighter: Swing/Thrust/Club/Parry; Ninja: Steal/Fight/Throw/Shoot;
-Priest: Identify/Heal/Influence/Defend; Wizard: Fire/Air/Earth/Water), plus
-starting-equipment slot/item pairs.
+`theron_v1_track02_champion_roster.h` documents the eight-record
+cross-reference (`THERON_TRACK02_CHAMPION_COUNT = 8`) with numeric
+record fields, skills and starting-equipment slot/item pairs. The US
+Track 02 does not yet have an authenticated name/title text consumer, so
+production keeps those labels empty; the complete named table is restricted
+to explicit fixture/probe targets. JP startup names/titles are admitted only
+through the real JP Track 02 text-cluster reader.
 
 ### Item types (`theron_v1_champions.h`)
 

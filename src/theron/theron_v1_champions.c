@@ -38,10 +38,15 @@ static void init_champion_from_roster(Theron_V1_Champion *c,
     const Theron_ChampionRecord *rec = theron_v1_track02_us_champion(roster_index);
     if (!rec) return;
 
-    size_t len = strlen(rec->name);
-    if (len > 23) len = 23;
-    memcpy(c->name, rec->name, len);
-    c->name[23] = '\0';
+    /* US champion text is not yet joined to an authenticated text consumer.
+     * Keep the numeric/source record usable for the forcefield handoff while
+     * leaving its unavailable name empty instead of dereferencing NULL. */
+    if (rec->name) {
+        size_t len = strlen(rec->name);
+        if (len > 23) len = 23;
+        memcpy(c->name, rec->name, len);
+        c->name[23] = '\0';
+    }
 
     /* Track 02 roster records do not bind portrait pixels or portrait IDs.
      * Do not derive a visual index from the host party slot. The explicit

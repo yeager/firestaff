@@ -257,6 +257,10 @@
   publishing host-owned names. The authenticated JP Track 02 roster remains
   independently bound and is now covered by a real-media regression for all
   eight names and titles.
+  2026-08-06 production audit: the cross-reference numeric champion records
+  remain available to the source-bound forcefield handoff, but production
+  now compiles out their unproven US names/titles. The named table is fixture
+  and probe-only; no US text consumer is implied by its presence.
 
 - **M11-F10-SOURCE-SPECIFIC-CHEATS:** The all-game F10 CH page now exposes
   the verified shared cheat master switch and live speed control. Do not add

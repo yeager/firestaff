@@ -34,6 +34,10 @@ the `TQUS19.iso` plus `TQUS02End.iso` materialization step.
 - The production viewport and dungeon handoff remain fail-closed. A byte
   span, palette-shaped window, or indexed atlas is not promoted to a dungeon,
   object, VDC/VCE consumer, HUD, or semantic level binding by itself.
+- The production forcefield handoff retains the cross-checked numeric
+  champion-record fields, but compiles out the unbound US names and titles.
+  The explicit roster table remains available only to fixture/probe targets;
+  JP startup names/titles are admitted only through the real JP cluster reader.
 
 ## Known placeholder boundaries
 
