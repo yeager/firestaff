@@ -1,3 +1,12 @@
+# DM1 champion disabled-icon synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the champion disabled-icon state model from M10. It synthesizes
+  champion rows and G0491 state, reads no original DM1 data, and has no M11
+  call site (only an unused header inclusion); its explicit ReDMCSB regression
+  already compiles the source directly.
+- ✅ Verification: `dm1_v1_champion_panel_disabled_icon_state_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D2C F0115 front-rear synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the D2C F0115 front/rear door-pass model from M10. It hard-codes

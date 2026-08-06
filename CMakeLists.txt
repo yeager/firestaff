@@ -4544,6 +4544,12 @@ list(REMOVE_ITEM M10_SOURCES
 # recovered.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2c_f0115_front_rear_overlap_pc34_compat.c")
+# `dm1_v1_champion_panel_disabled_icon_state_pc34_compat.c` is a
+# source-locked disabled-icon state model with synthetic champion rows and
+# table bytes. It reads no original DM1 data; M11 only includes its header and
+# has no call site, so retain it only in its explicit regression.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_disabled_icon_state_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part

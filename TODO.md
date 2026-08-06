@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHAMPION-DISABLED-ICON-SYNTHETIC-AUDIT:** The disabled-icon model
+  synthesizes champion rows and G0491 state. It reads no original DM1 data;
+  M11 has only an unused header inclusion, not a runtime call. Retain it as
+  an explicit ReDMCSB regression until a source-bound action-icon consumer is
+  recovered.
+
 - **DM1-D2C-F0115-FRONT-REAR-SYNTHETIC-AUDIT:** This door-pass helper
   hard-codes cell orders, zones and synthetic pixel composition. It reads no
   original DM1 data and has no M11/runtime caller; retain it only as an
