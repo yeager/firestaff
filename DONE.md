@@ -51086,6 +51086,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   verifies the SND3 boundary and the audit is wired into CTest. Remaining
   visual Greatstone/SCK comparison and packaged macOS capture stay open in
   `DM1-PC34-FULL-ASSET-VISUAL-AUDIT`; no generated art was introduced.
+# Nexus portrait placement boundary
+
+2026-08-06: Removed the startup champion renderer's guessed 10×10 FACE.BIN
+portrait rectangles and borders. The verified portrait ordinal remains in the
+opaque render command, but its destination is zero-sized and cannot draw while
+Saturn VDP1 destination/scale evidence is absent.
+
 # Nexus roster provenance boundary
 
 2026-08-06: Audited the Nexus champion paths against the real European

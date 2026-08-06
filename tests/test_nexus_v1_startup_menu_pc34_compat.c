@@ -380,6 +380,8 @@ int main(void)
                champion_rows[0].in_party == 0 &&
                champion_rows[0].portrait_index ==
                    champions.champions[0].portrait_index &&
+               champion_rows[0].portrait_w == 0 &&
+               champion_rows[0].portrait_h == 0 &&
                champion_rows[0].portrait_x ==
                    NEXUS_V1_STARTUP_CHAMPION_PORTRAIT_X &&
                champion_rows[0].highlight_visible == 1 &&
@@ -3266,11 +3268,11 @@ int main(void)
                 ++portrait_draws;
             }
         }
-        expect(draw_count > 24 &&
+        expect(draw_count > 12 &&
                    draw_commands[0].kind ==
                        NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
                    portrait_draws == 12,
-               "Nexus champion startup presentation combines title art and FACE portrait commands");
+               "Nexus champion startup keeps FACE index commands but emits no guessed portrait placement");
     }
     menu.selected_row = 99;
     expect(nexus_v1_startup_menu_refresh(&menu, menu.slot_mask) &&

@@ -444,6 +444,9 @@ static int nexus_v1_startup_push_portrait(
     const Nexus_V1_StartupChampionRenderRow *row)
 {
     Nexus_V1_StartupDrawCommand command;
+    /* FACE.BIN's 56x56 source pixels are authenticated, but this planner has
+     * no Saturn VDP1 destination/scale receipt. Keep the ordinal command as
+     * an opaque capture-route token; its zero-sized destination cannot draw. */
     if (!row || row->portrait_index < 0) {
         return 1;
     }
@@ -2474,8 +2477,11 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
         out->highlight_rect.h += 2;
         out->portrait_x = NEXUS_V1_STARTUP_CHAMPION_PORTRAIT_X;
         out->portrait_y = out->rect.y + 1;
-        out->portrait_w = 10;
-        out->portrait_h = 10;
+        /* FACE.BIN is 56x56 per DMWeb. Keep the source portrait ordinal for
+         * the future capture join, but do not invent its Saturn destination
+         * rectangle or scale in the startup presentation planner. */
+        out->portrait_w = 0;
+        out->portrait_h = 0;
         out->highlight_visible = out->selected && blink_on ? 1 : 0;
         out->text_color = out->selected && blink_on ? 11 : 15;
         out->shadow_color = 0;
@@ -3039,7 +3045,8 @@ int nexus_v1_startup_presentation_build_champion(
                                             render_row)) {
             return count;
         }
-        if (render_row->portrait_border_color > 0) {
+        if (render_row->portrait_border_color > 0 &&
+            render_row->portrait_w > 0 && render_row->portrait_h > 0) {
             Nexus_V1_StartupRect border;
             border.x = render_row->portrait_x - 1;
             border.y = render_row->portrait_y - 1;
