@@ -16,6 +16,14 @@
   passes with 53 assertions; the source object is absent from both M10 and M11
   archives.
 
+# DM1 mirror resurrect-rotation synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the local C040/C160 party/C30/G0425 rotation fixture from M10.
+  It reads no original DM1 data and has no M11/runtime caller; the generated
+  mirror regression continues to compile the source explicitly.
+- ✅ Verification: `dm1_v1_mirror_candidate_rotation_during_resurrect_confirmation_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 C040 reshuffle synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040 reshuffle fixture from M10. It fabricates

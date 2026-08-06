@@ -10,6 +10,11 @@
   input or M11/runtime caller; retain it only as explicit ReDMCSB coverage
   until a source-bound interaction owner is recovered.
 
+- **DM1-MIRROR-RESURRECT-ROTATION-SYNTHETIC-AUDIT:** This C040/C160 rotation
+  fixture fabricates party, C30 and G0425 state. It has no original DM1 data
+  input or M11/runtime caller; retain it only as explicit ReDMCSB coverage
+  until a source-bound interaction owner is recovered.
+
 - **DM1-MIRROR-RESHUFFLE-SYNTHETIC-AUDIT:** This C040 reshuffle fixture
   fabricates party, chest and leader-hand state. It has no original DM1 data
   input or M11/runtime caller; retain it only as explicit ReDMCSB coverage
