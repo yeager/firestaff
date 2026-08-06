@@ -29,15 +29,23 @@ static const char* resolve_data_dir(void)
     const char* home = getenv("HOME");
 
     if (data_dir_has_pc34(env)) return env;
+    if (env && env[0]) {
+        snprintf(path, sizeof(path), "%s/DATA", env);
+        if (data_dir_has_pc34(path)) return path;
+    }
     if (data_dir_has_pc34(root)) return root;
     if (root && root[0]) {
         snprintf(path, sizeof(path), "%s/dm1", root);
+        if (data_dir_has_pc34(path)) return path;
+        snprintf(path, sizeof(path), "%s/DATA", root);
         if (data_dir_has_pc34(path)) return path;
     }
     if (home && home[0]) {
         snprintf(path, sizeof(path), "%s/.firestaff/data/dm1", home);
         if (data_dir_has_pc34(path)) return path;
         snprintf(path, sizeof(path), "%s/.firestaff/data", home);
+        if (data_dir_has_pc34(path)) return path;
+        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/DATA", home);
         if (data_dir_has_pc34(path)) return path;
     }
     return NULL;

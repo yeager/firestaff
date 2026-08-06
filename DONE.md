@@ -157,6 +157,15 @@
 - ✅ Verification: `test_dm1_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 PC3.4 archive-layout realdata regressions (2026-08-06)
+
+- ✅ The viewport source-frame, deferred-C15 and thrown-projectile realdata
+  regressions now recognize the standard original DOS archive layout
+  `DATA/DUNGEON.DAT` plus `DATA/GRAPHICS.DAT`, as well as a flat install.
+- ✅ Verification against the supplied PC3.4 archive: source-frame preflight
+  and pixel rendering pass from authentic bytes. The C15 and throw probes now
+  reach the real corpus and skip only when it lacks their required live pose.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the

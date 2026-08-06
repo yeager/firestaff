@@ -10,6 +10,28 @@
 #include <stdlib.h>
 #include <string.h>
 
+static int data_dir_has_dungeon(const char *dir)
+{
+    char path[1200];
+    FILE *file;
+    if (!dir || !dir[0]) return 0;
+    snprintf(path, sizeof(path), "%s/DUNGEON.DAT", dir);
+    file = fopen(path, "rb");
+    if (!file) return 0;
+    fclose(file);
+    return 1;
+}
+
+static const char *resolve_pc34_data_dir(const char *root,
+                                         char *nested,
+                                         size_t nested_size)
+{
+    if (data_dir_has_dungeon(root)) return root;
+    if (!root || !root[0] || !nested || nested_size == 0) return NULL;
+    snprintf(nested, nested_size, "%s/DATA", root);
+    return data_dir_has_dungeon(nested) ? nested : NULL;
+}
+
 static unsigned char *read_file(const char *path, int *outCount)
 {
     FILE *file;
@@ -68,6 +90,7 @@ int main(void)
     const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
     const char *home;
     char defaultData[1024];
+    char nestedData[1200];
     char dungeonPath[1200];
     M11_GameViewState state;
     const M11_AssetSlot *wall;
@@ -89,6 +112,12 @@ int main(void)
         if (!home || !home[0]) return 0;
         snprintf(defaultData, sizeof(defaultData), "%s/.firestaff/data/dm1", home);
         dataDir = defaultData;
+    }
+    dataDir = resolve_pc34_data_dir(dataDir, nestedData, sizeof(nestedData));
+    if (!dataDir) {
+        if (getenv("FIRESTAFF_DM1_DATA_DIR")) return 1;
+        puts("SKIP: PC34 DM1 data not installed");
+        return 0;
     }
     snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", dataDir);
     dungeon = read_file(dungeonPath, &dungeonCount);
