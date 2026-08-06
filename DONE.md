@@ -2283,6 +2283,16 @@
   material-gate test and real PC-DOS GDAT viewport-plan regression pass. No
   game data was copied, unpacked or modified.
 
+- ✅ 2026-08-06 DM2 viewport generic-blit cleanup: removed the three
+  uncalled `dm2_blit_bitmap`, tiled-bitmap and scaled-bitmap helpers and
+  their DM1-derived clip helper from the production renderer. They could
+  consume caller-owned pixels without a GDAT image and local-palette receipt.
+  The production-boundary verifier rejects their return, leaving only
+  source-owned viewport material consumers.
+  Verification: `dm2_production_placeholder_boundary`, focused viewport
+  material-gate test and real PC-DOS GDAT viewport-plan regression pass. No
+  game data was copied, unpacked or modified.
+
 - ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now
   records a completed party/leader-cache clear only after its retained
   source-save projection is observed empty. M11 requires that postcondition

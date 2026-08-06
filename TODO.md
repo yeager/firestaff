@@ -691,6 +691,11 @@
   synthesizer from the production viewport. Its depth-parity wall selection
   and default full-light value had no original `c_light` or map/GDAT owner;
   the boundary verifier now rejects their return.
+  **2026-08-06 generic-blit update:** removed three further uncalled
+  viewport blitters that accepted arbitrary bitmap buffers, tiling or scaling
+  without a GDAT image/local-palette receipt, together with their uncalled
+  DM1-derived clip helper. Only the source-material consumer remains eligible
+  to write a runtime viewport.
 
 - **DM2-SOUND-TEXT-CONSUMER:** `c_sound.cpp` binds class triples to GDAT sound
   payloads but does not supply a sound-name text producer. The production

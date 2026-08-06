@@ -1207,58 +1207,6 @@ int dm2_v1_viewport_dialogue_box_graphic_index(void)
     return DM2_V1_VIEWPORT_GFX_DIALOGUE_BOX;
 }
 
-/* ── Helper: resolve blit clipping gate ─────────────────────────── */
-
-/* Clip gate for blit operations — prevents out-of-bounds writes.
- * Source: dm1_v1_viewport_3d_pc34_compat.c resolve_wall_blit_clip_gate */
-typedef struct {
-    int visible;
-    int src_x, src_y;
-    int dst_x, dst_y;
-    int width, height;
-} DM2_BlitClipGate;
-
-static DM2_BlitClipGate dm2_resolve_blit_clip(
-    const DM2_WallFrame *frame,
-    int bitmap_w, int bitmap_h,
-    int vp_w, int vp_h)
-{
-    DM2_BlitClipGate gate = {0};
-    if (!frame || frame->byte_width == 0 || frame->height == 0) return gate;
-
-    /* Frame source rect */
-    int src_x = frame->blit_x;
-    int src_y = frame->blit_y;
-    int bw = frame->byte_width;
-    int bh = frame->height;
-    (void)bitmap_w; (void)bitmap_h; /* reserved for future full bitmap clip */
-
-    /* Frame dest rect */
-    int dst_x = frame->left_x;
-    int dst_y = frame->top_y;
-    int fw = frame->right_x - frame->left_x + 1;
-    int fh = frame->bottom_y - frame->top_y + 1;
-    (void)fw; (void)fh;
-
-    /* Clip against viewport bounds */
-    int clip_left   = (dst_x < 0) ? -dst_x : 0;
-    int clip_top    = (dst_y < 0) ? -dst_y : 0;
-    int clip_right  = (dst_x + bw > vp_w) ? (vp_w - (dst_x + bw)) : 0;
-    int clip_bottom = (dst_y + bh > vp_h) ? (vp_h - (dst_y + bh)) : 0;
-
-    if (clip_left >= bw || clip_top >= bh || clip_right >= bw || clip_bottom >= bh)
-        return gate;
-
-    gate.visible = 1;
-    gate.src_x = src_x + clip_left;
-    gate.src_y = src_y + clip_top;
-    gate.dst_x = dst_x + clip_left;
-    gate.dst_y = dst_y + clip_top;
-    gate.width  = bw - clip_left + clip_right;
-    gate.height = bh - clip_top  + clip_bottom;
-    return gate;
-}
-
 /* ── Palette color constants (ReDMCSB DEFS.H color indices) ───────── */
 enum DM2_ColorIndex {
     DM2_COL_BLACK   = 0,
@@ -3962,42 +3910,6 @@ int dm2_v1_viewport_door_button_asset_blit(
                                                 out_blit);
 }
 
-/* ── Internal blit helper ─────────────────────────────────────────── */
-
-static void __attribute__((unused)) dm2_blit_bitmap (
-    uint8_t *vp,
-    int vp_stride,
-    const uint8_t *bitmap,
-    const DM2_WallFrame *frame,
-    int bitmap_stride,
-    int flip_horizontal,
-    int parity_flip)
-{
-    if (!vp || !bitmap || !frame) return;
-    if (frame->byte_width == 0 || frame->height == 0) return;
-
-    DM2_BlitClipGate gate = dm2_resolve_blit_clip(
-        frame, frame->byte_width, frame->height,
-        DM2_VP_WIDTH, DM2_VP_HEIGHT);
-    if (!gate.visible) return;
-
-    for (int y = 0; y < gate.height; y++) {
-        const uint8_t *src_row = bitmap + (gate.src_y + y) * bitmap_stride;
-        uint8_t *dst_row = vp + (gate.dst_y + y) * vp_stride;
-
-        for (int x = 0; x < gate.width; x++) {
-            int sx = flip_horizontal
-                       ? (frame->byte_width - 1 - (gate.src_x + x))
-                       : (gate.src_x + x);
-            uint8_t pixel = src_row[sx];
-            if (pixel != DM2_COLOR_TRANSPARENT) {
-                dst_row[gate.dst_x + x] = pixel;
-            }
-        }
-        (void)parity_flip;
-    }
-}
-
 static int dm2_v1_fetch_viewport_asset(DM2_V1_ViewportState *s,
                                        int gdat_index,
                                        const uint8_t **out_pixels,
@@ -4080,82 +3992,6 @@ static uint32_t dm2_v1_weather_pixels_hash(const uint8_t *pixels, int width,
         }
     }
     return hash;
-}
-
-static void __attribute__((unused)) dm2_v1_blit_tiled_bitmap(uint8_t *dst,
-                                     int dst_stride,
-                                     int dst_x,
-                                     int dst_y,
-                                     int dst_w,
-                                     int dst_h,
-                                     const uint8_t *src,
-                                     int src_w,
-                                     int src_h,
-                                     int src_stride,
-                                     int transparent_color)
-{
-    int y;
-
-    if (!dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
-        src_w <= 0 || src_h <= 0 || src_stride < src_w) {
-        return;
-    }
-    for (y = 0; y < dst_h; ++y) {
-        int sy = y % src_h;
-        int fy = dst_y + y;
-        int x;
-        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
-        for (x = 0; x < dst_w; ++x) {
-            int sx = x % src_w;
-            int fx = dst_x + x;
-            uint8_t pixel;
-            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
-            pixel = src[sy * src_stride + sx];
-            if (transparent_color >= 0 &&
-                pixel == (uint8_t)transparent_color) {
-                continue;
-            }
-            dst[fy * dst_stride + fx] = pixel;
-        }
-    }
-}
-
-static void __attribute__((unused)) dm2_v1_blit_scaled_bitmap(uint8_t *dst,
-                                      int dst_stride,
-                                      int dst_x,
-                                      int dst_y,
-                                      int dst_w,
-                                      int dst_h,
-                                      const uint8_t *src,
-                                      int src_w,
-                                      int src_h,
-                                      int src_stride,
-                                      int transparent_color)
-{
-    int y;
-
-    if (!dst || !src || dst_stride <= 0 || dst_w <= 0 || dst_h <= 0 ||
-        src_w <= 0 || src_h <= 0 || src_stride < src_w) {
-        return;
-    }
-    for (y = 0; y < dst_h; ++y) {
-        int sy = (y * src_h) / dst_h;
-        int fy = dst_y + y;
-        int x;
-        if ((unsigned)fy >= (unsigned)DM2_VP_HEIGHT) continue;
-        for (x = 0; x < dst_w; ++x) {
-            int sx = (x * src_w) / dst_w;
-            int fx = dst_x + x;
-            uint8_t pixel;
-            if ((unsigned)fx >= (unsigned)DM2_VP_WIDTH) continue;
-            pixel = src[sy * src_stride + sx];
-            if (transparent_color >= 0 &&
-                pixel == (uint8_t)transparent_color) {
-                continue;
-            }
-            dst[fy * dst_stride + fx] = pixel;
-        }
-    }
 }
 
 /* skproject QUERY_GDAT_IMAGE_LOCALPAL supplies the per-IMG3 16-byte palette

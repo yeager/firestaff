@@ -184,6 +184,10 @@ def verify(repo: Path) -> list[str]:
             "dm2_populate_view_squares",
             "alternate wall sets for visual variety",
             "s->source_materials_required ? 0u : 15u",
+            "dm2_blit_bitmap",
+            "dm2_v1_blit_tiled_bitmap",
+            "dm2_v1_blit_scaled_bitmap",
+            "dm2_resolve_blit_clip",
     ):
         if forbidden in viewport:
             errors.append(f"viewport retains synthetic world fallback: {forbidden}")
