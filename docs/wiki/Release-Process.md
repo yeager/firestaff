@@ -11,7 +11,28 @@ project(Firestaff VERSION 3.0.282 LANGUAGES C)
 ## Creating a Release
 
 1. **Bump version** in `CMakeLists.txt`
-2. **Update changelog** in `RELEASE_NOTES.md` (add a section headed `# Firestaff vX.Y.Z`)
+2. **Write release notes** in `RELEASE_NOTES.md` (add a section headed
+   `# Firestaff vX.Y.Z`). The section must contain exactly these functional
+   delta categories, each with concrete bullets:
+
+   ```markdown
+   # Firestaff vX.Y.Z
+
+   ## Added
+   - `FunctionOrFeature`: what was added and the user-visible or runtime effect.
+
+   ## Changed
+   - `FunctionOrFeature`: what changed and the resulting behavior.
+
+   ## Removed
+   - None. No functions or public features were removed.
+   ```
+
+   Name the affected function, subsystem, command, screen or feature in every
+   non-empty bullet. Do not use aggregate wording such as “various updates” or
+   generic release summaries. A release with no delta in a category must say
+   `None.` explicitly. The release workflow rejects notes that do not meet this
+   contract.
 3. **Update TODO.md and DONE.md** as needed
 4. **Commit** the version bump
 5. **Tag** with `v` prefix: `git tag v3.0.282`
@@ -34,7 +55,9 @@ Checks: build, test suite, compiler warnings, asset hygiene (no game data commit
 
 Triggers on `v*` tags or manual `workflow_dispatch`. Jobs:
 
-1. **Preflight** — validates version against `CMakeLists.txt`, extracts release notes
+1. **Preflight** — validates the version against `CMakeLists.txt` and verifies
+   that the selected release-notes section names added, changed and removed
+   functions/features before extracting it
 2. **macOS** — builds x86_64 (Intel) and arm64 (Apple Silicon) in parallel
    - Produces: `.dmg`, `.zip`
    - Bundles: Artpack Studio, Dungeon Studio, Savegame Editor

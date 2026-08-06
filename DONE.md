@@ -21,6 +21,16 @@
 
 # Nexus startup ASCII-label provenance fence (2026-08-06)
 
+# GitHub release-note functional-delta gate (2026-08-06)
+
+- ✅ GitHub release preflight now rejects a release unless its exact version
+  section has concrete `Added`, `Changed`, and `Removed` categories. Each
+  non-empty item must name the affected function or feature; an unchanged
+  category must say `None.` explicitly. The generic generated-notes fallback
+  was removed, so GitHub can no longer publish a release with a placeholder
+  summary. Verification: `scripts/verify_release_notes.py --notes
+  RELEASE_NOTES.md --version 3.0.291` passes against the current CMake version.
+
 - ✅ Startup champion footer and row labels now require the isolated
   compatibility-roster shape (`name_ascii` without an authenticated PLRD TABL
   code). Retail PLRD rows therefore remain source-glyph-only even after a

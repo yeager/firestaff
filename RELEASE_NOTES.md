@@ -1,10 +1,14 @@
 # Firestaff v3.0.291
-- Refresh the cross-game README, project status, data setup and CI documentation.
-- Add a single documentation index covering DM1, CSB, DM2, DM Nexus and Theron's Quest.
-- Align wiki status language with the current evidence boundary: DM1 V1 is the
-  strongest playable target; the other four games remain active hardening or
-  bring-up work until their real-data handoffs are proven.
-- Replace stale evidence/test counters with repository-derived wording.
+
+## Added
+- `Documentation index`: Added one cross-game entry point for DM1, CSB, DM2, DM Nexus and Theron's Quest documentation.
+
+## Changed
+- `README.md`: Replaced stale project-status, data-setup and CI claims with repository-derived wording.
+- `docs/wiki status`: States that DM1 V1 is the strongest playable target and that the other games remain under real-data handoff work.
+
+## Removed
+- None. No functions or public features were removed.
 
 # Firestaff v3.0.290
 - Add percent sign glyph to built-in bitmap font so scanning progress
