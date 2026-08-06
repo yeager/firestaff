@@ -317,6 +317,8 @@ int firestaff_zip_extract_memory_by_suffix(const uint8_t *zip_data,
         return 0;
     }
     return -1;
+}
+
 int firestaff_zip_extract_by_suffix_to_path(const char *zip_path,
                                             const char *suffix,
                                             const char *out_path)

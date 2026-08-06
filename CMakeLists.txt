@@ -4343,6 +4343,8 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_utility_save_transaction_pc34_compat.c
     src/csb/csb_v1_atari_save_decode_pc34_compat.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    src/dm1/dm1_v1_legacy_graphics_dat.c
+    src/shared/graphics_dat_snd3_loader_v1.c
     src/dm1/dm1_v1_original_save_classifier.c
     src/dm1/dm1_v1_original_save_pc34_handoff.c
     src/dm1/dm1_v1_melee_action_f0402_pc34_compat.c
@@ -4683,7 +4685,6 @@ set(M11_SOURCES
     src/csb/csb_v1_amiga_graphics_dat.c
     src/csb/csb_v1_amiga_titl_dat.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
-    src/dm1/dm1_v1_legacy_graphics_dat.c
     src/shared/firestaff_amiga_adf.c
     src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_fmtowns_anm.c
@@ -4701,7 +4702,6 @@ set(M11_SOURCES
     src/audio/soundtrack_selector_m11.c
     src/audio/ambient_layer_m11.c
     src/shared/audio_sdl_m11.c
-    src/shared/graphics_dat_snd3_loader_v1.c
     src/shared/song_dat_loader_v1.c
     src/shared/sound_event_snd3_map_v1.c
     src/frontend/title_dat_loader_v1.c
