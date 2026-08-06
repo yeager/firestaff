@@ -1017,7 +1017,10 @@ int nexus_viewport_dgn_host_route_receipt(
     out_receipt->status = NEXUS_V1_DGN_HOST_ROUTE_READY_RENDERED_MESH;
     out_receipt->can_present_runtime_dgn = 1;
     out_receipt->blocks_runtime_dgn = 0;
-    return 0;
+    /* The legacy material route is a completed host handoff too.  Returning
+     * zero here made callers treat this exact ready receipt as an API error,
+     * even though the receipt itself admitted presentation. */
+    return 1;
 }
 
 const char *nexus_viewport_dgn_host_route_status_name(

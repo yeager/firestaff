@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus viewport handoff return status: the verified legacy
+  DGN material route now returns success from
+  `nexus_viewport_dgn_host_route_receipt` when its receipt is
+  `ready-rendered-mesh`. Previously the receipt admitted presentation but
+  returned API failure, so launcher/M11 callers discarded an otherwise valid
+  viewport. Saturn-capture-gated Structure3/no-draw routes remain unchanged.
+
 - ✅ 2026-08-06 Theron VDC BAT binding retention: the authenticated 64 KiB
   VRAM/1 KiB VCE viewport mount now persists each admitted BAT word's
   source tile/palette atlas index instead of discarding the mapping after
