@@ -4316,6 +4316,12 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
 # regression compiles the fixture explicitly rather than exposing it via M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_open_while_another_open_pc34_compat.c")
+# `dm1_v1_champion_panel_name_box_clip_pc34_compat.c` is an asset-free F0292
+# geometry fixture with synthetic champion/name/title inputs. It has no
+# M11/runtime caller; retain its source lock in the direct regression rather
+# than admitting the diagnostic clip model through M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_name_box_clip_pc34_compat.c")
 # `dm1_v1_champion_panel_hand_slot_inventory_viewport_walk_pc34_compat.c`
 # is an asset-free F0296 walk fixture with fabricated party, slot and icon
 # state. It has no M11/runtime caller; its dedicated regression compiles it

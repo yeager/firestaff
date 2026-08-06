@@ -21,6 +21,11 @@
   capture is still required before menu, HUD, and viewport composition can be
   enabled.
 
+- **DM1-F0292-NAME-BOX-CLIP-SYNTHETIC-AUDIT:** This F0292 name/title clip
+  fixture fabricates champion, name and title inputs. It has no original DM1
+  data input or M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound panel owner is recovered.
+
 - **DM1-F0296-INVENTORY-VIEWPORT-WALK-SYNTHETIC-AUDIT:** This F0296
   inventory/chest sub-walk fixture fabricates party, slot and icon state. It
   has no original DM1 data input or M11/runtime caller; retain it only as

@@ -1,5 +1,13 @@
 # DM2 class-0x30 spell-failure real GDAT binding (2026-08-13)
 
+# DM1 F0292 name-box clip synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free F0292 name/title clip fixture from M10. It
+  fabricates champion, name and title inputs, has no original DM1 data input
+  or M11/runtime caller, and its dedicated regression compiles it directly.
+
+# DM1 F0296 inventory-viewport walk synthetic audit isolation (2026-08-06)
+
 - ✅ Bound SKProject `DM2_PROCEED_SPELL_FAILURE` class `0x30` to the exact
   authenticated `INTERFACE_GENERAL/5/dtImage/0x0B` NEED_FLASK record and
   source destination rect `0x5C`; runtime records decoded-pixel and local-
