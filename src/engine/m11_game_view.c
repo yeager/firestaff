@@ -15496,153 +15496,100 @@ static void m11_apply_kill_notify_plan(
  *   - DES (type 2): poison (damage)
  *   - VI  (type 14): restore all stats partially
  *   - WATER FLASK (type 15): restore water
- *   - EMPTY FLASK (type 16): no effect
- *   - Others: generic small heal
- * The potion thing is consumed (replaced by EMPTY FLASK subtype 16
- * if doNotDiscard is set, or removed from inventory otherwise).
+ *   - EMPTY FLASK (type 20): no effect
+ * The potion thing is consumed through the live PC34 transaction, which
+ * rewrites the original raw record and preserves its Power byte.
  * ================================================================ */
 
 /* DM1 potion type indices (match s_potionTypeNames order) */
-enum {
-    M11_POTION_MON  = 0,
-    M11_POTION_UM   = 1,
-    M11_POTION_DES  = 2,
-    M11_POTION_VEN  = 3,
-    M11_POTION_SAR  = 4,
-    M11_POTION_ZO   = 5,
-    M11_POTION_ROS  = 6,
-    M11_POTION_KU   = 7,
-    M11_POTION_DANE = 8,
-    M11_POTION_NETA = 9,
-    M11_POTION_BRO  = 10,
-    M11_POTION_MA   = 11,
-    M11_POTION_YA   = 12,
-    M11_POTION_EE   = 13,
-    M11_POTION_VI   = 14,
-    M11_POTION_WATER_FLASK = 15,
-    M11_POTION_EMPTY_FLASK = 16
-};
+/* Keep the keyboard/use-item route on the same ReDMCSB PANEL.C model as the
+ * authentic mouth click.  The retired route used a private generic heal,
+ * stamina and mana model and treated unhandled real potion types as a
+ * fabricated small heal. */
+static int m11_v1_mouth_live_inventory_transaction(
+    M11_GameViewState* state,
+    struct ChampionState_Compat* champ,
+    unsigned short leaderThing,
+    DM1ConsumableChampionPc34* inOutChampion,
+    const uint16_t* woundRandomMasks,
+    int woundRandomMaskCount,
+    DM1_V1_InventoryLiveUseReceiptPc34* outReceipt);
 
-static void m11_apply_potion_effect(M11_GameViewState* state,
-                                    struct ChampionState_Compat* champ,
-                                    int potionType,
-                                    int power,
-                                    const char* champName) {
-    int amount;
-    if (!state || !champ) return;
+static int m11_apply_source_potion_effect_pc34(
+    M11_GameViewState* state,
+    struct ChampionState_Compat* champ,
+    unsigned short leaderThing,
+    DM1ConsumableResultPc34* outResult)
+{
+    DM1ConsumableChampionPc34 sourceChampion;
+    uint16_t woundMasks[M11_DM1_V1_VI_WOUND_MASK_MAX_PC34];
+    DM1_V1_InventoryLiveUseReceiptPc34 liveReceipt;
+    int potionType;
+    int potionPower;
+    int woundMaskCount = 0;
 
-    /* Power scales the effect: 1..255, typical potion power is 20-80 */
-    amount = (power > 0) ? (int)power / 4 + 1 : 5;
-
-    switch (potionType) {
-        case M11_POTION_KU: /* Heal HP */
-            if ((int)champ->hp.current + amount > (int)champ->hp.maximum) {
-                champ->hp.current = champ->hp.maximum;
-            } else {
-                champ->hp.current += (uint16_t)amount;
-            }
-            m11_log_event(state, M11_COLOR_LIGHT_GREEN,
-                          "T%u: %s HEALED %d HP",
-                          (unsigned int)state->world.gameTick,
-                          champName, amount);
-            break;
-
-        case M11_POTION_VEN: /* Antidote / restore stamina */
-            if ((int)champ->stamina.current + amount * 2 > (int)champ->stamina.maximum) {
-                champ->stamina.current = champ->stamina.maximum;
-            } else {
-                champ->stamina.current += (uint16_t)(amount * 2);
-            }
-            m11_log_event(state, M11_COLOR_LIGHT_GREEN,
-                          "T%u: %s STAMINA RESTORED +%d",
-                          (unsigned int)state->world.gameTick,
-                          champName, amount * 2);
-            break;
-
-        case M11_POTION_ZO: /* Restore mana */
-            if ((int)champ->mana.current + amount > (int)champ->mana.maximum) {
-                champ->mana.current = champ->mana.maximum;
-            } else {
-                champ->mana.current += (uint16_t)amount;
-            }
-            m11_log_event(state, M11_COLOR_LIGHT_GREEN,
-                          "T%u: %s MANA RESTORED +%d",
-                          (unsigned int)state->world.gameTick,
-                          champName, amount);
-            break;
-
-        case M11_POTION_DES: /* Poison — damages the drinker */
-            if ((int)champ->hp.current > amount) {
-                champ->hp.current -= (uint16_t)amount;
-            } else {
-                champ->hp.current = 0;
-            }
-            m11_log_event(state, M11_COLOR_LIGHT_RED,
-                          "T%u: %s POISONED! -%d HP",
-                          (unsigned int)state->world.gameTick,
-                          champName, amount);
-            break;
-
-        case M11_POTION_VI: /* Restore all stats partially */
-            if ((int)champ->hp.current + amount / 2 <= (int)champ->hp.maximum) {
-                champ->hp.current += (uint16_t)(amount / 2);
-            } else {
-                champ->hp.current = champ->hp.maximum;
-            }
-            if ((int)champ->stamina.current + amount <= (int)champ->stamina.maximum) {
-                champ->stamina.current += (uint16_t)amount;
-            } else {
-                champ->stamina.current = champ->stamina.maximum;
-            }
-            if ((int)champ->mana.current + amount / 2 <= (int)champ->mana.maximum) {
-                champ->mana.current += (uint16_t)(amount / 2);
-            } else {
-                champ->mana.current = champ->mana.maximum;
-            }
-            m11_log_event(state, M11_COLOR_LIGHT_GREEN,
-                          "T%u: %s VITALITY RESTORED",
-                          (unsigned int)state->world.gameTick,
-                          champName);
-            break;
-
-        case M11_POTION_WATER_FLASK: /* Restore water */
-            if (champ->water + amount * 8 > 255) {
-                champ->water = 255;
-            } else {
-                champ->water += (unsigned char)(amount * 8);
-            }
-            m11_log_event(state, M11_COLOR_LIGHT_BLUE,
-                          "T%u: %s DRINKS WATER",
-                          (unsigned int)state->world.gameTick,
-                          champName);
-            break;
-
-        case M11_POTION_EMPTY_FLASK:
-            m11_log_event(state, M11_COLOR_YELLOW,
-                          "T%u: %s — FLASK IS EMPTY",
-                          (unsigned int)state->world.gameTick,
-                          champName);
-            break;
-
-        case M11_POTION_MON: /* Shield — log only for now */
-            m11_log_event(state, M11_COLOR_CYAN,
-                          "T%u: %s FEELS SHIELDED",
-                          (unsigned int)state->world.gameTick,
-                          champName);
-            break;
-
-        default: /* Generic small heal for unhandled types */
-            if ((int)champ->hp.current + amount / 2 <= (int)champ->hp.maximum) {
-                champ->hp.current += (uint16_t)(amount / 2);
-            } else {
-                champ->hp.current = champ->hp.maximum;
-            }
-            m11_log_event(state, M11_COLOR_LIGHT_GREEN,
-                          "T%u: %s DRINKS POTION (+%d HP)",
-                          (unsigned int)state->world.gameTick,
-                          champName, amount / 2);
-            break;
+    if (!state || !champ || !outResult ||
+        THING_GET_TYPE(leaderThing) != THING_TYPE_POTION ||
+        !state->world.things || !state->world.things->potions ||
+        THING_GET_INDEX(leaderThing) < 0 ||
+        (int)THING_GET_INDEX(leaderThing) >= state->world.things->potionCount) {
+        return 0;
     }
+    potionType = (int)state->world.things->potions[THING_GET_INDEX(leaderThing)].type;
+    potionPower = (int)state->world.things->potions[THING_GET_INDEX(leaderThing)].power;
+    memset(&sourceChampion, 0, sizeof(sourceChampion));
+    sourceChampion.statistic[DM1_CONSUMABLE_STAT_STRENGTH] =
+        (int16_t)champ->attributes[CHAMPION_ATTR_STRENGTH];
+    sourceChampion.statistic[DM1_CONSUMABLE_STAT_DEXTERITY] =
+        (int16_t)champ->attributes[CHAMPION_ATTR_DEXTERITY];
+    sourceChampion.statistic[DM1_CONSUMABLE_STAT_WISDOM] =
+        (int16_t)champ->attributes[CHAMPION_ATTR_WISDOM];
+    sourceChampion.statistic[DM1_CONSUMABLE_STAT_VITALITY] =
+        (int16_t)champ->attributes[CHAMPION_ATTR_VITALITY];
+    sourceChampion.currentHealth = (int16_t)champ->hp.current;
+    sourceChampion.maximumHealth = (int16_t)champ->hp.maximum;
+    sourceChampion.currentStamina = (int16_t)champ->stamina.current;
+    sourceChampion.maximumStamina = (int16_t)champ->stamina.maximum;
+    sourceChampion.currentMana = (int16_t)champ->mana.current;
+    sourceChampion.maximumMana = (int16_t)champ->mana.maximum;
+    sourceChampion.shieldDefense =
+        (int16_t)state->world.magic.partyShieldDefense;
+    sourceChampion.wounds = champ->wounds;
+    sourceChampion.poisonDose = champ->poisonDose;
+    sourceChampion.food = champ->food;
+    sourceChampion.water = champ->water;
+
+    if (potionType == M11_DM1_V1_POTION_VI_PC34 && champ->wounds) {
+        woundMaskCount = m11_dm1_v1_fill_vi_wound_random_masks_pc34(
+            &state->world.masterRng, potionPower, woundMasks,
+            M11_DM1_V1_VI_WOUND_MASK_MAX_PC34);
+    }
+    if (!m11_v1_mouth_live_inventory_transaction(
+            state, champ, leaderThing, &sourceChampion,
+            woundMaskCount > 0 ? woundMasks : NULL, woundMaskCount,
+            &liveReceipt) || !liveReceipt.valid ||
+        liveReceipt.kind != DM1_V1_INVENTORY_LIVE_USE_CONSUMABLE_PC34) {
+        return 0;
+    }
+    *outResult = liveReceipt.consumable;
+
+    champ->attributes[CHAMPION_ATTR_STRENGTH] =
+        (unsigned short)sourceChampion.statistic[DM1_CONSUMABLE_STAT_STRENGTH];
+    champ->attributes[CHAMPION_ATTR_DEXTERITY] =
+        (unsigned short)sourceChampion.statistic[DM1_CONSUMABLE_STAT_DEXTERITY];
+    champ->attributes[CHAMPION_ATTR_WISDOM] =
+        (unsigned short)sourceChampion.statistic[DM1_CONSUMABLE_STAT_WISDOM];
+    champ->attributes[CHAMPION_ATTR_VITALITY] =
+        (unsigned short)sourceChampion.statistic[DM1_CONSUMABLE_STAT_VITALITY];
+    champ->hp.current = (uint16_t)sourceChampion.currentHealth;
+    champ->stamina.current = (uint16_t)sourceChampion.currentStamina;
+    champ->mana.current = (uint16_t)sourceChampion.currentMana;
+    champ->wounds = sourceChampion.wounds;
+    champ->poisonDose = sourceChampion.poisonDose;
+    champ->food = sourceChampion.food;
+    champ->water = sourceChampion.water;
+    state->world.magic.partyShieldDefense = sourceChampion.shieldDefense;
+    return 1;
 }
 
 int M11_GameView_UseItem(M11_GameViewState* state) {
@@ -15703,7 +15650,7 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
             int potType = (int)pot->type;
             int potPower = (int)pot->power;
 
-            if (potType == M11_POTION_EMPTY_FLASK) {
+            if (potType == DM1_CONSUMABLE_POTION_EMPTY_FLASK_PC34) {
                 m11_set_status(state, "USE", "FLASK IS EMPTY");
                 snprintf(state->inspectTitle, sizeof(state->inspectTitle),
                          "EMPTY FLASK");
@@ -15712,26 +15659,21 @@ int M11_GameView_UseItem(M11_GameViewState* state) {
                 return 0;
             }
 
-            m11_apply_potion_effect(state, champ, potType, potPower, champName);
+            {
+                DM1ConsumableResultPc34 consumableResult;
+                if (!m11_apply_source_potion_effect_pc34(
+                        state, champ, item, &consumableResult) ||
+                    !consumableResult.consumed) {
+                    m11_set_status(state, "USE", "POTION DATA ERROR");
+                    return 0;
+                }
+            }
 
             /* Award priest XP for drinking a potion */
             m11_award_magic_xp(state,
                                state->world.party.activeChampionIndex,
                                LIFECYCLE_SKILL_HEAL,
                                potPower > 0 ? potPower / 10 + 1 : 1);
-
-            /* Consume: if doNotDiscard, convert to empty flask;
-             * otherwise remove from inventory */
-            if (pot->doNotDiscard) {
-                pot->type = M11_POTION_EMPTY_FLASK;
-                pot->power = 0;
-                m11_log_event(state, M11_COLOR_YELLOW,
-                              "T%u: %s NOW HOLDS AN EMPTY FLASK",
-                              (unsigned int)state->world.gameTick,
-                              champName);
-            } else {
-                champ->inventory[useSlot] = THING_NONE;
-            }
 
             m11_set_status(state, "USE", "POTION CONSUMED");
             snprintf(state->inspectTitle, sizeof(state->inspectTitle),

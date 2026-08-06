@@ -32,6 +32,13 @@
   now names its external capture witness explicitly; the retail startup-menu
   regression asserts title art loaded but title capture unavailable.
 
+- ✅ 2026-08-06 DM1 keyboard potion-use source route: removed the fabricated
+  generic M11 potion effects and routed keyboard/use-item consumption through
+  the ReDMCSB PANEL.C-backed PC34 live transaction. The route now uses the
+  source formulas, writes the real raw potion record, converts to type 20
+  while preserving Power, and passes the focused consumable/live-transaction
+  tests. Full HoC packaged capture remains open.
+
 - ✅ 2026-08-06 Theron US roster/text audit: real US Track 02 still proves
   only the `GO AWAY AND RESURRECT THERON` prompt at `0xa0722`; the JP ASCII
   roster cluster is absent from the US receipt. Real US Track 19 item names,

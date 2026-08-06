@@ -304,6 +304,15 @@
   helper is retained only for non-source diagnostics. Remaining work is
   packaged capture of door states, not another fallback texture.
 
+  2026-08-06 keyboard potion-use audit: the generic M11 `UseItem` potion
+  effect path is removed. Keyboard use now enters the same live PC34
+  transaction as ReDMCSB PANEL.C F0349, including source-owned stat/health/
+  wound/poison/food/water/shield formulas, the correct empty-flask type C20
+  (20), and raw Thing-byte rewrite. Focused consumable and live-transaction
+  tests pass. `YA` shield event scheduling and external packaged capture of
+  the complete interaction remain separate open work; do not mark the whole
+  HoC interaction audit complete from these headless tests.
+
   2026-08-06 bug-hunt audit: real PC34 checks pass for 83/83 HoC floor-item
   render samples, 611 M564 object names/icons, F0115 pickup material and
   placement, mirror side/depth orientation, inscriptions, stairs, doors and
