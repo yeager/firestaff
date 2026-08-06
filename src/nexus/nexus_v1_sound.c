@@ -1,4 +1,5 @@
 #include "nexus_v1_sound.h"
+#include "nexus_v1_world.h"
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
@@ -688,7 +689,7 @@ int nexus_sound_load_canonical_level(Nexus_SoundEngine *eng, int level_index,
                                       int sal_canonical_source_verified,
                                       int map_canonical_source_verified) {
     if (!eng || !eng->initialized) return -1;
-    if (level_index < 0 || level_index > 15) return -1;
+    if (level_index < 0 || level_index >= NEXUS_MAX_LEVELS) return -1;
 
     /* Free previous level data */
     nexus_sound_free_decoded(eng);

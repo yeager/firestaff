@@ -55324,3 +55324,12 @@ alcove runtime and archive-media tests passed (4/4).
   68-byte Shift-JIS pool from `0x11628`. The receipt keeps the Japanese text
   as original bytes and does not manufacture translated host labels. English
   and Japanese real-media handoff tests pass.
+# Nexus level-bound consistency (2026-08-06)
+
+- ✅ Nexus sound-bank loading and mechanics level admission now use the
+  canonical `NEXUS_MAX_LEVELS` bound instead of duplicated literal `15`
+  checks.
+- ✅ Real European SAL/MAP corpus verification still passes for all 16 levels;
+  event dispatch and playback remain fail-closed.
+- ⚠️ The aggregate build remains blocked by the pre-existing Font256 S2D
+  unresolved-symbol gap recorded in `TODO.md`.

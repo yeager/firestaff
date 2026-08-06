@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-FULL-BUILD-FONT256-LINK-GAP:** The focused Nexus sound/mechanics
+  targets build and the real 16-level SAL/MAP tests pass, but the current
+  aggregate build still cannot link several Font256 S2D targets because the
+  production archive references `nexus_v1_font_get_section`,
+  `nexus_v1_font_load_sections`, and `nexus_v1_font_section_in_bounds` without
+  linked implementations. Resolve that existing build gap before treating a
+  full Firestaff build as green; do not bypass it with synthetic font data.
+
 - **CSB-FMTOWNS-C06-UTILITY-TRANSACTIONS:** The F31E empty editor frame now
   reaches M11 from SWITCHTW with original C06 coordinates, UTILE strings,
   M653 metrics and C09_ICON palette; its authentic palette selector is

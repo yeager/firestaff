@@ -312,7 +312,7 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
     int i;
     int has_real_data;
 
-    if (!engine || level_index < 0 || level_index > 15) return -1;
+    if (!engine || level_index < 0 || level_index >= NEXUS_MAX_LEVELS) return -1;
     level = &engine->current_level;
     if (!engine->level_loaded || level->width != NEXUS_MAX_MAP_SIZE ||
         level->height != NEXUS_MAX_MAP_SIZE)
