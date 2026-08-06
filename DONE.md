@@ -49,6 +49,14 @@
   macOS viewport/HUD capture remains tracked separately in
   `DM1-DIRECT-LOOP-CAPTURE`.
 
+- ✅ 2026-08-06 DM1 host-font fallback removal: source-backed DM1 text no
+  longer silently falls back to Firestaff's built-in 5x7 diagnostic font when
+  M653 is unavailable. The real PC3.4 object corpus test now requires the
+  authenticated original font as well as the 611 source-backed names/icons;
+  the real corpus passes. Missing source font material is now no-draw instead
+  of a visually different replacement. Broader text capture remains tracked
+  in `DM1-M653-FONT-CAPTURE`.
+
 - ✅ 2026-08-06 Nexus ITEM equipment placeholder removal: deleted the old
   `20..26` item-ID armor mapping and the unknown-armor-to-torso fallback from
   the inventory helper. ITEM.IBS declarations remain source-owned, while

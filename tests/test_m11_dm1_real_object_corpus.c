@@ -69,7 +69,7 @@ int main(void)
     }
     M11_GameView_Init(&state);
     if (!M11_GameView_StartDm1(&state, dataDir) || !state.world.things ||
-        !state.dm1ObjectNameTableValid) {
+        !state.dm1ObjectNameTableValid || !state.originalFontAvailable) {
         fprintf(stderr, "DM1 real object corpus failed to start\n");
         M11_GameView_Shutdown(&state);
         return 1;

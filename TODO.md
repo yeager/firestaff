@@ -13,6 +13,11 @@
   source-backed direct loop on macOS and compare its complete viewport/HUD
   composition against ReDMCSB.
 
+- **DM1-M653-FONT-CAPTURE:** Authenticated DM1 text now refuses the generic
+  host 5x7 font when the original M653 GRAPHICS.DAT record is unavailable.
+  Broader macOS capture must still verify every message, inscription and HUD
+  text route with the loaded PC3.4 font.
+
 - **CSB-FMTOWNS-RUNTIME-PARITY:** The authentic FM Towns CD's verified
   `CDATA`/`CJDATA` files, title animation, portraits and executables now reach
   the CSB runtime cache without synthetic replacements. Keep launch/runtime

@@ -5298,6 +5298,13 @@ static void m11_draw_text(unsigned char* framebuffer,
             framebufferWidth, framebufferHeight, x, y, text, s);
         return;
     }
+    /* A real DM1 session must never replace M653 with Firestaff's diagnostic
+     * 5x7 host font.  The source font is loaded from the authenticated
+     * GRAPHICS.DAT bind; if that bind failed, leave the source text undrawn
+     * rather than changing its glyphs or spacing. */
+    if (g_drawState && m11_is_dm1_source_kind(g_drawState->sourceKind)) {
+        return;
+    }
     for (i = 0; text[i] != '\0'; /* i advances per UTF-8 codepoint */) {
         int consumed = 1;
         int isLatinExt = 0;
