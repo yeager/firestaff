@@ -183,6 +183,14 @@
 - ✅ Verification: `test_dm1_v1_viewport_d1l2_d1r2_f0115_thing_pass_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 D0C F0108 floor-ornament synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the D0C F0108 contract probe from M10. It uses fixed pixels,
+  seed and zone metadata, reads no original DM1 bytes and has no M11/runtime
+  caller; the separate D0C real-material route remains unchanged.
+- ✅ Verification: `test_dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the

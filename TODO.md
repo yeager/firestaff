@@ -155,6 +155,11 @@
   until a live F0115 consumer is bound to authentic Thing and GRAPHICS.DAT
   material.
 
+- **DM1-D0C-F0108-FLOOR-ORNAMENT-SYNTHETIC-AUDIT:** This D0C contract uses
+  fixed pixels, seed and zone metadata. It has no M11/runtime caller and
+  reads no original DM1 data; retain it only in its explicit regression while
+  the independent D0C real-material route remains the production owner.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

@@ -4362,6 +4362,12 @@ list(REMOVE_ITEM M10_SOURCES
 # explicit regression until a real D1L2/D1R2 F0115 consumer requires it.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1l2_d1r2_f0115_thing_pass_pc34_compat.c")
+# `dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat.c` is a
+# contract-only D0C probe with fixed pixels, seed and zone metadata. It reads
+# no original DM1 bytes and has no M11/runtime caller; its explicit test
+# already compiles it, while the real D0C material route remains separate.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0c_f0108_floor_ornament_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
