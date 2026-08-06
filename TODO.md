@@ -3678,10 +3678,10 @@ level or consumer bindings.
   resurrection. The square-local public entry now returns an explicit failure
   instead of a no-op success, so an unowned DB3 root cannot be reported as an
   accepted game action.
-  **2026-08-02 update:** the 0x56 CONTINUE_TICK_GENERATOR timer is now
-  fully wired: resolves the actuator record from the timer's ObjectID via
-  the record pool, handles ActionType==3 toggle mode and OnceOnly re-queue.
-  Periodic actuator events (tick generators) now fire correctly.
+  **2026-08-02 historical study:** the former 0x56 CONTINUE_TICK_GENERATOR
+  implementation resolved an actuator from timer ObjectID, toggled
+  ActionType==3 and re-queued OnceOnly records. It was later removed because
+  those reduced fields do not establish the complete original transaction.
   **2026-08-02 update:** floor-mecha CROSS_SCENE (0x27) now implements
   TOGGLE_ACTUATOR_MESSAGE on the once_only field. CREATURE_AI_STATE (0x28)
   shares the CREATURE_KILLER dispatch (both fail-closed pending creature
@@ -3708,6 +3708,10 @@ level or consumer bindings.
   `DM2_INVOKE_ACTUATOR`/`DM2_INVOKE_MESSAGE` timer builder. It could enqueue
   an actuator timer from caller-provided record bytes without the source DB3/
   DB14 link and target transaction; the archive boundary rejects its return.
+  The adjacent uncalled `CONTINUE_TICK_GENERATOR` study is removed too: it
+  toggled a DB3 byte, invoked an actuator and requeued from timer `value_b`
+  without the same complete DB3/DB14 target/payload transaction. The live
+  dispatcher continues to consume class 0x56 fail-closed.
   The M11 Action-door shortcut now follows the same rule: it cannot rewrite
   a G1 tile from a coordinate-only query while the live DB0 door record,
   direction, collision, sound and follow-up timer transaction are absent.

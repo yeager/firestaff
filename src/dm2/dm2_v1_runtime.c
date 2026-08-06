@@ -4761,83 +4761,6 @@ static int dm2_runtime_ornate_animator_timer(void *user,
 }
 
 /*
- * dm2_runtime_tick_generator_timer — 0x56 timer handler.
- * Source: skevent.cpp CONTINUE_TICK_GENERATOR (v4 line 2764).
- * Resolves the actuator record from the timer's value_a (ObjectID),
- * fires INVOKE_ACTUATOR on the actuator's target, then re-queues
- * itself with the next tick offset.
- */
-static int dm2_runtime_tick_generator_timer(void *user,
-                                            const DM2_V1_SourceTimer *timer,
-                                            uint16_t source_index,
-                                            DM2_V1_ProceedTimersReceipt *receipt)
-{
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    int16_t record_link;
-    uint8_t *actu;
-    uint8_t action_type;
-    uint8_t once_only;
-    uint8_t si;
-    int requeue;
-    uint16_t value2;
-    uint16_t actu_data;
-    DM2_V1_SourceTimer requeue_timer;
-
-    (void)source_index;
-    (void)receipt;
-
-    rt->actuator_tile_timers++;
-
-    if (!rt->record_pools_valid) return 1;
-
-    record_link = timer->value_a;
-    if (dm2_v1_record_handle_pool(record_link) != DM2_DB_ACTUATOR) return 1;
-
-    actu = dm2_v1_record_pool_address_mut(&rt->record_pools, record_link);
-    if (!actu) return 1;
-
-    action_type = dm2_actu_action_type(actu);
-    once_only   = dm2_actu_once_only(actu);
-    value2      = (uint16_t)(timer->value_b & 0xFF);
-    actu_data   = dm2_actu_data(actu);
-
-    if (action_type == 3) {
-        /* Toggle b4_0_0 bit (active status), use toggled state as action.
-         * Source: skevent.cpp:2771-2774 */
-        uint8_t toggled = (uint8_t)(dm2_actu_active_status(actu) ^ 1u);
-        dm2_actu_set_active_status(actu, toggled);
-        si = toggled | once_only;
-        dm2_v1_invoke_actuator(&rt->timer_queue, actu,
-                               (toggled != 0) ? 0 : 1, 0,
-                               (int)(timer->ticks_and_map >> 24),
-                               (uint32_t)rt->tick_count);
-    } else {
-        si = once_only;
-        if (si != 0) {
-            dm2_v1_invoke_actuator(&rt->timer_queue, actu,
-                                   action_type, 0,
-                                   (int)(timer->ticks_and_map >> 24),
-                                   (uint32_t)rt->tick_count);
-        }
-    }
-
-    requeue = (si != 0);
-    if (requeue && actu_data > 0 && value2 > 0) {
-        uint32_t next_tick = (timer->ticks_and_map & DM2_V1_SOURCE_TIMER_TICK_MASK)
-                           + (uint32_t)value2 * (uint32_t)actu_data;
-        requeue_timer = *timer;
-        requeue_timer.ticks_and_map =
-            (next_tick & DM2_V1_SOURCE_TIMER_TICK_MASK)
-            | (timer->ticks_and_map & ~DM2_V1_SOURCE_TIMER_TICK_MASK);
-        dm2_v1_source_timer_enqueue(&rt->timer_queue, &requeue_timer, 0);
-    } else if (!requeue) {
-        dm2_actu_set_active_status(actu, 0);
-    }
-
-    return 1;
-}
-
-/*
  * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214 (class-0 dispatch)
  *         skproject/SKULLWIN/c_tim_proc.cpp:1923 (DM2_ACTUATE_WALL_MECHA)
  */
@@ -5156,10 +5079,6 @@ void dm2_v1_runtime_tick(void) {
          * actuator record. A raw pool address is insufficient without the
          * original animator/timer ownership, so retain no live callback. */
         (void)dm2_runtime_ornate_animator_timer;
-        /* CONTINUE_TICK_GENERATOR invokes the same incomplete actuator
-         * transaction.  Do not let its convenience record decode enqueue a
-         * guessed 0x04 mutation. */
-        (void)dm2_runtime_tick_generator_timer;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
         /* STEP/DESTROY_DOOR likewise need the decoded DB0 direction,

@@ -2378,6 +2378,15 @@
   and real PC-DOS G1 viewport-plan regression pass. No game data was copied,
   unpacked or modified.
 
+- ✅ 2026-08-06 DM2 tick-generator transaction cleanup: removed the uncalled
+  `CONTINUE_TICK_GENERATOR` timer study from `dm2_v1_runtime.c`. It toggled a
+  DB3 record byte, invoked an actuator and requeued a timer from raw timer
+  fields despite the absent original DB3/DB14 target, payload and follow-up
+  transaction. The production-boundary verifier rejects its return; class
+  0x56 timers remain consumed fail-closed. Verification: `firestaff_dm2`
+  build, production-boundary verifier and real PC-DOS G1 viewport-plan
+  regression pass. No game data was copied, unpacked or modified.
+
 - ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now
   records a completed party/leader-cache clear only after its retained
   source-save projection is observed empty. M11 requires that postcondition
