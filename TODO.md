@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D1C-F0107-SYNTHETIC-AUDIT:** This asset-free F0107 model fixes
+  D1C wall-ornament routing and local C10 probes. It has no original DM1 data
+  input or M11/runtime caller; retain it as an explicit ReDMCSB regression
+  while the separate source-bound inscription/wall-material paths own pixels.
+
 - **DM1-D2L-D2R-F0108-SYNTHETIC-AUDIT:** This contract-only D2 side model
   fixes zone and ordered-cell metadata without comparing original bitmap data.
   It has no M11/runtime caller; retain it as an explicit ReDMCSB regression

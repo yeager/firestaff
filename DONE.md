@@ -1,3 +1,12 @@
+# DM1 D1C F0107 wall-ornament synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free D1C F0107 wall-ornament audit from M10. It fixes
+  route metadata and local C10 probe pixels, reads no original DM1 material
+  and has no M11/runtime caller. The separate source-bound D1C wall and
+  inscription renderers remain the production owners.
+- ✅ Verification: `dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D2L/D2R F0108 floor-ceiling synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only D2L/D2R F0108 floor/ceiling/ornament table

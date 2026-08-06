@@ -4371,6 +4371,11 @@ list(REMOVE_ITEM M10_SOURCES
 # values through the broad M10 production archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l_d2r_f0108_floor_ceiling_ornament_pc34_compat.c")
+# `dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat.c` is an asset-free
+# F0107 source audit with local probe pixels. It has no M11/runtime caller;
+# active D1C inscription and wall-material paths bind original data directly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat.c")
 # `dm1_v1_viewport_d2c_center_wall_composition_pc34_compat.c` is an
 # asset-free synthetic D2C pixel-trace audit with no M11/runtime caller.
 # Compile it only into its dedicated test and keep the broad M10 archive
