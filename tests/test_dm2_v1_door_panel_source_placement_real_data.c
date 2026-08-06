@@ -81,7 +81,8 @@ static int expected_button_rect(const DM2_V1_AssetLoader *loader,
 static int test_square(const DM2_V1_AssetLoader *loader,
                        DM2_V1_ViewportState *viewport,
                        int view_square,
-                       int expect_button)
+                       int expect_button,
+                       int door_record_type)
 {
     DM2_V1_DoorRenderPlan render_plan;
     DM2_V1_GdatDoorOverlayM11CommandPlan material_plan;
@@ -98,7 +99,8 @@ static int test_square(const DM2_V1_AssetLoader *loader,
 
     viewport->squares[view_square].flags = DM2_SQF_HAS_DOOR;
     viewport->squares[view_square].door_gfx_admitted = 1;
-    viewport->squares[view_square].door_record_type = 1;
+    viewport->squares[view_square].door_record_type =
+        (uint8_t)door_record_type;
     viewport->squares[view_square].door_gfx_index = 0;
     viewport->squares[view_square].door_state = 4;
     viewport->squares[view_square].door_opening_dir = 1;
@@ -119,6 +121,17 @@ static int test_square(const DM2_V1_AssetLoader *loader,
 
     if (!build_material_plan(loader, &render_plan, &material_plan)) {
         fprintf(stderr, "FAIL: no material plan for square %d\n", view_square);
+        return 0;
+    }
+
+    if (door_record_type == 0 && view_square == DM2_SQ_D0C &&
+        render_plan.doors[0].panel_gdat_index !=
+            dm2_v1_viewport_door_panel_graphic_index_for_record(
+                view_square, viewport->squares[view_square].door_gfx_index,
+                viewport->squares[view_square].door_opening_dir)) {
+        fprintf(stderr,
+                "FAIL: type-0 DB0 door lost its source DOORS record route\n");
+        dm2_v1_gdat_door_overlay_m11_command_plan_free(&material_plan);
         return 0;
     }
 
@@ -293,10 +306,10 @@ int main(void)
 
     /* D0C/D1C/D2C have both closed panels and default buttons. D3C has a panel
      * but no default button route. */
-    if (!test_square(&loader, &viewport, DM2_SQ_D0C, 1) ||
-        !test_square(&loader, &viewport, DM2_SQ_D1C, 1) ||
-        !test_square(&loader, &viewport, DM2_SQ_D2C, 1) ||
-        !test_square(&loader, &viewport, DM2_SQ_D3C, 0) ||
+    if (!test_square(&loader, &viewport, DM2_SQ_D0C, 1, 0) ||
+        !test_square(&loader, &viewport, DM2_SQ_D1C, 1, 1) ||
+        !test_square(&loader, &viewport, DM2_SQ_D2C, 1, 1) ||
+        !test_square(&loader, &viewport, DM2_SQ_D3C, 0, 1) ||
         !test_fallback_without_source(&viewport)) {
         goto cleanup;
     }

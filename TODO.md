@@ -4203,6 +4203,12 @@ diagnostic; it must not silently fall back to a generated visual.
   the V2 HUD renderer after declaring M11 the DM2 presentation owner. M11's
   frame-receipt gate is now the only production route that may issue the
   GDAT-backed V2 HUD pass; keep future HUD work on that route.
+  **2026-08-07 DoorType-0 parity correction:** the source door record's
+  `DoorType()` value may legitimately be zero. The viewport now uses the
+  separate authenticated G1 DB0-root receipt to decide whether to select the
+  record-specific `DOORS` image, rather than treating `door_record_type != 0`
+  as record presence. Remaining wall/door work is still limited to source
+  records and decoded GDAT/RAW4 receipts.
 - **DM2-ORIGINAL-REPLACE-002:** Replace the V2 HUD's synthetic 1x1/overlay
   route with real interface/widget records from `dm2/GRAPHICS.DAT`; do not
   use generated PNG pixels as a runtime fallback. **2026-07-30 update:** the

@@ -56457,3 +56457,12 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Removed M11's last call into that unavailable state carrier. Focused shop
   tests retain explicit source-study coverage; production remains blocked until
   the original `SHOP_GLASS`/`WALL_GFX`/`dt08` transaction is bound.
+
+# DM2 DoorType-0 source panel parity (2026-08-07)
+
+- ✅ Corrected the active V1 door render plan so a real DB0 door with
+  `DoorType()==0` still selects its record-specific `DOORS` image. The
+  authenticated G1 root, not the type value, now proves record presence.
+- ✅ Added the type-0 regression to the real PC-DOS `GRAPHICS.DAT` RAW4 door
+  placement test. The source panel/button test and door scene-control gate
+  pass; no generated door geometry is admitted.

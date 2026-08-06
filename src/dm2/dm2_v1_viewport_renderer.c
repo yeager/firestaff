@@ -3720,12 +3720,16 @@ int dm2_v1_viewport_build_door_render_plan(
         /* skproject DRAW_DOOR/DRAW_DOOR_FRAMES select the map-local DOORS
          * image for every state except destroyed (state 5), where only the
          * frame and destroyed mask are drawn.  States 0..4 use the recorded
-         * DoorType/OpeningDir-specific panel only when the G1 root actually
-         * admitted a door record (door_record_type != 0).  An unrecorded door
-         * falls back to the square panel, regardless of its opening direction.
+         * DoorType/OpeningDir-specific panel only when the authenticated G1
+         * root admitted a DB0 door record.  DoorType 0 is a valid source value;
+         * do not use door_record_type itself as the record-presence flag.
+         * An unrecorded door falls back to the square panel, regardless of its
+         * opening direction.
          * Source: SKWIN/SkWinCore.cpp DM2_DRAW_DOOR uses glbMapDoorType[DoorType()]
-         * only after a valid DB0 door record is present. */
-        if (vs->door_state <= 4u && vs->door_record_type != 0) {
+         * only after a valid DB0 door record is present; the record's DoorType
+         * is read from DME.h::Door::w2 and may be zero. */
+        if (vs->door_state <= 4u &&
+            (vs->door_direct_g1_root || vs->door_record_type != 0)) {
             row->panel_gdat_index =
                 dm2_v1_viewport_door_panel_graphic_index_for_record(
                     square,
