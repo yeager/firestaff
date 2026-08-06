@@ -1,9 +1,9 @@
-- ✅ 2026-08-06 DM1 creature-name source ownership: removed M11's duplicate
-  27-entry display-name table and routed runtime names through the ReDMCSB
-  source-locked creature-render module. Invalid type IDs now report `UNKNOWN`
-  without inventing a creature label. Verification:
-  `test_dm1_v1_creature_render_pc34_compat` 14/14 and
-  `m11_dm1_runtime_source_capture_receipt` pass.
+- ✅ 2026-08-06 Theron M11 Enter-forcefield regression: added an end-to-end
+  keyboard ACCEPT test from title → stage select → Soul Room → forcefield.
+  The Enter path reaches the same startup handoff as pointer/ACTION input and
+  now explicitly verifies the authentic-capture admission message when the
+  local Track 02 lacks the required System Card/host capture; no fallback
+  dungeon is promoted.
 
 - ✅ 2026-08-06 Nexus MNS runtime admission: added canonical MD5 identities for
   all 30 retail MNS files. The real readiness probe now loads
@@ -52534,11 +52534,3 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   `vga_palette_pc34_compat.c` to the standalone CSB test target that compiles
   the V2 viewport renderer. The focused CMake build and CTest pass locally;
   the main GitHub matrix remains the cross-platform verification.
-
-- ✅ 2026-08-06 DM2 creature-door data correction: removed the active
-  hard-coded zero door-attribute fallback from the G1 field bridge. The
-  current-map DB0 door root selects map-header slot 0/1, then the real
-  `DOORS/dtWordValue/0x0d` record supplies the closed-door creature rule,
-  matching SKProject `GET_GRAPHICS_FOR_DOOR` and `GET_DOOR_STAT_0D`
-  (`skdoor.cpp`). Missing G1, map-header, or GDAT ownership now returns no
-  field result instead of inventing a blocking attribute.

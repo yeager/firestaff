@@ -475,6 +475,63 @@ int main(void) {
                 view.theronState.level_loaded == 0,
                 "M11 Theron title gate keeps runtime unloaded");
 
+    /* Regression for the visible "ENTER FORCEFIELD" command: exercise the
+     * keyboard ACCEPT path end-to-end, independently of the later pointer
+     * and ACTION-path checks. */
+    {
+        M11_GameViewState enter_view;
+        Theron_V1_World *enter_world;
+        int enter_guard = 0;
+
+        M11_GameView_Init(&enter_view);
+        expect_true(M11_GameView_Start(&enter_view, &spec),
+                    "M11 Theron Enter-forcefield view starts");
+        enter_world = (Theron_V1_World *)enter_view.theronWorld;
+        while (enter_view.theronState.startup_title_animation_tick < 48 &&
+               enter_guard++ < 200) {
+            (void)M11_GameView_AdvanceIdleTick(&enter_view);
+        }
+        expect_true(M11_GameView_HandleInput(&enter_view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    enter_view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_STAGE_SELECT,
+                    "M11 Theron Enter-forcefield title accepts");
+        expect_true(M11_GameView_HandleInput(&enter_view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    enter_view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_SOUL_ROOM,
+                    "M11 Theron Enter-forcefield stage accepts");
+        expect_true(M11_GameView_HandleInput(&enter_view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    enter_view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_READY,
+                    "M11 Theron Enter-forcefield selects Theron");
+        for (enter_guard = 0; enter_guard < THERON_STARTUP_HERO_MIRROR_COUNT;
+             ++enter_guard) {
+            expect_true(M11_GameView_HandleInput(&enter_view,
+                                                 M12_MENU_INPUT_DOWN) ==
+                            M11_GAME_INPUT_REDRAW,
+                        "M11 Theron Enter-forcefield advances Soul Room focus");
+        }
+        expect_true(enter_view.theronState.startup_cursor ==
+                        THERON_STARTUP_HERO_MIRROR_COUNT,
+                    "M11 Theron Enter-forcefield focuses the forcefield");
+        expect_true(M11_GameView_HandleInput(&enter_view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    enter_view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_READY &&
+                    enter_view.theronState.level_loaded == 0 &&
+                    enter_world != NULL && enter_world->level_loaded[0][0] == 0 &&
+                    strstr(enter_view.inspectDetail,
+                           "AUTHENTIC CAPTURE ADMISSION REQUIRED") != NULL,
+                    "M11 Theron Enter-forcefield reports the missing authenticated capture");
+        M11_GameView_Shutdown(&enter_view);
+    }
+
     startup_row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
     expect_true(startup_row_count >= 5 &&
