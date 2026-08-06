@@ -70,6 +70,10 @@
   SWITCH.C's 60-VBlank delay. The F31J utility screen and all file-picker,
   save and portrait-edit transactions remain deliberately closed pending
   their native text and state consumers.
+- ✅ The source CEDT006 palette selector now follows F7043/F7036: every
+  C09_ICON row moves the white selected-swatch exterior while retaining the
+  indexed source colour. This state is local to the editor and cannot alter a
+  portrait, champion or save.
 
 - ✅ M11 no longer renders authentic Track 02 font tiles through unverified
   host render-plan coordinates or inferred palette styles.

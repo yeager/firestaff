@@ -225,6 +225,19 @@ int main(void)
                   framebuffer[51u * 320u + 286u] == 1u &&
                   framebuffer[60u * 320u + 157u] == 0u,
               "C06 F7042 frame uses its source boxes and selected C09_ICON swatch");
+        /* CEDT006.C F7043/F7036 selects a native colour without changing a
+         * portrait, save or champion. y=51 is the second eight-pixel row. */
+        result = M11_GameView_HandlePointerButton(
+            &view, 286, 51, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW &&
+                  view.csbFmtownsUtilitySelectedColor == 1u,
+              "C06 palette click updates only its source-local selection");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        CHECK(framebuffer[42u * 320u + 285u] == 0u &&
+                  framebuffer[50u * 320u + 285u] == 15u &&
+                  framebuffer[51u * 320u + 286u] == 1u,
+              "C06 F7036 moves the white selected-swatch exterior");
         result = M11_GameView_HandlePointerButton(
             &view, 288, 5, DM1_V1_MOUSE_MASK_LEFT_PC34);
         CHECK(result == M11_GAME_INPUT_REDRAW && !view.csbFmtownsUtilityBound &&

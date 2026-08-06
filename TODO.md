@@ -2,7 +2,8 @@
 
 - **CSB-FMTOWNS-C06-UTILITY-TRANSACTIONS:** The F31E empty editor frame now
   reaches M11 from SWITCHTW with original C06 coordinates, UTILE strings,
-  M653 metrics and C09_ICON palette. Recover the F31J Shift-JIS glyph
+  M653 metrics and C09_ICON palette; its authentic palette selector is
+  editor-local. Recover the F31J Shift-JIS glyph
   consumer and the original file-picker/save/portrait-edit transaction
   owners before exposing those commands; a C06 hit rectangle must not mutate
   a Firestaff save or manufacture a champion.

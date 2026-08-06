@@ -6767,13 +6767,20 @@ static int m11_csb_build_fmtowns_utility_english(M11_GameViewState *state)
                                             157, 252, 60, 146, 3, 3u, 0u);
     m11_csb_fmtowns_utility_draw_filled_box(state->csbFmtownsUtilityPixels,
                                             284, 305, 41, 171, 2, 2u, 0u);
-    m11_csb_fmtowns_utility_draw_filled_box(state->csbFmtownsUtilityPixels,
-                                            286, 303, 43, 49, 1, 15u, 0u);
     for (index = 1u; index < 16u; ++index) {
         int top = 43 + (int)index * 8;
         m11_csb_fmtowns_utility_fill_box(state->csbFmtownsUtilityPixels,
                                          286, 303, top, top + 6,
                                          (uint8_t)index);
+    }
+    /* CEDT006.C F7036 selects the same native C09_ICON inner colour while
+     * retaining a white, expanded one-pixel exterior. */
+    if (state->csbFmtownsUtilitySelectedColor >= 16u) return 0;
+    {
+        int top = 43 + (int)state->csbFmtownsUtilitySelectedColor * 8;
+        m11_csb_fmtowns_utility_draw_filled_box(
+            state->csbFmtownsUtilityPixels, 286, 303, top, top + 6, 1,
+            15u, state->csbFmtownsUtilitySelectedColor);
     }
     return 1;
 }
@@ -6788,8 +6795,13 @@ static int m11_csb_enter_fmtowns_utility(
     memset(&state->csbFmtownsUtilityMenuReceipt, 0,
            sizeof(state->csbFmtownsUtilityMenuReceipt));
     if (!csb_v1_fmtowns_utility_menu_open(profile, language,
-                                           &state->csbFmtownsUtilityMenuReceipt) ||
-        !m11_csb_build_fmtowns_utility_english(state)) {
+                                           &state->csbFmtownsUtilityMenuReceipt)) {
+        memset(&state->csbFmtownsUtilityMenuReceipt, 0,
+               sizeof(state->csbFmtownsUtilityMenuReceipt));
+        return 0;
+    }
+    state->csbFmtownsUtilitySelectedColor = 0u;
+    if (!m11_csb_build_fmtowns_utility_english(state)) {
         memset(&state->csbFmtownsUtilityMenuReceipt, 0,
                sizeof(state->csbFmtownsUtilityMenuReceipt));
         return 0;
@@ -6827,6 +6839,19 @@ static M11_GameInputResult m11_csb_handle_fmtowns_utility_pointer(
     if (!state || !state->csbFmtownsUtilityBound ||
         (button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
         return M11_GAME_INPUT_IGNORED;
+    }
+    /* ReDMCSB CEDTDATA.C G2272_MouseInputs[6] and CEDT006.C F7043:
+     * selection only updates C06's editor-local colour index. It has no
+     * save, portrait or champion side effect. */
+    if (x >= 286 && x <= 303 && y >= 43 && y <= 169) {
+        uint8_t selected = (uint8_t)((y - 43) / 8);
+        if (selected < 16u) {
+            state->csbFmtownsUtilitySelectedColor = selected;
+            if (!m11_csb_build_fmtowns_utility_english(state)) {
+                return M11_GAME_INPUT_IGNORED;
+            }
+        }
+        return M11_GAME_INPUT_REDRAW;
     }
     if (!csb_v1_fmtowns_utility_menu_action_at(
             &state->csbFmtownsUtilityMenuReceipt, (int16_t)x, (int16_t)y,
