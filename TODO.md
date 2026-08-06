@@ -1459,6 +1459,13 @@ level or consumer bindings.
   A loose companion is now checked again after its bounded RAM read, so the
   GDAT reader consumes the same canonical PC-English bytes that passed the
   hash gate.
+  **2026-08-06 FM Towns credits update:** `DM2_SHOW_CREDITS` now takes
+  precedence over the completed TITLE-to-SKULL menu handoff in M11, matching
+  the source's separate event loop. Its HME-242 TITLE/0/1 IMG3 page selects
+  the page's own verified 16-colour `dtPalIRGB` data rather than retaining
+  TITLE/0/4's menu palette. The real-CD M11 regression compares all active
+  indexed RGB6 rows with that original palette. This remains presentation
+  only: credits neither opens gameplay nor grants a save/resume path.
   **2026-08-06 FM Towns GDAT gate update:** the bounded format classifier now
   also requires HME-242's actual 3,407-entry raw catalogue. A made-up
   0x8004 header and plausible buffer size therefore cannot enter even the

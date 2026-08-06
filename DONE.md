@@ -12,6 +12,16 @@
 
 # Theron TQTR capture-offset correction (2026-08-06)
 
+# DM2 FM Towns credits palette and handoff (2026-08-06)
+
+- ✅ The original HME-242 credits page now overrides the completed static
+  menu in M11, as `DM2_SHOW_CREDITS` does in SKProject's separate event loop.
+- ✅ Its TITLE/0/1 4-bit source image selects its own authenticated 16-colour
+  `dtPalIRGB` palette. It no longer reuses TITLE/0/4's menu palette.
+- ✅ The real-CD M11 test compares the active 256-entry RGB6 palette against
+  the exact TITLE/0/1 source rows. No member is unpacked and the credits path
+  remains non-gameplay.
+
 # M11 viewport build hygiene (2026-08-06)
 
 - ✅ The four retained `cells` parameters in M11's floor-pit, floor-ornament,

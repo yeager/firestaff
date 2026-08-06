@@ -46308,12 +46308,16 @@ static int m11_draw_dm2_startup_credits(const M11_GameViewState *state,
     DM2_V1_BootProfile *profile;
     const DM2_V1_AssetLoader *loader;
     DM2_V1_QueryGdatSummaryImageReceipt image;
+    const uint8_t *palette_raw = NULL;
     uint8_t *pixels = NULL;
+    uint8_t rgb6[256][3];
     uint32_t raw_hash = 0u;
     uint32_t raw_bytes = 0u;
+    size_t palette_size = 0u;
     int width = 0;
     int height = 0;
     int stride = 0;
+    int color;
     int y;
 
     if (!state || !framebuffer || !state->dm2State.startup_credits_active ||
@@ -46340,9 +46344,38 @@ static int m11_draw_dm2_startup_credits(const M11_GameViewState *state,
         dm2_v1_boot_gdat_image_asset_free(pixels);
         return 0;
     }
-    /* ReDMCSB/SKProject SHOW_CREDITS passes glbl_pal2 only for non-BPP8
-     * IMG3 images.  The PC English BPP8 page keeps its physical source
-     * indices and is presented through DM2_INIT's dtPalIRGB table. */
+    /* SHOW_CREDITS gives R_C470 the image's local palette for a non-BPP8
+     * title page.  On HME-242 this is TITLE/0/dtPalIRGB/1, distinct from
+     * the static menu's field-4 palette.  Keep the palette transaction with
+     * the selected credits image; reusing the menu palette changes the
+     * visible colours even when all source pixels are correct.  The PC
+     * English BPP8 page instead retains the physical indices selected by
+     * DM2_INIT.  Source: SKULLWIN/startend.cpp::DM2_SHOW_MENU_SCREEN and
+     * DM2_SHOW_CREDITS. */
+    if (image.metadata.bits_per_pixel == 4u) {
+        palette_raw = dm2_v1_asset_load_typed_sized(
+            loader, DM2_GDAT_CATEGORY_TITLE, 0,
+            DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 1, &palette_size);
+        if (!palette_raw || palette_size != 16u * 4u) {
+            dm2_v1_boot_gdat_image_asset_free(pixels);
+            return 0;
+        }
+        memset(rgb6, 0, sizeof(rgb6));
+        for (color = 0; color < 16; ++color) {
+            const uint8_t *row = palette_raw + (size_t)color * 4u;
+            if (row[0] != (uint8_t)color) {
+                dm2_v1_boot_gdat_image_asset_free(pixels);
+                return 0;
+            }
+            rgb6[color][0] = (uint8_t)(row[1] >> 2u);
+            rgb6[color][1] = (uint8_t)(row[2] >> 2u);
+            rgb6[color][2] = (uint8_t)(row[3] >> 2u);
+        }
+        if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) {
+            dm2_v1_boot_gdat_image_asset_free(pixels);
+            return 0;
+        }
+    }
     for (y = 0; y < framebufferHeight; ++y) {
         int x;
         int sy = y * height / framebufferHeight;
@@ -54156,11 +54189,16 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             } else if (state->dm2FmtownsTitleBound) {
                 startup_menu_drawn = m11_dm2_present_fmtowns_title(
                     state, framebuffer, framebufferWidth, framebufferHeight);
+            } else if (state->dm2State.startup_credits_active) {
+                /* DM2_SHOW_CREDITS has its own image and palette transaction.
+                 * It temporarily replaces SHOW_MENU_SCREEN after TITLE has
+                 * handed off to SKULL, so it must precede the static FM Towns
+                 * menu branch here. Source: SKULLWIN/startend.cpp::
+                 * DM2_SHOW_CREDITS. */
+                startup_menu_drawn = m11_draw_dm2_startup_credits(
+                    state, framebuffer, framebufferWidth, framebufferHeight);
             } else if (state->dm2FmtownsTitleFinished) {
                 startup_menu_drawn = m11_dm2_present_fmtowns_skull_menu(
-                    state, framebuffer, framebufferWidth, framebufferHeight);
-            } else if (state->dm2State.startup_credits_active) {
-                startup_menu_drawn = m11_draw_dm2_startup_credits(
                     state, framebuffer, framebufferWidth, framebufferHeight);
             } else {
                 startup_menu_drawn = m11_draw_dm2_startup_menu(

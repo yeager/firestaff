@@ -5,6 +5,7 @@
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_asset_loader.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -182,6 +183,39 @@ int main(void)
         M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
         expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) != 0u,
                "FM Towns credits draw real TITLE GDAT pixels rather than a host status panel");
+        {
+            const DM2_V1_AssetLoader *loader =
+                dm2_v1_boot_asset_loader(
+                    (DM2_V1_BootProfile *)view.dm2BootProfile);
+            const uint8_t *palette_raw;
+            uint8_t expected_palette[256][3];
+            uint8_t presented_palette[256][3];
+            size_t palette_size = 0u;
+            int color;
+
+            memset(expected_palette, 0, sizeof(expected_palette));
+            memset(presented_palette, 0, sizeof(presented_palette));
+            palette_raw = dm2_v1_asset_load_typed_sized(
+                loader, DM2_GDAT_CATEGORY_TITLE, 0,
+                DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 1, &palette_size);
+            for (color = 0; palette_raw && color < 16; ++color) {
+                expect(palette_raw[(size_t)color * 4u] == (uint8_t)color,
+                       "FM Towns credits palette keeps its source index rows");
+                expected_palette[color][0] =
+                    (uint8_t)(palette_raw[(size_t)color * 4u + 1u] >> 2u);
+                expected_palette[color][1] =
+                    (uint8_t)(palette_raw[(size_t)color * 4u + 2u] >> 2u);
+                expected_palette[color][2] =
+                    (uint8_t)(palette_raw[(size_t)color * 4u + 3u] >> 2u);
+            }
+            expect(palette_raw && palette_size == 16u * 4u,
+                   "FM Towns credits exposes TITLE field-1's real local palette");
+            expect(palette_raw && palette_size == 16u * 4u &&
+                       M11_Render_CopyIndexedPaletteRgb6(presented_palette) &&
+                       memcmp(expected_palette, presented_palette,
+                              sizeof(expected_palette)) == 0,
+                   "FM Towns credits select TITLE field-1's real local palette");
+        }
         x = aux_layout.dismiss_credits.x + aux_layout.dismiss_credits.w / 2;
         y = aux_layout.dismiss_credits.y + aux_layout.dismiss_credits.h / 2;
         pointer_result = M11_GameView_HandlePointerButton(
