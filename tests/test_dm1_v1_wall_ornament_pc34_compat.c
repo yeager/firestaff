@@ -190,7 +190,7 @@ int main(void)
 
     expect_int("plan.inscription.d1c.ok",
                dm1_v1_wall_ornament_render_plan_pc34(0, 12, 0, &plan), 1);
-    expect_int("plan.inscription.d1c.graphic", plan.graphicIndex, 260);
+    expect_int("plan.inscription.d1c.graphic", plan.graphicIndex, 263);
     expect_int("plan.inscription.d1c.dstX", plan.dstX, 32);
     expect_int("plan.inscription.d1c.dstY", plan.dstY, 9);
     expect_int("plan.inscription.d1c.width", plan.width, 160);
@@ -205,7 +205,7 @@ int main(void)
 
     expect_int("plan.mirror.d1c.ok",
                dm1_v1_wall_ornament_render_plan_pc34(43, 12, 0, &plan), 1);
-    expect_int("plan.mirror.d1c.graphic", plan.graphicIndex, 346);
+    expect_int("plan.mirror.d1c.graphic", plan.graphicIndex, 349);
     expect_int("plan.mirror.d1c.dstX", plan.dstX, 80);
     expect_int("plan.mirror.d1c.dstY", plan.dstY, 29);
     expect_int("plan.mirror.d1c.width", plan.width, 64);
@@ -220,9 +220,29 @@ int main(void)
 
     expect_int("plan.d2r_left.ok",
                dm1_v1_wall_ornament_render_plan_pc34(1, 6, 0, &plan), 1);
-    expect_int("plan.d2r_left.graphic", plan.graphicIndex, 261);
+    expect_int("plan.d2r_left.graphic", plan.graphicIndex, 262);
     expect_int("plan.d2r_left.flip", plan.flipHorizontal, 1);
     expect_int("plan.d2r_left.palette1", plan.paletteMap[1], 12);
+
+    /* ReDMCSB DUNVIEW.C G0190: all 13 PC34 derived-bitmap increments.
+     * In particular D3L-front and D3C-front stay on the base bitmap; the
+     * former generic depth heuristic selected the following bitmap there. */
+    {
+        static const int expectedOffsets[13] = {
+            0, 0, 0, 0, 1, 1, 1, 2, 2, 3, 3, 3, 4
+        };
+        int view;
+        for (view = 0; view < 13; ++view) {
+            char name[64];
+            snprintf(name, sizeof(name), "plan.g0190.view%d.graphic", view);
+            expect_int(name,
+                       dm1_v1_wall_ornament_render_plan_pc34(
+                           1, view, 0, &plan), 1);
+            snprintf(name, sizeof(name), "plan.g0190.view%d.index", view);
+            expect_int(name, plan.graphicIndex,
+                       259 + 2 + expectedOffsets[view]);
+        }
+    }
 
     /* DUNVIEW.C:3913-3928 front champion mirror render plan:
      * C346 ornament + C026 atlas portrait inside G0109. */
@@ -233,7 +253,7 @@ int main(void)
     expect_int("mirror.plan.18.ok",
                dm1_v1_front_mirror_render_plan_pc34(18, &mirrorPlan), 1);
     expect_int("mirror.plan.18.orn_graphic",
-               mirrorPlan.ornament.graphicIndex, 346);
+               mirrorPlan.ornament.graphicIndex, 349);
     expect_int("mirror.plan.18.orn_dstX", mirrorPlan.ornament.dstX, 80);
     expect_int("mirror.plan.18.orn_dstY", mirrorPlan.ornament.dstY, 29);
     expect_int("mirror.plan.18.orn_w", mirrorPlan.ornament.width, 64);

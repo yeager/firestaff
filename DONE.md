@@ -21,6 +21,13 @@
   reintroduced merely to make a menu or front-cell action look playable.
   Verified against the authenticated local PC-DOS `GRAPHICS.DAT` and
   `DUNGEON.DAT` route.
+- ✅ 2026-08-06 DM1 ReDMCSB G0190 wall-ornament bitmap selection: replaced
+  the generic depth heuristic with the exact 13-entry PC34/I34E derived
+  bitmap increment table from `DUNVIEW.C`. This corrects D3L-front/D3C-front
+  and D1C/front-mirror selection while preserving the source G0205 zones,
+  palette ownership and flips. `dm1_v1_wall_ornament_pc34_compat` passes all
+  13 native-index assertions against the source table.
+
 - ✅ 2026-08-06 F10 all-game runtime coverage: the compact graphics/cheats
   popup is now regression-covered for DM1, CSB, DM2, Theron's Quest and
   Nexus as distinct M11 source kinds. The test exercises live presentation

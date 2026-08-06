@@ -287,6 +287,13 @@
   remaining gap is packaged Mac/app pixel capture for global ornaments 38 and
   43 and exact F0635 alignment evidence; no replacement art is admitted.
 
+  2026-08-06 G0190 bitmap-selection fix: the native derived-bitmap increment
+  now consumes ReDMCSB's exact 13-entry PC34 table. D3L-front and D3C-front
+  no longer receive the erroneous extra increment, while D1C/front-mirror
+  and the other depth transitions use their source-defined offsets. The
+  focused wall-ornament test passes all 13 rows; packaged Mac pixel capture
+  remains open.
+
 - **DM1-HOC-ORNAMENT-RENDER-CAPTURE:** The generic DM1 dungeon bridge now
   consumes the real PC34 map ornament counts, seed, square attributes and
   F0169/F0170 random wall/floor ordinal formulas. The real PC34 map-0 receipt

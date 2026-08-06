@@ -51,6 +51,15 @@ static const DM1_WallOrnamentViewSpecPc34 s_wallOrnamentViewSpecs[] = {
     {1,  0, 12, 0}  /* D1C front */
 };
 
+/* ReDMCSB DUNVIEW.C G0190_auc_Graphic558_WallOrnamentDerivedBitmapIndexIncrement
+ * for PC34/I34E.  This is indexed by the 13 G0205 view-wall rows; it is not
+ * equivalent to a depth/side heuristic. */
+static const unsigned char s_wallOrnamentNativeOffsetPc34[13] = {
+    0, 0, 0, 0, 1,
+    1, 1, 2, 2, 3,
+    3, 3, 4
+};
+
 static const unsigned char s_wallOrnamentPaletteD3[16] = {
     0, 0, 12, 3, 4, 3, 0, 6, 3, 9, 10, 11, 0, 1, 0, 2
 };
@@ -287,12 +296,10 @@ int dm1_v1_wall_ornament_render_plan_pc34(
         return 0;
     }
 
-    /* ReDMCSB DUNVIEW.C F0107 increments the native wall-ornament bitmap
-     * for front-facing projections and D1 side views, but not for
-     * D2L_RIGHT/D2R_LEFT side projections. */
-    nativeOffset = (viewWallIndex >= 2 &&
-                    viewWallIndex != 5 &&
-                    viewWallIndex != 6) ? 1 : 0;
+    if (viewWallIndex < 0 || viewWallIndex >= 13) {
+        return 0;
+    }
+    nativeOffset = s_wallOrnamentNativeOffsetPc34[viewWallIndex];
 
     outPlan->graphicIndex =
         DM1_GFX_WALL_ORNAMENT_BASE_PC34 + globalIndex * 2 + nativeOffset;
