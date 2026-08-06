@@ -79,9 +79,11 @@ The work continues as continuous lanes
   `dm2_v1_drops_resolve_gdat_creature_drops()` reads the eleven-entry
   per-creature drop table from real GDAT data and resolves proven drop
   words with RNG-gated selection, matching `SkWinCore.cpp`'s creature-death
-  drop route. Covers the defense route and combat-drop resolution path.
-  Tested by `test_dm2_v1_drops_gdat_real_data` (skip-safe against real
-  data).
+  drop route. Covers the defense route and combat-drop resolution path. The
+  verified CREATURES→v1d296c AIDefinition defense byte is retained in the
+  combat receipt, while the complete champion/hand/CMDSTR/RNG damage owner
+  remains fail-closed. Tested by `test_dm2_v1_drops_gdat_real_data`
+  (skip-safe against real data).
 
 Source reference for all DM2 work: `skproject`
 (`SKULLWIN/SkWinCore.cpp`, `SkGlobal.cpp`, plus the per-file `c_*.cpp`

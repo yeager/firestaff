@@ -57738,3 +57738,11 @@ alcove runtime and archive-media tests passed (4/4).
   `FIRESTAFF_DM2_DATA_DIR` is set.
   ENT1, underlay, image allocator and sound ownership remain explicitly gated;
   no release was made.
+# DM2 combat defense receipt binding (2026-08-13)
+
+- ✅ Retained the real CREATURES→v1d296c AIDefinition defense byte in the DM2
+  combat receipt through the existing provider hook, including explicit
+  no-provider and unproven-provider flags.
+- ✅ Kept the complete combat action fail-closed: no damage, kills, mutation or
+  player-facing feedback is produced from defense alone. Updated unit and
+  mounted-GDAT coverage accordingly; no release was made.

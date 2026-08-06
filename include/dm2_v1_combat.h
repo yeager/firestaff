@@ -113,8 +113,8 @@ typedef struct {
     uint8_t rejected_invalid_weapon;
     int creature_type;
     int defense;    /* data-backed AIDefinition Defense byte @8 */
-    int damage;     /* resolved damage after the proven defense */
-    int kills;      /* damage >= creature_hp (c_combat.cpp:401-420) */
+    int damage;     /* remains zero until the complete source owner is bound */
+    int kills;      /* remains zero until damage is source-resolved */
 } DM2_V1_CombatCreatureReceipt;
 
 /* This bridge remains fail-closed until DM2_ENGAGE_COMMAND's complete source

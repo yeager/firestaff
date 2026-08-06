@@ -361,12 +361,13 @@ int dm2_v1_combat_kills_creature(int current_hp, int damage)
 }
 
 /* ── Creature-combat admission boundary ────────────────────────────────
- * skchamp.cpp::CALC_PLAYER_ATTACK_DAMAGE (1402-1545) needs much more than
+ * skhero.cpp::DM2_CALC_PLAYER_ATTACK_DAMAGE (234-468) needs much more than
  * the target AIDefinition Defense: champion/hand records, CMDSTR probability
  * and damage, current difficulty/light, source RNG, skill and stamina
  * mutation, poison and the concrete target record. The former callback
  * bridge used only Defense, then manufactured the rest with this file's
- * host formula. Never promote that partial input as real DM2 combat. */
+ * host formula. Retain a proven Defense byte for diagnostics, but never
+ * promote that partial input as real DM2 combat. */
 
 static DM2_V1_CombatCreatureDefenseFn g_dm2_combat_defense_fn;
 
@@ -398,6 +399,19 @@ int dm2_v1_combat_resolve_attack_on_creature(
     (void)companion_count;
     receipt.valid = 1u;
     receipt.rejected_incomplete_source_contract = 1u;
+    if (!g_dm2_combat_defense_fn) {
+        receipt.rejected_no_defense_provider = 1u;
+    } else {
+        uint16_t defense = 0u;
+        if (!g_dm2_combat_defense_fn(creature_type, &defense) ||
+            defense > 255u) {
+            receipt.rejected_defense_unproven = 1u;
+        } else {
+            /* c_record.cpp:1351-1354 returns the source AIDefinition byte
+             * @8. Retain it only as evidence; no damage is derived here. */
+            receipt.defense = (int)defense;
+        }
+    }
     if (out_receipt) *out_receipt = receipt;
     return 0;
 }
@@ -419,6 +433,8 @@ const char *dm2_v1_combat_source_evidence(void) {
         "Source: ReDMCSB DEFS.H:1039-1047       (M036/M037 door state macros)\n"
         "Source: ReDMCSB DEFS.H:1567-1572       (DOOR_INFO)\n"
         "Source: ReDMCSB DUNGEON.C:560          (G0254_as_Graphic559_DoorInfo[4])\n"
+        "Source: skproject/SKWINSPX/src/v5/skhero.cpp:234-468 (DM2_CALC_PLAYER_ATTACK_DAMAGE)\n"
+        "Source: skproject/SKWINSPX/src/v5/c_record.cpp:1351-1354 (AIDefinition lookup)\n"
         "Source: skproject/SKWIN/SkWinCore.cpp:417-465  (open reimpl of damage formula)\n"
         "Source: skproject/SKULLWIN/c_combat.cpp:78-95  (bow vs ranged classification)\n"
         "Source: skproject/SKULLWIN/c_combat.cpp:96-110 (tech weapon gating)\n"

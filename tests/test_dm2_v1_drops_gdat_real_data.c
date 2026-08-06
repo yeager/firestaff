@@ -17,9 +17,10 @@
  *   type 19 (THORN DEMON): no drop word fields (fallback path stays)
  *
  * Also verifies the combat defense route stays fail-closed against this
- * GDAT: the CREATURE_AI (0x19) category is absent locally, so no creature
- * defense can be proven and dm2_v1_combat_resolve_attack_on_creature must
- * reject explicitly.
+ * GDAT: the real CREATURES-to-v1d296c defense byte is retained in the
+ * diagnostic receipt, but dm2_v1_combat_resolve_attack_on_creature still
+ * rejects explicitly because the complete champion/hand source contract is
+ * not connected.
  *
  * Skips cleanly when no local canonical DM2 data is present.
  */
@@ -259,8 +260,9 @@ int main(void)
         CHECK(combat_rc == 0,
               "partial combat remains disabled despite proven source defense");
         CHECK(cr.valid && cr.rejected_incomplete_source_contract &&
-                  !cr.rejected_defense_unproven && cr.damage == 0,
-              "combat receipt preserves the complete-contract gate");
+                  !cr.rejected_defense_unproven && cr.defense == 5 &&
+                  cr.damage == 0,
+              "combat receipt retains real defense but preserves the complete-contract gate");
         dm2_v1_combat_bind_creature_defense_fn(NULL);
     }
 

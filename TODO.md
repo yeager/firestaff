@@ -29252,6 +29252,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   formula must not publish real damage, kills or combat feedback.
   **2026-08-06 cleanup:** removed the disabled partial-defense bridge; the
   production boundary rejects restoring its computed creature damage.
+  **2026-08-13 progress:** the verified CREATURES→v1d296c AIDefinition
+  defense byte is now retained in the combat receipt when a real provider is
+  bound. This is evidence only; damage, kills and feedback remain rejected
+  until the full `DM2_CALC_PLAYER_ATTACK_DAMAGE` owner chain is connected.
 - [ ] DM2 FM Towns English text consumption: a selected FM Towns Japanese CD
   can now carry an explicit, hash-verified PC-English GDAT text companion in
   RAM. The companion now admits both a direct user file and a selected
