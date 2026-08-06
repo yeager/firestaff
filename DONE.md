@@ -16,6 +16,15 @@
   read solely in RAM. The real-media test verifies the complete English text
   overlay without extracting game data, including M12's scanned archive
   provenance handoff.
+- ✅ 2026-08-06 Theron Mednafen capture-module routing: the live original-media
+  capture launcher now passes `-force_module pce`, preventing a mixed-audio
+  CUE from entering Mednafen's CD-DA player instead of the HuC6280 PCE
+  module. The corrected capture was run against the real US Track 02 BIN,
+  authentic System Card 3.0 and source-derived audio/Track 19 media. It
+  emitted valid 65,536-byte VDC VRAM and 1,024-byte VCE snapshots and 256
+  authenticated raw sectors, while still proving no game-owned post-startup
+  PCE-CD read (`non_system_card_pcecd=0`) or `$2600` handoff. Dungeon,
+  object, palette and viewport promotion therefore remain correctly blocked.
 
 - ✅ 2026-08-06 Theron chapter-marker loot parity: removed the duplicated,
   incorrectly ordered quest-item table from the chapter marker and dungeon

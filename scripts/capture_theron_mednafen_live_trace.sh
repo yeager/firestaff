@@ -513,6 +513,7 @@ launch=(
     SDL_VIDEODRIVER="$capture_sdl_video_driver" \
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
+    -force_module pce \
     -sound 0 \
     -video.driver softfb \
     -pce.input.multitap 0 \

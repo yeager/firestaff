@@ -168,6 +168,13 @@
   `$2600` handoff and no source-owned VDC/VCE destination receipt. The longer
   trace only confirms the existing bounded loader/main-RAM windows; it does not
   change the admission boundary.
+  2026-08-06 capture-launch update: the Mednafen launcher now explicitly
+  selects the PCE module (`-force_module pce`). Without that option, a CUE
+  containing audio tracks could be misrouted to the CD-DA player before the
+  HuC6280 consumer trace began. A fresh capture with the corrected route reads
+  authentic Track 02 sectors and emits VDC/VCE snapshots, but still reports
+  `non_system_card_pcecd=0` and no `$2600` handoff; semantic promotion remains
+  closed.
   2026-08-06 text-boundary update: the raw US decoder still retains its real
   codons for diagnostics, but production world text now rejects any block
   containing unresolved brace/control-code values. Reopen publication only
