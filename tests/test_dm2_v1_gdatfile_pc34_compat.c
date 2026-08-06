@@ -496,7 +496,7 @@ static int test_load_raw_data(void)
     return 1;
 }
 
-static int test_read_graphics_structure_stub(void)
+static int test_read_graphics_structure_unimplemented_fails_closed(void)
 {
     DM2_V1_GdatFileState state;
     DM2_V1_GdatFileCallbacks cb = make_mock_callbacks();
@@ -509,11 +509,7 @@ static int test_read_graphics_structure_stub(void)
 
     DM2_V1_GdatReadStructureReceipt out;
     int r = dm2_v1_gdat_read_graphics_structure(&state, &cb, &mctx, &out);
-    if (!r) return 0;
-    if (!out.valid) return 0;
-    if (out.entries != 42) return 0;
-    if (out.versionlo != 5) return 0;
-    return 1;
+    return r == 0 && !out.valid && out.entries == 0 && out.versionlo == 0;
 }
 
 static int test_struct_sizes(void)
@@ -573,7 +569,7 @@ int main(void)
     TEST(query_next_entry_no_match);
     TEST(query_next_entry_filtered);
     TEST(load_raw_data);
-    TEST(read_graphics_structure_stub);
+    TEST(read_graphics_structure_unimplemented_fails_closed);
 
     printf("----------------------------------\n");
     printf("Results: %d/%d passed\n", tests_passed, tests_run);

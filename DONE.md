@@ -53116,3 +53116,11 @@ platform package.
   absent. Verification: `test_dm2_v1_dialogue_box_viewport_real_data`,
   `test_dm2_v1_m11_startup_profile_gate`, and the FM Towns direct/ZIP English
   companion regression pass against user-supplied original media.
+- ✅ 2026-08-06 DM2 GDAT structure-stub fail-closed gate: retired the false
+  `valid` receipt from the incomplete
+  `DM2_READ_GRAPHICS_STRUCTURE` compatibility seam. SKProject
+  `bgdat.cpp:1027-1141` proves that a real structure load includes header
+  validation, ULP/ENT1 allocation and image-allocator setup; none can be
+  inferred from two caller-populated words. The API now returns failure and
+  clears its receipt until those original owners are implemented. The focused
+  GDAT compatibility test verifies the rejection.

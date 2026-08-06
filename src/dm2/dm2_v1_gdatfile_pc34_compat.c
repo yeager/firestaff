@@ -867,19 +867,23 @@ int dm2_v1_gdat_resolve_deferred_sounds(
     return 1;
 }
 
-/* skproject: DM2_READ_GRAPHICS_STRUCTURE (c_gdatfile.cpp:1026-1128)
- * Stub — full implementation requires many subsystems (dballoc, ulp, etc.) */
+/* skproject: DM2_READ_GRAPHICS_STRUCTURE (bgdat.cpp:1027-1141).
+ *
+ * The source routine opens GRAPHICS.DAT, validates the four-byte header,
+ * constructs the ULP offset table, loads ENT1, optionally retains the
+ * underlay table, and configures the image allocator. This compatibility
+ * adapter has none of those owners; reporting a valid structure from only
+ * pre-filled entries/version words was a synthetic success receipt. Keep
+ * the public seam fail-closed until that complete source transaction exists.
+ */
 int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
                                          const DM2_V1_GdatFileCallbacks *cb,
                                          void *ctx,
                                          DM2_V1_GdatReadStructureReceipt *out)
 {
-    if (!state || !cb) return 0;
+    (void)state;
+    (void)cb;
     (void)ctx;
-    if (out) {
-        out->valid = true;
-        out->entries = state->entries;
-        out->versionlo = state->versionlo;
-    }
-    return 1;
+    if (out) memset(out, 0, sizeof(*out));
+    return 0;
 }

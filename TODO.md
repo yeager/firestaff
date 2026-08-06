@@ -27088,6 +27088,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   receipts are structurally silent until their matching original GUI/dialogue
   producer is connected. Bind that source-owned producer before rendering any
   player-facing feedback.
+- [ ] DM2 GDAT structure loader: `DM2_READ_GRAPHICS_STRUCTURE` remains
+  unavailable until the source's complete GRAPHICS.DAT transaction is ported:
+  header validation, ULP offsets, ENT1, optional underlay data and image
+  allocator setup. The compatibility seam no longer returns a synthetic valid
+  receipt from caller-filled fields.
 - [ ] DM2 FM Towns English text consumption: a selected FM Towns Japanese CD
   can now carry an explicit, hash-verified PC-English GDAT text companion in
   RAM. The companion now admits both a direct user file and a selected
