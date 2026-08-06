@@ -361,6 +361,11 @@ static int nexus_v1_dgn_source_bytes_match(
     const Nexus_V1_DgnStructure2SourceReceipt *source,
     const uint8_t *data, int size)
 {
+    if (source && source->loaded_dgn_identity_bytes && data && size > 0 &&
+        source->loaded_bytes_bound && source->loaded_dgn_size == size) {
+        return memcmp(source->loaded_dgn_identity_bytes, data,
+                      (size_t)size) == 0;
+    }
     return source && source->loaded_bytes_bound &&
         source->loaded_dgn_size == size &&
         source->loaded_dgn_fnv1a64 != 0U &&
@@ -4274,7 +4279,9 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
 
     nexus_v1_invalidate_dgn_material_plan(engine);
     free(engine->current_level_dgn_data);
+    free(engine->current_level_dgn_identity_data);
     engine->current_level_dgn_data = NULL;
+    engine->current_level_dgn_identity_data = NULL;
     engine->current_level_dgn_size = 0;
     nexus_v1_clear_structure3_runtime_source(engine);
     int r = nexus_v1_level_load(&engine->current_level, data, size, level);
@@ -4284,9 +4291,20 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     }
     engine->current_level_dgn_data = data;
     engine->current_level_dgn_size = size;
+    engine->current_level_dgn_identity_data = malloc((size_t)size);
+    if (!engine->current_level_dgn_identity_data) {
+        free(data);
+        engine->current_level_dgn_data = NULL;
+        engine->current_level_dgn_size = 0;
+        engine->level_loaded = 0;
+        return -1;
+    }
+    memcpy(engine->current_level_dgn_identity_data, data, (size_t)size);
     (void)nexus_v1_structure2_source_receipt(
         engine, level, &engine->current_level, data, size,
         &engine->current_level_structure2_source);
+    engine->current_level_structure2_source.loaded_dgn_identity_bytes =
+        engine->current_level_dgn_identity_data;
 
     /* Parsing establishes bounded DGN structure only. Do not promote parsed
      * bytes into item, animation, mechanics, or viewport ownership unless
@@ -4297,8 +4315,10 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         !engine->current_level_structure2_source.loaded_bytes_bound) {
         printf("Nexus: refusing unverified DGN source for %s\n", name);
         free(data);
+        free(engine->current_level_dgn_identity_data);
         memset(&engine->current_level, 0, sizeof(engine->current_level));
         engine->current_level_dgn_data = NULL;
+        engine->current_level_dgn_identity_data = NULL;
         engine->current_level_dgn_size = 0;
         engine->level_loaded = 0;
         return -1;
@@ -10326,7 +10346,9 @@ void nexus_v1_shutdown(Nexus_V1_Engine *engine) {
     if (!engine) return;
     nexus_v1_clear_structure3_runtime_source(engine);
     free(engine->current_level_dgn_data);
+    free(engine->current_level_dgn_identity_data);
     engine->current_level_dgn_data = NULL;
+    engine->current_level_dgn_identity_data = NULL;
     /* Free mechanics state */
     free(engine->mechanics);
     engine->mechanics = NULL;

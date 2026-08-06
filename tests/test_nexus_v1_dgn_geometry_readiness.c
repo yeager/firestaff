@@ -806,6 +806,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         FILE *file;
         long size;
         uint8_t *data;
+        uint8_t *identity_data;
         Nexus_V1_DgnStructure1Layout layout;
         Nexus_V1_DgnGeometryInfo info;
         Nexus_V1_Level loaded_level;
@@ -860,6 +861,10 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         CHECK(fread(data, 1, (size_t)size, file) == (size_t)size,
               "real DGN corpus file reads completely");
         fclose(file);
+        identity_data = (uint8_t *)malloc((size_t)size);
+        CHECK(identity_data != NULL, "real DGN identity buffer allocates");
+        if (!identity_data) { free(data); continue; }
+        memcpy(identity_data, data, (size_t)size);
         CHECK(nexus_v1_dgn_structure1_layout(&layout, data, (int)size) == 0 &&
               layout.valid && layout.post_grid_offset ==
                   layout.structure1b_end_relative_offset &&
@@ -1133,6 +1138,8 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         active_engine.current_level_structure2_source.loaded_dgn_size = (int)size;
         active_engine.current_level_structure2_source.loaded_dgn_fnv1a64 =
             fnv1a64(data, (size_t)size);
+        active_engine.current_level_structure2_source.loaded_dgn_identity_bytes =
+            identity_data;
         memset(&structure1f_source, 0, sizeof(structure1f_source));
         if (active_engine.current_level.structure1f_entry_count > 0) {
             CHECK(nexus_v1_current_level_lookup_structure1f_source_entry(
@@ -2364,6 +2371,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
         }
         checked++;
         free(data);
+        free(identity_data);
     }
     CHECK(checked == 16, "all LEV00 through LEV15 files were checked");
     CHECK(structure2_encoding_0x0008_total == 1553 &&

@@ -358,6 +358,10 @@ typedef struct {
     int loaded_bytes_bound;
     int loaded_dgn_size;
     uint64_t loaded_dgn_fnv1a64;
+    /* Immutable byte identity retained beside the live DGN buffer.  This
+     * keeps repeated no-draw provenance checks exact without re-hashing the
+     * whole level for every nested receipt. */
+    const uint8_t *loaded_dgn_identity_bytes;
     int structure2_payload_envelope_valid;
     int materialization_bound;
     int payload_decoder_permitted;
@@ -2461,6 +2465,7 @@ struct Nexus_V1_Engine {
     /* Owned canonical bytes remain available for authenticated Structure3
      * capture consumption; they are discarded on replacement/shutdown. */
     uint8_t *current_level_dgn_data;
+    uint8_t *current_level_dgn_identity_data;
     int current_level_dgn_size;
     Nexus_V1_DgnStructure3RuntimeSource structure3_runtime_source;
 
