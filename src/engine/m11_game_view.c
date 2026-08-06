@@ -17246,6 +17246,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     int hasLaunchIntent = 0;
     int rendererBackend = M12_RENDERER_BACKEND_AUTO;
     int gameOptionSlot = -1;
+    char selectedCsbRuntimeDataDir[FSP_PATH_MAX] = {0};
     if (!state || !menuState) {
         return 0;
     }
@@ -17293,6 +17294,18 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
             version->matchedMd5[0] != '\0') {
             spec.verifiedAssetPath = version->matchedPath;
             spec.verifiedAssetMd5 = version->matchedMd5;
+            /* The menu's version picker is authoritative.  FM Towns shares
+             * a CSB catalogue with PC/Atari/Amiga releases, so its selected
+             * CDATA/CJDATA pair must never inherit that first-match cache.
+             * ReDMCSB COMPILE.H EXEID 60/61 assigns CHTWE/CHTWJ to those
+             * distinct F31E/F31J game programs. */
+            if (entry->gameId && strcmp(entry->gameId, "csb") == 0 &&
+                M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
+                    &menuState->assetStatus, version->versionId,
+                    selectedCsbRuntimeDataDir,
+                    sizeof(selectedCsbRuntimeDataDir))) {
+                spec.dataDir = selectedCsbRuntimeDataDir;
+            }
         } else {
             /* Selected version not matched (e.g. user pointed --data-dir at
              * a non-default variant). Fall back to the first matched version

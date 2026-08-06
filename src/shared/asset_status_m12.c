@@ -3216,8 +3216,9 @@ static void m12_apply_required_game_availability(M12_AssetStatus* status,
 }
 
 static int m12_materialize_csb_fmtowns_runtime_cache(
-    M12_AssetStatus* status, int gameIndex, const char* gameCacheDir) {
-    const M12_AssetVersionStatus* version;
+    M12_AssetStatus* status, int gameIndex,
+    const M12_AssetVersionStatus* version, const char* gameCacheDir,
+    int publishRequiredPaths) {
     const char* separator;
     char archivePath[M12_ASSET_DATA_DIR_CAPACITY];
     const char* selectedDirectory;
@@ -3225,7 +3226,6 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
     CSB_V1_FmtownsCdLayout layout;
     int i;
     if (!status || !gameCacheDir) return 0;
-    version = m12_first_matched_version(status, gameIndex);
     if (!version || !version->versionId ||
         (strcmp(version->versionId, "fmtowns-en") != 0 &&
          strcmp(version->versionId, "fmtowns-ja") != 0)) return 0;
@@ -3250,15 +3250,17 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
             remove(imagePath);
             return 0;
         }
-        for (int requiredIndex = 0;
-             requiredIndex < (int)status->requiredFileCounts[gameIndex];
-             ++requiredIndex) {
-            M12_AssetRequiredFileStatus* required =
-                &status->requiredFiles[gameIndex][requiredIndex];
-            if ((i == 0 && strcmp(required->roleId, "graphics") == 0) ||
-                (i == 1 && strcmp(required->roleId, "dungeon") == 0)) {
-                snprintf(required->matchedPath, sizeof(required->matchedPath),
-                         "%s", outPath);
+        if (publishRequiredPaths) {
+            for (int requiredIndex = 0;
+                 requiredIndex < (int)status->requiredFileCounts[gameIndex];
+                 ++requiredIndex) {
+                M12_AssetRequiredFileStatus* required =
+                    &status->requiredFiles[gameIndex][requiredIndex];
+                if ((i == 0 && strcmp(required->roleId, "graphics") == 0) ||
+                    (i == 1 && strcmp(required->roleId, "dungeon") == 0)) {
+                    snprintf(required->matchedPath, sizeof(required->matchedPath),
+                             "%s", outPath);
+                }
             }
         }
     }
@@ -3362,7 +3364,8 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
             (strcmp(version->versionId, "fmtowns-en") == 0 ||
              strcmp(version->versionId, "fmtowns-ja") == 0)) {
             if (!m12_materialize_csb_fmtowns_runtime_cache(status, gameIndex,
-                                                            gameCacheDir)) return 0;
+                                                            version, gameCacheDir,
+                                                            1)) return 0;
             m12_copy_string(status->runtimeDataDirs[gameIndex],
                             sizeof(status->runtimeDataDirs[gameIndex]), cacheRoot);
             return 1;
@@ -4524,6 +4527,38 @@ const char* M12_AssetStatus_GetRuntimeDataDir(const M12_AssetStatus* status,
         return M12_AssetStatus_GetDataDir(status);
     }
     return status->runtimeDataDirs[gameIndex];
+}
+
+int M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
+    const M12_AssetStatus* status, const char* versionId,
+    char* outPath, size_t outPathSize) {
+    int gameIndex = m12_game_index_from_id("csb");
+    int versionIndex;
+    const M12_AssetVersionStatus* version;
+    char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
+
+    if (outPath && outPathSize) outPath[0] = '\0';
+    if (!status || !versionId || !outPath || outPathSize == 0U ||
+        gameIndex < 0 ||
+        (strcmp(versionId, "fmtowns-en") != 0 &&
+         strcmp(versionId, "fmtowns-ja") != 0)) return 0;
+    versionIndex = M12_AssetStatus_FindVersionIndex("csb", versionId);
+    if (versionIndex < 0) return 0;
+    version = &status->versions[gameIndex][versionIndex];
+    if (!version->matched || !version->matchedPath[0] ||
+        !FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
+        !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir,
+                      "asset-cache") ||
+        !FSP_JoinPath(outPath, outPathSize, cacheRoot,
+                      strcmp(versionId, "fmtowns-en") == 0
+                          ? "csb-fmtowns-en" : "csb-fmtowns-ja") ||
+        !FSP_CreateDirectoryRecursive(outPath)) {
+        if (outPathSize) outPath[0] = '\0';
+        return 0;
+    }
+    return m12_materialize_csb_fmtowns_runtime_cache(
+        (M12_AssetStatus*)status, gameIndex, version, outPath, 0);
 }
 
 const char* M12_AssetStatus_GetLegacyFallbackDir(const M12_AssetStatus* status) {

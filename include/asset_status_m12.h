@@ -150,6 +150,12 @@ size_t M12_AssetStatus_GameRequiredFileCount(const char* gameId);
 const char* M12_AssetStatus_GetDataDir(const M12_AssetStatus* status);
 const char* M12_AssetStatus_GetRuntimeDataDir(const M12_AssetStatus* status,
                                               const char* gameId);
+/* Materialize the selected FM Towns CSB CD into a version-private runtime
+ * directory.  This prevents a PC/Atari/Amiga default cache from satisfying a
+ * deliberate F31E/F31J launcher selection. */
+int M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
+    const M12_AssetStatus* status, const char* versionId,
+    char* outPath, size_t outPathSize);
 const char* M12_AssetStatus_GetLegacyFallbackDir(const M12_AssetStatus* status);
 size_t M12_AssetStatus_GetVersionCount(const char* gameId);
 const M12_AssetVersionStatus* M12_AssetStatus_GetVersion(const M12_AssetStatus* status,

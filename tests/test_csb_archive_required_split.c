@@ -716,6 +716,7 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
     char titlePath[ASSET_PATH_MAX];
     char portraitPath[ASSET_PATH_MAX];
     char programPath[ASSET_PATH_MAX];
+    char selectedRuntimeRoot[ASSET_PATH_MAX];
     if (!root || root[0] == '\0') {
         puts("skip: FIRESTAFF_CSB_FMTOWNS_DATA_DIR not set");
         return;
@@ -740,6 +741,13 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
                                "PORTRAIT/ALEX.CMP") &&
                   path_exists(titlePath) && path_exists(programPath) && path_exists(portraitPath),
               "real FM Towns ZIP should cache source title, program and portrait sidecars");
+    check_int(M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
+                  &status, "fmtowns-en", selectedRuntimeRoot,
+                  sizeof(selectedRuntimeRoot)) &&
+                  FSP_JoinPath(programPath, sizeof(programPath),
+                               selectedRuntimeRoot, "CHTWE.EXP") &&
+                  path_exists(programPath),
+              "selected FM Towns English version receives its own Game-program cache");
 }
 
 int main(void) {
