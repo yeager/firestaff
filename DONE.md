@@ -1,3 +1,13 @@
+# DM1 C045 non-candidate transition synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C045 close-after-transition fixture from M10.
+  It fabricates chest, leader-hand and visible-slot state, has no original DM1
+  data input or M11/runtime caller, and the generated regression compiles it
+  directly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c045_close_after_non_candidate_transition_pc34_compat`
+  passes with 445 assertions; the source object is absent from both M10 and
+  M11 archives.
+
 # DM1 C040/C537/C162 thought-cancel synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only thought-project cancel-after-pickup fixture
