@@ -29,6 +29,14 @@ static uint8_t g_dungeon_attributes[DQ_MAX_LEVELS][DQ_MAX_H][DQ_MAX_W];
 static int g_dungeon_level_w[DQ_MAX_LEVELS];
 static int g_dungeon_level_h[DQ_MAX_LEVELS];
 static int g_dungeon_level_count = 0;
+static int g_map_random_wall_count[DQ_MAX_LEVELS];
+static int g_map_random_floor_count[DQ_MAX_LEVELS];
+static int g_map_wall_count[DQ_MAX_LEVELS];
+static int g_map_floor_count[DQ_MAX_LEVELS];
+static int g_map_door_count[DQ_MAX_LEVELS];
+static uint16_t g_map_wall_ornaments[DQ_MAX_LEVELS][16];
+static uint16_t g_map_floor_ornaments[DQ_MAX_LEVELS][16];
+static uint16_t g_ornament_random_seed = 0;
 static int g_current_level = 0;
 static int g_dungeon_loaded = 0;
 static int g_start_x = 0, g_start_y = 0, g_start_dir = 0;
@@ -60,6 +68,13 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
     memset(g_dungeon_attributes, 0, sizeof(g_dungeon_attributes));
     memset(g_dungeon_level_w, 0, sizeof(g_dungeon_level_w));
     memset(g_dungeon_level_h, 0, sizeof(g_dungeon_level_h));
+    memset(g_map_random_wall_count, 0, sizeof(g_map_random_wall_count));
+    memset(g_map_random_floor_count, 0, sizeof(g_map_random_floor_count));
+    memset(g_map_wall_count, 0, sizeof(g_map_wall_count));
+    memset(g_map_floor_count, 0, sizeof(g_map_floor_count));
+    memset(g_map_door_count, 0, sizeof(g_map_door_count));
+    memset(g_map_wall_ornaments, 0, sizeof(g_map_wall_ornaments));
+    memset(g_map_floor_ornaments, 0, sizeof(g_map_floor_ornaments));
     g_current_level = 0;
     g_start_x = g_start_y = g_start_dir = 0;
 
@@ -68,6 +83,7 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
     if (level_count <= 0 || level_count > DQ_MAX_LEVELS) return -1;
 
     raw_map_byte_count = r16(data + 2);
+    g_ornament_random_seed = raw_map_byte_count ? r16(data) : 0;
     text_word_count = r16(data + 6);
     sft_count = r16(data + 10);
     for (lv = 0; lv < 16; ++lv) {
@@ -86,10 +102,17 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
     for (lv = 0; lv < level_count; ++lv) {
         const uint8_t *map = data + cursor + (size_t)lv * 16u;
         uint16_t word_a = r16(map + 8);
+        uint16_t word_b = r16(map + 10);
+        uint16_t word_c = r16(map + 12);
         int width = (int)((word_a >> 6) & 0x1F) + 1;
         int height = (int)((word_a >> 11) & 0x1F) + 1;
         g_dungeon_level_w[lv] = width;
         g_dungeon_level_h[lv] = height;
+        g_map_wall_count[lv] = word_b & 0x0F;
+        g_map_random_wall_count[lv] = (word_b >> 4) & 0x0F;
+        g_map_floor_count[lv] = (word_b >> 8) & 0x0F;
+        g_map_random_floor_count[lv] = (word_b >> 12) & 0x0F;
+        g_map_door_count[lv] = word_c & 0x0F;
         total_columns += width;
     }
     cursor += (size_t)level_count * 16u;
@@ -139,6 +162,23 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
                 g_dungeon_attributes[lv][row][col] = square & 0x1F;
             }
         }
+
+        /* Map metadata follows the square bytes in the same raw-map span:
+         * creature graphics, wall ornaments, floor ornaments, then door
+         * ornaments. Keep the source ordinals instead of returning a
+         * synthetic zero for every ornament query. */
+        {
+            size_t metadata = raw_base + map_offset + square_count +
+                (size_t)creature_count;
+            int i;
+            for (i = 0; i < g_map_wall_count[lv]; ++i) {
+                g_map_wall_ornaments[lv][i] = data[metadata + (size_t)i];
+            }
+            metadata += (size_t)g_map_wall_count[lv];
+            for (i = 0; i < g_map_floor_count[lv]; ++i) {
+                g_map_floor_ornaments[lv][i] = data[metadata + (size_t)i];
+            }
+        }
     }
 
     g_dungeon_level_count = level_count;
@@ -174,13 +214,56 @@ int fs_dungeon_get_door_state(int x, int y) {
 }
 
 int fs_dungeon_get_wall_ornament(int x, int y, int dir) {
-    (void)x; (void)y; (void)dir;
-    return 0;
+    static const unsigned char front_face_mask[4] = { 0x02, 0x01, 0x08, 0x04 };
+    int random_index;
+    int map_width;
+    int map_height;
+    unsigned int value1;
+    unsigned int value2;
+
+    if (!g_dungeon_loaded || dir < 0 || dir > 3 ||
+        x < 0 || y < 0 || x >= g_dungeon_level_w[g_current_level] ||
+        y >= g_dungeon_level_h[g_current_level] ||
+        g_dungeon_grid[g_current_level][y][x] != 0 ||
+        g_map_random_wall_count[g_current_level] <= 0 ||
+        !(g_dungeon_attributes[g_current_level][y][x] & front_face_mask[dir])) {
+        return 0;
+    }
+    map_width = g_dungeon_level_w[g_current_level];
+    map_height = g_dungeon_level_h[g_current_level];
+    value1 = (unsigned int)(2000 + (x << 5) + (y + 1) * (((dir + 2) & 3) + 1));
+    value2 = (unsigned int)(3000 + (g_current_level << 6) + map_width + map_height);
+    random_index = (int)(((((value1 * 31417u) >> 1) +
+                            (value2 * 11u) + g_ornament_random_seed) >> 2) % 30u);
+    return random_index < g_map_random_wall_count[g_current_level]
+        ? random_index + 1 : 0;
 }
 
 int fs_dungeon_get_floor_ornament(int x, int y) {
-    (void)x; (void)y;
-    return 0;
+    int element;
+    int random_index;
+    int map_width;
+    int map_height;
+    unsigned int value1;
+    unsigned int value2;
+
+    if (!g_dungeon_loaded || x < 0 || y < 0 ||
+        x >= g_dungeon_level_w[g_current_level] ||
+        y >= g_dungeon_level_h[g_current_level] ||
+        g_map_random_floor_count[g_current_level] <= 0 ||
+        !(g_dungeon_attributes[g_current_level][y][x] & 0x08)) {
+        return 0;
+    }
+    element = g_dungeon_grid[g_current_level][y][x];
+    if (element != 1 && element != 2 && element != 5) return 0;
+    map_width = g_dungeon_level_w[g_current_level];
+    map_height = g_dungeon_level_h[g_current_level];
+    value1 = (unsigned int)(2000 + (x << 5) + y);
+    value2 = (unsigned int)(3000 + (g_current_level << 6) + map_width + map_height);
+    random_index = (int)(((((value1 * 31417u) >> 1) +
+                            (value2 * 11u) + g_ornament_random_seed) >> 2) % 30u);
+    return random_index < g_map_random_floor_count[g_current_level]
+        ? random_index + 1 : 0;
 }
 
 int fs_dungeon_get_width(void) {

@@ -52,6 +52,10 @@ int main(int argc, char **argv)
     if (fs_dungeon_get_square_type(1, 2) != 4 ||
         fs_dungeon_get_door_type(1, 2) != 1 ||
         fs_dungeon_get_door_state(1, 2) != 4) ++failures;
+    /* Real map-0 metadata: F0170 selects wall ordinal 3 at (13,8) and
+     * floor ordinal 3 at (4,2) for the authenticated PC34 seed. */
+    if (fs_dungeon_get_wall_ornament(13, 8, 0) != 3 ||
+        fs_dungeon_get_floor_ornament(4, 2) != 3) ++failures;
     free(bytes);
     if (failures) {
         fprintf(stderr, "FAIL: real DM1 DUNGEON.DAT state checks (%d)\n", failures);

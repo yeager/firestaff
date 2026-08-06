@@ -6,6 +6,16 @@
   30 MNS models and the SMAP runtime binding. No capture or fallback gate was
   opened; no game data was tracked.
 
+- ✅ 2026-08-06 DM1 generic dungeon ornament placeholder removal: the legacy
+  wall/floor ornament bridge no longer returns zero for every map square. It
+  now parses the real PC34 map ornament counts and source metadata, applies
+  the original F0169/F0170 seed/formula and face/type gates, and returns the
+  verified local ordinals used by the source renderer. The real
+  `Dungeon-Master_DOS_EN_Version-34.zip` `DUNGEON.DAT` receipt verifies
+  wall ordinal 3 at map 0 `(13,8)` and floor ordinal 3 at `(4,2)`; no game
+  data was tracked. Sensor overrides and external Mac/app capture remain in
+  `DM1-HOC-ORNAMENT-RENDER-CAPTURE`.
+
 - ✅ 2026-08-06 Nexus ITEM equipment placeholder removal: deleted the old
   `20..26` item-ID armor mapping and the unknown-armor-to-torso fallback from
   the inventory helper. ITEM.IBS declarations remain source-owned, while

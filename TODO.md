@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- **DM1-HOC-ORNAMENT-RENDER-CAPTURE:** The generic DM1 dungeon bridge now
+  consumes the real PC34 map ornament counts, seed, square attributes and
+  F0169/F0170 random wall/floor ordinal formulas. The real PC34 map-0 receipt
+  verifies wall ordinal 3 and floor ordinal 3. Remaining work is the broader
+  M11 sensor override path and external Mac/app viewport capture for every
+  wall, inscription, torch, alcove, stairs and floor ornament.
+
 - **CSB-FMTOWNS-RUNTIME-PARITY:** The authentic FM Towns CD's verified
   `CDATA`/`CJDATA` files, title animation, portraits and executables now reach
   the CSB runtime cache without synthetic replacements. Keep launch/runtime
