@@ -27362,6 +27362,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `CREATURES[type] → AIDefinition` GDAT chain). The reader now fails closed
   when that source lookup is unavailable: two supplied PC-DOS direct-root
   streams need no DB4 creature while the other six stop at that exact owner.
+  The real-data creature-animation probe now opens the canonical DOS spelling
+  `GRAPHICS.DAT` after the lowercase attempt fails, so this conclusion comes
+  from parsed mounted media rather than an accidental filename-only skip.
   Its remaining source dependencies
   also include the c_record allocator/append graph, container-moneybox mask
   swap, timer links, `DM2_2066_062b` possession continuation and source

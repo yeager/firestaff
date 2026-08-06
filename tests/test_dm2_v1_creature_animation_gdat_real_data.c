@@ -59,10 +59,10 @@ int main(void)
     snprintf(path, sizeof(path), "%s/graphics.dat", root);
     if (!read_file(path, &graphics, &graphics_size)) {
         snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
-    }
-    if (graphics == NULL) {
-        puts("SKIP: no local canonical DM2 data");
-        return 0;
+        if (!read_file(path, &graphics, &graphics_size)) {
+            puts("SKIP: no local canonical DM2 data");
+            return 0;
+        }
     }
     memset(&loader, 0, sizeof(loader));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {

@@ -1,5 +1,13 @@
 # Nexus PLRD provisions quarantine (2026-08-06)
 
+- ✅ 2026-08-06 DM2 canonical GRAPHICS.DAT probe correction: the real-data
+  creature-animation regression now actually opens the DOS-uppercase
+  `GRAPHICS.DAT` after its lowercase candidate fails. Previously it changed
+  the candidate path but returned a misleading no-data skip without rereading
+  it. The mounted PC-English file is now parsed before the test accurately
+  reports that its current AI classification is not admitted. No game data is
+  copied or unpacked.
+
 - ✅ 2026-08-06 DM2 original-SKSAVE creature-mask gate: the isolated
   `DM2_READ_RECORD_CHECKCODE` reader no longer substitutes the default DB4
   SUPPRESS mask when SKProject's
