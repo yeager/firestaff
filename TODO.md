@@ -795,6 +795,9 @@
   `DATA/GRAPHICS.DAT` as well as the documented lower-case virtual spelling.
   Both forms still resolve only in RAM and require the canonical PC-English
   content hash before their text overlay can be bound to the Japanese CD.
+  The real-media regression also follows M12's scanned DOS-ZIP provenance
+  through that companion handoff, rather than relying only on a caller-built
+  virtual path.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   deliberately non-mutating until the original 263-byte `c_hero` layout,

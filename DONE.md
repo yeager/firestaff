@@ -9,7 +9,8 @@
   `DATA/GRAPHICS.DAT` member spelling as well as lower-case virtual paths.
   The Japanese FM Towns CD remains the game-data owner and the companion is
   read solely in RAM. The real-media test verifies the complete English text
-  overlay without extracting game data.
+  overlay without extracting game data, including M12's scanned archive
+  provenance handoff.
 
 - ✅ 2026-08-06 Theron chapter-marker loot parity: removed the duplicated,
   incorrectly ordered quest-item table from the chapter marker and dungeon

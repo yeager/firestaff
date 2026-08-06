@@ -10305,8 +10305,8 @@ int dm2_v1_boot_startup_prepare_failure_host_receipt(
  * media contract.  ZIP extraction here is bounded and RAM-only; the bytes
  * are immediately MD5-checked before GDAT parsing.
  *
- * The normal DOS archive has DATA/GRAPHICS.DAT, while the scanner may retain
- * a differently-cased directory component.  firestaff_zip_extract_by_name()
+ * The normal DOS archive has `data/graphics.dat`; callers may also retain an
+ * original uppercase member spelling. firestaff_zip_extract_by_name()
  * deliberately matches the final member name case-insensitively, which is
  * sufficient after the canonical PC-English content hash below is checked.
  */

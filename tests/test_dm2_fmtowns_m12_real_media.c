@@ -173,7 +173,35 @@ int main(void)
          * companion path.  This is the normal distribution form for the
          * user-owned DOS edition; no member may be materialised on disk. */
         if (english_companion_archive && english_companion_archive[0] != '\0') {
+            M12_AssetStatus english_archive_status;
+            const M12_AssetVersionStatus* english_archive_version;
             char virtual_companion[1024];
+
+            /* This is the M12 handoff the user actually gets after choosing
+             * English: scan the selected DOS archive and preserve the
+             * scanner-provided virtual member provenance. */
+            memset(&english_archive_status, 0, sizeof(english_archive_status));
+            M12_AssetStatus_ScanGame(&english_archive_status,
+                                     english_companion_archive, "dm2");
+            versionIndex = M12_AssetStatus_FindVersionIndex("dm2", "pc-en");
+            english_archive_version = versionIndex >= 0
+                ? M12_AssetStatus_GetVersion(&english_archive_status, "dm2",
+                                              (size_t)versionIndex)
+                : NULL;
+            expect(english_archive_version && english_archive_version->matched &&
+                       strstr(english_archive_version->matchedPath,
+                              "::data/graphics.dat") != NULL,
+                   "M12 retains the DOS archive companion member provenance");
+            memset(&launch, 0, sizeof(launch));
+            expect(english_archive_version &&
+                       dm2_v1_boot_startup_launch_alloc_with_language(
+                           selectedRuntime,
+                           english_archive_version->matchedPath, 0,
+                           &launch) == 1,
+                   "FM Towns English accepts M12's original ZIP provenance");
+            expect_complete_english_text_overlay(launch.profile);
+            dm2_v1_boot_startup_launch_cleanup(&launch);
+
             memset(&launch, 0, sizeof(launch));
             snprintf(virtual_companion, sizeof(virtual_companion),
                      "%s::data/graphics.dat", english_companion_archive);
