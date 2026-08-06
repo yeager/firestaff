@@ -3960,6 +3960,10 @@ level or consumer bindings.
   using the DM1 FM Towns evidence method only. The remaining map/DB/
   possession/timer handoff is still open and cannot be replaced by the
   test-only callback transcript.
+  **2026-08-07 corpus update:** the corpus regression now accepts only the
+  explicit `FIRESTAFF_DM2_SKSAVE_CORPUS` or `FIRESTAFF_DM2_DATA_DIR` root;
+  a selected root without the complete lower-case DOS save set fails rather
+  than borrowing a private HOME corpus or silently skipping.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

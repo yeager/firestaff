@@ -6,6 +6,15 @@
   that no retail stream fails. This proves the DMWeb-bounded byte decoder on
   real MENU.BPK data; it does not promote pixels to Saturn VDP1/VDP2 upload.
 
+# DM2 SKSave-korpus med vald källa (2026-08-07)
+
+- ✅ Realdatatestet för original-SKSave använder nu bara
+  `FIRESTAFF_DM2_SKSAVE_CORPUS` eller `FIRESTAFF_DM2_DATA_DIR`; en explicit
+  vald katalog utan de åtta DOS-savesen är ett fel. Den monterade PC-DOS
+  korpusen verifierar alla fyra primär- och backupfiler, 42-byteshuvudena,
+  rå dungeon-/timer-/hero-receipts och att en ofullständig GAME_LOAD aldrig
+  publicerar en spelbar session.
+
 # DM2 GDAT source-endian structure boundary (2026-08-13)
 
 - ✅ Matched SKProject `DM2_READ_GRAPHICS_STRUCTURE` header, size-word and ULP

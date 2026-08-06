@@ -206,7 +206,6 @@ static int resolve_corpus_root(char *out, size_t out_size)
 {
     const char *explicit_root = getenv("FIRESTAFF_DM2_SKSAVE_CORPUS");
     const char *data_root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
 
     if (!out || out_size == 0u) return 0;
     out[0] = '\0';
@@ -218,9 +217,7 @@ static int resolve_corpus_root(char *out, size_t out_size)
         snprintf(out, out_size, "%s", data_root);
         return 1;
     }
-    if (!home || !home[0]) return 0;
-    snprintf(out, out_size, "%s/.firestaff/data/dm2", home);
-    return 1;
+    return 0;
 }
 
 static uint8_t *read_file(const char *path, size_t *out_size)
@@ -564,8 +561,9 @@ int main(void)
         }
     }
     if (found == 0u) {
-        printf("SKIP: no lower-case PC-DOS SKSave corpus at %s\n", root);
-        return failed == 0 ? 0 : 1;
+        printf("  FAIL: selected corpus has no lower-case PC-DOS SKSave files at %s\n",
+               root);
+        return 1;
     }
     CHECK(found == 8u,
           "the supplied PC-DOS corpus retains all four primary/backup saves");
