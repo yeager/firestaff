@@ -1010,8 +1010,8 @@ static void check_incomplete_required_files_block_m11(const char* label,
                 "M11 incomplete/unverified DM2 launch does not retain world pointer");
     expect_true(view.sourceKind != M11_GAME_SOURCE_DM2_BOOT,
                 "M11 incomplete/unverified DM2 launch does not claim DM2 boot source");
-    expect_true(strstr(view.lastOutcome, "DM2 ASSETS") != NULL,
-                "M11 reports the expected DM2 launch blocker status");
+    expect_true(view.lastOutcome[0] == '\0',
+                "M11 keeps the unbound DM2 launch blocker status silent");
     M11_GameView_Shutdown(&view);
     remove_temp_dm2_root(root, dm2_dir);
 }
@@ -2501,9 +2501,8 @@ int main(void) {
                             M11_GAME_INPUT_REDRAW,
                         "M11 DM2 inventory toggle is handled without opening a DM1 panel");
             expect_true(!M11_GameView_IsInventoryPanelActive(&view) &&
-                        strstr(view.lastOutcome,
-                               "DM2 INVENTORY GDAT REQUIRED") != NULL,
-                        "M11 DM2 inventory remains blocked until its GDAT layout is bound");
+                        view.lastOutcome[0] == '\0',
+                        "M11 DM2 inventory remains silently blocked until its GDAT layout is bound");
             expect_true(!M11_GameView_IsInventoryPanelActive(&view),
                         "M11 DM2 startup inventory panel remains unavailable");
             expect_true(M11_GameView_HandlePointerMove(&view, 319, 199) ==
@@ -3006,9 +3005,8 @@ int main(void) {
                         &view, M12_MENU_INPUT_INVENTORY_TOGGLE) ==
                         M11_GAME_INPUT_REDRAW &&
                         !M11_GameView_IsInventoryPanelActive(&view) &&
-                        strstr(view.lastOutcome,
-                               "DM2 INVENTORY GDAT REQUIRED") != NULL,
-                    "M11 DM2 resume inventory stays behind its GDAT layout gate");
+                        view.lastOutcome[0] == '\0',
+                    "M11 DM2 resume inventory stays silently behind its GDAT layout gate");
         expect_true(M11_GameView_HandleInput(
                         &view, M12_MENU_INPUT_CHAMPION_1_INVENTORY) ==
                         M11_GAME_INPUT_REDRAW &&

@@ -29125,7 +29125,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - [ ] DM2 runtime action/save text ownership: action, shop, movement and save
   receipts are structurally silent until their matching original GUI/dialogue
   producer is connected. Bind that source-owned producer before rendering any
-  player-facing feedback.
+  player-facing feedback. **2026-08-06 inventory boundary correction:** the
+  two M11 DM2 inventory rejection paths no longer publish the host-authored
+  `DM2 INVENTORY GDAT REQUIRED` label; they preserve the source ObjectID and
+  silently reject until `CHANGE_VIEWPORT_TO_INVENTORY` owns the real
+  CHAMPIONS/INTERFACE_GENERAL surface and click route.
 - [ ] DM2 GDAT structure loader: `DM2_READ_GRAPHICS_STRUCTURE` remains
   unavailable until the source's complete GRAPHICS.DAT transaction is ported:
   header validation, ULP offsets, ENT1, optional underlay data and image

@@ -57490,3 +57490,11 @@ alcove runtime and archive-media tests passed (4/4).
 
 - ✅ Removed the asset-free D1C door-frame/F0115 contract from M10. Its direct
   ReDMCSB regression remains explicit; verification passes 87 assertions.
+# DM2 inventory rejection host-text removal (2026-08-06)
+
+- ✅ Removed both M11 DM2 inventory fallback labels (`DM2 INVENTORY GDAT
+  REQUIRED`). The shared DM1 panel remains unavailable, but the source
+  ObjectID/control boundary is preserved and the unbound DM2 GUI route now
+  stays silent until SKProject `CHANGE_VIEWPORT_TO_INVENTORY` is connected.
+- ✅ Updated the real-data M11 startup/resume regression to require an empty
+  status surface while the inventory gate rejects. No release was made.

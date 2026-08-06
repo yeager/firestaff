@@ -26232,8 +26232,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                  * inventory panel is built from DM1 GRAPHICS.DAT slots, so
                  * it cannot stand in for that source surface. */
                 state->inventoryPanelActive = 0;
-                m11_set_status(state, "INVENTORY",
-                               "DM2 INVENTORY GDAT REQUIRED");
+                /* No source-owned c_gui_draw/dialogue producer is bound for
+                 * this unavailable route. Keep the control boundary silent
+                 * rather than exposing a host-authored English label. */
+                m11_set_status(state, NULL, NULL);
                 return M11_GAME_INPUT_REDRAW;
             }
             state->mapOverlayActive = 0;
@@ -49377,7 +49379,10 @@ static M11_GameInputResult m11_toggle_champion_inventory(M11_GameViewState* stat
          * substitute panel. */
         state->inventoryPanelActive = 0;
         state->inventorySelectedSlot = -1;
-        m11_set_status(state, "INVENTORY", "DM2 INVENTORY GDAT REQUIRED");
+        /* The shared panel is not DM2's CHANGE_VIEWPORT_TO_INVENTORY owner.
+         * Until that source GUI is bound, reject silently; do not publish a
+         * Firestaff-authored status in its place. */
+        m11_set_status(state, NULL, NULL);
         return M11_GAME_INPUT_REDRAW;
     }
 
