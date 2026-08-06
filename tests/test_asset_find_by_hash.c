@@ -509,6 +509,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/archive.lzh");
     remove("asset_find_by_hash_test_tmp/archive.tgz");
     remove("asset_find_by_hash_test_tmp/archive.7z");
+    remove("asset_find_by_hash_test_tmp/nested_atari.st.7z");
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf.7z");
     remove("asset_find_by_hash_test_tmp/archive.dmg");
     remove("asset_find_by_hash_test_tmp/renamed_tar.payload");
@@ -563,6 +564,28 @@ static int file_matches_fixture_payload(const char* path) {
     n = fread(buf, 1U, sizeof(buf), fp);
     fclose(fp);
     return n == sizeof(payload) - 1U && memcmp(buf, payload, sizeof(payload) - 1U) == 0;
+}
+
+static int scan_cache_has_entry(const char* needle) {
+    const char* home = getenv("HOME");
+    char path[ASSET_PATH_MAX];
+    char line[ASSET_PATH_MAX + 64];
+    FILE* fp;
+    if (!home || !needle ||
+        snprintf(path, sizeof(path), "%s/.firestaff/cache/asset_scan_cache.dat", home) >=
+            (int)sizeof(path)) {
+        return 0;
+    }
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    while (fgets(line, sizeof(line), fp)) {
+        if (strstr(line, needle) != NULL) {
+            fclose(fp);
+            return 1;
+        }
+    }
+    fclose(fp);
+    return 0;
 }
 
 int main(void) {
@@ -1106,6 +1129,11 @@ int main(void) {
             !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
             cleanup_fixture();
             fprintf(stderr, "virtual 7z extraction failed: %s\n", outPath);
+            return 1;
+        }
+        if (!scan_cache_has_entry("archive.7z::packed_payload.bin")) {
+            cleanup_fixture();
+            fprintf(stderr, "external archive member MD5 was not cached\n");
             return 1;
         }
         remove("asset_find_by_hash_test_tmp/extracted.dat");

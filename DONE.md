@@ -10,6 +10,11 @@
   source-zone identity no longer consume generator capacity or create false
   respawn state. The focused source combat/runtime regression passes.
 
+- ✅ 2026-08-06 External archive cache regression: the hash-scanner fixture
+  now runs under an isolated home and asserts that a real `.7z` member writes
+  its complete virtual path to the persisted cache. Fixture cleanup also
+  removes its nested Atari archive after debugger/interrupted runs.
+
 - ✅ 2026-08-06 External archive scan cache: hash-verified external archive
   members now cache their digest under the complete virtual member path and
   containing archive mtime/size. Repeated game-profile searches therefore
