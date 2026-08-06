@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "asset_find_by_hash.h"
 #include "nexus_v1_dgn.h"
 
 static uint8_t *load_file(const char *path, int *size_out) {
@@ -20,6 +21,28 @@ static uint8_t *load_file(const char *path, int *size_out) {
 }
 
 static int test_all_levels(const char *data_dir) {
+    /* Keep this corpus regression on the same authenticated European
+     * identities as the production level loader.  Counts alone are not
+     * provenance: a same-sized fixture or renamed DGN must not publish
+     * floor-item/decoration/sensor census evidence. */
+    static const char *const retail_md5[16] = {
+        "603ec9c531a92539babdda84ab09e78e",
+        "751e1442bf7dccbd41bf146b5be144ab",
+        "e2cb85d9fedc27f894a84e0f465fcde1",
+        "19637d6b59849565f64565aed786d7ea",
+        "85abc1b822e5c66ec4e99f1f676c140e",
+        "ed5d54ab0ac1c927c1346dd966c8a5cc",
+        "58c336ff6146e7216f0081e726823ea1",
+        "c19e6038a017a320515ecbb66f6da197",
+        "9bfc31bea631345a3660c2645be0e95b",
+        "32a6450f29eb7babd73fcbe7a0310f22",
+        "2928440e9c21457929f1323a28a42f70",
+        "d7be5cd0d6e5c10afe99ec9950614fad",
+        "db1cf70d6730615f73f191fad5e11e32",
+        "f8876d0181d79727013236a6b597b99b",
+        "a634dd5e95567ecbbbc332350c8cf12b",
+        "5e6e237074f1e6b0decc629868a51f3c"
+    };
     static const struct {
         int level;
         int items, decors, sensors, alcoves, wdecors, wsensors;
@@ -54,6 +77,13 @@ static int test_all_levels(const char *data_dir) {
         buf = load_file(path, &sz);
         if (!buf) {
             printf("SKIP LEV%02d.DGN (not found)\n", i);
+            continue;
+        }
+
+        if (!asset_file_matches_md5(path, retail_md5[i])) {
+            printf("FAIL LEV%02d.DGN retail identity mismatch\n", i);
+            fail++;
+            free(buf);
             continue;
         }
 

@@ -832,6 +832,12 @@ level or consumer bindings.
   `palette_offset == 0` reuse rule per palette ID; the 75 retail descriptors
   that reuse an earlier palette no longer fail as if their source palette
   were missing. Item action, pickup and VDP1 command ownership remain gated.
+
+- **NEXUS-DGN-CORPUS-IDENTITY:** The DGN level-content regression now requires
+  the 16 production European `LEV00-15.DGN` MD5 identities before its
+  item/decoration/sensor census is accepted. Continue binding those real
+  Structure1F records to the Saturn object/trigger consumer; counts alone do
+  not prove loot, pickup, sensor dispatch or viewport ownership.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1

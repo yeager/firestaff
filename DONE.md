@@ -35,6 +35,13 @@
   existing playback/event no-op gates remain intact; SDDRVS/event-consumer
   capture is still required before runtime audio dispatch.
 
+# Nexus DGN level retail identity gate (2026-08-06)
+
+- ✅ Hardened `test_nexus_v1_dgn_level_content` with the production MD5
+  catalog for all 16 European `LEV00-15.DGN` files before accepting its
+  item/decoration/sensor census. The real corpus remains diagnostic evidence;
+  Saturn object, loot, trigger and viewport consumers are still capture-gated.
+
 # Nexus startup media retail identity gate (2026-08-06)
 
 - ✅ Added exact retail MD5 checks to the startup-media regression for
