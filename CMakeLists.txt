@@ -4699,6 +4699,7 @@ set(M11_SOURCES
     src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_fmtowns_anm.c
     src/csb/csb_v1_fmtowns_switch.c
+    src/csb/csb_v1_fmtowns_game.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/csb_v1_startup_sequence_pc34_compat.c
@@ -12216,6 +12217,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_boot_profile_smoke
         tests/test_csb_v1_boot_profile_smoke.c
         src/csb/csb_v1_boot.c
+        src/csb/csb_v1_fmtowns_game.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c

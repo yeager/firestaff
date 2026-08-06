@@ -1,4 +1,5 @@
 #include "csb_v1_boot.h"
+#include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_graphics_dat.h"
 
 #include <stdint.h>
@@ -430,6 +431,38 @@ static void test_fmtowns_authenticated_startup_session(void)
     csb_v1_boot_cleanup(&profile);
 }
 
+static void test_fmtowns_game_program_handoff(void)
+{
+    const char *data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR");
+    CSB_V1_BootProfile profile;
+    CSB_V1_FmtownsGameHandoffReceipt receipt;
+
+    if (!data_dir || data_dir[0] == '\0') {
+        printf("  SKIP: FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR not set\n");
+        return;
+    }
+    csb_v1_boot_profile_init(&profile);
+    CHECK(csb_v1_boot_scan_assets(&profile, data_dir) == 0 &&
+              profile.variant_id == CSB_V1_VARIANT_FMTOWNS_EN,
+          "FM Towns Game handoff scans the authenticated F31E media pair");
+    if (profile.variant_id == CSB_V1_VARIANT_FMTOWNS_EN &&
+        profile.assets_verified) {
+        CHECK(csb_v1_fmtowns_game_handoff_open(
+                  &profile, CSB_FMTOWNS_SWITCH_ENGLISH, &receipt) &&
+                  receipt.valid && receipt.executable_verified &&
+                  receipt.language_matches_profile &&
+                  receipt.game_program_is_c03_game &&
+                  strcmp(receipt.executable_name, "CHTWE.EXP") == 0 &&
+                  receipt.executable_size == 283936u &&
+                  receipt.executable_fnv1a == 0x3da136f6u,
+              "SWITCHTW English Game exit admits only retail CHTWE.EXP");
+        CHECK(!csb_v1_fmtowns_game_handoff_open(
+                  &profile, CSB_FMTOWNS_SWITCH_JAPANESE, &receipt),
+              "F31E profile rejects the F31J Game-program route");
+    }
+    csb_v1_boot_cleanup(&profile);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot Profile Smoke Test ===\n\n");
@@ -445,6 +478,7 @@ int main(void)
     test_fmtowns_media_registry();
     test_fmtowns_startup_surface_decode();
     test_fmtowns_authenticated_startup_session();
+    test_fmtowns_game_program_handoff();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
 }

@@ -61,6 +61,12 @@
   after both original CD hashes admit. The remaining M11 work is to attach
   that verified session to the separate `CHTWE.EXP` handoff rather than use a
   PC3.4 transition, then capture its first entrance/HUD frame and save path.
+  2026-08-06: the Game exit now has a separate retail-program admission
+  receipt: F31E accepts only `CHTWE.EXP` (283936 bytes, FNV-1a `3da136f6`)
+  and F31J accepts only `CHTWJ.EXP` (284416 bytes, FNV-1a `f937db45`). This
+  is the `C03_GAME` owner declared by ReDMCSB `COMPILE.H`, not a PC3.4
+  substitute; M11 still needs to consume that receipt into the first captured
+  F31 entrance, door-opening, HUD and save transaction.
   The raw CDDA extractor now streams a
   selected CUE track sectorwise; binding that authenticated PCM to M11 timing
   remains separate.
