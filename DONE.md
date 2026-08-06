@@ -3,6 +3,13 @@
   `main` now retain the newest full matrix instead of queuing obsolete commits
   ahead of it; pull-request runs remain isolated by ref.
 
+- ✅ 2026-08-06 Theron real palette-bind coverage: the startup palette bind
+  regression now discovers the supplied standard-root `TQUS02.bin` and
+  `TQJP02.bin` automatically, verifies both regional hash profiles and checks
+  the decoded black/white endpoints. This proves the production US/JP offset
+  selection is exercised with real media; VCE ownership and semantic render
+  promotion remain capture-gated.
+
 - ✅ 2026-08-06 DM1 creature-name source ownership: removed M11's duplicate
   27-entry display-name table and routed runtime names through the ReDMCSB
   source-locked creature-render module. Invalid type IDs now report `UNKNOWN`
