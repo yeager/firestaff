@@ -29342,6 +29342,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the exact source `0x16ffffff` champion DYN4 resource ID in addition to
   agreement across every authenticated G1 marker; unrelated selectors remain
   fail-closed.
+  **2026-08-13 lifecycle-boundary progress:** the selection seam now also
+  requires the addressed marker's source direction and source-derived dynamic
+  selector before reporting a mirror binding. It still does not mutate a party
+  or call `REVIVE_PLAYER` without the live GDAT hero-stat owner.
 
 - [ ] DM2 delayed movement ownership: `PERFORM_MOVE`'s real
   `glbIsPlayerMoving` path retains the old party pose and derives its countdown

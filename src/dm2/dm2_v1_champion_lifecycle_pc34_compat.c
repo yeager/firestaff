@@ -65,9 +65,18 @@ int dm2_v1_select_champion(
             request->source_mirrors;
         for (int i = 0; i < mirrors->mirror_count; ++i) {
             const DM2_V1_G1ChampionMirrorRoot *mirror = &mirrors->mirrors[i];
+            /* SKProject c_hero.cpp::DM2_SELECT_CHAMPION reads the marker
+             * from the addressed tile and passes that tile's facing into
+             * REVIVE_PLAYER.  c_loadlevel.cpp derives the selector from the
+             * marker's low byte; a caller-owned receipt with another selector
+             * or a mismatched facing is not a champion source. */
             if (mirror->map != request->map_level ||
                 mirror->x != request->tile_x ||
-                mirror->y != request->tile_y) {
+                mirror->y != request->tile_y ||
+                mirror->direction != (uint8_t)request->direction ||
+                mirror->dynamic_load_id !=
+                    (0x1600ffffu +
+                     ((uint32_t)mirror->dynamic_hero_type << 16))) {
                 continue;
             }
             receipt->source_mirror_bound = 1;

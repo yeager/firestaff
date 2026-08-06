@@ -60,6 +60,50 @@ static void test_select_second_hero(void)
     printf("  PASS: select_second_hero\n");
 }
 
+static void test_select_requires_exact_source_marker_identity(void)
+{
+    DM2_V1_SelectChampionReceipt receipt;
+    DM2_V1_SelectChampionRequest req;
+    DM2_V1_G1ChampionMirrorReceipt mirrors;
+
+    memset(&mirrors, 0, sizeof(mirrors));
+    mirrors.committed = 1;
+    mirrors.mirror_count = 1;
+    mirrors.mirrors[0].map = 0;
+    mirrors.mirrors[0].x = 5;
+    mirrors.mirrors[0].y = 10;
+    mirrors.mirrors[0].direction = 2;
+    mirrors.mirrors[0].actuator_data = 0x1ffu;
+    mirrors.mirrors[0].dynamic_hero_type = 0xffu;
+    mirrors.mirrors[0].dynamic_load_id = 0x1500ffffu;
+
+    memset(&req, 0, sizeof(req));
+    req.tile_x = 5;
+    req.tile_y = 10;
+    req.direction = 2;
+    req.map_level = 0;
+    req.source_mirrors = &mirrors;
+    assert(dm2_v1_select_champion(&req, &receipt) == 0);
+    assert(receipt.fail_closed == 1);
+    assert(receipt.source_mirror_bound == 0);
+
+    mirrors.mirrors[0].dynamic_load_id =
+        DM2_V1_G1_CHAMPION_DYN4_RESOURCE_ID;
+    req.direction = 1;
+    assert(dm2_v1_select_champion(&req, &receipt) == 0);
+    assert(receipt.source_mirror_bound == 0);
+
+    /* Other source-authored hero types retain their own derived selector;
+     * the lifecycle seam must not overfit the PC G1 type-0xff case. */
+    mirrors.mirrors[0].dynamic_hero_type = 2u;
+    mirrors.mirrors[0].dynamic_load_id = 0x1602ffffu;
+    req.direction = 2;
+    assert(dm2_v1_select_champion(&req, &receipt) == 0);
+    assert(receipt.source_mirror_bound == 1);
+
+    printf("  PASS: select_requires_exact_source_marker_identity\n");
+}
+
 static void test_revive_null_safety(void)
 {
     DM2_V1_BringChampionToLifeReceipt receipt;
@@ -136,6 +180,7 @@ int main(void)
     test_select_party_full();
     test_select_without_source_record_fails_closed();
     test_select_second_hero();
+    test_select_requires_exact_source_marker_identity();
     test_revive_null_safety();
     test_revive_invalid_index();
     test_revive_hp_penalty();

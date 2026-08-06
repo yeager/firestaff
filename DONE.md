@@ -1,3 +1,11 @@
+# DM2 champion selection source-identity boundary (2026-08-13)
+
+- ✅ The selection seam now requires the addressed marker's source facing and
+  the selector derived from its source hero type before it reports a mirror
+  binding. Mismatched or caller-authored receipts stay fail-closed while
+  non-G1 source hero types retain their own valid selectors; no party mutation
+  or release was made.
+
 # DM2 champion mirror DYN4 selector boundary (2026-08-13)
 
 - ✅ Tightened the PC G1 mirror join to require SKProject's exact
