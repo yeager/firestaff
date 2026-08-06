@@ -159,15 +159,17 @@ Nexus_V1_PhaseGateDecision nexus_v1_phase_gate_decide(
                 "V1-source-locked; V2 HUD is presentation-only");
 
         case NEXUS_V2_PHASE_DOMAIN_COMBAT:
-            /* Nexus combat — champion attack, damage, experience.
-             * Source: nexus_v1_combat.c (ReDMCSB COMBAT.C pattern).
-             * V2 must not alter combat resolution, damage, or XP rules. */
+            /* Nexus combat remains a diagnostic/table receipt only.
+             * The retail Saturn attack dispatcher, target admission, RNG and
+             * side-effect writes are not captured.  The live mechanics gate
+             * therefore keeps combat fail-closed; V2 must not manufacture a
+             * presentation or gameplay route from the DM1-shaped helper. */
             return make_decision(
                 1, 0,
-                "nexus_v1_combat.c (ReDMCSB COMBAT.C pattern); "
-                "ReDMCSB CHAMPION.C champion stat mechanics",
-                "combat resolution, damage calculation, and XP gain "
-                "stay V1-source-locked; V2 is presentation-only");
+                "nexus_v1_combat.c diagnostic helper; "
+                "Nexus action-semantics gate (dispatcher capture missing)",
+                "combat remains capture-gated and fail-closed; V2 cannot "
+                "promote the diagnostic helper into gameplay");
 
         case NEXUS_V2_PHASE_DOMAIN_MOVEMENT:
             /* Nexus movement — click/touch command routing, input queue.

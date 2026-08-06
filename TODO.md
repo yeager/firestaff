@@ -150,6 +150,12 @@
   carry explicit historical/diagnostic banners; their old “implemented” and
   “no tests” wording is not current status.
 
+- **NEXUS-COMPAT-GATE-COMBAT-CLAIM:** The Nexus phase-gate combat description
+  now calls the DM1-shaped combat helper diagnostic only. The retail Saturn
+  attack dispatcher, target admission, RNG and effect writes remain missing;
+  `nexus_v1_action_semantics_proven()` must stay closed until those receipts
+  are captured.
+
 - **THERON-REAL-CONSUMER-HANDOFF:** The authenticated US/JP Track 02 map,
   object, ground, door, teleporter and creature-bank records are retained, but
   a positive game-owned post-startup CD read is still missing. The current

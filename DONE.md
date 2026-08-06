@@ -1,3 +1,8 @@
+- ✅ 2026-08-06 Nexus combat claim quarantine: corrected the V1/V2 phase-gate
+  metadata so the DM1-shaped combat helper is described as diagnostic only.
+  The production action-semantics gate remains fail-closed while Saturn
+  attack dispatch, target admission, RNG and effect-write capture are absent.
+
 - ✅ 2026-08-06 Nexus stale-doc quarantine: marked the old testing, armor,
   potion and combat-item pages as historical/diagnostic snapshots. They no
   longer present DM1-derived formulas or the former “no tests/all scaffolding”

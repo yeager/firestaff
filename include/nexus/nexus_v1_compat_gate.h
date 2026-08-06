@@ -4,7 +4,7 @@
  * Phase 0: V1 Compatibility Lock Before V2 Work
  *
  * NEXUS_V1_PHASE_DOMAIN_LOCK is a compile-time flag that locks all
- * Nexus V1 behaviour (dungeon loading, rasterizer, champions, combat,
+ * Nexus V1 boundaries (dungeon loading, rasterizer, champions, combat,
  * movement, magic, save/load, sound) and explicitly blocks V2-only
  * code paths from activating.
  *
@@ -13,16 +13,16 @@
  * HUD overlay, smooth movement, lighting, particles, upscaler,
  * touch controller affordances) MUST NOT alter V1 game-logic state.
  *
- * V1 source-lock anchors (DM Nexus Saturn):
+ * V1 source/format anchors (DM Nexus Saturn):
  *   docs/NEXUS_FILE_CLASSIFICATION.md — full 138-file Saturn asset catalog
  *   Greatstone DM Nexus (greatstone.free.fr/g_dm.html) — dungeon maps,
  *     creature atlas, graphics reference
  *   ReDMCSB DUNGEON.C — dungeon square type dispatch (shared with DM1/CSB)
  *   ReDMCSB COMMAND.C:2045-2155 — command queue dispatch (shared pattern)
- *   ReDMCSB CHAMPION.C F0309 — champion maximum load calculation
+ *   ReDMCSB CHAMPION.C F0309 — shared champion maximum load calculation
  *   ReDMCSB MOVESENS.C F0267 — movement result side effects
- *   Saturn VDP1 SDK — Color RAM BGR555 format, BITMAP command format
- *   Saturn SDDRVS.TSK — 26 KB sound driver task
+ *   Saturn VDP1 SDK — Color RAM BGR555 and BITMAP command formats
+ *   Saturn SDDRVS.TSK — 26 KB sound driver task; consumer capture pending
  *
  * V2 presentation anchors (Firestaff only — no original source):
  *   nexus_v2_atmosphere.c          (Phase 4 — Saturn VDP2 atmosphere)
@@ -47,7 +47,8 @@ extern "C" {
  * NEXUS_V1_PHASE_DOMAIN_LOCK — compile-time gate
  * ================================================================
  *
- * Set to 1 to lock the build to V1 source-locked behaviour.
+ * Set to 1 to lock the build to V1 boundaries and keep unproven routes
+ * closed; it does not turn diagnostic receipts into authenticated parity.
  * V2-only paths are blocked when this is defined.
  *
  * V2 Phase 1+ modules that include this header can query the
@@ -94,9 +95,8 @@ typedef enum {
          * V2 HUD must not alter champion stats or party composition. */
 
     NEXUS_V2_PHASE_DOMAIN_COMBAT = 3,
-        /* Nexus combat — champion attack, damage, experience.
-         * Source: nexus_v1_combat.c (ReDMCSB COMBAT.C pattern).
-         * V2 must not alter combat resolution, damage, or XP rules. */
+        /* Combat tables/helpers are diagnostic until the Saturn action
+         * dispatcher, target/RNG path and effect writes are captured. */
 
     NEXUS_V2_PHASE_DOMAIN_MOVEMENT = 4,
         /* Nexus movement — click/touch command routing, input queue.
