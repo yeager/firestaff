@@ -52727,11 +52727,6 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   exact cell owner on despawn; ownerless F0821 remains limited to worlds with
   no raw Thing table. Focused source-publication and moving-killed-all tests
   pass.
-- ✅ 2026-08-06 DM1 F0190 raw GROUP-table boundary: when a raw PC34 GROUP
-  table is mounted, a missing C04 record now fails closed instead of allowing
-  a decoded mirror to authorize possession drops, group cleanup, or C040
-  smoke. Data-free compatibility worlds retain their explicitly bounded
-  no-raw-table contract. Four focused F0190 tests pass.
 - ✅ 2026-08-06 Theron JP Track 02 object handoff: ground references, item-part
   records, linked source objects, and the full dungeon loader now use the JP
   variant offset table instead of silently reusing US offsets. The real JP BIN

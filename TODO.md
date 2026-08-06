@@ -25730,11 +25730,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   each live group-retirement owner consume this common primitive rather than
   duplicating its bounded cleanup loop; delete the complete C29..C41 range
   but retain all other maps and squares exactly as GROUP.C does.
-- 2026-08-06 F0190 source-table boundary hardening: a data-free compatibility
-  world may use the bounded contract without a raw group table, but an
-  authenticated world with a raw GROUP table now rejects a missing raw C04
-  record before possession drops, group retirement, or C040 smoke. Broader
-  original-save C13/C03/C04 corpus capture remains open.
 - 2026-07-15 DM1 GROUP F0194 follow-up: source-defined active-group
   retirement now writes raw loaded C04 cells, low packed direction, and the
   F0184 behavior threshold before retiring every slot. F0195 now consumes
