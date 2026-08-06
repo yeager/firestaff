@@ -475,11 +475,20 @@ static void test_graphics_structure_and_image_extract(void)
     DM2_V1_GraphicsStructureReceipt structure;
     DM2_V1_GdatImageExtractReceipt image;
     DM2_V1_GdatUnderlayPair underlays[1];
+    DM2_V1_GdatEntry startup_entry;
     int16_t underlay = -1;
 
     fixture_loader(&loader, data, raw_offsets, raw_sizes, entries);
     underlays[0].image_raw_index = 4u;
     underlays[0].underlay_raw_index = 3;
+    /* c_gdatfile.cpp::DM2_READ_GRAPHICS_STRUCTURE queries this scalar after
+     * ENT1. The receipt must retain it and derive the image-cache route. */
+    startup_entry = entries[2];
+    entries[2].cls1 = 0u;
+    entries[2].cls2 = 0u;
+    entries[2].cls3 = DM2_GDAT_ENTRY_TYPE_WORD_VALUE;
+    entries[2].cls4 = 0u;
+    entries[2].data_index = 0x0060u;
 
     CHECK(dm2_v1_read_graphics_structure_receipt(&loader, &structure) &&
               structure.valid &&
@@ -489,8 +498,13 @@ static void test_graphics_structure_and_image_extract(void)
               structure.calculated_payload_end == 224u &&
               structure.max_raw_payload_length == 34u &&
               structure.has_underlay_table &&
-              structure.underlay_pair_count == 1u,
-          "DM2_READ_GRAPHICS_STRUCTURE receipt binds loader raw table and underlay table");
+              structure.underlay_pair_count == 1u &&
+              structure.source_startup_word == 0x0060u &&
+              structure.source_sound_mode &&
+              structure.source_image_allocator_mode &&
+              structure.source_image_cache_limit == 0x001fu,
+          "DM2_READ_GRAPHICS_STRUCTURE retains GDAT table, underlay and setup word");
+    entries[2] = startup_entry;
     CHECK(dm2_v1_gdat_track_underlay(underlays, 1u, 4u, &underlay) &&
               underlay == 3,
           "DM2_TRACK_UNDERLAY binary-searches the loaded image underlay table");
@@ -500,7 +514,7 @@ static void test_graphics_structure_and_image_extract(void)
     CHECK(dm2_v1_extract_gdat_image_receipt(
               &loader, 4u, 0, 1, NULL, 0u, &image) &&
               image.valid &&
-              image.decode_img3_underlay &&
+              !image.decode_img3_underlay &&
               !image.uses_underlay &&
               image.width == 2u &&
               image.height == 2u &&
@@ -508,7 +522,7 @@ static void test_graphics_structure_and_image_extract(void)
               image.pixel_payload_bytes == 18u &&
               image.allocation_bytes == 32u &&
               image.decoded_pixel_hash != 0u,
-          "DM2_EXTRACT_GDAT_IMAGE decodes direct IMG3/U4 raw payload bytes");
+          "DM2_EXTRACT_GDAT_IMAGE decodes source OffsetY=-32 U4 payload bytes");
     CHECK(dm2_v1_extract_gdat_image_receipt(
               &loader, 4u, 1, 0, underlays, 1u, &image) &&
               image.valid &&
@@ -535,8 +549,8 @@ static void test_gfx_material_ownership_routes(void)
               &loader, 4u, 1, &material) && material.accepted &&
               material.raw_index == 4u && material.source_bytes == data + 96u &&
               material.source_byte_count == 28u && material.image.valid &&
-              material.image.decode_img3_underlay,
-          "DM2_ALLOCATE_GFX256 exposes only real loaded GDAT image material");
+              !material.image.decode_img3_underlay,
+          "DM2_ALLOCATE_GFX256 exposes source OffsetY=-32 image material");
     CHECK(dm2_v1_gdat_allocate_gfx16_material_receipt(
               &loader, DM2_GDAT_CATEGORY_GRAPHICSSET, 2,
               DM2_GDAT_IMG_MAP_CHIP, 0, &material) && material.accepted &&
@@ -1067,9 +1081,20 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
 static int candidate_path(char *out, size_t out_size, const char *suffix)
 {
     const char *data = getenv("FIRESTAFF_DATA");
+    const char *dm2_data = getenv("FIRESTAFF_DM2_DATA_DIR");
     const char *home = getenv("HOME");
+    const char *leaf;
 
     if (!out || out_size == 0u || !suffix) return 0;
+    /* FIRESTAFF_DM2_DATA_DIR is the direct selected data directory, unlike
+     * FIRESTAFF_DATA which is the shared root containing dm2/.  Keep the
+     * real-media census usable for an installed archive without copying or
+     * unpacking GRAPHICS.DAT for a test. */
+    if (dm2_data && dm2_data[0]) {
+        leaf = strrchr(suffix, '/');
+        snprintf(out, out_size, "%s/%s", dm2_data, leaf ? leaf + 1 : suffix);
+        return 1;
+    }
     if (data && data[0]) {
         snprintf(out, out_size, "%s/%s", data, suffix);
         return 1;
@@ -1108,6 +1133,7 @@ static void test_real_graphics_census(void)
     DM2_V1_AssetLoader loader;
     DM2_V1_GdatEnt1Receipt ent1_receipt;
     DM2_V1_GdatLoadEntriesReceipt load_entries_receipt;
+    DM2_V1_GraphicsStructureReceipt structure_receipt;
     DM2_V1_GdatEntryIterator iterator;
     DM2_V1_GdatEntryQueryReceipt iter_receipt;
     DM2_V1_GdatGfxMaterialReceipt material;
@@ -1127,6 +1153,11 @@ static void test_real_graphics_census(void)
         free(graphics);
         return;
     }
+    CHECK(dm2_v1_read_graphics_structure_receipt(&loader, &structure_receipt) &&
+              structure_receipt.valid &&
+              (structure_receipt.source_image_cache_limit == 0x001fu ||
+               structure_receipt.source_image_cache_limit == 0x03e8u),
+          "real GRAPHICS.DAT retains its source startup allocator mode");
 
     for (uint16_t i = 0u; i < loader.entry_count; ++i) {
         DM2_V1_GdatEntryQueryReceipt receipt;

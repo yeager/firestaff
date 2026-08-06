@@ -289,6 +289,9 @@ typedef struct {
     int startup_title_h;
     int ccm_program_count;
     int ccm_program_field;
+    /* READ_GRAPHICS_STRUCTURE is part of boot admission, not a test-only
+     * parser. Keep its source-owned setup with this mounted GDAT owner. */
+    DM2_V1_GraphicsStructureReceipt graphics_structure;
     DM2_V1_G1ChampionMirrorReceipt champion_mirrors;
     DM2_V1_GdatDyn4MaterializedSelection champion_dyn4;
     uint32_t champion_dynamic_load_id;
@@ -782,7 +785,9 @@ static DM2_V1_BootGraphicsDat *dm2_v1_boot_graphics_load_from_buffer(
     gfx->size = mem_size;
     if (dm2_v1_asset_loader_init(&gfx->loader, gfx->bytes, mem_size) != 0 ||
         !dm2_v1_asset_loader_verify(&gfx->loader) ||
-        !dm2_v1_asset_loader_validate_typed_graph(&gfx->loader)) {
+        !dm2_v1_asset_loader_validate_typed_graph(&gfx->loader) ||
+        !dm2_v1_read_graphics_structure_receipt(
+            &gfx->loader, &gfx->graphics_structure)) {
         dm2_v1_boot_graphics_free(gfx);
         return NULL;
     }
@@ -814,7 +819,9 @@ static DM2_V1_BootGraphicsDat *dm2_v1_boot_graphics_load(
     gfx->bytes = bytes;
     if (dm2_v1_asset_loader_init(&gfx->loader, gfx->bytes, size) != 0 ||
         !dm2_v1_asset_loader_verify(&gfx->loader) ||
-        !dm2_v1_asset_loader_validate_typed_graph(&gfx->loader)) {
+        !dm2_v1_asset_loader_validate_typed_graph(&gfx->loader) ||
+        !dm2_v1_read_graphics_structure_receipt(
+            &gfx->loader, &gfx->graphics_structure)) {
         dm2_v1_boot_graphics_free(gfx);
         return NULL;
     }

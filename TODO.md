@@ -28439,7 +28439,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   unavailable until the source's complete GRAPHICS.DAT transaction is ported:
   header validation, ULP offsets, ENT1, optional underlay data and image
   allocator setup. The compatibility seam no longer returns a synthetic valid
-  receipt from caller-filled fields.
+  receipt from caller-filled fields. **2026-08-06 update:** the boot-owned
+  real GDAT loader now retains the original `dtWordValue(0,0,0)` setup word
+  and its bit-5 sound / bit-6 image-cache decisions (`0x3e8` or `0x1f`),
+  alongside the raw-offset, ENT1 and underlay receipts. This is source data
+  from the mounted v4/v5 file, never a host default; the remaining work is
+  wiring the source allocator lifetime and secondary-file transaction.
 - [ ] DM2 combat source contract: a creature Defense GDAT row alone cannot
   author a player attack. Keep `dm2_v1_combat_resolve_attack_on_creature()`
   blocked until `DM2_ENGAGE_COMMAND`/`CALC_PLAYER_ATTACK_DAMAGE` has the

@@ -2223,6 +2223,7 @@ int dm2_v1_read_graphics_structure_receipt(
     uint32_t max_end = 0u;
     uint32_t max_raw = 0u;
     uint32_t underlay_len = 0u;
+    uint16_t startup_word = 0xffffu;
     uint16_t i;
 
     if (!out_receipt) return 0;
@@ -2255,9 +2256,22 @@ int dm2_v1_read_graphics_structure_receipt(
         receipt.has_underlay_table = 1u;
         receipt.underlay_pair_count = (uint16_t)(underlay_len / 4u);
     }
+    /* ReDMCSB c_gdatfile.cpp::DM2_READ_GRAPHICS_STRUCTURE retains the
+     * missing-query sentinel (-1) too, then masks its bits. Keep that source
+     * behaviour instead of replacing an absent word with a host policy. */
+    (void)dm2_v1_query_gdat_entry_data_index(
+        loader, 0, 0, DM2_GDAT_ENTRY_TYPE_WORD_VALUE, 0, &startup_word);
+    receipt.source_startup_word = startup_word;
+    receipt.source_sound_mode = (startup_word & 0x20u) != 0u;
+    receipt.source_image_allocator_mode = (startup_word & 0x40u) != 0u;
+    receipt.source_image_cache_limit = receipt.source_image_allocator_mode
+        ? 0x001fu : 0x03e8u;
     receipt.receipt_hash = dm2_gdat_file_receipt_hash(
         receipt.raw0_length, receipt.graphics_file_size,
-        receipt.calculated_payload_end, receipt.max_raw_payload_length);
+        receipt.calculated_payload_end,
+        receipt.max_raw_payload_length ^
+            ((uint32_t)receipt.source_startup_word << 16) ^
+            receipt.source_image_cache_limit);
     *out_receipt = receipt;
     return 1;
 }

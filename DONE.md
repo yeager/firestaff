@@ -1,3 +1,15 @@
+# DM2 GDAT startup setup-word admission (2026-08-06)
+
+- ✅ The boot-owned v4/v5 GDAT loader now retains the exact
+  `dtWordValue(0,0,0)` configuration read by SKProject
+  `DM2_READ_GRAPHICS_STRUCTURE`. Its bit-5 sound mode and bit-6 image-cache
+  mode (`0x3e8`/`0x1f`) are derived from the mounted original data, not a host
+  default; boot fails closed if the complete structural receipt cannot form.
+- ✅ The focused receipt test accepts `FIRESTAFF_DM2_DATA_DIR` as a direct
+  user-supplied DM2 data directory, so it reads the real file in place and
+  never copies or unpacks it. Verification: 119/119 GDAT receipts against
+  the real DOS `GRAPHICS.DAT`, and `firestaff_m11_phase_a_probe` 24/24.
+
 # DM1 D2L2/D2R2 F0115 synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the D2L2/D2R2 F0115 no-draw receipt from M10. It has fixed

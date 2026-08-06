@@ -589,9 +589,16 @@ typedef struct {
     uint8_t filetype1;
     uint8_t filetype2;
     uint8_t has_underlay_table;
+    /* skproject SKWIN/c_gdatfile.cpp::DM2_READ_GRAPHICS_STRUCTURE queries
+     * dtWordValue(0, 0, 0) after ENT1 is live. These bits initialise the
+     * source sound and image-cache modes; retain the mounted GDAT value. */
+    uint8_t source_sound_mode;
+    uint8_t source_image_allocator_mode;
     uint16_t entries;
     uint16_t raw_data_count;
     uint16_t underlay_pair_count;
+    uint16_t source_startup_word;
+    uint16_t source_image_cache_limit;
     uint32_t raw0_length;
     uint32_t graphics_file_size;
     uint32_t calculated_payload_end;
