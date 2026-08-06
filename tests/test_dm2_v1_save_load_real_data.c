@@ -149,6 +149,10 @@ int main(void)
     unsigned int found = 0u;
     DM2_SKSaveCorpusReceipt corpus;
     DM2_V1_StartupMenu menu;
+    uint8_t parsed_slot = 0xffu;
+    int parsed_last_session = -1;
+    char parsed_root[512];
+    char corpus_path[600];
 
     printf("DM2 real PC-DOS SKSave corpus tests:\n\n");
     if (!resolve_corpus_root(root, sizeof(root))) {
@@ -187,6 +191,12 @@ int main(void)
     CHECK(dm2_v1_save_has_valid_slot(root, 0u) &&
               dm2_v1_save_has_valid_slot(root, 3u),
           "slot selection resolves the real PC-DOS filenames before decoding");
+    snprintf(corpus_path, sizeof(corpus_path), "%s/sksave0.dat", root);
+    CHECK(dm2_v1_startup_save_path_to_root_slot(
+              corpus_path, parsed_root, (int)sizeof(parsed_root), &parsed_slot,
+              &parsed_last_session) && strcmp(parsed_root, root) == 0 &&
+              parsed_slot == 0u && parsed_last_session == 0,
+          "startup path handoff preserves the supplied original DOS save path");
     dm2_v1_startup_menu_init(&menu, root);
     CHECK(dm2_v1_startup_menu_scan_saves(&menu) &&
               menu.resume_available == 0 && menu.slot_mask == 0x000fu,

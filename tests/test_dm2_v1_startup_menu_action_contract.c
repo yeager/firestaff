@@ -97,6 +97,16 @@ int main(void)
     check(dm2_v1_startup_input_from_firestaff_menu_code(999) ==
               DM2_V1_STARTUP_INPUT_NONE,
           "unknown Firestaff menu input maps to DM2 startup idle input");
+    memset(save_root, 0, sizeof(save_root));
+    save_slot = 0xffu;
+    last_session = -1;
+    check(dm2_v1_startup_save_path_to_root_slot(
+              "/tmp/firestaff-dm2-startup-missing/sksave3.dat",
+              save_root, (int)sizeof(save_root), &save_slot,
+              &last_session) &&
+              strcmp(save_root, "/tmp/firestaff-dm2-startup-missing") == 0 &&
+              save_slot == 3u && last_session == 0,
+          "direct resume path parser preserves the real PC-DOS slot spelling");
     check(dm2_v1_startup_runtime_handoff_receipt_from_state(
               &runtime_handoff, 1, 1) &&
               runtime_handoff.valid &&

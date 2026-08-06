@@ -51617,3 +51617,9 @@ and `firestaff` build pass.
   zero-filled pixels. Negative-window prefix zeroes and valid forward-window
   copies remain source-compatible; the legacy regression and real 162-entry
   MENU.BPK decode/upload receipt both pass.
+
+- ✅ 2026-08-06 DM2 PC-DOS save-path handoff: direct startup save selection
+  now accepts the real lower-case, one-digit `sksaveN.dat` filename shape,
+  carries the containing data root and slot to the validated loader, and
+  continues to reject a partial raw `GAME_LOAD` as a playable session. The
+  focused menu contract and the supplied `sksave0.dat` corpus path both pass.

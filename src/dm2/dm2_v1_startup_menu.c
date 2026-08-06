@@ -104,6 +104,58 @@ DM2_V1_StartupInput dm2_v1_startup_input_from_firestaff_menu_code(
     }
 }
 
+static int dm2_v1_startup_ascii_equal_ci(const char *left, const char *right)
+{
+    if (!left || !right) return 0;
+    while (*left && *right) {
+        int a = (unsigned char)*left++;
+        int b = (unsigned char)*right++;
+        if (a >= 'A' && a <= 'Z') a += 'a' - 'A';
+        if (b >= 'A' && b <= 'Z') b += 'a' - 'A';
+        if (a != b) return 0;
+    }
+    return *left == '\0' && *right == '\0';
+}
+
+static int dm2_v1_startup_parse_slot_basename(const char *base,
+                                               int *out_slot,
+                                               int *out_last_session)
+{
+    unsigned int slot = 0u;
+    unsigned int digits = 0u;
+    const char *suffix;
+
+    if (!base || !out_slot || !out_last_session) return 0;
+    if (dm2_v1_startup_ascii_equal_ci(base, "SKSave.dat") ||
+        dm2_v1_startup_ascii_equal_ci(base, "SKSave.bak")) {
+        *out_slot = 0;
+        *out_last_session = 1;
+        return 1;
+    }
+    if (strlen(base) < 8u ||
+        !((base[0] == 'S' || base[0] == 's') &&
+          (base[1] == 'K' || base[1] == 'k') &&
+          (base[2] == 'S' || base[2] == 's') &&
+          (base[3] == 'A' || base[3] == 'a') &&
+          (base[4] == 'V' || base[4] == 'v') &&
+          (base[5] == 'E' || base[5] == 'e'))) {
+        return 0;
+    }
+    while (digits < 2u && base[6u + digits] >= '0' &&
+           base[6u + digits] <= '9') {
+        slot = slot * 10u + (unsigned int)(base[6u + digits] - '0');
+        ++digits;
+    }
+    suffix = base + 6u + digits;
+    if (digits == 0u || slot >= DM2_SLOT_MAX ||
+        !dm2_v1_startup_ascii_equal_ci(suffix, ".dat")) {
+        return 0;
+    }
+    *out_slot = (int)slot;
+    *out_last_session = 0;
+    return 1;
+}
+
 int dm2_v1_startup_save_path_to_root_slot(const char *save_path,
                                           char *out_root,
                                           int out_root_cap,
@@ -118,7 +170,6 @@ int dm2_v1_startup_save_path_to_root_slot(const char *save_path,
         !out_slot || !out_last_session) {
         return 0;
     }
-    *out_last_session = 0;
     slash = strrchr(save_path, '/');
 #ifdef _WIN32
     {
@@ -129,21 +180,8 @@ int dm2_v1_startup_save_path_to_root_slot(const char *save_path,
     }
 #endif
     base = slash ? slash + 1 : save_path;
-    if (strcmp(base, "SKSave.dat") == 0 ||
-        strcmp(base, "SKSave.bak") == 0) {
-        slot = 0;
-        *out_last_session = 1;
-    } else {
-        if (strncmp(base, "SKSave", 6) != 0 ||
-            base[6] < '0' || base[6] > '9' ||
-            base[7] < '0' || base[7] > '9' ||
-            strcmp(base + 8, ".dat") != 0) {
-            return 0;
-        }
-        slot = (base[6] - '0') * 10 + (base[7] - '0');
-        if (slot < 0 || slot >= 10) {
-            return 0;
-        }
+    if (!dm2_v1_startup_parse_slot_basename(base, &slot, out_last_session)) {
+        return 0;
     }
     if (slash) {
         size_t len = (size_t)(slash - save_path);

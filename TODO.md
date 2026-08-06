@@ -4558,7 +4558,9 @@ that its exact runtime path is not already source-locked and tested.
     supplied PC-DOS `sksave0.dat`…`sksave3.dat` and matching `.bak` files as
     real, unpadded case variants. It inventories their actual slots and
     backups without promoting the incomplete raw payload into a playable
-    resume session.
+    resume session. **2026-08-06 path handoff:** direct menu/save selection
+    now also preserves that original lower-case, one-digit spelling instead
+    of rejecting it as a Firestaff-only filename mismatch.
 40. **DM2-MENU-STARTUP-COMPLETE:** Complete skproject title/menu state machine,
     clickable buttons, palette, animation, audio, save selection, new game,
     options, error states, and first HUD handoff.

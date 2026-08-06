@@ -288,6 +288,10 @@ int dm2_v1_startup_save_path_to_root_slot(const char *save_path,
                                           int out_root_cap,
                                           uint8_t *out_slot,
                                           int *out_last_session);
+/* Accepts source-shaped SKSaveNN.dat and the supplied PC-DOS corpus's
+ * lower-case, unpadded sksaveN.dat spelling.  .bak is accepted only for the
+ * original last-session filename; a slot backup is selected by the validated
+ * loader's primary-then-backup policy, never mistaken for a primary path. */
 DM2_V1_StartupSavePathResult
 dm2_v1_startup_load_session_from_save_path(const char *save_path,
                                            char *out_root,
