@@ -3284,6 +3284,14 @@ diagnostic; it must not silently fall back to a generated visual.
   overlay. Verification: `test_dm1_v1_viewport_3d_pc34_compat` and
   `test_m11_dm1_f0115_floor_item_runtime_capture_pc34` with local PC34 data.
 
+- **DM1-CREATURE-VIEWPORT-REAL-DATA:** The legacy creature-viewport helper
+  contained a fixed sprite table whose 225..297 bitmap indices do not resolve
+  to the authenticated PC3.4 `GRAPHICS.DAT` creature material. ReDMCSB's
+  production route owns creature aspects/native and derived bitmap selection;
+  until that route is wired to a real runtime consumer, the legacy helper is
+  test-only and must not be linked into the production M10/M11 archives. Its
+  focused fixture tests remain available for contract diagnostics.
+
 - **DM1-ORIGINAL-REPLACE-011:** Closed 2026-08-05. Removed the remaining
   legacy viewport renderer's synthetic coloured wall, floor, ceiling, side
   wall and door pixels. Missing source material now remains no-draw; the

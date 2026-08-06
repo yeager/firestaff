@@ -55374,3 +55374,15 @@ alcove runtime and archive-media tests passed (4/4).
   excluded.
 - ℹ️ The aggregate project build now passes the Nexus archive and stops later
   at an unrelated DM2 FM-Towns animation-stream link gap.
+# 2026-08-06 DM1 creature viewport placeholder isolation
+
+- Removed `dm1_v1_creature_viewport_pc34_compat.c` from the production M10/M11
+  archives. Its fixed 225..297 sprite table was not source-faithful: the
+  authenticated PC3.4 `GRAPHICS.DAT` has zero-sized entries at the first
+  creature indices and different dimensions at later indices, while the
+  ReDMCSB creature route selects native/derived bitmap indices from the
+  creature-aspect table. No production caller used this legacy API, so its
+  fixture tests remain explicit and the runtime can no longer expose its
+  synthetic creature metadata as real DM1 material.
+- Verification: production M10 archive-symbol check, focused creature
+  viewport fixture test, and authenticated PC3.4 `GRAPHICS.DAT` header audit.

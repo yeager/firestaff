@@ -4225,6 +4225,8 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_creature_viewport_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
@@ -4870,7 +4872,6 @@ set(M11_SOURCES
     src/dm1/dm1_v1_dungeon_decompressor_pc34_compat.c
     src/dm1/dm1_v1_field_teleporter_effect_pc34_compat.c
     src/dm1/dm1_v1_game_loop_integration_pc34_compat.c
-    src/dm1/dm1_v1_creature_viewport_pc34_compat.c
     src/dm1/dm1_v1_creature_ai_behavior_pc34_compat.c
     src/dm1/dm1_v1_save_load_system_pc34_compat.c
     src/dm1/dm1_v1_blit_fill_pc34_compat.c
@@ -53549,7 +53550,10 @@ target_include_directories(test_dm1_v1_f0344_f0658_hud_material_pc34_compat PRIV
 target_link_libraries(test_dm1_v1_f0344_f0658_hud_material_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_f0344_f0658_hud_material_pc34_compat COMMAND test_dm1_v1_f0344_f0658_hud_material_pc34_compat)
 
-add_executable(test_dm1_v1_creature_viewport_pc34_compat tests/test_dm1_v1_creature_viewport_pc34_compat.c)
+add_executable(test_dm1_v1_creature_viewport_pc34_compat
+    tests/test_dm1_v1_creature_viewport_pc34_compat.c
+    src/dm1/dm1_v1_creature_viewport_pc34_compat.c
+)
 target_include_directories(test_dm1_v1_creature_viewport_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_creature_viewport_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_creature_viewport_pc34_compat COMMAND test_dm1_v1_creature_viewport_pc34_compat)
