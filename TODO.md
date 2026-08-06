@@ -49,7 +49,9 @@
   byte-exact source receipt at `0x36D04..0x3702F`, but the former host
   event→command map and accepting
   dispatcher were synthetic DM1-shaped behavior. They are now unbound and
-  state-free. Recover the Saturn event producer, command queue, SLEV callback
+  state-free. The event regression now rejects any `DM.BIN` whose MD5 is not
+  the authenticated European retail identity
+  `e88d60859f65f08fa622e1992b02280f`. Recover the Saturn event producer, command queue, SLEV callback
   and SDDRVS state writes before admitting movement, inventory, spell, save,
   menu or HUD actions.
 
@@ -198,6 +200,9 @@
 - **NEXUS-PRS3-VDP1-STATE-RECEIPT:** The real MENU.BPK PRS3 decoder now
   passes all 162 retail surfaces, and DM.BIN's VDP1 register/state corridors
   are hash-bound. Keep this as byte/source evidence only: the current static
+  PRS3 evidence regression now accepts only the authenticated English/French
+  `MENU.BPK` identities (`a6f2272a4f6cb3c6b3b33012bc5b15ed` and
+  `fcf8a00fbb92593ed9ae908f8e285cda`). Keep this as byte/source evidence only:
   receipts do not prove PRS3 opcode execution, CLUT upload, draw-command
   emission, destination placement or viewport/menu ownership. Do not promote
   the decoder or any VDP1 candidate into production pixels without an

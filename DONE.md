@@ -63,6 +63,20 @@
 
 # Nexus boot-profile capability audit (2026-08-06)
 
+# Nexus startup event and PRS3 corpus identity gates (2026-08-06)
+
+- ✅ Hardened `test_nexus_v1_event` so the 61-name `DM.BIN` receipt cannot
+  silently accept a filename-matched or synthetic replacement; it now requires
+  the authenticated European MD5 `e88d60859f65f08fa622e1992b02280f`.
+- ✅ Hardened `test_nexus_v1_bpk_prs3_payload_evidence` to honor
+  `FIRESTAFF_NEXUS_DATA_DIR` and require the authenticated English/French
+  `MENU.BPK` MD5 catalog before walking the 162 retail PRS3 entries. The
+  decoder, upload, and Saturn presentation routes remain explicitly blocked
+  pending instrumented Saturn capture.
+- Verification: `test_nexus_v1_event`,
+  `test_nexus_v1_bpk_prs3_payload_evidence`, and focused CTest both pass with
+  `/Users/bosse/.firestaff/data/nexus`.
+
 # Nexus SLEV/SAL/MAP retail identity gate (2026-08-06)
 
 - ✅ Hardened the 16-level SLEV/SAL/MAP corpus regression with the production

@@ -1,5 +1,6 @@
 #include "nexus_v1_game.h"
 #include "nexus_v1_movement.h"
+#include "asset_find_by_hash.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -36,6 +37,11 @@ static int load_retail_dm_bin(uint8_t **out_data, int *out_size) {
         return 0;
     }
     fclose(f);
+    if (!asset_file_matches_md5(path,
+                                "e88d60859f65f08fa622e1992b02280f")) {
+        free(data);
+        return -1;
+    }
     *out_data = data;
     *out_size = (int)size;
     return 1;
@@ -67,15 +73,21 @@ int main(void) {
     /* Event count matches DM.BIN (61 events) */
     expect(NEXUS_EV_COUNT == 61, "61 event types from DM.BIN");
 
-    if (load_retail_dm_bin(&retail_dm_bin, &retail_dm_bin_size)) {
+    {
+        int retail_load_status =
+            load_retail_dm_bin(&retail_dm_bin, &retail_dm_bin_size);
+        if (retail_load_status > 0) {
         expect(nexus_v1_event_table_receipt(
                    retail_dm_bin, retail_dm_bin_size, &retail_event_count),
                "retail DM.BIN event-name pool receipt");
         expect(retail_event_count == 61,
                "retail DM.BIN event-name pool has 61 names");
         free(retail_dm_bin);
-    } else {
-        puts("note: retail DM.BIN absent; event-name receipt skipped");
+        } else if (retail_load_status == 0) {
+            puts("note: retail DM.BIN absent; event-name receipt skipped");
+        } else {
+            expect(0, "retail DM.BIN matches authenticated European source");
+        }
     }
 
     /* Event names are available, but dispatch is capture-gated. */

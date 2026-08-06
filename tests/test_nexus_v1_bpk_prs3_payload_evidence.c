@@ -1,4 +1,5 @@
 #include "nexus_v1_bpk_archive.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -454,6 +455,7 @@ static void test_opcode_prefix_witness(void) {
 }
 
 static void test_optional_local_menumenu_bpk(void) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[2048];
     FILE *fp;
@@ -464,14 +466,29 @@ static void test_optional_local_menumenu_bpk(void) {
     int rc;
     uint32_t capacity = 256U;
 
-    if (!home || !home[0]) {
-        puts("SKIP: HOME is unset; no local Nexus MENU.BPK check");
+    if (data_dir && data_dir[0]) {
+        if (snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) < 0) return;
+    } else if (home && home[0]) {
+        if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
+                     home) < 0) return;
+    } else {
+        puts("SKIP: Nexus data root is unset; no local MENU.BPK check");
         return;
     }
-    if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
-                 home) < 0) return;
     fp = fopen(path, "rb");
     if (!fp) { puts("SKIP: local MENU.BPK not present"); return; }
+    expect(asset_file_matches_md5(path,
+                                  "a6f2272a4f6cb3c6b3b33012bc5b15ed") ||
+               asset_file_matches_md5(path,
+                                      "fcf8a00fbb92593ed9ae908f8e285cda"),
+           "local MENU.BPK matches an authenticated English/French retail revision");
+    if (!asset_file_matches_md5(path,
+                                "a6f2272a4f6cb3c6b3b33012bc5b15ed") &&
+        !asset_file_matches_md5(path,
+                                "fcf8a00fbb92593ed9ae908f8e285cda")) {
+        fclose(fp);
+        return;
+    }
     if (fseek(fp, 0, SEEK_END) != 0) { fclose(fp); return; }
     size = ftell(fp);
     if (size <= 0) { fclose(fp); return; }

@@ -35487,6 +35487,7 @@ add_executable(test_nexus_v1_dgn_material_raster
         tests/test_nexus_v1_bpk_prs3_payload_evidence.c
         src/nexus/nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_prs3_decode.c
+        src/shared/asset_find_by_hash.c
     )
     target_include_directories(test_nexus_v1_bpk_prs3_payload_evidence PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
