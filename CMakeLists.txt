@@ -4632,6 +4632,12 @@ list(REMOVE_ITEM M10_SOURCES
 # in M10 while its direct regression target compiles this fixture explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_drop_to_floor_pc34_compat.c")
+# `dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat.c`
+# is a fixed-state party/chest race model. It has no original-DM1 input or
+# M11/runtime caller; keep the shared inventory helper in M10 and compile this
+# fixture only into its explicit regression target.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
@@ -54067,7 +54073,9 @@ add_executable(test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_co
 target_include_directories(test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat COMMAND test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat)
-add_executable(test_dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat tests/test_dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat.c)
+add_executable(test_dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat
+    tests/test_dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat.c
+    src/dm1/dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat COMMAND test_dm1_v1_chest_pickup_after_party_rotate_with_non_leader_open_pc34_compat)
