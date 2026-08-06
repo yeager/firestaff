@@ -18,6 +18,13 @@
   `GRAPHICS.DAT` command/palette receipts and their fail-closed M11 consumers.
   No production fallback was introduced.
 
+- ✅ 2026-08-06 Nexus DGN real texture census guard: the hash-verified
+  `LEV00.DGN`–`LEV15.DGN` regression now requires the exact 1,678 decoded
+  Structure2 images (1,553 indexed-4bpp and 125 direct-555) and aggregate
+  non-zero pixel/palette output. This prevents a zero-filled diagnostic buffer
+  from masquerading as texture coverage while keeping source verification and
+  VDP1 promotion separate. Verification: `test_nexus_v1_dgn_texture_decode`.
+
 - ✅ 2026-08-06 Nexus European BIOS capture preflight: the supplied
   `Sega Saturn BIOS (E) (1.00).bin` was verified as 524,288 bytes with
   SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`.

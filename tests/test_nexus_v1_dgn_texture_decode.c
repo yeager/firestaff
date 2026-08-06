@@ -45,6 +45,8 @@ int main(void)
     uint16_t palette[16];
     Nexus_V1_DgnTextureDecodeReceipt r;
     int rc, level_index, image_id, decoded = 0, indexed4 = 0, direct555 = 0;
+    size_t nonzero_pixels = 0U;
+    size_t nonzero_palette_words = 0U;
     const size_t pixel_capacity = 1024U * 1024U;
     if (!dir || !dir[0]) {
         const char *home = getenv("HOME");
@@ -125,17 +127,32 @@ int main(void)
                             level_index, image_id);
                     free(data); free(pixels); return 1;
                 }
+                for (rc = 0; rc < 16; ++rc) {
+                    if (palette[rc] != 0U) ++nonzero_palette_words;
+                }
                 ++indexed4;
             }
             if (r.direct_color_555) ++direct555;
+            {
+                size_t output_bytes = r.indexed4
+                    ? (size_t)r.width * (size_t)r.height
+                    : (size_t)r.width * (size_t)r.height * 2U;
+                size_t output_index;
+                for (output_index = 0U; output_index < output_bytes;
+                     ++output_index) {
+                    if (pixels[output_index] != 0U) ++nonzero_pixels;
+                }
+            }
             ++decoded;
         }
         free(data);
     }
     free(pixels);
-    if (decoded <= 0 || indexed4 <= 0 || direct555 <= 0) {
-        fprintf(stderr, "FAIL: no complete real texture census decoded=%d indexed4=%d direct555=%d\n",
-                decoded, indexed4, direct555);
+    if (decoded != 1678 || indexed4 != 1553 || direct555 != 125 ||
+        nonzero_pixels == 0U || nonzero_palette_words == 0U) {
+        fprintf(stderr, "FAIL: real texture census decoded=%d indexed4=%d direct555=%d nonzero_pixels=%zu nonzero_palette_words=%zu\n",
+                decoded, indexed4, direct555, nonzero_pixels,
+                nonzero_palette_words);
         return 1;
     }
     printf("test_nexus_v1_dgn_texture_decode: PASS levels=16 textures=%d indexed4=%d direct555=%d\n",

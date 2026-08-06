@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-DGN-MATERIAL-VDP1-CAPTURE:** The real Structure2 decoder now
+  has a 16-level census guard (1,678 textures: 1,553 indexed-4bpp and 125
+  direct-555) with non-zero output checks. Keep decoded pixels/palettes as
+  format receipts only until Structure3 face ownership and Saturn VDP1 CLUT,
+  upload and command-order evidence are joined.
+
 - **NEXUS-HUD-SATURN-DISPATCH-CAPTURE:** The real DM.BIN hit-rectangle
   parser now rejects both inverted/out-of-range rectangles and signed
   negative origins. Remaining work is still the Saturn input/VDP consumer
