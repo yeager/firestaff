@@ -8,9 +8,13 @@
   media. `TITLE.ANM`, `STORY.ANM` and `ENDING.ANM` now decode their real
   F2275/F8288 frame streams and retain their source Timer-A waits and loop
   execution and source `TD`/`TR` CD-DA track requests. M11 now displays only
-  the verified `TITLE.ANM` stream against its Timer-A timing, but the distinct
-  FM Towns story/ending owner, input, audio/CDDA playback and save handoff
-  still need original-media capture.
+  the verified `TITLE.ANM` stream against its Timer-A timing. ReDMCSB
+  `NECIO.C` launches `anim title.anm` as a standalone program; `SWITCH.C`
+  owns the separate player-selected `anim story.anm` route, and `STARTUP2.C`
+  calls `F2248_PlayAnimation("ending.anm")` after a winning game. Do not
+  auto-chain the title into Story. The distinct FM Towns switch-menu/story
+  owner, ending handoff, input, audio/CDDA playback and save handoff still
+  need original-media capture.
   The raw CDDA extractor now streams a
   selected CUE track sectorwise; binding that authenticated PCM to M11 timing
   remains separate.
