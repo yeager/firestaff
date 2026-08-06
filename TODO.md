@@ -10,6 +10,11 @@
   game data and has no M11/runtime caller; retain it only as explicit ReDMCSB
   coverage until a source-bound chest transaction owner is recovered.
 
+- **DM1-MIRROR-C045-FOOD-WATER-SYNTHETIC-AUDIT:** This asset-free C045/chest
+  scenario fixture reads no original DM1 data and has no M11/runtime caller.
+  Retain it only as an explicit ReDMCSB regression until a source-bound C045
+  interaction consumer is recovered.
+
 - **DM1-C146-WAKE-UP-SYNTHETIC-AUDIT:** This C040/C146 wake-up regression
   simulates fixed panel and rest state with no original game-data input. It
   has no M11/runtime caller; retain it as explicit ReDMCSB coverage until a

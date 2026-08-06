@@ -4703,6 +4703,12 @@ list(REMOVE_ITEM M10_SOURCES
 # only in its explicit regression.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_occupied_hand_panel_pc34_compat.c")
+# `dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_pc34_compat.c`
+# is an asset-free C045/chest scenario fixture. It reads no original DM1 data
+# and has no M11/runtime caller; the generated mirror test matrix compiles it
+# directly, so it must not remain in M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_pc34_compat.c")
 # `dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c`
 # is a deterministic C040/chest/rotation scenario fixture. It reads no
 # original DM1 data and has no M11/runtime caller; its explicit regression

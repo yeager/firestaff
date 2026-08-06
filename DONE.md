@@ -14,6 +14,14 @@
 - ✅ Verification: `test_dm1_v1_chest_round_trip_hand_swap_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 C045 food-water synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free C045/chest food-water-close scenario fixture from
+  M10. It reads no original DM1 data and has no M11/runtime caller; the
+  generated mirror ReDMCSB regression compiles the source directly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 C146 wake-up synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the C040/C146 wake-up state simulation from M10. It reads no
