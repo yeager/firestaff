@@ -5091,7 +5091,9 @@ endif()
 
 # ── Main executable ──────────────────────────────────────────────────
 if(CMAKE_SYSTEM_NAME STREQUAL "Android")
-    add_library(firestaff SHARED src/shared/firestaff_main_m11.c)
+    add_library(firestaff SHARED
+        src/shared/firestaff_main_m11.c
+        src/shared/firestaff_game_data_fingerprint.c)
     set_target_properties(firestaff PROPERTIES OUTPUT_NAME "main")
 else()
     add_executable(firestaff
