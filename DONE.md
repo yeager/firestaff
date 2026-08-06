@@ -53314,3 +53314,8 @@ alcove runtime and archive-media tests passed (4/4).
   and the M12 popup tells the player to install one and rescan. The three
   strings are translated in every shipped startup-menu catalog (19 locales
   plus English); focused 7z and CHD popup regression coverage is included.
+- ✅ 2026-08-06 Nexus PRS3 real-corpus admission: corrected the capture
+  schema's `MENU.BPK` MD5 to the verified retail value
+  `a6f2272a4f6cb3c6b3b33012bc5b15ed`, matching the boot profile. The real
+  V3 sidecar/provenance regression now binds evidence while remaining
+  fail-closed for Saturn authentication and runtime import.

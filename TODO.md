@@ -27257,3 +27257,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - **NEXUS-SAVE-ROUNDTRIP-STACK:** The manager-level native save round-trip is
   now verified with heap-owned test state; keep the serialized world contract
   unchanged while extending real Saturn-card save provenance separately.
+-  - 2026-08-06 Nexus PRS3 capture-schema correction: the real retail
+    `MENU.BPK` MD5 admission constant was stale (`c277...`) while the
+    verified corpus and boot profile use `a6f2272a4f6cb3c6b3b33012bc5b15ed`.
+    Update the capture-sidecar evidence only; Saturn authentication and
+    runtime texture upload remain blocked until independent VDP1 capture.
