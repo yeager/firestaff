@@ -423,7 +423,9 @@ int dm2_v1_creature_restore_live_state(const DM2_V1_CreatureLiveState *state);
  * Used by tests/probes to inject a synthetic AIDefinition entry so the
  * collision gate can exercise missile-redirect branches (NONMATERIAL /
  * ABSORBS_MISSILE / REFLECTOR / TURNS_MISSILE) without depending on the
- * real GDAT-loaded AI table (which is currently a zero-init stub).
+ * production GDAT import. Boot attempts that import from the admitted
+ * GRAPHICS.DAT session, but a row remains unavailable (and zeroed) when the
+ * source profile does not expose the required CREATURE_AI fields.
  *
  * Always reset after use via dm2_v1_creature_test_clear_ai_overrides().
  *
