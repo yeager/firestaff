@@ -31,6 +31,50 @@ static const char *find_standard_us_bin(void) {
     return path;
 }
 
+static const char *find_real_us_cue(void) {
+    const char *override = getenv("FIRESTAFF_THERON_CUE");
+    const char *home = getenv("HOME");
+    static char path[512];
+    FILE *file;
+
+    if (override && override[0]) {
+        file = fopen(override, "rb");
+        if (file) {
+            fclose(file);
+            return override;
+        }
+    }
+    if (!home || !home[0] || snprintf(path, sizeof(path),
+            "%s/.firestaff/data/theron/TQUS.cue", home) >=
+            (int)sizeof(path)) return NULL;
+    file = fopen(path, "rb");
+    if (!file) return NULL;
+    fclose(file);
+    return path;
+}
+
+static void test_real_split_us_cue_path(void) {
+#if defined(_WIN32)
+    (void)find_real_us_cue;
+#else
+    const char *cue = find_real_us_cue();
+    Theron_V1Track02RawMediaIntakeReceipt receipt;
+
+    if (!cue) {
+        printf("test_theron_v1_track02_raw_media_intake: SKIP split US CUE\n");
+        return;
+    }
+    CHECK(theron_v1_track02_raw_media_intake_discover(cue, &receipt));
+    CHECK(receipt.status == THERON_V1_TRACK02_MEDIA_INTAKE_READY);
+    CHECK(receipt.variant == THERON_TRACK02_VARIANT_US_ISO);
+    CHECK(receipt.cue_consumed && receipt.mode1_2048 && !receipt.mode1_2352);
+    CHECK(receipt.payload_bytes == 6596608u);
+    CHECK(receipt.sector_count == 3221u);
+    CHECK(!strcmp(receipt.track02_md5, THERON_TRACK02_MD5_US_ISO));
+    CHECK(strstr(receipt.payload_path, "TQUS02-") != NULL);
+#endif
+}
+
 static void test_real_us_cue_path(void) {
 #if defined(_WIN32)
     (void)find_standard_us_bin;
@@ -250,5 +294,6 @@ int main(void) {
         printf("test_theron_v1_track02_raw_media_intake: SKIP (no local Track 02 media)\n");
     }
     test_real_us_cue_path();
+    test_real_split_us_cue_path();
     return failures ? EXIT_FAILURE : EXIT_SUCCESS;
 }
