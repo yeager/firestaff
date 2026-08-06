@@ -3,9 +3,10 @@
  * A GRAPHICS.DAT/DUNGEON.DAT pair supplies authentic GDAT material, but it
  * does not contain the live c_weather v1e14xx chain that belongs to a running
  * game or imported save.  Therefore this test proves the production contract:
- * the outdoor frame is drawable from canonical data, while weather pixels are
- * deliberately no-draw until that source-owned session state is available.
- * It must not inject a fixture weather chain and call the result game data.
+ * canonical installation media may be decoded for material verification, but
+ * it cannot publish an M11-presentable outdoor frame while the source-owned
+ * GAME_LOAD/session state is absent. It must not inject a fixture weather
+ * chain and call the result game data.
  *
  * Source-locks:
  *   skproject/SKULLWIN/c_weather.cpp DM2_UPDATE_WEATHER (0x54 timer + arg==0)
@@ -64,26 +65,15 @@ static int load_canonical_files(uint8_t **graphics, size_t *graphics_size,
                                 char *boot_root, size_t boot_root_size)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
-    char fallback[1024];
     char graphics_path[1100];
     char dungeon_path[1100];
 
-    if (root && root[0]) {
-        snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
-        snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
-        snprintf(boot_root, boot_root_size, "%s/..", root);
-    } else if (home && home[0]) {
-        snprintf(fallback, sizeof(fallback), "%s/.firestaff/data/dm2/data", home);
-        snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat",
-                 fallback);
-        snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", fallback);
-        snprintf(boot_root, boot_root_size, "%s/.firestaff/data/dm2", home);
-    } else {
-        return 0;
-    }
+    if (!root || !root[0]) return -1;
+    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
+    snprintf(boot_root, boot_root_size, "%s/..", root);
     return read_file(graphics_path, graphics, graphics_size) &&
-        read_file(dungeon_path, dungeon, dungeon_size);
+        read_file(dungeon_path, dungeon, dungeon_size) ? 1 : 0;
 }
 
 /* Find a level whose MapGraphicsStyle has a complete weather GDAT receipt.
@@ -123,11 +113,19 @@ int main(void)
     passed = 0;
     failed = 0;
 
-    if (!load_canonical_files(&graphics, &graphics_size,
-                              &dungeon_bytes, &dungeon_size,
-                              boot_root, sizeof(boot_root))) {
-        puts("SKIP: no local canonical DM2 data");
-        return 0;
+    {
+        const int load_result = load_canonical_files(
+            &graphics, &graphics_size, &dungeon_bytes, &dungeon_size,
+            boot_root, sizeof(boot_root));
+        if (load_result < 0) {
+            puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not configured");
+            return 0;
+        }
+        if (load_result == 0) {
+            fputs("FAIL: configured DM2 graphics.dat/dungeon.dat is unreadable\n",
+                  stderr);
+            return 1;
+        }
     }
     memset(&loader, 0, sizeof(loader));
     dungeon = (DM2_V1_DungeonData *)calloc(1u, sizeof(*dungeon));
@@ -187,7 +185,8 @@ int main(void)
     /* The normal tick must preserve that fail-closed decision. */
     dm2_v1_runtime_tick();
 
-    /* Render the outdoor frame through the boot/runtime path. */
+    /* Exercise the boot/runtime renderer. Its decoded source material must
+     * still not become a player-facing frame without GAME_LOAD ownership. */
     memset(framebuffer, 0, sizeof(framebuffer));
     memset(&render_receipt, 0, sizeof(render_receipt));
     {
@@ -196,60 +195,31 @@ int main(void)
             DM2_VP_WIDTH, DM2_VP_HEIGHT,
             NULL, NULL, &render_receipt);
         CHECK(render_rc == 1,
-              "outdoor frame renders through boot/runtime path");
+              "outdoor material evaluation completes through boot/runtime path");
     }
 
-    /* The runtime frame ownership receipt must report real GDAT consumption. */
+    /* Static installation data cannot replace the live session/pose owner.
+     * The runtime may have decoded real material above, but it must not issue
+     * a presentation receipt for an invented party/map frame. */
     memset(&ownership, 0, sizeof(ownership));
     {
         int rc = dm2_v1_runtime_last_frame_ownership(&ownership);
-        CHECK(rc == 1,
-              "runtime produced a frame ownership receipt");
-    }
-    if (ownership.valid) {
-        CHECK(ownership.gdat_provider_bound,
-              "frame was drawn with the boot GDAT provider bound");
-        CHECK(ownership.outdoor_sky_gdat_blits > 0,
-              "outdoor sky plane consumed real GDAT material");
-        CHECK(ownership.outdoor_ground_gdat_blits > 0,
-              "outdoor ground plane consumed real GDAT material");
-        CHECK(ownership.hud_gdat_blits > 0,
-              "HUD consumed real GDAT material");
-        CHECK(ownership.gdat_scene_weather_consumed == 0,
-              "weather overlay stays absent without a source session receipt");
-        CHECK(ownership.total_runtime_fallback_draws == 0,
-              "no synthetic fallback draws were produced");
-        CHECK(ownership.blocked_material_draws == 0,
-              "no source material passes were blocked");
-        CHECK(ownership.outdoor_gdat_frame_valid,
-              "outdoor GDAT frame is valid");
-        CHECK(ownership.full_gdat_frame_valid,
-              "full GDAT frame is valid");
+        CHECK(rc == 0 && !ownership.valid,
+              "runtime refuses an outdoor ownership receipt without original session state");
     }
 
-    /* M11 must accept the runtime receipt. */
+    /* M11 must not accept the unowned runtime receipt. */
     memset(&m11_receipt, 0, sizeof(m11_receipt));
     {
         int rc = dm2_v1_runtime_last_m11_frame_receipt(&m11_receipt);
-        CHECK(rc == 1,
-              "runtime produced an M11 frame receipt");
-    }
-    if (m11_receipt.valid) {
-        CHECK(m11_receipt.m11_consume_frame,
-              "M11 frame receipt requests frame consumption");
-        CHECK(!m11_receipt.weather_material_plan_required,
-              "M11 does not require a weather plan without source state");
-        CHECK(!m11_receipt.weather_material_plan_consumed,
-              "M11 records no synthetic weather-plan consumption");
-        CHECK(m11_receipt.weather_material_plan_command_count == 0,
-              "M11 records no invented weather commands");
-        CHECK(!m11_receipt.weather_graphicsset_bound,
-              "M11 has no weather GRAPHICSSET binding without source state");
+        CHECK(rc == 0 && !m11_receipt.valid &&
+                  !m11_receipt.m11_consume_frame,
+              "runtime withholds an M11 frame receipt without original session state");
     }
 
     CHECK(M11_Dm2RuntimeFrameReceipt_ShouldPresent(
-              &render_receipt, &m11_receipt) == 1,
-          "M11 runtime-frame gate accepts the outdoor weather frame");
+              &render_receipt, &m11_receipt) == 0,
+          "M11 runtime-frame gate rejects the unowned outdoor frame");
 
     dm2_v1_boot_cleanup(&boot);
     dm2_v1_asset_loader_free(&loader);

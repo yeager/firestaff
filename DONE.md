@@ -9,6 +9,15 @@
   transfer and session mutation are source-bound. No synthetic champion or
   inventory state was introduced.
 
+# DM2 outdoor startup-frame corpus selection (2026-08-07)
+
+- ✅ The real-data outdoor frame regression no longer falls back to an
+  implicit home-directory corpus. It skips only when no corpus was selected;
+  a selected but unreadable `graphics.dat` or `dungeon.dat` fails the check.
+  The retained PC-DOS corpus also proves that decoded installation material
+  alone cannot publish an outdoor/M11 frame before original GAME_LOAD state
+  supplies the party, map and weather owners.
+
 # DM2 delayed movement receipt ownership (2026-08-07)
 - ✅ The DM2 movement execution boundary now keeps the source-authenticated
   `DM2_CALC_PLAYER_WALK_DELAY` result while refusing to claim that the
