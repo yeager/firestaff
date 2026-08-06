@@ -77,6 +77,7 @@ static const uint8_t DM2_PC_EN_GRAPHICS_MD5[16] DM2_MAYBE_UNUSED = {
 #define DM2_PC9821_GRAPHICS_MIN_SIZE (1U * 1024U * 1024U)
 #define DM2_PC9821_GRAPHICS_MAX_SIZE (4U * 1024U * 1024U)
 #define DM2_FMTOWNS_GDAT_CONTAINER_WORD 0x8004u
+#define DM2_FMTOWNS_GDAT_VERSION 4u
 #define DM2_PC_GDAT_ENT1_WORD 0x8001u
 #define DM2_GDAT_ENTRY_TYPE_MAX 0x0e
 #define DM2_IMG3_HEADER_SIZE 10u
@@ -92,6 +93,9 @@ enum {
     DM2_GDAT_EP_CLS6 = 6,
     DM2_GDAT_EP_COUNT = 7
 };
+
+static int dm2_img3_read_nibble(const uint8_t *raw, size_t raw_size,
+                                size_t *cursor, uint8_t *out);
 
 /* ── LE read helpers ─────────────────────────────────────────────── */
 static uint16_t rd16le(const uint8_t *p) {
@@ -525,6 +529,146 @@ static uint8_t *dm2_decode_uncompressed_image(const uint8_t *raw,
         return pixels;
     }
 
+    return NULL;
+}
+
+/* FM Towns GDAT v4 stores 4-bit images as IMG2, not the PC IMG3 command
+ * stream.  The command grammar below is the original decoder's direct
+ * counterpart: skproject/DM2GDED/DMGHLci.cpp::ReadImgDM2C4towns().  In
+ * particular, 0xB/0xF spill from the preceding scanline and 0xA retains the
+ * destination pixel; treating this data as IMG3 produces a plausible header
+ * followed by a corrupt command stream. */
+static int dm2_fmtowns_img2_write(uint8_t *pixels, size_t pixel_count,
+                                  size_t *cursor, size_t count,
+                                  uint8_t color)
+{
+    if (!pixels || !cursor || count > pixel_count - *cursor) return 0;
+    memset(pixels + *cursor, color, count);
+    *cursor += count;
+    return 1;
+}
+
+static int dm2_fmtowns_img2_still(size_t pixel_count, size_t *cursor,
+                                  size_t count)
+{
+    if (!cursor || count > pixel_count - *cursor) return 0;
+    *cursor += count;
+    return 1;
+}
+
+static int dm2_fmtowns_img2_spill(uint8_t *pixels, size_t pixel_count,
+                                  size_t *cursor, size_t width,
+                                  size_t count)
+{
+    size_t i;
+    if (!pixels || !cursor || width == 0u || *cursor < width ||
+        count > pixel_count - *cursor) return 0;
+    for (i = 0u; i < count; ++i)
+        pixels[*cursor + i] = pixels[*cursor + i - width];
+    *cursor += count;
+    return 1;
+}
+
+static int dm2_fmtowns_img2_read_u8_nibbles(const uint8_t *raw,
+                                             size_t raw_size,
+                                             size_t *cursor,
+                                             unsigned nibbles,
+                                             unsigned *out)
+{
+    unsigned value = 0u;
+    unsigned i;
+    uint8_t nibble;
+    if (!out || nibbles == 0u || nibbles > 4u) return 0;
+    for (i = 0u; i < nibbles; ++i) {
+        if (!dm2_img3_read_nibble(raw, raw_size, cursor, &nibble)) return 0;
+        value = (value << 4u) | nibble;
+    }
+    *out = value;
+    return 1;
+}
+
+static uint8_t *dm2_decode_fmtowns_img2_c4(const uint8_t *raw,
+                                            size_t raw_size,
+                                            int width, int height,
+                                            DM2_ImageFormat *out_format)
+{
+    size_t pixel_count;
+    size_t cursor = 8u; /* four-byte IMG2 header, counted in nibbles */
+    size_t pixel = 0u;
+    uint8_t *pixels;
+
+    if (!raw || raw_size < 4u || width <= 0 || height <= 0 ||
+        (size_t)width > SIZE_MAX / (size_t)height) return NULL;
+    pixel_count = (size_t)width * (size_t)height;
+    if (pixel_count == 0u || pixel_count > (size_t)1024u * 1024u) return NULL;
+    pixels = (uint8_t *)calloc(pixel_count, 1u);
+    if (!pixels) return NULL;
+
+    while (pixel < pixel_count) {
+        uint8_t command;
+        uint8_t color;
+        unsigned length = 0u;
+        unsigned i;
+        if (!dm2_img3_read_nibble(raw, raw_size, &cursor, &command) ||
+            !dm2_img3_read_nibble(raw, raw_size, &cursor, &color)) {
+            free(pixels);
+            return NULL;
+        }
+        if ((command & 8u) == 0u) {
+            if (!dm2_fmtowns_img2_write(pixels, pixel_count, &pixel,
+                                        (size_t)command + 1u, color)) goto fail;
+        } else if (command == 0x08u || command == 0x0bu) {
+            if (!dm2_fmtowns_img2_read_u8_nibbles(raw, raw_size, &cursor,
+                                                   2u, &length)) goto fail;
+            ++length;
+            if (command == 0x08u) {
+                if (!dm2_fmtowns_img2_write(pixels, pixel_count, &pixel,
+                                            length, color)) goto fail;
+            } else {
+                if (!dm2_fmtowns_img2_spill(pixels, pixel_count, &pixel,
+                                            (size_t)width, length) ||
+                    !dm2_fmtowns_img2_write(pixels, pixel_count, &pixel,
+                                            1u, color)) goto fail;
+            }
+        } else if (command == 0x0cu || command == 0x0fu) {
+            if (!dm2_fmtowns_img2_read_u8_nibbles(raw, raw_size, &cursor,
+                                                   4u, &length)) goto fail;
+            ++length;
+            if (command == 0x0cu) {
+                if (!dm2_fmtowns_img2_write(pixels, pixel_count, &pixel,
+                                            length, color)) goto fail;
+            } else {
+                if (!dm2_fmtowns_img2_spill(pixels, pixel_count, &pixel,
+                                            (size_t)width, length) ||
+                    !dm2_fmtowns_img2_write(pixels, pixel_count, &pixel,
+                                            1u, color)) goto fail;
+            }
+        } else if (command == 0x09u || command == 0x0du) {
+            if (!dm2_fmtowns_img2_read_u8_nibbles(raw, raw_size, &cursor,
+                                                   command == 0x09u ? 2u : 4u,
+                                                   &length)) goto fail;
+            if ((length & 1u) == 0u) {
+                if (!dm2_fmtowns_img2_write(pixels, pixel_count, &pixel,
+                                            1u, color)) goto fail;
+            } else {
+                ++length;
+            }
+            for (i = 0u; i < length; ++i) {
+                if (!dm2_img3_read_nibble(raw, raw_size, &cursor, &color) ||
+                    !dm2_fmtowns_img2_write(pixels, pixel_count, &pixel,
+                                             1u, color)) goto fail;
+            }
+        } else if (command == 0x0au) {
+            if (!dm2_fmtowns_img2_still(pixel_count, &pixel, 11u)) goto fail;
+        } else {
+            goto fail;
+        }
+    }
+    if (cursor != raw_size * 2u) goto fail;
+    if (out_format) *out_format = DM2_IMG_FMT_U4;
+    return pixels;
+fail:
+    free(pixels);
     return NULL;
 }
 
@@ -4028,6 +4172,29 @@ int dm2_v1_asset_load_interface_palette(
 
     if (!out_palette) return 0;
     memset(out_palette, 0, sizeof(*out_palette));
+    /* HME-242 GDAT v4 is a 16-colour FM Towns palette: dtPalIRGB field 0
+     * contains 16 BGRA-like rows, and no dtPalette16 companion exists.
+     * SKWIN's FM Towns branch uses these physical indices directly. */
+    if (loader && loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
+        irgb = dm2_v1_asset_load_typed_sized(
+            loader, category, index, DM2_GDAT_ENTRY_TYPE_PAL_IRGB, 0,
+            &irgb_size);
+        if (!irgb || irgb_size != 16u * 4u) return 0;
+        for (color = 0; color < 16; ++color) {
+            const uint8_t *src = irgb + (size_t)color * 4u;
+            out_palette->rgb6[color][0] = (uint8_t)(src[1] >> 2u);
+            out_palette->rgb6[color][1] = (uint8_t)(src[2] >> 2u);
+            out_palette->rgb6[color][2] = (uint8_t)(src[3] >> 2u);
+            out_palette->palette16[color] = (uint8_t)color;
+            hash = (hash ^ out_palette->rgb6[color][0]) * 16777619u;
+            hash = (hash ^ out_palette->rgb6[color][1]) * 16777619u;
+            hash = (hash ^ out_palette->rgb6[color][2]) * 16777619u;
+        }
+        for (color = 0; color < 16; ++color)
+            hash = (hash ^ out_palette->palette16[color]) * 16777619u;
+        out_palette->hash = hash ? hash : 1u;
+        return 1;
+    }
     irgb = dm2_v1_asset_load_typed_sized(loader, category, index,
                                           DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
                                           field, &irgb_size);
@@ -4118,6 +4285,18 @@ uint8_t *dm2_v1_asset_load_raw_image(const DM2_V1_AssetLoader *loader,
     height = (int)(cy & 0x03ffu);
     offset_y = dm2_img3_signed_offset(cy);
     if (width <= 0 || height <= 0) return NULL;
+
+    /* DMWeb's data-files format table identifies DMII FM Towns (0x8004)
+     * as IMG2 media.  It has only the four-byte width/height header; never
+     * route it through the PC IMG3 header/command decoder. */
+    if (loader->gdat_version == DM2_FMTOWNS_GDAT_VERSION) {
+        pixels = dm2_decode_fmtowns_img2_c4(raw, raw_size, width, height,
+                                            out_format);
+        if (!pixels) return NULL;
+        if (out_width) *out_width = width;
+        if (out_height) *out_height = height;
+        return pixels;
+    }
 
     /* skproject: SKWIN/DME.h IMG3::Getpf lines 1114-1120 classifies
      * OffsetY == -32 with w4 == 4/8 as uncompressed U4/U8.  EXTRACT_GDAT_IMAGE

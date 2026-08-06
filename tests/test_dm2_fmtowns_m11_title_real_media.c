@@ -33,6 +33,17 @@ static unsigned int nonzero_pixels(const unsigned char* pixels, size_t size)
     return count;
 }
 
+static unsigned int fnv1a32(const unsigned char* bytes, size_t size)
+{
+    unsigned int hash = 2166136261u;
+    size_t index;
+    for (index = 0u; bytes && index < size; ++index) {
+        hash ^= bytes[index];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 int main(void)
 {
     const char* root = getenv("FIRESTAFF_DM2_FMTOWNS_ROOT");
@@ -87,10 +98,13 @@ int main(void)
     view.dm2FmtownsTitleFinished = 1;
     memset(framebuffer, 0x7f, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
-    expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0u &&
-               M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
-                   M11_GAME_INPUT_IGNORED,
-           "unimplemented FM Towns SKULL.EXP stays black and cannot use PC menu input");
+    expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) != 0u,
+           "TITLE hands off to the original FM Towns GDAT menu");
+    expect(fnv1a32(framebuffer, sizeof(framebuffer)) == 0x63310e49u,
+           "TITLE handoff decodes the selected HME-242 IMG2 menu bytes exactly");
+    expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
+               M11_GAME_INPUT_IGNORED,
+           "untranslated keyboard tokens cannot invent FM Towns menu input");
     M11_GameView_Shutdown(&view);
     expect(view.dm2FmtownsTitleBytes == NULL &&
                view.dm2FmtownsTitleByteCount == 0u &&

@@ -1403,6 +1403,105 @@ static int m11_dm2_is_fmtowns_profile(const DM2_V1_BootProfile *profile)
     return profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA;
 }
 
+/* AUTOEXEC transfers from TWANIM TITLE to SKULL.EXP.  We do not execute the
+ * P3 program, but its authenticated GRAPHICS.DAT is the same source owner
+ * that SKWIN's SHOW_MENU_SCREEN reads after SKULL has opened it.  Admit the
+ * static handoff only when both original executables and the exact v4 GDAT
+ * title/menu-plus-pointer receipt are available; otherwise retain black and
+ * consume input.  Source: HME-242 AUTOEXEC.BAT; SKWIN
+ * SkWinCore.cpp::SHOW_MENU_SCREEN (0x2481:007D). */
+static int m11_dm2_fmtowns_skull_menu_ready(const M11_GameViewState *state)
+{
+    const DM2_V1_BootProfile *profile;
+    DM2_V1_BootStartupMenuHudGdatReceipt receipt;
+    if (!state || !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_is_fmtowns_profile(profile) ||
+        !profile->fmtowns_skull_p3.valid ||
+        !profile->fmtowns_twanim_p3.valid ||
+        !profile->fmtowns_startup_media_verified ||
+        !profile->fmtowns_animation_media_verified ||
+        !profile->fmtowns_animation_streams_verified) {
+        return 0;
+    }
+    memset(&receipt, 0, sizeof(receipt));
+    return dm2_v1_boot_startup_menu_hud_gdat_receipt(
+               (DM2_V1_BootProfile *)profile, &receipt) &&
+           receipt.valid;
+}
+
+/* The HME-242 menu is an IMG2 surface with its own 16×4 IRGB record, rather
+ * than the PC raw 64000-byte screen consumed by the generic M11 executor.
+ * Present it only through the boot-owned GDAT query after its exact source
+ * payload has been receipted.  No PC palette, text or rectangle is mixed in.
+ * Source: HME-242 DATA/GRAPHICS.DAT TITLE/0/dtImage+dtPalIRGB/4;
+ * SKWIN SkWinCore.cpp::SHOW_MENU_SCREEN (0x2481:007D). */
+static int m11_dm2_present_fmtowns_skull_menu(
+    const M11_GameViewState *state, unsigned char *framebuffer,
+    int framebuffer_width, int framebuffer_height)
+{
+    DM2_V1_BootProfile *profile;
+    const DM2_V1_AssetLoader *loader;
+    const uint8_t *palette_raw;
+    uint8_t rgb6[256][3];
+    uint8_t *pixels = NULL;
+    size_t palette_size = 0u;
+    uint32_t raw_hash = 0u;
+    uint32_t raw_byte_count = 0u;
+    int width = 0;
+    int height = 0;
+    int stride = 0;
+    int x;
+    int y;
+
+    if (!state || !framebuffer || framebuffer_width <= 0 ||
+        framebuffer_height <= 0 ||
+        !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_fmtowns_skull_menu_ready(state) ||
+        !(loader = dm2_v1_boot_asset_loader(profile)) ||
+        !dm2_v1_boot_gdat_raw_asset_proof(
+            profile, DM2_GDAT_CATEGORY_TITLE, 0, 4, 0x46544d4du,
+            &raw_hash, &raw_byte_count) ||
+        raw_hash == 0u || raw_byte_count == 0u) {
+        return 0;
+    }
+    palette_raw = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_TITLE, 0, DM2_GDAT_ENTRY_TYPE_PAL_IRGB,
+        4, &palette_size);
+    if (!palette_raw || palette_size != 16u * 4u ||
+        dm2_v1_boot_gdat_image_asset_fetch(
+            profile, DM2_GDAT_CATEGORY_TITLE, 0, 4, &pixels, &width,
+            &height, &stride) != 0 || !pixels || width != 320 ||
+        height != 200 || stride < width) {
+        dm2_v1_boot_gdat_image_asset_free(pixels);
+        return 0;
+    }
+    memset(rgb6, 0, sizeof(rgb6));
+    for (x = 0; x < 16; ++x) {
+        const uint8_t *row = palette_raw + (size_t)x * 4u;
+        if (row[0] != (uint8_t)x) {
+            dm2_v1_boot_gdat_image_asset_free(pixels);
+            return 0;
+        }
+        rgb6[x][0] = (uint8_t)(row[1] >> 2u);
+        rgb6[x][1] = (uint8_t)(row[2] >> 2u);
+        rgb6[x][2] = (uint8_t)(row[3] >> 2u);
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) {
+        dm2_v1_boot_gdat_image_asset_free(pixels);
+        return 0;
+    }
+    for (y = 0; y < framebuffer_height; ++y) {
+        int source_y = y * height / framebuffer_height;
+        for (x = 0; x < framebuffer_width; ++x) {
+            int source_x = x * width / framebuffer_width;
+            framebuffer[(size_t)y * (size_t)framebuffer_width + (size_t)x] =
+                pixels[(size_t)source_y * (size_t)stride + (size_t)source_x];
+        }
+    }
+    dm2_v1_boot_gdat_image_asset_free(pixels);
+    return 1;
+}
+
 static void m11_dm2_release_fmtowns_title(M11_GameViewState *state)
 {
     if (!state) return;
@@ -25497,10 +25596,12 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         int dir;
         int result;
-        if (state->dm2FmtownsTitleBound || state->dm2FmtownsTitleFinished) {
+        if (state->dm2FmtownsTitleBound ||
+            (state->dm2FmtownsTitleFinished &&
+             !m11_dm2_fmtowns_skull_menu_ready(state))) {
             /* AUTOEXEC's TITLE has no SKULL menu hit rectangles.  Do not
-             * leak clicks through the original animation, or through an
-             * unimplemented SKULL.EXP handoff, into the PC static menu. */
+             * leak clicks through the original animation, nor through an
+             * unverified TITLE->SKULL source handoff, into another menu. */
             return M11_GAME_INPUT_IGNORED;
         }
         if (!state->dm2World) {
@@ -53643,13 +53744,14 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_BLACK);
-            if (state->dm2FmtownsTitleRejected ||
-                state->dm2FmtownsTitleFinished) {
+            if (state->dm2FmtownsTitleRejected) {
                 /* Fail closed: selected FM Towns media cannot claim PC
-                 * GDAT's static startup page as an alternate TITLE or as
-                 * the unimplemented native SKULL.EXP menu. */
+                 * GDAT's static startup page as an alternate TITLE. */
             } else if (state->dm2FmtownsTitleBound) {
                 startup_menu_drawn = m11_dm2_present_fmtowns_title(
+                    state, framebuffer, framebufferWidth, framebufferHeight);
+            } else if (state->dm2FmtownsTitleFinished) {
+                startup_menu_drawn = m11_dm2_present_fmtowns_skull_menu(
                     state, framebuffer, framebufferWidth, framebufferHeight);
             } else if (state->dm2State.startup_credits_active) {
                 startup_menu_drawn = m11_draw_dm2_startup_credits(

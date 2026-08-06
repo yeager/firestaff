@@ -1210,8 +1210,12 @@ level or consumer bindings.
   stereo mixing from SO metadata. The remaining gap is source-owned
   END playback, TITLE sound-event/CDDA dispatch, and a captured
   title-to-SKULL menu handoff; do not replace them with host animation or
-  menus. M11 now fails black and blocks input after TITLE instead of using
-  the PC GDAT menu as a substitute for native `SKULL.EXP`. **2026-08-06
+  menus. **2026-08-06 IMG2 menu update:** after the authenticated TITLE
+  stream completes, M11 now presents the selected HME-242
+  `TITLE/0/dtImage+dtPalIRGB/4` surface through the FM Towns GDAT-v4 IMG2
+  decoder and its local 16-colour palette. It remains non-interactive until
+  the native SKULL input mapping is recovered; unverified media still fails
+  black. **2026-08-06
   update:** M11 now runs the selected HME-242 SWOOSH
   stream before TITLE, inferring only its documented EN-owned 320x200 canvas
   when AN says 0x0. Both streams remain RAM-only and Timer-A paced.

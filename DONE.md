@@ -79,6 +79,20 @@
   category, which desktop environments present as Games/Spel, and has a
   Swedish description. The launcher regression verifies Swedish missing-data
   text, the full DM2 title and the absence of the internal `DM2` id.
+
+# DM2 FM Towns IMG2 menu handoff (2026-08-06)
+
+- ✅ The selected HME-242 `TITLE/0/4` menu now reaches M11 after the real
+  TITLE stream through the documented GDAT-v4 IMG2 C4 decoder. The decoder is
+  a direct bounded counterpart to SKProject
+  `DMGHLci.cpp::ReadImgDM2C4towns`: it handles run, literal, spill and still
+  commands and rejects truncated, overlong or trailing payloads.
+- ✅ M11 uses the menu entry's real `dtPalIRGB/4` 16-colour palette and never
+  substitutes a PC palette, text surface or rectangle. Both original P3
+  executables, animation receipts and the boot GDAT receipt are required.
+  The real-disc regression locks the decoded 320×200 indexed result at
+  FNV-1a `63310e49` and confirms that keyboard input remains blocked pending
+  a recovered native SKULL input mapping.
 # Theron authentic VDC/VCE screen-space capture (2026-08-06)
 
 - ✅ A clean SIGINT shutdown of the instrumented Mednafen replay now emits
