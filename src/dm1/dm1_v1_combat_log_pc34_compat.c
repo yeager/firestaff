@@ -206,6 +206,12 @@ void DM1_CombatLog_Render(M11_GameViewState* state,
 
     if (!fb || fbW <= 0 || fbH <= 0) return;
     if (!M11_QolRuntime_GetCombatLogEnabled()) return;
+    if (state && !DM1_CombatLog_SourceAllowsDiagnosticOverlay(state->sourceKind)) {
+        /* DM1's real bottom lane is TEXT.C/C015.  The combat log's English
+         * host strings are useful in diagnostic worlds, but must never cover
+         * source-owned messages in an authenticated PC34 session. */
+        return;
+    }
     if (g_count <= 0) return;
 
     /* A missing GRAPHICS.DAT font is an asset failure, not permission to

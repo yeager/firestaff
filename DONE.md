@@ -1,5 +1,11 @@
 # DM1 production placeholder re-audit (2026-08-06)
 
+- ✅ Disabled the synthetic English combat-log overlay for authenticated DM1
+  source sessions. The real PC34 `TEXT.C`/C015 message lane remains visible;
+  the diagnostic overlay is still available for non-source diagnostic worlds.
+  Verification: `test_dm1_v1_combat_log_pc34_compat` (10 tests), source-name
+  guards, real object names and backed original-save roundtrip all pass.
+
 - ✅ Removed the launcher Item Encyclopedia's invented cross-game names,
   descriptions, weights, attack values and defense values. It now exposes the
   exact DM1 PC34 subtype names used by the ReDMCSB/M11 object consumer and

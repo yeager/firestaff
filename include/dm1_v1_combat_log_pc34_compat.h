@@ -60,6 +60,16 @@ static inline int DM1_CombatLog_SourceAllowsFallbackFont(
            sourceKind != M11_GAME_SOURCE_DIRECT_DUNGEON;
 }
 
+/* The log text itself is Firestaff diagnostic text, not a DM1 PC34 surface.
+ * Keep it out of authenticated DM1 sessions even when a persisted QoL
+ * setting enables the overlay; source TEXT.C owns the real message lane. */
+static inline int DM1_CombatLog_SourceAllowsDiagnosticOverlay(
+    M11_GameSourceKind sourceKind) {
+    return sourceKind != M11_GAME_SOURCE_BUILTIN_CATALOG &&
+           sourceKind != M11_GAME_SOURCE_CUSTOM_DUNGEON &&
+           sourceKind != M11_GAME_SOURCE_DIRECT_DUNGEON;
+}
+
 /* Render the overlay (no-op when disabled). */
 void DM1_CombatLog_Render(M11_GameViewState* gameView,
                           unsigned char* framebuffer,

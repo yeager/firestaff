@@ -73,6 +73,17 @@ static void test_source_font_gate(void) {
                M11_GAME_SOURCE_DM2_BOOT) == 1);
 }
 
+static void test_source_overlay_gate(void) {
+    assert(DM1_CombatLog_SourceAllowsDiagnosticOverlay(
+               M11_GAME_SOURCE_BUILTIN_CATALOG) == 0);
+    assert(DM1_CombatLog_SourceAllowsDiagnosticOverlay(
+               M11_GAME_SOURCE_CUSTOM_DUNGEON) == 0);
+    assert(DM1_CombatLog_SourceAllowsDiagnosticOverlay(
+               M11_GAME_SOURCE_DIRECT_DUNGEON) == 0);
+    assert(DM1_CombatLog_SourceAllowsDiagnosticOverlay(
+               M11_GAME_SOURCE_CSB_BOOT) == 1);
+}
+
 int main(void) {
     test_enum_values();
     test_enum_aliases();
@@ -80,6 +91,7 @@ int main(void) {
     test_typedef_aliases();
     test_text_field_capacity();
     test_source_font_gate();
-    puts("ok: dm1_v1_combat_log_pc34_compat 6 tests passed");
+    test_source_overlay_gate();
+    puts("ok: dm1_v1_combat_log_pc34_compat 10 tests passed");
     return 0;
 }
