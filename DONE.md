@@ -54135,3 +54135,14 @@ alcove runtime and archive-media tests passed (4/4).
   US split ISO, including size/MD5 ownership. The documentation explicitly
   prevents Track 19 bytes from being reused as Track 02 data and lists the
   remaining intentional placeholder/capture boundaries.
+# DM1 legacy wall-index placeholder removed (2026-08-06)
+
+- ✅ Removed the remaining fixed arithmetic wall-index helper from the old
+  `firestaff_dungeon_viewport_bridge` API. The previous `300 + distance * 18
+  + position * 6` calculation was not a ReDMCSB or PC34 `GRAPHICS.DAT`
+  mapping and could select unrelated pixels when that compatibility path was
+  called. It now returns a no-draw sentinel; authenticated M11 source tables
+  remain the only DM1 wall-material owner. Verification: external Ninja
+  `firestaff` and `test_firestaff_dm1_dungeon_state_real_data` build/pass,
+  real PC34 `DUNGEON.DAT` state test passes, bridge syntax check passes, and
+  `git diff --check` is clean.

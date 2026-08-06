@@ -79,14 +79,13 @@ int fs_viewport_build_view_cone(
 
 /* Wall bitmap selection from GRAPHICS.DAT index */
 int fs_viewport_select_wall_bitmap(int wall_type, int distance, int position) {
-    /* DM1 PC34 GRAPHICS.DAT wall bitmap indices:
-     * Base wall textures start at index 300+
-     * Distance 0 (closest) uses largest variants
-     * Distance 3 (farthest) uses smallest
-     * Position: 0=left, 1=center, 2=right */
-    int base = 300;
-    int dist_offset = distance * 18;  /* 18 variants per distance */
-    int pos_offset = position * 6;
-    return base + dist_offset + pos_offset + wall_type;
+    /* A wall index cannot be inferred from distance/position alone.  The
+     * active DM1 renderer resolves it through the authenticated source map
+     * and GRAPHICS.DAT presentation tables.  Returning a no-draw sentinel
+     * prevents this legacy bridge from painting a plausible but unrelated
+     * bitmap over the source-owned viewport. */
+    (void)wall_type;
+    (void)distance;
+    (void)position;
+    return -1;
 }
-
