@@ -257,6 +257,82 @@ int nexus_v1_audio_sal_opaque_prefix_receipt(
     return out->valid;
 }
 
+static int sddrvs_bytes_match(const uint8_t *data, uint32_t size,
+                              uint32_t offset, const uint8_t *pattern,
+                              uint32_t pattern_size)
+{
+    return data && pattern && offset <= size && pattern_size <= size - offset &&
+        memcmp(data + offset, pattern, pattern_size) == 0;
+}
+
+int nexus_v1_audio_sddrvs_disassembly_receipt(
+    const uint8_t *data,
+    uint32_t size,
+    Nexus_V1_SddrvsDisassemblyReceipt *out)
+{
+    static const uint8_t entry_signature[] = {0x46, 0xfc, 0x27, 0x00};
+    static const uint8_t sound_base_signature[] = {
+        0x2a, 0x7c, 0x00, 0x10, 0x00, 0x00,
+        0x2c, 0x7c, 0x00, 0x00, 0x70, 0x00,
+        0x2e, 0x7c, 0x00, 0x00, 0xa0, 0x00
+    };
+    static const uint8_t command_signature[] = {
+        0x02, 0x47, 0x00, 0xff, 0x1e, 0x07,
+        0x6a, 0x00, 0x00, 0x8e, 0x0c, 0x47,
+        0x00, 0x91, 0x64, 0x00, 0x00, 0xa2,
+        0x02, 0x47, 0x00, 0x0f, 0xde, 0x47,
+        0xde, 0x47, 0x4e, 0xbb, 0x70, 0x06
+    };
+    static const uint8_t jump_table_signature[] = {
+        0x4e, 0xfa, 0x02, 0x40
+    };
+    static const uint8_t pcm_signature[] = {
+        0x47, 0xee, 0x18, 0x90, 0x45, 0xee, 0x10, 0x00,
+        0x1e, 0x28, 0x00, 0x00
+    };
+    Nexus_V1_SddrvsDisassemblyReceipt receipt;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.source_size = size;
+    receipt.code_entry_offset = 0x1000U;
+    receipt.sound_cpu_ram_base = 0x00100000U;
+    receipt.work_ram_base = 0x00007000U;
+    receipt.stack_base = 0x0000a000U;
+    receipt.command_dispatch_offset = 0x1c08U;
+    receipt.command_jump_table_offset = 0x1c2aU;
+    receipt.command_jump_table_count = 16U;
+    receipt.pcm_voice_handler_offset = 0x1f0eU;
+    receipt.event_dispatch_proven = 0;
+    receipt.playback_permitted = 0;
+
+    /* SDDRVS.TSK is the retail sound-CPU image, not SH-2 code.  Its
+     * 68k entry and the A5/A6/A7 bases are byte-bound at 0x1000/0x1080;
+     * the command nibble dispatcher and voice-register handler are the
+     * executable corridors at 0x1c08 and 0x1f0e.  This is structure evidence
+     * only: it does not identify a game event or authorize host playback. */
+    receipt.m68k_instruction_stream_proven =
+        size == 26610U &&
+        sddrvs_bytes_match(data, size, 0x1000U, entry_signature,
+                           (uint32_t)sizeof(entry_signature)) &&
+        sddrvs_bytes_match(data, size, 0x1080U, sound_base_signature,
+                           (uint32_t)sizeof(sound_base_signature));
+    receipt.command_dispatch_proven =
+        receipt.m68k_instruction_stream_proven &&
+        sddrvs_bytes_match(data, size, 0x1c08U, command_signature,
+                           (uint32_t)sizeof(command_signature)) &&
+        sddrvs_bytes_match(data, size, 0x1c2aU, jump_table_signature,
+                           (uint32_t)sizeof(jump_table_signature));
+    receipt.pcm_voice_register_route_proven =
+        receipt.m68k_instruction_stream_proven &&
+        sddrvs_bytes_match(data, size, 0x1f0eU, pcm_signature,
+                           (uint32_t)sizeof(pcm_signature));
+    receipt.valid = receipt.m68k_instruction_stream_proven &&
+        receipt.command_dispatch_proven &&
+        receipt.pcm_voice_register_route_proven;
+    *out = receipt;
+    return receipt.valid;
+}
+
 int nexus_v1_audio_classify_cdda_layout(int data_track_count,
                                         int audio_track_count,
                                         int first_audio_track,
@@ -412,6 +488,7 @@ const char *nexus_v1_audio_source_evidence(void) {
         "docs/NEXUS_FILE_CLASSIFICATION.md: SNDLEV00-15.SAL/.MAP inventory\n"
         "docs/VERIFIED_HASHES.md:154-185 verified SAL/MAP sizes + SHA256\n"
         "docs/VERIFIED_HASHES.md:121 verified SDDRVS.TSK size + SHA256\n"
+        "SDDRVS.TSK: 68000 entry 0x1000, dispatch 0x1c08, PCM route 0x1f0e\n"
         "docs/nexus_audio_format.md: CD-DA track layout receipt only\n"
         "src/nexus/nexus_v1_game.c: level-to-track selector remains opaque\n"
         "Boundary: receipt/classification plus bounded MAP event table parse; "

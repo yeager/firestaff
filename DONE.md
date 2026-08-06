@@ -1,3 +1,13 @@
+# Nexus SDDRVS 68k disassembly receipt (2026-08-06)
+
+- ✅ Corrected the Nexus sound-driver source identity: authenticated
+  `SDDRVS.TSK` is a 26,610-byte 68000 sound-CPU image, not SH-2 code.
+- ✅ Bound the real entry/base-register corridor (`0x1000`/`0x1080`), the
+  16-value command-nibble dispatch mask (`0x1c08`/`0x1c2a`) and the PCM
+  voice-register handler corridor (`0x1f0e`) against the local retail bytes.
+- ✅ Kept event→MAP selection, SAL codec semantics and playback fail-closed;
+  the real-data SAL corpus probe passes with all 16 banks.
+
 # DM1 FM Towns DECODEGRAPHIC RLE decoder (2026-08-06)
 
 - Full port of DECODEGRAPHIC (EDM.EXP 0x1f63c) inner RLE loop with

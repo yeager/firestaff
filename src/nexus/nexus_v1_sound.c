@@ -639,13 +639,13 @@ int nexus_sound_init(Nexus_SoundEngine *eng) {
     ensure_event_selector_init(eng);
     clear_map_route(eng);
     clear_sal_profile(eng);
-    /* SH-2 binary analysis (pass 216) proves the SDDRVS.TSK ABI:
-     * - Sound CPU communicates via SCSP registers at 0x25B00400
-     * - sndlib2.c submitPCMP function submits PCM samples
-     * - SAL banks loaded by filename (SNDLEV01-15) via CD read
-     * - pcmtype field selects decode format
-     * Event→selector mapping remains unproven; playback stays blocked
-     * until a MAP record lookup succeeds with a verified selector. */
+    /* The authenticated SDDRVS.TSK image is a 68k sound-CPU task. Its
+     * command-nibble dispatch, sound-CPU RAM/work/stack bases and PCM voice
+     * register corridor are byte-bound by
+     * nexus_v1_audio_sddrvs_disassembly_receipt(); this does not identify a
+     * game event→MAP selector or authorize host playback. SAL banks remain
+     * source-owned metadata until that event handoff and native driver
+     * transport are captured together. */
     printf("Nexus sound: initialized (SAL metadata only, "
            "event selectors fail-closed, CD playback format-gated)\n");
     return 0;

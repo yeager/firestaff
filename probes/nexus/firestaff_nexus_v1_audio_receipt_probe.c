@@ -83,7 +83,7 @@ static void check_marker_classification(void) {
     CHECK(rc == NEXUS_V1_AUDIO_OK &&
           receipt.receipt_class == NEXUS_V1_AUDIO_RECEIPT_VERIFIED_HASH &&
           receipt.level_index == 8 &&
-          receipt.cd_track == 6,
+          receipt.cd_track == -1,
           "SNDLEV08.SAL exact size/hash verifies");
 
     rc = nexus_v1_audio_classify_file("NEXUS\\sndlev08.sal",
@@ -122,7 +122,7 @@ static void check_marker_classification(void) {
           receipt.kind == NEXUS_V1_AUDIO_KIND_MAP_TABLE &&
           receipt.receipt_class == NEXUS_V1_AUDIO_RECEIPT_VERIFIED_HASH &&
           receipt.level_index == 15 &&
-          receipt.cd_track == 9,
+          receipt.cd_track == -1,
           "SNDLEV15.MAP exact size/hash verifies");
 
     rc = nexus_v1_audio_classify_file("nexus/SNDLEV16.SAL",
@@ -217,10 +217,8 @@ static void check_cdda_layout(void) {
         int runtime_track = nexus_v1_cd_track_for_level(level);
         char msg[96];
         snprintf(msg, sizeof(msg),
-                 "level %02d receipt track matches runtime mapping", level);
-        CHECK(receipt_track == runtime_track &&
-              receipt_track >= NEXUS_V1_AUDIO_CDDA_TRACK_FIRST &&
-              receipt_track <= NEXUS_V1_AUDIO_CDDA_TRACK_LAST,
+                 "level %02d CDDA selector remains source-unbound", level);
+        CHECK(receipt_track == -1 && runtime_track == -1,
               msg);
     }
 

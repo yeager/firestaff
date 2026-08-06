@@ -67,12 +67,19 @@ Per-level SFX allows different sound environments per dungeon depth — deeper l
 
 ### SDDRVS.TSK (26 KB)
 
-- "Sound DRiVerS TaSK" — Saturn SH-2 sound driver
-- 26 KB — compact driver binary
-- Loads SNDLEV*.SAL and retains bounded MAP windows; event playback is gated
-  until the Saturn event-to-selector and driver handoff are authenticated
-- Retailens `SDDRVS.TSK` är en verifierad task-identitet. Dess event- och
-  selector-ABI är inte fastställd; “likely” är inte ett runtime-bevis.
+- "Sound DRiVerS TaSK" — Saturn sound-CPU task
+- The authenticated image is 26 610 bytes of 68000 code/data, not SH-2 code.
+  Its entry corridor is at file offset `0x1000`; the code initializes the
+  sound-CPU bases `A5=0x00100000`, `A6=0x00007000` and `A7=0x0000A000` at
+  `0x1080`.
+- The command-nibble dispatch corridor is byte-bound at `0x1c08`, with its
+  first jump-table entry at `0x1c2a` and a 16-value selector mask. The PCM
+  voice-register handler begins at `0x1f0e` and writes through the sound-CPU
+  register window rooted at `A5`; these are structure/disassembly receipts,
+  not a game-event mapping.
+- Firestaff verifies these corridors against the real `SDDRVS.TSK` identity,
+  but keeps event→MAP selection, SAL codec semantics and playback blocked
+  until an original Saturn event/driver handoff is captured.
 
 ## Audio Engine (Firestaff Implementation)
 
@@ -115,7 +122,7 @@ remains gated and no substitute WAV/OGG/MP3 is fabricated.
 | Music tracks | CD-DA (Red Book) | CD tracks 2-9 | Disc-layout receipt only; level selection and playback blocked |
 | SFX banks | SAL DataID 0 directory + bounded tone metadata | ISO Track 1 (SNDLEV*.SAL) | Real files loaded/provenance-bound; playback blocked |
 | SFX mapping | MAP format (66-90 B) | ISO Track 1 (SNDLEV*.MAP) | Bounded record parsing; event semantics unproven |
-| Sound driver | SH-2 binary | SDDRVS.TSK | Not reverse-engineered |
+| Sound driver | 68000 sound-CPU binary | SDDRVS.TSK | Entry/dispatch/PCM corridors receipt-bound; event ABI and playback remain blocked |
 | FMV audio | Saturn AVI codec | DMV*.AVI | Not implemented |
 
 ## Related Files

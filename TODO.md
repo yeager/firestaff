@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-SDDRVS-68K-EVENT-HANDOFF:** The authenticated `SDDRVS.TSK` is now
+  byte-bound as a 26,610-byte 68000 sound-CPU image. Its entry, command-nibble
+  dispatch and PCM voice-register corridors are receipt-verified, replacing
+  the old incorrect SH-2 description. The actual game event→MAP selector,
+  SAL codec contract and native driver handoff still require an original
+  Saturn execution trace; keep host playback blocked until those observations
+  are joined.
+
 - **NEXUS-STARTUP-SH2-VDP2-CAPTURE:** The authenticated European `DM.BIN`
   startup/menu routine is now checked as an SH-2 function with exact
   PC-relative references to the retail `MENU.BPK`/`STABG.BIN` literals and a

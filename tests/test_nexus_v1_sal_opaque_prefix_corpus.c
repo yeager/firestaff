@@ -82,6 +82,37 @@ int main(void) {
         ++checked;
     }
 
+    {
+        char path[2048];
+        uint8_t *data;
+        uint32_t size;
+        Nexus_V1_SddrvsDisassemblyReceipt driver;
+
+        snprintf(path, sizeof(path), "%s/SDDRVS.TSK", data_dir);
+        data = read_file(path, &size);
+        if (!data || !nexus_v1_audio_sddrvs_disassembly_receipt(
+                         data, size, &driver) ||
+            driver.source_size != 26610U ||
+            driver.code_entry_offset != 0x1000U ||
+            driver.sound_cpu_ram_base != 0x00100000U ||
+            driver.work_ram_base != 0x00007000U ||
+            driver.stack_base != 0x0000a000U ||
+            driver.command_dispatch_offset != 0x1c08U ||
+            driver.command_jump_table_offset != 0x1c2aU ||
+            driver.command_jump_table_count != 16U ||
+            driver.pcm_voice_handler_offset != 0x1f0eU ||
+            !driver.m68k_instruction_stream_proven ||
+            !driver.command_dispatch_proven ||
+            !driver.pcm_voice_register_route_proven ||
+            driver.event_dispatch_proven || driver.playback_permitted) {
+            puts("FAIL: SDDRVS.TSK 68k disassembly receipt was not admitted");
+            free(data);
+            return 1;
+        }
+        free(data);
+        puts("SDDRVS.TSK disassembly: 68k entry/dispatch/PCM corridors bound; playback blocked");
+    }
+
     printf("SAL opaque-prefix corpus: banks=%d prefix_bytes=33 decode=blocked\n",
            checked);
     return checked == NEXUS_V1_AUDIO_LEVEL_COUNT ? 0 : 1;

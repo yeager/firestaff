@@ -55,6 +55,28 @@ typedef struct {
     int last_audio_track;
 } Nexus_V1_CddaLayoutReceipt;
 
+/* Byte-bound structure receipt for the retail SDDRVS.TSK sound-CPU image.
+ * This is deliberately not a playback ABI: the source image's command
+ * dispatch and PCM voice corridors are identified, while event ownership,
+ * SAL codec semantics and host playback remain closed. */
+typedef struct {
+    int valid;
+    uint32_t source_size;
+    uint32_t code_entry_offset;
+    uint32_t sound_cpu_ram_base;
+    uint32_t work_ram_base;
+    uint32_t stack_base;
+    uint32_t command_dispatch_offset;
+    uint32_t command_jump_table_offset;
+    uint32_t command_jump_table_count;
+    uint32_t pcm_voice_handler_offset;
+    int m68k_instruction_stream_proven;
+    int command_dispatch_proven;
+    int pcm_voice_register_route_proven;
+    int event_dispatch_proven;
+    int playback_permitted;
+} Nexus_V1_SddrvsDisassemblyReceipt;
+
 /* Receipt for the only common on-disk SAL prefix observed in all sixteen
  * retail banks. It deliberately does not identify a file format, payload
  * boundary, codec, sample table, or playback ABI. */
@@ -89,6 +111,14 @@ int nexus_v1_audio_sal_opaque_prefix_receipt(
     const uint8_t *data,
     uint32_t size,
     Nexus_V1_SalOpaquePrefixReceipt *out);
+
+/* Verify the authenticated retail SDDRVS.TSK's 68k loader/dispatch
+ * corridors. The function accepts bytes only; callers must separately bind
+ * the returned source to the canonical SDDRVS.TSK identity. */
+int nexus_v1_audio_sddrvs_disassembly_receipt(
+    const uint8_t *data,
+    uint32_t size,
+    Nexus_V1_SddrvsDisassemblyReceipt *out);
 
 int nexus_v1_audio_cd_track_for_level_receipt(int level_index);
 
