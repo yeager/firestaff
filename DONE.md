@@ -52219,6 +52219,13 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   `firestaff_dm2_v2` and the linked `firestaff` binary export none of their
   draw or bitmap-loader symbols. DM2 V2.2 therefore cannot display generated
   placeholder art and falls back only to the source-preserving V1/V2.1 route.
+
+# 2026-08-06 DM2 startup GDAT execution gate
+
+- ✅ Startup command execution now fails immediately when the renderer rejects
+  an original TITLE/GDAT surface. The regression proves no subsequent startup
+  image is acknowledged after that failure, preserving the no-placeholder
+  title/menu boundary.
 # 2026-08-06 Nexus HUD DM.BIN disassembly anchor
 
 - ✅ The real-data HUD regression now verifies the `yam\\menuctrl.c` owner

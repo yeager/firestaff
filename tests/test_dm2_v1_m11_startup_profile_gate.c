@@ -95,6 +95,18 @@ static int dm2_startup_probe_gdat(
     return 1;
 }
 
+static int dm2_startup_probe_gdat_reject(
+    void *userdata,
+    const DM2_V1_StartupDrawCommand *command)
+{
+    DM2StartupDrawProbe *probe = (DM2StartupDrawProbe*)userdata;
+    if (probe && command &&
+        command->kind == DM2_V1_STARTUP_DRAW_GDAT_IMAGE) {
+        ++probe->gdat_count;
+    }
+    return 0;
+}
+
 static void dm2_startup_probe_fill(
     void *userdata,
     const DM2_V1_StartupDrawCommand *command)
@@ -837,6 +849,16 @@ static void expect_dm2_startup_layout_contract(void) {
                     draw_probe.outline_count == 0 &&
                     draw_probe.text_count == 0,
                 "DM2 startup presentation owns draw-command executor dispatch");
+    memset(&draw_probe, 0, sizeof(draw_probe));
+    executor.userdata = &draw_probe;
+    executor.draw_gdat_image = dm2_startup_probe_gdat_reject;
+    expect_true(!dm2_v1_startup_execute_draw_commands(
+                    commands,
+                    command_count,
+                    &executor) &&
+                    draw_probe.gdat_count == 1,
+                "DM2 startup executor fails closed when original GDAT draw rejects");
+    executor.draw_gdat_image = dm2_startup_probe_gdat;
     expect_true(dm2_v1_startup_menu_row_at(&menu, 0, &row_kind, &slot) &&
                     row_kind == DM2_V1_STARTUP_ROW_CONTINUE &&
                     slot == -1,

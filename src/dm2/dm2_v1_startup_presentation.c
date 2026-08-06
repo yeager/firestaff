@@ -418,7 +418,12 @@ int dm2_v1_startup_execute_draw_commands(
         const DM2_V1_StartupDrawCommand *command = &commands[i];
         switch (command->kind) {
         case DM2_V1_STARTUP_DRAW_GDAT_IMAGE:
-            (void)executor->draw_gdat_image(executor->userdata, command);
+            /* A startup surface is source-owned.  Never acknowledge the
+             * presentation transaction when its original GDAT image was not
+             * accepted by the active renderer. */
+            if (!executor->draw_gdat_image(executor->userdata, command)) {
+                return 0;
+            }
             break;
         case DM2_V1_STARTUP_DRAW_FILL_RECT:
             executor->fill_rect(executor->userdata, command);
