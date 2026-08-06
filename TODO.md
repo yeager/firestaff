@@ -756,6 +756,12 @@
   adapter. The separate light-overflow receipt/runtime remains diagnostic
   until its Saturn F0238/F0257 consumer is captured.
 
+  2026-08-06 follow-up: M11 no longer initializes, restores or ticks the
+  data-free light-overflow host timeline while
+  `nexus_v1_action_semantics_proven()` is closed. The standalone
+  `nexus_v1_light_runtime`/`light_overflow` implementation remains probe-only
+  evidence until Saturn F0238/F0257 execution and save ownership are captured.
+
 - **NEXUS-RETAIL-TICK-STATE-GATE:** Retail ISO/extracted ticks now leave the
   unbound action cooldown, door animation, trap cooldown and DM1-derived
   step-stamina state unchanged. Movement over decoded floor geometry remains

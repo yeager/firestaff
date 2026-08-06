@@ -14546,6 +14546,12 @@ m11_handle_dm1_spell_area_pointer(M11_GameViewState* state, int x, int y)
 
 static int m11_nexus_light_runtime_ensure(M11_GameViewState* state) {
     if (!state) return 0;
+    /* The light-overflow model is a data-free DM1 study. Do not even create
+     * its host timeline until the Saturn action/event consumer is captured. */
+    if (!nexus_v1_action_semantics_proven()) {
+        state->nexusLightRuntimeReady = 0;
+        return 0;
+    }
     if (!state->nexusLightRuntime.initialized) {
         nexus_v1_light_runtime_init(&state->nexusLightRuntime,
                                     state->nexusLightRuntime.guard_rejects);
@@ -18076,8 +18082,15 @@ static int m11_nexus_apply_launcher_runtime_receipt(
              sizeof(state->dungeonPath),
              "%s",
              receipt->dungeon_path);
-    nexus_v1_light_runtime_init(&state->nexusLightRuntime, /*guard_rejects=*/0);
-    state->nexusLightRuntimeReady = 1;
+    if (nexus_v1_action_semantics_proven()) {
+        nexus_v1_light_runtime_init(&state->nexusLightRuntime,
+                                    /*guard_rejects=*/0);
+        state->nexusLightRuntimeReady = 1;
+    } else {
+        memset(&state->nexusLightRuntime, 0,
+               sizeof(state->nexusLightRuntime));
+        state->nexusLightRuntimeReady = 0;
+    }
     state->nexusState.level_loaded = receipt->level_loaded;
     state->nexusState.party_x = receipt->party_x;
     state->nexusState.party_y = receipt->party_y;
@@ -22815,7 +22828,9 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             state->nexusEngine->game.party_dir =
                 state->nexusEngine->mechanics->party_dir;
         }
-        (void)nexus_v1_light_runtime_tick(&state->nexusLightRuntime, 1);
+        if (nexus_v1_action_semantics_proven()) {
+            (void)nexus_v1_light_runtime_tick(&state->nexusLightRuntime, 1);
+        }
         nexus_v2_lighting_runtime_tick(1.0f / 60.0f);
         nexus_v2_smooth_movement_runtime_tick(1.0f / 60.0f);
         /* Sync nexusState mirror so external callers (render loop,

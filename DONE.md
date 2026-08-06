@@ -219,6 +219,15 @@
   activation and ticking cannot mutate state before the Saturn light command,
   timer writeback and HUD/VDP consumers are captured.
 
+# Nexus light-overflow M11 boundary (2026-08-06)
+
+- ✅ Closed the remaining M11 init, launcher-handoff and tick calls into the
+  data-free light-overflow host timeline while the Saturn action gate is
+  closed. A retail Nexus session now keeps that runtime absent rather than
+  advancing inferred F0238/F0257 state.
+- ✅ Kept the standalone overflow/save model available only to explicit
+  diagnostic probes; no Saturn execution or save ownership is implied.
+
 # Nexus experience production boundary (2026-08-06)
 
 - ✅ Removed the DM.BIN-shaped XP award, level-up and class-table implementation
