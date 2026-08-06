@@ -15,6 +15,17 @@
   CUE replay produced zero rows, so no dynamic consumer, level record or
   object meaning is promoted.
 
+# Nexus MENU.BPK revision gate (2026-08-06)
+
+- ✅ The PRS3 loader-media probe no longer hardcodes the Japanese 89,060-byte
+  `MENU.BPK` revision. It now admits the documented Japanese, English
+  (`a6f2272a4f6cb3c6b3b33012bc5b15ed`, 87,684 bytes) and French
+  (`fcf8a00fbb92593ed9ae908f8e285cda`, 87,820 bytes) retail identities.
+- ✅ With `/Users/bosse/.firestaff/data/nexus`, the full 163-test Nexus matrix
+  passes; capture-dependent tests remain explicitly skipped. This changes
+  verification coverage only: PRS3 decoding, CLUT/VDP1 ownership and
+  presentation remain capture-gated.
+
 # Theron authentic VDC/VCE screen-space capture (2026-08-06)
 
 - ✅ A clean SIGINT shutdown of the instrumented Mednafen replay now emits

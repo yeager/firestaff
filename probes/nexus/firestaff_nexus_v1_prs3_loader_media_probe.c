@@ -1,8 +1,9 @@
 /*
  * Original Saturn PRS3 loader-media evidence probe.
  *
- * This is deliberately not a decoder. It hash-gates the verified Japanese
- * Track 1 DM.BIN + MENU.BPK pair, inventories executable-side PRS3 markers,
+ * This is deliberately not a decoder. It hash-gates the verified European
+ * Track 1 DM.BIN + MENU.BPK pair (Japanese/English/French MENU.BPK revisions
+ * are admitted), inventories executable-side PRS3 markers,
  * and compares their bounded headers with the menu archive. The original
  * executable currently proves that PRS3 is known to the game binary, but no
  * SH-2 control-flow reconstruction has connected either marker to an opcode
@@ -23,9 +24,13 @@
 #include <string.h>
 
 #define NEXUS_PRS3_LOADER_DM_MD5 "e88d60859f65f08fa622e1992b02280f"
-#define NEXUS_PRS3_LOADER_MENU_MD5 "c2776768ff25287c79013a1452253ca0"
+#define NEXUS_PRS3_LOADER_MENU_MD5_JAPANESE "c2776768ff25287c79013a1452253ca0"
+#define NEXUS_PRS3_LOADER_MENU_MD5_ENGLISH "a6f2272a4f6cb3c6b3b33012bc5b15ed"
+#define NEXUS_PRS3_LOADER_MENU_MD5_FRENCH "fcf8a00fbb92593ed9ae908f8e285cda"
 #define NEXUS_PRS3_LOADER_DM_SIZE 555144U
-#define NEXUS_PRS3_LOADER_MENU_SIZE 89060U
+#define NEXUS_PRS3_LOADER_MENU_SIZE_JAPANESE 89060U
+#define NEXUS_PRS3_LOADER_MENU_SIZE_ENGLISH 87684U
+#define NEXUS_PRS3_LOADER_MENU_SIZE_FRENCH 87820U
 
 /* These are byte locations in the MD5-verified Japanese DM.BIN only. */
 #define NEXUS_PRS3_LOADER_CODE_MARKER_OFFSET 85356U
@@ -81,6 +86,16 @@ static int menu_has_header(const uint8_t *menu, size_t menu_size,
     return 0;
 }
 
+static int menu_revision_is_admitted(const char *md5, size_t size)
+{
+    return (size == NEXUS_PRS3_LOADER_MENU_SIZE_JAPANESE &&
+            strcmp(md5, NEXUS_PRS3_LOADER_MENU_MD5_JAPANESE) == 0) ||
+        (size == NEXUS_PRS3_LOADER_MENU_SIZE_ENGLISH &&
+            strcmp(md5, NEXUS_PRS3_LOADER_MENU_MD5_ENGLISH) == 0) ||
+        (size == NEXUS_PRS3_LOADER_MENU_SIZE_FRENCH &&
+            strcmp(md5, NEXUS_PRS3_LOADER_MENU_MD5_FRENCH) == 0);
+}
+
 int main(int argc, char **argv) {
     const char *data_dir = argc > 1 ? argv[1] : NULL;
     char default_dir[1024], dm_path[1200], menu_path[1200];
@@ -110,15 +125,13 @@ int main(int argc, char **argv) {
     }
 
     check(dm_size == NEXUS_PRS3_LOADER_DM_SIZE,
-          "DM.BIN has the locked Japanese Track 1 size");
-    check(menu_size == NEXUS_PRS3_LOADER_MENU_SIZE,
-          "MENU.BPK has the locked Japanese Track 1 size");
+          "DM.BIN has the locked European Track 1 size");
     check(firestaff_x68k_media_receipt_md5_hex(dm, dm_size, dm_md5, sizeof(dm_md5)) == 0 &&
               strcmp(dm_md5, NEXUS_PRS3_LOADER_DM_MD5) == 0,
           "DM.BIN matches its locked MD5");
     check(firestaff_x68k_media_receipt_md5_hex(menu, menu_size, menu_md5, sizeof(menu_md5)) == 0 &&
-              strcmp(menu_md5, NEXUS_PRS3_LOADER_MENU_MD5) == 0,
-          "MENU.BPK matches its locked MD5");
+              menu_revision_is_admitted(menu_md5, menu_size),
+          "MENU.BPK matches a locked Japanese/English/French MD5 and size");
     if (g_failures == 0) {
         check(count_magic(dm, dm_size, "PRS3") == 2U,
               "DM.BIN contains exactly two PRS3 markers");
