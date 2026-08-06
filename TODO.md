@@ -2063,6 +2063,10 @@
   saved-dungeon metadata for a BE/EF/DE/AD magic number. The mounted eight
   original PC saves pass raw-prefix validation; full SUPPRESS world-state
   import remains blocked until the complete source graph is decoded.
+  **2026-08-06 creature-state follow-up:** the generic live-creature-pool
+  restore API now rejects in production. Its shape validator could not prove
+  the original SKSAVE/DB4/timer/CAII transaction and therefore could not
+  admit a caller-authored creature pool as a saved game.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

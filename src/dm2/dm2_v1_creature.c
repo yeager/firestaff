@@ -790,6 +790,16 @@ int dm2_v1_creature_live_state_valid(const DM2_V1_CreatureLiveState *state) {
 }
 
 int dm2_v1_creature_restore_live_state(const DM2_V1_CreatureLiveState *state) {
+#ifndef FIRESTAFF_DM2_CREATURE_TESTING
+    (void)state;
+    /* SKProject's DM2_GAME_LOAD restores creatures through the live DB4
+     * record chain, timer queue and CAII/CCM context.  This standalone
+     * structure has no original on-disk owner and previously let an arbitrary
+     * caller replace the production creature pool after only shape checks.
+     * Keep that fixture persistence route closed until the full SKSAVE/DB4
+     * transaction is imported. */
+    return -1;
+#else
     if (dm2_v1_creature_live_state_valid(state) != 0) {
         return -1;
     }
@@ -798,6 +808,7 @@ int dm2_v1_creature_restore_live_state(const DM2_V1_CreatureLiveState *state) {
     g_tick_counter = state->tick_counter;
     dm2_v1_creature_reset_ccm_tick_observer();
     return 0;
+#endif
 }
 
 /* ── Test-only API ────────────────────────────────────────────────

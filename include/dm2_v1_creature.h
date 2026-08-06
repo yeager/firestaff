@@ -414,9 +414,12 @@ int dm2_v1_creature_set_gdat_animation_state(int instance_id,
                                               uint16_t info);
 
 int dm2_v1_creature_export_live_state(DM2_V1_CreatureLiveState *out_state);
-/* Validates a serialized live creature pool without changing global runtime
- * state. Save restore uses this before committing any session or dungeon. */
+/* Validates a serialized creature-fixture pool without changing global state.
+ * Production cannot commit it: original DM2_GAME_LOAD requires the joined
+ * SKSAVE, DB4, timer and CAII/CCM ownership chain. */
 int dm2_v1_creature_live_state_valid(const DM2_V1_CreatureLiveState *state);
+/* Fixture-only restore.  Production returns -1 rather than accepting a
+ * caller-authored creature pool. */
 int dm2_v1_creature_restore_live_state(const DM2_V1_CreatureLiveState *state);
 
 /* ── Test-only API (compiled in only when FIRESTAFF_DM2_CREATURE_TESTING=1) ──
