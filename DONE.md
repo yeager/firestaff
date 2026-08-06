@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus Saturn capture-media inventory: verified the real corpus
+  archive contains a complete merged English cue/ISO with Track 1 and eight
+  audio tracks. Mednafen 1.32.1 opens the cue, identifies `T-9111G` /
+  `DUNGEON MASTER NEXUS`, and reaches the Saturn module. The remaining capture
+  blocker is the missing Saturn BIOS (`sega_101.bin`); no BIOS, screenshots or
+  game data were added to the repository, and FACE/MENU/STABG/HUD/viewport
+  rendering remains capture-gated.
+
 - ✅ 2026-08-06 Nexus real RLOWFIX/CRET handoff: corrected the real-data
   champion test to use the verified European RLOWFIX layout (TEXT#4 at
   `0xF270`, TABL at `0x1232C`, 450 strings) and the configured

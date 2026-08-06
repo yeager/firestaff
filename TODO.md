@@ -64,6 +64,11 @@
   Mednafen capture. Keep FACE/MENU/STABG/viewport presentation blocked until
   the capture binds bytes, palette, command order, and runtime state together;
   do not replace the missing BIOS/capture artifact with synthetic data.
+  2026-08-06: the real Nexus corpus also contains the complete merged English
+  cue/ISO with Track 1 plus eight audio tracks. Mednafen identifies it as
+  `T-9111G`/`DUNGEON MASTER NEXUS` and reaches the Saturn module; capture is
+  now blocked specifically by the missing European/Japan Saturn BIOS and not
+  by missing disc media.
   2026-08-05: bounded DMWeb PRS3 byte decoding is verified against all 20
   real FACE.BIN frames; this only advances diagnostics. Startup FACE, MENU,
   STABG, HUD, and viewport presentation remain blocked pending Saturn capture.
