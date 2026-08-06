@@ -57,6 +57,10 @@ int main(int argc, char **argv)
           "keeps SWITCHDA.C stream boundaries");
     CHECK(receipt.japanese_page_offset < receipt.english_page_offset,
           "preserves executable resource ordering");
+    CHECK(receipt.palette_offset < receipt.japanese_page_offset &&
+          receipt.palette_byte_count == 68u && receipt.palette[8].red6 == 0x3fu &&
+          receipt.palette[8].green6 == 0x3fu && receipt.palette[8].blue6 == 0u,
+          "binds C26_SWITCH from the original executable");
     for (index = 0u; index < CSB_FMTOWNS_SWITCH_BUTTON_COUNT; ++index) {
         CHECK(receipt.buttons[index].image.valid &&
               receipt.buttons[index].width != 0u && receipt.buttons[index].height != 0u,

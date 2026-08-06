@@ -28,6 +28,12 @@ typedef enum {
 } CSB_V1_FmtownsSwitchLanguage;
 
 typedef struct {
+    uint8_t red6;
+    uint8_t green6;
+    uint8_t blue6;
+} CSB_V1_FmtownsSwitchColor;
+
+typedef struct {
     uint16_t x;
     uint16_t y;
     uint16_t width;
@@ -40,6 +46,9 @@ typedef struct {
 typedef struct {
     int valid;
     uint32_t executable_fnv1a;
+    size_t palette_offset;
+    size_t palette_byte_count;
+    CSB_V1_FmtownsSwitchColor palette[16];
     size_t japanese_page_offset;
     size_t japanese_page_byte_count;
     size_t english_page_offset;

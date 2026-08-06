@@ -20,6 +20,21 @@ static const uint16_t k_switch_button_y[CSB_FMTOWNS_SWITCH_BUTTON_COUNT] = {
     15u, 59u, 105u, 150u
 };
 
+/* ReDMCSB SWITCHDA.C G8172_, selected as C26_SWITCH by SWITCH.C F0694.
+ * These bytes are solely an identity signature: published colours always
+ * come from the original executable after this exact sequence is found. */
+static const uint8_t k_switch_c26_signature[17u * 4u] = {
+    0x00u, 0x00u, 0x00u, 0x00u, 0x01u, 0x00u, 0x00u, 0x14u,
+    0x02u, 0x00u, 0x00u, 0x1cu, 0x03u, 0x00u, 0x00u, 0x24u,
+    0x04u, 0x00u, 0x00u, 0x34u, 0x05u, 0x00u, 0x18u, 0x2cu,
+    0x06u, 0x00u, 0x24u, 0x28u, 0x07u, 0x1cu, 0x14u, 0x0cu,
+    0x08u, 0x3fu, 0x3fu, 0x00u, 0x09u, 0x14u, 0x14u, 0x14u,
+    0x0au, 0x20u, 0x20u, 0x20u, 0x0bu, 0x28u, 0x28u, 0x28u,
+    0x0cu, 0x28u, 0x1cu, 0x14u, 0x0du, 0x3fu, 0x00u, 0x00u,
+    0x0eu, 0x28u, 0x08u, 0x08u, 0x0fu, 0x3fu, 0x30u, 0x28u,
+    0xffu, 0x00u, 0x00u, 0x00u
+};
+
 static uint16_t read_le16(const uint8_t *bytes)
 {
     return (uint16_t)(bytes[0] | ((uint16_t)bytes[1] << 8u));
@@ -34,6 +49,24 @@ static uint32_t fnv1a32(const uint8_t *bytes, size_t byte_count)
         hash *= 16777619u;
     }
     return hash;
+}
+
+static int find_c26_palette(const uint8_t *bytes, size_t byte_count,
+                            size_t before_offset, size_t *out_offset)
+{
+    size_t offset;
+    if (!bytes || !out_offset || before_offset > byte_count ||
+        before_offset < sizeof(k_switch_c26_signature))
+        return 0;
+    for (offset = before_offset - sizeof(k_switch_c26_signature); ; --offset) {
+        if (memcmp(bytes + offset, k_switch_c26_signature,
+                   sizeof(k_switch_c26_signature)) == 0) {
+            *out_offset = offset;
+            return 1;
+        }
+        if (offset == 0u) break;
+    }
+    return 0;
 }
 
 static int aligned_after(const uint8_t *bytes, size_t byte_count,
@@ -122,6 +155,18 @@ int csb_v1_fmtowns_switch_parse(const uint8_t *executable,
 
         out->valid = 1;
         out->executable_fnv1a = fnv1a32(executable, executable_size);
+        if (!find_c26_palette(executable, executable_size, candidate,
+                              &out->palette_offset)) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        out->palette_byte_count = sizeof(k_switch_c26_signature);
+        for (index = 0u; index < 16u; ++index) {
+            size_t palette_entry = out->palette_offset + index * 4u;
+            out->palette[index].red6 = executable[palette_entry + 1u];
+            out->palette[index].green6 = executable[palette_entry + 2u];
+            out->palette[index].blue6 = executable[palette_entry + 3u];
+        }
         out->japanese_page_offset = offsets[5];
         out->japanese_page_byte_count = k_switch_resource_bytes[5];
         out->english_page_offset = offsets[6];
