@@ -1877,10 +1877,12 @@ level or consumer bindings.
   Host object, inventory and item-kind publication remains deliberately
   unbound until the original ownership consumer is proven.
 
-- **THERON-FORCEFIELD-MENU:** Closed 2026-08-06. `ENTER FORCEFIELD` is now
-  enabled for both the Soul Room and READY phases, including a party with
-  Theron alone. Missing dungeon capture remains an explicit admission status;
-  it no longer makes the menu control inert.
+- **THERON-FORCEFIELD-MENU:** *(Open — capture-gated dungeon handoff)*
+  `ENTER FORCEFIELD` is enabled for both the Soul Room and READY phases,
+  including a party with Theron alone, and keyboard/pointer input reaches the
+  admission route. Missing original Track 02 dungeon/VDC/VCE capture still
+  prevents dungeon promotion; the menu reports that boundary instead of
+  silently treating Enter as a no-op.
 
 - **THERON-SHOP-REAL-DATA:** *(Closed v3.0.242)* No shop/vendor mechanic
   exists in Theron's Quest. Full Track 02 scan found zero BUY/SELL/SHOP

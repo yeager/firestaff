@@ -582,12 +582,13 @@ were corrected to stop presenting DM1 provisions as Nexus data.
   The real-US M12/M11 launcher boundary remains green at 52 passed, 0 failed,
   1 skipped.
 
-- ✅ 2026-08-06 Theron forcefield Enter transition: fixed the production
+- ✅ 2026-08-06 Theron forcefield Enter admission: fixed the production
   no-roster startup API, which previously entered the forcefield base state
   and immediately reset to Soul Room/`NOT_READY`. It now preserves the
-  source-owned Theron-only transition without inventing companions; the later
-  level/VDC/VCE capture gate remains fail-closed. The M12/M11 boundary now
-  passes 52 checks against the real US Track 02 path.
+  source-owned Theron-only admission without inventing companions, and the
+  M12/M11 boundary proves keyboard/pointer input reaches the explicit
+  level/VDC/VCE capture gate. Dungeon promotion remains fail-closed until the
+  original consumer capture exists.
 
 - ✅ 2026-08-06 DM2 unowned-shop state removal: the production shop API no
   longer retains caller-provided gold, negotiation skill or inventory when no
