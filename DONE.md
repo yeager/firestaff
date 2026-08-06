@@ -24,6 +24,12 @@
   selection, roster changes and the champion START footer now require the
   route-specific capture and exact input-matrix receipt; compatibility
   geometry remains available only to isolated tests.
+
+- ✅ 2026-08-06 Nexus scene-owner fallback removal: removed the production
+  heuristic that selected the first bounded Structure3 model when no active
+  Structure1F face owner existed. Real LEV00 adjacent-cell facts still parse,
+  while geometry, material and M11 promotion remain blocked until the
+  source-owned Structure1F → Structure1A → Structure3 chain is bound.
   Added `docs/NEXUS_RUNTIME_CAPTURE.md` to document the artifact boundary and
   the difference between ordinary video evidence and VDP/runtime provenance.
 

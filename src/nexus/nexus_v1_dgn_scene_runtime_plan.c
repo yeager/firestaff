@@ -110,39 +110,14 @@ int nexus_v1_dgn_scene_runtime_plan_build(
         }
     }
     if (!selected) {
-        int entry_index;
-        int found_mesh_entry = 0;
-        if (!input->level->structure3_directory.valid ||
-            input->level->structure3_directory.entry_count <= 0) {
-            out_receipt->status =
-                NEXUS_V1_DGN_SCENE_RUNTIME_PLAN_BLOCKED_STRUCTURE1F;
-            return 0;
-        }
-        for (entry_index = 0;
-             entry_index < input->level->structure3_directory.entry_count;
-             ++entry_index) {
-            Nexus_V1_DgnStructure3MeshEntryReceipt probe;
-            memset(&probe, 0, sizeof(probe));
-            (void)nexus_v1_level_extract_structure3_mesh_entry(
-                input->level, input->dgn_data, input->dgn_size,
-                entry_index, NULL, 0, NULL, 0, NULL, 0, &probe);
-            if (probe.source_identity_valid && probe.vertex_count > 0 &&
-                probe.face_count > 0) {
-                out_receipt->selected_structure3_model_index = entry_index;
-                out_receipt->selected_face_ordinal = 0;
-                found_mesh_entry = 1;
-                break;
-            }
-        }
-        if (!found_mesh_entry) {
-            out_receipt->status =
-                NEXUS_V1_DGN_SCENE_RUNTIME_PLAN_BLOCKED_MESH_ENTRY;
-            return 0;
-        }
-        out_receipt->selected_z_rotation = 0;
-        out_receipt->structure1f_face_selector_bound = 0;
-        out_receipt->structure1a_model_rotation_bound = 0;
-        out_receipt->face_ordinal_within_model_bound = 1;
+        /* A free-standing Structure3 model is not an active dungeon face.
+         * The former first-entry selection promoted an arbitrary mesh when
+         * the Structure1F -> Structure1A owner chain was absent. Keep the
+         * real adjacent-cell receipt, but require that source-owned chain
+         * before constructing any scene geometry. */
+        out_receipt->status =
+            NEXUS_V1_DGN_SCENE_RUNTIME_PLAN_BLOCKED_STRUCTURE1F;
+        return 0;
     } else {
         out_receipt->structure1f_visible_owned_entry_count = 1;
         out_receipt->structure1f_owned_source_count = 1;
