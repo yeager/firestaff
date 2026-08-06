@@ -400,40 +400,6 @@ int dm2_v1_combat_resolve_attack_on_creature(
     receipt.rejected_incomplete_source_contract = 1u;
     if (out_receipt) *out_receipt = receipt;
     return 0;
-
-#if 0 /* Kept as an implementation inventory until the complete source
-        * contract above can supply every input and consume every writeback. */
-    if (!dm2_v1_combat_validate_weapon(weapon)) {
-        receipt.rejected_invalid_weapon = 1u;
-        receipt.valid = 1u;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
-    }
-    if (!g_dm2_combat_defense_fn) {
-        receipt.rejected_no_defense_provider = 1u;
-        receipt.valid = 1u;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
-    }
-    if (!g_dm2_combat_defense_fn(creature_type, &defense)) {
-        /* The session did not prove this creature's defense (e.g. the GDAT
-         * CREATURE_AI row is absent); fail closed rather than inventing a
-         * defense value. */
-        receipt.rejected_defense_unproven = 1u;
-        receipt.valid = 1u;
-        if (out_receipt) *out_receipt = receipt;
-        return 0;
-    }
-
-    receipt.defense = (int)defense;
-    receipt.damage = dm2_v1_combat_resolve_attack_full(
-        weapon, attacker_strength, (int)defense, distance,
-        is_outdoor, companion_count);
-    receipt.kills = dm2_v1_combat_kills_creature(creature_hp, receipt.damage);
-    receipt.valid = 1u;
-    if (out_receipt) *out_receipt = receipt;
-    return 1;
-#endif
 }
 
 const char *dm2_v1_combat_source_evidence(void) {

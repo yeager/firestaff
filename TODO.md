@@ -29131,6 +29131,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   live champion hand and CMDSTR action, target record, difficulty/light,
   item words, source RNG, and skill/stamina/poison writeback. The old host
   formula must not publish real damage, kills or combat feedback.
+  **2026-08-06 cleanup:** removed the disabled partial-defense bridge; the
+  production boundary rejects restoring its computed creature damage.
 - [ ] DM2 FM Towns English text consumption: a selected FM Towns Japanese CD
   can now carry an explicit, hash-verified PC-English GDAT text companion in
   RAM. The companion now admits both a direct user file and a selected

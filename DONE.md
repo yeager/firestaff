@@ -466,6 +466,13 @@
   and SHOOT_ITEM-timer helpers. Source-owned DB14/DB-item transaction remains
   required before a shooter can execute.
 
+# DM2 partial-defense combat bridge removal (2026-08-06)
+
+- ✅ Removed the disabled creature-combat path that converted only an AI-defense
+  row and host inputs into damage and a kill decision.
+- ✅ Source-owned CMDSTR action, champion/target records, RNG and writeback are
+  still required before a player attack can execute.
+
 # DM1 D2C F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only/no-game-data D2C F0111 trace from M10. It has

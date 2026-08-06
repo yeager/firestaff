@@ -224,6 +224,14 @@ def verify(repo: Path) -> list[str]:
             errors.append(
                 f"actuator retains reduced-state shooter mutation study: {forbidden}")
 
+    combat_path = repo / "src/dm2/dm2_v1_combat.c"
+    if not combat_path.exists():
+        errors.append(f"missing {combat_path}")
+        return errors
+    combat = combat_path.read_text(encoding="utf-8")
+    if "receipt.damage = dm2_v1_combat_resolve_attack_full(" in combat:
+        errors.append("combat retains the incomplete creature-damage bridge")
+
     hud_path = repo / "src/dm2/dm2_v1_gdat_hud_m11_command.c"
     if not hud_path.exists():
         errors.append(f"missing {hud_path}")
