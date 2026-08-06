@@ -4693,6 +4693,7 @@ set(M11_SOURCES
     src/shared/firestaff_amiga_adf.c
     src/csb/csb_v1_fmtowns_portrait.c
     src/csb/csb_v1_fmtowns_anm.c
+    src/csb/csb_v1_fmtowns_switch.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/csb_v1_startup_sequence_pc34_compat.c
@@ -49945,6 +49946,20 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_anm.c")
     endif()
     add_test(NAME csb_v1_fmtowns_anm COMMAND test_csb_v1_fmtowns_anm)
     set_tests_properties(csb_v1_fmtowns_anm PROPERTIES LABELS "csb;fmtowns")
+endif()
+
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_switch.c")
+    add_executable(test_csb_v1_fmtowns_switch
+        tests/test_csb_v1_fmtowns_switch.c
+        src/csb/csb_v1_fmtowns_switch.c
+        src/csb/csb_v1_fmtowns_graphics_dat.c)
+    target_include_directories(test_csb_v1_fmtowns_switch PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_fmtowns_switch PRIVATE -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+    endif()
+    add_test(NAME csb_v1_fmtowns_switch COMMAND test_csb_v1_fmtowns_switch)
+    set_tests_properties(csb_v1_fmtowns_switch PROPERTIES
+        SKIP_RETURN_CODE 77 LABELS "csb;fmtowns;real_data")
 endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_game_data_fingerprint.c")

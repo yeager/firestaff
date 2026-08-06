@@ -4,6 +4,14 @@
   detached C table. Real-data coverage verifies every row and engine startup
   exposes the bound catalog; legacy unbound manager tests retain their
   compatibility lookup. No item action/combat semantics were inferred.
+- ✅ 2026-08-06 CSB FM Towns Switch executable inventory: the real
+  `SWITCHTW.EXP` resource chain now supplies both original 320x200 Switch
+  pages plus all four registered button images, with their actual IMG2 stream
+  boundaries and ReDMCSB `SWITCH.C` F2279/F2280 coordinates retained. The
+  parser rejects unrelated 320x200 executable payloads unless the complete
+  F31E/F31J sequence decodes. Verification: 11 assertions against the local
+  original executable. M11 presentation, source palette, input and child
+  process handoff remain explicitly open.
 
 - ✅ 2026-08-06 Nexus Saturn BGR555 channel-order correction: the real
   `SMAP00-15.BIN`, `FACE.BIN`, `ITEM.IBS` and `.MNS` palette decoders now map

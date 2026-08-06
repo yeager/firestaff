@@ -22,6 +22,11 @@
   auto-chain the title into Story. The distinct FM Towns switch-menu/story
   owner, ending handoff, input, audio/CDDA playback and save handoff still
   need original-media capture.
+  2026-08-06: `SWITCHTW.EXP` is now admitted as the source of the Japanese
+  and English 320x200 Switch pages and its four exact button streams. The
+  extractor requires the complete F2279 resource sequence and IMG2 decode;
+  it does not turn a matching 320x200 header into a menu. Bind its original
+  palette, click routing and process-exit handoff before displaying it in M11.
   The raw CDDA extractor now streams a
   selected CUE track sectorwise; binding that authenticated PCM to M11 timing
   remains separate.
