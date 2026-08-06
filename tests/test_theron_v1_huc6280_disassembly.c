@@ -38,6 +38,16 @@ static void verify(const char *env_name, const char *name, int variant,
     assert(receipt.stage2_resource_handler_verified);
     assert(receipt.stage2_resource_bank_table_population_verified);
     assert(receipt.stage2_resource_destination_registers_verified);
+    if (variant == THERON_TRACK02_VARIANT_US_BIN ||
+        variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        assert(receipt.vce_palette_consumer_verified);
+        assert(receipt.vce_palette_consumer_address == 0x96a5u);
+        assert(receipt.vce_palette_consumer_bytes == 37u);
+        assert(receipt.vce_palette_consumer_file_offset != 0u);
+        assert(receipt.vce_palette_consumer_fnv1a != 0u);
+    } else {
+        assert(!receipt.vce_palette_consumer_verified);
+    }
     assert(!receipt.semantic_publication_allowed);
     assert(receipt.fragment_address == 0x243eu);
     assert(receipt.fragment_bytes == 134u);

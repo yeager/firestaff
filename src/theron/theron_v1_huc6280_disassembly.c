@@ -30,6 +30,9 @@
 #define THERON_STAGE2_RESOURCE_HANDLER_ADDRESS 0x4c3fu
 #define THERON_STAGE2_RESOURCE_HANDLER_BYTES 162u
 #define THERON_STAGE2_RESOURCE_HANDLER_FNV1A 0x46360d97u
+#define THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET 0x9e15u
+#define THERON_VCE_PALETTE_CONSUMER_ADDRESS 0x96a5u
+#define THERON_VCE_PALETTE_CONSUMER_BYTES 37u
 #define THERON_US_BIN_BANK_FILE_OFFSET 0x2bb200u
 #define THERON_JP_BIN_BANK_FILE_OFFSET 0x2ba8d0u
 #define THERON_US_BIN_SIZE 8104992u
@@ -50,6 +53,17 @@ static const uint8_t g_fragment[THERON_FRAGMENT_BYTES] = {
     0x65, 0x32, 0x85, 0x10, 0xa5, 0x11, 0x65, 0x33, 0x85, 0x11, 0x85, 0x37,
     0xa5, 0x10, 0x85, 0x36, 0x44, 0x9d, 0xc2, 0xb1, 0x36, 0x85, 0x02, 0xc8,
     0xb1, 0x36
+};
+
+/* THQUEST.ASM stage-2 labels L96A5/L96C2. This exact routine is byte
+ * identical in the authenticated US and JP raw Track 02 BINs. */
+static const uint8_t g_vce_palette_consumer[
+    THERON_VCE_PALETTE_CONSUMER_BYTES] = {
+    0xad, 0xc2, 0x27, 0x8d, 0x02, 0x04, 0xad, 0xc3, 0x27,
+    0x8d, 0x03, 0x04, 0x44, 0x17, 0xad, 0xc4, 0x27, 0x8d,
+    0xc3, 0x56, 0xad, 0xc5, 0x27, 0x8d, 0xc4, 0x56, 0x44,
+    0x01, 0x60, 0xe3, 0x00, 0x00, 0x04, 0x04, 0x20, 0x00,
+    0x60
 };
 
 static uint32_t fnv1a(const uint8_t *bytes, size_t count) {
@@ -109,6 +123,8 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t decompressor[THERON_LEVEL_DECOMPRESSOR_BYTES];
     uint8_t decompressor_caller[THERON_LEVEL_DECOMPRESSOR_CALLER_BYTES];
     uint8_t stage2_resource_handler[THERON_STAGE2_RESOURCE_HANDLER_BYTES];
+    uint8_t vce_palette_consumer[THERON_VCE_PALETTE_CONSUMER_BYTES];
+    int raw_bin_variant;
     uint32_t expected_size;
     uint32_t bank_file_offset;
     uint32_t expected_stage2_fnv1a;
@@ -126,6 +142,8 @@ int theron_v1_huc6280_disassembly_read_file(
         *out = receipt;
         return 1;
     }
+    raw_bin_variant = track02_variant == THERON_TRACK02_VARIANT_US_BIN ||
+        track02_variant == THERON_TRACK02_VARIANT_JP_BIN;
     if (THERON_ACCESS(path, THERON_F_OK) != 0) {
         receipt.status = THERON_V1_HUC6280_DISASSEMBLY_UNAVAILABLE;
         *out = receipt;
@@ -153,6 +171,12 @@ int theron_v1_huc6280_disassembly_read_file(
               SEEK_SET) != 0 ||
         fread(stage2_resource_handler, 1u, sizeof(stage2_resource_handler),
               file) != sizeof(stage2_resource_handler) ||
+        (raw_bin_variant &&
+         (fseek(file, (long)(bank_file_offset +
+                             THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET),
+                  SEEK_SET) != 0 ||
+          fread(vce_palette_consumer, 1u, sizeof(vce_palette_consumer),
+                file) != sizeof(vce_palette_consumer))) ||
         !m12_file_md5_hex(path, receipt.source_md5)) {
         if (file) fclose(file);
         receipt.status = THERON_V1_HUC6280_DISASSEMBLY_REJECTED;
@@ -169,6 +193,9 @@ int theron_v1_huc6280_disassembly_read_file(
             THERON_LEVEL_DECOMPRESSOR_CALLER_FNV1A ||
         fnv1a(stage2_resource_handler, sizeof(stage2_resource_handler)) !=
             expected_stage2_fnv1a ||
+        (raw_bin_variant &&
+         memcmp(vce_palette_consumer, g_vce_palette_consumer,
+                sizeof(vce_palette_consumer)) != 0) ||
         decompressor[0] != 0xa5u || decompressor[1] != 0x2eu ||
         decompressor[2] != 0x85u || decompressor[3] != 0x32u ||
         decompressor[sizeof(decompressor) - 1u] != 0x60u) {
@@ -206,6 +233,16 @@ int theron_v1_huc6280_disassembly_read_file(
         THERON_STAGE2_RESOURCE_HANDLER_BYTES;
     receipt.stage2_resource_handler_fnv1a = fnv1a(
         stage2_resource_handler, sizeof(stage2_resource_handler));
+    receipt.vce_palette_consumer_verified = raw_bin_variant;
+    if (raw_bin_variant) {
+        receipt.vce_palette_consumer_address =
+            THERON_VCE_PALETTE_CONSUMER_ADDRESS;
+        receipt.vce_palette_consumer_bytes = THERON_VCE_PALETTE_CONSUMER_BYTES;
+        receipt.vce_palette_consumer_file_offset = bank_file_offset +
+            THERON_VCE_PALETTE_CONSUMER_BANK_OFFSET;
+        receipt.vce_palette_consumer_fnv1a = fnv1a(
+            vce_palette_consumer, sizeof(vce_palette_consumer));
+    }
     *out = receipt;
     return 1;
 }

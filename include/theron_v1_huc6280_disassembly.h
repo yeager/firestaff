@@ -28,6 +28,14 @@ typedef struct {
     int stage2_resource_handler_verified;
     int stage2_resource_bank_table_population_verified;
     int stage2_resource_destination_registers_verified;
+    /* Static palette consumer from the retail HuC6280 bank. The routine
+     * proves the VCE write contract only; its dynamic $27c4/$27c5 source
+     * pointer is not a Track 02 palette binding by itself. */
+    int vce_palette_consumer_verified;
+    uint16_t vce_palette_consumer_address;
+    uint16_t vce_palette_consumer_bytes;
+    uint32_t vce_palette_consumer_file_offset;
+    uint32_t vce_palette_consumer_fnv1a;
     int semantic_publication_allowed;
     uint32_t source_file_size;
     uint32_t bank_file_offset;
