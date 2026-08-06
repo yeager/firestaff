@@ -18,6 +18,12 @@
   alone cannot publish an outdoor/M11 frame before original GAME_LOAD state
   supplies the party, map and weather owners.
 
+# DM1 champion-panel inventory-walk synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only F0296 inventory/chest icon-walk fixture from
+  M10. Its direct regression already compiles the source explicitly; it loads
+  no original DM1 data and has no M11/runtime caller.
+
 # DM2 delayed movement receipt ownership (2026-08-07)
 - ✅ The DM2 movement execution boundary now keeps the source-authenticated
   `DM2_CALC_PLAYER_WALK_DELAY` result while refusing to claim that the

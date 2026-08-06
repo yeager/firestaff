@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHAMPION-PANEL-INVENTORY-WALK-SYNTHETIC-AUDIT:** This F0296
+  inventory/chest icon-walk fixture fabricates champion, slot and icon state.
+  It loads no original DM1 data and has no M11/runtime caller; retain it only
+  as explicit ReDMCSB coverage until a source-bound redraw owner is recovered.
+
 - **DM1-CHEST-OPEN-MIRROR-ROTATION-SYNTHETIC-AUDIT:** This C540 wheel-swap
   fixture fabricates chest, candidate and command-queue state. It loads no
   original DM1 data and has no M11/runtime caller; retain it only as explicit
