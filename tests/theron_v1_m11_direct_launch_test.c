@@ -503,21 +503,14 @@ int main(void) {
                     enter_view.theronState.startup_phase ==
                         THERON_STARTUP_PHASE_SOUL_ROOM,
                 "M11 Theron Enter-forcefield stage accepts");
-        expect_true(M11_GameView_HandleInput(&enter_view,
-                                             M12_MENU_INPUT_ACCEPT) ==
-                        M11_GAME_INPUT_REDRAW &&
-                    enter_view.theronState.startup_phase ==
+        expect_true(enter_view.theronState.startup_phase ==
                         THERON_STARTUP_PHASE_SOUL_ROOM &&
-                    enter_view.theronState.level_loaded == 0 &&
-                    strstr(enter_view.inspectDetail,
-                           "AUTHENTIC CAPTURE ADMISSION REQUIRED") != NULL,
-                    "M11 Theron Enter-forcefield is actionable with Theron alone");
-        expect_true(M11_GameView_HandleInput(&enter_view,
-                                             M12_MENU_INPUT_ACCEPT) ==
-                        M11_GAME_INPUT_REDRAW &&
-                    enter_view.theronState.startup_phase ==
-                        THERON_STARTUP_PHASE_READY,
-                    "M11 Theron Enter-forcefield selects Theron");
+                    enter_view.theronState.startup_cursor == 0 &&
+                    enter_view.theronState.level_loaded == 0,
+                    "M11 Theron Enter-forcefield opens Soul Room at first mirror");
+        /* The source menu's first ACCEPT selects a mirror.  The visible
+         * ENTER FORCEFIELD row is the final cursor slot; move there before
+         * exercising the keyboard Enter path. */
         for (enter_guard = 0; enter_guard < THERON_STARTUP_HERO_MIRROR_COUNT;
              ++enter_guard) {
             expect_true(M11_GameView_HandleInput(&enter_view,
@@ -532,12 +525,12 @@ int main(void) {
                                              M12_MENU_INPUT_ACCEPT) ==
                         M11_GAME_INPUT_REDRAW &&
                     enter_view.theronState.startup_phase ==
-                        THERON_STARTUP_PHASE_READY &&
+                        THERON_STARTUP_PHASE_SOUL_ROOM &&
                     enter_view.theronState.level_loaded == 0 &&
                     enter_world != NULL && enter_world->level_loaded[0][0] == 0 &&
                     strstr(enter_view.inspectDetail,
                            "AUTHENTIC CAPTURE ADMISSION REQUIRED") != NULL,
-                    "M11 Theron Enter-forcefield reports the missing authenticated capture");
+                    "M11 Theron Enter activates forcefield and reports capture admission");
         M11_GameView_Shutdown(&enter_view);
     }
 
