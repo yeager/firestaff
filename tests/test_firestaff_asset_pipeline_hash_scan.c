@@ -268,6 +268,16 @@ int main(void) {
     snprintf(originalHome, sizeof(originalHome), "%s", getenv("HOME") ?
              getenv("HOME") : "");
 
+    /* Keep a direct real-media probe independent from the synthetic hash
+     * override fixtures below.  This is used by source-data verification and
+     * must report the Atari archive result without being obscured by an
+     * unrelated fixture failure. */
+    if (getenv("FIRESTAFF_DM1_ATARI_STX") &&
+        getenv("FIRESTAFF_DM1_ATARI_STX")[0] != '\0') {
+        check_optional_real_dm1_atari_stx(NULL, originalHome);
+        return failures ? 1 : 0;
+    }
+
     check_int(make_root(root, sizeof(root)), "temp root created");
     check_int(test_setenv("HOME", root), "isolated HOME set");
 

@@ -215,13 +215,23 @@ int fs_assets_load_dm1_atari_st_stx(FS_AssetBundle *bundle,
     if (FSP_FileExists(data_dir)) {
         char md5[33];
         size_t i;
-        if (!asset_file_md5_hex(data_dir, md5)) return -1;
-        for (i = 0U; g_dm1_atari_st_stx_md5[i] != NULL; ++i) {
-            if (strcmp(md5, g_dm1_atari_st_stx_md5[i]) == 0) {
-                snprintf(path, sizeof(path), "%s", data_dir);
-                match_index = (int)i;
-                break;
+        if (asset_file_md5_hex(data_dir, md5)) {
+            for (i = 0U; g_dm1_atari_st_stx_md5[i] != NULL; ++i) {
+                if (strcmp(md5, g_dm1_atari_st_stx_md5[i]) == 0) {
+                    snprintf(path, sizeof(path), "%s", data_dir);
+                    match_index = (int)i;
+                    break;
+                }
             }
+        }
+        /* A launcher may pass the original archive itself rather than its
+         * extracted STX member.  Keep direct-file selection source-bound by
+         * asking the same virtual-aware scanner used for directory roots;
+         * do not treat the archive bytes as a disk image. */
+        if (match_index < 0) {
+            (void)asset_find_by_md5_list(data_dir, g_dm1_atari_st_stx_md5,
+                                         path, (int)sizeof(path),
+                                         &match_index, 32);
         }
     } else {
         (void)asset_find_by_md5_list(data_dir, g_dm1_atari_st_stx_md5,

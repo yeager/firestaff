@@ -37986,6 +37986,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_track02_creature_spawn.c
         src/theron/theron_v1_track02_item_categories.c
         src/theron/theron_v1_track02_spell_descriptors.c
+        src/theron/theron_v1_track02_dungeon_text.c
         src/theron/theron_v1_track02_spell_descriptors.c
         src/theron/theron_v1_track02_raw_media_intake.c
         src/theron/theron_v1_dungeon_progression.c
