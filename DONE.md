@@ -1,3 +1,8 @@
+- ✅ 2026-08-06 CI latest-revision scheduling: restored the branch-scoped
+  GitHub Actions concurrency guard with cancellation enabled. Rapid pushes to
+  `main` now retain the newest full matrix instead of queuing obsolete commits
+  ahead of it; pull-request runs remain isolated by ref.
+
 - ✅ 2026-08-06 DM1 creature-name source ownership: removed M11's duplicate
   27-entry display-name table and routed runtime names through the ReDMCSB
   source-locked creature-render module. Invalid type IDs now report `UNKNOWN`
