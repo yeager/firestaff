@@ -4539,46 +4539,6 @@ static int dm2_runtime_spell_timer_delegate(void *user,
 /* 0x46 light, 0x47 hero ench flag, 0x48 ench power, 0x4B poison —
  * delegated to spell timer handlers via dm2_runtime_spell_timer_delegate. */
 
-/*
- * dm2_runtime_move_record_rotate_timer — 0x5D timer handler.
- * Source: skevent.cpp:3140-3145.
- * If timer map == player map: MOVE_RECORD_TO(NULL, playerX, playerY,
- * targetX, targetY) then ROTATE_SQUAD(direction).
- * Timer value_a: bits 0-4 = target X, bits 5-9 = target Y, bits 10-11 = dir.
- * Timer value_b: map index (compared against player map).
- */
-static int dm2_runtime_move_record_rotate_timer(void *user,
-                                                const DM2_V1_SourceTimer *timer,
-                                                uint16_t source_index,
-                                                DM2_V1_ProceedTimersReceipt *receipt) {
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    int16_t target_x, target_y, new_dir;
-
-    (void)source_index; (void)receipt;
-
-    if (!rt || !rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data)
-        return 1;
-
-    if ((int)timer->value_b != rt->dungeon_level)
-        return 1;
-
-    target_x = (int16_t)(timer->value_a & 0x1F);
-    target_y = (int16_t)((timer->value_a >> 5) & 0x1F);
-    new_dir = (int16_t)((timer->value_a >> 10) & 0x3);
-
-    /* MOVE_RECORD_TO(OBJECT_NULL, playerX, playerY, targetX, targetY)
-     * is party teleport — this modifies session state (party position).
-     * For now, update party position directly without the full
-     * MOVE_RECORD_TO chain (which handles creature wake/sleep). */
-    if (rt->session_snapshot_valid) {
-        rt->session_snapshot.party_x = (uint16_t)target_x;
-        rt->session_snapshot.party_y = (uint16_t)target_y;
-        rt->session_snapshot.party_dir = (uint8_t)new_dir;
-    }
-
-    return 1;
-}
-
 /* 0x5E alloc new creature — delegated to spell timer handlers via
  * dm2_runtime_spell_timer_delegate. */
 
@@ -4925,7 +4885,6 @@ void dm2_v1_runtime_tick(void) {
          * link, wake/sleep and party transaction.  Their old direct writes
          * could relocate original records or the party from timer bytes
          * alone, so both stay unbound until that source owner is present. */
-        (void)dm2_runtime_move_record_rotate_timer;
         /* Spell-effect timer delegation: 0x46 light, 0x47 hero ench flag,
          * 0x48 ench power, 0x4B poison, 0x19 cloud, 0x1E missile, 0x5E summon.
          * 0x47/0x48/0x4B consume in source order but are deliberately

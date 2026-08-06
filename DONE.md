@@ -2283,6 +2283,71 @@
   material-gate test and real PC-DOS GDAT viewport-plan regression pass. No
   game data was copied, unpacked or modified.
 
+- ✅ 2026-08-06 DM2 viewport generic-blit cleanup: removed the three
+  uncalled `dm2_blit_bitmap`, tiled-bitmap and scaled-bitmap helpers and
+  their DM1-derived clip helper from the production renderer. They could
+  consume caller-owned pixels without a GDAT image and local-palette receipt.
+  The production-boundary verifier rejects their return, leaving only
+  source-owned viewport material consumers.
+  Verification: `dm2_production_placeholder_boundary`, focused viewport
+  material-gate test and real PC-DOS GDAT viewport-plan regression pass. No
+  game data was copied, unpacked or modified.
+
+- ✅ 2026-08-06 DM2 timer-byte mutation cleanup: removed the uncalled
+  PROCESS_3D, pitfall and door timer studies from `dm2_v1_runtime.c`. Each
+  could relocate a record or mutate a dungeon square directly from timer
+  bytes despite the absent DB3/DB14/DB0 transaction. The production-boundary
+  verifier now rejects their return; source timers remain consumed
+  fail-closed until their complete original owners are restored. Verification:
+  production-boundary verifier, `firestaff_dm2` build and real PC-DOS G1
+  viewport-plan regression pass. No game data was copied, unpacked or
+  modified.
+
+- ✅ 2026-08-06 DM2 actuator enqueue cleanup: removed the uncalled reduced-
+  record `DM2_INVOKE_ACTUATOR` and `DM2_INVOKE_MESSAGE` timer builder from
+  `dm2_v1_runtime.c`. It could enqueue a class-0x04 actuator from
+  caller-owned record bytes without the original DB3/DB14 link, target and
+  payload transaction. The production-boundary verifier now rejects both
+  remnants. Verification: `firestaff_dm2` build, production-boundary verifier
+  and real PC-DOS G1 viewport-plan regression pass. No game data was copied,
+  unpacked or modified.
+
+- ✅ 2026-08-06 DM2 tick-generator transaction cleanup: removed the uncalled
+  `CONTINUE_TICK_GENERATOR` timer study from `dm2_v1_runtime.c`. It toggled a
+  DB3 record byte, invoked an actuator and requeued a timer from raw timer
+  fields despite the absent original DB3/DB14 target, payload and follow-up
+  transaction. The production-boundary verifier rejects its return; class
+  0x56 timers remain consumed fail-closed. Verification: `firestaff_dm2`
+  build, production-boundary verifier and real PC-DOS G1 viewport-plan
+  regression pass. No game data was copied, unpacked or modified.
+
+- ✅ 2026-08-06 DM2 ornament-animator transaction cleanup: removed the
+  uncalled 0x55 animator study from `dm2_v1_runtime.c`. It wrote actuator
+  frame/active bits and requeued timers from a raw record address plus a GDAT
+  duration receipt, without the original animator record and timer-queue
+  transaction. The production-boundary verifier rejects its return; the
+  class remains fail-closed. Verification: `firestaff_dm2` build,
+  production-boundary verifier and real PC-DOS G1 viewport-plan regression
+  pass. No game data was copied, unpacked or modified.
+
+- ✅ 2026-08-06 DM2 ornament-noise transaction cleanup: removed the uncalled
+  0x5A noise study from `dm2_v1_runtime.c`. It formed a new timer and queued
+  activation sound from raw timer/record fields plus GDAT decoration facts,
+  without the original actuator lifecycle and audio transaction. The
+  production-boundary verifier rejects its return; the class remains
+  fail-closed. Verification: `firestaff_dm2` build, production-boundary
+  verifier and real PC-DOS G1 viewport-plan regression pass. No game data
+  was copied, unpacked or modified.
+
+- ✅ 2026-08-06 DM2 move-record transaction cleanup: removed the uncalled
+  `MOVE_RECORD_ROTATE` study from `dm2_v1_runtime.c`. It directly rewrote
+  party position and direction from timer fields instead of executing the
+  source `MOVE_RECORD_TO` link, wake/sleep and rotation transaction. The
+  production-boundary verifier rejects its return; class 0x5D remains
+  fail-closed. Verification: `firestaff_dm2` build, production-boundary
+  verifier and real PC-DOS G1 viewport-plan regression pass. No game data
+  was copied, unpacked or modified.
+
 - ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now
   records a completed party/leader-cache clear only after its retained
   source-save projection is observed empty. M11 requires that postcondition

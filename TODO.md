@@ -3751,6 +3751,9 @@ level or consumer bindings.
   duration receipts alone cannot authorize a timer requeue or activation
   sound before its original actuator lifecycle and audio transaction are
   restored.
+  The uncalled `MOVE_RECORD_ROTATE` study is removed too: it rewrote party
+  position and direction directly from timer bits instead of executing the
+  original `MOVE_RECORD_TO` link, wake/sleep and rotation transaction.
   The M11 Action-door shortcut now follows the same rule: it cannot rewrite
   a G1 tile from a coordinate-only query while the live DB0 door record,
   direction, collision, sound and follow-up timer transaction are absent.
