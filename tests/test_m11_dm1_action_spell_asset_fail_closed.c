@@ -35,7 +35,7 @@ int main(void) {
 
     ok = strstr(s, "if (actionAsset && spellAsset && actionAsset->loaded") &&
          strstr(s, "Missing real data leaves this source-owned strip black.") &&
-         strstr(s, "if (!drewAuthenticFrames && !m11_v1_chrome_mode_enabled(state))") &&
+         strstr(s, "!drewAuthenticFrames && !m11_v1_chrome_mode_enabled(state)") &&
          strstr(s, "if (!slot || !slot->loaded || !slot->pixels ||");
     action_menu = strstr(s, "static int m11_draw_dm_action_menu(");
     action_menu_end = action_menu

@@ -2598,6 +2598,15 @@ diagnostic; it must not silently fall back to a generated visual.
   `~/.firestaff/data/dm1` passes `test_m11_dm1_real_object_names` and
   `test_m11_dm1_real_object_corpus` (611 records).
 
+- **DM1-ORIGINAL-REPLACE-024:** Closed 2026-08-06. Removed the M11 font
+  loader's unverified third index and its "any unique 768-byte record"
+  heuristic. ReDMCSB's PC34/legacy M653 indices (`695`/`557`) are now the
+  only accepted identities; a matching byte count without source identity
+  fails closed instead of promoting unrelated GRAPHICS.DAT pixels to the
+  DM1 interface font. Focused action/spell source-gate, F0342 and F0662
+  tests pass. A real-data run remains dependent on the local PC34 corpus
+  being installed.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

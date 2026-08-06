@@ -52,6 +52,12 @@
   palette ownership and flips. `dm1_v1_wall_ornament_pc34_compat` passes all
   13 native-index assertions against the source table.
 
+- ✅ 2026-08-06 DM1 M653 font identity gate: removed the unverified font index
+  and unique-size heuristic from the shared GRAPHICS.DAT loader. Only the
+  ReDMCSB PC34/legacy M653 records 695/557 are admitted; unrelated 768-byte
+  records now fail closed. Focused action/spell source-gate, F0342 and F0662
+  tests pass.
+
 - ✅ 2026-08-06 F10 all-game runtime coverage: the compact graphics/cheats
   popup is now regression-covered for DM1, CSB, DM2, Theron's Quest and
   Nexus as distinct M11 source kinds. The test exercises live presentation

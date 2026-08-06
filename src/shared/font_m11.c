@@ -24,15 +24,13 @@
 
 const int g_m11_font_graphic_candidates[M11_FONT_GRAPHIC_CANDIDATE_COUNT] = {
     M11_FONT_GRAPHIC_INDEX_PC34,
-    M11_FONT_GRAPHIC_INDEX_LEGACY,
-    M11_FONT_GRAPHIC_INDEX_FALLBACK
+    M11_FONT_GRAPHIC_INDEX_LEGACY
 };
 
 static int m11_font_pick_graphic_index(
     const struct MemoryGraphicsDatRuntimeState_Compat* rt)
 {
     size_t i;
-    int fallback = -1;
 
     if (!rt) {
         return -1;
@@ -46,16 +44,11 @@ static int m11_font_pick_graphic_index(
         }
     }
 
-    for (i = 0; i < (size_t)rt->graphicCount; ++i) {
-        if (rt->decompressedByteCounts[i] == M11_FONT_BITMAP_BYTES) {
-            if (fallback >= 0) {
-                return -1;
-            }
-            fallback = (int)i;
-        }
-    }
-
-    return fallback;
+    /* A matching byte count is not an identity proof: GRAPHICS.DAT can
+     * contain other 768-byte records.  ReDMCSB DEFS.H identifies M653 only
+     * at the two media-specific indices above, so fail closed instead of
+     * promoting an arbitrary record to the interface font. */
+    return -1;
 }
 
 void M11_Font_Init(M11_FontState* font) {
