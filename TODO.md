@@ -12,7 +12,10 @@
   are now no-draw/source-preserving. Recover Saturn command order, CLUT bank,
   destination and brightness/composition ownership before restoring them. The
   startup-media regression now requires retail hashes for its STABG/WARNING/
-  GAMEOVER/TITLE/LOGOBG inputs before format receipts count.
+  GAMEOVER/TITLE/LOGOBG inputs before format receipts count. The V2 HUD
+  diagnostic probes now match that boundary: enabling the phase gate, setting
+  champion/action state, or using the test force switch cannot write synthetic
+  pixels while the retail HUD/VDP1/VDP2 capture is absent.
 
 - **DM2-PRODUCTION-PLACEHOLDER-INVENTORY:** The source tree retains bounded
   compatibility studies, fixture readers and modern-art probes for direct

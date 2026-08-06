@@ -135,6 +135,7 @@ const char *nexus_v2_hud_source_evidence(void) {
     return
         "Nexus V2 HUD: procedural diagnostic/test overlay only\n"
         "  No authenticated retail NEXUS.BIN/widget surface in supplied corpus\n"
+        "  DMDF/DGN describes dungeon source formats, not HUD ownership\n"
         "  No Saturn VDP1/VDP2 placement receipt; production pixels forbidden\n"
         "  ReDMCSB PANEL.C/DUNGEON.C are behavioural test references only\n";
 }

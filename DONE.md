@@ -77,6 +77,17 @@
   `test_nexus_v1_bpk_prs3_payload_evidence`, and focused CTest both pass with
   `/Users/bosse/.firestaff/data/nexus`.
 
+# Nexus HUD no-draw probe contract (2026-08-06)
+
+- ✅ Corrected the V2 HUD runtime and overlay probes, which still expected the
+  procedural diagnostic surface to paint when its phase gate was enabled.
+  They now verify the actual source-lock contract: state setters remain safe
+  for diagnostics, but no framebuffer pixels are written without authenticated
+  retail HUD/VDP1/VDP2 ownership. Added the DMDF/DGN format caveat to the
+  evidence string so the probe citation is complete.
+- Verification: `firestaff_nexus_v2_hud_runtime_probe` 25/25, focused
+  `nexus_v2_hud_overlay` and `nexus_v2_hud_runtime_integration` CTest pass.
+
 # Nexus SLEV/SAL/MAP retail identity gate (2026-08-06)
 
 - ✅ Hardened the 16-level SLEV/SAL/MAP corpus regression with the production

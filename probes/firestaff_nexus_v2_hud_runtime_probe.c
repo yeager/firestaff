@@ -3,7 +3,7 @@
  * Phase 3 HUD runtime wire-up verification probe for Nexus V2.
  * Verifies that the nexus_v2_hud_runtime module correctly:
  *   - Initializes and shuts down the HUD state
- *   - Phase-gates render: V2 off → no-op, V2 on → paints into fb
+ *   - Phase-gates render: V2 off/on both remain no-draw without retail capture
  *   - V1 framebuffer preserved byte-for-byte when V2 disabled
  *   - All 7 setters store state without crashing
  *   - Honors force_active_for_test escape hatch
@@ -20,15 +20,15 @@
  *   3.  Render is no-op when V2 launch disabled
  *   4.  Render is no-op when V2 profile disabled
  *   5.  Render is no-op when V2 disabled but fb preserved
- *   6.  Render paints into fb when V2 enabled + HUD visible
+ *   6.  Render remains no-op when V2 enabled but retail HUD capture is absent
  *   7.  Render is no-op when opacity = 0
  *   8.  All 7 setters store state without crashing
  *   9.  is_active returns 0 when V2 disabled
  *  10.  is_active returns 1 when V2 enabled
  *  11.  force_active_for_test bypasses gate
  *  12.  V1 invariant: V2 disabled, fb stays untouched
- *  13.  V2 active + champion bar setter → pixels appear
- *  14.  Action strip with active icon → pixels appear
+ *  13.  V2 active + champion bar setter → no synthetic pixels appear
+ *  14.  Action strip with active icon → no synthetic pixels appear
  *  15.  V1 invariant: V2 off → out struct fields stay at caller defaults
  *  16.  Null-fb is safe when V2 disabled
  *  17.  source_evidence returns citation string with NEXUS.BIN
@@ -124,7 +124,7 @@ int main(void) {
         nexus_v2_hud_runtime_shutdown();
     }
 
-    /* 6. V2 enabled + visible → render paints into fb */
+    /* 6. V2 enabled + visible still cannot draw without retail capture. */
     {
         NEXUS_V2_PhaseGateConfig gate = { 1, 1 };
         nexus_v2_hud_runtime_init();
@@ -135,7 +135,7 @@ int main(void) {
         for (int i = 0; i < (int)sizeof(fb_zero); i++) {
             if (fb_zero[i] != 0) { nonzero++; break; }
         }
-        CHECK(nonzero > 0);
+        CHECK(nonzero == 0);
         nexus_v2_hud_runtime_shutdown();
     }
 
@@ -204,7 +204,7 @@ int main(void) {
         for (int i = 0; i < (int)sizeof(fb_zero); i++) {
             if (fb_zero[i] != 0) { nonzero++; break; }
         }
-        CHECK(nonzero > 0);
+        CHECK(nonzero == 0);
         nexus_v2_hud_runtime_force_active_for_test(0);
         nexus_v2_hud_runtime_shutdown();
     }
@@ -224,7 +224,7 @@ int main(void) {
         nexus_v2_hud_runtime_shutdown();
     }
 
-    /* 13. V2 active + champion bar setter → pixels appear in champion bar area */
+    /* 13. V2 active + champion bar setter remains state-only. */
     {
         NEXUS_V2_PhaseGateConfig gate = { 1, 1 };
         nexus_v2_hud_runtime_init();
@@ -239,11 +239,11 @@ int main(void) {
                 if (fb_zero[y * 320 + x] != 0) { nonzero++; }
             }
         }
-        CHECK(nonzero > 0);
+        CHECK(nonzero == 0);
         nexus_v2_hud_runtime_shutdown();
     }
 
-    /* 14. Action strip with active icon → pixels appear */
+    /* 14. Action strip with active icon remains state-only. */
     {
         NEXUS_V2_PhaseGateConfig gate = { 1, 1 };
         nexus_v2_hud_runtime_init();
@@ -258,7 +258,7 @@ int main(void) {
                 if (fb_zero[y * 320 + x] != 0) { nonzero++; }
             }
         }
-        CHECK(nonzero > 0);
+        CHECK(nonzero == 0);
         nexus_v2_hud_runtime_shutdown();
     }
 

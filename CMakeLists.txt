@@ -6046,7 +6046,7 @@ add_test(
 
 # Nexus V2 Phase 3 — HUD Runtime Wire-up Probe
 # Headless: no game assets, no SDL rendering required.
-# Verifies: phase-gated render (V2 off → no-op, V2 on → paints into fb),
+# Verifies: phase-gated render (V2 off/on both remain no-draw without capture),
 # setter storage, V1 framebuffer preserved when V1 active,
 # force_active_for_test bypass, source evidence citation.
 add_executable(firestaff_nexus_v2_hud_runtime_probe
@@ -6559,8 +6559,8 @@ add_test(
 # Headless: no game assets, no SDL rendering required.
 # Verifies: init/reset defaults, set_direction/set_level/set_gold/
 # set_champion_bar/set_action_active stores state, hit_flash + toggle +
-# set_opacity semantics, render is deterministic for same state and
-# invisible HUD leaves buffer unchanged, null-arg safety, source evidence.
+# set_opacity semantics, render is deterministic and no-draw without
+# retail HUD/VDP capture, null-arg safety, source evidence.
 add_executable(firestaff_nexus_v2_hud_overlay_probe
     probes/firestaff_nexus_v2_hud_overlay_probe.c
     src/nexus/nexus_v2_hud_overlay.c

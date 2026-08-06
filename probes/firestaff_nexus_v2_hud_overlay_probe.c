@@ -33,9 +33,8 @@
  *
  *  10. nexus_v2_hud_set_opacity() clamps to 0..255 range
  *
- *  11. nexus_v2_hud_render() draws without crashing on a 320x200
- *      framebuffer, byte-modifies the buffer, and produces
- *      deterministic output for the same state
+ *  11. nexus_v2_hud_render() is safe and deterministic but remains
+ *      no-draw without authenticated retail HUD/VDP evidence
  *
  *  12. NEXUS_V2_ACTION_COUNT = 5 (Attack, Cast, Use, Drop, Move)
  *
@@ -283,7 +282,7 @@ static void check_render_deterministic(void)
     check(same, "render: deterministic for same state");
 }
 
-static void check_render_modifies_buffer(void)
+static void check_render_no_draw_without_capture(void)
 {
     Nexus_V2_HudOverlay h;
     uint8_t fb[320 * 200];
@@ -305,7 +304,8 @@ static void check_render_modifies_buffer(void)
             break;
         }
     }
-    check(any_changed, "render: modifies framebuffer when visible");
+    check(any_changed == 0,
+          "render: visible diagnostic HUD remains no-draw without capture");
 }
 
 static void check_render_invisible_no_change(void)
@@ -373,7 +373,7 @@ int main(void)
     check_set_opacity();
     check_action_count();
     check_render_deterministic();
-    check_render_modifies_buffer();
+    check_render_no_draw_without_capture();
     check_render_invisible_no_change();
     check_null_args();
     check_source_evidence();
