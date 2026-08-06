@@ -295,6 +295,19 @@ static const char* const g_nexusArchiveNames[] = {
     "Dungeon-Master-Nexus_SEGA-Saturn_JA.zip",
     NULL
 };
+/* DMWeb documents the English and French discs as separate fan-translation
+ * media lines, not as alternate Japanese retail releases.  Keep the exact
+ * container identities here so an ISO containing the unchanged retail
+ * DM.BIN is not reported as Japanese merely because its inner marker hashes
+ * to the Japanese executable. */
+static const char* const g_nexusEnglishIsoNames[] = {
+    "Dungeon Master Nexus (English).iso",
+    NULL
+};
+static const char* const g_nexusFrenchIsoNames[] = {
+    "Dungeon Master Nexus (French).iso",
+    NULL
+};
 
 static const M12_VersionSpec g_dm1Versions[] = {
     {"dm1", "pc34-en", "PC 3.4 English", "PC 3.4 EN", g_dm1GraphicsNames, "fa6b1aa29e191418713bf2cda93d962e", M12_ARCH_PC},
@@ -345,7 +358,9 @@ static const M12_VersionSpec g_dm2Versions[] = {
 static const M12_VersionSpec g_nexusVersions[] = {
     {"nexus", "nexus-saturn-jp", "Nexus Sega Saturn JP (extracted)", "Saturn JP", g_nexusArchiveNames, "e88d60859f65f08fa622e1992b02280f", M12_ARCH_SATURN},
     {"nexus", "nexus", "Nexus original Sega Saturn JP", "nexus", g_nexusArchiveNames, "96e511c8d36ccbe30a48ba36c59df194", M12_ARCH_SATURN},
-    {"nexus", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusArchiveNames, "", M12_ARCH_SATURN}
+    {"nexus", "nexus2", "Nexus V2 upscaled graphics", "nexus2", g_nexusArchiveNames, "", M12_ARCH_SATURN},
+    {"nexus", "nexus-saturn-en-fan-v2", "Nexus Sega Saturn English fan translation v2", "Saturn EN v2", g_nexusEnglishIsoNames, "cf158b32f342c168fc570d36a0f1c637", M12_ARCH_SATURN},
+    {"nexus", "nexus-saturn-fr-fan", "Nexus Sega Saturn French fan translation", "Saturn FR", g_nexusFrenchIsoNames, "2efb0e8c41f01dea3faa41328ce87f46", M12_ARCH_SATURN}
 };
 
 /* Theron's Quest — PC Engine / TurboGrafx-16 (Hudson Soft, 1992).
@@ -2712,6 +2727,27 @@ static int m12_nexus_version_index_for_md5(const char* md5) {
     return -1;
 }
 
+static int m12_nexus_path_is_fan_translation_container(const char* path) {
+    char container[ASSET_PATH_MAX];
+    char md5[M12_ASSET_MD5_CAPACITY];
+    const char* separator;
+    if (!path || !m12_path_is_virtual_asset(path)) {
+        return 0;
+    }
+    separator = strstr(path, "::");
+    if (!separator || separator == path ||
+        (size_t)(separator - path) >= sizeof(container)) {
+        return 0;
+    }
+    memcpy(container, path, (size_t)(separator - path));
+    container[separator - path] = '\0';
+    if (!m12_file_md5_hex(container, md5)) {
+        return 0;
+    }
+    return strcmp(md5, "cf158b32f342c168fc570d36a0f1c637") == 0 ||
+           strcmp(md5, "2efb0e8c41f01dea3faa41328ce87f46") == 0;
+}
+
 static void m12_init_version_metadata(M12_AssetStatus* status) {
     int gameIndex;
     if (!status) {
@@ -2980,6 +3016,24 @@ static int m12_try_match_direct_nexus_request(
     } else {
         return 0;
     }
+    /* Prefer the exact fan-translation container before looking for the
+     * shared inner DM.BIN marker.  The English/French discs intentionally
+     * retain the retail executable, so a generic DM.BIN lookup otherwise
+     * mislabels the selected ISO as Japanese. */
+    for (i = 3U; i < sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0]); ++i) {
+        if (m12_try_match_version(scanRoot,
+                                  &g_nexusVersions[i],
+                                  matchedPath,
+                                  matchedMd5)) {
+            m12_copy_string(runtimeRoot,
+                            M12_ASSET_DATA_DIR_CAPACITY,
+                            scanRoot);
+            if (outVersionIndex) {
+                *outVersionIndex = (int)i;
+            }
+            return 1;
+        }
+    }
     for (i = 0U; i < sizeof(g_nexusVersions) / sizeof(g_nexusVersions[0]); ++i) {
         if (m12_try_match_version(scanRoot,
                                   &g_nexusVersions[i],
@@ -3173,6 +3227,31 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
             }
             status->versions[gameIndex][i] = *retained;
             matchedAny = 1;
+        }
+    }
+
+    if (strcmp(gameSpec->gameId, "nexus") == 0) {
+        /* A fan-translation ISO may contain the unchanged Japanese DM.BIN.
+         * The ISO hash is the stronger container identity; do not leave the
+         * inner marker as a competing Japanese profile, or the first-match
+         * launcher path will silently select the wrong provenance.  A loose
+         * standalone DM.BIN remains a valid Japanese extracted profile. */
+        for (i = 0U; i < gameSpec->versionCount; ++i) {
+            M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
+            if (!version->matched || !version->matchedPath[0] ||
+                !m12_nexus_path_is_fan_translation_container(
+                    version->matchedPath)) {
+                continue;
+            }
+            if (version->versionId &&
+                (strcmp(version->versionId, "nexus-saturn-jp") == 0 ||
+                 strcmp(version->versionId, "nexus") == 0)) {
+                memset(version, 0, sizeof(*version));
+                version->gameId = gameSpec->versions[i].gameId;
+                version->versionId = gameSpec->versions[i].versionId;
+                version->label = gameSpec->versions[i].label;
+                version->shortLabel = gameSpec->versions[i].shortLabel;
+            }
         }
     }
 

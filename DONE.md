@@ -1,3 +1,16 @@
+# Nexus English/French ISO provenance profiles (2026-08-06)
+
+- ✅ Added exact container-hash profiles for the English fan-translation v2
+  ISO (`cf158b32f342c168fc570d36a0f1c637`) and French fan-translation ISO
+  (`2efb0e8c41f01dea3faa41328ce87f46`) found in the real Nexus data root.
+- ✅ The scanner now prefers those container identities before the shared
+  inner `DM.BIN` hash and suppresses the competing Japanese label when the
+  virtual marker came from one of those ISOs. A standalone authenticated
+  `DM.BIN` remains classified as Japanese extracted media.
+- ✅ This follows DMWeb's separate Japanese-retail/English-fan/French-fan
+  media classification; it does not claim fan translations are original
+  Saturn releases or open a runtime presentation path.
+
 # Nexus ITEM.IBS and TITLE.CG host-render quarantine (2026-08-06)
 
 - ✅ Removed the standalone ITEM.IBS and TITLE.CG RGBA writers from the retail

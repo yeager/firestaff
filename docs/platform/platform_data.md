@@ -35,6 +35,8 @@ validating game data files. Called during startup to scan for original files.
 | nexus-saturn-jp | Saturn JP extracted | DM.BIN, Dungeon-Master-Nexus_SEGA-Saturn_JA.zip |
 | nexus | Nexus original Saturn JP | DM.BIN, Dungeon-Master-Nexus_SEGA-Saturn_JA.zip |
 | nexus2 | Nexus V2 upscaled | DM.BIN, Dungeon-Master-Nexus_SEGA-Saturn_JA.zip |
+| nexus-saturn-en-fan-v2 | Saturn English fan translation v2 (container-hash gated) | Dungeon Master Nexus (English).iso |
+| nexus-saturn-fr-fan | Saturn French fan translation (container-hash gated) | Dungeon Master Nexus (French).iso |
 
 ### Scan Search Roots
 
