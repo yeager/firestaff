@@ -1,3 +1,21 @@
+# Firestaff v3.0.292
+
+## Added
+- FM Towns DM1 `DECODEGRAPHIC` (EDM.EXP `0x1f63c`) RLE decoder ported
+  from the byte-verified disassembly of the four leaf helpers
+  (`0x1f4c4`, `0x1f518`, `0x1f578`, `0x1f5d8`). All 347 RLE-branch
+  assets in the shipped English `DATA/GRAPHICS.DAT` round-trip
+  byte-exact (source consumption equals `size_table[index]`;
+  decoded output equals `padded_width/2 * height`). New API:
+  `dm1_v1_fmtowns_pic_library_decode_asset_pc34` — see
+  `include/dm1_v1_fmtowns_pic_library.h`.
+- Test `test_real_graphics_dat_rle_roundtrip` gated by
+  `FIRESTAFF_DM1_FMTOWNS_GRAPHICS_DAT`; sweeps every RLE asset and
+  verifies both length invariants. Skips without game data.
+- Extended `parity-evidence/dm1_fmtowns_pic_library_format.md` with
+  the four leaf-helper decodes and the round-trip verification
+  numbers.
+
 # Firestaff v3.0.291
 
 ## Added

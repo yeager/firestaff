@@ -115,9 +115,86 @@ zero-copy views onto each asset span. `load_raw_asset_pc34`
 implements the DIRECT+NO_HDR path `INIT_TEXT` uses for the menu
 font — the raw span is memcpy'd into a caller-owned buffer.
 
+## DECODEGRAPHIC leaf helpers (byte-verified disassembly)
+
+Disassembled with capstone (`CS_ARCH_X86`, `CS_MODE_32`) from the
+hash-verified EDM.EXP; global state lives at `[0x29588]` (destination
+pixel buffer, 4bpp packed) and `[0x2958c]` (source stream pointer).
+
+### `0x1f4c4` — put single pixel
+
+Args: `(pixel_index, nibble)`. Byte offset is `pixel_index >> 1`.
+Nibble ordering inside a byte:
+
+  - EVEN `pixel_index` → LOW nibble
+  - ODD  `pixel_index` → HIGH nibble
+
+i.e. dst byte layout is `[odd_pixel(hi) | even_pixel(lo)]`
+(little-nibble-first).
+
+### `0x1f518` — fill N pixels with a single nibble
+
+Args: `(start_pixel, nibble, count)`. Odd-start prologue writes one
+pixel via the same convention as `0x1f4c4`, then the tail loop
+duplicates the nibble into both halves of a byte (`cl = (nib<<4) |
+nib`) and writes one byte per two pixels (`di -= 2` each iteration).
+Byte-writes advance from `esi/2` upward.
+
+### `0x1f578` — copy N pixels from source stream to destination
+
+Args: `(src_pixel_index, dst_pixel_index, count)`. Reads packed
+nibbles from `[0x2958c] + (src_index >> 1)`:
+
+  - EVEN `src_index` → HIGH nibble
+  - ODD  `src_index` → LOW nibble
+
+then writes each pixel through `0x1f4c4`. The source stream is
+therefore packed big-nibble-first (`[even(hi) | odd(lo)]`) — the
+OPPOSITE convention of the destination. Two pixels per source byte;
+DECODEGRAPHIC advances `[0x2958c]` by `count/2` after the copy
+(from the stored count `[ebp-0xc]` at `0x1f7e5..0x1f7eb`).
+
+### `0x1f5d8` — row copy from prior scanline
+
+Args: `(src_pixel, dst_pixel, count)`. Reads whole BYTES from the
+destination buffer at `src_pixel/2` and writes them to
+`dst_pixel/2`. Odd-aligned dst prologue takes just the HIGH nibble
+of one source byte and stitches it into the HIGH nibble of the
+destination byte, preserving the low half. Because both operands
+live in the same buffer with the same nibble layout, no swap is
+needed.
+
+The mode-3 partial branch (`0x1f81e`) passes `edi` (row remaining)
+rather than `ebx` (count) to `0x1f5d8` — this is faithful to the
+disassembly. Any pixels written past the requested count are either
+inside the row-padding tail or overwritten by subsequent runs; the
+final `esi += ebx` at `0x1f82c` advances the state by only `count`
+pixels, so downstream state stays coherent.
+
+## Round-trip verification
+
+Firestaff decoder: `dm1_v1_fmtowns_pic_library_decode_asset_pc34`
+(`src/dm1/dm1_v1_fmtowns_pic_library.c`). Byte-count invariant
+holds against the shipped English GRAPHICS.DAT:
+
+  - **347 / 347 RLE-branch assets** (indices 6..532 where
+    `width != padded_width`) decode with
+    `source_bytes_consumed == size_table_primary[index]` **and**
+    `bytes_written == (padded_width/2) * height`.
+  - Indices ≥ 533 have `width` values (29187, 56072, ...) whose
+    padded_width fits no display asset — they are raw data spans
+    reachable via the DIRECT+NO_HDR path, not DECODEGRAPHIC. The
+    decoder correctly refuses them (fast-path branch is not
+    implemented for asset spans; the raw-asset path applies).
+
+The verification harness is `test_dm1_v1_fmtowns_pic_library.c`
+`test_real_graphics_dat_rle_roundtrip` — gate the run with
+`FIRESTAFF_DM1_FMTOWNS_GRAPHICS_DAT=/path/to/GRAPHICS.DAT`. Skips
+silently without game data. Never bundles bytes.
+
 ## Next step
 
-Decode the RLE cases at `0x1f775` and `0x1f7f3` and land a full
-`DECODEGRAPHIC` port. Once that ships, every non-font asset in
-`GRAPHICS.DAT` becomes reachable and the viewport / portrait /
-splash bindings can move off placeholder pixels.
+The pixel matrices for every RLE-branch asset in `GRAPHICS.DAT` are
+now materialisable. Follow-up work: wire the decoded pixels into the
+viewport, portrait, and splash bindings behind their own asset
+descriptors.

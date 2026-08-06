@@ -1,3 +1,16 @@
+# DM1 FM Towns DECODEGRAPHIC RLE decoder (2026-08-06)
+
+- Full port of DECODEGRAPHIC (EDM.EXP 0x1f63c) inner RLE loop with
+  byte-verified disassembly of leaf helpers 0x1f4c4, 0x1f518,
+  0x1f578, 0x1f5d8.
+- New API `dm1_v1_fmtowns_pic_library_decode_asset_pc34` returns
+  the 4bpp packed pixel matrix and the geometry header for any RLE
+  asset in `DATA/GRAPHICS.DAT`.
+- Round-trip verification: 347/347 RLE-branch assets decode with
+  exact source-byte consumption and exact destination-byte size.
+- Evidence: `parity-evidence/dm1_fmtowns_pic_library_format.md`
+  (updated with leaf-helper decodes and verification numbers).
+
 # Theron later-level resource-frame receipt (2026-08-06)
 
 - ✅ Later-level runtime handoff now retains the authenticated `LE16(+2)-5`
@@ -44,7 +57,6 @@
   passes; stock Mednafen still exits 78 before writing a manifest because the
   Firestaff capture hook is absent.
 - ✅ No synthetic trace or presentation evidence was admitted.
-
 # Theron authentic archive capture boundary (2026-08-06)
 
 # CSB FM Towns cross-volume CD cache (2026-08-06)

@@ -154,6 +154,61 @@ dm1_v1_fmtowns_pic_library_padded_width_pc34(uint16_t width_pixels);
 uint16_t
 dm1_v1_fmtowns_pic_library_row_bytes_pc34(uint16_t width_pixels);
 
+/* DECODEGRAPHIC (EDM.EXP 0x1f63c) full RLE-inner-loop port.
+ *
+ * Decodes one asset span into the caller's pixel buffer using the
+ * exact byte-for-byte control-byte grammar of the FM Towns
+ * DECODEGRAPHIC routine (helpers at 0x1f4c4, 0x1f518, 0x1f578,
+ * 0x1f5d8):
+ *
+ *   ctrl bit 7 == 0
+ *     short-form fill: count = (ctrl >> 4) + 1, fill `count` pixels
+ *     with the nibble `ctrl & 0x0f`.
+ *   ctrl bit 7 == 1
+ *     bits 5..4 pick the mode; count comes from the follow-up byte(s)
+ *     (bit 6 == 0 -> next-byte + 1; bit 6 == 1 -> next-two-bytes
+ *      big-endian + 1):
+ *
+ *     mode 00 (0x1f734): fill `count` pixels with `ctrl & 0x0f`
+ *     mode 01 (0x1f775): raw stream copy of `count` pixels (packed
+ *                        big-nibble-first in the source stream); if
+ *                        `count` is odd, one pixel is first written
+ *                        with `ctrl & 0x0f` and the copy handles the
+ *                        remaining even count. Advances the source
+ *                        stream by `(count adjusted)/2` bytes.
+ *     mode 10          : no-op (jumps to end of iteration)
+ *     mode 11 (0x1f7f3): row-copy of `count` pixels from the
+ *                        previous scanline into the current one (a
+ *                        vertical repeat), then one extra pixel
+ *                        written with `ctrl & 0x0f`.
+ *
+ * Nibble packing: pixel_index even -> LOW nibble of destination
+ * byte, pixel_index odd -> HIGH nibble. Source stream in mode 1 is
+ * packed the opposite way (even -> HIGH, odd -> LOW). Both
+ * conventions are what the leaf helpers produce byte-for-byte.
+ *
+ * Row geometry: the decoder advances the destination pixel index by
+ * `(padded_width - width)` at every row boundary so unused padding
+ * pixels are left as zero (they are never touched).
+ *
+ * Buffer size: caller must provide at least
+ *   (padded_width / 2) * height  bytes.
+ *
+ * On success: `*out_bytes_written` equals
+ *   (padded_width / 2) * height
+ * and `*out_source_bytes_consumed` equals the primary-table size
+ * for the asset (i.e. the whole span was consumed). Returns
+ * DM1_V1_FMTOWNS_PIC_LIB_OK. */
+dm1_v1_fmtowns_pic_library_status_t
+dm1_v1_fmtowns_pic_library_decode_asset_pc34(
+    const uint8_t *asset_bytes,
+    size_t         asset_size,
+    uint8_t       *dst_buffer,
+    size_t         dst_capacity,
+    size_t        *out_bytes_written,
+    size_t        *out_source_bytes_consumed,
+    dm1_v1_fmtowns_pic_library_gfx_header_t *out_header);
+
 /* GET_MY_DECODED (EDM.EXP 0x9f04) direct-copy path: for a raw
  * uncompressed asset (like the menu font, index 557), copy the
  * stored byte span verbatim into a caller buffer. Refuses to copy

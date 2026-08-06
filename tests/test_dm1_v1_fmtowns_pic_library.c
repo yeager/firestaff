@@ -4,6 +4,7 @@
 #include <assert.h>
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* Build a self-contained mini picture-library byte-for-byte in the
@@ -177,6 +178,125 @@ static void test_truncated_input(void) {
            == DM1_V1_FMTOWNS_PIC_LIB_ERR_TRUNCATED);
 }
 
+/* Synthetic RLE fixture: width=16 (padded=32), height=1 → 16 dst bytes.
+ * Short-form fill only covers up to 8 pixels (count = (ctrl>>4)+1
+ * with bit7=0 caps upper nibble at 7). Two runs cover the full row.
+ * Byte 0x7A: bit7=0, count=(7)+1=8, nibble=0xA → pixels 0..7 = 0xA
+ * Byte 0x7F: bit7=0, count=8, nibble=0xF → pixels 8..15 = 0xF */
+static void test_synthetic_short_fill(void) {
+    uint8_t asset[7] = { 0x10, 0x00, 0x01, 0x00, 0x7A, 0x7F, 0 };
+    uint8_t dst[16] = {0};
+    size_t wrote = 0, consumed = 0;
+    dm1_v1_fmtowns_pic_library_gfx_header_t hdr;
+    int rc = dm1_v1_fmtowns_pic_library_decode_asset_pc34(
+        asset, sizeof(asset), dst, sizeof(dst), &wrote, &consumed, &hdr);
+    assert(rc == DM1_V1_FMTOWNS_PIC_LIB_OK);
+    assert(hdr.width_pixels == 16 && hdr.padded_width_pixels == 32);
+    assert(wrote == 16);
+    /* Pixels 0..7 = 0xA → bytes 0..3 = 0xAA (both nibbles from 0xA
+     * short-form fill's dup-byte). Pixels 8..15 = 0xF → bytes 4..7 =
+     * 0xFF. Padding pixels 16..31 (bytes 8..15) untouched (zero). */
+    for (size_t i = 0; i < 4; ++i) assert(dst[i] == 0xAA);
+    for (size_t i = 4; i < 8; ++i) assert(dst[i] == 0xFF);
+    for (size_t i = 8; i < 16; ++i) assert(dst[i] == 0x00);
+    /* Consumed = 4 (header) + 2 (control bytes) = 6. */
+    assert(consumed == 6);
+}
+
+/* Extended fill (bit7=1, bit6=0, mode 0): 1-byte count field. */
+static void test_synthetic_extended_fill(void) {
+    /* w=32 h=1 → padded_w=32 → uncompressed path → decoder refuses.
+     * Use w=16 again; extended mode 0 with count = next+1. */
+    /* ctrl 0x8A: bit7=1 bit6=0 mode 00, nib 0xA. Next byte 0x0F →
+     * count = 16. Fills 16 pixels with nibble 0xA. */
+    uint8_t asset[7] = { 0x10, 0x00, 0x01, 0x00, 0x8A, 0x0F, 0 };
+    uint8_t dst[16] = {0};
+    size_t wrote = 0, consumed = 0;
+    dm1_v1_fmtowns_pic_library_gfx_header_t hdr;
+    int rc = dm1_v1_fmtowns_pic_library_decode_asset_pc34(
+        asset, sizeof(asset), dst, sizeof(dst), &wrote, &consumed, &hdr);
+    assert(rc == DM1_V1_FMTOWNS_PIC_LIB_OK);
+    assert(wrote == 16);
+    /* All 16 unpadded pixels = 0xA → 8 dup bytes = 0xAA. */
+    for (size_t i = 0; i < 8; ++i) assert(dst[i] == 0xAA);
+    for (size_t i = 8; i < 16; ++i) assert(dst[i] == 0x00);
+    /* Consumed = 4 (header) + 1 (ctrl) + 1 (count) = 6. */
+    assert(consumed == 6);
+}
+
+/* Real GRAPHICS.DAT round-trip: byte-count verification on ≥2 RLE
+ * assets. The task specification permits length-only verification
+ * because we have no known-good decoded pixel data — length invariants
+ * (source-bytes-consumed = size_table[idx], and decoded-bytes =
+ * padded_width/2 * height) are the strongest ship criterion available.
+ *
+ * Points at real GRAPHICS.DAT via env FIRESTAFF_DM1_FMTOWNS_GRAPHICS_DAT.
+ * Skips if not present. Never bundles game data. */
+static uint8_t *load_file_full(const char *path, size_t *out_size) {
+    FILE *f = fopen(path, "rb"); if (!f) return NULL;
+    fseek(f, 0, SEEK_END); long sz = ftell(f);
+    if (sz <= 0) { fclose(f); return NULL; }
+    fseek(f, 0, SEEK_SET);
+    uint8_t *buf = (uint8_t *)malloc((size_t)sz);
+    if (!buf) { fclose(f); return NULL; }
+    if (fread(buf, 1, (size_t)sz, f) != (size_t)sz) { free(buf); fclose(f); return NULL; }
+    fclose(f);
+    *out_size = (size_t)sz;
+    return buf;
+}
+
+static void test_real_graphics_dat_rle_roundtrip(void) {
+    const char *path = getenv("FIRESTAFF_DM1_FMTOWNS_GRAPHICS_DAT");
+    if (!path || !*path) {
+        printf("SKIP: FIRESTAFF_DM1_FMTOWNS_GRAPHICS_DAT not set\n");
+        return;
+    }
+    size_t sz = 0;
+    uint8_t *file = load_file_full(path, &sz);
+    if (!file) { printf("SKIP: cannot open %s\n", path); return; }
+
+    dm1_v1_fmtowns_pic_library_view_t view;
+    int rc = dm1_v1_fmtowns_pic_library_open_pc34(file, sz, &view);
+    assert(rc == DM1_V1_FMTOWNS_PIC_LIB_OK);
+
+    /* Sweep every asset that hits the RLE branch (width != padded_width)
+     * up to index 500 (past that the container also stores palette /
+     * font raw spans whose 4-byte prefix is data, not a valid header). */
+    uint8_t dst[1u << 17];
+    size_t pass = 0, tried = 0;
+    for (uint16_t i = 0; i < 500 && i < view.asset_count; ++i) {
+        const uint8_t *span; uint16_t span_sz;
+        if (dm1_v1_fmtowns_pic_library_asset_bytes_pc34(&view, i, &span, &span_sz) != 0) continue;
+        if (span_sz < 4) continue;
+        dm1_v1_fmtowns_pic_library_gfx_header_t hdr;
+        if (dm1_v1_fmtowns_pic_library_parse_gfx_header_pc34(span, span_sz, &hdr) != 0) continue;
+        if (hdr.is_uncompressed) continue;
+        if (hdr.decoded_total_bytes == 0 || hdr.decoded_total_bytes > sizeof(dst)) continue;
+        size_t wrote = 0, consumed = 0;
+        int drc = dm1_v1_fmtowns_pic_library_decode_asset_pc34(
+            span, span_sz, dst, sizeof(dst), &wrote, &consumed, NULL);
+        if (drc != DM1_V1_FMTOWNS_PIC_LIB_OK) continue;
+        tried++;
+        /* Byte-count invariants: destination fully written and source
+         * fully consumed. */
+        if (wrote == hdr.decoded_total_bytes && consumed == span_sz) {
+            pass++;
+        } else {
+            printf("  MISMATCH idx=%u w=%u h=%u wrote=%zu/%u consumed=%zu/%u\n",
+                   i, hdr.width_pixels, hdr.height_pixels,
+                   wrote, hdr.decoded_total_bytes, consumed, span_sz);
+        }
+    }
+    printf("  RLE round-trip: %zu/%zu assets byte-exact\n", pass, tried);
+    /* Task requires at least two RLE assets round-trip. */
+    assert(pass >= 2);
+    /* And realistically, ALL well-formed RLE assets must round-trip;
+     * anything less means the decoder or the header classifier is
+     * off. */
+    assert(pass == tried);
+    free(file);
+}
+
 int main(void) {
     test_open_and_header();
     test_sizes_and_offsets();
@@ -186,6 +306,9 @@ int main(void) {
     test_gfx_header_parse();
     test_menu_font_identity_is_reachable();
     test_truncated_input();
+    test_synthetic_short_fill();
+    test_synthetic_extended_fill();
+    test_real_graphics_dat_rle_roundtrip();
     printf("All dm1_v1_fmtowns_pic_library tests passed.\n");
     return 0;
 }
