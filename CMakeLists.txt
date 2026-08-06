@@ -4620,6 +4620,12 @@ list(REMOVE_ITEM M10_SOURCES
 # target already compiles it; it has no M11 caller or original-DM1 input.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_nested_tail_reopen_after_drop_gate_pc34_compat.c")
+# `dm1_v1_chest_nested_container_weight_gate_pc34_compat.c` is a
+# contract-only nested-container model with fixed local item ids, weights and
+# side-channel slot arrays. It has no original-DM1 input or M11/runtime caller;
+# its direct regression target already compiles the source explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_nested_container_weight_gate_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
