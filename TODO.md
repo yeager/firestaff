@@ -201,10 +201,12 @@
   source/code ownership only. The receipt now additionally verifies the
   `MPOFN`, `COAR`, `COAG` and `COAB` literal loads at file offsets `0x28E78`,
   `0x28E98`, `0x28EAA` and `0x28EB8`, plus their adjacent SH-2 word stores.
-  Recover the
-  executed VDP2 register/VRAM writes and tile/CLUT consumer from an
-  instrumented Saturn capture before admitting menu placement, FONT256 text,
-  HUD composition or viewport pixels.
+  The same receipt now binds the VDP1-init literal pool at `0x7D3B8` through
+  `0x7D3C0` and its adjacent framebuffer-control stores. Recover the
+  executed VDP1 command-list/VRAM writes, the remaining VDP2 register/VRAM
+  writes, and the tile/CLUT consumer from an instrumented Saturn capture;
+  these static receipts do not authorize host drawing before admitting menu
+  placement, FONT256 text, HUD composition or viewport pixels.
 
 - **DM1-D0C-F0108-SYNTHETIC-AUDIT:** The D0C/F0108 floor-ceiling-ornament
   helper remains a contract-only probe with fixed coordinate, zone and

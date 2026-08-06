@@ -5152,6 +5152,11 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   offset writes only; VDP2 runtime capture, VRAM/CRAM tile and CLUT consumers,
   and final composition remain intentionally capture-gated. Real-data test
   passes against `DM.BIN` MD5 `e88d60859f65f08fa622e1992b02280f`.
+- ✅ 2026-08-06 Nexus VDP1 init source receipt: the same real-data regression
+  now binds the retail SH-2 VDP1 framebuffer-control literal pool and its
+  adjacent word stores. This records source ownership for startup/menu
+  initialization only; command-list, VRAM, CLUT and runtime pixel capture
+  remain gated on an instrumented Saturn trace.
 - ✅ 2026-08-06 Nexus SAL host-PCM boundary: production now retains the
   source-owned SAL/DataID-0 and MAP receipts but does not materialize retail
   SAL bytes as host PCM candidates.  Playback remains blocked pending Saturn

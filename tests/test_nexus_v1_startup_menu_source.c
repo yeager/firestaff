@@ -188,6 +188,23 @@ int main(void)
         !check_sh2_mov_l_literal(data, (size_t)file_size, 0x28EB8U, 1U,
             0x28F4CU, UINT32_C(0x25F00104)) ||
         read_be16(data, 0x28EBCU) != UINT16_C(0x2131) ||
+        /* The retail VDP1 init spine is likewise retained as a source
+         * receipt.  Its literal pool names the framebuffer-control ports;
+         * the adjacent stores are instruction ownership only, not a host
+         * command-list or pixel capture. */
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x7D3B8U, 0U,
+            0x7D49CU, UINT32_C(0x25D00004)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x7D3BCU, 4U,
+            0x7D4A0U, UINT32_C(0x00008000)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x7D3BEU, 3U,
+            0x7D498U, UINT32_C(0x25D00002)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x7D3C0U, 13U,
+            0x7D4ACU, UINT32_C(0x0000FFFF)) ||
+        read_be16(data, 0x7D3C2U) != UINT16_C(0x2321) ||
+        read_be16(data, 0x7D3C4U) != UINT16_C(0x2011) ||
+        read_be16(data, 0x7D3CEU) != UINT16_C(0x2121) ||
+        read_be16(data, 0x7D3D2U) != UINT16_C(0x2231) ||
+        read_be16(data, 0x7D3D6U) != UINT16_C(0x23D1) ||
         /* Register literals are retained as disassembly receipts only. */
         count_be32(data, (size_t)file_size, UINT32_C(0x25F00006)) != 1U ||
         count_be32(data, (size_t)file_size, UINT32_C(0x25F80000)) != 1U ||
