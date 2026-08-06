@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus stale-doc quarantine: marked the old testing, armor,
+  potion and combat-item pages as historical/diagnostic snapshots. They no
+  longer present DM1-derived formulas or the former “no tests/all scaffolding”
+  planning text as current Nexus parity, and point readers to the strict
+  fidelity inventory and Saturn capture gates.
+
 - ✅ 2026-08-06 DM2 FM Towns English ZIP companion: an explicitly selected,
   hash-verified PC-English `GRAPHICS.DAT` now accepts the DOS archive's real
   `DATA/GRAPHICS.DAT` member spelling as well as lower-case virtual paths.

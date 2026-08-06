@@ -1,5 +1,12 @@
 # Nexus V1 — Potion/Flask System
 
+> **Historical/diagnostic note.** This page is not an authoritative claim
+> that Nexus inherits the DM1 potion system or that flask effects are
+> implemented. The retail ITEM/DM.BIN records are receipts only; an
+> authenticated Saturn action/effect consumer is still missing. Production
+> potion/fountain mutation therefore remains blocked. See
+> `docs/NEXUS_STALE_CLAIM_AUDIT.md`.
+
 **Audit date:** 2026-05-25
 **Sources:** `src/nexus/nexus_v1_magic.c`, `include/firestaff_item_encyclopedia.h`, `src/ui/firestaff_item_encyclopedia.c`, `include/firestaff_inventory_ui.h`, `docs/spells_items.md` (DM1 V1), `docs/dm2_potions.md`
 

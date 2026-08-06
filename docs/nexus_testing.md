@@ -1,5 +1,14 @@
 # Nexus V1 Parity Testing Guide
 
+> **Historical planning snapshot — not current production status.** This
+> document predates the real-retail Nexus corpus, source receipts and Saturn
+> capture gates. Its statements such as “No end-to-end test exists” and “all
+> scaffolding” must not be read as current facts. For the current inventory,
+> see [`NEXUS_STRICT_FIDELITY_INVENTORY.md`](NEXUS_STRICT_FIDELITY_INVENTORY.md),
+> [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md), `TODO.md` and
+> `DONE.md`. Format parsing is evidence; runtime parity still requires an
+> authenticated Saturn/Mednafen consumer capture.
+
 ## Overview
 
 Dungeon Master Nexus (1998) is a 3D polygon remake of DM1, exclusive to Sega Saturn, Japanese only.

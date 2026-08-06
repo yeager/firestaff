@@ -1,5 +1,12 @@
 # Nexus V1 — Weapons and Items in Combat
 
+> **Historical/diagnostic note.** This page is not an authoritative claim
+> that Nexus uses the DM1 item set or that the listed combat routes are
+> playable. The tables and call signatures are diagnostic/fixture material;
+> production item actions remain capture-gated until Saturn dispatch,
+> source records and effect writes are joined. See
+> `docs/NEXUS_STALE_CLAIM_AUDIT.md`.
+
 ## Source
 - `src/nexus/nexus_v1_combat.c` — weapon_power parameter in attack formula
 - `src/nexus/nexus_v1_magic.c` — potion crafting (flask system)

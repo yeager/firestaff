@@ -146,7 +146,9 @@
   focused audit in `docs/NEXUS_STALE_CLAIM_AUDIT.md` quarantines those claims
   and points to the current retail receipts and capture gates. Continue the
   sweep when a new source-owned consumer is proven; do not reopen a route from
-  documentation alone.
+  documentation alone. The testing, armor, potion and combat-item pages now
+  carry explicit historical/diagnostic banners; their old “implemented” and
+  “no tests” wording is not current status.
 
 - **THERON-REAL-CONSUMER-HANDOFF:** The authenticated US/JP Track 02 map,
   object, ground, door, teleporter and creature-bank records are retained, but

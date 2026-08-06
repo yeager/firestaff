@@ -1,5 +1,11 @@
 # Nexus V1 — Armor System
 
+> **Historical/diagnostic note.** This page is not an authoritative claim
+> that Nexus armor is implemented or source-locked. Its DM1-derived tables
+> and host combat formulas remain diagnostic/fixture material. Retail ITEM,
+> PLRD and Saturn action-dispatch evidence are required before armor effects
+> may mutate production gameplay. See `docs/NEXUS_STALE_CLAIM_AUDIT.md`.
+
 **Audit date:** 2026-05-25
 **Sources:** `src/nexus/nexus_v1_combat.c`, `include/nexus_v1_combat.h`, `include/firestaff_item_encyclopedia.h`, `src/ui/firestaff_item_encyclopedia.c`, `include/firestaff_inventory_ui.h`, `docs/nexus_combat_items.md`
 
