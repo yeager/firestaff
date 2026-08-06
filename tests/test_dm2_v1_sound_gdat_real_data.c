@@ -190,7 +190,7 @@ int main(void)
     dm2_v1_sound_queue_state_init(&state, 8);
     assert(dm2_v1_sound9(&state, 1, 2, 3, 7, &index) == 1);
     assert(index == 1);
-    assert(state.ssound[0].w_00 == 7);
+    assert(state.ssound[0].w_00 == -1);
     assert(state.ssound[0].b_02 == 1);
     assert(state.ssound[0].b_03 == 2);
     assert(state.ssound[0].b_04 == 3);
@@ -209,7 +209,8 @@ int main(void)
         (void)q;
         DM2_V1_GdatSoundEntryReceipt receipt;
 
-        /* The same GDAT triple resolves to a real raw-entry sample binding. */
+        /* GDAT proves the later resolver's source entry, but DM2_SOUND9
+         * itself must not fabricate the c_gdatfile.cpp binding or pool slot. */
         assert(dm2_v1_gdat_sound_entry_receipt(&loader, sound_cat, sound_idx,
                                                sound_field, 0, 0,
                                                &receipt) == 1);
@@ -217,7 +218,8 @@ int main(void)
         dm2_v1_sound_queue_state_init(&state, 8);
         assert(dm2_v1_sound9(&state, (int8_t)sound_cat, (int8_t)sound_idx,
                              (int8_t)sound_field, -1, &index) == 1);
-        assert(state.ssound[index - 1u].w_00 == (int16_t)receipt.raw_index);
+        assert(state.ssound[index - 1u].w_00 == -1);
+        assert(state.ssound[index - 1u].w_05 == -1);
 
         /* A verified loader alone cannot construct a host-side queue. */
         assert(dm2_v1_sound_query_entry(sound_cat, sound_idx, sound_field) == -1);

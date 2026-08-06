@@ -86,7 +86,12 @@ int dm2_v1_sound_queue_sound9(DM2_V1_SoundQueueState *state,
     if (state->ssound_count >= state->ssound_capacity ||
         state->ssound_count >= DM2_V1_SOUND_SSOUND_QUEUE_CAP)
         return 0;
-    state->ssound[state->ssound_count].w_00 = sample_id;
+    /* c_sound.cpp:656-661 assigns only the class triple and w_05 = -1.
+     * The old Firestaff compatibility path copied sample_id into w_00 here,
+     * fabricating c_gdatfile.cpp::DM2_482b_0684's later ownership of both a
+     * GDAT raw index and a sndptr4 slot. */
+    (void)sample_id;
+    state->ssound[state->ssound_count].w_00 = -1;
     state->ssound[state->ssound_count].b_02 = cls1;
     state->ssound[state->ssound_count].b_03 = cls2;
     state->ssound[state->ssound_count].b_04 = cls3;

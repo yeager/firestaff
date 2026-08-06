@@ -84,6 +84,16 @@ int main(void)
     assert(dm2_v1_sound_queue_sound9(&st, 3, 1, 4, 12, &idx) == 1);
     assert(dm2_v1_sound_queue_sound9(&st, 5, 5, 5, 13, &idx) == 0); /* full */
 
+    /* Model only the postcondition of c_gdatfile.cpp::DM2_482b_0684 for
+     * the source-ordered GEN1 cases below. DM2_SOUND9 must not create this
+     * binding. The data-free queue test has no authenticated DYN4 owner. */
+    st.ssound[0].w_00 = 7;
+    st.ssound[0].w_05 = 0x1234;
+    st.ssound[2].w_00 = 11;
+    st.ssound[2].w_05 = 0x1235;
+    st.ssound[3].w_00 = 12;
+    st.ssound[3].w_05 = 0x1236;
+
     /* ── GEN1 gate order (c_sfx.cpp:156-169) ── */
     /* map gate: delay > 0 with foreign map rejects before anything else */
     env.current_map = 9;
@@ -327,6 +337,9 @@ int main(void)
     make_env(&env);
     env.occlusion_probe = probe_near;
     assert(dm2_v1_sound_queue_sound9(&st, 1, 2, 3, 7, &idx) == 1);
+    /* Post-DM2_482b_0684 source state; see the equivalent note above. */
+    st.ssound[0].w_00 = 7;
+    st.ssound[0].w_05 = 0x1234;
     assert(dm2_v1_sound_queue_noise_gen1(&st, 1, 2, 3, 4, 10, 12, 13, 1,
                                          &env, &r) == 1);
     assert(dm2_v1_sound_queue_noise_gen1(&st, 1, 2, 3, 2, 10, 14, 15, 1,

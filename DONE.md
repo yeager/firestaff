@@ -53014,6 +53014,13 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   still defers those entries. The real-media regression locks 149,244 payload
   bytes in a 149,670-byte source-layout image; it neither decodes nor plays
   a sample and does not open a gameplay path.
+
+- ✅ Removed a synthetic DM2 sound binding from `DM2_SOUND9`. SKProject's
+  `c_sound.cpp:650-662` records only the class triple and sets `w_05 = -1`;
+  `c_gdatfile.cpp::DM2_482b_0684` later owns both the GDAT raw-index lookup
+  and `sndptr4` pool slot. Firestaff no longer puts a caller value or GDAT raw
+  index into `w_00` merely because a loader exists. The real-GDAT test proves
+  that the queue remains unbound until that source owner is implemented.
 # 2026-08-06 Nexus mixed extracted/ISO runtime source
 
 - ✅ `nexus_v1_init()` now retains the hash-verified extracted corpus as the

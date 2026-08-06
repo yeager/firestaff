@@ -364,9 +364,9 @@ int dm2_v1_sound_voice_active(unsigned voice_slot);
 
 /* ── Public API ──────────────────────────────────────────────────────── */
 
-/* DM2-008 GDAT-backed sound backend.  Bind a verified GDAT loader so that
- * DM2_SOUND9 / DM2_QUERY_SND_ENTRY_INDEX can resolve sample bindings from
- * GRAPHICS.DAT audio raw entries.  Without binding every path is fail-closed. */
+/* DM2-008 GDAT-backed sound backend. Bind a verified GDAT loader for the
+ * later source-owned GDAT resolver and playback routes. DM2_SOUND9 itself
+ * does not resolve a sample binding. */
 void dm2_v1_sound_bind_gdat_loader(const DM2_V1_AssetLoader *loader,
                                    int verified);
 
@@ -377,7 +377,10 @@ void dm2_v1_sound_bind_gdat_loader(const DM2_V1_AssetLoader *loader,
 void dm2_v1_sound_bind_runtime_queue(DM2_V1_SoundQueueState *state);
 
 /* DM2_SOUND9: populate dm2sound.xsndptr2 (seven-byte s_ssound entry).
- * Pass sample_id = -1 to attempt GDAT resolution when a loader is bound. */
+ * The original routine has no sample argument and always leaves w_05 at -1;
+ * c_gdatfile.cpp::DM2_482b_0684 later owns the GDAT lookup, raw-index binding
+ * and sndptr4 slot allocation. `sample_id` remains only for ABI compatibility
+ * and is deliberately ignored. */
 int dm2_v1_sound9(DM2_V1_SoundQueueState *state,
                   int8_t cls1,
                   int8_t cls2,

@@ -159,8 +159,9 @@ typedef struct {
 void dm2_v1_sound_queue_state_init(DM2_V1_SoundQueueState *state,
                                    uint16_t ssound_capacity);
 
-/* DM2_SOUND9, c_sound.cpp:650-662.  sample_id is the w_00 binding the source
- * owns from level load; pass -1 when no proven binding exists. */
+/* DM2_SOUND9, c_sound.cpp:650-662. The source initialises w_05 to -1 and
+ * does not bind w_00 here. `sample_id` exists only to preserve Firestaff's
+ * older public call shape and is ignored; DM2_482b_0684 owns later binding. */
 int dm2_v1_sound_queue_sound9(DM2_V1_SoundQueueState *state,
                               int8_t cls1, int8_t cls2, int8_t cls3,
                               int16_t sample_id,

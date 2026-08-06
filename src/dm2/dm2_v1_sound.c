@@ -1065,35 +1065,10 @@ void dm2_v1_sound_bind_runtime_queue(DM2_V1_SoundQueueState *state)
     g_dm2_sound_runtime_queue = state;
 }
 
-static int dm2_v1_sound_resolve_sample_from_gdat(int8_t cls1,
-                                                  int8_t cls2,
-                                                  int8_t cls3,
-                                                  int16_t *out_sample_id)
-{
-    DM2_V1_GdatSoundEntryReceipt receipt;
-    if (!g_dm2_sound_gdat_verified || !g_dm2_sound_gdat_loader || !out_sample_id)
-        return 0;
-    /* The GDAT class bytes are unsigned (categories run to 0xF0); the
-     * s_ssound queue stores them as the source's signed bytes, so widen
-     * through uint8_t before hitting the GDAT query layer. */
-    if (!dm2_v1_gdat_sound_entry_receipt(g_dm2_sound_gdat_loader,
-                                         (int)(uint8_t)cls1,
-                                         (int)(uint8_t)cls2,
-                                         (int)(uint8_t)cls3,
-                                         0, 0, &receipt) ||
-        !receipt.accepted) {
-        return 0;
-    }
-    /* The GDAT raw index that owns the PCM payload becomes the sample binding
-     * (mirrors how the source builds xsndptr2->w_00 from sndptr4). */
-    *out_sample_id = (int16_t)receipt.raw_index;
-    return 1;
-}
-
 /* DM2_SOUND9: populate dm2sound.xsndptr2 (seven-byte s_ssound entry).
- * Source: c_sound.cpp:650-662.  If sample_id is -1 and a verified GDAT loader
- * is bound, the binding is resolved from GDAT; otherwise -1 stays unresolved
- * and downstream playback is rejected. */
+ * Source: c_sound.cpp:650-662. The later c_gdatfile.cpp::DM2_482b_0684 owns
+ * the GDAT lookup and writes w_00/w_05 after DYN4 has materialised its raw
+ * sample. A loader alone must not forge that later state. */
 int dm2_v1_sound9(DM2_V1_SoundQueueState *state,
                   int8_t cls1,
                   int8_t cls2,
@@ -1101,13 +1076,7 @@ int dm2_v1_sound9(DM2_V1_SoundQueueState *state,
                   int16_t sample_id,
                   uint16_t *out_index)
 {
-    int16_t resolved = sample_id;
-    if (!state) return 0;
-    if (resolved < 0) {
-        (void)dm2_v1_sound_resolve_sample_from_gdat(cls1, cls2, cls3,
-                                                    &resolved);
-    }
-    return dm2_v1_sound_queue_sound9(state, cls1, cls2, cls3, resolved,
+    return dm2_v1_sound_queue_sound9(state, cls1, cls2, cls3, sample_id,
                                      out_index);
 }
 
