@@ -21,6 +21,13 @@ The panel uses the same per-game configuration slots as the start menu. It is
 available for all five games, and changing a control writes the normal
 Firestaff configuration immediately. No restart is required.
 
+The presentation page is shared by all games and owns scaling, aspect ratio,
+window mode, VSync and the FPS overlay. Source-specific filters are separate:
+Theron's admitted V2 chain owns its scanline, palette, dither, EPX and bilinear
+settings. DM2 and Nexus show those rows as `SOURCE LOCKED` until their real
+runtime filter chains have been decoded and connected; Firestaff does not
+pretend that DM1 settings affect them.
+
 ## Keyboard and mouse
 
 - Press **F10** to open or close the panel.

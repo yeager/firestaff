@@ -533,6 +533,58 @@ int main(void) {
         }
     }
 
+    /* Source-specific filter ownership: Theron must use its own admitted
+     * settings bridge, while DM2/Nexus must not silently mutate DM1 values
+     * through a generic host filter path. */
+    config.dm1V2CrtScanlinesEnabled = 0;
+    config.theronV2CrtScanlinesEnabled = 0;
+    config.theronV2ScalePercent = 200;
+    assert(M12_Config_Save(&config) == 1);
+    state.sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
+    state.presentationMode = M12_PRESENTATION_V20_FILTERED;
+    state.graphicsPopupActive = 0;
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_GRAPHICS_POPUP);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupPage == 1);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.theronV2CrtScanlinesEnabled == 1);
+    assert(config.dm1V2CrtScanlinesEnabled == 0);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.theronV2ScalePercent == 400);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
+    assert(result == M11_GAME_INPUT_REDRAW);
+
+    config.dm1V2CrtScanlinesEnabled = 0;
+    state.sourceKind = M11_GAME_SOURCE_DM2_BOOT;
+    state.presentationMode = M12_PRESENTATION_V20_FILTERED;
+    state.graphicsPopupActive = 0;
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_GRAPHICS_POPUP);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupPage == 1);
+    result = M11_GameView_HandlePointerButton(&state, 180, 48,
+                                               DM1_V1_MOUSE_MASK_LEFT_PC34);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.dm1V2CrtScanlinesEnabled == 0);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
+    assert(result == M11_GAME_INPUT_REDRAW);
+
     puts("m11 runtime graphics popup: ok");
     return 0;
 }

@@ -23899,10 +23899,23 @@ static int m11_graphics_popup_row_count(const M11_GameViewState* state,
                                         int page) {
     if (page == M11_GRAPHICS_POPUP_PAGE_PRESENTATION) return 9;
     if (page == M11_GRAPHICS_POPUP_PAGE_CHEATS) return 2;
+    /* Theron has its own admitted V2 filter owner.  DM2 and Nexus do not yet
+     * have a real filter-chain contract, so expose one explicit locked row
+     * instead of presenting DM1 controls as if they affected those games. */
+    if (page == M11_GRAPHICS_POPUP_PAGE_EFFECTS && state &&
+        state->sourceKind != M11_GAME_SOURCE_BUILTIN_CATALOG &&
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
+        state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02) return 1;
+    if (page == M11_GRAPHICS_POPUP_PAGE_FILTERS && state &&
+        state->sourceKind != M11_GAME_SOURCE_BUILTIN_CATALOG &&
+        state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
+        state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02) return 1;
     /* CSB has its own source-preserving V2 filter chain.  Do not present
      * DM1-only colour/sharpen controls as if they altered CSB's runtime. */
     if (page == M11_GRAPHICS_POPUP_PAGE_FILTERS &&
         state && state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) return 6;
+    if (page == M11_GRAPHICS_POPUP_PAGE_FILTERS && state &&
+        state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) return 6;
     return page == M11_GRAPHICS_POPUP_PAGE_FILTERS ? 11 : 8;
 }
 
@@ -23936,6 +23949,16 @@ static void m11_graphics_popup_apply_v2(const M11_GameViewState* state,
                                       settings.paletteCorrectionEnabled,
                                       100, settings.ditherCleanupEnabled,
                                       0, 0);
+        return;
+    }
+    if (state && state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+        Theron_V2_Settings settings;
+        theron_v2_settings_from_m12_config(&settings, config);
+        theron_v2_settings_apply_to_runtime(&settings);
+        return;
+    }
+    if (state && state->sourceKind != M11_GAME_SOURCE_BUILTIN_CATALOG) {
+        /* DM2/Nexus have no admitted source-owned post-process chain yet. */
         return;
     }
     /* M12 has no independent persisted interpolation preference. Palette
@@ -24111,27 +24134,43 @@ static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
     } else {
         /* Filters are deliberately locked in V1: the source-original route
          * remains exact while enhanced modes can change presentation live. */
+        if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS &&
+            state->sourceKind != M11_GAME_SOURCE_BUILTIN_CATALOG &&
+            state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
+            state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02) return 1;
+        if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_EFFECTS &&
+            state->sourceKind != M11_GAME_SOURCE_BUILTIN_CATALOG &&
+            state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
+            state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02) return 1;
         if (state->presentationMode == M12_PRESENTATION_V1_ORIGINAL) return 1;
         if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS) {
             switch (row) {
                 case 0:
                     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)
                         config.csbV2CrtScanlinesEnabled = !config.csbV2CrtScanlinesEnabled;
+                    else if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02)
+                        config.theronV2CrtScanlinesEnabled = !config.theronV2CrtScanlinesEnabled;
                     else config.dm1V2CrtScanlinesEnabled = !config.dm1V2CrtScanlinesEnabled;
                     break;
                 case 1:
                     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)
                         config.csbV2CrtScanlineStrength = m11_graphics_popup_cycle(config.csbV2CrtScanlineStrength, delta, 101);
+                    else if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02)
+                        config.theronV2CrtScanlineStrength = m11_graphics_popup_cycle(config.theronV2CrtScanlineStrength, delta, 101);
                     else config.dm1V2CrtScanlineStrength = m11_graphics_popup_cycle(config.dm1V2CrtScanlineStrength, delta, 101);
                     break;
                 case 2:
                     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)
                         config.csbV2PaletteCorrectionEnabled = !config.csbV2PaletteCorrectionEnabled;
+                    else if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02)
+                        config.theronV2PaletteCorrectionEnabled = !config.theronV2PaletteCorrectionEnabled;
                     else config.dm1V2PaletteCorrectionEnabled = !config.dm1V2PaletteCorrectionEnabled;
                     break;
                 case 3:
                     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)
                         config.csbV2DitherCleanupEnabled = !config.csbV2DitherCleanupEnabled;
+                    else if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02)
+                        config.theronV2DitherCleanupEnabled = !config.theronV2DitherCleanupEnabled;
                     else { config.dm1V2PaletteGamma += delta * 5; if (config.dm1V2PaletteGamma < 80) config.dm1V2PaletteGamma = 260; if (config.dm1V2PaletteGamma > 260) config.dm1V2PaletteGamma = 80; }
                     break;
                 case 4:
@@ -24141,11 +24180,16 @@ static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
                                      config.csbV2ScalePercent == 400 ? 2 : 1;
                         config.csbV2ScalePercent = scaleChoices[
                             m11_graphics_popup_cycle(choice, delta, 3)];
+                    } else if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+                        config.theronV2ScalePercent = config.theronV2ScalePercent == 100 ? 200 :
+                            config.theronV2ScalePercent == 400 ? 100 : 400;
                     } else config.dm1V2PaletteBrightness = m11_graphics_popup_cycle(config.dm1V2PaletteBrightness + 50, delta * 5, 101) - 50;
                     break;
                 case 5:
                     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT)
                         config.csbV2BilinearEnabled = !config.csbV2BilinearEnabled;
+                    else if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02)
+                        config.theronV2BilinearEnabled = !config.theronV2BilinearEnabled;
                     else config.dm1V2PaletteContrast = m11_graphics_popup_cycle(config.dm1V2PaletteContrast + 50, delta * 5, 101) - 50;
                     break;
                 case 6: config.dm1V2DitherCleanupEnabled = !config.dm1V2DitherCleanupEnabled; break;
@@ -52365,6 +52409,34 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                           M11_GRAPHICS_POPUP_X + 7, y, csbFilters[i], &line);
             m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                           M11_GRAPHICS_POPUP_X + 82, y, value, &line);
+            continue;
+        } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS &&
+                   state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
+            static const char* const theronFilters[] = {
+                "SCANLINE", "SCAN %", "PALETTE", "DITHER", "EPX", "BILINEAR"
+            };
+            switch (i) {
+                case 0: snprintf(value, sizeof(value), "%s", config.theronV2CrtScanlinesEnabled ? "ON" : "OFF"); break;
+                case 1: snprintf(value, sizeof(value), "%d%%", config.theronV2CrtScanlineStrength); break;
+                case 2: snprintf(value, sizeof(value), "%s", config.theronV2PaletteCorrectionEnabled ? "ON" : "OFF"); break;
+                case 3: snprintf(value, sizeof(value), "%s", config.theronV2DitherCleanupEnabled ? "ON" : "OFF"); break;
+                case 4: snprintf(value, sizeof(value), "%dX", config.theronV2ScalePercent / 100); break;
+                default: snprintf(value, sizeof(value), "%s", config.theronV2BilinearEnabled ? "ON" : "OFF"); break;
+            }
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_GRAPHICS_POPUP_X + 7, y, theronFilters[i], &line);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_GRAPHICS_POPUP_X + 82, y, value, &line);
+            continue;
+        } else if ((state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ||
+                    state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_EFFECTS) &&
+                   state->sourceKind != M11_GAME_SOURCE_BUILTIN_CATALOG &&
+                   state->sourceKind != M11_GAME_SOURCE_CSB_BOOT &&
+                   state->sourceKind != M11_GAME_SOURCE_THERON_TRACK02) {
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_GRAPHICS_POPUP_X + 7, y, "SOURCE LOCKED", &line);
+            m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
+                          M11_GRAPHICS_POPUP_X + 82, y, "REAL CHAIN NEEDED", &line);
             continue;
         } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS) {
             switch (i) {

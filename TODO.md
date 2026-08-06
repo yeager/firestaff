@@ -60,6 +60,14 @@
   source/runtime owner is proven for that game; research those controls as
   separate source-locked work rather than fabricating behavior.
 
+- **M11-F10-SOURCE-SPECIFIC-FILTERS:** The live panel now routes Theron V2
+  scanline, palette, dither, scale and bilinear changes through its own
+  `theron_v2_settings` owner. DM2 and Nexus no longer inherit DM1 filter
+  controls: their global presentation controls and shared cheat/speed owner
+  remain available, while source-specific filter/effect pages report
+  `SOURCE LOCKED` until a real post-process chain is admitted. Add those
+  controls only after verified DM2/Nexus runtime ownership and pixel evidence.
+
 - **ASSET-SCAN-CROSS-PLATFORM-CORPUS:** DM2 never materializes game data:
   FM Towns and Amiga retain their platform-owned bounded RAM readers, while
   PC-DOS ZIP/ISO media and renamed loose pairs remain source-path diagnostics

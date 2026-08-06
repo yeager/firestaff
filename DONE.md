@@ -53876,3 +53876,8 @@ alcove runtime and archive-media tests passed (4/4).
   semantics are promoted. Verification:
   `bash -n scripts/capture_theron_mednafen_live_trace.sh`, the live-capture
   script regression, and the real archive CUE transformation pass.
+- ✅ 2026-08-06 F10 source-owned live graphics controls: Theron now routes its
+  V2 filter changes through `theron_v2_settings` and persists the Theron slot.
+  DM2/Nexus no longer mutate DM1 filter state from the popup; unsupported
+  source-specific rows are explicitly locked while shared presentation and
+  cheat/speed controls remain available. `m11_runtime_graphics_popup` passes.
