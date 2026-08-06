@@ -19,6 +19,14 @@ hash-locked JP retail image `TQJP19.iso` (MD5
 static-bank receipt only; it does not turn the absent post-CD `$2600` RAM
 consumer into a static disassembly.
 
+The receipt now also covers the contiguous 382-byte routine at bank address
+`$23AD–$252A` (FNV-1a `3056f96c`). The verified listing contains the real
+variable-bit reader at `$242A–$2458`, HuC6280 bank-window switches at
+`$2459–$2482`, literal output at `$2483–$2495`, and the back-reference path at
+`$2496–$252A`. US and JP bytes are identical for this range. This identifies a
+real decompressor support routine, but not its caller's block address,
+destination buffer, output contract, or level/object meaning.
+
 ## What the fragment proves
 
 The `$2450–$24b0` region is real code. It performs a bounded byte/bitstream

@@ -52132,6 +52132,15 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   verifies the source-locked bytes and rejects mismatched tables. This closes
   descriptor-byte provenance only; it does not infer graphics compression,
   object IDs, tile-bank ownership, palette binding or dungeon handoff.
+
+# 2026-08-06 Theron HuC6280 decompressor receipt
+
+- ✅ Extended the authenticated US/JP bank-$1f disassembly receipt from the
+  134-byte helper fragment to the full byte-identical `$23AD-$252A` routine.
+  The 382-byte range covers the variable-bit reader, bank switches, literal
+  output and back-reference path. It remains evidence only: the caller,
+  destination and level-block contract are not yet proven, so no decoder was
+  enabled in production.
 # 2026-08-06 DM2 G1 champion-mirror source inventory
 
 - ✅ The canonical PC G1 `DUNGEON.DAT` now has a source-locked receipt for

@@ -24,6 +24,11 @@
   from the authenticated BIN. This closes only the descriptor-byte receipt;
   the referenced graphics blocks, object records, tile bank, palette and
   game-owned consumer handoff remain blocked.
+  2026-08-06 disassembly update: the hash-locked US/JP bank-$1f receipt now
+  covers the full byte-identical `$23AD-$252A` variable-bit/back-reference
+  routine (382 bytes, FNV-1a 3056f96c). Its caller, destination and block
+  contract are still unbound; do not apply it to the seven level blocks by
+  byte-shape alone.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

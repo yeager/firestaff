@@ -20,6 +20,9 @@
 #define THERON_BANK1F_FILE_OFFSET 0x1f0000u
 #define THERON_FRAGMENT_OFFSET 0x243eu
 #define THERON_FRAGMENT_BYTES 134u
+#define THERON_LEVEL_DECOMPRESSOR_OFFSET 0x23adu
+#define THERON_LEVEL_DECOMPRESSOR_BYTES 382u
+#define THERON_LEVEL_DECOMPRESSOR_FNV1A 0x3056f96cu
 
 static const uint8_t g_fragment[THERON_FRAGMENT_BYTES] = {
     0xb2, 0x2e, 0x85, 0x0e, 0xe6, 0x2e, 0xd0, 0x02, 0xe6, 0x2f, 0x86, 0x0f,
@@ -66,6 +69,7 @@ int theron_v1_huc6280_disassembly_read_file(
     Theron_V1Huc6280DisassemblyReceipt receipt = {0};
     FILE *file = NULL;
     uint8_t bytes[THERON_FRAGMENT_BYTES];
+    uint8_t decompressor[THERON_LEVEL_DECOMPRESSOR_BYTES];
     uint32_t expected_size;
     const char *expected_md5;
     long file_size;
@@ -93,6 +97,9 @@ int theron_v1_huc6280_disassembly_read_file(
         (file_size = ftell(file)) <= 0 || (uint32_t)file_size != expected_size ||
         fseek(file, (long)(THERON_BANK1F_FILE_OFFSET + THERON_FRAGMENT_OFFSET),
               SEEK_SET) != 0 || fread(bytes, 1u, sizeof(bytes), file) != sizeof(bytes) ||
+        fseek(file, (long)(THERON_BANK1F_FILE_OFFSET +
+                           THERON_LEVEL_DECOMPRESSOR_OFFSET), SEEK_SET) != 0 ||
+        fread(decompressor, 1u, sizeof(decompressor), file) != sizeof(decompressor) ||
         !m12_file_md5_hex(path, receipt.source_md5)) {
         if (file) fclose(file);
         receipt.status = THERON_V1_HUC6280_DISASSEMBLY_REJECTED;
@@ -102,7 +109,12 @@ int theron_v1_huc6280_disassembly_read_file(
     fclose(file);
 
     if (strcmp(receipt.source_md5, expected_md5) != 0 ||
-        memcmp(bytes, g_fragment, sizeof(bytes)) != 0) {
+        memcmp(bytes, g_fragment, sizeof(bytes)) != 0 ||
+        fnv1a(decompressor, sizeof(decompressor)) !=
+            THERON_LEVEL_DECOMPRESSOR_FNV1A ||
+        decompressor[0] != 0xa5u || decompressor[1] != 0x2eu ||
+        decompressor[2] != 0x85u || decompressor[3] != 0x32u ||
+        decompressor[sizeof(decompressor) - 1u] != 0x60u) {
         receipt.status = THERON_V1_HUC6280_DISASSEMBLY_REJECTED;
         *out = receipt;
         return 1;
@@ -113,12 +125,16 @@ int theron_v1_huc6280_disassembly_read_file(
     receipt.forward_byte_step_verified = 1;
     receipt.bank_switch_table_verified = 1;
     receipt.reverse_byte_read_verified = 1;
+    receipt.level_decompressor_fragment_verified = 1;
     receipt.semantic_publication_allowed = 0;
     receipt.source_file_size = expected_size;
     receipt.bank_file_offset = THERON_BANK1F_FILE_OFFSET;
     receipt.fragment_address = THERON_FRAGMENT_OFFSET;
     receipt.fragment_bytes = THERON_FRAGMENT_BYTES;
     receipt.fragment_fnv1a = fnv1a(bytes, sizeof(bytes));
+    receipt.level_decompressor_address = THERON_LEVEL_DECOMPRESSOR_OFFSET;
+    receipt.level_decompressor_bytes = THERON_LEVEL_DECOMPRESSOR_BYTES;
+    receipt.level_decompressor_fnv1a = fnv1a(decompressor, sizeof(decompressor));
     *out = receipt;
     return 1;
 }
