@@ -1482,6 +1482,13 @@
   runtime). CREATURE_DIRECTION (0x42) recognized as a skproject TODO/no-op.
   Remaining: PARTY_TELEPORTER (0x2E floor), CREATURE_ANIMATOR (0x3A),
   CREATURE_KILLER/AI_STATE body (needs GET_CREATURE_AT + creature commands).
+  **2026-08-06 provenance correction:** the former production timer bindings
+  for class-2 pitfall, class-4 door, class-5 teleporter, class-6 trickwall,
+  `CONTINUE_TICK_GENERATOR`, `STEP_DOOR` and `DESTROY_DOOR` are now removed.
+  Their byte-only `value_b` interpretation changed real dungeon bytes without
+  the complete DB3/DB14/DB0 source transaction. `PROCEED_TIMERS` consumes
+  those unbound events without mutation until their record link, payload,
+  direction, map owner and follow-up timer are admitted together.
 
 - **DM2-SHOP-GLASS-OWNER-HANDOFF:** The fixed-coordinate catalog path is
   closed. SKProject `DRAW_WALL_ORNATE` passes the live wall actuator into

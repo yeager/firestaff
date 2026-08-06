@@ -8334,6 +8334,14 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-06 DM2 actuator synthetic-mutation removal: production
+  `PROCEED_TIMERS` no longer registers byte-only pitfall, door, teleporter,
+  trickwall, tick-generator, step-door or destroy-door handlers. Those
+  handlers inferred DB3/DB14/DB0 actuator semantics from timer bits while the
+  original record transaction is still unavailable. Such timers now consume
+  fail-closed without changing authentic dungeon bytes; their focused source
+  studies remain available outside the live dispatcher.
+
 - ✅ 2026-08-06 CSB FM Towns ANM CD-DA command receipts: the F2275 stream
   interpreter now retains `TD`'s original physical-track table and surfaces
   `TR` requests at the following real presentation frame, rather than

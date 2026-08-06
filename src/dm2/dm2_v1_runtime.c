@@ -5802,37 +5802,44 @@ void dm2_v1_runtime_tick(void) {
             dispatcher.handlers[DM2_V1_TIMER_THINK_CREATURE_B] =
                 dm2_runtime_think_creature_timer;
         }
-        /* Lane B cycle 8: the 0x04 actuator dispatch reads the square class
-         * through the bound provider and subdispatches to the DM2-owned
-         * handlers.  The tile-class provider only needs the boot dungeon.
-         * Class 1 (floor mecha) gates on the record-pool/CAII think binding
-         * because it walks DB records; classes 2 and 4 perform bounded
-         * square-state mutations without record-pool ownership; classes 0,
-         * 5 toggles the teleporter active bit; 6 toggles trickwall
-         * between FAKE_WALL and FLOOR. */
+        /* c_tim_proc's 0x04 dispatch is record-owned: its DB3/DB14 target,
+         * direction and payload decide every observable square mutation.
+         * Firestaff has the timer bytes but not that complete GAME_LOAD
+         * transaction yet.  In particular, the old class-2/4/5/6 helpers
+         * derived pit, door, teleporter and trick-wall state from value_b;
+         * that was a host-side substitute, not an authenticated actuator.
+         * Leave all actuator classes unbound so PROCEED_TIMERS consumes an
+         * unsupported source timer without changing the real dungeon.
+         *
+         * Re-admit a class only with its live DB3/DB14 record link, payload
+         * grammar, map owner and any required follow-up timer in one receipt.
+         * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214-4230,
+         * DM2_INVOKE_ACTUATOR / DM2_INVOKE_MESSAGE. */
         dispatcher.tile_class_at = dm2_runtime_tile_class_at;
-        dispatcher.actuator_tile[0] = dm2_runtime_actuate_wall_mecha;
-        dispatcher.actuator_tile[2] = dm2_runtime_actuate_pitfall;
-        dispatcher.actuator_tile[4] = dm2_runtime_actuate_door;
-        dispatcher.actuator_tile[5] = dm2_runtime_actuate_teleporter;
-        dispatcher.actuator_tile[6] = dm2_runtime_actuate_trickwall;
-        if (rt->think_binding_ready) {
-            dispatcher.actuator_tile[1] = dm2_runtime_actuate_floor_mecha;
-        }
+        /* No dispatcher.actuator_tile[] binding until the source transaction
+         * above exists. */
+        /* Keep the bounded transcriptions compiled as source studies for
+         * their focused regressions, but make their non-registration explicit
+         * to both readers and strict warning builds.  These expressions take
+         * no action and do not install a callback. */
+        (void)dm2_runtime_actuate_wall_mecha;
+        (void)dm2_runtime_actuate_pitfall;
+        (void)dm2_runtime_actuate_door;
+        (void)dm2_runtime_actuate_teleporter;
+        (void)dm2_runtime_actuate_trickwall;
         dispatcher.handlers[DM2_V1_TIMER_ORNATE_ANIMATOR] =
             dm2_runtime_ornate_animator_timer;
-        dispatcher.handlers[DM2_V1_TIMER_TICK_GENERATOR] =
-            dm2_runtime_tick_generator_timer;
+        /* CONTINUE_TICK_GENERATOR invokes the same incomplete actuator
+         * transaction.  Do not let its convenience record decode enqueue a
+         * guessed 0x04 mutation. */
+        (void)dm2_runtime_tick_generator_timer;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
-        /* Round 24: the 0x01 door-step timer mutates the dungeon square
-         * state one tick at a time, using ReDMCSB TIMELINE.C:750-810 for
-         * the state transition and re-queueing subsequent steps until the
-         * door reaches OPEN or CLOSED. */
-        dispatcher.handlers[DM2_V1_TIMER_STEP_DOOR] =
-            dm2_runtime_door_step_timer;
-        dispatcher.handlers[DM2_V1_TIMER_DESTROY_DOOR] =
-            dm2_runtime_destroy_door_timer;
+        /* STEP/DESTROY_DOOR likewise need the decoded DB0 direction,
+         * collision, sound and queue state.  The old bit-only handlers are
+         * intentionally not registered in a real-data runtime. */
+        (void)dm2_runtime_door_step_timer;
+        (void)dm2_runtime_destroy_door_timer;
         if (rt->record_pools_valid) {
             dispatcher.handlers[DM2_V1_TIMER_RELEASE_DOOR_BUTTON] =
                 dm2_runtime_release_door_button_timer;
