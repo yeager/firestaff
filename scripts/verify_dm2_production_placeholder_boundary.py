@@ -210,6 +210,20 @@ def verify(repo: Path) -> list[str]:
             errors.append(
                 f"creature retains reduced-state CCM mutation study: {forbidden}")
 
+    actuator_path = repo / "src/dm2/dm2_v1_actuator_event_pc34_compat.c"
+    if not actuator_path.exists():
+        errors.append(f"missing {actuator_path}")
+        return errors
+    actuator = actuator_path.read_text(encoding="utf-8")
+    for forbidden in (
+            "DM2_V1_TIMER_SHOOT_ITEM",
+            "dm2_v1_record_pool_cut_from_tile(pool_set, dungeon",
+            "dm2_v1_alloc_new_dbitem(pool_set, actu_data)",
+    ):
+        if forbidden in actuator:
+            errors.append(
+                f"actuator retains reduced-state shooter mutation study: {forbidden}")
+
     hud_path = repo / "src/dm2/dm2_v1_gdat_hud_m11_command.c"
     if not hud_path.exists():
         errors.append(f"missing {hud_path}")

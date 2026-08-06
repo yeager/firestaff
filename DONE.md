@@ -442,6 +442,14 @@
   projectile receipt unchanged. Source lock: SKProject `c_tim_proc.cpp::DM2_INVOKE_ACTUATOR` /
   `DM2_STEP_MISSILE`.
 
+# DM2 reduced-state shooter bridge removal (2026-08-06)
+
+- ✅ Removed the disabled shooter bridge that reconstructed projectile records
+  and timer payloads from partial actuator fields.
+- ✅ The production boundary now rejects restoration of its allocation, tile-cut
+  and SHOOT_ITEM-timer helpers. Source-owned DB14/DB-item transaction remains
+  required before a shooter can execute.
+
 # DM1 D2C F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only/no-game-data D2C F0111 trace from M10. It has

@@ -3804,8 +3804,8 @@ level or consumer bindings.
   compatibility body. It now returns a valid/fail-closed receipt for a
   structurally present actuator until the complete DB14/timer owner exists;
   the focused regression proves that no item allocation or timer mutation
-  occurs. Keep the source-study body out of runtime; the actual source
-  handoff remains open.
+  occurs. **2026-08-06 cleanup:** removed the disabled reduced-state source
+  study too. The actual source handoff remains open.
 
 - **DM2-ACTUATOR-GENERATOR-OWNER-HANDOFF:** Creature and item generator
   defaults are closed. Port the DB14/DB-record allocation, payload and timer
