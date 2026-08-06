@@ -86,8 +86,10 @@
   receipt: F31E accepts only `CHTWE.EXP` (283936 bytes, FNV-1a `3da136f6`)
   and F31J accepts only `CHTWJ.EXP` (284416 bytes, FNV-1a `f937db45`). This
   is the `C03_GAME` owner declared by ReDMCSB `COMPILE.H`, not a PC3.4
-  substitute; M11 still needs to consume that receipt into the first captured
-  F31 entrance, door-opening, HUD and save transaction.
+  substitute. M11 now consumes that receipt from the Switch Game exit and
+  enters the verified F31 C004 entrance session without replaying TITLE.ANM
+  or falling through to PC3.4 input. Original-media capture of the subsequent
+  door-opening, HUD and save transaction remains required.
   The raw CDDA extractor now streams a
   selected CUE track sectorwise; binding that authenticated PCM to M11 timing
   remains separate.
