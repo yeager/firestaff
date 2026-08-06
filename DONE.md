@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Theron palette admission cleanup: raw Track 02 asset loads no
+  longer initialize the procedural stone palette. Verified media therefore
+  begins with an empty, non-renderable palette until a captured HuC6260 span
+  and consumer are explicitly bound; fixture tests that need a palette still
+  initialize it locally. Theron asset-loader and rendering tests pass.
+
 - ✅ 2026-08-06 Nexus CUE external-media completeness gate: `nexus_iso_open_cue`
   still selects only the authenticated Nexus data track, while the new
   `nexus_iso_cue_media_receipt` checks every CUE `FILE` payload independently.

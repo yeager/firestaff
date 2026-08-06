@@ -14,7 +14,6 @@
  */
 
 #include "theron_v1_asset_loader.h"
-#include "theron_v1_palette.h"
 #include "theron_v1_track02.h"
 #include <string.h>
 #include <stdio.h>
@@ -104,8 +103,10 @@ TrAssetResult tr_asset_load(const char *file_path, TrAssetBundle *bundle) {
     memset(bundle, 0, sizeof(*bundle));
     bundle->assets_verified = 0;
 
-    /* Initialize palette with defaults */
-    tqr_palette_init_defaults(&bundle->palette);
+    /* A raw verified-media load starts with an empty palette.  The old
+     * procedural stone palette was never source evidence and could make a
+     * caller mistake an allocated/default state for a real HuC6260 route.
+     * Only a captured, hash/offset-bound palette consumer may populate it. */
 
     FILE *fp = fopen(file_path, "rb");
     if (!fp) {
@@ -224,10 +225,9 @@ void tr_asset_block_synthetic_rendering_for_verified_media(
         variant != THERON_TRACK02_VARIANT_US_BIN) {
         return;
     }
-    /* Verified JP/US Track 02 bytes are authoritative. The legacy loader may
-     * already have initialized a default palette or tile store, but neither is
-     * source evidence. Only a decoded original bank plus a proven HuC6260
-     * palette route can clear this admission boundary. */
+    /* Verified JP/US Track 02 bytes are authoritative. Only a decoded
+     * original bank plus a proven HuC6260 palette route can clear this
+     * admission boundary. */
     bundle->synthetic_rendering_blocked =
         !tr_asset_generated_v1_rendering_allowed(bundle);
 }

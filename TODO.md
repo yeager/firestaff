@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **THERON-PALETTE-ROUTE:** A raw verified Track 02 load now starts with an
+  empty palette. The former procedural stone palette was not source evidence
+  and could make an unbound bundle look renderable. Keep the runtime blocked
+  until a captured HuC6260 palette span and consumer are hash/offset-bound.
+
 - **THERON-US-ROSTER-CONSUMER:** The production startup receipt no longer
   copies the eight JP roster literals into an authenticated US Track 02
   receipt. The real US BIN exposes the startup prompt, but its champion
