@@ -143,6 +143,65 @@ static void test_real_raw_save(const char *path)
     free(bytes);
 }
 
+static void test_real_state_corpus(const char *root)
+{
+    DM2_OriginalSaveStateCorpusReceipt state;
+    unsigned int entry;
+    int state_ok;
+
+    memset(&state, 0, sizeof(state));
+    state_ok = dm2_v1_original_save_state_corpus_probe(root, &state) &&
+              state.scan_complete && state.original_candidate_list_complete &&
+              state.original_candidate_count == 8u &&
+              state.parsed_candidate_count == 8u &&
+              state.rejected_candidate_count == 0u && state.entry_count == 8u &&
+              state.corpus_hash != 0u;
+    if (!state_ok) {
+        printf("  state-probe: scan=%d complete=%d original=%u parsed=%u rejected=%u entries=%u hash=%08x\n",
+               state.scan_complete, state.original_candidate_list_complete,
+               state.original_candidate_count, state.parsed_candidate_count,
+               state.rejected_candidate_count, state.entry_count,
+               state.corpus_hash);
+    }
+    CHECK(state_ok, "real SKSave corpus retains every source-owned fixed state receipt");
+    for (entry = 0u; entry < state.entry_count; ++entry) {
+        const DM2_OriginalSaveStateCorpusEntry *current = &state.entries[entry];
+        int pool;
+        int nonempty_pool_seen = 0;
+
+        CHECK(current->candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW &&
+                  !current->candidate.import_rejected &&
+                  current->candidate.payload_size > 0u &&
+                  current->candidate.payload_hash != 0u &&
+                  current->candidate.source_file_hash != 0u &&
+                  current->raw_dungeon_layout_valid &&
+                  current->raw_dungeon_map_count > 0u &&
+                  current->party_map < current->raw_dungeon_map_count &&
+                  current->champion_count <= 4u &&
+                  current->raw_v1e0104_hash != 0u &&
+                  current->raw_globalb_hash != 0u &&
+                  current->raw_globalw_hash != 0u &&
+                  current->raw_heroes_hash != 0u &&
+                  current->raw_save_state_hash != 0u &&
+                  current->raw_fixed_sections_hash != 0u &&
+                  current->raw_timers_hash != 0u &&
+                  current->raw_dungeon_prefix_hash != 0u &&
+                  current->raw_map_data_hash != 0u &&
+                  current->raw_timer_stream_byte_count > 0u &&
+                  current->raw_timer_stream_hash != 0u &&
+                  current->state_hash != 0u,
+              "real SKSave state fields remain bounded by the original stream");
+        for (pool = 0; pool < DM2_ORIGINAL_SAVE_RAW_DB_POOL_COUNT; ++pool) {
+            if (current->raw_db_record_counts[pool] != 0u) {
+                nonempty_pool_seen = 1;
+                break;
+            }
+        }
+        CHECK(nonempty_pool_seen,
+              "real SKSave state retains source-sized raw DB pool facts");
+    }
+}
+
 int main(void)
 {
     char root[512];
@@ -201,6 +260,7 @@ int main(void)
     CHECK(dm2_v1_startup_menu_scan_saves(&menu) &&
               menu.resume_available == 0 && menu.slot_mask == 0x000fu,
           "startup menu exposes the real slots without inventing a resume session");
+    test_real_state_corpus(root);
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
 }

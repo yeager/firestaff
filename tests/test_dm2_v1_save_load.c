@@ -2239,20 +2239,21 @@ static int test_sksave_corpus_scan_receipt(void)
     memset(&receipt, 0, sizeof(receipt));
     if (!dm2_v1_sksave_corpus_scan(tmpdir, &receipt) ||
         receipt.valid_slot_count != 1 ||
-        receipt.importable_candidate_count != 2 ||
-        receipt.import_rejected_candidate_count != 2 ||
+        receipt.importable_candidate_count != 3 ||
+        receipt.import_rejected_candidate_count != 1 ||
         receipt.firestaff_session_candidate_count != 1 ||
         receipt.original_envelope_candidate_count != 2 ||
-        receipt.original_raw_candidate_count != 0 ||
+        receipt.original_raw_candidate_count != 1 ||
         receipt.first_importable_kind != DM2_SK_SAVE_KIND_ORIGINAL_ENVELOPE ||
         receipt.first_importable_payload_size != payload_b_size ||
         receipt.recursive_candidate_count != 2 ||
-        receipt.recursive_importable_candidate_count != 1 ||
+        receipt.recursive_importable_candidate_count != 2 ||
         receipt.alternate_name_candidate_count != 2 ||
         receipt.header_discovered_candidate_count != 1 ||
         receipt.extra_valid_candidate_count != 2 ||
         receipt.importable_kind_mask !=
-            (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE) ||
+            ((uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE) |
+             (uint32_t)(1u << DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)) ||
         receipt.importable_payload_hash == 0u ||
         receipt.recursive_scan_depth_limit != 4 ||
         receipt.recursive_scan_candidate_cap != 64 ||
@@ -2284,12 +2285,12 @@ static int test_sksave_corpus_scan_receipt(void)
     if (!dm2_v1_original_save_state_corpus_probe(tmpdir, &state_receipt) ||
         state_receipt.scan_complete != 1 ||
         state_receipt.original_candidate_list_complete != 1 ||
-        state_receipt.original_candidate_count != 2 ||
-        state_receipt.parsed_candidate_count != 2 ||
+        state_receipt.original_candidate_count != 3 ||
+        state_receipt.parsed_candidate_count != 3 ||
         state_receipt.rejected_candidate_count != 0 ||
-        state_receipt.entry_count != 2) {
+        state_receipt.entry_count != 3) {
         printf("    FAIL: recursive original state census did not retain "
-               "only source-complete envelope candidates (original=%u "
+               "only source-complete state candidates (original=%u "
                "parsed=%u rejected=%u entries=%u)\n",
                state_receipt.original_candidate_count,
                state_receipt.parsed_candidate_count,
@@ -2306,7 +2307,7 @@ static int test_sksave_corpus_scan_receipt(void)
     FS_RMDIR(nested_dir);
 
     printf("    PASS: corpus scan reports resume order, slot mask, importable "
-           "Firestaff/envelope saves, and rejects renamed raw-SKSave tails, "
+           "Firestaff/envelope saves, source-owned raw-SKSave receipts, "
            "payload sizes, invalid saves, timer-format rejection evidence and "
            "first-importable payload promotion\n");
     cleanup_slot_dir(tmpdir);
@@ -3398,18 +3399,51 @@ static int test_external_original_sksave_corpus_census(void)
     for (i = 0u; i < state.entry_count; ++i) {
         const DM2_OriginalSaveStateCorpusEntry *entry = &state.entries[i];
         DM2_V1_SaveCandidate candidate;
+        DM2_V1_OriginalRawDungeonReceipt raw_dungeon;
+        DM2_V1_OriginalRawSaveStateReceipt raw_state;
         uint8_t payload[DM2_SESSION_MAX_SIZE];
         size_t payload_size = 0u;
 
+        memset(&candidate, 0, sizeof(candidate));
+        memset(&raw_dungeon, 0, sizeof(raw_dungeon));
+        memset(&raw_state, 0, sizeof(raw_state));
         if ((entry->candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&
              entry->candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) ||
             entry->candidate.source_file_hash == 0u ||
             entry->candidate.payload_hash == 0u ||
             !dm2_v1_sksave_corpus_load_receipted_candidate(
                 &entry->candidate, payload, sizeof(payload), &payload_size) ||
-            dm2_v1_session_parse_save_candidate(&candidate, payload,
-                                                 payload_size) != 0 ||
-            candidate.kind != (DM2_V1_SaveCandidateKind)entry->candidate.kind ||
+            (entry->candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW &&
+             (!dm2_v1_original_raw_sksave_dungeon_receipt(
+                  payload, payload_size, &raw_dungeon) ||
+              !dm2_v1_original_raw_sksave_fixed_state_receipt(
+                  payload, payload_size, &raw_state) ||
+              !raw_dungeon.valid || !raw_state.valid ||
+              raw_state.game_tick != entry->game_tick ||
+              raw_state.random_seed != entry->rng_seed ||
+              raw_state.party_x != entry->party_x ||
+              raw_state.party_y != entry->party_y ||
+              raw_state.party_direction != entry->party_dir ||
+              raw_state.party_map != entry->party_map ||
+              raw_state.champion_count != entry->champion_count ||
+              raw_state.timer_count != entry->timer_count ||
+              raw_state.v1e0104_hash != entry->raw_v1e0104_hash ||
+              raw_state.globalb_hash != entry->raw_globalb_hash ||
+              raw_state.globalw_hash != entry->raw_globalw_hash ||
+              raw_state.heroes_hash != entry->raw_heroes_hash ||
+              raw_state.save_state_hash != entry->raw_save_state_hash ||
+              raw_state.fixed_sections_hash != entry->raw_fixed_sections_hash ||
+              raw_state.timers_hash != entry->raw_timers_hash ||
+              !entry->raw_dungeon_layout_valid ||
+              entry->raw_dungeon_map_count != raw_dungeon.map_count ||
+              entry->raw_dungeon_prefix_hash != raw_dungeon.prefix_hash ||
+              entry->raw_map_data_hash != raw_dungeon.map_data_hash ||
+              memcmp(entry->raw_db_record_counts, raw_dungeon.db_record_counts,
+                     sizeof(entry->raw_db_record_counts)) != 0)) ||
+            (entry->candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW &&
+             (dm2_v1_session_parse_save_candidate(&candidate, payload,
+                                                   payload_size) != 0 ||
+              candidate.kind != (DM2_V1_SaveCandidateKind)entry->candidate.kind ||
             candidate.session.game_tick != entry->game_tick ||
             candidate.session.rng_seed != entry->rng_seed ||
             candidate.session.party_x != entry->party_x ||
@@ -3430,16 +3464,7 @@ static int test_external_original_sksave_corpus_census(void)
             corpus_hash_bytes(candidate.session.original_spell_effects,
                               sizeof(candidate.session.original_spell_effects)) !=
                 entry->spell_effects_hash ||
-            (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW &&
-             (!entry->raw_dungeon_layout_valid ||
-              entry->raw_dungeon_map_count != candidate.dungeon_receipt.map_count ||
-              entry->raw_dungeon_prefix_hash != candidate.dungeon_receipt.prefix_hash ||
-              entry->raw_map_data_hash != candidate.dungeon_receipt.map_data_hash ||
-              memcmp(entry->raw_db_record_counts,
-                     candidate.dungeon_receipt.db_record_counts,
-                     sizeof(entry->raw_db_record_counts)) != 0)) ||
-            (candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW &&
-             entry->raw_dungeon_layout_valid)) {
+              entry->raw_dungeon_layout_valid))) {
             printf("    FAIL: external candidate %u did not revalidate\n",
                    (unsigned)i);
             return 0;

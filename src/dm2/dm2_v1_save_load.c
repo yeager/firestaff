@@ -677,6 +677,7 @@ static void dm2_sksave_corpus_classify_payload(
     FILE *f;
     uint8_t *payload;
     DM2_V1_SaveCandidate candidate;
+    DM2_V1_OriginalRawDungeonReceipt raw_dungeon;
     int status = 0;
     int importable_kind_ok = 0;
     DM2_SKSaveKind save_kind = DM2_SK_SAVE_KIND_NONE;
@@ -705,13 +706,30 @@ static void dm2_sksave_corpus_classify_payload(
         receipt->import_rejected_candidate_count++;
         return;
     }
-    if (fread(payload, 1, payload_size, f) != payload_size ||
-        dm2_v1_session_parse_save_candidate(&candidate, payload,
-                                            payload_size) != 0) {
+    if (fread(payload, 1, payload_size, f) != payload_size) {
         free(payload);
         fclose(f);
         receipt->import_rejected_candidate_count++;
         return;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    memset(&raw_dungeon, 0, sizeof(raw_dungeon));
+    if (dm2_v1_session_parse_save_candidate(&candidate, payload,
+                                            payload_size) != 0) {
+        /* The raw branch is an evidence-only census.  It must not go through
+         * dm2_v1_session_import_raw_sksave_payload(), which correctly rejects
+         * a partial GAME_LOAD as a playable Firestaff session. */
+        if (!dm2_v1_original_raw_sksave_dungeon_receipt(
+                payload, payload_size, &raw_dungeon) || !raw_dungeon.valid) {
+            free(payload);
+            fclose(f);
+            receipt->import_rejected_candidate_count++;
+            return;
+        }
+        candidate.kind = DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW;
+        candidate.dungeon_bytes = payload;
+        candidate.dungeon_size = raw_dungeon.suppress_state_offset;
+        candidate.dungeon_receipt = raw_dungeon;
     }
     source_file_hash = dm2_sksave_corpus_file_hash(path);
     /* The census receipt binds one complete original file to the payload
@@ -1462,6 +1480,8 @@ bool dm2_v1_original_save_state_corpus_probe(
             &corpus.candidate_receipts[i];
         DM2_OriginalSaveStateCorpusEntry *target;
         DM2_V1_SaveCandidate candidate;
+        DM2_V1_OriginalRawDungeonReceipt raw_dungeon;
+        DM2_V1_OriginalRawSaveStateReceipt raw_state;
         uint8_t payload[DM2_SESSION_MAX_SIZE];
         size_t payload_size = 0u;
 
@@ -1475,12 +1495,35 @@ bool dm2_v1_original_save_state_corpus_probe(
             continue;
         }
         if (!dm2_v1_sksave_corpus_load_receipted_candidate(
-                source, payload, sizeof(payload), &payload_size) ||
-            dm2_v1_session_parse_save_candidate(&candidate, payload,
-                                                 payload_size) != 0 ||
-            candidate.kind != (DM2_V1_SaveCandidateKind)source->kind ||
-            (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW &&
-             !candidate.dungeon_receipt.valid)) {
+                source, payload, sizeof(payload), &payload_size)) {
+            out_receipt->original_candidate_list_complete = 0;
+            out_receipt->rejected_candidate_count++;
+            continue;
+        }
+
+        memset(&candidate, 0, sizeof(candidate));
+        memset(&raw_dungeon, 0, sizeof(raw_dungeon));
+        memset(&raw_state, 0, sizeof(raw_state));
+        if (source->kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+            /* SKProject sksvgame.cpp::DM2_GAME_LOAD reads these raw sections
+             * before later runtime ownership.  Census them directly, without
+             * treating an incomplete read as a resumable session. */
+            if (!dm2_v1_original_raw_sksave_dungeon_receipt(
+                    payload, payload_size, &raw_dungeon) ||
+                !dm2_v1_original_raw_sksave_fixed_state_receipt(
+                    payload, payload_size, &raw_state) ||
+                !raw_dungeon.valid || !raw_state.valid) {
+                out_receipt->original_candidate_list_complete = 0;
+                out_receipt->rejected_candidate_count++;
+                continue;
+            }
+            candidate.kind = DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW;
+            candidate.dungeon_bytes = payload;
+            candidate.dungeon_size = raw_dungeon.suppress_state_offset;
+            candidate.dungeon_receipt = raw_dungeon;
+        } else if (dm2_v1_session_parse_save_candidate(&candidate, payload,
+                                                        payload_size) != 0 ||
+                   candidate.kind != (DM2_V1_SaveCandidateKind)source->kind) {
             out_receipt->original_candidate_list_complete = 0;
             out_receipt->rejected_candidate_count++;
             continue;
@@ -1488,27 +1531,45 @@ bool dm2_v1_original_save_state_corpus_probe(
 
         target = &out_receipt->entries[out_receipt->entry_count++];
         target->candidate = *source;
-        target->game_tick = candidate.session.game_tick;
-        target->rng_seed = candidate.session.rng_seed;
-        target->party_x = candidate.session.party_x;
-        target->party_y = candidate.session.party_y;
-        target->party_dir = candidate.session.party_dir;
-        target->party_map = candidate.session.party_level;
-        target->champion_count = candidate.session.champion_count;
-        target->timer_count = candidate.session.original_timer_count;
-        target->rain_intensity = candidate.session.rain_intensity;
-        target->global_flags_hash = dm2_sksave_corpus_payload_hash(
-            candidate.session.original_global_flags,
-            sizeof(candidate.session.original_global_flags), 2166136261u);
-        target->global_bytes_hash = dm2_sksave_corpus_payload_hash(
-            candidate.session.original_global_bytes,
-            sizeof(candidate.session.original_global_bytes), 2166136261u);
-        target->global_words_hash = dm2_sksave_corpus_words_hash(
-            candidate.session.original_global_words,
-            DM2_GLOBAL_WORDS_SIZE);
-        target->spell_effects_hash = dm2_sksave_corpus_payload_hash(
-            candidate.session.original_spell_effects,
-            sizeof(candidate.session.original_spell_effects), 2166136261u);
+        if (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+            target->game_tick = raw_state.game_tick;
+            target->rng_seed = raw_state.random_seed;
+            target->party_x = raw_state.party_x;
+            target->party_y = raw_state.party_y;
+            target->party_dir = (uint8_t)raw_state.party_direction;
+            target->party_map = (uint8_t)raw_state.party_map;
+            target->champion_count = (uint8_t)raw_state.champion_count;
+            target->timer_count = (uint8_t)raw_state.timer_count;
+            target->raw_v1e0104_hash = raw_state.v1e0104_hash;
+            target->raw_globalb_hash = raw_state.globalb_hash;
+            target->raw_globalw_hash = raw_state.globalw_hash;
+            target->raw_heroes_hash = raw_state.heroes_hash;
+            target->raw_save_state_hash = raw_state.save_state_hash;
+            target->raw_fixed_sections_hash = raw_state.fixed_sections_hash;
+            target->raw_timers_hash = raw_state.timers_hash;
+        } else {
+            target->game_tick = candidate.session.game_tick;
+            target->rng_seed = candidate.session.rng_seed;
+            target->party_x = candidate.session.party_x;
+            target->party_y = candidate.session.party_y;
+            target->party_dir = candidate.session.party_dir;
+            target->party_map = candidate.session.party_level;
+            target->champion_count = candidate.session.champion_count;
+            target->timer_count = candidate.session.original_timer_count;
+            target->rain_intensity = candidate.session.rain_intensity;
+            target->global_flags_hash = dm2_sksave_corpus_payload_hash(
+                candidate.session.original_global_flags,
+                sizeof(candidate.session.original_global_flags), 2166136261u);
+            target->global_bytes_hash = dm2_sksave_corpus_payload_hash(
+                candidate.session.original_global_bytes,
+                sizeof(candidate.session.original_global_bytes), 2166136261u);
+            target->global_words_hash = dm2_sksave_corpus_words_hash(
+                candidate.session.original_global_words,
+                DM2_GLOBAL_WORDS_SIZE);
+            target->spell_effects_hash = dm2_sksave_corpus_payload_hash(
+                candidate.session.original_spell_effects,
+                sizeof(candidate.session.original_spell_effects), 2166136261u);
+        }
         if (candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
             uint8_t pool;
 
@@ -1553,6 +1614,20 @@ bool dm2_v1_original_save_state_corpus_probe(
             target->state_hash, target->global_words_hash);
         target->state_hash = dm2_sksave_corpus_hash_step(
             target->state_hash, target->spell_effects_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_v1e0104_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_globalb_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_globalw_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_heroes_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_save_state_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_fixed_sections_hash);
+        target->state_hash = dm2_sksave_corpus_hash_step(
+            target->state_hash, target->raw_timers_hash);
         target->state_hash = dm2_sksave_corpus_hash_step(
             target->state_hash, target->raw_timer_stream_offset);
         target->state_hash = dm2_sksave_corpus_hash_step(
@@ -1620,6 +1695,7 @@ bool dm2_v1_sksave_corpus_load_receipted_candidate(
     size_t *out_payload_size)
 {
     DM2_V1_SaveCandidate candidate;
+    DM2_V1_OriginalRawDungeonReceipt raw_dungeon;
     size_t payload_size = 0u;
 
     if (out_payload_size) *out_payload_size = 0u;
@@ -1633,10 +1709,23 @@ bool dm2_v1_sksave_corpus_load_receipted_candidate(
         payload_size != candidate_receipt->payload_size ||
         dm2_sksave_corpus_payload_hash(out_payload, payload_size,
                                        2166136261u) !=
-            candidate_receipt->payload_hash ||
-        dm2_v1_session_parse_save_candidate(&candidate, out_payload,
-                                             payload_size) != 0 ||
-        (int)candidate.kind != candidate_receipt->kind) {
+            candidate_receipt->payload_hash) {
+        return false;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    memset(&raw_dungeon, 0, sizeof(raw_dungeon));
+    if (candidate_receipt->kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW) {
+        /* A re-read raw body is valid evidence when its source-owned dungeon
+         * prefix still parses.  This does not make it a Firestaff session;
+         * callers attempting runtime restore still hit the GAME_LOAD owner
+         * gate in dm2_v1_session_parse_save_candidate(). */
+        if (!dm2_v1_original_raw_sksave_dungeon_receipt(
+                out_payload, payload_size, &raw_dungeon) || !raw_dungeon.valid) {
+            return false;
+        }
+    } else if (dm2_v1_session_parse_save_candidate(&candidate, out_payload,
+                                                     payload_size) != 0 ||
+               (int)candidate.kind != candidate_receipt->kind) {
         return false;
     }
     *out_payload_size = payload_size;

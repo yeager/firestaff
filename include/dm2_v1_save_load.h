@@ -260,6 +260,16 @@ typedef struct {
     uint32_t raw_timer_stream_offset;
     uint32_t raw_timer_stream_byte_count;
     uint32_t raw_timer_stream_hash;
+    /* Direct receipts for the fixed SUPPRESS sections in an original raw
+     * SKSave.  They deliberately remain distinct from the Firestaff-session
+     * fields above: no raw file is decoded as an invented session. */
+    uint32_t raw_v1e0104_hash;
+    uint32_t raw_globalb_hash;
+    uint32_t raw_globalw_hash;
+    uint32_t raw_heroes_hash;
+    uint32_t raw_save_state_hash;
+    uint32_t raw_fixed_sections_hash;
+    uint32_t raw_timers_hash;
     /* Raw SKSave candidates additionally retain only the complete parsed
      * dungeon-prefix identity. These are pool/span facts, not DB semantics
      * or permission to follow GenericRecord links. */

@@ -715,6 +715,18 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   blocked until the later `DM2_READ_SKSAVE_DUNGEON` record-link and possession
   graph has a live source-owned runtime owner.
 
+- ✅ 2026-08-06 DM2 full fixed-state SKSave corpus receipt: the scanner and
+  receipted reread path now classify an original raw save by its authentic
+  dungeon-prefix contract, independently of the intentionally blocked session
+  importer. The state probe preserves the fixed `DM2_GAME_LOAD` SUPPRESS
+  identities for all eight mounted PC-DOS `sksave0..3.dat/.bak` files,
+  including globals, heroes, save state, timers and the shared timer to
+  record-link boundary. Verification: `test_dm2_v1_save_load_real_data`
+  passes 64/64 and `test_dm2_v1_save_load` passes 25/25 with
+  `FIRESTAFF_DM2_SKSAVE_CORPUS` set to the mounted corpus. The live resume
+  gate remains closed until the later record-link, possession and allocation
+  sequence is source-owned.
+
 - ✅ 2026-08-06 Nexus runtime screenshot gate classification: changed the
   real-data readiness verifier to report `BLOCKED_CAPTURE` when Firestaff
   reaches Nexus with a valid runtime probe and valid 320x200/presented BMP

@@ -605,6 +605,15 @@
   record widths from SKProject `SKWIN/DME.h`. This proves the raw records
   remain bounded by the real dungeon prefix, but it does not yet restore the
   source-owned record-link, possession or live-allocation graph.
+  2026-08-06: corpus classification and receipted rereads now retain a raw
+  SKSave when both its authenticated header and source-owned dungeon prefix
+  validate, without routing it through the deliberately fail-closed session
+  importer. The state-corpus receipt also binds all eight mounted PC-DOS
+  files to their exact fixed SUPPRESS identities (`v1e0104`, `globalb`,
+  `globalw`, heroes, save state and timers) plus the shared timer/record-link
+  boundary. This is read-only evidence, not a resume admission: complete
+  `DM2_GAME_LOAD` ownership is still required before any of these fields can
+  change a live game.
   2026-08-06: `READ_RECORD_CHECKCODE` now preserves source record bytes for
   `DM2_SUPPRESS_READER(..., false)` and derives the map-container branch from
   `c_record::b_04` bits 1..2, including its possession-index bit. This closes
