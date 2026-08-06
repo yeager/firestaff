@@ -33,26 +33,16 @@ static int join_path(char *dst, size_t dst_size,
     return 1;
 }
 
-dm1_v1_fmtowns_pic_library_load_status_t
-dm1_v1_fmtowns_pic_library_load_from_cache_pc34(
-    const char                          *cache_dir,
-    const char                          *override_name,
+static dm1_v1_fmtowns_pic_library_load_status_t
+load_from_absolute_path(
+    const char                          *path,
     dm1_v1_fmtowns_pic_library_handle_t *out_handle) {
-    char path[DM1_V1_FMTOWNS_PIC_LIB_PATH_MAX];
     FILE *fp;
     long size_long;
     size_t size;
     uint8_t *buf;
     size_t got;
     dm1_v1_fmtowns_pic_library_status_t view_status;
-
-    if (!cache_dir || !out_handle) return DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_NULL;
-    memset(out_handle, 0, sizeof(*out_handle));
-
-    if (!join_path(path, sizeof(path), cache_dir,
-                   override_name ? override_name : "GRAPHICS.DAT")) {
-        return DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_PATH;
-    }
 
     fp = fopen(path, "rb");
     if (!fp) return DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_OPEN;
@@ -87,6 +77,34 @@ dm1_v1_fmtowns_pic_library_load_from_cache_pc34(
     out_handle->bytes = buf;
     out_handle->size_bytes = size;
     return DM1_V1_FMTOWNS_PIC_LIB_LOAD_OK;
+}
+
+dm1_v1_fmtowns_pic_library_load_status_t
+dm1_v1_fmtowns_pic_library_load_from_file_pc34(
+    const char                          *file_path,
+    dm1_v1_fmtowns_pic_library_handle_t *out_handle) {
+    if (!file_path || !out_handle) return DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_NULL;
+    memset(out_handle, 0, sizeof(*out_handle));
+    if (file_path[0] == '\0') return DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_PATH;
+    return load_from_absolute_path(file_path, out_handle);
+}
+
+dm1_v1_fmtowns_pic_library_load_status_t
+dm1_v1_fmtowns_pic_library_load_from_cache_pc34(
+    const char                          *cache_dir,
+    const char                          *override_name,
+    dm1_v1_fmtowns_pic_library_handle_t *out_handle) {
+    char path[DM1_V1_FMTOWNS_PIC_LIB_PATH_MAX];
+
+    if (!cache_dir || !out_handle) return DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_NULL;
+    memset(out_handle, 0, sizeof(*out_handle));
+
+    if (!join_path(path, sizeof(path), cache_dir,
+                   override_name ? override_name : "GRAPHICS.DAT")) {
+        return DM1_V1_FMTOWNS_PIC_LIB_LOAD_ERR_PATH;
+    }
+
+    return load_from_absolute_path(path, out_handle);
 }
 
 void dm1_v1_fmtowns_pic_library_release_pc34(

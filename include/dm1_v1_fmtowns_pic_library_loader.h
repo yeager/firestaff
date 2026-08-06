@@ -65,6 +65,15 @@ dm1_v1_fmtowns_pic_library_load_from_cache_pc34(
     const char                          *override_name,
     dm1_v1_fmtowns_pic_library_handle_t *out_handle);
 
+/* Load a full absolute or relative file path directly. Same
+ * semantics as load_from_cache_pc34 but skips the directory-join
+ * step; use this when the caller already knows the on-disk file
+ * location (e.g. `M11_AssetLoader::graphicsDatPath`). */
+dm1_v1_fmtowns_pic_library_load_status_t
+dm1_v1_fmtowns_pic_library_load_from_file_pc34(
+    const char                          *file_path,
+    dm1_v1_fmtowns_pic_library_handle_t *out_handle);
+
 /* Release the buffer owned by `handle`. Safe to call on a zeroed
  * handle. Zeros the handle after freeing. */
 void dm1_v1_fmtowns_pic_library_release_pc34(

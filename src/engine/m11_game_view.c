@@ -112,6 +112,7 @@
 #include "dm1_v1_fmtowns_egb_shim.h"
 #include "dm1_v1_fmtowns_jdm_bss.h"
 #include "dm1_v1_fmtowns_jdm_symbols.h"
+#include "dm1_v1_fmtowns_pic_library_loader.h"
 #include "firestaff_fmtowns_disc.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_c15_layout_pc34_compat.h"
@@ -22388,6 +22389,30 @@ void M11_GameView_PlayFmtownsCdda(M11_GameViewState* state, int track_number) {
 
 void M11_GameView_StopFmtownsCdda(M11_GameViewState* state) {
     m11_dm1_stop_fmtowns_cdda(state);
+}
+
+int M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(M11_GameViewState* state) {
+    dm1_v1_fmtowns_pic_library_handle_t handle;
+    dm1_v1_fmtowns_pic_library_load_status_t st;
+    const char *path;
+    if (!state) return 0;
+    if (state->dm1FmtownsMenuFontLoaded) return 1;
+    if (!state->dm1FmtownsStartupReceiptValid) return 0;
+    path = state->assetLoader.graphicsDatPath;
+    if (!path || path[0] == '\0') return 0;
+    memset(&handle, 0, sizeof(handle));
+    st = dm1_v1_fmtowns_pic_library_load_from_file_pc34(path, &handle);
+    if (st != DM1_V1_FMTOWNS_PIC_LIB_LOAD_OK) {
+        dm1_v1_fmtowns_pic_library_release_pc34(&handle);
+        return 0;
+    }
+    st = dm1_v1_fmtowns_pic_library_load_menu_font_pc34(
+        &handle, state->dm1FmtownsMenuFont,
+        sizeof(state->dm1FmtownsMenuFont));
+    dm1_v1_fmtowns_pic_library_release_pc34(&handle);
+    if (st != DM1_V1_FMTOWNS_PIC_LIB_LOAD_OK) return 0;
+    state->dm1FmtownsMenuFontLoaded = 1;
+    return 1;
 }
 
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {

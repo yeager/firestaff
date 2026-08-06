@@ -844,6 +844,11 @@ typedef struct {
     int      dm1FmtownsStartupReceiptValid;
     int      dm1FmtownsCddaPlaying;
     int      dm1FmtownsCddaCurrentTrack;
+    /* FM Towns DM1 menu font raster loaded from DATA/GRAPHICS.DAT
+     * asset 557 via the DIRECT+NO_HDR path (INIT_TEXT / GET_MY_DECODED).
+     * See dm1_v1_fmtowns_font_asset.h and dm1_v1_fmtowns_pic_library_loader.h. */
+    unsigned char dm1FmtownsMenuFont[768];
+    int      dm1FmtownsMenuFontLoaded;
 
     /* Asset loader for GRAPHICS.DAT-backed rendering */
     M11_AssetLoader assetLoader;
@@ -1921,6 +1926,12 @@ int M11_GameView_ToggleMusic(M11_GameViewState* state);
 int M11_GameView_GetMusicEnabled(const M11_GameViewState* state);
 void M11_GameView_PlayFmtownsCdda(M11_GameViewState* state, int track_number);
 void M11_GameView_StopFmtownsCdda(M11_GameViewState* state);
+/* Load the FM Towns DM1 menu font from the authenticated
+ * assetLoader.graphicsDatPath (picture-library index 557,
+ * DIRECT+NO_HDR path). No-op if the font is already loaded or the
+ * receipt is not admitted. Returns 1 on success or already-loaded,
+ * 0 if the load could not be performed. Idempotent. */
+int M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(M11_GameViewState* state);
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state);
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input);

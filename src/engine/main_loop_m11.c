@@ -3018,6 +3018,11 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
             (void)M11_Render_SetPaletteLevel(0);
             if (titleTrack > 0 && gameView->dm1FmtownsStartupReceiptValid)
                 M11_GameView_PlayFmtownsCdda(gameView, titleTrack);
+            /* Load the FM Towns DM1 menu font eagerly at title time so
+             * the later menu-draw path never blocks on I/O. Safe to
+             * call repeatedly; returns 1 if the font is already loaded
+             * or the load succeeds. */
+            (void)M11_GameView_LoadDm1FmtownsMenuFontIfAvailable(gameView);
             if (!m11_play_dm1_fmtowns_title_if_available(gameView, &played) ||
                 !played) {
                 M11_GameView_Shutdown(gameView);
