@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus MENU.BPK receipt aligned with the real European retail
+  corpus: the structural probe now recognizes the verified canonical,
+  English and French archive identities, checks the observed 536-byte
+  outer/header delta, and compares the directory trailer against the live
+  final offset-table entries instead of stale hardcoded offsets. Verification:
+  real 87,684-byte `MENU.BPK`, 51/51 probe checks. No game data was tracked;
+  menu VDP1/VDP2 drawing remains capture-gated.
+
 - ✅ 2026-08-06 Nexus PLRD/TABL source-name handoff: the real 20-record
   European RLOWFIX corpus now propagates each champion's bounded FONT256 glyph
   codes (TABL indices, stopping at the verified `0x0005` terminator) into the

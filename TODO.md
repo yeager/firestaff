@@ -23,6 +23,13 @@
   an authenticated Saturn capture before adding menu transitions or screen
   coordinates.
 
+  2026-08-06: the bounded MENU.BPK receipt now accepts the verified
+  canonical/English/French retail identities and derives the directory
+  trailer's final two offsets from the active archive table. The local
+  European corpus is 87,684 bytes; this corrects stale 89,060-byte probe
+  expectations only. Menu drawing, text ownership and VDP1/VDP2 composition
+  remain capture-gated.
+
 - **NEXUS-PLRD-TABL-NAME-CONSUMER:** Production champion initialization is
   already fail-closed on the verified European `RLOWFIX.BIN` PLRD resource;
   the legacy hardcoded roster is test-fixture-only and must not populate live

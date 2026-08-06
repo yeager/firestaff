@@ -10,7 +10,7 @@
  * decompression. Locks:
  *
  *   - BPPK magic + outer_size == file_size
- *   - BMPD magic + bmpd_size == outer_size - 16
+ *   - BMPD magic + the observed 536-byte outer/header delta
  *   - count == 163 (header + 162 picture entries)
  *   - 20-byte entry prefix: width @ 12..14 (BE u16), height @ 15,
  *     mode tag @ 19 (one of {6, 14, 22, 30, 10})
@@ -25,8 +25,9 @@
  *   docs/source-lock/nexus_v1_phase0_provenance_gate_H2315.md:291-306
  *     (MENU.BPK identified as packed, game-specific, no formal
  *      compression analysis documented)
- *   docs/VERIFIED_HASHES.md:103
- *     (size 89060 / sha256 740ab2a864f04b89cddb172ce2560044fcc8c6a7f98ae2fe50461aa8da886636)
+ *   include/nexus_v1_bpx_bpk.h
+ *     (canonical 89060-byte identity plus the verified English/French
+ *      retail revisions; the local corpus is the 87684-byte English file)
  *   ReDMCSB has no Saturn/Nexus implementation, so the structural
  *     invariants below are reverse-engineered from the real MENU.BPK
  *     byte layout and explicitly do NOT decode the PRS3 stream.
@@ -64,6 +65,11 @@ static void wb32(uint8_t *p, uint32_t v) {
     p[1] = (uint8_t)((v >> 16) & 0xffu);
     p[2] = (uint8_t)((v >> 8) & 0xffu);
     p[3] = (uint8_t)(v & 0xffu);
+}
+
+static uint32_t rb32(const uint8_t *p) {
+    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+           ((uint32_t)p[2] << 8) | (uint32_t)p[3];
 }
 
 /* Build a synthetic BPX3 archive that exercises the new MENU.BPK-shaped
@@ -277,8 +283,12 @@ static void test_optional_real_menumenu_bpk(void) {
 
     rc = nexus_v1_bpk_archive_parse(data, size, &info);
     CHECK(rc == 0, "real MENU.BPK BPPK/BMPD directory parses");
-    CHECK(info.outer_size == 89060U, "real MENU.BPK outer size = 89060");
-    CHECK(info.bmpd_size == 88524U, "real MENU.BPK BMPD size = 88524");
+    CHECK(info.outer_size == NEXUS_V1_MENU_BPK_SIZE ||
+          info.outer_size == NEXUS_V1_MENU_BPK_ENGLISH_SIZE ||
+          info.outer_size == NEXUS_V1_MENU_BPK_FRENCH_SIZE,
+          "real MENU.BPK outer size is a verified retail revision");
+    CHECK(info.bmpd_size + 536U == info.outer_size,
+          "real MENU.BPK BMPD/header delta is 536 bytes");
     CHECK(info.entry_count_hint == 163U, "real MENU.BPK entry count = 163");
     CHECK(info.prs3_payload_count == 162U,
           "real MENU.BPK PRS3 candidate count = 162");
@@ -343,8 +353,9 @@ static void test_optional_real_menumenu_bpk(void) {
           "entry[0] pixel-count cross-check is not asserted");
 
     /* The directory trailer's prefix[0..8] must hold offset[161] and
-     * offset[162] (88,384 and 88,448), pointing at the last two real
-     * picture entries. This is the observed MENU.BPK contract. */
+     * offset[162], pointing at the last two real picture entries. Read the
+     * directory table itself so this receipt covers all verified retail
+     * revisions rather than one stale byte-offset pair. */
     {
         Nexus_V1_BpkEntryPrefix trailer;
         rc = nexus_v1_bpk_archive_get_entry_prefix(data, size, 0U, &trailer);
@@ -354,12 +365,10 @@ static void test_optional_real_menumenu_bpk(void) {
         /* Raw bytes 0..3 and 4..7 are BE uint32 file offsets. We don't
          * expose those on the prefix struct, so spot-check the raw
          * 20-byte prefix bytes instead. */
-        CHECK(trailer.raw[0] == 0x00u && trailer.raw[1] == 0x01u &&
-              trailer.raw[2] == 0x59u && trailer.raw[3] == 0x40u,
-              "entry[0] trailer prefix[0..4] = 0x00015940 (= offset[161])");
-        CHECK(trailer.raw[4] == 0x00u && trailer.raw[5] == 0x01u &&
-              trailer.raw[6] == 0x59u && trailer.raw[7] == 0x80u,
-              "entry[0] trailer prefix[4..8] = 0x00015980 (= offset[162])");
+        CHECK(rb32(trailer.raw) == rb32(data + 24U + 161U * 4U),
+              "entry[0] trailer prefix[0..4] = offset[161]");
+        CHECK(rb32(trailer.raw + 4U) == rb32(data + 24U + 162U * 4U),
+              "entry[0] trailer prefix[4..8] = offset[162]");
     }
 
     /* Verify prefix width*height matches PRS3 pixel count for every
