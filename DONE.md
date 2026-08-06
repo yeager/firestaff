@@ -10,6 +10,12 @@
   made its direct regression compile the source explicitly. It loads no
   original DM1 data and has no M11/runtime caller.
 
+# DM1 G0117 stair-frame synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the generated, source-locked Graphic558 D1C stair-frame table
+  from M10. Its direct regression compiles the table explicitly; no runtime
+  caller or authenticated `GRAPHICS.DAT` material consumer exists yet.
+
 # DM1 mirror resurrect-reincarnate-skills synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the fabricated C160/C161 party/champion fixture from M10 and made
