@@ -48,6 +48,12 @@
   or viewport semantics were promoted, and no guessed pregap normalization was
   added.
 
+- ✅ 2026-08-06 Theron split-ISO intake: the raw-media regression passed against
+  the supplied retail `TQUS.cue` with `TQUS19.iso` and `TQUS02End.iso`. The
+  production materializer rebuilt the canonical 3,221-sector US Track 02 ISO
+  with MD5 `ceb02343868f80cec899e9b239aff2da` and the expected MODE1/2048
+  receipt; this verifies media intake only, not later game-owned consumers.
+
 - ✅ 2026-08-06 Theron chapter-marker loot parity: removed the duplicated,
   incorrectly ordered quest-item table from the chapter marker and dungeon
   progression diagnostic. Both now consume the authenticated US Track 02

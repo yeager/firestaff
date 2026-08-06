@@ -1241,6 +1241,9 @@
   window, and deliberate exclusion from raw-loader trace preparation. BIN/CUE
   and ISO paths therefore have separate verified receipts; later semantic
   publication still requires the executing consumer trace.
+  The same regression now passes against the supplied retail split CUE with
+  `TQUS19.iso` plus `TQUS02End.iso`, proving that the production materializer
+  reconstructs the canonical US ISO before the direct receipt is checked.
 
   The supplied retail US ISO now contributes one bounded real startup-level
   envelope at `0x5a9114`, linked to the first retail descriptor by `0x92f2`.
