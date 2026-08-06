@@ -18,6 +18,9 @@ corresponding `FIRESTAFF_NEXUS_*_OUTPUT` hook before writing a manifest or
 starting the emulator. Stock Mednafen is therefore rejected early (exit 78):
 its normal video snapshots or movie recording are useful visual evidence, but
 they do not prove VDP register/VRAM ownership or SLEV/SAL event dispatch.
+The raw Saturn launcher uses a non-quiet string scan for this check because
+`set -o pipefail` makes `strings | grep -q` report a false failure when grep
+closes the pipe after the first match.
 
 ## Artifact families
 

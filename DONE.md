@@ -57746,3 +57746,12 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Kept the complete combat action fail-closed: no damage, kills, mutation or
   player-facing feedback is produced from defense alone. Updated unit and
   mounted-GDAT coverage accordingly; no release was made.
+
+# Nexus Saturn capture window follow-up (2026-08-07)
+
+- ✅ Fixed the raw-capture launcher’s instrumented-binary check so `pipefail`
+  cannot turn a valid `strings` match into a false exit-78 rejection.
+- ✅ Captured additional authentic E-BIOS/French-media VDP1/VDP2 windows at
+  intro frame offsets 2400, 3000, and 4200. They remain raw transport/layout
+  witnesses: the validator passes, while PRS3, menu, HUD, viewport, and
+  SLEV/SAL/SDDRVS semantic admission remains correctly blocked.

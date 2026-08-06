@@ -172,10 +172,11 @@
   validator proves transport/layout only. Do not admit it as PRS3,
   SLEV/SAL/SDDRVS, HUD, or viewport semantics until those consumers have
   authenticated runtime observations and source-owned bindings. The producer
-  now supports an external skip/count window and captures after the VDP2 frame
-  boundary; E-BIOS + French-media windows show the real TrueMotion and orange
-  startup animation in VDP1 framebuffer data. This is still a raw witness,
-  not a menu/HUD/viewport import or a PRS3 decoder proof.
+  now supports an external skip/count window and captures at the VDP2 frame
+  assembly hook immediately before `VDP2REND_EndFrame()`; E-BIOS +
+  French-media windows show the real TrueMotion and changing startup scenes in
+  VDP1 framebuffer data. This is still a raw witness, not a menu/HUD/viewport
+  import or a PRS3 decoder proof.
 - **NEXUS-MENU-CAPTURE-GATE:** TITLE.CG timing must remain on the title screen
   until the real MENU.BPK capture route is joined. A source-owned runtime
   capture is still required before menu, HUD, and viewport composition can be

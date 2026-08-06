@@ -45,7 +45,8 @@ require_disc_container "$disc" || exit 1
 [[ ! -e "$trace" && ! -e "$manifest" && "$trace" != "$manifest" ]] || exit 1
 [[ -d "$(dirname "$trace")" && -d "$(dirname "$manifest")" ]] || exit 1
 if ((launch)); then
-  strings "$mednafen" | grep -Fq 'FIRESTAFF_NEXUS_TRACE_OUTPUT' || {
+  # With pipefail, grep -q can make strings exit on SIGPIPE after the match.
+  strings "$mednafen" | grep -F 'FIRESTAFF_NEXUS_TRACE_OUTPUT' >/dev/null || {
     echo "ERROR: instrumented Mednafen hook is missing" >&2
     exit 78
   }
