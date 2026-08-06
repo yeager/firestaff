@@ -7,12 +7,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Only the newest verification run for a ref is useful. Without this guard,
-# rapid main pushes consume the hosted-runner quota with obsolete matrices and
-# leave the current commit queued behind work that can no longer be promoted.
+# Every main commit needs a complete verification receipt. Queue later runs
+# for the same ref rather than cancelling an in-flight matrix when several
+# verified changes are pushed close together.
 concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   SDL3_TAG: release-3.2.14
