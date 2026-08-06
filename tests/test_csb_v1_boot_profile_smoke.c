@@ -479,12 +479,15 @@ static void test_fmtowns_game_program_handoff(void)
                   strcmp(receipt.executable_name, "CHTWE.EXP") == 0 &&
                   receipt.executable_size == 283936u &&
                   receipt.executable_fnv1a == 0x3da136f6u &&
+                  receipt.startup_mini_verified &&
+                  receipt.startup_mini_size == 42776u &&
+                  receipt.startup_mini_fnv1a == 0x494999c9u &&
                   receipt.music_table_verified &&
                   receipt.music_table_source_offset == 271144u &&
                   receipt.music_table_size ==
                       CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_BYTES &&
                   receipt.music_table_fnv1a == 0x3faffb70u,
-              "SWITCHTW English Game exit admits only retail CHTWE.EXP");
+              "SWITCHTW English Game exit binds retail CHTWE.EXP and CDATA/MINI.DAT");
         CHECK(csb_v1_fmtowns_utility_handoff_open(
                   &profile, CSB_FMTOWNS_SWITCH_ENGLISH, &utility) &&
                   utility.valid && utility.executable_verified &&

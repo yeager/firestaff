@@ -694,7 +694,11 @@
   and `CJDATA/MINI.DAT` files are explicitly not admitted by the Atari/Amiga
   GAMEBLOCK decoder: both differ from that big-endian layout and remain
   outside Resume until the F31E/F31J save-header and runtime handoff have
-  source-backed corpus evidence.
+  source-backed corpus evidence. The shipped F31 bootstrap files are now
+  identity-bound at the Game handoff (`CDATA/MINI.DAT`, 42 776 bytes,
+  FNV-1a `494999c9`; `CJDATA/MINI.DAT`, 43 208 bytes, FNV-1a `284799d1`),
+  but user-save header decoding, persistence and runtime restoration remain
+  open.
   2026-08-06: the F31E `CDATA/GRAPHICS.DAT` and `DUNGEON.DAT` pair now
   opens the source-bound C001--C005 entrance and C017/C040 HUD session only
   after both original CD hashes admit. M11 binds its package-language Switch

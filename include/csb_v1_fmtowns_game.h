@@ -40,6 +40,13 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     char executable_path[512];
     char graphics_md5[33];
     char dungeon_md5[33];
+    /* The CD's MINI.DAT is an authenticated F31 bootstrap resource.  It is
+     * deliberately recorded separately from a user save: it must not enter
+     * the Atari/Amiga GAMEBLOCK Resume decoder. */
+    int startup_mini_verified;
+    uint32_t startup_mini_size;
+    uint32_t startup_mini_fnv1a;
+    char startup_mini_path[512];
     int music_table_verified;
     uint32_t music_table_source_offset;
     uint32_t music_table_size;

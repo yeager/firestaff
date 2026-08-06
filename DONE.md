@@ -54953,3 +54953,12 @@ alcove runtime and archive-media tests passed (4/4).
   startup media fails closed rather than entering the PC34 title path.
   Japanese JDM and the native FM Towns menu/TBIOS/CD-audio consumers remain
   explicitly open in TODO.
+
+- ✅ 2026-08-06 CSB FM Towns MINI.DAT bootstrap receipt: the F31 Game
+  handoff now records the selected retail CD bootstrap independently of
+  user saves. It authenticates `CDATA/MINI.DAT` (42 776 bytes, FNV-1a
+  `494999c9`) for English and `CJDATA/MINI.DAT` (43 208 bytes, FNV-1a
+  `284799d1`) for Japanese, following ReDMCSB `CEDTDATA.C` G2297 and
+  `LOADSAVE.C` F0435's native header path. It deliberately does not pass
+  either file to the Atari/Amiga GAMEBLOCK decoder or advertise Resume.
+  Real English and Japanese F31 Switch→Game handoff tests pass.

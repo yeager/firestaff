@@ -12,6 +12,10 @@ enum {
     CSB_V1_FMTOWNS_UTILJ_SIZE = 152499u,
     CSB_V1_FMTOWNS_UTILE_FNV1A = 0xff240e0cu,
     CSB_V1_FMTOWNS_UTILJ_FNV1A = 0xbb3b47c2u,
+    CSB_V1_FMTOWNS_CDATA_MINI_SIZE = 42776u,
+    CSB_V1_FMTOWNS_CJDATA_MINI_SIZE = 43208u,
+    CSB_V1_FMTOWNS_CDATA_MINI_FNV1A = 0x494999c9u,
+    CSB_V1_FMTOWNS_CJDATA_MINI_FNV1A = 0x284799d1u,
     /* The retail F31E/F31J programs carry identical 10*32*32 selector
      * tables. These offsets are from the raw verified executable image. */
     CSB_V1_FMTOWNS_CHTWE_MUSIC_TABLE_OFFSET = 271144u,
@@ -95,6 +99,11 @@ int csb_v1_fmtowns_game_handoff_open(
     uint32_t actual_size;
     uint32_t actual_hash;
     uint32_t music_table_offset;
+    const char *mini_name;
+    uint32_t mini_expected_size;
+    uint32_t mini_expected_hash;
+    uint32_t mini_actual_size;
+    uint32_t mini_actual_hash;
     unsigned char music_table[CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_BYTES];
     CSB_V1_VariantId expected_variant;
 
@@ -108,12 +117,18 @@ int csb_v1_fmtowns_game_handoff_open(
         expected_size = CSB_V1_FMTOWNS_CHTWE_SIZE;
         expected_hash = CSB_V1_FMTOWNS_CHTWE_FNV1A;
         music_table_offset = CSB_V1_FMTOWNS_CHTWE_MUSIC_TABLE_OFFSET;
+        mini_name = "CDATA/MINI.DAT";
+        mini_expected_size = CSB_V1_FMTOWNS_CDATA_MINI_SIZE;
+        mini_expected_hash = CSB_V1_FMTOWNS_CDATA_MINI_FNV1A;
         expected_variant = CSB_V1_VARIANT_FMTOWNS_EN;
     } else if (language == CSB_FMTOWNS_SWITCH_JAPANESE) {
         name = "CHTWJ.EXP";
         expected_size = CSB_V1_FMTOWNS_CHTWJ_SIZE;
         expected_hash = CSB_V1_FMTOWNS_CHTWJ_FNV1A;
         music_table_offset = CSB_V1_FMTOWNS_CHTWJ_MUSIC_TABLE_OFFSET;
+        mini_name = "CJDATA/MINI.DAT";
+        mini_expected_size = CSB_V1_FMTOWNS_CJDATA_MINI_SIZE;
+        mini_expected_hash = CSB_V1_FMTOWNS_CJDATA_MINI_FNV1A;
         expected_variant = CSB_V1_VARIANT_FMTOWNS_JA;
     } else {
         return 0;
@@ -156,13 +171,31 @@ int csb_v1_fmtowns_game_handoff_open(
              "%s", profile->graphics_md5);
     snprintf(out_receipt->dungeon_md5, sizeof(out_receipt->dungeon_md5),
              "%s", profile->dungeon_md5);
+    /* ReDMCSB CEDTDATA.C G2297 lines 380-387 selects CDATA/CJDATA MINI.DAT
+     * for F31E/F31J. F0435 then reads its native 512-byte save header. The
+     * shipped seed is recorded by exact bytes here, never decoded as the
+     * unrelated big-endian Atari/Amiga GAMEBLOCK layout. */
+    if (snprintf(out_receipt->startup_mini_path,
+                 sizeof(out_receipt->startup_mini_path), "%s/%s",
+                 profile->asset_root, mini_name) >= 0 &&
+        strlen(out_receipt->startup_mini_path) <
+            sizeof(out_receipt->startup_mini_path)) {
+        mini_actual_hash = csb_v1_fmtowns_game_file_fnv1a(
+            out_receipt->startup_mini_path, &mini_actual_size);
+        out_receipt->startup_mini_size = mini_actual_size;
+        out_receipt->startup_mini_fnv1a = mini_actual_hash;
+        out_receipt->startup_mini_verified =
+            mini_actual_size == mini_expected_size &&
+            mini_actual_hash == mini_expected_hash;
+    }
     out_receipt->music_table_verified = 1;
     out_receipt->music_table_source_offset = music_table_offset;
     out_receipt->music_table_size = sizeof(music_table);
     out_receipt->music_table_fnv1a = CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_FNV1A;
     out_receipt->source_evidence =
         "ReDMCSB COMPILE.H EXEID 60/61 lines 367-375; "
-        "STARTUP1.C F0435 line 163; ENTRANCE.C F0807 line 85; "
+        "STARTUP1.C F0435 line 163; CEDTDATA.C G2297 lines 380-387; "
+        "ENTRANCE.C F0807 line 85; "
         "MUSIC.C G4099 line 6/F0743 lines 632-646";
     out_receipt->valid = 1;
     return 1;

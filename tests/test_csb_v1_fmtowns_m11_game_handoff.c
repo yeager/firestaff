@@ -32,6 +32,8 @@ int main(void)
     const char *language_name = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE");
     const char *version_id;
     const char *expected_program;
+    uint32_t expected_mini_size;
+    uint32_t expected_mini_fnv1a;
     CSB_V1_FmtownsSwitchLanguage language;
     char materialized_data_dir[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus asset_status;
@@ -54,11 +56,15 @@ int main(void)
         language = CSB_FMTOWNS_SWITCH_JAPANESE;
         version_id = "fmtowns-ja";
         expected_program = "CHTWJ.EXP";
+        expected_mini_size = 43208u;
+        expected_mini_fnv1a = 0x284799d1u;
     } else if (!language_name || language_name[0] == '\0' ||
                strcmp(language_name, "en") == 0) {
         language = CSB_FMTOWNS_SWITCH_ENGLISH;
         version_id = "fmtowns-en";
         expected_program = "CHTWE.EXP";
+        expected_mini_size = 42776u;
+        expected_mini_fnv1a = 0x494999c9u;
     } else {
         fprintf(stderr, "SKIP: unsupported FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE\n");
         return 0;
@@ -129,10 +135,13 @@ int main(void)
               (const CSB_V1_BootProfile *)view.csbBootProfile,
               language, &direct_handoff) &&
               strcmp(direct_handoff.executable_name, expected_program) == 0 &&
+              direct_handoff.startup_mini_verified &&
+              direct_handoff.startup_mini_size == expected_mini_size &&
+              direct_handoff.startup_mini_fnv1a == expected_mini_fnv1a &&
               direct_handoff.music_table_verified &&
               csb_v1_fmtowns_game_music_track_at(&direct_handoff, 0u, 2u, 0u,
                                                   &music_track),
-          "verified F31 profile resolves its language-owned Game program");
+          "verified F31 profile resolves its language-owned Game program and MINI.DAT");
 
     /* ReDMCSB SWITCH.C F2279 registers G4171 at (47,105), 62x39. */
     result = M11_GameView_HandlePointerButton(&view, 52, 110,
