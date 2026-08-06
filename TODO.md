@@ -445,6 +445,11 @@
   integrity/truthfulness fix only; the actual Track 02 graphics consumer,
   bitmap bank, palette offset and live `$2600` RAM join remain open.
 
+  **2026-08-06 synthetic palette-promotion guard:** the runtime capture helper
+  no longer turns a caller-supplied `palette_semantic_binding_verified=1`
+  boolean into semantic or render authorization. A real HuC6280 consumer/capture
+  receipt must supply that evidence; the helper remains fail-closed meanwhile.
+
   Full-dungeon loading now accepts a valid zero-ground-reference map and
   rejects object-capacity exhaustion instead of reporting a partial success.
 

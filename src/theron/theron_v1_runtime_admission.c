@@ -1480,6 +1480,14 @@ int theron_v1_runtime_track02_render_asset_proof_from_track02_capture(
         return 0;
     }
     theron_v1_runtime_track02_render_asset_proof_init(out);
+    /* A caller-supplied boolean is not source evidence. Earlier revisions
+     * copied `palette_semantic_binding_verified` into the palette receipt and
+     * could promote a palette-shaped window without an authenticated HuC6280
+     * consumer trace. Keep this compatibility entry point fail-closed until
+     * the real loader/consumer binding is passed as structured evidence. */
+    if (palette_semantic_binding_verified) {
+        return 0;
+    }
     if (!consumer || !track02_data || track02_size == 0u ||
         !track02_md5 || track02_md5[0] == '\0' ||
         !consumer->valid ||
@@ -1513,11 +1521,6 @@ int theron_v1_runtime_track02_render_asset_proof_from_track02_capture(
             &palette_window) != THERON_TRACK02_SIGNAL_OK) {
         return 0;
     }
-    if (palette_semantic_binding_verified) {
-        palette_window.semantic_binding_verified = 1;
-        palette_window.promotion_allowed = 1;
-    }
-
     return theron_v1_runtime_track02_render_asset_proof_from_decoded_routes(
         consumer,
         &level_route,

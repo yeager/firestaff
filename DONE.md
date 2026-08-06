@@ -50988,6 +50988,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   exposes an unverified text offset or reads candidate ASCII/fill windows as
   codons. US text decoding is unchanged; JP text remains blocked until its
   actual source block and consumer are identified.
+
+- ✅ 2026-08-06 Theron synthetic palette-promotion closure: the runtime
+  Track 02 asset-proof helper no longer promotes a palette-shaped real-media
+  window from a caller-supplied boolean. Non-zero compatibility input is
+  rejected until an authenticated HuC6280 consumer/capture receipt binds the
+  palette to the bitmap route; real-media regression remains fail-closed.
 - ✅ 2026-08-06 DM1 legacy platform graphics handoff: added a real
   endian-aware legacy `GRAPHICS.DAT` container and IMAGE2 decoder for the
   original FM Towns (little-endian) and Amiga (big-endian) DM1 releases.

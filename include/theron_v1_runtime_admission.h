@@ -1437,6 +1437,8 @@ int theron_v1_runtime_track02_render_asset_proof_from_track02_capture(
     size_t track02_size,
     const char *track02_md5,
     size_t palette_raw_offset,
+    /* Compatibility input only. Non-zero is rejected: a boolean cannot
+     * replace an authenticated original consumer/capture receipt. */
     int palette_semantic_binding_verified,
     Theron_V1RuntimeTrack02RenderAssetProof *out);
 
