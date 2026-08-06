@@ -6,7 +6,22 @@ executable structure, symbol coordinates recovered by disassembly,
 CDDA layout, currently wired features and the concrete extraction
 workflow. All addresses come from the hash-verified HMA-240 English
 disc; the Japanese disc uses the same layout but a different
-executable (`JDM.EXP`) whose symbol table has not been disassembled.
+executable (`JDM.EXP`) whose structural map is recorded separately —
+see the JDM section below.
+
+### Companion parity-evidence files (deep-decode references)
+
+- [`dm1_fmtowns_menu_p3_disassembly.md`](../../parity-evidence/dm1_fmtowns_menu_p3_disassembly.md) — DRAW_DMENU, DRAW_ICN_BUTTON,
+  GET_LABEL, MOUSE_OFF/ON, SPC_BLOT, FILL_CSCREEN + TownsOS EGB
+  primitive table.
+- [`dm1_fmtowns_region_table.md`](../../parity-evidence/dm1_fmtowns_region_table.md) — GET_SCL_COORD / GET_RGN_COORD /
+  GET_COORD, the 23-block region registry at `[0x28f08]`, byte-exact
+  region records including regions 10 and 11.
+- [`dm1_fmtowns_text_rasteriser.md`](../../parity-evidence/dm1_fmtowns_text_rasteriser.md) — DO_DRAW_CTEXT subtree,
+  TEXT_SIZE font base, ASCII→glyph mapping, colourisation.
+- [`dm1_fmtowns_jdm_structural_map.md`](../../parity-evidence/dm1_fmtowns_jdm_structural_map.md) — Japanese `JDM.EXP` P3
+  header, Shift-JIS label pool, initial-EIP fingerprint match with
+  EDM, EGB-trampoline recovery plan.
 
 ## 1. Retail media
 
@@ -132,6 +147,38 @@ Highlights so agents don't need to re-lift them:
 These are the FM Towns action-menu button labels. Index 0 is the
 `"N"` placeholder glyph; every subsequent index is a real verb.
 
+## 3a. Region table — locked coordinates for menu geometry
+
+`GET_RGN_COORD` (0x194fc) is a 1:1-scale tail-call into
+`GET_SCL_COORD` (0x1942c), which walks a linked list of region blocks
+whose head pointer is stored at `[0x28f08]` (statically initialised
+to `0x28e78`). The lookup routine at `0x18db4` iterates blocks
+matching `first_id ≤ id ≤ last_id` and returns the record at
+`block+8 + (id-first_id)*8`.
+
+Each record is 8 bytes: `type u16 | parent u16 | a i16 | b i16`.
+
+- `type == 9`: `(a, b)` are `(width, height)` in pixels. The record
+  is a **size** node.
+- Other types: `(a, b)` are anchor coordinates whose meaning is
+  selected by `GET_COORD` (0x18df0) jump tables at `0x18f14` /
+  `0x18fe6`.
+- `parent` walks up the tree; `GET_SCL_COORD` requires the parent
+  to be a `type == 9` size node and returns
+  `parent_size * scale / 10000` (scale defaults to 10000, i.e. 1:1
+  when called via GET_RGN_COORD).
+
+Byte-verified regions that back the current menu draw:
+
+| Region | Record                             | Meaning                                     |
+|--------|------------------------------------|---------------------------------------------|
+| 10     | `type=9  parent=2  size=(87, 45)`  | SPC_BLOT dynamic-menu panel size            |
+| 11     | `type=2  parent=10  anchor=(319,77)` | Menu clear-area anchor (inherits 87×45)  |
+
+The full 23-block registry (994 records) is enumerated byte-exact in
+[`parity-evidence/dm1_fmtowns_region_table.md`](../../parity-evidence/dm1_fmtowns_region_table.md);
+consult it before adding any new region binding.
+
 ## 4. TownsOS EGB primitives — locked coordinates
 
 `FILL_RECT` (0x1fccc) and `PIX_BLOT` (0x1fe7c) route into the FM Towns
@@ -155,6 +202,47 @@ Because these are documented TownsOS calls with published semantics,
 the menu draw does not require reverse-engineering custom pixel code.
 The bounded implementation task is a software EGB shim over the M11
 framebuffer.
+
+## 4a. Text rasteriser — DO_DRAW_CTEXT subtree
+
+The menu draws all labels through the following call chain:
+
+```
+DO_FDRAW_CTEXT (0x1a8c0)   pad string to column count, NUL-terminate
+  → DO_DRAW_CTEXT (0x1a804)  measure + place + rasterise
+      → text_measure  (0x1a710)   glyph width sum via CHAR_X_SPC
+      → text_place    (0x18df0)   same GET_COORD used by regions
+      → DO_DRAW_TEXT  (0x1a664)   per-glyph loop
+          → text_colourise (0x1a5a4)  1bpp → 4bpp packed
+          → PIX_BLOT       (0x1fe7c)  EGB_PUTBLOCKCOLOR blit
+```
+
+**Font base.** Symbol `TEXT_SIZE` at vaddr `0x29344` is a dword
+pointer to a 768-byte 1bpp source raster, populated at `INIT_TEXT`.
+A pre-baked fg/bg-resolved 4bpp copy is kept at `[0x293e4]` (3072
+bytes, EGB source stride `0x400`).
+
+**Glyph geometry.**
+
+| Quantity          | Symbol / value                          |
+|-------------------|-----------------------------------------|
+| Source pitch      | 8 pixels / char                         |
+| Drawn width       | `CHAR_X_SPC`                            |
+| Drawn height      | `CHAR_Y_SPC - CHAR_X_SIZE + 1`          |
+| Per-char advance  | `CHAR_Y_HYT`                            |
+| Static default    | 5×6 cell, 6-pixel advance               |
+| Runtime source    | `TEXT_PIC` at `0x2934c`                 |
+
+**ASCII → glyph mapping.** Direct: `source_x = char_byte * 8`. No
+`-0x20` offset, no lookup table. Colour handling is done entirely
+in the pre-blit `text_colourise` (1bpp source → 4bpp packed:
+`bit7 → low nibble`, `bit6 → high nibble`, each nibble selects fg
+or bg); the blit itself is `PIX_BLOT` with `colour = -1`, i.e. a
+plain `EGB_PUTBLOCKCOLOR` copy.
+
+The only piece not recoverable from the executable is the physical
+2-D shape of the raster and the actual glyph bitmaps — those are
+loaded at INIT_TEXT and remain a bounded next task.
 
 ## 5. CDDA layout — 19 audio tracks (2..20)
 
@@ -226,6 +314,48 @@ opens:
 
 Japanese `JDM.EXP` is admitted at the header level but has no SYM1
 table; its title animation and menu remain source-boundary-only.
+See section 6a for the structural map that unblocks JDM recovery.
+
+## 6a. `JDM.EXP` (Japanese runtime) — structural map
+
+`JDM.EXP` is 290,221 bytes; SHA-256
+`1db4f049…de0bae`; initial EIP `0x00042cb4`; load image at `0x200`
+(size `0x46bad`); memory requirement `0x778f0`. **No SYM1 table**:
+both header fields are 0 and the literal `"SYM1"` does not appear in
+the file. No English identifier strings (`DRAW_DMENU`, `DYNAMENU`,
+`EGB_`, …) appear either.
+
+**Same source, Japanese resources.** The initial-EIP disassembly
+matches EDM.EXP byte-for-byte for 62 of 64 bytes — differing only in
+one call displacement (the Metaware / Phar Lap High-C run-time
+stub). JDM is therefore the same source rebuilt with Japanese
+resources rather than an independent build.
+
+**Japanese label pool.** Located at vaddr `0x243bc` (`EDM.DYNA_BUTTONS
++ 0x228`). All 15 verb slots decode from Shift-JIS with a 1:1
+mapping to the English pool:
+
+| EDM label   | JDM (Shift-JIS)   |
+|-------------|-------------------|
+| BLOCK       | さえぎる          |
+| CHOP        | 叩き切る          |
+| BLOW HORN   | (recorded)        |
+| WAR CRY     | ときの声          |
+| …           | full list in evidence |
+
+Larger dialog pool starts at `0x22000`; asset paths in the
+executable use `Q:\JDATA\...` (versus EDM's `\DATA\`).
+
+**EGB library still linked.** The trampoline signature
+`0f a0 68 10 01 00` appears at multiple JDM call sites; only the
+`EGB_*` symbol names are lost. Recovering them is a structural
+byte-fingerprint pass against EDM.
+
+**Recovery plan (recorded).** Structural byte-fingerprint match
+against EDM.EXP → data-segment reference translation via string-
+anchored deltas → EGB-trampoline pattern enumeration → bind the
+Japanese label pool and `JDATA/` path fixup. Full recipe in
+[`parity-evidence/dm1_fmtowns_jdm_structural_map.md`](../../parity-evidence/dm1_fmtowns_jdm_structural_map.md).
 
 ## 7. What is wired, what is open
 
@@ -242,17 +372,33 @@ table; its title animation and menu remain source-boundary-only.
   `SWSH → TITLE → ENTRANCE` transaction — no PC34 presentation
   fallback.
 
-**Open (blocked on decoded work, not on synthesis):**
+**Decoded, awaiting implementation (not blocked on synthesis):**
 
-- `DRAW_DMENU` / `DYNAMENU` visible menu rendering. Consumption
-  plan and disassembly are in the parity-evidence file linked above.
-  The three bounded next steps: (a) lift `GET_SCL_COORD` (0x1942c)
-  to recover the region table; (b) provide an EGB shim over the
-  M11 framebuffer for `EGB_RECTANGLE` and `EGB_PUTBLOCK`; (c) decode
-  `DO_DRAW_CTEXT` (0x1a804) for the font raster.
-- `TMENU` interactive icon/layout rendering and mouse routes.
-- Japanese `JDM.EXP` title animation and menu (no SYM1 → symbol
-  addresses are not lifted).
+- `DRAW_DMENU` / `DYNAMENU` visible menu rendering. The whole draw
+  chain is now decoded end-to-end: symbol table → region table →
+  panel/label draw → text rasteriser → EGB primitives → TownsOS EGB
+  library. What remains is authoring an EGB shim in Firestaff that
+  binds these decoded coordinates and rasters to the M11
+  framebuffer. Concrete steps that can be executed today:
+  1. Encode regions 10 and 11 (see section 3a) as source-locked
+     C constants in `include/dm1_v1_fmtowns_menu_regions.h`.
+  2. Provide software implementations of `EGB_RECTANGLE` (colour
+     fill) and `EGB_PUTBLOCKCOLOR` (raster copy) against the M11
+     framebuffer.
+  3. Bind the `TEXT_SIZE` font raster loaded at INIT_TEXT and the
+     `text_colourise` 1bpp → 4bpp expansion (section 4a).
+  4. Drive the three-slot dynamic menu from `DYNAMENU[+1..+3]`
+     via the `GET_LABEL` walk into `DYNA_BUTTONS`.
+- `TMENU` interactive icon/layout rendering and mouse routes
+  (TownsOS shell layer, above the game executable).
+
+**Blocked (needs additional real-data recovery):**
+
+- Japanese `JDM.EXP` symbol map. Not fabricable — see the
+  structural map in section 6a for the byte-fingerprint recovery
+  plan against EDM.EXP.
+- Physical 2-D layout of the font raster (loaded by `INIT_TEXT`,
+  not stored inline in the executable).
 
 ## 8. Extracting data during development
 
@@ -326,6 +472,9 @@ for i in md.disasm(p[load_off+start_v : load_off+end_v], start_v):
 | Runtime wiring             | `src/engine/main_loop_m11.c`, `src/engine/m11_game_view.c` |
 | Fingerprints               | `include/firestaff_game_data_fingerprint.h`, `src/shared/firestaff_game_data_fingerprint.c` |
 | Menu disassembly evidence  | `parity-evidence/dm1_fmtowns_menu_p3_disassembly.md` |
+| Region table evidence      | `parity-evidence/dm1_fmtowns_region_table.md`   |
+| Text rasteriser evidence   | `parity-evidence/dm1_fmtowns_text_rasteriser.md` |
+| JDM.EXP structural map     | `parity-evidence/dm1_fmtowns_jdm_structural_map.md` |
 | Tests                      | `tests/test_dm1_v1_fmtowns_cd_audio.c`, `tests/test_dm1_v1_fmtowns_title.c`, `tests/test_firestaff_fmtowns_disc.c` |
 
 ## 11. Cross-references
