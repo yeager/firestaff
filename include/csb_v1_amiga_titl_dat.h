@@ -45,6 +45,13 @@ typedef struct {
     uint16_t color_count;
 } CSB_V1_AmigaTitlPalette;
 
+typedef struct {
+    uint16_t width;
+    uint16_t height;
+    size_t source_bytes_consumed;
+    size_t decoded_pixel_count;
+} CSB_V1_AmigaTitlFrameReceipt;
+
 /* Decode the strict AN/PL/EN/DL.../DO record envelope and its real VBL
  * schedule.  Image and delta payloads stay opaque here; their decompression
  * belongs to the renderer once the IMGA delta operation is source-locked. */
@@ -55,6 +62,12 @@ int csb_v1_amiga_titl_dat_decode(const uint8_t *data, size_t size,
  * source components; applying them to a display remains the renderer's job. */
 int csb_v1_amiga_titl_dat_decode_palette(const uint8_t *data, size_t size,
                                          CSB_V1_AmigaTitlPalette *out);
+
+/* Decode the first EN frame through the Amiga GRF1 command stream. ReDMCSB
+ * ANIM.C F1204 calls GRF1_05 directly after the attribute word. */
+int csb_v1_amiga_titl_dat_decode_initial_frame(
+    const uint8_t *data, size_t size, uint8_t *indexed_pixels,
+    size_t indexed_pixel_capacity, CSB_V1_AmigaTitlFrameReceipt *out);
 
 #ifdef __cplusplus
 }

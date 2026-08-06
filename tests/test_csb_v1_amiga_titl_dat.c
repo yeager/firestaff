@@ -34,8 +34,10 @@ int main(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_AMIGA_TITL");
     CSB_V1_AmigaTitlPalette palette;
+    CSB_V1_AmigaTitlFrameReceipt frame;
     CSB_V1_AmigaTitlSchedule schedule;
     uint8_t *data;
+    uint8_t *pixels;
     size_t size;
 
     if (!path || !*path) {
@@ -49,8 +51,6 @@ int main(void)
         fputs("FAIL: cannot decode real Amiga TITL.DAT\n", stderr);
         return 1;
     }
-    free(data);
-
     if (schedule.width != 320u || schedule.height != 200u ||
         schedule.bit_depth != 4u || schedule.delta_count != 31u ||
         schedule.initial_duration_vbl != 126u ||
@@ -68,6 +68,20 @@ int main(void)
         fputs("FAIL: unexpected Amiga TITL.DAT palette\n", stderr);
         return 1;
     }
+    pixels = (uint8_t *)malloc(320u * 200u);
+    if (!pixels || !csb_v1_amiga_titl_dat_decode_initial_frame(
+            data, size, pixels, 320u * 200u, &frame) ||
+        frame.width != 320u || frame.height != 200u ||
+        frame.decoded_pixel_count != 320u * 200u ||
+        frame.source_bytes_consumed != 254u ||
+        pixels[89u * 320u + 186u] != 7u) {
+        free(pixels);
+        free(data);
+        fputs("FAIL: cannot decode real Amiga TITL.DAT EN frame\n", stderr);
+        return 1;
+    }
+    free(pixels);
+    free(data);
     puts("ok: real Amiga TITL.DAT has 32 title frames over 606 VBL");
     return 0;
 }

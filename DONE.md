@@ -42,6 +42,15 @@
   schedule and original palette values. `EN`/`DL` pixels remain fail-closed
   until the separate Amiga GRF1 expansion route is implemented.
 
+- ✅ 2026-08-06 CSB Amiga TITL.DAT EN-frame receipt: `TITL.DAT` now expands
+  the authentic 320×200 base `EN` image through the distinct Amiga GRF1
+  command stream, preserving fills, literals and previous-line copies from
+  ReDMCSB `EXPAND.C` F0466. The real-media regression proves all 64 000
+  indexed pixels and the source-faithful 254-byte read, including the six
+  bytes consumed from the following `DL` record because `ANIM.C` F1204 passes
+  the expander only an address, not ByteCount. This does not claim `DL` delta
+  frame expansion or M11 presentation binding, which remain open.
+
 - ✅ 2026-08-06 Nexus startup FONT256/TEXTTABL receipts: the real DM.BIN
   startup regression now verifies the literal-pool pointer at `0x18BF4` to
   retail `FONT256.S2D` and the adjacent `TEXTTABL` marker at `0x294C0`.

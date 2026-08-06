@@ -1612,9 +1612,12 @@
   gamla 1024×768-fönster.
   **2026-08-06 update:** Amiga `TITL.DAT` now retains its source `PL` palette
   as sixteen indexed 4-bit RGB components and verifies it against real media.
-  ReDMCSB `ANIM.C` F1181 owns that read. The `EN` base image and `DL` delta
-  expansion remain blocked on the distinct Amiga GRF1 decoder; do not route
-  them through the PC IMG2/IMG3 decoder or fill the unexpanded pixels.
+  ReDMCSB `ANIM.C` F1181 owns that read. The distinct Amiga GRF1 decoder now
+  expands the real `EN` base image through `EXPAND.C` F0466; its final command
+  intentionally consumes six bytes from the following `DL` record because
+  the source expander receives no ByteCount. `DL` delta expansion remains
+  blocked until its source buffer-copy/flip path is likewise bound; do not
+  route it through the PC IMG2/IMG3 decoder or fill unexpanded pixels.
 
 - **DM2-M11-GAME-LOAD-ORIGINAL-HANDOFF:** M11 now keeps New Game at the
   source `SHOW_MENU_SCREEN` → `GAME_LOAD` boundary rather than constructing

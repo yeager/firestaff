@@ -140,3 +140,117 @@ int csb_v1_amiga_titl_dat_decode_palette(const uint8_t *data, size_t size,
     out->color_count = color_count;
     return 0;
 }
+
+/* ReDMCSB EXPAND.C F0466, built by GRF1.C for MEDIA619_A31E_A31M, expands
+ * this command stream into four planar words.  The base EN destination is
+ * cleared by ANIM.C F1219, so writing the resulting colour index directly
+ * produces the same indexed pixels without host-created source data. */
+static int csb_v1_amiga_grf1_decode_base(const uint8_t *stream,
+                                         size_t stream_size,
+                                         uint8_t *pixels, size_t capacity,
+                                         CSB_V1_AmigaTitlFrameReceipt *out)
+{
+    uint16_t width;
+    uint16_t height;
+    size_t total;
+    size_t source = 4u;
+    size_t pixel = 0u;
+
+    if (!stream || !pixels || stream_size < 5u) return 0;
+    width = csb_v1_rd16be(stream);
+    height = csb_v1_rd16be(stream + 2u);
+    if (width != CSB_V1_AMIGA_TITL_WIDTH ||
+        height != CSB_V1_AMIGA_TITL_HEIGHT ||
+        height > SIZE_MAX / width ||
+        (total = (size_t)width * height) > capacity) {
+        return 0;
+    }
+    memset(pixels, 0, total);
+    while (pixel < total) {
+        uint8_t command;
+        uint8_t color;
+        size_t count;
+
+        if (source >= stream_size) return 0;
+        command = stream[source++];
+        color = (uint8_t)(command & 0x0fu);
+        if ((command & 0x80u) == 0u) {
+            count = (size_t)(command >> 4u) + 1u;
+        } else {
+            if (source >= stream_size) return 0;
+            count = (size_t)stream[source++] + 1u;
+            if ((command & 0x40u) != 0u) {
+                if (source >= stream_size) return 0;
+                count = (count - 1u) * 256u + (size_t)stream[source++] + 1u;
+            }
+        }
+        if (count == 0u || count > total - pixel) return 0;
+        /* EXPAND.C only interprets bits 4 and 5 as literal/copy selectors
+         * in its multi-byte-command branch.  Short commands such as 0x17
+         * are still ordinary colour-7 fills. */
+        if ((command & 0x80u) == 0u || (command & 0x10u) == 0u) {
+            memset(pixels + pixel, color, count);
+            pixel += count;
+        } else if ((command & 0x20u) == 0u) {
+            if ((count & 1u) != 0u) {
+                pixels[pixel++] = color;
+                --count;
+            }
+            while (count != 0u) {
+                uint8_t packed;
+                if (source >= stream_size) return 0;
+                packed = stream[source++];
+                pixels[pixel++] = (uint8_t)(packed >> 4u);
+                pixels[pixel++] = (uint8_t)(packed & 0x0fu);
+                count -= 2u;
+            }
+        } else {
+            size_t previous = (size_t)width;
+            if (pixel < previous || count > total - pixel) return 0;
+            while (count-- != 0u) {
+                pixels[pixel] = pixels[pixel - previous];
+                ++pixel;
+            }
+        }
+    }
+    if (out) {
+        out->width = width;
+        out->height = height;
+        out->source_bytes_consumed = source;
+        out->decoded_pixel_count = pixel;
+    }
+    return 1;
+}
+
+int csb_v1_amiga_titl_dat_decode_initial_frame(
+    const uint8_t *data, size_t size, uint8_t *indexed_pixels,
+    size_t indexed_pixel_capacity, CSB_V1_AmigaTitlFrameReceipt *out)
+{
+    const uint8_t *payload;
+    uint16_t payload_size;
+    size_t offset = 0u;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!data || !indexed_pixels ||
+        csb_v1_amiga_titl_take_record(data, size, &offset,
+                                      'A', 'N', &payload, &payload_size) != 0 ||
+        payload_size != 8u ||
+        csb_v1_amiga_titl_take_record(data, size, &offset,
+                                      'P', 'L', &payload, &payload_size) != 0 ||
+        payload_size != 66u ||
+        csb_v1_amiga_titl_take_record(data, size, &offset,
+                                      'E', 'N', &payload, &payload_size) != 0 ||
+        payload_size < 4u) {
+        return 0;
+    }
+    /* F1204 passes only the address after ANIMSTEP to the GRF1 expander;
+     * unlike the ANIM reader, it does not pass ByteCount.  The final EN
+     * command therefore deliberately consumes six bytes that begin the
+     * following DL record before reaching the 320x200 destination limit.
+     * Keep the whole TITL.DAT tail available, while still validating EN's
+     * declared record above.  ReDMCSB ANIM.C F1182 / EXPAND.C F0466. */
+    return csb_v1_amiga_grf1_decode_base(payload + 2u,
+                                          size - (size_t)((payload + 2u) - data),
+                                          indexed_pixels,
+                                          indexed_pixel_capacity, out);
+}
