@@ -6,6 +6,12 @@
   non-G1 source hero types retain their own valid selectors; no party mutation
   or release was made.
 
+# DM1 F0352 eye material med vald korpus (2026-08-07)
+
+- ✅ F0352-regressionen läser nu endast explicit
+  `FIRESTAFF_DM1_DATA_DIR/GRAPHICS.DAT`. Utan vald korpus skippar den, men en
+  vald oläsbar fil är ett fel i stället för en privat hemkatalogsreserv.
+
 # DM2 champion mirror DYN4 selector boundary (2026-08-13)
 
 - ✅ Tightened the PC G1 mirror join to require SKProject's exact

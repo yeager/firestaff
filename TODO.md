@@ -8799,7 +8799,9 @@ file and DONE.md after every completed job.
 
 - **DM1 F0352/F0353 C503 eye/arrow material:** Done 2026-07-23. Eye and arrow
   panel rendering now uses the source-bound C503 receipt and rejects missing
-  or drifted material. Verification: `dm1_v1_f0352_eye_material_gate`.
+  or drifted material. The regression consumes only an explicitly selected
+  `FIRESTAFF_DM1_DATA_DIR`; a selected unreadable corpus is a failure.
+  Verification: `dm1_v1_f0352_eye_material_gate`.
 
 - **CSB `TT_ParameterMessage` timer ownership:** Done 2026-07-23. EXPOOL
   parameters are consumed only when a unique loaded timer-queue owner exists;
