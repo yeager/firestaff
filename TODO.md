@@ -83,6 +83,9 @@
   consumer is captured; do not infer semantics from selector ordering.
   2026-08-06: real SNDLEV00 SAL/MAP bytes now have a regression proving that
   neither event playback nor the legacy sample-index API creates a host voice.
+  Capture launchers now reject stock Mednafen before creating a manifest when
+  the required Firestaff trace hook is absent; a normal movie/screenshot is not
+  promoted to SLEV/SAL evidence.
 
 - **NEXUS-PALETTE-CAPTURE:** The retail SMAP/FACE/ITEM/MNS palette decoders
   now share the Saturn BGR555 channel order. Remaining work is an independent

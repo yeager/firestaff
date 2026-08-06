@@ -20,6 +20,15 @@ require_file_hash() {
 
 require_fnv() { [[ "$1" =~ ^[[:xdigit:]]{1,16}$ && "$1" != 0 ]]; }
 
+require_capture_hook() {
+  local marker=$1
+  strings "$mednafen" | grep -Fq "$marker" || {
+    echo "ERROR: Mednafen binary does not advertise the Firestaff capture hook: $marker" >&2
+    echo "       stock Mednafen cannot produce NXSVDP1C; use an instrumented build" >&2
+    return 1
+  }
+}
+
 launch=0
 operator_only=0
 while (($#)); do
@@ -54,6 +63,9 @@ case "$bios_region" in
 esac
 [[ ! -e "$capture" && ! -e "$manifest" && "$capture" != "$manifest" && \
    -d "$(dirname "$capture")" && -d "$(dirname "$manifest")" ]] || exit 1
+if ((launch)); then
+  require_capture_hook FIRESTAFF_NEXUS_VDP1_CAPTURE_OUTPUT || exit 78
+fi
 bios_sha256=$(lower "$bios_sha256")
 disc_sha256=$(lower "$disc_sha256")
 package_fnv=$(lower "$package_fnv")

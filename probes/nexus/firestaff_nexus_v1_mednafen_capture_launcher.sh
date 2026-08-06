@@ -17,6 +17,15 @@ require_file_hash() {
   [[ "$actual_lower" == "$expected_lower" ]]
 }
 
+require_capture_hook() {
+  local marker=$1
+  strings "$mednafen" | grep -Fq "$marker" || {
+    echo "ERROR: Mednafen binary does not advertise the Firestaff capture hook: $marker" >&2
+    echo "       stock Mednafen cannot produce a Nexus Saturn trace; use an instrumented build" >&2
+    return 1
+  }
+}
+
 launch=0
 operator_only=0
 while (($#)); do
@@ -41,6 +50,9 @@ require_file_hash "$dm_bin" "$dm_bin_sha256" || exit 1
 require_file_hash "$dgn" "$dgn_sha256" || exit 1
 [[ "$replay_trace_fnv" =~ ^[[:xdigit:]]+$ && "$replay_dgn_fnv" =~ ^[[:xdigit:]]+$ && "$replay_bitmap_fnv" =~ ^[[:xdigit:]]+$ && "$replay_epoch" =~ ^[1-9][0-9]*$ ]] || exit 1
 [[ ! -e "$trace" && ! -e "$manifest" && -d "$(dirname "$trace")" && -d "$(dirname "$manifest")" ]] || exit 1
+if ((launch)); then
+  require_capture_hook FIRESTAFF_NEXUS_TRACE_OUTPUT || exit 78
+fi
 
 manifest_tmp="$manifest.tmp.$$"
 umask 077

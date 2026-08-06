@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus capture producer preflight: the PRS3, VDP1 and SLEV/SAL
+  Mednafen launchers now require their advertised Firestaff output hook before
+  writing a manifest or starting an external run. Stock Mednafen exits 78 with
+  an explicit instrumented-build message and leaves no misleading artifact.
+  Added `docs/NEXUS_RUNTIME_CAPTURE.md` to document the artifact boundary and
+  the difference between ordinary video evidence and VDP/runtime provenance.
+
 - ✅ 2026-08-06 Nexus M11 startup capture gate: removed the remaining direct
   `TITLE.CG` and `WARNING.BIN` host-framebuffer/palette copies from the M11
   startup executors. The real European ISO still loads and advances the
