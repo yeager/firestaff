@@ -3183,6 +3183,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->dataDir        = NULL;
     opts->savePath       = NULL;
     opts->gameId         = NULL;
+    opts->architectureOverride = -1;
     opts->directLaunch   = 0;
     opts->bootProbe      = 0;
     opts->bootProbeFrames = 0;
@@ -3234,6 +3235,67 @@ static void m11_phase_a_advance_boot_probe_frames(M11_GameViewState* gameView,
                               M11_FB_HEIGHT);
         }
     }
+}
+
+/* Select a source-owned architecture in the same M12 version catalogue used
+ * by the visible game-options screen.  The version index is chosen from the
+ * catalogue, preferring a matched hash but retaining the first source entry
+ * when media is absent so the menu can show the requested platform as
+ * unavailable instead of silently falling back to PC. */
+static int m11_apply_architecture_override(M12_StartupMenuState* menuState,
+                                           const char* gameId,
+                                           int architecture) {
+    static const char* const gameIds[] = {"dm1", "csb", "dm2"};
+    size_t gameStart = 0U;
+    size_t gameEnd = sizeof(gameIds) / sizeof(gameIds[0]);
+    size_t gameIndex;
+    int applied = 0;
+
+    if (!menuState || architecture <= M12_ARCH_AUTO ||
+        architecture >= M12_ARCH_COUNT) {
+        return 0;
+    }
+    if (gameId && gameId[0] != '\0') {
+        gameStart = gameEnd;
+        for (gameIndex = 0U; gameIndex < gameEnd; ++gameIndex) {
+            if (strcmp(gameIds[gameIndex], gameId) == 0) {
+                gameStart = gameIndex;
+                gameEnd = gameIndex + 1U;
+                break;
+            }
+        }
+        if (gameStart == sizeof(gameIds) / sizeof(gameIds[0])) {
+            return 0;
+        }
+    }
+    for (gameIndex = gameStart; gameIndex < gameEnd; ++gameIndex) {
+        const char* id = gameIds[gameIndex];
+        size_t count = M12_AssetStatus_GetVersionCount(id);
+        size_t versionIndex;
+        int first = -1;
+        int matched = -1;
+        for (versionIndex = 0U; versionIndex < count; ++versionIndex) {
+            if (M12_AssetStatus_GetVersionArchitecture(id, versionIndex) !=
+                architecture) {
+                continue;
+            }
+            if (first < 0) first = (int)versionIndex;
+            {
+                const M12_AssetVersionStatus* version =
+                    M12_AssetStatus_GetVersion(&menuState->assetStatus,
+                                               id, versionIndex);
+                if (matched < 0 && version && version->matched) {
+                    matched = (int)versionIndex;
+                }
+            }
+        }
+        if (first < 0) continue;
+        menuState->gameOptions[gameIndex].architectureIndex = architecture;
+        menuState->gameOptions[gameIndex].versionIndex =
+            matched >= 0 ? matched : first;
+        applied++;
+    }
+    return applied;
 }
 
 static int m11_script_next_token(const char** cursor,
@@ -5440,6 +5502,18 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
                                         o->dataDir,
                                         o->gameId,
                                         &menuInitOptions);
+    }
+    if (o->architectureOverride > M12_ARCH_AUTO) {
+        if (!m11_apply_architecture_override(&menuState,
+                                             o->gameId,
+                                             o->architectureOverride)) {
+            fprintf(stderr,
+                    "firestaff: requested platform %s is not catalogued for the selected game\n",
+                    M12_Architecture_Label(o->architectureOverride));
+            free(launcherFramebuffer);
+            M11_Render_Shutdown();
+            return 2;
+        }
     }
     /* The playback device is a launcher-wide host preference, not a
      * per-game effect.  Bind it before title/entrance audio can create a

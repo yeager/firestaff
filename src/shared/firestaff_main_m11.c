@@ -69,6 +69,8 @@ static void usage(const char* prog) {
             "  --no-vsync          Disable vertical sync\n"
             "  --fps               Show FPS counter\n"
             "  --game <id>         Start game directly: dm1, csb, dm2, nexus, theron\n"
+            "  --platform <name>   Select source platform: auto, pc, amiga, atari-st, fm-towns, pc98, saturn\n"
+            "  --fm-towns          Select the verified FM Towns edition (dm1, csb, or dm2)\n"
             "  --retroachievements Enable RetroAchievements runtime bridge\n"
             "  --ra-user <name>    RetroAchievements username\n"
             "  --ra-token <token>  RetroAchievements API token\n"
@@ -365,6 +367,26 @@ static int parse_presentation_mode(const char* value, int* out_mode) {
     return 1;
 }
 
+static int parse_architecture(const char* value, int* out_architecture) {
+    if (!value || !out_architecture) return 0;
+    if (strcmp(value, "auto") == 0) *out_architecture = M12_ARCH_AUTO;
+    else if (strcmp(value, "pc") == 0) *out_architecture = M12_ARCH_PC;
+    else if (strcmp(value, "amiga") == 0) *out_architecture = M12_ARCH_AMIGA;
+    else if (strcmp(value, "atari-st") == 0 || strcmp(value, "st") == 0)
+        *out_architecture = M12_ARCH_ATARI_ST;
+    else if (strcmp(value, "fm-towns") == 0 || strcmp(value, "fmtowns") == 0 ||
+             strcmp(value, "fm_towns") == 0)
+        *out_architecture = M12_ARCH_FM_TOWNS;
+    else if (strcmp(value, "x68000") == 0) *out_architecture = M12_ARCH_X68000;
+    else if (strcmp(value, "pc98") == 0 || strcmp(value, "pc-98") == 0)
+        *out_architecture = M12_ARCH_PC98;
+    else if (strcmp(value, "pce") == 0 || strcmp(value, "pc-engine") == 0)
+        *out_architecture = M12_ARCH_PCE;
+    else if (strcmp(value, "saturn") == 0) *out_architecture = M12_ARCH_SATURN;
+    else return 0;
+    return 1;
+}
+
 int main(int argc, char** argv) {
     M11_PhaseA_Options opts;
     int scanData = 0;
@@ -521,6 +543,18 @@ int main(int argc, char** argv) {
         if (strcmp(a, "--game") == 0 && i + 1 < argc) {
             opts.gameId = argv[++i];
             opts.directLaunch = 1;
+            continue;
+        }
+        if (strcmp(a, "--platform") == 0 && i + 1 < argc) {
+            if (!parse_architecture(argv[++i], &opts.architectureOverride)) {
+                fprintf(stderr,
+                        "firestaff: --platform must be auto, pc, amiga, atari-st, fm-towns, pc98, pce, saturn, or x68000\n");
+                return 2;
+            }
+            continue;
+        }
+        if (strcmp(a, "--fm-towns") == 0) {
+            opts.architectureOverride = M12_ARCH_FM_TOWNS;
             continue;
         }
         if (strcmp(a, "--save") == 0 && i + 1 < argc) {

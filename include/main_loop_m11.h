@@ -42,6 +42,9 @@ typedef struct {
     const char* savePath;  /* Optional validated save to resume after launch. */
     const char* gameId;    /* Optional game to pre-select: dm1, csb, dm2,
                               nexus, theron. Overrides auto-detection. */
+    int architectureOverride; /* M12_ARCH_*; -1 keeps the saved/menu choice.
+                                 --fm-towns is the shorthand for
+                                 M12_ARCH_FM_TOWNS. */
     int directLaunch;      /* Non-zero when --game should bypass M12. */
     int bootProbe;         /* Non-zero for deterministic --game boot smoke:
                               prepare/open selected-entry startup, then exit. */

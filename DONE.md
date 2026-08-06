@@ -46,6 +46,18 @@
 - ✅ Verification: `test_dm1_v1_m151_m200_source_audit_pc34_compat` passes;
   the source object is absent from both M10 and M11 archives.
 
+# FM Towns CLI/start-menu selectors for DM1, CSB and DM2 (2026-08-06)
+
+- ✅ Added `--fm-towns` and `--platform fm-towns` to the Firestaff CLI.
+- ✅ Both selectors use the existing hash-verified FM Towns entries in the
+  M12 catalogue for DM1, CSB and DM2; no PC fallback is performed when media
+  is absent.
+- ✅ The startup menu's existing Architecture/Version options now receive the
+  same explicit selection, including the visible unavailable state.
+- ✅ `firestaff` builds, the polished M12 flow passes, and invalid platform
+  input is rejected. Existing unrelated boot-probe fixture failures remain
+  outside this change.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the
