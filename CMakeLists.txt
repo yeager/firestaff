@@ -4322,6 +4322,7 @@ add_library(firestaff_m10 STATIC
     src/shared/image_backend_pc34_compat_globals.c
     src/csb/csb_v1_csbgraphics_dat_classify.c
     src/csb/csb_v1_csbgraphics_dat_real_scan.c
+    src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_csbgraphics_runtime_binding.c
     src/csb/csb_v1_csbgraphics_runtime_plan.c
     src/csb/csb_v1_startup_real_asset_receipt.c
@@ -7791,6 +7792,7 @@ add_executable(firestaff_csb_v1_real_asset_launch_probe
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
     src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
@@ -7833,6 +7835,7 @@ add_executable(firestaff_csb_v1_pc_real_asset_launch_probe
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_graphics_lzw_pc34_compat.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
@@ -7854,6 +7857,7 @@ add_executable(firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe
     probes/csb/firestaff_csb_v1_pc_real_asset_title_import_ui_gate_probe.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_dungeon_loader_pc34_compat.c
@@ -7878,6 +7882,7 @@ add_executable(firestaff_csb_v1_pc_package_presentation_probe
     probes/csb/firestaff_csb_v1_pc_package_presentation_probe.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/csb_v1_startup_real_asset_receipt.c
     src/csb/csb_v1_runtime_pc34_compat.c
@@ -7946,6 +7951,7 @@ add_executable(firestaff_csb_v1_pc34_quickplay_dungeon_handle_probe
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
     src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
@@ -8001,6 +8007,7 @@ add_executable(firestaff_csb_v1_first_viewport_frame_probe
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
     src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
@@ -8056,6 +8063,7 @@ add_executable(firestaff_csb_v1_pc_real_asset_ornament_blit_probe
     src/csb/csb_v1_runtime_pc34_compat.c
     src/csb/csb_v1_boot.c
     src/csb/csb_v1_startup_runtime_surfaces_pc34_compat.c
+    src/csb/csb_v1_fmtowns_graphics_dat.c
     src/csb/csb_v1_startup_img3_decode_pc34_compat.c
     src/csb/redmcsb_f0691_draw_compressed_img3_pc34_compat.c
     src/csb/redmcsb_f0685_img3_line_fill_pc34_compat.c
@@ -15880,6 +15888,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_light_ops
         tests/test_dm2_v1_light_ops.c
         src/dm2/dm2_v1_light_ops_pc34_compat.c
+        src/dm2/dm2_v1_runtime_narrow_pc34_compat.c
     )
     target_link_libraries(test_dm2_v1_light_ops PRIVATE
         firestaff_dm2 firestaff_m10 firestaff_zlib
@@ -15988,6 +15997,7 @@ if(BUILD_TESTING)
     add_executable(test_dm2_v1_moverec_ops
         tests/test_dm2_v1_moverec_ops.c
         src/dm2/dm2_v1_moverec_ops_pc34_compat.c
+        src/dm2/dm2_v1_runtime_narrow_pc34_compat.c
     )
     target_link_libraries(test_dm2_v1_moverec_ops PRIVATE
         firestaff_dm2 firestaff_m10 firestaff_zlib
@@ -19600,6 +19610,7 @@ if(BUILD_TESTING)
         src/shared/dungeon_decompressor_ftl.c
         src/dm2/dm2_v1_new_game.c
         src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_glob_var.c
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
@@ -46835,7 +46846,7 @@ endif()
 # Theron Track 02 full dungeon loader (tiles + ground refs + items + actuator fix)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_loader.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_loader.c")
-        add_executable(test_theron_v1_track02_dungeon_loader
+add_executable(test_theron_v1_track02_dungeon_loader
         tests/test_theron_v1_track02_dungeon_loader.c
         src/theron/theron_v1_track02_dungeon_loader.c
         src/theron/theron_v1_track02_actuator.c
@@ -48719,6 +48730,9 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/shared/fs_portable_compat.c
         src/shared/asset_find_by_hash.c
         src/dm2/dm2_v1_save_load.c
+        src/dm2/dm2_v1_glob_var.c
+        src/dm2/dm2_v1_save_record_masks_pc34_compat.c
+        src/dm2/dm2_v1_save_suppress_masks_pc34_compat.c
         src/dm2/dm2_v1_save_timers_pc34_compat.c
         src/dm2/dm2_v1_door_mechanics.c
         src/dm2/dm2_v1_perform_move.c

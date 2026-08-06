@@ -4,8 +4,12 @@
 #include <string.h>
 
 enum { ADF_BLOCK = 512, ADF_WORDS = 128, ADF_FILE_TYPE = 2, ADF_DATA_TYPE = 8,
-       ADF_LIST_TYPE = 16, ADF_FILE_SUBTYPE = 0xfffffffdU, ADF_DATA_BYTES = 488,
-       ADF_POINTERS = 72 };
+       ADF_LIST_TYPE = 16, ADF_DATA_BYTES = 488, ADF_POINTERS = 72 };
+
+/* 0xfffffffd is an AmigaDOS on-disk tag, not an ISO C enum value.  Keeping it
+ * typed as uint32_t avoids -Wpedantic failures on Clang, where enumerators
+ * are required to fit in int. */
+static const uint32_t ADF_FILE_SUBTYPE = UINT32_C(0xfffffffd);
 
 static uint32_t adf_be32(const uint8_t *p) {
     return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |

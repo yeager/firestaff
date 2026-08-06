@@ -32,7 +32,7 @@ static void p_v1_inactive(void) {
     check(all_zero, "V1 inactive -> pixels unchanged");
 }
 
-static void p_v22_9_cells(void) {
+static void p_v22_no_draw(void) {
     unsigned char fb[320 * 200];
     memset(fb, 0x00, sizeof(fb));
     dm1_v2_presentation_mode_reset();
@@ -40,7 +40,12 @@ static void p_v22_9_cells(void) {
     dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
     m11_v22_shape_cache_update(0, (const unsigned char[3][3]){0});
     int n = m11_v22_render_overlay(fb, 320, 200);
-    check(n == 9, "V22: 9 cells painted");
+    check(n == 0, "V22 without authenticated art -> no cells painted");
+    int all_zero = 1;
+    for (int i = 0; i < 320 * 200; ++i) {
+        if (fb[i] != 0x00) { all_zero = 0; break; }
+    }
+    check(all_zero, "V22 without authenticated art -> pixels unchanged");
 }
 
 static void p_v22_transition(void) {
@@ -59,7 +64,7 @@ static void p_v22_transition(void) {
     m11_v22_shape_cache_update(0, (const unsigned char[3][3]){0});
     int n3 = m11_v22_render_overlay(fb, 320, 200);
     check(n1 == 0, "V1 -> 0 cells");
-    check(n2 == 9, "V22 -> 9 cells");
+    check(n2 == 0, "V22 without authenticated art -> 0 cells");
     check(n3 == 0, "V1 (back) -> 0 cells");
 }
 
@@ -71,8 +76,7 @@ static void p_null_safe(void) {
     check(n == 0, "zero-sized framebuffer -> 0 cells");
 }
 
-static void p_border(void) {
-    /* The 1-pixel border uses the placeholder index. */
+static void p_no_synthetic_border(void) {
     unsigned char fb[320 * 200];
     memset(fb, 0x00, sizeof(fb));
     dm1_v2_presentation_mode_reset();
@@ -80,15 +84,11 @@ static void p_border(void) {
     dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
     m11_v22_shape_cache_update(0, (const unsigned char[3][3]){0});
     m11_v22_render_overlay(fb, 320, 200);
-    /* D1L top-left border = (8, 103). The overlay's 1px border
-     * should be M11_V22_OVERLAY_PLACEHOLDER_INDEX. */
+    /* D1L top-left remains untouched until authenticated art is available. */
     int idx = 103 * 320 + 8;
-    check(fb[idx] == M11_V22_OVERLAY_PLACEHOLDER_INDEX,
-          "D1L top-left border = placeholder index");
-    /* The center of the D1L rect (8+35, 103+15) should also be
-     * filled (with the color derived from color_tint). */
+    check(fb[idx] == 0x00, "D1L top-left remains unchanged without art");
     int cidx = (103 + 15) * 320 + (8 + 35);
-    check(fb[cidx] != 0x00, "D1L center filled (non-zero)");
+    check(fb[cidx] == 0x00, "D1L center remains unchanged without art");
 }
 
 static void p_source_palette_shadow(void) {
@@ -101,12 +101,12 @@ static void p_source_palette_shadow(void) {
     dm1_v2_presentation_mode_set_modern_pack_available(1);
     dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
     m11_v22_shape_cache_update(0, (const unsigned char[3][3]){0});
-    check(m11_v22_render_overlay_with_palette(bright, 320, 200, 0) == 9,
-          "palette shadow: bright source paints 9 cells");
-    check(m11_v22_render_overlay_with_palette(dark, 320, 200, 5) == 9,
-          "palette shadow: dark source paints 9 cells");
-    check(dark[center] < bright[center],
-          "palette shadow: source palette 5 darkens D1L center");
+    check(m11_v22_render_overlay_with_palette(bright, 320, 200, 0) == 0,
+          "palette shadow: no authenticated art paints 0 cells");
+    check(m11_v22_render_overlay_with_palette(dark, 320, 200, 5) == 0,
+          "palette shadow: no authenticated art paints 0 cells");
+    check(dark[center] == bright[center],
+          "palette shadow: no synthetic palette changes pixels");
 }
 
 static void p_material_categories(void) {
@@ -126,17 +126,15 @@ static void p_material_categories(void) {
     dm1_v2_presentation_mode_set_modern_pack_available(1);
     dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
     m11_v22_shape_cache_update(0, (const unsigned char (*)[3])raw_cells);
-    check(m11_v22_render_overlay_with_palette(fb, 320, 200, 0) == 9,
-          "material categories: paints 9 cells");
+    check(m11_v22_render_overlay_with_palette(fb, 320, 200, 0) == 0,
+          "material categories: no authenticated art paints 0 cells");
     wall = fb[(103 + 15) * 320 + (8 + 35)];
     floor = fb[(103 + 15) * 320 + (78 + 30)];
     pit = fb[(103 + 15) * 320 + (139 + 35)];
     stairs = fb[(72 + 15) * 320 + (8 + 35)];
     field = fb[(72 + 15) * 320 + (139 + 35)];
-    check(wall != floor, "material categories: wall differs from floor");
-    check(floor != pit, "material categories: floor differs from pit");
-    check(stairs != floor, "material categories: stairs differs from floor");
-    check(field != floor, "material categories: field differs from floor");
+    check(wall == 0 && floor == 0 && pit == 0 && stairs == 0 && field == 0,
+          "material categories: no synthetic pixels are emitted");
 }
 
 static void p_evidence(void) {
@@ -149,10 +147,10 @@ static void p_evidence(void) {
 int main(void) {
     printf("=== M11 V22 render overlay probe ===\n");
     p_v1_inactive();
-    p_v22_9_cells();
+    p_v22_no_draw();
     p_v22_transition();
     p_null_safe();
-    p_border();
+    p_no_synthetic_border();
     p_source_palette_shadow();
     p_material_categories();
     p_evidence();

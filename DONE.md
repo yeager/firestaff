@@ -50626,3 +50626,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   oversized declarations fail closed. Verification: `test_nexus_v1_mns`
   decoded all 30 real MNS files and rendered 815 source textures. This does
   not claim Saturn VDP1 capture or final viewport-pixel parity.
+- ✅ 2026-08-06 CI portability/link closure: fixed Clang pedantic rejection of
+  the AmigaDOS `0xfffffffd` tag, completed missing DM2 test-source links,
+  added the CSB FMTowns graphics owner to M10 and direct probes, and updated
+  the V22 overlay probe to assert the authenticated no-draw contract.
+  Verification: full local CMake build reaches 100%; affected CTest probes
+  pass.
