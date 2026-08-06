@@ -7376,6 +7376,16 @@ lane is carried forward in the sections below.
 
 ## Current DM1 Follow-up
 
+- **DM1 synthetic-path audit:** Completed 2026-08-06. The active `firestaff`
+  M11 target was checked against the local real PC34 corpus and its Ninja link
+  graph. Authenticated DM1 object names use M564, object icons and charge
+  state use raw Thing/G0237 data, and viewport material uses decoded
+  GRAPHICS.DAT surfaces; missing source material fails closed. The old generic
+  viewport renderer is not linked into the M11 executable. Full findings and
+  evidence are in `docs/parity/DM1_V1_SYNTHETIC_PATH_AUDIT.md`. Remaining
+  items are real Mac capture, C13-bearing original saves, and broader paired
+  original-pixel capture.
+
 - **DM1-HOC-C040-TIME-EFFECTS:** Closed 2026-07-31. The live M11 idle
   path now has a F0331 due-tick regression: a selected Hall of Champions
   candidate is excluded from health, stamina, food and water mutation while

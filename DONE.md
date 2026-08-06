@@ -26,6 +26,15 @@
   unmodified payload is still decoded for diagnostics but cannot change live
   party state or create a raw-save handoff. Focused real-corpus and save/load
   regressions pass.
+- ✅ 2026-08-06 DM1 synthetic-path audit: checked the active M11 production
+  target against ReDMCSB ownership and the local real PC34 corpus. M564
+  object names, raw Thing/G0237 icon and charge resolution, decoded
+  GRAPHICS.DAT viewport material, C127/C026 mirrors and F0702 held-object
+  cursor paths are source-backed; missing material fails closed. The legacy
+  generic viewport renderer is not linked into the `firestaff` M11 executable.
+  Added `docs/parity/DM1_V1_SYNTHETIC_PATH_AUDIT.md`. Remaining work is real
+  Mac capture, C13-bearing original saves and broader original-pixel pairs.
+
 - ✅ 2026-08-06 DM1 original PC34 save recheck: two operator-supplied
   48,561-byte `DMSAVE.DAT` files from `Downloads/` passed
   `test_dm1_v1_original_save_pc34_backed_corpus_roundtrip` using the
