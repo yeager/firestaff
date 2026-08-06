@@ -1,14 +1,17 @@
 # Nexus V1 Phase 4 — Rendering Pipeline
 **Job:** `Nexus_V1_Phase4_RenderingPipeline_0357`
-**Status:** Source-format portions verified; Saturn presentation remains blocked
+**Status:** Source-format receipts verified; Saturn presentation remains capture-gated
 **Author:** Firestaff agent (cron)
-**Last revised:** 2026-05-27T04:10 UTC+2
+**Last revised:** 2026-08-06T12:00 UTC+2
 
 ---
 
 ## Scope
 
-Source-lock the Nexus wall/floor/object/creature/projectile/UI/title rendering pipeline, palette/texture/model handling, and deterministic fallback paths for unsupported 3D assets.
+Source-lock the retained Nexus source-format receipts and the explicit no-draw
+boundaries around wall/floor/object/creature/projectile/UI/title presentation,
+palette/texture/model handling, and unsupported 3D assets. Saturn presentation
+is not claimed until the required VDP1/VDP2 capture evidence exists.
 
 ---
 
@@ -94,7 +97,9 @@ View matrix from `m4_look_at()`, projection from `m4_perspective(fov=60, aspect=
 
 Affine UV (no perspective divide — Saturn style): `u_screen = w0*v0.uv + w1*v1.uv + w2*v2.uv` (barycentric weights from screen space). UV scaled by `(int)(u * tex_w) & (tex_w - 1)` for pixel lookup. Power-of-two textures use bitwise AND (fast modulo); non-POT sizes use integer % for safety.
 
-**Fallback:** mismatched or NULL texture data → `nexus_raster_triangle()` (flat shaded). No crash.
+The raster primitive is retained for source study and isolated fixture tests.
+Production DGN/MNS presentation does not fall back to flat shading when texture,
+CLUT, placement, or command-order provenance is absent; it remains no-draw.
 
 ### 3.5 Wall Rendering — `nexus_draw_wall()`
 
@@ -154,15 +159,22 @@ placement and SLEV/SAL/SFX ownership.
 **Source:** Saturn VDP1 SDK — `CMD_BITMAP` (8-bit indexed CLUT mode). Row-major, stride = w bytes (no padding, Saturn row stride = w).
 
 `nexus_ui_surface_load()`:
-- `NULL` data → deterministic gray (palette 7) fill + diagnostic log. No crash.
-- Short data → partial copy, zero-pad remainder, log diagnostic.
+- rejects `NULL` data, invalid dimensions, and any source shorter than `w*h`.
+- never zero-pads, publishes partial pixels, or creates a gray placeholder.
+- may retain verified source pixels for receipts and inspection only; a
+  successful load is not proof of Saturn VDP2 placement or a drawable screen.
 - SEGA header chk (first 4 bytes `"SEGA"`), skip 16-byte offset if present (for TITLE.CG).
 
-### 4.3 Blit Primitive
+### 4.3 Presentation Boundary
 
-**Source:** ReDMCSB BLIT.C F0132 — fast rect copy with optional horizontal flip.
+The public blit/render/remap/darken helpers are intentionally no-op in the
+production Nexus route. The ReDMCSB `BLIT.C` F0132 copy is a historical source
+reference, not evidence that Nexus uses the same framebuffer ownership.
+Authentic presentation requires captured VDP1 commands, VDP2 destination and
+CLUT selection, plus ordering/timing tied to the relevant title/HUD surface.
 
-Clips source rect to destination framebuffer bounds. Per-pixel copy: `fb[dy*fb_w + dx] = surf->data[row*surf->w + (flip ? w-1-col : col)]`.
+Until that evidence is available, missing or unproven presentation data is
+reported as a receipt/status and produces no visible fallback.
 
 ### 4.4 FACE.BIN Layout
 
@@ -223,10 +235,8 @@ V1_fb.color_buffer[320×200]  (indexed)
 
 ## 8. Compliance with Phase 4 Mandate
 
-✅ Wall/floor/object/creature/projectile/UI/title rendering — implemented
-✅ Palette/BGR555/texture handling — implemented (STONE.BIN, BGR555→RGBA)
-✅ DMDF model loading — implemented with `nexus_project_model_vert()` bridge
-✅ Unsupported 3D assets — explicitly no-draw until source material is authenticated
-✅ No crashes on missing/corrupt data (all bounds-validated before use)
-✅ Source citations in every function comment
-✅ Missing surface/texture — explicitly no-draw; no generated placeholder is admitted
+✅ Source-format parsers and bounded receipts — implemented and validated
+⏳ Saturn VDP1/VDP2 presentation — capture-gated
+⏳ DGN mesh/material/creature/door/projectile runtime rendering — capture-gated
+✅ Unsupported or missing/corrupt data fails closed; no generated placeholder is admitted
+✅ Source citations and bounds checks are retained at the implementation boundary

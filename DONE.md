@@ -1,11 +1,10 @@
-# Theron forcefield focus dispatch (2026-08-06)
+# Nexus Phase 4 rendering-document fidelity correction (2026-08-06)
 
-- ✅ M11 now dispatches Enter from the authenticated Soul Room forcefield
-  cursor even when no diagnostic prompt text has been published yet. This
-  fixes the first-attempt/menu-state path without bypassing the Track 02
-  admission gate.
-- ✅ Added a prompt-free regression; the real-data test now reports 64 passed,
-  0 failed, 1 skipped.
+- ✅ Corrected the source-lock rendering document so it no longer describes
+  gray/zero-padded UI fallback or completed Nexus presentation.
+- ✅ It now matches the implementation: invalid/short surfaces reject, source
+  pixels remain receipt-only, and VDP1/VDP2 plus DGN/MNS presentation stays
+  capture-gated with no generated fallback.
 
 # Theron complete static decompressor listing (2026-08-06)
 
@@ -54726,13 +54725,6 @@ alcove runtime and archive-media tests passed (4/4).
   stream latch. The real title→Switch→Game→Prison regression preserves its
   boot-owned map 0 coordinate (9,0), retail selector/physical track 2. Native CD pause/resume
   remains intentionally open.
-
-- ✅ 2026-08-06 CSB FM Towns Utility-program admission: AUTOEXEC.BAT's
-  separate Switch exits 2/5 now resolve only their retail C06_CEDT owners,
-  `UTILE.EXP`/`UTILJ.EXP`, after the selected F31 profile is authenticated.
-  The receipts verify exact size and FNV-1a identity and cannot fall through
-  to C03_GAME or a PC34 utility panel. The real F31E boot smoke passes;
-  source-owned Utility UI and save transactions remain open.
 
 - ✅ Removed the remaining fixed arithmetic wall-index helper from the old
   `firestaff_dungeon_viewport_bridge` API. The previous `300 + distance * 18
