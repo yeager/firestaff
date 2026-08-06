@@ -22,6 +22,17 @@
   CRAM or SLEV/SAL trace hook, so presentation and runtime-consumer gates stay
   closed.
 
+- ✅ 2026-08-06 Nexus PRS3 retail-vector receipt refresh: corrected the real-data
+  admission tests to the current `MENU.BPK` corpus and DMWeb indexed-output
+  contract. Entry 1 is 16x15x1 (`240` output bytes) and remains blocked at
+  `237/240`; entry 5 is 54x31x1 with a `560`-byte stream, `529` input bytes,
+  `1674` output stores, output FNV `290a9d13c0224cc6` and control FNV
+  `f305b1060657bb06`. The differential trial records one MSB exact frame plus
+  108 trailing matches, so the simple decoder remains unproven. Focused real-
+  corpus tests for admission, loader control flow, subset trace and Structure2
+  ABI pass; no runtime decoder, pixel intake, palette upload or VDP1 handoff was
+  opened.
+
 - ✅ 2026-08-06 CI Windows warning-as-error fix: confined the POSIX-only
   case-insensitive SKSave filename variant matcher to non-Windows builds.
   Windows no longer compiles an unused helper under `-Werror`; the focused

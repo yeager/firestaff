@@ -113,21 +113,21 @@ static void test_real_prs3_structure2_abi_gate(void)
     CHECK(receipt.positive_prs3_vector_bound &&
               receipt.prs3_entry_index == 5U &&
               receipt.prs3_stream_offset == 1612U &&
-              receipt.prs3_stream_size == 552U &&
+              receipt.prs3_stream_size == 560U &&
               receipt.prs3_expected_output_bytes == 1674U &&
               receipt.prs3_width == 54U &&
               receipt.prs3_height == 31U &&
               receipt.prs3_bpp == 1U &&
               receipt.prs3_output_fnv1a64 ==
-                  UINT64_C(0x14cacc01cee292aa) &&
+                  UINT64_C(0x290a9d13c0224cc6) &&
               receipt.prs3_header_span_fnv1a64 != 0U &&
               receipt.prs3_bitmap_candidate_fnv1a64 != 0U &&
               receipt.prs3_bitmap_candidate_offset == 1616U &&
-              receipt.prs3_bitmap_candidate_size == 548U &&
-              receipt.prs3_input_read_bytes == 514U &&
+              receipt.prs3_bitmap_candidate_size == 556U &&
+              receipt.prs3_input_read_bytes == 529U &&
               receipt.prs3_output_store_count == 1674U &&
-              receipt.prs3_zero_merge_count == 164U &&
-              receipt.prs3_zero_copy_count == 1527U,
+              receipt.prs3_zero_merge_count == 158U &&
+              receipt.prs3_zero_copy_count == 1503U,
           "entry 5 positive vector facts are retained");
     CHECK(receipt.palt_trailer_bound &&
               receipt.palt_entries_are_be16 &&

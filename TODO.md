@@ -10314,7 +10314,7 @@ lane is carried forward in the sections below.
     R11/R14 observations. The real run consumes all 140 body bytes, observes
     82 original nonzero output stores, 22 zero-side merges, 125 indexed
     zero-side reads, and stable output/control fingerprints, but it reaches
-    `blocked-execution` before the declared 480-byte output vector. This is
+    `blocked-execution` before the declared 240-byte indexed output vector. This is
     an authenticated-code negative blocker, not a decoder: positive vectors
     still require an independently authenticated Saturn/emulator trace or an
     equally reviewed execution proof that explains zero-side output/copy
@@ -10322,9 +10322,9 @@ lane is carried forward in the sections below.
   - 2026-07-16 Nexus PRS3 SH-2 subset-vector update: the subset executor now
     models the missing real output stores (`2a20`, `2310`, `2a10`) and R10
     linear output pointer alongside the R13/R6 history window. `MENU.BPK`
-    entry 5 now produces a full 1674-byte output vector from its own 552-byte
-    real stream with stable FNV `14cacc01cee292aa`, proving the zero-side
-    copy/store path for that bounded vector. Entry 1 still stops at 237/480
+    entry 5 now produces a full 1674-byte output vector from its own 560-byte
+    real stream with stable FNV `290a9d13c0224cc6`, proving the zero-side
+    copy/store path for that bounded vector. Entry 1 still stops at 237/240
     bytes from its own real span. Remaining work is an independently
     authenticated Saturn/emulator trace and reviewed opcode/pixel/palette ABI
     before PRS3 output can be promoted into Structure2 intake or rendering.

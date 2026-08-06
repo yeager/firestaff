@@ -141,7 +141,7 @@ static void test_real_loader_control_flow(void)
               receipt.menu_prs3_stream_count == 162U &&
               receipt.first_menu_entry_index == 1U &&
               receipt.first_menu_stream_size == 144U &&
-              receipt.first_menu_expected_output_bytes == 480U,
+              receipt.first_menu_expected_output_bytes == 240U,
           "MENU.BPK stream plan is bound to the control-flow probe");
     CHECK(!receipt.expected_output_vector_bound &&
               !receipt.opcode_grammar_reviewed &&

@@ -110,18 +110,18 @@ static void test_real_retail_decoder_admission_blocks_without_proof(void)
               receipt.menu_bpk_prs3_stream_count == 162U &&
               receipt.first_stream_entry_index == 1U &&
               receipt.first_stream_size > 0U &&
-              receipt.first_expected_output_bytes == 480U,
+              receipt.first_expected_output_bytes == 240U,
           "retail MENU.BPK PRS3 streams are bound");
     CHECK(receipt.lsb_trial_evaluated > 0U &&
               receipt.msb_trial_evaluated > 0U &&
               !receipt.simple_lsb_msb_decoder_disproven &&
               receipt.lsb_trial_complete_exact == 0U &&
               receipt.lsb_trial_complete_trailing == 0U &&
-              receipt.msb_trial_complete_exact == 0U &&
-              receipt.msb_trial_complete_trailing == 8U &&
+              receipt.msb_trial_complete_exact == 1U &&
+              receipt.msb_trial_complete_trailing == 108U &&
               receipt.lsb_trial_failures > 0U &&
               receipt.msb_trial_failures > 0U,
-          "MSB trial has 8 trailing matches; LSB/MSB not fully disproven");
+          "MSB trial has one exact frame and 108 trailing matches; simple decoder remains unproven");
     CHECK(!receipt.expected_output_bound &&
               !receipt.decoder_ready &&
               !receipt.decoder_promoted &&

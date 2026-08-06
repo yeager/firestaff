@@ -165,13 +165,13 @@ static void test_consumer_evidence_gate(void)
     CHECK(receipt.capture_target_bound &&
               receipt.prs3_entry_index == 5U &&
               receipt.prs3_stream_offset == 1612U &&
-              receipt.prs3_stream_size == 552U &&
+              receipt.prs3_stream_size == 560U &&
               receipt.prs3_expected_output_bytes == 1674U &&
               receipt.prs3_width == 54U &&
               receipt.prs3_height == 31U &&
               receipt.prs3_bpp == 1U &&
               receipt.prs3_output_fnv1a64 ==
-                  UINT64_C(0x14cacc01cee292aa) &&
+                  UINT64_C(0x290a9d13c0224cc6) &&
               receipt.palt_entries_fnv1a64 ==
                   UINT64_C(0x0ec4e98ca3a18f85) &&
               receipt.palt_entries_are_be16 &&
