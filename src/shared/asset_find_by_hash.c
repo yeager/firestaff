@@ -4404,6 +4404,32 @@ static int external_adf_extract_entry_to_path(const char *archivePath,
     (void)outFilePath;
     return 0;
 }
+
+/* Keep virtual nested-disk extraction fail-closed on Windows as well.  The
+ * external archive reader above depends on POSIX pipes, so these formats
+ * cannot be materialized there until a Windows-native archive backend is
+ * supplied.  Matching direct .st/.msa files is still handled in-process. */
+static int external_atari_st_extract_entry_to_path(const char *archivePath,
+                                                   const char *stEntry,
+                                                   const char *entry,
+                                                   const char *outFilePath) {
+    (void)archivePath;
+    (void)stEntry;
+    (void)entry;
+    (void)outFilePath;
+    return 0;
+}
+
+static int external_atari_msa_extract_entry_to_path(const char *archivePath,
+                                                    const char *msaEntry,
+                                                    const char *entry,
+                                                    const char *outFilePath) {
+    (void)archivePath;
+    (void)msaEntry;
+    (void)entry;
+    (void)outFilePath;
+    return 0;
+}
 #endif
 
 static int scan_container_by_md5(const char *path, const char *expectedMd5,

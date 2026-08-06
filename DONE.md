@@ -8925,6 +8925,12 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-06 Windows nested-Atari archive guard: the Windows fallback
+  branch now defines fail-closed nested `.adf`, `.st` and `.msa` extraction
+  paths. Direct Atari disk images remain in-process; an external archive
+  cannot be materialized until a Windows-native archive backend exists, and
+  no unresolved external extractor call can reach the Windows linker.
+
 - ✅ 2026-08-06 CSB nested-MSA profile-scan reuse: the external-archive
   scanner now reads and decodes one Atari `.msa` member once for the complete
   hash list, then preserves every matched `archive::msa::file` path. The

@@ -24,7 +24,9 @@
   Amiga/Atari media. Raw GEMDOS Atari ST `.st` images and standard Magic
   Shadow Archiver `.msa` images now have bounded FAT12 paths, including
   `.st`/`.msa` media inside `.7z`. A nested MSA is decoded once for the
-  complete profile hash list rather than once per required file; protected STX remains intentionally
+  complete profile hash list rather than once per required file. Windows
+  fails closed for nested external Atari media until it has a native archive
+  reader; protected STX remains intentionally
   unsupported until its transport is implemented and verified.
   The verified original Amiga 3.1 English ADF (A31E) now materializes and
   launches; keep the remaining title/entrance capture work separate from this
