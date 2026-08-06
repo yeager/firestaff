@@ -3612,6 +3612,10 @@ level or consumer bindings.
   now verifies the extracted file's registered Amiga 3.1 MD5 before decoding.
   A same-shaped fixture, renamed ADF or arbitrary `TITL.DAT` no longer counts
   as title evidence.
+  **2026-08-06 scanner build follow-up:** the shared scanner no longer retains
+  an unused DM1 FM Towns admission result while it scans CSB media. The
+  admission itself remains mandatory; only its dead local copy was removed so
+  focused scanner builds stay warning-free.
 
 - **DM2-M11-GAME-LOAD-ORIGINAL-HANDOFF:** M11 now keeps New Game at the
   source `SHOW_MENU_SCREEN` → `GAME_LOAD` boundary rather than constructing

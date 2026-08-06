@@ -5003,7 +5003,6 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     int userExplicitDataDir = (requestedDataDir && requestedDataDir[0] != '\0') ? 1 : 0;
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
         int csbFmtownsAdmitted = 0;
-        int dm1FmtownsAdmitted = 0;
         if (!m12_scan_progress_update(&progressCtx,
                                       "matching game versions",
                                       g_games[i].gameId,
@@ -5025,7 +5024,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
                                userExplicitDataDir,
                                csbFmtownsAdmitted);
         if (strcmp(g_games[i].gameId, "dm1") == 0) {
-            dm1FmtownsAdmitted = m12_admit_dm1_fmtowns_archive(
+            (void)m12_admit_dm1_fmtowns_archive(
                 status, i, roots, rootCount, requestedDataDir);
         }
         if (strcmp(g_games[i].gameId, "csb") == 0) {
