@@ -87,3 +87,21 @@ In-game ESC flow:
 3. Action list built by F0383 (MENU.C:635)
 4. Spell symbols drawn by F0397 (MENUDRAW.C:43)
 5. Save/Load via F0435_STARTEND_LoadGame (STARTUP2.C:1444)
+# Runtime graphics and cheats
+
+While any of the five games is running, press **F10** to open the compact
+runtime panel. It is available for DM1, CSB, DM2, Theron's Quest and Nexus.
+The dungeon remains visible behind the panel, and changes are applied on the
+next frame without restarting the game.
+
+- **PRES**: presentation mode, scaling, filter, aspect policy, integer
+  scaling, VSync, FPS overlay, output resolution and window mode.
+- **FILT**: filters owned by the active game's admitted renderer.
+- **FX**: phosphor, pixel grid, motion blur, lighting and turn-pan effects.
+- **CH**: the shared cheat switch and slower/normal/faster runtime speed.
+
+Use arrow keys and Enter, or click a tab and click a row. **Tab** changes page
+and **Esc** closes the panel. The panel is modal while open, so clicks cannot
+activate dungeon objects underneath it. V1 source-original rendering locks
+filters and effects; Firestaff does not invent game-specific cheat powers when
+the original game has no verified owner for them.

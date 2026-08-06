@@ -123,3 +123,11 @@ drag-and-drop, key binding customization, and the in-game pause menu.
 3. Add key binding customization via config_m12.c settings
 4. Implement champion portrait click (party member selection)
 5. Add pause menu binding (Start button on gamepad)
+# Firestaff runtime panel
+
+The Nexus runtime exposes the shared **F10** panel after launch. It provides
+live host presentation controls and the verified shared cheat/speed controls
+without changing Saturn input semantics. Use keyboard navigation or mouse
+clicks; changes apply immediately and Esc closes the modal panel. Unproven
+Saturn-specific debug powers and synthetic graphics are intentionally not
+shown as cheats.

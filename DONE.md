@@ -13,6 +13,12 @@
   reintroduced merely to make a menu or front-cell action look playable.
   Verified against the authenticated local PC-DOS `GRAPHICS.DAT` and
   `DUNGEON.DAT` route.
+- ✅ 2026-08-06 F10 all-game runtime coverage: the compact graphics/cheats
+  popup is now regression-covered for DM1, CSB, DM2, Theron's Quest and
+  Nexus as distinct M11 source kinds. The test exercises live presentation
+  switching plus mouse tab/row clicks and per-game cheat/speed slots; the
+  start-menu, in-game menu, DM2, Theron and Nexus input docs now describe the
+  shortcut and its source-data boundary.
 
 - ✅ 2026-08-06 DM2 FM Towns English save-dialogue labels: a selected,
   hash-verified PC-English `GRAPHICS.DAT` companion now supplies the two

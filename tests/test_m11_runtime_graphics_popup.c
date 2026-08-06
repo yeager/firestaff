@@ -467,6 +467,72 @@ int main(void) {
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupActive == 0);
 
+    /* Every non-DM1 runtime source owns the same modal F10 contract.  Keep
+     * this as a source-kind matrix so a new game cannot accidentally inherit
+     * the popup only through the DM1 built-in catalog path.  The clicks use
+     * the real popup coordinates and therefore cover the mouse path too. */
+    {
+        static const M11_GameSourceKind otherSources[] = {
+            M11_GAME_SOURCE_CSB_BOOT,
+            M11_GAME_SOURCE_DM2_BOOT,
+            M11_GAME_SOURCE_THERON_TRACK02,
+            M11_GAME_SOURCE_NEXUS_DGN
+        };
+        static const int otherSlots[] = { 1, 2, 4, 3 };
+        size_t sourceIndex;
+        config.gameCheatsEnabled[1] = 0;
+        config.gameCheatsEnabled[2] = 0;
+        config.gameCheatsEnabled[3] = 0;
+        config.gameCheatsEnabled[4] = 0;
+        config.gameSpeed[1] = 1;
+        config.gameSpeed[2] = 1;
+        config.gameSpeed[3] = 1;
+        config.gameSpeed[4] = 1;
+        assert(M12_Config_Save(&config) == 1);
+        for (sourceIndex = 0;
+             sourceIndex < sizeof(otherSources) / sizeof(otherSources[0]);
+             ++sourceIndex) {
+            int slot = otherSlots[sourceIndex];
+            state.sourceKind = otherSources[sourceIndex];
+            state.presentationMode = M12_PRESENTATION_V1_ORIGINAL;
+            state.graphicsPopupActive = 0;
+            state.graphicsPopupPage = 0;
+            state.graphicsPopupSelectedRow = 0;
+
+            result = M11_GameView_HandleInput(
+                &state, M12_MENU_INPUT_GRAPHICS_POPUP);
+            assert(result == M11_GAME_INPUT_REDRAW);
+            assert(state.graphicsPopupActive == 1);
+            result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+            assert(result == M11_GAME_INPUT_REDRAW);
+            assert(state.presentationMode == M12_PRESENTATION_V20_FILTERED);
+
+            /* Click CH, then click the selected CHEATS and SPEED rows. */
+            result = M11_GameView_HandlePointerButton(
+                &state, 286, 31, DM1_V1_MOUSE_MASK_LEFT_PC34);
+            assert(result == M11_GAME_INPUT_REDRAW);
+            assert(state.graphicsPopupPage == 3);
+            result = M11_GameView_HandlePointerButton(
+                &state, 180, 48, DM1_V1_MOUSE_MASK_LEFT_PC34);
+            assert(result == M11_GAME_INPUT_REDRAW);
+            assert(M12_Config_Load(&config, NULL) == 1);
+            assert(config.gameCheatsEnabled[slot] == 1);
+            result = M11_GameView_HandlePointerButton(
+                &state, 180, 58, DM1_V1_MOUSE_MASK_LEFT_PC34);
+            assert(result == M11_GAME_INPUT_REDRAW);
+            result = M11_GameView_HandlePointerButton(
+                &state, 180, 58, DM1_V1_MOUSE_MASK_LEFT_PC34);
+            assert(result == M11_GAME_INPUT_REDRAW);
+            assert(M12_Config_Load(&config, NULL) == 1);
+            assert(config.gameSpeed[slot] == 2);
+            assert(M11_QolRuntime_GetSpeedMultiplier() == 150);
+            result = M11_GameView_HandlePointerButton(
+                &state, 300, 20, DM1_V1_MOUSE_MASK_LEFT_PC34);
+            assert(result == M11_GAME_INPUT_REDRAW);
+            assert(state.graphicsPopupActive == 0);
+        }
+    }
+
     puts("m11 runtime graphics popup: ok");
     return 0;
 }

@@ -97,3 +97,11 @@ DM2's input system is SDL-driven, split into keyboard and mouse subsystems, both
 - `skproject/SKULLWIN/c_tmouse.cpp` — mouse implementation
 - `skproject/SKWIN/SkWinCore.h` / `.cpp` — global input state
 - `skproject/SKWIN/defines.h` — input-related constants
+# Firestaff runtime panel
+
+Firestaff's DM2 runtime keeps the shared **F10** graphics and cheats panel
+available after boot. It is separate from DM2's source input tables: press
+F10, use the arrow keys and Enter, or click the tabs and rows. PRES changes
+host presentation immediately, while FILT and FX only change admitted
+enhanced-renderer controls. CH changes the shared cheat switch and live
+slower/normal/faster scheduler. Press Esc to close.

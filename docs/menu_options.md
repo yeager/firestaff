@@ -102,3 +102,12 @@ platform-specific text prompts at startup. The Firestaff modern UI
 (menu_startup_m12.c) provides the full options panel: graphics renderer,
 scale mode, audio channels, viewport style, input remapping,
 accessibility options.
+# Live runtime graphics
+
+The per-game **Game** settings in the start menu contain the initial
+presentation mode, cheat switch and speed. The same values can be changed
+after launch with **F10**. F10 writes the selected game's configuration slot
+immediately, so the setting is retained for the next launch.
+
+F10 is supported by DM1, CSB, DM2, Theron's Quest and Nexus. Presentation
+changes affect the active renderer in real time; no restart is required.

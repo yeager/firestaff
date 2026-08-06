@@ -57,6 +57,15 @@ F0437_STARTEND_DrawTitle (TITLE.C:12) renders the animated title logo
 with zoom-in Dungeon/Chaos word effect. Requires ~133-146 KB RAM.
 Returns early if insufficient memory.
 
+## Runtime graphics and cheats shortcut
+
+The start menu's per-game **Game** settings provide the initial presentation
+mode, cheat switch and speed. After a game starts, press **F10** to open the
+same settings live. The compact panel works for all five games and supports
+keyboard navigation plus mouse clicks. PRES, FILT and FX changes are applied
+without restarting; CH changes the verified shared cheat/speed owner without
+inventing game-specific debug powers. **Esc** closes the panel.
+
 ---
 
 ## Complete Startup Chain

@@ -42,3 +42,9 @@ Theron's Quest (PC Engine) has no strafe — arrow Left/Right produce turns.
 - Run and Select have no keyboard binding (no gameplay use currently).
 - Gamepad input follows the SDL3 gamepad mapping (D-pad, A/B buttons).
 - F5 = quick save, F9 = quick load, F12 = screenshot (engine-global).
+# Firestaff runtime panel
+
+Theron's Quest supports the shared **F10** graphics and cheats panel during
+runtime. PRES, FILT and FX update the host presentation immediately. CH
+contains only the verified shared cheat switch and slower/normal/faster live
+scheduler. Navigate with arrows and Enter or mouse clicks; press Esc to close.
