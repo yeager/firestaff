@@ -804,6 +804,9 @@
   boot-owned GRAPHICS/DUNGEON/GDAT provider boundary as frame rendering.
   A fixture-only dungeon or a headless profile cannot create a walkable floor
   receipt, change direction, or enter the playable loop.
+  2026-08-06: the legacy direct-start loop now routes queued DM2 input through
+  those same boot receipts and mirrors their resulting state only. Its former
+  direct mutation of generic DM1-style party coordinates is removed.
   The old low-level SKSave helper now emits the real `c_hex2a` header boundary
   only and is not a serializer: complete original dungeon/DB write ordering
   from `SKProject/SKULLWIN/c_savegame.cpp` remains required before save output

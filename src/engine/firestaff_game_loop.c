@@ -472,6 +472,67 @@ int fs_game_load_assets(FS_GameState *state) {
 void fs_game_tick_v1(FS_GameState *state, uint32_t now_ms) {
     if (!state || state->paused) return;
 
+    /* DM2 does not own FS_GameState's generic DM1-style party fields.  This
+     * legacy direct-start loop predates M11, but it is still reachable by
+     * touch/keyboard input.  Do not let that queue manufacture a parallel
+     * party position: every accepted DM2 command must reach the verified
+     * boot/runtime boundary, and the fields below remain a read-only mirror
+     * of its receipt.  SKProject T048/T520 dispatches the command before the
+     * T560 state update; M11 follows the same boundary. */
+    if (state->config.game == FS_GAME_DM2) {
+        DM2_V1_BootProfile *profile =
+            (DM2_V1_BootProfile *)state->dm2_boot;
+        FS_InputEvent evt;
+        DM2_V1_BootRuntimeReceipt receipt;
+
+        if (!profile) {
+            /* A missing boot profile is not a blank DM2 session. Drain the
+             * queue so stale input cannot be replayed after a later launch. */
+            while (fs_input_queue_pop(&state->input_queue, &evt)) { }
+            return;
+        }
+        while (fs_input_queue_pop(&state->input_queue, &evt)) {
+            int dir = dm2_v1_runtime_get_party_dir() & 3;
+            memset(&receipt, 0, sizeof(receipt));
+            switch (evt.cmd) {
+            case FS_CMD_MOVE_FORWARD:
+                (void)dm2_v1_boot_runtime_move(profile, dir, &receipt);
+                break;
+            case FS_CMD_MOVE_BACKWARD:
+                (void)dm2_v1_boot_runtime_move(profile, (dir + 2) & 3,
+                                                &receipt);
+                break;
+            case FS_CMD_TURN_LEFT:
+                (void)dm2_v1_boot_runtime_turn(profile, -1, &receipt);
+                break;
+            case FS_CMD_TURN_RIGHT:
+                (void)dm2_v1_boot_runtime_turn(profile, 1, &receipt);
+                break;
+            case FS_CMD_MENU:
+                state->paused = !state->paused;
+                break;
+            default:
+                break;
+            }
+            if (receipt.runtime_ready) {
+                state->current_level = receipt.current_level;
+                state->party_x = receipt.party_x;
+                state->party_y = receipt.party_y;
+                state->party_direction = receipt.party_dir;
+            }
+        }
+        if (!state->paused && dm2_v1_boot_runtime_tick(profile, &receipt) &&
+            receipt.runtime_ready) {
+            state->current_level = receipt.current_level;
+            state->party_x = receipt.party_x;
+            state->party_y = receipt.party_y;
+            state->party_direction = receipt.party_dir;
+        }
+        state->frame_count++;
+        (void)now_ms;
+        return;
+    }
+
     /* V1 game tick — process one game logic frame */
     /* 1. Process input queue → V1 command queue */
     {
@@ -503,11 +564,6 @@ void fs_game_tick_v1(FS_GameState *state, uint32_t now_ms) {
     /* dm1_creature_ai_tick() — when fully wired */
     /* 4. Apply pending damage */
     /* dm1_combat_apply_pending_damage_pc34() — when fully wired */
-
-    /* DM2 V1: delegate to DM2 runtime tick if DM2 boot profile is active */
-    if (state->config.game == FS_GAME_DM2 && state->dm2_boot) {
-        dm2_v1_runtime_tick();
-    }
 
     state->frame_count++;
 }

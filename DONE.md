@@ -52615,3 +52615,9 @@ no-draw/capture-gates är oförändrade.
   DUNGEON.DAT and GDAT callback binding used by the renderer; fixture-only
   dungeons cannot alter party position or facing. The collision decoder stays
   isolated and explicitly tested outside the live gameplay boundary.
+
+- ✅ 2026-08-06 DM2 legacy-loop input correction: `fs_game_tick_v1()` no
+  longer interprets DM2 keyboard/touch commands by mutating its generic
+  DM1-style party fields. It sends movement and turning to the verified DM2
+  boot/runtime boundary, then mirrors only the returned source state; absent
+  boot state drains stale commands without creating a session.
