@@ -4511,7 +4511,11 @@ that its exact runtime path is not already source-locked and tested.
     through skproject renderer rules.
 38. **DM2-G1-MAP-RECORDS:** Complete G1/c_record addressing, map records,
     triggers, doors, stairs, teleporters, scenery, and first-class live scene
-    object semantics from original data.
+    object semantics from original data. **2026-08-06 loader hardening:** the
+    bounded legacy parser now rejects an allocation failure instead of
+    returning a successful dungeon without its owned source bytes. This is
+    only a fail-closed correction; its fixture-only 16-bit layout is still not
+    a runtime source route.
 39. **DM2-SKSAVE-ORIGINAL-INTEROP:** Complete original SKSAVE corpus loading,
     validation, save/export, resume, party, map, timers, objects, weather,
     and backup behavior without Firestaff-only approximations.

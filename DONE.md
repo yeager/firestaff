@@ -51419,6 +51419,12 @@ verification item.
   frame gates, while unowned gameplay remains explicitly fail-closed. This is
   a provenance correction only; it does not promote partial save or gameplay
   state into a playable session.
+- ✅ 2026-08-06 DM2 dungeon loader ownership gate: the bounded legacy loader
+  no longer returns success after a failed copy of its input bytes. A success
+  result now always retains the complete owned dungeon buffer required by all
+  square and record accessors; allocation failure is rejected before any
+  partial handoff. The production PC G1 route remains hash-verified and
+  source-byte backed; no fixture layout was promoted into the runtime.
 - ✅ 2026-08-06 DM2 legacy creature-fixture boundary: corrected the public
   contract for `dm2_v1_creature_tick()`. It advances only its isolated test
   pool and is not a `DM2_THINK_CREATURE`/CCM implementation or an M11 runtime

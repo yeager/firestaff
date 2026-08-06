@@ -796,10 +796,13 @@ int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
 
     /* Retain raw data reference for square type lookups */
     out->raw_data = (uint8_t *)malloc((size_t)size);
-    if (out->raw_data) {
-        memcpy(out->raw_data, dat, (size_t)size);
-        out->raw_size = size;
-    }
+    /* Every public loader result promises a complete owned raw source
+     * buffer.  Returning success with a NULL buffer would turn allocation
+     * failure into a partial dungeon handoff.  Keep the source-data boundary
+     * fail-closed instead. */
+    if (!out->raw_data) return -1;
+    memcpy(out->raw_data, dat, (size_t)size);
+    out->raw_size = size;
 
     return 0;
 }
