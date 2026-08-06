@@ -589,8 +589,8 @@
   count and the cleanup record runs only between iterations. The real
   HME-242 stream therefore produces 420 display frames; the regression pins
   its final indexed frame to FNV-1a `553d172f`, duration 2,000 and one IMG1
-  command. This is decoder coverage only: END's game-won presentation
-  handoff remains explicitly unbound.
+  command. This decoder initially did not bind a presentation handoff; that
+  boundary is completed below.
 
 # DM2 FM Towns END palette timing (2026-08-06)
 
@@ -599,6 +599,18 @@
   regression locks original palette records at frames 0, 100 and 419,
   including offsets 34, 111,174 and 466,082. This does not itself draw END
   or open a victory route.
+
+# DM2 FM Towns Quit-to-END startup exit (2026-08-06)
+
+- ✅ The selected source `0xE0` Quit rectangle no longer exits directly from
+  the FM Towns menu. It starts the authenticated RAM-owned HME-242 `END`
+  stream; M11 presents every source frame with its active `PL` palette and
+  returns to the launcher only on the idle tick following frame 420. This
+  follows the selected disc's `SWOOSH → TITLE → SKULL → END` AUTOEXEC order,
+  without executing P3 code or writing any game media to disk.
+- ✅ `test_dm2_fmtowns_m11_title_real_media` covers the real Quit rectangle,
+  frame 100's source palette and the delayed launcher return. Native P3
+  keyboard input, GAME_LOAD and save/resume stay blocked.
 
 # DM2 V2 source-palette correction (2026-08-06)
 

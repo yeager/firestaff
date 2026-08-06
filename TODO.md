@@ -1602,10 +1602,12 @@ level or consumer bindings.
   payload is not interpreted as host stereo or gain because the original
   call passes `0xff` and 5500 instead. END's source FO/NE/BN loops and per-frame PL
   palette route now replay through RAM-only receipts (420 displayed frames
-  from 385 EN/DL records), but its game-won handoff remains unbound. The remaining
-  gap is a captured title-to-SKULL menu handoff; the real SKULL.EXP table
-  maps the source menu cue 0 to silence, so TITLE has no missing CDDA track
-  to substitute. Do not replace them with host animation or menus.
+  from 385 EN/DL records). The selected SKULL Quit event now binds that END
+  stream and returns to the launcher only after its final frame, completing
+  AUTOEXEC's exit transition. The remaining gaps are native P3 keyboard
+  input, GAME_LOAD and save/resume; the real SKULL.EXP table maps the source
+  menu cue 0 to silence, so TITLE has no missing CDDA track to substitute.
+  Do not replace those missing routes with host animation, menus or saves.
   **2026-08-06 IMG2 menu update:** after the authenticated TITLE
   stream completes, M11 now presents the selected HME-242
   `TITLE/0/dtImage+dtPalIRGB/4` surface through the FM Towns GDAT-v4 IMG2
