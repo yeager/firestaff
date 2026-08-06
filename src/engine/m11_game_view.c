@@ -50798,8 +50798,9 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         int fwY = panelBottom;
 
         /* GRAPHICS.DAT-backed food/water labels (graphics 30, 31).
-         * Food label: 34×9, Water label: 46×9.
-         * Falls back to text rendering when assets unavailable. */
+         * Food label: 34×9, Water label: 46×9.  ReDMCSB PANEL.C owns
+         * these bitmap labels; an authenticated DM1 page must not replace
+         * them with host text when either source record is unavailable. */
         if (state->assetsAvailable) {
             const M11_AssetSlot* foodLbl = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
@@ -50832,7 +50833,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 labelDrawn = 1;
             }
         }
-        if (!labelDrawn) {
+        if (!labelDrawn && !m11_is_dm1_source_kind(state->sourceKind)) {
             char foodWater[48];
             M11_TextStyle fwStyle = g_text_small;
             fwStyle.color = M11_COLOR_LIGHT_GRAY;
@@ -50867,12 +50868,17 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                     dmgDrawn = 1;
                 }
             }
-            if (!dmgDrawn) {
+            if (!dmgDrawn && !m11_is_dm1_source_kind(state->sourceKind)) {
+                /* Non-source diagnostic sessions may retain the old visual
+                 * cue, but an authenticated DM1 page must never replace
+                 * ReDMCSB C016 with a host-colour rectangle. */
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               portX, portY, PORT_W, PORT_H, M11_COLOR_LIGHT_RED);
             }
-            /* Damage number centered on portrait */
-            {
+            /* C016 owns both the portrait damage surface and its number in
+             * a source DM1 inventory frame.  Do not leak a host-drawn number
+             * when the original bitmap is unavailable. */
+            if (dmgDrawn || !m11_is_dm1_source_kind(state->sourceKind)) {
                 char dmgNum[8];
                 M11_TextStyle dmgStyle = g_text_small;
                 dmgStyle.color = M11_COLOR_WHITE;

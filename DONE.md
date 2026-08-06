@@ -51172,3 +51172,10 @@ verification item.
   handoff, while New Game remains blocked at original `GAME_LOAD` instead of
   fabricating a playable session. The verification was read-only; no game
   data was unpacked, copied or tracked.
+# ✅ 2026-08-06 DM1 inventory fallback removal
+
+Authenticated DM1 inventory frames no longer draw a red host rectangle or a
+host damage number when the original C016 damage bitmap is missing. Food and
+water labels likewise remain source-owned GRAPHICS.DAT surfaces; missing label
+records no longer become generated text. The focused damage source-gate test
+and `firestaff` build pass.

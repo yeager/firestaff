@@ -82,6 +82,21 @@ int main(void)
           "missing C015/M653 leaves DM1 damage feedback unavailable");
     M11_GameView_Shutdown(&state);
 
+    /* Inventory C016 must obey the same source gate.  The old M11 path
+     * painted a red rectangle and a host number when the real 32x29 bitmap
+     * was absent, which presented as a false damage square in HoC. */
+    seed_damage_state(&state);
+    state.inventoryPanelActive = 1;
+    memset(baseline, 0, sizeof(baseline));
+    M11_GameView_Draw(&state, baseline, 320, 200);
+    state.championDamageTimer[0] = 3;
+    state.championDamageAmount[0] = 42;
+    memset(damaged, 0, sizeof(damaged));
+    M11_GameView_Draw(&state, damaged, 320, 200);
+    CHECK(memcmp(baseline, damaged, sizeof(baseline)) == 0,
+          "missing C016 leaves DM1 inventory damage feedback unavailable");
+    M11_GameView_Shutdown(&state);
+
     graphicsPath = graphics_dat_path();
     if (graphicsPath) {
         const M11_AssetSlot* damage;

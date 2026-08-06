@@ -79,6 +79,8 @@
   ReDMCSB `C00_SOUND_METALLIC_THUD` through authenticated source audio, the
   host-drawn yellow attack-X is removed, and C015/C016 damage text is converted
   from the original F0053 baseline to the native font's first-row coordinate.
+  The inventory C016 path and food/water labels also refuse host-colour or
+  host-text substitutes when their source records are unavailable.
   Keep the packaged Mac capture open until a real wall bump and creature-hit
   capture confirms the source sound and C015/C016 placement. The remaining red
   viewport damage frame is not promoted as source behavior until ReDMCSB or an
