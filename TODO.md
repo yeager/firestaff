@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D0C-F0108-SYNTHETIC-AUDIT:** The D0C/F0108 floor-ceiling-ornament
+  helper remains a contract-only probe with fixed coordinate, zone and
+  framebuffer values. Its ReDMCSB control-flow notes are useful, but no
+  production caller or authenticated GRAPHICS.DAT material is bound to it.
+  Keep it test-only until the real D0C consumer and source bitmap ownership
+  are recovered from disassembly/capture; do not expose its synthetic values
+  through M10.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

@@ -803,6 +803,20 @@
 
 # DM1 production placeholder re-audit (2026-08-06)
 
+# DM1 D0C/F0108 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only `dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat.c`
+  from the broad M10 production source glob. Its fixed coordinate set, floor
+  zone, and framebuffer values are synthetic probe inputs; source comments
+  explicitly make no original pixel-parity claim, and repository-wide caller
+  search found only its dedicated tests. The test targets still compile the
+  helper explicitly.
+- ✅ Retained the ReDMCSB control-flow audit as test material while preventing
+  its synthetic values from entering a production archive. Recovery of the
+  real D0C consumer and GRAPHICS.DAT ownership remains open.
+- ✅ Verification target: M10/M11 archive-symbol audit plus the focused
+  D0C/F0108 contract test; no game data was copied or committed.
+
 # CSB FM Towns graphics real-cache regression (2026-08-06)
 
 - ✅ `test_csb_v1_fmtowns_graphics_dat` now takes

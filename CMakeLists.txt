@@ -4227,6 +4227,12 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_creature_viewport_pc34_compat.c")
+# `dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat.c` is a
+# contract-only audit: its fixed coordinate/zone and framebuffer values are
+# synthetic probes, and no M11/runtime caller exists.  Keep it test-only so
+# the broad M10 compatibility glob cannot expose those values in production.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
