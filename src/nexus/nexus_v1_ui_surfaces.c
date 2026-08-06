@@ -124,7 +124,7 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
     }
     memset(surf, 0, sizeof(*surf));
 
-    if (!data || w <= 0 || h <= 0 ||
+    if (!data || data_size < 0 || w <= 0 || h <= 0 ||
         (size_t)w > SIZE_MAX / (size_t)h) {
         printf("Nexus UI: rejecting invalid surface dimensions %d [%s] (%dx%d)\n",
                which, source ? source : "?", w, h);
@@ -585,6 +585,7 @@ int nexus_ui_stabg_dmweb_decode_receipt(const uint8_t *data,
     uint32_t part3_off, part3_size, cursor;
     uint32_t map_offsets[NEXUS_UI_STABG_DMWEB_MAX_MAPS];
     int map_count = 0;
+    int table_terminated = 0;
     int i;
 
     if (!out) return -1;
@@ -614,13 +615,17 @@ int nexus_ui_stabg_dmweb_decode_receipt(const uint8_t *data,
      * Offsets are consumed as file-relative values; its tile dimensions
      * use (TilemapOffset - 48) / 2 as a Part-1 word index. */
     cursor = part1_off;
-    while (cursor + 4U <= part2_off && map_count < NEXUS_UI_STABG_DMWEB_MAX_MAPS) {
+    while (cursor + 4U <= part2_off &&
+           map_count < NEXUS_UI_STABG_DMWEB_MAX_MAPS) {
         uint32_t offset = nexus_ui_read_be32_u(data + cursor);
         cursor += 4U;
-        if (offset == 0U) break;
+        if (offset == 0U) {
+            table_terminated = 1;
+            break;
+        }
         map_offsets[map_count++] = offset;
     }
-    if (map_count == 0 || cursor > part2_off ||
+    if (!table_terminated || map_count == 0 || cursor > part2_off ||
         cursor + 2U > part2_off)
         return -1;
 

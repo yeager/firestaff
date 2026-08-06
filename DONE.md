@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus STABG DMWeb table hardening: the retail
+  `DecodeSTABGBIN`-shaped offset table must now show its zero terminator; a
+  full bounded table without that marker is rejected instead of being
+  accepted as complete. The public surface loader also rejects negative byte
+  counts before size conversion. Real `STABG.BIN` still decodes its 11 maps,
+  40×21 first map, 320×168 receipt surface and 512-byte palette. Verification:
+  `test_nexus_v1_startup_media_gate` with the mounted Nexus corpus.
+
 - ✅ 2026-08-06 Nexus startup-surface allocation bounds: `nexus_ui_surface_load`
   now validates width/height products with `size_t` before comparing source
   bytes or allocating. Overflowing dimensions remain unavailable instead of

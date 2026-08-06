@@ -159,6 +159,30 @@ int main(void)
                         stabg_framing.background_cell_h == 21 &&
                         stabg_framing.cell_offsets_bounded == 1,
                     "local STABG.BIN proves its STMP container framing");
+            {
+                unsigned char *unterminated = (unsigned char *)malloc(
+                    local_warning_size);
+                if (unterminated) {
+                    Nexus_UI_StabgDmwebReceipt dmweb_receipt;
+                    memcpy(unterminated, local_stabg, local_warning_size);
+                    /* The retail table has 11 offsets followed by zero at
+                     * part-1 offset 0x4c. Replace that terminator with a
+                     * nonzero offset; the parser must not accept 64 entries
+                     * merely because its bounded array is full. */
+                    unterminated[0x4c] = 0x00;
+                    unterminated[0x4d] = 0x00;
+                    unterminated[0x4e] = 0x00;
+                    unterminated[0x4f] = 0x30;
+                    expect_true(nexus_ui_stabg_dmweb_decode_receipt(
+                                    unterminated, (int)local_warning_size,
+                                    &dmweb_receipt) < 0 &&
+                                    dmweb_receipt.valid == 0,
+                                "STABG DMWeb offset table requires a terminator");
+                    free(unterminated);
+                } else {
+                    expect_true(0, "STABG terminator regression allocation");
+                }
+            }
             expect_true(nexus_ui_load_stabg(&ui, local_stabg,
                                             (int)local_warning_size,
                                             NULL) > 0 &&
