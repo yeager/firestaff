@@ -145,6 +145,7 @@ int main(void) {
     char dst[FSP_PATH_MAX];
     char dm_bin_src[FSP_PATH_MAX];
     char dm_bin_dst[FSP_PATH_MAX];
+    char wrong_dm_bin_dst[FSP_PATH_MAX];
     char menu_bpk_src[FSP_PATH_MAX];
     char menu_bpk_dst[FSP_PATH_MAX];
     char profile_root[FSP_PATH_MAX];
@@ -152,6 +153,7 @@ int main(void) {
     char profile_dm_bin_dst[FSP_PATH_MAX];
     char level_src[FSP_PATH_MAX];
     char level_dst[FSP_PATH_MAX];
+    char wrong_level_canonical_dst[FSP_PATH_MAX];
     char negative_root[FSP_PATH_MAX];
     char wrong_level_dst[FSP_PATH_MAX];
     char slev00_src[FSP_PATH_MAX];
@@ -342,6 +344,14 @@ int main(void) {
         FSP_JoinPath(level_dst, sizeof(level_dst), root,
                      "renamed-level-zero.payload") &&
         copy_file_bytes(level_src, level_dst) &&
+        FSP_JoinPath(wrong_level_canonical_dst,
+                     sizeof(wrong_level_canonical_dst),
+                     root,
+                     "LEV00.DGN") &&
+        copy_file_bytes(src, wrong_level_canonical_dst) &&
+        FSP_JoinPath(wrong_dm_bin_dst, sizeof(wrong_dm_bin_dst), root,
+                     "DM.BIN") &&
+        copy_file_bytes(src, wrong_dm_bin_dst) &&
         FSP_JoinPath(negative_root, sizeof(negative_root), root,
                      "negative-level-name-only") &&
         FSP_CreateDirectoryRecursive(negative_root) &&
@@ -359,6 +369,8 @@ int main(void) {
                   "Nexus init accepts renamed DM.BIN marker by hash");
         check_int(engine.source == NEXUS_SRC_EXTRACTED,
                   "renamed DM.BIN selects extracted Nexus source");
+        check_int(nexus_v1_champion_panel_geometry_ready(&engine) == 1,
+                  "hash-verified renamed DM.BIN outranks wrong canonical filename");
         check_int(engine.floor_bpk_container.exact_name_observed == 0 &&
                       engine.wall_bpk_container.exact_name_observed == 0 &&
                       engine.floor_bpk_container.source_present == 0 &&

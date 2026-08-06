@@ -6,6 +6,13 @@
   BAT receipt. The loader regression and real Mednafen snapshot test pass;
   no dungeon-square, object, or synthetic rendering semantics were inferred.
 
+- ✅ 2026-08-06 Nexus extracted-file provenance gate: canonical filenames no
+  longer outrank identity hashes in `nexus_v1_read_extracted_file`. A wrong
+  `DM.BIN`, FACE, SLEV, SAL/MAP or other known-name payload is rejected and a
+  hash-verified renamed retail file is selected instead; unknown DMDF-family
+  model discovery remains unchanged. This closes the direct filename
+  injection path used by startup, HUD and level auxiliary loaders.
+
 - ✅ 2026-08-06 Nexus DGN actor CRET provenance gate: a Structure1A/3 model
   signature no longer promotes an actor to a live creature type when its
   RLOWFIX CRET record is absent. Such actors remain untyped/idle instead of

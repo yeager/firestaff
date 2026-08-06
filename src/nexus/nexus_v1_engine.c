@@ -405,7 +405,10 @@ static int nexus_v1_level_aux_source_receipt(
                             sizeof(out_receipt->canonical_md5) - 1U);
                 }
             }
-        } else {
+        }
+        /* A wrong canonical filename must not hide a hash-verified renamed
+         * retail member elsewhere in the configured data root. */
+        if (!out_receipt->canonical_hash_verified) {
             for (i = 0; g_nexus_known_boot_files[i].name && !out_receipt->canonical_hash_verified; ++i) {
                 if (strcasecmp(g_nexus_known_boot_files[i].name, name) == 0 &&
                     asset_find_by_md5(engine->data_dir, g_nexus_known_boot_files[i].md5,
@@ -479,9 +482,10 @@ static int nexus_v1_structure2_source_receipt(
         if (out_receipt->exact_source_entry_observed) {
             out_receipt->canonical_hash_verified =
                 asset_file_matches_md5(path, md5) ? 1 : 0;
-        } else {
-            /* Match nexus_v1_read_extracted_file(): when the canonical name
-             * is absent, the materialized bytes came from hash discovery. */
+        }
+        if (!out_receipt->canonical_hash_verified) {
+            /* Match nexus_v1_read_extracted_file(): a wrong canonical name
+             * must not hide a hash-verified renamed retail member. */
             out_receipt->canonical_hash_verified = asset_find_by_md5(
                 engine->data_dir, md5, found_path, (int)sizeof(found_path), 8);
         }
@@ -2210,10 +2214,27 @@ static uint8_t *nexus_v1_read_extracted_file(Nexus_V1_Engine *engine,
                                              int *out_size) {
     char path[512];
     int i;
+    int known_name = 0;
+    int exact_path_verified = 0;
     if (!engine || !name) return NULL;
     snprintf(path, sizeof(path), "%s/%s", engine->data_dir, name);
     if (nexus_path_is_file(path)) {
-        return nexus_read_host_file(path, out_size);
+        /* A canonical filename is only a lookup key.  It must not override
+         * the retail hash contract when a user-supplied file has been
+         * replaced or fabricated in-place. */
+        for (i = 0; g_nexus_known_boot_files[i].name; ++i) {
+            if (strcasecmp(g_nexus_known_boot_files[i].name, name) != 0) {
+                continue;
+            }
+            known_name = 1;
+            if (asset_file_matches_md5(path, g_nexus_known_boot_files[i].md5)) {
+                exact_path_verified = 1;
+                break;
+            }
+        }
+        if (!known_name || exact_path_verified) {
+            return nexus_read_host_file(path, out_size);
+        }
     }
     /* Keep hash discovery aligned with the source receipt. Several retail
      * files, notably MENU.BPK, have verified revision hashes; using only the
