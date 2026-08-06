@@ -690,7 +690,11 @@ static int dm1_v1_champion_mirror_is_f0107_wall_projection_pc34(
         int relSide;
         int viewWallIndex;
     } projections[] = {
-        {3, -2, 0}, {3,  2, 1}, {3, -1, 2}, {3, 0, 3},
+        /* F0128's viewport cell iterator addresses the outer D3 wall
+         * columns as -1/+1.  The raw F0115/D3L2-D3R2 contract also has
+         * -2/+2 aliases; both coordinates identify the same G0205 rows. */
+        {3, -2, 0}, {3, -1, 0}, {3,  2, 1}, {3,  1, 1},
+        {3, -1, 2}, {3, 0, 3},
         {3,  1, 4}, {2, -1, 5}, {2,  1, 6}, {2, -1, 7},
         {2,  0, 8}, {2,  1, 9}, {1, -1,10}, {1, 1,11}
     };

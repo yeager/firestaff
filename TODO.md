@@ -26877,6 +26877,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     decoded pixel buffer are present. They cannot manufacture a global
     ornament index or draw a dimension-only slot. This is code-side cleanup;
     the real Mac/window torch-and-holder capture is still open.
+  - 2026-08-06 viewport-coordinate audit: the live M11 F0128 iterator uses
+    normalized D3 outer-wall offsets `-1/+1`, while the raw F0115 D3L2/D3R2
+    source contract also exposes `-2/+2` aliases. The C127 mirror admission
+    now accepts both representations and keeps the real C346 backing material
+    for `viewWallIndex` 0/1. Real PC34 all-cell coverage passes; Mac/window
+    pixel capture remains open.
 - [ ] DM1-HOC-OBJECTS-002 Capture a real PC34 HoC pickup/placement round trip
   for weapon, potion, scroll, container and junk objects. Confirm M564 names,
   C00/C01 hand masks and backpack ownership remain source-backed. The F0033

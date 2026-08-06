@@ -52901,3 +52901,12 @@ konsument och placering är capture-bundna.
   PRS3 row is now tested as admitted opaque no-draw evidence, while payload,
   compression, mode and bounds drift remain rejected. BPK no-draw presentation,
   M11 host, and Saturn-card startup tests all pass.
+- ✅ 2026-08-06 DM1 HoC C127 D3 side/depth material: fixed the mismatch
+  between ReDMCSB's raw D3L2/D3R2 `-2/+2` offsets and M11's normalized
+  F0128 `-1/+1` viewport offsets. Real PC34 D3/D2/D1 coverage now retains
+  the authenticated C346 wall backing at every admitted side/depth view;
+  no C026 portrait or procedural fallback is introduced away from D1C.
+  Verification: `test_dm1_v1_champion_mirror_pc34_compat` 68/68,
+  `test_m11_dm1_hoc_mirror_side_depth_material_receipt`, and
+  `test_m11_dm1_hoc_real_mirror_viewport_material` pass against the real
+  PC34 `GRAPHICS.DAT`/`DUNGEON.DAT` corpus.

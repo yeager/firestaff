@@ -360,9 +360,9 @@ static void test_f0172_front_wall_sensor_receipt(void)
         render.backingWidth == 64 &&
             render.backingHeight == 43 &&
             render.backingTransparentColor == 10 &&
-            render.backingPaletteMapValid == 1,
+            !render.backingPaletteMapValid,
         "render receipt owns C346 mirror backing material",
-        "DUNVIEW.C:3922-3928; DUNVIEW.C G0205 coord-set 5");
+        "DUNVIEW.C:3922-3928; DUNVIEW.C G0205 coord-set 5; native D1 C10 palette");
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_BuildThingLayerBoundaryReceiptPc34(
@@ -641,6 +641,30 @@ static void test_f0172_front_wall_sensor_receipt(void)
             projection.suppressGenericWallOrnament == 0,
         "D2 C127 projection keeps the original C346 mirror frame",
         "DUNVIEW.C F0107:3502-3938; DUNVIEW.C:3913-3928");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
+            3, -1, 0, 13,
+            DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT,
+            &projection) == 1 &&
+            projection.valid == 1 &&
+            projection.consumedC127WallFact == 1 &&
+            projection.drawWallOrnamentBacking == 1 &&
+            projection.suppressGenericWallOrnament == 0,
+        "M11-normalized D3L2 C127 projection keeps the real C346 frame",
+        "DUNVIEW.C F0107:3502-3938; F0128 viewport cell normalization");
+
+    CHECK_ANCHOR(
+        DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
+            3, 1, 1, 13,
+            DM1_V1_CHAMPION_MIRROR_BACKING_GLOBAL_ORNAMENT_PC34_COMPAT,
+            &projection) == 1 &&
+            projection.valid == 1 &&
+            projection.consumedC127WallFact == 1 &&
+            projection.drawWallOrnamentBacking == 1 &&
+            projection.suppressGenericWallOrnament == 0,
+        "M11-normalized D3R2 C127 projection keeps the real C346 frame",
+        "DUNVIEW.C F0107:3502-3938; F0128 viewport cell normalization");
 
     CHECK_ANCHOR(
         DM1_V1_ChampionMirror_BuildViewportProjectionReceiptPc34(
