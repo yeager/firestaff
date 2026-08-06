@@ -1,5 +1,16 @@
 # Nexus SDDRVS 68k disassembly receipt (2026-08-06)
 
+# DM1 legacy dungeon bridge ornament fallback removal (2026-08-06)
+
+- ✅ Removed the legacy bridge's fabricated wall/floor ornament ordinal
+  generator. The `2000`/`3000`/`31417` coordinate arithmetic was not a
+  recovered F0170/F0172 random/aspect path and could select unrelated art
+  from otherwise authentic `DUNGEON.DAT`.
+- ✅ The bridge now fails closed with no ornament while continuing to decode
+  the real map grid, start position and door state. The real-data state test
+  passes against the materialized PC 3.4 `DUNGEON.DAT`, and `firestaff_m11`
+  builds successfully.
+
 - ✅ Corrected the Nexus sound-driver source identity: authenticated
   `SDDRVS.TSK` is a 26,610-byte 68000 sound-CPU image, not SH-2 code.
 - ✅ Bound the real entry/base-register corridor (`0x1000`/`0x1080`), the
