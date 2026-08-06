@@ -601,6 +601,27 @@ static int dm2_sksave_basename_matches_variant(const char *name,
 }
 #endif
 
+#if defined(_WIN32)
+/* The recursive directory walk is POSIX-only, but the shared corpus-candidate
+ * receipt is compiled on Windows too. Keep its direct SKSave spelling gate
+ * available there rather than relying on an undeclared POSIX-local helper. */
+static int dm2_sksave_basename_is_canonical_direct(const char *name)
+{
+    if (!name) return 0;
+    if (strcmp(name, "SKSave.dat") == 0 ||
+        strcmp(name, "SKSave.bak") == 0) {
+        return 1;
+    }
+    if (strncmp(name, "SKSave", 6) == 0 &&
+        name[6] >= '0' && name[6] <= '9' &&
+        name[7] >= '0' && name[7] <= '9' &&
+        strcmp(name + 8, ".dat") == 0) {
+        return 1;
+    }
+    return 0;
+}
+#endif
+
 #if !defined(_WIN32)
 static int dm2_sksave_basename_is_candidate_ci(const char *name)
 {

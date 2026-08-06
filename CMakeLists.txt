@@ -4070,6 +4070,15 @@ else()
     endif()
 endif()
 
+# Theron's local original CD corpus stores Track 01 as OGG transcodes while
+# its CUE retains the original WAV names.  Keep Vorbis optional so platforms
+# without the decoder remain fail-closed rather than treating compressed bytes
+# as PCM; when present, the Track 01 owner can decode the real audio through
+# the same SDL3 stream used by raw CDDA.
+if(PkgConfig_FOUND)
+    pkg_check_modules(VORBISFILE QUIET IMPORTED_TARGET vorbisfile)
+endif()
+
 # ── Python discovery for source-shape/evidence gates ───────────────
 find_package(Python3 COMPONENTS Interpreter QUIET)
 
@@ -4632,6 +4641,10 @@ if(THERON_SOURCES)
     # with Ninja receive SDL's headers as well as the final M11 executable.
     target_link_libraries(firestaff_theron PUBLIC SDL3::SDL3)
     firestaff_link_zlib(firestaff_theron PUBLIC)
+    if(TARGET PkgConfig::VORBISFILE)
+        target_compile_definitions(firestaff_theron PRIVATE FIRESTAFF_HAVE_VORBISFILE=1)
+        target_link_libraries(firestaff_theron PUBLIC PkgConfig::VORBISFILE)
+    endif()
     if(NOT MSVC)
         target_compile_options(firestaff_theron PRIVATE -Wall -Wextra -O2 -fcommon)
     endif()
@@ -49085,6 +49098,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_runtime.c
+        src/dm2/dm2_v1_champion_stat_bridge.c
+        src/dm2/dm2_v1_champion_hud_helpers.c
         src/dm2/dm2_v1_champion_lifecycle_pc34_compat.c
         src/dm2/dm2_v1_i18n.c
         src/dm2/dm2_v1_actuator_event_pc34_compat.c

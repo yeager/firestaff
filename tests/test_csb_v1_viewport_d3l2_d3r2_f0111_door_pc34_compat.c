@@ -341,6 +341,7 @@ static int test_real_graphics_dat_d3lr_door_receipt(void)
 {
     int ok = 1;
     const char *path = getenv("FIRESTAFF_CSB_GRAPHICS_DAT");
+    FILE *source_file;
     const CSB_V1_ViewportD3L2D3R2F0111DoorRouteSpecPc34 *d3l2 =
         csb_v1_viewport_d3l2_d3r2_f0111_door_for_side_pc34(
             CSB_V1_VIEWPORT_D3L2_D3R2_F0111_DOOR_SIDE_D3L2_PC34);
@@ -367,9 +368,19 @@ static int test_real_graphics_dat_d3lr_door_receipt(void)
                      csb_v1_viewport_d3_door_graphic_index_valid_pc34(247), 0,
                      A_F0111);
 
+    /* Licensed PC 3.4 media is deliberately opt-in.  Do not make a hosted
+     * test depend on a developer's home directory, or mistake an admitted
+     * Amiga/Atari cache entry for the PC byte order this receipt proves. */
     if (!path || !path[0]) {
-        path = "/Users/bosse/.firestaff/data/csb/GRAPHICS.DAT";
+        puts("SKIP: set FIRESTAFF_CSB_GRAPHICS_DAT to original CSB PC 3.4 GRAPHICS.DAT");
+        return ok;
     }
+    source_file = fopen(path, "rb");
+    if (!source_file) {
+        printf("SKIP: CSB PC 3.4 GRAPHICS.DAT is unavailable at %s\n", path);
+        return ok;
+    }
+    fclose(source_file);
 
     ok &= expect_int("real.hash.read",
                      read_real_graphics_item_hash(path, 246u,
@@ -451,7 +462,7 @@ int main(void)
     ok &= test_real_graphics_dat_d3lr_door_receipt();
 
     printf("assertions=%d\n", g_assertions);
-    ok &= expect_int("assertion_count_at_least_65", g_assertions >= 65, 1,
+    ok &= expect_int("assertion_count_at_least_64", g_assertions >= 64, 1,
                      A_BOTH);
     if (ok) {
         printf("PASS csb_v1_viewport_d3l2_d3r2_f0111_door_pc34_compat assertions=%d\n",

@@ -27057,6 +27057,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   verified alternative only when `SHOW_MENU_SCREEN` has no source raw-screen
   record; generated menu text or rectangles remain forbidden.
 
+- 2026-08-06: DM2's cross-platform CMake build now has its immediate Windows
+  and macOS linkage faults corrected. Re-run the GitHub build matrix after the
+  verified main push; retain the usual platform-specific test coverage.
+
 - [ ] DM2 startup status-panel ownership: host-authored English status,
   inspector and log labels are now absent from the live menu path. Bind an
   actual `c_gui_draw`/dialogue status producer before displaying startup or

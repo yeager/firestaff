@@ -53029,6 +53029,14 @@ frame. Source: `SKWINSPX/src/v4/skcore.cpp:15447-15455` and
 `src/v5/SK1C9A.cpp:5377-5399`. Verification:
 `test_dm2_v1_1c9a_pc34_compat` passes 53/53, including set, clear,
 out-of-range and absent-owner cases.
+
+# 2026-08-06 — DM2 cross-platform CI build repair
+
+The scene-light test target now links the champion-stat bridge already used by
+`dm2_v1_runtime.c`, fixing the macOS arm64 undefined symbol. The shared save
+corpus candidate receipt now retains its canonical `SKSave` filename helper on
+Windows even though recursive directory walking is POSIX-only, removing the
+Windows implicit declaration. No runtime or save-format behavior changed.
 - 2026-08-06 Nexus save round-trip test stability: moved the large native
   `Nexus_V1_World` and champion-pool test objects from the small process stack
   to heap-owned state. The test now reaches and passes its existing
