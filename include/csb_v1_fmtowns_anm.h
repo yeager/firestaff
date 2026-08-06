@@ -86,6 +86,11 @@ typedef struct {
     uint32_t frame_index;
     uint32_t source_chunk_offset;
     uint32_t source_chunk_bytes;
+    /* ReDMCSB ANIM.C F2275 stores the chunk attribute in G8204_ before
+     * displaying EN/DL. FM Towns clamps it to five Timer-A ticks.  These are
+     * source timer units, deliberately not host milliseconds. */
+    uint16_t source_delay_ticks;
+    uint16_t timer_a_ticks;
     int source_was_delta;
     int palette_applied;
     CSB_V1_FmtownsAnmColor palette[CSB_FMTOWNS_ANM_PALETTE_SIZE];

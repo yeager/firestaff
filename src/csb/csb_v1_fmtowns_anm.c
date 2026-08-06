@@ -290,6 +290,7 @@ int csb_v1_fmtowns_anm_decode_frame(const uint8_t *data, size_t size,
         } else if (type == CSB_FMTOWNS_ANM_CHUNK_EN ||
                    type == CSB_FMTOWNS_ANM_CHUNK_DL) {
             size_t payload_offset = 0u;
+            uint16_t source_delay_ticks = rd16be(data + pos + 4u);
             if (bytes >= 2u && payload[0] == 0xffu && payload[1] == 0x81u)
                 payload_offset = 2u;
             if ((size_t)bytes < payload_offset + 4u ||
@@ -304,6 +305,12 @@ int csb_v1_fmtowns_anm_decode_frame(const uint8_t *data, size_t size,
                 out->frame_index = frame_index;
                 out->source_chunk_offset = (uint32_t)pos;
                 out->source_chunk_bytes = bytes;
+                out->source_delay_ticks = source_delay_ticks;
+                /* ReDMCSB ANIM.C F2275 lines 2263-2266: the FM Towns
+                 * Timer-A wait never receives fewer than five ticks. */
+                out->timer_a_ticks = source_delay_ticks < 5u
+                                         ? 5u
+                                         : source_delay_ticks;
                 out->source_was_delta = type == CSB_FMTOWNS_ANM_CHUNK_DL;
                 out->palette_applied = palette_seen;
                 memcpy(out->palette, palette, sizeof(palette));

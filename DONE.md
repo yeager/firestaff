@@ -8059,6 +8059,14 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-06 CSB FM Towns ANM source timing: decoded `EN`/`DL` frame
+  receipts now retain the original big-endian chunk delay and its exact F2275
+  FM Towns minimum of five Timer-A ticks. No unsupported host-millisecond
+  conversion is made. The real `TITLE.ANM`, `STORY.ANM` and `ENDING.ANM`
+  regressions assert that first and final decoded frames carry that timing,
+  alongside source-owned pixels and palettes. M11 presentation remains
+  explicitly capture-gated; no game data was changed or tracked.
+
 - ✅ 2026-08-05 DM1 boot save-evidence correction: a normal real-data HoC
   boot no longer promotes its loaded `DUNGEON.DAT`/`GRAPHICS.DAT` runtime into
   an original PC34 save corpus. Save header, five-part corpus, four-portrait

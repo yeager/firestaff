@@ -35,6 +35,25 @@ static void test_probe_null(void) {
     ASSERT(csb_v1_fmtowns_anm_probe(small, 4) == 0, "probe rejects small");
 }
 
+static void test_timer_a_minimum(void) {
+    /* One 2x1 source EN frame. 0x10 fills both pixels with palette index
+     * zero. Its attribute is intentionally
+     * zero: ReDMCSB ANIM.C F2275 raises that wait to five Timer-A ticks. */
+    const uint8_t anm[] = {
+        'A', 'N', 0, 0, 0, 0, 0, 2, 0, 1, 0, 4, 0, 0,
+        'E', 'N', 0, 5, 0, 0, 0, 2, 0, 1, 0x10
+    };
+    uint8_t pixels[2];
+    CSB_V1_FmtownsAnmFrameReceipt frame;
+
+    ASSERT(csb_v1_fmtowns_anm_decode_frame(anm, sizeof(anm), 0u,
+                                            pixels, sizeof(pixels),
+                                            &frame) == 0,
+           "decode accepts bounded zero-delay source frame");
+    ASSERT(frame.source_delay_ticks == 0u && frame.timer_a_ticks == 5u,
+           "F2275 clamps zero source delay to five Timer-A ticks");
+}
+
 static void test_real_anm(void) {
     const char *home = getenv("HOME");
     const char *anm_dir = getenv("FIRESTAFF_CSB_FMTOWNS_ANM_DIR");
@@ -77,6 +96,8 @@ static void test_real_anm(void) {
         if (receipt.frame_count + receipt.delta_count > 0) {
             uint8_t pixels[CSB_FMTOWNS_ANM_FRAME_PIXELS];
             CSB_V1_FmtownsAnmFrameReceipt frame;
+            uint16_t first_source_ticks;
+            uint16_t first_timer_a_ticks;
             uint32_t frame_index =
                 (uint32_t)(receipt.frame_count + receipt.delta_count - 1);
             ASSERT(csb_v1_fmtowns_anm_decode_frame(
@@ -86,12 +107,25 @@ static void test_real_anm(void) {
                    "first decoded frame retains source dimensions");
             ASSERT(frame.pixel_fnv1a != 0u,
                    "first decoded frame has source-derived pixels");
+            ASSERT(frame.timer_a_ticks >= 5u &&
+                   frame.timer_a_ticks >= frame.source_delay_ticks,
+                   "first decoded frame retains F2275 Timer-A timing");
+            first_source_ticks = frame.source_delay_ticks;
+            first_timer_a_ticks = frame.timer_a_ticks;
             ASSERT(csb_v1_fmtowns_anm_decode_frame(
                        data, size, frame_index, pixels, sizeof(pixels), &frame) == 0,
                    "last source animation frame decodes");
             ASSERT(frame.valid == 1 && frame.frame_index == frame_index &&
                    frame.pixel_fnv1a != 0u,
                    "last decoded frame is source-owned");
+            ASSERT(frame.timer_a_ticks >= 5u &&
+                   frame.timer_a_ticks >= frame.source_delay_ticks,
+                   "last decoded frame retains F2275 Timer-A timing");
+            printf("    Frame timing: first %u/%u, last %u/%u source/Timer-A ticks\n",
+                   (unsigned int)first_source_ticks,
+                   (unsigned int)first_timer_a_ticks,
+                   (unsigned int)frame.source_delay_ticks,
+                   (unsigned int)frame.timer_a_ticks);
         }
 
         printf("  %s: %ux%u %dbpp, %d chunks (%d frames, %d deltas, %d KF), "
@@ -114,6 +148,7 @@ static void test_real_anm(void) {
 
 int main(void) {
     test_probe_null();
+    test_timer_a_minimum();
     test_real_anm();
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;
