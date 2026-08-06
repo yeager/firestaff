@@ -170,6 +170,8 @@ const FirestaffGameDataFingerprint firestaff_fingerprint_table[FIRESTAFF_FINGERP
     /* DM1 FM Towns */
     {MD5(C1,0C,51,2F,63,46,1E,BE,79,B5,AC,36,51,15,B6,1B), G_DM1, P_FMT, L_EN, F_GFX, NULL, "DM FM-Towns English GRAPHICS.DAT"},
     {MD5(ED,F4,7D,7D,A5,DE,81,84,60,4D,6D,80,47,7E,F0,1F), G_DM1, P_FMT, L_JP, F_GFX, NULL, "DM FM-Towns Japanese GRAPHICS.DAT"},
+    {MD5(3D,C0,A9,32,D0,E0,AD,FE,59,87,8F,07,C5,17,00,C5), G_DM1, P_FMT, L_EN, F_DNG, NULL, "DM FM-Towns English DUNGEON.DAT"},
+    {MD5(FE,09,8F,70,CE,83,CF,E3,F2,33,35,65,09,3D,AF,35), G_DM1, P_FMT, L_JP, F_DNG, NULL, "DM FM-Towns Japanese DUNGEON.DAT"},
     /* DM1 PC */
     {MD5(FA,6B,1A,A2,9E,19,14,18,71,3B,F2,CD,A9,3D,96,2E), G_DM1, P_PC, L_EN, F_GFX, "3.4", "DM PC 3.4 English GRAPHICS.DAT"},
     {MD5(F9,34,D9,7E,43,E1,BA,6E,51,59,83,9A,CB,CD,06,11), G_DM1, P_PC, L_ML, F_GFX, "3.4", "DM PC 3.4 Multilanguage GRAPHICS.DAT"},
