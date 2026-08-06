@@ -170,6 +170,13 @@ int M12_AssetStatus_ResolveRuntimeDataDirForVersion(
 int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize);
+/* Materialize the selected DM1 FM Towns language package from the original
+ * BIN/CUE archive.  The cache contains the verified DATA/JDATA files and the
+ * original FM Towns launcher/program siblings; it never substitutes PC34
+ * TITLE/SWOOSH media. */
+int M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(
+    const M12_AssetStatus* status, const char* versionId,
+    char* outPath, size_t outPathSize);
 const char* M12_AssetStatus_GetLegacyFallbackDir(const M12_AssetStatus* status);
 size_t M12_AssetStatus_GetVersionCount(const char* gameId);
 const M12_AssetVersionStatus* M12_AssetStatus_GetVersion(const M12_AssetStatus* status,

@@ -4366,6 +4366,10 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_atari_save_decode_pc34_compat.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
+    src/dm1/dm1_v1_fmtowns_graphics_dat.c
+    src/dm1/dm1_v1_fmtowns_dungeon_dat.c
+    src/dm1/dm1_v1_fmtowns_iso9660.c
+    src/dm1/dm1_v1_fmtowns_cd_audio.c
     src/shared/graphics_dat_snd3_loader_v1.c
     src/dm1/dm1_v1_original_save_classifier.c
     src/dm1/dm1_v1_original_save_pc34_handoff.c

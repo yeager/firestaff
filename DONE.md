@@ -23,6 +23,18 @@
 
 # DM1 production placeholder re-audit (2026-08-06)
 
+- ✅ DM1 FM Towns discovery now admits the real `Dungeon-Master_FM-Towns_JA-EN.zip`
+  only after the original MODE1/2048 ISO yields the registered English or
+  Japanese `GRAPHICS.DAT` + `DUNGEON.DAT` MD5 pair. Required-file rows preserve
+  archive/member provenance instead of relying on filenames. The selected FM
+  Towns version can be materialized into a private cache with the real
+  `EDM.EXP`/`JDM.EXP`, `TMENU.EXP`, `TMENU.ICN` and language data; the menu does
+  not silently fall back to PC34 startup media. Verification:
+  `test_firestaff_fmtowns_disc`, all five FM Towns DM1 unit tests, direct
+  archive scan, and a DM1 boot probe with the real FM Towns archive. FM Towns
+  executable animation/menu decoding and original capture remain tracked in
+  `DM1-FMTOWNS-STARTUP-ANIMATION-MENU`.
+
 - ✅ Disabled the synthetic English combat-log overlay for authenticated DM1
   source sessions. The real PC34 `TEXT.C`/C015 message lane remains visible;
   the diagnostic overlay is still available for non-source diagnostic worlds.

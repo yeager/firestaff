@@ -17586,6 +17586,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     int gameOptionSlot = -1;
     char selectedCsbRuntimeDataDir[FSP_PATH_MAX] = {0};
     char selectedDm2RuntimeDataDir[FSP_PATH_MAX] = {0};
+    char selectedDm1RuntimeDataDir[FSP_PATH_MAX] = {0};
     if (!state || !menuState) {
         return 0;
     }
@@ -17666,6 +17667,18 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                     selectedDm2RuntimeDataDir,
                     sizeof(selectedDm2RuntimeDataDir))) {
                 spec.dataDir = selectedDm2RuntimeDataDir;
+            }
+            if (entry->gameId && strcmp(entry->gameId, "dm1") == 0 &&
+                version->versionId &&
+                (strcmp(version->versionId, "fmtowns-en") == 0 ||
+                 strcmp(version->versionId, "fmtowns-ja") == 0)) {
+                if (!M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(
+                        &menuState->assetStatus, version->versionId,
+                        selectedDm1RuntimeDataDir,
+                        sizeof(selectedDm1RuntimeDataDir))) {
+                    return 0;
+                }
+                spec.dataDir = selectedDm1RuntimeDataDir;
             }
             if (entry->gameId && strcmp(entry->gameId, "dm2") == 0 &&
                 strcmp(version->versionId, "fmtowns-ja") == 0 &&

@@ -890,6 +890,13 @@ level or consumer bindings.
   accepting descriptor/ floor-image coverage. Continue binding the raw DGN
   item declaration to the Saturn action/slot consumer; source bytes alone do
   not prove loot or pickup semantics.
+- **DM1-FMTOWNS-STARTUP-ANIMATION-MENU:** The real DM1 FM Towns BIN/CUE is
+  now hash-admitted for both `DATA`/English and `JDATA`/Japanese, and the
+  runtime cache preserves `EDM.EXP`, `JDM.EXP`, `TMENU.EXP`, `TMENU.ICN`, the
+  selected language data and the original system siblings. Remaining work is
+  decoding and consuming the FM Towns-owned executable startup animation and
+  menu in M11, with original timing/audio/input capture. Do not reuse the
+  PC34 `TITLE`/`SWOOSH` path for this edition.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1

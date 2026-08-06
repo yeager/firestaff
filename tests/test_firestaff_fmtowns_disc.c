@@ -111,6 +111,26 @@ static int test_dm1_fmtowns_probe(void) {
     if (dgn)
         printf("OK: DATA/DUNGEON.DAT at LBA %u, size %u\n", dgn->lba, dgn->size);
 
+    /* DM1 FM Towns startup is owned by the original language executable and
+     * Towns launcher, not by the PC34 TITLE/SWOOSH files.  Keep the media
+     * inventory gate explicit so a future startup handoff cannot silently
+     * lose these real files. */
+    const FmtownsIsoEntry *jgfx = fmtowns_disc_find(&result, "JDATA/GRAPHICS.DAT");
+    const FmtownsIsoEntry *jdgn = fmtowns_disc_find(&result, "JDATA/DUNGEON.DAT");
+    const FmtownsIsoEntry *edm = fmtowns_disc_find(&result, "EDM.EXP");
+    const FmtownsIsoEntry *jdm = fmtowns_disc_find(&result, "JDM.EXP");
+    const FmtownsIsoEntry *tmenu = fmtowns_disc_find(&result, "TMENU.EXP");
+    const FmtownsIsoEntry *tmenuIcon = fmtowns_disc_find(&result, "TMENU.ICN");
+    if (!jgfx || jgfx->size != 396407U || !jdgn || jdgn->size != 33931U ||
+        !edm || edm->size != 310518U || !jdm || jdm->size != 290221U ||
+        !tmenu || tmenu->size != 235476U || !tmenuIcon ||
+        tmenuIcon->size != 32768U) {
+        fprintf(stderr, "FAIL: DM1 FM Towns startup/menu inventory incomplete\n");
+        free(img);
+        return 1;
+    }
+    printf("OK: DM1 FM Towns EN/JP startup and menu inventory\n");
+
     free(img);
     return 0;
 }

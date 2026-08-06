@@ -2,6 +2,7 @@
 #include "asset_find_by_hash.h"
 #include "dm2_v1_fmtowns_disc.h"
 #include "csb_v1_fmtowns_cd.h"
+#include "firestaff_fmtowns_disc.h"
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
 #include "dm2_v1_boot.h"
 #endif
@@ -859,6 +860,155 @@ static int m12_admit_dm2_fmtowns_archive(M12_AssetStatus* status,
         }
     }
     return 0;
+}
+
+/* The DM1 FM Towns release is a raw MODE1/2048 BIN inside a ZIP.  The
+ * language payloads are ISO members, not ZIP members, so filename/hash
+ * discovery alone cannot admit them.  Verify both the real GRAPHICS.DAT and
+ * DUNGEON.DAT before exposing either language to the launcher. */
+static int m12_admit_dm1_fmtowns_archive(
+    M12_AssetStatus* status, int gameIndex,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount, const char* preferredArchive) {
+    static const char archiveName[] = "Dungeon-Master_FM-Towns_JA-EN.zip";
+    static const char* const graphicsMd5[] = {
+        "c10c512f63461ebe79b5ac365115b61b",
+        "edf47d7da5de8184604d6d80477ef01f"
+    };
+    static const char* const dungeonMd5[] = {
+        "3dc0a932d0e0adfe59878f07c51700c5",
+        "fe098f70ce83cfe3f2333565093daf35"
+    };
+    size_t rootIndex;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm1") != 0) return 0;
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        char candidate[3][M12_ASSET_DATA_DIR_CAPACITY];
+        size_t candidateCount = 0U;
+        size_t candidateIndex;
+        if (preferredArchive && preferredArchive[0] != '\0' &&
+            strstr(preferredArchive, archiveName) != NULL)
+            m12_copy_string(candidate[candidateCount++], sizeof(candidate[0]),
+                            preferredArchive);
+        snprintf(candidate[candidateCount++], sizeof(candidate[0]), "%s/%s",
+                 roots[rootIndex], archiveName);
+        snprintf(candidate[candidateCount++], sizeof(candidate[0]), "%s/dm1/%s",
+                 roots[rootIndex], archiveName);
+        for (candidateIndex = 0U; candidateIndex < candidateCount;
+             ++candidateIndex) {
+            uint8_t* image = NULL;
+            size_t imageSize = 0U;
+            FmtownsDiscProbeResult disc;
+            int language;
+            int accepted = 0;
+            int anyAccepted = 0;
+            if (firestaff_zip_extract_by_suffix(candidate[candidateIndex], ".bin",
+                                                &image, &imageSize) != 0 ||
+                fmtowns_disc_probe(image, imageSize, FMTOWNS_SECTOR_2048,
+                                   &disc) != 0) {
+                free(image);
+                continue;
+            }
+            for (language = 0; language < 2; ++language) {
+                const char* directory = language == 0 ? "DATA" : "JDATA";
+                const FmtownsIsoEntry* graphics =
+                    fmtowns_disc_find(&disc, language == 0
+                                      ? "DATA/GRAPHICS.DAT"
+                                      : "JDATA/GRAPHICS.DAT");
+                const FmtownsIsoEntry* dungeon =
+                    fmtowns_disc_find(&disc, language == 0
+                                      ? "DATA/DUNGEON.DAT"
+                                      : "JDATA/DUNGEON.DAT");
+                uint8_t* graphicsBytes = NULL;
+                uint8_t* dungeonBytes = NULL;
+                size_t graphicsSize = 0U, dungeonSize = 0U;
+                char graphicsHash[33], dungeonHash[33];
+                (void)directory;
+                if (!graphics || !dungeon ||
+                    fmtowns_disc_extract_alloc(image, imageSize,
+                                               FMTOWNS_SECTOR_2048, graphics,
+                                               &graphicsBytes, &graphicsSize) != 0 ||
+                    fmtowns_disc_extract_alloc(image, imageSize,
+                                               FMTOWNS_SECTOR_2048, dungeon,
+                                               &dungeonBytes, &dungeonSize) != 0) {
+                    free(graphicsBytes);
+                    free(dungeonBytes);
+                    continue;
+                }
+                m12_bytes_md5_hex(graphicsBytes, graphicsSize, graphicsHash);
+                m12_bytes_md5_hex(dungeonBytes, dungeonSize, dungeonHash);
+                accepted = strcmp(graphicsHash, graphicsMd5[language]) == 0 &&
+                           strcmp(dungeonHash, dungeonMd5[language]) == 0;
+                free(graphicsBytes);
+                free(dungeonBytes);
+                if (!accepted) continue;
+                accepted = 1;
+                anyAccepted = 1;
+                {
+                    const char* versionId = language == 0 ? "fmtowns-en" : "fmtowns-ja";
+                    size_t versionIndex;
+                    for (versionIndex = 0U;
+                         versionIndex < g_games[gameIndex].versionCount;
+                         ++versionIndex) {
+                        M12_AssetVersionStatus* version =
+                            &status->versions[gameIndex][versionIndex];
+                        if (strcmp(version->versionId, versionId) != 0) continue;
+                        version->matched = 1;
+                        snprintf(version->matchedPath, sizeof(version->matchedPath),
+                                 "%s::%s/GRAPHICS.DAT", candidate[candidateIndex],
+                                 language == 0 ? "DATA" : "JDATA");
+                        snprintf(version->matchedMd5, sizeof(version->matchedMd5),
+                                 "%s", graphicsHash);
+                        break;
+                    }
+                }
+            }
+            free(image);
+            if (anyAccepted) return 1;
+        }
+    }
+    return 0;
+}
+
+static void m12_publish_dm1_fmtowns_required_files(M12_AssetStatus* status,
+                                                     int gameIndex) {
+    const M12_AssetVersionStatus* version;
+    const char* separator;
+    size_t i, archiveLength;
+    const char* directory;
+    const char* dungeonHash;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm1") != 0) return;
+    version = m12_first_matched_version(status, gameIndex);
+    if (!version || !version->versionId ||
+        (strcmp(version->versionId, "fmtowns-en") != 0 &&
+         strcmp(version->versionId, "fmtowns-ja") != 0)) return;
+    separator = strstr(version->matchedPath, "::");
+    if (!separator) return;
+    archiveLength = (size_t)(separator - version->matchedPath);
+    directory = strcmp(version->versionId, "fmtowns-en") == 0 ? "DATA" : "JDATA";
+    dungeonHash = strcmp(version->versionId, "fmtowns-en") == 0
+        ? "3dc0a932d0e0adfe59878f07c51700c5"
+        : "fe098f70ce83cfe3f2333565093daf35";
+    for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+        M12_AssetRequiredFileStatus* required =
+            &status->requiredFiles[gameIndex][i];
+        const char* member = NULL;
+        const char* md5 = NULL;
+        if (strcmp(required->roleId, "graphics") == 0) {
+            member = "GRAPHICS.DAT";
+            md5 = version->matchedMd5;
+        } else if (strcmp(required->roleId, "dungeon") == 0) {
+            member = "DUNGEON.DAT";
+            md5 = dungeonHash;
+        }
+        if (!member) continue;
+        required->matched = 1;
+        snprintf(required->matchedPath, sizeof(required->matchedPath),
+                 "%.*s::%s/%s", (int)archiveLength, version->matchedPath,
+                 directory, member);
+        snprintf(required->matchedHash, sizeof(required->matchedHash), "%s", md5);
+    }
 }
 
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
@@ -3583,6 +3733,115 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
     return 1;
 }
 
+static int m12_write_bytes(const char* path, const uint8_t* bytes, size_t size) {
+    FILE* file;
+    if (!path || !bytes || size == 0U) return 0;
+    file = fopen(path, "wb");
+    if (!file) return 0;
+    if (fwrite(bytes, 1U, size, file) != size) {
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    return 1;
+}
+
+static int m12_materialize_dm1_fmtowns_runtime_cache(
+    const M12_AssetVersionStatus* version, const char* gameCacheDir) {
+    const char* separator;
+    char archivePath[M12_ASSET_DATA_DIR_CAPACITY];
+    uint8_t* image = NULL;
+    size_t imageSize = 0U;
+    FmtownsDiscProbeResult disc;
+    const char* selectedDirectory;
+    const char* expectedGraphics;
+    const char* expectedDungeon;
+    int i;
+    if (!version || !version->versionId || !gameCacheDir) return 0;
+    if (strcmp(version->versionId, "fmtowns-en") != 0 &&
+        strcmp(version->versionId, "fmtowns-ja") != 0) return 0;
+    separator = strstr(version->matchedPath, "::");
+    if (!separator || (size_t)(separator - version->matchedPath) >= sizeof(archivePath))
+        return 0;
+    memcpy(archivePath, version->matchedPath,
+           (size_t)(separator - version->matchedPath));
+    archivePath[separator - version->matchedPath] = '\0';
+    if (firestaff_zip_extract_by_suffix(archivePath, ".bin", &image, &imageSize) != 0 ||
+        fmtowns_disc_probe(image, imageSize, FMTOWNS_SECTOR_2048, &disc) != 0) {
+        free(image);
+        return 0;
+    }
+    selectedDirectory = strcmp(version->versionId, "fmtowns-en") == 0 ? "DATA" : "JDATA";
+    expectedGraphics = strcmp(version->versionId, "fmtowns-en") == 0
+        ? "c10c512f63461ebe79b5ac365115b61b"
+        : "edf47d7da5de8184604d6d80477ef01f";
+    expectedDungeon = strcmp(version->versionId, "fmtowns-en") == 0
+        ? "3dc0a932d0e0adfe59878f07c51700c5"
+        : "fe098f70ce83cfe3f2333565093daf35";
+    for (i = 0; i < disc.entry_count; ++i) {
+        const FmtownsIsoEntry* entry = &disc.entries[i];
+        const char* relative = entry->name;
+        uint8_t* bytes = NULL;
+        size_t size = 0U;
+        char outPath[M12_ASSET_DATA_DIR_CAPACITY];
+        char parent[M12_ASSET_DATA_DIR_CAPACITY];
+        if (entry->is_directory || !entry->name[0]) continue;
+        if (strncmp(relative, "DATA/", 5U) == 0 ||
+            strncmp(relative, "JDATA/", 6U) == 0) {
+            if (strncmp(relative, selectedDirectory, strlen(selectedDirectory)) != 0)
+                continue;
+        } else if (strchr(relative, '/') != NULL) {
+            continue;
+        }
+        if (fmtowns_disc_extract_alloc(image, imageSize, FMTOWNS_SECTOR_2048,
+                                       entry, &bytes, &size) != 0) continue;
+        if (strncmp(relative, selectedDirectory, strlen(selectedDirectory)) == 0 &&
+            relative[strlen(selectedDirectory)] == '/') {
+            relative += strlen(selectedDirectory) + 1U;
+        }
+        if (!FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, relative)) {
+            free(bytes);
+            free(image);
+            return 0;
+        }
+        if (strrchr(relative, '/') != NULL) {
+            size_t prefix = (size_t)(strrchr(outPath, '/') - outPath);
+            if (prefix >= sizeof(parent)) prefix = sizeof(parent) - 1U;
+            memcpy(parent, outPath, prefix);
+            parent[prefix] = '\0';
+            if (!FSP_CreateDirectoryRecursive(parent)) {
+                free(bytes);
+                free(image);
+                return 0;
+            }
+        }
+        if (!m12_write_bytes(outPath, bytes, size)) {
+            free(bytes);
+            free(image);
+            return 0;
+        }
+        if (strcmp(entry->name, "DATA/GRAPHICS.DAT") == 0 ||
+            strcmp(entry->name, "JDATA/GRAPHICS.DAT") == 0) {
+            char hash[33];
+            m12_bytes_md5_hex(bytes, size, hash);
+            if (strcmp(hash, expectedGraphics) != 0) {
+                free(bytes); free(image); return 0;
+            }
+        }
+        if (strcmp(entry->name, "DATA/DUNGEON.DAT") == 0 ||
+            strcmp(entry->name, "JDATA/DUNGEON.DAT") == 0) {
+            char hash[33];
+            m12_bytes_md5_hex(bytes, size, hash);
+            if (strcmp(hash, expectedDungeon) != 0) {
+                free(bytes); free(image); return 0;
+            }
+        }
+        free(bytes);
+    }
+    free(image);
+    return 1;
+}
+
 static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
                                                   int gameIndex) {
     const char* gameId;
@@ -3639,6 +3898,17 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     }
     {
         selectedVersion = m12_first_matched_version(status, gameIndex);
+        if (strcmp(gameId, "dm1") == 0 && selectedVersion &&
+            selectedVersion->versionId &&
+            (strcmp(selectedVersion->versionId, "fmtowns-en") == 0 ||
+             strcmp(selectedVersion->versionId, "fmtowns-ja") == 0) &&
+            m12_path_is_virtual_asset(selectedVersion->matchedPath)) {
+            if (!m12_materialize_dm1_fmtowns_runtime_cache(
+                    selectedVersion, gameCacheDir)) return 0;
+            m12_copy_string(status->runtimeDataDirs[gameIndex],
+                            sizeof(status->runtimeDataDirs[gameIndex]), cacheRoot);
+            return 1;
+        }
         if (strcmp(gameId, "csb") == 0 && selectedVersion && selectedVersion->versionId &&
             (strcmp(selectedVersion->versionId, "fmtowns-en") == 0 ||
              strcmp(selectedVersion->versionId, "fmtowns-ja") == 0)) {
@@ -4393,6 +4663,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     int userExplicitDataDir = (requestedDataDir && requestedDataDir[0] != '\0') ? 1 : 0;
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
         int csbFmtownsAdmitted = 0;
+        int dm1FmtownsAdmitted = 0;
         if (!m12_scan_progress_update(&progressCtx,
                                       "matching game versions",
                                       g_games[i].gameId,
@@ -4413,6 +4684,10 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
                                &dataDirResolvedToMatchedRoot,
                                userExplicitDataDir,
                                csbFmtownsAdmitted);
+        if (strcmp(g_games[i].gameId, "dm1") == 0) {
+            dm1FmtownsAdmitted = m12_admit_dm1_fmtowns_archive(
+                status, i, roots, rootCount, requestedDataDir);
+        }
         if (strcmp(g_games[i].gameId, "csb") == 0) {
             m12_admit_csb_amiga31_title_package(status, i, roots, rootCount);
         }
@@ -4437,6 +4712,23 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
              strcmp(selected->versionId, "fmtowns-ja") == 0);
         int reqMatch = m12_fill_required_files(status, i, roots, rootCount,
                                                skipNestedArchiveScan);
+        if (strcmp(g_games[i].gameId, "dm1") == 0) {
+            size_t requiredIndex;
+            m12_publish_dm1_fmtowns_required_files(status, i);
+            if (m12_first_matched_version(status, i) &&
+                strstr(m12_first_matched_version(status, i)->matchedPath, "::")) {
+                reqMatch = status->requiredFileCounts[i] > 0U;
+                for (requiredIndex = 0U;
+                     requiredIndex < status->requiredFileCounts[i];
+                     ++requiredIndex) {
+                    if (status->requiredFiles[i][requiredIndex].required &&
+                        !status->requiredFiles[i][requiredIndex].matched) {
+                        reqMatch = 0;
+                        break;
+                    }
+                }
+            }
+        }
         if (strcmp(g_games[i].gameId, "dm2") == 0) {
             size_t requiredIndex;
             m12_publish_dm2_fmtowns_required_files(status, i);
@@ -4599,6 +4891,7 @@ void M12_AssetStatus_ScanGameWithOptions(
     int gameIndex;
     int dataDirResolvedToMatchedRoot = 0;
     int csbFmtownsAdmitted = 0;
+    int dm1FmtownsAdmitted = 0;
     int reqMatch;
     int i;
     if (!status) {
@@ -4667,7 +4960,12 @@ void M12_AssetStatus_ScanGameWithOptions(
                                rootCount,
                                &dataDirResolvedToMatchedRoot,
                                (requestedDataDir && requestedDataDir[0] != '\0'),
-                               (options && options->looseFilesOnly) || csbFmtownsAdmitted);
+                               (options && options->looseFilesOnly) ||
+                               csbFmtownsAdmitted);
+        if (strcmp(g_games[gameIndex].gameId, "dm1") == 0) {
+            dm1FmtownsAdmitted = m12_admit_dm1_fmtowns_archive(
+                status, gameIndex, roots, rootCount, requestedDataDir);
+        }
         if (strcmp(g_games[gameIndex].gameId, "csb") == 0) {
             m12_admit_csb_amiga31_title_package(status, gameIndex, roots,
                                                  rootCount);
@@ -4690,7 +4988,24 @@ void M12_AssetStatus_ScanGameWithOptions(
                                        roots,
                                        rootCount,
                                        (options && options->looseFilesOnly) ||
-                                       csbFmtownsAdmitted);
+                                       csbFmtownsAdmitted || dm1FmtownsAdmitted);
+    if (strcmp(g_games[gameIndex].gameId, "dm1") == 0) {
+        size_t requiredIndex;
+        m12_publish_dm1_fmtowns_required_files(status, gameIndex);
+        if (m12_first_matched_version(status, gameIndex) &&
+            strstr(m12_first_matched_version(status, gameIndex)->matchedPath, "::")) {
+            reqMatch = status->requiredFileCounts[gameIndex] > 0U;
+            for (requiredIndex = 0U;
+                 requiredIndex < status->requiredFileCounts[gameIndex];
+                 ++requiredIndex) {
+                if (status->requiredFiles[gameIndex][requiredIndex].required &&
+                    !status->requiredFiles[gameIndex][requiredIndex].matched) {
+                    reqMatch = 0;
+                    break;
+                }
+            }
+        }
+    }
     if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
         size_t requiredIndex;
         m12_publish_dm2_fmtowns_required_files(status, gameIndex);
@@ -4990,6 +5305,34 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     m12_materialize_csb_startup_optional_cache(
         version->matchedPath, outPath, 0,
         strncmp(versionId, "st20-21-", 8) == 0);
+    return 1;
+}
+
+int M12_AssetStatus_MaterializeDM1FmtownsRuntimeVersion(
+    const M12_AssetStatus* status, const char* versionId,
+    char* outPath, size_t outPathSize) {
+    int gameIndex = m12_game_index_from_id("dm1");
+    int versionIndex;
+    const M12_AssetVersionStatus* version;
+    char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
+    char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char cacheLeaf[64];
+    if (outPath && outPathSize) outPath[0] = '\0';
+    if (!status || !versionId || !outPath || outPathSize == 0U || gameIndex < 0)
+        return 0;
+    versionIndex = M12_AssetStatus_FindVersionIndex("dm1", versionId);
+    if (versionIndex < 0) return 0;
+    version = &status->versions[gameIndex][versionIndex];
+    if (!version->matched || !m12_path_is_virtual_asset(version->matchedPath) ||
+        !FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
+        !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir, "asset-cache") ||
+        snprintf(cacheLeaf, sizeof(cacheLeaf), "dm1-%s", versionId) < 0 ||
+        !FSP_JoinPath(outPath, outPathSize, cacheRoot, cacheLeaf) ||
+        !FSP_CreateDirectoryRecursive(outPath) ||
+        !m12_materialize_dm1_fmtowns_runtime_cache(version, outPath)) {
+        outPath[0] = '\0';
+        return 0;
+    }
     return 1;
 }
 
