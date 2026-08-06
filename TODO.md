@@ -1,5 +1,9 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-ICON-REFRESH-SYNTHETIC-AUDIT:** This in-memory icon/slot
+  fixture has no original DM1 data input or M11/runtime caller; retain it only
+  as explicit ReDMCSB coverage.
+
 - **DM1-MIRROR-REOPEN-SAVELOAD-SYNTHETIC-AUDIT:** This C040 save/load model
   fabricates save parts, party and UI state. It has no original DM1 data input
   or M11/runtime caller; retain it only as explicit ReDMCSB coverage.

@@ -57604,3 +57604,7 @@ alcove runtime and archive-media tests passed (4/4).
 
 - ✅ Removed the contract-only C040 reopen-after-save/load snapshot model from
   M10; its explicit ReDMCSB regression remains the build owner.
+# DM1 mirror icon-refresh synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the in-memory icon/slot fixture from M10; its direct regression
+  and the dependent double-open regression compile it explicitly.

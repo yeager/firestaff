@@ -4418,6 +4418,11 @@ list(REMOVE_ITEM M10_SOURCES
 # no original DM1 data, performs no original save I/O, and has no M11 caller.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_reopen_after_save_load_pc34_compat.c")
+# `dm1_v1_mirror_candidate_icon_refresh_pc34_compat.c` is a contract-only
+# in-memory icon/slot fixture. It loads no original DM1 data and has no M11
+# caller; the double-open regression compiles it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_icon_refresh_pc34_compat.c")
 # `dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c` contains only the
 # asset-free D3C stairs/pit dispatch and transparent-byte fixture contract;
 # no M11/runtime caller consumes it.  Keep its source-lock test explicit and
@@ -26243,6 +26248,10 @@ endif()
                 AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_mod_src}"
                 AND NOT TARGET ${_tgt})
             add_executable(${_tgt} ${_test_src} ${_mod_src})
+            if(_mirror_candidate_test STREQUAL "double_open_close")
+                target_sources(${_tgt} PRIVATE
+                    src/dm1/dm1_v1_mirror_candidate_icon_refresh_pc34_compat.c)
+            endif()
             target_link_libraries(${_tgt} PRIVATE firestaff_m10)
             if(NOT MSVC)
                 target_compile_options(${_tgt} PRIVATE -Wall -Wextra -O2)
