@@ -5006,6 +5006,12 @@ list(REMOVE_ITEM M10_SOURCES
 # explicit regression compiles it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_chest_open_during_pending_pc34_compat.c")
+# `dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat.c` is a
+# contract-only C040/C162 rotation race with local party, panel and hand
+# state. It loads no original DM1 data and has no M11/runtime caller; its
+# generated regression compiles it directly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat.c")
 # `dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_pc34_compat.c`
 # is a contract-only C040 close/reopen model with local panel and candidate
 # state. It loads no original DM1 assets and has no M11/runtime caller; its

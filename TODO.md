@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-CANCEL-ROTATION-SYNTHETIC-AUDIT:** This C040/C162 rotation
+  fixture fabricates party, panel and hand state. It loads no original DM1
+  data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound interaction owner is recovered.
+
 - **DM1-MIRROR-CHEST-OPEN-PENDING-SYNTHETIC-AUDIT:** This C040/F0333/F0282
   fixture fabricates candidate, chest and slot state. It loads no original
   DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB

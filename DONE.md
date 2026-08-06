@@ -1,3 +1,11 @@
+# DM1 mirror cancel-rotation synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C040/C162 rotation fixture from M10. Its
+  generated regression still compiles the source directly; it loads no
+  original DM1 data and has no M11/runtime caller.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 mirror chest-open-during-pending synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040/F0333/F0282 fixture from M10 and wired
