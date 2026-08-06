@@ -1344,7 +1344,6 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
 {
     struct DungeonDatState_Compat* dungeon = NULL;
     struct DungeonThings_Compat* things = NULL;
-    struct TimelineEvent_Compat ev;
     int direction = 0, py = 0, px = 0;
 
     if (!dungeonPath || !outWorld) return 0;
@@ -1386,14 +1385,6 @@ int F0882_WORLD_InitFromDungeonDat_Compat(
      * GROUP.C F0195, so the loaded C04 chains own initial active state and
      * C37 scheduling rather than an empty host-only AI table. */
     if (F0195_DM1_GROUP_AddAllActiveGroups_Compat(outWorld) < 0) goto fail;
-
-    /* Schedule an initial watchdog / generator-placeholder event at tick 1
-     * so the timeline is non-empty at init (invariant C14). */
-    memset(&ev, 0, sizeof(ev));
-    ev.kind = TIMELINE_EVENT_WATCHDOG;
-    ev.fireAtTick = 1;
-    ev.mapIndex = 0;
-    F0721_TIMELINE_Schedule_Compat(&outWorld->timeline, &ev);
 
     return 1;
 

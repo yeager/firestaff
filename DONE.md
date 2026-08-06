@@ -4,6 +4,13 @@
   dependent double-open regressions compile the source explicitly; it loads no
   original DM1 data and has no M11/runtime caller.
 
+# DM1 C53 synthetic start-watchdog removal (2026-08-07)
+
+- ✅ Removed the host-only tick-1 C53 from dungeon startup. ReDMCSB
+  `TIMELINE.C:F0256` creates and dispatches C53 only outside
+  `NOCOPYPROTECTION`; Firestaff retains import/export support for an
+  authenticated saved C53 receipt, but no longer fabricates one for a new game.
+
 # DM1 D2C stair-rail synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only D2C stair-rail trace from M10 and made its
