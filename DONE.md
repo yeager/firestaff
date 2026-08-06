@@ -91,6 +91,15 @@
 - ✅ Verification: `test_dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 D2L2/D2R2 side-wall synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free F0678/F0679 side-wall model from M10. It carries
+  fixed route data and a synthetic 8×8 probe, reads no authenticated graphics
+  material and has no M11/runtime caller; its source-lock regression remains
+  explicit.
+- ✅ Verification: `test_dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat`
+  passes; the source object is absent from M10.
+
 # DM1 champion portrait-box redraw synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the portrait-box redraw-state matrix from M10. It fabricates

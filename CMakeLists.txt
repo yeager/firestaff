@@ -4533,6 +4533,12 @@ list(REMOVE_ITEM M10_SOURCES
 # compile it directly, so keep it out of the broad M10 production archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat.c")
+# `dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat.c` is an asset-free
+# F0678/F0679 source-lock model with a synthetic 8x8 probe. It has no M11
+# caller and reads no authenticated GRAPHICS.DAT material, so retain it only
+# in its explicit regression while the live viewport uses source-bound assets.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l2_d2r2_side_wall_pc34_compat.c")
 # `dm1_v1_viewport_d1l_d1r_f0107_wall_ornament_pc34_compat.c` is a
 # source-locked synthetic framebuffer probe with fixed zones, ordinals and
 # pixels. It reads no GRAPHICS.DAT data and has no M11/runtime caller; compile

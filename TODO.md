@@ -201,6 +201,12 @@
   explicit ReDMCSB regression until a source-bound D2 side-lane consumer is
   recovered.
 
+- **DM1-D2L2-D2R2-SIDE-WALL-SYNTHETIC-AUDIT:** This F0678/F0679 source-lock
+  model has fixed side-wall route data and a synthetic 8×8 probe. It reads no
+  authenticated `GRAPHICS.DAT` material and has no M11/runtime caller; retain
+  it only as an explicit regression while the live viewport uses the separate
+  source-bound asset route.
+
 - **DM1-D1L-D1R-F0107-SYNTHETIC-AUDIT:** This D1 side-wall helper hard-codes
   wall-ornament zones, ordinals and probe pixels. It reads no original DM1
   data or GRAPHICS.DAT material and has no M11/runtime caller; retain it only
