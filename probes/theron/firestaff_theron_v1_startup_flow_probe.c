@@ -332,9 +332,17 @@ int main(void) {
         check_str("startup media US text",
                   media.startup_text_prompt,
                   "GO AWAY AND RESURRECT THERON");
-        check_int("startup media US roster OK",
+        /*
+         * The real US Track 02 disassembly has no joined champion-name
+         * consumer.  Keep this gate source-locked instead of copying the
+         * JP ASCII fixture into the US path.
+         */
+        check_int("startup media US roster remains source-gated",
                   media.startup_roster_name_status,
-                  THERON_TRACK02_SIGNAL_OK);
+                  THERON_TRACK02_SIGNAL_NOT_FOUND);
+        check_int("startup media US roster count remains zero",
+                  media.startup_roster_name_count,
+                  0);
     }
     {
         unsigned char jp_sector[THERON_TRACK02_RAW_SECTOR_BYTES];
