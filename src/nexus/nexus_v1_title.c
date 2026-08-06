@@ -80,35 +80,6 @@ int nexus_v1_title_decode_mapd(const uint8_t *mapd,
     return 1;
 }
 
-static void nexus_title_draw_rect(Nexus_Framebuffer *fb,
-                                  int x, int y, int w, int h,
-                                  uint8_t color) {
-    int yy;
-    if (!fb || w <= 0 || h <= 0) {
-        return;
-    }
-    if (x < 0) {
-        w += x;
-        x = 0;
-    }
-    if (y < 0) {
-        h += y;
-        y = 0;
-    }
-    if (x + w > NEXUS_FB_W) {
-        w = NEXUS_FB_W - x;
-    }
-    if (y + h > NEXUS_FB_H) {
-        h = NEXUS_FB_H - y;
-    }
-    if (w <= 0 || h <= 0) {
-        return;
-    }
-    for (yy = y; yy < y + h; ++yy) {
-        memset(&fb->color_buffer[yy * NEXUS_FB_W + x], color, (size_t)w);
-    }
-}
-
 static int nexus_title_copy_surface(uint8_t **out_pixels,
                                     int *out_w,
                                     int *out_h,
@@ -427,67 +398,17 @@ int nexus_v1_title_build_render_plan(const Nexus_TitleScreen *title,
     return 1;
 }
 
-static void nexus_render_title_plan(const Nexus_TitleScreen *title,
-                                    Nexus_Framebuffer *fb,
-                                    const Nexus_V1_TitleRenderPlan *plan)
-{
-    int y;
-    int i;
+void nexus_render_title(const Nexus_TitleScreen *title,
+                        Nexus_Framebuffer *fb, int frame) {
+    /* WARNING.BIN and TITLE.CG are authentic source assets, but this public
+     * host renderer has no Saturn VDP1/VDP2 capture binding for their palette,
+     * tile-map, destination, or command order. Keep the production framebuffer
+     * blank until that source-owned handoff is admitted. The render-plan
+     * helper remains available to isolated format/timing diagnostics. */
+    (void)title;
+    (void)frame;
     if (!fb) {
         return;
     }
     nexus_fb_clear(fb);
-    if (!plan) {
-        return;
-    }
-    if (plan->kind == NEXUS_V1_TITLE_RENDER_PLAN_TITLE_ART) {
-        /* Unreachable for the unadmitted TITLE.CG/MAPD route. Keep this
-         * branch source-only if a future Saturn capture opens it. */
-        if (title && title->pixels && title->width > 0 && title->height > 0) {
-            for (y = plan->reveal_y0;
-                 y < plan->reveal_y1 && y < plan->copy_height &&
-                     y < NEXUS_FB_H;
-                 ++y) {
-                memcpy(&fb->color_buffer[y * NEXUS_FB_W],
-                       &title->pixels[y * title->width],
-                       (size_t)plan->copy_width);
-            }
-        }
-    } else if (plan->kind == NEXUS_V1_TITLE_RENDER_PLAN_WARNING_ART) {
-        if (title && title->warning_pixels && title->warning_width > 0) {
-            if (title->warning_palette_loaded) {
-                nexus_fb_set_palette(fb, title->warning_palette_rgba);
-            }
-            for (y = 0; y < plan->copy_height && y < NEXUS_FB_H; ++y) {
-                memcpy(&fb->color_buffer[y * NEXUS_FB_W],
-                       &title->warning_pixels[y * title->warning_width],
-                       (size_t)plan->copy_width);
-            }
-        }
-    } else {
-        /* Invalid/unknown plans remain blank. Never synthesize a gradient
-         * when the authenticated title or warning surface is unavailable. */
-    }
-    for (i = 0; i < plan->rect_count; ++i) {
-        const Nexus_V1_TitleRenderRect *rect = &plan->rects[i];
-        nexus_title_draw_rect(fb,
-                              rect->x,
-                              rect->y,
-                              rect->w,
-                              rect->h,
-                              rect->color);
-    }
-}
-
-void nexus_render_title(const Nexus_TitleScreen *title,
-                        Nexus_Framebuffer *fb, int frame) {
-    Nexus_V1_TitleRenderPlan plan;
-    if (!fb) {
-        return;
-    }
-    if (!nexus_v1_title_build_render_plan(title, frame, &plan)) {
-        nexus_fb_clear(fb);
-        return;
-    }
-    nexus_render_title_plan(title, fb, &plan);
 }

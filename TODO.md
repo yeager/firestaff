@@ -130,7 +130,9 @@
 - **NEXUS-TITLE-VDP-CAPTURE:** Startup title reveal geometry now uses the
   verified 224-row Saturn surface from the DMWeb 64x28 TITLE.BIN map layout.
   The remaining work is still the captured VDP2 tilemap/CLUT owner and its
-  runtime timing, not another host-sized 320x200 approximation.
+  runtime timing, not another host-sized 320x200 approximation. The public
+  `nexus_render_title` host entry point is now no-draw while that capture is
+  absent; authentic WARNING.BIN/TITLE.CG bytes remain diagnostic receipts.
 
 - **NEXUS-DGN-MATERIAL-VDP1-CAPTURE:** The real Structure2 decoder now
   has a 16-level census guard (1,678 textures: 1,553 indexed-4bpp and 125

@@ -277,11 +277,19 @@ int main(void)
         title.warning_palette_loaded = 1;
         nexus_fb_init(&framebuffer);
         nexus_render_title(&title, &framebuffer, 0);
-        expect_true(framebuffer.palette[0] ==
-                        ui.surfaces[NEXUS_SURFACE_WARNING].dgt2_palette_rgba[0] &&
-                        framebuffer.palette[255] ==
-                        ui.surfaces[NEXUS_SURFACE_WARNING].dgt2_palette_rgba[255],
-                    "Nexus warning title phase consumes the source DGT2 CLUT");
+        {
+            size_t pixel_index;
+            int nonzero_pixels = 0;
+            for (pixel_index = 0; pixel_index <
+                              (size_t)NEXUS_FB_W * (size_t)NEXUS_FB_H;
+                 ++pixel_index) {
+                if (framebuffer.color_buffer[pixel_index] != 0U) {
+                    ++nonzero_pixels;
+                }
+            }
+            expect_true(nonzero_pixels == 0,
+                        "Nexus warning title host renderer stays no-draw without Saturn capture");
+        }
         nexus_ui_manager_free(&ui);
         free(local_warning);
     }

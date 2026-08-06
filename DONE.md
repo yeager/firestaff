@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus startup title host no-draw gate: the public
+  `nexus_render_title` entry point no longer copies authentic WARNING.BIN or
+  TITLE.CG pixels/CLUT into a host framebuffer without a verified Saturn
+  VDP1/VDP2 capture binding. The real startup media tests still decode and
+  provenance-check those source bytes; presentation remains explicitly
+  capture-gated.
+
 - ✅ 2026-08-06 CSB FM Towns Game-session provenance gate: the F31E CDATA
   pair now has an opt-in real-media regression that scans the exact
   `405b757038eea3c263e60f240854d6de` GRAPHICS.DAT and
