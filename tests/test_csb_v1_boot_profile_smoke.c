@@ -460,6 +460,7 @@ static void test_fmtowns_game_program_handoff(void)
     CSB_V1_FmtownsGameHandoffReceipt receipt;
     CSB_V1_FmtownsUtilityHandoffReceipt utility;
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
+    CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
     uint8_t music_track;
 
     if (!data_dir || data_dir[0] == '\0') {
@@ -510,6 +511,17 @@ static void test_fmtowns_game_program_handoff(void)
                   memcmp(utility_menu.source_bytes, "LOAD CHAMPIONS", 14u) == 0 &&
                   utility_menu.label_offsets[5] == 68u,
               "F31E C06 Utility menu uses the original six-label P3 pool");
+        CHECK(csb_v1_fmtowns_utility_menu_action_at(
+                  &utility_menu, 2, 186, &utility_hit) &&
+                  utility_hit.action ==
+                      CSB_V1_FMTOWNS_UTILITY_ACTION_LOAD_CHAMPIONS &&
+                  csb_v1_fmtowns_utility_menu_action_at(
+                      &utility_menu, 316, 194, &utility_hit) &&
+                  utility_hit.action ==
+                      CSB_V1_FMTOWNS_UTILITY_ACTION_MAKE_NEW_ADVENTURE &&
+                  !csb_v1_fmtowns_utility_menu_action_at(
+                      &utility_menu, 100, 170, &utility_hit),
+              "F31E C06 Utility input uses the original inclusive mouse boxes");
         music_track = 0u;
         CHECK(csb_v1_fmtowns_game_music_track_at(&receipt, 0u, 2u, 0u,
                                                   &music_track) &&

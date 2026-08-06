@@ -525,6 +525,15 @@
 
 # DM1 production placeholder re-audit (2026-08-06)
 
+- ✅ 2026-08-06 CSB FM Towns C06 menu input: retained the original F31E/F31J
+  `CEDTDATA.C G2272_MouseInputs` rectangles for Load Champions, Save
+  Champions, Make New Adventure, Revert, Undo and Quit. The new source-space
+  decoder preserves inclusive 320×200 boundaries and passes the actual C06
+  command ordinal to a future owner; it does not substitute the generic PC34
+  utility flow. ReDMCSB `CEDT006.C` lines 1401–1529 is the dispatch evidence.
+  Verification: real-cache English and Japanese handoff tests plus the FM
+  Towns boot-profile smoke test.
+
 - ✅ 2026-08-06 CSB FM Towns CDDA pause/continue: the dedicated source CDDA
   stream now preserves its queued raw CUE/IMG span while CSB's F31 music
   switch is off, matching ReDMCSB `MUSIC.C` F0740/F0738

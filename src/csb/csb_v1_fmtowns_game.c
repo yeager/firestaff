@@ -378,6 +378,52 @@ int csb_v1_fmtowns_utility_menu_open(
     return 1;
 }
 
+int csb_v1_fmtowns_utility_menu_action_at(
+    const CSB_V1_FmtownsUtilityMenuReceipt *receipt,
+    int16_t source_x, int16_t source_y,
+    CSB_V1_FmtownsUtilityMenuHitBox *out_hit_box)
+{
+    static const CSB_V1_FmtownsUtilityMenuHitBox k_english_hits[
+        CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT] = {
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_LOAD_CHAMPIONS, 2, 92, 186, 194 },
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_SAVE_CHAMPIONS, 102, 192, 186, 194 },
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_MAKE_NEW_ADVENTURE, 202, 316, 186, 194 },
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_REVERT, 156, 196, 159, 167 },
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_UNDO, 225, 253, 159, 167 },
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_QUIT, 288, 316, 5, 13 }
+    };
+    static const CSB_V1_FmtownsUtilityMenuHitBox k_japanese_hits[
+        CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT] = {
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_LOAD_CHAMPIONS, 2, 92, 179, 196 },
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_SAVE_CHAMPIONS, 98, 197, 179, 196 },
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_MAKE_NEW_ADVENTURE, 203, 317, 179, 196 },
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_REVERT, 156, 196, 154, 171 },
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_UNDO, 213, 253, 154, 171 },
+        { CSB_V1_FMTOWNS_UTILITY_ACTION_QUIT, 266, 317, 6, 23 }
+    };
+    const CSB_V1_FmtownsUtilityMenuHitBox *hits;
+    uint32_t index;
+
+    if (out_hit_box) memset(out_hit_box, 0, sizeof(*out_hit_box));
+    if (!receipt || !out_hit_box || !receipt->valid) return 0;
+    if (receipt->language == CSB_FMTOWNS_SWITCH_ENGLISH) {
+        hits = k_english_hits;
+    } else if (receipt->language == CSB_FMTOWNS_SWITCH_JAPANESE) {
+        hits = k_japanese_hits;
+    } else return 0;
+
+    /* ReDMCSB CEDTDATA.C G2272_MouseInputs keeps both box boundaries. */
+    for (index = 0u; index < CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT;
+         ++index) {
+        if (source_x >= hits[index].left && source_x <= hits[index].right &&
+            source_y >= hits[index].top && source_y <= hits[index].bottom) {
+            *out_hit_box = hits[index];
+            return 1;
+        }
+    }
+    return 0;
+}
+
 int csb_v1_fmtowns_game_music_track_at(
     const CSB_V1_FmtownsGameHandoffReceipt *receipt,
     uint32_t map_index,

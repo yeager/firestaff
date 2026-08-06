@@ -750,8 +750,10 @@
   P3 pool rather than the generic PC34 action list: English bytes are
   `LOAD CHAMPIONS`, `SAVE CHAMPIONS`, `MAKE NEW ADVENTURE`, `REVERT`,
   `UNDO`, `QUIT`; Japanese remains its original Shift-JIS byte pool until
-  the Towns text rasterizer is decoded. Input rectangles, EGB rendering and
-  all save transactions remain open. 2026-08-06: a real F31 Game victory now activates
+  the Towns text rasterizer is decoded. The six C06 source-coordinate input
+  boxes are now bound separately for F31E/F31J, including the original
+  inclusive edges and `CEDT006.C` action ordinals; EGB rendering and all save
+  transactions remain open. 2026-08-06: a real F31 Game victory now activates
   `ENDING.ANM` through the retained F2275 interpreter. It uses the original
   Timer-A frames and TD/TR CUE dispatch, holds its last decoded frame when
   F0750 returns, and never chains back to `SWITCHTW.EXP` or a PC34 endgame

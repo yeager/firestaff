@@ -55,6 +55,7 @@ int main(void)
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
     CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
     CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
+    CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     uint8_t music_track;
 
@@ -176,6 +177,20 @@ int main(void)
                   (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0xfd9986bfu :
                                                            0xdceefc60u),
           "verified F31 profile resolves its language-owned C06 menu bytes");
+    CHECK(csb_v1_fmtowns_utility_menu_action_at(
+              &utility_menu,
+              language == CSB_FMTOWNS_SWITCH_ENGLISH ? 102 : 98,
+              language == CSB_FMTOWNS_SWITCH_ENGLISH ? 194 : 196,
+              &utility_hit) &&
+              utility_hit.action ==
+                  CSB_V1_FMTOWNS_UTILITY_ACTION_SAVE_CHAMPIONS &&
+              csb_v1_fmtowns_utility_menu_action_at(
+                  &utility_menu,
+                  language == CSB_FMTOWNS_SWITCH_ENGLISH ? 288 : 266,
+                  language == CSB_FMTOWNS_SWITCH_ENGLISH ? 5 : 6,
+                  &utility_hit) &&
+              utility_hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_QUIT,
+          "verified F31 profile retains its language-owned C06 input boxes");
 
     /* ReDMCSB SWITCH.C F2279 registers G4171 at (47,105), 62x39. */
     result = M11_GameView_HandlePointerButton(&view, 52, 110,

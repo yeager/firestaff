@@ -21,6 +21,25 @@ extern "C" {
 #define CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT 6u
 #define CSB_V1_FMTOWNS_UTILITY_MENU_POOL_CAPACITY 76u
 
+/* ReDMCSB DEFS.H command ordinals consumed by CEDT006.C's C06 loop. */
+typedef enum CSB_V1_FmtownsUtilityMenuAction {
+    CSB_V1_FMTOWNS_UTILITY_ACTION_NONE = 0,
+    CSB_V1_FMTOWNS_UTILITY_ACTION_REVERT = 8,
+    CSB_V1_FMTOWNS_UTILITY_ACTION_UNDO = 9,
+    CSB_V1_FMTOWNS_UTILITY_ACTION_LOAD_CHAMPIONS = 11,
+    CSB_V1_FMTOWNS_UTILITY_ACTION_SAVE_CHAMPIONS = 12,
+    CSB_V1_FMTOWNS_UTILITY_ACTION_MAKE_NEW_ADVENTURE = 13,
+    CSB_V1_FMTOWNS_UTILITY_ACTION_QUIT = 17
+} CSB_V1_FmtownsUtilityMenuAction;
+
+typedef struct CSB_V1_FmtownsUtilityMenuHitBox {
+    CSB_V1_FmtownsUtilityMenuAction action;
+    int16_t left;
+    int16_t right;
+    int16_t top;
+    int16_t bottom;
+} CSB_V1_FmtownsUtilityMenuHitBox;
+
 /*
  * FM Towns Game-program admission.
  *
@@ -114,6 +133,15 @@ int csb_v1_fmtowns_utility_menu_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsUtilityMenuReceipt *out_receipt);
+
+/* Decode the original C06 mouse target in its 320x200 source coordinate
+ * space. ReDMCSB CEDTDATA.C lines 128-165 defines these F31E/F31J boxes,
+ * and CEDT006.C lines 1401-1529 dispatches the resulting command ordinal.
+ * Edges are inclusive, matching MOUSE2_INPUT. */
+int csb_v1_fmtowns_utility_menu_action_at(
+    const CSB_V1_FmtownsUtilityMenuReceipt *receipt,
+    int16_t source_x, int16_t source_y,
+    CSB_V1_FmtownsUtilityMenuHitBox *out_hit_box);
 
 /* Return the native F31 music selector (zero means no selector) for one
  * source map square. The value is the exact byte passed to F0719_PlayMusicTrack
