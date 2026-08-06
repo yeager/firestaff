@@ -30,6 +30,14 @@ int firestaff_zip_extract_by_name(const char *zip_path,
                                   uint8_t **out_data,
                                   size_t *out_size);
 
+/* Same bounded stored/deflate ZIP extraction, but from an already resident
+ * byte buffer.  This is for nested game media and never creates a file. */
+int firestaff_zip_extract_memory_by_suffix(const uint8_t *zip_data,
+                                           size_t zip_size,
+                                           const char *suffix,
+                                           uint8_t **out_data,
+                                           size_t *out_size);
+
 #ifdef __cplusplus
 }
 #endif

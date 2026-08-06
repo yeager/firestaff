@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 DM2 Amiga nested-media intake: the real-media receipt no
+  longer shells out to `unzip` or `bsdtar`. A bounded ZIP reader now accepts
+  an already-resident ZIP byte buffer, so the supplied outer archive, its
+  original M3 disk ZIPs and their ADFs are traversed entirely in memory before
+  the six LZX parts are joined. Stored and deflated entries retain the same
+  strict bounds checks as the regular ZIP reader. Verification runs the full
+  outer-ZIP → disk-ZIP → ADF → LZX → GRAPHICS/DUNGEON/CD chain against the
+  real supplied archive. No game data was unpacked, copied or tracked.
+
 - ✅ 2026-08-06 DM2 Amiga LZX in-memory decoder: implemented the bounded
   64 KiB-window LZX solid-stream decoder required by the authentic Amiga
   installer archive. It honors the original swapped-byte bitstream, block

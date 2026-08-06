@@ -230,3 +230,91 @@ int firestaff_zip_extract_by_name(const char *zip_path,
     return zip_extract_impl(zip_path, filename, ZIP_MATCH_BASENAME,
                             out_data, out_size);
 }
+
+int firestaff_zip_extract_memory_by_suffix(const uint8_t *zip_data,
+                                           size_t zip_size,
+                                           const char *suffix,
+                                           uint8_t **out_data,
+                                           size_t *out_size) {
+    size_t search_start, pos, cd_offset, cd_size;
+    uint16_t count, i;
+    if (out_data) *out_data = NULL;
+    if (out_size) *out_size = 0U;
+    if (!zip_data || !suffix || !out_data || !out_size || zip_size < 22U) return -1;
+    search_start = zip_size > 65557U ? zip_size - 65557U : 0U;
+    for (pos = zip_size - 22U;; --pos) {
+        if (zr_u32le(zip_data + pos) == 0x06054b50U) break;
+        if (pos == search_start) return -1;
+    }
+    count = zr_u16le(zip_data + pos + 10U);
+    cd_size = zr_u32le(zip_data + pos + 12U);
+    cd_offset = zr_u32le(zip_data + pos + 16U);
+    if (cd_offset > zip_size || cd_size > zip_size - cd_offset) return -1;
+    pos = cd_offset;
+    for (i = 0U; i < count; ++i) {
+        const uint8_t *header;
+        uint16_t method, name_size, extra_size, comment_size, local_name, local_extra;
+        uint32_t compressed_size, uncompressed_size, local_offset, data_offset;
+        char name[512];
+        uint8_t *decoded;
+        if (pos > cd_offset + cd_size || cd_offset + cd_size - pos < 46U) return -1;
+        header = zip_data + pos;
+        if (zr_u32le(header) != 0x02014b50U) return -1;
+        method = zr_u16le(header + 10U);
+        compressed_size = zr_u32le(header + 20U);
+        uncompressed_size = zr_u32le(header + 24U);
+        name_size = zr_u16le(header + 28U);
+        extra_size = zr_u16le(header + 30U);
+        comment_size = zr_u16le(header + 32U);
+        local_offset = zr_u32le(header + 42U);
+        if (name_size == 0U || name_size >= sizeof(name) ||
+            (size_t)name_size > cd_offset + cd_size - pos - 46U ||
+            (size_t)extra_size > cd_offset + cd_size - pos - 46U - name_size ||
+            (size_t)comment_size > cd_offset + cd_size - pos - 46U - name_size - extra_size)
+            return -1;
+        memcpy(name, header + 46U, name_size);
+        name[name_size] = '\0';
+        pos += 46U + name_size + extra_size + comment_size;
+        if (name[name_size - 1U] == '/' || !str_iends_with(name, suffix)) continue;
+        if (local_offset > zip_size || zip_size - local_offset < 30U ||
+            zr_u32le(zip_data + local_offset) != 0x04034b50U) return -1;
+        local_name = zr_u16le(zip_data + local_offset + 26U);
+        local_extra = zr_u16le(zip_data + local_offset + 28U);
+        data_offset = local_offset + 30U + local_name + local_extra;
+        if (data_offset < local_offset || data_offset > zip_size ||
+            compressed_size > zip_size - data_offset || uncompressed_size == 0U) return -1;
+        decoded = (uint8_t *)malloc(uncompressed_size);
+        if (!decoded) return -1;
+        if (method == 0U) {
+            if (compressed_size != uncompressed_size) { free(decoded); return -1; }
+            memcpy(decoded, zip_data + data_offset, uncompressed_size);
+        } else if (method == 8U) {
+#ifdef FIRESTAFF_HAS_ZLIB
+            z_stream stream;
+            int result;
+            memset(&stream, 0, sizeof(stream));
+            stream.next_in = (Bytef *)(zip_data + data_offset);
+            stream.avail_in = compressed_size;
+            stream.next_out = decoded;
+            stream.avail_out = uncompressed_size;
+            if (inflateInit2(&stream, -MAX_WBITS) != Z_OK) { free(decoded); return -1; }
+            result = inflate(&stream, Z_FINISH);
+            inflateEnd(&stream);
+            if (result != Z_STREAM_END || stream.avail_in != 0U || stream.avail_out != 0U) {
+                free(decoded);
+                return -1;
+            }
+#else
+            free(decoded);
+            return -1;
+#endif
+        } else {
+            free(decoded);
+            return -1;
+        }
+        *out_data = decoded;
+        *out_size = uncompressed_size;
+        return 0;
+    }
+    return -1;
+}

@@ -52792,6 +52792,7 @@ add_executable(test_dm2_v1_amiga_lzx_real_media
     src/shared/firestaff_amiga_adf.c
 )
 target_include_directories(test_dm2_v1_amiga_lzx_real_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_amiga_lzx_real_media PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm2_v1_amiga_lzx_real_media COMMAND test_dm2_v1_amiga_lzx_real_media)
 
 add_executable(test_dm2_v1_fmtowns_disc

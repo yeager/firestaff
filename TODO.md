@@ -104,9 +104,10 @@
   boot and GAME_LOAD both retain their authenticated G1 bytes in memory. The
   supplied Amiga archive is an installer corpus: Disk 1 holds only installer
   scripts and `dm2_arcsplit1`, not launch files. The original six-part
-  `DM2_archive.LZX` index is now joined, bounded and decoded in memory,
-  including the real `GRAPHICS.DAT`, `DUNGEON.DAT`, `CD.DAT` and MOD receipts;
-  the decoded entries retain their LZX CRC receipt. Wire the existing
+  `DM2_archive.LZX` index is now joined, bounded and decoded in memory through
+  the real outer-ZIP → disk-ZIP → ADF chain, including the real
+  `GRAPHICS.DAT`, `DUNGEON.DAT`, `CD.DAT` and MOD receipts; the decoded entries
+  retain their LZX CRC receipt. Wire the existing
   original MD5 pair gate to that in-memory decoder before admitting the floppy
   corpus. M12 now admits the FM Towns CD ZIP only after it reads the raw image
   in memory and verifies its original GRAPHICS.DAT/DUNGEON.DAT pair; apply

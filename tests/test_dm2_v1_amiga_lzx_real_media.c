@@ -7,6 +7,7 @@
 
 #include "dm2_v1_amiga_lzx.h"
 #include "dm2_v1_amiga_cd_dat.h"
+#include "firestaff_zip_extract.h"
 #include "firestaff_amiga_adf.h"
 
 #include <assert.h>
@@ -20,53 +21,21 @@ typedef struct {
     size_t size;
 } PartCapture;
 
-static char *shell_quote(const char *text) {
-    size_t i, length, used = 0u;
-    char *quoted;
-    if (!text) return NULL;
-    length = strlen(text);
-    quoted = (char *)malloc(length * 5u + 3u);
-    if (!quoted) return NULL;
-    quoted[used++] = '\'';
-    for (i = 0u; i < length; ++i) {
-        if (text[i] == '\'') {
-            memcpy(quoted + used, "'\\''", 4u);
-            used += 4u;
-        } else {
-            quoted[used++] = text[i];
-        }
+static uint8_t *read_file(const char *path, size_t *out_size) {
+    FILE *file;
+    long length;
+    uint8_t *bytes;
+    if (!path || !out_size || !(file = fopen(path, "rb"))) return NULL;
+    if (fseek(file, 0L, SEEK_END) != 0 || (length = ftell(file)) <= 0L ||
+        fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return NULL; }
+    bytes = (uint8_t *)malloc((size_t)length);
+    if (!bytes || fread(bytes, 1U, (size_t)length, file) != (size_t)length) {
+        free(bytes);
+        fclose(file);
+        return NULL;
     }
-    quoted[used++] = '\'';
-    quoted[used] = '\0';
-    return quoted;
-}
-
-static uint8_t *read_pipe(const char *command, size_t *out_size) {
-    FILE *pipe;
-    uint8_t *bytes = NULL;
-    size_t capacity = 0u, used = 0u;
-    int status;
-    if (!command || !out_size) return NULL;
-    pipe = popen(command, "r");
-    if (!pipe) return NULL;
-    for (;;) {
-        size_t got;
-        if (used == capacity) {
-            size_t next = capacity ? capacity * 2u : 65536u;
-            uint8_t *grown;
-            if (next > 2u * 1024u * 1024u) { free(bytes); pclose(pipe); return NULL; }
-            grown = (uint8_t *)realloc(bytes, next);
-            if (!grown) { free(bytes); pclose(pipe); return NULL; }
-            bytes = grown;
-            capacity = next;
-        }
-        got = fread(bytes + used, 1u, capacity - used, pipe);
-        used += got;
-        if (got == 0u) break;
-    }
-    status = pclose(pipe);
-    if (status != 0 || used == 0u) { free(bytes); return NULL; }
-    *out_size = used;
+    fclose(file);
+    *out_size = (size_t)length;
     return bytes;
 }
 
@@ -83,24 +52,31 @@ static int capture_part(const char *name, const uint8_t *bytes,
 
 static int load_original_part(const char *archive, unsigned int disk,
                               DM2_V1_AmigaLzxPart *out_part) {
-    char *quoted_archive;
-    char command[1400];
+    char inner_suffix[128];
     char wanted_name[32];
-    uint8_t *adf;
+    uint8_t *outer;
+    uint8_t *inner = NULL;
+    uint8_t *adf = NULL;
+    size_t outer_size;
+    size_t inner_size;
     size_t adf_size;
     PartCapture capture;
     int found;
     if (!archive || !out_part || disk == 0u || disk > DM2_V1_AMIGA_LZX_PART_COUNT) return 0;
-    quoted_archive = shell_quote(archive);
-    if (!quoted_archive) return 0;
-    snprintf(command, sizeof(command),
-             "unzip -p %s 'Dungeon Master II - The Legend Of Skullkeep "
-             "(1994)(Interplay)(AGA)(M3)(Disk %u of 6)\\[HD\\].zip' "
-             "| bsdtar -xOf - '*.adf'",
-             quoted_archive, disk);
-    free(quoted_archive);
-    adf = read_pipe(command, &adf_size);
-    if (!adf) return 0;
+    outer = read_file(archive, &outer_size);
+    if (!outer) return 0;
+    snprintf(inner_suffix, sizeof(inner_suffix),
+             "(1994)(Interplay)(AGA)(M3)(Disk %u of 6)[HD].zip", disk);
+    if (firestaff_zip_extract_memory_by_suffix(outer, outer_size, inner_suffix,
+                                               &inner, &inner_size) != 0 ||
+        firestaff_zip_extract_memory_by_suffix(inner, inner_size, ".adf",
+                                               &adf, &adf_size) != 0) {
+        free(outer);
+        free(inner);
+        return 0;
+    }
+    free(outer);
+    free(inner);
     snprintf(wanted_name, sizeof(wanted_name), "dm2_arcsplit%u", disk);
     memset(&capture, 0, sizeof(capture));
     capture.wanted_name = wanted_name;
@@ -146,6 +122,8 @@ static void test_original_installer_media(void) {
     }
     fclose(file);
     for (i = 0u; i < DM2_V1_AMIGA_LZX_PART_COUNT; ++i) {
+        printf("  loading original disk %u\n", i + 1u);
+        fflush(stdout);
         assert(load_original_part(archive_path, i + 1u, &parts[i]) == 1);
     }
     assert(dm2_v1_amiga_lzx_join_parts(parts, &joined, &joined_size) == 1);
@@ -185,7 +163,7 @@ static void test_original_installer_media(void) {
 }
 
 int main(void) {
-    DM2_V1_AmigaLzxArchive archive;
+    DM2_V1_AmigaLzxArchive archive = {0};
     printf("DM2 Amiga original LZX media tests:\n");
     assert(dm2_v1_amiga_lzx_join_parts(NULL, NULL, NULL) == 0);
     assert(dm2_v1_amiga_lzx_parse(NULL, NULL, 0u) == 0);
