@@ -1,3 +1,12 @@
+# Nexus ITEM.IBS and TITLE.CG host-render quarantine (2026-08-06)
+
+- ✅ Removed the standalone ITEM.IBS and TITLE.CG RGBA writers from the retail
+  Nexus library. They accepted source bytes plus caller palettes but had no
+  authenticated Saturn VDP1/VDP2 command, CLUT or placement owner.
+- ✅ Added both decoders explicitly to their receipt tests and strengthened
+  the production boundary verifier. Real ITEM.IBS/TITLE.CG data remains
+  available as source evidence; no host item/title pixels are promoted.
+
 # Nexus CPU rasterizer production quarantine (2026-08-06)
 
 - ✅ Removed the textured host CPU rasterizer from `firestaff_nexus`; the

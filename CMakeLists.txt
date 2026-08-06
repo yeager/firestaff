@@ -4589,6 +4589,11 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_saturn_font\\.c$")
 # order, CLUT/VRAM destination, or DGN/MNS ownership.  Production links the
 # lifecycle-safe no-op adapter; material probes add the fixture explicitly.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rasterizer\\.c$")
+# ITEM.IBS and TITLE.CG decoders retain source-format bytes, but their RGBA
+# writers are host presentation helpers without authenticated Saturn VDP1/VDP2
+# ownership. Keep both sources in their explicit receipt probes only.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_item_ibs\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_title_cg\\.c$")
 # These modules are source-format/host-presentation probes only.  Their M11
 # callbacks copy decoded WARNING.BIN planes into a host framebuffer, which is
 # not a Saturn VDP capture and must not be exported by firestaff_nexus.
@@ -38471,6 +38476,7 @@ add_test(NAME nexus_v1_face_bin COMMAND test_nexus_v1_face_bin)
 set_tests_properties(nexus_v1_face_bin PROPERTIES LABELS "nexus;saturn;portrait;skip_safe")
 add_executable(test_nexus_v1_item_ibs
     tests/test_nexus_v1_item_ibs.c
+    src/nexus/nexus_v1_item_ibs.c
     src/shared/asset_find_by_hash.c)
 target_include_directories(test_nexus_v1_item_ibs PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_item_ibs PRIVATE firestaff_nexus)
@@ -38489,7 +38495,9 @@ target_include_directories(test_nexus_v1_dgn PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}
 target_link_libraries(test_nexus_v1_dgn PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_dgn COMMAND test_nexus_v1_dgn)
 set_tests_properties(nexus_v1_dgn PROPERTIES LABELS "nexus;saturn;dungeon;skip_safe")
-add_executable(test_nexus_v1_title_res tests/test_nexus_v1_title_res.c)
+add_executable(test_nexus_v1_title_res
+    tests/test_nexus_v1_title_res.c
+    src/nexus/nexus_v1_title_cg.c)
 target_include_directories(test_nexus_v1_title_res PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_title_res PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_title_res COMMAND test_nexus_v1_title_res)

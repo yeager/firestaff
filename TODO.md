@@ -753,6 +753,9 @@
   VDP1/VDP2 capture that proves each asset's upload/CLUT destination and final
   display composition; decoded host surfaces are not themselves presentation
   evidence.
+  2026-08-06 follow-up: standalone ITEM.IBS/TITLE.CG RGBA writers are now
+  excluded from `firestaff_nexus`; their source decoders remain explicit
+  probes while VDP1/VDP2 upload, CLUT and placement ownership stays open.
 
 - **NEXUS-SHOP-ACTION-CAPTURE:** The eight retail shop price rows are now
   source-bound from `DM.BIN`, but shop stock placement, purchase/sell dispatch,

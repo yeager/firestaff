@@ -813,8 +813,8 @@ transform_vec4, perspective projection.
 - SWTCHR.BIN (38 KB) — switch/lever graphics
 
 Format: likely Saturn VDP2 background layers (2bpp/4bpp indexed).
-No dedicated parser in current source — loaded raw via ISO reader
-and treated as opaque byte buffers.
+Bounded source parsers/receipts exist, but no VDP2 placement consumer is
+authenticated; host presentation remains blocked.
 
 Source: `docs/NEXUS_FILE_CLASSIFICATION.md`, `src/nexus/nexus_v1_ui_surfaces.c`
 
@@ -822,8 +822,11 @@ Source: `docs/NEXUS_FILE_CLASSIFICATION.md`, `src/nexus/nexus_v1_ui_surfaces.c`
 
 - File: `ITEM.IBS` (98 KB) — item icon/bitmap set
 - Likely a Saturn VDP1 BITMAP-strip of item icons
-- Format: UNKNOWN — likely 2bpp or 4bpp indexed bitmap rows
-- No parser in current source
+- Format: bounded DMWeb/retail descriptor and 4bpp source receipts; VDP1
+  command/CLUT/placement ownership remains unknown
+- The `nexus_v1_item_ibs.c` parser/RGBA helpers are probe-only; production
+  uses the separate source-receipt/VDP1-admission path in `nexus_v1_dungeon.c`
+  and exports no host item renderer
 
 Source: `docs/NEXUS_FILE_CLASSIFICATION.md`
 
@@ -835,8 +838,8 @@ Source: `docs/NEXUS_FILE_CLASSIFICATION.md`
 | DMDF texture BITMAP | ⚠️ Receipt-only | Saturn pixel/CLUT ownership remains unproven |
 | 3D rasterization | ⏳ Probe-only/capture-gated | `nexus_v1_rasterizer.c` is excluded from `firestaff_nexus` |
 | Math3D transforms | ✅ Implemented | `nexus_v1_math3d.c` |
-| TITLE.BIN/CG surfaces | ⚠️ Raw read only | No VDP2 parser |
-| ITEM.IBS icons | ❌ NOT PARSED | Format unknown |
+| TITLE.BIN/CG surfaces | ⚠️ Receipt/probe only | No VDP2 parser/placement proof |
+| ITEM.IBS icons | ⚠️ Receipt/probe only | VDP1 command/CLUT/placement unproven |
 | VDP1 texture decompression | ❌ NOT IMPLEMENTED | No VDP1 decompressor |
 | Minimap rendering | ⚠️ SOURCE DECODE ONLY | All 16 retail SMAP LVMP files parse/decode; Saturn VDP2 placement and explored-state writes remain unproven |
 
