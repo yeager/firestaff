@@ -51750,6 +51750,11 @@ and `firestaff` build pass.
   real-data test, while approximate trig/BGR555 output cannot become a
   viewport image before Saturn VDP1/VDP2 capture proves the consumer.
 
+- ✅ 2026-08-06 Nexus shop mutation quarantine: the real DM.BIN eight-row
+  price catalog remains source-bound, but the unproven host buy/sell manager
+  can no longer mutate champion inventory, gold or stock. Saturn shop/event
+  capture is still required before those actions can be enabled.
+
 - ✅ 2026-08-06 DM2 PC-DOS save-path handoff: direct startup save selection
   now accepts the real lower-case, one-digit `sksaveN.dat` filename shape,
   carries the containing data root and slot to the validated loader, and

@@ -104,6 +104,8 @@
   item ownership and UI feedback still require the authentic Saturn
   action/event consumer. Do not treat the price catalog as proof of gameplay
   semantics.
+  The standalone host shop manager now keeps both purchase and sell mutations
+  fail-closed; only the verified price catalog remains usable until capture.
   The exported item-use helpers now also remain no-op/fail-closed; the old
   DM1-derived food/potion magnitudes and status durations are not inferred from
   the unproven `ITEM.IBS` Word36 field.

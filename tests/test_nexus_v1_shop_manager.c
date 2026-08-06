@@ -52,7 +52,7 @@ int main(void) {
         expect(!nexus_v1_shop_is_open(&mgr), "closed");
     }
 
-    /* Test 5: buy item */
+    /* Test 5: buy remains blocked without the Saturn shop dispatcher */
     {
         Nexus_ShopManager mgr;
         Nexus_V1_Champion ch;
@@ -65,10 +65,10 @@ int main(void) {
         memset(&ch, 0, sizeof(ch));
         memset(ch.inventory, 0xFF, sizeof(ch.inventory));
         ch.gold = 500;
-        expect(nexus_v1_shop_buy(&mgr, &ch, 0), "buy ok");
-        expect(ch.inventory[0] == 0xAA, "item in inventory");
-        expect(mgr.shops[si].stock[0].stock == 1, "stock decremented");
-        expect(ch.gold == 400, "gold deducted");
+        expect(!nexus_v1_shop_buy(&mgr, &ch, 0), "buy blocked");
+        expect(ch.inventory[0] == 0xFF, "blocked buy leaves inventory");
+        expect(mgr.shops[si].stock[0].stock == 2, "blocked buy leaves stock");
+        expect(ch.gold == 500, "blocked buy leaves gold");
     }
 
     /* Test 6: buy when out of stock */
@@ -115,7 +115,7 @@ int main(void) {
         expect(!nexus_v1_shop_buy(&mgr, &ch, 0), "cannot buy no gold");
     }
 
-    /* Test 9: sell item */
+    /* Test 9: sell remains blocked without the Saturn shop dispatcher */
     {
         Nexus_ShopManager mgr;
         Nexus_V1_Champion ch;
@@ -127,9 +127,9 @@ int main(void) {
         memset(ch.inventory, 0xFF, sizeof(ch.inventory));
         ch.inventory[0] = 0x9C;
         ch.gold = 0;
-        expect(nexus_v1_shop_sell(&mgr, &ch, 0), "sell ok");
-        expect(ch.inventory[0] == 0xFF, "slot cleared");
-        expect(ch.gold == 250, "gold received");
+        expect(!nexus_v1_shop_sell(&mgr, &ch, 0), "sell blocked");
+        expect(ch.inventory[0] == 0x9C, "blocked sell leaves slot");
+        expect(ch.gold == 0, "blocked sell leaves gold");
     }
 
     /* Test 10: find by id */
