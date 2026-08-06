@@ -71,6 +71,9 @@ typedef struct {
     CSB_V1_FmtownsItemDecodeReceipt japanese_page;
     CSB_V1_FmtownsItemDecodeReceipt english_page;
     CSB_V1_FmtownsSwitchButton buttons[CSB_FMTOWNS_SWITCH_BUTTON_COUNT];
+    /* F2279 registers G4172 for Japanese and G4173 for English in the
+     * fourth rectangle. The common hit rectangle remains buttons[3]. */
+    CSB_V1_FmtownsSwitchButton language_buttons[2];
 } CSB_V1_FmtownsSwitchReceipt;
 
 /* Locates only the contiguous F31E/F31J Switch resource sequence from the
@@ -87,6 +90,16 @@ int csb_v1_fmtowns_switch_decode_page(const uint8_t *executable,
                                       uint8_t *out_pixels,
                                       size_t out_pixel_capacity,
                                       CSB_V1_FmtownsItemDecodeReceipt *out);
+
+/* Expands the complete source-owned switch page: the language page followed
+ * by its four F2279 button bitmaps. No host-drawn text or replacement art is
+ * accepted here. */
+int csb_v1_fmtowns_switch_compose_page(const uint8_t *executable,
+                                       size_t executable_size,
+                                       const CSB_V1_FmtownsSwitchReceipt *receipt,
+                                       CSB_V1_FmtownsSwitchLanguage language,
+                                       uint8_t *out_pixels,
+                                       size_t out_pixel_capacity);
 
 /* ReDMCSB SWITCH.C main() sends buttons 1..3 through exit(), while button
  * four restarts the loop in the other language. AUTOEXEC.BAT maps exits

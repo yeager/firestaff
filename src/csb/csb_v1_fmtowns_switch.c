@@ -182,6 +182,13 @@ int csb_v1_fmtowns_switch_parse(const uint8_t *executable,
             out->buttons[index].source_byte_count = k_switch_resource_bytes[index];
             out->buttons[index].image = decoded[index];
         }
+        out->language_buttons[CSB_FMTOWNS_SWITCH_JAPANESE] = out->buttons[3];
+        out->language_buttons[CSB_FMTOWNS_SWITCH_ENGLISH] = out->buttons[3];
+        out->language_buttons[CSB_FMTOWNS_SWITCH_ENGLISH].source_offset =
+            offsets[4];
+        out->language_buttons[CSB_FMTOWNS_SWITCH_ENGLISH].source_byte_count =
+            k_switch_resource_bytes[4];
+        out->language_buttons[CSB_FMTOWNS_SWITCH_ENGLISH].image = decoded[4];
         return 1;
     }
     return 0;
@@ -207,6 +214,43 @@ int csb_v1_fmtowns_switch_decode_page(const uint8_t *executable,
     return decode_resource(executable, executable_size, offset, byte_count,
                            CSB_FMTOWNS_SWITCH_WIDTH, CSB_FMTOWNS_SWITCH_HEIGHT,
                            out_pixels, out_pixel_capacity, out);
+}
+
+int csb_v1_fmtowns_switch_compose_page(
+    const uint8_t *executable, size_t executable_size,
+    const CSB_V1_FmtownsSwitchReceipt *receipt,
+    CSB_V1_FmtownsSwitchLanguage language, uint8_t *out_pixels,
+    size_t out_pixel_capacity)
+{
+    uint8_t button_pixels[62u * 40u];
+    CSB_V1_FmtownsItemDecodeReceipt page;
+    size_t index;
+    if (!receipt || !receipt->valid || !out_pixels ||
+        out_pixel_capacity < CSB_FMTOWNS_SWITCH_PIXELS ||
+        (language != CSB_FMTOWNS_SWITCH_JAPANESE &&
+         language != CSB_FMTOWNS_SWITCH_ENGLISH) ||
+        !csb_v1_fmtowns_switch_decode_page(executable, executable_size,
+                                            receipt, language, out_pixels,
+                                            out_pixel_capacity, &page))
+        return 0;
+    for (index = 0u; index < CSB_FMTOWNS_SWITCH_BUTTON_COUNT; ++index) {
+        const CSB_V1_FmtownsSwitchButton *button = index == 3u
+            ? &receipt->language_buttons[language] : &receipt->buttons[index];
+        size_t row;
+        CSB_V1_FmtownsItemDecodeReceipt decoded;
+        if ((size_t)button->width * button->height > sizeof(button_pixels) ||
+            !decode_resource(executable, executable_size, button->source_offset,
+                             button->source_byte_count, button->width,
+                             button->height, button_pixels,
+                             sizeof(button_pixels), &decoded))
+            return 0;
+        for (row = 0u; row < button->height; ++row) {
+            memcpy(out_pixels + ((size_t)button->y + row) *
+                                 CSB_FMTOWNS_SWITCH_WIDTH + button->x,
+                   button_pixels + row * button->width, button->width);
+        }
+    }
+    return 1;
 }
 
 int csb_v1_fmtowns_switch_route_click(const CSB_V1_FmtownsSwitchReceipt *receipt,

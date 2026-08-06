@@ -58,6 +58,11 @@ int main(int argc, char **argv)
           "keeps SWITCHDA.C stream boundaries");
     CHECK(receipt.japanese_page_offset < receipt.english_page_offset,
           "preserves executable resource ordering");
+    CHECK(receipt.language_buttons[CSB_FMTOWNS_SWITCH_JAPANESE].source_byte_count ==
+              304u &&
+          receipt.language_buttons[CSB_FMTOWNS_SWITCH_ENGLISH].source_byte_count ==
+              108u,
+          "keeps the distinct fourth-button streams for both languages");
     CHECK(receipt.palette_offset < receipt.japanese_page_offset &&
           receipt.palette_byte_count == 68u && receipt.palette[8].red6 == 0x3fu &&
           receipt.palette[8].green6 == 0x3fu && receipt.palette[8].blue6 == 0u,
@@ -73,6 +78,10 @@ int main(int argc, char **argv)
           "decodes the original English page");
     CHECK(page.pixel_fnv1a != 0u && page.pixel_fnv1a != receipt.japanese_page.pixel_fnv1a,
           "English page remains distinct from Japanese page");
+    CHECK(csb_v1_fmtowns_switch_compose_page(
+              bytes, byte_count, &receipt, CSB_FMTOWNS_SWITCH_ENGLISH,
+              pixels, sizeof(pixels)),
+          "composes the English page with its source-owned buttons");
     CHECK(csb_v1_fmtowns_switch_route_click(&receipt, CSB_FMTOWNS_SWITCH_ENGLISH,
                                             52, 15, 1, &click) && click.valid &&
           click.button_index == 0u && click.source_exit_status == 4u &&
