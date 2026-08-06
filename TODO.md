@@ -570,6 +570,13 @@
   action gate. Recover the Saturn event producer, command queue and SDDRVS
   state-write owner before reopening any retail mechanics mutation.
 
+- **NEXUS-SQUARE-DOOR-PRODUCTION-BOUNDARY:** The explicit fixture/study door
+  registry still documents the DM1-shaped stepped animation, but the retail
+  `firestaff_nexus` build now rejects direct square-door open/close/lock,
+  passability and animation calls. A DGN type-8 byte alone does not prove the
+  Saturn SDDRVS state write or VDP1 door-frame consumer. Remove this boundary
+  only after authentic door-event and frame capture binds those owners.
+
 - **NEXUS-BOOT-FEATURE-CONSUMER:** The default boot profile now enables only
   the authenticated Saturn data-container route. Historical flags for a
   six-member party, Nexus stat growth, rune UI, party swapping, and 2D/3D

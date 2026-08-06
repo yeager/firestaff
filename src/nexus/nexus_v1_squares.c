@@ -96,6 +96,7 @@ int nexus_doors_register(int x, int y) {
     return i;
 }
 
+#if !defined(FIRESTAFF_NEXUS_PRODUCTION)
 static int nexus_doors_find(int x, int y) {
     int i;
     for (i = 0; i < g_door_count; i++) {
@@ -103,10 +104,18 @@ static int nexus_doors_find(int x, int y) {
     }
     return -1;
 }
+#endif
 
 int nexus_doors_open(int x, int y) {
+#if defined(FIRESTAFF_NEXUS_PRODUCTION)
+    /* A DGN type-8 square does not prove the Saturn door dispatcher, its
+     * SDDRVS state write, or the VDP1 door-frame consumer. Keep the old
+     * DM1-shaped registry mutation in explicit fixture/study builds only. */
+    (void)x;
+    (void)y;
+    return -1;
+#else
     int idx = nexus_doors_find(x, y);
-    if (idx < 0) idx = nexus_doors_register(x, y);
     if (idx < 0) return -1;
     if (g_doors[idx].door_state == NEXUS_DOOR_STATE_LOCKED) return -1;
     /* If already open or opening, leave it alone. */
@@ -119,9 +128,15 @@ int nexus_doors_open(int x, int y) {
     if (g_doors[idx].animation_step == 0)
         g_doors[idx].animation_step = 0;
     return 0;
+#endif
 }
 
 int nexus_doors_close(int x, int y) {
+#if defined(FIRESTAFF_NEXUS_PRODUCTION)
+    (void)x;
+    (void)y;
+    return -1;
+#else
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return -1;
     if (g_doors[idx].door_state == NEXUS_DOOR_STATE_LOCKED) return -1;
@@ -135,9 +150,15 @@ int nexus_doors_close(int x, int y) {
     if (g_doors[idx].animation_step == 0)
         g_doors[idx].animation_step = NEXUS_DOOR_ANIMATION_STEPS;
     return 0;
+#endif
 }
 
 int nexus_doors_toggle(int x, int y) {
+#if defined(FIRESTAFF_NEXUS_PRODUCTION)
+    (void)x;
+    (void)y;
+    return -1;
+#else
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return -1;
     switch (g_doors[idx].door_state) {
@@ -150,25 +171,43 @@ int nexus_doors_toggle(int x, int y) {
     default:
         return -1;
     }
+#endif
 }
 
 int nexus_doors_lock(int x, int y, int key_item_id) {
+#if defined(FIRESTAFF_NEXUS_PRODUCTION)
+    (void)x;
+    (void)y;
+    (void)key_item_id;
+    return -1;
+#else
     int idx = nexus_doors_find(x, y);
-    if (idx < 0) idx = nexus_doors_register(x, y);
     if (idx < 0) return -1;
     g_doors[idx].door_state = NEXUS_DOOR_STATE_LOCKED;
     g_doors[idx].key_required = key_item_id;
     g_doors[idx].animation_step = 0;
     return 0;
+#endif
 }
 
 int nexus_doors_is_open(int x, int y) {
+#if defined(FIRESTAFF_NEXUS_PRODUCTION)
+    (void)x;
+    (void)y;
+    return 0;
+#else
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return 0; /* no record = treat as closed */
     return g_doors[idx].door_state == NEXUS_DOOR_STATE_OPEN;
+#endif
 }
 
 int nexus_doors_is_passable(int x, int y) {
+#if defined(FIRESTAFF_NEXUS_PRODUCTION)
+    (void)x;
+    (void)y;
+    return 0;
+#else
     int idx = nexus_doors_find(x, y);
     /* A type-8 square without a source-owned door record has no proven
      * SDDRVS/DGN state.  Do not turn missing provenance into an open door. */
@@ -182,9 +221,16 @@ int nexus_doors_is_passable(int x, int y) {
     default:
         return 0;
     }
+#endif
 }
 
 int nexus_doors_can_open(int x, int y, const uint8_t inventory[30]) {
+#if defined(FIRESTAFF_NEXUS_PRODUCTION)
+    (void)x;
+    (void)y;
+    (void)inventory;
+    return 0;
+#else
     int idx = nexus_doors_find(x, y);
     int i;
 
@@ -214,6 +260,7 @@ int nexus_doors_can_open(int x, int y, const uint8_t inventory[30]) {
     }
 
     return 0; /* key not found */
+#endif
 }
 
 /* Advance every animating door by one step.  Opening doors increment their
@@ -222,6 +269,11 @@ int nexus_doors_can_open(int x, int y, const uint8_t inventory[30]) {
  * Source: DM1 viewport door animation (stepped open/close frames).
  * Returns 1 if any door changed step or state this tick. */
 int nexus_doors_tick_animation(void) {
+#if defined(FIRESTAFF_NEXUS_PRODUCTION)
+    /* NEXUS_DOOR_ANIMATION_STEPS is a fixture cadence, not a captured Saturn
+     * VDP1 frame sequence. Do not advance retail state from it. */
+    return 0;
+#else
     int i;
     int changed = 0;
     for (i = 0; i < g_door_count; i++) {
@@ -246,12 +298,19 @@ int nexus_doors_tick_animation(void) {
         }
     }
     return changed;
+#endif
 }
 
 int nexus_doors_animation_step(int x, int y) {
+#if defined(FIRESTAFF_NEXUS_PRODUCTION)
+    (void)x;
+    (void)y;
+    return 0;
+#else
     int idx = nexus_doors_find(x, y);
     if (idx < 0) return 0;
     return g_doors[idx].animation_step;
+#endif
 }
 
 /* ═══════════════════════════════════════════════════════════════════

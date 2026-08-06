@@ -1,5 +1,6 @@
 #include "nexus_v1_action_timer.h"
 #include "nexus_v1_doors.h"
+#include "nexus_v1_squares.h"
 #include "nexus_v1_traps.h"
 #include "nexus_v1_projectiles.h"
 
@@ -40,6 +41,7 @@ int main(void)
     nexus_v1_projectiles_init(&projectiles);
     nexus_v1_projectile_spawn(&projectiles, NEXUS_PROJ_FIREBALL,
                               1, 2, 0, 10, 2, 0);
+    nexus_doors_init();
 
     if (memcmp(&timers, &timers_before, sizeof(timers)) != 0 ||
         memcmp(&doors, &doors_before, sizeof(doors)) != 0 ||
@@ -48,7 +50,15 @@ int main(void)
         nexus_v1_action_is_ready(&timers, 0) != 0 ||
         nexus_v1_door_register(&doors, 1, 2, 0, 0, -1, 0, 0) != -1 ||
         nexus_v1_trap_find(&traps, 0, 1, 2) != NULL ||
-        nexus_v1_projectile_count(&projectiles) != 0) {
+        nexus_v1_projectile_count(&projectiles) != 0 ||
+        nexus_doors_open(1, 2) != -1 ||
+        nexus_doors_close(1, 2) != -1 ||
+        nexus_doors_lock(1, 2, 66) != -1 ||
+        nexus_doors_is_open(1, 2) != 0 ||
+        nexus_doors_is_passable(1, 2) != 0 ||
+        nexus_doors_can_open(1, 2, NULL) != 0 ||
+        nexus_doors_tick_animation() != 0 ||
+        nexus_doors_animation_step(1, 2) != 0) {
         fprintf(stderr, "FAIL: production Nexus action/world route mutated or admitted inferred state\n");
         return 1;
     }
