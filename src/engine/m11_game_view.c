@@ -6303,8 +6303,8 @@ static int m11_csb_is_fmtowns_profile(const CSB_V1_BootProfile *profile)
                        profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA);
 }
 
-static void m11_csb_dispatch_fmtowns_cdda(
-    M11_GameViewState *state, const CSB_V1_FmtownsAnmFrameReceipt *frame)
+static void m11_csb_dispatch_fmtowns_cdda_track(M11_GameViewState *state,
+                                                uint16_t source_track)
 {
     const CSB_V1_BootProfile *profile;
     char cue_path[sizeof(((CSB_V1_BootProfile *)0)->asset_root) + 16u];
@@ -6318,7 +6318,8 @@ static void m11_csb_dispatch_fmtowns_cdda(
     const CSB_V1_FmtownsCddaTrack *track = NULL;
     int i;
 
-    if (!state || !frame || !frame->cdda_track_requested ||
+    if (!state || source_track < CSB_FMTOWNS_CD_CDDA_FIRST_TRACK ||
+        source_track > CSB_FMTOWNS_CD_CDDA_LAST_TRACK ||
         !state->csbBootProfile) return;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
     if (!m11_csb_is_fmtowns_profile(profile) || !profile->asset_root[0] ||
@@ -6359,7 +6360,7 @@ static void m11_csb_dispatch_fmtowns_cdda(
     }
     free(cue_bytes);
     for (i = 0; i < layout.track_count; ++i) {
-        if (layout.tracks[i].track_number == frame->cdda_track) {
+        if (layout.tracks[i].track_number == source_track) {
             track = &layout.tracks[i];
             break;
         }
@@ -6371,9 +6372,67 @@ static void m11_csb_dispatch_fmtowns_cdda(
     }
     /* F0719's CD mtplay uses the next CUE track as the end boundary. It is
      * not a host loop; replay occurs only if a later source TR asks for it. */
-    if (M11_Audio_PlayCdda(&state->audioState, pcm, pcm_size, 0))
+    if (M11_Audio_PlayCdda(&state->audioState, pcm, pcm_size, 0)) {
         state->csbFmtownsCddaPlaying = 1;
+        /* F2257 polls the physical device. M11 retains a source-tick
+         * duration from the original 44.1 kHz stereo CD-DA span so a later
+         * F0743 update can observe completion instead of latching one host
+         * stream forever. CSB_V1_TICK_MS_NOMINAL is the F31 game tick. */
+        state->csbFmtownsCddaSourceTicksRemaining = (uint32_t)
+            ((pcm_size + (176400u * CSB_V1_TICK_MS_NOMINAL / 1000u) - 1u) /
+             (176400u * CSB_V1_TICK_MS_NOMINAL / 1000u));
+        if (state->csbFmtownsCddaSourceTicksRemaining == 0u)
+            state->csbFmtownsCddaSourceTicksRemaining = 1u;
+    }
     free(pcm);
+}
+
+static void m11_csb_dispatch_fmtowns_cdda(
+    M11_GameViewState *state, const CSB_V1_FmtownsAnmFrameReceipt *frame)
+{
+    if (!state || !frame || !frame->cdda_track_requested) return;
+    m11_csb_dispatch_fmtowns_cdda_track(state, frame->cdda_track);
+}
+
+static void m11_csb_update_fmtowns_game_music(M11_GameViewState *state)
+{
+    uint8_t selected_track;
+
+    if (!state || !state->csbFmtownsGameHandoffReceipt.valid ||
+        !state->csbState.level_loaded || !state->dm1MusicOn) return;
+    if (state->csbFmtownsCddaPlaying &&
+        state->csbFmtownsCddaSourceTicksRemaining > 0u) {
+        --state->csbFmtownsCddaSourceTicksRemaining;
+        if (state->csbFmtownsCddaSourceTicksRemaining == 0u)
+            state->csbFmtownsCddaPlaying = 0;
+    }
+    if (state->world.party.mapIndex < 0 || state->world.party.mapX < 0 ||
+        state->world.party.mapY < 0 ||
+        !csb_v1_fmtowns_game_music_track_at(
+            &state->csbFmtownsGameHandoffReceipt,
+            (uint32_t)state->world.party.mapIndex,
+            (uint32_t)state->world.party.mapX,
+            (uint32_t)state->world.party.mapY, &selected_track)) return;
+
+    /* ReDMCSB MUSIC.C F0743 lines 632-646: a nonzero table selector arms
+     * exactly 100 source updates. F0719 subtracts two only to address the
+     * compacted non-data track-time array; the physical CUE track remains
+     * the selector itself (track 2 is array index zero). */
+    if (selected_track != 0u &&
+        selected_track != state->csbFmtownsGameMusicSelectedTrack) {
+        state->csbFmtownsGameMusicSelectedTrack = selected_track;
+        state->csbFmtownsGameMusicPending = 1;
+        state->csbFmtownsGameMusicCountdown = 100;
+    }
+    if (state->csbFmtownsGameMusicPending &&
+        !state->csbFmtownsCddaPlaying &&
+        selected_track != 0u &&
+        selected_track != state->csbFmtownsGameMusicPlayingTrack &&
+        state->csbFmtownsGameMusicCountdown-- <= 0) {
+        state->csbFmtownsGameMusicPending = 0;
+        state->csbFmtownsGameMusicPlayingTrack = selected_track;
+        m11_csb_dispatch_fmtowns_cdda_track(state, selected_track);
+    }
 }
 
 static void m11_csb_release_fmtowns_title(M11_GameViewState *state)
@@ -6386,6 +6445,7 @@ static void m11_csb_release_fmtowns_title(M11_GameViewState *state)
         (void)M11_Audio_StopCdda(&state->audioState);
         state->csbFmtownsCddaPlaying = 0;
     }
+    state->csbFmtownsCddaSourceTicksRemaining = 0u;
     free(state->csbFmtownsTitleBytes);
     state->csbFmtownsTitleBytes = NULL;
     state->csbFmtownsTitleByteCount = 0u;
@@ -7451,6 +7511,10 @@ static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
         return 0;
     }
     state->csbFmtownsGameHandoffReceipt = handoff;
+    state->csbFmtownsGameMusicSelectedTrack = -1;
+    state->csbFmtownsGameMusicPlayingTrack = -1;
+    state->csbFmtownsGameMusicCountdown = -1;
+    state->csbFmtownsGameMusicPending = 0;
     m11_csb_release_fmtowns_switch(state);
     /* ReDMCSB STARTUP1.C enters F0441 before its F0435 loop. The FM Towns
      * game executable therefore starts on the closed C004 entrance page;
@@ -7845,6 +7909,7 @@ static int m11_csb_apply_boot_runtime_receipt(
         state->csbStartupExpectedPackageIdentity =
             package_identity ? package_identity : 1u;
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+        m11_csb_update_fmtowns_game_music(state);
         m11_csb_startup_init_state_receipt_to_m11(
             state, &receipt->receipts.init_state);
         state->csbState.startup_title_active = 1;

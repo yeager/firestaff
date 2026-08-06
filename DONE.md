@@ -54645,6 +54645,16 @@ alcove runtime and archive-media tests passed (4/4).
   entrance handoff regressions exercise the receipt; live movement-triggered
   CDDA remains intentionally open.
 
+- ✅ 2026-08-06 CSB FM Towns F0743 live music route: after the verified
+  C03_GAME entrance reaches the live F31 world, M11 reads the authenticated
+  G4099 table with the source map/y/x order. It preserves ReDMCSB `MUSIC.C`
+  F0743's nonzero change gate and 100-update delay, then hands the unmodified
+  selector to the matching physical CUE track. The original CD-DA byte length
+  supplies the source-tick completion boundary, avoiding a permanent host
+  stream latch. The real title→Switch→Game→Prison regression exercises map 0
+  coordinate (2,0), retail selector/physical track 7. Native CD pause/resume
+  remains intentionally open.
+
 - ✅ Removed the remaining fixed arithmetic wall-index helper from the old
   `firestaff_dungeon_viewport_bridge` API. The previous `300 + distance * 18
   + position * 6` calculation was not a ReDMCSB or PC34 `GRAPHICS.DAT`

@@ -1554,6 +1554,7 @@ typedef struct {
     /* F2275's TD/TR request playing through the authenticated FM Towns
      * CUE/IMG pair materialized with this launch. */
     int csbFmtownsCddaPlaying;
+    uint32_t csbFmtownsCddaSourceTicksRemaining;
     CSB_V1_FmtownsAnmPlayback csbFmtownsTitlePlayback;
     CSB_V1_FmtownsAnmFrameReceipt csbFmtownsTitleFrameReceipt;
     uint8_t csbFmtownsTitlePixels[CSB_FMTOWNS_ANM_FRAME_PIXELS];
@@ -1577,6 +1578,13 @@ typedef struct {
     CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34
         csbStartupAssetGateReceipt;
     CSB_V1_FmtownsGameHandoffReceipt csbFmtownsGameHandoffReceipt;
+    /* ReDMCSB MUSIC.C F0743 owns this selector/countdown state for the
+     * separate F31 Game program. It is deliberately distinct from ANIM.C's
+     * TD/TR playback owner above. */
+    int csbFmtownsGameMusicSelectedTrack;
+    int csbFmtownsGameMusicPlayingTrack;
+    int csbFmtownsGameMusicCountdown;
+    int csbFmtownsGameMusicPending;
     /* Atari ST ANIMATE.SCR runs at 50 VBlanks/sec while the shared CSB
      * startup state advances at its source-owned 55 ms cadence. Keep the
      * fractional conversion and last source framebuffer here, not in a

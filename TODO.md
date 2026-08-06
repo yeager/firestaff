@@ -695,9 +695,12 @@
   10x32x32 `G4099_SquareCoordinatesToMusicTrack` payload directly from the
   selected CHTWE/CHTWJ program (raw offsets 271144/271624, FNV-1a
   `3faffb70`), so a future movement consumer can query only the original
-  map/x/y selector and cannot substitute a host coordinate map. Native CD
-  pause/resume, live movement-triggered CDDA, Utility, ending and save
-  transactions remain required.
+  map/x/y selector and cannot substitute a host coordinate map. M11 now
+  runs F0743's nonzero-selector change gate and 100-update delay against the
+  live F31 party map/x/y, then requests that same physical CUE track. Its
+  source-tick duration follows the original CD-DA byte span so later selector
+  changes do not remain blocked by a stale host stream. Native CD
+  pause/resume, Utility, ending and save transactions remain required.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP
