@@ -52504,3 +52504,14 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   matches the enforced gate: original corpus parsing is receipt-only; no
   source session, possession graph, inventory, or leader hand is published
   before the SKProject record allocator/append path is implemented.
+
+- ✅ 2026-08-06 DM2 `READ_RECORD_CHECKCODE` ownership receipt: the isolated
+  decoder now mirrors SKProject `sksvgame.cpp:808-974` and
+  `skrecord.cpp:63-112` at the allocation boundary. Its explicit callback
+  contract appends every allocated link to the authentic parent root or tile
+  coordinates, initializes nested `uw_02` roots before recursive reads, and
+  preserves the source two-bit record-link placement field. Unit coverage
+  proves ordered chain ownership and placement retention; the real eight-save
+  PC-DOS corpus traverses every hero-item and party root (72 PASS). This is a
+  test-only source receipt, not a playable restore path: production remains
+  fail-closed until a genuine G1 DB/tile/possession/timer allocator exists.

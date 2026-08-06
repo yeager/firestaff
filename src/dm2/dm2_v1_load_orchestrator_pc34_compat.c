@@ -211,7 +211,7 @@ int dm2_v1_load_orchestrate(
         for (int h = 0; h < (int)local.hero_count; h++) {
             for (int slot = 0; slot < DM2_SAVE_HERO_ITEM_SLOTS; slot++) {
                 int rc = dm2_v1_read_record_checkcode(
-                    &rrs, &cb->read_record_cb, 0, 0);
+                    &rrs, &cb->read_record_cb, NULL, -1, 0, 0, 0);
                 if (rc != 0) { result->error = 16; return -1; }
             }
         }
@@ -220,7 +220,7 @@ int dm2_v1_load_orchestrate(
          * Source: sksvgame.cpp:1199. */
         {
             int rc = dm2_v1_read_record_checkcode(
-                &rrs, &cb->read_record_cb, 0, 0);
+                &rrs, &cb->read_record_cb, NULL, -1, 0, 0, 0);
             if (rc != 0) { result->error = 17; return -1; }
         }
 

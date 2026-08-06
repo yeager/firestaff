@@ -72,10 +72,17 @@ static int read_set_data(void *ctx, uint16_t link,
     (void)ctx; (void)link; (void)data; (void)size;
     return 0;
 }
-static int read_chain(void *ctx, uint16_t prev, uint16_t next)
+static int read_append(void *ctx, uint16_t next, uint16_t *owner,
+                       int map_x, int map_y)
 {
-    (void)ctx; (void)prev; (void)next;
+    (void)ctx; (void)next; (void)owner; (void)map_x; (void)map_y;
     return 0;
+}
+
+static int read_child_owner(void *ctx, uint16_t link, uint16_t **out)
+{
+    (void)ctx; (void)link; (void)out;
+    return -1;
 }
 
 /* ---- Tests ---- */
@@ -134,7 +141,8 @@ static void test_empty_dungeon_round_trip(void)
     memset(&rcb, 0, sizeof(rcb));
     rcb.alloc_record = read_alloc;
     rcb.set_data = read_set_data;
-    rcb.chain_record = read_chain;
+    rcb.append_record = read_append;
+    rcb.child_owner = read_child_owner;
     rcb.ctx = &pool;
 
     DM2_LoadExtraDungeonCallbacks ldcb;

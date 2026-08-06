@@ -71,10 +71,13 @@ static int read_suppress_preserving(DM2_ReadRecordSession *s,
 int dm2_v1_read_record_checkcode(
     DM2_ReadRecordSession *session,
     const DM2_ReadRecordCallbacks *cb,
+    uint16_t *owner_link,
+    int map_x, int map_y,
     int read_sub_chain_info,
     int follow_chain)
 {
-    if (!session || !cb || !cb->alloc_record || !cb->set_data)
+    if (!session || !cb || !cb->alloc_record || !cb->set_data ||
+        !cb->append_record)
         return -1;
 
     for (;;) {
@@ -83,6 +86,7 @@ int dm2_v1_read_record_checkcode(
         const uint8_t *mask;
         uint8_t rec_data[16];
         uint16_t record_link;
+        uint16_t sub_chain_bits = 0u;
         int is_map_or_nested = 0;
 
         /* Read continuation bit. 0 = end of chain. */
@@ -107,6 +111,9 @@ int dm2_v1_read_record_checkcode(
             uint8_t sub_byte = 0;
             uint8_t sub_mask = 3;
             if (read_suppress(session, &sub_byte, &sub_mask, 1)) return 1;
+            /* sksvgame.cpp:857/864: this two-bit placement is carried in
+             * the returned record link, not discarded as reader metadata. */
+            sub_chain_bits = (uint16_t)((sub_byte & 3u) << 14);
         }
 
         /* Type 0xF with nested_type_0e: read 7-bit link and return.
@@ -115,6 +122,9 @@ int dm2_v1_read_record_checkcode(
             uint8_t link_bytes[2] = {0, 0};
             uint8_t link_mask[2] = {0x7f, 0x00};
             if (read_suppress(session, link_bytes, link_mask, 2)) return 1;
+            if (owner_link) {
+                *owner_link = (uint16_t)(link_bytes[0] | 0xff80u);
+            }
             return 0;
         }
 
@@ -128,6 +138,17 @@ int dm2_v1_read_record_checkcode(
         /* Allocate the record. */
         record_link = cb->alloc_record(cb->ctx, record_type);
         if (record_link == 0xFFFE) {
+            session->error = 1;
+            return -1;
+        }
+        record_link = (uint16_t)((record_link & 0x3fffu) | sub_chain_bits);
+
+        /* ReDMCSB/SKProject: sksvgame.cpp:864-866 invokes
+         * DM2_APPEND_RECORD_TO immediately after allocation.  The callback
+         * owns the record's end marker and parent/tile-chain insertion; do
+         * not replace either with a Firestaff-private link scheme. */
+        if (cb->append_record(cb->ctx, record_link, owner_link,
+                              map_x, map_y) != 0) {
             session->error = 1;
             return -1;
         }
@@ -195,14 +216,26 @@ int dm2_v1_read_record_checkcode(
         if (record_type == 4) {
             /* Creature: recurse into possession chain. */
             int saved = session->nested_creature;
+            uint16_t *child_owner = NULL;
+            if (!cb->child_owner ||
+                cb->child_owner(cb->ctx, record_link, &child_owner) != 0 ||
+                !child_owner) return -1;
+            *child_owner = 0xfffeu;
             session->nested_creature = 1;
-            int rc = dm2_v1_read_record_checkcode(session, cb, 0, 1);
+            int rc = dm2_v1_read_record_checkcode(session, cb, child_owner,
+                                                   -1, 0, 0, 1);
             session->nested_creature = saved;
             if (rc) return rc;
         } else if (record_type == 9) {
             if (!is_map_or_nested) {
                 /* Normal container: recurse into contents. */
-                int rc = dm2_v1_read_record_checkcode(session, cb, 0, 1);
+                uint16_t *child_owner = NULL;
+                if (!cb->child_owner ||
+                    cb->child_owner(cb->ctx, record_link, &child_owner) != 0 ||
+                    !child_owner) return -1;
+                *child_owner = 0xfffeu;
+                int rc = dm2_v1_read_record_checkcode(session, cb, child_owner,
+                                                       -1, 0, 0, 1);
                 if (rc) return rc;
             } else {
                 /* Map container: read 1-bit has-contents. */
@@ -223,8 +256,14 @@ int dm2_v1_read_record_checkcode(
                 session->possessions_read++;
             } else {
                 int saved = session->nested_type_0e;
+                uint16_t *child_owner = NULL;
+                if (!cb->child_owner ||
+                    cb->child_owner(cb->ctx, record_link, &child_owner) != 0 ||
+                    !child_owner) return -1;
+                *child_owner = 0xfffeu;
                 session->nested_type_0e = 1;
-                int rc = dm2_v1_read_record_checkcode(session, cb, 0, 0);
+                int rc = dm2_v1_read_record_checkcode(session, cb, child_owner,
+                                                       -1, 0, 0, 0);
                 session->nested_type_0e = saved;
                 if (rc) return rc;
             }

@@ -25,6 +25,8 @@ static int failed;
  * consumption and record types, but it cannot publish a resumable session. */
 typedef struct {
     uint16_t next_index[16];
+    uint16_t next_link[16][256];
+    uint16_t child_link[16][256];
     unsigned int record_count;
     uint32_t record_hash;
 } RecordChainInventory;
@@ -51,7 +53,7 @@ static uint16_t inventory_alloc_record(void *context, int record_type)
 
     if (!inventory || record_type < 0 || record_type >= 16) return 0xfffeu;
     index = inventory->next_index[record_type];
-    if (index >= 0x03feu) return 0xfffeu;
+    if (index >= 256u) return 0xfffeu;
     inventory->next_index[record_type] = (uint16_t)(index + 1u);
     return (uint16_t)(((uint16_t)record_type << 10) | index);
 }
@@ -70,14 +72,37 @@ static int inventory_set_record(void *context, uint16_t record_link,
     return 0;
 }
 
-static int inventory_chain_record(void *context, uint16_t previous,
-                                  uint16_t next)
+static int inventory_append_record(void *context, uint16_t next,
+                                   uint16_t *owner, int map_x, int map_y)
 {
-    (void)context;
-    (void)previous;
-    (void)next;
-    /* The reader transcript does not yet expose the source append target.
-     * This test proves only the exact direct roots, never a fabricated link. */
+    RecordChainInventory *inventory = (RecordChainInventory *)context;
+    uint16_t *tail;
+    uint16_t type = (uint16_t)((next >> 10) & 0x0fu);
+    uint16_t index = (uint16_t)(next & 0x03ffu);
+
+    /* This diagnostic owns only direct SKSAVE roots, never a map tile. */
+    if (!inventory || !owner || map_x != -1 || map_y != 0 || index >= 256u)
+        return -1;
+    inventory->next_link[type][index] = 0xfffeu;
+    tail = owner;
+    while (*tail != 0xfffeu) {
+        type = (uint16_t)((*tail >> 10) & 0x0fu);
+        index = (uint16_t)(*tail & 0x03ffu);
+        if (index >= 256u) return -1;
+        tail = &inventory->next_link[type][index];
+    }
+    *tail = next;
+    return 0;
+}
+
+static int inventory_child_owner(void *context, uint16_t link,
+                                 uint16_t **out_owner)
+{
+    RecordChainInventory *inventory = (RecordChainInventory *)context;
+    const uint16_t type = (uint16_t)((link >> 10) & 0x0fu);
+    const uint16_t index = (uint16_t)(link & 0x03ffu);
+    if (!inventory || !out_owner || index >= 256u) return -1;
+    *out_owner = &inventory->child_link[type][index];
     return 0;
 }
 
@@ -118,11 +143,14 @@ static int verify_real_direct_record_roots(
     memset(&callbacks, 0, sizeof(callbacks));
     callbacks.alloc_record = inventory_alloc_record;
     callbacks.set_data = inventory_set_record;
-    callbacks.chain_record = inventory_chain_record;
+    callbacks.append_record = inventory_append_record;
+    callbacks.child_owner = inventory_child_owner;
     callbacks.add_possession_index = inventory_add_possession;
     callbacks.ctx = &inventory;
     for (root = 0u; root < root_count; ++root) {
-        if (dm2_v1_read_record_checkcode(&reader, &callbacks, 0, 0) != 0 ||
+        uint16_t root_link = 0xfffeu;
+        if (dm2_v1_read_record_checkcode(&reader, &callbacks, &root_link,
+                                         -1, 0, 0, 0) != 0 ||
             reader.error) {
             return 0;
         }

@@ -67,6 +67,8 @@ typedef struct {
     uint8_t data[MAX_REC_SIZE];
     size_t size;
     int type;
+    uint16_t next_link;
+    uint16_t child_link;
 } ReadRecord;
 
 typedef struct {
@@ -82,23 +84,49 @@ static uint16_t read_alloc(void *ctx, int record_type)
     if (pool->count >= MAX_READ_RECORDS) return 0xFFFE;
     int idx = pool->count++;
     pool->records[idx].type = record_type;
-    return (uint16_t)idx;
+    pool->records[idx].next_link = DM2_RECORD_LINK_END;
+    pool->records[idx].child_link = DM2_RECORD_LINK_END;
+    return (uint16_t)(((uint16_t)record_type << 10) | (uint16_t)idx);
 }
 
 static int read_set_data(void *ctx, uint16_t link,
                          const uint8_t *data, size_t size)
 {
     ReadPool *pool = (ReadPool *)ctx;
-    if (link >= MAX_READ_RECORDS) return -1;
+    const uint16_t index = (uint16_t)(link & 0x03ffu);
+    if (index >= MAX_READ_RECORDS) return -1;
     if (size > MAX_REC_SIZE) size = MAX_REC_SIZE;
-    memcpy(pool->records[link].data, data, size);
-    pool->records[link].size = size;
+    memcpy(pool->records[index].data, data, size);
+    pool->records[index].size = size;
     return 0;
 }
 
-static int read_chain(void *ctx, uint16_t prev, uint16_t next)
+static int read_append(void *ctx, uint16_t next, uint16_t *owner,
+                       int map_x, int map_y)
 {
-    (void)ctx; (void)prev; (void)next;
+    ReadPool *pool = (ReadPool *)ctx;
+    uint16_t *tail;
+    const uint16_t next_index = (uint16_t)(next & 0x03ffu);
+
+    (void)map_x;
+    (void)map_y;
+    if (!pool || !owner || next_index >= MAX_READ_RECORDS) return -1;
+    tail = owner;
+    while (*tail != DM2_RECORD_LINK_END) {
+        const uint16_t tail_index = (uint16_t)(*tail & 0x03ffu);
+        if (tail_index >= MAX_READ_RECORDS) return -1;
+        tail = &pool->records[tail_index].next_link;
+    }
+    *tail = next;
+    return 0;
+}
+
+static int read_child_owner(void *ctx, uint16_t link, uint16_t **out)
+{
+    ReadPool *pool = (ReadPool *)ctx;
+    const uint16_t index = (uint16_t)(link & 0x03ffu);
+    if (!pool || !out || index >= MAX_READ_RECORDS) return -1;
+    *out = &pool->records[index].child_link;
     return 0;
 }
 
@@ -130,10 +158,24 @@ static DM2_ReadRecordCallbacks make_reader_cb(ReadPool *pool)
     memset(&cb, 0, sizeof(cb));
     cb.alloc_record = read_alloc;
     cb.set_data = read_set_data;
-    cb.chain_record = read_chain;
+    cb.append_record = read_append;
+    cb.child_owner = read_child_owner;
     cb.add_possession_index = read_add_possession;
     cb.ctx = pool;
     return cb;
+}
+
+static int read_from_root(DM2_ReadRecordSession *session,
+                          const DM2_ReadRecordCallbacks *cb,
+                          uint16_t *out_root, int read_sub_chain_info,
+                          int follow_chain)
+{
+    uint16_t root = DM2_RECORD_LINK_END;
+    const int rc = dm2_v1_read_record_checkcode(session, cb, &root, -1, 0,
+                                                 read_sub_chain_info,
+                                                 follow_chain);
+    if (out_root) *out_root = root;
+    return rc;
 }
 
 static size_t write_and_flush(int type, int rec_idx, int follow_chain,
@@ -164,7 +206,7 @@ static size_t write_and_flush(int type, int rec_idx, int follow_chain,
 
 static void test_null_safety(void)
 {
-    assert(dm2_v1_read_record_checkcode(NULL, NULL, 0, 0) == -1);
+    assert(dm2_v1_read_record_checkcode(NULL, NULL, NULL, -1, 0, 0, 0) == -1);
     printf("  PASS: null_safety\n");
 }
 
@@ -203,7 +245,7 @@ static void test_empty_chain(void)
     dm2_v1_read_record_session_init(&rd, buf, wr.out_written);
     DM2_ReadRecordCallbacks rcb = make_reader_cb(&pool);
 
-    int rrc = dm2_v1_read_record_checkcode(&rd, &rcb, 0, 1);
+    int rrc = read_from_root(&rd, &rcb, NULL, 0, 1);
     assert(rrc == 0);
     assert(pool.count == 0);
     printf("  PASS: empty_chain\n");
@@ -227,9 +269,11 @@ static void test_round_trip_type5(void)
     dm2_v1_read_record_session_init(&rd, buf, written);
     DM2_ReadRecordCallbacks rcb = make_reader_cb(&pool);
 
-    int rrc = dm2_v1_read_record_checkcode(&rd, &rcb, 0, 1);
+    uint16_t root;
+    int rrc = read_from_root(&rd, &rcb, &root, 0, 1);
     assert(rrc == 0);
     assert(pool.count == 1);
+    assert(root == mock_make_link(0, 5));
     assert(pool.records[0].type == 5);
 
     const uint8_t *rec_mask = dm2_v1_save_record_mask_for_type(5);
@@ -259,7 +303,7 @@ static void test_round_trip_type6(void)
     dm2_v1_read_record_session_init(&rd, buf, written);
     DM2_ReadRecordCallbacks rcb = make_reader_cb(&pool);
 
-    int rrc = dm2_v1_read_record_checkcode(&rd, &rcb, 0, 1);
+    int rrc = read_from_root(&rd, &rcb, NULL, 0, 1);
     assert(rrc == 0);
     assert(pool.count == 1);
     assert(pool.records[0].type == 6);
@@ -291,12 +335,46 @@ static void test_round_trip_chain(void)
     dm2_v1_read_record_session_init(&rd, buf, written);
     DM2_ReadRecordCallbacks rcb = make_reader_cb(&pool);
 
-    int rrc = dm2_v1_read_record_checkcode(&rd, &rcb, 0, 1);
+    uint16_t root;
+    int rrc = read_from_root(&rd, &rcb, &root, 0, 1);
     assert(rrc == 0);
     assert(pool.count == 2);
     assert(pool.records[0].type == 5);
     assert(pool.records[1].type == 7);
+    assert(root == mock_make_link(0, 5));
+    assert(pool.records[0].next_link == mock_make_link(1, 7));
+    assert(pool.records[1].next_link == DM2_RECORD_LINK_END);
     printf("  PASS: round_trip_chain\n");
+}
+
+static void test_round_trip_sub_chain_bits(void)
+{
+    uint8_t buf[256];
+    DM2_WriteRecordSession wr;
+    DM2_ReadRecordSession rd;
+    DM2_WriteRecordCallbacks wcb = make_writer_cb();
+    DM2_ReadRecordCallbacks rcb;
+    ReadPool pool;
+    int ci[4], co[4];
+    size_t flush_size;
+    uint16_t root;
+
+    mock_init();
+    dm2_v1_write_record_session_init(&wr, buf, sizeof(buf), ci, 4, co, 4,
+                                     NULL, 0);
+    assert(dm2_v1_write_record_checkcode(&wr, &wcb,
+        (uint16_t)(mock_make_link(0, 5) | 0x8000u), 1, 0) == 0);
+    assert(dm2_suppress_writer_flush(&wr.writer, buf + wr.out_written,
+        sizeof(buf) - wr.out_written, &flush_size) == 0);
+    wr.out_written += flush_size;
+
+    memset(&pool, 0, sizeof(pool));
+    dm2_v1_read_record_session_init(&rd, buf, wr.out_written);
+    rcb = make_reader_cb(&pool);
+    assert(read_from_root(&rd, &rcb, &root, 1, 0) == 0);
+    assert((root & 0xc000u) == 0x8000u);
+    assert((root & 0x3fffu) == mock_make_link(0, 5));
+    printf("  PASS: round_trip_sub_chain_bits\n");
 }
 
 static void test_round_trip_map_container(void)
@@ -320,7 +398,7 @@ static void test_round_trip_map_container(void)
     memset(&pool, 0, sizeof(pool));
     dm2_v1_read_record_session_init(&rd, buf, written);
     rcb = make_reader_cb(&pool);
-    assert(dm2_v1_read_record_checkcode(&rd, &rcb, 0, 1) == 0);
+    assert(read_from_root(&rd, &rcb, NULL, 0, 1) == 0);
     assert(pool.count == 1);
     assert(pool.records[0].type == 9);
     assert((pool.records[0].data[4] & 0x06u) == 0x02u);
@@ -351,6 +429,7 @@ int main(void)
     test_round_trip_type5();
     test_round_trip_type6();
     test_round_trip_chain();
+    test_round_trip_sub_chain_bits();
     test_round_trip_map_container();
     test_session_counters();
     printf("All read_record_checkcode tests passed.\n");

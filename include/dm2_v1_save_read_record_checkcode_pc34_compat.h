@@ -30,12 +30,20 @@ typedef uint16_t (*DM2_ReadRecordAllocFn)(void *ctx, int record_type);
 typedef int (*DM2_ReadRecordSetDataFn)(void *ctx, uint16_t record_link,
                                        const uint8_t *data, size_t size);
 
-/* Callback to chain a record as next-link of the previous record.
- * prev_link: previous record's link (or tile head sentinel).
- * new_link: newly allocated record to append.
- * Returns 0 on success. */
-typedef int (*DM2_ReadRecordChainFn)(void *ctx, uint16_t prev_link,
-                                     uint16_t new_link);
+/* Source: SKWINSPX/src/v5/skrecord.cpp::DM2_APPEND_RECORD_TO.
+ * The allocator owns both the record's initial end marker and insertion into
+ * either a parent record-link field or a tile chain. `owner_link` is the
+ * exact `i16* ebxpw` destination from DM2_READ_RECORD_CHECKCODE; it is NULL
+ * only for a tile root, which is addressed by map_x/map_y. */
+typedef int (*DM2_ReadRecordAppendFn)(void *ctx, uint16_t new_link,
+                                      uint16_t *owner_link,
+                                      int map_x, int map_y);
+
+/* Return the `uw_02` field of an allocated record.  READ_RECORD_CHECKCODE
+ * initializes that field to OBJECT_END_MARKER before recursively restoring
+ * creature/container/type-0xE subchains. */
+typedef int (*DM2_ReadRecordChildOwnerFn)(void *ctx, uint16_t record_link,
+                                          uint16_t **out_owner_link);
 
 /* Source: sksvgame.cpp::DM2_ADD_INDEX_TO_POSSESSION_INDICES. Map containers
  * and creature-owned type 0xE records retain their source-owned possession
@@ -46,7 +54,8 @@ typedef void (*DM2_ReadRecordAddPossessionIndexFn)(void *ctx,
 typedef struct {
     DM2_ReadRecordAllocFn alloc_record;
     DM2_ReadRecordSetDataFn set_data;
-    DM2_ReadRecordChainFn chain_record;
+    DM2_ReadRecordAppendFn append_record;
+    DM2_ReadRecordChildOwnerFn child_owner;
     DM2_ReadRecordAddPossessionIndexFn add_possession_index;
     void *ctx;
 } DM2_ReadRecordCallbacks;
@@ -78,6 +87,8 @@ void dm2_v1_read_record_session_init(
 int dm2_v1_read_record_checkcode(
     DM2_ReadRecordSession *session,
     const DM2_ReadRecordCallbacks *cb,
+    uint16_t *owner_link,
+    int map_x, int map_y,
     int read_sub_chain_info,
     int follow_chain);
 

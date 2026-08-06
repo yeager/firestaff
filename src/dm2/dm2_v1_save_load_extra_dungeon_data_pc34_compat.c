@@ -89,7 +89,7 @@ int dm2_v1_load_extra_dungeon_data(
                 /* Read the record chain unless skipped. */
                 if (!skip_record_chain) {
                     int rc = dm2_v1_read_record_checkcode(
-                        session, rec_cb, 1, 1);
+                        session, rec_cb, NULL, x, y, 1, 1);
                     if (rc > 0) {
                         local.error = 1;
                         goto done;

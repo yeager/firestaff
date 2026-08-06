@@ -842,6 +842,15 @@
   caller and cannot be linked into either production archive as an accidental
   Firestaff-private SKSAVE reader or writer while those original owners remain
   incomplete.
+  2026-08-06 record-chain ownership update: the isolated reader now carries
+  SKProject's actual `DM2_APPEND_RECORD_TO` contract: the allocator callback
+  receives the source root (`i16*`) or tile coordinates, initializes/appends
+  the new link, and exposes each allocated record's `uw_02` child root before
+  recursion. The two saved placement bits are retained in the record link.
+  The real eight-file DOS corpus traverses all champion-item and party roots
+  through this contract. This is still diagnostic-only: no production G1 DB
+  allocator, tile-chain owner, possession-index owner, timer record owner, or
+  `DM2_GAME_LOAD` publication exists, so no source save can resume yet.
   **2026-08-06 follow-up:** the remaining `FS2RT01` live-runtime sidecar
   serializer/deserializer is removed from the production archive and public
   API. It wrote Firestaff's session, creature cache, mutable dungeon bytes and
