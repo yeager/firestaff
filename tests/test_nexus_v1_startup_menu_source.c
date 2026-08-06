@@ -117,10 +117,12 @@ int main(void)
         !check_string(data, (size_t)file_size, 0x373C0U, "yam\\menu.c") ||
         !check_string(data, (size_t)file_size, 0x373CCU, "FONT256.S2D") ||
         !check_string(data, (size_t)file_size, 0x373D8U, "STABG.BIN") ||
+        !check_string(data, (size_t)file_size, 0x38CF4U, "yam\\vdp2.c") ||
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373B4)) != 1U ||
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373CC)) != 1U ||
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373D8)) != 1U ||
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373C0)) != 10U ||
+        count_be32(data, (size_t)file_size, base + UINT32_C(0x38CF4)) != 6U ||
         /* The same startup literal pool retains FONT256.S2D at 0x18BF4.
          * TEXTTABL is an adjacent DM.BIN table marker only; neither receipt
          * proves the Saturn glyph consumer or VDP2 placement. */

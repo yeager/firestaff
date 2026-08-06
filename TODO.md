@@ -11,7 +11,9 @@
 - **NEXUS-STARTUP-SH2-VDP2-CAPTURE:** The authenticated European `DM.BIN`
   startup/menu routine is now checked as an SH-2 function with exact
   PC-relative references to the retail `MENU.BPK`/`STABG.BIN` literals and a
-  retained hardware literal. This proves source ownership only. Recover the
+  retained hardware literal. The same source receipt now binds the adjacent
+  `yam\\vdp2.c` marker at `0x38CF4` and its six exact address-literal
+  references. This proves source ownership only. Recover the
   executed VDP2 register/VRAM writes and tile/CLUT consumer from an
   instrumented Saturn capture before admitting menu placement, FONT256 text,
   HUD composition or viewport pixels.

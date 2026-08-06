@@ -8,6 +8,15 @@
 - ✅ Kept event→MAP selection, SAL codec semantics and playback fail-closed;
   the real-data SAL corpus probe passes with all 16 banks.
 
+# Nexus startup VDP2 source-reference receipt (2026-08-06)
+
+- ✅ The authenticated European `DM.BIN` startup/menu source regression now
+  also verifies `yam\\vdp2.c` at `0x38CF4` and exactly six references to its
+  source-address literal.
+- ✅ This extends byte-level source ownership evidence only; VDP2
+  register/VRAM writes, tilemap/CLUT placement and runtime presentation remain
+  capture-gated.
+
 # DM1 FM Towns DECODEGRAPHIC RLE decoder (2026-08-06)
 
 - Full port of DECODEGRAPHIC (EDM.EXP 0x1f63c) inner RLE loop with
