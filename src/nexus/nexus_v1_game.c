@@ -186,84 +186,15 @@ const char *nexus_v1_event_name(Nexus_EventType ev) {
 }
 
 int nexus_v1_event_to_command(Nexus_EventType ev) {
-    switch (ev) {
-    case NEXUS_EV_GO_FORWARD:  return NEXUS_CMD_FORWARD;
-    case NEXUS_EV_GO_BACKWARD: return NEXUS_CMD_BACKWARD;
-    case NEXUS_EV_GO_LEFT:     return NEXUS_CMD_STRAFE_LEFT;
-    case NEXUS_EV_GO_RIGHT:    return NEXUS_CMD_STRAFE_RIGHT;
-    case NEXUS_EV_TURN_LEFT:   return NEXUS_CMD_TURN_LEFT;
-    case NEXUS_EV_TURN_RIGHT:  return NEXUS_CMD_TURN_RIGHT;
-    case NEXUS_EV_GET_ITEM:
-    case NEXUS_EV_GETITEM:     return NEXUS_CMD_INTERACT;
-    case NEXUS_EV_INV_EQUIP:
-    case NEXUS_EV_INV_SLOT:    return NEXUS_CMD_USE_ITEM;
-    case NEXUS_EV_DO_SPELL:
-    case NEXUS_EV_SPELL_CMD:   return NEXUS_CMD_CAST_SPELL;
-    case NEXUS_EV_GO_MAP:      return NEXUS_CMD_TOGGLE_MAP;
-    default:                   return NEXUS_CMD_NONE;
-    }
+    (void)ev;
+    /* The event string table is source evidence, not a command queue
+     * capture.  The former DM1-shaped mapping was synthetic for Nexus. */
+    return NEXUS_CMD_NONE;
 }
 
 int nexus_v1_event_dispatch(Nexus_V1_GameState *state, const Nexus_Event *ev) {
     if (!state || !ev) return -1;
-
-    switch (ev->type) {
-    case NEXUS_EV_NO_EVENT:
-        return 0;
-
-    case NEXUS_EV_GO_FORWARD:
-    case NEXUS_EV_GO_BACKWARD:
-    case NEXUS_EV_GO_RIGHT:
-    case NEXUS_EV_GO_LEFT:
-    case NEXUS_EV_TURN_LEFT:
-    case NEXUS_EV_TURN_RIGHT:
-        state->tick_count++;
-        return 1;
-
-    case NEXUS_EV_GET_ITEM:
-    case NEXUS_EV_GETITEM:
-        return 1;
-
-    case NEXUS_EV_INVENTORY:
-    case NEXUS_EV_EXIT_INV:
-    case NEXUS_EV_INV_SLOT:
-    case NEXUS_EV_INV_SEL:
-    case NEXUS_EV_INV_EQUIP:
-        return 1;
-
-    case NEXUS_EV_GO_SPELL:
-    case NEXUS_EV_EXIT_SPELL:
-    case NEXUS_EV_SPELL:
-    case NEXUS_EV_DO_SPELL:
-    case NEXUS_EV_SPELL_CMD:
-        return 1;
-
-    case NEXUS_EV_REST_PARTY:
-    case NEXUS_EV_WAKE_UP:
-    case NEXUS_EV_PAUSE_GAME:
-    case NEXUS_EV_RESUME_GAME:
-        return 1;
-
-    case NEXUS_EV_SAVE:
-    case NEXUS_EV_SAVELOAD:
-        return 1;
-
-    case NEXUS_EV_GO_MAP:
-    case NEXUS_EV_SET_LEAD:
-    case NEXUS_EV_CHG_PLAYER:
-    case NEXUS_EV_CHG_VIEW:
-    case NEXUS_EV_CHG_SPD:
-    case NEXUS_EV_LOCKON:
-    case NEXUS_EV_EXIT:
-    case NEXUS_EV_WIN_OK:
-    case NEXUS_EV_OK:
-    case NEXUS_EV_CANCEL:
-    case NEXUS_EV_MOUSE_CLICK:
-    case NEXUS_EV_MOUSE_EXIT:
-    case NEXUS_EV_MOTION_CHG:
-        return 1;
-
-    default:
-        return 0;
-    }
+    (void)ev;
+    /* Do not mutate tick/state from an unowned Saturn event. */
+    return NEXUS_V1_EVENT_DISPATCH_UNBOUND;
 }

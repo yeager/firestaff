@@ -28,69 +28,67 @@ int main(void) {
     /* Event count matches DM.BIN (61 events) */
     expect(NEXUS_EV_COUNT == 61, "61 event types from DM.BIN");
 
-    /* Movement events advance tick */
+    /* Event names are available, but dispatch is capture-gated. */
     memset(&ev, 0, sizeof(ev));
     ev.type = NEXUS_EV_GO_FORWARD;
     state.tick_count = 0;
-    expect(nexus_v1_event_dispatch(&state, &ev) == 1, "forward dispatches");
-    expect(state.tick_count == 1, "forward advances tick");
+    expect(nexus_v1_event_dispatch(&state, &ev) ==
+               NEXUS_V1_EVENT_DISPATCH_UNBOUND,
+           "forward remains unbound");
+    expect(state.tick_count == 0, "unbound forward does not advance tick");
 
     ev.type = NEXUS_EV_TURN_LEFT;
-    expect(nexus_v1_event_dispatch(&state, &ev) == 1, "turn dispatches");
-    expect(state.tick_count == 2, "turn advances tick");
+    expect(nexus_v1_event_dispatch(&state, &ev) ==
+               NEXUS_V1_EVENT_DISPATCH_UNBOUND,
+           "turn remains unbound");
+    expect(state.tick_count == 0, "unbound turn does not advance tick");
 
     /* No-event returns 0 */
     ev.type = NEXUS_EV_NO_EVENT;
-    expect(nexus_v1_event_dispatch(&state, &ev) == 0, "no-event returns 0");
+    expect(nexus_v1_event_dispatch(&state, &ev) ==
+               NEXUS_V1_EVENT_DISPATCH_UNBOUND,
+           "no-event remains unbound");
 
     /* Null safety */
     expect(nexus_v1_event_dispatch(NULL, &ev) == -1, "null state returns -1");
     expect(nexus_v1_event_dispatch(&state, NULL) == -1, "null event returns -1");
 
-    /* Inventory/spell events accepted */
+    /* Inventory/spell events remain unbound. */
     ev.type = NEXUS_EV_INVENTORY;
-    expect(nexus_v1_event_dispatch(&state, &ev) == 1, "inventory accepted");
+    expect(nexus_v1_event_dispatch(&state, &ev) ==
+               NEXUS_V1_EVENT_DISPATCH_UNBOUND,
+           "inventory remains unbound");
     ev.type = NEXUS_EV_DO_SPELL;
-    expect(nexus_v1_event_dispatch(&state, &ev) == 1, "spell accepted");
+    expect(nexus_v1_event_dispatch(&state, &ev) ==
+               NEXUS_V1_EVENT_DISPATCH_UNBOUND,
+           "spell remains unbound");
 
-    /* Event-to-command mapping (yam\event.c → command queue) */
-    expect(nexus_v1_event_to_command(NEXUS_EV_GO_FORWARD) == NEXUS_CMD_FORWARD,
-           "forward → CMD_FORWARD");
-    expect(nexus_v1_event_to_command(NEXUS_EV_GO_BACKWARD) == NEXUS_CMD_BACKWARD,
-           "backward → CMD_BACKWARD");
-    expect(nexus_v1_event_to_command(NEXUS_EV_GO_LEFT) == NEXUS_CMD_STRAFE_LEFT,
-           "left → CMD_STRAFE_LEFT");
-    expect(nexus_v1_event_to_command(NEXUS_EV_GO_RIGHT) == NEXUS_CMD_STRAFE_RIGHT,
-           "right → CMD_STRAFE_RIGHT");
-    expect(nexus_v1_event_to_command(NEXUS_EV_TURN_LEFT) == NEXUS_CMD_TURN_LEFT,
-           "turn_left → CMD_TURN_LEFT");
-    expect(nexus_v1_event_to_command(NEXUS_EV_TURN_RIGHT) == NEXUS_CMD_TURN_RIGHT,
-           "turn_right → CMD_TURN_RIGHT");
-    expect(nexus_v1_event_to_command(NEXUS_EV_GET_ITEM) == NEXUS_CMD_INTERACT,
-           "get_item → CMD_INTERACT");
-    expect(nexus_v1_event_to_command(NEXUS_EV_GETITEM) == NEXUS_CMD_INTERACT,
-           "getitem → CMD_INTERACT");
-    expect(nexus_v1_event_to_command(NEXUS_EV_DO_SPELL) == NEXUS_CMD_CAST_SPELL,
-           "do_spell → CMD_CAST_SPELL");
-    expect(nexus_v1_event_to_command(NEXUS_EV_GO_MAP) == NEXUS_CMD_TOGGLE_MAP,
-           "go_map → CMD_TOGGLE_MAP");
-    expect(nexus_v1_event_to_command(NEXUS_EV_NO_EVENT) == NEXUS_CMD_NONE,
-           "no_event → CMD_NONE");
-    expect(nexus_v1_event_to_command(NEXUS_EV_PAUSE_GAME) == NEXUS_CMD_NONE,
-           "pause → CMD_NONE (no direct command)");
+    /* No event→command mapping is admitted without Saturn capture. */
+    expect(nexus_v1_event_to_command(NEXUS_EV_GO_FORWARD) == NEXUS_CMD_NONE,
+           "forward remains unmapped");
+    expect(nexus_v1_event_to_command(NEXUS_EV_DO_SPELL) == NEXUS_CMD_NONE,
+           "spell remains unmapped");
+    expect(nexus_v1_event_to_command(NEXUS_EV_GO_MAP) == NEXUS_CMD_NONE,
+           "map remains unmapped");
 
     /* Additional dispatched events */
     ev.type = NEXUS_EV_GO_MAP;
-    expect(nexus_v1_event_dispatch(&state, &ev) == 1, "map event accepted");
+    expect(nexus_v1_event_dispatch(&state, &ev) ==
+               NEXUS_V1_EVENT_DISPATCH_UNBOUND,
+           "map event remains unbound");
     ev.type = NEXUS_EV_CANCEL;
-    expect(nexus_v1_event_dispatch(&state, &ev) == 1, "cancel event accepted");
+    expect(nexus_v1_event_dispatch(&state, &ev) ==
+               NEXUS_V1_EVENT_DISPATCH_UNBOUND,
+           "cancel event remains unbound");
     ev.type = NEXUS_EV_SET_LEAD;
-    expect(nexus_v1_event_dispatch(&state, &ev) == 1, "set_lead event accepted");
+    expect(nexus_v1_event_dispatch(&state, &ev) ==
+               NEXUS_V1_EVENT_DISPATCH_UNBOUND,
+           "set_lead event remains unbound");
 
     if (g_failures) {
         fprintf(stderr, "test_nexus_v1_event: %d failure(s)\n", g_failures);
         return 1;
     }
-    puts("ok: Nexus event system with 61 types + command mapping verified");
+    puts("ok: Nexus 61 event-name receipts remain capture-gated");
     return 0;
 }

@@ -5098,6 +5098,13 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   binary now remains `UNKNOWN` until execution/disassembly or VDP capture
   binds it. Real Nexus raw-bin regression passes with stable retail offsets
   and hashes.
+
+- ✅ 2026-08-06 Nexus event-dispatch provenance correction: retained the
+  61 real `DM.BIN` event names, but removed the synthetic DM1-shaped
+  event→command mapping and state-mutating dispatcher. Valid event inputs now
+  return an explicit unbound status without changing tick/state; movement,
+  inventory, spell, save, menu and HUD action admission awaits Saturn
+  event/SLEV/SDDRVS capture. Updated `test_nexus_v1_event` accordingly.
   DMV*.AVI are standard RIFF/AVI video, DMN_*.TXT are Shift-JIS text.
 
 - ✅ 2026-07-29 Nexus BPPK menu graphics decoder: MENU.BPK BPPK/BMPD

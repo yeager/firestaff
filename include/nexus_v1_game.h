@@ -144,12 +144,15 @@ typedef struct {
     int param2;
 } Nexus_Event;
 
+/* A valid event type is not a dispatch receipt.  The retail Saturn event
+ * owner, SLEV callback and SDDRVS state writes are still uncaptured. */
+#define NEXUS_V1_EVENT_DISPATCH_UNBOUND (-2)
+
 const char *nexus_v1_event_name(Nexus_EventType ev);
 int nexus_v1_event_dispatch(Nexus_V1_GameState *state, const Nexus_Event *ev);
 
-/* Translate an event type to a NEXUS_CMD_* command (nexus_v1_movement.h).
- * Returns NEXUS_CMD_NONE if the event has no direct command mapping.
- * Source: yam\event.c dispatch table → yam\inventry.c/timeline.c command queue. */
+/* Event names are a DM.BIN receipt only.  No event→NEXUS_CMD_* mapping is
+ * admitted until the Saturn event owner and command queue are captured. */
 int nexus_v1_event_to_command(Nexus_EventType ev);
 
 #endif

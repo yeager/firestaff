@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-EVENT-DISPATCH-CAPTURE:** The 61 `DM.BIN` event names remain a
+  source receipt, but the former host event→command map and accepting
+  dispatcher were synthetic DM1-shaped behavior. They are now unbound and
+  state-free. Recover the Saturn event producer, command queue, SLEV callback
+  and SDDRVS state writes before admitting movement, inventory, spell, save,
+  menu or HUD actions.
+
 - **NEXUS-RAW-BIN-OWNER-CAPTURE:** The retail receipts for `DM.BIN`,
   `NBG3.BIN`, `STONE.BIN`, `DEATH.BIN`, `SWTCHR.BIN`, `TM.BIN`, and
   `SDDRVS.TSK` now deliberately report `UNKNOWN` content ownership. The
