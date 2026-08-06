@@ -634,6 +634,15 @@ int main(void) {
                                  sfx_receipt.status),
                              "blocked-unsupported-decode") == 0,
                       "Nexus SFX receipt has stable blocked route name");
+            {
+                int voices_before = engine.audio.voice_count;
+                nexus_sound_play(&engine.audio, NEXUS_SFX_FOOTSTEP);
+                check_int(engine.audio.voice_count == voices_before,
+                          "real SAL/MAP bytes cannot create a host SFX voice");
+                nexus_sound_play_idx(&engine.audio, 0);
+                check_int(engine.audio.voice_count == voices_before,
+                          "legacy SAL sample-index API remains diagnostic-only");
+            }
         } else {
             puts("SKIP: local Nexus SNDLEV00.SAL/.MAP not present for SFX runtime receipt");
         }

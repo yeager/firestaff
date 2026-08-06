@@ -51651,6 +51651,13 @@ and `firestaff` build pass.
   boundary checks; the menu exposes only the real four slots and does not
   fabricate a resumable session from the still-partial raw save decoder.
 - ✅ 2026-08-06 DM1 HoC false-artifact audit: real PC34 `DUNGEON.DAT` sampled 2,172 open HoC cells and 83 source item cells. The projectile/explosion guard found zero compact projectile chains, zero explosions, zero viewport leaks, zero stale fields, zero debug-marker leaks and zero fire/explosion blob leaks; the floor-item guard found 83/83 real item renders with zero viewport mismatches. The prior 30-sample hot-color warning was a false positive, not missing game data.
+- ✅ 2026-08-06 Nexus SLEV/SAL playback provenance: the real renamed
+  SNDLEV00.SAL/.MAP hash route now verifies that loaded diagnostic windows
+  cannot create a host SFX voice through either `NEXUS_SFX_*` dispatch or the
+  legacy sample-index API. SAL candidates remain opaque until the authentic
+  Saturn event→MAP/SDDRVS consumer is captured; no synthetic playback is
+  introduced.
+
 - ✅ 2026-08-06 Nexus MENU.BPK presentation gate: real PRS3 decode/upload
   receipts no longer promote a menu to drawable merely because 162 surfaces
   decoded. The renderer and launcher now require the independently admitted
