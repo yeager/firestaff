@@ -32059,9 +32059,14 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
          * after a save/placement mutation.  Never let it select a different
          * junk icon (or torch/food) for a real alcove object. */
         sourceSubtype = cell->floorItemSubtypes[ii];
-        if (m11_is_dm1_source_kind(state->sourceKind) &&
-            cell->floorItemThings[ii] != THING_NONE &&
-            cell->floorItemThings[ii] != THING_ENDOFLIST) {
+        if (m11_is_dm1_source_kind(state->sourceKind)) {
+            /* F0121/F0124 also consume the live raw Thing. Never let the
+             * compact candidate mirror create an alcove object when the
+             * source chain did not provide one. */
+            if (cell->floorItemThings[ii] == THING_NONE ||
+                cell->floorItemThings[ii] == THING_ENDOFLIST) {
+                continue;
+            }
             if (THING_GET_TYPE(cell->floorItemThings[ii]) !=
                     cell->floorItemTypes[ii] ||
                 !state->world.things ||
@@ -34345,12 +34350,15 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
     int mapY) {
     int drawn;
     int sourceSubtype;
-    if (m11_is_dm1_source_kind(state ? state->sourceKind : M11_GAME_SOURCE_BUILTIN_CATALOG) &&
-        thing != THING_NONE && thing != THING_ENDOFLIST) {
+    if (m11_is_dm1_source_kind(state ? state->sourceKind : M11_GAME_SOURCE_BUILTIN_CATALOG)) {
         /* F0115's source Thing is authoritative.  Candidate subtypes are
          * presentation metadata only and can lag after live C080/F0302
-         * pickup, drop, or save restoration. */
-        if (THING_GET_TYPE(thing) != thingType || !state->world.things ||
+         * pickup, drop, or save restoration. A missing raw Thing is not an
+         * invitation to use the candidate fields: that would manufacture a
+         * plausible but incorrect object icon/name in a real PC34 frame. */
+        if (thing == THING_NONE || thing == THING_ENDOFLIST ||
+            THING_GET_TYPE(thing) != thingType || !state ||
+            !state->world.things ||
             (sourceSubtype = dm1_v1_dungeon_get_object_subtype_pc34(
                 state->world.things, thing)) < 0) {
             return 0;

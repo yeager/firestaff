@@ -27350,13 +27350,18 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   reachable, so capture must distinguish reachability from a missing object.
   The manual does not replace the required original PC34 runtime capture or
   the M564 name/slot evidence.
-- 2026-08-06 source-runtime verification: the real PC3.4 alcove test now
-  completes pickup-to-placement for Thing 5196 (graphic 511), preserving the
-  source `AllowedSlots=0x40` mask and placing it in legal quiver slot C519.
-  M564 name-table validity remains intact after placement. Remaining scope is
-  real macOS/window capture plus the requested weapon, potion, scroll,
-  container and junk corpus; do not reopen the source route without a failing
-  real-data case.
+  - 2026-08-06 source-runtime verification: the real PC3.4 alcove test now
+    completes pickup-to-placement for Thing 5196 (graphic 511), preserving the
+    source `AllowedSlots=0x40` mask and placing it in legal quiver slot C519.
+    M564 name-table validity remains intact after placement. Remaining scope is
+    real macOS/window capture plus the requested weapon, potion, scroll,
+    container and junk corpus; do not reopen the source route without a failing
+    real-data case.
+  - 2026-08-06 source-identity hardening: the live DM1 F0115 floor and
+    F0121/F0124 alcove consumers now require the raw PC34 `THING` record before
+    resolving subtype or drawing an icon. Candidate viewport metadata can no
+    longer manufacture a plausible but incorrect object when the source chain
+    is incomplete; the real floor-item and alcove pickup/place tests still pass.
 - 2026-08-06 update: the active legacy stairs helper now rejects dimension-only
   cache entries unless the authentic GRAPHICS.DAT surface is decoded
   (`loaded` and `pixels` are both present). This prevents an invalid stair

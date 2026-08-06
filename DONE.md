@@ -53887,3 +53887,8 @@ alcove runtime and archive-media tests passed (4/4).
   DM2/Nexus no longer mutate DM1 filter state from the popup; unsupported
   source-specific rows are explicitly locked while shared presentation and
   cheat/speed controls remain available. `m11_runtime_graphics_popup` passes.
+- ✅ 2026-08-06 DM1 F0115 object identity quarantine: real floor-object and
+  HoC alcove rendering now requires the source-owned raw PC34 `THING` record
+  before resolving subtype or material. Missing raw identity produces no-draw
+  instead of a candidate-derived wrong icon/name. Real F0115 floor pickup and
+  alcove pickup-to-inventory tests pass against the PC34 corpus.
