@@ -4598,6 +4598,11 @@ list(REMOVE_ITEM M10_SOURCES
 # its explicit regression rather than exposing probe material through M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3c_f0107_wall_ornament_pc34_compat.c")
+# `dm1_v1_viewport_d0c_ceiling_f0098_pc34_compat.c` is an asset-free row
+# ownership fixture with fixed viewport rows and C10 probe pixels. It has no
+# M11/runtime caller and its dedicated regression compiles it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0c_ceiling_f0098_pc34_compat.c")
 # `dm1_v1_mirror_candidate_c146_sleep_wakeup_repaint_gate_pc34_compat.c`
 # simulates C040 panel and wake-up state with fixed fixture values.  It reads
 # no original DM1 material and has no M11/runtime caller; its generated

@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D0C-F0098-SYNTHETIC-AUDIT:** This D0C floor/ceiling row-ownership
+  model uses fixed viewport rows and C10 probe pixels. It reads no original
+  game data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound F0098 owner is recovered.
+
 - **DM1-CHEST-ROUND-TRIP-SYNTHETIC-AUDIT:** This C537/C538 hand-swap model
   fabricates visible chest slots, item kinds and weights. It reads no original
   game data and has no M11/runtime caller; retain it only as explicit ReDMCSB

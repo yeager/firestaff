@@ -1,3 +1,11 @@
+# DM1 D0C F0098 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the fixed-row D0C ceiling/floor ownership fixture from M10. It
+  has no game-data input or M11/runtime caller; its dedicated ReDMCSB
+  regression already compiles the source explicitly.
+- ✅ Verification: `dm1_v1_viewport_d0c_ceiling_f0098_pc34_compat` passes;
+  the source object is absent from both M10 and M11 archives.
+
 # DM1 chest round-trip synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the C537/C538 chest hand-swap fixture from M10. It fabricates
