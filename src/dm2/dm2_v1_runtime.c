@@ -4,8 +4,9 @@
  * Provides the source-gated M11 tick and real-GDAT frame path for an
  * admitted boot profile. Gameplay families whose original runtime state is
  * not yet owned remain fail-closed rather than becoming a host substitute.
- * This stub wires the DM2 viewport into the Firestaff game loop
- * so that a DM2 launch can display a viewport frame without crashes.
+ * This runtime wires the DM2 viewport into the Firestaff game loop only
+ * after the boot profile and the frame's GDAT material receipts validate.
+ * It never uses a crash-avoidance or data-free viewport fallback.
  *
  * The CSB path in firestaff_game_loop.c provides the reference pattern:
  *   FS_GAME_CSB → csb_v1_viewport_render_frame() → DM1 viewport engine
