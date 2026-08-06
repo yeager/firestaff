@@ -3,9 +3,11 @@
 - **ASSET-SCAN-CROSS-PLATFORM-CORPUS:** The PC-DOS DM2 ZIP route now
   materializes a complete hash-verified `GRAPHICS.DAT`/`DUNGEON.DAT` pair
   into the launch cache instead of showing both files as FOUND and the game
-  as MISSING. Continue the same real-media audit for CSB's Amiga ADF, Atari
-  ST and FM Towns packages, and report the matched platform/profile whenever
-  only a partial or unsupported package is present.
+  as MISSING. The M12 profile store now accommodates every declared profile,
+  rather than truncating after seven entries. Continue the same real-media
+  audit for CSB's Amiga ADF, Atari ST and FM Towns packages, and report the
+  matched platform/profile whenever only a partial or unsupported package is
+  present.
 
 - **NEXUS-DGN-MATERIAL-ISO-RECEIPT:** The extracted European retail layout now
   authenticates `SN_FLOOR.MNS` and `SN_WALL.MNS` from the co-located Track 1

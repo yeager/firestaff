@@ -14,9 +14,10 @@ extern "C" {
 enum {
     M12_ASSET_DATA_DIR_CAPACITY = 512,
     M12_ASSET_MD5_CAPACITY = 33,
-    /* DM2 has six source-verified identities; CSB now has seven once
-     * its English and Japanese FM Towns CD-ROM profiles are included. */
-    M12_ASSET_MAX_VERSIONS_PER_GAME = 7,
+    /* The scanner stores every declared source-verified profile. DM1 has
+     * fifteen entries today, so this must never be a smaller presentation
+     * bound: M12_AssetStatus_GetVersion() exposes the complete catalogue. */
+    M12_ASSET_MAX_VERSIONS_PER_GAME = 16,
     M12_ASSET_MAX_REQUIRED_FILES_PER_GAME = 4,
     M12_ASSET_GAME_COUNT = 5  /* DM1, CSB, DM2, Nexus, Theron */
 

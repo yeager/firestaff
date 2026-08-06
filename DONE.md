@@ -5,6 +5,11 @@
   regressions cover renamed and nested-deflated members, cache paths and
   byte-identical payloads.
 
+- ✅ 2026-08-06 M12 version-catalog capacity: raised the scanner's stored
+  profile bound from seven to sixteen, matching the declared 15-profile DM1
+  matrix and preventing later profiles from being silently omitted or read
+  past the status array.
+
 - ✅ 2026-08-06 CI latest-revision scheduling: restored the branch-scoped
   GitHub Actions concurrency guard with cancellation enabled. Rapid pushes to
   `main` now retain the newest full matrix instead of queuing obsolete commits
