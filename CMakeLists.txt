@@ -4957,6 +4957,12 @@ list(REMOVE_ITEM M10_SOURCES
 # M11/runtime caller; its generated mirror regression compiles it explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c040_resurrect_rotation_save_load_runtime_pc34_compat.c")
+# `dm1_v1_mirror_candidate_close_button_pc34_compat.c` is a contract-only
+# C040 chrome model with fabricated party, portrait and panel state. It loads
+# no original DM1 data and has no M11/runtime caller; its direct and dependent
+# double-open regressions compile it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_close_button_pc34_compat.c")
 # `dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.c`
 # is a contract-only C100/C040 gate with fabricated party, panel, G0299 and
 # G0514 state. It loads no original DM1 data and has no M11/runtime caller;
@@ -26266,6 +26272,7 @@ endif()
             add_executable(${_tgt} ${_test_src} ${_mod_src})
             if(_mirror_candidate_test STREQUAL "double_open_close")
                 target_sources(${_tgt} PRIVATE
+                    src/dm1/dm1_v1_mirror_candidate_close_button_pc34_compat.c
                     src/dm1/dm1_v1_mirror_candidate_icon_refresh_pc34_compat.c)
             endif()
             target_link_libraries(${_tgt} PRIVATE firestaff_m10)
