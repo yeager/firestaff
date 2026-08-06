@@ -1,5 +1,15 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-INVENTORY-CLICK-ROTATION-SYNTHETIC-AUDIT:** This C156/C157
+  dispatch-table fixture fabricates click and rotation state. It loads no
+  original DM1 data and has no M11/runtime caller; retain it only as explicit
+  ReDMCSB coverage until a source-bound interaction owner is recovered.
+
+- **DM1-MIRROR-RESURRECT-REINCARNATE-SKILLS-SYNTHETIC-AUDIT:** This C160/C161
+  fixture fabricates party, champion and slot state. It loads no original DM1
+  data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound interaction owner is recovered.
+
 - **DM1-MIRROR-KEYBOARD-ROTATION-SYNTHETIC-AUDIT:** This command-queue fixture
   fabricates candidate, roster and rune-buffer state. It loads no original
   DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
