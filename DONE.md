@@ -50950,6 +50950,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   blocks through the real JP map/item offsets. It verifies 192–261 ground
   references, 871–1 132 decoded records and every populated category, while
   deliberately keeping JP text empty until its real codon consumer is bound.
+- ✅ 2026-08-06 Theron Track 19 ISO level-block binding: the level-data
+  receipt now has separate direct-projection descriptors for `TQUS19.iso`
+  and `TQJP19.iso`, including their own offsets, metadata and EOF-bounded
+  compressed-span hashes. The real US and JP ISO files pass all seven blocks;
+  raw BIN offsets are no longer treated as ISO offsets. Decompression and
+  tile/map/object ownership remain intentionally closed.
 - ✅ 2026-08-06 DM2 CCM synthetic-execution closure: removed
   `dm2_v1_ccm.c` from both production archives and retired creature-tick
   flag-to-action writeback. The compact opcode interpreter lacks the original

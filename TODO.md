@@ -26261,8 +26261,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   tile binding. The runtime copy is now lifetime-safe; decompression and
   tile/map/object ownership remain gated.
   The real JP dungeon-map table is now bound separately; object-record and
-  graphics-consumer handoff remains gated, and JP ISO offsets still need a
-  container-specific verification.
+  graphics-consumer handoff remains gated. The direct `TQJP19.iso` projection
+  now has its own seven authenticated level-block offsets and EOF-bounded
+  hashes; no BIN offset is reused as a container guess.
 
 - [ ] THERON-V1-TRACK02-VRAM-CONSUMER: bind the real VDC BAT/tile and VCE
   palette snapshot to the source-owned square/material/UI consumer. A native

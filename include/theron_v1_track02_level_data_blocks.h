@@ -9,8 +9,9 @@
 extern "C" {
 #endif
 
-/* Sources: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76) and JP
- * Track 02 BIN (MD5 b7afb338ad31be1025b53f9aff12d73a).
+/* Sources: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76), JP
+ * Track 02 BIN (MD5 b7afb338ad31be1025b53f9aff12d73a), and the direct ISO
+ * projections TQUS19.iso/TQJP19.iso (hash-gated by their media receipts).
  *
  * 7 per-level graphics/tile banks (~256KB each = one PCE HuCard bank).
  * Identified by byte-exact 232-byte shared prologue signature.
@@ -21,7 +22,10 @@ extern "C" {
  * These are NOT the dungeon map layout (wall/floor topology) — that data
  * format is still unidentified within Track 02.
  *
- * UD offsets discovered via full-track signature scan. */
+ * UD offsets discovered via full-track signature scan. Direct ISO projection
+ * offsets are the same authenticated spans after the 225-sector pregap is
+ * removed; they are separate descriptors because the final level span and
+ * container identity differ. */
 
 #define THERON_TRACK02_LEVEL_COUNT  7u
 #define THERON_TRACK02_LEVEL_PROLOGUE_SIZE  0xF0u

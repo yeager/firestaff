@@ -22,6 +22,15 @@ static const uint32_t g_jp_compressed_fnv1a[THERON_TRACK02_LEVEL_COUNT] = {
     0x326eff1fu, 0xff96a9afu, 0x930a5bf6u
 };
 
+static const uint32_t g_us_iso_compressed_fnv1a[THERON_TRACK02_LEVEL_COUNT] = {
+    0xf7ccbfe9u, 0xf1a6b37au, 0x3c56f832u, 0xdf34534bu,
+    0xa1928360u, 0x64749f2fu, 0x5c09952du
+};
+static const uint32_t g_jp_iso_compressed_fnv1a[THERON_TRACK02_LEVEL_COUNT] = {
+    0xa8818e93u, 0x13142c8fu, 0x4087881au, 0x5bc73358u,
+    0x326eff1fu, 0xff96a9afu, 0xdce9bf6u
+};
+
 /* Both authenticated BINs carry the same byte-exact shared 0xE8-byte
  * resource prologue at every later-level anchor.  Keep this as an admission
  * invariant: a compressed-span hash alone would let a damaged shared table
@@ -61,6 +70,30 @@ static const Theron_LevelDataBlockDesc g_jp_level_blocks[THERON_TRACK02_LEVEL_CO
     /* Level 7 */ { 0x21E82F, { 0x0F, 0x87, 0x10, 0x10, 0x10, 0x00, 0x20, 0x01 } },
 };
 
+/* Direct MODE1/2048 ISO projections. These offsets are not raw BIN offsets:
+ * the raw Track 02 pregap is absent from the supplied TQUS19.iso/TQJP19.iso
+ * projections. The final spans intentionally use each ISO's own EOF and
+ * hash; no truncated US or JP ISO payload is silently compared with BIN. */
+static const Theron_LevelDataBlockDesc g_us_iso_level_blocks[THERON_TRACK02_LEVEL_COUNT] = {
+    { 0x02E800, { 0x07, 0x87, 0x18, 0x10, 0x10, 0x10, 0x10, 0x20 } },
+    { 0x06EB42, { 0x03, 0x83, 0x3F, 0x3F, 0x3F, 0x07, 0x1F, 0x0F } },
+    { 0x0AE800, { 0x0F, 0x87, 0x0F, 0x04, 0x00, 0x01, 0x01, 0x01 } },
+    { 0x0EEEA8, { 0x07, 0x87, 0x3F, 0x3F, 0x3F, 0x1F, 0x1F, 0x1F } },
+    { 0x12EB73, { 0x07, 0x87, 0x0F, 0x3F, 0x7F, 0xFF, 0xFF, 0xFF } },
+    { 0x16E800, { 0x07, 0x87, 0x07, 0x0C, 0x10, 0x30, 0x20, 0x20 } },
+    { 0x1AE800, { 0x0D, 0x86, 0x06, 0x30, 0x0F, 0x0E, 0x07, 0x0E } },
+};
+
+static const Theron_LevelDataBlockDesc g_jp_iso_level_blocks[THERON_TRACK02_LEVEL_COUNT] = {
+    { 0x02E82F, { 0x07, 0x87, 0x18, 0x10, 0x10, 0x10, 0x10, 0x20 } },
+    { 0x06EB71, { 0x07, 0x87, 0x04, 0x02, 0x04, 0x02, 0x04, 0x02 } },
+    { 0x0AE82F, { 0x0F, 0x87, 0x0F, 0x04, 0x00, 0x01, 0x01, 0x01 } },
+    { 0x0EEED7, { 0x03, 0x83, 0x3F, 0x3F, 0x3F, 0x07, 0x1F, 0x0F } },
+    { 0x12EE9B, { 0x0F, 0x87, 0x1E, 0x1E, 0x1E, 0x1F, 0x3F, 0x3F } },
+    { 0x16E82F, { 0x07, 0x87, 0x07, 0x0C, 0x10, 0x30, 0x20, 0x20 } },
+    { 0x1AE82F, { 0x0F, 0x87, 0x10, 0x10, 0x10, 0x00, 0x20, 0x01 } },
+};
+
 const Theron_LevelDataBlockDesc *theron_v1_track02_level_data_block(unsigned int level) {
     return theron_v1_track02_level_data_block_for_variant(
         THERON_TRACK02_VARIANT_US_BIN, level);
@@ -71,6 +104,10 @@ const Theron_LevelDataBlockDesc *theron_v1_track02_level_data_block_for_variant(
     if (level >= THERON_TRACK02_LEVEL_COUNT) return NULL;
     if (variant == THERON_TRACK02_VARIANT_US_BIN) return &g_level_blocks[level];
     if (variant == THERON_TRACK02_VARIANT_JP_BIN) return &g_jp_level_blocks[level];
+    if (variant == THERON_TRACK02_VARIANT_US_ISO)
+        return &g_us_iso_level_blocks[level];
+    if (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO)
+        return &g_jp_iso_level_blocks[level];
     return NULL;
 }
 
@@ -86,11 +123,17 @@ int theron_v1_track02_level_data_block_read(
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    if (!user_data ||
-        (variant != THERON_TRACK02_VARIANT_US_BIN &&
-         variant != THERON_TRACK02_VARIANT_JP_BIN)) return 0;
-    expected_hashes = variant == THERON_TRACK02_VARIANT_US_BIN
-        ? g_us_compressed_fnv1a : g_jp_compressed_fnv1a;
+    if (!user_data) return 0;
+    if (variant == THERON_TRACK02_VARIANT_US_BIN)
+        expected_hashes = g_us_compressed_fnv1a;
+    else if (variant == THERON_TRACK02_VARIANT_JP_BIN)
+        expected_hashes = g_jp_compressed_fnv1a;
+    else if (variant == THERON_TRACK02_VARIANT_US_ISO)
+        expected_hashes = g_us_iso_compressed_fnv1a;
+    else if (variant == THERON_TRACK02_VARIANT_JP_REV1_ISO)
+        expected_hashes = g_jp_iso_compressed_fnv1a;
+    else
+        return 0;
     if (!theron_v1_track02_level_data_block_for_variant(variant, level)) return 0;
     block = theron_v1_track02_level_data_block_for_variant(variant, level);
     if ((size_t)block->ud_offset > user_data_size ||

@@ -126,6 +126,63 @@ static void verify_real_track02_level_blocks(const char *env_name,
     printf("PASS: authentic %s Track 02 level-block prologues and metadata\n", label);
 }
 
+static void verify_real_iso_level_blocks(const char *env_name,
+                                         const char *file_name,
+                                         Theron_Track02Variant variant,
+                                         size_t expected_size,
+                                         const char *label) {
+    char fallback[512];
+    const char *path = resolve_track02_path(env_name, file_name,
+                                            fallback, sizeof(fallback));
+    FILE *file;
+    long file_size;
+    uint8_t *image;
+
+    if (!path || !path[0]) {
+        puts("SKIP: no standard or FIRESTAFF_THERON_*_ISO real-data path");
+        return;
+    }
+    file = fopen(path, "rb");
+    assert(file != NULL);
+    assert(fseek(file, 0L, SEEK_END) == 0);
+    file_size = ftell(file);
+    assert(file_size == (long)expected_size);
+    assert(fseek(file, 0L, SEEK_SET) == 0);
+    image = malloc(expected_size);
+    assert(image != NULL);
+    assert(fread(image, 1u, expected_size, file) == expected_size);
+    fclose(file);
+
+    for (unsigned int level = 0; level < THERON_TRACK02_LEVEL_COUNT; ++level) {
+        const Theron_LevelDataBlockDesc *block =
+            theron_v1_track02_level_data_block_for_variant(variant, level);
+        Theron_LevelDataBlockReceipt receipt;
+        assert(block != NULL);
+        assert(theron_v1_track02_level_data_block_read(
+            image, expected_size, variant, level, &receipt));
+        assert(receipt.valid && receipt.variant == variant &&
+               receipt.level == level &&
+               receipt.block_ud_offset == block->ud_offset &&
+               receipt.compressed_bytes > 0u &&
+               receipt.compressed_fnv1a != 0u &&
+               receipt.shared_prologue_fnv1a != 0u &&
+               memcmp(receipt.per_level_meta, block->per_level_meta,
+                      sizeof(receipt.per_level_meta)) == 0);
+    }
+
+    {
+        const Theron_LevelDataBlockDesc *first =
+            theron_v1_track02_level_data_block_for_variant(variant, 0u);
+        Theron_LevelDataBlockReceipt rejected;
+        image[first->ud_offset] ^= 1u;
+        assert(!theron_v1_track02_level_data_block_read(
+            image, expected_size, variant, 0u, &rejected));
+    }
+    free(image);
+    printf("PASS: authentic %s Track 19 ISO level-block offsets and hashes\n",
+           label);
+}
+
 int main(void) {
     /* 7 levels */
     assert(THERON_TRACK02_LEVEL_COUNT == 7);
@@ -157,7 +214,7 @@ int main(void) {
     assert(theron_v1_track02_level_data_block_for_variant(
                THERON_TRACK02_VARIANT_JP_BIN, 1)->per_level_meta[2] == 0x04);
     assert(theron_v1_track02_level_data_block_for_variant(
-               THERON_TRACK02_VARIANT_US_ISO, 0) == NULL);
+               THERON_TRACK02_VARIANT_US_ISO, 0)->ud_offset == 0x02E800);
 
     /* All blocks have non-zero UD offsets */
     for (unsigned i = 0; i < THERON_TRACK02_LEVEL_COUNT; i++) {
@@ -169,6 +226,14 @@ int main(void) {
                                      THERON_TRACK02_VARIANT_US_BIN, "US");
     verify_real_track02_level_blocks("FIRESTAFF_THERON_TRACK02_JP_RAW", "TQJP02.bin",
                                      THERON_TRACK02_VARIANT_JP_BIN, "JP");
+    assert(theron_v1_track02_level_data_block_for_variant(
+               THERON_TRACK02_VARIANT_US_ISO, 0)->ud_offset == 0x02E800);
+    assert(theron_v1_track02_level_data_block_for_variant(
+               THERON_TRACK02_VARIANT_JP_REV1_ISO, 0)->ud_offset == 0x02E82F);
+    verify_real_iso_level_blocks("FIRESTAFF_THERON_US_ISO", "TQUS19.iso",
+                                 THERON_TRACK02_VARIANT_US_ISO, 5984256u, "US");
+    verify_real_iso_level_blocks("FIRESTAFF_THERON_JP_ISO", "TQJP19.iso",
+                                 THERON_TRACK02_VARIANT_JP_REV1_ISO, 6291456u, "JP");
 
     printf("PASS: theron_v1_track02_level_data_blocks\n");
     return 0;
