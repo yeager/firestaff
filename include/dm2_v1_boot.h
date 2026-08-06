@@ -8,6 +8,7 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_weather_gdat.h"
 #include "dm2_v1_fmtowns_disc.h"
+#include "dm2_v1_fmtowns_cdda_music.h"
 #include "dm2_v1_fmtowns_anim_stream.h"
 #include <stddef.h>
 
@@ -191,6 +192,9 @@ typedef struct {
     size_t   fmtowns_disc_image_size;
     uint32_t fmtowns_cdda_track_starts[9]; /* track_starts[2..8] */
     int      fmtowns_cdda_track_count;
+    /* HMP-to-CDDA selection read from the native SKULL.EXP member in the
+     * selected disc buffer.  The receipt owns only copied table bytes. */
+    DM2_V1_FmtownsCddaMusicReceipt fmtowns_cdda_music;
     /* Original HME-242 AUTOEXEC route, read directly from the selected
      * in-memory IMG.  A Towns session is not admitted without this media. */
     DM2_V1_FmtownsStartupPlan fmtowns_startup_plan;

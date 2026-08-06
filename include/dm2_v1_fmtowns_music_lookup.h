@@ -21,11 +21,13 @@ extern "C" {
 /* Returns the CDDA audio index (1-9) for a given dungeon map on FM Towns.
  * Returns 0 (silence) if the map has no music or is out of range. */
 static inline int dm2_v1_fmtowns_cdda_for_map(
-    const DM2_V1_SonglistDat *songlist, int map_index)
+    const DM2_V1_SonglistDat *songlist,
+    const DM2_V1_FmtownsCddaMusicReceipt *cdda_music,
+    int map_index)
 {
     int hmp = dm2_v1_songlist_dat_track_for_map(songlist, map_index);
     if (hmp < 0) return 0;
-    return dm2_v1_fmtowns_hmp_to_cdda(hmp);
+    return dm2_v1_fmtowns_hmp_to_cdda(cdda_music, hmp);
 }
 
 #ifdef __cplusplus

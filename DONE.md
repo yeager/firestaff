@@ -54418,6 +54418,14 @@ alcove runtime and archive-media tests passed (4/4).
   regression covers this completion-state fence; this does not claim a usable
   FM Towns menu yet.
 
+- ✅ 2026-08-06 DM2 FM Towns CDDA mapping correction: removed the former
+  hard-coded HMP→CDDA source literal. Boot now extracts the selected
+  HME-242 `SKULL.EXP` in RAM and copies only its native 29-byte table at
+  offset `0x3dac` into a bounded receipt. The real-CD regression locks the
+  374,416-byte member, source offset and map lookup. Playback remains
+  separately blocked until native SKULL execution and CDDA transport are
+  joined.
+
 - ✅ 2026-08-06 Theron raw-BIN HuC6280 disassembly intake: the static bank-$1f
   receipt now verifies authentic `TQUS02.bin` and `TQJP02.bin` Track 02 files
   in addition to the ISO projections. Their real MODE1/2352 bank-window

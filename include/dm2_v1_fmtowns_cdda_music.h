@@ -8,18 +8,13 @@
  * category 4, type 3 (dtHMP), indices 0x00-0x1C.  SONGLIST.DAT
  * maps dungeon maps to these HMP track indices.
  *
- * The FM Towns version replaces HMP playback with CDDA (CD audio).
- * The disc has 9 audio tracks (disc tracks 2-10).  A 29-byte
- * mapping table in SKULL.EXP (offset 0x3dac from code base)
- * translates each HMP track index to a 1-based CDDA audio index
- * (0 = silence).
- *
- * Source: disassembly of SKULL.EXP (P3/Run386 flat-model binary,
- * HME-242 FM Towns release).  The mapping table was located by
- * scanning for a 29-byte array with values 0-9 using all 9 CDDA
- * tracks.
+ * The FM Towns release uses CDDA.  Its native SKULL.EXP holds the 29-byte
+ * HMP-to-CDDA table at offset 0x3dac.  The receipt below is filled only by
+ * parsing that span from the selected HME-242 CD image in RAM; it must not
+ * be replaced with a copy of those values in Firestaff source.
  */
 
+#include <stddef.h>
 #include <stdint.h>
 
 #ifdef __cplusplus
@@ -27,14 +22,27 @@ extern "C" {
 #endif
 
 #define DM2_FMTOWNS_HMP_TRACK_COUNT     29
+#define DM2_FMTOWNS_SKULL_HMP_CDDA_OFFSET 0x3dacu
 
-/* Map an HMP track index (0-28) to a 1-based CDDA audio index.
- * Returns 0 for silence (no CDDA track), 1-9 for audio indices.
- * The audio index maps to disc track (audio_index + 1) via CD.DAT. */
-int dm2_v1_fmtowns_hmp_to_cdda(int hmp_track);
+typedef struct {
+    int valid;
+    uint32_t source_offset;
+    uint32_t source_size;
+    uint32_t source_fnv1a;
+    uint8_t hmp_to_cdda[DM2_FMTOWNS_HMP_TRACK_COUNT];
+} DM2_V1_FmtownsCddaMusicReceipt;
 
-/* Return the full 29-entry mapping table (read-only). */
-const uint8_t *dm2_v1_fmtowns_cdda_map_table(void);
+/* Read SKULL.EXP's native table from caller-owned original-media bytes. */
+int dm2_v1_fmtowns_cdda_music_parse(
+    const uint8_t *skull_data, size_t skull_size,
+    DM2_V1_FmtownsCddaMusicReceipt *out);
+
+/* Map an HMP track index through an authenticated source receipt. */
+int dm2_v1_fmtowns_hmp_to_cdda(
+    const DM2_V1_FmtownsCddaMusicReceipt *receipt, int hmp_track);
+
+const uint8_t *dm2_v1_fmtowns_cdda_map_table(
+    const DM2_V1_FmtownsCddaMusicReceipt *receipt);
 
 #ifdef __cplusplus
 }

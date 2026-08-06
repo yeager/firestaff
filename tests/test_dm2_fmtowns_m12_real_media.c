@@ -9,6 +9,7 @@
 #include "asset_status_m12.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_fmtowns_cdda_music.h"
 #include "dm2_v1_fmtowns_disc.h"
 #include "dm2_v1_runtime.h"
 
@@ -199,6 +200,8 @@ int main(void)
             size_t title_size = 0u;
             uint8_t *swoosh = NULL;
             size_t swoosh_size = 0u;
+            uint8_t *skull = NULL;
+            size_t skull_size = 0u;
             uint8_t pixels[320u * 200u / 2u];
             int first_ok = 0;
             int last_ok = 0;
@@ -246,6 +249,15 @@ int main(void)
                 swoosh_last_ok = dm2_v1_fmtowns_anim_stream_decode_frame(
                     swoosh, swoosh_size, 18u, pixels, sizeof(pixels),
                     &swoosh_last_frame);
+            }
+            if (launch.profile && launch.profile->fmtowns_disc_image &&
+                dm2_v1_fmtowns_disc_probe(
+                    launch.profile->fmtowns_disc_image,
+                    launch.profile->fmtowns_disc_image_size, &disc) == 0) {
+                (void)dm2_v1_fmtowns_disc_extract_alloc(
+                    launch.profile->fmtowns_disc_image,
+                    launch.profile->fmtowns_disc_image_size,
+                    &disc.skull_exp, &skull, &skull_size);
             }
             /* FNV-1a receipts are of the two 320x200/4bpp buffers decoded
              * from the selected HME-242 TITLE stream, not stored artwork. */
@@ -296,8 +308,19 @@ int main(void)
                        swoosh_first_frame.output_fnv1a != 0u &&
                        swoosh_last_frame.output_fnv1a != 0u,
                    "FM Towns SWOOSH infers its retail IMG1 canvas from EN/DL records in RAM");
+            expect(skull && skull_size == 374416u &&
+                       launch.profile->fmtowns_cdda_music.valid &&
+                       launch.profile->fmtowns_cdda_music.source_offset == 0x3dacu &&
+                       launch.profile->fmtowns_cdda_music.source_size == 29u &&
+                       skull[0x3dacu] == 0u && skull[0x3db0u] == 1u &&
+                       dm2_v1_fmtowns_hmp_to_cdda(
+                           &launch.profile->fmtowns_cdda_music, 4) == 1 &&
+                       dm2_v1_fmtowns_cdda_map_table(
+                           &launch.profile->fmtowns_cdda_music) != NULL,
+                   "FM Towns SKULL supplies its HMP-to-CDDA map from RAM");
             free(title);
             free(swoosh);
+            free(skull);
         }
         expect_complete_english_text_overlay(launch.profile);
         text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);

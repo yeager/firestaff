@@ -41,6 +41,7 @@
 #include "asset_find_by_hash.h"
 #include "dm2_v1_amiga_lzx.h"
 #include "dm2_v1_fmtowns_disc.h"
+#include "dm2_v1_fmtowns_cdda_music.h"
 #include "firestaff_amiga_adf.h"
 #include "firestaff_zip_extract.h"
 #include "firestaff_fmtowns_disc.h"
@@ -965,6 +966,8 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
            sizeof(profile->fmtowns_title_stream));
     memset(&profile->fmtowns_end_stream, 0,
            sizeof(profile->fmtowns_end_stream));
+    memset(&profile->fmtowns_cdda_music, 0,
+           sizeof(profile->fmtowns_cdda_music));
     /* M12 passes an explicitly selected retail archive verbatim.  Preserve
      * that choice: treating it as a directory would silently fall back to a
      * sibling PC install and change the selected platform. */
@@ -1089,6 +1092,22 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
             memset(&profile->fmtowns_end_stream, 0,
                    sizeof(profile->fmtowns_end_stream));
             return;
+        }
+        /* SKULL.EXP is the source owner for this HMP-to-CDDA selection
+         * table.  Retain only its bounded parsed receipt; the selected IMG
+         * remains the backing media and no executable or data file is
+         * materialised on disk.  A failed optional music receipt stays
+         * silent and cannot substitute a source literal. */
+        {
+            uint8_t *skull_data = NULL;
+            size_t skull_size = 0u;
+            if (dm2_v1_fmtowns_disc_extract_alloc(
+                    img_data, img_size, &probe.skull_exp,
+                    &skull_data, &skull_size) == 0) {
+                (void)dm2_v1_fmtowns_cdda_music_parse(
+                    skull_data, skull_size, &profile->fmtowns_cdda_music);
+            }
+            free(skull_data);
         }
         profile->fmtowns_startup_media_verified = 1;
         profile->fmtowns_animation_media_verified = 1;

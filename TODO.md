@@ -68,6 +68,10 @@
   than accepting pre-extracted `trackNN.raw` files or caller PCM. Recover
   each platform's original disc container and its audio-track binding before
   enabling playback.
+  The FM Towns HMP→CDDA map is now read from the selected original
+  `SKULL.EXP+0x3dac` buffer in RAM. Keep playback itself silent until native
+  SKULL execution and CDDA transport ownership are joined; do not revive a
+  source-literal lookup table.
 
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
