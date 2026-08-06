@@ -1,3 +1,9 @@
+# DM1 inventory hand-belt round-trip synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only hand/belt swap probe from M10 and made its
+  direct regression compile the source explicitly. It loads no original DM1
+  data and has no M11/runtime caller.
+
 # DM2 G1 champion-mirror selection source binding (2026-08-07)
 
 - ✅ The champion-selection seam now consumes the committed real G1 mirror

@@ -4947,6 +4947,12 @@ list(REMOVE_ITEM M10_SOURCES
 # its explicit regression already compiles it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_inventory_walk_pc34_compat.c")
+# `dm1_v1_inventory_hand_belt_round_trip_pc34_compat.c` is a contract-only
+# hand/belt swap probe with fixed item types, weights and slot state. It loads
+# no original DM1 data and has no M11/runtime caller; its direct regression
+# compiles it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_inventory_hand_belt_round_trip_pc34_compat.c")
 # `dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.c`
 # is a contract-only C111/C040 gate with fabricated party, panel and G0299
 # state. It loads no original DM1 data and has no M11/runtime caller; its
@@ -54109,7 +54115,9 @@ add_executable(test_dm1_v1_inventory_hand_belt_quiver_swap_pc34_compat tests/tes
 target_include_directories(test_dm1_v1_inventory_hand_belt_quiver_swap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_inventory_hand_belt_quiver_swap_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_inventory_hand_belt_quiver_swap_pc34_compat COMMAND test_dm1_v1_inventory_hand_belt_quiver_swap_pc34_compat)
-add_executable(test_dm1_v1_inventory_hand_belt_round_trip_pc34_compat tests/test_dm1_v1_inventory_hand_belt_round_trip_pc34_compat.c)
+add_executable(test_dm1_v1_inventory_hand_belt_round_trip_pc34_compat
+    tests/test_dm1_v1_inventory_hand_belt_round_trip_pc34_compat.c
+    src/dm1/dm1_v1_inventory_hand_belt_round_trip_pc34_compat.c)
 target_include_directories(test_dm1_v1_inventory_hand_belt_round_trip_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_inventory_hand_belt_round_trip_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_inventory_hand_belt_round_trip_pc34_compat COMMAND test_dm1_v1_inventory_hand_belt_round_trip_pc34_compat)
