@@ -25838,6 +25838,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   DM1 HoC C027/C040 inventory-input checks reject the same dimension-only
   cache records. This closes the last source-consumer cases found in the
   current M11 load scan; no capture requirement is being marked complete.
+- 2026-08-06 update: the DM1 action/spell utility-panel admission now also
+  requires decoded C010/C009 pixel payloads, not only loaded flags and native
+  dimensions. A dimension-only cache record can no longer suppress the real
+  source-owned panel route while leaving the action/spell strip empty.
 - [ ] DM1-HOC-OBJECTS-003 Capture the live held-object cursor on the host window
   after pickup and during movement. The source framebuffer now invalidates on
   pointer motion and hides the host arrow while G4055 is occupied; close only

@@ -44927,7 +44927,8 @@ static void m11_draw_utility_panel(const M11_GameViewState* state,
                 (M11_AssetLoader*)&state->assetLoader,
                 (unsigned int)DM1_V1_SPELL_AREA_BACKGROUND_GRAPHIC_ID_PC34);
         }
-        if (actionAsset && spellAsset && actionAsset->loaded && spellAsset->loaded &&
+        if (actionAsset && spellAsset && actionAsset->loaded && actionAsset->pixels &&
+            spellAsset->loaded && spellAsset->pixels &&
             (int)actionAsset->width == action.w &&
             (int)actionAsset->height == action.h &&
             (int)spellAsset->width == spell.w &&
