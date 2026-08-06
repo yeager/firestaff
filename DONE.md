@@ -57591,3 +57591,7 @@ alcove runtime and archive-media tests passed (4/4).
   `set_tile_record_link`, matching SKProject `sksvgame.cpp:1390-1399`.
 - ✅ Kept complete GAME_LOAD/resume admission blocked; this change only
   preserves the authentic decoded ownership edge. No release was made.
+# DM1 mirror reopen-after-save-load synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C040 reopen-after-save/load snapshot model from
+  M10; its explicit ReDMCSB regression remains the build owner.
