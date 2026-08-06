@@ -831,6 +831,14 @@
   loaders. They remain explicit diagnostic inputs only; a player-facing
   Continue/slot action can admit neither a Firestaff private envelope nor the
   real raw corpus before complete `DM2_GAME_LOAD` support exists.
+  2026-08-06 champion-format correction: the prior 261-byte convenience
+  `DM2_ChampionRecord` and all-ones SUPPRESS mask are not the PC-DOS
+  `c_hero` source format. Original payload decoding now uses SKWINDOS'
+  exact 0x107-byte `table1d6356` and preserves its raw records separately;
+  only independently proved display fields are copied out. The retained
+  legacy 261-byte helper is diagnostic-only. Continue with the complete
+  16-bit inventory, leader-hand (22-byte) and possession-index owner before
+  any original save can be resumed or hand commands can be shown live.
   2026-08-06 menu-inventory correction: the source-authenticated raw PC-DOS
   candidates remain visible to the startup scanner instead of being hidden as
   if no original save existed. Selection is separately regression-tested to

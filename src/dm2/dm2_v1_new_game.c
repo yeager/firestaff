@@ -45,6 +45,58 @@ static const int s_dm2_raw_db_record_size[DM2_RAW_THING_TYPE_COUNT] = {
     0x04, 0x08, 0x04, 0x00, 0x00, 0x00, 0x08, 0x04
 };
 
+/* Exact PC DOS c_hero SUPPRESS mask, copied from
+ * SKWINDOS/src/dm2data.cpp::table1d6356.  Do not replace this with a
+ * field-shaped all-ones mask: SUPPRESS consumes only the bits named here. */
+static const uint8_t s_dm2_pc_dos_champion_suppress_mask
+    [DM2_V1_ORIGINAL_CHAMPION_RECORD_SIZE] = {
+    0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x00,0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,
+    0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x7f,0x00,0x03,0x03,0x07,0x00,
+    0x3f,0x3f,0x7f,0x7f,0x7f,0x7f,0x00,0x00,0x03,0xff,0xff,0xff,0xff,0x00,0x00,0x00,
+    0x00,0x00,0x12,0x00,0x3f,0x00,0xff,0x03,0xff,0x03,0xff,0x3f,0xff,0x3f,0xff,0x03,
+    0xff,0x03,0xff,0xff,0xff,0xff,0xff,0xff,0x00,0x00,0xff,0xff,0xff,0xff,0xff,0xff,
+    0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xff,0xe0,
+    0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,
+    0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,
+    0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,
+    0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0xe0,
+    0xff,0xff,0x1f,0xe0,0xff,0xff,0x1f,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,0x00,
+    0x00,0x3f,0x0f,0x00,0x00,0x00,0x00
+};
+
+static uint16_t dm2_v1_read_u16_le(const uint8_t *p)
+{
+    return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
+}
+
+static void dm2_v1_copy_original_champion_fields(DM2_ChampionRecord *out,
+                                                  const uint8_t raw[DM2_V1_ORIGINAL_CHAMPION_RECORD_SIZE])
+{
+    if (!out || !raw) return;
+    memset(out, 0, sizeof(*out));
+    memcpy(out->first_name, raw, DM2_CHAMPION_NAME_FIRST_LEN);
+    memcpy(out->last_name, raw + 8, DM2_CHAMPION_NAME_LAST_LEN);
+    out->absolute_direction = raw[28];
+    out->squad_position = raw[29];
+    out->runes_count = raw[30];
+    out->poison_value = raw[31];
+    out->hand_command[0] = raw[32];
+    out->hand_command[1] = raw[33];
+    memcpy(out->spelled_runes, raw + 34, sizeof(out->spelled_runes));
+    out->cur_hp = dm2_v1_read_u16_le(raw + 54);
+    out->max_hp = dm2_v1_read_u16_le(raw + 56);
+    out->stamina = dm2_v1_read_u16_le(raw + 58);
+    out->mana = dm2_v1_read_u16_le(raw + 62);
+    out->food = (int16_t)dm2_v1_read_u16_le(raw + 68);
+    out->water = (int16_t)dm2_v1_read_u16_le(raw + 70);
+    out->portrait_index = raw[257];
+}
+
 /* ════════════════════════════════════════════════════════════════
  * Session validation
  * Source: Phase 6 internal consistency checks
@@ -615,18 +667,17 @@ static int dm2_v1_decode_original_champions(DM2_V1_SessionState *session,
                                             int length_prefixed,
                                             int requested_champions)
 {
-    uint8_t champ_mask[261];
     int decoded_champions = 0;
 
     if (!session || !buf || !pos || *pos > buf_size) return -1;
     if (requested_champions < 0) requested_champions = 0;
     if (requested_champions > 4) requested_champions = 4;
 
-    dm2_suppress_champion_mask(champ_mask);
     while (*pos < buf_size && decoded_champions < requested_champions) {
         int champ_size;
         DM2_ChampionRecord *champ =
             (DM2_ChampionRecord *)session->champion_data[decoded_champions];
+        uint8_t *raw = session->original_champion_records[decoded_champions];
 
         if (length_prefixed) {
             if (!dm2_v1_read_payload_i32_le(buf, buf_size, pos,
@@ -639,19 +690,24 @@ static int dm2_v1_decode_original_champions(DM2_V1_SessionState *session,
             champ_size = (int)(buf_size - *pos);
         }
 
-        memset(champ, 0, sizeof(*champ));
-        champ_size = dm2_suppress_decode_champion(buf + *pos,
-                                                  (size_t)champ_size,
-                                                  champ_mask,
-                                                  champ,
-                                                  0);
+        /* SKWINDOS c_savegame.cpp calls SKW_SUPPRESS_READER directly over
+         * c_hero (0x107 bytes) with table1d6356.  Decode that source record
+         * first, then copy only independently proven fields into the legacy
+         * convenience view. */
+        memset(raw, 0, DM2_V1_ORIGINAL_CHAMPION_RECORD_SIZE);
+        champ_size = dm2_suppress_decode(buf + *pos, (size_t)champ_size,
+                                         s_dm2_pc_dos_champion_suppress_mask,
+                                         DM2_V1_ORIGINAL_CHAMPION_RECORD_SIZE,
+                                         raw, 0);
         if (champ_size <= 0) return -1;
+        dm2_v1_copy_original_champion_fields(champ, raw);
         *pos += (size_t)champ_size;
         decoded_champions++;
     }
 
     if (decoded_champions <= 0) return -1;
     session->champion_count = (uint8_t)decoded_champions;
+    session->original_champion_records_valid = 1u;
     if (session->leader_index >= session->champion_count) {
         session->leader_index = 0;
     }

@@ -6329,20 +6329,19 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         dst->stat_bar_color = source_default_stat_bar_color[slot];
         dst->stat_bar_color_source_bound = 1;
         dst->portrait_index = 0u;
-        /* skproject/SKWIN/DME.h::Champion::heroType is byte 255 of the
-         * 261-byte save record.  REVIVE_PLAYER writes it from the source
+        /* SKWINDOS/src/c_hero.h places herotype at byte 257 of the PC-DOS
+         * 0x107-byte c_hero record.  REVIVE_PLAYER writes it from the source
          * mirror actuator and DRAW_CHAMPION_PICTURE uses that exact GDAT
          * index.  The local portrait_index tail is not a substitute. */
         dst->portrait_type_source_bound = 0;
-        const uint8_t *source_champion =
-            rt->session_snapshot.champion_data[slot];
         char source_first_name[DM2_V1_HUD_CHAMPION_NAME_MAX + 1];
         memset(source_first_name, 0, sizeof(source_first_name));
         memcpy(source_first_name, champ->first_name,
                DM2_V1_HUD_CHAMPION_NAME_MAX);
         source_first_name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
-        if (dst->occupied) {
-            dst->portrait_index = source_champion[255];
+        if (dst->occupied && rt->session_snapshot.original_champion_records_valid) {
+            dst->portrait_index = rt->session_snapshot
+                .original_champion_records[slot][257];
             dst->portrait_type_source_bound = 1;
         }
         memcpy(dst->name, champ->first_name, DM2_V1_HUD_CHAMPION_NAME_MAX);

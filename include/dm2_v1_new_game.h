@@ -57,6 +57,12 @@ extern "C" {
 /* Session version marker — written in slot header extension */
 #define DM2_SESSION_VERSION   1
 
+/* The PC DOS c_hero stream is 0x107 bytes.  It is deliberately kept apart
+ * from DM2_ChampionRecord: that older Firestaff convenience model is not a
+ * byte-for-byte SKSave representation.  Source: SKWINDOS/src/c_hero.h and
+ * dm2data.cpp::table1d6356. */
+#define DM2_V1_ORIGINAL_CHAMPION_RECORD_SIZE 263
+
 typedef struct DM2_V1_SessionState {
     /* Game tick counter — SUPPRESS-encoded 4-byte field */
     uint32_t game_tick;
@@ -98,6 +104,13 @@ typedef struct DM2_V1_SessionState {
     DM2_TimerEntry original_timers[DM2_MAX_TIMERS];
     uint32_t original_leader_hand_object;
     DM2_MinionTable original_minions;
+
+    /* Retained only after a successful original PC-DOS SUPPRESS decode.
+     * Consumers that require source byte positions (formation, hero type,
+     * and hand command state) must use this record, never the convenience
+     * DM2_ChampionRecord overlay above. */
+    uint8_t  original_champion_records[4][DM2_V1_ORIGINAL_CHAMPION_RECORD_SIZE];
+    uint8_t  original_champion_records_valid;
 
     /* Dungeon state (variable — level data) */
     /* Note: full dungeon state saved separately via dungeon_serialize() */

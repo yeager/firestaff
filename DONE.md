@@ -52413,3 +52413,13 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   candidate metadata cannot override a changed junk/torch/food record, and
   mismatched Thing types fail closed. Verified with real PC34 object-name,
   F0115 floor-material/pickup, and alcove-material tests.
+
+- ✅ 2026-08-06 DM2 PC-DOS champion SUPPRESS correction: original save
+  import now decodes the exact 263-byte `c_hero` record using
+  `SKWINDOS/src/dm2data.cpp::table1d6356`, retaining the raw source records
+  apart from Firestaff's older 261-byte convenience view. Proven name,
+  formation, stats and hero-type fields are copied only after that decode;
+  the old all-ones 261-byte mask is explicitly diagnostic-only. Synthetic
+  D2RS envelopes are rejected before save admission. The real eight-file
+  PC-DOS corpus passes the source receipt census; complete `GAME_LOAD`,
+  inventory/possession and live resume remain fail-closed.

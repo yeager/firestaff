@@ -637,8 +637,9 @@ typedef struct {
     uint8_t  portrait_index;
 } DM2_ChampionRecord;
 
-/* Fill mask[261] with SUPPRESS mask for a DM2 champion record.
- * Used with dm2_suppress_encode/decode for champion serialization. */
+/* Fill mask[261] for the legacy Firestaff-session record only. This is not
+ * SKWINDOS table1d6356 and must not be used for original PC-DOS SKSave
+ * decoding. */
 void dm2_suppress_champion_mask(uint8_t mask[261]);
 
 int dm2_suppress_encode_champion(const DM2_ChampionRecord *c,

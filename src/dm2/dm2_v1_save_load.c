@@ -1780,15 +1780,14 @@ const char *dm2_v1_save_source_evidence(void)
 }
 
 /* ════════════════════════════════════════════════════════════════
- * Champion SUPPRESS mask table
- * Source: docs/dm2_party_state.md — _4976_3992 write-mask pattern;
- * 261 bytes of per-field mask values (0x00=skip, 0xFF=all source bits).
- * SKProject's original table1d6356 is not yet catalogued here, so modeled
- * fields retain every bit rather than silently discarding high-bit corpus
- * values. ReDMCSB/SKProject: SKULLWIN/c_savegame.cpp
- * DM2_SUPPRESS_WRITER lines 1596-1659.
- * This mask marks every field that can hold non-zero data in a live
- * champion so SUPPRESS compression achieves source-authentic packing.
+ * Legacy Firestaff-session champion mask
+ *
+ * This 261-byte compatibility layout is not the original PC-DOS c_hero
+ * format and must never decode an original SKSave. The authoritative DOS
+ * import uses the 263-byte table1d6356 mask in dm2_v1_new_game.c, copied
+ * from SKWINDOS/src/dm2data.cpp. This helper remains only for isolated
+ * Firestaff-session diagnostics until that private representation is
+ * removed; no production save/resume path may promote its result.
  * ════════════════════════════════════════════════════════════════ */
 
 void dm2_suppress_champion_mask(uint8_t mask[261])
