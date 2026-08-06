@@ -132,15 +132,20 @@
   Game selection to the separate `CHTWE.EXP` handoff, draws its authenticated
   C004 entrance raster with the source-owned entrance palette, and never
   replays PC3.4 TITLE.C. A real-media regression covers that first entrance
-  frame; door-opening, live HUD and save-path capture remain open.
+  frame, the C002/C003 door-opening sequence, and the nonempty C017/F0128
+  live HUD/viewport frame after Prison. Audio/CDDA and save-path capture
+  remain open.
   2026-08-06: the Game exit now has a separate retail-program admission
   receipt: F31E accepts only `CHTWE.EXP` (283936 bytes, FNV-1a `3da136f6`)
   and F31J accepts only `CHTWJ.EXP` (284416 bytes, FNV-1a `f937db45`). This
   is the `C03_GAME` owner declared by ReDMCSB `COMPILE.H`, not a PC3.4
   substitute. M11 now consumes that receipt from the Switch Game exit and
   enters the verified F31 C004 entrance session without replaying TITLE.ANM
-  or falling through to PC3.4 input. Original-media capture of the subsequent
-  door-opening, HUD and save transaction remains required.
+  or falling through to PC3.4 input. 2026-08-06 follow-up: F31J's selected
+  CJDATA cache now keeps its top-level hash-verified pair ahead of the CDATA
+  sidecar directory, so the Japanese Switch Game exit reaches `CHTWJ.EXP`,
+  door-opening and the same live C017/F0128 handoff. Original-media audio,
+  Utility, ending and save transactions remain required.
   The raw CDDA extractor now streams a
   selected CUE track sectorwise; binding that authenticated PCM to M11 timing
   remains separate.

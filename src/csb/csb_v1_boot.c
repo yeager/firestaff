@@ -1372,6 +1372,54 @@ static int csb_v1_boot_scan_required_paths(const char *root,
     *graphics_match = -1;
     *dungeon_match = -1;
 
+    /* A selected FM Towns runtime cache has its chosen CDATA or CJDATA pair
+     * at its root, but preserves both original language directories as
+     * sidecars.  ReDMCSB COMPILE.H EXEID60/61 keeps F31E and F31J separate;
+     * scan that selected root pair first so a recursive walk cannot replace
+     * CJDATA with the sibling CDATA package merely because it sorts first. */
+    {
+        char direct_graphics[ASSET_PATH_MAX];
+        char direct_dungeon[ASSET_PATH_MAX];
+        int direct_graphics_match = -1;
+        int direct_dungeon_match = -1;
+        const CSB_V1_VariantInfo *direct_variant;
+
+        if (snprintf(direct_graphics, sizeof(direct_graphics),
+                     "%s/GRAPHICS.DAT", root) > 0 &&
+            snprintf(direct_dungeon, sizeof(direct_dungeon),
+                     "%s/DUNGEON.DAT", root) > 0) {
+            for (i = 0; g_csb_boot_graphics_hashes[i] != NULL; ++i) {
+                if (asset_file_matches_md5(direct_graphics,
+                                           g_csb_boot_graphics_hashes[i])) {
+                    direct_graphics_match = i;
+                    break;
+                }
+            }
+            for (i = 0; g_csb_boot_dungeon_hashes[i] != NULL; ++i) {
+                if (asset_file_matches_md5(direct_dungeon,
+                                           g_csb_boot_dungeon_hashes[i])) {
+                    direct_dungeon_match = i;
+                    break;
+                }
+            }
+        }
+        direct_variant = direct_graphics_match >= 0
+            ? csb_v1_runtime_get_variant_info(
+                  g_csb_boot_graphics_variants[direct_graphics_match])
+            : NULL;
+        if (direct_variant && direct_dungeon_match >= 0 &&
+            strcmp(direct_variant->md5_dungeon,
+                   g_csb_boot_dungeon_hashes[direct_dungeon_match]) == 0) {
+            csb_v1_boot_copy(graphics_path, graphics_path_size,
+                              direct_graphics);
+            csb_v1_boot_copy(dungeon_path, dungeon_path_size,
+                              direct_dungeon);
+            *graphics_match = direct_graphics_match;
+            *dungeon_match = direct_dungeon_match;
+            return 1;
+        }
+    }
+
     /* A normal CSB install is a loose GRAPHICS.DAT/DUNGEON.DAT pair.  Verify
      * that pair by content before considering any container.  In particular,
      * do not ask archive tools to enumerate unrelated, potentially enormous

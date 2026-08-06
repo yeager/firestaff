@@ -175,6 +175,15 @@
   identically named PC, Atari or Amiga cache file. `CHTWE.EXP` presentation,
   audio and save ownership remain capture-gated.
 
+- ✅ 2026-08-06 CSB FM Towns F31J runtime handoff: a selected CJDATA runtime
+  cache now keeps its verified top-level GRAPHICS.DAT/DUNGEON.DAT pair ahead
+  of the preserved CDATA sidecar. This prevents the recursive boot scan from
+  silently changing the Japanese F31J profile into F31E. The opt-in original
+  CD regression proves `TITLE.ANM` → `SWITCHTW` → `CHTWJ.EXP` → C004,
+  C002/C003 door opening, C017 HUD and F0128 live viewport. ReDMCSB
+  `COMPILE.H` EXEID60/61 is the program-ownership reference; audio/CDDA,
+  Utility, ending and save handoff remain explicitly open.
+
 - ✅ 2026-08-06 Nexus HUD layout envelope gate: the real DM.BIN 80-entry
   `menuctrl.c` layout parser now rejects non-sentinel coordinates outside the
   Saturn 320×224 display envelope, matching the existing hit-rectangle
