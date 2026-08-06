@@ -1,3 +1,8 @@
+- ✅ 2026-08-06 CI Windows warning-as-error fix: confined the POSIX-only
+  case-insensitive SKSave filename variant matcher to non-Windows builds.
+  Windows no longer compiles an unused helper under `-Werror`; the focused
+  `dm2_v1_dynamic_creature_material_plan` target builds and its test passes.
+
 - ✅ 2026-08-06 DM2 ZIP scan-to-launch handoff: a complete pair of
   hash-verified PC-DOS archive members now materializes to ordinary
   `asset-cache/dm2/GRAPHICS.DAT` and `DUNGEON.DAT` files. The scanner no

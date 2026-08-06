@@ -511,6 +511,7 @@ static uint32_t dm2_sksave_corpus_words_hash(const uint16_t *words,
     return hash;
 }
 
+#if !defined(_WIN32)
 static int dm2_sksave_ascii_lower(int c)
 {
     return (c >= 'A' && c <= 'Z') ? (c + ('a' - 'A')) : c;
@@ -598,6 +599,7 @@ static int dm2_sksave_basename_matches_variant(const char *name,
     if (out_backup) *out_backup = dm2_sksave_ascii_equal_ci(suffix, ".bak");
     return 1;
 }
+#endif
 
 #if !defined(_WIN32)
 static int dm2_sksave_basename_is_candidate_ci(const char *name)
