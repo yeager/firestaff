@@ -4626,6 +4626,12 @@ list(REMOVE_ITEM M10_SOURCES
 # its direct regression target already compiles the source explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_nested_container_weight_gate_pc34_compat.c")
+# `dm1_v1_chest_drop_to_floor_pc34_compat.c` is a contract-only scenario
+# driver with fixed chest, hand-stack and floor-drop arrays. It has no
+# original-DM1 input or M11/runtime caller; keep the shared inventory helper
+# in M10 while its direct regression target compiles this fixture explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_drop_to_floor_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
