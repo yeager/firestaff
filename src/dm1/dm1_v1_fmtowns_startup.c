@@ -446,7 +446,9 @@ int dm1_v1_fmtowns_startup_receipt_from_directory(
     size_t iconSize = 0, infoSize = 0;
     int ok = 0;
     const char *gameName = japanese ? "JDM.EXP" : "EDM.EXP";
-    if (!root || !out ||
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!root ||
         !read_startup_file(root, "AUTOEXEC.BAT", &autoexec, &autoexecSize) ||
         !read_startup_file(root, gameName, &game, &gameSize) ||
         !read_startup_file(root, "TMENU.EXP", &menu, &menuSize) ||
