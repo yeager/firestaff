@@ -4540,7 +4540,7 @@ that its exact runtime path is not already source-locked and tested.
     fail-closed in the production API. Only `dm2_v1_boot` may expose a menu
     hit after decoding the mounted GDAT RAW4 matrix.
     **2026-08-06 real-corpus verification:** the supplied PC DOS corpus passes
-    all 102 startup/menu action checks, including decoded 320×200 title and
+    all 103 startup/menu action checks, including decoded 320×200 title and
     menu GDAT captures, palette/package ownership and the first-HUD handoff.
     New Game remains at the original `GAME_LOAD` boundary; it does not create
     a synthetic session when that owner is unavailable.

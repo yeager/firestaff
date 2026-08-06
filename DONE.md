@@ -51387,7 +51387,7 @@ records. `firestaff` builds successfully; packaged Mac capture remains an open
 verification item.
 
 - ✅ 2026-08-06 DM2 PC-DOS startup/menu real-corpus verification: ran the
-  complete 102-case startup action contract and the M11 startup/profile gate
+  complete 103-case startup action contract and the M11 startup/profile gate
   against the user's existing `dos_extract` corpus. The checks consume the
   actual 320×200 decoded title/menu GDAT records and package palette/HUD
   handoff, while New Game remains blocked at original `GAME_LOAD` instead of
