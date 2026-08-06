@@ -858,14 +858,14 @@ static const struct real_asset_case g_real_cases[] = {
     {
         "JP Track 02 BIN",
         "FIRESTAFF_THERON_TRACK02_JP_BIN",
-        "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin",
+        "theron/TQJP02.bin",
         THERON_TRACK02_MD5_JP_BIN,
         1
     },
     {
         "US Track 02 BIN",
         "FIRESTAFF_THERON_TRACK02_US_BIN",
-        "theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin",
+        "theron/TQUS02.bin",
         THERON_TRACK02_MD5_US_BIN,
         1
     },

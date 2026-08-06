@@ -3,6 +3,14 @@
   `main` now retain the newest full matrix instead of queuing obsolete commits
   ahead of it; pull-request runs remain isolated by ref.
 
+- ✅ 2026-08-06 Theron startup real-asset probe path correction: the receipt
+  probe now discovers the supplied authentic `theron/TQJP02.bin` and
+  `theron/TQUS02.bin` files instead of obsolete `theron-extras` filenames.
+  Both real BIN variants now exercise the 313-pass receipt path, including
+  regional bitmap routes, 32×27 startup candidate, descriptor/text/roster
+  bytes and hash-bound boot profile; unsupported ISO names remain explicit
+  skips.
+
 - ✅ 2026-08-06 Theron real palette-bind coverage: the startup palette bind
   regression now discovers the supplied standard-root `TQUS02.bin` and
   `TQJP02.bin` automatically, verifies both regional hash profiles and checks
