@@ -6,6 +6,12 @@
   decoded descriptor records to Structure1B/VDP1 material ownership; palette,
   transform and drawing evidence remain capture-gated.
 
+- **NEXUS-SAL-MAP-CORPUS-RECEIPT:** The 16 real European SAL/MAP pairs now
+  pass the retail byte-zero MAP parser (154 bounded eight-byte rows, `FF FF`
+  terminators, all SAL windows in bounds). Continue with the missing Saturn
+  event→MAP selector trace and SDDRVS playback consumer; do not infer those
+  semantics from row order or decoded tone candidates.
+
 - **NEXUS-STALE-ISSUE-PAGES:** The three historical Nexus issue pages are now
   explicitly labelled as snapshots. Keep the strict-fidelity inventory and
   capture gates authoritative when further format or runtime gaps are found.

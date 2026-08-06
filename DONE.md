@@ -15,6 +15,12 @@
   `SN_FLOOR.MNS`/`SN_WALL.MNS` hashes and DMDF routes are bound, while the
   real TEXT4/TABL/FONT012 receipts leave the Saturn text-consumer gate closed.
 
+- ✅ 2026-08-06 Nexus SAL/MAP retail corpus verification: the real
+  `SNDLEV00-15.SAL/.MAP` corpus passes `test_nexus_v1_sal_map_corpus` with
+  16 pairs, 154 bounded eight-byte MAP records and no out-of-bounds SAL
+  windows. The decoder retains 720 tone candidates as diagnostic source
+  evidence; event dispatch, SDDRVS ownership and host playback remain gated.
+
 - ✅ 2026-08-06 Nexus DGN corpus geometry receipt: fixed
   `nexus_v1_inspect_dgn_material_corpus()` to count the real Structure3 mesh
   extraction receipt instead of the unrelated post-grid/collision
