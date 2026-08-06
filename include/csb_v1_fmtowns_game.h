@@ -10,6 +10,14 @@
 extern "C" {
 #endif
 
+#define CSB_V1_FMTOWNS_GAME_MUSIC_MAP_COUNT 10u
+#define CSB_V1_FMTOWNS_GAME_MUSIC_MAP_WIDTH 32u
+#define CSB_V1_FMTOWNS_GAME_MUSIC_MAP_HEIGHT 32u
+#define CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_BYTES \
+    (CSB_V1_FMTOWNS_GAME_MUSIC_MAP_COUNT * \
+     CSB_V1_FMTOWNS_GAME_MUSIC_MAP_WIDTH * \
+     CSB_V1_FMTOWNS_GAME_MUSIC_MAP_HEIGHT)
+
 /*
  * FM Towns Game-program admission.
  *
@@ -32,6 +40,10 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     char executable_path[512];
     char graphics_md5[33];
     char dungeon_md5[33];
+    int music_table_verified;
+    uint32_t music_table_source_offset;
+    uint32_t music_table_size;
+    uint32_t music_table_fnv1a;
     const char *source_evidence;
 } CSB_V1_FmtownsGameHandoffReceipt;
 
@@ -42,6 +54,16 @@ int csb_v1_fmtowns_game_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsGameHandoffReceipt *out_receipt);
+
+/* Return the native F31 music selector (zero means no selector) for one
+ * source map square. The value is the exact byte passed to F0719_PlayMusicTrack
+ * by ReDMCSB MUSIC.C F0743; it is not a synthesized physical CD track number. */
+int csb_v1_fmtowns_game_music_track_at(
+    const CSB_V1_FmtownsGameHandoffReceipt *receipt,
+    uint32_t map_index,
+    uint32_t map_x,
+    uint32_t map_y,
+    uint8_t *out_track);
 
 #ifdef __cplusplus
 }

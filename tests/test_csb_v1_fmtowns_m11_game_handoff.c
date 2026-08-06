@@ -47,6 +47,7 @@ int main(void)
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
+    uint8_t music_track;
 
     if (language_name && strcmp(language_name, "ja") == 0) {
         language = CSB_FMTOWNS_SWITCH_JAPANESE;
@@ -126,7 +127,10 @@ int main(void)
     CHECK(csb_v1_fmtowns_game_handoff_open(
               (const CSB_V1_BootProfile *)view.csbBootProfile,
               language, &direct_handoff) &&
-              strcmp(direct_handoff.executable_name, expected_program) == 0,
+              strcmp(direct_handoff.executable_name, expected_program) == 0 &&
+              direct_handoff.music_table_verified &&
+              csb_v1_fmtowns_game_music_track_at(&direct_handoff, 0u, 2u, 0u,
+                                                  &music_track),
           "verified F31 profile resolves its language-owned Game program");
 
     /* ReDMCSB SWITCH.C F2279 registers G4171 at (47,105), 62x39. */

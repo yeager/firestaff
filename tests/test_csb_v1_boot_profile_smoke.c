@@ -458,6 +458,7 @@ static void test_fmtowns_game_program_handoff(void)
     const char *data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR");
     CSB_V1_BootProfile profile;
     CSB_V1_FmtownsGameHandoffReceipt receipt;
+    uint8_t music_track;
 
     if (!data_dir || data_dir[0] == '\0') {
         printf("  SKIP: FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR not set\n");
@@ -476,8 +477,23 @@ static void test_fmtowns_game_program_handoff(void)
                   receipt.game_program_is_c03_game &&
                   strcmp(receipt.executable_name, "CHTWE.EXP") == 0 &&
                   receipt.executable_size == 283936u &&
-                  receipt.executable_fnv1a == 0x3da136f6u,
+                  receipt.executable_fnv1a == 0x3da136f6u &&
+                  receipt.music_table_verified &&
+                  receipt.music_table_source_offset == 271144u &&
+                  receipt.music_table_size ==
+                      CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_BYTES &&
+                  receipt.music_table_fnv1a == 0x3faffb70u,
               "SWITCHTW English Game exit admits only retail CHTWE.EXP");
+        music_track = 0u;
+        CHECK(csb_v1_fmtowns_game_music_track_at(&receipt, 0u, 2u, 0u,
+                                                  &music_track) &&
+                  music_track == 7u &&
+                  csb_v1_fmtowns_game_music_track_at(&receipt, 0u, 0u, 0u,
+                                                      &music_track) &&
+                  music_track == 0u &&
+                  !csb_v1_fmtowns_game_music_track_at(&receipt, 10u, 0u, 0u,
+                                                       &music_track),
+              "F31E Game music selectors come only from the verified G4099 table");
         CHECK(!csb_v1_fmtowns_game_handoff_open(
                   &profile, CSB_FMTOWNS_SWITCH_JAPANESE, &receipt),
               "F31E profile rejects the F31J Game-program route");

@@ -54608,6 +54608,15 @@ alcove runtime and archive-media tests passed (4/4).
   authentic TITLE/STORY/ENDING playback timeline regression `1367 passed,
   0 failed`.
 
+- ✅ 2026-08-06 CSB FM Towns Game music-table admission: the F31E/F31J
+  C03_GAME handoff now binds ReDMCSB `MUSIC.C`'s real
+  `G4099_SquareCoordinatesToMusicTrack[10][32][32]` bytes rather than a host
+  coordinate map. It verifies the raw CHTWE/CHTWJ offsets (271144/271624),
+  shared 10,240-byte FNV-1a `3faffb70`, and exposes bounded map/x/y lookups
+  returning the native F0719 selector. The real F31E boot smoke and M11
+  entrance handoff regressions exercise the receipt; live movement-triggered
+  CDDA remains intentionally open.
+
 - ✅ Removed the remaining fixed arithmetic wall-index helper from the old
   `firestaff_dungeon_viewport_bridge` API. The previous `300 + distance * 18
   + position * 6` calculation was not a ReDMCSB or PC34 `GRAPHICS.DAT`

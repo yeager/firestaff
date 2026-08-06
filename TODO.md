@@ -684,7 +684,12 @@
   not a derived track map. M11 dispatches each F2275 TD/TR request through
   that CUE's physical Red Book track and ends its one-shot transport when the
   animation owner returns, matching F0719's replacement boundary without
-  generated PCM or a loop. Native CD pause/resume, Utility, ending and save
+  generated PCM or a loop. The C03 Game handoff now also admits the exact
+  10x32x32 `G4099_SquareCoordinatesToMusicTrack` payload directly from the
+  selected CHTWE/CHTWJ program (raw offsets 271144/271624, FNV-1a
+  `3faffb70`), so a future movement consumer can query only the original
+  map/x/y selector and cannot substitute a host coordinate map. Native CD
+  pause/resume, live movement-triggered CDDA, Utility, ending and save
   transactions remain required.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
