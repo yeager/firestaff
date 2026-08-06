@@ -67,6 +67,13 @@
   geometry. The HUD remains no-draw/input-capture-gated after this source
   receipt.
 
+# Nexus startup/menu source retail identity gate (2026-08-06)
+
+- ✅ Hardened `test_nexus_v1_startup_menu_source` with the authenticated
+  European DM.BIN MD5 before accepting its startup/menu loader, FONT256,
+  STABG and VDP2-register receipts. Saturn menu order, text placement and
+  VDP1/VDP2 composition remain capture-gated.
+
 # Nexus startup media retail identity gate (2026-08-06)
 
 - ✅ Added exact retail MD5 checks to the startup-media regression for

@@ -2,6 +2,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include "asset_find_by_hash.h"
 
 static size_t count_be32(const uint8_t *data, size_t size, uint32_t value)
 {
@@ -62,6 +63,13 @@ int main(void)
         return 77;
     }
     fclose(file);
+
+    if (!asset_file_matches_md5(path,
+                                "e88d60859f65f08fa622e1992b02280f")) {
+        free(data);
+        fprintf(stderr, "FAIL: DM.BIN is not the authenticated European retail source\n");
+        return 1;
+    }
 
     /* DM.BIN's adjacent strings are the retail startup/menu loader's own
      * resource names. The pointer counts are byte-level receipts only; they

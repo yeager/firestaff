@@ -815,6 +815,11 @@ level or consumer bindings.
   rectangles to Saturn input/VDP1/VDP2 consumers; geometry alone is not a
   drawable HUD proof.
 
+- **NEXUS-STARTUP-MENU-CORPUS-IDENTITY:** The startup/menu source regression
+  now requires the authenticated European DM.BIN before accepting its loader,
+  FONT256, STABG and VDP2-register receipts. These are source ownership facts;
+  menu order, text placement and Saturn presentation remain capture-gated.
+
 - **NEXUS-SPELL-ACTION-CAPTURE:** DM.BIN spell tables and effect constants
   remain available as disassembly evidence, but the standalone host effect
   helper is now test-only. Bind the Saturn spell action, status writes,
