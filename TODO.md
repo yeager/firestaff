@@ -62,8 +62,10 @@
 - **DM1-PENDING-WOUNDS-SYNTHETIC-AUDIT:** The pending-wounds tick helper is a
   contract-only synthetic state machine. It mirrors ReDMCSB F0320/F0321 but
   does not consume live champion records, original saves, or authenticated
-  DM1 data, and it has no production caller. Keep it test-only until the
-  live F0320 owner is bound to real runtime state.
+  DM1 data. Keep it test-only: the live M10 F0321 staging and F0320 consume
+  route already owns real `GameWorld_Compat.pendingChampionCombat` state and
+  source-backed HUD handoff. Do not introduce a second production caller
+  through this fixture.
 
 - **DM1-D3C-STAIRS-PIT-SYNTHETIC-AUDIT:** The D3C stairs/pit dispatch helper
   remains a test-only contract fixture for ReDMCSB dispatch/C10 rules. The
