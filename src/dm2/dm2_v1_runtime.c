@@ -101,9 +101,6 @@ typedef struct {
     uint32_t last_generated_object;
     int last_projectile_slot;
     int projectile_actuator_count;
-    /* Consumed by the next V1 frame only. It represents an accepted party
-     * move, never a cooldown, blocked move, or host-supplied animation. */
-    int scene_movement_pending;
     /* V2 smooth movement callbacks — registered by dm2_v2_runtime */
     DM2_V2_MoveCallback  move_callback;
     DM2_V2_TurnCallback  turn_callback;
@@ -6563,7 +6560,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     memset(&weather_context, 0, sizeof(weather_context));
     memset(&weather_renderer, 0, sizeof(weather_renderer));
     memset(&weather_m11, 0, sizeof(weather_m11));
-    if (rt->outdoor && !rt->scene_movement_pending &&
+    if (rt->outdoor &&
         rt->weather_distant_slot_count > 0u &&
         rt->weather_distant_slots_map_token ==
             dm2_v1_runtime_g1_scene_map_token(rt->dungeon_level,
@@ -6651,7 +6648,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
             &rt->gdat_scene_light_receipt, &rt->c_light_receipt,
             &c_light_parameter);
         int apply_ok = darkness_ok && dm2_v1_boot_gdat_scene_m11_apply_light_palette(
-            rt->boot, rt->scene_movement_pending, c_light_parameter,
+            rt->boot, 0, c_light_parameter,
             rt->c_light_receipt.receipt_hash, &scene_material_plan);
         if (!apply_ok) {
             /* An observed c_light state selects _32cb_0804.  Do not present
@@ -6665,7 +6662,7 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_v1_viewport_set_gdat_scene_material_plan(
         &viewport, scene_material_plan_for_m11);
     dm2_v1_viewport_set_gdat_scene_movement_active(
-        &viewport, rt->scene_movement_pending);
+        &viewport, 0);
     dm2_v1_viewport_set_gdat_wall_material_plan(
         &viewport, &rt->gdat_wall_material_plan);
     memset(&door_render_plan, 0, sizeof(door_render_plan));
@@ -6793,11 +6790,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
     dm2_runtime_capture_door_render_receipt(&viewport);
     viewport.tick_count = rt->tick_count;
     dm2_v1_viewport_render(&viewport);
-    /* TODO(source-bound): retain SKProject's full glbIsPlayerMoving cadence
-     * only after its original timing state is decoded. This V1 runtime has
-     * one accepted-move presentation frame, so consume the proven 700/701
-     * offsets once instead of inventing additional animation samples. */
-    rt->scene_movement_pending = 0;
     /* LOAD_GDAT_INTERFACE_00_02 must hand the full original command family
      * to M11. The count proves all chrome and four party portraits consumed
      * their plan-owned pixels; a partial plan cannot fall through to a
@@ -8503,10 +8495,11 @@ int dm2_v1_runtime_move(int dir) {
         if (rt->move_callback) {
             rt->move_callback(old_x, old_y, nx, ny);
         }
-        /* SKProject DRAW_DUNGEON_GRAPHIC moves only the floor/ceiling planes
-         * while glbIsPlayerMoving is active. Arm the next renderer-owned V1
-         * frame after an accepted step; blocked moves do not enter it. */
-        rt->scene_movement_pending = 1;
+        /* SKProject keeps the old pose and its glbIsPlayerMoving countdown
+         * until PERFORM_MOVE commits the step. This V1 state has neither the
+         * source hero/inventory inputs needed for CALC_PLAYER_WALK_DELAY nor
+         * that delayed pose owner, so it must not invent a one-frame 700/701
+         * viewport offset after an immediate move. */
         gs->party_x = nx;
         gs->party_y = ny;
         for (int i = 1; i <= dm2_v1_trigger_get_builtin_count(); ++i) {

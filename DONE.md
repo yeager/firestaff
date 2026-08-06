@@ -52689,6 +52689,15 @@ no-draw/capture-gates är oförändrade.
   `PROCEED_SPELL_FAILURE` preserves C068--C070 panel state and draws the
   NEED_FLASK GDAT image for class `0x30`; Firestaff now retains only that
   source failure class until those original consumers are bound.
+
+- ✅ 2026-08-06 DM2 movement-cadence no-fabrication correction: removed the
+  runtime's post-commit one-frame `glbIsPlayerMoving` substitute. SKProject
+  renders the saved old pose while a walk-delay countdown runs, then commits
+  through `PERFORM_MOVE`; the active V1 state lacks those source-owned hero,
+  inventory and spell-effect inputs, so it now renders the settled pose rather
+  than applying the real 700/701 plane offsets at a false time. The isolated
+  party walk-delay helper now delegates to the source-locked
+  `DM2_CALC_PLAYER_WALK_DELAY` receipt instead of a conflicting local formula.
 ✅ 2026-08-06 Nexus startup menu text sanitization: production save/chrome
 builders no longer emit hoststrängarna `DUNGEON MASTER NEXUS`, `LOAD GAME`,
 `NEW GAME` eller `LOAD SLOT ##`. Riktig radgeometri och källans slot-identitet

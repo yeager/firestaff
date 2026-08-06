@@ -26937,6 +26937,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   possession transfer and session-state updates are all connected. Do not
   treat a marker receipt as a playable New Game path.
 
+- [ ] DM2 delayed movement ownership: `PERFORM_MOVE`'s real
+  `glbIsPlayerMoving` path retains the old party pose and derives its countdown
+  from live champion loads, wounds, walk-speed modifiers and global Aura of
+  Speed. The active V1 runtime deliberately renders only the settled source
+  pose until those G1 hero/inventory/spell-state owners are restored; do not
+  reintroduce a host-defined one-frame floor/ceiling offset.
+
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN
   tables). Remaining work is original Saturn/VDP1 capture and source-locked

@@ -27,29 +27,6 @@
 
 #include <string.h>
 
-/* Walk delay formula from c_querydb.cpp:2175 DM2_CALC_PLAYER_WALK_DELAY.
- *
- * base = 2 + (overburdened ? 4 : (heavy_load ? 2 : 0))
- *       + (bodyflag & 0x01 ? 2 : 0)
- * final = max(2, base + walkspeed)
- *
- * overburdened: player_weight >= max_load
- * heavy_load:   player_weight * 2 >= max_load * 3 / 2 */
-static int calc_single_hero_walk_delay(const DM2_V1_HeroMoveState *h)
-{
-    int base = 2;
-    if (h->max_load > 0) {
-        if (h->player_weight >= h->max_load)
-            base += 4;
-        else if ((uint32_t)h->player_weight * 2 >= (uint32_t)h->max_load * 3 / 2)
-            base += 2;
-    }
-    if (h->bodyflag & 0x01)
-        base += 2;
-    int final_delay = base + (int)h->walkspeed;
-    return final_delay < 2 ? 2 : final_delay;
-}
-
 int dm2_v1_calc_party_walk_delay(
     const DM2_V1_HeroMoveState *heroes,
     int hero_count)
@@ -59,10 +36,20 @@ int dm2_v1_calc_party_walk_delay(
     if (!heroes || hero_count <= 0) return 1;
 
     for (int i = 0; i < hero_count && i < 4; i++) {
-        if (!heroes[i].alive) continue;
+        int32_t delay = 1;
 
-        int d = calc_single_hero_walk_delay(&heroes[i]);
-        if (d > max_delay) max_delay = d;
+        if (!heroes[i].alive) continue;
+        /* SKProject c_querydb.cpp:2175 DM2_CALC_PLAYER_WALK_DELAY.
+         * Keep this compatibility receipt on the single source-locked
+         * implementation; the old local approximation used the wrong load
+         * threshold and bodyflag bit. */
+        if (dm2_v1_skproject_calc_player_walk_delay(
+                heroes[i].max_load, heroes[i].player_weight,
+                heroes[i].bodyflag, heroes[i].walkspeed,
+                heroes[i].savegames1_b_04, &delay, NULL) &&
+            delay > max_delay) {
+            max_delay = (int)delay;
+        }
     }
 
     return max_delay;

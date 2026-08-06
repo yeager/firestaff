@@ -127,7 +127,18 @@ static void test_calc_party_walk_delay(void)
     heroes[1].alive = 0;
 
     d = dm2_v1_calc_party_walk_delay(heroes, 2);
-    assert(d >= 1);
+    assert(d == 2);
+
+    heroes[0].player_weight = 70;
+    assert(dm2_v1_calc_party_walk_delay(heroes, 2) == 4);
+
+    heroes[0].player_weight = 50;
+    heroes[0].bodyflag = 0x20;
+    assert(dm2_v1_calc_party_walk_delay(heroes, 2) == 4);
+
+    heroes[0].bodyflag = 0;
+    heroes[0].savegames1_b_04 = 1;
+    assert(dm2_v1_calc_party_walk_delay(heroes, 2) == 1);
 
     printf("  PASS: calc_party_walk_delay\n");
 }
