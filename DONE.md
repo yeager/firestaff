@@ -9,6 +9,12 @@
   `tests/nexus_v1_boot_profile_smoke.c`. Verification: 27/27 smoke checks,
   `git diff --check` clean.
 
+- ✅ The same audit removed `RESTRICTED_DOOR_CLOSES` from the default Nexus
+  runtime flags. Retail door transition/timer ownership is still absent from
+  the Saturn capture, so a default boot must not claim the DM1-shaped timed
+  door behavior. The flag remains available only for explicit compatibility
+  profiles. The smoke regression now covers both uncaptured capabilities.
+
 # Nexus PLRD provisions quarantine (2026-08-06)
 
 - ✅ 2026-08-06 DM2 canonical GRAPHICS.DAT probe correction: the real-data

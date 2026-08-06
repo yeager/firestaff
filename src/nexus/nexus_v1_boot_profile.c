@@ -39,7 +39,8 @@
  *   • NO_PARTY_SWAP         — party order fixed at dungeon entry
  *   • NO_KINGS_WISDOM       — no Kings Wisdom scroll equivalent
  *   • NO_GANGULF_REVIVAL    — Gangulf mechanic absent
- *   • RESTRICTED_DOOR_CLOSES — doors auto-close after fixed duration
+ *   • RESTRICTED_DOOR_CLOSES — reserved for a captured door-timer consumer;
+ *     the default profile must not advertise it while that route is unbound
  *   • SATURN_CDDA_AUDIO     — reserved for a captured CDDA consumer; the
  *     default profile must not advertise it while level selection and
  *     playback remain unbound
@@ -52,8 +53,7 @@ static const unsigned int g_defaultRuntimeFlags =
     | NEXUS_V1_RF_NO_MNEMONIC_RUNE
     | NEXUS_V1_RF_NO_PARTY_SWAP
     | NEXUS_V1_RF_NO_KINGS_WISDOM
-    | NEXUS_V1_RF_NO_GANGULF_REVIVAL
-    | NEXUS_V1_RF_RESTRICTED_DOOR_CLOSES;
+    | NEXUS_V1_RF_NO_GANGULF_REVIVAL;
 
 /* ── Default boot profile ───────────────────────────────────────── */
 static const Nexus_V1_BootProfile g_defaultProfile = {

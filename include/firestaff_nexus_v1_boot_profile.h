@@ -114,9 +114,9 @@ typedef enum {
 
     /*
      * NEXUS_V1_RF_RESTRICTED_DOOR_CLOSES:
-     *   In Nexus, doors opened by actuators stay open for a fixed
-     *   duration before auto-closing (vs DM1's stay-open). Emulates
-     *   Saturn timing.
+     *   Reserved for a source-bound Saturn door-timer consumer. The retail
+     *   door transition and timer owner are not captured, so it is not part
+     *   of the default profile.
      */
     NEXUS_V1_RF_RESTRICTED_DOOR_CLOSES  = (1 << 8),
 
@@ -141,8 +141,7 @@ typedef struct {
      *   NEXUS_V1_RF_NO_MNEMONIC_RUNE |
      *   NEXUS_V1_RF_NO_PARTY_SWAP |
      *   NEXUS_V1_RF_NO_KINGS_WISDOM |
-     *   NEXUS_V1_RF_NO_GANGULF_REVIVAL |
-     *   NEXUS_V1_RF_RESTRICTED_DOOR_CLOSES
+     *   NEXUS_V1_RF_NO_GANGULF_REVIVAL
      */
     unsigned int runtimeFlags;
 

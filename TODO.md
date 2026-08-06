@@ -99,6 +99,8 @@
   2026-08-06 follow-up: the Nexus default boot profile no longer advertises
   `SATURN_CDDA_AUDIO`; the flag is reserved for a future source-bound capture
   and cannot be mistaken for playback readiness.
+  The same default profile now leaves `RESTRICTED_DOOR_CLOSES` clear because
+  the Saturn door-transition/timer consumer is still capture-gated.
 
 - **NEXUS-STALE-ISSUE-PAGES:** The three historical Nexus issue pages are now
   explicitly labelled as snapshots. Keep the strict-fidelity inventory and

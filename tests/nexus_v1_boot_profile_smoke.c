@@ -31,6 +31,8 @@ int main(void) {
         CHECK(def->presentationMode == 0, "presentationMode == 0 (V1_ORIGINAL)");
         CHECK((def->runtimeFlags & NEXUS_V1_RF_SATURN_CDDA_AUDIO) == 0,
               "default profile does not advertise uncaptured CDDA playback");
+        CHECK((def->runtimeFlags & NEXUS_V1_RF_RESTRICTED_DOOR_CLOSES) == 0,
+              "default profile does not advertise uncaptured door timers");
     }
 
     /* ── 2. Init and path resolution ── */
