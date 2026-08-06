@@ -1016,7 +1016,8 @@ static const char* dm2_data_dir(char fallback[512]) {
  * never merely the configured scan root.  SKULL.ASM T560 owns DUNGEON.DAT;
  * dm2_v1_boot_scan_assets() is the corresponding hash-first Firestaff entry.
  */
-static void expect_m12_dm2_verified_launch(const char* data_dir) {
+static void expect_m12_dm2_verified_launch(const char* data_dir,
+                                           const char* expected_asset_root) {
     M12_StartupMenuState menu;
     M12_StartupMenuInitOptions options;
     M11_GameViewState launched_view;
@@ -1033,6 +1034,9 @@ static void expect_m12_dm2_verified_launch(const char* data_dir) {
                 "M12 publishes a DM2 runtime data directory");
     expect_true(runtime_dir && strstr(runtime_dir, "::") == NULL,
                 "loose DOS data keeps an ordinary runtime directory");
+    expect_true(runtime_dir && expected_asset_root &&
+                    strcmp(runtime_dir, expected_asset_root) == 0,
+                "M12 hands M11 the authenticated DM2 asset-owner directory");
 
     /* Main card -> options; first UP wraps the initial presentation row to
      * the dedicated Launch row.  No option is changed by this sequence. */
@@ -1210,7 +1214,7 @@ int main(void) {
         return g_failures == 0 ? 0 : 1;
     }
 
-    expect_m12_dm2_verified_launch(data_dir);
+    expect_m12_dm2_verified_launch(data_dir, preflight.asset_root);
 
     fill_dm2_launch_spec(&spec, data_dir);
 

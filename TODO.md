@@ -4468,9 +4468,9 @@ that its exact runtime path is not already source-locked and tested.
     a synthetic session when that owner is unavailable.
     **2026-08-06 M12 launch-root regression:** the real-data M11 startup gate
     now also drives the actual M12 card → options → Launch sequence.  It
-    proves that a verified DOS install rooted above its original `DATA/`
-    directory hands M11 the matched `GRAPHICS.DAT` owner directory, and then
-    reaches the DM2 boot profile.  Keep package/app captures separate: a
+    proves byte-for-byte path equality between M12's runtime handoff and the
+    verified boot profile's `GRAPHICS.DAT` owner directory before it reaches
+    the DM2 boot profile.  Keep package/app captures separate: a
     stale installed bundle may not be used as evidence for this source path.
 41. **DM2-PARTY-INVENTORY-SPELLS:** Complete real champion, inventory, item,
    skill, action, spell, damage, condition, and UI mutation paths through

@@ -51208,8 +51208,9 @@ verification item.
 - ✅ 2026-08-06 DM2 M12 verified-launch handoff: extended the real-data M11
   startup gate through the actual M12 DM2 card, options and Launch action.
   A DOS install whose original files are under `DATA/` now has a regression
-  proof that M12 passes the matched asset-owner directory to M11, which boots
-  the hash-verified PC-English profile. This covers the source build, not a
+  proof that M12's runtime directory exactly equals the matched asset-owner
+  directory before M11 boots the hash-verified PC-English profile. This covers
+  the source build, not a
   separately installed stale application bundle; no game data was written,
   unpacked or tracked.
 # ✅ 2026-08-06 DM1 inventory fallback removal
