@@ -676,9 +676,9 @@
   sidecar directory, so the Japanese Switch Game exit reaches `CHTWJ.EXP`,
   door-opening and the same live C017/F0128 handoff. Original-media audio,
   Utility, ending and save transactions remain required.
-  The raw CDDA extractor now streams a
-  selected CUE track sectorwise; binding that authenticated PCM to M11 timing
-  remains separate.
+  The raw CDDA extractor now streams or allocates a selected CUE track from
+  authenticated Red Book sectors; binding that PCM to M11 timing remains
+  separate.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP

@@ -128,6 +128,13 @@ int csb_v1_fmtowns_cdda_extract_file_to_path(
     const CSB_V1_FmtownsCddaTrack *track,
     const char *out_path);
 
+/* Read one verified CDDA track from the original raw image into caller-owned
+ * memory.  This is the M11 transport boundary: it returns the actual Red
+ * Book sectors (16-bit signed LE stereo, 44100 Hz), never generated PCM. */
+int csb_v1_fmtowns_cdda_read_file_alloc(
+    const char *image_path, const CSB_V1_FmtownsCddaTrack *track,
+    uint8_t **out_data, size_t *out_size);
+
 #ifdef __cplusplus
 }
 #endif

@@ -531,3 +531,38 @@ int csb_v1_fmtowns_cdda_extract_file_to_path(
     fclose(image);
     return 0;
 }
+
+int csb_v1_fmtowns_cdda_read_file_alloc(
+    const char *image_path, const CSB_V1_FmtownsCddaTrack *track,
+    uint8_t **out_data, size_t *out_size) {
+    FILE *image;
+    long image_size;
+    size_t start, length;
+    uint8_t *data = NULL;
+
+    if (!out_data || !out_size) return -1;
+    *out_data = NULL;
+    *out_size = 0U;
+    if (!image_path || !track || !(image = fopen(image_path, "rb"))) return -1;
+    if (fseek(image, 0L, SEEK_END) != 0 || (image_size = ftell(image)) < 0L ||
+        (size_t)image_size % RAW != 0U) {
+        fclose(image);
+        return -1;
+    }
+    start = (size_t)track->start_sector * RAW;
+    if (start >= (size_t)image_size) { fclose(image); return -1; }
+    length = track->sector_count == 0U
+        ? (size_t)image_size - start
+        : (size_t)track->sector_count * RAW;
+    if (length == 0U || length > (size_t)image_size - start ||
+        fseek(image, (long)start, SEEK_SET) != 0 || !(data = (uint8_t *)malloc(length)) ||
+        fread(data, 1U, length, image) != length) {
+        free(data);
+        fclose(image);
+        return -1;
+    }
+    fclose(image);
+    *out_data = data;
+    *out_size = length;
+    return 0;
+}

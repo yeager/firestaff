@@ -263,6 +263,8 @@ static void test_real_cdda_file_stream(void) {
     CSB_V1_FmtownsCddaLayout layout;
     FILE *out;
     long out_size;
+    uint8_t *pcm = NULL;
+    size_t pcm_size = 0U;
 
     if (!image_path || image_path[0] == '\0' || !cue_path || cue_path[0] == '\0') {
         printf("SKIP: FIRESTAFF_CSB_FMTOWNS_IMAGE/CUE not set\n");
@@ -292,6 +294,13 @@ static void test_real_cdda_file_stream(void) {
                "streamed CDDA track has CUE-derived length");
         fclose(out);
     }
+    ASSERT(csb_v1_fmtowns_cdda_read_file_alloc(image_path, &layout.tracks[0],
+                                                &pcm, &pcm_size) == 0,
+           "read real FM Towns CDDA track 2 for runtime");
+    ASSERT(pcm != NULL && pcm_size == (size_t)layout.tracks[0].byte_length &&
+           pcm_size % 4U == 0U,
+           "runtime PCM retains CUE-derived Red Book bytes");
+    free(pcm);
     remove(out_path);
 }
 

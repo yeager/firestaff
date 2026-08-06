@@ -239,6 +239,14 @@
   executable animation/menu decoding and original capture remain tracked in
   `DM1-FMTOWNS-STARTUP-ANIMATION-MENU`.
 
+- ✅ 2026-08-06 CSB FM Towns CDDA runtime transport: added a bounded
+  file-backed allocator for a selected original CUE track. It validates raw
+  2352-byte sectors and returns the exact 44.1 kHz signed-LE stereo bytes to
+  the caller, including the source image end for track 31. No PCM is made or
+  substituted. The real Victor CUE/IMG regression now verifies track 2's
+  CUE-derived byte span both through the streaming extractor and runtime
+  allocator. M11 binding remains tracked separately.
+
 - ✅ 2026-08-06 DM1 FM Towns executable-title compositor: added a bounded
   `dm1_v1_fmtowns_title` frame composer for the HMA-240 EDM.EXP
   `DO_TITLE_ANIMATION` plan. It consumes only decoded original
