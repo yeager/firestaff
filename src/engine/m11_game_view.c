@@ -55540,6 +55540,15 @@ int M11_GameView_GetAttackCueCreatureType(const M11_GameViewState* state) {
 
 int M11_GameView_ToggleMapOverlay(M11_GameViewState* state) {
     if (!state) return 0;
+    if (m11_is_dm1_source_kind(state->sourceKind) &&
+        strcmp(state->sourceId, "dm1") == 0 &&
+        !state->showDebugHUD && m11_v1_chrome_mode_enabled(state)) {
+        /* The full-screen map is a Firestaff convenience/debug surface,
+         * not a source-owned DM1 V1 command or display.  HandleInput
+         * already rejects its keyboard route in this mode; preserve that
+         * boundary for callers of the public helper as well. */
+        return 0;
+    }
     if (state->candidateMirrorPanelActive) {
         /* ReDMCSB: COMMAND.C F0380 gates the normal command surfaces
          * around G0299_ui_CandidateChampionOrdinal while the C040

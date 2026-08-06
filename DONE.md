@@ -55924,8 +55924,12 @@ alcove runtime and archive-media tests passed (4/4).
   movement through C013's C068--C073 zones, and the strip is neither source
   pixels nor source input. The catalog/debug path remains available for its
   explicit tooling use.
+- The same source-DM1 boundary rejects direct calls to M11's procedural
+  full-screen map helper. This matches the already-blocked keyboard route and
+  prevents callers from exposing a non-source overlay in authenticated V1.
 - Regression: `test_m11_overlay_command_queue_block` verifies that a click at
-  the old strip coordinate returns ignored and enqueues no movement in DM1 V1.
+  the old strip coordinate returns ignored and enqueues no movement in DM1 V1,
+  and that the direct map helper keeps its overlay closed.
 
 # 2026-08-06 DM1 FM Towns DRAW_DMENU backdrop binding
 
