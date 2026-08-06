@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-LEFT-CLICK-ROTATION-SYNTHETIC-AUDIT:** This C040 view-rotation
+  fixture fabricates candidate, hand and panel state. It loads no original DM1
+  data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound interaction owner is recovered.
+
 - **DM1-MIRROR-INVENTORY-CLICK-ROTATION-SYNTHETIC-AUDIT:** This C156/C157
   dispatch-table fixture fabricates click and rotation state. It loads no
   original DM1 data and has no M11/runtime caller; retain it only as explicit

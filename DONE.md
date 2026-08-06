@@ -1,3 +1,9 @@
+# DM1 mirror left-click-rotation synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C040 view-rotation fixture from M10 and made
+  its direct regression compile the source explicitly. It loads no original
+  DM1 data and has no M11/runtime caller.
+
 # DM1 mirror inventory-click-rotation synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C156/C157 dispatch-table fixture from M10 and
