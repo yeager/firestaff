@@ -4206,12 +4206,6 @@ level or consumer bindings.
   floor/wall backing. Real GRAPHICS.DAT material, focused stairs CTests, and
   a dummy-video DM1 launch pass.
 
-- **DM1-V1-F0172-TELEPORTER-ASPECT:** Closed 2026-07-30. M11 now requires
-  both original teleporter `VISIBLE` and `OPEN` bits before exposing the
-  F0113 field route. The movement, stairs/pits and SHOOT source gates were
-  also refreshed for the current source-owned route-plan/F0158 layouts.
-  Focused Ninja/CTest verification passes 5/5.
-
 - **DM1-V1-STARTUP-VISUAL-CADENCE:** Closed 2026-07-30. The C001 PRESENTS
   interval again retains all 30 source-side preparation slots rather than
   donating them to the macOS zoom-frame dwell. The Entrance curtain now holds
