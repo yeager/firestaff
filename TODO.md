@@ -29311,7 +29311,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `DM2_READ_SKSAVE_DUNGEON` reader now retains each decoded tile-chain root
   through `set_tile_record_link`, matching `sksvgame.cpp:1390-1399`. This fixes
   a discarded ownership edge but does not promote the incomplete save into a
-  resumable runtime session.
+  resumable runtime session. **2026-08-13 moneybox-mask progress:** the
+  callback reader and writer now switch DB10 child records to the source
+  `v1d64c3` mask only while traversing a source-owned moneybox, matching
+  `sksvgame.cpp:923-928` and the `DM2_IS_CONTAINER_MONEYBOX` predicate in
+  `skgdtqdb.cpp:822`. A synthetic chain regression and the supplied real
+  PC-DOS SKSave corpus pass; the c_record runtime graph, timer links,
+  `DM2_2066_062b` possession continuation and item-bonus pass remain open.
 
 - [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
   source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw

@@ -84,6 +84,7 @@ typedef struct {
     size_t container_indices_cap;
     int nested_creature;
     int nested_type_0e;
+    int moneybox_chain_active;
     const DM2_WriteRecordTimer *timers;
     int timer_count;
 } DM2_WriteRecordSession;

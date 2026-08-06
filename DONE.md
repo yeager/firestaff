@@ -1,3 +1,13 @@
+# DM2 SKSAVE moneybox DB10 mask handoff (2026-08-13)
+
+- ✅ Bound nested DB10 record decoding and encoding to SKProject's alternate
+  `v1d64c3` mask while a source-owned moneybox chain is active, using the
+  `DM2_IS_CONTAINER_MONEYBOX` callback boundary from `sksvgame.cpp:923-928`.
+- ✅ Added a round-trip regression for a moneybox-owned DB10 record and fixed
+  the test owner callback to treat source sentinel `0xfffe` as an empty chain.
+  The record-checkcode suite and real PC-DOS SKSave corpus passed (126/126);
+  no release was made.
+
 # DM2 champion selection source-identity boundary (2026-08-13)
 
 - ✅ The selection seam now requires the addressed marker's source facing and

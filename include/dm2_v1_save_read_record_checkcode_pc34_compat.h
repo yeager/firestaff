@@ -51,6 +51,13 @@ typedef int (*DM2_ReadRecordChildOwnerFn)(void *ctx, uint16_t record_link,
 typedef void (*DM2_ReadRecordAddPossessionIndexFn)(void *ctx,
                                                     uint16_t record_link);
 
+/* Source: skgdtqdb.cpp::DM2_IS_CONTAINER_MONEYBOX.  While a normal
+ * container's child chain is decoded, SKProject temporarily replaces the
+ * DB10 mask with v1d64c3.  A missing callback means that no moneybox claim
+ * can be made and the ordinary mask remains in force. */
+typedef int (*DM2_ReadRecordIsMoneyboxFn)(void *ctx,
+                                          uint16_t record_link);
+
 /* Resolve the original AI-spec flags for a just-allocated DB4 creature.
  * SKProject c_savegame.cpp::DM2_READ_RECORD_CHECKCODE selects v1d648f rather
  * than the default v1d647f mask when QUERY_CREATURE_AI_SPEC_FLAGS(record)
@@ -72,6 +79,7 @@ typedef struct {
     DM2_ReadRecordAppendFn append_record;
     DM2_ReadRecordChildOwnerFn child_owner;
     DM2_ReadRecordAddPossessionIndexFn add_possession_index;
+    DM2_ReadRecordIsMoneyboxFn is_container_moneybox;
     DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags;
     void *ctx;
 } DM2_ReadRecordCallbacks;
@@ -88,6 +96,7 @@ typedef struct {
     int possessions_read;
     int nested_creature;
     int nested_type_0e;
+    int moneybox_chain_active;
     int error;
 } DM2_ReadRecordSession;
 

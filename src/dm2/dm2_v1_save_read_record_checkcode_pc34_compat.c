@@ -134,6 +134,13 @@ int dm2_v1_read_record_checkcode(
             if (!follow_chain) break;
             continue;
         }
+        /* sksvgame.cpp:923-928 temporarily installs v1d64c3 for DB10
+         * records below a source-owned moneybox.  Do not infer this from an
+         * item type or a caller label; only the live source callback may
+         * select the alternate mask. */
+        if (record_type == 0x0a && session->moneybox_chain_active) {
+            mask = dm2_v1_save_record_mask_misc_moneybox();
+        }
 
         /* Allocate the record. */
         record_link = cb->alloc_record(cb->ctx, record_type);
@@ -246,6 +253,11 @@ int dm2_v1_read_record_checkcode(
         } else if (record_type == 9) {
             if (!is_map_or_nested) {
                 /* Normal container: recurse into contents. */
+                int saved_moneybox = session->moneybox_chain_active;
+                if (cb->is_container_moneybox &&
+                    cb->is_container_moneybox(cb->ctx, record_link)) {
+                    session->moneybox_chain_active = 1;
+                }
                 uint16_t *child_owner = NULL;
                 if (!cb->child_owner ||
                     cb->child_owner(cb->ctx, record_link, &child_owner) != 0 ||
@@ -253,6 +265,7 @@ int dm2_v1_read_record_checkcode(
                 *child_owner = 0xfffeu;
                 int rc = dm2_v1_read_record_checkcode(session, cb, child_owner,
                                                        -1, 0, 0, 1);
+                session->moneybox_chain_active = saved_moneybox;
                 if (rc) return rc;
             } else {
                 /* Map container: read 1-bit has-contents. */

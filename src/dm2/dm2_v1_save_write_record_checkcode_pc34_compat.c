@@ -113,6 +113,9 @@ int dm2_v1_write_record_checkcode(
         /* Get mask for this record type. */
         mask = dm2_v1_save_record_mask_for_type(record_type);
         if (mask == NULL) goto next_record;
+        if (record_type == 0x0a && session->moneybox_chain_active) {
+            mask = dm2_v1_save_record_mask_misc_moneybox();
+        }
 
         /* Get record data. */
         if (cb->get_record(cb->ctx, record_link, &rec) != 0) return -1;
@@ -200,12 +203,13 @@ int dm2_v1_write_record_checkcode(
             if (!is_map_or_nested) {
                 /* Normal container: recurse into contents.
                  * Swap misc mask for moneybox if needed. */
+                int saved_moneybox = session->moneybox_chain_active;
                 if (cb->is_container_moneybox &&
-                    cb->is_container_moneybox(cb->ctx, record_link)) {
-                    /* Moneybox: temporarily use moneybox mask for type 0xA. */
-                }
+                    cb->is_container_moneybox(cb->ctx, record_link))
+                    session->moneybox_chain_active = 1;
                 int rc = dm2_v1_write_record_checkcode(session, cb,
                     rec.word_02, 0, 1);
+                session->moneybox_chain_active = saved_moneybox;
                 if (rc) return rc;
             } else {
                 /* Map container: write 1-bit has-contents + possession index. */

@@ -57,6 +57,7 @@ static int mock_ai_spec(void *ctx, uint16_t link) { (void)ctx; (void)link; retur
 static int mock_ai_spec_alt(void *ctx, uint16_t link) { (void)ctx; (void)link; return 1; }
 static int mock_is_map(void *ctx, uint16_t link) { (void)ctx; (void)link; return 0; }
 static int mock_is_moneybox(void *ctx, uint16_t link) { (void)ctx; (void)link; return 0; }
+static int mock_is_moneybox_true(void *ctx, uint16_t link) { (void)ctx; (void)link; return 1; }
 static void mock_add_poss(void *ctx, uint16_t link) { (void)ctx; (void)link; }
 
 /* ---- Reader mock pool ---- */
@@ -112,6 +113,10 @@ static int read_append(void *ctx, uint16_t next, uint16_t *owner,
     (void)map_x;
     (void)map_y;
     if (!pool || !owner || next_index >= MAX_READ_RECORDS) return -1;
+    if (*owner == 0xfffeu) {
+        *owner = next;
+        return 0;
+    }
     tail = owner;
     while (*tail != DM2_RECORD_LINK_END) {
         const uint16_t tail_index = (uint16_t)(*tail & 0x03ffu);
@@ -186,6 +191,7 @@ static DM2_ReadRecordCallbacks make_reader_cb(ReadPool *pool)
     cb.append_record = read_append;
     cb.child_owner = read_child_owner;
     cb.add_possession_index = read_add_possession;
+    cb.is_container_moneybox = mock_is_moneybox;
     cb.query_creature_ai_flags = read_creature_ai_flags;
     cb.ctx = pool;
     return cb;
@@ -434,6 +440,57 @@ static void test_round_trip_map_container(void)
     printf("  PASS: round_trip_map_container\n");
 }
 
+static void test_round_trip_moneybox_misc_mask(void)
+{
+    uint8_t buf[256];
+    DM2_ReadRecordSession rd;
+    DM2_ReadRecordCallbacks rcb;
+    DM2_WriteRecordCallbacks wcb;
+    ReadPool pool;
+    int ci[4], co[4];
+    size_t flushed;
+    const uint8_t *sizes = dm2_v1_save_record_sizes();
+    const uint8_t *default_mask = dm2_v1_save_record_mask_misc_default();
+    const uint8_t *moneybox_mask = dm2_v1_save_record_mask_misc_moneybox();
+    int masks_differ = 0;
+
+    mock_init();
+    /* DB9 normal container owns a DB10 child through w2. */
+    g_mock_records[0][2] = (uint8_t)mock_make_link(1, 10);
+    g_mock_records[0][3] = (uint8_t)(mock_make_link(1, 10) >> 8);
+    g_mock_records[1][0] = 0x5au;
+    g_mock_records[1][1] = 0xa5u;
+    g_mock_records[1][2] = 0xc3u;
+    g_mock_records[1][3] = 0x3cu;
+    g_mock_next[1] = DM2_RECORD_LINK_END;
+    wcb = make_writer_cb();
+    wcb.is_container_moneybox = mock_is_moneybox_true;
+    {
+        DM2_WriteRecordSession wr;
+        dm2_v1_write_record_session_init(&wr, buf, sizeof(buf), ci, 4,
+                                         co, 4, NULL, 0);
+        assert(dm2_v1_write_record_checkcode(
+                   &wr, &wcb, mock_make_link(0, 9), 0, 1) == 0);
+        assert(dm2_suppress_writer_flush(&wr.writer, buf + wr.out_written,
+                                          sizeof(buf) - wr.out_written,
+                                          &flushed) == 0);
+        wr.out_written += flushed;
+        memset(&pool, 0, sizeof(pool));
+        dm2_v1_read_record_session_init(&rd, buf, wr.out_written);
+        rcb = make_reader_cb(&pool);
+        rcb.is_container_moneybox = mock_is_moneybox_true;
+        assert(read_from_root(&rd, &rcb, NULL, 0, 1) == 0);
+    }
+    for (size_t i = 0; i < sizes[10]; ++i) {
+        if (default_mask[i] != moneybox_mask[i]) masks_differ = 1;
+        assert((pool.records[1].data[i] & moneybox_mask[i]) ==
+               (g_mock_records[1][i] & moneybox_mask[i]));
+    }
+    assert(masks_differ);
+    assert(pool.count == 2);
+    printf("  PASS: round_trip_moneybox_misc_mask\n");
+}
+
 static void test_creature_requires_source_ai_mask(void)
 {
     uint8_t buf[256];
@@ -515,6 +572,7 @@ int main(void)
     test_round_trip_chain();
     test_round_trip_sub_chain_bits();
     test_round_trip_map_container();
+    test_round_trip_moneybox_misc_mask();
     test_creature_requires_source_ai_mask();
     test_creature_uses_source_ai_mask();
     test_session_counters();
