@@ -430,6 +430,13 @@ static void run_real_launcher_handoff_if_available(void) {
         expect_true(strcmp(view.theronState.startup_text_prompt,
                            "CAPTURE REQUIRED: FORCEFIELD LOCKED") == 0,
                     "M11 Theron Enter exposes the forcefield capture gate in Soul Room");
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                        M11_GAME_INPUT_RETURN_TO_MENU,
+                    "M11 Theron Enter retries the locked forcefield action");
+        expect_true(view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_SOUL_ROOM &&
+                        view.theronState.level_loaded == 0,
+                    "M11 Theron keeps the retry on the Soul Room admission gate");
     }
     if (view.theronState.startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM) {
         M11_GameInputResult pointer_result = M11_GameView_HandlePointer(

@@ -42,15 +42,17 @@
  	}
 --- a/src/pce/pcecd.cpp
 +++ b/src/pce/pcecd.cpp
-@@ -108,5 +108,7 @@
+@@ -108,5 +108,9 @@
  static uint16 TheronPCECDMainRAME009ReturnPC;
  static unsigned TheronPCECDMainRAME009Sequence;
  static unsigned TheronPCECDCriticalTraceCount;
 +static FILE *TheronPCECDMainRAMConsumerTrace;
 +static unsigned TheronPCECDMainRAMConsumerTraceCount;
++static FILE *TheronPCECDMainRAMTargetTrace;
++static unsigned TheronPCECDMainRAMTargetTraceCount;
  static void TheronTracePCECDState(const char *format, ...);
  static void TheronTracePCECDCriticalState(const char *format, ...);
-@@ -133,5 +135,28 @@
+@@ -133,5 +135,51 @@
   TheronPCECDMainRAME009Active = false;
  }
  
@@ -58,6 +60,29 @@
 +                                         uint32 physical_address, uint8 value,
 +                                         uint16 reader_pc, uint32 reader_physical_pc)
 +{
++ if(logical_address >= 0x2600 && logical_address < 0x2800)
++ {
++  if(!TheronPCECDMainRAMTargetTrace)
++  {
++   const char *path = getenv("FIRESTAFF_THERON_MAIN_RAM_TARGET_TRACE");
++   if(path && *path)
++   {
++    TheronPCECDMainRAMTargetTrace = fopen(path, "w");
++    if(TheronPCECDMainRAMTargetTrace)
++     fputs("source=mednafen-pce-instrumented-main-ram-target\n",
++           TheronPCECDMainRAMTargetTrace);
++   }
++  }
++  if(TheronPCECDMainRAMTargetTrace &&
++     TheronPCECDMainRAMTargetTraceCount < 4096)
++  {
++   fprintf(TheronPCECDMainRAMTargetTrace,
++           "main_ram_target_read sequence=%u logical_address=%04x physical_address=%06x value=%02x reader_pc=%04x reader_physical_pc=%06x\n",
++           TheronPCECDMainRAMTargetTraceCount++, logical_address,
++           physical_address, value, reader_pc, reader_physical_pc);
++   fflush(TheronPCECDMainRAMTargetTrace);
++  }
++ }
 + if(TheronPCECDMainRAMConsumerTraceCount >= 4096)
 +  return;
 + if(!TheronPCECDMainRAMConsumerTrace)

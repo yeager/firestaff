@@ -519,6 +519,7 @@ cd_trace="${trace}.cd"
 input_trace="${trace}.input"
 main_ram_loader_trace="${trace}.main-ram-loader"
 main_ram_consumer_trace="${trace}.main-ram-consumer"
+main_ram_target_trace="${trace}.main-ram-target"
 vram_snapshot="${trace}.vram"
 vce_snapshot="${trace}.vce"
 transition_receipt="${trace}.transition"
@@ -534,7 +535,7 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$vram_snapshot" "$vce_snapshot" "$transition_receipt" "$stage2_system_card_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace" "$vram_snapshot" "$vce_snapshot" "$transition_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ -n "$configured_home" ]]; then
@@ -586,6 +587,7 @@ launch=(
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
+    FIRESTAFF_THERON_MAIN_RAM_TARGET_TRACE="$main_ram_target_trace" \
     FIRESTAFF_THERON_VRAM_SNAPSHOT="$vram_snapshot" \
     FIRESTAFF_THERON_VCE_SNAPSHOT="$vce_snapshot" \
     SDL_VIDEODRIVER="$capture_sdl_video_driver" \
@@ -746,7 +748,7 @@ if [[ ! -s "$trace" ]] || ! grep -Fqx 'source=mednafen-pce-instrumented' "$trace
     printf '%s\n' 'FAIL: Mednafen did not produce a provenance-marked live trace' >&2
     exit 1
 fi
-if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace"; then
+if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$memory_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$main_ram_target_trace"; then
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
@@ -786,6 +788,7 @@ transition_main_ram_e009_data_read_count=$(trace_count '^main_ram_e009_data_read
 transition_main_ram_e009_return_count=$(trace_count '^main_ram_e009_return ' "$cd_trace")
 transition_main_ram_e009_register_write_count=$(trace_count '^main_ram_e009_register_write ' "$cd_trace")
 transition_main_ram_consumer_read_count=$(trace_count '^main_ram_consumer_read ' "$main_ram_consumer_trace")
+transition_main_ram_target_read_count=$(trace_count '^main_ram_target_read ' "$main_ram_target_trace")
 transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$input_trace")
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
@@ -822,6 +825,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'main_ram_e009_returns=%s\n' "$transition_main_ram_e009_return_count"
     printf 'main_ram_e009_register_writes=%s\n' "$transition_main_ram_e009_register_write_count"
     printf 'main_ram_consumer_reads=%s\n' "$transition_main_ram_consumer_read_count"
+    printf 'main_ram_target_reads=%s\n' "$transition_main_ram_target_read_count"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
     printf 'vdc_vram_snapshot_bytes=65536\n'
     printf 'vce_palette_snapshot_bytes=1024\n'

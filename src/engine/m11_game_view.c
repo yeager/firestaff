@@ -25180,6 +25180,21 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             Theron_V1_BootStartupFullStartReceipt full_start;
             Theron_StartupActionHostReceipt receipt;
 
+            /* THQUEST.ASM T400 leaves the Soul Room on its forcefield
+             * action.  If that action is rejected by Firestaff's authentic
+             * Track 02 admission gate, the host deliberately rolls back to
+             * the Soul Room.  Keep Enter on the visible locked-forcefield
+             * prompt bound to the same action on retry; otherwise the
+             * restored cursor can make Enter toggle a mirror and make the
+             * forcefield appear inert. */
+            if (input == M12_MENU_INPUT_ACCEPT &&
+                state->theronState.startup_phase ==
+                    THERON_STARTUP_PHASE_SOUL_ROOM &&
+                strstr(state->theronState.startup_text_prompt,
+                       "FORCEFIELD LOCKED") != NULL) {
+                input = M12_MENU_INPUT_ACTION;
+            }
+
             /* Keep the failure path deterministic: the receipt is consumed
              * below even when rebuilding the full-start package fails. */
             theron_v1_startup_action_host_receipt_init(&receipt);

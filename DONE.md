@@ -1,3 +1,20 @@
+# Theron forcefield Enter retry boundary (2026-08-06)
+
+- ✅ After a failed authentic Track 02 admission, M11 now keeps Enter bound
+  to the forcefield action while the Soul Room shows `FORCEFIELD LOCKED`.
+  This prevents the restored cursor from making Enter toggle a mirror and
+  makes the capture gate actionable and visible without admitting fallback
+  dungeon graphics.
+- ✅ Added a regression covering the initial admission failure and a second
+  Enter retry; both remain in the Soul Room with `level_loaded == 0`.
+
+# Theron bounded `$2600` consumer trace (2026-08-06)
+
+- ✅ The capture-only Mednafen patch now has a separate bounded trace for
+  bank `$1f` logical reads in `$2600–$27ff`. The complete original-like US
+  CUE replay produced zero rows, so no dynamic consumer, level record or
+  object meaning is promoted.
+
 # Theron authentic VDC/VCE screen-space capture (2026-08-06)
 
 - ✅ A clean SIGINT shutdown of the instrumented Mednafen replay now emits

@@ -405,6 +405,13 @@
   codons for diagnostics, but production world text now rejects any block
   containing unresolved brace/control-code values. Reopen publication only
   after the original HuC6280 text consumer is disassembled and matched.
+  2026-08-06 forcefield-input update: after a failed authentic admission,
+  Enter now retries the source-bound forcefield action while the Soul Room
+  prompt says `FORCEFIELD LOCKED`; it must not silently toggle a mirror.
+  This fixes the host-menu dead-looking retry without opening fallback
+  dungeon rendering. A separate bounded bank-$1f `$2600–$27ff` trace was
+  added to the capture patch; the complete US replay emitted zero target
+  rows, so the real dynamic consumer and level/object handoff remain open.
   2026-08-06 receipt-integrity update: source occurrences now retain a 16-bit
   category index, matching the 512-entry Track 02 category bound. Category
   to host item-kind/index ownership remains intentionally unbound.
