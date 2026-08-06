@@ -13,6 +13,12 @@
   the normal production path. This closes a real-data-to-viewport/runtime
   leak without changing the isolated fixture `spawn_on_level` route.
 
+- ✅ 2026-08-06 Theron VDC capture preview: added an explicit raw-BAT preview
+  that copies only authenticated VRAM tile pixels through the retained
+  BAT→atlas binding into the production framebuffer. The real snapshot test
+  now proves nonzero preview pixels, while world-driven dungeon/HUD drawing
+  remains blocked until the HuC6280 consumer mapping is proven.
+
 - ✅ 2026-08-06 Nexus startup PLRD label provenance cleanup: authenticated
   RLOWFIX/PLRD champion rows no longer receive a host-generated ASCII/HP/MP
   label when the retail record carries only TABL/FONT256 glyph codes. The
@@ -53,6 +59,11 @@
   pages plus all four registered button images, with their actual IMG2 stream
   boundaries, `C26_SWITCH` palette and ReDMCSB `SWITCH.C` F2279/F2280
   coordinates retained. The parser rejects unrelated 320x200 executable
+  streams. M11 now transfers from the completed source-owned `TITLE.ANM`
+  playback into the `AUTOEXEC.BAT` `SWITCHTW JAPAN` route, preserves
+  SWITCH.C's sixty-VBlank reveal, and displays the executable's authenticated
+  palette/page/button pixels. The focused original-media Switch test passes
+  18/18 and `firestaff_m11` builds successfully.
   payloads unless the complete F31E/F31J sequence decodes. Its four source
   rectangles now route through the original language-dependent exit statuses
   into the verified `AUTOEXEC.BAT` Story, utility, game or language-toggle

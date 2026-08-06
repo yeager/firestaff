@@ -40,7 +40,10 @@
   its `C26_SWITCH` (G8172_) palette is likewise read only from that verified
   executable. The original four button rectangles now retain their
   `AUTOEXEC.BAT` Story/utility/game exit handoffs and language toggle.
-  Bind that source-owned Switch surface to M11 before displaying it.
+  M11 now follows `TITLE.ANM`'s return into the original Japanese Switch
+  surface after SWITCH.C's sixty source-VBlank wait, retaining executable
+  palette, page and button pixels. Its selected Story/utility/game handoffs,
+  language input, audio/CDDA playback and save handoff remain capture-gated.
   The raw CDDA extractor now streams a
   selected CUE track sectorwise; binding that authenticated PCM to M11 timing
   remains separate.
@@ -526,6 +529,9 @@
   binding after snapshot population, so later HuC6280 square/material work
   can consume the exact captured tile/palette pairs. This still does not
   assign a dungeon-square meaning to a BAT word or enable synthetic drawing.
+  An explicit capture-only BAT preview now copies those authenticated tile
+  pixels into the production framebuffer for pixel/app-capture inspection;
+  world-driven dungeon and HUD drawing remain blocked pending the consumer.
 
   The raw media-intake regression now exercises the supplied assembled US ISO
   at `~/.firestaff/cache/theron/TQUS02-ceb02343868f80cec899e9b239aff2da.iso`

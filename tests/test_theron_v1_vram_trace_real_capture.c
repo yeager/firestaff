@@ -17,6 +17,8 @@ int main(void) {
     const char *vce_path = getenv("THERON_VCE_SNAPSHOT");
     Theron_V1_Viewport viewport;
     int loaded;
+    int preview_cells;
+    size_t preview_nonzero;
     size_t vram_nonzero;
     size_t vce_nonzero;
 
@@ -46,9 +48,19 @@ int main(void) {
         theron_vp_free(&viewport);
         return 1;
     }
+    preview_cells = theron_v1_vram_trace_render_bat_preview(
+        &viewport, 0, 32, 28, 0, 0);
+    preview_nonzero = nonzero_bytes(viewport.fb.data,
+                                    (size_t)viewport.fb.stride * viewport.fb.h);
+    if (preview_cells <= 0 || preview_nonzero == 0u) {
+        fprintf(stderr, "FAIL: authentic BAT preview produced no pixels\n");
+        theron_vp_free(&viewport);
+        return 1;
+    }
     printf("PASS: vram_nonzero=%zu vce_nonzero=%zu bat_tiles=%d "
-           "palette_entries=512 pixels=source_only\n",
-           vram_nonzero, vce_nonzero, loaded);
+           "preview_cells=%d preview_nonzero=%zu palette_entries=512 "
+           "pixels=source_only\n",
+           vram_nonzero, vce_nonzero, loaded, preview_cells, preview_nonzero);
     theron_vp_free(&viewport);
     return 0;
 }

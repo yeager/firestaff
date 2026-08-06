@@ -29,4 +29,15 @@ int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
 int theron_v1_vram_trace_bat_atlas_index(const Theron_V1_Viewport *vp,
                                          int bat_word);
 
+/* Draw an explicitly requested raw BAT window using the authenticated atlas
+ * entries.  The coordinates are VDC tile-preview coordinates, not dungeon
+ * squares; no world or object state is consulted.  Returns the number of
+ * admitted BAT cells copied, or -1 for an invalid request. */
+int theron_v1_vram_trace_render_bat_preview(Theron_V1_Viewport *vp,
+                                            int bat_start_word,
+                                            int bat_w,
+                                            int bat_h,
+                                            int dst_x,
+                                            int dst_y);
+
 #endif

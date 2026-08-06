@@ -45,7 +45,13 @@ static void test_load_raw(void) {
 
 static void test_populate_tiles(void) {
     Theron_V1_Viewport vp;
+    uint8_t framebuffer[TQR_FB_W * TQR_FB_H];
     memset(&vp, 0, sizeof(vp));
+    memset(framebuffer, 0, sizeof(framebuffer));
+    vp.fb.data = framebuffer;
+    vp.fb.w = TQR_FB_W;
+    vp.fb.h = TQR_FB_H;
+    vp.fb.stride = TQR_FB_W;
 
     uint8_t vram[THERON_VRAM_SIZE];
     uint8_t vce[THERON_VCE_SIZE];
@@ -78,6 +84,10 @@ static void test_populate_tiles(void) {
     assert(theron_v1_vram_trace_bat_atlas_index(&vp, 1) == 1);
     assert(theron_v1_vram_trace_bat_atlas_index(&vp, 2) == 2);
     assert(theron_v1_vram_trace_bat_atlas_index(&vp, 3) == -1);
+    assert(theron_v1_vram_trace_render_bat_preview(&vp, 0, 3, 1, 0, 0) == 3);
+    assert(framebuffer[0] != 0 || framebuffer[8] != 0 || framebuffer[16] != 0);
+    assert(theron_v1_vram_trace_render_bat_preview(&vp, 0, 3, 1,
+                                                   TQR_FB_W - 16, 0) == -1);
 
     assert(theron_v1_vram_trace_populate_tiles(&vp, -1, 32, 32) == -1);
     assert(theron_v1_vram_trace_populate_tiles(&vp, 0, 65, 1) == -1);

@@ -214,3 +214,43 @@ int theron_v1_vram_trace_bat_atlas_index(const Theron_V1_Viewport *vp,
         return -1;
     return vp->bat_atlas_indices[bat_word];
 }
+
+int theron_v1_vram_trace_render_bat_preview(Theron_V1_Viewport *vp,
+                                            int bat_start_word,
+                                            int bat_w,
+                                            int bat_h,
+                                            int dst_x,
+                                            int dst_y) {
+    int copied = 0;
+
+    if (!vp || !vp->vram_trace_loaded || !vp->fb.data ||
+        bat_start_word < 0 || bat_w <= 0 || bat_h <= 0 ||
+        bat_w > 64 || bat_h > 32 || bat_start_word >= 2048 ||
+        bat_start_word + (bat_h - 1) * 64 + (bat_w - 1) >= 2048 ||
+        dst_x < 0 || dst_y < 0 || dst_x + bat_w * TQR_TILE_DIM > vp->fb.w ||
+        dst_y + bat_h * TQR_TILE_DIM > vp->fb.h) {
+        return -1;
+    }
+
+    for (int y = 0; y < bat_h; ++y) {
+        for (int x = 0; x < bat_w; ++x) {
+            int bat_word = bat_start_word + y * 64 + x;
+            int atlas_index = vp->bat_atlas_indices[bat_word];
+            const TQR_Tile *tile;
+
+            if (atlas_index < 0 || atlas_index >= vp->palette.tile_count)
+                continue;
+            tile = &vp->palette.tiles[atlas_index];
+            if (!tile->data) continue;
+            for (int row = 0; row < TQR_TILE_DIM; ++row) {
+                memcpy(vp->fb.data +
+                           (dst_y + y * TQR_TILE_DIM + row) * vp->fb.stride +
+                           dst_x + x * TQR_TILE_DIM,
+                       tile->data + row * TQR_TILE_DIM,
+                       TQR_TILE_DIM);
+            }
+            ++copied;
+        }
+    }
+    return copied;
+}
