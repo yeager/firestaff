@@ -91,6 +91,27 @@ static int find_first_sound_entry(const DM2_V1_AssetLoader *loader,
     return 0;
 }
 
+/* Retail SOUND rows carry sample payloads only. A class triple is not an
+ * English label, so keep the sound-name API fail-closed. */
+static int count_sound_text_entries(const DM2_V1_AssetLoader *loader)
+{
+    DM2_V1_GdatEntryIterator iterator;
+    DM2_V1_GdatEntryQueryReceipt entry;
+    int count = 0;
+
+    if (!loader) return 0;
+    memset(&iterator, 0, sizeof(iterator));
+    iterator.category_first = 0;
+    iterator.category_last = DM2_GDAT_CATEGORY_LIMIT;
+    iterator.index_filter = -1;
+    iterator.type_filter = DM2_GDAT_ENTRY_TYPE_TEXT;
+    iterator.field_filter = -1;
+    while (dm2_v1_query_next_gdat_entry(loader, &iterator, &entry)) {
+        if (entry.category == 0x02u) ++count;
+    }
+    return count;
+}
+
 static int find_dyn4_materialized_sound(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_GdatDyn4MaterializedSelection *selection,
@@ -157,6 +178,9 @@ int main(void)
         failures = 1;
         goto done;
     }
+
+    /* The supplied PC-DOS GRAPHICS.DAT has no SOUND text rows. */
+    assert(count_sound_text_entries(&loader) == 0);
 
     /* ── Fail-closed before any binding ── */
     assert(dm2_v1_sound_query_entry(0x0E, 0, 0x81) == -1);

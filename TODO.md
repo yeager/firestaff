@@ -379,6 +379,11 @@
   compatibility name API deliberately returns `NULL` rather than exposing
   hand-written English labels. Recover an original text consumer and bind it
   to the exact GDAT entry before displaying sound names.
+  **2026-08-06 real-data check:** the supplied PC-DOS `GRAPHICS.DAT` contains
+  zero `DM2_GDAT_ENTRY_TYPE_TEXT` rows in category `0x02` (SOUND); its SOUND
+  rows are payload entries only. `test_dm2_v1_sound_gdat_real_data` now
+  asserts this corpus fact, so no sound names may be derived from class
+  triples or copied from a host table.
 
 - **DM2-CDDA-OTHER-PLATFORM-MEDIA:** FM Towns CDDA now has a verified
   in-memory original-disc route only. Mega CD and PC-9821 still lack an

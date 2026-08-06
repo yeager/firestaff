@@ -56189,3 +56189,10 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Kept the focused material-boundary test compiling the source explicitly.
   The production outdoor route remains the authenticated
   `ENVIRONMENT`/`DistantEnvironment` weather/runtime chain.
+# DM2 sound-name corpus boundary (2026-08-06)
+
+- ✅ Verified the supplied PC-DOS `GRAPHICS.DAT`: category `0x02` has no text
+  entries; SOUND rows are raw audio payloads.
+- ✅ Added a regression assertion to `test_dm2_v1_sound_gdat_real_data` and
+  kept `dm2_v1_sound_name()` fail-closed. No synthetic sound labels were
+  admitted.
