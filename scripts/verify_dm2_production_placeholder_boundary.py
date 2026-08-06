@@ -196,6 +196,20 @@ def verify(repo: Path) -> list[str]:
         if forbidden in runtime:
             errors.append(f"runtime retains timer-byte mutation study: {forbidden}")
 
+    creature_path = repo / "src/dm2/dm2_v1_creature.c"
+    if not creature_path.exists():
+        errors.append(f"missing {creature_path}")
+        return errors
+    creature = creature_path.read_text(encoding="utf-8")
+    for forbidden in (
+            "dm2_v1_creature_make_ccm_args",
+            "dm2_v1_creature_imported_ccm_op",
+            "dm2_v1_creature_door_blocks_creature",
+    ):
+        if forbidden in creature:
+            errors.append(
+                f"creature retains reduced-state CCM mutation study: {forbidden}")
+
     hud_path = repo / "src/dm2/dm2_v1_gdat_hud_m11_command.c"
     if not hud_path.exists():
         errors.append(f"missing {hud_path}")

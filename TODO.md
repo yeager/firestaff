@@ -840,6 +840,10 @@
   descriptor/tile parser rather than retaining it as an apparent DM2 route.
   The world model now has only the verified G1 byte-square loader; this does
   not promote incomplete G1 record traversal to gameplay.
+  **2026-08-06 CCM update:** removed the disabled reduced-state CCM bridge.
+  It reconstructed operands and world/door mutations from a fixture-shaped
+  creature instance, rather than the original DB4/CAII handler transaction.
+  Production remains fail-closed until that source owner is complete.
 
 - **DM2-SOUND-TEXT-CONSUMER:** `c_sound.cpp` binds class triples to GDAT sound
   payloads but does not supply a sound-name text producer. The production

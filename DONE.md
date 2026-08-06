@@ -167,6 +167,13 @@
 - ✅ The menu action contract now covers distinct selected and fallback roots,
   preventing a stale profile directory from being selected silently.
 
+# DM2 reduced-state CCM bridge removal (2026-08-06)
+
+- ✅ Removed the disabled CCM interpreter bridge that reconstructed operands,
+  door movement and creature mutations from reduced fixture state.
+- ✅ The production boundary rejects restoration of its helpers. Source-owned
+  DB4/CAII records and handler callbacks remain required before CCM can run.
+
 # DM2 inferred dungeon parser removal (2026-08-06)
 
 - ✅ Removed the retired 16-bit descriptor/tile parser from the world-model
