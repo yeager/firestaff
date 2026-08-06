@@ -4685,6 +4685,10 @@ list(REMOVE_ITEM M10_SOURCES
 # seeded chest/champion regression driver with no M11 caller.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_reopen_cross_champion_pc34_compat.c")
+# `dm1_v1_mirror_candidate_party_swap_pc34_compat.c` is a fixed party-array
+# regression model with no original-DM1 input or M11 runtime caller.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_party_swap_pc34_compat.c")
 # `dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c` is a
 # contract-only probe. It manufactures its chest stack, leader hand, floor
 # link and coordinates locally, reads no original save/dungeon/graphics data,
@@ -54502,7 +54506,9 @@ target_include_directories(test_dm1_v1_mirror_candidate_thought_project_cancel_a
     ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1)
 target_link_libraries(test_dm1_v1_mirror_candidate_thought_project_cancel_after_pickup_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_thought_project_cancel_after_pickup_pc34_compat COMMAND test_dm1_v1_mirror_candidate_thought_project_cancel_after_pickup_pc34_compat)
-add_executable(test_dm1_v1_mirror_candidate_party_swap_pc34_compat tests/test_dm1_v1_mirror_candidate_party_swap_pc34_compat.c)
+add_executable(test_dm1_v1_mirror_candidate_party_swap_pc34_compat
+    tests/test_dm1_v1_mirror_candidate_party_swap_pc34_compat.c
+    src/dm1/dm1_v1_mirror_candidate_party_swap_pc34_compat.c)
 target_include_directories(test_dm1_v1_mirror_candidate_party_swap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_party_swap_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_party_swap_pc34_compat COMMAND test_dm1_v1_mirror_candidate_party_swap_pc34_compat)
