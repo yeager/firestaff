@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 DM1 macOS runtime captures: captured clean Entrance and
+  post-Entrance dungeon frames from the built Firestaff executable using the
+  verified PC DOS 3.4 data directory and original save. Added the real images
+  to `docs/screenshots/` and README. HoC/HUD capture remains explicitly open;
+  these frames are not promoted as proof for those outstanding routes.
+
 - ✅ 2026-08-06 Theron US roster/text audit: real US Track 02 still proves
   only the `GO AWAY AND RESURRECT THERON` prompt at `0xa0722`; the JP ASCII
   roster cluster is absent from the US receipt. Real US Track 19 item names,

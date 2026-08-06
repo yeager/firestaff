@@ -338,6 +338,12 @@
   focused wall-ornament test passes all 13 rows; packaged Mac pixel capture
   remains open.
 
+  2026-08-06 macOS capture update: a clean real-data Entrance frame and a
+  post-Entrance dungeon viewport frame are now checked in under
+  `docs/screenshots/`. These prove the packaged window can present source
+  DM1 data, but they do not close the remaining HoC/HUD object, torch-holder,
+  side/depth mirror or held-object-cursor capture requirements.
+
 - **DM1-HOC-ORNAMENT-RENDER-CAPTURE:** The generic DM1 dungeon bridge now
   consumes the real PC34 map ornament counts, seed, square attributes and
   F0169/F0170 random wall/floor ordinal formulas. The real PC34 map-0 receipt
