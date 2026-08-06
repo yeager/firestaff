@@ -186,6 +186,8 @@ static void test_m11_cast_spell_validation_failure_stops_cast(void) {
     assert(state.spellBuffer.runeCount == 0);
     assert(champ->mana.current == 100);
     assert(M11_GameView_GetProjectileCount(&state) == 0);
+    assert(strcmp(state.lastOutcome,
+                  "EMPTY NEEDS MORE PRACTICE WITH THIS WIZARD SPELL.") == 0);
 }
 
 static void test_m11_f0230_parry_attack_uses_f0303_query(void) {

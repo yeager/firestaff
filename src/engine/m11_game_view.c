@@ -14687,8 +14687,7 @@ static int m11_apply_dm1_spell_failure_feedback_f0412(
     int casterIndex,
     int failureReason,
     int spellSkillIndex,
-    const char* championName,
-    const char* fallbackText)
+    const char* championName)
 {
     const DM1_SpellFailureFeedback* sourceFeedback;
     DM1_V1_SpellFailureHudFeedbackPc34 feedback;
@@ -14742,8 +14741,8 @@ static int m11_apply_dm1_spell_failure_feedback_f0412(
                         (unsigned char)receipt.textColor);
     m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s",
                   (unsigned int)state->world.gameTick,
-                  fallbackText ? fallbackText : receipt.text);
-    m11_set_status(state, "CAST", fallbackText ? fallbackText : receipt.text);
+                  line);
+    m11_set_status(state, "CAST", line);
     snprintf(state->inspectTitle, sizeof(state->inspectTitle), "SPELL FAILED");
     snprintf(state->inspectDetail, sizeof(state->inspectDetail), "%s", line);
     if (receipt.clearsSymbolsOnCastClick) {
@@ -14820,7 +14819,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         if (!m11_apply_dm1_spell_failure_feedback_f0412(
                 state, casterIndex, SPELL_FAILURE_MEANINGLESS_SPELL,
                 -1,
-                champName, "MEANINGLESS SPELL")) {
+                champName)) {
             m11_log_event(state, M11_COLOR_LIGHT_RED,
                           "T%u: %s MEANINGLESS SPELL",
                           (unsigned int)state->world.gameTick, champName);
@@ -14916,7 +14915,7 @@ int M11_GameView_CastSpell(M11_GameViewState* state) {
         else if (failureReason == SPELL_FAILURE_NEEDS_MAGIC_MAP) failMsg = "NEED MAGIC MAP";
         if (!m11_apply_dm1_spell_failure_feedback_f0412(
                 state, casterIndex, failureReason, spell.skillIndex,
-                champName, failMsg)) {
+                champName)) {
             m11_log_event(state, M11_COLOR_LIGHT_RED, "T%u: %s %s",
                           (unsigned int)state->world.gameTick, champName,
                           failMsg);
