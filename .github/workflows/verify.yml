@@ -18,6 +18,14 @@ env:
   SDL3_TAG: release-3.2.14
 
 jobs:
+  release-notes-policy:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+
+      - name: Verify release-notes policy regression cases
+        run: python3 scripts/test_verify_release_notes.py
+
   cmake-build:
     strategy:
       fail-fast: false

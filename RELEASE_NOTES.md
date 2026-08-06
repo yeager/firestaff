@@ -5,10 +5,10 @@
 
 ## Changed
 - `README.md`: Replaced stale project-status, data-setup and CI claims with repository-derived wording.
-- `docs/wiki status`: States that DM1 V1 is the strongest playable target and that the other games remain under real-data handoff work.
+- `docs/wiki status`: Replaced the status text to state that DM1 V1 is the strongest playable target and that the other games remain under real-data handoff work.
 
 ## Removed
-- None. No functions or public features were removed.
+- None.
 
 # Firestaff v3.0.290
 - Add percent sign glyph to built-in bitmap font so scanning progress

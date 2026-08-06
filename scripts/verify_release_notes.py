@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Reject release notes that do not account for every functional delta."""
+"""Reject release notes that do not name their version's concrete deltas."""
 
 import argparse
 import re
@@ -9,7 +9,36 @@ from pathlib import Path
 
 HEADER_RE = re.compile(r"^# Firestaff v([^\s]+)\s*$")
 SECTION_NAMES = ("Added", "Changed", "Removed")
-GENERIC_TERMS = ("various", "miscellaneous", "improvements", "updates")
+GENERIC_TERMS = (
+    "various",
+    "miscellaneous",
+    "improvements",
+    "updates",
+    "and more",
+    "etc.",
+    "etc",
+)
+ACTION_WORDS = {
+    "Added": ("add", "introduc", "register", "admit", "enable", "create"),
+    "Changed": (
+        "change",
+        "fix",
+        "replace",
+        "prevent",
+        "load",
+        "read",
+        "write",
+        "use",
+        "move",
+        "remove",
+        "reject",
+        "block",
+        "bind",
+        "restore",
+        "update",
+    ),
+    "Removed": ("remove", "delete", "drop", "retire", "disable", "unregister"),
+}
 
 
 def fail(message: str) -> None:
@@ -56,11 +85,19 @@ def verify_category(lines: list[str], name: str) -> None:
         lower = body.lower()
         if any(term in lower for term in GENERIC_TERMS):
             fail(f"{heading!r} contains generic wording: {entry!r}")
-        if body.startswith("None."):
+        if body == "None.":
             continue
+        if body.startswith("None."):
+            fail(f"{heading!r} must use exactly 'None.' when there is no delta")
         if not re.match(r"`[^`]+`:\s+\S", body):
             fail(
                 f"{heading!r} must name the changed function or feature in backticks: "
+                f"{entry!r}"
+            )
+        action_text = body.split(":", 1)[1].lower()
+        if not any(word in action_text for word in ACTION_WORDS[name]):
+            fail(
+                f"{heading!r} must state what changed, not only its result: "
                 f"{entry!r}"
             )
 

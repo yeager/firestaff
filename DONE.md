@@ -1,5 +1,14 @@
 # Theron production fixture-symbol boundary (2026-08-06)
 
+# GitHub release-notes specificity gate (2026-08-06)
+
+- ✅ Strengthened the release preflight so every published version must have
+  `Added`, `Changed` and `Removed` sections. Each non-empty entry names the
+  affected function or feature in code formatting and describes a concrete
+  action; generic catch-alls and explanatory text after `None.` are rejected.
+  A data-free regression script now exercises accepted and rejected notes in
+  the normal verification workflow.
+
 - ✅ Removed the fixture-only `theron_v1_party_clear_fixture_defaults()` export
   from the production archive. Its implementation and declaration now require
   `THERON_CHAMPION_FIXTURE_HELPERS`, while source-bound startup keeps the real
