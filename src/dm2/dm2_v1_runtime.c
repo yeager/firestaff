@@ -4537,107 +4537,6 @@ static int dm2_runtime_spell_timer_delegate(void *user,
  * delegated to spell timer handlers via dm2_runtime_spell_timer_delegate. */
 
 /*
- * dm2_runtime_ornate_noise_timer — 0x5A timer handler.
- * Source: skevent.cpp:2818 / c_tim_proc.cpp:4216 DM2_CONTINUE_ORNATE_NOISE.
- * Reads actuator record, checks ActiveStatus, resolves wall/floor decoration,
- * requeues timer with anim_len delay, and queues activation sound.
- */
-static int dm2_runtime_ornate_noise_timer(void *user,
-                                          const DM2_V1_SourceTimer *timer,
-                                          uint16_t source_index,
-                                          DM2_V1_ProceedTimersReceipt *receipt) {
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    uint8_t *rec;
-    uint16_t w4, graphic_number, active_status;
-    uint8_t tile_x, tile_y;
-    int tile_raw, is_wall;
-    uint8_t category, decoration;
-    const uint8_t *gfx_list;
-    int gfx_count;
-    int timer_map;
-
-    (void)source_index; (void)receipt;
-
-    if (!rt || !rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data)
-        return 1;
-
-    rec = dm2_v1_record_pool_address_mut(&rt->record_pools,
-                                          timer->value_b);
-    if (!rec)
-        return 1;
-
-    w4 = (uint16_t)(rec[4] | (rec[5] << 8));
-    active_status = w4 & 0x01u;
-    timer_map = (int)((timer->ticks_and_map >> 24) & 0xFFu);
-
-    if (active_status == 0 || timer_map != rt->dungeon_level)
-        return 1;
-
-    tile_x = (uint8_t)(timer->value_a & 0xFF);
-    tile_y = (uint8_t)((timer->value_a >> 8) & 0xFF);
-
-    tile_raw = dm2_v1_dungeon_get_tile_raw(
-        (const DM2_V1_DungeonData *)rt->boot->dungeon_data,
-        rt->dungeon_level, tile_x, tile_y);
-    if (tile_raw < 0)
-        return 1;
-
-    is_wall = ((tile_raw >> 5) & 7) == 0 ? 1 : 0;
-    graphic_number = (w4 >> 12) & 0x0Fu;
-    if (graphic_number == 0)
-        return 1;
-
-    if (is_wall) {
-        category = 0x09;
-        gfx_list = rt->map_wall_gfx_list;
-        gfx_count = rt->map_wall_gfx_count;
-    } else {
-        category = 0x0A;
-        gfx_list = rt->map_floor_gfx_list;
-        gfx_count = rt->map_floor_gfx_count;
-    }
-
-    if ((int)graphic_number > gfx_count)
-        return 1;
-    decoration = gfx_list[graphic_number - 1];
-    if (decoration == 0xFFu)
-        return 1;
-
-    /* Requeue timer: tick += GET_ORNATE_ANIM_LEN */
-    {
-        const DM2_V1_AssetLoader *loader =
-            dm2_v1_boot_asset_loader(rt->boot);
-        if (loader) {
-            DM2_V1_GetOrnateAnimLenReceipt anim_rc;
-            if (dm2_v1_get_ornate_anim_len_receipt(
-                    loader, (int)category, (int)decoration, 0, &anim_rc) &&
-                anim_rc.accepted && anim_rc.length > 0) {
-                DM2_V1_SourceTimer requeue = *timer;
-                requeue.ticks_and_map =
-                    (timer->ticks_and_map & 0xFF000000u) |
-                    ((dm2_v1_source_timer_tick(timer) +
-                      (uint32_t)anim_rc.length) &
-                     DM2_V1_SOURCE_TIMER_TICK_MASK);
-                dm2_v1_runtime_enqueue_source_timer(&requeue, 0);
-            }
-        }
-    }
-
-    /* QUEUE_NOISE_GEN2: activation sound */
-    if (rt->sound_queue_ready) {
-        DM2_V1_SoundQueueReceipt snd_rc;
-        dm2_v1_sound_queue_noise_gen2(
-            &rt->sound_queue,
-            (int8_t)category, (int8_t)decoration, (int8_t)0x88,
-            (int8_t)0xFF, (int16_t)tile_x, (int16_t)tile_y,
-            1, 0x8C, 0x80,
-            &rt->sound_env, &snd_rc);
-    }
-
-    return 1;
-}
-
-/*
  * dm2_runtime_move_record_rotate_timer — 0x5D timer handler.
  * Source: skevent.cpp:3140-3145.
  * If timer map == player map: MOVE_RECORD_TO(NULL, playerX, playerY,
@@ -5023,7 +4922,6 @@ void dm2_v1_runtime_tick(void) {
          * link, wake/sleep and party transaction.  Their old direct writes
          * could relocate original records or the party from timer bytes
          * alone, so both stay unbound until that source owner is present. */
-        (void)dm2_runtime_ornate_noise_timer;
         (void)dm2_runtime_move_record_rotate_timer;
         /* Spell-effect timer delegation: 0x46 light, 0x47 hero ench flag,
          * 0x48 ench power, 0x4B poison, 0x19 cloud, 0x1E missile, 0x5E summon.

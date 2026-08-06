@@ -3730,6 +3730,10 @@ level or consumer bindings.
   address plus an animation-length receipt cannot authorize frame-bit writes,
   activation clearing or timer requeue without the original animator record
   and timer-queue transaction.
+  The adjacent 0x5A ornament-noise study is removed: GDAT decoration and
+  duration receipts alone cannot authorize a timer requeue or activation
+  sound before its original actuator lifecycle and audio transaction are
+  restored.
   The M11 Action-door shortcut now follows the same rule: it cannot rewrite
   a G1 tile from a coordinate-only query while the live DB0 door record,
   direction, collision, sound and follow-up timer transaction are absent.

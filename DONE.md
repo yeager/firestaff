@@ -2423,6 +2423,15 @@
   production-boundary verifier and real PC-DOS G1 viewport-plan regression
   pass. No game data was copied, unpacked or modified.
 
+- ✅ 2026-08-06 DM2 ornament-noise transaction cleanup: removed the uncalled
+  0x5A noise study from `dm2_v1_runtime.c`. It formed a new timer and queued
+  activation sound from raw timer/record fields plus GDAT decoration facts,
+  without the original actuator lifecycle and audio transaction. The
+  production-boundary verifier rejects its return; the class remains
+  fail-closed. Verification: `firestaff_dm2` build, production-boundary
+  verifier and real PC-DOS G1 viewport-plan regression pass. No game data
+  was copied, unpacked or modified.
+
 - ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now
   records a completed party/leader-cache clear only after its retained
   source-save projection is observed empty. M11 requires that postcondition
