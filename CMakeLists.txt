@@ -4275,6 +4275,12 @@ list(REMOVE_ITEM M10_SOURCES
 # not in the production M10 archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat.c")
+# `dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat.c` is an unused
+# platform-boundary receipt: ReDMCSB F0449/F0450 are Atari-ST floppy bodies,
+# not PC34 runtime code, and caller search found only its explicit test.
+# Keep the fail-closed audit out of the broad M10 production archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0449_f0450_floppy_media_guard_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part

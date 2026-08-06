@@ -54,6 +54,11 @@
   champions and has no production caller or original-data input. Keep the
   race/clear contract test-only until the live F0280/F0346 owner is bound.
 
+- **DM1-F0449-F0450-FLOPPY-PLATFORM-AUDIT:** The F0449/F0450 helper is a
+  fail-closed Atari-ST floppy boundary, not a PC34 runtime owner. Keep its
+  source evidence test-only until a real platform-specific media consumer is
+  identified; never synthesize PC34 floppy availability.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

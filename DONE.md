@@ -1010,6 +1010,16 @@
   champion state into production. The live owner remains open.
 - ✅ No game data was copied or committed.
 
+# DM1 F0449/F0450 floppy platform audit isolation (2026-08-06)
+
+- ✅ Removed the unused F0449/F0450 floppy-media guard from the broad M10
+  source glob. ReDMCSB identifies these bodies as Atari-ST floppy code, and
+  caller search found only the explicit fail-closed test.
+- ✅ Retained the platform-boundary receipt and its no-synthetic-availability
+  assertion without linking an inert PC34 floppy route into production. No
+  PC34 floppy data was invented or copied.
+- ✅ No game data was copied or committed.
+
 # CSB FM Towns graphics real-cache regression (2026-08-06)
 
 - ✅ `test_csb_v1_fmtowns_graphics_dat` now takes
