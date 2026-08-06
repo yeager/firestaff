@@ -51122,3 +51122,9 @@ STX extraction remain explicitly open in TODO.
   507 MB heap allocation. The local real-media regression covers both language
   receipts and the resulting ordinary runtime paths; the game image remains
   user-supplied and untracked.
+- ✅ 2026-08-06 CSB FM Towns CDDA filström: originalets 30-spårs CUE och
+  råa MODE1/2352-bild kan nu leverera ett valt 44,1 kHz stereo-CDDA-spår
+  sektorvis till en vanlig PCM-fil. Den sista spårlängden bestäms av den
+  fysiska bildens slut, precis som minnesvägen, utan att läsa in hela
+  507 MB-bilden. Realt CUE/IMG-test bekräftar spårantalet och spår 2:s
+  CUE-härledda längd. Uppspelningens M11-bindning är fortfarande öppen.

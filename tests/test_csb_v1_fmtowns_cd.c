@@ -195,10 +195,52 @@ static void test_real_bin(void) {
     free(bin);
 }
 
+static void test_real_cdda_file_stream(void) {
+    const char *image_path = getenv("FIRESTAFF_CSB_FMTOWNS_IMAGE");
+    const char *cue_path = getenv("FIRESTAFF_CSB_FMTOWNS_CUE");
+    char out_path[512];
+    uint8_t *cue;
+    size_t cue_size;
+    CSB_V1_FmtownsCddaLayout layout;
+    FILE *out;
+    long out_size;
+
+    if (!image_path || image_path[0] == '\0' || !cue_path || cue_path[0] == '\0') {
+        printf("SKIP: FIRESTAFF_CSB_FMTOWNS_IMAGE/CUE not set\n");
+        return;
+    }
+    cue = load_file(cue_path, &cue_size);
+    ASSERT(cue != NULL, "load real FM Towns CUE");
+    if (!cue) return;
+    ASSERT(csb_v1_fmtowns_cdda_parse_cue((const char *)cue, cue_size,
+                                         &layout) == 0,
+           "parse real FM Towns CUE");
+    ASSERT(layout.valid == 1 && layout.track_count == 30,
+           "real FM Towns CUE has 30 CDDA tracks");
+    free(cue);
+    if (!layout.valid) return;
+    snprintf(out_path, sizeof(out_path), "/tmp/firestaff-csb-fmtowns-track2.pcm");
+    ASSERT(csb_v1_fmtowns_cdda_extract_file_to_path(image_path,
+                                                     &layout.tracks[0],
+                                                     out_path) == 0,
+           "stream real FM Towns CDDA track 2");
+    out = fopen(out_path, "rb");
+    ASSERT(out != NULL, "open streamed CDDA track");
+    if (out) {
+        ASSERT(fseek(out, 0L, SEEK_END) == 0, "seek streamed CDDA track");
+        out_size = ftell(out);
+        ASSERT(out_size == (long)layout.tracks[0].byte_length,
+               "streamed CDDA track has CUE-derived length");
+        fclose(out);
+    }
+    remove(out_path);
+}
+
 int main(void) {
     test_probe_null();
     test_cue_index_one_without_zero_padding();
     test_real_bin();
+    test_real_cdda_file_stream();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

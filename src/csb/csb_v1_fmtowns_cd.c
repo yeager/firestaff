@@ -479,3 +479,55 @@ int csb_v1_fmtowns_cdda_extract(const uint8_t *bin_data, size_t bin_size,
     memcpy(out_buf, bin_data + start, length);
     return (int)length;
 }
+
+int csb_v1_fmtowns_cdda_extract_file_to_path(
+    const char *image_path, const CSB_V1_FmtownsCddaTrack *track,
+    const char *out_path) {
+    FILE *image = NULL;
+    FILE *out = NULL;
+    long image_size;
+    size_t start, length, remaining;
+    uint8_t buffer[32768];
+
+    if (!image_path || !track || !out_path ||
+        !(image = fopen(image_path, "rb"))) return -1;
+    if (fseek(image, 0L, SEEK_END) != 0 || (image_size = ftell(image)) < 0L ||
+        (size_t)image_size % RAW != 0U) {
+        fclose(image);
+        return -1;
+    }
+    start = (size_t)track->start_sector * RAW;
+    if (start >= (size_t)image_size) {
+        fclose(image);
+        return -1;
+    }
+    length = track->sector_count == 0U
+        ? (size_t)image_size - start
+        : (size_t)track->sector_count * RAW;
+    if (length == 0U || length > (size_t)image_size - start ||
+        fseek(image, (long)start, SEEK_SET) != 0 ||
+        !(out = fopen(out_path, "wb"))) {
+        if (out) fclose(out);
+        fclose(image);
+        return -1;
+    }
+    remaining = length;
+    while (remaining > 0U) {
+        size_t count = remaining > sizeof(buffer) ? sizeof(buffer) : remaining;
+        if (fread(buffer, 1U, count, image) != count ||
+            fwrite(buffer, 1U, count, out) != count) {
+            fclose(out);
+            fclose(image);
+            remove(out_path);
+            return -1;
+        }
+        remaining -= count;
+    }
+    if (fclose(out) != 0) {
+        fclose(image);
+        remove(out_path);
+        return -1;
+    }
+    fclose(image);
+    return 0;
+}

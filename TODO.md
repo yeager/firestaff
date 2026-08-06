@@ -4,7 +4,9 @@
   `CDATA`/`CJDATA` files, title animation, portraits and executables now reach
   the CSB runtime cache without synthetic replacements. Keep launch/runtime
   behavior capture-gated until the FM Towns-specific presentation, input,
-  audio/CDDA and save handoff are demonstrated against original media.
+  audio/CDDA playback and save handoff are demonstrated against original
+  media. The raw CDDA extractor now streams a selected CUE track sectorwise;
+  binding that authenticated PCM to M11 timing remains separate.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP
