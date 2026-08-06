@@ -52803,3 +52803,10 @@ konsument och placering är capture-bundna.
   hash-verified English pair instead of dereferencing an uninitialized
   `versionId`. Verified against the original 484 MiB MODE1/2352 image and
   both the file-backed ISO parser and scanner path.
+- ✅ 2026-08-06 Theron regular creature spawn bridge: production no longer
+  rejects every creature record. The five Track 02 regular spawn zones now
+  publish live HP/attack/defense from the authenticated category formulas,
+  but only on a loaded source-header-verified level. Scripted Thief/Demon
+  encounters, AI/combat behavior, loot and sound remain fail-closed. The world
+  spawn loop no longer consumes its budget when a source-unbound type is
+  rejected. Focused CTest: 3/3 passed.

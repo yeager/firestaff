@@ -782,10 +782,15 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
             if (theron_v1_creature_at(world, lvl, cx, cy)) {
                 attempts++; continue;
             }
-            theron_v1_creature_spawn(world, (Theron_CreatureType)ctype,
-                                     world->current_dungeon, lvl, cx, cy);
-            spawned++;
-            break;
+            if (theron_v1_creature_spawn(
+                    world, (Theron_CreatureType)ctype,
+                    world->current_dungeon, lvl, cx, cy) > 0) {
+                ++spawned;
+                break;
+            }
+            /* A scripted or otherwise source-unbound type must not consume
+             * the level budget merely because a candidate square was found. */
+            ++attempts;
         }
     }
     return spawned;

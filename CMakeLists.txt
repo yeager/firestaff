@@ -4601,7 +4601,7 @@ file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/thero
 # speed/AI/attack data. Keep it out of production until the Track 02 T900
 # consumer is decoded; fixture targets add it explicitly where needed.
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_compat\\.c$")
-list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_combat_runtime_noop\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_combat_runtime_source\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shape_cache_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shapes\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_widget_assets_pc34\\.c$")
@@ -4613,7 +4613,7 @@ list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_startup_receipt\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_overlay_pc34\\.c$")
 if(THERON_SOURCES)
     add_library(firestaff_theron STATIC ${THERON_SOURCES}
-        src/theron/theron_v1_combat_runtime_noop.c
+        src/theron/theron_v1_combat_runtime_source.c
         src/theron/theron_v1_track02_text_decode.c
         src/theron/theron_v1_track02_item_properties.c
         src/theron/theron_v1_track02_creature_spawn.c
@@ -39945,18 +39945,18 @@ endif()
 
 # ── Theron V1 Phase 5 — Combat Mechanics Regression Test ───────────────
 if(BUILD_TESTING AND THERON_SOURCES)
-    add_executable(test_theron_v1_combat_runtime_noop
-        tests/test_theron_v1_combat_runtime_noop.c)
-    target_link_libraries(test_theron_v1_combat_runtime_noop PRIVATE
+    add_executable(test_theron_v1_combat_runtime_source
+        tests/test_theron_v1_combat_runtime_source.c)
+    target_link_libraries(test_theron_v1_combat_runtime_source PRIVATE
         firestaff_theron)
-    target_include_directories(test_theron_v1_combat_runtime_noop PRIVATE
+    target_include_directories(test_theron_v1_combat_runtime_source PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
-        target_compile_options(test_theron_v1_combat_runtime_noop PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_theron_v1_combat_runtime_source PRIVATE -Wall -Wextra -O2)
     endif()
     add_test(
-        NAME theron_v1_combat_runtime_noop
-        COMMAND test_theron_v1_combat_runtime_noop)
+        NAME theron_v1_combat_runtime_source
+        COMMAND test_theron_v1_combat_runtime_source)
 
     add_executable(test_theron_v1_combat_mechanics
         tests/test_theron_v1_combat_mechanics.c
