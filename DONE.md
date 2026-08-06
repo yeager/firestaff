@@ -60,6 +60,13 @@ were corrected to stop presenting DM1 provisions as Nexus data.
   and creature docs are labelled historical/diagnostic instead of claiming
   source-locked live parity.
 
+- ✅ 2026-08-06 Nexus retail tick-state quarantine: ISO/extracted engine ticks
+  no longer advance unbound action cooldowns, door animation or trap timers;
+  retail movement no longer applies the inherited DM1 step-stamina mutation,
+  and a local door record cannot open from movement without the Saturn action
+  receipt. Fixture behavior remains available for isolated tests. The focused
+  tick integration now covers the retail no-mutation boundary (18 tests).
+
 - ✅ 2026-08-06 Nexus retail provision mutation quarantine: the mechanics tick
   no longer decrements or penalizes unbound PLRD food/water in ISO/extracted
   engines. The 14-test tick integration confirms the real-source path leaves

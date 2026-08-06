@@ -197,6 +197,13 @@
   applies inherited starvation/dehydration damage before the Saturn
   start/save consumer is captured.
 
+- **NEXUS-RETAIL-TICK-STATE-GATE:** Retail ISO/extracted ticks now leave the
+  unbound action cooldown, door animation, trap cooldown and DM1-derived
+  step-stamina state unchanged. Movement over decoded floor geometry remains
+  available, but registered doors still require the Saturn SDDRVS transition
+  receipt before opening. The fixture path remains available for isolated
+  helper tests; restore each retail route only from a captured Saturn owner.
+
 - **NEXUS-CONTAINER-LOOT-CAPTURE:** The old DM1-shaped Nexus container helper
   accepted caller-supplied chest/crate contents despite the retail DGN corpus
   exposing no authenticated container owner, content chain, key dispatch or

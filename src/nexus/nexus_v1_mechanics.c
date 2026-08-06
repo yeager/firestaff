@@ -568,7 +568,12 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
 
     /* Advance door animation each tick, independent of input cooldown.
      * Source: DM1 viewport door open/close stepping (SDDRVS.TSK / renderer). */
-    if (nexus_doors_tick_animation()) {
+    /* Door animation is still a DM1-shaped compatibility state machine.  A
+     * retail DGN door record does not prove the Saturn SDDRVS transition or
+     * VDP1 frame owner, so do not advance it in production retail state. */
+    if ((engine->source == NEXUS_SRC_NONE ||
+         nexus_v1_action_semantics_proven()) &&
+        nexus_doors_tick_animation()) {
         needs_redraw = 1;
     }
 
@@ -825,6 +830,15 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
              * Source: DM1 door processing — locked doors block without key;
              *         viewport door animation steps open/closed. */
             if (sq == NEXUS_SQUARE_DOOR && !nexus_doors_is_passable(t_x, t_y)) {
+                /* A registered local door is not enough to authorize the
+                 * Saturn action transition.  Keep retail movement closed
+                 * until SDDRVS/VDP1 state is captured. */
+                if (engine->source != NEXUS_SRC_NONE &&
+                    !nexus_v1_action_semantics_proven()) {
+                    sq = 0;
+                }
+            }
+            if (sq == NEXUS_SQUARE_DOOR && !nexus_doors_is_passable(t_x, t_y)) {
                 uint8_t leader_inv[30] = {[0 ... 29] = (uint8_t)-1};
                 int leader_idx = mechanics_party_leader_index(engine);
                 if (leader_idx >= 0) {
@@ -885,11 +899,17 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     if (li2 >= 0) {
                         Nexus_V1_Champion *ldr = &engine->champions.champions[li2];
                         st->move_cooldown_ticks = nexus_v1_encumbrance_move_ticks(ldr);
-                        int stam_cost = nexus_v1_encumbrance_stamina_cost(ldr);
-                        if (ldr->stamina > stam_cost)
-                            ldr->stamina -= stam_cost;
-                        else
-                            ldr->stamina = 0;
+                        /* Encumbrance/stamina cost is a DM1-derived state
+                         * write; the Saturn movement consumer is not yet
+                         * captured.  Keep it fixture-only. */
+                        if (engine->source == NEXUS_SRC_NONE ||
+                            nexus_v1_action_semantics_proven()) {
+                            int stam_cost = nexus_v1_encumbrance_stamina_cost(ldr);
+                            if (ldr->stamina > stam_cost)
+                                ldr->stamina -= stam_cost;
+                            else
+                                ldr->stamina = 0;
+                        }
                     } else {
                         st->move_cooldown_ticks = 8;
                     }
@@ -900,13 +920,16 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 {
                     int li = mechanics_party_leader_index(engine);
                     if (li >= 0) {
-                        Nexus_V1_TrapResult tr = nexus_v1_trap_trigger(
-                            &engine->traps,
-                            &engine->champions.champions[li],
-                            st->map_index, t_x, t_y);
-                        if (tr.triggered && tr.damage_dealt > 0) {
-                            nexus_v1_damage_display_add(&engine->damage_display,
-                                li, tr.damage_dealt, NEXUS_DMG_TAKEN);
+                        if (engine->source == NEXUS_SRC_NONE ||
+                            nexus_v1_action_semantics_proven()) {
+                            Nexus_V1_TrapResult tr = nexus_v1_trap_trigger(
+                                &engine->traps,
+                                &engine->champions.champions[li],
+                                st->map_index, t_x, t_y);
+                            if (tr.triggered && tr.damage_dealt > 0) {
+                                nexus_v1_damage_display_add(&engine->damage_display,
+                                    li, tr.damage_dealt, NEXUS_DMG_TAKEN);
+                            }
                         }
                     }
                 }
@@ -1252,7 +1275,9 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     /* Stamina cost per step — party leader spends 3 stamina per step.
      * Source: DM1 CLIKMENU.C:237-255 (living champion stamina decrement),
      * CHAMPION.C F0325_DECREMENTSTAMINA lines 2025-2048. */
-    if (needs_redraw && cmd != NEXUS_CMD_TURN_LEFT && cmd != NEXUS_CMD_TURN_RIGHT) {
+    if ((engine->source == NEXUS_SRC_NONE ||
+         nexus_v1_action_semantics_proven()) &&
+        needs_redraw && cmd != NEXUS_CMD_TURN_LEFT && cmd != NEXUS_CMD_TURN_RIGHT) {
         int leader_idx;
         if (engine->champions.party_count > 0 &&
             engine->champions.leader_index >= 0 &&

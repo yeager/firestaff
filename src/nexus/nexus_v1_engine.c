@@ -10447,9 +10447,15 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                         .spawned_creature = cr;
             }
         }
-        nexus_v1_action_timers_tick(&engine->action_timers);
-        nexus_v1_door_tick(&engine->doors);
-        nexus_v1_trap_tick(&engine->traps);
+        /* These bounded DM1-shaped state machines have no authenticated
+         * Saturn dispatcher/timer owner yet.  Keep fixture behavior, but do
+         * not mutate retail action, door, or trap state speculatively. */
+        if (engine->source == NEXUS_SRC_NONE ||
+            nexus_v1_action_semantics_proven()) {
+            nexus_v1_action_timers_tick(&engine->action_timers);
+            nexus_v1_door_tick(&engine->doors);
+            nexus_v1_trap_tick(&engine->traps);
+        }
         if (nexus_v1_action_semantics_proven()) {
             nexus_v1_creatures_tick(&engine->creatures,
                                     engine->mechanics->party_x,

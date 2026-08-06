@@ -326,11 +326,57 @@ int main(void) {
         destroy_engine(e);
     }
 
+    /* Test 17: retail ticks do not advance unbound action/door/trap state. */
+    {
+        Nexus_V1_Engine *e = create_minimal_engine();
+        Nexus_V1_Trap trap;
+        int door;
+        e->source = NEXUS_SRC_EXTRACTED;
+        nexus_v1_action_start_cooldown(&e->action_timers, 0, 12, NULL);
+        door = nexus_v1_door_register(&e->doors, 5, 4, 0, 0, -1, 0, 0);
+        nexus_v1_door_try_open(&e->doors, door, -1, 0);
+        memset(&trap, 0, sizeof(trap));
+        trap.kind = NEXUS_TRAP_PRESSURE_PLATE;
+        trap.armed = 1;
+        trap.rearm_ticks = 8;
+        nexus_v1_trap_add(&e->traps, &trap);
+        nexus_v1_tick(e);
+        expect(e->action_timers.cooldown[0] == 12,
+               "uncaptured retail action cooldown does not tick");
+        expect(e->doors.doors[door].anim_frame == 0 &&
+               e->doors.doors[door].state == NEXUS_DOOR_OPENING,
+               "uncaptured retail door animation does not tick");
+        expect(e->traps.traps[0].cooldown == 0,
+               "uncaptured retail trap timer does not tick");
+        destroy_engine(e);
+    }
+
+    /* Test 18: retail movement remains available on decoded floor geometry,
+     * but its DM1-derived step-stamina mutation stays closed. */
+    {
+        Nexus_V1_Engine *e = create_minimal_engine();
+        int old_stamina;
+        int old_x = e->mechanics->party_x;
+        int old_y = e->mechanics->party_y;
+        memset(e->current_level.squares, 1, sizeof(e->current_level.squares));
+        e->current_level.width = 64;
+        e->current_level.height = 64;
+        e->source = NEXUS_SRC_EXTRACTED;
+        old_stamina = e->champions.champions[0].stamina;
+        nexus_mechanics_push_command(e->mechanics, NEXUS_CMD_FORWARD);
+        nexus_v1_tick(e);
+        expect(e->mechanics->party_x != old_x || e->mechanics->party_y != old_y,
+               "retail movement still follows decoded floor geometry");
+        expect(e->champions.champions[0].stamina == old_stamina,
+               "uncaptured retail step stamina does not mutate");
+        destroy_engine(e);
+    }
+
     if (g_fail) {
         fprintf(stderr, "%d failures\n", g_fail);
         return 1;
     }
 
-    printf("ok: Nexus tick integration verified (16 tests)\n");
+    printf("ok: Nexus tick integration verified (18 tests)\n");
     return 0;
 }
