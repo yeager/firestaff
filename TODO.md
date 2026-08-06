@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D2L-D2R-F0108-SYNTHETIC-AUDIT:** This contract-only D2 side model
+  fixes zone and ordered-cell metadata without comparing original bitmap data.
+  It has no M11/runtime caller; retain it as an explicit ReDMCSB regression
+  until a source-bound D2 side floor-ornament consumer is recovered.
+
 - **DM1-D2C-F0108-SYNTHETIC-AUDIT:** This contract-only D2C F0108 model
   fixes zones, cell ordering and a local framebuffer probe. It has no original
   DM1 data input or M11/runtime caller; retain it as an explicit ReDMCSB
