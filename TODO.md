@@ -443,6 +443,10 @@
   dispatch is captured; do not bind the host sound enum or start playback
   from inferred selectors.
 
+  Host-side SFX requests remain numeric in production diagnostics. Former
+  labels such as `DOOR_OPEN` and `SPELL_CAST` were not retail MAP facts and
+  must not be presented as such.
+
   2026-08-06: ITEM.IBS inventory helpers no longer guess armor slots from
   inherited DM1 item IDs; the remaining equipment mutation still requires the
   authentic Saturn action/slot dispatcher capture.

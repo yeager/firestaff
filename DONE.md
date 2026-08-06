@@ -52577,3 +52577,7 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   neither of which can be reconstructed from a host handle. The focused
   save/load regression proves these calls stay fail-closed; M11's real
   PC-DOS startup gate still passes.
+✅ 2026-08-06 Nexus SFX-diagnostiken visar inte längre syntetiska händelsenamn.
+Hostenumret är kvar som intern begäran, medan retail-MAP-selectors förblir
+opaka tills en Saturn-capture binder event-dispatchen. Playback och övriga
+no-draw/capture-gates är oförändrade.

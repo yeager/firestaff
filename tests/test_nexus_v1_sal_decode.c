@@ -62,8 +62,8 @@ static void test_cd_callbacks(void) {
 }
 
 static void test_event_name(void) {
-    assert(strcmp(nexus_sound_event_name(NEXUS_SFX_FOOTSTEP), "FOOTSTEP") == 0);
-    assert(strcmp(nexus_sound_event_name(NEXUS_SFX_DOOR_OPEN), "DOOR_OPEN") == 0);
+    assert(strcmp(nexus_sound_event_name(NEXUS_SFX_FOOTSTEP), "HOST_EVENT") == 0);
+    assert(strcmp(nexus_sound_event_name(NEXUS_SFX_DOOR_OPEN), "HOST_EVENT") == 0);
     assert(strcmp(nexus_sound_event_name(NEXUS_SFX_NONE), "UNKNOWN") == 0);
     tests_run++;
 }

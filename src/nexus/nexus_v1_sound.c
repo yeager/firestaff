@@ -22,18 +22,9 @@ static int nexus_file_exists(const char *path);
  * unproven, so no actual SFX playback is admitted.
  * Source: docs/nexus_sfx.md (no SFX implementation found in current source). */
 
-/* Diagnostic names for host-side requests. They are not decoded from, or
- * asserted to match, the opaque retail MAP selector bytes. */
-static const char *g_event_names[] = {
-    "NONE", "FOOTSTEP", "DOOR_OPEN", "DOOR_CLOSE",
-    "ATTACK_HIT", "ATTACK_MISS", "CHAMPION_HURT", "CREATURE_DEATH",
-    "CREATURE_ATTACK", "SPELL_CAST", "SPELL_IMPACT", "PICKUP_ITEM",
-    "DROP_ITEM", "STAIRS", "TELEPORT", "ALARM", "PIT_FALL",
-    "MENU_SELECT", "MENU_CONFIRM", "MENU_CANCEL", "GOLD_PICKUP",
-    "EXIT_REACHED", "PARTY_HURT", "LEVEL_UP", "MAGIC_SHIELD",
-    "MAGIC_HEAL", "MAGIC_DAMAGE"
-};
-#define EVENT_COUNT (sizeof(g_event_names)/sizeof(g_event_names[0]))
+/* The host event enum is an internal request identifier only. It is not a
+ * retail MAP selector and must not acquire a source-looking label here. */
+#define EVENT_COUNT NEXUS_SFX_EVENT_SELECTOR_COUNT
 
 /* Source-locked event→MAP-selector dispatch table.
  * No Saturn source has yet bound the host NEXUS_SFX_* enum values to MAP
@@ -1053,7 +1044,6 @@ static int record_event_window(Nexus_SoundEngine *eng,
  * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
  *         nexus_v1_audio_receipt.c verified SNDLEV##.SAL/.MAP sizes. */
 void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
-    const char *name;
     Nexus_SfxRuntimeReceipt receipt;
     int sample_index = -1;
     int selector = -1;
@@ -1063,9 +1053,6 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     if (!eng || !eng->initialized) return;
     if (!eng->sfx_enabled) return;
     if (event <= NEXUS_SFX_NONE || event >= EVENT_COUNT) return;
-
-    name = g_event_names[event];
-    if (!name) name = "UNKNOWN";
 
     /* Always compute the runtime receipt for diagnostic state. */
     (void)nexus_sound_level_runtime_receipt(eng, &receipt);
@@ -1106,9 +1093,9 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
     }
 
     if (looked_up) {
-        printf("Nexus SFX dispatch: %s selector=%d sal_offset=%d sal_size=%d "
+        printf("Nexus SFX dispatch: host_event=%d selector=%d sal_offset=%d sal_size=%d "
                "(no decoded tone)\n",
-               name, selector, window.sal_offset, window.sal_size);
+               event, selector, window.sal_offset, window.sal_size);
         return;
     }
 }
@@ -1284,7 +1271,9 @@ void nexus_sound_set_music(Nexus_SoundEngine *eng, int enabled) {
 
 const char *nexus_sound_event_name(Nexus_SoundEvent event) {
     if (event <= NEXUS_SFX_NONE || event >= EVENT_COUNT) return "UNKNOWN";
-    return g_event_names[event];
+    /* This API is retained for callers that need a stable diagnostic token;
+     * individual host names would falsely claim a retail MAP meaning. */
+    return "HOST_EVENT";
 }
 
 /* ═══════════════════════════════════════════════════════════════════

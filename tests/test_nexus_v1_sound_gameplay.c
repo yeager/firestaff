@@ -133,10 +133,10 @@ static void test_event_names(void) {
         }
     }
 
-    /* Check a few specific names */
+    /* Individual host labels are intentionally not source-promoted. */
     const char *foot = nexus_sound_event_name(NEXUS_SFX_FOOTSTEP);
-    expect(foot != NULL && strstr(foot, "OOTSTEP") != NULL,
-           "FOOTSTEP event name contains 'OOTSTEP'");
+    expect(foot != NULL && strcmp(foot, "HOST_EVENT") == 0,
+           "host event name remains a generic diagnostic token");
 }
 
 static void test_sfx_music_toggle(void) {
