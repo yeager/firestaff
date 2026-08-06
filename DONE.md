@@ -55935,9 +55935,12 @@ alcove runtime and archive-media tests passed (4/4).
 - The same source-DM1 boundary rejects direct calls to M11's procedural
   full-screen map helper. This matches the already-blocked keyboard route and
   prevents callers from exposing a non-source overlay in authenticated V1.
+  A retained flag from a prior diagnostic session is cleared before input or
+  idle simulation and is excluded from the final frame compositor.
 - Regression: `test_m11_overlay_command_queue_block` verifies that a click at
   the old strip coordinate returns ignored and enqueues no movement in DM1 V1,
-  and that the direct map helper keeps its overlay closed.
+  that the direct map helper keeps its overlay closed, and that stale map
+  state is removed without blocking the DM1 command pipeline.
 
 # 2026-08-06 DM1 FM Towns DRAW_DMENU backdrop binding
 

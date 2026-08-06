@@ -1162,6 +1162,27 @@ static void test_dm1_v1_rejects_direct_procedural_map_overlay(void)
     M11_GameView_Shutdown(&state);
 }
 
+static void test_dm1_v1_clears_stale_procedural_map_overlay(void)
+{
+    M11_GameViewState state;
+    M11_GameInputResult result;
+
+    seed_active_view(&state);
+    state.sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
+    (void)snprintf(state.sourceId, sizeof(state.sourceId), "%s", "dm1");
+    state.mapOverlayActive = 1;
+
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_MAP_TOGGLE);
+
+    ASSERT_EQ(result, M11_GAME_INPUT_IGNORED,
+              "DM1 V1 ignores the host map-toggle input");
+    ASSERT_EQ(state.mapOverlayActive, 0,
+              "DM1 V1 clears a stale procedural map overlay");
+    assert_no_pipeline_activity(&state, 0, 0,
+                                "stale DM1 V1 map state cannot block gameplay");
+    M11_GameView_Shutdown(&state);
+}
+
 #if 0 /* Retired M11 viewport diagnostics are covered by DM1-owned receipts. */
 static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void)
 {
@@ -2024,6 +2045,7 @@ int main(void)
     test_mouse_positive_control_dispatches_without_overlay();
     test_dm1_v1_rejects_hidden_procedural_control_strip();
     test_dm1_v1_rejects_direct_procedural_map_overlay();
+    test_dm1_v1_clears_stale_procedural_map_overlay();
     test_m11_runtime_center_wall_blocks_deeper_corridor();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);

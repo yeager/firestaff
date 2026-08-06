@@ -12068,6 +12068,16 @@ static int m11_v1_chrome_mode_enabled(const M11_GameViewState* state) {
     return !(env && env[0] != '\0' && strcmp(env, "0") == 0);
 }
 
+/* The full-screen map is a Firestaff diagnostic convenience, not a PC34 DM1
+ * surface. Keep this predicate shared by all public entry points: a caller
+ * can retain M11_GameViewState across a source switch, so merely rejecting
+ * the normal M-key route is insufficient to prevent a stale host overlay. */
+static int m11_dm1_v1_blocks_host_map_overlay(const M11_GameViewState* state) {
+    return state && m11_is_dm1_source_kind(state->sourceKind) &&
+           strcmp(state->sourceId, "dm1") == 0 &&
+           !state->showDebugHUD && m11_v1_chrome_mode_enabled(state);
+}
+
 
 
 /* Pass 41: mode-aware champion status-box stride / width.
@@ -22522,6 +22532,11 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
+    if (m11_dm1_v1_blocks_host_map_overlay(state)) {
+        /* A state object can be reused after a diagnostic session. Never let
+         * a stale host overlay pause an authenticated DM1 V1 simulation. */
+        state->mapOverlayActive = 0;
+    }
     mouthRedraw = m11_tick_v1_mouth_animation(state);
     /* F31 does not continue through PC34 ENDGAME.C's fuse replay once
      * STARTUP2.C F0750 has handed victory to the Towns animation program. */
@@ -25755,6 +25770,9 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (!state || !state->active) {
         return M11_GAME_INPUT_IGNORED;
     }
+    if (m11_dm1_v1_blocks_host_map_overlay(state)) {
+        state->mapOverlayActive = 0;
+    }
 
     /* Session-timer forced-pause confirm dialog: ENTER returns to the
      * launcher; BACK dismisses the dialog (the runtime keeps the
@@ -27187,6 +27205,9 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     state->pointerPositionKnown = 1;
     state->pointerX = x;
     state->pointerY = y;
+    if (m11_dm1_v1_blocks_host_map_overlay(state)) {
+        state->mapOverlayActive = 0;
+    }
 
     if (state->graphicsPopupActive) {
         if ((buttonMask & DM1_V1_MOUSE_MASK_LEFT_PC34) == 0) {
@@ -55498,7 +55519,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     }
 
     /* ── Full-screen overlay panels (drawn last, on top of everything) ── */
-    if (state->mapOverlayActive) {
+    if (state->mapOverlayActive &&
+        !m11_dm1_v1_blocks_host_map_overlay(state)) {
         m11_draw_fullscreen_map(state, framebuffer, framebufferWidth, framebufferHeight);
     }
     if (state->inventoryPanelActive) {
@@ -55655,13 +55677,12 @@ int M11_GameView_GetAttackCueCreatureType(const M11_GameViewState* state) {
 
 int M11_GameView_ToggleMapOverlay(M11_GameViewState* state) {
     if (!state) return 0;
-    if (m11_is_dm1_source_kind(state->sourceKind) &&
-        strcmp(state->sourceId, "dm1") == 0 &&
-        !state->showDebugHUD && m11_v1_chrome_mode_enabled(state)) {
+    if (m11_dm1_v1_blocks_host_map_overlay(state)) {
         /* The full-screen map is a Firestaff convenience/debug surface,
          * not a source-owned DM1 V1 command or display.  HandleInput
-         * already rejects its keyboard route in this mode; preserve that
-         * boundary for callers of the public helper as well. */
+         * already rejects its keyboard route in this mode. Clear a retained
+         * diagnostic value as well as rejecting direct activation. */
+        state->mapOverlayActive = 0;
         return 0;
     }
     if (state->candidateMirrorPanelActive) {
