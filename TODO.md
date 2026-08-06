@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-STARTUP-TEXT-CAPTURE:** Retail PLRD rows now refuse stale
+  serialized ASCII names in the startup footer/row-label lane; only the
+  isolated compatibility roster may expose host labels. Recover the Saturn
+  TEXT4/TABL/FONT256 consumer and placement before admitting real names,
+  stats, or action labels to the menu.
+
 - **NEXUS-CREATURE-VDP1-CAPTURE:** The generic creature billboard API is now
   no-draw. Its old DM1-shaped perspective/flag behavior accepted a host
   texture without Saturn VDP1 command, CLUT, placement, or DMDF/MNS owner

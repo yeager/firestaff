@@ -2416,7 +2416,11 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
     blink_on = ((frame / 12) & 1) == 0;
     memset(rows, 0, (size_t)max_rows * sizeof(rows[0]));
     for (row = 0; row < pool->champion_count; ++row) {
-        if (pool->champions[row].name_ascii[0] != '\0') {
+        /* ASCII names are permitted only for the isolated compatibility
+         * roster.  An authenticated PLRD row owns TABL/FONT256 codes; do
+         * not let a stale serialized host name create a retail footer. */
+        if (pool->champions[row].name_ascii[0] != '\0' &&
+            pool->champions[row].name_tabl_code[0] == 0U) {
             host_label_fixture = 1;
             break;
         }
@@ -2502,7 +2506,8 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
          * champion name or a host-formatted HP/MP line.  Keep this legacy
          * label lane empty for authenticated records until the Saturn text
          * consumer and glyph placement are captured. */
-        if (pool->champions[row].name_ascii[0] != '\0') {
+        if (pool->champions[row].name_ascii[0] != '\0' &&
+            pool->champions[row].name_tabl_code[0] == 0U) {
             snprintf(out->label,
                      sizeof(out->label),
                      "%c %s %s HP %d MP %d",

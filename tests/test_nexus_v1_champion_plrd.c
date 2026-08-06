@@ -101,6 +101,15 @@ int main(void) {
             row.source_name_glyphs[3] != 0x00d8U ||
             row.label[0] != '\0' ||
             footer.label[0] != '\0') return 1;
+        /* A stale host name must not reopen the ASCII compatibility lane for
+         * an authenticated PLRD row that already owns TABL glyph codes. */
+        snprintf(pool.champions[0].name_ascii,
+                 sizeof(pool.champions[0].name_ascii), "STALE-HOST-NAME");
+        memset(&row, 0, sizeof(row));
+        memset(&footer, 0, sizeof(footer));
+        if (nexus_v1_startup_menu_build_champion_render_rows(
+                &pool, 0, &row, 1, &footer) != 1 ||
+            row.label[0] != '\0' || footer.label[0] != '\0') return 1;
     }
     {
         FILE *item_file = fopen(item_path, "rb");

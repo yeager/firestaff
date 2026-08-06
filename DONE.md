@@ -1,3 +1,12 @@
+# Nexus startup ASCII-label provenance fence (2026-08-06)
+
+- ✅ Startup champion footer and row labels now require the isolated
+  compatibility-roster shape (`name_ascii` without an authenticated PLRD TABL
+  code). Retail PLRD rows therefore remain source-glyph-only even after a
+  stale host name is present in a serialized pool. Verification: startup menu
+  compatibility tests and the real PLRD parser test; no game data was copied
+  or committed.
+
 # Nexus CDDA selection-only status (2026-08-06)
 
 - ✅ Corrected the Nexus sound runtime diagnostic so an unbound Saturn
