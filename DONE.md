@@ -5,6 +5,11 @@
   continues to compile the source directly.
 - ✅ Verification: `dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
+# DM1 champion hand-slot priority synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the source-only champion hand-slot priority trace from M10. It
+  fabricates party, slot and Thing state, while its direct ReDMCSB regression
+  and status-hand sibling regression compile it explicitly.
 
 # DM1 mirror C160/F0284 synthetic audit isolation (2026-08-06)
 

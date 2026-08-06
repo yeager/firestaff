@@ -4389,6 +4389,12 @@ list(REMOVE_ITEM M10_SOURCES
 # champion state through the broad M10 production archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_pending_wounds_tick_pc34_compat.c")
+# `dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c` is a source-only
+# ReDMCSB trace with fabricated party, slot and thing state. It explicitly
+# declares `contract_only=1`, loads no original DM1 data, and has no M11
+# runtime caller; its direct and sibling regressions compile it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c")
 # `dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c` contains only the
 # asset-free D3C stairs/pit dispatch and transparent-byte fixture contract;
 # no M11/runtime caller consumes it.  Keep its source-lock test explicit and
