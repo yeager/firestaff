@@ -268,3 +268,26 @@ med samma ID; den får inte falla tillbaka till palette 0. Hashverifierad testni
 av LEV00–LEV15 dekoderar 1 678 riktiga descriptors, varav 1 553 indexed-4bpp
 och 125 direct-color-555. Det bevisar descriptor-, pixel- och palettebytes, men
 inte ännu Structure3:s Saturn-VDP1-upload, UV-/draw-order eller viewportplacering.
+
+## Aktuell produktionsaudit 2026-08-06
+
+En ny genomgång mot aktuell `main` skiljer produktionsbiblioteket från de
+uttryckliga test-/probe-fixtures som fortfarande använder syntetiska bytes för
+parserkontrakt. `firestaff_nexus` länkar inte `nexus_v1_bpx_bpk.c`, S2D-
+textlayouten, screen-text-wrappern, MNS-host-renderaren eller de procedurala
+V2-HUD-modulerna. Den länkade viewporten returnerar ingen färgtriangel,
+fallbackpalett eller procedurmodell när Saturnmaterial saknas.
+
+Retailkörningen med `/Users/bosse/.firestaff/data/nexus` passerar de fokuserade
+regressionerna för DM.BIN-startupankare, HUD-layout (80 poster), HUD-hitrects
+(40 poster), championpanel, MENU.BPK-ytklassning, SLEV/SAL-discovery,
+SAL-proveniens, ljud-runtime-receipt, SAL-dekodning, TITLE MAPD/TIBG och
+save-roundtrip. Track-1-readinessproben passerar `29/0`; dess real-data-BMP
+är avsiktligt svart och får inte räknas som en Saturn-skärmbild.
+
+Det finns därför ingen verifierad lokal retailfil att byta in för de sista
+presentations- eller ljudluckorna. Nästa källtroget tillåtna steg är en
+instrumenterad Saturn-capture som binder `MENU.BPK`/`STABG.BIN` till
+VDP1/VDP2, Structure3 till draw order och SLEV/SAL till selector/SDDRVS.
+Stock Mednafen avvisas av `docs/NEXUS_RUNTIME_CAPTURE.md` eftersom den saknar
+Firestaffs capture-hook; ingen syntetisk capture får ersätta den.

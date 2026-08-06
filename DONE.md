@@ -9,6 +9,15 @@
   viewport route, and FM Towns real-media direct/ZIP companion regressions
   pass.
 
+- ✅ 2026-08-06 Nexus current-main production audit: rechecked the startup,
+  menu, HUD, viewport and SLEV/SAL routes against the real European corpus in
+  `/Users/bosse/.firestaff/data/nexus`. Focused retail regressions pass for
+  DM.BIN startup/HUD geometry, MENU.BPK, TITLE MAPD, STABG, FACE, SLEV/SAL,
+  save round-trip and the 29/0 Track-1 readiness probe. The audit confirms
+  synthetic BPX/text/MNS/V2 presentation modules remain test/probe-only and
+  the linked viewport remains no-draw without authenticated Saturn capture;
+  no guessed asset or screenshot was promoted.
+
 - ✅ 2026-08-06 Theron Track 02 monster source ledger: the authentic category-4
   thing-list records from all loaded dungeons are now copied into world state
   with source references, level coordinates, raw type/position, health words,
