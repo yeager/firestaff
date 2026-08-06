@@ -24,15 +24,6 @@
   regression now compiles the source directly.
 - ✅ Verification: `test_dm1_v1_viewport_d1l2_d1r2_f0108_wall_composition_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
-# DM1 M11 Thing-list ornament fail-closed gate (2026-08-06)
-
-- ✅ M11 no longer retains a calculated F0170/F0171 random wall or floor
-  ornament when the original PC34 square carries a Thing list. The value may
-  now come only from a C03 sensor in that source chain; an item/text-only list
-  produces no ornament.
-- ✅ Verification: `test_m11_overlay_command_queue_block` passes 216/216,
-  alongside the real `DUNGEON.DAT` state and focused random-ornament tests.
-
 # DM1 mirror pending-hand/chest-race synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the pending-hand/chest-pickup race model from M10. It fabricates

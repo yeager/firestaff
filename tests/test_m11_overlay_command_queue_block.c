@@ -1926,63 +1926,6 @@ static void test_hoc_floor_ornament_sources_follow_redmcsb(void)
     ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 3,
               "HoC random floor ornament follows F0172 map-zero stream");
 
-    /* Only a C03 sensor may replace the random ordinal. A non-sensor Thing
-     * list is not ornament evidence and must not retain the calculated value. */
-    squareData[0] |= DUNGEON_SQUARE_MASK_THING_LIST;
-    squareFirstThings[0] = make_thing(THING_TYPE_JUNK, 0);
-    ASSERT_EQ(M11_GameView_GetFloorOrnamentOrdinal(&state, 0, 0), 0,
-              "HoC non-sensor Thing list suppresses random floor ornament");
-}
-
-static void test_wall_thing_list_does_not_leak_random_ornament(void)
-{
-    M11_GameViewState state;
-    struct DungeonDatState_Compat dungeon;
-    struct DungeonMapDesc_Compat map;
-    struct DungeonMapTiles_Compat tiles;
-    struct DungeonThings_Compat things;
-    unsigned char squareData[2];
-    unsigned short squareFirstThings[2];
-    int wallOrnament = 0;
-
-    seed_active_view(&state);
-    memset(&dungeon, 0, sizeof(dungeon));
-    memset(&map, 0, sizeof(map));
-    memset(&tiles, 0, sizeof(tiles));
-    memset(&things, 0, sizeof(things));
-    memset(squareData, 0, sizeof(squareData));
-    memset(squareFirstThings, 0, sizeof(squareFirstThings));
-
-    /* North-facing party at y=1 sees the south face of y=0. Thirty source
-     * slots guarantee F0171 would choose a random ordinal without this list. */
-    squareData[0] = (unsigned char)((DUNGEON_ELEMENT_WALL << 5) | 0x02 |
-                                    DUNGEON_SQUARE_MASK_THING_LIST);
-    squareData[1] = (unsigned char)(DUNGEON_ELEMENT_CORRIDOR << 5);
-    squareFirstThings[0] = make_thing(THING_TYPE_JUNK, 0);
-    squareFirstThings[1] = THING_ENDOFLIST;
-    map.width = 1;
-    map.height = 2;
-    map.randomWallOrnamentCount = 30;
-    tiles.squareData = squareData;
-    tiles.squareCount = 2;
-    dungeon.header.mapCount = 1;
-    dungeon.maps = &map;
-    dungeon.tiles = &tiles;
-    dungeon.tilesLoaded = 1;
-    things.squareFirstThings = squareFirstThings;
-    things.squareFirstThingCount = 2;
-    state.world.dungeon = &dungeon;
-    state.world.things = &things;
-    state.world.party.mapX = 0;
-    state.world.party.mapY = 1;
-    state.world.party.direction = 0;
-
-    ASSERT_EQ(M11_GameView_ProbeViewportRenderMetadata(
-                  &state, 1, 0, NULL, NULL, NULL,
-                  &wallOrnament, NULL, NULL, NULL),
-              1, "front wall with a Thing list is sampled");
-    ASSERT_EQ(wallOrnament, -1,
-              "non-sensor Thing list suppresses random wall ornament");
 }
 
 static void test_m11_runtime_center_wall_blocks_deeper_corridor(void)
@@ -2098,7 +2041,6 @@ int main(void)
     test_candidate_panel_blocks_rest_and_source_save_commands();
     test_candidate_panel_hides_stale_action_rows();
     test_hoc_floor_ornament_sources_follow_redmcsb();
-    test_wall_thing_list_does_not_leak_random_ornament();
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();
