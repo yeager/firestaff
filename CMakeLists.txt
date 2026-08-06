@@ -124,6 +124,16 @@ set_tests_properties(nexus_v1_hud_layout PROPERTIES
     LABELS "nexus;hud;tier4;real_data;skip_safe"
     SKIP_RETURN_CODE 77)
 
+add_executable(test_nexus_v1_startup_menu_source
+    tests/test_nexus_v1_startup_menu_source.c)
+target_include_directories(test_nexus_v1_startup_menu_source PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_startup_menu_source PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_startup_menu_source COMMAND test_nexus_v1_startup_menu_source)
+set_tests_properties(nexus_v1_startup_menu_source PROPERTIES
+    LABELS "nexus;startup;menu;tier4;real_data;skip_safe"
+    SKIP_RETURN_CODE 77)
+
 add_executable(test_nexus_v1_spell_cast_mechanics
     tests/test_nexus_v1_spell_cast_mechanics.c)
 target_include_directories(test_nexus_v1_spell_cast_mechanics PRIVATE

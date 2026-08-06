@@ -213,6 +213,11 @@
   2026-08-06: a decoded real MENU.BPK route is now explicitly blocked until
   the admitted PALT memory, palette-state and VDP1-command capture exists;
   decoder success alone no longer reports a drawable menu.
+  2026-08-06: the real DM.BIN startup/menu regression now verifies the
+  adjacent `MENU.BPK`, `yam\\menu.c`, `FONT256.S2D` and `STABG.BIN` loader
+  names at `0x373B4`–`0x373D8`, with pointer-reference counts 1/10/1/1.
+  This is source ownership only; menu order, text consumer and VDP1/VDP2
+  composition remain capture-gated.
 
 - **NEXUS-MANIFEST-CONTAINER-COVERAGE:** The asset verifier now recognizes
   the authenticated English/French `MENU.BPK` and English `RLOWFIX.BIN`

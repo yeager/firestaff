@@ -52185,3 +52185,11 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   and seven occurrences of the SH-2 runtime address `0x060476D0`. This is a
   stronger disassembly/source-ownership receipt; it does not infer VDP1/VDP2
   drawing or event-command semantics.
+
+# 2026-08-06 Nexus startup/menu DM.BIN resource anchor
+
+- ✅ The real-data startup/menu regression now verifies the adjacent retail
+  loader strings `MENU.BPK`, `yam\\menu.c`, `FONT256.S2D` and `STABG.BIN` at
+  `DM.BIN+0x373B4` through `DM.BIN+0x373D8`. Their exact SH-2 pointer-reference
+  counts are 1/10/1/1. This records resource ownership only; it does not infer
+  menu order, text semantics or Saturn VDP1/VDP2 composition.
