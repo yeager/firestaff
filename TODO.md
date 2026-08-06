@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-STARTUP-SH2-VDP2-CAPTURE:** The authenticated European `DM.BIN`
+  startup/menu routine is now checked as an SH-2 function with exact
+  PC-relative references to the retail `MENU.BPK`/`STABG.BIN` literals and a
+  retained hardware literal. This proves source ownership only. Recover the
+  executed VDP2 register/VRAM writes and tile/CLUT consumer from an
+  instrumented Saturn capture before admitting menu placement, FONT256 text,
+  HUD composition or viewport pixels.
+
 - **DM1-D0C-F0108-SYNTHETIC-AUDIT:** The D0C/F0108 floor-ceiling-ornament
   helper remains a contract-only probe with fixed coordinate, zone and
   framebuffer values. Its ReDMCSB control-flow notes are useful, but no

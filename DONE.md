@@ -1,3 +1,14 @@
+# Nexus startup/menu SH-2 source corridor (2026-08-06)
+
+- ✅ Extended the authenticated European `DM.BIN` receipt to validate the
+  startup/menu routine's SH-2 prologue/return envelope and exact PC-relative
+  literal targets for `MENU.BPK`, `STABG.BIN` and the retained hardware
+  literal.
+- ✅ Kept the result source-ownership evidence only: no menu placement,
+  FONT256 consumer, VDP2 register write, HUD composition or viewport pixel
+  was promoted without Saturn capture.
+- ✅ Real-data `test_nexus_v1_startup_menu_source` passes.
+
 # Nexus Saturn capture launcher executability (2026-08-06)
 
 - ✅ Marked all five Nexus Mednafen capture launchers executable so the

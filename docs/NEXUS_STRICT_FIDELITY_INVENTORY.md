@@ -234,6 +234,14 @@ den verifierar den unika statiska registertabellen och SH-2-literalflödet till
 VDP1-registerfönstret och VDP1-VRAM-baskandidaten. Den bevisar inte en
 STABG-specifik kommandoemission, palette-lane eller slutlig skärmplacering.
 
+Startup/menu-korridoren vid filoffset `0x18B60` är nu dessutom verifierad som
+en SH-2-funktion med `STS.L PR,@-R15`, `RTS` och exakta PC-relativa
+`MOV.L`-referenser till retailens `yam\\menu.c`- och `STABG.BIN`-strängar samt
+ett kvarhållet hårdvaruliteral `0x25E64000`. Det stärker ägarskapet i
+disassemblyn, men är fortfarande inte ett bevis på att en viss VDP2-register-
+eller VRAM-skrivning exekveras. Menyplacering, FONT256-konsumtion och
+VDP1/VDP2-komposition är därför fortsatt capture-gated.
+
 DMWebs formatbeskrivning anger big-endian som standard och dokumenterar PRS3:s
 kontrollbitar, literal-/kopieringskod och relativa 12-bitarsoffset. Samma källa
 beskriver `MENU.BPK` som Nexus UI-grafik och `STABG.BIN` som champion status box

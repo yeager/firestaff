@@ -35,6 +35,45 @@ static int check_string(const uint8_t *data, size_t size, size_t offset,
     return offset + length <= size && memcmp(data + offset, text, length) == 0;
 }
 
+static uint16_t read_be16(const uint8_t *data, size_t offset)
+{
+    return (uint16_t)(((uint16_t)data[offset] << 8) | data[offset + 1U]);
+}
+
+static uint32_t read_be32(const uint8_t *data, size_t offset)
+{
+    return ((uint32_t)data[offset] << 24) |
+        ((uint32_t)data[offset + 1U] << 16) |
+        ((uint32_t)data[offset + 2U] << 8) | data[offset + 3U];
+}
+
+/* SH-2 MOV.L @(disp,PC),Rn: PC is the address of the instruction and the
+ * aligned base is (PC + 4) & ~3. Keep this receipt local to the authenticated
+ * retail image; it is not a runtime MMIO or VDP2 interpretation. */
+static int check_sh2_mov_l_literal(const uint8_t *data, size_t size,
+    size_t instruction_offset, unsigned int register_number,
+    size_t literal_offset, uint32_t literal_value)
+{
+    uint16_t opcode;
+    size_t aligned_pc_plus_four;
+    size_t observed_literal_offset;
+
+    if (instruction_offset + 2U > size || literal_offset + 4U > size ||
+        register_number > 15U) {
+        return 0;
+    }
+    opcode = read_be16(data, instruction_offset);
+    if ((opcode & UINT16_C(0xF000)) != UINT16_C(0xD000) ||
+        ((opcode >> 8) & 0x0FU) != register_number) {
+        return 0;
+    }
+    aligned_pc_plus_four = (instruction_offset + 4U) & ~(size_t)3U;
+    observed_literal_offset = aligned_pc_plus_four +
+        ((size_t)(opcode & UINT16_C(0x00FF)) * 4U);
+    return observed_literal_offset == literal_offset &&
+        read_be32(data, observed_literal_offset) == literal_value;
+}
+
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
@@ -104,7 +143,22 @@ int main(void)
             base + UINT32_C(0x373D8) ||
         /* Register literals are retained as disassembly receipts only. */
         count_be32(data, (size_t)file_size, UINT32_C(0x25F00006)) != 1U ||
-        count_be32(data, (size_t)file_size, UINT32_C(0x25F80000)) != 1U) {
+        count_be32(data, (size_t)file_size, UINT32_C(0x25F80000)) != 1U ||
+        /* The startup/menu routine is a real SH-2 function: verify its
+         * frame/return envelope and the PC-relative references that bind the
+         * code to the retail resource literals. These are ownership receipts,
+         * not proof that Firestaff has captured or reproduced Saturn output. */
+        read_be16(data, 0x18B64U) != UINT16_C(0x4F22) ||
+        read_be16(data, 0x18BE4U) != UINT16_C(0x4F26) ||
+        read_be16(data, 0x18BE8U) != UINT16_C(0x000B) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x18B6CU, 4U,
+            0x18C20U, base + UINT32_C(0x373D8)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x18B7EU, 4U,
+            0x18C00U, base + UINT32_C(0x373C0)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x18BB8U, 4U,
+            0x18C00U, base + UINT32_C(0x373C0)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x18B88U, 4U,
+            0x18C24U, UINT32_C(0x25E64000))) {
         free(data);
         fprintf(stderr, "FAIL: DM.BIN startup/menu resource anchor mismatch\n");
         return 1;
