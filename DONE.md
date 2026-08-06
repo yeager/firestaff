@@ -53164,3 +53164,11 @@ platform package.
   test to require zero framebuffer writes while Saturn HUD/VDP1/VDP2 capture
   is absent. The test now matches the production no-op gate and passes 9/9;
   the standalone overlay smoke test passes 46/46 without synthetic pixels.
+- ✅ 2026-08-06 CSB ZIP→ADF scanner admission: the shared hash scanner now
+  falls through from its native ZIP reader to the existing nested-disk
+  archive route when a ZIP member is an ADF/ST/MSA image.  It retains the
+  complete `archive.zip::disk.adf::FILE` receipt and materializes the same
+  member for the ordinary CSB runtime cache.  Regression coverage adds the
+  ZIP→ADF lookup/extraction case to `test_asset_find_by_hash`.  Verified
+  against the supplied `Chaos Strikes Back (FTL).zip` Amiga package: CSB
+  changes from `MISSING` to `READY` and emits the hash-verified cache files.

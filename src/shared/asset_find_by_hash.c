@@ -1059,6 +1059,21 @@ static int zip_extract_entry_to_path(const char *zipPath, const char *entryName,
     return 0;
 }
 
+/* A ZIP can itself carry a native disk image.  The regular ZIP reader owns
+ * ordinary members, while the external reader already knows how to walk an
+ * ADF/ST/MSA filesystem after extracting that member.  Keep the fallback
+ * here rather than treating a ZIP-distributed disk as a flat opaque file. */
+static int scan_external_archive_by_md5(const char *archivePath,
+                                        const char *expectedMd5,
+                                        char *outPath,
+                                        int outPathLen);
+static int scan_external_archive_by_md5_list(const char *archivePath,
+                                             const char *const *md5List,
+                                             int md5Count,
+                                             char outPaths[][ASSET_PATH_MAX],
+                                             int matched[]);
+static int external_tool_available_for_path(const char *path);
+
 static int scan_zip_by_md5(const char *zipPath, const char *expectedMd5,
                             char *outPath, int outPathLen) {
     FILE *fp;
@@ -4475,7 +4490,16 @@ static int scan_container_by_md5(const char *path, const char *expectedMd5,
                                  char *outPath, int outPathLen) {
     AssetContainerKind kind = asset_container_kind_for_path(path);
     if (kind == ASSET_CONTAINER_ZIP) {
-        return scan_zip_by_md5(path, expectedMd5, outPath, outPathLen);
+        if (scan_zip_by_md5(path, expectedMd5, outPath, outPathLen)) {
+            return 1;
+        }
+        /* Retail Amiga releases are often ZIP → ADF.  The in-process ZIP
+         * path cannot enumerate the OFS filesystem, whereas the existing
+         * extractor path emits the required archive::disk.adf::FILE receipt. */
+        return external_tool_available_for_path(path)
+                   ? scan_external_archive_by_md5(path, expectedMd5,
+                                                  outPath, outPathLen)
+                   : 0;
     }
     if (kind == ASSET_CONTAINER_ISO) {
         return scan_iso_by_md5(path, expectedMd5, outPath, outPathLen);
@@ -4526,7 +4550,14 @@ static int scan_container_by_md5_list(const char *path, const char *const *md5Li
                                       int matched[]) {
     AssetContainerKind kind = asset_container_kind_for_path(path);
     if (kind == ASSET_CONTAINER_ZIP) {
-        return scan_zip_by_md5_list(path, md5List, md5Count, outPaths, matched);
+        int found = scan_zip_by_md5_list(path, md5List, md5Count,
+                                         outPaths, matched);
+        if (found >= md5Count || !external_tool_available_for_path(path)) {
+            return found;
+        }
+        return found + scan_external_archive_by_md5_list(path, md5List,
+                                                         md5Count, outPaths,
+                                                         matched);
     }
     if (kind == ASSET_CONTAINER_ISO) {
         return scan_iso_by_md5_list(path, md5List, md5Count, outPaths, matched);
@@ -5067,6 +5098,27 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
     if (entry[0] == '\0') return 0;
     kind = asset_container_kind_for_path(container);
     if (kind == ASSET_CONTAINER_ZIP) {
+        const char *nested = strstr(entry, "::");
+        if (nested) {
+            char disk_entry[ASSET_PATH_MAX];
+            size_t disk_length = (size_t)(nested - entry);
+            if (disk_length == 0U || disk_length >= sizeof(disk_entry) ||
+                nested[2] == '\0' || !external_tool_available_for_path(container)) {
+                return 0;
+            }
+            memcpy(disk_entry, entry, disk_length);
+            disk_entry[disk_length] = '\0';
+            if (is_atari_st_path(disk_entry)) {
+                return external_atari_st_extract_entry_to_path(
+                    container, disk_entry, nested + 2, outFilePath);
+            }
+            if (is_atari_msa_path(disk_entry)) {
+                return external_atari_msa_extract_entry_to_path(
+                    container, disk_entry, nested + 2, outFilePath);
+            }
+            return external_adf_extract_entry_to_path(container, disk_entry,
+                                                      nested + 2, outFilePath);
+        }
         return zip_extract_entry_to_path(container, entry, outFilePath);
     }
     if (kind == ASSET_CONTAINER_TAR) {

@@ -1400,6 +1400,34 @@ int main(void) {
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf.7z");
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
 
+    /* CSB Amiga media is also commonly supplied as ZIP → ADF.  ZIP has an
+     * in-process reader for flat members, but the nested disk filesystem must
+     * retain the full virtual receipt and materialize the same ADF member. */
+    if (write_adf_fixture("asset_find_by_hash_test_tmp/nested_amiga.adf") &&
+        system("command -v 7zz >/dev/null 2>&1 && "
+               "(cd asset_find_by_hash_test_tmp && "
+               "7zz a -tzip nested_amiga.adf.zip nested_amiga.adf >/dev/null 2>&1)") == 0) {
+        remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
+        memset(outPath, 0, sizeof(outPath));
+        if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                               outPath, (int)sizeof(outPath), 2) ||
+            !path_has_virtual_entry(outPath, "nested_amiga.adf.zip",
+                                    "nested_amiga.adf::GRAPHICS.DAT")) {
+            cleanup_fixture();
+            fprintf(stderr, "nested ZIP/ADF filesystem lookup failed: %s\n", outPath);
+            return 1;
+        }
+        if (!asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+            !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+            cleanup_fixture();
+            fprintf(stderr, "nested ZIP/ADF filesystem extraction failed: %s\n", outPath);
+            return 1;
+        }
+        remove("asset_find_by_hash_test_tmp/extracted.dat");
+    }
+    remove("asset_find_by_hash_test_tmp/nested_amiga.adf.zip");
+    remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
+
     if (!write_iso_fixture("asset_find_by_hash_test_tmp/disc.iso")) {
         cleanup_fixture();
         fprintf(stderr, "ISO fixture setup failed\n");
