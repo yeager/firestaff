@@ -4670,6 +4670,12 @@ list(REMOVE_ITEM M10_SOURCES
 # or M11/runtime caller; its direct regression target already compiles it.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_hand_swap_no_duplicate_gate_pc34_compat.c")
+# `dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat.c` is a
+# fixed-weight partial-stack scenario driver. It has no original-DM1 input or
+# M11/runtime caller; keep shared inventory helpers in M10 and compile this
+# fixture only in its explicit regression target.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
@@ -54127,7 +54133,9 @@ add_executable(test_dm1_v1_chest_pickup_during_resurrect_pending_non_leader_pc34
 target_include_directories(test_dm1_v1_chest_pickup_during_resurrect_pending_non_leader_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_pickup_during_resurrect_pending_non_leader_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_pickup_during_resurrect_pending_non_leader_pc34_compat COMMAND test_dm1_v1_chest_pickup_during_resurrect_pending_non_leader_pc34_compat)
-add_executable(test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat tests/test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat.c)
+add_executable(test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat
+    tests/test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat.c
+    src/dm1/dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat COMMAND test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat)
