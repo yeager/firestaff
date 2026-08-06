@@ -26,6 +26,10 @@
   package, including nested `.7z` disk media, alongside cache, Amiga and FM
   Towns matches. The real Atari archive regression materializes the original
   launch pair and each authenticated startup/utility sidecar from that root.
+- ✅ PC 3.4 is no longer falsely reported when the matching `GRAPHICS.DAT`
+  exists only in an Amiga 3.1 package. The scanner verifies the A31E
+  `TITL.DAT` companion hash for every shared-payload candidate and preserves a
+  separate PC package only when its provenance is distinct.
 
 - ✅ TQTR containers with an extended declared VRAM segment now advance to the
   declared VCE offset before loading the palette snapshot. The previous path

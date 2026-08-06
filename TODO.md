@@ -822,6 +822,10 @@
   profile inventory now continues after a fast-path match, so an Atari ST
   `.7z` or other authenticated platform package in the same data root remains
   visible instead of being hidden by a cached or loose CSB pair.
+  2026-08-06: PC 3.4 and Amiga 3.1 share one `GRAPHICS.DAT` identity, so the
+  scanner now checks the paired, hash-verified A31E `TITL.DAT` receipt before
+  publishing the PC row. An A31 disk can no longer be mislabeled as PC 3.4;
+  a distinct shared-payload package is retained when one is actually present.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP

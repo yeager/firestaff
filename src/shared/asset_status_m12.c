@@ -3361,6 +3361,137 @@ static void m12_admit_csb_amiga31_title_package(
     }
 }
 
+/* A31E and PC34 deliberately share the GRAPHICS.DAT digest.  The A31E
+ * admission above proves the disk package with TITL.DAT, whereas the generic
+ * hash inventory only sees the common graphics payload.  Do not present that
+ * same verified Amiga disk as a second, fictitious PC34 installation.  When
+ * another authenticated copy of the shared payload exists, retain it for the
+ * PC row; otherwise leave that row unavailable.  This is package provenance,
+ * not a filename or directory-name guess. */
+static int m12_csb_graphics_has_amiga31_title(const char* graphicsPath) {
+    static const char* const titleNames[] = {
+        "TITL.DAT", "titl.dat", NULL
+    };
+    const char* const titleMd5 = "5b590ea3a6f5eed513b5678b01468ee4";
+    char parent[M12_ASSET_DATA_DIR_CAPACITY];
+    char titlePath[ASSET_PATH_MAX];
+    char stagePath[ASSET_PATH_MAX] = {0};
+    char md5[M12_ASSET_MD5_CAPACITY];
+    const char* separator;
+    const char* nextSeparator;
+    size_t prefixLength = 0U;
+    int titleIndex;
+    if (!graphicsPath || graphicsPath[0] == '\0') {
+        return 0;
+    }
+    if (m12_path_is_virtual_asset(graphicsPath)) {
+        separator = strstr(graphicsPath, "::");
+        while (separator &&
+               (nextSeparator = strstr(separator + 2, "::")) != NULL) {
+            separator = nextSeparator;
+        }
+        if (!separator || separator == graphicsPath) {
+            return 0;
+        }
+        prefixLength = (size_t)(separator - graphicsPath) + 2U;
+    } else if (!FSP_ParentDir(parent, sizeof(parent), graphicsPath)) {
+        return 0;
+    }
+    for (titleIndex = 0; titleNames[titleIndex] != NULL; ++titleIndex) {
+        if (prefixLength > 0U) {
+            if (snprintf(titlePath, sizeof(titlePath), "%.*s%s",
+                         (int)prefixLength, graphicsPath,
+                         titleNames[titleIndex]) >= (int)sizeof(titlePath)) {
+                continue;
+            }
+        } else if (!FSP_JoinPath(titlePath, sizeof(titlePath), parent,
+                                 titleNames[titleIndex])) {
+            continue;
+        }
+        if (!m12_csb_fmtowns_make_stage_path(stagePath, sizeof(stagePath)) ||
+            !(m12_path_is_virtual_asset(titlePath)
+                  ? asset_extract_virtual_path(titlePath, stagePath)
+                  : m12_copy_file_to_path(titlePath, stagePath)) ||
+            !m12_file_md5_hex(stagePath, md5)) {
+            if (stagePath[0] != '\0') {
+                (void)remove(stagePath);
+            }
+            continue;
+        }
+        (void)remove(stagePath);
+        if (strcmp(md5, titleMd5) == 0) {
+            return 1;
+        }
+    }
+    return 0;
+}
+
+static void m12_separate_csb_pc34_from_amiga31_package(
+    M12_AssetStatus* status, int gameIndex,
+    const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+    size_t rootCount) {
+    enum { M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT = 8 };
+    const char* const graphicsMd5 = "61fbfd56887c94adc26888a9491c6611";
+    int pcIndex;
+    int amigaIndex;
+    size_t rootIndex;
+    M12_AssetVersionStatus* pc;
+    const M12_AssetVersionStatus* amiga;
+
+    if (!status || gameIndex < 0 ||
+        strcmp(g_games[gameIndex].gameId, "csb") != 0) {
+        return;
+    }
+    pcIndex = M12_AssetStatus_FindVersionIndex("csb", "pc34-en");
+    amigaIndex = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    if (pcIndex < 0 || amigaIndex < 0) {
+        return;
+    }
+    pc = &status->versions[gameIndex][pcIndex];
+    amiga = &status->versions[gameIndex][amigaIndex];
+    if (!pc->matched || !amiga->matched ||
+        !m12_csb_graphics_has_amiga31_title(pc->matchedPath)) {
+        return;
+    }
+
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        const char* hashes[M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT + 1U];
+        char paths[M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT][ASSET_PATH_MAX];
+        int matched[M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT];
+        int candidateIndex;
+        for (candidateIndex = 0;
+             candidateIndex < M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT;
+             ++candidateIndex) {
+            hashes[candidateIndex] = graphicsMd5;
+        }
+        hashes[M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT] = NULL;
+        memset(paths, 0, sizeof(paths));
+        memset(matched, 0, sizeof(matched));
+        (void)asset_find_all_by_md5_list(
+            roots[rootIndex], hashes, paths, matched,
+            M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT, 32);
+        for (candidateIndex = 0;
+             candidateIndex < M12_CSB_SHARED_GRAPHICS_CANDIDATE_LIMIT;
+             ++candidateIndex) {
+            if (matched[candidateIndex] && paths[candidateIndex][0] != '\0' &&
+                !m12_csb_graphics_has_amiga31_title(paths[candidateIndex])) {
+                m12_copy_string(pc->matchedPath, sizeof(pc->matchedPath),
+                                paths[candidateIndex]);
+                m12_copy_string(pc->matchedMd5, sizeof(pc->matchedMd5),
+                                graphicsMd5);
+                return;
+            }
+        }
+    }
+
+    /* The only common-hash receipt belongs to the authenticated A31E disk.
+     * Keeping it in PC34 would make the launcher promise a platform whose
+     * package was not found. */
+    pc->matched = 0;
+    pc->matchedPath[0] = '\0';
+    pc->matchedMd5[0] = '\0';
+}
+
 static size_t m12_required_file_count_for_game(const char* gameId) {
     size_t i;
     size_t count = 0U;
@@ -4869,6 +5000,8 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         }
         if (strcmp(g_games[i].gameId, "csb") == 0) {
             m12_admit_csb_amiga31_title_package(status, i, roots, rootCount);
+            m12_separate_csb_pc34_from_amiga31_package(
+                status, i, roots, rootCount);
         }
         if (strcmp(g_games[i].gameId, "dm2") == 0) {
             (void)m12_admit_dm2_fmtowns_archive(status, i, roots, rootCount,
