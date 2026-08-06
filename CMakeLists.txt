@@ -4383,6 +4383,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_dungeon_dat.c
     src/dm1/dm1_v1_fmtowns_iso9660.c
     src/dm1/dm1_v1_fmtowns_cd_audio.c
+    src/dm1/dm1_v1_fmtowns_menu_regions.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
     src/shared/graphics_dat_snd3_loader_v1.c
@@ -53437,6 +53438,13 @@ add_executable(test_dm1_v1_fmtowns_cd_audio
 )
 target_include_directories(test_dm1_v1_fmtowns_cd_audio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_cd_audio COMMAND test_dm1_v1_fmtowns_cd_audio)
+
+add_executable(test_dm1_v1_fmtowns_menu_regions
+    tests/test_dm1_v1_fmtowns_menu_regions.c
+    src/dm1/dm1_v1_fmtowns_menu_regions.c
+)
+target_include_directories(test_dm1_v1_fmtowns_menu_regions PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_menu_regions COMMAND test_dm1_v1_fmtowns_menu_regions)
 
 add_executable(test_dm1_v1_fmtowns_dungeon_dat
     tests/test_dm1_v1_fmtowns_dungeon_dat.c
