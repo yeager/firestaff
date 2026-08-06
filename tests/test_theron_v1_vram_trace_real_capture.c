@@ -24,11 +24,17 @@ int main(void) {
         puts("SKIP: THERON_VRAM_SNAPSHOT and THERON_VCE_SNAPSHOT are not set");
         return 77;
     }
+    setenv("FIRESTAFF_THERON_VRAM_SNAPSHOT", vram_path, 1);
+    setenv("FIRESTAFF_THERON_VCE_SNAPSHOT", vce_path, 1);
     memset(&viewport, 0, sizeof(viewport));
-    if (theron_v1_vram_trace_load_files(&viewport, vram_path, vce_path) != 0 ||
-        !viewport.vram_trace_loaded || !viewport.vram_trace_data ||
-        !viewport.vce_trace_data) {
-        fprintf(stderr, "FAIL: real Mednafen VDC/VCE snapshot was not loaded\n");
+    if (!theron_vp_init(&viewport) || !viewport.vram_trace_loaded ||
+        !viewport.vram_trace_data || !viewport.vce_trace_data) {
+        fprintf(stderr, "FAIL: production viewport did not initialize\n");
+        return 1;
+    }
+    if (!viewport.synthetic_rendering_blocked) {
+        fprintf(stderr, "FAIL: real capture did not keep unbound semantic rendering blocked\n");
+        theron_vp_free(&viewport);
         return 1;
     }
     vram_nonzero = nonzero_bytes(viewport.vram_trace_data, THERON_VRAM_SIZE);
@@ -37,12 +43,12 @@ int main(void) {
     if (vram_nonzero == 0u || vce_nonzero == 0u || loaded <= 0 ||
         viewport.palette.tile_count <= 0) {
         fprintf(stderr, "FAIL: authentic snapshot contains no usable BAT/tile binding\n");
-        theron_v1_vram_trace_unload(&viewport);
+        theron_vp_free(&viewport);
         return 1;
     }
     printf("PASS: vram_nonzero=%zu vce_nonzero=%zu bat_tiles=%d "
            "palette_entries=512 pixels=source_only\n",
            vram_nonzero, vce_nonzero, loaded);
-    theron_v1_vram_trace_unload(&viewport);
+    theron_vp_free(&viewport);
     return 0;
 }

@@ -1,5 +1,6 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_palette.h"
+#include "theron_v1_vram_trace_loader.h"
 
 #include <stdlib.h>
 #include <string.h>
@@ -15,6 +16,9 @@
  */
 
 int theron_vp_init(Theron_V1_Viewport *vp) {
+    const char *vram_snapshot;
+    const char *vce_snapshot;
+
     if (!vp) return 0;
     memset(vp, 0, sizeof(*vp));
     vp->fb.w = TQR_FB_W;
@@ -29,13 +33,33 @@ int theron_vp_init(Theron_V1_Viewport *vp) {
     vp->viewport_x = 0;
     vp->viewport_y = 0;
     vp->initialized = 1;
+
+    /* An explicit real-capture pair may be mounted for runtime inspection.
+     * Never search for or synthesize snapshots implicitly: both paths must
+     * be supplied and the loader must authenticate the exact raw sizes.
+     * Square-to-tile semantics remain blocked until the HuC6280 consumer is
+     * source-bound, but the real bitmap/palette bank is now owned by the
+     * production viewport when this evidence is present. */
+    vram_snapshot = getenv("FIRESTAFF_THERON_VRAM_SNAPSHOT");
+    vce_snapshot = getenv("FIRESTAFF_THERON_VCE_SNAPSHOT");
+    if (vram_snapshot && vram_snapshot[0] && vce_snapshot && vce_snapshot[0] &&
+        theron_v1_vram_trace_load_files(vp, vram_snapshot, vce_snapshot) == 0 &&
+        theron_v1_vram_trace_populate_tiles(vp, 0, 64, 32) > 0) {
+        vp->synthetic_rendering_blocked = 1;
+    } else if (vp->vram_trace_loaded) {
+        theron_v1_vram_trace_unload(vp);
+    }
     return 1;
 }
 
 void theron_vp_free(Theron_V1_Viewport *vp) {
     if (!vp) return;
     free(vp->fb.data);
-    tqr_palette_free_tiles(&vp->palette);
+    if (vp->vram_trace_loaded) {
+        theron_v1_vram_trace_unload(vp);
+    } else {
+        tqr_palette_free_tiles(&vp->palette);
+    }
     memset(vp, 0, sizeof(*vp));
 }
 
@@ -96,5 +120,7 @@ void theron_vp_clear(Theron_V1_Viewport *vp, uint8_t color_index) {
 }
 
 const char *theron_v1_viewport_source_evidence(void) {
+    /* This reports only the capture-side bank ownership. It does not claim
+     * that a dungeon square or UI record has been mapped to these tiles. */
     return "NO VERIFIED TRACK02 TILE/MATERIAL/UI BANK";
 }

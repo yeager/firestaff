@@ -26210,10 +26210,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 - [ ] THERON-V1-TRACK02-VRAM-CONSUMER: bind the real VDC BAT/tile and VCE
   palette snapshot to the source-owned square/material/UI consumer. A native
   SDL2 Mednafen capture now emits exact 64 KiB VRAM and 1 KiB VCE snapshots;
-  the loader verifies 219 BAT tile bindings and 512 palette entries. This is
-  still opaque capture evidence: `$2600` source-LBA joins, object/level
-  records, and production viewport admission remain blocked until the
-  HuC6280 consumer is disassembled and tied to the Track 02 level handoff.
+  the production viewport can explicitly mount that pair through
+  `FIRESTAFF_THERON_VRAM_SNAPSHOT` and `FIRESTAFF_THERON_VCE_SNAPSHOT`, and
+  verifies 219 BAT tile bindings plus 512 palette entries. This remains a
+  capture-side bank binding: `$2600` source-LBA joins, object/level records,
+  square-to-tile semantics, and production dungeon/UI admission remain
+  blocked until the HuC6280 consumer is disassembled and tied to Track 02.
 
 - 🔧 DM2 HUD follow-up: M11 now leaves the accepted V1 runtime frame as the
   sole production HUD owner. The retired V2 compatibility blit used a static

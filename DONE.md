@@ -93,6 +93,14 @@
   media is tracked; the receipt remains opaque and does not admit guessed
   viewport, object or level semantics.
 
+- ✅ 2026-08-06 Theron production capture binding: the production viewport
+  lifecycle now accepts the authenticated VDC-VRAM/VCE snapshot pair through
+  explicit `FIRESTAFF_THERON_VRAM_SNAPSHOT` and
+  `FIRESTAFF_THERON_VCE_SNAPSHOT` paths, loads the real BAT/tile and palette
+  data, and releases it through the normal viewport owner. The real-capture
+  test now exercises this production init path; square-to-tile, object/level,
+  and dungeon/UI rendering remain fail-closed pending the HuC6280 consumer.
+
 - ✅ 2026-08-06 Nexus MENU.BPK receipt aligned with the real European retail
   corpus: the structural probe now recognizes the verified canonical,
   English and French archive identities, checks the observed 536-byte
