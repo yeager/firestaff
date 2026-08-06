@@ -16,6 +16,14 @@
 - ✅ Verification: `test_dm1_v1_viewport_d2c_f0107_wall_ornament_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 legacy ornament sensor-cell selection (2026-08-06)
+
+- ✅ The legacy DUNGEON.DAT bridge now matches a C03 wall sensor only when
+  its packed Thing cell is the face viewed by F0172. A sensor on another wall
+  cell, or another Thing type, no longer overrides the F0170/F0171 ordinal.
+- ✅ Verification: the raw compact-Thing regression and the materialized PC34
+  `DUNGEON.DAT` state test pass, as does `test_m11_overlay_command_queue_block`.
+
 # DM1 D1L2/D1R2 F0108 floor-ceiling synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the fixed D1L2/D1R2 F0108 floor/ceiling-ornament model from M10.

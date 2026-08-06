@@ -229,7 +229,7 @@ static uint16_t fs_dungeon_next_thing(uint16_t thing) {
     return r16(g_thing_bytes[type] + (size_t)index * g_thing_byte_count[type]);
 }
 
-static int fs_dungeon_sensor_ornament_override(int x, int y) {
+static int fs_dungeon_sensor_ornament_override(int x, int y, int wanted_cell) {
     int column = x;
     int row;
     int index;
@@ -250,7 +250,9 @@ static int fs_dungeon_sensor_ornament_override(int x, int y) {
     while (thing != 0xffffu && thing != 0xfffeu && guard++ < 64) {
         unsigned int type = (thing >> 10) & 0x0fu;
         unsigned int item = thing & 0x03ffu;
-        if (type == 3 && item < g_thing_counts[3] && g_thing_bytes[3]) {
+        if (type == 3 && item < g_thing_counts[3] && g_thing_bytes[3] &&
+            (wanted_cell < 0 || ((thing >> 14) & 0x03u) ==
+                                (unsigned int)(wanted_cell & 3))) {
             uint16_t bits = r16(g_thing_bytes[3] + (size_t)item * 8u + 4u);
             return (int)((bits >> 12) & 0x0fu);
         }
@@ -303,30 +305,35 @@ int fs_dungeon_get_wall_ornament(int x, int y, int dir) {
     }
     square = (uint8_t)((g_dungeon_grid[g_current_level][y][x] << 5) |
                        g_dungeon_attributes[g_current_level][y][x]);
-    /* F0172 lets a sensor in the source-owned compact Thing chain replace
-     * the random wall ordinal. A list without a sensor remains no-draw: a
-     * text, door or object must not be mistaken for ornament evidence. */
-    if ((square >> 5) != 0 || (square & front_face_mask[dir]) == 0) {
+    /* F0172 calculates the random wall stream independently from the
+     * Thing-list flag. A C03 sensor on the viewed wall cell then replaces it;
+     * another kind of Thing, or a sensor on another cell, does not erase the
+     * calculated source ordinal. */
+    if ((square >> 5) != 0) {
         return 0;
     }
-    if (square & 0x10) {
-        sensor_ordinal = fs_dungeon_sensor_ornament_override(x, y);
-        return sensor_ordinal >= 0 ? sensor_ordinal : 0;
-    }
     random_count = g_dungeon_random_wall_ornament_count[g_current_level];
-    if (random_count <= 0) return 0;
-
-    /* ReDMCSB DUNGEON.C F0171's front-face call is its second direction
-     * increment: sourceY=(y+1)*(((dir+2)&3)+1), then F0170 mixes it with
-     * the exact DUNGEON.DAT seed and current-map dimensions. */
-    value1 = (uint16_t)(2000 + x * 32 +
-                        (y + 1) * (((dir + 2) & 3) + 1));
-    value2 = (uint16_t)(3000 + g_current_level * 64 +
-                        g_dungeon_level_w[g_current_level] +
-                        g_dungeon_level_h[g_current_level]);
-    mixed = (((uint32_t)value1 * 31417u) >> 1) +
-            ((uint32_t)value2 * 11u) + g_ornament_random_seed;
-    random_index = (int)((mixed >> 2) % 30u);
+    random_index = 30;
+    if ((square & front_face_mask[dir]) != 0 && random_count > 0) {
+        /* ReDMCSB DUNGEON.C F0171's front-face call is its second direction
+         * increment: sourceY=(y+1)*(((dir+2)&3)+1), then F0170 mixes it with
+         * the exact DUNGEON.DAT seed and current-map dimensions. */
+        value1 = (uint16_t)(2000 + x * 32 +
+                            (y + 1) * (((dir + 2) & 3) + 1));
+        value2 = (uint16_t)(3000 + g_current_level * 64 +
+                            g_dungeon_level_w[g_current_level] +
+                            g_dungeon_level_h[g_current_level]);
+        mixed = (((uint32_t)value1 * 31417u) >> 1) +
+                ((uint32_t)value2 * 11u) + g_ornament_random_seed;
+        random_index = (int)((mixed >> 2) % 30u);
+    }
+    sensor_ordinal = -1;
+    if (square & 0x10) {
+        /* F0172's viewed wall face is opposite the viewing direction. */
+        sensor_ordinal = fs_dungeon_sensor_ornament_override(
+            x, y, (dir + 2) & 3);
+    }
+    if (sensor_ordinal >= 0) return sensor_ordinal;
     return random_index < random_count ? random_index + 1 : 0;
 }
 
@@ -349,26 +356,28 @@ int fs_dungeon_get_floor_ornament(int x, int y) {
                        g_dungeon_attributes[g_current_level][y][x]);
     element = square >> 5;
     /* F0172 admits random floor ornament only on corridor/pit/teleporter
-     * cells. A Thing-list square instead requires a source sensor override
-     * from the original compact chain. */
+     * cells. A source sensor overrides that value but a non-sensor chain does
+     * not remove it. */
     if ((element != 1 && element != 2 && element != 5) ||
-        (square & 0x08) == 0) {
+        !g_dungeon_loaded) {
         return 0;
     }
-    if (square & 0x10) {
-        sensor_ordinal = fs_dungeon_sensor_ornament_override(x, y);
-        return sensor_ordinal >= 0 ? sensor_ordinal : 0;
-    }
     random_count = g_dungeon_random_floor_ornament_count[g_current_level];
-    if (random_count <= 0) return 0;
-
-    value1 = (uint16_t)(2000 + x * 32 + y);
-    value2 = (uint16_t)(3000 + g_current_level * 64 +
-                        g_dungeon_level_w[g_current_level] +
-                        g_dungeon_level_h[g_current_level]);
-    mixed = (((uint32_t)value1 * 31417u) >> 1) +
-            ((uint32_t)value2 * 11u) + g_ornament_random_seed;
-    random_index = (int)((mixed >> 2) % 30u);
+    random_index = 30;
+    if ((square & 0x08) != 0 && random_count > 0) {
+        value1 = (uint16_t)(2000 + x * 32 + y);
+        value2 = (uint16_t)(3000 + g_current_level * 64 +
+                            g_dungeon_level_w[g_current_level] +
+                            g_dungeon_level_h[g_current_level]);
+        mixed = (((uint32_t)value1 * 31417u) >> 1) +
+                ((uint32_t)value2 * 11u) + g_ornament_random_seed;
+        random_index = (int)((mixed >> 2) % 30u);
+    }
+    sensor_ordinal = -1;
+    if (square & 0x10) {
+        sensor_ordinal = fs_dungeon_sensor_ornament_override(x, y, -1);
+    }
+    if (sensor_ordinal >= 0) return sensor_ordinal;
     return random_index < random_count ? random_index + 1 : 0;
 }
 

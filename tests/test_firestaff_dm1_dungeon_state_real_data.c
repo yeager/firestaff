@@ -2,6 +2,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int read_file(const char *path, unsigned char **out, int *out_size)
 {
@@ -30,11 +31,51 @@ static int read_file(const char *path, unsigned char **out, int *out_size)
     return 1;
 }
 
+static void w16(unsigned char *p, unsigned short value)
+{
+    p[0] = (unsigned char)(value & 0xffu);
+    p[1] = (unsigned char)(value >> 8);
+}
+
+static int sensor_wall_cell_regression(void)
+{
+    unsigned char data[73];
+    const size_t map = 44;
+    const size_t column_sft = 60;
+    const size_t square_first_thing = 62;
+    const size_t sensor = 64;
+    const size_t raw_map = 72;
+
+    memset(data, 0, sizeof(data));
+    w16(data + 2, 1);                 /* raw map bytes */
+    data[4] = 1;                      /* map count */
+    w16(data + 10, 1);                /* SquareFirstThing count */
+    w16(data + 18, 1);                /* C03 sensor count */
+    w16(data + map + 8, 0);           /* 1x1 map dimensions */
+    w16(data + column_sft, 0);        /* x=0 starts at SFT index 0 */
+    w16(data + square_first_thing, (unsigned short)((3u << 10) | (2u << 14)));
+    w16(data + sensor, 0xffffu);      /* C03 next Thing */
+    w16(data + sensor + 4, (unsigned short)(5u << 12));
+    data[raw_map] = 0x10u;            /* wall with a Thing list */
+
+    if (fs_dungeon_load_dat(data, (int)sizeof(data)) != 1) return 0;
+    /* North view sees wall cell 2, so only this C03 supplies ordinal 5. */
+    if (fs_dungeon_get_wall_ornament(0, 0, 0) != 5) return 0;
+    w16(data + square_first_thing, (unsigned short)((3u << 10) | (1u << 14)));
+    if (fs_dungeon_load_dat(data, (int)sizeof(data)) != 1) return 0;
+    return fs_dungeon_get_wall_ornament(0, 0, 0) == 0;
+}
+
 int main(int argc, char **argv)
 {
     unsigned char *bytes = NULL;
     int size = 0;
     int failures = 0;
+
+    if (!sensor_wall_cell_regression()) {
+        fprintf(stderr, "FAIL: C03 wall sensor cell selection\n");
+        return 1;
+    }
 
     if (argc < 2) {
         puts("SKIP: pass the extracted PC34 DUNGEON.DAT path for real-data verification");

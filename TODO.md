@@ -5,9 +5,10 @@
   ordinals from the authenticated PC34 DUNGEON.DAT seed, map dimensions,
   counts and raw square flags. It also reads F0510/F0511's compact
   Thing-list chain to let a source sensor's F0172 ornament ordinal replace
-  the random value. It still lacks an authenticated GRAPHICS.DAT consumer;
-  recover that owner before claiming complete ornament parity. M11's
-  source-owned viewport remains separate.
+  the random value only on the viewed wall cell; unrelated sensor cells and
+  non-sensor Things retain the calculated source ordinal. It still lacks an
+  authenticated GRAPHICS.DAT consumer; recover that owner before claiming
+  complete ornament parity. M11's source-owned viewport remains separate.
 
 - **NEXUS-SDDRVS-68K-EVENT-HANDOFF:** The authenticated `SDDRVS.TSK` is now
   byte-bound as a 26,610-byte 68000 sound-CPU image. Its entry, command-nibble
