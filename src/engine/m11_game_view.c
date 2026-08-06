@@ -6647,6 +6647,9 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
         const CSB_V1_StartupRuntimeSurface_PC34 *entrance =
             fmtowns_session ? &fmtowns_session->surfaces.surfaces[
                 CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34] : NULL;
+        CSB_V1_StartupRenderState_PC34 render_state;
+        CSB_V1_StartupRenderPlan_PC34 render_plan;
+        CSB_V1_StartupRuntimeHostSurfaceReceipt_PC34 opening;
         /* ReDMCSB ENTRANCE.C F0807 owns C004 after the verified C03_GAME
          * executable has started. C004 is the source-owned 320x200 entrance
          * page, so F31 must not synthesize a PC TITLE.C playback sequence. */
@@ -6654,6 +6657,39 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
             entrance->source_asset_id != 4 || entrance->width != 320 ||
             entrance->height != 200 || !entrance->decode_receipt.valid ||
             !entrance->decode_receipt.ended_at_record_boundary) return;
+        if (state->csbState.startup_entrance_opening_active) {
+            memset(&render_state, 0, sizeof(render_state));
+            memset(&render_plan, 0, sizeof(render_plan));
+            memset(&opening, 0, sizeof(opening));
+            render_state.entrance_active = 1;
+            render_state.entrance_source_step =
+                state->csbState.startup_entrance_source_step;
+            render_state.opening_active = 1;
+            render_state.opening_delay_ticks =
+                state->csbState.startup_entrance_opening_delay_ticks;
+            render_state.opening_step =
+                state->csbState.startup_entrance_opening_step;
+            if (!csb_v1_startup_source_render_plan_from_state_pc34(
+                    &render_state, &render_plan) ||
+                render_plan.surface !=
+                    CSB_V1_STARTUP_RENDER_ENTRANCE_OPENING_FRAME_PC34 ||
+                !csb_v1_boot_startup_runtime_host_surface_receipt_from_session_pc34(
+                    (CSB_V1_StartupRuntimeAssetSession_PC34 *)fmtowns_session,
+                    &render_plan, m11_csb_startup_source_tick(state),
+                    &opening) || !opening.valid ||
+                opening.host_surface !=
+                    CSB_V1_STARTUP_RUNTIME_HOST_SURFACE_DOOR_OPENING_PC34 ||
+                !opening.raster.pixels) {
+                csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                    &opening);
+                return;
+            }
+            m11_csb_present_startup_raster(opening.raster.pixels, framebuffer,
+                                           framebufferWidth, framebufferHeight);
+            csb_v1_boot_startup_runtime_host_surface_receipt_release_pc34(
+                &opening);
+            return;
+        }
         m11_csb_present_startup_raster(entrance->pixels, framebuffer,
                                        framebufferWidth, framebufferHeight);
         return;

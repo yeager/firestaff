@@ -31,6 +31,7 @@ int main(void)
     unsigned char framebuffer[320 * 200];
     unsigned int tick;
     int result;
+    int door_frame_seen = 0;
     CSB_V1_FmtownsSwitchInputReceipt switch_input;
     CSB_V1_StartupRuntimeAssetSession_PC34 direct_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
@@ -121,7 +122,19 @@ int main(void)
          ++tick) {
         (void)M11_GameView_AdvanceIdleTick(&view);
         M11_GameView_Draw(&view, framebuffer, 320, 200);
+        if (view.csbState.startup_entrance_opening_active &&
+            view.csbState.startup_entrance_opening_step > 0 &&
+            memcmp(framebuffer,
+                   ((const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                    view.csbStartupRuntimeAssetSession)->surfaces.surfaces[
+                       CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34]
+                       .pixels,
+                   sizeof(framebuffer)) != 0) {
+            door_frame_seen = 1;
+        }
     }
+    CHECK(door_frame_seen,
+          "F31 Prison transition draws a source-owned C002/C003 door frame");
     CHECK(!view.csbState.startup_entrance_active && view.csbState.level_loaded,
           "F31 Prison door handoff reaches the live CSB runtime");
     M11_GameView_Shutdown(&view);
