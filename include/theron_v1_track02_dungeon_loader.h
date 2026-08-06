@@ -50,6 +50,10 @@ typedef struct {
      * DMBUILDER6 category byte retained in source_objects; they are not host
      * object, inventory, or item-kind publication. */
     unsigned int source_category_counts[THERON_ITEM_CATEGORY_COUNT];
+    /* Bitsets for the raw `type` fields that the source record decoder
+     * exposes in categories 4..8 and 10.  A set bit is only a value census;
+     * it is not a verified Theron item ID or host inventory mapping. */
+    uint32_t source_type_value_mask[THERON_ITEM_CATEGORY_COUNT][8];
     Theron_Track02SourceObjectOccurrence source_objects[
         THERON_TRACK02_SOURCE_OBJECT_MAX];
 } Theron_DungeonLoadResult;

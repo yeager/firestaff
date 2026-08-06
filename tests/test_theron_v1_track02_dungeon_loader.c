@@ -85,6 +85,45 @@ static void assert_source_category_census(
     assert(total == result->source_object_count);
 }
 
+static void assert_source_type_census(
+    const Theron_DungeonLoadResult *result) {
+    uint32_t expected[THERON_ITEM_CATEGORY_COUNT][8] = {{0}};
+    for (unsigned int i = 0; i < result->source_object_count; ++i) {
+        const Theron_Track02SourceObjectOccurrence *occ =
+            &result->source_objects[i];
+        unsigned int type_value = 0;
+        int has_type = 1;
+        switch (occ->category) {
+        case THERON_CAT_MONSTER:
+            type_value = occ->decoded.value.monster.type;
+            break;
+        case THERON_CAT_WEAPON:
+            type_value = occ->decoded.value.weapon.type;
+            break;
+        case THERON_CAT_CLOTHING:
+            type_value = occ->decoded.value.clothing.type;
+            break;
+        case THERON_CAT_SCROLL:
+            type_value = occ->decoded.value.scroll.type;
+            break;
+        case THERON_CAT_POTION:
+            type_value = occ->decoded.value.potion.type;
+            break;
+        case THERON_CAT_MISC:
+            type_value = occ->decoded.value.misc.type;
+            break;
+        default:
+            has_type = 0;
+            break;
+        }
+        if (has_type)
+            expected[occ->category][type_value >> 5] |=
+                1u << (type_value & 31u);
+    }
+    assert(memcmp(expected, result->source_type_value_mask,
+                  sizeof(expected)) == 0);
+}
+
 static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
     const char *names[] = {
         "AKUTUBA","DRATOR","FORMICIA","SARMON","SHADODAN","THIEVES","DEMON"
@@ -166,6 +205,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.source_object_count ==
                (unsigned int)result.unbound_item_refs);
         assert_source_category_census(&result);
+        assert_source_type_census(&result);
         for (unsigned int i = 0; i < result.source_object_count; ++i) {
             const Theron_Track02SourceObjectOccurrence *occ =
                 &result.source_objects[i];
@@ -206,6 +246,7 @@ static void test_all_jp_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.source_object_count ==
                (unsigned int)result.unbound_item_refs);
         assert_source_category_census(&result);
+        assert_source_type_census(&result);
         free(world);
     }
     printf("  JP Track 02: all dungeon object records OK\n");

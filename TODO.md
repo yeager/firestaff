@@ -494,6 +494,11 @@
   source receipts; it remains a DMBUILDER category receipt, not an inferred
   host item-kind or inventory mapping.
 
+  The same receipt now carries a compact bitmask census of decoded raw type
+  fields for categories 4..8 and 10. US/JP differences and high raw values are
+  preserved exactly; no generic DMBUILDER range is used to relabel or reject a
+  real Theron record, and no type value is promoted to a host item ID.
+
   The same map/ground-reference/item-record handoff now accepts the
   authenticated Japanese `TQJP02.bin` offset table through the full loader;
   this verifies JP source records but does not bind their host gameplay or

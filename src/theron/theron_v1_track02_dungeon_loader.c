@@ -87,8 +87,36 @@ static int retain_source_object_occurrence(
     occurrence->x = (uint16_t)x;
     occurrence->y = (uint16_t)y;
     if (decoded && decoded->category == category) {
+        unsigned int type_value = 0;
+        int has_type = 1;
         occurrence->decoded_valid = 1;
         occurrence->decoded = *decoded;
+        switch (category) {
+        case THERON_CAT_MONSTER:
+            type_value = decoded->value.monster.type;
+            break;
+        case THERON_CAT_WEAPON:
+            type_value = decoded->value.weapon.type;
+            break;
+        case THERON_CAT_CLOTHING:
+            type_value = decoded->value.clothing.type;
+            break;
+        case THERON_CAT_SCROLL:
+            type_value = decoded->value.scroll.type;
+            break;
+        case THERON_CAT_POTION:
+            type_value = decoded->value.potion.type;
+            break;
+        case THERON_CAT_MISC:
+            type_value = decoded->value.misc.type;
+            break;
+        default:
+            has_type = 0;
+            break;
+        }
+        if (has_type)
+            result->source_type_value_mask[category][type_value >> 5] |=
+                1u << (type_value & 31u);
     }
     result->source_category_counts[category]++;
     return 1;

@@ -51029,6 +51029,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   represented by its opaque source-object receipts. Regression coverage proves
   the counts sum exactly to retained records and rejects unexpected categories;
   no host item kind, inventory ID, or gameplay object is inferred.
+- ✅ 2026-08-06 Theron Track 02 raw-type census: retained source receipts now
+  include compact bitmasks for the decoded raw type fields in categories
+  4..8/10. Real US and JP high values remain observable without applying the
+  generic DMBUILDER maxima, so this adds corpus evidence without inventing an
+  item-ID or inventory mapping.
 - ✅ 2026-08-06 Theron JP text fail-closed correction: the JP variant no longer
   exposes an unverified text offset or reads candidate ASCII/fill windows as
   codons. US text decoding is unchanged; JP text remains blocked until its
