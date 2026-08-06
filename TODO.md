@@ -876,6 +876,10 @@
   It reconstructed operands and world/door mutations from a fixture-shaped
   creature instance, rather than the original DB4/CAII handler transaction.
   Production remains fail-closed until that source owner is complete.
+  **2026-08-06 V2.2 update:** removed the disabled local-manifest availability
+  path. Manifest parsing remains diagnostic-only; neither a local pack nor
+  its category names can make DM2 material playable without an original-data
+  receipt.
 
 - **DM2-SOUND-TEXT-CONSUMER:** `c_sound.cpp` binds class triples to GDAT sound
   payloads but does not supply a sound-name text producer. The production

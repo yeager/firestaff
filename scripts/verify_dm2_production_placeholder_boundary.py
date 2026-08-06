@@ -272,6 +272,14 @@ def verify(repo: Path) -> list[str]:
         if forbidden in object_model:
             errors.append("object model retains the inferred sequential-pool fallback")
 
+    modern_assets_path = repo / "src/dm2/dm2_v22_modern_assets_pc34.c"
+    if not modern_assets_path.exists():
+        errors.append(f"missing {modern_assets_path}")
+        return errors
+    modern_assets = modern_assets_path.read_text(encoding="utf-8")
+    if "found_critical[0] && found_critical[1] && found_critical[2]" in modern_assets:
+        errors.append("modern-assets availability retains the local-manifest admission study")
+
     viewport_path = repo / "src/dm2/dm2_v1_viewport_renderer.c"
     if not viewport_path.exists():
         errors.append(f"missing {viewport_path}")

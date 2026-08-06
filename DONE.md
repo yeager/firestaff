@@ -493,6 +493,13 @@
 - ✅ Object inspection remains tied to the G1 loader's source-shaped square and
   record links; the production boundary rejects restoring the guessed layout.
 
+# DM2 V2.2 local-manifest admission removal (2026-08-06)
+
+- ✅ Removed the disabled availability path that treated local manifest category
+  names as sufficient to advertise a modern DM2 material source.
+- ✅ Manifest format parsing remains diagnostic-only. M11 still requires an
+  original-data receipt before admitting any V2.2 material.
+
 # DM1 D2C F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only/no-game-data D2C F0111 trace from M10. It has
