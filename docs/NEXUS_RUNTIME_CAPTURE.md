@@ -39,6 +39,13 @@ adjacent frames. This proves observed runtime change in the producer without
 identifying a menu, HUD, viewport, CLUT, or consumer; the tool always keeps
 semantic admission blocked.
 
+The capture patch now emits `FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2` with an
+explicit VDP1 state line (`TVMR`, `FBCR`, `PTMR`, `EDSR`, `LOPR`, `COPR`, the
+return pointer and framebuffer selector) before the unchanged raw VRAM/FB
+payload. V1 witnesses remain readable. The state line is an observation of
+the emulator's VDP1 model, not by itself proof that a particular MENU.BPK,
+DGN, HUD or viewport record owns the command stream.
+
 ## Artifact families
 
 | Route | Magic | Evidence still required |

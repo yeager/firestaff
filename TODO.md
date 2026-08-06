@@ -299,6 +299,12 @@
   This is stronger transport evidence for the authentic startup animation,
   but it still does not identify a menu, HUD, viewport, CLUT, or source-owned
   consumer; semantic admission remains blocked.
+- **NEXUS-SATURN-VDP1-STATE-CAPTURE:** The external producer now emits VDP1
+  V2 state lines alongside raw VRAM/framebuffers. A real two-frame E-region
+  witness records `PTMR=02`, `EDSR=03`, `LOPR=0008`, `COPR=000008`,
+  `RET=ffffffff`, and framebuffer selection `1 -> 0`. This binds observed
+  VDP1 state to the emulator frame, but does not identify the active command
+  list's source record, CLUT, destination or menu/HUD/viewport owner.
 - **NEXUS-SATURN-STARTUP-INPUT-CAPTURE:** The external Saturn producer now
   supports a bounded, active-low START pulse through Mednafen SMPC at an
   operator-selected emulated frame, with an explicit mask for START (`0x10`),

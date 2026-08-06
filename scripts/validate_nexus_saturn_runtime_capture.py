@@ -13,6 +13,7 @@ from pathlib import Path
 
 RUNTIME_MAGIC = b"FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n"
 VDP1_MAGIC = b"FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V1\n"
+VDP1_MAGIC_V2 = b"FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V2\n"
 VDP2_MAGIC = b"VDP2_RAW\n"
 VDP1_PAYLOAD_BYTES = 0x40000 * 2 + 0x20000 * 2 + 0x20000 * 2 + 1
 VDP2_PAYLOAD_BYTES = 0x100 * 2 + 0x40000 * 2 + 0x800 * 2
@@ -30,9 +31,17 @@ def validate(blob: bytes, required_frames: int) -> tuple[int, list[int]]:
             raise ValueError(f"invalid frame marker at offset {offset}")
         frames.append(offset)
         offset += len(marker)
-        if not blob.startswith(VDP1_MAGIC, offset):
+        if not (blob.startswith(VDP1_MAGIC, offset) or blob.startswith(VDP1_MAGIC_V2, offset)):
             raise ValueError(f"missing VDP1 marker for frame {len(frames) - 1}")
-        offset += len(VDP1_MAGIC) + VDP1_PAYLOAD_BYTES
+        if blob.startswith(VDP1_MAGIC_V2, offset):
+            offset += len(VDP1_MAGIC_V2)
+            state_end = blob.find(b"\n", offset)
+            if state_end < 0 or not blob.startswith(b"state=", offset):
+                raise ValueError(f"missing VDP1 state line for frame {len(frames) - 1}")
+            offset = state_end + 1
+        else:
+            offset += len(VDP1_MAGIC)
+        offset += VDP1_PAYLOAD_BYTES
         if not blob.startswith(VDP2_MAGIC, offset):
             raise ValueError(f"missing VDP2 marker for frame {len(frames) - 1}")
         offset += len(VDP2_MAGIC) + VDP2_PAYLOAD_BYTES
@@ -56,7 +65,7 @@ def main() -> int:
         print(f"NEXUS_SATURN_RUNTIME_CAPTURE_INVALID: {error}")
         return 1
     print(
-        "NEXUS_SATURN_RUNTIME_CAPTURE_RAW_V1: "
+        "NEXUS_SATURN_RUNTIME_CAPTURE_RAW_LAYOUT: "
         f"frames={count} bytes={len(blob)} offsets={','.join(map(str, offsets))}"
     )
     print("semantic_admission=blocked")

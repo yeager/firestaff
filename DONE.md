@@ -87,6 +87,16 @@
   regions remain unchanged. The tool keeps semantic admission blocked: this
   is runtime observation only, not menu/HUD/viewport or CLUT ownership proof.
 
+# Nexus Saturn VDP1 state witness (2026-08-07)
+
+- ✅ Extended the external capture patch to VDP1 raw format V2 and rebuilt the
+  Saturn-enabled Mednafen binary. The real E-region two-frame witness records
+  `PTMR=02`, `EDSR=03`, `LOPR=0008`, `COPR=000008`, `RET=ffffffff`, and a
+  framebuffer selector change from `1` to `0`.
+- ✅ V1 raw witnesses remain accepted by the validator. V2 state is evidence
+  only; no active command-list source, CLUT, placement or production draw route
+  is inferred.
+
 # DM2 SKSave-korpus med vald källa (2026-08-07)
 
 - ✅ Realdatatestet för original-SKSave använder nu bara

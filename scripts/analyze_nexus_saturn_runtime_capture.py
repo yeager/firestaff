@@ -15,6 +15,7 @@ from pathlib import Path
 from validate_nexus_saturn_runtime_capture import (
     RUNTIME_MAGIC,
     VDP1_MAGIC,
+    VDP1_MAGIC_V2,
     VDP1_PAYLOAD_BYTES,
     VDP2_MAGIC,
     VDP2_PAYLOAD_BYTES,
@@ -35,19 +36,29 @@ VDP2_REGIONS = (
 )
 
 
-def frame_regions(blob: bytes, required_frames: int) -> list[dict[str, bytes]]:
+def frame_regions(blob: bytes, required_frames: int) -> tuple[list[dict[str, bytes]], list[str]]:
     """Extract named raw regions after the shared validator has checked layout."""
     validate(blob, required_frames)
     offset = len(RUNTIME_MAGIC)
     frames: list[dict[str, bytes]] = []
+    states: list[str] = []
     for frame_index in range(required_frames):
         marker = f"frame={frame_index}\n".encode("ascii")
         if not blob.startswith(marker, offset):
             raise ValueError(f"invalid frame marker at offset {offset}")
         offset += len(marker)
-        if not blob.startswith(VDP1_MAGIC, offset):
+        if not (blob.startswith(VDP1_MAGIC, offset) or blob.startswith(VDP1_MAGIC_V2, offset)):
             raise ValueError(f"missing VDP1 marker for frame {frame_index}")
-        offset += len(VDP1_MAGIC)
+        if blob.startswith(VDP1_MAGIC_V2, offset):
+            offset += len(VDP1_MAGIC_V2)
+            state_end = blob.find(b"\n", offset)
+            if state_end < 0 or not blob.startswith(b"state=", offset):
+                raise ValueError(f"missing VDP1 state line for frame {frame_index}")
+            states.append(blob[offset:state_end].decode("ascii"))
+            offset = state_end + 1
+        else:
+            offset += len(VDP1_MAGIC)
+            states.append("state=legacy-v1-unavailable")
         vdp1 = blob[offset : offset + VDP1_PAYLOAD_BYTES]
         offset += VDP1_PAYLOAD_BYTES
         if not blob.startswith(VDP2_MAGIC, offset):
@@ -66,7 +77,7 @@ def frame_regions(blob: bytes, required_frames: int) -> list[dict[str, bytes]]:
             regions[name] = vdp2[cursor : cursor + size]
             cursor += size
         frames.append(regions)
-    return frames
+    return frames, states
 
 
 def digest(data: bytes) -> str:
@@ -86,7 +97,7 @@ def main() -> int:
     )
     args = parser.parse_args()
     try:
-        frames = frame_regions(args.capture.read_bytes(), args.require_frames)
+        frames, states = frame_regions(args.capture.read_bytes(), args.require_frames)
     except (OSError, ValueError) as error:
         print(f"NEXUS_SATURN_RUNTIME_CAPTURE_ANALYSIS_INVALID: {error}")
         return 1
@@ -97,6 +108,7 @@ def main() -> int:
             f"frame={index} "
             + " ".join(f"{name}_sha256={digest(frame[name])}" for name, _ in VDP1_REGIONS + VDP2_REGIONS)
         )
+        print(f"frame={index} vdp1_{states[index]}")
         if index:
             for name in frame:
                 if frame[name] != frames[index - 1][name]:
