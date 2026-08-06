@@ -2594,6 +2594,10 @@ static int test_champion_death_permanence_source_lock(void)
     return 1;
 }
 
+/* Retired Firestaff-private FS2RT01 sidecar fixture. DM2_GAME_SAVE must write
+ * SKProject's complete SUPPRESS stream; this test is retained only as source
+ * archaeology and is not compiled or registered as runtime evidence. */
+#if 0
 static int test_live_runtime_state_roundtrip(void)
 {
     char tmpdir[256];
@@ -2756,6 +2760,7 @@ fail:
     printf("    FAIL: live runtime state did not round-trip\n");
     return 0;
 }
+#endif
 
 static int test_original_save_candidate_live_restore(void)
 {

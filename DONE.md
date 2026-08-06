@@ -51756,6 +51756,13 @@ and `firestaff` build pass.
   pickup or mouse placement; a target from a previous map can no longer
   unlink an object from the active square. Packaged macOS capture of torches,
   holders, stairs, doors and the held-object cursor remains open in TODO.
+- ✅ 2026-08-06 DM2 private runtime-save removal: removed the production
+  `FS2RT01` sidecar serializer, deserializer and public export API. That
+  format combined Firestaff session/cache/dungeon state and could not be an
+  original `DM2_GAME_SAVE` SUPPRESS stream. The sole fixture consumer is now
+  compile-disabled; normal save actions remain fail-closed until the complete
+  original writer is recovered.
+
 - ✅ 2026-08-06 DM1 C015/C016 damage transparency: fixed the authenticated
   PC34 champion damage overlays to use ReDMCSB `C10_COLOR_FLESH` (palette slot
   10) for both normal and inventory damage surfaces. Black source pixels are

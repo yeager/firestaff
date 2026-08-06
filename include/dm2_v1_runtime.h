@@ -1174,16 +1174,6 @@ uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
 int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
                                                  uint8_t slot,
                                                  uint32_t object);
-int dm2_v1_runtime_export_inventory_to_session(DM2_V1_SessionState *session);
-int dm2_v1_runtime_export_session(DM2_V1_SessionState *session);
-
-/* Runtime sidecar persistence supplements the interoperable SKSave session
- * with live DM2 state that is not representable in its startup envelope:
- * CCM instances, animation/revision writeback, mutable dungeon bytes (door
- * and DB runtime), and the GDAT profile binding used to render them. */
-size_t dm2_v1_runtime_live_save_size(void);
-int dm2_v1_runtime_serialize_live_save(uint8_t *out, size_t out_size);
-int dm2_v1_runtime_restore_live_save(const uint8_t *data, size_t data_size);
 
 /* Restore a decoded SKSave payload into the active DM2 runtime. Original raw
  * candidates must carry a dungeon prefix exactly matching the booted dungeon;
