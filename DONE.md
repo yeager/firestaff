@@ -10,6 +10,12 @@
   source-zone identity no longer consume generator capacity or create false
   respawn state. The focused source combat/runtime regression passes.
 
+- ✅ 2026-08-06 External archive scan cache: hash-verified external archive
+  members now cache their digest under the complete virtual member path and
+  containing archive mtime/size. Repeated game-profile searches therefore
+  reuse authentic member identities while an archive replacement invalidates
+  the cache; no filename-based admission was added.
+
 - ✅ 2026-08-06 M12 missing archive-tool recovery: when present game media is
   inside an archive whose reader is unavailable, the launcher now shows a
   localized popup naming the required extractor and asks the player to rescan

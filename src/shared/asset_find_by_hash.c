@@ -160,7 +160,7 @@ static void md5_body(AssetMd5Ctx *ctx, const unsigned char *block) {
 
 /* ── Inline scan cache (avoids external library dependency) ───── */
 
-#define SCAN_CACHE_MAX 4096
+#define SCAN_CACHE_MAX 16384
 
 typedef struct {
     char     path[512];
@@ -3045,13 +3045,33 @@ static int external_list_command(char *cmd,
 static int external_entry_md5(const char *archivePath, const char *entryName,
                               char outHex[33]) {
     char cmd[ASSET_PATH_MAX * 4];
+    char cacheKey[sizeof(((ScanCacheEntry_I *)0)->path)];
     const char *tool;
     unsigned char buf[8192];
     AssetMd5Ctx ctx;
     FILE *pipe;
     size_t n;
     int ok = 1;
+    int cacheable = 0;
+    int keyLength;
+    struct stat st;
     if (!archivePath || !entryName || !outHex) return 0;
+
+    /* 7zz must start a new process for every external member read.  A full
+     * data-root scan asks several game profiles about the same archives, so
+     * cache an entry digest behind the containing archive's identity.  Keep
+     * the key bounded: ScanCache_I truncates paths for ordinary files, but a
+     * truncated virtual path could alias two distinct archive members. */
+    keyLength = snprintf(cacheKey, sizeof(cacheKey), "%s::%s",
+                         archivePath, entryName);
+    if (s_scan_cache && stat(archivePath, &st) == 0 && keyLength >= 0 &&
+        (size_t)keyLength < sizeof(cacheKey)) {
+        cacheable = 1;
+        if (scache_lookup(s_scan_cache, cacheKey, (int64_t)st.st_mtime,
+                          (int64_t)st.st_size, outHex)) {
+            return 1;
+        }
+    }
     tool = external_archive_tool_for_path(archivePath);
     if (!tool) {
         return 0;
@@ -3067,6 +3087,10 @@ static int external_entry_md5(const char *archivePath, const char *entryName,
     if (pclose(pipe) != 0) ok = 0;
     if (!ok) return 0;
     md5_final(&ctx, outHex);
+    if (cacheable) {
+        scache_put(s_scan_cache, cacheKey, (int64_t)st.st_mtime,
+                   (int64_t)st.st_size, outHex);
+    }
     return 1;
 }
 

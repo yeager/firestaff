@@ -17,7 +17,11 @@
   Towns RAR with a MODE1/2352 `.bin` now follows the same verified CD route
   through `unrar`; the launcher now turns missing archive-reader diagnostics
   into a localized recovery popup. Keep that popup aligned with scanner
-  diagnostics as further archive formats are admitted. Raw GEMDOS
+  diagnostics as further archive formats are admitted. External-archive
+  member hashes now share a bounded cache keyed by archive identity, so
+  repeated profile scans do not re-extract already-verified members. Continue
+  to profile first-time scans of the full supplied corpus, especially nested
+  Amiga/Atari media. Raw GEMDOS
   Atari ST `.st` images now have a bounded FAT12 path, including `.st` media
   inside `.7z`; protected STX and compressed MSA remain intentionally
   unsupported until their transports are implemented and verified.
