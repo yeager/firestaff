@@ -29,3 +29,8 @@ jobs:
           path: docs
       - id: deployment
         uses: actions/deploy-pages@v4
+        with:
+          # GitHub Pages can leave a valid deployment queued for longer than
+          # the action's 10-minute default. Keep transient service backlog
+          # from failing an otherwise verified main push.
+          timeout: 1200000
