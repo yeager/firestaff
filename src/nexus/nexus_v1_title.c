@@ -199,8 +199,8 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
                                           cg_size > 0 ? (size_t)cg_size : 0U,
                                           title);
             free(cg);
-            free(data);
         }
+        free(data);
         return 0;
     }
 
