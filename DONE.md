@@ -51583,3 +51583,9 @@ and `firestaff` build pass.
   invalidation, wall-material and viewport-wall capture tests pass after the
   change.
 - ✅ 2026-08-06 DM1 HoC false-artifact audit: real PC34 `DUNGEON.DAT` sampled 2,172 open HoC cells and 83 source item cells. The projectile/explosion guard found zero compact projectile chains, zero explosions, zero viewport leaks, zero stale fields, zero debug-marker leaks and zero fire/explosion blob leaks; the floor-item guard found 83/83 real item renders with zero viewport mismatches. The prior 30-sample hot-color warning was a false positive, not missing game data.
+- ✅ 2026-08-06 Nexus PRS3 strict legacy API parity: the public decoder now
+  enforces DMWeb PRS3 version 1 and rejects positive forward-window
+  references that point beyond produced output instead of manufacturing
+  zero-filled pixels. Negative-window prefix zeroes and valid forward-window
+  copies remain source-compatible; the legacy regression and real 162-entry
+  MENU.BPK decode/upload receipt both pass.

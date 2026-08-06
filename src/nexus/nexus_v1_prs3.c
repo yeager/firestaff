@@ -17,11 +17,14 @@ size_t nexus_v1_prs3_decode(const uint8_t *src, size_t src_size,
 
     /* Parse header (big-endian). */
     uint32_t magic           = read_be32(src + 0);
-    /* uint32_t version      = read_be32(src + 4); — always 1, unused */
+    uint32_t version          = read_be32(src + 4);
     uint32_t uncompressed_sz = read_be32(src + 8);
     uint32_t compressed_sz   = read_be32(src + 12);
 
     if (magic != PRS3_MAGIC)
+        return 0;
+    /* DMWeb's DMNDataFileDecoder accepts PRS3 version 1 only. */
+    if (version != 1)
         return 0;
     if ((size_t)uncompressed_sz > dst_size)
         return 0;
@@ -59,13 +62,17 @@ size_t nexus_v1_prs3_decode(const uint8_t *src, size_t src_size,
                     offset += 4096;
 
                 /* Copy count bytes from the absolute offset position.
-                 * Negative positions produce zero fills. */
+                 * DMWeb defines only the negative prefix as zero-filled;
+                 * a positive forward reference is malformed and must fail
+                 * closed instead of manufacturing pixels. */
                 for (int i = 0; i < count && out_pos < target; i++) {
                     int pos = offset + i;
-                    if (pos < 0 || (size_t)pos >= out_pos) {
+                    if (pos < 0) {
                         dst[out_pos++] = 0x00;
-                    } else {
+                    } else if ((size_t)pos < out_pos) {
                         dst[out_pos++] = dst[pos];
+                    } else {
+                        return 0;
                     }
                 }
             }
