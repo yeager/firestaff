@@ -1,3 +1,11 @@
+# DM1 D3L/D3R F0108 floor-ceiling synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the fixed-zone D3L/D3R F0108 floor/ceiling contract from M10.
+  It reads no original material and has no M11/runtime caller; its dedicated
+  ReDMCSB regression now compiles the source explicitly.
+- ✅ Verification: `test_dm1_v1_viewport_d3l_d3r_f0108_floor_ceiling_ornament_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D3L2/D3R2 F0108 floor-ceiling synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the fixed-zone D3L2/D3R2 F0108 floor/ceiling contract from M10.

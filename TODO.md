@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D3L-D3R-F0108-FLOOR-CEILING-SYNTHETIC-AUDIT:** This D3 side
+  floor/ceiling contract uses fixed zones, orders and framebuffer pixels. It
+  reads no original game data and has no M11/runtime caller; retain it only as
+  explicit ReDMCSB coverage until a source-bound owner is recovered.
+
 - **DM1-D3L2-D3R2-F0108-FLOOR-CEILING-SYNTHETIC-AUDIT:** This post-D3C
   floor/ceiling contract uses fixed zones, ordinals and probe pixels. It reads
   no original game data and has no M11/runtime caller; retain it only as
