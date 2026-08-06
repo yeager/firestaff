@@ -50073,6 +50073,23 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_switch.c")
         SKIP_RETURN_CODE 77 LABELS "csb;fmtowns;real_data")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_fmtowns_m11_game_handoff.c")
+    add_executable(test_csb_v1_fmtowns_m11_game_handoff
+        tests/test_csb_v1_fmtowns_m11_game_handoff.c)
+    target_include_directories(test_csb_v1_fmtowns_m11_game_handoff PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_fmtowns_m11_game_handoff PRIVATE
+        firestaff_m12 firestaff_m11 firestaff_m10 SDL3::SDL3)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_fmtowns_m11_game_handoff PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(NAME csb_v1_fmtowns_m11_game_handoff
+             COMMAND test_csb_v1_fmtowns_m11_game_handoff)
+    set_tests_properties(csb_v1_fmtowns_m11_game_handoff PROPERTIES
+        LABELS "csb;fmtowns;real_data;m11")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_game_data_fingerprint.c")
     add_executable(test_firestaff_game_data_fingerprint
         tests/test_firestaff_game_data_fingerprint.c

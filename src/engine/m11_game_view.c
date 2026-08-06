@@ -5932,6 +5932,8 @@ static int m11_csb_boot_runtime_startup_idle(
         out_receipt);
 }
 
+static int m11_csb_is_fmtowns_profile(const CSB_V1_BootProfile *profile);
+
 static int m11_csb_c001_palette_is_source_owned(
     const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view)
 {
@@ -6046,6 +6048,16 @@ int M11_GameView_GetPresentationSpecialPalette(const M11_GameViewState* state)
     if (!state || !state->active ||
         !m11_csb_startup_package_identity_current(state)) {
         return -1;
+    }
+    /* ReDMCSB ENTRANCE.C F0807 presents F31's verified C004 page after
+     * CHTWE/CHTWJ, outside TITLE.C's PC host-view sequence. */
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT &&
+        m11_csb_is_fmtowns_profile(
+            (const CSB_V1_BootProfile *)state->csbBootProfile) &&
+        state->csbFmtownsGameHandoffReceipt.valid &&
+        state->csbState.startup_entrance_active &&
+        !state->csbState.startup_title_active) {
+        return VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE;
     }
     if (!m11_csb_boot_runtime_startup_host_view_receipt(state,
                                                         &host_view) ||
@@ -6220,8 +6232,9 @@ static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state,
         return 0;
     }
     state->csbFmtownsSwitchByteCount = (size_t)file_size;
-    /* AUTOEXEC.BAT starts SWITCHTW JAPAN. SWITCH.C waits sixty F0693
-     * VBlanks, flips the initial selector, and then expands G4167. */
+    /* The F31 package selects its own language page before SWITCH.C waits
+     * sixty F0693 VBlanks and expands G4167.  F31E must never route its
+     * Game button toward the F31J-only CHTWJ executable. */
     state->csbFmtownsSwitchLanguage = language;
     state->csbFmtownsSwitchVblanksRemaining = 60u;
     state->csbFmtownsSwitchBound = 1;
@@ -6619,6 +6632,28 @@ static void m11_draw_csb_startup_entrance(M11_GameViewState *state,
         !m11_csb_startup_package_identity_current(state) ||
         framebufferWidth <= 0 ||
         framebufferHeight <= 0) {
+        return;
+    }
+    if (m11_csb_is_fmtowns_profile(
+            (const CSB_V1_BootProfile *)state->csbBootProfile) &&
+        state->csbFmtownsGameHandoffReceipt.valid &&
+        state->csbState.startup_entrance_active &&
+        !state->csbState.startup_title_active) {
+        const CSB_V1_StartupRuntimeAssetSession_PC34 *fmtowns_session =
+            (const CSB_V1_StartupRuntimeAssetSession_PC34 *)
+                state->csbStartupRuntimeAssetSession;
+        const CSB_V1_StartupRuntimeSurface_PC34 *entrance =
+            fmtowns_session ? &fmtowns_session->surfaces.surfaces[
+                CSB_V1_STARTUP_RUNTIME_SURFACE_ENTRANCE_SCREEN_PC34] : NULL;
+        /* ReDMCSB ENTRANCE.C F0807 owns C004 after the verified C03_GAME
+         * executable has started. C004 is the source-owned 320x200 entrance
+         * page, so F31 must not synthesize a PC TITLE.C playback sequence. */
+        if (!entrance || !entrance->valid || !entrance->pixels ||
+            entrance->source_asset_id != 4 || entrance->width != 320 ||
+            entrance->height != 200 || !entrance->decode_receipt.valid ||
+            !entrance->decode_receipt.ended_at_record_boundary) return;
+        m11_csb_present_startup_raster(entrance->pixels, framebuffer,
+                                       framebufferWidth, framebufferHeight);
         return;
     }
     m11_csb_boot_runtime_startup_snapshot(state, &snapshot);
@@ -7073,6 +7108,7 @@ static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
 {
     CSB_V1_FmtownsGameHandoffReceipt handoff;
     CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34 gate;
 
     if (!state || !state->csbBootProfile ||
         state->csbStartupRuntimeAssetSession ||
@@ -7092,8 +7128,32 @@ static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
     session->csbStartupPackageIdentity =
         state->csbStartupExpectedPackageIdentity;
     state->csbStartupRuntimeAssetSession = session;
-    if (!m11_csb_bind_release_app_capture_receipt(
-            state, &state->csbStartupAssetGateReceipt)) {
+    gate = state->csbStartupAssetGateReceipt;
+    /* The F31 title is owned by ANIMTW rather than TITLE.C, so the launch
+     * gate intentionally has no PC title-session receipt. CHTWE/CHTWJ is the
+     * authoritative C03_GAME transition: combine its exact executable
+     * identity with the just-opened C001--C005/C017/C040 session instead of
+     * manufacturing a PC34 receipt. */
+    if ((!gate.valid || !gate.real_asset_matched ||
+         !gate.rejects_fallback_sources) &&
+        session->valid && session->real_asset_matched &&
+        session->full_startup_ready && handoff.valid &&
+        handoff.executable_verified && handoff.language_matches_profile &&
+        handoff.game_program_is_c03_game) {
+        memset(&gate, 0, sizeof(gate));
+        gate.valid = 1;
+        gate.real_asset_matched = 1;
+        gate.asset_ownership_valid = 1;
+        gate.session_state_valid = 1;
+        gate.title_assets_owned = 1;
+        gate.entrance_assets_owned = 1;
+        gate.hud_assets_owned = session->hud_assets_bound;
+        gate.rejects_fallback_sources = 1;
+        gate.real_asset_receipt_hash = handoff.executable_fnv1a ^
+            session->generation;
+        gate.source_evidence = handoff.source_evidence;
+    }
+    if (!m11_csb_bind_release_app_capture_receipt(state, &gate)) {
         csb_v1_boot_startup_runtime_asset_session_release_pc34(session);
         free(session);
         state->csbStartupRuntimeAssetSession = NULL;
@@ -7517,7 +7577,10 @@ static int m11_csb_apply_boot_runtime_receipt(
             state, &receipt->receipts.init_state);
         state->csbState.startup_title_active = 1;
         state->csbState.startup_entrance_active = 0;
-        state->csbFmtownsSwitchReturnLanguage = CSB_FMTOWNS_SWITCH_JAPANESE;
+        state->csbFmtownsSwitchReturnLanguage =
+            receipt->profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN
+                ? CSB_FMTOWNS_SWITCH_ENGLISH
+                : CSB_FMTOWNS_SWITCH_JAPANESE;
         if (m11_csb_bind_fmtowns_title(state, "TITLE.ANM")) return 1;
         m11_set_status(state, "CSB FM TOWNS", "TITLE.ANM DECODE FAILED");
         return 0;

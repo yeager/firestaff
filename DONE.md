@@ -51955,3 +51955,10 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   `font_loaded` stays clear until the Saturn page/attribute character mapping
   and text consumer are proven. The real-data boot regression covers all 242
   retained tiles and the blocked runtime flag.
+- ✅ 2026-08-06 CSB FM Towns Game handoff: F31E now enters only the verified
+  `CHTWE.EXP` C03_GAME owner after the source-language SWITCHTW Game click.
+  M11 presents the authenticated C004 entrance raster and its entrance palette
+  directly, without manufacturing a PC TITLE.C replay. The opt-in
+  `csb_v1_fmtowns_m11_game_handoff` regression runs against original F31E
+  media and verifies TITLE.ANM → SWITCHTW → CHTWE, C001--C005/C017/C040
+  session admission and exact C004 pixels.

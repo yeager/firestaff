@@ -77,7 +77,7 @@
   F2275/F8288 frame streams and retain their source Timer-A waits and loop
   execution and source `TD`/`TR` CD-DA track requests. M11 now displays the
   verified `TITLE.ANM` stream against its Timer-A timing and, at EOF, the
-  source-owned `SWITCHTW JAPAN` surface. ReDMCSB
+  source-owned package-language `SWITCHTW` surface. ReDMCSB
   `NECIO.C` launches `anim title.anm` as a standalone program; `SWITCH.C`
   owns the separate player-selected `anim story.anm` route, and `STARTUP2.C`
   calls `F2248_PlayAnimation("ending.anm")` after a winning game. Do not
@@ -90,8 +90,8 @@
   its `C26_SWITCH` (G8172_) palette is likewise read only from that verified
   executable. The original four button rectangles now retain their
   `AUTOEXEC.BAT` Story/utility/game exit handoffs and language toggle.
-  M11 now follows `TITLE.ANM`'s return into the original Japanese Switch
-  surface after SWITCH.C's sixty source-VBlank wait, retaining executable
+  M11 now follows `TITLE.ANM`'s return into the original package-language
+  Switch surface after SWITCH.C's sixty source-VBlank wait, retaining executable
   palette, page and button pixels. It also reproduces the language toggle and
   hands Story to `ANIMTW STORY.ANM`, returning to the selected language's
   Switch loop when that stream completes. Utility and Game remain deliberately
@@ -101,9 +101,11 @@
   transfer still need original-media capture.
   2026-08-06: the F31E `CDATA/GRAPHICS.DAT` and `DUNGEON.DAT` pair now
   opens the source-bound C001--C005 entrance and C017/C040 HUD session only
-  after both original CD hashes admit. The remaining M11 work is to attach
-  that verified session to the separate `CHTWE.EXP` handoff rather than use a
-  PC3.4 transition, then capture its first entrance/HUD frame and save path.
+  after both original CD hashes admit. M11 binds its package-language Switch
+  Game selection to the separate `CHTWE.EXP` handoff, draws its authenticated
+  C004 entrance raster with the source-owned entrance palette, and never
+  replays PC3.4 TITLE.C. A real-media regression covers that first entrance
+  frame; door-opening, live HUD and save-path capture remain open.
   2026-08-06: the Game exit now has a separate retail-program admission
   receipt: F31E accepts only `CHTWE.EXP` (283936 bytes, FNV-1a `3da136f6`)
   and F31J accepts only `CHTWJ.EXP` (284416 bytes, FNV-1a `f937db45`). This
