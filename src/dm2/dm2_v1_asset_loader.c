@@ -1526,6 +1526,172 @@ int dm2_v1_gdat_dyn4_selection_receipt(
     return 1;
 }
 
+static void dm2_gdat_wr16le(uint8_t *p, uint16_t value)
+{
+    p[0] = (uint8_t)value;
+    p[1] = (uint8_t)(value >> 8);
+}
+
+void dm2_v1_gdat_dyn4_materialized_selection_free(
+    DM2_V1_GdatDyn4MaterializedSelection *selection)
+{
+    if (!selection) return;
+    free(selection->bytes);
+    free(selection->raw_indices);
+    free(selection->block_offsets);
+    memset(selection, 0, sizeof(*selection));
+}
+
+int dm2_v1_gdat_dyn4_materialize_selection(
+    const DM2_V1_AssetLoader *loader,
+    uint32_t resource_id,
+    DM2_V1_GdatDyn4MaterializedSelection *out_selection)
+{
+    DM2_V1_GdatDyn4SelectionReceipt receipt;
+    uint8_t *seen = NULL;
+    uint16_t i;
+    uint16_t count = 0u;
+    uint16_t expected_count;
+    uint32_t byte_count = 0u;
+    uint32_t expected_byte_count;
+    uint32_t payload_hash = 2166136261u;
+    uint32_t receipt_hash = 2166136261u;
+
+    if (!out_selection) return 0;
+    memset(out_selection, 0, sizeof(*out_selection));
+    if (!dm2_v1_gdat_dyn4_selection_receipt(loader, resource_id, &receipt) ||
+        receipt.rejected_raw_count != 0u ||
+        receipt.raw_loadable_entry_count == 0u ||
+        !loader->raw_data_count) {
+        return 0;
+    }
+    seen = calloc(loader->raw_data_count, sizeof(*seen));
+    if (!seen) return 0;
+
+    /* DM2_LOAD_DYN4 indexes its mark table by raw GDAT index, not ENT1 row.
+     * Count unique source indices before allocating the final RAM image. */
+    for (i = 0; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        uint16_t raw_index;
+        uint32_t raw_length = 0u;
+        uint32_t block_bytes;
+
+        if ((receipt.category != 0xffu && entry->cls1 != receipt.category) ||
+            (receipt.index != 0xffu && entry->cls2 != receipt.index) ||
+            (receipt.type != 0xffu && entry->cls3 != receipt.type) ||
+            (receipt.field != 0xffu && entry->cls4 != receipt.field) ||
+            entry->cls3 == DM2_GDAT_ENTRY_TYPE_WORD_VALUE ||
+            entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET ||
+            (entry->data_index & 0x8000u) != 0u) {
+            continue;
+        }
+        if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_SOUND) {
+            ++out_selection->skipped_sound_entry_count;
+            continue;
+        }
+        raw_index = entry->data_index;
+        if (raw_index >= loader->raw_data_count || seen[raw_index] ||
+            !dm2_gdat_raw_bounds(loader, raw_index, NULL, &raw_length)) {
+            continue;
+        }
+        block_bytes = (raw_length + 1u) & ~1u;
+        if (block_bytes > UINT32_MAX - 4u ||
+            byte_count > UINT32_MAX - (block_bytes + 4u) ||
+            count == UINT16_MAX) {
+            free(seen);
+            return 0;
+        }
+        seen[raw_index] = 1u;
+        byte_count += block_bytes + 4u;
+        ++count;
+    }
+    free(seen);
+    if (!count || !byte_count) return 0;
+    expected_count = count;
+    expected_byte_count = byte_count;
+    out_selection->bytes = calloc(1u, byte_count);
+    out_selection->raw_indices = calloc(count, sizeof(*out_selection->raw_indices));
+    out_selection->block_offsets = calloc(count, sizeof(*out_selection->block_offsets));
+    if (!out_selection->bytes || !out_selection->raw_indices ||
+        !out_selection->block_offsets) {
+        dm2_v1_gdat_dyn4_materialized_selection_free(out_selection);
+        return 0;
+    }
+
+    seen = calloc(loader->raw_data_count, sizeof(*seen));
+    if (!seen) {
+        dm2_v1_gdat_dyn4_materialized_selection_free(out_selection);
+        return 0;
+    }
+    byte_count = 0u;
+    count = 0u;
+    for (i = 0; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        const uint8_t *raw;
+        uint16_t raw_index;
+        uint32_t raw_length = 0u;
+        uint32_t aligned_length;
+
+        if ((receipt.category != 0xffu && entry->cls1 != receipt.category) ||
+            (receipt.index != 0xffu && entry->cls2 != receipt.index) ||
+            (receipt.type != 0xffu && entry->cls3 != receipt.type) ||
+            (receipt.field != 0xffu && entry->cls4 != receipt.field) ||
+            entry->cls3 == DM2_GDAT_ENTRY_TYPE_WORD_VALUE ||
+            entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET ||
+            (entry->data_index & 0x8000u) != 0u) {
+            continue;
+        }
+        if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_SOUND) {
+            continue;
+        }
+        raw_index = entry->data_index;
+        if (raw_index >= loader->raw_data_count || seen[raw_index] ||
+            !dm2_gdat_raw_bounds(loader, raw_index, NULL, &raw_length)) {
+            continue;
+        }
+        raw = dm2_v1_load_gdat_raw_data(loader, raw_index, NULL);
+        if (!raw || raw_length > UINT16_MAX) {
+            free(seen);
+            dm2_v1_gdat_dyn4_materialized_selection_free(out_selection);
+            return 0;
+        }
+        aligned_length = (raw_length + 1u) & ~1u;
+        out_selection->block_offsets[count] = byte_count;
+        out_selection->raw_indices[count] = raw_index;
+        dm2_gdat_wr16le(out_selection->bytes + byte_count,
+                        (uint16_t)raw_length);
+        memcpy(out_selection->bytes + byte_count + 2u, raw, raw_length);
+        dm2_gdat_wr16le(out_selection->bytes + byte_count + 2u + aligned_length,
+                        raw_index);
+        payload_hash = (payload_hash ^ dm2_fnv1a_bytes(raw, raw_length)) *
+                       16777619u;
+        receipt_hash = (receipt_hash ^ raw_index) * 16777619u;
+        receipt_hash = (receipt_hash ^ raw_length) * 16777619u;
+        receipt_hash = (receipt_hash ^ dm2_fnv1a_bytes(raw, raw_length)) *
+                       16777619u;
+        seen[raw_index] = 1u;
+        byte_count += aligned_length + 4u;
+        ++count;
+    }
+    free(seen);
+    if (count != expected_count || byte_count != expected_byte_count) {
+        /* Do not publish a partial image if an entry changed between the
+         * sizing and copy passes. */
+        dm2_v1_gdat_dyn4_materialized_selection_free(out_selection);
+        return 0;
+    }
+    out_selection->valid = 1u;
+    out_selection->category = receipt.category;
+    out_selection->index = receipt.index;
+    out_selection->type = receipt.type;
+    out_selection->field = receipt.field;
+    out_selection->block_count = count;
+    out_selection->byte_count = byte_count;
+    out_selection->payload_hash = payload_hash ? payload_hash : 1u;
+    out_selection->receipt_hash = receipt_hash ? receipt_hash : 1u;
+    return 1;
+}
+
 int dm2_v1_query_next_gdat_entry(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_GdatEntryIterator *iterator,

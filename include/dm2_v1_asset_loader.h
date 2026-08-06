@@ -446,6 +446,27 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GdatDyn4SelectionReceipt;
 
+/* Caller-owned RAM image for the source DYN4 raw-data blocks.  Each block is
+ * `[u16 raw_length][raw bytes][optional alignment byte][u16 raw_index]`,
+ * matching the allocation layout immediately before DM2_LOAD_GDAT_RAW_DATA
+ * in SKProject c_gdatfile.cpp::DM2_LOAD_DYN4.  It contains no decoded,
+ * generated or disk-materialized data. */
+typedef struct {
+    uint8_t valid;
+    uint8_t category;
+    uint8_t index;
+    uint8_t type;
+    uint8_t field;
+    uint16_t block_count;
+    uint16_t skipped_sound_entry_count;
+    uint32_t byte_count;
+    uint32_t payload_hash;
+    uint32_t receipt_hash;
+    uint8_t *bytes;
+    uint16_t *raw_indices;
+    uint32_t *block_offsets;
+} DM2_V1_GdatDyn4MaterializedSelection;
+
 typedef struct {
     uint16_t cursor;
     int category_first;
@@ -913,6 +934,16 @@ int dm2_v1_gdat_dyn4_selection_receipt(
     const DM2_V1_AssetLoader *loader,
     uint32_t resource_id,
     DM2_V1_GdatDyn4SelectionReceipt *out_receipt);
+/* Materialize one selector's source-owned non-sound raw blocks in RAM.  This
+ * is only the final raw-copy layout of DM2_LOAD_DYN4, not its allocator,
+ * cache eviction, sound admission or gameplay state machine.  Type-2 sound
+ * rows remain excluded until DM2_SOUND7 and v1e13fe[2] have real owners. */
+int dm2_v1_gdat_dyn4_materialize_selection(
+    const DM2_V1_AssetLoader *loader,
+    uint32_t resource_id,
+    DM2_V1_GdatDyn4MaterializedSelection *out_selection);
+void dm2_v1_gdat_dyn4_materialized_selection_free(
+    DM2_V1_GdatDyn4MaterializedSelection *selection);
 int dm2_v1_query_next_gdat_entry(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_GdatEntryIterator *iterator,

@@ -52981,6 +52981,15 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   rows (`bcb603ef`). This verifies selection only: source-owned DYN4 cache
   materialisation, sound state and the `GAME_LOAD` champion path remain
   blocked.
+
+- ✅ Added the source-independent RAM materialisation portion of that
+  champion DYN4 route. Each selected original raw block uses the cache layout
+  from `c_gdatfile.cpp::DM2_LOAD_DYN4`: little-endian raw length, unchanged
+  `GRAPHICS.DAT` bytes, alignment and original raw index. The canonical PC
+  regression verifies 85 deduplicated non-sound blocks, 24,701 payload bytes
+  and a 25,074-byte RAM image. All 21 selected sound rows are deliberately
+  deferred instead of assuming `DM2_SOUND7` or `v1e13fe[2]`; no data is
+  written to disk and no gameplay route is opened.
 # 2026-08-06 Nexus mixed extracted/ISO runtime source
 
 - ✅ `nexus_v1_init()` now retains the hash-verified extracted corpus as the
