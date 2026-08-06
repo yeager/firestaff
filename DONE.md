@@ -60,6 +60,12 @@
   with MD5 `ceb02343868f80cec899e9b239aff2da` and the expected MODE1/2048
   receipt; this verifies media intake only, not later game-owned consumers.
 
+- ✅ 2026-08-06 Theron targeted real-data regression: the available rebuilt
+  binaries passed the 653-case startup-flow probe, all seven US and seven JP
+  Track 02 level-bank checks, the authenticated US/JP Track 19 level-offset
+  checks, and the 57-case M11/M12 launcher handoff boundary. The raw split-CUE
+  case remains an explicit skip when `FIRESTAFF_THERON_CUE` is unset.
+
 - ✅ 2026-08-06 Theron chapter-marker loot parity: removed the duplicated,
   incorrectly ordered quest-item table from the chapter marker and dungeon
   progression diagnostic. Both now consume the authenticated US Track 02

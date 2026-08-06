@@ -1246,6 +1246,10 @@
   The same regression now passes against the supplied retail split CUE with
   `TQUS19.iso` plus `TQUS02End.iso`, proving that the production materializer
   reconstructs the canonical US ISO before the direct receipt is checked.
+  2026-08-06 targeted regression: the real-data level-bank test passes for
+  all seven US and seven JP Track 02 banks and the authenticated US/JP Track
+  19 level offsets; the 653-case startup-flow probe and 57-case M11/M12 handoff
+  boundary also pass. The semantic consumer gate remains unchanged.
 
   The supplied retail US ISO now contributes one bounded real startup-level
   envelope at `0x5a9114`, linked to the first retail descriptor by `0x92f2`.
