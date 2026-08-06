@@ -2137,6 +2137,8 @@ int main(void) {
     snprintf(direct_save_path, sizeof(direct_save_path), "%s%sSKSave.dat",
              direct_save_root, TEST_PATH_SEP);
     M11_GameView_Shutdown(&view);
+    expect_true(!dm2_v1_sound_playback_backend_bound(),
+                "M11 DM2 shutdown unbinds the verified playback backend");
     fill_dm2_launch_spec(&spec, data_dir);
     spec.savePath = direct_save_path;
     M11_GameView_Init(&view);

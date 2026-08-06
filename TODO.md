@@ -23109,7 +23109,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     create summon creature records, implement the cloud handler, wire the
     handlers into live `dm2_v1_runtime.c` timer dispatch, and route failure
     feedback through M11's DM2 status scope.
-- DM2-008 — `skproject/SKULLWIN/c_sound.cpp` `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, `DM2_QUERY_SND_ENTRY_INDEX` and `c_sfx.cpp` queueing: **cycle 16 (Lane B) update:** voice allocation, PCM decode, and a real SDL3 playback backend are now implemented behind the fail-closed contract — `dm2_v1_sound_decode_gdat_pcm()` decodes verified GDAT sound raw entries (payload ^ 0x80, 6000 Hz U8 mono per SKWIN/SkwinSDL.cpp), 16 MAX_SB voices allocate/free without stealing, `src/dm2/dm2_v1_sound_sdl_backend.c` mixes them through a real SDL3 stream, and attenuation is the source R_928 metric only.  Playback is audible only when the sample decodes from a verified GDAT entry and the backend reports ready; the title music cue stays fail-closed because no verified music asset root is proven locally.  Remaining: app-side binding in the M11 DM2 runtime path, a verified music asset root, and proven wall-occlusion/facing routing for positional cues.
+- DM2-008 — `skproject/SKULLWIN/c_sound.cpp` `DM2_PLAY_MUSIC`, `DM2_PLAY_SOUND`, `DM2_QUERY_SND_ENTRY_INDEX` and `c_sfx.cpp` queueing: **cycle 16 (Lane B) update:** voice allocation, PCM decode, and a real SDL3 playback backend are now implemented behind the fail-closed contract — `dm2_v1_sound_decode_gdat_pcm()` decodes verified GDAT sound raw entries (payload ^ 0x80, 6000 Hz U8 mono per SKWIN/SkwinSDL.cpp), 16 MAX_SB voices allocate/free without stealing, `src/dm2/dm2_v1_sound_sdl_backend.c` mixes them through a real SDL3 stream, and attenuation is the source R_928 metric only. Playback is audible only when the sample decodes from a verified GDAT entry and the backend reports ready; the title music cue stays fail-closed because no verified music asset root is proven locally. Remaining: a verified music asset root and proven wall-occlusion/facing routing for positional cues.
+  - 2026-08-06 update: M11 binds the SDL backend only after
+    `dm2_v1_boot_startup_launch_alloc_with_language()` succeeds, then
+    unbinds it in `M11_GameView_Shutdown()`. The real-data M11 startup gate
+    now covers both sides, preventing a verified DM2 backend from leaking
+    into an unverified or later game launch.
   - 2026-07-31 update: `dm2_v1_sound_stop_music()` now closes the MIDI
     backend and clears the admitted event/loop schedule. A completed stop
     cannot leave an old source stream schedulable.

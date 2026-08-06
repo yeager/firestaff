@@ -93,6 +93,14 @@
   PC-DOS real-save regression; both pass without unpacking or writing game
   data.
 
+# DM2 verified audio backend lifetime (2026-08-06)
+
+- ✅ The real-data M11 startup gate now verifies both that DM2 binds its SDL
+  playback backend only after a hash-verified boot profile and that shutdown
+  unbinds it again.
+- ✅ This keeps real GDAT audio scoped to the selected DM2 session; a failed
+  or later launch cannot inherit an earlier backend binding.
+
 # DM2 FM Towns credits palette and handoff (2026-08-06)
 
 - ✅ The original HME-242 credits page now overrides the completed static
