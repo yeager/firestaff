@@ -773,9 +773,12 @@
   `NOT_EXPANDED` raw font record (C695), rather than being misclassified as
   an IMG2 image. The F31E CEDT ASCII path now uses its separate five-pixel,
   six-pixel-advance baseline metrics from `CEDTTXT.C F7338_`; the remaining
-  C06 screen composition, portraits, save transactions and Japanese
+  C06 screen composition, portrait placement, save transactions and Japanese
   `F0952_JAPANESE_Print` path must still be bound before Utility may be
-  presented. 2026-08-06: a real F31 Game victory now activates
+  presented. The `.CMP` decoder now follows `PORTRAIT.C F7251`'s F31
+  Atari-ST-planar conversion instead of a fabricated packed-nibble view, so
+  its real 24-portrait corpus is ready for that placement work. 2026-08-06:
+  a real F31 Game victory now activates
   `ENDING.ANM` through the retained F2275 interpreter. It uses the original
   Timer-A frames and TD/TR CUE dispatch, holds its last decoded frame when
   F0750 returns, and never chains back to `SWITCHTW.EXP` or a PC34 endgame

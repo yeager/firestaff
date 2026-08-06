@@ -24,7 +24,8 @@ int csb_v1_fmtowns_portrait_decode(const uint8_t *data, size_t size,
                                     size_t pixel_capacity,
                                     CSB_V1_FmtownsPortraitReceipt *receipt) {
     const uint8_t *img;
-    size_t i;
+    unsigned int x;
+    unsigned int y;
 
     if (receipt) memset(receipt, 0, sizeof(*receipt));
     if (!csb_v1_fmtowns_portrait_probe(data, size)) return 0;
@@ -41,11 +42,32 @@ int csb_v1_fmtowns_portrait_decode(const uint8_t *data, size_t size,
         receipt->title[CSB_FMTOWNS_PORTRAIT_TITLE_LEN] = '\0';
     }
 
-    /* Unpack 4bpp pixels: high nibble first */
+    /* ReDMCSB PORTRAIT.C F7251 (MEDIA670_F31E_F31J): each 16-pixel
+     * group is four big-endian Atari ST plane words. The converter writes
+     * its chunky F31 bitmap with pixel 0 in the low nibble and pixel 1 in
+     * the high nibble (the final nibble swap in F7251). Decode directly to
+     * one byte per source pixel, preserving the F7276 even/odd convention
+     * in CEDTINCO.C:180-190. */
     img = data + CSB_FMTOWNS_PORTRAIT_HEADER_SIZE;
-    for (i = 0; i < CSB_FMTOWNS_PORTRAIT_DATA_SIZE; i++) {
-        indexed_pixels[i * 2]     = (img[i] >> 4) & 0x0fu;
-        indexed_pixels[i * 2 + 1] = img[i] & 0x0fu;
+    for (y = 0u; y < CSB_FMTOWNS_PORTRAIT_HEIGHT; ++y) {
+        for (x = 0u; x < CSB_FMTOWNS_PORTRAIT_WIDTH; ++x) {
+            const size_t plane_group =
+                (size_t)y * 16u + (size_t)(x >> 4) * 8u;
+            const uint16_t bit = (uint16_t)(0x8000u >> (x & 15u));
+            uint8_t color = 0u;
+            unsigned int plane;
+
+            for (plane = 0u; plane < 4u; ++plane) {
+                const uint8_t *word = img + plane_group + plane * 2u;
+                const uint16_t plane_word =
+                    (uint16_t)(((uint16_t)word[0] << 8u) | word[1]);
+                if ((plane_word & bit) != 0u) {
+                    color |= (uint8_t)(1u << plane);
+                }
+            }
+            indexed_pixels[(size_t)y * CSB_FMTOWNS_PORTRAIT_WIDTH + x] =
+                color;
+        }
     }
 
     if (receipt) {

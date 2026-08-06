@@ -35,6 +35,26 @@ static void test_probe_null(void) {
     ASSERT(csb_v1_fmtowns_portrait_probe(small, 4) == 0, "probe rejects small");
 }
 
+static void test_f31_planar_decode(void) {
+    uint8_t data[CSB_FMTOWNS_PORTRAIT_FILE_SIZE];
+    uint8_t pixels[CSB_FMTOWNS_PORTRAIT_PIXEL_COUNT];
+
+    memset(data, 0, sizeof(data));
+    data[0] = 0x91u;
+    data[1] = 0xa7u;
+    /* First 16-pixel group: plane 0 and 2 set x=0, plane 1 and 3 set x=1.
+     * PORTRAIT.C F7251 must therefore produce palette colours 5 and 10. */
+    data[44] = 0x80u;
+    data[46] = 0x40u;
+    data[48] = 0x80u;
+    data[50] = 0x40u;
+    ASSERT(csb_v1_fmtowns_portrait_decode(data, sizeof(data), pixels,
+                                            sizeof(pixels), NULL) == 1,
+           "F31 portrait planar fixture decodes");
+    ASSERT(pixels[0] == 5u && pixels[1] == 10u && pixels[2] == 0u,
+           "F31 portrait preserves F7251 plane and pixel-pair order");
+}
+
 static void test_real_portraits(void) {
     const char *home = getenv("HOME");
     const char *portrait_dir = getenv("FIRESTAFF_CSB_FMTOWNS_PORTRAIT_DIR");
@@ -104,6 +124,7 @@ static void test_real_portraits(void) {
 
 int main(void) {
     test_probe_null();
+    test_f31_planar_decode();
     test_real_portraits();
     printf("\n%d passed, %d failed\n", g_pass, g_fail);
     return g_fail > 0 ? 1 : 0;

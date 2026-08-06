@@ -657,6 +657,14 @@
   `F0952_JAPANESE_Print` path. The FM Towns graphics regression pins those
   metrics and passes 40/40 checks against both real cache roots.
 
+# CSB FM Towns C06 portrait planar conversion (2026-08-06)
+
+- ✅ Corrected the `.CMP` portrait decoder from an invented packed-nibble
+  interpretation to the actual F31 `PORTRAIT.C F7251` Atari ST four-plane
+  conversion, including F31's swapped chunky-nibble order from
+  `CEDTINCO.C F7276`. A bitplane fixture locks palette values 5/10, and all
+  24 supplied portraits pass against each English and Japanese cache.
+
 - ✅ 2026-08-06 CSB FM Towns M653 font material: F31 `GRAPHICS.DAT` record
   C695 is now copied as its original 768-byte, one-bit `NOT_EXPANDED` font
   payload. M11 binds it before the real FM Towns title plays for both English
