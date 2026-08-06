@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-CANCEL-REOPEN-SYNTHETIC-AUDIT:** This same-tick C040/C162/C127
+  model fabricates party, panel and sensor state. It has no original DM1 data
+  input or M11/runtime caller; retain it only as explicit ReDMCSB coverage
+  until a source-bound interaction owner is recovered.
+
 - **DM1-MIRROR-RESHUFFLE-SYNTHETIC-AUDIT:** This C040 reshuffle fixture
   fabricates party, chest and leader-hand state. It has no original DM1 data
   input or M11/runtime caller; retain it only as explicit ReDMCSB coverage

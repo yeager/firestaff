@@ -1,3 +1,12 @@
+# DM1 C040/C162/C127 same-tick synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only cancel-then-reopen fixture from M10. It
+  fabricates party, panel and sensor state, has no original DM1 data input or
+  M11/runtime caller, and the generated regression compiles it directly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat`
+  passes with 53 assertions; the source object is absent from both M10 and M11
+  archives.
+
 # DM1 C040 reshuffle synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040 reshuffle fixture from M10. It fabricates
