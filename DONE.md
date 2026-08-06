@@ -37,6 +37,15 @@
 - ✅ Verification: `test_dm1_v1_viewport_d2c_f0107_wall_ornament_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 M11 compact Thing-chain consumers (2026-08-06)
+
+- ✅ M11 endgame text and projectile door/teleporter inspection now obtain
+  the first Thing through the PC34 F0511 compact SquareFirstThings lookup,
+  rather than dense map-square indexing that aliases a later-map chain.
+- ✅ Verification: `test_m11_dm1_endgame_final_presentation_receipt_pc34`
+  passes. The broader action/stamina suite remains externally red on its
+  existing projectile-damage and fleeing-delay cases, unrelated to lookup.
+
 # DM1 legacy ornament sensor-cell selection (2026-08-06)
 
 - ✅ The legacy DUNGEON.DAT bridge now matches a C03 wall sensor only when

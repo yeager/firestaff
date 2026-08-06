@@ -40335,7 +40335,7 @@ static int m11_print_endgame_text_messages_f0446(M11_GameViewState* state,
      * square (0,0), keeps only TextString things, decodes each as a message
      * even when invisible, then prints them in A/B/... order by the first
      * decoded character while suppressing that ordering character. */
-    thing = m11_get_first_square_thing(&state->world, mapIndex, 0, 0);
+    thing = m11_square_chain_head(&state->world, mapIndex, 0, 0);
     while (thing != THING_NONE && thing != THING_ENDOFLIST && scanGuard++ < 1024) {
         if (THING_GET_TYPE(thing) == THING_TYPE_TEXTSTRING &&
             textThingCount < (int)(sizeof(textThings) / sizeof(textThings[0]))) {
@@ -41216,7 +41216,7 @@ static int m11_build_projectile_digest(
         }
         {
             unsigned short firstThing = THING_ENDOFLIST;
-            firstThing = m11_get_first_square_thing(world, p->mapIndex, destX, destY);
+            firstThing = m11_square_chain_head(world, p->mapIndex, destX, destY);
             if (firstThing != THING_ENDOFLIST
                     && firstThing != THING_NONE
                     && THING_GET_TYPE(firstThing) == THING_TYPE_DOOR
@@ -41246,7 +41246,7 @@ static int m11_build_projectile_digest(
      * the scope/direction field.  If no teleporter thing is
      * present, destTeleporterNewDirection stays -1 (no rotation). */
     if (out->destSquareType == PROJECTILE_ELEMENT_TELEPORTER) {
-        unsigned short firstThing = m11_get_first_square_thing(
+        unsigned short firstThing = m11_square_chain_head(
             world, p->mapIndex, destX, destY);
         if (firstThing != THING_ENDOFLIST
                 && firstThing != THING_NONE
@@ -54652,10 +54652,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
         mapDesc = &state->world.dungeon->maps[state->world.party.mapIndex];
     }
     if (state->showDebugHUD) {
-        firstThing = m11_get_first_square_thing(&state->world,
-                                                state->world.party.mapIndex,
-                                                state->world.party.mapX,
-                                                state->world.party.mapY);
+        firstThing = m11_square_chain_head(&state->world,
+                                           state->world.party.mapIndex,
+                                           state->world.party.mapX,
+                                           state->world.party.mapY);
         squareThingCount = m11_count_square_things(&state->world,
                                                    state->world.party.mapIndex,
                                                    state->world.party.mapX,
