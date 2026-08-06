@@ -1882,12 +1882,12 @@ int main(void) {
     probe_audio_bank_marker_unsupported_variant_fixture();
     probe_audio_bank_marker_real_data(THERON_TRACK02_MD5_US_BIN,
                                       "FIRESTAFF_THERON_TRACK02_US_BIN",
-                                      "theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin",
+                                      "theron/TQUS02.bin",
                                       g_us_audio_bank_ids,
                                       g_us_bin_span_offsets);
     probe_audio_bank_marker_real_data(THERON_TRACK02_MD5_JP_BIN,
                                       "FIRESTAFF_THERON_TRACK02_JP_BIN",
-                                      "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin",
+                                      "theron/TQJP02.bin",
                                       g_jp_audio_bank_ids,
                                       g_jp_bin_span_offsets);
     probe_raw_bin_positive_fixture("US raw BIN synthetic anchors",
@@ -1914,12 +1914,12 @@ int main(void) {
                 THERON_TRACK02_SIGNAL_OK);
     probe_track("US raw Track 02 bank anchors",
                 "FIRESTAFF_THERON_TRACK02_US_BIN",
-                "theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin",
+                "theron/TQUS02.bin",
                 THERON_TRACK02_MD5_US_BIN,
                 THERON_TRACK02_SIGNAL_OK);
     probe_track("JP raw Track 02 bank anchors",
                 "FIRESTAFF_THERON_TRACK02_JP_BIN",
-                "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin",
+                "theron/TQJP02.bin",
                 THERON_TRACK02_MD5_JP_BIN,
                 THERON_TRACK02_SIGNAL_OK);
     probe_track("JP Rev 1 ISO zero-image guard",

@@ -3,6 +3,12 @@
   `main` now retain the newest full matrix instead of queuing obsolete commits
   ahead of it; pull-request runs remain isolated by ref.
 
+- ✅ 2026-08-06 Theron raw nonstartup/bank probe paths: real-data probes now
+  discover `theron/TQUS02.bin` and `theron/TQJP02.bin` directly. Nonstartup
+  sector receipts pass with zero skips, and bank evidence passes with all six
+  regional descriptor/span anchors plus the three US and three JP audio-bank
+  IDs; the unavailable composed US ISO remains an explicit skip.
+
 - ✅ 2026-08-06 Theron descriptor-role probe path correction: the real US/JP
   raw BIN role probe now discovers `theron/TQUS02.bin` and `theron/TQJP02.bin`
   from the standard data root. It verifies all six raw descriptor anchors,

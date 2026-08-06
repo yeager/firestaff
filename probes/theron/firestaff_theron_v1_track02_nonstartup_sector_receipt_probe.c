@@ -303,11 +303,11 @@ int main(void) {
     free(fixture);
 
     probe_real_media("FIRESTAFF_THERON_TRACK02_US_BIN",
-                     "theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin",
+                     "theron/TQUS02.bin",
                      THERON_TRACK02_MD5_US_BIN, "real-us", &real_us,
                      &have_real_us);
     probe_real_media("FIRESTAFF_THERON_TRACK02_JP_BIN",
-                     "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin",
+                     "theron/TQJP02.bin",
                      THERON_TRACK02_MD5_JP_BIN, "real-jp", &real_jp,
                      &have_real_jp);
     if (have_real_jp && have_real_us) {
