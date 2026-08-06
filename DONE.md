@@ -1,3 +1,12 @@
+# DM1 D3C back-wall item synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free D3C F0115 back-wall item model from M10. It uses
+  synthetic framebuffer writes, cells and zones, has no original DM1 data
+  input or M11/runtime caller, and its explicit tests and gate probe already
+  compile the source directly.
+- ✅ Verification: `dm1_v1_viewport_d3c_back_wall_item_pc34_compat` passes;
+  the source object is absent from both M10 and M11 archives.
+
 # DM1 champion disabled-icon synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the champion disabled-icon state model from M10. It synthesizes

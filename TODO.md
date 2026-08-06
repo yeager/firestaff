@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D3C-BACK-WALL-ITEM-SYNTHETIC-AUDIT:** This asset-free F0115 model
+  uses synthetic framebuffer writes, cells and zones. It has no original DM1
+  data input or M11/runtime caller; retain it as an explicit ReDMCSB
+  regression until a source-bound D3C back-wall item consumer is recovered.
+
 - **DM1-CHAMPION-DISABLED-ICON-SYNTHETIC-AUDIT:** The disabled-icon model
   synthesizes champion rows and G0491 state. It reads no original DM1 data;
   M11 has only an unused header inclusion, not a runtime call. Retain it as
