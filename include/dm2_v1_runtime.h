@@ -198,6 +198,10 @@ extern "C" {
 /* ── Core movement ──────────────────────────────────────────────── */
 
 void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile);
+/* Release the singleton only when it still borrows this exact boot profile.
+ * Boot-profile cleanup calls this before releasing original-media buffers, so
+ * a rejected or closed FM Towns session cannot leave a dangling GDAT owner. */
+void dm2_v1_runtime_unbind_boot_profile(DM2_V1_BootProfile *boot_profile);
 int  dm2_v1_runtime_bind_boot_profile(DM2_V1_BootProfile *boot_profile);
 /* Returns the map-0 bounded receipt when a canonical G1 partial world was
  * consumed. Only source-defined direct DB1 teleporter fields are available;

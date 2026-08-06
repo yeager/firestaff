@@ -28341,6 +28341,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   The check covers both a direct file and the original DOS ZIP member, entirely
   in RAM. It proves the companion corpus covers the selected CD's text keys;
   it does not claim that unbound GUI/dialogue consumers already render them.
+  **2026-08-06 input audit:** the PC `D7 80 1C 00` Enter row is absent from
+  the authenticated `SKULL.EXP` load image, so generic M12 keyboard tokens
+  remain correctly blocked for FM Towns. Decode the native P3 input route
+  before enabling it; do not import the PC table.
 
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN

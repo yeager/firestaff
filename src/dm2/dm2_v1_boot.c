@@ -11964,6 +11964,10 @@ void dm2_v1_boot_gdat_image_asset_free(uint8_t *pixels)
 
 void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     if (!profile) return;
+    /* The runtime borrows this profile's source-owned GDAT and disc buffers.
+     * Release that exact binding before their owner is freed.  This also
+     * covers an FM Towns English-companion rejection after runtime bind. */
+    dm2_v1_runtime_unbind_boot_profile(profile);
     /* The sound singleton borrows the loader stored in graphics_dat. */
     dm2_v1_sound_bind_gdat_loader(NULL, 0);
     dm2_v1_sound_bind_runtime_queue(NULL);

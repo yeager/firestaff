@@ -61,6 +61,21 @@ the original SKULL continuation loop, and a real save-backed RESUME action
 remain unavailable. A NEW GAME click cannot construct a party or dungeon;
 RESUME remains inert without a boot-admitted original save.
 
+## Keyboard boundary
+
+The PC SKWIN reference maps its `0xD7` New Game event through the PC-only
+four-byte row `D7 80 1C 00` (Enter). A bytewise search of the authenticated
+`SKULL.EXP` load image (`0x200..0x5b68f`) finds zero instances of that row.
+That is not evidence that FM Towns lacks keyboard input; it is evidence that
+the PC table is not the FM Towns table. M11 consequently keeps generic
+launcher ACCEPT/UP/DOWN tokens inert on this screen until a native P3 input
+route, including its event representation and consumer, is decoded. Pointer
+input continues to use only the selected title's `dt04/0` rectangles.
+
+The executable scan uses the existing RAM-only HME-242 disc extractor. It
+does not persist `SKULL.EXP`, disassemble a copied member, or borrow PC input
+data.
+
 ## Regression evidence
 
 `tests/test_dm2_fmtowns_m12_real_media.c` verifies the selected source media,

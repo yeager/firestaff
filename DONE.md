@@ -55923,3 +55923,17 @@ alcove runtime and archive-media tests passed (4/4).
   event, possession-transfer and party/session mutations are connected. The
   FM Towns HME-242 extension-pool gap remains explicit and is not replaced by
   the PC layout.
+
+# 2026-08-06 — DM2 FM Towns boot-profile lifetime and input boundary
+
+- Boot cleanup now releases the DM2 runtime only when it is bound to the
+  exact profile being destroyed. This prevents a rejected FM Towns English
+  companion from leaving the runtime or sound layer borrowing freed native
+  GDAT/disc memory. The release path contains no replacement media or text.
+- Audited the real HME-242 `SKULL.EXP` load image in RAM against SKWIN's
+  PC-only `D7 80 1C 00` Enter row. It has zero matches, so FM Towns continues
+  to accept only its authenticated GDAT pointer rectangles while keyboard
+  routing remains closed pending native P3 evidence.
+- Verification: the authentic FM Towns title/menu real-media test with the
+  selected DOS English ZIP companion, the full PC-DOS M11 startup/profile
+  gate and the production placeholder boundary all pass.

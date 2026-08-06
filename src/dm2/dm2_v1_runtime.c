@@ -1827,7 +1827,6 @@ static void dm2_runtime_refresh_g1_map0_teleporter_transition(
 /* ── Runtime init ──────────────────────────────────────────────────── */
 
 void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
-    if (!boot_profile) return;
     dm2_v1_gdat_scene_m11_command_plan_free(
         &g_dm2_runtime.gdat_scene_material_plan);
     dm2_v1_gdat_wall_m11_command_plan_free(
@@ -1845,6 +1844,15 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     }
     memset(&g_dm2_runtime, 0, sizeof(g_dm2_runtime));
     memset(&g_dm2_frame_ownership, 0, sizeof(g_dm2_frame_ownership));
+    /* A NULL profile is the explicit runtime-release path.  In particular,
+     * startup may reject a selected FM Towns companion after the runtime has
+     * borrowed the native GDAT loader; do not retain pointers into the
+     * profile that boot cleanup is about to free. */
+    if (!boot_profile) {
+        dm2_v1_sound_bind_gdat_loader(NULL, 0);
+        dm2_v1_sound_bind_runtime_queue(NULL);
+        return;
+    }
     /* DM2-003: source-order timer queue (skproject c_timer.cpp heap). */
     dm2_v1_source_timer_queue_init(&g_dm2_runtime.timer_queue);
     g_dm2_runtime.boot = boot_profile;
@@ -1957,6 +1965,14 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
      * selection precedes GDAT access; M12's selected-media receipt is the
      * Firestaff equivalent. */
     dm2_v1_i18n_init(&g_dm2_runtime.i18n);
+}
+
+void dm2_v1_runtime_unbind_boot_profile(DM2_V1_BootProfile *boot_profile)
+{
+    if (!boot_profile || g_dm2_runtime.boot != boot_profile) {
+        return;
+    }
+    dm2_v1_runtime_init(NULL);
 }
 
 int dm2_v1_runtime_g1_first_map_receipt(
