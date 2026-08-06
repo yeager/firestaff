@@ -25822,3 +25822,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   consumer and tile/map ownership are disassembled. The JP raw BIN now has
   its own verified seven-block offsets and metadata table; this remains a
   source-bound inventory, not a synthetic or inferred tile binding.
+
+- 🔧 DM2 HUD follow-up: M11 now leaves the accepted V1 runtime frame as the
+  sole production HUD owner. The retired V2 compatibility blit used a static
+  GDAT plan without SKProject's live GUI/session inputs, so it cannot return
+  until complete per-command, party and champion-state receipts drive the
+  original UI route. Diagnostic V2 HUD modules remain non-production only.

@@ -50533,3 +50533,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   authenticated DM1 sessions. Verified with a full Ninja build and the real
   PC3.4 object-name, 611-record object corpus, and alcove pickup/placement
   tests.
+- ✅ 2026-08-06 DM2 HUD compatibility-pass closure: removed M11's remaining
+  optional V2 post-frame HUD setup and static GDAT blit. SKProject's
+  `DRAW_CHAMPION_PICTURE` and `skguidrw.cpp` command paths consume live
+  champion, command and GUI/session state, which the static compatibility
+  plan could not prove. The accepted V1 runtime frame is therefore the sole
+  production pixel owner in every presentation mode; V2 HUD diagnostics have
+  no M11 invocation. Verification: `firestaff` build, real PC-DOS
+  GDAT HUD command family, material receipt, boot profile 95/95, lighting/HUD
+  gate 151/151, portrait-palette gate 2/2, and M11 launcher-handoff boundary.

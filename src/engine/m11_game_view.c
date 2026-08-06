@@ -58,8 +58,6 @@
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_tech_magic.h"
-#include "dm2_v2_hud_runtime.h"
-#include "dm2_v2_phase_gate.h"
 #include "theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
@@ -950,33 +948,6 @@ static int m11_dm1_hoc_floor_item_capture_observed(int itemPresent)
            s_m11_dm1_floor_item_host_presentation_receipt.transparentColor == 10;
 }
 
-/* The M11 game view owns one active DM2 launch at a time.  Keep the V2
- * phase gate alive for the HUD/touch/lighting runtimes rather than handing
- * them a stack-local configuration.  skproject's c_gui_vp.cpp consumes
- * decoded GDAT UI images after the game profile is mounted; no M11 artwork
- * is substituted when that original source is unavailable. */
-static DM2_V2_PhaseGateConfig g_m11_dm2_v2_gate;
-static void m11_dm2_configure_v2_presentation(
-    const M11_GameViewState *state,
-    DM2_V1_BootProfile *profile)
-{
-    int v2_active;
-
-    if (!state || !profile) {
-        return;
-    }
-    v2_active = state->presentationMode != M12_PRESENTATION_V1_ORIGINAL;
-    dm2_v2_phase_gate_defaults(&g_m11_dm2_v2_gate);
-    g_m11_dm2_v2_gate.v2LaunchEnabled = v2_active;
-    g_m11_dm2_v2_gate.v2ProfileEnabled = v2_active;
-    dm2_v2_hud_runtime_set_gate_config(&g_m11_dm2_v2_gate);
-    dm2_v2_hud_runtime_set_gdat_source(
-        dm2_v1_boot_viewport_asset_fetch,
-        dm2_v1_boot_viewport_asset_palette_fetch,
-        profile,
-        profile->assets_verified && profile->graphics_dat != NULL);
-}
-
 static void m11_sync_dm2_state_from_runtime(M11_GameViewState *state)
 {
     DM2_V1_BootRuntimeReceipt receipt;
@@ -1422,9 +1393,7 @@ static int m11_dm2_apply_boot_runtime_receipt(
     /* The legacy V2 runtime inferred camera/effect state from host ticks.
      * Its production path is removed until source-owned timing is decoded. */
     (void)receipt->initialize_v2_runtime;
-    if (receipt->initialize_hud_runtime) {
-        dm2_v2_hud_runtime_init();
-    }
+    (void)receipt->initialize_hud_runtime;
     state->active = 1;
     state->startedFromLauncher = 1;
     state->sourceKind = M11_GAME_SOURCE_DM2_BOOT;
@@ -1452,7 +1421,6 @@ static int m11_dm2_apply_boot_runtime_receipt(
     state->dm2BootProfile = receipt->profile;
     state->dm2World = receipt->dm2_state;
     state->dm2State.level_loaded = 1;
-    m11_dm2_configure_v2_presentation(state, receipt->profile);
     m11_sync_dm2_state_from_runtime(state);
     return 1;
 }
@@ -52143,18 +52111,14 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_BLACK);
         }
-        if (rendered == 0 &&
-            state->presentationMode != M12_PRESENTATION_V1_ORIGINAL) {
-            /* The V1 viewport has already established the authoritative
-             * scene.  V2.0 reuses only the mounted GDAT HUD pixels through
-             * the boot-profile fetcher configured at hand-off above.
-             * skproject/SKWIN/c_gui_vp.cpp: GUI chrome follows viewport
-             * presentation; unavailable GDAT images deliberately draw
-             * nothing here. */
-            dm2_v2_hud_runtime_render(framebuffer,
-                                      framebufferWidth,
-                                      framebufferHeight);
-        }
+        /* The accepted V1 runtime frame is the only HUD owner.  SKProject
+         * drives interface images from live GUI/session state (not a static
+         * post-frame list), including per-champion and active-command state.
+         * Do not replay a second compatibility HUD pass here: no complete
+         * live-GUI receipt exists yet, so even authentic GDAT pixels could
+         * overwrite a source-owned state transition.  Source: SKProject
+         * SKWIN/SkWinCore.cpp DRAW_CHAMPION_PICTURE (12866+) and
+         * SKWINSPX/src/v5/skguidrw.cpp UI command paths. */
         if (runtime_frame_accepted &&
             runtime_render_receipt.runtime_render_real_asset_ready) {
             m11_set_status((M11_GameViewState *)state,
