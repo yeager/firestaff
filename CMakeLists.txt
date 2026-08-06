@@ -4976,6 +4976,12 @@ list(REMOVE_ITEM M10_SOURCES
 # M11/runtime caller. Its explicit regression compiles it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_no_pending_resurrect_pc34_compat.c")
+# `dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat.c` is a
+# contract-only C004/C006/C040 fixture with local party, panel and chest
+# state. It loads no original DM1 data and has no M11/runtime caller; its
+# explicit regression compiles it directly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat.c")
 # `dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_pc34_compat.c`
 # is a contract-only C040 close/reopen model with local panel and candidate
 # state. It loads no original DM1 assets and has no M11/runtime caller; its
@@ -53953,7 +53959,9 @@ add_executable(test_dm1_v1_mirror_candidate_left_click_rotation_pc34_compat test
 target_include_directories(test_dm1_v1_mirror_candidate_left_click_rotation_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_left_click_rotation_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_left_click_rotation_pc34_compat COMMAND test_dm1_v1_mirror_candidate_left_click_rotation_pc34_compat)
-add_executable(test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat tests/test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat.c)
+add_executable(test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat
+    tests/test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat.c
+    src/dm1/dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat.c)
 target_include_directories(test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat COMMAND test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat)
