@@ -2602,6 +2602,9 @@ struct Nexus_V1_Engine {
     uint64_t m11_direct_lev_dungeon_last_route_epoch;
     Nexus_V1_DgnM11DirectLevNoDrawReceipt m11_direct_lev_dungeon;
     Nexus_V1_MenuBpkPaltTraceAdmissionReceipt menu_bpk_palt_trace_admission;
+    /* Test/capture seam only: real startup remains zero until the TEXT4/TABL/
+     * FONT256 Saturn text consumer and placement are externally admitted. */
+    int startup_menu_text_consumer_capture_verified;
 
     /* Per-level trigger/script runtime. SLEV*.BIN is real candidate data;
      * dispatch remains blocked until a source-locked parser exists. */

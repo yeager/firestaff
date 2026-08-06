@@ -227,6 +227,11 @@
   names at `0x373B4`–`0x373D8`, with pointer-reference counts 1/10/1/1.
   This is source ownership only; menu order, text consumer and VDP1/VDP2
   composition remain capture-gated.
+  2026-08-06: the startup asset receipt now has an explicit
+  `menu_text_consumer_bound` gate. Real engines leave it false because the
+  current host chrome strings are not proven TEXT4/TABL/FONT256 Saturn output;
+  only an explicit external capture seam may open the save/champion fixture
+  route.
   The same receipt now pins the SH-2 routine at `0x18B60` and its literal
   pool hash, including the `yam\\menu.c` and `STABG.BIN` address targets.
 

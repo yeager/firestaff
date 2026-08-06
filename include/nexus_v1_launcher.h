@@ -1056,6 +1056,9 @@ typedef struct {
     int title_route_ready;
     int real_menu_surface_route_ready;
     int real_menu_surface_route_blocked;
+    /* Host chrome strings are not a Saturn text consumer. This remains zero
+     * until RLOWFIX TEXT4/TABL/FONT256 and placement are capture-bound. */
+    int menu_text_consumer_bound;
     int save_menu_route_ready;
     int champion_menu_route_ready;
     const char *real_menu_surface_blocker;

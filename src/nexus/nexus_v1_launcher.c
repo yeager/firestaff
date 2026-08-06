@@ -3244,6 +3244,12 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         !receipt->menu_bpk_blocks_real_menu_surface_render;
     receipt->real_menu_surface_route_blocked =
         receipt->real_menu_surface_route_ready ? 0 : 1;
+    /* The resource bytes are real, but the current startup builders still
+     * carry host string labels. Do not let those labels become production
+     * Saturn menu pixels before the TEXT4/TABL/FONT256 consumer and VDP2 text
+     * placement are captured. */
+    receipt->menu_text_consumer_bound =
+        engine->startup_menu_text_consumer_capture_verified ? 1 : 0;
     if (!title_capture_source_ready) {
         receipt->real_menu_surface_blocker = "title-vdp-capture-required";
         receipt->startup_menu_asset_route = "blocked-title-vdp-capture";
@@ -3277,6 +3283,11 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         receipt->real_menu_surface_blocker = "menu-bpk-vdp1-capture-required";
         receipt->startup_menu_asset_route =
             "menu-bpk-vdp1-capture-required";
+    } else if (!receipt->menu_text_consumer_bound) {
+        receipt->real_menu_surface_blocker =
+            "menu-text-consumer-capture-required";
+        receipt->startup_menu_asset_route =
+            "menu-text-consumer-capture-required";
     } else if (receipt->real_menu_surface_route_ready) {
         receipt->real_menu_surface_blocker = "none";
         receipt->startup_menu_asset_route = "ready-real-menu-surfaces";
@@ -3286,7 +3297,8 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
     }
     receipt->save_menu_route_ready =
         receipt->startup_audio_handoff_ready &&
-        receipt->real_menu_surface_route_ready;
+        receipt->real_menu_surface_route_ready &&
+        receipt->menu_text_consumer_bound;
     receipt->champion_menu_route_ready =
         receipt->save_menu_route_ready &&
         nexus_v1_startup_faces_ready(engine);
@@ -3294,7 +3306,8 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         engine->level_loaded &&
         receipt->startup_assets_ready &&
         receipt->startup_audio_handoff_ready &&
-        receipt->real_menu_surface_route_ready;
+        receipt->real_menu_surface_route_ready &&
+        receipt->menu_text_consumer_bound;
 }
 
 static int nexus_v1_launcher_startup_assets_from_runtime_state(

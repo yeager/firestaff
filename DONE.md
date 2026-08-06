@@ -52217,3 +52217,13 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   measurement through `$3B7C/$3B7D` without promoting unknown input, bank or
   level/object semantics into production. `test_theron_v1_huc6280_disassembly`
   passes against both authentic regional ISOs.
+
+# 2026-08-06 Nexus startup menu text-consumer gate
+
+- ✅ Added an explicit `menu_text_consumer_bound` production gate. The real
+  TEXT4/TABL/FONT256 bytes are retained, but host-generated chrome strings no
+  longer suffice to open the save/champion menu route. Until Saturn text
+  placement is capture-bound, the route reports
+  `menu-text-consumer-capture-required` and remains fail-closed.
+  The compatibility test opts into this seam explicitly; initialized retail
+  engines leave `startup_menu_text_consumer_capture_verified` clear.
