@@ -98,6 +98,10 @@
   automatic locals, not an implementation or data owner. It has no runtime
   caller or authentic data input; retain it only in the explicit audit test.
 
+- **DM1-F0410-F0411-SPELL-CONTINUATION-AUDIT:** This receipt contract has no
+  M11/runtime caller; F0412 remains the live spell-result owner. Keep it
+  test-only until authentic live spell state needs the bounded continuation.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

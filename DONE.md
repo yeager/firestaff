@@ -84,6 +84,15 @@
 - ✅ Verification: `test_dm1_v1_l0151_l0200_f0115_local_owner_audit` passes;
   the source object is absent from both M10 and M11 archives.
 
+# DM1 F0410–F0411 spell-continuation audit isolation (2026-08-06)
+
+- ✅ Removed the receipt-only F0410/F0411 spell-continuation contract from
+  M10. It has no M11/runtime caller, while F0412 remains the live spell-result
+  owner; its explicit source-receipt test remains available.
+- ✅ Verification:
+  `test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat` passes; the
+  source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the

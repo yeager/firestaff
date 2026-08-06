@@ -4325,6 +4325,12 @@ list(REMOVE_ITEM M10_SOURCES
 # not link its metadata table into the broad M10 production archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_l0151_l0200_f0115_local_owner_audit.c")
+# `dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c` only verifies
+# source-bound spell receipts for its explicit test. It has no M11/runtime
+# caller and F0412 remains the live spell-result owner; keep this contract out
+# of M10 so it cannot become a parallel production continuation path.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
