@@ -55,9 +55,11 @@ typedef void (*DM2_ReadRecordAddPossessionIndexFn)(void *ctx,
  * SKProject c_savegame.cpp::DM2_READ_RECORD_CHECKCODE selects v1d648f rather
  * than the default v1d647f mask when QUERY_CREATURE_AI_SPEC_FLAGS(record)
  * has bit 0 set.  The creature type is byte 4, read before its body mask.
- * Return zero only when the result comes from the authenticated CREATURES →
- * CREATURE_AI GDAT chain.  A missing provider is deliberately not equivalent
- * to zero flags: accepting that would desynchronise the shared SKSAVE stream.
+ * Return zero only when the result comes from the authenticated
+ * CREATURES[type].word(5) → executable `v1d296c.dat` chain.  A profile may
+ * override a row through CREATURE_AI GDAT, but retail PC-DOS uses the
+ * executable baseline. A missing mapping is deliberately not equivalent to
+ * zero flags: accepting that would desynchronise the shared SKSAVE stream.
  */
 typedef int (*DM2_ReadRecordCreatureAiFlagsFn)(void *ctx,
                                                uint16_t record_link,

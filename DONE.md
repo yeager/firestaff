@@ -32731,12 +32731,13 @@ generic fallback. Source: SKProject `SKWIN/DME.h::Creature::CreatureType()`;
 - ✅ 2026-07-11 DM2-GDAT-FB-08 `CREATURE_AI` runtime binding: DM2 V1 now
   follows skproject `QUERY_CREATURE_AI_SPEC_FROM_TYPE`
   (`SKWINSPX/src/v4/skcrture.cpp:28-36`): it resolves each creature through
-  `CREATURES[type]` `dtWordValue(0x05)` before loading the 36-byte
-  `CREATURE_AI` row. Mounted GDAT mode treats missing mappings, missing rows,
-  and malformed rows as unavailable: spawn rejects them and attack, spell,
-  tick, projectile, and collision routes take no action rather than inventing
-  melee, ranged, damage, armor, or HP defaults. Data-free fixtures retain
-  their isolated test behavior before any table is mounted. Verification:
+  `CREATURES[type]` `dtWordValue(0x05)` before selecting the executable
+  `v1d296c.dat` row or an optional extended `CREATURE_AI` override. Mounted
+  GDAT mode treats missing mappings and malformed override rows as
+  unavailable: spawn rejects them and attack, spell, tick, projectile, and
+  collision routes take no action rather than inventing melee, ranged, damage,
+  armor, or HP defaults. Data-free fixtures retain their isolated test
+  behavior before any table is mounted. Verification:
   `test_dm2_v1_creature_gdat_ai_table` passed 13/13 and the strict real-data
   probe `firestaff_dm2_v1_creature_ai_real_data_probe` builds; it is skip-safe
   when no canonical `GRAPHICS.DAT` is staged locally.

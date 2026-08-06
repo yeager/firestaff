@@ -171,9 +171,10 @@ int dm2_v1_read_record_checkcode(
             /* SKProject SKULLWIN/c_savegame.cpp::DM2_READ_RECORD_CHECKCODE
              * lines 876-881 obtains this from
              * QUERY_CREATURE_AI_SPEC_FLAGS(vl_1c).  Do not silently select
-             * the default v1d647f mask when the live CREATURES →
-             * CREATURE_AI GDAT lookup is unavailable: every subsequent
-             * record in this one SUPPRESS stream would then be misread. */
+             * the default v1d647f mask when the live
+             * CREATURES[type].word(5) → v1d296c source lookup is
+             * unavailable: every subsequent record in this one SUPPRESS
+             * stream would then be misread. */
             if (!cb->query_creature_ai_flags ||
                 cb->query_creature_ai_flags(cb->ctx, record_link, b04,
                                             &ai_flags) != 0) {

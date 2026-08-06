@@ -19082,15 +19082,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     is still exact live light-source and weather-object semantics, not a
     borrowed scene or generated image during map handoff.
   - 2026-07-14 update: creature-atlas admission now requires the SKProject `GET_CREATURE_ANIMATION_FRAME` raw-table triad (`dtRaw8/FB`, `dtRaw7/FC`, `dtRaw7/FD`) to coexist for one real `CREATURES` index. The receipt retains the complete-index mask and hash; isolated table sightings cannot promote animation readiness. Remaining creature work is decoding the selected command/sequence semantics into the live frame choice. In particular, the dynamic route still needs the source-owned mutable sequence state, random branch, and AI/static classification; the bounded direct-DB4 route may not fabricate any of those fields.
-  - 2026-07-14 update: the V5 dynamic-table decoder now reads one complete real `CREATURES/type` `FB` command row, `FC` terminal sequence walk, and `FD` directional image id only after a GDAT-backed AI definition classifies the type as non-static. Its focused canonical-media test uses the SKProject initial `iAnimInfo=0xffff` sentinel and records no pixels or generated state; it skips when the supplied variant has no admitted source AI classification. Remaining work is binding authentic mutable `iAnimInfo` and command state from a live original creature context; the static DB4 route remains frame-zero-only and cannot borrow this dynamic receipt.
+  - 2026-07-14 update: the V5 dynamic-table decoder now reads one complete real `CREATURES/type` `FB` command row, `FC` terminal sequence walk, and `FD` directional image id only after a source-owned AI definition classifies the type as non-static. Retail PC-DOS resolves that definition through `CREATURES[type].word(5)` and the executable `v1d296c.dat` baseline; `CREATURE_AI` is only an optional extended override. Its focused canonical-media test uses the SKProject initial `iAnimInfo=0xffff` sentinel and records no pixels or generated state; it skips when the supplied variant has no admitted source AI classification. Remaining work is binding authentic mutable `iAnimInfo` and command state from a live original creature context; the static DB4 route remains frame-zero-only and cannot borrow this dynamic receipt.
   - 2026-07-14 update: runtime now carries an admitted live V5 receipt from
     `FB/FC/FD` through the direct `CREATURES/type/dtImage/FD-image` viewport
     key and M11 material plan, with the mutable sequence pair stored on the
     creature instance. `F9` remains exclusive to the direct DB4 map-chip
-    route. The local PC corpus has complete table triads but no accepted
-    `CREATURES[type]/dtWordValue(5) -> CREATURE_AI` material binding, so no
-    live creature can promote this path yet; it remains no-draw rather than
-    borrowing a type-index image or a generated visual.
+    route. The local PC corpus has complete table triads plus source-backed
+    `CREATURES[type].dtWordValue(5) -> v1d296c` bindings; it still lacks the
+    complete live DB4/sequence-state owner, so no live creature can promote
+    this path yet. It remains no-draw rather than borrowing a type-index image
+    or a generated visual.
   - 2026-07-11 update: runtime HUD/dungeon complete-support now includes item and carried-item fallback counters from the V1 viewport renderer. Remaining render work is broader real item/object asset coverage and Mac packaged capture.
   - 2026-07-11 update: runtime frame ownership now resolves raw/decoded GDAT evidence for HUD core, HUD portraits, item/object map chips, projectiles, wall buttons, door buttons, and door frames through the same viewport asset-address path used by rendering. Remaining render work is Mac packaged capture plus broader live object/save corpus scenarios.
   - 2026-07-11 update: HUD-core runtime rendering now resolves Firestaff HUD keys to real skproject `INTERFACE_GENERAL` image subcategories for top bar, action strip, gold box, portrait panel, and action icons, so the boot-profile smoke is fully green on local real DM2 data. Remaining startup work is Mac packaged capture plus broader real save corpus import.
@@ -27383,9 +27384,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   callback-only `DM2_READ_RECORD_CHECKCODE` transcript cannot be promoted as
   a raw-save reader: SKProject `sksvgame.cpp:880-881` selects the DB4 record
   SUPPRESS mask through `DM2_QUERY_CREATURE_AI_SPEC_FLAGS` (the authenticated
-  `CREATURES[type] → AIDefinition` GDAT chain). The reader now fails closed
-  when that source lookup is unavailable: two supplied PC-DOS direct-root
-  streams need no DB4 creature while the other six stop at that exact owner.
+  `CREATURES[type].word(5) → v1d296c` chain, with optional GDAT override).
+  The reader now fails closed when that source lookup is unavailable: five
+  supplied PC-DOS direct-root streams decode fully, while three stop at the
+  exact absent mapping (type 54 twice and type 127 once).
   The real-data creature-animation probe now opens the canonical DOS spelling
   `GRAPHICS.DAT` after the lowercase attempt fails, so this conclusion comes
   from parsed mounted media rather than an accidental filename-only skip.

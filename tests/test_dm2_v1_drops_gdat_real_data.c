@@ -6,8 +6,9 @@
  * (skproject/SKWINSPX/src/v4/skcrture.cpp:2092-2100
  * DROP_CREATURE_POSSESSION), resolved in source order through
  * dm2_v1_drops_resolve_gdat_creature_drops. The canonical PC-English data
- * has no CREATURE_AI row, so it must not be promoted into a live creature
- * death path merely to exercise the otherwise genuine drop words.
+ * has no CREATURE_AI override rows. Its original executable supplies the
+ * v1d296c AI baseline, so a CREATURES word-5 mapping may be used; drop words
+ * alone still never authorize a synthetic live death path.
  *
  * Proven local GDAT facts (PC English canonical GRAPHICS.DAT):
  *   type 24 (GLOP):        [0x0A]=0x8E10  [0x0B]=0x9D10
