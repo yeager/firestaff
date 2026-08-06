@@ -55357,8 +55357,9 @@ alcove runtime and archive-media tests passed (4/4).
   checks.
 - ✅ Real European SAL/MAP corpus verification still passes for all 16 levels;
   event dispatch and playback remain fail-closed.
-- ⚠️ The aggregate build remains blocked by the pre-existing Font256 S2D
-  unresolved-symbol gap recorded in `TODO.md`.
+- ⚠️ The aggregate build remains blocked later by the unrelated DM2 FM-Towns
+  animation-stream link gap recorded in `TODO.md`; the Nexus archive itself
+  builds.
 # Nexus Font256 production section-parser link (2026-08-06)
 
 - ✅ `firestaff_nexus` now links the existing real SEGA SATURN SCR section
