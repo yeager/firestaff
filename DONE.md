@@ -8,6 +8,14 @@
 - ✅ M11 launcher handoff and direct-launch regressions pass with the real US
   Track 02 asset.
 
+# Theron JP startup roster real-data regression (2026-08-06)
+
+- ✅ The startup-media regression now reads the authenticated local
+  `TQJP02.bin` and verifies all eight source roster names and titles before
+  they can reach the startup menu.
+- ✅ The US path remains fail-closed because its real text consumer and
+  champion-name payload are still unproven.
+
 # DM2 FM Towns END loop decoder (2026-08-06)
 
 - ✅ The RAM-only TWANIM frame decoder now follows END's original `FO`/`NE`

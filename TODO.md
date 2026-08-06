@@ -176,7 +176,9 @@
   Track 19/Track 02 disassembly and capture before restoring US mirror labels;
   until then the menu exposes those entries as `UNAVAILABLE`, disables their
   hit targets, and skips them during keyboard/controller focus rather than
-  publishing host-owned names.
+  publishing host-owned names. The authenticated JP Track 02 roster remains
+  independently bound and is now covered by a real-media regression for all
+  eight names and titles.
 
 - **M11-F10-SOURCE-SPECIFIC-CHEATS:** The all-game F10 CH page now exposes
   the verified shared cheat master switch and live speed control. Do not add
