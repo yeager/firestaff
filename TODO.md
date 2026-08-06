@@ -9,6 +9,10 @@
   fabricates party, panel and chest state. It loads no original DM1 data and
   has no M11/runtime caller; retain it only as explicit ReDMCSB coverage until
   a source-bound movement owner is recovered.
+- **DM1-MIRROR-TELEPORTER-SURVIVAL-SYNTHETIC-AUDIT:** This teleporter fixture
+  fabricates a dungeon, C040 panel, party and chest-slot state. It has no
+  original DM1 data input or M11/runtime caller; retain it only as explicit
+  ReDMCSB coverage until a source-bound interaction owner is recovered.
 
 - **DM1-MIRROR-NO-PENDING-RESURRECT-SYNTHETIC-AUDIT:** This no-op C040/G0299
   fixture has no original DM1 data input or M11/runtime caller; retain it only

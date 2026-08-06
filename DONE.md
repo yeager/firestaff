@@ -13,6 +13,11 @@
   original DM1 data and has no M11/runtime caller.
 - ✅ Verification: `test_dm1_v1_mirror_candidate_lower_arrow_state_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
+# DM1 mirror teleporter-survival synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the teleporter-survival fixture from M10. Its direct ReDMCSB
+  regression continues to compile the local dungeon, panel, party and
+  chest-slot model explicitly.
 
 # DM1 mirror no-pending-resurrect synthetic audit isolation (2026-08-06)
 

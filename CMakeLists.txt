@@ -4395,6 +4395,12 @@ list(REMOVE_ITEM M10_SOURCES
 # runtime caller; its direct and sibling regressions compile it explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_hand_slot_priority_pc34_compat.c")
+# `dm1_v1_mirror_candidate_teleporter_survival_pc34_compat.c` fabricates a
+# 6x6 dungeon, C040 panel, party, chest slots and teleporter output solely
+# for its ReDMCSB regression. It reads no original DM1 data and has no M11
+# caller; retain this source-only fixture outside the broad M10 archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_teleporter_survival_pc34_compat.c")
 # `dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c` contains only the
 # asset-free D3C stairs/pit dispatch and transparent-byte fixture contract;
 # no M11/runtime caller consumes it.  Keep its source-lock test explicit and
