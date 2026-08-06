@@ -2989,9 +2989,13 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
             if (nexus_v1_font_s2d_decode(font_data, font_size, &font_regions) == 1) {
                 if (nexus_v1_font_load_from_s2d(&engine->font, font_data,
                                                  font_size, &font_regions) > 0) {
-                    engine->font_loaded = 1;
-                    printf("Nexus font: FONT256.S2D loaded (%d glyphs, 8x8 8bpp)\n",
-                           engine->font.char_count);
+                    /* The CG tiles are real source bytes, but the Saturn
+                     * page/attribute character-code relation is not proven.
+                     * Retain the diagnostic payload without advertising a
+                     * drawable runtime font. */
+                    engine->font_loaded = 0;
+                    printf("Nexus font: FONT256.S2D retained (%d CG tiles, "
+                           "glyph mapping pending)\n", engine->font.char_count);
                 } else {
                     printf("Nexus font: FONT256.S2D regions admitted; glyph mapping pending\n");
                     /* Region admission is not a drawable font. Keep the

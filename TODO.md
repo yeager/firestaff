@@ -26260,7 +26260,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   inheriting the generic non-wall passability rule.
 - 🔧 Nexus FONT256 text binding: retail DMWeb map/page header facts are now
   exposed. The remaining gap is proving how page tilemap entries become
-  runtime character codes before enabling text rendering.
+  runtime character codes before enabling text rendering. The engine retains
+  the 242 real CG tiles diagnostically but keeps `font_loaded=0` until that
+  mapping is source-bound.
 - 🔧 Nexus HUD runtime binding: `DM.BIN` `yam\\menuctrl.c` geometry at
   `0x376D0` is now copied into the M11 startup handoff as separate source
   provenance (80 layout entries and 40 hit rectangles) and is verified against

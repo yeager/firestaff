@@ -678,6 +678,9 @@ int main(void) {
                           nexus_v1_load_level(&item_engine, 1) == 0,
                       "real LEV01 loads for ITEM.IBS floor provenance");
             if (item_engine.level_loaded) {
+                check_int(item_engine.font.char_count == 242 &&
+                              item_engine.font_loaded == 0,
+                          "real FONT256 CG tiles remain diagnostic until page mapping is proven");
                 for (i = 0; i < item_engine.current_level.structure1f_entry_count; ++i) {
                     if (item_engine.current_level.structure1f_entries[i].family ==
                             NEXUS_V1_DGN_STRUCTURE1F_ITEMS) {

@@ -51940,3 +51940,8 @@ and `firestaff` build pass.
 This fixes the source path for torch holders, mirrors, inscriptions and
   narrow wall ornaments without synthetic pixels. Ninja build plus the 126/126
   source test and real PC34 side-wall, mirror, and HoC wall-material tests pass.
+- ✅ 2026-08-06 Nexus FONT256 runtime-flag correction: real FONT256.S2D
+  character-generator bytes remain retained for diagnostics, but
+  `font_loaded` stays clear until the Saturn page/attribute character mapping
+  and text consumer are proven. The real-data boot regression covers all 242
+  retained tiles and the blocked runtime flag.
