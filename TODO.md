@@ -1925,9 +1925,11 @@ level or consumer bindings.
 
 - **THERON-TRACK19-RECORD-INTAKE:** Verified US/JP Track 19 ISO identities
   are now recognized as MODE1/2048 sector media with exact sector counts;
-  raw MODE1/2352 remains explicitly distinguished. This proves container
-  intake only. Later-level and object semantics remain blocked until a
-  source-backed CD-read/record trace binds them.
+  raw MODE1/2352 remains explicitly distinguished. `inventory_file()` now
+  normalizes raw sector payloads before running the same hash/offset-bound
+  item, label, opaque-window and startup-envelope checks. This proves
+  container intake only. Later-level and object semantics remain blocked until
+  a source-backed CD-read/record trace binds them.
 
   The US Track 19 item-name span and 66×6 item-property table are now
   byte-validated from real ISO data; level/object records still require the

@@ -69,6 +69,9 @@ int theron_v1_track19_inventory_file(
     FILE *file;
     long file_size;
     size_t bytes;
+    size_t normalized_bytes;
+    size_t sector_bytes;
+    size_t sector_count;
     uint8_t *data;
     char md5[33];
     char text[64];
@@ -85,22 +88,44 @@ int theron_v1_track19_inventory_file(
     }
     bytes = (size_t)file_size;
     if (!theron_v1_track19_inventory(md5, bytes, out) ||
-        !out->mode1_2048 || out->mode1_2352) {
+        (!out->mode1_2048 && !out->mode1_2352)) {
         fclose(file);
         return 0;
     }
-    data = (uint8_t *)malloc(bytes);
-    if (!data || fread(data, 1u, bytes, file) != bytes) {
+    sector_bytes = out->mode1_2352 ? 2352u : 2048u;
+    sector_count = bytes / sector_bytes;
+    normalized_bytes = sector_count * 2048u;
+    data = (uint8_t *)malloc(normalized_bytes);
+    if (!data) {
         free(data);
         fclose(file);
         return 0;
+    }
+    if (out->mode1_2048) {
+        if (fread(data, 1u, normalized_bytes, file) != normalized_bytes) {
+            free(data);
+            fclose(file);
+            return 0;
+        }
+    } else {
+        /* Track 19 records use MODE1/2048 offsets even when the transport is
+         * a raw 2352-byte image. Strip only the 16-byte sector header; keep
+         * the authenticated raw hash and transport identity in `out`. */
+        for (i = 0u; i < sector_count; ++i) {
+            if (fseek(file, (long)(i * 2352u + 16u), SEEK_SET) != 0 ||
+                fread(data + i * 2048u, 1u, 2048u, file) != 2048u) {
+                free(data);
+                fclose(file);
+                return 0;
+            }
+        }
     }
     fclose(file);
     snprintf(out->source_md5, sizeof(out->source_md5), "%s", md5);
     if (strcmp(out->variant, "us") == 0) {
         for (i = 0u; i < THERON_TRACK19_US_ITEM_NAME_COUNT; ++i) {
             if (!theron_v1_track19_us_item_name_from_iso(
-                    data, bytes, i, text, sizeof(text))) {
+                    data, normalized_bytes, i, text, sizeof(text))) {
                 free(data);
                 return 0;
             }
@@ -108,7 +133,7 @@ int theron_v1_track19_inventory_file(
         out->item_name_table_verified = 1;
         for (i = 0u; i < THERON_TRACK19_US_LEVEL_LABEL_COUNT; ++i) {
             if (!theron_v1_track19_us_level_label_from_iso(
-                    data, bytes, i, text, sizeof(text))) {
+                    data, normalized_bytes, i, text, sizeof(text))) {
                 free(data);
                 return 0;
             }
@@ -122,7 +147,7 @@ int theron_v1_track19_inventory_file(
 
         for (i = 0u; i < THERON_TRACK19_JP_ITEM_NAME_COUNT; ++i) {
             if (!theron_v1_track19_jp_item_name_from_iso(
-                    data, bytes, i, raw_name, sizeof(raw_name),
+                    data, normalized_bytes, i, raw_name, sizeof(raw_name),
                     &raw_name_size) || raw_name_size == 0u) {
                 free(data);
                 return 0;
@@ -131,7 +156,7 @@ int theron_v1_track19_inventory_file(
         out->item_name_table_verified = 1;
         for (i = 0u; i < THERON_TRACK19_JP_LEVEL_LABEL_COUNT; ++i) {
             if (!theron_v1_track19_jp_level_label_from_iso(
-                    data, bytes, i, raw_label, sizeof(raw_label),
+                    data, normalized_bytes, i, raw_label, sizeof(raw_label),
                     &raw_label_size) || raw_label_size == 0u) {
                 free(data);
                 return 0;
@@ -140,21 +165,21 @@ int theron_v1_track19_inventory_file(
         out->level_label_table_verified = 1;
     }
     if (!theron_v1_track19_opaque_record_window_validate(
-            data, bytes, strcmp(out->variant, "jp") == 0,
+            data, normalized_bytes, strcmp(out->variant, "jp") == 0,
             &out->opaque_record_window_offset,
             &out->opaque_record_window_bytes)) {
         free(data);
         return 0;
     }
     if (!theron_v1_track19_item_property_table_validate(
-            data, bytes, strcmp(out->variant, "jp") == 0,
+            data, normalized_bytes, strcmp(out->variant, "jp") == 0,
             &out->item_property_table_offset,
             &out->item_property_table_bytes)) {
         free(data);
         return 0;
     }
     Theron_Track19LevelEnvelope envelope;
-    if (!theron_v1_track19_startup_level_envelope_read(data, bytes,
+    if (!theron_v1_track19_startup_level_envelope_read(data, normalized_bytes,
                                                         &envelope)) {
         free(data);
         return 0;

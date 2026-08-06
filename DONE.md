@@ -78,6 +78,13 @@
 - ✅ M11 remains no-draw when only a palette candidate is present; the gate
   awaits a captured VDC/VCE destination and semantic route.
 
+# Theron Track 19 raw-sector intake (2026-08-06)
+
+- ✅ Track 19 inventory now accepts authenticated MODE1/2352 files by
+  stripping only the 16-byte sector header before ISO-coordinate validation.
+- ✅ The raw transport identity remains explicit; real object and later-level
+  semantics are still not promoted without an original consumer trace.
+
 # Theron JP startup roster real-data regression (2026-08-06)
 
 - ✅ The startup-media regression now reads the authenticated local
