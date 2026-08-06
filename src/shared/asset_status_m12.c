@@ -1839,7 +1839,12 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * payload to the native CSB runtime. */
         "MINI.DAT", "MINIF.DAT", "MINIG.DAT",
         "CSBGAME.DAT", "CSBGAME1.DAT", "CSBGAME2.DAT",
-        "CSBGAME3.DAT", "CSBGAME4.DAT", "CSB.DAT", "CSBGRAPH.DAT"
+        "CSBGAME3.DAT", "CSBGAME4.DAT", "CSB.DAT", "CSBGRAPH.DAT",
+        /* CSBWin/CSBGraffer spells this optional override
+         * CSBgraphics.dat. Preserve that exact on-disk spelling as well as
+         * the short CSBGRAPH.DAT legacy name, so a hash-admitted override
+         * inside a user archive reaches the existing real-data scanner. */
+        "CSBgraphics.dat"
     };
     size_t i;
     if (!seedPath || !gameCacheDir || seedPath[0] == '\0' ||

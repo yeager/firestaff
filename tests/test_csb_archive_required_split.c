@@ -375,11 +375,12 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     char cachedFmtownsEnglishProgram[512];
     char cachedFmtownsJapaneseProgram[512];
     char cachedFmtownsPortrait[512];
+    char cachedCsbGraphics[512];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
     const char* runtimeDir;
-    TestZipEntry zipEntries[23];
+    TestZipEntry zipEntries[24];
     M12_AssetStatus status;
 
     memset(csbCacheDir, 0, sizeof(csbCacheDir));
@@ -405,6 +406,7 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     memset(cachedFmtownsEnglishProgram, 0, sizeof(cachedFmtownsEnglishProgram));
     memset(cachedFmtownsJapaneseProgram, 0, sizeof(cachedFmtownsJapaneseProgram));
     memset(cachedFmtownsPortrait, 0, sizeof(cachedFmtownsPortrait));
+    memset(cachedCsbGraphics, 0, sizeof(cachedCsbGraphics));
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_graphics.zip"),
               "positive ZIP path should fit");
     check_int(join_path(isoPath, sizeof(isoPath), root, "csb_required.iso"),
@@ -456,6 +458,8 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     zipEntries[21].payload = "original FM Towns CSB Japanese P3 program";
     zipEntries[22].name = "archive/PORTRAIT/ALEX.CMP";
     zipEntries[22].payload = "original FM Towns CSB ALEX portrait";
+    zipEntries[23].name = "archive/CSBgraphics.dat";
+    zipEntries[23].payload = "user-authenticated CSBWin graphics override";
     check_int(write_stored_zip_entries(zipPath,
                                        zipEntries,
                                        sizeof(zipEntries) / sizeof(zipEntries[0])),
@@ -568,7 +572,10 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                                "CHTWJ.EXP") &&
                   FSP_JoinPath(cachedFmtownsPortrait,
                                sizeof(cachedFmtownsPortrait), csbCacheDir,
-                               "PORTRAIT/ALEX.CMP"),
+                               "PORTRAIT/ALEX.CMP") &&
+                  FSP_JoinPath(cachedCsbGraphics,
+                               sizeof(cachedCsbGraphics), csbCacheDir,
+                               "CSBgraphics.dat"),
               "CSB optional startup cache paths should resolve");
     check_int(file_matches_payload(cachedBonusDungeon, kCsbBonusDungeonPayload),
               "archive-backed CSB bonus dungeon should be materialized next to GRAPHICS.DAT");
@@ -581,6 +588,9 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     check_int(file_matches_payload(cachedHintData,
                                    "original CSB Hint Oracle graphics data"),
               "archive-backed CSB HCSB.DAT Hint Oracle graphics should be materialized next to GRAPHICS.DAT");
+    check_int(file_matches_payload(cachedCsbGraphics,
+                                   "user-authenticated CSBWin graphics override"),
+              "archive-backed CSBgraphics.dat override should be materialized for hash admission");
     check_int(file_matches_payload(cachedSave, kCsbSavePayload),
               "archive-backed CSB CSBGAME.DAT utility save should be materialized next to GRAPHICS.DAT");
     check_int(file_matches_payload(cachedMiniSave, kCsbMiniSavePayload),
