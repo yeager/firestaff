@@ -57608,3 +57608,15 @@ alcove runtime and archive-media tests passed (4/4).
 
 - ✅ Removed the in-memory icon/slot fixture from M10; its direct regression
   and the dependent double-open regression compile it explicitly.
+# Nexus European Saturn startup capture correction (2026-08-07)
+
+- ✅ Confirmed media provenance with the supplied E-BIOS: the English ISO is
+  `SGAREA U`, the merged English image is `SGAREA J`, and the French ISO is
+  `SGAREA E`. Only the French ISO is used for the European capture chain.
+- ✅ The E-BIOS + French-media raw captures validate through the external
+  VDP1/VDP2 validator. At later frame windows they show authentic TrueMotion
+  publisher graphics and a changing orange startup animation in the VDP1
+  framebuffer. No host pixels or semantic menu/HUD/viewport admission was
+  added.
+- ✅ The Japanese BIOS attachment was hash-verified separately for the J-region
+  comparison path; its evidence remains separate from the European chain.
