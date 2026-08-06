@@ -51762,6 +51762,13 @@ and `firestaff` build pass.
   pickup or mouse placement; a target from a previous map can no longer
   unlink an object from the active square. Packaged macOS capture of torches,
   holders, stairs, doors and the held-object cursor remains open in TODO.
+- ✅ 2026-08-06 DM2 session-publication boundary: made session application a
+  private helper of the parsed original-save candidate transaction and removed
+  the public runtime API. Caller-constructed session structs can no longer
+  write party, map, inventory or timer state into a linked DM2 runtime; the
+  active path still requires the authenticated candidate parser and its
+  preflight checks.
+
 - ✅ 2026-08-06 DM2 private runtime-save removal: removed the production
   `FS2RT01` sidecar serializer, deserializer and public export API. That
   format combined Firestaff session/cache/dungeon state and could not be an

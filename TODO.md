@@ -533,6 +533,11 @@
   derived GDAT state, none of which is the original `DM2_GAME_SAVE` SUPPRESS
   order. The old fixture is compile-disabled; no runtime route may recreate
   `SKSave.runtime` while the original writer is incomplete.
+  **2026-08-06 follow-up:** session publication is now private to the
+  parsed-original save-candidate transaction. The former public
+  `dm2_v1_runtime_apply_session` API could write a caller-built session into
+  the live party/map state; it is no longer exported or linkable outside the
+  source-candidate path.
   2026-08-06: D2RS decoder envelopes are now rejected by both public slot
   loaders. They remain explicit diagnostic inputs only; a player-facing
   Continue/slot action can admit neither a Firestaff private envelope nor the

@@ -2245,7 +2245,11 @@ int dm2_v1_runtime_bind_boot_profile_with_receipt(
     return 1;
 }
 
-int dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session) {
+/* The session structure is a decoded fragment of SKProject's SUPPRESS stream,
+ * not a public runtime-state format. Keep publication private to the original
+ * save-candidate transaction below; callers cannot construct a session and
+ * turn it into a playable DM2 state. */
+static int dm2_runtime_apply_source_session(const DM2_V1_SessionState *session) {
     DM2_V1_RuntimeState *rt = &g_dm2_runtime;
     DM2_V1_GameState *gs;
     DM2_V1_RuntimeTimerPostLoadReceipt timer_post_load;
@@ -9135,7 +9139,7 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
      * Clear that cache before apply_session; a matching quicksave sidecar is
      * allowed to replace it with the exact saved CCM/animation/GDAT state. */
     if (dm2_v1_creature_restore_live_state(&cleared_creatures) != 0 ||
-        dm2_v1_runtime_apply_session(&candidate.session) != 0) {
+        dm2_runtime_apply_source_session(&candidate.session) != 0) {
         if (parsed_original_dungeon) {
             dm2_v1_dungeon_free(dungeon);
             *dungeon = saved_dungeon;

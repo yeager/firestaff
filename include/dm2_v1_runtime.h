@@ -236,7 +236,6 @@ int dm2_v1_runtime_g1_scene_handoff_receipt(
 int  dm2_v1_runtime_bind_boot_profile_with_receipt(
     DM2_V1_BootProfile *boot_profile,
     DM2_V1_StartupHostReceipt *out_receipt);
-int  dm2_v1_runtime_apply_session(const DM2_V1_SessionState *session);
 void dm2_v1_runtime_tick(void);
 int  dm2_v1_runtime_get_tick_count(void);
 int  dm2_v1_runtime_can_move(void);
