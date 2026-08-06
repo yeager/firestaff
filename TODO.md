@@ -37,9 +37,12 @@
   pixel-level D3C parity.
 
 - **DM1-D2C-CENTER-WALL-SYNTHETIC-AUDIT:** The D2C center-wall composition
-  helper is an asset-free synthetic pixel trace with no production caller.
-  Keep its ReDMCSB ordering/C10 contract test-only until the live D2C source
-  bitmap consumer and original-data capture are bound.
+  helper remains an asset-free, test-only trace of ReDMCSB ordering/C10
+  rules. The live M11 D2C wall now takes only the authenticated GRAPHICS.DAT
+  wall-set bitmap through C709; the generic grey wall face is suppressed for
+  source-owned DM1 sessions so C10 pixels preserve earlier source layers.
+  Keep the fixture out of production and retain original-data capture work
+  for full D2C pixel parity.
 
 - **DM1-F0241-F0260-SOURCE-RECEIPT-AUDIT:** The raw F0241–F0260 timeline
   receipt is currently an admission audit with no live caller. Keep its

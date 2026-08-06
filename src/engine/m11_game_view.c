@@ -31534,6 +31534,17 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                           faceX + 5, faceY + 4, faceW - 10, faceH - 8, M11_COLOR_MAGENTA);
             break;
+        case DUNGEON_ELEMENT_WALL:
+            /* F0100/F0101 later places the source-selected wall-set bitmap
+             * in the exact C704/C709/C712 zone.  In an authenticated DM1
+             * session, filling this generic face first turns C10-transparent
+             * source pixels into invented grey material. */
+            if (m11_dm1_authenticated_viewport_source_active()) {
+                break;
+            }
+            m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
+                          faceX + 4, faceY + 4, faceW - 8, faceH - 8, M11_COLOR_DARK_GRAY);
+            break;
         case DUNGEON_ELEMENT_CORRIDOR:
         default:
             m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,

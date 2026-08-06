@@ -55730,6 +55730,15 @@ alcove runtime and archive-media tests passed (4/4).
   admission continues through the source-indexed plan and C10 transparency
   gate.
 
+# 2026-08-06 DM1 D2C wall synthetic-face removal
+
+- Authenticated DM1 viewport sessions no longer prepaint a generic grey wall
+  face below the source-owned D2C C709 wall-set bitmap. This preserves the
+  F0100/F0101 C10-transparent composition instead of turning transparent
+  pixels into generated wall material.
+- The D2C order/pixel fixture remains test-only; the production path uses
+  GRAPHICS.DAT wall-set material and the existing source-zone renderer.
+
 # 2026-08-06 DM1 FM Towns DRAW_DMENU backdrop binding
 
 - Bound the recovered EDM.EXP `DRAW_DMENU` backdrop order to the software
