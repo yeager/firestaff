@@ -16,6 +16,14 @@
 
 # Nexus boot-profile capability audit (2026-08-06)
 
+# Nexus MNS retail corpus identity gate (2026-08-06)
+
+- ✅ Hardened `test_nexus_v1_mns` so all 30 expected retail `.MNS` files must
+  be present under `FIRESTAFF_NEXUS_DATA_DIR` and match the production MD5
+  identity catalog before decode/texture checks count. This closes the
+  same-named/synthetic corpus loophole; 815 real source textures and the
+  existing animation checks still pass. No game data is tracked.
+
 # Nexus startup handoff fixture re-authorization (2026-08-06)
 
 - ✅ Re-authored `test_m11_nexus_startup_runtime_handoff` around the current

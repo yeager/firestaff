@@ -1,8 +1,8 @@
 #include "nexus_v1_mns.h"
+#include "asset_find_by_hash.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <dirent.h>
 
 static uint8_t *load_file(const char *path, int *out_size) {
     FILE *f = fopen(path, "rb");
@@ -28,6 +28,46 @@ static void write_be32(uint8_t *p, uint32_t value) {
     p[2] = (uint8_t)(value >> 8);
     p[3] = (uint8_t)value;
 }
+
+typedef struct {
+    const char *name;
+    const char *md5;
+} NexusMnsCorpusEntry;
+
+/* Same identity catalog used by the production model loader.  The corpus
+ * test must not turn a same-named DMDF fixture into retail evidence. */
+static const NexusMnsCorpusEntry g_retail_mns[] = {
+    {"SN_FLOOR.MNS", "85c517e8e0bd84e00da58295dca5b409"},
+    {"SN_WALL.MNS", "ae67ca9fa8d09481e1849a42aaaa2eb6"},
+    {"ANTMAN.MNS", "d578212f99f9ad1a61ade2a06484e04a"},
+    {"BIGWORM.MNS", "457fb32e4975b109f435f478bbf59899"},
+    {"BORKETH.MNS", "ff6e7a0fcd50ba30cab0f93c48970c66"},
+    {"CHAOS.MNS", "dc82e11302eb58cd8cf200e7268946d1"},
+    {"DRA_ZOM.MNS", "c189e8f41a33a546302f631106f841ea"},
+    {"D_GOLD.MNS", "0955e39f0807dea30acd5eff051fc56d"},
+    {"D_RED.MNS", "c5dd72925db0df2bbfe9ddc05160d171"},
+    {"D_SILVER.MNS", "a0929c9eed3bb7064086031d17e18b73"},
+    {"GHOST.MNS", "201f3e0766821d28c6122a7cbd652447"},
+    {"GIGGLER.MNS", "76311d88bda1889200b5442eb8acd5d4"},
+    {"GOLEM.MNS", "9cd105a43119faf50537de026a9fd034"},
+    {"GRN_DRA.MNS", "507271933bfe9a7b6ab8f7a01d9b1813"},
+    {"H_HOUND.MNS", "f6d704310950624a67886be616735557"},
+    {"LAS_MON.MNS", "590a45db6cb62c224c415ea1cd1c4b3b"},
+    {"LORD_RIB.MNS", "aa76813ac43ea79a3df55dcec6cdc7f3"},
+    {"MINI_DRA.MNS", "07c0affc959f52f00d9276104af727e8"},
+    {"MUMMY.MNS", "6a8c849cbb87e218caa7dcd96c483311"},
+    {"OBAKE.MNS", "d05a0ee97ade3c0db5492525c82381ec"},
+    {"OITU.MNS", "b8aa4490b3695a72571126c213515f88"},
+    {"RAT.MNS", "ef7b68f95978255f878c1fedcd6d547a"},
+    {"RED_DRA.MNS", "163ab5fc2ea25165798dfbf8c4c3affb"},
+    {"ROCKPILE.MNS", "478c8fccb2dcc3d82a442ae399e8e910"},
+    {"SCORPION.MNS", "3655bfa98a005beabdcdea13058ab18f"},
+    {"SCREAMER.MNS", "c3af0af2f0110b76e637622caeda3524"},
+    {"S_SHIELD.MNS", "de4930cf4ec25c56a0f419ad66f65680"},
+    {"S_SWORD.MNS", "2ecc9f49a07f55f0e6fc9414f0b6a30c"},
+    {"VEXIRK.MNS", "44574143d331debd748f4ec6ba133269"},
+    {"WORM.MNS", "25c34e051ea5cf4ab2ca37a60f89ef78"}
+};
 
 static int test_synthetic(void) {
     Nexus_V1_MnsDecodeResult r;
@@ -59,32 +99,40 @@ static int test_synthetic(void) {
 }
 
 static int test_all_mns(void) {
-    const char *home = getenv("HOME");
-    char dirpath[512];
-    DIR *d;
-    struct dirent *ent;
+    const char *dirpath = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    char home_path[512];
     int decoded = 0, rendered = 0, fail = 0;
     int scorpion_joints = 0, rockpile_joints = 0;
     int vexirk_textures = 0, d_gold_tables = 0;
 
-    if (!home) { printf("  SKIP all_mns (no HOME)\n"); return 0; }
-    snprintf(dirpath, sizeof(dirpath), "%s/.firestaff/data/nexus", home);
-    d = opendir(dirpath);
-    if (!d) { printf("  SKIP all_mns (no data dir)\n"); return 0; }
-
-    while ((ent = readdir(d)) != NULL) {
+    if (!dirpath || !dirpath[0]) {
+        const char *home = getenv("HOME");
+        if (!home) { printf("  SKIP all_mns (no data root)\n"); return 0; }
+        snprintf(home_path, sizeof(home_path), "%s/.firestaff/data/nexus", home);
+        dirpath = home_path;
+    }
+    for (size_t corpus_index = 0;
+         corpus_index < sizeof(g_retail_mns) / sizeof(g_retail_mns[0]);
+         ++corpus_index) {
         char path[768];
-        const char *name = ent->d_name;
-        int len = (int)strlen(name);
+        const char *name = g_retail_mns[corpus_index].name;
         uint8_t *data;
         int size = 0;
         Nexus_V1_MnsDecodeResult result;
 
-        if (len < 5 || strcmp(name + len - 4, ".MNS") != 0) continue;
-
         snprintf(path, sizeof(path), "%s/%s", dirpath, name);
         data = load_file(path, &size);
-        if (!data) continue;
+        if (!data) {
+            printf("  FAIL %s: missing retail file\n", name);
+            ++fail;
+            continue;
+        }
+        if (!asset_file_matches_md5(path, g_retail_mns[corpus_index].md5)) {
+            printf("  FAIL %s: retail MD5 mismatch\n", name);
+            free(data);
+            ++fail;
+            continue;
+        }
 
         if (!nexus_v1_mns_decode(data, size, &result)) {
             printf("  FAIL %s: decode failed\n", name);
@@ -125,7 +173,6 @@ static int test_all_mns(void) {
         decoded++;
         free(data);
     }
-    closedir(d);
 
     printf("  decoded %d MNS files, rendered %d source textures\n",
            decoded, rendered);

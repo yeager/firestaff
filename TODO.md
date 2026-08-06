@@ -3,7 +3,9 @@
 - **NEXUS-CREATURE-VDP1-CAPTURE:** The generic creature billboard API is now
   no-draw. Its old DM1-shaped perspective/flag behavior accepted a host
   texture without Saturn VDP1 command, CLUT, placement, or DMDF/MNS owner
-  proof. Recover those bindings before admitting creature pixels.
+  proof. The retail MNS corpus regression now requires all 30 production MD5
+  identities before decoding or texture rendering. Recover Saturn VDP1
+  command/CLUT/placement bindings before admitting creature pixels.
 
 - **NEXUS-UI-VDP1-VDP2-CAPTURE:** UI surface loaders retain verified source
   pixels and palettes, but the public blit, palette-remap and darken helpers
