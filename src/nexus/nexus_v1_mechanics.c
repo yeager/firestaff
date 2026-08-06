@@ -1355,6 +1355,18 @@ int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,
 {
     if (!st || !engine) return -1;
 
+    /* Real DGN/DM.BIN admission does not prove the Saturn UI-event producer,
+     * queue, or state-write contract. Keep retail host events fail-closed so
+     * clicks cannot mutate automap, command, inventory, leader, throw/drop, or
+     * save state before SLEV/SDDRVS capture binds their owner. The source-less
+     * lane remains available for isolated compatibility tests.
+     * Source boundary: DMWeb SLEV/SAL descriptions; SDDRVS.TSK is the
+     * authenticated sound task, not proof of the gameplay event owner. */
+    if (engine->source != NEXUS_SRC_NONE &&
+        !nexus_v1_action_semantics_proven()) {
+        return -1;
+    }
+
     switch (event_type) {
     case NEXUS_UI_EVENT_MAP:
         nexus_v1_automap_toggle(&engine->automap);

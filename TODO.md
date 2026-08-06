@@ -28889,6 +28889,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   verified corpus does not prove that low DGN bits select DM1-like events,
   nor that `SDDRVS.TSK` dispatches them. Original-Saturn capture must bind
   event owner, selector order, destination fields, and state transitions.
+- **NEXUS-UI-EVENT-DISPATCH-CAPTURE:** Retail `nexus_mechanics_dispatch_event()`
+  now rejects host UI events for ISO/extracted data until the Saturn SLEV/SDDRVS
+  producer, queue and state-write contract is captured. The source-less fixture
+  lane remains available for isolated tests. Bind the original event route before
+  admitting automap, inventory, save, leader, throw or drop mutations.
 - **NEXUS-BPK-NO-DRAW-REGRESSION:** The bounded PRS3 presentation receipt must
   continue to admit exact retail-shaped rows only as opaque no-draw evidence;
   decoder drift, payload/hash drift, unknown modes and malformed spans must

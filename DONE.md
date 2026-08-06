@@ -56903,3 +56903,12 @@ alcove runtime and archive-media tests passed (4/4).
 - Verification: the real-media FM Towns handoff regression admits the
   authentic UTILE program, menu bytes and C09 palette, then confirms that a
   Utility click is fail-closed and preserves the SWITCHTW raster.
+
+# 2026-08-06 Nexus UI-event dispatch boundary
+
+- ✅ Retail ISO/extracted Nexus now rejects host UI events before the Saturn
+  SLEV/SDDRVS producer, queue and state-write contract is captured. This closes
+  direct automap, inventory, save, leader, throw and drop mutations while
+  retaining the source-less compatibility lane.
+- ✅ Added the production-boundary regression for automap and command-state
+  immutability.
