@@ -52778,6 +52778,18 @@ no-draw/capture-gates är oförändrade.
   including the `GAME_LOAD` control-flow boundary, but M11 now leaves status,
   inspect and log text empty until an original GUI/dialogue text owner is
   connected.
+- ✅ 2026-08-06 DM2 startup/runtime GDAT-label closure: removed M11's
+  `STARTUP GDAT`, credits, frame-blocked and `RUNTIME GDAT` labels, plus
+  runtime-bind ready/failed text. Real TITLE and runtime pixels remain
+  source-gated and fail closed when unavailable; their structural receipts are
+  retained without a host-authored status panel.
+- ✅ 2026-08-06 DM2 FM Towns English companion gate: English requests for the
+  Japanese FM Towns CD now require an explicit, canonical PC-English
+  `GRAPHICS.DAT` companion selected by M12. The companion is MD5-gated,
+  consumed only in RAM and only for decoded GDAT text; there is no sibling-path
+  lookup, disk extraction or generated translation. The real-media test proves
+  the Towns CD stays the runtime owner while `FIGHTER` is read from the
+  authenticated PC text corpus.
 ✅ 2026-08-06 Nexus startup menu text sanitization: production save/chrome
 builders no longer emit hoststrängarna `DUNGEON MASTER NEXUS`, `LOAD GAME`,
 `NEW GAME` eller `LOAD SLOT ##`. Riktig radgeometri och källans slot-identitet

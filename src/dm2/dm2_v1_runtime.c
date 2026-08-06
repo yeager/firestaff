@@ -2250,7 +2250,10 @@ int dm2_v1_runtime_bind_boot_profile_with_receipt(
     if (out_receipt) {
         dm2_v1_startup_host_receipt_clear(out_receipt);
         out_receipt->status_scope = "BOOT";
-        out_receipt->status = "DM2 RUNTIME BIND FAILED";
+        /* Binding has no identified original GUI/status producer.  Keep the
+         * structural return value for the caller but never manufacture an
+         * English M11 receipt. */
+        out_receipt->status = NULL;
     }
     if (!dm2_v1_runtime_bind_boot_profile(boot_profile)) {
         return 0;
@@ -2258,7 +2261,7 @@ int dm2_v1_runtime_bind_boot_profile_with_receipt(
     if (out_receipt) {
         dm2_v1_startup_host_receipt_clear(out_receipt);
         out_receipt->status_scope = "BOOT";
-        out_receipt->status = "DM2 RUNTIME READY";
+        out_receipt->status = NULL;
     }
     return 1;
 }
@@ -9692,6 +9695,39 @@ const uint8_t *dm2_v1_runtime_i18n_text(int category, int index, int field,
 
 int dm2_v1_runtime_i18n_ready(void) {
     return g_dm2_runtime.i18n_ready;
+}
+
+int dm2_v1_runtime_bind_fmtowns_english_text_companion(
+    const uint8_t *graphics_data, size_t graphics_size)
+{
+    DM2_V1_AssetLoader probe;
+    if (!g_dm2_runtime.boot ||
+        g_dm2_runtime.boot->platform != DM2_PLATFORM_FMTOWNS_JA ||
+        !graphics_data || graphics_size == 0u ||
+        dm2_v1_asset_loader_init(&probe, graphics_data, graphics_size) != 0) {
+        return 0;
+    }
+    /* PC English is GDAT v5 (0x8005), while the selected Towns CD stays on
+     * v4.  Reject any other source before it can become a language owner. */
+    if (probe.data_size < 2u ||
+        ((uint16_t)probe.data[0] | ((uint16_t)probe.data[1] << 8)) != 0x8005u) {
+        dm2_v1_asset_loader_free(&probe);
+        return 0;
+    }
+    dm2_v1_asset_loader_free(&probe);
+    if (g_dm2_runtime.i18n_ready) {
+        dm2_v1_i18n_destroy(&g_dm2_runtime.i18n);
+        g_dm2_runtime.i18n_ready = 0;
+    }
+    dm2_v1_i18n_init(&g_dm2_runtime.i18n);
+    if (!dm2_v1_i18n_load_english_overlay(&g_dm2_runtime.i18n,
+                                           graphics_data, graphics_size)) {
+        dm2_v1_i18n_destroy(&g_dm2_runtime.i18n);
+        return 0;
+    }
+    dm2_v1_i18n_set_locale(&g_dm2_runtime.i18n, DM2_LOCALE_EN);
+    g_dm2_runtime.i18n_ready = 1;
+    return 1;
 }
 
 /* ── Engage command (hand actions) ────────────────────────────────── */

@@ -469,8 +469,8 @@ static void run_real_m12_dm2_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 200,
                 "real DM2 startup menu first frame is non-blank");
-    expect_true(strcmp(view.lastOutcome, "DM2 STARTUP GDAT") == 0,
-                "real DM2 startup frame uses TITLE GDAT before runtime");
+    expect_true(view.lastOutcome[0] == '\0',
+                "real DM2 startup frame uses TITLE GDAT without host status text");
     expect_true(view.dm2State.startup_menu_active == 1 &&
                 view.dm2State.tick_count == initialTick,
                 "startup draw cannot enter or age the dungeon runtime");

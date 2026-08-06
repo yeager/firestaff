@@ -543,6 +543,10 @@ typedef struct {
     const char* dungeonPath;
     const char* verifiedAssetPath; /* Optional: hash-verified single-file launch path. */
     const char* verifiedAssetMd5;  /* Optional: expected MD5 for verifiedAssetPath. */
+    /* Explicit English PC GDAT companion for a selected FM Towns Japanese
+     * session.  This is a user-supplied, separately hash-verified corpus;
+     * it is never inferred from a sibling install by M11 or the runtime. */
+    const char* dm2EnglishCompanionPath;
     const Theron_Track02StartupLoaderReceipt* theronTrack02LoaderReceipt;
     const Theron_V1Track02CampaignMediaDiscoveryReceipt* theronCampaignMedia;
     const Theron_V1Track02CaptureTargetPlan* theronCampaignMediaPlan;

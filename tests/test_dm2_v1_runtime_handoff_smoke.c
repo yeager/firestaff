@@ -575,10 +575,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   &bind_receipt) == 0 &&
                   bind_receipt.status_scope &&
                   strcmp(bind_receipt.status_scope, "BOOT") == 0 &&
-                  bind_receipt.status &&
-                  strcmp(bind_receipt.status,
-                         "DM2 RUNTIME BIND FAILED") == 0,
-              "runtime boot-profile bind receipt reports M11-ready failure");
+                  bind_receipt.status == NULL,
+              "runtime boot-profile bind keeps failure structurally silent");
     }
     CHECK(dm2_v1_runtime_bind_boot_profile(&profile) == 1,
           "runtime boot-profile bind initializes runtime state");
@@ -589,9 +587,8 @@ static void test_first_tick_after_boot_profile_handoff(void)
                   &bind_receipt) == 1 &&
                   bind_receipt.status_scope &&
                   strcmp(bind_receipt.status_scope, "BOOT") == 0 &&
-                  bind_receipt.status &&
-                  strcmp(bind_receipt.status, "DM2 RUNTIME READY") == 0,
-              "runtime boot-profile bind receipt reports M11-ready success");
+                  bind_receipt.status == NULL,
+              "runtime boot-profile bind keeps success structurally silent");
     }
     CHECK(dm2_v1_runtime_get_tick_count() == 0,
           "runtime tick counter starts at zero after handoff bind");

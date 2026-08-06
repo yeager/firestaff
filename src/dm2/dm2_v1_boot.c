@@ -10293,10 +10293,14 @@ int dm2_v1_boot_startup_prepare_failure_host_receipt(
     return 1;
 }
 
-int dm2_v1_boot_startup_launch_alloc(
+int dm2_v1_boot_startup_launch_alloc_with_language(
     const char *data_dir,
+    const char *english_companion_graphics_path,
+    int language_index,
     DM2_V1_BootStartupLaunch *out_launch) {
     DM2_V1_BootProfile *profile;
+    uint8_t *english_companion = NULL;
+    size_t english_companion_size = 0u;
     if (!out_launch) return 0;
     memset(out_launch, 0, sizeof(*out_launch));
     if (!data_dir || data_dir[0] == '\0') {
@@ -10329,6 +10333,52 @@ int dm2_v1_boot_startup_launch_alloc(
         free(profile);
         return 0;
     }
+    /* The Towns retail disc is Japanese. English is permitted only when M12
+     * explicitly selected the canonical PC-English GRAPHICS.DAT as a
+     * companion. Do not scan data_dir here: that was the former accidental
+     * sibling-install overlay and violates selected-media ownership. */
+    if (profile->platform == DM2_PLATFORM_FMTOWNS_JA && language_index == 0) {
+        FILE *fp;
+        long file_size;
+        if (!english_companion_graphics_path ||
+            english_companion_graphics_path[0] == '\0' ||
+            strstr(english_companion_graphics_path, "::") != NULL ||
+            !asset_file_matches_md5(english_companion_graphics_path,
+                                    "25247ede4dabb6a71e5dabdfbcd5907d")) {
+            out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS;
+            dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                                   out_launch);
+            dm2_v1_boot_cleanup(profile);
+            free(profile);
+            return 0;
+        }
+        fp = fopen(english_companion_graphics_path, "rb");
+        if (!fp || fseek(fp, 0, SEEK_END) != 0 ||
+            (file_size = ftell(fp)) <= 0 || fseek(fp, 0, SEEK_SET) != 0) {
+            if (fp) fclose(fp);
+            out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_SCAN_FAILED;
+            dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                                   out_launch);
+            dm2_v1_boot_cleanup(profile);
+            free(profile);
+            return 0;
+        }
+        english_companion_size = (size_t)file_size;
+        english_companion = (uint8_t *)malloc(english_companion_size);
+        if (!english_companion ||
+            fread(english_companion, 1, english_companion_size, fp) !=
+                english_companion_size) {
+            fclose(fp);
+            free(english_companion);
+            out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_OOM;
+            dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                                   out_launch);
+            dm2_v1_boot_cleanup(profile);
+            free(profile);
+            return 0;
+        }
+        fclose(fp);
+    }
     dm2_v1_boot_set_save_root(profile, NULL);
     if (dm2_v1_boot_enter_game(profile) != 0) {
         out_launch->prepare_result =
@@ -10336,6 +10386,7 @@ int dm2_v1_boot_startup_launch_alloc(
         dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
                                                out_launch);
         dm2_v1_boot_cleanup(profile);
+        free(english_companion);
         free(profile);
         return 0;
     }
@@ -10348,9 +10399,22 @@ int dm2_v1_boot_startup_launch_alloc(
         dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
                                                out_launch);
         dm2_v1_boot_cleanup(profile);
+        free(english_companion);
         free(profile);
         return 0;
     }
+    if (english_companion &&
+        !dm2_v1_runtime_bind_fmtowns_english_text_companion(
+            english_companion, english_companion_size)) {
+        out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS;
+        dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
+                                               out_launch);
+        free(english_companion);
+        dm2_v1_boot_cleanup(profile);
+        free(profile);
+        return 0;
+    }
+    free(english_companion);
     /* Print only after DUNGEON_Load has admitted the G1 header.  Before that
      * point max_levels and dungeon_seed are deliberately unavailable rather
      * than PC-English defaults, so an earlier summary falsely reported zero
@@ -10360,6 +10424,14 @@ int dm2_v1_boot_startup_launch_alloc(
     out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_OK;
     out_launch->runtime_bound = 1;
     return 1;
+}
+
+int dm2_v1_boot_startup_launch_alloc(
+    const char *data_dir,
+    DM2_V1_BootStartupLaunch *out_launch)
+{
+    return dm2_v1_boot_startup_launch_alloc_with_language(
+        data_dir, NULL, -1, out_launch);
 }
 
 int dm2_v1_boot_startup_launch_detach_runtime(

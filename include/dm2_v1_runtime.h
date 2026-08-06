@@ -1462,6 +1462,13 @@ const uint8_t *dm2_v1_runtime_i18n_text(int category, int index, int field,
                                         size_t *out_size);
 int dm2_v1_runtime_i18n_ready(void);
 
+/* Adopt decoded text from the separately verified PC-English companion of a
+ * selected FM Towns Japanese session. The caller retains file ownership; the
+ * i18n context copies bounded decoded entries. Returns zero unless the live
+ * runtime is FM Towns and the companion parses as original PC GDAT. */
+int dm2_v1_runtime_bind_fmtowns_english_text_companion(
+    const uint8_t *graphics_data, size_t graphics_size);
+
 /* ── Source evidence ──────────────────────────────────────────────── */
 const char *dm2_v1_runtime_source_evidence(void);
 

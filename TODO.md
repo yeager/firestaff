@@ -26989,6 +26989,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   actual `c_gui_draw`/dialogue status producer before displaying startup or
   resume feedback; the structured action and load results remain available to
   drive control flow without visible replacement text.
+- [ ] DM2 runtime action/save text ownership: action, shop and save receipts
+  still contain host-authored English labels. Retain their structural results,
+  then bind the matching original GUI/dialogue producer before rendering any
+  player-facing feedback.
+- [ ] DM2 FM Towns English text consumption: a selected FM Towns Japanese CD
+  can now carry an explicit, hash-verified PC-English GDAT text companion in
+  RAM. Bind that companion to each original GUI/dialogue text call and add an
+  archive-backed companion admission path before claiming complete English UI;
+  missing companion data blocks English FM Towns rather than substituting text.
 
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN

@@ -1360,6 +1360,17 @@ int dm2_v1_boot_startup_launch_alloc(
     const char *data_dir,
     DM2_V1_BootStartupLaunch *out_launch);
 
+/* FM Towns is a Japanese retail edition.  An English request therefore needs
+ * an explicit, user-selected PC-English GRAPHICS.DAT companion with the
+ * canonical MD5; no host-path discovery or generated translation is allowed.
+ * `language_index` follows M12's stable language ordering (0 == English).
+ * Other locales retain the selected retail corpus unchanged. */
+int dm2_v1_boot_startup_launch_alloc_with_language(
+    const char *data_dir,
+    const char *english_companion_graphics_path,
+    int language_index,
+    DM2_V1_BootStartupLaunch *out_launch);
+
 int dm2_v1_boot_startup_launch_detach_runtime(
     DM2_V1_BootStartupLaunch *launch,
     DM2_V1_BootStartupRuntimeReceipt *out_receipt);

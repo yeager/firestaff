@@ -14150,6 +14150,7 @@ if(BUILD_TESTING)
         )
         target_link_libraries(test_dm2_fmtowns_m12_real_media PRIVATE
             firestaff_m12
+            firestaff_dm2
         )
         if(NOT MSVC)
             target_compile_options(test_dm2_fmtowns_m12_real_media PRIVATE

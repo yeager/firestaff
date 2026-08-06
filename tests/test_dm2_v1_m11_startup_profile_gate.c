@@ -1877,10 +1877,10 @@ int main(void) {
                                        sizeof(palette.rgb6)) == 0,
                             "M11 DM2 startup menu presents the verified dtPalIRGB palette");
             }
-            expect_true(strcmp(view.lastAction, "STARTUP") == 0 &&
-                            strcmp(view.lastOutcome,
-                                   "DM2 STARTUP GDAT") == 0,
-                        "M11 DM2 startup draw consumes real-GDAT draw receipt status");
+            expect_true(strstr(view.lastOutcome, "DM2 STARTUP GDAT") == NULL &&
+                            strstr(view.lastOutcome,
+                                   "DM2 STARTUP GDAT REQUIRED") == NULL,
+                        "M11 DM2 startup draw adds no host-authored GDAT status text");
         }
         dm2_v1_boot_gdat_image_asset_free(menu_pixels);
     }
@@ -2081,9 +2081,8 @@ int main(void) {
                         dm2_v1_runtime_last_asset_wall_count() > 0 &&
                         dm2_v1_runtime_last_fallback_wall_count() == 0 &&
                         dm2_v1_runtime_last_fallback_door_count() == 0 &&
-                        strcmp(view.lastAction, "RUNTIME") == 0 &&
-                        strcmp(view.lastOutcome, "DM2 RUNTIME GDAT") == 0,
-                    "M11 DM2 runtime draw consumes real GDAT frame/HUD receipt");
+                        view.lastOutcome[0] == '\0',
+                    "M11 DM2 runtime presents a real GDAT frame without host status text");
     }
 
     /* Retained decoder-fixture notes only: these paths construct D2RS

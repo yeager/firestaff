@@ -7,6 +7,8 @@
  * directory itself. */
 
 #include "asset_status_m12.h"
+#include "dm2_v1_boot.h"
+#include "dm2_v1_runtime.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -25,6 +27,8 @@ static void expect(int condition, const char* message)
 int main(void)
 {
     const char* root = getenv("FIRESTAFF_DM2_FMTOWNS_ROOT");
+    const char* english_companion =
+        getenv("FIRESTAFF_DM2_ENGLISH_COMPANION");
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
@@ -79,6 +83,34 @@ int main(void)
                strstr(selectedRuntime,
                       "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip") != NULL,
            "selected FM Towns edition retains its original archive handoff");
+
+    /* The Japanese CD is still the session owner. English is admitted only
+     * through this separately selected canonical PC corpus; both sources are
+     * read in memory and the ZIP is never unpacked to disk. */
+    if (english_companion && english_companion[0] != '\0') {
+        DM2_V1_BootStartupLaunch launch;
+        DM2_V1_BootStartupLaunch missing_companion;
+        const uint8_t* text;
+        size_t text_size = 0u;
+        memset(&missing_companion, 0, sizeof(missing_companion));
+        expect(dm2_v1_boot_startup_launch_alloc_with_language(
+                   selectedRuntime, NULL, 0, &missing_companion) == 0,
+               "FM Towns English refuses to launch without its real companion corpus");
+        memset(&launch, 0, sizeof(launch));
+        expect(dm2_v1_boot_startup_launch_alloc_with_language(
+                   selectedRuntime, english_companion, 0, &launch) == 1,
+               "FM Towns English requires and accepts the explicit PC-English companion");
+        expect(launch.profile &&
+                   launch.profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+                   dm2_v1_runtime_i18n_ready(),
+               "FM Towns runtime keeps Japanese CD ownership and binds English text only");
+        text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
+        expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,
+               "English text comes from the authenticated PC GDAT companion");
+        dm2_v1_boot_startup_launch_cleanup(&launch);
+    } else {
+        puts("SKIP: FIRESTAFF_DM2_ENGLISH_COMPANION is not set");
+    }
 
     if (failures != 0) {
         return 1;

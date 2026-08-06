@@ -17352,7 +17352,9 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
              * indexed EPX presentation for now. */
             state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
         }
-        if (!dm2_v1_boot_startup_launch_alloc(dd, &launch)) {
+        if (!dm2_v1_boot_startup_launch_alloc_with_language(
+                dd, spec->dm2EnglishCompanionPath, spec->languageIndex,
+                &launch)) {
             DM2_V1_StartupHostReceipt failureReceipt;
             (void)dm2_v1_boot_startup_prepare_failure_host_receipt(
                 &launch,
@@ -17684,6 +17686,27 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                     selectedDm2RuntimeDataDir,
                     sizeof(selectedDm2RuntimeDataDir))) {
                 spec.dataDir = selectedDm2RuntimeDataDir;
+            }
+            if (entry->gameId && strcmp(entry->gameId, "dm2") == 0 &&
+                strcmp(version->versionId, "fmtowns-ja") == 0 &&
+                hasLaunchIntent && intent.launcherOptionsBound &&
+                intent.launcherOptions.languageIndex == 0) {
+                int englishVersionIndex =
+                    M12_AssetStatus_FindVersionIndex("dm2", "pc-en");
+                const M12_AssetVersionStatus* englishVersion =
+                    englishVersionIndex >= 0
+                        ? M12_AssetStatus_GetVersion(
+                              &menuState->assetStatus, "dm2",
+                              (size_t)englishVersionIndex)
+                        : NULL;
+                /* This is an explicit M12 selection, not a runtime search.
+                 * Archive-backed companions remain unavailable until they
+                 * have an equally memory-owned admission path. */
+                if (englishVersion && englishVersion->matched &&
+                    englishVersion->matchedMd5[0] != '\0' &&
+                    strstr(englishVersion->matchedPath, "::") == NULL) {
+                    spec.dm2EnglishCompanionPath = englishVersion->matchedPath;
+                }
             }
         } else {
             /* Selected version not matched (e.g. user pointed --data-dir at
@@ -21441,7 +21464,6 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                 }
                 if (state->dm2State.startup_credits_remaining_ticks == 0) {
                     state->dm2State.startup_credits_active = 0;
-                    m11_set_status(state, "STARTUP", "DM2 STARTUP GDAT");
                 }
                 return M11_GAME_INPUT_REDRAW;
             }
@@ -25565,12 +25587,14 @@ static M11_GameInputResult m11_dm2_startup_enter_credits(
         credits_material_ready = 1;
     }
     if (!credits_material_ready) {
-        m11_set_status(state, "STARTUP", "DM2 CREDITS GDAT REQUIRED");
+        /* The original event loop simply leaves TITLE/0/dt07/1 unavailable
+         * when its material transaction cannot be proven.  There is no
+         * source-owned status-panel string at this boundary, so do not
+         * substitute an M11 English diagnostic. */
         return M11_GAME_INPUT_REDRAW;
     }
     state->dm2State.startup_credits_active = 1;
     state->dm2State.startup_credits_remaining_ticks = 1800;
-    m11_set_status(state, "STARTUP", "DM2 CREDITS GDAT");
     return M11_GAME_INPUT_REDRAW;
 }
 
@@ -25608,7 +25632,6 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
              * screen. */
             state->dm2State.startup_credits_active = 0;
             state->dm2State.startup_credits_remaining_ticks = 0;
-            m11_set_status(state, "STARTUP", "DM2 STARTUP GDAT");
             return M11_GAME_INPUT_REDRAW;
         }
         return M11_GAME_INPUT_IGNORED;
@@ -53014,10 +53037,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             if (state->dm2State.startup_credits_active) {
                 startup_menu_drawn = m11_draw_dm2_startup_credits(
                     state, framebuffer, framebufferWidth, framebufferHeight);
-                m11_set_status((M11_GameViewState *)state,
-                               "STARTUP", startup_menu_drawn
-                                   ? "DM2 CREDITS GDAT"
-                                   : "DM2 CREDITS GDAT REQUIRED");
             } else {
                 startup_menu_drawn = m11_draw_dm2_startup_menu(
                     state,
@@ -53028,15 +53047,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                     &startup_ownership_receipt,
                     &startup_visual_receipt);
             }
-            if (startup_menu_drawn &&
-                !state->dm2State.startup_credits_active) {
-                m11_set_status((M11_GameViewState *)state,
-                               "STARTUP", "DM2 STARTUP GDAT");
-            } else if (!startup_menu_drawn &&
-                       !state->dm2State.startup_credits_active) {
-                m11_set_status((M11_GameViewState *)state,
-                               "STARTUP", "DM2 STARTUP GDAT REQUIRED");
-            }
+            /* SHOW_MENU_SCREEN and DM2_SHOW_CREDITS own pixels, input and
+             * music, not an M11 status line.  A missing source image stays
+             * black/fails closed; a decoded one is presented directly. */
+            (void)startup_menu_drawn;
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
             g_drawState = NULL;
@@ -53070,8 +53084,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                 m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                               0, 0, framebufferWidth, framebufferHeight,
                               M11_COLOR_BLACK);
-                m11_set_status((M11_GameViewState *)state,
-                               "RUNTIME", "DM2 GDAT FRAME BLOCKED");
                 rendered = -1;
             }
         }
@@ -53088,12 +53100,6 @@ void M11_GameView_Draw(const M11_GameViewState* state,
          * overwrite a source-owned state transition.  Source: SKProject
          * SKWIN/SkWinCore.cpp DRAW_CHAMPION_PICTURE (12866+) and
          * SKWINSPX/src/v5/skguidrw.cpp UI command paths. */
-        if (runtime_frame_accepted &&
-            runtime_render_receipt.runtime_render_real_asset_ready) {
-            m11_set_status((M11_GameViewState *)state,
-                           "RUNTIME",
-                           "DM2 RUNTIME GDAT");
-        }
         if (runtime_frame_accepted) {
             m11_draw_v1_leader_hand_object_name(state, framebuffer,
                                                 framebufferWidth,
