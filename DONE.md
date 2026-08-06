@@ -11,6 +11,19 @@
   seven real US dungeons. No host object or synthetic inventory mapping was
   introduced.
 
+- ✅ 2026-08-06 DM2 loose-install admission: M12 now prefers an ordinary,
+  hash-verified DM2 installation over an identical ZIP/ISO member and hands
+  M11 the actual directory containing `GRAPHICS.DAT` and `DUNGEON.DAT`.
+  Case-insensitive macOS install names such as `graphics.dat` remain ordinary
+  files rather than being mistaken for cache candidates. A mounted PC-DOS
+  corpus under `.firestaff/data/dm2/dos_extract/data` now reports `READY` when
+  scanning its parent DM2 directory and reaches `dm2-startup-menu` through the
+  parent-root boot probe. Virtual ISO entries remain launch-blocked and no
+  game data was unpacked, copied or tracked. Verification:
+  `test_dm2_v1_missing_graphics_profile_gate`,
+  `test_asset_status_dm2_iso_required_cache_gate`,
+  `test_dm2_v1_m11_startup_profile_gate`, and the real-data boot probe.
+
 - ✅ 2026-08-06 DM2 unowned projectile-route isolation: removed the projectile
   dispatch, per-tick step and creature-collision adapters from the production
   DM2 archive. They own a private F0810-compatible list, but no M11 or DM2

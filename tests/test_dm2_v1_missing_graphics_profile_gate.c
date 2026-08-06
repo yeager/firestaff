@@ -284,12 +284,56 @@ static void check_dm2_matched_dungeon_unmatched_graphics_launch_is_blocked(
     CHECK(intent.options.versionIndex == 0);
 }
 
+static void check_dm2_nested_loose_install_stays_launchable(
+    const char* nestedRoot,
+    const char* graphicsMd5,
+    const char* dungeonMd5) {
+    char installRoot[512];
+    char graphicsPath[512];
+    char dungeonPath[512];
+    M12_AssetStatus status;
+    const M12_AssetVersionStatus* version;
+    const M12_AssetRequiredFileStatus* graphics;
+    const M12_AssetRequiredFileStatus* dungeon;
+
+    CHECK(join_path(installRoot, sizeof(installRoot), nestedRoot,
+                    "original-dos/DATA"));
+    CHECK(MKDIR(nestedRoot) == 0);
+    {
+        char originalRoot[512];
+        CHECK(join_path(originalRoot, sizeof(originalRoot), nestedRoot,
+                        "original-dos"));
+        CHECK(MKDIR(originalRoot) == 0);
+    }
+    CHECK(MKDIR(installRoot) == 0);
+    CHECK(join_path(graphicsPath, sizeof(graphicsPath), installRoot,
+                    "graphics.dat"));
+    CHECK(join_path(dungeonPath, sizeof(dungeonPath), installRoot,
+                    "dungeon.dat"));
+    CHECK(write_plain_file(graphicsPath, kDm2GraphicsPayload));
+    CHECK(write_plain_file(dungeonPath, kDm2DungeonPayload));
+
+    M12_AssetStatus_TestSetDm2SyntheticHashes(graphicsMd5, dungeonMd5);
+    M12_AssetStatus_Scan(&status, nestedRoot);
+    version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
+    graphics = required_file_by_role(&status, "graphics");
+    dungeon = required_file_by_role(&status, "dungeon");
+
+    CHECK(M12_AssetStatus_GameAvailable(&status, "dm2") == 1);
+    CHECK(version && version->matched == 1);
+    CHECK(graphics && graphics->matched == 1);
+    CHECK(dungeon && dungeon->matched == 1);
+    CHECK(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
+                 installRoot) == 0);
+}
+
 int main(void) {
     char home[512];
     char hashRoot[512];
     char dungeonOnlyRoot[512];
     char wrongGraphicsRoot[512];
     char pc98DemoRoot[512];
+    char nestedRoot[512];
     char graphicsMd5[M12_ASSET_MD5_CAPACITY];
     char dungeonMd5[M12_ASSET_MD5_CAPACITY];
     char pc98DemoGraphicsMd5[M12_ASSET_MD5_CAPACITY];
@@ -299,6 +343,7 @@ int main(void) {
         !join_path(dungeonOnlyRoot, sizeof(dungeonOnlyRoot), home, "dungeon-only") ||
         !join_path(wrongGraphicsRoot, sizeof(wrongGraphicsRoot), home, "wrong-graphics") ||
         !join_path(pc98DemoRoot, sizeof(pc98DemoRoot), home, "pc98-demo") ||
+        !join_path(nestedRoot, sizeof(nestedRoot), home, "nested-install") ||
         !make_dir_if_needed(hashRoot) ||
         !make_dir_if_needed(dungeonOnlyRoot) ||
         !make_dir_if_needed(wrongGraphicsRoot) ||
@@ -336,6 +381,9 @@ int main(void) {
         wrongGraphicsRoot,
         graphicsMd5,
         dungeonMd5);
+    check_dm2_nested_loose_install_stays_launchable(nestedRoot,
+                                                    graphicsMd5,
+                                                    dungeonMd5);
 
     M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetDm2Pc98DemoSyntheticHash(NULL);

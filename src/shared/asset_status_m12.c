@@ -1367,12 +1367,12 @@ static int m12_required_file_needs_runtime_cache(const M12_AssetStatus* status,
     }
     if (FSP_JoinPath(directPath, sizeof(directPath),
                      runtimeRoot, cacheLeaf) &&
-        m12_same_path(directPath, fileStatus->matchedPath)) {
+        m12_ascii_equals_ignore_case(directPath, fileStatus->matchedPath)) {
         return 0;
     }
     if (FSP_JoinPath(gamePath, sizeof(gamePath), runtimeRoot, gameId) &&
         FSP_JoinPath(gameLeaf, sizeof(gameLeaf), gamePath, cacheLeaf) &&
-        m12_same_path(gameLeaf, fileStatus->matchedPath)) {
+        m12_ascii_equals_ignore_case(gameLeaf, fileStatus->matchedPath)) {
         return 0;
     }
     return 1;
@@ -2180,24 +2180,24 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
             }
             md5Count = md5Index;
             md5List[md5Index] = NULL;
-#ifdef FIRESTAFF_ASSET_STATUS_TESTING
-            g_m12ScanMetrics.versionHashLookups++;
-#endif
             if (looseFilesOnly) {
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+                g_m12ScanMetrics.versionHashLookups++;
+#endif
                 (void)asset_find_all_files_by_md5_list(
-                    roots[rootIndex],
-                    md5List,
-                    rootMatchedPaths[rootIndex],
-                    rootMatched[rootIndex],
-                    (int)md5Count,
-                    32);
+                    roots[rootIndex], md5List,
+                    rootMatchedPaths[rootIndex], rootMatched[rootIndex],
+                    (int)md5Count, 32);
             } else {
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+                g_m12ScanMetrics.versionHashLookups++;
+#endif
                 (void)asset_find_all_by_md5_list(roots[rootIndex],
-                                                 md5List,
-                                                 rootMatchedPaths[rootIndex],
-                                                 rootMatched[rootIndex],
-                                                 (int)md5Count,
-                                                 32);
+                                                  md5List,
+                                                  rootMatchedPaths[rootIndex],
+                                                  rootMatched[rootIndex],
+                                                  (int)md5Count,
+                                                  32);
             }
         }
     }
@@ -2219,9 +2219,37 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                 m12_copy_string(version->matchedMd5,
                                 sizeof(version->matchedMd5),
                                 md5);
-                m12_copy_string(status->runtimeDataDirs[gameIndex],
-                                sizeof(status->runtimeDataDirs[gameIndex]),
-                                roots[rootIndex]);
+                if (strcmp(gameSpec->gameId, "dm2") == 0 &&
+                    !m12_path_is_virtual_asset(version->matchedPath)) {
+                    /* The verified DM2 install is allowed to keep its own
+                     * original layout.  In particular, a DOS install can
+                     * place DATA/ below the selected data root.  Its boot
+                     * loader resolves GRAPHICS.DAT/DUNGEON.DAT and the
+                     * accompanying music from the directory that owns the
+                     * authenticated graphics file; treating that ordinary
+                     * directory as a cache input would both block launch and
+                     * misclassify real loose files as archive media.
+                     *
+                     * Archive entries retain their virtual path and take the
+                     * fail-closed in-memory route below.  No game data is
+                     * copied or unpacked here. */
+                    char dm2AssetDir[M12_ASSET_DATA_DIR_CAPACITY];
+                    if (FSP_ParentDir(dm2AssetDir,
+                                      sizeof(dm2AssetDir),
+                                      version->matchedPath)) {
+                        m12_copy_string(status->runtimeDataDirs[gameIndex],
+                                        sizeof(status->runtimeDataDirs[gameIndex]),
+                                        dm2AssetDir);
+                    } else {
+                        m12_copy_string(status->runtimeDataDirs[gameIndex],
+                                        sizeof(status->runtimeDataDirs[gameIndex]),
+                                        roots[rootIndex]);
+                    }
+                } else {
+                    m12_copy_string(status->runtimeDataDirs[gameIndex],
+                                    sizeof(status->runtimeDataDirs[gameIndex]),
+                                    roots[rootIndex]);
+                }
                 if (dataDirResolvedToMatchedRoot && !*dataDirResolvedToMatchedRoot && !userExplicitDataDir) {
                     /* Runtime source path: when the saved/default data_dir is the
                      * preferred ~/.firestaff/originals but the verified PC34 files
@@ -2539,6 +2567,54 @@ static int m12_fill_required_files(M12_AssetStatus* status,
     }
     status->requiredFileCounts[gameIndex] = count;
     return count > 0U && allRequiredMatched;
+}
+
+static void m12_prefer_dm2_loose_graphics_runtime_dir(M12_AssetStatus* status,
+                                                       int gameIndex) {
+    const M12_GameVersionSpec* gameSpec;
+    const M12_AssetRequiredFileStatus* graphics = NULL;
+    size_t i;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
+        return;
+    }
+    gameSpec = &g_games[gameIndex];
+    if (strcmp(gameSpec->gameId, "dm2") != 0) {
+        return;
+    }
+    for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+        const M12_AssetRequiredFileStatus* candidate =
+            &status->requiredFiles[gameIndex][i];
+        if (candidate->roleId && strcmp(candidate->roleId, "graphics") == 0 &&
+            candidate->matched &&
+            !m12_path_is_virtual_asset(candidate->matchedPath)) {
+            graphics = candidate;
+            break;
+        }
+    }
+    if (!graphics || graphics->matchedHash[0] == '\0') {
+        return;
+    }
+    for (i = 0U; i < gameSpec->versionCount; ++i) {
+        M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
+        char assetDir[M12_ASSET_DATA_DIR_CAPACITY];
+        if (!version->matched ||
+            strcmp(version->matchedMd5, graphics->matchedHash) != 0) {
+            continue;
+        }
+        /* The required-file gate has authenticated a loose GRAPHICS.DAT
+         * under the selected root.  It is the executable install route, so
+         * prefer it to a duplicate virtual archive member selected by the
+         * version inventory.  The sibling DUNGEON.DAT was verified by the
+         * same gate.  No cache materialization or file copy is involved. */
+        m12_copy_string(version->matchedPath, sizeof(version->matchedPath),
+                        graphics->matchedPath);
+        if (FSP_ParentDir(assetDir, sizeof(assetDir), graphics->matchedPath)) {
+            m12_copy_string(status->runtimeDataDirs[gameIndex],
+                            sizeof(status->runtimeDataDirs[gameIndex]),
+                            assetDir);
+        }
+        return;
+    }
 }
 
 static void m12_apply_required_game_availability(M12_AssetStatus* status,
@@ -3356,6 +3432,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     }
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
         int reqMatch = m12_fill_required_files(status, i, roots, rootCount, 0);
+        m12_prefer_dm2_loose_graphics_runtime_dir(status, i);
         if (!m12_scan_progress_update(&progressCtx,
                                       "matching required files",
                                       g_games[i].gameId,
@@ -3555,6 +3632,7 @@ void M12_AssetStatus_ScanGameWithOptions(
                                        roots,
                                        rootCount,
                                        options && options->looseFilesOnly);
+    m12_prefer_dm2_loose_graphics_runtime_dir(status, gameIndex);
     m12_apply_required_game_availability(status, gameIndex, reqMatch);
     if (reqMatch) {
         status->originalFileCandidateFound = 1;
