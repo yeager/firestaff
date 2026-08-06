@@ -27095,14 +27095,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   extraction and the canonical PC-English MD5; it is never unpacked to disk.
   `c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL` now consumes the companion for
   its two original `DIALOG_BOXES/0x81/dtText/0..1` labels, retaining the
-  native panel, raw4 rectangles, palette and source font. Bind the companion
-  to each remaining original GUI/dialogue text call before claiming complete
-  English UI; missing companion data blocks English FM Towns rather than
-  substituting text.
+  native panel, raw4 rectangles, palette and source font. M11 delegates that
+  active source command to the DM2 viewport renderer, so the English labels
+  are now actually drawn through the original raw font and palette path.
+  Bind the companion to each remaining original GUI/dialogue text call before
+  claiming complete English UI; missing companion data blocks English FM
+  Towns rather than substituting text.
   Both `c_gfx_str.cpp::DM2_QUERY_GDAT_TEXT` and the QueryDB relay now accept
   only explicit decoded companion callbacks and otherwise consume the selected
-  GDAT unchanged; remaining work is wiring that callback to every live M11
-  GUI/dialogue owner. **2026-08-06 coverage update:** the real-media M12
+  GDAT unchanged; remaining work is wiring that callback to every remaining
+  live M11 GUI/dialogue owner. **2026-08-06 coverage update:** the real-media M12
   regression now walks every non-empty text entry in the selected Japanese
   GDAT and requires a non-empty entry with the same `(category,index,field)`
   key in the authenticated PC-English companion. It performs that check for

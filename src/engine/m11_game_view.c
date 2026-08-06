@@ -58,6 +58,7 @@
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_tech_magic.h"
+#include "dm2_v1_viewport_renderer.h"
 #include "theron/theron_v1_asset_loader.h"
 
 #include "asset_status_m12.h"
@@ -44961,9 +44962,12 @@ static void m11_draw_v1_leader_hand_object_name(const M11_GameViewState* state,
     }
 }
 
-/* c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL expands raw4 rectangles and
- * blits DIALOG_BOXES/0x81/0 with its local palette.  M11 consumes that exact
- * command and never substitutes a launcher or generic dialog panel. */
+/* c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL expands raw4 rectangles, blits
+ * DIALOG_BOXES/0x81/0 with its local palette, and then renders its compiled
+ * heading plus the two GDAT labels through DRAW_VP_RC_STR.  Keep that work in
+ * the DM2 source renderer: an M11-only panel blit would visibly discard the
+ * original font and (for FM Towns English) the authenticated companion text.
+ * Source: SKWINSPX/src/v5/uidialog.cpp:352-415; v4/sktext.cpp:763-778. */
 static int m11_draw_dm2_save_dialogue_panel(
     const M11_GameViewState *state,
     unsigned char *framebuffer,
@@ -44972,47 +44976,53 @@ static int m11_draw_dm2_save_dialogue_panel(
 {
     DM2_V1_BootProfile *profile;
     DM2_V1_DialogueOpenPanelHostCommand command;
-    uint8_t *pixels = NULL;
-    int srcW = 0;
-    int srcH = 0;
-    int stride = 0;
-    int y;
+    DM2_V1_InterfacePalette interface_palette;
+    DM2_V1_InterfaceActionTable action_table;
+    DM2_V1_ViewportState viewport;
+    const uint8_t *font_rows = NULL;
+    uint32_t font_hash = 0u;
+    uint8_t action_palette[16];
 
     if (!state || !framebuffer ||
         state->sourceKind != M11_GAME_SOURCE_DM2_BOOT ||
-        !state->dm2SaveDialoguePanelActive || !state->dm2BootProfile) {
+        !state->dm2SaveDialoguePanelActive || !state->dm2BootProfile ||
+        framebufferWidth < DM2_VP_WIDTH ||
+        framebufferHeight < DM2_VP_HEIGHT) {
         return 0;
     }
     profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
     memset(&command, 0, sizeof(command));
+    memset(&interface_palette, 0, sizeof(interface_palette));
+    memset(&action_table, 0, sizeof(action_table));
     if (!dm2_v1_boot_dialogue_open_panel_host_command(profile, &command) ||
         !command.valid || !command.draw.valid ||
         command.panel_rect.w <= 0 || command.panel_rect.h <= 0 ||
-        dm2_v1_boot_gdat_image_asset_fetch(
-            profile, DM2_GDAT_CATEGORY_DIALOG_BOXES,
-            DM2_V1_DIALOGUE_BOX_INDEX, DM2_V1_DIALOGUE_BOX_FIELD,
-            &pixels, &srcW, &srcH, &stride) != 0 ||
-        !pixels || srcW <= 0 || srcH <= 0 || stride < srcW) {
-        dm2_v1_boot_gdat_image_asset_free(pixels);
+        !dm2_v1_boot_interface_palette(profile, &interface_palette) ||
+        !dm2_v1_boot_interface_action_table(profile, &action_table) ||
+        !dm2_v1_boot_interface_font_table(profile, &font_rows, &font_hash)) {
         return 0;
     }
-    for (y = 0; y < command.panel_rect.h; ++y) {
-        int x;
-        int sy = y * srcH / command.panel_rect.h;
-        int dy = command.panel_rect.y + y;
-        if (dy < 0 || dy >= framebufferHeight) continue;
-        for (x = 0; x < command.panel_rect.w; ++x) {
-            int sx = x * srcW / command.panel_rect.w;
-            int dx = command.panel_rect.x + x;
-            uint8_t color;
-            if (dx < 0 || dx >= framebufferWidth) continue;
-            color = pixels[sy * stride + sx];
-            if (color < 16u) color = command.draw.material.palette[color];
-            framebuffer[dy * framebufferWidth + dx] = color;
-        }
+    memcpy(action_palette, interface_palette.palette16,
+           sizeof(action_palette));
+    if (!dm2_v1_interface_action_table_remap_palette(
+            &action_table, action_palette, 16u, 0u, -1, -1)) {
+        return 0;
     }
-    dm2_v1_boot_gdat_image_asset_free(pixels);
-    return 1;
+    dm2_v1_viewport_init(&viewport, framebuffer, framebufferWidth);
+    dm2_v1_viewport_set_asset_provider(
+        &viewport, dm2_v1_boot_viewport_asset_fetch, profile);
+    dm2_v1_viewport_set_asset_palette_provider(
+        &viewport, dm2_v1_boot_viewport_asset_palette_fetch, profile);
+    dm2_v1_viewport_set_source_materials_required(&viewport, 1);
+    dm2_v1_viewport_set_gdat_interface_font(&viewport, font_rows, font_hash);
+    dm2_v1_viewport_set_gdat_interface_text_palette(
+        &viewport, 1, interface_palette.hash, action_palette);
+    dm2_v1_viewport_set_gdat_dialogue_open_panel_host_command(
+        &viewport, &command, 1);
+    dm2_v1_render_dialogue_open_panel(&viewport);
+    return viewport.gdat_dialogue_open_panel_consumed_count == 4 &&
+        viewport.gdat_dialogue_open_panel_consumed_hash == command.command_hash &&
+        viewport.blocked_material_draw_count == 0;
 }
 
 typedef struct M11_DM2StartupDrawContext {

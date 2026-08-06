@@ -53106,3 +53106,13 @@ platform package.
   accepts both the 12-row no-pack state and the full 16-row state when a real
   pack is present. Verification: probe and `dm1_v2_source_owned_screenshot_receipts`
   passed with the real PC34 `DUNGEON.DAT`; 15/15 probe invariants passed.
+- ✅ 2026-08-06 DM2 FM Towns English M11 dialogue rendering: the active
+  `c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL` no longer stops at M11's
+  former image-only panel blit. M11 now delegates it to the source-owned DM2
+  viewport renderer, which retains the Japanese CD panel, raw4 geometry and
+  local palette while drawing the compiled heading and authenticated
+  PC-English GDAT labels with the original `dt07/0` font and action-table
+  palette remap. The whole panel fails closed when any source material is
+  absent. Verification: `test_dm2_v1_dialogue_box_viewport_real_data`,
+  `test_dm2_v1_m11_startup_profile_gate`, and the FM Towns direct/ZIP English
+  companion regression pass against user-supplied original media.
