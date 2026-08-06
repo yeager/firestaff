@@ -2289,16 +2289,16 @@ static int dm2_runtime_apply_source_session(const DM2_V1_SessionState *session) 
     rt->dungeon_level = gs->current_level;
     rt->view_dir = gs->party_dir;
     dm2_runtime_refresh_map_transition_context(rt);
-    rt->leader_hand_object = session->original_leader_hand_object;
+    /* SKWINSPX/src/v0/sktypesx.h:196-200 defines LeaderPossession as a
+     * 22-byte runtime cursor object (ObjectID + picture buffer + pixels),
+     * while SKSAVE writes only its ObjectID through
+     * WRITE_RECORD_CHECKCODE.  c_hero.h stores the 30 hero slots as 16-bit
+     * links at 0xc3.  The bounded SUPPRESS import does not yet own the
+     * subsequent record-checkcode/DB-chain stream, so its old 32-bit cache
+     * must never be published as a playable hand or inventory. */
+    rt->leader_hand_object = 0u;
     memset(rt->champion_inventory_objects, 0,
            sizeof(rt->champion_inventory_objects));
-    for (uint8_t c = 0; c < session->champion_count && c < 4u; ++c) {
-        const DM2_ChampionRecord *champ =
-            (const DM2_ChampionRecord *)session->champion_data[c];
-        for (uint8_t slot = 0; slot < 30u; ++slot) {
-            rt->champion_inventory_objects[c][slot] = champ->inventory[slot];
-        }
-    }
     rt->minions = session->original_minions;
     if (rt->minions.count > DM2_MAX_MINIONS) {
         rt->minions.count = DM2_MAX_MINIONS;

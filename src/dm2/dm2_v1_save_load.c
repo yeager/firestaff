@@ -2214,70 +2214,44 @@ int dm2_minion_read(DM2_MinionTable *t, FILE *f)
     return 0;
 }
 
-/* ════════════════════════════════════════════════════════════════════════
- * Leader hand possession (22 bytes in original, here using ObjectID)
- * Source: docs/dm2_party_state.md § Leader Hand Possession
- * Type DM2_LeaderPossession is defined in dm2_v1_save_load.h
- * ════════════════════════════════════════════════════════════════════════ */
+/* SKWINSPX/src/v0/sktypesx.h:196-200 has a 22-byte LeaderPossession cursor
+ * object.  SKSAVE does not write that object or a flat ObjectID: it calls
+ * WRITE_RECORD_CHECKCODE on the 16-bit ObjectID and emits the DB record chain.
+ * Rejecting this obsolete four-byte surrogate prevents false SKSAVE output. */
 
 int dm2_leader_possession_write(const DM2_LeaderPossession *lp, FILE *f)
 {
-    if (!lp || !f) return -1;
-    /* Write as 4-byte ObjectID */
-    uint8_t buf[4];
-    buf[0] = (uint8_t)(lp->object & 0xFF);
-    buf[1] = (uint8_t)((lp->object >> 8) & 0xFF);
-    buf[2] = (uint8_t)((lp->object >> 16) & 0xFF);
-    buf[3] = (uint8_t)((lp->object >> 24) & 0xFF);
-    return (fwrite(buf, 4, 1, f) == 1) ? 0 : -1;
+    (void)lp;
+    (void)f;
+    return -1;
 }
 
 int dm2_leader_possession_read(DM2_LeaderPossession *lp, FILE *f)
 {
-    if (!lp || !f) return -1;
-    uint8_t buf[4];
-    if (fread(buf, 4, 1, f) != 1) return -1;
-    lp->object = ((uint32_t)buf[0]) | ((uint32_t)buf[1] << 8) |
-                 ((uint32_t)buf[2] << 16) | ((uint32_t)buf[3] << 24);
-    return 0;
+    (void)lp;
+    (void)f;
+    return -1;
 }
 
-/* ════════════════════════════════════════════════════════════════════════
- * Champion inventory serialization via WRITE_RECORD_CHECKCODE
- * Each inventory slot is an ObjectID handle; chains are followed.
- * Source: docs/dm2_party_state.md § Inventory: The Item Record Chain
- * ════════════════════════════════════════════════════════════════════════ */
+/* c_hero.h @0xc3 stores 30 16-bit links.  Each link reaches SKSAVE through
+ * WRITE_RECORD_CHECKCODE, which owns recursive DB records and checkcodes.
+ * A 120-byte flat 32-bit sequence is synthetic and must not be emitted or
+ * accepted as a DM2 inventory. */
 
 int dm2_champion_inventory_write(const uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS],
                                    FILE *f)
 {
-    if (!inventory || !f) return -1;
-    for (int i = 0; i < DM2_CHAMPION_INVENTORY_SLOTS; i++) {
-        uint8_t buf[4];
-        uint32_t h = inventory[i];
-        buf[0] = (uint8_t)(h & 0xFF);
-        buf[1] = (uint8_t)((h >> 8) & 0xFF);
-        buf[2] = (uint8_t)((h >> 16) & 0xFF);
-        buf[3] = (uint8_t)((h >> 24) & 0xFF);
-        if (fwrite(buf, 4, 1, f) != 1) return -1;
-        /* Note: actual WRITE_RECORD_CHECKCODE follows chains.
-         * Here we write the handle; chain following would need
-         * the full DB state and is handled at higher level. */
-    }
-    return 0;
+    (void)inventory;
+    (void)f;
+    return -1;
 }
 
 int dm2_champion_inventory_read(uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS],
                                  FILE *f)
 {
-    if (!inventory || !f) return -1;
-    for (int i = 0; i < DM2_CHAMPION_INVENTORY_SLOTS; i++) {
-        uint8_t buf[4];
-        if (fread(buf, 4, 1, f) != 1) return -1;
-        inventory[i] = ((uint32_t)buf[0]) | ((uint32_t)buf[1] << 8) |
-                       ((uint32_t)buf[2] << 16) | ((uint32_t)buf[3] << 24);
-    }
-    return 0;
+    (void)inventory;
+    (void)f;
+    return -1;
 }
 
 /* ════════════════════════════════════════════════════════════════════════

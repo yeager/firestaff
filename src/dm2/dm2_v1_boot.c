@@ -8691,35 +8691,23 @@ int dm2_v1_boot_runtime_swap_inventory_slot(
         champion_slot < 0 || champion_slot >= 30) {
         return 0;
     }
-    slot_object = dm2_v1_runtime_get_champion_inventory_object(
-        (uint8_t)champion_index,
-        (uint8_t)champion_slot);
-    leader_object = dm2_v1_runtime_get_leader_hand_object();
     out_receipt->champion_index = champion_index;
     out_receipt->champion_slot = champion_slot;
+    /* skproject SKWINSPX/src/v4/skcorev4.h:146 and
+     * src/v0/sktypesx.h:196-200: leader possession includes a real cursor
+     * buffer.  SKSAVE persists its ObjectID via WRITE_RECORD_CHECKCODE, and
+     * c_hero::item uses 16-bit links.  Firestaff has not imported that DB
+     * record chain, so swapping the former 32-bit cache would fabricate
+     * playable state. */
+    slot_object = 0u;
+    leader_object = 0u;
     out_receipt->slot_object_before = slot_object;
     out_receipt->leader_hand_before = leader_object;
-    if (slot_object == 0u && leader_object == 0u) {
-        return 0;
-    }
-    if (dm2_v1_runtime_set_champion_inventory_object(
-            (uint8_t)champion_index,
-            (uint8_t)champion_slot,
-            leader_object) != 0) {
-        return 0;
-    }
-    dm2_v1_runtime_set_leader_hand_object(slot_object);
-    out_receipt->slot_object_after = leader_object;
-    out_receipt->leader_hand_after = slot_object;
-    if (out_receipt->leader_hand_after != 0u && leader_object != 0u) {
-        out_receipt->status = "DM2 SWAP";
-    } else if (out_receipt->leader_hand_after != 0u) {
-        out_receipt->status = "DM2 PICKUP";
-    } else {
-        out_receipt->status = "DM2 PLACE";
-    }
+    out_receipt->slot_object_after = slot_object;
+    out_receipt->leader_hand_after = leader_object;
+    out_receipt->status = "DM2 INVENTORY UNAVAILABLE";
     (void)dm2_v1_boot_runtime_capture(profile, &out_receipt->runtime);
-    return 1;
+    return 0;
 }
 
 static void dm2_v1_boot_runtime_render_receipt_clear(

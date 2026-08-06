@@ -144,10 +144,10 @@ static void test_session_validate(void)
     CHECK(!dm2_v1_session_validate(NULL), "NULL session is invalid");
 }
 
-/* ── Test 4b: Champion inventory write/read order — stable slot layout ── */
-static void test_champion_inventory_order_roundtrip(void)
+/* ── Test 4b: Flat inventory stream must stay unavailable ── */
+static void test_champion_inventory_flat_stream_rejected(void)
 {
-    printf("  Champion inventory write/read ordering...\n");
+    printf("  Champion inventory flat-stream rejection...\n");
     FILE *f = tmpfile();
     if (!f) {
         CHECK(0, "tmpfile() is available");
@@ -162,18 +162,18 @@ static void test_champion_inventory_order_roundtrip(void)
     /* keep one empty slot to ensure zero slot positions are preserved */
     in[7] = 0;
 
-    CHECK(dm2_champion_inventory_write(in, f) == 0,
-          "inventory write returns success");
+    CHECK(dm2_champion_inventory_write(in, f) == -1,
+          "flat 32-bit inventory writer is rejected");
 
     rewind(f);
-    memset(out, 0, sizeof(out));
-    CHECK(dm2_champion_inventory_read(out, f) == 0,
-          "inventory read returns success");
-
-    for (int i = 0; i < DM2_CHAMPION_INVENTORY_SLOTS; i++) {
-        char msg[80];
-        snprintf(msg, sizeof(msg), "inventory slot %d order preserved", i);
-        CHECK(out[i] == in[i], msg);
+    memset(out, 0xA5, sizeof(out));
+    {
+        uint32_t before[DM2_CHAMPION_INVENTORY_SLOTS];
+        memcpy(before, out, sizeof(before));
+        CHECK(dm2_champion_inventory_read(out, f) == -1,
+              "flat 32-bit inventory reader is rejected");
+        CHECK(memcmp(out, before, sizeof(out)) == 0,
+              "rejected reader does not fabricate inventory state");
     }
 
     CHECK(dm2_champion_inventory_write(NULL, f) == -1,
@@ -369,7 +369,7 @@ int main(void)
 
     /* ── Champion inventory slot order ── */
     printf("\n--- Champion inventory ordering ---\n");
-    test_champion_inventory_order_roundtrip();
+    test_champion_inventory_flat_stream_rejected();
 
     /* ── Serialize round-trip ── */
     printf("\n--- Serialize→deserialize round-trip ---\n");

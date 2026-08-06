@@ -1106,12 +1106,10 @@ static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
         return 0;
     }
     (void)m11_dm2_startup_apply_host_receipt(state, &receipt.host_receipt);
-    if (receipt.session_applied) {
-        dm2_v1_runtime_set_leader_hand_object(
-            execution.session.original_leader_hand_object);
-        state->dm2State.leader_hand_object =
-            execution.session.original_leader_hand_object;
-    }
+    /* A decoded SUPPRESS prefix has no owned record-checkcode/DB-chain
+     * reader yet.  Do not turn its legacy leader-hand cache into live UI
+     * state; dm2_runtime_apply_source_session keeps the hand empty too. */
+    state->dm2State.leader_hand_object = 0u;
     return receipt.session_applied;
 }
 

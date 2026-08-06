@@ -849,8 +849,19 @@
   exact 0x107-byte `table1d6356` and preserves its raw records separately;
   only independently proved display fields are copied out. The retained
   legacy 261-byte helper is diagnostic-only. Continue with the complete
-  16-bit inventory, leader-hand (22-byte) and possession-index owner before
-  any original save can be resumed or hand commands can be shown live.
+  16-bit inventory, leader-hand record-checkcode/DB-chain and
+  possession-index owners before any original save can be resumed or hand
+  commands can be shown live.
+  2026-08-06 inventory/leader-hand correction: SKProject's
+  `LeaderPossession` is indeed a 22-byte runtime cursor (`ObjectID`, picture
+  buffer pointer and pixel bytes), but SKSAVE writes only its 16-bit ObjectID
+  through `WRITE_RECORD_CHECKCODE`; it does not write a 22-byte struct or a
+  flat 32-bit value. Likewise `c_hero::item[30]` is a 16-bit link array at
+  `0xc3`, not the legacy 32-bit `DM2_ChampionRecord::inventory` cache.
+  Firestaff now rejects those flat read/write helpers, publishes neither
+  cache on source-session admission, and reports inventory interaction as
+  unavailable instead of swapping synthetic object handles. Implement the
+  source record-checkcode/DB allocation chain before reopening this route.
   2026-08-06 menu-inventory correction: the source-authenticated raw PC-DOS
   candidates remain visible to the startup scanner instead of being hidden as
   if no original save existed. Selection is separately regression-tested to

@@ -4,9 +4,11 @@
 
 The party (champion squad) is persisted entirely in the save file. Here's what's saved and how:
 
-## Champion Base Stats (261 bytes each × up to 4 champions)
+## Champion Base Stats (263 bytes each × up to 4 champions)
 
-`struct Champion` (261 bytes) includes:
+`c_hero` is `0x107` (263 bytes) in the PC-DOS source. Its on-disk values are
+SUPPRESS encoded with the matching 263-byte mask; it is not interchangeable
+with Firestaff's old 261-byte display convenience record. It includes:
 - **Names**: firstName[8], lastName[16]
 - **Position/orientation**: absoluteDirection, squadPosition
 - **HP/Stamina/Mana**: cur/max HP, stamina, mana
@@ -15,15 +17,19 @@ The party (champion squad) is persisted entirely in the save file. Here's what's
 - **Food/Water**: food, water
 - **Combat state**: handCommand[2], handCooldown[2], handDefenseClass[2]
 - **Timers and flags**: timerIndex, damageSuffered, heroFlag, bodyFlag
-- **Inventory slot refs**: `inventory[INVENTORY_MAX_SLOT]` — ObjectID[30] handles to item records in the DB pool
+- **Inventory slot refs**: `item[30]` at offset `0xC3` — 16-bit record links
+  into the DB pool
 
 ## Inventory: The Item Record Chain
 
-Each champion's 30 inventory slots (`inventory[30]`) are **ObjectID handles**, not inline item data. At save time, for each champion and each of their 30 slots:
+Each champion's 30 inventory slots (`item[30]`) are 16-bit record links, not
+inline item data. At save time, each link is handed to
+`WRITE_RECORD_CHECKCODE`, which writes the record/checkcode stream and follows
+the linked DB records:
 
 ```cpp
 for (bp0e = 0; bp0e < glbChampionsCount; bp0e++) {
-    ObjectID *bp04 = glbChampionSquad[bp0e].inventory;
+    ObjectID *bp04 = glbChampionSquad[bp0e].item;
     for (i16 bp12 = 0; bp12 < 30; bp12++) {
         if (WRITE_RECORD_CHECKCODE(*(bp04++), 0, 0) != 0)
             goto _14fa;
@@ -31,7 +37,13 @@ for (bp0e = 0; bp0e < glbChampionsCount; bp0e++) {
 }
 ```
 
-`WRITE_RECORD_CHECKCODE` writes the item's DB record link, then follows the record chain (objects can link to other objects). This means inventory items are saved as **references into the DB pool** (`glbDBObjectData[dbXXX]`), not as inline data. The actual item records (type, charges, enchantments, etc.) live in the 16 database record pools and are saved separately.
+`WRITE_RECORD_CHECKCODE` writes the item's DB record link, then follows the
+record chain (objects can link to other objects). This means inventory items
+are saved as **references into the DB pool** (`glbDBObjectData[dbXXX]`), not
+as inline data. The actual item records (type, charges, enchantments, etc.)
+live in the 16 database record pools and are saved separately. A flat sequence
+of 32-bit values is therefore not a valid DM2 save representation and is
+deliberately rejected by Firestaff.
 
 ## Leader Hand Possession
 
@@ -40,15 +52,19 @@ A single record link for what the party leader has in their active hand:
 if (WRITE_RECORD_CHECKCODE(glbLeaderHandPossession.object, 0, 0) != 0)
     goto _14fa;
 ```
-`glbLeaderHandPossession` is a `struct LeaderPossession` (22 bytes) holding an ObjectID.
+`glbLeaderHandPossession` is a 22-byte runtime cursor object: a 16-bit
+`ObjectID`, a picture-buffer pointer and 16 bytes of cursor pixels
+(`SKWINSPX/src/v0/sktypesx.h:196-200`). Only the ObjectID is saved, through
+the same record/checkcode chain. Neither the cursor buffer nor a flat 32-bit
+surrogate belongs in an SKSAVE file.
 
 ## How Champions Are Serialized in Save
 
 The champion squad is SUPPRESS-encoded (bit-level RLE) as a block:
 ```cpp
-SUPPRESS_WRITER(glbChampionSquad, _4976_3992, 261, glbChampionsCount)
+SUPPRESS_WRITER(glbChampionSquad, _4976_3992, 263, glbChampionsCount)
 ```
-- 261 bytes per champion
+- 263 bytes per champion
 - `_4976_3992` is the per-field write mask (tells SUPPRESS which bits to actually store)
 - Written for `glbChampionsCount` champions (1–4)
 
@@ -66,7 +82,7 @@ SUPPRESS_WRITER(glbChampionSquad, _4976_3992, 261, glbChampionsCount)
 
 On load, `SUPPRESS_READER` is used with a `fill` parameter set to `1`:
 ```cpp
-SUPPRESS_READER(glbChampionSquad, _4976_3992, 261, glbChampionsCount, 1)
+SUPPRESS_READER(glbChampionSquad, _4976_3992, 263, glbChampionsCount, 1)
 ```
 The `fill=1` means: if a field is absent/masked in the save, fill it with a default value (ensures champions are in a valid state even if some fields couldn't be read).
 
@@ -100,8 +116,8 @@ DM1 persisted champion state per-champion into separate `CHAMP.DAT` files. Each 
 
 | Party Component | Persisted? | Mechanism |
 |----------------|-----------|----------|
-| Champion base stats (261B × 4) | Yes | SUPPRESS on `glbChampionSquad` |
-| Champion inventory slots (30 × 4 = 120 ObjectIDs) | Yes | `WRITE_RECORD_CHECKCODE` chains |
+| Champion base stats (263B × 4) | Yes | SUPPRESS on `glbChampionSquad` |
+| Champion inventory slots (30 × 16-bit links) | Yes | `WRITE_RECORD_CHECKCODE` chains |
 | Leader hand possession | Yes | Single `WRITE_RECORD_CHECKCODE` |
 | Global spell effects (6B) | Yes | SUPPRESS |
 | Minion associations | Yes | `WRITE_MINION_ASSOC()` |

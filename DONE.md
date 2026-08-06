@@ -52453,3 +52453,12 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   D2RS envelopes are rejected before save admission. The real eight-file
   PC-DOS corpus passes the source receipt census; complete `GAME_LOAD`,
   inventory/possession and live resume remain fail-closed.
+- ✅ 2026-08-06 DM2 original inventory/leader-hand fail-closed correction:
+  replaced the false flat 32-bit leader-hand and 30-slot inventory save
+  helpers with rejection boundaries. SKProject `LeaderPossession` is a
+  22-byte runtime cursor, but only its 16-bit ObjectID reaches SKSAVE through
+  `WRITE_RECORD_CHECKCODE`; `c_hero::item[30]` likewise contains 16-bit DB
+  links. The source-session route no longer publishes the old cache, M11
+  cannot re-inject it, and inventory swap returns unavailable until the real
+  record-chain importer/allocator exists. Verified with utility, real
+  eight-save corpus, M11 startup/profile and Phase A probes.

@@ -552,10 +552,9 @@ int dm2_minion_write(const DM2_MinionTable *t, FILE *f);
 
 int dm2_minion_read(DM2_MinionTable *t, FILE *f);
 
-/* ════════════════════════════════════════════════════════════════
- * Champion inventory serialization via WRITE_RECORD_CHECKCODE
- * Source: docs/dm2_party_state.md § Inventory: The Item Record Chain
- * ════════════════════════════════════════════════════════════════ */
+/* These legacy convenience APIs deliberately reject serialization.  Original
+ * SKSAVE uses 16-bit c_hero item links plus WRITE_RECORD_CHECKCODE's recursive
+ * DB-chain stream; a flat 32-bit array is not a valid on-disk substitute. */
 
 #define DM2_CHAMPION_INVENTORY_SLOTS 30
 
@@ -565,10 +564,10 @@ int dm2_champion_inventory_write(const uint32_t inventory[DM2_CHAMPION_INVENTORY
 int dm2_champion_inventory_read(uint32_t inventory[DM2_CHAMPION_INVENTORY_SLOTS],
                                  FILE *f);
 
-/* ════════════════════════════════════════════════════════════════
- * Leader hand possession
- * Source: docs/dm2_party_state.md § Leader Hand Possession
- * ════════════════════════════════════════════════════════════════ */
+/* LeaderPossession is a 22-byte runtime cursor structure in SKProject, but
+ * only its ObjectID is written through WRITE_RECORD_CHECKCODE.  This reduced
+ * compatibility view is not serializable until that source-owned stream is
+ * implemented. */
 
 typedef struct {
     uint32_t object; /* ObjectID handle */
