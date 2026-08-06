@@ -24,44 +24,91 @@ static uint8_t *load_file(const char *path, size_t *out_size) {
 }
 
 static const char *us_md5 = "f23601102138f87c33025877767ebf76";
+static const char *jp_md5 = "b7afb338ad31be1025b53f9aff12d73a";
 
-static int test_font_tile_extraction(void) {
-    const char *path = getenv("THERON_TRACK02_US_BIN");
-    if (!path) {
-        printf("SKIP: THERON_TRACK02_US_BIN not set\n");
+static int resolve_track02_path(const char *env_name,
+                                const char *leaf,
+                                char *out,
+                                size_t out_size) {
+    const char *override = getenv(env_name);
+    const char *home = getenv("HOME");
+
+    if (override && override[0]) {
+        return snprintf(out, out_size, "%s", override) < (int)out_size;
+    }
+    if (!home || !home[0]) return 0;
+    return snprintf(out, out_size, "%s/.firestaff/data/theron/%s",
+                    home, leaf) < (int)out_size;
+}
+
+static int verify_real_font(const char *label,
+                            const char *env_name,
+                            const char *leaf,
+                            const char *md5,
+                            size_t expected_user_data_offset) {
+    char path[1024];
+    size_t size = 0u;
+    uint8_t *data;
+    Theron_Track02FontTileReceipt receipt;
+    Theron_Track02SignalStatus status;
+
+    if (!resolve_track02_path(env_name, leaf, path, sizeof(path))) {
+        printf("SKIP: %s path unavailable\n", label);
         return 0;
     }
-    size_t size;
-    uint8_t *data = load_file(path, &size);
-    CHECK(data != NULL);
-
-    Theron_Track02FontTileReceipt receipt;
-    Theron_Track02SignalStatus status =
-        theron_v1_track02_extract_font_tiles(data, size, us_md5, &receipt);
-
+    data = load_file(path, &size);
+    if (!data) {
+        printf("SKIP: %s media unavailable at %s\n", label, path);
+        return 0;
+    }
+    status = theron_v1_track02_extract_font_tiles(
+        data, size, md5, &receipt);
     CHECK(status == THERON_TRACK02_SIGNAL_OK);
     CHECK(receipt.valid);
     CHECK(receipt.tile_count == 96u);
     CHECK(receipt.nonblank_tile_count > 50u);
-    CHECK(receipt.user_data_offset == 0x263200u);
+    CHECK(receipt.user_data_offset == expected_user_data_offset);
     CHECK(receipt.checksum != 0u);
-
-    printf("font: %zu tiles, %zu nonblank, checksum=0x%08x\n",
-           receipt.tile_count, receipt.nonblank_tile_count, receipt.checksum);
-
+    printf("%s font: %zu tiles, %zu nonblank, UD=0x%zx checksum=0x%08x\n",
+           label, receipt.tile_count, receipt.nonblank_tile_count,
+           receipt.user_data_offset, receipt.checksum);
     free(data);
     return 0;
 }
 
-static int test_font_space_tile_is_blank(void) {
-    const char *path = getenv("THERON_TRACK02_US_BIN");
-    if (!path) { printf("SKIP\n"); return 0; }
-    size_t size;
-    uint8_t *data = load_file(path, &size);
-    CHECK(data != NULL);
+static int test_font_tile_extraction(void) {
+    CHECK(verify_real_font("US", "THERON_TRACK02_US_BIN", "TQUS02.bin",
+                           us_md5, 0x263200u) == 0);
+    CHECK(verify_real_font("JP", "THERON_TRACK02_JP_BIN", "TQJP02.bin",
+                           jp_md5, 0x262A00u) == 0);
+    return 0;
+}
 
+static int load_us_font_receipt(Theron_Track02FontTileReceipt *receipt,
+                                uint8_t **out_data) {
+    char path[1024];
+    size_t size = 0u;
+    uint8_t *data;
+    if (!resolve_track02_path("THERON_TRACK02_US_BIN", "TQUS02.bin",
+                              path, sizeof(path))) {
+        printf("SKIP\n");
+        return 0;
+    }
+    data = load_file(path, &size);
+    if (!data) {
+        printf("SKIP\n");
+        return 0;
+    }
+    CHECK(theron_v1_track02_extract_font_tiles(
+              data, size, us_md5, receipt) == THERON_TRACK02_SIGNAL_OK);
+    *out_data = data;
+    return 1;
+}
+
+static int test_font_space_tile_is_blank(void) {
     Theron_Track02FontTileReceipt receipt;
-    theron_v1_track02_extract_font_tiles(data, size, us_md5, &receipt);
+    uint8_t *data;
+    if (!load_us_font_receipt(&receipt, &data)) return 0;
 
     int space_idx = ' ' - THERON_TRACK02_FONT_FIRST_CHAR;
     CHECK(space_idx >= 0 && space_idx < 96);
@@ -80,14 +127,9 @@ static int test_font_space_tile_is_blank(void) {
 }
 
 static int test_font_letter_a_has_content(void) {
-    const char *path = getenv("THERON_TRACK02_US_BIN");
-    if (!path) { printf("SKIP\n"); return 0; }
-    size_t size;
-    uint8_t *data = load_file(path, &size);
-    CHECK(data != NULL);
-
     Theron_Track02FontTileReceipt receipt;
-    theron_v1_track02_extract_font_tiles(data, size, us_md5, &receipt);
+    uint8_t *data;
+    if (!load_us_font_receipt(&receipt, &data)) return 0;
 
     int a_idx = 'A' - THERON_TRACK02_FONT_FIRST_CHAR;
     CHECK(a_idx >= 0 && a_idx < 96);

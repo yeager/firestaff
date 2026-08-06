@@ -8793,6 +8793,14 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-06 Theron regional font-tile intake: `test_theron_v1_font_tiles`
+  now reads the supplied `TQUS02.bin` and `TQJP02.bin` automatically from
+  `.firestaff/data/theron/`, with environment overrides preserved. It verifies
+  the source-selected UD offsets (`0x263200` US, `0x262A00` JP), 96 decoded
+  font tiles, 87 nonblank tiles and the authenticated checksum for both
+  regions. No HUD layout, portrait, tile-bank or viewport semantics were
+  inferred or promoted.
+
 - ✅ 2026-08-06 DM2 actuator synthetic-mutation removal: production
   `PROCEED_TIMERS` no longer registers byte-only pitfall, door, teleporter,
   trickwall, tick-generator, step-door or destroy-door handlers. Those

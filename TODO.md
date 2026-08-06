@@ -1222,6 +1222,12 @@
   receipt fixture target so its handoff contract remains testable; it is
   excluded from the production archive. The remaining widget manifest code
   is admission diagnostics only, not a render source.
+  2026-08-06 regional font-tile update: `test_theron_v1_font_tiles` now
+  discovers and verifies both supplied raw BINs from the documented data
+  root. US uses UD `0x263200`, JP uses UD `0x262A00`; both decode 96 tiles,
+  87 nonblank, with the same authenticated checksum. This proves the
+  regional font-byte bind only; HUD tile bank, bar/slot geometry and portrait
+  graphics remain capture-gated.
   The retired procedural `theron_v1_ui_chrome.c` module is now removed from
   the repository and the rendering test links the same production no-op seam;
   remaining work is only authenticated HUD tile-bank, layout, and portrait
