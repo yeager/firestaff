@@ -1,3 +1,21 @@
+# Theron real main-RAM loader capture parser correction (2026-08-06)
+
+- ✅ A fresh replay against the supplied hash-verified US Track 02 ISO and
+  System Card produced a real Mednafen loader sidecar with the source `$2286`
+  `TIA` witness followed by 13 block transfers, 24 RTS observations and 24
+  post-RTS observations. The sidecar also produced 4,096 game-owned
+  main-RAM-consumer reads and the executed HuC6280 `$2c54–$2c69` code window.
+- ✅ Fixed `theron_v1_mednafen_main_ram_trace` so it accepts the complete
+  instrumented HuC6280 transfer/control witness instead of comparing every
+  later `TII`/return row to the first `TIA`. The parser remains opaque-only:
+  no `$2600` consumer bytes, level/object semantics, VDC snapshot or runtime
+  promotion are inferred.
+- ✅ Verification: loader sidecar MD5
+  `2827cb429d0b97f0e1fc26185a9bb28c` passes with `13/24/24`; consumer sidecar
+  MD5 `9d19ad9b993f1853e868f381756eb1d0` passes with `4096` reads and the
+  `$2c54–$2c69` code-window check. Capture files remain operator-local and
+  no game data was added to the repository.
+
 # Theron production fixture-symbol boundary (2026-08-06)
 
 # DM2 FM Towns SKULL P3 startup gate (2026-08-06)

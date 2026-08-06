@@ -26090,6 +26090,17 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Theron Track 02 remaining evidence
 
+- [ ] THERON-V1-TRACK02-LIVE-LOADER-CONSUMER: the latest replay against the
+  authenticated US Track 02 ISO now gives a real HuC6280 loader witness
+  (`$2286` `TIA` followed by 13 block transfers, 24 RTS and 24 post-RTS rows)
+  plus 4,096 static-bank consumer reads and an executed `$2c54–$2c69`
+  code-window receipt. The parser now accepts this richer real trace. It still
+  has no `$2600` dynamic consumer bytes, no VDC VRAM/VCE snapshot, and no
+  source-owned level/object field decisions, so forcefield→dungeon admission
+  and runtime drawing remain blocked. Next evidence is a capture that reaches
+  the game-owned post-CD consumer and closes the VDC snapshot on clean exit;
+  do not promote the current trace into level/object semantics.
+
 - 2026-08-06 update: the Track 02 thing-category enum is now source-bound to
   the retail order used by DMBUILDER6 (`4=monster`, `5=weapon`, `6=clothing`,
   `7=scroll`, `8=potion`, `9=chest`, `10=misc`, `14=missile`, `15=cloud`).
