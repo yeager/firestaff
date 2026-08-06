@@ -15526,8 +15526,8 @@ effects remain blocked without a restored HUD owner.
 ## M12 Localization Completion (2026-07-12)
 
 The launcher now resolves all 20 shipped locales from `LC_ALL`, `LC_MESSAGES`,
-or `LANG`, and the flag popup commits mouse selection through the same PO/l10n
-path as keyboard input. Indonesian is the twentieth Latin-script locale and
+`LANGUAGE`, or `LANG`, and the flag popup commits mouse selection through the
+same PO/l10n path as keyboard input. Indonesian is the twentieth Latin-script locale and
 uses the normal Noto Sans fallback. 2026-07-19 (Jobb G, w5): the 13
 fallback-only `startup-menu.*.po` catalogs (cs, da, es, fi, hu, it, ko, nl,
 no, pl, pt, ru, tr) are now natively translated (59 strings each);
@@ -15537,6 +15537,11 @@ translation passes for the `csb.*.po` and `theron.*.po` fallback-only
 catalogs (owned by other jobs), and review of the older machine-translated
 startup-menu catalogs (e.g. de has "CHEA TS" / "DURCHSTECHEND" artifacts).
 Do not claim a locale is translated merely because it falls back to English.
+2026-08-06: the first-run scan now keeps internal game ids and scanner tasks
+out of the visible status line, uses full launcher titles, and loads packaged
+catalogs from the AppImage/installed FHS location. Remaining work is native
+translation coverage for the other launcher scan states, not another fallback
+to English.
 
 Per-game cheats are still a single enable/speed gate. Expand them only where a
 game runtime has a real, bounded capability to consume the option; a launcher

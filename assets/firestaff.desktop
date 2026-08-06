@@ -1,6 +1,8 @@
 [Desktop Entry]
 Name=Firestaff
-Comment=Dungeon Master engine reimplementation
+Name[sv]=Firestaff
+Comment=Source-faithful Dungeon Master engine
+Comment[sv]=Källtrogen spelmotor för Dungeon Master
 Exec=firestaff
 Icon=firestaff
 Terminal=false

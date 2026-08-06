@@ -1430,18 +1430,50 @@ static int m12_store_catalog_entry(M12_RuntimeCatalog* catalog,
 }
 
 static int m12_resolve_catalog_path(int localeIndex, char* out, size_t outSize) {
+    char filename[64];
     char path[FSP_PATH_MAX];
+    const char* localeDir;
+    const char* basePath;
     if (!out || outSize == 0U || localeIndex < 0 || localeIndex >= M12_UI_LANGUAGE_COUNT) {
         return 0;
     }
-    if (snprintf(path, sizeof(path), "po/startup-menu.%s.po", g_languages[localeIndex]) <= 0) {
+    if (snprintf(filename, sizeof(filename), "startup-menu.%s.po",
+                 g_languages[localeIndex]) <= 0) {
         return 0;
     }
-    path[sizeof(path) - 1U] = '\0';
-    for (size_t i = 0U; path[i] != '\0'; ++i) {
-        path[i] = (char)tolower((unsigned char)path[i]);
+    filename[sizeof(filename) - 1U] = '\0';
+    for (size_t i = 0U; filename[i] != '\0'; ++i) {
+        filename[i] = (char)tolower((unsigned char)filename[i]);
     }
-    if (FSP_FileExists(path)) {
+
+    /* Release packages install the catalog outside the mutable game-data
+     * root. FIRESTAFF_LOCALE_DIR is set by AppRun; the FHS path covers DEB,
+     * RPM and Steam Deck packages. The relative path keeps source-tree
+     * builds and developer tests working. */
+    localeDir = getenv("FIRESTAFF_LOCALE_DIR");
+    if (localeDir && localeDir[0] != '\0' &&
+        snprintf(path, sizeof(path), "%s/%s", localeDir, filename) > 0 &&
+        FSP_FileExists(path)) {
+        m12_copy_string(out, outSize, path);
+        return 1;
+    }
+    if (snprintf(path, sizeof(path), "/usr/share/firestaff/po/%s", filename) > 0 &&
+        FSP_FileExists(path)) {
+        m12_copy_string(out, outSize, path);
+        return 1;
+    }
+    basePath = SDL_GetBasePath();
+    if (basePath) {
+        int found = snprintf(path, sizeof(path), "%s../po/%s", basePath,
+                             filename) > 0 && FSP_FileExists(path);
+        SDL_free((void*)basePath);
+        if (found) {
+            m12_copy_string(out, outSize, path);
+            return 1;
+        }
+    }
+    if (snprintf(path, sizeof(path), "po/%s", filename) > 0 &&
+        FSP_FileExists(path)) {
         m12_copy_string(out, outSize, path);
         return 1;
     }
@@ -1656,26 +1688,30 @@ static void m12_clear_message_view(M12_StartupMenuState* state) {
     state->messageReturnNavLevel = (int)M12_NAV_MAIN;
 }
 
-static const char* m12_game_popup_label(const char* gameId) {
+/* Launcher-visible game names are deliberately separate from the stable
+ * internal ids used by the asset scanner.  Never expose ids such as "dm1"
+ * while the first-run scan is in progress. */
+static const char* m12_game_display_title(const M12_StartupMenuState* state,
+                                          const char* gameId) {
     if (!gameId) {
-        return "GAME";
+        return m12_tr(state, "GAME");
     }
     if (strcmp(gameId, "dm1") == 0) {
-        return "DM1";
+        return m12_tr(state, "Dungeon Master");
     }
     if (strcmp(gameId, "csb") == 0) {
-        return "CSB";
+        return m12_tr(state, "Chaos Strikes Back");
     }
     if (strcmp(gameId, "dm2") == 0) {
-        return "DM2";
+        return m12_tr(state, "Dungeon Master II: The Legend of Skullkeep");
     }
     if (strcmp(gameId, "nexus") == 0) {
-        return "NEXUS";
+        return m12_tr(state, "Dungeon Master Nexus");
     }
     if (strcmp(gameId, "theron") == 0) {
-        return "THERON";
+        return m12_tr(state, "Theron's Quest");
     }
-    return gameId;
+    return m12_tr(state, "GAME");
 }
 
 static void m12_append_text(char* out, size_t outSize, const char* text) {
@@ -1694,7 +1730,8 @@ static void m12_format_data_dir_line(const M12_StartupMenuState* state,
                                      char* out,
                                      size_t outSize) {
     const char* dir = state ? M12_StartupMenu_GetVisibleDataDir(state) : "";
-    size_t prefixLen = strlen("DATA DIR: ");
+    const char* label;
+    size_t prefixLen;
     size_t len;
     if (!out || outSize == 0U) {
         return;
@@ -1702,14 +1739,16 @@ static void m12_format_data_dir_line(const M12_StartupMenuState* state,
     if (!dir || dir[0] == '\0') {
         dir = m12_tr(state, "NOT SET");
     }
+    label = m12_text(state, M12_TEXT_DATA_DIR);
+    prefixLen = strlen(label) + 2U;
     len = strlen(dir);
     if (len + prefixLen < outSize) {
-        snprintf(out, outSize, "DATA DIR: %s", dir);
+        snprintf(out, outSize, "%s: %s", label, dir);
     } else if (outSize > prefixLen + 8U) {
         size_t keep = outSize - prefixLen - 5U;
-        snprintf(out, outSize, "DATA DIR: ...%s", dir + len - keep);
+        snprintf(out, outSize, "%s: ...%s", label, dir + len - keep);
     } else {
-        snprintf(out, outSize, "DATA DIR");
+        snprintf(out, outSize, "%s", label);
     }
 }
 
@@ -1767,7 +1806,7 @@ static void m12_show_missing_game_data_popup(M12_StartupMenuState* state,
         return;
     }
     gameIndex = m12_entry_index_for_game_id(state, gameId);
-    snprintf(line1, sizeof(line1), "%s %s", m12_game_popup_label(gameId), m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND));
+    snprintf(line1, sizeof(line1), "%s %s", m12_game_display_title(state, gameId), m12_text(state, M12_TEXT_GAME_DATA_NOT_FOUND));
     m12_format_missing_files_for_game(state, gameId, line2, sizeof(line2));
     m12_format_data_dir_line(state, line3, sizeof(line3));
     m12_enter_message_view(state);
@@ -1920,6 +1959,7 @@ static void m12_show_data_dir_result_popup(M12_StartupMenuState* state,
 }
 
 static void m12_format_data_scan_progress_line(
+    const M12_StartupMenuState* state,
     const M12_AssetScanProgress* progress,
     char* out,
     size_t outSize) {
@@ -1934,10 +1974,8 @@ static void m12_format_data_scan_progress_line(
         }
     }
     if (progress && progress->currentGameId[0] != '\0') {
-        snprintf(out, outSize, "%s %zu%%  %s",
-                 progress->currentGameId, pct, progress->currentTask);
-    } else if (progress && progress->currentTask[0] != '\0') {
-        snprintf(out, outSize, "%zu%%  %s", pct, progress->currentTask);
+        snprintf(out, outSize, "%s  %zu%%",
+                 m12_game_display_title(state, progress->currentGameId), pct);
     } else {
         snprintf(out, outSize, "%zu%%", pct);
     }
@@ -1953,7 +1991,7 @@ static int m12_data_dir_scan_progress_callback(
         return 1;
     }
     state->dataDirScanProgress = *progress;
-    m12_format_data_scan_progress_line(progress, line2, sizeof(line2));
+    m12_format_data_scan_progress_line(state, progress, line2, sizeof(line2));
     m12_format_data_dir_line(state, line3, sizeof(line3));
     m12_set_buffered_message(state,
                              m12_tr(state, "SCANNING GAME DATA"),
@@ -2033,7 +2071,7 @@ static void m12_update_data_dir_scan_message(M12_StartupMenuState* state) {
     if (!state || !state->dataDirScanActive) {
         return;
     }
-    m12_format_data_scan_progress_line(&state->dataDirScanProgress,
+    m12_format_data_scan_progress_line(state, &state->dataDirScanProgress,
                                        line2,
                                        sizeof(line2));
     m12_format_data_dir_line(state, line3, sizeof(line3));

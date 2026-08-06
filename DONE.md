@@ -64,6 +64,22 @@
   `LANG` can remain `en_US.UTF-8` while the user-selected Steam UI preference
   is `sv_SE.UTF-8:en_US`. The M12 probe verifies that the Swedish setting is
   selected without a stored explicit override.
+
+# Launcher scan localization and Linux desktop entry (2026-08-06)
+
+- ✅ The first-run game-data scan now renders only a full launcher-visible
+  title and its percentage. Internal scanner ids such as `dm1` and English
+  worker labels no longer reach the UI. Missing-data popups use the same
+  canonical titles, including `Dungeon Master II: The Legend of Skullkeep`.
+- ✅ Swedish catalog text now covers the scan heading and initial state, and
+  the M12 catalog resolver loads release catalogs from `FIRESTAFF_LOCALE_DIR`
+  or `/usr/share/firestaff/po` before the source-tree fallback. DEB, RPM,
+  Steam Deck package and AppImage builders install the startup-menu catalogs;
+  AppRun sets the AppImage catalog path.
+- ✅ Firestaff's desktop entry remains in the standard `Game;RolePlaying;`
+  category, which desktop environments present as Games/Spel, and has a
+  Swedish description. The launcher regression verifies Swedish missing-data
+  text, the full DM2 title and the absence of the internal `DM2` id.
 # Theron authentic VDC/VCE screen-space capture (2026-08-06)
 
 - ✅ A clean SIGINT shutdown of the instrumented Mednafen replay now emits

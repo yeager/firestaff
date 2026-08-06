@@ -131,6 +131,15 @@ static void check_graphics_only_blocks_launch(const GraphicsOnlyFixture* fixture
     CHECK(state.messageIsMissingGameData == 1);
     CHECK(strcmp(state.messageGameId, fixture->gameId) == 0);
     CHECK(state.activatedIndex == fixture->gameIndex);
+    if (strcmp(fixture->gameId, "dm1") == 0) {
+        CHECK(state.messageLine1 && strstr(state.messageLine1, "Dungeon Master") != NULL);
+        CHECK(state.messageLine1 && strstr(state.messageLine1, "DM1") == NULL);
+    } else if (strcmp(fixture->gameId, "dm2") == 0) {
+        CHECK(state.messageLine1 &&
+              strstr(state.messageLine1,
+                     "Dungeon Master II: The Legend of Skullkeep") != NULL);
+        CHECK(state.messageLine1 && strstr(state.messageLine1, "DM2") == NULL);
+    }
     CHECK(state.messageLine2 && strstr(state.messageLine2, "DUNGEON.DAT") != NULL);
     CHECK(state.messageLine3 && strstr(state.messageLine3, "DATA DIR:") != NULL);
 
@@ -138,6 +147,26 @@ static void check_graphics_only_blocks_launch(const GraphicsOnlyFixture* fixture
     CHECK(intent.valid == 0);
     CHECK(intent.gameId && strcmp(intent.gameId, fixture->gameId) == 0);
     CHECK(intent.versionId && strcmp(intent.versionId, fixture->versionId) == 0);
+}
+
+static void check_swedish_missing_media_uses_full_title(void) {
+    M12_StartupMenuState state;
+
+    seed_graphics_only_state(&state, &fixtures[2]);
+    /* sv is index 1 in the production language cycle. The catalog must
+     * localize the scan/popup surface while preserving the official title. */
+    state.settings.languageIndex = 1;
+    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
+
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 &&
+          strstr(state.messageLine1,
+                 "Dungeon Master II: The Legend of Skullkeep") != NULL);
+    CHECK(state.messageLine1 && strstr(state.messageLine1,
+                                      "SPELDATA HITTADES INTE") != NULL);
+    CHECK(state.messageLine1 && strstr(state.messageLine1, "DM2") == NULL);
+    CHECK(state.messageLine3 && strstr(state.messageLine3, "DATAKAT:") != NULL);
+    M12_StartupMenu_Destroy(&state);
 }
 
 static int isolate_home(void) {
@@ -164,6 +193,7 @@ int main(void) {
     for (i = 0U; i < sizeof(fixtures) / sizeof(fixtures[0]); ++i) {
         check_graphics_only_blocks_launch(&fixtures[i]);
     }
+    check_swedish_missing_media_uses_full_title();
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

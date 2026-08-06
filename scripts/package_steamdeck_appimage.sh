@@ -49,6 +49,7 @@ rm -rf "$APPDIR"
 mkdir -p \
   "$APPDIR/usr/bin" \
   "$APPDIR/usr/lib/firestaff" \
+  "$APPDIR/usr/share/firestaff/po" \
   "$APPDIR/usr/share/firestaff/scripts" \
   "$APPDIR/usr/share/applications" \
   "$APPDIR/usr/share/icons/hicolor/256x256/apps" \
@@ -59,6 +60,7 @@ cp "$ARTPACK_STUDIO_BIN_SRC" "$APPDIR/usr/bin/firestaff_artpack_studio"
 cp "$DUNGEON_STUDIO_BIN_SRC" "$APPDIR/usr/bin/firestaff_dungeon_studio"
 cp "$SAVEGAME_EDITOR_BIN_SRC" "$APPDIR/usr/bin/firestaff_savegame_editor"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$APPDIR/usr/share/firestaff/firestaff-startup-intro.ppm"
+cp "$ROOT"/po/startup-menu.*.po "$APPDIR/usr/share/firestaff/po/"
 chmod 0755 "$APPDIR/usr/bin/firestaff"
 chmod 0755 "$APPDIR/usr/bin/firestaff_artpack_studio"
 chmod 0755 "$APPDIR/usr/bin/firestaff_dungeon_studio"
@@ -91,7 +93,9 @@ cat > "$APPDIR/firestaff.desktop" <<'DESKTOP'
 [Desktop Entry]
 Type=Application
 Name=Firestaff
+Name[sv]=Firestaff
 Comment=Firestaff source-faithful Dungeon Master engine
+Comment[sv]=Källtrogen spelmotor för Dungeon Master
 Exec=firestaff
 Icon=firestaff
 Categories=Game;RolePlaying;
@@ -125,6 +129,7 @@ cat > "$APPDIR/AppRun" <<'APPRUN'
 set -eu
 HERE="$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)"
 export LD_LIBRARY_PATH="$HERE/usr/lib/firestaff${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}"
+export FIRESTAFF_LOCALE_DIR="$HERE/usr/share/firestaff/po"
 exec "$HERE/usr/bin/firestaff" "$@"
 APPRUN
 chmod 0755 "$APPDIR/AppRun"

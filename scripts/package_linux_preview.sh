@@ -39,12 +39,13 @@ mkdir -p "$OUT_DIR"
 # Debian package -------------------------------------------------------------
 DEB_ROOT="$OUT_DIR/deb-stage/${PKG_NAME}_${VERSION}_${ARCH_DEB}"
 rm -rf "$DEB_ROOT"
-mkdir -p "$DEB_ROOT/DEBIAN" "$DEB_ROOT/usr/bin" "$DEB_ROOT/usr/share/doc/$PKG_NAME" "$DEB_ROOT/usr/share/pixmaps" "$DEB_ROOT/usr/share/applications" "$DEB_ROOT/usr/share/firestaff/scripts"
+mkdir -p "$DEB_ROOT/DEBIAN" "$DEB_ROOT/usr/bin" "$DEB_ROOT/usr/share/doc/$PKG_NAME" "$DEB_ROOT/usr/share/pixmaps" "$DEB_ROOT/usr/share/applications" "$DEB_ROOT/usr/share/firestaff/po" "$DEB_ROOT/usr/share/firestaff/scripts"
 cp "$BIN_SRC" "$DEB_ROOT/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$DUNGEON_STUDIO_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_dungeon_studio"
 cp "$SAVEGAME_EDITOR_BIN_SRC" "$DEB_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$DEB_ROOT/usr/share/firestaff/firestaff-startup-intro.ppm"
+cp "$ROOT"/po/startup-menu.*.po "$DEB_ROOT/usr/share/firestaff/po/"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff_artpack_studio"
 chmod 0755 "$DEB_ROOT/usr/bin/firestaff_dungeon_studio"
@@ -58,7 +59,9 @@ cat > "$DEB_ROOT/usr/share/applications/firestaff.desktop" <<DESKTOP
 [Desktop Entry]
 Type=Application
 Name=Firestaff
-Comment=Firestaff preview Dungeon Master engine
+Name[sv]=Firestaff
+Comment=Source-faithful Dungeon Master engine
+Comment[sv]=Källtrogen spelmotor för Dungeon Master
 Exec=firestaff
 Icon=firestaff
 Categories=Game;RolePlaying;
@@ -114,12 +117,13 @@ RPM_TOP="$OUT_DIR/rpmbuild"
 RPM_ROOT="$RPM_TOP/BUILDROOT/${PKG_NAME}-${VERSION}-1.${ARCH_RPM}"
 rm -rf "$RPM_TOP"
 mkdir -p "$RPM_TOP/BUILD" "$RPM_TOP/RPMS" "$RPM_TOP/SOURCES" "$RPM_TOP/SPECS" "$RPM_TOP/SRPMS"
-mkdir -p "$RPM_ROOT/usr/bin" "$RPM_ROOT/usr/share/doc/$PKG_NAME" "$RPM_ROOT/usr/share/pixmaps" "$RPM_ROOT/usr/share/applications" "$RPM_ROOT/usr/share/firestaff/scripts"
+mkdir -p "$RPM_ROOT/usr/bin" "$RPM_ROOT/usr/share/doc/$PKG_NAME" "$RPM_ROOT/usr/share/pixmaps" "$RPM_ROOT/usr/share/applications" "$RPM_ROOT/usr/share/firestaff/po" "$RPM_ROOT/usr/share/firestaff/scripts"
 cp "$BIN_SRC" "$RPM_ROOT/usr/bin/firestaff"
 cp "$ARTPACK_STUDIO_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
 cp "$DUNGEON_STUDIO_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_dungeon_studio"
 cp "$SAVEGAME_EDITOR_BIN_SRC" "$RPM_ROOT/usr/bin/firestaff_savegame_editor"
 cp "$ROOT/assets/branding/firestaff-startup-intro.ppm" "$RPM_ROOT/usr/share/firestaff/firestaff-startup-intro.ppm"
+cp "$ROOT"/po/startup-menu.*.po "$RPM_ROOT/usr/share/firestaff/po/"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_artpack_studio"
 chmod 0755 "$RPM_ROOT/usr/bin/firestaff_dungeon_studio"
@@ -159,6 +163,7 @@ $DESCRIPTION
 /usr/share/applications/firestaff-dungeon-studio.desktop
 /usr/share/applications/firestaff-savegame-editor.desktop
 /usr/share/firestaff/firestaff-startup-intro.ppm
+/usr/share/firestaff/po/*.po
 $RPM_ICON_ENTRY
 SPEC
 rpmbuild --define "_topdir $RPM_TOP" --define "buildroot $RPM_ROOT" --target "$ARCH_RPM" -bb "$RPM_TOP/SPECS/firestaff.spec"

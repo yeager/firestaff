@@ -71,6 +71,7 @@ rm -rf "$PKG_ROOT"
 mkdir -p \
   "$PKG_ROOT/usr/bin" \
   "$PKG_ROOT/usr/lib/$PKG_NAME" \
+  "$PKG_ROOT/usr/share/firestaff/po" \
   "$PKG_ROOT/usr/share/firestaff/scripts" \
   "$PKG_ROOT/usr/share/doc/$PKG_NAME" \
   "$PKG_ROOT/usr/share/pixmaps" \
@@ -86,6 +87,7 @@ chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-dungeon-studio-bin"
 chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/firestaff-savegame-editor-bin"
 cp -L "$SDL3_LIB" "$PKG_ROOT/usr/lib/$PKG_NAME/libSDL3.so.0"
 chmod 0755 "$PKG_ROOT/usr/lib/$PKG_NAME/libSDL3.so.0"
+cp "$ROOT"/po/startup-menu.*.po "$PKG_ROOT/usr/share/firestaff/po/"
 cat > "$PKG_ROOT/usr/bin/firestaff" <<'WRAPPER'
 #!/usr/bin/env sh
 set -eu
@@ -123,7 +125,9 @@ cat > "$PKG_ROOT/usr/share/applications/firestaff.desktop" <<DESKTOP
 [Desktop Entry]
 Type=Application
 Name=Firestaff
-Comment=$SUMMARY
+Name[sv]=Firestaff
+Comment=Source-faithful Dungeon Master engine
+Comment[sv]=Källtrogen spelmotor för Dungeon Master
 Exec=firestaff
 Icon=firestaff
 Categories=Game;RolePlaying;

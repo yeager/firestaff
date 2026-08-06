@@ -41,6 +41,22 @@ msgstr "LAUNCHER-DESTINATIONER"
 msgid "DATA DIR"
 msgstr "DATAKAT"
 
+#. First-run game-data scan heading
+msgid "SCANNING GAME DATA"
+msgstr "SÖKER EFTER SPELDATA"
+
+#. First-run game-data scan initial state
+msgid "STARTING"
+msgstr "STARTAR"
+
+#. Full launcher-visible title; internal scanner id is dm2.
+msgid "Dungeon Master II: The Legend of Skullkeep"
+msgstr "Dungeon Master II: The Legend of Skullkeep"
+
+#. Full launcher-visible title; internal scanner id is nexus.
+msgid "Dungeon Master Nexus"
+msgstr "Dungeon Master Nexus"
+
 #. Main menu footer / navigation hint
 msgid "UP/DOWN MOVE   ENTER OPEN   ESC EXIT"
 msgstr "UPP/NER FLYTTA   ENTER ÖPPNA   ESC AVSLUTA"
