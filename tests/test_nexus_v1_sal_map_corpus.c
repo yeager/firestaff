@@ -144,6 +144,7 @@ int main(void) {
         int map_size;
         int record;
         Nexus_SoundEngine sound;
+        Nexus_SfxRuntimeReceipt runtime_receipt;
 
         snprintf(sal_path, sizeof(sal_path), "%s/SNDLEV%02d.SAL", data_dir,
                  level);
@@ -174,6 +175,17 @@ int main(void) {
                                                 sal_data, sal_size,
                                                 map_data, map_size, 1, 1) == 0,
               "retail SAL/MAP pair loads");
+        memset(&runtime_receipt, 0, sizeof(runtime_receipt));
+        CHECK(nexus_sound_level_runtime_receipt(&sound,
+                                                &runtime_receipt) == 0,
+              "retail SAL/MAP runtime receipt emits");
+        CHECK(runtime_receipt.sal_canonical_source_verified == 1 &&
+              runtime_receipt.map_canonical_source_verified == 1 &&
+              runtime_receipt.event_dispatch_source_verified == 0 &&
+              runtime_receipt.playback_enabled == 0 &&
+              runtime_receipt.blocks_real_sfx_playback == 1 &&
+              runtime_receipt.status != NEXUS_SFX_RUNTIME_READY_DECODED,
+              "retail SAL/MAP metadata remains playback-blocked without Saturn dispatch");
         CHECK(sound.map_record_table_supported,
               "retail MAP has a terminated record table");
         CHECK(sound.map_record_count > 0 &&

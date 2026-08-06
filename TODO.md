@@ -641,6 +641,10 @@
   2026-08-06: the CDDA status table and runtime regression now explicitly
   distinguish manual track selection from playback readiness; no level→track
   binding or ready receipt is emitted without source-owned evidence.
+  2026-08-06 follow-up: the 16-level real SAL/MAP regression now also runs
+  `nexus_sound_level_runtime_receipt()` after each authenticated pair load and
+  proves that metadata consumption cannot promote SFX playback without the
+  Saturn event-dispatch/SDDRVS route.
 
 - **NEXUS-PALETTE-CAPTURE:** The retail SMAP/FACE/ITEM/MNS palette decoders
   now share the Saturn BGR555 channel order. Remaining work is an independent

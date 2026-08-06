@@ -101,6 +101,14 @@
 - Verification: `firestaff_nexus_v2_hud_runtime_probe` 25/25, focused
   `nexus_v2_hud_overlay` and `nexus_v2_hud_runtime_integration` CTest pass.
 
+# Nexus real SAL/MAP runtime receipt gate (2026-08-06)
+
+- ✅ Extended the 16-level authenticated SAL/MAP corpus regression to run the
+  runtime SFX receipt after every real pair load. It now proves that canonical
+  SAL/MAP metadata is retained while playback remains blocked, with no ready
+  status or host voice, until Saturn event-dispatch and SDDRVS ownership are
+  captured.
+
 # Nexus SLEV/SAL/MAP retail identity gate (2026-08-06)
 
 - ✅ Hardened the 16-level SLEV/SAL/MAP corpus regression with the production
