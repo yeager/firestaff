@@ -50587,3 +50587,17 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   correctly gated because no host conversion or synthetic track is added.
   Verification: `test_nexus_v1_sound_gameplay` and the focused Nexus audio
   CTest lane pass.
+- ✅ 2026-08-06 DM1/CSB decoded-surface gate completion: hardened the remaining
+  M11 source consumers so CSB Atari ceiling/floor/wall projection and DM1 HoC
+  C027/C040 inventory input accept only decoded asset slots (`loaded &&
+  pixels`). This prevents dimension-only cache records from reaching planar or
+  panel blits. Verification against the real DM1 corpus: HoC inscription
+  palette transition, 611-record object names/icons, and F0702 held-object
+  cursor/floor pickup all pass. Real macOS capture remains open in TODO.
+- ✅ 2026-08-06 DM1/CSB decoded-surface gate completion: hardened the remaining
+  M11 source consumers so CSB Atari ceiling/floor/wall projection and DM1 HoC
+  C027/C040 inventory input accept only decoded asset slots (`loaded &&
+  pixels`). This prevents dimension-only cache records from reaching planar or
+  panel blits. Verification against the real DM1 corpus: HoC inscription
+  palette transition, 611-record object names/icons, and F0702 held-object
+  cursor/floor pickup all pass. Real macOS capture remains open in TODO.

@@ -2591,7 +2591,8 @@ static int m11_csb_blit_atari_st_viewport_graphic(
     if (!state || !projection || !viewport ||
         !m11_csb_install_runtime_source_graphic(state, graphic_index)) return 0;
     asset = M11_AssetLoader_Load(&state->assetLoader, graphic_index);
-    if (!asset || !asset->pixels || asset->width == 0u || asset->height == 0u ||
+    if (!asset || !asset->loaded || !asset->pixels ||
+        asset->width == 0u || asset->height == 0u ||
         !csb_v1_csbwin_planar_bitmap_pack_indexed(
             asset->pixels, asset->width, asset->height, &packed, &packed_size)) {
         goto done;
@@ -2680,7 +2681,8 @@ static int m11_csb_present_atari_st_runtime_viewport(
     floor_graphic = material_plan.floor_graphic_index;
     ceiling = M11_AssetLoader_Load(&state->assetLoader, ceiling_graphic);
     floor = M11_AssetLoader_Load(&state->assetLoader, floor_graphic);
-    if (!ceiling || !floor || !ceiling->pixels || !floor->pixels ||
+    if (!ceiling || !floor || !ceiling->loaded || !floor->loaded ||
+        !ceiling->pixels || !floor->pixels ||
         ceiling->width != VIEWPORT_WIDTH || ceiling->height != CEILING_HEIGHT ||
         floor->width != VIEWPORT_WIDTH || floor->height != FLOOR_HEIGHT) {
         return 0;
@@ -2780,7 +2782,8 @@ static int m11_csb_present_atari_st_runtime_viewport(
             return 0;
         }
         wall = M11_AssetLoader_Load(&state->assetLoader, draw->graphic_index);
-        if (!wall || !wall->pixels || wall->width == 0u || wall->height == 0u ||
+        if (!wall || !wall->loaded || !wall->pixels ||
+            wall->width == 0u || wall->height == 0u ||
             !csb_v1_csbwin_planar_bitmap_pack_indexed(
                 wall->pixels, wall->width, wall->height, &packed, &packed_size)) {
             free(packed);
@@ -21674,13 +21677,14 @@ static int m11_dm1_hoc_c040_input_material_ready(
     backdrop = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader,
                                     (unsigned int)
                                         dm1_v1_graphic_inventory_backdrop_pc34());
-    if (!backdrop || !backdrop->pixels ||
+    if (!backdrop || !backdrop->loaded || !backdrop->pixels ||
         backdrop->width != M11_VIEWPORT_W ||
         backdrop->height != M11_VIEWPORT_H) {
         return 0;
     }
     panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 40);
-    return panel && panel->pixels && panel->width == panelRect.w &&
+    return panel && panel->loaded && panel->pixels &&
+           panel->width == panelRect.w &&
            panel->height == panelRect.h;
 }
 
@@ -21699,7 +21703,8 @@ static int m11_dm1_hoc_c027_input_material_ready(
         return 0;
     }
     panel = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, 27);
-    return panel && panel->pixels && panel->width == panelRect.w &&
+    return panel && panel->loaded && panel->pixels &&
+           panel->width == panelRect.w &&
            panel->height == panelRect.h;
 }
 

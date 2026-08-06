@@ -25829,6 +25829,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   gate. Dimension-only cache records cannot reach `BlitRegion`/`BlitScaled`
   in those F0102/F0110/F0111/F0113 routes. The real PC34 sweep remains the
   authoritative data check; packaged Mac capture is still required.
+- 2026-08-06 update: the remaining CSB Atari planar viewport path now also
+  requires `loaded && pixels` for ceiling, floor and wall records, and the
+  DM1 HoC C027/C040 inventory-input checks reject the same dimension-only
+  cache records. This closes the last source-consumer cases found in the
+  current M11 load scan; no capture requirement is being marked complete.
 - [ ] DM1-HOC-OBJECTS-003 Capture the live held-object cursor on the host window
   after pickup and during movement. The source framebuffer now invalidates on
   pointer motion and hides the host arrow while G4055 is occupied; close only
