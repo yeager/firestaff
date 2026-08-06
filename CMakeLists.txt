@@ -4840,6 +4840,12 @@ list(REMOVE_ITEM M10_SOURCES
 # its generated mirror regression compiles it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c160_close_while_rotation_pending_pc34_compat.c")
+# `dm1_v1_mirror_candidate_resurrect_confirm_inventory_interrupt_pc34_compat.c`
+# is a contract-only C040/C160/C038 fixture with fixed party, hand and chest
+# values. It reads no original DM1 data and has no M11/runtime caller; its
+# generated mirror regression compiles it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_resurrect_confirm_inventory_interrupt_pc34_compat.c")
 # `dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c`
 # is a deterministic C040/chest/rotation scenario fixture. It reads no
 # original DM1 data and has no M11/runtime caller; its explicit regression

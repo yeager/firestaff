@@ -16,6 +16,11 @@
   input or M11/runtime caller; retain it only as explicit ReDMCSB coverage
   until a source-bound interaction owner is recovered.
 
+- **DM1-MIRROR-RESURRECT-INTERRUPT-SYNTHETIC-AUDIT:** This C040/C160/C038
+  fixture fabricates party, hand and chest state. It has no original DM1 data
+  input or M11/runtime caller; retain it only as explicit ReDMCSB coverage
+  until a source-bound interaction owner is recovered.
+
 - **DM1-MIRROR-INVENTORY-PORTRAIT-SYNTHETIC-AUDIT:** This C175 portrait-click
   guard fabricates party, hand and candidate state. It has no original DM1
   data input or M11/runtime caller; retain it only as explicit ReDMCSB coverage

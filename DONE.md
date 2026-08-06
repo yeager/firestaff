@@ -7,6 +7,14 @@
   passes with 333 assertions; the source object is absent from both M10 and
   M11 archives.
 
+# DM1 mirror resurrect-interrupt synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the fixed C040/C160/C038 party/hand/chest fixture from M10. It
+  has no original DM1 data input or M11/runtime caller; the generated mirror
+  regression continues to compile the source explicitly.
+- ✅ Verification: `dm1_v1_mirror_candidate_resurrect_confirm_inventory_interrupt_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 C175 inventory-portrait synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C175 portrait-click guard from M10. It
