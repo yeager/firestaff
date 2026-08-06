@@ -1465,7 +1465,9 @@ void dm2_v1_viewport_set_hud_hand_action_source(
         source->possession_index > 1u || source->left_or_right > 1u ||
         source->player_position > 3u || source->party_direction > 3u ||
         source->map_load_token == 0u || source->scene_control_hash == 0u ||
-        source->palette_hash == 0u ||
+        source->palette_hash == 0u || source->raw4_hash == 0u ||
+        source->source_rect.x < 0 || source->source_rect.y < 0 ||
+        source->source_rect.w <= 0 || source->source_rect.h <= 0 ||
         source->destination_rect.x < 0 || source->destination_rect.y < 0 ||
         source->destination_rect.w <= 0 || source->destination_rect.h <= 0 ||
         source->destination_rect.x + source->destination_rect.w >
@@ -8312,10 +8314,57 @@ static int dm2_v1_render_hud_hand_action_asset(DM2_V1_ViewportState *s)
         !pixels || width <= 0 || height <= 0 || stride < width) {
         return 0;
     }
+    if (s->asset_loader) {
+        const uint8_t *raw4;
+        size_t raw4_size = 0u;
+        uint32_t raw4_hash = 2166136261u;
+        DM2_V1_GdatRaw4BlitPlacement raw4_placement;
+
+        /* SKProject SkWinCore.cpp::DRAW_HAND_ACTION_ICONS (0x29EE:026C)
+         * calls DRAW_ICON_PICT_ENTRY.  Its QUERY_BLIT_RECT invocation uses
+         * the decoded source size and INTERFACE_GENERAL/0/RAW4/0 to choose
+         * the destination.  A host coordinate or scaling transform is not
+         * an alternative implementation of that call. */
+        raw4 = dm2_v1_asset_load_typed_sized(
+            s->asset_loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+            DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw4_size);
+        if (!raw4 || raw4_size == 0u ||
+            !dm2_v1_gdat_door_overlay_query_raw4_blit_placement(
+                s->asset_loader, source->rectno, width, height,
+                &raw4_placement)) {
+            return 0;
+        }
+        for (size_t i = 0u; i < raw4_size; ++i) {
+            /* Keep the boot receipt's identity algorithm so the M11
+             * consumer is bound to the same immutable RAW4 owner. */
+            raw4_hash ^= (uint32_t)raw4[i] + 0x9e3779b9u +
+                (raw4_hash << 6) + (raw4_hash >> 2);
+            if (raw4_hash == 0u) raw4_hash = 1u;
+        }
+        if (raw4_hash == 0u || source->raw4_hash != raw4_hash ||
+            source->source_rect.x != raw4_placement.source_x ||
+            source->source_rect.y != raw4_placement.source_y ||
+            source->source_rect.w != raw4_placement.destination.w ||
+            source->source_rect.h != raw4_placement.destination.h ||
+            source->destination_rect.x != raw4_placement.destination.x ||
+            source->destination_rect.y != raw4_placement.destination.y ||
+            source->destination_rect.w != raw4_placement.destination.w ||
+            source->destination_rect.h != raw4_placement.destination.h) {
+            return 0;
+        }
+    }
+    if (source->source_rect.x + source->source_rect.w > width ||
+        source->source_rect.y + source->source_rect.h > height ||
+        source->destination_rect.w != source->source_rect.w ||
+        source->destination_rect.h != source->source_rect.h) {
+        return 0;
+    }
     dm2_v1_blit_scaled_material_bitmap(
         s, s->framebuffer, s->fb_stride, source->destination_rect.x,
         source->destination_rect.y, source->destination_rect.w,
-        source->destination_rect.h, pixels, width, height, stride,
+        source->destination_rect.h,
+        pixels + source->source_rect.y * stride + source->source_rect.x,
+        source->source_rect.w, source->source_rect.h, stride,
         DM2_COLOR_TRANSPARENT, &s->gdat_interface_palette_consumed_count);
     memset(&request, 0, sizeof(request));
     request.valid = 1;
@@ -8334,7 +8383,7 @@ static int dm2_v1_render_hud_hand_action_asset(DM2_V1_ViewportState *s)
     request.transparent_color = DM2_COLOR_TRANSPARENT;
     request.colorkey_palette_index =
         request.palette16[request.transparent_color];
-    request.source_rect = (DM2_V1_ViewportRect){ 0, 0, width, height };
+    request.source_rect = source->source_rect;
     request.destination_rect = source->destination_rect;
     memset(&command, 0, sizeof(command));
     command.valid = 1;
@@ -9475,6 +9524,19 @@ static int dm2_v1_viewport_build_m11_frame_receipt(
           c->hud_hand_action_command.valid));
     out_receipt->m11_consume_frame = out_receipt->valid;
     return out_receipt->valid;
+}
+
+int dm2_v1_viewport_last_hud_hand_action_presentation_command(
+    const DM2_V1_ViewportState *s,
+    DM2_V1_ViewportHudPresentationCommand *out_command)
+{
+    if (!out_command) return 0;
+    memset(out_command, 0, sizeof(*out_command));
+    if (!s || !s->last_hud_hand_action_presentation_command.valid) {
+        return 0;
+    }
+    *out_command = s->last_hud_hand_action_presentation_command;
+    return 1;
 }
 
 int dm2_v1_gfx_fetch(int gdat_index,

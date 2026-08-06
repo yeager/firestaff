@@ -10,6 +10,7 @@
  */
 
 #include "dm2_v1_asset_loader.h"
+#include "dm2_v1_gdat_door_overlay_m11_command.h"
 #include "dm2_v1_inventory_panel.h"
 
 #include <stdio.h>
@@ -70,6 +71,9 @@ int main(void)
     unsigned int hand_count = 0u;
     unsigned int failure_count = 0u;
     uint32_t identity_hash = 2166136261u;
+    uint32_t raw4_hash = 2166136261u;
+    const uint8_t *raw4 = NULL;
+    size_t raw4_size = 0u;
 
     if (!load_canonical_graphics(&graphics, &graphics_size)) {
         puts("SKIP: no local canonical DM2 GRAPHICS.DAT");
@@ -83,6 +87,25 @@ int main(void)
         free(graphics);
         return 1;
     }
+    raw4 = dm2_v1_asset_load_typed_sized(
+        &loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &raw4_size);
+    if (!raw4 || raw4_size == 0u) {
+        fputs("FAIL: canonical HUD RAW4 table was not admitted\n", stderr);
+        dm2_v1_asset_loader_free(&loader);
+        free(graphics);
+        return 1;
+    }
+    for (size_t i = 0u; i < raw4_size; ++i) {
+        raw4_hash ^= raw4[i];
+        raw4_hash *= 16777619u;
+    }
+    if (raw4_hash == 0u) {
+        fputs("FAIL: canonical HUD RAW4 identity was empty\n", stderr);
+        dm2_v1_asset_loader_free(&loader);
+        free(graphics);
+        return 1;
+    }
 
     for (uint8_t possession = 0u; possession < 2u; ++possession) {
         for (uint8_t side = 0u; side < 2u; ++side) {
@@ -92,6 +115,7 @@ int main(void)
                     DM2_V1_InventoryPanelHudBlit blit;
                     DM2_V1_InventoryPanelHudSurface surface;
                     DM2_V1_InventoryPanelHudConsumptionReceipt consumed;
+                    DM2_V1_ViewportRect raw4_destination;
 
                     memset(&receipt, 0, sizeof(receipt));
                     memset(&blit, 0, sizeof(blit));
@@ -108,6 +132,24 @@ int main(void)
                         !receipt.identity_hash || receipt.format != DM2_IMG_FMT_IMG3 ||
                         receipt.decoded_width == 0u || receipt.decoded_height == 0u ||
                         receipt.decoded_width > 320u || receipt.decoded_height > 200u) {
+                        ++failure_count;
+                        continue;
+                    }
+                    /* SKProject SkWinCore.cpp::DRAW_HAND_ACTION_ICONS calls
+                     * DRAW_ICON_PICT_ENTRY, whose QUERY_BLIT_RECT path uses
+                     * the image dimensions and the original RAW4 table.  The
+                     * receipt must therefore resolve to an in-frame,
+                     * unscaled source destination before it can reach M11. */
+                    memset(&raw4_destination, 0, sizeof(raw4_destination));
+                    if (!dm2_v1_gdat_door_overlay_query_raw4_destination_rect(
+                            &loader, receipt.expanded_rect_index,
+                            receipt.decoded_width, receipt.decoded_height,
+                            &raw4_destination) ||
+                        raw4_destination.x < 0 || raw4_destination.y < 0 ||
+                        raw4_destination.w != (int)receipt.decoded_width ||
+                        raw4_destination.h != (int)receipt.decoded_height ||
+                        raw4_destination.x + raw4_destination.w > 320 ||
+                        raw4_destination.y + raw4_destination.h > 200) {
                         ++failure_count;
                         continue;
                     }
@@ -176,8 +218,9 @@ int main(void)
             }
         }
     }
-    printf("hand-routes=%u survey-frame=%s identity-hash=%08x\n",
-           hand_count, failure_count == 0u ? "PASS" : "FAIL", identity_hash);
+    printf("hand-routes=%u raw4-hash=%08x survey-frame=%s identity-hash=%08x\n",
+           hand_count, raw4_hash, failure_count == 0u ? "PASS" : "FAIL",
+           identity_hash);
     dm2_v1_asset_loader_free(&loader);
     free(graphics);
     if (failure_count != 0u || hand_count != 64u || identity_hash == 0u) {

@@ -150,6 +150,12 @@ typedef struct {
     uint8_t *hud_core_pixels[DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK + 1];
     int hud_core_w[DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK + 1];
     int hud_core_h[DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK + 1];
+    /* DRAW_HAND_ACTION_ICONS uses a different INTERFACE_GENERAL subcategory
+     * than static HUD chrome. Keep its four source images in a separate
+     * cache so entry 2..5 can never alias a logical chrome field. */
+    uint8_t *hud_hand_action_pixels[4];
+    int hud_hand_action_w[4];
+    int hud_hand_action_h[4];
     uint8_t *dialogue_box_pixels;
     int dialogue_box_w;
     int dialogue_box_h;
@@ -542,6 +548,9 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     }
     for (int i = 0; i <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK; ++i) {
         dm2_v1_asset_free_pixels(gfx->hud_core_pixels[i]);
+    }
+    for (int i = 0; i < 4; ++i) {
+        dm2_v1_asset_free_pixels(gfx->hud_hand_action_pixels[i]);
     }
     dm2_v1_asset_free_pixels(gfx->dialogue_box_pixels);
     dm2_v1_asset_free_pixels(gfx->startup_title_pixels);
@@ -10687,6 +10696,22 @@ int dm2_v1_boot_viewport_asset_fetch(void *user,
         cache_w = &gfx->creature_w[slot];
         cache_h = &gfx->creature_h[slot];
         gfx->creature_keys[slot] = gdat_index;
+    } else if (dm2_v1_viewport_hud_hand_action_graphic_address(
+                   gdat_index, &index, &field, &wall_button_key)) {
+        /* SKProject SkWinCore.cpp::DRAW_HAND_ACTION_ICONS passes
+         * (1, 4, (possession << 1) + side + 2) to DRAW_ICON_PICT_ENTRY.
+         * The private packed index carries that last entry only. */
+        int entry = wall_button_key;
+        int cache_slot = entry - 2;
+        if (cache_slot < 0 || cache_slot >= 4) {
+            return -1;
+        }
+        category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+        index = 4;
+        field = entry;
+        cache_pixels = &gfx->hud_hand_action_pixels[cache_slot];
+        cache_w = &gfx->hud_hand_action_w[cache_slot];
+        cache_h = &gfx->hud_hand_action_h[cache_slot];
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index <=
                    DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK) {
@@ -11045,6 +11070,11 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
         *out_field = direct_field
             ? (packed & DM2_V1_VIEWPORT_GFX_CREATURE_FIELD_MASK)
             : DM2_GDAT_IMG_MAP_CHIP;
+    } else if (dm2_v1_viewport_hud_hand_action_graphic_address(
+                   gdat_index, out_index, out_field, &packed)) {
+        *out_category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+        *out_index = 4;
+        *out_field = packed;
     } else if (gdat_index <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE &&
                DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_BASE - gdat_index <=
                    DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK) {

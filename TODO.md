@@ -22478,6 +22478,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     the HUD material plan. SKProject selects those hand backdrops dynamically
     through `INTERFACE_GENERAL/4` and `RECT_46..RECT_4d`; static `/3/2..6`
     keys and host coordinates could not represent that source route.
+  - 2026-08-06 follow-up: the production GDAT fetch and RAW4 crop route for
+    those four hand backdrops is now source-bound and fails closed. It remains
+    deliberately unwired from normal gameplay until the live original
+    champion formation, possession and hand-selection state is recovered;
+    M11 must not infer that tuple from party order, pointer position or a
+    Firestaff default.
   - 2026-08-06 follow-up: command dispatch now propagates a rejected
     source-GDAT image callback, so a failed title/menu blit aborts the
     presentation transaction instead of being reported as successfully drawn.

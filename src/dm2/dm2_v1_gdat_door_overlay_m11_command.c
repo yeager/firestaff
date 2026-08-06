@@ -144,7 +144,8 @@ static int query_raw4_blit_rect(const uint8_t *table, size_t table_size,
                                 uint16_t rect_number, int width, int height,
                                 int query_offset_x, int query_offset_y,
                                 int signed_rect, int override_mode,
-                                DM2_V1_DoorRawRect *out)
+                                DM2_V1_DoorRawRect *out,
+                                int *out_source_x, int *out_source_y)
 {
     DM2_V1_DoorRawRect current;
     DM2_V1_DoorRawRect clip = { -10000, -10000, 20000, 20000 };
@@ -209,12 +210,48 @@ static int query_raw4_blit_rect(const uint8_t *table, size_t table_size,
     {
         int dx = clip.x - out->x;
         int dy = clip.y - out->y;
+        if (out_source_x) *out_source_x = dx > 0 ? dx : 0;
+        if (out_source_y) *out_source_y = dy > 0 ? dy : 0;
         if (dx > 0) { out->x = clip.x; out->w = width - dx < clip.w ? width - dx : clip.w; }
         else out->w = width < dx + clip.w ? width : dx + clip.w;
         if (dy > 0) { out->y = clip.y; out->h = height - dy < clip.h ? height - dy : clip.h; }
         else out->h = height < dy + clip.h ? height : dy + clip.h;
     }
     return out->x >= 0 && out->y >= 0 && out->w > 0 && out->h > 0;
+}
+
+int dm2_v1_gdat_door_overlay_query_raw4_blit_placement(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t rect_number,
+    int image_width,
+    int image_height,
+    DM2_V1_GdatRaw4BlitPlacement *out_placement)
+{
+    const uint8_t *table;
+    size_t table_size = 0u;
+    DM2_V1_DoorRawRect rect;
+
+    if (!out_placement || image_width <= 0 || image_height <= 0) return 0;
+    memset(out_placement, 0, sizeof(*out_placement));
+    if (!loader || !dm2_v1_asset_loader_verify(loader)) return 0;
+    table = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
+        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
+    if (!table || !table_size ||
+        !query_raw4_blit_rect(table, table_size, rect_number,
+                              image_width, image_height,
+                              0, 0, 0, -1, &rect,
+                              &out_placement->source_x,
+                              &out_placement->source_y) ||
+        rect.x < 0 || rect.y < 0 || rect.w <= 0 || rect.h <= 0) {
+        memset(out_placement, 0, sizeof(*out_placement));
+        return 0;
+    }
+    out_placement->destination.x = rect.x;
+    out_placement->destination.y = rect.y;
+    out_placement->destination.w = rect.w;
+    out_placement->destination.h = rect.h;
+    return 1;
 }
 
 int dm2_v1_gdat_door_overlay_panel_rect_number(int view_square,
@@ -253,30 +290,18 @@ int dm2_v1_gdat_door_overlay_query_raw4_destination_rect(
     int image_height,
     DM2_V1_ViewportRect *out_rect)
 {
-    const uint8_t *table;
-    size_t table_size = 0u;
-    DM2_V1_DoorRawRect rect;
+    DM2_V1_GdatRaw4BlitPlacement placement;
 
     if (!out_rect || image_width <= 0 || image_height <= 0) return 0;
     out_rect->x = 0;
     out_rect->y = 0;
     out_rect->w = 0;
     out_rect->h = 0;
-    if (!loader || !dm2_v1_asset_loader_verify(loader)) return 0;
-    table = dm2_v1_asset_load_typed_sized(
-        loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,
-        DM2_GDAT_ENTRY_TYPE_RAW4, 0, &table_size);
-    if (!table || !table_size ||
-        !query_raw4_blit_rect(table, table_size, rect_number,
-                              image_width, image_height,
-                              0, 0, 0, -1, &rect) ||
-        rect.x < 0 || rect.y < 0 || rect.w <= 0 || rect.h <= 0) {
+    if (!dm2_v1_gdat_door_overlay_query_raw4_blit_placement(
+            loader, rect_number, image_width, image_height, &placement)) {
         return 0;
     }
-    out_rect->x = rect.x;
-    out_rect->y = rect.y;
-    out_rect->w = rect.w;
-    out_rect->h = rect.h;
+    *out_rect = placement.destination;
     return 1;
 }
 
@@ -334,7 +359,7 @@ static int bind_door_panel_geometry(
     if (!table || !table_size || !row ||
         !query_raw4_blit_rect(table, table_size, command->rect_number,
                              command->source_width, command->source_height,
-                             0, 0, 0, -1, &rect) ||
+                             0, 0, 0, -1, &rect, NULL, NULL) ||
         rect.x > INT16_MAX || rect.y > INT16_MAX ||
         rect.w > UINT16_MAX || rect.h > UINT16_MAX) {
         return 0;
@@ -415,7 +440,7 @@ static int bind_door_side_frame_geometry(
                               command->source_width, command->source_height,
                               offset_x, offset_y,
                               offset_x != 0 || offset_y != 0,
-                              side == 0 ? 4 : 3, &rect) ||
+                              side == 0 ? 4 : 3, &rect, NULL, NULL) ||
         rect.x > INT16_MAX || rect.y > INT16_MAX ||
         rect.w > UINT16_MAX || rect.h > UINT16_MAX) {
         return 0;

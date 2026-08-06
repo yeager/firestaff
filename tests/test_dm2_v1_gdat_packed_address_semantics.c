@@ -227,6 +227,8 @@ int main(void)
         .map_load_token = 42u,
         .scene_control_hash = 0x53434e45u,
         .palette_hash = 0x50414c31u,
+        .raw4_hash = 0x52415734u,
+        .source_rect = { 0, 0, 2, 2 },
         .destination_rect = { 24, 170, 2, 2 }
     };
     dm2_v1_viewport_set_hud_hand_action_source(&viewport, &hand_action_source);
@@ -507,6 +509,8 @@ int main(void)
         .map_load_token = 42u,
         .scene_control_hash = 0x53434e45u,
         .palette_hash = 0x50414c31u,
+        .raw4_hash = 0x52415734u,
+        .source_rect = { 0, 0, 2, 2 },
         .destination_rect = { 24, 170, 2, 2 }
     };
     dm2_v1_viewport_set_hud_hand_action_source(&viewport, &hand_action_source);

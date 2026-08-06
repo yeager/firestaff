@@ -733,6 +733,12 @@ typedef struct {
     uint32_t map_load_token;
     uint32_t scene_control_hash;
     uint32_t palette_hash;
+    /* Hash of INTERFACE_GENERAL/0/RAW4/0.  Production M11 frames verify
+     * this against the active original layout table before they accept the
+     * supplied destination. */
+    uint32_t raw4_hash;
+    /* Exact source crop returned by RAW4 QUERY_BLIT_RECT. */
+    DM2_V1_ViewportRect source_rect;
     DM2_V1_ViewportRect destination_rect;
 } DM2_V1_HudHandActionSource;
 

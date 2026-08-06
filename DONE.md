@@ -52301,6 +52301,22 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   `DRAW_HAND_ACTION_ICONS` chooses its `INTERFACE_GENERAL/4` image and
   `RECT_46..RECT_4d` destination from live hand, formation and facing state;
   only that separately source-gated route may now render a hand backdrop.
+
+# 2026-08-06 DM2 HUD hand-action GDAT/RAW4 delivery
+
+- ✅ Completed the previously unconnected production asset route for
+  `SkWinCore.cpp::DRAW_HAND_ACTION_ICONS`: the boot fetcher now resolves only
+  `INTERFACE_GENERAL/4/dtImage/2..5`, with a separate four-entry cache rather
+  than aliasing static HUD chrome. The viewport now replays the original
+  RAW4 `QUERY_BLIT_RECT` placement, including source cropping, and rejects a
+  stale table hash, altered source crop or altered destination before any
+  pixels are drawn. `test_dm2_v1_inventory_gdat_real_data` verifies all 64
+  possession/side/formation/facing routes in the mounted PC-DOS corpus;
+  `test_dm2_v1_gdat_hud_m11_command_real_data` drives a real hand image
+  through the viewport and proves an altered coordinate is blocked. The
+  public hand-action presentation getter is now implemented as a copy-only
+  receipt accessor. This does not invent live hand state: gameplay remains
+  no-draw until the original formation and possession owner is available.
 # 2026-08-06 Nexus HUD DM.BIN disassembly anchor
 
 - ✅ The real-data HUD regression now verifies the `yam\\menuctrl.c` owner

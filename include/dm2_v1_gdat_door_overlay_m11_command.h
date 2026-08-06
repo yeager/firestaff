@@ -101,6 +101,20 @@ int dm2_v1_gdat_door_overlay_panel_rect_number(int view_square,
                                                uint16_t *out_rect_number);
 int dm2_v1_gdat_door_overlay_button_rect_number(int view_square,
                                                 uint16_t *out_rect_number);
+/* Bounded QUERY_BLIT_RECT result.  DRAW_ICON_PICT_ENTRY must preserve the
+ * source crop as well as its RAW4-selected destination; a clipped image is
+ * never rescaled to fill its destination rectangle. */
+typedef struct {
+    int source_x;
+    int source_y;
+    DM2_V1_ViewportRect destination;
+} DM2_V1_GdatRaw4BlitPlacement;
+int dm2_v1_gdat_door_overlay_query_raw4_blit_placement(
+    const DM2_V1_AssetLoader *loader,
+    uint16_t rect_number,
+    int image_width,
+    int image_height,
+    DM2_V1_GdatRaw4BlitPlacement *out_placement);
 /* Query INTERFACE_GENERAL/0/RAW4/0 for a destination rectangle using the source
  * image's dimensions. This is the same RAW4 route DRAW_DOOR/DRAW_DOOR_FRAMES
  * uses; failure leaves the caller's fallback rectangle unchanged. */
