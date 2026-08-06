@@ -1454,6 +1454,78 @@ int dm2_v1_load_gdat_entries_receipt(
     return 1;
 }
 
+int dm2_v1_gdat_dyn4_selection_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint32_t resource_id,
+    DM2_V1_GdatDyn4SelectionReceipt *out_receipt)
+{
+    uint16_t i;
+    uint32_t hash = 2166136261u;
+    uint8_t category = (uint8_t)(resource_id >> 24);
+    uint8_t index = (uint8_t)(resource_id >> 16);
+    uint8_t type = (uint8_t)(resource_id >> 8);
+    uint8_t field = (uint8_t)resource_id;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!loader || !loader->loaded || !loader->entries ||
+        !loader->raw_offsets || !loader->raw_sizes) {
+        return 0;
+    }
+
+    /* SKProject SKULLWIN/c_gdatfile.cpp::DM2_QUERY_NEXT_GDAT_ENTRY
+     * (lines 41-75, 98-128, 202-217): each descriptor byte is exact unless
+     * it is 0xff, in which case that dimension spans the original table.
+     * DM2_LOAD_DYN4 (lines 1345-1351) omits scalar dtWordValue/
+     * dtImageOffset rows and high-bit data indexes before it marks the
+     * dynamic cache. */
+    for (i = 0; i < loader->entry_count; ++i) {
+        const DM2_V1_GdatEntry *entry = &loader->entries[i];
+        uint16_t raw_index;
+        uint32_t raw_length = 0u;
+
+        if ((category != 0xffu && entry->cls1 != category) ||
+            (index != 0xffu && entry->cls2 != index) ||
+            (type != 0xffu && entry->cls3 != type) ||
+            (field != 0xffu && entry->cls4 != field)) {
+            continue;
+        }
+        ++out_receipt->matched_entry_count;
+        if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_WORD_VALUE ||
+            entry->cls3 == DM2_GDAT_ENTRY_TYPE_IMAGE_OFFSET) {
+            ++out_receipt->scalar_entry_count;
+            continue;
+        }
+        if ((entry->data_index & 0x8000u) != 0u) {
+            ++out_receipt->high_bit_data_index_count;
+            continue;
+        }
+        raw_index = entry->data_index;
+        if (!dm2_gdat_raw_bounds(loader, raw_index, NULL, &raw_length)) {
+            ++out_receipt->rejected_raw_count;
+            continue;
+        }
+        ++out_receipt->raw_loadable_entry_count;
+        if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_SOUND) {
+            ++out_receipt->sound_entry_count;
+        }
+        out_receipt->payload_bytes += raw_length;
+        hash = (hash ^ entry->cls1) * 16777619u;
+        hash = (hash ^ entry->cls2) * 16777619u;
+        hash = (hash ^ entry->cls3) * 16777619u;
+        hash = (hash ^ entry->cls4) * 16777619u;
+        hash = (hash ^ raw_index) * 16777619u;
+        hash = (hash ^ raw_length) * 16777619u;
+    }
+    out_receipt->valid = 1u;
+    out_receipt->category = category;
+    out_receipt->index = index;
+    out_receipt->type = type;
+    out_receipt->field = field;
+    out_receipt->receipt_hash = hash ? hash : 1u;
+    return 1;
+}
+
 int dm2_v1_query_next_gdat_entry(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_GdatEntryIterator *iterator,

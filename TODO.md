@@ -27265,8 +27265,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `c_loadlevel.cpp:604-611` truncates that value to `0xff` and queues
   `DM2_MARK_DYN_LOAD(0x16ffffff)` before `c_hero.cpp` reaches
   `REVIVE_PLAYER`; direct `CHAMPIONS/255` text/stat rows are absent from the
-  on-disk GDAT. Live champion selection remains blocked until that original
-  dynamic-GDAT load, event preconditions, possession transfer and
+  on-disk GDAT. The read-only first DYN4 selection pass is now verified
+  against all 277 original category-0x16 rows (including 21 sound rows), but
+  no dynamic cache or payload materialisation exists yet. Live champion
+  selection remains blocked until that original dynamic-GDAT load, event
+  preconditions, possession transfer and
   session-state updates are all connected. Do not treat a marker receipt as
   a playable New Game path.
 

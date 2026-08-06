@@ -425,6 +425,27 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_GdatLoadEntriesReceipt;
 
+/* Read-only first-pass selection made by DM2_LOAD_DYN4 for one six-byte
+ * DM2_MARK_DYN_LOAD descriptor.  A selector byte of 0xff means "all" in
+ * the original enumerator.  This receipt deliberately reports only source
+ * rows and raw bytes already inside GRAPHICS.DAT: it neither allocates a
+ * dynamic GDAT cache nor materializes a host-side substitute. */
+typedef struct {
+    uint8_t valid;
+    uint8_t category;
+    uint8_t index;
+    uint8_t type;
+    uint8_t field;
+    uint16_t matched_entry_count;
+    uint16_t raw_loadable_entry_count;
+    uint16_t scalar_entry_count;
+    uint16_t high_bit_data_index_count;
+    uint16_t sound_entry_count;
+    uint16_t rejected_raw_count;
+    uint32_t payload_bytes;
+    uint32_t receipt_hash;
+} DM2_V1_GdatDyn4SelectionReceipt;
+
 typedef struct {
     uint16_t cursor;
     int category_first;
@@ -885,6 +906,13 @@ int dm2_v1_load_ent1_receipt(
 int dm2_v1_load_gdat_entries_receipt(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_GdatLoadEntriesReceipt *out_receipt);
+/* Source: SKProject SKULLWIN/c_loadlevel.cpp::DM2_MARK_DYN_LOAD and
+ * c_gdatfile.cpp::DM2_LOAD_DYN4 (first marking pass).  `resource_id` uses
+ * the original byte order: category/index/type/field. */
+int dm2_v1_gdat_dyn4_selection_receipt(
+    const DM2_V1_AssetLoader *loader,
+    uint32_t resource_id,
+    DM2_V1_GdatDyn4SelectionReceipt *out_receipt);
 int dm2_v1_query_next_gdat_entry(
     const DM2_V1_AssetLoader *loader,
     DM2_V1_GdatEntryIterator *iterator,

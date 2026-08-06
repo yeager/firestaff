@@ -52951,6 +52951,16 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   all sixteen roots. This replaces the unsafe assumption that `0x1ff` was a
   static `CHAMPIONS` GDAT index. Dynamic GDAT materialisation and the complete
   `GAME_LOAD` selection path remain deliberately blocked.
+
+- ✅ Added a read-only, source-locked first-pass receipt for the dynamic GDAT
+  selector `0x16ffffff`. It follows SKProject
+  `c_gdatfile.cpp::DM2_QUERY_NEXT_GDAT_ENTRY` wildcard semantics and
+  `DM2_LOAD_DYN4`'s scalar/high-bit exclusions without allocating a cache or
+  writing a file. The canonical PC `GRAPHICS.DAT` regression fixes the real
+  result at 277 matched and loadable rows, 221878 payload bytes and 21 sound
+  rows (`bcb603ef`). This verifies selection only: source-owned DYN4 cache
+  materialisation, sound state and the `GAME_LOAD` champion path remain
+  blocked.
 # 2026-08-06 Nexus mixed extracted/ISO runtime source
 
 - ✅ `nexus_v1_init()` now retains the hash-verified extracted corpus as the
