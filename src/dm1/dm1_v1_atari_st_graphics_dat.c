@@ -1,6 +1,8 @@
 #include "dm1_v1_atari_st_graphics_dat.h"
 #include "dm1_v1_graphics_loader_pc34_compat.h"
+#include "dm1_v1_legacy_graphics_dat.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 static uint16_t be16(const uint8_t *p)
@@ -56,4 +58,33 @@ int dm1_v1_atari_st_graphics_read(const DM1_V1_AtariStGraphicsDat *dat,
             out, record->expanded_size);
         return decoded == (int)record->expanded_size ? decoded : 0;
     }
+}
+
+int dm1_v1_atari_st_graphics_decode(const DM1_V1_AtariStGraphicsDat *dat,
+                                    uint16_t index, uint8_t *indexed_pixels,
+                                    size_t pixel_capacity,
+                                    uint16_t *out_width,
+                                    uint16_t *out_height)
+{
+    const DM1_V1_AtariStGraphic *record;
+    uint8_t *item;
+    int decoded;
+
+    if (!dat || !indexed_pixels || index >= DM1_V1_ATARI_ST_GRAPHICS_COUNT)
+        return 0;
+    record = &dat->records[index];
+    if (record->expanded_size < 4u) return 0;
+    item = (uint8_t *)malloc(record->expanded_size);
+    if (!item) return 0;
+    decoded = dm1_v1_atari_st_graphics_read(
+        dat, index, item, record->expanded_size);
+    if (decoded != (int)record->expanded_size) {
+        free(item);
+        return 0;
+    }
+    decoded = dm1_v1_legacy_graphics_decode_item(
+        item, record->expanded_size, 1, indexed_pixels, pixel_capacity,
+        out_width, out_height);
+    free(item);
+    return decoded;
 }

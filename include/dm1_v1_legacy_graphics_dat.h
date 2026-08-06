@@ -30,6 +30,16 @@ int dm1_v1_legacy_graphics_decode(const uint8_t *data, size_t size,
                                   size_t pixel_capacity,
                                   uint16_t *out_width, uint16_t *out_height);
 
+/* Decode one already-bounded original IMG1/IMG2 record. This is shared by
+ * the 575-record FM Towns/Amiga container and the 563-record Atari ST
+ * DMCSB1 container after its Atari-LZW envelope has been removed. */
+int dm1_v1_legacy_graphics_decode_item(const uint8_t *item, size_t item_size,
+                                       int big_endian,
+                                       uint8_t *indexed_pixels,
+                                       size_t pixel_capacity,
+                                       uint16_t *out_width,
+                                       uint16_t *out_height);
+
 #ifdef __cplusplus
 }
 #endif

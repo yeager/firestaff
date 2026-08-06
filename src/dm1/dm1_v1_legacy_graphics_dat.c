@@ -118,16 +118,19 @@ static int read_nibble_value(const uint8_t *data, size_t offset, size_t length,
  * documented by DMWeb's data-files page and ReDMCSB IMAGE2.C.  IMG1 uses a
  * big-endian width/height header; IMG2 uses little endian.  The pixel stream
  * itself is identical on both targets. */
-int dm1_v1_legacy_graphics_decode(const uint8_t *data, size_t size, int be,
-                                  uint16_t index, uint8_t *pixels,
-                                  size_t capacity, uint16_t *out_width,
-                                  uint16_t *out_height)
+int dm1_v1_legacy_graphics_decode_item(const uint8_t *data, size_t size,
+                                       int be, uint8_t *pixels,
+                                       size_t capacity, uint16_t *out_width,
+                                       uint16_t *out_height)
 {
-    size_t offset, length, nibble_pos = 0u, pos = 0u, total, count, i;
+    size_t offset = 0u, length = size, nibble_pos = 0u, pos = 0u;
+    size_t total, count, i;
     uint16_t width, height;
-    if (!pixels || !dm1_v1_legacy_graphics_query(data, size, be, index,
-                                                  &width, &height) ||
-        !record_bounds(data, size, be, index, &offset, &length)) return 0;
+    if (!data || !pixels || size < 4u) return 0;
+    width = rd16(data, be);
+    height = rd16(data + 2u, be);
+    if (width == 0u || height == 0u || width > 640u || height > 400u ||
+        (size_t)width * height > 1024u * 1024u) return 0;
     total = (size_t)width * height;
     if (capacity < total) return 0;
     memset(pixels, 0, total);
@@ -229,4 +232,18 @@ int dm1_v1_legacy_graphics_decode(const uint8_t *data, size_t size, int be,
     if (out_width) *out_width = width;
     if (out_height) *out_height = height;
     return 1;
+}
+
+int dm1_v1_legacy_graphics_decode(const uint8_t *data, size_t size, int be,
+                                  uint16_t index, uint8_t *pixels,
+                                  size_t capacity, uint16_t *out_width,
+                                  uint16_t *out_height)
+{
+    size_t offset;
+    size_t length;
+    if (!pixels || !dm1_v1_legacy_graphics_query(data, size, be, index,
+                                                  out_width, out_height) ||
+        !record_bounds(data, size, be, index, &offset, &length)) return 0;
+    return dm1_v1_legacy_graphics_decode_item(
+        data + offset, length, be, pixels, capacity, out_width, out_height);
 }

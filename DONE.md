@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 DM1 Atari ST IMG1 decoder: the real 563-record DMCSB1
+  Atari-LZW/raw handoff now feeds a shared original IMG1/IMG2 nibble decoder.
+  The decoder preserves the Atari big-endian dimensions and rejects invalid
+  bounds; it does not reinterpret records through the PC34 IMG3 path. Focused
+  Atari and legacy graphics tests pass. Runtime launch remains gated until
+  the extracted STX record is joined to the Atari dungeon/runtime owner.
+
 - ✅ 2026-08-06 DM1 V2 unknown-field VFX fail-closed: removed the last
   success-valued no-op fallback from the extended field effect API. Unknown
   pits/stairs/teleporter/fake-wall families now return no-draw, matching the

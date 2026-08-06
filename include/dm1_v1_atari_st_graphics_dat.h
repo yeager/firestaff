@@ -32,6 +32,14 @@ int dm1_v1_atari_st_graphics_read(const DM1_V1_AtariStGraphicsDat *dat,
                                   uint16_t index, uint8_t *out,
                                   size_t capacity);
 
+/* Decode one real Atari ST IMG1 record after the container's Atari-LZW
+ * envelope. Atari ST GRAPHICS.DAT stores IMG1's big-endian dimensions. */
+int dm1_v1_atari_st_graphics_decode(const DM1_V1_AtariStGraphicsDat *dat,
+                                    uint16_t index, uint8_t *indexed_pixels,
+                                    size_t pixel_capacity,
+                                    uint16_t *out_width,
+                                    uint16_t *out_height);
+
 #ifdef __cplusplus
 }
 #endif

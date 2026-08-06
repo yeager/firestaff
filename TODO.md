@@ -342,9 +342,11 @@
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1
   big-endian 563-record table and Atari-LZW/raw record handoff. The production
-  M11 renderer still lacks the final source-bound IMG1/IMG2 interpretation
-  after that handoff. Keep these variants launch-blocked for gameplay rather
-  than routing their bytes through the PC34 loader. 2026-08-06: the
+  M11 renderer now has a source-bound Atari IMG1 decode API after that
+  handoff; the shared decoder uses the same original nibble stream as the
+  FM Towns/Amiga path. Keep these variants launch-blocked for gameplay rather
+  than routing their bytes through the PC34 loader until the decoded record is
+  joined to the Atari dungeon/runtime owner. 2026-08-06: the
   endian-aware legacy path now uses the DMWeb bitmap index table and decodes
   all 532 real DM1 FM Towns IMG2 and Amiga IMG1 records from local corpora;
   non-raster code, sound, text, font and unused records fail closed before
