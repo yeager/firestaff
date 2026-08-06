@@ -395,6 +395,41 @@ static void test_fmtowns_startup_surface_decode(void)
 #undef CHECK_FMTOWNS_HUD_SURFACE
 }
 
+static void test_fmtowns_authenticated_startup_session(void)
+{
+    const char *data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_DATA_DIR");
+    CSB_V1_BootProfile profile;
+    CSB_V1_StartupRuntimeAssetSession_PC34 session;
+
+    if (!data_dir || data_dir[0] == '\0') {
+        printf("  SKIP: FIRESTAFF_CSB_FMTOWNS_DATA_DIR not set\n");
+        return;
+    }
+    csb_v1_boot_profile_init(&profile);
+    csb_v1_boot_startup_runtime_asset_session_init_pc34(&session);
+    /* F31E starts CHTWE.EXP after SWITCHTW.  Its C001--C005 and C017/C040
+     * records must be bound from the authenticated CDATA pair, rather than
+     * from the same-named stale cache files.  ReDMCSB F31E/MKFF.BAT links
+     * STARTUP1.C, STARTUP2.C, PANEL.C and DRAWVIEW.C into that program. */
+    CHECK(csb_v1_boot_scan_assets(&profile, data_dir) == 0 &&
+              profile.variant_id == CSB_V1_VARIANT_FMTOWNS_EN &&
+              profile.assets_verified && profile.graphics_verified &&
+              profile.dungeon_verified,
+          "FM Towns CDATA pair scans as the authenticated F31E profile");
+    if (profile.variant_id == CSB_V1_VARIANT_FMTOWNS_EN &&
+        profile.assets_verified) {
+        CHECK(csb_v1_boot_startup_runtime_asset_session_open_pc34(
+                  &profile, &session) && session.valid &&
+                  session.full_startup_ready &&
+                  session.surfaces.entrance_screen_ready &&
+                  session.surfaces.hud_surfaces_ready &&
+                  session.hud_assets_bound,
+              "FM Towns game handoff opens real entrance and HUD source surfaces");
+    }
+    csb_v1_boot_startup_runtime_asset_session_release_pc34(&session);
+    csb_v1_boot_cleanup(&profile);
+}
+
 int main(void)
 {
     printf("=== CSB V1 Boot Profile Smoke Test ===\n\n");
@@ -409,6 +444,7 @@ int main(void)
     test_source_evidence();
     test_fmtowns_media_registry();
     test_fmtowns_startup_surface_decode();
+    test_fmtowns_authenticated_startup_session();
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
 }
