@@ -173,6 +173,19 @@ def verify(repo: Path) -> list[str]:
         if guard not in m11:
             errors.append(f"M11 source gate missing: {guard}")
 
+    runtime_path = repo / "src/dm2/dm2_v1_runtime.c"
+    if not runtime_path.exists():
+        errors.append(f"missing {runtime_path}")
+        return errors
+    runtime = runtime_path.read_text(encoding="utf-8")
+    for forbidden in (
+            "dm2_runtime_process_3d_timer",
+            "dm2_runtime_actuate_pitfall",
+            "dm2_runtime_actuate_door",
+    ):
+        if forbidden in runtime:
+            errors.append(f"runtime retains timer-byte mutation study: {forbidden}")
+
     viewport_path = repo / "src/dm2/dm2_v1_viewport_renderer.c"
     if not viewport_path.exists():
         errors.append(f"missing {viewport_path}")

@@ -3678,6 +3678,11 @@ level or consumer bindings.
   `MOVE_RECORD_ROTATE` unbound: a record-pool address or timer coordinate is
   not a substitute for the original `c_hero` inventory or `MOVE_RECORD_TO`
   link/wake/sleep/party transaction.
+  **2026-08-06 runtime-cleanup update:** removed the uncalled PROCESS_3D,
+  pitfall and door timer studies from the production runtime translation
+  unit. They derived record relocation or square mutation from raw timer
+  fields; the archive boundary now rejects their return. The remaining source
+  work still requires the full record, payload and follow-up-timer handoff.
   The M11 Action-door shortcut now follows the same rule: it cannot rewrite
   a G1 tile from a coordinate-only query while the live DB0 door record,
   direction, collision, sound and follow-up timer transaction are absent.

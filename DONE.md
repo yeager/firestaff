@@ -2342,6 +2342,16 @@
   material-gate test and real PC-DOS GDAT viewport-plan regression pass. No
   game data was copied, unpacked or modified.
 
+- ✅ 2026-08-06 DM2 timer-byte mutation cleanup: removed the uncalled
+  PROCESS_3D, pitfall and door timer studies from `dm2_v1_runtime.c`. Each
+  could relocate a record or mutate a dungeon square directly from timer
+  bytes despite the absent DB3/DB14/DB0 transaction. The production-boundary
+  verifier now rejects their return; source timers remain consumed
+  fail-closed until their complete original owners are restored. Verification:
+  production-boundary verifier, `firestaff_dm2` build and real PC-DOS G1
+  viewport-plan regression pass. No game data was copied, unpacked or
+  modified.
+
 - ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now
   records a completed party/leader-cache clear only after its retained
   source-save projection is observed empty. M11 requires that postcondition

@@ -4612,44 +4612,6 @@ static int dm2_runtime_spell_timer_delegate(void *user,
 /* 0x19 cloud and 0x1D/0x1E missile — delegated to spell timer handlers via
  * dm2_runtime_spell_timer_delegate. */
 
-/*
- * dm2_runtime_process_3d_timer — 0x3C/0x3D timer handler.
- * Source: skevent.cpp:2570 PROCESS_TIMER_3D.
- * Moves a record from "nowhere" (-3,0) to the timer's (x,y) coordinates.
- * Timer fields: value_a = XcoordB|YcoordB, value_b = record handle (id8).
- * If type==0x3C and move succeeds, queues teleport noise (not yet wired).
- */
-static int dm2_runtime_process_3d_timer(void *user,
-                                        const DM2_V1_SourceTimer *timer,
-                                        uint16_t source_index,
-                                        DM2_V1_ProceedTimersReceipt *receipt) {
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    DM2_V1_MoveRecordToReceipt move_rc;
-    int16_t dest_x, dest_y, record_handle;
-    int move_ok;
-
-    (void)source_index; (void)receipt;
-    rt->actuator_tile_timers++;
-
-    if (!rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data)
-        return 1;
-
-    dest_x = (int16_t)(timer->value_a & 0xFF);
-    dest_y = (int16_t)((timer->value_a >> 8) & 0xFF);
-    record_handle = timer->value_b;
-
-    move_ok = dm2_v1_move_record_to(
-        &rt->record_pools,
-        (DM2_V1_DungeonData *)rt->boot->dungeon_data,
-        &rt->timer_queue,
-        record_handle, -3, 0, dest_x, dest_y, 0,
-        rt->dungeon_level, (uint32_t)rt->tick_count,
-        &move_rc);
-
-    (void)move_ok;
-    return 1;
-}
-
 /* 0x46 light, 0x47 hero ench flag, 0x48 ench power, 0x4B poison —
  * delegated to spell timer handlers via dm2_runtime_spell_timer_delegate. */
 
@@ -4997,152 +4959,6 @@ static int dm2_runtime_actuate_wall_mecha(void *user,
 }
 
 /*
- * dm2_runtime_actuate_pitfall — DM2-owned class-2 handler for the 0x04
- * actuator tile subdispatch (Lane B, cycle 8).
- *
- * skproject/SKULLWIN/c_tim_proc.cpp:4216 dispatches square class 2 to
- * DM2_ACTUATE_PITFALL (c_tim_proc.cpp:3707).  The source operates on the
- * byte-square at (getxA, getyA) and toggles the pit open/closed state.
- * Firestaff's bounded slice treats value_b bit 0 as the target direction:
- *   0 -> set square type to DM2_SQUARE_FLOOR (close the pit)
- *   1 -> set square type to DM2_SQUARE_PIT   (open the pit)
- * Only the lower 5 bits of the raw square byte are modified; the actuator
- * class in bits 5-7 is preserved.  Squares that are neither FLOOR nor PIT
- * are rejected (fail-closed).  Party damage, sound, and the full CCM tail
- * remain unbound.
- *
- * Source: skproject/SKULLWIN/c_tim_proc.cpp:4216 (class-2 dispatch)
- *         skproject/SKULLWIN/c_tim_proc.cpp:3707 (DM2_ACTUATE_PITFALL)
- *         ReDMCSB DEFS.H:385-390 (DM2_SQUARE_* type constants)
- */
-static int dm2_runtime_actuate_pitfall(void *user,
-                                       const DM2_V1_SourceTimer *timer,
-                                       uint16_t source_index,
-                                       DM2_V1_ProceedTimersReceipt *receipt)
-{
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    DM2_V1_DungeonData *dungeon;
-    int x;
-    int y;
-    int raw;
-    int direction;
-    int target_type;
-    uint16_t new_raw;
-
-    (void)source_index;
-    (void)receipt;
-
-    rt->actuator_tile_timers++;
-    rt->actuator_tile_pitfall++;
-
-    if (timer == NULL || rt->boot == NULL || rt->boot->dungeon_data == NULL) {
-        rt->actuator_tile_pitfall_rejected++;
-        return 1;
-    }
-    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-
-    x = (int)(int8_t)(timer->value_a & 0xff);
-    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
-
-    raw = dm2_v1_dungeon_get_tile_raw(dungeon, rt->dungeon_level, x, y);
-    if (raw < 0) {
-        rt->actuator_tile_pitfall_rejected++;
-        return 1;
-    }
-
-    /* Source direction inference: value_b bit 0 selects open vs close. */
-    direction = (int)(timer->value_b & 0x1);
-    target_type = direction ? DM2_SQUARE_PIT : DM2_SQUARE_FLOOR;
-
-    /* Bounded mutation: only toggle between FLOOR and PIT. */
-    if ((raw & DM2_SQUARE_TYPE_MASK) != DM2_SQUARE_FLOOR &&
-        (raw & DM2_SQUARE_TYPE_MASK) != DM2_SQUARE_PIT) {
-        rt->actuator_tile_pitfall_rejected++;
-        return 1;
-    }
-
-    new_raw = (uint16_t)((raw & (uint16_t)~DM2_SQUARE_TYPE_MASK) |
-                         (target_type & DM2_SQUARE_TYPE_MASK));
-    if (dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level, x, y,
-                                    new_raw) != 0) {
-        rt->actuator_tile_pitfall_rejected++;
-        return 1;
-    }
-    rt->actuator_tile_pitfall_toggles++;
-    return 1;
-}
-
-/*
- * dm2_runtime_actuate_door — DM2-owned class-4 handler for the 0x04 actuator
- * tile subdispatch (Lane B, cycle 8).
- *
- * skproject/SKULLWIN/c_tim_proc.cpp:4218 dispatches square class 4 to
- * DM2_ACTUATE_DOOR (c_tim_proc.cpp:3744).  The bounded Firestaff slice reads
- * the door square, applies one ReDMCSB TIMELINE.C toggle step in the
- * direction encoded by value_b bit 0, and writes the new state back.  The
- * full source derives direction from the door-record word[2] bits 9/10 and
- * byte[3] bit 0x4; decoding those from the thing record is left for a
- * follow-up.  Party damage on close, door-record direction decoding, and
- * sound dispatch remain unbound.
- *
- * Source: skproject/SKULLWIN/c_tim_proc.cpp:4218 (class-4 dispatch)
- *         skproject/SKULLWIN/c_tim_proc.cpp:3744 (DM2_ACTUATE_DOOR)
- *         ReDMCSB TIMELINE.C:750-810 (door state transitions)
- */
-static int dm2_runtime_actuate_door(void *user,
-                                    const DM2_V1_SourceTimer *timer,
-                                    uint16_t source_index,
-                                    DM2_V1_ProceedTimersReceipt *receipt)
-{
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    DM2_V1_DungeonData *dungeon;
-    int x;
-    int y;
-    int raw;
-    int current_state;
-    int direction;
-    int new_state;
-
-    (void)source_index;
-    (void)receipt;
-
-    rt->actuator_tile_timers++;
-    rt->actuator_tile_door++;
-
-    if (timer == NULL || rt->boot == NULL || rt->boot->dungeon_data == NULL) {
-        rt->actuator_tile_door_rejected++;
-        return 1;
-    }
-    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-
-    x = (int)(int8_t)(timer->value_a & 0xff);
-    y = (int)(int8_t)((timer->value_a >> 8) & 0xff);
-
-    raw = dm2_v1_dungeon_get_tile_raw(dungeon, rt->dungeon_level, x, y);
-    if (raw < 0) {
-        rt->actuator_tile_door_rejected++;
-        return 1;
-    }
-
-    current_state = dm2_door_get_state((uint16_t)raw);
-    if (current_state == DM2_DOOR_STATE_DESTROYED) {
-        return 1;
-    }
-
-    direction = (int)(timer->value_b & 0x1);
-    new_state = dm2_door_apply_toggle_step(current_state, direction);
-
-    raw = (int)dm2_door_set_state((uint16_t)raw, new_state);
-    if (dm2_v1_dungeon_set_tile_raw(dungeon, rt->dungeon_level, x, y,
-                                    (uint16_t)raw) != 0) {
-        rt->actuator_tile_door_rejected++;
-        return 1;
-    }
-    rt->actuator_tile_door_mutations++;
-    return 1;
-}
-
-/*
  * dm2_runtime_actuate_teleporter — DM2-owned class-5 handler for the 0x04
  * actuator tile subdispatch (Lane B, cycle 8).
  *
@@ -5410,13 +5226,9 @@ void dm2_v1_runtime_tick(void) {
         dispatcher.tile_class_at = dm2_runtime_tile_class_at;
         /* No dispatcher.actuator_tile[] binding until the source transaction
          * above exists. */
-        /* Keep the bounded transcriptions compiled as source studies for
-         * their focused regressions, but make their non-registration explicit
-         * to both readers and strict warning builds.  These expressions take
-         * no action and do not install a callback. */
+        /* Keep only the remaining bounded source studies explicit. These
+         * expressions take no action and do not install a callback. */
         (void)dm2_runtime_actuate_wall_mecha;
-        (void)dm2_runtime_actuate_pitfall;
-        (void)dm2_runtime_actuate_door;
         (void)dm2_runtime_actuate_teleporter;
         (void)dm2_runtime_actuate_trickwall;
         /* Ornament animation/noise both mutate or requeue through an
@@ -5455,7 +5267,6 @@ void dm2_v1_runtime_tick(void) {
          * link, wake/sleep and party transaction.  Their old direct writes
          * could relocate original records or the party from timer bytes
          * alone, so both stay unbound until that source owner is present. */
-        (void)dm2_runtime_process_3d_timer;
         (void)dm2_runtime_ornate_noise_timer;
         (void)dm2_runtime_move_record_rotate_timer;
         /* Spell-effect timer delegation: 0x46 light, 0x47 hero ench flag,
