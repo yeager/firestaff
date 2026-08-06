@@ -895,6 +895,17 @@
   blit from entering production. Real D3C bitmap ownership remains open.
 - ✅ No game data was copied or committed.
 
+# DM1 D2C center-wall synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free
+  `dm1_v1_viewport_d2c_center_wall_composition_pc34_compat.c` pixel-trace
+  helper from the broad M10 source glob; caller search found only its
+  dedicated test.
+- ✅ The test target now compiles the audit source explicitly, retaining the
+  ReDMCSB D2C ordering/C10 contract while preventing synthetic pixels from
+  entering production. Real D2C bitmap ownership remains open.
+- ✅ No game data was copied or committed.
+
 # CSB FM Towns graphics real-cache regression (2026-08-06)
 
 - ✅ `test_csb_v1_fmtowns_graphics_dat` now takes

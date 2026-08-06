@@ -26,6 +26,11 @@
   input. Keep the fixture test-only until the live D3C consumer is bound to
   real `GRAPHICS.DAT` records and capture evidence.
 
+- **DM1-D2C-CENTER-WALL-SYNTHETIC-AUDIT:** The D2C center-wall composition
+  helper is an asset-free synthetic pixel trace with no production caller.
+  Keep its ReDMCSB ordering/C10 contract test-only until the live D2C source
+  bitmap consumer and original-data capture are bound.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The
