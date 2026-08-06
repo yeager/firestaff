@@ -51179,3 +51179,17 @@ host damage number when the original C016 damage bitmap is missing. Food and
 water labels likewise remain source-owned GRAPHICS.DAT surfaces; missing label
 records no longer become generated text. The focused damage source-gate test
 and `firestaff` build pass.
+
+- ✅ 2026-08-06 Theron native Mednafen consumer-capture receipt: built the
+  instrumented Mednafen 1.32.1 path against native SDL2, reached the authentic
+  PC Engine Super CD-ROM2 runtime with the supplied Track 02 CUE, and retained
+  4,096 bounded `main_ram_consumer_read` rows. The new C11 receipt verifies the
+  source marker, monotonic rows, and both executing and target physical bank
+  coordinates while explicitly keeping `$2600`, object/level, and visual
+  semantics unpublished. The repository test passes against the captured
+  sidecar; raw media and traces remain user-supplied and untracked.
+- ✅ 2026-08-06 Theron CD sidecar compatibility: the strict CD receipt now
+  accepts the authenticated E009 enter/register/return observation rows that
+  accompany the native app capture. The captured run verifies 54 SCSI reads,
+  171 raw MODE1/2352 sectors, and all 171 command bindings while retaining
+  the semantic-publication block.

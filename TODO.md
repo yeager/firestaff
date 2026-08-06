@@ -484,13 +484,19 @@
   no Track 02 tile-bank or runtime viewport admission is implied.
 
   The real Mednafen `*.trace.cd` sidecar now has a strict opaque receipt path:
-  it validates the source marker, 51 SCSI READ commands, 157 MODE1/2352 raw
-  sectors and all 157 command-to-sector bindings from the captured app run.
+  it validates the source marker, 54 SCSI READ commands, 171 MODE1/2352 raw
+  sectors and all 171 command-to-sector bindings from the latest captured app
+  run.
   This is transport/app-capture evidence only; the loaded `$2600` RAM
   consumer bytes and level/object semantics still require a RAM-window
   capture with executing PC and source-LBA provenance.
 
-  The real Main-RAM loader sidecar now adds a strict loader-boundary receipt:
+  The real Main-RAM loader sidecar now adds a strict loader-boundary receipt.
+  A native-SDL2 Mednafen app capture also supplies 4,096 bounded consumer-read
+  rows with executing-PC and physical-bank coordinates. The new consumer
+  receipt accepts that exact grammar and keeps `$2600` publication,
+  object/level records, and viewport rendering blocked until source-LBA/FIFO
+  provenance reaches the actual RAM window.
   it verifies the observed TIA transfer `$c800 -> $0404`, length `0x80`,
   logical PC `$2286`, physical PC `$1f0286`, the loader RTS, and the post-RTS
   opcode. This still contains no `$2600` RAM bytes or source-LBA join, so the

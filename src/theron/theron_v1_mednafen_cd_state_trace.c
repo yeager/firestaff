@@ -137,6 +137,11 @@ int theron_v1_mednafen_cd_state_trace_parse_file(
             receipt.destination_candidate_count++;
             continue;
         }
+        if (known_observation_row(line, "main_ram_e009_enter ") ||
+            known_observation_row(line, "main_ram_e009_register_write ") ||
+            known_observation_row(line, "main_ram_e009_return ")) {
+            continue;
+        }
         if (sscanf(line,
                    "scsi_read_command generation=%u opcode=%x cdb=%31s "
                    "start_lba=%u sector_count=%u%n",
