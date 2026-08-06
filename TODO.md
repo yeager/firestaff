@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-PRS3-INVALID-REFERENCE-GATE:** PRS3-avkodaren avvisar nu framtida,
+  ogiltiga backreferenser utan att skapa nollfyllda pixlar. Verifiera fortsatt att nya
+  källkorpusar följer DMWebs fönsterregel; palettbindning, VDP1-upload och
+  menyrendering är fortfarande capture-gated.
+
 - **NEXUS-HUD-SATURN-DISPATCH-CAPTURE:** `DM.BIN` now supplies the runtime
   hit-rectangle table and a raw, order-preserving screen hit-test. Keep this
   API placement-only until an original Saturn/VDP1 capture binds each region

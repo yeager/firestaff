@@ -80,12 +80,25 @@ static void test_decompress_forward_window_ref(void) {
           "forward-window ref: DMWeb +18 source byte copied");
 }
 
+static void test_decompress_invalid_ref_rejected(void) {
+    uint8_t output[3] = { 0xA5, 0xA5, 0xA5 };
+    Nexus_V1_Prs3DecodeResult r;
+    /* A copy before any literal has no produced source window. */
+    uint8_t src[] = { 0x00, 0x00, 0x00 };
+
+    r = nexus_v1_prs3_decompress(src, sizeof(src), output, sizeof(output), 3);
+    check(r.success == 0, "invalid copy ref rejected");
+    check(r.bytes_produced == 0, "invalid copy ref produces no bytes");
+    check(output[0] == 0xA5, "invalid copy ref does not synthesize pixels");
+}
+
 int main(void) {
     printf("=== Nexus V1 PRS3 Decode test ===\n");
     test_header_parse();
     test_decompress_literal_run();
     test_decompress_copy_ref();
     test_decompress_forward_window_ref();
+    test_decompress_invalid_ref_rejected();
     printf("=== %d passed, %d failed ===\n", g_pass, g_fail);
     return g_fail ? 1 : 0;
 }

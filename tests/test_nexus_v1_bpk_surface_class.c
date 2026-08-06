@@ -230,8 +230,8 @@ static void test_prs3_surface_decode(void) {
     rc = nexus_v1_bpk_archive_decode_surface(data, sizeof(data), 1U,
                                               pixels, sizeof(pixels),
                                               NULL, &written);
-    expect(rc == NEXUS_V1_BPK_DECODE_OK,
-           "PRS3 decoder handles back-reference in synthetic fixture");
+    expect(rc == NEXUS_V1_BPK_DECODE_ERR_STREAM,
+           "PRS3 decoder rejects a forward reference in synthetic fixture");
 }
 
 static void test_prs3_candidate_evidence(void) {
@@ -459,10 +459,11 @@ static void test_prs3_host_route_blocks_corrupt_stream(void) {
     rc = nexus_v1_dmdf_import_bpk_material_bank_host_route(
         data, sizeof(data), &bank, NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR,
         &host);
-    expect(rc == 0, "corrupt PRS3 host route decodes to zero-fill");
-    expect(host.upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED &&
+    expect(rc == 0, "corrupt PRS3 host route remains bounded");
+    expect(host.upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 &&
+               host.blocks_real_surface_render == 1 &&
                host.fallback_visuals_permitted == 0,
-           "corrupt PRS3 decodes via forward-offset zero-fill");
+           "corrupt PRS3 forward reference blocks rendering");
 }
 
 static void test_host_route_rejects_partial_material_archive(void) {

@@ -74,12 +74,15 @@ Nexus_V1_Prs3DecodeResult nexus_v1_prs3_decompress(
                     offset += 4096;
                 }
                 for (i = 0; i < num_pixels && out_pos < target; ++i) {
+                    /* DMWeb explicitly defines the negative prefix of the
+                     * window as zero bytes. A positive offset beyond the
+                     * produced output, however, cannot be copied from the
+                     * source stream and must fail closed. */
                     if (offset < 0) {
                         output[out_pos++] = 0;
-                    } else if (offset < out_pos) {
-                        output[out_pos++] = output[offset];
                     } else {
-                        output[out_pos++] = 0;
+                        if (offset >= out_pos) goto done;
+                        output[out_pos++] = output[offset];
                     }
                     offset++;
                 }
