@@ -51,6 +51,14 @@
 - ✅ Visual VDC/VCE capture remains separately gated. Focused M11 and real
   Track 02 loader tests pass: 59/59 and all seven US/JP dungeon blocks.
 
+# Theron startup animation evidence boundary (2026-08-06)
+
+- ✅ Documented the real startup media boundary: authenticated Track 02
+  bitmap spans, atlas routes, font tiles and variant palettes are bound.
+- ✅ Kept the original title/Soul Room animation consumer, frame table,
+  VBlank cadence and VDC/VCE destination capture-gated. The M11 timing receipt
+  is not presented as original animation parity.
+
 # Nexus FONT256 host-draw seam quarantine (2026-08-06)
 
 - ✅ Removed `nexus_v1_saturn_font.c` from the retail `firestaff_nexus`

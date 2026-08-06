@@ -2,9 +2,18 @@
 
 - **THERON-FORCEFIELD-REAL-DUNGEON:** Enter now reliably dispatches from the
   Soul Room forcefield focus, including the first attempt without prompt text.
-  The subsequent real Track 02 handoff remains intentionally gated until the
-  post-CD game-owned consumer binds the decompressed level/object records;
-  do not replace that gate with fallback dungeon data.
+  Authenticated raw MODE1/2352 Track 02 now reaches the source-faithful
+  initial level/object handoff. Keep VDC/VCE presentation and later object
+  semantics gated until their original consumers are bound; do not replace
+  either gate with fallback dungeon data.
+
+- **THERON-STARTUP-ANIMATION-CONSUMER:** Real Track 02 startup bitmap spans,
+  atlas routes, font tiles and variant palettes are now receipt-bound, but the
+  original title/Soul Room animation command, frame table, VBlank cadence and
+  VDC/VCE destination are not yet identified. Recover that consumer from the
+  disassembly or an original-emulator/app capture before exposing changing
+  source frames or claiming animation parity. The current M11 timing receipt
+  is intentionally not a source-derived animation.
 
 - **NEXUS-PRS3-PIXEL-CAPTURE:** Retail Structure2 descriptors still expose
   bounded DMWeb format evidence, but the runtime no longer decodes their
