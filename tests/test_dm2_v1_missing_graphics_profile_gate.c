@@ -183,8 +183,8 @@ static void check_dm2_pc98_demo_classifies_without_satisfying_launch_graphics(
     dungeon = required_file_by_role(&status, "dungeon");
 
     CHECK(pc98Index == 3);
-    CHECK(M12_AssetStatus_GetVersionCount("dm2") == 6U);
-    CHECK(M12_AssetStatus_GameKnownHashCount("dm2") == 6U);
+    CHECK(M12_AssetStatus_GetVersionCount("dm2") == 7U);
+    CHECK(M12_AssetStatus_GameKnownHashCount("dm2") == 7U);
     CHECK(M12_AssetStatus_GameRequiredFileCount("dm2") == 2U);
     CHECK(M12_AssetStatus_GameAvailable(&status, "dm2") == 0);
 
@@ -203,6 +203,10 @@ static void check_dm2_pc98_demo_classifies_without_satisfying_launch_graphics(
     CHECK(graphics && graphics->matchedHash[0] == '\0');
     CHECK(dungeon && dungeon->matched == 1);
     CHECK(dungeon && strcmp(dungeon->matchedHash, dungeonMd5) == 0);
+
+    CHECK(M12_AssetStatus_FindVersionIndex("dm2", "pc9821-ja") == 6);
+    CHECK(M12_AssetStatus_GetVersionArchitecture(
+              "dm2", 6U) == M12_ARCH_PC98);
 }
 
 static void check_dm2_matched_dungeon_unmatched_graphics_scan_blocks_availability(
@@ -271,7 +275,8 @@ static void check_dm2_matched_dungeon_unmatched_graphics_launch_is_blocked(
     CHECK(menu.launchRequested == 0);
     CHECK(menu.quickResumeLaunchRequested == 0);
     CHECK(menu.view == M12_MENU_VIEW_MESSAGE);
-    CHECK(menu.messageLine1 && strstr(menu.messageLine1, "DM2") != NULL);
+    CHECK(menu.messageIsMissingGameData == 1);
+    CHECK(menu.messageLine1 && menu.messageLine1[0] != '\0');
     CHECK(menu.messageLine2 && strstr(menu.messageLine2, "GRAPHICS.DAT") != NULL);
     CHECK(menu.messageLine2 && strstr(menu.messageLine2, "DUNGEON.DAT") == NULL);
 

@@ -352,7 +352,12 @@ static const M12_VersionSpec g_dm2Versions[] = {
     {"dm2", "pc-jewel", "PC German/English JewelCase", "PC JewelCase", g_dm2GraphicsNames, "e52ab5e01715042b16a4dcff02052e5d", M12_ARCH_PC},
     {"dm2", "pc98-ja-demo", "PC-9801 Japanese Demo", "PC-98 Demo", g_dm2GraphicsNames, "a0277195099b2ace51d4e085f7eef835", M12_ARCH_PC98},
     {"dm2", "fmtowns-ja", "FM Towns Japanese", "FM Towns JP", g_dm2GraphicsNames, "027ff3b8ddc2c4c4cdda7ada0b0bc46c", M12_ARCH_FM_TOWNS},
-    {"dm2", "amiga-en", "Amiga AGA English", "Amiga EN", g_dm2GraphicsNames, "1c940ea95703eaea0ecdf84d17e954b9", M12_ARCH_AMIGA}
+    {"dm2", "amiga-en", "Amiga AGA English", "Amiga EN", g_dm2GraphicsNames, "1c940ea95703eaea0ecdf84d17e954b9", M12_ARCH_AMIGA},
+    /* DM2 boot profile / DMWeb-authenticated PC-9821 pair.  This is a
+     * retail Japanese variant, not the separate PC-9801 demo above.
+     * dm2_v1_boot.c admits GRAPHICS a80c555a... only with DUNGEON
+     * fa644b2451..., so the launcher must expose the same version owner. */
+    {"dm2", "pc9821-ja", "PC-9821 Japanese", "PC-9821 JP", g_dm2GraphicsNames, "a80c555a858ef7770e1d7f3d2e37fec3", M12_ARCH_PC98}
 };
 
 static const M12_VersionSpec g_nexusVersions[] = {
@@ -3601,6 +3606,9 @@ static const char* m12_dm2_dungeon_md5_for_matched_version(
     }
     if (strcmp(version->versionId, "amiga-en") == 0) {
         return "719ae78bc124027806c65491a256827d";
+    }
+    if (strcmp(version->versionId, "pc9821-ja") == 0) {
+        return "fa644b2451af197874ee7dc3951e7033";
     }
     return m12_effective_required_md5(required);
 }

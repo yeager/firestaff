@@ -24873,6 +24873,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - DM2-016 — `skproject/SKULLWIN/main.cpp`, `fileio.cpp`, and `c_gdatfile.cpp`: `src/shared/asset_status_m12.c`, `src/dm2/dm2_v1_boot.c`, and CLI launch still need corpus-verified classification/materialisation for every supported PC variant and valid container before entering DM2. Preserve hash-based discovery, but reject demo, incomplete, or cross-version mixes before boot rather than normalising them into a generic launch profile.
 - 🔧 DM2 extras/cross-version launch remains open for demo and non-PC extracted paths that need separate version classification/container normalization.
+  **2026-08-07 PC-9821 catalog correction:** the authenticated retail
+  `GRAPHICS.DAT`/`DUNGEON.DAT` pair is now represented as `pc9821-ja` in the
+  launcher catalog, separate from the PC-9801 demo. Its required dungeon hash
+  follows the graphics-selected pair from `dm2_v1_boot.c`; other non-PC
+  variants remain separately gated until their catalog and runtime owners are
+  proven.
 
 ## Dungeon Master Nexus
 

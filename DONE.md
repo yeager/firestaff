@@ -57641,3 +57641,13 @@ alcove runtime and archive-media tests passed (4/4).
   added.
 - ✅ The Japanese BIOS attachment was hash-verified separately for the J-region
   comparison path; its evidence remains separate from the European chain.
+# DM2 PC-9821 catalog/hash-pair correction (2026-08-07)
+
+- ✅ Added the authenticated retail `pc9821-ja` DM2 version to the launcher
+  catalog using the real `GRAPHICS.DAT` MD5 `a80c555a858ef7770e1d7f3d2e37fec3`.
+- ✅ Selected its source-owned `DUNGEON.DAT` MD5
+  `fa644b2451af197874ee7dc3951e7033` in the required-file gate, keeping it
+  distinct from the PC-9801 demo and PC DOS dungeon pair.
+- ✅ Extended the DM2 catalog regression to cover the seventh version and
+  PC-98 architecture classification. Runtime launch remains subject to the
+  existing authenticated boot pair and native platform owners.
