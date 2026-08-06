@@ -277,6 +277,12 @@ typedef struct {
     int reloaded;
     int source_party_reset_required;
     int source_leader_hand_reset_required;
+    /* Set only after Firestaff's retained source-save cache is observed
+     * empty.  These are deliberately distinct from the source requirements
+     * above: an M11 handoff may not treat a requested clear as a completed
+     * GAME_LOAD boundary. */
+    int source_party_reset_applied;
+    int source_leader_hand_reset_applied;
     int synthetic_party_created;
     int map_count;
     int dungeon_seed;
@@ -1346,8 +1352,11 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile);
 /* Performs only the source-owned DUNGEON.DAT reload portion of GAME_LOAD.
  * It rechecks the selected asset hash when one was verified at boot and swaps
  * the parsed G1 data only after a complete candidate parse succeeds.
- * Party/leader reset remains unavailable until its original record owner is
- * modeled, and this function never creates a Firestaff starter party. */
+ * It also clears Firestaff's retained source-save party/leader cache and
+ * verifies that cache is empty before publishing the reload receipt. This
+ * function never creates a Firestaff starter party; original champion,
+ * inventory, actuator and timer ownership remains with later GAME_LOAD
+ * work. */
 int dm2_v1_boot_load_new_dungeon(
     DM2_V1_BootProfile *profile,
     DM2_V1_BootNewDungeonReceipt *out_receipt);

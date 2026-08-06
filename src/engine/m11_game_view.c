@@ -1069,14 +1069,16 @@ static void m11_dm2_mirror_session_party(M11_GameViewState *state,
 
 }
 
-static void m11_dm2_clear_new_game_party_state(M11_GameViewState *state)
+static int m11_dm2_clear_new_game_party_state(M11_GameViewState *state)
 {
-    if (!state) return;
+    if (!state) return 0;
     memset(&state->world.party, 0, sizeof(state->world.party));
     state->world.party.activeChampionIndex = -1;
     memset(state->dm2State.champion_inventory_objects, 0,
            sizeof(state->dm2State.champion_inventory_objects));
     state->dm2State.leader_hand_object = 0u;
+    return state->world.party.activeChampionIndex == -1 &&
+           state->dm2State.leader_hand_object == 0u;
 }
 
 static int m11_dm2_resume_from_save_path(M11_GameViewState *state,
@@ -1331,8 +1333,13 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
             profile = (DM2_V1_BootProfile *)state->dm2BootProfile;
             if (dm2_v1_boot_load_new_dungeon(profile, &new_dungeon) &&
                 new_dungeon.valid && new_dungeon.reloaded &&
-                !new_dungeon.synthetic_party_created) {
-                m11_dm2_clear_new_game_party_state(state);
+                new_dungeon.source_party_reset_applied &&
+                new_dungeon.source_leader_hand_reset_applied &&
+                !new_dungeon.synthetic_party_created &&
+                m11_dm2_clear_new_game_party_state(state)) {
+                /* Both the boot cache and M11's presentation cache are now
+                 * empty.  Keep the menu active until original GAME_LOAD
+                 * publishes the mirror-selection transaction. */
             }
             state->dm2State.startup_menu_active = 1;
             if (route->status) {

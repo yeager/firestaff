@@ -117,16 +117,20 @@ int main(void)
         !receipt.valid || !receipt.reloaded ||
         !receipt.source_party_reset_required ||
         !receipt.source_leader_hand_reset_required ||
+        !receipt.source_party_reset_applied ||
+        !receipt.source_leader_hand_reset_applied ||
         receipt.synthetic_party_created || receipt.map_count != 1 ||
         receipt.raw_byte_count != dungeon_size || receipt.raw_hash == 0u ||
         profile.deterministic.dungeon_seed != 1) {
         fprintf(stderr,
                 "FAIL: LOAD_NEW_DUNGEON source transaction changed "
-                "valid=%d reloaded=%d party=%d leader=%d synthetic=%d "
+                "valid=%d reloaded=%d party=%d leader=%d applied=%d/%d synthetic=%d "
                 "maps=%d seed=%d bytes=%u hash=%u\n",
                 receipt.valid, receipt.reloaded,
                 receipt.source_party_reset_required,
                 receipt.source_leader_hand_reset_required,
+                receipt.source_party_reset_applied,
+                receipt.source_leader_hand_reset_applied,
                 receipt.synthetic_party_created, receipt.map_count,
                 receipt.dungeon_seed, receipt.raw_byte_count, receipt.raw_hash);
         dm2_v1_boot_cleanup(&profile);

@@ -8640,6 +8640,34 @@ void dm2_v1_runtime_clear_new_game_party_state(void) {
     g_dm2_runtime.session_snapshot_valid = 0;
 }
 
+int dm2_v1_runtime_new_game_party_state_is_clear(void) {
+    size_t champion;
+    size_t slot;
+
+    /* SKWINSPX/src/v5/sksvgame.cpp::DM2_LOAD_NEW_DUNGEON clears the old
+     * party before it reads the selected G1 structure.  This is a narrow
+     * postcondition for Firestaff's cached projection of that state: it does
+     * not claim that the unported original hero/record owner is complete. */
+    if (g_dm2_runtime.leader_hand_object != 0u ||
+        g_dm2_runtime.session_snapshot_valid) {
+        return 0;
+    }
+    for (champion = 0;
+         champion < sizeof(g_dm2_runtime.champion_inventory_objects) /
+                        sizeof(g_dm2_runtime.champion_inventory_objects[0]);
+         ++champion) {
+        for (slot = 0;
+             slot < sizeof(g_dm2_runtime.champion_inventory_objects[champion]) /
+                        sizeof(g_dm2_runtime.champion_inventory_objects[champion][0]);
+             ++slot) {
+            if (g_dm2_runtime.champion_inventory_objects[champion][slot] != 0u) {
+                return 0;
+            }
+        }
+    }
+    return 1;
+}
+
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
                                                       uint8_t slot) {
     if (champion >= 4u || slot >= 30u) {

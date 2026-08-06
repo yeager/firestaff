@@ -1,5 +1,17 @@
 # DM2 production placeholder inventory (2026-08-06)
 
+- ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now
+  records a completed party/leader-cache clear only after its retained
+  source-save projection is observed empty. M11 requires that postcondition
+  and clears its own party presentation cache in the same acceptance branch.
+  This prevents stale resume portraits, inventory or leader-hand state from
+  crossing into the source mirror-selection boundary. It does not create a
+  party or claim complete `GAME_LOAD` support. Verification: full `firestaff`
+  build, `dm2_v1_load_new_dungeon_contract`,
+  `dm2_v1_boot_profile_smoke`, `dm2_production_placeholder_boundary`, and
+  the real PC-DOS champion-mirror/GDAT regressions pass. No game data was
+  copied, unpacked or modified.
+
 - ✅ 2026-08-06 DM2 FM Towns CDDA media boundary: removed the production
   `trackNN.raw` fallback and its unpacked-directory census. A CDDA buffer can
   now be queued only when boot extracted it directly from the selected FM

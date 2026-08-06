@@ -1909,6 +1909,12 @@ int dm2_v1_boot_load_new_dungeon(
      * owned by the still-unported GAME_LOAD records. */
     game = (DM2_V1_GameState *)profile->dm2_state;
     dm2_v1_runtime_clear_new_game_party_state();
+    if (!dm2_v1_runtime_new_game_party_state_is_clear()) {
+        dm2_v1_dungeon_free(&candidate);
+        return 0;
+    }
+    receipt.source_party_reset_applied = 1;
+    receipt.source_leader_hand_reset_applied = 1;
     game->party_x = candidate.initial_party_x;
     game->party_y = candidate.initial_party_y;
     game->party_dir = candidate.initial_party_dir & 3;

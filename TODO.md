@@ -2267,6 +2267,11 @@ level or consumer bindings.
   A verified New Game reload now also clears stale resume portraits,
   inventory and leader hand before source mirror selection; it still cannot
   create a replacement party or enter runtime.
+  2026-08-06 follow-up: the reload receipt now distinguishes the required
+  source clear from a completed clear. M11 accepts the boundary only after
+  both its own and the retained runtime cache report no party, leader hand or
+  inventory residue. This remains a cache-integrity gate, not a substitute
+  for the missing original champion/record ownership.
   The bounded `dm2_v1_select_champion()` receipt also remains deliberately
   non-mutating: request coordinates without the live DB3 subtype-0x7E mirror,
   hero record and inventory chain now return failure rather than a synthetic

@@ -1170,6 +1170,10 @@ void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
  * structure. This clears only Firestaff's cached representation of that
  * source-owned party/hand state; it does not construct a replacement party. */
 void dm2_v1_runtime_clear_new_game_party_state(void);
+/* Read-only postcondition for the clear above.  It covers only Firestaff's
+ * retained source-save cache, never substitutes for the original party
+ * record owner. */
+int dm2_v1_runtime_new_game_party_state_is_clear(void);
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
                                                       uint8_t slot);
 /* Returns -1 without mutation: c_hero item links require the original DB
