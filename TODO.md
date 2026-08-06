@@ -1737,6 +1737,12 @@ level or consumer bindings.
   raw-tail local palette, while Greatstone expands the nibbles to greyscale.
   Do not alter the original palette path or add downloaded/generated artwork
   merely to imitate that third-party export.
+  **2026-08-06 corpus-lock update:** the maintained real-data census now
+  requires the selected PC 1.0 English source file to retain all observed
+  structural and decoded-pixel facts: 5,624 raw entries, 11,854 ENT1 rows,
+  5,676 image rows, 4,031 unique image RAWs, 18,633,937 decoded pixels and
+  census hash `bf5050d3`. A merely decodable substitute GDAT file can no
+  longer pass this complete-asset inventory.
   2026-08-06: a callback-supplied fixture raster can no longer make the
   runtime ownership receipt `full_gdat_frame_valid` (or its outdoor variant).
   Only the mounted boot provider's raw and decoded `GRAPHICS.DAT` evidence

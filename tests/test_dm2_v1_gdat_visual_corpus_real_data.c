@@ -17,6 +17,20 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* Greatstone's PC 1.0 English GRAPHICS.DAT catalogue has 5,624 raw entries.
+ * The following derived ENT1/image census is from the hash-verified original
+ * corpus used by the DM2 boot profile.  Keep this test specific to that
+ * corpus: merely being a decodable GDAT file must not look like complete PC
+ * asset coverage. */
+enum {
+    DM2_PC10_EN_RAW_COUNT = 5624u,
+    DM2_PC10_EN_ENT1_COUNT = 11854u,
+    DM2_PC10_EN_IMAGE_ROW_COUNT = 5676u,
+    DM2_PC10_EN_UNIQUE_IMAGE_RAW_COUNT = 4031u,
+    DM2_PC10_EN_DECODED_PIXEL_COUNT = 18633937u,
+    DM2_PC10_EN_VISUAL_CENSUS_HASH = 0xbf5050d3u
+};
+
 static int read_file(const char *path, uint8_t **out, size_t *out_size)
 {
     FILE *file;
@@ -85,6 +99,7 @@ int main(void)
     uint32_t unique_raw_images = 0u;
     uint32_t decoded_pixels = 0u;
     uint32_t corpus_hash = 2166136261u;
+    int census_matches;
     int failures = 0;
 
     if (!load_canonical_graphics(&graphics, &graphics_size)) {
@@ -151,19 +166,25 @@ int main(void)
         dm2_v1_asset_free_pixels(pixels);
     }
 
-    printf("ENT1=%u image-rows=%u unique-raw-images=%u decoded-pixels=%u "
-           "census-hash=%08x\n", (unsigned int)loader.entry_count,
+    printf("raw=%u ENT1=%u image-rows=%u unique-raw-images=%u decoded-pixels=%u "
+           "census-hash=%08x\n", (unsigned int)loader.raw_data_count,
+           (unsigned int)loader.entry_count,
            (unsigned int)image_rows, (unsigned int)unique_raw_images,
            (unsigned int)decoded_pixels, corpus_hash);
+    census_matches = loader.raw_data_count == DM2_PC10_EN_RAW_COUNT &&
+        loader.entry_count == DM2_PC10_EN_ENT1_COUNT &&
+        image_rows == DM2_PC10_EN_IMAGE_ROW_COUNT &&
+        unique_raw_images == DM2_PC10_EN_UNIQUE_IMAGE_RAW_COUNT &&
+        decoded_pixels == DM2_PC10_EN_DECODED_PIXEL_COUNT &&
+        corpus_hash == DM2_PC10_EN_VISUAL_CENSUS_HASH;
     free(seen_raw);
     dm2_v1_asset_loader_free(&loader);
     free(graphics);
-    if (failures != 0 || image_rows == 0u || unique_raw_images == 0u ||
-        decoded_pixels == 0u || corpus_hash == 0u) {
-        fputs("FAIL: canonical visual corpus contains an unhandled image\n",
+    if (failures != 0 || !census_matches) {
+        fputs("FAIL: PC 1.0 English visual corpus drifted or contains an unhandled image\n",
               stderr);
         return 1;
     }
-    puts("PASS: every unique PC English GDAT image payload decodes directly");
+    puts("PASS: every unique PC 1.0 English GDAT image payload decodes directly");
     return 0;
 }

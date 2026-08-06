@@ -55170,6 +55170,14 @@ alcove runtime and archive-media tests passed (4/4).
 
 # DM1 FM Towns Phar Lap symbol ownership (2026-08-06)
 
+- ✅ 2026-08-06 DM2 PC 1.0 English visual-corpus lock: strengthened the
+  real-data GDAT census so it no longer treats an arbitrary decodable table
+  as complete asset coverage. The test now requires the original corpus's
+  5,624 raw entries, 11,854 ENT1 rows, 5,676 image rows, 4,031 unique image
+  payloads, 18,633,937 decoded pixels and census hash `bf5050d3`. The
+  inventory passed against the supplied PC-DOS `GRAPHICS.DAT`; all pixels
+  still come directly from user-supplied original media.
+
 - ✅ 2026-08-06 DM2 FM Towns startup/HUD parity review: compared the DM2
   HME-242 route with the bounded P3/EGB methodology in
   `parity-evidence/dm1_fmtowns_menu_p3_disassembly.md`, without borrowing
