@@ -746,17 +746,28 @@ int32_t dm2_v1_1c9a_078b(
 }
 
 /* ========================================================================
- * DM2_1c9a_0958 — creature type extractor
- * skproject c_1c9a.cpp:5377-5401
- * Stub: returns -1
+ * DM2_1c9a_0958 — creature animation-frame bit 14
+ *
+ * SKProject resolves GET_ADDRESS_OF_RECORD(record), obtains the Creature AI
+ * spec, selects its current animation frame, then returns `(frame->w0 &
+ * 0x4000) >> 14`. DB4, AI-info and animation layouts have separate owners in
+ * Firestaff, so this adapter requires that complete source traversal from its
+ * caller rather than inventing offsets or a default frame.
+ *
+ * Source: SKWINSPX/src/v4/skcore.cpp:15447-15455;
+ *         SKWINSPX/src/v5/SK1C9A.cpp:5377-5399.
  * ======================================================================== */
 
 int32_t dm2_v1_1c9a_0958(
     const DM2_V1_1c9aCallbacks *cb, void *ctx,
     int32_t creature_index)
 {
-    (void)cb; (void)ctx; (void)creature_index;
-    return -1;
+    if (!cb || !cb->query_creature_animation_frame_bit14 ||
+        creature_index < 0 || creature_index > 0xffff) {
+        return 0;
+    }
+    return cb->query_creature_animation_frame_bit14(
+        ctx, (uint16_t)creature_index) ? 1 : 0;
 }
 
 /* ========================================================================

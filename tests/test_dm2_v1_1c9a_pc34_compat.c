@@ -22,6 +22,7 @@ static int mock_schedule_calls = 0;
 static int mock_cancel_calls = 0;
 static int mock_alloc_caii_calls = 0;
 static int16_t mock_last_schedule_delay = 0;
+static int32_t mock_creature_animation_frame_bit14 = 0;
 
 /* ========================================================================
  * Mock callbacks
@@ -80,6 +81,12 @@ static bool mock_is_rebirth_altar(void *ctx, void *rec) {
 static int32_t mock_query_creature_ai_spec_flags(void *ctx, uint16_t type) {
     (void)ctx; (void)type;
     return 0;
+}
+
+static int32_t mock_query_creature_animation_frame_bit14(void *ctx,
+                                                          uint16_t record) {
+    (void)ctx;
+    return record == 0x1234u ? mock_creature_animation_frame_bit14 : 0;
 }
 
 static int32_t mock_creature_can_handle_it(void *ctx, uint16_t rec, int16_t act) {
@@ -234,6 +241,8 @@ static DM2_V1_1c9aCallbacks make_callbacks(void) {
     cb.get_creature_at = mock_get_creature_at;
     cb.is_rebirth_altar = mock_is_rebirth_altar;
     cb.query_creature_ai_spec_flags = mock_query_creature_ai_spec_flags;
+    cb.query_creature_animation_frame_bit14 =
+        mock_query_creature_animation_frame_bit14;
     cb.creature_can_handle_it = mock_creature_can_handle_it;
     cb.query_creature_ai_spec_from_record = mock_query_creature_ai_spec_from_record;
     cb.get_graphics_for_door = mock_get_graphics_for_door;
@@ -286,6 +295,7 @@ static void reset_mock_state(void) {
     mock_cancel_calls = 0;
     mock_alloc_caii_calls = 0;
     mock_last_schedule_delay = 0;
+    mock_creature_animation_frame_bit14 = 0;
 }
 
 /* ========================================================================
@@ -691,6 +701,19 @@ TEST(2813_stub) {
     assert(r == false);
 }
 
+/* ---- 0958 animation frame flag ---- */
+
+TEST(0958_animation_frame_bit14) {
+    DM2_V1_1c9aCallbacks cb = make_callbacks();
+    mock_creature_animation_frame_bit14 = 1;
+    assert(dm2_v1_1c9a_0958(&cb, NULL, 0x1234) == 1);
+    mock_creature_animation_frame_bit14 = 0;
+    assert(dm2_v1_1c9a_0958(&cb, NULL, 0x1234) == 0);
+    assert(dm2_v1_1c9a_0958(&cb, NULL, -1) == 0);
+    cb.query_creature_animation_frame_bit14 = NULL;
+    assert(dm2_v1_1c9a_0958(&cb, NULL, 0x1234) == 0);
+}
+
 /* ---- 1BAAD tile passability ---- */
 
 TEST(1baad_open_floor) {
@@ -818,6 +841,7 @@ int main(void) {
     RUN(13aa_stub);
     RUN(2165_stub);
     RUN(2813_stub);
+    RUN(0958_animation_frame_bit14);
 
     /* 1BAAD */
     RUN(1baad_open_floor);

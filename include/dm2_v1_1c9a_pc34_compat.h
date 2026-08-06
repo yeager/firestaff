@@ -123,6 +123,12 @@ typedef struct DM2_V1_1c9aCallbacks {
     int16_t (*get_creature_at)(void *ctx, int16_t x, int16_t y);
     bool    (*is_rebirth_altar)(void *ctx, void *tile_record);
     int32_t (*query_creature_ai_spec_flags)(void *ctx, uint16_t creature_type);
+    /* CREATURE_1c9a_0958 resolves the creature's AI animation sequence and
+     * returns bit 14 from its current CreatureAnimationFrame::w0.  Retain
+     * that source-owned record/AI/frame traversal behind one callback: the
+     * compatibility layer must not guess DB4 or AI-info offsets. */
+    int32_t (*query_creature_animation_frame_bit14)(void *ctx,
+                                                    uint16_t record);
     int32_t (*creature_can_handle_it)(void *ctx, uint16_t record, int16_t action);
     void   *(*query_creature_ai_spec_from_record)(void *ctx, uint8_t type_byte);
     int32_t (*get_graphics_for_door)(void *ctx, int32_t altar_result);
@@ -425,9 +431,11 @@ int32_t dm2_v1_1c9a_078b(
     void *creature_ptr, int32_t x, int32_t y);
 
 /*
- * DM2_1c9a_0958 — creature type extractor.
- * Returns creature type ID from record index.
- * skproject c_1c9a.cpp:5377-5401
+ * DM2_1c9a_0958 — creature animation-frame flag.
+ * Returns `(CreatureAnimationFrame::w0 & 0x4000) >> 14` for the source
+ * creature record. The callback owns the record → AI spec → frame traversal.
+ * Source: SKProject SKWINSPX/src/v4/skcore.cpp:15447-15455;
+ *         SKWINSPX/src/v5/SK1C9A.cpp:5377-5399.
  */
 int32_t dm2_v1_1c9a_0958(
     const DM2_V1_1c9aCallbacks *cb, void *ctx,

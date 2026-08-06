@@ -52950,3 +52950,13 @@ and `Dungeon-Master-II-Skullkeep_DOS_EN.zip`, including the authenticated
 the PC-English corpus. Remaining scope is unchanged: wire the overlay into
 each live original GUI/dialogue text producer before claiming complete English
 FM Towns UI.
+# 2026-08-06 — DM2 `DM2_1c9a_0958` animation-frame flag
+
+Replaced the disconnected `dm2_v1_1c9a_0958` `-1` placeholder with the exact
+SKProject result: bit 14 of the selected creature animation frame's `w0`.
+The compatibility callback owns the required source record → AI spec → frame
+traversal, so Firestaff neither guesses DB4/AI offsets nor invents a fallback
+frame. Source: `SKWINSPX/src/v4/skcore.cpp:15447-15455` and
+`src/v5/SK1C9A.cpp:5377-5399`. Verification:
+`test_dm2_v1_1c9a_pc34_compat` passes 53/53, including set, clear,
+out-of-range and absent-owner cases.

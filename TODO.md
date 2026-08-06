@@ -27019,6 +27019,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   pose until those G1 hero/inventory/spell-state owners are restored; do not
   reintroduce a host-defined one-frame floor/ceiling offset.
 
+- [ ] DM2 creature animation-frame ownership: `DM2_1c9a_0958` now carries
+  the source's exact `CreatureAnimationFrame::w0` bit-14 query through an
+  explicit callback, but no live DB4 record → AI-info → animation-frame
+  runtime owner is connected yet. Keep creature animation-state consumers
+  fail-closed until that source traversal is bound; do not infer record or
+  animation offsets from a fixture.
+
 - 2026-08-06: PC-DOS startup's decoded `TITLE/0/4` surface is now named and
   receipted as an original GDAT image route, not a fallback. It remains the
   verified alternative only when `SHOW_MENU_SCREEN` has no source raw-screen
