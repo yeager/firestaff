@@ -669,6 +669,13 @@
   boundary. This is read-only evidence, not a resume admission: complete
   `DM2_GAME_LOAD` ownership is still required before any of these fields can
   change a live game.
+  2026-08-06 direct-root update: the real corpus now also traverses the
+  source `DM2_READ_SKSAVE_DUNGEON` direct roots for all 30 item slots of each
+  saved champion plus the party root, reusing the exact shared SUPPRESS
+  reader state after `c_tim`. This is a read-only record-type/byte-consumption
+  check over all eight PC-DOS files. It deliberately stops before map-tile
+  chains, possession-index restoration, record allocation and live session
+  publication; none of those can be inferred from the inventory receipt.
   2026-08-06: `READ_RECORD_CHECKCODE` now preserves source record bytes for
   `DM2_SUPPRESS_READER(..., false)` and derives the map-container branch from
   `c_record::b_04` bits 1..2, including its possession-index bit. This closes

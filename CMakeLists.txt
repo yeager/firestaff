@@ -16524,6 +16524,7 @@ endif()
 
     add_executable(test_dm2_v1_save_load_real_data
         tests/test_dm2_v1_save_load_real_data.c
+        src/dm2/dm2_v1_save_read_record_checkcode_pc34_compat.c
     )
     target_include_directories(test_dm2_v1_save_load_real_data PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

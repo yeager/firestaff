@@ -52136,3 +52136,15 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   distinguish real retail byte/format receipts from unproven Saturn VDP1/VDP2,
   text, HUD, mesh, gameplay and audio consumers. The corrupt startup document
   was replaced with valid UTF-8; no runtime claim was expanded.
+
+# 2026-08-06 DM2 SKSave direct-root corpus inventory
+
+- ✅ The PC-DOS real-data save regression now retains the next original
+  `DM2_READ_SKSAVE_DUNGEON` boundary after the fixed `DM2_GAME_LOAD` stream.
+  For every one of the four primary and four backup SKSave files it resumes
+  the same MSB-first SUPPRESS reader and reads all 30 direct item roots for
+  each saved champion plus the party root. The test owner only records
+  source-decoded record types and byte consumption; it neither manufactures
+  a dungeon graph nor publishes a resume session. Source: SKProject
+  `SKULLWIN/c_savegame.cpp::DM2_READ_SKSAVE_DUNGEON` (hero roots and party
+  root at lines 1180–1200).

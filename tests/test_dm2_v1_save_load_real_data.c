@@ -8,6 +8,7 @@
  */
 
 #include "dm2_v1_new_game.h"
+#include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
 
@@ -18,10 +19,119 @@
 static int passed;
 static int failed;
 
+/* Read-only owner for SKProject c_savegame.cpp::READ_SKSAVE_DUNGEON's
+ * champion-item and party-hand chains.  It deliberately has no dungeon,
+ * possession, timer or runtime callback: this corpus test can prove byte
+ * consumption and record types, but it cannot publish a resumable session. */
+typedef struct {
+    uint16_t next_index[16];
+    unsigned int record_count;
+    uint32_t record_hash;
+} RecordChainInventory;
+
 #define CHECK(condition, message) do { \
     if (condition) { ++passed; printf("  PASS: %s\n", message); } \
     else { ++failed; printf("  FAIL: %s\n", message); } \
 } while (0)
+
+static uint32_t hash_bytes(uint32_t hash, const uint8_t *bytes, size_t size)
+{
+    size_t i;
+    for (i = 0u; i < size; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
+static uint16_t inventory_alloc_record(void *context, int record_type)
+{
+    RecordChainInventory *inventory = (RecordChainInventory *)context;
+    uint16_t index;
+
+    if (!inventory || record_type < 0 || record_type >= 16) return 0xfffeu;
+    index = inventory->next_index[record_type];
+    if (index >= 0x03feu) return 0xfffeu;
+    inventory->next_index[record_type] = (uint16_t)(index + 1u);
+    return (uint16_t)(((uint16_t)record_type << 10) | index);
+}
+
+static int inventory_set_record(void *context, uint16_t record_link,
+                                const uint8_t *data, size_t size)
+{
+    RecordChainInventory *inventory = (RecordChainInventory *)context;
+    const uint8_t record_type = (uint8_t)((record_link >> 10) & 0x0fu);
+
+    if (!inventory || !data || record_type >= 16u) return -1;
+    inventory->record_hash = hash_bytes(inventory->record_hash,
+                                        &record_type, sizeof(record_type));
+    inventory->record_hash = hash_bytes(inventory->record_hash, data, size);
+    ++inventory->record_count;
+    return 0;
+}
+
+static int inventory_chain_record(void *context, uint16_t previous,
+                                  uint16_t next)
+{
+    (void)context;
+    (void)previous;
+    (void)next;
+    /* The reader transcript does not yet expose the source append target.
+     * This test proves only the exact direct roots, never a fabricated link. */
+    return 0;
+}
+
+static void inventory_add_possession(void *context, uint16_t record_link)
+{
+    (void)context;
+    (void)record_link;
+}
+
+static int verify_real_direct_record_roots(
+    const uint8_t *payload, size_t payload_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state)
+{
+    DM2_ReadRecordSession reader;
+    DM2_ReadRecordCallbacks callbacks;
+    RecordChainInventory inventory;
+    unsigned int root;
+    const size_t root_count = (size_t)state->champion_count * 30u + 1u;
+
+    if (!payload || !state || !state->valid ||
+        state->record_link_bitstream_offset > payload_size ||
+        state->record_link_bitstream_bits_remaining > 7u ||
+        root_count > 121u) {
+        return 0;
+    }
+    memset(&reader, 0, sizeof(reader));
+    dm2_v1_read_record_session_init(&reader, payload, payload_size);
+    reader.reader.position = state->record_link_bitstream_offset;
+    reader.reader.bits_remaining = state->record_link_bitstream_bits_remaining;
+    if (reader.reader.bits_remaining != 0u) {
+        if (reader.reader.position == 0u) return 0;
+        reader.reader.current_byte = (uint8_t)(
+            payload[reader.reader.position - 1u] <<
+            (8u - reader.reader.bits_remaining));
+    }
+    memset(&inventory, 0, sizeof(inventory));
+    inventory.record_hash = 2166136261u;
+    memset(&callbacks, 0, sizeof(callbacks));
+    callbacks.alloc_record = inventory_alloc_record;
+    callbacks.set_data = inventory_set_record;
+    callbacks.chain_record = inventory_chain_record;
+    callbacks.add_possession_index = inventory_add_possession;
+    callbacks.ctx = &inventory;
+    for (root = 0u; root < root_count; ++root) {
+        if (dm2_v1_read_record_checkcode(&reader, &callbacks, 0, 0) != 0 ||
+            reader.error) {
+            return 0;
+        }
+    }
+    /* A no-record chain is valid. The hash captures its source consumption
+     * only when a record body is genuinely present. */
+    return reader.reader.position <= payload_size &&
+           inventory.record_hash != 0u;
+}
 
 static int resolve_corpus_root(char *out, size_t out_size)
 {
@@ -140,6 +250,9 @@ static void test_real_raw_save(const char *path)
     CHECK(verify_real_db_pool_receipts(bytes + 42u, byte_count - 42u,
                                        &receipt),
           "real SKSave DB pools retain source-sized records inside the raw dungeon prefix");
+    CHECK(verify_real_direct_record_roots(bytes + 42u, byte_count - 42u,
+                                          &state_receipt),
+          "real SKSave reads every source champion-item and party root without a fixture graph");
     free(bytes);
 }
 
