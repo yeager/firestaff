@@ -26,6 +26,10 @@
 #define THERON_LEVEL_DECOMPRESSOR_CALLER_OFFSET 0x2386u
 #define THERON_LEVEL_DECOMPRESSOR_CALLER_BYTES 30u
 #define THERON_LEVEL_DECOMPRESSOR_CALLER_FNV1A 0x699e8da1u
+#define THERON_STAGE2_RESOURCE_HANDLER_FILE_OFFSET 0x1f443fu
+#define THERON_STAGE2_RESOURCE_HANDLER_ADDRESS 0x4c3fu
+#define THERON_STAGE2_RESOURCE_HANDLER_BYTES 162u
+#define THERON_STAGE2_RESOURCE_HANDLER_FNV1A 0x46360d97u
 
 static const uint8_t g_fragment[THERON_FRAGMENT_BYTES] = {
     0xb2, 0x2e, 0x85, 0x0e, 0xe6, 0x2e, 0xd0, 0x02, 0xe6, 0x2f, 0x86, 0x0f,
@@ -74,6 +78,7 @@ int theron_v1_huc6280_disassembly_read_file(
     uint8_t bytes[THERON_FRAGMENT_BYTES];
     uint8_t decompressor[THERON_LEVEL_DECOMPRESSOR_BYTES];
     uint8_t decompressor_caller[THERON_LEVEL_DECOMPRESSOR_CALLER_BYTES];
+    uint8_t stage2_resource_handler[THERON_STAGE2_RESOURCE_HANDLER_BYTES];
     uint32_t expected_size;
     const char *expected_md5;
     long file_size;
@@ -109,6 +114,10 @@ int theron_v1_huc6280_disassembly_read_file(
               SEEK_SET) != 0 ||
         fread(decompressor_caller, 1u, sizeof(decompressor_caller), file) !=
             sizeof(decompressor_caller) ||
+        fseek(file, (long)THERON_STAGE2_RESOURCE_HANDLER_FILE_OFFSET,
+              SEEK_SET) != 0 ||
+        fread(stage2_resource_handler, 1u, sizeof(stage2_resource_handler),
+              file) != sizeof(stage2_resource_handler) ||
         !m12_file_md5_hex(path, receipt.source_md5)) {
         if (file) fclose(file);
         receipt.status = THERON_V1_HUC6280_DISASSEMBLY_REJECTED;
@@ -123,6 +132,8 @@ int theron_v1_huc6280_disassembly_read_file(
             THERON_LEVEL_DECOMPRESSOR_FNV1A ||
         fnv1a(decompressor_caller, sizeof(decompressor_caller)) !=
             THERON_LEVEL_DECOMPRESSOR_CALLER_FNV1A ||
+        fnv1a(stage2_resource_handler, sizeof(stage2_resource_handler)) !=
+            THERON_STAGE2_RESOURCE_HANDLER_FNV1A ||
         decompressor[0] != 0xa5u || decompressor[1] != 0x2eu ||
         decompressor[2] != 0x85u || decompressor[3] != 0x32u ||
         decompressor[sizeof(decompressor) - 1u] != 0x60u) {
@@ -138,6 +149,9 @@ int theron_v1_huc6280_disassembly_read_file(
     receipt.reverse_byte_read_verified = 1;
     receipt.level_decompressor_fragment_verified = 1;
     receipt.level_decompressor_caller_verified = 1;
+    receipt.stage2_resource_handler_verified = 1;
+    receipt.stage2_resource_bank_table_population_verified = 1;
+    receipt.stage2_resource_destination_registers_verified = 1;
     receipt.semantic_publication_allowed = 0;
     receipt.source_file_size = expected_size;
     receipt.bank_file_offset = THERON_BANK1F_FILE_OFFSET;
@@ -151,6 +165,12 @@ int theron_v1_huc6280_disassembly_read_file(
     receipt.level_decompressor_caller_bytes = THERON_LEVEL_DECOMPRESSOR_CALLER_BYTES;
     receipt.level_decompressor_caller_fnv1a = fnv1a(
         decompressor_caller, sizeof(decompressor_caller));
+    receipt.stage2_resource_handler_address =
+        THERON_STAGE2_RESOURCE_HANDLER_ADDRESS;
+    receipt.stage2_resource_handler_bytes =
+        THERON_STAGE2_RESOURCE_HANDLER_BYTES;
+    receipt.stage2_resource_handler_fnv1a = fnv1a(
+        stage2_resource_handler, sizeof(stage2_resource_handler));
     *out = receipt;
     return 1;
 }

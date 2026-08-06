@@ -52327,3 +52327,10 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   frames and also passes the Track 19 ISO projections. This is a real
   disassembly-backed framing boundary only; bank mappings, decoder output and
   tile/map/palette semantics remain fail-closed.
+- ✅ 2026-08-06 Theron stage-2 resource-handler disassembly receipt: the
+  authentic US/JP HuC6280 handler at `$4C3F` (162 bytes, FNV-1a `46360d97`)
+  now verifies the four-entry MPR table publication and the source-window to
+  destination-register contract (`$3004/$3005`, length `$3006/$3007`). The
+  focused disassembly test passes for both retail ISO variants. This remains
+  generic source ownership; no level/object/tile/palette semantics were
+  enabled without an executing command and source-LBA join.

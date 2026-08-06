@@ -63,6 +63,23 @@ bitstream slice. The first two header bytes are deliberately still opaque:
 the static caller has not proven them to be a destination address or level
 identifier, and no map/tile/palette semantics are promoted from that shape.
 
+## Stage-2 bank and destination contract
+
+The authenticated US and JP retail projections also contain the same generic
+resource-command handler at HuC6280 `$4C3F` (162 bytes, FNV-1a
+`46360d97`). Its source order fills four MPR values at `$3b7e-$3b81` from a
+selected four-byte table row, runs the source-owned variable-bit path, then
+hands the result to the copy helper with source `$3002/$3003 = $6000`,
+destination `$3004/$3005` from the command record, and produced length
+`$3006/$3007`.
+
+This is static proof of the bank-table and destination-register contract. It
+is still a generic command handler: the level-specific table row, command
+index, source record and executing-PC/source-LBA join have not been captured.
+The seven real level blocks therefore remain framed opaque inputs; they are
+not promoted to map, object, tile, bitmap or palette data. See
+[`tqr_v1_stage2_resource_handler_disassembly_2026-08-06.md`](../source-lock/tqr_v1_stage2_resource_handler_disassembly_2026-08-06.md).
+
 ## Multi-Level Object Table
 
 `theron_v1_track02_read_object_table()` now bounds decoded records against the

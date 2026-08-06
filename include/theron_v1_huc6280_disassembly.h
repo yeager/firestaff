@@ -25,6 +25,9 @@ typedef struct {
     int reverse_byte_read_verified;
     int level_decompressor_fragment_verified;
     int level_decompressor_caller_verified;
+    int stage2_resource_handler_verified;
+    int stage2_resource_bank_table_population_verified;
+    int stage2_resource_destination_registers_verified;
     int semantic_publication_allowed;
     uint32_t source_file_size;
     uint32_t bank_file_offset;
@@ -37,6 +40,9 @@ typedef struct {
     uint16_t level_decompressor_caller_address;
     uint16_t level_decompressor_caller_bytes;
     uint32_t level_decompressor_caller_fnv1a;
+    uint16_t stage2_resource_handler_address;
+    uint16_t stage2_resource_handler_bytes;
+    uint32_t stage2_resource_handler_fnv1a;
     char source_md5[33];
 } Theron_V1Huc6280DisassemblyReceipt;
 

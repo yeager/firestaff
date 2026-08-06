@@ -49,9 +49,14 @@
   block, destination bank and level/object meaning remain open.
   2026-08-06 resource-frame update: all seven US and seven JP level spans now
   validate the six-byte `$23AD` resource header and bounded `LE16(+2)-5`
-  bitstream length. The exact header/bitstream slice is retained, but the
-  separate HuC6280 bank mappings and destination pointer are still missing;
-  no decoder output or tile/map semantics are admitted.
+  bitstream length. The exact header/bitstream slice is retained, but no
+  level-specific table row or executing command is bound yet; no decoder
+  output or tile/map semantics are admitted.
+  2026-08-06 stage2-handler update: the byte-identical 162-byte generic
+  resource handler at `$4C3F` now proves the four-entry MPR table population
+  and `$3004/$3005` destination plus `$3006/$3007` produced-length handoff
+  (FNV-1a `46360d97`) for both retail variants. This is a static generic
+  contract, not a level-specific Track 02 consumer receipt.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size
