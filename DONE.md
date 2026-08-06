@@ -1,3 +1,11 @@
+# DM1 D3C F0108 floor-ceiling synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only D3C F0108 framebuffer model from M10. It uses
+  fixed probe pixels, reads no original DM1 material and has no M11/runtime
+  caller; its dedicated ReDMCSB regression now compiles the source explicitly.
+- ✅ Verification: `test_dm1_v1_viewport_d3c_f0108_floor_ceiling_ornament_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D1L/D1R F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D1L/D1R F0111 control/blit model from M10. It

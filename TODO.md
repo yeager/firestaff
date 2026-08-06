@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D3C-F0108-SYNTHETIC-AUDIT:** This contract-only D3C model uses fixed
+  floor, ceiling, ornament and thing probe pixels without original material.
+  It has no M11/runtime caller; retain it as explicit ReDMCSB regression until
+  a source-bound D3C floor-ornament consumer is recovered.
+
 - **DM1-D1L-D1R-F0111-SYNTHETIC-AUDIT:** This asset-free F0111 model records
   D1-side door control and synthetic blits without original game data. It has
   no M11/runtime caller; retain it as explicit ReDMCSB coverage while the
