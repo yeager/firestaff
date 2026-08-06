@@ -1,223 +1,74 @@
-# DM2 V1 — Test Coverage: Well-Tested Areas vs Gaps
+# DM2 V1 — coverage and remaining parity work
 
-## Overview
+## Current scope
 
-DM2 V1 is a stub-only codebase. All 11 source files in `src/dm2/` are
-compile-safe skeleton implementations — no functional implementation, no tests.
-The test coverage picture is almost entirely gaps.
+This document describes the current DM2 codebase. It replaces the old
+bootstrap note which incorrectly described DM2 as eleven untested stubs.
+The configured CTest manifest currently contains 310 DM2-named tests. They
+cover source-bound parsers, material receipts and narrowly scoped runtime
+handoffs. That is not evidence that DM2 is fully playable.
 
-**Current state**: 0 DM2-specific tests exist. 11 stub `.c` files compile into
-`firestaff_dm2` static library but are never exercised by CTest.
+Original game files remain user-supplied. Tests that need them are skip-safe
+when no corpus is configured, and use the mounted PC-DOS data when
+`FIRESTAFF_DM2_DATA_DIR` or `FIRESTAFF_DM2_SKSAVE_CORPUS` is set.
 
----
+## Covered source boundaries
 
-## 1. What IS Covered (DM1/CSB pattern, reference for DM2)
+| Area | Evidence | Honest status |
+| --- | --- | --- |
+| Boot, title and menu | Original `TITLE` and `INTERFACE_GENERAL` GDAT records, source pointer rectangles and palette receipts | Real-data startup is covered. Full original keyboard-event translation remains open. |
+| GDAT | PC-DOS, Mac, Amiga, FM Towns, PC-9821 and Mega-CD parser boundaries; raw image, palette, animation and command plans | Decoding and provenance are covered; every presentation family still needs a live runtime owner. |
+| Dungeon and G1 | Map header, first-map, record-base, tile links, scene/material, static object and local-palette gates | Real input is decoded and bounded. Complete live dungeon rendering and mechanics remain open. |
+| HUD and viewport | GDAT HUD-command receipts, portraits, item/creature local palettes, M11 material handoffs | The active path is source-owned and rejects generated overlays. It is not yet full original GUI/viewport parity. |
+| Save corpus | Header, raw dungeon prefix, fixed `DM2_GAME_LOAD` SUPPRESS sections, DB-pool records and transactional rejection | The real PC-DOS corpus is inspected without unpacking or modifying it. Resume and original writing remain blocked until the full record-link/possession graph is live. |
+| Sound | GDAT PCM receipt/decoder, queue ordering, positional attenuation and SDL backend | Sound data is real when a verified entry exists. PC HMP music stays silent until its original timing/decoder path is implemented. |
+| Mechanics | Source-locked helper tests for movement, records, timers, creature, CCM, projectile, spells, doors, shops and actuators | Most are bounded components or test-only transcripts until connected to the real loaded world. |
+| Outdoor scenes | G1/GDAT palette and environment-material gates | Missing source-owned environment timer and image selection keep outdoor drawing fail-closed. |
 
-Firestaff's DM1 V1 test suite (`test_dm1_v1_*.c`, 39 integration tests) provides
-a structural template for what DM2 V1 coverage should eventually look like.
-These DM1 areas map to equivalent DM2 systems:
+## Real-data regression entry points
 
-| DM1 V1 Tested Area | DM2 V1 Equivalent (not yet tested) | Gap Severity |
-|-------------------|-------------------------------------|-------------|
-| Dungeon loader bounds | DM2 dungeon loader (SKULL.ASM) | CRITICAL — no fixture |
-| GRAPHICS.DAT loading | DM2 GRAPHICS.DAT (hash known) | CRITICAL — no fixture |
-| Viewport 3D render | DM2 outdoor renderer | HIGH |
-| Save/load roundtrip | DM2 SKSAVE* format | HIGH |
-| Combat resolver | DM2 combat (extended weapons) | HIGH |
-| Movement pipeline | DM2 movement/click routing | MEDIUM |
-| Creature AI behavior | DM2 creature AI | MEDIUM |
-| Spell casting | DM2 tech/magic hybrid | MEDIUM |
-| Sensor/trigger | DM2 actuators, doors, pits | MEDIUM |
-| Champion stats/panel | DM2 champion classes (4 new types) | MEDIUM |
+The following focused tests are useful when the PC-DOS corpus is available:
 
----
+```sh
+FIRESTAFF_DM2_DATA_DIR=/path/to/dm2/data \
+  ./build/test_dm2_v1_m11_startup_profile_gate
 
-## 2. Source File Inventory and Coverage Status
+FIRESTAFF_DM2_SKSAVE_CORPUS=/path/to/dm2/data \
+  ./build/test_dm2_v1_save_load_real_data
 
-### 2.1 dm2_v1_game.c (INIT/SHIM ONLY)
-
-**Coverage**: NONE
-
-```
-Lines: ~60 (stub)
-Function: dm2_v1_init(), dm2_v1_load_dungeon(), dm2_v1_enter_shop(), dm2_v1_is_outdoor()
-Status: Returns -1 for dungeon load — extraction pipeline missing
-Test: NONE
+FIRESTAFF_DM2_DATA_DIR=/path/to/dm2/data \
+  ./build/test_dm2_v1_sound_gdat_real_data
 ```
 
-This is the top-level entry point. Nothing is tested.
+`test_dm2_v1_save_load_real_data` currently checks all eight supplied
+`sksave0..3.dat/.bak` files. It verifies the 42-byte original header, raw
+dungeon boundaries, the shared fixed SUPPRESS stream and first/final records
+of each non-empty DB pool. It deliberately does not publish a playable
+session.
 
-### 2.2 dm2_v1_dungeon_loader.c
+## Remaining blockers to playable parity
 
-**Coverage**: NONE (but closest to testable)
+The following are deliberately unavailable rather than replaced with
+placeholders or synthetic state:
 
-```
-Lines: ~50
-Function: dm2_v1_dungeon_load(), dm2_v1_dungeon_get_square_type(),
-         dm2_v1_dungeon_is_outdoor(), dm2_v1_dungeon_free()
-Format: Level header (16-bit LE count + type/width/height/offset per level),
-        tile data (16-bit LE square types)
-Source: SKULL.ASM
-Status: Parser is written; no fixture to test against
-Test: NONE
-```
+- Original SKSAVE resume and writing: `DM2_READ_SKSAVE_DUNGEON`, record-link
+  restoration, possessions, live allocation and post-load ownership are not
+  complete.
+- The complete source menu/HUD event loop, including keyboard/controller
+  translation and live champion GUI state.
+- Full G1 dungeon/viewport composition, object chains, door state, lighting
+  and outdoor environment selection in the M11 runtime.
+- HMP playback timing and a source-proven music backend for PC-DOS music.
+- End-to-end gameplay proof across timers, movement, combat, triggers and
+  save/load with the same authenticated world state.
 
-This is the most testable file — purely data transformation, no I/O dependencies
-except the raw bytes. Once a fixture exists, unit tests are straightforward.
+## Rules for future coverage
 
-### 2.3 dm2_v1_outdoor_renderer.c
-
-**Coverage**: NONE
-
-```
-Lines: ~35 (stub)
-Function: outdoor viewport rendering, sky gradient
-Source: SKULL.ASM (outdoor rendering routines)
-Status: Stub — no actual rendering code
-Test: NONE
-```
-
-Requires a real dungeon + outdoor level to test visually.
-
-### 2.4 dm2_v1_save_load.c
-
-**Coverage**: NONE
-
-```
-Lines: ~20 (stub)
-Function: SKSAVE* format load/save
-Source: SKULL.ASM (savegame format)
-Status: Stub — save/load not implemented
-Test: NONE
-```
-
-### 2.5 dm2_v1_combat.c
-
-**Coverage**: NONE
-
-```
-Lines: ~35 (stub)
-Function: combat resolver with DM2 weapon types
-Source: SKWIN c_ai.cpp (reference), SKULL.ASM (combat logic)
-Status: Stub
-Test: NONE
-```
-
-### 2.6 dm2_v1_tech_magic.c
-
-**Coverage**: NONE
-
-```
-Lines: ~25 (stub)
-Function: tech/magic hybrid item system (DM2's "magic items" vs "items")
-Source: SKWIN c_ai.cpp
-Status: Stub
-Test: NONE
-```
-
-### 2.7 dm2_v1_companion.c
-
-**Coverage**: NONE
-
-```
-Lines: ~30 (stub)
-Function: companion/party AI
-Source: SKWIN c_ai.cpp
-Status: Stub
-Test: NONE
-```
-
-DM2 companions are different from DM1 champions — they level up differently,
-have different class progression. No test fixtures.
-
-### 2.8 V2 files (dm2_v2_*.c) — not in scope for V1 testing
-
----
-
-## 3. Test Coverage Gaps by Category
-
-### Category: Dungeon Data Loading
-
-| File | What needs testing | Status |
-|------|-------------------|--------|
-| dm2_v1_dungeon_loader.c | Valid dungeon file load | MISSING FIXTURE |
-| dm2_v1_dungeon_loader.c | Truncated dungeon handling | MISSING FIXTURE |
-| dm2_v1_dungeon_loader.c | Outdoor level detection | MISSING FIXTURE |
-| dm2_v1_dungeon_loader.c | Square type lookup (rd16 LE) | MISSING FIXTURE |
-| dm2_v1_dungeon_loader.c | Memory cleanup (valgrind) | MISSING FIXTURE |
-
-**FIXTURE NEEDED**: `tests/fixtures/dm2/dungeon_pc_en.DAT`
-**Source**: `Dungeon-Master-II-Skullkeep_DOS_EN.zip` → extract → SHA256 verify
-**Hash**: `6caccd7875009e82fe2e28e7f6d6adc0` (known, from dm2_v1_game.c)
-
-### Category: Graphics Data
-
-| File | What needs testing | Status |
-|------|-------------------|--------|
-| dm2_v1_game.c | GRAPHICS.DAT hash lookup | MISSING FIXTURE |
-| dm2_v1_outdoor_renderer.c | Outdoor bitmap rendering | MISSING FIXTURE + STUB |
-
-**FIXTURE NEEDED**: `tests/fixtures/dm2/graphics_pc_en.DAT`
-**Hash**: `25247ede4dabb6a71e5dabdfbcd5907d` (known)
-
-### Category: Save/Load
-
-| File | What needs testing | Status |
-|------|-------------------|--------|
-| dm2_v1_save_load.c | Save format write | MISSING IMPLEMENTATION |
-| dm2_v1_save_load.c | Save format read | MISSING IMPLEMENTATION |
-| dm2_v1_save_load.c | Roundtrip integrity | MISSING FIXTURE |
-
-**FIXTURE NEEDED**: `tests/fixtures/dm2/save_slot_0.bin`
-**Source**: SKULL.ASM savegame format section (not yet analyzed in docs)
-
-### Category: Combat
-
-| File | What needs testing | Status |
-|------|-------------------|--------|
-| dm2_v1_combat.c | Damage formula (DM2 vs DM1) | MISSING IMPLEMENTATION |
-| dm2_v1_combat.c | Weapon type modifiers | MISSING IMPLEMENTATION |
-| dm2_v1_combat.c | Magic weapon bonus | MISSING IMPLEMENTATION |
-| dm2_v1_combat.c | Armor absorption | MISSING IMPLEMENTATION |
-
-**NOTE**: `SKWIN/c_ai.cpp` has combat resolver — needs disassembly cross-reference
-with SKULL.ASM before test values can be determined.
-
-### Category: Integration (Dungeons + Rendering + Input)
-
-| What needs testing | Status |
-|--------------------|--------|
-| Outdoor level rendering | MISSING FIXTURE + STUB |
-| Indoor-to-outdoor transition | MISSING IMPLEMENTATION |
-| Party movement in outdoor | MISSING IMPLEMENTATION |
-| Companion AI in outdoor | MISSING IMPLEMENTATION |
-| Click routing for outdoor | MISSING IMPLEMENTATION |
-| Ladder/pit/teleport transitions | MISSING IMPLEMENTATION |
-| Shop/trader interaction | MISSING IMPLEMENTATION |
-
----
-
-## 4. What DOESN'T Need Testing (Not Yet in Scope)
-
-- V2 rendering modes (dm2_v2_*.c) — separate from V1 parity
-- WebAssembly/Emscripten target — platform not prioritized for DM2 yet
-- Nexus support — separate game, Phase 0 not started
-- Theron's Quest — separate game, Phase 1 not started
-
----
-
-## 5. Coverage Summary
-
-| Category | Files | Tests | Coverage |
-|----------|-------|-------|---------|
-| Dungeon loader | 1 | 0 | 0% |
-| Game entry point | 1 | 0 | 0% |
-| Outdoor renderer | 1 | 0 | 0% |
-| Save/load | 1 | 0 | 0% |
-| Combat | 1 | 0 | 0% |
-| Tech/magic | 1 | 0 | 0% |
-| Companion | 1 | 0 | 0% |
-| **TOTAL (V1)** | **7** | **0** | **0%** |
-
-The DM2 V1 codebase is a blank slate for testing. The first meaningful
-coverage milestone is fixture creation (dungeon + graphics extraction from zip).
+- Prefer original bytes and source references from SKProject, ReDMCSB,
+  Greatstone and DMWeb.
+- Keep tests data-free only for isolated algorithms. Do not turn fixtures,
+  inferred labels, generated art or host state into player-facing DM2 data.
+- Treat a successful parse, receipt or component test as a local proof, not a
+  claim of playable parity.
+- When a source owner is missing, leave the production path unavailable and
+  record the reason in `TODO.md`.

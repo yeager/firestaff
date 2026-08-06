@@ -268,6 +268,10 @@
   loaders. They remain explicit diagnostic inputs only; a player-facing
   Continue/slot action can admit neither a Firestaff private envelope nor the
   real raw corpus before complete `DM2_GAME_LOAD` support exists.
+  2026-08-06: `docs/dm2_test_coverage.md` no longer calls this codebase an
+  untested stub. Its current coverage statement is intentionally limited to
+  source-bound component and real-data receipts; the same document records
+  the incomplete live owners above as playable-parity blockers.
   2026-08-06: Greatstone's PC 1.0 `GRAPHICS.DAT` catalogue is now bound to
   the original file's 5,624-entry raw table. All 4,031 IMG3/IMG9/IMG11
   rasters now have a nonzero decoded-pixel receipt from those same original

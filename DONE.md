@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 DM2 coverage-document correction: replaced the obsolete DM2
+  bootstrap document that claimed eleven untested stubs and zero DM2 tests.
+  The revised `docs/dm2_test_coverage.md` describes the current 310-test CTest
+  manifest, real PC-DOS startup/SKSAVE/audio regression entry points, and the
+  still-blocked source owners without presenting parser receipts as playable
+  parity. No game data was added to the repository.
+
 - ✅ 2026-08-06 DM2 real SKSave DB-pool boundary verification: extended the
   PC-DOS corpus regression to validate the first and final record in every
   non-empty DB pool of all eight supplied `sksave0..3.dat/.bak` files. The
