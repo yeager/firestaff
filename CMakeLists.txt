@@ -4386,6 +4386,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_dyna_buttons.c
     src/dm1/dm1_v1_fmtowns_dyna_buttons_ja.c
     src/dm1/dm1_v1_fmtowns_jdm_symbols.c
+    src/dm1/dm1_v1_fmtowns_jdm_bss.c
     src/dm1/dm1_v1_fmtowns_dynamenu.c
     src/dm1/dm1_v1_fmtowns_egb_shim.c
     src/dm1/dm1_v1_fmtowns_menu_regions.c
@@ -53473,6 +53474,13 @@ add_executable(test_dm1_v1_fmtowns_jdm_symbols
 )
 target_include_directories(test_dm1_v1_fmtowns_jdm_symbols PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_jdm_symbols COMMAND test_dm1_v1_fmtowns_jdm_symbols)
+
+add_executable(test_dm1_v1_fmtowns_jdm_bss
+    tests/test_dm1_v1_fmtowns_jdm_bss.c
+    src/dm1/dm1_v1_fmtowns_jdm_bss.c
+)
+target_include_directories(test_dm1_v1_fmtowns_jdm_bss PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_jdm_bss COMMAND test_dm1_v1_fmtowns_jdm_bss)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c
