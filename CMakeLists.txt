@@ -4385,6 +4385,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_cd_audio.c
     src/dm1/dm1_v1_fmtowns_dyna_buttons.c
     src/dm1/dm1_v1_fmtowns_dynamenu.c
+    src/dm1/dm1_v1_fmtowns_egb_shim.c
     src/dm1/dm1_v1_fmtowns_menu_regions.c
     src/dm1/dm1_v1_fmtowns_startup.c
     src/dm1/dm1_v1_fmtowns_title.c
@@ -53461,6 +53462,14 @@ add_executable(test_dm1_v1_fmtowns_dynamenu
 )
 target_include_directories(test_dm1_v1_fmtowns_dynamenu PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_dynamenu COMMAND test_dm1_v1_fmtowns_dynamenu)
+
+add_executable(test_dm1_v1_fmtowns_egb_shim
+    tests/test_dm1_v1_fmtowns_egb_shim.c
+    src/dm1/dm1_v1_fmtowns_egb_shim.c
+    src/dm1/dm1_v1_fmtowns_menu_regions.c
+)
+target_include_directories(test_dm1_v1_fmtowns_egb_shim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_egb_shim COMMAND test_dm1_v1_fmtowns_egb_shim)
 
 add_executable(test_dm1_v1_fmtowns_dungeon_dat
     tests/test_dm1_v1_fmtowns_dungeon_dat.c
