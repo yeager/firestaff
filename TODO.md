@@ -179,6 +179,11 @@
   negative origins. Remaining work is still the Saturn input/VDP consumer
   capture that binds each admitted region to its command semantics.
 
+- **NEXUS-SPELL-ACTION-CAPTURE:** DM.BIN spell tables and effect constants
+  remain available as disassembly evidence, but the standalone host effect
+  helper is now test-only. Bind the Saturn spell action, status writes,
+  projectile DMA and HUD feedback before exporting any effect mutation.
+
 - **NEXUS-SAL-MAP-DISPATCH-CAPTURE:** Retail `SNDLEV##.MAP` byte-zero
   records are now admitted independently of the legacy 24-byte fixture
   grammar, and the real 16-level corpus remains bounded and source-backed.

@@ -51759,6 +51759,11 @@ and `firestaff` build pass.
   manufacture a floor gold object without an authenticated Saturn drop
   producer. The loot/drop gate and real boot regression remain green.
 
+- ✅ 2026-08-06 Nexus spell-effect host-route quarantine: disassembly-backed
+  spell tables remain covered by the focused probe, but the unbound helper
+  that directly mutated health/status/light/projectiles is no longer exported
+  by the production Nexus library. Live spell action remains capture-gated.
+
 - ✅ 2026-08-06 DM2 PC-DOS save-path handoff: direct startup save selection
   now accepts the real lower-case, one-digit `sksaveN.dat` filename shape,
   carries the containing data root and slot to the validated loader, and

@@ -258,7 +258,8 @@ add_test(NAME nexus_v1_hunger COMMAND test_nexus_v1_hunger)
 set_tests_properties(nexus_v1_hunger PROPERTIES LABELS "nexus;hunger;tier4")
 
 add_executable(test_nexus_v1_spell_effects
-    tests/test_nexus_v1_spell_effects.c)
+    tests/test_nexus_v1_spell_effects.c
+    src/nexus/nexus_v1_spell_effects.c)
 target_include_directories(test_nexus_v1_spell_effects PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_spell_effects PRIVATE firestaff_nexus)
@@ -4555,6 +4556,10 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_warning_dgt2_resource_corpus\\
 # keep it available to the real-data decoder test without exporting a host
 # presentation path from firestaff_nexus.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_mns\\.c$")
+# Spell-effect tables are disassembly probes only. The live action gate is
+# closed and no production caller binds these host mutations to Saturn's
+# combat/VDP consumer; keep the probe explicit in its focused test target.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_spell_effects\\.c$")
 # M11 owns the shared host lifecycle and calls these four runtime adapters.
 # Keep the procedural V2 renderer modules out of the production library, but
 # retain the explicit lifecycle implementations needed to satisfy M11.
