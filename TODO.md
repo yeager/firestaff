@@ -37,6 +37,13 @@
   test-only until Saturn action/stat/writeback and SLEV/SFX consumers are
   captured.
 
+- **NEXUS-EXPERIENCE-PRODUCTION-BOUNDARY:** The DM.BIN-shaped XP award,
+  level-up and class-table implementation is now excluded from
+  `firestaff_nexus`; production uses a state-preserving fail-closed adapter.
+  Keep the byte-bound study test-only until the Saturn actor-death event,
+  class-XP producer, champion writeback and HUD level-up consumer are
+  captured.
+
 - **NEXUS-STARTUP-SH2-VDP2-CAPTURE:** The authenticated European `DM.BIN`
   startup/menu routine is now checked as an SH-2 function with exact
   PC-relative references to the retail `MENU.BPK`/`STABG.BIN` literals and a

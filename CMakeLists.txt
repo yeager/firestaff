@@ -354,12 +354,23 @@ add_test(NAME nexus_v1_formation COMMAND test_nexus_v1_formation)
 set_tests_properties(nexus_v1_formation PROPERTIES LABELS "nexus;formation;tier4")
 
 add_executable(test_nexus_v1_experience
-    tests/test_nexus_v1_experience.c)
+    tests/test_nexus_v1_experience.c
+    src/nexus/nexus_v1_experience.c)
 target_include_directories(test_nexus_v1_experience PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_experience PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_experience COMMAND test_nexus_v1_experience)
 set_tests_properties(nexus_v1_experience PROPERTIES LABELS "nexus;experience;tier4")
+
+add_executable(test_nexus_v1_experience_production_boundary
+    tests/test_nexus_v1_experience_production_boundary.c)
+target_include_directories(test_nexus_v1_experience_production_boundary PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_experience_production_boundary PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_experience_production_boundary
+    COMMAND test_nexus_v1_experience_production_boundary)
+set_tests_properties(nexus_v1_experience_production_boundary PROPERTIES
+    LABELS "nexus;experience;production-boundary;tier4")
 
 add_executable(test_nexus_v1_level_transition
     tests/test_nexus_v1_level_transition.c)
@@ -4852,6 +4863,10 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_magic\\.c$")
 # captured Nexus action/stat/writeback consumer. Keep it in focused tests and
 # export only a state-preserving production ABI adapter.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_combat\\.c$")
+# The DM.BIN-shaped XP/level mutation model has no captured Saturn actor,
+# writeback or HUD consumer. Keep the study explicit and export only the
+# state-preserving production ABI adapter.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience\\.c$")
 # M11 owns the shared host lifecycle and calls these runtime adapters.
 # Keep the procedural V2 renderer modules out of the production library, but
 # retain the explicit lifecycle implementations needed to satisfy M11.
@@ -4860,6 +4875,7 @@ set(NEXUS_M11_RUNTIME_SOURCES
     src/nexus/nexus_v1_saturn_font_runtime_noop.c
     src/nexus/nexus_v1_magic_runtime_noop.c
     src/nexus/nexus_v1_combat_runtime_noop.c
+    src/nexus/nexus_v1_experience_runtime_noop.c
     src/nexus/nexus_v2_hud_runtime_noop.c
     src/nexus/nexus_v2_lighting_runtime_noop.c
     src/nexus/nexus_v2_smooth_movement_runtime_noop.c

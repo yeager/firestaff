@@ -62,6 +62,15 @@
   XP calls cannot mutate champion or creature state without a Saturn action
   and writeback capture.
 
+# Nexus experience production boundary (2026-08-06)
+
+- ✅ Removed the DM.BIN-shaped XP award, level-up and class-table implementation
+  from the production archive. It remains available to explicit source-study
+  tests; production now links a state-preserving fail-closed adapter.
+- ✅ Added a production-boundary regression proving XP, level-up and stat/
+  skill queries cannot expose or mutate inferred runtime state before the
+  Saturn actor-death and champion writeback consumers are captured.
+
 # DM2 static-object Rect14 runtime handoff (2026-08-06)
 
 - ✅ DB5 weapon and DB9 container roots that have passed the source
