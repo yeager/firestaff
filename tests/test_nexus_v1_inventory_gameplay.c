@@ -127,36 +127,32 @@ static void test_container_operations(void) {
     Nexus_ContainerManager cmgr;
     nexus_v1_container_manager_init(&cmgr);
 
-    /* Register a chest */
+    /* Retail DGN has no authenticated container owner/content chain yet. */
     int cidx = nexus_v1_container_register(&cmgr,
         NEXUS_CONTAINER_CHEST, 10, 10, 0, -1);
-    expect(cidx >= 0, "container registered");
+    expect(cidx == -1, "unproven container registration blocked");
 
-    /* Add items to chest */
     int rc = nexus_v1_container_add_item(&cmgr, cidx, 42);
-    expect(rc == 0 || rc == 1, "add item to container succeeds");
-    expect(nexus_v1_container_item_count(&cmgr, cidx) == 1,
-           "container has 1 item");
+    expect(rc == -1, "unproven container loot blocked");
+    expect(nexus_v1_container_item_count(&cmgr, cidx) == 0,
+           "blocked container has no items");
 
     nexus_v1_container_add_item(&cmgr, cidx, 43);
-    expect(nexus_v1_container_item_count(&cmgr, cidx) == 2,
-           "container has 2 items");
+    expect(nexus_v1_container_item_count(&cmgr, cidx) == 0,
+           "second blocked loot item is not stored");
 
-    /* Open the container (not locked) */
     int open_rc = nexus_v1_container_open(&cmgr, cidx, -1);
-    expect(open_rc == 1, "unlocked container opens successfully");
-    expect(nexus_v1_container_is_open(&cmgr, cidx) == 1,
-           "container is now open");
+    expect(open_rc == 0, "unproven container does not open");
+    expect(nexus_v1_container_is_open(&cmgr, cidx) == 0,
+           "blocked container remains closed");
 
-    /* Take an item */
     int taken = nexus_v1_container_take(&cmgr, cidx, 0);
-    expect(taken == 42, "took item 42 from slot 0");
-    expect(nexus_v1_container_item_count(&cmgr, cidx) == 1,
-           "container has 1 item after taking");
+    expect(taken == -1, "unproven loot cannot be taken");
+    expect(nexus_v1_container_item_count(&cmgr, cidx) == 0,
+           "blocked container remains empty");
 
-    /* Find container at position */
     int found = nexus_v1_container_find_at(&cmgr, 10, 10);
-    expect(found == cidx, "find_at returns correct container index");
+    expect(found == -1, "find_at has no unproven container owner");
     expect(nexus_v1_container_find_at(&cmgr, 99, 99) == -1,
            "find_at returns -1 for empty position");
 }
@@ -165,10 +161,10 @@ static void test_container_locked(void) {
     Nexus_ContainerManager cmgr;
     nexus_v1_container_manager_init(&cmgr);
 
-    /* Register a locked chest requiring key_id 5 */
+    /* Key semantics remain blocked with the container route. */
     int cidx = nexus_v1_container_register(&cmgr,
         NEXUS_CONTAINER_CHEST, 3, 3, 1, 5);
-    expect(cidx >= 0, "locked container registered");
+    expect(cidx == -1, "locked container registration blocked");
 
     /* Try to open without key */
     int rc = nexus_v1_container_open(&cmgr, cidx, -1);
@@ -178,9 +174,8 @@ static void test_container_locked(void) {
     rc = nexus_v1_container_open(&cmgr, cidx, 3);
     expect(rc == 0, "locked container does not open with wrong key");
 
-    /* Open with correct key */
     rc = nexus_v1_container_open(&cmgr, cidx, 5);
-    expect(rc == 1, "locked container opens with correct key");
+    expect(rc == 0, "correct key is still unproven without Saturn dispatch");
 }
 
 static void test_floor_items(void) {

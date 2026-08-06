@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus container/loot quarantine: removed the synthetic
+  DM1-shaped chest/crate mutation route from production. Retail DGN item and
+  location records remain diagnostic until a Saturn container owner, content
+  chain, key dispatch and loot writeback are authenticated. Focused container
+  and real ITEM.IBS inventory tests pass with the route blocked.
+
 - ✅ 2026-08-06 Nexus combat claim quarantine: corrected the V1/V2 phase-gate
   metadata so the DM1-shaped combat helper is described as diagnostic only.
   The production action-semantics gate remains fail-closed while Saturn

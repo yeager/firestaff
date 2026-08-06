@@ -2,11 +2,12 @@
 #ifndef NEXUS_V1_CONTAINERS_H
 #define NEXUS_V1_CONTAINERS_H
 
-/* Nexus V1 container system — chests, crates, and sarcophagi that hold
- * items the party can loot.
- * Source: DM1 DUNGEON.C container thing type,
- *         OBJECTMAN.C F0258 container contents,
- *         DM Nexus Saturn: chest squares in dungeon data. */
+/* Nexus V1 container provenance seam.
+ *
+ * Retail LEV*.DGN currently exposes item/location records, but no
+ * authenticated Saturn container owner, content chain, key dispatch or loot
+ * writeback. The former DM1-shaped implementation is retained only as a
+ * fail-closed API boundary until the real consumer is captured. */
 
 #include <stdint.h>
 

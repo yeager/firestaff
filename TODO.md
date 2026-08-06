@@ -156,6 +156,12 @@
   `nexus_v1_action_semantics_proven()` must stay closed until those receipts
   are captured.
 
+- **NEXUS-CONTAINER-LOOT-CAPTURE:** The old DM1-shaped Nexus container helper
+  accepted caller-supplied chest/crate contents despite the retail DGN corpus
+  exposing no authenticated container owner, content chain, key dispatch or
+  Saturn loot writeback. The public route is now fail-closed; recover those
+  real records and the original consumer before admitting chests or loot.
+
 - **THERON-REAL-CONSUMER-HANDOFF:** The authenticated US/JP Track 02 map,
   object, ground, door, teleporter and creature-bank records are retained, but
   a positive game-owned post-startup CD read is still missing. The current
