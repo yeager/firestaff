@@ -28,9 +28,9 @@ Nexus are development targets and are not presented as finished games.
 
 ## Screenshots
 
-Only real DM1 v1 runtime captures appear here. The images below come from
-Firestaff's original-data runtime capture set; no generated, placeholder or
-fallback image is presented as game evidence.
+Only real DM1 v1 runtime captures appear here. The images below were captured
+from Firestaff using the local PC DOS 3.4 data and two original save files;
+no generated, placeholder or fallback image is presented as game evidence.
 
 ### Dungeon Master v1
 
@@ -38,11 +38,11 @@ fallback image is presented as game evidence.
 |--------------------|----------|------------------|-----------------|
 | ![Dungeon Master v1 Presents runtime capture](docs/screenshots/dm1-v1-runtime-presents-macos.png) | ![Dungeon Master v1 Entrance runtime capture](docs/screenshots/dm1-v1-runtime-entrance-macos.png) | ![Dungeon Master v1 dungeon runtime capture](docs/screenshots/dm1-v1-runtime-dungeon-macos.png) | ![Dungeon Master v1 HUD runtime capture](docs/screenshots/dm1-v1-runtime-hud.png) |
 
-Additional verified DM1 v1 in-game states:
+Fresh DM1 v1 in-game captures from the save route:
 
-| Start | Movement | Spells | Inventory | Party HUD |
-|-------|----------|--------|-----------|----------|
-| ![DM1 v1 start](docs/screenshots/dm1-v1-runtime-start-latest.png) | ![DM1 v1 movement](docs/screenshots/dm1-v1-runtime-movement-latest.png) | ![DM1 v1 spells](docs/screenshots/dm1-v1-runtime-spells-latest.png) | ![DM1 v1 inventory](docs/screenshots/dm1-v1-runtime-inventory-latest.png) | ![DM1 v1 party HUD](docs/screenshots/dm1-v1-runtime-party-hud-latest.png) |
+| Save HUD | Save movement | Runtime viewport |
+|----------|---------------|-----------------|
+| ![DM1 v1 save HUD](docs/screenshots/dm1-v1-runtime-save-hud-20260806.png) | ![DM1 v1 save movement](docs/screenshots/dm1-v1-runtime-save-movement-20260806.png) | ![DM1 v1 runtime viewport](docs/screenshots/dm1-v1-runtime-save-dungeon-20260806.png) |
 
 Screenshots for CSB, DM2, Theron's Quest, DM Nexus and future custom art are
 **Coming soon** because those game versions are not currently available.
@@ -86,10 +86,10 @@ source-reference boundaries for all five games.
 | Platform | Status | Data directory |
 |----------|--------|---------------|
 | macOS | DM1 v1 playable and runtime-verified | `~/.firestaff/data/` |
-| Linux | Build target; DM1 v1 runtime verification pending | `~/.firestaff/data/` |
-| Windows | Build target; DM1 v1 runtime verification pending | `%USERPROFILE%\.firestaff\data\` |
-| Steam Deck | Linux/AppImage target; DM1 v1 runtime verification pending | `~/.firestaff/data/` |
-| iOS / Android | Not currently supported | Coming soon |
+| Linux | Build target; DM1 v1 packaged/runtime verification pending | `~/.firestaff/data/` |
+| Windows | Build target; DM1 v1 packaged/runtime verification pending | `%USERPROFILE%\.firestaff\data\` |
+| Steam Deck | Linux/AppImage target; DM1 v1 verification pending | `~/.firestaff/data/` |
+| iOS / Android | Not supported today | Coming soon |
 
 Suggested layout:
 
@@ -274,7 +274,8 @@ language is **English**. The launcher has gettext catalogs and
 language-selection plumbing, including Swedish, but that does not yet mean
 that every menu, runtime message, font and game asset is fully translated.
 Swedish and other languages remain development targets until complete runtime
-coverage is verified.
+coverage is verified. CSB, DM2, Theron's Quest and DM Nexus have no playable
+language/runtime claim yet.
 
 | Language | Current status |
 |----------|----------------|
