@@ -53,6 +53,20 @@ static int16_t mock_rotate_5x5_pos(void *ctx __attribute__((unused)),
     return pos; /* identity rotation */
 }
 
+static int mock_text_queries;
+static int8_t mock_text_a, mock_text_b, mock_text_c;
+
+static char *mock_query_gdat_text(void *ctx __attribute__((unused)),
+    int8_t a, int8_t b, int8_t c, char *buf)
+{
+    mock_text_queries++;
+    mock_text_a = a;
+    mock_text_b = b;
+    mock_text_c = c;
+    strcpy(buf, "FIGHTER");
+    return buf;
+}
+
 /* ---- Helper: build callback struct with all NULLs ---- */
 static DM2_V1_QueryDbCallbacks null_callbacks(void)
 {
@@ -310,6 +324,40 @@ static void test_get_creature_weight(void)
 }
 
 /* ================================================================ */
+/* Test 11: dm2_v1_query_gdat_text -- original text callback route  */
+/* ================================================================ */
+static void test_query_gdat_text(void)
+{
+    DM2_V1_QueryDbCallbacks cb = null_callbacks();
+    char text[16];
+
+    cb.query_gdat_text = mock_query_gdat_text;
+    mock_text_queries = 0;
+    memset(text, 0x5a, sizeof(text));
+
+    assert(dm2_v1_query_gdat_text(0x07, 0x00, 0x00, text,
+                                  (int32_t)sizeof(text), &cb, NULL) == 1);
+    assert(mock_text_queries == 1);
+    assert(mock_text_a == 0x07 && mock_text_b == 0x00 && mock_text_c == 0x00);
+    assert(strcmp(text, "FIGHTER") == 0);
+
+    /* GDAT keys are bytes in the source ABI; out-of-range values must not
+     * wrap to an unrelated original entry. */
+    mock_text_queries = 0;
+    strcpy(text, "stale");
+    assert(dm2_v1_query_gdat_text(0x100, 0, 0, text,
+                                  (int32_t)sizeof(text), &cb, NULL) == 0);
+    assert(mock_text_queries == 0);
+    assert(text[0] == '\0');
+
+    strcpy(text, "stale");
+    assert(dm2_v1_query_gdat_text(7, 0, 0, text, 0, &cb, NULL) == 0);
+    assert(strcmp(text, "stale") == 0);
+
+    printf("  PASS: test_query_gdat_text\n");
+}
+
+/* ================================================================ */
 /* Main                                                              */
 /* ================================================================ */
 int main(void)
@@ -324,6 +372,7 @@ int main(void)
     test_is_miscitem_currency();
     test_door_strength();
     test_get_creature_weight();
+    test_query_gdat_text();
 
     printf("All dm2_v1_querydb tests passed.\n");
     return 0;

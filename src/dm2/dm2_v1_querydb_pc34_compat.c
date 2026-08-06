@@ -836,10 +836,26 @@ int32_t dm2_v1_query_gdat_text(int32_t cls1, int32_t cls2, int32_t field,
                                char *buf, int32_t buf_len,
                                const DM2_V1_QueryDbCallbacks *cb, void *ctx)
 {
-    /* TODO: port from skproject c_querydb.cpp:2900 */
-    (void)cls1; (void)cls2; (void)field; (void)cb; (void)ctx;
-    if (buf && buf_len > 0) buf[0] = '\0';
-    return 0;
+    char *text;
+
+    if (!buf || buf_len <= 0) return 0;
+    buf[0] = '\0';
+    if (!cb || !cb->query_gdat_text) return 0;
+
+    /* ReDMCSB/SKProject: skcore.cpp::QUERY_GDAT_TEXT at 2636:02F8.
+     * The source routine takes byte GDAT keys, writes the decoded and
+     * FORMAT_SKSTR-expanded result to its caller-owned buffer, and returns
+     * that buffer. Do not silently truncate signed or wider caller values:
+     * a wrapped key would select unrelated original game data. */
+    if (cls1 < 0 || cls1 > 0xff ||
+        cls2 < 0 || cls2 > 0xff ||
+        field < 0 || field > 0xff) {
+        return 0;
+    }
+
+    text = cb->query_gdat_text(ctx, (int8_t)cls1, (int8_t)cls2,
+                               (int8_t)field, buf);
+    return text != NULL ? 1 : 0;
 }
 
 /* ── Section 15: Projectile and missile queries ───────────────────── */

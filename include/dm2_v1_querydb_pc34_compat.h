@@ -141,6 +141,12 @@ int32_t dm2_v1_query_gdat_entry_data_length(int8_t a, int8_t b, int8_t c, int8_t
 int16_t dm2_v1_query_gdat_pict_offset(int8_t a, int8_t b, int8_t c,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);
 
+/* Source QUERY_GDAT_TEXT writes decoded/FORMAT_SKSTR-expanded GDAT text to
+ * buf. Returns one if the source callback found an entry, otherwise zero. */
+int32_t dm2_v1_query_gdat_text(int32_t cls1, int32_t cls2, int32_t field,
+    char *buf, int32_t buf_len,
+    const DM2_V1_QueryDbCallbacks *cb, void *ctx);
+
 void dm2_v1_query_gdat_image_metrics(int8_t a, int8_t b, int8_t c,
     int16_t *w, int16_t *h,
     const DM2_V1_QueryDbCallbacks *cb, void *ctx);

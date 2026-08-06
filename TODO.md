@@ -27008,9 +27008,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   RAM. Bind that companion to each original GUI/dialogue text call and add an
   archive-backed companion admission path before claiming complete English UI;
   missing companion data blocks English FM Towns rather than substituting text.
-  `c_gfx_str.cpp::DM2_QUERY_GDAT_TEXT` now accepts only an explicit decoded
-  companion callback and otherwise consumes the selected GDAT unchanged;
-  remaining work is wiring that callback to every live M11 GUI/dialogue owner.
+  Both `c_gfx_str.cpp::DM2_QUERY_GDAT_TEXT` and the QueryDB relay now accept
+  only explicit decoded companion callbacks and otherwise consume the selected
+  GDAT unchanged; remaining work is wiring that callback to every live M11
+  GUI/dialogue owner.
 
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN

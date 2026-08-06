@@ -52818,6 +52818,12 @@ no-draw/capture-gates är oförändrade.
   already-decoded companion entry before the selected GDAT cipher path. It
   leaves the native entry untouched when no companion post exists and still
   runs the shared original `FORMAT_SKSTR` consumer.
+- ✅ 2026-08-06 DM2 QueryDB GDAT-text relay: the formerly empty text-query
+  stub now forwards byte-validated keys to the original callback contract from
+  `skcore.cpp::QUERY_GDAT_TEXT` (2636:02F8). It preserves the caller-owned,
+  decoded and `FORMAT_SKSTR`-expanded buffer, rejects out-of-range keys rather
+  than wrapping them to unrelated data, and is covered with a `FIGHTER` text
+  callback proof.
 ✅ 2026-08-06 Nexus startup menu text sanitization: production save/chrome
 builders no longer emit hoststrängarna `DUNGEON MASTER NEXUS`, `LOAD GAME`,
 `NEW GAME` eller `LOAD SLOT ##`. Riktig radgeometri och källans slot-identitet
