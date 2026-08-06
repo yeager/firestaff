@@ -5608,6 +5608,12 @@ that its exact runtime path is not already source-locked and tested.
     source click sequence menu → credits → menu. Packaged-app evidence and
     every gameplay surface remain open; do not treat this source-binary
     result as a release capture.
+    2026-08-06: `M11_Screenshot_CaptureCurrent` now keeps all 256 physical
+    source indices when M11 owns a source-proven indexed palette. The prior
+    four-bit mask could corrupt an external DM2 BPP8 TITLE/menu/credits
+    capture even though the live SDL surface had the correct dtPalIRGB
+    palette. Keep the packaged-app evidence task open; this closes only that
+    unbundled capture fidelity defect.
 49. **DM2-REAL-DATA-REGRESSION-CORPUS:** Build hash/provenance-verified DM2
     GRAPHICS/DUNGEON/SKSAVE/SND test corpus and end-to-end runtime regressions
     that exercise the authentic production paths.

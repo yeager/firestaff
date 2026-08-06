@@ -26,6 +26,9 @@ int M11_Render_CopyIndexedPaletteRgb6(uint8_t out_rgb6[256][3]) {
     out_rgb6[3][0] = 63;
     out_rgb6[3][1] = 31;
     out_rgb6[3][2] = 0;
+    out_rgb6[0x83][0] = 7;
+    out_rgb6[0x83][1] = 47;
+    out_rgb6[0x83][2] = 63;
     return 1;
 }
 
@@ -66,7 +69,9 @@ int main(void) {
         fprintf(stderr, "capture paths or BMPs invalid\n");
         return 1;
     }
-    memset(s_framebuffer, 3, sizeof(s_framebuffer));
+    /* High physical palette indices are used by DM2's BPP8 TITLE pages.
+     * The screenshot path must not fold 0x83 to colour 3. */
+    memset(s_framebuffer, 0x83, sizeof(s_framebuffer));
     s_indexed_palette_active = 1;
     if (!M11_Screenshot_CaptureCurrent(outputDir, first, (int)sizeof(first)) ||
         !(captured = fopen(first, "rb")) ||
@@ -77,9 +82,9 @@ int main(void) {
         return 1;
     }
     fclose(captured);
-    /* BMP stores BGR. RGB6 (63,31,0) expands to RGB8 (255,125,0). */
-    if (first_pixel[0] != 0 || first_pixel[1] != 125 || first_pixel[2] != 255) {
-        fprintf(stderr, "indexed palette was not preserved in capture\n");
+    /* BMP stores BGR. RGB6 (7,47,63) expands to RGB8 (28,190,255). */
+    if (first_pixel[0] != 255 || first_pixel[1] != 190 || first_pixel[2] != 28) {
+        fprintf(stderr, "high indexed palette was not preserved in capture\n");
         return 1;
     }
     remove(first);

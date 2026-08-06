@@ -209,9 +209,9 @@ int M11_Screenshot_Capture(const unsigned char* framebuffer,
     return 1;
 }
 
-/* Capture the m11 indexed framebuffer with the current 16-entry VGA
- * palette expanded into a 256-entry RGB table (high indices repeat
- * the active row to remain in-range with the BMP writer). */
+/* Capture the M11 indexed framebuffer with its active palette.  The legacy
+ * VGA route expands 16 entries, but DM2 hands M11 physical BPP8 GDAT indices
+ * with a source-owned 256-entry dtPalIRGB palette. */
 int M11_Screenshot_CaptureCurrent(const char* outputDir,
                                   char* outPath, int outPathCap) {
     unsigned char* fb;
@@ -224,16 +224,19 @@ int M11_Screenshot_CaptureCurrent(const char* outputDir,
     fb = M11_Render_GetFramebuffer();
     if (!fb) return 0;
 
-    /* Drop level bits so the index fits the 16-entry VGA palette. */
-    for (i = 0; i < n; i++) {
-        masked[i] = (unsigned char)(fb[i] & M11_FB_INDEX_MASK);
-    }
     /* CSB and DM2 install source-owned indexed palettes for their runtime
      * pages.  Capture the same expanded RGB values that M11 presents rather
      * than reinterpreting their source indices through the generic DM1 VGA
      * row.  This keeps diagnostics and real-data evidence faithful to the
-     * actual renderer while retaining the legacy 16-colour fallback. */
+     * actual renderer while retaining the legacy 16-colour fallback.
+     *
+     * In particular, do not apply M11_FB_INDEX_MASK after this succeeds:
+     * SKProject's startend.cpp::DM2_SHOW_MENU_SCREEN and DM2_SHOW_CREDITS
+     * present the original TITLE BPP8 page as physical dtPalIRGB indices.
+     * Masking those bytes to four bits made an external screenshot disagree
+     * with the presented DM2 menu/credits palette. */
     if (M11_Render_CopyIndexedPaletteRgb6(indexed_palette_rgb6)) {
+        memcpy(masked, fb, (size_t)n);
         for (i = 0; i < 256; i++) {
             palette[i * 3 + 0] = (unsigned char)((indexed_palette_rgb6[i][0] << 2) |
                                                    (indexed_palette_rgb6[i][0] >> 4));
@@ -243,6 +246,11 @@ int M11_Screenshot_CaptureCurrent(const char* outputDir,
                                                    (indexed_palette_rgb6[i][2] >> 4));
         }
     } else {
+        /* Legacy 16-colour frames still encode palette-level bits in the
+         * framebuffer index, so retain the historic mask only on this path. */
+        for (i = 0; i < n; i++) {
+            masked[i] = (unsigned char)(fb[i] & M11_FB_INDEX_MASK);
+        }
         level = M11_Render_GetPaletteLevel();
         if (level < 0) level = 0;
         if (level >= M11_PALETTE_LEVELS) level = M11_PALETTE_LEVELS - 1;

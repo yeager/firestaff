@@ -1,5 +1,18 @@
 # Nexus PLRD provisions quarantine (2026-08-06)
 
+- ✅ 2026-08-06 DM2 external BPP8 screenshot palette correction:
+  `M11_Screenshot_CaptureCurrent` no longer folds framebuffer indices through
+  `0x0f` after M11 has installed a source-owned 256-colour palette. This makes
+  the external capture retain the same physical GDAT index and dtPalIRGB RGB6
+  colour as the live DM2 title/menu/credits surface. The legacy 16-colour
+  route retains its historic mask. Source: SKProject
+  `startend.cpp::DM2_SHOW_MENU_SCREEN` and `DM2_SHOW_CREDITS`; both present
+  BPP8 TITLE pages with physical indices. Verification:
+  `test_m11_screenshot_capture_delivery` now checks high index `0x83`, and a
+  dummy-SDL `firestaff --game dm2 --boot-probe` run against the supplied
+  PC-English corpus emitted the 320×200 indexed capture plus the actual
+  post-presentation RGBA capture.
+
 - ✅ 2026-08-06 Theron production archive boundary: the archive regression now
   checks every CMake-excluded inferred/procedural Theron translation unit,
   not only the legacy creature table. A future source binding must therefore
