@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-C100-C040-SYNTHETIC-AUDIT:** This C100/C040 fixture fabricates
+  party, panel, G0299 candidate and G0514 caster state. It loads no original
+  DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound command owner is recovered.
+
 - **DM1-MIRROR-C040-C545-REDRAW-SYNTHETIC-AUDIT:** This asset-free C040/C545
   fixture fabricates party, chest and candidate state. It loads no original
   DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
