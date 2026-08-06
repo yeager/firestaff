@@ -215,12 +215,14 @@ int main(void) {
         destroy_engine(e);
     }
 
-    /* Test 11: light tick doesn't crash */
+    /* Test 11: the uncaptured retail light consumer remains closed. */
     {
         Nexus_V1_Engine *e = create_minimal_engine();
+        int before_light = e->light.torch_ticks;
         nexus_v1_light_torch_on(&e->light, 100);
         nexus_v1_tick(e);
-        expect(e->light.torch_ticks < 100, "torch burned down");
+        expect(e->light.torch_ticks == before_light,
+               "uncaptured retail light does not mutate state");
         destroy_engine(e);
     }
 

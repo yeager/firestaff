@@ -243,12 +243,23 @@ add_test(NAME nexus_v1_doors COMMAND test_nexus_v1_doors)
 set_tests_properties(nexus_v1_doors PROPERTIES LABELS "nexus;doors;tier4")
 
 add_executable(test_nexus_v1_light
-    tests/test_nexus_v1_light.c)
+    tests/test_nexus_v1_light.c
+    src/nexus/nexus_v1_light.c)
 target_include_directories(test_nexus_v1_light PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_light PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_light COMMAND test_nexus_v1_light)
 set_tests_properties(nexus_v1_light PROPERTIES LABELS "nexus;light;tier4")
+
+add_executable(test_nexus_v1_light_production_boundary
+    tests/test_nexus_v1_light_production_boundary.c)
+target_include_directories(test_nexus_v1_light_production_boundary PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_light_production_boundary PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_light_production_boundary
+    COMMAND test_nexus_v1_light_production_boundary)
+set_tests_properties(nexus_v1_light_production_boundary PROPERTIES
+    LABELS "nexus;light;production-boundary;tier4")
 
 add_executable(test_nexus_v1_status
     tests/test_nexus_v1_status.c
@@ -323,7 +334,8 @@ set_tests_properties(nexus_v1_hunger PROPERTIES LABELS "nexus;hunger;tier4")
 add_executable(test_nexus_v1_spell_effects
     tests/test_nexus_v1_spell_effects.c
     src/nexus/nexus_v1_spell_effects.c
-    src/nexus/nexus_v1_status.c)
+    src/nexus/nexus_v1_status.c
+    src/nexus/nexus_v1_light.c)
 target_include_directories(test_nexus_v1_spell_effects PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_spell_effects PRIVATE firestaff_nexus)
@@ -4960,6 +4972,10 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_action_timer\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_doors\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_traps\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_projectiles\\.c$")
+# The simple DM1-shaped torch/FUL/ambient state machine has no captured
+# Saturn light command, timer writeback or HUD/VDP consumer. Keep its study
+# explicit and export only the fail-closed production ABI.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_light\\.c$")
 # M11 owns the shared host lifecycle and calls these runtime adapters.
 # Keep the procedural V2 renderer modules out of the production library, but
 # retain the explicit lifecycle implementations needed to satisfy M11.
@@ -4971,6 +4987,7 @@ set(NEXUS_M11_RUNTIME_SOURCES
     src/nexus/nexus_v1_experience_runtime_noop.c
     src/nexus/nexus_v1_rest_status_runtime_noop.c
     src/nexus/nexus_v1_action_world_runtime_noop.c
+    src/nexus/nexus_v1_light_runtime_noop.c
     src/nexus/nexus_v2_hud_runtime_noop.c
     src/nexus/nexus_v2_lighting_runtime_noop.c
     src/nexus/nexus_v2_smooth_movement_runtime_noop.c

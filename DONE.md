@@ -183,6 +183,15 @@
   create or advance state without the captured Saturn command, transition,
   trigger or projectile-DMA consumers.
 
+# Nexus light production boundary (2026-08-06)
+
+- ✅ Removed the DM1-shaped torch/FUL/ambient light state machine from
+  `firestaff_nexus`. Its original implementation remains in the explicit
+  study target; production now links a state-preserving fail-closed adapter.
+- ✅ Added a production-boundary regression proving light setters, torch/FUL
+  activation and ticking cannot mutate state before the Saturn light command,
+  timer writeback and HUD/VDP consumers are captured.
+
 # Nexus experience production boundary (2026-08-06)
 
 - ✅ Removed the DM.BIN-shaped XP award, level-up and class-table implementation

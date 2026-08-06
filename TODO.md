@@ -732,6 +732,12 @@
   adapter. Do not restore them until Saturn action, timing and HUD ownership
   is captured.
 
+  2026-08-06 follow-up: `nexus_v1_light.c` is now excluded from
+  `firestaff_nexus`; its original torch/FUL/ambient state machine remains an
+  explicit study input and production exports only a state-preserving ABI
+  adapter. The separate light-overflow receipt/runtime remains diagnostic
+  until its Saturn F0238/F0257 consumer is captured.
+
 - **NEXUS-RETAIL-TICK-STATE-GATE:** Retail ISO/extracted ticks now leave the
   unbound action cooldown, door animation, trap cooldown and DM1-derived
   step-stamina state unchanged. Movement over decoded floor geometry remains
