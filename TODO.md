@@ -1317,12 +1317,13 @@ level or consumer bindings.
   `decode_title_sound` now retains TITLE's one real signed SND2 sample and
   all five SO events in RAM, including source offsets, frame positions,
   volume bytes and the source-invalid 1000 Hz field. SKWIN `0759:0E33/0EF0`
-  establishes the selected slot and fixed 5500 Hz playback argument, so the
-  next step is a separately source-proven 5500-Hz transport — not inferred
-  stereo mixing from SO metadata. END's source FO/NE/BN loops and per-frame PL
+  establishes the selected slot and fixed 5500 Hz playback argument; M11 now
+  transports that exact signed sample at each source frame boundary. The SO
+  payload is not interpreted as host stereo or gain because the original
+  call passes `0xff` and 5500 instead. END's source FO/NE/BN loops and per-frame PL
   palette route now replay through RAM-only receipts (420 displayed frames
   from 385 EN/DL records), but its game-won handoff remains unbound. The remaining
-  gap is source-owned END playback, TITLE sound-event/CDDA dispatch, and a captured
+  gap is source-owned END playback, TITLE CDDA dispatch, and a captured
   title-to-SKULL menu handoff; do not replace them with host animation or
   menus. **2026-08-06 IMG2 menu update:** after the authenticated TITLE
   stream completes, M11 now presents the selected HME-242

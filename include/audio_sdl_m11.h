@@ -26,6 +26,9 @@ typedef enum {
 #define M11_AUDIO_SAMPLE_RATE 22050
 #define M11_AUDIO_SOURCE_SND3_SAMPLE_RATE 6000
 #define M11_AUDIO_SOURCE_SND8_SAMPLE_RATE 11025
+#define M11_AUDIO_DM2_FMTOWNS_TITLE_SAMPLE_RATE 5500
+#define M11_AUDIO_DM2_FMTOWNS_TITLE_SAMPLE_BYTES 12862
+#define M11_AUDIO_DM2_FMTOWNS_TITLE_SAMPLE_FNV1A 0x0b829ae7u
 #define M11_AUDIO_MAX_SOUND_MS 300
 #define M11_AUDIO_MAX_SAMPLES ((M11_AUDIO_SAMPLE_RATE * M11_AUDIO_MAX_SOUND_MS) / 1000)
 #define M11_AUDIO_ORIGINAL_SOUND_COUNT 35
@@ -74,6 +77,7 @@ typedef struct {
     M11_SoundBuffer csbAtariStPsg;
     M11_SoundBuffer csbPc34RuntimePcm;
     M11_SoundBuffer csbAmigaRuntimePcm;
+    M11_SoundBuffer dm2FmtownsTitlePcm;
     int dm1SwshProgramAccepted;
     int dm1SwshRegisterWriteCount;
     int dm1SwshWaitVblankCount;
@@ -99,6 +103,11 @@ typedef struct {
     int csbAmigaRuntimeSoundSourceVolume;
     unsigned int csbAmigaRuntimeSoundHash;
     int csbAmigaRuntimeSoundQueuedCount;
+    int dm2FmtownsTitleSoundAccepted;
+    int dm2FmtownsTitleSoundByteCount;
+    unsigned int dm2FmtownsTitleSoundHash;
+    int dm2FmtownsTitleSoundPlayCount;
+    int dm2FmtownsTitleSoundQueuedCount;
 } M11_AudioState;
 
 int M11_Audio_Init(M11_AudioState* state);
@@ -177,6 +186,16 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
     int sourcePeriod,
     unsigned int sourceHash,
     int sourceVolume);
+/* HME-242 TWANIM TITLE's SD record owns exactly one signed 8-bit sample.
+ * SKWIN 0759:0EF0 calls the native player with that buffer, argument 0xff
+ * and 5,500 Hz for every SO record. This transport accepts only the retail
+ * buffer fingerprint and rate; SO's unused payload bytes never become a
+ * guessed stereo or volume interpretation. */
+int M11_Audio_PlayDm2FmtownsTitlePcm(M11_AudioState* state,
+                                     const int8_t* source,
+                                     int sourceBytes,
+                                     int sourceRateHz,
+                                     unsigned int sourceHash);
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId);
 int M11_Audio_SetTitleMusicEnabled(M11_AudioState* state, int enabled);
 int M11_Audio_TitleMusicEnabled(const M11_AudioState* state);

@@ -952,6 +952,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
         m11_sound_free(&state->csbAtariStPsg);
         m11_sound_free(&state->csbPc34RuntimePcm);
         m11_sound_free(&state->csbAmigaRuntimePcm);
+        m11_sound_free(&state->dm2FmtownsTitlePcm);
     }
 
     state->initialized = 0;
@@ -997,6 +998,11 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->csbAmigaRuntimeSoundSourceVolume = 0;
     state->csbAmigaRuntimeSoundHash = 0u;
     state->csbAmigaRuntimeSoundQueuedCount = 0;
+    state->dm2FmtownsTitleSoundAccepted = 0;
+    state->dm2FmtownsTitleSoundByteCount = 0;
+    state->dm2FmtownsTitleSoundHash = 0u;
+    state->dm2FmtownsTitleSoundPlayCount = 0;
+    state->dm2FmtownsTitleSoundQueuedCount = 0;
 }
 
 int M11_Audio_IsAvailable(const M11_AudioState* state) {
@@ -1512,6 +1518,64 @@ int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
                                   sourceScaledVolume)) {
             ++state->csbAmigaRuntimeSoundQueuedCount;
         }
+    }
+#endif
+    return 1;
+}
+
+int M11_Audio_PlayDm2FmtownsTitlePcm(M11_AudioState* state,
+                                     const int8_t* source,
+                                     int sourceBytes,
+                                     int sourceRateHz,
+                                     unsigned int sourceHash)
+{
+    unsigned int outputCount;
+    unsigned int outputIndex;
+
+    /* HME-242 TITLE's SD is converted in place with +0x80 at 0759:0EBF,
+     * then every SO calls _0759_0739(sample, 0xff, 5500) at 0759:0EF0.
+     * Centring the original signed bytes around zero is the identical sample
+     * domain after that unsigned conversion. The SDL resample is transport
+     * only and deliberately has no SO-byte-derived stereo or gain path. */
+    if (!state || !state->initialized || !source ||
+        sourceBytes != M11_AUDIO_DM2_FMTOWNS_TITLE_SAMPLE_BYTES ||
+        sourceRateHz != M11_AUDIO_DM2_FMTOWNS_TITLE_SAMPLE_RATE ||
+        sourceHash != M11_AUDIO_DM2_FMTOWNS_TITLE_SAMPLE_FNV1A ||
+        m11_fnv1a_bytes((const unsigned char*)source, sourceBytes) != sourceHash) {
+        if (state) {
+            m11_sound_clear(&state->dm2FmtownsTitlePcm);
+            state->dm2FmtownsTitleSoundAccepted = 0;
+        }
+        return 0;
+    }
+    outputCount = ((unsigned int)sourceBytes * M11_AUDIO_SAMPLE_RATE +
+                   (unsigned int)sourceRateHz - 1u) /
+                  (unsigned int)sourceRateHz;
+    if (outputCount == 0u || outputCount > 65536u ||
+        !m11_sound_reserve(&state->dm2FmtownsTitlePcm, (int)outputCount)) {
+        m11_sound_clear(&state->dm2FmtownsTitlePcm);
+        state->dm2FmtownsTitleSoundAccepted = 0;
+        return 0;
+    }
+    for (outputIndex = 0u; outputIndex < outputCount; ++outputIndex) {
+        unsigned int sourceIndex = outputIndex * (unsigned int)sourceRateHz /
+                                   M11_AUDIO_SAMPLE_RATE;
+        if (sourceIndex >= (unsigned int)sourceBytes)
+            sourceIndex = (unsigned int)sourceBytes - 1u;
+        state->dm2FmtownsTitlePcm.samples[outputIndex] =
+            (float)source[sourceIndex] / 128.0f;
+    }
+    state->dm2FmtownsTitlePcm.sampleCount = (int)outputCount;
+    state->dm2FmtownsTitleSoundAccepted = 1;
+    state->dm2FmtownsTitleSoundByteCount = sourceBytes;
+    state->dm2FmtownsTitleSoundHash = sourceHash;
+    ++state->dm2FmtownsTitleSoundPlayCount;
+#if M11_HAVE_SDL_AUDIO
+    if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream &&
+        m11_sdl_queue_samples(state, state->dm2FmtownsTitlePcm.samples,
+                              state->dm2FmtownsTitlePcm.sampleCount,
+                              state->sfxVolume)) {
+        ++state->dm2FmtownsTitleSoundQueuedCount;
     }
 #endif
     return 1;

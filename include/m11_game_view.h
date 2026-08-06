@@ -1701,10 +1701,12 @@ typedef struct {
     size_t dm2FmtownsTitleByteCount;
     DM2_V1_FmtownsAnimPaletteReceipt dm2FmtownsTitlePalette;
     DM2_V1_FmtownsAnimFrameReceipt dm2FmtownsTitleFrameReceipt;
+    DM2_V1_FmtownsAnimSoundReceipt dm2FmtownsTitleSound;
     uint8_t dm2FmtownsTitlePixels[320u * 200u / 2u];
     uint32_t dm2FmtownsTimerAAccumulatorUs;
     uint16_t dm2FmtownsFrameTimerARemaining;
     uint32_t dm2FmtownsTitleFrameIndex;
+    uint32_t dm2FmtownsTitleSoundEventIndex;
     /* Bound from the selected authenticated TWANIM stream's EN+DL receipt.
      * This is intentionally retained with the RAM-only member instead of
      * assuming a retail frame total in M11. */

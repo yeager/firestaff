@@ -94,18 +94,36 @@ int main(void)
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) == 59u,
            "M11 presents real HME-242 SWOOSH delta pixels before TITLE");
-    for (step = 0; step < 254; ++step) {
+    for (step = 0; step < 10000 && view.dm2FmtownsSwooshActive; ++step) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
     expect(view.dm2FmtownsTitleBound && !view.dm2FmtownsSwooshActive &&
-               view.dm2FmtownsTitleFrameReceipt.requested_frame > 0u &&
+               view.dm2FmtownsTitleFrameReceipt.requested_frame == 0u &&
                view.dm2FmtownsFrameCount == 225u,
            "M11 advances real SWOOSH before binding TITLE's source EN/DL count through Timer-A units");
+    for (step = 0; step < 10000 &&
+                    view.dm2FmtownsTitleFrameIndex < 13u; ++step) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    expect(view.dm2FmtownsTitleFrameIndex == 13u &&
+               view.audioState.dm2FmtownsTitleSoundPlayCount == 0,
+           "TITLE keeps SND2 silent before SO's 14 preceding source frames");
+    for (step = 0; step < 10000 &&
+                    view.dm2FmtownsTitleFrameIndex < 14u; ++step) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    expect(view.dm2FmtownsTitleFrameIndex == 14u &&
+               view.audioState.dm2FmtownsTitleSoundPlayCount == 1,
+           "TITLE starts its first authenticated SND2 playback at SO's frame boundary");
     for (step = 0; step < 10000 && !view.dm2FmtownsTitleFinished; ++step) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
     expect(view.dm2FmtownsTitleFinished && !view.dm2FmtownsTitleBound &&
-               view.dm2FmtownsFrameCount == 0u,
+               view.dm2FmtownsFrameCount == 0u &&
+               view.audioState.dm2FmtownsTitleSoundAccepted &&
+               view.audioState.dm2FmtownsTitleSoundByteCount == 12862 &&
+               view.audioState.dm2FmtownsTitleSoundHash == 0x0b829ae7u &&
+               view.audioState.dm2FmtownsTitleSoundPlayCount == 5,
            "M11 reaches the real TITLE stream end before handing off to SKULL");
     memset(framebuffer, 0x7f, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);

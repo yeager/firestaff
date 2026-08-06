@@ -47,6 +47,16 @@
 - ✅ Existing MAP provenance and audio receipt checks remain unchanged; no
   selector meaning, SAL codec, CD-DA handoff or SFX playback was inferred.
 
+# DM2 FM Towns TITLE SND2 transport (2026-08-06)
+
+- ✅ M11 now plays the authenticated HME-242 TITLE SND2 buffer at the five
+  original SO image boundaries. The transport admits only the 12,862-byte
+  signed PCM sample with FNV-1a `0b829ae7` at 5,500 Hz. SKWIN
+  `0759:0E33/0EF0` converts the SD bytes and calls `_0759_0739` with `0xff`
+  and 5,500 Hz, so SO's L/R/frequency payload is retained as source evidence
+  but never guessed into a stereo or volume mix. The real-media M11 test
+  verifies all five calls while the CD image remains in RAM.
+
 # Theron startup menu availability boundary (2026-08-06)
 
 - ✅ Soul Room mirrors without an authenticated Track 02 roster record remain

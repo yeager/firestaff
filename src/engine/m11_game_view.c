@@ -1532,10 +1532,13 @@ static void m11_dm2_release_fmtowns_title(M11_GameViewState *state)
            sizeof(state->dm2FmtownsTitlePalette));
     memset(&state->dm2FmtownsTitleFrameReceipt, 0,
            sizeof(state->dm2FmtownsTitleFrameReceipt));
+    memset(&state->dm2FmtownsTitleSound, 0,
+           sizeof(state->dm2FmtownsTitleSound));
     memset(state->dm2FmtownsTitlePixels, 0, sizeof(state->dm2FmtownsTitlePixels));
     state->dm2FmtownsTimerAAccumulatorUs = 0u;
     state->dm2FmtownsFrameTimerARemaining = 0u;
     state->dm2FmtownsTitleFrameIndex = 0u;
+    state->dm2FmtownsTitleSoundEventIndex = 0u;
     state->dm2FmtownsFrameCount = 0u;
     state->dm2FmtownsSwooshActive = 0;
     state->dm2FmtownsTitleBound = 0;
@@ -1575,7 +1578,10 @@ static int m11_dm2_bind_fmtowns_title(M11_GameViewState *state)
         !dm2_v1_fmtowns_anim_stream_decode_frame(
             state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount, 0u,
             state->dm2FmtownsTitlePixels, sizeof(state->dm2FmtownsTitlePixels),
-            &state->dm2FmtownsTitleFrameReceipt)) {
+            &state->dm2FmtownsTitleFrameReceipt) ||
+        !dm2_v1_fmtowns_anim_stream_decode_title_sound(
+            state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount,
+            &state->dm2FmtownsTitleSound)) {
         m11_dm2_release_fmtowns_title(state);
         state->dm2FmtownsTitleRejected = 1;
         return 0;
@@ -1586,6 +1592,29 @@ static int m11_dm2_bind_fmtowns_title(M11_GameViewState *state)
     state->dm2FmtownsFrameCount = frame_count;
     state->dm2FmtownsTitleBound = 1;
     return 1;
+}
+
+static void m11_dm2_emit_fmtowns_title_sound_events(
+    M11_GameViewState *state, uint32_t preceding_frame_count)
+{
+    if (!state || !state->dm2FmtownsTitleSound.valid) return;
+    while (state->dm2FmtownsTitleSoundEventIndex <
+           state->dm2FmtownsTitleSound.event_count) {
+        const DM2_V1_FmtownsAnimSoundEventReceipt *event =
+            &state->dm2FmtownsTitleSound.events[
+                state->dm2FmtownsTitleSoundEventIndex];
+        if (event->preceding_frame_count != preceding_frame_count) break;
+        /* SKWIN SkWinCore.cpp 0759:0EF0 ignores SO's raw L/R/frequency
+         * payload at this call site and invokes _0759_0739(sample, 0xff,
+         * 5500). The M11 helper accepts only the authenticated SD buffer at
+         * that exact source rate; failure is silent, never a marker sound. */
+        (void)M11_Audio_PlayDm2FmtownsTitlePcm(
+            &state->audioState, state->dm2FmtownsTitleSound.samples,
+            (int)state->dm2FmtownsTitleSound.sample_count,
+            (int)event->player_frequency_hz,
+            state->dm2FmtownsTitleSound.sample_fnv1a);
+        ++state->dm2FmtownsTitleSoundEventIndex;
+    }
 }
 
 static int m11_dm2_bind_fmtowns_swoosh(M11_GameViewState *state)
@@ -1677,6 +1706,11 @@ static void m11_dm2_advance_fmtowns_title(M11_GameViewState *state,
             --state->dm2FmtownsFrameTimerARemaining;
         if (state->dm2FmtownsFrameTimerARemaining != 0u) continue;
         ++state->dm2FmtownsTitleFrameIndex;
+        /* TWANIM processes SO after the preceding EN/DL records and before
+         * the following image. Frame N therefore sees events with N prior
+         * source images, not a host-time estimate. */
+        m11_dm2_emit_fmtowns_title_sound_events(
+            state, state->dm2FmtownsTitleFrameIndex);
         if (state->dm2FmtownsFrameCount == 0u ||
             state->dm2FmtownsTitleFrameIndex >= state->dm2FmtownsFrameCount ||
             !dm2_v1_fmtowns_anim_stream_decode_frame(
