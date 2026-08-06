@@ -89,6 +89,9 @@ static void test_select_requires_exact_source_marker_identity(void)
 
     mirrors.mirrors[0].dynamic_load_id =
         DM2_V1_G1_CHAMPION_DYN4_RESOURCE_ID;
+    assert(dm2_v1_select_champion(&req, &receipt) == 0);
+    assert(receipt.source_mirror_bound == 1);
+    assert(receipt.hero_type == -1);
     req.direction = 1;
     assert(dm2_v1_select_champion(&req, &receipt) == 0);
     assert(receipt.source_mirror_bound == 0);
@@ -100,6 +103,7 @@ static void test_select_requires_exact_source_marker_identity(void)
     req.direction = 2;
     assert(dm2_v1_select_champion(&req, &receipt) == 0);
     assert(receipt.source_mirror_bound == 1);
+    assert(receipt.hero_type == 2);
 
     printf("  PASS: select_requires_exact_source_marker_identity\n");
 }

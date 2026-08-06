@@ -82,7 +82,11 @@ int dm2_v1_select_champion(
             receipt->source_mirror_bound = 1;
             receipt->source_actuator_data = mirror->actuator_data;
             receipt->source_dynamic_load_id = mirror->dynamic_load_id;
-            receipt->hero_type = (int16_t)mirror->dynamic_hero_type;
+            /* SKProject c_hero.cpp:1088 stores the extracted byte in an
+             * i8 before REVIVE_PLAYER.  Preserve that signed source value
+             * (PC G1's 0xff is hero type -1), while the DYN4 selector above
+             * remains the original unsigned 0x16ffffff resource key. */
+            receipt->hero_type = (int16_t)(int8_t)mirror->dynamic_hero_type;
             break;
         }
     }

@@ -29350,6 +29350,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   source DB3 marker, raw actuator data and `0x16ffffff` dynamic-load key
   before returning its still-fail-closed result. It does not create a hero;
   `REVIVE_PLAYER`, possession transfer and session mutation remain open.
+  **2026-08-13 signed-type parity:** the lifecycle receipt now preserves
+  SKProject's signed `i8` hero type when the source marker byte is `0xff`
+  (published as `-1` to `REVIVE_PLAYER`), while retaining the unsigned
+  `0x16ffffff` DYN4 selector. The real 16-marker and 96-block PC-DOS probes
+  remain green; this does not open party mutation or possession transfer.
   **2026-08-07 corpus update:** the three champion/DYN4 real-data probes now
   accept only an explicit `GRAPHICS.DAT` argument or
   `FIRESTAFF_DM2_DATA_DIR`; a selected unreadable corpus fails verification

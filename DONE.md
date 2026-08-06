@@ -1,3 +1,13 @@
+# DM2 champion mirror signed hero-type parity (2026-08-13)
+
+- ✅ Preserved SKProject `c_hero.cpp:1088` signed-byte semantics in the
+  champion lifecycle seam: the authentic PC G1 marker byte `0xff` now reaches
+  the receipt as hero type `-1`, while its DYN4 resource identity remains
+  `0x16ffffff`.
+- ✅ Lifecycle regression plus real PC-DOS G1 mirror and DYN4 materialization
+  probes passed. Party mutation and possession transfer remain fail-closed; no
+  release was made.
+
 # DM2 SKSAVE moneybox DB10 mask handoff (2026-08-13)
 
 - ✅ Bound nested DB10 record decoding and encoding to SKProject's alternate
