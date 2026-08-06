@@ -4818,6 +4818,12 @@ list(REMOVE_ITEM M10_SOURCES
 # its generated mirror regression compiles it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c040_chrome_inventory_owner_swap_pc34_compat.c")
+# `dm1_v1_mirror_candidate_c040_close_non_leader_scroll_pickup_pc34_compat.c`
+# is a seeded C040/C537/C162 fixture with local party, chest and scroll
+# values. It reads no original DM1 data and has no M11/runtime caller; its
+# generated mirror regression compiles it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c040_close_non_leader_scroll_pickup_pc34_compat.c")
 # `dm1_v1_mirror_candidate_reshuffle_panel_live_pc34_compat.c` is a
 # contract-only C040 reshuffle fixture with synthetic party, chest and
 # leader-hand state. It has no original DM1 data input or M11/runtime caller;

@@ -9,6 +9,14 @@
 - ✅ Verification: targeted CTest
   `dm1_v1_wound_probability_index_to_mask_pc34_compat` passes.
 
+# DM1 mirror C040 non-leader scroll synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the seeded C040/C537/C162 party/chest/scroll fixture from M10.
+  It has no original DM1 data input or M11/runtime caller; the generated
+  mirror regression continues to compile the source explicitly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c040_close_non_leader_scroll_pickup_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 C040/C160 rotation-close synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040/C160 rotation-close fixture from M10. It

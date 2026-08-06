@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-C040-NONLEADER-SCROLL-SYNTHETIC-AUDIT:** This seeded
+  C040/C537/C162 fixture fabricates party, chest and scroll state. It has no
+  original DM1 data input or M11/runtime caller; retain it only as explicit
+  ReDMCSB coverage until a source-bound interaction owner is recovered.
+
 - **NEXUS-SATURN-RUNTIME-CAPTURE-PRODUCER:** The repository now carries a
   source patch and external-disk build script for a read-only Mednafen 1.32.1
   Saturn VDP1/VDP2 frame witness, but the producer has not yet been compiled
