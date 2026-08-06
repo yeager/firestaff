@@ -39,6 +39,13 @@
   control codes, so world-text publication remains rejected and diagnostic
   output remains available for the future original text-consumer match.
 
+- ✅ 2026-08-06 Theron US roster placeholder removal: the production Track 02
+  receipt no longer reports the eight host literals (`MARA`, `LINOS`, etc.) as
+  US source data. The authenticated US BIN currently proves the startup prompt
+  but not the champion-name/title payload, so the roster catalog now returns
+  `NOT_FOUND` and the menu remains fail-closed until the real encoded text
+  consumer is recovered. JP roster decoding remains byte-verified.
+
 - ✅ 2026-08-06 DM2 FM Towns English corpus-coverage gate: the real-media
   launcher regression now iterates every non-empty text key in the selected
   Japanese CD GDAT and requires a non-empty value at the identical key in the

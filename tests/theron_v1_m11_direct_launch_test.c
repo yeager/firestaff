@@ -162,9 +162,9 @@ static void expect_startup_media_receipt_for_fake_track02(void) {
                 receipt.startup_media_ready == 1,
                 "Theron startup media receipt carries Track 02 identity");
     expect_true(receipt.startup_roster_name_status ==
-                    THERON_TRACK02_SIGNAL_OK &&
-                receipt.startup_roster_name_count == 8,
-                "Theron startup media receipt has US roster names");
+                    THERON_TRACK02_SIGNAL_NOT_FOUND &&
+                receipt.startup_roster_name_count == 0,
+                "Theron startup media receipt keeps unbound US roster absent");
 }
 
 static int make_temp_dir(char out[512]) {

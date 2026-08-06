@@ -1111,9 +1111,9 @@ static void check_raw_user_data_contract(
         } else if (strcmp(md5_hex, THERON_TRACK02_MD5_US_BIN) == 0) {
             check_int("US startup roster name catalog OK",
                       status,
-                      THERON_TRACK02_SIGNAL_OK);
+                      THERON_TRACK02_SIGNAL_NOT_FOUND);
             check_int("US startup roster name count",
-                      (int)roster_catalog.name_count, 8);
+                      (int)roster_catalog.name_count, 0);
         }
     }
 

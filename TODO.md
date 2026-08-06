@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+- **THERON-US-ROSTER-CONSUMER:** The production startup receipt no longer
+  copies the eight JP roster literals into an authenticated US Track 02
+  receipt. The real US BIN exposes the startup prompt, but its champion
+  names/titles are not yet proven as an ASCII cluster or bound to an
+  executing text consumer. Recover that encoded payload from the US
+  Track 19/Track 02 disassembly and capture before restoring US mirror labels;
+  until then the menu must expose those entries as `UNAVAILABLE` rather than
+  publishing host-owned names.
+
 - **M11-F10-SOURCE-SPECIFIC-CHEATS:** The all-game F10 CH page now exposes
   the verified shared cheat master switch and live speed control. Do not add
   game-specific god mode, infinite-item or debug toggles until an original
