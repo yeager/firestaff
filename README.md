@@ -29,8 +29,8 @@ Nexus are development targets and are not presented as finished games.
 ## Screenshots
 
 Only real DM1 v1 runtime captures appear here. The images below were captured
-from Firestaff using the local PC DOS 3.4 data and two original save files;
-no generated, placeholder or fallback image is presented as game evidence.
+from Firestaff using PC DOS 3.4 data and original save files. No generated,
+placeholder or fallback image is presented as game evidence.
 
 ### Dungeon Master v1
 
@@ -38,11 +38,17 @@ no generated, placeholder or fallback image is presented as game evidence.
 |--------------------|----------|------------------|-----------------|
 | ![Dungeon Master v1 Presents runtime capture](docs/screenshots/dm1-v1-runtime-presents-macos.png) | ![Dungeon Master v1 Entrance runtime capture](docs/screenshots/dm1-v1-runtime-entrance-macos.png) | ![Dungeon Master v1 dungeon runtime capture](docs/screenshots/dm1-v1-runtime-dungeon-macos.png) | ![Dungeon Master v1 HUD runtime capture](docs/screenshots/dm1-v1-runtime-hud.png) |
 
-Fresh DM1 v1 in-game captures from the save route:
+Additional DM1 v1 in-game captures from the verified save/runtime routes:
 
 | Save HUD | Save movement | Runtime viewport |
 |----------|---------------|-----------------|
 | ![DM1 v1 save HUD](docs/screenshots/dm1-v1-runtime-save-hud-20260806.png) | ![DM1 v1 save movement](docs/screenshots/dm1-v1-runtime-save-movement-20260806.png) | ![DM1 v1 runtime viewport](docs/screenshots/dm1-v1-runtime-save-dungeon-20260806.png) |
+
+HUD, inventory and spell surfaces:
+
+| Party HUD | Inventory | Spells / actions |
+|-----------|-----------|------------------|
+| ![DM1 v1 party HUD](docs/screenshots/dm1-v1-runtime-party-hud-latest.png) | ![DM1 v1 inventory](docs/screenshots/dm1-v1-runtime-inventory-latest.png) | ![DM1 v1 spells and actions](docs/screenshots/dm1-v1-runtime-spells-latest.png) |
 
 Screenshots for CSB, DM2, Theron's Quest, DM Nexus and future custom art are
 **Coming soon** because those game versions are not currently available.
@@ -85,10 +91,10 @@ source-reference boundaries for all five games.
 
 | Platform | Status | Data directory |
 |----------|--------|---------------|
-| macOS | DM1 v1 playable and runtime-verified | `~/.firestaff/data/` |
-| Linux | Build target; DM1 v1 packaged/runtime verification pending | `~/.firestaff/data/` |
-| Windows | Build target; DM1 v1 packaged/runtime verification pending | `%USERPROFILE%\.firestaff\data\` |
-| Steam Deck | Linux/AppImage target; DM1 v1 verification pending | `~/.firestaff/data/` |
+| macOS | DM1 v1 playable; Apple Silicon runtime-verified | `~/.firestaff/data/` |
+| Linux | Build target; packaged DM1 v1 runtime verification pending | `~/.firestaff/data/` |
+| Windows | Build target; packaged DM1 v1 runtime verification pending | `%USERPROFILE%\.firestaff\data\` |
+| Steam Deck | Linux/AppImage target; packaged DM1 v1 verification pending | `~/.firestaff/data/` |
 | iOS / Android | Not supported today | Coming soon |
 
 Suggested layout:
@@ -113,10 +119,10 @@ for the complete control list and source-data boundaries.
 
 ## Download
 
-The current playable scope is **DM1 v1**. Package availability follows the
-release workflow for the target platform; a package does not imply that CSB,
-DM2, Theron's Quest or DM Nexus is playable. iOS and Android packages are not
-currently available.
+The current playable scope is **DM1 v1 on macOS**. Linux, Windows and Steam
+Deck are build/package targets whose final packaged runtime verification is
+still pending. A package does not imply that CSB, DM2, Theron's Quest or DM
+Nexus is playable. iOS and Android packages are not currently available.
 
 ## Game Status
 
@@ -274,14 +280,14 @@ language is **English**. The launcher has gettext catalogs and
 language-selection plumbing, including Swedish, but that does not yet mean
 that every menu, runtime message, font and game asset is fully translated.
 Swedish and other languages remain development targets until complete runtime
-coverage is verified. CSB, DM2, Theron's Quest and DM Nexus have no playable
-language/runtime claim yet.
+verification is available. CSB, DM2, Theron's Quest and DM Nexus have no
+playable language/runtime claim yet.
 
 | Language | Current status |
 |----------|----------------|
-| English | Verified for the complete DM1 v1 playable path |
-| Swedish | Launcher/catalog work present; full DM1 v1 runtime verification pending |
-| Other languages | Catalog and runtime coverage pending |
+| English | Verified for the DM1 v1 playable path on macOS |
+| Swedish | Launcher/catalog plumbing present; full DM1 v1 runtime verification pending |
+| Other languages | Catalog and complete runtime verification pending |
 
 ## Wiki
 
