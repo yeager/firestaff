@@ -161,6 +161,67 @@ static int add_chunk(DM2_V1_FmtownsAnimStreamReceipt *receipt,
     return 1;
 }
 
+typedef struct {
+    size_t body_offset;
+    size_t cleanup_offset;
+    size_t after_bn_offset;
+    uint16_t remaining;
+    int cleanup_pending;
+} FmtownsAnimLoop;
+
+/* DMWeb Animations, FO/NE/BN: the first record after FO is setup and runs
+ * once.  The following body runs `attribute` times; the one cleanup record
+ * between NE and BN runs between, but never after, iterations.  TWANIM's
+ * own P3 player keeps a bounded loop stack (SKWIN skibmio.cpp 0759:1160).
+ * Locate the source-owned bounds at FO rather than guessing that NE branches
+ * to the record directly after FO. */
+static int fmtowns_open_loop(const uint8_t *data, size_t data_size,
+                             size_t fo_next_offset, uint16_t attribute,
+                             FmtownsAnimLoop *out)
+{
+    FmtownsAnimLoop loop;
+    size_t offset;
+    unsigned int nested_depth = 0u;
+
+    memset(&loop, 0, sizeof(loop));
+    if (!data || !out || attribute == 0u || attribute > 10u ||
+        fo_next_offset + 6u > data_size) return 0;
+
+    /* Skip the one-time setup record immediately following FO. */
+    offset = fo_next_offset + 6u + read_be16(data + fo_next_offset + 2u);
+    if (offset > data_size) return 0;
+    loop.body_offset = offset;
+    while (offset + 6u <= data_size) {
+        const uint16_t tag = read_be16(data + offset);
+        const size_t next_offset =
+            offset + 6u + read_be16(data + offset + 2u);
+        if (next_offset > data_size) return 0;
+        if (tag == 0x464fu) { /* nested FO */
+            ++nested_depth;
+        } else if (tag == 0x424eu) { /* BN */
+            if (nested_depth != 0u) {
+                --nested_depth;
+            }
+        } else if (tag == 0x4e45u && nested_depth == 0u) {
+            const size_t cleanup_next =
+                next_offset + 6u +
+                (next_offset + 6u <= data_size
+                     ? read_be16(data + next_offset + 2u) : 0u);
+            if (next_offset + 6u > data_size || cleanup_next + 6u > data_size ||
+                read_be16(data + cleanup_next) != 0x424eu) return 0;
+            loop.cleanup_offset = next_offset;
+            loop.after_bn_offset = cleanup_next + 6u +
+                                   read_be16(data + cleanup_next + 2u);
+            if (loop.after_bn_offset > data_size) return 0;
+            loop.remaining = attribute;
+            *out = loop;
+            return 1;
+        }
+        offset = next_offset;
+    }
+    return 0;
+}
+
 int dm2_v1_fmtowns_anim_stream_parse(
     const uint8_t *data, size_t data_size,
     DM2_V1_FmtownsAnimStreamReceipt *out)
@@ -254,10 +315,6 @@ int dm2_v1_fmtowns_anim_stream_decode_frame(
     uint8_t *out_pixels, size_t out_pixel_capacity,
     DM2_V1_FmtownsAnimFrameReceipt *out)
 {
-    typedef struct {
-        size_t resume_offset;
-        uint16_t remaining;
-    } FmtownsAnimLoop;
     DM2_V1_FmtownsAnimFrameReceipt receipt;
     DM2_V1_FmtownsAnimStreamReceipt stream;
     size_t offset = 0u;
@@ -316,8 +373,11 @@ int dm2_v1_fmtowns_anim_stream_decode_frame(
                 if (out) *out = receipt;
                 return 0;
             }
-            loops[loop_depth].resume_offset = next_offset;
-            loops[loop_depth].remaining = attribute;
+            if (!fmtowns_open_loop(data, data_size, next_offset, attribute,
+                                   &loops[loop_depth])) {
+                if (out) *out = receipt;
+                return 0;
+            }
             ++loop_depth;
             offset = next_offset;
             continue;
@@ -330,12 +390,22 @@ int dm2_v1_fmtowns_anim_stream_decode_frame(
             }
             remaining = (uint16_t)(loops[loop_depth - 1u].remaining - 1u);
             loops[loop_depth - 1u].remaining = remaining;
-            if (remaining > 0u && remaining < 10u) {
-                offset = loops[loop_depth - 1u].resume_offset;
+            if (remaining > 0u) {
+                loops[loop_depth - 1u].cleanup_pending = 1;
+                offset = loops[loop_depth - 1u].cleanup_offset;
             } else {
                 --loop_depth;
-                offset = next_offset;
+                offset = loops[loop_depth].after_bn_offset;
             }
+            continue;
+        }
+        if (tag == 0x424eu) { /* BN */
+            if (loop_depth == 0u || !loops[loop_depth - 1u].cleanup_pending) {
+                if (out) *out = receipt;
+                return 0;
+            }
+            loops[loop_depth - 1u].cleanup_pending = 0;
+            offset = loops[loop_depth - 1u].body_offset;
             continue;
         }
         if (tag != 0x454eu && tag != 0x444cu) {
@@ -489,10 +559,6 @@ int dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
     const uint8_t *data, size_t data_size, uint32_t requested_frame,
     DM2_V1_FmtownsAnimPaletteReceipt *out)
 {
-    typedef struct {
-        size_t resume_offset;
-        uint16_t remaining;
-    } FmtownsAnimLoop;
     DM2_V1_FmtownsAnimStreamReceipt stream;
     DM2_V1_FmtownsAnimPaletteReceipt receipt;
     FmtownsAnimLoop loops[8];
@@ -521,8 +587,11 @@ int dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
                 if (out) *out = receipt;
                 return 0;
             }
-            loops[loop_depth].resume_offset = next_offset;
-            loops[loop_depth].remaining = attribute;
+            if (!fmtowns_open_loop(data, data_size, next_offset, attribute,
+                                   &loops[loop_depth])) {
+                if (out) *out = receipt;
+                return 0;
+            }
             ++loop_depth;
             offset = next_offset;
             continue;
@@ -535,12 +604,22 @@ int dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
             }
             remaining = (uint16_t)(loops[loop_depth - 1u].remaining - 1u);
             loops[loop_depth - 1u].remaining = remaining;
-            if (remaining > 0u && remaining < 10u) {
-                offset = loops[loop_depth - 1u].resume_offset;
+            if (remaining > 0u) {
+                loops[loop_depth - 1u].cleanup_pending = 1;
+                offset = loops[loop_depth - 1u].cleanup_offset;
             } else {
                 --loop_depth;
-                offset = next_offset;
+                offset = loops[loop_depth].after_bn_offset;
             }
+            continue;
+        }
+        if (tag == 0x424eu) { /* BN */
+            if (loop_depth == 0u || !loops[loop_depth - 1u].cleanup_pending) {
+                if (out) *out = receipt;
+                return 0;
+            }
+            loops[loop_depth - 1u].cleanup_pending = 0;
+            offset = loops[loop_depth - 1u].body_offset;
             continue;
         }
         if (tag == 0x504cu &&

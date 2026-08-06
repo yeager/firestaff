@@ -296,7 +296,7 @@ int main(void)
                 (void)dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
                     end, end_size, 100u, &end_middle_palette);
                 (void)dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
-                    end, end_size, 421u, &end_last_palette);
+                    end, end_size, 419u, &end_last_palette);
             }
             if (launch.profile && launch.profile->fmtowns_disc_image &&
                 dm2_v1_fmtowns_disc_probe(
@@ -356,8 +356,8 @@ int main(void)
                        swoosh_first_frame.output_fnv1a != 0u &&
                        swoosh_last_frame.output_fnv1a != 0u,
                    "FM Towns SWOOSH infers its retail IMG1 canvas from EN/DL records in RAM");
-            expect(end_frame_count == 422u && end_last_frame.valid &&
-                       end_last_frame.requested_frame == 421u &&
+            expect(end_frame_count == 420u && end_last_frame.valid &&
+                       end_last_frame.requested_frame == 419u &&
                        end_last_frame.output_fnv1a == 0x553d172fu &&
                        end_last_frame.display_duration == 2000u &&
                        end_last_frame.compressed_command_count == 1u,
