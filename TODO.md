@@ -3717,6 +3717,10 @@ level or consumer bindings.
   toggled a DB3 byte, invoked an actuator and requeued from timer `value_b`
   without the same complete DB3/DB14 target/payload transaction. The live
   dispatcher continues to consume class 0x56 fail-closed.
+  The uncalled 0x55 ornament animator study is removed as well: a raw record
+  address plus an animation-length receipt cannot authorize frame-bit writes,
+  activation clearing or timer requeue without the original animator record
+  and timer-queue transaction.
   The M11 Action-door shortcut now follows the same rule: it cannot rewrite
   a G1 tile from a coordinate-only query while the live DB0 door record,
   direction, collision, sound and follow-up timer transaction are absent.

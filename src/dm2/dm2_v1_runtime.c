@@ -4681,86 +4681,6 @@ static int dm2_runtime_move_record_rotate_timer(void *user,
  * dm2_runtime_spell_timer_delegate. */
 
 /*
- * dm2_runtime_ornate_animator_timer — 0x55 timer handler.
- * Source: skevent.cpp:2742 CONTINUE_ORNATE_ANIMATOR.
- * Advances the ornate animation frame on the actuator record via
- * dm2_v1_continue_ornate_animator, querying GDAT for the animation
- * length through the asset loader's decoration table lookup.
- */
-
-typedef struct {
-    DM2_V1_RuntimeState *rt;
-    DM2_V1_SourceTimer requeue;
-} DM2_OrnateAnimCtx;
-
-static uint8_t *dm2_ornate_get_record(void *ctx, uint16_t rw) {
-    DM2_OrnateAnimCtx *oc = (DM2_OrnateAnimCtx *)ctx;
-    return dm2_v1_record_pool_address_mut(&oc->rt->record_pools, (int16_t)rw);
-}
-
-static int16_t dm2_ornate_get_anim_len(void *ctx, uint8_t *rec, int mode) {
-    DM2_OrnateAnimCtx *oc = (DM2_OrnateAnimCtx *)ctx;
-    DM2_V1_RuntimeState *rt = oc->rt;
-    const DM2_V1_AssetLoader *loader = dm2_v1_boot_asset_loader(rt->boot);
-    uint16_t w4 = (uint16_t)(rec[4] | (rec[5] << 8));
-    int16_t gfx_num = (int16_t)((w4 >> 12) & 0xf);
-    int category;
-    uint8_t decoration;
-    DM2_V1_GetOrnateAnimLenReceipt receipt;
-
-    if (gfx_num == 0) return 1;
-    if (mode == 0) {
-        category = 0x0a;
-        if (gfx_num - 1 >= rt->map_floor_gfx_count) return 1;
-        decoration = rt->map_floor_gfx_list[gfx_num - 1];
-    } else {
-        category = 0x09;
-        if (gfx_num - 1 >= rt->map_wall_gfx_count) return 1;
-        decoration = rt->map_wall_gfx_list[gfx_num - 1];
-    }
-    if (!loader) return 1;
-    if (!dm2_v1_get_ornate_anim_len_receipt(
-            loader, category, (int)decoration, 0, &receipt))
-        return 1;
-    return (int16_t)receipt.length;
-}
-
-static void dm2_ornate_queue_timer(void *ctx) {
-    DM2_OrnateAnimCtx *oc = (DM2_OrnateAnimCtx *)ctx;
-    oc->requeue.ticks_and_map =
-        (oc->requeue.ticks_and_map & ~DM2_V1_SOURCE_TIMER_TICK_MASK) |
-        ((dm2_v1_source_timer_tick(&oc->requeue) + 1) &
-         DM2_V1_SOURCE_TIMER_TICK_MASK);
-    dm2_v1_runtime_enqueue_source_timer(&oc->requeue, 0);
-}
-
-static int dm2_runtime_ornate_animator_timer(void *user,
-                                             const DM2_V1_SourceTimer *timer,
-                                             uint16_t source_index,
-                                             DM2_V1_ProceedTimersReceipt *receipt)
-{
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    DM2_OrnateAnimCtx oc;
-    DM2_V1_OrnateAnimCallbacks cb;
-
-    (void)source_index; (void)receipt;
-    rt->actuator_tile_timers++;
-
-    if (!rt->record_pools_valid) return 1;
-    if (dm2_v1_record_handle_pool(timer->value_a) != DM2_DB_ACTUATOR) return 1;
-
-    oc.rt = rt;
-    oc.requeue = *timer;
-    cb.get_record_address = dm2_ornate_get_record;
-    cb.get_ornate_anim_len = dm2_ornate_get_anim_len;
-    cb.queue_timer = dm2_ornate_queue_timer;
-
-    dm2_v1_continue_ornate_animator(
-        (uint16_t)timer->value_a, (int)timer->value_b, &cb, &oc);
-    return 1;
-}
-
-/*
  * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214 (class-0 dispatch)
  *         skproject/SKULLWIN/c_tim_proc.cpp:1923 (DM2_ACTUATE_WALL_MECHA)
  */
@@ -5075,10 +4995,6 @@ void dm2_v1_runtime_tick(void) {
         (void)dm2_runtime_actuate_wall_mecha;
         (void)dm2_runtime_actuate_teleporter;
         (void)dm2_runtime_actuate_trickwall;
-        /* Ornament animation/noise both mutate or requeue through an
-         * actuator record. A raw pool address is insufficient without the
-         * original animator/timer ownership, so retain no live callback. */
-        (void)dm2_runtime_ornate_animator_timer;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
             dm2_runtime_update_weather_timer;
         /* STEP/DESTROY_DOOR likewise need the decoded DB0 direction,

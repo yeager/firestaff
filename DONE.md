@@ -2406,6 +2406,15 @@
   build, production-boundary verifier and real PC-DOS G1 viewport-plan
   regression pass. No game data was copied, unpacked or modified.
 
+- ✅ 2026-08-06 DM2 ornament-animator transaction cleanup: removed the
+  uncalled 0x55 animator study from `dm2_v1_runtime.c`. It wrote actuator
+  frame/active bits and requeued timers from a raw record address plus a GDAT
+  duration receipt, without the original animator record and timer-queue
+  transaction. The production-boundary verifier rejects its return; the
+  class remains fail-closed. Verification: `firestaff_dm2` build,
+  production-boundary verifier and real PC-DOS G1 viewport-plan regression
+  pass. No game data was copied, unpacked or modified.
+
 - ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now
   records a completed party/leader-cache clear only after its retained
   source-save projection is observed empty. M11 requires that postcondition
