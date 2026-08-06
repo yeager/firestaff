@@ -1186,6 +1186,11 @@ level or consumer bindings.
   only after it reads the raw image in memory and verifies its original
   GRAPHICS.DAT/DUNGEON.DAT pair; the same identity-first requirement now holds
   for Amiga.
+  **2026-08-06 FM Towns stream-count update:** M11 now keeps each active
+  TWANIM member's frame limit from its authenticated `EN + DL` receipt while
+  it remains in RAM. The source HME-242 streams, rather than hard-coded
+  retail totals, therefore decide when SWOOSH may hand off to TITLE and when
+  TITLE may hand off to SKULL.
   Generic DM2 ZIP/ISO cache materialization is deliberately disabled: it must
   either gain a verified in-memory PC reader or remain non-launchable. Do not
   synthesize a compatible install, palette, dungeon, music map or save corpus

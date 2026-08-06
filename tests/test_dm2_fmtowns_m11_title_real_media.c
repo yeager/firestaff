@@ -73,8 +73,9 @@ int main(void)
     expect(view.dm2FmtownsTitleBound && view.dm2FmtownsSwooshActive &&
                view.dm2FmtownsTitlePalette.valid &&
                view.dm2FmtownsTitleFrameReceipt.valid &&
-               view.dm2FmtownsTitleFrameReceipt.requested_frame == 0u,
-           "M11 starts with AUTOEXEC's real SWOOSH frame zero and PL palette");
+               view.dm2FmtownsTitleFrameReceipt.requested_frame == 0u &&
+               view.dm2FmtownsFrameCount == 19u,
+           "M11 starts with AUTOEXEC's real SWOOSH frame zero, PL palette and EN/DL count");
     expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                M11_GAME_INPUT_IGNORED,
            "SWOOSH prevents a click from reaching SKULL menu input early");
@@ -97,8 +98,9 @@ int main(void)
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
     expect(view.dm2FmtownsTitleBound && !view.dm2FmtownsSwooshActive &&
-               view.dm2FmtownsTitleFrameReceipt.requested_frame > 0u,
-           "M11 advances real SWOOSH before binding TITLE through Timer-A units");
+               view.dm2FmtownsTitleFrameReceipt.requested_frame > 0u &&
+               view.dm2FmtownsFrameCount == 225u,
+           "M11 advances real SWOOSH before binding TITLE's source EN/DL count through Timer-A units");
     view.dm2FmtownsTitleBound = 0;
     view.dm2FmtownsTitleFinished = 1;
     memset(framebuffer, 0x7f, sizeof(framebuffer));
@@ -134,6 +136,7 @@ int main(void)
     M11_GameView_Shutdown(&view);
     expect(view.dm2FmtownsTitleBytes == NULL &&
                view.dm2FmtownsTitleByteCount == 0u &&
+               view.dm2FmtownsFrameCount == 0u &&
                !view.dm2FmtownsTitleBound &&
                !view.dm2FmtownsSwooshActive,
            "shutdown releases the RAM-only FM Towns animation member");

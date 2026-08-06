@@ -1404,6 +1404,24 @@ static int m11_dm2_is_fmtowns_profile(const DM2_V1_BootProfile *profile)
     return profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA;
 }
 
+/* TWANIM emits one displayable canvas for each EN or DL record.  Keep the
+ * count from the already authenticated source receipt; M11 must not infer a
+ * fixed retail duration or silently accept a different stream.  DMWeb,
+ * "Animations"; SKWIN's ANIM_DECODE_IMG1 replay. */
+static int m11_dm2_fmtowns_stream_frame_count(
+    const DM2_V1_FmtownsAnimStreamReceipt *stream, uint32_t *out_count)
+{
+    uint32_t count;
+    if (!stream || !out_count || !stream->valid ||
+        stream->en_count > UINT32_MAX - stream->dl_count) {
+        return 0;
+    }
+    count = stream->en_count + stream->dl_count;
+    if (count == 0u) return 0;
+    *out_count = count;
+    return 1;
+}
+
 /* AUTOEXEC transfers from TWANIM TITLE to SKULL.EXP.  We do not execute the
  * P3 program, but its authenticated GRAPHICS.DAT is the same source owner
  * that SKWIN's SHOW_MENU_SCREEN reads after SKULL has opened it.  Admit the
@@ -1517,6 +1535,7 @@ static void m11_dm2_release_fmtowns_title(M11_GameViewState *state)
     state->dm2FmtownsTimerAAccumulatorUs = 0u;
     state->dm2FmtownsFrameTimerARemaining = 0u;
     state->dm2FmtownsTitleFrameIndex = 0u;
+    state->dm2FmtownsFrameCount = 0u;
     state->dm2FmtownsSwooshActive = 0;
     state->dm2FmtownsTitleBound = 0;
     state->dm2FmtownsTitleFinished = 0;
@@ -1527,6 +1546,7 @@ static int m11_dm2_bind_fmtowns_title(M11_GameViewState *state)
 {
     DM2_V1_BootProfile *profile;
     DM2_V1_FmtownsDiscReceipt disc;
+    uint32_t frame_count;
 
     if (!state || !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
         !m11_dm2_is_fmtowns_profile(profile) ||
@@ -1534,7 +1554,9 @@ static int m11_dm2_bind_fmtowns_title(M11_GameViewState *state)
         !profile->fmtowns_animation_media_verified ||
         !profile->fmtowns_animation_streams_verified ||
         !dm2_v1_fmtowns_anim_stream_is_hme242_title(
-            &profile->fmtowns_title_stream)) return 0;
+            &profile->fmtowns_title_stream) ||
+        !m11_dm2_fmtowns_stream_frame_count(
+            &profile->fmtowns_title_stream, &frame_count)) return 0;
     m11_dm2_release_fmtowns_title(state);
     memset(&disc, 0, sizeof(disc));
     if (!profile->fmtowns_disc_image ||
@@ -1560,6 +1582,7 @@ static int m11_dm2_bind_fmtowns_title(M11_GameViewState *state)
     state->dm2FmtownsFrameTimerARemaining =
         state->dm2FmtownsTitleFrameReceipt.display_duration < 5u ? 5u :
         state->dm2FmtownsTitleFrameReceipt.display_duration;
+    state->dm2FmtownsFrameCount = frame_count;
     state->dm2FmtownsTitleBound = 1;
     return 1;
 }
@@ -1568,6 +1591,7 @@ static int m11_dm2_bind_fmtowns_swoosh(M11_GameViewState *state)
 {
     DM2_V1_BootProfile *profile;
     DM2_V1_FmtownsDiscReceipt disc;
+    uint32_t frame_count;
 
     if (!state || !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
         !m11_dm2_is_fmtowns_profile(profile) ||
@@ -1575,7 +1599,9 @@ static int m11_dm2_bind_fmtowns_swoosh(M11_GameViewState *state)
         !profile->fmtowns_animation_media_verified ||
         !profile->fmtowns_animation_streams_verified ||
         !dm2_v1_fmtowns_anim_stream_is_hme242_swoosh(
-            &profile->fmtowns_swoosh_stream)) return 0;
+            &profile->fmtowns_swoosh_stream) ||
+        !m11_dm2_fmtowns_stream_frame_count(
+            &profile->fmtowns_swoosh_stream, &frame_count)) return 0;
     m11_dm2_release_fmtowns_title(state);
     memset(&disc, 0, sizeof(disc));
     if (!profile->fmtowns_disc_image ||
@@ -1601,6 +1627,7 @@ static int m11_dm2_bind_fmtowns_swoosh(M11_GameViewState *state)
     state->dm2FmtownsFrameTimerARemaining =
         state->dm2FmtownsTitleFrameReceipt.display_duration < 5u ? 5u :
         state->dm2FmtownsTitleFrameReceipt.display_duration;
+    state->dm2FmtownsFrameCount = frame_count;
     state->dm2FmtownsSwooshActive = 1;
     state->dm2FmtownsTitleBound = 1;
     return 1;
@@ -1649,8 +1676,8 @@ static void m11_dm2_advance_fmtowns_title(M11_GameViewState *state,
             --state->dm2FmtownsFrameTimerARemaining;
         if (state->dm2FmtownsFrameTimerARemaining != 0u) continue;
         ++state->dm2FmtownsTitleFrameIndex;
-        if (state->dm2FmtownsTitleFrameIndex >=
-                (state->dm2FmtownsSwooshActive ? 19u : 225u) ||
+        if (state->dm2FmtownsFrameCount == 0u ||
+            state->dm2FmtownsTitleFrameIndex >= state->dm2FmtownsFrameCount ||
             !dm2_v1_fmtowns_anim_stream_decode_frame(
                 state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount,
                 state->dm2FmtownsTitleFrameIndex, state->dm2FmtownsTitlePixels,
@@ -1667,6 +1694,7 @@ static void m11_dm2_advance_fmtowns_title(M11_GameViewState *state,
                 free(state->dm2FmtownsTitleBytes);
                 state->dm2FmtownsTitleBytes = NULL;
                 state->dm2FmtownsTitleByteCount = 0u;
+                state->dm2FmtownsFrameCount = 0u;
                 state->dm2FmtownsTitleBound = 0;
                 state->dm2FmtownsTitleFinished = 1;
             }

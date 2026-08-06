@@ -1706,6 +1706,10 @@ typedef struct {
     uint32_t dm2FmtownsTimerAAccumulatorUs;
     uint16_t dm2FmtownsFrameTimerARemaining;
     uint32_t dm2FmtownsTitleFrameIndex;
+    /* Bound from the selected authenticated TWANIM stream's EN+DL receipt.
+     * This is intentionally retained with the RAM-only member instead of
+     * assuming a retail frame total in M11. */
+    uint32_t dm2FmtownsFrameCount;
     int dm2FmtownsSwooshActive;
     int dm2FmtownsTitleBound;
     int dm2FmtownsTitleFinished;

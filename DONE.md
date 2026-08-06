@@ -131,6 +131,12 @@
 
 # DM2 FM Towns IMG2 menu handoff (2026-08-06)
 
+- ✅ M11's FM Towns TWANIM player now derives each active animation's final
+  frame from the selected HME-242 stream receipt (`EN + DL`) and retains that
+  count only with the RAM-resident member. The real-media regression confirms
+  the source-owned SWOOSH 19-frame and TITLE 225-frame limits, so M11 no
+  longer embeds assumed retail frame totals in the startup transition.
+
 - ✅ The selected HME-242 `TITLE/0/4` menu now reaches M11 after the real
   TITLE stream through the documented GDAT-v4 IMG2 C4 decoder. The decoder is
   a direct bounded counterpart to SKProject
