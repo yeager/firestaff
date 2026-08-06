@@ -1,3 +1,12 @@
+# Nexus Saturn capture launcher executability (2026-08-06)
+
+- ✅ Marked all five Nexus Mednafen capture launchers executable so the
+  operator-only capture workflow can be invoked directly.
+- ✅ Real European BIOS/CUE and MENU.BPK/DM.BIN/LEV00.DGN identity preflight
+  passes; stock Mednafen still exits 78 before writing a manifest because the
+  Firestaff capture hook is absent.
+- ✅ No synthetic trace or presentation evidence was admitted.
+
 # Theron authentic archive capture boundary (2026-08-06)
 
 - ✅ Extracted the supplied retail US archive through its original CUE layout
