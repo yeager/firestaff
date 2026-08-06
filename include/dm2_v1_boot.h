@@ -1093,7 +1093,10 @@ typedef struct {
     uint32_t menu_raw_byte_count;
     int menu_raw_screen_route_ready;
     int menu_raw_screen_consumed;
-    int menu_image_field_fallback_used;
+    /* The verified PC-DOS TITLE/0/4 decoded image route. This is original
+     * GDAT material, selected only when SHOW_MENU_SCREEN has no raw-screen
+     * record; it is not a generated fallback. */
+    int menu_decoded_image_route_used;
     uint32_t menu_raw_screen_hash;
     uint32_t menu_raw_screen_byte_count;
     uint32_t menu_pixel_hash;

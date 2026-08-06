@@ -52715,6 +52715,12 @@ no-draw/capture-gates är oförändrade.
   than applying the real 700/701 plane offsets at a false time. The isolated
   party walk-delay helper now delegates to the source-locked
   `DM2_CALC_PLAYER_WALK_DELAY` receipt instead of a conflicting local formula.
+
+- ✅ 2026-08-06 DM2 PC-DOS menu image-route provenance correction: renamed
+  the `TITLE/0/4` decoded-image receipt that had been called a fallback. The
+  established PC-DOS profile uses that real 320×200 GDAT image when no raw
+  `SHOW_MENU_SCREEN` record exists; the startup gate still rejects every
+  generated menu overlay and every missing original route.
 ✅ 2026-08-06 Nexus startup menu text sanitization: production save/chrome
 builders no longer emit hoststrängarna `DUNGEON MASTER NEXUS`, `LOAD GAME`,
 `NEW GAME` eller `LOAD SLOT ##`. Riktig radgeometri och källans slot-identitet

@@ -8187,7 +8187,7 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         size_t row;
         uint32_t pixel_hash = 0x324d454eu;
         out_receipt->real_gdat_menu_asset_consumed = 1;
-        out_receipt->menu_image_field_fallback_used = 1;
+        out_receipt->menu_decoded_image_route_used = 1;
         out_receipt->menu_gdat_asset_w = menu_w;
         out_receipt->menu_gdat_asset_h = menu_h;
         out_receipt->menu_gdat_asset_stride = menu_stride;
@@ -8232,14 +8232,14 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
          * receipt proves no synthetic overlay. */
         ((out_receipt->menu_raw_screen_route_ready &&
           out_receipt->menu_raw_screen_consumed &&
-          !out_receipt->menu_image_field_fallback_used &&
+          !out_receipt->menu_decoded_image_route_used &&
           out_receipt->menu_gdat_command_count >= 1) ||
          /* This verified PC GDAT uses the decoded IMAGE field when no raw
           * SHOW_MENU_SCREEN record is present.  It is still an original
           * 320x200 menu surface; the composite gate below remains responsible
           * for rejecting any generated text/rect overlay. */
          (!out_receipt->menu_raw_screen_route_ready &&
-          out_receipt->menu_image_field_fallback_used &&
+          out_receipt->menu_decoded_image_route_used &&
           out_receipt->menu_gdat_command_count >= 1));
     out_receipt->exact_selected_highlight_ready =
         out_receipt->selected_highlight_count == 1;
@@ -8263,7 +8263,7 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
         out_receipt->skproject_menu_query_ready &&
         (!out_receipt->menu_raw_screen_route_ready ||
          (out_receipt->menu_raw_screen_consumed &&
-          !out_receipt->menu_image_field_fallback_used &&
+          !out_receipt->menu_decoded_image_route_used &&
           out_receipt->real_menu_screen_no_synthetic_overlay_ready)) &&
         out_receipt->hud_suppressed_capture_ready &&
         out_receipt->no_fallback_title_blit;
@@ -8304,7 +8304,7 @@ int dm2_v1_boot_startup_real_visual_capture_receipt_from_runtime_state(
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->menu_raw_screen_consumed);
     hash = dm2_v1_boot_packaged_capture_hash_step(
-        hash, out_receipt->menu_image_field_fallback_used);
+        hash, out_receipt->menu_decoded_image_route_used);
     hash = dm2_v1_boot_packaged_capture_hash_step(
         hash, out_receipt->composite_pixel_hash);
     hash = dm2_v1_boot_packaged_capture_hash_step(

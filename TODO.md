@@ -26954,6 +26954,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   pose until those G1 hero/inventory/spell-state owners are restored; do not
   reintroduce a host-defined one-frame floor/ceiling offset.
 
+- 2026-08-06: PC-DOS startup's decoded `TITLE/0/4` surface is now named and
+  receipted as an original GDAT image route, not a fallback. It remains the
+  verified alternative only when `SHOW_MENU_SCREEN` has no source raw-screen
+  record; generated menu text or rectangles remain forbidden.
+
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN
   tables). Remaining work is original Saturn/VDP1 capture and source-locked

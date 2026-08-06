@@ -1690,13 +1690,13 @@ int main(void) {
                         real_visual_capture.menu_raw_byte_count > 0u &&
                         (real_visual_capture.menu_raw_screen_route_ready
                              ? (real_visual_capture.menu_raw_screen_consumed == 1 &&
-                                real_visual_capture.menu_image_field_fallback_used == 0 &&
+                                real_visual_capture.menu_decoded_image_route_used == 0 &&
                                 real_visual_capture.menu_raw_screen_hash ==
                                     real_visual_capture.menu_raw_byte_hash &&
                                 real_visual_capture.menu_raw_screen_byte_count ==
                                     64000u)
                              : (real_visual_capture.menu_raw_screen_consumed == 0 &&
-                                real_visual_capture.menu_image_field_fallback_used == 1 &&
+                                real_visual_capture.menu_decoded_image_route_used == 1 &&
                                 real_visual_capture.menu_raw_screen_hash == 0u &&
                                 real_visual_capture.menu_raw_screen_byte_count ==
                                     0u)) &&
