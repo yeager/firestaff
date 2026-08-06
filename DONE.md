@@ -50868,3 +50868,7 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   verifies all sixteen mounted `SNDLEV00-15.MAP` files (66–90 bytes, 154
   bounded records in total); event dispatch and audio playback remain
   capture-gated.
+- ✅ 2026-08-06 GitHub Actions Windows warning-fix: nested ADF hash-scan
+  helpers are now compiled only on POSIX, where the external archive scanner
+  calls them. Windows keeps its explicit fail-closed stubs and no longer turns
+  the unused POSIX definitions into `-Werror` failures.

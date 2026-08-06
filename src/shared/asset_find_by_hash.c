@@ -3155,6 +3155,7 @@ static int external_archive_commit_entry(const char *archivePath,
     return 1;
 }
 
+#ifndef _WIN32
 static int scan_external_adf_by_md5(const char *archive_path,
                                     const char *adf_entry,
                                     const char *expected_md5,
@@ -3761,6 +3762,7 @@ static int scan_external_adf_by_md5_list(const char *archive_path,
     free(image);
     return result < 0 ? 0 : matches.found_count;
 }
+#endif
 
 static int external_adf_extract_entry_to_path(const char *archive_path,
                                               const char *adf_entry,
