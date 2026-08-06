@@ -42,6 +42,10 @@ the `TQUS19.iso` plus `TQUS02End.iso` materialization step.
   offset `0x0B3D98`: eight newline/NUL-framed records decode their numeric
   fields from the A–P nibble representation. A wrong regional MD5, offset
   mutation or malformed field rejects the receipt.
+- Later-level runtime receipts retain the retail resource frame length
+  (`LE16(+2)-5`) and exact user-data end offset in addition to the block and
+  payload hashes. The payload remains opaque until the HuC6280 consumer is
+  bound.
 
 ## Known placeholder boundaries
 

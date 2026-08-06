@@ -177,7 +177,11 @@ int theron_v1_track02_level_data_block_read(
     out->level = level;
     out->block_ud_offset = block->ud_offset;
     out->compressed_ud_offset = (uint32_t)compressed_offset;
+    out->resource_end_ud_offset = (uint32_t)(compressed_offset +
+                                             THERON_TRACK02_LEVEL_RESOURCE_HEADER_SIZE +
+                                             resource_bitstream_bytes);
     out->compressed_bytes = compressed_end - compressed_offset;
+    out->resource_length = resource_length;
     out->resource_bitstream_bytes = resource_bitstream_bytes;
     out->compressed = user_data + compressed_offset;
     out->compressed_fnv1a = fnv1a(out->compressed, out->compressed_bytes);

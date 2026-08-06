@@ -58,8 +58,9 @@ Each of the seven later-level spans now also has a source-locked resource
 frame. The retail `$23AD` routine reads the little-endian word at resource
 offset `+2`, treats `word - 5` as the remaining bitstream byte count, and
 starts reading after the six-byte header. Firestaff verifies this framing for
-all seven US and all seven JP blocks and retains the exact header and bounded
-bitstream slice. The first two header bytes are deliberately still opaque:
+all seven US and all seven JP blocks and retains the exact header, bounded
+bitstream slice, and user-data end offset in the runtime receipt. The first
+two header bytes are deliberately still opaque:
 the static caller has not proven them to be a destination address or level
 identifier, and no map/tile/palette semantics are promoted from that shape.
 

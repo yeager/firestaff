@@ -1248,7 +1248,9 @@ int theron_v1_world_runtime_media_bind_level_data_block(
     receipt.level = source.level;
     receipt.block_ud_offset = source.block_ud_offset;
     receipt.compressed_ud_offset = source.compressed_ud_offset;
+    receipt.resource_end_ud_offset = source.resource_end_ud_offset;
     receipt.compressed_bytes = source.compressed_bytes;
+    receipt.resource_length = source.resource_length;
     receipt.compressed_fnv1a = source.compressed_fnv1a;
     receipt.shared_prologue_fnv1a = source.shared_prologue_fnv1a;
     memcpy(receipt.per_level_meta, source.per_level_meta,

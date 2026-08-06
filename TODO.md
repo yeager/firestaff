@@ -28077,6 +28077,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   hashes; no BIN offset is reused as a container guess.
   The runtime level receipt now accepts both direct ISO variants as well as
   the two raw BIN variants, while retaining only byte-range/hash metadata.
+  2026-08-06 update: the runtime copy now also retains the source-owned
+  `LE16(+2)-5` resource length and exact user-data end offset of the framed
+  bitstream, so a future HuC6280 decoder cannot accidentally consume trailing
+  bytes from the next level span. This is still a framing receipt only;
+  decompression and tile/map/object publication remain gated.
   Decompression and tile/map/object publication remain gated.
 
 - [ ] THERON-V1-TRACK02-VRAM-CONSUMER: bind the real VDC BAT/tile and VCE

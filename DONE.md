@@ -1,3 +1,12 @@
+# Theron later-level resource-frame receipt (2026-08-06)
+
+- ✅ Later-level runtime handoff now retains the authenticated `LE16(+2)-5`
+  resource length and the exact user-data end offset of the framed bitstream,
+  alongside the existing block/span hashes and per-level metadata.
+- ✅ Focused real-media level-block and runtime-receipt tests pass for the
+  bounded frame contract; no decompression, tile, map or object semantics were
+  promoted.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the

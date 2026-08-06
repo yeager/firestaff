@@ -98,6 +98,9 @@ static void verify_bound_data(uint8_t *data, size_t data_size,
         assert(world.runtime_media.later_level_data.track02_variant == variant);
         assert(world.runtime_media.later_level_data.level == level);
         assert(world.runtime_media.later_level_data.compressed_bytes > 0u);
+        assert(world.runtime_media.later_level_data.resource_end_ud_offset >
+               world.runtime_media.later_level_data.compressed_ud_offset);
+        assert(world.runtime_media.later_level_data.resource_length >= 5u);
         assert(world.runtime_media.later_level_data.compressed_fnv1a != 0u);
         assert(world.runtime_media.later_level_data.shared_prologue_fnv1a != 0u);
     }

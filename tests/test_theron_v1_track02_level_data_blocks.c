@@ -97,6 +97,10 @@ static void verify_real_track02_level_blocks(const char *env_name,
                 user_data, user_data_size, variant, level, &receipt));
             assert(receipt.valid && receipt.level == level &&
                    receipt.compressed_ud_offset == block->ud_offset + 0xF0u &&
+                   receipt.resource_end_ud_offset > receipt.compressed_ud_offset &&
+                   receipt.resource_end_ud_offset <=
+                       receipt.compressed_ud_offset + receipt.compressed_bytes &&
+                   receipt.resource_length >= 5u &&
                    receipt.compressed_bytes > 0u &&
                    receipt.resource_header_verified &&
                    receipt.resource_bitstream != NULL &&
@@ -169,6 +173,10 @@ static void verify_real_iso_level_blocks(const char *env_name,
         assert(receipt.valid && receipt.variant == variant &&
                receipt.level == level &&
                receipt.block_ud_offset == block->ud_offset &&
+               receipt.resource_end_ud_offset > receipt.compressed_ud_offset &&
+               receipt.resource_end_ud_offset <=
+                   receipt.compressed_ud_offset + receipt.compressed_bytes &&
+               receipt.resource_length >= 5u &&
                receipt.compressed_bytes > 0u &&
                receipt.resource_header_verified &&
                receipt.resource_bitstream != NULL &&

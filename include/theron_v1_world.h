@@ -173,7 +173,9 @@ typedef struct {
     unsigned int level;
     uint32_t block_ud_offset;
     uint32_t compressed_ud_offset;
+    uint32_t resource_end_ud_offset;
     size_t compressed_bytes;
+    uint16_t resource_length;
     uint32_t compressed_fnv1a;
     uint32_t shared_prologue_fnv1a;
     uint8_t per_level_meta[8];
