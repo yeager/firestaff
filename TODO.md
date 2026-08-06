@@ -112,6 +112,9 @@
   and `LEV00.DGN` identities, but stock Mednafen is rejected at launch with
   exit 78 because it lacks `FIRESTAFF_NEXUS_TRACE_OUTPUT`. No startup/menu,
   HUD, VDP1, SLEV, or SAL artifact may be admitted from that binary.
+  2026-08-06 follow-up: the generic Mednafen launcher now rejects a shared
+  `--trace`/`--manifest` path before writing either artifact, matching the
+  collision guard already used by the specialized VDP1/SLEV launchers.
 
 - **NEXUS-TITLE-TRUNCATED-SOURCE-GATE:** `nexus_title_load` now refuses to
   form the DMWeb MAPD/TIBG offset when a cached title surface is paired with

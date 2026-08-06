@@ -66,6 +66,12 @@
   share the source-defined `NEXUS_MAX_LEVELS` bound instead of duplicated
   literal limits.
 
+# Nexus capture launcher collision guard (2026-08-06)
+
+- ✅ The generic Saturn capture launcher now rejects identical trace and
+  manifest output paths before creating the manifest, preventing one artifact
+  from overwriting the other.
+
 # Nexus startup animation capture gate (2026-08-06)
 
 - ✅ Startup animation readiness now has a separate

@@ -59,7 +59,8 @@ require_file_hash "$menu_bpk" "$menu_bpk_sha256" || exit 1
 require_file_hash "$dm_bin" "$dm_bin_sha256" || exit 1
 require_file_hash "$dgn" "$dgn_sha256" || exit 1
 [[ "$replay_trace_fnv" =~ ^[[:xdigit:]]+$ && "$replay_dgn_fnv" =~ ^[[:xdigit:]]+$ && "$replay_bitmap_fnv" =~ ^[[:xdigit:]]+$ && "$replay_epoch" =~ ^[1-9][0-9]*$ ]] || exit 1
-[[ ! -e "$trace" && ! -e "$manifest" && -d "$(dirname "$trace")" && -d "$(dirname "$manifest")" ]] || exit 1
+[[ ! -e "$trace" && ! -e "$manifest" && "$trace" != "$manifest" && \
+   -d "$(dirname "$trace")" && -d "$(dirname "$manifest")" ]] || exit 1
 if ((launch)); then
   require_capture_hook FIRESTAFF_NEXUS_TRACE_OUTPUT || exit 78
 fi
