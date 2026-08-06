@@ -28,19 +28,19 @@
 #define DM2_SK_CORPUS_RECURSE_CANDIDATE_CAP 64u
 #define DM2_SK_CORPUS_RECURSE_DEPTH 4
 
-/* docs/dm2_save_format.md § Game state block identifies skload_table_60 as
- * a fixed 56-byte SUPPRESS block. Keep this wire-layout view byte-exact so
- * the mask below cannot drift when compiled on hosts with stricter alignment. */
+/* This is the retired 56-byte D2RS diagnostic envelope, not SKProject's
+ * 60-byte s_savegamebuffer. Keep the diagnostic codec byte-exact so its
+ * fixtures remain deterministic; raw SKSave uses the separate source reader. */
 _Static_assert(sizeof(DM2_GameStateBlock) == DM2_GAME_STATE_BLOCK_SIZE,
-               "DM2_GameStateBlock must match skload_table_60 size");
+               "DM2_GameStateBlock must match D2RS diagnostic size");
 _Static_assert(offsetof(DM2_GameStateBlock, wTimersCount) == 20,
-               "DM2_GameStateBlock wTimersCount offset must match skload_table_60");
+               "DM2_GameStateBlock wTimersCount offset must match D2RS");
 _Static_assert(offsetof(DM2_GameStateBlock, dw22) == 22,
-               "DM2_GameStateBlock dw22 offset must match skload_table_60");
+               "DM2_GameStateBlock dw22 offset must match D2RS");
 _Static_assert(offsetof(DM2_GameStateBlock, bRainStrength) == 44,
-               "DM2_GameStateBlock rain strength must match skload_table_60");
+               "DM2_GameStateBlock rain strength must match D2RS");
 _Static_assert(offsetof(DM2_GameStateBlock, dwRainSpecialNextTick) == 52,
-               "DM2_GameStateBlock rain timer must match skload_table_60");
+               "DM2_GameStateBlock rain timer must match D2RS");
 
 /* ════════════════════════════════════════════════════════════════
  * SUPPRESS codec
@@ -1288,84 +1288,27 @@ static int dm2_v1_original_raw_timer_stream_receipt(
     uint32_t *out_byte_count,
     uint32_t *out_hash)
 {
-    DM2_V1_OriginalRawDungeonReceipt dungeon;
-    DM2_GameStateBlock gs;
-    DM2_ChampionRecord champion;
-    uint8_t champion_mask[261];
-    uint8_t global_flags[DM2_GLOBAL_FLAGS_SIZE];
-    uint8_t global_bytes[DM2_GLOBAL_BYTES_SIZE];
-    uint16_t global_words[DM2_GLOBAL_WORDS_SIZE];
-    uint8_t spell_effects[DM2_GLOBAL_SPELL_EFFECTS_SIZE];
-    DM2_TimerEntry timer;
-    size_t pos;
+    DM2_V1_OriginalRawSaveStateReceipt state;
     size_t timer_start;
     size_t timer_end;
-    int decoded;
-    int champion_count;
 
     if (out_offset) *out_offset = 0u;
     if (out_byte_count) *out_byte_count = 0u;
     if (out_hash) *out_hash = 0u;
     if (!payload || !out_offset || !out_byte_count || !out_hash ||
         payload_size > UINT32_MAX ||
-        !dm2_v1_original_raw_sksave_dungeon_receipt(payload, payload_size,
-                                                     &dungeon) ||
-        !dungeon.valid) {
+        !dm2_v1_original_raw_sksave_fixed_state_receipt(payload, payload_size,
+                                                         &state) ||
+        !state.valid || state.timer_count != expected_timer_count) {
         return 0;
     }
-
-    pos = dungeon.suppress_state_offset;
-    decoded = dm2_suppress_decode_gamestate(payload + pos,
-                                            payload_size - pos, &gs, 0);
-    if (decoded <= 0) return 0;
-    pos += (size_t)decoded;
-
-    decoded = dm2_suppress_decode_global_flags(payload + pos,
-                                               payload_size - pos,
-                                               global_flags, 0);
-    if (decoded <= 0) return 0;
-    pos += (size_t)decoded;
-
-    decoded = dm2_suppress_decode_global_bytes(payload + pos,
-                                               payload_size - pos,
-                                               global_bytes, 0);
-    if (decoded <= 0) return 0;
-    pos += (size_t)decoded;
-
-    decoded = dm2_suppress_decode_global_words(payload + pos,
-                                               payload_size - pos,
-                                               global_words, 0);
-    if (decoded <= 0) return 0;
-    pos += (size_t)decoded;
-
-    champion_count = (int)gs.wChampionsCount;
-    if (champion_count < 0 || champion_count > 4) return 0;
-    dm2_suppress_champion_mask(champion_mask);
-    for (int i = 0; i < champion_count; ++i) {
-        decoded = dm2_suppress_decode_champion(payload + pos,
-                                               payload_size - pos,
-                                               champion_mask, &champion, 0);
-        if (decoded <= 0) return 0;
-        pos += (size_t)decoded;
-    }
-
-    decoded = dm2_suppress_decode_spell_effects(payload + pos,
-                                                payload_size - pos,
-                                                spell_effects, 0);
-    if (decoded <= 0) return 0;
-    pos += (size_t)decoded;
-
-    timer_start = pos;
-    if (expected_timer_count > DM2_MAX_TIMERS) return 0;
-    for (int i = 0; i < (int)expected_timer_count; ++i) {
-        decoded = dm2_suppress_decode_timer(payload + pos,
-                                            payload_size - pos, &timer, 0);
-        if (decoded <= 0) return 0;
-        pos += (size_t)decoded;
-    }
-    timer_end = pos;
+    /* Source: SKProject sksvgame.cpp::DM2_GAME_LOAD.  These offsets bound
+     * the original shared bitstream; they intentionally include a partially
+     * consumed boundary byte when one exists. */
+    timer_start = state.timer_bitstream_offset;
+    timer_end = state.record_link_bitstream_offset;
     if (timer_start > UINT32_MAX || timer_end < timer_start ||
-        timer_end - timer_start > UINT32_MAX) {
+        timer_end > payload_size || timer_end - timer_start > UINT32_MAX) {
         return 0;
     }
 
@@ -1805,15 +1748,16 @@ bool dm2_db_write_record(uint8_t pool, uint32_t index,
 }
 
 /* ════════════════════════════════════════════════════════════════════════
- * Game state block (56 bytes, SUPPRESS-encoded)
- * Source: docs/dm2_save_format.md § Game state block (skload_table_60)
+ * Retired D2RS diagnostic state envelope (56 bytes, SUPPRESS-encoded)
+ * The original s_savegamebuffer is 60 bytes and is decoded only by the raw
+ * SKSave receipt in dm2_v1_new_game.c.
  * Type DM2_GameStateBlock is defined in dm2_v1_save_load.h
  * ════════════════════════════════════════════════════════════════════════ */
 
 #define DM2_GAME_STATE_BLOCK_SIZE 56
 
-/* SUPPRESS mask for game state block (56 bytes)
- * Source: SKULL.ASM skload_table_60 write mask */
+/* Legacy D2RS diagnostic mask (56 bytes). It is never an original-SKSave
+ * mask: SKProject dm2data.cpp::table1d631a contains 60 bytes. */
 static void dm2_suppress_gamestate_mask(uint8_t mask[DM2_GAME_STATE_BLOCK_SIZE])
 {
     /* SKProject SKWIN/SkGlobal.cpp:336-341, _4976_395a. The final explicit
@@ -2245,7 +2189,8 @@ const char *dm2_v1_save_phase7_source_evidence(void)
 {
     return
         "SKULL.ASM: _2066_#### save/load entry points\n"
-        "SKULL.ASM: skload_table_60 game state block\n"
+        "SKProject sksvgame.cpp: 60-byte s_savegamebuffer raw receipt\n"
+        "Firestaff D2RS: retained diagnostic codec only (not original save I/O)\n"
         "SKULL.ASM: WRITE_RECORD_CHECKCODE for inventory chains\n"
         "SKULL.ASM: WRITE_MINION_ASSOC for minion table\n"
         "docs/dm2_save_format.md: full save format specification\n"

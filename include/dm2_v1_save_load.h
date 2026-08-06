@@ -387,15 +387,21 @@ int dm2_v1_save_detect_game_version(const uint8_t *header42);
 const char *dm2_v1_save_source_evidence(void);
 
 /* ════════════════════════════════════════════════════════════════
- * Game state block (56 bytes, SUPPRESS-encoded)
- * Source: docs/dm2_save_format.md § Game state block (skload_table_60)
+ * Retired D2RS diagnostic state envelope (56 bytes, SUPPRESS-encoded)
+ *
+ * This Firestaff-only layout exists for isolated codec/session diagnostics.
+ * It is not the raw PC-DOS SKSave `s_savegamebuffer`: SKProject's source
+ * record is 0x3c (60) bytes and is decoded from the shared stream by
+ * dm2_v1_original_raw_sksave_fixed_state_receipt().  Player-facing loaders
+ * reject D2RS and raw saves remain fail-closed until the subsequent
+ * READ_SKSAVE_DUNGEON stream has a live runtime owner.
  * ════════════════════════════════════════════════════════════════ */
 
 #define DM2_GAME_STATE_BLOCK_SIZE 56
 
-/* Packed wire-layout view of SKProject's skload_table_60. The original DM2
- * save block is byte-addressed; do not let host alignment move dw22 from byte
- * 22. Source: SKWIN/DME.h:956-990 and SKULLWIN/c_savegame.cpp:1483-1517. */
+/* Packed D2RS diagnostic layout.  Do not apply this 56-byte mask to an
+ * original SKSave.  Host packing is nevertheless fixed because the retained
+ * test codec must be deterministic. */
 #if defined(_MSC_VER)
 #pragma pack(push, 1)
 #endif

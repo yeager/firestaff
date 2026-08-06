@@ -50898,6 +50898,14 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   timers on one MSB-first reader, then records the precise record-link
   boundary for `DM2_READ_SKSAVE_DUNGEON`. All eight supplied primary/backup
   saves pass; no incomplete session is admitted or made playable.
+- ✅ 2026-08-06 DM2 SKSAVE D2RS boundary correction: removed the remaining
+  corpus timer-stream path that decoded an original raw body through the
+  retired 56-byte `DM2_GameStateBlock` fixture. It now reuses the
+  source-sized 60-byte `s_savegamebuffer` receipt and records the exact shared
+  SUPPRESS timer-to-record-link byte span. Public comments now identify D2RS
+  as diagnostic-only, so it cannot be mistaken for original save I/O. The
+  raw `DM2_READ_SKSAVE_DUNGEON` continuation remains fail-closed and no save
+  is made playable by this change.
 - ✅ 2026-08-06 Nexus HUD runtime binding: production engine init now retains
   the 80-entry layout table at `DM.BIN+0x376D0` and 40-entry ring-menu hit
   table at `DM.BIN+0x38000` only after the exact real `DM.BIN` hash receipt is

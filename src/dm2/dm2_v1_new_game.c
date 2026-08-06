@@ -914,6 +914,12 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
                                                         sizeof(save_state));
     fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, save_state,
                                                 sizeof(save_state));
+    /* sksvgame.cpp::DM2_GAME_LOAD reads c_wbbb before c_tim, without
+     * flushing SUPPRESS.  This is a bitstream boundary, not an invented
+     * byte-aligned record stream. */
+    candidate.timer_bitstream_offset =
+        candidate.dungeon.suppress_state_offset + reader.position;
+    candidate.timer_bitstream_bits_remaining = reader.bits_remaining;
     for (i = 0u; i < timer_count; ++i) {
         if (dm2_suppress_reader_read(&reader, timer_mask, sizeof(timer), timer,
                                      0u) != 0) {

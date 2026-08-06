@@ -128,6 +128,10 @@ static void test_real_raw_save(const char *path)
               state_receipt.champion_count <= 4u &&
               state_receipt.party_map < state_receipt.dungeon.map_count &&
               state_receipt.fixed_sections_hash != 0u &&
+              state_receipt.timer_bitstream_offset >=
+                  state_receipt.dungeon.suppress_state_offset &&
+              state_receipt.timer_bitstream_offset <=
+                  state_receipt.record_link_bitstream_offset &&
               state_receipt.record_link_bitstream_offset >
                   state_receipt.dungeon.suppress_state_offset &&
               state_receipt.record_link_bitstream_offset <= byte_count - 42u,

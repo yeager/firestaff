@@ -26182,6 +26182,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   until complete per-command, party and champion-state receipts drive the
   original UI route. Diagnostic V2 HUD modules remain non-production only.
 
+- [ ] DM2 SKSAVE runtime restoration: the corpus reader now follows the
+  source-sized 60-byte `s_savegamebuffer` and its continuous timer bitstream,
+  but still stops at the `DM2_READ_SKSAVE_DUNGEON` record-link boundary. Keep
+  Continue and slot admission disabled until that complete source-owned
+  record/object/possession restoration path is live; do not substitute D2RS
+  fixtures or inferred session state.
+
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN
   tables). Remaining work is original Saturn/VDP1 capture and source-locked

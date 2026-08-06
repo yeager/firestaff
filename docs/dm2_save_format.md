@@ -43,7 +43,9 @@ SUPPRESS stream must parse before a save is admitted.
    This is the packed `s_savegamebuffer` layout in SKProject
    `SKWINSPX/src/v5/sksvgame.cpp` (size `0x3c`), not the former Firestaff
    56-byte diagnostic convenience view and not an eight-byte weather-state
-   array. `table1d631a[60]` in `dm2data.cpp` selects its source bits.
+   array. `table1d631a[60]` in `dm2data.cpp` selects its source bits. The
+   retained `DM2_GameStateBlock` type is a D2RS codec fixture only; it is not
+   a raw-SKSave parser and must never be used to admit a playable save.
 9. **Ingame global flags** (8 bytes, SUPPRESS)
 10. **Ingame global bytes** (64 bytes, SUPPRESS)
 11. **Ingame global words** (64 words, SUPPRESS)

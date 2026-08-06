@@ -170,6 +170,11 @@ typedef struct {
     uint32_t save_state_hash;
     uint32_t timers_hash;
     uint32_t fixed_sections_hash;
+    /* The timer records and the following READ_SKSAVE_DUNGEON links share
+     * one MSB-first SUPPRESS reader.  Keep both boundaries so corpus code
+     * never reconstructs them with a different (legacy) state layout. */
+    size_t timer_bitstream_offset;
+    uint8_t timer_bitstream_bits_remaining;
     size_t record_link_bitstream_offset;
     uint8_t record_link_bitstream_bits_remaining;
 } DM2_V1_OriginalRawSaveStateReceipt;
