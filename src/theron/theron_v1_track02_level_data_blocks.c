@@ -120,6 +120,8 @@ int theron_v1_track02_level_data_block_read(
     size_t next_offset;
     size_t compressed_offset;
     size_t compressed_end;
+    uint16_t resource_length;
+    size_t resource_bitstream_bytes;
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
@@ -153,14 +155,37 @@ int theron_v1_track02_level_data_block_read(
     compressed_offset = (size_t)block->ud_offset +
                         THERON_TRACK02_LEVEL_PROLOGUE_SIZE;
     compressed_end = next_offset;
+    if (compressed_end - compressed_offset <
+            THERON_TRACK02_LEVEL_RESOURCE_HEADER_SIZE) {
+        return 0;
+    }
+    resource_length = (uint16_t)(user_data[compressed_offset + 2u] |
+                                 ((uint16_t)user_data[compressed_offset + 3u] << 8));
+    /* Retail bank-$1f $23ad reads the word at source+2, subtracts five,
+     * then advances the source pointer by six before the variable-bit reader
+     * starts. This is framing only; bank mappings and output meaning remain
+     * unauthenticated. */
+    if (resource_length < 5u ||
+        (size_t)(resource_length - 5u) >
+            compressed_end - compressed_offset -
+                THERON_TRACK02_LEVEL_RESOURCE_HEADER_SIZE) {
+        return 0;
+    }
+    resource_bitstream_bytes = (size_t)(resource_length - 5u);
     out->valid = 1;
     out->variant = variant;
     out->level = level;
     out->block_ud_offset = block->ud_offset;
     out->compressed_ud_offset = (uint32_t)compressed_offset;
     out->compressed_bytes = compressed_end - compressed_offset;
+    out->resource_bitstream_bytes = resource_bitstream_bytes;
     out->compressed = user_data + compressed_offset;
     out->compressed_fnv1a = fnv1a(out->compressed, out->compressed_bytes);
+    memcpy(out->resource_header, out->compressed,
+           THERON_TRACK02_LEVEL_RESOURCE_HEADER_SIZE);
+    out->resource_header_verified = 1;
+    out->resource_bitstream = out->compressed +
+                              THERON_TRACK02_LEVEL_RESOURCE_HEADER_SIZE;
     out->shared_prologue_fnv1a = fnv1a(
         user_data + block->ud_offset,
         THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE);

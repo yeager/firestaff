@@ -30,6 +30,7 @@ extern "C" {
 #define THERON_TRACK02_LEVEL_COUNT  7u
 #define THERON_TRACK02_LEVEL_PROLOGUE_SIZE  0xF0u
 #define THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE  0xE8u
+#define THERON_TRACK02_LEVEL_RESOURCE_HEADER_SIZE  6u
 
 typedef struct {
     uint32_t ud_offset;
@@ -46,10 +47,14 @@ typedef struct {
     uint32_t block_ud_offset;
     uint32_t compressed_ud_offset;
     size_t compressed_bytes;
+    size_t resource_bitstream_bytes;
     uint32_t compressed_fnv1a;
     uint32_t shared_prologue_fnv1a;
+    uint8_t resource_header[THERON_TRACK02_LEVEL_RESOURCE_HEADER_SIZE];
+    int resource_header_verified;
     uint8_t per_level_meta[8];
     const uint8_t *compressed;
+    const uint8_t *resource_bitstream;
 } Theron_LevelDataBlockReceipt;
 
 const Theron_LevelDataBlockDesc *theron_v1_track02_level_data_block(unsigned int level);

@@ -52256,7 +52256,6 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   The real DM.BIN startup receipt also records one occurrence each of the
   SH-2-visible constants `0x25F00006` and `0x25F80000`; these remain address
   receipts, not proof of text-layer placement.
-
 # 2026-08-06 Nexus RLOWFIX startup text source handoff
 
 - ✅ Engine initialization now retains the authenticated European RLOWFIX
@@ -52264,3 +52263,11 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   #0/#1/#2 (291/250/710 glyphs) beside the real PLRD champion records. The
   launch smoke probe verifies this source handoff;
   it does not promote the bytes into Saturn text pixels or open the menu gate.
+
+- ✅ 2026-08-06 Theron's Quest Track 02 resource framing: the level-block
+  receipt now applies the authenticated `$23AD` contract to all seven US and
+  seven JP spans, retaining each exact six-byte header and bounded
+  `LE16(+2)-5` bitstream slice. It rejects short, underflowing, or overrun
+  frames and also passes the Track 19 ISO projections. This is a real
+  disassembly-backed framing boundary only; bank mappings, decoder output and
+  tile/map/palette semantics remain fail-closed.

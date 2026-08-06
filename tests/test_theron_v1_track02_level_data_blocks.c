@@ -98,6 +98,12 @@ static void verify_real_track02_level_blocks(const char *env_name,
             assert(receipt.valid && receipt.level == level &&
                    receipt.compressed_ud_offset == block->ud_offset + 0xF0u &&
                    receipt.compressed_bytes > 0u &&
+                   receipt.resource_header_verified &&
+                   receipt.resource_bitstream != NULL &&
+                   receipt.resource_bitstream_bytes > 0u &&
+                   receipt.resource_bitstream_bytes <=
+                       receipt.compressed_bytes -
+                           THERON_TRACK02_LEVEL_RESOURCE_HEADER_SIZE &&
                    receipt.compressed_fnv1a != 0u &&
                    receipt.shared_prologue_fnv1a != 0u &&
                    memcmp(receipt.per_level_meta, block->per_level_meta,
@@ -164,6 +170,12 @@ static void verify_real_iso_level_blocks(const char *env_name,
                receipt.level == level &&
                receipt.block_ud_offset == block->ud_offset &&
                receipt.compressed_bytes > 0u &&
+               receipt.resource_header_verified &&
+               receipt.resource_bitstream != NULL &&
+               receipt.resource_bitstream_bytes > 0u &&
+               receipt.resource_bitstream_bytes <=
+                   receipt.compressed_bytes -
+                       THERON_TRACK02_LEVEL_RESOURCE_HEADER_SIZE &&
                receipt.compressed_fnv1a != 0u &&
                receipt.shared_prologue_fnv1a != 0u &&
                memcmp(receipt.per_level_meta, block->per_level_meta,

@@ -33,6 +33,11 @@
   now authenticated (30 bytes, FNV-1a 699e8da1). It proves `$30/$31` is
   measured as the decompressed output length through `$3B7C/$3B7D`; input
   block, destination bank and level/object meaning remain open.
+  2026-08-06 resource-frame update: all seven US and seven JP level spans now
+  validate the six-byte `$23AD` resource header and bounded `LE16(+2)-5`
+  bitstream length. The exact header/bitstream slice is retained, but the
+  separate HuC6280 bank mappings and destination pointer are still missing;
+  no decoder output or tile/map semantics are admitted.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size
