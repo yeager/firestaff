@@ -4,6 +4,48 @@
 #include <string.h>
 #include "nexus_v1_creatures.h"
 
+#define DM_BIN_AI_TABLE_OFFSET 0x0383A8U
+
+static uint32_t read_be32(const uint8_t *p)
+{
+    return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
+           ((uint32_t)p[2] << 8) | (uint32_t)p[3];
+}
+
+static int verify_retail_ai_table(const char *data_dir,
+                                  const Nexus_V1_CreatureManager *mgr)
+{
+    char path[512];
+    uint8_t bytes[NEXUS_CRET_COUNT * sizeof(uint32_t)];
+    FILE *file;
+    int i;
+
+    if (snprintf(path, sizeof(path), "%s/DM.BIN", data_dir) >= (int)sizeof(path) ||
+        !(file = fopen(path, "rb"))) {
+        puts("SKIP: retail Nexus DM.BIN is not mounted for AI table check");
+        return 0;
+    }
+    if (fseek(file, (long)DM_BIN_AI_TABLE_OFFSET, SEEK_SET) != 0 ||
+        fread(bytes, 1, sizeof(bytes), file) != sizeof(bytes)) {
+        fclose(file);
+        fprintf(stderr, "FAIL: could not read DM.BIN AI table at 0x%06X\n",
+                DM_BIN_AI_TABLE_OFFSET);
+        return 1;
+    }
+    fclose(file);
+    for (i = 0; i < NEXUS_CRET_COUNT; ++i) {
+        uint32_t actual = read_be32(bytes + i * sizeof(uint32_t));
+        if (actual != mgr->types[i].ai_func_ptr) {
+            fprintf(stderr, "FAIL: AI pointer %d: got 0x%08X, expected 0x%08X\n",
+                    i, mgr->types[i].ai_func_ptr, actual);
+            return 1;
+        }
+    }
+    printf("AI dispatch: all %d pointers match DM.BIN 0x%06X\n",
+           NEXUS_CRET_COUNT, DM_BIN_AI_TABLE_OFFSET);
+    return 0;
+}
+
 static const struct {
     const char *name;
     int hp, damage, armor, speed;
@@ -127,6 +169,8 @@ int main(void) {
             printf("  [%2d] %-16s HP=%3d ATK=%3d DEF=%3d SPD=%3d OK\n",
                    i, t->name, t->health, t->attack, t->defense, t->speed);
     }
+
+    fail += verify_retail_ai_table(data_dir, &mgr);
 
     /* Verify new CRET fields for known creatures */
     {

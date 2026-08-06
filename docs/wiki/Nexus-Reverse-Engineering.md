@@ -398,7 +398,8 @@ record (`RLOWFIX.BIN`, 96 bytes/creature, 30 creatures,
 `ranged_type` (byte 4), `poison` (byte 13). `cret_raw[96]` retains the
 whole raw record; `cret_bound` gates whether it was actually sourced from
 `RLOWFIX.BIN`. `ai_func_ptr` is an SH-2 function pointer extracted from
-`DM.BIN` offset `0x0383A8` (the creature AI dispatch table), retained as
+`DM.BIN` offset `0x0383A8` (the creature AI dispatch table, including its
+leading `0xFFFFFFFF` sentinel), retained as
 raw provenance rather than executed.
 
 `nexus_v1_creatures_load_cret()` reads the CRET table at `RLOWFIX.BIN`

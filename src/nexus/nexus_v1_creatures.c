@@ -1,5 +1,6 @@
 
 #include "nexus_v1_creatures.h"
+#include "nexus_v1_creature_names.h"
 #include "nexus_v1_combat.h"    /* for nexus_v1_combat_random */
 #include "nexus_v1_movement.h"  /* for nexus_get_square */
 #include <string.h>
@@ -20,53 +21,36 @@ static uint64_t creatures_fnv1a64(const uint8_t *data, long size) {
     return h;
 }
 
-/* Real Nexus creature roster — 30 MNS filenames from DM.BIN 0x0385F0.
- * AI function pointers from DM.BIN 0x0383A8 (yam\crenet.c dispatch).
- * Stats sourced from RLOWFIX.BIN CRET section (96 bytes per creature). */
-static const struct { const char *name; const char *mns; uint32_t ai_func; } g_creature_defs[] = {
-    {"Ant Man",        "ANTMAN.MNS",   0xFFFFFFFF},
-    {"Mummy",          "MUMMY.MNS",   0x060478D0},
-    {"Ghost",          "GHOST.MNS",   0x06048374},
-    {"Vexirk",         "VEXIRK.MNS",  0x060479E0},
-    {"Giggler",        "GIGGLER.MNS", 0x06047B30},
-    {"Golem",          "GOLEM.MNS",   0x06048378},
-    {"Hell Hound",     "H_HOUND.MNS", 0x060479D0},
-    {"Gold Dragon",    "D_GOLD.MNS",  0x060477C8},
-    {"Silver Dragon",  "D_SILVER.MNS",0x06048388},
-    {"Red Dragon",     "D_RED.MNS",   0x060479C8},
-    {"Last Monster",   "LAS_MON.MNS", 0x06047C78},
-    {"Oitu",           "OITU.MNS",    0x0604837E},
-    {"Rat",            "RAT.MNS",     0x060479B8},
-    {"Rock Pile",      "ROCKPILE.MNS",0x060477C8},
-    {"Screamer",       "SCREAMER.MNS",0x06048388},
-    {"Scorpion",       "SCORPION.MNS",0x060479A8},
-    {"Floor Snake",    "SN_FLOOR.MNS",0x06047B90},
-    {"Wall Snake",     "SN_WALL.MNS", 0x0604838A},
-    {"Skeleton Sword", "S_SWORD.MNS", 0x060479B0},
-    {"Skeleton Shield","S_SHIELD.MNS",0x06047870},
-    {"Worm",           "WORM.MNS",    0x06048390},
-    {"Green Dragon",   "GRN_DRA.MNS", 0x060479C0},
-    {"Red Drake",      "RED_DRA.MNS", 0x06047928},
-    {"Dragon Zombie",  "DRA_ZOM.MNS", 0x0604839C},
-    {"Mini Dragon",    "MINI_DRA.MNS",0x060479D8},
-    {"Borketh",        "BORKETH.MNS", 0x06047BC0},
-    {"Chaos",          "CHAOS.MNS",   0x060483A0},
-    {"Lord Rib",       "LORD_RIB.MNS",0x00000000},
-    {"Big Worm",       "BIGWORM.MNS", 0x06047870},
-    {"Obake",          "OBAKE.MNS",   0x06047888},
-    {NULL, NULL, 0}
+/* Real Nexus creature AI dispatch table — 30 SH-2 pointers from DM.BIN
+ * yam\crenet.c at 0x0383A8.  The first entry is the retail
+ * 0xFFFFFFFF sentinel; the remaining 29 entries are SH-2 pointers.  The MNS
+ * filename order is kept in
+ * nexus_v1_creature_names.c and is independently authenticated against
+ * DM.BIN 0x0385F0.  Human-readable English labels are deliberately absent:
+ * no retail Nexus text source has been proven for this type table. */
+static const uint32_t g_creature_ai_funcs[NEXUS_CREATURE_NAME_COUNT] = {
+    0xFFFFFFFF, 0x060478D0, 0x06048374, 0x060479E0,
+    0x06047B30, 0x06048378, 0x060479D0, 0x060477C8,
+    0x06048388, 0x060479C8, 0x06047C78, 0x0604837E,
+    0x060479B8, 0x060477C8, 0x06048388, 0x060479A8,
+    0x06047B90, 0x0604838A, 0x060479B0, 0x06047870,
+    0x06048390, 0x060479C0, 0x06047928, 0x0604839C,
+    0x060479D8, 0x06047BC0, 0x060483A0, 0x00000000,
+    0x06047870, 0x06047888
 };
 
 void nexus_v1_creatures_init(Nexus_V1_CreatureManager *mgr) {
     int i;
     if (!mgr) return;
     memset(mgr, 0, sizeof(*mgr));
-    for (i = 0; g_creature_defs[i].name; i++) {
+    for (i = 0; i < NEXUS_CREATURE_NAME_COUNT; i++) {
         Nexus_CreatureType *t = &mgr->types[i];
-        strncpy(t->name, g_creature_defs[i].name, 31);
-        strncpy(t->model_file, g_creature_defs[i].mns, 31);
+        const char *mns = nexus_v1_creature_mns_name(i);
+        /* The retail filename is the only proven display identity here. */
+        strncpy(t->name, mns ? mns : "", sizeof(t->name) - 1U);
+        strncpy(t->model_file, mns ? mns : "", sizeof(t->model_file) - 1U);
         t->model_index = -1;
-        t->ai_func_ptr = g_creature_defs[i].ai_func;
+        t->ai_func_ptr = g_creature_ai_funcs[i];
         mgr->type_count++;
     }
 }

@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus creature metadata quarantine: production creature init
+  no longer inserts unverified English display labels or duplicates the MNS
+  filename table. It uses the authenticated retail MNS roster, while the
+  complete AI/sentinel table is verified against `DM.BIN+0x0383A8`; CRET stats
+  remain bound only from retail `RLOWFIX.BIN`.
+
 - ✅ 2026-08-06 Nexus MNS roster provenance: the complete 30-entry
   `nexus_v1_creature_names` table is now checked against the mounted European
   retail `DM.BIN` string table at `0x0385F0`, rather than relying only on

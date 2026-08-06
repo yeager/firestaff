@@ -27,9 +27,11 @@
 
 - **NEXUS-CREATURE-MNS-CONSUMER:** The 30-entry MNS filename roster is now
   authenticated byte-for-byte against European retail `DM.BIN` at `0x0385F0`.
-  Keep its API as source metadata only until a production creature-model
-  consumer binds CRET indices to DGN/MNS records; do not infer creature stats
-  or render models from filenames alone.
+  Production creature types now expose those retail filenames instead of
+  invented English labels, and the 30-entry AI/sentinel table is checked
+  against `DM.BIN+0x0383A8`. Keep both as source metadata until a production
+  creature-model consumer binds CRET indices to DGN/MNS records; do not infer
+  stats or render models from filenames/addresses alone.
 
 - **NEXUS-PRS3-VDP1-STATE-RECEIPT:** The real MENU.BPK PRS3 decoder now
   passes all 162 retail surfaces, and DM.BIN's VDP1 register/state corridors
