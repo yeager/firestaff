@@ -1,7 +1,13 @@
 # DM Nexus — Extracted File Classification
 
-137 files extracted from Sega Saturn ISO (Track 1, MODE1/2352).
+137 files present in the Sega Saturn ISO directory (Track 1, MODE1/2352).
 Volume: DUNGEONMASTERNEXUS. Product: T-9111G V1.003 (1998-02-03).
+
+The local user-supplied corpus contains 131 loose game resources plus the
+authenticated ISO container. `DMN_ABS.TXT`, `DMN_BIB.TXT`, `DMN_CPY.TXT`,
+`DMV0.AVI`, `DMV1.AVI` and `DMV2.AVI` are ISO-only members in that corpus.
+They must remain virtual ISO entries until a consumer is source-bound; their
+absence as loose files is not permission to create host placeholders.
 
 ## File Types
 

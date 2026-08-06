@@ -189,9 +189,13 @@ fortsatt komma från Saturn-källorna, bland annat `DM.BIN` och `FACE.BIN`.
 Detta tar bort ett syntetiskt filkrav utan att ersätta det med en namnbaserad
 fallback.
 
-Alla primära Nexus-assets finns i `/Users/bosse/.firestaff/data/nexus`.
-Återstående gap gäller alltså inte assetförekomst utan byte-/pixelsemantik och
-verifierad runtime-bindning.
+Den lokala Nexus-katalogen innehåller 131 lösa spelresurser samt den
+hashverifierade Track 1-ISO:n. Sex entries är avsiktligt ISO-only:
+`DMN_ABS.TXT`, `DMN_BIB.TXT`, `DMN_CPY.TXT`, `DMV0.AVI`, `DMV1.AVI` och
+`DMV2.AVI`. De får läsas via ISO-entryn när en källbunden konsument finns,
+men ska inte materialiseras som lösa hostfiler eller ersättas med text-/video-
+placeholders. Återstående Nexus-gap gäller därför både dessa ännu okonsumerade
+ISO-medlemmar och byte-/pixelsemantik samt verifierad runtime-bindning.
 
 1. Bind de fem verifierade `TITLE.BIN`/`TITLE.CG`-bilderna och `LOGOBG.DG2` till korrekt uppstartsroute utan obevisad 320×200-cropping. `test_nexus_v1_title_mapd_real` verifierar nu retailens fem MAPD/TIBG-kartor, tilepixlar och paletteord; endast displayplaceringen återstår.
 2. Bevisa `MENU.BPK`-ytornas Saturn-placering, palettbindning och betydelse i menyn.

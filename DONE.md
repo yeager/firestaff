@@ -117,6 +117,14 @@
   that the runtime preserves `MagicalLightAmount` and reports the missing
   Saturn action-dispatch capture.
 
+# Nexus ISO-only corpus inventory (2026-08-06)
+
+- ✅ Compared the authenticated English Track 1 ISO directory with the local
+  loose corpus. The 137 ISO entries resolve to 131 loose game resources plus
+  six deliberate ISO-only members: three DMN text files and three DMV video
+  files. The inventory now records that they remain virtual until a real
+  consumer is bound, with no placeholder materialization.
+
 # Nexus SLEV/SAL/MAP retail identity gate (2026-08-06)
 
 - ✅ Hardened the 16-level SLEV/SAL/MAP corpus regression with the production
