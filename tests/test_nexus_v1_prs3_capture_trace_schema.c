@@ -703,7 +703,11 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
     size_t menu_size = 0U, dm_bin_size = 0U;
     unsigned int index;
     char text[4096];
-    char v9_text[4096];
+    /* The real V8 receipt carries the full retail stream identity and is
+     * materially larger than the compact fixture.  Leave room for the V9/V10
+     * DGN fields appended below; truncation must be a test failure, never a
+     * NULL-strstr crash. */
+    char v9_text[8192];
     char transfer_text[1024];
     char *tail;
     uint32_t output_base = 0x06020000U;
@@ -804,45 +808,83 @@ static void test_real_v5_decoder_readiness_trace_contract(void) {
         memcpy(v9_text, text, prefix);
         v9_text[prefix] = '\0';
         v9_text[sizeof("NEXUS_PRS3_SH2_VDP1_TRACE_V") - 1U] = '9';
-        snprintf(v9_text + prefix, sizeof(v9_text) - prefix,
+        expect(snprintf(v9_text + prefix, sizeof(v9_text) - prefix,
                  "dgn_fnv1a64=7\ndgn_descriptor_index=0\n"
                  "dgn_frame_sequence=40\ndgn_command_sequence=31\n"
                  "dgn_command_xa=0\ndgn_command_ya=0\n"
                  "dgn_command_xb=0\ndgn_command_yb=0\n"
                  "dgn_command_xc=0\ndgn_command_yc=0\n"
-                 "dgn_command_xd=0\ndgn_command_yd=0\n%s", tail);
+                 "dgn_command_xd=0\ndgn_command_yd=0\n%s", tail) >= 0 &&
+               strlen(v9_text) < sizeof(v9_text),
+               "V9 receipt extension is not truncated");
         expect(nexus_v1_prs3_vdp1_capture_schema_parse(
                    v9_text, strlen(v9_text), &trace) &&
                    trace.schema_version == 9U && trace.dgn_placement_observed &&
-                   trace.dgn_fnv1a64 == 7U && trace.dgn_frame_sequence == 40U &&
+                   trace.dgn_fnv1a64 == 7U && trace.dgn_frame_sequence == 0x40U &&
                    trace.dgn_command_sequence == trace.vdp1_command_sequence,
                "V9 requires an explicit DGN descriptor/frame/command observation");
-        memcpy(strstr(v9_text, "dgn_fnv1a64=7"), "dgn_fnv1a64=0", 15U);
-        expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
-                   v9_text, strlen(v9_text), &trace),
-               "V9 rejects a missing DGN identity");
+        {
+            char *dgn_identity = strstr(v9_text, "dgn_fnv1a64=7");
+            expect(dgn_identity != NULL, "V9 receipt retains DGN identity");
+            if (dgn_identity) {
+                memcpy(dgn_identity, "dgn_fnv1a64=0", 15U);
+                expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+                           v9_text, strlen(v9_text), &trace),
+                       "V9 rejects a missing DGN identity");
+            }
+        }
         memcpy(v9_text, text, prefix);
         v9_text[prefix] = '\0';
         v9_text[sizeof("NEXUS_PRS3_SH2_VDP1_TRACE_V") - 1U] = '1';
         v9_text[sizeof("NEXUS_PRS3_SH2_VDP1_TRACE_V")] = '0';
-        snprintf(v9_text + prefix + 1U, sizeof(v9_text) - prefix - 1U,
+        {
+            const size_t v8_magic_size =
+                sizeof("NEXUS_PRS3_SH2_VDP1_TRACE_V8\n") - 1U;
+            const size_t v10_prefix = prefix + 1U;
+            /* V10 adds one byte to the magic. Shift the copied body and
+             * restore its newline before appending the new fields. */
+            memmove(v9_text + v8_magic_size + 1U,
+                    v9_text + v8_magic_size,
+                    prefix - v8_magic_size + 1U);
+            v9_text[v8_magic_size] = '\n';
+            expect(snprintf(v9_text + v10_prefix,
+                            sizeof(v9_text) - v10_prefix,
                  "dgn_fnv1a64=7\ndgn_descriptor_index=0\n"
                  "dgn_frame_sequence=40\ndgn_command_sequence=31\n"
                  "dgn_command_xa=0\ndgn_command_ya=0\n"
                  "dgn_command_xb=0\ndgn_command_yb=0\n"
                  "dgn_command_xc=0\ndgn_command_yc=0\n"
                  "dgn_command_xd=0\ndgn_command_yd=0\n"
-                 "dgn_descriptor_fnv1a64=9\n%s", tail);
+                 "dgn_descriptor_fnv1a64=9\n%s", tail) >= 0 &&
+               strlen(v9_text) < sizeof(v9_text),
+               "V10 receipt extension is not truncated");
+        }
         expect(nexus_v1_prs3_vdp1_capture_schema_parse(
                    v9_text, strlen(v9_text), &trace) &&
                    trace.schema_version == 10U &&
                    trace.dgn_descriptor_fnv1a64 == 9U,
                "V10 requires the observed DGN descriptor FNV");
-        memcpy(strstr(v9_text, "dgn_descriptor_fnv1a64=9"),
-               "dgn_descriptor_fnv1a64=0", 25U);
-        expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
-                   v9_text, strlen(v9_text), &trace),
-               "V10 rejects a missing DGN descriptor FNV");
+        {
+            char *descriptor_identity =
+                strstr(v9_text, "dgn_descriptor_fnv1a64=9");
+            expect(descriptor_identity != NULL,
+                   "V10 receipt retains descriptor identity");
+            if (descriptor_identity) {
+                memcpy(descriptor_identity, "dgn_descriptor_fnv1a64=0", 24U);
+                expect(!nexus_v1_prs3_vdp1_capture_schema_parse(
+                           v9_text, strlen(v9_text), &trace),
+                       "V10 rejects a missing DGN descriptor FNV");
+                /* The negative parse intentionally clears its output. Restore
+                 * the valid V10 observation before the readiness checks below. */
+                memcpy(descriptor_identity, "dgn_descriptor_fnv1a64=9", 24U);
+                {
+                    int restored = nexus_v1_prs3_vdp1_capture_schema_parse(
+                        v9_text, strlen(v9_text), &trace);
+                    expect(restored && trace.schema_version == 10U && trace.valid,
+                           "V10 valid receipt is restored after negative check");
+                }
+            }
+        }
     }
     expect(nexus_v1_prs3_decoder_readiness_bind_capture(
                &trace, menu, menu_size, dm_bin, dm_bin_size, &readiness) &&

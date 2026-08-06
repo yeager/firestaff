@@ -137,6 +137,10 @@
   overwrites a `SATURN_PRESENTATION` block with `READY_STORED` after a
   source-authenticated stored/decoded route is found. The menu handoff now
   preserves the missing-capture status all the way to the caller.
+  2026-08-06: the retail V8/V9/V10 schema regression no longer crashes on
+  its appended DGN fields or leaves a negative receipt in place for later
+  readiness checks; this repairs verification coverage only and does not
+  promote PRS3 decoding or VDP1 presentation.
 
 - **NEXUS-PLRD-FIXTURE-QUARANTINE:** The inferred 24-name champion roster is
   no longer compiled into `firestaff_nexus`; it is isolated in the explicit

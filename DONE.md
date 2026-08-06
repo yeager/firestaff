@@ -53662,3 +53662,10 @@ alcove runtime and archive-media tests passed (4/4).
   the Saturn provisions/start/save consumer is captured. The focused tick
   regression now verifies threshold-crossing retail state remains unchanged
   (16 tests).
+
+- ✅ 2026-08-06 Nexus PRS3 schema regression repair: the retail MENU.BPK V8
+  capture test now has sufficient space for V9/V10 DGN extensions, rejects
+  truncation explicitly, uses the parser's hexadecimal sequence convention,
+  and restores the valid receipt after negative checks. Verification passes
+  against the real Nexus data root; no decoder or VDP1 presentation is
+  promoted by this test repair.
