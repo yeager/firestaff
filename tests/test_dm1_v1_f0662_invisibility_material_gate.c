@@ -8,7 +8,6 @@
 
 int main(void)
 {
-    const char* home = getenv("HOME");
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
     const unsigned char* paletteChanges;
     unsigned char alteredPalette[DM1_V1_F0662_PALETTE_CHANGE_COUNT_PC34];
@@ -20,13 +19,14 @@ int main(void)
     DM1_V1_F0662GlyphSourcePc34 glyph;
     DM1_V1_F0662InvisibilityMaterialReceiptPc34 receipt;
 
-    if (root && root[0]) snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
-    else if (home && home[0]) snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
-    else return 0;
-    if (!M11_AssetLoader_Init(&loader, path)) {
-        if (root && root[0]) return 1;
-        puts("SKIP: PC34 GRAPHICS.DAT not installed");
+    if (!root || !root[0]) {
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
         return 0;
+    }
+    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
+    if (!M11_AssetLoader_Init(&loader, path)) {
+        fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
+        return 1;
     }
     icon = M11_AssetLoader_Load(&loader, DM1_V1_F0662_C028_CHAMPION_ICONS_PC34);
     if (!icon || !icon->loaded || !icon->pixels ||
