@@ -50311,6 +50311,14 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   still admitted from memory only. The opt-in real-media regression verifies
   both root forms.
 
+- ✅ 2026-08-06 DM2 FM Towns M12 launch admission: the launcher now reads the
+  HME-242 raw image from the original ZIP only in memory, verifies the
+  platform-bound GDAT and G1 MD5 pair, and reports their virtual
+  `ZIP::DATA/...` provenance. It hands the untouched archive root to the
+  existing memory-owned DM2 boot reader rather than creating an asset cache.
+  Real-media scan and boot probes reach `dm2-startup-menu`; ordinary virtual
+  DM2 ISO media remains blocked unless it has a dedicated in-memory owner.
+
 - ✅ 2026-08-06 DM2 resurrection surrogate mutation removal: removed the
   runtime type-0x0D final-phase write that treated Firestaff's bounded
   261-byte session record as SKProject's 263-byte `c_hero`. The old path

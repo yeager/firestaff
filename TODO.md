@@ -49,9 +49,11 @@
   boot and GAME_LOAD both retain their authenticated G1 bytes in memory. The
   supplied Amiga archive is an installer corpus: Disk 1 holds only installer
   scripts and `dm2_arcsplit1`, not launch files. Recover its original
-  installer/archive semantics in memory before admitting it. Complete M12 menu
-  admission for that CD image and the nested Amiga floppy corpus only after
-  their original GRAPHICS.DAT/DUNGEON.DAT pairs can be verified together.
+  installer/archive semantics in memory before admitting it. M12 now admits
+  the FM Towns CD ZIP only after it reads the raw image in memory and verifies
+  its original GRAPHICS.DAT/DUNGEON.DAT pair; complete the same nested-media
+  admission for the Amiga floppy corpus only after its original pair can be
+  verified together.
   Generic DM2 ZIP/ISO cache materialization is deliberately disabled: it must
   either gain a verified in-memory PC reader or remain non-launchable. Do not
   synthesize a compatible install, palette, dungeon, music map or save corpus

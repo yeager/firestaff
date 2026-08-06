@@ -1,5 +1,7 @@
 #include "asset_status_m12.h"
 #include "asset_find_by_hash.h"
+#include "dm2_v1_fmtowns_disc.h"
+#include "firestaff_zip_extract.h"
 #include "fs_portable_compat.h"
 #include "nexus_v1_bpk_archive.h"
 #include "theron_v1_track02.h"
@@ -682,6 +684,161 @@ int m12_file_md5_matches_spec(const char* path, const char* specMd5) {
         return 0;
     }
     return strcmp(md5Hex, specMd5) == 0;
+}
+
+static void m12_bytes_md5_hex(const uint8_t* bytes,
+                              size_t byteCount,
+                              char outHex[33]) {
+    M12_Md5Context ctx;
+    if (!outHex) {
+        return;
+    }
+    outHex[0] = '\0';
+    if (!bytes || byteCount == 0U) {
+        return;
+    }
+    m12_md5_init(&ctx);
+    m12_md5_update(&ctx, bytes, byteCount);
+    m12_md5_final(&ctx, outHex);
+}
+
+/* The HME-242 FM Towns release is distributed as a ZIP containing a raw
+ * MODE1/2352 image.  Its GRAPHICS.DAT and DUNGEON.DAT are not ZIP members,
+ * so the generic archive walker cannot see their hashes.  Probe only the
+ * original image in memory, then leave the archive untouched for the DM2
+ * boot owner to reopen.  This is discovery, never extraction to disk. */
+static int m12_admit_dm2_fmtowns_archive(M12_AssetStatus* status,
+                                         int gameIndex,
+                                         const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+                                         size_t rootCount) {
+    static const char archiveName[] =
+        "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip";
+    size_t rootIndex;
+    size_t versionIndex;
+
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm2") != 0) {
+        return 0;
+    }
+    for (versionIndex = 0U; versionIndex < g_games[gameIndex].versionCount;
+         ++versionIndex) {
+        if (strcmp(g_games[gameIndex].versions[versionIndex].versionId,
+                   "fmtowns-ja") == 0 &&
+            status->versions[gameIndex][versionIndex].matched) {
+            return 1;
+        }
+    }
+    for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
+        char candidate[2][M12_ASSET_DATA_DIR_CAPACITY];
+        size_t candidateIndex;
+        snprintf(candidate[0], sizeof(candidate[0]), "%s/%s",
+                 roots[rootIndex], archiveName);
+        snprintf(candidate[1], sizeof(candidate[1]), "%s/dm2/%s",
+                 roots[rootIndex], archiveName);
+        for (candidateIndex = 0U; candidateIndex < 2U; ++candidateIndex) {
+            uint8_t* image = NULL;
+            size_t imageSize = 0U;
+            uint8_t* graphics = NULL;
+            size_t graphicsSize = 0U;
+            uint8_t* dungeon = NULL;
+            size_t dungeonSize = 0U;
+            char graphicsMd5[33];
+            char dungeonMd5[33];
+            DM2_V1_FmtownsDiscReceipt receipt;
+            int accepted = 0;
+
+            if (firestaff_zip_extract_by_suffix(candidate[candidateIndex], ".img",
+                                                &image, &imageSize) != 0 ||
+                dm2_v1_fmtowns_disc_probe(image, imageSize, &receipt) != 0 ||
+                dm2_v1_fmtowns_disc_extract_alloc(image, imageSize,
+                                                   &receipt.graphics_dat,
+                                                   &graphics, &graphicsSize) != 0 ||
+                dm2_v1_fmtowns_disc_extract_alloc(image, imageSize,
+                                                   &receipt.dungeon_dat,
+                                                   &dungeon, &dungeonSize) != 0) {
+                free(image);
+                free(graphics);
+                free(dungeon);
+                continue;
+            }
+            m12_bytes_md5_hex(graphics, graphicsSize, graphicsMd5);
+            m12_bytes_md5_hex(dungeon, dungeonSize, dungeonMd5);
+            accepted = strcmp(graphicsMd5,
+                              "027ff3b8ddc2c4c4cdda7ada0b0bc46c") == 0 &&
+                       strcmp(dungeonMd5,
+                              "74c7549f174574201988bf936385841a") == 0;
+            free(image);
+            free(graphics);
+            free(dungeon);
+            if (!accepted) {
+                continue;
+            }
+            for (versionIndex = 0U;
+                 versionIndex < g_games[gameIndex].versionCount;
+                 ++versionIndex) {
+                M12_AssetVersionStatus* version =
+                    &status->versions[gameIndex][versionIndex];
+                if (strcmp(version->versionId, "fmtowns-ja") != 0) {
+                    continue;
+                }
+                version->matched = 1;
+                snprintf(version->matchedPath, sizeof(version->matchedPath),
+                         "%s::DATA/GRAPHICS.DAT", candidate[candidateIndex]);
+                snprintf(version->matchedMd5, sizeof(version->matchedMd5),
+                         "%s", graphicsMd5);
+                m12_copy_string(status->runtimeDataDirs[gameIndex],
+                                sizeof(status->runtimeDataDirs[gameIndex]),
+                                roots[rootIndex]);
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+static void m12_publish_dm2_fmtowns_required_files(M12_AssetStatus* status,
+                                                    int gameIndex) {
+    const M12_AssetVersionStatus* version;
+    const char* separator;
+    size_t i;
+    size_t archiveLength;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm2") != 0) {
+        return;
+    }
+    version = m12_first_matched_version(status, gameIndex);
+    if (!version || !version->versionId ||
+        strcmp(version->versionId, "fmtowns-ja") != 0) {
+        return;
+    }
+    separator = strstr(version->matchedPath, "::");
+    if (!separator) {
+        return;
+    }
+    archiveLength = (size_t)(separator - version->matchedPath);
+    if (archiveLength == 0U) {
+        return;
+    }
+    for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+        M12_AssetRequiredFileStatus* required =
+            &status->requiredFiles[gameIndex][i];
+        const char* member = NULL;
+        const char* md5 = NULL;
+        if (strcmp(required->roleId, "graphics") == 0) {
+            member = "DATA/GRAPHICS.DAT";
+            md5 = "027ff3b8ddc2c4c4cdda7ada0b0bc46c";
+        } else if (strcmp(required->roleId, "dungeon") == 0) {
+            member = "DATA/DUNGEON.DAT";
+            md5 = "74c7549f174574201988bf936385841a";
+        }
+        if (!member) {
+            continue;
+        }
+        required->matched = 1;
+        snprintf(required->matchedPath, sizeof(required->matchedPath),
+                 "%.*s::%s", (int)archiveLength, version->matchedPath, member);
+        snprintf(required->matchedHash, sizeof(required->matchedHash), "%s", md5);
+    }
 }
 
 static void m12_copy_string(char* out, size_t outSize, const char* value) {
@@ -2676,6 +2833,19 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
          * data to disk and makes a partial archive route look playable.
          * Returning failure makes the normal required-file gate keep launch
          * closed until the relevant in-memory reader is bound. */
+        {
+            const M12_AssetVersionStatus* version =
+                m12_first_matched_version(status, gameIndex);
+            if (version && version->versionId &&
+                strcmp(version->versionId, "fmtowns-ja") == 0 &&
+                m12_path_is_virtual_asset(version->matchedPath)) {
+                /* The FM Towns raw image has a complete, verified memory
+                 * owner in dm2_v1_boot_load_fmtowns_disc_from_zip().  Keep
+                 * this virtual provenance and let that owner reopen it; no
+                 * generic cache is ever created for DM2. */
+                return 1;
+            }
+        }
         return 0;
     }
     if (!FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
@@ -3429,9 +3599,26 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
                                &dataDirResolvedToMatchedRoot,
                                userExplicitDataDir,
                                0);
+        if (strcmp(g_games[i].gameId, "dm2") == 0) {
+            (void)m12_admit_dm2_fmtowns_archive(status, i, roots, rootCount);
+        }
     }
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
         int reqMatch = m12_fill_required_files(status, i, roots, rootCount, 0);
+        if (strcmp(g_games[i].gameId, "dm2") == 0) {
+            size_t requiredIndex;
+            m12_publish_dm2_fmtowns_required_files(status, i);
+            reqMatch = status->requiredFileCounts[i] > 0U;
+            for (requiredIndex = 0U;
+                 requiredIndex < status->requiredFileCounts[i];
+                 ++requiredIndex) {
+                if (status->requiredFiles[i][requiredIndex].required &&
+                    !status->requiredFiles[i][requiredIndex].matched) {
+                    reqMatch = 0;
+                    break;
+                }
+            }
+        }
         m12_prefer_dm2_loose_graphics_runtime_dir(status, i);
         if (!m12_scan_progress_update(&progressCtx,
                                       "matching required files",
@@ -3627,11 +3814,29 @@ void M12_AssetStatus_ScanGameWithOptions(
                            &dataDirResolvedToMatchedRoot,
                            (requestedDataDir && requestedDataDir[0] != '\0'),
                            options && options->looseFilesOnly);
+    if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
+        (void)m12_admit_dm2_fmtowns_archive(status, gameIndex,
+                                            roots, rootCount);
+    }
     reqMatch = m12_fill_required_files(status,
                                        gameIndex,
                                        roots,
                                        rootCount,
                                        options && options->looseFilesOnly);
+    if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
+        size_t requiredIndex;
+        m12_publish_dm2_fmtowns_required_files(status, gameIndex);
+        reqMatch = status->requiredFileCounts[gameIndex] > 0U;
+        for (requiredIndex = 0U;
+             requiredIndex < status->requiredFileCounts[gameIndex];
+             ++requiredIndex) {
+            if (status->requiredFiles[gameIndex][requiredIndex].required &&
+                !status->requiredFiles[gameIndex][requiredIndex].matched) {
+                reqMatch = 0;
+                break;
+            }
+        }
+    }
     m12_prefer_dm2_loose_graphics_runtime_dir(status, gameIndex);
     m12_apply_required_game_availability(status, gameIndex, reqMatch);
     if (reqMatch) {

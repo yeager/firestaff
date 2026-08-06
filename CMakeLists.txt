@@ -4352,6 +4352,11 @@ add_library(firestaff_m10 STATIC
     src/dm2/dm2_v1_party.c
     src/dm2/dm2_v1_hand_action_gdat.c
     src/dm2/dm2_v1_asset_loader.c
+    # The FM Towns ISO reader is shared by the DM2 boot receipt and M12's
+    # read-only archive admission.  Keep one implementation in M10 so the
+    # launcher can verify the raw CD payload before handing the archive back
+    # to the memory-owned DM2 boot path.
+    src/dm2/dm2_v1_fmtowns_disc.c
     src/dm2/dm2_v1_sound.c
     src/dm2/dm2_v1_sound_queue_pc34_compat.c
     src/dm2/dm2_v1_midi_backend.c
@@ -4469,7 +4474,8 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_anim_chunk_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_step_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_fmtowns_disc.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
