@@ -24760,6 +24760,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   cloud payload fields) through the full-dungeon handoff. Host object-kind,
   inventory and projectile/cloud ownership remain deliberately unbound; no
   synthetic object is created.
+- 2026-08-06 update: the real-data thing-record regression now covers both
+  authenticated `TQUS02.bin` and `TQJP02.bin`. All seven Japanese dungeon
+  blocks use their source-bound map/item offsets, retain 871–1 132 records per
+  dungeon and decode every populated category without publishing a host
+  object. Japanese text remains at zero until its codon consumer is proven;
+  no translated or synthetic text is inserted.
 
 ## Theron Track 19 remaining evidence
 

@@ -33,27 +33,23 @@ static uint8_t *load_track02_ud(const char *path, size_t *out_size) {
     return ud;
 }
 
-static const char *find_track02(void) {
+static const char *find_track02_variant(Theron_Track02Variant variant) {
     const char *home = getenv("HOME");
-    const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_RAW");
+    const char *explicit_path = (variant == THERON_TRACK02_VARIANT_JP_BIN)
+        ? getenv("FIRESTAFF_THERON_TRACK02_JP_RAW")
+        : getenv("FIRESTAFF_THERON_TRACK02_RAW");
     static char path[512];
-    const char *candidates[3];
+    const char *candidates[2];
 
     candidates[0] = explicit_path;
     if (home && home[0]) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQUS02.bin",
-                 home);
+        snprintf(path, sizeof(path), "%s/.firestaff/data/theron/%s.bin",
+                 home, variant == THERON_TRACK02_VARIANT_JP_BIN ? "TQJP02" : "TQUS02");
         candidates[1] = path;
-        snprintf(path + 256, sizeof(path) - 256,
-                 "%s/.firestaff/data/theron/raw-us/"
-                 "Dungeon Master - Theron's Quest (USA) (Track 02).bin",
-                 home);
-        candidates[2] = path + 256;
     } else {
         candidates[1] = NULL;
-        candidates[2] = NULL;
     }
-    for (unsigned int i = 0; i < 3u; ++i) {
+    for (unsigned int i = 0; i < 2u; ++i) {
         FILE *fp;
         if (!candidates[i] || !candidates[i][0]) continue;
         fp = fopen(candidates[i], "rb");
@@ -144,7 +140,8 @@ static void test_source_projectile_records(void) {
 }
 
 static void test_real_item_records(const Theron_ThingData *td,
-                                   unsigned int dungeon_index) {
+                                   unsigned int dungeon_index,
+                                   int require_us_counts) {
     /* Authenticated object-count words from each real US quest block. */
     static const uint16_t expected[7][11] = {
         {31, 68, 17, 180, 118, 143, 153, 6, 11, 3, 181},
@@ -158,7 +155,8 @@ static void test_real_item_records(const Theron_ThingData *td,
 
     assert(dungeon_index < 7u);
     for (unsigned int cat = 0; cat <= THERON_CAT_MISC; ++cat) {
-        assert(td->object_counts[cat] == expected[dungeon_index][cat]);
+        if (require_us_counts)
+            assert(td->object_counts[cat] == expected[dungeon_index][cat]);
         if (td->object_counts[cat] == 0u)
             continue;
         size_t bytes = (size_t)td->object_counts[cat] *
@@ -187,7 +185,9 @@ static void test_real_item_records(const Theron_ThingData *td,
     }
 }
 
-static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
+static void test_all_dungeons(const uint8_t *ud, size_t ud_size,
+                              Theron_Track02Variant variant,
+                              const char *label) {
     const char *names[] = {
         "AKUTUBA", "DRATOR", "FORMICIA", "SARMON",
         "SHADODAN", "THIEVES", "DEMON"
@@ -195,7 +195,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
 
     for (unsigned int d = 0; d < 7; d++) {
         Theron_DungeonData dd;
-        assert(theron_v1_track02_dungeon_map_load(ud, ud_size, d, &dd));
+        assert(theron_v1_track02_dungeon_map_load_for_variant(
+            ud, ud_size, variant, d, &dd));
 
         unsigned int total_tiles = 0;
         uint8_t flat_tiles[4096];
@@ -214,21 +215,22 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
 
         Theron_ThingData *td = calloc(1, sizeof(Theron_ThingData));
         assert(td);
-        int ok = theron_v1_track02_thing_data_load(
-            ud, ud_size, d, dd.object_counts, gref_count, td);
+        int ok = theron_v1_track02_thing_data_load_for_variant(
+            ud, ud_size, variant, d, dd.object_counts, gref_count, td);
         assert(ok);
 
         assert(td->ground_ref_count == gref_count);
-        test_real_item_records(td, d);
+        test_real_item_records(td, d,
+                               variant == THERON_TRACK02_VARIANT_US_BIN);
 
         unsigned int total_items = 0;
         for (int c = 0; c < 16; c++)
             total_items += td->object_counts[c];
 
-        printf("  %s: %u ground_refs, %u items, %u text_words OK\n",
-               names[d], gref_count, total_items, td->text_data_count);
+        printf("  %s %s: %u ground_refs, %u items, %u text_words OK\n",
+               label, names[d], gref_count, total_items, td->text_data_count);
 
-        if (d == 0) {
+        if (variant == THERON_TRACK02_VARIANT_US_BIN && d == 0) {
             assert(td->object_counts[THERON_CAT_DOOR] == 31);
             assert(td->object_counts[THERON_CAT_TELEPORTER] == 68);
             assert(td->object_counts[THERON_CAT_ACTUATOR] == 180);
@@ -249,7 +251,7 @@ int main(void) {
     test_source_category_layout();
     test_source_projectile_records();
 
-    const char *path = find_track02();
+    const char *path = find_track02_variant(THERON_TRACK02_VARIANT_US_BIN);
     if (!path) {
         printf("  SKIP: Track 02 BIN not found\n");
         return 0;
@@ -262,7 +264,17 @@ int main(void) {
         return 0;
     }
 
-    test_all_dungeons(ud, ud_size);
+    test_all_dungeons(ud, ud_size, THERON_TRACK02_VARIANT_US_BIN, "US");
+    free(ud);
+
+    path = find_track02_variant(THERON_TRACK02_VARIANT_JP_BIN);
+    if (!path) {
+        printf("  SKIP: JP Track 02 BIN not found\n");
+        return 0;
+    }
+    ud = load_track02_ud(path, &ud_size);
+    assert(ud);
+    test_all_dungeons(ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN, "JP");
     free(ud);
     printf("PASS\n");
     return 0;

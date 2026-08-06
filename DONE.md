@@ -50944,6 +50944,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   regions and rejects non-sector-aligned raw input. Result: all seven real
   regions pass with 190–264 ground refs and 871–1132 items; no synthetic
   records or presentation semantics were promoted.
+- ✅ 2026-08-06 Theron JP thing-data coverage: the same regression now
+  discovers authenticated `~/.firestaff/data/theron/TQJP02.bin` (or
+  `FIRESTAFF_THERON_TRACK02_JP_RAW`) and runs all seven Japanese dungeon
+  blocks through the real JP map/item offsets. It verifies 192–261 ground
+  references, 871–1 132 decoded records and every populated category, while
+  deliberately keeping JP text empty until its real codon consumer is bound.
 - ✅ 2026-08-06 DM2 CCM synthetic-execution closure: removed
   `dm2_v1_ccm.c` from both production archives and retired creature-tick
   flag-to-action writeback. The compact opcode interpreter lacks the original
