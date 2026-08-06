@@ -160,6 +160,12 @@ static void test_drain_party_stamina(void)
     d = dm2_v1_drain_party_stamina(heroes, 2);
     assert(d == 2);
 
+    {
+        int16_t costs[4] = { -1, -1, -1, -1 };
+        assert(dm2_v1_calc_party_stamina_costs(heroes, 2, costs) == 2);
+        assert(costs[0] == 2 && costs[1] == 3 && costs[2] == 0);
+    }
+
     printf("  PASS: drain_party_stamina\n");
 }
 
@@ -215,6 +221,8 @@ static void test_perform_move_exec_accepted(void)
     assert(exec_receipt.classification == DM2_MOVE_CLASS_OPEN_TILE);
     assert(exec_receipt.squad_dir_reset == 1);
     assert(exec_receipt.stamina_drained == 1);
+    assert(exec_receipt.stamina_cost[0] == 2);
+    assert(exec_receipt.stamina_cost[1] == 0);
     assert(exec_receipt.walk_delay == 2);
     assert(exec_receipt.delayed_pose_unbound == 1);
     assert(exec_receipt.half_step_entered == 0);

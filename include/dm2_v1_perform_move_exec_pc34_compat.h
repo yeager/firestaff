@@ -61,6 +61,9 @@ typedef struct {
 
     int walk_delay;
     int stamina_drained;
+    /* Source-owned DM2_ADJUST_STAMINA amounts, one per hero slot.  These are
+     * receipts only until the live c_hero owner can apply the writeback. */
+    int16_t stamina_cost[4];
     /* The source delay is known, but no live pose owner has been imported.
      * This is deliberately not an interpolation/viewport activation flag. */
     int delayed_pose_unbound;
@@ -170,6 +173,14 @@ int dm2_v1_calc_party_walk_delay(
 int dm2_v1_drain_party_stamina(
     const DM2_V1_HeroMoveState *heroes,
     int hero_count);
+
+/* Calculate the same source costs while retaining each slot's value for a
+ * later DM2_ADJUST_STAMINA owner.  Returns the number of living heroes with
+ * a valid max-load denominator. */
+int dm2_v1_calc_party_stamina_costs(
+    const DM2_V1_HeroMoveState *heroes,
+    int hero_count,
+    int16_t out_costs[4]);
 
 #ifdef __cplusplus
 }

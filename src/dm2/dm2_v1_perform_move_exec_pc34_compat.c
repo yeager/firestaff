@@ -59,8 +59,21 @@ int dm2_v1_drain_party_stamina(
     const DM2_V1_HeroMoveState *heroes,
     int hero_count)
 {
+    int16_t costs[4] = { 0, 0, 0, 0 };
+
+    return dm2_v1_calc_party_stamina_costs(heroes, hero_count, costs);
+}
+
+int dm2_v1_calc_party_stamina_costs(
+    const DM2_V1_HeroMoveState *heroes,
+    int hero_count,
+    int16_t out_costs[4])
+{
     int drained = 0;
 
+    if (out_costs) {
+        memset(out_costs, 0, sizeof(int16_t) * 4u);
+    }
     if (!heroes || hero_count <= 0) return 0;
 
     /* skmove.cpp:376-398: for each living hero, compute
@@ -75,7 +88,9 @@ int dm2_v1_drain_party_stamina(
 
         uint32_t cost = 3u * (uint32_t)heroes[i].player_weight;
         cost = cost / (uint32_t)heroes[i].max_load + 1u;
-        (void)cost;
+        if (out_costs) {
+            out_costs[i] = (int16_t)(cost > INT16_MAX ? INT16_MAX : cost);
+        }
         drained++;
     }
 
@@ -131,8 +146,8 @@ int dm2_v1_perform_move_exec(
 
     /* Stamina drain: weight-proportional per hero.
      * skmove.cpp:376-398 */
-    receipt->stamina_drained = dm2_v1_drain_party_stamina(
-        request->heroes, request->hero_count);
+    receipt->stamina_drained = dm2_v1_calc_party_stamina_costs(
+        request->heroes, request->hero_count, receipt->stamina_cost);
     receipt->squad_dir_reset = 1;
 
     /* Move classification: the reference calls DM2_12b4_0881

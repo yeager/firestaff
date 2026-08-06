@@ -90,6 +90,14 @@
   caller now fails the audit before synthetic damage can enter runtime. The
   live champion/CMDSTR/target/RNG/writeback owner chain remains open.
 
+# DM2 movement stamina receipt ownership (2026-08-13)
+
+- ✅ The movement execution seam now retains the source `3 * weight /
+  max_load + 1` stamina cost for every living hero slot. The previous
+  implementation calculated the value and discarded it. Tests cover both
+  individual costs and the accepted-move receipt; live stamina writeback and
+  delayed-pose ownership remain fail-closed.
+
 # DM2 G1 champion-mirror selection source binding (2026-08-07)
 
 - ✅ The champion-selection seam now consumes the committed real G1 mirror

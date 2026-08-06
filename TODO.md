@@ -29276,6 +29276,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   receipt now reports this as an unbound delayed pose instead of falsely
   claiming that interpolation entered; the source-owned pose/countdown
   owner and live real-data runtime handoff remain open.
+  **2026-08-13 owner-chain progress:** the exact `3 * weight / max_load + 1`
+  `DM2_ADJUST_STAMINA` amount is now retained per hero slot in the execution
+  receipt instead of being discarded. It remains a receipt only; applying the
+  writeback and publishing `glbIsPlayerMoving` still require the live c_hero,
+  possession and tick owners.
 
 - [ ] DM2 creature animation-frame ownership: `DM2_1c9a_0958` now carries
   the source's exact `CreatureAnimationFrame::w0` bit-14 query through an
