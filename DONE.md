@@ -1,3 +1,9 @@
+# DM1 D2C stair-rail synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only D2C stair-rail trace from M10 and made its
+  regression compile the source explicitly. It loads no original DM1 data and
+  has no M11/runtime caller.
+
 # DM1 chest multi-champion-close synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only multi-champion chest-close fixture from M10 and

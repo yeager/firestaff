@@ -5039,6 +5039,11 @@ list(REMOVE_ITEM M10_SOURCES
 # DM1 data and has no M11/runtime caller; its explicit regression compiles it.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_multi_champion_close_pc34_compat.c")
+# `dm1_v1_viewport_d2c_stair_rail_pc34_compat.c` is a contract-only D2C
+# stair-rail trace with fixed route metadata. It loads no original DM1 data
+# and has no M11/runtime caller; its explicit regression compiles it directly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2c_stair_rail_pc34_compat.c")
 # `dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_pc34_compat.c`
 # is a contract-only C040 close/reopen model with local panel and candidate
 # state. It loads no original DM1 assets and has no M11/runtime caller; its
@@ -54351,7 +54356,9 @@ add_executable(test_dm1_v1_viewport_d2c_f0115_front_rear_overlap_pc34_compat
 target_include_directories(test_dm1_v1_viewport_d2c_f0115_front_rear_overlap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d2c_f0115_front_rear_overlap_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d2c_f0115_front_rear_overlap_pc34_compat COMMAND test_dm1_v1_viewport_d2c_f0115_front_rear_overlap_pc34_compat)
-add_executable(test_dm1_v1_viewport_d2c_stair_rail_pc34_compat tests/test_dm1_v1_viewport_d2c_stair_rail_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d2c_stair_rail_pc34_compat
+    tests/test_dm1_v1_viewport_d2c_stair_rail_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d2c_stair_rail_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d2c_stair_rail_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d2c_stair_rail_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d2c_stair_rail_pc34_compat COMMAND test_dm1_v1_viewport_d2c_stair_rail_pc34_compat)
