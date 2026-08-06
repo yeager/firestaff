@@ -1,7 +1,5 @@
 #include "nexus_v1_screen_text.h"
-#include "nexus_v1_font_s2d.h"
 
-#include <stdlib.h>
 #include <string.h>
 
 static void clear_receipt(Nexus_V1_ScreenTextReceipt *receipt,
@@ -159,14 +157,17 @@ int nexus_v1_screen_text_draw_s2d_bytes(
     const Nexus_V1_ScreenTextStyle *style,
     Nexus_V1_ScreenTextReceipt *receipt)
 {
-    Nexus_V1_Font font;
-    Nexus_V1_FontSections sections;
-    int rc;
-
     clear_receipt(receipt, NEXUS_V1_SCREEN_TEXT_ERR_INVALID_ARG);
     if (!s2d_data || s2d_size <= 0) {
         return NEXUS_V1_SCREEN_TEXT_ERR_INVALID_ARG;
     }
+
+    (void)framebuffer;
+    (void)fb_width;
+    (void)fb_height;
+    (void)fb_stride;
+    (void)text;
+    (void)style;
 
     /* The retail Saturn SCR is a multi-region FONT256 asset.  Its
      * page/tilemap/attribute-to-character mapping is not yet bound.  Do not
@@ -175,35 +176,12 @@ int nexus_v1_screen_text_draw_s2d_bytes(
      * supplied `draw_indexed` API remains available for isolated synthetic
      * layout tests, but a real SCR byte stream is no-draw until its mapping
      * receipt is source-bound. */
-    {
-        Nexus_V1_FontS2dDecodeResult retail_regions;
-        if (nexus_v1_font_s2d_decode(s2d_data, s2d_size, &retail_regions) == 0) {
-            clear_receipt(receipt, NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP);
-            return NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP;
-        }
-        clear_receipt(receipt, NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP);
-        return NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP;
-    }
-
-    memset(&font, 0, sizeof(font));
-    rc = nexus_v1_font_load(&font, s2d_data, s2d_size);
-    if (rc <= 0) {
-        clear_receipt(receipt, NEXUS_V1_SCREEN_TEXT_ERR_FONT_LOAD);
-        return NEXUS_V1_SCREEN_TEXT_ERR_FONT_LOAD;
-    }
-
-    rc = nexus_v1_font_load_sections(s2d_data, s2d_size, &sections);
-    if (rc != 0) {
-        nexus_v1_font_free(&font);
-        clear_receipt(receipt, NEXUS_V1_SCREEN_TEXT_ERR_SECTION_PARSE);
-        return NEXUS_V1_SCREEN_TEXT_ERR_SECTION_PARSE;
-    }
-
-    rc = nexus_v1_screen_text_draw_indexed(
-        &font, &sections, framebuffer, fb_width, fb_height, fb_stride,
-        text, style, receipt);
-    nexus_v1_font_free(&font);
-    return rc;
+    /* No flat-font decode follows this gate.  The retail SCR mapping is
+     * deliberately the only missing precondition, so a future implementation
+     * must add source-bound page/tilemap evidence here rather than reviving the
+     * obsolete helper with guessed character placement. */
+    clear_receipt(receipt, NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP);
+    return NEXUS_V1_SCREEN_TEXT_ERR_GLYPH_MAP;
 }
 
 const char *nexus_v1_screen_text_status_name(

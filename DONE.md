@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus SCR no-draw boundary cleanup: removed the unreachable
+  flat-glyph decode/raster branch from `nexus_v1_screen_text_draw_s2d_bytes`.
+  Real `FONT256.S2D` input now has one explicit, auditable `GLYPH_MAP`
+  failure path until Saturn page/tilemap/attribute evidence is bound; the
+  isolated synthetic `draw_indexed` layout probe remains unchanged. The
+  screen-text surface probe passes 27/27 and real input leaves its framebuffer
+  untouched. No game data was tracked.
+
 - ✅ 2026-08-06 Nexus shop catalog provenance: the runtime shop manager now
   binds the eight `(item_id, price)` rows and `0xFFFF` terminator directly
   from hash-verified `DM.BIN` at `0x037210` instead of relying only on a
