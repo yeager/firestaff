@@ -110,10 +110,10 @@ int main(void) {
     char save_dir[512];
     char slot_path[512];
     Nexus_V1_SaveManager mgr;
-    Nexus_V1_World world_before;
-    Nexus_V1_World world_after;
-    Nexus_V1_ChampionPool pool_before;
-    Nexus_V1_ChampionPool pool_after;
+    Nexus_V1_World *world_before;
+    Nexus_V1_World *world_after;
+    Nexus_V1_ChampionPool *pool_before;
+    Nexus_V1_ChampionPool *pool_after;
     Nexus_V1_SaveHeader out_header;
     char diagnostic[256];
     Nexus_SaveResult save_result;
@@ -121,22 +121,38 @@ int main(void) {
     const int PARTY_X_MARKER = 17;
     const uint8_t SLOT_INDEX = 0;
 
+    /* Nexus_V1_World contains all level/object/event/timer storage and is
+     * intentionally large. Keep the test's native save fixture off the small
+     * process stack; this changes no serialized bytes or save API contract. */
+    world_before = (Nexus_V1_World *)calloc(1, sizeof(*world_before));
+    world_after = (Nexus_V1_World *)calloc(1, sizeof(*world_after));
+    pool_before = (Nexus_V1_ChampionPool *)calloc(1, sizeof(*pool_before));
+    pool_after = (Nexus_V1_ChampionPool *)calloc(1, sizeof(*pool_after));
+    if (!world_before || !world_after || !pool_before || !pool_after) {
+        free(world_before);
+        free(world_after);
+        free(pool_before);
+        free(pool_after);
+        fprintf(stderr, "FAIL: could not allocate Nexus save test state\n");
+        return 1;
+    }
+
     if (!make_temp_root(root, sizeof(root))) {
         fprintf(stderr, "FAIL: could not create temporary test root\n");
         return 1;
     }
 
     /* ── Arrange: deterministic world + empty champion pool ────────── */
-    nexus_v1_champions_init(&pool_before);
-    expect(pool_before.champion_count > 0,
+    nexus_v1_champions_init(pool_before);
+    expect(pool_before->champion_count > 0,
            "roster is seeded from g_nexus_roster so champion_count > 0");
     /* Drop the party to empty to keep the champion blob tiny — the gate
      * here is about the world field, not the pool serialization. */
-    pool_before.party_count = 0;
-    pool_before.leader_index = -1;
+    pool_before->party_count = 0;
+    pool_before->leader_index = -1;
 
-    build_world(&world_before, PARTY_X_MARKER);
-    expect(world_before.party_x == PARTY_X_MARKER,
+    build_world(world_before, PARTY_X_MARKER);
+    expect(world_before->party_x == PARTY_X_MARKER,
            "world_before.party_x set to PARTY_X_MARKER");
 
     /* ── Save through the manager-level API to slot 0 ──────────────── */
@@ -146,14 +162,14 @@ int main(void) {
            "save manager initializes with the temp save directory");
 
     save_result = nexus_v1_save_full(&mgr, SLOT_INDEX,
-                                      /*current_level=*/world_before.party_level,
-                                      /*party_x=*/world_before.party_x,
-                                      /*party_y=*/world_before.party_y,
-                                      /*party_dir=*/world_before.party_dir,
-                                      /*game_time=*/(uint32_t)world_before.world_tick,
-                                      /*state_hash=*/world_before.state_hash,
-                                      /*champion_pool=*/&pool_before,
-                                      /*world=*/&world_before);
+                                      /*current_level=*/world_before->party_level,
+                                      /*party_x=*/world_before->party_x,
+                                      /*party_y=*/world_before->party_y,
+                                      /*party_dir=*/world_before->party_dir,
+                                      /*game_time=*/(uint32_t)world_before->world_tick,
+                                      /*state_hash=*/world_before->state_hash,
+                                      /*champion_pool=*/pool_before,
+                                      /*world=*/world_before);
     expect(save_result == NEXUS_SAVE_OK,
            "nexus_v1_save_full returns NEXUS_SAVE_OK for slot 0");
     if (save_result == NEXUS_SAVE_OK) {
@@ -177,28 +193,28 @@ int main(void) {
      * must already be initialized (callers cannot pass uninitialized
      * memory). Init both, then clear party_count for symmetry with the
      * saved pool. */
-    nexus_v1_champions_init(&pool_after);
-    pool_after.party_count = 0;
-    pool_after.leader_index = -1;
-    nexus_v1_world_init(&world_after);
+    nexus_v1_champions_init(pool_after);
+    pool_after->party_count = 0;
+    pool_after->leader_index = -1;
+    nexus_v1_world_init(world_after);
     memset(&out_header, 0, sizeof(out_header));
     memset(diagnostic, 0, sizeof(diagnostic));
 
     load_result = nexus_v1_load_full(&mgr, SLOT_INDEX, &out_header,
-                                      /*champion_pool=*/&pool_after,
-                                      /*world=*/&world_after,
+                                      /*champion_pool=*/pool_after,
+                                      /*world=*/world_after,
                                       diagnostic, sizeof(diagnostic));
     expect(load_result == NEXUS_SAVE_OK,
            "nexus_v1_load_full returns NEXUS_SAVE_OK for the just-saved slot");
     if (load_result == NEXUS_SAVE_OK) {
         /* The narrow gate: ONE world field round-trips. */
-        expect(world_after.party_x == PARTY_X_MARKER,
+        expect(world_after->party_x == PARTY_X_MARKER,
                "world.party_x round-trips through slot 0 (single gate field)");
         /* Complementary header check: the slot marker field on the
          * loaded header agrees with the world field. */
-        expect(out_header.party_x == world_after.party_x,
+        expect(out_header.party_x == world_after->party_x,
                "loaded save header.party_x agrees with rehydrated world.party_x");
-        expect(out_header.current_level == world_after.party_level,
+        expect(out_header.current_level == world_after->party_level,
                "loaded save header.current_level agrees with rehydrated world.party_level");
         expect(out_header.magic == NEXUS_SAVE_MAGIC,
                "loaded save header.magic is the 'FNXS' marker");
@@ -218,6 +234,10 @@ int main(void) {
     NSR_UNLINK(slot_path);
     NSR_RMDIR(save_dir);
     NSR_RMDIR(root);
+    free(world_before);
+    free(world_after);
+    free(pool_before);
+    free(pool_after);
 
     if (g_failures) {
         fprintf(stderr, "test_nexus_v1_save_slot_roundtrip_pc34_compat: %d failure(s)\n",

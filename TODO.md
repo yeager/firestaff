@@ -27088,3 +27088,6 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   Firestaff-native/test state rather than recovered SDDRVS/SLEV semantics.
   Keep the actual SLEV task body, callback owner, event selector and dispatch
   capture-gated; do not promote the compatibility enum into Saturn opcodes.
+- **NEXUS-SAVE-ROUNDTRIP-STACK:** The manager-level native save round-trip is
+  now verified with heap-owned test state; keep the serialized world contract
+  unchanged while extending real Saturn-card save provenance separately.

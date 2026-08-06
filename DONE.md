@@ -52960,3 +52960,8 @@ frame. Source: `SKWINSPX/src/v4/skcore.cpp:15447-15455` and
 `src/v5/SK1C9A.cpp:5377-5399`. Verification:
 `test_dm2_v1_1c9a_pc34_compat` passes 53/53, including set, clear,
 out-of-range and absent-owner cases.
+- 2026-08-06 Nexus save round-trip test stability: moved the large native
+  `Nexus_V1_World` and champion-pool test objects from the small process stack
+  to heap-owned state. The test now reaches and passes its existing
+  `nexus_v1_save_full` -> `nexus_v1_load_full` `party_x` gate without changing
+  serialized bytes or promoting the native FNXS format to Saturn-card parity.
