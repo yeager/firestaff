@@ -1,5 +1,10 @@
 # Nexus PLRD provisions quarantine (2026-08-06)
 
+- ✅ 2026-08-06 Theron production archive boundary: the archive regression now
+  checks every CMake-excluded inferred/procedural Theron translation unit,
+  not only the legacy creature table. A future source binding must therefore
+  be explicit and reviewable before it can enter the production library.
+
 `RLOWFIX.BIN/PLRD` is now treated as the source of its authenticated raw
 name/TABL references, statistics and equipment ordinals only. The production
 parser no longer seeds food/water with the inherited DM1 value `1500`; those

@@ -3155,6 +3155,9 @@ diagnostic; it must not silently fall back to a generated visual.
   palette and chapter-marker placeholders with real US/JP Track 02 bitmap,
   palette and loader-selected records.  The supplied `TQUS02.bin`, CUE and
   ISO corpus are the admission sources; unknown records remain blocked.
+  The production archive boundary now rejects every currently excluded
+  inferred/procedural Theron translation unit, so future source bindings must
+  enter through an explicit real-data review rather than a broad glob.
 - **THERON-ORIGINAL-REPLACE-002:** Replace item-as-creature and direction-bar
   viewport placeholders only after the HuC6280 CD-read table binds their
   exact Track 02 records.  No inferred object graphics or palette may ship.
