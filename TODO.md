@@ -2620,6 +2620,14 @@ diagnostic; it must not silently fall back to a generated visual.
   portrait area untouched instead of drawing invented eyes/mouth pixels.
   The diagnostic silhouette remains restricted to non-source fixtures.
 
+- **DM1-ORIGINAL-REPLACE-026:** Closed 2026-08-06. The legacy wall-face
+  helper no longer decides that an authenticated DM1 session is source-owned
+  only after Thing tables are populated. A real PC34 GRAPHICS.DAT loader is
+  now sufficient to suppress primitive wall, door and stairs fallbacks;
+  missing later F0115 Thing data therefore remains no-draw instead of
+  producing host geometry. Verification: focused DM1 source-render tests and
+  the real archive object corpus pass.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

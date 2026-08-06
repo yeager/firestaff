@@ -30245,21 +30245,17 @@ static void m11_draw_wall_contents(unsigned char* framebuffer,
 
 static int m11_dm1_authenticated_viewport_source_active(void)
 {
-    int thingType;
     const M11_GameViewState* state = g_drawState;
 
     if (!state || !m11_is_dm1_source_kind(state->sourceKind) ||
-        !state->assetsAvailable || !state->world.things ||
-        !state->world.things->loaded) {
+        !state->assetsAvailable || !state->assetLoader.initialized ||
+        !state->assetLoader.fileState || !state->assetLoader.runtimeState) {
         return 0;
     }
-    for (thingType = 0; thingType < DUNGEON_THING_TYPE_COUNT; ++thingType) {
-        if (state->world.things->rawThingData[thingType] &&
-            state->world.things->thingCounts[thingType] > 0) {
-            return 1;
-        }
-    }
-    return 0;
+    /* Source ownership begins when the authenticated PC34 graphics loader is
+     * live. Thing tables are a later F0115 input and must not decide whether
+     * the legacy primitive wall/door/stairs renderer is allowed to run. */
+    return 1;
 }
 
 /* Forward declarations for asset-backed rendering helpers */

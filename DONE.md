@@ -53199,3 +53199,16 @@ platform package.
   now disables all external archive tools while proving nested ZIP→ADF lookup
   and extraction; the supplied `Chaos Strikes Back (FTL).zip` also reports
   CSB `READY` under an empty tool PATH.
+
+# DM1 original-data replacement: source gate for legacy wall primitives
+
+DM1 source sessions now suppress the legacy wall/door/stairs primitive path as
+soon as the authenticated PC34 `GRAPHICS.DAT` loader is initialized. The old
+gate incorrectly waited for populated Thing tables, allowing a synthetic
+primitive to appear during the interval between graphics admission and the
+later F0115 Thing handoff. The source renderer now fails closed until its real
+material consumer is ready.
+
+Verification: focused DM1 inventory/object/portrait/inscription/stairs/sound
+tests passed (27/27), and the real archive-backed object names, object corpus,
+alcove runtime and archive-media tests passed (4/4).
