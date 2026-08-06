@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Theron text/disassembly boundary verification: the real
+  US/JP Track 02 HuC6280 bank-$1f receipt passes with the authenticated
+  decompressor fragment, caller output-size contract and stage-2 resource
+  handler. The real Track 02 text corpus still produces unresolved brace
+  control codes, so world-text publication remains rejected and diagnostic
+  output remains available for the future original text-consumer match.
+
 - ✅ 2026-08-06 DM2 FM Towns English corpus-coverage gate: the real-media
   launcher regression now iterates every non-empty text key in the selected
   Japanese CD GDAT and requires a non-empty value at the identical key in the

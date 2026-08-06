@@ -53,3 +53,14 @@ transfer and `$3800/$4000` stage-two entry. This fragment extends the static
 listing into the bank-switch/byte-consumption helper that surrounds the live
 handoff. It does not promote the current opaque startup envelope or any
 object/later-level record into runtime use.
+
+## 2026-08-06 verification boundary
+
+The checked-in receipt was rerun against both owned real regional images. The
+US and JP bank-$1f bytes pass the fragment, decompressor, caller and stage-2
+resource-handler hashes. The Track 02 text corpus was also rerun from the real
+US BIN: it decodes into diagnostic strings, but unresolved brace/control-code
+values remain present. Accordingly the world-text loader continues to reject
+that block, and this disassembly still authorizes no text, menu, dungeon,
+object, tile, palette or viewport semantics. A future promotion requires the
+executing HuC6280 text consumer plus its source-LBA/payload join.
