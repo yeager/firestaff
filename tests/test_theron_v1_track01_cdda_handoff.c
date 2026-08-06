@@ -102,12 +102,23 @@ int main(void) {
     {
         const char *real_cue = getenv("FIRESTAFF_THERON_CUE");
         if (real_cue && real_cue[0] &&
-            theron_v1_track01_cdda_handoff_from_verified_media(
-                real_cue, THERON_TRACK02_MD5_US_BIN, &handoff) !=
-                THERON_TRACK01_CDDA_AVAILABLE) {
-            fprintf(stderr, "real Track 01 CDDA handoff rejected: %s\n",
+            (theron_v1_track01_cdda_handoff_from_verified_media(
+                 real_cue, THERON_TRACK02_MD5_US_ISO, &handoff) !=
+                 THERON_TRACK01_CDDA_AVAILABLE ||
+             !handoff.playback_handoff_ready || !handoff.original_cdda ||
+             !handoff.audio_is_vorbis || strstr(handoff.audio_path, ".ogg") == NULL ||
+             strstr(handoff.track02_path, "TQUS02End.iso") == NULL)) {
+            fprintf(stderr, "real Track 01 OGG handoff rejected: %s\n",
                     handoff.unavailable_reason);
             failed = 1;
+        } else if (real_cue && real_cue[0]) {
+            Theron_Track01CddaStream real_stream = {0};
+            if (!theron_v1_track01_cdda_lifecycle_update(
+                    &handoff, 1, &real_stream) || !real_stream.output_started) {
+                fprintf(stderr, "real Track 01 OGG stream did not start\n");
+                failed = 1;
+            }
+            theron_v1_track01_cdda_stream_stop(&real_stream);
         }
     }
     remove(cue);

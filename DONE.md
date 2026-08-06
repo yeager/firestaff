@@ -7,6 +7,15 @@
   conceal missing English companion text. This verifies corpus coverage, not
   the still-unbound original GUI/dialogue consumers.
 
+- ✅ 2026-08-06 Theron Track 01 real-audio consumer: the authentic CUE
+  handoff now accepts the supplied CUE-declared WAV names when the matching
+  local original OGG transcode is present, resolves the split Track 02 ISO
+  alias, and decodes 44.1 kHz stereo Vorbis into the existing SDL3 audio
+  stream when `vorbisfile` is available. Raw 2352-byte CDDA remains unchanged;
+  platforms without Vorbis fail closed instead of treating OGG bytes as PCM.
+  The real extracted US CUE/OGG/ISO corpus starts and pumps through the audio
+  stream under the dummy SDL audio driver.
+
 - ✅ 2026-08-06 Theron split-CUE parity coverage: the raw Track 02 intake
   regression now exercises the authentic Japanese CUE alias route as well as
   the US route. It verifies that `TQJP02.iso` resolves only to the supplied

@@ -23545,9 +23545,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   MODE1/2352 declaration canonically resolves to the independently
   hash-verified Track 02 payload. M12 passes that original CUE path to the
   launch profile, while an absent, malformed, renamed, or mismatched pair
-  stays Track-02-only. No media is copied or synthesized. Remaining work is
-  user-staged JP/US title playback/capture evidence; do not widen this into
-  filename-based pairing, audio transcoding, or non-CDDA fallback.
+  stays Track-02-only. No media is copied or synthesized. The bounded Track 01
+  consumer now accepts only the CUE-declared WAV stem's local OGG counterpart
+  and decodes it through optional Vorbis support; platforms without that
+  decoder remain silent. Remaining work is user-staged JP/US title
+  playback/capture evidence, not broader filename pairing or invented audio.
 
 - ✅ 2026-07-27 Theron CDDA host-consumer correction: M11 had the title-phase
   CDDA lifecycle but reset the handoff without rebuilding it. It now consumes

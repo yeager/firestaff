@@ -386,8 +386,15 @@ static int tqr_cue_file_line(const char *line, char *out_name, size_t out_cap) {
     memcpy(out_name, p, len);
     out_name[len] = '\0';
     p = tqr_skip_space(end + 1u);
-    return tqr_ascii_starts_ci(p, "BINARY") &&
-           (p[6] == '\0' || p[6] == ' ' || p[6] == '\t' || p[6] == '\r' || p[6] == '\n');
+    return (tqr_ascii_starts_ci(p, "BINARY") &&
+            (p[6] == '\0' || p[6] == ' ' || p[6] == '\t' ||
+             p[6] == '\r' || p[6] == '\n')) ||
+           (tqr_ascii_starts_ci(p, "WAVE") &&
+            (p[4] == '\0' || p[4] == ' ' || p[4] == '\t' ||
+             p[4] == '\r' || p[4] == '\n')) ||
+           (tqr_ascii_starts_ci(p, "AIFF") &&
+            (p[4] == '\0' || p[4] == ' ' || p[4] == '\t' ||
+             p[4] == '\r' || p[4] == '\n'));
 }
 
 static int tqr_cue_is_track02_mode1(const char *line) {
@@ -414,7 +421,13 @@ static int tqr_cue_known_split_track02_path(
     char out_path[THERON_TRACK02_MOUNT_PATH_CAPACITY]) {
     if (!cue_path || !selected_file || !out_path ||
         strchr(selected_file, '/') || strchr(selected_file, '\\')) return 0;
-    return tqr_cue_path_for_file(cue_path, selected_file, out_path);
+    if (tqr_ascii_equal_ci(selected_file, "TQUS02.iso")) {
+        return tqr_cue_path_for_file(cue_path, "TQUS02End.iso", out_path);
+    }
+    if (tqr_ascii_equal_ci(selected_file, "TQJP02.iso")) {
+        return tqr_cue_path_for_file(cue_path, "TQJP02End.iso", out_path);
+    }
+    return 0;
 }
 
 static int tqr_cue_track_number_and_mode(const char *line,
@@ -482,6 +495,29 @@ static int tqr_path_is_readable(const char *path) {
     FILE *file = path ? fopen(path, "rb") : NULL;
     if (!file) return 0;
     fclose(file);
+    return 1;
+}
+
+static int tqr_path_has_extension_ci(const char *path, const char *extension) {
+    const char *dot = path ? strrchr(path, '.') : NULL;
+    if (!dot || !extension) return 0;
+    return (strcmp(dot, extension) == 0 ||
+            (strcmp(extension, ".ogg") == 0 && strcmp(dot, ".OGG") == 0));
+}
+
+static int tqr_path_replace_extension(const char *path, const char *extension,
+                                      char *out, size_t out_cap) {
+    const char *dot;
+    size_t stem;
+    size_t extension_len;
+    if (!path || !extension || !out || out_cap == 0u) return 0;
+    dot = strrchr(path, '.');
+    if (!dot) return 0;
+    stem = (size_t)(dot - path);
+    extension_len = strlen(extension);
+    if (stem + extension_len >= out_cap) return 0;
+    memcpy(out, path, stem);
+    memcpy(out + stem, extension, extension_len + 1u);
     return 1;
 }
 
@@ -571,11 +607,43 @@ Theron_Track01CddaStatus theron_v1_track01_cdda_handoff_from_verified_media(
     if (track01_count != 1u || track01_index_count != 1u || track02_count != 1u ||
         !audio_file[0] || !track02_file[0] ||
         !tqr_cue_path_for_file(media_path, audio_file, out_handoff->audio_path) ||
-        !tqr_cue_path_for_file(media_path, track02_file, out_handoff->track02_path) ||
-        !tqr_path_is_readable(out_handoff->audio_path) || !tqr_path_is_readable(out_handoff->track02_path) ||
-        !tqr_file_size(out_handoff->audio_path, &out_handoff->audio_file_bytes)) {
+        !tqr_path_is_readable(out_handoff->audio_path) ||
+        !theron_v1_track02_resolve_media_path(media_path,
+                                              out_handoff->track02_path) ||
+        !tqr_path_is_readable(out_handoff->track02_path)) {
+        /* The supplied original corpus stores CUE-declared WAV names as
+         * OGG transcodes.  Resolve only that exact sibling stem; do not
+         * search by filename or invent a music asset. */
+        if (!audio_file[0] ||
+            !tqr_cue_path_for_file(media_path, audio_file,
+                                   out_handoff->audio_path) ||
+            tqr_path_is_readable(out_handoff->audio_path) ||
+            !tqr_path_replace_extension(out_handoff->audio_path, ".ogg",
+                                        out_handoff->audio_path,
+                                        sizeof(out_handoff->audio_path)) ||
+            !tqr_path_is_readable(out_handoff->audio_path) ||
+            !theron_v1_track02_resolve_media_path(media_path,
+                                                  out_handoff->track02_path) ||
+            !tqr_path_is_readable(out_handoff->track02_path)) {
+            snprintf(out_handoff->unavailable_reason, sizeof(out_handoff->unavailable_reason),
+                     "CUE lacks one readable Track 01 AUDIO and Track 02 MODE1/2352 pair");
+            return out_handoff->status;
+        }
+    }
+    if (!tqr_file_size(out_handoff->audio_path, &out_handoff->audio_file_bytes)) {
         snprintf(out_handoff->unavailable_reason, sizeof(out_handoff->unavailable_reason),
-                 "CUE lacks one readable Track 01 AUDIO and Track 02 MODE1/2352 pair");
+                 "Track 01 audio size is unavailable");
+        return out_handoff->status;
+    }
+    out_handoff->audio_is_vorbis =
+        tqr_path_has_extension_ci(out_handoff->audio_path, ".ogg");
+    if (out_handoff->audio_is_vorbis) {
+        out_handoff->audio_start_byte = 0u;
+        out_handoff->audio_sector_count = 0u;
+        out_handoff->status = THERON_TRACK01_CDDA_AVAILABLE;
+        out_handoff->track_number = 1u;
+        out_handoff->original_cdda = 1;
+        out_handoff->playback_handoff_ready = 1;
         return out_handoff->status;
     }
     out_handoff->audio_start_byte = (size_t)out_handoff->index_lba *

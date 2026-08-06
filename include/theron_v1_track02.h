@@ -124,6 +124,7 @@ typedef struct {
     size_t audio_start_byte;
     size_t audio_file_bytes;
     size_t audio_sector_count;
+    int audio_is_vorbis;
     int original_cdda;
     int playback_handoff_ready;
 } Theron_Track01CddaHandoff;
@@ -136,6 +137,7 @@ typedef struct {
     size_t sectors_read;
     size_t sectors_queued;
     size_t loop_count;
+    int audio_is_vorbis;
     int output_started;
 } Theron_Track01CddaStream;
 
