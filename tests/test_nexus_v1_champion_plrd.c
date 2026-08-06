@@ -2,6 +2,7 @@
 #include "nexus_v1_dungeon.h"
 #include "nexus_v1_inventory.h"
 #include "nexus_v1_rlowfix_text.h"
+#include "nexus_v1_startup_menu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -86,6 +87,16 @@ int main(void) {
         pool.champions[19].wizard_level != 2 ||
         pool.champions[0].name_tabl_index[0] != 0x21 ||
         pool.champions[0].name_tabl_code[0] != 0x00c1) return 1;
+    {
+        Nexus_V1_StartupChampionRenderRow row;
+        memset(&row, 0, sizeof(row));
+        if (nexus_v1_startup_menu_build_champion_render_rows(
+                &pool, 0, &row, 1, NULL) != 1 ||
+            !row.source_name_glyphs_valid ||
+            row.source_name_glyph_count != 4 ||
+            row.source_name_glyphs[0] != 0x00c1U ||
+            row.source_name_glyphs[3] != 0x00d8U) return 1;
+    }
     {
         FILE *item_file = fopen(item_path, "rb");
         long item_size;

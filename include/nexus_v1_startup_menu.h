@@ -393,6 +393,13 @@ typedef struct {
     int party_marker_color;
     int text_x;
     int text_y;
+    /* Real PLRD/TABL name payload. Values are FONT256 glyph codes; 0x0005
+     * is the retail terminator in the verified European RLOWFIX corpus.
+     * Keep this source-owned lane separate from the legacy host label until
+     * the Saturn VDP2 text consumer is captured. */
+    uint16_t source_name_glyphs[6];
+    int source_name_glyph_count;
+    int source_name_glyphs_valid;
     char label[NEXUS_V1_STARTUP_CHAMPION_ROW_LABEL_CAPACITY];
 } Nexus_V1_StartupChampionRenderRow;
 

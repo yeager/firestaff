@@ -2490,6 +2490,23 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
         out->party_marker_color = out->in_party ? 7 : 12;
         out->text_x = NEXUS_V1_STARTUP_CHAMPION_ROW_TEXT_X;
         out->text_y = out->rect.y + 1;
+        {
+            int glyph;
+            out->source_name_glyph_count = 0;
+            out->source_name_glyphs_valid = 1;
+            for (glyph = 0; glyph < 6; ++glyph) {
+                uint16_t code = pool->champions[row].name_tabl_code[glyph];
+                if (code == 0x0005U) break;
+                if (code > 0x00ffU) {
+                    /* The verified European champion names currently use
+                     * FONT256 byte-sized glyphs. Do not truncate an unknown
+                     * wider TABL code into a synthetic host character. */
+                    out->source_name_glyphs_valid = 0;
+                    break;
+                }
+                out->source_name_glyphs[out->source_name_glyph_count++] = code;
+            }
+        }
         snprintf(out->label,
                  sizeof(out->label),
                  "%c %s %s HP %d MP %d",

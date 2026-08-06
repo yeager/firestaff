@@ -28,7 +28,9 @@
   names, classes, stats, portraits or inventory. The real 20×64-byte PLRD
   records and six TABL indices/codes are admitted, but the TEXT/FONT256
   consumer that renders those codes as champion names has not been captured.
-  Keep live name fields empty until that Saturn text route is authenticated.
+  The startup row now carries the verified FONT256 glyph-code sequence without
+  converting it to guessed ASCII/JIS. Keep visible text no-draw until the
+  Saturn TEXT/FONT256 VDP2 consumer and glyph placement are authenticated.
 
 - **NEXUS-FACE-VDP1-PLACEMENT:** FACE.BIN source portraits are now loaded from
   the real PRS3 streams as 20 indexed 56×56 surfaces with their 64-entry

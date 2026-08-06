@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus PLRD/TABL source-name handoff: the real 20-record
+  European RLOWFIX corpus now propagates each champion's bounded FONT256 glyph
+  codes (TABL indices, stopping at the verified `0x0005` terminator) into the
+  startup row model. No ASCII/JIS name is invented; visible text remains
+  capture-gated at the Saturn VDP2 consumer. Verification: real PLRD/TABL
+  regression plus startup-row glyph assertions; no game data was tracked.
+
 - ✅ 2026-08-06 Nexus FACE source-owned startup decode: the real European
   `FACE.BIN` records now pass the DMWeb 64-entry BGR555 + PRS3 decode contract
   and load as 20 indexed 56×56 UI surfaces. The host portrait entry point
