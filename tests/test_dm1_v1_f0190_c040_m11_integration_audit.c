@@ -70,6 +70,32 @@ static int audit_m11_live_explosion_handoff(void)
     return ok;
 }
 
+static int audit_m11_uses_source_creature_attributes(void)
+{
+    char* text = read_source("src/engine/m11_game_view.c");
+    const struct CreatureBehaviorProfile_Compat* profile;
+    int ok = 1;
+
+    if (!text) {
+        fprintf(stderr, "could not read current M11 source\n");
+        return 0;
+    }
+    profile = CREATURE_GetProfile_Compat(9);
+    ok &= expect(profile != NULL &&
+                     (profile->attributes & DM1_ATTR_SIZE_MASK) ==
+                         DM1_SIZE_FULL_SQUARE &&
+                     (profile->attributes & DM1_ATTR_DROP_FIXED_POSS) != 0,
+                 "PC34 creature profile exposes source size and fixed-drop bits");
+    ok &= expect(strstr(text, "profile = CREATURE_GetProfile_Compat") != NULL,
+                 "M11 resolves the immutable PC34 creature profile");
+    ok &= expect(strstr(text, "dropIn.creatureAttributes = profile->attributes;") != NULL,
+                 "F0190 drop route receives source creature attributes");
+    ok &= expect(strstr(text, "dropIn.creatureAttributes = 0;") == NULL,
+                 "M11 has no zero-filled F0190 creature attribute substitute");
+    free(text);
+    return ok;
+}
+
 static int build_killed_all_afterplay(
     int creatureAttributes,
     DM1_MeleeF0231AftermathApplyPlanPc34* outApply,
@@ -403,6 +429,7 @@ int main(void)
     ok &= verify_killed_all_blocks_los_move_materialization();
     ok &= verify_moving_killed_all_source_smoke();
     ok &= audit_m11_live_explosion_handoff();
+    ok &= audit_m11_uses_source_creature_attributes();
 
     if (!ok) return 1;
     puts("ok: F0190 C040 M10-to-M11 attack-domain integration audit");

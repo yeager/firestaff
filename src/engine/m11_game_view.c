@@ -14356,6 +14356,7 @@ static int m11_check_group_death_and_drop(
     int shouldPresentSourceSmoke) {
     int gIdx;
     struct DungeonGroup_Compat* g;
+    const struct CreatureBehaviorProfile_Compat* profile;
     int anyAlive = 0;
     int slotI;
     DM1_MeleeF0190KilledAllStateInputPc34 killedAllIn;
@@ -14380,6 +14381,12 @@ static int m11_check_group_death_and_drop(
             &state->world, groupMapIndex, groupMapX, groupMapY, groupThing)) {
         return 0;
     }
+    /* ReDMCSB GROUP.C F0190 receives the creature's immutable
+     * CREATURE_INFO attributes.  The size bits select the source C040
+     * attack (110/190/255), while the fixed-possession bit controls the
+     * group drop table.  A zero-filled substitute silently loses both. */
+    profile = CREATURE_GetProfile_Compat((int)g->creatureType);
+    if (!profile) return 0;
 
     for (slotI = 0; slotI <= (int)g->count; ++slotI) {
         if (g->health[slotI] > 0) {
@@ -14411,7 +14418,7 @@ static int m11_check_group_death_and_drop(
     memset(&dropApply, 0, sizeof(dropApply));
     dropIn.outcome = COMBAT_OUTCOME_KILLED_ALL_CREATURES;
     dropIn.creatureType = (int)g->creatureType;
-    dropIn.creatureAttributes = 0;
+    dropIn.creatureAttributes = profile->attributes;
     dropIn.killedCell = EXPLOSION_CELL_CENTERED;
     dropIn.mapIndex = killedAllPlan.mapIndex;
     dropIn.mapX = killedAllPlan.mapX;

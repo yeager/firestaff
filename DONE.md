@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 DM1 F0190 creature-attribute handoff: fixed the M11
+  killed-all group route to resolve the immutable ReDMCSB/PC34 creature
+  profile before planning possessions. The previous zero-filled attribute
+  input could suppress source fixed possessions and use the wrong C040 death
+  smoke attack domain; M11 now passes the profile's size/drop bits. The
+  integration audit verifies the source profile and rejects the old zero
+  substitute. `test_dm1_v1_f0190_c040_m11_integration_audit` and the full
+  Ninja `firestaff` build pass.
+
 - ✅ 2026-08-06 DM1 V2.1 real PC34 palette binding: replaced the viewport
   renderer's hard-coded EGA-like palette and linear shade calculation with
   ReDMCSB `VIDEODRV.C`'s six independently tuned PC34 VGA rows
