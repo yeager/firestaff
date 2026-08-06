@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D1C-F0108-SYNTHETIC-AUDIT:** This asset-free F0108 occlusion model
+  fixes D1C zones, cell orders and C10 pixel probes. It has no original DM1
+  data input or M11/runtime caller; retain it as an explicit ReDMCSB
+  regression until a source-bound D1C floor-ornament consumer is recovered.
+
 - **DM1-D2L-D2R-DOOR-FRAME-TOP-SYNTHETIC-AUDIT:** This asset-free door-frame
   trace uses fixed strides, zones and synthetic framebuffer fields. It has no
   original DM1 data input or M11/runtime caller; retain it only as an explicit

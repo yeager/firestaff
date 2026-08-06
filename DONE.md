@@ -1,3 +1,12 @@
+# DM1 D1C F0108 floor-ornament synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free D1C F0108 occlusion model from M10. It fixes
+  zones, cell orders and C10 probe pixels, reads no original DM1 data or
+  GRAPHICS.DAT material, and has no M11/runtime caller; its explicit ReDMCSB
+  regression already compiles the source directly.
+- ✅ Verification: `test_dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D2L/D2R door-frame-top synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D2L/D2R door-frame-top trace from M10. It uses

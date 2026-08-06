@@ -4335,6 +4335,12 @@ list(REMOVE_ITEM M10_SOURCES
 # prevent the broad M10 glob from linking the synthetic blit helper.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c")
+# `dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat.c` is an
+# asset-free, contract-only trace of the D1C F0108 occlusion ordering.  It
+# reads no authenticated GRAPHICS.DAT material and no M11/runtime caller
+# consumes it; keep the explicit ReDMCSB regression as its only build owner.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat.c")
 # `dm1_v1_viewport_d2c_center_wall_composition_pc34_compat.c` is an
 # asset-free synthetic D2C pixel-trace audit with no M11/runtime caller.
 # Compile it only into its dedicated test and keep the broad M10 archive
@@ -5321,6 +5327,11 @@ set(M11_SOURCES
     src/engine/m11_dm2_runtime_frame_receipt_gate.c
     src/csb/csb_v1_viewport_f0115_first_object_pc34_compat.c
 )
+
+# Keep the asset-free D1C F0108 occlusion contract out of both production
+# archives. Its sole owner is the explicit regression target above.
+list(REMOVE_ITEM M11_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat.c")
 
 add_library(firestaff_m11 STATIC ${M11_SOURCES})
 target_include_directories(firestaff_m11 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR})
