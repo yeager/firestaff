@@ -29,7 +29,10 @@
   retained hardware literal. The same source receipt now binds the adjacent
   `yam\\vdp2.c` marker at `0x38CF4` and six exact address-literal slots at
   `0x28098`, `0x28640`, `0x28778`, `0x2887C`, `0x289E0` and `0x28E1C`. This
-  proves source ownership only. Recover the
+  The static receipt now also verifies the nine retail SH-2 `MOV.L` loads at
+  `0x27FE6`, `0x28002`, `0x285C6`, `0x28710`, `0x287AA`, `0x2880A`,
+  `0x2885A`, `0x288B2` and `0x28D76` that target those slots. This still proves
+  source/code ownership only. Recover the
   executed VDP2 register/VRAM writes and tile/CLUT consumer from an
   instrumented Saturn capture before admitting menu placement, FONT256 text,
   HUD composition or viewport pixels.

@@ -128,6 +128,29 @@ int main(void)
         read_be32(data, 0x2887CU) != base + UINT32_C(0x38CF4) ||
         read_be32(data, 0x289E0U) != base + UINT32_C(0x38CF4) ||
         read_be32(data, 0x28E1CU) != base + UINT32_C(0x38CF4) ||
+        /* The vdp2.c marker is not merely a dead string occurrence: these
+         * retail SH-2 PC-relative MOV.L instructions load the exact literal
+         * slots above. This binds the disassembly's code-to-source corridor
+         * while deliberately saying nothing about the callee's VDP2 meaning.
+         */
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x27FE6U, 4U,
+            0x28098U, base + UINT32_C(0x38CF4)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x28002U, 4U,
+            0x28098U, base + UINT32_C(0x38CF4)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x285C6U, 4U,
+            0x28640U, base + UINT32_C(0x38CF4)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x28710U, 4U,
+            0x28778U, base + UINT32_C(0x38CF4)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x287AAU, 4U,
+            0x2887CU, base + UINT32_C(0x38CF4)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x2880AU, 4U,
+            0x2887CU, base + UINT32_C(0x38CF4)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x2885AU, 4U,
+            0x2887CU, base + UINT32_C(0x38CF4)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x288B2U, 4U,
+            0x289E0U, base + UINT32_C(0x38CF4)) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x28D76U, 4U,
+            0x28E1CU, base + UINT32_C(0x38CF4)) ||
         /* The same startup literal pool retains FONT256.S2D at 0x18BF4.
          * TEXTTABL is an adjacent DM.BIN table marker only; neither receipt
          * proves the Saturn glyph consumer or VDP2 placement. */

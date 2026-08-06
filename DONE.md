@@ -25,6 +25,9 @@
   also verifies `yam\\vdp2.c` at `0x38CF4` and the six exact source-address
   literal slots at `0x28098`, `0x28640`, `0x28778`, `0x2887C`, `0x289E0` and
   `0x28E1C`.
+- ✅ The same receipt now verifies the nine retail SH-2 PC-relative `MOV.L`
+  loads at `0x27FE6`, `0x28002`, `0x285C6`, `0x28710`, `0x287AA`, `0x2880A`,
+  `0x2885A`, `0x288B2` and `0x28D76` that reach those literal slots.
 - ✅ This extends byte-level source ownership evidence only; VDP2
   register/VRAM writes, tilemap/CLUT placement and runtime presentation remain
   capture-gated.
