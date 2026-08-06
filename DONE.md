@@ -1,28 +1,19 @@
-# DM1 mirror keyboard-browse synthetic audit isolation (2026-08-07)
+# DM2 delayed movement receipt ownership (2026-08-07)
 
-- ✅ Removed the contract-only keyboard-browse fixture from M10 and made its
-  direct regression compile the source explicitly. It loads no original DM1
-  data and has no M11/runtime caller.
-
-# DM1 mirror thought-project synthetic audit isolation (2026-08-07)
-
-- ✅ Removed the contract-only C157/C158 overlay fixture from M10 and made its
-  direct regression compile the source explicitly. It loads no original DM1
-  data and has no M11/runtime caller.
+- ✅ The DM2 movement execution boundary now keeps the source-authenticated
+  `DM2_CALC_PLAYER_WALK_DELAY` result while refusing to claim that the
+  `glbIsPlayerMoving` half-step interpolation has started. When the real
+  hero/inventory pose owner is absent, the receipt reports
+  `delayed_pose_unbound`; no synthetic 700/701 viewport offset is enabled.
+  The focused movement regression covers the real source delay and this
+  fail-closed presentation contract. The live pose/countdown handoff remains
+  open until those source owners are imported.
 
 # DM1 champion dead-hand-refresh synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only F0296/F0295/F0386 fixture from M10. Its direct
   regression already compiles the source explicitly; it loads no original DM1
   data and has no M11/runtime caller.
-# DM2 real-media HUD/viewport verification ownership (2026-08-07)
-
-- ✅ The PC-DOS HUD command, dialogue/viewport and M11 material-receipt
-  regressions now use only an explicitly selected
-  `FIRESTAFF_DM2_DATA_DIR`. A configured but unreadable `graphics.dat` is a
-  failure, never a passing skip; CI without a supplied corpus still reports
-  an explicit skip. Verified against the retained PC-DOS `GRAPHICS.DAT`,
-  plus the complete eight-file SKSAVE corpus.
 
 # DM1 chest scroll-resurrect-confirmation synthetic audit isolation (2026-08-07)
 

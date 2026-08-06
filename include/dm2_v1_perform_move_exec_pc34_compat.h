@@ -61,6 +61,9 @@ typedef struct {
 
     int walk_delay;
     int stamina_drained;
+    /* The source delay is known, but no live pose owner has been imported.
+     * This is deliberately not an interpolation/viewport activation flag. */
+    int delayed_pose_unbound;
     int half_step_entered;
 
     DM2_V1_MoveClassification classification;

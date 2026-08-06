@@ -29238,7 +29238,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   from live champion loads, wounds, walk-speed modifiers and global Aura of
   Speed. The active V1 runtime deliberately renders only the settled source
   pose until those G1 hero/inventory/spell-state owners are restored; do not
-  reintroduce a host-defined one-frame floor/ceiling offset.
+  reintroduce a host-defined one-frame floor/ceiling offset. The execution
+  receipt now reports this as an unbound delayed pose instead of falsely
+  claiming that interpolation entered; the source-owned pose/countdown
+  owner and live real-data runtime handoff remain open.
 
 - [ ] DM2 creature animation-frame ownership: `DM2_1c9a_0958` now carries
   the source's exact `CreatureAnimationFrame::w0` bit-14 query through an

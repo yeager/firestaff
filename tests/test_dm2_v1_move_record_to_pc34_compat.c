@@ -215,6 +215,9 @@ static void test_perform_move_exec_accepted(void)
     assert(exec_receipt.classification == DM2_MOVE_CLASS_OPEN_TILE);
     assert(exec_receipt.squad_dir_reset == 1);
     assert(exec_receipt.stamina_drained == 1);
+    assert(exec_receipt.walk_delay == 2);
+    assert(exec_receipt.delayed_pose_unbound == 1);
+    assert(exec_receipt.half_step_entered == 0);
 
     printf("  PASS: perform_move_exec_accepted\n");
 }

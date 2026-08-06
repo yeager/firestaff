@@ -119,11 +119,14 @@ int dm2_v1_perform_move_exec(
         request->heroes, request->hero_count);
     receipt->walk_delay = walk_delay;
 
-    /* Half-step: if walk_delay > 1 and no cooldown active,
-     * enter half-step interpolation state.
-     * skmove.cpp:264-303 */
+    /* skmove.cpp:264-303 derives a half-step countdown from the source
+     * delay, but the old party pose is owned by the live glbIsPlayerMoving
+     * state and its hero/inventory inputs. This execution boundary has no
+     * such owner yet. Do not claim that interpolation started, and do not
+     * synthesize the 700/701 viewport offset; retain an explicit unresolved
+     * receipt until that source state is imported. */
     if (walk_delay > 1) {
-        receipt->half_step_entered = 1;
+        receipt->delayed_pose_unbound = 1;
     }
 
     /* Stamina drain: weight-proportional per hero.
