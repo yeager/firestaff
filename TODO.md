@@ -736,11 +736,6 @@
   input; retain it in the explicit audit test until a live owner needs its
   local-storage evidence, never as standalone production state.
 
-- **DM1-M151-M200-ABSENT-LABEL-AUDIT:** ReDMCSB has no M151–M200 labels.
-  This table is a fail-closed absence receipt with no runtime caller or game
-  data input. Keep it test-only; do not invent a production route for an
-  unassigned source range.
-
 - **DM1-MIRROR-EYE-SLOT-SWAP-SYNTHETIC-AUDIT:** The C546/C09 eye-route model
   uses fabricated things, chest slots, panel state and icons, with no runtime
   caller or authentic save/graphics input. Keep it test-only until the live
