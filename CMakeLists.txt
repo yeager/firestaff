@@ -4653,6 +4653,12 @@ list(REMOVE_ITEM M10_SOURCES
 # it only in its explicit regression.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_resurrect_reselect_with_inventory_pickup_pc34_compat.c")
+# `dm1_v1_champion_panel_portrait_pc34_compat.c` is a contract-only portrait
+# route model with synthetic panel state and no bitmap sampling. It reads no
+# original DM1 data and has no M11/runtime caller; its explicit regression
+# already compiles it directly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_portrait_pc34_compat.c")
 # `dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c`
 # is a deterministic C040/chest/rotation scenario fixture. It reads no
 # original DM1 data and has no M11/runtime caller; its explicit regression

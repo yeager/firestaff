@@ -15,6 +15,15 @@
 - ✅ Verification: `test_dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 champion portrait synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only champion portrait route model from M10. It uses
+  synthetic panel state, has no bitmap sampling or original DM1 data input,
+  and has no M11/runtime caller; its explicit ReDMCSB regression compiles it
+  directly.
+- ✅ Verification: `dm1_v1_champion_panel_portrait_pc34_compat` passes; the
+  source object is absent from both M10 and M11 archives.
+
 # DM1 D1C F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D1C F0111 door geometry/transparency model from

@@ -10,6 +10,11 @@
   no M11/runtime caller; retain it as explicit ReDMCSB coverage while the
   independent D1-side door receipt owns source material.
 
+- **DM1-CHAMPION-PORTRAIT-SYNTHETIC-AUDIT:** This portrait-route model uses
+  synthetic panel state and no bitmap sampling. It reads no original DM1 data
+  and has no M11/runtime caller; retain it only as an explicit ReDMCSB
+  regression until a source-bound portrait consumer is recovered.
+
 - **DM1-D1C-F0111-SYNTHETIC-AUDIT:** This asset-free D1C F0111 geometry and
   transparency model uses synthetic blits and no original data. It has no
   M11/runtime caller; retain it as an explicit ReDMCSB regression while the
