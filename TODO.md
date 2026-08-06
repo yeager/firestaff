@@ -94,6 +94,8 @@
   from the original F0053 baseline to the native font's first-row coordinate.
   The inventory C016 path and food/water labels also refuse host-colour or
   host-text substitutes when their source records are unavailable.
+  2026-08-06: the F0623 damage-number text now uses source `C15` foreground
+  and `C08` red background; the previous orange host slot was incorrect.
   Keep the packaged Mac capture open until a real wall bump and creature-hit
   capture confirms the source sound and C015/C016 placement. The former red
   viewport damage frame is now suppressed for authenticated DM1 frames because

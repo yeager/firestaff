@@ -5613,7 +5613,7 @@ static void m11_draw_v1_damage_number_text(unsigned char* framebuffer,
         (void)M11_Font_DrawChar(
             g_activeOriginalFont, framebuffer, framebufferWidth,
             framebufferHeight, x + i * DM1_V1_CPNBC_GLYPH_WIDTH_PC34, y,
-            (unsigned char)text[i], M11_COLOR_WHITE, M11_COLOR_LIGHT_RED, 1);
+            (unsigned char)text[i], M11_COLOR_WHITE, M11_COLOR_RED, 1);
     }
 }
 

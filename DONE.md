@@ -38,6 +38,12 @@
   corpus pass. An unrelated existing parry assertion in
   `test_m11_rest_runtime_pc34_compat` remains open.
 
+- ✅ 2026-08-06 DM1 damage-number palette correction: the original-font
+  damage-number route now uses PC34 `C15` foreground with `C08` red
+  background, matching ReDMCSB `CHAMDRAW.C F0623` instead of the old orange
+  host palette slot. Verification: Firestaff builds and the focused DM1
+  damage, champion-layout, and sound tests pass.
+
 - ✅ 2026-08-06 DM2 Amiga nested-media intake: the real-media receipt no
   longer shells out to `unzip` or `bsdtar`. A bounded ZIP reader now accepts
   an already-resident ZIP byte buffer, so the supplied outer archive, its
