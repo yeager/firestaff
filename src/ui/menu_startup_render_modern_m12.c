@@ -1911,7 +1911,7 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
     if (mode >= M12_PRESENTATION_MODE_COUNT) mode = M12_PRESENTATION_MODE_COUNT - 1;
     int isV1 = (mode == M12_PRESENTATION_V1_ORIGINAL);
     int isCustom = !isV1;
-    int nexusV22Fallback = entry->gameId &&
+    int nexusV22CaptureLocked = entry->gameId &&
                            strcmp(entry->gameId, "nexus") == 0 &&
                            mode == M12_PRESENTATION_V22_MODERN;
 
@@ -2072,11 +2072,14 @@ static void draw_game_options_view(M12_ModernCanvas* c, const M12_StartupMenuSta
         draw_info_tile(c, x0 + 2 * (tileW + tileGap), y0, tileW, tileH, "AUDIO",
                        state->settings.audioMuted ? "MUTED" : "ON", 0, 0);
         draw_info_tile(c, x0 + 3 * (tileW + tileGap), y0, tileW, tileH, "STATUS",
-                       (mode == M12_PRESENTATION_V22_MODERN && !nexusV22Fallback)
-                           ? "COMING SOON"
-                           : "READY",
+                       nexusV22CaptureLocked
+                           ? "CAPTURE LOCKED"
+                           : (mode == M12_PRESENTATION_V22_MODERN
+                                  ? "COMING SOON"
+                                  : "READY"),
                        0,
-                       mode == M12_PRESENTATION_V22_MODERN && !nexusV22Fallback);
+                       nexusV22CaptureLocked ||
+                           mode == M12_PRESENTATION_V22_MODERN);
     }
 
     /* Launch button: centered horizontally, positioned below last visible row */

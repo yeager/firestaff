@@ -1,3 +1,10 @@
+# Nexus launcher V2.2 status gate (2026-08-06)
+
+- ✅ Nexus V2.2 now reports `CAPTURE LOCKED` in the game-options status tile
+  instead of the misleading `READY` state. The launcher still keeps the
+  source-locked panel and launch gate intact until Saturn VDP1/VDP2 capture.
+- ✅ `firestaff_m12` and `verify_nexus_production_source_boundary.py` pass.
+
 # Nexus MENU.BPK raw PALT source lane (2026-08-06)
 
 - ✅ Added a bounded API that copies all 256 real PALT entries as
