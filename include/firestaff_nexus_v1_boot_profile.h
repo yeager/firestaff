@@ -68,9 +68,10 @@ typedef enum {
     NEXUS_V1_RF_NO_3D_ENGINE           = (1 << 1),
 
     /*
-     * NEXUS_V1_RF_STANDARD_CHAMPION_LIMIT:
-     *   Nexus supports up to 6 champions (vs DM1's 4). When set, the
-     *   champion roster UI and party management allow 6 slots.
+     * NEXUS_V1_RF_EXTENDED_CHAMPION_SLOTS:
+     *   Historical compatibility flag. Authenticated RLOWFIX/PLRD proves
+     *   20 mirror records, not a six-member active party; never enabled by
+     *   the default profile.
      */
     NEXUS_V1_RF_EXTENDED_CHAMPION_SLOTS = (1 << 2),
 
@@ -133,15 +134,9 @@ typedef enum {
 typedef struct {
     /*
      * runtimeFlags:
-     *   Bitwise OR of NEXUS_V1_RF_* flags. Default for a clean
-     *   Nexus game start is NEXUS_V1_RF_USE_SATURN_CD |
-     *   NEXUS_V1_RF_NO_3D_ENGINE |
-     *   NEXUS_V1_RF_EXTENDED_CHAMPION_SLOTS |
-     *   NEXUS_V1_RF_NEXUS_CHAMPION_STATS |
-     *   NEXUS_V1_RF_NO_MNEMONIC_RUNE |
-     *   NEXUS_V1_RF_NO_PARTY_SWAP |
-     *   NEXUS_V1_RF_NO_KINGS_WISDOM |
-     *   NEXUS_V1_RF_NO_GANGULF_REVIVAL
+     *   Bitwise OR of NEXUS_V1_RF_* flags. The default profile enables only
+     *   the authenticated Saturn data-container route. Behavior flags remain
+     *   opt-in until their original action/UI consumers are source-bound.
      */
     unsigned int runtimeFlags;
 

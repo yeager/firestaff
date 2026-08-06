@@ -26,6 +26,8 @@ int main(void) {
     {
         const Nexus_V1_BootProfile *def = Nexus_V1_BootProfile_GetDefault();
         CHECK(def != NULL, "GetDefault() != NULL");
+        CHECK(def->runtimeFlags == NEXUS_V1_RF_USE_SATURN_CD,
+              "default profile exposes only authenticated Saturn data route");
         CHECK(def->tickRateMs == NEXUS_V1_TICK_RATE_MS, "tickRateMs == 55 ms");
         CHECK(def->renderRateMs == NEXUS_V1_RENDER_RATE_MS, "renderRateMs == 33 ms");
         CHECK(def->presentationMode == 0, "presentationMode == 0 (V1_ORIGINAL)");

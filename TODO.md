@@ -12,6 +12,12 @@
   action gate. Recover the Saturn event producer, command queue and SDDRVS
   state-write owner before reopening any retail mechanics mutation.
 
+- **NEXUS-BOOT-FEATURE-CONSUMER:** The default boot profile now enables only
+  the authenticated Saturn data-container route. Historical flags for a
+  six-member party, Nexus stat growth, rune UI, party swapping, and 2D/3D
+  behavior remain opt-in until their retail consumers are proven from
+  disassembly or capture.
+
 - **NEXUS-CREATURE-VDP1-CAPTURE:** The generic creature billboard API is now
   no-draw. Its old DM1-shaped perspective/flag behavior accepted a host
   texture without Saturn VDP1 command, CLUT, placement, or DMDF/MNS owner

@@ -1,3 +1,13 @@
+# Nexus boot-profile synthetic feature fence (2026-08-06)
+
+- ✅ Removed unproven behavior claims from the default Nexus profile. It now
+  enables only `USE_SATURN_CD`; historical champion-limit, stat, rune, party,
+  and renderer flags remain explicit opt-in compatibility settings. This
+  matches the evidence boundary: RLOWFIX/PLRD proves 20 mirror records, while
+  DGN/Structure3 and the action/UI consumers still require source binding.
+- ✅ Added a smoke assertion for the exact default flag set. No game data was
+  copied or committed.
+
 # Nexus retail mechanics mutation fence (2026-08-06)
 
 - ✅ Closed the remaining retail mechanics leak: `NEXUS_SRC_EXTRACTED` and

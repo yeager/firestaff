@@ -29,16 +29,10 @@
 
 /* ── Default runtime flags ──────────────────────────────────────────
  *
- * A clean Nexus Sega Saturn boot uses these flags by default.
- * Runtime flag documentation:
- *   • USE_SATURN_CD          — load from extracted Saturn CD
- *   • NO_3D_ENGINE          — Saturn 2D mode; rasterizer not used
- *   • EXTENDED_CHAMPION_SLOTS — 6 champion slots (vs DM1's 4)
- *   • NEXUS_CHAMPION_STATS   — Nexus-specific stat growth table
- *   • NO_MNEMONIC_RUNE       — rune book replaces scroll magic
- *   • NO_PARTY_SWAP         — party order fixed at dungeon entry
- *   • NO_KINGS_WISDOM       — no Kings Wisdom scroll equivalent
- *   • NO_GANGULF_REVIVAL    — Gangulf mechanic absent
+ * A clean Nexus Sega Saturn boot enables only the authenticated data
+ * container route by default. The remaining behavior flags are explicit
+ * opt-in compatibility settings: the retail corpus proves records and DGN
+ * geometry, not their action/UI consumers.
  *   • RESTRICTED_DOOR_CLOSES — reserved for a captured door-timer consumer;
  *     the default profile must not advertise it while that route is unbound
  *   • SATURN_CDDA_AUDIO     — reserved for a captured CDDA consumer; the
@@ -46,14 +40,7 @@
  *     playback remain unbound
  */
 static const unsigned int g_defaultRuntimeFlags =
-    NEXUS_V1_RF_USE_SATURN_CD
-    | NEXUS_V1_RF_NO_3D_ENGINE
-    | NEXUS_V1_RF_EXTENDED_CHAMPION_SLOTS
-    | NEXUS_V1_RF_NEXUS_CHAMPION_STATS
-    | NEXUS_V1_RF_NO_MNEMONIC_RUNE
-    | NEXUS_V1_RF_NO_PARTY_SWAP
-    | NEXUS_V1_RF_NO_KINGS_WISDOM
-    | NEXUS_V1_RF_NO_GANGULF_REVIVAL;
+    NEXUS_V1_RF_USE_SATURN_CD;
 
 /* ── Default boot profile ───────────────────────────────────────── */
 static const Nexus_V1_BootProfile g_defaultProfile = {
