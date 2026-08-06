@@ -20,7 +20,9 @@ typedef struct {
     uint16_t source_ref;
     uint16_t next_ref;
     uint8_t category;
-    uint8_t source_index;
+    /* Category tables are bounded at 512 entries.  Keep the full source
+     * index; an 8-bit field would reject/truncate real later records. */
+    uint16_t source_index;
     uint8_t position;
     uint8_t raw_size;
     uint8_t raw[16];

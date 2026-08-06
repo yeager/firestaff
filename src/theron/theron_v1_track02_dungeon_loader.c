@@ -70,7 +70,7 @@ static int retain_source_object_occurrence(
     Theron_Track02SourceObjectOccurrence *occurrence;
 
     if (!result || !raw || category >= THERON_ITEM_CATEGORY_COUNT ||
-        source_index > UINT8_MAX || position > UINT8_MAX ||
+        source_index > UINT16_MAX || position > UINT8_MAX ||
         raw_size == 0u || raw_size > sizeof(occurrence->raw) ||
         result->source_object_count >= THERON_TRACK02_SOURCE_OBJECT_MAX)
         return 0;
@@ -79,7 +79,7 @@ static int retain_source_object_occurrence(
     occurrence->source_ref = source_ref;
     occurrence->next_ref = (uint16_t)raw[0] | ((uint16_t)raw[1] << 8);
     occurrence->category = (uint8_t)category;
-    occurrence->source_index = (uint8_t)source_index;
+    occurrence->source_index = (uint16_t)source_index;
     occurrence->position = (uint8_t)position;
     occurrence->raw_size = (uint8_t)raw_size;
     memcpy(occurrence->raw, raw, raw_size);

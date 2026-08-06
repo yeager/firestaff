@@ -16,6 +16,9 @@
   codons for diagnostics, but production world text now rejects any block
   containing unresolved brace/control-code values. Reopen publication only
   after the original HuC6280 text consumer is disassembled and matched.
+  2026-08-06 receipt-integrity update: source occurrences now retain a 16-bit
+  category index, matching the 512-entry Track 02 category bound. Category
+  to host item-kind/index ownership remains intentionally unbound.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

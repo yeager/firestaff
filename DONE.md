@@ -52048,3 +52048,10 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   synthetic HUD, plaque or scroll text. The focused real-media regression
   passes and will reopen only after the original HuC6280 text consumer is
   identified.
+
+# 2026-08-06 Theron source-index receipt integrity
+
+- ✅ Track 02 source occurrences now retain their full 16-bit category index
+  instead of an 8-bit field. This matches the 512-entry source-category
+  bound and prevents later real records from being truncated or rejected.
+  No category-local type was promoted to a host item index.

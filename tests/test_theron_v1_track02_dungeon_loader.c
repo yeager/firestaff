@@ -91,6 +91,7 @@ static void assert_source_type_census(
     for (unsigned int i = 0; i < result->source_object_count; ++i) {
         const Theron_Track02SourceObjectOccurrence *occ =
             &result->source_objects[i];
+        assert(occ->source_index < THERON_MAX_ITEMS_PER_CAT);
         unsigned int type_value = 0;
         int has_type = 1;
         switch (occ->category) {
