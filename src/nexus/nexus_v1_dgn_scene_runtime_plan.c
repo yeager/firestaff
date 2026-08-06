@@ -239,8 +239,12 @@ int nexus_v1_dgn_scene_runtime_plan_build(
     out_receipt->material_index_bound =
         out_receipt->selected_face_fill_kind != NEXUS_V1_DGN_MESH_FILL_COLOR;
     out_receipt->geometry_consumer_ready = 1;
-    out_receipt->texture_submit_blocked =
-        input->vdp1_consumer_evidence_available ? 0 : 1;
+    /* A bare boolean is not Saturn evidence. The legacy input field is kept
+     * for source compatibility, but a Structure3 plan cannot open texture
+     * submission without the complete VDP1 trace/CLUT/VRAM/owner receipt.
+     * That receipt is not part of this geometry-only planner. */
+    (void)input->vdp1_consumer_evidence_available;
+    out_receipt->texture_submit_blocked = 1;
     out_receipt->raster_submit_blocked = 1;
     out_receipt->m11_runtime_handoff_permitted = 0;
     out_receipt->fallback_geometry_permitted = 0;

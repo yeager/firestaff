@@ -19,6 +19,16 @@
 - ✅ `test_nexus_v1_startup_menu_pc34_compat` asserts the no-text-command
   boundary while retaining the 20 real PLRD/portrait source route.
 
+# Nexus Structure3 VDP1 permission quarantine (2026-08-06)
+
+- ✅ The geometry-only Structure3 scene planner no longer treats a bare
+  `vdp1_consumer_evidence_available` boolean as presentation evidence.
+- ✅ Texture submission stays blocked until a complete Saturn VDP1
+  trace/CLUT/VRAM/owner receipt is bound; the real LEV01 Structure1F→Structure3
+  plan remains geometry-only and no-draw.
+- ✅ `test_nexus_v1_dgn_scene_runtime_plan` now sets the legacy flag and proves
+  that texture and raster submission remain blocked.
+
 # Theron startup font presentation gate (2026-08-06)
 
 # CSB FM Towns C06 Utility palette material (2026-08-06)

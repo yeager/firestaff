@@ -197,6 +197,9 @@ static void test_lev01_owned_scene_plan(void)
     input.dgn_size = (int)size;
     input.level_index = 1;
     input.dgn_source_hash_verified = 1;
+    /* A legacy boolean must not impersonate a complete Saturn VDP1
+     * trace/CLUT/VRAM/owner receipt. */
+    input.vdp1_consumer_evidence_available = 1;
     for (y = 0; y < NEXUS_MAX_MAP_SIZE && !found; ++y) {
         int x;
         for (x = 0; x < NEXUS_MAX_MAP_SIZE && !found; ++x) {
