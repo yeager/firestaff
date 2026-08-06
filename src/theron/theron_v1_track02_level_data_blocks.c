@@ -22,6 +22,12 @@ static const uint32_t g_jp_compressed_fnv1a[THERON_TRACK02_LEVEL_COUNT] = {
     0x326eff1fu, 0xff96a9afu, 0x930a5bf6u
 };
 
+/* Both authenticated BINs carry the same byte-exact shared 0xE8-byte
+ * resource prologue at every later-level anchor.  Keep this as an admission
+ * invariant: a compressed-span hash alone would let a damaged shared table
+ * masquerade as a valid level record. */
+static const uint32_t g_shared_prologue_fnv1a = 0xa6268637u;
+
 /* Sources: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76) and JP
  * Track 02 BIN (MD5 b7afb338ad31be1025b53f9aff12d73a).
  *
@@ -118,5 +124,10 @@ int theron_v1_track02_level_data_block_read(
     memcpy(out->per_level_meta, block->per_level_meta,
            sizeof(out->per_level_meta));
     return out->compressed_bytes != 0u &&
-           out->compressed_fnv1a == expected_hashes[level];
+           out->compressed_fnv1a == expected_hashes[level] &&
+           out->shared_prologue_fnv1a == g_shared_prologue_fnv1a &&
+           memcmp(user_data + block->ud_offset +
+                      THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE,
+                  block->per_level_meta,
+                  sizeof(block->per_level_meta)) == 0;
 }

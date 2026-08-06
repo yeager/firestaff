@@ -108,6 +108,14 @@ static void verify_real_track02_level_blocks(const char *env_name,
         Theron_LevelDataBlockReceipt rejected;
         const Theron_LevelDataBlockDesc *first =
             theron_v1_track02_level_data_block_for_variant(variant, 0u);
+        user_data[first->ud_offset] ^= 1u;
+        assert(!theron_v1_track02_level_data_block_read(
+            user_data, user_data_size, variant, 0u, &rejected));
+        user_data[first->ud_offset] ^= 1u;
+        user_data[first->ud_offset + THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE] ^= 1u;
+        assert(!theron_v1_track02_level_data_block_read(
+            user_data, user_data_size, variant, 0u, &rejected));
+        user_data[first->ud_offset + THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE] ^= 1u;
         user_data[first->ud_offset + THERON_TRACK02_LEVEL_PROLOGUE_SIZE] ^= 1u;
         assert(!theron_v1_track02_level_data_block_read(
             user_data, user_data_size, variant, 0u, &rejected));

@@ -50885,3 +50885,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   rectangles now reject coordinates outside the Saturn 320x224 envelope.
   Mutation tests exercise both rejection paths against the mounted real
   `DM.BIN`; no HUD rendering or Saturn input semantics are promoted.
+- ✅ 2026-08-06 Theron later-level record integrity: the seven authenticated
+  US/JP Track 02 level-bank records now require the byte-exact shared `0xE8`
+  prologue hash and the source-owned eight-byte per-level metadata before a
+  compressed span is admitted. Real BIN regressions cover mutations in the
+  shared prologue, metadata, and payload; tile/object semantics remain
+  capture/disassembly-gated.
