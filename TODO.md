@@ -1066,10 +1066,15 @@ level or consumer bindings.
   **2026-08-06 update:** the source-owned IMG1 decoder now replays TITLE's
   EN/DL records from the same RAM-owned stream and validates first/final
   retail 320x200 frames. It follows SKWIN `ANIM_DECODE_IMG1`, including its
-  contiguous-file read at a record boundary. The remaining gap is the M11
-  display/palette/timing and entrance handoff, not a replacement bitmap.
-  Re-admit actual TWANIM playback only with a selected-media hash receipt,
-  an actual title/entrance execution handoff.
+  contiguous-file read at a record boundary. **2026-08-06 update:** M11 now
+  binds the selected, authenticated TITLE member in RAM, decodes its native
+  PL record, presents the indexed 320x200 canvas and advances EN/DL frames
+  with the SKWIN TWANIM Timer-A quantum and source durations (minimum five
+  ticks). It blocks SKULL-menu input until TITLE ends and fails closed rather
+  than drawing the PC static GDAT menu when this binding is rejected. The
+  remaining gap is source-owned SWOOSH/END playback, TITLE sound-event/CDDA
+  dispatch, and a captured title-to-SKULL menu handoff; do not replace them
+  with host animation or menus.
   **2026-08-06 update:** a shared data root can now retain all three verified
   DM2 editions at once. At M12→M11 launch, the selected DOS, FM Towns or
   Amiga version resolves its own matched owner instead of inheriting the

@@ -56,6 +56,7 @@
 #include "csb_v1_fmtowns_anm.h"
 #include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_switch.h"
+#include "dm2_v1_fmtowns_anim_stream.h"
 #include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_f0128_entrance_runtime_consumer_pc34_compat.h"
 #include "csb_v1_startup_entrance_f0128_m11_handoff_pc34_compat.h"
@@ -1671,6 +1672,20 @@ typedef struct {
                                * the static DM2_V1_BootProfile in
                                * M11_GameView_StartDm2(). */
     void *dm2BootProfile;     /* DM2_V1_BootProfile* */
+    /* HME-242's AUTOEXEC runs the separate TWANIM TITLE stream before
+     * SKULL's menu.  Retain only the selected in-memory CD member and its
+     * decoded source frame; no member is materialised on the host disk. */
+    uint8_t *dm2FmtownsTitleBytes;
+    size_t dm2FmtownsTitleByteCount;
+    DM2_V1_FmtownsAnimPaletteReceipt dm2FmtownsTitlePalette;
+    DM2_V1_FmtownsAnimFrameReceipt dm2FmtownsTitleFrameReceipt;
+    uint8_t dm2FmtownsTitlePixels[320u * 200u / 2u];
+    uint32_t dm2FmtownsTimerAAccumulatorUs;
+    uint16_t dm2FmtownsFrameTimerARemaining;
+    uint32_t dm2FmtownsTitleFrameIndex;
+    int dm2FmtownsTitleBound;
+    int dm2FmtownsTitleFinished;
+    int dm2FmtownsTitleRejected;
     int dm2SaveDialoguePanelActive;
     struct {
         int level_loaded;

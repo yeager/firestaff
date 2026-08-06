@@ -191,6 +191,7 @@ int main(void)
             DM2_V1_FmtownsDiscReceipt disc;
             DM2_V1_FmtownsAnimFrameReceipt first_frame;
             DM2_V1_FmtownsAnimFrameReceipt last_frame;
+            DM2_V1_FmtownsAnimPaletteReceipt title_palette;
             uint8_t *title = NULL;
             size_t title_size = 0u;
             uint8_t pixels[320u * 200u / 2u];
@@ -200,6 +201,7 @@ int main(void)
             memset(&disc, 0, sizeof(disc));
             memset(&first_frame, 0, sizeof(first_frame));
             memset(&last_frame, 0, sizeof(last_frame));
+            memset(&title_palette, 0, sizeof(title_palette));
             if (launch.profile && launch.profile->fmtowns_disc_image &&
                        dm2_v1_fmtowns_disc_probe(
                            launch.profile->fmtowns_disc_image,
@@ -215,6 +217,8 @@ int main(void)
                 last_ok = dm2_v1_fmtowns_anim_stream_decode_frame(
                            title, title_size, 224u, pixels, sizeof(pixels),
                            &last_frame);
+                (void)dm2_v1_fmtowns_anim_stream_decode_palette(
+                    title, title_size, &title_palette);
             }
             /* FNV-1a receipts are of the two 320x200/4bpp buffers decoded
              * from the selected HME-242 TITLE stream, not stored artwork. */
@@ -228,6 +232,10 @@ int main(void)
                        first_frame.output_fnv1a == 0xc7ad2279u &&
                        last_frame.output_fnv1a == 0x5ef57a09u,
                    "FM Towns TITLE decodes its first and final retail frames in RAM");
+            expect(title_palette.valid && title_palette.color_count == 16u &&
+                       title_palette.source_record_offset != 0u &&
+                       title_palette.output_fnv1a != 0u,
+                   "FM Towns TITLE decodes its original PL palette in RAM");
             free(title);
         }
         expect_complete_english_text_overlay(launch.profile);

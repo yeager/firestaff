@@ -52,6 +52,18 @@ typedef struct {
     uint32_t output_fnv1a;
 } DM2_V1_FmtownsAnimFrameReceipt;
 
+/* TWANIM's PL payload starts with a big-endian colour count, followed by
+ * index/R/G/B four-bit entries.  Keep the palette as source nibbles: M11
+ * expands them only at the final indexed-palette boundary. */
+#define DM2_V1_FMTOWNS_ANIM_PALETTE_COLORS 16u
+typedef struct {
+    int valid;
+    uint16_t color_count;
+    uint32_t source_record_offset;
+    uint8_t rgb4[DM2_V1_FMTOWNS_ANIM_PALETTE_COLORS][3];
+    uint32_t output_fnv1a;
+} DM2_V1_FmtownsAnimPaletteReceipt;
+
 /* Parses every complete record, rejects unknown tags and rejects trailing or
  * truncated bytes.  It does not render pixels; decoding stays unavailable
  * until a source-owned TWANIM execution handoff consumes this receipt. */
@@ -76,5 +88,12 @@ int dm2_v1_fmtowns_anim_stream_decode_frame(
     const uint8_t *data, size_t data_size, uint32_t requested_frame,
     uint8_t *out_pixels, size_t out_pixel_capacity,
     DM2_V1_FmtownsAnimFrameReceipt *out);
+
+/* Reads the last complete PL update in an admitted stream.  This is the
+ * 0759:1013 palette transaction in SKWIN's TWANIM reconstruction, not an
+ * inferred VGA palette. */
+int dm2_v1_fmtowns_anim_stream_decode_palette(
+    const uint8_t *data, size_t data_size,
+    DM2_V1_FmtownsAnimPaletteReceipt *out);
 
 #endif /* FIRESTAFF_DM2_V1_FMTOWNS_ANIM_STREAM_H */

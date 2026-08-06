@@ -14207,6 +14207,27 @@ if(BUILD_TESTING)
         COMMAND test_dm2_fmtowns_m12_real_media
     )
 
+    add_executable(test_dm2_fmtowns_m11_title_real_media
+        tests/test_dm2_fmtowns_m11_title_real_media.c
+    )
+    target_include_directories(test_dm2_fmtowns_m11_title_real_media PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_fmtowns_m11_title_real_media PRIVATE
+        firestaff_m11
+        firestaff_m12
+        firestaff_m10
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_fmtowns_m11_title_real_media PRIVATE
+            -Wall -Wextra -Werror -O2
+        )
+    endif()
+    add_test(
+        NAME dm2_fmtowns_m11_title_real_media
+        COMMAND test_dm2_fmtowns_m11_title_real_media
+    )
+
     add_executable(test_dm2_amiga_m12_real_media
         tests/test_dm2_amiga_m12_real_media.c
     )

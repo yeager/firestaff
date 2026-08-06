@@ -1393,6 +1393,136 @@ static M11_GameInputResult m11_dm2_startup_apply_launch_receipt(
         &launch_receipt->host_receipt);
 }
 
+#define M11_DM2_FMTOWNS_TIMER_A_TICK_US (18u * (1024u - 100u))
+
+static int m11_dm2_is_fmtowns_profile(const DM2_V1_BootProfile *profile)
+{
+    return profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA;
+}
+
+static void m11_dm2_release_fmtowns_title(M11_GameViewState *state)
+{
+    if (!state) return;
+    free(state->dm2FmtownsTitleBytes);
+    state->dm2FmtownsTitleBytes = NULL;
+    state->dm2FmtownsTitleByteCount = 0u;
+    memset(&state->dm2FmtownsTitlePalette, 0,
+           sizeof(state->dm2FmtownsTitlePalette));
+    memset(&state->dm2FmtownsTitleFrameReceipt, 0,
+           sizeof(state->dm2FmtownsTitleFrameReceipt));
+    memset(state->dm2FmtownsTitlePixels, 0, sizeof(state->dm2FmtownsTitlePixels));
+    state->dm2FmtownsTimerAAccumulatorUs = 0u;
+    state->dm2FmtownsFrameTimerARemaining = 0u;
+    state->dm2FmtownsTitleFrameIndex = 0u;
+    state->dm2FmtownsTitleBound = 0;
+    state->dm2FmtownsTitleFinished = 0;
+    state->dm2FmtownsTitleRejected = 0;
+}
+
+static int m11_dm2_bind_fmtowns_title(M11_GameViewState *state)
+{
+    DM2_V1_BootProfile *profile;
+    DM2_V1_FmtownsDiscReceipt disc;
+
+    if (!state || !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_is_fmtowns_profile(profile) ||
+        !profile->fmtowns_startup_media_verified ||
+        !profile->fmtowns_animation_media_verified ||
+        !profile->fmtowns_animation_streams_verified ||
+        !dm2_v1_fmtowns_anim_stream_is_hme242_title(
+            &profile->fmtowns_title_stream)) return 0;
+    m11_dm2_release_fmtowns_title(state);
+    memset(&disc, 0, sizeof(disc));
+    if (!profile->fmtowns_disc_image ||
+        dm2_v1_fmtowns_disc_probe(profile->fmtowns_disc_image,
+                                  profile->fmtowns_disc_image_size, &disc) != 0 ||
+        dm2_v1_fmtowns_disc_extract_alloc(profile->fmtowns_disc_image,
+                                          profile->fmtowns_disc_image_size,
+                                          &disc.title,
+                                          &state->dm2FmtownsTitleBytes,
+                                          &state->dm2FmtownsTitleByteCount) != 0 ||
+        !state->dm2FmtownsTitleBytes ||
+        !dm2_v1_fmtowns_anim_stream_decode_palette(
+            state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount,
+            &state->dm2FmtownsTitlePalette) ||
+        !dm2_v1_fmtowns_anim_stream_decode_frame(
+            state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount, 0u,
+            state->dm2FmtownsTitlePixels, sizeof(state->dm2FmtownsTitlePixels),
+            &state->dm2FmtownsTitleFrameReceipt)) {
+        m11_dm2_release_fmtowns_title(state);
+        state->dm2FmtownsTitleRejected = 1;
+        return 0;
+    }
+    state->dm2FmtownsFrameTimerARemaining =
+        state->dm2FmtownsTitleFrameReceipt.display_duration < 5u ? 5u :
+        state->dm2FmtownsTitleFrameReceipt.display_duration;
+    state->dm2FmtownsTitleBound = 1;
+    return 1;
+}
+
+static int m11_dm2_present_fmtowns_title(const M11_GameViewState *state,
+                                         unsigned char *framebuffer,
+                                         int framebuffer_width,
+                                         int framebuffer_height)
+{
+    uint8_t rgb6[256][3];
+    int x;
+    int y;
+    if (!state || !framebuffer || !state->dm2FmtownsTitleBound ||
+        !state->dm2FmtownsTitlePalette.valid ||
+        !state->dm2FmtownsTitleFrameReceipt.valid) return 0;
+    for (x = 0; x < 256; ++x) {
+        rgb6[x][0] = (uint8_t)(state->dm2FmtownsTitlePalette.rgb4[x & 15][0] << 2u);
+        rgb6[x][1] = (uint8_t)(state->dm2FmtownsTitlePalette.rgb4[x & 15][1] << 2u);
+        rgb6[x][2] = (uint8_t)(state->dm2FmtownsTitlePalette.rgb4[x & 15][2] << 2u);
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) return 0;
+    for (y = 0; y < framebuffer_height; ++y) {
+        const int source_y = y * 200 / framebuffer_height;
+        for (x = 0; x < framebuffer_width; ++x) {
+            const int source_x = x * 320 / framebuffer_width;
+            const uint8_t packed = state->dm2FmtownsTitlePixels[
+                (size_t)source_y * 160u + (size_t)(source_x >> 1)];
+            framebuffer[(size_t)y * (size_t)framebuffer_width + (size_t)x] =
+                (source_x & 1) ? (packed & 15u) : (packed >> 4u);
+        }
+    }
+    return 1;
+}
+
+static void m11_dm2_advance_fmtowns_title(M11_GameViewState *state,
+                                           uint32_t elapsed_us)
+{
+    uint64_t accumulator;
+    if (!state || !state->dm2FmtownsTitleBound) return;
+    accumulator = (uint64_t)state->dm2FmtownsTimerAAccumulatorUs + elapsed_us;
+    while (accumulator >= M11_DM2_FMTOWNS_TIMER_A_TICK_US &&
+           state->dm2FmtownsTitleBound) {
+        accumulator -= M11_DM2_FMTOWNS_TIMER_A_TICK_US;
+        if (state->dm2FmtownsFrameTimerARemaining > 0u)
+            --state->dm2FmtownsFrameTimerARemaining;
+        if (state->dm2FmtownsFrameTimerARemaining != 0u) continue;
+        ++state->dm2FmtownsTitleFrameIndex;
+        if (state->dm2FmtownsTitleFrameIndex >= 225u ||
+            !dm2_v1_fmtowns_anim_stream_decode_frame(
+                state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount,
+                state->dm2FmtownsTitleFrameIndex, state->dm2FmtownsTitlePixels,
+                sizeof(state->dm2FmtownsTitlePixels),
+                &state->dm2FmtownsTitleFrameReceipt)) {
+            free(state->dm2FmtownsTitleBytes);
+            state->dm2FmtownsTitleBytes = NULL;
+            state->dm2FmtownsTitleByteCount = 0u;
+            state->dm2FmtownsTitleBound = 0;
+            state->dm2FmtownsTitleFinished = 1;
+            break;
+        }
+        state->dm2FmtownsFrameTimerARemaining =
+            state->dm2FmtownsTitleFrameReceipt.display_duration < 5u ? 5u :
+            state->dm2FmtownsTitleFrameReceipt.display_duration;
+    }
+    state->dm2FmtownsTimerAAccumulatorUs = (uint32_t)accumulator;
+}
+
 static int m11_dm2_apply_boot_runtime_receipt(
     M11_GameViewState *state,
     const M11_GameLaunchSpec *spec,
@@ -1434,6 +1564,12 @@ static int m11_dm2_apply_boot_runtime_receipt(
     state->dm2World = receipt->dm2_state;
     state->dm2State.level_loaded = 1;
     m11_sync_dm2_state_from_runtime(state);
+    if (m11_dm2_is_fmtowns_profile(receipt->profile) &&
+        !m11_dm2_bind_fmtowns_title(state)) {
+        /* HME-242 must not fall through into the PC static title if its
+         * separately authenticated TWANIM media cannot be replayed. */
+        state->dm2FmtownsTitleRejected = 1;
+    }
     return 1;
 }
 
@@ -6302,6 +6438,7 @@ static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
         return 0;
     m11_csb_release_fmtowns_title(state);
     m11_csb_release_fmtowns_switch(state);
+    m11_dm2_release_fmtowns_title(state);
     if (snprintf(path, sizeof(path), "%s/%s", profile->asset_root,
                  animation_name) < 0 ||
         strlen(path) >= sizeof(path)) return 0;
@@ -21487,6 +21624,13 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                 }
                 return M11_GAME_INPUT_REDRAW;
             }
+            if (state->dm2FmtownsTitleBound) {
+                /* SKWIN's 0759:06C2 Timer-A interrupt owns TWANIM's DL
+                 * waits.  Preserve its 18*(1024-100) us source step rather
+                 * than treating the stream as a 60 Hz host animation. */
+                m11_dm2_advance_fmtowns_title(state, 16667u);
+                return M11_GAME_INPUT_REDRAW;
+            }
             /* SKProject's SHOW_MENU_SCREEN redraws the static dt07/4 menu
              * while it waits for input. dt07/1 belongs only to SHOW_CREDITS;
              * do not manufacture a title/credits tick sequence here. */
@@ -24923,6 +25067,12 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         int dir;
         int result;
+        if (state->dm2FmtownsTitleBound) {
+            /* AUTOEXEC's TITLE has no SKULL menu hit rectangles.  Do not
+             * leak clicks through the original animation into the later
+             * static menu before TWANIM finishes. */
+            return M11_GAME_INPUT_IGNORED;
+        }
         if (!state->dm2World) {
             return M11_GAME_INPUT_IGNORED;
         }
@@ -53063,7 +53213,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_BLACK);
-            if (state->dm2State.startup_credits_active) {
+            if (state->dm2FmtownsTitleRejected) {
+                /* Fail closed: selected FM Towns media cannot claim PC
+                 * GDAT's static startup page as an alternate TITLE. */
+            } else if (state->dm2FmtownsTitleBound) {
+                startup_menu_drawn = m11_dm2_present_fmtowns_title(
+                    state, framebuffer, framebufferWidth, framebufferHeight);
+            } else if (state->dm2State.startup_credits_active) {
                 startup_menu_drawn = m11_draw_dm2_startup_credits(
                     state, framebuffer, framebufferWidth, framebufferHeight);
             } else {

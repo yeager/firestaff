@@ -54219,6 +54219,19 @@ alcove runtime and archive-media tests passed (4/4).
   This is a decoder and source receipt only; M11 palette/timing/presentation
   remains explicitly unclaimed until its own source-owned handoff exists.
 
+- ✅ 2026-08-06 DM2 FM Towns TITLE M11 presentation: the selected HME-242
+  `TITLE` member is retained only in RAM after its boot/profile MD5 and stream
+  receipts pass. M11 decodes the original PL index/RGB4 palette, expands it at
+  the indexed-render boundary, and presents the stream's packed 320x200 4bpp
+  canvas instead of the PC static GDAT menu. EN/DL progression uses the
+  SKWIN TWANIM Timer-A unit (`18*(1024-100)` microseconds) and each source
+  display duration clamped to the original five-tick minimum. Input cannot
+  reach SKULL's later menu until TITLE ends; rejected Towns media remains
+  black rather than falling back to PC art. The opt-in real-CD M11 regression
+  launches the selected Japanese ZIP plus authenticated English companion,
+  verifies the first rendered frame and a source-timed advance; the focused
+  `test_dm2_fmtowns_m12_real_media` also passes without unpacking game data.
+
 - ✅ 2026-08-06 Theron raw-BIN HuC6280 disassembly intake: the static bank-$1f
   receipt now verifies authentic `TQUS02.bin` and `TQJP02.bin` Track 02 files
   in addition to the ISO projections. Their real MODE1/2352 bank-window
