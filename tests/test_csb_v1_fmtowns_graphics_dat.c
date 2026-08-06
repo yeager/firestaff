@@ -103,19 +103,28 @@ static void test_raw_record_copy(void) {
 
 static void test_real_data(void) {
     char path_en[512], path_jp[512];
+    const char *data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR");
     const char *home = getenv("HOME");
     uint8_t *data;
     size_t size;
     CSB_V1_FmtownsGraphicsReceipt receipt;
 
-    if (!home) {
-        printf("SKIP: HOME not set\n");
+    /* Use the same materialized runtime root as the F31 M11 handoff test.
+     * The historical ~/.firestaff/data/csb/fmtowns layout remains a local
+     * convenience fallback, but must not make the real-media proof silently
+     * skip the cache admitted by the scanner. */
+    if (data_dir && data_dir[0] != '\0') {
+        snprintf(path_en, sizeof(path_en), "%s/CDATA/GRAPHICS.DAT", data_dir);
+        snprintf(path_jp, sizeof(path_jp), "%s/CJDATA/GRAPHICS.DAT", data_dir);
+    } else if (home) {
+        snprintf(path_en, sizeof(path_en),
+                 "%s/.firestaff/data/csb/fmtowns/CDATA/GRAPHICS.DAT", home);
+        snprintf(path_jp, sizeof(path_jp),
+                 "%s/.firestaff/data/csb/fmtowns/CJDATA/GRAPHICS.DAT", home);
+    } else {
+        printf("SKIP: FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR and HOME not set\n");
         return;
     }
-    snprintf(path_en, sizeof(path_en),
-             "%s/.firestaff/data/csb/fmtowns/CDATA/GRAPHICS.DAT", home);
-    snprintf(path_jp, sizeof(path_jp),
-             "%s/.firestaff/data/csb/fmtowns/CJDATA/GRAPHICS.DAT", home);
 
     /* English version */
     data = load_file(path_en, &size);
@@ -139,6 +148,21 @@ static void test_real_data(void) {
     ASSERT(receipt.image_item_count > 650, "EN has >650 image items");
     ASSERT(receipt.header_fnv1a != 0, "EN header hash non-zero");
     ASSERT(receipt.payload_fnv1a != 0, "EN payload hash non-zero");
+
+    /* ReDMCSB TEXT.C:2019-2022 opens M653 with NOT_EXPANDED.  Exercise the
+     * same raw record path M11 uses rather than accidentally covering it via
+     * the IMG2 image decoder above. */
+    {
+        uint8_t raw_font[768];
+        CSB_V1_FmtownsItemDecodeReceipt raw_receipt;
+        ASSERT(csb_v1_fmtowns_graphics_copy_raw_item(
+                   data, size, 695u, raw_font, sizeof(raw_font),
+                   &raw_receipt) == 1 &&
+               raw_receipt.valid && raw_receipt.is_data_record &&
+               raw_receipt.stream_byte_count == sizeof(raw_font) &&
+               raw_receipt.stream_fnv1a != 0,
+               "EN M653 is copied as a 768-byte raw font record");
+    }
 
     /* Decode C001 title (item 1: 320x153) */
     {
@@ -258,6 +282,17 @@ static void test_real_data(void) {
         ASSERT(csb_v1_fmtowns_graphics_receipt(data, size, &receipt) == 0,
                "receipt succeeds for JP");
         ASSERT(receipt.item_count == 728, "JP has 728 items");
+        {
+            uint8_t raw_font[768];
+            CSB_V1_FmtownsItemDecodeReceipt raw_receipt;
+            ASSERT(csb_v1_fmtowns_graphics_copy_raw_item(
+                       data, size, 695u, raw_font, sizeof(raw_font),
+                       &raw_receipt) == 1 &&
+                   raw_receipt.valid && raw_receipt.is_data_record &&
+                   raw_receipt.stream_byte_count == sizeof(raw_font) &&
+                   raw_receipt.stream_fnv1a != 0,
+                   "JP M653 is copied as a 768-byte raw font record");
+        }
         printf("  JP: %u images, %u empty, %u data records\n",
                receipt.image_item_count, receipt.empty_item_count,
                receipt.data_item_count);

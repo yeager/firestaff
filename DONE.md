@@ -586,6 +586,14 @@
 
 # DM1 production placeholder re-audit (2026-08-06)
 
+# CSB FM Towns graphics real-cache regression (2026-08-06)
+
+- ✅ `test_csb_v1_fmtowns_graphics_dat` now takes
+  `FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR`, the scanner-materialized F31 runtime
+  root, before considering the legacy private data layout. It verifies both
+  `CDATA` and `CJDATA` on the real cache, including C695/M653's 768-byte raw
+  `NOT_EXPANDED` record. English and Japanese cache runs pass 36/36 checks.
+
 - ✅ 2026-08-06 CSB FM Towns M653 font material: F31 `GRAPHICS.DAT` record
   C695 is now copied as its original 768-byte, one-bit `NOT_EXPANDED` font
   payload. M11 binds it before the real FM Towns title plays for both English
