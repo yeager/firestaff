@@ -1,3 +1,11 @@
+# DM1 mirror C040/C545 redraw synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free C040/C545 party/chest/candidate fixture from M10.
+  It loads no original DM1 data and has no M11/runtime caller; the generated
+  mirror regression continues to compile the source explicitly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c040_redraw_after_chest_close_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 FM-Towns JA DYNA_BUTTONS placeholder audit (2026-08-06)
 
 - ✅ Confirmed that the JDM.EXP `DYNA_BUTTONS` `N`/`X` values are
