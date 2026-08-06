@@ -1846,7 +1846,8 @@ static int m12_materialize_authenticated_csb_amiga_sidecar(
 }
 
 static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
-                                                       const char* gameCacheDir) {
+                                                       const char* gameCacheDir,
+                                                       int permitAmiga31Sidecars) {
     static const char* const labels[] = {
         "SWOOSH", "SWOOSH.DAT",
         /* PC3.4 SWSHSND.C G0746 raw startup sample. Keep every accepted
@@ -1934,6 +1935,18 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * ZIP or nested ADF container. */
         if (!FSP_ParentDir(outParent, sizeof(outParent), outPath) ||
             !FSP_CreateDirectoryRecursive(outParent)) {
+            continue;
+        }
+        /* PC34 and A31E share a GRAPHICS.DAT fingerprint, but not a title
+         * route.  An outer archive can contain both editions, so an
+         * authenticated TITL.DAT is still not sufficient evidence to attach
+         * it to whichever graphics member the scanner selected.  Only the
+         * paired A31E version admission may retain these four sidecars.
+         * ReDMCSB APPA.C:51-53 selects the Amiga FTL/TITL path, whereas
+         * TITLE.C F0437 owns PC34's C001 sequence. */
+        if (m12_csb_amiga_sidecar_expected_md5(labels[i]) != NULL &&
+            !permitAmiga31Sidecars) {
+            (void)remove(outPath);
             continue;
         }
         if (!(m12_csb_amiga_sidecar_expected_md5(labels[i]) != NULL
@@ -3469,6 +3482,7 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
     char gameCacheDir[M12_ASSET_DATA_DIR_CAPACITY];
     char optionalSeedPath[M12_ASSET_DATA_DIR_CAPACITY];
+    const M12_AssetVersionStatus* selectedVersion = NULL;
     size_t i;
     int needsRuntimeCache = 0;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
@@ -3516,13 +3530,12 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         return 0;
     }
     {
-        const M12_AssetVersionStatus* version =
-            m12_first_matched_version(status, gameIndex);
-        if (strcmp(gameId, "csb") == 0 && version && version->versionId &&
-            (strcmp(version->versionId, "fmtowns-en") == 0 ||
-             strcmp(version->versionId, "fmtowns-ja") == 0)) {
+        selectedVersion = m12_first_matched_version(status, gameIndex);
+        if (strcmp(gameId, "csb") == 0 && selectedVersion && selectedVersion->versionId &&
+            (strcmp(selectedVersion->versionId, "fmtowns-en") == 0 ||
+             strcmp(selectedVersion->versionId, "fmtowns-ja") == 0)) {
             if (!m12_materialize_csb_fmtowns_runtime_cache(status, gameIndex,
-                                                            version, gameCacheDir,
+                                                            selectedVersion, gameCacheDir,
                                                             1)) return 0;
             m12_copy_string(status->runtimeDataDirs[gameIndex],
                             sizeof(status->runtimeDataDirs[gameIndex]), cacheRoot);
@@ -3563,7 +3576,10 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
          * CSB utility path uses HCSB.HTC-family sidecar data. Runtime code
          * opens ordinary paths under asset-cache/csb/, so archive-backed CSB
          * launches must carry these startup/utility siblings with GRAPHICS.DAT. */
-        m12_materialize_csb_startup_optional_cache(optionalSeedPath, gameCacheDir);
+        m12_materialize_csb_startup_optional_cache(
+            optionalSeedPath, gameCacheDir,
+            selectedVersion && selectedVersion->versionId &&
+            strcmp(selectedVersion->versionId, "amiga31-en") == 0);
     }
     m12_copy_string(status->runtimeDataDirs[gameIndex],
                     sizeof(status->runtimeDataDirs[gameIndex]),
@@ -4837,7 +4853,7 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
                 m12_file_md5_hex(dungeonPath, copiedMd5) &&
                 strcmp(copiedMd5, expectedDungeonMd5) == 0) {
                 m12_materialize_csb_startup_optional_cache(version->matchedPath,
-                                                           outPath);
+                                                           outPath, 1);
                 return 1;
             }
             (void)remove(dungeonPath);
@@ -4865,7 +4881,7 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
         outPath[0] = '\0';
         return 0;
     }
-    m12_materialize_csb_startup_optional_cache(version->matchedPath, outPath);
+    m12_materialize_csb_startup_optional_cache(version->matchedPath, outPath, 0);
     return 1;
 }
 
