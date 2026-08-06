@@ -760,7 +760,13 @@ compression differs by platform port in the ReDMCSB source tree:
   `csb_v1_csbgraphics_dat_classify.h`). This is *not* interchangeable with
   the PC LZW format even though both are called "GRAPHICS.DAT".
 - **FM Towns** variants exist for DM2 (`dm2_v1_fmtowns_graphics_dat.h`,
-  `csb_v1_fmtowns_graphics_dat.h`).
+  `csb_v1_fmtowns_graphics_dat.h`). The DM1 FM Towns port ships on a
+  BIN/CUE disc image and drives all in-game presentation through the
+  TownsOS EGB graphics library and its own Phar Lap P3 executable
+  (`EDM.EXP` / `JDM.EXP`); see the dedicated
+  [DM1 FM Towns guide](DM1-FMTowns-Guide.md) and the disassembly
+  evidence at
+  [`parity-evidence/dm1_fmtowns_menu_p3_disassembly.md`](../../parity-evidence/dm1_fmtowns_menu_p3_disassembly.md).
 
 Firestaff's memory-allocator model for GRAPHICS.DAT (`memory_graphics_dat_*`
 modules — allocator entry/boundary/orchestrator, defrag loop/entry, used
