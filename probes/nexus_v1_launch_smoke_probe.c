@@ -92,6 +92,16 @@ int main(int argc, char **argv) {
                      engine.startup_menu_font012[1].character_count == 250 &&
                      engine.startup_menu_font012[2].character_count == 710,
                  "real RLOWFIX TEXT4/TABL/FONT012 source receipt is bound");
+    PROBE_ASSERT(engine.startup_menu_text_consumer_capture_verified == 0,
+                 "real TEXT4/TABL/FONT012 receipts do not open the Saturn text consumer gate");
+    PROBE_ASSERT(engine.dgn_static_material_sources.canonical_pair_bound == 1 &&
+                     engine.dgn_static_material_sources.floor_mns
+                         .canonical_hash_verified == 1 &&
+                     engine.dgn_static_material_sources.wall_mns
+                         .canonical_hash_verified == 1 &&
+                     engine.floor_mns_material_route_valid == 1 &&
+                     engine.wall_mns_material_route_valid == 1,
+                 "real SN_FLOOR.MNS/SN_WALL.MNS sources bind through the supplemental ISO and DMDF decoder");
 
     /* ── Step 2: Load Level 0 ─────────────────────────────────────── */
     printf("\n[Step 2: Load Level 0]\n");

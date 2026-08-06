@@ -10,6 +10,10 @@
   explicitly labelled as snapshots. Keep the strict-fidelity inventory and
   capture gates authoritative when further format or runtime gaps are found.
 
+- **NEXUS-STARTUP-MNS-REGRESSION:** Keep the real launch-smoke assertions for
+  supplemental-ISO MNS material binding and the closed TEXT4/TABL/FONT012
+  capture gate green while the Saturn VDP1/VDP2/text consumer remains open.
+
 - **NEXUS-STALE-DOCUMENT-CLAIMS:** Older Nexus content/format documents still
   contain historical “implemented” wording for DM1-derived roster/combat,
   host mesh/title/HUD rendering, text conversion, and audio playback. The

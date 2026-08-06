@@ -10,6 +10,11 @@
   no-disc/no-tests claims as historical snapshots and linked the current
   strict-fidelity inventory. No runtime status was changed.
 
+- ✅ 2026-08-06 Nexus real launch-smoke regression: the 17-pass European
+  retail launch probe now also asserts that supplemental-ISO
+  `SN_FLOOR.MNS`/`SN_WALL.MNS` hashes and DMDF routes are bound, while the
+  real TEXT4/TABL/FONT012 receipts leave the Saturn text-consumer gate closed.
+
 - ✅ 2026-08-06 Nexus DGN corpus geometry receipt: fixed
   `nexus_v1_inspect_dgn_material_corpus()` to count the real Structure3 mesh
   extraction receipt instead of the unrelated post-grid/collision
