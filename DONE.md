@@ -51931,3 +51931,12 @@ and `firestaff` build pass.
   item records materialize exactly eight floor items through the hash-bound
   ITEM.IBS association table. No creature-drop, gold, name, action, combat or
   HUD semantics are inferred from that handoff.
+- ✅ 2026-08-06 DM1 PC34 wall-ornament projection fix: corrected the live
+  F0107 host dispatch to ReDMCSB's authenticated 13-row G0205 table, removing
+  the duplicate/misaligned D3L2/D3R2 entries that shifted side/depth ornaments.
+  The production consumer now creates the real F0675 14/32 or 21/32 indexed
+  derived bitmap and clips it through the real G0205 zone in the F0791 order,
+  rather than scaling the entire native GRAPHICS.DAT surface to the zone.
+This fixes the source path for torch holders, mirrors, inscriptions and
+  narrow wall ornaments without synthetic pixels. Ninja build plus the 126/126
+  source test and real PC34 side-wall, mirror, and HoC wall-material tests pass.

@@ -37,17 +37,14 @@
   open because they still need a packaged-window capture at the affected
   real-data poses; do not close them from headless receipts alone.
 
-  2026-08-06 renderer audit: found a concrete source/runtime mismatch behind
-  the remaining black or stretched wall-art reports. ReDMCSB DUNVIEW.C
-  F0107 sends D2/D3 ornaments through F0675, which creates the indexed derived
-  bitmap using G0190 plus G0198/G0199, and then F0791 clips/blits that finished
-  bitmap through the G0205/C1004 zone. Firestaff's host consumer currently
-  loads the native GRAPHICS.DAT pair and scales the entire source surface
-  directly into the destination zone. That bypasses the source crop/alignment
-  and derived-bitmap step, affecting torch holders, mirrors, inscriptions and
-  other narrow side/depth ornaments. This is an open code gap, not a reason to
-  admit a replacement texture; fix it with the real F0675/F0791 source path
-  and add a real PC34 pixel capture for global ornaments 38 and 43.
+  2026-08-06 renderer audit/fix: corrected the PC34 wall-view dispatch from
+  the erroneous 15-row host list to ReDMCSB's real 13-row G0205 table. D3L2
+  and D3R2 remain owned by their separate F0676/F0677 square passes. The host
+  wall consumer now applies the source-locked F0675 14/32 (D3) or 21/32
+  (D2/near) derived scale and clips the real bitmap against the G0205 zone as
+  F0791 does, instead of stretching the full native surface to the zone. The
+  remaining gap is packaged Mac/app pixel capture for global ornaments 38 and
+  43 and exact F0635 alignment evidence; no replacement art is admitted.
 
 - **DM1-HOC-ORNAMENT-RENDER-CAPTURE:** The generic DM1 dungeon bridge now
   consumes the real PC34 map ornament counts, seed, square attributes and

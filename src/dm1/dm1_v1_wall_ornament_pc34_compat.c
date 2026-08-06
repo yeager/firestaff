@@ -34,21 +34,21 @@ enum {
 };
 
 static const DM1_WallOrnamentViewSpecPc34 s_wallOrnamentViewSpecs[] = {
-    {3, -2,  0, 1},
-    {3,  2,  1, 1},
-    {3, -1,  2, 0},
-    {3,  1,  4, 0},
-    {3, -1,  2, 0},
-    {3,  0,  3, 0},
-    {3,  1,  4, 0},
-    {2, -1,  5, 0},
-    {2,  1,  6, 0},
-    {2, -1,  7, 0},
-    {2,  0,  8, 0},
-    {2,  1,  9, 0},
-    {1, -1, 10, 0},
-    {1,  1, 11, 0},
-    {1,  0, 12, 0}
+    /* PC34 G0205 has 13 wall rows. D3L2/D3R2 are separate F0676/F0677
+     * square passes; they do not consume the G0205 wall-ornament table. */
+    {3, -1,  0, 0}, /* D3L right */
+    {3,  1,  1, 0}, /* D3R left */
+    {3, -1,  2, 0}, /* D3L front */
+    {3,  0,  3, 0}, /* D3C front */
+    {3,  1,  4, 0}, /* D3R front */
+    {2, -1,  5, 0}, /* D2L right */
+    {2,  1,  6, 0}, /* D2R left */
+    {2, -1,  7, 0}, /* D2L front */
+    {2,  0,  8, 0}, /* D2C front */
+    {2,  1,  9, 0}, /* D2R front */
+    {1, -1, 10, 0}, /* D1L right */
+    {1,  1, 11, 0}, /* D1R left */
+    {1,  0, 12, 0}  /* D1C front */
 };
 
 static const unsigned char s_wallOrnamentPaletteD3[16] = {
@@ -320,6 +320,18 @@ int dm1_v1_wall_ornament_render_plan_pc34(
     }
     outPlan->isAlcove =
         dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);
+    /* ReDMCSB DUNVIEW.C F0107/F0675 uses the source platform's derived
+     * bitmap scales before F0791 clips to G0205. PC34/I34E is 14/32 for D3
+     * and 21/32 for D2 and nearer views; it never stretches the full native
+     * bitmap to the destination zone. */
+    if (viewWallIndex <= 4) {
+        outPlan->sourceScaleX32 = 14;
+        outPlan->sourceScaleY32 = 14;
+    } else {
+        outPlan->sourceScaleX32 = 21;
+        outPlan->sourceScaleY32 = 21;
+    }
+    outPlan->usesDerivedBitmap = 1;
     return 1;
 }
 

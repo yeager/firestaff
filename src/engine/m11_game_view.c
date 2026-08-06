@@ -31273,6 +31273,57 @@ static void m11_blit_scaled_palette_map_maybe_flip(const M11_AssetSlot* slot,
     }
 }
 
+static void m11_blit_dm1_wall_ornament_f0675_f0791(
+    const M11_AssetSlot* slot,
+    unsigned char* framebuffer,
+    int fbW,
+    int fbH,
+    int zoneX,
+    int zoneY,
+    int zoneW,
+    int zoneH,
+    int scaleX32,
+    int scaleY32,
+    int transparentColor,
+    const unsigned char paletteMap[16],
+    int flipHorizontal)
+{
+    int drawW;
+    int drawH;
+    int y;
+    if (!slot || !slot->loaded || !slot->pixels || !framebuffer ||
+        slot->width == 0 || slot->height == 0 || zoneW <= 0 ||
+        zoneH <= 0 || scaleX32 <= 0 || scaleY32 <= 0) {
+        return;
+    }
+    drawW = ((int)slot->width * scaleX32 + 16) >> 5;
+    drawH = ((int)slot->height * scaleY32 + 16) >> 5;
+    if (drawW <= 0 || drawH <= 0) return;
+
+    /* F0675 creates this derived source surface. F0791 then clips the
+     * source/destination against the G0205 zone; it does not resize the
+     * source to fill that zone. */
+    for (y = 0; y < drawH; ++y) {
+        int fbY = M11_VIEWPORT_Y + zoneY + y;
+        int sy = y * (int)slot->height / drawH;
+        int x;
+        if (y >= zoneH || fbY < 0 || fbY >= fbH) continue;
+        for (x = 0; x < drawW && x < zoneW; ++x) {
+            int fbX = M11_VIEWPORT_X + zoneX + x;
+            int sx = flipHorizontal
+                ? ((drawW - 1 - x) * (int)slot->width) / drawW
+                : (x * (int)slot->width) / drawW;
+            unsigned char pixel;
+            if (fbX < 0 || fbX >= fbW) continue;
+            pixel = slot->pixels[sy * (int)slot->width + sx];
+            if (transparentColor >= 0 &&
+                pixel == (unsigned char)transparentColor) continue;
+            if (paletteMap) pixel = paletteMap[pixel & 0x0f];
+            framebuffer[fbY * fbW + fbX] = pixel;
+        }
+    }
+}
+
 static int m11_dm1_door_panel_graphic(const M11_GameViewState* state,
                                       const M11_ViewportCell* cell,
                                       int depthIndex) {
@@ -32541,12 +32592,13 @@ static int m11_draw_dm1_wall_ornament_host_material_receipt(
         slot->width <= 0 || slot->height <= 0) {
         return 0;
     }
-    /* ReDMCSB DUNVIEW.C F0107:3502-3717: consume the M10-selected PC34
-     * graphic, C10 key, D2/D3 palette row, and source-selected flip. */
-    m11_blit_scaled_palette_map_maybe_flip(
+    /* ReDMCSB DUNVIEW.C F0107/F0675/F0791: consume the real PC34 graphic,
+     * create the depth-scaled source, then clip it to the G0205 zone. */
+    m11_blit_dm1_wall_ornament_f0675_f0791(
         slot, framebuffer, fbW, fbH,
-        M11_VIEWPORT_X + plan->dstX, M11_VIEWPORT_Y + plan->dstY,
-        plan->width, plan->height, plan->transparentColor,
+        plan->dstX, plan->dstY, plan->width, plan->height,
+        plan->sourceScaleX32, plan->sourceScaleY32,
+        plan->transparentColor,
         plan->paletteMapValid ? plan->paletteMap : NULL,
         plan->flipHorizontal);
     memset(&s_m11_dm1_wall_ornament_host_presentation_receipt, 0,
@@ -32570,6 +32622,10 @@ static int m11_draw_dm1_wall_ornament_host_material_receipt(
         plan->flipHorizontal;
     s_m11_dm1_wall_ornament_host_presentation_receipt.paletteMapValid =
         plan->paletteMapValid;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.sourceScaleX32 =
+        plan->sourceScaleX32;
+    s_m11_dm1_wall_ornament_host_presentation_receipt.sourceScaleY32 =
+        plan->sourceScaleY32;
     if (plan->paletteMapValid) {
         memcpy(s_m11_dm1_wall_ornament_host_presentation_receipt.paletteMap,
                plan->paletteMap,

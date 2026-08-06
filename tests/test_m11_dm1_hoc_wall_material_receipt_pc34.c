@@ -165,6 +165,8 @@ static int verify_wall_ornament_pixel(
 {
     const M11_AssetSlot *slot;
     int destinationY;
+    int drawWidth;
+    int drawHeight;
 
     if (!state || !framebuffer || !receipt || !receipt->valid ||
         receipt->graphicIndex < 0 || receipt->destinationX < 0 ||
@@ -180,14 +182,19 @@ static int verify_wall_ornament_pixel(
         slot->width == 0 || slot->height == 0) {
         return 0;
     }
-    for (destinationY = 0; destinationY < receipt->height; ++destinationY) {
+    drawWidth = ((int)slot->width * receipt->sourceScaleX32 + 16) >> 5;
+    drawHeight = ((int)slot->height * receipt->sourceScaleY32 + 16) >> 5;
+    if (drawWidth <= 0 || drawHeight <= 0) return 0;
+    for (destinationY = 0; destinationY < drawHeight &&
+                            destinationY < receipt->height; ++destinationY) {
         int destinationX;
-        for (destinationX = 0; destinationX < receipt->width; ++destinationX) {
+        for (destinationX = 0; destinationX < drawWidth &&
+                                destinationX < receipt->width; ++destinationX) {
             int sourceX = receipt->flipHorizontal
-                ? ((receipt->width - 1 - destinationX) * (int)slot->width) /
-                      receipt->width
-                : (destinationX * (int)slot->width) / receipt->width;
-            int sourceY = (destinationY * (int)slot->height) / receipt->height;
+                ? ((drawWidth - 1 - destinationX) * (int)slot->width) /
+                      drawWidth
+                : (destinationX * (int)slot->width) / drawWidth;
+            int sourceY = (destinationY * (int)slot->height) / drawHeight;
             unsigned char expected = slot->pixels[
                 sourceY * (int)slot->width + sourceX];
             if (expected == (unsigned char)receipt->transparentColor) {

@@ -85,6 +85,11 @@ typedef struct DM1_WallOrnamentRenderPlanPc34 {
     int paletteMapValid;
     unsigned char paletteMap[16];
     int isAlcove;
+    /* F0675 output dimensions. The old host path incorrectly resized the
+     * complete native slot to width/height, bypassing derived bitmap scale. */
+    int sourceScaleX32;
+    int sourceScaleY32;
+    int usesDerivedBitmap;
 } DM1_WallOrnamentRenderPlanPc34;
 
 typedef struct DM1_WallOrnamentHostMaterialReceiptPc34 {

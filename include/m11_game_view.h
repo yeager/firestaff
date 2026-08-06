@@ -3043,6 +3043,8 @@ typedef struct M11_Dm1WallOrnamentHostPresentationReceipt {
     int flipHorizontal;
     int paletteMapValid;
     unsigned char paletteMap[16];
+    int sourceScaleX32;
+    int sourceScaleY32;
 } M11_Dm1WallOrnamentHostPresentationReceipt;
 
 void M11_GameView_GetDm1WallOrnamentHostPresentationReceipt(
