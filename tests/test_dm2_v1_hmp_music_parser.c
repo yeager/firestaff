@@ -18,7 +18,7 @@ int main(void)
         'M','T','r','k', 0,0,0,8,
         0, 0x90,0x3c,0x40, 0x60, 0xff,0x2f,0
     };
-    unsigned char hmp[792];
+    unsigned char hmp[920];
     DM2_V1_MusicStreamReceipt receipt;
 
     if (dm2_v1_sound_inspect_music_data(smf, sizeof(smf), &receipt) !=
@@ -35,11 +35,13 @@ int main(void)
     }
 
     memset(hmp, 0, sizeof(hmp));
-    memcpy(hmp, "HMIMIDIP", 8);
+    memcpy(hmp, "HMIMIDIP013195", 14);
     put_le32(hmp + 48, 1);
-    put_le32(hmp + 52, 60);
-    put_le32(hmp + 780, 16); /* HMP chunk includes its 12-byte header. */
-    hmp[788] = 0x80; hmp[789] = 0x90; hmp[790] = 0x3c; hmp[791] = 0x40;
+    put_le32(hmp + 56, 120);
+    /* DM2's HMP 013195 payload keeps a four-byte branch offset after its
+     * 900-byte header; the first 12-byte chunk starts at 904. */
+    put_le32(hmp + 908, 16);
+    hmp[916] = 0x80; hmp[917] = 0x90; hmp[918] = 0x3c; hmp[919] = 0x40;
     if (dm2_v1_sound_inspect_music_data(hmp, sizeof(hmp), &receipt) !=
             DM2_V1_MUSIC_INSPECT_OK ||
         receipt.format != DM2_V1_MUSIC_FORMAT_HMP_V1 ||
@@ -50,7 +52,7 @@ int main(void)
         return 1;
     }
 
-    hmp[788] = 0x00; /* Makes event data serve as the HMP VLQ terminator. */
+    hmp[916] = 0x00; /* Makes event data serve as the HMP VLQ continuation. */
     if (dm2_v1_sound_inspect_music_data(hmp, sizeof(hmp), &receipt) !=
             DM2_V1_MUSIC_INSPECT_BAD_EVENT || receipt.midi_handoff_ready != 0) {
         fprintf(stderr, "malformed HMP event was accepted\n");

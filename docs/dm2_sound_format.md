@@ -18,8 +18,12 @@ VOC/WAV/MP2/OGG files — audio samples are packed inside the GDAT container.
   one of those streams for each dungeon map.  The canonical PC file's
   SHA-256 is
   `401540ad09f7fc85ba80cbaeb3b882fc5ba6a1a29c2db6ab83f6fb6f89bc8f72`.
-- Channels: MIDI-style channel events; the exact HMI timing and track layout
-  still needs direct decoder support.
+- Channels: MIDI-style channel events. Firestaff's bounded source inspector
+  reads the real `013195` header (subtrack count at byte 48, BPM at byte 56),
+  the observed first chunk at byte 904, and every 12-byte chunk header. HMP
+  delta values use least-significant seven-bit groups with a high-bit
+  terminator; Standard MIDI variable-length fields remain most-significant
+  first.
 
 `SKWIN/data/*.hmp.mid` and `SKULLWIN/Data/*.hmp.mid` are pre-converted
 Standard MIDI developer/port assets. They are useful as behavioural reference,
@@ -29,9 +33,9 @@ playing DM2.
 ### HMP vs Standard MIDI
 HMP uses MIDI-like events but has its own header, track directory and timing
 encoding. `SkWinMIDI.cpp` consumes only the converted Standard MIDI sidecars;
-it is not a decoder for the original GDAT HMP streams. Firestaff currently
-binds the real bytes and intentionally rejects playback until a complete
-original-HMP decoder can prove a valid scheduler/backend handoff.
+it is not a decoder for the original GDAT HMP streams. Firestaff directly
+validates the original track partitions and event bounds, but intentionally
+rejects playback until a source-faithful scheduler/backend handoff is proven.
 
 ### Converted SKWIN sidecars
 

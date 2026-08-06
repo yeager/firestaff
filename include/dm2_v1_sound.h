@@ -132,6 +132,8 @@ typedef struct {
     int schedule_handoff_ready;
     int midi_handoff_ready;
     int pcm_handoff_ready;
+    /* The inspector walks every source track.  This bounded receipt retains
+     * per-track EOT counters for the first 16 only. */
     DM2_V1_MusicTrackReceipt tracks[16];
 } DM2_V1_MusicStreamReceipt;
 

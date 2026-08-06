@@ -137,13 +137,25 @@ static int dm2_read_hmp_vlq(const uint8_t *data,
         uint8_t byte;
         if (*offset >= size || count >= 4u) return 0;
         byte = data[(*offset)++];
-        value = (value << 7) | (uint32_t)(byte & 0x7fu);
+        /* HMP stores seven-bit delta groups least-significant first and
+         * terminates with bit 7 set. This is intentionally distinct from
+         * SMF's most-significant-first VLQ above. */
+        value |= (uint32_t)(byte & 0x7fu) << (7u * count);
         count++;
         if ((byte & 0x80u) != 0u) {
             *out_value = value;
             return 1;
         }
     } while (1);
+}
+
+static uint32_t dm2_music_hmp_ticks_to_us(uint32_t ticks, uint32_t bpm)
+{
+    if (bpm == 0u) return 0u;
+    /* HMP 013195 uses the fixed 60 PPQN cadence consumed by the HMI player.
+     * Keep this diagnostic calculation in 64 bits so a long original track
+     * cannot wrap into a fabricated short duration. */
+    return (uint32_t)(((uint64_t)ticks * 60000000u) / (60u * bpm));
 }
 
 static void dm2_music_receipt_clear(DM2_V1_MusicStreamReceipt *receipt)
@@ -276,47 +288,147 @@ static int dm2_inspect_smf(const uint8_t *data,
     return DM2_V1_MUSIC_INSPECT_OK;
 }
 
+static int dm2_inspect_hmp_track(const uint8_t *data,
+                                 size_t size,
+                                 DM2_V1_MusicStreamReceipt *receipt,
+                                 DM2_V1_MusicTrackReceipt *track,
+                                 uint32_t *out_duration_ticks)
+{
+    size_t offset = 0u;
+    uint32_t tick = 0;
+    uint8_t running_status = 0u;
+
+    if (!data || !receipt || !track || !out_duration_ticks) return 0;
+    while (offset < size) {
+        uint32_t delta = 0;
+        uint8_t status;
+        if (!dm2_read_hmp_vlq(data, size, &offset, &delta)) return 0;
+        tick += delta;
+        if (offset >= size) return 0;
+        status = data[offset++];
+        receipt->event_count++;
+        if (status < 0x80u) {
+            if (running_status == 0u) return 0;
+            --offset;
+            status = running_status;
+        } else if (status < 0xf0u) {
+            running_status = status;
+        }
+        if (status == 0xffu) {
+            uint8_t meta_type;
+            uint32_t meta_length;
+            if (offset >= size) return 0;
+            meta_type = data[offset++];
+            if (!dm2_read_vlq(data, size, &offset, &meta_length) ||
+                meta_length > size - offset) return 0;
+            ++receipt->meta_event_count;
+            if (meta_type == 0x2fu) ++track->end_of_track_count;
+            dm2_music_store_event(tick, status, meta_type, 0u, 0u);
+            offset += meta_length;
+        } else if (status == 0xf0u || status == 0xf7u) {
+            uint32_t sysex_length;
+            if (!dm2_read_vlq(data, size, &offset, &sysex_length) ||
+                sysex_length > size - offset) return 0;
+            offset += sysex_length;
+        } else if (status < 0xf0u) {
+            uint8_t data_size = (uint8_t)(((status & 0xf0u) == 0xc0u ||
+                                            (status & 0xf0u) == 0xd0u)
+                                           ? 1u : 2u);
+            uint8_t data1;
+            uint8_t data2 = 0u;
+            if (data_size > size - offset) return 0;
+            data1 = data[offset++];
+            if (data_size == 2u) data2 = data[offset++];
+            ++receipt->channel_event_count;
+            dm2_music_store_event(tick, status, data1, data2, data_size);
+        } else {
+            uint8_t data_size = status == 0xf1u || status == 0xf3u ? 1u :
+                                status == 0xf2u ? 2u : 0u;
+            if (data_size > size - offset) return 0;
+            offset += data_size;
+        }
+    }
+    *out_duration_ticks = tick;
+    return 1;
+}
+
 static int dm2_inspect_hmp(const uint8_t *data,
                            size_t size,
                            DM2_V1_MusicStreamReceipt *receipt)
 {
+    enum { DM2_HMP_TRACKS_OFFSET = 48, DM2_HMP_BPM_OFFSET = 56,
+           DM2_HMP_V1_TRACKS_BASE = 776,
+           /* DM2's HMP 013195 payloads have four zero bytes between the
+            * 900-byte static header and the first observed track chunk. */
+           DM2_HMP_013195_TRACKS_BASE = 904,
+           DM2_HMP_TRACK_HEADER_BYTES = 12 };
     uint32_t tracks;
-    uint32_t chunk_size;
-    size_t offset = 788u;
-    uint32_t tick = 0;
-    if (size < 792u || memcmp(data, "HMIMIDIP", 8u) != 0)
+    uint32_t bpm;
+    size_t offset;
+
+    /* HMI SOS has two HMP headers that share the 48-byte subtrack count and
+     * the tempo at 56. DM2's PC corpus uses V1 (six zero version bytes and a
+     * 776-byte header); 013195 adds 128 restore-controller bytes plus the
+     * observed four-byte gap, placing chunks at 904. Each chunk is
+     * number(4), size(4), track(4), followed by
+     * HMP delta/MIDI events. This is cross-checked against the HMI format
+     * reader in ScummVM; Firestaff still consumes only its original GDAT
+     * payload and does not import a converted MIDI file. */
+    if (size < DM2_HMP_V1_TRACKS_BASE ||
+        memcmp(data, "HMIMIDIP", 8u) != 0) {
         return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
-    tracks = dm2_read_le32(data + 48u);
-    chunk_size = dm2_read_le32(data + 780u);
-    if (chunk_size < 12u || 780u + chunk_size > size)
+    }
+    if (memcmp(data + 8u, "013195", 6u) == 0) {
+        offset = DM2_HMP_013195_TRACKS_BASE;
+    } else if (data[8] == 0u && data[9] == 0u && data[10] == 0u &&
+               data[11] == 0u && data[12] == 0u && data[13] == 0u) {
+        offset = DM2_HMP_V1_TRACKS_BASE;
+    } else {
         return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+    }
+    if (size < offset) return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+    tracks = dm2_read_le32(data + DM2_HMP_TRACKS_OFFSET);
+    bpm = dm2_read_le32(data + DM2_HMP_BPM_OFFSET);
+    /* HMP device mappings reserve up to 32 subtracks in the original header;
+     * the retail DM2 corpus uses as many as 32. The public receipt retains
+     * detailed EOT counters for its first 16 tracks but inspection must walk
+     * every source chunk, never silently truncate the remaining music. */
+    if (tracks == 0u || tracks > 32u || bpm == 0u) {
+        return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+    }
     receipt->format = DM2_V1_MUSIC_FORMAT_HMP_V1;
     receipt->track_count = (uint16_t)tracks;
-    g_dm2_music_ticks_per_quarter = 96u;
-    while (offset < 780u + chunk_size) {
-        uint32_t delta = 0;
-        uint8_t status;
-        if (!dm2_read_hmp_vlq(data, 780u + chunk_size, &offset, &delta))
+    g_dm2_music_ticks_per_quarter = 60u;
+    for (uint32_t track_index = 0u; track_index < tracks; ++track_index) {
+        uint32_t chunk_size;
+        uint32_t track_duration = 0u;
+        DM2_V1_MusicTrackReceipt overflow_track;
+        DM2_V1_MusicTrackReceipt *track_receipt = track_index < 16u
+            ? &receipt->tracks[track_index] : &overflow_track;
+        memset(&overflow_track, 0, sizeof(overflow_track));
+        if (offset > size || size - offset < DM2_HMP_TRACK_HEADER_BYTES) {
+            return DM2_V1_MUSIC_INSPECT_BAD_HEADER;
+        }
+        chunk_size = dm2_read_le32(data + offset + 4u);
+        if (chunk_size < DM2_HMP_TRACK_HEADER_BYTES ||
+            chunk_size > size - offset ||
+            !dm2_inspect_hmp_track(
+                data + offset + DM2_HMP_TRACK_HEADER_BYTES,
+                chunk_size - DM2_HMP_TRACK_HEADER_BYTES, receipt,
+                track_receipt, &track_duration)) {
             return DM2_V1_MUSIC_INSPECT_BAD_EVENT;
-        tick += delta;
-        if (offset >= 780u + chunk_size) return DM2_V1_MUSIC_INSPECT_BAD_EVENT;
-        status = data[offset++];
-        if (status < 0x80u || status >= 0xf0u)
-            return DM2_V1_MUSIC_INSPECT_BAD_EVENT;
-        if (offset + 2u > 780u + chunk_size)
-            return DM2_V1_MUSIC_INSPECT_BAD_EVENT;
-        receipt->event_count++;
-        receipt->channel_event_count++;
-        dm2_music_store_event(tick, status, data[offset], data[offset + 1u], 2u);
-        offset += 2u;
+        }
+        if (track_duration > receipt->duration_ticks) {
+            receipt->duration_ticks = track_duration;
+        }
+        offset += chunk_size;
     }
-    receipt->duration_ticks = tick;
-    receipt->loop_duration_us = dm2_music_ticks_to_us(tick, 96u);
-    /* The HMP header is sufficient for a bounded diagnostic, but not for a
-     * source-faithful player. Unlike SMF, HMP has its own track-directory
-     * and timing semantics. SKProject's MIDI code consumes converted
-     * sidecars, not the original GDAT HMP bytes. Never hand this tentative
-     * event walk to the live MIDI scheduler. */
+    receipt->loop_duration_us =
+        dm2_music_hmp_ticks_to_us(receipt->duration_ticks, bpm);
+    /* Inspection proves the original stream's complete track partition and
+     * event bounds, not a source-faithful playback backend. SKProject's MIDI
+     * code consumes converted sidecars, so never give these direct-HMP
+     * events to the live scheduler until that backend contract is ported. */
     memset(g_dm2_music_events, 0, sizeof(g_dm2_music_events));
     g_dm2_music_event_count = 0;
     receipt->schedule_event_count = 0u;

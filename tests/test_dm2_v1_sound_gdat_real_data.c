@@ -138,11 +138,34 @@ int main(void)
         for (track = 0; track < DM2_MUSIC_TRACK_COUNT; ++track) {
             DM2_V1_GdatEntryQueryReceipt entry;
             DM2_V1_MusicQueueReceipt music;
+            DM2_V1_MusicStreamReceipt stream;
+            const uint8_t *hmp_bytes;
+            size_t hmp_size = 0u;
             char expected_path[sizeof(music.asset_path)];
             assert(dm2_v1_query_gdat_entry(
                 &loader, DM2_GDAT_CATEGORY_MUSICS, track,
                 DM2_GDAT_ENTRY_TYPE_HMP, 0, &entry) == 1);
             assert(entry.loadable_raw && entry.raw_length > 0u);
+            hmp_bytes = dm2_v1_load_gdat_raw_data(&loader, entry.raw_index,
+                                                   &hmp_size);
+            /* Each original stream is inspected directly from its GDAT raw
+             * entry. The parser proves all HMP 013195 track boundaries and
+             * events but intentionally does not grant MIDI playback. */
+            assert(hmp_bytes != NULL && hmp_size == entry.raw_length);
+            if (dm2_v1_sound_inspect_music_data(hmp_bytes, hmp_size,
+                                                &stream) !=
+                DM2_V1_MUSIC_INSPECT_OK) {
+                fprintf(stderr, "FAIL: HMP track %d was not structurally valid\n",
+                        track);
+                ++failures;
+                continue;
+            }
+            assert(stream.valid &&
+                   stream.format == DM2_V1_MUSIC_FORMAT_HMP_V1 &&
+                   stream.track_count > 0u && stream.event_count > 0u &&
+                   stream.channel_event_count > 0u &&
+                   !stream.schedule_handoff_ready &&
+                   !stream.midi_handoff_ready);
             /* Every original HMP payload must remain source-resolved but
              * fail-closed. A valid-looking header in any non-title track
              * cannot reopen the unproven direct-HMP scheduler path. */

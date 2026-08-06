@@ -68,7 +68,8 @@ DM2_QUERY_SND_ENTRY_INDEX(cat, idx, sfx) — resolve GDAT sound entry to index
 - 29 `HMIMIDIP013195` streams: `GRAPHICS.DAT` GDAT `MUSICS/<track>/dtHMP/0`
 - PC `SONGLIST.DAT` supplies the first 44 map-to-track selectors
 - `SkWinMIDI.cpp` parses converted Standard MIDI sidecars, not original HMP
-- Firestaff rejects playback until a direct original-HMP decoder is ready
+- Firestaff directly validates original HMP headers, chunks and event bounds,
+  then rejects playback until a source-faithful scheduler/backend is ready
 
 ### Music Folder per Variant
 SkWinMIDI_MIDI_LOOP() branches on dungeon variant:

@@ -2810,6 +2810,14 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   -> track 02 and preserves `playback_started = 0` while the original-HMP
   decoder/backend are unavailable; no sidecar MIDI or OGG substitute is used.
 
+- ✅ 2026-08-06 DM2 original-HMP corpus inspection: the direct GDAT reader
+  now validates all 29 PC `MUSICS/00..1c/dtHMP/0` streams against their real
+  HMP header variants, 12-byte track chunks and bounded events. The retail
+  `013195` corpus reaches 10--32 subtracks; every chunk is inspected even
+  though the public receipt retains detailed EOT counters for its first 16.
+  The inspector clears scheduler and MIDI-backend handoff state afterwards,
+  so no converted sidecar, synthetic timing or unproven cue can play.
+
 - ✅ 2026-07-31 DM2 music-source documentation correction: removed the stale
   claim that skproject's converted loose `.hmp.mid` sidecars were original PC
   runtime data. `docs/dm2_sound_format.md` now identifies the 29 authentic

@@ -4649,9 +4649,12 @@ that its exact runtime path is not already source-locked and tested.
     as a consumer of externally converted `.hmp.mid` files, not an original
     HMP decoder. The real PC corpus contains 29 records (`00..1c`), not the
     obsolete 28-track count. Continue to reject sidecars and generated audio.
-    Remaining work is original-HMP stream decoding and backend scheduling. Do
-    not claim a cue played until that source chain and backend have both
-    succeeded.
+    **2026-08-06 HMP corpus boundary:** the direct reader now validates each
+    original stream's header variant, all source chunks and HMP event bounds
+    (including the 10--32-subtrack `013195` corpus). It deliberately clears
+    every scheduler/backend handoff after inspection. Remaining work is the
+    source-faithful scheduling/backend contract. Do not claim a cue played
+    until that source chain and backend have both succeeded.
 47. **DM2-INPUT-CONTROLLER-TOUCH:** Complete mouse, keyboard, controller,
     Steam Deck, touch, focus, scaling, hit-testing, and command translation
     for the real DM2 menu/HUD/gameplay routes.
