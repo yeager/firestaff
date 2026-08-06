@@ -26269,6 +26269,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   model when no Structure1F owner row is visible. Real adjacent-cell facts
   remain retained, but mesh planning now blocks until the source-owned
   Structure1F → Structure1A → Structure3 face chain is present.
+- 2026-08-06: Structure1F scene selection now additionally requires the
+  source-recorded Structure1A owner cell to be party/forward/left/right of
+  the active camera. A valid owner elsewhere in the level is no longer
+  treated as the visible face; VDP1/raster semantics remain capture-gated.
 # Theron V2 HUD widget pixels remain blocked in production: the manifest parser is fixture-only and the runtime now fails closed until all seven slots resolve to decoded Track 02 source assets.
 
 - 🔧 CSB V2.2 artpack follow-up: the hand-authored per-cell asset-id catalog is

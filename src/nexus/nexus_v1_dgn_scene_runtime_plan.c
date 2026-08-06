@@ -39,6 +39,20 @@ static Nexus_V1_DgnMeshFillKind fill_kind_from_face(
     return NEXUS_V1_DGN_MESH_FILL_STATIC_TEXTURE;
 }
 
+static int owner_cell_is_in_view(const Nexus_V1_DgnSceneRuntimePlanReceipt *view,
+                                 const Nexus_V1_DgnStructure1FEntry *entry)
+{
+    if (!view || !entry) return 0;
+    return (entry->structure1a_owner_x == view->party_x &&
+            entry->structure1a_owner_y == view->party_y) ||
+           (entry->structure1a_owner_x == view->forward_x &&
+            entry->structure1a_owner_y == view->forward_y) ||
+           (entry->structure1a_owner_x == view->left_x &&
+            entry->structure1a_owner_y == view->left_y) ||
+           (entry->structure1a_owner_x == view->right_x &&
+            entry->structure1a_owner_y == view->right_y);
+}
+
 int nexus_v1_dgn_scene_runtime_plan_build(
     const Nexus_V1_DgnSceneRuntimePlanInput *input,
     Nexus_V1_DgnSceneRuntimePlanReceipt *out_receipt)
@@ -100,6 +114,7 @@ int nexus_v1_dgn_scene_runtime_plan_build(
         const Nexus_V1_DgnStructure1FEntry *entry =
             &input->level->structure1f_entries[index];
         if (entry->structure1a_relation_valid &&
+            owner_cell_is_in_view(out_receipt, entry) &&
             (int)entry->structure1a_structure3_model_index <
                 input->level->structure3_directory.entry_count &&
             entry->face < input->level->structure3_entry_face_counts[

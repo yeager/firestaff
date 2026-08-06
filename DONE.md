@@ -43,6 +43,12 @@
   Added `docs/NEXUS_RUNTIME_CAPTURE.md` to document the artifact boundary and
   the difference between ordinary video evidence and VDP/runtime provenance.
 
+- ✅ 2026-08-06 Nexus visible-owner selection: scene planning now filters
+  Structure1F candidates by their authenticated Structure1A owner coordinates
+  against the active party/forward/left/right cells. Real `LEV01.DGN` still
+  finds a positive owner chain across the camera scan; arbitrary off-screen
+  faces are not selected for the no-draw geometry plan.
+
 - ✅ 2026-08-06 Nexus M11 startup capture gate: removed the remaining direct
   `TITLE.CG` and `WARNING.BIN` host-framebuffer/palette copies from the M11
   startup executors. The real European ISO still loads and advances the

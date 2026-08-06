@@ -200,12 +200,15 @@ static void test_lev01_owned_scene_plan(void)
     for (y = 0; y < NEXUS_MAX_MAP_SIZE && !found; ++y) {
         int x;
         for (x = 0; x < NEXUS_MAX_MAP_SIZE && !found; ++x) {
+            int dir;
             if (nexus_v1_level_get_square(&level, x, y) < 0) continue;
-            input.party_x = x;
-            input.party_y = y;
-            input.party_dir = 0;
-            found = nexus_v1_dgn_scene_runtime_plan_build(
-                        &input, &receipt) == 1;
+            for (dir = 0; dir < 4 && !found; ++dir) {
+                input.party_x = x;
+                input.party_y = y;
+                input.party_dir = dir;
+                found = nexus_v1_dgn_scene_runtime_plan_build(
+                            &input, &receipt) == 1;
+            }
         }
     }
     CHECK(found &&
