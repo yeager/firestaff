@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D2C-F0108-SYNTHETIC-AUDIT:** This contract-only D2C F0108 model
+  fixes zones, cell ordering and a local framebuffer probe. It has no original
+  DM1 data input or M11/runtime caller; retain it as an explicit ReDMCSB
+  regression until a source-bound D2C floor-ornament consumer is recovered.
+
 - **DM1-D3L2-D3R2-F0108-OCCLUSION-SYNTHETIC-AUDIT:** This asset-free F0676/
   F0677 ordering model fixes side-pair zones, cell orders and C10 probes. It
   has no original DM1 data input or M11/runtime caller; retain it as an

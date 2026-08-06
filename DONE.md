@@ -1,3 +1,12 @@
+# DM1 D2C F0108 floor-ceiling synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only D2C F0108 floor/ceiling/ornament model from
+  M10. It fixes source-order metadata and a local framebuffer probe, reads no
+  original DM1 material and has no M11/runtime caller; its dedicated ReDMCSB
+  regression now compiles the source explicitly.
+- ✅ Verification: `test_dm1_v1_viewport_d2c_f0108_floor_ceiling_ornament_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D3L2/D3R2 F0108 occlusion synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D3L2/D3R2 F0108 occlusion model from M10. It
