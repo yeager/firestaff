@@ -5105,6 +5105,13 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   return an explicit unbound status without changing tick/state; movement,
   inventory, spell, save, menu and HUD action admission awaits Saturn
   event/SLEV/SDDRVS capture. Updated `test_nexus_v1_event` accordingly.
+
+- ✅ 2026-08-06 Nexus startup-capture preflight: authenticated the supplied
+  European BIOS (`96e106f7…330266f`) and English CUE (`b96f01e2…616f33`)
+  against the local retail `MENU.BPK`, `DM.BIN`, and `LEV00.DGN` receipts.
+  The operator manifest is created without game-data copies; a launch attempt
+  with stock Mednafen exits 78 at the missing Firestaff trace-hook check, so
+  no unowned startup/menu/HUD/VDP1/SLEV/SAL artifact is admitted.
   DMV*.AVI are standard RIFF/AVI video, DMN_*.TXT are Shift-JIS text.
 
 - ✅ 2026-07-29 Nexus BPPK menu graphics decoder: MENU.BPK BPPK/BMPD

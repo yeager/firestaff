@@ -1,5 +1,14 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
+  authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
+  and the local English CUE by
+  `b96f01e2f8ce3ab9c8e4a33d5a0c7076cdc1bfd247a85a1454e6c36c8a616f33`.
+  The operator preflight accepts both with the real `MENU.BPK`, `DM.BIN`,
+  and `LEV00.DGN` identities, but stock Mednafen is rejected at launch with
+  exit 78 because it lacks `FIRESTAFF_NEXUS_TRACE_OUTPUT`. No startup/menu,
+  HUD, VDP1, SLEV, or SAL artifact may be admitted from that binary.
+
 - **NEXUS-EVENT-DISPATCH-CAPTURE:** The 61 `DM.BIN` event names remain a
   source receipt, but the former host event→command map and accepting
   dispatcher were synthetic DM1-shaped behavior. They are now unbound and
