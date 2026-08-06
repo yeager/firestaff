@@ -67,6 +67,12 @@
   regression already compiles the source explicitly; it loads no original DM1
   data and has no M11/runtime caller.
 
+# DM1 chest leader-death synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the deterministic leader-death chest-close contract fixture from
+  M10. It fabricates chest, champion and hand objects locally; M11 owns the
+  runtime behavior and the direct regression compiles the source.
+
 # DM1 C040 status-box synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C040/G0299 status-box click fixture from M10.

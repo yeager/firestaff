@@ -4565,6 +4565,11 @@ list(REMOVE_ITEM M10_SOURCES
 # or M11/runtime caller; keep it in its direct source-lock regression.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c040_status_box_click_while_panel_live_pc34_compat.c")
+# `dm1_v1_chest_auto_close_on_leader_death_pc34_compat.c` is a deterministic
+# contract fixture with locally fabricated chest, champion and hand objects.
+# M11 owns the live runtime route, so keep this source in its direct test.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_auto_close_on_leader_death_pc34_compat.c")
 # `dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c` is a
 # contract-only probe. It manufactures its chest stack, leader hand, floor
 # link and coordinates locally, reads no original save/dungeon/graphics data,
