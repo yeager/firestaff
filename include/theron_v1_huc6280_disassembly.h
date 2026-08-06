@@ -46,7 +46,7 @@ typedef struct {
     char source_md5[33];
 } Theron_V1Huc6280DisassemblyReceipt;
 
-/* Reads a direct retail Track 02 ISO projection and verifies the exact
+/* Reads a direct retail Track 02 BIN or ISO projection and verifies the exact
  * source-owned US or JP bank-$1f fragment. Missing input is UNAVAILABLE;
  * mismatched size, identity, bytes, or path type is REJECTED. */
 int theron_v1_huc6280_disassembly_read_file(

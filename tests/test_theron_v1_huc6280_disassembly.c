@@ -50,7 +50,10 @@ static void verify(const char *env_name, const char *name, int variant,
     assert(receipt.level_decompressor_caller_fnv1a == 0x699e8da1u);
     assert(receipt.stage2_resource_handler_address == 0x4c3fu);
     assert(receipt.stage2_resource_handler_bytes == 162u);
-    assert(receipt.stage2_resource_handler_fnv1a == 0x46360d97u);
+    assert(receipt.stage2_resource_handler_fnv1a ==
+           (variant == THERON_TRACK02_VARIANT_US_BIN ? 0x58cd4b73u :
+            variant == THERON_TRACK02_VARIANT_JP_BIN ? 0x788df8e7u :
+            0x46360d97u));
     printf("PASS: authentic %s bank-$1f HuC6280 fragment md5=%s fnv=%08x\n",
            label, receipt.source_md5, (unsigned)receipt.fragment_fnv1a);
 }
@@ -65,6 +68,10 @@ int main(void) {
            THERON_TRACK02_VARIANT_US_ISO, "US");
     verify("FIRESTAFF_THERON_JP_ISO", "TQJP19.iso",
            THERON_TRACK02_VARIANT_JP_REV1_ISO, "JP");
+    verify("FIRESTAFF_THERON_US_BIN", "TQUS02.bin",
+           THERON_TRACK02_VARIANT_US_BIN, "US raw BIN");
+    verify("FIRESTAFF_THERON_JP_BIN", "TQJP02.bin",
+           THERON_TRACK02_VARIANT_JP_BIN, "JP raw BIN");
     puts("PASS: theron_v1_huc6280_disassembly");
     return 0;
 }

@@ -53910,3 +53910,11 @@ alcove runtime and archive-media tests passed (4/4).
   before resolving subtype or material. Missing raw identity produces no-draw
   instead of a candidate-derived wrong icon/name. Real F0115 floor pickup and
   alcove pickup-to-inventory tests pass against the PC34 corpus.
+
+- ✅ 2026-08-06 Theron raw-BIN HuC6280 disassembly intake: the static bank-$1f
+  receipt now verifies authentic `TQUS02.bin` and `TQJP02.bin` Track 02 files
+  in addition to the ISO projections. Their real MODE1/2352 bank-window
+  offsets and regional stage-2 handler hashes are bound by MD5/size/byte/FNV
+  checks. The focused test passes all four authentic US/JP BIN/ISO sources;
+  runtime consumer and semantic level/object/palette/tile/viewport handoff
+  remain capture-gated.

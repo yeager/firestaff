@@ -371,6 +371,11 @@
   locals and marked the POSIX-only canonical-path capacity parameter unused.
   This keeps the authentic Track 02 receipt path warning-clean without
   changing any media offsets, hashes or runtime admission gates.
+  2026-08-06 raw-disassembly follow-up: the HuC6280 bank-$1f receipt now
+  admits the authentic `TQUS02.bin` and `TQJP02.bin` files with their real
+  MODE1/2352 bank-window offsets and regional stage-2 hashes. This closes
+  only static code identity coverage; the executing consumer and semantic
+  level/object/palette handoff remain capture-gated.
 
 - **THERON-M11-FORCEFIELD-INPUT:** M11 now lets authentic Track 02 startup
   input reach the forcefield admission path even when the source-owned
