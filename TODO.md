@@ -2271,8 +2271,12 @@ diagnostic; it must not silently fall back to a generated visual.
   now fixture-only. A mounted M11 source provider may use only the
   authenticated `dm2_v1_dungeon_*` record chain; if that chain cannot bind a
   button, the button is absent instead of obtaining a guessed WALL_GFX
-  selection. Complete the G1 record-chain ownership before restoring any
-  missing source button. **2026-08-06 weather inventory update:** the unused
+  selection. **2026-08-06 follow-up:** removed those local compatibility
+  walkers from the linked runtime as well. The only remaining wall-button
+  routes are the authenticated dungeon graph and the G1 direct-material
+  receipts; a callback-selected viewport provider can no longer reactivate a
+  fixture-only DB2/DB3 inference. Complete the G1 record-chain ownership
+  before restoring any missing source button. **2026-08-06 weather inventory update:** the unused
   generic rain/fog/storm planner with fixed colours and generated commands
   has been removed, together with its otherwise unused viewport selector
   fields. The only remaining weather draw route is the original GDAT

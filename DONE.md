@@ -51756,3 +51756,11 @@ and `firestaff` build pass.
   seen during creature damage. `test_m11_dm1_damage_indicator_source_gate`
   and `test_dm1_v1_champion_panel_damage_indicator_pc34_compat` pass. A real
   packaged macOS capture is still intentionally tracked in TODO.
+
+- ✅ 2026-08-06 DM2 wall-button fallback removal: removed the two local
+  DB2/DB3 record-chain walkers from the linked V1 runtime. A custom or test
+  viewport asset provider can no longer derive a `WALL_GFX` button from raw
+  tile-chain bytes; only the authenticated dungeon graph and direct G1
+  material receipts may authorize one. The focused WALL_GFX and door-scene
+  gates pass, and the real PC-DOS startup probe still reaches the original
+  title/menu surface.

@@ -332,165 +332,6 @@ static int dm2_runtime_is_door_at(const DM2_V1_DungeonData *dd,
                                   int y,
                                   int raw);
 
-/* The proven graph helpers (dm2_v1_dungeon_find_text_wall_gfx /
- * dm2_v1_dungeon_resolve_actuator_wall_gfx) fail closed when the loader has
- * not authenticated every GenericRecord::w0 link.  The runtime handoff still
- * needs to discover DB2/DB3 wall-gfx metadata for bounded skproject fixtures
- * and for maps where the wall-gfx record precedes the DB0 door record in the
- * tile chain, so walk the same chain locally without promoting the graph. */
-static int dm2_runtime_text_index_allows_wall_gfx(uint16_t text_index)
-{
-    switch ((text_index >> 8) & 0xffu) {
-        case 0x00:
-        case 0x02:
-        case 0x03:
-        case 0x05:
-        case 0x0d:
-            return 1;
-        default:
-            return 0;
-    }
-}
-
-static int dm2_runtime_find_text_wall_gfx_fallback(
-    const DM2_V1_DungeonData *d,
-    uint16_t first_thing,
-    int view_dir,
-    int side_index,
-    int max_steps,
-    int *out_wall_gfx_index,
-    int *out_wall_gfx_field)
-{
-    uint16_t thing = first_thing;
-
-    if (out_wall_gfx_index) *out_wall_gfx_index = -1;
-    if (out_wall_gfx_field) *out_wall_gfx_field = -1;
-    if (!d || !d->raw_data || !out_wall_gfx_index || !out_wall_gfx_field)
-        return -1;
-    if (side_index < 0 || side_index > 3) return -1;
-    if (max_steps <= 0) max_steps = 32;
-
-    for (int step = 0; step < max_steps; ++step) {
-        int type = -1;
-        int size = 0;
-        const uint8_t *record;
-        uint16_t w2;
-        uint16_t next;
-        int text_index;
-        int text_visible;
-        int ext_usage;
-        int object_dir;
-        int relative_side;
-        int ornate;
-        int packed;
-
-        if (thing == 0xfffeu || thing == 0xffffu) return -1;
-        record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
-        if (!record || size < 2) return -1;
-        if (type > 3) return -1;
-
-        if (type == 2 && size >= 4) {
-            w2 = (uint16_t)record[2] | ((uint16_t)record[3] << 8);
-            text_index = (int)((w2 >> 3) & 0x1fffu);
-            text_visible = (int)(w2 & 1u);
-            ext_usage = (text_index >> 8) & 0xff;
-            object_dir = (int)((thing >> 14) & 3u);
-            relative_side = ((object_dir - (view_dir & 3)) & 3);
-            ornate = text_index & 0xff;
-
-            if (((w2 >> 1) & 3u) == 1 && relative_side == side_index &&
-                dm2_runtime_text_index_allows_wall_gfx((uint16_t)text_index) &&
-                ((ext_usage != 0x05 && ext_usage != 0x0d) || text_visible != 0)) {
-                packed = ornate; /* static frame 0 */
-                *out_wall_gfx_index = packed & 0xff;
-                *out_wall_gfx_field = ((packed >> 8) & 0xff) + 1;
-                return 0;
-            }
-        }
-
-        next = (uint16_t)record[0] | ((uint16_t)record[1] << 8);
-        if (next == thing || next == 0xfffeu || next == 0xffffu) return -1;
-        thing = next;
-    }
-    return -1;
-}
-
-static int dm2_runtime_find_actuator_wall_gfx_ordinal_fallback(
-    const DM2_V1_DungeonData *d,
-    uint16_t first_thing,
-    int view_dir,
-    int side_index,
-    int max_steps,
-    int *out_ordinal)
-{
-    uint16_t thing = first_thing;
-
-    if (out_ordinal) *out_ordinal = -1;
-    if (!d || !d->raw_data || !out_ordinal) return -1;
-    if (side_index < 0 || side_index > 3) return -1;
-    if (max_steps <= 0) max_steps = 32;
-
-    for (int step = 0; step < max_steps; ++step) {
-        int type = -1;
-        int size = 0;
-        const uint8_t *record;
-        uint16_t next;
-        int object_dir;
-        int relative_side;
-        int ordinal;
-
-        if (thing == 0xfffeu || thing == 0xffffu) return -1;
-        record = dm2_v1_dungeon_get_thing_record(d, thing, &type, NULL, &size);
-        if (!record || size < 2) return -1;
-        if (type > 3) return -1;
-
-        if (type == 3 && size >= 8) {
-            ordinal = (int)(((uint16_t)record[4] |
-                             ((uint16_t)record[5] << 8)) >> 12) & 0x0f;
-            object_dir = (int)((thing >> 14) & 3u);
-            relative_side = ((object_dir - (view_dir & 3)) & 3);
-            if (relative_side == side_index && ordinal > 0) {
-                *out_ordinal = ordinal;
-                return 0;
-            }
-        }
-
-        next = (uint16_t)record[0] | ((uint16_t)record[1] << 8);
-        if (next == thing || next == 0xfffeu || next == 0xffffu) return -1;
-        thing = next;
-    }
-    return -1;
-}
-
-static int dm2_runtime_resolve_actuator_wall_gfx_fallback(
-    const DM2_V1_DungeonData *d,
-    uint16_t first_thing,
-    int view_dir,
-    int side_index,
-    int max_steps,
-    const uint8_t *wall_gfx_list,
-    int wall_gfx_count,
-    int *out_wall_gfx_index,
-    int *out_wall_gfx_field)
-{
-    int ordinal = -1;
-
-    if (out_wall_gfx_index) *out_wall_gfx_index = -1;
-    if (out_wall_gfx_field) *out_wall_gfx_field = -1;
-    if (!wall_gfx_list || wall_gfx_count <= 0 ||
-        !out_wall_gfx_index || !out_wall_gfx_field) {
-        return -1;
-    }
-    if (dm2_runtime_find_actuator_wall_gfx_ordinal_fallback(
-            d, first_thing, view_dir, side_index, max_steps, &ordinal) != 0) {
-        return -1;
-    }
-    if (ordinal <= 0 || ordinal > wall_gfx_count) return -1;
-    *out_wall_gfx_index = (int)wall_gfx_list[ordinal - 1];
-    *out_wall_gfx_field = 1;
-    return 0;
-}
-
 /* skproject/SKULLWIN/c_creature.cpp DM2_PROCEED_CCM reads the door cell in
  * front of the creature through the field runtime before executing the CCM
  * step.  The runtime bridges the creature pool to the live dungeon tile state
@@ -966,7 +807,6 @@ static void dm2_runtime_apply_door_record_metadata(
     const uint8_t *door_gfx_active,
     const uint8_t *door_ornate_list,
     int door_ornate_count, uint32_t tick,
-    int allow_compatibility_record_walk,
     DM2_ViewSquare *door) {
     int thing;
     int door_thing;
@@ -1012,15 +852,10 @@ static void dm2_runtime_apply_door_record_metadata(
             door_ornate_list[door->ornament_index - 1u];
     }
     if (!door->door_button &&
-        (dm2_v1_dungeon_find_text_wall_gfx(dd, (uint16_t)thing,
-                                           view_dir, 2, 8,
-                                           &wall_gfx_index,
-                                           &wall_gfx_field) == 0 ||
-         (allow_compatibility_record_walk &&
-          dm2_runtime_find_text_wall_gfx_fallback(dd, (uint16_t)thing,
-                                                  view_dir, 2, 8,
-                                                  &wall_gfx_index,
-                                                  &wall_gfx_field) == 0))) {
+        dm2_v1_dungeon_find_text_wall_gfx(dd, (uint16_t)thing,
+                                          view_dir, 2, 8,
+                                          &wall_gfx_index,
+                                          &wall_gfx_field) == 0) {
         door->door_wall_button = 1;
         door->door_wall_button_index = (uint8_t)wall_gfx_index;
         door->door_wall_button_field = (uint8_t)wall_gfx_field;
@@ -1028,15 +863,10 @@ static void dm2_runtime_apply_door_record_metadata(
         door->door_wall_button_y = (int16_t)y;
         door->door_wall_button_object_id = (uint16_t)thing;
     } else if (!door->door_button &&
-               (dm2_v1_dungeon_resolve_actuator_wall_gfx(
-                    dd, (uint16_t)thing, view_dir, 2, 8,
-                    wall_gfx_list, wall_gfx_count,
-                    &wall_gfx_index, &wall_gfx_field) == 0 ||
-                (allow_compatibility_record_walk &&
-                 dm2_runtime_resolve_actuator_wall_gfx_fallback(
-                     dd, (uint16_t)thing, view_dir, 2, 8,
-                     wall_gfx_list, wall_gfx_count,
-                     &wall_gfx_index, &wall_gfx_field) == 0))) {
+               dm2_v1_dungeon_resolve_actuator_wall_gfx(
+                   dd, (uint16_t)thing, view_dir, 2, 8,
+                   wall_gfx_list, wall_gfx_count,
+                   &wall_gfx_index, &wall_gfx_field) == 0) {
         door->door_wall_button = 1;
         door->door_wall_button_index = (uint8_t)wall_gfx_index;
         door->door_wall_button_field = (uint8_t)wall_gfx_field;
@@ -1573,7 +1403,6 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
     };
     DM2_V1_DungeonData *dd;
     int dir;
-    int allow_compatibility_record_walk;
 
     if (!rt || !viewport || rt->outdoor || !rt->boot ||
         !rt->boot->dungeon_data) {
@@ -1581,14 +1410,6 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
     }
     dir = party_dir & 3;
     dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    /* The two local DB2/DB3 walkers predate the complete G1 record-chain
-     * receipt. They are useful only to exercise bounded fixtures. A mounted
-     * M11 source provider must use dm2_v1_dungeon_*'s authenticated graph;
-     * otherwise a wall button remains absent rather than acquiring a guessed
-     * GDAT image position. */
-    allow_compatibility_record_walk =
-        rt->viewport_asset_fetch != dm2_v1_boot_viewport_asset_fetch ||
-        rt->viewport_asset_user == NULL;
     for (size_t i = 0; i < sizeof(visible_cells) / sizeof(visible_cells[0]); ++i) {
         int map_x = party_x + dx[dir] * visible_cells[i].forward -
             dy[dir] * visible_cells[i].lateral;
@@ -1657,8 +1478,7 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                         rt->map_door_gfx_list, rt->map_door_gfx_active,
                         rt->map_door_ornate_list,
                         rt->map_door_ornate_count,
-                        (uint32_t)rt->tick_count,
-                        allow_compatibility_record_walk, door);
+                        (uint32_t)rt->tick_count, door);
                 }
                 (void)dm2_runtime_apply_direct_g1_wall_button_metadata(
                     rt, map_x, map_y, door);
@@ -1669,7 +1489,7 @@ static void dm2_runtime_populate_visible_terrain(DM2_V1_RuntimeState *rt,
                     rt->map_door_gfx_list, rt->map_door_gfx_active,
                     rt->map_door_ornate_list,
                     rt->map_door_ornate_count, (uint32_t)rt->tick_count,
-                    allow_compatibility_record_walk, door);
+                    door);
             }
         }
     }
