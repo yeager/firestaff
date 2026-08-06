@@ -42,6 +42,15 @@ typedef struct DM2_V1_SndIndexEntry {
     int16_t  w_00;
 } DM2_V1_SndIndexEntry;
 
+/* The two origin bytes consumed by DM2_QUEUE_NOISE_GEN1 when the sound is
+ * emitted from a non-current map.  This is the source s_sizee::barr_04[2..3]
+ * pair, not host world geometry.  Source: SKProject SKULLWIN/xtypes.h:110-118
+ * and c_sfx.cpp:174-182. */
+typedef struct DM2_V1_SfxLevelOrigin {
+    uint8_t x;
+    uint8_t y;
+} DM2_V1_SfxLevelOrigin;
+
 /* ========================================================================
  * SFX state
  * ======================================================================== */
@@ -88,9 +97,11 @@ typedef struct DM2_V1_SfxCallbacks {
     void    *(*get_snd_queue_neg)(void *ctx);     /* xsndptr3 */
     DM2_V1_SfxEntry *(*get_delayed_sounds)(void *ctx); /* sndptr1 */
 
-    /* Level geometry pointers for sound occlusion */
-    void    *(*get_level_sizee)(void *ctx);        /* v1e03c0 */
-    void    *(*get_level_sizee_array)(void *ctx);  /* v1e03c8 */
+    /* Source level origins for cross-map sound positioning.  GEN1 requires
+     * both when mode > 0; absent source origins reject rather than retaining
+     * the former same-map approximation. */
+    const DM2_V1_SfxLevelOrigin *(*get_current_level_origin)(void *ctx);
+    const DM2_V1_SfxLevelOrigin *(*get_party_level_origin)(void *ctx);
 
     /* v1e0238 flag for distance halving */
     int16_t (*get_distance_halve_flag)(void *ctx);
@@ -112,6 +123,8 @@ typedef struct DM2_V1_SfxSoundDistanceReceipt {
 
 typedef struct DM2_V1_SfxQueueNoiseReceipt {
     bool     queued;
+    int16_t  relative_x;
+    int16_t  relative_y;
 } DM2_V1_SfxQueueNoiseReceipt;
 
 /* ========================================================================

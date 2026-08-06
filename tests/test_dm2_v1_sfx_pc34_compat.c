@@ -119,6 +119,24 @@ static int16_t mock_query_snd_found(void *ctx, int8_t a, int8_t b, int8_t c)
 static int16_t mock_get_zero(void *ctx) { (void)ctx; return 0; }
 static int16_t mock_get_party_map(void *ctx) { (void)ctx; return 1; }
 static int32_t mock_get_game_tick(void *ctx) { (void)ctx; return 100; }
+static DM2_V1_SfxLevelOrigin mock_current_level_origin = { 1u, 2u };
+static DM2_V1_SfxLevelOrigin mock_party_level_origin = { 0u, 0u };
+static int16_t mock_party_direction;
+static const DM2_V1_SfxLevelOrigin *mock_get_current_level_origin(void *ctx)
+{
+    (void)ctx;
+    return &mock_current_level_origin;
+}
+static const DM2_V1_SfxLevelOrigin *mock_get_party_level_origin(void *ctx)
+{
+    (void)ctx;
+    return &mock_party_level_origin;
+}
+static int16_t mock_get_party_direction(void *ctx)
+{
+    (void)ctx;
+    return mock_party_direction;
+}
 
 static void test_queue_noise_gen2(void)
 {
@@ -140,6 +158,8 @@ static void test_queue_noise_gen2(void)
     cb.get_view_width2       = mock_get_view_width2;
     cb.get_map_height        = mock_get_map_height;
     cb.get_game_tick         = mock_get_game_tick;
+    cb.get_current_level_origin = mock_get_current_level_origin;
+    cb.get_party_level_origin = mock_get_party_level_origin;
     cb.ctx = NULL;
 
     DM2_V1_SfxState state;
@@ -152,7 +172,61 @@ static void test_queue_noise_gen2(void)
     /* Should have queued (or at least tried) */
     assert(r.queued);
 
+    /* GEN1 applies the source s_sizee origin delta first: (5,5) becomes
+     * (6,7), then direction 0 rotates it relative to party (0,0). */
+    assert(r.relative_x == 6);
+    assert(r.relative_y == -7);
+
     printf("  PASS: queue_noise_gen2\n");
+}
+
+static void test_queue_noise_source_geometry_and_rotation(void)
+{
+    DM2_V1_SfxCallbacks cb;
+    DM2_V1_SfxState state;
+    DM2_V1_SfxQueueNoiseReceipt r;
+
+    memset(&cb, 0, sizeof(cb));
+    cb.query_snd_entry_index = mock_query_snd_found;
+    cb.get_current_map = mock_get_current_map;
+    cb.get_party_map = mock_get_party_map;
+    cb.get_party_alt_map = mock_get_zero;
+    cb.get_party_x = mock_get_zero;
+    cb.get_party_y = mock_get_zero;
+    cb.get_distance_halve_flag = mock_get_zero;
+    cb.get_view_map1 = mock_get_view_map1;
+    cb.get_view_map2 = mock_get_view_map2;
+    cb.get_view_data1 = mock_get_view_data1;
+    cb.get_view_data2 = mock_get_view_data2;
+    cb.get_view_width1 = mock_get_view_width1;
+    cb.get_view_width2 = mock_get_view_width2;
+    cb.get_map_height = mock_get_map_height;
+    cb.get_current_level_origin = mock_get_current_level_origin;
+    cb.get_party_level_origin = mock_get_party_level_origin;
+    memset(mock_view_data, 0, sizeof(mock_view_data));
+    mock_view_data[(6 << 5) + 7] = 1;
+
+    dm2_v1_sfx_state_init(&state);
+    /* A non-current-map sound cannot keep the old origin-free approximation. */
+    cb.get_current_level_origin = NULL;
+    r = dm2_v1_sfx_queue_noise_gen1(&cb, &state, 1, 2, 3, 0, 0, 5, 5, 1);
+    assert(!r.queued);
+    cb.get_current_level_origin = mock_get_current_level_origin;
+
+    for (int direction = 0; direction < 4; ++direction) {
+        static const int16_t expected_x[4] = { 6, 7, -6, -7 };
+        static const int16_t expected_y[4] = { -7, 6, 7, -6 };
+        mock_party_direction = (int16_t)direction;
+        cb.get_party_dir = mock_get_party_direction;
+        r = dm2_v1_sfx_queue_noise_gen1(
+            &cb, &state, 1, 2, 3, 0, 0, 5, 5, 1);
+        assert(r.queued);
+        assert(r.relative_x == expected_x[direction]);
+        assert(r.relative_y == expected_y[direction]);
+        state.queued_count = 0;
+    }
+
+    printf("  PASS: queue_noise_source_geometry_and_rotation\n");
 }
 
 /* ── Main ───────────────────────────────────────────────────────────── */
@@ -164,6 +238,7 @@ int main(void)
     test_state_init();
     test_sound_distance();
     test_queue_noise_gen2();
+    test_queue_noise_source_geometry_and_rotation();
     printf("All SFX tests passed.\n");
     return 0;
 }

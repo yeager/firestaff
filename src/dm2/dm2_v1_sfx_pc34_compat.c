@@ -126,6 +126,8 @@ DM2_V1_SfxQueueNoiseReceipt dm2_v1_sfx_queue_noise_gen1(
 {
     DM2_V1_SfxQueueNoiseReceipt r;
     r.queued = false;
+    r.relative_x = 0;
+    r.relative_y = 0;
 
     if (cb == NULL || state == NULL) return r;
 
@@ -157,8 +159,26 @@ DM2_V1_SfxQueueNoiseReceipt dm2_v1_sfx_queue_noise_gen1(
         int16_t dx = 0, dy = 0;
 
         if (mode > 0) {
-            /* Adjust for multi-level offset */
-            /* (simplified: level geometry offset not implemented here) */
+            const DM2_V1_SfxLevelOrigin *current_origin;
+            const DM2_V1_SfxLevelOrigin *party_origin;
+
+            /* SKProject c_sfx.cpp:174-182 translates source coordinates by
+             * the selected map's s_sizee::barr_04[2..3] origin before the
+             * direction transform.  A host-only same-map approximation made
+             * cross-map SFX positional data synthetic, so missing origins
+             * remain fail-closed. */
+            if (!cb->get_current_level_origin || !cb->get_party_level_origin) {
+                return r;
+            }
+            current_origin = cb->get_current_level_origin(cb->ctx);
+            party_origin = cb->get_party_level_origin(cb->ctx);
+            if (!current_origin || !party_origin) {
+                return r;
+            }
+            x = (int16_t)((int)x + (int)current_origin->x -
+                          (int)party_origin->x);
+            y = (int16_t)((int)y + (int)current_origin->y -
+                          (int)party_origin->y);
         }
 
         /* Direction-relative positioning */
@@ -166,16 +186,21 @@ DM2_V1_SfxQueueNoiseReceipt dm2_v1_sfx_queue_noise_gen1(
         if (party_dir <= 3) {
             int16_t px = cb->get_party_x(cb->ctx);
             int16_t py = cb->get_party_y(cb->ctx);
-            int16_t rel_x = x - px;
-            int16_t rel_y = py - y;
+            int16_t party_y_minus_y = py - y;
+            int16_t x_minus_party_x = x - px;
+            int16_t y_minus_party_y = y - py;
+            int16_t party_x_minus_x = px - x;
 
             switch (party_dir) {
-                case 0: dx =  rel_x; dy = rel_y; break;
-                case 1: dx = -rel_y + (y - py); dy = rel_x; break;
-                case 2: dx = -rel_x; dy = -rel_y + (y - py); break;
-                case 3: dx =  rel_y; dy = -rel_x; break;
+                case 0: dx = x_minus_party_x; dy = party_y_minus_y; break;
+                case 1: dx = y_minus_party_y; dy = x_minus_party_x; break;
+                case 2: dx = party_x_minus_x; dy = y_minus_party_y; break;
+                case 3: dx = party_y_minus_y; dy = party_x_minus_x; break;
             }
         }
+
+        r.relative_x = dx;
+        r.relative_y = dy;
 
         /* Occlusion distance check */
         int16_t total_dist = (int16_t)(abs((int)dx) + abs((int)dy));

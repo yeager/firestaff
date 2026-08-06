@@ -54063,6 +54063,16 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `test_dm2_v1_sound_gdat_real_data` passed against the local retail
   `GRAPHICS.DAT`; `test_dm2_v1_sound_source_gate` passed.
 
+- ✅ 2026-08-06 DM2 `c_sfx` source-origin correction: the isolated
+  `DM2_QUEUE_NOISE_GEN1` transcript now applies SKProject's exact
+  `s_sizee::barr_04[2..3]` current-map/party-map coordinate delta before the
+  original four-direction relative rotation. Missing origins reject instead
+  of retaining the prior host same-map approximation. This remains test-only:
+  it does not create queue memory, a runtime sound owner or playback.
+  Verification: `test_dm2_v1_sfx_pc34_compat` PASS, including all four source
+  rotations and missing-origin rejection. Source: `SKULLWIN/c_sfx.cpp:138-283`
+  and `SKULLWIN/xtypes.h:110-118`.
+
 - ✅ 2026-08-06 DM2 c_sfx placeholder isolation: removed the inactive
   callback sound queue from both production CMake globs. Its position handling
   omits the original level-geometry transform; the explicit test remains while
