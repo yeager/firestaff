@@ -181,6 +181,14 @@
   authentic Track 02 sectors and emits VDC/VCE snapshots, but still reports
   `non_system_card_pcecd=0` and no `$2600` handoff; semantic promotion remains
   closed.
+  2026-08-06 input-bound follow-up: a real PID-bound macOS key pair was
+  observed by the instrumented SDL boundary, but the supplied raw BIN's first
+  MODE1 sync is 75 sectors into the file while the archive CUE describes a
+  three-second pregap. The unnormalized raw/CUE pairing therefore reports
+  uncorrectable sectors before any game-owned consumer read. Keep this as a
+  media-alignment boundary, not a level/object/palette claim; a production
+  BIN/CUE normalizer must prove the raw span and pregap before capture can
+  promote any later-level semantics.
   2026-08-06 text-boundary update: the raw US decoder still retains its real
   codons for diagnostics, but production world text now rejects any block
   containing unresolved brace/control-code values. Reopen publication only

@@ -33,6 +33,15 @@
   PCE-CD read (`non_system_card_pcecd=0`) or `$2600` handoff. Dungeon,
   object, palette and viewport promotion therefore remain correctly blocked.
 
+- ✅ 2026-08-06 Theron capture input/media boundary: the instrumented original
+  runner observed a real PID-bound macOS key-down/up pair, proving host input
+  reaches the capture boundary. The same run exposed a separate media issue:
+  the supplied raw Track 02 BIN begins its first MODE1 sync 75 sectors into
+  the file, while the archive CUE declares a three-second pregap. The raw/CUE
+  pair consequently produces uncorrectable sectors before a game-owned
+  consumer read. No level, object, tile, palette or viewport semantics were
+  promoted; production BIN/CUE normalization remains open.
+
 - ✅ 2026-08-06 Theron chapter-marker loot parity: removed the duplicated,
   incorrectly ordered quest-item table from the chapter marker and dungeon
   progression diagnostic. Both now consume the authenticated US Track 02
