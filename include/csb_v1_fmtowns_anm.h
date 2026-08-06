@@ -38,6 +38,7 @@ extern "C" {
 #define CSB_FMTOWNS_ANM_MAX_HEIGHT   200u
 #define CSB_FMTOWNS_ANM_FRAME_PIXELS \
     (CSB_FMTOWNS_ANM_MAX_WIDTH * CSB_FMTOWNS_ANM_MAX_HEIGHT)
+#define CSB_FMTOWNS_ANM_MAX_LOOP_DEPTH 16u
 
 typedef enum {
     CSB_FMTOWNS_ANM_CHUNK_UNKNOWN = 0,
@@ -47,7 +48,9 @@ typedef enum {
     CSB_FMTOWNS_ANM_CHUNK_DL = 4,  /* delta frame */
     CSB_FMTOWNS_ANM_CHUNK_KD = 5,  /* keyframe data */
     CSB_FMTOWNS_ANM_CHUNK_BR = 6,  /* container wrapper */
-    CSB_FMTOWNS_ANM_CHUNK_AN = 7   /* animation header */
+    CSB_FMTOWNS_ANM_CHUNK_AN = 7,  /* animation header */
+    CSB_FMTOWNS_ANM_CHUNK_FO = 8,  /* loop begin */
+    CSB_FMTOWNS_ANM_CHUNK_NE = 9   /* loop end */
 } CSB_V1_FmtownsAnmChunkType;
 
 typedef struct {
@@ -97,6 +100,28 @@ typedef struct {
     uint32_t pixel_fnv1a;
 } CSB_V1_FmtownsAnmFrameReceipt;
 
+/* Stateful F2275 interpreter. The caller supplies and retains the indexed
+ * 320x200 work surface, matching the original animation player's retained
+ * bitmap. It deliberately exposes Timer-A units rather than a guessed host
+ * duration. */
+typedef struct {
+    const uint8_t *data;
+    size_t size;
+    size_t offset;
+    uint16_t width;
+    uint16_t height;
+    uint16_t loop_count[CSB_FMTOWNS_ANM_MAX_LOOP_DEPTH];
+    size_t loop_item_offset[CSB_FMTOWNS_ANM_MAX_LOOP_DEPTH];
+    uint32_t presentation_frame_index;
+    uint32_t chunks_visited;
+    uint16_t loop_depth;
+    int valid;
+    int finished;
+    int break_allowed;
+    int palette_seen;
+    CSB_V1_FmtownsAnmColor palette[CSB_FMTOWNS_ANM_PALETTE_SIZE];
+} CSB_V1_FmtownsAnmPlayback;
+
 /* Probe whether a buffer looks like an FM Towns ANM file.
  * Checks for "AN" or "BR" magic at the start. */
 int csb_v1_fmtowns_anm_probe(const uint8_t *data, size_t size);
@@ -116,6 +141,16 @@ int csb_v1_fmtowns_anm_decode_frame(const uint8_t *data, size_t size,
                                     uint8_t *out_pixels,
                                     size_t out_pixel_capacity,
                                     CSB_V1_FmtownsAnmFrameReceipt *out);
+
+/* Initialise and advance the original F2275 chunk stream. Step returns 1
+ * when it has decoded one EN/DL frame, 0 at end of stream and -1 for malformed
+ * source data. pixels must remain allocated between calls. */
+int csb_v1_fmtowns_anm_playback_init(const uint8_t *data, size_t size,
+                                     CSB_V1_FmtownsAnmPlayback *out);
+int csb_v1_fmtowns_anm_playback_step(CSB_V1_FmtownsAnmPlayback *playback,
+                                     uint8_t *pixels,
+                                     size_t pixel_capacity,
+                                     CSB_V1_FmtownsAnmFrameReceipt *out);
 
 #ifdef __cplusplus
 }

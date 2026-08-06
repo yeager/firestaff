@@ -13,6 +13,8 @@ static CSB_V1_FmtownsAnmChunkType classify_chunk(uint8_t a, uint8_t b) {
     if (a == 'K' && b == 'D') return CSB_FMTOWNS_ANM_CHUNK_KD;
     if (a == 'B' && b == 'R') return CSB_FMTOWNS_ANM_CHUNK_BR;
     if (a == 'A' && b == 'N') return CSB_FMTOWNS_ANM_CHUNK_AN;
+    if (a == 'F' && b == 'O') return CSB_FMTOWNS_ANM_CHUNK_FO;
+    if (a == 'N' && b == 'E') return CSB_FMTOWNS_ANM_CHUNK_NE;
     return CSB_FMTOWNS_ANM_CHUNK_UNKNOWN;
 }
 
@@ -322,4 +324,148 @@ int csb_v1_fmtowns_anm_decode_frame(const uint8_t *data, size_t size,
         pos += 6u + (size_t)bytes;
     }
     return -1;
+}
+
+int csb_v1_fmtowns_anm_playback_init(const uint8_t *data, size_t size,
+                                     CSB_V1_FmtownsAnmPlayback *out) {
+    size_t ignored_pos;
+    uint16_t width, height;
+    if (!out) return -1;
+    memset(out, 0, sizeof(*out));
+    if (!anm_header(data, size, &ignored_pos, &width, &height)) return -1;
+    /* F2275 begins at byte zero so it consumes an optional BR and the AN
+     * envelope as regular chunks before it reaches PL/EN/DL. */
+    out->data = data;
+    out->size = size;
+    out->width = width;
+    out->height = height;
+    out->valid = 1;
+    return 0;
+}
+
+static int playback_read_palette(CSB_V1_FmtownsAnmPlayback *playback,
+                                 const uint8_t *payload, uint16_t bytes) {
+    unsigned int i;
+    if (!playback || !payload || bytes < 66u || rd16be(payload) != 16u)
+        return 0;
+    for (i = 0u; i < CSB_FMTOWNS_ANM_PALETTE_SIZE; ++i) {
+        uint8_t index = payload[2u + i * 4u];
+        if (index >= CSB_FMTOWNS_ANM_PALETTE_SIZE) return 0;
+        playback->palette[index].r = payload[3u + i * 4u];
+        playback->palette[index].g = payload[4u + i * 4u];
+        playback->palette[index].b = payload[5u + i * 4u];
+    }
+    playback->palette_seen = 1;
+    return 1;
+}
+
+int csb_v1_fmtowns_anm_playback_step(CSB_V1_FmtownsAnmPlayback *playback,
+                                     uint8_t *pixels,
+                                     size_t pixel_capacity,
+                                     CSB_V1_FmtownsAnmFrameReceipt *out) {
+    size_t pixel_count;
+    uint32_t visited_this_step = 0u;
+    if (!playback || !pixels || !out || !playback->valid ||
+        playback->finished) return -1;
+    pixel_count = (size_t)playback->width * (size_t)playback->height;
+    if (pixel_count == 0u || pixel_capacity < pixel_count) return -1;
+    memset(out, 0, sizeof(*out));
+
+    while (playback->offset < playback->size) {
+        size_t pos = playback->offset;
+        uint16_t bytes;
+        uint16_t attributes;
+        size_t next;
+        const uint8_t *payload;
+        CSB_V1_FmtownsAnmChunkType type;
+
+        /* A broken no-frame loop must not spin forever. The authentic corpus
+         * remains far below this F2275 interpreter safety ceiling. */
+        if (++visited_this_step > 65536u) return -1;
+        if (playback->size - pos < 6u) return -1;
+        bytes = rd16be(playback->data + pos + 2u);
+        if ((size_t)bytes > playback->size - pos - 6u) return -1;
+        next = pos + 6u + (size_t)bytes;
+        attributes = rd16be(playback->data + pos + 4u);
+        payload = playback->data + pos + 6u;
+        type = classify_chunk(playback->data[pos], playback->data[pos + 1u]);
+        playback->chunks_visited++;
+
+        switch (type) {
+        case CSB_FMTOWNS_ANM_CHUNK_BR:
+            if (attributes == 1u) playback->break_allowed = 1;
+            playback->offset = next;
+            break;
+        case CSB_FMTOWNS_ANM_CHUNK_PL:
+            if (!playback_read_palette(playback, payload, bytes)) return -1;
+            playback->offset = next;
+            break;
+        case CSB_FMTOWNS_ANM_CHUNK_EN:
+        case CSB_FMTOWNS_ANM_CHUNK_DL: {
+            size_t payload_offset = bytes >= 2u && payload[0] == 0xffu &&
+                                    payload[1] == 0x81u ? 2u : 0u;
+            if ((size_t)bytes < payload_offset + 4u ||
+                !decode_f8288(payload + payload_offset,
+                              (size_t)bytes - payload_offset,
+                              pixels, pixel_count,
+                              playback->width, playback->height)) return -1;
+            playback->offset = next;
+            out->valid = 1;
+            out->width = playback->width;
+            out->height = playback->height;
+            out->frame_index = playback->presentation_frame_index++;
+            out->source_chunk_offset = (uint32_t)pos;
+            out->source_chunk_bytes = bytes;
+            out->source_delay_ticks = attributes;
+            out->timer_a_ticks = attributes < 5u ? 5u : attributes;
+            out->source_was_delta = type == CSB_FMTOWNS_ANM_CHUNK_DL;
+            out->palette_applied = playback->palette_seen;
+            memcpy(out->palette, playback->palette, sizeof(out->palette));
+            out->pixel_fnv1a = fnv1a32(pixels, pixel_count);
+            return 1;
+        }
+        case CSB_FMTOWNS_ANM_CHUNK_FO: {
+            uint16_t next_bytes;
+            size_t item_offset;
+            if (playback->loop_depth >= CSB_FMTOWNS_ANM_MAX_LOOP_DEPTH ||
+                playback->size - next < 6u) return -1;
+            next_bytes = rd16be(playback->data + next + 2u);
+            if ((size_t)next_bytes > playback->size - next - 6u) return -1;
+            item_offset = next + 6u + (size_t)next_bytes;
+            playback->loop_count[playback->loop_depth] = attributes;
+            playback->loop_item_offset[playback->loop_depth] = item_offset;
+            playback->loop_depth++;
+            playback->offset = next;
+            break;
+        }
+        case CSB_FMTOWNS_ANM_CHUNK_NE:
+            if (playback->loop_depth == 0u) return -1;
+            playback->loop_depth--;
+            if (playback->loop_count[playback->loop_depth] == 0u) return -1;
+            playback->loop_count[playback->loop_depth]--;
+            if (playback->loop_count[playback->loop_depth] > 0u &&
+                playback->loop_count[playback->loop_depth] < 10u) {
+                playback->offset =
+                    playback->loop_item_offset[playback->loop_depth];
+                /* F2275 keeps this loop record live while it jumps back. */
+                playback->loop_depth++;
+            } else {
+                uint16_t next_bytes;
+                if (playback->size - next < 6u) return -1;
+                next_bytes = rd16be(playback->data + next + 2u);
+                if ((size_t)next_bytes > playback->size - next - 6u)
+                    return -1;
+                playback->offset = next + 6u + (size_t)next_bytes;
+            }
+            break;
+        default:
+            /* AN, SD, TD, TR, WA and SO are still consumed in stream order.
+             * Their host audio/input owners remain separate from the visual
+             * interpreter; no synthetic cue is emitted here. */
+            playback->offset = next;
+            break;
+        }
+    }
+    playback->finished = 1;
+    return 0;
 }

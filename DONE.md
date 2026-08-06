@@ -8083,6 +8083,15 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-06 CSB FM Towns ANM stream interpreter: added the retained-raster
+  F2275 playback owner for original ANM chunks, including source palette
+  changes, `BR` input admission and exact `FO`/`NE` loop control. It does not
+  fabricate sound, input or a host timebase. The authentic title, story and
+  ending streams now prove 32/851/419 displayed frames and 606/10,823/5,352
+  Timer-A ticks respectively; in particular ENDING's 419 frames prove that
+  its original loop sections are executed. M11 scheduling remains
+  capture-gated; no game data was changed or tracked.
+
 - ✅ 2026-08-06 CSB FM Towns ANM source timing: decoded `EN`/`DL` frame
   receipts now retain the original big-endian chunk delay and its exact F2275
   FM Towns minimum of five Timer-A ticks. No unsupported host-millisecond

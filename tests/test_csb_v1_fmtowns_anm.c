@@ -59,6 +59,8 @@ static void test_real_anm(void) {
     const char *anm_dir = getenv("FIRESTAFF_CSB_FMTOWNS_ANM_DIR");
     char path[512];
     const char *files[] = {"TITLE.ANM", "STORY.ANM", "ENDING.ANM"};
+    const uint32_t expected_playback_frames[] = {32u, 851u, 419u};
+    const uint32_t expected_playback_ticks[] = {606u, 10823u, 5352u};
     int i;
 
     if ((!anm_dir || anm_dir[0] == '\0') && !home) {
@@ -96,8 +98,12 @@ static void test_real_anm(void) {
         if (receipt.frame_count + receipt.delta_count > 0) {
             uint8_t pixels[CSB_FMTOWNS_ANM_FRAME_PIXELS];
             CSB_V1_FmtownsAnmFrameReceipt frame;
+            CSB_V1_FmtownsAnmPlayback playback;
             uint16_t first_source_ticks;
             uint16_t first_timer_a_ticks;
+            uint32_t playback_frames = 0u;
+            uint32_t playback_ticks = 0u;
+            int step_result;
             uint32_t frame_index =
                 (uint32_t)(receipt.frame_count + receipt.delta_count - 1);
             ASSERT(csb_v1_fmtowns_anm_decode_frame(
@@ -126,6 +132,30 @@ static void test_real_anm(void) {
                    (unsigned int)first_timer_a_ticks,
                    (unsigned int)frame.source_delay_ticks,
                    (unsigned int)frame.timer_a_ticks);
+
+            ASSERT(csb_v1_fmtowns_anm_playback_init(data, size, &playback) == 0,
+                   "F2275 playback initialises from source stream");
+            memset(pixels, 0, sizeof(pixels));
+            while ((step_result = csb_v1_fmtowns_anm_playback_step(
+                        &playback, pixels, sizeof(pixels), &frame)) == 1) {
+                ASSERT(frame.valid == 1 && frame.pixel_fnv1a != 0u &&
+                       frame.timer_a_ticks >= 5u,
+                       "F2275 playback emits a source-owned timed frame");
+                ++playback_frames;
+                playback_ticks += frame.timer_a_ticks;
+            }
+            ASSERT(step_result == 0 && playback.finished,
+                   "F2275 playback reaches end of authentic stream");
+            ASSERT(playback_frames >=
+                   (uint32_t)(receipt.frame_count + receipt.delta_count) &&
+                   playback_ticks > 0u,
+                   "F2275 playback retains every source frame and timing");
+            ASSERT(playback_frames == expected_playback_frames[i] &&
+                   playback_ticks == expected_playback_ticks[i],
+                   "F2275 playback matches the authenticated animation timeline");
+            printf("    Playback: %u frames, %u Timer-A ticks\n",
+                   (unsigned int)playback_frames,
+                   (unsigned int)playback_ticks);
         }
 
         printf("  %s: %ux%u %dbpp, %d chunks (%d frames, %d deltas, %d KF), "
