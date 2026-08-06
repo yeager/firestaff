@@ -4629,6 +4629,11 @@ list(REMOVE_ITEM M10_SOURCES
 # reads no original data and has no M11/runtime caller.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_ninth_item_hidden_tail_pc34_compat.c")
+# `dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat.c` is an asset-free
+# D0-side door composition contract with fixed blit rectangles and zones. It
+# has no M11/runtime caller and must remain confined to its regression.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat.c")
 # `dm1_v1_mirror_candidate_c146_sleep_wakeup_repaint_gate_pc34_compat.c`
 # simulates C040 panel and wake-up state with fixed fixture values.  It reads
 # no original DM1 material and has no M11/runtime caller; its generated
@@ -53774,7 +53779,9 @@ add_executable(test_dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_co
 target_include_directories(test_dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat COMMAND test_dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat)
-add_executable(test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat tests/test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat
+    tests/test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat COMMAND test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat)

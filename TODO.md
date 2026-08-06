@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D0L-D0R-F0111-SYNTHETIC-AUDIT:** This D0 side-door composition uses
+  fixed zones and blit rectangles. It reads no original game data and has no
+  M11/runtime caller; retain it only as explicit ReDMCSB coverage until a
+  source-bound owner is recovered.
+
 - **DM1-CHEST-NINTH-ITEM-SYNTHETIC-AUDIT:** This hidden-tail chest model
   fabricates item types, weights and a sentinel. It reads no original game
   data and has no M11/runtime caller; retain it only as explicit ReDMCSB
