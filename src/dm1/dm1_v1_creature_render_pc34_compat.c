@@ -272,6 +272,15 @@ unsigned int dm1_creature_sprite_for_view(int creatureType,
     return dm1_creature_sprite_for_pose(creatureType, depthIndex, pose);
 }
 
+unsigned int dm1_creature_native_sprite_for_view(int creatureType,
+                                                 int creatureDir,
+                                                 int partyDir,
+                                                 int attacking) {
+    int relFacing = dm1_creature_m11_relative_facing(creatureDir, partyDir);
+    int pose = dm1_creature_m11_pose_for_view(relFacing, attacking);
+    return dm1_creature_native_bitmap_index(creatureType, pose);
+}
+
 unsigned int dm1_creature_graphic_info(int creatureType) {
     if (creatureType < 0 || creatureType >= DM1_CREATURE_TYPE_COUNT) return 0u;
     return (unsigned int)s_aspects[creatureType].graphicInfo;

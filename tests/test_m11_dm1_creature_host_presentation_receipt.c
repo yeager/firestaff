@@ -37,6 +37,53 @@ int main(void)
     }
     state.assetsAvailable = 1;
     state.sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
+
+    /* The legacy viewport helper is intentionally test-only.  The real
+     * production selector is dm1_creature_sprite_for_view(), which consumes
+     * ReDMCSB G0219/G0243 native and derived indices.  Admit the full PC34
+     * native corpus here so a single Mummy smoke check cannot hide a stale
+     * source index. The Mummy draw below also exercises F0675 materialization
+     * of a derived D2 surface; derived IDs are cache addresses, not required
+     * GRAPHICS.DAT records. */
+    {
+        int creatureType;
+        int depthIndex;
+        for (creatureType = 0;
+             creatureType < DM1_CREATURE_TYPE_COUNT;
+             ++creatureType) {
+            {
+                const M11_AssetSlot *slot;
+                const unsigned int nativeIndex = dm1_creature_native_sprite_for_view(
+                    creatureType, 0, 0, 0);
+                if (nativeIndex == 0u) {
+                    fprintf(stderr,
+                            "real PC34 creature type %d has no native source graphic\n",
+                            creatureType);
+                    M11_GameView_Shutdown(&state);
+                    return 1;
+                }
+                slot = M11_AssetLoader_Load(&state.assetLoader, nativeIndex);
+                if (!slot || !slot->loaded || !slot->pixels ||
+                    slot->width == 0 || slot->height == 0) {
+                    fprintf(stderr,
+                            "real PC34 creature type %d native graphic %u has no decoded pixels\n",
+                            creatureType, nativeIndex);
+                    M11_GameView_Shutdown(&state);
+                    return 1;
+                }
+            }
+            for (depthIndex = 1; depthIndex < 3; ++depthIndex) {
+                if (dm1_creature_sprite_for_view(
+                        creatureType, depthIndex, 0, 0, 0, NULL) == 0u) {
+                    fprintf(stderr,
+                            "real PC34 creature type %d depth %d has no derived source index\n",
+                            creatureType, depthIndex);
+                    M11_GameView_Shutdown(&state);
+                    return 1;
+                }
+            }
+        }
+    }
     memset(framebuffer, 0, sizeof(framebuffer));
     if (!M11_GameView_ProbeDrawDm1CreatureHostReceipt(
             &state, framebuffer, 320, 200)) {

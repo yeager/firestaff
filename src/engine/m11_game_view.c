@@ -514,7 +514,7 @@ static int dm1_creature_palette_for_depth(
     int replacementColor9;
     int replacementColor10;
     int i;
-    src = depthIndex >= 3 ? dm1_creature_palette_d3() : dm1_creature_palette_d2();
+    src = depthIndex >= 2 ? dm1_creature_palette_d3() : dm1_creature_palette_d2();
     if (!src || !palette) return 0;
     for (i = 0; i < 16; ++i) palette[i] = src[i];
 
@@ -536,6 +536,72 @@ static int dm1_creature_palette_for_depth(
         palette[10] = (unsigned char)replacementColor10;
     }
     return 1;
+}
+
+/* ReDMCSB DUNVIEW.C F0675/F0129: GRAPHICS.DAT contains native C584+
+ * creature rasters; D2/D3 indices in G0219 are derived-cache addresses.
+ * Materialize a missing derived slot from the real native raster, preserving
+ * the source's nearest-neighbour M078 scale and leaving palette replacement
+ * to the existing G0221/G0222 draw palette. */
+static const M11_AssetSlot *m11_dm1_creature_derived_source(
+    const M11_GameViewState *state,
+    int creatureType,
+    int depthIndex,
+    int creatureDir,
+    int useAttackPose,
+    unsigned int derivedIndex)
+{
+    M11_GameViewState *mutableState;
+    const M11_AssetSlot *existing;
+    const M11_AssetSlot *native;
+    unsigned int nativeIndex;
+    unsigned char *pixels;
+    unsigned short width;
+    unsigned short height;
+    int scale32;
+    int y;
+
+    if (!state || !state->assetsAvailable || depthIndex <= 0 ||
+        depthIndex > 2 || creatureType < 0 || derivedIndex >= M11_ASSET_CACHE_SLOTS) {
+        return NULL;
+    }
+    mutableState = (M11_GameViewState *)state;
+    existing = M11_AssetLoader_Load(&mutableState->assetLoader, derivedIndex);
+    if (existing && existing->loaded && existing->pixels &&
+        existing->width > 0 && existing->height > 0) {
+        return existing;
+    }
+    nativeIndex = dm1_creature_native_sprite_for_view(
+        creatureType, creatureDir, state->world.party.direction,
+        useAttackPose);
+    native = M11_AssetLoader_Load(&mutableState->assetLoader, nativeIndex);
+    if (!native || !native->loaded || !native->pixels ||
+        native->width == 0 || native->height == 0) {
+        return NULL;
+    }
+    scale32 = depthIndex == 1 ? 21 : 14;
+    width = (unsigned short)(((int)native->width * scale32 + 16) >> 5);
+    height = (unsigned short)(((int)native->height * scale32 + 16) >> 5);
+    if (width == 0 || height == 0) return NULL;
+    pixels = (unsigned char *)malloc((size_t)width * (size_t)height);
+    if (!pixels) return NULL;
+    for (y = 0; y < (int)height; ++y) {
+        int sourceY = y * (int)native->height / (int)height;
+        int x;
+        for (x = 0; x < (int)width; ++x) {
+            int sourceX = x * (int)native->width / (int)width;
+            pixels[y * (int)width + x] =
+                native->pixels[sourceY * (int)native->width + sourceX];
+        }
+    }
+    if (!M11_AssetLoader_InstallDecodedPixels(&mutableState->assetLoader,
+                                               derivedIndex, pixels,
+                                               width, height)) {
+        free(pixels);
+        return NULL;
+    }
+    free(pixels);
+    return M11_AssetLoader_Load(&mutableState->assetLoader, derivedIndex);
 }
 
 static int dm1_v1_champion_panel_action_icon_map_palette_color_pc34(
@@ -35982,6 +36048,13 @@ static int m11_draw_creature_sprite_ex_material(const M11_GameViewState* state,
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
     /* F0115 draws the C584+ bitmap selected by G0221/G0222. A cached
      * dimension record or a pane-relative side hint is not source material. */
+    if ((!slot || !slot->loaded || !slot->pixels ||
+         slot->width == 0 || slot->height == 0) && depthIndex > 0 &&
+        m11_is_dm1_source_kind(state->sourceKind)) {
+        slot = m11_dm1_creature_derived_source(
+            state, creatureType, depthIndex, creatureDir, useAttackPose,
+            spriteIdx);
+    }
     if (!slot || !slot->loaded || !slot->pixels ||
         slot->width == 0 || slot->height == 0 || sideHint != 0) return 0;
 
@@ -36091,6 +36164,14 @@ static int m11_draw_creature_sprite_source_anchored(
         return 0;
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, spriteIdx);
+    if ((!slot || !slot->loaded || !slot->pixels ||
+         slot->width == 0 || slot->height == 0) &&
+        placement->source_depth_index > 0 &&
+        m11_is_dm1_source_kind(state->sourceKind)) {
+        slot = m11_dm1_creature_derived_source(
+            state, creatureType, placement->source_depth_index,
+            creatureDir, useAttackPose, spriteIdx);
+    }
     if (!slot || !slot->loaded || !slot->pixels ||
         slot->width == 0 || slot->height == 0) {
         return 0;

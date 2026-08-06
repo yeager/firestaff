@@ -55588,3 +55588,15 @@ alcove runtime and archive-media tests passed (4/4).
 - Verification: real PC34 `test_m11_dm1_hoc_wall_material_receipt_pc34`,
   `test_dm1_v1_champion_mirror_pc34_compat`, and
   `test_dm1_v1_hoc_graphics_material_receipts_pc34_compat` pass.
+
+# 2026-08-06 DM1 creature native/derived real-data route
+
+- Kept the legacy 225..297 creature viewport table test-only and out of the
+  production archives.
+- Wired the production F0115 creature path to materialize missing D2/D3
+  derived-cache slots from authenticated native C584+ pixels using the
+  source 21/32 and 14/32 F0675/F0129 scales. Corrected D3 to use G0221 while
+  D2 uses G0222; CSB sources remain fail-closed and unaffected.
+- Verification: all 27 native PC34 creature types, real F0115 D1–D3
+  admission, host material receipt, creature tick receipt and 132 source-lock
+  assertions pass.

@@ -248,6 +248,12 @@ unsigned int dm1_creature_sprite_for_view(int creatureType,
                                           int partyDir,
                                           int attacking,
                                           int *outMirror);
+/* Native C584+ source corresponding to the same pose selection.  F0675
+ * uses this source when the requested D2/D3 derived cache slot is empty. */
+unsigned int dm1_creature_native_sprite_for_view(int creatureType,
+                                                 int creatureDir,
+                                                 int partyDir,
+                                                 int attacking);
 unsigned int dm1_creature_graphic_info(int creatureType);
 int dm1_creature_additional(int creatureType);
 int dm1_creature_has_special_d2_front(int creatureType);
