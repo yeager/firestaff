@@ -164,11 +164,106 @@ DRAW_DMENU's remaining unresolved dependencies, in call order:
 Both `SPC_BLOT` and `FILL_CSCREEN` route through `SCREEN` (0x31290),
 which is the FM Towns TBIOS screen descriptor.
 
+## Chain-through primitives (also decoded)
+
+### FILL_RECT (0x1fccc, 432 bytes)
+
+Reads a rect descriptor at `[ebp+0xc]` (four words: x1, y1, x2, y2),
+snaps width to a 32-pixel row alignment (`(w+0x1f) & ~0x1f`), then
+routes to two paths depending on `[ebp+8]` (a write-target buffer, or
+zero for the on-screen frame):
+
+- Screen path (`[ebp+8] == 0`):
+    - `EGB_WRITEPAGE(WORK, WRITE_PAGE)` sets destination page
+    - `EGB_WRITEMODE(WORK, 0)` = plain write
+    - `EGB_COLOR(WORK, 2, colour)` = solid-fill colour
+    - `EGB_PAINTMODE(WORK, 0x20)` = filled-rectangle mode
+    - Populate `EGBPARA[0..3]` with the rect and call `EGB_VIEWPORT`,
+      then again for `EGB_RECTANGLE`.
+- RAM path (`[ebp+8] != 0`):
+    - Same sequence prefixed by `EGB_RESOLUTIONRAM(WORK, 0x80, w, 4,
+      h+1, buffer)` which retargets the EGB library at a caller-owned
+      RAM raster before drawing.
+
+The whole primitive is therefore a routine wrapper over the
+FM Towns TownsOS **EGB** graphics library (published API), not custom
+rasterisation — the fill is `EGB_RECTANGLE` after establishing colour,
+mode and viewport.
+
+`WORK` at `0x318d8` is the persistent EGB work area (the standard
+1500-byte block every EGB caller passes); `EGBPARA` at `0x360d8` is
+the 4-word rect parameter buffer; `WRITE_PAGE` at `0x36170` is the
+runtime-selected VRAM page number.
+
+### PIX_BLOT (0x1fe7c, 512 bytes)
+
+Same envelope structure as FILL_RECT but the final call is
+`EGB_PUTBLOCK` — a source-block copy that reads pixels from the caller's
+bitmap at `EGBPARA[0]` = base + row*(width>>1) + (x>>1). Handles both
+on-screen and off-screen destinations symmetrically. Colour argument
+`>= 0` picks colour and `EGB_WRITEMODE 6` (masked); `< 0` uses
+`EGB_WRITEMODE 0` (plain copy).
+
+### GET_RGN_COORD (0x194fc)
+
+Tail-call wrapper: `GET_SCL_COORD(region_id, out, 0x2710, 0x2710)`
+(constant 10000 for both scale axes = 1:1 unscaled resolution). The
+region table itself lives inside `GET_SCL_COORD` at 0x1942c and is the
+next artefact to lift.
+
+### DO_FDRAW_CTEXT (0x1a8c0, 92 bytes)
+
+Formatted-centered-text shim:
+- Copies the C-string at arg[0x1c] into a stack buffer up to its NUL,
+  padding with `0x20` up to the requested column count arg[0x20], then
+  NUL-terminates.
+- Tail-calls `DO_DRAW_CTEXT` (0x1a804) with the padded buffer and the
+  remaining args (`SCREEN`, `SCR_X_SIZE`, `y`, `x`, `colour`).
+
+`DO_DRAW_CTEXT` itself is the next unresolved rasteriser to decode.
+
+### GET_PICLOC (0x18ca4)
+
+Picture-location descriptor lookup at table base `0x26cac`, stride
+14 bytes: `{ byte kind, byte pad, word field04, word field06, word
+width, word height, dword data_or_index }`. `kind == 1` decodes the
+graphic via `GET_DECODED` (0x9df8); `kind == 2` is a raw pointer
+already in memory. Width/height default to the graphic's own
+`[data-4]/[data-2]` prefix if the descriptor holds zero.
+
+## TBIOS boundary
+
+Everything below `SPC_BLOT` / `FILL_CSCREEN` funnels into the FM Towns
+TownsOS **EGB** library. The concrete primitives observed so far:
+
+| Primitive          | Vaddr    | Purpose                          |
+|--------------------|----------|----------------------------------|
+| EGB_RESOLUTIONRAM  | 0x40739  | Retarget EGB at a RAM raster     |
+| EGB_VIEWPORT       | 0x407a0  | Clip rectangle                   |
+| EGB_WRITEPAGE      | 0x407ec  | Select destination VRAM page     |
+| EGB_COLOR          | 0x40836  | Set foreground/background colour |
+| EGB_WRITEMODE      | 0x408a5  | Set write op (0=copy, 6=masked)  |
+| EGB_PAINTMODE      | 0x408ed  | Set fill mode (0x20=solid)       |
+| EGB_PUTBLOCK       | 0x40bec  | Copy source raster to viewport   |
+| EGB_RECTANGLE      | 0x40ee5  | Filled/outlined rectangle        |
+
+Because these are all documented TownsOS calls with published
+semantics, the menu draw does not require reverse-engineering custom
+pixel code — it requires wiring a bounded EGB shim (WORK area, EGBPARA
+buffer, WRITE_PAGE, VRAM page selection) into the M11 framebuffer.
+
 ## Consumption plan
 
-None of the above adds host-visible presentation on its own — the
-firestaff runtime cannot draw the FM Towns menu until at least the
-region table, `PIX_BLOT` / `FILL_RECT` blit primitives, and
-`DO_FDRAW_CTEXT` text rasteriser are decoded and bound to the M11
-framebuffer. This document is the entry point evidence that unblocks
-that work; do not use the disassembly to synthesise pixels.
+Firestaff still cannot present a real FM Towns menu frame from this
+evidence alone. It unblocks the following bounded next steps, in order:
+
+1. Lift `GET_SCL_COORD` (0x1942c) to recover the region table and the
+   pixel geometry of regions 10 (SPC_BLOT panel) and 11 (menu area).
+2. Provide an EGB shim: WORK area, EGBPARA staging, `EGB_RECTANGLE`
+   and `EGB_PUTBLOCK` in software against the M11 framebuffer.
+3. Decode `DO_DRAW_CTEXT` at 0x1a804 to recover the font raster and
+   the glyph blit chain, then bind the DYNA_BUTTONS label pool to it.
+
+None of these steps invent pixels. Do not use the disassembly here to
+synthesise a placeholder menu — only decoded EGB primitives against
+real, hash-verified EDM.EXP-owned data may drive the M11 framebuffer.
