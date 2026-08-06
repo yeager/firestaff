@@ -488,6 +488,16 @@
   Verification: `test_dm1_v1_fmtowns_title`, `cmake --build build --target
   firestaff` and `git diff --check`.
 
+- ✅ 2026-08-06 DM1 FM Towns PRESENTS/VBlank title handoff: M11 now keeps
+  EDM.EXP's initial PRESENTS page separate from the first 48x12 zoom bitmap,
+  then advances the native 18-frame zoom at the source's 60 Hz VBlank cadence
+  and retains the two final VBlank waits before returning. The evidence is the
+  real English `EDM.EXP` P3 sequence at `DO_TITLE_ANIMATION +0xc3f0`,
+  `+0xc563` and `+0xc5b9`; no invented title hold or PC34 frame is used.
+  Verification: `test_dm1_v1_fmtowns_title`, real-cache
+  `test_dm1_v1_fmtowns_startup`, `cmake --build build --target firestaff` and
+  `git diff --check`.
+
 - ✅ 2026-08-06 DM1 FM Towns title CDDA handoff: M11 now starts the original
   CUE/BIN track 02 at the EDM title boundary, before the first source-owned
   frame is shown. The exposed game-view entry point rejects non-FM Towns,

@@ -28,28 +28,37 @@ int main(void)
     DM1_V1_FmtownsStartupReceipt startup = receipt();
     size_t i;
 
-    for (i = 0u; i < sizeof(source); ++i) source[i] = (unsigned char)(i & 0x0fu);
+    for (i = 0u; i < sizeof(source); ++i)
+        source[i] = (unsigned char)((i % 15u) + 1u);
     assert(!dm1_v1_fmtowns_title_compose_frame(NULL, source, 320u, 200u,
                                                 0u, frame, sizeof(frame)));
     assert(!dm1_v1_fmtowns_title_compose_frame(&startup, source, 319u, 200u,
                                                 0u, frame, sizeof(frame)));
     assert(!dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
-                                                19u, frame, sizeof(frame)));
+                                                20u, frame, sizeof(frame)));
 
     assert(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
                                                0u, frame, sizeof(frame)));
-    /* First reverse-order frame is 48x12, centred at (136,74). */
-    assert(frame[74u * 320u + 136u] == source[0]);
+    /* EDM first flips PRESENTS before it enters the reverse zoom loop. */
+    assert(frame[74u * 320u + 136u] == 0u);
     assert(frame[90u * 320u] == source[137u * 320u]);
     assert(frame[40u * 320u] == 0u);
 
+    /* First reverse-order zoom frame is 48x12, centred at (136,74). */
+    assert(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
+                                               1u, frame, sizeof(frame)));
+    assert(frame[74u * 320u + 136u] == source[0]);
+
     assert(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
                                                17u, frame, sizeof(frame)));
-    assert(frame[40u * 320u] == source[0]);
     assert(frame[119u * 320u] == 0u);
 
     assert(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
                                                18u, frame, sizeof(frame)));
+    assert(frame[40u * 320u] == source[0]);
+
+    assert(dm1_v1_fmtowns_title_compose_frame(&startup, source, 320u, 200u,
+                                               19u, frame, sizeof(frame)));
     assert(frame[118u * 320u] == source[80u * 320u]);
     assert(frame[90u * 320u] == source[137u * 320u]);
     puts("PASS: dm1_v1_fmtowns_title");

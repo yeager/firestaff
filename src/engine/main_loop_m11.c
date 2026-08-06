@@ -2866,7 +2866,10 @@ static int m11_play_dm1_fmtowns_title_if_available(
      * reverse order: 48x12 first, then 16x4 larger per frame.  Use the
      * receipt-bound compositor for M11 as well, so the PRESENTS strip and
      * final TITLE_MASTER cannot diverge from the exact P3 plan verified in
-     * dm1_v1_fmtowns_title.c. */
+     * dm1_v1_fmtowns_title.c.  EDM.EXP +0xc3f0 first flips PRESENTS by
+     * itself; +0xc563 then waits once per prepared zoom bitmap.  FM Towns
+     * video is 60 Hz, so 17 ms is the nearest whole-millisecond host wait.
+     */
     for (frame = 0u; frame <= DM1_FMTOWNS_TITLE_FINAL_FRAME; ++frame) {
         if (!dm1_v1_fmtowns_title_compose_frame(
                 plan, title->pixels, title->width, title->height, frame,
@@ -2876,9 +2879,10 @@ static int m11_play_dm1_fmtowns_title_if_available(
         if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                       M11_FB_HEIGHT) != M11_RENDER_OK) return 0;
         if (outPlayedAnyFrame) *outPlayedAnyFrame = 1;
-        if (m11_delay_ms_with_intro_event_pump(16u)) return 1;
+        if (m11_delay_ms_with_intro_event_pump(17u)) return 1;
     }
-    (void)m11_delay_ms_with_intro_event_pump(32u);
+    /* EDM.EXP +0xc5b9 performs two final VBlank waits before returning. */
+    (void)m11_delay_ms_with_intro_event_pump(34u);
     return 1;
 }
 

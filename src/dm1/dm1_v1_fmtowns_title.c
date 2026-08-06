@@ -55,12 +55,19 @@ int dm1_v1_fmtowns_title_compose_frame(
                 0, 90, 320, 16, 0,
                 (int)startup->game_title_presents_source_y, 320, 16);
 
-    if (frame < DM1_FMTOWNS_TITLE_ZOOM_FRAME_COUNT) {
+    if (frame == DM1_FMTOWNS_TITLE_PRESENTS_FRAME) {
+        /* EDM.EXP + 0xc3f0 draws TITLE_PRESENTS and flips that page before
+         * DO_TITLE_ANIMATION prepares and presents any zoom bitmap. */
+        return 1;
+    }
+
+    if (frame < DM1_FMTOWNS_TITLE_FINAL_FRAME) {
         /* EDM.EXP DO_TITLE_ANIMATION: BX starts at 80, SI at 320, then
          * decrements by 4/16 for 18 prepared bitmaps.  It presents them in
          * reverse order, from the 48x12 centre frame to 320x80 at y=40. */
-        zoom_width = 48u + frame * 16u;
-        zoom_height = 12u + frame * 4u;
+        unsigned int zoom_step = frame - DM1_FMTOWNS_TITLE_ZOOM_FIRST_FRAME;
+        zoom_width = 48u + zoom_step * 16u;
+        zoom_height = 12u + zoom_step * 4u;
         zoom_x = ((int)DM1_FMTOWNS_TITLE_WIDTH - (int)zoom_width) / 2;
         zoom_y = 40 + (80 - (int)zoom_height) / 2;
         blit_scaled(title_pixels, title_width, title_height, out_pixels,
