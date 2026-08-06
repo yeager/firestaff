@@ -1689,6 +1689,11 @@
   RAW4 ids (`0x0197` and `0x0199`), rather than mistakenly passing their
   input events (`0xD7`/`0xD9`) to `QUERY_RECT`. The last M11 dependency on
   the fixed DM2 click-zone matrix has been removed.
+  **2026-08-06 title/credits identity follow-up:** the M11 real-PC-DOS startup
+  gate now requires separate bounded GDAT receipts for `TITLE/0/dt07/4`
+  (menu) and `TITLE/0/dt07/1` (credits), as well as their shared source
+  `dtPalIRGB` presentation. A credits payload can therefore not silently be
+  presented as the startup menu.
   **2026-08-06 leader-hand follow-up:** the unproven fixed `304,41,14,14`
   leader-hand icon/cursor zone is no longer exposed by M11. The API reports
   no zone until SKProject's live `DRAW_ITEM_ICON` rectangle and image route

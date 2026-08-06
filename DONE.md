@@ -12,6 +12,12 @@
   display names remain empty unless a source text receipt supplies them.
   The real-US M12/M11 launcher boundary is 57 passed, 0 failed, 1 skipped.
 
+- ✅ 2026-08-06 DM2 title/credits identity gate: the real PC-DOS M11 startup
+  test now verifies separate bounded GDAT receipts for the `TITLE/0/dt07/4`
+  menu and `TITLE/0/dt07/1` credits payloads, together with the original
+  `dtPalIRGB` palette. This prevents the credits surface from being accepted
+  as the startup menu when palette-index values happen to overlap.
+
 - ✅ 2026-08-06 DM1 macOS runtime captures: captured clean Entrance and
   post-Entrance dungeon frames from the built Firestaff executable using the
   verified PC DOS 3.4 data directory and original save. Added the real images

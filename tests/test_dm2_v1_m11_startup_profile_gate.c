@@ -1887,6 +1887,10 @@ int main(void) {
     {
         DM2_V1_StartupMenuAuxPointerLayout aux_pointer_layout;
         uint8_t *credits_pixels = NULL;
+        uint32_t menu_raw_hash = 0u;
+        uint32_t menu_raw_byte_count = 0u;
+        uint32_t credits_raw_hash = 0u;
+        uint32_t credits_raw_byte_count = 0u;
         int credits_w = 0;
         int credits_h = 0;
         int credits_stride = 0;
@@ -1907,6 +1911,18 @@ int main(void) {
                         aux_pointer_layout.dismiss_credits.w > 0 &&
                         aux_pointer_layout.dismiss_credits.h > 0,
                     "M11 DM2 obtains credits, quit and dismiss rectangles from verified GDAT");
+        expect_true(dm2_v1_boot_gdat_raw_asset_proof(profile, 5, 0, 4,
+                                                      0x324d5257u,
+                                                      &menu_raw_hash,
+                                                      &menu_raw_byte_count) &&
+                        dm2_v1_boot_gdat_raw_asset_proof(profile, 5, 0, 1,
+                                                          0x32435244u,
+                                                          &credits_raw_hash,
+                                                          &credits_raw_byte_count) &&
+                        menu_raw_hash != 0u && credits_raw_hash != 0u &&
+                        menu_raw_byte_count > 0u && credits_raw_byte_count > 0u &&
+                        menu_raw_hash != credits_raw_hash,
+                    "M11 DM2 keeps separate original GDAT payloads for menu and credits");
         credits_x = aux_pointer_layout.show_credits.x +
             aux_pointer_layout.show_credits.w / 2;
         credits_y = aux_pointer_layout.show_credits.y +
