@@ -25375,9 +25375,11 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
         state->theronState.level_loaded) {
         return M11_GAME_INPUT_IGNORED;
     }
-    if (state->theronState.dungeon_capture_required) {
-        return M11_GAME_INPUT_RETURN_TO_MENU;
-    }
+    /* Keep pointer activation on the same startup route as keyboard Enter.
+     * Track 02 may reach the forcefield before the positive dungeon capture
+     * exists; that is an in-menu admission boundary, not a request to leave
+     * the Theron launcher.  Let the boot receipt publish the precise status
+     * and keep the user on the Soul Room screen. */
     if (!m11_theron_startup_has_verified_runtime_surfaces(state)) {
         m11_set_status(state, "STARTUP", "TRACK02 ATLAS ROUTES INVALID");
         return M11_GAME_INPUT_RETURN_TO_MENU;

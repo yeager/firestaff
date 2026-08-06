@@ -7,6 +7,12 @@
   conceal missing English companion text. This verifies corpus coverage, not
   the still-unbound original GUI/dialogue consumers.
 
+- ✅ 2026-08-06 Theron forcefield menu input: pointer activation now uses the
+  same boot-layer admission route as keyboard Enter/Action. When the real
+  Track 02 dungeon capture is still missing, the Soul Room remains visible
+  and reports `AUTHENTIC CAPTURE ADMISSION REQUIRED` instead of silently
+  returning to the launcher. Dungeon promotion remains fail-closed.
+
 - ✅ 2026-08-06 Theron Track 01 real-audio consumer: the authentic CUE
   handoff now accepts the supplied CUE-declared WAV names when the matching
   local original OGG transcode is present, resolves the split Track 02 ISO

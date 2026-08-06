@@ -179,9 +179,11 @@
 - **THERON-M11-FORCEFIELD-INPUT:** M11 now lets authentic Track 02 startup
   input reach the forcefield admission path even when the source-owned
   post-startup VDC/VCE capture is unavailable. The old pre-dispatch atlas
-  check returned to the launcher before Enter was interpreted. Keep dungeon
-  promotion fail-closed and replace the remaining capture gate only after a
-  real consumer receipt binds the level, object, tile and palette routes.
+  check returned to the launcher before Enter was interpreted. Pointer input
+  now follows the same route and keeps the Soul Room visible while reporting
+  the admission boundary. Keep dungeon promotion fail-closed and replace the
+  remaining capture gate only after a real consumer receipt binds the level,
+  object, tile and palette routes.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

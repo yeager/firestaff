@@ -429,6 +429,15 @@ static void run_real_launcher_handoff_if_available(void) {
                         THERON_STARTUP_PHASE_IN_DUNGEON,
                     "M11 Theron forcefield keeps startup state bounded on admission failure");
     }
+    if (view.theronState.startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM) {
+        M11_GameInputResult pointer_result = M11_GameView_HandlePointer(
+            &view, 46 + 77, 158 + 5, 1);
+        expect_true(pointer_result != M11_GAME_INPUT_RETURN_TO_MENU,
+                    "M11 Theron forcefield click stays in startup admission");
+        expect_true(strstr(view.inspectDetail,
+                           "AUTHENTIC CAPTURE ADMISSION REQUIRED") != NULL,
+                    "M11 Theron forcefield click exposes capture admission");
+    }
 
     M11_GameView_Shutdown(&view);
 }
