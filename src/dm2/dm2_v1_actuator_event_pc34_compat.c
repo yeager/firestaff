@@ -338,20 +338,36 @@ int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
                             DM2_V1_ShooterReceipt *receipt)
 {
     DM2_V1_ShooterReceipt local;
-    uint8_t atype;
-    uint16_t actu_data;
-    int single;
-    int facing;
-    int16_t proj_handle;
 
     memset(&local, 0, sizeof(local));
     if (receipt == NULL) receipt = &local;
 
+    /* SKProject c_tim_proc.cpp::DM2_INVOKE_ACTUATOR and
+     * ::DM2_STEP_MISSILE own more than the actuator's eight bytes: the
+     * source DB14/DB item record, projectile energy/attack/facing and the
+     * follow-up timer are one transaction.  Firestaff has no authenticated
+     * live owner for that transaction yet.  Keep the older callback-only
+     * study below out of every runtime call; otherwise a real DB3 actuator
+     * would still allocate an invented item or queue a timer carrying
+     * unverified payload fields. */
+    (void)pool_set;
+    (void)dungeon;
+    (void)queue;
+    (void)actu_record;
+    (void)timer_x;
+    (void)timer_y;
+    (void)timer_direction;
+    (void)map;
+    (void)game_tick;
+    receipt->fail_closed = 1;
+    receipt->valid = 1;
+    return 0;
+
+#if 0
     if (pool_set == NULL || queue == NULL || actu_record == NULL) {
         receipt->fail_closed = 1;
         return 0;
     }
-
     atype = dm2_actu_type(actu_record);
     actu_data = dm2_actu_data(actu_record);
 
@@ -502,6 +518,7 @@ int dm2_v1_activate_shooter(DM2_V1_RecordPoolSet *pool_set,
 
     receipt->valid = 1;
     return 1;
+#endif
 }
 
 /* ── ACTIVATE_ITEM_TELEPORT ───────────────────────────────────────── */

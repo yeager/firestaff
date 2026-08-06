@@ -3509,7 +3509,13 @@ level or consumer bindings.
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   DB14/timer scheduling and record-owned projectile fields from SK-projects.
   Shooter records currently reject until their owner, facing, energy and
-  attack can be traced from original data.
+  attack can be traced from original data. **2026-08-10 update:** production
+  `dm2_v1_activate_shooter()` no longer reaches the former DB-item/timer
+  compatibility body. It now returns a valid/fail-closed receipt for a
+  structurally present actuator until the complete DB14/timer owner exists;
+  the focused regression proves that no item allocation or timer mutation
+  occurs. Keep the source-study body out of runtime; the actual source
+  handoff remains open.
 
 - **DM2-ACTUATOR-GENERATOR-OWNER-HANDOFF:** Creature and item generator
   defaults are closed. Port the DB14/DB-record allocation, payload and timer

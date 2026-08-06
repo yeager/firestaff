@@ -213,6 +213,36 @@ static void test_creature_generator_fails_closed(void)
     printf("  PASS: creature_generator_fails_closed\n");
 }
 
+/* A structurally valid shooter actuator is not enough to authorize the
+ * source DB14/DB-item + DM2_STEP_MISSILE transaction.  The runtime must leave
+ * both the source timer queue and projectile receipt untouched. */
+static void test_shooter_fails_closed_without_db14_owner(void)
+{
+    DM2_V1_RecordPoolSet pools;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_SourceTimerQueue queue;
+    DM2_V1_ShooterReceipt receipt;
+    uint8_t actu[8];
+
+    memset(&pools, 0, sizeof(pools));
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&receipt, 0, sizeof(receipt));
+    memset(actu, 0, sizeof(actu));
+    actu[2] = DM2_ACTU_WEAPON_SHOOTER;
+    dm2_actu_set_data(actu, 0x12u);
+    dm2_v1_source_timer_queue_init(&queue);
+
+    assert(dm2_v1_activate_shooter(&pools, &dungeon, &queue, actu,
+                                    6, 14, 1, 5, 100u, &receipt) == 0);
+    assert(receipt.valid == 1);
+    assert(receipt.fail_closed == 1);
+    assert(receipt.items_allocated == 0);
+    assert(receipt.projectiles_queued == 0);
+    assert(queue.count == 0);
+
+    printf("  PASS: shooter_fails_closed_without_db14_owner\n");
+}
+
 /* ── Handle helpers ────────────────────────────────────────────────── */
 
 static void test_handle_helpers(void)
@@ -382,6 +412,7 @@ int main(void)
     test_activate_relay1();
     test_null_safety();
     test_creature_generator_fails_closed();
+    test_shooter_fails_closed_without_db14_owner();
     test_handle_helpers();
     test_new_actuator_types();
     test_creature_killer();

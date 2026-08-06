@@ -38,6 +38,17 @@
 - ✅ Verification: `dm1_v1_mirror_candidate_c146_sleep_wakeup_repaint_gate_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM2 actuator shooter production gate (2026-08-10)
+
+- ✅ `dm2_v1_activate_shooter()` no longer allocates/reuses a projectile or
+  queues SHOOT_ITEM from an incomplete actuator record. It returns an explicit
+  valid/fail-closed receipt until the source DB14/DB-item, facing, energy/
+  attack and timer transaction is bound.
+- ✅ Regression `test_dm2_v1_actuator_event_pc34_compat` proves that a
+  structurally valid weapon-shooter record leaves the timer queue and
+  projectile receipt unchanged. Source lock: SKProject `c_tim_proc.cpp::DM2_INVOKE_ACTUATOR` /
+  `DM2_STEP_MISSILE`.
+
 # DM1 D2C F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only/no-game-data D2C F0111 trace from M10. It has
