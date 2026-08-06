@@ -1380,6 +1380,9 @@
   DMWeb-derived generator table, nor retained Track 02 generator records whose
   original timing/re-enable consumer is still unbound. Source records remain
   diagnostic receipt data until the real generator consumer is captured.
+  2026-08-06 archive hygiene: the legacy DMWeb creature-table translation unit
+  is now excluded from `firestaff_theron`; it remains available only to the
+  explicit diagnostic/fixture table tests.
 
   THIEF/DEMON scripted encounters no longer use approximated template stats;
   bind their source encounter records before admitting them to combat.
@@ -1604,7 +1607,9 @@
   param1/param2 from spawn zone descriptors. HP capped at 900.
   THIEF/DEMON scripted stats are blocked until their encounter records bind.
   Category formulas wired into spawn path via dungeon_id-based zone lookup.
-  Creature generators now respawn per DMWeb data.
+  Legacy DMWeb generator respawn is no longer a production route; generator
+  timing and re-enable behavior remain closed until the Track 02 consumer is
+  bound.
   Drop category mapping remains a decoder utility; runtime loot stays blocked
   until source T900 records and the PCE RNG call are decoded.
   PCE rand() lives in bank-switched overlay ($4644/$4667) — not statically

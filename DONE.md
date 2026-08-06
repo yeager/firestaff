@@ -53559,6 +53559,11 @@ alcove runtime and archive-media tests passed (4/4).
   generator records before the original timing/re-enable consumer is bound.
   The focused combat-runtime regression now asserts zero active generators in
   that unbound state; source records remain available as diagnostic receipts.
+- ✅ 2026-08-06 Theron production archive cleanup: removed the unused legacy
+  `theron_v1_track02_creature.c` translation unit from `firestaff_theron` after
+  closing its generator route. The production archive was rebuilt and checked
+  for absence of the legacy object; focused combat and real JP Track 02 loader
+  regressions remain green.
 - ✅ 2026-08-06 CSB selected-archive isolation: M12 can now materialize every
   selected CSB edition into its own hash-checked runtime cache instead of
   reusing the scanner's first-match `asset-cache/csb` view. The existing FM

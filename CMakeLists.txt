@@ -4611,6 +4611,7 @@ file(GLOB THERON_SOURCES CONFIGURE_DEPENDS "src/theron/theron_v1_*.c" "src/thero
 # consumer is decoded; fixture targets add it explicitly where needed.
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_compat\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_combat_runtime_source\\.c$")
+list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v1_track02_creature\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shape_cache_pc34\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v22_shapes\\.c$")
 list(FILTER THERON_SOURCES EXCLUDE REGEX "theron_v2_hud_widget_assets_pc34\\.c$")
@@ -4649,6 +4650,19 @@ if(THERON_SOURCES)
     if(NOT MSVC)
         target_compile_options(firestaff_theron PRIVATE -Wall -Wextra -O2 -fcommon)
     endif()
+endif()
+
+if(BUILD_TESTING AND TARGET firestaff_theron)
+    add_test(
+        NAME theron_v1_production_archive_source_boundary
+        COMMAND bash
+            "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_production_archive_source_boundary.sh"
+            "$<TARGET_FILE:firestaff_theron>"
+        WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    )
+    set_tests_properties(theron_v1_production_archive_source_boundary PROPERTIES
+        LABELS "tier2;theron;production;source-boundary;no-fallback"
+    )
 endif()
 
 # ── DM2 V2 static library ──────────────────────────────────────────
