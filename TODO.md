@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-C040-OWNER-SWAP-SYNTHETIC-AUDIT:** This C040 chrome fixture
+  fabricates party, portrait and status-icon ownership state. It has no
+  original DM1 data input or M11/runtime caller; retain it only as explicit
+  ReDMCSB coverage until a source-bound panel owner is recovered.
+
 - **DM1-MIRROR-C045-NONCANDIDATE-SYNTHETIC-AUDIT:** This C045 close-after-
   transition fixture fabricates chest, leader-hand and visible-slot state. It
   has no original DM1 data input or M11/runtime caller; retain it only as

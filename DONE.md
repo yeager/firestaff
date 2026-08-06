@@ -10,6 +10,15 @@
   `c_record.cpp:1351-1354` and `skcrture.cpp::QUERY_CREATURE_AI_SPEC_FROM_TYPE`.
 - ✅ No release was made. Focused build and real-data regression verification
   follows.
+# DM1 C040 chrome owner-swap synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C040 chrome owner-swap fixture from M10. It
+  fabricates party, portrait and status-icon ownership state, has no original
+  DM1 data input or M11/runtime caller, and the generated regression compiles
+  it directly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c040_chrome_inventory_owner_swap_pc34_compat`
+  passes with 121 assertions; the source object is absent from both M10 and
+  M11 archives.
 
 # DM1 C045 non-candidate transition synthetic audit isolation (2026-08-06)
 
