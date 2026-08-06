@@ -10,8 +10,45 @@
 #include <stdlib.h>
 #include <string.h>
 
+static const char *resolve_track19_iso(const char *env_name,
+                                       const char *file_name,
+                                       char *fallback,
+                                       size_t fallback_capacity) {
+    const char *configured = getenv(env_name);
+    const char *theron_root = getenv("FIRESTAFF_THERON_DATA_DIR");
+    const char *root = getenv("FIRESTAFF_DATA_DIR");
+    const char *home;
+    int length;
+
+    if (configured && configured[0]) return configured;
+    if (theron_root && theron_root[0]) {
+        length = snprintf(fallback, fallback_capacity, "%s/%s", theron_root,
+                          file_name);
+        if (length >= 0 && (size_t)length < fallback_capacity) {
+            return fallback;
+        }
+    }
+    if (root && root[0]) {
+        length = snprintf(fallback, fallback_capacity, "%s/theron/%s", root,
+                          file_name);
+        if (length >= 0 && (size_t)length < fallback_capacity) {
+            return fallback;
+        }
+    }
+    home = getenv("HOME");
+    if (!home || !home[0]) return NULL;
+    length = snprintf(fallback, fallback_capacity,
+                      "%s/.firestaff/data/theron/%s", home, file_name);
+    if (length < 0 || (size_t)length >= fallback_capacity) {
+        return NULL;
+    }
+    return fallback;
+}
+
 static int verify_real_us_item_table(void) {
-    const char *path = getenv("THERON_TRACK19_US_ISO");
+    char fallback[512];
+    const char *path = resolve_track19_iso(
+        "THERON_TRACK19_US_ISO", "TQUS19.iso", fallback, sizeof(fallback));
     FILE *file;
     long size;
     uint8_t *bytes;
@@ -125,7 +162,9 @@ static int verify_real_us_item_table(void) {
 }
 
 static int verify_real_jp_item_table(void) {
-    const char *path = getenv("THERON_TRACK19_JP_ISO");
+    char fallback[512];
+    const char *path = resolve_track19_iso(
+        "THERON_TRACK19_JP_ISO", "TQJP19.iso", fallback, sizeof(fallback));
     FILE *file;
     long size;
     uint8_t *bytes;
@@ -244,8 +283,14 @@ static int verify_real_jp_item_table(void) {
 int main(void) {
     Theron_V1Track19InventoryReceipt receipt;
     Theron_V1Track19InventoryReceipt file_receipt;
-    const char *real_iso = getenv("THERON_TRACK19_US_ISO");
-    const char *real_jp_iso = getenv("THERON_TRACK19_JP_ISO");
+    char us_fallback[512];
+    char jp_fallback[512];
+    const char *real_iso = resolve_track19_iso(
+        "THERON_TRACK19_US_ISO", "TQUS19.iso", us_fallback,
+        sizeof(us_fallback));
+    const char *real_jp_iso = resolve_track19_iso(
+        "THERON_TRACK19_JP_ISO", "TQJP19.iso", jp_fallback,
+        sizeof(jp_fallback));
 
     if (!theron_v1_track19_inventory(
             "51b40a17b92a30339957ba564aa0015c",
