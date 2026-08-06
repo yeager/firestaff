@@ -107,6 +107,8 @@ void nexus_champion_decrement_stamina(Nexus_V1_Champion *c, int cost);
  * Source: CHAMPION.C load update on inventory change. */
 void nexus_champion_recalc_load(Nexus_V1_Champion *c);
 
+/* Legacy compatibility fixture API.  The implementation is linked only into
+ * isolated tests; production uses nexus_v1_champions_init_from_rlowfix(). */
 void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool);
 /* Populate the live pool from DMWeb's RLOWFIX.BIN resource PLRD records. */
 int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,

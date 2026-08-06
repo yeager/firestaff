@@ -33,6 +33,13 @@
   the decoder or any VDP1 candidate into production pixels without an
   instrumented Saturn/Mednafen capture.
 
+- **NEXUS-PLRD-FIXTURE-QUARANTINE:** The inferred 24-name champion roster is
+  no longer compiled into `firestaff_nexus`; it is isolated in the explicit
+  compatibility-fixture library used by legacy tests. Keep production
+  champion initialization on authenticated European RLOWFIX/PLRD records and
+  add no inferred labels, stats or party members while the Saturn text/menu
+  consumer remains capture-gated.
+
 - **NEXUS-STALE-DOCUMENT-CLAIMS:** Older Nexus content/format documents still
   contain historical “implemented” wording for DM1-derived roster/combat,
   host mesh/title/HUD rendering, text conversion, and audio playback. The

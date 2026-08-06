@@ -130,6 +130,7 @@ void nexus_champion_recalc_load(Nexus_V1_Champion *c) {
     c->load = total;
     c->attributes |= NEXUS_ATTR_LOAD_CHANGED;
 }
+#if defined(FIRESTAFF_NEXUS_TEST_FIXTURE)
 static const struct { const char *ascii; const char *jp; int cls; int hp; int sta; int mp; int str; int dex; int wis; int vit; } g_nexus_roster[] = {
     {"Syra",      "\xe3\x82\xb7\xe3\x83\xa9", NEXUS_CLASS_FIGHTER, 70, 55, 15, 55, 40, 25, 50},
     {"Leyla",     "\xe3\x83\xac\xe3\x82\xa4\xe3\x83\xa9", NEXUS_CLASS_WIZARD,  40, 35, 65, 25, 35, 60, 30},
@@ -159,49 +160,12 @@ static const struct { const char *ascii; const char *jp; int cls; int hp; int st
 };
 
 void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool) {
-    /* Compatibility fixture for isolated legacy tests only. Production
-     * callers must use nexus_v1_champions_init_from_rlowfix(). */
-    int i, j;
-    if (!pool) return;
-    memset(pool, 0, sizeof(*pool));
-    for (i = 0; g_nexus_roster[i].ascii; i++) {
-        Nexus_V1_Champion *c = &pool->champions[i];
-        strncpy(c->name_ascii, g_nexus_roster[i].ascii, 31);
-        strncpy(c->name_jp, g_nexus_roster[i].jp, 63);
-        c->primary_class = g_nexus_roster[i].cls;
-        c->health = c->max_health = g_nexus_roster[i].hp;
-        c->stamina = c->max_stamina = g_nexus_roster[i].sta;
-        c->mana = c->max_mana = g_nexus_roster[i].mp;
-        c->strength = g_nexus_roster[i].str;
-        c->dexterity = g_nexus_roster[i].dex;
-        c->wisdom = g_nexus_roster[i].wis;
-        c->vitality = g_nexus_roster[i].vit;
-        c->anti_magic = 0;
-        c->anti_fire = 0;
-        c->food = 1500;
-        c->water = 1500;
-        c->gold = 0;
-        c->alive = 1;
-        c->portrait_index = i;
-
-        /* Initialize inventory and equipment slots */
-        for (j = 0; j < 30; j++)
-            c->inventory[j] = -1;
-        for (j = 0; j < NEXUS_SLOT_COUNT; j++)
-            c->slots[j] = -1;
-
-        c->load = 0;
-        c->max_load = nexus_champion_get_maximum_load(c);
-        c->wounds = 0;
-        c->attributes = 0;
-
-        pool->champion_count++;
-    }
-    /* Empty party */
-    for (i = 0; i < NEXUS_MAX_PARTY; i++)
-        pool->party[i] = -1;
-    pool->leader_index = 0;
+    /* The historical 24-name roster is test-fixture data. Production
+     * callers must use nexus_v1_champions_init_from_rlowfix(); do not seed a
+     * runtime pool from inferred names or stats. */
+    if (pool) memset(pool, 0, sizeof(*pool));
 }
+#endif
 
 /* DMWeb DMNDataFileDecoder.vbs: DecodeRES/PLRD reads 20 records.  Each
  * record is 6 TABL character indices, three BE16 values (health, stamina,

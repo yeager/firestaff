@@ -53963,3 +53963,34 @@ foreach(_firestaff_target IN LISTS _firestaff_build_targets)
         endif()
     endif()
 endforeach()
+
+# The historical 24-name Nexus champion roster is retained only for legacy
+# compatibility tests. Production firestaff_nexus must resolve champions
+# from authenticated RLOWFIX/PLRD bytes, so keep the fixture translation unit
+# out of the production library and attach it only to the tests/probes that
+# explicitly exercise that old compatibility API.
+add_library(firestaff_nexus_test_fixtures STATIC
+    tests/nexus_v1_champions_fixture.c)
+target_include_directories(firestaff_nexus_test_fixtures PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(firestaff_nexus_test_fixtures PRIVATE
+        -Wall -Wextra -O2)
+endif()
+foreach(_nexus_fixture_target IN ITEMS
+        test_m11_nexus_startup_gate
+        test_m11_nexus_startup_runtime_handoff
+        test_m12_quick_resume_gate
+        test_nexus_v1_save_multislot_roundtrip_pc34_compat
+        test_nexus_v1_save_slot_roundtrip_pc34_compat
+        test_nexus_v1_startup_menu_pc34_compat
+        test_nexus_v1_tick_integration
+        test_save_browser_export_import_m12
+        firestaff_nexus_v1_light_full_load_nglt_probe
+        firestaff_nexus_v1_mechanics_parity_probe
+        firestaff_nexus_v1_mechanics_playability_probe)
+    if(TARGET ${_nexus_fixture_target})
+        target_link_libraries(${_nexus_fixture_target} PRIVATE
+            firestaff_nexus_test_fixtures)
+    endif()
+endforeach()

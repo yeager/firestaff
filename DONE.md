@@ -52383,6 +52383,16 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   level/object semantics into production. `test_theron_v1_huc6280_disassembly`
   passes against both authentic regional ISOs.
 
+# 2026-08-06 Nexus production roster quarantine
+
+- ✅ Removed the inferred 24-name Nexus roster from the production
+  `firestaff_nexus` archive. Legacy tests/probes that intentionally exercise
+  the compatibility API now link `tests/nexus_v1_champions_fixture.c` through
+  `firestaff_nexus_test_fixtures`; the production library contains no old
+  roster strings. The real European RLOWFIX/PLRD parser remains the sole
+  production champion source, and `test_nexus_v1_champion_plrd` passes against
+  `/Users/bosse/.firestaff/data/nexus`.
+
 # 2026-08-06 Nexus PRS3/VDP1 static-state audit
 
 - ✅ The real European `MENU.BPK` PRS3 route passes all 162 retail surfaces;

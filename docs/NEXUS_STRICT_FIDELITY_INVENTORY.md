@@ -14,7 +14,7 @@ pixelavkodning och runtime-handoff måste också vara verifierade.
 | Saknad/ej redo titelasset | Blockerad | Ingen syntetisk titelbild |
 | Startup-fallback | Isolerad status/diagnostik | Får inte materialiseras som spelgrafik |
 | `nexus_render_title_fallback` (äldre API) | Isolerad; ingen M11-produktionsanropsväg | Får inte återkopplas som Nexus-startbild |
-| Hårdkodad roster i `nexus_v1_champions.c` | Bortkopplad från runtime | Namn, japanska namn och attribut är ännu inte dekoderade från verifierad Saturn-källa; initiering lämnar roster tom och championpresentation fail-closed |
+| Hårdkodad roster i `nexus_v1_champions.c` | Borttagen från produktionsbiblioteket; kvar endast i `tests/nexus_v1_champions_fixture.c` för äldre kompatibilitetstester | Namn, japanska namn och attribut kommer i produktion endast från verifierad RLOWFIX/PLRD; saknad eller felaktig källa lämnar roster tom och championpresentation fail-closed |
 | Saturns `FACE.BIN` | Verifierad 20-entry container; alla 20 verkliga PRS3-portraitrecords kan avkodas till 56×56 pixlar. Uppstartens loader bevarar nu varje frames 64-entry BGR555-källpalette och RGBA-expansion | Champion-index och VDP-placering saknar fortfarande verifiering; M11 laddar receipten men placerar inte portraitpixlar |
 | Hårdkodad creature-statstabell i `nexus_v1_creatures.c` | Bortkopplad från runtime | MNS bevisar modellcontainer, inte HP/attack/försvar/XP; creature-init lämnar typregistret tomt tills DGN/DM.BIN-statkälla är verifierad |
 | DM1-inherited itemkatalog i `nexus_v1_inventory.c` | Bortkopplad från runtime | Filen anger själv att Saturnspecifika stats, namn och use-semantik inte är bekräftade; item-ID:n resolvear nu inte till DM1-stand-ins |
