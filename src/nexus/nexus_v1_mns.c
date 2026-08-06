@@ -53,8 +53,11 @@ static int parse_mesh(const uint8_t *data, int data_size,
     m->vertex_offset = read_be32(md + 8);
     m->face_offset = read_be32(md + 16);
 
-    if (m->vertex_count > NEXUS_MNS_MAX_VERTICES) m->vertex_count = NEXUS_MNS_MAX_VERTICES;
-    if (m->face_count > NEXUS_MNS_MAX_FACES) m->face_count = NEXUS_MNS_MAX_FACES;
+    /* DMWeb's declared counts are part of the DMDF source envelope. Never
+     * accept a prefix by silently clipping a retail declaration to the host
+     * buffer; an unrepresentable mesh must remain unavailable. */
+    if (m->vertex_count > NEXUS_MNS_MAX_VERTICES ||
+        m->face_count > NEXUS_MNS_MAX_FACES) return 0;
 
     if (!range_in_file(m->vertex_offset,
                        (uint64_t)m->vertex_count * NEXUS_MNS_VERTEX_SIZE,
@@ -89,6 +92,7 @@ static int parse_mesh(const uint8_t *data, int data_size,
 int nexus_v1_mns_decode(const uint8_t *data, int data_size,
                          Nexus_V1_MnsDecodeResult *out) {
     uint32_t joints_offset;
+    uint32_t declared_joint_count;
     int i;
 
     if (!out) return 0;
@@ -99,10 +103,14 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
     out->file_size = read_be32(data + 4);
     out->motn_offset = read_be32(data + 0x20);
     out->text_offset = read_be32(data + 0x24);
-    out->joint_count = (int)read_be32(data + 0x28);
+    declared_joint_count = read_be32(data + 0x28);
+    out->joint_count = (int)declared_joint_count;
     joints_offset = read_be32(data + 0x1C);
 
-    if (out->joint_count > NEXUS_MNS_MAX_JOINTS) out->joint_count = NEXUS_MNS_MAX_JOINTS;
+    /* Preserve source identity: a declared skeleton larger than the bounded
+     * host representation is invalid for this route, not a request to drop
+     * the tail joints. */
+    if (declared_joint_count > NEXUS_MNS_MAX_JOINTS) return 0;
 
     for (i = 0; i < out->joint_count; ++i) {
         uint32_t joff = joints_offset + (uint32_t)i * NEXUS_MNS_JOINT_SIZE;
@@ -137,10 +145,12 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
         const uint8_t *text = data + out->text_offset;
         if (read_be32(text) == NEXUS_MNS_TEXT_MAGIC) {
             uint32_t text_size = read_be32(text + 4);
-            int tex_count = (int)read_be32(text + 8);
+            uint32_t declared_tex_count = read_be32(text + 8);
+            int tex_count;
             uint32_t desc_start = out->text_offset + 0x24;
 
-            if (tex_count > NEXUS_MNS_MAX_TEXTURES) tex_count = NEXUS_MNS_MAX_TEXTURES;
+            if (declared_tex_count > NEXUS_MNS_MAX_TEXTURES) return 0;
+            tex_count = (int)declared_tex_count;
             (void)text_size;
 
             for (i = 0; i < tex_count; ++i) {
@@ -190,11 +200,15 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
     if (out->motn_offset && (int)(out->motn_offset + 0x20) <= data_size) {
         const uint8_t *motn = data + out->motn_offset;
         if (read_be32(motn) == NEXUS_MNS_MOTN_MAGIC) {
-            int table_count = (int)read_be32(motn + 8);
-            int motn_joints = (int)read_be32(motn + 0x0C);
+            uint32_t declared_table_count = read_be32(motn + 8);
+            uint32_t declared_motn_joints = read_be32(motn + 0x0C);
+            int table_count;
+            int motn_joints;
             int t;
-            if (table_count > NEXUS_MNS_MAX_MOTN_TABLES)
-                table_count = NEXUS_MNS_MAX_MOTN_TABLES;
+            if (declared_table_count > NEXUS_MNS_MAX_MOTN_TABLES ||
+                declared_motn_joints > NEXUS_MNS_MAX_JOINTS) return 0;
+            table_count = (int)declared_table_count;
+            motn_joints = (int)declared_motn_joints;
             out->motn.joint_count_motn = motn_joints;
             out->motn.table_count = table_count;
             for (t = 0; t < table_count; ++t) {
@@ -242,6 +256,13 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
                         }
                         f_idx++;
                         entry_pos += 4;
+                    }
+                    if (f_idx == NEXUS_MNS_MAX_MOTN_FRAMES) {
+                        uint32_t next_frame;
+                        if (!range_in_file(entry_pos, 4U, data_size)) return 0;
+                        next_frame = read_be32(data + entry_pos);
+                        if (next_frame != 0U && next_frame != 0xFFFFFFFFU)
+                            return 0;
                     }
                     out->motn.tables[t].frame_count = f_idx;
                 }

@@ -232,3 +232,11 @@ blitas direkt: `TITLE.BIN` MAPD väljer tile-index, h/v-flip och 16-färgspalett
 för fem 64×28-bilder. Den beskriver inte Firestaffs slutliga 320×200-output- eller
 VDP1/VDP2-bindning: [DMWeb Nexus file formats](http://dmweb.free.fr/community/documentation/dungeon-master-nexus/file-formats/),
 [DMWeb Nexus Data File Decoder](http://dmweb.free.fr/community/tools/dungeon-master-nexus-data-file-decoder/).
+
+MNS-gränserna är nu härledda från hela den lokala, hashverifierade retailkorpusen
+med 30 modeller. `VEXIRK.MNS` behåller 64 TEXT-deskriptorer och
+`D_GOLD.MNS` behåller 11 MOTN-tabeller; tidigare gränser på 16 respektive 8
+orsakade tyst bortfall av riktiga modeller. Parsern avvisar i stället deklarationer
+som inte ryms, utan att skapa en trunkerad giltig modell. Testet dekoder alla 30
+MNS-filer och renderar 815 källtexturer. Detta är fortsatt parser-/materialbevis,
+inte bevis på Saturns slutliga VDP1-kommandoordning eller viewport-pixlar.

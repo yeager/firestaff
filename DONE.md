@@ -50619,3 +50619,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   panel blits. Verification against the real DM1 corpus: HoC inscription
   palette transition, 611-record object names/icons, and F0702 held-object
   cursor/floor pickup all pass. Real macOS capture remains open in TODO.
+- ✅ 2026-08-06 Nexus MNS retail declaration bounds: the MNS decoder no longer
+  silently clips declared skeleton, mesh, TEXT, or MOTN data to undersized host
+  buffers. The verified 30-model corpus retains the observed 37-joint
+  `ROCKPILE.MNS`, 64-texture `VEXIRK.MNS`, and 11-table `D_GOLD.MNS` cases;
+  oversized declarations fail closed. Verification: `test_nexus_v1_mns`
+  decoded all 30 real MNS files and rendered 815 source textures. This does
+  not claim Saturn VDP1 capture or final viewport-pixel parity.

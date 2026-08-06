@@ -22,6 +22,13 @@ static uint8_t *load_file(const char *path, int *out_size) {
     return buf;
 }
 
+static void write_be32(uint8_t *p, uint32_t value) {
+    p[0] = (uint8_t)(value >> 24);
+    p[1] = (uint8_t)(value >> 16);
+    p[2] = (uint8_t)(value >> 8);
+    p[3] = (uint8_t)value;
+}
+
 static int test_synthetic(void) {
     Nexus_V1_MnsDecodeResult r;
     uint8_t bad[64];
@@ -35,6 +42,13 @@ static int test_synthetic(void) {
     bad[0x28 + 3] = 1;
     bad[0x1C + 3] = 0x34;
     if (nexus_v1_mns_decode(bad, 0x34, &r)) return 1;
+    /* A declared skeleton beyond the bounded host representation must not be
+     * accepted as a truncated prefix. */
+    memset(bad, 0, sizeof(bad));
+    bad[0] = 'D'; bad[1] = 'M'; bad[2] = 'D'; bad[3] = 'F';
+    write_be32(bad + 0x1C, 0x34U);
+    write_be32(bad + 0x28, NEXUS_MNS_MAX_JOINTS + 1U);
+    if (nexus_v1_mns_decode(bad, (int)sizeof(bad), &r)) return 1;
     printf("  PASS synthetic\n");
     return 0;
 }
@@ -46,6 +60,7 @@ static int test_all_mns(void) {
     struct dirent *ent;
     int decoded = 0, rendered = 0, fail = 0;
     int scorpion_joints = 0, rockpile_joints = 0;
+    int vexirk_textures = 0, d_gold_tables = 0;
 
     if (!home) { printf("  SKIP all_mns (no HOME)\n"); return 0; }
     snprintf(dirpath, sizeof(dirpath), "%s/.firestaff/data/nexus", home);
@@ -100,6 +115,8 @@ static int test_all_mns(void) {
         printf("\n");
         if (strcmp(name, "SCORPION.MNS") == 0) scorpion_joints = result.joint_count;
         if (strcmp(name, "ROCKPILE.MNS") == 0) rockpile_joints = result.joint_count;
+        if (strcmp(name, "VEXIRK.MNS") == 0) vexirk_textures = result.texture_count;
+        if (strcmp(name, "D_GOLD.MNS") == 0) d_gold_tables = result.motn.table_count;
         decoded++;
         free(data);
     }
@@ -121,6 +138,20 @@ static int test_all_mns(void) {
             ++fail;
         } else {
             printf("  PASS ROCKPILE.MNS: retained 37 retail joints\n");
+        }
+        if (vexirk_textures != 64) {
+            printf("  FAIL VEXIRK.MNS: textures=%d (expected retail 64)\n",
+                   vexirk_textures);
+            ++fail;
+        } else {
+            printf("  PASS VEXIRK.MNS: retained 64 retail textures\n");
+        }
+        if (d_gold_tables != 11) {
+            printf("  FAIL D_GOLD.MNS: MOTN tables=%d (expected retail 11)\n",
+                   d_gold_tables);
+            ++fail;
+        } else {
+            printf("  PASS D_GOLD.MNS: retained 11 retail MOTN tables\n");
         }
     }
     if (decoded == 0) printf("  SKIP (no MNS files found)\n");

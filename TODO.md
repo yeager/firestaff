@@ -25868,3 +25868,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   GDAT plan without SKProject's live GUI/session inputs, so it cannot return
   until complete per-command, party and champion-state receipts drive the
   original UI route. Diagnostic V2 HUD modules remain non-production only.
+
+- 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
+  texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN
+  tables). Remaining work is original Saturn/VDP1 capture and source-locked
+  face/mesh texture placement; parser success is not viewport proof.

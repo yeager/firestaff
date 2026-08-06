@@ -17,7 +17,8 @@
 #define NEXUS_MNS_MAX_JOINTS     64
 #define NEXUS_MNS_MAX_VERTICES   512
 #define NEXUS_MNS_MAX_FACES      512
-#define NEXUS_MNS_MAX_TEXTURES   16
+/* Corpus census: VEXIRK.MNS declares 64 TEXT descriptors. */
+#define NEXUS_MNS_MAX_TEXTURES   64
 #define NEXUS_MNS_TEXT_DESC_SIZE  20
 
 typedef struct {
@@ -64,7 +65,8 @@ typedef struct {
 } Nexus_V1_MnsTextureDesc;
 
 /* MOTN keyframe: per-joint rotation for one frame (DMWeb StrucMotnFrame) */
-#define NEXUS_MNS_MAX_MOTN_TABLES   8
+/* Corpus census: D_GOLD.MNS and GIGGLER.MNS declare 11 MOTN tables. */
+#define NEXUS_MNS_MAX_MOTN_TABLES  16
 #define NEXUS_MNS_MAX_MOTN_FRAMES  64
 
 typedef struct {
