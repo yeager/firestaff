@@ -1,3 +1,12 @@
+# DM1 mirror pending-hand/chest-race synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the pending-hand/chest-pickup race model from M10. It fabricates
+  champion hands, chest slots, candidate state and panel counters, reads no
+  original DM1 data and has no M11/runtime caller; its explicit ReDMCSB
+  regression compiles the source directly.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_pending_hand_during_chest_pickup_race_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 mirror C545 pickup synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the C545/C040 pickup model from M10. It fabricates floor objects,

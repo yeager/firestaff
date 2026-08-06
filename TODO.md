@@ -102,6 +102,12 @@
   explicit ReDMCSB regression until a live pickup owner is bound to authentic
   object and panel state.
 
+- **DM1-MIRROR-PENDING-HAND-CHEST-RACE-SYNTHETIC-AUDIT:** This race helper
+  fabricates champion hands, chest slots, candidate state and panel counters.
+  It reads no original DM1 data and has no M11/runtime caller; retain it only
+  as an explicit ReDMCSB regression until a live queue/pickup owner is bound
+  to authentic runtime state.
+
 - **DM1-F0449-F0450-FLOPPY-PLATFORM-AUDIT:** The F0449/F0450 helper is a
   fail-closed Atari-ST floppy boundary, not a PC34 runtime owner. Keep its
   source evidence test-only until a real platform-specific media consumer is
