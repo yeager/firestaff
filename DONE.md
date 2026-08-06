@@ -51001,3 +51001,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   remains 377/377. Atari ST is intentionally documented as discovery-only
   until its LZW-to-IMG1/IMG2 pixel handoff is complete; no synthetic Atari
   gameplay path was enabled.
+- ✅ 2026-08-06 DM1 Atari ST GRAPHICS.DAT record handoff: added the DM1-owned
+  `dm1_v1_atari_st_graphics_dat` parser for the original big-endian 575-record
+  table, exact data-section accounting, raw records, and Atari-LZW records
+  using the ReDMCSB-compatible decoder. It is intentionally separate from the
+  PC34 and FM Towns/Amiga IMAGE2 paths. Unit coverage verifies every table
+  offset, final-record bounds, raw reads, and truncation rejection. This does
+  not claim Atari pixel rendering: IMG1/IMG2 interpretation and STX protected
+  media extraction remain open in TODO.

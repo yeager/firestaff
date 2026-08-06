@@ -24,12 +24,13 @@
   from inferred selectors.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
-  the production M11 renderer still lacks the final source-bound IMG1/IMG2
-  interpretation after the Atari LZW record handoff. Keep these variants
-  launch-blocked for gameplay rather than routing their big-endian/LZW bytes
-  through the PC34 loader. FM Towns legacy IMAGE2 and Amiga legacy IMAGE2
-  graphics are handled by the new endian-aware DM1 cache path; their remaining
-  dungeon/save/input/media capture gaps stay separate.
+  `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1
+  big-endian 575-record table and Atari-LZW/raw record handoff. The production
+  M11 renderer still lacks the final source-bound IMG1/IMG2 interpretation
+  after that handoff. Keep these variants launch-blocked for gameplay rather
+  than routing their bytes through the PC34 loader. FM Towns legacy IMAGE2 and
+  Amiga legacy IMAGE2 graphics are handled by the endian-aware DM1 cache path;
+  their remaining dungeon/save/input/media capture gaps stay separate.
 
 - **NEXUS-MNS-SATURN-RENDER-HANDOFF:** Retail MNS admission now validates
   DMDF block size plus MOTN/TEXT section envelopes, and the real corpus decodes
