@@ -4578,6 +4578,12 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_text\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_s2d_text_layout\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_s2d_glyph_decode\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_screen_text\\.c$")
+# The SCR loader's indexed glyph writer is a host framebuffer fixture.  The
+# retail FONT256 path currently has no authenticated Saturn page/tilemap,
+# attribute, CLUT or VDP2 destination capture, so do not export this draw seam
+# from firestaff_nexus.  The source is added explicitly to its deterministic
+# parser/render probes below.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_saturn_font\\.c$")
 # These modules are source-format/host-presentation probes only.  Their M11
 # callbacks copy decoded WARNING.BIN planes into a host framebuffer, which is
 # not a Saturn VDP capture and must not be exported by firestaff_nexus.
@@ -38070,6 +38076,7 @@ endif()
 # NULL-safety + 50-repetition determinism.
 add_executable(firestaff_nexus_v1_saturn_font_determinism_probe
     probes/nexus/firestaff_nexus_v1_saturn_font_determinism_probe.c
+    src/nexus/nexus_v1_saturn_font.c
 )
 target_link_libraries(firestaff_nexus_v1_saturn_font_determinism_probe PRIVATE
     firestaff_nexus firestaff_m10
@@ -38090,6 +38097,7 @@ endif()
 # handoff without committing asset bytes or claiming full SCR section parity.
 add_executable(firestaff_nexus_v1_saturn_font_render_probe
     probes/nexus/firestaff_nexus_v1_saturn_font_render_probe.c
+    src/nexus/nexus_v1_saturn_font.c
 )
 target_link_libraries(firestaff_nexus_v1_saturn_font_render_probe PRIVATE
     firestaff_nexus firestaff_m10
@@ -38114,6 +38122,7 @@ endif()
 # docs/NEXUS_FILE_CLASSIFICATION.md, docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md.
 add_executable(firestaff_nexus_v1_track1_phase_launch_probe
     probes/nexus_v1_track1_phase_launch_probe.c
+    src/nexus/nexus_v1_saturn_font.c
 )
 target_link_libraries(firestaff_nexus_v1_track1_phase_launch_probe PRIVATE
     firestaff_nexus firestaff_m10
@@ -38138,6 +38147,7 @@ endif()
 # Readiness receipt only — no image is promoted.
 add_executable(firestaff_nexus_v1_track1_real_screen_capture_readiness_probe
     probes/nexus_v1_track1_real_screen_capture_readiness_probe.c
+    src/nexus/nexus_v1_saturn_font.c
 )
 target_link_libraries(firestaff_nexus_v1_track1_real_screen_capture_readiness_probe PRIVATE
     firestaff_nexus firestaff_m10
@@ -38552,6 +38562,7 @@ add_test(NAME nexus_v1_raw_bin COMMAND test_nexus_v1_raw_bin)
 set_tests_properties(nexus_v1_raw_bin PROPERTIES LABELS "nexus;saturn;raw;skip_safe")
 
 add_executable(test_nexus_v1_font_s2d tests/test_nexus_v1_font_s2d.c)
+target_sources(test_nexus_v1_font_s2d PRIVATE src/nexus/nexus_v1_saturn_font.c)
 target_include_directories(test_nexus_v1_font_s2d PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_font_s2d PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_font_s2d COMMAND test_nexus_v1_font_s2d)
@@ -39269,6 +39280,7 @@ endif()
 # committing asset bytes or claiming full text-layout/render parity.
 add_executable(firestaff_nexus_v1_saturn_font_scr_sections_probe
     probes/nexus/firestaff_nexus_v1_saturn_font_scr_sections_probe.c
+    src/nexus/nexus_v1_saturn_font.c
 )
 target_link_libraries(firestaff_nexus_v1_saturn_font_scr_sections_probe PRIVATE
     firestaff_nexus firestaff_m10
@@ -39297,6 +39309,7 @@ endif()
 #   docs/FIRESTAFF_GAP_LIST.md           (S2D PARTIAL row, "bind text layout")
 add_executable(firestaff_nexus_v1_s2d_runtime_text_layout_probe
     probes/nexus/firestaff_nexus_v1_s2d_runtime_text_layout_probe.c
+    src/nexus/nexus_v1_saturn_font.c
     src/nexus/nexus_v1_s2d_text_layout.c
     src/nexus/nexus_v1_s2d_glyph_decode.c
     src/nexus/nexus_v1_screen_text.c
@@ -39331,6 +39344,7 @@ endif()
 #   src/nexus/nexus_v1_saturn_font.c     (load_sections + glyph draw)
 add_executable(firestaff_nexus_v1_screen_text_surface_probe
     probes/nexus/firestaff_nexus_v1_screen_text_surface_probe.c
+    src/nexus/nexus_v1_saturn_font.c
     src/nexus/nexus_v1_screen_text.c
     src/nexus/nexus_v1_s2d_text_layout.c
     src/nexus/nexus_v1_s2d_glyph_decode.c
@@ -39355,6 +39369,7 @@ endif()
 # FONT256.S2D input is skip-safe.
 add_executable(firestaff_nexus_v1_s2d_glyph_decode_probe
     probes/nexus/firestaff_nexus_v1_s2d_glyph_decode_probe.c
+    src/nexus/nexus_v1_saturn_font.c
     src/nexus/nexus_v1_s2d_glyph_decode.c
     src/nexus/nexus_v1_s2d_text_layout.c
     src/nexus/nexus_v1_text.c
@@ -39409,6 +39424,7 @@ endif()
 # parity screenshot promotion.
 add_executable(firestaff_nexus_v1_track1_screen_capture_readiness_probe
     probes/nexus/firestaff_nexus_v1_track1_screen_capture_readiness_probe.c
+    src/nexus/nexus_v1_saturn_font.c
 )
 target_link_libraries(firestaff_nexus_v1_track1_screen_capture_readiness_probe PRIVATE
     firestaff_nexus firestaff_m10

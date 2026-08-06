@@ -27,6 +27,10 @@
   for the real `FONT256.S2D`; the retail receipt is now limited to five named
   regions and 242 authenticated 8x8 CG tiles. The old 256-slot/map receipts
   were removed from the real-data path.
+  2026-08-06 follow-up: `nexus_v1_saturn_font.c` and its indexed host
+  framebuffer writer are now excluded from `firestaff_nexus`; only explicit
+  parser/render probes compile that fixture source. Keep the Saturn text
+  consumer and VDP2 placement capture open.
 
 - **NEXUS-ACTION-DISPATCH-CAPTURE:** Retail mechanics no longer consume
   queued movement or turn commands merely because DGN floor geometry decoded;

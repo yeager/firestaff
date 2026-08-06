@@ -31,6 +31,7 @@ for exclusion in (
     r"nexus_v1_s2d_text_layout\\.c$",
     r"nexus_v1_s2d_glyph_decode\\.c$",
     r"nexus_v1_screen_text\\.c$",
+    r"nexus_v1_saturn_font\\.c$",
     r"nexus_v1_warning_dgt2_m11_presentation\\.c$",
     r"nexus_v1_mns\\.c$",
     r"nexus_v1_spell_effects\\.c$",

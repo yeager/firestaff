@@ -99,12 +99,12 @@ int nexus_v1_font_draw_glyph_indexed(const Nexus_V1_Font *font,
  * `data`/`out` is NULL, the buffer is too small to fit the header + table,
  * or the magic does not match.
  *
- * This is the asset-backed step the existing 1bpp glyph-decode path
- * skipped; the existing `nexus_v1_font_load()` still does its flat
- * 1bpp bitmap pass over the bytes after offset 48, and remains the
- * path the runtime takes. `nexus_v1_font_load_sections()` is the
- * section-aware complement that the SCR section-table gap-list row
- * needs to claim real on-disk evidence. */
+ * This is the asset-backed step the old 1bpp glyph-decode path skipped.
+ * `nexus_v1_font_load()` and the indexed glyph writer remain explicit
+ * fixture/probe APIs; they are not exported by the retail `firestaff_nexus`
+ * target until Saturn page/tilemap/attribute and VDP2 placement evidence is
+ * captured. `nexus_v1_font_load_sections()` is the section-aware parser used
+ * by the explicit source-format probes. */
 int nexus_v1_font_load_sections(const uint8_t *data, int size,
                                 Nexus_V1_FontSections *out);
 

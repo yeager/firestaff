@@ -1,3 +1,12 @@
+# Nexus FONT256 host-draw seam quarantine (2026-08-06)
+
+- ✅ Removed `nexus_v1_saturn_font.c` from the retail `firestaff_nexus`
+  library. Its indexed glyph writer was a host-framebuffer fixture, not a
+  captured Saturn page/tilemap/attribute/VDP2 consumer.
+- ✅ Added the source explicitly to deterministic parser/render probes and
+  corrected the API comments. Real FONT256 source receipts remain available;
+  production startup/HUD text stays capture-gated.
+
 # Nexus Phase 4 rendering-document fidelity correction (2026-08-06)
 
 - ✅ Corrected the source-lock rendering document so it no longer describes

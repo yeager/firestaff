@@ -229,10 +229,10 @@ int nexus_v1_font_draw_glyph_indexed(const Nexus_V1_Font *font,
  * parser skips them rather than rejecting the whole table.
  *
  * This is the asset-backed handoff the original 1bpp flat bitmap path
- * skipped. `nexus_v1_font_load()` still consumes the bytes after offset
- * 48 as a flat 1bpp glyph stream; `nexus_v1_font_load_sections()` is the
- * section-aware complement, and it is what the SCR section-table row in
- * docs/FIRESTAFF_GAP_LIST.md needs to claim real on-disk evidence.
+ * skipped. The loader and indexed writer are retained for explicit
+ * source-format probes only; the retail `firestaff_nexus` target excludes
+ * this translation unit until Saturn page/tilemap/attribute and VDP2
+ * placement evidence is captured.
  *
  * Source-lock notes:
  *   - SEGA SATURN SCR header is 32 bytes (16-byte magic + 16-byte
