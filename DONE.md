@@ -56245,3 +56245,13 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Added a regression assertion to `test_dm2_v1_sound_gdat_real_data` and
   kept `dm2_v1_sound_name()` fail-closed. No synthetic sound labels were
   admitted.
+
+# 2026-08-06 CSB Atari MSA save-disk admission
+
+- ✅ Added a strict Magic Shadow Archiver reader for CSB's Atari ST save-disk
+  media. It accepts only the documented big-endian `0x0E0F` header, bounded
+  per-track RLE and GEMDOS/FAT12 root-file chains; malformed tracks, broken
+  chains and absent files are rejected before any save bytes are exposed.
+- Verification: a data-free 9-sector FAT12 regression passes, and the real
+  `Chaos Strikes Back for Atari ST Save Disk.msa` from the local retail archive
+  decodes to its declared 9-sector, two-sided, 80-track 720 KiB image.

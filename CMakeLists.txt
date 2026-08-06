@@ -4636,6 +4636,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_utility_import_pc34.c
     src/csb/csb_v1_utility_save_transaction_pc34_compat.c
     src/csb/csb_v1_atari_save_decode_pc34_compat.c
+    src/csb/csb_v1_atari_msa.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
     src/dm1/dm1_v1_legacy_graphics_dat.c
     src/dm1/dm1_v1_fmtowns_graphics_dat.c
@@ -54707,6 +54708,16 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 add_test(NAME dm2_v1_tim_proc_pc34_compat COMMAND test_dm2_v1_tim_proc_pc34_compat)
+
+add_executable(test_csb_v1_atari_msa
+    tests/test_csb_v1_atari_msa.c
+    src/csb/csb_v1_atari_msa.c)
+target_include_directories(test_csb_v1_atari_msa PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_atari_msa PRIVATE -Wall -Wextra -O2)
+endif()
+add_test(NAME csb_v1_atari_msa COMMAND test_csb_v1_atari_msa)
 
 # Standalone DM2 tests and probes often compile dm2_v1_boot.c directly rather
 # than linking firestaff_dm2. Keep the boot-owned Amiga media helpers attached
