@@ -4,6 +4,13 @@
   HUD tile bank and layout are captured. `test_theron_v1_m11_launcher_handoff_boundary`
   (46/46) and `test_theron_rendering` (25/25) pass.
 
+- ✅ 2026-08-06 CSB FM Towns legacy RAR admission: the supplied retail RAR
+  contains the same original MODE1/2352 track as the Redump ZIP, but its
+  compression method is unreadable by the installed 7-Zip build. External
+  RAR extraction now prefers `unrar`, including shared hash discovery and
+  virtual-path materialization. CSB stages the real `.bin`, verifies its
+  `CDATA` pair and reports READY without a renamed loose-file copy.
+
 - ✅ 2026-08-06 Nexus retail Saturn boot receipt: the supplied European BIOS
   (`96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`) and
   the real English merged BIN/CUE from the user-owned archive booted in stock

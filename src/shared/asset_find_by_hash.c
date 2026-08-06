@@ -2951,8 +2951,10 @@ static int chd_extract_entry_to_path(const char *chdPath,
 static const char *external_archive_tool_for_path(const char *archivePath) {
     static const char *const defaultTools[] = {"7zz", "7z", "bsdtar", NULL};
     static const char *const tarTools[] = {"bsdtar", "7zz", "7z", NULL};
+    static const char *const rarTools[] = {"unrar", "7zz", "7z", "bsdtar", NULL};
     const char *const *tools =
-        is_external_tar_archive_path(archivePath) ? tarTools : defaultTools;
+        is_external_tar_archive_path(archivePath) ? tarTools :
+        has_case_suffix(archivePath, ".rar") ? rarTools : defaultTools;
     int i;
     for (i = 0; tools[i] != NULL; ++i) {
         if (shell_tool_exists(tools[i])) {
@@ -2972,6 +2974,18 @@ static int external_entry_command(char *cmd,
     }
     if (strcmp(tool, "bsdtar") == 0) {
         if (snprintf(cmd, cmdSize, "%s -xOf ", tool) >= (int)cmdSize) {
+            return 0;
+        }
+        if (!shell_append_quoted(cmd, cmdSize, archivePath)) return 0;
+        if (strlen(cmd) + 2U >= cmdSize) return 0;
+        strcat(cmd, " ");
+        if (!shell_append_quoted(cmd, cmdSize, entryName)) return 0;
+        if (strlen(cmd) + 13U >= cmdSize) return 0;
+        strcat(cmd, " 2>/dev/null");
+        return 1;
+    }
+    if (strcmp(tool, "unrar") == 0) {
+        if (snprintf(cmd, cmdSize, "%s p -inul ", tool) >= (int)cmdSize) {
             return 0;
         }
         if (!shell_append_quoted(cmd, cmdSize, archivePath)) return 0;
@@ -3003,6 +3017,15 @@ static int external_list_command(char *cmd,
     }
     if (strcmp(tool, "bsdtar") == 0) {
         if (snprintf(cmd, cmdSize, "%s -tf ", tool) >= (int)cmdSize) {
+            return 0;
+        }
+        if (!shell_append_quoted(cmd, cmdSize, archivePath)) return 0;
+        if (strlen(cmd) + 13U >= cmdSize) return 0;
+        strcat(cmd, " 2>/dev/null");
+        return 1;
+    }
+    if (strcmp(tool, "unrar") == 0) {
+        if (snprintf(cmd, cmdSize, "%s lb ", tool) >= (int)cmdSize) {
             return 0;
         }
         if (!shell_append_quoted(cmd, cmdSize, archivePath)) return 0;
@@ -3208,7 +3231,7 @@ static int scan_external_archive_by_md5(const char *archivePath,
     while (fgets(line, sizeof(line), pipe)) {
         char *value;
         line[strcspn(line, "\r\n")] = '\0';
-        if (strcmp(tool, "bsdtar") == 0) {
+        if (strcmp(tool, "bsdtar") == 0 || strcmp(tool, "unrar") == 0) {
             if (line[0] != '\0') {
                 if (is_adf_path(line) && scan_external_adf_by_md5(
                         archivePath, line, expectedMd5, outPath, outPathLen)) {
@@ -3305,7 +3328,7 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
     while (fgets(line, sizeof(line), pipe)) {
         int commit = 0;
         line[strcspn(line, "\r\n")] = '\0';
-        if (strcmp(tool, "bsdtar") == 0) {
+        if (strcmp(tool, "bsdtar") == 0 || strcmp(tool, "unrar") == 0) {
             if (line[0] != '\0' && line[strlen(line) - 1U] != '/') {
                 if (is_adf_path(line)) {
                     foundCount += scan_external_adf_by_md5_list(
@@ -3511,7 +3534,9 @@ static void record_missing_extractor(const char *archivePath) {
     if (g_missingExtractorCount >= ASSET_SCAN_MISSING_EXTRACTOR_MAX) return;
     tools = is_external_tar_archive_path(archivePath)
                 ? "bsdtar/7zz/7z"
-                : "7zz/7z/bsdtar";
+                : has_case_suffix(archivePath, ".rar")
+                    ? "unrar/7zz/7z/bsdtar"
+                    : "7zz/7z/bsdtar";
     snprintf(g_missingExtractorPaths[g_missingExtractorCount],
              ASSET_PATH_MAX, "%s", archivePath);
     snprintf(g_missingExtractorTools[g_missingExtractorCount],

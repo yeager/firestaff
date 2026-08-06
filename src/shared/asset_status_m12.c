@@ -1034,14 +1034,31 @@ static int m12_csb_fmtowns_make_stage_path(char* path, size_t pathSize) {
 #endif
 }
 
-static int m12_csb_fmtowns_zip_stage(const char* archivePath,
-                                     char* imagePath, size_t imagePathSize,
-                                     CSB_V1_FmtownsCdLayout* layout) {
+static int m12_csb_fmtowns_archive_stage(const char* archivePath,
+                                         char* imagePath, size_t imagePathSize,
+                                         CSB_V1_FmtownsCdLayout* layout) {
+    char virtualPath[M12_ASSET_DATA_DIR_CAPACITY + 64U];
+    int extracted = 0;
     if (!archivePath || !imagePath || !layout ||
-        !m12_csb_fmtowns_make_stage_path(imagePath, imagePathSize) ||
-        firestaff_zip_extract_by_suffix_to_path(archivePath, ".img", imagePath) != 0 ||
-        csb_v1_fmtowns_cd_parse_file(imagePath, layout) != 0) {
+        !m12_csb_fmtowns_make_stage_path(imagePath, imagePathSize)) {
         if (imagePath && imagePath[0] != '\0') remove(imagePath);
+        return 0;
+    }
+    /* The Redump ZIP is an IMG, whereas the earlier retail RAR carries the
+     * same MODE1/2352 track as a BIN.  Both are real CSB FM Towns packages;
+     * use the shared virtual-archive extractor for RAR so its command quoting,
+     * tool availability and write-error handling match the hash scanner. */
+    if (firestaff_zip_extract_by_suffix_to_path(archivePath, ".img", imagePath) == 0 ||
+        firestaff_zip_extract_by_suffix_to_path(archivePath, ".bin", imagePath) == 0) {
+        extracted = 1;
+    } else if (snprintf(virtualPath, sizeof(virtualPath),
+                        "%s::Chaos Strikes Back for FM-Towns.bin", archivePath) <
+                   (int)sizeof(virtualPath) &&
+               asset_extract_virtual_path(virtualPath, imagePath)) {
+        extracted = 1;
+    }
+    if (!extracted || csb_v1_fmtowns_cd_parse_file(imagePath, layout) != 0) {
+        remove(imagePath);
         return 0;
     }
     return 1;
@@ -1094,6 +1111,7 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
     static const char* const archiveNames[] = {
         "Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN.zip",
         "Dungeon-Master-Chaos-Strikes-Back-Expansion-Set-1_FM-Towns_JA-EN (1).zip",
+        "Chaos Strikes Back for FM-Towns.rar",
         NULL
     };
     static const char* const directories[] = {"CDATA", "CJDATA"};
@@ -1109,8 +1127,8 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
             if (snprintf(archivePath, sizeof(archivePath), "%s/%s",
                          roots[rootIndex], archiveNames[archiveIndex]) >=
                     (int)sizeof(archivePath) ||
-                !m12_csb_fmtowns_zip_stage(archivePath, imagePath, sizeof(imagePath),
-                                           &layout)) {
+                !m12_csb_fmtowns_archive_stage(archivePath, imagePath, sizeof(imagePath),
+                                               &layout)) {
                 continue;
             }
             for (languageIndex = 0U; languageIndex < 2U; ++languageIndex) {
@@ -3247,7 +3265,7 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
     archivePath[separator - version->matchedPath] = '\0';
     selectedDirectory = strcmp(version->versionId, "fmtowns-en") == 0
         ? "CDATA" : "CJDATA";
-    if (!m12_csb_fmtowns_zip_stage(archivePath, imagePath, sizeof(imagePath), &layout)) return 0;
+    if (!m12_csb_fmtowns_archive_stage(archivePath, imagePath, sizeof(imagePath), &layout)) return 0;
     for (i = 0; i < 2; ++i) {
         const char* name = i == 0 ? "GRAPHICS.DAT" : "DUNGEON.DAT";
         char outPath[M12_ASSET_DATA_DIR_CAPACITY];
