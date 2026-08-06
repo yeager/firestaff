@@ -50516,3 +50516,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   now the sole production owner of the optional GDAT-backed V2 HUD pass.
   Verification: full app build, real PC-DOS boot profile 95/95, and the M11
   launcher-handoff regression's bounded SDL timeout exit.
+- ✅ 2026-08-06 DM1 floor/ceiling frame source gate: the live M11 outer
+  viewport frame now accepts PC34 floor-set records only when the asset is
+  both decoded and pixel-backed. Dimension-only cache metadata can no longer
+  reach `BlitScaled` and paint an empty or placeholder frame over the real
+  DM1 viewport. The legacy diagnostic frame path remains isolated from
+  authenticated DM1 sessions. Verified with a full Ninja build and the real
+  PC3.4 object-name, 611-record object corpus, and alcove pickup/placement
+  tests.

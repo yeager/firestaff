@@ -34221,12 +34221,18 @@ static int m11_draw_ui_frame_assets(const M11_GameViewState* state,
     floorSlot = M11_AssetLoader_Load(
         (M11_AssetLoader*)&state->assetLoader, M11_GFX_FLOOR_PANEL);
 
-    if (ceilSlot && ceilSlot->width > 0 && ceilSlot->height > 0) {
+    /* A cache entry with dimensions but no decoded pixels is metadata, not a
+     * source surface.  ReDMCSB F0094/F0098 consume the actual floor-set
+     * bitmap; accepting the dimension-only entry lets the scaled blit paint
+     * an empty/placeholder frame over the authenticated DM1 viewport. */
+    if (ceilSlot && ceilSlot->loaded && ceilSlot->pixels &&
+        ceilSlot->width > 0 && ceilSlot->height > 0) {
         /* Blit the ceiling panel at the top of the viewport area */
         M11_AssetLoader_BlitScaled(ceilSlot, framebuffer, fbW, fbH,
                                    12, 24, 196, 14, -1);
     }
-    if (floorSlot && floorSlot->width > 0 && floorSlot->height > 0) {
+    if (floorSlot && floorSlot->loaded && floorSlot->pixels &&
+        floorSlot->width > 0 && floorSlot->height > 0) {
         /* Blit the floor panel below the viewport */
         M11_AssetLoader_BlitScaled(floorSlot, framebuffer, fbW, fbH,
                                    12, 142, 196, 6, -1);

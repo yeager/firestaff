@@ -6281,6 +6281,11 @@ lane is carried forward in the sections below.
   and preserves the source object -> projectile -> explosion restart order.
   Real multi-effect corpus capture remains open; no missing surface may be
   replaced by a marker or generated sprite.
+- 2026-08-06 update: the active outer floor/ceiling frame consumer now also
+  requires decoded pixel ownership (`loaded` plus `pixels`) before blitting
+  the PC34 floor-set records. Dimension-only cache entries are rejected, so
+  they cannot masquerade as real frame material. Remaining work is broader
+  real multi-effect and packaged-app capture, not another frame fallback.
 
 - F0135/F0732/F0733/F0735 now have bounded planar dispatch coverage. The DM1
   viewport has a fail-closed F0134/F0135 material consumer that accepts only a
