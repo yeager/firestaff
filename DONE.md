@@ -1,3 +1,9 @@
+# DM1 mirror keyboard-rotation synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only command-queue fixture from M10 and made its
+  direct regression compile the source explicitly. It loads no original DM1
+  data and has no M11/runtime caller.
+
 # DM1 mirror close-button synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C040 chrome fixture from M10. Its direct and
