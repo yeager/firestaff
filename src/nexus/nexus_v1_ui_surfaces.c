@@ -63,6 +63,11 @@ static uint64_t nexus_ui_fnv1a64_append(uint64_t hash,
     return hash;
 }
 
+static uint64_t nexus_ui_fnv1a64(const uint8_t *data, size_t size)
+{
+    return nexus_ui_fnv1a64_append(UINT64_C(14695981039346656037), data, size);
+}
+
 static uint64_t nexus_ui_fnv1a64_append_u32(uint64_t hash, uint32_t value)
 {
     uint8_t bytes[4];
@@ -460,6 +465,12 @@ int nexus_ui_load_title(Nexus_UI_Manager *mgr,
                                       NEXUS_UI_TITLE_CG_WIDTH,
                                       NEXUS_UI_TITLE_CG_HEIGHT,
                                       0, 16, "TITLE.CG/4bpp-atlas");
+    if ((int)i > 0) {
+        mgr->surfaces[NEXUS_SURFACE_TITLE].source_bytes_fnv1a64 =
+            nexus_ui_fnv1a64(data, (size_t)data_size);
+        mgr->surfaces[NEXUS_SURFACE_TITLE].source_bytes_size =
+            (uint32_t)data_size;
+    }
     free(pixels);
     return (int)i;
 }
@@ -479,8 +490,14 @@ int nexus_ui_load_warning(Nexus_UI_Manager *mgr,
         printf("Nexus UI: WARNING.BIN requires a valid RES* container DGT2 PP image\n");
         return -1;
     }
-    return nexus_ui_load_dgt2_pp_surface(mgr, NEXUS_SURFACE_WARNING,
-                                         &view, "WARNING.BIN/DGT2#0");
+    if (nexus_ui_load_dgt2_pp_surface(mgr, NEXUS_SURFACE_WARNING,
+                                      &view, "WARNING.BIN/DGT2#0") <= 0)
+        return -1;
+    mgr->surfaces[NEXUS_SURFACE_WARNING].source_bytes_fnv1a64 =
+        nexus_ui_fnv1a64(data, (size_t)data_size);
+    mgr->surfaces[NEXUS_SURFACE_WARNING].source_bytes_size =
+        (uint32_t)data_size;
+    return 1;
 }
 
 /* GAMEOVER.BIN is a verified RES* DGT2 PP container, not a raw 320x200
@@ -497,8 +514,14 @@ int nexus_ui_load_gameover(Nexus_UI_Manager *mgr,
         printf("Nexus UI: GAMEOVER.BIN requires a valid RES* container DGT2 PP image\n");
         return -1;
     }
-    return nexus_ui_load_dgt2_pp_surface(mgr, NEXUS_SURFACE_GAMEOVER,
-                                         &view, "GAMEOVER.BIN/DGT2#0");
+    if (nexus_ui_load_dgt2_pp_surface(mgr, NEXUS_SURFACE_GAMEOVER,
+                                      &view, "GAMEOVER.BIN/DGT2#0") <= 0)
+        return -1;
+    mgr->surfaces[NEXUS_SURFACE_GAMEOVER].source_bytes_fnv1a64 =
+        nexus_ui_fnv1a64(data, (size_t)data_size);
+    mgr->surfaces[NEXUS_SURFACE_GAMEOVER].source_bytes_size =
+        (uint32_t)data_size;
+    return 1;
 }
 
 static int nexus_ui_read_be32(const uint8_t *p);
@@ -785,6 +808,9 @@ int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
                                "STABG.BIN/STMP#0") <= 0)
         return -1;
     surface = &mgr->surfaces[NEXUS_SURFACE_STABG];
+    surface->source_bytes_fnv1a64 =
+        nexus_ui_fnv1a64(data, (size_t)data_size);
+    surface->source_bytes_size = (uint32_t)data_size;
     for (i = 0U; i < 256U; ++i) {
         uint16_t bgr555 = palette_le[i];
         uint8_t red = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 10) & 0x1fU));

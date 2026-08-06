@@ -39,6 +39,11 @@ typedef struct {
     int       owns_data;  /* 1=calloc'd, 0=borrowed ref */
     const char *source;   /* e.g. "TITLE.CG" */
     uint64_t  hash;       /* SHA-256 hash of source file (if known) */
+    /* Identity of the exact raw bytes consumed by a specialized retail
+     * loader. This is a local provenance receipt, not scanner admission or
+     * a substitute for the canonical source SHA-256. */
+    uint64_t  source_bytes_fnv1a64;
+    uint32_t  source_bytes_size;
     /* Source-owned Saturn palettes are retained in their original words and
      * expanded RGBA form. Other formats leave this unavailable rather than
      * borrowing a host or generated palette. */

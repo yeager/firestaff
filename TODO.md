@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
+  GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size
+  receipt on each decoded surface. This proves which bytes the loader
+  consumed, but it is not the scanner's canonical SHA-256 and does not bind
+  Saturn VDP1/VDP2 placement. Continue with capture-backed startup/menu
+  handoff; do not promote these receipts into host rendering.
+
 - **DM2-REAL-DATA-RENDER-INVENTORY:** The PC English `GRAPHICS.DAT` corpus is
   hash-locked and its G1-referenced scene sets now decode through the original
   IMG9 mode-1/2/3 dispatcher. The full real `dtImage` census (5,676 ENT1

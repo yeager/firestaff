@@ -214,7 +214,10 @@ int main(void)
                         ui.surfaces[NEXUS_SURFACE_STABG].data != NULL &&
                         ui.surfaces[NEXUS_SURFACE_STABG].w == 320 &&
                         ui.surfaces[NEXUS_SURFACE_STABG].h == 168 &&
-                        ui.surfaces[NEXUS_SURFACE_STABG].source_palette_loaded,
+                        ui.surfaces[NEXUS_SURFACE_STABG].source_palette_loaded &&
+                        ui.surfaces[NEXUS_SURFACE_STABG].source_bytes_fnv1a64 != 0U &&
+                        ui.surfaces[NEXUS_SURFACE_STABG].source_bytes_size ==
+                            local_warning_size,
                     "framed STABG.BIN loads its verified first map and palette");
             free(local_stabg);
         }
@@ -264,7 +267,10 @@ int main(void)
                         ui.surfaces[NEXUS_SURFACE_WARNING].dgt2_palette_rgba[0] ==
                             dgt2_rgba(warning_view.clut_bgr555_be, 0) &&
                         ui.surfaces[NEXUS_SURFACE_WARNING].dgt2_palette_rgba[255] ==
-                            dgt2_rgba(warning_view.clut_bgr555_be, 255),
+                            dgt2_rgba(warning_view.clut_bgr555_be, 255) &&
+                        ui.surfaces[NEXUS_SURFACE_WARNING].source_bytes_fnv1a64 != 0U &&
+                        ui.surfaces[NEXUS_SURFACE_WARNING].source_bytes_size ==
+                            local_warning_size,
                     "WARNING.BIN binds its documented DGT2 pixel plane and BGR555 CLUT");
         memset(&title, 0, sizeof(title));
         title.warning_pixels = ui.surfaces[NEXUS_SURFACE_WARNING].data;
@@ -308,7 +314,10 @@ int main(void)
                         ui.surfaces[NEXUS_SURFACE_GAMEOVER].data[0] == warning_view.pixels[0] &&
                         ui.surfaces[NEXUS_SURFACE_GAMEOVER].dgt2_palette_loaded &&
                         ui.surfaces[NEXUS_SURFACE_GAMEOVER].dgt2_palette_rgba[0] ==
-                            dgt2_rgba(warning_view.clut_bgr555_be, 0),
+                            dgt2_rgba(warning_view.clut_bgr555_be, 0) &&
+                        ui.surfaces[NEXUS_SURFACE_GAMEOVER].source_bytes_fnv1a64 != 0U &&
+                        ui.surfaces[NEXUS_SURFACE_GAMEOVER].source_bytes_size ==
+                            local_warning_size,
                     "GAMEOVER.BIN binds its verified DGT2 PP pixels and CLUT");
         nexus_ui_manager_free(&ui);
         free(local_gameover);
@@ -326,7 +335,10 @@ int main(void)
                         ui.surfaces[NEXUS_SURFACE_TITLE].h ==
                             NEXUS_UI_TITLE_CG_HEIGHT &&
                         ui.surfaces[NEXUS_SURFACE_TITLE].data[0] == 7 &&
-                        ui.surfaces[NEXUS_SURFACE_TITLE].data[1] == 7,
+                        ui.surfaces[NEXUS_SURFACE_TITLE].data[1] == 7 &&
+                        ui.surfaces[NEXUS_SURFACE_TITLE].source_bytes_fnv1a64 != 0U &&
+                        ui.surfaces[NEXUS_SURFACE_TITLE].source_bytes_size ==
+                            local_warning_size,
                     "local TITLE.CG expands its verified 328x1024 4bpp atlas");
         nexus_ui_manager_free(&ui);
         free(local_title);

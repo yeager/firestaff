@@ -12,6 +12,12 @@
   original event/layout route is bound. Source: SKProject
   `SKWIN/c_gui_draw.cpp::DM2_DRAW_HAND_ACTION_ICONS` (2341–2386) and
   `DM2_DRAW_ITEM_SURVEY` (2072–2106).
+- ✅ 2026-08-06 Nexus startup surface raw-byte provenance: the real
+  TITLE.CG, WARNING.BIN, GAMEOVER.BIN and STABG.BIN loaders now retain an
+  FNV-1a-64 receipt and exact source-byte size on each decoded surface.
+  `test_nexus_v1_startup_media_gate` asserts the receipt against the retail
+  files in `.firestaff/data/nexus`. This is provenance only; the Saturn
+  VDP1/VDP2 capture gate and no-draw presentation boundary remain unchanged.
 
 - ✅ 2026-08-06 DM2 M10 IMG9 decoder ownership: corrected a link boundary
   exposed by the full real GDAT census. `dm2_v1_asset_loader.c` is owned by
