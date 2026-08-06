@@ -94,7 +94,12 @@ int nexus_v1_load_level(...) {
 }
 ```
 
-Current state: track number is computed and stored, but actual audio playback is a stub.
+Current state: track number is computed and stored. The sound engine now
+receives the active Nexus data root from `nexus_v1_engine.c`; any future
+verified host CD-DA materialization is therefore resolved against the selected
+source root, not a hardcoded `HOME/.firestaff/data/nexus` path. The retail
+CUE/ISO AUDIO tracks are still not converted to host files here, so playback
+remains gated and no substitute WAV/OGG/MP3 is fabricated.
 
 ## FMV Audio
 

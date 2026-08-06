@@ -50569,3 +50569,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   layout selection or blitting. Empty metadata cannot alter source panel
   geometry or paint a fake surface. Verified with a full Ninja `firestaff`
   build and real PC34 HoC/object/name/cursor tests.
+- ✅ 2026-08-06 Nexus audio source-root binding: `Nexus_SoundEngine` now
+  receives the active engine data root and resolves any future verified
+  CD-DA host materialization relative to that root. The old implicit
+  `HOME/.firestaff/data/nexus` lookup is gone; retail CUE/ISO audio remains
+  correctly gated because no host conversion or synthetic track is added.
+  Verification: `test_nexus_v1_sound_gameplay` and the focused Nexus audio
+  CTest lane pass.

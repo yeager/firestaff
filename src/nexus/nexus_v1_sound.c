@@ -1158,16 +1158,18 @@ static int nexus_file_exists(const char *path) {
 }
 
 static void nexus_cd_build_track_path(Nexus_SoundEngine *eng, int track_number) {
-    const char *home = getenv("HOME");
-    if (!home) home = ".";
+    if (!eng || !eng->data_root[0]) {
+        if (eng) eng->cd_track_path[0] = '\0';
+        return;
+    }
     snprintf(eng->cd_track_path, sizeof(eng->cd_track_path),
-             "%s/.firestaff/data/nexus/track%02d.wav", home, track_number);
+             "%s/track%02d.wav", eng->data_root, track_number);
     if (nexus_file_exists(eng->cd_track_path)) return;
     snprintf(eng->cd_track_path, sizeof(eng->cd_track_path),
-             "%s/.firestaff/data/nexus/track%02d.ogg", home, track_number);
+             "%s/track%02d.ogg", eng->data_root, track_number);
     if (nexus_file_exists(eng->cd_track_path)) return;
     snprintf(eng->cd_track_path, sizeof(eng->cd_track_path),
-             "%s/.firestaff/data/nexus/track%02d.mp3", home, track_number);
+             "%s/track%02d.mp3", eng->data_root, track_number);
     if (nexus_file_exists(eng->cd_track_path)) return;
     eng->cd_track_path[0] = '\0';
 }
@@ -1196,6 +1198,15 @@ int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number) {
     printf("Nexus music: CD track %d selected (no audio file at %s)\n",
         track_number, eng->cd_track_path);
     return 0;
+}
+
+void nexus_sound_set_data_root(Nexus_SoundEngine *eng, const char *data_root) {
+    if (!eng) return;
+    if (!data_root || !data_root[0]) {
+        eng->data_root[0] = '\0';
+        return;
+    }
+    snprintf(eng->data_root, sizeof(eng->data_root), "%s", data_root);
 }
 
 int nexus_sound_cd_stop(Nexus_SoundEngine *eng) {

@@ -80,6 +80,10 @@ typedef struct {
     int music_enabled;
     int current_cd_track;
     int current_level;
+    /* Configured Nexus data root. CD-DA materialization, when admitted by a
+     * host decoder, must resolve relative to the active source root rather
+     * than a HOME-relative placeholder. */
+    char data_root[512];
     /* SAL/MAP data for current level */
     uint8_t *sal_data;
     int sal_size;
@@ -361,6 +365,7 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index);
 
 /* CD audio track management */
 int nexus_sound_cd_track(Nexus_SoundEngine *eng, int track_number);
+void nexus_sound_set_data_root(Nexus_SoundEngine *eng, const char *data_root);
 int nexus_sound_cd_stop(Nexus_SoundEngine *eng);
 int nexus_sound_cd_pause(Nexus_SoundEngine *eng);
 int nexus_sound_cd_resume(Nexus_SoundEngine *eng);

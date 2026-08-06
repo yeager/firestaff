@@ -2795,6 +2795,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     /* Init game state */
     nexus_v1_game_init(&engine->game, data_dir);
     engine->audio_enabled = 1;
+    nexus_sound_set_data_root(&engine->audio, data_dir);
 
     /* DGN Structure1B references resolve through the retail environment
      * resources, not guessed FLOORS/WALLS BPK names.  SN_FLOOR.MNS and

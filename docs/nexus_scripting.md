@@ -10,11 +10,14 @@ Nexus trigger scripting is unresolved in Firestaff.
 - `SDDRVS.TSK` is verified at 26,610 bytes and is currently classified as a
   Saturn sound driver task.
 - The older 5,448-byte `SDDRVS.TSK` claim was a mix-up with `RHIFIX.BIN`.
-- `SLEV00.BIN` through `SLEV15.BIN` are real per-level supplementary files and
-  remain plausible event or level-state data, but Firestaff does not parse
-  them yet.
-- `src/nexus/nexus_v1_script_vm.c` is scaffolding only. It does not decode real
-  Nexus records and must not be cited as source-locked runtime support.
+- `SLEV00.BIN` through `SLEV15.BIN` are real per-level supplementary files.
+  Firestaff now validates their shared 36-byte SH-2 entry spine and records
+  bounded literal/RTS/call-shape receipts for the complete real 16-file
+  corpus. The task bodies remain opaque; no event rule or action meaning is
+  assigned.
+- `src/nexus/nexus_v1_script_vm.c` is a receipt/profile boundary for the real
+  task shape plus an isolated provisional rule-table test API. It is not a
+  source-locked Nexus script dispatcher.
 
 ## DM1 and DM2 Baseline
 
@@ -42,9 +45,9 @@ Until a future disassembly, parser, or real-data route probe proves the model,
 Firestaff should describe Nexus trigger support as:
 
 > DGN grid parsing and gameplay scaffolding exist; the real Nexus
-> trigger/script model is not decoded. `SLEV*.BIN` files are candidate
-> per-level event data, and `SDDRVS.TSK` remains classified as a sound-driver
-> task.
+> trigger/script model is not decoded. `SLEV*.BIN` files have a bounded,
+> source-verified SH-2 task-entry profile but no decoded event ownership, and
+> `SDDRVS.TSK` remains classified as a sound-driver task.
 
 Do not publish opcode tables, rule counts, or `.TSK` trigger claims as facts
 without a corresponding source-lock artifact.

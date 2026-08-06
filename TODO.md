@@ -92,6 +92,10 @@
   a valid real launch with valid black no-draw BMPs, instead of mislabeling
   the authenticated absence of Saturn VDP1/VDP2 presentation as a runtime
   failure. This remains a blocker and does not promote a screenshot.
+  The configured Nexus data root is now also passed into the sound engine;
+  CD-DA candidate paths no longer fall back to a HOME-relative placeholder.
+  SLEV00-15 real task-entry profiles and SAL/MAP metadata remain receipts only
+  until the Saturn event/audio consumer is captured.
   generic storage remains diagnostic and no retail drop record is fabricated.
   MNS mesh/skeleton/texture decoding now rejects truncated declared joint
   tables and guards TEXT/mesh/MOTN/pixel ranges; keep creature rendering
