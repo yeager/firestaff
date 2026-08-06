@@ -1,3 +1,14 @@
+# Nexus startup real-corpus gate audit (2026-08-06)
+
+- ✅ `test_m11_nexus_startup_gate`, `test_nexus_v1_startup_menu_pc34_compat`
+  och `test_nexus_v1_startup_media_gate` passerar mot
+  `/Users/bosse/.firestaff/data/nexus`, inklusive TITLE, WARNING, GAMEOVER,
+  STABG, LOGOBG och alla 20 FACE-ytor.
+- ✅ Källbundna ytor laddas endast som receipts/source surfaces; FONT256
+  glyph mapping, Saturn VDP1/VDP2-placering och startup-animationens
+  presentation är fortsatt capture-gated. Ingen hårdkodad timing öppnar
+  rendering.
+
 # Nexus real MENU.BPK PRS3 decode audit (2026-08-06)
 
 - ✅ De verkliga `MENU.BPK`-proberna passerar för den europeiska korpusen:
