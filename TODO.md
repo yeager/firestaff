@@ -385,12 +385,14 @@
   synthetic data.
 
 - **CSB-FMTOWNS-C06-UTILITY-TRANSACTIONS:** The F31E empty editor frame now
-  reaches M11 from SWITCHTW with original C06 coordinates, UTILE strings,
-  M653 metrics and C09_ICON palette; its authentic palette selector is
-  editor-local. Recover the F31J Shift-JIS glyph
-  consumer and the original file-picker/save/portrait-edit transaction
-  owners before exposing those commands; a C06 hit rectangle must not mutate
-  a Firestaff save or manufacture a champion. 2026-08-06 follow-up: verified
+  no longer reaches M11 as a host reconstruction. The prior page combined
+  C06 coordinates and string/palette bytes with guessed rectangles and the
+  unrelated PC34 M653 renderer. Utility now remains on the real SWITCHTW
+  page until UTILE/UTILJ's native EGB text and editor consumers are bound.
+  Recover the F31J Shift-JIS glyph consumer and the original
+  file-picker/save/portrait-edit transaction owners before exposing those
+  commands; a C06 hit rectangle must not mutate a Firestaff save or
+  manufacture a champion. 2026-08-06 follow-up: verified
   FM Towns ZIP media now materializes its original image into the user cache
   across volume boundaries, so this remaining work starts from the real CD
   payload rather than a partial archive extraction.

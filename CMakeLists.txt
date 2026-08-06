@@ -4600,12 +4600,10 @@ list(REMOVE_ITEM M10_SOURCES
 # recovered.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2c_f0115_front_rear_overlap_pc34_compat.c")
-# `dm1_v1_champion_panel_disabled_icon_state_pc34_compat.c` is a
-# source-locked disabled-icon state model with synthetic champion rows and
-# table bytes. It reads no original DM1 data; M11 only includes its header and
-# has no call site, so retain it only in its explicit regression.
-list(REMOVE_ITEM M10_SOURCES
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_disabled_icon_state_pc34_compat.c")
+# `dm1_v1_champion_panel_disabled_icon_state_pc34_compat.c` is also the
+# production owner of M11's global disabled-action hatch predicate. Keep it
+# in M10 while M11 calls it; the focused regression still owns its synthetic
+# row fixtures rather than promoting those fixtures to runtime data.
 # `dm1_v1_viewport_d3c_back_wall_item_pc34_compat.c` is an asset-free
 # source-lock model with synthetic framebuffer writes, cells and zones. It has
 # no original DM1 data input or M11/runtime caller; its explicit tests and

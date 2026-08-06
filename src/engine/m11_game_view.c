@@ -6959,27 +6959,19 @@ static int m11_csb_build_fmtowns_utility_english(M11_GameViewState *state)
 static int m11_csb_enter_fmtowns_utility(
     M11_GameViewState *state, CSB_V1_FmtownsSwitchLanguage language)
 {
-    const CSB_V1_BootProfile *profile;
-    if (!state || !state->csbBootProfile ||
-        language != CSB_FMTOWNS_SWITCH_ENGLISH) return 0;
-    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
-    memset(&state->csbFmtownsUtilityMenuReceipt, 0,
-           sizeof(state->csbFmtownsUtilityMenuReceipt));
-    if (!csb_v1_fmtowns_utility_menu_open(profile, language,
-                                           &state->csbFmtownsUtilityMenuReceipt)) {
-        memset(&state->csbFmtownsUtilityMenuReceipt, 0,
-               sizeof(state->csbFmtownsUtilityMenuReceipt));
-        return 0;
-    }
-    state->csbFmtownsUtilitySelectedColor = 0u;
-    if (!m11_csb_build_fmtowns_utility_english(state)) {
-        memset(&state->csbFmtownsUtilityMenuReceipt, 0,
-               sizeof(state->csbFmtownsUtilityMenuReceipt));
-        return 0;
-    }
-    m11_csb_release_fmtowns_switch(state);
-    state->csbFmtownsUtilityBound = 1;
-    return 1;
+    /*
+     * C06 is a separate UTILE/UTILJ Phar Lap program.  The previous M11
+     * path redrew its empty editor from guessed rectangles and the PC34 M653
+     * font.  Those are not C06-owned pixels: the F31 executable's EGB text
+     * and editor consumers have not been recovered.  The authentic program,
+     * menu pool and C09 palette remain available to the admission APIs, but
+     * no host-composed page may stand in for the native executable.
+     *
+     * ReDMCSB: SWITCH.C F2279; CEDT006.C F7042/F7043; CEDT018.C.
+     */
+    (void)state;
+    (void)language;
+    return 0;
 }
 
 static int m11_csb_present_fmtowns_utility(M11_GameViewState *state,
@@ -7307,7 +7299,7 @@ static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
          * ownership is reconstructed. */
         if (!m11_csb_enter_fmtowns_utility(
                 state, state->csbFmtownsSwitchLanguage)) {
-            m11_set_status(state, "CSB FM TOWNS", "UTILITY MEDIA REJECTED");
+            m11_set_status(state, "CSB FM TOWNS", "UTILITY OWNER UNAVAILABLE");
             return M11_GAME_INPUT_IGNORED;
         }
     } else if (receipt.action == CSB_FMTOWNS_SWITCH_ACTION_GAME) {

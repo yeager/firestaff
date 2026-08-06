@@ -56531,3 +56531,14 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Added the type-0 regression to the real PC-DOS `GRAPHICS.DAT` RAW4 door
   placement test. The source panel/button test and door scene-control gate
   pass; no generated door geometry is admitted.
+
+# 2026-08-06 CSB FM Towns C06 placeholder removal
+
+- ✅ Removed the live M11 reconstruction of the FM Towns Utility editor. It
+  drew C06 coordinates with generic boxes and the PC3.4 M653 font even though
+  the real UTILE/UTILJ EGB text and editor consumers are not yet bound.
+  Utility now remains on the authenticated SWITCHTW page instead of replacing
+  it with host-composed pixels.
+- Verification: the real-media FM Towns handoff regression admits the
+  authentic UTILE program, menu bytes and C09 palette, then confirms that a
+  Utility click is fail-closed and preserves the SWITCHTW raster.
