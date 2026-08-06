@@ -102,6 +102,11 @@
   M11/runtime caller; F0412 remains the live spell-result owner. Keep it
   test-only until authentic live spell state needs the bounded continuation.
 
+- **DM1-D2L2-D2R2-WALL-SYNTHETIC-AUDIT:** This wall contract fills local
+  framebuffers with synthetic probe pixels and has no M11/runtime caller or
+  authenticated GRAPHICS.DAT input. Keep it test-only until a real D2L2/D2R2
+  asset consumer requires the source dispatch evidence.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

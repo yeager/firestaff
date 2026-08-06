@@ -4331,6 +4331,12 @@ list(REMOVE_ITEM M10_SOURCES
 # of M10 so it cannot become a parallel production continuation path.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat.c")
+# `dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat.c` is a synthetic framebuffer
+# contract: it fills local wall sources with probe pixels and has no M11/runtime
+# caller or authenticated GRAPHICS.DAT input. Compile it only with its test;
+# production D2L2/D2R2 rendering remains the real M11 asset route.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
@@ -53337,7 +53343,9 @@ add_executable(test_dm1_v1_viewport_d2l2_d2r2_stairs_pit_dispatch_pc34_compat te
 target_include_directories(test_dm1_v1_viewport_d2l2_d2r2_stairs_pit_dispatch_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d2l2_d2r2_stairs_pit_dispatch_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d2l2_d2r2_stairs_pit_dispatch_pc34_compat COMMAND test_dm1_v1_viewport_d2l2_d2r2_stairs_pit_dispatch_pc34_compat)
-add_executable(test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat tests/test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat
+ tests/test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat.c
+ src/dm1/dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat COMMAND test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat)

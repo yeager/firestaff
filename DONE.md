@@ -93,6 +93,14 @@
   `test_dm1_v1_f0410_f0411_spell_cast_continuation_pc34_compat` passes; the
   source object is absent from both M10 and M11 archives.
 
+# DM1 D2L2/D2R2 synthetic wall audit isolation (2026-08-06)
+
+- ✅ Removed the synthetic D2L2/D2R2 framebuffer contract from M10. It uses
+  local probe pixels and has no M11/runtime caller or original GRAPHICS.DAT
+  input; the test now compiles the contract explicitly.
+- ✅ Verification: `test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat` passes;
+  the source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the
