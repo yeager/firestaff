@@ -5019,6 +5019,12 @@ list(REMOVE_ITEM M10_SOURCES
 # caller; its direct regression compiles it explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_scroll_wheel_resurrect_confirmation_pc34_compat.c")
+# `dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat.c` is a
+# contract-only F0296/F0295/F0386 fixture with fabricated party, icon and
+# slotbox state. It loads no original DM1 data and has no M11/runtime caller;
+# its direct regression already compiles it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_dead_member_hand_refresh_pc34_compat.c")
 # `dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat.c`
 # is a contract-only C100/C040 gate with fabricated party, panel, G0299 and
 # G0514 state. It loads no original DM1 data and has no M11/runtime caller;

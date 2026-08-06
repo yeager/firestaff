@@ -1,3 +1,9 @@
+# DM1 champion dead-hand-refresh synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only F0296/F0295/F0386 fixture from M10. Its direct
+  regression already compiles the source explicitly; it loads no original DM1
+  data and has no M11/runtime caller.
+
 # DM1 chest scroll-resurrect-confirmation synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C040/C545 confirmation fixture from M10 and

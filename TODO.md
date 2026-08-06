@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHAMPION-DEAD-HAND-REFRESH-SYNTHETIC-AUDIT:** This F0296/F0295/F0386
+  fixture fabricates party, icon and slotbox state. It loads no original DM1
+  data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound interaction owner is recovered.
+
 - **DM1-CHEST-SCROLL-RESURRECT-CONFIRM-SYNTHETIC-AUDIT:** This C040/C545
   confirmation fixture fabricates chest, party and command-queue state. It
   loads no original DM1 data and has no M11/runtime caller; retain it only as
