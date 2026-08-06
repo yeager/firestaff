@@ -2763,10 +2763,23 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
     const M12_GameVersionSpec* gameSpec;
     char rootMatchedPaths[M12_SEARCH_ROOT_COUNT][M12_ASSET_MAX_VERSIONS_PER_GAME][ASSET_PATH_MAX];
     int rootMatched[M12_SEARCH_ROOT_COUNT][M12_ASSET_MAX_VERSIONS_PER_GAME];
+    M12_AssetVersionStatus retainedFmtowns[M12_ASSET_MAX_VERSIONS_PER_GAME];
+    int retainFmtowns = 0;
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT) {
         return;
     }
     gameSpec = &g_games[gameIndex];
+    /* The CSB FM Towns admission has already opened the selected original
+     * CD image and verified both CDATA/CJDATA pairs.  This generic pass
+     * normally clears every version row before matching loose/hash files;
+     * retain those verified rows so it does not unpack the same 430 MiB
+     * archive a second time.  ReDMCSB COMPILE.H owns F31E/F31J as distinct
+     * programs, so only those exact platform rows may survive this pass. */
+    if (looseFilesOnly && strcmp(gameSpec->gameId, "csb") == 0) {
+        memcpy(retainedFmtowns, status->versions[gameIndex],
+               sizeof(retainedFmtowns));
+        retainFmtowns = 1;
+    }
     for (i = 0U; i < gameSpec->versionCount; ++i) {
         M12_AssetVersionStatus* version = &status->versions[gameIndex][i];
         const M12_VersionSpec* spec = &gameSpec->versions[i];
@@ -2900,6 +2913,19 @@ static void m12_fill_game_versions(M12_AssetStatus* status,
                 }
                 break;
             }
+        }
+    }
+
+    if (retainFmtowns) {
+        for (i = 0U; i < gameSpec->versionCount; ++i) {
+            const M12_AssetVersionStatus* retained = &retainedFmtowns[i];
+            if (!retained->matched || !retained->versionId ||
+                (strcmp(retained->versionId, "fmtowns-en") != 0 &&
+                 strcmp(retained->versionId, "fmtowns-ja") != 0)) {
+                continue;
+            }
+            status->versions[gameIndex][i] = *retained;
+            matchedAny = 1;
         }
     }
 
@@ -4314,9 +4340,8 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
                                               requestedDataDir);
 #endif
         } else if (strcmp(g_games[i].gameId, "csb") == 0) {
-            if (csbFmtownsAdmitted) {
-                (void)m12_admit_csb_fmtowns_archive(status, i, roots, rootCount);
-            }
+            /* m12_fill_game_versions retains the verified FM Towns rows.
+             * Do not reopen the same disc image solely to restore them. */
         }
     }
     for (i = 0; i < M12_ASSET_GAME_COUNT; ++i) {
@@ -4563,12 +4588,9 @@ void M12_AssetStatus_ScanGameWithOptions(
             m12_admit_csb_amiga31_title_package(status, gameIndex, roots,
                                                  rootCount);
         }
-        /* m12_fill_game_versions refreshes the game's status rows.  Restore
-         * the verified nested-CD rows afterwards while retaining the
-         * archive-free pass above for this multi-hundred-megabyte ZIP. */
-        if (csbFmtownsAdmitted) {
-            (void)m12_admit_csb_fmtowns_archive(status, gameIndex, roots, rootCount);
-        }
+        /* m12_fill_game_versions retains the verified nested-CD rows, so a
+         * direct CSB scan does not reopen the selected multi-hundred-megabyte
+         * archive only to restore them. */
         if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
             (void)m12_admit_dm2_fmtowns_archive(status, gameIndex,
                                                  roots, rootCount,
