@@ -1224,9 +1224,12 @@ level or consumer bindings.
   menus. **2026-08-06 IMG2 menu update:** after the authenticated TITLE
   stream completes, M11 now presents the selected HME-242
   `TITLE/0/dtImage+dtPalIRGB/4` surface through the FM Towns GDAT-v4 IMG2
-  decoder and its local 16-colour palette. It remains non-interactive until
-  the native SKULL input mapping is recovered; unverified media still fails
-  black. **2026-08-06
+  decoder and its local 16-colour palette. Its real `dt04/0` NEW GAME
+  rectangle now reaches SKWIN's `0xD7` load boundary only after the verified
+  TITLE→SKULL handoff; TITLE/SWOOSH pointer events remain inert. Keyboard,
+  RESUME save execution and the native SKULL continuation are still unbound,
+  and `0xD7` deliberately cannot create a synthetic party; unverified media
+  still fails black. **2026-08-06
   update:** M11 now runs the selected HME-242 SWOOSH
   stream before TITLE, inferring only its documented EN-owned 320x200 canvas
   when AN says 0x0. Both streams remain RAM-only and Timer-A paced.

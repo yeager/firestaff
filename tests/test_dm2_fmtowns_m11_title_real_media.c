@@ -4,6 +4,7 @@
 
 #include "m11_game_view.h"
 #include "render_sdl_m11.h"
+#include "dm2_v1_boot.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -77,6 +78,10 @@ int main(void)
     expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                M11_GAME_INPUT_IGNORED,
            "SWOOSH prevents a click from reaching SKULL menu input early");
+    expect(M11_GameView_HandlePointerButton(
+               &view, 160, 100, DM1_V1_MOUSE_MASK_LEFT_PC34) ==
+               M11_GAME_INPUT_IGNORED,
+           "SWOOSH prevents pointer input from reaching SKULL menu input early");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) == 13u,
@@ -102,6 +107,27 @@ int main(void)
            "TITLE hands off to the original FM Towns GDAT menu");
     expect(fnv1a32(framebuffer, sizeof(framebuffer)) == 0x63310e49u,
            "TITLE handoff decodes the selected HME-242 IMG2 menu bytes exactly");
+    {
+        DM2_V1_StartupMenuPointerLayout layout;
+        M11_GameInputResult pointer_result;
+        int x;
+        int y;
+        memset(&layout, 0, sizeof(layout));
+        expect(dm2_v1_boot_startup_menu_pointer_layout(
+                   (DM2_V1_BootProfile *)view.dm2BootProfile, &layout) &&
+                   layout.valid && layout.new_game.w > 0 &&
+                   layout.new_game.h > 0,
+               "HME-242 GDAT provides the source NEW GAME hit rectangle");
+        x = layout.new_game.x + layout.new_game.w / 2;
+        y = layout.new_game.y + layout.new_game.h / 2;
+        pointer_result = M11_GameView_HandlePointerButton(
+            &view, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        expect(pointer_result == M11_GAME_INPUT_REDRAW &&
+                   view.dm2State.startup_menu_active &&
+                   view.world.party.championCount == 0 &&
+                   view.world.party.activeChampionIndex == -1,
+               "HME-242 NEW GAME rectangle dispatches 0xD7 but cannot create a fake party");
+    }
     expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
                M11_GAME_INPUT_IGNORED,
            "untranslated keyboard tokens cannot invent FM Towns menu input");

@@ -26383,6 +26383,15 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
         !state->dm2State.startup_menu_active) {
         return M11_GAME_INPUT_IGNORED;
     }
+    if (state->dm2FmtownsTitleBound ||
+        (state->dm2FmtownsTitleFinished &&
+         !m11_dm2_fmtowns_skull_menu_ready(state))) {
+        /* AUTOEXEC's TITLE stream precedes SKULL.EXP and has no menu click
+         * table.  SKProject's SHOW_MENU_SCREEN only enters the GDAT-driven
+         * mouse loop after that handoff, so a host pointer event must stay
+         * inert until the selected P3 GDAT receipt proves the SKULL page. */
+        return M11_GAME_INPUT_IGNORED;
+    }
     if (state->dm2State.startup_credits_active) {
         memset(&aux_layout, 0, sizeof(aux_layout));
         if (dm2_v1_boot_startup_menu_aux_pointer_layout(

@@ -111,6 +111,19 @@
   The real-disc regression locks the decoded 320×200 indexed result at
   FNV-1a `63310e49` and confirms that keyboard input remains blocked pending
   a recovered native SKULL input mapping.
+
+# DM2 FM Towns SKULL pointer handoff fence (2026-08-06)
+
+- ✅ M11 now consumes pointer input during the authenticated SWOOSH/TITLE
+  sequence, just as it already consumed keyboard input. Once the selected
+  HME-242 TITLE has completed and the P3/GDAT handoff receipt is present, the
+  only admitted NEW GAME click is the original `INTERFACE_GENERAL/0/dt04/0`
+  rectangle. It follows SKProject `HANDLE_UI_EVENT`'s `0xD7` route, reloads
+  the verified dungeon boundary, and leaves the menu active with no party or
+  leader until the native `GAME_LOAD`/mirror-selection continuation exists.
+  `test_dm2_fmtowns_m11_title_real_media` verifies both the early-pointer
+  fence and the real-archive click without unpacking game data.
+
 # Theron authentic VDC/VCE screen-space capture (2026-08-06)
 
 - ✅ A clean SIGINT shutdown of the instrumented Mednafen replay now emits
