@@ -20,6 +20,14 @@
   unmodified payload is still decoded for diagnostics but cannot change live
   party state or create a raw-save handoff. Focused real-corpus and save/load
   regressions pass.
+- ✅ 2026-08-06 DM1 original PC34 save recheck: two operator-supplied
+  48,561-byte `DMSAVE.DAT` files from `Downloads/` passed
+  `test_dm1_v1_original_save_pc34_backed_corpus_roundtrip` using the
+  hash-resolved real DM1 `DUNGEON.DAT`. The verified inputs were
+  `26ccd1591ccf6ec9e53186e994f73924185143f82055312cafd474ed7abc9437` and
+  `ab7bb4a34b77bba033d7b6c31db32e7198a962b0e55c0644c0486f50bb361ecb`.
+  No synthetic save bytes were used. This expands authentic PC34 evidence;
+  C13-bearing saves and packaged Mac capture remain open.
 
 - ✅ 2026-08-06 DM2 no-disk-materialization enforcement: removed the stale
   M12 PC-DOS archive and renamed-loose-file cache path that could write

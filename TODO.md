@@ -5422,6 +5422,15 @@ that its exact runtime path is not already source-locked and tested.
   F0435 -> F0433 -> F0435 core-state round trip. Configured discovery now
   prioritizes `saves/dm1/original-pc34` over ordinary Firestaff saves, so an
   un-attested duplicate cannot invalidate the verified corpus.
+  Rechecked 2026-08-06 with two operator-supplied 48,561-byte saves from
+  `Downloads/`: `DMSAVE.DAT` (SHA-256
+  `26ccd1591ccf6ec9e53186e994f73924185143f82055312cafd474ed7abc9437`)
+  and `DMSAVE (1).DAT` (SHA-256
+  `ab7bb4a34b77bba033d7b6c31db32e7198a962b0e55c0644c0486f50bb361ecb`).
+  Both pass `test_dm1_v1_original_save_pc34_backed_corpus_roundtrip` against
+  the hash-resolved real `DUNGEON.DAT`. This broadens fixture-free PC34 save
+  evidence to two distinct source files; it does not close the separate C13
+  save corpus or packaged Mac capture requirements.
 
 `F2606-F2685` has been removed from the CSB queue: those symbols do not
 exist in the ReDMCSB inventory, whose callable F range ends at F2104. Do not
