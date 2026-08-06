@@ -314,6 +314,9 @@ int nexus_ui_res_dgt2_pp_view(const uint8_t *data,
     uint32_t next_offset = 0U;
     size_t table_size;
     uint32_t i;
+    uint32_t previous_offset = 0U;
+    uint32_t selected_index = 0U;
+    int selected = 0;
 
     if (!data || !out_view || data_size < 12U ||
         memcmp(data, "RES*", 4) != 0) {
@@ -329,6 +332,9 @@ int nexus_ui_res_dgt2_pp_view(const uint8_t *data,
     if (table_size > data_size) {
         return -1;
     }
+    /* Retail WARNING/GAMEOVER RES* directories are ordered resource spans.
+     * Admit the complete directory before selecting one resource; otherwise
+     * a malformed later record could remain invisible to resource zero. */
     for (i = 0U; i < entry_count; ++i) {
         const uint8_t *entry = data + 12U + (size_t)i * 12U;
         uint32_t entry_id;
@@ -339,22 +345,31 @@ int nexus_ui_res_dgt2_pp_view(const uint8_t *data,
         }
         entry_id = nexus_ui_read_be32_u(entry + 4);
         entry_offset = nexus_ui_read_be32_u(entry + 8);
-        if (entry_offset < table_size || entry_offset >= data_size) {
+        if (entry_offset < table_size ||
+            entry_offset > (uint32_t)data_size - 8U ||
+            (i > 0U && entry_offset <= previous_offset) ||
+            memcmp(data + entry_offset, "DGT2", 4) != 0 ||
+            nexus_ui_read_be32_u(data + entry_offset + 4U) != entry_id) {
             return -1;
         }
         if (entry_id == resource_id) {
             offset = entry_offset;
-            if (i + 1U < entry_count) {
-                next_offset = nexus_ui_read_be32_u(entry + 20);
-            } else {
-                next_offset = (uint32_t)data_size;
-            }
-            break;
+            selected_index = i;
+            selected = 1;
         }
+        previous_offset = entry_offset;
     }
-    if (offset == 0U || next_offset <= offset || next_offset > data_size ||
-        next_offset - offset < 8U || memcmp(data + offset, "DGT2", 4) != 0 ||
-        nexus_ui_read_be32_u(data + offset + 4) != resource_id) {
+    if (!selected) {
+        return -1;
+    }
+    if (selected_index + 1U < entry_count) {
+        next_offset = nexus_ui_read_be32_u(
+            data + 12U + (size_t)(selected_index + 1U) * 12U + 8U);
+    } else {
+        next_offset = (uint32_t)data_size;
+    }
+    if (next_offset <= offset || next_offset > data_size ||
+        next_offset - offset < 8U) {
         return -1;
     }
     return nexus_ui_dgt2_pp_view(data + offset + 8U,

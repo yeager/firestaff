@@ -50829,3 +50829,7 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   silent instead of becoming a generated door/combat/creature marker. CSB's
   existing GRAPHICS.DAT PCM route and non-source diagnostic marker behavior
   are unchanged.
+- ✅ 2026-08-06 Nexus RES* directory admission: WARNING/GAMEOVER DGT2 lookup
+  now validates every ordered record's bounded header and matching resource id
+  before selecting a payload. A real WARNING.BIN mutation regression proves
+  an unselected malformed record cannot be hidden by resource-zero lookup.

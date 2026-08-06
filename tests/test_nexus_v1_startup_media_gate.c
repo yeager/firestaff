@@ -231,6 +231,26 @@ int main(void)
                         warning_view.clut_bgr555_be == local_warning + 0x56 &&
                         warning_view.pixels == local_warning + 0x256,
                     "local WARNING.BIN resource zero is documented DGT2 PP art");
+        {
+            unsigned char *malformed = (unsigned char *)malloc(local_warning_size);
+            if (malformed) {
+                memcpy(malformed, local_warning, local_warning_size);
+                /* Entry 1 is not selected below. Move it into entry 0's
+                 * payload; a selected-entry-only scan would accept resource
+                 * zero unchanged. */
+                malformed[32] = 0x00;
+                malformed[33] = 0x00;
+                malformed[34] = 0x00;
+                malformed[35] = 0x59;
+                expect_true(nexus_ui_res_dgt2_pp_view(
+                                malformed, local_warning_size, 0U,
+                                &warning_view) < 0,
+                            "RES* lookup validates unselected DGT2 records");
+                free(malformed);
+            } else {
+                expect_true(0, "RES* directory regression allocation");
+            }
+        }
         expect_true(nexus_ui_load_warning(&ui, local_warning,
                                           (int)local_warning_size, NULL) > 0 &&
                         ui.surfaces[NEXUS_SURFACE_WARNING].w == 240 &&
