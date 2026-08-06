@@ -9,6 +9,12 @@
   creation, possession transfer and session mutation remain gated. No release
   was made.
 
+# DM1 mirror resurrect-chest-close-order synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C040/chest/queue fixture from M10. Its
+  generated regression compiles the source directly; it loads no original
+  DM1 data and has no M11/runtime caller.
+
 # DM1 mirror C545 drop-panel-live synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C545/C040 fixture from M10 and made its

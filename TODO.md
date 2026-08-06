@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-RESURRECT-CHEST-CLOSE-ORDER-SYNTHETIC-AUDIT:** This
+  C040/chest/queue fixture fabricates party, Thing and slot state. It loads
+  no original DM1 data and has no M11/runtime caller; retain it only as
+  explicit ReDMCSB coverage until a source-bound interaction owner is
+  recovered.
+
 - **DM1-MIRROR-C545-DROP-PANEL-LIVE-SYNTHETIC-AUDIT:** This C545/C040
   fixture fabricates party, chest, panel and Thing state. It loads no
   original DM1 data and has no M11/runtime caller; retain it only as explicit
