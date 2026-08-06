@@ -53330,6 +53330,10 @@ alcove runtime and archive-media tests passed (4/4).
   and the M12 popup tells the player to install one and rescan. The three
   strings are translated in every shipped startup-menu catalog (19 locales
   plus English); focused 7z and CHD popup regression coverage is included.
+- ✅ 2026-08-06 Nexus DGN readiness regression sync: the geometry-readiness
+  fixture now expects the current source-authenticated MENU.BPK handoff to
+  remain `SATURN_PRESENTATION`/no-draw when PALT and VDP1 capture are absent.
+  Real Structure3 viewport presentation remains capture-gated.
 - ✅ 2026-08-06 Nexus PRS3 real-corpus admission: corrected the capture
   schema's `MENU.BPK` MD5 to the verified retail value
   `a6f2272a4f6cb3c6b3b33012bc5b15ed`, matching the boot profile. The real

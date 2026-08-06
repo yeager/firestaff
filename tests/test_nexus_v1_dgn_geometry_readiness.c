@@ -6072,14 +6072,14 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
     CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
           handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED &&
           handoff.prs3_prerequisite_status ==
-              NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_READY_STORED &&
+              NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION &&
           handoff.canonical_source_hash_verified && handoff.receipt_valid &&
           handoff.canonical_palette_trailer_bound &&
           handoff.palette_trailer.record_bytes == 524U &&
           handoff.palette_trailer.entry_count == 256U &&
           !handoff.palette_trailer.palette_format_proven &&
-          handoff.can_render_stored_surfaces &&
-          !handoff.blocks_real_menu_surface_render &&
+          !handoff.can_render_stored_surfaces &&
+          handoff.blocks_real_menu_surface_render &&
           !handoff.fallback_visuals_permitted &&
           nexus_v1_menu_bpk_decode_receipt_ready(&engine),
           "only an authenticated source can expose an otherwise-ready BPK receipt");
