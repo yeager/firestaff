@@ -16,6 +16,15 @@
   strengthened the source-boundary verifier. Retail DGN/MNS presentation
   remains gated on Saturn VDP1 command, CLUT/VRAM and owner capture.
 
+# Theron forcefield source handoff (2026-08-06)
+
+- ✅ Interactive Soul Room → `ENTER FORCEFIELD` now consumes authenticated raw
+  MODE1/2352 Track 02 through the source-faithful dungeon loader. Real map
+  headers and bounded source records reach the live world without synthetic
+  rooms or guessed host item mappings.
+- ✅ Visual VDC/VCE capture remains separately gated. Focused M11 and real
+  Track 02 loader tests pass: 59/59 and all seven US/JP dungeon blocks.
+
 # Nexus FONT256 host-draw seam quarantine (2026-08-06)
 
 - ✅ Removed `nexus_v1_saturn_font.c` from the retail `firestaff_nexus`

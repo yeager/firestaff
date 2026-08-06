@@ -408,11 +408,9 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(view.theronState.level_loaded == 0,
                 "M11 Theron launcher Soul Room still gates dungeon load");
 
-    /* Real BIN media has authenticated startup records but no source-owned
-     * post-startup VDC/VCE consumer capture yet.  Input must still reach the
-     * forcefield action so the runtime can report that precise admission
-     * boundary; the old M11 pre-dispatch atlas check returned to the launcher
-     * on the first key and made Enter appear broken. */
+    /* Real BIN media has authenticated startup records. The forcefield now
+     * hands raw map/thing data to the source loader; visual capture remains a
+     * separate gate. */
     for (int i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT; ++i) {
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_RIGHT) ==
                         M11_GAME_INPUT_REDRAW,
@@ -422,42 +420,18 @@ static void run_real_launcher_handoff_if_available(void) {
         M11_GameInputResult enter_result =
             M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT);
         expect_true(enter_result != M11_GAME_INPUT_RETURN_TO_MENU,
-                    "M11 Theron Enter reaches forcefield admission instead of returning to launcher");
+                    "M11 Theron Enter reaches the dungeon instead of returning to launcher");
         expect_true(view.theronState.startup_phase ==
-                        THERON_STARTUP_PHASE_SOUL_ROOM &&
-                        view.theronState.level_loaded == 0,
-                    "M11 Theron forcefield rolls back to Soul Room on admission failure");
-        expect_true(strcmp(view.theronState.startup_text_prompt,
-                           "CAPTURE REQUIRED: FORCEFIELD LOCKED") == 0,
-                    "M11 Theron Enter exposes the forcefield capture gate in Soul Room");
-        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
-                        M11_GAME_INPUT_RETURN_TO_MENU,
-                    "M11 Theron Enter retries the locked forcefield action");
-        expect_true(view.theronState.startup_phase ==
-                        THERON_STARTUP_PHASE_SOUL_ROOM &&
-                        view.theronState.level_loaded == 0,
-                    "M11 Theron keeps the retry on the Soul Room admission gate");
-
-        /* The first attempt may have no diagnostic prompt at all.  The
-         * cursor is the source-owned focus state; Enter must still dispatch
-         * the forcefield action instead of toggling a mirror. */
-        view.theronState.startup_text_prompt[0] = '\0';
-        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
-                        M11_GAME_INPUT_RETURN_TO_MENU,
-                    "M11 Theron Enter uses forcefield focus without prompt text");
-        expect_true(view.theronState.startup_phase ==
-                        THERON_STARTUP_PHASE_SOUL_ROOM &&
-                        view.theronState.level_loaded == 0,
-                    "M11 Theron prompt-free forcefield retry remains at admission gate");
-    }
-    if (view.theronState.startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM) {
-        M11_GameInputResult pointer_result = M11_GameView_HandlePointer(
-            &view, 46 + 77, 158 + 5, 1);
-        expect_true(pointer_result != M11_GAME_INPUT_RETURN_TO_MENU,
-                    "M11 Theron forcefield click stays in startup admission");
+                        THERON_STARTUP_PHASE_IN_DUNGEON &&
+                        view.theronState.level_loaded == 1,
+                    "M11 Theron forcefield publishes the authenticated source level");
+        expect_true(view.theronWorld != NULL &&
+                        ((Theron_V1_World *)view.theronWorld)->level_loaded[0][0] == 1 &&
+                        ((Theron_V1_World *)view.theronWorld)->source_object_count > 0,
+                    "M11 Theron forcefield retains real map and object source records");
         expect_true(strstr(view.inspectDetail,
-                           "AUTHENTIC CAPTURE ADMISSION REQUIRED") != NULL,
-                    "M11 Theron forcefield click exposes capture admission");
+                           "visual capture remains gated") != NULL,
+                    "M11 Theron keeps visual capture status separate from source handoff");
     }
 
     M11_GameView_Shutdown(&view);

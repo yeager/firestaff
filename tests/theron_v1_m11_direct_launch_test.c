@@ -904,6 +904,17 @@ int main(void) {
     expect_true(M11_GameView_HandlePointer(&view, 46 + 77, 158 + 5, 1) ==
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron forcefield click loads the dungeon");
+    if (world != NULL && world->level_loaded[0][0] == 1 &&
+        world->source_object_count > 0) {
+        expect_true(view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_IN_DUNGEON &&
+                        view.theronState.level_loaded == 1,
+                    "M11 Theron source-only forcefield handoff enters dungeon state");
+        expect_true(strstr(view.inspectDetail,
+                           "visual capture remains gated") != NULL,
+                    "M11 Theron source-only forcefield handoff keeps visual capture gated");
+        goto theron_fake_track02_runtime_done;
+    }
     if (world != NULL && world->level_loaded[0][0] == 0) {
         /* The blocked forcefield entry now reports the strict capture
          * admission status (a3451530a-era contract); the route token

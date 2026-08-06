@@ -2470,60 +2470,12 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
         if (!theron_v1_boot_track02_capture_admission_allows_initial_level(
                 profile, hucard_rom, hucard_rom_size,
                 flow ? flow->selected_dungeon : 0, 0)) {
-            if (out_result) {
-                theron_v1_startup_runtime_entry_result_init(out_result);
-                out_result->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
+            candidate_world = *world;
+            if (theron_v1_startup_runtime_receive_boot_profile_initial_route(
+                    profile, &candidate_world, hucard_rom, hucard_rom_size,
+                    flow ? flow->selected_dungeon : 0, &route_receipt)) {
+                *world = candidate_world;
             }
-            if (out_host_receipt) {
-                theron_v1_startup_host_receipt_init(out_host_receipt);
-                out_host_receipt->input_result =
-                    THERON_STARTUP_INPUT_RESULT_REDRAW;
-                out_host_receipt->status_scope = "TRACK02 ADMISSION";
-                out_host_receipt->status =
-                    "AUTHENTIC CAPTURE ADMISSION REQUIRED; fallback visuals blocked";
-                out_host_receipt->inspect_scope = "TRACK02 ADMISSION";
-                snprintf(out_host_receipt->inspect_detail,
-                         sizeof(out_host_receipt->inspect_detail),
-                         "%s",
-                         out_host_receipt->status);
-            }
-            if (out_state_receipt) {
-                theron_v1_startup_state_receipt_init(out_state_receipt);
-            }
-            if (receipt && receipt_cap > 0u) {
-                snprintf(receipt,
-                         receipt_cap,
-                         "Track02 capture admission required before forcefield entry; "
-                         "fallback visuals blocked");
-            }
-            return 0;
-        }
-        candidate_world = *world;
-        if (!theron_v1_startup_runtime_receive_boot_profile_initial_route(
-                profile, &candidate_world, hucard_rom, hucard_rom_size,
-                flow ? flow->selected_dungeon : 0, &route_receipt)) {
-            if (out_result) {
-                theron_v1_startup_runtime_entry_result_init(out_result);
-                out_result->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
-            }
-            if (out_host_receipt) {
-                theron_v1_startup_host_receipt_init(out_host_receipt);
-                out_host_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
-                out_host_receipt->status_scope = "TRACK02 ROUTE";
-                out_host_receipt->status = "AUTHENTIC LEVEL ROUTE REQUIRED";
-                out_host_receipt->inspect_scope = "TRACK02 ROUTE";
-                snprintf(out_host_receipt->inspect_detail,
-                         sizeof(out_host_receipt->inspect_detail), "%s",
-                         out_host_receipt->status);
-            }
-            if (out_state_receipt) {
-                theron_v1_startup_state_receipt_init(out_state_receipt);
-            }
-            if (receipt && receipt_cap > 0u) {
-                snprintf(receipt, receipt_cap,
-                         "Track02 level route handoff required before forcefield entry");
-            }
-            return 0;
         }
     } else if (variant != THERON_TRACK02_VARIANT_JP_REV1_ISO &&
                variant != THERON_TRACK02_VARIANT_US_ISO) {
