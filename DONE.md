@@ -52935,3 +52935,18 @@ konsument och placering är capture-bundna.
   claims ReDMCSB or SDDRVS source equivalence. The runtime's existing
   authenticated-dispatch gate remains unchanged; no unproven gameplay action
   was enabled.
+# 2026-08-06 — DM2 FM Towns English archive companion admission
+
+FM Towns DM2 remains a Japanese CD-owned session, but an explicitly selected
+canonical PC-English `GRAPHICS.DAT` companion may now retain its M12 virtual
+ZIP provenance (`archive.zip::data/graphics.dat`). `dm2_v1_boot` extracts only
+that member into bounded RAM, verifies MD5 `25247ede4dabb6a71e5dabdfbcd5907d`,
+loads the decoded text overlay, and frees the temporary bytes after binding;
+it never writes or unpacks game data to disk. The M11 menu handoff now forwards
+the verified virtual path rather than discarding it. Real-media verification:
+`test_dm2_fmtowns_m12_real_media` passes with the FM Towns Japanese retail ZIP
+and `Dungeon-Master-II-Skullkeep_DOS_EN.zip`, including the authenticated
+`FIGHTER` text query; `test_dm2_v1_m11_startup_profile_gate` also passes against
+the PC-English corpus. Remaining scope is unchanged: wire the overlay into
+each live original GUI/dialogue text producer before claiming complete English
+FM Towns UI.

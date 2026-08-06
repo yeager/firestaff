@@ -29,6 +29,8 @@ int main(void)
     const char* root = getenv("FIRESTAFF_DM2_FMTOWNS_ROOT");
     const char* english_companion =
         getenv("FIRESTAFF_DM2_ENGLISH_COMPANION");
+    const char* english_companion_archive =
+        getenv("FIRESTAFF_DM2_ENGLISH_COMPANION_ARCHIVE");
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
@@ -108,6 +110,23 @@ int main(void)
         expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,
                "English text comes from the authenticated PC GDAT companion");
         dm2_v1_boot_startup_launch_cleanup(&launch);
+
+        /* Archive provenance must be accepted through the same RAM-only
+         * companion path.  This is the normal distribution form for the
+         * user-owned DOS edition; no member may be materialised on disk. */
+        if (english_companion_archive && english_companion_archive[0] != '\0') {
+            char virtual_companion[1024];
+            memset(&launch, 0, sizeof(launch));
+            snprintf(virtual_companion, sizeof(virtual_companion),
+                     "%s::data/graphics.dat", english_companion_archive);
+            expect(dm2_v1_boot_startup_launch_alloc_with_language(
+                       selectedRuntime, virtual_companion, 0, &launch) == 1,
+                   "FM Towns English accepts a verified PC GDAT ZIP member in RAM");
+            text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
+            expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,
+                   "ZIP companion supplies authenticated English text");
+            dm2_v1_boot_startup_launch_cleanup(&launch);
+        }
     } else {
         puts("SKIP: FIRESTAFF_DM2_ENGLISH_COMPANION is not set");
     }

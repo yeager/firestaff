@@ -10284,6 +10284,64 @@ int dm2_v1_boot_startup_prepare_failure_host_receipt(
     return 1;
 }
 
+/* M12 preserves archive provenance as "archive.zip::member".  The FM Towns
+ * English companion is text-only auxiliary media, but it still has to retain
+ * that provenance: materialising it beside the CD would violate the mounted
+ * media contract.  ZIP extraction here is bounded and RAM-only; the bytes
+ * are immediately MD5-checked before GDAT parsing.
+ *
+ * The normal DOS archive has DATA/GRAPHICS.DAT, while the scanner may retain
+ * a differently-cased directory component.  firestaff_zip_extract_by_name()
+ * deliberately matches the final member name case-insensitively, which is
+ * sufficient after the canonical PC-English content hash below is checked.
+ */
+static int dm2_v1_boot_read_english_companion(
+    const char *path, uint8_t **out_bytes, size_t *out_size)
+{
+    static const char expected_md5[] = "25247ede4dabb6a71e5dabdfbcd5907d";
+    const char *separator;
+    char actual_md5[33];
+
+    if (!path || !out_bytes || !out_size) return 0;
+    *out_bytes = NULL;
+    *out_size = 0u;
+    separator = strstr(path, "::");
+    if (separator) {
+        char archive_path[1024];
+        const char *member = separator + 2;
+        const char *basename = strrchr(member, '/');
+        size_t archive_length = (size_t)(separator - path);
+
+        if (archive_length == 0u || archive_length >= sizeof(archive_path) ||
+            member[0] == '\0') return 0;
+        memcpy(archive_path, path, archive_length);
+        archive_path[archive_length] = '\0';
+        if (basename) ++basename;
+        else basename = member;
+        if (strcmp(basename, "graphics.dat") != 0 ||
+            firestaff_zip_extract_by_name(archive_path, basename,
+                                          out_bytes, out_size) != 0 ||
+            !*out_bytes || *out_size == 0u ||
+            *out_size > 64u * 1024u * 1024u) {
+            free(*out_bytes);
+            *out_bytes = NULL;
+            *out_size = 0u;
+            return 0;
+        }
+        dm2_md5_bytes_hex(*out_bytes, *out_size, actual_md5);
+        if (strcmp(actual_md5, expected_md5) != 0) {
+            free(*out_bytes);
+            *out_bytes = NULL;
+            *out_size = 0u;
+            return 0;
+        }
+        return 1;
+    }
+    if (!asset_file_matches_md5(path, expected_md5)) return 0;
+    return dm2_v1_boot_read_asset_bytes(path, 64L * 1024L * 1024L,
+                                        out_bytes, out_size);
+}
+
 int dm2_v1_boot_startup_launch_alloc_with_language(
     const char *data_dir,
     const char *english_companion_graphics_path,
@@ -10329,13 +10387,11 @@ int dm2_v1_boot_startup_launch_alloc_with_language(
      * companion. Do not scan data_dir here: that was the former accidental
      * sibling-install overlay and violates selected-media ownership. */
     if (profile->platform == DM2_PLATFORM_FMTOWNS_JA && language_index == 0) {
-        FILE *fp;
-        long file_size;
         if (!english_companion_graphics_path ||
             english_companion_graphics_path[0] == '\0' ||
-            strstr(english_companion_graphics_path, "::") != NULL ||
-            !asset_file_matches_md5(english_companion_graphics_path,
-                                    "25247ede4dabb6a71e5dabdfbcd5907d")) {
+            !dm2_v1_boot_read_english_companion(
+                english_companion_graphics_path, &english_companion,
+                &english_companion_size)) {
             out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS;
             dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
                                                    out_launch);
@@ -10343,32 +10399,6 @@ int dm2_v1_boot_startup_launch_alloc_with_language(
             free(profile);
             return 0;
         }
-        fp = fopen(english_companion_graphics_path, "rb");
-        if (!fp || fseek(fp, 0, SEEK_END) != 0 ||
-            (file_size = ftell(fp)) <= 0 || fseek(fp, 0, SEEK_SET) != 0) {
-            if (fp) fclose(fp);
-            out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_SCAN_FAILED;
-            dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
-                                                   out_launch);
-            dm2_v1_boot_cleanup(profile);
-            free(profile);
-            return 0;
-        }
-        english_companion_size = (size_t)file_size;
-        english_companion = (uint8_t *)malloc(english_companion_size);
-        if (!english_companion ||
-            fread(english_companion, 1, english_companion_size, fp) !=
-                english_companion_size) {
-            fclose(fp);
-            free(english_companion);
-            out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_OOM;
-            dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
-                                                   out_launch);
-            dm2_v1_boot_cleanup(profile);
-            free(profile);
-            return 0;
-        }
-        fclose(fp);
     }
     dm2_v1_boot_set_save_root(profile, NULL);
     if (dm2_v1_boot_enter_game(profile) != 0) {

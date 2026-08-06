@@ -27035,9 +27035,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   player-facing feedback.
 - [ ] DM2 FM Towns English text consumption: a selected FM Towns Japanese CD
   can now carry an explicit, hash-verified PC-English GDAT text companion in
-  RAM. Bind that companion to each original GUI/dialogue text call and add an
-  archive-backed companion admission path before claiming complete English UI;
-  missing companion data blocks English FM Towns rather than substituting text.
+  RAM. The companion now admits both a direct user file and a selected
+  `archive.zip::data/graphics.dat` member through bounded RAM-only ZIP
+  extraction and the canonical PC-English MD5; it is never unpacked to disk.
+  Bind that companion to each original GUI/dialogue text call before claiming
+  complete English UI; missing companion data blocks English FM Towns rather
+  than substituting text.
   Both `c_gfx_str.cpp::DM2_QUERY_GDAT_TEXT` and the QueryDB relay now accept
   only explicit decoded companion callbacks and otherwise consume the selected
   GDAT unchanged; remaining work is wiring that callback to every live M11

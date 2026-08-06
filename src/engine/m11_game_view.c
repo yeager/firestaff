@@ -17700,11 +17700,13 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                               (size_t)englishVersionIndex)
                         : NULL;
                 /* This is an explicit M12 selection, not a runtime search.
-                 * Archive-backed companions remain unavailable until they
-                 * have an equally memory-owned admission path. */
+                 * dm2_v1_boot_startup_launch_alloc_with_language() admits a
+                 * virtual ZIP member by extracting it directly into bounded
+                 * RAM and verifying the canonical PC-English hash.  Keep its
+                 * archive provenance intact; it must never be unpacked into
+                 * the data directory merely to satisfy fopen(). */
                 if (englishVersion && englishVersion->matched &&
-                    englishVersion->matchedMd5[0] != '\0' &&
-                    strstr(englishVersion->matchedPath, "::") == NULL) {
+                    englishVersion->matchedMd5[0] != '\0') {
                     spec.dm2EnglishCompanionPath = englishVersion->matchedPath;
                 }
             }
