@@ -29093,6 +29093,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   also include the c_record allocator/append graph, container-moneybox mask
   swap, timer links, `DM2_2066_062b` possession continuation and source
   item-bonus pass. Bind those real owners before retrying corpus promotion.
+  **2026-08-06 tile-link correction:** the bounded
+  `DM2_READ_SKSAVE_DUNGEON` reader now retains each decoded tile-chain root
+  through `set_tile_record_link`, matching `sksvgame.cpp:1390-1399`. This fixes
+  a discarded ownership edge but does not promote the incomplete save into a
+  resumable runtime session.
 
 - [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
   source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw

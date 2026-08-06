@@ -88,8 +88,9 @@ int dm2_v1_load_extra_dungeon_data(
 
                 /* Read the record chain unless skipped. */
                 if (!skip_record_chain) {
+                    uint16_t root_link = 0xfffeu;
                     int rc = dm2_v1_read_record_checkcode(
-                        session, rec_cb, NULL, x, y, 1, 1);
+                        session, rec_cb, &root_link, x, y, 1, 1);
                     if (rc > 0) {
                         local.error = 1;
                         goto done;
@@ -97,6 +98,15 @@ int dm2_v1_load_extra_dungeon_data(
                     if (rc < 0) {
                         local.error = 1;
                         goto done;
+                    }
+                    /* SKProject sksvgame.cpp:1390-1399 installs the
+                     * decoded chain head in the tile's record-link field.
+                     * Passing NULL here used to consume authentic bytes and
+                     * then discard the entire tile ownership edge. */
+                    if (root_link != 0xfffeu &&
+                        dung_cb->set_tile_record_link) {
+                        dung_cb->set_tile_record_link(dung_cb->ctx, x, y,
+                                                      root_link);
                     }
                     local.record_chains_loaded++;
                 }

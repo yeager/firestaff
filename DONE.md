@@ -57552,3 +57552,11 @@ alcove runtime and archive-media tests passed (4/4).
   stays silent until SKProject `CHANGE_VIEWPORT_TO_INVENTORY` is connected.
 - ✅ Updated the real-data M11 startup/resume regression to require an empty
   status surface while the inventory gate rejects. No release was made.
+
+# DM2 SKSAVE tile-chain root retention (2026-08-06)
+
+- ✅ Fixed `DM2_READ_SKSAVE_DUNGEON` to pass a root-link owner to the source
+  record decoder and retain the resulting DB-chain head on the tile through
+  `set_tile_record_link`, matching SKProject `sksvgame.cpp:1390-1399`.
+- ✅ Kept complete GAME_LOAD/resume admission blocked; this change only
+  preserves the authentic decoded ownership edge. No release was made.
