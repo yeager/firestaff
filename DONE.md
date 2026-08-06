@@ -111,6 +111,15 @@
 - ✅ Verification: `test_dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat` passes;
   the source object is absent from both M10 and M11 archives.
 
+# DM1 D3L2/D3R2 F0115 thing-pass synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the D3 side-route F0115 fixture from M10. It hard-codes
+  viewport zones, source coordinates and pixel blends, consumes no original
+  DM1 data, and has no M11/runtime caller; its explicit viewport tests retain
+  the ReDMCSB dispatch regression.
+- ✅ Verification: `test_dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the

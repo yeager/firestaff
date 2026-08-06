@@ -115,6 +115,12 @@
   authenticated GRAPHICS.DAT input. Keep it test-only until a real D2L2/D2R2
   asset consumer requires the source dispatch evidence.
 
+- **DM1-D3L2-D3R2-F0115-THING-PASS-SYNTHETIC-AUDIT:** This D3 side-route
+  model hard-codes viewport zones, source coordinates and pixel blends. It
+  reads no original DM1 data and has no M11/runtime caller; retain it only in
+  its explicit contract tests until a real F0115 D3L2/D3R2 consumer is bound
+  to authenticated GRAPHICS.DAT and live Thing records.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

@@ -4337,6 +4337,13 @@ list(REMOVE_ITEM M10_SOURCES
 # production D2L2/D2R2 rendering remains the real M11 asset route.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l2_d2r2_wall_pc34_compat.c")
+# `dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c` is a
+# source-locked contract fixture: it hard-codes route/zone/framebuffer values,
+# reads no original DM1 data, and has no M11/runtime caller. Its dedicated
+# viewport tests already compile it explicitly, so keep the synthetic thing
+# pass out of M10 until a real D3L2/D3R2 F0115 asset consumer is recovered.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3l2_d3r2_f0115_thing_pass_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
