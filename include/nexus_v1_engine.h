@@ -2467,6 +2467,10 @@ struct Nexus_V1_Engine {
     uint8_t *current_level_dgn_data;
     uint8_t *current_level_dgn_identity_data;
     int current_level_dgn_size;
+    /* Resolved retail source path for the exact level bytes consumed above.
+     * Extracted files may be renamed; ISO sources use a virtual `::` member
+     * path. Never reconstruct this from the canonical LEV filename. */
+    char current_level_source_path[512];
     Nexus_V1_DgnStructure3RuntimeSource structure3_runtime_source;
 
     /* DGN material references resolve through these decoded DMDF banks. */

@@ -529,6 +529,9 @@ int main(void) {
                   "Nexus init accepts renamed LEV00.DGN for runtime DGN handoff");
         check_int(nexus_v1_load_level(&engine, 0) == 0,
                   "Nexus runtime loads renamed LEV00.DGN by hash");
+        check_int(strstr(engine.current_level_source_path,
+                         "renamed-level-zero.payload") != NULL,
+                  "Nexus runtime receipt retains the hash-resolved level source path");
         memset(&structure2_source, 0, sizeof(structure2_source));
         check_int(nexus_v1_current_level_structure2_source_receipt(
                       &engine, &structure2_source) == 0,

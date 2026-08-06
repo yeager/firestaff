@@ -8952,6 +8952,7 @@ static void nexus_v1_launcher_fill_boot_receipt(
     if (!receipt || !engine) {
         return;
     }
+    (void)data_dir;
     receipt->engine = engine;
     receipt->level_loaded = engine->level_loaded;
     receipt->party_x = engine->game.party_x;
@@ -8961,8 +8962,8 @@ static void nexus_v1_launcher_fill_boot_receipt(
     receipt->title_loaded = title_loaded ? 1 : 0;
     snprintf(receipt->dungeon_path,
              sizeof(receipt->dungeon_path),
-             "%s/LEV00.DGN",
-             data_dir ? data_dir : "");
+             "%s",
+             engine->current_level_source_path);
     nexus_v1_launcher_fill_startup_assets_receipt(
         engine,
         title_loaded,
@@ -9231,9 +9232,8 @@ int nexus_v1_launcher_resume_from_save_path(
     out_receipt->tick_count = engine->game.tick_count;
     snprintf(out_receipt->dungeon_path,
              sizeof(out_receipt->dungeon_path),
-             "%s/LEV%02d.DGN",
-             engine->data_dir,
-             level);
+             "%s",
+             engine->current_level_source_path);
     (void)nexus_v1_startup_resume_status_host_receipt(
         NEXUS_V1_STARTUP_RESUME_STATUS_RESUMED,
         &out_receipt->host_receipt);

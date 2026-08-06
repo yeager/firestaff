@@ -4278,6 +4278,7 @@ static void nexus_v1_load_smap_runtime(Nexus_V1_Engine *engine, int level)
 
 int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     char name[32];
+    char resolved_level_path[ASSET_PATH_MAX];
     char script_name[32];
     char sal_name[32];
     char map_name[32];
@@ -4305,6 +4306,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     engine->m11_direct_lev_dungeon_route_epoch = 0U;
     memset(&engine->m11_direct_lev_dungeon, 0,
            sizeof(engine->m11_direct_lev_dungeon));
+    engine->current_level_source_path[0] = '\0';
     snprintf(name, sizeof(name), "LEV%02d.DGN", level);
 
     data = nexus_v1_read_file(engine, name, &size);
@@ -4322,6 +4324,27 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
         printf("Nexus: canonical byte hash mismatch for %s\n", name);
         free(data);
         return -1;
+    }
+
+    /* Preserve the exact source selected by the same identity hash that
+     * admitted `data`. A canonical filename is not a source path: renamed
+     * extracted retail bytes and ISO members must remain distinguishable in
+     * startup/resume receipts. */
+    resolved_level_path[0] = '\0';
+    if (engine->source == NEXUS_SRC_EXTRACTED &&
+        asset_find_by_md5(engine->data_dir, canonical_md5,
+                          resolved_level_path,
+                          (int)sizeof(resolved_level_path), 8)) {
+        snprintf(engine->current_level_source_path,
+                 sizeof(engine->current_level_source_path),
+                 "%s",
+                 resolved_level_path);
+    } else if (engine->source == NEXUS_SRC_ISO && engine->iso.path[0]) {
+        snprintf(engine->current_level_source_path,
+                 sizeof(engine->current_level_source_path),
+                 "%s::%s",
+                 engine->iso.path,
+                 name);
     }
 
     nexus_v1_invalidate_dgn_material_plan(engine);

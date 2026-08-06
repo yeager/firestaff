@@ -27,6 +27,12 @@
   for the isolated ASCII compatibility roster; the real PLRD regression now
   requires an empty footer until Saturn TEXT/FONT256 placement is captured.
 
+- ✅ 2026-08-06 Nexus level-source receipt correction: engine and launcher
+  startup/resume receipts now retain the exact hash-resolved `LEV##.DGN`
+  source path, including renamed extracted files and ISO `::member` paths,
+  instead of reconstructing a misleading canonical filename. The real boot
+  hash regression verifies the renamed level path survives the runtime handoff.
+
 - ✅ 2026-08-06 Nexus DGN actor CRET provenance gate: a Structure1A/3 model
   signature no longer promotes an actor to a live creature type when its
   RLOWFIX CRET record is absent. Such actors remain untyped/idle instead of
