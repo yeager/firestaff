@@ -982,6 +982,9 @@ level or consumer bindings.
   Saturn startup package it must not promote title/save/champion or DGN host
   draws. Exact Saturn menu timing, input dispatch, and VDP1/VDP2 composition
   remain open capture work.
+  2026-08-06 follow-up: removed the remaining hardcoded HUD depth limit from
+  the M11 handoff; diagnostics now use the source-defined `NEXUS_MAX_LEVELS`
+  (16). This changes no production pixels while the Saturn HUD route is closed.
 
 - **NEXUS-HUD-PANEL-CORPUS-IDENTITY:** The champion-panel regression now
   requires the authenticated European DM.BIN before accepting stat-bar,

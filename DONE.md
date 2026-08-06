@@ -31,6 +31,13 @@
   missing-media regression, `firestaff` build, verifier and real Nexus data
   scan pass.
 
+# Nexus HUD depth provenance (2026-08-06)
+
+- ✅ The M11 Nexus HUD handoff no longer supplies a synthetic maximum depth of
+  15; diagnostics now use source-defined `NEXUS_MAX_LEVELS` (16). Production
+  HUD pixels remain no-draw until Saturn widget placement and VDP1/VDP2
+  ownership are captured.
+
 # Nexus startup animation capture gate (2026-08-06)
 
 - ✅ Startup animation readiness now has a separate
