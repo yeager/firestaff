@@ -10,6 +10,14 @@
 
 # Nexus boot-profile capability audit (2026-08-06)
 
+# Nexus startup handoff fixture re-authorization (2026-08-06)
+
+- ✅ Re-authored `test_m11_nexus_startup_runtime_handoff` around the current
+  source-faithful capture gate. Synthetic title/save/champion fixture state no
+  longer expects host draw promotion; the test now proves no-draw behavior and
+  preserves the DGN fail-closed route until Saturn VDP1/VDP2 capture exists.
+  Verification: focused test passes; no retail data is changed or committed.
+
 # Nexus viewport provenance quarantine (2026-08-06)
 
 - ✅ Closed the remaining generic creature billboard raster path. The public

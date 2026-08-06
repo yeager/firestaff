@@ -760,9 +760,11 @@
   with six literal references. This is source ownership evidence only;
   register consumer, layer selection and runtime placement remain gated.
   retain the separate HUD capture requirement.
-  The older synthetic `test_m11_nexus_startup_runtime_handoff` still reports
-  four pre-existing fixture-route failures in both A/B runs; keep it separate
-  from the passing real-data startup gate until that fixture is re-authored.
+  The former synthetic `test_m11_nexus_startup_runtime_handoff` fixture has
+  been re-authored to assert the current no-draw contract: without a captured
+  Saturn startup package it must not promote title/save/champion or DGN host
+  draws. Exact Saturn menu timing, input dispatch, and VDP1/VDP2 composition
+  remain open capture work.
 
 - **NEXUS-SPELL-ACTION-CAPTURE:** DM.BIN spell tables and effect constants
   remain available as disassembly evidence, but the standalone host effect

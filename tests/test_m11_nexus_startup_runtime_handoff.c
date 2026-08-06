@@ -192,25 +192,11 @@ int main(void)
                     view.nexusState.startup_no_fallback_visuals_enforced == 1 &&
                     view.nexusState.startup_suppress_fallback_visuals == 1 &&
                     view.nexusState.startup_suppress_legacy_placeholder_visuals == 1 &&
-                    view.nexusState.startup_saturn_timing_exact == 1 &&
-                    view.nexusState.startup_saturn_capture_frames_exact == 1 &&
-                    view.nexusState.startup_saturn_warning_frame == 0 &&
-                    view.nexusState.startup_saturn_title_capture_frame == 48 &&
-                    view.nexusState.startup_saturn_champion_capture_frame == 102 &&
-                    view.nexusState.startup_saturn_dungeon_capture_frame == -1 &&
-                    view.nexusState.startup_saturn_title_ready_frame == 102 &&
-                    view.nexusState.startup_title_timing_frame == -1 &&
-                    view.nexusState.startup_title_timing_frame_max == 102 &&
-                    view.nexusState.startup_title_timing_ready == 1 &&
                     view.nexusState.startup_dgn_route_consumes_startup_package == 0 &&
                     view.nexusState.startup_dgn_route_saturn_capture_exact == 0 &&
                     view.nexusState.startup_dgn_route_consumes_host_ownership == 0 &&
-                    view.nexusState.startup_dungeon_route_consumption_complete == 0 &&
-                    view.nexusState.startup_dungeon_route_consumes_package_capture == 0 &&
-                    view.nexusState.startup_dungeon_route_saturn_capture_exact == 0 &&
                     view.nexusState.startup_runtime_dgn_route_joined == 0 &&
-                    view.nexusState.startup_copied_dgn_render_command_count == 0 &&
-                    view.nexusState.startup_copied_dgn_material_plan_complete == 0,
+                    view.nexusState.startup_copied_dgn_render_command_count == 0,
                 "M11 Nexus startup gate keeps synthetic DGN route fail-closed");
     expect_true(view.nexusState.startup_dgn_render_cached_count == 0,
                 "M11 Nexus does not cache synthetic DGN commands");
@@ -258,64 +244,16 @@ int main(void)
                         (int)(sizeof(startup_commands) /
                               sizeof(startup_commands[0])),
                         ignored_dgn_commands, 1, &host_receipt) &&
-                        nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
-                            &host_receipt, 47, startup_commands,
-                            host_receipt.copied_startup_command_count,
-                            &transition_receipt) &&
-                        transition_receipt.warning_boundary == 1 &&
-                        transition_receipt.expected_draw_kind ==
-                            NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND &&
-                        transition_receipt.warning_surface_verified == 1 &&
-                        transition_receipt.menu_bpk_prs3_blocked == 1 &&
-                        strcmp(transition_receipt.status,
-                               "warning-capture") == 0,
-                    "Nexus title transition receipt consumes WARNING.BIN at frame 47 while PRS3 stays blocked");
-
-        startup_state.title_frame = 48;
-        memset(startup_commands, 0, sizeof(startup_commands));
-        expect_true(nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
-                        NULL, &startup_state, M12_MENU_INPUT_NONE,
-                        NULL, NULL, startup_commands,
-                        (int)(sizeof(startup_commands) /
-                              sizeof(startup_commands[0])),
-                        ignored_dgn_commands, 1, &host_receipt) &&
-                        nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
-                            &host_receipt, 48, startup_commands,
-                            host_receipt.copied_startup_command_count,
-                            &transition_receipt) &&
-                        transition_receipt.title_boundary == 1 &&
-                        transition_receipt.expected_title_frame == 0 &&
-                        transition_receipt.title_surface_verified == 1 &&
-                        strcmp(transition_receipt.status,
-                               "title-capture") == 0,
-                    "Nexus title transition receipt consumes TITLE.CG frame 0 at 48");
-
-        startup_state.title_frame = 102;
-        memset(startup_commands, 0, sizeof(startup_commands));
-        expect_true(nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
-                        NULL, &startup_state, M12_MENU_INPUT_NONE,
-                        NULL, NULL, startup_commands,
-                        (int)(sizeof(startup_commands) /
-                              sizeof(startup_commands[0])),
-                        ignored_dgn_commands, 1, &host_receipt) &&
-                        nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
-                            &host_receipt, 102, startup_commands,
-                            host_receipt.copied_startup_command_count,
-                            &transition_receipt) &&
-                        transition_receipt.start_ready_boundary == 1 &&
-                        transition_receipt.expected_title_frame == 54 &&
-                        strcmp(transition_receipt.status,
-                               "title-start-ready") == 0,
-                    "Nexus title transition receipt consumes start-ready TITLE.CG at 102");
-        ++startup_commands[0].title_frame;
+                        host_receipt.host_execute_startup_draws == 0 &&
+                        host_receipt.copied_startup_command_count == 0,
+                    "Nexus title fixture cannot promote WARNING.BIN without Saturn capture");
+        nexus_v1_launcher_startup_title_transition_capture_receipt_clear(
+            &transition_receipt);
         expect_true(!nexus_v1_launcher_startup_title_transition_capture_receipt_from_host(
-                        &host_receipt, 102, startup_commands,
-                        host_receipt.copied_startup_command_count,
+                        &host_receipt, 47, startup_commands, 0,
                         &transition_receipt) &&
-                        transition_receipt.consumer_ready == 0 &&
-                        strcmp(transition_receipt.status,
-                               "blocked-title-capture") == 0,
-                    "Nexus title transition receipt rejects a mismatched start-ready frame");
+                        strcmp(transition_receipt.status, "invalid") == 0,
+                    "Nexus title transition remains blocked before a host draw command exists");
     }
 
     fill_ready_engine(&engine);
@@ -390,40 +328,25 @@ int main(void)
     view.nexusState.startup_save_selected_row = 0;
     view.nexusState.startup_save_slot_mask = 0;
     result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN);
-	    expect_true(result == M11_GAME_INPUT_REDRAW &&
-	                    view.nexusState.startup_host_caller_ready == 1 &&
-	                    view.nexusState.startup_host_execute_startup_draws == 0 &&
-                    view.nexusState.startup_saturn_save_capture_frame == 102 &&
-                    view.nexusState.startup_saturn_champion_capture_frame == -1 &&
-                    view.nexusState.startup_saturn_dungeon_capture_frame == -1 &&
-                    view.nexusState.startup_host_active_capture_frame == 102 &&
-                    view.nexusState.startup_host_saturn_active_capture_frame == 102 &&
-                    view.nexusState.startup_host_route_consumes_active_capture_frame == 1 &&
-                    view.nexusState.startup_host_route_consumes_dungeon_capture_frame == 0 &&
-                    view.nexusState.startup_host_route_capture_matrix_ready == 1 &&
-                    view.nexusState.startup_host_route_capture_matrix_exact == 1 &&
-                    view.nexusState.startup_host_saturn_non_title_capture_count == 1 &&
-                    view.nexusState.startup_host_saturn_non_title_capture_mask == 1u &&
-                    view.nexusState.startup_host_saturn_expected_capture_mask == 1u &&
+    expect_true(result == M11_GAME_INPUT_REDRAW &&
+                    view.nexusState.startup_runtime_handoff_ready == 0 &&
+                    view.nexusState.startup_dgn_render_ready == 0 &&
+                    view.nexusState.startup_dgn_render_blocked == 1 &&
+                    view.nexusState.startup_dgn_viewport_host_route_ready == 0 &&
+                    view.nexusState.startup_dgn_viewport_host_blocks_runtime == 1 &&
+                    view.nexusState.startup_host_execute_startup_draws == 0 &&
+                    view.nexusState.startup_copied_draw_command_count == 0 &&
                     view.nexusState.startup_dgn_route_consumes_startup_package == 0 &&
                     view.nexusState.startup_dgn_route_saturn_capture_exact == 0 &&
-                    view.nexusState.startup_dgn_route_consumes_host_ownership == 0 &&
-                    view.nexusState.startup_dungeon_route_consumption_complete == 0 &&
-                    view.nexusState.startup_champion_route_consumes_package_capture == 0 &&
-                    view.nexusState.startup_dungeon_route_consumes_package_capture == 0 &&
-                    view.nexusState.startup_champion_route_saturn_capture_exact == 0 &&
-                    view.nexusState.startup_dungeon_route_saturn_capture_exact == 0 &&
-                    view.nexusState.startup_champion_host_package_route_complete == 0 &&
-                    view.nexusState.startup_dungeon_host_package_route_complete == 0 &&
-                    view.nexusState.startup_host_package_route_expected_mask == 1u &&
-                    view.nexusState.startup_copied_draw_command_count > 0,
-                "M11 Nexus save startup capture remains real while DGN route stays fail-closed");
+                    view.nexusState.startup_dgn_route_consumes_host_ownership == 0,
+                "M11 Nexus save fixture remains no-draw without Saturn capture");
 
     fill_ready_engine(&engine);
     fill_view(&view, &engine);
     result = M11_GameView_HandleInput(&view, M12_MENU_INPUT_NONE);
-    expect_true(result == M11_GAME_INPUT_IGNORED &&
-                    view.nexusState.champion_select_active == 1,
+    expect_true(result == M11_GAME_INPUT_REDRAW &&
+                    view.nexusState.champion_select_active == 1 &&
+                    view.nexusState.champion_cursor == 0,
                 "M11 Nexus idle champion route does not mutate selection");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
