@@ -24,15 +24,6 @@ static const char *const g_nexus_level_md5[16] = {
     "5e6e237074f1e6b0decc629868a51f3c"
 };
 
-static int nexus_v1_file_exists(const char *path) {
-    FILE *fp;
-    if (!path || !path[0]) return 0;
-    fp = fopen(path, "rb");
-    if (!fp) return 0;
-    fclose(fp);
-    return 1;
-}
-
 void nexus_v1_game_init(Nexus_V1_GameState *state, const char *data_dir) {
     if (!state) return;
     memset(state, 0, sizeof(*state));
@@ -154,14 +145,8 @@ int nexus_v1_game_load_level(Nexus_V1_GameState *state, int level) {
         return 0;
     }
 
-    snprintf(path, sizeof(path), "%s/LEV%02d.DGN", state->data_dir, level);
-    if (!nexus_v1_file_exists(path)) {
-        return -1;
-    }
-    snprintf(state->level_path, sizeof(state->level_path), "%s", path);
-    state->current_level = level;
-    printf("Nexus: loading level %d from %s\n", level, state->level_path);
-    return 0;
+    /* A filename-shaped DGN is not evidence of Saturn provenance. */
+    return -1;
 }
 
 /* Map dungeon levels to CD audio tracks (Track 2-9).

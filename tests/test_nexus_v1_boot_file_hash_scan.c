@@ -6,6 +6,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 
 #if defined(_WIN32)
 #include <direct.h>
@@ -64,10 +65,11 @@ static int write_file_bytes(const char* dst,
 static int make_root(char* out, size_t outBytes) {
     int rc = snprintf(out,
                       outBytes,
-                      "%s%sfirestaff-nexus-boot-hash-%ld",
+                      "%s%sfirestaff-nexus-boot-hash-%ld-%lu",
                       getenv("TMPDIR") ? getenv("TMPDIR") : "/tmp",
                       TEST_SEP,
-                      (long)TEST_GETPID());
+                      (long)TEST_GETPID(),
+                      (unsigned long)clock());
     return rc > 0 && (size_t)rc < outBytes && FSP_CreateDirectoryRecursive(out);
 }
 
@@ -150,6 +152,8 @@ int main(void) {
     char profile_dm_bin_dst[FSP_PATH_MAX];
     char level_src[FSP_PATH_MAX];
     char level_dst[FSP_PATH_MAX];
+    char negative_root[FSP_PATH_MAX];
+    char wrong_level_dst[FSP_PATH_MAX];
     char slev00_src[FSP_PATH_MAX];
     char slev00_dst[FSP_PATH_MAX];
     char sal00_src[FSP_PATH_MAX];
@@ -337,7 +341,12 @@ int main(void) {
         local_file_exists(level_src) &&
         FSP_JoinPath(level_dst, sizeof(level_dst), root,
                      "renamed-level-zero.payload") &&
-        copy_file_bytes(level_src, level_dst)) {
+        copy_file_bytes(level_src, level_dst) &&
+        FSP_JoinPath(negative_root, sizeof(negative_root), root,
+                     "negative-level-name-only") &&
+        FSP_CreateDirectoryRecursive(negative_root) &&
+        FSP_JoinPath(wrong_level_dst, sizeof(wrong_level_dst), negative_root, "LEV00.DGN") &&
+        copy_file_bytes(dm_bin_src, wrong_level_dst)) {
         if (FSP_JoinPath(menu_bpk_src, sizeof(menu_bpk_src), data_root, "MENU.BPK") &&
             local_file_exists(menu_bpk_src) &&
             FSP_JoinPath(menu_bpk_dst, sizeof(menu_bpk_dst), root, "renamed-menu-bpk.payload") &&
@@ -489,6 +498,15 @@ int main(void) {
                   "renamed LEV00.DGN selects extracted Nexus source");
         nexus_v1_shutdown(&engine);
 
+        nexus_v1_game_init(&game, negative_root);
+        check_int(nexus_v1_game_load_level(&game, 0) == -1,
+                  "Nexus level loader rejects wrong bytes under canonical LEV00.DGN name");
+        check_int(game.level_path[0] == '\0',
+                  "rejected canonical LEV00.DGN does not enter game state");
+        check_int(FSP_JoinPath(level_dst, sizeof(level_dst), root,
+                               "renamed-level-zero.payload") &&
+                      copy_file_bytes(level_src, level_dst),
+                  "renamed authentic LEV00.DGN fixture written for hash test");
         nexus_v1_game_init(&game, root);
         check_int(nexus_v1_game_load_level(&game, 0) == 0,
                   "Nexus level loader accepts renamed LEV00.DGN by hash");

@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus level provenance gate: removed the filename-only
+  `LEV%02d.DGN` fallback from `nexus_v1_game_load_level`. Level state now
+  accepts only an MD5-resolved Saturn payload, while renamed authentic bytes
+  remain supported. The boot/hash regression now proves that wrong bytes under
+  the canonical `LEV00.DGN` name are rejected before entering game state.
+
 - ✅ 2026-08-06 Nexus ITEM raw-declaration provenance cleanup: the legacy
   40-byte ITEM.IBS binder now retains `carry_locations` as source metadata
   without inferring a consumable gameplay flag from bit 0. The authenticated
