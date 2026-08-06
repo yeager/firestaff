@@ -16,6 +16,13 @@
   Saturn VDP1/VDP2 composition remain capture-gated. No runtime behavior or
   game data was changed.
 
+- ✅ 2026-08-06 Nexus startup label hardening: M12 no longer advertises
+  `V1 / V2` for Nexus while its V2 HUD is still a procedural no-op and the
+  Saturn presentation capture is missing. The game card now states
+  `V1 / SATURN CAPTURE GATED`. The boot-readiness regression now also checks
+  that the unbound prompt remains closed; no runtime pixels or game data were
+  changed.
+
 - ✅ 2026-08-06 DM2 platform documentation: corrected the obsolete claim that
   DM2 had no Amiga release. The variant guide now records the documented
   European 1.0 EN/FR/DE port, its six-floppy installer and original

@@ -11,6 +11,10 @@
   an authenticated Saturn capture before adding menu transitions or screen
   coordinates.
 
+- **NEXUS-STARTUP-V2-LABEL:** The launcher no longer advertises a Nexus V2
+  presentation fallback. Keep the game card capture-gated until the real
+  Saturn title/menu owner and VDP1/VDP2 composition are authenticated.
+
 - **NEXUS-DGN-MATERIAL-VDP1-CAPTURE:** The real Structure2 decoder now
   has a 16-level census guard (1,678 textures: 1,553 indexed-4bpp and 125
   direct-555) with non-zero output checks. Keep decoded pixels/palettes as

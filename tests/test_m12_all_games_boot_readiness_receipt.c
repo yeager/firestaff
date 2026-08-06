@@ -304,8 +304,8 @@ int main(void) {
             if (!expect(boot.packagedCaptureWarningFrames == 48 &&
                         boot.packagedCaptureTitleReadyFrame == 102 &&
                         boot.packagedCaptureTitleFrameMax == 102 &&
-                        boot.packagedCaptureTitlePromptVisible == 1,
-                        "Nexus M12 boot receipt should expose title/warning timing")) return 1;
+                        boot.packagedCaptureTitlePromptVisible == 0,
+                        "Nexus M12 boot receipt should expose timing while keeping the unbound prompt closed")) return 1;
         }
         if (!expect(M12_StartupMenu_GetLaunchGate(&state, i, &gate) == 1,
                     "launch gate should build")) return 1;

@@ -620,8 +620,9 @@ static void m12_enforce_mode_constraints(M12_GameOptions* opts, int presentation
      * the row cycle controls the full range (320x200 → 640x400
      * → 1280x960 → 1920x1080 → 2560x1440 → 3840x2160). */
     /* Game-specific launch gates live in M12_StartupMenu_GetLaunchIntent().
-     * Nexus V2 presentation currently keeps V1 gameplay/source state locked
-     * and falls back to the full WARNING.BIN/TITLE.CG startup presentation. */
+     * Nexus V2 presentation has no authenticated retail owner in the supplied
+     * corpus; keep the V1/source state separate and leave Saturn presentation
+     * capture-gated rather than selecting a generated fallback. */
 }
 
 static void m12_clamp_game_options(M12_GameOptions* opts) {
@@ -7590,13 +7591,13 @@ static const char *g_game_select_labels[M12_GAME_SELECT_COUNT] = {
 /* g_game_select_tags_ready: per-game display tags for game-select menu.
  * DM1: V1/V2.0/V2.1/V2.2 all available.
  * CSB/DM2: V1 + V2 available.
- * Nexus: V1 gameplay/source state with V2 presentation fallback available.
+ * Nexus: V1 gameplay/source state; Saturn presentation remains capture-gated.
  * ReDMCSB: COMMAND.C F0359 "LoadGameSettings". */
 static const char *g_game_select_tags_ready[] = {
     _("V1 / V2.0 / V2.1 / V2.2"),
     _("V1 / V2"),
     _("V1 / V2"),
-    _("V1 / V2"),
+    _("V1 / SATURN CAPTURE GATED"),
     _("V1 Only (Phase 1)")      /* theron — Track 02 provenance gate passed */
 };
 static const char *g_game_select_tags_missing[] = {
