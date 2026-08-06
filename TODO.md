@@ -247,6 +247,11 @@
   the exact M12-to-boot handoff, just like Amiga. Its CUE/IMG, G1 payload and
   CD.DAT map are read only in RAM; a sibling DOS install cannot silently win
   platform selection. The real archive passes M12, boot and `GAME_LOAD`.
+  The former runtime-side implicit `$HOME/.firestaff/data/dm2/GRAPHICS.DAT`
+  English overlay was removed as well: an FM Towns session now uses only the
+  selected verified corpus. A future language option must carry an explicit,
+  separately authenticated companion corpus in its M12-to-boot receipt; it
+  must not discover a sibling PC installation by path.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   deliberately non-mutating until the original 263-byte `c_hero` layout,

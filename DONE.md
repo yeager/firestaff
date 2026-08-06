@@ -50772,6 +50772,15 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `dm2-startup-menu`. Ordinary virtual DM2 ISO media remains blocked unless it
   has a dedicated in-memory owner.
 
+- ✅ 2026-08-06 DM2 FM Towns corpus-identity closure: removed the runtime
+  convenience path that reopened `$HOME/.firestaff/data/dm2/GRAPHICS.DAT`
+  and used it as an English overlay after M12 had selected FM Towns media.
+  The path could silently mix a sibling PC release into the authenticated
+  CD/G1 session. FM Towns now keeps its selected original corpus throughout
+  runtime initialization; a future language choice must carry a separately
+  verified companion-media receipt instead of inferring a host path. Source:
+  `SKWINSPX/src/v5/skfileop.cpp` media selection before GDAT access.
+
 - ✅ 2026-08-06 DM2 resurrection surrogate mutation removal: removed the
   runtime type-0x0D final-phase write that treated Firestaff's bounded
   261-byte session record as SKProject's 263-byte `c_hero`. The old path

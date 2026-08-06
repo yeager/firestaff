@@ -2334,36 +2334,19 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.sound_env.gate_map_a = -1;
     g_dm2_runtime.sound_env.gate_map_b = -1;
     g_dm2_runtime.sound_queue_ready = 1;
-    /* i18n: when running FM Towns, load English text overlay from PC GDAT */
+    /* A selected FM Towns session must remain bound to its authenticated
+     * CD/G1 payload.  The former convenience path reopened a sibling PC
+     * GRAPHICS.DAT beneath $HOME and silently overlaid its text.  That mixes
+     * releases after M12 has selected a platform and gives an unrelated loose
+     * file authority over the live game.  Keep the source FM Towns strings
+     * until an explicit language selection carries a separately verified
+     * companion corpus all the way through the boot receipt.  Do not infer
+     * that companion from a host path.
+     *
+     * Source ownership: SKProject/SKWINSPX/src/v5/skfileop.cpp media
+     * selection precedes GDAT access; M12's selected-media receipt is the
+     * Firestaff equivalent. */
     dm2_v1_i18n_init(&g_dm2_runtime.i18n);
-    if (boot_profile->platform == DM2_PLATFORM_FMTOWNS_JA) {
-        const char *home = getenv("HOME");
-        if (home) {
-            char pc_path[512];
-            FILE *f;
-            snprintf(pc_path, sizeof(pc_path),
-                     "%s/.firestaff/data/dm2/GRAPHICS.DAT", home);
-            f = fopen(pc_path, "rb");
-            if (f) {
-                long sz;
-                fseek(f, 0, SEEK_END);
-                sz = ftell(f);
-                if (sz > 0) {
-                    uint8_t *buf = malloc((size_t)sz);
-                    if (buf) {
-                        fseek(f, 0, SEEK_SET);
-                        if (fread(buf, 1, (size_t)sz, f) == (size_t)sz) {
-                            g_dm2_runtime.i18n_ready =
-                                dm2_v1_i18n_load_english_overlay(
-                                    &g_dm2_runtime.i18n, buf, (size_t)sz);
-                        }
-                        free(buf);
-                    }
-                }
-                fclose(f);
-            }
-        }
-    }
 }
 
 int dm2_v1_runtime_g1_first_map_receipt(
