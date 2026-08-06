@@ -93,6 +93,15 @@ Suggested layout:
   theron/
 ```
 
+## In-game runtime panel
+
+Press **F10** in any game to open the compact runtime graphics and cheats
+panel. Change presentation, filters, effects, FPS overlay, window settings and
+the implemented shared cheat controls while the game is running; changes are
+applied and saved immediately. Use **Up/Down** plus **Left/Right** or the
+mouse, **Tab** for pages and **Esc** to close. See the [runtime panel guide](docs/runtime_graphics_and_cheats.md)
+for the complete control list and source-data boundaries.
+
 ## Download
 
 | Platform | Package |

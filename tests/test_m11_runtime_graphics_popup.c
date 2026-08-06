@@ -1,4 +1,5 @@
 #include "m11_game_view.h"
+#include "m11_qol_runtime.h"
 #include "config_m12.h"
 #include "render_sdl_m11.h"
 #include "csb_v22_finished_art_material_gate_pc34.h"
@@ -112,8 +113,9 @@ static void write_csb_v22_finished_fixture(const char* dataDir) {
                 assert(assetFile != NULL);
                 fputs("source-derived-fixture", assetFile);
                 fclose(assetFile);
-                fprintf(fp, "%s{\"id\":\"%s\",\"generator\":\"source_export\","
-                            "\"source_file\":\"%s.png\",\"width\":%d,\"height\":%d}",
+                fprintf(fp, "%s{\"id\":\"%s\",\"generator\":\"original_csb_pc34_graphics_dat\","
+                            "\"source_file\":\"%s.png\",\"width\":%d,\"height\":%d,"
+                            "\"f0128ProjectionStatus\":\"admitted_real\"}",
                         first ? "" : ",", slots[i].id, slots[i].id,
                         slots[i].width, slots[i].height);
                 first = 0;
@@ -121,7 +123,20 @@ static void write_csb_v22_finished_fixture(const char* dataDir) {
         }
         fputs("]", fp);
     }
-    fputs("}", fp);
+    fputs(",\"routeProvenance\":[", fp);
+    for (size_t i = 0; i < sizeof(slots) / sizeof(slots[0]); ++i) {
+        fprintf(fp, "%s{\"id\":\"%s\",\"category\":\"%s\","
+                    "\"f0128ProjectionStatus\":\"admitted_real\"}",
+                i == 0 ? "" : ",", slots[i].id, slots[i].category);
+    }
+    fputs("],\"slots\":[", fp);
+    for (size_t i = 0; i < sizeof(slots) / sizeof(slots[0]); ++i) {
+        fprintf(fp, "%s{\"id\":\"%s\",\"generator\":\"original_csb_pc34_graphics_dat\","
+                    "\"source_file\":\"%s.png\",\"width\":%d,\"height\":%d}",
+                i == 0 ? "" : ",", slots[i].id, slots[i].id,
+                slots[i].width, slots[i].height);
+    }
+    fputs("]}", fp);
     fclose(fp);
 }
 
@@ -256,8 +271,12 @@ int main(void) {
     assert(config.dm1V2PhosphorPersistenceEnabled != savedPhosphor);
 
     /* V2.2 is omitted completely when no real art pack has been admitted.
-     * Cycling from V2.1 therefore returns directly to V1; prove enhancement
-     * rows cannot alter that original-data presentation. */
+     * The new CHEATS page is still available, so cycle past it before
+     * returning to presentation; prove enhancement rows cannot alter the
+     * original-data presentation. */
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupPage == 3);
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupPage == 0);
@@ -414,6 +433,36 @@ int main(void) {
     assert(M12_Config_Load(&config, NULL) == 1);
     assert(config.csbV2BilinearEnabled == 1);
     assert(csb_v2_upscale_get_bilinear() == 1);
+
+    /* The fourth F10 page is backed by the same real cheat settings exposed
+     * by the launcher. It must work in the live CSB slot without affecting
+     * DM1's slot, and speed must reach the live scheduler immediately. */
+    config.gameCheatsEnabled[0] = 0;
+    config.gameSpeed[0] = 1;
+    config.gameCheatsEnabled[1] = 0;
+    config.gameSpeed[1] = 1;
+    config.gameSpeedMultiplier = 100;
+    assert(M12_Config_Save(&config) == 1);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupPage == 2);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_CYCLE_CHAMPION);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(state.graphicsPopupPage == 3);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.gameCheatsEnabled[1] == 1);
+    assert(config.gameCheatsEnabled[0] == 0);
+    assert(M11_QolRuntime_GetSpeedMultiplier() == 100);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_DOWN);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_RIGHT);
+    assert(result == M11_GAME_INPUT_REDRAW);
+    assert(M12_Config_Load(&config, NULL) == 1);
+    assert(config.gameSpeed[1] == 2);
+    assert(config.gameSpeedMultiplier == 150);
+    assert(M11_QolRuntime_GetSpeedMultiplier() == 150);
     result = M11_GameView_HandleInput(&state, M12_MENU_INPUT_BACK);
     assert(result == M11_GAME_INPUT_REDRAW);
     assert(state.graphicsPopupActive == 0);

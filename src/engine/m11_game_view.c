@@ -70,6 +70,7 @@
 #include "entrance_frontend_pc34_compat.h" /* command-path enum only */
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "main_loop_m11.h"
+#include "m11_qol_runtime.h"
 #include "m11_game_view_a11y.h"  /* m11_screen_reader_update_ex gameplay manifest */
 #include "fs_portable_compat.h"
 #include "m11_v2_vertical_slice_assets.h"
@@ -12874,6 +12875,34 @@ int M11_GameView_DropItem(M11_GameViewState* state) {
         return 0;
     }
 
+    /* F0374 consumes G4055 (the transient mouse/leader hand) before any
+     * champion slot is considered.  Previously this command searched only
+     * the inventory, leaving a picked-up object apparently undroppable until
+     * the user found the pointer-specific viewport route.  The keyboard
+     * command targets the party's current square directly; it must not run
+     * the pointer helper's viewport-cell hit testing. */
+    item = DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(state);
+    if (item != THING_NONE) {
+        DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
+        if (!m11_prepend_thing_to_square(&state->world,
+                                         state->world.party.mapIndex,
+                                         state->world.party.mapX,
+                                         state->world.party.mapY,
+                                         item)) {
+            (void)DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state, item);
+            m11_set_status(state, "DROP", "DROP TARGET UNAVAILABLE");
+            return 0;
+        }
+        m11_get_source_item_name(state, state->world.things, item,
+                                 itemName, sizeof(itemName));
+        m11_set_status(state, "DROP", "ITEM DROPPED");
+        snprintf(state->inspectTitle, sizeof(state->inspectTitle), "DROPPED");
+        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
+                 "%s FROM MOUSE HAND", itemName);
+        m11_refresh_hash(state);
+        return 1;
+    }
+
     /* Drop from hands first (right, then left), then last backpack item */
     if (champ->inventory[CHAMPION_SLOT_HAND_RIGHT] != THING_NONE) {
         dropSlot = CHAMPION_SLOT_HAND_RIGHT;
@@ -23864,6 +23893,7 @@ enum {
     M11_GRAPHICS_POPUP_PAGE_PRESENTATION = 0,
     M11_GRAPHICS_POPUP_PAGE_FILTERS,
     M11_GRAPHICS_POPUP_PAGE_EFFECTS,
+    M11_GRAPHICS_POPUP_PAGE_CHEATS,
     M11_GRAPHICS_POPUP_PAGE_COUNT,
     /* Keep the live dungeon visible while graphics settings are adjusted.
      * The prior 288x184 modal almost completely hid the 224x136 viewport. */
@@ -23876,6 +23906,7 @@ enum {
 static int m11_graphics_popup_row_count(const M11_GameViewState* state,
                                         int page) {
     if (page == M11_GRAPHICS_POPUP_PAGE_PRESENTATION) return 9;
+    if (page == M11_GRAPHICS_POPUP_PAGE_CHEATS) return 2;
     /* CSB has its own source-preserving V2 filter chain.  Do not present
      * DM1-only colour/sharpen controls as if they altered CSB's runtime. */
     if (page == M11_GRAPHICS_POPUP_PAGE_FILTERS &&
@@ -24059,6 +24090,31 @@ static int m11_graphics_popup_adjust(M11_GameViewState* state, int delta) {
                 M12_Resolution_Dimensions(config.gameResolution[slot], &state->presentationWidth, &state->presentationHeight);
                 break;
             case 8: config.windowModeIndex = m11_graphics_popup_cycle(config.windowModeIndex, delta, 3); (void)M11_Render_SetWindowMode(config.windowModeIndex); break;
+        }
+    } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_CHEATS) {
+        /* Only expose cheats that have a real shared runtime owner.  The
+         * launcher already owns this master toggle and speed setting for all
+         * five games; do not invent game-specific debug powers here. */
+        if (row == 0) {
+            config.gameCheatsEnabled[slot] = !config.gameCheatsEnabled[slot];
+            if (!config.gameCheatsEnabled[slot]) {
+                config.gameSpeed[slot] = 1;
+                config.gameSpeedMultiplier = 100;
+                M11_QolRuntime_SetSpeedMultiplier(100);
+            } else {
+                static const int speedMultipliers[] = { 50, 100, 150 };
+                int speed = config.gameSpeed[slot];
+                if (speed < 0 || speed > 2) speed = 1;
+                config.gameSpeed[slot] = speed;
+                config.gameSpeedMultiplier = speedMultipliers[speed];
+                M11_QolRuntime_SetSpeedMultiplier(speedMultipliers[speed]);
+            }
+        } else if (row == 1 && config.gameCheatsEnabled[slot]) {
+            static const int speedMultipliers[] = { 50, 100, 150 };
+            config.gameSpeed[slot] = m11_graphics_popup_cycle(
+                config.gameSpeed[slot], delta, 3);
+            config.gameSpeedMultiplier = speedMultipliers[config.gameSpeed[slot]];
+            M11_QolRuntime_SetSpeedMultiplier(config.gameSpeedMultiplier);
         }
     } else {
         /* Filters are deliberately locked in V1: the source-original route
@@ -25783,10 +25839,11 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
         }
         if (m11_point_in_rect(x, y, M11_GRAPHICS_POPUP_X + 6,
                               M11_GRAPHICS_POPUP_Y + 23, 136, 12)) {
-            state->graphicsPopupPage = (x < M11_GRAPHICS_POPUP_X + 50) ?
+            state->graphicsPopupPage = (x < M11_GRAPHICS_POPUP_X + 40) ?
                 M11_GRAPHICS_POPUP_PAGE_PRESENTATION :
-                (x < M11_GRAPHICS_POPUP_X + 98 ? M11_GRAPHICS_POPUP_PAGE_FILTERS :
-                                                  M11_GRAPHICS_POPUP_PAGE_EFFECTS);
+                (x < M11_GRAPHICS_POPUP_X + 78 ? M11_GRAPHICS_POPUP_PAGE_FILTERS :
+                 (x < M11_GRAPHICS_POPUP_X + 114 ? M11_GRAPHICS_POPUP_PAGE_EFFECTS :
+                                                   M11_GRAPHICS_POPUP_PAGE_CHEATS));
             state->graphicsPopupSelectedRow = 0;
             return M11_GAME_INPUT_REDRAW;
         }
@@ -52293,6 +52350,7 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
     static const char* const presentation[] = { "MODE", "SCALE", "FILTER", "ASPECT", "INTEGER", "VSYNC", "FPS", "RES", "WINDOW" };
     static const char* const filters[] = { "SCANLINE", "SCAN %", "PALETTE", "GAMMA", "BRIGHT", "CONTRAST", "DITHER", "SHARPEN", "SHARP %", "PRESET", "SMOOTH" };
     static const char* const effects[] = { "PHOSPHOR", "DECAY", "GRID", "GRID %", "MOTION", "BLUR %", "LIGHT", "TURN PAN" };
+    static const char* const cheats[] = { "CHEATS", "SPEED" };
     static const char* const scaleNames[] = { "1X", "2X", "3X", "4X", "FIT", "STRETCH" };
     const char* const* rows;
     M12_Config config;
@@ -52310,7 +52368,8 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
     slot = m11_graphics_popup_game_slot(state);
     v2 = state->presentationMode != M12_PRESENTATION_V1_ORIGINAL;
     rows = state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_PRESENTATION ? presentation :
-           state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ? filters : effects;
+           state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ? filters :
+           state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_EFFECTS ? effects : cheats;
     rowCount = m11_graphics_popup_row_count(state, state->graphicsPopupPage);
     title.color = M11_COLOR_YELLOW;
     normal.color = M11_COLOR_WHITE;
@@ -52330,16 +52389,19 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                   M11_GRAPHICS_POPUP_X + 134, M11_GRAPHICS_POPUP_Y + 8, "X", &title);
     m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                   M11_GRAPHICS_POPUP_X + 6, M11_GRAPHICS_POPUP_Y + 23,
-                  state->graphicsPopupPage == 0 ? "[PRES] FILT FX" :
-                  state->graphicsPopupPage == 1 ? "PRES [FILT] FX" :
-                                                   "PRES FILT [FX]", &selected);
-    if (!v2 && state->graphicsPopupPage != M11_GRAPHICS_POPUP_PAGE_PRESENTATION)
+                  state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_PRESENTATION ? "[PRES] FILT FX CH" :
+                  state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ? "PRES [FILT] FX CH" :
+                  state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_EFFECTS ? "PRES FILT [FX] CH" :
+                                                                                  "PRES FILT FX [CH]", &selected);
+    if (!v2 && (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ||
+                state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_EFFECTS))
         m11_draw_text(framebuffer, framebufferWidth, framebufferHeight,
                       M11_GRAPHICS_POPUP_X + 6, M11_GRAPHICS_POPUP_Y + 34,
                       "V1: EFFECTS LOCKED", &normal);
     for (i = 0; i < rowCount; ++i) {
         M11_TextStyle line = i == state->graphicsPopupSelectedRow ? selected :
-                             ((!v2 && state->graphicsPopupPage != 0) ? title : normal);
+                             ((!v2 && (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS ||
+                                       state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_EFFECTS)) ? title : normal);
         int y = M11_GRAPHICS_POPUP_Y + 42 + i * 10;
         value[0] = '\0';
         if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_PRESENTATION) {
@@ -52353,6 +52415,16 @@ void M11_GameView_DrawGraphicsPopup(const M11_GameViewState* state,
                 case 6: snprintf(value, sizeof(value), "%s", config.showFpsOverlay ? "ON" : "OFF"); break;
                 case 7: if (!v2) snprintf(value, sizeof(value), "320X200 LOCKED"); else { int w, h; M12_Resolution_Dimensions(config.gameResolution[slot], &w, &h); snprintf(value, sizeof(value), "%dX%d", w, h); } break;
                 default: snprintf(value, sizeof(value), "%s", config.windowModeIndex == 0 ? "WINDOW" : config.windowModeIndex == 1 ? "MAXIMIZED" : "FULLSCREEN"); break;
+            }
+        } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_CHEATS) {
+            switch (i) {
+                case 0: snprintf(value, sizeof(value), "%s", config.gameCheatsEnabled[slot] ? "ON" : "OFF"); break;
+                default:
+                    if (!config.gameCheatsEnabled[slot]) snprintf(value, sizeof(value), "LOCKED");
+                    else if (config.gameSpeed[slot] == 0) snprintf(value, sizeof(value), "SLOWER");
+                    else if (config.gameSpeed[slot] == 2) snprintf(value, sizeof(value), "FASTER");
+                    else snprintf(value, sizeof(value), "NORMAL");
+                    break;
             }
         } else if (state->graphicsPopupPage == M11_GRAPHICS_POPUP_PAGE_FILTERS &&
                    state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {

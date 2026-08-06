@@ -88,6 +88,21 @@ int main(void)
     state.world.party.champions[0].present = 1;
     state.world.party.champions[0].hp.current = 100;
     state.world.party.champions[0].hp.maximum = 100;
+
+    /* ReDMCSB CLIKVIEW.C F0374 must also be reachable from the generic drop
+     * command: a real object held by G4055 is not a champion inventory slot. */
+    if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(&state, thing) ||
+        !M11_GameView_DropItem(&state) ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) != THING_NONE ||
+        !M11_GameView_PickupItem(&state) ||
+        DM1_V1_M11Runtime_GetLeaderHandThingPc34Compat(&state) != thing) {
+        fprintf(stderr, "real leader-hand DropItem route failed detail=%s\n",
+                state.inspectDetail);
+        M11_GameView_Shutdown(&state);
+        return 1;
+    }
+    DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(&state);
+
     state.world.party.champions[0].inventory[CHAMPION_SLOT_HAND_LEFT] = thing;
     {
         int dropped = M11_GameView_DropItem(&state);

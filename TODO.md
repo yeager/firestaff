@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **M11-F10-SOURCE-SPECIFIC-CHEATS:** The all-game F10 CH page now exposes
+  the verified shared cheat master switch and live speed control. Do not add
+  game-specific god mode, infinite-item or debug toggles until an original
+  source/runtime owner is proven for that game; research those controls as
+  separate source-locked work rather than fabricating behavior.
+
 - **ASSET-SCAN-CROSS-PLATFORM-CORPUS:** The PC-DOS DM2 ZIP route now
   materializes a complete hash-verified `GRAPHICS.DAT`/`DUNGEON.DAT` pair
   into the launch cache instead of showing both files as FOUND and the game
@@ -240,6 +246,12 @@
   the GRAPHICS.DAT object aspect. A stale decoded subtype can no longer show
   an unrelated junk/torch/food icon after pickup, placement or save restore.
   The packaged Mac capture of the affected HoC poses remains open.
+
+  2026-08-06 interaction follow-up: the keyboard drop command now also
+  consumes G4055 directly, so a held object no longer depends on the pointer
+  viewport hit-test before it can return to the current party square. The
+  remaining open item is packaged-window visual capture, not the source item
+  mutation route.
 
   2026-08-06 renderer audit/fix: corrected the PC34 wall-view dispatch from
   the erroneous 15-row host list to ReDMCSB's real 13-row G0205 table. D3L2

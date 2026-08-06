@@ -1,3 +1,18 @@
+- ✅ 2026-08-06 F10 runtime graphics and cheats panel: extended the existing
+  all-game modal popup with a fourth CH page backed by the real shared
+  launcher cheat toggle and live slower/normal/faster scheduler. Keyboard and
+  mouse page/row controls persist per-game settings and apply speed changes
+  without restart. README and `docs/runtime_graphics_and_cheats.md` now
+  document F10, the start-menu relationship, all controls and the source-data
+  boundary. The focused runtime popup and DM1 real-data tests pass.
+
+- ✅ 2026-08-06 DM1 F0374 keyboard drop route: `M11_GameView_DropItem`
+  now consumes a held real PC34 object from the transient leader/mouse hand
+  before searching champion inventory, drops it onto the current party square
+  with rollback on chain failure, and preserves the source M564 name. The
+  real `Dungeon-Master_DOS_EN.zip` GRAPHICS.DAT/DUNGEON.DAT regression now
+  proves leader-hand drop followed by pickup back into G4055.
+
 - ✅ 2026-08-06 Theron startup frame cleanup: when verified Track 02 atlas
   pixels and font tiles are present, M11 no longer overlays its host-generated
   border on top of them. The unbound frame remains absent until the original
