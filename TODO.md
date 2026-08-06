@@ -3780,6 +3780,12 @@ level or consumer bindings.
   The class-0 wall-mecha study is also removed: its timer-byte coordinates,
   action and direction cannot substitute for the original DB3/DB14 record,
   target and payload handoff.
+  The class-5 teleporter study is removed as well: it toggled an authenticated
+  G1 tile and redirected to floor mecha from raw timer fields, without the
+  source teleporter record, movement and actuator transaction.
+  Its uncalled floor-mecha target is removed too: a partial record walk and
+  CAII activation cannot stand in for the complete original DB3/DB4/CAII/CCM
+  transaction.
   The M11 Action-door shortcut now follows the same rule: it cannot rewrite
   a G1 tile from a coordinate-only query while the live DB0 door record,
   direction, collision, sound and follow-up timer transaction are absent.

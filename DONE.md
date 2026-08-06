@@ -2396,6 +2396,23 @@
   verifier and real PC-DOS G1 viewport-plan regression pass. No game data
   was copied, unpacked or modified.
 
+- ✅ 2026-08-06 DM2 teleporter transaction cleanup: removed the uncalled
+  class-5 actuator study from `dm2_v1_runtime.c`. It toggled a G1 tile and
+  redirected to floor-mecha processing from raw timer fields without the
+  source teleporter record, movement and actuator transaction. The
+  production-boundary verifier rejects its return; the class remains
+  fail-closed. Verification: `firestaff_dm2` build, production-boundary
+  verifier and real PC-DOS G1 viewport-plan regression pass. No game data
+  was copied, unpacked or modified.
+
+- ✅ 2026-08-06 DM2 floor-mecha transaction cleanup: removed the uncalled
+  class-1 study from `dm2_v1_runtime.c`. Its partial record walk could
+  activate CAII from a timer coordinate without the original DB3/DB4/CAII/CCM
+  transaction. The production-boundary verifier rejects its return; the
+  class remains fail-closed. Verification: `firestaff_dm2` build,
+  production-boundary verifier and real PC-DOS G1 viewport-plan regression
+  pass. No game data was copied, unpacked or modified.
+
 - ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now
   records a completed party/leader-cache clear only after its retained
   source-save projection is observed empty. M11 requires that postcondition
