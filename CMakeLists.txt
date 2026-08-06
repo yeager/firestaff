@@ -4994,6 +4994,12 @@ list(REMOVE_ITEM M10_SOURCES
 # its explicit regression compiles it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_pending_hand_queue_pc34_compat.c")
+# `dm1_v1_mirror_candidate_chest_open_during_pending_pc34_compat.c` is a
+# contract-only C040/F0333/F0282 fixture with local candidate, chest and slot
+# state. It loads no original DM1 data and has no M11/runtime caller; its
+# explicit regression compiles it directly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_chest_open_during_pending_pc34_compat.c")
 # `dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_pc34_compat.c`
 # is a contract-only C040 close/reopen model with local panel and candidate
 # state. It loads no original DM1 assets and has no M11/runtime caller; its

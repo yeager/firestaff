@@ -1,3 +1,11 @@
+# DM1 mirror chest-open-during-pending synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C040/F0333/F0282 fixture from M10 and wired
+  its regression to compile the source explicitly. It loads no original DM1
+  data and has no M11/runtime caller.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_chest_open_during_pending_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 mirror pending-hand-queue synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040 chest/hand-queue fixture from M10 and
