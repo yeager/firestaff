@@ -1,3 +1,10 @@
+# DM2 dörr-RAW4 med vald korpus (2026-08-07)
+
+- ✅ Dörrpanel-/knappplaceringstestet använder nu endast explicit
+  `FIRESTAFF_DM2_DATA_DIR/graphics.dat`. En vald men oläsbar fil är ett fel.
+  PC-DOS-media bekräftar RAW4-baserade D0C/D1C/D2C/D3C-paneler och
+  D0C/D1C/D2C-standardknappar utan att återgå till reservgeometri.
+
 # Nexus MENU.BPK retail PRS3 decode census (2026-08-07)
 
 - ✅ `test_nexus_v1_bpk_archive` now loads the explicit

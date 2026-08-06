@@ -15025,6 +15025,9 @@ lane is carried forward in the sections below.
     `dm2_v1_gdat_door_overlay_query_raw4_destination_rect`. New real-data test
     `test_dm2_v1_door_panel_source_placement_real_data` proves D0C/D1C/D2C
     panels and buttons and D3C panel differ from the hard-coded fallbacks.
+    **2026-08-07 corpus update:** this probe now requires the explicit
+    `FIRESTAFF_DM2_DATA_DIR/graphics.dat` corpus and fails an unreadable
+    selection rather than borrowing a private HOME installation.
     Remaining: distance stretch/light-palette execution, `DRAW_DOOR_FRAMES`,
     D3/custom WALL_GFX buttons, door opening transforms, and verified GDAT
     material.

@@ -265,8 +265,6 @@ static int test_fallback_without_source(DM2_V1_ViewportState *viewport)
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
-    char default_root[1024];
     char path[2048];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
@@ -276,18 +274,13 @@ int main(void)
     int ok = 0;
 
     if (!root || !root[0]) {
-        if (!home || !home[0]) {
-            puts("SKIP: no local canonical DM2 data");
-            return 0;
-        }
-        snprintf(default_root, sizeof(default_root),
-                 "%s/.firestaff/data/dm2/data", home);
-        root = default_root;
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+        return 0;
     }
     snprintf(path, sizeof(path), "%s/graphics.dat", root);
     if (!read_file(path, &graphics, &graphics_size)) {
-        puts("SKIP: no local canonical DM2 data");
-        return 0;
+        fputs("FAIL: selected canonical DM2 GRAPHICS.DAT is unreadable\n", stderr);
+        return 1;
     }
 
     memset(&loader, 0, sizeof(loader));
