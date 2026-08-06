@@ -4381,6 +4381,11 @@ list(REMOVE_ITEM M10_SOURCES
 # caller; the independent D1C door receipt is the original-material owner.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_f0111_door_pc34_compat.c")
+# `dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat.c` is an
+# asset-free F0111 source lock. Its synthetic control/blit model has no
+# runtime caller; the independent D1 side door receipt owns real material.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat.c")
 # `dm1_v1_viewport_d2c_center_wall_composition_pc34_compat.c` is an
 # asset-free synthetic D2C pixel-trace audit with no M11/runtime caller.
 # Compile it only into its dedicated test and keep the broad M10 archive
@@ -53711,7 +53716,9 @@ add_executable(test_dm1_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_co
 target_include_directories(test_dm1_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat COMMAND test_dm1_v1_viewport_d1l_d1r_f0108_floor_ceiling_ornament_pc34_compat)
-add_executable(test_dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat tests/test_dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat
+    tests/test_dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat COMMAND test_dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat)

@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D1L-D1R-F0111-SYNTHETIC-AUDIT:** This asset-free F0111 model records
+  D1-side door control and synthetic blits without original game data. It has
+  no M11/runtime caller; retain it as explicit ReDMCSB coverage while the
+  independent D1-side door receipt owns source material.
+
 - **DM1-D1C-F0111-SYNTHETIC-AUDIT:** This asset-free D1C F0111 geometry and
   transparency model uses synthetic blits and no original data. It has no
   M11/runtime caller; retain it as an explicit ReDMCSB regression while the
