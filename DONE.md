@@ -5,6 +5,14 @@
   seven real US dungeons. No host object or synthetic inventory mapping was
   introduced.
 
+- ✅ 2026-08-06 DM2 unowned projectile-route isolation: removed the projectile
+  dispatch, per-tick step and creature-collision adapters from the production
+  DM2 archive. They own a private F0810-compatible list, but no M11 or DM2
+  runtime call site supplies the original CCM, timer, creature and DB-pool
+  transaction that creates it. Dedicated tests compile the modules directly;
+  product code cannot present their fixture-capable list as live gameplay.
+  No game data was unpacked, copied or tracked.
+
 - ✅ 2026-08-06 Nexus STABG DMWeb table hardening: the retail
   `DecodeSTABGBIN`-shaped offset table must now show its zero terminator; a
   full bounded table without that marker is rejected instead of being

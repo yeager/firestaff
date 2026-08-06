@@ -4426,6 +4426,11 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # runtime, M11 handoff, or source-owned DB4/CAII state binds their inputs, so
 # linking them would advertise a synthetic execution route. Their focused
 # contracts stay available outside the product archive.
+# The projectile dispatch, step and creature-collision adapters likewise own
+# a private F0810-style list, but no M11/DM2 runtime path supplies the
+# original CCM, timer, creature and record-pool transaction that creates it.
+# Their only construction fixture is test-only; keep the focused contracts
+# out of the product archive until a source-owned producer consumes them.
 list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_panel_routing.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_survey_helpers.c"
@@ -4461,7 +4466,10 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_creature_attacks_player_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_creature_combat_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_creature_ai_spec_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_anim_chunk_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_anim_chunk_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_step_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)

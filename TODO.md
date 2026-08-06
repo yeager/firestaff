@@ -1056,6 +1056,9 @@
   at the runtime boundary. `DM2_GAME_LOAD` must restore the complete original
   record pools, timer queue, actuator-generator pass and entrance placement
   before Continue or Load Slot can leave the source menu.
+  **2026-08-06 update:** projectile, step and creature-collision receipts are
+  now test-only too. Bind their private F0810 list to the original
+  CCM/timer/DB transaction before a projectile can exist in a live DM2 frame.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its
