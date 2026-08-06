@@ -1,3 +1,13 @@
+# DM1 C040/C537 double-open-close synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C040/C537 lifecycle fixture from M10. It
+  fabricates champion, hand and chest-slot state, has no original DM1 data
+  input or M11/runtime caller, and its generated regression compiles it
+  directly.
+- ✅ Verification: `dm1_v1_mirror_candidate_double_open_close_guard_pc34_compat`
+  passes with 63 assertions; the source object is absent from both M10 and M11
+  archives.
+
 # DM1 chest stack-split synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the local F0333 stack-split chain fixture from M10. It reads no

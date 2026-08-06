@@ -4774,6 +4774,12 @@ list(REMOVE_ITEM M10_SOURCES
 # its generated mirror regression compiles it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat.c")
+# `dm1_v1_mirror_candidate_double_open_close_guard_pc34_compat.c` is a
+# contract-only C040/C537 lifecycle model with synthetic champion, hand and
+# chest-slot state. It has no original DM1 data input or M11/runtime caller;
+# its generated mirror regression compiles it directly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_double_open_close_guard_pc34_compat.c")
 # `dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c`
 # is a deterministic C040/chest/rotation scenario fixture. It reads no
 # original DM1 data and has no M11/runtime caller; its explicit regression

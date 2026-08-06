@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-DOUBLE-OPEN-CLOSE-SYNTHETIC-AUDIT:** This C040/C537 lifecycle
+  fixture fabricates champion, hand and chest-slot state. It has no original
+  DM1 data input or M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound interaction owner is recovered.
+
 - **DM1-CHEST-STACK-SPLIT-SYNTHETIC-AUDIT:** This F0333 chain model uses
   fixed sentinel item values and a local Next array. It reads no original game
   data and has no M11/runtime caller; retain it only as explicit ReDMCSB
