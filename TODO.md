@@ -14,6 +14,12 @@
   for parity work, but the real D0L/D0R GRAPHICS.DAT consumer and pixel
   ownership must be recovered before any runtime rendering claim.
 
+- **DM1-PENDING-WOUNDS-SYNTHETIC-AUDIT:** The pending-wounds tick helper is a
+  contract-only synthetic state machine. It mirrors ReDMCSB F0320/F0321 but
+  does not consume live champion records, original saves, or authenticated
+  DM1 data, and it has no production caller. Keep it test-only until the
+  live F0320 owner is bound to real runtime state.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

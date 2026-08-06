@@ -862,6 +862,18 @@
   Real D0L/D0R bitmap ownership remains open.
 - ✅ No game data was copied or committed.
 
+# DM1 pending-wounds synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only
+  `dm1_v1_champion_panel_pending_wounds_tick_pc34_compat.c` from the broad
+  M10 source glob. The file explicitly models a synthetic champion state,
+  does not load original saves or DM1 data, and caller search found only its
+  dedicated test target.
+- ✅ Kept the ReDMCSB F0320/F0321 state-machine test intact; it already
+  compiles the audit source explicitly. The live F0320 owner remains gated on
+  real runtime champion state.
+- ✅ No game data was copied or committed.
+
 # CSB FM Towns graphics real-cache regression (2026-08-06)
 
 - ✅ `test_csb_v1_fmtowns_graphics_dat` now takes
