@@ -1,5 +1,13 @@
 # Theron TQTR capture-offset correction (2026-08-06)
 
+# M11 viewport build hygiene (2026-08-06)
+
+- ✅ The four retained `cells` parameters in M11's floor-pit, floor-ornament,
+  stairs and teleporter helpers are now explicitly acknowledged as unused.
+  Each helper already samples the authoritative live viewport state; this
+  removes focused-build C11 warnings without changing pixels, routing or
+  game-data ownership.
+
 # Nexus TITLE.BIN/TITLE.CG real map join (2026-08-06)
 
 - ✅ Extended the real TITLE.BIN MAPD/TIBG regression to load the authenticated

@@ -108,7 +108,11 @@
   modules and now also locks the live viewport's named fallback counters to
   reset-only observability fields. Remove an entry only together with its
   source-backed M11/runtime handoff and real-data regression; never make a
-  broad glob the admission mechanism.
+  broad glob the admission mechanism. The focused FM Towns M11 build also
+  explicitly acknowledges the four retained, caller-compatible `cells`
+  parameters in DM1 viewport helpers: each helper samples the live viewport
+  cell through its source-owned state instead. This is warning hygiene only;
+  it does not alter DM2 admission, drawing or source ownership.
 
 - **DM2-SOUND-TEXT-CONSUMER:** `c_sound.cpp` binds class triples to GDAT sound
   payloads but does not supply a sound-name text producer. The production

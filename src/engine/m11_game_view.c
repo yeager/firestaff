@@ -33005,6 +33005,7 @@ static void m11_draw_dm1_floor_pits(const M11_GameViewState* state,
                                     const M11_ViewportCell cells[3][3]) {
     int i;
     int planCount;
+    (void)cells;
     if (!state || !state->assetsAvailable) {
         return;
     }
@@ -33063,6 +33064,7 @@ static void m11_draw_dm1_floor_ornaments(const M11_GameViewState* state,
                                          const M11_ViewportCell cells[3][3]) {
     int i;
     int ornamentCount;
+    (void)cells;
     if (!state || !state->assetsAvailable) {
         return;
     }
@@ -34327,6 +34329,7 @@ static void m11_draw_dm1_stairs(const M11_GameViewState* state,
                                 const M11_ViewportCell cells[3][3]) {
     int i;
     int planCount;
+    (void)cells;
     if (!state || !state->assetsAvailable) {
         return;
     }
@@ -34385,6 +34388,7 @@ static void m11_draw_dm1_teleporter_fields(const M11_GameViewState* state,
                                            const M11_ViewportCell cells[3][3]) {
     int i;
     int planCount;
+    (void)cells;
     if (!state || !state->assetsAvailable) {
         return;
     }
