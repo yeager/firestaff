@@ -2369,6 +2369,15 @@
   viewport-plan regression pass. No game data was copied, unpacked or
   modified.
 
+- ✅ 2026-08-06 DM2 actuator enqueue cleanup: removed the uncalled reduced-
+  record `DM2_INVOKE_ACTUATOR` and `DM2_INVOKE_MESSAGE` timer builder from
+  `dm2_v1_runtime.c`. It could enqueue a class-0x04 actuator from
+  caller-owned record bytes without the original DB3/DB14 link, target and
+  payload transaction. The production-boundary verifier now rejects both
+  remnants. Verification: `firestaff_dm2` build, production-boundary verifier
+  and real PC-DOS G1 viewport-plan regression pass. No game data was copied,
+  unpacked or modified.
+
 - ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now
   records a completed party/leader-cache clear only after its retained
   source-save projection is observed empty. M11 requires that postcondition

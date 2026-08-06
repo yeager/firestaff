@@ -3704,6 +3704,10 @@ level or consumer bindings.
   unit. They derived record relocation or square mutation from raw timer
   fields; the archive boundary now rejects their return. The remaining source
   work still requires the full record, payload and follow-up-timer handoff.
+  **2026-08-06 actuator enqueue update:** removed the uncalled reduced-record
+  `DM2_INVOKE_ACTUATOR`/`DM2_INVOKE_MESSAGE` timer builder. It could enqueue
+  an actuator timer from caller-provided record bytes without the source DB3/
+  DB14 link and target transaction; the archive boundary rejects its return.
   The M11 Action-door shortcut now follows the same rule: it cannot rewrite
   a G1 tile from a coordinate-only query while the live DB0 door record,
   direction, collision, sound and follow-up timer transaction are absent.

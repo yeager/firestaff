@@ -182,6 +182,8 @@ def verify(repo: Path) -> list[str]:
             "dm2_runtime_process_3d_timer",
             "dm2_runtime_actuate_pitfall",
             "dm2_runtime_actuate_door",
+            "dm2_runtime_invoke_message",
+            "dm2_runtime_invoke_actuator",
     ):
         if forbidden in runtime:
             errors.append(f"runtime retains timer-byte mutation study: {forbidden}")
