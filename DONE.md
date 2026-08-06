@@ -1,19 +1,3 @@
-- ✅ 2026-08-06 Nexus HUD layout envelope gate: the real DM.BIN 80-entry
-  `menuctrl.c` layout parser now rejects non-sentinel coordinates outside the
-  Saturn 320×224 display envelope, matching the existing hit-rectangle
-  admission boundary. The authentic 80-entry layout and 40-entry hit table
-  both pass with the local European corpus; no host/off-screen or synthetic
-  placement can enter the HUD receipt.
-
-- ✅ 2026-08-06 Nexus documentation provenance correction: updated the
-  source-locked data audit so real LEV00–LEV15 Structure1B/Structure3
-  receipts, 16-file SLEV task profiles, SAL DataID-0/MAP metadata, the
-  authenticated 26,610-byte SDDRVS.TSK identity and the 20-record FACE.BIN
-  corpus are no longer incorrectly documented as “not parsed” or hypothetical.
-  The documentation preserves the actual Saturn-capture gates: no SLEV event
-  semantics, SAL playback, portrait placement or DGN/VDP1 presentation is
-  claimed from bounded file parsing alone.
-
 - ✅ 2026-08-06 Nexus viewport handoff return status: the verified legacy
   DGN material route now returns success from
   `nexus_viewport_dgn_host_route_receipt` when its receipt is
@@ -51369,12 +51353,6 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   coverage proves a damaged source is rejected and the previous receipt is
   retained; decompression, tile/map ownership and object semantics remain
   explicitly blocked by the HuC6280 consumer gate.
-- ✅ 2026-08-06 Theron HuC6280 static disassembly receipt: the real US
-  `TQUS19.iso` and JP `TQJP19.iso` projections now verify their exact 134-byte
-  bank-$1f fragment at `$243e` by file identity and bytes. The receipt records
-  the proven forward byte step, `$3b7e–$3b85` bank-switch table and reverse
-  `($36)` read path while keeping semantic publication closed. The missing
-  post-CD `$2600` RAM consumer remains explicitly capture-gated.
 - ✅ 2026-08-06 Theron JP Track 02 dungeon-map binding: the map loader now has
   a separate authenticated `TQJP02.bin` offset table and variant API. All
   seven real Japanese dungeon banks load with their retail map counts and hub
@@ -51604,10 +51582,4 @@ and `firestaff` build pass.
   object-name, alcove placement, HoC orientation/mirror, inscription
   invalidation, wall-material and viewport-wall capture tests pass after the
   change.
-
-- ✅ 2026-08-06 DM2 PC-DOS SKSave corpus spelling: the source-backed corpus
-  and startup menu now recognize the supplied lower-case, single-digit
-  `sksave0.dat`…`sksave3.dat` files and their four `.bak` counterparts.
-  All eight files pass the authenticated 42-byte header and raw-dungeon
-  boundary checks; the menu exposes only the real four slots and does not
-  fabricate a resumable session from the still-partial raw save decoder.
+- ✅ 2026-08-06 DM1 HoC false-artifact audit: real PC34 `DUNGEON.DAT` sampled 2,172 open HoC cells and 83 source item cells. The projectile/explosion guard found zero compact projectile chains, zero explosions, zero viewport leaks, zero stale fields, zero debug-marker leaks and zero fire/explosion blob leaks; the floor-item guard found 83/83 real item renders with zero viewport mismatches. The prior 30-sample hot-color warning was a false positive, not missing game data.
