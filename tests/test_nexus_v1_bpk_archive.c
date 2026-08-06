@@ -1,4 +1,5 @@
 #include "nexus_v1_bpk_archive.h"
+#include "asset_find_by_hash.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -195,6 +196,12 @@ static void test_optional_local_menu_bpk(void) {
         puts("SKIP: local Nexus MENU.BPK not present");
         return;
     }
+
+    expect(asset_file_matches_md5(path,
+                                  "a6f2272a4f6cb3c6b3b33012bc5b15ed") ||
+               asset_file_matches_md5(path,
+                                      "fcf8a00fbb92593ed9ae908f8e285cda"),
+           "local MENU.BPK matches an authenticated English/French retail revision");
 
     expect(nexus_v1_bpk_archive_parse(data, size, &info) == 0,
            "local MENU.BPK BPPK/BMPD directory parses");

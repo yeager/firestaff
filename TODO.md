@@ -646,6 +646,11 @@
   an authenticated Saturn capture before adding menu transitions or screen
   coordinates.
 
+  The MENU.BPK corpus regression now also requires an authenticated
+  English/French retail archive identity before accepting its 163-entry
+  directory census. Menu drawing, text ownership and VDP1/VDP2 composition
+  remain capture-gated.
+
   2026-08-06: the bounded MENU.BPK receipt now accepts the verified
   canonical/English/French retail identities and derives the directory
   trailer's final two offsets from the active archive table. The local

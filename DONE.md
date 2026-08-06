@@ -16,6 +16,13 @@
 
 # Nexus boot-profile capability audit (2026-08-06)
 
+# Nexus MENU.BPK retail identity gate (2026-08-06)
+
+- ✅ Hardened the real MENU.BPK archive regression with the authenticated
+  English/French retail MD5 identities before accepting its 163-entry,
+  162-PRS3 directory census. PRS3 decompression and Saturn menu composition
+  remain intentionally capture-gated.
+
 # Nexus HUD DM.BIN retail identity gate (2026-08-06)
 
 - ✅ Hardened the 80-entry HUD layout and 40-entry hit-rectangle regressions
