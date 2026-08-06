@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus MENU.BPK PRS3 span hardening: bounded compressed-size
+  inspection now stops at each directory entry's `next_offset`, including the
+  final entry's authenticated `PALT` boundary, instead of scanning to the end
+  of the archive. The real 162-entry PRS3 corpus remains intact and the
+  regression asserts every reported payload stays inside its own entry span.
+  Verification: `test_nexus_v1_bpk_archive` with
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - ✅ 2026-08-06 Nexus TITLE.BIN MAPD/TIBG bounds: corrected the DMWeb
   section minimum from `0x8c70` to `0x8c74`, covering five 64×28 tilemaps
   followed by all sixteen big-endian palette words. A truncated palette table

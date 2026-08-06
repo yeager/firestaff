@@ -276,12 +276,19 @@ static void test_optional_local_menu_bpk(void) {
     prs3_seen = 0U;
     pix_matches = 0U;
     for (uint32_t i = 0; i < info.entry_count_hint; ++i) {
+        Nexus_V1_BpkEntry bounded_entry;
         if (nexus_v1_bpk_archive_inspect_prs3(data, size, i, &prs3) != 0) {
             continue;
         }
         if (!prs3.has_prs3) continue;
         ++prs3_seen;
         if (prs3.pixel_count_matches) ++pix_matches;
+        expect(nexus_v1_bpk_archive_get_entry(data, size, i,
+                                              &bounded_entry) == 0,
+               "local MENU.BPK PRS3 entry span is readable");
+        expect(!prs3.payload_available ||
+                   prs3.compressed_size <= bounded_entry.payload_size,
+               "local MENU.BPK PRS3 payload stays inside its entry span");
     }
     expect(prs3_seen == 162U,
            "local MENU.BPK inspected 162/162 PRS3-bearing entries");

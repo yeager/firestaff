@@ -345,13 +345,14 @@ int nexus_v1_bpk_archive_inspect_prs3(const uint8_t *data,
     out_info->prefix_pixels = prefix_pixels;
     out_info->pixel_count_matches = (prs3_pixel_count == prefix_pixels);
 
+    /* The final PRS3 entry ends at the directory-bounded PALT offset, not at
+     * the end of the archive. Keep the opaque compressed stream inside the
+     * entry span so palette-trailer bytes cannot become payload evidence. */
     payload_start = prs3_off + NEXUS_V1_BPK_PRS3_HEADER_BYTES;
-    if (payload_start + 4U <= data_size) {
+    if (payload_start <= entry.next_offset &&
+        entry.next_offset - payload_start >= 4U) {
         uint32_t declared = rd32_be(data + payload_start);
-        uint32_t available =
-            (data_size - payload_start - 4U > UINT32_MAX)
-                ? UINT32_MAX
-                : (uint32_t)(data_size - payload_start - 4U);
+        uint32_t available = entry.next_offset - payload_start - 4U;
         out_info->payload_available = 1;
         out_info->compressed_size =
             (declared <= available) ? declared : available;
