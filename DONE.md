@@ -1,3 +1,14 @@
+- ✅ 2026-08-06 DM2: retired the obsolete `dm2_v1_wall_door_local_palette_gate`
+  fixture. It fabricated wall and door plans, pixels, palettes, RAW receipts,
+  and destination geometry, and had become incompatible with the source-owned
+  RAW4 route: a source-required door now obtains its placement from the real
+  GDAT loader before it can draw. The gate could therefore neither prove the
+  current renderer nor exercise genuine game data. The maintained real-media
+  tests `test_dm2_v1_gdat_wall_plan_viewport_real_data` and
+  `test_dm2_v1_gdat_door_overlay_plan_real_data` cover the actual
+  `GRAPHICS.DAT` command/palette receipts and their fail-closed M11 consumers.
+  No production fallback was introduced.
+
 - ✅ 2026-08-06 Nexus retail MAP minimum-size admission: `SNDLEV##.MAP`
   parsing now recognizes DMWeb's byte-zero retail record table even when the
   file contains only one eight-byte record and its `FF FF` terminator; the
