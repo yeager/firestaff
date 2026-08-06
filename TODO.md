@@ -15,6 +15,11 @@
   presentation fallback. Keep the game card capture-gated until the real
   Saturn title/menu owner and VDP1/VDP2 composition are authenticated.
 
+- **NEXUS-TITLE-VDP-CAPTURE:** Startup title reveal geometry now uses the
+  verified 224-row Saturn surface from the DMWeb 64x28 TITLE.BIN map layout.
+  The remaining work is still the captured VDP2 tilemap/CLUT owner and its
+  runtime timing, not another host-sized 320x200 approximation.
+
 - **NEXUS-DGN-MATERIAL-VDP1-CAPTURE:** The real Structure2 decoder now
   has a 16-level census guard (1,678 textures: 1,553 indexed-4bpp and 125
   direct-555) with non-zero output checks. Keep decoded pixels/palettes as

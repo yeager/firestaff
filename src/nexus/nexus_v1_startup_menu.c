@@ -2951,7 +2951,10 @@ int nexus_v1_startup_presentation_build_title(
     memset(out_commands,
            0,
            (size_t)max_commands * sizeof(out_commands[0]));
-    if (!nexus_v1_boot_frame(title_frame, 200, &boot_frame)) {
+    /* DMWeb TITLE.BIN: the five MAPD/TIBG maps are 64x28 8x8 cells.
+     * Keep the startup reveal on the verified Saturn framebuffer height;
+     * the former 200-row host value truncated the real 224-row surface. */
+    if (!nexus_v1_boot_frame(title_frame, NEXUS_FB_H, &boot_frame)) {
         return count;
     }
     if (boot_frame.warning_visible) {

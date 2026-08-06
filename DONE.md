@@ -23,6 +23,11 @@
   that the unbound prompt remains closed; no runtime pixels or game data were
   changed.
 
+- ✅ 2026-08-06 Nexus startup title geometry: replaced the production
+  320x200 reveal-height assumption with `NEXUS_FB_H` (224), matching DMWeb's
+  64x28 TITLE.BIN map geometry and the verified Saturn HUD envelope. Added a
+  320x224 regression; VDP2 tilemap/CLUT ownership remains capture-gated.
+
 - ✅ 2026-08-06 DM2 platform documentation: corrected the obsolete claim that
   DM2 had no Amiga release. The variant guide now records the documented
   European 1.0 EN/FR/DE port, its six-floppy installer and original

@@ -3227,9 +3227,13 @@ int main(void)
         expect(draw_count == 1 &&
                    draw_commands[0].kind ==
                        NEXUS_V1_STARTUP_DRAW_BOOT_TITLE_FRAME &&
-                   draw_commands[0].title_frame ==
+                       draw_commands[0].title_frame ==
                        60 - nexus_v1_boot_warning_frames(),
                "Nexus startup presentation maps boot frame to TITLE.CG frame");
+        expect(nexus_v1_title_frame(
+                   nexus_v1_boot_start_ready_frames(), NEXUS_FB_H,
+                   &title_frame) && title_frame.reveal_h == NEXUS_FB_H,
+               "Nexus startup title uses the verified 320x224 framebuffer height");
         menu_snapshot.slot_mask = (1u << 3);
         menu_snapshot.row_count = 2;
         menu_snapshot.selected_row = 1;
