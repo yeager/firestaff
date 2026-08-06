@@ -1379,7 +1379,9 @@ level or consumer bindings.
   and stays inert without a boot-admitted original save. Keyboard, RESUME save
   execution and the native SKULL continuation are still unbound,
   and `0xD7` deliberately cannot create a synthetic party; unverified media
-  still fails black. **2026-08-06
+  still fails black. Credits and Quit now use their selected GDAT rectangles;
+  the credits dismissal accepts its source event from either mouse button.
+  **2026-08-06
   update:** M11 now runs the selected HME-242 SWOOSH
   stream before TITLE, inferring only its documented EN-owned 320x200 canvas
   when AN says 0x0. Both streams remain RAM-only and Timer-A paced.

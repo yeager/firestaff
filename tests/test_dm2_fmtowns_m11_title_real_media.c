@@ -133,10 +133,12 @@ int main(void)
            "TITLE handoff decodes the selected HME-242 IMG2 menu bytes exactly");
     {
         DM2_V1_StartupMenuPointerLayout layout;
+        DM2_V1_StartupMenuAuxPointerLayout aux_layout;
         M11_GameInputResult pointer_result;
         int x;
         int y;
         memset(&layout, 0, sizeof(layout));
+        memset(&aux_layout, 0, sizeof(aux_layout));
         expect(dm2_v1_boot_startup_menu_pointer_layout(
                    (DM2_V1_BootProfile *)view.dm2BootProfile, &layout) &&
                    layout.valid && layout.new_game.w > 0 &&
@@ -161,6 +163,38 @@ int main(void)
                    view.world.party.championCount == 0 &&
                    view.world.party.activeChampionIndex == -1,
                "HME-242 RESUME rectangle dispatches 0xD9 only when an admitted real save exists");
+        expect(dm2_v1_boot_startup_menu_aux_pointer_layout(
+                   (DM2_V1_BootProfile *)view.dm2BootProfile, &aux_layout) &&
+                   aux_layout.valid && aux_layout.show_credits.w > 0 &&
+                   aux_layout.show_credits.h > 0 &&
+                   aux_layout.dismiss_credits.w > 0 &&
+                   aux_layout.dismiss_credits.h > 0 &&
+                   aux_layout.quit_game.w > 0 && aux_layout.quit_game.h > 0,
+               "HME-242 GDAT provides source credits, dismissal and quit rectangles");
+        x = aux_layout.show_credits.x + aux_layout.show_credits.w / 2;
+        y = aux_layout.show_credits.y + aux_layout.show_credits.h / 2;
+        pointer_result = M11_GameView_HandlePointerButton(
+            &view, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        expect(pointer_result == M11_GAME_INPUT_REDRAW &&
+                   view.dm2State.startup_credits_active,
+               "HME-242 credits rectangle enters the source-owned credits state");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+        expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) != 0u,
+               "FM Towns credits draw real TITLE GDAT pixels rather than a host status panel");
+        x = aux_layout.dismiss_credits.x + aux_layout.dismiss_credits.w / 2;
+        y = aux_layout.dismiss_credits.y + aux_layout.dismiss_credits.h / 2;
+        pointer_result = M11_GameView_HandlePointerButton(
+            &view, x, y, DM1_V1_MOUSE_MASK_RIGHT_PC34);
+        expect(pointer_result == M11_GAME_INPUT_REDRAW &&
+                   !view.dm2State.startup_credits_active,
+               "HME-242 credits accepts the source dismissal event from either mouse button");
+        x = aux_layout.quit_game.x + aux_layout.quit_game.w / 2;
+        y = aux_layout.quit_game.y + aux_layout.quit_game.h / 2;
+        pointer_result = M11_GameView_HandlePointerButton(
+            &view, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        expect(pointer_result == M11_GAME_INPUT_RETURN_TO_MENU,
+               "HME-242 quit rectangle dispatches the source-owned launcher return");
     }
     expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
                M11_GAME_INPUT_IGNORED,

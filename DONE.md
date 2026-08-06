@@ -560,6 +560,15 @@
   frame ownership receipt. This is a source-boundary guard, not a claim that
   unimplemented material families are drawable.
 
+# DM2 FM Towns source menu auxiliary actions (2026-08-06)
+
+- ✅ The real-media M11 regression now exercises the selected HME-242 GDAT
+  rectangles for Credits, its source-owned dismissal event and Quit after the
+  TITLE-to-IMG2 handoff. Credits is confirmed to draw TITLE GDAT pixels and
+  accepts either mouse button for dismissal; Quit returns to the launcher.
+  Keyboard routing, save restoration and native `SKULL.EXP` continuation are
+  still deliberately unavailable.
+
 # DM2 FM Towns TWANIM P3 startup gate (2026-08-06)
 
 - ✅ The selected HME-242 TWANIM.EXP is now also extracted only into RAM and
