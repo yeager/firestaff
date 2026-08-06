@@ -8,6 +8,7 @@
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_weather_gdat.h"
 #include "dm2_v1_fmtowns_disc.h"
+#include "dm2_v1_fmtowns_anim_stream.h"
 #include <stddef.h>
 
 #define DM2_V1_GRAPHICSSET_SCENE_COLORKEY_PRESENT_MASK (1u << 0)
@@ -201,6 +202,12 @@ typedef struct {
     char     fmtowns_title_md5[33];
     char     fmtowns_end_md5[33];
     int      fmtowns_animation_media_verified;
+    /* Bounded record receipts for the selected retail streams.  They are
+     * source data facts, not a claim that the host has rendered a frame. */
+    DM2_V1_FmtownsAnimStreamReceipt fmtowns_swoosh_stream;
+    DM2_V1_FmtownsAnimStreamReceipt fmtowns_title_stream;
+    DM2_V1_FmtownsAnimStreamReceipt fmtowns_end_stream;
+    int      fmtowns_animation_streams_verified;
 
     /* ── Deterministic config ──────────────────────────────── */
     DM2_V1_DeterministicConfig deterministic;

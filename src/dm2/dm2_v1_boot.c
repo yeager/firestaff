@@ -955,9 +955,16 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
            sizeof(profile->fmtowns_startup_plan));
     profile->fmtowns_startup_media_verified = 0;
     profile->fmtowns_animation_media_verified = 0;
+    profile->fmtowns_animation_streams_verified = 0;
     profile->fmtowns_swoosh_md5[0] = '\0';
     profile->fmtowns_title_md5[0] = '\0';
     profile->fmtowns_end_md5[0] = '\0';
+    memset(&profile->fmtowns_swoosh_stream, 0,
+           sizeof(profile->fmtowns_swoosh_stream));
+    memset(&profile->fmtowns_title_stream, 0,
+           sizeof(profile->fmtowns_title_stream));
+    memset(&profile->fmtowns_end_stream, 0,
+           sizeof(profile->fmtowns_end_stream));
     /* M12 passes an explicitly selected retail archive verbatim.  Preserve
      * that choice: treating it as a directory would silently fall back to a
      * sibling PC install and change the selected platform. */
@@ -1013,6 +1020,10 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
             profile->fmtowns_swoosh_md5, profile->fmtowns_title_md5,
             profile->fmtowns_end_md5
         };
+        DM2_V1_FmtownsAnimStreamReceipt *animation_receipts[3] = {
+            &profile->fmtowns_swoosh_stream, &profile->fmtowns_title_stream,
+            &profile->fmtowns_end_stream
+        };
         int animation_index;
         /* HME-242 does not boot straight into SKULL: AUTOEXEC.BAT runs the
          * native TWANIM swoosh and title before SKULL, and again for END.
@@ -1041,11 +1052,24 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
             }
             dm2_md5_bytes_hex(animation_data, animation_size,
                               animation_actual_md5s[animation_index]);
-            free(animation_data);
             if (!md5_matches(animation_actual_md5s[animation_index],
-                             animation_md5s[animation_index])) {
+                             animation_md5s[animation_index]) ||
+                !dm2_v1_fmtowns_anim_stream_parse(
+                    animation_data, animation_size,
+                    animation_receipts[animation_index]) ||
+                (animation_index == 0 &&
+                 !dm2_v1_fmtowns_anim_stream_is_hme242_swoosh(
+                     animation_receipts[animation_index])) ||
+                (animation_index == 1 &&
+                 !dm2_v1_fmtowns_anim_stream_is_hme242_title(
+                     animation_receipts[animation_index])) ||
+                (animation_index == 2 &&
+                 !dm2_v1_fmtowns_anim_stream_is_hme242_end(
+                     animation_receipts[animation_index]))) {
+                free(animation_data);
                 break;
             }
+            free(animation_data);
         }
         if (animation_index != 3) {
             free(profile->fmtowns_disc_image);
@@ -1058,10 +1082,17 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
             profile->fmtowns_swoosh_md5[0] = '\0';
             profile->fmtowns_title_md5[0] = '\0';
             profile->fmtowns_end_md5[0] = '\0';
+            memset(&profile->fmtowns_swoosh_stream, 0,
+                   sizeof(profile->fmtowns_swoosh_stream));
+            memset(&profile->fmtowns_title_stream, 0,
+                   sizeof(profile->fmtowns_title_stream));
+            memset(&profile->fmtowns_end_stream, 0,
+                   sizeof(profile->fmtowns_end_stream));
             return;
         }
         profile->fmtowns_startup_media_verified = 1;
         profile->fmtowns_animation_media_verified = 1;
+        profile->fmtowns_animation_streams_verified = 1;
         if (!profile->graphics_path[0]) {
             if (probe.has_graphics_dat) {
                 dm2_v1_fmtowns_disc_extract_alloc(img_data, img_size,

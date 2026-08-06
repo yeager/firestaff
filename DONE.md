@@ -54130,6 +54130,16 @@ alcove runtime and archive-media tests passed (4/4).
   M12 real-media regression verifies all three identities with the Japanese
   CD ZIP and English text companion, without extracting any game data to disk.
 
+- ✅ 2026-08-06 DM2 FM Towns TWANIM stream-bound admission: the production
+  boot owner now parses the selected, hash-verified root streams directly from
+  the retained CD image using DMWeb's six-byte big-endian record framing.
+  It requires the exact HME-242 inventories before exposing startup media:
+  SWOOSH has 22 records/18 deltas, TITLE has 235/224 deltas plus one sound
+  definition and five sound events, and END has 401 records/382 deltas across
+  two matching animation phases. `test_dm2_fmtowns_m12_real_media` proves all
+  three receipts from the user's original ZIP in RAM; no title frame is
+  invented or rendered by this boundary.
+
 - ✅ 2026-08-06 Theron raw-BIN HuC6280 disassembly intake: the static bank-$1f
   receipt now verifies authentic `TQUS02.bin` and `TQJP02.bin` Track 02 files
   in addition to the ISO projections. Their real MODE1/2352 bank-window

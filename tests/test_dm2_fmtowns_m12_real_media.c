@@ -160,6 +160,7 @@ int main(void)
         expect(launch.profile &&
                    launch.profile->fmtowns_startup_media_verified &&
                    launch.profile->fmtowns_animation_media_verified &&
+                   launch.profile->fmtowns_animation_streams_verified &&
                    strcmp(launch.profile->fmtowns_swoosh_md5,
                           "ecec4d7ac081b099056531043191b55a") == 0 &&
                    strcmp(launch.profile->fmtowns_title_md5,
@@ -177,6 +178,14 @@ int main(void)
                    launch.profile->fmtowns_startup_plan.stages[3] ==
                        DM2_FMTOWNS_STARTUP_STAGE_END,
                "FM Towns follows its original AUTOEXEC animation and startup order");
+        expect(launch.profile &&
+                   dm2_v1_fmtowns_anim_stream_is_hme242_swoosh(
+                       &launch.profile->fmtowns_swoosh_stream) &&
+                   dm2_v1_fmtowns_anim_stream_is_hme242_title(
+                       &launch.profile->fmtowns_title_stream) &&
+                   dm2_v1_fmtowns_anim_stream_is_hme242_end(
+                       &launch.profile->fmtowns_end_stream),
+               "FM Towns startup media has complete retail TWANIM stream bounds");
         expect_complete_english_text_overlay(launch.profile);
         text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
         expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,

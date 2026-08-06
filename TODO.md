@@ -1027,8 +1027,13 @@ level or consumer bindings.
   a member. `SWOOSH`, `TITLE` and `END` are also checked against the published
   HME-242 retail MD5 identities before their startup plan is accepted. This is
   an authenticity gate, not an animation renderer.
+  **2026-08-06 update:** production now also parses each selected stream in
+  RAM using DMWeb's big-endian record framing and requires the complete
+  HME-242 inventories: SWOOSH 22 records (18 DL), TITLE 235 (224 DL, one SD,
+  five SO) and END 401 (two AN phases, 382 DL). These are bounded source
+  receipts, not decoded frames.
   Re-admit actual TWANIM playback only with a selected-media hash receipt,
-  decoded stream bounds,
+  source-owned frame decoding,
   and an actual title/entrance execution handoff.
   **2026-08-06 update:** a shared data root can now retain all three verified
   DM2 editions at once. At M12→M11 launch, the selected DOS, FM Towns or
