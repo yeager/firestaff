@@ -9,6 +9,10 @@
   floor/ceiling contract uses fixed zones and framebuffer pixels. It reads no
   original game data and has no M11/runtime caller; retain it only as explicit
   ReDMCSB coverage until a source-bound owner is recovered.
+- **DM1-MIRROR-CWRPIP-SYNTHETIC-AUDIT:** This C040/C537 close-while-pending
+  scenario fabricates champion, hand and chest-chain state. It has no original
+  DM1 data input or M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound interaction owner is recovered.
 
 - **DM1-D3L-D3R-F0108-FLOOR-CEILING-SYNTHETIC-AUDIT:** This D3 side
   floor/ceiling contract uses fixed zones, orders and framebuffer pixels. It

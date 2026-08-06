@@ -13,6 +13,15 @@
   ReDMCSB regression now compiles the source explicitly.
 - ✅ Verification: `test_dm1_v1_viewport_d2l2_d2r2_f0108_floor_ceiling_ornament_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
+# DM1 C040/C537 close-while-pending synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the deterministic mirror-candidate C040/C537 fixture from M10.
+  It fabricates champion, hand and chest-chain state, has no original DM1 data
+  input or M11/runtime caller, and its explicit ReDMCSB regression now compiles
+  the source directly.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat`
+  passes with 27 assertions plus 20 internal assertions; the source object is
+  absent from both M10 and M11 archives.
 
 # DM1 D3L/D3R F0108 floor-ceiling synthetic audit isolation (2026-08-06)
 
