@@ -53812,3 +53812,15 @@ alcove runtime and archive-media tests passed (4/4).
   loop. HOLD remains non-mutating; door animation stays on the source timeline
   owner and teleporter state remains on its existing route. Ninja build,
   actuator, pit/teleporter and game-loop integration regressions pass.
+# 2026-08-06 Theron split-ISO Mednafen capture intake
+
+- ✅ The live Mednafen capture runner now handles the supplied retail CUE's
+  CRLF and unquoted `FILE TQUS02.iso BINARY` spelling. When that authenticated
+  MODE1/2048 member is absent but the production cache contains the exact
+  `ceb02343868f80cec899e9b239aff2da` US ISO assembled from `TQUS19.iso` and
+  `TQUS02End.iso`, the runner creates a private normalized capture CUE and
+  replaces only Track 02. Track 19 and audio references remain from the
+  original layout. This removes the missing-member/raw-BIN capture mismatch;
+  it does not claim a game-owned dungeon consumer. Verification:
+  `bash -n scripts/capture_theron_mednafen_live_trace.sh` and
+  `tests/test_theron_v1_mednafen_live_capture_script.sh` pass.

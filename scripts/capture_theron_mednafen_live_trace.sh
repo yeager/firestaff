@@ -101,6 +101,13 @@ track02_member=$(awk '
         file = line
         next
     }
+    /^[[:space:]]*FILE[[:space:]]+[^\"]+[[:space:]]+BINARY[[:space:]]*$/ {
+        line = $0
+        sub(/^[[:space:]]*FILE[[:space:]]+/, "", line)
+        sub(/[[:space:]]+BINARY[[:space:]]*$/, "", line)
+        file = line
+        next
+    }
     /^[[:space:]]*TRACK[[:space:]]+02[[:space:]]+MODE1\/(2352|2048)[[:space:]]*$/ {
         print file
         exit
@@ -111,6 +118,25 @@ if [[ -z "$track02_member" || "$track02_member" == */* || "$track02_member" == *
     exit 1
 fi
 track02_path="$(dirname -- "$cue")/$track02_member"
+capture_cue="$cue"
+capture_cue_needs_split_iso=0
+capture_split_iso_cache="${HOME:-}/.firestaff/cache/theron/TQUS02-ceb02343868f80cec899e9b239aff2da.iso"
+if [[ ! -f "$track02_path" && "$track02_mode" == 'MODE1/2048' &&
+      ( "$track02_member" == 'TQUS02.iso' ||
+        "$track02_member" == 'TQUS02End.iso' ) &&
+      -f "$capture_split_iso_cache" ]]; then
+    split_iso_md5=$(md5_file "$capture_split_iso_cache") || split_iso_md5=
+    if [[ "$split_iso_md5" == ceb02343868f80cec899e9b239aff2da ]]; then
+        # The supplied retail CUE names TQUS02.iso, while Decode.bat's real
+        # split distribution stores that Track 02 payload as TQUS19.iso
+        # followed by TQUS02End.iso. The production intake assembles and hashes this exact ISO.
+        # Give Mednafen a private normalized CUE so
+        # the capture consumes the same authenticated bytes rather than
+        # silently falling back to the incomplete/missing member.
+        capture_cue_needs_split_iso=1
+        track02_path="$capture_split_iso_cache"
+    fi
+fi
 if [[ ! -f "$track02_path" ]]; then
     printf '%s\n' 'FAIL: CUE TRACK 02 payload is unavailable' >&2
     exit 1
@@ -502,6 +528,16 @@ if [[ -n "$configured_home" ]]; then
         exit 1
     fi
 fi
+if [[ "$capture_cue_needs_split_iso" == 1 ]]; then
+    capture_cue="$home_dir/theron-capture.cue"
+    # Accept both the quoted and unquoted FILE spelling used by the supplied
+    # retail CUE sheets. Only the authenticated Track 02 member is replaced;
+    # audio and Track 19 references retain the user's original layout.
+    sed \
+        -e "s#^FILE \\\"${track02_member}\\\" BINARY[[:space:]]*\$#FILE \\\"$capture_split_iso_cache\\\" BINARY#" \
+        -e "s#^FILE ${track02_member} BINARY[[:space:]]*\$#FILE \\\"$capture_split_iso_cache\\\" BINARY#" \
+        "$cue" >"$capture_cue"
+fi
 cleanup_capture() {
     local exit_status=$?
 
@@ -543,7 +579,7 @@ launch=(
     -pce.input.port1 gamepad \
     -pce.arcadecard 0 \
     -pce.cdbios "$system_card"
-    "$cue"
+    "$capture_cue"
 )
 set +e
 "${launch[@]}" >"$stdout_file" 2>"$stderr_file" &

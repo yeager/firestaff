@@ -272,6 +272,13 @@
   `MODE1/2048` ISO layouts. The previous mixed parser could identify the ISO
   mode and then reject its track member as raw-only. This closes only the
   capture-intake mismatch; it does not promote a game-owned consumer.
+  2026-08-06 split-CUE capture follow-up: the live Mednafen runner now accepts
+  the supplied archive's CRLF/okvoterade `FILE TQUS02.iso BINARY` spelling and
+  reuses the production hash-verified assembled US ISO from the split
+  `TQUS19.iso` + `TQUS02End.iso` distribution through a private normalized
+  capture CUE. This removes the missing-member/raw-BIN capture mismatch; a
+  fresh run is still required before any game-owned consumer or dungeon
+  semantics can be promoted.
   2026-08-06 input-bound follow-up: a real PID-bound macOS key pair was
   observed by the instrumented SDL boundary. The source-locked raw intake
   still requires US `INDEX 01 = 225` and the BIN has a second valid MODE1

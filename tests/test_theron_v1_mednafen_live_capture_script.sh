@@ -94,6 +94,14 @@ if ! grep -Fq -- '-force_module pce' "$script" ||
     printf 'FAIL: capture script must force the PCE module and disable unrelated Arcade Card emulation\n' >&2
     exit 1
 fi
+if ! grep -Fq 'capture_split_iso_cache=' "$script" ||
+   ! grep -Fq 'ceb02343868f80cec899e9b239aff2da' "$script" ||
+   ! grep -Fq 'theron-capture.cue' "$script" ||
+   ! grep -Fq 'production intake assembles and hashes this exact ISO' "$script" ||
+   ! grep -Fq '"$capture_cue"' "$script"; then
+    printf 'FAIL: live capture must reuse the authenticated split-ISO materialization path\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'MODE1/2048' "$script" ||
    ! grep -Fq '397039af02d50d15c70b74088eb8a1cb|ceb02343868f80cec899e9b239aff2da' "$script" ||
    ! grep -Fq 'MODE1\/(2352|2048)' "$script" ||
