@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-OPEN-THEN-RESELECT-SYNTHETIC-AUDIT:** This C159/C040 fixture
+  fabricates champion, hand and slot-fingerprint state. It loads no original
+  DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound candidate-panel owner is recovered.
+
 - **DM1-STATUS-HAND-CLOSED-CHEST-SYNTHETIC-AUDIT:** This closed-chest status
   hand probe fabricates party, chest and hand state. It loads no original DM1
   data and has no M11/runtime caller; retain it only as explicit ReDMCSB

@@ -4984,6 +4984,12 @@ list(REMOVE_ITEM M10_SOURCES
 # caller; its direct regression compiles it explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_inventory_panel_status_hand_closed_chest_runtime_pc34_compat.c")
+# `dm1_v1_mirror_candidate_open_then_reselect_pc34_compat.c` is a
+# contract-only C159/C040 state model with fabricated champion, hand and
+# slot-fingerprint state. It loads no original DM1 data and has no M11/runtime
+# caller; its explicit regression compiles it directly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_open_then_reselect_pc34_compat.c")
 # `dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.c`
 # is a contract-only C111/C040 gate with fabricated party, panel and G0299
 # state. It loads no original DM1 data and has no M11/runtime caller; its
@@ -54168,6 +54174,14 @@ add_executable(test_dm1_v1_inventory_panel_status_hand_closed_chest_runtime_pc34
 target_include_directories(test_dm1_v1_inventory_panel_status_hand_closed_chest_runtime_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_inventory_panel_status_hand_closed_chest_runtime_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_inventory_panel_status_hand_closed_chest_runtime_pc34_compat COMMAND test_dm1_v1_inventory_panel_status_hand_closed_chest_runtime_pc34_compat)
+add_executable(test_dm1_v1_mirror_candidate_open_then_reselect_pc34_compat
+    tests/test_dm1_v1_mirror_candidate_open_then_reselect_pc34_compat.c
+    src/dm1/dm1_v1_mirror_candidate_open_then_reselect_pc34_compat.c)
+target_include_directories(test_dm1_v1_mirror_candidate_open_then_reselect_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1)
+target_link_libraries(test_dm1_v1_mirror_candidate_open_then_reselect_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_mirror_candidate_open_then_reselect_pc34_compat COMMAND test_dm1_v1_mirror_candidate_open_then_reselect_pc34_compat)
 add_executable(test_dm1_v1_inventory_panel_status_hand_open_chest_runtime_pc34_compat tests/test_dm1_v1_inventory_panel_status_hand_open_chest_runtime_pc34_compat.c)
 target_include_directories(test_dm1_v1_inventory_panel_status_hand_open_chest_runtime_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_inventory_panel_status_hand_open_chest_runtime_pc34_compat PRIVATE firestaff_m10)

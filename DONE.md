@@ -20,6 +20,12 @@
   keys, and the FM Towns M11 title path still accepts only the authenticated,
   RAM-resident English companion.
 
+# DM1 mirror open-then-reselect synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C159/C040 fixture from M10 and registered its
+  existing regression as an explicit CTest target that compiles the source.
+  It loads no original DM1 data and has no M11/runtime caller.
+
 # DM2 G1 champion-mirror selection source binding (2026-08-07)
 
 - ✅ The champion-selection seam now consumes the committed real G1 mirror
