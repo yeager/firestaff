@@ -15,6 +15,8 @@ static CSB_V1_FmtownsAnmChunkType classify_chunk(uint8_t a, uint8_t b) {
     if (a == 'A' && b == 'N') return CSB_FMTOWNS_ANM_CHUNK_AN;
     if (a == 'F' && b == 'O') return CSB_FMTOWNS_ANM_CHUNK_FO;
     if (a == 'N' && b == 'E') return CSB_FMTOWNS_ANM_CHUNK_NE;
+    if (a == 'T' && b == 'D') return CSB_FMTOWNS_ANM_CHUNK_TD;
+    if (a == 'T' && b == 'R') return CSB_FMTOWNS_ANM_CHUNK_TR;
     return CSB_FMTOWNS_ANM_CHUNK_UNKNOWN;
 }
 
@@ -400,6 +402,24 @@ int csb_v1_fmtowns_anm_playback_step(CSB_V1_FmtownsAnmPlayback *playback,
             if (!playback_read_palette(playback, payload, bytes)) return -1;
             playback->offset = next;
             break;
+        case CSB_FMTOWNS_ANM_CHUNK_TD:
+            /* ReDMCSB ANIM.C F2275 lines 2023-2025 stores TD attributes in
+             * G4146_ and TR later indexes that exact source table. */
+            if (playback->cdda_track_table_count >=
+                sizeof(playback->cdda_track_table) /
+                    sizeof(playback->cdda_track_table[0])) return -1;
+            playback->cdda_track_table[playback->cdda_track_table_count++] =
+                attributes;
+            playback->offset = next;
+            break;
+        case CSB_FMTOWNS_ANM_CHUNK_TR:
+            if (attributes == 0u || attributes >
+                playback->cdda_track_table_count) return -1;
+            playback->pending_cdda_track =
+                playback->cdda_track_table[attributes - 1u];
+            playback->cdda_track_pending = 1;
+            playback->offset = next;
+            break;
         case CSB_FMTOWNS_ANM_CHUNK_EN:
         case CSB_FMTOWNS_ANM_CHUNK_DL: {
             size_t payload_offset = bytes >= 2u && payload[0] == 0xffu &&
@@ -418,6 +438,10 @@ int csb_v1_fmtowns_anm_playback_step(CSB_V1_FmtownsAnmPlayback *playback,
             out->source_chunk_bytes = bytes;
             out->source_delay_ticks = attributes;
             out->timer_a_ticks = attributes < 5u ? 5u : attributes;
+            out->cdda_track = playback->pending_cdda_track;
+            out->cdda_track_requested = playback->cdda_track_pending;
+            playback->pending_cdda_track = 0u;
+            playback->cdda_track_pending = 0;
             out->source_was_delta = type == CSB_FMTOWNS_ANM_CHUNK_DL;
             out->palette_applied = playback->palette_seen;
             memcpy(out->palette, playback->palette, sizeof(out->palette));

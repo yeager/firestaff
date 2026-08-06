@@ -18,6 +18,14 @@
   portraits. Verification: real startup media gate and startup-menu runtime
   test pass; no game data was tracked. Saturn VDP1 placement remains gated.
 
+- ✅ 2026-08-06 Theron real VDC/VCE capture receipt: the instrumented native
+  SDL2 Mednafen build now snapshots the authentic US Track 02 session at exit
+  into exact 65,536-byte VDC VRAM and 1,024-byte VCE palette-RAM files. The
+  real-data loader test verifies 8,315 non-zero VRAM bytes, 123 non-zero VCE
+  bytes, 219 BAT tile bindings and 512 palette entries. No snapshot or game
+  media is tracked; the receipt remains opaque and does not admit guessed
+  viewport, object or level semantics.
+
 - ✅ 2026-08-06 Nexus MENU.BPK receipt aligned with the real European retail
   corpus: the structural probe now recognizes the verified canonical,
   English and French archive identities, checks the observed 536-byte
@@ -8119,6 +8127,14 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
       real-data/capture paths unrelated to this mechanics change.
 
 # Firestaff DONE - Completed Work
+
+- ✅ 2026-08-06 CSB FM Towns ANM CD-DA command receipts: the F2275 stream
+  interpreter now retains `TD`'s original physical-track table and surfaces
+  `TR` requests at the following real presentation frame, rather than
+  inventing a title-music association. The authentic corpus verifies no
+  title request, two Story requests beginning at track 3 and two Ending
+  requests beginning at track 18. Audio playback remains separately
+  capture-gated; no game data was changed or tracked.
 
 - ✅ 2026-08-06 CSB FM Towns M11 title handoff: the FM Towns variants now
   bind `TITLE.ANM` only from the selected verified runtime cache and present

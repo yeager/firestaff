@@ -50,7 +50,9 @@ typedef enum {
     CSB_FMTOWNS_ANM_CHUNK_BR = 6,  /* container wrapper */
     CSB_FMTOWNS_ANM_CHUNK_AN = 7,  /* animation header */
     CSB_FMTOWNS_ANM_CHUNK_FO = 8,  /* loop begin */
-    CSB_FMTOWNS_ANM_CHUNK_NE = 9   /* loop end */
+    CSB_FMTOWNS_ANM_CHUNK_NE = 9,  /* loop end */
+    CSB_FMTOWNS_ANM_CHUNK_TD = 10, /* CD track table entry */
+    CSB_FMTOWNS_ANM_CHUNK_TR = 11  /* play CD track table entry */
 } CSB_V1_FmtownsAnmChunkType;
 
 typedef struct {
@@ -94,6 +96,10 @@ typedef struct {
      * source timer units, deliberately not host milliseconds. */
     uint16_t source_delay_ticks;
     uint16_t timer_a_ticks;
+    /* ReDMCSB ANIM.C F2275 TD/TR: non-zero only when source commands before
+     * this frame requested a specific physical CD-DA track. */
+    uint16_t cdda_track;
+    int cdda_track_requested;
     int source_was_delta;
     int palette_applied;
     CSB_V1_FmtownsAnmColor palette[CSB_FMTOWNS_ANM_PALETTE_SIZE];
@@ -112,12 +118,16 @@ typedef struct {
     uint16_t height;
     uint16_t loop_count[CSB_FMTOWNS_ANM_MAX_LOOP_DEPTH];
     size_t loop_item_offset[CSB_FMTOWNS_ANM_MAX_LOOP_DEPTH];
+    uint16_t cdda_track_table[32];
     uint32_t presentation_frame_index;
     uint32_t chunks_visited;
     uint16_t loop_depth;
+    uint16_t cdda_track_table_count;
+    uint16_t pending_cdda_track;
     int valid;
     int finished;
     int break_allowed;
+    int cdda_track_pending;
     int palette_seen;
     CSB_V1_FmtownsAnmColor palette[CSB_FMTOWNS_ANM_PALETTE_SIZE];
 } CSB_V1_FmtownsAnmPlayback;

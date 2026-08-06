@@ -1,4 +1,5 @@
 #include "csb_v1_fmtowns_anm.h"
+#include "csb_v1_fmtowns_cd.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -61,6 +62,8 @@ static void test_real_anm(void) {
     const char *files[] = {"TITLE.ANM", "STORY.ANM", "ENDING.ANM"};
     const uint32_t expected_playback_frames[] = {32u, 851u, 419u};
     const uint32_t expected_playback_ticks[] = {606u, 10823u, 5352u};
+    const uint32_t expected_cdda_requests[] = {0u, 2u, 2u};
+    const uint16_t expected_first_cdda_track[] = {0u, 3u, 18u};
     int i;
 
     if ((!anm_dir || anm_dir[0] == '\0') && !home) {
@@ -103,6 +106,8 @@ static void test_real_anm(void) {
             uint16_t first_timer_a_ticks;
             uint32_t playback_frames = 0u;
             uint32_t playback_ticks = 0u;
+            uint32_t cdda_requests = 0u;
+            uint16_t first_cdda_track = 0u;
             int step_result;
             uint32_t frame_index =
                 (uint32_t)(receipt.frame_count + receipt.delta_count - 1);
@@ -141,6 +146,13 @@ static void test_real_anm(void) {
                 ASSERT(frame.valid == 1 && frame.pixel_fnv1a != 0u &&
                        frame.timer_a_ticks >= 5u,
                        "F2275 playback emits a source-owned timed frame");
+                if (frame.cdda_track_requested) {
+                    ASSERT(frame.cdda_track >= CSB_FMTOWNS_CD_CDDA_FIRST_TRACK &&
+                           frame.cdda_track <= CSB_FMTOWNS_CD_CDDA_LAST_TRACK,
+                           "F2275 TR resolves a physical CSB CD-DA track");
+                    if (cdda_requests == 0u) first_cdda_track = frame.cdda_track;
+                    ++cdda_requests;
+                }
                 ++playback_frames;
                 playback_ticks += frame.timer_a_ticks;
             }
@@ -153,9 +165,17 @@ static void test_real_anm(void) {
             ASSERT(playback_frames == expected_playback_frames[i] &&
                    playback_ticks == expected_playback_ticks[i],
                    "F2275 playback matches the authenticated animation timeline");
+            ASSERT(cdda_requests == expected_cdda_requests[i] &&
+                   first_cdda_track == expected_first_cdda_track[i],
+                   "F2275 TD/TR matches authenticated CD-DA requests");
             printf("    Playback: %u frames, %u Timer-A ticks\n",
                    (unsigned int)playback_frames,
                    (unsigned int)playback_ticks);
+            if (cdda_requests != 0u) {
+                printf("    CD-DA: %u TR requests, first physical track %u\n",
+                       (unsigned int)cdda_requests,
+                       (unsigned int)first_cdda_track);
+            }
         }
 
         printf("  %s: %ux%u %dbpp, %d chunks (%d frames, %d deltas, %d KF), "
