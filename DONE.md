@@ -1,3 +1,13 @@
+# Theron startup menu availability boundary (2026-08-06)
+
+- ✅ Soul Room mirrors without an authenticated Track 02 roster record remain
+  visible as `UNAVAILABLE` but are no longer selectable.
+- ✅ M11 keyboard/controller focus skips unavailable mirrors, pointer hit-tests
+  reject them, and stale focus cannot toggle one; the Forcefield remains an
+  enabled route.
+- ✅ M11 launcher handoff and direct-launch regressions pass with the real US
+  Track 02 asset.
+
 # DM2 V2 source-palette correction (2026-08-06)
 
 - ✅ Replaced the DM2 V2 palette-LUT stub with bounded gamma, brightness and
@@ -54992,3 +55002,12 @@ alcove runtime and archive-media tests passed (4/4).
   intentionally does not substitute the existing PC34 utility flow for the
   native TBIOS editor or its save transactions. Real F31E and F31J handoff
   tests pass.
+
+- ✅ 2026-08-06 CSB FM Towns C06 menu byte receipt: disassembly of the
+  verified P3 load images identifies the first Utility menu pool and binds
+  it by raw offset, length and FNV-1a. F31E exposes its six original labels
+  (`LOAD CHAMPIONS`, `SAVE CHAMPIONS`, `MAKE NEW ADVENTURE`, `REVERT`,
+  `UNDO`, `QUIT`) from virtual `0x11578`; F31J exposes the corresponding
+  68-byte Shift-JIS pool from `0x11628`. The receipt keeps the Japanese text
+  as original bytes and does not manufacture translated host labels. English
+  and Japanese real-media handoff tests pass.

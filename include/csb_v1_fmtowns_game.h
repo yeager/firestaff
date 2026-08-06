@@ -16,7 +16,10 @@ extern "C" {
 #define CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_BYTES \
     (CSB_V1_FMTOWNS_GAME_MUSIC_MAP_COUNT * \
      CSB_V1_FMTOWNS_GAME_MUSIC_MAP_WIDTH * \
-     CSB_V1_FMTOWNS_GAME_MUSIC_MAP_HEIGHT)
+    CSB_V1_FMTOWNS_GAME_MUSIC_MAP_HEIGHT)
+
+#define CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT 6u
+#define CSB_V1_FMTOWNS_UTILITY_MENU_POOL_CAPACITY 76u
 
 /*
  * FM Towns Game-program admission.
@@ -78,6 +81,22 @@ typedef struct CSB_V1_FmtownsUtilityHandoffReceipt {
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityHandoffReceipt;
 
+/* C06's first menu is retained as source bytes.  Japanese remains Shift-JIS
+ * until the native Towns text path is decoded; callers must not replace it
+ * with translated host strings. */
+typedef struct CSB_V1_FmtownsUtilityMenuReceipt {
+    int valid;
+    CSB_V1_FmtownsSwitchLanguage language;
+    CSB_V1_VariantId variant_id;
+    uint32_t source_virtual_offset;
+    uint32_t source_file_offset;
+    uint32_t source_size;
+    uint32_t source_fnv1a;
+    uint16_t label_offsets[CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT];
+    uint8_t source_bytes[CSB_V1_FMTOWNS_UTILITY_MENU_POOL_CAPACITY];
+    const char *source_evidence;
+} CSB_V1_FmtownsUtilityMenuReceipt;
+
 /* Admit precisely the F31E/F31J executable selected by SWITCHTW.  A valid
  * CSB profile alone is deliberately insufficient: this gate also checks the
  * exact retail program identity before the entrance/HUD session is opened. */
@@ -90,6 +109,11 @@ int csb_v1_fmtowns_utility_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsUtilityHandoffReceipt *out_receipt);
+
+int csb_v1_fmtowns_utility_menu_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityMenuReceipt *out_receipt);
 
 /* Return the native F31 music selector (zero means no selector) for one
  * source map square. The value is the exact byte passed to F0719_PlayMusicTrack

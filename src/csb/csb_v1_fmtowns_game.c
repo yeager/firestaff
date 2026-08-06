@@ -16,6 +16,12 @@ enum {
     CSB_V1_FMTOWNS_CJDATA_MINI_SIZE = 43208u,
     CSB_V1_FMTOWNS_CDATA_MINI_FNV1A = 0x494999c9u,
     CSB_V1_FMTOWNS_CJDATA_MINI_FNV1A = 0x284799d1u,
+    CSB_V1_FMTOWNS_UTILE_MENU_VIRTUAL_OFFSET = 0x11578u,
+    CSB_V1_FMTOWNS_UTILJ_MENU_VIRTUAL_OFFSET = 0x11628u,
+    CSB_V1_FMTOWNS_UTILE_MENU_BYTES = 76u,
+    CSB_V1_FMTOWNS_UTILJ_MENU_BYTES = 68u,
+    CSB_V1_FMTOWNS_UTILE_MENU_FNV1A = 0xfd9986bfu,
+    CSB_V1_FMTOWNS_UTILJ_MENU_FNV1A = 0xdceefc60u,
     /* The retail F31E/F31J programs carry identical 10*32*32 selector
      * tables. These offsets are from the raw verified executable image. */
     CSB_V1_FMTOWNS_CHTWE_MUSIC_TABLE_OFFSET = 271144u,
@@ -313,6 +319,62 @@ int csb_v1_fmtowns_utility_handoff_open(
     out_receipt->source_evidence =
         "ReDMCSB SWITCH.C F2279; AUTOEXEC.BAT exits 2/5; "
         "COMPILE.H EXEID 63/64 lines 379-385 C06_CEDT";
+    return 1;
+}
+
+int csb_v1_fmtowns_utility_menu_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityMenuReceipt *out_receipt)
+{
+    CSB_V1_FmtownsUtilityHandoffReceipt handoff;
+    uint32_t virtual_offset;
+    uint32_t byte_count;
+    uint32_t expected_hash;
+    static const uint16_t k_english_offsets[
+        CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT] = {0u, 16u, 32u, 52u, 60u, 68u};
+    static const uint16_t k_japanese_offsets[
+        CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT] = {0u, 12u, 28u, 44u, 52u, 60u};
+    const uint16_t *offsets;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!csb_v1_fmtowns_utility_handoff_open(profile, language, &handoff))
+        return 0;
+    if (language == CSB_FMTOWNS_SWITCH_ENGLISH) {
+        virtual_offset = CSB_V1_FMTOWNS_UTILE_MENU_VIRTUAL_OFFSET;
+        byte_count = CSB_V1_FMTOWNS_UTILE_MENU_BYTES;
+        expected_hash = CSB_V1_FMTOWNS_UTILE_MENU_FNV1A;
+        offsets = k_english_offsets;
+    } else if (language == CSB_FMTOWNS_SWITCH_JAPANESE) {
+        virtual_offset = CSB_V1_FMTOWNS_UTILJ_MENU_VIRTUAL_OFFSET;
+        byte_count = CSB_V1_FMTOWNS_UTILJ_MENU_BYTES;
+        expected_hash = CSB_V1_FMTOWNS_UTILJ_MENU_FNV1A;
+        offsets = k_japanese_offsets;
+    } else return 0;
+    if (byte_count > sizeof(out_receipt->source_bytes) ||
+        virtual_offset > UINT32_MAX - handoff.p3_load_image_offset ||
+        !csb_v1_fmtowns_game_read_span(
+            handoff.executable_path,
+            handoff.p3_load_image_offset + virtual_offset,
+            out_receipt->source_bytes, byte_count) ||
+        csb_v1_fmtowns_game_bytes_fnv1a(out_receipt->source_bytes,
+                                         byte_count) != expected_hash) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    memcpy(out_receipt->label_offsets, offsets,
+           sizeof(out_receipt->label_offsets));
+    out_receipt->valid = 1;
+    out_receipt->language = language;
+    out_receipt->variant_id = handoff.variant_id;
+    out_receipt->source_virtual_offset = virtual_offset;
+    out_receipt->source_file_offset = handoff.p3_load_image_offset + virtual_offset;
+    out_receipt->source_size = byte_count;
+    out_receipt->source_fnv1a = expected_hash;
+    out_receipt->source_evidence =
+        "UTILE/UTILJ Phar Lap P3 disassembly: C06 menu label pool; "
+        "ReDMCSB COMPILE.H EXEID 63/64 C06_CEDT";
     return 1;
 }
 

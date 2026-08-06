@@ -174,7 +174,8 @@
   names/titles are not yet proven as an ASCII cluster or bound to an
   executing text consumer. Recover that encoded payload from the US
   Track 19/Track 02 disassembly and capture before restoring US mirror labels;
-  until then the menu must expose those entries as `UNAVAILABLE` rather than
+  until then the menu exposes those entries as `UNAVAILABLE`, disables their
+  hit targets, and skips them during keyboard/controller focus rather than
   publishing host-owned names.
 
 - **M11-F10-SOURCE-SPECIFIC-CHEATS:** The all-game F10 CH page now exposes
@@ -745,7 +746,12 @@
   P3 envelope and exposes only the real load image/entrypoint: UTILE has
   load image `0x200..0x25343`, EIP `0xfe00`; UTILJ has
   `0x200..0x253b3`, EIP `0xfeb0`. This is an executable boundary, not a
-  decoded Utility UI. 2026-08-06: a real F31 Game victory now activates
+  decoded Utility UI. The first C06 menu now binds its original six-label
+  P3 pool rather than the generic PC34 action list: English bytes are
+  `LOAD CHAMPIONS`, `SAVE CHAMPIONS`, `MAKE NEW ADVENTURE`, `REVERT`,
+  `UNDO`, `QUIT`; Japanese remains its original Shift-JIS byte pool until
+  the Towns text rasterizer is decoded. Input rectangles, EGB rendering and
+  all save transactions remain open. 2026-08-06: a real F31 Game victory now activates
   `ENDING.ANM` through the retained F2275 interpreter. It uses the original
   Timer-A frames and TD/TR CUE dispatch, holds its last decoded frame when
   F0750 returns, and never chains back to `SWITCHTW.EXP` or a PC34 endgame

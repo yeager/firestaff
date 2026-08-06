@@ -459,6 +459,7 @@ static void test_fmtowns_game_program_handoff(void)
     CSB_V1_BootProfile profile;
     CSB_V1_FmtownsGameHandoffReceipt receipt;
     CSB_V1_FmtownsUtilityHandoffReceipt utility;
+    CSB_V1_FmtownsUtilityMenuReceipt utility_menu;
     uint8_t music_track;
 
     if (!data_dir || data_dir[0] == '\0') {
@@ -501,6 +502,14 @@ static void test_fmtowns_game_program_handoff(void)
                   utility.p3_load_image_size == 151875u &&
                   utility.p3_initial_eip == 65024u,
               "SWITCHTW English Utility exit admits only retail UTILE.EXP");
+        CHECK(csb_v1_fmtowns_utility_menu_open(
+                  &profile, CSB_FMTOWNS_SWITCH_ENGLISH, &utility_menu) &&
+                  utility_menu.valid && utility_menu.source_virtual_offset ==
+                      0x11578u && utility_menu.source_size == 76u &&
+                  utility_menu.source_fnv1a == 0xfd9986bfu &&
+                  memcmp(utility_menu.source_bytes, "LOAD CHAMPIONS", 14u) == 0 &&
+                  utility_menu.label_offsets[5] == 68u,
+              "F31E C06 Utility menu uses the original six-label P3 pool");
         music_track = 0u;
         CHECK(csb_v1_fmtowns_game_music_track_at(&receipt, 0u, 2u, 0u,
                                                   &music_track) &&
