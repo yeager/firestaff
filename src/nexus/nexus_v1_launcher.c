@@ -8654,11 +8654,12 @@ int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
         state->save_selected_row,
         out_commands,
         max_commands);
-    /* FONT012 2bpp glyph decode proven (pass 216): three RLOWFIX.BIN FONT
+    /* FONT012 2bpp glyph decode is proven (pass 216): three RLOWFIX.BIN FONT
      * resources (291+250+710 glyphs, 6x12/12x12, palette FFFF/DEF7/B9CE/8000).
-     * TEXT4 15-entry menu-options resource with TABL character encoding.
-     * VDP2 CHCTLA at 0x25F00006 and CRAM palette upload at 0x25F80000
-     * authenticated from SH-2 disassembly.  TEXT draw commands admitted. */
+     * TEXT4's 15-entry menu-options resource, TABL character encoding, VDP2
+     * CHCTLA at 0x25F00006 and CRAM upload at 0x25F80000 are source receipts
+     * from SH-2 disassembly. They do not yet prove the live text consumer or
+     * placement, so the startup builder emits no synthetic text command. */
     return count;
 }
 

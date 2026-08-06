@@ -52621,3 +52621,8 @@ no-draw/capture-gates är oförändrade.
   DM1-style party fields. It sends movement and turning to the verified DM2
   boot/runtime boundary, then mirrors only the returned source state; absent
   boot state drains stale commands without creating a session.
+✅ 2026-08-06 Nexus startup menu text sanitization: production save/chrome
+builders no longer emit hoststrängarna `DUNGEON MASTER NEXUS`, `LOAD GAME`,
+`NEW GAME` eller `LOAD SLOT ##`. Riktig radgeometri och källans slot-identitet
+behålls som receipts; textfälten är tomma tills Saturns TEXT4/TABL/FONT012-
+konsument och placering är capture-bundna.

@@ -2321,18 +2321,11 @@ int nexus_v1_startup_menu_build_save_render_rows(
         out->highlight_rect.h = 11;
         out->text_x = NEXUS_V1_STARTUP_SAVE_ROW_TEXT_X;
         out->text_y = out->rect.y + 1;
-        if (kind == NEXUS_V1_STARTUP_ROW_SLOT) {
-            snprintf(out->label,
-                     sizeof(out->label),
-                     "%c LOAD SLOT %02d",
-                     out->selected ? '>' : ' ',
-                     slot);
-        } else if (kind == NEXUS_V1_STARTUP_ROW_NEW_GAME) {
-            snprintf(out->label,
-                     sizeof(out->label),
-                     "%c NEW GAME",
-                     out->selected ? '>' : ' ');
-        }
+        /* Save-slot wording belongs to the Saturn TEXT4/TABL/FONT012
+         * consumer. The row geometry and source slot identity are useful
+         * receipts, but ASCII labels here would be synthetic production
+         * presentation. Keep the label lane empty until that consumer is
+         * capture-bound. */
         ++count;
     }
     return count;
@@ -2376,15 +2369,6 @@ int nexus_v1_startup_menu_build_save_chrome_render(
         return 0;
     }
     nexus_v1_startup_chrome_clear(out_chrome);
-    snprintf(out_chrome->title,
-             sizeof(out_chrome->title),
-             "DUNGEON MASTER NEXUS");
-    snprintf(out_chrome->subtitle,
-             sizeof(out_chrome->subtitle),
-             "LOAD GAME");
-    snprintf(out_chrome->footer,
-             sizeof(out_chrome->footer),
-             "ACCEPT LOADS  ACTION STARTS");
     return 1;
 }
 
@@ -2395,12 +2379,6 @@ int nexus_v1_startup_menu_build_champion_chrome_render(
         return 0;
     }
     nexus_v1_startup_chrome_clear(out_chrome);
-    snprintf(out_chrome->title,
-             sizeof(out_chrome->title),
-             "DUNGEON MASTER NEXUS");
-    snprintf(out_chrome->subtitle,
-             sizeof(out_chrome->subtitle),
-             "SELECT CHAMPIONS");
     return 1;
 }
 
@@ -2889,6 +2867,20 @@ int nexus_v1_startup_presentation_build_save(
                                         0)) {
             return count;
         }
+        {
+            int opaque_index;
+            for (opaque_index = 0; opaque_index < 2; ++opaque_index) {
+                Nexus_V1_StartupDrawCommand opaque_chrome;
+                /* Keep title/subtitle ownership slots in the bounded capture
+                 * package without fabricating TEXT4/TABL glyphs. */
+                nexus_v1_startup_draw_clear(&opaque_chrome);
+                opaque_chrome.kind = NEXUS_V1_STARTUP_DRAW_NONE;
+                if (!nexus_v1_startup_push_draw(out_commands, max_commands,
+                                                &count, &opaque_chrome)) {
+                    return count;
+                }
+            }
+        }
     }
     row_count = nexus_v1_startup_menu_snapshot_build_save_render_rows(
         snapshot,
@@ -2917,6 +2909,17 @@ int nexus_v1_startup_presentation_build_save(
                                         15,
                                         0)) {
             return count;
+        }
+        if (render_row->label[0] == '\0') {
+            Nexus_V1_StartupDrawCommand opaque_row;
+            /* Preserve one bounded command slot per source row for capture
+             * accounting without emitting a fabricated text primitive. */
+            nexus_v1_startup_draw_clear(&opaque_row);
+            opaque_row.kind = NEXUS_V1_STARTUP_DRAW_NONE;
+            if (!nexus_v1_startup_push_draw(out_commands, max_commands,
+                                            &count, &opaque_row)) {
+                return count;
+            }
         }
     }
     if (chrome.footer[0]) {
@@ -3108,6 +3111,17 @@ int nexus_v1_startup_presentation_build_champion(
                                         render_row->text_color,
                                         render_row->shadow_color)) {
             return count;
+        }
+        if (render_row->label[0] == '\0') {
+            Nexus_V1_StartupDrawCommand opaque_row;
+            /* Preserve one bounded command slot per source row for capture
+             * accounting without emitting a fabricated text primitive. */
+            nexus_v1_startup_draw_clear(&opaque_row);
+            opaque_row.kind = NEXUS_V1_STARTUP_DRAW_NONE;
+            if (!nexus_v1_startup_push_draw(out_commands, max_commands,
+                                            &count, &opaque_row)) {
+                return count;
+            }
         }
     }
     if (footer.label[0] != '\0') {

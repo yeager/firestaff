@@ -3200,9 +3200,9 @@ int main(void)
         memset(save_rows, 0, sizeof(save_rows));
         memset(&chrome, 0, sizeof(chrome));
         expect(nexus_v1_startup_menu_build_save_chrome_render(&chrome) &&
-                   strcmp(chrome.title, "DUNGEON MASTER NEXUS") == 0 &&
-                   strcmp(chrome.subtitle, "LOAD GAME") == 0 &&
-                   strcmp(chrome.footer, "ACCEPT LOADS  ACTION STARTS") == 0 &&
+                   chrome.title[0] == '\0' &&
+                   chrome.subtitle[0] == '\0' &&
+                   chrome.footer[0] == '\0' &&
                    chrome.title_x == NEXUS_V1_STARTUP_TITLE_X &&
                    chrome.subtitle_y == NEXUS_V1_STARTUP_SUBTITLE_Y &&
                    chrome.footer_x == NEXUS_V1_STARTUP_FOOTER_X,
@@ -3214,15 +3214,15 @@ int main(void)
                    save_rows[0].kind == NEXUS_V1_STARTUP_ROW_SLOT &&
                    save_rows[0].slot == 3 &&
                    save_rows[0].selected == 0 &&
-                   strstr(save_rows[0].label, "LOAD SLOT 03") != NULL &&
+                   save_rows[0].label[0] == '\0' &&
                    save_rows[1].kind == NEXUS_V1_STARTUP_ROW_NEW_GAME &&
                    save_rows[1].selected == 1 &&
-                   strstr(save_rows[1].label, "NEW GAME") != NULL,
-               "Nexus save-select render rows carry slot and New Game labels");
+                   save_rows[1].label[0] == '\0',
+               "Nexus save-select rows retain source slot identity without synthetic labels");
         memset(&chrome, 0, sizeof(chrome));
         expect(nexus_v1_startup_menu_build_champion_chrome_render(&chrome) &&
-                   strcmp(chrome.title, "DUNGEON MASTER NEXUS") == 0 &&
-                   strcmp(chrome.subtitle, "SELECT CHAMPIONS") == 0 &&
+                   chrome.title[0] == '\0' &&
+                   chrome.subtitle[0] == '\0' &&
                    chrome.footer[0] == '\0' &&
                    chrome.title_x == NEXUS_V1_STARTUP_TITLE_X &&
                    chrome.subtitle_y == NEXUS_V1_STARTUP_SUBTITLE_Y,
@@ -3261,15 +3261,11 @@ int main(void)
             &menu_snapshot,
             draw_commands,
             (int)(sizeof(draw_commands) / sizeof(draw_commands[0])));
-        expect(draw_count >= 6 &&
+        expect(draw_count >= 4 &&
                    draw_commands[0].kind ==
                        NEXUS_V1_STARTUP_DRAW_TITLE_BACKGROUND &&
-                   draw_commands[1].kind == NEXUS_V1_STARTUP_DRAW_TEXT &&
-                   draw_commands[1].text_style ==
-                       NEXUS_V1_STARTUP_TEXT_TITLE &&
-                   strcmp(draw_commands[1].label,
-                          "DUNGEON MASTER NEXUS") == 0,
-               "Nexus save startup presentation starts from title art and owns chrome commands");
+                   draw_commands[1].kind != NEXUS_V1_STARTUP_DRAW_TEXT,
+               "Nexus save startup presentation keeps title art and omits synthetic chrome text");
         memset(&champion_snapshot, 0, sizeof(champion_snapshot));
         champion_snapshot.cursor = 0;
         champion_snapshot.frame = 0;

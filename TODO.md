@@ -31,6 +31,9 @@
 - **NEXUS-STARTUP-MNS-REGRESSION:** Keep the real launch-smoke assertions for
   supplemental-ISO MNS material binding and the closed TEXT4/TABL/FONT012
   capture gate green while the Saturn VDP1/VDP2/text consumer remains open.
+  2026-08-06: save/champion chrome and save-row builders no longer emit
+  host-invented ASCII labels; bounded `DRAW_NONE` slots retain capture
+  accounting until the real TEXT4/TABL/FONT012 consumer is captured.
 
 - **NEXUS-CREATURE-MNS-CONSUMER:** The 30-entry MNS filename roster is now
   authenticated byte-for-byte against European retail `DM.BIN` at `0x0385F0`.
