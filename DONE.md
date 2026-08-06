@@ -6,6 +6,14 @@
   text now requires the same captured VDC/VCE presentation route as bitmap
   art, preventing a synthetic menu from appearing over real media.
 
+# Nexus descriptor-0008 fixture provenance (2026-08-06)
+
+- ✅ Corrected the DGN readiness fixture so a special ITEM.IBS floor image
+  carries the production binder's `0xFF` regular-palette/image sentinels.
+  This removes one false failure without authorizing decode or VDP1 drawing.
+- ✅ The real-data probe still reports the independent open Structure3,
+  Structure1C and Saturn VDP1/viewport capture gaps; those remain blocked.
+
 # Nexus MENU.BPK raw PALT source lane (2026-08-06)
 
 - ✅ Added a bounded API that copies all 256 real PALT entries as

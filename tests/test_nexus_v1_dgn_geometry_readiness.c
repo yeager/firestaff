@@ -5568,6 +5568,10 @@ static void test_real_item_ibs_special_floor_corpus(void) {
     memset(&binding, 0, sizeof(binding));
     memset(&command, 0, sizeof(command));
     binding.command_index = 0;
+    /* Special floor-image bindings use the same explicit sentinels as the
+     * production Structure1Fa binder; zero is a regular-image reference. */
+    binding.palette_index = 0xffU;
+    binding.image_index = 0xffU;
     binding.special_floor_image = &bank.floor_images[43];
     command.kind = NEXUS_V1_DGN_RENDER_COMMAND_FLOOR;
     CHECK(nexus_v1_dgn_consume_structure1f_item_floor_materials(
