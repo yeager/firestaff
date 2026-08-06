@@ -148,6 +148,8 @@
   runtime timing, not another host-sized 320x200 approximation. The public
   `nexus_render_title` host entry point is now no-draw while that capture is
   absent; authentic WARNING.BIN/TITLE.CG bytes remain diagnostic receipts.
+  M11's separate startup executors are now no-draw for the same reason; timing
+  receipts cannot authorize a direct source-to-host framebuffer copy.
 
 - **NEXUS-DGN-MATERIAL-VDP1-CAPTURE:** The real Structure2 decoder now
   has a 16-level census guard (1,678 textures: 1,553 indexed-4bpp and 125

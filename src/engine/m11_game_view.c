@@ -45010,27 +45010,6 @@ typedef struct M11_NexusStartupDrawContext {
     int framebufferHeight;
 } M11_NexusStartupDrawContext;
 
-static int m11_nexus_startup_warning_receipt_ready(
-    const M11_NexusStartupDrawContext *context)
-{
-    const Nexus_V1_StartupFullStartPackageReceipt *package;
-
-    if (!context || !context->state || !context->startup_package) {
-        return 0;
-    }
-    package = context->startup_package;
-    return context->transition_capture &&
-           context->transition_capture->consumer_ready &&
-           context->transition_capture->expected_draw_kind ==
-               NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND &&
-           package->consumer.full_start.assets.warning_surface_loaded &&
-           package->warning_capture_surface_ready &&
-           package->saturn_timing_exact &&
-           package->saturn_capture_frames_exact &&
-           context->state->nexusState.title_frame >= 0 &&
-           context->state->nexusState.title_frame < package->boot_warning_frames;
-}
-
 static int m11_nexus_startup_title_receipt_ready(
     const M11_NexusStartupDrawContext *context,
     const Nexus_V1_StartupDrawCommand *command)
@@ -45066,84 +45045,21 @@ static void m11_nexus_startup_exec_title_background(
     void *userdata,
     const Nexus_V1_StartupDrawCommand *command)
 {
-    M11_NexusStartupDrawContext *context =
-        (M11_NexusStartupDrawContext*)userdata;
-    const Nexus_TitleScreen *title;
-    int y;
-    int copyW;
-    int copyH;
-    if (!context || !context->framebuffer) {
-        return;
-    }
-    if (!m11_nexus_startup_title_receipt_ready(context, command)) {
-        return;
-    }
-    title = context->state
-                ? (const Nexus_TitleScreen*)context->state->nexusTitleScreen
-                : NULL;
-    if (!title || !title->loaded || !title->pixels ||
-        title->width <= 0 || title->height <= 0) {
-        m11_fill_rect(context->framebuffer,
-                      context->framebufferWidth,
-                      context->framebufferHeight,
-                      0,
-                      0,
-                      context->framebufferWidth,
-                      context->framebufferHeight,
-                      M11_COLOR_BLACK);
-        return;
-    }
-    copyW = context->framebufferWidth < title->width
-                ? context->framebufferWidth
-                : title->width;
-    copyH = context->framebufferHeight < title->height
-                ? context->framebufferHeight
-                : title->height;
-    for (y = 0; y < copyH; ++y) {
-        memcpy(&context->framebuffer[y * context->framebufferWidth],
-               &title->pixels[y * title->width],
-               (size_t)copyW);
-    }
+    /* TITLE.CG/TITLE.BIN are source receipts, not a Saturn framebuffer.
+     * A host-sized top-left crop is not proof of VDP1/VDP2 placement. Keep
+     * this executor no-draw until an original capture surface is bound. */
+    (void)userdata;
+    (void)command;
 }
 
 static void m11_nexus_startup_exec_warning_background(
     void *userdata,
     const Nexus_V1_StartupDrawCommand *command)
 {
-    M11_NexusStartupDrawContext *context =
-        (M11_NexusStartupDrawContext*)userdata;
-    Nexus_V1_LevelAuxSourceReceipt warning_source;
-    Nexus_V1_WarningDgt2M11PresentationReceipt warning_presentation;
-    uint8_t palette_rgb6[256][3];
-    uint8_t *warning_bytes;
-    int warning_size;
-    if (!context || !context->framebuffer) {
-        return;
-    }
-    if (!m11_nexus_startup_warning_receipt_ready(context) ||
-        !command || command->kind != NEXUS_V1_STARTUP_DRAW_WARNING_BACKGROUND) {
-        return;
-    }
-    if (!context->state->nexusEngine ||
-        context->framebufferWidth != (int)NEXUS_V1_WARNING_M11_WIDTH ||
-        context->framebufferHeight != (int)NEXUS_V1_WARNING_M11_HEIGHT ||
-        nexus_v1_warning_bin_source_receipt(context->state->nexusEngine,
-                                            &warning_source) != 0 ||
-        !warning_source.canonical_hash_verified ||
-        !warning_source.exact_source_entry_observed) {
-        return;
-    }
-    warning_size = 0;
-    warning_bytes = nexus_v1_read_file(context->state->nexusEngine,
-                                       "WARNING.BIN", &warning_size);
-    if (warning_bytes && warning_size > 0 &&
-        nexus_v1_warning_dgt2_m11_present(warning_bytes, (size_t)warning_size,
-            context->framebuffer,
-            (size_t)context->framebufferWidth * context->framebufferHeight,
-            palette_rgb6, &warning_presentation)) {
-        (void)M11_Render_SetIndexedPaletteRgb6(palette_rgb6);
-    }
-    free(warning_bytes);
+    /* WARNING.BIN is source evidence only. Do not blit its DGT2 pixels or
+     * install a host palette without captured Saturn destination/CLUT state. */
+    (void)userdata;
+    (void)command;
 }
 
 static void m11_nexus_startup_exec_boot_title_frame(

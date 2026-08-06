@@ -314,8 +314,8 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 Nexus launcher handoff enters title phase");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 500,
-                "M11 Nexus launcher title phase draws a nonblank frame");
+    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                "M11 Nexus launcher title phase stays blank without Saturn capture");
     for (int t = 0;
          t < 128 &&
              view.nexusState.title_frame <
@@ -331,8 +331,8 @@ static void run_real_launcher_handoff_if_available(void) {
     M11_GameView_Draw(&view, framebuffer_later, 320, 200);
     expect_true(count_diff_pixels(framebuffer,
                                   framebuffer_later,
-                                  sizeof(framebuffer)) > 100,
-                "M11 Nexus launcher TITLE.CG reveal changes after warning");
+                                  sizeof(framebuffer)) == 0,
+                "M11 Nexus launcher title framebuffer stays blank across reveal timing");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
                     M11_GAME_INPUT_IGNORED,
                 "M11 Nexus launcher title ignores movement input");

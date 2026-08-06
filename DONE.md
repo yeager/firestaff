@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus M11 startup capture gate: removed the remaining direct
+  `TITLE.CG` and `WARNING.BIN` host-framebuffer/palette copies from the M11
+  startup executors. The real European ISO still loads and advances the
+  source-backed timing/receipt state, while the framebuffer stays no-draw until
+  an original Saturn VDP1/VDP2 destination and CLUT capture is bound.
+
 - ✅ 2026-08-06 Nexus item-use provenance gate: removed the remaining DM1-derived
   food/potion/status mutations and fallback magnitudes from the exported item
   API. Real `ITEM.IBS` declarations remain available for source/material
