@@ -6796,6 +6796,7 @@ endif()
 add_executable(firestaff_dm1_v2_v1_v2_side_by_side_seed_probe
     probes/firestaff_dm1_v2_v1_v2_side_by_side_seed_probe.c
     src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+    src/shared/vga_palette_pc34_compat.c
     src/dm1v2/dm1_v2_anim_timing_pc34.c)
 target_include_directories(firestaff_dm1_v2_v1_v2_side_by_side_seed_probe PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
@@ -26222,6 +26223,7 @@ endif()
         src/dm1v2/dm1_v2_camera_controller_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/shared/vga_palette_pc34_compat.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_csb_v2_lighting_dynamic
@@ -26826,6 +26828,7 @@ endif()
         src/dm1v2/dm1_v2_camera_controller_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/shared/vga_palette_pc34_compat.c
         src/dm1v2/dm1_v2_settings_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
@@ -26887,6 +26890,7 @@ endif()
     add_executable(test_dm1_v22_real_asset_material_gate_pc34
         tests/test_dm1_v22_real_asset_material_gate_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/shared/vga_palette_pc34_compat.c
         src/dm1v2/m11_v22_inplace_draw_pc34.c
         src/dm1v2/m11_v22_cell_rects_pc34.c
         src/dm1v2/m11_v22_shape_cache_pc34.c
@@ -27061,6 +27065,7 @@ endif()
     add_executable(dm1_v2_export_entry_viewport_png
         tools/dm1_v2_export_entry_viewport_png.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/shared/vga_palette_pc34_compat.c
     )
     if(UNIX AND NOT APPLE)
         target_link_libraries(test_csb_v2_lighting_dynamic PRIVATE m)
@@ -27662,6 +27667,7 @@ endif()
         src/dm1/dm1_v1_viewport_wall_ornament_ordinal_pc34_compat.c
     src/dm1/dm1_v1_creature_render_pc34_compat.c
     src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+    src/shared/vga_palette_pc34_compat.c
     src/csb/csb_v1_dungeon_world_pc34_compat.c
     src/dm1v2/dm1_v2_movement_engine_pc34.c
     src/csb/csb_v1_game_state_pc34_compat.c
@@ -27708,6 +27714,7 @@ endif()
         tests/test_dm1_v1_creature_render_pc34_compat_integration.c
         src/dm1/dm1_v1_creature_render_pc34_compat.c
     src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+    src/shared/vga_palette_pc34_compat.c
     src/csb/csb_v1_dungeon_world_pc34_compat.c
     src/dm1v2/dm1_v2_movement_engine_pc34.c
     src/csb/csb_v1_game_state_pc34_compat.c
@@ -50276,7 +50283,8 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_title_capture_admission
     add_executable(test_csb_v1_title_capture_admission_pc34_compat
         tests/test_csb_v1_title_capture_admission_pc34_compat.c
         src/csb/csb_v1_startup_sequence_pc34_compat.c
-        src/csb/csb_v1_startup_playback_pc34_compat.c)
+        src/csb/csb_v1_startup_playback_pc34_compat.c
+        src/csb/csb_v1_startup_session_contract_pc34_compat.c)
     target_include_directories(test_csb_v1_title_capture_admission_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
