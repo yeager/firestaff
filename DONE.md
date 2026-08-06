@@ -391,6 +391,15 @@
   CD-track-2 playback and TMENU interaction remain explicitly open.
   Verification: `test_dm1_v1_fmtowns_title`.
 
+- ✅ 2026-08-06 DM1 FM Towns M11 title-order fix: the production title loop
+  now uses that same EDM.EXP receipt-bound compositor for every frame. It
+  therefore keeps PRESENTS visible, starts at the original centred 48x12
+  bitmap and grows by 16x4 through the 18 prepared frames before drawing
+  TITLE_MASTER. This removes the previous opposite-direction M11-only zoom;
+  title timing, CDDA and TMENU input are still separately capture-gated.
+  Verification: `test_dm1_v1_fmtowns_title`, `cmake --build build --target
+  firestaff` and `git diff --check`.
+
 - ✅ DM1 FM Towns startup-owner gate: added a source-bound receipt for the
   real HMA-240 root startup chain. It verifies `AUTOEXEC.BAT`, the selected
   English `EDM.EXP` or Japanese `JDM.EXP` Phar Lap P3 owner, `TMENU.EXP`,

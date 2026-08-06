@@ -35,6 +35,7 @@
 #include "fs_portable_compat.h"
 #include "dm1_v1_vblank_timing.h"
 #include "dm1_v1_fmtowns_startup.h"
+#include "dm1_v1_fmtowns_title.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "csb_v1_keyboard_commands_pc34_compat.h"
@@ -2824,7 +2825,7 @@ static int m11_play_dm1_fmtowns_title_if_available(
     const DM1_V1_FmtownsStartupReceipt *plan;
     const M11_AssetSlot *title;
     unsigned char *framebuffer;
-    unsigned int step;
+    unsigned int frame;
     if (outPlayedAnyFrame) *outPlayedAnyFrame = 0;
     if (!gameView || !gameView->dm1FmtownsStartupReceiptValid ||
         !gameView->assetLoader.legacyDm1 ||
@@ -2838,41 +2839,22 @@ static int m11_play_dm1_fmtowns_title_if_available(
     if (!title || !framebuffer || title->width < 320u || title->height < 200u) {
         return 0;
     }
-    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
-    M11_AssetLoader_BlitRegion(
-        title, 0, plan->game_title_presents_source_y, 320, 16,
-        framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-        plan->game_title_presents_rect[0], plan->game_title_presents_rect[2], -1);
-    if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT) !=
-        M11_RENDER_OK) return 0;
-    if (outPlayedAnyFrame) *outPlayedAnyFrame = 1;
-    if (m11_delay_ms_with_intro_event_pump(16u)) return 1;
-
-    for (step = 0; step < plan->game_title_zoom_step_count; ++step) {
-        unsigned int width = (unsigned int)plan->game_title_zoom_start_width -
-                             step * plan->game_title_zoom_width_step;
-        unsigned int height = (unsigned int)plan->game_title_zoom_start_height -
-                              step * plan->game_title_zoom_height_step;
-        int dstX = (M11_FB_WIDTH - (int)width) / 2;
-        int dstY = 40 + (80 - (int)height) / 2;
-        memset(framebuffer, 0, (size_t)M11_FB_BYTES);
-        M11_AssetLoader_BlitSubRectScaled(
-            title, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-            dstX, dstY, (int)width, (int)height,
-            0, plan->game_title_swoosh_rect[2],
-            plan->game_title_zoom_source_width,
-            plan->game_title_zoom_source_height, -1);
+    /* EDM.EXP DO_TITLE_ANIMATION presents the prepared zoom bitmaps in
+     * reverse order: 48x12 first, then 16x4 larger per frame.  Use the
+     * receipt-bound compositor for M11 as well, so the PRESENTS strip and
+     * final TITLE_MASTER cannot diverge from the exact P3 plan verified in
+     * dm1_v1_fmtowns_title.c. */
+    for (frame = 0u; frame <= DM1_FMTOWNS_TITLE_FINAL_FRAME; ++frame) {
+        if (!dm1_v1_fmtowns_title_compose_frame(
+                plan, title->pixels, title->width, title->height, frame,
+                framebuffer, (size_t)M11_FB_BYTES)) {
+            return 0;
+        }
         if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH,
                                       M11_FB_HEIGHT) != M11_RENDER_OK) return 0;
+        if (outPlayedAnyFrame) *outPlayedAnyFrame = 1;
         if (m11_delay_ms_with_intro_event_pump(16u)) return 1;
     }
-    memset(framebuffer, 0, (size_t)M11_FB_BYTES);
-    M11_AssetLoader_BlitRegion(
-        title, 0, plan->game_title_master_source_y, 320, 57,
-        framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT,
-        plan->game_title_master_rect[0], plan->game_title_master_rect[2], -1);
-    if (M11_Render_PresentIndexed(framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT) !=
-        M11_RENDER_OK) return 0;
     (void)m11_delay_ms_with_intro_event_pump(32u);
     return 1;
 }

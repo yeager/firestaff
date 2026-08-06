@@ -1001,7 +1001,8 @@ level or consumer bindings.
   2026-08-06: the English EDM P3 receipt now also binds the executable's
   native title plan: GRAPHICS.DAT graphic 1, PRESENTS source y=137,
   MASTER source y=80, destination rectangles y=90..105 and y=118..174,
-  the 320x80 swoosh/zoom source region and the 18-step 16x4 shrink loop.
+  the 320x80 swoosh/zoom source region and the 18-step 16x4 prepared-bitmap
+  loop.
   These values are checked at the original load-image offsets and are not
   copied from the PC34 title frontend.
   2026-08-06: the English runtime now consumes this receipt after the
@@ -1013,13 +1014,13 @@ level or consumer bindings.
   `DRAW_DMENU`/`DYNAMENU` menu and FM CD-audio handoff remain open.
   2026-08-06: `dm1_v1_fmtowns_title` now composes the real GRAPHICS.DAT
   graphic-1 title frames from the EDM.EXP receipt: PRESENTS, the native
-  18-frame reverse zoom (48x12 through 320x80) and TITLE_MASTER. Remaining
-  work is consuming this FM Towns-owned animation and TMENU in M11, with
-  original timing/audio/input capture. M11 now routes a selected FM Towns edition
-  around the PC34 `SWSH -> TITLE -> ENTRANCE` transaction. It opens only the
-  selected hash-verified Towns data while native title/menu playback remains
-  explicitly unclaimed; do not restore the PC34 path as a presentation
-  fallback.
+  18-frame reverse zoom (48x12 through 320x80) and TITLE_MASTER. M11 now
+  consumes that same compositor in its actual title loop, so it presents the
+  source order instead of a separate 320x80-to-48x12 approximation. Original
+  timing, CD-audio and TMENU input capture remain open. M11 routes a selected
+  FM Towns edition around the PC34 `SWSH -> TITLE -> ENTRANCE` transaction.
+  It opens only the selected hash-verified Towns data; do not restore the PC34
+  path as a presentation fallback.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1
