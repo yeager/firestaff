@@ -178,6 +178,11 @@
   parser now rejects both inverted/out-of-range rectangles and signed
   negative origins. Remaining work is still the Saturn input/VDP consumer
   capture that binds each admitted region to its command semantics.
+  M11 no longer derives `startup_hud_ready` from a DGN viewport handoff;
+  retain the separate HUD capture requirement.
+  The older synthetic `test_m11_nexus_startup_runtime_handoff` still reports
+  four pre-existing fixture-route failures in both A/B runs; keep it separate
+  from the passing real-data startup gate until that fixture is re-authored.
 
 - **NEXUS-SPELL-ACTION-CAPTURE:** DM.BIN spell tables and effect constants
   remain available as disassembly evidence, but the standalone host effect

@@ -16142,8 +16142,11 @@ static void m11_nexus_apply_startup_host_caller_receipt(
         receipt->host_runtime_dgn_ready ? 1 : 0;
     state->nexusState.startup_dgn_render_ready =
         receipt->host_execute_dgn_draws ? 1 : 0;
-    state->nexusState.startup_hud_ready =
-        receipt->host_runtime_dgn_ready ? 1 : 0;
+    /* DGN viewport ownership does not prove the separate Saturn HUD
+     * consumer. DM.BIN hit rectangles, VDP2/VDP1 placement, FONT256 text and
+     * SLEV feedback still need their own capture receipt; never promote HUD
+     * readiness from a dungeon handoff. */
+    state->nexusState.startup_hud_ready = 0;
     state->nexusState.startup_dgn_render_command_count =
         receipt->dgn_command_count;
     state->nexusState.startup_dgn_render_blocked =

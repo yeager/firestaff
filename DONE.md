@@ -51774,6 +51774,10 @@ and `firestaff` build pass.
   that directly mutated health/status/light/projectiles is no longer exported
   by the production Nexus library. Live spell action remains capture-gated.
 
+- ✅ 2026-08-06 Nexus M11 HUD readiness boundary: a ready DGN viewport can no
+  longer set `startup_hud_ready`. M11 now keeps HUD readiness false until the
+  independent DM.BIN/VDP1/VDP2/FONT256/SLEV consumer capture is admitted.
+
 - ✅ 2026-08-06 DM2 PC-DOS save-path handoff: direct startup save selection
   now accepts the real lower-case, one-digit `sksaveN.dat` filename shape,
   carries the containing data root and slot to the validated loader, and
