@@ -47,6 +47,10 @@
   HUD pixels remain no-draw until Saturn widget placement and VDP1/VDP2
   ownership are captured.
 
+- ✅ Nexus level-MD5 lookup, level loading and current-level validation now
+  share the source-defined `NEXUS_MAX_LEVELS` bound instead of duplicated
+  literal limits.
+
 # Nexus startup animation capture gate (2026-08-06)
 
 - ✅ Startup animation readiness now has a separate

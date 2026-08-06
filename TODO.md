@@ -987,6 +987,9 @@ level or consumer bindings.
   2026-08-06 follow-up: removed the remaining hardcoded HUD depth limit from
   the M11 handoff; diagnostics now use the source-defined `NEXUS_MAX_LEVELS`
   (16). This changes no production pixels while the Saturn HUD route is closed.
+  2026-08-06 follow-up: level loading and current-level validation now use the
+  same `NEXUS_MAX_LEVELS` bound as the verified 16-level corpus; no duplicate
+  literal `15/16` limit remains in the production game/engine path.
 
 - **NEXUS-HUD-PANEL-CORPUS-IDENTITY:** The champion-panel regression now
   requires the authenticated European DM.BIN before accepting stat-bar,

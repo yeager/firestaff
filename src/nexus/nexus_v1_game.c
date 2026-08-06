@@ -1,11 +1,12 @@
 
 #include "nexus_v1_game.h"
 #include "nexus_v1_movement.h"
+#include "nexus_v1_world.h"
 #include "asset_find_by_hash.h"
 #include <string.h>
 #include <stdio.h>
 
-static const char *const g_nexus_level_md5[16] = {
+static const char *const g_nexus_level_md5[NEXUS_MAX_LEVELS] = {
     "603ec9c531a92539babdda84ab09e78e",
     "751e1442bf7dccbd41bf146b5be144ab",
     "e2cb85d9fedc27f894a84e0f465fcde1",
@@ -132,7 +133,8 @@ const char *nexus_v1_dungeon_start_status_name(
 
 int nexus_v1_game_load_level(Nexus_V1_GameState *state, int level) {
     char path[512];
-    if (!state || !state->data_dir || level < 0 || level > 15) return -1;
+    if (!state || !state->data_dir || level < 0 ||
+        level >= NEXUS_MAX_LEVELS) return -1;
 
     if (asset_find_by_md5(state->data_dir,
                           g_nexus_level_md5[level],

@@ -1437,7 +1437,8 @@ int nexus_v1_engine_set_dgn_multi_level_capture_adjudication(
     if (!receipt || !receipt->valid || !receipt->opaque_original_capture_only ||
         receipt->decoder_promoted || receipt->mesh_semantics_permitted ||
         receipt->render_permitted || !engine->level_loaded ||
-        engine->game.current_level < 0 || engine->game.current_level >= 16) return 0;
+        engine->game.current_level < 0 ||
+        engine->game.current_level >= NEXUS_MAX_LEVELS) return 0;
     coverage = &receipt->levels[engine->game.current_level];
     if (!coverage->valid || !coverage->opaque_original_capture_covered ||
         !coverage->dgn_fnv1a64 || !coverage->trace_fnv1a64 || !coverage->trace_size || !coverage->frame_sequence ||
@@ -4493,7 +4494,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
     int loaded_bytes_canonical;
     Nexus_V1_DungeonStartReceipt dungeon_start;
 
-    if (!engine || level < 0 || level > 15) return -1;
+    if (!engine || level < 0 || level >= NEXUS_MAX_LEVELS) return -1;
     /* A reload may replace the same numeric level with fresh source bytes.
      * Retained capture evidence is therefore never valid across this boundary. */
     nexus_v1_engine_clear_external_prs3_placement_receipt(engine);
