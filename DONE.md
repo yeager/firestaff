@@ -1,5 +1,14 @@
 # DM1 production placeholder re-audit (2026-08-06)
 
+- ✅ Removed the launcher Item Encyclopedia's invented cross-game names,
+  descriptions, weights, attack values and defense values. It now exposes the
+  exact DM1 PC34 subtype names used by the ReDMCSB/M11 object consumer and
+  labels numeric properties as `PC34 SOURCE` until an authenticated live
+  DUNGEON.DAT owner is attached. No generated item facts remain in this view.
+- ✅ Replaced the launcher Bestiary's approximate HP ranges, invented
+  weaknesses/lore and generated art indices with the exact ReDMCSB PC34
+  G0243 creature identities/base-health records C00-C26. Uncaptured attack,
+  placement, weakness and pixel ownership remains explicitly unavailable.
 - ✅ Re-audited the active DM1 V1 M11 renderer against the real PC34
   `GRAPHICS.DAT`/`DUNGEON.DAT` path and the `DM1-ORIGINAL-REPLACE-003` through
   `DM1-ORIGINAL-REPLACE-026` inventory. No open production placeholder was

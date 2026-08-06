@@ -3,205 +3,46 @@
 
 /* ── DM1 Creature Database ────────────────────────────────────────
  *
- * Data sourced from Dungeon Master 1 (Atari ST / PC).
- * HP ranges are approximate based on dungeon level scaling.
- * Art indices reference creature_art_m12.h thumbnails where available.
- *
- * Art index mapping (creature_art_data_m12.h):
- *   0 = GIANT SCORPION
- *   1 = RED DRAGON
- *   2 = SKELETON
- *   3 = STONE GOLEM
- *   4 = MUMMY
+ * This view is a source index, not a strategy guide.  The previous table
+ * contained approximate HP ranges, invented weaknesses/lore and generated
+ * thumbnail indices.  These rows now retain only the exact PC34 creature
+ * identity and base-health value from ReDMCSB DUNGEON.C
+ * G0243_as_Graphic559_CreatureInfo (C00-C26).  Attack details, weakness,
+ * dungeon placement and pixels remain unavailable until their source
+ * consumers are bound, so they are intentionally left empty.
  */
 
 static const M12_BestiaryEntry g_bestiaryEntries[] = {
-    /* ── HUMANOID ─────────────────────────────────────────────── */
-    {
-        "SCREAMER",
-        M12_BESTIARY_CAT_HUMANOID,
-        15, 30,
-        M12_BESTIARY_ATK_MELEE,
-        "FIRE, NINJA SKILLS",
-        "MUSHROOM-LIKE CREATURES THAT SHRIEK TO\n"
-        "ALERT NEARBY MONSTERS. WEAK INDIVIDUALLY\n"
-        "BUT DANGEROUS IN SWARMS. FOUND ON THE\n"
-        "UPPER DUNGEON LEVELS.",
-        -1, 1
-    },
-    {
-        "GIGGLER",
-        M12_BESTIARY_CAT_HUMANOID,
-        20, 45,
-        M12_BESTIARY_ATK_MELEE,
-        "VORPAL BLADE, SPEED",
-        "MISCHIEVOUS THIEVES THAT STEAL ITEMS FROM\n"
-        "YOUR PARTY. FAST AND ANNOYING, THEY GIGGLE\n"
-        "AS THEY DART IN AND OUT OF REACH. KILL THEM\n"
-        "QUICKLY TO RECOVER STOLEN GOODS.",
-        -1, 2
-    },
-    {
-        "TROLIN",
-        M12_BESTIARY_CAT_HUMANOID,
-        60, 100,
-        M12_BESTIARY_ATK_MELEE,
-        "FIRE, MAGIC MISSILES",
-        "BRUTISH TROLL-LIKE WARRIORS WITH THICK HIDE.\n"
-        "THEY LUMBER THROUGH CORRIDORS SWINGING\n"
-        "MASSIVE CLUBS. TOUGH BUT SLOW. OFTEN GUARD\n"
-        "KEY PASSAGES IN THE MID DUNGEON.",
-        -1, 4
-    },
-    /* ── UNDEAD ────────────────────────────────────────────────── */
-    {
-        "MUMMY",
-        M12_BESTIARY_CAT_UNDEAD,
-        50, 90,
-        M12_BESTIARY_ATK_MELEE,
-        "FIRE, VORPAL BLADE",
-        "ANCIENT WRAPPED CORPSES ANIMATED BY DARK\n"
-        "MAGIC. THEY SHAMBLE RELENTLESSLY AND HIT\n"
-        "HARD. EXTREMELY VULNERABLE TO FIRE SPELLS.\n"
-        "COMMON IN THE TOMB LEVELS.",
-        4, 3
-    },
-    {
-        "SKELETON",
-        M12_BESTIARY_CAT_UNDEAD,
-        25, 55,
-        M12_BESTIARY_ATK_MELEE,
-        "MACE, BLUNT WEAPONS",
-        "REANIMATED BONES WIELDING RUSTY WEAPONS.\n"
-        "FRAGILE BUT NUMEROUS. THEIR BONES SCATTER\n"
-        "SATISFYINGLY WHEN STRUCK WITH BLUNT FORCE.\n"
-        "GUARD THE EARLY CRYPT CHAMBERS.",
-        2, 2
-    },
-    {
-        "GHOST",
-        M12_BESTIARY_CAT_UNDEAD,
-        40, 70,
-        M12_BESTIARY_ATK_MAGIC,
-        "VORPAL BLADE, DES EW",
-        "SPECTRAL ENTITIES THAT PHASE THROUGH WALLS.\n"
-        "IMMUNE TO MOST PHYSICAL ATTACKS. ONLY\n"
-        "MAGICAL WEAPONS AND SPELLS CAN HARM THEM.\n"
-        "THEIR TOUCH DRAINS STAMINA.",
-        -1, 5
-    },
-    /* ── BEAST ─────────────────────────────────────────────────── */
-    {
-        "GIANT SCORPION",
-        M12_BESTIARY_CAT_BEAST,
-        80, 140,
-        M12_BESTIARY_ATK_POISON,
-        "FIRE, SPEED ATTACKS",
-        "ENORMOUS ARACHNIDS WITH DEADLY VENOMOUS\n"
-        "STINGERS. THEIR POISON WEAKENS EVEN THE\n"
-        "STRONGEST CHAMPIONS. APPROACH WITH ANTI-\n"
-        "VENOM OR STRONG FIRE MAGIC.",
-        0, 6
-    },
-    {
-        "GIANT WASP",
-        M12_BESTIARY_CAT_BEAST,
-        30, 50,
-        M12_BESTIARY_ATK_POISON,
-        "FIRE, RANGED ATTACKS",
-        "OVERSIZED INSECTS WITH PAINFUL STINGERS.\n"
-        "THEY FLY ERRATICALLY, MAKING THEM HARD TO\n"
-        "HIT IN MELEE. THEIR VENOM IS LESS POTENT\n"
-        "THAN THE SCORPION BUT STILL DANGEROUS.",
-        -1, 4
-    },
-    {
-        "COUATL",
-        M12_BESTIARY_CAT_BEAST,
-        55, 85,
-        M12_BESTIARY_ATK_MAGIC,
-        "PHYSICAL ATTACKS",
-        "FEATHERED SERPENTS OF ANCIENT POWER. THEY\n"
-        "SPIT MAGICAL PROJECTILES AND SLITHER WITH\n"
-        "SURPRISING SPEED. RESISTANT TO MAGIC BUT\n"
-        "VULNERABLE TO STRONG MELEE STRIKES.",
-        -1, 7
-    },
-    {
-        "WORM",
-        M12_BESTIARY_CAT_BEAST,
-        70, 110,
-        M12_BESTIARY_ATK_MELEE,
-        "FIRE, SLASHING WEAPONS",
-        "MASSIVE PURPLE WORMS THAT BURROW THROUGH\n"
-        "THE DEEP DUNGEON. THEIR BULK FILLS ENTIRE\n"
-        "CORRIDORS. TOUGH HIDE BUT SLOW TO TURN.\n"
-        "CAN SWALLOW SMALL ITEMS WHOLE.",
-        -1, 8
-    },
-    /* ── CONSTRUCT ─────────────────────────────────────────────── */
-    {
-        "STONE GOLEM",
-        M12_BESTIARY_CAT_CONSTRUCT,
-        120, 200,
-        M12_BESTIARY_ATK_MELEE,
-        "ZO KATH RA, MAGIC",
-        "ANIMATED STONE GUARDIANS OF IMMENSE POWER.\n"
-        "NEAR-IMPERVIOUS TO PHYSICAL DAMAGE. ONLY\n"
-        "THE MOST POWERFUL SPELLS CAN CRACK THEIR\n"
-        "GRANITE SHELLS. SLOW BUT DEVASTATING.",
-        3, 10
-    },
-    {
-        "ANIMATED ARMOUR",
-        M12_BESTIARY_CAT_CONSTRUCT,
-        90, 150,
-        M12_BESTIARY_ATK_MELEE,
-        "LIGHTNING, DES EW",
-        "ENCHANTED SUITS OF PLATE MAIL THAT FIGHT\n"
-        "WITHOUT A WEARER. THEY MIMIC THE COMBAT\n"
-        "STYLE OF FALLEN KNIGHTS. RESISTANT TO\n"
-        "EDGED WEAPONS BUT WEAK TO ELECTRICITY.",
-        -1, 9
-    },
-    /* ── DEMON ─────────────────────────────────────────────────── */
-    {
-        "VEXIRK",
-        M12_BESTIARY_CAT_DEMON,
-        100, 160,
-        M12_BESTIARY_ATK_FIRE,
-        "VORPAL BLADE, ICE MAGIC",
-        "DEMONIC BEINGS FROM THE LOWER PLANES.\n"
-        "THEY HURL FIREBALLS AND TELEPORT SHORT\n"
-        "DISTANCES. UNPREDICTABLE AND AGGRESSIVE.\n"
-        "ONE OF LORD CHAOS'S FAVOURED SERVANTS.",
-        -1, 11
-    },
-    {
-        "WATER ELEMENTAL",
-        M12_BESTIARY_CAT_DEMON,
-        80, 130,
-        M12_BESTIARY_ATK_MAGIC,
-        "LIGHTNING, FUL",
-        "SWIRLING MASSES OF ANIMATED WATER THAT\n"
-        "CRASH AGAINST INTRUDERS. IMMUNE TO MOST\n"
-        "PHYSICAL WEAPONS. FIRE AND LIGHTNING\n"
-        "SPELLS DISRUPT THEIR FLUID FORM.",
-        -1, 10
-    },
-    /* ── DRAGON ────────────────────────────────────────────────── */
-    {
-        "RED DRAGON",
-        M12_BESTIARY_CAT_DRAGON,
-        200, 350,
-        M12_BESTIARY_ATK_FIRE,
-        "ICE MAGIC, SPEED",
-        "THE MOST FEARSOME CREATURE IN THE DUNGEON.\n"
-        "BREATHES DEVASTATING FIRE AND POSSESSES\n"
-        "INCREDIBLE STRENGTH. ONLY A FULLY EQUIPPED\n"
-        "AND EXPERIENCED PARTY STANDS A CHANCE.",
-        1, 12
-    },
+    /* category is a launcher-only grouping; it is not a game property. */
+#define C(id, name, cat, hp) { name " (C" id ")", cat, hp, hp, M12_BESTIARY_ATK_SOURCE, NULL, "ReDMCSB DUNGEON.C G0243 PC34 source record C" id, -1, -1 }
+    C("00", "MUMMY",             M12_BESTIARY_CAT_UNDEAD,    150),
+    C("01", "SWAMP SLIME",       M12_BESTIARY_CAT_BEAST,     110),
+    C("02", "GIGGLER",           M12_BESTIARY_CAT_HUMANOID,   10),
+    C("03", "WIZARD EYE",        M12_BESTIARY_CAT_BEAST,      40),
+    C("04", "PAIN RAT / HELLHOUND", M12_BESTIARY_CAT_BEAST,  101),
+    C("05", "RUSTER",            M12_BESTIARY_CAT_BEAST,      60),
+    C("06", "SCREAMER",          M12_BESTIARY_CAT_BEAST,     165),
+    C("07", "ROCK / ROCKPILE",   M12_BESTIARY_CAT_CONSTRUCT,  50),
+    C("08", "GHOST",             M12_BESTIARY_CAT_UNDEAD,     30),
+    C("09", "STONE GOLEM",       M12_BESTIARY_CAT_CONSTRUCT, 120),
+    C("10", "MUMMY",             M12_BESTIARY_CAT_UNDEAD,     33),
+    C("11", "GHOST / RIVE",      M12_BESTIARY_CAT_UNDEAD,     80),
+    C("12", "SKELETON",          M12_BESTIARY_CAT_UNDEAD,     20),
+    C("13", "COUATL",            M12_BESTIARY_CAT_BEAST,      39),
+    C("14", "VEXIRK",            M12_BESTIARY_CAT_DEMON,      44),
+    C("15", "MAGENTA WORM / WORM", M12_BESTIARY_CAT_BEAST,   70),
+    C("16", "TROLIN / ANTMAN",   M12_BESTIARY_CAT_HUMANOID,   20),
+    C("17", "GIANT WASP / MUNCHER", M12_BESTIARY_CAT_BEAST,   8),
+    C("18", "ANIMATED ARMOUR / DETH KNIGHT", M12_BESTIARY_CAT_CONSTRUCT, 60),
+    C("19", "MATERIALIZER / ZYTAZ", M12_BESTIARY_CAT_DEMON,   33),
+    C("20", "OITU",              M12_BESTIARY_CAT_DEMON,     144),
+    C("21", "DEMON",             M12_BESTIARY_CAT_DEMON,      77),
+    C("22", "DEMON",             M12_BESTIARY_CAT_DEMON,     100),
+    C("23", "LORD CHAOS",        M12_BESTIARY_CAT_DEMON,     180),
+    C("24", "RED DRAGON",        M12_BESTIARY_CAT_DRAGON,    255),
+    C("25", "LORD ORDER",        M12_BESTIARY_CAT_DEMON,     180),
+    C("26", "GREY LORD",         M12_BESTIARY_CAT_DEMON,     180),
+#undef C
 };
 
 #define G_BESTIARY_COUNT \

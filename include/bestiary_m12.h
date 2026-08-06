@@ -30,7 +30,8 @@ typedef enum {
     M12_BESTIARY_ATK_RANGED,
     M12_BESTIARY_ATK_MAGIC,
     M12_BESTIARY_ATK_POISON,
-    M12_BESTIARY_ATK_FIRE
+    M12_BESTIARY_ATK_FIRE,
+    M12_BESTIARY_ATK_SOURCE
 } M12_BestiaryAttackType;
 
 /* ── Single creature entry ───────────────────────────────────────── */

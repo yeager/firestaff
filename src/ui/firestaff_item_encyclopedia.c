@@ -1,67 +1,185 @@
-
 #include "firestaff_item_encyclopedia.h"
 #include <stddef.h>
 
-/* Item Encyclopedia — representative items from all DM games.
- * Item properties based on general DM1 game mechanics. */
+/*
+ * This is deliberately a name-only catalog.  The old launcher catalog used
+ * invented cross-game names and made-up weights/attack/defense values.  DM1
+ * owns the real values in DUNGEON.C (F0031/F0140/F0143); the live M11 route
+ * already consumes those records.  Until the launcher has an authenticated
+ * GRAPHICS.DAT/DUNGEON.DAT session to bind those values, expose only the
+ * exact PC34 subtype names and leave the numeric fields unavailable.
+ *
+ * Names mirror the source-owned DM1 PC34 subtype tables in M11's object-name
+ * consumer.  They are not descriptions, cross-game lore, or replacement art.
+ */
+
+#define DM1_ITEM(name, category) { name, category, NULL, -1, -1, -1 }
 
 static const FS_ItemEntry g_items[] = {
-    /* Weapons */
-    {"Falchion",       FS_ITEM_CAT_WEAPON, "A curved single-edged sword.",           18, 30, 0},
-    {"Rapier",         FS_ITEM_CAT_WEAPON, "A thin thrusting blade.",                14, 24, 4},
-    {"Mace",           FS_ITEM_CAT_WEAPON, "A heavy blunt weapon.",                  30, 32, 0},
-    {"Club",           FS_ITEM_CAT_WEAPON, "A simple wooden club.",                  20, 16, 0},
-    {"Staff",          FS_ITEM_CAT_WEAPON, "A wooden staff. Also useful for spells.", 12, 10, 2},
-    {"Sword",          FS_ITEM_CAT_WEAPON, "A standard double-edged sword.",         22, 34, 2},
-    {"Axe",            FS_ITEM_CAT_WEAPON, "A single-bladed battle axe.",            26, 36, 0},
-    {"Dagger",         FS_ITEM_CAT_WEAPON, "A small blade. Can be thrown.",            6, 14, 0},
-    {"Arrow",          FS_ITEM_CAT_WEAPON, "Ammunition for bows.",                    1, 10, 0},
-    {"Slayer",         FS_ITEM_CAT_WEAPON, "A legendary demon-slaying blade.",       28, 50, 6},
-    {"Vorpal Blade",   FS_ITEM_CAT_WEAPON, "Enchanted blade of supreme sharpness.",  20, 48, 4},
-    {"Firestaff",      FS_ITEM_CAT_WEAPON, "The legendary Firestaff of power.",      16, 40, 10},
+    DM1_ITEM("EYE OF TIME", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("STORMRING", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("TORCH", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("FLAMITT", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("STAFF OF CLAWS", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("BOLT BLADE", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("FURY", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("THE FIRESTAFF", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("DAGGER", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("FALCHION", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("SWORD", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("RAPIER", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("SABRE", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("SAMURAI SWORD", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("DELTA", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("DIAMOND EDGE", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("VORPAL BLADE", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("THE INQUISITOR", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("AXE", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("HARDCLEAVE", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("MACE", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("MACE OF ORDER", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("MORNING STAR", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("CLUB", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("STONE CLUB", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("BOW", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("CROSSBOW", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("ARROW", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("SLAYER", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("SLING", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("ROCK", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("POISON DART", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("THROWING STAR", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("STICK", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("STAFF", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("WAND", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("TEOWAND", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("YEW STAFF", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("STAFF OF MANAR", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("SNAKE STAFF", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("THE CONDUIT", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("DRAGON SPIT", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("SCEPTRE OF LYF", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("HORN OF FEAR", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("SPEED BOW", FS_ITEM_CAT_WEAPON),
+    DM1_ITEM("THE FIRESTAFF", FS_ITEM_CAT_WEAPON),
 
-    /* Armor */
-    {"Leather Jerkin", FS_ITEM_CAT_ARMOR, "Light leather protection.",                8, 0, 8},
-    {"Mail Aketon",    FS_ITEM_CAT_ARMOR, "Chainmail vest.",                         24, 0, 14},
-    {"Plate Armor",    FS_ITEM_CAT_ARMOR, "Full plate mail. Heavy but strong.",      40, 0, 22},
-    {"Shield",         FS_ITEM_CAT_ARMOR, "A wooden shield.",                        16, 0, 12},
-    {"Helmet",         FS_ITEM_CAT_ARMOR, "Head protection.",                        10, 0, 6},
-    {"Boots",          FS_ITEM_CAT_ARMOR, "Sturdy leather boots.",                    6, 0, 4},
+    DM1_ITEM("CAPE", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("CLOAK OF NIGHT", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("BARBARIAN HIDE", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("SANDALS", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("LEATHER BOOTS", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("ELVEN BOOTS", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("LEATHER JERKIN", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("LEATHER PANTS", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("SUEDE BOOTS", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("BLUE PANTS", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("GHI", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("GHI TROUSERS", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("CALISTA", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("CROWN OF NERRA", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("BEZERKER HELM", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("HELMET", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("BASINET", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("NETA SHIRT", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("CHAINMAIL", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("PLATE MAIL", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("MITHRAL MAIL", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("MITHRAL HOSEN", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("LEG MAIL", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("FOOT PLATE", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("SMALL SHIELD", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("WOODEN SHIELD", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("LARGE SHIELD", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("SHIELD OF LYTE", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("SHIELD OF DARC", FS_ITEM_CAT_ARMOR),
+    DM1_ITEM("DEXHELM", FS_ITEM_CAT_ARMOR),
 
-    /* Potions */
-    {"Health Potion",  FS_ITEM_CAT_POTION, "Restores health when consumed.",          2, 0, 0},
-    {"Mana Potion",    FS_ITEM_CAT_POTION, "Restores mana when consumed.",            2, 0, 0},
-    {"Stamina Potion", FS_ITEM_CAT_POTION, "Restores stamina.",                       2, 0, 0},
-    {"Antidote",       FS_ITEM_CAT_POTION, "Cures poison.",                           2, 0, 0},
+    DM1_ITEM("MON POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("UM POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("DES POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("VEN POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("SAR POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("ZO POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("ROS POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("KU POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("DANE POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("NETA POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("BRO POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("MA POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("YA POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("EE POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("VI POTION", FS_ITEM_CAT_POTION),
+    DM1_ITEM("WATER FLASK", FS_ITEM_CAT_POTION),
+    DM1_ITEM("EMPTY FLASK", FS_ITEM_CAT_POTION),
 
-    /* Scrolls */
-    {"Scroll",         FS_ITEM_CAT_SCROLL, "Contains written text or a spell.",       1, 0, 0},
+    DM1_ITEM("SCROLL", FS_ITEM_CAT_SCROLL),
+    DM1_ITEM("CHEST", FS_ITEM_CAT_CONTAINER),
+    DM1_ITEM("OPEN CHEST", FS_ITEM_CAT_CONTAINER),
+    DM1_ITEM("OPEN CHEST", FS_ITEM_CAT_CONTAINER),
 
-    /* Containers */
-    {"Chest",          FS_ITEM_CAT_CONTAINER, "Can hold multiple items.",            10, 0, 0},
-    {"Sack",           FS_ITEM_CAT_CONTAINER, "A bag for carrying items.",            2, 0, 0},
+    DM1_ITEM("COMPASS", FS_ITEM_CAT_MISC),
+    DM1_ITEM("WATERSKIN", FS_ITEM_CAT_MISC),
+    DM1_ITEM("JEWEL SYMAL", FS_ITEM_CAT_MISC),
+    DM1_ITEM("ILLUMULET", FS_ITEM_CAT_MISC),
+    DM1_ITEM("ASHES", FS_ITEM_CAT_MISC),
+    DM1_ITEM("BONES", FS_ITEM_CAT_MISC),
+    DM1_ITEM("SAR COIN", FS_ITEM_CAT_MISC),
+    DM1_ITEM("SILVER COIN", FS_ITEM_CAT_MISC),
+    DM1_ITEM("GOLD COIN", FS_ITEM_CAT_MISC),
+    DM1_ITEM("IRON KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("KEY OF B", FS_ITEM_CAT_MISC),
+    DM1_ITEM("SOLID KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("SQUARE KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("TOURQUOISE KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("CROSS KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("ONYX KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("SKELETON KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("GOLD KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("WINGED KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("TOPAZ KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("SAPPHIRE KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("EMERALD KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("RUBY KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("RA KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("MASTER KEY", FS_ITEM_CAT_MISC),
+    DM1_ITEM("BOULDER", FS_ITEM_CAT_MISC),
+    DM1_ITEM("BLUE GEM", FS_ITEM_CAT_MISC),
+    DM1_ITEM("ORANGE GEM", FS_ITEM_CAT_MISC),
+    DM1_ITEM("GREEN GEM", FS_ITEM_CAT_MISC),
+    DM1_ITEM("APPLE", FS_ITEM_CAT_MISC),
+    DM1_ITEM("CORN", FS_ITEM_CAT_MISC),
+    DM1_ITEM("BREAD", FS_ITEM_CAT_MISC),
+    DM1_ITEM("CHEESE", FS_ITEM_CAT_MISC),
+    DM1_ITEM("SCREAMER SLICE", FS_ITEM_CAT_MISC),
+    DM1_ITEM("WORM ROUND", FS_ITEM_CAT_MISC),
+    DM1_ITEM("DRUMSTICK", FS_ITEM_CAT_MISC),
+    DM1_ITEM("DRAGON STEAK", FS_ITEM_CAT_MISC),
+    DM1_ITEM("GEM OF AGES", FS_ITEM_CAT_MISC),
+    DM1_ITEM("EKKHARD CROSS", FS_ITEM_CAT_MISC),
+    DM1_ITEM("MOONSTONE", FS_ITEM_CAT_MISC),
+    DM1_ITEM("THE HELLION", FS_ITEM_CAT_MISC),
+    DM1_ITEM("PENDANT FERAL", FS_ITEM_CAT_MISC),
+    DM1_ITEM("MAGICAL BOX", FS_ITEM_CAT_MISC),
+    DM1_ITEM("MAGICAL BOX", FS_ITEM_CAT_MISC),
+    DM1_ITEM("MIRROR OF DAWN", FS_ITEM_CAT_MISC),
+    DM1_ITEM("ROPE", FS_ITEM_CAT_MISC),
+    DM1_ITEM("RABBIT FOOT", FS_ITEM_CAT_MISC),
+    DM1_ITEM("CORBAMITE", FS_ITEM_CAT_MISC),
+    DM1_ITEM("CHOKER", FS_ITEM_CAT_MISC),
+    DM1_ITEM("LOCK PICKS", FS_ITEM_CAT_MISC),
+    DM1_ITEM("MAGNIFIER", FS_ITEM_CAT_MISC),
+    DM1_ITEM("ZOKATHRA SPELL", FS_ITEM_CAT_MISC),
+    DM1_ITEM("EMPTY FLASK", FS_ITEM_CAT_MISC),
 
-    /* Keys */
-    {"Gold Key",       FS_ITEM_CAT_KEY, "Opens gold locks.",                          1, 0, 0},
-    {"Silver Key",     FS_ITEM_CAT_KEY, "Opens silver locks.",                        1, 0, 0},
-    {"Skeleton Key",   FS_ITEM_CAT_KEY, "Opens most common locks.",                   1, 0, 0},
-
-    /* Misc */
-    {"Torch",          FS_ITEM_CAT_MISC, "Provides light. Burns out over time.",      6, 8, 0},
-    {"Compass",        FS_ITEM_CAT_MISC, "Shows cardinal direction.",                 2, 0, 0},
-    {"Rabbit Foot",    FS_ITEM_CAT_MISC, "Increases luck while carried.",             1, 0, 0},
-    {"Corn",           FS_ITEM_CAT_MISC, "Food. Restores hunger.",                    3, 0, 0},
-    {"Water Flask",    FS_ITEM_CAT_MISC, "Contains water. Restores thirst.",          4, 0, 0},
-
-    {NULL, 0, NULL, 0, 0, 0}
+    { NULL, 0, NULL, 0, 0, 0 }
 };
 
-static const char *g_cat_names[] = {
-    "Weapons", "Armor", "Potions", "Scrolls", "Containers", "Miscellaneous", "Keys"
-};
+#undef DM1_ITEM
 
 int fs_item_encyclopedia_count(void) {
-    int i = 0; while (g_items[i].name) i++; return i;
+    int i = 0;
+    while (g_items[i].name) ++i;
+    return i;
 }
 
 const FS_ItemEntry *fs_item_encyclopedia_get(int index) {
@@ -70,14 +188,18 @@ const FS_ItemEntry *fs_item_encyclopedia_get(int index) {
 }
 
 int fs_item_encyclopedia_count_in_category(FS_ItemCategory cat) {
-    int i, c = 0;
-    for (i = 0; g_items[i].name; i++)
-        if (g_items[i].category == cat) c++;
-    return c;
+    int i, count = 0;
+    for (i = 0; g_items[i].name; ++i) {
+        if (g_items[i].category == cat) ++count;
+    }
+    return count;
 }
 
 const char *fs_item_category_name(FS_ItemCategory cat) {
+    static const char *const names[] = {
+        "Weapons", "Armor", "Potions", "Scrolls", "Containers",
+        "Miscellaneous", "Keys"
+    };
     if (cat < 0 || cat >= FS_ITEM_CAT_COUNT) return "Unknown";
-    return g_cat_names[cat];
+    return names[cat];
 }
-

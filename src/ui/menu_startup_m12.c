@@ -10463,6 +10463,7 @@ static void m12_draw_bestiary_view_modern(const M12_StartupMenuState* state,
             case M12_BESTIARY_ATK_MAGIC:  snprintf(atkBuf, sizeof(atkBuf), "MAGIC");  break;
             case M12_BESTIARY_ATK_POISON: snprintf(atkBuf, sizeof(atkBuf), "POISON"); break;
             case M12_BESTIARY_ATK_FIRE:   snprintf(atkBuf, sizeof(atkBuf), "FIRE");   break;
+            case M12_BESTIARY_ATK_SOURCE: snprintf(atkBuf, sizeof(atkBuf), "PC34 SOURCE"); break;
             case M12_BESTIARY_ATK_MELEE:
             default:                      snprintf(atkBuf, sizeof(atkBuf), "MELEE");  break;
         }
@@ -10493,11 +10494,9 @@ static void m12_draw_bestiary_view_modern(const M12_StartupMenuState* state,
 }
 
 /* ── Item Encyclopedia view (M12_MENU_VIEW_ITEM_ENCYCLOPEDIA) ────
- * Renders the firestaff_item_encyclopedia.c database (32 items in 7
- * categories) as a scrollable list with category tabs.  Replaces
- * the v2.7.13-era m12_draw_item_encyclopedia_stub placeholder.
- *
- * Source: firestaff_item_encyclopedia.c g_items[].
+ * Renders the authenticated DM1 PC34 subtype-name catalog.  Numeric
+ * properties are deliberately omitted until the launcher has a live
+ * DUNGEON.DAT owner; a name-only row is preferable to invented values.
  */
 static void m12_draw_item_encyclopedia_view_modern(
     const M12_StartupMenuState* state,
@@ -10555,7 +10554,9 @@ static void m12_draw_item_encyclopedia_view_modern(
         if (!e) break;
         if ((int)e->category != cat) continue;
         if (i < scrollOff) continue;
-        if (e->category == (FS_ItemCategory)cat && e->attack > 0) {
+        if (e->attack < 0 || e->defense < 0 || e->weight < 0) {
+            snprintf(statBuf, sizeof(statBuf), "PC34 SOURCE");
+        } else if (e->category == (FS_ItemCategory)cat && e->attack > 0) {
             snprintf(statBuf, sizeof(statBuf), "ATK %2d  WT %2d",
                      e->attack, e->weight);
         } else if (e->category == (FS_ItemCategory)cat && e->defense > 0) {
