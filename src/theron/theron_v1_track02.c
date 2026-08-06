@@ -2349,19 +2349,6 @@ Theron_Track02SignalStatus theron_v1_track02_build_startup_bitmap_atlas_wide(
     return THERON_TRACK02_SIGNAL_OK;
 }
 
-static size_t tqr_raw_to_user_data_offset(size_t raw_offset) {
-    size_t sector = raw_offset / THERON_TRACK02_RAW_SECTOR_BYTES;
-    size_t within = raw_offset % THERON_TRACK02_RAW_SECTOR_BYTES;
-
-    if (within < THERON_TRACK02_RAW_USER_DATA_OFFSET ||
-        within >= THERON_TRACK02_RAW_USER_DATA_OFFSET +
-                  THERON_TRACK02_RAW_USER_DATA_BYTES) {
-        return (size_t)-1;
-    }
-    return sector * THERON_TRACK02_RAW_USER_DATA_BYTES +
-           (within - THERON_TRACK02_RAW_USER_DATA_OFFSET);
-}
-
 static size_t tqr_user_data_to_raw_offset(size_t ud_offset) {
     size_t sector = ud_offset / THERON_TRACK02_RAW_USER_DATA_BYTES;
     size_t within = ud_offset % THERON_TRACK02_RAW_USER_DATA_BYTES;
@@ -2381,7 +2368,6 @@ static int tqr_read_user_data_contiguous(
 
     while (done < count) {
         size_t raw = tqr_user_data_to_raw_offset(ud_offset + done);
-        size_t sector = raw / THERON_TRACK02_RAW_SECTOR_BYTES;
         size_t within = raw % THERON_TRACK02_RAW_SECTOR_BYTES;
         size_t avail = THERON_TRACK02_RAW_USER_DATA_OFFSET +
                        THERON_TRACK02_RAW_USER_DATA_BYTES - within;
@@ -10922,13 +10908,6 @@ Theron_Track02SignalStatus theron_v1_track02_catalog_pce_io(
     Theron_Track02IplLoaderReceipt loader;
     Theron_Track02SignalStatus status;
     size_t i;
-    /* Joypad read routine pattern: STA $1000, STA $1000, STA $1000,
-     * LDA $1000, STA $1000, LDA $1000 — standard PC Engine joypad scan.
-     * The 6 accesses are at offsets 0,5,10,15,21,26 relative to start. */
-    static const uint8_t joypad_pattern[] = {
-        0x8Du, 0x00u, 0x10u,
-    };
-
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     if (!track02_data || !md5_hex || !out_receipt) {
         return THERON_TRACK02_SIGNAL_BAD_INPUT;

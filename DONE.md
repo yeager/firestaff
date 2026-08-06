@@ -46,6 +46,11 @@
   the decoded black/white endpoints. This proves the production US/JP offset
   selection is exercised with real media; VCE ownership and semantic render
   promotion remain capture-gated.
+
+- ✅ 2026-08-06 Theron Track 02 warning cleanup: removed unused raw-offset and
+  joypad probe paths and made the POSIX canonical-path capacity contract
+  explicit. `firestaff_theron` and the authentic US/JP font-tile regression
+  build and pass without changing the source-bound media or admission gates.
 - ✅ 2026-08-06 DM1 archive-backed runtime handoff: hash-discovered ZIP
   members were previously passed directly to the ordinary-file ReDMCSB
   loaders, so a real archive could be detected but not launched. M11 now

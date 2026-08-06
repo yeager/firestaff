@@ -142,6 +142,10 @@
   declaration now has one guarded typedef owner. This removes the strict
   C11 redefinition warning without changing the record layout or opening
   object semantics.
+  2026-08-06 Theron warning cleanup: removed dead raw-offset/joypad probe
+  locals and marked the POSIX-only canonical-path capacity parameter unused.
+  This keeps the authentic Track 02 receipt path warning-clean without
+  changing any media offsets, hashes or runtime admission gates.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

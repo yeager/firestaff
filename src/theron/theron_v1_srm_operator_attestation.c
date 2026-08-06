@@ -44,6 +44,7 @@ static int canonical_path(const char *path, char *out, size_t capacity)
 #if defined(_WIN32)
     return path && out && capacity && _fullpath(out, path, capacity) != NULL;
 #else
+    (void)capacity;
     return path && out && realpath(path, out) != NULL;
 #endif
 }
