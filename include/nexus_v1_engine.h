@@ -61,6 +61,7 @@ typedef struct Nexus_V1_Structure1FPlacementBindingReceipt
 #include "nexus_v1_script_vm.h"
 #include "nexus_v1_sound.h"
 #include "nexus_v1_structure3_capture_manifest.h"
+#include "nexus_v1_rlowfix_text.h"
 #include <stddef.h>
 #include <stdint.h>
 #include <stddef.h>
@@ -2602,6 +2603,11 @@ struct Nexus_V1_Engine {
     uint64_t m11_direct_lev_dungeon_last_route_epoch;
     Nexus_V1_DgnM11DirectLevNoDrawReceipt m11_direct_lev_dungeon;
     Nexus_V1_MenuBpkPaltTraceAdmissionReceipt menu_bpk_palt_trace_admission;
+    /* Real European RLOWFIX TEXT4/TABL source receipts retained beside PLRD.
+     * These prove the input bytes only; they do not authorize text pixels. */
+    Nexus_V1_RlowfixText startup_menu_text_source;
+    Nexus_V1_RlowfixTabl startup_menu_tabl_source;
+    int startup_menu_text_source_bound;
     /* Test/capture seam only: real startup remains zero until the TEXT4/TABL/
      * FONT256 Saturn text consumer and placement are externally admitted. */
     int startup_menu_text_consumer_capture_verified;

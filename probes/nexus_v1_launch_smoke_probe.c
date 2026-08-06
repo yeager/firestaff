@@ -81,6 +81,13 @@ int main(int argc, char **argv) {
     PROBE_ASSERT(engine.initialized == 1, "engine.initialized == 1 after init");
     PROBE_ASSERT(engine.source != NEXUS_SRC_NONE, "source != NEXUS_SRC_NONE");
     PROBE_ASSERT(engine.mechanics != NULL, "engine.mechanics != NULL (calloc'd)");
+    PROBE_ASSERT(engine.startup_menu_text_source_bound == 1 &&
+                     engine.startup_menu_text_source.valid == 1 &&
+                     engine.startup_menu_text_source.resource_index == 4 &&
+                     engine.startup_menu_text_source.string_count == 15 &&
+                     engine.startup_menu_tabl_source.valid == 1 &&
+                     engine.startup_menu_tabl_source.entry_count == 216,
+                 "real RLOWFIX TEXT4/TABL source receipt is bound");
 
     /* ── Step 2: Load Level 0 ─────────────────────────────────────── */
     printf("\n[Step 2: Load Level 0]\n");

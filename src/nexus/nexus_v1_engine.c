@@ -2949,8 +2949,22 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
         int rlowfix_size = 0;
         uint8_t *rlowfix = nexus_v1_read_file(engine, "RLOWFIX.BIN",
                                               &rlowfix_size);
-        if (!rlowfix || !nexus_v1_champions_init_from_rlowfix(
-                &engine->champions, rlowfix, (size_t)rlowfix_size)) {
+        int champions_bound = 0;
+        if (rlowfix) {
+            champions_bound = nexus_v1_champions_init_from_rlowfix(
+                &engine->champions, rlowfix, (size_t)rlowfix_size);
+            /* DMWeb DecodeRES/DecodeTEXT offsets for the authenticated
+             * European RLOWFIX corpus. Keep these as source receipts; the
+             * Saturn TEXT/FONT256 consumer remains capture-gated. */
+            engine->startup_menu_text_source_bound =
+                nexus_v1_rlowfix_text_parse(
+                    rlowfix, (size_t)rlowfix_size, UINT32_C(0xF270),
+                    &engine->startup_menu_text_source) &&
+                nexus_v1_rlowfix_tabl_parse(
+                    rlowfix, (size_t)rlowfix_size, UINT32_C(0x1232C),
+                    &engine->startup_menu_tabl_source);
+        }
+        if (!champions_bound) {
             memset(&engine->champions, 0, sizeof(engine->champions));
             engine->champions.leader_index = -1;
         }

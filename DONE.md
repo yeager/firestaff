@@ -52237,3 +52237,10 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   The real DM.BIN startup receipt also records one occurrence each of the
   SH-2-visible constants `0x25F00006` and `0x25F80000`; these remain address
   receipts, not proof of text-layer placement.
+
+# 2026-08-06 Nexus RLOWFIX startup text source handoff
+
+- ✅ Engine initialization now retains the authenticated European RLOWFIX
+  `TEXT` resource 4 (15 strings) and 216-entry `TABL` receipt beside the real
+  PLRD champion records. The launch smoke probe verifies this source handoff;
+  it does not promote the bytes into Saturn text pixels or open the menu gate.
