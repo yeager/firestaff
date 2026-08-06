@@ -66,6 +66,7 @@ int main(void)
     DM2_V1_AssetLoader loader;
     DM2_V1_BootProfile boot;
     DM2_V1_GdatHudM11CommandPlan plan;
+    DM2_V1_GdatHudM11CommandPlan portrait_plan;
     DM2_V1_BootStartupMenuHudGdatReceipt menu_hud_gdat;
     DM2_V1_HudPartyState party;
     DM2_V1_ViewportState viewport;
@@ -102,6 +103,7 @@ int main(void)
     memset(&loader, 0, sizeof(loader));
     dm2_v1_boot_profile_init(&boot);
     memset(&plan, 0, sizeof(plan));
+    memset(&portrait_plan, 0, sizeof(portrait_plan));
     memset(&menu_hud_gdat, 0, sizeof(menu_hud_gdat));
     memset(&party, 0, sizeof(party));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {
@@ -177,6 +179,30 @@ int main(void)
                command->destination.x, command->destination.y,
                command->destination.w, command->destination.h);
     }
+    party.champion_count = 1;
+    party.champions[0].occupied = 1;
+    party.champions[0].portrait_type_source_bound = 1;
+    party.champions[0].portrait_index = 0xffu;
+    if (!dm2_v1_gdat_hud_m11_command_plan_build_for_party(
+            &loader, &party, &portrait_plan) ||
+        portrait_plan.command_count != 10 ||
+        portrait_plan.commands[9].kind !=
+            DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT ||
+        portrait_plan.commands[9].gdat_category !=
+            DM2_GDAT_CATEGORY_MISCELLANEOUS ||
+        portrait_plan.commands[9].gdat_index != 0xfe ||
+        portrait_plan.commands[9].gdat_field != 0xfe ||
+        portrait_plan.commands[9].width != 31 ||
+        portrait_plan.commands[9].height != 31 ||
+        portrait_plan.commands[9].raw_hash == 0u ||
+        portrait_plan.commands[9].decoded_hash == 0u ||
+        portrait_plan.commands[9].palette_hash == 0u) {
+        fputs("FAIL: HeroType 255 did not retain the original GDAT fallback\n",
+              stderr);
+        ++failures;
+    }
+    dm2_v1_gdat_hud_m11_command_plan_free(&portrait_plan);
+    memset(&party, 0, sizeof(party));
     memset(framebuffer, 0, sizeof(framebuffer));
     unexpected_fetches = 0;
     dm2_v1_viewport_init(&viewport, framebuffer, DM2_VP_WIDTH);

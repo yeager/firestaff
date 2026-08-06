@@ -35,10 +35,16 @@
   Greatstone's 5,624 exported visual items are not a one-to-one substitute for
   the file's 11,854 ENT1 rows, which also include text, words, palettes and
   raw controls. Bind each remaining visible HUD/viewport route to its exact
-  GDAT record; do not make a count-derived asset table or fallback. The shared
+  GDAT record; do not make a count-derived asset table or arbitrary fallback. The shared
   IMG3/IMG9 decoder now belongs to the M10 loader boundary, so future
   real-data consumers must link that owner rather than introduce a parallel
   decoder or fallback.
+  2026-08-06 champion-portrait update: the canonical PC corpus has no direct
+  `CHAMPIONS/255/dtImage/0` row. SKProject's image query instead resolves
+  that missing address to `MISCELLANEOUS/254/dtImage/254`. The HUD may use
+  only that verified original fallback until a non-fallback HeroType is
+  observed in an authenticated save or original runtime capture; it must not
+  create a portrait row or select another champion image.
 
 - **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
   mirror side/depth, inscription/corridor invalidation and wall-material

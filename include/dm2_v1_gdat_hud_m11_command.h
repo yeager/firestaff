@@ -100,8 +100,9 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
     DM2_V1_GdatHudM11CommandPlan *out_plan);
 
 /* Extends the same verified HUD family with 0..4 occupied party portraits.
- * A portrait without its exact CHAMPIONS/HeroType/0 material rejects the
- * plan rather than replacing it with a coloured slot. */
+ * A missing CHAMPIONS/HeroType/0 image follows SKProject's exact
+ * MISCELLANEOUS/254/IMG/254 fallback; every other absent or malformed
+ * material rejects the plan rather than replacing it with a coloured slot. */
 int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     const DM2_V1_AssetLoader *loader,
     const DM2_V1_HudPartyState *party,

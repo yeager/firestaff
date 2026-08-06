@@ -9,6 +9,14 @@
 #include <stdlib.h>
 #include <string.h>
 
+/* SKProject c_querydb.cpp::DM2_QUERY_GDAT_IMAGE_ENTRY_BUFF:105-108.
+ * DRAW_CHAMPION_PICTURE asks for CHAMPIONS/HeroType/IMG/0, but an absent
+ * image is resolved by the original to MISCELLANEOUS/254/IMG/254.  This is
+ * an original GRAPHICS.DAT record, not a host portrait substitute. */
+#define DM2_V1_GDAT_IMAGE_FALLBACK_CATEGORY DM2_GDAT_CATEGORY_MISCELLANEOUS
+#define DM2_V1_GDAT_IMAGE_FALLBACK_INDEX 0xfeu
+#define DM2_V1_GDAT_IMAGE_FALLBACK_FIELD 0xfeu
+
 static uint32_t dm2_v1_gdat_hud_hash_bytes(uint32_t hash,
                                             const uint8_t *bytes,
                                             size_t size)
@@ -351,6 +359,14 @@ static int dm2_v1_gdat_hud_add_command(
     raw = dm2_v1_asset_load_sized(loader, command->gdat_category,
                                   command->gdat_index, command->gdat_field,
                                   &raw_size);
+    if (!raw && kind == DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT) {
+        command->gdat_category = DM2_V1_GDAT_IMAGE_FALLBACK_CATEGORY;
+        command->gdat_index = DM2_V1_GDAT_IMAGE_FALLBACK_INDEX;
+        command->gdat_field = DM2_V1_GDAT_IMAGE_FALLBACK_FIELD;
+        raw = dm2_v1_asset_load_sized(loader, command->gdat_category,
+                                      command->gdat_index,
+                                      command->gdat_field, &raw_size);
+    }
     if (!raw || raw_size == 0u || raw_size > UINT32_MAX ||
         !dm2_v1_asset_load_image_local_palette(
             loader, command->gdat_category, command->gdat_index,
@@ -510,9 +526,12 @@ int dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
         if (command_index >= plan->command_count) break;
         command = &plan->commands[command_index];
         if (command->kind != DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT ||
-            command->gdat_category != DM2_GDAT_CATEGORY_CHAMPIONS ||
-            command->gdat_index != party->champions[slot].portrait_index ||
-            command->gdat_field != 0 ||
+            !((command->gdat_category == DM2_GDAT_CATEGORY_CHAMPIONS &&
+               command->gdat_index == party->champions[slot].portrait_index &&
+               command->gdat_field == 0) ||
+              (command->gdat_category == DM2_V1_GDAT_IMAGE_FALLBACK_CATEGORY &&
+               command->gdat_index == DM2_V1_GDAT_IMAGE_FALLBACK_INDEX &&
+               command->gdat_field == DM2_V1_GDAT_IMAGE_FALLBACK_FIELD)) ||
             destination->x < 0 || destination->y < 0 || destination->w <= 0 ||
             destination->h <= 0 || destination->x + destination->w > DM2_VP_WIDTH ||
             destination->y + destination->h > DM2_VP_HEIGHT) {

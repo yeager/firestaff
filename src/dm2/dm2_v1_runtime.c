@@ -6341,7 +6341,7 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         memcpy(source_first_name, champ->first_name,
                DM2_V1_HUD_CHAMPION_NAME_MAX);
         source_first_name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
-        if (dst->occupied && source_champion[255] != 0xffu) {
+        if (dst->occupied) {
             dst->portrait_index = source_champion[255];
             dst->portrait_type_source_bound = 1;
         }

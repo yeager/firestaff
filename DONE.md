@@ -52110,3 +52110,13 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   without changing source identity or enabling synthetic fallbacks. The real
   English root boot smoke verifies `DMN_ABS.TXT` (210 bytes) through this path;
   the nested ISO inside the 7z archive remains intentionally uninspected.
+
+# 2026-08-06 DM2 champion portrait source fallback
+
+- ✅ Removed the test-constructed `CHAMPIONS/255` portrait path. The canonical
+  PC `GRAPHICS.DAT` has no direct row at that address. The HUD now follows
+  SKProject `c_querydb.cpp::DM2_QUERY_GDAT_IMAGE_ENTRY_BUFF` and, only when
+  that direct image is absent, consumes the original
+  `MISCELLANEOUS/254/dtImage/254` fallback. The real-data regression decodes
+  that exact source payload; no portrait pixels, palette or GDAT row are
+  fabricated.

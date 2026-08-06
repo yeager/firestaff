@@ -14723,6 +14723,20 @@ endif()
             -Wall -Wextra -O2)
     endif()
 
+    # Canonical G1-selected CHAMPIONS/255 source inventory; requires user media.
+    add_executable(test_dm2_v1_champion_gdat_real_data
+        tests/test_dm2_v1_champion_gdat_real_data.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_champion_gdat_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_champion_gdat_real_data PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+
     # Canonical G1-only DB4 creature receipt; built in CI but requires user
     # media, so it is deliberately not registered as a data-free CTest.
     add_executable(test_dm2_v1_g1_direct_creature_runtime_real_data
@@ -48434,23 +48448,6 @@ if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_door_mechanics.c
     add_test(
         NAME dm2_door_mechanics
         COMMAND test_dm2_door_mechanics
-    )
-endif()
-
-if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_champion_portrait_gdat.c"
-        AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_champion_portrait_gdat.c")
-    add_executable(test_dm2_v1_champion_portrait_gdat
-        tests/test_dm2_v1_champion_portrait_gdat.c
-        src/dm2/dm2_v1_champion_portrait_gdat.c
-        src/dm2/dm2_v1_asset_loader.c
-    )
-    target_include_directories(test_dm2_v1_champion_portrait_gdat PRIVATE ${CMAKE_SOURCE_DIR}/include)
-    if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
-        target_compile_options(test_dm2_v1_champion_portrait_gdat PRIVATE -Wall -Wextra -O2)
-    endif()
-    add_test(
-        NAME dm2_v1_champion_portrait_gdat
-        COMMAND test_dm2_v1_champion_portrait_gdat
     )
 endif()
 
