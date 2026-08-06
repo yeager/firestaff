@@ -4305,7 +4305,8 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "test_.*_pc34_compat\\.c$")
 # translation units explicitly below.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_export_import_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_utility_save_transaction_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_utility_save_transaction_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_import_path_pc34_compat.c")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
@@ -9211,6 +9212,8 @@ target_include_directories(firestaff_csb_v1_csbwin_save_loader_boundary_probe
     PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/tests)
 target_link_libraries(firestaff_csb_v1_csbwin_save_loader_boundary_probe
     PRIVATE firestaff_m10)
+target_compile_definitions(firestaff_csb_v1_csbwin_save_loader_boundary_probe
+    PRIVATE CSB_V1_CSBWIN_SAVE_LOADER_BOUNDARY_CONTRACT_ONLY=1)
 if(NOT MSVC)
     target_compile_options(firestaff_csb_v1_csbwin_save_loader_boundary_probe
         PRIVATE -Wall -Wextra -O2)
@@ -37244,6 +37247,9 @@ add_executable(test_nexus_v1_dgn_material_raster
     target_include_directories(test_csb_v1_csbwin_save_loader_boundary_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
     )
+    target_compile_definitions(test_csb_v1_csbwin_save_loader_boundary_pc34_compat PRIVATE
+        CSB_V1_CSBWIN_SAVE_LOADER_BOUNDARY_CONTRACT_ONLY=1
+    )
     if(NOT MSVC)
         target_compile_options(test_csb_v1_csbwin_save_loader_boundary_pc34_compat PRIVATE
             -std=c99 -Wall -Wextra -pedantic -O2)
@@ -37437,6 +37443,14 @@ add_executable(test_nexus_v1_dgn_material_raster
                 ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_csb_fssb_production_boundary.py
         )
         set_tests_properties(csb_fssb_production_boundary PROPERTIES
+            LABELS "tier1;csb;save;production;source-boundary;no-synthetic-data"
+        )
+        add_test(
+            NAME csb_compact_save_import_production_boundary
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_csb_compact_save_import_production_boundary.py
+        )
+        set_tests_properties(csb_compact_save_import_production_boundary PROPERTIES
             LABELS "tier1;csb;save;production;source-boundary;no-synthetic-data"
         )
     endif()

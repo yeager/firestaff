@@ -7,9 +7,9 @@
  * (CSBGAME.DAT magic), CEDT006.C:101-118 (save-section
  * dispatch), and Character.cpp:14 (reincarnation globals).
  *
- * v2 (2026-06-16, Champions GAP 3): real CSB v2.0 + v2.1
- * save importer.  The v1 detector is retained; the loader
- * now parses the CSB roster format and maps each champion
+ * This is a contract-only compact CSBGAME roster reader. The v1 detector is
+ * retained; the reader parses a CSB v2.0/v2.1 roster-shaped header and maps
+ * each champion
  * into Firestaff's CSB_V1_PartyState / CSB_V1_Champion
  * structures, applies the CSB-only reincarnation stat-cap
  * penalty (CHANGE7_24) to reincarnated champions, and
@@ -52,8 +52,9 @@ typedef enum {
 CSB_V1_SaveVariant csb_v1_detect_save_variant(
     const unsigned char* header, int headerLen);
 
-/* Champions GAP 3 is now implemented for the CSB v2.0/v2.1
- * roster format.  Returns 1. */
+/* Contract-only compact roster reader availability. It is not a production
+ * save/resume admission: ReDMCSB LOADSAVE.C F0435 requires the complete
+ * original save body before it can change live runtime state. Returns 1. */
 int  csb_v1_save_import_path_implemented(void);
 
 /* ── CSB save container layout ────────────────────────────── */
@@ -107,10 +108,11 @@ typedef enum {
     CSB_SAVE_IMPORT_ERR_BAD_MAGIC   = -3, /* not a CSB save */
     CSB_SAVE_IMPORT_ERR_VERSION     = -4, /* unsupported/mismatched version */
     CSB_SAVE_IMPORT_ERR_NO_CHAMPIONS = -5, /* count 0 or > 4 */
-    CSB_SAVE_IMPORT_ERR_TRUNCATED   = -6  /* buffer too short for records */
+    CSB_SAVE_IMPORT_ERR_TRUNCATED   = -6, /* buffer too short for records */
+    CSB_SAVE_IMPORT_ERR_INCOMPLETE_BODY = -7 /* original save body required */
 } CSB_SaveImportResult;
 
-/* Import a CSB v2.0/v2.1 save from an in-memory buffer into
+/* Contract-only: import a compact CSB v2.0/v2.1 roster-shaped buffer into
  * `party`.  Maps the CSB roster into CSB_V1_Champion slots,
  * applies the CHANGE7_24 reincarnation stat-cap penalty to
  * any champion flagged reincarnated, and stamps the party
@@ -123,11 +125,11 @@ int csb_v1_import_csb_save_buffer(CSB_V1_PartyState* party,
                                   const unsigned char* buf,
                                   long len);
 
-/* File wrapper around csb_v1_import_csb_save_buffer. */
+/* Contract-only file wrapper around csb_v1_import_csb_save_buffer. */
 int csb_v1_import_csb_save_file(CSB_V1_PartyState* party,
                                 const char* path);
 
-/* Build a CSB save buffer from a party (inverse of the
+/* Contract-only: build a compact CSB roster buffer from a party (inverse of the
  * importer; used for round-trip tests and re-export).  Writes
  * the 256-byte header + one record per present champion.
  * `version` must be CSB_SAVE_VERSION_V20 or _V21.  Returns
@@ -137,7 +139,7 @@ long csb_v1_build_csb_save_buffer(const CSB_V1_PartyState* party,
                                   unsigned char* out,
                                   long outCapacity);
 
-/* Legacy entry point (retained for the OMFATTANDE-stub gate).
+/* Contract-only legacy entry point (retained for the OMFATTANDE-stub gate).
  * Now performs a real path-based import into a throwaway
  * party just to validate the file; returns the champion count
  * on success, or a negative CSB_SaveImportResult on failure

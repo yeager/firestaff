@@ -3080,6 +3080,9 @@ level or consumer bindings.
     are also test-only. They reconstruct a CSBGAME-shaped party buffer and
     cannot stand in for an original CSBGAME/CSBWin save; production continues
     through the authenticated Atari/Amiga/CSBWin resume readers.
+  - 2026-08-06: The compact `CSBGAME` roster reader is likewise test/probe-
+    only. It has no complete original GAMEBLOCK body, so production save
+    discovery classifies raw bytes without admitting a roster as a resume.
   - 2026-07-31: The unbound D0L2/D0R2 partly-open-door and D1L/D1R
     floor/ceiling-ornament contracts now compile only into their tests. Their
     source metadata stays available for verification, but live pixels still

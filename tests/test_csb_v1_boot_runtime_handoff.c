@@ -1169,7 +1169,9 @@ static void test_enter_game_with_verified_profile_loads_dungeon(void)
               save_import_receipt.csbwin_path_present &&
               save_import_receipt.csbwin_filename_candidate &&
               !save_import_receipt.csbwin_should_attempt_import &&
-              save_import_receipt.csbwin_contract_match &&
+              !save_import_receipt.csbwin_contract_match &&
+              save_import_receipt.csbwin_loader_code ==
+                  CSB_SAVE_IMPORT_ERR_INCOMPLETE_BODY &&
               save_import_receipt.csbwin_shape ==
                   CSB_V1_CSBWIN_SHAPE_CSBGAME_V20 &&
               save_import_receipt.csbwin_file_kind ==

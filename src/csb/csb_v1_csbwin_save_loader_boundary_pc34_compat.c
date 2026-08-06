@@ -4,10 +4,10 @@
  * CSB V1 CSBWin save-side loader-boundary evidence gate.
  *
  * Implementation note: this module is intentionally thin. It
- * accepts caller-provided CSBWin / DM1 save bytes, feeds them into
- * the existing
- * csb_v1_import_csb_save_buffer() entry point, and records the
- * actual loader result against the documented contract. No new
+ * classifies caller-provided CSBWin / DM1 save bytes. The focused contract
+ * target may also feed compact CSBGAME fixtures into the historical roster
+ * reader and records that result against the documented contract. Production
+ * instead requires the complete original body before runtime import. No new
  * parser logic, no new decode path, no new data — just an
  * evidence-only gate that proves the loader boundary behaves as
  * documented today and surfaces which shapes remain OPEN-LARGE.
@@ -311,8 +311,10 @@ int csb_v1_csbwin_save_loader_boundary_check(
     size_t table_count = 0u;
     size_t i;
     const CSB_V1_CSBWinSaveShapeContract *row = NULL;
-    CSB_V1_PartyState party;
     int rc;
+#ifdef CSB_V1_CSBWIN_SAVE_LOADER_BOUNDARY_CONTRACT_ONLY
+    CSB_V1_PartyState party;
+#endif
 
     if (!out) {
         return CSB_SAVE_IMPORT_ERR_NULL;
@@ -348,19 +350,29 @@ int csb_v1_csbwin_save_loader_boundary_check(
          * loader returns ERR_NULL on NULL bytes and ERR_TRUNCATED
          * on zero-length input; both are deterministic and
          * covered by the test's per-shape expectations. */
+#ifdef CSB_V1_CSBWIN_SAVE_LOADER_BOUNDARY_CONTRACT_ONLY
         if (!bytes) {
             rc = csb_v1_import_csb_save_buffer(&party, NULL, 0);
         } else {
             rc = csb_v1_import_csb_save_buffer(&party, bytes, 0);
         }
+#else
+        rc = !bytes ? CSB_SAVE_IMPORT_ERR_NULL : CSB_SAVE_IMPORT_ERR_TRUNCATED;
+#endif
         out->loader_code    = rc;
         out->champion_count = (rc > 0) ? rc : 0;
         out->contract_match =
             (!row->expect_accept && rc == row->expect_code) ? 1 : 0;
         return rc;
     }
-    /* Normal path: feed the bytes through the existing loader. */
+    /* The compact reader has no complete original GAMEBLOCK body. It is a
+     * focused compatibility contract only; a product classifier must never
+     * mistake its roster result for a resumable original save. */
+#ifdef CSB_V1_CSBWIN_SAVE_LOADER_BOUNDARY_CONTRACT_ONLY
     rc = csb_v1_import_csb_save_buffer(&party, bytes, (long)size);
+#else
+    rc = CSB_SAVE_IMPORT_ERR_INCOMPLETE_BODY;
+#endif
     out->loader_code    = rc;
     out->champion_count = (rc > 0) ? rc : 0;
 
