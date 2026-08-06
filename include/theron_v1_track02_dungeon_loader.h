@@ -46,6 +46,10 @@ typedef struct {
     int unbound_item_refs;
     int raw_only_item_refs;
     unsigned int source_object_count;
+    /* Authenticated source-occurrence census.  These counts describe the
+     * DMBUILDER6 category byte retained in source_objects; they are not host
+     * object, inventory, or item-kind publication. */
+    unsigned int source_category_counts[THERON_ITEM_CATEGORY_COUNT];
     Theron_Track02SourceObjectOccurrence source_objects[
         THERON_TRACK02_SOURCE_OBJECT_MAX];
 } Theron_DungeonLoadResult;

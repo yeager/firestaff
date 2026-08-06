@@ -474,6 +474,12 @@
   handoff only; the original consumer still has to bind item kind/index to
   host inventory semantics before these records may become live objects.
 
+  **2026-08-06 source-category census:** the full loader result now counts
+  every retained authentic category-4..10/14/15 occurrence for both US and JP
+  variants. The test prints and cross-checks the census against the retained
+  source receipts; it remains a DMBUILDER category receipt, not an inferred
+  host item-kind or inventory mapping.
+
   The same map/ground-reference/item-record handoff now accepts the
   authenticated Japanese `TQJP02.bin` offset table through the full loader;
   this verifies JP source records but does not bind their host gameplay or

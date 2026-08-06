@@ -90,6 +90,7 @@ static int retain_source_object_occurrence(
         occurrence->decoded_valid = 1;
         occurrence->decoded = *decoded;
     }
+    result->source_category_counts[category]++;
     return 1;
 }
 

@@ -51009,6 +51009,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   variant offset table instead of silently reusing US offsets. The real JP BIN
   passes all seven dungeon object-record gates with zero raw-only records;
   host item/combat/graphics semantics remain explicitly unbound.
+- ✅ 2026-08-06 Theron Track 02 source-category census: the full US/JP dungeon
+  loader now retains a bounded count for each authentic DMBUILDER category
+  represented by its opaque source-object receipts. Regression coverage proves
+  the counts sum exactly to retained records and rejects unexpected categories;
+  no host item kind, inventory ID, or gameplay object is inferred.
 - ✅ 2026-08-06 Theron JP text fail-closed correction: the JP variant no longer
   exposes an unverified text offset or reads candidate ASCII/fill windows as
   codons. US text decoding is unchanged; JP text remains blocked until its
