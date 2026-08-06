@@ -356,9 +356,18 @@ static const char *pc_csb_data_dir(int argc, char **argv, char *buf,
 static int pc_csb_data_present(const char *dir)
 {
     CSB_V1_BootProfile profile;
+    int present;
+
     if (!dir || dir[0] == '\0') return 0;
     csb_v1_boot_profile_init(&profile);
-    return csb_v1_boot_scan_assets(&profile, dir) == 0;
+    present = csb_v1_boot_scan_assets(&profile, dir) == 0 &&
+              strstr(profile.graphics_path, "::") == NULL &&
+              strstr(profile.dungeon_path, "::") == NULL;
+    /* This probe parses GRAPHICS.DAT directly with fopen(). Archive-backed
+     * data remains launchable after M12 materializes it, but must skip here
+     * until that handoff has produced ordinary files. */
+    csb_v1_boot_cleanup(&profile);
+    return present;
 }
 
 /* ── Ornament blit math driver ───────────────────────────────── */
@@ -935,8 +944,9 @@ int main(int argc, char **argv)
     printf("data_dir=%s\n", dir ? dir : "(none)");
 
     if (!pc_csb_data_present(dir)) {
-        printf("SKIP: PC CSB GRAPHICS.DAT + DUNGEON.DAT not available; "
-               "set FIRESTAFF_CSB_PC_DATA to enable the real-data gate.\n");
+        printf("SKIP: a materialized PC CSB GRAPHICS.DAT + DUNGEON.DAT "
+               "pair is required; set FIRESTAFF_CSB_PC_DATA to enable "
+               "the real-data gate.\n");
         return 0;
     }
 

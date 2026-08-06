@@ -56,6 +56,27 @@ static const CSB_V1_VariantId g_csb_boot_graphics_variants[] = {
     CSB_V1_VARIANT_FMTOWNS_JA
 };
 
+/* M12 materializes an admitted A31E package under this exact leaf. The
+ * A31E title sidecar is only a presentation discriminator after that
+ * selected-package handoff: a shared or generic CSB directory can contain a
+ * valid PC34 GRAPHICS.DAT and an unrelated A31E TITL.DAT at the same time.
+ * ReDMCSB COMPILE.H:199-243 keeps the media families separate, so never use
+ * a neighbouring TITL.DAT to rewrite an already hash-admitted PC34 pair. */
+static int csb_v1_boot_root_is_selected_amiga31_cache(const char *root)
+{
+    const char *slash;
+    const char *backslash;
+    const char *leaf;
+
+    if (!root || !root[0]) return 0;
+    slash = strrchr(root, '/');
+    backslash = strrchr(root, '\\');
+    leaf = slash;
+    if (!leaf || (backslash && backslash > leaf)) leaf = backslash;
+    leaf = leaf ? leaf + 1 : root;
+    return strcmp(leaf, "csb-amiga31-en") == 0;
+}
+
 static uint32_t csb_v1_boot_packaged_capture_hash_step_pc34(uint32_t hash,
                                                             uint32_t value)
 {
@@ -8341,12 +8362,14 @@ int csb_v1_boot_scan_assets(CSB_V1_BootProfile *profile, const char *data_dir)
                          g_csb_boot_graphics_hashes[graphics_match]);
         profile->graphics_kind = csb_v1_boot_graphics_kind(graphics_path);
         profile->variant_id = g_csb_boot_graphics_variants[graphics_match];
-        /* A31E reuses PC34's GRAPHICS.DAT digest.  M12 admitted that
-         * edition only after proving TITL.DAT from the same original ADF;
-         * after materialization the sidecar remains beside GRAPHICS.DAT and
-         * is the only source-owned discriminator.  ReDMCSB APPA.C:51-53
-         * enters SWSH/ANIM FTL_TITL for this package, never TITLE.C. */
-        if (profile->variant_id == CSB_V1_VARIANT_PC34_EN) {
+        /* A31E shares PC34's GRAPHICS.DAT digest. M12 admits it only after
+         * proving TITL.DAT from the same original ADF, then materializes the
+         * selected package in its own cache leaf. A generic/shared root may
+         * contain both unrelated originals, so a nearby title must not
+         * rewrite the verified PC34 pair. ReDMCSB APPA.C:51-53 enters
+         * SWSH/ANIM FTL_TITL only for the selected A31E package. */
+        if (profile->variant_id == CSB_V1_VARIANT_PC34_EN &&
+            csb_v1_boot_root_is_selected_amiga31_cache(root)) {
             char amigaTitlePath[ASSET_PATH_MAX];
             if (FSP_JoinPath(amigaTitlePath, sizeof(amigaTitlePath), root,
                              "TITL.DAT") &&

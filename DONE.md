@@ -57417,6 +57417,14 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ The four focused regressions and the D1C real-asset ornament probe now
   own their sources explicitly. CI rejects a broad-glob relink.
 
+# 2026-08-06 CSB PC34/A31E cache provenance fix
+
+- ✅ Kept a verified PC34 GRAPHICS.DAT/DUNGEON.DAT pair as PC34 when a shared
+  cache also contains an A31E `TITL.DAT`. The sidecar now promotes A31E only
+  from M12's selected `csb-amiga31-en` cache package, which preserves the
+  original package provenance instead of using a nearby file as a variant
+  override.
+
 # 2026-08-06 Nexus UI-event dispatch boundary
 
 - ✅ Retail ISO/extracted Nexus now rejects host UI events before the Saturn

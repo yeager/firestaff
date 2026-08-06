@@ -3195,6 +3195,9 @@ level or consumer bindings.
     D3C F0107/F0108 viewport traces are test/probe-only. They retain source
     order evidence, not a production renderer. Reintroduce them only with
     authenticated GRAPHICS.DAT material and an M11 consumer.
+  - 2026-08-06: CSB's shared cache may hold several admitted editions. A31E's
+    TITL.DAT can discriminate its selected `csb-amiga31-en` cache package,
+    but cannot rewrite a verified PC34 pair in a generic root.
   - 2026-07-31: The unbound D0L2/D0R2 partly-open-door and D1L/D1R
     floor/ceiling-ornament contracts now compile only into their tests. Their
     source metadata stays available for verification, but live pixels still
