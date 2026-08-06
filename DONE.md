@@ -9,6 +9,16 @@
   captured.
 - ✅ `test_nexus_v1_champion_plrd` covers the no-synthetic-animation contract.
 
+# Nexus champion menu text quarantine (2026-08-06)
+
+- ✅ Champion startup presentation now mirrors the save route: its title,
+  subtitle, row labels and footer remain bounded `DRAW_NONE` capture slots.
+- ✅ No host English `DRAW_TEXT` command can reach the startup command package;
+  real PLRD/TABL/FONT256 text remains closed until the Saturn VDP2 consumer and
+  placement are captured.
+- ✅ `test_nexus_v1_startup_menu_pc34_compat` asserts the no-text-command
+  boundary while retaining the 20 real PLRD/portrait source route.
+
 # Theron startup font presentation gate (2026-08-06)
 
 # CSB FM Towns C06 Utility palette material (2026-08-06)

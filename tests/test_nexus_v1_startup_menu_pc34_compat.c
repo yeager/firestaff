@@ -3284,6 +3284,8 @@ int main(void)
                 NEXUS_V1_STARTUP_DRAW_PORTRAIT) {
                 ++portrait_draws;
             }
+            expect(draw_commands[slot].kind != NEXUS_V1_STARTUP_DRAW_TEXT,
+                   "Nexus champion startup presentation keeps text capture-gated");
         }
         expect(draw_count > 12 &&
                    draw_commands[0].kind ==

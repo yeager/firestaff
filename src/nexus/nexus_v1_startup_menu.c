@@ -3053,25 +3053,21 @@ int nexus_v1_startup_presentation_build_champion(
         return count;
     }
     if (nexus_v1_startup_menu_build_champion_chrome_render(&chrome)) {
-        if (!nexus_v1_startup_push_text(out_commands,
-                                        max_commands,
-                                        &count,
-                                        chrome.title_x,
-                                        chrome.title_y,
-                                        chrome.title,
-                                        NEXUS_V1_STARTUP_TEXT_TITLE,
-                                        15,
-                                        0) ||
-            !nexus_v1_startup_push_text(out_commands,
-                                        max_commands,
-                                        &count,
-                                        chrome.subtitle_x,
-                                        chrome.subtitle_y,
-                                        chrome.subtitle,
-                                        NEXUS_V1_STARTUP_TEXT_SHADOW,
-                                        15,
-                                        0)) {
-            return count;
+        int opaque_chrome;
+        /* Champion chrome is source-owned TEXT4/TABL material, not the
+         * English host strings retained by the compatibility planner. Keep
+         * two bounded accounting slots, matching the save route, until the
+         * Saturn VDP2 text consumer is captured. */
+        for (opaque_chrome = 0; opaque_chrome < 2; ++opaque_chrome) {
+            Nexus_V1_StartupDrawCommand opaque;
+            nexus_v1_startup_draw_clear(&opaque);
+            opaque.kind = NEXUS_V1_STARTUP_DRAW_NONE;
+            if (!nexus_v1_startup_push_draw(out_commands,
+                                            max_commands,
+                                            &count,
+                                            &opaque)) {
+                return count;
+            }
         }
     }
     row_count = nexus_v1_startup_champion_snapshot_build_render_rows(
@@ -3113,22 +3109,12 @@ int nexus_v1_startup_presentation_build_champion(
                 return count;
             }
         }
-        if (render_row->label[0] != '\0' &&
-            !nexus_v1_startup_push_text(out_commands,
-                                        max_commands,
-                                        &count,
-                                        render_row->text_x,
-                                        render_row->text_y,
-                                        render_row->label,
-                                        NEXUS_V1_STARTUP_TEXT_SMALL,
-                                        render_row->text_color,
-                                        render_row->shadow_color)) {
-            return count;
-        }
-        if (render_row->label[0] == '\0') {
+        {
             Nexus_V1_StartupDrawCommand opaque_row;
-            /* Preserve one bounded command slot per source row for capture
-             * accounting without emitting a fabricated text primitive. */
+            /* Preserve one bounded command slot per source row. Both the
+             * authenticated PLRD row and the ASCII compatibility row remain
+             * text-no-draw here; only a captured Saturn text consumer may
+             * turn TABL/FONT256 codes into pixels. */
             nexus_v1_startup_draw_clear(&opaque_row);
             opaque_row.kind = NEXUS_V1_STARTUP_DRAW_NONE;
             if (!nexus_v1_startup_push_draw(out_commands, max_commands,
@@ -3137,16 +3123,16 @@ int nexus_v1_startup_presentation_build_champion(
             }
         }
     }
-    if (footer.label[0] != '\0') {
-        (void)nexus_v1_startup_push_text(out_commands,
+    {
+        Nexus_V1_StartupDrawCommand opaque_footer;
+        /* The footer's English compatibility label is likewise not a retail
+         * Saturn text proof. Retain its bounded source slot only. */
+        nexus_v1_startup_draw_clear(&opaque_footer);
+        opaque_footer.kind = NEXUS_V1_STARTUP_DRAW_NONE;
+        (void)nexus_v1_startup_push_draw(out_commands,
                                          max_commands,
                                          &count,
-                                         footer.text_x,
-                                         footer.text_y,
-                                         footer.label,
-                                         NEXUS_V1_STARTUP_TEXT_SMALL,
-                                         15,
-                                         0);
+                                         &opaque_footer);
     }
     return count;
 }
