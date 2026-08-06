@@ -1367,6 +1367,11 @@ level or consumer bindings.
   A loose companion is now checked again after its bounded RAM read, so the
   GDAT reader consumes the same canonical PC-English bytes that passed the
   hash gate.
+  **2026-08-06 FM Towns GDAT gate update:** the bounded format classifier now
+  also requires HME-242's actual 3,407-entry raw catalogue. A made-up
+  0x8004 header and plausible buffer size therefore cannot enter even the
+  format receipt; the boot profile retains the stricter full-media identity
+  gate.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   deliberately non-mutating until the original 263-byte `c_hero` layout,

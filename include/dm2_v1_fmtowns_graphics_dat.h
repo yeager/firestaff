@@ -15,7 +15,9 @@ extern "C" {
  * version 5 (0x8005). The file is ~2.78 MB vs ~8.64 MB for DOS, with
  * 3407 raw entries vs 5624. The category/entry structure is identical;
  * the difference is fewer and smaller image assets (320x200 FM Towns
- * native resolution vs DOS VGA). */
+ * native resolution vs DOS VGA).  The format probe also requires the
+ * HME-242 catalogue's 3,407 raw entries.  A version word and a broadly
+ * plausible buffer size alone are not original-media evidence. */
 
 #define DM2_FMTOWNS_GDAT_CONTAINER_WORD    0x8004u
 #define DM2_FMTOWNS_GDAT_VERSION           4u
@@ -33,9 +35,10 @@ typedef struct {
     uint8_t  md5[16];
 } DM2_V1_FmtownsGdatReceipt;
 
-/* Probe whether a GRAPHICS.DAT buffer is the FM Towns version.
- * Returns 1 if the container word is 0x8004 and the size is in range.
- * Does not parse the full GDAT graph. */
+/* Probe whether a GRAPHICS.DAT buffer is the known FM Towns retail shape.
+ * Returns 1 only for container word 0x8004, 3,407 raw entries and the
+ * expected size interval.  This is still a bounded format gate, not a
+ * substitute for the boot profile's full original-media identity check. */
 int dm2_v1_fmtowns_gdat_probe(const uint8_t *data, size_t size);
 
 /* Build a receipt describing the FM Towns GRAPHICS.DAT.

@@ -14,6 +14,7 @@ int dm2_v1_fmtowns_gdat_probe(const uint8_t *data, size_t size) {
     if (!data || size < 4) return 0;
     uint16_t w0 = rd16le(data);
     return w0 == DM2_FMTOWNS_GDAT_CONTAINER_WORD &&
+           rd16le(data + 2) == DM2_FMTOWNS_GRAPHICS_RAW_COUNT &&
            size >= DM2_FMTOWNS_GRAPHICS_MIN_SIZE &&
            size <= DM2_FMTOWNS_GRAPHICS_MAX_SIZE;
 }

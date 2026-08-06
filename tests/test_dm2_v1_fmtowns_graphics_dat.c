@@ -7,8 +7,16 @@ static void test_probe_valid(void) {
     uint8_t buf[2 * 1024 * 1024];
     memset(buf, 0, sizeof(buf));
     buf[0] = 0x04; buf[1] = 0x80;
-    buf[2] = 0x4f; buf[3] = 0x0d;
+    buf[2] = 0x4f; buf[3] = 0x0d; /* HME-242: 3407 raw entries */
     assert(dm2_v1_fmtowns_gdat_probe(buf, sizeof(buf)) == 1);
+}
+
+static void test_probe_rejects_synthetic_raw_count(void) {
+    uint8_t buf[2 * 1024 * 1024];
+    memset(buf, 0, sizeof(buf));
+    buf[0] = 0x04; buf[1] = 0x80;
+    buf[2] = 0x10; buf[3] = 0x00;
+    assert(dm2_v1_fmtowns_gdat_probe(buf, sizeof(buf)) == 0);
 }
 
 static void test_probe_wrong_version(void) {
@@ -33,13 +41,13 @@ static void test_receipt_valid(void) {
     uint8_t buf[2 * 1024 * 1024];
     memset(buf, 0, sizeof(buf));
     buf[0] = 0x04; buf[1] = 0x80;
-    buf[2] = 0x10; buf[3] = 0x00;
+    buf[2] = 0x4f; buf[3] = 0x0d;
 
     DM2_V1_FmtownsGdatReceipt r;
     assert(dm2_v1_fmtowns_gdat_receipt(buf, sizeof(buf), &r) == 0);
     assert(r.is_fmtowns == 1);
     assert(r.gdat_version == 4);
-    assert(r.raw_data_count == 16);
+    assert(r.raw_data_count == DM2_FMTOWNS_GRAPHICS_RAW_COUNT);
     assert(r.file_size == sizeof(buf));
 }
 
@@ -53,6 +61,7 @@ static void test_receipt_invalid(void) {
 
 int main(void) {
     test_probe_valid();
+    test_probe_rejects_synthetic_raw_count();
     test_probe_wrong_version();
     test_probe_too_small();
     test_probe_null();

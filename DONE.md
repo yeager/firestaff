@@ -81,6 +81,14 @@
   invoking any callback, leaving caller state untouched until the real
   raw-layout, record-link and allocation path is owned end to end.
 
+# DM2 FM Towns GDAT format gate (2026-08-06)
+
+- ✅ The HME-242 GRAPHICS.DAT classifier now requires the authentic 0x8004
+  container word, the real 3,407-entry raw catalogue and the bounded file
+  size. A fabricated version header in a similarly sized buffer no longer
+  receives an FM Towns format receipt. The boot profile's full source-media
+  hash gate remains the production admission owner.
+
 # Theron startup menu availability boundary (2026-08-06)
 
 - ✅ Soul Room mirrors without an authenticated Track 02 roster record remain
