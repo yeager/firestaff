@@ -55,6 +55,29 @@ int nexus_v1_smap_parse_header(const uint8_t *data, int data_size,
         out->tilemap_offset < 0x20U ||
         out->palette_offset < tilemap_end ||
         out->tileset_offset < palette_end) return 0;
+
+    /* DMWeb Dungeon Master Nexus/file-formats: tilemap bit 0 is unused and
+     * always zero; palette bit 15 is always one.  Rejecting violations here
+     * keeps a padded or synthetic LVMP-looking blob from reaching the map
+     * decoder as if it were an authentic Saturn automap. */
+    {
+        uint32_t index;
+        for (index = 0U; index < NEXUS_SMAP_TILE_WIDTH *
+                                  NEXUS_SMAP_TILE_HEIGHT; ++index) {
+            uint16_t tile_word = read_be16(data + out->tilemap_offset +
+                                           index * 2U);
+            if ((tile_word & 1U) != 0U ||
+                ((tile_word >> 1) & 0x1FFFU) >= (uint32_t)out->tile_count) {
+                return 0;
+            }
+        }
+        for (index = 0U; index < NEXUS_SMAP_PALETTE_COLORS; ++index) {
+            if ((read_be16(data + out->palette_offset + index * 2U) &
+                 0x8000U) == 0U) {
+                return 0;
+            }
+        }
+    }
     out->valid = 1;
     return 1;
 }

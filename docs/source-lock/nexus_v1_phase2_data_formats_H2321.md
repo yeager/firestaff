@@ -813,7 +813,7 @@ Source: `docs/NEXUS_FILE_CLASSIFICATION.md`
 | TITLE.BIN/CG surfaces | ⚠️ Raw read only | No VDP2 parser |
 | ITEM.IBS icons | ❌ NOT PARSED | Format unknown |
 | VDP1 texture decompression | ❌ NOT IMPLEMENTED | No VDP1 decompressor |
-| Minimap rendering | ❌ NOT IMPLEMENTED | SMAP\*.BIN not parsed |
+| Minimap rendering | ⚠️ SOURCE DECODE ONLY | All 16 retail SMAP LVMP files parse/decode; Saturn VDP2 placement and explored-state writes remain unproven |
 
 ---
 

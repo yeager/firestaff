@@ -50708,3 +50708,7 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   closes the remaining diagnostic/custom helper paths without inventing
   ornament pixels. The supplied DOS manual remains behavioral evidence only;
   the real Mac/window capture gaps stay open.
+- ✅ 2026-08-06 Nexus SMAP LVMP strictness: automap-parsern följer nu DMWebs
+  regler för oanvänd tilemap-bit 0, alltid-satt palette-bit 15 och bounded
+  tile-index. Alla 16 verkliga `SMAP00-15.BIN`-filer verifieras och dekoderas;
+  inga syntetiska automap-pixlar används.

@@ -24,11 +24,43 @@ static uint8_t *load_file(const char *path, int *out_size) {
 static int test_synthetic(void) {
     Nexus_V1_SmapHeader hdr;
     uint8_t bad[32];
+    uint8_t *valid;
+    const int valid_size = 0x31a0 + 64;
+    int i;
     memset(bad, 0, sizeof(bad));
     if (nexus_v1_smap_parse_header(bad, 32, &hdr)) return 1;
     if (nexus_v1_smap_parse_header(NULL, 0, &hdr)) return 1;
     memcpy(bad, "LVMP", 4);
     if (nexus_v1_smap_parse_header(bad, 32, &hdr)) return 1;
+    valid = (uint8_t *)calloc((size_t)valid_size, 1U);
+    if (!valid) return 1;
+    memcpy(valid, "LVMP", 4);
+    valid[4] = (uint8_t)(valid_size >> 24);
+    valid[5] = (uint8_t)(valid_size >> 16);
+    valid[6] = (uint8_t)(valid_size >> 8);
+    valid[7] = (uint8_t)valid_size;
+    valid[8] = 0; valid[9] = 0; valid[10] = 0x00; valid[11] = 0x20;
+    valid[12] = 0; valid[13] = 0x00; valid[14] = 0x2f; valid[15] = 0x80;
+    valid[16] = 0; valid[17] = 0x00; valid[18] = 0x2f; valid[19] = 0xa0;
+    valid[20] = 0; valid[21] = 0; valid[22] = 0x02; valid[23] = 0x00;
+    valid[24] = 0; valid[25] = 0x00; valid[26] = 0x31; valid[27] = 0xa0;
+    valid[28] = 0; valid[29] = 0; valid[30] = 0; valid[31] = 64;
+    for (i = 0; i < 256; ++i) {
+        valid[0x2fa0 + i * 2] = 0x80;
+    }
+    if (!nexus_v1_smap_parse_header(valid, valid_size, &hdr)) {
+        free(valid); return 1;
+    }
+    valid[0x20 + 1] = 1;
+    if (nexus_v1_smap_parse_header(valid, valid_size, &hdr)) {
+        free(valid); return 1;
+    }
+    valid[0x20 + 1] = 0;
+    valid[0x2fa0] = 0;
+    if (nexus_v1_smap_parse_header(valid, valid_size, &hdr)) {
+        free(valid); return 1;
+    }
+    free(valid);
     printf("  PASS synthetic\n");
     return 0;
 }

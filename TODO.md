@@ -5,6 +5,11 @@
   källkorpusar följer DMWebs fönsterregel; palettbindning, VDP1-upload och
   menyrendering är fortfarande capture-gated.
 
+- **NEXUS-SMAP-LVMP-STRICTNESS:** LVMP-dekodaren avvisar nu tilemap-bit 0,
+  paletteord utan DMWebs bit 15 och tile-index utanför den verkliga tileseten.
+  Alla 16 retailkartor passerar; VDP2-placering och explored-state-skrivning är
+  fortfarande capture-gated.
+
 - **NEXUS-HUD-SATURN-DISPATCH-CAPTURE:** `DM.BIN` now supplies the runtime
   hit-rectangle table and a raw, order-preserving screen hit-test. Keep this
   API placement-only until an original Saturn/VDP1 capture binds each region

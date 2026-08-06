@@ -1126,7 +1126,7 @@ typedef struct {
 | DMDF vertex stride bug | **HIGH** | Models loaded incorrectly |
 | VDP1 BITMAP texture | **HIGH** | Cannot display creature textures |
 | SAL/MAP sound format | **HIGH** | No audio playback |
-| SMAP\*.BIN format | **MEDIUM** | Minimap not available |
+| SMAP\*.BIN format | **MEDIUM** | Retail LVMP decode is available; Saturn VDP2 placement and explored-state writes remain unproven |
 | FACE.BIN portraits | **MEDIUM** | Champion portraits missing |
 | Full 24-champion roster | **MEDIUM** | Only 8 champions defined |
 | Shift-JIS kanji lookup | **MEDIUM** | All kanji displayed as "?" |
