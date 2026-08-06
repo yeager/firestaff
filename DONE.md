@@ -19,6 +19,12 @@
   made its direct regression compile the source explicitly. It loads no
   original DM1 data and has no M11/runtime caller.
 
+# DM1 mirror keyrot-combo-invclick synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only F0361/F0380 race fixture from M10 and made its
+  direct regression compile the source explicitly. It loads no original DM1
+  data and has no M11/runtime caller.
+
 # DM2 selected-corpus i18n verification (2026-08-07)
 
 - ✅ The focused DM2 i18n regression now reads only the explicitly selected

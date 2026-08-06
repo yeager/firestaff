@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-KEYROT-COMBO-INVCLICK-SYNTHETIC-AUDIT:** This F0361/F0380 race
+  fixture fabricates candidate, queue and redraw state. It loads no original
+  DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound command-queue owner is recovered.
+
 - **DM1-MIRROR-OPEN-THEN-RESELECT-SYNTHETIC-AUDIT:** This C159/C040 fixture
   fabricates champion, hand and slot-fingerprint state. It loads no original
   DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
