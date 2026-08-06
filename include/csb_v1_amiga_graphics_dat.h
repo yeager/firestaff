@@ -52,10 +52,19 @@ typedef struct {
     uint8_t              md5[16];
 } CSB_V1_AmigaGraphicsReceipt;
 
+typedef struct {
+    uint16_t compressedByteCount;
+    uint16_t decompressedByteCount;
+    uint32_t dataOffset;
+} CSB_V1_AmigaGraphicsItem;
+
 int csb_v1_amiga_graphics_probe(const uint8_t *data, size_t size);
 
 int csb_v1_amiga_graphics_receipt(const uint8_t *data, size_t size,
                                   CSB_V1_AmigaGraphicsReceipt *out);
+int csb_v1_amiga_graphics_item(const uint8_t *data, size_t size,
+                               uint16_t itemIndex,
+                               CSB_V1_AmigaGraphicsItem *out);
 
 #ifdef __cplusplus
 }

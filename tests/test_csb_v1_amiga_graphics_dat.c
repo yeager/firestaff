@@ -49,6 +49,17 @@ static void test_synthetic_valid(void) {
     CHECK(r.is_amiga == 1, "synthetic_is_amiga");
     CHECK(r.item_count == 749, "synthetic_count");
     CHECK(r.lang == CSB_AMIGA_LANG_UNKNOWN, "synthetic_lang");
+    buf[4] = 0; buf[5] = 4; /* item 0 compressed size */
+    buf[4 + (size_t)count * 2] = 0; buf[5 + (size_t)count * 2] = 6;
+    {
+        CSB_V1_AmigaGraphicsItem item;
+        CHECK(csb_v1_amiga_graphics_item(buf, total, 0, &item) == 1,
+              "item_table_accepts_source_record");
+        CHECK(item.dataOffset == header && item.compressedByteCount == 4 &&
+              item.decompressedByteCount == 6, "item_table_reports_be_fields");
+        CHECK(csb_v1_amiga_graphics_item(buf, total, count, &item) == 0,
+              "item_table_rejects_out_of_range_index");
+    }
     free(buf);
 }
 

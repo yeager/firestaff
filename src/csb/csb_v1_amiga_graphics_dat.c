@@ -29,6 +29,33 @@ int csb_v1_amiga_graphics_probe(const uint8_t *data, size_t size) {
     return 1;
 }
 
+int csb_v1_amiga_graphics_item(const uint8_t *data, size_t size,
+                               uint16_t itemIndex,
+                               CSB_V1_AmigaGraphicsItem *out) {
+    uint16_t count;
+    size_t table, offset;
+    uint16_t i;
+    if (!out || !csb_v1_amiga_graphics_probe(data, size)) return 0;
+    memset(out, 0, sizeof(*out));
+    count = rd16be(data + 2);
+    if (itemIndex >= count) return 0;
+    table = 4u;
+    offset = 4u + (size_t)count * 8u;
+    for (i = 0; i < count; ++i) {
+        uint16_t compressed = rd16be(data + table + (size_t)i * 2u);
+        if (i == itemIndex) {
+            if (offset + compressed > size) return 0;
+            out->compressedByteCount = compressed;
+            out->decompressedByteCount = rd16be(data + 4u + (size_t)count * 2u + (size_t)i * 2u);
+            out->dataOffset = (uint32_t)offset;
+            return 1;
+        }
+        if (offset + compressed > size) return 0;
+        offset += compressed;
+    }
+    return 0;
+}
+
 /* MD5 — minimal implementation for receipt hashing. */
 typedef struct { uint32_t s[4]; uint64_t count; uint8_t buf[64]; } MD5Ctx;
 
