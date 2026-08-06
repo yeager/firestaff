@@ -11,6 +11,14 @@
   an authenticated Saturn capture before adding menu transitions or screen
   coordinates.
 
+- **NEXUS-PLRD-TABL-NAME-CONSUMER:** Production champion initialization is
+  already fail-closed on the verified European `RLOWFIX.BIN` PLRD resource;
+  the legacy hardcoded roster is test-fixture-only and must not populate live
+  names, classes, stats, portraits or inventory. The real 20×64-byte PLRD
+  records and six TABL indices/codes are admitted, but the TEXT/FONT256
+  consumer that renders those codes as champion names has not been captured.
+  Keep live name fields empty until that Saturn text route is authenticated.
+
 - **NEXUS-STARTUP-V2-LABEL:** The launcher no longer advertises a Nexus V2
   presentation fallback. Keep the game card capture-gated until the real
   Saturn title/menu owner and VDP1/VDP2 composition are authenticated.

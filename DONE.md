@@ -51072,3 +51072,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   verifies the SND3 boundary and the audit is wired into CTest. Remaining
   visual Greatstone/SCK comparison and packaged macOS capture stay open in
   `DM1-PC34-FULL-ASSET-VISUAL-AUDIT`; no generated art was introduced.
+# Nexus roster provenance boundary
+
+2026-08-06: Audited the Nexus champion paths against the real European
+`RLOWFIX.BIN`. Production engine and launcher use the verified PLRD importer
+and clear the pool on absent or malformed data; the 24-entry hardcoded roster
+remains isolated to compatibility fixtures. PLRD health/stamina/mana,
+attributes, equipment ordinals, and six TABL indices/codes are source-backed.
+Rendered names remain intentionally unavailable until the Saturn
+TEXT/FONT256 consumer is captured, so no synthetic names are promoted.
