@@ -35,6 +35,17 @@
   existing regression as an explicit CTest target that compiles the source.
   It loads no original DM1 data and has no M11/runtime caller.
 
+# DM2 DB4 creature animation-state boundary (2026-08-13)
+
+- ✅ The real G1 creature material receipt now retains each source DB4
+  `info_slot`, `w8/iAnimSeq` and `w10/iAnimInfo` cursor word alongside its
+  exact `CREATURES/type/F9` material identity. Runtime no longer attempts the
+  V5 FB/FC/FD image route with fabricated command `0` and frame `0xffff`;
+  that route remains blocked until the live CAII command owner is connected.
+  The canonical PC-DOS corpus verifies the retained cursor words against the
+  original DB4 records. This removes a synthetic animation-state path without
+  claiming that the complete animation owner is finished.
+
 # DM2 G1 champion-mirror selection source binding (2026-08-07)
 
 - ✅ The champion-selection seam now consumes the committed real G1 mirror

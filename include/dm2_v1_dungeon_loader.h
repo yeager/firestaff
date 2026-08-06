@@ -256,6 +256,9 @@ typedef struct {
     uint16_t object_id;
     uint8_t direction;
     uint8_t creature_type;
+    uint8_t info_slot;
+    uint16_t animation_sequence;
+    uint16_t animation_info;
     uint32_t raw_hash;
     uint32_t raw_byte_count;
     int image_width;

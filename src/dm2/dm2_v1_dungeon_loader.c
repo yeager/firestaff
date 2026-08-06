@@ -5107,6 +5107,10 @@ int dm2_v1_g1_creature_map_chip_material_identity(
     hash = dm2_v1_g1_material_identity_step(hash, material->object_id);
     hash = dm2_v1_g1_material_identity_step(hash, material->direction);
     hash = dm2_v1_g1_material_identity_step(hash, material->creature_type);
+    hash = dm2_v1_g1_material_identity_step(hash, material->info_slot);
+    hash = dm2_v1_g1_material_identity_step(hash,
+                                             material->animation_sequence);
+    hash = dm2_v1_g1_material_identity_step(hash, material->animation_info);
     hash = dm2_v1_g1_material_identity_step(hash, (uint32_t)material->x);
     hash = dm2_v1_g1_material_identity_step(hash, (uint32_t)material->y);
     hash = dm2_v1_g1_material_identity_step(hash,
@@ -5279,6 +5283,13 @@ int dm2_v1_dungeon_materialize_g1_creature_map_chip_runtime(
              * direction bits, to select the view-relative atlas frame. */
             material->direction = (uint8_t)(record[15] & 3u);
             material->creature_type = creature_type;
+            /* SKWINSPX/src/v0/dme.h Creature::w8/w10 are the live
+             * iAnimSeq/iAnimInfo words. Keep them with the exact DB4 root;
+             * the CAII command that advances them is intentionally not
+             * guessed here. */
+            material->info_slot = record[5];
+            material->animation_sequence = RD16(record + 8);
+            material->animation_info = RD16(record + 10);
             material->raw_byte_count = raw_byte_count;
             material->raw_hash = dm2_v1_g1_raw_hash(raw_map_chip,
                                                      raw_byte_count);

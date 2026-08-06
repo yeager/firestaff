@@ -29260,7 +29260,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   explicit callback, but no live DB4 record → AI-info → animation-frame
   runtime owner is connected yet. Keep creature animation-state consumers
   fail-closed until that source traversal is bound; do not infer record or
-  animation offsets from a fixture.
+  animation offsets from a fixture. **2026-08-13 boundary correction:** the
+  real G1 DB4 material receipt now retains `info_slot`, `w8/iAnimSeq` and
+  `w10/iAnimInfo` from the exact source record and includes them in its
+  identity. Runtime no longer promotes the V5 FB/FC/FD route with fabricated
+  command `0` and frame `0xffff`; the live CAII command and complete
+  `DM2_1c9a_0958` traversal remain required before animation state can drive a
+  player-facing frame.
 
 - 2026-08-06: PC-DOS startup's decoded `TITLE/0/4` surface is now named and
   receipted as an original GDAT image route, not a fallback. It remains the

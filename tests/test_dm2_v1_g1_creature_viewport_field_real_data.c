@@ -79,10 +79,29 @@ int main(void)
 
         for (map = 0; map < dungeon->level_count; ++map) {
             DM2_V1_G1RuntimeMapCreatureReceipt creatures;
+            DM2_V1_G1CreatureMapChipRuntimeReceipt materials;
             DM2_V1_G1RuntimeMapValidationReceipt validation;
             int column_index = 0;
             int level;
             int x;
+
+            memset(&materials, 0, sizeof(materials));
+            if (dm2_v1_boot_g1_creature_map_chip_materials(
+                    &profile, map, &materials) && materials.valid) {
+                for (int i = 0; i < materials.material_count; ++i) {
+                    const DM2_V1_G1CreatureMapChipMaterial *material =
+                        &materials.materials[i];
+                    const uint8_t *raw_record =
+                        dm2_v1_dungeon_get_thing_record(
+                            dungeon, material->object_id, NULL, NULL, NULL);
+
+                    CHECK("runtime F9 material retains the exact DB4 cursor",
+                          raw_record &&
+                          material->info_slot == raw_record[5] &&
+                          material->animation_sequence == rd16(raw_record + 8) &&
+                          material->animation_info == rd16(raw_record + 10));
+                }
+            }
 
             memset(&creatures, 0, sizeof(creatures));
             if (!dm2_v1_dungeon_materialize_g1_runtime_map_creatures(

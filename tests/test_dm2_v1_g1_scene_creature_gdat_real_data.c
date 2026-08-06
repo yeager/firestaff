@@ -289,6 +289,14 @@ int main(void)
     material_receipt.materials[0].direction =
         (uint8_t)(dungeon.raw_data[root->record_offset + 15] & 3u);
     material_receipt.materials[0].creature_type = (uint8_t)trace.creature_type;
+    material_receipt.materials[0].info_slot =
+        dungeon.raw_data[root->record_offset + 5];
+    material_receipt.materials[0].animation_sequence =
+        (uint16_t)(dungeon.raw_data[root->record_offset + 8] |
+                   ((uint16_t)dungeon.raw_data[root->record_offset + 9] << 8));
+    material_receipt.materials[0].animation_info =
+        (uint16_t)(dungeon.raw_data[root->record_offset + 10] |
+                   ((uint16_t)dungeon.raw_data[root->record_offset + 11] << 8));
     material_receipt.materials[0].raw_hash =
         hash_bytes(raw_map_chip, raw_map_chip_size);
     material_receipt.materials[0].raw_byte_count =
