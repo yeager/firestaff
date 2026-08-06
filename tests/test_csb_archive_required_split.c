@@ -717,6 +717,9 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
     char portraitPath[ASSET_PATH_MAX];
     char programPath[ASSET_PATH_MAX];
     char selectedRuntimeRoot[ASSET_PATH_MAX];
+    char japaneseRuntimeRoot[ASSET_PATH_MAX];
+    char japaneseGraphicsPath[ASSET_PATH_MAX];
+    char japaneseDungeonPath[ASSET_PATH_MAX];
     if (!root || root[0] == '\0') {
         puts("skip: FIRESTAFF_CSB_FMTOWNS_DATA_DIR not set");
         return;
@@ -748,6 +751,28 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
                                selectedRuntimeRoot, "CHTWE.EXP") &&
                   path_exists(programPath),
               "selected FM Towns English version receives its own Game-program cache");
+
+    /* The FM Towns CD has two independently hash-verified game packages.
+     * ReDMCSB COMPILE.H EXEID61 lines 367-375 maps F31J to CHTWJ; do not
+     * let a prior F31E materialization satisfy the Japanese launch route by
+     * filename alone. */
+    check_int(M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
+                  &status, "fmtowns-ja", japaneseRuntimeRoot,
+                  sizeof(japaneseRuntimeRoot)) &&
+                  FSP_JoinPath(japaneseGraphicsPath,
+                               sizeof(japaneseGraphicsPath),
+                               japaneseRuntimeRoot, "GRAPHICS.DAT") &&
+                  FSP_JoinPath(japaneseDungeonPath,
+                               sizeof(japaneseDungeonPath),
+                               japaneseRuntimeRoot, "DUNGEON.DAT") &&
+                  FSP_JoinPath(programPath, sizeof(programPath),
+                               japaneseRuntimeRoot, "CHTWJ.EXP") &&
+                  asset_file_matches_md5(japaneseGraphicsPath,
+                                         "761d6fc588b31aeaaa9caf3725e111b9") &&
+                  asset_file_matches_md5(japaneseDungeonPath,
+                                         "7ca51c17ef8bd542ca5f0273672ec1a5") &&
+                  path_exists(programPath),
+              "selected FM Towns Japanese version receives only its authenticated CJDATA pair");
 }
 
 int main(void) {
