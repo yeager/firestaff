@@ -4588,6 +4588,12 @@ list(REMOVE_ITEM M10_SOURCES
 # M11/runtime caller; its explicit test and gate probe compile it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l_d2r_door_frame_top_edge_pc34_compat.c")
+# `dm1_v1_champion_panel_inventory_tail_pc34_compat.c` is a source-locked
+# slot/dirty-bit model with synthetic inventory rows. It reads no original
+# DM1 data and has no M11/runtime caller; its explicit regression compiles it
+# directly until a source-bound inventory-tail consumer is recovered.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_inventory_tail_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part

@@ -5,6 +5,14 @@
   GRAPHICS.DAT material, and has no M11/runtime caller; its explicit ReDMCSB
   regression already compiles the source directly.
 - ✅ Verification: `test_dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat`
+
+# DM1 champion inventory-tail synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the champion inventory-tail model from M10. It uses synthetic
+  inventory slot and dirty-bit rows, reads no original DM1 data and has no
+  M11/runtime caller; its explicit ReDMCSB regression now compiles the source
+  directly.
+- ✅ Verification: `dm1_v1_champion_panel_inventory_tail_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
 # DM1 D2L/D2R door-frame-top synthetic audit isolation (2026-08-06)
