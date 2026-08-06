@@ -4333,6 +4333,13 @@ list(REMOVE_ITEM M10_SOURCES
 # surfaces; keep G0212's duplicate only in its direct source-lock test.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0212_pc34_compat.c")
+# `dm1_v1_g0145_pc34_compat.c` and `dm1_v1_g0196_pc34_compat.c` are
+# source-locked Graphic558 coordinate copies with no production callers.
+# The live pit and door-ornament paths own their source-material zones
+# independently; retain these generated tables only in their direct tests.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0145_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0196_pc34_compat.c")
 # `dm1_v1_chest_open_while_another_open_pc34_compat.c` is a source-locked
 # scenario fixture with fixed Thing ordinals and a local Next-array model.
 # It reads no original DM1 data and has no M11/runtime caller; its dedicated

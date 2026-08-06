@@ -16,6 +16,13 @@
   made its direct regression compile the source explicitly. It loads no
   original DM1 data and has no M11/runtime caller.
 
+# DM1 G0145/G0196 Graphic558 synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the test-only D2R floor-pit frame and door-ornament coordinate
+  copies from M10. ReDMCSB confirms their source values, while the active
+  material routes use independent authenticated graphics zones; both direct
+  source-lock regressions retain the copies outside production archives.
+
 # DM1 G0212 smoke-palette synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the duplicate source-lock smoke palette table from M10. The live
