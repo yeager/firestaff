@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-C111-C040-SYNTHETIC-AUDIT:** This C111/C040 gate fabricates
+  party, panel and G0299 candidate state. It loads no original DM1 data and
+  has no M11/runtime caller; retain it only as explicit ReDMCSB coverage until
+  a source-bound command owner is recovered.
+
 - **DM1-MIRROR-C040-PANEL-EXIT-SYNTHETIC-AUDIT:** This C040 close/reopen
   fixture fabricates panel and candidate state. It loads no original DM1
   assets and has no M11/runtime caller; retain it only as explicit ReDMCSB

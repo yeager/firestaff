@@ -1,3 +1,11 @@
+# DM1 mirror C111/C040 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C111/C040 party/panel/G0299 fixture from M10.
+  It loads no original DM1 data and has no M11/runtime caller; the generated
+  mirror regression continues to compile the source explicitly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM2 class-0x30 spell-failure real GDAT binding (2026-08-13)
 
 # DM1 F0292 name-box clip synthetic audit isolation (2026-08-06)
