@@ -50,10 +50,13 @@ run_case() {
         --boot-probe --width 960 --height 600 --scale-mode 4 \
         --script 'wait120,key:enter,wait200' >"$log" 2>&1
 
+    # The fixed 320-frame boot script reaches tick 149 after the current
+    # source-owned CSB startup handoff. Keep this exact value so a timing
+    # regression cannot be hidden by the presentation-mode assertion.
     if ! grep -Fq 'FIRESTAFF BOOT PROBE READY: gameId=csb' "$log" ||
        ! grep -Fq "presentationMode=$expected" "$log" ||
        ! grep -Fq 'phase=inactive startupActive=0' "$log" ||
-       ! grep -Fq 'runtimeTick=148' "$log"; then
+       ! grep -Fq 'runtimeTick=149' "$log"; then
         cat "$log" >&2
         echo "FAIL: explicit CSB $mode launch did not retain presentation mode $expected" >&2
         exit 1
