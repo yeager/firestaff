@@ -47,6 +47,12 @@
   Saturn execution trace; keep host playback blocked until those observations
   are joined.
 
+- **NEXUS-SAL-HOST-PCM-BOUNDARY:** The production SAL path must remain a
+  byte-level receipt path only.  PCM format/rate/looping, voice ownership and
+  MAP→event handoff still require a Saturn SCSP/SDDRVS execution capture;
+  `nexus_sound_decode_sal()` is therefore kept as an explicit no-op until
+  that capture is admitted.
+
 - **NEXUS-V2-PROCEDURAL-PRESENTATION-BOUNDARY:** The production Nexus library
   no longer links the procedural V2 lighting, smooth-movement or touch/
   controller implementations. Their M11 adapters are fail-closed no-ops

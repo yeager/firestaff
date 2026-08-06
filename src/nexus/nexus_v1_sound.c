@@ -1298,7 +1298,17 @@ int nexus_sound_decode_sal(Nexus_SoundEngine *eng) {
     int decoded = 0;
     int i;
 
-    if (!eng || !eng->sal_data || eng->sal_size <= 0) return 0;
+    /* The directory parser is a byte-level receipt only.  Without a Saturn
+     * SCSP/SDDRVS capture proving PCM format, rate, looping, voice ownership
+     * and MAP-to-event handoff, retail SAL bytes must not become host PCM
+     * candidates in the production runtime.  Keep this public seam as an
+     * explicit no-op until that capture is admitted. */
+    if (!eng) return 0;
+    nexus_sound_free_decoded(eng);
+    return 0;
+
+    /* Unreachable until the Saturn capture gate above is reopened. */
+    if (!eng->sal_data || eng->sal_size <= 0) return 0;
     if (!eng->sal_tone_bank_directory_supported) return 0;
 
     nexus_sound_free_decoded(eng);
