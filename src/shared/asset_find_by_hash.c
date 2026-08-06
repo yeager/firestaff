@@ -3155,7 +3155,6 @@ static int external_archive_commit_entry(const char *archivePath,
     return 1;
 }
 
-#ifndef _WIN32
 static int scan_external_adf_by_md5(const char *archive_path,
                                     const char *adf_entry,
                                     const char *expected_md5,
@@ -3685,6 +3684,7 @@ static int adf_extract_entry_to_path(const char *adfPath, const char *entry,
     return result >= 0 && extract.extracted;
 }
 
+#ifndef _WIN32
 static int scan_external_adf_by_md5(const char *archive_path,
                                     const char *adf_entry,
                                     const char *expected_md5,
@@ -3762,8 +3762,6 @@ static int scan_external_adf_by_md5_list(const char *archive_path,
     free(image);
     return result < 0 ? 0 : matches.found_count;
 }
-#endif
-
 static int external_adf_extract_entry_to_path(const char *archive_path,
                                               const char *adf_entry,
                                               const char *entry,
@@ -3783,6 +3781,19 @@ static int external_adf_extract_entry_to_path(const char *archive_path,
     free(image);
     return result >= 0 && extract.extracted;
 }
+#else
+static int external_adf_extract_entry_to_path(const char *archivePath,
+                                              const char *adfEntry,
+                                              const char *entry,
+                                              const char *outFilePath) {
+    /* External archive extraction uses POSIX pipes and is unavailable here. */
+    (void)archivePath;
+    (void)adfEntry;
+    (void)entry;
+    (void)outFilePath;
+    return 0;
+}
+#endif
 
 static int scan_container_by_md5(const char *path, const char *expectedMd5,
                                  char *outPath, int outPathLen) {
