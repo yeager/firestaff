@@ -1271,6 +1271,10 @@
   the repository and the rendering test links the same production no-op seam;
   remaining work is only authenticated HUD tile-bank, layout, and portrait
   binding from Track 02.
+  2026-08-06 host-frame cleanup: M11 no longer paints its synthetic layout
+  border over an authenticated Track 02 startup atlas. The border remains
+  available only on the explicit no-media/fixture route; the real HUD frame
+  still needs its source-owned tile bank and geometry.
 
 - **THERON-V1-VIEWPORT-REAL-DATA:** The initial 32×27 Track 02 grid is now
   byte-faithful but its square values have no proven tile/material meaning.

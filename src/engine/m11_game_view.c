@@ -52249,10 +52249,11 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
      * Only fall back to synthetic M11 text when no font tiles exist AND
      * no Track 02 atlas was drawn. */
     if (state->theronState.startup_font_tiles_ready) {
-        m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
-                      plan->border_x, plan->border_y,
-                      plan->border_w, plan->border_h,
-                      plan->border_color);
+        /* The render plan still carries a host layout border for fixture and
+         * no-media routes.  It is not a Track 02 bitmap, so never paint it
+         * over an authenticated startup atlas.  THQUEST.ASM owns the
+         * startup surface; until its frame tiles are decoded, leaving the
+         * unbound border absent is the source-faithful result. */
         for (i = 0; i < plan->text_count; ++i) {
             const Theron_StartupRenderTextCommand *command = &plan->text[i];
             int ci = M11_COLOR_WHITE;

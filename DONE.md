@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Theron startup frame cleanup: when verified Track 02 atlas
+  pixels and font tiles are present, M11 no longer overlays its host-generated
+  border on top of them. The unbound frame remains absent until the original
+  HUD tile bank and layout are captured. `test_theron_v1_m11_launcher_handoff_boundary`
+  (46/46) and `test_theron_rendering` (25/25) pass.
+
 - ✅ 2026-08-06 Nexus retail Saturn boot receipt: the supplied European BIOS
   (`96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`) and
   the real English merged BIN/CUE from the user-owned archive booted in stock
