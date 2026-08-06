@@ -1,3 +1,12 @@
+# DM1 D1C F0111 door synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free D1C F0111 door geometry/transparency model from
+  M10. It uses synthetic blits, reads no original DM1 material and has no
+  M11/runtime caller. The independent D1C door receipt remains the
+  source-material production owner.
+- ✅ Verification: `dm1_v1_viewport_d1c_f0111_door_pc34_compat` passes; the
+  source object is absent from both M10 and M11 archives.
+
 # DM1 D1C F0107 wall-ornament synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D1C F0107 wall-ornament audit from M10. It fixes

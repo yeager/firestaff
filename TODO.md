@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D1C-F0111-SYNTHETIC-AUDIT:** This asset-free D1C F0111 geometry and
+  transparency model uses synthetic blits and no original data. It has no
+  M11/runtime caller; retain it as an explicit ReDMCSB regression while the
+  independent D1C door receipt remains the source-material owner.
+
 - **DM1-D1C-F0107-SYNTHETIC-AUDIT:** This asset-free F0107 model fixes
   D1C wall-ornament routing and local C10 probes. It has no original DM1 data
   input or M11/runtime caller; retain it as an explicit ReDMCSB regression
