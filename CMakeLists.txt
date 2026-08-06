@@ -4762,10 +4762,8 @@ set(NEXUS_M11_RUNTIME_SOURCES
     src/nexus/nexus_v1_rasterizer_runtime_noop.c
     src/nexus/nexus_v1_saturn_font_runtime_noop.c
     src/nexus/nexus_v2_hud_runtime_noop.c
-    src/nexus/nexus_v2_lighting.c
-    src/nexus/nexus_v2_lighting_runtime.c
-    src/nexus/nexus_v2_smooth_movement.c
-    src/nexus/nexus_v2_smooth_movement_runtime.c
+    src/nexus/nexus_v2_lighting_runtime_noop.c
+    src/nexus/nexus_v2_smooth_movement_runtime_noop.c
     src/nexus/nexus_v2_touch_controller_affordance.c
     src/nexus/nexus_v2_touch_runtime.c
 )
@@ -4777,6 +4775,19 @@ if(NEXUS_SOURCES)
     target_link_libraries(firestaff_nexus PUBLIC m)
     if(NOT MSVC)
         target_compile_options(firestaff_nexus PRIVATE -Wall -Wextra -O2)
+    endif()
+endif()
+
+if(TARGET firestaff_nexus)
+    add_executable(test_nexus_v2_production_runtime_boundary
+        tests/test_nexus_v2_production_runtime_boundary.c)
+    target_include_directories(test_nexus_v2_production_runtime_boundary PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_nexus_v2_production_runtime_boundary PRIVATE
+        firestaff_nexus)
+    if(NOT MSVC)
+        target_compile_options(test_nexus_v2_production_runtime_boundary PRIVATE
+            -Wall -Wextra -O2)
     endif()
 endif()
 
@@ -11999,6 +12010,13 @@ endif()
 include(CTest)
 
 if(BUILD_TESTING)
+ if(TARGET test_nexus_v2_production_runtime_boundary)
+  add_test(NAME nexus_v2_production_runtime_boundary
+           COMMAND test_nexus_v2_production_runtime_boundary)
+  set_tests_properties(nexus_v2_production_runtime_boundary PROPERTIES
+   LABELS "tier1;nexus;production_boundary;no_synthetic_data"
+   TIMEOUT 60)
+ endif()
  add_executable(test_redmcsb_l0051_l0100_source_audit_pc34_compat
   tests/test_redmcsb_l0051_l0100_source_audit_pc34_compat.c
   src/shared/redmcsb_l0051_l0100_source_audit_pc34_compat.c)

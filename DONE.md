@@ -28,6 +28,15 @@
   register/VRAM writes, tilemap/CLUT placement and runtime presentation remain
   capture-gated.
 
+# Nexus V2 production placeholder boundary (2026-08-06)
+
+- ✅ Removed procedural V2 lighting and smooth-movement runtime sources from
+  `firestaff_nexus`; the original implementations remain available only to
+  explicit probes.
+- ✅ Added fail-closed production adapters and a CTest boundary proving that
+  neither route exposes active state, ticks, or a synthetic viewport/HUD
+  presentation path.
+
 # DM1 FM Towns DECODEGRAPHIC RLE decoder (2026-08-06)
 
 - Full port of DECODEGRAPHIC (EDM.EXP 0x1f63c) inner RLE loop with
