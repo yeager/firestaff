@@ -38319,6 +38319,16 @@ add_executable(test_nexus_v1_slev_task_body_capture_plan
     src/nexus/nexus_v1_slev_task_body_capture_plan.c)
 target_include_directories(test_nexus_v1_slev_task_body_capture_plan PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME nexus_v1_slev_task_body_capture_plan COMMAND test_nexus_v1_slev_task_body_capture_plan)
+add_executable(test_nexus_v1_slev_task_corpus_receipt
+    tests/test_nexus_v1_slev_task_corpus_receipt.c)
+target_include_directories(test_nexus_v1_slev_task_corpus_receipt PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_slev_task_corpus_receipt PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_slev_task_corpus_receipt
+    COMMAND test_nexus_v1_slev_task_corpus_receipt)
+set_tests_properties(nexus_v1_slev_task_corpus_receipt PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;slev;real_data;skip_safe")
 add_test(NAME nexus_v1_slev_task_body_capture_plan_real
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_slev_task_body_capture_plan_real.sh)
 set_tests_properties(nexus_v1_slev_task_body_capture_plan_real PROPERTIES

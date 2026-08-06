@@ -202,8 +202,10 @@
 
 - **NEXUS-SLEV-TASK-CORPUS-RECEIPT:** The real `SLEV00.BIN` through
   `SLEV15.BIN` corpus now passes the common SH-2 entry-spine and bounded
-  PC-relative literal checks. Continue with execution-capture proof of task
-  body, callback owner and event semantics; no task opcode is executable yet.
+  PC-relative literal checks. `nexus_v1_slev_task_corpus_receipt` now
+  rehashes and profiles all 16 files in one retail-data test. Continue with
+  execution-capture proof of task body, callback owner and event semantics;
+  no task opcode is executable yet.
 
 - **NEXUS-CDDA-LEVEL-SELECTOR-CAPTURE:** The European CUE/ISO receipt proves
   the eight Red Book tracks 2–9, but neither the retained DM.BIN disassembly

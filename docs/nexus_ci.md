@@ -83,8 +83,9 @@ retail corpus, run:
     ctest --test-dir build --output-on-failure -R nexus
 
 The important current gates cover production source boundaries, startup,
-DGN/PRS3, SLEV/SAL receipts and mechanics no-mutation. These prove bounded
-source handling, not full playability.
+DGN/PRS3, all-16-file SLEV task-profile receipts, SLEV/SAL asset metadata and
+mechanics no-mutation. These prove bounded source handling, not full
+playability or task/event semantics.
 
 ---
 

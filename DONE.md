@@ -1,3 +1,13 @@
+# Nexus retail SLEV corpus receipt (2026-08-06)
+
+- ✅ Added `nexus_v1_slev_task_corpus_receipt`, which rehashes and reads all
+  16 authenticated `SLEV00.BIN`–`SLEV15.BIN` files from the real Nexus
+  directory. It verifies the common SH-2 entry spine, bounded PC-relative
+  literals, exact word count and the fail-closed `rules=0`/no-dispatch state.
+- ✅ The test passes against `/Users/bosse/.firestaff/data/nexus`; the
+  result proves an encoding/profile receipt only, not task semantics or an
+  event dispatcher.
+
 # Nexus retail readiness and historical-format fence (2026-08-06)
 
 - ✅ Built the actual `firestaff` executable and ran the runtime screenshot

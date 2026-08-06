@@ -29,8 +29,10 @@ matches `RHIFIX.BIN`, not `SDDRVS.TSK`.
   not parse real `SDDRVS.TSK` bytes, does not decode real opcodes, and should
   not be cited as runtime parity evidence.
 - `SLEV00.BIN` through `SLEV15.BIN` are real per-level supplementary files.
-  They remain plausible event/level-state inputs, but their format and runtime
-  owner are not proven in Firestaff.
+  The retail corpus test now authenticates and profiles all 16 files. Their
+  common 36-byte SH-2 entry spine and two bounded PC-relative literals are
+  proven as an encoding receipt; task-body opcodes, record meanings and the
+  runtime owner are still not proven.
 
 ## What Is Not Proven
 
@@ -52,8 +54,9 @@ Use this wording in status docs:
 > Nexus trigger/script ownership is unresolved. Firestaff currently has DGN
 > grid parsing and bounded runtime scaffolding, but no proven Nexus
 > trigger-script parser. `SDDRVS.TSK` is treated as a sound-driver task unless
-> disassembly or a real-data probe proves a trigger role. `SLEV*.BIN` files are
-> candidate per-level event data, still unparsed.
+> disassembly or a real-data probe proves a trigger role. `SLEV*.BIN` files
+> have a bounded entry-spine/profile receipt, but their task bodies remain
+> opaque candidate per-level event data.
 
 This keeps three possibilities open without over-claiming:
 
@@ -70,7 +73,8 @@ change provides at least one of:
 - a documented disassembly path from `DM.BIN` or `SDDRVS.TSK` into a real event
   dispatcher;
 - a bounded parser/probe that consumes real `SLEV*.BIN` or `SDDRVS.TSK` bytes
-  and identifies stable records/opcodes without invented tables;
+  and identifies stable task-body records/opcodes (beyond the already-proven
+  entry-spine receipt) without invented tables;
 - a real-asset runtime probe proving a specific trigger route, such as a known
   Nexus teleporter, stair transition, door event, trap, or level-completion
   event, and citing the owning data file or executable path.
