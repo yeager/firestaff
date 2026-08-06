@@ -4913,6 +4913,12 @@ list(REMOVE_ITEM M10_SOURCES
 # its generated mirror regression compiles it explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_pc34_compat.c")
+# `dm1_v1_mirror_candidate_c061_drop_resurrect_pending_pc34_compat.c` is a
+# contract-only C061/C028 fixture with local slot, party and panel state. It
+# loads no original DM1 data and has no M11/runtime caller; its generated
+# mirror regression compiles it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c061_drop_resurrect_pending_pc34_compat.c")
 # `dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_pc34_compat.c`
 # is a contract-only C040 close/reopen model with local panel and candidate
 # state. It loads no original DM1 assets and has no M11/runtime caller; its

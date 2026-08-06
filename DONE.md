@@ -13,6 +13,14 @@
   `verify_dm2_production_placeholder_boundary.py` pass against the mounted
   DM2 corpus. No release was made.
 
+# DM1 mirror C061/C028 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C061/C028 slot/party/panel fixture from M10.
+  It loads no original DM1 data and has no M11/runtime caller; the generated
+  mirror regression continues to compile the source explicitly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c061_drop_resurrect_pending_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 mirror C045/C160 rotation synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C045/C160 party/panel/item fixture from M10.
