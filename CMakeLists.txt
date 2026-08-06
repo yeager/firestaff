@@ -52757,6 +52757,14 @@ add_executable(test_dm2_v1_amiga_cd_dat
 target_include_directories(test_dm2_v1_amiga_cd_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm2_v1_amiga_cd_dat COMMAND test_dm2_v1_amiga_cd_dat)
 
+add_executable(test_dm2_v1_amiga_lzx_real_media
+    tests/test_dm2_v1_amiga_lzx_real_media.c
+    src/dm2/dm2_v1_amiga_lzx.c
+    src/shared/firestaff_amiga_adf.c
+)
+target_include_directories(test_dm2_v1_amiga_lzx_real_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm2_v1_amiga_lzx_real_media COMMAND test_dm2_v1_amiga_lzx_real_media)
+
 add_executable(test_dm2_v1_fmtowns_disc
     tests/test_dm2_v1_fmtowns_disc.c
     src/dm2/dm2_v1_fmtowns_disc.c

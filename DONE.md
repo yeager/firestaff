@@ -1,3 +1,14 @@
+- ✅ 2026-08-06 DM2 Amiga installer-media index: Firestaff now joins the
+  authentic `dm2_arcsplit1`…`dm2_arcsplit6` corpus strictly in RAM and parses
+  its original `DM2_archive.LZX` index without extracting or publishing a
+  file. The real supplied six-disk corpus verifies 35 entries and locates the
+  original `GRAPHICS.DAT` (3,493,879 bytes), `DUNGEON.DAT` (39,411 bytes),
+  `CD.DAT` and `music/SK00.MOD`…`SK09.MOD` receipts. The corpus stays
+  non-launchable: compressed LZX payloads must still be decoded in memory and
+  the resulting GRAPHICS/DUNGEON pair must pass the original hashes. The
+  real-media test streams nested ADFs through RAM only; no game data was
+  unpacked, copied or tracked.
+
 - ✅ 2026-08-06 DM2 platform documentation: corrected the obsolete claim that
   DM2 had no Amiga release. The variant guide now records the documented
   European 1.0 EN/FR/DE port, its six-floppy installer and original
