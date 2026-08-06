@@ -31,6 +31,12 @@
   SLEV/SFX publication remain uncaptured. Keep `nexus_v1_magic.c` test-only
   until those real consumers are bound.
 
+- **NEXUS-COMBAT-PRODUCTION-BOUNDARY:** The DM.BIN/ReDMCSB-shaped combat,
+  wound, XP and RNG study is now excluded from `firestaff_nexus`; production
+  uses a state-preserving fail-closed adapter. Keep the formula implementation
+  test-only until Saturn action/stat/writeback and SLEV/SFX consumers are
+  captured.
+
 - **NEXUS-STARTUP-SH2-VDP2-CAPTURE:** The authenticated European `DM.BIN`
   startup/menu routine is now checked as an SH-2 function with exact
   PC-relative references to the retail `MENU.BPK`/`STABG.BIN` literals and a

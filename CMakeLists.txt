@@ -67,7 +67,8 @@ set_tests_properties(nexus_v1_inventory_gameplay PROPERTIES
     LABELS "nexus;inventory;real-media;tier4")
 
 add_executable(test_nexus_v1_combat
-    tests/test_nexus_v1_combat.c)
+    tests/test_nexus_v1_combat.c
+    src/nexus/nexus_v1_combat.c)
 target_include_directories(test_nexus_v1_combat PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_combat PRIVATE firestaff_nexus)
@@ -76,7 +77,8 @@ set_tests_properties(nexus_v1_combat PROPERTIES LABELS "nexus;combat;tier4")
 
 add_executable(test_nexus_v1_magic
     tests/test_nexus_v1_magic.c
-    src/nexus/nexus_v1_magic.c)
+    src/nexus/nexus_v1_magic.c
+    src/nexus/nexus_v1_combat.c)
 target_include_directories(test_nexus_v1_magic PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_magic PRIVATE firestaff_nexus)
@@ -92,6 +94,16 @@ add_test(NAME nexus_v1_magic_production_boundary
          COMMAND test_nexus_v1_magic_production_boundary)
 set_tests_properties(nexus_v1_magic_production_boundary PROPERTIES
     LABELS "nexus;magic;production_boundary")
+
+add_executable(test_nexus_v1_combat_production_boundary
+    tests/test_nexus_v1_combat_production_boundary.c)
+target_include_directories(test_nexus_v1_combat_production_boundary PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_combat_production_boundary PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_combat_production_boundary
+         COMMAND test_nexus_v1_combat_production_boundary)
+set_tests_properties(nexus_v1_combat_production_boundary PROPERTIES
+    LABELS "nexus;combat;production_boundary")
 
 add_executable(test_nexus_v1_event
     tests/test_nexus_v1_event.c)
@@ -4821,6 +4833,10 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_spell_effects\\.c$")
 # action consumer. Keep them in focused tests and export only a production
 # fail-closed ABI adapter.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_magic\\.c$")
+# The combat/RNG implementation is a DM1-shaped formula study without a
+# captured Nexus action/stat/writeback consumer. Keep it in focused tests and
+# export only a state-preserving production ABI adapter.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_combat\\.c$")
 # M11 owns the shared host lifecycle and calls these runtime adapters.
 # Keep the procedural V2 renderer modules out of the production library, but
 # retain the explicit lifecycle implementations needed to satisfy M11.
@@ -4828,6 +4844,7 @@ set(NEXUS_M11_RUNTIME_SOURCES
     src/nexus/nexus_v1_rasterizer_runtime_noop.c
     src/nexus/nexus_v1_saturn_font_runtime_noop.c
     src/nexus/nexus_v1_magic_runtime_noop.c
+    src/nexus/nexus_v1_combat_runtime_noop.c
     src/nexus/nexus_v2_hud_runtime_noop.c
     src/nexus/nexus_v2_lighting_runtime_noop.c
     src/nexus/nexus_v2_smooth_movement_runtime_noop.c

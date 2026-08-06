@@ -27,6 +27,15 @@
 - ✅ This prevents authenticated table bytes from being mistaken for a
   captured Saturn spell dispatcher or SLEV/SFX effect consumer.
 
+# Nexus combat production boundary (2026-08-06)
+
+- ✅ Removed the DM1-shaped combat/RNG/wound/XP implementation from the
+  production archive. It remains available to explicit formula-study tests;
+  production now links a state-preserving fail-closed adapter.
+- ✅ Added a production-boundary regression proving attack, damage, RNG and
+  XP calls cannot mutate champion or creature state without a Saturn action
+  and writeback capture.
+
 # DM1 legacy dungeon bridge ornament fallback removal (2026-08-06)
 
 - ✅ Removed the legacy bridge's fabricated wall/floor ornament ordinal
