@@ -562,8 +562,11 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     int cmd = 0;
     int tx, ty, tl, td;
     int i;
+    int saturn_actions;
 
     if (!st || !engine) return 0;
+    saturn_actions = engine->source == NEXUS_SRC_NONE ||
+                     nexus_v1_action_semantics_proven();
     st->total_ticks++;
 
     /* Advance door animation each tick, independent of input cooldown.
@@ -582,6 +585,11 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
      * not be blocked by the normal step cooldown that was set when the
      * party walked onto the teleporter square.
      * Source: DM1 MOVESENS.C F0267/F0268 teleporter sensor (immediate). */
+    if (st->pending_teleport && !saturn_actions) {
+        /* Keep an unproven SDDRVS event pending for diagnostics; never turn
+         * it into a retail pose or level write. */
+        return 0;
+    }
     if (st->pending_teleport) {
         st->party_x = st->teleport_target_x;
         st->party_y = st->teleport_target_y;
@@ -934,8 +942,10 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                     }
                 }
 
-                /* Check transition table for level changes */
-                {
+                /* Check transition table for level changes.  The table is
+                 * still a compatibility owner until the Saturn event
+                 * dispatcher is captured. */
+                if (saturn_actions) {
                     const Nexus_V1_Transition *trans =
                         nexus_v1_transition_find(&engine->transitions,
                                                   st->map_index, t_x, t_y);
@@ -961,16 +971,18 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                      * route may invent an adjacent-level transition.
                      * Source: DM1 CLIKMENU.C F0364_COMMAND_TakeStairs,
                      *         MOVESENS.C F0267/F0268 stairs sensor. */
-                    if (tl >= 0) {
+                    if (saturn_actions && tl >= 0) {
                         st->pending_level_change = tl;
                         st->party_x = tx;
                         st->party_y = ty;
                         if (td >= 0) st->party_dir = td;
                     }
-                    nexus_sound_play(&engine->audio, NEXUS_SFX_STAIRS);
+                    if (saturn_actions)
+                        nexus_sound_play(&engine->audio, NEXUS_SFX_STAIRS);
                     break;
                 case NEXUS_EVENT_TELEPORT:
-                    nexus_mechanics_teleport(st, tx, ty, tl);
+                    if (saturn_actions)
+                        nexus_mechanics_teleport(st, tx, ty, tl);
                     break;
                 case NEXUS_EVENT_PIT_FALL:
                 case NEXUS_EVENT_CHUTE_FALL:
@@ -979,23 +991,28 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                      * no adjacent-level fallback is permitted here.
                      * Source: DM1 MOVESENS.C F0267/F0268 chute/pit sensor;
                      *         CLIKMENU.C:264-276 stairs special cases. */
-                    if (tl < 0) break;
+                    if (!saturn_actions || tl < 0) break;
                     st->pending_level_change = tl;
                     if (st->pending_level_change > NEXUS_MAX_LEVEL)
                         st->pending_level_change = NEXUS_MAX_LEVEL;
                     st->party_x = tx;
                     st->party_y = ty;
-                    nexus_sound_play(&engine->audio, NEXUS_SFX_PIT_FALL);
+                    if (saturn_actions)
+                        nexus_sound_play(&engine->audio, NEXUS_SFX_PIT_FALL);
                     break;
                 case NEXUS_EVENT_ALARM_TRIGGER:
                     /* Alarm: alert all creatures on the current level and start
                      * a bounded alarm timer that keeps them chasing.
                      * Source: DM1 MOVESENS.C F0277 — ALARM sets creature alert=255. */
-                    nexus_v1_creatures_alert_all(&engine->creatures, st->map_index);
-                    nexus_sound_play(&engine->audio, NEXUS_SFX_ALARM);
+                    if (saturn_actions) {
+                        nexus_v1_creatures_alert_all(&engine->creatures,
+                                                    st->map_index);
+                        nexus_sound_play(&engine->audio, NEXUS_SFX_ALARM);
+                    }
                     break;
                 case NEXUS_EVENT_DOOR_OPEN:
-                    nexus_sound_play(&engine->audio, NEXUS_SFX_DOOR_OPEN);
+                    if (saturn_actions)
+                        nexus_sound_play(&engine->audio, NEXUS_SFX_DOOR_OPEN);
                     break;
                 case NEXUS_EVENT_EXIT_REACHED:
                     /* Exit: only the final level exit completes the game.
@@ -1004,7 +1021,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                      * return-to-previous-level portals, but that behavior is
                      * not source-locked here.
                      * Source: DM1 MOVESENS.C exit square sensor. */
-                    if (st->map_index >= NEXUS_MAX_LEVEL) {
+                    if (saturn_actions && st->map_index >= NEXUS_MAX_LEVEL) {
                         st->game_over = 1;
                         st->game_over_reason = 1;
                         nexus_sound_play(&engine->audio, NEXUS_SFX_EXIT_REACHED);
@@ -1013,13 +1030,15 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 case NEXUS_EVENT_CROSS_WATER:
                     /* Water crossed with rope. No additional effect in V1.
                      * Source: DM1 MOVESENS.C water square sensor. */
-                    nexus_sound_play(&engine->audio, NEXUS_SFX_FOOTSTEP);
+                    if (saturn_actions)
+                        nexus_sound_play(&engine->audio, NEXUS_SFX_FOOTSTEP);
                     break;
                 case NEXUS_EVENT_CROSS_FIRE:
                     /* Fire crossed with fire-rune protection. No additional
                      * effect in V1.
                      * Source: DM1 MOVESENS.C fire square sensor. */
-                    nexus_sound_play(&engine->audio, NEXUS_SFX_FOOTSTEP);
+                    if (saturn_actions)
+                        nexus_sound_play(&engine->audio, NEXUS_SFX_FOOTSTEP);
                     break;
                 default:
                     break;
@@ -1206,7 +1225,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
 
         /* Check for total party death.
          * Source: DM1 CLIKMENU.C F0366 — game ends when all champions die. */
-        if (!nexus_mechanics_party_alive(st, engine)) {
+        if (saturn_actions && !nexus_mechanics_party_alive(st, engine)) {
             st->game_over = 1;
             st->game_over_reason = 2; /* all_dead */
         }
@@ -1298,7 +1317,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     /* Script VM: party move event.
      * Fires ON_XY rules when party steps on a scripted square.
      * Source: nexus_v1_script_vm.c nexus_script_on_party_move(). */
-    if (needs_redraw) {
+    if (needs_redraw && saturn_actions) {
         nexus_script_on_party_move(&engine->script_vm,
                                    st->party_x,
                                    st->party_y,
@@ -1317,7 +1336,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
         }
     }
 
-    return needs_redraw || (st->pending_level_change >= 0);
+    return needs_redraw || (saturn_actions && st->pending_level_change >= 0);
 }
 
 int nexus_mechanics_dispatch_event(Nexus_MechanicsState *st,

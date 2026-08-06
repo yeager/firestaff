@@ -390,11 +390,32 @@ int main(void) {
         destroy_engine(e);
     }
 
+    /* Test 20: retail event/transition writes remain closed. */
+    {
+        Nexus_V1_Engine *e = create_minimal_engine();
+        int old_x = e->mechanics->party_x;
+        int old_y = e->mechanics->party_y;
+        e->source = NEXUS_SRC_EXTRACTED;
+        nexus_mechanics_teleport(e->mechanics, 12, 13, 4);
+        nexus_v1_tick(e);
+        expect(e->mechanics->party_x == old_x &&
+               e->mechanics->party_y == old_y &&
+               e->mechanics->pending_teleport == 1,
+               "uncaptured retail teleport does not mutate pose");
+        e->mechanics->pending_teleport = 0;
+        e->mechanics->pending_level_change = 4;
+        nexus_v1_tick(e);
+        expect(e->game.current_level == 0 &&
+               e->mechanics->pending_level_change == 4,
+               "uncaptured retail level transition does not load");
+        destroy_engine(e);
+    }
+
     if (g_fail) {
         fprintf(stderr, "%d failures\n", g_fail);
         return 1;
     }
 
-    printf("ok: Nexus tick integration verified (19 tests)\n");
+    printf("ok: Nexus tick integration verified (20 tests)\n");
     return 0;
 }

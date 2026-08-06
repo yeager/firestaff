@@ -83,7 +83,8 @@ were corrected to stop presenting DM1 provisions as Nexus data.
   receipt. Creature death/XP/script/spawner follow-up, damage-display/message
   timers and game-over transitions are also closed. Fixture behavior remains
   available for isolated tests. The focused tick integration now covers the
-  retail no-mutation boundary (19 tests).
+  retail no-mutation boundary (20 tests), including pending teleport and level
+  transition writes.
 
 - ✅ 2026-08-06 Nexus retail provision mutation quarantine: the mechanics tick
   no longer decrements or penalizes unbound PLRD food/water in ISO/extracted

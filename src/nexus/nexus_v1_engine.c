@@ -10395,7 +10395,10 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
     /* Handle pending level change (stairs/chute/pit).
      * Loaded here so the level data is ready for next tick's render.
      * Source: DM1 CLIKMENU.C F0364 — load new dungeon on stairs step. */
-    if (engine->mechanics && engine->mechanics->pending_level_change >= 0) {
+    if (engine->mechanics &&
+        (engine->source == NEXUS_SRC_NONE ||
+         nexus_v1_action_semantics_proven()) &&
+        engine->mechanics->pending_level_change >= 0) {
         int new_level = -1;
         if (nexus_v1_engine_level_change(engine, &new_level) == 0) {
             printf("Nexus: party moved to level %d\n", new_level);
@@ -10407,7 +10410,10 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
      * Teleport target already committed in mechanics state;
      * sound effect already played in mechanics_tick.
      * Source: DM1 DUNGEON.C teleporter processing. */
-    if (engine->mechanics && engine->mechanics->pending_teleport) {
+    if (engine->mechanics &&
+        (engine->source == NEXUS_SRC_NONE ||
+         nexus_v1_action_semantics_proven()) &&
+        engine->mechanics->pending_teleport) {
         /* Teleport committed in mechanics_tick — just log it here */
         printf("Nexus: party teleported to (%d,%d) level %d\n",
                engine->mechanics->party_x, engine->mechanics->party_y,

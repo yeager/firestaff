@@ -203,8 +203,10 @@
   available, but registered doors still require the Saturn SDDRVS transition
   receipt before opening. Creature death/XP/script/spawner follow-up,
   damage-display/message timers and game-over transitions are likewise closed
-  for retail. The fixture path remains available for isolated helper tests;
-  restore each retail route only from a captured Saturn owner.
+  for retail. Unproven teleporter and level-transition writes are also held
+  pending rather than applied to retail pose/level state. The fixture path
+  remains available for isolated helper tests; restore each retail route only
+  from a captured Saturn owner.
 
 - **NEXUS-CONTAINER-LOOT-CAPTURE:** The old DM1-shaped Nexus container helper
   accepted caller-supplied chest/crate contents despite the retail DGN corpus
