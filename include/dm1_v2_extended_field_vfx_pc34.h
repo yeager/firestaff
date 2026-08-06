@@ -65,10 +65,7 @@ int dm1_v2_extended_vfx_trigger_field(
     int mapY,
     DM1_V2_ExtendedFieldEffectFamily family);
 
-/* Deterministic fallback for unknown field types.
- * Always succeeds (returns 0) so callers can ignore failure silently.
- *
- * Source: Firestaff DM1 V2 Phase 4 followup. */
+/* Unknown field types have no source-owned VFX record and fail closed. */
 int dm1_v2_extended_vfx_trigger_unknown_fallback(int mapX, int mapY);
 
 #ifdef __cplusplus

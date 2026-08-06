@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 DM1 V2 unknown-field VFX fail-closed: removed the last
+  success-valued no-op fallback from the extended field effect API. Unknown
+  pits/stairs/teleporter/fake-wall families now return no-draw, matching the
+  ReDMCSB source boundary; authenticated V1 field bitmaps remain the only
+  admitted visual owner. `test_dm1_v2_extended_field_vfx_pc34` passes.
+
 - ✅ 2026-08-06 DM1 F0190 creature-attribute handoff: fixed the M11
   killed-all group route to resolve the immutable ReDMCSB/PC34 creature
   profile before planning possessions. The previous zero-filled attribute

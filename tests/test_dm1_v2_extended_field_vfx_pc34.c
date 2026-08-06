@@ -86,9 +86,9 @@ int main(void) {
     CHECK(dm1_v2_extended_vfx_trigger_field(4, 5,
         (DM1_V2_ExtendedFieldEffectFamily)999) == -1);
 
-    /* Deterministic unknown fallback always returns 0 (success) */
-    CHECK(dm1_v2_extended_vfx_trigger_unknown_fallback(0, 0) == 0);
-    CHECK(dm1_v2_extended_vfx_trigger_unknown_fallback(-1, -1) == 0);
+    /* Unknown V2 effects fail closed; V1 source bitmaps own the surface. */
+    CHECK(dm1_v2_extended_vfx_trigger_unknown_fallback(0, 0) == -1);
+    CHECK(dm1_v2_extended_vfx_trigger_unknown_fallback(-1, -1) == -1);
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

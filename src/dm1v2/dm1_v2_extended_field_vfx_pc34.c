@@ -66,12 +66,11 @@ int dm1_v2_extended_vfx_trigger_field(
     return -1; /* Source field bitmaps are rendered by the V1 route. */
 }
 
-/* Deterministic fallback for unknown field types.
- * Always succeeds (returns 0) so callers can ignore failure silently.
- *
- * Source: Firestaff DM1 V2 Phase 4. */
+/* Unknown field types have no ReDMCSB-owned VFX record.  Fail closed so a
+ * caller cannot mistake an unrendered effect for a successfully materialized
+ * emitter.  The authenticated V1 field bitmap route remains authoritative. */
 int dm1_v2_extended_vfx_trigger_unknown_fallback(int mapX, int mapY) {
     (void)mapX;
     (void)mapY;
-    return 0;
+    return -1;
 }
