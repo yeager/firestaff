@@ -1341,7 +1341,7 @@
   2026-08-06 champion-portrait update: the canonical PC corpus has no direct
   `CHAMPIONS/255/dtImage/0` row. SKProject's image query instead resolves
   that missing address to `MISCELLANEOUS/254/dtImage/254`. The HUD may use
-  only that verified original fallback until a non-fallback HeroType is
+  only that verified original source-default image until a non-default HeroType is
   observed in an authenticated save or original runtime capture; it must not
   create a portrait row or select another champion image.
   2026-08-06 V2 archive audit: the retained V2/V2.2 manifest, PNG and

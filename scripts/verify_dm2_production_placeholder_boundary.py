@@ -196,6 +196,21 @@ def verify(repo: Path) -> list[str]:
         if forbidden in runtime:
             errors.append(f"runtime retains timer-byte mutation study: {forbidden}")
 
+    hud_path = repo / "src/dm2/dm2_v1_gdat_hud_m11_command.c"
+    if not hud_path.exists():
+        errors.append(f"missing {hud_path}")
+        return errors
+    hud = hud_path.read_text(encoding="utf-8")
+    if "DM2_V1_GDAT_IMAGE_FALLBACK" in hud:
+        errors.append("HUD mislabels SKProject's portrait source-default as fallback")
+    for source_default in (
+            "DM2_V1_GDAT_CHAMPION_PORTRAIT_DEFAULT_CATEGORY",
+            "DM2_V1_GDAT_CHAMPION_PORTRAIT_DEFAULT_INDEX",
+            "DM2_V1_GDAT_CHAMPION_PORTRAIT_DEFAULT_FIELD",
+    ):
+        if source_default not in hud:
+            errors.append(f"HUD portrait source-default binding missing: {source_default}")
+
     viewport_path = repo / "src/dm2/dm2_v1_viewport_renderer.c"
     if not viewport_path.exists():
         errors.append(f"missing {viewport_path}")

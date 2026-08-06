@@ -108,7 +108,7 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
 
 /* Extends the same verified HUD family with 0..4 occupied party portraits.
  * A missing CHAMPIONS/HeroType/0 image follows SKProject's exact
- * MISCELLANEOUS/254/IMG/254 fallback; every other absent or malformed
+ * MISCELLANEOUS/254/IMG/254 source-default image; every other absent or malformed
  * material rejects the plan rather than replacing it with a coloured slot. */
 int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     const DM2_V1_AssetLoader *loader,

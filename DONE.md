@@ -70,6 +70,13 @@
 - ✅ The real-data M11 startup/profile regression passes against the mounted
   PC-English DM2 corpus; no release was made.
 
+# DM2 HUD champion source-default audit (2026-08-06)
+
+- ✅ Reclassified the active HeroType-miss path as SKProject's original
+  `MISCELLANEOUS/254/dtImage/254` source-default record, not a Firestaff
+  placeholder. The HUD still rejects every other absent or malformed portrait
+  material and does not create a host portrait.
+
 # DM1 mirror C040 panel-exit synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040 close/reopen panel fixture from M10. It

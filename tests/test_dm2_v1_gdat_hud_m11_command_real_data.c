@@ -199,7 +199,7 @@ int main(void)
         portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].raw_hash == 0u ||
         portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].decoded_hash == 0u ||
         portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].palette_hash == 0u) {
-        fputs("FAIL: HeroType 255 did not retain the original GDAT fallback\n",
+        fputs("FAIL: HeroType 255 did not retain the original GDAT default\n",
               stderr);
         ++failures;
     }
