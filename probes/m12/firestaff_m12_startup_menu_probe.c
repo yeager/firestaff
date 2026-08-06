@@ -312,6 +312,20 @@ int main(void) {
                      file_contains(configPath, "language_explicit = 0"),
                  "system Swedish auto-selects the startup-menu language when no explicit override exists and unsupported games stay non-launching");
 
+    /* Steam Deck Game Mode can retain an English process LANG while its UI
+     * preference is carried by GNU LANGUAGE.  The launcher and its runtime
+     * l10n bridge must select the first Swedish preference, not LANG. */
+    remove_if_present(configPath);
+    portable_setenv("LANG", "en_US.UTF-8", 1);
+    portable_setenv("LANGUAGE", "sv_SE.UTF-8:en_US", 1);
+    M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);
+    probe_record(&tally,
+                 "INV_M12_00A_STEAMDECK_LANGUAGE",
+                 state.settings.languageIndex == 1 &&
+                     state.languageExplicit == 0,
+                 "Steam Deck LANGUAGE Swedish preference overrides an English runtime LANG");
+    portable_unsetenv("LANGUAGE");
+
     remove_if_present(configPath);
     portable_setenv("LANG", "C", 1);
     M12_StartupMenu_InitWithDataDir(&state, dataDir, NULL);

@@ -148,15 +148,20 @@ static int m12_starts_with_lang(const char* value, const char* langCode) {
             return 0;
         }
     }
-    return value[i] == '\0' || value[i] == '_' || value[i] == '-' || value[i] == '.' || value[i] == '@';
+    /* LANGUAGE is a colon-separated preference list on GNU/Linux.  Steam's
+     * Game Mode can retain LANG=en_US while LANGUAGE contains the Deck UI
+     * locale (for example sv_SE:en), so the first explicit preference is a
+     * valid locale boundary too. */
+    return value[i] == '\0' || value[i] == '_' || value[i] == '-' ||
+           value[i] == '.' || value[i] == '@' || value[i] == ':';
 }
 
 int M12_Config_GetAutoLanguageIndex(void) {
     const char* candidates[] = {
         getenv("LC_ALL"),
         getenv("LC_MESSAGES"),
-        getenv("LANG"),
-        getenv("LANGUAGE")
+        getenv("LANGUAGE"),
+        getenv("LANG")
     };
     size_t i;
     for (i = 0U; i < sizeof(candidates) / sizeof(candidates[0]); ++i) {

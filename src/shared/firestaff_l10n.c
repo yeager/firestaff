@@ -262,8 +262,11 @@ FS_Language fs_l10n_language_from_locale(const char *locale) {
 }
 
 FS_Language fs_l10n_detect_system_language(void) {
-    /* Check LANG, LC_ALL, LC_MESSAGES environment variables */
-    const char *env_vars[] = {"LC_ALL", "LC_MESSAGES", "LANG", NULL};
+    /* GNU/Linux LANGUAGE is a colon-separated user-preference list.  Steam
+     * Game Mode may expose the UI locale there while leaving LANG at its
+     * English runtime default, so honour it before LANG after the two
+     * locale-category overrides. */
+    const char *env_vars[] = {"LC_ALL", "LC_MESSAGES", "LANGUAGE", "LANG", NULL};
     int i;
     for (i = 0; env_vars[i]; i++) {
         const char *val = getenv(env_vars[i]);

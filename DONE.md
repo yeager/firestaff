@@ -35,7 +35,13 @@
   passes; capture-dependent tests remain explicitly skipped. This changes
   verification coverage only: PRS3 decoding, CLUT/VDP1 ownership and
   presentation remain capture-gated.
+# Steam Deck AppImage Swedish locale preference (2026-08-06)
 
+- ✅ The launcher and shared runtime language detector now honour GNU
+  `LANGUAGE` before a fallback `LANG`. This covers Steam Deck Game Mode where
+  `LANG` can remain `en_US.UTF-8` while the user-selected Steam UI preference
+  is `sv_SE.UTF-8:en_US`. The M12 probe verifies that the Swedish setting is
+  selected without a stored explicit override.
 # Theron authentic VDC/VCE screen-space capture (2026-08-06)
 
 - ✅ A clean SIGINT shutdown of the instrumented Mednafen replay now emits
