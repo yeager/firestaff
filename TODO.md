@@ -225,7 +225,10 @@
   remaining capture gate only after a real consumer receipt binds the level,
   object, tile and palette routes. The production no-roster API now also keeps
   its successful forcefield state instead of undoing the transition with
-  `NOT_READY`; it admits Theron alone and leaves companion data unavailable.
+  `NOT_READY`; it admits Theron alone and leaves companion display names
+  unavailable. When mirrors are selected, production now binds their real
+  Track 02 champion records (stats/skills/equipment) without inventing names;
+  the remaining gap is the original text consumer and later dungeon capture.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

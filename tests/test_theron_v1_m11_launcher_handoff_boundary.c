@@ -484,6 +484,35 @@ static void run_production_forcefield_transition_without_roster(void) {
                 "production Enter retains only the source-owned Theron slot");
 }
 
+static void run_production_forcefield_binds_selected_records_without_names(void) {
+    Theron_StartupFlow flow;
+    Theron_DungeonProgression progression;
+    Theron_V1_Party party;
+
+    theron_v1_startup_flow_init(&flow);
+    theron_v1_dungeon_progression_init(&progression);
+    expect_true(theron_v1_startup_choose_stage(
+                    &flow, &progression, THERON_DUNGEON_1_AKUTUBA) ==
+                    THERON_STARTUP_OK,
+                "production roster handoff chooses AKUTUBA");
+    expect_true(theron_v1_startup_select_mirror(&flow, 6) ==
+                    THERON_STARTUP_OK &&
+                    theron_v1_startup_select_mirror(&flow, 2) ==
+                    THERON_STARTUP_OK,
+                "production roster handoff selects two mirrors");
+    memset(&party, 0, sizeof(party));
+    expect_true(theron_v1_startup_enter_forcefield_with_roster(
+                    &flow, &party, NULL, 0) == THERON_STARTUP_OK,
+                "production roster handoff succeeds without text names");
+    expect_true(party.champion_count == 3 &&
+                    party.champions[1].health == 550 &&
+                    party.champions[2].health == 450,
+                "production roster handoff binds real Track 02 companion records");
+    expect_true(party.champions[1].name[0] == '\0' &&
+                    party.champions[2].name[0] == '\0',
+                "production roster handoff keeps unavailable text names empty");
+}
+
 int main(void) {
     printf("=== Theron V1 M12/M11 launcher handoff boundary ===\n");
 
@@ -491,6 +520,7 @@ int main(void) {
     run_track02_startup_overlay_regression();
     run_explicit_real_cue_campaign_if_available();
     run_production_forcefield_transition_without_roster();
+    run_production_forcefield_binds_selected_records_without_names();
     run_real_launcher_handoff_if_available();
 
     printf("\nTheron V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",

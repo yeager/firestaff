@@ -4181,6 +4181,71 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
         party->champions[THERON_CHAMPION_SLOT_THERON] = persisted_theron;
     }
 
+#if !defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
+    /* Production handoff: the startup receipt may not contain a US text
+     * consumer, but each selected mirror still needs a real Track 02
+     * champion record before the runtime can admit the party.  The roster
+     * record owns stats, skills and equipment; the optional text receipt owns
+     * only the display name.  Never publish an empty companion struct merely
+     * because a name payload is unavailable. */
+    {
+        Theron_V1_Champion saved_theron = party->champions[
+            THERON_CHAMPION_SLOT_THERON];
+
+        theron_v1_party_init(party, (int)flow->selected_dungeon);
+        if (saved_theron.name[0] != '\0') {
+            party->champions[THERON_CHAMPION_SLOT_THERON] = saved_theron;
+        }
+        for (int clear_slot = THERON_CHAMPION_SLOT_COMPANION_1;
+             clear_slot < THERON_MAX_CHAMPIONS;
+             ++clear_slot) {
+            memset(&party->champions[clear_slot], 0,
+                   sizeof(party->champions[clear_slot]));
+        }
+
+        for (int order = 0;
+             order < flow->companion_count && slot < THERON_MAX_CHAMPIONS;
+             ++order) {
+            int mirror = flow->selected_mirror_order[order];
+            int roster_index;
+            int name_bound = 0;
+
+            if (mirror < 0 ||
+                mirror >= THERON_STARTUP_HERO_MIRROR_COUNT ||
+                (flow->selected_mirrors_mask &
+                 (uint8_t)(1u << mirror)) == 0u) {
+                continue;
+            }
+            roster_index = theron_v1_startup_roster_index_for_mirror(mirror);
+            if (roster_names && roster_index >= 0 &&
+                roster_index < roster_name_count &&
+                roster_names[roster_index] &&
+                roster_names[roster_index][0] != '\0') {
+                name_bound = 1;
+            }
+            if (roster_index < 0 ||
+                theron_v1_party_set_companion(
+                    party, slot, (unsigned int)roster_index,
+                    (int)flow->selected_dungeon) != 0) {
+                continue;
+            }
+            if (name_bound) {
+                snprintf(party->champions[slot].name,
+                         sizeof(party->champions[slot].name),
+                         "%s",
+                         roster_names[roster_index]);
+            } else {
+                /* Stats are source-bound; the missing US text consumer keeps
+                 * the display label unavailable rather than inventing one. */
+                party->champions[slot].name[0] = '\0';
+            }
+            ++slot;
+        }
+        party->champion_count = slot;
+        party->active_slot = THERON_CHAMPION_SLOT_THERON;
+    }
+    return THERON_STARTUP_OK;
+#else
     for (int order = 0;
          order < flow->companion_count && slot < THERON_MAX_CHAMPIONS;
          ++order) {
@@ -4204,7 +4269,9 @@ Theron_StartupResult theron_v1_startup_enter_forcefield_with_roster(
         }
         ++slot;
     }
+    party->champion_count = slot;
     return THERON_STARTUP_OK;
+#endif
 }
 
 Theron_StartupResult theron_v1_startup_enter_world_from_forcefield(

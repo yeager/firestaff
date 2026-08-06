@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Theron forcefield companion-record handoff: production
+  `enter_forcefield_with_roster()` no longer advances empty companion slots
+  when the US text consumer is unavailable. Selected Soul Room mirrors now
+  bind the real Track 02 champion records for stats, skills and equipment;
+  display names remain empty unless a source text receipt supplies them.
+  The real-US M12/M11 launcher boundary is 57 passed, 0 failed, 1 skipped.
+
 - ✅ 2026-08-06 DM1 macOS runtime captures: captured clean Entrance and
   post-Entrance dungeon frames from the built Firestaff executable using the
   verified PC DOS 3.4 data directory and original save. Added the real images
