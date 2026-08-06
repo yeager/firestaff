@@ -54,6 +54,19 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
                                               int *out_category,
                                               int *out_index,
                                               int *out_field);
+
+static const uint8_t *dm2_v1_boot_fmtowns_english_dialogue_text(
+    void *userdata, int category, int index, int field, size_t *out_size)
+{
+    const DM2_V1_BootProfile *profile = (const DM2_V1_BootProfile *)userdata;
+
+    if (out_size) *out_size = 0u;
+    if (!profile || profile->platform != DM2_PLATFORM_FMTOWNS_JA ||
+        !dm2_v1_runtime_i18n_ready()) {
+        return NULL;
+    }
+    return dm2_v1_runtime_i18n_text(category, index, field, out_size);
+}
 #include <stdlib.h>
 #include <sys/stat.h>
 
@@ -7481,7 +7494,9 @@ int dm2_v1_boot_dialogue_open_panel_host_command(
     memset(out_command, 0, sizeof(*out_command));
     if (!profile || !profile->graphics_dat) return 0;
     gfx = (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
-    if (!dm2_v1_dialogue_open_panel_receipt(&gfx->loader, &out_command->draw))
+    if (!dm2_v1_dialogue_open_panel_receipt_with_text_override(
+            &gfx->loader, dm2_v1_boot_fmtowns_english_dialogue_text,
+            profile, &out_command->draw))
         return 0;
     raw = dm2_v1_asset_load_typed_sized(
         &gfx->loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 0,

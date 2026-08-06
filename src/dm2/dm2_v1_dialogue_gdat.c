@@ -187,8 +187,10 @@ int dm2_v1_dialogue_box_draw_plan(
     return 1;
 }
 
-int dm2_v1_dialogue_open_panel_receipt(
+int dm2_v1_dialogue_open_panel_receipt_with_text_override(
     const DM2_V1_AssetLoader *loader,
+    DM2_V1_DialogueTextOverride text_override,
+    void *text_override_userdata,
     DM2_V1_DialogueOpenPanelReceipt *out)
 {
     uint32_t hash = 2166136261u;
@@ -214,9 +216,24 @@ int dm2_v1_dialogue_open_panel_receipt(
      * lines 352-415. QUERY_GDAT_TEXT(0x1a, 0x81, 0/1) supplies the two
      * button labels before the source panel is blitted at rect 4. */
     for (i = 0; i < DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_COUNT; ++i) {
-        if (!dm2_dialogue_open_panel_text_decode(
-                loader, DM2_V1_DIALOGUE_BOX_INDEX, (uint8_t)i,
-                out->decoded_text[i], &out->text_size[i])) {
+        const uint8_t *override_text = text_override
+            ? text_override(text_override_userdata,
+                            DM2_GDAT_CATEGORY_DIALOG_BOXES,
+                            DM2_V1_DIALOGUE_BOX_INDEX, (int)i,
+                            &out->text_size[i]) : NULL;
+        if (override_text) {
+            const uint8_t *terminator;
+            if (out->text_size[i] == 0u ||
+                out->text_size[i] > DM2_V1_DIALOGUE_OPEN_PANEL_TEXT_CAPACITY ||
+                !(terminator = memchr(override_text, '\0', out->text_size[i])) ||
+                terminator == override_text) {
+                memset(out, 0, sizeof(*out));
+                return 0;
+            }
+            memcpy(out->decoded_text[i], override_text, out->text_size[i]);
+        } else if (!dm2_dialogue_open_panel_text_decode(
+                       loader, DM2_V1_DIALOGUE_BOX_INDEX, (uint8_t)i,
+                       out->decoded_text[i], &out->text_size[i])) {
             memset(out, 0, sizeof(*out));
             return 0;
         }
@@ -250,6 +267,14 @@ int dm2_v1_dialogue_open_panel_receipt(
     out->receipt_hash = hash ? hash : 1u;
     out->valid = 1;
     return 1;
+}
+
+int dm2_v1_dialogue_open_panel_receipt(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_DialogueOpenPanelReceipt *out)
+{
+    return dm2_v1_dialogue_open_panel_receipt_with_text_override(
+        loader, NULL, NULL, out);
 }
 
 static uint32_t dm2_dialogue_save_input_hash(

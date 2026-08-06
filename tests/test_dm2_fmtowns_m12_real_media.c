@@ -92,6 +92,7 @@ int main(void)
     if (english_companion && english_companion[0] != '\0') {
         DM2_V1_BootStartupLaunch launch;
         DM2_V1_BootStartupLaunch missing_companion;
+        DM2_V1_DialogueOpenPanelHostCommand dialogue;
         const uint8_t* text;
         size_t text_size = 0u;
         memset(&missing_companion, 0, sizeof(missing_companion));
@@ -109,6 +110,12 @@ int main(void)
         text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
         expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,
                "English text comes from the authenticated PC GDAT companion");
+        memset(&dialogue, 0, sizeof(dialogue));
+        expect(dm2_v1_boot_dialogue_open_panel_host_command(
+                   launch.profile, &dialogue) && dialogue.valid &&
+                   strcmp((const char *)dialogue.draw.text[0], "SAVE") == 0 &&
+                   strcmp((const char *)dialogue.draw.text[1], "CANCEL") == 0,
+               "FM Towns save dialogue consumes English labels from the PC companion");
         dm2_v1_boot_startup_launch_cleanup(&launch);
 
         /* Archive provenance must be accepted through the same RAM-only
@@ -125,6 +132,12 @@ int main(void)
             text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
             expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,
                    "ZIP companion supplies authenticated English text");
+            memset(&dialogue, 0, sizeof(dialogue));
+            expect(dm2_v1_boot_dialogue_open_panel_host_command(
+                       launch.profile, &dialogue) && dialogue.valid &&
+                       strcmp((const char *)dialogue.draw.text[0], "SAVE") == 0 &&
+                       strcmp((const char *)dialogue.draw.text[1], "CANCEL") == 0,
+                   "FM Towns save dialogue uses English labels from the ZIP companion");
             dm2_v1_boot_startup_launch_cleanup(&launch);
         }
     } else {

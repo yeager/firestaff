@@ -107,6 +107,13 @@ typedef struct {
     uint32_t receipt_hash;
 } DM2_V1_DialogueOpenPanelReceipt;
 
+/* An optional locale owner may provide already-decoded source text for the
+ * two QUERY_GDAT_TEXT records that OPEN_DIALOG_PANEL consumes. The callback
+ * remains keyed by the original GDAT address, so it cannot introduce a host
+ * label, geometry, or a text record not selected by c_dialog.cpp. */
+typedef const uint8_t *(*DM2_V1_DialogueTextOverride)(
+    void *userdata, int category, int index, int field, size_t *out_size);
+
 /* c_dialog.cpp::DM2_dialog_2066_33e7 receives these four eventqueue values
  * while the original save-name panel is open.  They are deliberately not
  * Firestaff menu actions: the host must first decode a source rectangle hit
@@ -163,6 +170,14 @@ int dm2_v1_dialogue_box_draw_plan(
  * skproject dm2data.cpp constant and must not be replaced by a host label. */
 int dm2_v1_dialogue_open_panel_receipt(
     const DM2_V1_AssetLoader *loader,
+    DM2_V1_DialogueOpenPanelReceipt *out);
+
+/* As above, but lets an authenticated locale overlay replace only a decoded
+ * source text payload. Passing NULL preserves the native GDAT result. */
+int dm2_v1_dialogue_open_panel_receipt_with_text_override(
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_DialogueTextOverride text_override,
+    void *text_override_userdata,
     DM2_V1_DialogueOpenPanelReceipt *out);
 
 /* Initializes the source save-dialogue state after OPEN_DIALOG_PANEL has

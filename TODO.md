@@ -27057,9 +27057,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   RAM. The companion now admits both a direct user file and a selected
   `archive.zip::data/graphics.dat` member through bounded RAM-only ZIP
   extraction and the canonical PC-English MD5; it is never unpacked to disk.
-  Bind that companion to each original GUI/dialogue text call before claiming
-  complete English UI; missing companion data blocks English FM Towns rather
-  than substituting text.
+  `c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL` now consumes the companion for
+  its two original `DIALOG_BOXES/0x81/dtText/0..1` labels, retaining the
+  native panel, raw4 rectangles, palette and source font. Bind the companion
+  to each remaining original GUI/dialogue text call before claiming complete
+  English UI; missing companion data blocks English FM Towns rather than
+  substituting text.
   Both `c_gfx_str.cpp::DM2_QUERY_GDAT_TEXT` and the QueryDB relay now accept
   only explicit decoded companion callbacks and otherwise consume the selected
   GDAT unchanged; remaining work is wiring that callback to every live M11

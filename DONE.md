@@ -1,3 +1,14 @@
+- ✅ 2026-08-06 DM2 FM Towns English save-dialogue labels: a selected,
+  hash-verified PC-English `GRAPHICS.DAT` companion now supplies the two
+  `c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL` GDAT labels to the real FM
+  Towns dialogue command. The selected Japanese CD still owns the panel image,
+  raw4 layout, palette and font; the English companion is bounded RAM-only
+  data, including `archive.zip::data/graphics.dat`, and is never unpacked to
+  disk. Native GDAT remains the fallback unless the authenticated FM Towns
+  runtime overlay is active. The fixture dialogue receipt, PC real-data
+  viewport route, and FM Towns real-media direct/ZIP companion regressions
+  pass.
+
 - ✅ 2026-08-06 Theron Track 02 monster source ledger: the authentic category-4
   thing-list records from all loaded dungeons are now copied into world state
   with source references, level coordinates, raw type/position, health words,
