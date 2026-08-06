@@ -4,6 +4,10 @@
   fixed zones and blit rectangles. It reads no original game data and has no
   M11/runtime caller; retain it only as explicit ReDMCSB coverage until a
   source-bound owner is recovered.
+- **DM1-MIRROR-FIRST-FOCUS-SYNTHETIC-AUDIT:** This first-C127/C040 focus
+  fixture fabricates party, panel and input-focus state. It has no original
+  DM1 data input or M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound interaction owner is recovered.
 
 - **DM1-CHEST-NINTH-ITEM-SYNTHETIC-AUDIT:** This hidden-tail chest model
   fabricates item types, weights and a sentinel. It reads no original game

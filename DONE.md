@@ -5,6 +5,15 @@
   ReDMCSB regression now compiles the source explicitly.
 - ✅ Verification: `test_dm1_v1_viewport_d0l_d0r_f0111_door_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
+# DM1 first-C127 focus synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only first-C127/C040 focus fixture from M10. It
+  fabricates party, panel and input-focus state, has no original DM1 data input
+  or M11/runtime caller, and the generated ReDMCSB regression compiles it
+  directly.
+- ✅ Verification: `dm1_v1_mirror_candidate_first_interaction_focus_pc34_compat`
+  passes with 74 assertions; the source object is absent from both M10 and M11
+  archives.
 
 # DM1 chest hidden-tail synthetic audit isolation (2026-08-06)
 
