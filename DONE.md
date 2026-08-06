@@ -55149,6 +55149,20 @@ alcove runtime and archive-media tests passed (4/4).
 
 # DM1 FM Towns Phar Lap symbol ownership (2026-08-06)
 
+- ✅ 2026-08-06 DM2 FM Towns startup/HUD parity review: compared the DM2
+  HME-242 route with the bounded P3/EGB methodology in
+  `parity-evidence/dm1_fmtowns_menu_p3_disassembly.md`, without borrowing
+  DM1 coordinates, text, pixels or input rules. The DM2 M11 real-media gate
+  was rerun against the selected original disc and PC-English companion: it
+  verifies RAM-only SWOOSH and TITLE playback, the selected IMG2 menu frame
+  FNV-1a `63310e49`, the local palette, real GDAT NEW GAME/RESUME rectangles,
+  and the deliberate no-synthetic-party boundary. The independent canonical
+  DOS GDAT HUD/material receipts also pass, confirming four source-owned HUD
+  commands and palette rejection. The stale TODO statement that listed END
+  playback as missing is corrected: END's 420 source frames already replay;
+  only its game-won handoff, TITLE CDDA dispatch and native SKULL continuation
+  remain open. No game data was unpacked or copied to disk.
+
 - ✅ The FM Towns startup receipt now parses the real English `EDM.EXP`
   `SYM1` table from the authenticated P3 symbol span. It verifies all 1,174
   bounded records and records the original entry addresses for
