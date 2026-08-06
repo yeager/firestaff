@@ -160,9 +160,11 @@ static uint8_t *build_synthetic(void)
 static void make_identity(const uint8_t *bytes, size_t size,
                           Nexus_V1_TitleResSourceIdentity *out_identity)
 {
+    const char *real_sha256 = getenv("FIRESTAFF_NEXUS_TITLE_BIN_SHA256");
     memset(out_identity, 0, sizeof(*out_identity));
     out_identity->sha256_verified = 1;
-    out_identity->sha256_hex = NEXUS_V1_TITLE_BIN_SHA256;
+    out_identity->sha256_hex = real_sha256 && real_sha256[0]
+        ? real_sha256 : NEXUS_V1_TITLE_BIN_SHA256;
     out_identity->source_fnv1a64 = fnv1a64(bytes, size);
 }
 
@@ -180,7 +182,22 @@ static void check_corpus(const uint8_t *bytes, size_t size, int synthetic)
     CHECK(corpus.valid && corpus.source_identity_bound &&
           corpus.res_directory_bound && corpus.all_titl_bound);
     CHECK(corpus.contiguous_chain_observed == 1);
-    CHECK(corpus.shared_prefix_observed == 1);
+    if (synthetic) {
+        CHECK(corpus.shared_prefix_observed == 1);
+    } else if (strcmp(identity.sha256_hex,
+                      NEXUS_V1_TITLE_BIN_ENGLISH_SHA256) == 0) {
+        /* English ISO: records 0, 2 and 3 share the prefix; record 1 is
+         * distinct. This is a real revision receipt, not a wildcard. */
+        CHECK(corpus.shared_prefix_observed == 0);
+        CHECK(corpus.records[0].prefix_fnv1a64 ==
+              corpus.records[2].prefix_fnv1a64);
+        CHECK(corpus.records[0].prefix_fnv1a64 ==
+              corpus.records[3].prefix_fnv1a64);
+        CHECK(corpus.records[0].prefix_fnv1a64 !=
+              corpus.records[1].prefix_fnv1a64);
+    } else {
+        CHECK(corpus.shared_prefix_observed == 1);
+    }
     CHECK(!corpus.colour_proven && !corpus.palette_proven &&
           !corpus.pixel_decode_permitted && !corpus.draw_permitted &&
           !corpus.presentation_permitted);
@@ -242,7 +259,15 @@ static void check_corpus(const uint8_t *bytes, size_t size, int synthetic)
     if (!synthetic) {
         /* Opaque real-asset witnesses verified against the canonical
          * TITLE.BIN: per-plane nonzero byte counts. No pixel meaning. */
-        static const uint32_t k_nonzero[4] = { 15187U, 912U, 1572U, 885U };
+        static const uint32_t k_nonzero_canonical[4] = {
+            15187U, 912U, 1572U, 885U
+        };
+        static const uint32_t k_nonzero_english[4] = {
+            15187U, 410U, 1572U, 885U
+        };
+        const uint32_t *k_nonzero =
+            strcmp(identity.sha256_hex, NEXUS_V1_TITLE_BIN_ENGLISH_SHA256) == 0
+                ? k_nonzero_english : k_nonzero_canonical;
         for (i = 0U; i < 4U; ++i) {
             const Nexus_V1_TitleTitlPpRecordReceipt *r = &corpus.records[i];
             uint32_t nonzero = 0U;

@@ -21,6 +21,12 @@ extern "C" {
 #define NEXUS_V1_TITLE_BIN_BYTES 112216U
 #define NEXUS_V1_TITLE_BIN_SHA256 \
     "51f1f18b68acf5993b00ffcb458ef2a7372b21595656f3ed5b95520c9a305fc3"
+/* Documented English Saturn ISO revision from docs/VERIFIED_HASHES.md.  Its
+ * RES* directory has the same bounded retail layout, but it is not the
+ * canonical capture revision above.  Accepting this identity admits the
+ * user's real European corpus without promoting title presentation. */
+#define NEXUS_V1_TITLE_BIN_ENGLISH_SHA256 \
+    "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44"
 
 #define NEXUS_V1_TITLE_RES_ENTRY_COUNT 60U
 #define NEXUS_V1_TITLE_RES_ENTRY_BYTES 12U
@@ -40,9 +46,10 @@ typedef enum {
 } Nexus_V1_TitleResClass;
 
 /* Live source identity. sha256_verified/sha256_hex attest the pinned
- * canonical asset class; source_fnv1a64 binds the exact live bytes (real
- * retail asset or a synthetic mirror in tests). No canonical FNV is pinned
- * so that synthetic dual-mode tests can bind their own live bytes. */
+ * canonical asset class or the documented English retail revision above;
+ * source_fnv1a64 binds the exact live bytes (real retail asset or a synthetic
+ * mirror in tests). No canonical FNV is pinned so that synthetic dual-mode
+ * tests can bind their own live bytes. */
 typedef struct {
     int sha256_verified;
     const char *sha256_hex;

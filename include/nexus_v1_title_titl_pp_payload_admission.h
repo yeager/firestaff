@@ -17,7 +17,10 @@ extern "C" {
  * two trailing bytes before the next record. The canonical dimensions are
  * 304x104, 160x28, 304x22, and 256x16 with a shared 0x8220 leading word
  * at the head of the 512-byte prefix, and all four 512-byte prefixes are
- * byte-identical in the attested source.
+ * byte-identical in the canonical attested source. The documented English
+ * retail revision keeps the same bounded record spans but has a distinct
+ * second prefix; the receipt records that observation instead of treating
+ * it as canonical shared data.
  * The four records form one contiguous sub-chain [0x2318, 0xe278) inside
  * the whole-file chain. This module binds those provenance facts only: no
  * byte or word is assigned colour, palette, image, pixel, or presentation
@@ -113,7 +116,7 @@ int nexus_v1_title_titl_pp_record_admit(
     Nexus_V1_TitleTitlPpRecordReceipt *out_receipt);
 
 /* Admits all four TITL PP payloads and binds their observed contiguous
- * sub-chain and the byte-identical shared 512-byte prefix observation.
+ * sub-chain and any shared 512-byte prefix observation.
  * Returns 1 only when every per-record receipt and the chain arithmetic
  * match the live source. */
 int nexus_v1_title_titl_pp_corpus_admit(

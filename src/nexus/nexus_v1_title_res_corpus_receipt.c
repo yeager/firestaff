@@ -78,14 +78,21 @@ static uint64_t fnv1a64(const uint8_t *bytes, size_t size)
     return value;
 }
 
+static int title_bin_sha256_is_verified(const char *sha256_hex)
+{
+    return sha256_hex &&
+        (strcmp(sha256_hex, NEXUS_V1_TITLE_BIN_SHA256) == 0 ||
+         strcmp(sha256_hex, NEXUS_V1_TITLE_BIN_ENGLISH_SHA256) == 0);
+}
+
 static int directory_recheck(const uint8_t *source_bytes, size_t source_size,
     const Nexus_V1_TitleResSourceIdentity *identity, uint64_t *out_source_fnv)
 {
     uint64_t source_fnv;
     uint32_t index;
     if (!source_bytes || !identity || source_size != NEXUS_V1_TITLE_BIN_BYTES ||
-        !identity->sha256_verified || !identity->sha256_hex ||
-        strcmp(identity->sha256_hex, NEXUS_V1_TITLE_BIN_SHA256) != 0 ||
+        !identity->sha256_verified ||
+        !title_bin_sha256_is_verified(identity->sha256_hex) ||
         !identity->source_fnv1a64) {
         return 0;
     }

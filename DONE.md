@@ -13,6 +13,22 @@
   The capture used SDL 2.32.70 through `sdl2-compat` with dummy video; it is
   authentic emulator memory evidence, not native Quartz/SDL2 evidence.
 
+# Nexus European TITLE.BIN revision admission (2026-08-06)
+
+- ✅ The documented English Saturn ISO `TITLE.BIN` identity is now admitted
+  alongside the canonical capture revision: SHA-256
+  `a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44`
+  (`MD5 0b293be24d06eb550b27442ac9e8924c`, 112,216 bytes). Unknown hashes
+  remain rejected.
+- ✅ Real English `RES*`, DGT2, MAPD/TIBG and CNFD admissions now pass. The
+  English TITL receipt records its real prefix split (records 0, 2 and 3
+  share the 512-byte prefix; record 1 differs) and plane non-zero census
+  `15187/410/1572/885`; it is not conflated with the canonical profile.
+- ✅ Verification with `/Users/bosse/.firestaff/data/nexus`: five TITLE.BIN
+  real-data admissions, `nexus_v1_title_mapd_real` and
+  `nexus_v1_startup_media_gate` all pass. No VDP2 placement or host draw route
+  was opened.
+
 # Theron real main-RAM loader capture parser correction (2026-08-06)
 
 - ✅ A fresh replay against the supplied hash-verified US Track 02 ISO and

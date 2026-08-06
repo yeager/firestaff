@@ -18,7 +18,7 @@ obundna konsumenter får inte ersättas med syntetiska ytor.
 
 | Resurs | Status |
 |---|---|
-| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG-avkodning och fem retailbilder verifierade; VDP2-placering saknas |
+| `TITLE.CG` + `TITLE.BIN` | MAPD/TIBG-avkodning och fem retailbilder verifierade för den kanoniska profilen och den dokumenterade engelska revisionen; VDP2-placering saknas |
 | `LOGOBG.DG2` | PP-pixlar och 256-entry BGR555-palette verifierade; lager/timing saknas |
 | `WARNING.BIN`, `GAMEOVER.BIN`, `STABG.BIN` | riktiga ytor avkodas och får bytesproveniens; presentation saknas |
 | `FACE.BIN` | 20 verkliga PRS3-porträtt, 56×56, med källpaletter; VDP1-destination saknas |
