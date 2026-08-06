@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Theron US roster/text audit: real US Track 02 still proves
+  only the `GO AWAY AND RESURRECT THERON` prompt at `0xa0722`; the JP ASCII
+  roster cluster is absent from the US receipt. Real US Track 19 item names,
+  item properties, level labels, and startup envelope remain independently
+  validated, but the bank-$1f/stage-2 disassembly still has no executing US
+  roster/text consumer or `$2600` RAM join. No host champion labels were
+  restored. See `docs/source-lock/tqr_v1_us_roster_consumer_audit_2026-08-06.md`.
+
 - ✅ 2026-08-06 Theron bitmap-route provenance audit: the real US/JP Track 02
   indexed samples remain available as byte-level diagnostics, but the startup
   route labels are now documented as layout-catalog candidates rather than
