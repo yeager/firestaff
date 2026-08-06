@@ -15121,6 +15121,7 @@ endif()
         src/dm2/dm2_v1_boot.c
         src/dm2/dm2_v1_fmtowns_cdda_music.c
         src/dm2/dm2_v1_fmtowns_disc.c
+        src/dm2/dm2_v1_fmtowns_anim_stream.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_runtime.c
@@ -49343,6 +49344,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_scene_light_control.c"
         src/dm2/dm2_v1_amiga_lzx.c
         src/dm2/dm2_v1_fmtowns_cdda_music.c
         src/dm2/dm2_v1_fmtowns_disc.c
+        src/dm2/dm2_v1_fmtowns_anim_stream.c
         src/dm2/dm2_v1_music_map.c
         src/dm2/dm2_v1_cdda_cd_dat.c
         src/dm2/dm2_v1_runtime.c
