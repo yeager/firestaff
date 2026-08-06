@@ -7661,16 +7661,19 @@ static int m11_csb_apply_boot_runtime_receipt(
     (void)m11_csb_startup_apply_host_receipt(
         state,
         &receipt->receipts.launch_host_receipt);
-    if (state->presentationMode == M12_PRESENTATION_V22_MODERN &&
+    if ((state->presentationMode == M12_PRESENTATION_V22_MODERN ||
+         csb_v2_presentation_mode_has_partial_source_overlay()) &&
         !csb_v22_inplace_draw_init()) {
         /* The CSB-specific finished-pack gate admitted the manifest, but the
          * selected cache still has to be readable by the live CSB renderer.
          * Fall back to V2.1 rather than using DM1's V2.2 cache. */
-        csb_v2_runtime_cleanup();
-        csb_v2_presentation_mode_set(CSB_V2_PM_V21_UPSCALED);
-        csb_v2_runtime_init(2);
-        csb_v2_runtime_bind_to_v1(&receipt->profile->runtime);
-        state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
+        if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
+            csb_v2_runtime_cleanup();
+            csb_v2_presentation_mode_set(CSB_V2_PM_V21_UPSCALED);
+            csb_v2_runtime_init(2);
+            csb_v2_runtime_bind_to_v1(&receipt->profile->runtime);
+            state->presentationMode = M12_PRESENTATION_V21_UPSCALED;
+        }
     }
     return 1;
 }

@@ -61,6 +61,11 @@ __attribute__((weak)) int csb_v2_presentation_mode_is_v22(void)
     return 0;
 }
 
+__attribute__((weak)) int csb_v2_presentation_mode_has_partial_source_overlay(void)
+{
+    return 0;
+}
+
 __attribute__((weak)) int csb_v22_inplace_render_f0128_command(
     const CSB_V1_ViewportRuntimeDrawCommandPc34 *source_command,
     unsigned char *framebuffer, int framebuffer_width, int framebuffer_height)
@@ -1070,7 +1075,8 @@ int csb_v1_viewport_consume_first_frame_material_raster_pc34(
          * clip and draw order; later source Thing commands still compose over
          * the replacement. Unsupported commands remain entirely V1. */
         if (CSB_V1_OPTIONAL_V22_AVAILABLE() &&
-            csb_v2_presentation_mode_is_v22()) {
+            (csb_v2_presentation_mode_is_v22() ||
+             csb_v2_presentation_mode_has_partial_source_overlay())) {
             if (out_receipt) {
                 out_receipt->v22_f0128_replacement_count +=
                     csb_v22_inplace_render_f0128_command(

@@ -1,7 +1,9 @@
 /* test_csb_v2_presentation_mode_pc34.c */
 #include "csb_v2_presentation_mode_pc34.h"
+#include "csb_v22_finished_art_material_gate_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 static int g_failed = 0, g_total = 0;
 static void check(int cond, const char* name) {
@@ -49,6 +51,42 @@ static void t_v22_requires_provenance(void) {
     csb_v2_presentation_mode_set(CSB_V2_PM_V22_MODERN);
     check(csb_v2_presentation_mode_get() == CSB_V2_PM_V21_UPSCALED,
           "CSB V22 without reviewed material falls back to V21");
+}
+static void t_v22_partial_source_overlay(void) {
+    static const char* const root = "/tmp/firestaff-csb-v22-partial-overlay";
+    static const char* const data_dir = "/tmp/firestaff-csb-v22-partial-overlay/data/csb";
+    static const char* const modern_dir = "/tmp/firestaff-csb-v22-partial-overlay/assets/csb/modern";
+    char command[512];
+    char manifest_path[512];
+    char source_path[512];
+    FILE* fp;
+
+    snprintf(command, sizeof(command), "rm -rf %s && mkdir -p %s/wall_shapes", root, modern_dir);
+    check(system(command) == 0, "create partial-source artpack fixture");
+    snprintf(source_path, sizeof(source_path), "%s/wall_shapes/wall_dungeon_d0_01.png", modern_dir);
+    fp = fopen(source_path, "wb");
+    check(fp != NULL, "create independently admitted source material");
+    if (fp) { fputs("source-only fixture", fp); fclose(fp); }
+    snprintf(manifest_path, sizeof(manifest_path), "%s/modern_asset_manifest.json", modern_dir);
+    fp = fopen(manifest_path, "wb");
+    check(fp != NULL, "write partial-source manifest");
+    if (fp) {
+        fputs("{\n\"wall_shapes\":[{\"id\":\"wall_dungeon_d0_01\",\"generator\":\"original_csb_pc34_graphics_dat\",\"source_file\":\"wall_dungeon_d0_01.png\",\"width\":1,\"height\":1}],\n"
+              "\"routeProvenance\":[{\"id\":\"wall_dungeon_d0_01\",\"category\":\"wall_shapes\",\"f0128ProjectionStatus\":\"admitted_test\"}]\n}\n", fp);
+        fclose(fp);
+    }
+    csb_v22_famg_set_manifest_path(data_dir);
+    csb_v2_presentation_mode_reset();
+    csb_v2_presentation_mode_set_modern_pack_available(0);
+    csb_v2_presentation_mode_set(CSB_V2_PM_V22_MODERN);
+    check(csb_v2_presentation_mode_get() == CSB_V2_PM_V21_UPSCALED,
+          "partial source pack keeps the base presentation at V2.1");
+    check(csb_v2_presentation_mode_has_partial_source_overlay() == 1,
+          "requested V2.2 enables only independently admitted source overlay");
+    csb_v2_presentation_mode_set(CSB_V2_PM_V21_UPSCALED);
+    check(csb_v2_presentation_mode_has_partial_source_overlay() == 0,
+          "ordinary V2.1 request cannot inherit partial V2.2 overlay");
+    csb_v22_famg_set_manifest_path(NULL);
 }
 static void t_m12_enum(void) {
     csb_v2_presentation_mode_reset();
@@ -123,7 +161,7 @@ static void t_dm1_csb_independent(void) {
 int main(void) {
     printf("=== CSB V2 presentation-mode unit test ===\n");
     t_default(); t_set_v20(); t_set_v21();
-    t_v22_with_pack(); t_v22_no_pack(); t_v22_requires_provenance();
+    t_v22_with_pack(); t_v22_no_pack(); t_v22_requires_provenance(); t_v22_partial_source_overlay();
     t_m12_enum(); t_names(); t_set_count(); t_reset();
     t_evidence(); t_resolve(); t_pack_change();
     t_dm1_csb_independent();

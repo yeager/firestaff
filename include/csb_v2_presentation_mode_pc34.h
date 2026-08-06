@@ -18,6 +18,10 @@ typedef struct {
     int v20FilterActive;
     int upscaleScale;
     int modernPackAvailable;
+    /* Requested V2.2 with at least one individually source-bound F0128
+     * material, while the incomplete pack still resolves the base frame to
+     * V2.1.  This never authorises an unbound material. */
+    int partialSourceOverlayActive;
     uint32_t setCount;
 } CSB_V2_PresentationModeState;
 void csb_v2_presentation_mode_set(CSB_V2_PresentationModeKind kind);
@@ -31,6 +35,7 @@ int csb_v2_presentation_mode_is_v1(void);
 int csb_v2_presentation_mode_is_v20(void);
 int csb_v2_presentation_mode_is_v21(void);
 int csb_v2_presentation_mode_is_v22(void);
+int csb_v2_presentation_mode_has_partial_source_overlay(void);
 void csb_v2_presentation_mode_set_modern_pack_available(int available);
 const char* csb_v2_presentation_mode_source_evidence(void);
 const char* csb_v2_presentation_mode_name(CSB_V2_PresentationModeKind kind);

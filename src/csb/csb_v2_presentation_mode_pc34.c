@@ -45,9 +45,17 @@ static void csb_pm_recompute(CSB_V2_PresentationModeKind resolved) {
 }
 
 void csb_v2_presentation_mode_set(CSB_V2_PresentationModeKind kind) {
+    int modern_pack_available = csb_pm_modern_pack_detected();
     CSB_V2_PresentationModeKind resolved = csb_v2_presentation_mode_resolve(
-        kind, csb_pm_modern_pack_detected());
+        kind, modern_pack_available);
     csb_pm_recompute(resolved);
+    /* The base presentation remains V2.1 until every routed material is
+     * proven.  A requested V2.2 pack can nevertheless carry a small set of
+     * independently admitted F0111/F0128 replacements (currently doors),
+     * which are composited only at their exact V1 command points. */
+    g_csb_pm_state.partialSourceOverlayActive =
+        kind == CSB_V2_PM_V22_MODERN && !modern_pack_available &&
+        csb_v22_famg_real_count(NULL) > 0;
     /* Side-effects: push the active scale into the CSB V2.1 upscale
      * pipeline and initialise the CSB V2.2 shape book on V22 entry.
      * Mirror of dm1_v2_presentation_mode_set() in DM1 V2. */
@@ -93,6 +101,9 @@ int csb_v2_presentation_mode_is_v1(void)  { return g_csb_pm_state.kind == CSB_V2
 int csb_v2_presentation_mode_is_v20(void) { return g_csb_pm_state.v20FilterActive; }
 int csb_v2_presentation_mode_is_v21(void) { return g_csb_pm_state.v21UpscaleActive; }
 int csb_v2_presentation_mode_is_v22(void) { return g_csb_pm_state.v22ModernActive; }
+int csb_v2_presentation_mode_has_partial_source_overlay(void) {
+    return g_csb_pm_state.partialSourceOverlayActive;
+}
 
 void csb_v2_presentation_mode_set_modern_pack_available(int available) {
     g_csb_pm_pack_override_valid = 1;
