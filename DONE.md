@@ -13,7 +13,9 @@
   regression asserts every reported payload stays inside its own entry span.
   Verification: `test_nexus_v1_bpk_archive` with
   `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
-
+- ✅ 2026-08-06 CI link fix: `test_dm2_v1_scene_weather_light_runtime_chain_real_data`
+  now compiles its `dm2_v1_GRAPHICS_DATA_OPEN_receipt` implementation into the
+  test target. The full real-data runtime-chain test passes after the fix.
 - ✅ 2026-08-06 Nexus TITLE.BIN MAPD/TIBG bounds: corrected the DMWeb
   section minimum from `0x8c70` to `0x8c74`, covering five 64×28 tilemaps
   followed by all sixteen big-endian palette words. A truncated palette table

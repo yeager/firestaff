@@ -19794,6 +19794,7 @@ if(BUILD_TESTING)
 
     add_executable(test_dm2_v1_scene_weather_light_runtime_chain_real_data
         tests/test_dm2_v1_scene_weather_light_runtime_chain_real_data.c
+        src/dm2/dm2_v1_graphics_data_open.c
     )
     target_include_directories(
         test_dm2_v1_scene_weather_light_runtime_chain_real_data PRIVATE
