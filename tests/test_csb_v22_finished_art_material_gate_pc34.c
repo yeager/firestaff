@@ -587,6 +587,12 @@ static void test_get_slot_info(void) {
           "get_slot_info -> file_exists=1 when source resolves");
     CHECK(info.classification == CSB_V22_FAMG_CLASS_REAL,
           "get_slot_info -> classification REAL");
+    CHECK(csb_v22_famg_admits_material("wall_shapes", "wall_dungeon_d0_01") == 1,
+          "one independently admitted real slot can enter its runtime route");
+    CHECK(csb_v22_famg_admits_material("door_shapes", "wall_dungeon_d0_01") == 0,
+          "category mismatch cannot borrow another source projection");
+    CHECK(csb_v22_famg_admits_material("wall_shapes", "missing_01") == 0,
+          "missing material cannot enter a partial source pack");
 }
 
 static void test_slot_info_unknown_assets(void) {

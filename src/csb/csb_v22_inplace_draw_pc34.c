@@ -368,10 +368,7 @@ int csb_v22_inplace_render_f0128_command(
     int height = 0;
 
     if (!source_command || !framebuffer || fbW <= 0 || fbH <= 0 ||
-        !csb_v22_inplace_draw_active() || !g_v22_palette_active ||
-        /* A readable cache is not proof that its RGBA pixels are authentic.
-         * The full pack must still satisfy every F0128 route/material gate. */
-        !csb_v22_famg_is_finished_real()) {
+        !csb_v22_inplace_draw_active() || !g_v22_palette_active) {
         return 0;
     }
 
@@ -419,6 +416,7 @@ int csb_v22_inplace_render_f0128_command(
     memset(&provenance, 0, sizeof(provenance));
     memset(&projection, 0, sizeof(projection));
     if (!csb_v22_get_route_provenance("door_shapes", asset_id, &provenance) ||
+        !csb_v22_famg_admits_material("door_shapes", asset_id) ||
         !csb_v22_admit_f0128_door_projection_pc34(source_command,
                                                     &provenance,
                                                     &projection) ||

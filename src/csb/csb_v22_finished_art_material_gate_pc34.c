@@ -590,8 +590,41 @@ int csb_v22_famg_validate_manifest(const char* manifest_path) {
     return complete ? 1 : 0;
 }
 
+/* A partial source pack is useful only where one concrete original raster has
+ * a concrete renderer receipt.  Do not require unrelated wall/floor/creature
+ * slots to be bound before F0111 can use an independently admitted door.
+ * ReDMCSB DUNVIEW.C F0111 supplies the source door record; F0128 retains the
+ * caller's checked clip and composition order. */
+int csb_v22_famg_admits_material(const char* category, const char* asset_id) {
+    CSB_V22_FamgSlotRaw raw;
+    char resolved_path[FSP_PATH_MAX];
+
+    if (!category || !asset_id || category[0] == '\0' || asset_id[0] == '\0') {
+        return 0;
+    }
+    if (g_manifest_path[0] == '\0' ||
+        !csb_v22_famg_file_exists(g_manifest_path)) {
+        return 0;
+    }
+    if (!csb_v22_famg_find_slot_in_manifest(g_manifest_path, asset_id, &raw)) {
+        return 0;
+    }
+    if (!raw.has_id || !raw.has_generator || !raw.has_source_file ||
+        !raw.has_width || !raw.has_height || raw.width <= 0 || raw.height <= 0 ||
+        strcmp(raw.generator, CSB_V22_FAMG_SOURCE_EXPORT_GENERATOR) != 0) {
+        return 0;
+    }
+    return csb_v22_famg_resolve_source_file(g_manifest_path, category,
+                                            raw.source_file, resolved_path,
+                                            sizeof(resolved_path)) &&
+           csb_v22_famg_route_provenance_admits_slot(g_manifest_path, category,
+                                                      asset_id);
+}
+
 /* ── Slot classification ───────────────────────────────────────── */
 CSB_V22_FamgClass csb_v22_famg_classify_slot(CSB_V22_FamgSlot slot) {
+    CSB_V22_FamgSlotRaw raw;
+    int has_required;
     if ((unsigned)slot >= (unsigned)CSB_V22_FAMG_MATERIAL_COUNT) {
         return CSB_V22_FAMG_CLASS_UNKNOWN;
     }
@@ -599,45 +632,17 @@ CSB_V22_FamgClass csb_v22_famg_classify_slot(CSB_V22_FamgSlot slot) {
         !csb_v22_famg_file_exists(g_manifest_path)) {
         return CSB_V22_FAMG_CLASS_MISSING;
     }
-
-    CSB_V22_FamgSlotRaw raw;
     if (!csb_v22_famg_find_slot_in_manifest(g_manifest_path,
                                             k_slot_table[slot].id, &raw)) {
         return CSB_V22_FAMG_CLASS_MISSING;
     }
-
-    int has_required = raw.has_id && raw.has_generator &&
-                       raw.has_source_file && raw.has_width &&
-                       raw.has_height && raw.width > 0 && raw.height > 0;
-    if (!has_required) {
-        return CSB_V22_FAMG_CLASS_PARTIAL;
-    }
-
-    /* generator == "placeholder" is the explicit fallback marker */
-    if (strcmp(raw.generator, "placeholder") == 0) {
-        return CSB_V22_FAMG_CLASS_PLACEHOLDER;
-    }
-
-    /* A non-placeholder label is not provenance. The only production
-     * exporter is build_csb_v22_source_fsart.py, which emits this exact
-     * generator token for a decoded PC3.4 GRAPHICS.DAT record. */
-    if (strcmp(raw.generator, CSB_V22_FAMG_SOURCE_EXPORT_GENERATOR) != 0) {
-        return CSB_V22_FAMG_CLASS_PARTIAL;
-    }
-
-    /* Original export metadata + source_file resolves on disk + an exact
-     * source projection. */
-    char resolved_path[FSP_PATH_MAX];
-    int exists = csb_v22_famg_resolve_source_file(g_manifest_path,
-                                                  k_slot_table[slot].category,
-                                                  raw.source_file,
-                                                  resolved_path,
-                                                  sizeof(resolved_path));
-    return exists && csb_v22_famg_route_provenance_admits_slot(
-                         g_manifest_path, k_slot_table[slot].category,
-                         k_slot_table[slot].id)
-        ? CSB_V22_FAMG_CLASS_REAL
-        : CSB_V22_FAMG_CLASS_PARTIAL;
+    has_required = raw.has_id && raw.has_generator && raw.has_source_file &&
+                   raw.has_width && raw.has_height && raw.width > 0 && raw.height > 0;
+    if (!has_required) return CSB_V22_FAMG_CLASS_PARTIAL;
+    if (strcmp(raw.generator, "placeholder") == 0) return CSB_V22_FAMG_CLASS_PLACEHOLDER;
+    return csb_v22_famg_admits_material(k_slot_table[slot].category,
+                                        k_slot_table[slot].id)
+        ? CSB_V22_FAMG_CLASS_REAL : CSB_V22_FAMG_CLASS_PARTIAL;
 }
 
 int csb_v22_famg_get_slot_info(CSB_V22_FamgSlot slot,

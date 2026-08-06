@@ -265,6 +265,14 @@ int  csb_v22_famg_get_installed(void);
  * uses_placeholder() contract. */
 int csb_v22_famg_uses_placeholder(CSB_V22_FamgSlot slot);
 
+/* Admit one concrete runtime material rather than the whole modern-art pack.
+ * This is for F0128 routes with independently proven source placement (the
+ * PC3.4 door routes today).  It requires the exact source-export generator,
+ * a resolving source file, and an `admitted_*` routeProvenance entry for the
+ * supplied category/id.  It never promotes an unbound neighbour merely
+ * because another slot in the pack is real. */
+int csb_v22_famg_admits_material(const char* category, const char* asset_id);
+
 /* Returns 1 if the gate is FINISHED_REAL — i.e. every required slot
  * is REAL with the documented PC3.4 source-export generator and a
  * source_file path that resolves on disk. */
