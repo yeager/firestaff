@@ -86,8 +86,12 @@ int main(int argc, char **argv) {
                      engine.startup_menu_text_source.resource_index == 4 &&
                      engine.startup_menu_text_source.string_count == 15 &&
                      engine.startup_menu_tabl_source.valid == 1 &&
-                     engine.startup_menu_tabl_source.entry_count == 216,
-                 "real RLOWFIX TEXT4/TABL source receipt is bound");
+                     engine.startup_menu_tabl_source.entry_count == 216 &&
+                     engine.startup_menu_font012_bound == 1 &&
+                     engine.startup_menu_font012[0].character_count == 291 &&
+                     engine.startup_menu_font012[1].character_count == 250 &&
+                     engine.startup_menu_font012[2].character_count == 710,
+                 "real RLOWFIX TEXT4/TABL/FONT012 source receipt is bound");
 
     /* ── Step 2: Load Level 0 ─────────────────────────────────────── */
     printf("\n[Step 2: Load Level 0]\n");

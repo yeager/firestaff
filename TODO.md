@@ -229,13 +229,14 @@
   composition remain capture-gated.
   2026-08-06: the startup asset receipt now has an explicit
   `menu_text_consumer_bound` gate. Real engines leave it false because the
-  current host chrome strings are not proven TEXT4/TABL/FONT256 Saturn output;
+  current host chrome strings are not proven TEXT4/TABL/FONT012 Saturn output;
   only an explicit external capture seam may open the save/champion fixture
   route.
   The receipt now also counts the real DM.BIN register literals `0x25F00006`
   and `0x25F80000`; their consumer and VDP2 role remain unproven.
-  Engine-init now retains the real RLOWFIX TEXT4/TABL source receipt, but the
-  Saturn glyph consumer and placement are still not admitted.
+  Engine-init now retains the real RLOWFIX TEXT4/TABL/FONT012 source receipt,
+  but the Saturn glyph consumer and placement are still not admitted. FONT256
+  remains a separate champion/spell bank.
   The same receipt now pins the SH-2 routine at `0x18B60` and its literal
   pool hash, including the `yam\\menu.c` and `STABG.BIN` address targets.
 

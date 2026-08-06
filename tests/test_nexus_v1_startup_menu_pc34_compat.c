@@ -973,7 +973,7 @@ int main(void)
     synthetic_engine.menu_bpk_palt_trace_admission.palette_state_bytes_bound = 1;
     synthetic_engine.menu_bpk_palt_trace_admission.vdp1_command_bytes_bound = 1;
     /* This fixture explicitly models the external text-consumer admission;
-     * real Nexus engines leave the field zero until TEXT4/TABL/FONT256 and
+     * real Nexus engines leave the field zero until TEXT4/TABL/FONT012 and
      * Saturn text placement are captured. */
     synthetic_engine.startup_menu_text_consumer_capture_verified = 1;
     synthetic_engine.sfx_runtime_receipt.status =

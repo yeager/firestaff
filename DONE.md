@@ -52238,7 +52238,7 @@ This fixes the source path for torch holders, mirrors, inscriptions and
 # 2026-08-06 Nexus startup menu text-consumer gate
 
 - ✅ Added an explicit `menu_text_consumer_bound` production gate. The real
-  TEXT4/TABL/FONT256 bytes are retained, but host-generated chrome strings no
+  TEXT4/TABL/FONT012 bytes are retained, but host-generated chrome strings no
   longer suffice to open the save/champion menu route. Until Saturn text
   placement is capture-bound, the route reports
   `menu-text-consumer-capture-required` and remains fail-closed.
@@ -52251,6 +52251,7 @@ This fixes the source path for torch holders, mirrors, inscriptions and
 # 2026-08-06 Nexus RLOWFIX startup text source handoff
 
 - ✅ Engine initialization now retains the authenticated European RLOWFIX
-  `TEXT` resource 4 (15 strings) and 216-entry `TABL` receipt beside the real
-  PLRD champion records. The launch smoke probe verifies this source handoff;
+  `TEXT` resource 4 (15 strings), 216-entry `TABL` receipt and FONT012
+  #0/#1/#2 (291/250/710 glyphs) beside the real PLRD champion records. The
+  launch smoke probe verifies this source handoff;
   it does not promote the bytes into Saturn text pixels or open the menu gate.

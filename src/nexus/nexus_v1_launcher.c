@@ -3246,7 +3246,7 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         receipt->real_menu_surface_route_ready ? 0 : 1;
     /* The resource bytes are real, but the current startup builders still
      * carry host string labels. Do not let those labels become production
-     * Saturn menu pixels before the TEXT4/TABL/FONT256 consumer and VDP2 text
+     * Saturn menu pixels before the TEXT4/TABL/FONT012 consumer and VDP2 text
      * placement are captured. */
     receipt->menu_text_consumer_bound =
         engine->startup_menu_text_consumer_capture_verified ? 1 : 0;

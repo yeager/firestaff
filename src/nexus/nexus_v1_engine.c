@@ -2963,6 +2963,35 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
                 nexus_v1_rlowfix_tabl_parse(
                     rlowfix, (size_t)rlowfix_size, UINT32_C(0x1232C),
                     &engine->startup_menu_tabl_source);
+            {
+                const uint32_t font_offsets[3] = {
+                    UINT32_C(0xC0), UINT32_C(0x1C2C), UINT32_C(0x3F78)
+                };
+                const uint32_t font_counts[3] = { 291U, 250U, 710U };
+                const uint32_t font_widths[3] = { 6U, 12U, 12U };
+                Nexus_V1_ResDecodeResult res;
+                int font_index;
+                engine->startup_menu_font012_bound =
+                    nexus_v1_res_decode(rlowfix, rlowfix_size, &res);
+                for (font_index = 0; font_index < 3 &&
+                     engine->startup_menu_font012_bound; ++font_index) {
+                    const Nexus_V1_ResEntry *entry =
+                        nexus_v1_res_find(&res, "FONT", font_index);
+                    if (!entry || entry->offset != font_offsets[font_index] ||
+                        !nexus_v1_font012_parse(
+                            rlowfix + entry->offset, entry->size,
+                            (uint32_t)font_index,
+                            &engine->startup_menu_font012[font_index]) ||
+                        engine->startup_menu_font012[font_index].character_count !=
+                            font_counts[font_index] ||
+                        engine->startup_menu_font012[font_index].character_width !=
+                            font_widths[font_index] ||
+                        engine->startup_menu_font012[font_index].character_height !=
+                            12U) {
+                        engine->startup_menu_font012_bound = 0;
+                    }
+                }
+            }
         }
         if (!champions_bound) {
             memset(&engine->champions, 0, sizeof(engine->champions));
