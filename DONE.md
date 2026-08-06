@@ -64,6 +64,16 @@
   source-material production owner.
 - ✅ Verification: `dm1_v1_viewport_d1c_f0111_door_pc34_compat` passes; the
   source object is absent from both M10 and M11 archives.
+# DM2 fixed spell and AI debug-text boundary (2026-08-06)
+
+- ✅ Removed fixed-mode spell and AI display-name tables whose English strings
+  came from SKProject source comments and the `DEBUG_HELPER` `getAIName()`,
+  rather than from the original game data.
+- ✅ The fixed APIs now return `NULL` and the spell definition leaves its name
+  buffer empty. The original PC-DOS `GRAPHICS.DAT` was checked: it contains no
+  extended `SPELL_DEF` records, so it cannot supply an authentic fallback.
+- ✅ Verification: `test_dm2_v1_spell_rune_lookup_pc34_compat` passes; the
+  real-data extended-spell receipt correctly reports no extended spell rows.
 
 # DM1 D1C F0107 wall-ornament synthetic audit isolation (2026-08-06)
 

@@ -37,72 +37,6 @@
  * Boss indices: 30 (Lord Dragoth), 55 (Vexirk King), 51 (Amplifier).
  */
 
-static const char *const g_ai_names[DM2_AI_TABLE_SIZE] = {
-    [0]  = "TREE (PILLAR)",
-    [1]  = "LABORATORY TABLE",
-    [2]  = "????",
-    [3]  = "BUSH",
-    [4]  = "PILLARS / ROD (PILLAR)",
-    [5]  = "STALAGMITE (PILLAR)",
-    [6]  = "BOULDER",
-    [7]  = "FOUNTAIN",
-    [8]  = "OBELISKS / TOMBS",
-    [9]  = "WOOD TABLE (TABLE)",
-    [10] = "MAGICK CAULDRON",
-    [11] = "SKULL BRAZIER",
-    [12] = "TRADING TABLE",
-    [13] = "SCOUT MINION (ALLY)",      /* DM2: companion */
-    [14] = "ATTACK MINION (ALLY)",      /* DM2: summoned by spell 29 */
-    [15] = "CARRY MINION (ALLY)",       /* DM2: companion */
-    [16] = "FETCH MINION (ALLY)",       /* DM2: companion */
-    [17] = "GUARD MINION (ALLY)",       /* DM2: summoned by spell 30 */
-    [18] = "U-HAUL MINION (ALLY)",      /* DM2: summoned by spell 31 */
-    [19] = "THORN DEMON",               /* DM2: drops sellable worm food */
-    [20] = "OBELISK (PASSABLE)",        /* DM2: decorative */
-    [21] = "VORTEX",                    /* DM2: pull hazard */
-    [22] = "FLAME ORB",                 /* DM2: fire hazard */
-    [23] = "CAVERN BAT (BAT)",          /* like DM1 bat */
-    [24] = "GLOP",                      /* DM2: w0_6_7 set */
-    [25] = "ROCKY",                     /* DM2: jump ability */
-    [26] = "GIGGLER",                   /* steal (AI_ATTACK_FLAGS__STEAL) */
-    [27] = "THICKET THIEF",             /* steal (AI_ATTACK_FLAGS__STEAL) */
-    [28] = "TIGER STRIPED WORM (WORM)", /* DM2: w0_6_7 */
-    [29] = "TREANT (TREE GORGON)",      /* DM2 */
-    [30] = "LORD DRAGOTH",              /* DM2: primary antagonist */
-    [31] = "DRU TAN",                   /* DM2 */
-    [32] = "CAVE IN",                   /* DM2: trap */
-    [33] = "MERCHANTS",                 /* DM2: NPC/shop */
-    [34] = "DRAGOTH MINION (EVIL)",     /* DM2: Dragoth spawn */
-    [35] = "TOWER BAT (BAT)",             /* like DM1 bat */
-    [36] = "ARCHER GUARD",              /* DM2: AI_ATTACK_FLAGS__SHOOT */
-    [37] = "MAGICK REFLECTOR (MACHINE)", /* DM2: w0_1_1 reflector */
-    [38] = "POWER CRYSTAL (MACHINE)",    /* DM2 */
-    [39] = "EVIL FOUNTAIN (FOUNTAIN)",  /* DM1 variant */
-    [40] = "SPIKED WALL / FLOOR SPIKES", /* DM1: AI_ATTACK_FLAGS__PUSH_BACK */
-    [41] = "SPECTRE (GHOST)",           /* DM1 ghost */
-    [42] = "VEG MOUTH (DIGGER WORM)",   /* DM2 */
-    [43] = "EVIL ATTACK MINION (EVIL)", /* DM2 */
-    [44] = "AXEMAN",                    /* DM1 axeman */
-    [45] = "CAVERN / STONE TABLE / WALL HOLE?", /* DM2 */
-    [46] = "MUMMY",                     /* DM2: poison */
-    [47] = "VOID DOOR (MACHINE)",       /* DM2 */
-    [48] = "DARK VEXIRK (VEXIRK)",      /* DM2: w0_4_4 */
-    [49] = "EVIL GUARD MINION (ENEMY)", /* DM2 */
-    [50] = "SKELETON",                  /* DM1 skeleton */
-    [51] = "AMPLIFIER (MACHINE)",        /* DM2: AI_ATTACK_FLAGS__FIREBALL */
-    [52] = "WOLF",                      /* DM2 */
-    [53] = "PIT GHOST (GHOST)",         /* DM1 variant: invisible (w0_a_a) */
-    [54] = "DOOR GHOST (GHOST)",        /* DM1 variant */
-    [55] = "VEXIRK KING (VEXIRK)",      /* DM2: elite boss */
-    [56] = "? OBELISK LIKE ?",          /* DM2: unknown */
-    [57] = "AXEMAN THIEF",              /* DM2 */
-    [58] = "FLYING CHEST",              /* DM2 */
-    [59] = "BARREL",                    /* DM2 */
-    [60] = "PEDISTAL (PILLAR)",         /* DM2 */
-    [61] = "GHOST",                     /* DM1 ghost */
-    [62] = "EVIL ATTACK MINION (EVIL)", /* DM2: duplicate of index 43 */
-};
-
 /* AIDefinition table — pre-populated from dAITableGenuine[62],
  * then overridden from GDAT via EXTENDED_LOAD_AI_DEFINITION().
  * Source: skproject/SKWIN/_4976_03a2.h + xcoreenh.cpp:61-217. */
@@ -133,8 +67,11 @@ int dm2_v1_creature_ai_index_count(void) {
 }
 
 const char *dm2_v1_creature_ai_name(int ai_index) {
-    if (ai_index < 0 || ai_index >= DM2_AI_TABLE_SIZE) return "?";
-    return g_ai_names[ai_index] ? g_ai_names[ai_index] : "?";
+    (void)ai_index;
+    /* SKProject's getAIName() is compiled as DEBUG_HELPER, not original UI
+     * data.  Fixed Skullkeep AI records have no text owner.  Do not expose
+     * developer labels (or guessed labels) as game text. */
+    return NULL;
 }
 
 const DM2_AIDefinition *dm2_v1_creature_ai_spec(int creature_type) {

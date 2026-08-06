@@ -585,6 +585,15 @@
   `dm2_v1_weather_name()` now returns `NULL`. Bind an authenticated text
   producer before presenting weather text in a player-facing UI.
 
+- **DM2-FIXED-SPELL-AI-TEXT-CONSUMER:** The fixed `dSpellsTable` and genuine
+  AI table own mechanics only. Names visible beside SKProject's fixed spell
+  rows are developer comments, and `getAIName()` is a `DEBUG_HELPER`; neither
+  is retail text. The mounted PC-DOS `GRAPHICS.DAT` has no extended
+  `SPELL_DEF` rows, so its `QUERY_GDAT_TEXT(..., 0x18)` route cannot provide a
+  fixed-mode fallback. `dm2_v1_spell_name()` and `dm2_v1_creature_ai_name()`
+  therefore return `NULL`. Bind a real selected-profile text consumer before
+  showing spell or AI names.
+
 - **DM2-CDDA-OTHER-PLATFORM-MEDIA:** FM Towns CDDA now has a verified
   in-memory original-disc route only. Mega CD and PC-9821 still lack an
   equivalent selected-medium reader and therefore must remain silent rather

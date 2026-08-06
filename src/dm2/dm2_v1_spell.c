@@ -49,46 +49,6 @@ static const DM2_V1_SpellRecord g_spell_table[DM2_MAX_SPELL_ORIGINAL] = {
 };
 /* clang-format on */
 
-/* ── Spell name table (aligned with dSpellsTable order) ───────────────────
- * Source: skproject/SKWIN/SkGlobal.cpp:966-1011 */
-
-static const char *const g_spell_names[DM2_MAX_SPELL_ORIGINAL] = {
-    "Long Light",
-    "Darkness",
-    "Spell Shield (Party)",
-    "Invisibility",
-    "Magical Shield",
-    "Light",
-    "Aura of Wisdom",
-    "Aura of Dexterity",
-    "Fire Shield",
-    "Aura of Vitality",
-    "Aura of Strength",
-    "Aura of Speed",
-    "Spell Reflector",
-    "Magical Marker",
-    "Poison Cloud",
-    "Lightning",
-    "Fireball",
-    "NP: STR Potion",
-    "Antimatter",
-    "Poison Bolt",
-    "Open/Close Door",
-    "NP: Shield Potion",
-    "NP: Stamina Potion",
-    "NP: Wisdom Potion",
-    "NP: Vitality Potion",
-    "NP: Health Potion",
-    "NP: Anti Venin",
-    "NP: Dexterity Potion",
-    "NP: Mana Potion",
-    "Attack Minion",
-    "Guard Minion",
-    "U-Haul Minion",
-    "Push",
-    "Pull",
-};
-
 const DM2_SpellDefinition *dm2_v1_spell_get(int spell_index) {
     static DM2_SpellDefinition out;
     const DM2_V1_SpellRecord *e;
@@ -102,7 +62,6 @@ const DM2_SpellDefinition *dm2_v1_spell_get(int spell_index) {
     out.spell_type = (uint8_t)(e->w6 & 0x0fu);
     out.difficulty = e->difficulty;
     out.required_skill = e->skill;
-    strncpy(out.name, g_spell_names[spell_index], sizeof(out.name) - 1);
     return &out;
 }
 
@@ -130,8 +89,13 @@ int dm2_v1_spell_resolves_object_effect(int spell_index, int effect_id) {
 }
 
 const char *dm2_v1_spell_name(int spell_index) {
-    if (spell_index < 0 || spell_index >= DM2_MAX_SPELL_ORIGINAL) return "?";
-    return g_spell_names[spell_index];
+    (void)spell_index;
+    /* dSpellsTable contains only runes and mechanics.  The English names in
+     * SKProject/SkGlobal.cpp are source comments; they are not retail text.
+     * QUERY_GDAT_TEXT(SPELL_DEF, ..., 0x18) belongs solely to the extended
+     * mode loader, so fixed-mode UI must stay textless until it has a real
+     * text owner. */
+    return NULL;
 }
 
 const char *dm2_v1_spell_source_evidence(void) {

@@ -137,10 +137,10 @@ int main(void)
               "glob var update receipted pending, never simulated");
     }
 
-    /* 5. Existing fixed-table API untouched. */
+    /* 5. Fixed table retains mechanics but has no invented display text. */
     CHECK(dm2_v1_spell_count() == DM2_MAX_SPELL_ORIGINAL,
           "fixed table still 34");
-    CHECK(dm2_v1_spell_name(0) != NULL, "name table intact");
+    CHECK(dm2_v1_spell_name(0) == NULL, "fixed spell table has no text owner");
 
     if (g_failures == 0) {
         printf("PASS: dm2_v1_spell_rune_lookup_pc34_compat\n");
