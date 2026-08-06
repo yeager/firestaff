@@ -187,13 +187,14 @@
   `non_system_card_pcecd=0` and no `$2600` handoff; semantic promotion remains
   closed.
   2026-08-06 input-bound follow-up: a real PID-bound macOS key pair was
-  observed by the instrumented SDL boundary, but the supplied raw BIN's first
-  MODE1 sync is 75 sectors into the file while the archive CUE describes a
-  three-second pregap. The unnormalized raw/CUE pairing therefore reports
-  uncorrectable sectors before any game-owned consumer read. Keep this as a
-  media-alignment boundary, not a level/object/palette claim; a production
-  BIN/CUE normalizer must prove the raw span and pregap before capture can
-  promote any later-level semantics.
+  observed by the instrumented SDL boundary. The source-locked raw intake
+  still requires US `INDEX 01 = 225` and the BIN has a second valid MODE1
+  sync at that source offset; an earlier sync-like span at sector 75 is not a
+  reason to change the authenticated layout. Mednafen nevertheless reports
+  uncorrectable sectors for this raw/CUE pairing before any game-owned
+  consumer read. Keep this as an emulator/capture-media boundary, not a
+  level/object/palette claim; do not promote later semantics or invent a new
+  pregap normalization from the earlier span.
   2026-08-06 text-boundary update: the raw US decoder still retains its real
   codons for diagnostics, but production world text now rejects any block
   containing unresolved brace/control-code values. Reopen publication only

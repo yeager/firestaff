@@ -40,12 +40,13 @@
 
 - ✅ 2026-08-06 Theron capture input/media boundary: the instrumented original
   runner observed a real PID-bound macOS key-down/up pair, proving host input
-  reaches the capture boundary. The same run exposed a separate media issue:
-  the supplied raw Track 02 BIN begins its first MODE1 sync 75 sectors into
-  the file, while the archive CUE declares a three-second pregap. The raw/CUE
-  pair consequently produces uncorrectable sectors before a game-owned
-  consumer read. No level, object, tile, palette or viewport semantics were
-  promoted; production BIN/CUE normalization remains open.
+  reaches the capture boundary. Firestaff's source-locked intake continues to
+  require US `INDEX 01 = 225`; the raw BIN also contains a valid MODE1 sync at
+  that authenticated offset, while an earlier sync-like span at sector 75 is
+  not promoted. Mednafen still reports uncorrectable sectors for the raw/CUE
+  pairing before a game-owned consumer read. No level, object, tile, palette
+  or viewport semantics were promoted, and no guessed pregap normalization was
+  added.
 
 - ✅ 2026-08-06 Theron chapter-marker loot parity: removed the duplicated,
   incorrectly ordered quest-item table from the chapter marker and dungeon
