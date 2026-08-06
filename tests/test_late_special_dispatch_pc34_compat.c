@@ -24,7 +24,7 @@ static int test_dispatch_marks_known_empty_entries(void) {
 
 static int test_dispatch_marks_suspicious_but_exportable_entries(void) {
     struct LateSpecialDispatchResult_Compat result;
-    if (!F9008_RUNTIME_ClassifyLateGraphicsDatEntry_Compat(701, &result)) {
+    if (!F9008_RUNTIME_ClassifyLateGraphicsDatEntry_Compat(696, &result)) {
         return 0;
     }
     return result.kind == LATE_GRAPHICS_DAT_ENTRY_BITMAP_SUSPICIOUS &&
@@ -34,12 +34,21 @@ static int test_dispatch_marks_suspicious_but_exportable_entries(void) {
 
 static int test_dispatch_leaves_normal_bitmap_entries_on_bitmap_path(void) {
     struct LateSpecialDispatchResult_Compat result;
-    if (!F9008_RUNTIME_ClassifyLateGraphicsDatEntry_Compat(693, &result)) {
+    if (!F9008_RUNTIME_ClassifyLateGraphicsDatEntry_Compat(670, &result)) {
         return 0;
     }
     return result.kind == LATE_GRAPHICS_DAT_ENTRY_BITMAP_SAFE &&
            result.shouldUseBitmapPath &&
            !result.shouldSkipBitmapExport;
+}
+
+static int test_dispatch_rejects_snd3_pcm_records(void) {
+    struct LateSpecialDispatchResult_Compat result;
+    if (!F9008_RUNTIME_ClassifyLateGraphicsDatEntry_Compat(687, &result)) {
+        return 0;
+    }
+    return result.kind == LATE_GRAPHICS_DAT_ENTRY_SPECIAL_NON_BITMAP &&
+           !result.shouldUseBitmapPath && result.shouldSkipBitmapExport;
 }
 
 int main(void) {
@@ -57,6 +66,10 @@ int main(void) {
     }
     if (!test_dispatch_leaves_normal_bitmap_entries_on_bitmap_path()) {
         fprintf(stderr, "test_dispatch_leaves_normal_bitmap_entries_on_bitmap_path failed\n");
+        return 1;
+    }
+    if (!test_dispatch_rejects_snd3_pcm_records()) {
+        fprintf(stderr, "test_dispatch_rejects_snd3_pcm_records failed\n");
         return 1;
     }
     printf("ok\n");

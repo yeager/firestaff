@@ -51040,3 +51040,15 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   offset, final-record bounds, raw reads, and truncation rejection. This does
   not claim Atari pixel rendering: IMG1/IMG2 interpretation and STX protected
   media extraction remain open in TODO.
+- ✅ 2026-08-06 DM1 PC34 GRAPHICS.DAT full record audit and SND3 boundary:
+  added `test_m11_dm1_full_graphics_asset_audit_pc34`, which runs the real
+  canonical 713-record PC3.4 corpus through the M11 classifier, dimensions
+  query and IMG3 decoder, and records a deterministic decoded-pixel digest.
+  The audit passes with 543 bitmap records, 1 suspicious bitmap, 34
+  non-bitmap records, 4 empty records and 131 zero-sized records. The shared
+  late dispatch now consumes the authoritative 33-entry SND3 index list
+  (671-675, 677-685, 687-693, 701-712) and rejects those PCM records before
+  bitmap decoding, preventing junk sprites/icons. Regression coverage also
+  verifies the SND3 boundary and the audit is wired into CTest. Remaining
+  visual Greatstone/SCK comparison and packaged macOS capture stay open in
+  `DM1-PC34-FULL-ASSET-VISUAL-AUDIT`; no generated art was introduced.

@@ -3387,10 +3387,15 @@ that its exact runtime path is not already source-locked and tested.
    Exact real door/stair bitmap binding and packaged macOS capture remain open.
 2. **DM1-PC34-FULL-ASSET-VISUAL-AUDIT:** Compare every one of the 713
    hash-verified PC 3.4 `GRAPHICS.DAT` records against Greatstone/SCK decoded
-   references and capture the packaged macOS app. The current source lock and
-   22-record pixel comparison pass, but they do not prove all records or the
-   final app presentation. Keep C001 title timing/palette tied to ReDMCSB
-   `TITLE.C`; do not replace missing references with generated pixels.
+   references and capture the packaged macOS app. 2026-08-06: the new real
+   corpus audit now classifies and decodes all 713 records through the M11
+   loader: 543 bitmap records, 1 suspicious bitmap, 34 non-bitmap records,
+   4 empty records and 131 zero-sized records. The 34 non-bitmap records
+   include the complete 33-item SND3 PCM bank; they are now rejected before
+   IMG3, fixing the old junk-icon path. Remaining scope is pixel comparison
+   against every Greatstone/SCK reference and packaged macOS app capture.
+   Keep C001 title timing/palette tied to ReDMCSB `TITLE.C`; do not replace
+   missing references with generated pixels.
 3. **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
    live group, line-of-sight, projectile-impact, teleporter, and spell-tick
    runtime paths using raw C04/C05/C14/C15 ownership and source scheduling.
