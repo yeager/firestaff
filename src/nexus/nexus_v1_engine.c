@@ -10423,7 +10423,14 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
             nexus_v1_action_semantics_proven()) {
             nexus_v1_rest_tick(&engine->rest, &engine->champions);
         }
-        nexus_v1_hunger_tick(&engine->hunger, &engine->champions);
+        /* The DM1-shaped hunger helper mutates food, water and health.  PLRD
+         * does not provide authenticated provisions, and the Saturn
+         * start/save consumer is still uncaptured; keep the retail engine
+         * immutable until that route is proven. */
+        if (engine->source == NEXUS_SRC_NONE ||
+            nexus_v1_action_semantics_proven()) {
+            nexus_v1_hunger_tick(&engine->hunger, &engine->champions);
+        }
         if (nexus_v1_action_semantics_proven()) {
             Nexus_SpawnEvent spawn_events[8];
             int nspawn = nexus_v1_spawners_tick(&engine->spawners,

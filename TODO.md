@@ -188,6 +188,11 @@
   helpers. Keep fixture-only behavior for isolated unit tests and recover the
   original state-write/timing trace before reopening the runtime route.
 
+  2026-08-06 follow-up: the separate engine-level hunger loop is now covered
+  by the same retail no-mutation boundary; it no longer drains food/water or
+  applies inherited starvation/dehydration damage before the Saturn
+  start/save consumer is captured.
+
 - **NEXUS-CONTAINER-LOOT-CAPTURE:** The old DM1-shaped Nexus container helper
   accepted caller-supplied chest/crate contents despite the retail DGN corpus
   exposing no authenticated container owner, content chain, key dispatch or

@@ -53647,3 +53647,10 @@ alcove runtime and archive-media tests passed (4/4).
   fixture source keeps isolated module tests usable, and the Nexus tick
   integration regression now covers the retail no-mutation boundary (15
   tests). No game data or BIOS was copied into the repository.
+
+- ✅ 2026-08-06 Nexus engine hunger quarantine: closed the second, engine-level
+  DM1 hunger tick that bypassed the mechanics resource gate. Retail extracted
+  and ISO engines now retain food, water, health and hunger accumulators until
+  the Saturn provisions/start/save consumer is captured. The focused tick
+  regression now verifies threshold-crossing retail state remains unchanged
+  (16 tests).

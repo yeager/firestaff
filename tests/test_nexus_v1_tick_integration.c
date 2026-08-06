@@ -306,11 +306,31 @@ int main(void) {
         destroy_engine(e);
     }
 
+    /* Test 16: the engine-level hunger loop is also closed for retail data;
+     * place both accumulators immediately before their mutation threshold. */
+    {
+        Nexus_V1_Engine *e = create_minimal_engine();
+        int old_hp = e->champions.champions[0].health;
+        int old_food = e->champions.champions[0].food;
+        int old_water = e->champions.champions[0].water;
+        e->source = NEXUS_SRC_EXTRACTED;
+        e->hunger.food_accumulator = NEXUS_HUNGER_ACCUM_THRESH - 1;
+        e->hunger.water_accumulator = NEXUS_HUNGER_ACCUM_THRESH - 1;
+        nexus_v1_tick(e);
+        expect(e->champions.champions[0].health == old_hp &&
+               e->champions.champions[0].food == old_food &&
+               e->champions.champions[0].water == old_water &&
+               e->hunger.food_accumulator == NEXUS_HUNGER_ACCUM_THRESH - 1 &&
+               e->hunger.water_accumulator == NEXUS_HUNGER_ACCUM_THRESH - 1,
+               "uncaptured retail hunger does not mutate provisions or health");
+        destroy_engine(e);
+    }
+
     if (g_fail) {
         fprintf(stderr, "%d failures\n", g_fail);
         return 1;
     }
 
-    printf("ok: Nexus tick integration verified (15 tests)\n");
+    printf("ok: Nexus tick integration verified (16 tests)\n");
     return 0;
 }
