@@ -9,6 +9,11 @@
   no game-data input or M11/runtime caller. Retain it as explicit ReDMCSB
   coverage until a source-bound D2C door consumer is recovered.
 
+- **DM1-MIRROR-OCCUPIED-HAND-SYNTHETIC-AUDIT:** This C040 occupied-hand
+  fixture synthesizes panel and candidate state. It has no original DM1 data
+  input or M11/runtime caller; retain it only as an explicit ReDMCSB
+  regression until a source-bound interaction consumer is recovered.
+
 - **DM1-D2L-D2R-F0111-SYNTHETIC-AUDIT:** This asset-free F0111 model
   simulates D2-side door composition in a local framebuffer without original
   material. It has no M11/runtime caller; retain it as explicit ReDMCSB

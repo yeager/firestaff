@@ -25,6 +25,14 @@
 - ✅ Verification: `test_dm2_v1_inventory_item_panel_gate` and the production
   placeholder-boundary verifier pass.
 
+# DM1 mirror occupied-hand synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the C040 occupied-hand fixture from M10. It synthesizes panel and
+  candidate state, has no original DM1 data input or M11/runtime caller, and
+  its explicit ReDMCSB regression now compiles it directly.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_occupied_hand_panel_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D2L/D2R F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D2L/D2R F0111 framebuffer simulation from M10.
