@@ -26189,10 +26189,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   plus 4,096 static-bank consumer reads and an executed `$2c54–$2c69`
   code-window receipt. The parser now accepts this richer real trace. It still
   has no `$2600` dynamic consumer bytes, no VDC VRAM/VCE snapshot, and no
-  source-owned level/object field decisions, so forcefield→dungeon admission
-  and runtime drawing remain blocked. Next evidence is a capture that reaches
-  the game-owned post-CD consumer and closes the VDC snapshot on clean exit;
-  do not promote the current trace into level/object semantics.
+  source-owned level/object field decisions, so visual runtime drawing and
+  source-consumer correlation remain blocked. The interactive forcefield route
+  now admits a source-only map/thing handoff from authenticated raw BIN data;
+  it does not promote VDC/VCE pixels, host item semantics, or guessed field
+  meanings. Next evidence is a capture that reaches the game-owned post-CD
+  consumer and closes the VDC snapshot on clean exit.
 
 - 2026-08-06 update: the Track 02 thing-category enum is now source-bound to
   the retail order used by DMBUILDER6 (`4=monster`, `5=weapon`, `6=clothing`,
