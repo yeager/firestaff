@@ -53182,3 +53182,13 @@ platform package.
   ZIP→ADF lookup/extraction case to `test_asset_find_by_hash`.  Verified
   against the supplied `Chaos Strikes Back (FTL).zip` Amiga package: CSB
   changes from `MISSING` to `READY` and emits the hash-verified cache files.
+- ✅ 2026-08-06 CSB native ZIP→ADF scanner hardening: ZIP-distributed Amiga
+  (and Atari ST/MSA) disk images now use Firestaff's bounded ZIP-deflate and
+  native disk-filesystem readers before considering any external tool. The
+  resulting `archive.zip::disk.adf::FILE` receipt materializes through the
+  same in-process path, so normal CSB ZIP→ADF packages remain launchable
+  without 7zz/7z/bsdtar. The retained external path is only a fallback for
+  ZIP compression methods Firestaff does not own. `test_asset_find_by_hash`
+  now disables all external archive tools while proving nested ZIP→ADF lookup
+  and extraction; the supplied `Chaos Strikes Back (FTL).zip` also reports
+  CSB `READY` under an empty tool PATH.

@@ -1408,6 +1408,9 @@ int main(void) {
                "(cd asset_find_by_hash_test_tmp && "
                "7zz a -tzip nested_amiga.adf.zip nested_amiga.adf >/dev/null 2>&1)") == 0) {
         remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
+        /* The archive is created by 7zz, but scan and materialization must
+         * use Firestaff's ZIP+ADF readers rather than shelling back out. */
+        test_setenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS", "1");
         memset(outPath, 0, sizeof(outPath));
         if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
                                outPath, (int)sizeof(outPath), 2) ||
@@ -1423,6 +1426,7 @@ int main(void) {
             fprintf(stderr, "nested ZIP/ADF filesystem extraction failed: %s\n", outPath);
             return 1;
         }
+        test_setenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS", NULL);
         remove("asset_find_by_hash_test_tmp/extracted.dat");
     }
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf.zip");
