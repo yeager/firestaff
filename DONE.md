@@ -1,3 +1,9 @@
+# DM1 mirror reopen-after-save-load synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only F0433/F0435/C040 fixture from M10. Its
+  generated regression compiles the source directly; it loads no original
+  DM1 data and has no M11/runtime caller.
+
 # DM1 C70 full G0039 light table (2026-08-07)
 
 - ✅ Replaced the Phase 19 seven-entry light-table copy and its 0–6 clamp with
