@@ -3962,71 +3962,6 @@ static int m11_apply_dm1_save_resume_receipt(
     return 1;
 }
 
-static int m11_seed_dm1_v2_visible_effects_from_viewport(
-    const M11_GameViewState* state,
-    int seedDynamicLights);
-
-static void m11_draw_dm1_v2_enhanced_effects_framepath(
-    const M11_GameViewState* state,
-    unsigned char* framebuffer,
-    int framebufferWidth,
-    int framebufferHeight)
-{
-    DM1_V2_PhaseGateConfig gate;
-    DM1_V2_Settings settings;
-    M12_Config liveConfig;
-
-    if (!state || !m11_is_dm1_source_kind(state->sourceKind)) {
-        return;
-    }
-
-    dm1_v2_phase_gate_defaults(&gate);
-    gate.v2PresentationEnabled =
-        (state->presentationMode != M12_PRESENTATION_V1_ORIGINAL) ? 1 : 0;
-    gate.v2ConfigPersistenceEnabled = 1;
-    if (!gate.v2PresentationEnabled) {
-        return;
-    }
-
-    dm1_v2_settings_defaults(&settings);
-    if (state->presentationMode == M12_PRESENTATION_V20_FILTERED) {
-        v2_settings_apply_v20_defaults(&settings);
-    } else if (state->presentationMode == M12_PRESENTATION_V21_UPSCALED) {
-        v2_settings_apply_v21_defaults(&settings);
-    } else if (state->presentationMode == M12_PRESENTATION_V22_MODERN) {
-        v2_settings_apply_v22_defaults(&settings);
-    }
-
-    /* The F10 panel owns the persisted V2 preferences.  Read the three
-     * frame-visible switches here, rather than only at launcher startup, so
-     * lighting and smoothing react on the next presented frame.  Mode
-     * defaults above still own the mode-specific scaler/palette contract. */
-    M12_Config_Load(&liveConfig, NULL);
-    settings.smoothingEnabled = liveConfig.dm1V2SmoothingEnabled ? 1 : 0;
-    settings.dynamicLightingEnabled =
-        liveConfig.dm1V2DynamicLightingEnabled ? 1 : 0;
-    settings.smoothTurnPanEnabled =
-        liveConfig.dm1V2SmoothTurnPanEnabled ? 1 : 0;
-
-    /* ReDMCSB keeps field/projectile visuals in the viewport redraw path
-     * (DUNVIEW.C F0128/F0115; PROJEXPL.C F0213/F0220). Firestaff's V2
-     * effect modules are presentation-only, so M11 advances them once per
-     * rendered DM1 frame after the source viewport draw and behind the
-     * DM1_V2_PHASE_DOMAIN_RENDER_PRESENTATION gate. */
-    if (gate.v2PresentationEnabled) {
-        if (settings.dynamicLightingEnabled) {
-            v2_light_clear_sources();
-            v22_light_clear();
-        }
-        (void)m11_seed_dm1_v2_visible_effects_from_viewport(
-            state, settings.dynamicLightingEnabled);
-    }
-    (void)dm1_v2_enhanced_effects_runtime_tick(&gate, &settings, 1.0f / 60.0f);
-    (void)dm1_v2_enhanced_effects_runtime_render_indexed(
-        &gate, &settings, framebuffer, framebufferWidth, framebufferHeight,
-        M11_VIEWPORT_X, M11_VIEWPORT_Y);
-}
-
 enum {
     M11_QUICKSAVE_EXPLORED_BITS_COUNT = 32,
 };
@@ -27092,26 +27027,6 @@ static int m11_build_dm1_viewport_materialization_decision(
     return 1;
 }
 
-static void m11_dm1_v2_effect_point_for_cell(const M11_ViewportCell* cell,
-                                             float* outX,
-                                             float* outY)
-{
-    int depth;
-    float x;
-    float y;
-    if (!outX || !outY) {
-        return;
-    }
-    depth = cell ? cell->relForward : 1;
-    if (depth < 1) depth = 1;
-    if (depth > 3) depth = 3;
-    x = 112.0f + (float)(cell ? cell->relSide : 0) *
-        (70.0f - (float)(depth - 1) * 20.0f);
-    y = 103.0f - (float)(depth - 1) * 22.0f;
-    *outX = x;
-    *outY = y;
-}
-
 static int m11_dm1_v2_cell_would_seed_visible_effect(
     const M11_ViewportCell* cell)
 {
@@ -27120,80 +27035,6 @@ static int m11_dm1_v2_cell_would_seed_visible_effect(
             m11_viewport_cell_has_renderable_explosion(cell) ||
             (cell->summary.teleporters > 0 &&
              cell->elementType == DUNGEON_ELEMENT_TELEPORTER));
-}
-
-static void m11_seed_dm1_v2_visible_effect_light(float x,
-                                                 float y,
-                                                 float size,
-                                                 uint32_t color)
-{
-    float lightX = x * ((float)M11_V2_LIGHT_MAP_SIZE / 224.0f);
-    float lightY = y * ((float)M11_V2_LIGHT_MAP_SIZE / 136.0f);
-    uint8_t r = (uint8_t)((color >> 24) & 0xffu);
-    uint8_t g = (uint8_t)((color >> 16) & 0xffu);
-    uint8_t b = (uint8_t)((color >> 8) & 0xffu);
-    float radius = size < 2.0f ? 2.5f : 3.5f;
-    uint8_t intensity = size < 2.0f ? 160u : 220u;
-
-    if (lightX < 0.0f) lightX = 0.0f;
-    if (lightY < 0.0f) lightY = 0.0f;
-    if (lightX > (float)(M11_V2_LIGHT_MAP_SIZE - 1)) {
-        lightX = (float)(M11_V2_LIGHT_MAP_SIZE - 1);
-    }
-    if (lightY > (float)(M11_V2_LIGHT_MAP_SIZE - 1)) {
-        lightY = (float)(M11_V2_LIGHT_MAP_SIZE - 1);
-    }
-
-    (void)v2_light_add_source(lightX, lightY, radius, intensity, r, g, b);
-    (void)v22_light_add((int)(lightX + 0.5f), (int)(lightY + 0.5f),
-                        (float)intensity / 255.0f, radius, color, 1);
-}
-
-static int m11_seed_dm1_v2_visible_effect_particle(
-    const M11_ViewportCell* cell,
-    int seedDynamicLights)
-{
-    float x = 0.0f;
-    float y = 0.0f;
-    float life = 0.12f;
-    float size = 2.0f;
-    uint32_t color = 0xffff00ffu;
-    if (!m11_dm1_v2_cell_would_seed_visible_effect(cell)) {
-        return 0;
-    }
-
-    if (m11_viewport_cell_has_renderable_projectile(cell)) {
-        (void)dm1_v1_projectile_effect_particle_pc34(
-            cell->firstProjectileSubtype,
-            &color,
-            &size);
-    } else if (m11_viewport_cell_has_renderable_explosion(cell)) {
-        if (cell->firstExplosionType == C002_EXPLOSION_LIGHTNING_BOLT) {
-            color = 0x00ffffffu;
-            size = 2.0f;
-        } else if (cell->firstExplosionType == C007_EXPLOSION_POISON_CLOUD) {
-            color = 0x00ff00ffu;
-            size = 3.0f;
-        } else if (cell->firstExplosionType == C040_EXPLOSION_SMOKE) {
-            color = 0x888888ffu;
-            size = 3.0f;
-        } else if (cell->firstExplosionType == C050_EXPLOSION_FLUXCAGE) {
-            color = 0xff00ffffu;
-            size = 1.0f;
-        } else {
-            color = 0xff5500ffu;
-            size = 3.0f;
-        }
-    } else {
-        color = 0xff00ffffu;
-        size = 1.0f;
-    }
-
-    m11_dm1_v2_effect_point_for_cell(cell, &x, &y);
-    if (seedDynamicLights) {
-        m11_seed_dm1_v2_visible_effect_light(x, y, size, color);
-    }
-    return v2_particle_add_direct(x, y, life, size, 0.0f, color) >= 0;
 }
 
 static int m11_count_dm1_v2_visible_effect_seeds_from_viewport(
@@ -27222,28 +27063,6 @@ int M11_GameView_ProbeDm1V2LiveEffectSeedCount(
     const M11_GameViewState* state)
 {
     return m11_count_dm1_v2_visible_effect_seeds_from_viewport(state);
-}
-
-static int m11_seed_dm1_v2_visible_effects_from_viewport(
-    const M11_GameViewState* state,
-    int seedDynamicLights)
-{
-    int count = 0;
-    int depth;
-    if (!state || !state->active) {
-        return 0;
-    }
-    for (depth = 1; depth <= 3; ++depth) {
-        int side;
-        for (side = -1; side <= 1; ++side) {
-            M11_ViewportCell cell;
-            if (m11_sample_viewport_cell(state, depth, side, &cell)) {
-                count += m11_seed_dm1_v2_visible_effect_particle(
-                    &cell, seedDynamicLights);
-            }
-        }
-    }
-    return count;
 }
 
 /* Draw a GRAPHICS.DAT-backed projectile sprite in the given area.
@@ -53242,8 +53061,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
     m11_dm1_f0115_c15_runtime_capture_consume(state);
     m11_dm1_f0115_c2900_runtime_capture_consume(state);
     m11_dm1_hoc_presented_frame_consumer_build(state);
-    m11_draw_dm1_v2_enhanced_effects_framepath(
-        state, framebuffer, framebufferWidth, framebufferHeight);
+    /* ReDMCSB has no procedural V2 particle, light or full-screen overlay
+     * path. Keep the authenticated DM1 bitmap/palette renderer authoritative
+     * until a real V2 asset corpus is available; synthetic effects must not
+     * be injected after the source viewport draw. */
 
     /* Old Firestaff frame-strip assets are debug-only now; in normal
      * V1 they overdraw the source viewport/floor/ceiling composition. */

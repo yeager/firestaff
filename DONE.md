@@ -8,6 +8,13 @@
   receipt while blocking synthetic shop registration, stock, open and lookup
   routes. Buy/sell remain no-op until the Saturn shop-object consumer and
   inventory/gold dispatch are authenticated; focused shop-manager tests pass.
+- ✅ 2026-08-06 DM1 V2 synthetic-effects framepath quarantine: removed the
+  production step that converted viewport projectiles, explosions and
+  teleporters into procedural particles or dynamic-light sources after the
+  authenticated ReDMCSB draw. The source bitmap/palette renderer remains the
+  only DM1 visual owner until a real V2 asset corpus exists. Updated the
+  framepath probe to verify that V1, V2.0 and V2.2 leave unbound V2 state alone.
+  Ninja `firestaff` build and focused CTest pass.
 
 - ✅ 2026-08-06 Nexus container/loot quarantine: removed the synthetic
   DM1-shaped chest/crate mutation route from production. Retail DGN item and

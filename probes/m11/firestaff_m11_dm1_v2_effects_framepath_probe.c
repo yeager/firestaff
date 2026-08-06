@@ -1,14 +1,13 @@
 /*
  * firestaff_m11_dm1_v2_effects_framepath_probe.c
  *
- * Data-free M11 wire-up proof for the DM1 V2 Phase 4 enhanced-effects
- * runtime. A short-lived V2 particle is used as the observable: V1
- * presentation must leave it alive, while DM1 V2 presentation must tick
- * it from M11_GameView_Draw after the source viewport render.
+ * Data-free M11 source-lock proof for the DM1 V2 framepath. ReDMCSB has no
+ * particle, dynamic-light or full-screen overlay equivalent for these source
+ * effects, so every presentation mode must leave caller-owned V2 state alone.
  *
  * Source-lock: ReDMCSB DUNVIEW.C F0128/F0115 and PROJEXPL.C F0213/F0220
- * own source visuals; Firestaff's V2 effect tick is presentation-only
- * behind DM1_V2_PHASE_DOMAIN_RENDER_PRESENTATION.
+ * own source visuals; Firestaff must not invent a V2 effect from a synthetic
+ * viewport fixture.
  */
 
 #include "dm1_v2_particle_system_pc34.h"
@@ -208,14 +207,14 @@ int main(void)
     seed_short_lived_particle();
     init_dm1_state(&state, M12_PRESENTATION_V20_FILTERED);
     draw_once(&state, framebuffer);
-    CHECK(v2_particle_active_count() == 0,
-          "V2.0 draw ticks enhanced-effects runtime");
+    CHECK(v2_particle_active_count() == 1,
+          "V2.0 draw leaves unbound V2 particles untouched");
 
     seed_short_lived_particle();
     init_dm1_state(&state, M12_PRESENTATION_V22_MODERN);
     draw_once(&state, framebuffer);
-    CHECK(v2_particle_active_count() == 0,
-          "V2.2 draw ticks enhanced-effects runtime");
+    CHECK(v2_particle_active_count() == 1,
+          "V2.2 draw leaves unbound V2 particles untouched");
 
     seed_visible_particle();
     init_dm1_state(&state, M12_PRESENTATION_V1_ORIGINAL);
@@ -231,16 +230,16 @@ int main(void)
     draw_once(&state, baseline);
     seed_visible_particle();
     draw_once(&state, framebuffer);
-    CHECK(count_particle_region_diff(baseline, framebuffer) > 0,
-          "V2.0 draw paints visible particle overlay into viewport");
+    CHECK(count_particle_region_diff(baseline, framebuffer) == 0,
+          "V2.0 draw does not paint an unbound particle overlay");
 
     v2_particle_init();
     init_dm1_state(&state, M12_PRESENTATION_V22_MODERN);
     draw_once(&state, baseline);
     seed_visible_particle();
     draw_once(&state, framebuffer);
-    CHECK(count_particle_region_diff(baseline, framebuffer) > 0,
-          "V2.2 draw paints visible particle overlay into viewport");
+    CHECK(count_particle_region_diff(baseline, framebuffer) == 0,
+          "V2.2 draw does not paint an unbound particle overlay");
 
     init_dm1_state(&state, M12_PRESENTATION_V20_FILTERED);
     seed_runtime_fireball_ahead(&state);
@@ -277,12 +276,12 @@ int main(void)
     v2_light_init();
     v22_light_clear();
     draw_once(&state, framebuffer);
-    CHECK(v2_particle_active_count() > 0,
-          "V2.0 live runtime projectile seeds transient particles");
-    CHECK(v2_light_source_count() > 0 && v22_light_source_count() > 0,
-          "V2.0 live runtime projectile seeds dynamic light sources");
-    CHECK(count_live_effect_region_diff(baseline, framebuffer) > 0,
-          "V2.0 live runtime projectile seeds additional effect overlay");
+    CHECK(v2_particle_active_count() == 0,
+          "V2.0 live runtime projectile does not seed synthetic particles");
+    CHECK(v2_light_source_count() == 0 && v22_light_source_count() == 0,
+          "V2.0 live runtime projectile does not seed synthetic lights");
+    CHECK(count_live_effect_region_diff(baseline, framebuffer) == 0,
+          "V2.0 live runtime projectile does not paint a synthetic overlay");
 
     if (s_fail) {
         fprintf(stderr, "Summary: %d passed, %d failed\n", s_pass, s_fail);

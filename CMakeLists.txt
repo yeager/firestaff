@@ -8646,9 +8646,9 @@ if(NOT MSVC)
     target_compile_options(firestaff_m11_game_view_probe PRIVATE -Wall -Wextra -O2 -Wno-format-truncation)
 endif()
 
-# DM1 V2 Phase 4 M11 framepath wire-up probe. Data-free: proves the
-# presentation-only enhanced-effects runtime ticks from M11_GameView_Draw
-# only when DM1 V2 presentation is active.
+# DM1 V2 Phase 4 M11 framepath source-lock probe. Data-free: proves that
+# unbound V2 particles/lights are not consumed or injected by the DM1 draw
+# path until a real V2 asset corpus exists.
 add_executable(firestaff_m11_dm1_v2_effects_framepath_probe
     probes/m11/firestaff_m11_dm1_v2_effects_framepath_probe.c)
 target_link_libraries(firestaff_m11_dm1_v2_effects_framepath_probe
