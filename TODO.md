@@ -731,6 +731,11 @@
   remains available for isolated helper tests; restore each retail route only
   from a captured Saturn owner.
 
+  2026-08-06 follow-up: `nexus_v1_action_timer.c`, `nexus_v1_doors.c`,
+  `nexus_v1_traps.c` and `nexus_v1_projectiles.c` are now excluded from
+  `firestaff_nexus`; their original state machines remain explicit study
+  inputs and production exports only a state-preserving ABI adapter.
+
 - **NEXUS-CONTAINER-LOOT-CAPTURE:** The old DM1-shaped Nexus container helper
   accepted caller-supplied chest/crate contents despite the retail DGN corpus
   exposing no authenticated container owner, content chain, key dispatch or

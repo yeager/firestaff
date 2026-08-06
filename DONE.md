@@ -155,6 +155,16 @@
   effects and champion state cannot mutate before Saturn action/timing/HUD
   consumers are captured.
 
+# Nexus action/world production boundary (2026-08-06)
+
+- ✅ Removed the DM1-shaped action-timer, door, trap and projectile state
+  machines from `firestaff_nexus`. Their original implementations remain in
+  explicit study targets; production now rejects inferred admission and
+  writeback through a fail-closed ABI adapter.
+- ✅ Added a production-boundary regression proving those four routes do not
+  create or advance state without the captured Saturn command, transition,
+  trigger or projectile-DMA consumers.
+
 # Nexus experience production boundary (2026-08-06)
 
 - ✅ Removed the DM.BIN-shaped XP award, level-up and class-table implementation

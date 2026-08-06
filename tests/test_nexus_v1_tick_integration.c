@@ -336,20 +336,22 @@ int main(void) {
         e->source = NEXUS_SRC_EXTRACTED;
         nexus_v1_action_start_cooldown(&e->action_timers, 0, 12, NULL);
         door = nexus_v1_door_register(&e->doors, 5, 4, 0, 0, -1, 0, 0);
-        nexus_v1_door_try_open(&e->doors, door, -1, 0);
+        if (door >= 0)
+            nexus_v1_door_try_open(&e->doors, door, -1, 0);
         memset(&trap, 0, sizeof(trap));
         trap.kind = NEXUS_TRAP_PRESSURE_PLATE;
         trap.armed = 1;
         trap.rearm_ticks = 8;
-        nexus_v1_trap_add(&e->traps, &trap);
+        expect(nexus_v1_trap_add(&e->traps, &trap) == 0 &&
+               e->traps.count == 0,
+               "uncaptured retail trap admission remains closed");
         nexus_v1_tick(e);
-        expect(e->action_timers.cooldown[0] == 12,
-               "uncaptured retail action cooldown does not tick");
-        expect(e->doors.doors[door].anim_frame == 0 &&
-               e->doors.doors[door].state == NEXUS_DOOR_OPENING,
-               "uncaptured retail door animation does not tick");
-        expect(e->traps.traps[0].cooldown == 0,
-               "uncaptured retail trap timer does not tick");
+        expect(e->action_timers.cooldown[0] == 0,
+               "uncaptured retail action admission remains closed");
+        expect(door < 0 && e->doors.count == 0,
+               "uncaptured retail door admission remains closed");
+        expect(e->traps.count == 0,
+               "uncaptured retail trap timer remains empty");
         destroy_engine(e);
     }
 

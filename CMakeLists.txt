@@ -217,7 +217,8 @@ add_test(NAME nexus_v1_creature_names COMMAND test_nexus_v1_creature_names)
 set_tests_properties(nexus_v1_creature_names PROPERTIES LABELS "nexus;creature;tier4")
 
 add_executable(test_nexus_v1_creature_ranged
-    tests/test_nexus_v1_creature_ranged.c)
+    tests/test_nexus_v1_creature_ranged.c
+    src/nexus/nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_creature_ranged PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_creature_ranged PRIVATE firestaff_nexus)
@@ -233,7 +234,8 @@ add_test(NAME nexus_v1_automap COMMAND test_nexus_v1_automap)
 set_tests_properties(nexus_v1_automap PROPERTIES LABELS "nexus;automap;tier4")
 
 add_executable(test_nexus_v1_doors
-    tests/test_nexus_v1_doors.c)
+    tests/test_nexus_v1_doors.c
+    src/nexus/nexus_v1_doors.c)
 target_include_directories(test_nexus_v1_doors PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_doors PRIVATE firestaff_nexus)
@@ -302,7 +304,8 @@ add_test(NAME nexus_v1_messages COMMAND test_nexus_v1_messages)
 set_tests_properties(nexus_v1_messages PROPERTIES LABELS "nexus;messages;tier4")
 
 add_executable(test_nexus_v1_throw
-    tests/test_nexus_v1_throw.c)
+    tests/test_nexus_v1_throw.c
+    src/nexus/nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_throw PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_throw PRIVATE firestaff_nexus)
@@ -328,7 +331,8 @@ add_test(NAME nexus_v1_spell_effects COMMAND test_nexus_v1_spell_effects)
 set_tests_properties(nexus_v1_spell_effects PROPERTIES LABELS "nexus;spell_effects;tier4")
 
 add_executable(test_nexus_v1_action_timer
-    tests/test_nexus_v1_action_timer.c)
+    tests/test_nexus_v1_action_timer.c
+    src/nexus/nexus_v1_action_timer.c)
 target_include_directories(test_nexus_v1_action_timer PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_action_timer PRIVATE firestaff_nexus)
@@ -395,7 +399,8 @@ add_test(NAME nexus_v1_level_transition COMMAND test_nexus_v1_level_transition)
 set_tests_properties(nexus_v1_level_transition PROPERTIES LABELS "nexus;level_transition;tier4")
 
 add_executable(test_nexus_v1_traps
-    tests/test_nexus_v1_traps.c)
+    tests/test_nexus_v1_traps.c
+    src/nexus/nexus_v1_traps.c)
 target_include_directories(test_nexus_v1_traps PRIVATE
     ${CMAKE_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_traps PRIVATE firestaff_nexus)
@@ -491,12 +496,23 @@ add_test(NAME nexus_v1_leader_switch COMMAND test_nexus_v1_leader_switch)
 set_tests_properties(nexus_v1_leader_switch PROPERTIES LABELS "nexus;leader;tier4")
 
 add_executable(test_nexus_v1_projectiles
-    tests/test_nexus_v1_projectiles.c)
+    tests/test_nexus_v1_projectiles.c
+    src/nexus/nexus_v1_projectiles.c)
 target_include_directories(test_nexus_v1_projectiles PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_projectiles PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_projectiles COMMAND test_nexus_v1_projectiles)
 set_tests_properties(nexus_v1_projectiles PROPERTIES LABELS "nexus;projectiles;tier4")
+
+add_executable(test_nexus_v1_action_world_production_boundary
+    tests/test_nexus_v1_action_world_production_boundary.c)
+target_include_directories(test_nexus_v1_action_world_production_boundary PRIVATE
+    ${CMAKE_SOURCE_DIR}/include)
+target_link_libraries(test_nexus_v1_action_world_production_boundary PRIVATE firestaff_nexus)
+add_test(NAME nexus_v1_action_world_production_boundary
+    COMMAND test_nexus_v1_action_world_production_boundary)
+set_tests_properties(nexus_v1_action_world_production_boundary PROPERTIES
+    LABELS "nexus;action;doors;traps;projectiles;production-boundary;tier4")
 
 add_executable(test_firestaff_fsdung_loader
     tests/test_firestaff_fsdung_loader.c)
@@ -4923,6 +4939,13 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_experience\\.c$")
 # state-preserving production ABI adapter.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_rest\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_status\\.c$")
+# These DM1-shaped action/world state machines have no captured Saturn
+# command, transition, trigger or projectile-DMA consumer. Keep them in
+# explicit study targets and export only the fail-closed production ABI.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_action_timer\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_doors\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_traps\\.c$")
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_projectiles\\.c$")
 # M11 owns the shared host lifecycle and calls these runtime adapters.
 # Keep the procedural V2 renderer modules out of the production library, but
 # retain the explicit lifecycle implementations needed to satisfy M11.
@@ -4933,6 +4956,7 @@ set(NEXUS_M11_RUNTIME_SOURCES
     src/nexus/nexus_v1_combat_runtime_noop.c
     src/nexus/nexus_v1_experience_runtime_noop.c
     src/nexus/nexus_v1_rest_status_runtime_noop.c
+    src/nexus/nexus_v1_action_world_runtime_noop.c
     src/nexus/nexus_v2_hud_runtime_noop.c
     src/nexus/nexus_v2_lighting_runtime_noop.c
     src/nexus/nexus_v2_smooth_movement_runtime_noop.c
