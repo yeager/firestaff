@@ -1903,6 +1903,13 @@ int theron_v1_world_load_dungeon_text(Theron_V1_World *world,
     if (theron_v1_track02_text_decode(codons, codon_count, &tb) != 0)
         return -1;
 
+    /* The authentic Track 02 stream is retained by the decoder for
+     * diagnostics, but braces are unresolved source control codes until the
+     * original HuC6280 text consumer is identified.  Never expose those
+     * candidate strings as gameplay/UI text. */
+    if (tb.diagnostic_only || tb.unresolved_control_codes != 0)
+        return 0;
+
     unsigned int max = tb.count < 64 ? tb.count : 64;
     for (unsigned int i = 0; i < max; i++) {
         size_t len = strlen(tb.strings[i]);

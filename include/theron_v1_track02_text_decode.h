@@ -10,6 +10,11 @@
 
 typedef struct {
     unsigned int count;
+    /* The raw codec can be inspected while the original HuC6280 text
+     * consumer is unresolved.  These fields never authorize production text
+     * publication. */
+    unsigned int unresolved_control_codes;
+    int diagnostic_only;
     char strings[THERON_TEXT_MAX_STRINGS][THERON_TEXT_MAX_LENGTH];
 } Theron_TextBlock;
 

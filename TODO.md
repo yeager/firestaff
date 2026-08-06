@@ -12,6 +12,10 @@
   `$2600` handoff and no source-owned VDC/VCE destination receipt. The longer
   trace only confirms the existing bounded loader/main-RAM windows; it does not
   change the admission boundary.
+  2026-08-06 text-boundary update: the raw US decoder still retains its real
+  codons for diagnostics, but production world text now rejects any block
+  containing unresolved brace/control-code values. Reopen publication only
+  after the original HuC6280 text consumer is disassembled and matched.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

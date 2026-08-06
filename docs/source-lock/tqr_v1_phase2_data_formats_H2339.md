@@ -260,6 +260,13 @@ Source: ReDMCSB DEFS.H:1887–1951 · Phase 0 provenance gate · STUB
 | Text storage | Tile index arrays in Track 02 (not ASCII) |
 | UI text | Track 02 candidate records exist; executing consumer/control codes unresolved |
 
+The authenticated US text codon stream remains available to diagnostics, but
+it is not a production text source yet. The current raw decode exposes brace
+values whose control/UI meaning is unresolved; production world loading now
+fails closed for such a block. No candidate string is promoted to a plaque,
+scroll, HUD or translated text surface until the original HuC6280 text
+consumer is tied to the codon stream by disassembly or capture.
+
 PC Engine CD-ROM uses a custom text/font path, but the exact Theron's Quest
 consumer and control-code semantics are not yet source-locked:
 - Each character = 8×8 tile from the game font

@@ -52030,3 +52030,13 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   VDC/VCE destination receipt. The bounded main-RAM windows remain retained as
   loader evidence only; no level, object, tile, material, palette, HUD or
   viewport semantics were enabled.
+
+# 2026-08-06 Theron text publication boundary
+
+- ✅ Authentic Track 02 text codons remain decoded from the supplied US media
+  for diagnostics, including their exact unresolved control-code markers.
+  Production `theron_v1_world_load_dungeon_text()` now keeps the world text
+  table empty when those markers occur, so candidate strings cannot become
+  synthetic HUD, plaque or scroll text. The focused real-media regression
+  passes and will reopen only after the original HuC6280 text consumer is
+  identified.

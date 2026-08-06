@@ -110,6 +110,8 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
 
         if (d == 0) {
             assert(tb->count > 0);
+            assert(tb->diagnostic_only);
+            assert(tb->unresolved_control_codes > 0);
         }
 
         free(tb);
@@ -164,10 +166,11 @@ int main(void) {
         theron_v1_world_init(w2);
         int count = theron_v1_world_load_dungeon_text(
             w2, td->text_data, td->text_data_count);
-        assert(count > 0);
+        /* Raw Track 02 text remains diagnostic-only until the original
+         * HuC6280 text consumer binds the brace/control-code values. */
+        assert(count == 0);
         assert(w2->dungeon_text_count == (unsigned)count);
-        assert(theron_v1_world_dungeon_text(w2, 0) != NULL);
-        assert(strlen(theron_v1_world_dungeon_text(w2, 0)) > 0);
+        assert(theron_v1_world_dungeon_text(w2, 0) == NULL);
         assert(theron_v1_world_dungeon_text(w2, (unsigned)count) == NULL);
         printf("  World text load: %d strings from AKUTUBA\n", count);
         free(w2);

@@ -42,6 +42,14 @@ int theron_v1_track02_text_decode(
                 char_idx = 0;
                 break;
             }
+            /* The 5-bit stream's brace values are preserved for reverse-
+             * engineering output, but their original text/UI control
+             * meaning is not proven by the current Track 02 consumer
+             * evidence.  Keep the complete raw decode diagnostic-only. */
+            if (c == '{' || c == '}') {
+                out->unresolved_control_codes++;
+                out->diagnostic_only = 1;
+            }
             if (char_idx < THERON_TEXT_MAX_LENGTH - 1)
                 out->strings[str_idx][char_idx++] = c;
         }
