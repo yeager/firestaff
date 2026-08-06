@@ -22,6 +22,12 @@
 - ✅ Verification: `dm1_v1_mirror_candidate_c040_panel_browse_pickup_rotate_race_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 chest-close pending-panel synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C011/C038/C162 party/chest/panel/Thing fixture
+  from M10. It loads no original DM1 data and has no M11/runtime caller; its
+  generated mirror regression continues to compile the source explicitly.
+
 # DM1 mirror C007--C011/C040 synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C007..C011/C040 party/panel/G0299 fixture from

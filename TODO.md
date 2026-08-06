@@ -5,6 +5,11 @@
   DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
   coverage until a source-bound panel owner is recovered.
 
+- **DM1-MIRROR-CHEST-CLOSE-PENDING-SYNTHETIC-AUDIT:** This C011/C038/C162
+  fixture fabricates party, chest, panel and Thing state. It has no original
+  DM1 data input or M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound command owner is recovered.
+
 - **DM1-MIRROR-C040-PICKUP-ROTATE-SYNTHETIC-AUDIT:** This C040/chest/rotation
   fixture fabricates party, panel and Thing state. It loads no original DM1
   data and has no M11/runtime caller; retain it only as explicit ReDMCSB
