@@ -10,14 +10,16 @@ ISO files so a valid-looking image cannot be attached to the wrong loader.
 |---|---:|---|---|
 | `TQUS02.bin` | 8,104,992 | `f23601102138f87c33025877767ebf76` | US Track 02, raw MODE1/2352 |
 | `TQJP02.bin` | 8,102,640 | `b7afb338ad31be1025b53f9aff12d73a` | JP Track 02, raw MODE1/2352 |
-| `TQJP02End.iso` | 305,152 | `397039af02d50d15c70b74088eb8a1cb` | JP Rev. 1 Track 02 ISO split member |
+| `TQJP02End.iso` | 305,152 | `397039af02d50d15c70b74088eb8a1cb` | Complete JP Rev. 1 Track 02 ISO payload (149 sectors) |
 | `TQUS19.iso` | 5,984,256 | `51b40a17b92a30339957ba564aa0015c` | US Track 19 ISO |
 | `TQJP19.iso` | 6,291,456 | `f9f069a5e489b91207f3156059b756f1` | JP Track 19 ISO |
 | `TQUS02-ceb02343868f80cec899e9b239aff2da.iso` | 6,596,608 | `ceb02343868f80cec899e9b239aff2da` | Materialized US split Track 02 ISO |
 
 `TQJP19.iso` is not the JP Track 02 image. Its `f9f069…` identity belongs to
-the Track 19 metadata readers. Likewise, `TQJP02End.iso` is a 149-sector
-Track 02 ISO member and must not be treated as a full six-megabyte projection.
+the Track 19 metadata readers. The JP `TQJP02End.iso` file is instead the
+complete 149-sector Track 02 ISO payload; it must not be treated as a full
+six-megabyte Track 19 projection. The US distribution is the one that needs
+the `TQUS19.iso` plus `TQUS02End.iso` materialization step.
 
 ## Real bindings currently admitted
 
