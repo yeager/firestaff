@@ -77,6 +77,30 @@ static void md5_final(Md5 *c, char out[33]) {
 }
 static void hash_bytes(const uint8_t *p, size_t n, char out[33]) { Md5 c; md5_init(&c); md5_update(&c,p,n); md5_final(&c,out); }
 
+static int contains_ascii(const uint8_t *bytes, size_t size, const char *needle) {
+    size_t n;
+    size_t i;
+    if (!bytes || !needle) return 0;
+    n = strlen(needle);
+    if (n == 0 || n > size) return 0;
+    for (i = 0; i + n <= size; ++i) {
+        if (memcmp(bytes + i, needle, n) == 0) return 1;
+    }
+    return 0;
+}
+
+static int menu_info_selects_program(const uint8_t *menu_info, size_t size,
+                                     int english) {
+    static const char k_japanese_entry[] = "JDM     .EXP";
+    static const char k_english_entry[] = "EDM     .EXP";
+    const char *entry = english ? k_english_entry : k_japanese_entry;
+    size_t offset = english ? 0x80u : 0u;
+    size_t entry_size = 0x80u;
+    if (!menu_info || offset >= size) return 0;
+    if (entry_size > size - offset) entry_size = size - offset;
+    return contains_ascii(menu_info + offset, entry_size, entry);
+}
+
 int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size,
     const uint8_t *game_program, size_t game_program_size,
     const uint8_t *menu_program, size_t menu_program_size,
@@ -85,6 +109,8 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
     DM1_V1_FmtownsStartupReceipt *out) {
     char autoHash[33], gameHash[33], menuHash[33], iconHash[33], infoHash[33];
     int english, japanese;
+    int menuSymbols;
+    int gameSymbols;
     if (!out) return 0;
     memset(out,0,sizeof(*out));
     if (!autoexec || !game_program || !menu_program || !menu_icon || !menu_info ||
@@ -92,18 +118,47 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
     hash_bytes(autoexec,autoexec_size,autoHash); hash_bytes(game_program,game_program_size,gameHash);
     hash_bytes(menu_program,menu_program_size,menuHash); hash_bytes(menu_icon,menu_icon_size,iconHash); hash_bytes(menu_info,menu_info_size,infoHash);
     english=!strcmp(gameHash,k_edm_md5); japanese=!strcmp(gameHash,k_jdm_md5);
+    /* TMENU.EXP is the TownsOS file browser, not the game executable.  Its
+     * stable ownership evidence is the real menu assets and Towns mouse/OS
+     * bindings; the game-owned title symbols live in EDM/JDM below. */
+    menuSymbols = contains_ascii(menu_program, menu_program_size, "\\TMENU.INF") &&
+                  contains_ascii(menu_program, menu_program_size, "\\TMENU.ICN") &&
+                  contains_ascii(menu_program, menu_program_size, "TownsOS") &&
+                  contains_ascii(menu_program, menu_program_size, "TOWNS MOUSE LIBRARY");
+    gameSymbols = contains_ascii(game_program, game_program_size, "DO_TITLE_ANIMATION") &&
+                  contains_ascii(game_program, game_program_size, "TITLE_MASTER") &&
+                  contains_ascii(game_program, game_program_size, "TITLE_PRESENTS") &&
+                  contains_ascii(game_program, game_program_size, "SHOW_DUNGEON") &&
+                  contains_ascii(game_program, game_program_size, "LOAD_3D_GRAPHICS") &&
+                  contains_ascii(game_program, game_program_size, "CD_LEVEL_SONG");
     if (strcmp(autoHash,k_autoexec_md5) || strcmp(menuHash,k_tmenu_exp_md5) ||
         strcmp(iconHash,k_tmenu_icn_md5) || strcmp(infoHash,k_tmenu_inf_md5) || (!english && !japanese) ||
         game_program[0] != 'P' || game_program[1] != '3' || game_program[2] != 1 || game_program[3] != 0 ||
-        menu_program[0] != 'P' || menu_program[1] != '3' || menu_program[2] != 1 || menu_program[3] != 0) return 0;
+        menu_program[0] != 'P' || menu_program[1] != '3' || menu_program[2] != 1 || menu_program[3] != 0 ||
+        !menuSymbols || !gameSymbols) return 0;
     out->valid=1; out->language=english?DM1_FMTOWNS_LANG_EN:DM1_FMTOWNS_LANG_JP;
     out->autoexec_size=(uint32_t)autoexec_size; out->game_program_size=(uint32_t)game_program_size; out->menu_program_size=(uint32_t)menu_program_size; out->menu_icon_size=(uint32_t)menu_icon_size; out->menu_info_size=(uint32_t)menu_info_size;
     memcpy(out->game_program_name,english?"EDM.EXP":"JDM.EXP",7); out->game_program_name[7]='\0';
     strcpy(out->autoexec_md5,autoHash); strcpy(out->game_program_md5,gameHash); strcpy(out->menu_program_md5,menuHash); strcpy(out->menu_icon_md5,iconHash); strcpy(out->menu_info_md5,infoHash);
+    out->menu_info_selects_game = menu_info_selects_program(menu_info, menu_info_size, english);
+    out->menu_program_symbols_verified = menuSymbols;
+    out->game_program_symbols_verified = gameSymbols;
+    if (!out->menu_info_selects_game) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
     out->title_track=2; out->hall_track=3; out->entrance_track=5;
     return 1;
 }
 
 int dm1_v1_fmtowns_startup_receipt_is_native(const DM1_V1_FmtownsStartupReceipt *receipt) {
     return receipt && receipt->valid && (receipt->language == DM1_FMTOWNS_LANG_EN || receipt->language == DM1_FMTOWNS_LANG_JP);
+}
+
+int dm1_v1_fmtowns_startup_receipt_has_native_owners(
+    const DM1_V1_FmtownsStartupReceipt *receipt) {
+    return dm1_v1_fmtowns_startup_receipt_is_native(receipt) &&
+           receipt->menu_info_selects_game &&
+           receipt->menu_program_symbols_verified &&
+           receipt->game_program_symbols_verified;
 }

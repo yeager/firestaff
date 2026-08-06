@@ -928,7 +928,10 @@ level or consumer bindings.
   receipt now verifies the exact HMA-240 `AUTOEXEC.BAT`, selected `EDM/JDM`
   Phar Lap P3 owner, `TMENU.EXP`, `TMENU.ICN` and `TMENU.INF` hashes before
   the cache is accepted; its CD title/hall/entrance track ownership is also
-  recorded. Remaining work is decoding and consuming the FM Towns-owned
+  recorded. The receipt now additionally requires TMENU's real TownsOS
+  file-browser bindings, the language-specific EDM/JDM selection in TMENU.INF,
+  and the game executable's original title/menu/dungeon/CD owner symbols.
+  Remaining work is decoding and consuming the FM Towns-owned
   executable startup animation and menu in M11, with original timing/audio/
   input capture. Do not reuse the PC34 `TITLE`/`SWOOSH` path for this edition.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3

@@ -102,6 +102,15 @@
   cache, the five existing DM1 FM Towns tests, and the real-archive DM1 boot
   probe. This does not claim P3/TBIOS pixel decoding; that remains TODO.
 
+- ✅ DM1 FM Towns native owner-symbol gate: the startup receipt now checks the
+  real `TMENU.EXP` TownsOS/file-browser bindings, confirms that `TMENU.INF`
+  selects the requested `EDM.EXP` or `JDM.EXP`, and requires the original game
+  executable's title-animation, title, menu, dungeon, 3D-graphics and CD-song
+  owner symbols. This prevents a hash-correct but mismatched startup set from
+  being presented as a native FM Towns boot. Verification: the real English
+  HMA-240 cache passes `dm1_v1_fmtowns_startup`; no P3 instruction or TBIOS
+  pixel decoding is claimed.
+
 - ✅ Disabled the synthetic English combat-log overlay for authenticated DM1
   source sessions. The real PC34 `TEXT.C`/C015 message lane remains visible;
   the diagnostic overlay is still available for non-source diagnostic worlds.

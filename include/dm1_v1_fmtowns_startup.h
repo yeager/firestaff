@@ -29,6 +29,9 @@ typedef struct {
     char menu_program_md5[33];
     char menu_icon_md5[33];
     char menu_info_md5[33];
+    int menu_info_selects_game;
+    int menu_program_symbols_verified;
+    int game_program_symbols_verified;
     uint8_t title_track;
     uint8_t hall_track;
     uint8_t entrance_track;
@@ -48,6 +51,12 @@ int dm1_v1_fmtowns_startup_receipt(
 /* The receipt's program is the native startup owner. This intentionally
  * does not claim that the P3/TBIOS pixel decoder is complete. */
 int dm1_v1_fmtowns_startup_receipt_is_native(
+    const DM1_V1_FmtownsStartupReceipt *receipt);
+
+/* The native executables remain the source of truth for startup ownership.
+ * This gate is deliberately symbol-based: it does not claim that the P3
+ * instruction stream or TBIOS pixel calls have been decoded. */
+int dm1_v1_fmtowns_startup_receipt_has_native_owners(
     const DM1_V1_FmtownsStartupReceipt *receipt);
 
 #ifdef __cplusplus
