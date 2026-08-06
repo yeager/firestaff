@@ -22,6 +22,7 @@ static const Nexus_ShopEntry g_shop_table[NEXUS_SHOP_ITEM_COUNT] = {
 };
 
 int nexus_v1_shop_table(const Nexus_ShopEntry **out) {
+    /* This is a disassembly/retail receipt, not a Saturn shop owner. */
     if (out) *out = g_shop_table;
     return NEXUS_SHOP_ITEM_COUNT;
 }
@@ -144,6 +145,7 @@ int nexus_v1_shop_sell(Nexus_ShopManager *mgr,
 
 int nexus_v1_shop_price(uint16_t item_id) {
     int i;
+    /* Price metadata alone cannot authorize stock, wallet or UI mutation. */
     for (i = 0; i < NEXUS_SHOP_ITEM_COUNT; i++) {
         if (g_shop_table[i].item_id == item_id)
             return (int)g_shop_table[i].price;

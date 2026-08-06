@@ -18,11 +18,12 @@ typedef struct {
 
 typedef struct Nexus_ShopManager Nexus_ShopManager;
 
-/* Retrieve the shop price table.  Returns NEXUS_SHOP_ITEM_COUNT. */
+/* Retrieve the static DM.BIN price receipt for diagnostics only. Returns
+ * NEXUS_SHOP_ITEM_COUNT; this does not admit a live shop catalog. */
 int nexus_v1_shop_table(const Nexus_ShopEntry **out);
 
-/* Look up the price for an item_id.  Returns the price or -1 if not found.
- * If the item appears multiple times, returns the first match. */
+/* Look up a diagnostic DM.BIN price receipt. Returns the price or -1 if not
+ * found. If the item appears multiple times, returns the first match. */
 int nexus_v1_shop_price(uint16_t item_id);
 
 /* Bind the retail DM.BIN yam\\item.c price rows at 0x037210.  The source
