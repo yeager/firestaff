@@ -15,7 +15,7 @@
  *   docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md
  *
  * Key design constraints:
- *   - 7 mini-dungeons, 3 levels each (21 dungeon maps total).
+ *   - 7 mini-dungeons, 3-8 maps each including the hub map.
  *   - Between-dungeon saves only (in_dungeon_save_allowed = 0).
  *   - Champion inventory resets each dungeon; Theron stats/skills persist.
  *   - 7 quest items collected across sequence (one per dungeon).
@@ -34,7 +34,8 @@
  * real values are populated at runtime from Track 02 data. */
 static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
     /* Creature-region names from Track 02 UD 0x2741EF (7 × 8-char, \x01-delimited)
-     * map 1:1 to dungeons 1-7. DMWeb confirms Ak-Tu-Ba = Dungeon 1 with 3 levels.
+     * map 1:1 to dungeons 1-7. The real Track 02 corpus retains one hub plus
+     * the retail dungeon's 2-7 playable maps.
      * Quest items from retrieval messages at UD 0x27715B-0x277272. */
 
     /* Dungeon 1 — AKUTUBA (Ak-Tu-Ba): Shield Defiant. 4 maps (1 hub + 3 levels). */
@@ -502,7 +503,7 @@ const char *theron_v1_dungeon_progression_source_evidence(void) {
         "THQUEST.ASM T520  — party placement / start position\n"
         "THQUEST.ASM T560  — dungeon loading (header parsing, dungeon_seed)\n"
         "THQUEST.ASM T800  — champion persistence between dungeons\n"
-        "TQR: 7 mini-dungeons, 3 levels each max; dungeon 1 first, dungeons\n"
+        "TQR: 7 mini-dungeons, 3-8 maps including each hub; dungeon 1 first, dungeons\n"
         "  2..6 unlocked after the first quest item, dungeon 7 after the first six;\n"
         "  champion inv reset per dungeon; Theron persists with stats/skills;\n"
         "  7 quest items one per dungeon;\n"

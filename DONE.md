@@ -50661,5 +50661,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   real PC-DOS boot, M11 startup and eight-file SKSave corpus tests pass.
 - ✅ 2026-08-06 Nexus PRS3 invalid-reference gate: DMWeb-avkodaren fail-closed
   på framtida backreferenser utanför redan producerat fönster; DMWebs
-  dokumenterade negativa inledning nollfylls fortfarande. Den nya negativa
-  testvektorn passerar och hela den verkliga MENU.BPK-korpusen är verifierad.
+ dokumenterade negativa inledning nollfylls fortfarande. Den nya negativa
+ testvektorn passerar och hela den verkliga MENU.BPK-korpusen är verifierad.
+- ✅ 2026-08-06 Theron Track 02 level-record retention: the world handoff now
+  copies every decoded retail map-header byte into explicit source receipt
+  fields without guessing seed, spawn direction or gameplay semantics.
+  The real US loader test verifies those fields for all seven dungeons and
+  their complete 3-8-map retail spans; all existing object chains remain
+  fail-closed and unbound where the consumer is unproven.

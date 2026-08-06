@@ -1,4 +1,5 @@
 #include "theron_v1_track02_dungeon_loader.h"
+#include "theron_v1_track02_dungeon_map.h"
 #include "theron_v1_track02_thing_data.h"
 #include "theron_v1_world.h"
 #include <assert.h>
@@ -71,6 +72,25 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         int rc = theron_v1_track02_load_full_dungeon(
             world, d + 1, ud, ud_size, &result);
         assert(rc == 0);
+
+        Theron_DungeonData source_maps;
+        assert(theron_v1_track02_dungeon_map_load(
+                   ud, ud_size, (unsigned int)d, &source_maps));
+        assert(source_maps.map_count == (uint8_t)result.levels_loaded);
+        for (unsigned int m = 0; m < source_maps.map_count; ++m) {
+            const Theron_MapHeader *src = &source_maps.maps[m].header;
+            const Theron_V1_Level *dst = &world->levels[d][m];
+            assert(dst->source_header_verified == 1);
+            assert(dst->source_header_level_index == src->map_id);
+            assert(dst->source_map_x_offset == src->x_offset);
+            assert(dst->source_map_y_offset == src->y_offset);
+            assert(dst->source_header_unk1 == src->unk1);
+            assert(dst->source_header_unk2 == src->unk2);
+            assert(dst->source_xp_modifier == src->xp_modifier);
+            assert(dst->source_door_type1 == src->door_type1);
+            assert(dst->source_door_type2 == src->door_type2);
+            assert(dst->creature_budget == src->creature_count);
+        }
 
         printf("  %s: %d levels, %d things placed "
                "(%d doors, %d telep, %d act[%d fixed], %d source records, "

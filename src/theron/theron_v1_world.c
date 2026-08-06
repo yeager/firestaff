@@ -274,6 +274,14 @@ int theron_v1_world_load_track02_dungeon(
         lv->height = (int)h;
         lv->dungeon_seed = 0;
         lv->source_header_level_index = tm->header.map_id;
+        lv->source_map_x_offset = tm->header.x_offset;
+        lv->source_map_y_offset = tm->header.y_offset;
+        lv->source_header_unk1 = tm->header.unk1;
+        lv->source_header_unk2 = tm->header.unk2;
+        lv->source_xp_modifier = tm->header.xp_modifier;
+        lv->source_door_type1 = tm->header.door_type1;
+        lv->source_door_type2 = tm->header.door_type2;
+        lv->source_header_verified = 1;
         lv->start_dir = 0;
 
         int has_entrance = 0;

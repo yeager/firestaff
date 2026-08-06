@@ -89,7 +89,7 @@ typedef enum {
 
 /* ── Dungeon state machine ───────────────────────────────────────── */
 
-/* Each dungeon has up to 3 sub-levels. State transitions:
+/* Each dungeon has 2-7 playable sub-levels after its hub map. State transitions:
  *   DUNGEON_STATE_LOCKED → DUNGEON_STATE_AVAILABLE (between-dungeon save restored)
  *   DUNGEON_STATE_AVAILABLE → DUNGEON_STATE_IN_PROGRESS (entered dungeon)
  *   DUNGEON_STATE_IN_PROGRESS → DUNGEON_STATE_COMPLETE (quest item found + exit)

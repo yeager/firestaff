@@ -24403,6 +24403,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   leaves `Theron_V1_Object` untouched for categories whose host owner is not
   proven. The remaining handoff is the original object-kind/item-index
   consumer, not raw media intake or chain traversal.
+- 2026-08-06 update: each real Track 02 map header now survives the world
+  handoff as an exact verified receipt (`x/y` offsets, opaque bytes, XP and
+  door bytes, map id and creature count). These fields remain semantic
+  read-only evidence; seed, spawn direction and object-kind publication stay
+  closed pending the original consumers.
 
 ## Theron Track 19 remaining evidence
 

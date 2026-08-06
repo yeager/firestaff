@@ -25,7 +25,7 @@ typedef struct Theron_Track02ObjectTable Theron_Track02ObjectTable;
  * timers, object database, and deterministic world-state hashing.
  *
  * Key design constraints (from TQR provenance):
- *   - 7 mini-dungeons, 3-8 levels each (matching Track 02 quest blocks).
+ *   - 7 mini-dungeons, 3-8 maps each including the hub map (matching Track 02 quest blocks).
  *   - Between-dungeon saves only (no in-dungeon save).
  *   - Theron persists fully across dungeons.
  *   - Champions reset inventories each dungeon, keep stats/skills.
@@ -193,10 +193,21 @@ typedef struct {
 
 /* ── Level struct ──────────────────────────────────────────────────── */
 typedef struct {
-    int   level_index;          /* 0..2 within this dungeon */
+    int   level_index;          /* 0..7 map index within this dungeon */
     int   width, height;        /* typically 20x20 for TQR mini-dungeons */
     uint32_t dungeon_seed;      /* source header seed, never inferred */
     uint16_t source_header_level_index; /* opaque Track 02 header value */
+    /* Exact Track 02 map-header bytes retained without assigning gameplay
+     * meaning. Source: theron_v1_track02_dungeon_map.c, the real 11-byte
+     * per-map header reader; the two unknown bytes remain opaque. */
+    uint8_t source_map_x_offset;
+    uint8_t source_map_y_offset;
+    uint8_t source_header_unk1;
+    uint8_t source_header_unk2;
+    uint8_t source_xp_modifier;
+    uint8_t source_door_type1;
+    uint8_t source_door_type2;
+    uint8_t source_header_verified;
     int   start_x, start_y;    /* party spawn position (THQUEST.ASM T520) */
     int   start_dir;            /* 0=N 1=E 2=S 3=W */
     uint8_t squares[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE];
@@ -306,7 +317,7 @@ typedef enum {
 
 /* ── World state struct ────────────────────────────────────────────── */
 struct Theron_V1_World {
-    /* Dungeon maps — levels[7][3]: [dungeon_id-1][level_index] */
+    /* Dungeon maps — levels[7][8]: [dungeon_id-1][map_index]. */
     Theron_V1_Level levels[THERON_DUNGEON_COUNT][THERON_MAX_LEVELS_PER_DUNGEON];
     int level_loaded[THERON_DUNGEON_COUNT][THERON_MAX_LEVELS_PER_DUNGEON];
 
