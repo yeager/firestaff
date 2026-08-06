@@ -9,6 +9,9 @@
   fabricates party and panel state. It loads no original DM1 data and has no
   M11/runtime caller; retain it only as explicit ReDMCSB coverage until a
   source-bound interaction owner is recovered.
+- **DM1-D1C-F0115-SYNTHETIC-AUDIT:** This D1C door-frame/F0115 contract uses
+  fixed geometry and local probe pixels. It has no original material input or
+  M11/runtime caller; retain it only as explicit ReDMCSB coverage.
 
 - **DM1-MIRROR-C545-C160-SYNTHETIC-AUDIT:** This C545/C160 fixture fabricates
   party, panel and pixel state. It loads no original DM1 data and has no

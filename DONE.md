@@ -57471,3 +57471,7 @@ alcove runtime and archive-media tests passed (4/4).
   HUD, and viewport routes remain gated.
 - ⚠️ The supplied European CUE references missing Japanese audio-track files;
   the capture used a temporary data-only CUE pointing at the same European ISO.
+# DM1 D1C F0115 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free D1C door-frame/F0115 contract from M10. Its direct
+  ReDMCSB regression remains explicit; verification passes 87 assertions.

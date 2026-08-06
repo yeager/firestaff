@@ -4447,6 +4447,11 @@ list(REMOVE_ITEM M10_SOURCES
 # caller; the independent D1C door receipt is the original-material owner.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_f0111_door_pc34_compat.c")
+# `dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat.c` is an asset-free
+# D1C F0115 ordering and frame-geometry contract. It has no M11/runtime
+# caller; its direct ReDMCSB regression compiles the source explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_f0115_door_frame_pc34_compat.c")
 # `dm1_v1_viewport_d1l_d1r_f0111_partly_open_door_pc34_compat.c` is an
 # asset-free F0111 source lock. Its synthetic control/blit model has no
 # runtime caller; the independent D1 side door receipt owns real material.
