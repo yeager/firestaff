@@ -1,3 +1,13 @@
+# DM1 C040/C537/C162 thought-cancel synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only thought-project cancel-after-pickup fixture
+  from M10. It fabricates champion, chest and scroll state, has no original
+  DM1 data input or M11/runtime caller, and its explicit ReDMCSB regression
+  now compiles the source directly.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_thought_project_cancel_after_pickup_pc34_compat`
+  passes with 166 assertions; the source object is absent from both M10 and
+  M11 archives.
+
 # DM1 C040/C537 double-open-close synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040/C537 lifecycle fixture from M10. It

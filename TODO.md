@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-THOUGHT-CANCEL-SYNTHETIC-AUDIT:** This C040/C537/C162
+  thought-project scenario fabricates champion, chest and scroll state. It
+  has no original DM1 data input or M11/runtime caller; retain it only as
+  explicit ReDMCSB coverage until a source-bound interaction owner is
+  recovered.
+
 - **DM1-MIRROR-DOUBLE-OPEN-CLOSE-SYNTHETIC-AUDIT:** This C040/C537 lifecycle
   fixture fabricates champion, hand and chest-slot state. It has no original
   DM1 data input or M11/runtime caller; retain it only as explicit ReDMCSB
