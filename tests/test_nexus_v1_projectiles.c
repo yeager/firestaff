@@ -3,6 +3,7 @@
 #include <string.h>
 #include "nexus_v1_projectiles.h"
 #include "nexus_v1_dungeon.h"
+#include "nexus_v1_squares.h"
 
 static uint8_t g_map[NEXUS_MAX_MAP_SIZE][NEXUS_MAX_MAP_SIZE];
 
@@ -84,7 +85,26 @@ int main(void) {
         }
     }
 
-    /* Test 5: max projectiles */
+    /* Test 5: an unbound door is a projectile collision, not a passability
+       fallback through the generic non-wall classifier. */
+    {
+        Nexus_ProjectileManager mgr;
+        Nexus_ProjectileHit hits[4];
+        nexus_v1_projectiles_init(&mgr);
+        g_map[5][5] = NEXUS_SQUARE_DOOR;
+        nexus_v1_projectile_spawn(&mgr, NEXUS_PROJ_FIREBALL,
+                                   5, 6, 0, 10, 1, 0);
+        nexus_v1_projectiles_tick(&mgr, g_map, hits, 4);
+        if (nexus_v1_projectile_count(&mgr) != 0 || !hits[0].hit_wall) {
+            fprintf(stderr, "FAIL: projectile passed through unbound door\n");
+            fail++;
+        } else {
+            printf("  Fireball stops at unbound door, no placeholder passage OK\n");
+        }
+        g_map[5][5] = 0x00;
+    }
+
+    /* Test 6: max projectiles */
     {
         Nexus_ProjectileManager mgr;
         nexus_v1_projectiles_init(&mgr);
@@ -100,7 +120,7 @@ int main(void) {
         }
     }
 
-    /* Test 6: NULL safety */
+    /* Test 7: NULL safety */
     {
         nexus_v1_projectiles_init(NULL);
         nexus_v1_projectile_spawn(NULL, NEXUS_PROJ_FIREBALL, 0, 0, 0, 0, 0, 0);

@@ -26246,6 +26246,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   registration now fails closed in both passability and square-event routes;
   the remaining gap is binding the registered door's state transition and
   animation to SDDRVS.TSK/retail capture rather than the bounded local state.
+  Projectile consumers also stop at an unbound type-8 square instead of
+  inheriting the generic non-wall passability rule.
 - 🔧 Nexus FONT256 text binding: retail DMWeb map/page header facts are now
   exposed. The remaining gap is proving how page tilemap entries become
   runtime character codes before enabling text rendering.

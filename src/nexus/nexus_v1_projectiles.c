@@ -1,6 +1,7 @@
 
 #include "nexus_v1_projectiles.h"
 #include "nexus_v1_movement.h"
+#include "nexus_v1_squares.h"
 #include <string.h>
 
 void nexus_v1_projectiles_init(Nexus_ProjectileManager* mgr) {
@@ -61,7 +62,9 @@ int nexus_v1_projectiles_tick(Nexus_ProjectileManager* mgr,
         }
 
         sq = nexus_get_square(squares, nx, ny);
-        if (!nexus_square_is_passable(sq)) {
+        /* The generic square classifier has no door-state input. Stop at an
+         * unbound type-8 square rather than passing through a closed door. */
+        if (sq == NEXUS_SQUARE_DOOR || !nexus_square_is_passable(sq)) {
             if (out_hits && hits < max_hits) {
                 out_hits[hits].hit_x = p->x;
                 out_hits[hits].hit_y = p->y;

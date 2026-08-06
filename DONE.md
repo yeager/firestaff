@@ -51901,3 +51901,8 @@ and `firestaff` build pass.
   openable. The square-event path now blocks it, while registered DGN doors
   retain their bounded state machine. Regression coverage proves the missing
   SDDRVS/DGN state cannot create a door transition or viewport movement.
+- ✅ 2026-08-06 Nexus projectile door fallback removal: projectile traversal
+  now treats an unbound type-8 square as a collision, rather than allowing
+  the generic non-wall passability helper to send a projectile through a
+  closed door. The focused regression covers the fail-closed route; open-door
+  passage remains capture/state-gated.
