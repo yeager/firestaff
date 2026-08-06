@@ -866,10 +866,21 @@ void theron_v1_world_tick_generators(Theron_V1_World *world) {
             if (theron_v1_creature_at(world, lvl, cx, cy)) {
                 attempts++; continue;
             }
-            theron_v1_creature_spawn(world, (Theron_CreatureType)dg->gens[i].creature_type,
-                                     world->current_dungeon, lvl, cx, cy);
-            world->generator_spawn_count[gen_idx]++;
-            break;
+            if (theron_v1_creature_spawn(
+                    world,
+                    (Theron_CreatureType)dg->gens[i].creature_type,
+                    world->current_dungeon,
+                    lvl,
+                    cx,
+                    cy) > 0) {
+                ++world->generator_spawn_count[gen_idx];
+                break;
+            }
+            /* The legacy generator table still carries DMWeb creature
+             * labels, while the production Track 02 spawn bridge accepts
+             * only source-zone identities.  Do not consume a real generator
+             * budget when that source consumer rejects the label. */
+            ++attempts;
         }
         world->generator_next_tick[gen_idx] =
             world->world_tick + THERON_GENERATOR_RESPAWN_INTERVAL;

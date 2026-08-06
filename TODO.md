@@ -1410,6 +1410,9 @@
   loaded, using the disassembly-bound category HP/attack/defense formulas.
   Scripted Thief/Demon records, AI/attack behavior, T900 loot and sound stay
   closed until their source consumers are captured.
+  2026-08-06 generator-integrity update: a rejected legacy generator label no
+  longer increments `generator_spawn_count`; bind the real Track 02 monster
+  record/type consumer before admitting generator creatures or AI.
 
 - **THERON-FORCEFIELD-MENU:** Closed 2026-08-06. `ENTER FORCEFIELD` is now
   enabled for both the Soul Room and READY phases, including a party with

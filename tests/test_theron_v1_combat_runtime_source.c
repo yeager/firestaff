@@ -39,6 +39,32 @@ int main(void) {
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_DEMON,
                                    1, 0, 2, 1) == -1,
           "scripted Demon remains blocked without a spawn record");
+    memset(&world, 0, sizeof(world));
+    world.current_dungeon = 1;
+    world.current_level = 2;
+    world.level_loaded[0][2] = 1;
+    world.levels[0][2].source_header_verified = 1;
+    world.levels[0][2].width = 32;
+    world.levels[0][2].height = 27;
+    memset(world.levels[0][2].squares, THERON_SQUARE_FLOOR,
+           sizeof(world.levels[0][2].squares));
+    world.party.leader_x = 0;
+    world.party.leader_y = 0;
+    theron_v1_world_init_generators(&world);
+    world.world_tick = 60;
+    theron_v1_world_tick_generators(&world);
+    CHECK(world.generator_active_count == 1 &&
+              world.generator_spawn_count[0] == 0 &&
+              world.creature_count == 0,
+          "rejected legacy generator labels do not consume source spawn budget");
+    memset(&world, 0, sizeof(world));
+    world.level_loaded[0][0] = 1;
+    world.levels[0][0].source_header_verified = 1;
+    world.levels[0][0].dungeon_seed = 0x0108e938u;
+    CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
+                                   1, 0, 1, 1) == 1,
+          "regular spawn remains source-admitted after generator rejection");
+    creature = theron_v1_creature_by_id(&world, 1);
     CHECK(theron_v1_champion_attack(&world, 0, 1) == -1,
           "combat behavior stays blocked without the source consumer");
     CHECK(theron_v1_champion_cast_spell(&world, 0, 0, -1) == -1,

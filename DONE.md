@@ -4,6 +4,12 @@
   fails closed with the authenticated-capture status when the dungeon handoff
   capture is absent. Direct-launch and launcher-handoff regressions pass.
 
+- ✅ 2026-08-06 Theron generator budget integrity: production generator ticks
+  now increment a respawn budget only after the source spawn bridge creates a
+  live record. Legacy DMWeb/DM1 labels that are not yet bound to Theron's
+  source-zone identity no longer consume generator capacity or create false
+  respawn state. The focused source combat/runtime regression passes.
+
 - ✅ 2026-08-06 M12 missing archive-tool recovery: when present game media is
   inside an archive whose reader is unavailable, the launcher now shows a
   localized popup naming the required extractor and asks the player to rescan
