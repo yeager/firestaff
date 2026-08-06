@@ -24220,8 +24220,18 @@ static M11_GameInputResult m11_dm1_write_save_disk(M11_GameViewState* state,
         m11_set_status(state, "SAVE", "SAVE DIRECTORY UNAVAILABLE");
         return M11_GAME_INPUT_REDRAW;
     }
-    saveResult = DM1_SaveGame(&state->world, savePath, state->dm1GameID,
-                              quitAfterSave ? 0 : 1, state->dm1MusicOn);
+    /* ReDMCSB F0433 writes the selected physical disk in PC34 format.  The
+     * old call here used Firestaff's private quicksave envelope, which made
+     * the in-game SAVE GAME / QUIT GAME dialog produce a file that DOS DM
+     * could not consume.  Keep F9's host quicksave separate, but make the
+     * source DM1 disk dialog an actual PC34 writer. */
+    if (state->sourceId[0] != '\0' && strcmp(state->sourceId, "dm1") == 0) {
+        saveResult = DM1_SaveGamePC34(&state->world, savePath,
+                                      state->dm1GameID);
+    } else {
+        saveResult = DM1_SaveGame(&state->world, savePath, state->dm1GameID,
+                                  quitAfterSave ? 0 : 1, state->dm1MusicOn);
+    }
     if (saveResult != DM1_SAVE_OK) {
         m11_set_status(state, "SAVE", DM1_SaveLoadErrorString(saveResult));
         return M11_GAME_INPUT_REDRAW;
@@ -24476,9 +24486,14 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                     if (M11_GameView_GetQuickSavePath(state, savePath,
                                                       sizeof(savePath)) &&
                         dm1_v1_save_prepare_parent_directory_pc34(savePath)) {
-                        int saveResult = DM1_SaveGame(&state->world, savePath,
-                                                      state->dm1GameID, 0,
-                                                      state->dm1MusicOn);
+                        int saveResult =
+                            (state->sourceId[0] != '\0' &&
+                             strcmp(state->sourceId, "dm1") == 0)
+                                ? DM1_SaveGamePC34(&state->world, savePath,
+                                                   state->dm1GameID)
+                                : DM1_SaveGame(&state->world, savePath,
+                                               state->dm1GameID, 0,
+                                               state->dm1MusicOn);
                         if (saveResult == DM1_SAVE_OK) {
                             state->lastSaveTick =
                                 (uint32_t)state->world.gameTick;

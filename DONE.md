@@ -53756,3 +53756,10 @@ alcove runtime and archive-media tests passed (4/4).
   and restores the valid receipt after negative checks. Verification passes
   against the real Nexus data root; no decoder or VDP1 presentation is
   promoted by this test repair.
+
+- ✅ 2026-08-06 DM1 save-disk format boundary: the in-game DM1 SAVE GAME,
+  QUIT GAME and unsaved-quit paths now emit source-shaped PC34 save bytes via
+  `DM1_SaveGamePC34()`. Firestaff's private quick-resume envelope remains
+  confined to F9/host resume. The focused save/load suite passes 16/16 and
+  the real PC34 graphics audit passes 713/713 structural records; authentic
+  corpus-backed F0802/C13 writeback remains tracked in TODO.

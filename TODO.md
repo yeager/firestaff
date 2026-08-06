@@ -4944,6 +4944,12 @@ that its exact runtime path is not already source-locked and tested.
 10. **DM1-ORIGINAL-NEWGAME-SAVE:** Complete PC34 F0803/F0433 new-game and
     Save-and-Quit ownership, including original-format export, backup, error,
     and resume paths against a real corpus.
+    **2026-08-06 update:** the live DM1 save-disk dialog and unsaved-quit
+    guard now call `DM1_SaveGamePC34()` instead of Firestaff's private
+    `FSDM1SV1` quicksave writer. F9 remains the separate host quick-resume
+    path. The remaining gap is authentic corpus-backed F0802/C13 writeback
+    and packaged DOS/macOS round-trip capture; no claim of full corpus
+    completion is made here.
 11. **DONE 2026-07-23 DM1-CHAMPION-MIRROR-RESURRECTION:** C127 mirror
     selection, C160 resurrection, C161 rename/reincarnate, C162 cancellation,
     real C026 portraits, sensor state, party handoff, and HiDPI/fullscreen
