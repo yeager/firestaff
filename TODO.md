@@ -446,6 +446,10 @@
   2026-08-06: ITEM.IBS inventory helpers no longer guess armor slots from
   inherited DM1 item IDs; the remaining equipment mutation still requires the
   authentic Saturn action/slot dispatcher capture.
+  2026-08-06: the real floor-image renderer now follows DMWeb's
+  `palette_offset == 0` reuse rule per palette ID; the 75 retail descriptors
+  that reuse an earlier palette no longer fail as if their source palette
+  were missing. Item action, pickup and VDP1 command ownership remain gated.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1

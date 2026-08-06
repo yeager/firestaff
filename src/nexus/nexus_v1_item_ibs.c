@@ -34,6 +34,40 @@ static uint32_t align2k(uint32_t v) {
     return (v + 2047U) & ~2047U;
 }
 
+/* DMWeb ITEM.IBS file: a floor-image descriptor with palette_offset == 0
+ * reuses the previously declared palette for the descriptor's palette ID.
+ * Resolve that source palette without inventing a palette-0 fallback. */
+static int resolve_floor_palette(const uint8_t *data, int data_size,
+                                 const Nexus_V1_ItemIbsDecodeResult *result,
+                                 int floor_index, uint32_t out_palette[16])
+{
+    uint32_t floor_base;
+    int index;
+
+    if (!data || data_size <= 0 || !result || !out_palette || floor_index < 0 ||
+        floor_index >= result->floor_images_decoded) return 0;
+    floor_base = result->header.floor_section_offset;
+    if (floor_base > (uint32_t)data_size) return 0;
+    for (index = floor_index; index >= 0; --index) {
+        const Nexus_V1_ItemIbsFloorDesc *candidate =
+            &result->floor_descs[index];
+        uint32_t abs_palette;
+
+        if (candidate->palette_id != result->floor_descs[floor_index].palette_id ||
+            candidate->palette_offset == 0U) continue;
+        if (candidate->palette_offset > (uint32_t)data_size - floor_base)
+            return 0;
+        abs_palette = floor_base + candidate->palette_offset;
+        if (abs_palette > (uint32_t)data_size ||
+            32U > (uint32_t)data_size - abs_palette) return 0;
+        for (int color = 0; color < 16; ++color)
+            out_palette[color] = bgr555_to_rgba(
+                read_be16(data + abs_palette + (uint32_t)color * 2U));
+        return 1;
+    }
+    return 0;
+}
+
 int nexus_v1_item_ibs_parse_header(const uint8_t *data, int data_size,
                                     Nexus_V1_ItemIbsHeader *out) {
     uint32_t decl_data_size, img_data_size, floor_data_size;
@@ -268,7 +302,7 @@ int nexus_v1_item_ibs_render_floor_image(const uint8_t *data, int data_size,
                                           uint32_t *rgba_out,
                                           int rgba_capacity) {
     const Nexus_V1_ItemIbsFloorDesc *fd;
-    uint32_t floor_base, abs_img, abs_pal;
+    uint32_t floor_base, abs_img;
     uint32_t pal_rgba[16];
     int px_count, byte_count, j;
     const uint8_t *src;
@@ -289,14 +323,8 @@ int nexus_v1_item_ibs_render_floor_image(const uint8_t *data, int data_size,
         (fd->palette_offset != 0U &&
          fd->palette_offset > (uint32_t)data_size - floor_base)) return 0;
     abs_img = floor_base + fd->image_offset;
-    abs_pal = fd->palette_offset ? (floor_base + fd->palette_offset) : 0;
-
-    if (!abs_pal) return 0;
-    if (abs_pal > (uint32_t)data_size ||
-        32U > (uint32_t)data_size - abs_pal) return 0;
-
-    for (j = 0; j < 16; ++j)
-        pal_rgba[j] = bgr555_to_rgba(read_be16(data + abs_pal + j * 2));
+    if (!resolve_floor_palette(data, data_size, result, floor_index,
+                               pal_rgba)) return 0;
 
     byte_count = (px_count + 1) / 2;
     if (abs_img > (uint32_t)data_size ||

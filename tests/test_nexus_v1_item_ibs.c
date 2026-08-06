@@ -21,6 +21,19 @@ static uint8_t *load_file(const char *path, int *out_size) {
     return buf;
 }
 
+static uint32_t fnv1a_rgba(const uint32_t *pixels, int count) {
+    uint32_t hash = 0x811C9DC5U;
+    int i;
+    for (i = 0; i < count; ++i) {
+        uint32_t value = pixels[i];
+        hash = (hash ^ (value & 0xffU)) * 0x01000193U;
+        hash = (hash ^ ((value >> 8) & 0xffU)) * 0x01000193U;
+        hash = (hash ^ ((value >> 16) & 0xffU)) * 0x01000193U;
+        hash = (hash ^ ((value >> 24) & 0xffU)) * 0x01000193U;
+    }
+    return hash;
+}
+
 static int test_synthetic(void) {
     Nexus_V1_ItemIbsHeader hdr;
     uint8_t bad[64];
@@ -39,7 +52,9 @@ static int test_real_decode(void) {
     int size = 0;
     Nexus_V1_ItemIbsDecodeResult result;
     int i, unique_img, unique_floor;
+    int reused_palette_index = -1;
     uint32_t seen[256];
+    uint32_t floor_rgba[16384];
 
     if (data_dir && data_dir[0] != '\0') {
         snprintf(path, sizeof(path), "%s/ITEM.IBS", data_dir);
@@ -86,6 +101,27 @@ static int test_real_decode(void) {
     if (result.floor_images_decoded != 109) {
         printf("  FAIL expected 109 floor images, got %d\n",
                result.floor_images_decoded);
+        free(data);
+        return 1;
+    }
+
+    for (i = 0; i < result.floor_images_decoded; ++i) {
+        if (result.floor_descs[i].palette_offset == 0U) {
+            reused_palette_index = i;
+            break;
+        }
+    }
+    if (reused_palette_index < 0 ||
+        nexus_v1_item_ibs_render_floor_image(
+            data, size, reused_palette_index, &result, floor_rgba,
+            (int)(sizeof(floor_rgba) / sizeof(floor_rgba[0]))) != 1 ||
+        fnv1a_rgba(floor_rgba,
+                   result.floor_descs[reused_palette_index].width *
+                       result.floor_descs[reused_palette_index].height) !=
+            result.floor_image_hashes[reused_palette_index]) {
+        fprintf(stderr,
+                "  FAIL floor image %d did not resolve DMWeb palette reuse\n",
+                reused_palette_index);
         free(data);
         return 1;
     }

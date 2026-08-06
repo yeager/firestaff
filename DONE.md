@@ -5,6 +5,13 @@
   local Track 02 lacks the required System Card/host capture; no fallback
   dungeon is promoted.
 
+- ✅ 2026-08-06 Nexus ITEM.IBS floor-palette reuse: fixed the real floor-image
+  renderer to resolve DMWeb's `palette_offset == 0` descriptors from the
+  previously declared palette with the same palette ID, without falling back
+  to palette 0. The retail regression exercises one of the 75 reused-palette
+  descriptors and matches the decoder's source hash. Item action/pickup
+  semantics and Saturn VDP1 presentation remain capture-gated.
+
 - ✅ 2026-08-06 Nexus MNS runtime admission: added canonical MD5 identities for
   all 30 retail MNS files. The real readiness probe now loads
   `SCORPION.MNS` into the DMDF model pool and passes 17/17 checks; the prior
