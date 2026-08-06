@@ -259,7 +259,7 @@ jobs:
       - name: Install Go (for lefthook installer)
         uses: actions/setup-go@v7
         with:
-          go-version: "1.22"
+          go-version: "1.26.4"
           cache: false
 
       - name: Install lefthook
