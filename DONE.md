@@ -4,6 +4,13 @@
   direct regression compile the source explicitly. It loads no original DM1
   data and has no M11/runtime caller.
 
+# DM1 mirror icon-refresh synthetic audit isolation (2026-08-07)
+
+- ✅ Confirmed the contract-only F0295/F0296 in-memory icon/slot fixture is
+  excluded from M10 and M11. Its dedicated and double-open regressions compile
+  the source explicitly; it loads no original DM1 data and has no runtime
+  caller.
+
 # DM1 mirror close-button synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C040 chrome fixture from M10. Its direct and

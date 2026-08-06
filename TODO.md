@@ -15,10 +15,6 @@
   original DM1 data and has no M11/runtime caller; retain it only as explicit
   ReDMCSB coverage until a source-bound interaction owner is recovered.
 
-- **DM1-MIRROR-ICON-REFRESH-SYNTHETIC-AUDIT:** This in-memory icon/slot
-  fixture has no original DM1 data input or M11/runtime caller; retain it only
-  as explicit ReDMCSB coverage.
-
 - **DM1-CHEST-MULTI-CHAMPION-CLOSE-SYNTHETIC-AUDIT:** This chest-close fixture
   fabricates champions, Things and weights. It loads no original DM1 data and
   has no M11/runtime caller; retain it only as explicit ReDMCSB coverage.
