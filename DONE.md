@@ -6,6 +6,13 @@
   BAT receipt. The loader regression and real Mednafen snapshot test pass;
   no dungeon-square, object, or synthetic rendering semantics were inferred.
 
+- ✅ 2026-08-06 Nexus DGN actor CRET provenance gate: a Structure1A/3 model
+  signature no longer promotes an actor to a live creature type when its
+  RLOWFIX CRET record is absent. Such actors remain untyped/idle instead of
+  receiving zero-health roster defaults; authenticated CRET data still binds
+  the normal production path. This closes a real-data-to-viewport/runtime
+  leak without changing the isolated fixture `spawn_on_level` route.
+
 - ✅ 2026-08-06 Nexus startup PLRD label provenance cleanup: authenticated
   RLOWFIX/PLRD champion rows no longer receive a host-generated ASCII/HP/MP
   label when the retail record carries only TABL/FONT256 glyph codes. The

@@ -26,6 +26,17 @@ int main(void) {
     nexus_v1_creatures_init(&mgr);
     CHECK(mgr.type_count > 0, "fixture has at least one Nexus actor type");
 
+    CHECK(nexus_v1_creature_bind_actor_model(
+              &mgr, UINT64_C(0x1234), 0, 0) == 0,
+          "model identity can be recorded before CRET binding");
+    slot = nexus_v1_creature_spawn_actor(
+        &mgr, 1, 1, 0, 0, 0, 0, UINT64_C(0x1234));
+    CHECK(slot == 0, "untyped real actor still occupies its authenticated slot");
+    CHECK(mgr.active[0].type_index == -1 && mgr.active[0].state == 0 &&
+              mgr.active[0].health == 0,
+          "model-only actor cannot promote zero-health roster defaults");
+    nexus_v1_creatures_reset_active(&mgr);
+
     slot = nexus_v1_creature_spawn(&mgr, 0, -4, 70, -1);
     CHECK(slot == 0, "malformed DGN actor coordinates still spawn in slot 0");
     CHECK(mgr.active[0].x == 0, "negative actor x clamps to DGN grid minimum");

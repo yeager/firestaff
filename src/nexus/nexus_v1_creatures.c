@@ -468,6 +468,13 @@ int nexus_v1_creature_spawn_actor(Nexus_V1_CreatureManager *mgr,
 
     type_idx = nexus_v1_creature_actor_type_for(mgr, model_signature,
                                                 structure3_model_index);
+    /* A model signature identifies geometry only.  Do not promote the actor
+     * to a live creature type until the matching retail CRET record has
+     * supplied its health/combat/AI fields; otherwise a missing RLOWFIX
+     * resource would create a zero-health actor from roster defaults. */
+    if (type_idx >= 0 && !mgr->types[type_idx].cret_bound) {
+        type_idx = -1;
+    }
     c = &mgr->active[mgr->active_count];
     memset(c, 0, sizeof(*c));
     c->type_index = type_idx;
