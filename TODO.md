@@ -168,6 +168,11 @@
   has no M11/runtime caller; retain it only in its explicit regression until a
   live F0108 consumer is bound to authenticated GRAPHICS.DAT material.
 
+- **DM1-D0L2-D0R2-F0111-SYNTHETIC-AUDIT:** This partly-open-door route model
+  hard-codes frames, zones and states. It reads no original DM1 data and has
+  no M11/runtime caller; retain it only in its explicit regression until a live
+  F0111 consumer is bound to authenticated door graphics and Thing state.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

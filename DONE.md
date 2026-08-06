@@ -202,6 +202,14 @@
 - ✅ Verification: `test_dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 D0L2/D0R2 F0111 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the partly-open D0 side-door route model from M10. It hard-codes
+  frames, zones and states, reads no original DM1 bytes and has no M11/runtime
+  caller; its explicit ReDMCSB regression now compiles it directly.
+- ✅ Verification: `test_dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the

@@ -4374,6 +4374,12 @@ list(REMOVE_ITEM M10_SOURCES
 # explicit regression until a real D0L2/D0R2 F0108 consumer requires it.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0l2_d0r2_f0108_floor_ceiling_ornament_pc34_compat.c")
+# `dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat.c` is a
+# source-locked route model with fixed frames and zones. It reads no original
+# DM1 bytes and has no M11/runtime caller; compile it only into its explicit
+# regression until a real D0L2/D0R2 F0111 consumer requires it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
@@ -53265,7 +53271,9 @@ add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat tests/test_
 target_include_directories(test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat COMMAND test_dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat)
-add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat tests/test_dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat
+    tests/test_dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat.c
+    src/dm1/dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat COMMAND test_dm1_v1_viewport_d0l2_d0r2_f0111_partly_open_door_pc34_compat)
