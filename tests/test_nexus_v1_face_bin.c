@@ -1,5 +1,6 @@
 #include "nexus_v1_face_bin.h"
 #include "nexus_v1_ui_surfaces.h"
+#include "asset_find_by_hash.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -52,6 +53,16 @@ static int test_real_decode(void) {
     }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP real_decode (no FACE.BIN)\n"); return 0; }
+
+    /* Portrait count and PRS3 shape alone do not establish retail identity.
+     * Require the exact European FACE.BIN accepted by the production loader
+     * before treating the 20 decoded records as source data. */
+    if (!asset_file_matches_md5(path,
+                                "bd9ca16ea68043984e2804067b6cd66f")) {
+        printf("  FAIL FACE.BIN is not the authenticated retail source\n");
+        free(data);
+        return 1;
+    }
 
     if (!nexus_v1_face_bin_parse_header(data, size, &hdr)) {
         printf("  FAIL real_decode: header parse failed\n");

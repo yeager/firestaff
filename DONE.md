@@ -16,6 +16,13 @@
 
 # Nexus boot-profile capability audit (2026-08-06)
 
+# Nexus FACE.BIN retail identity gate (2026-08-06)
+
+- ✅ Hardened `test_nexus_v1_face_bin` with the authenticated European
+  FACE.BIN MD5 before accepting the 20-record portrait decode and UI-surface
+  census. No portrait draw path was reopened; Saturn VDP1 destination,
+  scaling, flip and command order remain capture-gated.
+
 # Nexus ITEM.IBS retail identity gate (2026-08-06)
 
 - ✅ Hardened `test_nexus_v1_item_ibs` with the authenticated European retail
