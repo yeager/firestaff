@@ -5,6 +5,16 @@
   and could make an unbound bundle look renderable. Keep the runtime blocked
   until a captured HuC6260 palette span and consumer are hash/offset-bound.
 
+- **THERON-BITMAP-ROUTE-PROVENANCE:** The raw Track 02 bitmap catalog and
+  indexed atlas retain real byte spans from `TQUS02.bin`/`TQJP02.bin`, but the
+  `title`, `stage`, `Soul Room`, and `forcefield` route bits are still bounded
+  candidate classes from the layout scan, not VDC/VCE consumer bindings. The
+  receipt remains diagnostic evidence only: do not promote its route labels
+  to semantic screen ownership, palette assignment, viewport pixels, or a
+  later-level record until a captured original consumer read joins the source
+  LBA/span to the executing HuC6280 code. See
+  `docs/source-lock/tqr_v1_bitmap_route_provenance_audit_2026-08-06.md`.
+
 - **THERON-US-ROSTER-CONSUMER:** The production startup receipt no longer
   copies the eight JP roster literals into an authenticated US Track 02
   receipt. The real US BIN exposes the startup prompt, but its champion

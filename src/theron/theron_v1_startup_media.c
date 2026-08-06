@@ -302,6 +302,11 @@ static void theron_v1_startup_media_capture_bitmaps(
     }
 
     media->startup_bitmap_sample_count = (int)catalog.sample_count;
+    /* The catalog route bits identify bounded byte candidates selected by the
+     * Track 02 layout scan. They are not a game-owned title/stage/Soul
+     * Room/forcefield semantic binding; the original VDC/VCE consumer is
+     * still absent from the captured evidence. Keep the indexed samples for
+     * diagnostics, while palette/render admission remains separately gated. */
     media->startup_bitmap_route_mask = catalog.route_mask;
     for (i = 0u; i < catalog.sample_count; ++i) {
         media->startup_bitmap_nonzero_pixel_count +=

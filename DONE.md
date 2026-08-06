@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 Theron bitmap-route provenance audit: the real US/JP Track 02
+  indexed samples remain available as byte-level diagnostics, but the startup
+  route labels are now documented as layout-catalog candidates rather than
+  VDC/VCE screen ownership. Palette binding and RGBA output remain blocked;
+  the required consumer/LBA/VDC/VCE proof is recorded in
+  `docs/source-lock/tqr_v1_bitmap_route_provenance_audit_2026-08-06.md`.
+  The real-US M12/M11 launcher boundary remains green at 52 passed, 0 failed,
+  1 skipped.
+
 - ✅ 2026-08-06 Theron forcefield Enter transition: fixed the production
   no-roster startup API, which previously entered the forcefield base state
   and immediately reset to Soul Room/`NOT_READY`. It now preserves the
