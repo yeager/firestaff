@@ -68,7 +68,10 @@
   editor-local. Recover the F31J Shift-JIS glyph
   consumer and the original file-picker/save/portrait-edit transaction
   owners before exposing those commands; a C06 hit rectangle must not mutate
-  a Firestaff save or manufacture a champion.
+  a Firestaff save or manufacture a champion. 2026-08-06 follow-up: verified
+  FM Towns ZIP media now materializes its original image into the user cache
+  across volume boundaries, so this remaining work starts from the real CD
+  payload rather than a partial archive extraction.
 
 - **THERON-FORCEFIELD-REAL-DUNGEON:** Enter now reliably dispatches from the
   Soul Room forcefield focus, including the first attempt without prompt text.
@@ -2217,8 +2220,13 @@ level or consumer bindings.
   real square-value/depth/material mapping before enabling it.
 
 - **THERON-V1-CHAMPION-STATE-REAL-DATA:** *(Partially resolved v3.0.234-250)*
-  Real champion roster (8 entries from UD 0x09D1D6) now wired into
-  `theron_v1_party_init()` with real HP/STA/MANA and 6 base attributes.
+  The cross-checked numeric champion records remain available to
+  `theron_v1_party_init()` for the source-bound forcefield handoff. The old
+  claim that they came from US UD `0x09D1D6` was false: that US window is
+  executable code. The authenticated JP raw BIN now has a bounded eight-record
+  receipt at raw offset `0x0B3D98`, including names, titles, class/kön,
+  HP/STA/MANA, seven attributes and 16 skill nibbles. Production compiles out
+  unbound US names/titles; the named cross-reference table is fixture/probe-only.
   Soul Room companion selection via `theron_v1_party_set_companion()`.
   Skill sub-levels (Fighter/Ninja/Priest/Wizard × 4 sub-skills) added from
   DMWeb encyclopaedia, cross-validated against Track 02 base stats.
@@ -2237,7 +2245,8 @@ level or consumer bindings.
   ranges/category lists are no longer admitted.
   The authenticated forcefield-entry path now retains the source-bound
   champion HP/skills/equipment while the later dungeon capture gate rejects
-  unproven media. Remaining roster work is the US/JP text/portrait consumer;
+  unproven media. Remaining roster work is the US text/portrait consumer and
+  JP portrait consumer;
   do not clear the source roster as a fixture fallback after handoff.
   Dungeon seeds: TQ data blocks have no DM1-style global header with
   randomGeneratorSeed; seeds are likely in PCE code, not data.

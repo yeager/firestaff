@@ -20,6 +20,18 @@
 
 # Theron authentic archive capture boundary (2026-08-06)
 
+# CSB FM Towns cross-volume CD cache (2026-08-06)
+
+- ✅ Materializing verified F31 English/Japanese ZIP media no longer fails
+  after successful extraction when the user-selected data directory and the
+  Firestaff cache are on different mounted volumes.
+- ✅ The cache retains the original `FMTOWNS.IMG` and matching CUE sheet for
+  source-owned CDDA, then the real FM Towns title, SWITCHTW, Prison door,
+  HUD and viewport handoff completes from that cache.
+- ✅ Verified against the supplied FM Towns original ZIP: `--scan-data`
+  reports CSB READY, and the original-media F31 English handoff regression
+  passes without unpacking the archive by hand.
+
 - ✅ Extracted the supplied retail US archive through its original CUE layout
   and verified the assembled Track 02 ISO against the authenticated
   `ceb02343868f80cec899e9b239aff2da` identity.
@@ -40,6 +52,15 @@
 - ✅ Added null-safe champion initialization and kept the real JP roster
   cluster reader unchanged; production handoff, source-boundary, startup
   media, mechanics and fixture probes remain green.
+
+# Theron JP champion record receipt (2026-08-06)
+
+- ✅ Added a hash-gated reader for the authentic JP Track 02 cluster at raw
+  offset `0x0B3D98`, covering all eight records and their newline/NUL framing.
+- ✅ Decoded the real A–P nibble representation into HP/stamina/mana, seven
+  attributes and 16 skill values, with regional-hash and mutation rejection.
+- ✅ The receipt remains source-format evidence; it does not promote portraits,
+  US labels or gameplay semantics.
 
 # Theron TQTR capture-offset correction (2026-08-06)
 

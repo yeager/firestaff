@@ -38,6 +38,10 @@ the `TQUS19.iso` plus `TQUS02End.iso` materialization step.
   champion-record fields, but compiles out the unbound US names and titles.
   The explicit roster table remains available only to fixture/probe targets;
   JP startup names/titles are admitted only through the real JP cluster reader.
+- The JP raw Track 02 champion cluster is independently receipt-bound at raw
+  offset `0x0B3D98`: eight newline/NUL-framed records decode their numeric
+  fields from the A–P nibble representation. A wrong regional MD5, offset
+  mutation or malformed field rejects the receipt.
 
 ## Known placeholder boundaries
 

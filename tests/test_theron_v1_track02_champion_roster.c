@@ -1,10 +1,78 @@
 #include "theron_v1_track02_champion_roster.h"
+#include "theron_v1_track02_jp_roster_receipt.h"
+#include "theron_v1_track02.h"
 #include "theron_v1_champions.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
+static void verify_real_jp_roster_receipt(void) {
+    const char *home = getenv("HOME");
+    const char *override = getenv("FIRESTAFF_THERON_TRACK02_JP_RAW");
+    char fallback[512];
+    const char *path = override;
+    FILE *file = NULL;
+    long size;
+    uint8_t *bytes;
+    Theron_Track02JpRosterReceipt records[THERON_TRACK02_JP_ROSTER_COUNT];
+    static const char *titles[] = {
+        "", "GUARDIAN OF WISDO", "THE RESOLUTE", "LORD OF FEALTY",
+        "THE BRAVE", "KNIGHT OF STRENGT", "MASTER OF THE WIN",
+        "THE SURVIVOR"
+    };
+
+    if (!path && home && home[0]) {
+        snprintf(fallback, sizeof(fallback),
+                 "%s/.firestaff/data/theron/TQJP02.bin", home);
+        path = fallback;
+    }
+    if (!path || !(file = fopen(path, "rb")) || fseek(file, 0L, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0L || fseek(file, 0L, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        puts("SKIP: real JP Track 02 roster receipt data unavailable");
+        return;
+    }
+    bytes = malloc((size_t)size);
+    assert(bytes != NULL);
+    assert(fread(bytes, 1u, (size_t)size, file) == (size_t)size);
+    fclose(file);
+
+    assert(theron_v1_track02_jp_roster_read(
+        bytes, (size_t)size, THERON_TRACK02_MD5_JP_BIN, records));
+    for (unsigned int i = 0u; i < THERON_TRACK02_JP_ROSTER_COUNT; ++i) {
+        const Theron_ChampionRecord *cross =
+            theron_v1_track02_us_champion(i);
+        assert(records[i].valid && records[i].index == i);
+        assert(strcmp(records[i].title, titles[i]) == 0);
+        assert(records[i].sex == cross->sex);
+        assert(records[i].hp == cross->hp &&
+               records[i].stamina == cross->stamina &&
+               records[i].mana == cross->mana);
+        assert(records[i].attributes[0] == cross->luck &&
+               records[i].attributes[1] == cross->strength &&
+               records[i].attributes[2] == cross->dexterity &&
+               records[i].attributes[3] == cross->wisdom &&
+               records[i].attributes[4] == cross->vitality &&
+               records[i].attributes[5] == cross->anti_magic &&
+               records[i].attributes[6] == cross->anti_fire);
+        assert(records[i].next_raw_offset > records[i].raw_offset);
+    }
+    {
+        uint8_t original = bytes[0x0b3d98u];
+        bytes[0x0b3d98u] ^= 1u;
+        assert(!theron_v1_track02_jp_roster_read(
+            bytes, (size_t)size, THERON_TRACK02_MD5_JP_BIN, records));
+        bytes[0x0b3d98u] = original;
+        assert(!theron_v1_track02_jp_roster_read(
+            bytes, (size_t)size, THERON_TRACK02_MD5_US_BIN, records));
+    }
+    free(bytes);
+    puts("PASS: real JP Track 02 champion record receipt");
+}
+
 int main(void) {
+    verify_real_jp_roster_receipt();
     assert(theron_v1_track02_us_champion_count() == 8);
     assert(theron_v1_track02_us_champion(8) == NULL);
 

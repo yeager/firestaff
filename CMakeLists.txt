@@ -47297,13 +47297,14 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_save_strings
     )
 endif()
 
-# Theron Track 02 champion roster (8 champions with real stats from UD 0x09D1D6)
+# Theron Track 02 champion roster (cross-reference plus real JP raw receipt)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_champion_roster.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_champion_roster.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/include/theron_v1_track02_champion_roster.h")
     add_executable(test_theron_v1_track02_champion_roster
         tests/test_theron_v1_track02_champion_roster.c
         src/theron/theron_v1_track02_champion_roster.c
+        src/theron/theron_v1_track02_jp_roster_receipt.c
         src/theron/theron_v1_champions.c
     )
     target_include_directories(test_theron_v1_track02_champion_roster PRIVATE

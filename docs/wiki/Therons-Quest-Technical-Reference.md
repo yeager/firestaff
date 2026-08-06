@@ -39,6 +39,13 @@ Level/object candidates are staged and committed atomically only when every
 original-data receipt validates. Descriptor proximity and repeated byte shapes
 are not semantic evidence.
 
+The JP Track 02 champion cluster has a separate source receipt at raw offset
+`0x0B3D98`. It validates eight newline/NUL-framed records against the JP BIN
+identity and decodes the A–P nibble fields for HP, stamina, mana, attributes
+and skill levels. This is data-format evidence only: the US BIN has no proven
+equivalent text consumer, and portraits or live gameplay ownership are not
+inferred from the JP records.
+
 SRM discovery validates gzip framing, optional header fields, CRC32, and ISIZE.
 Opaque original bodies remain unavailable until their layout is correlated with
 evidence. Firestaff-native export is no-replace atomic, protecting original
