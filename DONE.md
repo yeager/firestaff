@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 DM2 FM Towns English corpus-coverage gate: the real-media
+  launcher regression now iterates every non-empty text key in the selected
+  Japanese CD GDAT and requires a non-empty value at the identical key in the
+  explicitly selected, hash-verified PC-English GDAT companion. It covers
+  both a direct companion file and the original DOS ZIP member, using only
+  RAM-held source buffers. A single familiar label can therefore no longer
+  conceal missing English companion text. This verifies corpus coverage, not
+  the still-unbound original GUI/dialogue consumers.
+
 - ✅ 2026-08-06 Theron split-CUE parity coverage: the raw Track 02 intake
   regression now exercises the authentic Japanese CUE alias route as well as
   the US route. It verifies that `TQJP02.iso` resolves only to the supplied

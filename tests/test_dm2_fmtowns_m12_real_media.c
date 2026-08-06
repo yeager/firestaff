@@ -7,6 +7,7 @@
  * directory itself. */
 
 #include "asset_status_m12.h"
+#include "dm2_v1_asset_loader.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_runtime.h"
 
@@ -22,6 +23,55 @@ static void expect(int condition, const char* message)
         fprintf(stderr, "FAIL: %s\n", message);
         ++failures;
     }
+}
+
+/* The FM Towns disc remains the native Japanese GDAT owner, while the
+ * explicitly selected PC-English corpus supplies the overlay.  Do not call
+ * the overlay complete merely because one known label (SAVE) resolves: every
+ * native non-empty GDAT text key must have a non-empty companion value before
+ * an English Towns session is admitted.  Both loaders operate on the selected
+ * RAM buffers; no archive member is materialised on disk. */
+static void expect_complete_english_text_overlay(
+    const DM2_V1_BootProfile* profile)
+{
+    DM2_V1_AssetLoader native_loader;
+    DM2_V1_GdatEntryIterator iterator;
+    DM2_V1_GdatEntryQueryReceipt entry;
+    unsigned int native_text_count = 0u;
+    unsigned int missing_text_count = 0u;
+
+    if (!profile || !profile->graphics_mem || profile->graphics_mem_size == 0u ||
+        dm2_v1_asset_loader_init(&native_loader, profile->graphics_mem,
+                                  profile->graphics_mem_size) != 0) {
+        expect(0, "FM Towns English has its selected native GDAT in RAM");
+        return;
+    }
+
+    memset(&iterator, 0, sizeof(iterator));
+    iterator.category_first = 0;
+    iterator.category_last = DM2_GDAT_CATEGORY_LIMIT;
+    iterator.index_filter = -1;
+    iterator.type_filter = DM2_GDAT_ENTRY_TYPE_TEXT;
+    iterator.field_filter = -1;
+    while (dm2_v1_query_next_gdat_entry(&native_loader, &iterator, &entry)) {
+        const uint8_t* text;
+        size_t text_size = 0u;
+
+        if (!entry.present || entry.raw_length == 0u) {
+            continue;
+        }
+        ++native_text_count;
+        text = dm2_v1_runtime_i18n_text(entry.category, entry.index,
+                                        entry.field, &text_size);
+        if (!text || text_size == 0u) {
+            ++missing_text_count;
+        }
+    }
+    dm2_v1_asset_loader_free(&native_loader);
+    expect(native_text_count > 0u,
+           "FM Towns CD exposes original GDAT text for the English coverage check");
+    expect(missing_text_count == 0u,
+           "every non-empty FM Towns GDAT text key has a real English companion value");
 }
 
 int main(void)
@@ -107,6 +157,7 @@ int main(void)
                    launch.profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
                    dm2_v1_runtime_i18n_ready(),
                "FM Towns runtime keeps Japanese CD ownership and binds English text only");
+        expect_complete_english_text_overlay(launch.profile);
         text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
         expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,
                "English text comes from the authenticated PC GDAT companion");
@@ -129,6 +180,7 @@ int main(void)
             expect(dm2_v1_boot_startup_launch_alloc_with_language(
                        selectedRuntime, virtual_companion, 0, &launch) == 1,
                    "FM Towns English accepts a verified PC GDAT ZIP member in RAM");
+            expect_complete_english_text_overlay(launch.profile);
             text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
             expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,
                    "ZIP companion supplies authenticated English text");
