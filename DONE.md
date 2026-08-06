@@ -1,3 +1,13 @@
+# DM2 SKSAVE possession continuation decoder boundary (2026-08-07)
+
+- ✅ Added the source-faithful `DM2_2066_062b` continuation decoder for
+  possession-index links, preserving the ordinary-record `0x1000` and type
+  `0xE` `0x2400` markers from SKProject `sksvgame.cpp:1003-1040`.
+- ✅ Added source-order and truncated-stream regressions; the helper remains
+  callback-only until the authenticated `savegamep3` owner and record pool are
+  wired into runtime. `test_dm2_v1_save_read_record_checkcode` passed; no
+  release was made.
+
 # DM2 startup status host-text removal (2026-08-13)
 
 - ✅ Removed the final generic M11 DM2 failure labels from

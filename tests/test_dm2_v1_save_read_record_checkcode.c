@@ -167,6 +167,23 @@ static int read_creature_ai_flags_alt(void *ctx, uint16_t link,
     return 0;
 }
 
+typedef struct {
+    int count;
+    uint16_t links[4];
+    uint16_t continuations[4];
+} ContinuationMock;
+
+static int read_set_continuation(void *ctx, uint16_t record_link,
+                                 uint16_t continuation)
+{
+    ContinuationMock *mock = (ContinuationMock *)ctx;
+    if (!mock || mock->count >= 4) return -1;
+    mock->links[mock->count] = record_link;
+    mock->continuations[mock->count] = continuation;
+    mock->count++;
+    return 0;
+}
+
 /* ---- Helpers ---- */
 
 static DM2_WriteRecordCallbacks make_writer_cb(void)
@@ -561,6 +578,62 @@ static void test_session_counters(void)
     printf("  PASS: session_counters\n");
 }
 
+static void test_possession_continuations(void)
+{
+    const uint16_t links[] = {
+        mock_make_link(0, 9),
+        mock_make_link(1, 0x0e),
+        mock_make_link(2, 5)
+    };
+    const uint8_t values[] = {
+        0x23, 0x01, /* source continuation payload 0x0123 */
+        0xab, 0x02, /* source continuation payload 0x02ab */
+        0x55, 0x00  /* source continuation payload 0x0055 */
+    };
+    const uint8_t mask[] = { 0xff, 0x03, 0xff, 0x03, 0xff, 0x03 };
+    uint8_t encoded[8] = {0};
+    DM2_SuppressReader reader;
+    DM2_ReadPossessionContinuationCallbacks cb;
+    ContinuationMock mock;
+    int encoded_size;
+
+    encoded_size = dm2_suppress_encode(values, mask, sizeof(values),
+                                       encoded, sizeof(encoded));
+    assert(encoded_size > 0);
+    memset(&mock, 0, sizeof(mock));
+    cb.set_continuation = read_set_continuation;
+    cb.ctx = &mock;
+    dm2_suppress_reader_init(&reader, encoded, (size_t)encoded_size);
+    assert(dm2_v1_read_possession_continuations(&reader, links,
+                                                sizeof(links) / sizeof(links[0]),
+                                                &cb) == 0);
+    assert(mock.count == 3);
+    assert(mock.links[0] == links[0]);
+    assert(mock.continuations[0] == 0x1123);
+    assert(mock.links[1] == links[1]);
+    assert(mock.continuations[1] == 0x26ab);
+    assert(mock.links[2] == links[2]);
+    assert(mock.continuations[2] == 0x1055);
+    printf("  PASS: possession_continuations_source_markers\n");
+}
+
+static void test_possession_continuations_underflow(void)
+{
+    const uint16_t link = mock_make_link(0, 9);
+    const uint8_t encoded[] = {0};
+    DM2_SuppressReader reader;
+    DM2_ReadPossessionContinuationCallbacks cb;
+    ContinuationMock mock;
+
+    memset(&mock, 0, sizeof(mock));
+    cb.set_continuation = read_set_continuation;
+    cb.ctx = &mock;
+    dm2_suppress_reader_init(&reader, encoded, sizeof(encoded));
+    assert(dm2_v1_read_possession_continuations(&reader, &link, 1, &cb) == -1);
+    assert(mock.count == 0);
+    printf("  PASS: possession_continuations_underflow_is_closed\n");
+}
+
 int main(void)
 {
     printf("test_dm2_v1_save_read_record_checkcode:\n");
@@ -576,6 +649,8 @@ int main(void)
     test_creature_requires_source_ai_mask();
     test_creature_uses_source_ai_mask();
     test_session_counters();
+    test_possession_continuations();
+    test_possession_continuations_underflow();
     printf("All read_record_checkcode tests passed.\n");
     return 0;
 }

@@ -68,6 +68,46 @@ static int read_suppress_preserving(DM2_ReadRecordSession *s,
     return 0;
 }
 
+int dm2_v1_read_possession_continuations(
+    DM2_SuppressReader *reader,
+    const uint16_t *record_links,
+    size_t record_link_count,
+    const DM2_ReadPossessionContinuationCallbacks *cb)
+{
+    /* Source: SKProject sksvgame.cpp::DM2_2066_062b, lines 1003-1040.
+     * Its `wordrg4 &= 0x3c00; wordrg4 >>= 10` type test is deliberately
+     * performed on the source link, before the 10-bit read. */
+    static const uint8_t continuation_mask[2] = { 0xffu, 0x03u };
+    size_t i;
+
+    if (!reader || (!record_links && record_link_count != 0u) || !cb ||
+        !cb->set_continuation) {
+        return -1;
+    }
+
+    for (i = 0u; i < record_link_count; ++i) {
+        const uint16_t record_link = record_links[i];
+        const unsigned record_type =
+            (unsigned)((record_link & 0x3c00u) >> 10);
+        uint8_t decoded_bytes[2] = { 0u, 0u };
+        uint16_t continuation;
+
+        if (record_type > 9u && record_type != 0x0eu) continue;
+        if (dm2_suppress_reader_read(reader, continuation_mask, 2u,
+                                     decoded_bytes, 0u) != 0) {
+            return -1;
+        }
+
+        continuation = (uint16_t)(decoded_bytes[0] |
+                                  ((uint16_t)decoded_bytes[1] << 8));
+        continuation = (uint16_t)(continuation |
+                                  (record_type == 0x0eu ? 0x2400u : 0x1000u));
+        if (cb->set_continuation(cb->ctx, record_link, continuation) != 0)
+            return -1;
+    }
+    return 0;
+}
+
 int dm2_v1_read_record_checkcode(
     DM2_ReadRecordSession *session,
     const DM2_ReadRecordCallbacks *cb,

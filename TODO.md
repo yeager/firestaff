@@ -29331,6 +29331,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   also include the c_record allocator/append graph, container-moneybox mask
   swap, timer links, `DM2_2066_062b` possession continuation and source
   item-bonus pass. Bind those real owners before retrying corpus promotion.
+  **2026-08-07 audit:** added a source-faithful bounded decoder for the
+  `DM2_2066_062b` 10-bit possession continuation stream, including its
+  `0x1000`/`0x2400` link markers and fail-closed underflow behavior. It is
+  callback-only until the authenticated `savegamep3` owner and record pool
+  are connected; Continue and slot admission remain disabled.
   **2026-08-06 tile-link correction:** the bounded
   `DM2_READ_SKSAVE_DUNGEON` reader now retains each decoded tile-chain root
   through `set_tile_record_link`, matching `sksvgame.cpp:1390-1399`. This fixes
