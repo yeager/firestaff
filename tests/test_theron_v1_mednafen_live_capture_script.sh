@@ -14,6 +14,13 @@ if [[ ! -x "$script" ]]; then
     printf 'FAIL: live Mednafen capture script is not executable\n' >&2
     exit 1
 fi
+if ! grep -Fq 'THERON_US_CUE:-${THERON_CUE:-}' "$script" ||
+   ! grep -Fq 'TQJP02End.iso' "$script" ||
+   ! grep -Fq '397039af02d50d15c70b74088eb8a1cb' "$script" ||
+   ! grep -Fq 'THERON_US_CUE/THERON_CUE' "$script"; then
+    printf 'FAIL: live capture must support the authenticated Japanese CUE/ISO route\n' >&2
+    exit 1
+fi
 if [[ ! -x "$later_raw_receipt" ]] ||
    ! grep -Fq 'captured physical-to-raw Track 02 delta is not the observed US value' "$later_raw_receipt" ||
    ! grep -Fq 'no Stage-3 descriptor binds the range, so payload semantics remain blocked' "$later_raw_receipt"; then
@@ -283,9 +290,9 @@ if ! grep -Fq 'stage2_system_card_receipt="${trace}.stage2-system-card"' "$scrip
     exit 1
 fi
 
-output=$(env -u MEDNAFEN_BIN -u THERON_US_CUE -u THERON_SYSTEM_CARD \
+output=$(env -u MEDNAFEN_BIN -u THERON_US_CUE -u THERON_CUE -u THERON_SYSTEM_CARD \
     -u THERON_LIVE_TRACE_OUTPUT "$script")
-if [[ "$output" != 'SKIP: MEDNAFEN_BIN, THERON_US_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required' ]]; then
+if [[ "$output" != 'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required' ]]; then
     printf 'FAIL: capture script did not reject unstaged live inputs\n' >&2
     printf '%s\n' "$output" >&2
     exit 1

@@ -53856,3 +53856,14 @@ alcove runtime and archive-media tests passed (4/4).
   copying incomplete indexed pixels into a bitmap. The focused fail-closed
   regression and the real 713-record PC34 audit pass; no generated surface is
   admitted as a substitute.
+# 2026-08-06 Theron Japanese split-ISO capture intake
+
+- ✅ The live Mednafen capture runner now supports both regions. The supplied
+  Japanese CUE's CRLF/okvoterade `FILE TQJP02.iso BINARY` member is normalized
+  to the complete sibling `TQJP02End.iso` only after its authentic MD5
+  `397039af02d50d15c70b74088eb8a1cb` is verified. `THERON_CUE` is accepted as
+  the generic variable while `THERON_US_CUE` remains compatible. This extends
+  only verified media intake; no JP consumer, dungeon, palette or viewport
+  semantics are promoted. Verification:
+  `bash -n scripts/capture_theron_mednafen_live_trace.sh`, the live-capture
+  script regression, and the real archive CUE transformation pass.

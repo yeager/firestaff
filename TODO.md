@@ -27572,3 +27572,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     verified corpus and boot profile use `a6f2272a4f6cb3c6b3b33012bc5b15ed`.
     Update the capture-sidecar evidence only; Saturn authentication and
     runtime texture upload remain blocked until independent VDP1 capture.
+2026-08-06 regional capture follow-up: the same private CUE normalization
+now accepts the archive's Japanese `TQJP02.iso` alias and binds the complete
+sibling `TQJP02End.iso` only after the authenticated JP ISO MD5 matches
+`397039af02d50d15c70b74088eb8a1cb`. The new generic `THERON_CUE` variable
+retains `THERON_US_CUE` compatibility. A fresh JP consumer capture remains
+required before semantic promotion.

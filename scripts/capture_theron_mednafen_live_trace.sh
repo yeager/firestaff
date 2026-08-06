@@ -3,7 +3,7 @@ set -euo pipefail
 
 script_dir=$(CDPATH= cd -- "$(dirname -- "$0")" && pwd)
 mednafen_bin=${MEDNAFEN_BIN:-}
-cue=${THERON_US_CUE:-}
+cue=${THERON_US_CUE:-${THERON_CUE:-}}
 system_card=${THERON_SYSTEM_CARD:-}
 trace=${THERON_LIVE_TRACE_OUTPUT:-}
 seconds=${THERON_CAPTURE_SECONDS:-45}
@@ -31,7 +31,7 @@ fi
 quartz_keypair_script="$script_dir/send_theron_macos_quartz_keypair.swift"
 
 if [[ -z "$mednafen_bin" || -z "$cue" || -z "$system_card" || -z "$trace" ]]; then
-    printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'
+    printf '%s\n' 'SKIP: MEDNAFEN_BIN, THERON_US_CUE/THERON_CUE, THERON_SYSTEM_CARD, and THERON_LIVE_TRACE_OUTPUT are required'
     exit 0
 fi
 if [[ ! -x "$mednafen_bin" || ! -f "$cue" || ! -f "$system_card" ]]; then
@@ -121,6 +121,7 @@ track02_path="$(dirname -- "$cue")/$track02_member"
 capture_cue="$cue"
 capture_cue_needs_split_iso=0
 capture_split_iso_cache="${HOME:-}/.firestaff/cache/theron/TQUS02-ceb02343868f80cec899e9b239aff2da.iso"
+capture_jp_iso_sibling="$(dirname -- "$cue")/TQJP02End.iso"
 if [[ ! -f "$track02_path" && "$track02_mode" == 'MODE1/2048' &&
       ( "$track02_member" == 'TQUS02.iso' ||
         "$track02_member" == 'TQUS02End.iso' ) &&
@@ -135,6 +136,19 @@ if [[ ! -f "$track02_path" && "$track02_mode" == 'MODE1/2048' &&
         # silently falling back to the incomplete/missing member.
         capture_cue_needs_split_iso=1
         track02_path="$capture_split_iso_cache"
+    fi
+fi
+if [[ ! -f "$track02_path" && "$track02_mode" == 'MODE1/2048' &&
+      "$track02_member" == 'TQJP02.iso' &&
+      -f "$capture_jp_iso_sibling" ]]; then
+    split_iso_md5=$(md5_file "$capture_jp_iso_sibling") || split_iso_md5=
+    if [[ "$split_iso_md5" == 397039af02d50d15c70b74088eb8a1cb ]]; then
+        # The Japanese retail CUE names TQJP02.iso, while the supplied
+        # archive retains the complete authenticated payload as TQJP02End.iso.
+        # Keep the same private CUE normalization used by the US split route.
+        capture_cue_needs_split_iso=1
+        capture_split_iso_cache="$capture_jp_iso_sibling"
+        track02_path="$capture_jp_iso_sibling"
     fi
 fi
 if [[ ! -f "$track02_path" ]]; then
