@@ -52210,6 +52210,15 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   SKProject `DM2_GAME_LOAD` stream owns the live session. This removes the
   stale assertion that concealed real data in the menu and still forbids a
   partial or synthetic resume.
+
+# 2026-08-06 DM2 V2/V2.2 production-art exclusion audit
+
+- ✅ Verified the production archive boundary after inspecting every remaining
+  DM2 V2/V2.2 synthetic-art module. The generated-HUD, manifest/PNG and
+  modern-art-cache sources remain explicit test/diagnostic compilation units;
+  `firestaff_dm2_v2` and the linked `firestaff` binary export none of their
+  draw or bitmap-loader symbols. DM2 V2.2 therefore cannot display generated
+  placeholder art and falls back only to the source-preserving V1/V2.1 route.
 # 2026-08-06 Nexus HUD DM.BIN disassembly anchor
 
 - ✅ The real-data HUD regression now verifies the `yam\\menuctrl.c` owner

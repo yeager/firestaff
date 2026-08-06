@@ -65,6 +65,12 @@
   only that verified original fallback until a non-fallback HeroType is
   observed in an authenticated save or original runtime capture; it must not
   create a portrait row or select another champion image.
+  2026-08-06 V2 archive audit: the retained V2/V2.2 manifest, PNG and
+  generated-HUD modules are explicit diagnostic/test owners only. The
+  production `firestaff_dm2_v2` archive and linked `firestaff` binary export
+  none of their render or bitmap-loader entry points; V2.2 remains routed to
+  the source-preserving V1/V2.1 path. Keep this boundary while no original
+  DM2 V2 art owner exists.
 
 - **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
   mirror side/depth, inscription/corridor invalidation and wall-material
