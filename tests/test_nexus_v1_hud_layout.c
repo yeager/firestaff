@@ -55,6 +55,20 @@ int main(void)
         fprintf(stderr, "FAIL: reserved HUD layout word was accepted\n");
         return 1;
     }
+    /* Restore the reserved word, then test the independent Saturn display
+     * envelope. A non-sentinel off-screen coordinate is not a valid retail
+     * HUD placement. */
+    data[NEXUS_HUD_LAYOUT_DM_BIN_OFFSET + 2U] = 0U;
+    data[NEXUS_HUD_LAYOUT_DM_BIN_OFFSET + 3U] = 0U;
+    data[NEXUS_HUD_LAYOUT_DM_BIN_OFFSET + 4U] = 0x01U;
+    data[NEXUS_HUD_LAYOUT_DM_BIN_OFFSET + 5U] = 0x41U;
+    if (nexus_v1_hud_layout_parse_dm_bin(
+            data, (size_t)size, entries, NEXUS_HUD_LAYOUT_ENTRY_COUNT,
+            &count) == 0) {
+        free(data);
+        fprintf(stderr, "FAIL: off-screen HUD layout coordinate was accepted\n");
+        return 1;
+    }
     free(data);
     puts("PASS: real DM.BIN HUD layout parsed (80 entries)");
     return 0;

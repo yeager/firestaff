@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus HUD layout envelope gate: the real DM.BIN 80-entry
+  `menuctrl.c` layout parser now rejects non-sentinel coordinates outside the
+  Saturn 320×224 display envelope, matching the existing hit-rectangle
+  admission boundary. The authentic 80-entry layout and 40-entry hit table
+  both pass with the local European corpus; no host/off-screen or synthetic
+  placement can enter the HUD receipt.
+
 - ✅ 2026-08-06 Nexus documentation provenance correction: updated the
   source-locked data audit so real LEV00–LEV15 Structure1B/Structure3
   receipts, 16-file SLEV task profiles, SAL DataID-0/MAP metadata, the

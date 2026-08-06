@@ -37,6 +37,11 @@ int nexus_v1_hud_layout_parse_dm_bin(
         out[i].element_id = read_be16(entry + 0U);
         out[i].x = read_be16(entry + 4U);
         out[i].y = read_be16(entry + 6U);
+        /* These are Saturn screen coordinates, not an unconstrained host
+         * layout. Keep the inclusive 320x224 display envelope explicit so a
+         * shifted or synthetic entry cannot become an off-screen HUD
+         * placement while still passing the reserved-word check. */
+        if (out[i].x > 320U || out[i].y > 224U) return -5;
     }
     for (sentinel = 0U; sentinel < NEXUS_HUD_LAYOUT_SENTINEL_COUNT;
          ++sentinel) {
