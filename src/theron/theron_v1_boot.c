@@ -2747,6 +2747,66 @@ tqr_boot_startup_view_model_move_stage_focus(
     return last_stage ? last_stage : focused;
 }
 
+static const Theron_StartupLayoutElement *
+tqr_boot_startup_view_model_move_soul_focus(
+    const Theron_V1_BootStartupViewModel *view_model,
+    const Theron_StartupLayoutElement *focused,
+    int delta)
+{
+    int i;
+    int focused_index = -1;
+    int current_cursor = 0;
+    int step;
+    int candidate;
+    int count = 0;
+
+    if (!view_model) {
+        return NULL;
+    }
+    for (i = 0; i < view_model->layout_count; ++i) {
+        const Theron_StartupLayoutElement *element = &view_model->layout[i];
+        if (element->kind == THERON_STARTUP_LAYOUT_ELEMENT_MIRROR ||
+            element->kind == THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD) {
+            ++count;
+        }
+        if (element == focused) {
+            focused_index = i;
+            if (element->kind == THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD) {
+                current_cursor = THERON_STARTUP_HERO_MIRROR_COUNT;
+            } else if (element->kind == THERON_STARTUP_LAYOUT_ELEMENT_MIRROR) {
+                current_cursor = element->mirror_index;
+            }
+        }
+    }
+    if (count <= 0) {
+        return NULL;
+    }
+    if (focused_index < 0) {
+        current_cursor = 0;
+    }
+    step = delta < 0 ? -1 : 1;
+    for (i = 0; i < count; ++i) {
+        candidate = (current_cursor + step * (i + 1)) % count;
+        if (candidate < 0) {
+            candidate += count;
+        }
+        for (int j = 0; j < view_model->layout_count; ++j) {
+            const Theron_StartupLayoutElement *element =
+                &view_model->layout[j];
+            int element_cursor =
+                element->kind == THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD
+                    ? THERON_STARTUP_HERO_MIRROR_COUNT
+                    : element->mirror_index;
+            if ((element->kind == THERON_STARTUP_LAYOUT_ELEMENT_MIRROR ||
+                 element->kind == THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD) &&
+                element->enabled && element_cursor == candidate) {
+                return element;
+            }
+        }
+    }
+    return focused;
+}
+
 static int tqr_boot_startup_session_from_view_model(
     const Theron_V1_BootStartupViewModel *view_model,
     Theron_StartupSessionFacts *out_session)
@@ -2967,23 +3027,36 @@ int theron_v1_boot_startup_execute_input_from_view_model(
         }
         if (input == THERON_STARTUP_INPUT_LEFT ||
             input == THERON_STARTUP_INPUT_UP) {
+            const Theron_StartupLayoutElement *target =
+                tqr_boot_startup_view_model_move_soul_focus(
+                    view_model, focused, -1);
             out_action->kind = THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR;
-            out_action->cursor =
-                (cursor + THERON_STARTUP_HERO_MIRROR_COUNT) %
-                (THERON_STARTUP_HERO_MIRROR_COUNT + 1);
+            out_action->cursor = target &&
+                                         target->kind ==
+                                             THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD
+                                     ? THERON_STARTUP_HERO_MIRROR_COUNT
+                                     : target ? target->mirror_index : cursor;
             out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
             return 1;
         }
         if (input == THERON_STARTUP_INPUT_RIGHT ||
             input == THERON_STARTUP_INPUT_DOWN) {
+            const Theron_StartupLayoutElement *target =
+                tqr_boot_startup_view_model_move_soul_focus(
+                    view_model, focused, 1);
             out_action->kind = THERON_STARTUP_ACTION_MOVE_SOUL_CURSOR;
-            out_action->cursor =
-                (cursor + 1) % (THERON_STARTUP_HERO_MIRROR_COUNT + 1);
+            out_action->cursor = target &&
+                                         target->kind ==
+                                             THERON_STARTUP_LAYOUT_ELEMENT_FORCEFIELD
+                                     ? THERON_STARTUP_HERO_MIRROR_COUNT
+                                     : target ? target->mirror_index : cursor;
             out_receipt->input_result = THERON_STARTUP_INPUT_RESULT_REDRAW;
             return 1;
         }
         if (input == THERON_STARTUP_INPUT_ACCEPT &&
-            cursor < THERON_STARTUP_HERO_MIRROR_COUNT) {
+            cursor < THERON_STARTUP_HERO_MIRROR_COUNT && focused &&
+            focused->kind == THERON_STARTUP_LAYOUT_ELEMENT_MIRROR &&
+            focused->enabled) {
             out_action->kind = THERON_STARTUP_ACTION_TOGGLE_MIRROR;
             out_action->cursor = cursor;
             out_action->mirror_index = cursor;

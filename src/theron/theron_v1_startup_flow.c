@@ -1209,10 +1209,20 @@ int theron_v1_startup_layout_build(
             tqr_startup_layout_roster_title(state, i);
         int selected_mirror =
             (state->selected_mirrors_mask & (1 << i)) != 0;
+        int mirror_available = decoded_name && decoded_name[0] != '\0';
+#if defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
+        /* Fixture metadata may stand in for the decoded roster.  Production
+         * builds deliberately have no such fallback: an unbound mirror must
+         * remain visible but unavailable until Track 02 supplies its record. */
+        if (!mirror_available && theron_v1_startup_mirror_meta(i)) {
+            mirror_available = 1;
+        }
+#endif
         elements[count].kind = THERON_STARTUP_LAYOUT_ELEMENT_MIRROR;
         elements[count].phase = state->phase;
-        elements[count].cursor = (state->soul_cursor == i) ? 1 : 0;
-        elements[count].enabled = 1;
+        elements[count].cursor =
+            (mirror_available && state->soul_cursor == i) ? 1 : 0;
+        elements[count].enabled = mirror_available ? 1 : 0;
         elements[count].selected = selected_mirror ? 1 : 0;
         elements[count].mirror_index = i;
         elements[count].selected_order =
