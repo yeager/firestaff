@@ -4,6 +4,15 @@
   complete AI/sentinel table is verified against `DM.BIN+0x0383A8`; CRET stats
   remain bound only from retail `RLOWFIX.BIN`.
 
+- ✅ 2026-08-06 Theron authentic regional palette receipt: registered the
+  focused Track 02 palette test in CMake and made it discover
+  `.firestaff/data/theron/TQUS02.bin` and `TQJP02.bin` automatically. The
+  authenticated HuC6260-shaped windows are `0x2A06A0` (US) and `0x29FD70`
+  (JP); the startup binder now selects the correct regional offset. Both
+  strict decodes pass while semantic/VCE ownership and production rendering
+  remain fail-closed. See
+  `docs/source-lock/tqr_v1_track02_palette_offset_receipt_2026-08-06.md`.
+
 - ✅ 2026-08-06 Nexus MNS roster provenance: the complete 30-entry
   `nexus_v1_creature_names` table is now checked against the mounted European
   retail `DM.BIN` string table at `0x0385F0`, rather than relying only on

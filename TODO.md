@@ -110,6 +110,11 @@
   skipping on obsolete `theron-extras/` filenames. Both raw variants now
   exercise all three descriptor anchors and the real 32×27 startup candidate;
   the semantic dungeon/object consumer remains capture-gated.
+  2026-08-06 palette-offset update: the real US/JP palette-shape candidates
+  are now regionalized (`0x2A06A0` US, `0x29FD70` JP). The focused test reads
+  both standard-root BINs and the startup binder no longer applies the US
+  offset to JP media. This remains format evidence only; VCE ownership and
+  production palette/viewport promotion still require an executing capture.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

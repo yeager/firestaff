@@ -40760,6 +40760,23 @@ if(BUILD_TESTING AND THERON_SOURCES)
         COMMAND test_theron_v1_track02_loader_intake
     )
 
+    add_executable(test_theron_v1_track02_palette_window
+        tests/test_theron_v1_track02_palette_window.c
+    )
+    target_link_libraries(test_theron_v1_track02_palette_window PRIVATE
+        firestaff_theron
+    )
+    target_include_directories(test_theron_v1_track02_palette_window PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_track02_palette_window PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_track02_palette_window
+        COMMAND test_theron_v1_track02_palette_window
+    )
+
     add_executable(test_theron_v1_stage2_disassembly_chain
         tests/test_theron_v1_stage2_disassembly_chain.c
     )

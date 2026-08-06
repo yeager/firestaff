@@ -42,3 +42,8 @@ The existing caller-supplied HuC6260 palette-word helper remains offset-unbound
 and cannot promote catalogued media. No catalog candidate is consumed by the
 Theron runtime, and verified media continues to fail closed for unbound
 graphics.
+
+The separately authenticated regional offset receipt is recorded in
+`tqr_v1_track02_palette_offset_receipt_2026-08-06.md`. It corrects the JP raw
+BIN candidate to `0x29FD70`; the US candidate remains `0x2A06A0`. This still
+does not establish palette ownership or permit production rendering.

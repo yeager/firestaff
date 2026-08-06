@@ -696,6 +696,7 @@ int theron_v1_startup_media_bind_runtime_palette(
 
     enum {
         PALETTE_RAW_OFFSET_BIN = 0x2a06a0u,
+        PALETTE_RAW_OFFSET_JP_BIN = 0x29fd70u,
         PALETTE_RAW_OFFSET_ISO = 0x249800u
     };
     Theron_Track02PaletteWindowEvidence evidence;
@@ -708,9 +709,12 @@ int theron_v1_startup_media_bind_runtime_palette(
         return 0;
     }
     variant = theron_v1_track02_variant_for_md5(md5_hex);
-    if (variant == THERON_TRACK02_VARIANT_US_BIN ||
-        variant == THERON_TRACK02_VARIANT_JP_BIN) {
+    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
         offset = PALETTE_RAW_OFFSET_BIN;
+    } else if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        /* The authenticated JP BIN has a distinct aligned palette candidate;
+         * reusing the US offset lands in a zero/text tail. */
+        offset = PALETTE_RAW_OFFSET_JP_BIN;
     } else if (variant == THERON_TRACK02_VARIANT_US_ISO) {
         offset = PALETTE_RAW_OFFSET_ISO;
     } else {
