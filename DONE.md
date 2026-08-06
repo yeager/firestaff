@@ -54531,3 +54531,11 @@ alcove runtime and archive-media tests passed (4/4).
   data-free tests remain separate and continue to run without game media.
 - ✅ Focused CTest: 10/10 passed against `/Users/bosse/.firestaff/data/nexus`;
   missing-data probes returned 77 as intended. `git diff --check` passed.
+
+- ✅ 2026-08-06 DM1 FM Towns English title runtime consumer: after the
+  selected legacy GRAPHICS.DAT is bound, M11 validates the selected EDM.EXP
+  directory receipt and presents the real graphic-1 PRESENTS frame, the
+  source-bound 18-step zoom and MASTER frame. Missing or mismatched FM Towns
+  startup media fails closed rather than entering the PC34 title path.
+  Japanese JDM and the native FM Towns menu/TBIOS/CD-audio consumers remain
+  explicitly open in TODO.

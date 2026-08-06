@@ -968,6 +968,13 @@ level or consumer bindings.
   the 320x80 swoosh/zoom source region and the 18-step 16x4 shrink loop.
   These values are checked at the original load-image offsets and are not
   copied from the PC34 title frontend.
+  2026-08-06: the English runtime now consumes this receipt after the
+  selected FM Towns directory binds legacy GRAPHICS.DAT. It presents the
+  authentic graphic-1 PRESENTS frame, source-owned 18-step zoom and MASTER
+  frame through the M11 framebuffer, and fails closed instead of falling
+  back to PC34 when the receipt is absent. Japanese JDM remains blocked from
+  this path because its pixel/TBIOS plan is not yet decoded. The native
+  `DRAW_DMENU`/`DYNAMENU` menu and FM CD-audio handoff remain open.
   Remaining work is decoding and consuming the FM Towns-owned
   executable startup animation and menu in M11, with original timing/audio/
   input capture. 2026-08-06: M11 now routes a selected FM Towns edition

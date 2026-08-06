@@ -1,6 +1,9 @@
 #include "dm1_v1_fmtowns_startup.h"
+#include "fs_portable_compat.h"
 
 #include <string.h>
+#include <stdio.h>
+#include <stdlib.h>
 
 /* These hashes are from the locally verified HMA-240 BIN/CUE archive. */
 static const char k_autoexec_md5[] = "64b9a0a317f387c270b485f242e27159";
@@ -412,6 +415,49 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
 
 int dm1_v1_fmtowns_startup_receipt_is_native(const DM1_V1_FmtownsStartupReceipt *receipt) {
     return receipt && receipt->valid && (receipt->language == DM1_FMTOWNS_LANG_EN || receipt->language == DM1_FMTOWNS_LANG_JP);
+}
+
+static int read_startup_file(const char *root, const char *name,
+                             uint8_t **out_data, size_t *out_size) {
+    char path[FSP_PATH_MAX];
+    FILE *file;
+    long size;
+    uint8_t *data;
+    if (!root || !name || !out_data || !out_size ||
+        !FSP_JoinPath(path, sizeof(path), root, name) ||
+        !(file = fopen(path, "rb"))) return 0;
+    if (fseek(file, 0L, SEEK_END) != 0 || (size = ftell(file)) <= 0L ||
+        fseek(file, 0L, SEEK_SET) != 0) { fclose(file); return 0; }
+    data = (uint8_t *)malloc((size_t)size);
+    if (!data || fread(data, 1u, (size_t)size, file) != (size_t)size) {
+        free(data); fclose(file); return 0;
+    }
+    fclose(file);
+    *out_data = data;
+    *out_size = (size_t)size;
+    return 1;
+}
+
+int dm1_v1_fmtowns_startup_receipt_from_directory(
+    const char *root, int japanese, DM1_V1_FmtownsStartupReceipt *out) {
+    uint8_t *autoexec = NULL, *game = NULL, *menu = NULL;
+    uint8_t *icons = NULL, *info = NULL;
+    size_t autoexecSize = 0, gameSize = 0, menuSize = 0;
+    size_t iconSize = 0, infoSize = 0;
+    int ok = 0;
+    const char *gameName = japanese ? "JDM.EXP" : "EDM.EXP";
+    if (!root || !out ||
+        !read_startup_file(root, "AUTOEXEC.BAT", &autoexec, &autoexecSize) ||
+        !read_startup_file(root, gameName, &game, &gameSize) ||
+        !read_startup_file(root, "TMENU.EXP", &menu, &menuSize) ||
+        !read_startup_file(root, "TMENU.ICN", &icons, &iconSize) ||
+        !read_startup_file(root, "TMENU.INF", &info, &infoSize)) goto done;
+    ok = dm1_v1_fmtowns_startup_receipt(
+        autoexec, autoexecSize, game, gameSize, menu, menuSize,
+        icons, iconSize, info, infoSize, out);
+done:
+    free(autoexec); free(game); free(menu); free(icons); free(info);
+    return ok;
 }
 
 int dm1_v1_fmtowns_startup_receipt_has_native_owners(

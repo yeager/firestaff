@@ -17714,6 +17714,23 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                 &receipt.graphics_bind_receipt)) {
             return 0;
         }
+        /* FM Towns owns its startup in EDM/JDM and the legacy IMG2
+         * GRAPHICS.DAT.  Admit the native startup receipt only from the
+         * selected materialized directory; this prevents a sibling language
+         * executable or the PC34 TITLE path from being consumed silently. */
+        if (state->assetLoader.legacyDm1) {
+            memset(&state->dm1FmtownsStartupReceipt, 0,
+                   sizeof(state->dm1FmtownsStartupReceipt));
+            state->dm1FmtownsStartupReceiptValid =
+                dm1_v1_fmtowns_startup_receipt_from_directory(
+                    spec->dataDir, spec->dm1FmtownsJapanese,
+                    &state->dm1FmtownsStartupReceipt);
+            if (!state->dm1FmtownsStartupReceiptValid ||
+                !dm1_v1_fmtowns_startup_receipt_is_native(
+                    &state->dm1FmtownsStartupReceipt)) {
+                return 0;
+            }
+        }
     } else {
         state->active = 1;
         state->startedFromLauncher = 1;
@@ -17887,6 +17904,8 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                     return 0;
                 }
                 spec.dataDir = selectedDm1RuntimeDataDir;
+                spec.dm1FmtownsJapanese =
+                    strcmp(version->versionId, "fmtowns-ja") == 0;
             }
             if (entry->gameId && strcmp(entry->gameId, "dm2") == 0 &&
                 strcmp(version->versionId, "fmtowns-ja") == 0 &&

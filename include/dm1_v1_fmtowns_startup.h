@@ -79,6 +79,14 @@ int dm1_v1_fmtowns_startup_receipt(
     const uint8_t *menu_info, size_t menu_info_size,
     DM1_V1_FmtownsStartupReceipt *out);
 
+/* Validate the selected original FM Towns runtime directory without
+ * accepting a sibling language executable.  The directory must contain the
+ * retained retail root files; no PC34 title asset is consulted. */
+int dm1_v1_fmtowns_startup_receipt_from_directory(
+    const char *root,
+    int japanese,
+    DM1_V1_FmtownsStartupReceipt *out);
+
 /* The receipt's program is the native startup owner. This intentionally
  * does not claim that the P3/TBIOS pixel decoder is complete. */
 int dm1_v1_fmtowns_startup_receipt_is_native(

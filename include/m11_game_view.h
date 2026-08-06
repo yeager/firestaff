@@ -63,6 +63,7 @@
 #include "csb_v1_csbwin_dsa_runtime_admission_pc34_compat.h"
 #include "csb_v1_startup_runtime_coupling_adapter_pc34_compat.h"
 #include "dm1_v1_f0740_f0743_music_source_pc34_compat.h"
+#include "dm1_v1_fmtowns_startup.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -566,6 +567,7 @@ typedef struct {
     const char* entranceResumeSavePath; /* Optional validated save for in-entrance Resume buttons. */
     const char* csbImportDm1SavePath; /* Optional CSB utility startup import candidate. */
     const char* artpackPath; /* Optional M12-selected .fsart package. */
+    int dm1FmtownsJapanese; /* Selected DM1 FM Towns language family. */
     uint32_t csbSaveCandidateIdentity; /* M12-selected CSB save discovery identity. */
     int languageIndex;
     int rendererBackend;
@@ -838,6 +840,8 @@ typedef struct {
     size_t   fmtownsDungeonDatSize;
     uint32_t fmtownsCddaTrackStarts[24];
     int      fmtownsCddaTrackCount;
+    DM1_V1_FmtownsStartupReceipt dm1FmtownsStartupReceipt;
+    int      dm1FmtownsStartupReceiptValid;
 
     /* Asset loader for GRAPHICS.DAT-backed rendering */
     M11_AssetLoader assetLoader;
