@@ -18,9 +18,9 @@ Nexus are development targets and are not presented as finished games.
 
 ## Supported Games
 
-| Game | Platform | Reference Source | Status |
-|------|----------|-----------------|--------|
-| **Dungeon Master v1** | PC DOS 3.4 data | ReDMCSB / DMWeb | **Available and playable** |
+| Game | Original data | Reference Source | Status |
+|------|---------------|-----------------|--------|
+| **Dungeon Master v1** | PC DOS 3.4 | ReDMCSB / DMWeb | **Available and playable** |
 | **Chaos Strikes Back** | PC DOS 3.4 data | ReDMCSB / CSBWin | Development only |
 | **Dungeon Master II: Skullkeep** | DOS data | skproject | Development only |
 | **DM Nexus** | Sega Saturn data | Saturn disassembly | Development only |
@@ -34,9 +34,9 @@ placeholder or fallback image is presented as game evidence.
 
 ### Dungeon Master v1
 
-| Entrance | Dungeon viewport | HUD / HoC route |
-|----------|------------------|-----------------|
-| ![Dungeon Master v1 Entrance runtime capture](docs/screenshots/dm1-v1-runtime-entrance-macos.png) | ![Dungeon Master v1 dungeon runtime capture](docs/screenshots/dm1-v1-runtime-dungeon-macos.png) | ![Dungeon Master v1 HUD runtime capture](docs/screenshots/dm1-v1-runtime-hud.png) |
+| Presents / startup | Entrance | Dungeon viewport | HUD / HoC route |
+|--------------------|----------|------------------|-----------------|
+| ![Dungeon Master v1 Presents runtime capture](docs/screenshots/dm1-v1-runtime-presents-macos.png) | ![Dungeon Master v1 Entrance runtime capture](docs/screenshots/dm1-v1-runtime-entrance-macos.png) | ![Dungeon Master v1 dungeon runtime capture](docs/screenshots/dm1-v1-runtime-dungeon-macos.png) | ![Dungeon Master v1 HUD runtime capture](docs/screenshots/dm1-v1-runtime-hud.png) |
 
 Screenshots for CSB, DM2, Theron's Quest, DM Nexus and future custom art are
 **Coming soon** because those game versions are not currently available.
@@ -79,10 +79,10 @@ source-reference boundaries for all five games.
 
 | Platform | Status | Data directory |
 |----------|--------|---------------|
-| macOS | DM1 v1 playable; current capture target | `~/.firestaff/data/` |
-| Linux | DM1 v1 playable build target | `~/.firestaff/data/` |
-| Windows | DM1 v1 playable build target | `%USERPROFILE%\.firestaff\data\` |
-| Steam Deck | DM1 v1 Linux/AppImage target | `~/.firestaff/data/` |
+| macOS | DM1 v1 runtime verified; captures taken on macOS | `~/.firestaff/data/` |
+| Linux | Build target; playable runtime capture pending | `~/.firestaff/data/` |
+| Windows | Build target; playable runtime capture pending | `%USERPROFILE%\.firestaff\data\` |
+| Steam Deck | Linux/AppImage target; playable runtime capture pending | `~/.firestaff/data/` |
 | iOS / Android | Not available | Coming soon |
 
 Suggested layout:
@@ -251,7 +251,7 @@ Launcher UI (M12)
 | Automated checks | Thousands |
 | Parity-evidence documents | Thousands |
 | Verified game-data hashes | Cross-game catalog |
-| Currently verified game-language scope | DM1 v1 English |
+| Currently verified game-language scope | DM1 v1 English only |
 
 ## Source References
 
@@ -263,16 +263,17 @@ Launcher UI (M12)
 
 ## Languages
 
-The currently playable game scope is verified in **English only**. The
-launcher has gettext catalogs and language-selection plumbing, including
-Swedish, but those catalogs do not yet mean that every menu, runtime message,
-font and game asset is fully translated. Swedish and other languages remain
-development targets until their complete runtime coverage is verified.
+The only currently playable game is **DM1 v1**, and its verified runtime
+language is **English**. The launcher has gettext catalogs and
+language-selection plumbing, including Swedish, but that does not yet mean
+that every menu, runtime message, font and game asset is fully translated.
+Swedish and other languages remain development targets until complete runtime
+coverage is verified.
 
 | Language | Current status |
 |----------|----------------|
 | English | Verified for DM1 v1 |
-| Swedish | Launcher/catalog work present; full DM1 v1 verification pending |
+| Swedish | Launcher/catalog work present; full DM1 v1 runtime verification pending |
 | Other languages | Catalog/runtime coverage pending |
 
 ## Wiki
