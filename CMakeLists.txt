@@ -4370,6 +4370,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_dungeon_dat.c
     src/dm1/dm1_v1_fmtowns_iso9660.c
     src/dm1/dm1_v1_fmtowns_cd_audio.c
+    src/dm1/dm1_v1_fmtowns_startup.c
     src/shared/graphics_dat_snd3_loader_v1.c
     src/dm1/dm1_v1_original_save_classifier.c
     src/dm1/dm1_v1_original_save_pc34_handoff.c
@@ -22504,6 +22505,24 @@ endif()
     add_test(
         NAME firestaff_fmtowns_disc_unit
         COMMAND test_firestaff_fmtowns_disc
+    )
+
+    add_executable(test_dm1_v1_fmtowns_startup
+        tests/test_dm1_v1_fmtowns_startup.c
+    )
+    target_include_directories(test_dm1_v1_fmtowns_startup PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm1_v1_fmtowns_startup PRIVATE firestaff_m10)
+    if(NOT MSVC)
+        target_compile_options(test_dm1_v1_fmtowns_startup PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME dm1_v1_fmtowns_startup
+        COMMAND test_dm1_v1_fmtowns_startup
+    )
+    set_tests_properties(dm1_v1_fmtowns_startup PROPERTIES
+        LABELS "dm1;fmtowns;startup;menu;real_data;skip_safe"
     )
 
     add_executable(test_firestaff_zip_extract

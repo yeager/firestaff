@@ -63,6 +63,16 @@
   executable animation/menu decoding and original capture remain tracked in
   `DM1-FMTOWNS-STARTUP-ANIMATION-MENU`.
 
+- ✅ DM1 FM Towns startup-owner gate: added a source-bound receipt for the
+  real HMA-240 root startup chain. It verifies `AUTOEXEC.BAT`, the selected
+  English `EDM.EXP` or Japanese `JDM.EXP` Phar Lap P3 owner, `TMENU.EXP`,
+  `TMENU.ICN` and `TMENU.INF` by MD5 and records the original title (track 2),
+  Hall of Champions (track 3) and entrance (track 5) CD-audio owners. M12 now
+  rejects a materialized FM Towns cache if that native startup set is missing,
+  mixed or altered. Verification: `dm1_v1_fmtowns_startup` against the real
+  cache, the five existing DM1 FM Towns tests, and the real-archive DM1 boot
+  probe. This does not claim P3/TBIOS pixel decoding; that remains TODO.
+
 - ✅ Disabled the synthetic English combat-log overlay for authenticated DM1
   source sessions. The real PC34 `TEXT.C`/C015 message lane remains visible;
   the diagnostic overlay is still available for non-source diagnostic worlds.

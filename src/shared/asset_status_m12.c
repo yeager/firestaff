@@ -3,6 +3,7 @@
 #include "dm2_v1_fmtowns_disc.h"
 #include "csb_v1_fmtowns_cd.h"
 #include "firestaff_fmtowns_disc.h"
+#include "dm1_v1_fmtowns_startup.h"
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
 #include "dm2_v1_boot.h"
 #endif
@@ -3839,6 +3840,36 @@ static int m12_materialize_dm1_fmtowns_runtime_cache(
         free(bytes);
     }
     free(image);
+    {
+        const char* gameName = strcmp(version->versionId, "fmtowns-en") == 0
+            ? "EDM.EXP" : "JDM.EXP";
+        const char* names[] = { "AUTOEXEC.BAT", gameName, "TMENU.EXP",
+                                "TMENU.ICN", "TMENU.INF" };
+        unsigned char* bytes[5] = { NULL, NULL, NULL, NULL, NULL };
+        size_t sizes[5] = { 0U, 0U, 0U, 0U, 0U };
+        char paths[5][M12_ASSET_DATA_DIR_CAPACITY];
+        DM1_V1_FmtownsStartupReceipt receipt;
+        int startupOk = 1;
+        int j;
+        for (j = 0; j < 5; ++j) {
+            if (!FSP_JoinPath(paths[j], sizeof(paths[j]), gameCacheDir, names[j]) ||
+                !m12_read_file_bytes(paths[j], &bytes[j], &sizes[j])) {
+                startupOk = 0;
+                break;
+            }
+        }
+        if (startupOk &&
+            (!dm1_v1_fmtowns_startup_receipt(
+                 bytes[0], sizes[0], bytes[1], sizes[1], bytes[2], sizes[2],
+                 bytes[3], sizes[3], bytes[4], sizes[4], &receipt) ||
+             !dm1_v1_fmtowns_startup_receipt_is_native(&receipt) ||
+             receipt.language != (strcmp(version->versionId, "fmtowns-en") == 0
+                                      ? DM1_FMTOWNS_LANG_EN : DM1_FMTOWNS_LANG_JP))) {
+            startupOk = 0;
+        }
+        for (j = 0; j < 5; ++j) free(bytes[j]);
+        if (!startupOk) return 0;
+    }
     return 1;
 }
 
