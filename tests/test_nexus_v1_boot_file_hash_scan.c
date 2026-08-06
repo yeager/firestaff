@@ -371,6 +371,11 @@ int main(void) {
                   "renamed DM.BIN selects extracted Nexus source");
         check_int(nexus_v1_champion_panel_geometry_ready(&engine) == 1,
                   "hash-verified renamed DM.BIN outranks wrong canonical filename");
+        check_int(nexus_v1_hud_geometry_ready(&engine) == 1 &&
+                      engine.hud_geometry_source.canonical_hash_verified == 1 &&
+                      engine.hud_layout_count == NEXUS_HUD_LAYOUT_ENTRY_COUNT &&
+                      engine.hud_hit_rect_count == NEXUS_HIT_RECT_COUNT,
+                  "hash-verified renamed DM.BIN binds real HUD geometry provenance");
         check_int(engine.floor_bpk_container.exact_name_observed == 0 &&
                       engine.wall_bpk_container.exact_name_observed == 0 &&
                       engine.floor_bpk_container.source_present == 0 &&

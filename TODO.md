@@ -26228,11 +26228,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   exposed. The remaining gap is proving how page tilemap entries become
   runtime character codes before enabling text rendering.
 - 🔧 Nexus HUD runtime binding: `DM.BIN` `yam\\menuctrl.c` geometry at
-  `0x376D0` now has a real-data parser and European corpus verification. Wire
-  that parser into the M11 HUD handoff, then bind the element surfaces,
-  palette and VDP1/VDP2 destinations from one authenticated Saturn capture;
-  no static accessor remains and the parser cannot authorize HUD pixels by
-  itself.
+  `0x376D0` is now copied into the M11 startup handoff as separate source
+  provenance (80 layout entries and 40 hit rectangles) and is verified against
+  the European retail corpus. `startup_hud_ready` remains false: element
+  surfaces, palette, FONT256 text and VDP1/VDP2 destinations still require one
+  authenticated Saturn capture, so parser output cannot authorize HUD pixels.
 - 🔧 Nexus HUD click-route binding: the real `DM.BIN` ring-menu rectangle
   section at `0x38000` now parses and matches all 40 entries. Replace the
   removed screen-coordinate adapter only after an epoch/package-bound

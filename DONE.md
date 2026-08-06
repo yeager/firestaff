@@ -51879,3 +51879,10 @@ and `firestaff` build pass.
   SCSI reads. The existing capture remains transport/loader evidence only until
   the patched binary produces a fresh consumer trace; no runtime semantics or
   synthetic viewport data were enabled.
+- ✅ 2026-08-06 Nexus HUD geometry provenance handoff: the real `DM.BIN`
+  `yam\\menuctrl.c` parser now carries its canonical source receipt, 80 layout
+  entries and 40 hit rectangles through the Nexus startup host-caller receipt
+  into M11. A real renamed-DM.BIN boot regression verifies the European corpus
+  path. M11 still keeps `startup_hud_ready=0`; Saturn element surfaces,
+  palette, FONT256 text and VDP1/VDP2 destination capture remain required
+  before any HUD pixels or input semantics are enabled.
