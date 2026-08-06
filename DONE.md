@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus FACE invalid-layout fallback removal: rejected or
+  incomplete FACE.BIN bytes no longer report the legacy synthetic 48×48
+  portrait geometry. Valid DMWeb FACE.BIN data still reports its authenticated
+  20-entry, 56×56 PRS3 layout; invalid input now remains 0×0 and cannot leak a
+  portrait size into startup diagnostics. Verification: real startup-media
+  gate and M11 Nexus startup gate pass against the European Nexus corpus.
+  No game data was changed or tracked.
+
 - ✅ 2026-08-06 DM2 Amiga nested-media intake: the real-media receipt no
   longer shells out to `unzip` or `bsdtar`. A bounded ZIP reader now accepts
   an already-resident ZIP byte buffer, so the supplied outer archive, its

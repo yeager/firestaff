@@ -139,8 +139,10 @@ int main(void)
         expect_true(nexus_ui_face_layout_detect(malformed_face,
                                                 (int)sizeof(malformed_face),
                                                 &face_layout) == 0 &&
-                        face_layout.valid == 0,
-                    "aligned FACE PRS3 headers must stay inside the source");
+                        face_layout.valid == 0 &&
+                        face_layout.portrait_w == 0 &&
+                        face_layout.portrait_h == 0,
+                    "rejected FACE bytes cannot retain fallback portrait geometry");
     }
     expect_true(nexus_ui_load_warning(&ui, opaque_warning,
                                       (int)sizeof(opaque_warning), NULL) < 0 &&

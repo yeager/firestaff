@@ -892,8 +892,6 @@ int nexus_ui_face_layout_detect(const uint8_t *data,
 {
     Nexus_UI_FaceLayout layout;
     memset(&layout, 0, sizeof(layout));
-    layout.portrait_w = 48;
-    layout.portrait_h = 48;
     if (!data || data_size <= 0) {
         if (out_layout) *out_layout = layout;
         return 0;
@@ -1102,8 +1100,6 @@ int nexus_ui_expand_face_record_48x48(const uint8_t *record_data,
     memset(&info, 0, sizeof(info));
     info.kind = NEXUS_UI_FACE_RECORD_NONE;
     info.source_size = record_size;
-    info.portrait_w = 48;
-    info.portrait_h = 48;
     if (!out_pixels || out_size <= 0) {
         if (out_info) *out_info = info;
         return -1;
