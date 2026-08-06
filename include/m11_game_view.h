@@ -1683,6 +1683,7 @@ typedef struct {
     uint32_t dm2FmtownsTimerAAccumulatorUs;
     uint16_t dm2FmtownsFrameTimerARemaining;
     uint32_t dm2FmtownsTitleFrameIndex;
+    int dm2FmtownsSwooshActive;
     int dm2FmtownsTitleBound;
     int dm2FmtownsTitleFinished;
     int dm2FmtownsTitleRejected;

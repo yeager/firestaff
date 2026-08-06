@@ -259,21 +259,32 @@ int dm2_v1_fmtowns_anim_stream_decode_frame(
     size_t offset = 0u;
     uint32_t frame = 0u;
     size_t canvas_bytes;
+    uint16_t canvas_width;
+    uint16_t canvas_height;
 
     memset(&receipt, 0, sizeof(receipt));
     if (!data || !out_pixels ||
         !dm2_v1_fmtowns_anim_stream_parse(data, data_size, &stream) ||
-        stream.width == 0u || stream.height == 0u || stream.bit_depth != 4u) {
+        stream.bit_depth != 4u) {
         if (out) *out = receipt;
         return 0;
     }
-    canvas_bytes = (((size_t)stream.width + 1u) & ~(size_t)1u) *
-                   stream.height / 2u;
-    if (canvas_bytes > out_pixel_capacity) {
-        if (out) *out = receipt;
-        return 0;
+    canvas_width = stream.width;
+    canvas_height = stream.height;
+    canvas_bytes = 0u;
+    if (canvas_width != 0u || canvas_height != 0u) {
+        if (canvas_width == 0u || canvas_height == 0u) {
+            if (out) *out = receipt;
+            return 0;
+        }
+        canvas_bytes = (((size_t)canvas_width + 1u) & ~(size_t)1u) *
+                       canvas_height / 2u;
+        if (canvas_bytes > out_pixel_capacity) {
+            if (out) *out = receipt;
+            return 0;
+        }
+        memset(out_pixels, 0, canvas_bytes);
     }
-    memset(out_pixels, 0, canvas_bytes);
     while (offset + 6u <= data_size) {
         const uint16_t tag = read_be16(data + offset);
         const size_t payload_size = read_be16(data + offset + 2u);
@@ -306,15 +317,35 @@ int dm2_v1_fmtowns_anim_stream_decode_frame(
             image += 2u;
             image_size -= 2u;
         }
+        /* HME-242 SWOOSH has AN 0x0 but its first EN record is an IMG1
+         * 320x200 canvas, followed by equally-sized deltas.  SKWIN's
+         * ANIM_DECODE_IMG1 reads dimensions from every IMG1 payload; infer
+         * only this absent AN canvas from that first source record. */
+        if (canvas_width == 0u && canvas_height == 0u) {
+            if (image_size < 4u) {
+                if (out) *out = receipt;
+                return 0;
+            }
+            canvas_width = read_be16(image);
+            canvas_height = read_be16(image + 2u);
+            canvas_bytes = (((size_t)canvas_width + 1u) & ~(size_t)1u) *
+                           canvas_height / 2u;
+            if (canvas_width == 0u || canvas_height == 0u ||
+                canvas_bytes > out_pixel_capacity) {
+                if (out) *out = receipt;
+                return 0;
+            }
+            memset(out_pixels, 0, canvas_bytes);
+        }
         if (!decode_img1(image, image_size, out_pixels, canvas_bytes,
-                         stream.width, stream.height, &commands)) {
+                         canvas_width, canvas_height, &commands)) {
             if (out) *out = receipt;
             return 0;
         }
         if (frame == requested_frame) {
             receipt.valid = 1;
-            receipt.width = stream.width;
-            receipt.height = stream.height;
+            receipt.width = canvas_width;
+            receipt.height = canvas_height;
             receipt.bit_depth = stream.bit_depth;
             receipt.requested_frame = requested_frame;
             receipt.decoded_frame_count = frame + 1u;

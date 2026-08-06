@@ -191,17 +191,25 @@ int main(void)
             DM2_V1_FmtownsDiscReceipt disc;
             DM2_V1_FmtownsAnimFrameReceipt first_frame;
             DM2_V1_FmtownsAnimFrameReceipt last_frame;
+            DM2_V1_FmtownsAnimFrameReceipt swoosh_first_frame;
+            DM2_V1_FmtownsAnimFrameReceipt swoosh_last_frame;
             DM2_V1_FmtownsAnimPaletteReceipt title_palette;
             DM2_V1_FmtownsAnimSoundReceipt title_sound;
             uint8_t *title = NULL;
             size_t title_size = 0u;
+            uint8_t *swoosh = NULL;
+            size_t swoosh_size = 0u;
             uint8_t pixels[320u * 200u / 2u];
             int first_ok = 0;
             int last_ok = 0;
+            int swoosh_first_ok = 0;
+            int swoosh_last_ok = 0;
 
             memset(&disc, 0, sizeof(disc));
             memset(&first_frame, 0, sizeof(first_frame));
             memset(&last_frame, 0, sizeof(last_frame));
+            memset(&swoosh_first_frame, 0, sizeof(swoosh_first_frame));
+            memset(&swoosh_last_frame, 0, sizeof(swoosh_last_frame));
             memset(&title_palette, 0, sizeof(title_palette));
             memset(&title_sound, 0, sizeof(title_sound));
             if (launch.profile && launch.profile->fmtowns_disc_image &&
@@ -223,6 +231,21 @@ int main(void)
                     title, title_size, &title_palette);
                 (void)dm2_v1_fmtowns_anim_stream_decode_title_sound(
                     title, title_size, &title_sound);
+            }
+            if (launch.profile && launch.profile->fmtowns_disc_image &&
+                dm2_v1_fmtowns_disc_probe(
+                    launch.profile->fmtowns_disc_image,
+                    launch.profile->fmtowns_disc_image_size, &disc) == 0 &&
+                dm2_v1_fmtowns_disc_extract_alloc(
+                    launch.profile->fmtowns_disc_image,
+                    launch.profile->fmtowns_disc_image_size,
+                    &disc.swoosh, &swoosh, &swoosh_size) == 0) {
+                swoosh_first_ok = dm2_v1_fmtowns_anim_stream_decode_frame(
+                    swoosh, swoosh_size, 0u, pixels, sizeof(pixels),
+                    &swoosh_first_frame);
+                swoosh_last_ok = dm2_v1_fmtowns_anim_stream_decode_frame(
+                    swoosh, swoosh_size, 18u, pixels, sizeof(pixels),
+                    &swoosh_last_frame);
             }
             /* FNV-1a receipts are of the two 320x200/4bpp buffers decoded
              * from the selected HME-242 TITLE stream, not stored artwork. */
@@ -259,7 +282,22 @@ int main(void)
                        title_sound.events[0].player_frequency_hz == 5500u &&
                        title_sound.events[4].player_frequency_hz == 5500u,
                    "FM Towns TITLE retains its retail SND2 and five SO events in RAM");
+            expect(swoosh_first_ok && swoosh_last_ok &&
+                       swoosh_first_frame.width == 320u &&
+                       swoosh_first_frame.height == 200u &&
+                       swoosh_first_frame.requested_frame == 0u &&
+                       swoosh_first_frame.decoded_frame_count == 1u &&
+                       swoosh_first_frame.display_duration == 0u &&
+                       swoosh_last_frame.width == 320u &&
+                       swoosh_last_frame.height == 200u &&
+                       swoosh_last_frame.requested_frame == 18u &&
+                       swoosh_last_frame.decoded_frame_count == 19u &&
+                       swoosh_last_frame.display_duration == 126u &&
+                       swoosh_first_frame.output_fnv1a != 0u &&
+                       swoosh_last_frame.output_fnv1a != 0u,
+                   "FM Towns SWOOSH infers its retail IMG1 canvas from EN/DL records in RAM");
             free(title);
+            free(swoosh);
         }
         expect_complete_english_text_overlay(launch.profile);
         text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);

@@ -1414,6 +1414,7 @@ static void m11_dm2_release_fmtowns_title(M11_GameViewState *state)
     state->dm2FmtownsTimerAAccumulatorUs = 0u;
     state->dm2FmtownsFrameTimerARemaining = 0u;
     state->dm2FmtownsTitleFrameIndex = 0u;
+    state->dm2FmtownsSwooshActive = 0;
     state->dm2FmtownsTitleBound = 0;
     state->dm2FmtownsTitleFinished = 0;
     state->dm2FmtownsTitleRejected = 0;
@@ -1456,6 +1457,48 @@ static int m11_dm2_bind_fmtowns_title(M11_GameViewState *state)
     state->dm2FmtownsFrameTimerARemaining =
         state->dm2FmtownsTitleFrameReceipt.display_duration < 5u ? 5u :
         state->dm2FmtownsTitleFrameReceipt.display_duration;
+    state->dm2FmtownsTitleBound = 1;
+    return 1;
+}
+
+static int m11_dm2_bind_fmtowns_swoosh(M11_GameViewState *state)
+{
+    DM2_V1_BootProfile *profile;
+    DM2_V1_FmtownsDiscReceipt disc;
+
+    if (!state || !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_is_fmtowns_profile(profile) ||
+        !profile->fmtowns_startup_media_verified ||
+        !profile->fmtowns_animation_media_verified ||
+        !profile->fmtowns_animation_streams_verified ||
+        !dm2_v1_fmtowns_anim_stream_is_hme242_swoosh(
+            &profile->fmtowns_swoosh_stream)) return 0;
+    m11_dm2_release_fmtowns_title(state);
+    memset(&disc, 0, sizeof(disc));
+    if (!profile->fmtowns_disc_image ||
+        dm2_v1_fmtowns_disc_probe(profile->fmtowns_disc_image,
+                                  profile->fmtowns_disc_image_size, &disc) != 0 ||
+        dm2_v1_fmtowns_disc_extract_alloc(profile->fmtowns_disc_image,
+                                          profile->fmtowns_disc_image_size,
+                                          &disc.swoosh,
+                                          &state->dm2FmtownsTitleBytes,
+                                          &state->dm2FmtownsTitleByteCount) != 0 ||
+        !state->dm2FmtownsTitleBytes ||
+        !dm2_v1_fmtowns_anim_stream_decode_palette(
+            state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount,
+            &state->dm2FmtownsTitlePalette) ||
+        !dm2_v1_fmtowns_anim_stream_decode_frame(
+            state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount, 0u,
+            state->dm2FmtownsTitlePixels, sizeof(state->dm2FmtownsTitlePixels),
+            &state->dm2FmtownsTitleFrameReceipt)) {
+        m11_dm2_release_fmtowns_title(state);
+        state->dm2FmtownsTitleRejected = 1;
+        return 0;
+    }
+    state->dm2FmtownsFrameTimerARemaining =
+        state->dm2FmtownsTitleFrameReceipt.display_duration < 5u ? 5u :
+        state->dm2FmtownsTitleFrameReceipt.display_duration;
+    state->dm2FmtownsSwooshActive = 1;
     state->dm2FmtownsTitleBound = 1;
     return 1;
 }
@@ -1503,17 +1546,27 @@ static void m11_dm2_advance_fmtowns_title(M11_GameViewState *state,
             --state->dm2FmtownsFrameTimerARemaining;
         if (state->dm2FmtownsFrameTimerARemaining != 0u) continue;
         ++state->dm2FmtownsTitleFrameIndex;
-        if (state->dm2FmtownsTitleFrameIndex >= 225u ||
+        if (state->dm2FmtownsTitleFrameIndex >=
+                (state->dm2FmtownsSwooshActive ? 19u : 225u) ||
             !dm2_v1_fmtowns_anim_stream_decode_frame(
                 state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount,
                 state->dm2FmtownsTitleFrameIndex, state->dm2FmtownsTitlePixels,
                 sizeof(state->dm2FmtownsTitlePixels),
                 &state->dm2FmtownsTitleFrameReceipt)) {
-            free(state->dm2FmtownsTitleBytes);
-            state->dm2FmtownsTitleBytes = NULL;
-            state->dm2FmtownsTitleByteCount = 0u;
-            state->dm2FmtownsTitleBound = 0;
-            state->dm2FmtownsTitleFinished = 1;
+            if (state->dm2FmtownsSwooshActive) {
+                /* AUTOEXEC.BAT orders TWANIM SWOOSH before TWANIM TITLE.
+                 * Bind TITLE only after the final SWOOSH frame has elapsed;
+                 * no PC GDAT title or host-made transition may fill this gap. */
+                if (!m11_dm2_bind_fmtowns_title(state)) {
+                    state->dm2FmtownsTitleRejected = 1;
+                }
+            } else {
+                free(state->dm2FmtownsTitleBytes);
+                state->dm2FmtownsTitleBytes = NULL;
+                state->dm2FmtownsTitleByteCount = 0u;
+                state->dm2FmtownsTitleBound = 0;
+                state->dm2FmtownsTitleFinished = 1;
+            }
             break;
         }
         state->dm2FmtownsFrameTimerARemaining =
@@ -1565,7 +1618,7 @@ static int m11_dm2_apply_boot_runtime_receipt(
     state->dm2State.level_loaded = 1;
     m11_sync_dm2_state_from_runtime(state);
     if (m11_dm2_is_fmtowns_profile(receipt->profile) &&
-        !m11_dm2_bind_fmtowns_title(state)) {
+        !m11_dm2_bind_fmtowns_swoosh(state)) {
         /* HME-242 must not fall through into the PC static title if its
          * separately authenticated TWANIM media cannot be replayed. */
         state->dm2FmtownsTitleRejected = 1;

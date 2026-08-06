@@ -1110,9 +1110,11 @@ level or consumer bindings.
   establishes the selected slot and fixed 5500 Hz playback argument, so the
   next step is a separately source-proven 5500-Hz transport — not inferred
   stereo mixing from SO metadata. The remaining gap is source-owned
-  SWOOSH/END playback, TITLE sound-event/CDDA dispatch, and a captured
+  END playback, TITLE sound-event/CDDA dispatch, and a captured
   title-to-SKULL menu handoff; do not replace them with host animation or
-  menus.
+  menus. **2026-08-06 update:** M11 now runs the selected HME-242 SWOOSH
+  stream before TITLE, inferring only its documented EN-owned 320x200 canvas
+  when AN says 0x0. Both streams remain RAM-only and Timer-A paced.
   **2026-08-06 update:** a shared data root can now retain all three verified
   DM2 editions at once. At M12→M11 launch, the selected DOS, FM Towns or
   Amiga version resolves its own matched owner instead of inheriting the

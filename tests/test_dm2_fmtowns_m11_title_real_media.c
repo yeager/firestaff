@@ -58,23 +58,31 @@ int main(void)
     M11_GameView_Init(&view);
     expect(M11_GameView_Start(&view, &spec) == 1,
            "selected HME-242 archive enters the DM2 M11 path");
-    expect(view.dm2FmtownsTitleBound && view.dm2FmtownsTitlePalette.valid &&
+    expect(view.dm2FmtownsTitleBound && view.dm2FmtownsSwooshActive &&
+               view.dm2FmtownsTitlePalette.valid &&
                view.dm2FmtownsTitleFrameReceipt.valid &&
                view.dm2FmtownsTitleFrameReceipt.requested_frame == 0u,
-           "M11 binds TITLE frame zero and its original PL palette");
+           "M11 starts with AUTOEXEC's real SWOOSH frame zero and PL palette");
     expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                M11_GAME_INPUT_IGNORED,
-           "TITLE prevents a click from reaching SKULL menu input early");
+           "SWOOSH prevents a click from reaching SKULL menu input early");
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
-    expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) > 200u,
-           "M11 presents real HME-242 TITLE pixels instead of a static PC menu");
+    expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) == 13u,
+           "M11 presents HME-242 SWOOSH's sparse source first EN canvas");
     for (step = 0; step < 6; ++step) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
-    expect(view.dm2FmtownsTitleBound && view.dm2FmtownsTitleFrameIndex > 0u &&
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) == 59u,
+           "M11 presents real HME-242 SWOOSH delta pixels before TITLE");
+    for (step = 0; step < 254; ++step) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    expect(view.dm2FmtownsTitleBound && !view.dm2FmtownsSwooshActive &&
                view.dm2FmtownsTitleFrameReceipt.requested_frame > 0u,
-           "M11 advances TITLE through source Timer-A duration units");
+           "M11 advances real SWOOSH before binding TITLE through Timer-A units");
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     puts("PASS: DM2 FM Towns TITLE M11 presentation uses authenticated real media");

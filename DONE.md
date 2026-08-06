@@ -54339,6 +54339,16 @@ alcove runtime and archive-media tests passed (4/4).
   and fixed 5500 Hz instead. This is a read-only source receipt, not an SDL
   playback claim; no game member was unpacked or copied to disk.
 
+- ✅ 2026-08-06 DM2 FM Towns SWOOSH M11 presentation: M11 now follows the
+  real HME-242 `AUTOEXEC.BAT` ordering by presenting authenticated `SWOOSH`
+  before `TITLE`. Its `AN` header is 0x0, so the IMG1 decoder takes the
+  320x200 canvas only from SWOOSH's first EN record, exactly as SKWIN
+  `ANIM_DECODE_IMG1` does. The retained stream/palette/frame buffer is reused
+  for TITLE only after SWOOSH's 19 source frames finish on the Timer-A cadence.
+  The real-CD M11 regression locks source frame-zero and first-delta output
+  (13 and 59 indexed pixels), prevents early SKULL input, and reaches TITLE.
+  No file is unpacked and no PC GDAT screen substitutes for either stream.
+
 - ✅ 2026-08-06 Theron raw-BIN HuC6280 disassembly intake: the static bank-$1f
   receipt now verifies authentic `TQUS02.bin` and `TQJP02.bin` Track 02 files
   in addition to the ISO projections. Their real MODE1/2352 bank-window
