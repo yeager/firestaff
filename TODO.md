@@ -26253,6 +26253,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   now explicitly unsupported until Saturn sample-consumption and SDDRVS trace
   evidence proves the host PCM interpretation. Do not promote
   `sal_decode_ready` or a guessed selector into playback readiness.
+- 2026-08-06: M11 Nexus save/champion pointer input now requires the exact
+  route capture and package-bound input matrix. The retained fixed startup
+  rectangles remain isolated compatibility geometry; they can no longer
+  mutate live startup state without Saturn menu/input evidence.
 # Theron V2 HUD widget pixels remain blocked in production: the manifest parser is fixture-only and the runtime now fails closed until all seven slots resolve to decoded Track 02 source assets.
 
 - 🔧 CSB V2.2 artpack follow-up: the hand-authored per-cell asset-id catalog is

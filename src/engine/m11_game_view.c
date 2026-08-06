@@ -25075,6 +25075,17 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return m11_nexus_apply_startup_action_receipt(state, &receipt);
     }
     if (state->nexusState.startup_save_select_active) {
+        /* The startup layout helpers retain compatibility hit regions for
+         * isolated state tests, but their fixed 320x224 rectangles are not a
+         * Saturn input trace. Do not let them mutate the live M11 route until
+         * the save-menu VDP/input capture is joined to this exact package. */
+        if (!state->nexusState.startup_host_capture_ready ||
+            !state->nexusState.startup_save_route_saturn_capture_exact ||
+            !state->nexusState.startup_host_route_capture_matrix_ready ||
+            !state->nexusState.startup_host_route_capture_matrix_exact) {
+            m11_set_status(state, "ASSETS", "NEXUS SAVE MENU CAPTURE REQUIRED");
+            return M11_GAME_INPUT_IGNORED;
+        }
         Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
         Nexus_V1_StartupSaveExecution execution;
         Nexus_V1_StartupHostActionReceipt receipt;
@@ -25092,6 +25103,16 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return m11_nexus_apply_startup_action_receipt(state, &receipt);
     }
     if (state->nexusState.champion_select_active) {
+        /* As above, the planner's champion rows/footer are not proof of the
+         * Saturn menu's actual VDP/input coordinates. Keep pointer-driven
+         * roster changes capture-gated, including the START footer. */
+        if (!state->nexusState.startup_host_capture_ready ||
+            !state->nexusState.startup_champion_route_saturn_capture_exact ||
+            !state->nexusState.startup_host_route_capture_matrix_ready ||
+            !state->nexusState.startup_host_route_capture_matrix_exact) {
+            m11_set_status(state, "ASSETS", "NEXUS CHAMPION MENU CAPTURE REQUIRED");
+            return M11_GAME_INPUT_IGNORED;
+        }
         Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
         Nexus_V1_StartupHostFacts facts;
         Nexus_V1_StartupChampionSnapshot pointer_snapshot;

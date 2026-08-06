@@ -18,6 +18,12 @@
   Mednafen launchers now require their advertised Firestaff output hook before
   writing a manifest or starting an external run. Stock Mednafen exits 78 with
   an explicit instrumented-build message and leaves no misleading artifact.
+
+- ✅ 2026-08-06 Nexus startup pointer provenance gate: M11 no longer accepts
+  the planner's fixed save/champion hit rectangles as live Saturn input. Save
+  selection, roster changes and the champion START footer now require the
+  route-specific capture and exact input-matrix receipt; compatibility
+  geometry remains available only to isolated tests.
   Added `docs/NEXUS_RUNTIME_CAPTURE.md` to document the artifact boundary and
   the difference between ordinary video evidence and VDP/runtime provenance.
 

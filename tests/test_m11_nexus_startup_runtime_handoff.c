@@ -228,14 +228,9 @@ int main(void)
         expect_true(nexus_v1_startup_champion_footer_rect(&footer) == 1 &&
                         M11_GameView_HandlePointer(
                             &view, footer.x + 1, footer.y + 1, 1) ==
-                            M11_GAME_INPUT_RETURN_TO_MENU &&
-                        view.nexusState.champion_select_active == 0 &&
-                        view.nexusState.startup_host_execute_dgn_draws == 0 &&
-                        view.nexusState.startup_dgn_render_ready == 0 &&
-                        view.nexusState.startup_dgn_render_cached_count == 0 &&
-                        view.nexusState.startup_dgn_viewport_host_route_ready == 0 &&
-                        view.nexusState.startup_dgn_viewport_host_blocks_runtime == 1,
-                    "M11 Nexus footer start returns blocked DGN route to launcher");
+                            M11_GAME_INPUT_IGNORED &&
+                        view.nexusState.champion_select_active == 1,
+                    "M11 Nexus footer input stays blocked without Saturn menu capture");
     }
 
     fill_ready_engine(&engine);
