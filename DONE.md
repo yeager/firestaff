@@ -52475,3 +52475,10 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   cannot re-inject it, and inventory swap returns unavailable until the real
   record-chain importer/allocator exists. Verified with utility, real
   eight-save corpus, M11 startup/profile and Phase A probes.
+
+- ✅ 2026-08-06 DM2 save-resume documentation audit: corrected stale TODO
+  claims which described diagnostic D2RS/raw-SKSave parsing and fabricated
+  inventory caches as a playable restore path. The documented state now
+  matches the enforced gate: original corpus parsing is receipt-only; no
+  source session, possession graph, inventory, or leader hand is published
+  before the SKProject record allocator/append path is implemented.
