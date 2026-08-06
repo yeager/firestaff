@@ -7,12 +7,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Verify the latest main commit promptly.  While active development can push
-# several commits in quick succession, an older run no longer represents the
-# branch users will receive and only delays the current verification.
+# Keep a verification record for every main commit. Active development can
+# produce several pushes in quick succession, but cancelling in-progress runs
+# can otherwise leave main without a completed cross-platform result.
 concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 env:
   SDL3_TAG: release-3.2.14
