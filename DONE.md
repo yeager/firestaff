@@ -1,3 +1,10 @@
+# Nexus production text-raster fence (2026-08-06)
+
+- ✅ Removed the remaining production path that could paint host ASCII glyphs
+  through the obsolete flat FONT256 bridge. The data-free layout probe keeps
+  its explicit fixture raster lane; production now returns no-draw until the
+  Saturn page/tilemap/attribute and placement consumer is authenticated.
+
 # Nexus direct Structure2 decode gate (2026-08-06)
 
 - ✅ Closed the remaining public retail bypass: the active canonical DGN

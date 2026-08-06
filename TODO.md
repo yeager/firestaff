@@ -13,6 +13,11 @@
   TEXT4/TABL/FONT256 consumer and placement before admitting real names,
   stats, or action labels to the menu.
 
+- **NEXUS-FONT256-FRAMEBUFFER-CAPTURE:** The obsolete flat 1bpp text bridge
+  is now fixture-only and the production draw seam stays fail-closed. Recover
+  the Saturn page/tilemap/attribute-to-character mapping and screen placement
+  before admitting real FONT256 text to the HUD or startup framebuffer.
+
 - **NEXUS-ACTION-DISPATCH-CAPTURE:** Retail mechanics no longer consume
   queued movement or turn commands merely because DGN floor geometry decoded;
   the prior compatibility loop could mutate party coordinates before the

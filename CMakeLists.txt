@@ -39214,6 +39214,9 @@ add_executable(firestaff_nexus_v1_s2d_runtime_text_layout_probe
     src/nexus/nexus_v1_screen_text.c
     src/nexus/nexus_v1_text.c
 )
+target_compile_definitions(firestaff_nexus_v1_s2d_runtime_text_layout_probe PRIVATE
+    FIRESTAFF_NEXUS_TEST_FIXTURE=1
+)
 target_link_libraries(firestaff_nexus_v1_s2d_runtime_text_layout_probe PRIVATE
     firestaff_nexus firestaff_m10 m
 )

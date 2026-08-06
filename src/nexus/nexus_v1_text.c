@@ -164,6 +164,24 @@ int nexus_v1_screen_text_draw(
     Nexus_V1_ScreenTextReceipt receipt;
     int drawn;
 
+#if !defined(FIRESTAFF_NEXUS_TEST_FIXTURE)
+    /* FONT256.S2D's retail page/tilemap/attribute-to-character owner is not
+     * captured.  The old flat 1bpp bridge could nevertheless write host
+     * ASCII glyphs into the live indexed framebuffer and make a diagnostic
+     * layout look like a Saturn text consumer.  Keep the production seam
+     * fail-closed; the data-free probe builds this file with the explicit
+     * FIRESTAFF_NEXUS_TEST_FIXTURE definition. */
+    (void)runtime;
+    (void)framebuffer;
+    (void)x;
+    (void)y;
+    (void)text;
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+    }
+    return -1;
+#endif
+
     if (!runtime || !runtime->initialized || !framebuffer || !text) {
         return -1;
     }

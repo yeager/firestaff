@@ -18,11 +18,10 @@ int nexus_v1_extract_strings(const uint8_t *data, int size,
 /* Minimal runtime screen-text binding for Nexus FONT256.S2D.
  *
  * This path intentionally stays small: callers provide the already-loaded
- * flat 1bpp glyph font plus the parsed SCR section table. The runtime object
- * builds the section -> glyph range map once, then draws ASCII text through
- * nexus_v1_s2d_text_layout into the live 320x200 Nexus indexed framebuffer.
- * It is a runtime-facing handoff, not a full Saturn text-system claim: no
- * Shift-JIS double-byte layout, proportional metrics, or real-screen parity.
+ * flat 1bpp glyph font plus the parsed SCR section table. The map/layout
+ * object remains available to the data-free fixture probe; the production
+ * draw seam is fail-closed until Saturn page/tilemap/attribute ownership and
+ * screen placement are authenticated.
  */
 typedef struct {
     int      glyphs_drawn;
