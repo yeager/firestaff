@@ -20,6 +20,16 @@
   gate and M11 Nexus startup gate pass against the European Nexus corpus.
   No game data was changed or tracked.
 
+- ✅ 2026-08-06 DM1 synthetic damage-frame removal: authenticated PC34 DM1
+  frames no longer draw Firestaff's host-made red viewport border when a
+  champion is hit. ReDMCSB's damage feedback remains source-owned through the
+  C015/C016 champion-panel redraw and source audio; the border is retained only
+  in the unauthenticated diagnostic renderer. Verification: `firestaff` builds,
+  `test_m11_dm1_damage_indicator_source_gate`, the 142-case champion layout
+  test, the 283-case sound integration test, and the real 611-record object
+  corpus pass. An unrelated existing parry assertion in
+  `test_m11_rest_runtime_pc34_compat` remains open.
+
 - ✅ 2026-08-06 DM2 Amiga nested-media intake: the real-media receipt no
   longer shells out to `unzip` or `bsdtar`. A bounded ZIP reader now accepts
   an already-resident ZIP byte buffer, so the supplied outer archive, its

@@ -53087,8 +53087,13 @@ void M11_GameView_Draw(const M11_GameViewState* state,
                       112, 88, "R TO WAKE", &g_text_small);
     }
 
-    /* ── Damage flash: red border overlay when party takes melee hit ── */
-    if (state->damageFlashTimer > 0) {
+    /* ReDMCSB has no host-drawn damage border in the authenticated DM1
+     * viewport.  The original damage feedback is carried by the source
+     * C015/C016 champion-panel redraw and the source audio route.  Keep the
+     * old red frame only for the non-authenticated diagnostic renderer; it
+     * must never contaminate a real PC34 frame as a synthetic visual. */
+    if (state->damageFlashTimer > 0 &&
+        !m11_dm1_authenticated_viewport_source_active()) {
         int vx = 12, vy = 24, vw = 196, vh = 118;
         int thickness = 2;
         /* Top border */

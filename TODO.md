@@ -88,9 +88,9 @@
   The inventory C016 path and food/water labels also refuse host-colour or
   host-text substitutes when their source records are unavailable.
   Keep the packaged Mac capture open until a real wall bump and creature-hit
-  capture confirms the source sound and C015/C016 placement. The remaining red
-  viewport damage frame is not promoted as source behavior until ReDMCSB or an
-  original capture proves it; it is currently a host-only candidate.
+  capture confirms the source sound and C015/C016 placement. The former red
+  viewport damage frame is now suppressed for authenticated DM1 frames because
+  ReDMCSB has no corresponding viewport primitive; it remains diagnostic-only.
 
 - **NEXUS-MNS-SATURN-RENDER-HANDOFF:** Retail MNS admission now validates
   DMDF block size plus MOTN/TEXT section envelopes, and the real corpus decodes
