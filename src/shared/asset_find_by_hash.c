@@ -13,6 +13,7 @@
 
 #include "asset_find_by_hash.h"
 #include <stdint.h>
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -762,6 +763,66 @@ static int md5_list_contains_large_whole_file_hash(const char *const *md5List,
         if (is_known_large_whole_file_hash(md5List[i])) return 1;
     }
     return 0;
+}
+
+/* Red Book disc dumps are often archived as a CUE plus a numbered sequence
+ * of raw Track NN BIN files.  Those streams are transport, not named game
+ * payloads: scanning an unrelated game profile must not spawn one extractor
+ * per audio track just because several happen to be below the ordinary
+ * 32 MiB member limit.  The only registered whole-track archive members are
+ * Theron's authenticated Track 02 images above.  Its own lookup keeps this
+ * route, while CSB FM Towns owns its CD image through the explicit
+ * m12_admit_csb_fmtowns_archive() intake.
+ *
+ * This is intentionally narrower than a generic .bin rejection.  Renamed
+ * loose payloads and non-track archive members remain hash-first.
+ */
+static int numbered_cd_track_payload_number(const char *path, int *outTrack) {
+    const char *track;
+    const char *digits;
+    if (outTrack) *outTrack = -1;
+    if (!path || !has_case_suffix(path, ".bin")) return 0;
+    track = path;
+    while ((track = strstr(track, "Track")) != NULL) {
+        const char *before = track == path ? NULL : track - 1;
+        const char *after = track + 5;
+        if ((before == NULL || !isalnum((unsigned char)*before)) &&
+            (after[0] == ' ' || after[0] == '_' || after[0] == '-')) {
+            digits = after + 1;
+            if (isdigit((unsigned char)*digits)) {
+                unsigned long number = strtoul(digits, NULL, 10);
+                while (isdigit((unsigned char)*digits)) ++digits;
+                while (*digits == ' ' || *digits == ')' || *digits == ']') {
+                    ++digits;
+                }
+                if (has_case_suffix(digits, ".bin")) {
+                    if (outTrack && number <= (unsigned long)INT_MAX) {
+                        *outTrack = (int)number;
+                    }
+                    return 1;
+                }
+            }
+        }
+        track += 5;
+    }
+    return 0;
+}
+
+static int external_archive_entry_may_match_md5(const char *entryName,
+                                                const char *expectedMd5) {
+    int track;
+    if (is_kryoflux_raw_track_path(entryName)) return 0;
+    if (!numbered_cd_track_payload_number(entryName, &track)) return 1;
+    return track == 2 && is_known_large_whole_file_hash(expectedMd5);
+}
+
+static int external_archive_entry_may_match_md5_list(
+    const char *entryName, const char *const *md5List, int md5Count) {
+    int track;
+    if (is_kryoflux_raw_track_path(entryName)) return 0;
+    if (!numbered_cd_track_payload_number(entryName, &track)) return 1;
+    return track == 2 && md5_list_contains_large_whole_file_hash(md5List,
+                                                                   md5Count);
 }
 
 static int md5_list_match_index(const char *hex, const char *const *md5List,
@@ -3624,7 +3685,7 @@ static int scan_external_archive_by_md5(const char *archivePath,
                     (void)pclose(pipe);
                     return 1;
                 }
-                if (!is_kryoflux_raw_track_path(line)) {
+                if (external_archive_entry_may_match_md5(line, expectedMd5)) {
                     (void)external_archive_commit_entry(archivePath, expectedMd5,
                                                         line, UINT32_MAX,
                                                         bestName, &hasMatch);
@@ -3649,7 +3710,7 @@ static int scan_external_archive_by_md5(const char *archivePath,
                     (void)pclose(pipe);
                     return 1;
                 }
-                if (!is_kryoflux_raw_track_path(entryName)) {
+                if (external_archive_entry_may_match_md5(entryName, expectedMd5)) {
                     (void)external_archive_commit_entry(archivePath, expectedMd5,
                                                         entryName, entrySize,
                                                         bestName, &hasMatch);
@@ -3684,7 +3745,7 @@ static int scan_external_archive_by_md5(const char *archivePath,
             (void)pclose(pipe);
             return 1;
         }
-        if (!is_kryoflux_raw_track_path(entryName)) {
+        if (external_archive_entry_may_match_md5(entryName, expectedMd5)) {
             (void)external_archive_commit_entry(archivePath, expectedMd5,
                                                 entryName, entrySize,
                                                 bestName, &hasMatch);
@@ -3749,7 +3810,9 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
                 }
                 char hex[33];
                 int matchIndex;
-                if (!diskImageOnly && !is_kryoflux_raw_track_path(line) &&
+                if (!diskImageOnly &&
+                    external_archive_entry_may_match_md5_list(line, md5List,
+                                                              md5Count) &&
                     external_entry_md5(archivePath, line, hex)) {
                     matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
                     if (matchIndex >= 0 &&
@@ -3781,7 +3844,9 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
             }
             char hex[33];
             int matchIndex;
-            if (!diskImageOnly && !is_kryoflux_raw_track_path(entryName) &&
+            if (!diskImageOnly &&
+                external_archive_entry_may_match_md5_list(entryName, md5List,
+                                                          md5Count) &&
                 external_entry_md5(archivePath, entryName, hex)) {
                 matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
                 if (matchIndex >= 0 &&
@@ -3822,7 +3887,9 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
         }
         char hex[33];
         int matchIndex;
-        if (!diskImageOnly && !is_kryoflux_raw_track_path(entryName) &&
+        if (!diskImageOnly &&
+            external_archive_entry_may_match_md5_list(entryName, md5List,
+                                                      md5Count) &&
             external_entry_md5(archivePath, entryName, hex)) {
             matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
             if (matchIndex >= 0 &&

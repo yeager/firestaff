@@ -1272,6 +1272,28 @@ int main(void) {
     remove("asset_find_by_hash_test_tmp/kryoflux_tracks.7z");
     remove("asset_find_by_hash_test_tmp/79.1.raw");
 
+    /* A numbered raw CD track is also transport, rather than a generic
+     * archive member.  In particular, a CSB CD dump can contain dozens of
+     * Red Book tracks below the member-size cap; they must not each be
+     * extracted for ordinary GRAPHICS/DUNGEON profile hashes.  Whole Track 02
+     * searches use the separately registered Theron identities. */
+    if (write_fixture("asset_find_by_hash_test_tmp/Chaos (Track 03).bin") &&
+        system("command -v 7zz >/dev/null 2>&1 && "
+               "(cd asset_find_by_hash_test_tmp && "
+               "7zz a -t7z cd_track_payloads.7z 'Chaos (Track 03).bin' >/dev/null 2>&1)") == 0) {
+        remove("asset_find_by_hash_test_tmp/Chaos (Track 03).bin");
+        memset(outPath, 0, sizeof(outPath));
+        if (asset_find_by_md5("asset_find_by_hash_test_tmp/cd_track_payloads.7z",
+                              md5Upper, outPath, (int)sizeof(outPath), 2)) {
+            cleanup_fixture();
+            fprintf(stderr, "numbered CD track was treated as a generic archive payload: %s\n",
+                    outPath);
+            return 1;
+        }
+    }
+    remove("asset_find_by_hash_test_tmp/cd_track_payloads.7z");
+    remove("asset_find_by_hash_test_tmp/Chaos (Track 03).bin");
+
     if (write_fixture("asset_find_by_hash_test_tmp/capture.raw") &&
         system("command -v 7zz >/dev/null 2>&1 && "
                "(cd asset_find_by_hash_test_tmp && "
