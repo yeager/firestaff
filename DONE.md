@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 DM2 platform documentation: corrected the obsolete claim that
+  DM2 had no Amiga release. The variant guide now records the documented
+  European 1.0 EN/FR/DE port, its six-floppy installer and original
+  `dm2_arcsplit1`…`dm2_arcsplit6` → `DM2_archive.LZX` → `unlzx` installation
+  order. It explicitly keeps the corpus non-launchable until that operation
+  can be reproduced entirely in memory and a matching original data pair is
+  hash-verified. Sources: DMWeb and Greatstone; no game data was extracted,
+  copied or tracked.
+
 - ✅ 2026-08-06 DM2: retired the obsolete `dm2_v1_wall_door_local_palette_gate`
   fixture. It fabricated wall and door plans, pixels, palettes, RAW receipts,
   and destination geometry, and had become incompatible with the source-owned
