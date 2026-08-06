@@ -101,8 +101,12 @@ int main(void)
                view.dm2FmtownsTitleFrameReceipt.requested_frame > 0u &&
                view.dm2FmtownsFrameCount == 225u,
            "M11 advances real SWOOSH before binding TITLE's source EN/DL count through Timer-A units");
-    view.dm2FmtownsTitleBound = 0;
-    view.dm2FmtownsTitleFinished = 1;
+    for (step = 0; step < 10000 && !view.dm2FmtownsTitleFinished; ++step) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    expect(view.dm2FmtownsTitleFinished && !view.dm2FmtownsTitleBound &&
+               view.dm2FmtownsFrameCount == 0u,
+           "M11 reaches the real TITLE stream end before handing off to SKULL");
     memset(framebuffer, 0x7f, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) != 0u,

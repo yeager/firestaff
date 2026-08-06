@@ -135,7 +135,9 @@
   frame from the selected HME-242 stream receipt (`EN + DL`) and retains that
   count only with the RAM-resident member. The real-media regression confirms
   the source-owned SWOOSH 19-frame and TITLE 225-frame limits, so M11 no
-  longer embeds assumed retail frame totals in the startup transition.
+  longer embeds assumed retail frame totals in the startup transition. The
+  regression advances the complete original TITLE stream to its actual end;
+  it no longer forces a synthetic finished state before checking SKULL's menu.
 
 - ✅ The selected HME-242 `TITLE/0/4` menu now reaches M11 after the real
   TITLE stream through the documented GDAT-v4 IMG2 C4 decoder. The decoder is
