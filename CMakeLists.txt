@@ -4305,6 +4305,13 @@ list(REMOVE_ITEM M10_SOURCES
 # into M10 where an absent source label could be mistaken for runtime code.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m151_m200_source_audit_pc34_compat.c")
+# `dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c` is an explicit
+# contract-only synthetic state model: it fabricates C09 things, chest slots,
+# panel state and icons, has no M11/runtime caller, and reads no original save
+# or graphics data. The dedicated test compiles it explicitly; keep it out of
+# M10 until a real mirror/chest owner binds authenticated runtime state.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part

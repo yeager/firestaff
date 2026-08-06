@@ -84,6 +84,11 @@
   data input. Keep it test-only; do not invent a production route for an
   unassigned source range.
 
+- **DM1-MIRROR-EYE-SLOT-SWAP-SYNTHETIC-AUDIT:** The C546/C09 eye-route model
+  uses fabricated things, chest slots, panel state and icons, with no runtime
+  caller or authentic save/graphics input. Keep it test-only until the live
+  mirror/chest owner is bound to real DM1 state.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

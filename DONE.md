@@ -58,6 +58,14 @@
   input is rejected. Existing unrelated boot-probe fixture failures remain
   outside this change.
 
+# DM1 mirror C546 eye-slot-swap synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the C546/C09 eye-route contract model from M10. It models fixed
+  things, chest slots, panels and icons without a live M11 caller or original
+  save/graphics input; its explicit ReDMCSB-backed test remains available.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the
