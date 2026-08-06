@@ -54,6 +54,7 @@
 #include "theron_v1_track02_g8_fifo_capture_binding.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_fmtowns_anm.h"
+#include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_switch.h"
 #include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_f0128_entrance_runtime_consumer_pc34_compat.h"
@@ -1554,6 +1555,12 @@ typedef struct {
     CSB_V1_FmtownsSwitchLanguage csbFmtownsSwitchReturnLanguage;
     uint16_t csbFmtownsSwitchVblanksRemaining;
     int csbFmtownsSwitchBound;
+    /* The selected SWITCHTW Game exit is a separate F31 C03_GAME program.
+     * Retain its verified identity alongside the launch gate so M11 can open
+     * the source-owned entrance session only after CHTWE/CHTWJ admission. */
+    CSB_V1_BootStartupRuntimeAssetGateReceipt_PC34
+        csbStartupAssetGateReceipt;
+    CSB_V1_FmtownsGameHandoffReceipt csbFmtownsGameHandoffReceipt;
     /* Atari ST ANIMATE.SCR runs at 50 VBlanks/sec while the shared CSB
      * startup state advances at its source-owned 55 ms cadence. Keep the
      * fractional conversion and last source framebuffer here, not in a

@@ -6270,6 +6270,8 @@ static void m11_csb_advance_fmtowns_switch(M11_GameViewState *state)
 
 static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
                                       const char *animation_name);
+static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
+                                      CSB_V1_FmtownsSwitchLanguage language);
 
 static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
     M11_GameViewState *state, int x, int y, int button_mask)
@@ -6304,10 +6306,19 @@ static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
         if (!m11_csb_bind_fmtowns_title(state, "STORY.ANM")) {
             return M11_GAME_INPUT_IGNORED;
         }
+    } else if (receipt.action == CSB_FMTOWNS_SWITCH_ACTION_GAME) {
+        /* AUTOEXEC.BAT maps exits 3/6 to CHTWJ/CHTWE.  The game program,
+         * not SWITCHTW and never the PC3.4 launcher, owns STARTUP1.C's
+         * F0435 load loop and ENTRANCE.C's F0807 prison sequence. */
+        if (!m11_csb_enter_fmtowns_game(state,
+                                        state->csbFmtownsSwitchLanguage)) {
+            m11_set_status(state, "CSB FM TOWNS", "GAME MEDIA REJECTED");
+            return M11_GAME_INPUT_IGNORED;
+        }
     }
-    /* Utility and game leave SWITCHTW through AUTOEXEC.BAT. Keep
-     * their source exit receipts in the media layer, but do not misroute
-     * them into a PC34 startup transaction before their own handoffs exist. */
+    /* Utility still leaves SWITCHTW through AUTOEXEC.BAT into its separate
+     * C06_CEDT owner. Game above consumes its distinct C03_GAME receipt;
+     * neither route may fall through into a PC3.4 command rectangle. */
     return M11_GAME_INPUT_REDRAW;
 }
 
@@ -7056,6 +7067,58 @@ static int m11_csb_bind_release_app_capture_receipt(
                &state->csbStartupReleaseLifecycleReceipt);
 }
 
+static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
+                                      CSB_V1_FmtownsSwitchLanguage language)
+{
+    CSB_V1_FmtownsGameHandoffReceipt handoff;
+    CSB_V1_StartupRuntimeAssetSession_PC34 *session;
+
+    if (!state || !state->csbBootProfile ||
+        state->csbStartupRuntimeAssetSession ||
+        !m11_csb_is_fmtowns_profile(
+            (const CSB_V1_BootProfile *)state->csbBootProfile) ||
+        !csb_v1_fmtowns_game_handoff_open(
+            (const CSB_V1_BootProfile *)state->csbBootProfile, language,
+            &handoff)) return 0;
+
+    session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)calloc(1u,
+        sizeof(*session));
+    if (!session || !csb_v1_boot_startup_runtime_asset_session_open_pc34(
+            (const CSB_V1_BootProfile *)state->csbBootProfile, session)) {
+        free(session);
+        return 0;
+    }
+    session->csbStartupPackageIdentity =
+        state->csbStartupExpectedPackageIdentity;
+    state->csbStartupRuntimeAssetSession = session;
+    if (!m11_csb_bind_release_app_capture_receipt(
+            state, &state->csbStartupAssetGateReceipt)) {
+        csb_v1_boot_startup_runtime_asset_session_release_pc34(session);
+        free(session);
+        state->csbStartupRuntimeAssetSession = NULL;
+        return 0;
+    }
+    state->csbFmtownsGameHandoffReceipt = handoff;
+    m11_csb_release_fmtowns_switch(state);
+    /* ReDMCSB STARTUP1.C enters F0441 before its F0435 loop. The FM Towns
+     * game executable therefore starts on the closed C004 entrance page;
+     * it must not replay the standalone TITLE.ANM or PC TITLE.C timeline. */
+    state->csbState.startup_title_active = 0;
+    state->csbState.startup_title_frame = 0;
+    state->csbState.startup_title_source_step = 0;
+    state->csbState.startup_entrance_active = 1;
+    state->csbState.startup_entrance_source_step = 0;
+    state->csbState.startup_entrance_dismissed = 0;
+    state->csbState.startup_entrance_credits_active = 0;
+    state->csbState.startup_entrance_credits_remaining_ticks = 0;
+    state->csbState.startup_entrance_opening_active = 0;
+    state->csbState.startup_entrance_opening_delay_ticks = 0;
+    state->csbState.startup_entrance_opening_step = 0;
+    state->csbState.startup_entrance_pending_command = 0;
+    state->csbState.startup_entrance_frame = 0;
+    return 1;
+}
+
 static int m11_csb_release_delivery_receipt_current(
     const M11_GameViewState *state)
 {
@@ -7384,6 +7447,7 @@ static int m11_csb_apply_boot_runtime_receipt(
         }
     }
     state->csbBootProfile = receipt->profile;
+    state->csbStartupAssetGateReceipt = receipt->startup_asset_gate;
     if (receipt->load_original_font_from_graphics) {
         unsigned char *font_pixels = NULL;
         int font_width = 0;
