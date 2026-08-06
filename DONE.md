@@ -66,6 +66,16 @@
 - ✅ Verification: `test_dm1_v1_mirror_candidate_eye_slot_swap_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 chest scroll/drop rotation synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free C540 scroll/drop-during-rotation regression from
+  M10. It fabricates item, slot and queue state and has no runtime caller or
+  original-data input; its test now compiles the driver explicitly and still
+  links M10 only for the real inventory helper APIs it checks.
+- ✅ Verification:
+  `test_dm1_v1_chest_scroll_wheel_drop_during_rotation_non_leader_open_pc34_compat`
+  passes; the driver object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the

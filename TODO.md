@@ -89,6 +89,11 @@
   caller or authentic save/graphics input. Keep it test-only until the live
   mirror/chest owner is bound to real DM1 state.
 
+- **DM1-CHEST-SCROLL-DROP-ROTATION-SYNTHETIC-AUDIT:** This C540 regression
+  fabricates items, charges, slots and command-queue state. It has no runtime
+  caller or original-data input; keep it test-only until the live chest and
+  command owners can be verified against authentic DM1 state.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The
