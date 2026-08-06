@@ -32,6 +32,17 @@
 
 # Theron TQTR capture-offset correction (2026-08-06)
 
+# DM2 original SKSave per-hero receipts (2026-08-06)
+
+- ✅ `DM2_GAME_LOAD`'s fixed SUPPRESS pass now retains a distinct source hash
+  for every decoded 263-byte `c_hero` record, in addition to the aggregate
+  hero-section hash.
+- ✅ The original-save corpus carries these identities into its state
+  fingerprint and revalidates them when the selected source file is reread.
+- ✅ All eight supplied PC-DOS primary/backup saves pass the per-hero check.
+  This is read-only provenance; Resume stays closed until the full original
+  record-link, inventory and timer ownership chain is restored.
+
 # DM2 FM Towns credits palette and handoff (2026-08-06)
 
 - ✅ The original HME-242 credits page now overrides the completed static

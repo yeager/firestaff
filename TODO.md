@@ -2879,6 +2879,12 @@ level or consumer bindings.
   restore API now rejects in production. Its shape validator could not prove
   the original SKSAVE/DB4/timer/CAII transaction and therefore could not
   admit a caller-authored creature pool as a saved game.
+  **2026-08-06 hero-identity update:** each source-decoded 263-byte
+  `c_hero` SUPPRESS record now carries its own raw hash through the real
+  corpus census and state fingerprint. The eight supplied PC-DOS saves verify
+  every present hero independently; this is a provenance receipt only and
+  does not promote their inventory links, stats or portrait data into a
+  partial Resume session.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

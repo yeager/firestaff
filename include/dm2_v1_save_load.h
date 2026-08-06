@@ -266,6 +266,7 @@ typedef struct {
     uint32_t raw_v1e0104_hash;
     uint32_t raw_globalb_hash;
     uint32_t raw_globalw_hash;
+    uint32_t raw_hero_hashes[4];
     uint32_t raw_heroes_hash;
     uint32_t raw_save_state_hash;
     uint32_t raw_fixed_sections_hash;

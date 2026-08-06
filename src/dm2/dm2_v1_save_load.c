@@ -1568,6 +1568,8 @@ bool dm2_v1_original_save_state_corpus_probe(
             target->raw_v1e0104_hash = raw_state.v1e0104_hash;
             target->raw_globalb_hash = raw_state.globalb_hash;
             target->raw_globalw_hash = raw_state.globalw_hash;
+            memcpy(target->raw_hero_hashes, raw_state.hero_hashes,
+                   sizeof(target->raw_hero_hashes));
             target->raw_heroes_hash = raw_state.heroes_hash;
             target->raw_save_state_hash = raw_state.save_state_hash;
             target->raw_fixed_sections_hash = raw_state.fixed_sections_hash;
@@ -1645,6 +1647,10 @@ bool dm2_v1_original_save_state_corpus_probe(
             target->state_hash, target->raw_globalb_hash);
         target->state_hash = dm2_sksave_corpus_hash_step(
             target->state_hash, target->raw_globalw_hash);
+        for (uint8_t hero = 0u; hero < target->champion_count; ++hero) {
+            target->state_hash = dm2_sksave_corpus_hash_step(
+                target->state_hash, target->raw_hero_hashes[hero]);
+        }
         target->state_hash = dm2_sksave_corpus_hash_step(
             target->state_hash, target->raw_heroes_hash);
         target->state_hash = dm2_sksave_corpus_hash_step(

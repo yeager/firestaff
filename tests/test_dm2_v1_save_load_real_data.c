@@ -456,6 +456,7 @@ static void test_real_state_corpus(const char *root)
     for (entry = 0u; entry < state.entry_count; ++entry) {
         const DM2_OriginalSaveStateCorpusEntry *current = &state.entries[entry];
         int pool;
+        int hero;
         int nonempty_pool_seen = 0;
 
         CHECK(current->candidate.kind == DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW &&
@@ -480,6 +481,10 @@ static void test_real_state_corpus(const char *root)
                   current->raw_timer_stream_hash != 0u &&
                   current->state_hash != 0u,
               "real SKSave state fields remain bounded by the original stream");
+        for (hero = 0; hero < current->champion_count; ++hero) {
+            CHECK(current->raw_hero_hashes[hero] != 0u,
+                  "each real SKSave c_hero has its own source receipt");
+        }
         for (pool = 0; pool < DM2_ORIGINAL_SAVE_RAW_DB_POOL_COUNT; ++pool) {
             if (current->raw_db_record_counts[pool] != 0u) {
                 nonempty_pool_seen = 1;

@@ -956,6 +956,10 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
                                      0u) != 0) {
             return 0;
         }
+        candidate.hero_hashes[i] = dm2_v1_raw_sksave_hash(hero, sizeof(hero));
+        if (candidate.hero_hashes[i] == 0u) {
+            return 0;
+        }
         fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, hero,
                                                     sizeof(hero));
         heroes_hash = dm2_v1_raw_sksave_hash_extend(heroes_hash, hero,

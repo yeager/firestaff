@@ -3456,6 +3456,8 @@ static int test_external_original_sksave_corpus_census(void)
               raw_state.v1e0104_hash != entry->raw_v1e0104_hash ||
               raw_state.globalb_hash != entry->raw_globalb_hash ||
               raw_state.globalw_hash != entry->raw_globalw_hash ||
+              memcmp(raw_state.hero_hashes, entry->raw_hero_hashes,
+                     sizeof(raw_state.hero_hashes)) != 0 ||
               raw_state.heroes_hash != entry->raw_heroes_hash ||
               raw_state.save_state_hash != entry->raw_save_state_hash ||
               raw_state.fixed_sections_hash != entry->raw_fixed_sections_hash ||

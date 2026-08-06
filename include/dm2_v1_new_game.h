@@ -179,6 +179,11 @@ typedef struct {
     uint32_t v1e0104_hash;
     uint32_t globalb_hash;
     uint32_t globalw_hash;
+    /* c_savegame.cpp reads each 263-byte c_hero through the same SUPPRESS
+     * stream before c_wbbb/timers. Preserve per-hero source identities so a
+     * later record-link owner cannot replace an individual hero with a
+     * fixture while retaining only a matching aggregate hash. */
+    uint32_t hero_hashes[4];
     uint32_t heroes_hash;
     uint32_t save_state_hash;
     uint32_t timers_hash;
