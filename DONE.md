@@ -10,6 +10,15 @@
   never copies or unpacks it. Verification: 119/119 GDAT receipts against
   the real DOS `GRAPHICS.DAT`, and `firestaff_m11_phase_a_probe` 24/24.
 
+# DM1 D0L/D0R F0115 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the D0L/D0R F0115 front-cell-order model from M10. It hard-codes
+  cell orders, rows and probe pixels, reads no original DM1 data and has no
+  M11/runtime caller; its explicit ReDMCSB regression now compiles the source
+  directly.
+- ✅ Verification: `test_dm1_v1_viewport_d0l_d0r_f0115_front_cell_order_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 C545 occupied-leader-hand synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the C545 occupied-leader-hand model from M10. It seeds party,

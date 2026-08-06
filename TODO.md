@@ -172,6 +172,11 @@
   explicit ReDMCSB regression until a live chest transaction binds authentic
   party and object state.
 
+- **DM1-D0L-D0R-F0115-SYNTHETIC-AUDIT:** This D0 side-lane helper hard-codes
+  F0115 cell orders, rows and probe pixels. It reads no original DM1 data and
+  has no M11/runtime caller; retain it only as an explicit ReDMCSB regression
+  until a source-bound D0 side consumer is recovered.
+
 - **DM1-F0449-F0450-FLOPPY-PLATFORM-AUDIT:** The F0449/F0450 helper is a
   fail-closed Atari-ST floppy boundary, not a PC34 runtime owner. Keep its
   source evidence test-only until a real platform-specific media consumer is
