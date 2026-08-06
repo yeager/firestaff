@@ -54667,8 +54667,8 @@ alcove runtime and archive-media tests passed (4/4).
   F0743's nonzero change gate and 100-update delay, then hands the unmodified
   selector to the matching physical CUE track. The original CD-DA byte length
   supplies the source-tick completion boundary, avoiding a permanent host
-  stream latch. The real title→Switch→Game→Prison regression exercises map 0
-  coordinate (2,0), retail selector/physical track 7. Native CD pause/resume
+  stream latch. The real title→Switch→Game→Prison regression preserves its
+  boot-owned map 0 coordinate (9,0), retail selector/physical track 2. Native CD pause/resume
   remains intentionally open.
 
 - ✅ Removed the remaining fixed arithmetic wall-index helper from the old

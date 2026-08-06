@@ -198,18 +198,15 @@ int main(void)
     CHECK(live_frame_nonblack,
           "F31 C017 HUD and F0128 viewport draw a real live frame after Prison");
     /* ReDMCSB MUSIC.C F0743 reads G4099[map][y][x] after each game update.
-     * Map 0, (2,0) is retail selector 7 and must wait its full 100 source
-     * updates before F0719 starts physical CUE track 7. */
-    view.world.party.mapIndex = 0;
-    view.world.party.mapX = 2;
-    view.world.party.mapY = 0;
+     * The real Prison handoff reaches map 0, (9,0), whose retail selector is
+     * 2. Do not overwrite the boot-owned party state with a test coordinate. */
     for (tick = 0u; tick < 101u; ++tick) {
         (void)M11_GameView_AdvanceIdleTick(&view);
     }
-    game_music_started = view.csbFmtownsGameMusicPlayingTrack == 7 &&
+    game_music_started = view.csbFmtownsGameMusicPlayingTrack == 2 &&
                          !view.csbFmtownsGameMusicPending;
     CHECK(game_music_started,
-          "F31 live map music waits 100 F0743 updates then selects CUE track 7");
+          "F31 live map music waits 100 F0743 updates then selects CUE track 2");
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     printf("PASS: real FM Towns SWITCHTW -> %s entrance handoff\n",
