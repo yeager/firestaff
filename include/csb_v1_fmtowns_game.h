@@ -20,6 +20,7 @@ extern "C" {
 
 #define CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT 6u
 #define CSB_V1_FMTOWNS_UTILITY_MENU_POOL_CAPACITY 76u
+#define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT 16u
 
 /* ReDMCSB DEFS.H command ordinals consumed by CEDT006.C's C06 loop. */
 typedef enum CSB_V1_FmtownsUtilityMenuAction {
@@ -142,6 +143,14 @@ int csb_v1_fmtowns_utility_menu_action_at(
     const CSB_V1_FmtownsUtilityMenuReceipt *receipt,
     int16_t source_x, int16_t source_y,
     CSB_V1_FmtownsUtilityMenuHitBox *out_hit_box);
+
+/* Copy the F31 C06 editor's active C09_ICON palette in native six-bit RGB.
+ * CEDT018.C first blacks the curtain, applies C09_ICON, then restores the
+ * curtain; CEDT027.C defines the 16 source entries.  This is deliberately a
+ * palette-material receipt only: it does not infer a Utility screen layout
+ * or make untranslated F31J text renderable. */
+int csb_v1_fmtowns_utility_icon_palette_rgb6(
+    uint8_t out_rgb6[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3]);
 
 /* Return the native F31 music selector (zero means no selector) for one
  * source map square. The value is the exact byte passed to F0719_PlayMusicTrack

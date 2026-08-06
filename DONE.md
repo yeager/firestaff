@@ -1,5 +1,16 @@
 # Theron startup font presentation gate (2026-08-06)
 
+# CSB FM Towns C06 Utility palette material (2026-08-06)
+
+- ✅ C06 now exposes the exact 16-entry F31 `C09_ICON` palette as native
+  six-bit RGB, with no PC3.4 or host-colour substitution. ReDMCSB
+  `CEDT018.C:829-838` supplies the clear/black/apply/restore order and
+  `CEDT027.C:45-62` supplies the entries.
+- ✅ The real F31E and F31J handoff regressions verify the original C06 P3
+  envelope, menu bytes, input rectangles and palette material. M11 remains
+  compositor-gated until the original Utility layout and Shift-JIS glyph
+  consumer are recovered.
+
 - ✅ M11 no longer renders authentic Track 02 font tiles through unverified
   host render-plan coordinates or inferred palette styles.
 - ✅ Startup input and phase transitions remain available; visible startup

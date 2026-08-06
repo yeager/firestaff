@@ -29,6 +29,31 @@ enum {
     CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_FNV1A = 0x3faffb70u
 };
 
+/* ReDMCSB CEDT018.C:829-838 clears the F31 screen, blacks its curtain and
+ * loads C09_ICON before F7268 restores the normal curtain. CEDT027.C:45-62
+ * owns C09_ICON itself. Keep the original Towns six-bit component values;
+ * M11 is responsible for its RGB6-to-host presentation boundary. */
+static const uint8_t k_csb_v1_fmtowns_utility_icon_palette_rgb6[
+    CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3] = {
+    { 0x00u, 0x00u, 0x00u }, { 0x1bu, 0x1bu, 0x1bu },
+    { 0x24u, 0x24u, 0x24u }, { 0x1bu, 0x09u, 0x00u },
+    { 0x00u, 0x36u, 0x36u }, { 0x24u, 0x12u, 0x00u },
+    { 0x00u, 0x24u, 0x00u }, { 0x00u, 0x36u, 0x00u },
+    { 0x3fu, 0x00u, 0x00u }, { 0x3fu, 0x2du, 0x00u },
+    { 0x36u, 0x24u, 0x1bu }, { 0x3fu, 0x3fu, 0x00u },
+    { 0x12u, 0x12u, 0x12u }, { 0x2du, 0x2du, 0x2du },
+    { 0x00u, 0x00u, 0x3fu }, { 0x3fu, 0x3fu, 0x3fu }
+};
+
+int csb_v1_fmtowns_utility_icon_palette_rgb6(
+    uint8_t out_rgb6[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3])
+{
+    if (!out_rgb6) return 0;
+    memcpy(out_rgb6, k_csb_v1_fmtowns_utility_icon_palette_rgb6,
+           sizeof(k_csb_v1_fmtowns_utility_icon_palette_rgb6));
+    return 1;
+}
+
 static uint32_t csb_v1_fmtowns_game_bytes_fnv1a(const unsigned char *bytes,
                                                   size_t size)
 {

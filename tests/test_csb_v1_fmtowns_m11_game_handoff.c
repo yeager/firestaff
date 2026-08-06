@@ -58,6 +58,7 @@ int main(void)
     CSB_V1_FmtownsUtilityMenuHitBox utility_hit;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     uint8_t music_track;
+    uint8_t utility_palette[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
 
     if (language_name && strcmp(language_name, "ja") == 0) {
         language = CSB_FMTOWNS_SWITCH_JAPANESE;
@@ -194,6 +195,19 @@ int main(void)
                   &utility_hit) &&
               utility_hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_QUIT,
           "verified F31 profile retains its language-owned C06 input boxes");
+    memset(utility_palette, 0, sizeof(utility_palette));
+    CHECK(csb_v1_fmtowns_utility_icon_palette_rgb6(utility_palette) &&
+              utility_palette[0][0] == 0x00u &&
+              utility_palette[4][0] == 0x00u &&
+              utility_palette[4][1] == 0x36u &&
+              utility_palette[4][2] == 0x36u &&
+              utility_palette[14][0] == 0x00u &&
+              utility_palette[14][1] == 0x00u &&
+              utility_palette[14][2] == 0x3fu &&
+              utility_palette[15][0] == 0x3fu &&
+              utility_palette[15][1] == 0x3fu &&
+              utility_palette[15][2] == 0x3fu,
+          "C06 retains its source-owned C09_ICON six-bit palette");
 
     /* ReDMCSB SWITCH.C F2279 registers G4171 at (47,105), 62x39. */
     result = M11_GameView_HandlePointerButton(&view, 52, 110,
