@@ -210,7 +210,9 @@
   now follows the same route and keeps the Soul Room visible while reporting
   the admission boundary. Keep dungeon promotion fail-closed and replace the
   remaining capture gate only after a real consumer receipt binds the level,
-  object, tile and palette routes.
+  object, tile and palette routes. The production no-roster API now also keeps
+  its successful forcefield state instead of undoing the transition with
+  `NOT_READY`; it admits Theron alone and leaves companion data unavailable.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

@@ -4116,12 +4116,14 @@ Theron_StartupResult theron_v1_startup_enter_forcefield(
     }
 
 #if !defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
-    /* The public no-roster entry has no source champion records.  Keep the
-     * fixture-only mirror table out of a production session. */
-    memset(party, 0, sizeof(*party));
-    flow->forcefield_entered = 0;
-    flow->phase = THERON_STARTUP_PHASE_READY;
-    return THERON_STARTUP_ERR_NOT_READY;
+    /* A production caller may not have a decoded companion roster yet, but
+     * that must not turn Enter into a no-op.  Keep the source-owned Theron
+     * slot and admit the forcefield transition with no invented companions;
+     * the later runtime/capture gate still decides whether the dungeon can
+     * be published.  Fixture-only mirror population remains below. */
+    party->champion_count = 1;
+    party->active_slot = THERON_CHAMPION_SLOT_THERON;
+    return THERON_STARTUP_OK;
 #else
     int slot = 1;
     int mirror;

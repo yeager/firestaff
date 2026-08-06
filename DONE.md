@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Theron forcefield Enter transition: fixed the production
+  no-roster startup API, which previously entered the forcefield base state
+  and immediately reset to Soul Room/`NOT_READY`. It now preserves the
+  source-owned Theron-only transition without inventing companions; the later
+  level/VDC/VCE capture gate remains fail-closed. The M12/M11 boundary now
+  passes 52 checks against the real US Track 02 path.
+
 - ✅ 2026-08-06 Theron palette admission cleanup: raw Track 02 asset loads no
   longer initialize the procedural stone palette. Verified media therefore
   begins with an empty, non-renderable palette until a captured HuC6260 span

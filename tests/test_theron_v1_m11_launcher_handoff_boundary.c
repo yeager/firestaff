@@ -461,12 +461,36 @@ static void run_explicit_real_cue_campaign_if_available(void) {
                 "explicit authentic Theron CUE retains CUE-backed raw Track 02 provenance");
 }
 
+static void run_production_forcefield_transition_without_roster(void) {
+    Theron_StartupFlow flow;
+    Theron_DungeonProgression progression;
+    Theron_V1_Party party;
+
+    theron_v1_startup_flow_init(&flow);
+    theron_v1_dungeon_progression_init(&progression);
+    expect_true(theron_v1_startup_choose_stage(
+                    &flow, &progression, THERON_DUNGEON_1_AKUTUBA) ==
+                    THERON_STARTUP_OK,
+                "production Theron-only startup reaches Soul Room");
+    memset(&party, 0, sizeof(party));
+    expect_true(theron_v1_startup_enter_forcefield(&flow, &party) ==
+                    THERON_STARTUP_OK,
+                "production Enter admits forcefield without fixture roster");
+    expect_true(flow.forcefield_entered == 1 &&
+                    flow.phase == THERON_STARTUP_PHASE_IN_DUNGEON,
+                "production Enter keeps the forcefield transition state");
+    expect_true(party.champion_count == 1 &&
+                    party.active_slot == THERON_CHAMPION_SLOT_THERON,
+                "production Enter retains only the source-owned Theron slot");
+}
+
 int main(void) {
     printf("=== Theron V1 M12/M11 launcher handoff boundary ===\n");
 
     run_empty_launcher_boundary();
     run_track02_startup_overlay_regression();
     run_explicit_real_cue_campaign_if_available();
+    run_production_forcefield_transition_without_roster();
     run_real_launcher_handoff_if_available();
 
     printf("\nTheron V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",
