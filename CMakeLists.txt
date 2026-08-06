@@ -4398,6 +4398,13 @@ list(REMOVE_ITEM M10_SOURCES
 # explicit regression until a real D0L2/D0R2 F0115 consumer requires it.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0l2_d0r2_f0115_thing_pass_pc34_compat.c")
+# `dm1_v1_mirror_candidate_c545_pickup_while_panel_live_pc34_compat.c`
+# fabricates floor objects, chest slots and C040 panel counters. It reads no
+# original data and has no M11/runtime caller, so retain it solely in its
+# explicit ReDMCSB regression instead of admitting the synthetic state model
+# through M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c545_pickup_while_panel_live_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part

@@ -1,3 +1,12 @@
+# DM1 mirror C545 pickup synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the C545/C040 pickup model from M10. It fabricates floor objects,
+  chest slots, candidate state and panel counters, reads no original DM1 data
+  and has no M11/runtime caller; its explicit ReDMCSB regression now compiles
+  the source directly.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_c545_pickup_while_panel_live_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # Nexus SDDRVS 68k disassembly receipt (2026-08-06)
 
 # Nexus spell-table production boundary (2026-08-06)
