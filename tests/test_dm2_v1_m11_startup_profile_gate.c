@@ -3198,6 +3198,9 @@ int main(void) {
 
     {
         DM2_V1_SpellCastApplyReceipt spell_failure;
+        DM2_V1_BootProfile spell_profile;
+        DM2_V1_RuntimeSpellFailureGdatReceipt spell_gdat;
+        int spell_profile_ready;
 
         memset(&spell_failure, 0, sizeof(spell_failure));
         spell_failure.valid = 1;
@@ -3210,6 +3213,32 @@ int main(void) {
         expect_true(dm2_v1_runtime_status_scope() == NULL &&
                     dm2_v1_runtime_status_message() == NULL,
                     "DM2 spell failure does not publish synthetic status text");
+
+        dm2_v1_boot_profile_init(&spell_profile);
+        spell_profile_ready = dm2_v1_boot_scan_assets(&spell_profile, data_dir) == 0 &&
+                              dm2_v1_boot_enter_game(&spell_profile) == 0;
+        if (spell_profile_ready) {
+            dm2_v1_runtime_init(&spell_profile);
+            dm2_v1_runtime_note_spell_cast_apply_receipt(&spell_failure);
+            memset(&spell_gdat, 0, sizeof(spell_gdat));
+            expect_true(dm2_v1_runtime_last_spell_failure_gdat_receipt(
+                            &spell_gdat) == 1 && spell_gdat.valid &&
+                        spell_gdat.no_draw && spell_gdat.source_bound &&
+                        spell_gdat.category ==
+                            DM2_GDAT_CATEGORY_INTERFACE_GENERAL &&
+                        spell_gdat.entry_index == 5u &&
+                        spell_gdat.image_field == 0x0bu &&
+                        spell_gdat.destination_rect == 0x5cu &&
+                        spell_gdat.width > 0u && spell_gdat.height > 0u &&
+                        spell_gdat.decoded_pixels_hash != 0u &&
+                        spell_gdat.palette_hash != 0u &&
+                        spell_gdat.identity_hash != 0u,
+                        "DM2 class-30 failure binds real NEED_FLASK GDAT material");
+            dm2_v1_boot_cleanup(&spell_profile);
+            dm2_v1_runtime_init(NULL);
+        } else {
+            dm2_v1_boot_cleanup(&spell_profile);
+        }
     }
 
     if (g_failures) {

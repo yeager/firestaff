@@ -266,6 +266,7 @@ typedef struct {
     const char *last_spell_status_scope;
     const char *last_spell_status;
     int last_spell_failure_class;
+    DM2_V1_RuntimeSpellFailureGdatReceipt last_spell_failure_gdat;
     DM2_V1_SpellTimerHandlerContext spell_timer_ctx;
     int spell_timer_ctx_ready;
     DM2_V1_I18nContext i18n;
@@ -1916,6 +1917,8 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     g_dm2_runtime.last_spell_status_scope = NULL;
     g_dm2_runtime.last_spell_status = NULL;
     g_dm2_runtime.last_spell_failure_class = 0;
+    memset(&g_dm2_runtime.last_spell_failure_gdat, 0,
+           sizeof(g_dm2_runtime.last_spell_failure_gdat));
     memset(g_dm2_runtime.map_wall_gfx_list, 0,
            sizeof(g_dm2_runtime.map_wall_gfx_list));
     g_dm2_runtime.map_wall_gfx_count = 0;
@@ -5098,6 +5101,18 @@ int dm2_v1_runtime_weather_chain_snapshot(DM2_V1_UpdateWeatherState *out)
 void dm2_v1_runtime_note_spell_cast_apply_receipt(
     const DM2_V1_SpellCastApplyReceipt *a)
 {
+    const DM2_V1_AssetLoader *loader;
+    uint8_t *pixels;
+    uint8_t palette16[16];
+    uint32_t palette_hash = 0u;
+    uint32_t pixel_hash = 2166136261u;
+    size_t pixel_count;
+    int width = 0;
+    int height = 0;
+    DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
+
+    memset(&g_dm2_runtime.last_spell_failure_gdat, 0,
+           sizeof(g_dm2_runtime.last_spell_failure_gdat));
     if (!a || !a->valid) {
         g_dm2_runtime.last_spell_status_scope = NULL;
         g_dm2_runtime.last_spell_status = NULL;
@@ -5113,11 +5128,59 @@ void dm2_v1_runtime_note_spell_cast_apply_receipt(
         g_dm2_runtime.last_spell_status_scope = NULL;
         g_dm2_runtime.last_spell_status = NULL;
         g_dm2_runtime.last_spell_failure_class = a->failure_class;
+        /* SKProject SKWINSPX/src/v5/skevents.cpp::DM2_PROCEED_SPELL_FAILURE
+         * calls DRAW_TRANSPARENT_STATIC_PIC(1, 5, 11, 92, NOALPHA) for
+         * class 0x30. Resolve that exact source image from the admitted
+         * GRAPHICS.DAT; never substitute a text label or another image. */
+        if (a->failure_class == 0x30 && g_dm2_runtime.boot &&
+            (loader = dm2_v1_boot_asset_loader(g_dm2_runtime.boot)) != NULL &&
+            dm2_v1_asset_load_image_local_palette(
+                loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 5, 0x0b,
+                palette16, &palette_hash)) {
+            pixels = dm2_v1_asset_load_image_field(
+                loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 5, 0x0b,
+                &width, &height, &format);
+            if (pixels && width > 0 && height > 0 && palette_hash != 0u) {
+                pixel_count = (size_t)width * (size_t)height;
+                for (size_t i = 0u; i < pixel_count; ++i) {
+                    pixel_hash ^= pixels[i];
+                    pixel_hash *= 16777619u;
+                }
+                if (pixel_hash != 0u) {
+                    DM2_V1_RuntimeSpellFailureGdatReceipt *r =
+                        &g_dm2_runtime.last_spell_failure_gdat;
+                    r->valid = 1;
+                    r->no_draw = 1;
+                    r->source_bound = 1;
+                    r->category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
+                    r->entry_index = 5u;
+                    r->image_field = 0x0bu;
+                    r->destination_rect = 0x5cu;
+                    r->width = (uint16_t)width;
+                    r->height = (uint16_t)height;
+                    r->format = format;
+                    r->decoded_pixels_hash = pixel_hash;
+                    r->palette_hash = palette_hash;
+                    r->identity_hash = pixel_hash ^ palette_hash ^
+                        ((uint32_t)r->destination_rect << 16);
+                    if (r->identity_hash == 0u) r->identity_hash = 1u;
+                }
+            }
+            dm2_v1_asset_free_pixels(pixels);
+        }
     } else {
         g_dm2_runtime.last_spell_status_scope = NULL;
         g_dm2_runtime.last_spell_status = NULL;
         g_dm2_runtime.last_spell_failure_class = 0;
     }
+}
+
+int dm2_v1_runtime_last_spell_failure_gdat_receipt(
+    DM2_V1_RuntimeSpellFailureGdatReceipt *out_receipt)
+{
+    if (!out_receipt) return 0;
+    *out_receipt = g_dm2_runtime.last_spell_failure_gdat;
+    return out_receipt->valid;
 }
 
 const char *dm2_v1_runtime_status_scope(void)

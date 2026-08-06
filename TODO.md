@@ -1325,6 +1325,13 @@
   runtime frame ownership receipt. Their fallback counters remain zero. No
   additional visible surface was promoted: the remaining spell-feedback class
   still lacks its source-owned panel-global update and is deliberately blocked.
+  **2026-08-13 spell-feedback source-material update:** class 0x30 now resolves
+  the exact real `INTERFACE_GENERAL/5/dtImage/0x0B` NEED_FLASK material from
+  the admitted PC-English GRAPHICS.DAT, including decoded pixels and local
+  palette hashes, and carries the source destination rect `0x5C` as a runtime
+  receipt. The receipt remains no-draw until the M11 transparent-static-pic
+  consumer and C068--C070 panel-global owner are bound; no text or synthetic
+  image fallback is allowed.
 
 - **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
   mirror side/depth, inscription/corridor invalidation and wall-material

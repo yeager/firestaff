@@ -973,11 +973,32 @@ int dm2_v1_runtime_weather_chain_started(void);
 struct DM2_V1_UpdateWeatherState;
 int dm2_v1_runtime_weather_chain_snapshot(
     struct DM2_V1_UpdateWeatherState *out);
+/* Source-bound GDAT evidence for DM2_PROCEED_SPELL_FAILURE class 0x30.
+ * The image is real GRAPHICS.DAT material, but remains no_draw until the
+ * M11 transparent-static-pic consumer owns the destination surface. */
+typedef struct {
+    int valid;
+    int no_draw;
+    int source_bound;
+    uint8_t category;
+    uint8_t entry_index;
+    uint8_t image_field;
+    uint8_t destination_rect;
+    uint16_t width;
+    uint16_t height;
+    DM2_ImageFormat format;
+    uint32_t decoded_pixels_hash;
+    uint32_t palette_hash;
+    uint32_t identity_hash;
+} DM2_V1_RuntimeSpellFailureGdatReceipt;
+
 /* Records the source spell-failure class from a cast receipt. The original
  * route updates panel globals and a GDAT image, not a host status string;
- * scope/message therefore remain NULL until that source UI consumer is bound. */
+ * scope/message therefore remain NULL. */
 void dm2_v1_runtime_note_spell_cast_apply_receipt(
     const DM2_V1_SpellCastApplyReceipt *a);
+int dm2_v1_runtime_last_spell_failure_gdat_receipt(
+    DM2_V1_RuntimeSpellFailureGdatReceipt *out_receipt);
 const char *dm2_v1_runtime_status_scope(void);
 const char *dm2_v1_runtime_status_message(void);
 int dm2_v1_runtime_last_spell_failure_class(void);

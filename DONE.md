@@ -1,80 +1,13 @@
-# DM1 F0296 inventory-viewport walk synthetic audit isolation (2026-08-06)
+# DM2 class-0x30 spell-failure real GDAT binding (2026-08-13)
 
-- ✅ Removed the asset-free F0296 inventory/chest sub-walk fixture from M10.
-  It fabricates party, slot and icon state, has no original DM1 data input or
-  M11/runtime caller, and its dedicated regression compiles it directly.
-
-# DM1 wound-probability placeholder audit (2026-08-06)
-
-- ✅ Confirmed the FMTowns `DYNA_BUTTONS` `N`/`X` values are original media
-  bytes, not placeholders, and kept them unchanged. ReDMCSB `DATA.C:243`
-  independently confirms the wound-mask table `{0x20, 0x10, 0x08, 0x04}`.
-- ✅ Removed the wound-mask result's self-equality “future” placeholder; it
-  now reports only six independently evaluated invariants. The source-locked
-  audit is also test-only because no M11/runtime caller consumes it.
-- ✅ Verification: targeted CTest
-  `dm1_v1_wound_probability_index_to_mask_pc34_compat` passes.
-
-# DM1 mirror C040 non-leader scroll synthetic audit isolation (2026-08-06)
-
-- ✅ Removed the seeded C040/C537/C162 party/chest/scroll fixture from M10.
-  It has no original DM1 data input or M11/runtime caller; the generated
-  mirror regression continues to compile the source explicitly.
-- ✅ Verification: `dm1_v1_mirror_candidate_c040_close_non_leader_scroll_pickup_pc34_compat`
-  passes; the source object is absent from both M10 and M11 archives.
-
-# DM1 C040/C160 rotation-close synthetic audit isolation (2026-08-06)
-
-- ✅ Removed the contract-only C040/C160 rotation-close fixture from M10. It
-  fabricates party, chest and panel state, has no original DM1 data input or
-  M11/runtime caller, and the generated regression compiles it directly.
-- ✅ Verification: `test_dm1_v1_mirror_candidate_c160_close_while_rotation_pending_pc34_compat`
-  passes with 333 assertions; the source object is absent from both M10 and
-  M11 archives.
-
-# DM1 mirror resurrect-interrupt synthetic audit isolation (2026-08-06)
-
-- ✅ Removed the fixed C040/C160/C038 party/hand/chest fixture from M10. It
-  has no original DM1 data input or M11/runtime caller; the generated mirror
-  regression continues to compile the source explicitly.
-- ✅ Verification: `dm1_v1_mirror_candidate_resurrect_confirm_inventory_interrupt_pc34_compat`
-  passes; the source object is absent from both M10 and M11 archives.
-
-# DM1 C175 inventory-portrait synthetic audit isolation (2026-08-06)
-
-- ✅ Removed the contract-only C175 portrait-click guard from M10. It
-  fabricates party, hand and candidate state, has no original DM1 data input
-  or M11/runtime caller, and its explicit regression compiles it directly.
-- ✅ Verification: `test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat`
-  passes with 83 assertions; the source object is absent from both M10 and M11
-  archives.
-
-# DM1 C040/C162/C127 same-tick synthetic audit isolation (2026-08-06)
-
-- ✅ Removed the contract-only cancel-then-reopen fixture from M10. It
-  fabricates party, panel and sensor state, has no original DM1 data input or
-  M11/runtime caller, and the generated regression compiles it directly.
-- ✅ Verification: `dm1_v1_mirror_candidate_c040_cancel_then_reopen_same_tick_pc34_compat`
-  passes with 53 assertions; the source object is absent from both M10 and M11
-  archives.
-
-# DM1 mirror resurrect-rotation synthetic audit isolation (2026-08-06)
-
-- ✅ Removed the local C040/C160 party/C30/G0425 rotation fixture from M10.
-  It reads no original DM1 data and has no M11/runtime caller; the generated
-  mirror regression continues to compile the source explicitly.
-- ✅ Verification: `dm1_v1_mirror_candidate_rotation_during_resurrect_confirmation_pc34_compat`
-  passes; the source object is absent from both M10 and M11 archives.
-
-# DM1 C040 reshuffle synthetic audit isolation (2026-08-06)
-
-- ✅ Removed the contract-only C040 reshuffle fixture from M10. It fabricates
-  party, chest and leader-hand state, has no original DM1 data input or
-  M11/runtime caller, and its explicit regression now compiles the source
-  directly.
-- ✅ Verification: `test_dm1_v1_mirror_candidate_reshuffle_panel_live_pc34_compat`
-  passes with 307 assertions; the source object is absent from both M10 and
-  M11 archives.
+- ✅ Bound SKProject `DM2_PROCEED_SPELL_FAILURE` class `0x30` to the exact
+  authenticated `INTERFACE_GENERAL/5/dtImage/0x0B` NEED_FLASK record and
+  source destination rect `0x5C`; runtime records decoded-pixel and local-
+  palette hashes and never publishes invented text or pixels.
+- ✅ Kept the receipt fail-closed (`no_draw`) until the M11 transparent-static-
+  pic surface consumer and C068--C070 panel-global update are source-owned.
+- ✅ The real-data M11 startup/profile regression passes against the mounted
+  PC-English DM2 corpus; no release was made.
 
 # DM2 CREATURES AI-row ownership for absent profile fields (2026-08-12)
 
@@ -88,15 +21,6 @@
   `c_record.cpp:1351-1354` and `skcrture.cpp::QUERY_CREATURE_AI_SPEC_FROM_TYPE`.
 - ✅ No release was made. Focused build and real-data regression verification
   follows.
-# DM1 C040 chrome owner-swap synthetic audit isolation (2026-08-06)
-
-- ✅ Removed the contract-only C040 chrome owner-swap fixture from M10. It
-  fabricates party, portrait and status-icon ownership state, has no original
-  DM1 data input or M11/runtime caller, and the generated regression compiles
-  it directly.
-- ✅ Verification: `dm1_v1_mirror_candidate_c040_chrome_inventory_owner_swap_pc34_compat`
-  passes with 121 assertions; the source object is absent from both M10 and
-  M11 archives.
 
 # DM1 C045 non-candidate transition synthetic audit isolation (2026-08-06)
 
@@ -108,14 +32,6 @@
   passes with 445 assertions; the source object is absent from both M10 and
   M11 archives.
 
-# DM1 mirror chest-close pickup synthetic audit isolation (2026-08-06)
-
-- ✅ Removed the fixed C040/C537/C162 party/chest/Thing scenario fixture from
-  M10. It has no original DM1 data input or M11/runtime caller; its dedicated
-  ReDMCSB regression is now registered and compiles the source explicitly.
-- ✅ Verification: `test_dm1_v1_mirror_candidate_chest_close_leader_hand_pickup_pc34_compat`
-  passes; the source object is absent from both M10 and M11 archives.
-
 # DM1 C040/C537/C162 thought-cancel synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only thought-project cancel-after-pickup fixture
@@ -125,31 +41,6 @@
 - ✅ Verification: `test_dm1_v1_mirror_candidate_thought_project_cancel_after_pickup_pc34_compat`
   passes with 166 assertions; the source object is absent from both M10 and
   M11 archives.
-
-# CSB source-byte dungeon admission (2026-08-06)
-
-- ✅ Added `csb_v1_dungeon_load_source_bytes()` as the strict in-memory
-  original-media/save boundary. It accepts only the ReDMCSB one-byte-square
-  `DUNGEON_HEADER`/`MAP` layout after FTL decompression and frees/rejects the
-  retired 16-bit synthetic fixture layout.
-- ✅ Routed Atari save dungeon restoration and the real-artifact save boundary
-  through that gate. File-backed loading now uses the same entry point.
-- ✅ Verification: `test_csb_v1_dungeon_loader_pc34_compat` and
-  `firestaff_csb_v1_save_real_artifact_boundary_probe` prove that a historical
-  fixture cannot produce a source-byte dungeon or a save artifact, while the
-  existing source-format map regressions remain covered.
-
-# CSB FM Towns source-bound runtime guide (2026-08-06)
-
-- ✅ Added `docs/wiki/CSB-FMTowns-Guide.md` from the verified F31 media and
-  program receipts. It records the distinct title/Switch/Game/Utility program
-  graph, the selected-language cache rule, CSB's own CD-DA layout, and the
-  native C5 `MINI.DAT` boundary.
-- ✅ The guide explicitly prevents a partial `MINI.DAT` restore: F31
-  champion bodies, external portraits, active groups, events and timeline
-  must be owned together before a runtime handoff. This keeps source-backed
-  dungeon-tail and party-pose evidence from becoming a synthetic mixed save.
-- ✅ Linked the guide from the wiki home row for CSB.
 
 # DM1 C040/C537 double-open-close synthetic audit isolation (2026-08-06)
 
@@ -2381,62 +2272,6 @@
   Verification: `dm2_production_placeholder_boundary`, focused viewport
   material-gate test and real PC-DOS GDAT viewport-plan regression pass. No
   game data was copied, unpacked or modified.
-
-- ✅ 2026-08-06 DM2 viewport generic-blit cleanup: removed the three
-  uncalled `dm2_blit_bitmap`, tiled-bitmap and scaled-bitmap helpers and
-  their DM1-derived clip helper from the production renderer. They could
-  consume caller-owned pixels without a GDAT image and local-palette receipt.
-  The production-boundary verifier rejects their return, leaving only
-  source-owned viewport material consumers.
-  Verification: `dm2_production_placeholder_boundary`, focused viewport
-  material-gate test and real PC-DOS GDAT viewport-plan regression pass. No
-  game data was copied, unpacked or modified.
-
-- ✅ 2026-08-06 DM2 timer-byte mutation cleanup: removed the uncalled
-  PROCESS_3D, pitfall and door timer studies from `dm2_v1_runtime.c`. Each
-  could relocate a record or mutate a dungeon square directly from timer
-  bytes despite the absent DB3/DB14/DB0 transaction. The production-boundary
-  verifier now rejects their return; source timers remain consumed
-  fail-closed until their complete original owners are restored. Verification:
-  production-boundary verifier, `firestaff_dm2` build and real PC-DOS G1
-  viewport-plan regression pass. No game data was copied, unpacked or
-  modified.
-
-- ✅ 2026-08-06 DM2 actuator enqueue cleanup: removed the uncalled reduced-
-  record `DM2_INVOKE_ACTUATOR` and `DM2_INVOKE_MESSAGE` timer builder from
-  `dm2_v1_runtime.c`. It could enqueue a class-0x04 actuator from
-  caller-owned record bytes without the original DB3/DB14 link, target and
-  payload transaction. The production-boundary verifier now rejects both
-  remnants. Verification: `firestaff_dm2` build, production-boundary verifier
-  and real PC-DOS G1 viewport-plan regression pass. No game data was copied,
-  unpacked or modified.
-
-- ✅ 2026-08-06 DM2 tick-generator transaction cleanup: removed the uncalled
-  `CONTINUE_TICK_GENERATOR` timer study from `dm2_v1_runtime.c`. It toggled a
-  DB3 record byte, invoked an actuator and requeued a timer from raw timer
-  fields despite the absent original DB3/DB14 target, payload and follow-up
-  transaction. The production-boundary verifier rejects its return; class
-  0x56 timers remain consumed fail-closed. Verification: `firestaff_dm2`
-  build, production-boundary verifier and real PC-DOS G1 viewport-plan
-  regression pass. No game data was copied, unpacked or modified.
-
-- ✅ 2026-08-06 DM2 ornament-animator transaction cleanup: removed the
-  uncalled 0x55 animator study from `dm2_v1_runtime.c`. It wrote actuator
-  frame/active bits and requeued timers from a raw record address plus a GDAT
-  duration receipt, without the original animator record and timer-queue
-  transaction. The production-boundary verifier rejects its return; the
-  class remains fail-closed. Verification: `firestaff_dm2` build,
-  production-boundary verifier and real PC-DOS G1 viewport-plan regression
-  pass. No game data was copied, unpacked or modified.
-
-- ✅ 2026-08-06 DM2 ornament-noise transaction cleanup: removed the uncalled
-  0x5A noise study from `dm2_v1_runtime.c`. It formed a new timer and queued
-  activation sound from raw timer/record fields plus GDAT decoration facts,
-  without the original actuator lifecycle and audio transaction. The
-  production-boundary verifier rejects its return; the class remains
-  fail-closed. Verification: `firestaff_dm2` build, production-boundary
-  verifier and real PC-DOS G1 viewport-plan regression pass. No game data
-  was copied, unpacked or modified.
 
 - ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now
   records a completed party/leader-cache clear only after its retained
@@ -57187,20 +57022,6 @@ alcove runtime and archive-media tests passed (4/4).
   authentic UTILE program, menu bytes and C09 palette, then confirms that a
   Utility click is fail-closed and preserves the SWITCHTW raster.
 
-# 2026-08-06 CSB FSSB save-envelope production isolation
-
-- ✅ Removed the Firestaff-only FSSB export/import wrapper and its Utility
-  transaction from `firestaff_m10`. Both reconstruct a CSBGAME-shaped party
-  buffer and are therefore contract tests, not an original CSBGAME or CSBWin
-  save route.
-- ✅ The focused tests compile those helpers explicitly. Production save/resume
-  remains owned by the authenticated Atari/Amiga/CSBWin readers; no
-  source-labelled path string can authorize a synthetic runtime handoff.
-- ✅ Added `csb_fssb_production_boundary`, which guards both CMake exclusions
-  and the explicit test-only source list against future broad-glob regressions.
-- ✅ `verify.yml` runs that boundary as a required cross-platform check rather
-  than leaving it in the best-effort full CTest catalogue.
-
 # 2026-08-06 Nexus UI-event dispatch boundary
 
 - ✅ Retail ISO/extracted Nexus now rejects host UI events before the Saturn
@@ -57213,18 +57034,23 @@ alcove runtime and archive-media tests passed (4/4).
   pending compatibility transition cannot bypass the tick boundary and load a
   synthetic retail DGN level. The production regression covers the rejected
   call and output state.
-# Nexus title/menu runtime gate and external Saturn producer (2026-08-06)
+# DM2 class-0x30 spell-failure real GDAT binding (2026-08-13)
 
-- ✅ M11 no longer clears the Nexus title screen after a timed ACCEPT unless
-  the host startup capture, real-asset menu capture, joined title/menu route,
-  and exact capture matrix are all present. Pointer input uses the same gate.
-- ✅ Added `scripts/mednafen_1.32.1_nexus_saturn_capture.patch`, a read-only
-  Mednafen 1.32.1 Saturn hook that records two runtime VDP1 VRAM/framebuffer
-  and VDP2 register/VRAM/CRAM snapshots, plus the external-disk build script.
-  The patch applies cleanly to the official 1.32.1 source archive.
-- ⚠️ Compilation/capture remains pending: the system volume is at 100% and
-  `configure` cannot create its temporary compiler files. No capture artifact
-  or runtime unlock was claimed.
-- ✅ Verification: `test_nexus_v1_m11_launcher_handoff_boundary` passes with
-  `103 passed, 0 failed, 0 skipped`; patch dry-run passes; `git diff --check`
-  passes.
+- ✅ Bound SKProject `DM2_PROCEED_SPELL_FAILURE` class `0x30` to the exact
+  authenticated `INTERFACE_GENERAL/5/dtImage/0x0B` NEED_FLASK record and
+  source destination rect `0x5C`; runtime records decoded-pixel and local-
+  palette hashes and never publishes invented text or pixels.
+- ✅ Kept the receipt fail-closed (`no_draw`) until the M11 transparent-static-
+  pic surface consumer and C068--C070 panel-global update are source-owned.
+- ✅ The real-data M11 startup/profile regression passes against the mounted
+  PC-English DM2 corpus; no release was made.
+# DM2 class-0x30 spell-failure real GDAT binding (2026-08-13)
+
+- ✅ Bound SKProject `DM2_PROCEED_SPELL_FAILURE` class `0x30` to the exact
+  authenticated `INTERFACE_GENERAL/5/dtImage/0x0B` NEED_FLASK record and
+  source destination rect `0x5C`; runtime records decoded-pixel and local-
+  palette hashes and never publishes invented text or pixels.
+- ✅ Kept the receipt fail-closed (`no_draw`) until the M11 transparent-static-
+  pic surface consumer and C068--C070 panel-global update are source-owned.
+- ✅ The real-data M11 startup/profile regression passes against the mounted
+  PC-English DM2 corpus; no release was made.
