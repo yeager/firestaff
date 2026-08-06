@@ -52,6 +52,11 @@ requires an observed END record when requested. Its output is still a state
 receipt: command type `0x09`, `0x0A`, or END does not establish a game-asset
 owner or authorize a host draw.
 
+When a later frame contains a texture command, the same tool reports its
+bounded `SRCa`-derived VRAM byte span and SHA-256. That span is the join key
+for a future source-owned capture; it is not permission to reinterpret the
+bytes as PRS3, TITLE.CG, MENU.BPK, STABG, FACE, or DGN material.
+
 ## Artifact families
 
 | Route | Magic | Evidence still required |

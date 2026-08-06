@@ -115,6 +115,16 @@
 - ✅ This remains a raw hardware-state receipt only. No MENU.BPK/DGN owner,
   CLUT, destination or production draw route is inferred.
 
+# Nexus Saturn authentic startup draw-command receipt (2026-08-07)
+
+- ✅ A later real E-region frame now verifies one VDP1 distorted-sprite command
+  at `0x0040` (`PMOD=0x0028`, `SRCa=0xc7c0`, `SIZE=0x28b4`) followed by END at
+  `0x0060`. The command-window analyzer now computes the bounded source VRAM
+  span and SHA-256 for this record.
+- ✅ This remains a raw source-join target. No TITLE.CG, MENU.BPK, PRS3,
+  STABG, FACE or DGN ownership is inferred, and no production draw route is
+  enabled.
+
 # DM2 SKSave-korpus med vald källa (2026-08-07)
 
 - ✅ Realdatatestet för original-SKSave använder nu bara

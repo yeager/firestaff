@@ -10,6 +10,7 @@ production draw permission.
 from __future__ import annotations
 
 import argparse
+import hashlib
 import re
 import struct
 from pathlib import Path
@@ -60,12 +61,29 @@ def main() -> int:
         command_type = control & 0x000F
         end = bool(control & 0x8000)
         end_seen |= end
+        source_detail = ""
+        if command_type <= 2 and not end:
+            colour_mode = (words[2] >> 3) & 0x7
+            width = (words[5] & 0x003F) * 8
+            height = (words[5] >> 8) & 0x00FF
+            bits_per_pixel = 4 if colour_mode <= 1 else 8 if colour_mode <= 4 else 16
+            source_offset = words[4] * 8
+            source_size = (width * height * bits_per_pixel) // 8
+            source_end = source_offset + source_size
+            if source_end > len(frames[args.frame]["vdp1-vram"]):
+                raise ValueError("draw command source span exceeds captured VDP1 VRAM")
+            source = frames[args.frame]["vdp1-vram"][source_offset:source_end]
+            source_detail = (
+                f" colour_mode={colour_mode} width={width} height={height}"
+                f" source_offset=0x{source_offset:05x} source_size={source_size}"
+                f" source_sha256={hashlib.sha256(source).hexdigest()}"
+            )
         print(
             f"offset=0x{offset:05x} control=0x{control:04x} "
             f"type=0x{command_type:x} end={int(end)} "
             f"link=0x{words[1]:04x} pmod=0x{words[2]:04x} "
             f"colr=0x{words[3]:04x} srca=0x{words[4]:04x} "
-            f"size=0x{words[5]:04x}"
+            f"size=0x{words[5]:04x}{source_detail}"
         )
     print("semantic_admission=blocked")
     if args.require_end and not end_seen:

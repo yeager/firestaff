@@ -311,6 +311,13 @@
   `0x20` have control types `0x09` and `0x0A`. This is a genuine command-state
   receipt, not a texture/menu draw proof. The source record, CLUT, destination
   and asset join remain open.
+- **NEXUS-SATURN-VDP1-DRAW-SOURCE-JOIN:** A later authentic E-region startup
+  frame now exposes one bounded distorted-sprite command at `0x0040`
+  (`PMOD=0x0028`, `SRCa=0xc7c0`, `SIZE=0x28b4`) and END at `0x0060`. The
+  analyzer computes the command's source VRAM span and SHA-256. It still does
+  not identify whether the bytes belong to TITLE.CG, an intro decoder, or
+  another retail source; that source join and CLUT/placement ownership remain
+  required before any production presentation route changes.
 - **NEXUS-SATURN-STARTUP-INPUT-CAPTURE:** The external Saturn producer now
   supports a bounded, active-low START pulse through Mednafen SMPC at an
   operator-selected emulated frame, with an explicit mask for START (`0x10`),
