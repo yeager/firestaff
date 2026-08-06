@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-SAL-MAP-DISPATCH-CAPTURE:** Retail `SNDLEV##.MAP` byte-zero
+  records are now admitted independently of the legacy 24-byte fixture
+  grammar, and the real 16-level corpus remains bounded and source-backed.
+  Keep DataID/selector entries opaque until Saturn SLEV/SDDRVS event
+  dispatch is captured; do not bind the host sound enum or start playback
+  from inferred selectors.
+
 - **NEXUS-MNS-SATURN-RENDER-HANDOFF:** Retail MNS admission now validates
   DMDF block size plus MOTN/TEXT section envelopes, and the real corpus decodes
   30/30 models with non-zero meshes and 815 source textures. Remaining work is

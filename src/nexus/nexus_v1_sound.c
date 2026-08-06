@@ -218,13 +218,23 @@ static void parse_map_record_table(Nexus_SoundEngine *eng) {
     int header_last = -1;
     unsigned char record_event_seen[256];
 
-    if (!eng || !eng->map_data || eng->map_size < NEXUS_SFX_MAP_HEADER_BYTES + 2)
+    if (!eng || !eng->map_data || eng->map_size < 2)
+        return;
+
+    /* DMWeb retail MAPs have no file header: records begin at byte zero and
+     * the table ends at FF FF.  The legacy 24-byte grammar is the only form
+     * that needs its larger minimum size. */
+    if (eng->map_data[0] != 0x20U &&
+        eng->map_size < NEXUS_SFX_MAP_HEADER_BYTES + 2)
         return;
 
     sal_window_profile(eng->map_data,
                        eng->map_size,
                        0,
-                       NEXUS_SFX_MAP_HEADER_BYTES,
+                       eng->map_data[0] == 0x20U &&
+                               eng->map_size < NEXUS_SFX_MAP_HEADER_BYTES
+                           ? eng->map_size
+                           : NEXUS_SFX_MAP_HEADER_BYTES,
                        &eng->map_header_checksum16,
                        &eng->map_header_nonzero_byte_count,
                        &header_high,
@@ -256,7 +266,7 @@ static void parse_map_record_table(Nexus_SoundEngine *eng) {
                 return;
             }
             if (retail_dmweb_map) {
-                if (off > eng->map_size - 8)
+                if (off > eng->map_size - NEXUS_SFX_MAP_RETAIL_RECORD_BYTES)
                     return;
             } else if (off > eng->map_size - 2) {
                 return;
@@ -314,7 +324,7 @@ static void parse_map_record_table(Nexus_SoundEngine *eng) {
              * direct SAL-file interval. Do not misclassify it as an invalid
              * file window; DataID remains the required provenance boundary. */
             eng->map_record_count++;
-            off += 8;
+            off += NEXUS_SFX_MAP_RETAIL_RECORD_BYTES;
             continue;
         }
     }

@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 Nexus retail MAP minimum-size admission: `SNDLEV##.MAP`
+  parsing now recognizes DMWeb's byte-zero retail record table even when the
+  file contains only one eight-byte record and its `FF FF` terminator; the
+  legacy 24-byte fixture grammar remains isolated. Added a regression that
+  preserves the opaque DataID/selector and bounded SAL window without
+  inventing event semantics. Verification: `test_nexus_v1_sal_map_corpus`
+  passes against all 16 real SAL/MAP pairs plus the minimal retail case.
+  No game data was added to the repo.
+
 - ✅ 2026-08-06 Nexus MNS DMDF envelope gate: `nexus_v1_mns_decode` now
   requires DMWeb's exact DMDF block/file size and validates the declared MOTN
   and TEXT section spans before accepting animation tables or texture pixels.

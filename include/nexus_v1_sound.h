@@ -65,7 +65,10 @@ typedef struct {
 } Nexus_SoundMapWindow;
 
 #define NEXUS_SFX_MAP_MAX_RECORDS 16
+/* DMWeb retail MAP records start at byte zero.  Keep the 24-byte value
+ * exclusively for the historical fixture grammar below. */
 #define NEXUS_SFX_MAP_HEADER_BYTES 24
+#define NEXUS_SFX_MAP_RETAIL_RECORD_BYTES 8
 #define NEXUS_SFX_MAP_RECORD_BYTES 8
 #define NEXUS_SAL_CONTAINER_PREAMBLE_BYTES 8
 #define NEXUS_SFX_EVENT_SELECTOR_COUNT 32

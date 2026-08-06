@@ -66,6 +66,31 @@ static void test_retail_map_requires_ff_ff_terminator(void) {
     nexus_sound_shutdown(&sound);
 }
 
+static void test_minimal_retail_map_has_no_legacy_header_requirement(void) {
+    static const unsigned char sal_data[] = { 0x7f };
+    static const unsigned char retail_map[] = {
+        0x20, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x01,
+        0xff, 0xff
+    };
+    Nexus_SoundEngine sound;
+
+    CHECK(nexus_sound_init(&sound) == 0,
+          "minimal retail MAP sound engine initializes");
+    CHECK(nexus_sound_load_canonical_level(&sound, 0, sal_data,
+                                            (int)sizeof(sal_data),
+                                            retail_map,
+                                            (int)sizeof(retail_map), 1, 1) == 0,
+          "minimal retail MAP loads without a legacy header");
+    CHECK(sound.map_record_table_supported && sound.map_record_count == 1,
+          "minimal retail MAP exposes its byte-zero record");
+    CHECK(sound.map_records[0].selector == 0x20 &&
+          sound.map_records[0].data_id == 2 &&
+          sound.map_records[0].sal_offset == 0 &&
+          sound.map_records[0].sal_size == 1,
+          "minimal retail MAP preserves its bounded opaque window");
+    nexus_sound_shutdown(&sound);
+}
+
 int main(void) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     int level;
@@ -145,6 +170,7 @@ int main(void) {
           "retail SNDLEV00-15 MAP corpus exposes 154 bounded records");
 
     test_retail_map_requires_ff_ff_terminator();
+    test_minimal_retail_map_has_no_legacy_header_requirement();
 
     return failures ? 1 : 0;
 }
