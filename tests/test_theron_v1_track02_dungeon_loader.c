@@ -327,6 +327,36 @@ static void test_all_jp_dungeons(const uint8_t *ud, size_t ud_size) {
     printf("  JP Track 02: all dungeon object records OK\n");
 }
 
+static void test_real_bank_reload_clears_stale_levels(
+    const uint8_t *ud, size_t ud_size) {
+    Theron_V1_World *world = calloc(1, sizeof(Theron_V1_World));
+    Theron_DungeonData long_bank;
+    Theron_DungeonData short_bank;
+
+    assert(world);
+    theron_v1_world_init(world);
+    assert(theron_v1_track02_dungeon_map_load_for_variant(
+               ud, ud_size, THERON_TRACK02_VARIANT_US_BIN, 1u,
+               &long_bank));
+    assert(long_bank.map_count == 8u);
+    assert(theron_v1_world_load_track02_dungeon(world, 2, &long_bank) == 8);
+    assert(world->level_loaded[1][7] == 1);
+
+    assert(theron_v1_track02_dungeon_map_load_for_variant(
+               ud, ud_size, THERON_TRACK02_VARIANT_US_BIN, 4u,
+               &short_bank));
+    assert(short_bank.map_count == 3u);
+    assert(theron_v1_world_load_track02_dungeon(world, 2, &short_bank) == 3);
+    for (unsigned int level = 0u; level < 3u; ++level)
+        assert(world->level_loaded[1][level] == 1);
+    for (unsigned int level = 3u; level < THERON_MAX_LEVELS_PER_DUNGEON;
+         ++level)
+        assert(world->level_loaded[1][level] == 0);
+
+    free(world);
+    printf("  US Track 02: real bank reload clears stale level records\n");
+}
+
 int main(void) {
     printf("test_theron_v1_track02_dungeon_loader\n");
 
@@ -342,6 +372,7 @@ int main(void) {
         return 0;
     }
     test_all_dungeons(ud, ud_size);
+    test_real_bank_reload_clears_stale_levels(ud, ud_size);
     free(ud);
 
     const char *jp_path = find_jp_track02();

@@ -268,6 +268,13 @@ int theron_v1_world_load_track02_dungeon(
     int slot = dungeon_id - 1;
     int loaded = 0;
 
+    /* ReDMCSB: THQUEST.ASM T400/T560 replaces the selected dungeon bank and
+     * rebuilds its level directory.  Clear the complete slot first so a
+     * reload from a real Track 02 bank with fewer maps cannot expose stale
+     * level records from the previous bank. */
+    memset(world->levels[slot], 0, sizeof(world->levels[slot]));
+    memset(world->level_loaded[slot], 0, sizeof(world->level_loaded[slot]));
+
     world->source_monster_count = 0;
     world->source_generator_count = 0;
     world->source_object_count = 0;

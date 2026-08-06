@@ -1,5 +1,14 @@
 # Theron TQTR capture-offset correction (2026-08-06)
 
+# Theron real Track 02 bank reload hygiene (2026-08-06)
+
+- ✅ The source-faithful world loader now clears the selected dungeon's level
+  directory before loading a replacement Track 02 bank, so a shorter real
+  dungeon cannot expose stale later-level records from a previous load.
+- ✅ The regression reloads authenticated US DRATOR (8 maps) with real US
+  SHADODAN (3 maps) and confirms only the three current levels remain loaded;
+  the complete US/JP Track 02 object-chain census still passes.
+
 # CSB complete cross-platform data inventory (2026-08-06)
 
 - ✅ The hash scanner now treats the recommended fast candidates as launch
