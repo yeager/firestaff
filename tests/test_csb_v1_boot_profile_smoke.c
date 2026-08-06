@@ -458,6 +458,7 @@ static void test_fmtowns_game_program_handoff(void)
     const char *data_dir = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_DATA_DIR");
     CSB_V1_BootProfile profile;
     CSB_V1_FmtownsGameHandoffReceipt receipt;
+    CSB_V1_FmtownsUtilityHandoffReceipt utility;
     uint8_t music_track;
 
     if (!data_dir || data_dir[0] == '\0') {
@@ -484,6 +485,14 @@ static void test_fmtowns_game_program_handoff(void)
                       CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_BYTES &&
                   receipt.music_table_fnv1a == 0x3faffb70u,
               "SWITCHTW English Game exit admits only retail CHTWE.EXP");
+        CHECK(csb_v1_fmtowns_utility_handoff_open(
+                  &profile, CSB_FMTOWNS_SWITCH_ENGLISH, &utility) &&
+                  utility.valid && utility.executable_verified &&
+                  utility.utility_program_is_c06_cedt &&
+                  strcmp(utility.executable_name, "UTILE.EXP") == 0 &&
+                  utility.executable_size == 152387u &&
+                  utility.executable_fnv1a == 0xff240e0cu,
+              "SWITCHTW English Utility exit admits only retail UTILE.EXP");
         music_track = 0u;
         CHECK(csb_v1_fmtowns_game_music_track_at(&receipt, 0u, 2u, 0u,
                                                   &music_track) &&

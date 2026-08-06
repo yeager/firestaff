@@ -47,6 +47,22 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     const char *source_evidence;
 } CSB_V1_FmtownsGameHandoffReceipt;
 
+/* AUTOEXEC.BAT exit 2/5 enters a different C06_CEDT program. This receipt
+ * admits that program only; it does not pretend its editor UI is C03_GAME. */
+typedef struct CSB_V1_FmtownsUtilityHandoffReceipt {
+    int valid;
+    int executable_verified;
+    int language_matches_profile;
+    int utility_program_is_c06_cedt;
+    CSB_V1_FmtownsSwitchLanguage language;
+    CSB_V1_VariantId variant_id;
+    uint32_t executable_size;
+    uint32_t executable_fnv1a;
+    char executable_name[16];
+    char executable_path[512];
+    const char *source_evidence;
+} CSB_V1_FmtownsUtilityHandoffReceipt;
+
 /* Admit precisely the F31E/F31J executable selected by SWITCHTW.  A valid
  * CSB profile alone is deliberately insufficient: this gate also checks the
  * exact retail program identity before the entrance/HUD session is opened. */
@@ -54,6 +70,11 @@ int csb_v1_fmtowns_game_handoff_open(
     const CSB_V1_BootProfile *profile,
     CSB_V1_FmtownsSwitchLanguage language,
     CSB_V1_FmtownsGameHandoffReceipt *out_receipt);
+
+int csb_v1_fmtowns_utility_handoff_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityHandoffReceipt *out_receipt);
 
 /* Return the native F31 music selector (zero means no selector) for one
  * source map square. The value is the exact byte passed to F0719_PlayMusicTrack

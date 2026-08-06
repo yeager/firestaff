@@ -54693,6 +54693,13 @@ alcove runtime and archive-media tests passed (4/4).
   boot-owned map 0 coordinate (9,0), retail selector/physical track 2. Native CD pause/resume
   remains intentionally open.
 
+- ✅ 2026-08-06 CSB FM Towns Utility-program admission: AUTOEXEC.BAT's
+  separate Switch exits 2/5 now resolve only their retail C06_CEDT owners,
+  `UTILE.EXP`/`UTILJ.EXP`, after the selected F31 profile is authenticated.
+  The receipts verify exact size and FNV-1a identity and cannot fall through
+  to C03_GAME or a PC34 utility panel. The real F31E boot smoke passes;
+  source-owned Utility UI and save transactions remain open.
+
 - ✅ Removed the remaining fixed arithmetic wall-index helper from the old
   `firestaff_dungeon_viewport_bridge` API. The previous `300 + distance * 18
   + position * 6` calculation was not a ReDMCSB or PC34 `GRAPHICS.DAT`

@@ -8,6 +8,10 @@ enum {
     CSB_V1_FMTOWNS_CHTWJ_SIZE = 284416u,
     CSB_V1_FMTOWNS_CHTWE_FNV1A = 0x3da136f6u,
     CSB_V1_FMTOWNS_CHTWJ_FNV1A = 0xf937db45u,
+    CSB_V1_FMTOWNS_UTILE_SIZE = 152387u,
+    CSB_V1_FMTOWNS_UTILJ_SIZE = 152499u,
+    CSB_V1_FMTOWNS_UTILE_FNV1A = 0xff240e0cu,
+    CSB_V1_FMTOWNS_UTILJ_FNV1A = 0xbb3b47c2u,
     /* The retail F31E/F31J programs carry identical 10*32*32 selector
      * tables. These offsets are from the raw verified executable image. */
     CSB_V1_FMTOWNS_CHTWE_MUSIC_TABLE_OFFSET = 271144u,
@@ -161,6 +165,61 @@ int csb_v1_fmtowns_game_handoff_open(
         "STARTUP1.C F0435 line 163; ENTRANCE.C F0807 line 85; "
         "MUSIC.C G4099 line 6/F0743 lines 632-646";
     out_receipt->valid = 1;
+    return 1;
+}
+
+int csb_v1_fmtowns_utility_handoff_open(
+    const CSB_V1_BootProfile *profile,
+    CSB_V1_FmtownsSwitchLanguage language,
+    CSB_V1_FmtownsUtilityHandoffReceipt *out_receipt)
+{
+    const char *name;
+    uint32_t expected_size;
+    uint32_t expected_hash;
+    uint32_t actual_size;
+    uint32_t actual_hash;
+    CSB_V1_VariantId expected_variant;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->assets_verified || !profile->graphics_verified ||
+        !profile->dungeon_verified || !profile->asset_root[0]) return 0;
+    if (language == CSB_FMTOWNS_SWITCH_ENGLISH) {
+        name = "UTILE.EXP";
+        expected_size = CSB_V1_FMTOWNS_UTILE_SIZE;
+        expected_hash = CSB_V1_FMTOWNS_UTILE_FNV1A;
+        expected_variant = CSB_V1_VARIANT_FMTOWNS_EN;
+    } else if (language == CSB_FMTOWNS_SWITCH_JAPANESE) {
+        name = "UTILJ.EXP";
+        expected_size = CSB_V1_FMTOWNS_UTILJ_SIZE;
+        expected_hash = CSB_V1_FMTOWNS_UTILJ_FNV1A;
+        expected_variant = CSB_V1_VARIANT_FMTOWNS_JA;
+    } else return 0;
+    if (profile->variant_id != expected_variant ||
+        snprintf(out_receipt->executable_path,
+                 sizeof(out_receipt->executable_path), "%s/%s",
+                 profile->asset_root, name) < 0 ||
+        strlen(out_receipt->executable_path) >=
+            sizeof(out_receipt->executable_path)) return 0;
+    actual_hash = csb_v1_fmtowns_game_file_fnv1a(
+        out_receipt->executable_path, &actual_size);
+    if (actual_size != expected_size || actual_hash != expected_hash) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->executable_verified = 1;
+    out_receipt->language_matches_profile = 1;
+    out_receipt->utility_program_is_c06_cedt = 1;
+    out_receipt->language = language;
+    out_receipt->variant_id = expected_variant;
+    out_receipt->executable_size = actual_size;
+    out_receipt->executable_fnv1a = actual_hash;
+    snprintf(out_receipt->executable_name, sizeof(out_receipt->executable_name),
+             "%s", name);
+    out_receipt->source_evidence =
+        "ReDMCSB SWITCH.C F2279; AUTOEXEC.BAT exits 2/5; "
+        "COMPILE.H C06_CEDT";
     return 1;
 }
 
