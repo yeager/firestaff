@@ -417,8 +417,9 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
     DM2_V1_GdatHudM11CommandPlan *out_plan)
 {
     DM2_V1_HudChromeRenderPlan chrome;
-    int i;
-    int expected_count = is_outdoor ? 8 : 9;
+    int expected_count = is_outdoor
+        ? DM2_V1_GDAT_HUD_M11_STATIC_OUTDOOR_COMMAND_COUNT
+        : DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT;
 
     if (!out_plan) return 0;
     memset(out_plan, 0, sizeof(*out_plan));
@@ -436,15 +437,13 @@ int dm2_v1_gdat_hud_m11_command_plan_build(
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;
     }
-    for (i = 0; i < chrome.action_icon_count; ++i) {
-        if (!dm2_v1_gdat_hud_add_command(loader, out_plan,
-                DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
-                chrome.action_icons[i].gdat_index,
-                &chrome.action_icons[i].fill_rect)) {
-            dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
-            return 0;
-        }
-    }
+    /* Do not turn the former generic action-strip icons into a HUD source.
+     * SKProject DRAW_HAND_ACTION_ICONS (SkWinCore.cpp:7536-7582) selects
+     * INTERFACE_GENERAL/4 entries 2..5 and RECT_46..RECT_4d using the live
+     * possession, party position and facing.  The static `/3/2..6` mapping
+     * had none of those owners and was a visually plausible substitute, not
+     * original DM2 data.  The separately gated hand-action command is the
+     * only renderer route permitted to draw those backdrops. */
     if (!is_outdoor &&
         (!dm2_v1_gdat_hud_add_command(loader, out_plan,
                 DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL,
@@ -493,7 +492,8 @@ int dm2_v1_gdat_hud_m11_command_plan_build_for_party(
     }
     /* DRAW_CHAMPION_PICTURE runs once per active squad member. Keep the
      * source chrome plus exactly the admitted HeroType images. */
-    if (out_plan->command_count != 9 + portrait_count) {
+    if (out_plan->command_count !=
+        DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT + portrait_count) {
         dm2_v1_gdat_hud_m11_command_plan_free(out_plan);
         return 0;
     }
@@ -508,8 +508,9 @@ int dm2_v1_gdat_hud_m11_command_plan_bind_portrait_destinations(
     uint32_t source_table_hash)
 {
     int slot;
-    int command_index = 9;
-    if (!plan || !plan->valid || plan->command_count < 9 ||
+    int command_index = DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT;
+    if (!plan || !plan->valid || plan->command_count <
+            DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT ||
         plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
         !party || !portrait_destinations ||
         source_table_hash == 0u) return 0;

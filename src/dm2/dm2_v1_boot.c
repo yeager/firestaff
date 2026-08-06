@@ -5736,7 +5736,9 @@ int dm2_v1_boot_startup_menu_hud_gdat_receipt(
     memset(&hud, 0, sizeof(hud));
     out_receipt->hud_static_plan_ready =
         dm2_v1_boot_gdat_hud_static_m11_command_plan(profile, 0, &hud) &&
-        hud.valid && hud.command_count == 9 && hud.command_hash != 0u;
+        hud.valid && hud.command_count ==
+            DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT &&
+        hud.command_hash != 0u;
     out_receipt->hud_static_command_count = hud.command_count;
     out_receipt->hud_static_plan_hash = hud.command_hash;
     out_receipt->hud_palette_ready = out_receipt->hud_static_plan_ready;

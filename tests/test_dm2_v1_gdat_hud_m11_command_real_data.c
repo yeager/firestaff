@@ -76,11 +76,6 @@ int main(void)
         DM2_V1_GDAT_HUD_M11_COMMAND_TOP_BAR,
         DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_STRIP,
         DM2_V1_GDAT_HUD_M11_COMMAND_GOLD_BOX,
-        DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
-        DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
-        DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
-        DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
-        DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON,
         DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL
     };
 
@@ -146,21 +141,24 @@ int main(void)
         !menu_hud_gdat.interface_palette_ready ||
         menu_hud_gdat.interface_palette_hash == 0u ||
         !menu_hud_gdat.hud_static_plan_ready ||
-        menu_hud_gdat.hud_static_command_count != 9 ||
+        menu_hud_gdat.hud_static_command_count !=
+            DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT ||
         menu_hud_gdat.hud_static_plan_hash == 0u ||
         !menu_hud_gdat.hud_palette_ready ||
         menu_hud_gdat.receipt_hash == 0u) {
         fputs("FAIL: startup menu/HUD GDAT receipt was incomplete\n", stderr);
         ++failures;
     }
-    if (!plan.valid || plan.command_count != 9 ||
+    if (!plan.valid || plan.command_count !=
+            DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT ||
         plan.command_hash == 0u) {
         ++failures;
     }
     for (int i = 0; i < plan.command_count; ++i) {
         const DM2_V1_GdatHudM11Command *command = &plan.commands[i];
         if (command->kind != expected_kind[i] ||
-            (i < 9 && (command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
+            (i < DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT &&
+             (command->gdat_category != DM2_GDAT_CATEGORY_INTERFACE_GENERAL ||
                        command->gdat_index < 2 || command->gdat_index > 6)) ||
             command->width <= 0 || command->height <= 0 || !command->pixels ||
             command->format == DM2_IMG_FMT_UNKNOWN || command->raw_hash == 0u ||
@@ -185,18 +183,19 @@ int main(void)
     party.champions[0].portrait_index = 0xffu;
     if (!dm2_v1_gdat_hud_m11_command_plan_build_for_party(
             &loader, &party, &portrait_plan) ||
-        portrait_plan.command_count != 10 ||
-        portrait_plan.commands[9].kind !=
+        portrait_plan.command_count !=
+            DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT + 1 ||
+        portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].kind !=
             DM2_V1_GDAT_HUD_M11_COMMAND_CHAMPION_PORTRAIT ||
-        portrait_plan.commands[9].gdat_category !=
+        portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].gdat_category !=
             DM2_GDAT_CATEGORY_MISCELLANEOUS ||
-        portrait_plan.commands[9].gdat_index != 0xfe ||
-        portrait_plan.commands[9].gdat_field != 0xfe ||
-        portrait_plan.commands[9].width != 31 ||
-        portrait_plan.commands[9].height != 31 ||
-        portrait_plan.commands[9].raw_hash == 0u ||
-        portrait_plan.commands[9].decoded_hash == 0u ||
-        portrait_plan.commands[9].palette_hash == 0u) {
+        portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].gdat_index != 0xfe ||
+        portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].gdat_field != 0xfe ||
+        portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].width != 31 ||
+        portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].height != 31 ||
+        portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].raw_hash == 0u ||
+        portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].decoded_hash == 0u ||
+        portrait_plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT].palette_hash == 0u) {
         fputs("FAIL: HeroType 255 did not retain the original GDAT fallback\n",
               stderr);
         ++failures;
@@ -215,10 +214,11 @@ int main(void)
     dm2_v1_render_ui_chrome(&viewport);
     /* HUD names still use the separately source-gated dt07 font route. The
      * image-family proof below excludes that known no-draw lookup. */
-    if (viewport.asset_hud_core_drawn_count != 9 ||
+    if (viewport.asset_hud_core_drawn_count !=
+            DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT ||
         viewport.asset_hud_portrait_drawn_count != 0 ||
         viewport.gdat_hud_material_plan_consumed_count !=
-            9 ||
+            DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT ||
         viewport.fallback_hud_core_drawn_count != 0 ||
         viewport.fallback_hud_portrait_drawn_count != 0 ||
         !viewport.last_hud_top_bar_material_request.valid ||
@@ -232,13 +232,13 @@ int main(void)
             plan.commands[0].width ||
         !viewport.last_hud_status_panel_material_request.valid ||
         viewport.last_hud_status_panel_material_request.indexed_pixels !=
-            plan.commands[8].pixels ||
+            plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT - 1].pixels ||
         viewport.last_hud_status_panel_material_request.width !=
-            plan.commands[8].width ||
+            plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT - 1].width ||
         viewport.last_hud_status_panel_material_request.height !=
-            plan.commands[8].height ||
+            plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT - 1].height ||
         viewport.last_hud_status_panel_material_request.stride !=
-            plan.commands[8].width) {
+            plan.commands[DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT - 1].width) {
         fputs("FAIL: HUD plan did not render directly from canonical GDAT material\n",
               stderr);
         fprintf(stderr, "core=%d portrait=%d consumed=%d fallback-core=%d fallback-portrait=%d callbacks=%d\n",
@@ -264,8 +264,10 @@ int main(void)
         dm2_v1_viewport_set_gdat_hud_material_plan(&viewport, &plan);
         dm2_v1_render_ui_chrome(&viewport);
         plan.commands[0].palette16[0] = saved_palette_byte;
-        if (viewport.asset_hud_core_drawn_count >= 9 ||
-            viewport.gdat_hud_material_plan_consumed_count >= 9 ||
+        if (viewport.asset_hud_core_drawn_count >=
+                DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT ||
+            viewport.gdat_hud_material_plan_consumed_count >=
+                DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT ||
             (viewport.blocked_material_mask &
                 DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE) == 0u ||
             viewport.fallback_hud_core_drawn_count != 0 ||

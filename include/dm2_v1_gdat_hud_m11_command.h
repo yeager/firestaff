@@ -19,6 +19,13 @@ enum {
 };
 
 #define DM2_V1_GDAT_HUD_M11_COMMAND_MAX 13
+/* The static source family contains only the four surfaces whose exact
+ * address is independently retained here. Hand/action backdrops are dynamic:
+ * DRAW_HAND_ACTION_ICONS selects INTERFACE_GENERAL/4 fields 2..5 and
+ * RECT_46..RECT_4d from live party placement, so they must never be folded
+ * into this static plan. */
+#define DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT 4
+#define DM2_V1_GDAT_HUD_M11_STATIC_OUTDOOR_COMMAND_COUNT 3
 
 typedef struct DM2_V1_GdatHudM11Command {
     int kind;

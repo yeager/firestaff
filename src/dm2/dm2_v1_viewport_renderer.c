@@ -8094,8 +8094,7 @@ static const DM2_V1_GdatHudM11Command *dm2_v1_hud_plan_command(
 
     if (!s || !rect || !(plan = s->gdat_hud_material_plan) ||
         !plan->valid ||
-        plan->command_count < DM2_V1_GDAT_HUD_M11_COMMAND_MAX -
-                                  DM2_V1_HUD_CHAMPION_SLOT_COUNT - 1 ||
+        plan->command_count < DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT ||
         plan->command_count > DM2_V1_GDAT_HUD_M11_COMMAND_MAX ||
         plan->command_hash == 0u ||
         plan->command_hash !=
@@ -8510,14 +8509,10 @@ void dm2_v1_render_ui_chrome(DM2_V1_ViewportState *s)
         dm2_v1_block_source_material(
             s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
     }
-    for (int i = 0; i < plan.action_icon_count; ++i) {
-        if (!dm2_v1_render_hud_core_asset(s,
-                                          &plan.action_icons[i].fill_rect,
-                                          plan.action_icons[i].gdat_index)) {
-            dm2_v1_block_source_material(
-                s, DM2_V1_VIEWPORT_BLOCKED_MATERIAL_HUD_CORE);
-        }
-    }
+    /* DRAW_HAND_ACTION_ICONS is not part of the static chrome. It needs the
+     * live possession, formation and facing tuple to select
+     * INTERFACE_GENERAL/4 and RECT_46..RECT_4d. The source-gated hand-action
+     * route below owns that draw; never substitute its old generic icon row. */
 
     if (!plan.outdoor) {
         if (!dm2_v1_render_hud_core_asset(s,

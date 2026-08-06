@@ -105,7 +105,9 @@ int main(void)
         return 1;
     }
     if (!dm2_v1_gdat_hud_m11_command_plan_build(&loader, 0, &hud) ||
-        !hud.valid || hud.command_count != 9 || hud.command_hash == 0u) {
+        !hud.valid || hud.command_count !=
+            DM2_V1_GDAT_HUD_M11_STATIC_COMMAND_COUNT ||
+        hud.command_hash == 0u) {
         fputs("FAIL: no complete canonical GDAT HUD material plan\n", stderr);
         dm2_v1_gdat_scene_m11_command_plan_free(&scene);
         dm2_v1_gdat_wall_m11_command_plan_free(&wall);

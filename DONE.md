@@ -52247,6 +52247,13 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   an original TITLE/GDAT surface. The regression proves no subsequent startup
   image is acknowledged after that failure, preserving the no-placeholder
   title/menu boundary.
+
+# 2026-08-06 DM2 HUD hand-action source gate
+
+- ✅ Removed the static HUD plan's fabricated action-icon row. Original
+  `DRAW_HAND_ACTION_ICONS` chooses its `INTERFACE_GENERAL/4` image and
+  `RECT_46..RECT_4d` destination from live hand, formation and facing state;
+  only that separately source-gated route may now render a hand backdrop.
 # 2026-08-06 Nexus HUD DM.BIN disassembly anchor
 
 - ✅ The real-data HUD regression now verifies the `yam\\menuctrl.c` owner
