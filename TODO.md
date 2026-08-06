@@ -4533,6 +4533,12 @@ that its exact runtime path is not already source-locked and tested.
 46. **DM2-SOUND-MUSIC-CUTSCENES:** Complete real SND/music/cutscene startup,
     menu, dungeon, combat, weather, and transition playback with skproject
     timing and no placeholder audio.
+   **2026-08-06 update:** `DM2_QUERY_SND_ENTRY_INDEX` no longer creates a
+   process-global fallback queue from a verified GDAT loader. It now requires
+   the active runtime's source-shaped `xsndptr2` queue, bound immediately
+   after its initialization and cleared with the boot profile. Real GDAT PCM
+   lookup remains verified; original HMP scheduling and the remaining audio
+   owners are still open.
     2026-07-31: the startup handoff now distinguishes an attempted menu cue
     from successful verified playback. Cue ownership now reads directly from
     PC `GRAPHICS.DAT` GDAT `MUSICS/<track>/dtHMP/0`; loose `.hmp.mid` files

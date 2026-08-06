@@ -2324,6 +2324,10 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     /* Initialize sound queue for QUEUE_NOISE_GEN1/GEN2 runtime routing. */
     dm2_v1_sound_queue_state_init(&g_dm2_runtime.sound_queue,
                                   DM2_V1_SOUND_SSOUND_QUEUE_CAP);
+    /* c_sound.cpp queries the current xsndptr2 queue.  Bind the queue just
+     * initialised for this admitted runtime; a query must not fall back to a
+     * process-global host fixture. */
+    dm2_v1_sound_bind_runtime_queue(&g_dm2_runtime.sound_queue);
     memset(&g_dm2_runtime.sound_env, 0, sizeof(g_dm2_runtime.sound_env));
     g_dm2_runtime.sound_env.current_map = (int16_t)g_dm2_runtime.dungeon_level;
     g_dm2_runtime.sound_env.gate_map_a = -1;

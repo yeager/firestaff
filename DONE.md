@@ -50650,6 +50650,14 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   focused tests still compile the adapter explicitly, while production cannot
   use it instead of the mounted GRAPHICS.DAT data owner.
 
+- ✅ 2026-08-06 DM2 sound queue ownership: `DM2_QUERY_SND_ENTRY_INDEX` now
+  operates only on the active runtime's source-shaped `xsndptr2` queue. The
+  former process-global fallback queue is removed, so a verified GDAT loader
+  cannot manufacture unowned queue state. The queue binds after runtime
+  initialization and clears with boot teardown. Verification:
+  `test_dm2_v1_sound_gdat_real_data` passed against the local retail
+  `GRAPHICS.DAT`; `test_dm2_v1_sound_source_gate` passed.
+
 - ✅ 2026-08-06 DM2 c_sfx placeholder isolation: removed the inactive
   callback sound queue from both production CMake globs. Its position handling
   omits the original level-geometry transform; the explicit test remains while

@@ -82,6 +82,10 @@ static int       g_dm2_cdda_queued;
 
 static const DM2_V1_AssetLoader *g_dm2_sound_gdat_loader;
 static int g_dm2_sound_gdat_verified;
+/* c_sound.cpp keeps xsndptr2 in the live DM2 sound state.  Retain only a
+ * borrow of that owner; constructing a file-scope queue here would create
+ * host-only sound history unrelated to the running game. */
+static DM2_V1_SoundQueueState *g_dm2_sound_runtime_queue;
 
 static uint16_t dm2_read_be16(const uint8_t *p)
 {
@@ -944,6 +948,11 @@ void dm2_v1_sound_bind_gdat_loader(const DM2_V1_AssetLoader *loader,
     }
 }
 
+void dm2_v1_sound_bind_runtime_queue(DM2_V1_SoundQueueState *state)
+{
+    g_dm2_sound_runtime_queue = state;
+}
+
 static int dm2_v1_sound_resolve_sample_from_gdat(int8_t cls1,
                                                   int8_t cls2,
                                                   int8_t cls3,
@@ -1000,22 +1009,17 @@ uint16_t dm2_v1_query_snd_entry_index(const DM2_V1_SoundQueueState *state,
     return dm2_v1_sound_queue_query_entry_index(state, cls1, cls2, cls3);
 }
 
-/* DM2_QUERY_SND_ENTRY_INDEX with GDAT fallback.
- * If the entry is not already in the runtime queue and a verified GDAT loader
- * is bound, DM2_SOUND9 is used to materialise the queue entry from the GDAT
- * binding, preserving the original queue/query order.  Returns a 1-based index
- * on success, -1 when unavailable. */
+/* DM2_QUERY_SND_ENTRY_INDEX with GDAT resolution.
+ * Source: SKProject/SKWINSPX/src/v5/sksound.cpp::DM2_QUERY_SND_ENTRY_INDEX
+ * and c_sound.cpp:650-673.  The original query operates on dm2sound.xsndptr2,
+ * which is now explicitly bound by the live runtime.  Do not fabricate an
+ * independent static queue merely because a GRAPHICS.DAT loader is available. */
 int dm2_v1_sound_query_entry(uint8_t cls1, uint8_t cls2, uint8_t cls3)
 {
-    static DM2_V1_SoundQueueState fallback_state;
-    static int fallback_initialized;
-    DM2_V1_SoundQueueState *state = &fallback_state;
+    DM2_V1_SoundQueueState *state = g_dm2_sound_runtime_queue;
     uint16_t index;
 
-    if (!fallback_initialized) {
-        dm2_v1_sound_queue_state_init(state, DM2_V1_SOUND_SSOUND_QUEUE_CAP);
-        fallback_initialized = 1;
-    }
+    if (!state) return -1;
 
     index = dm2_v1_sound_queue_query_entry_index(
         state, (int8_t)cls1, (int8_t)cls2, (int8_t)cls3);

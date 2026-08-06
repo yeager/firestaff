@@ -368,6 +368,12 @@ int dm2_v1_sound_voice_active(unsigned voice_slot);
 void dm2_v1_sound_bind_gdat_loader(const DM2_V1_AssetLoader *loader,
                                    int verified);
 
+/* Bind the live source-shaped xsndptr2 queue owned by the active DM2
+ * runtime.  QUERY_SND_ENTRY_INDEX has no queue parameter in the original
+ * call shape, so it must never allocate a private host substitute.  Pass
+ * NULL while tearing down or before a verified runtime is active. */
+void dm2_v1_sound_bind_runtime_queue(DM2_V1_SoundQueueState *state);
+
 /* DM2_SOUND9: populate dm2sound.xsndptr2 (seven-byte s_ssound entry).
  * Pass sample_id = -1 to attempt GDAT resolution when a loader is bound. */
 int dm2_v1_sound9(DM2_V1_SoundQueueState *state,
@@ -383,7 +389,9 @@ uint16_t dm2_v1_query_snd_entry_index(const DM2_V1_SoundQueueState *state,
                                       int8_t cls2,
                                       int8_t cls3);
 
-/* DM2_QUERY_SND_ENTRY_INDEX with GDAT fallback.  Returns 1-based index or -1. */
+/* DM2_QUERY_SND_ENTRY_INDEX against the bound live runtime queue.  A missing
+ * queue is unavailable; this API never creates a private fallback queue.
+ * Returns a 1-based index or -1. */
 int  dm2_v1_sound_query_entry(uint8_t cls1, uint8_t cls2, uint8_t cls3);
 int  dm2_v1_sound_play(int sound_id, int volume);
 int  dm2_v1_sound_play_positional(int sound_id, int world_x, int world_y, int listener_x, int listener_y);

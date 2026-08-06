@@ -11416,6 +11416,7 @@ void dm2_v1_boot_cleanup(DM2_V1_BootProfile *profile) {
     if (!profile) return;
     /* The sound singleton borrows the loader stored in graphics_dat. */
     dm2_v1_sound_bind_gdat_loader(NULL, 0);
+    dm2_v1_sound_bind_runtime_queue(NULL);
     if (profile->graphics_dat) {
         dm2_v1_boot_graphics_free(
             (DM2_V1_BootGraphicsDat *)profile->graphics_dat);

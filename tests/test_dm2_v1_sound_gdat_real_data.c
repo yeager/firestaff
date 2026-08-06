@@ -180,7 +180,7 @@ int main(void)
     /* Duplicate DM2_SOUND9 is rejected (source order: query first). */
     assert(dm2_v1_sound9(&state, 1, 2, 3, 8, &index) == 0);
 
-    /* ── DM2_QUERY_SND_ENTRY_INDEX with GDAT fallback ── */
+    /* ── DM2_QUERY_SND_ENTRY_INDEX against the live xsndptr2 queue ── */
     if (find_first_sound_entry(&loader, &sound_cat, &sound_idx, &sound_field)) {
         int q;
         (void)q;
@@ -196,10 +196,14 @@ int main(void)
                              (int8_t)sound_field, -1, &index) == 1);
         assert(state.ssound[index - 1u].w_00 == (int16_t)receipt.raw_index);
 
-        /* First query call should add the entry to the fallback queue. */
+        /* A verified loader alone cannot construct a host-side queue. */
+        assert(dm2_v1_sound_query_entry(sound_cat, sound_idx, sound_field) == -1);
+        dm2_v1_sound_bind_runtime_queue(&state);
+        /* First query materialises the entry in the explicitly bound live
+         * queue, exactly as the source's xsndptr2 ownership requires. */
         q = dm2_v1_sound_query_entry(sound_cat, sound_idx, sound_field);
         assert(q == 1);
-        /* Second call should find it already queued and return the same index. */
+        /* Second call finds it in that same live queue. */
         assert(dm2_v1_sound_query_entry(sound_cat, sound_idx, sound_field) == q);
 
         /* ── PCM decode from the verified GDAT entry (cycle 16) ── */
@@ -287,6 +291,7 @@ int main(void)
            (unsigned)sound_cat, (unsigned)sound_idx, (unsigned)sound_field);
 
 done:
+    dm2_v1_sound_bind_runtime_queue(NULL);
     dm2_v1_sound_bind_gdat_loader(NULL, 0);
     free(graphics);
     return failures;
