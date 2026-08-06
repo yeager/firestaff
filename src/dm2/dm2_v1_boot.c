@@ -56,7 +56,6 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
                                               int *out_field);
 #include <stdlib.h>
 #include <sys/stat.h>
-#include <unistd.h>
 
 #define DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL 0x01
 #define DM2_GDAT_WALL_FIELD_CACHE_LIMIT 0x40
@@ -449,14 +448,10 @@ static int dm2_v1_boot_read_asset_bytes(const char *path,
                                         long max_size,
                                         uint8_t **out_bytes,
                                         size_t *out_size) {
-    char materialized[512];
-    const char *read_path;
     FILE *f;
     long fsize;
     uint8_t *bytes;
     size_t got;
-    int remove_materialized = 0;
-    static unsigned int materialize_serial = 0u;
 
     if (out_bytes) *out_bytes = NULL;
     if (out_size) *out_size = 0u;
@@ -464,38 +459,36 @@ static int dm2_v1_boot_read_asset_bytes(const char *path,
         max_size <= 0) {
         return 0;
     }
-    read_path = path;
+    /* A generic archive entry has no DM2 memory owner.  Do not extract it
+     * to /tmp merely to make fopen() work: original game data must never be
+     * unpacked onto disk.  The explicitly supported FM Towns and Amiga
+     * media readers place their authenticated GRAPHICS/DUNGEON buffers in
+     * BootProfile::{graphics,dungeon}_mem before this helper is reached.
+     * A PC ZIP/ISO remains launch-blocked until it receives an equivalent
+     * verified in-memory reader.
+     *
+     * Source ownership: SKProject's mounted-media read is the source owner;
+     * Firestaff's RAM receipt is its required equivalent. */
     if (strstr(path, "::") != NULL) {
-        snprintf(materialized, sizeof(materialized),
-                 "/tmp/firestaff-dm2-asset-%ld-%u.dat",
-                 (long)getpid(), materialize_serial++);
-        if (!asset_extract_virtual_path(path, materialized)) {
-            return 0;
-        }
-        read_path = materialized;
-        remove_materialized = 1;
+        return 0;
     }
-    f = fopen(read_path, "rb");
+    f = fopen(path, "rb");
     if (!f) {
-        if (remove_materialized) remove(materialized);
         return 0;
     }
     if (fseek(f, 0, SEEK_END) != 0 ||
         (fsize = ftell(f)) <= 0 || fsize > max_size ||
         fseek(f, 0, SEEK_SET) != 0) {
         fclose(f);
-        if (remove_materialized) remove(materialized);
         return 0;
     }
     bytes = (uint8_t *)malloc((size_t)fsize);
     if (!bytes) {
         fclose(f);
-        if (remove_materialized) remove(materialized);
         return 0;
     }
     got = fread(bytes, 1, (size_t)fsize, f);
     fclose(f);
-    if (remove_materialized) remove(materialized);
     if (got != (size_t)fsize) {
         free(bytes);
         return 0;

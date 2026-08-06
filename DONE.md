@@ -50779,6 +50779,14 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `dm2-startup-menu`. Ordinary virtual DM2 ISO media remains blocked unless it
   has a dedicated in-memory owner.
 
+- ✅ 2026-08-06 DM2 generic archive disk-unpack closure: removed the boot
+  reader's `/tmp/firestaff-dm2-asset-*.dat` extraction of virtual ZIP/ISO
+  paths. A virtual PC archive entry now fails closed until it has a verified
+  in-memory reader; the separately authenticated FM Towns and Amiga RAM
+  buffers remain supported. This eliminates the last generic DM2 boot path
+  that unpacked original data on disk. Source: mounted-media ownership in
+  SKProject's file layer; Firestaff boot RAM receipts.
+
 - ✅ 2026-08-06 DM2 FM Towns corpus-identity closure: removed the runtime
   convenience path that reopened `$HOME/.firestaff/data/dm2/GRAPHICS.DAT`
   and used it as an English overlay after M12 had selected FM Towns media.

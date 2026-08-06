@@ -254,6 +254,10 @@
   selected verified corpus. A future language option must carry an explicit,
   separately authenticated companion corpus in its M12-to-boot receipt; it
   must not discover a sibling PC installation by path.
+  **2026-08-06 update:** the generic DM2 boot reader also now rejects every
+  virtual archive path instead of extracting it to `/tmp`. FM Towns and Amiga
+  continue through their already authenticated in-memory buffers. PC archive
+  media remains non-launchable until it has the same in-memory owner.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   deliberately non-mutating until the original 263-byte `c_hero` layout,
