@@ -704,7 +704,11 @@ static const Nexus_DMDFTextureSurface *nexus_v1_plan_surface(
      * through either static material route. */
     if (command->animated_texture_declared &&
         command->animated_texture_structure2_image_valid &&
-        engine->animated_floor_material_route_valid) {
+        engine->animated_floor_material_route_valid &&
+        command->animated_texture_structure2_image_id <
+            NEXUS_DMDF_MATERIAL_COUNT &&
+        command->animated_texture_structure2_image_id <
+            (uint16_t)engine->animated_floor_materials.surface_count) {
         surface = &engine->animated_floor_materials.surfaces[
             command->animated_texture_structure2_image_id];
         return surface->valid &&
@@ -715,6 +719,12 @@ static const Nexus_DMDFTextureSurface *nexus_v1_plan_surface(
             command->kind == NEXUS_V1_DGN_RENDER_COMMAND_CEILING)
         ? &engine->floor_materials : &engine->wall_materials;
     if (!bank->valid) {
+        return NULL;
+    }
+    /* Structure1B selectors are opaque until the Saturn selector transform
+     * is captured. Do not let a future, incorrectly admitted route index a
+     * decoded MNS bank past its bounded descriptor-backed surface count. */
+    if (command->material_id >= (uint16_t)bank->surface_count) {
         return NULL;
     }
     surface = &bank->surfaces[command->material_id];

@@ -253,6 +253,15 @@ creature-modeller (t.ex. `SCORPION.MNS`) från den riktiga dataroten. Detta
 öppnar inte modellrendering: VDP1-kommandon, placering och pose är fortfarande
 capture-gated.
 
+DGN-korpusen motbevisar också en direkt Structure1B-selektor-till-MNS-ordinal:
+de 16 europeiska LEV-filerna använder texturerade selektorer i intervallet
+`0x01..0x7D`, medan både `SN_FLOOR.MNS` och `SN_WALL.MNS` har 15 TEXT-deskriptorer.
+Firestaff lämnar därför Structure1B-bindningen stängd tills Saturnens verkliga
+selektortransform och VDP1-materialägarskap har fångats. Materialplaneraren
+avvisar dessutom nu material- och Structure2-index utanför den dekoderade
+bankens bounded surface-count, så en felaktigt antagen bindning kan inte läsa
+utanför källbanken.
+
 DGN Structure2-dekodern följer nu också DMWebs palette-ID-regel: en descriptor
 med `Palette offset = 0` återanvänder den senaste tidigare paletteassociationen
 med samma ID; den får inte falla tillbaka till palette 0. Hashverifierad testning

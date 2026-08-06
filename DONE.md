@@ -52646,3 +52646,10 @@ builders no longer emit hoststrängarna `DUNGEON MASTER NEXUS`, `LOAD GAME`,
 `NEW GAME` eller `LOAD SLOT ##`. Riktig radgeometri och källans slot-identitet
 behålls som receipts; textfälten är tomma tills Saturns TEXT4/TABL/FONT012-
 konsument och placering är capture-bundna.
+- ✅ 2026-08-06 Nexus DGN Structure1B material census and bounds gate:
+  hashverifierade europeiska LEV00–LEV15 visar selektorer `0x01..0x7D`,
+  medan både `SN_FLOOR.MNS` och `SN_WALL.MNS` har 15 TEXT-deskriptorer.
+  Direkt selector→MNS-ordinal är därmed motbevisad och förblir capture-gated;
+  materialplaneraren avvisar nu även framtida material-/Structure2-index utanför
+  den dekoderade bankens bounded surface-count. Retail MNS/material-regression
+  passerar.

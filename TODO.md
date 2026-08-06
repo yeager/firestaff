@@ -11,9 +11,11 @@
 
 - **NEXUS-DGN-MATERIAL-ISO-RECEIPT:** The extracted European retail layout now
   authenticates `SN_FLOOR.MNS` and `SN_WALL.MNS` from the co-located Track 1
-  ISO through the same fallback used by the loader. Continue binding the
-  decoded descriptor records to Structure1B/VDP1 material ownership; palette,
-  transform and drawing evidence remain capture-gated.
+  ISO through the same fallback used by the loader. The 16-level selector
+  census reaches `0x7D`, while each MNS bank has only 15 TEXT descriptors;
+  direct selector-to-descriptor ordinal binding is therefore disproven.
+  Recover the Saturn selector transform and VDP1 ownership from executable or
+  runtime capture; palette, transform and drawing evidence remain gated.
 
 - **NEXUS-SAL-MAP-CORPUS-RECEIPT:** The 16 real European SAL/MAP pairs now
   pass the retail byte-zero MAP parser (154 bounded eight-byte rows, `FF FF`
