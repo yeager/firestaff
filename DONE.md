@@ -57164,6 +57164,20 @@ alcove runtime and archive-media tests passed (4/4).
   authentic UTILE program, menu bytes and C09 palette, then confirms that a
   Utility click is fail-closed and preserves the SWITCHTW raster.
 
+# 2026-08-06 CSB FSSB save-envelope production isolation
+
+- ✅ Removed the Firestaff-only FSSB export/import wrapper and its Utility
+  transaction from `firestaff_m10`. Both reconstruct a CSBGAME-shaped party
+  buffer and are therefore contract tests, not an original CSBGAME or CSBWin
+  save route.
+- ✅ The focused tests compile those helpers explicitly. Production save/resume
+  remains owned by the authenticated Atari/Amiga/CSBWin readers; no
+  source-labelled path string can authorize a synthetic runtime handoff.
+- ✅ Added `csb_fssb_production_boundary`, which guards both CMake exclusions
+  and the explicit test-only source list against future broad-glob regressions.
+- ✅ `verify.yml` runs that boundary as a required cross-platform check rather
+  than leaving it in the best-effort full CTest catalogue.
+
 # 2026-08-06 Nexus UI-event dispatch boundary
 
 - ✅ Retail ISO/extracted Nexus now rejects host UI events before the Saturn

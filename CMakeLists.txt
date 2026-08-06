@@ -4298,6 +4298,14 @@ endif()
 
 # Exclude test_* files from the library (they have their own main()).
 list(FILTER M10_SOURCES EXCLUDE REGEX "test_.*_pc34_compat\\.c$")
+# FSSB is a Firestaff-only test envelope around a reconstructed party, not
+# an original CSB or CSBWin save format.  Keep its builder/import exercise
+# out of the production archive until an authenticated original corpus owns
+# the complete save transaction.  The focused contract targets name these
+# translation units explicitly below.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_export_import_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_utility_save_transaction_pc34_compat.c")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
@@ -5008,7 +5016,6 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_amiga_graphics_dat.c
     src/csb/csb_v1_utility_flow_pc34.c
     src/csb/csb_v1_utility_import_pc34.c
-    src/csb/csb_v1_utility_save_transaction_pc34_compat.c
     src/csb/csb_v1_atari_save_decode_pc34_compat.c
     src/csb/csb_v1_atari_msa.c
     src/dm1/dm1_v1_graphics_loader_pc34_compat.c
@@ -37372,6 +37379,8 @@ add_executable(test_nexus_v1_dgn_material_raster
 
     add_executable(test_csb_v1_utility_save_transaction_pc34_compat
         tests/test_csb_v1_utility_save_transaction_pc34_compat.c
+        src/csb/csb_v1_utility_save_transaction_pc34_compat.c
+        src/csb/csb_v1_save_export_import_pc34_compat.c
     )
     target_include_directories(test_csb_v1_utility_save_transaction_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
@@ -37390,6 +37399,17 @@ add_executable(test_nexus_v1_dgn_material_raster
     set_tests_properties(csb_v1_utility_save_transaction_pc34_compat PROPERTIES
         LABELS "tier2;csb;save;utility;runtime"
     )
+
+    if(Python3_Interpreter_FOUND)
+        add_test(
+            NAME csb_fssb_production_boundary
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_csb_fssb_production_boundary.py
+        )
+        set_tests_properties(csb_fssb_production_boundary PROPERTIES
+            LABELS "tier1;csb;save;production;source-boundary;no-synthetic-data"
+        )
+    endif()
 
     add_executable(test_csb_v1_atari_save_decode_pc34_compat
         tests/test_csb_v1_atari_save_decode_pc34_compat.c

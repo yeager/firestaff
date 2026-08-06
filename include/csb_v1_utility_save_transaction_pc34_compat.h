@@ -5,10 +5,12 @@
  * CSB Utility Disk save-to-runtime transaction.
  *
  * CEDT's Load Saved Game route must not install a partly decoded roster.
- * This boundary accepts only the existing source-labelled FSSB/CSBGAME
- * envelope, decodes it through the production CSBGAME reader into a local
- * candidate, validates the candidate's champion ownership, and publishes it
- * to the live profile as one final operation.
+ * This contract-only boundary accepts a Firestaff FSSB envelope around a
+ * reconstructed CSBGAME-shaped party buffer, decodes it through the
+ * production CSBGAME reader into a local candidate, validates the candidate's
+ * champion ownership, and publishes it to the live profile as one final
+ * operation. It is deliberately not linked into the production archive:
+ * original CSBGAME/CSBWin files use their source-owned resume routes.
  *
  * Sources: ReDMCSB CEDTINC8.C, LOADSAVE.C F0435, CHAMPION.C F0297-F0302;
  * CSBWin SaveGame.cpp LoadGame/SaveGame.
@@ -43,10 +45,11 @@ typedef struct {
     char source_path[64];
 } CSB_V1_UtilitySaveTransactionReceipt;
 
-/* Applies a source-labelled, checksum-valid FSSB envelope to a live CSB
- * profile. No default champions, inventory objects, EXPOOL records, or UI
- * state are created by this API. A rejected envelope leaves `profile` byte
- * unchanged. Returns the imported champion count, or a negative result. */
+/* Contract-only test helper. Applies a checksum-valid Firestaff FSSB envelope
+ * to a live CSB profile. No default champions, inventory objects, EXPOOL
+ * records, or UI state are created by this API. A rejected envelope leaves
+ * `profile` byte unchanged. Returns the imported champion count, or a
+ * negative result. */
 int csb_v1_utility_save_transaction_commit_runtime_pc34_compat(
     CSB_V1_RuntimeProfile *profile,
     const uint8_t *envelope,

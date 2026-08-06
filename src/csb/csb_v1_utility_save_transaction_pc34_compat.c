@@ -5,6 +5,10 @@
 
 #include <string.h>
 
+/* This compatibility transaction is intentionally compiled only by its
+ * focused contract target. ReDMCSB LOADSAVE.C F0435 stages native save bytes,
+ * whereas FSSB is a Firestaff test envelope with no original-media owner. */
+
 static int csb_v1_utility_party_is_publishable(
     const CSB_V1_PartyState *party)
 {
