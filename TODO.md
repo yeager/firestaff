@@ -116,6 +116,12 @@
   as an explicit ReDMCSB regression until a live queue/pickup owner is bound
   to authentic runtime state.
 
+- **DM1-D1L2-D1R2-F0108-WALL-SYNTHETIC-AUDIT:** This wall-composition helper
+  hard-codes ornament ordinals, zones, seeds and probe pixels. It reads no
+  original DM1 data and has no M11/runtime caller; retain it only as an
+  explicit ReDMCSB regression until a source-bound D1L2/D1R2 F0108 consumer
+  is recovered.
+
 - **DM1-F0449-F0450-FLOPPY-PLATFORM-AUDIT:** The F0449/F0450 helper is a
   fail-closed Atari-ST floppy boundary, not a PC34 runtime owner. Keep its
   source evidence test-only until a real platform-specific media consumer is

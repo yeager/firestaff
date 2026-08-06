@@ -1,3 +1,12 @@
+# DM1 D1L2/D1R2 F0108 wall synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the fixed D1L2/D1R2 F0108 wall-composition model from M10. It
+  hard-codes ornament ordinals, zones, seeds and probe pixels, reads no
+  original DM1 data and has no M11/runtime caller; its explicit ReDMCSB
+  regression now compiles the source directly.
+- ✅ Verification: `test_dm1_v1_viewport_d1l2_d1r2_f0108_wall_composition_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 mirror pending-hand/chest-race synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the pending-hand/chest-pickup race model from M10. It fabricates
