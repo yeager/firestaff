@@ -180,6 +180,13 @@ def verify(repo: Path) -> list[str]:
     viewport = viewport_path.read_text(encoding="utf-8")
     if "dm2_v1_block_source_material" not in viewport:
         errors.append("viewport source-material block gate missing")
+    for forbidden in (
+            "dm2_populate_view_squares",
+            "alternate wall sets for visual variety",
+            "s->source_materials_required ? 0u : 15u",
+    ):
+        if forbidden in viewport:
+            errors.append(f"viewport retains synthetic world fallback: {forbidden}")
     for counter in VIEWPORT_FALLBACK_COUNTERS:
         assignments = re.findall(
             rf"\bs->\s*{counter}\s*(?:=|\+=|-=|\+\+|--)", viewport)

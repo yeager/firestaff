@@ -671,6 +671,10 @@
   Its focused material-boundary test still compiles it explicitly; production
   outdoor presentation remains owned by the authenticated
   `ENVIRONMENT`/`DistantEnvironment` GDAT runtime chain.
+  **2026-08-06 viewport update:** removed the uncalled world-model square
+  synthesizer from the production viewport. Its depth-parity wall selection
+  and default full-light value had no original `c_light` or map/GDAT owner;
+  the boundary verifier now rejects their return.
 
 - **DM2-SOUND-TEXT-CONSUMER:** `c_sound.cpp` binds class triples to GDAT sound
   payloads but does not supply a sound-name text producer. The production

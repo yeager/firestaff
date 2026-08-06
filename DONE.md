@@ -2222,6 +2222,15 @@
 
 # DM2 production placeholder inventory (2026-08-06)
 
+- ✅ 2026-08-06 DM2 viewport synthetic-world cleanup: removed the uncalled
+  `dm2_populate_view_squares` fallback from the production renderer. It
+  selected wall parity from viewport depth and published a default full-light
+  value without a source `c_light` result or authenticated map/GDAT handoff.
+  The production-boundary verifier now rejects those exact fallback remnants.
+  Verification: `dm2_production_placeholder_boundary`, focused viewport
+  material-gate test and real PC-DOS GDAT viewport-plan regression pass. No
+  game data was copied, unpacked or modified.
+
 - ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now
   records a completed party/leader-cache clear only after its retained
   source-save projection is observed empty. M11 requires that postcondition
