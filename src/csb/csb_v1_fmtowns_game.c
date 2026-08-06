@@ -22,7 +22,10 @@ enum {
     CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX = 29u,
     CSB_V1_FMTOWNS_SAVE_HEADER_USELESS_OFFSET = 0x12cu,
     CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_OFFSET = 0x12du,
+    CSB_V1_FMTOWNS_SAVE_HEADER_PLATFORM_OFFSET = 0x178u,
+    CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_ID_OFFSET = 0x17au,
     CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_C5 = 5u,
+    CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_CSB_GAME = 13u,
     CSB_V1_FMTOWNS_UTILE_MENU_VIRTUAL_OFFSET = 0x11578u,
     CSB_V1_FMTOWNS_UTILJ_MENU_VIRTUAL_OFFSET = 0x11628u,
     CSB_V1_FMTOWNS_UTILE_MENU_BYTES = 76u,
@@ -43,7 +46,8 @@ static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
 static uint16_t csb_v1_fmtowns_game_read_le16(const unsigned char *bytes);
 
 static int csb_v1_fmtowns_game_startup_mini_header_open(
-    const char *path, CSB_V1_FmtownsGameHandoffReceipt *receipt)
+    const char *path, uint16_t expected_platform,
+    CSB_V1_FmtownsGameHandoffReceipt *receipt)
 {
     unsigned char header[CSB_V1_FMTOWNS_SAVE_HEADER_BYTES];
     uint16_t key;
@@ -62,12 +66,22 @@ static int csb_v1_fmtowns_game_startup_mini_header_open(
             CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX) ||
         header[CSB_V1_FMTOWNS_SAVE_HEADER_USELESS_OFFSET] != 1u ||
         header[CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_OFFSET] !=
-            CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_C5) {
+            CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_C5 ||
+        csb_v1_fmtowns_game_read_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_PLATFORM_OFFSET) !=
+            expected_platform ||
+        csb_v1_fmtowns_game_read_le16(
+            header + CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_ID_OFFSET) !=
+            CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_CSB_GAME) {
         return 0;
     }
     receipt->startup_mini_header_key = key;
     receipt->startup_mini_header_format_id =
         header[CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_OFFSET];
+    receipt->startup_mini_header_platform = csb_v1_fmtowns_game_read_le16(
+        header + CSB_V1_FMTOWNS_SAVE_HEADER_PLATFORM_OFFSET);
+    receipt->startup_mini_header_dungeon_id = csb_v1_fmtowns_game_read_le16(
+        header + CSB_V1_FMTOWNS_SAVE_HEADER_DUNGEON_ID_OFFSET);
     receipt->startup_mini_header_verified = 1;
     return 1;
 }
@@ -242,6 +256,7 @@ int csb_v1_fmtowns_game_handoff_open(
     uint32_t mini_expected_hash;
     uint32_t mini_actual_size;
     uint32_t mini_actual_hash;
+    uint16_t mini_expected_platform;
     unsigned char music_table[CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_BYTES];
     CSB_V1_VariantId expected_variant;
 
@@ -258,6 +273,7 @@ int csb_v1_fmtowns_game_handoff_open(
         mini_name = "CDATA/MINI.DAT";
         mini_expected_size = CSB_V1_FMTOWNS_CDATA_MINI_SIZE;
         mini_expected_hash = CSB_V1_FMTOWNS_CDATA_MINI_FNV1A;
+        mini_expected_platform = 7u;
         expected_variant = CSB_V1_VARIANT_FMTOWNS_EN;
     } else if (language == CSB_FMTOWNS_SWITCH_JAPANESE) {
         name = "CHTWJ.EXP";
@@ -267,6 +283,7 @@ int csb_v1_fmtowns_game_handoff_open(
         mini_name = "CJDATA/MINI.DAT";
         mini_expected_size = CSB_V1_FMTOWNS_CJDATA_MINI_SIZE;
         mini_expected_hash = CSB_V1_FMTOWNS_CJDATA_MINI_FNV1A;
+        mini_expected_platform = 8u;
         expected_variant = CSB_V1_VARIANT_FMTOWNS_JA;
     } else {
         return 0;
@@ -327,7 +344,8 @@ int csb_v1_fmtowns_game_handoff_open(
             mini_actual_hash == mini_expected_hash;
         if (!out_receipt->startup_mini_verified ||
             !csb_v1_fmtowns_game_startup_mini_header_open(
-                out_receipt->startup_mini_path, out_receipt)) {
+                out_receipt->startup_mini_path, mini_expected_platform,
+                out_receipt)) {
             memset(out_receipt, 0, sizeof(*out_receipt));
             return 0;
         }
@@ -339,7 +357,7 @@ int csb_v1_fmtowns_game_handoff_open(
     out_receipt->source_evidence =
         "ReDMCSB COMPILE.H EXEID 60/61 lines 367-375; "
         "STARTUP1.C F0435 line 163; CEDTDATA.C G2297 lines 380-387/F7051 "
-        "lines 211-255; CEDTINC6.C F7061; DEFS.H C5 format; "
+        "lines 211-255; CEDTINC6.C F7061; DEFS.H C5/F7/F8/C13; "
         "ENTRANCE.C F0807 line 85; "
         "MUSIC.C G4099 line 6/F0743 lines 632-646";
     out_receipt->valid = 1;

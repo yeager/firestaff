@@ -77,6 +77,8 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     int startup_mini_header_verified;
     uint16_t startup_mini_header_key;
     uint8_t startup_mini_header_format_id;
+    uint16_t startup_mini_header_platform;
+    uint16_t startup_mini_header_dungeon_id;
     int music_table_verified;
     uint32_t music_table_source_offset;
     uint32_t music_table_size;

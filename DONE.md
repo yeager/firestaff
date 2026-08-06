@@ -56353,6 +56353,12 @@ alcove runtime and archive-media tests passed (4/4).
   an Atari/Amiga save or enabling Resume. Real F31E and F31J handoff tests
   pass.
 
+- ✅ 2026-08-06 CSB FM Towns MINI.DAT header ownership: after F7061 admits
+  the real header, F31E now requires its F7 English platform marker and F31J
+  requires F8 Japanese, with both retaining the C13 CSB-Game dungeon marker.
+  This makes the bootstrap receipt reject a language-crossed or wrong-dungeon
+  header before any later save-body work.
+
 - ✅ 2026-08-06 CSB FM Towns Utility P3 boundary: `UTILE.EXP` and
   `UTILJ.EXP` now must pass their original Phar Lap level-1 P3 envelope in
   addition to the full-file identity gate. The receipt records the real
