@@ -21961,6 +21961,14 @@ int M11_GameView_GetMusicEnabled(const M11_GameViewState* state) {
     return (state && state->dm1MusicOn) ? 1 : 0;
 }
 
+void M11_GameView_PlayFmtownsCdda(M11_GameViewState* state, int track_number) {
+    m11_dm1_dispatch_fmtowns_cdda(state, track_number);
+}
+
+void M11_GameView_StopFmtownsCdda(M11_GameViewState* state) {
+    m11_dm1_stop_fmtowns_cdda(state);
+}
+
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
     int mouthRedraw;
     if (!state || !state->active) {

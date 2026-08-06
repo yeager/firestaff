@@ -36,6 +36,7 @@
 #include "dm1_v1_vblank_timing.h"
 #include "dm1_v1_fmtowns_startup.h"
 #include "dm1_v1_fmtowns_title.h"
+#include "dm1_v1_fmtowns_cd_audio.h"
 #include "entrance_frontend_pc34_compat.h"
 #include "entrance_mouse_routes_pc34_compat.h"
 #include "csb_v1_keyboard_commands_pc34_compat.h"
@@ -2991,9 +2992,12 @@ static int m11_open_requested_launch(M11_GameViewState* gameView,
     if (M11_GameView_OpenSelectedMenuEntry(gameView, menuState)) {
         if (m11_selected_dm1_is_fmtowns(menuState, launchEntry)) {
             int played = 0;
+            int titleTrack = dm1_v1_fmtowns_cd_track_for_event(0);
             /* FM Towns must either consume its authenticated native title
              * plan or fail closed; do not expose the generic PC34 title. */
             (void)M11_Render_SetPaletteLevel(0);
+            if (titleTrack > 0 && gameView->dm1FmtownsStartupReceiptValid)
+                M11_GameView_PlayFmtownsCdda(gameView, titleTrack);
             if (!m11_play_dm1_fmtowns_title_if_available(gameView, &played) ||
                 !played) {
                 M11_GameView_Shutdown(gameView);

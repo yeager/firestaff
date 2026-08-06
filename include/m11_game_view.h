@@ -1899,6 +1899,8 @@ int M11_GameView_SetCsbStartupSwooshSource(M11_GameViewState* state,
                                            uint32_t expectedHash);
 int M11_GameView_ToggleMusic(M11_GameViewState* state);
 int M11_GameView_GetMusicEnabled(const M11_GameViewState* state);
+void M11_GameView_PlayFmtownsCdda(M11_GameViewState* state, int track_number);
+void M11_GameView_StopFmtownsCdda(M11_GameViewState* state);
 M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state);
 M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                                              M12_MenuInput input);
