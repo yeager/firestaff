@@ -248,6 +248,11 @@
   position where `DM2_READ_SKSAVE_DUNGEON` begins for all eight PC-DOS saves;
   inventory, tile record chains and possession indices remain unowned and
   continue to block resume.
+  2026-08-06: the real-corpus regression now also verifies the first and last
+  record in every non-empty original DB pool against the pool offsets and
+  record widths from SKProject `SKWIN/DME.h`. This proves the raw records
+  remain bounded by the real dungeon prefix, but it does not yet restore the
+  source-owned record-link, possession or live-allocation graph.
   2026-08-06: `READ_RECORD_CHECKCODE` now preserves source record bytes for
   `DM2_SUPPRESS_READER(..., false)` and derives the map-container branch from
   `c_record::b_04` bits 1..2, including its possession-index bit. This closes

@@ -1,3 +1,14 @@
+- ✅ 2026-08-06 DM2 real SKSave DB-pool boundary verification: extended the
+  PC-DOS corpus regression to validate the first and final record in every
+  non-empty DB pool of all eight supplied `sksave0..3.dat/.bak` files. The
+  checks use the source-sized sixteen-pool table from SKProject `SKWIN/DME.h`
+  and require every receipt to stay within the authentic raw dungeon prefix;
+  no generated record graph or save data is used. Verification:
+  `test_dm2_v1_save_load_real_data` passes 43/43 with
+  `FIRESTAFF_DM2_SKSAVE_CORPUS` set to the mounted PC-DOS data. Resume remains
+  blocked until the later `DM2_READ_SKSAVE_DUNGEON` record-link and possession
+  graph has a live source-owned runtime owner.
+
 - ✅ 2026-08-06 Nexus runtime screenshot gate classification: changed the
   real-data readiness verifier to report `BLOCKED_CAPTURE` when Firestaff
   reaches Nexus with a valid runtime probe and valid 320x200/presented BMP

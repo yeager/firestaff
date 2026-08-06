@@ -67,6 +67,42 @@ static uint8_t *read_file(const char *path, size_t *out_size)
     return bytes;
 }
 
+static int verify_real_db_pool_receipts(const uint8_t *payload,
+                                        size_t payload_size,
+                                        const DM2_V1_OriginalRawDungeonReceipt *dungeon)
+{
+    int ok = 1;
+    int pool;
+
+    if (!payload || !dungeon || !dungeon->valid) return 0;
+    /* SKProject SKWIN/DME.h fixes these sixteen DB pools and their record
+     * widths.  Verify both ends of every non-empty pool from the supplied
+     * DOS corpus, rather than accepting a generated record graph. */
+    for (pool = 0; pool < DM2_RAW_SKSAVE_DB_POOL_COUNT; ++pool) {
+        DM2_V1_OriginalRawDbRecordReceipt first;
+        DM2_V1_OriginalRawDbRecordReceipt last;
+        const uint16_t count = dungeon->db_record_counts[pool];
+
+        if (count == 0u) continue;
+        memset(&first, 0, sizeof(first));
+        memset(&last, 0, sizeof(last));
+        if (!dm2_v1_original_raw_sksave_db_record_receipt(
+                payload, payload_size, pool, 0, &first) ||
+            !dm2_v1_original_raw_sksave_db_record_receipt(
+                payload, payload_size, pool, (int)count - 1, &last) ||
+            !first.valid || !last.valid || first.db_pool != (uint8_t)pool ||
+            last.db_pool != (uint8_t)pool || first.record_index != 0u ||
+            last.record_index != count - 1u || first.record_size == 0u ||
+            first.record_size != last.record_size ||
+            first.record_offset != dungeon->db_pool_offsets[pool] ||
+            last.record_offset + last.record_size > dungeon->suppress_state_offset ||
+            first.record_hash == 0u || last.record_hash == 0u) {
+            ok = 0;
+        }
+    }
+    return ok;
+}
+
 static void test_real_raw_save(const char *path)
 {
     DM2_V1_OriginalRawDungeonReceipt receipt;
@@ -96,6 +132,9 @@ static void test_real_raw_save(const char *path)
                   state_receipt.dungeon.suppress_state_offset &&
               state_receipt.record_link_bitstream_offset <= byte_count - 42u,
           "real SKSave follows SKProject's fixed SUPPRESS order through the record-link boundary");
+    CHECK(verify_real_db_pool_receipts(bytes + 42u, byte_count - 42u,
+                                       &receipt),
+          "real SKSave DB pools retain source-sized records inside the raw dungeon prefix");
     free(bytes);
 }
 
