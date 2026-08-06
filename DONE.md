@@ -1760,8 +1760,8 @@ were corrected to stop presenting DM1 provisions as Nexus data.
   `GRAPHICS.DAT` audit now accepts both a direct install root and the standard
   PC34 `DATA/GRAPHICS.DAT` layout. The previous test-only path assumption
   reported a false open failure for the real extracted DOS package. Ninja
-  rebuild and the full real 713-record audit pass: 543 bitmap records, 1
-  suspicious bitmap, 34 non-bitmap records, 4 empty records and 131
+  rebuild and the full real 713-record audit pass: 543 bitmap records, 0
+  suspicious bitmap, 35 non-bitmap records, 4 empty records and 131
   zero-sized records.
 
 - ✅ 2026-08-06 DM1 source SND3 binding: M11 now rebinds the original 35-event
@@ -54390,7 +54390,7 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   added `test_m11_dm1_full_graphics_asset_audit_pc34`, which runs the real
   canonical 713-record PC3.4 corpus through the M11 classifier, dimensions
   query and IMG3 decoder, and records a deterministic decoded-pixel digest.
-  The audit passes with 543 bitmap records, 1 suspicious bitmap, 34
+  The audit passes with 543 bitmap records, 0 suspicious bitmap, 35
   non-bitmap records, 4 empty records and 131 zero-sized records. The shared
   late dispatch now consumes the authoritative 33-entry SND3 index list
   (671-675, 677-685, 687-693, 701-712) and rejects those PCM records before
@@ -54403,11 +54403,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   Greatstone index to a temporary directory and compared all 542 published
   `IMG3` PNG records against the local hash-admitted PC3.4 `GRAPHICS.DAT`.
   Every record matched dimensions and decoded indexed pixels exactly (542/542,
-  zero differences). The separate 0695 `FNT1` interface font and 0696 unknown
-  word-data entry were kept out of the raster claim; no reference media was
-  committed and no synthetic asset was introduced. Remaining 0696 consumer
-  proof and packaged macOS capture stay open in
-  `DM1-PC34-FULL-ASSET-VISUAL-AUDIT`.
+  zero differences). The separate 0695 `FNT1` interface font and
+  `C696_GRAPHIC_LAYOUT` word-data entry were kept out of the raster claim; no
+  reference media was committed and no synthetic asset was introduced.
+  ReDMCSB `COORD.C` consumes C696 as layout ranges; packaged macOS capture
+  remains open in `DM1-PC34-FULL-ASSET-VISUAL-AUDIT`.
 # Nexus portrait placement boundary
 
 2026-08-06: Removed the startup champion renderer's guessed 10×10 FACE.BIN
@@ -55829,6 +55829,12 @@ alcove runtime and archive-media tests passed (4/4).
 - ℹ️ The aggregate project build now passes the Nexus archive and stops later
   at an unrelated DM2 FM-Towns animation-stream link gap.
 # 2026-08-06 DM1 creature viewport placeholder isolation
+
+- Classified the authenticated PC34 `C696_GRAPHIC_LAYOUT` as source layout
+  data rather than a suspicious bitmap. ReDMCSB `COORD.C` F0640 consumes its
+  `0xfc0d` range table for layout-696; the M11 bitmap cache now rejects it
+  alongside the other non-raster records. The real 713-record audit requires
+  the resulting 543 bitmap, 35 non-bitmap, 4 empty and 131 zero-sized census.
 
 - Removed `dm1_v1_creature_viewport_pc34_compat.c` from the production M10/M11
   archives. Its fixed 225..297 sprite table was not source-faithful: the

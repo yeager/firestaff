@@ -42,10 +42,11 @@ matches**, with zero dimension or pixel-digest differences. No downloaded
 reference media was added to the repository.
 
 Greatstone's `0696` entry is labelled unknown word data and has no `IMG3`
-reference image. It remains classified as a suspicious bitmap candidate only
-for the bounded audit path; it is not promoted to a visual asset. `0695` is
-consumed by the source-bound 1bpp interface-font loader, not the generic IMG3
-bitmap path. The authoritative SND3 records are rejected before IMG3 decoding.
+reference image. ReDMCSB `COORD.C` F0640 identifies it as
+`C696_GRAPHIC_LAYOUT`, the original `0xFC0D` layout-range table. It is
+classified as non-raster source data and never enters the generic bitmap path.
+`0695` is consumed by the source-bound 1bpp interface-font loader. The
+authoritative SND3 records are also rejected before IMG3 decoding.
 
 Focused title tests pass: 56/56 palette/step invariants, 371 C001 fallback
 checks, the 53-frame real `TITLE` decode probe, and the ReDMCSB cadence gate.

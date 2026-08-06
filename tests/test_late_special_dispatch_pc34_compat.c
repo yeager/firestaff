@@ -22,14 +22,13 @@ static int test_dispatch_marks_known_empty_entries(void) {
            result.shouldSkipBitmapExport;
 }
 
-static int test_dispatch_marks_suspicious_but_exportable_entries(void) {
+static int test_dispatch_marks_layout_data_non_bitmap(void) {
     struct LateSpecialDispatchResult_Compat result;
     if (!F9008_RUNTIME_ClassifyLateGraphicsDatEntry_Compat(696, &result)) {
         return 0;
     }
-    return result.kind == LATE_GRAPHICS_DAT_ENTRY_BITMAP_SUSPICIOUS &&
-           result.shouldUseBitmapPath &&
-           !result.shouldSkipBitmapExport;
+    return result.kind == LATE_GRAPHICS_DAT_ENTRY_SPECIAL_NON_BITMAP &&
+           !result.shouldUseBitmapPath && result.shouldSkipBitmapExport;
 }
 
 static int test_dispatch_leaves_normal_bitmap_entries_on_bitmap_path(void) {
@@ -60,8 +59,8 @@ int main(void) {
         fprintf(stderr, "test_dispatch_marks_known_empty_entries failed\n");
         return 1;
     }
-    if (!test_dispatch_marks_suspicious_but_exportable_entries()) {
-        fprintf(stderr, "test_dispatch_marks_suspicious_but_exportable_entries failed\n");
+    if (!test_dispatch_marks_layout_data_non_bitmap()) {
+        fprintf(stderr, "test_dispatch_marks_layout_data_non_bitmap failed\n");
         return 1;
     }
     if (!test_dispatch_leaves_normal_bitmap_entries_on_bitmap_path()) {

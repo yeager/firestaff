@@ -97,6 +97,14 @@ int main(void)
             M11_AssetLoader_Shutdown(&loader);
             return 1;
         }
+        if (i == 696u &&
+            classification.kind != GRAPHICS_DAT_ENTRY_SPECIAL_NON_BITMAP) {
+            fprintf(stderr,
+                    "C696_GRAPHIC_LAYOUT entered the bitmap classifier kind=%d\n",
+                    (int)classification.kind);
+            M11_AssetLoader_Shutdown(&loader);
+            return 1;
+        }
         if (classification.shouldUseBitmapPath) {
             if (!M11_AssetLoader_QuerySize(&loader, i, &width, &height) ||
                 width == 0u || height == 0u) {
@@ -155,6 +163,13 @@ int main(void)
     }
 
     M11_AssetLoader_Shutdown(&loader);
+    if (bitmap_safe != 543u || bitmap_suspicious != 0u || special != 35u ||
+        empty != 4u || zero_sized != 131u) {
+        fprintf(stderr,
+                "unexpected DM1 PC34 class census bitmap=%u suspicious=%u special=%u empty=%u zero-sized=%u\n",
+                bitmap_safe, bitmap_suspicious, special, empty, zero_sized);
+        return 1;
+    }
     printf("ok: DM1 PC34 audited 713 records; bitmap=%u suspicious=%u special=%u empty=%u zero-sized=%u pixel-digest=%016llx\n",
            bitmap_safe, bitmap_suspicious, special, empty, zero_sized,
            (unsigned long long)pixel_digest);

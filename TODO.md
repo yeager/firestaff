@@ -5313,14 +5313,15 @@ that its exact runtime path is not already source-locked and tested.
 2. **DM1-PC34-FULL-ASSET-VISUAL-AUDIT:** Finish the non-raster source
    consumer audit and capture the packaged macOS app for the 713 hash-verified
    PC 3.4 `GRAPHICS.DAT` records. 2026-08-06: the real corpus audit classifies
-   all 713 records through the M11 loader: 543 bitmap records, 1 suspicious
-   bitmap, 34 non-bitmap records, 4 empty records and 131 zero-sized records.
+   all 713 records through the M11 loader: 543 bitmap records, 0 suspicious
+   bitmap, 35 non-bitmap records, 4 empty records and 131 zero-sized records.
    Greatstone publishes 542 `IMG3` raster references plus the separate 0695
    `FNT1` font; all 542 `IMG3` records now match Firestaff dimensions and
-   decoded indexed pixels exactly. The 34 non-bitmap records include the
-   complete 33-item SND3 PCM bank and are rejected before IMG3, fixing the old
-   junk-icon path. Remaining scope is 0696 unknown-word-data consumer proof
-   and packaged macOS app capture; do not treat 0696 as a guessed bitmap.
+   decoded indexed pixels exactly. The 35 non-bitmap records include the
+   complete 33-item SND3 PCM bank and `C696_GRAPHIC_LAYOUT`, which ReDMCSB
+   `COORD.C` consumes as the original layout-range table. They are rejected
+   before IMG3, fixing the old junk-icon path. Remaining scope is packaged
+   macOS app capture; do not treat source word data as a guessed bitmap.
    2026-08-06 test-path correction: the audit accepts both a direct PC34
    install root and its standard `DATA/GRAPHICS.DAT` layout, and the real
    extracted package now passes the complete 713-record audit without a path
@@ -5329,7 +5330,7 @@ that its exact runtime path is not already source-locked and tested.
    2026-08-06: the legacy `firestaff_graphics_dat_reader` now rejects a
    short LZW decode and undersized output buffer instead of copying a partial
    pixel stream. This closes the remaining partial-surface admission found in
-   the reader; 0696 consumer proof and packaged macOS app capture remain open.
+   the reader; packaged macOS app capture remains open.
 3. **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
    live group, line-of-sight, projectile-impact, teleporter, and spell-tick
    runtime paths using raw C04/C05/C14/C15 ownership and source scheduling.

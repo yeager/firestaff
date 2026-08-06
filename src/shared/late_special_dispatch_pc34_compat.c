@@ -40,8 +40,17 @@ struct LateSpecialDispatchResult_Compat*  outResult    FINAL_SEPARATOR
                 outResult->shouldSkipBitmapExport = 1;
                 return 1;
         }
-        if ((graphicIndex == 696U)
-         || ((graphicIndex >= 701U) && (graphicIndex <= 706U))
+        /* COORD.C F0640 loads C696_GRAPHIC_LAYOUT as the original 0xfc0d
+         * layout-range table, not an IMG3 raster. It owns the C2500/C2900/
+         * C3200 coordinate families; sending its words through the bitmap
+         * cache only turns valid source data into a false image candidate. */
+        if (graphicIndex == 696U) {
+                outResult->kind = LATE_GRAPHICS_DAT_ENTRY_SPECIAL_NON_BITMAP;
+                outResult->shouldUseBitmapPath = 0;
+                outResult->shouldSkipBitmapExport = 1;
+                return 1;
+        }
+        if (((graphicIndex >= 701U) && (graphicIndex <= 706U))
          || (graphicIndex == 708U)
          || ((graphicIndex >= 711U) && (graphicIndex <= 712U))) {
                 outResult->kind = LATE_GRAPHICS_DAT_ENTRY_BITMAP_SUSPICIOUS;
