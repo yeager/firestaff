@@ -2187,6 +2187,18 @@ diagnostic; it must not silently fall back to a generated visual.
   focused enhanced-effects, spell-overlay, and extended-field tests prove
   generated state does not advance or write pixels.
 
+- **DM1-ORIGINAL-REPLACE-021:** Closed 2026-08-06. Replaced the DM1 V2.1
+  viewport renderer's hard-coded EGA-like palette and linear brightness
+  attenuation with the authenticated PC34 six-level VGA table from ReDMCSB
+  `VIDEODRV.C` (`G8149/G8151-G8156`, exposed as
+  `G9010_auc_VgaPaletteAll_Compat`). The indexed framebuffer's high nibble
+  now selects the source brightness row, preserving the independently tuned
+  wall, item and creature colours. Verification: the four direct-renderer
+  CTest targets `dm1_v2_source_route_state_hash_pc34`,
+  `dm1_v2_launch_smoke_pc34`, `dm1_v2_viewport_materials_pc34` and
+  `dm1_v2_per_mode_material_signatures_pc34` pass; no generated palette
+  remains in this route.
+
 - **CSB-ORIGINAL-REPLACE-001:** Replace the remaining V2.2 viewport
   placeholder/legacy rectangle route with the verified Atari-ST/CSBWin
   `GRAPHICS.DAT` TAG0088b2 source material.  Do not promote the source-less

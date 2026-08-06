@@ -1022,9 +1022,8 @@ const char *v21_viewport_source_evidence(void) {
  *
  * Each source byte encodes (level << 4) | palette_index per
  * m11_framebuffer_to_rgba() convention in render_sdl_m11.c:442.
- * We use level 0 (brightest) as the fallback here since the V21
- * viewport state does not carry a per-pixel level field - the full
- * 6-level V2 pipeline would set source_palette_level from
+ * The indexed framebuffer carries the source brightness level in its high
+ * nibble.  Expand it through the exact six-level table selected by
  * G0304_i_DungeonViewPaletteIndex (ReDMCSB PANEL.C:418-428).
  *
  * G9010_auc_VgaPaletteAll_Compat[level][index][RGB] stores VGA DAC
@@ -1037,22 +1036,19 @@ const char *v21_viewport_source_evidence(void) {
 static void v21_palette_expand_indexed_to_rgba(const uint8_t *indexed,
     int w, int h, uint32_t *rgba_out)
 {
-    static const uint8_t fallback_palette[16][3] = {
-        {0, 0, 0},       {0, 0, 170},     {0, 170, 0},     {0, 170, 170},
-        {170, 0, 0},     {170, 0, 170},   {170, 85, 0},    {170, 170, 170},
-        {85, 85, 85},    {85, 85, 255},   {85, 255, 85},   {85, 255, 255},
-        {255, 85, 85},   {255, 85, 255},  {255, 255, 85},  {255, 255, 255}
-    };
     if (!indexed || !rgba_out) return;
     for (int i = 0; i < w * h; i++) {
         uint8_t byte = indexed[i];
         uint8_t level = (byte & M11_FB_LEVEL_MASK) >> M11_FB_LEVEL_SHIFT;
         uint8_t idx   = byte & M11_FB_INDEX_MASK;
         if (level >= DM1_V2_PALETTE_LEVELS) level = 0;
-        uint8_t shade = (uint8_t)(255 - (level * 28));
-        uint8_t rr = (uint8_t)((fallback_palette[idx][0] * shade) / 255);
-        uint8_t gg = (uint8_t)((fallback_palette[idx][1] * shade) / 255);
-        uint8_t bb = (uint8_t)((fallback_palette[idx][2] * shade) / 255);
+        /* ReDMCSB VIDEODRV.C G8149/G8151-G8156 owns six independently
+         * tuned PC34 VGA rows.  Do not approximate darkness with a host
+         * palette or a linear shade: that changes torch-lit wall, item and
+         * creature colours before the V2 presentation reaches the window. */
+        uint8_t rr = G9010_auc_VgaPaletteAll_Compat[level][idx][0];
+        uint8_t gg = G9010_auc_VgaPaletteAll_Compat[level][idx][1];
+        uint8_t bb = G9010_auc_VgaPaletteAll_Compat[level][idx][2];
         rgba_out[i] = 0xFF000000u | (rr << 16) | (gg << 8) | bb;
     }
 }

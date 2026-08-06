@@ -26269,6 +26269,7 @@ endif()
         src/dm1v2/dm1_v2_camera_controller_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/shared/vga_palette_pc34_compat.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
         src/dm1v2/dm1_v2_phase_gate_pc34.c
     )
@@ -26287,6 +26288,7 @@ endif()
         src/dm1v2/dm1_v2_camera_controller_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/shared/vga_palette_pc34_compat.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     target_link_libraries(test_dm1_v2_launch_smoke_pc34 PRIVATE firestaff_m12)
@@ -26834,10 +26836,12 @@ endif()
     add_executable(test_dm1_v2_viewport_materials_pc34
         tests/test_dm1_v2_viewport_materials_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/shared/vga_palette_pc34_compat.c
     )
     add_executable(test_dm1_v2_per_mode_material_signatures_pc34
         tests/test_dm1_v2_per_mode_material_signatures_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/shared/vga_palette_pc34_compat.c
         src/dm1v2/m11_v22_inplace_draw_pc34.c
         src/dm1v2/m11_v22_cell_rects_pc34.c
         src/dm1v2/m11_v22_shape_cache_pc34.c

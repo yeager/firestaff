@@ -242,7 +242,7 @@ static void test_v21_epx_material_signature(const DM1_V2_ViewportState* flat_vp,
 
     rgba_size = (size_t)out_w * (size_t)out_h * sizeof(uint32_t);
     *out_signature = fnv1a_bytes(rgba, rgba_size);
-    CHECK_EQ_U32(*out_signature, 0x3fae57cdu);
+    CHECK_EQ_U32(*out_signature, 0xa5230885u);
 }
 
 static unsigned char cell_center_pixel(const unsigned char* fb,

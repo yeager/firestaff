@@ -1,3 +1,14 @@
+- ✅ 2026-08-06 DM1 V2.1 real PC34 palette binding: replaced the viewport
+  renderer's hard-coded EGA-like palette and linear shade calculation with
+  ReDMCSB `VIDEODRV.C`'s six independently tuned PC34 VGA rows
+  (`G8149/G8151-G8156`, `G9010_auc_VgaPaletteAll_Compat`). The indexed
+  framebuffer brightness nibble now selects the corresponding source row,
+  so wall, item and creature colours are source-owned at every light level.
+  Updated the direct-renderer CMake test targets and pixel signature. Verified
+  with `dm1_v2_source_route_state_hash_pc34`,
+  `dm1_v2_launch_smoke_pc34`, `dm1_v2_viewport_materials_pc34` and
+  `dm1_v2_per_mode_material_signatures_pc34` (4/4 pass).
+
 - ✅ 2026-08-06 DM1 original PC34 save corpus backed roundtrip: both
   operator-supplied `DMSAVE.DAT` files were classified as authentic PC34
   saves, loaded through F0435 against the hash-verified original
