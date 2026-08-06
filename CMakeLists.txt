@@ -33284,6 +33284,21 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_pc34_runtime_audio_tran
         LABELS "csb;audio;runtime;source-lock")
 endif()
 
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_amiga_runtime_audio_transport.c")
+    add_executable(test_csb_v1_amiga_runtime_audio_transport
+        tests/test_csb_v1_amiga_runtime_audio_transport.c)
+    target_include_directories(test_csb_v1_amiga_runtime_audio_transport PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_csb_v1_amiga_runtime_audio_transport PRIVATE firestaff_m11)
+    if(NOT MSVC)
+        target_compile_options(test_csb_v1_amiga_runtime_audio_transport PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME csb_v1_amiga_runtime_audio_transport
+             COMMAND test_csb_v1_amiga_runtime_audio_transport)
+    set_tests_properties(csb_v1_amiga_runtime_audio_transport PROPERTIES
+        LABELS "csb;audio;amiga;runtime;source-lock")
+endif()
+
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_atari_st_sound_audio.c")
     add_executable(test_csb_v1_atari_st_sound_audio
         tests/test_csb_v1_atari_st_sound_audio.c)

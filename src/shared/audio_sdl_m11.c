@@ -949,6 +949,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
         m11_sound_free(&state->csbSwshPcm);
         m11_sound_free(&state->csbAtariStPsg);
         m11_sound_free(&state->csbPc34RuntimePcm);
+        m11_sound_free(&state->csbAmigaRuntimePcm);
     }
 
     state->initialized = 0;
@@ -988,6 +989,12 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
     state->csbPc34RuntimeSoundTimerDivisor = 0;
     state->csbPc34RuntimeSoundHash = 0u;
     state->csbPc34RuntimeSoundQueuedCount = 0;
+    state->csbAmigaRuntimeSoundAccepted = 0;
+    state->csbAmigaRuntimeSoundByteCount = 0;
+    state->csbAmigaRuntimeSoundPeriod = 0;
+    state->csbAmigaRuntimeSoundSourceVolume = 0;
+    state->csbAmigaRuntimeSoundHash = 0u;
+    state->csbAmigaRuntimeSoundQueuedCount = 0;
 }
 
 int M11_Audio_IsAvailable(const M11_AudioState* state) {
@@ -1434,6 +1441,78 @@ int M11_Audio_PlayCsbPc34RuntimePcm(M11_AudioState* state,
                                     unsigned int sourceHash) {
     return M11_Audio_PlayCsbPc34RuntimePcmAtSourceVolume(
         state, source, sourceBytes, timerDivisor, sourceHash, 3);
+}
+
+int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
+    M11_AudioState* state, const unsigned char* source, int sourceBytes,
+    int sourcePeriod, unsigned int sourceHash, int sourceVolume)
+{
+    const unsigned int amigaClockHz = 3579545u;
+    const unsigned int sourcePeriodNumerator = 72800u;
+    unsigned int devicePeriod;
+    unsigned int sourceRate;
+    unsigned int outputCount;
+    unsigned int outputIndex;
+
+    /* ReDMCSB SOUND.C F0709 lines 404-416 assigns the same signed source
+     * bytes to left/right and calculates ioa_Period = 72800 / Period.
+     * Paula consumes one signed byte per two colour-clock ticks. */
+    if (!state || !state->initialized || !source || sourceBytes <= 0 ||
+        sourcePeriod <= 0 || sourcePeriod > (int)sourcePeriodNumerator ||
+        sourceHash == 0u || sourceVolume < 1 || sourceVolume > 3 ||
+        m11_fnv1a_bytes(source, sourceBytes) != sourceHash) {
+        if (state) {
+            m11_sound_clear(&state->csbAmigaRuntimePcm);
+            state->csbAmigaRuntimeSoundAccepted = 0;
+        }
+        return 0;
+    }
+    devicePeriod = sourcePeriodNumerator / (unsigned int)sourcePeriod;
+    if (devicePeriod == 0u) {
+        m11_sound_clear(&state->csbAmigaRuntimePcm);
+        state->csbAmigaRuntimeSoundAccepted = 0;
+        return 0;
+    }
+    sourceRate = amigaClockHz / (2u * devicePeriod);
+    if (sourceRate == 0u) {
+        m11_sound_clear(&state->csbAmigaRuntimePcm);
+        state->csbAmigaRuntimeSoundAccepted = 0;
+        return 0;
+    }
+    outputCount = ((unsigned int)sourceBytes * M11_AUDIO_SAMPLE_RATE +
+                   sourceRate - 1u) / sourceRate;
+    if (outputCount == 0u || outputCount > 65536u ||
+        !m11_sound_reserve(&state->csbAmigaRuntimePcm, (int)outputCount)) {
+        m11_sound_clear(&state->csbAmigaRuntimePcm);
+        state->csbAmigaRuntimeSoundAccepted = 0;
+        return 0;
+    }
+    for (outputIndex = 0u; outputIndex < outputCount; ++outputIndex) {
+        unsigned int sourceIndex =
+            (outputIndex * sourceRate) / M11_AUDIO_SAMPLE_RATE;
+        if (sourceIndex >= (unsigned int)sourceBytes) sourceIndex =
+            (unsigned int)sourceBytes - 1u;
+        state->csbAmigaRuntimePcm.samples[outputIndex] =
+            (float)(int8_t)source[sourceIndex] / 128.0f;
+    }
+    state->csbAmigaRuntimePcm.sampleCount = (int)outputCount;
+    state->csbAmigaRuntimeSoundAccepted = 1;
+    state->csbAmigaRuntimeSoundByteCount = sourceBytes;
+    state->csbAmigaRuntimeSoundPeriod = sourcePeriod;
+    state->csbAmigaRuntimeSoundSourceVolume = sourceVolume;
+    state->csbAmigaRuntimeSoundHash = sourceHash;
+#if M11_HAVE_SDL_AUDIO
+    if (state->backend == M11_AUDIO_BACKEND_SDL3 && state->sdlStream) {
+        int sourceScaledVolume =
+            (state->sfxVolume * sourceVolume + 1) / 3;
+        if (m11_sdl_queue_samples(state, state->csbAmigaRuntimePcm.samples,
+                                  state->csbAmigaRuntimePcm.sampleCount,
+                                  sourceScaledVolume)) {
+            ++state->csbAmigaRuntimeSoundQueuedCount;
+        }
+    }
+#endif
+    return 1;
 }
 
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId) {

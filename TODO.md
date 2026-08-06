@@ -27859,3 +27859,9 @@ sibling `TQJP02End.iso` only after the authenticated JP ISO MD5 matches
 `397039af02d50d15c70b74088eb8a1cb`. The new generic `THERON_CUE` variable
 retains `THERON_US_CUE` compatibility. A fresh JP consumer capture remains
 required before semantic promotion.
+- **CSB-AMIGA-LIVE-AUDIO:** M11 now transports the selected authentic Amiga
+  `GRAPHICS.DAT` sample bytes through the F0709 period calculation
+  (`ioa_Period = 72800 / SOUND_DATA.Period`) rather than falling back to the
+  PC3.4 PIT/marker route. The remaining Amiga work is source-captured
+  audio.device voice allocation, left/right volume arbitration and overlap
+  behavior; do not infer those from PC3.4's distance-volume model.

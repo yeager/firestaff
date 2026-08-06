@@ -8994,6 +8994,7 @@ static void m11_audio_emit_source_sound_with_volume(
     M11_AudioMarker fallbackMarker) {
     const CSB_V1_BootProfile *csbProfile;
     CsbV1Pc34SoundPayload payload;
+    CsbV1AmigaSoundPayload amigaPayload;
     if (!state) {
         return;
     }
@@ -9010,6 +9011,22 @@ static void m11_audio_emit_source_sound_with_volume(
          * source record into a generic marker. */
         csbProfile = (const CSB_V1_BootProfile *)state->csbBootProfile;
         memset(&payload, 0, sizeof(payload));
+        memset(&amigaPayload, 0, sizeof(amigaPayload));
+        if (csbProfile && csbProfile->graphics_path[0] != '\0' &&
+            (csbProfile->variant_id == CSB_V1_VARIANT_AMIGA31_EN ||
+             csbProfile->variant_id == CSB_V1_VARIANT_AMIGA35_EN ||
+             csbProfile->variant_id == CSB_V1_VARIANT_AMIGA35_MULTI) &&
+            csb_v1_audio_runtime_load_amiga_sound_payload(
+                csbProfile->graphics_path, (int16_t)soundIndex,
+                &amigaPayload)) {
+            (void)M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
+                &state->audioState, amigaPayload.bytes,
+                (int)amigaPayload.byteCount, (int)amigaPayload.spec.period,
+                m11_audio_source_fnv1a(amigaPayload.bytes,
+                                        amigaPayload.byteCount), sourceVolume);
+            csb_v1_audio_runtime_amiga_sound_payload_free(&amigaPayload);
+            return;
+        }
         if (csbProfile && csbProfile->graphics_path[0] != '\0' &&
             csb_v1_audio_runtime_load_pc34_sound_payload(
                 csbProfile->graphics_path, (int16_t)soundIndex, &payload)) {
@@ -9020,6 +9037,7 @@ static void m11_audio_emit_source_sound_with_volume(
                 sourceVolume);
         }
         csb_v1_audio_runtime_pc34_sound_payload_free(&payload);
+        csb_v1_audio_runtime_amiga_sound_payload_free(&amigaPayload);
         return;
     }
     (void)M11_Audio_EmitSoundIndex(&state->audioState, soundIndex,

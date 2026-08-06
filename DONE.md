@@ -38,6 +38,15 @@
 
 # CSB Amiga runtime sound-table admission (2026-08-06)
 
+- ✅ M11 now consumes those real Amiga PCM payloads for an Amiga CSB session.
+  It preserves the signed sample bytes and the ReDMCSB `SOUND.C` F0709 period
+  path (`72800 / SOUND_DATA.Period`) before resampling solely for the host
+  device. The PC3.4 PIT/SND3/marker route is not used for an admitted Amiga
+  payload. Verification: dedicated transport regression, the 76-check
+  original-`GRAPHICS.DAT` audio suite with the Amiga 3.3 corpus, and the
+  unchanged PC3.4 transport regression. Voice allocation and stereo-volume
+  capture remain explicitly open; no game data was copied or committed.
+
 - ✅ Added the separate ReDMCSB Amiga `SOUND_DATA` table and a fail-closed
   `GRAPHICS.DAT` payload loader. It preserves the Amiga Graphic 671–712
   routing and hardware period, including the entries where Amiga differs from

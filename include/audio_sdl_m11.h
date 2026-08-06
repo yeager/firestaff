@@ -72,6 +72,7 @@ typedef struct {
     M11_SoundBuffer csbSwshPcm;
     M11_SoundBuffer csbAtariStPsg;
     M11_SoundBuffer csbPc34RuntimePcm;
+    M11_SoundBuffer csbAmigaRuntimePcm;
     int dm1SwshProgramAccepted;
     int dm1SwshRegisterWriteCount;
     int dm1SwshWaitVblankCount;
@@ -91,6 +92,12 @@ typedef struct {
     int csbPc34RuntimeSoundSourceVolume;
     unsigned int csbPc34RuntimeSoundHash;
     int csbPc34RuntimeSoundQueuedCount;
+    int csbAmigaRuntimeSoundAccepted;
+    int csbAmigaRuntimeSoundByteCount;
+    int csbAmigaRuntimeSoundPeriod;
+    int csbAmigaRuntimeSoundSourceVolume;
+    unsigned int csbAmigaRuntimeSoundHash;
+    int csbAmigaRuntimeSoundQueuedCount;
 } M11_AudioState;
 
 int M11_Audio_Init(M11_AudioState* state);
@@ -157,6 +164,16 @@ int M11_Audio_PlayCsbPc34RuntimePcmAtSourceVolume(
     const unsigned char* source,
     int sourceBytes,
     int timerDivisor,
+    unsigned int sourceHash,
+    int sourceVolume);
+/* ReDMCSB SOUND.C F0709 uses Amiga audio.device period 72800 / SOUND_DATA
+ * period. The host preserves signed source bytes and that cadence, with no
+ * PC PIT, SND3, marker, or procedural substitute. */
+int M11_Audio_PlayCsbAmigaRuntimePcmAtSourceVolume(
+    M11_AudioState* state,
+    const unsigned char* source,
+    int sourceBytes,
+    int sourcePeriod,
     unsigned int sourceHash,
     int sourceVolume);
 int M11_Audio_RequestSourceMusicTrack(M11_AudioState* state, int musicTrackId);
