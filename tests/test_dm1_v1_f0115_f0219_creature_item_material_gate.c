@@ -15,14 +15,8 @@ enum { kMaterialCount = 4 };
 static const char* data_path(const char* name, char path[2048])
 {
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char* home;
-    if (root && root[0]) {
-        snprintf(path, 1024, "%s/%s", root, name);
-        return path;
-    }
-    home = getenv("HOME");
-    if (!home || !home[0]) return 0;
-    snprintf(path, 1024, "%s/.firestaff/data/dm1/%s", home, name);
+    if (!root || !root[0]) return 0;
+    snprintf(path, 1024, "%s/%s", root, name);
     return path;
 }
 
