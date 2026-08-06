@@ -3037,6 +3037,11 @@ int csb_v1_runtime_trigger_front_wall_ornament_click_from_boot_profile_pc34(
     void *boot_profile,
     unsigned short leader_hand_thing,
     unsigned short *out_leader_hand_thing);
+/* Compatibility boundary for the historic compact CSBGAME roster fixture.
+ * It deliberately rejects at runtime: ReDMCSB LOADSAVE.C F0435 and CSBWin
+ * SaveGame.cpp require a complete save body before any party/world state can
+ * be adopted.  The compact reader remains available only to its isolated
+ * importer-contract tests until an authentic corpus supplies that body. */
 int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path);

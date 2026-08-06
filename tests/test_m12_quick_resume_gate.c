@@ -1021,23 +1021,8 @@ int main(void) {
     M12_Config_SetLastSavePath(csbSavePath);
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_csb_available(&state);
-    if (!expect(state.quickResumeAvailable == 1,
-                "raw CSBGAME roster save must enable CSB quick Resume")) return 1;
-    if (!expect(strcmp(state.quickResumeGameId, "csb") == 0,
-                "raw CSBGAME quick Resume should identify csb")) return 1;
-    if (!expect(strcmp(state.quickResumeSavePath, csbSavePath) == 0,
-                "raw CSBGAME quick Resume should retain save path")) return 1;
-    state.selectedIndex = -1;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    if (!expect(state.launchRequested == 1,
-                "raw CSBGAME quick Resume accept should request launch")) return 1;
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 1 &&
-                intent.gameId &&
-                strcmp(intent.gameId, "csb") == 0,
-                "raw CSBGAME quick Resume launch intent should identify CSB")) return 1;
-    if (!expect(intent.savePath && strcmp(intent.savePath, csbSavePath) == 0,
-                "raw CSBGAME quick Resume launch intent must carry exact save path")) return 1;
+    if (!expect(state.quickResumeAvailable == 0,
+                "compact CSBGAME roster must not enable CSB quick Resume")) return 1;
 
     snprintf(originalCsbGameBrowserSavePath, sizeof(originalCsbGameBrowserSavePath),
              "%s/CSBGAME.DAT", tmpTemplate);
@@ -1046,19 +1031,8 @@ int main(void) {
     M12_Config_SetLastSavePath(originalCsbGameBrowserSavePath);
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_csb_available(&state);
-    if (!expect(state.quickResumeAvailable == 1,
-                "CSBGAME.DAT must enable CSB quick Resume by content")) return 1;
-    if (!expect(strcmp(state.quickResumeGameId, "csb") == 0,
-                "CSBGAME.DAT quick Resume should identify csb")) return 1;
-    state.selectedIndex = -1;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 1 &&
-                intent.gameId &&
-                strcmp(intent.gameId, "csb") == 0 &&
-                intent.savePath &&
-                strcmp(intent.savePath, originalCsbGameBrowserSavePath) == 0,
-                "CSBGAME.DAT quick Resume launch intent should carry exact CSB path")) return 1;
+    if (!expect(state.quickResumeAvailable == 0,
+                "compact CSBGAME.DAT must not enable CSB quick Resume")) return 1;
 
     snprintf(originalCsbGameSlotSavePath, sizeof(originalCsbGameSlotSavePath),
              "%s/CSBGAME2.DAT", tmpTemplate);
@@ -1067,16 +1041,8 @@ int main(void) {
     M12_Config_SetLastSavePath(originalCsbGameSlotSavePath);
     M12_StartupMenu_InitWithDataDir(&state, "/tmp/firestaff-test-no-assets", NULL);
     force_csb_available(&state);
-    if (!expect(state.quickResumeAvailable == 1 &&
-                strcmp(state.quickResumeGameId, "csb") == 0 &&
-                strcmp(state.quickResumeSavePath, originalCsbGameSlotSavePath) == 0,
-                "CSBGAME2.DAT must enable CSB quick Resume by content")) return 1;
-    state.selectedIndex = -1;
-    M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 1 && intent.savePath &&
-                strcmp(intent.savePath, originalCsbGameSlotSavePath) == 0,
-                "CSBGAME2.DAT Resume launch intent should carry exact CSB path")) return 1;
+    if (!expect(state.quickResumeAvailable == 0,
+                "compact CSBGAME2.DAT must not enable CSB quick Resume")) return 1;
 
     /* This is intentionally an opt-in real-corpus lane. MINI.DAT has a
      * distinct Atari/Amiga GAMEBLOCK layout and must classify as CSB before
@@ -1203,8 +1169,8 @@ int main(void) {
                 "startup should open save browser for CSB saves")) return 1;
     if (!expect(select_save_entry(&state, "firestaff-csb-browser.sav"),
                 "save browser should list raw CSBGAME CSB save")) return 1;
-    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
-                "save browser should mark CSB save loadable")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 0,
+                "save browser must reject compact CSBGAME roster save")) return 1;
     if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
                        "csb") == 0,
                 "save browser should classify CSB save as csb")) return 1;
@@ -1213,23 +1179,9 @@ int main(void) {
                 strstr(M12_StartupMenu_SaveBrowserFooterText(&state),
                        "EXPORTS PC34") == NULL,
                 "CSB save browser footer should not advertise DM1-only actions")) return 1;
-    if (!expect(strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
-                       "ROSTERA") != NULL &&
-                strstr(state.saveBrowser.entries[state.saveBrowser.selectedIndex].champions,
-                       "ROSTERB") != NULL,
-                "save browser should expose CSB champion names")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    if (!expect(state.launchRequested == 1,
-                "save browser accept should request CSB launch")) return 1;
-    if (!expect(state.quickResumeLaunchRequested == 1,
-                "save browser accept should route selected CSB save as savePath")) return 1;
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 1 &&
-                intent.gameId &&
-                strcmp(intent.gameId, "csb") == 0,
-                "save browser CSB launch intent should identify CSB")) return 1;
-    if (!expect(intent.savePath && strcmp(intent.savePath, csbBrowserSavePath) == 0,
-                "save browser CSB launch intent should carry selected save path")) return 1;
+    if (!expect(state.launchRequested == 0,
+                "save browser must not launch compact CSBGAME roster save")) return 1;
 
     snprintf(csbWinBrowserSavePath, sizeof(csbWinBrowserSavePath),
              "%s/firestaff-csb-csbwin-browser.sav", tmpTemplate);
@@ -1310,20 +1262,14 @@ int main(void) {
                 "startup should open save browser for original CSBGAME name")) return 1;
     if (!expect(select_save_entry(&state, "CSBGAME.DAT"),
                 "save browser should list CSBGAME.DAT")) return 1;
-    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 1,
-                "save browser should mark CSBGAME.DAT loadable")) return 1;
+    if (!expect(state.saveBrowser.entries[state.saveBrowser.selectedIndex].valid == 0,
+                "save browser must reject compact CSBGAME.DAT")) return 1;
     if (!expect(strcmp(state.saveBrowser.entries[state.saveBrowser.selectedIndex].gameId,
                        "csb") == 0,
                 "save browser should classify CSBGAME.DAT as csb")) return 1;
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
-    intent = M12_StartupMenu_GetLaunchIntent(&state);
-    if (!expect(intent.valid == 1 &&
-                intent.gameId &&
-                strcmp(intent.gameId, "csb") == 0,
-                "save browser CSBGAME.DAT launch intent should identify CSB")) return 1;
-    if (!expect(intent.savePath &&
-                strcmp(intent.savePath, originalCsbGameBrowserSavePath) == 0,
-                "save browser CSBGAME.DAT launch intent should carry exact path")) return 1;
+    if (!expect(state.launchRequested == 0,
+                "save browser must not launch compact CSBGAME.DAT")) return 1;
 
     snprintf(originalDmSaveBrowserSavePath,
              sizeof(originalDmSaveBrowserSavePath),

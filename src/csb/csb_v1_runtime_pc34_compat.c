@@ -1974,58 +1974,21 @@ int csb_v1_runtime_import_csbgame_roster_from_path(
     CSB_V1_RuntimeProfile *profile,
     const char *path)
 {
-    CSB_V1_PartyState party;
-    int imported;
-    int pose_x;
-    int pose_y;
-    int pose_z;
-    int pose_dir;
-    int pose_level;
-
-    if (!profile || !path) return CSB_SAVE_IMPORT_ERR_NULL;
-
-    pose_x = profile->party_x;
-    pose_y = profile->party_y;
-    pose_z = profile->party_z;
-    pose_dir = profile->party_dir & 3;
-    pose_level = profile->current_level;
-
-    memset(&party, 0, sizeof(party));
-    imported = csb_v1_import_csb_save_file(&party, path);
-    if (imported <= 0) {
-        return imported;
-    }
-
-    /* ReDMCSB LOADSAVE.C F0435 restores a full running game, while
-     * CHARACTER.C ReadingChampion()/CEDTINC8.C import only the roster
-     * payload from CSBGAME.DAT.  Until the CSBGAME dungeon/global-data
-     * body is source-locked, keep the already booted runtime pose and
-     * promote only the champion roster into live CSB state. */
-    party.PartyMapX = pose_x;
-    party.PartyMapY = pose_y;
-    party.PartyDirection = (uint8_t)pose_dir;
-    party.MagicCasterIndex = party.LeaderIndex;
-
-    if (csb_v1_runtime_set_party_state(profile, &party) != 0) {
-        return -1;
-    }
-
-    profile->party_x = pose_x;
-    profile->party_y = pose_y;
-    profile->party_z = pose_z;
-    profile->party_dir = pose_dir;
-    profile->current_level = pose_level;
-    csb_v1_dungeon_set_current_level(profile->current_level);
-    /* The raw CSBGAME roster body does not carry MAP.C. ReDMCSB
-     * LOADSAVE.C F0435 retains the already loaded dungeon/current map, so
-     * champion count must not invent a difficulty multiplier here. */
-    csb_v1_runtime_sync_map_difficulty(profile);
-    profile->party_state.PartyMapX = pose_x;
-    profile->party_state.PartyMapY = pose_y;
-    profile->party_state.PartyDirection = (uint8_t)pose_dir;
-    profile->party_state.MagicCasterIndex = profile->magic_caster_index;
-    profile->timeline_queue.gameTick = profile->game_time;
-    return CSB_V1_LOAD_OK;
+    /* ReDMCSB LOADSAVE.C F0435 restores GAMEBLOCK1/2 plus the dungeon,
+     * timers and global state as one transaction.  The historic compact
+     * "CSBGAME" roster reader has none of those source-owned sections; it
+     * was a synthetic test shape, not a resumable CSB save.  In particular,
+     * retaining the already booted pose while replacing champions is not a
+     * LOADSAVE operation and can manufacture a party/world pairing no
+     * original executable could produce.
+     *
+     * CSBWin SaveGame.cpp follows the same whole-save rule: the verified
+     * 512-byte GAMEBLOCK body is handled above by
+     * csb_v1_runtime_apply_csbwin_resume_file().  Do not promote a compact
+     * header until an authentic corpus proves its complete body decoder. */
+    (void)profile;
+    (void)path;
+    return CSB_SAVE_IMPORT_ERR_VERSION;
 }
 
 int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
@@ -2059,16 +2022,6 @@ int csb_v1_runtime_load_game_from_path(CSB_V1_RuntimeProfile *profile,
 
     result = csb_v1_load_game(path, &image, (int)sizeof(image), &header);
     if (result != CSB_V1_LOAD_OK) {
-        int import_result;
-
-        /* CSBWin SaveGame.cpp/Chaos.cpp first validates GAMEBLOCK1, then
-         * reads GAMEBLOCK2, ITEM16, CHARDESC, TIMER, and timer queue. Keep
-         * this runtime entry point aligned with M11 startup/F9 so callers do
-         * not have to special-case verified CSBWin saves outside runtime. */
-        import_result =
-            csb_v1_runtime_import_csbgame_roster_from_path(profile, path);
-        if (import_result == CSB_V1_LOAD_OK) return CSB_V1_LOAD_OK;
-
         /* SaveGame.cpp restores CSBGAMEx.BAK when its selected original
          * media slot cannot be opened.  Restrict this recovery path to the
          * original slot names so Firestaff paths never gain an invented
@@ -2093,7 +2046,6 @@ int csb_v1_runtime_can_load_resume_path(const char *path)
     enum { MAX_CSBWIN_RESUME_BYTES = 4 * 1024 * 1024 };
     CSB_V1_SaveHeader header;
     CSB_V1_CSBWin512BodyReport report;
-    CSB_V1_PartyState party;
     FILE *fp;
     long file_size_long;
     size_t file_size;
@@ -2141,7 +2093,6 @@ int csb_v1_runtime_can_load_resume_path(const char *path)
         fclose(fp);
     }
 
-    memset(&party, 0, sizeof(party));
     if (csb_v1_runtime_is_original_atari_save_file(path)) {
         return 1;
     }
@@ -2153,7 +2104,11 @@ int csb_v1_runtime_can_load_resume_path(const char *path)
             return 1;
         }
     }
-    return csb_v1_import_csb_save_file(&party, path) > 0;
+    /* The compact CSBGAME roster shape is deliberately not a Resume
+     * candidate.  It lacks ReDMCSB LOADSAVE.C F0435's complete state and
+     * must remain an importer-contract fixture until a real corpus proves
+     * an end-to-end body handoff. */
+    return 0;
 }
 
 int csb_v1_runtime_import_dm1_party_path(CSB_V1_RuntimeProfile *profile,

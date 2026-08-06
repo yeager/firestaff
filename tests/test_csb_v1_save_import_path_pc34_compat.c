@@ -269,6 +269,8 @@ int main(void) {
         long blen;
         const char* path = "firestaff-csb-runtime-import.csb";
         FILE* f;
+        int initial_champion_count;
+        int initial_dungeon_level;
 
         csb_v1_character_init_default(&src);
         make_champion(&src.Champions[0], "RUNEA", 70, 0);
@@ -291,24 +293,24 @@ int main(void) {
         runtime.current_level = 4;
         csb_v1_dungeon_set_current_level(1);
         runtime.game_time = 1234;
+        initial_champion_count = runtime.champion_count;
+        initial_dungeon_level = csb_v1_dungeon_get_current_level();
         CHECK(csb_v1_runtime_import_csbgame_roster_from_path(&runtime, path)
-                  == CSB_V1_LOAD_OK,
-              "runtime imports raw CSBGAME roster file");
-        CHECK(csb_v1_runtime_can_load_resume_path(path),
-              "runtime resume validator accepts raw CSBGAME roster file");
-        CHECK(runtime.champion_count == 3,
-              "runtime CSBGAME import sets champion count");
-        CHECK(strncmp(runtime.party_state.Champions[2].Name, "RUNEC", 5) == 0,
-              "runtime CSBGAME import maps champion names");
+                  == CSB_SAVE_IMPORT_ERR_VERSION,
+              "runtime rejects compact CSBGAME roster without full save body");
+        CHECK(!csb_v1_runtime_can_load_resume_path(path),
+              "runtime resume validator rejects compact CSBGAME roster file");
+        CHECK(runtime.champion_count == initial_champion_count,
+              "runtime rejection leaves champion count unchanged");
         CHECK(runtime.party_x == 11 && runtime.party_y == 7 &&
               runtime.party_dir == 2 && runtime.current_level == 4,
-              "runtime CSBGAME import preserves booted dungeon pose");
-        CHECK(csb_v1_dungeon_get_current_level() == 4,
-              "runtime CSBGAME import keeps dungeon singleton on booted level");
-        CHECK(runtime.party_state.PartyMapX == 11 &&
-              runtime.party_state.PartyMapY == 7 &&
-              runtime.party_state.PartyDirection == 2,
-              "runtime CSBGAME import reanchors party snapshot to runtime pose");
+              "runtime rejection preserves booted dungeon pose");
+        CHECK(csb_v1_dungeon_get_current_level() == initial_dungeon_level,
+              "runtime rejection leaves dungeon singleton unchanged");
+        CHECK(runtime.party_state.PartyMapX != 11 ||
+              runtime.party_state.PartyMapY != 7 ||
+              runtime.party_state.PartyDirection != 2,
+              "runtime rejection does not synthesize a party snapshot");
         CHECK(runtime.difficulty == CSB_V1_DIFFICULTY_UNBOUND,
               "runtime CSBGAME import leaves difficulty unbound without a loaded map");
 
@@ -316,11 +318,12 @@ int main(void) {
         runtime.party_x = 6;
         runtime.party_y = 6;
         runtime.party_dir = 1;
+        initial_champion_count = runtime.champion_count;
         CHECK(csb_v1_runtime_load_game_from_path(&runtime, path)
-                  == CSB_V1_LOAD_OK,
-              "runtime load falls back to raw CSBGAME roster import");
-        CHECK(runtime.champion_count == 3,
-              "runtime load fallback sets champion count");
+                  != CSB_V1_LOAD_OK,
+              "runtime load rejects raw CSBGAME roster fallback");
+        CHECK(runtime.champion_count == initial_champion_count,
+              "runtime load rejection leaves champion count unchanged");
         CHECK(runtime.party_x == 6 && runtime.party_y == 6 &&
               runtime.party_dir == 1,
               "runtime load fallback preserves booted pose");
