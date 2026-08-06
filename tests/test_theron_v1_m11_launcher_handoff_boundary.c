@@ -187,6 +187,10 @@ static void run_track02_startup_overlay_regression(void) {
     expect_true(theron_v1_boot_startup_host_render_plan_fallback_allowed(
                     &receipt),
                 "startup plan fallback remains available before Track 02 graphics execute");
+    receipt.track02_real_media_ready = 1;
+    expect_true(!theron_v1_boot_startup_host_render_plan_fallback_allowed(
+                    &receipt),
+                "authenticated Track 02 media suppresses host startup fallback even before an executor runs");
 
     M11_GameView_Init(&view);
     view.active = 1;

@@ -8,6 +8,13 @@
 - ✅ M11 launcher handoff and direct-launch regressions pass with the real US
   Track 02 asset.
 
+# Theron startup fallback quarantine (2026-08-06)
+
+- ✅ Authenticated Track 02 media now blocks the legacy host border/text
+  fallback before the graphics executor runs.
+- ✅ M11 and boot-contract regressions verify that missing original startup
+  graphics stay capture-gated instead of becoming synthetic UI pixels.
+
 # Theron JP startup roster real-data regression (2026-08-06)
 
 - ✅ The startup-media regression now reads the authenticated local

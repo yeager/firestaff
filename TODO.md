@@ -14,7 +14,10 @@
   disassembly or an original-emulator/app capture before exposing changing
   source frames or claiming animation parity. The former M11 timing receipt
   has been removed; M11 now presents one static source-backed title frame until
-  the original consumer is identified.
+  the original consumer is identified. 2026-08-06 follow-up: authenticated
+  Track 02 media now suppresses the host border/text fallback even when the
+  graphics executor has not yet run; the startup surface remains capture-gated
+  rather than leaking synthetic pixels.
 
 - **NEXUS-PRS3-PIXEL-CAPTURE:** Retail Structure2 descriptors still expose
   bounded DMWeb format evidence, but the runtime no longer decodes their

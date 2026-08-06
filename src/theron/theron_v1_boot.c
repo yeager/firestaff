@@ -5064,7 +5064,8 @@ void theron_v1_boot_startup_ui_caller_receipt_init(
 int theron_v1_boot_startup_host_render_plan_fallback_allowed(
     const Theron_V1_BootStartupHostRenderReceipt *receipt)
 {
-    return receipt && !receipt->track02_startup_graphics_executed;
+    return receipt && !receipt->track02_real_media_ready &&
+           !receipt->track02_startup_graphics_executed;
 }
 
 int theron_v1_boot_startup_ui_caller_from_full_start_receipt(

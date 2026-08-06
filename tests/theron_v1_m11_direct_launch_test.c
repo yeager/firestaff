@@ -428,8 +428,8 @@ int main(void) {
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, FB_W, FB_H);
     render_pixels = count_nonzero_pixels(framebuffer, sizeof(framebuffer));
-    expect_true(render_pixels > 1000,
-                "M11 Theron startup screen produces a nonblank framebuffer");
+    expect_true(render_pixels == 0,
+                "M11 Theron startup screen stays blank until a real graphics route is bound");
     memset(&boot_receipt, 0, sizeof(boot_receipt));
     expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
                     boot_receipt.startupTitleFrame == 0 &&

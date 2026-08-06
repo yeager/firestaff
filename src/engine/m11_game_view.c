@@ -53111,8 +53111,15 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                 command->x, command->y, command->text,
                 &state->theronState.startup_font_tile_receipt, ci);
         }
-    } else if (theron_v1_boot_startup_host_render_plan_fallback_allowed(
+    } else if (!state->theronState.startup_media_ready &&
+               !state->theronState.startup_capture_media_bound &&
+               theron_v1_boot_startup_host_render_plan_fallback_allowed(
                    &ui_caller.host_render)) {
+        /* A host render receipt without an executor does not prove that the
+         * Track 02 graphics executor was absent.  Once authenticated media
+         * is bound, the old M11 border/text path is synthetic and must not
+         * leak over a real startup surface.  Fixture/no-data sessions retain
+         * this compatibility renderer until their source route is available. */
         m11_draw_rect(framebuffer, framebufferWidth, framebufferHeight,
                       plan->border_x, plan->border_y,
                       plan->border_w, plan->border_h,
