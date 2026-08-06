@@ -23,12 +23,18 @@
   The original algorithms remain only in explicit probes; do not restore them
   to production without real Saturn evidence.
 
+- **NEXUS-MAGIC-PRODUCTION-BOUNDARY:** The DM.BIN spell-table study is now
+  excluded from `firestaff_nexus`; production receives only a fail-closed ABI
+  adapter because the Saturn spell dispatcher, caster/effect writes and
+  SLEV/SFX publication remain uncaptured. Keep `nexus_v1_magic.c` test-only
+  until those real consumers are bound.
+
 - **NEXUS-STARTUP-SH2-VDP2-CAPTURE:** The authenticated European `DM.BIN`
   startup/menu routine is now checked as an SH-2 function with exact
   PC-relative references to the retail `MENU.BPK`/`STABG.BIN` literals and a
   retained hardware literal. The same source receipt now binds the adjacent
   `yam\\vdp2.c` marker at `0x38CF4` and six exact address-literal slots at
-  `0x28098`, `0x28640`, `0x28778`, `0x2887C`, `0x289E0` and `0x28E1C`. This
+  `0x28098`, `0x28640`, `0x28778`, `0x2887C`, `0x289E0` and `0x28E1C`.
   The static receipt now also verifies the nine retail SH-2 `MOV.L` loads at
   `0x27FE6`, `0x28002`, `0x285C6`, `0x28710`, `0x287AA`, `0x2880A`,
   `0x2885A`, `0x288B2` and `0x28D76` that target those slots. This still proves

@@ -1,5 +1,14 @@
 # Nexus SDDRVS 68k disassembly receipt (2026-08-06)
 
+# Nexus spell-table production boundary (2026-08-06)
+
+- ✅ Removed the inferred `nexus_v1_magic.c` spell/mana implementation from
+  the production archive. It remains available to explicit source-study
+  tests, while production links a fail-closed adapter returning no spell,
+  no mana preview and no damage.
+- ✅ This prevents authenticated table bytes from being mistaken for a
+  captured Saturn spell dispatcher or SLEV/SFX effect consumer.
+
 # DM1 legacy dungeon bridge ornament fallback removal (2026-08-06)
 
 - ✅ Removed the legacy bridge's fabricated wall/floor ornament ordinal
