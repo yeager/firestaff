@@ -76,6 +76,14 @@
   `test_dm1_v1_chest_scroll_wheel_drop_during_rotation_non_leader_open_pc34_compat`
   passes; the driver object is absent from both M10 and M11 archives.
 
+# DM1 L0151–L0200 local-owner audit isolation (2026-08-06)
+
+- ✅ Removed the F0115/F0116 automatic-local metadata table from M10. The
+  table has no runtime caller or original-data input; it points to the real
+  F0115 material/projectile owners without becoming one itself.
+- ✅ Verification: `test_dm1_v1_l0151_l0200_f0115_local_owner_audit` passes;
+  the source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the

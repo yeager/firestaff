@@ -4319,6 +4319,12 @@ list(REMOVE_ITEM M10_SOURCES
 # M10 for the real inventory helper APIs it exercises.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_scroll_wheel_drop_during_rotation_non_leader_open_pc34_compat.c")
+# `dm1_v1_l0151_l0200_f0115_local_owner_audit.c` is a source-label
+# inventory for automatic F0115/F0116 locals. It has no M11/runtime caller or
+# game-data input; the generic inventory target compiles it explicitly, so do
+# not link its metadata table into the broad M10 production archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_l0151_l0200_f0115_local_owner_audit.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
