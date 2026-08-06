@@ -30029,7 +30029,13 @@ static void m11_draw_wall_face(unsigned char* framebuffer,
     if (m11_viewport_cell_is_open(cell)) {
         m11_draw_wall_contents(framebuffer, framebufferWidth, framebufferHeight,
                                rect, cell, depthIndex);
-    } else if (cell->thingCount > 0) {
+    } else if (cell->thingCount > 0 &&
+               g_drawState && g_drawState->showDebugHUD &&
+               !m11_is_dm1_source_kind(g_drawState->sourceKind) &&
+               !m11_source_is_csb(g_drawState)) {
+        /* Diagnostic-only marker for synthetic probe worlds.  ReDMCSB never
+         * paints a host marker on a closed wall because its thing chain is
+         * consumed only by the source F0128/F0115 schedule. */
         m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                       faceX + faceW / 2 - 1, faceY + faceH / 2 - 1,
                       3, 3, M11_COLOR_WHITE);

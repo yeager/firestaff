@@ -51575,3 +51575,10 @@ and `firestaff` build pass.
   `DATA/GRAPHICS.DAT` layout. The D0C F0115 material and final M11 capture
   receipt now run instead of falsely skipping and pass against the extracted
   original corpus.
+- ✅ 2026-08-06 DM1 HoC synthetic wall-marker removal: authenticated DM1 no
+  longer paints the legacy white thing-chain marker on closed wall cells.
+  That marker was host-only diagnostic art and could appear as junk on walls;
+  it remains available only for non-source debug probe worlds. The real PC34
+  object-name, alcove placement, HoC orientation/mirror, inscription
+  invalidation, wall-material and viewport-wall capture tests pass after the
+  change.

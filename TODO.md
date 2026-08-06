@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
+  mirror side/depth, inscription/corridor invalidation and wall-material
+  receipts pass on the current renderer. Remaining work is external Mac/app
+  capture of torches, stairs, doors and the complete viewport; do not reopen
+  the verified source routes without a failing real-data capture.
+
 - **DM1-HOC-ORNAMENT-RENDER-CAPTURE:** The generic DM1 dungeon bridge now
   consumes the real PC34 map ornament counts, seed, square attributes and
   F0169/F0170 random wall/floor ordinal formulas. The real PC34 map-0 receipt
