@@ -210,24 +210,17 @@ int Nexus_V1_BootProfile_ValidateAssets(const Nexus_V1_BootProfile *profile,
             diagCount++;
     }
 
-    /* Check for champion data directory */
-    {
-        char champPath[512];
-        snprintf(champPath, sizeof(champPath), "%s%sCHAMPIONS.DAT", dataDir, sep);
-        FILE *f = fopen(champPath, "rb");
-        if (!f && diagCount < maxDiags) {
-            diags[diagCount].code = NEXUS_V1_DIAG_MISSING_CHAMPION_DATA;
-            snprintf(diags[diagCount].message, sizeof(diags[0].message),
-                     "%s", g_diagStrings[NEXUS_V1_DIAG_MISSING_CHAMPION_DATA]);
-            snprintf(diags[diagCount].detail, sizeof(diags[0].detail),
-                     "Champion data file not found: %s", champPath);
-            snprintf(diags[diagCount].suggestion, sizeof(diags[0].suggestion),
-                     "Verify Nexus CD image extraction includes champion data.");
-            diagCount++;
-        } else if (f) {
-            fclose(f);
-        }
-    }
+    /* The retail Saturn champion/creature resources are carried by the
+     * hash-verified RLOWFIX.BIN RES* archive (PLRD + CRET), not by the old
+     * Firestaff-only CHAMPIONS.DAT name.  Keep the diagnostic enum for API
+     * compatibility, but bind its readiness check to the real source.
+     * Source: DMWeb Nexus resources; nexus_v1_champions.c and
+     * nexus_v1_creatures.c consume RLOWFIX.BIN directly. */
+    (void)nexus_v1_boot_check_asset_hash_or_file(
+        dataDir, "RLOWFIX.BIN",
+        "14c3a7e6fed2dc9e53a727640d4c9348",
+        NEXUS_V1_DIAG_MISSING_CHAMPION_DATA,
+        diags, &diagCount);
 
     return (int)diagCount;
 }

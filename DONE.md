@@ -53147,6 +53147,10 @@ platform package.
   inferred from two caller-populated words. The API now returns failure and
   clears its receipt until those original owners are implemented. The focused
   GDAT compatibility test verifies the rejection.
+- ✅ 2026-08-06 Nexus boot placeholder removal: replaced the obsolete
+  `CHAMPIONS.DAT` validation with the hash-verified European `RLOWFIX.BIN`
+  champion/CRET source consumed by the engine. The real Nexus boot hash scan
+  passes without a false missing-champion diagnostic.
 - ✅ 2026-08-06 DM2 creature-combat synthetic-result gate: the former
   provider-only creature-combat wrapper no longer converts one authenticated
   AIDefinition Defense value into host-calculated damage or a kill. SKProject

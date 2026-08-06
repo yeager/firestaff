@@ -26826,6 +26826,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   removed screen-coordinate adapter only after an epoch/package-bound
   mounted-table handoff and an authenticated Saturn screen-input capture
   exist; parser output alone never enables interaction.
+- 2026-08-06: Nexus boot validation now binds the champion-data diagnostic to
+  the real hash-verified European `RLOWFIX.BIN` RES* archive (PLRD/CRET),
+  replacing the obsolete `CHAMPIONS.DAT` placeholder check. The real-corpus
+  boot hash regression confirms no false missing-champion diagnostic.
 - 🔧 Nexus champion follow-up: PLRD equipment ordinals now bind to the real
   `ITEM.IBS` declaration category/weight lane. Bind the remaining ITEM.IBS
   text/action/combat semantics before exposing item names, attack, defense or

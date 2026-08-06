@@ -720,6 +720,16 @@ int main(void) {
         puts("SKIP: local Nexus LEV00.DGN not present for level hash test");
     }
 
+    /* The real European corpus uses RLOWFIX.BIN for PLRD/CRET champion data;
+     * the obsolete CHAMPIONS.DAT filename must not produce a false diagnostic. */
+    memset(&profile, 0, sizeof(profile));
+    memset(diags, 0, sizeof(diags));
+    check_int(Nexus_V1_BootProfile_Init(&profile, data_root, data_root, 0U) == 0,
+              "Nexus boot profile initializes against the real corpus");
+    (void)Nexus_V1_BootProfile_ValidateAssets(&profile, diags, 4U);
+    check_int(!diag_details_contain(diags, 4U, "CHAMPIONS.DAT"),
+              "real RLOWFIX.BIN champion data does not trigger CHAMPIONS.DAT diagnostic");
+
     if (failures) return 1;
     puts("ok: Nexus boot file resolver finds renamed startup files by hash");
     return 0;
