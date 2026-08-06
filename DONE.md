@@ -40,6 +40,16 @@
 - ✅ Removed the contract-only F0433/F0435/C040 fixture from M10. Its
   generated regression compiles the source directly; it loads no original
   DM1 data and has no M11/runtime caller.
+# CSB Atari ST runtime fail-closed session boundary (2026-08-07)
+
+- ✅ Atari ST's ANIM.C→FTLCODE route has no PC3.4 TITLE.C/C017 runtime
+  session. `m11_csb_live_hud_session_ready` now rejects that absent receipt
+  before any PC34 terminal access, so a failed Atari C232/F0128 presentation
+  remains a blank source rejection rather than dereferencing a null session.
+- ✅ Verification: default `csb_v1_m11_launcher_handoff_boundary` passes
+  with dummy audio; the supplied Atari archive no longer crashes at the
+  PC34-session boundary. Its remaining C232/F0128 delivery failure remains
+  explicitly open in TODO.
 
 # DM1 C70 full G0039 light table (2026-08-07)
 

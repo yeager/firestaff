@@ -3770,6 +3770,14 @@ static int m11_csb_live_hud_session_ready(const M11_GameViewState *state)
     if (!m11_csb_startup_package_identity_current(state)) {
         return 0;
     }
+    /* ANIM.C hands Atari ST control directly to FTLCODE.  That platform has
+     * no PC34 TITLE.C/C017 session, so a failed C232/F0128 presentation must
+     * remain fail-closed instead of dereferencing the absent PC34 receipt.
+     * ReDMCSB ANIM.C main lines 2100-2130; CSBWin Viewport.cpp owns the
+     * alternate Atari runtime page. */
+    if (!state->csbStartupRuntimeAssetSession) {
+        return 0;
+    }
     session = (CSB_V1_StartupRuntimeAssetSession_PC34 *)
         state->csbStartupRuntimeAssetSession;
     /* LOADSAVE.C F0435 restores a live GAMEBLOCK directly. It has no
