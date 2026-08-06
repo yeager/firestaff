@@ -50459,6 +50459,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   passes; these records remain outside host gameplay until their consumer is
   proven.
 
+- ✅ 2026-08-06 Theron later level-bank receipts: added a borrowed-byte receipt
+  for every one of the seven authenticated US and JP Track 02 level banks.
+  Each receipt binds the exact post-`0xF0` compressed span, per-level metadata,
+  shared-prologue hash, and payload FNV-1a without guessing decompression or
+  tile semantics. Real US/JP level-bank tests pass.
+
 - ✅ 2026-08-06 DM2 SKSAVE record container-map fidelity: corrected the
   isolated `READ_RECORD_CHECKCODE` port to preserve unmasked `c_record` bits
   during `DM2_SUPPRESS_READER(..., false)` and to select the source map-

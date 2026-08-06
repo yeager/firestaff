@@ -323,6 +323,10 @@
   retaining explicit environment overrides. Real media is therefore scanned
   automatically when supplied; the graphics decoder and runtime handoff stay
   blocked because the HuC6280 consumer still does not bind the bank semantics.
+  Each of the seven real level banks now also exposes its complete opaque
+  post-prologue compressed span and identity hash through a bounded receipt;
+  the original decompressor and tile/material consumer are still required
+  before any drawing or map semantics can be enabled.
   The independent VRAM-trace diagnostic now maps captured VDC BAT words to
   the actual tile index and VCE palette group, including separate atlas entries
   when one tile is used with multiple groups. This is capture-side parity only;

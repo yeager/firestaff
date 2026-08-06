@@ -32,10 +32,35 @@ typedef struct {
     uint8_t  per_level_meta[8];
 } Theron_LevelDataBlockDesc;
 
+/* Exact later-level byte window from the authenticated user-data image. The
+ * compressed payload is borrowed from the caller's buffer and remains opaque
+ * until the original HuC6280 decompressor is bound. */
+typedef struct {
+    int valid;
+    Theron_Track02Variant variant;
+    unsigned int level;
+    uint32_t block_ud_offset;
+    uint32_t compressed_ud_offset;
+    size_t compressed_bytes;
+    uint32_t compressed_fnv1a;
+    uint32_t shared_prologue_fnv1a;
+    uint8_t per_level_meta[8];
+    const uint8_t *compressed;
+} Theron_LevelDataBlockReceipt;
+
 const Theron_LevelDataBlockDesc *theron_v1_track02_level_data_block(unsigned int level);
 
 const Theron_LevelDataBlockDesc *theron_v1_track02_level_data_block_for_variant(
     Theron_Track02Variant variant, unsigned int level);
+
+/* Reads one complete later-level block from a normalized 2048-byte
+ * user-data image. The span ends at the next authenticated block or at the
+ * end of the supplied image for level seven. No decompression or tile/object
+ * semantics are assigned. */
+int theron_v1_track02_level_data_block_read(
+    const uint8_t *user_data, size_t user_data_size,
+    Theron_Track02Variant variant, unsigned int level,
+    Theron_LevelDataBlockReceipt *out);
 
 #ifdef __cplusplus
 }

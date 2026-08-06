@@ -3,6 +3,7 @@
 #include <stdint.h>
 #include <stdlib.h>
 #include <stdio.h>
+#include <string.h>
 
 /*
  * Re-check the descriptor table against an authentic MODE1/2352 Track 02
@@ -46,6 +47,8 @@ static void verify_real_track02_level_blocks(const char *env_name,
     FILE *file;
     long file_size;
     uint8_t shared[THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE];
+    uint8_t *user_data;
+    size_t user_data_size;
 
     if (!path || !path[0]) {
         puts("SKIP: no standard or FIRESTAFF_THERON_TRACK02_* real-data path");
@@ -58,6 +61,13 @@ static void verify_real_track02_level_blocks(const char *env_name,
     assert(file_size > 0L);
     assert((file_size % 2352L) == 0L);
     assert(fseek(file, 0L, SEEK_SET) == 0);
+    user_data_size = (size_t)(file_size / 2352L) * 2048u;
+    user_data = calloc(1u, user_data_size);
+    assert(user_data != NULL);
+    for (size_t sector = 0u; sector < (size_t)(file_size / 2352L); ++sector) {
+        assert(fseek(file, (long)(sector * 2352u + 16u), SEEK_SET) == 0);
+        assert(fread(user_data + sector * 2048u, 1u, 2048u, file) == 2048u);
+    }
 
     for (size_t i = 0; i < THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE; ++i) {
         assert(read_raw_user_byte(file,
@@ -81,7 +91,20 @@ static void verify_real_track02_level_blocks(const char *env_name,
                                       &byte));
             assert(byte == block->per_level_meta[i]);
         }
+        {
+            Theron_LevelDataBlockReceipt receipt;
+            assert(theron_v1_track02_level_data_block_read(
+                user_data, user_data_size, variant, level, &receipt));
+            assert(receipt.valid && receipt.level == level &&
+                   receipt.compressed_ud_offset == block->ud_offset + 0xF0u &&
+                   receipt.compressed_bytes > 0u &&
+                   receipt.compressed_fnv1a != 0u &&
+                   receipt.shared_prologue_fnv1a != 0u &&
+                   memcmp(receipt.per_level_meta, block->per_level_meta,
+                          sizeof(receipt.per_level_meta)) == 0);
+        }
     }
+    free(user_data);
     fclose(file);
     printf("PASS: authentic %s Track 02 level-block prologues and metadata\n", label);
 }
