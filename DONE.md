@@ -60,6 +60,13 @@
   diagnostic/no-draw evidence; Saturn action, loot and pickup consumers remain
   capture-gated.
 
+# Nexus HUD champion-panel retail identity gate (2026-08-06)
+
+- ✅ Hardened `test_nexus_v1_champion_panel` with the authenticated European
+  DM.BIN MD5 before accepting stat-bar, inventory-slot and equipment-slot
+  geometry. The HUD remains no-draw/input-capture-gated after this source
+  receipt.
+
 # Nexus startup media retail identity gate (2026-08-06)
 
 - ✅ Added exact retail MD5 checks to the startup-media regression for

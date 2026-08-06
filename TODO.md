@@ -809,6 +809,12 @@ level or consumer bindings.
   draws. Exact Saturn menu timing, input dispatch, and VDP1/VDP2 composition
   remain open capture work.
 
+- **NEXUS-HUD-PANEL-CORPUS-IDENTITY:** The champion-panel regression now
+  requires the authenticated European DM.BIN before accepting stat-bar,
+  inventory-slot and equipment-slot geometry. Continue binding those real
+  rectangles to Saturn input/VDP1/VDP2 consumers; geometry alone is not a
+  drawable HUD proof.
+
 - **NEXUS-SPELL-ACTION-CAPTURE:** DM.BIN spell tables and effect constants
   remain available as disassembly evidence, but the standalone host effect
   helper is now test-only. Bind the Saturn spell action, status writes,

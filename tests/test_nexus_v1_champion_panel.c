@@ -4,6 +4,7 @@
 #include <string.h>
 #include "nexus_v1_champion_panel.h"
 #include "nexus_v1_engine.h"
+#include "asset_find_by_hash.h"
 
 int main(void) {
     int fail = 0;
@@ -38,6 +39,12 @@ int main(void) {
         return 77;
     }
     fclose(file);
+    if (!asset_file_matches_md5(path,
+                                "e88d60859f65f08fa622e1992b02280f")) {
+        free(data);
+        fprintf(stderr, "FAIL: DM.BIN is not the authenticated European retail source\n");
+        return 1;
+    }
     if (nexus_v1_champion_panel_parse_dm_bin(
             data, (size_t)size, stat_bars, inv_slots, equip_slots) != 0) {
         free(data);
