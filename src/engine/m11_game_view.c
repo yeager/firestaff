@@ -18781,6 +18781,24 @@ static void m11_theron_boot_host_set_status(
 {
     M11_GameViewState *state = (M11_GameViewState *)userdata;
     m11_set_status(state, scope, status);
+
+    /* The Soul Room draws its actionable prompt from the Theron startup
+     * view-model, not from the generic M11 status strip.  Keep a failed
+     * forcefield admission visible in that surface so Enter is not perceived
+     * as ignored.  The status remains source-owned: this only reports the
+     * capture gate and never admits a dungeon without the proven consumer. */
+    if (state && state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
+        state->theronState.startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM &&
+        scope &&
+        (strcmp(scope, "TRACK02 ADMISSION") == 0 ||
+         strcmp(scope, "TRACK02 ROUTE") == 0)) {
+        snprintf(state->theronState.startup_text_prompt,
+                 sizeof(state->theronState.startup_text_prompt),
+                 "%s",
+                 (status && strstr(status, "CAPTURE") != NULL)
+                     ? "CAPTURE REQUIRED: FORCEFIELD LOCKED"
+                     : "LEVEL ROUTE REQUIRED: FORCEFIELD LOCKED");
+    }
 }
 
 static void m11_theron_boot_host_set_inspect(

@@ -428,6 +428,11 @@ static void run_real_launcher_handoff_if_available(void) {
                         view.theronState.startup_phase ==
                         THERON_STARTUP_PHASE_IN_DUNGEON,
                     "M11 Theron forcefield keeps startup state bounded on admission failure");
+        if (view.theronState.startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM) {
+            expect_true(strcmp(view.theronState.startup_text_prompt,
+                               "CAPTURE REQUIRED: FORCEFIELD LOCKED") == 0,
+                        "M11 Theron Enter exposes the forcefield capture gate in Soul Room");
+        }
     }
     if (view.theronState.startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM) {
         M11_GameInputResult pointer_result = M11_GameView_HandlePointer(
