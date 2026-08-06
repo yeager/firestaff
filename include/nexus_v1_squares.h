@@ -5,11 +5,9 @@
 
 struct Nexus_V1_Champion;  /* forward declaration for altar ritual API */
 
-/* Nexus V1 special square processing — doors, pits, teleporters,
- * stairs, traps. Mirrors DM1 DUNGEON.C / MOVESENS.C sensor processing.
- * Source: DM1 DUNGEON.C square type dispatch, MOVESENS.C F0267/F0268,
- * docs/nexus_squares.md. Nexus SDDRVS.TSK replaces sensor array but
- * square-type effects are unchanged from DM1. */
+/* Nexus V1 special-square API. The explicit registries are capture/runtime
+ * interfaces, not a claim that DGN low bits have DM1 semantics. Nexus event
+ * ownership and dispatch remain Saturn-capture gated. */
 
 /* Square type constants (lower 5 bits of square byte, matches DM1).
  * Source: DM1 DUNGEON.C square type dispatch, MOVESENS.C F0267/F0268,

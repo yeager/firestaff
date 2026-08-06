@@ -52873,3 +52873,9 @@ konsument och placering är capture-bundna.
   encounters, AI/combat behavior, loot and sound remain fail-closed. The world
   spawn loop no longer consumes its budget when a source-unbound type is
   rejected. Focused CTest: 3/3 passed.
+- 2026-08-06 Nexus event-owner quarantine: removed the production path that
+  inferred live door, teleporter, pit, and stairs routes from DGN square
+  values plus Structure1F destination fields. The verified SDDRVS asset is a
+  sound-driver task, while SLEV/SAL event dispatch remains capture-gated;
+  explicit source-bound registries and no-draw behavior remain available for
+  future Saturn evidence.

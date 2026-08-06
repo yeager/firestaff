@@ -309,7 +309,7 @@ static int mechanics_spawn_creatures_from_dgn(Nexus_V1_Engine *engine,
  * Returns 0 on success, -1 on bad arguments. */
 int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
     const Nexus_V1_Level *level;
-    int x, y, i;
+    int i;
     int has_real_data;
 
     if (!engine || level_index < 0 || level_index > 15) return -1;
@@ -360,70 +360,14 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
             }
         }
 
-        /* Register teleport/pit/door/stair targets from real floor and wall
-         * sensors.  Wall sensors resolve to their Structure1A owner cell.
-         * Where the target semantics are not source-locked, the path stays
-         * fail-closed (no synthetic destination). */
-        for (i = 0; i < level->structure1f_entry_count; ++i) {
-            const Nexus_V1_DgnStructure1FEntry *e =
-                &level->structure1f_entries[i];
-            int sx, sy, sq, dx, dy, dl;
-            if (e->family == NEXUS_V1_DGN_STRUCTURE1F_FLOOR_SENSORS) {
-                sx = e->x;
-                sy = e->y;
-            } else if (e->family == NEXUS_V1_DGN_STRUCTURE1F_WALL_SENSORS &&
-                       e->structure1a_relation_valid) {
-                sx = e->structure1a_owner_x;
-                sy = e->structure1a_owner_y;
-            } else {
-                continue;
-            }
-            if (sx < 0 || sx >= level->width || sy < 0 || sy >= level->height)
-                continue;
-            sq = level->squares[sy][sx];
-            dx = e->destination_x;
-            dy = e->destination_y;
-            dl = (e->type_or_control <= 15) ? (int)e->type_or_control : -1;
-
-            switch (sq) {
-            case NEXUS_SQUARE_DOOR:
-                nexus_doors_register(sx, sy);
-                if (e->item_id != 0 &&
-                    e->item_id < nexus_itemdef_count() &&
-                    nexus_itemdef_get(e->item_id) &&
-                    (nexus_itemdef_get(e->item_id)->flags & NEXUS_ITEMF_KEY)) {
-                    nexus_doors_lock(sx, sy, e->item_id);
-                }
-                break;
-            case NEXUS_SQUARE_TELEPORT:
-                nexus_teleporters_register(sx, sy, dx, dy, level_index);
-                break;
-            case NEXUS_SQUARE_TELEPORT2:
-                nexus_teleporters_register(sx, sy, dx, dy,
-                    (dl >= 0) ? dl : level_index);
-                break;
-            case NEXUS_SQUARE_TELEPORT3:
-                nexus_teleporters_register(sx, sy, dx, dy, level_index);
-                break;
-            case NEXUS_SQUARE_CHUTE:
-                if (dl >= 0) {
-                    nexus_pits_register(sx, sy, dx, dy, dl);
-                }
-                break;
-            case NEXUS_SQUARE_STAIRS_DN:
-                nexus_stairs_register(sx, sy,
-                    (dl >= 0) ? dl : level_index + 1, dx, dy,
-                    (int)e->destination_orientation);
-                break;
-            case NEXUS_SQUARE_STAIRS_UP:
-                nexus_stairs_register(sx, sy,
-                    (dl >= 0) ? dl : level_index - 1, dx, dy,
-                    (int)e->destination_orientation);
-                break;
-            default:
-                break;
-            }
-        }
+        /* Structure1F records are retained as raw, source-bound evidence.
+         * Their relation to the Structure1B square byte, destination fields,
+         * and the Saturn event dispatcher is not proven.  In particular,
+         * SDDRVS.TSK is authenticated as a sound-driver task, while the
+         * SLEV/SAL event owner and selector order remain capture-gated.
+         * Do not turn an apparent DGN sensor record into a live door,
+         * teleporter, pit, or stairs route until an original-Saturn trace
+         * proves that ownership and dispatch. */
 
         /* Floor decorations are recorded as candidate altars but remain
          * blocked: the exact altar tag/aspect is not source-locked.
@@ -443,18 +387,8 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
         }
     }
 
-    /* Register doors from the authenticated Structure1B grid. Stairs are
-     * intentionally absent here: their destination belongs to a real
-     * Structure1F sensor/script record, and a same-coordinate adjacent-level
-     * link would be synthetic. */
-    for (y = 0; y < level->height; ++y) {
-        for (x = 0; x < level->width; ++x) {
-            int sq = level->squares[y][x];
-            if (sq == NEXUS_SQUARE_DOOR) {
-                nexus_doors_register(x, y);
-            }
-        }
-    }
+    /* Structure1B square values remain geometry evidence only.  A door-like
+     * value is not enough to establish Saturn door state or passability. */
 
     if (engine->mechanics) {
         engine->mechanics->map_index = level_index;

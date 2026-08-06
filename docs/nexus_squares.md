@@ -11,13 +11,18 @@ squares with different properties.
 
 ## 2. Teleporter Squares
 
+The descriptions below are investigation hypotheses, not runtime contracts.
+The verified corpus proves DGN bytes and Structure1F records, but not that
+their low bits select DM1-like event types or that `SDDRVS.TSK` owns dispatch.
+SDDRVS is currently classified as the Saturn sound-driver task; SLEV/SAL
+event ownership still requires original-Saturn capture.
+
 In DM1, teleporter squares (type 9 and 10) are hardwired in the game loop:
 - Type 9: level teleport (D0-D7 transitions)
 - Type 10: intra-level teleport (same level, different position)
 
-In Nexus, teleporters are scripted via SDDRVS.TSK rather than hardwired.
-This allows designers to place teleporters anywhere without being constrained
-to specific type codes.
+An earlier draft described Nexus teleporters as scripted via SDDRVS.TSK.
+That claim is not source-locked and must not enable runtime routes.
 
 Teleporter rendering in Nexus 3D: nexus_viewport.c draws floor/ceiling for
 open squares (sq != 0). Wall faces drawn where sq == 0. Teleporter overlays
@@ -30,9 +35,9 @@ Nexus uses 3D polygon geometry for doors rather than DM1 sprite overlays.
 DM1: Doors rendered as 2D sprites overlaid on wall squares during viewport
 rendering. Door state (open/closed) toggles the sprite.
 
-Nexus: Door geometry embedded in wall/floor meshes in DGN files.
-Open/close state likely controlled via the SDDRVS.TSK script VM rather
-than a hardwired door type.
+Nexus: Door geometry is evidence for a door-like surface, but the
+open/closed selector and event owner remain unproven.
+Open/close state and its owner are not source-locked.
 
 Door squares in Nexus view: nexus_viewport_render() draws wall faces where
 sq == 0. When a wall square is a door, the 3D geometry switches between
@@ -40,15 +45,15 @@ open/closed door mesh variants based on game state.
 
 ## 4. Trap Squares
 
-Nexus trap behavior is scripted in SDDRVS.TSK (the task/script file).
+Nexus trap ownership and behavior remain unresolved; SDDRVS is not a proven
+trap script file.
 
 DM1 traps are hardwired to specific square types:
 - Type 6: alarm trap (all creatures chase party)
 - Type 7: chute/trapdoor (party falls to next level)
 - Type 11: teleport trap
 
-Nexus traps: declarative rules in script file, allowing any combination
-of trigger condition plus effect without being bound to square type numbers.
+No trap route is enabled from a DGN square value alone.
 
 ## 5. Stairs / Level Transition Squares
 
@@ -56,8 +61,8 @@ Stairs in Nexus are handled via the 3D geometry in DGN files.
 
 DM1 stairs: square types 2 (up) and 3 (down) rendered as distinct sprites.
 
-Nexus stairs: likely a geometry variant in the DGN floor/ceiling mesh for
-stairs squares, plus an SDDRVS.TSK script that handles level transitions.
+Nexus stairs: a possible geometry variant in the DGN mesh; the destination
+and transition dispatch are not source-locked.
 
 ## 6. Special Squares Summary vs DM1
 
@@ -65,12 +70,12 @@ stairs squares, plus an SDDRVS.TSK script that handles level transitions.
 |-----------------|---------------------|--------------------------|
 | Wall (0)        | Blocks movement     | 3D wall geometry         |
 | Floor (1)       | Normal passage      | 3D floor mesh            |
-| Stairs Up (2)   | Go up one level     | 3D stairs mesh + script  |
-| Stairs Down (3) | Go down one level   | 3D stairs mesh + script  |
-| Teleporter (9/10)| Hardwired jump     | Scripted in TSK           |
+| Stairs Up (2)   | Go up one level     | Unresolved; capture-gated |
+| Stairs Down (3) | Go down one level   | Unresolved; capture-gated |
+| Teleporter (9/10)| Hardwired jump     | Unresolved; capture-gated |
 | Door (type 8)   | 2D sprite overlay   | 3D door geometry         |
-| Trap types      | Hardwired effects   | Scripted in TSK          |
-| Other special   | Varies              | Scripted in TSK          |
+| Trap types      | Hardwired effects   | Unresolved; capture-gated |
+| Other special   | Varies              | Unresolved; capture-gated |
 
 ## 7. Implementation Notes from Firestaff
 

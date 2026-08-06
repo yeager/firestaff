@@ -27039,3 +27039,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   but `nexus_v1_cast_spell()` is now side-effect free and returns `-1` until a
   Saturn dispatcher capture binds mana commit, effect/target routing, RNG and
   SLEV/SFX publication. The previous host mana/damage mutation was synthetic.
+- **NEXUS-EVENT-DGN-OWNER-CAPTURE:** Real DGN Structure1F/Structure1B bytes
+  remain retained as source evidence, but the runtime no longer promotes
+  apparent door/teleporter/pit/stairs records into live registries. The
+  verified corpus does not prove that low DGN bits select DM1-like events,
+  nor that `SDDRVS.TSK` dispatches them. Original-Saturn capture must bind
+  event owner, selector order, destination fields, and state transitions.

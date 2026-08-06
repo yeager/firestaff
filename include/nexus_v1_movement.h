@@ -69,7 +69,7 @@
 #define NEXUS_SQUARE_FLOOR      1
 #define NEXUS_SQUARE_STAIRS_DN   2
 #define NEXUS_SQUARE_STAIRS_UP   3
-#define NEXUS_SQUARE_DOOR       8   /* 3D door geometry, scripted via SDDRVS.TSK */
+#define NEXUS_SQUARE_DOOR       8   /* DGN geometry candidate; event owner unproven */
 #define NEXUS_SQUARE_TELEPORT   9
 #define NEXUS_SQUARE_TELEPORT2  10
 #define NEXUS_SQUARE_TELEPORT3  11
