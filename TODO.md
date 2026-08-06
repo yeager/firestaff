@@ -150,6 +150,12 @@
   open because they still need a packaged-window capture at the affected
   real-data poses; do not close them from headless receipts alone.
 
+  2026-08-06 raw-Thing icon guard: DM1 F0115 floor and alcove consumers now
+  resolve the item subtype from the live PC34 Thing record before selecting
+  the GRAPHICS.DAT object aspect. A stale decoded subtype can no longer show
+  an unrelated junk/torch/food icon after pickup, placement or save restore.
+  The packaged Mac capture of the affected HoC poses remains open.
+
   2026-08-06 renderer audit/fix: corrected the PC34 wall-view dispatch from
   the erroneous 15-row host list to ReDMCSB's real 13-row G0205 table. D3L2
   and D3R2 remain owned by their separate F0676/F0677 square passes. The host

@@ -52407,3 +52407,9 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   focused disassembly test passes for both retail ISO variants. This remains
   generic source ownership; no level/object/tile/palette semantics were
   enabled without an executing command and source-LBA join.
+- ✅ 2026-08-06 DM1 F0115 raw-Thing object icon ownership: floor and alcove
+  item rendering now uses `dm1_v1_dungeon_get_object_subtype_pc34()` for the
+  live Thing before selecting the real PC34 GRAPHICS.DAT aspect. Decoded
+  candidate metadata cannot override a changed junk/torch/food record, and
+  mismatched Thing types fail closed. Verified with real PC34 object-name,
+  F0115 floor-material/pickup, and alcove-material tests.

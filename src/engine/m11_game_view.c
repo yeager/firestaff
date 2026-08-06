@@ -31983,12 +31983,30 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
      * sub-cell is visible in square/Vi/arched alcoves. */
     for (ii = 0; ii < cell->floorItemCount; ++ii) {
         DM1_F0115AlcoveItemMaterialPlanPc34 material;
+        int sourceSubtype;
         if (cell->floorItemTypes[ii] < 0 ||
             cell->floorItemCells[ii] != alcoveCellRelativeToParty) {
             continue;
         }
+        /* ReDMCSB F0115 receives the live Thing and F0141/F0156 resolve its
+         * subtype from the loaded PC34 bytes.  The viewport candidate also
+         * carries a decoded mirror for layout, but that mirror may be stale
+         * after a save/placement mutation.  Never let it select a different
+         * junk icon (or torch/food) for a real alcove object. */
+        sourceSubtype = cell->floorItemSubtypes[ii];
+        if (m11_is_dm1_source_kind(state->sourceKind) &&
+            cell->floorItemThings[ii] != THING_NONE &&
+            cell->floorItemThings[ii] != THING_ENDOFLIST) {
+            if (THING_GET_TYPE(cell->floorItemThings[ii]) !=
+                    cell->floorItemTypes[ii] ||
+                !state->world.things ||
+                (sourceSubtype = dm1_v1_dungeon_get_object_subtype_pc34(
+                    state->world.things, cell->floorItemThings[ii])) < 0) {
+                continue;
+            }
+        }
         if (!dm1_v1_f0115_alcove_item_material_plan_pc34(
-                &material, cell->floorItemTypes[ii], cell->floorItemSubtypes[ii],
+                &material, cell->floorItemTypes[ii], sourceSubtype,
                 cell->relForward, cell->relSide, cell->floorItemCells[ii])) {
             continue;
         }
@@ -32001,7 +32019,7 @@ static void m11_draw_dm1_alcove_wall_items(const M11_GameViewState* state,
             M11_VIEWPORT_X + material.clip_x,
             M11_VIEWPORT_Y + material.clip_y,
             material.clip_w, material.clip_h,
-            cell->floorItemTypes[ii], cell->floorItemSubtypes[ii],
+            cell->floorItemTypes[ii], sourceSubtype,
             alcoveCellRelativeToParty, ii, cell->relForward - 1,
             material.source_zone, material.source_zone,
             material.transparent_color, 1, M11_F0115_PRESENTATION_ALCOVE);
@@ -34261,6 +34279,19 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
     int mapX,
     int mapY) {
     int drawn;
+    int sourceSubtype;
+    if (m11_is_dm1_source_kind(state ? state->sourceKind : M11_GAME_SOURCE_BUILTIN_CATALOG) &&
+        thing != THING_NONE && thing != THING_ENDOFLIST) {
+        /* F0115's source Thing is authoritative.  Candidate subtypes are
+         * presentation metadata only and can lag after live C080/F0302
+         * pickup, drop, or save restoration. */
+        if (THING_GET_TYPE(thing) != thingType || !state->world.things ||
+            (sourceSubtype = dm1_v1_dungeon_get_object_subtype_pc34(
+                state->world.things, thing)) < 0) {
+            return 0;
+        }
+        subtype = sourceSubtype;
+    }
     if (state && m11_is_dm1_source_kind(state->sourceKind) &&
         s_m11_dm1_f0115_floor_item_capture_request.owner == state &&
         s_m11_dm1_f0115_floor_item_capture_request.runtimeTick ==
