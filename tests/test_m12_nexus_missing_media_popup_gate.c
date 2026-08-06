@@ -1,4 +1,5 @@
 #include "menu_startup_m12.h"
+#include "card_art_generated_m12.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -115,6 +116,7 @@ static void check_nexus_missing_media_popup(void) {
     CHECK(state.cardArt[gi].hasImageFile == 0);
     CHECK(strcmp(state.cardArt[gi].slotLabel,
                  "SATURN TITLE SOURCE (CAPTURE LOCKED)") == 0);
+    CHECK(M12_GeneratedCardArt_Find("nexus") == NULL);
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
 

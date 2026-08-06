@@ -36028,6 +36028,10 @@ static const M12_GeneratedCardArt g_generatedCardArt[] = {
 
 const M12_GeneratedCardArt* M12_GeneratedCardArt_Find(const char* gameId) {
     if (!gameId) return 0;
+    /* Nexus has no source-proven launcher bitmap.  Its authentic TITLE.CG
+     * atlas remains capture-gated, so never expose the legacy procedural
+     * card through this public lookup. */
+    if (strcmp(gameId, "nexus") == 0) return 0;
     for (unsigned i = 0; i < sizeof(g_generatedCardArt) / sizeof(g_generatedCardArt[0]); ++i) {
         if (strcmp(g_generatedCardArt[i].gameId, gameId) == 0) return &g_generatedCardArt[i];
     }

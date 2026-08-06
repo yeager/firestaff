@@ -13,6 +13,8 @@
 - ✅ Removed the compiled procedural Nexus card from the M12 startup and
   missing-media views. Nexus now reports `SATURN TITLE SOURCE (CAPTURE
   LOCKED)` and stays image-less unless a caller supplies an actual card file.
+- ✅ The public generated-card lookup also rejects `nexus`, so no other M12
+  caller can resurrect that legacy procedural bitmap accidentally.
 - ✅ This keeps authentic `TITLE.CG`/`TITLE.BIN` available as source media
   without pretending their Saturn VDP2 tile-map/CLUT placement is a launcher
   framebuffer. `m12_nexus_missing_media_popup_gate`, the Nexus startup-menu
