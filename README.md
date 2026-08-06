@@ -142,6 +142,10 @@ System Card and BIOS CD-read path, but has not yet produced a game-owned
 and the real Track 02 dungeon handoff therefore remain open. See
 [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md).
 
+The cross-game status and evidence boundary are kept in
+[`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md). Presentation work follows
+the same order for every game: startup, menu, HUD, then viewport.
+
 ## Graphics Modes
 
 | Mode | Resolution | Description |
@@ -267,6 +271,10 @@ font cache with system-font fallback for Cyrillic, Greek, CJK and Hangul.
 
 The [Firestaff Wiki](https://github.com/yeager/firestaff/wiki) has detailed
 documentation for users, developers and preservationists:
+
+The repository's [project status](docs/PROJECT_STATUS.md) is the canonical
+short summary; the wiki expands each game's formats, hardware and reverse-
+engineering evidence without changing the playability claims.
 
 - Per-platform install guides (macOS, Windows, Linux, iOS AltStore, Android sideload)
 - Reverse engineering documentation for all five games (function registries, file formats, data structures)
