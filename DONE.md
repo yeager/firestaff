@@ -14,6 +14,13 @@
 - ✅ Verification: `dm1_v1_mirror_candidate_c040_spell_area_click_while_panel_live_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 D1C wall synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only D1C wall pixel model from M10. It uses
+  caller-provided local buffers and fixed route metadata, has no original DM1
+  data input or M11/runtime caller, and its dedicated regression still
+  compiles it directly.
+
 # DM1 mirror C040/C545 redraw synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free C040/C545 party/chest/candidate fixture from M10.

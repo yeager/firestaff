@@ -4423,6 +4423,12 @@ list(REMOVE_ITEM M10_SOURCES
 # active D1C inscription and wall-material paths bind original data directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_f0107_wall_ornament_pc34_compat.c")
+# `dm1_v1_viewport_d1c_wall_pc34_compat.c` is a contract-only D1C wall
+# pixel model with caller-provided local buffers. It reads no original DM1
+# material and has no M11/runtime caller; the source-bound D1C renderer owns
+# real wall data while this explicit ReDMCSB regression retains the contract.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1c_wall_pc34_compat.c")
 # `dm1_v1_viewport_d1c_f0111_door_pc34_compat.c` is an asset-free F0111
 # geometry/transparency contract with synthetic blits. It has no M11/runtime
 # caller; the independent D1C door receipt is the original-material owner.

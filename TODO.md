@@ -10,6 +10,11 @@
   DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
   coverage until a source-bound command owner is recovered.
 
+- **DM1-D1C-WALL-SYNTHETIC-AUDIT:** This D1C wall pixel model uses
+  caller-provided local buffers and fixed route metadata. It has no original
+  DM1 data input or M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage while the source-bound D1C renderer owns wall material.
+
 - **DM1-MIRROR-C040-C545-REDRAW-SYNTHETIC-AUDIT:** This asset-free C040/C545
   fixture fabricates party, chest and candidate state. It loads no original
   DM1 data and has no M11/runtime caller; retain it only as explicit ReDMCSB
