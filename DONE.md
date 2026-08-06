@@ -1,3 +1,12 @@
+# Nexus SAL provenance real-corpus regression (2026-08-06)
+
+- ✅ `test_nexus_v1_sal_container_provenance` now admits all 16 European
+  `SNDLEV00.SAL` through `SNDLEV15.SAL` files through their exact direct
+  identities and verifies the retail `dsp01.EX` header plus opaque descriptor
+  interval. The test explicitly keeps codec proof and playback disabled.
+- ✅ Existing MAP provenance and audio receipt checks remain unchanged; no
+  selector meaning, SAL codec, CD-DA handoff or SFX playback was inferred.
+
 # Theron startup menu availability boundary (2026-08-06)
 
 - ✅ Soul Room mirrors without an authenticated Track 02 roster record remain

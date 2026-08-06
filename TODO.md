@@ -245,7 +245,9 @@
 
 - **NEXUS-SAL-MAP-CORPUS-RECEIPT:** The 16 real European SAL/MAP pairs now
   pass the retail byte-zero MAP parser (154 bounded eight-byte rows, `FF FF`
-  terminators, all SAL windows in bounds). Continue with the missing Saturn
+  terminators, all SAL windows in bounds). The SAL provenance regression now
+  also rehashes every real `dsp01.EX` header through the direct-identity route
+  while keeping codec and playback flags false. Continue with the missing Saturn
   event→MAP selector trace and SDDRVS playback consumer; do not infer those
   semantics from row order or decoded tone candidates.
 
