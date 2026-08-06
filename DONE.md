@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 Nexus runtime screenshot gate classification: changed the
+  real-data readiness verifier to report `BLOCKED_CAPTURE` when Firestaff
+  reaches Nexus with a valid runtime probe and valid 320x200/presented BMP
+  geometry but the source-faithful Saturn VDP1/VDP2 handoff emits no pixels.
+  It still fails invalid launches or malformed artifacts, and does not turn
+  the black no-draw frame into a screenshot or parity claim. Verification:
+  `nexus_v1_runtime_screenshot_readiness` plus the focused real-data Nexus
+  suite pass (10/10).
+
 - ✅ 2026-08-06 Nexus Saturn capture-media inventory: verified the real corpus
   archive contains a complete merged English cue/ISO with Track 1 and eight
   audio tracks. Mednafen 1.32.1 opens the cue, identifies `T-9111G` /

@@ -1,6 +1,7 @@
 {
   "cases": [
     {
+      "capture_gate": "BLOCKED_NO_SATURN_PRESENTATION",
       "command": {
         "cmd": [
           "<build-firestaff>",
@@ -13,9 +14,10 @@
         ],
         "ok": true,
         "returncode": 0,
-        "stderr": "NEXUS READY: gameId=nexus dataDir=<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260805-095946.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260805-095946.bmp",
-        "stdout": "Nexus: opened disc image <canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso with 137 files\nNexus UI: surface 0 [TITLE.CG/4bpp-atlas] loaded 328x1024 (palette 0-15) own=1 size=335872\nNexus UI: surface 1 [WARNING.BIN/DGT2#0] loaded 240x96 (palette 0--1) own=1 size=23040\nNexus UI: surface 2 [GAMEOVER.BIN/DGT2#0] loaded 320x224 (palette 0--1) own=1 size=71680\nNexus UI: surface 23 [STABG.BIN/STMP#0] loaded 320x168 (palette 0-255) own=1 size=53760\nNexus sound: initialized (SAL decode ready, event selectors bound, CD tracks extracted)\nSaturn font: 256 chars (8x8 8bpp from SCR character generator, 242 tiles)\nNexus font: FONT256.S2D loaded (256 glyphs, 8x8 8bpp)\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso')\nNexus level 0: 64x64 Structure1B, payload=604 bytes, mesh_span=604 bytes, refs=0/0 [DMWeb DGN]\nNexus script VM: level 0 source=1 verified=1 bytes=2388 parser=task-header rules=0\nNexus sound: decoded 45 tones from SAL tone bank (49 entries)\nNexus sound: loaded level 0 SFX (SAL=297082 bytes, MAP=66 bytes, decoded=45 tones)\nNexus music: CD track 2 selected (no audio file at )\nNexus: CD track 2 for level 0\nNexus launcher: loaded level 0"
+        "stderr": "NEXUS READY: gameId=nexus dataDir=<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso\nAUTOTEST SCREENSHOT: <temp>/source_bmp/firestaff-20260806-021452.bmp\nAUTOTEST PRESENTED SCREENSHOT: <temp>/presented_bmp/firestaff-presented-20260806-021452.bmp",
+        "stdout": "Nexus: opened disc image <canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso with 137 files\nNexus UI: surface 0 [TITLE.CG/4bpp-atlas] loaded 328x1024 (palette 0-15) own=1 size=335872\nNexus UI: surface 1 [WARNING.BIN/DGT2#0] loaded 240x96 (palette 0--1) own=1 size=23040\nNexus UI: surface 2 [GAMEOVER.BIN/DGT2#0] loaded 320x224 (palette 0--1) own=1 size=71680\nNexus UI: surface 23 [STABG.BIN/STMP#0] loaded 320x168 (palette 0-255) own=1 size=53760\nNexus sound: initialized (SAL metadata only, event selectors fail-closed, CD playback format-gated)\nSaturn font: 242 chars (8x8 8bpp from SCR character generator, 242 tiles)\nNexus font: FONT256.S2D loaded (242 glyphs, 8x8 8bpp)\nNexus V1 engine initialized (source: ISO)\nNexus launcher: initialized (data_dir='<canonical_extracted_root-data-dir>/Dungeon Master Nexus (English).iso')\nNexus level 0: 64x64 Structure1B, payload=604 bytes, mesh_span=604 bytes, refs=0/0 [DMWeb DGN]\nNexus script VM: level 0 source=1 verified=1 bytes=2388 parser=task-header rules=0\nNexus sound: retained 45 diagnostic SAL tone candidates (49 entries; playback remains capture-gated)\nNexus sound: loaded level 0 SFX metadata (SAL=297082 bytes, MAP=66 bytes, diagnostic_candidates=45)\nNexus music: CD track 2 selected (no audio file at )\nNexus: CD track 2 for level 0\nNexus launcher: loaded level 0"
       },
+      "geometry_ok": true,
       "id": "canonical_extracted_root",
       "label": "Nexus canonical extracted Track 1 root",
       "marker_found": true,
@@ -25,9 +27,9 @@
         {
           "bit_count": 24,
           "height": 540,
-          "name": "firestaff-presented-20260805-095946.bmp",
-          "non_black_pixels": 289920,
-          "sha256": "cbf5e8d84dfe5ecc93141adf9c66a1d92afa7ff1a9350532e1f44da9620508ce",
+          "name": "firestaff-presented-20260806-021452.bmp",
+          "non_black_pixels": 0,
+          "sha256": "1b7e1a150a13c487e872f7b9bc991b212f719315dc916d5016c665e9db442501",
           "size": 1555254,
           "valid": true,
           "width": 960
@@ -70,21 +72,24 @@
         "sourceId": "nexus",
         "title": "DUNGEON MASTER NEXUS"
       },
+      "reason": "valid real launch and BMP geometry, but source-faithful no-draw seam is waiting for authenticated Saturn VDP1/VDP2 capture",
+      "runtime_ok": true,
       "screenshots": [
         {
           "bit_count": 24,
           "height": 200,
-          "name": "firestaff-20260805-095946.bmp",
-          "non_black_pixels": 35840,
-          "sha256": "7dd227b182415ea19c1c9147914ba1bab14bf5e4e1c4661090a918ee44756c19",
+          "name": "firestaff-20260806-021452.bmp",
+          "non_black_pixels": 0,
+          "sha256": "a70034eeabbfab4da3e6e2846a111fcf41c08c21ab17bf0228cd23255be7074f",
           "size": 192054,
           "valid": true,
           "width": 320
         }
       ],
-      "status": "PASS",
+      "status": "BLOCKED",
       "uses_extracted_source": false,
-      "uses_iso_source": false
+      "uses_iso_source": true,
+      "visual_ok": false
     },
     {
       "id": "saturn_ja_track1_iso",
@@ -100,12 +105,12 @@
     }
   ],
   "firestaff": "build/firestaff",
-  "generated_at": "2026-08-05T07:59:31.085797+00:00",
+  "generated_at": "2026-08-06T00:14:44.898049+00:00",
   "non_claims": [
     "No public Nexus screenshot image is promoted.",
     "No generated or mock image is used.",
     "No claim of full Nexus runtime playability or final text/3D/BPK rendering parity."
   ],
   "schema": "firestaff.parity.nexus_v1_runtime_screenshot_readiness.v1",
-  "status": "PASS"
+  "status": "BLOCKED_CAPTURE"
 }

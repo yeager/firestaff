@@ -88,6 +88,10 @@
   THROW; no live inventory/floor mutation occurs from unproven ITEM/action
   semantics.
   Gold-pile pickup is also held behind the same Saturn action/drop gate;
+  2026-08-06: runtime screenshot readiness now reports `BLOCKED_CAPTURE` for
+  a valid real launch with valid black no-draw BMPs, instead of mislabeling
+  the authenticated absence of Saturn VDP1/VDP2 presentation as a runtime
+  failure. This remains a blocker and does not promote a screenshot.
   generic storage remains diagnostic and no retail drop record is fabricated.
   MNS mesh/skeleton/texture decoding now rejects truncated declared joint
   tables and guards TEXT/mesh/MOTN/pixel ranges; keep creature rendering
