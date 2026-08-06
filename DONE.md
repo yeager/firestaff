@@ -53037,6 +53037,14 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   and `sndptr4` pool slot. Firestaff no longer puts a caller value or GDAT raw
   index into `w_00` merely because a loader exists. The real-GDAT test proves
   that the queue remains unbound until that source owner is implemented.
+
+- ✅ Bound the non-decoding part of `c_gdatfile.cpp::DM2_482b_0684` to the
+  real DYN4 RAM selection. A deferred `s_ssound` now receives its exact GDAT
+  raw index and source pool-slot ordinal only when the same raw entry is
+  present in the materialised selection; existing raw indices share a slot,
+  absent material remains unbound, and the source pool-capacity early stop is
+  retained. The real PC-GDAT regression exercises all three outcomes. It does
+  not allocate `sndptr4`, decode PCM, or enable playback.
 # 2026-08-06 Nexus mixed extracted/ISO runtime source
 
 - ✅ `nexus_v1_init()` now retains the hash-verified extracted corpus as the

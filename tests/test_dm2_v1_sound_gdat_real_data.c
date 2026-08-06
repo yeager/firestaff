@@ -91,15 +91,55 @@ static int find_first_sound_entry(const DM2_V1_AssetLoader *loader,
     return 0;
 }
 
+static int find_dyn4_materialized_sound(
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_GdatDyn4MaterializedSelection *selection,
+    uint8_t *out_cat,
+    uint8_t *out_idx,
+    uint8_t *out_field,
+    uint16_t *out_raw_index)
+{
+    DM2_V1_GdatEntryIterator iterator;
+    DM2_V1_GdatEntryQueryReceipt entry;
+    uint16_t i;
+
+    if (!loader || !selection || !selection->valid || !out_cat ||
+        !out_idx || !out_field || !out_raw_index) return 0;
+    memset(&iterator, 0, sizeof(iterator));
+    iterator.category_first = 0x16;
+    iterator.category_last = 0x16;
+    iterator.index_filter = -1;
+    iterator.type_filter = DM2_GDAT_ENTRY_TYPE_SOUND;
+    iterator.field_filter = -1;
+    while (dm2_v1_query_next_gdat_entry(loader, &iterator, &entry)) {
+        if (!entry.loadable_raw || entry.raw_length <= 2u) continue;
+        for (i = 0; i < selection->block_count; ++i) {
+            if (selection->raw_indices[i] == entry.raw_index) {
+                *out_cat = entry.category;
+                *out_idx = entry.index;
+                *out_field = entry.field;
+                *out_raw_index = entry.raw_index;
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
 int main(void)
 {
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;
     DM2_V1_SoundQueueState state;
+    DM2_V1_GdatDyn4MaterializedSelection dyn4_selection;
+    DM2_V1_GdatDyn4MaterializedSelection dyn4_without_sounds;
+    DM2_V1_GdatDyn4SoundState dyn4_sound_state;
+    DM2_V1_Dyn4SoundResolveReceipt dyn4_resolve;
     uint8_t sound_cat = 0;
     uint8_t sound_idx = 0;
     uint8_t sound_field = 0;
+    uint16_t dyn4_raw_index = 0u;
     uint16_t index;
     (void)index;
     int failures = 0;
@@ -110,6 +150,8 @@ int main(void)
     }
 
     memset(&loader, 0, sizeof(loader));
+    memset(&dyn4_selection, 0, sizeof(dyn4_selection));
+    memset(&dyn4_without_sounds, 0, sizeof(dyn4_without_sounds));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0) {
         fputs("FAIL: canonical DM2 GRAPHICS.DAT was not accepted\n", stderr);
         failures = 1;
@@ -129,6 +171,47 @@ int main(void)
 
     /* ── Bind verified GDAT loader ── */
     dm2_v1_sound_bind_gdat_loader(&loader, 1);
+
+    /* c_gdatfile.cpp::DM2_482b_0684 may bind a queue entry only after DYN4
+     * owns its exact raw block. This uses the actual G1 champion selector,
+     * never a caller-supplied raw index or a disk-expanded copy. */
+    dm2_v1_gdat_dyn4_sound_state_init(&dyn4_sound_state);
+    assert(dm2_v1_gdat_dyn4_materialize_selection(
+               &loader, 0x16ffffffu, &dyn4_sound_state,
+               &dyn4_selection) == 1);
+    assert(dm2_v1_gdat_dyn4_materialize_selection(
+               &loader, 0x16ffffffu, NULL,
+               &dyn4_without_sounds) == 1);
+    assert(find_dyn4_materialized_sound(
+               &loader, &dyn4_selection, &sound_cat, &sound_idx,
+               &sound_field, &dyn4_raw_index));
+    dm2_v1_sound_queue_state_init(&state, 8);
+    assert(dm2_v1_sound9(&state, (int8_t)sound_cat, (int8_t)sound_idx,
+                         (int8_t)sound_field, -1, &index) == 1);
+    assert(dm2_v1_sound_resolve_dyn4_samples(
+               &state, &loader, &dyn4_selection, 8u,
+               &dyn4_resolve) == 1);
+    assert(dyn4_resolve.valid && dyn4_resolve.newly_bound_count == 1u);
+    assert(!dyn4_resolve.stopped_pool_full &&
+           state.ssound[0].w_05 == (int16_t)dyn4_raw_index &&
+           state.ssound[0].w_00 == 0 && state.sample_binding_count == 1u);
+    assert(dm2_v1_sound_resolve_dyn4_samples(
+               &state, &loader, &dyn4_selection, 8u,
+               &dyn4_resolve) == 1);
+    assert(dyn4_resolve.newly_bound_count == 0u &&
+           dyn4_resolve.active_sample_count == 1u);
+    dm2_v1_sound_queue_state_init(&state, 8);
+    assert(dm2_v1_sound9(&state, (int8_t)sound_cat, (int8_t)sound_idx,
+                         (int8_t)sound_field, -1, &index) == 1);
+    assert(dm2_v1_sound_resolve_dyn4_samples(
+               &state, &loader, &dyn4_without_sounds, 8u,
+               &dyn4_resolve) == 1);
+    assert(dyn4_resolve.deferred_missing_material_count == 1u &&
+           state.ssound[0].w_05 == -1);
+    assert(dm2_v1_sound_resolve_dyn4_samples(
+               &state, &loader, &dyn4_selection, 0u,
+               &dyn4_resolve) == 1);
+    assert(dyn4_resolve.stopped_pool_full && state.ssound[0].w_05 == -1);
 
     /* The PC corpus owns 29 HMP records: index 00 through 1c inclusive.
      * Keep the final source track admitted; an old 28-entry limit silently
@@ -316,6 +399,8 @@ int main(void)
            (unsigned)sound_cat, (unsigned)sound_idx, (unsigned)sound_field);
 
 done:
+    dm2_v1_gdat_dyn4_materialized_selection_free(&dyn4_without_sounds);
+    dm2_v1_gdat_dyn4_materialized_selection_free(&dyn4_selection);
     dm2_v1_sound_bind_runtime_queue(NULL);
     dm2_v1_sound_bind_gdat_loader(NULL, 0);
     free(graphics);

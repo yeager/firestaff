@@ -82,6 +82,7 @@ typedef struct {
     DM2_V1_SoundSsoundEntry ssound[DM2_V1_SOUND_SSOUND_QUEUE_CAP];
     uint16_t ssound_count;     /* v1d2698 */
     uint16_t ssound_capacity;  /* dm2_dballochandler.v1e0ad6 */
+    uint16_t sample_binding_count; /* v1d269a, set by DM2_482b_0684 */
     DM2_V1_SoundSfx positional[DM2_V1_SOUND_POSITIONAL_CAP]; /* xsndptr5 */
     uint16_t positional_count; /* v1d2694 */
     DM2_V1_SoundSfx immediate[DM2_V1_SOUND_IMMEDIATE_CAP];   /* xsndptr3 */

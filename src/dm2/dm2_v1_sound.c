@@ -1065,6 +1065,108 @@ void dm2_v1_sound_bind_runtime_queue(DM2_V1_SoundQueueState *state)
     g_dm2_sound_runtime_queue = state;
 }
 
+static int dm2_v1_sound_dyn4_has_raw(
+    const DM2_V1_GdatDyn4MaterializedSelection *selection,
+    uint16_t raw_index)
+{
+    uint16_t i;
+
+    if (!selection || !selection->valid || !selection->bytes ||
+        !selection->raw_indices || !selection->block_offsets) {
+        return 0;
+    }
+    for (i = 0; i < selection->block_count; ++i) {
+        uint32_t offset;
+        uint16_t raw_length;
+
+        if (selection->raw_indices[i] != raw_index) continue;
+        offset = selection->block_offsets[i];
+        if (offset > selection->byte_count ||
+            selection->byte_count - offset < 4u) {
+            return 0;
+        }
+        raw_length = (uint16_t)selection->bytes[offset] |
+            (uint16_t)((uint16_t)selection->bytes[offset + 1u] << 8);
+        if ((uint32_t)raw_length > selection->byte_count - offset - 4u)
+            return 0;
+        return 1;
+    }
+    return 0;
+}
+
+static uint16_t dm2_v1_sound_dyn4_sound7(
+    const DM2_V1_SoundQueueState *state,
+    uint16_t raw_index)
+{
+    uint16_t i;
+
+    if (!state) return 0u;
+    for (i = 0; i < state->ssound_count; ++i) {
+        if (state->ssound[i].w_05 == (int16_t)raw_index)
+            return (uint16_t)(i + 1u);
+    }
+    return 0u;
+}
+
+int dm2_v1_sound_resolve_dyn4_samples(
+    DM2_V1_SoundQueueState *state,
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_GdatDyn4MaterializedSelection *selection,
+    uint16_t sample_capacity,
+    DM2_V1_Dyn4SoundResolveReceipt *out_receipt)
+{
+    DM2_V1_Dyn4SoundResolveReceipt receipt;
+    uint16_t i;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!state || !loader || !dm2_v1_asset_loader_verify(loader) ||
+        !selection || !selection->valid ||
+        state->sample_binding_count > sample_capacity) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* SKProject SKULLWIN/c_gdatfile.cpp::DM2_482b_0684 (932-975): each
+     * deferred s_ssound resolves its exact GDAT type-2 entry, then SOUND7
+     * either shares an existing sndptr4 slot or allocates the next one. The
+     * raw entry must already have been admitted by DYN4. */
+    for (i = 0; i < state->ssound_count; ++i) {
+        DM2_V1_SoundSsoundEntry *entry = &state->ssound[i];
+        DM2_V1_GdatSoundEntryReceipt source;
+        uint16_t existing;
+
+        ++receipt.queue_entries_seen;
+        if (entry->w_05 != -1) continue;
+        if (!dm2_v1_gdat_sound_entry_receipt(
+                loader, (uint8_t)entry->b_02, (uint8_t)entry->b_03,
+                (uint8_t)entry->b_04, 0, 0, &source) ||
+            !source.accepted ||
+            !dm2_v1_sound_dyn4_has_raw(selection, source.raw_index)) {
+            ++receipt.deferred_missing_material_count;
+            continue;
+        }
+        existing = dm2_v1_sound_dyn4_sound7(state, source.raw_index);
+        if (existing != 0u) {
+            entry->w_00 = state->ssound[existing - 1u].w_00;
+            entry->w_05 = (int16_t)source.raw_index;
+            ++receipt.shared_binding_count;
+            continue;
+        }
+        if (state->sample_binding_count >= sample_capacity) {
+            receipt.stopped_pool_full = 1u;
+            break;
+        }
+        entry->w_05 = (int16_t)source.raw_index;
+        entry->w_00 = (int16_t)state->sample_binding_count;
+        ++state->sample_binding_count;
+        ++receipt.newly_bound_count;
+    }
+    receipt.active_sample_count = state->sample_binding_count;
+    receipt.valid = 1u;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
+}
+
 /* DM2_SOUND9: populate dm2sound.xsndptr2 (seven-byte s_ssound entry).
  * Source: c_sound.cpp:650-662. The later c_gdatfile.cpp::DM2_482b_0684 owns
  * the GDAT lookup and writes w_00/w_05 after DYN4 has materialised its raw

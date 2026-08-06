@@ -376,6 +376,26 @@ void dm2_v1_sound_bind_gdat_loader(const DM2_V1_AssetLoader *loader,
  * NULL while tearing down or before a verified runtime is active. */
 void dm2_v1_sound_bind_runtime_queue(DM2_V1_SoundQueueState *state);
 
+/* c_gdatfile.cpp::DM2_482b_0684 consumes only DYN4-materialised sound raw
+ * entries. It binds the source queue's w_05 raw index and w_00 sndptr4 slot,
+ * but deliberately does not decode or play a sample. */
+typedef struct {
+    uint8_t valid;
+    uint8_t stopped_pool_full;
+    uint16_t queue_entries_seen;
+    uint16_t newly_bound_count;
+    uint16_t shared_binding_count;
+    uint16_t deferred_missing_material_count;
+    uint16_t active_sample_count;
+} DM2_V1_Dyn4SoundResolveReceipt;
+
+int dm2_v1_sound_resolve_dyn4_samples(
+    DM2_V1_SoundQueueState *state,
+    const DM2_V1_AssetLoader *loader,
+    const DM2_V1_GdatDyn4MaterializedSelection *selection,
+    uint16_t sample_capacity,
+    DM2_V1_Dyn4SoundResolveReceipt *out_receipt);
+
 /* DM2_SOUND9: populate dm2sound.xsndptr2 (seven-byte s_ssound entry).
  * The original routine has no sample argument and always leaves w_05 at -1;
  * c_gdatfile.cpp::DM2_482b_0684 later owns the GDAT lookup, raw-index binding

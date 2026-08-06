@@ -27333,9 +27333,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   dynamic-GDAT cache, event preconditions, possession transfer and
   session-state updates are all connected. Do not treat a marker receipt as
   a playable New Game path.
-  `DM2_SOUND9` now retains the original unbound `w_00/w_05 == -1` state;
-  the next step is to bind `DM2_482b_0684` to the same materialised selection
-  and its source-owned `sndptr4` pool before admitting any sample playback.
+  `DM2_SOUND9` now retains the original unbound `w_00/w_05 == -1` state.
+  `DM2_482b_0684` now binds that queue only against the same materialised
+  DYN4 selection and preserves the source's pool-capacity stop. The remaining
+  owner is the real `sndptr4` descriptor pool, sample format/header handling,
+  decode lifetime and playback scheduling; do not admit playback from the
+  binding receipt alone.
 
 - [ ] DM2 delayed movement ownership: `PERFORM_MOVE`'s real
   `glbIsPlayerMoving` path retains the old party pose and derives its countdown
