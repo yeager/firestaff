@@ -10,6 +10,11 @@
   M11/runtime caller; retain it only as explicit ReDMCSB coverage until a
   source-bound interaction owner is recovered.
 
+- **DM1-F0098-FLOOR-CEILING-SYNTHETIC-AUDIT:** This F0098 dispatch and pixel-
+  blend model uses fixed metadata and local colors. It has no original DM1
+  material input or M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage while the data-owned floor and ceiling route is recovered.
+
 - **DM1-MIRROR-C061-C028-SYNTHETIC-AUDIT:** This C061/C028 fixture fabricates
   slot, party and panel state. It loads no original DM1 data and has no
   M11/runtime caller; retain it only as explicit ReDMCSB coverage until a

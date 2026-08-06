@@ -14,6 +14,12 @@
 - ✅ Verification: `dm1_v1_mirror_candidate_c159_click_rotation_combo_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 F0098 floor-ceiling synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only F0098 dispatch and local pixel-blend model from
+  M10. It consumes no original DM1 material and has no M11/runtime caller;
+  its dedicated ReDMCSB regression now compiles the source explicitly.
+
 # DM2 startup status-panel host-text removal (2026-08-06)
 
 - ✅ Removed the last host-authored DM2 boot-failure labels and M11 startup/

@@ -4338,6 +4338,12 @@ list(REMOVE_ITEM M10_SOURCES
 # dedicated regression compiles it explicitly rather than exposing it via M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_f0099_row_local_flip_pc34_compat.c")
+# `dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat.c` is a
+# contract-only F0098 dispatch and local pixel-blend model. It consumes no
+# original DM1 floor or ceiling bytes and has no M11/runtime caller; retain
+# it only in its direct ReDMCSB regression while the material route owns data.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat.c")
 # `dm1_v1_champion_panel_name_box_clip_pc34_compat.c` is an asset-free F0292
 # geometry fixture with synthetic champion/name/title inputs. It has no
 # M11/runtime caller; retain its source lock in the direct regression rather
@@ -34751,6 +34757,16 @@ firestaff_add_dm1_v1_viewport_contract_test(
     tests/test_dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat.c
     src/dm1/dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat.c
     dm1_v1_viewport_d1c_f0108_floor_ornament_occlusion_pc34_compat
+)
+firestaff_add_dm1_v1_viewport_contract_test(
+    test_dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat
+    tests/test_dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat.c
+    src/dm1/dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat.c
+    dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat
+)
+target_include_directories(
+    test_dm1_v1_viewport_f0098_floor_ceiling_fallback_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1
 )
 firestaff_add_dm1_v1_viewport_contract_test(
     test_dm1_v1_viewport_d3l2_d3r2_f0108_floor_ornament_occlusion_pc34_compat
