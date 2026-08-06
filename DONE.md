@@ -54078,6 +54078,16 @@ alcove runtime and archive-media tests passed (4/4).
   instead of a candidate-derived wrong icon/name. Real F0115 floor pickup and
   alcove pickup-to-inventory tests pass against the PC34 corpus.
 
+- ✅ 2026-08-06 DM2 FM Towns native startup-media gate: the HME-242 ISO reader
+  now inventories the root `AUTOEXEC.BAT`, `SWOOSH`, `TITLE`, `TWANIM.EXP`,
+  `SKULL.EXP` and `END` files as well as `DATA/`. It reads the original boot
+  script in memory and requires the authenticated `SWOOSH -> TITLE -> SKULL
+  -> END` route before boot accepts an FM Towns session. The real Japanese CD
+  ZIP plus explicitly selected English GDAT companion regression passes with
+  no game member unpacked to disk. This verifies the native animation/startup
+  ownership and blocks partial media; it does not claim that TWANIM frame
+  playback has been implemented.
+
 - ✅ 2026-08-06 Theron raw-BIN HuC6280 disassembly intake: the static bank-$1f
   receipt now verifies authentic `TQUS02.bin` and `TQJP02.bin` Track 02 files
   in addition to the ISO projections. Their real MODE1/2352 bank-window

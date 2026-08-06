@@ -937,6 +937,9 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
      * extraction is memory-only; neither spelling authorizes a cache or an
      * unpacked copy. */
     if (!profile || !data_dir || !data_dir[0]) return;
+    memset(&profile->fmtowns_startup_plan, 0,
+           sizeof(profile->fmtowns_startup_plan));
+    profile->fmtowns_startup_media_verified = 0;
     /* M12 passes an explicitly selected retail archive verbatim.  Preserve
      * that choice: treating it as a directory would silently fall back to a
      * sibling PC install and change the selected platform. */
@@ -982,6 +985,22 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
      * DATA/ file identities used below. */
     DM2_V1_FmtownsDiscReceipt probe;
     if (dm2_v1_fmtowns_disc_probe(img_data, img_size, &probe) == 0) {
+        /* HME-242 does not boot straight into SKULL: AUTOEXEC.BAT runs the
+         * native TWANIM swoosh and title before SKULL, and again for END.
+         * Refuse a partial/synthetic disc instead of presenting its data pair
+         * through the PC-DOS static startup route. */
+        if (dm2_v1_fmtowns_disc_startup_plan(img_data, img_size, &probe,
+                                             &profile->fmtowns_startup_plan) != 0) {
+            free(profile->fmtowns_disc_image);
+            profile->fmtowns_disc_image = NULL;
+            profile->fmtowns_disc_image_size = 0u;
+            profile->fmtowns_zip_path[0] = '\0';
+            memset(profile->fmtowns_cdda_track_starts, 0,
+                   sizeof(profile->fmtowns_cdda_track_starts));
+            profile->fmtowns_cdda_track_count = 0;
+            return;
+        }
+        profile->fmtowns_startup_media_verified = 1;
         if (!profile->graphics_path[0]) {
             if (probe.has_graphics_dat) {
                 dm2_v1_fmtowns_disc_extract_alloc(img_data, img_size,

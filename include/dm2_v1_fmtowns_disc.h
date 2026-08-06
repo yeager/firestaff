@@ -21,6 +21,9 @@ extern "C" {
  *   DATA/CD.DAT        (40 bytes)   — CDDA track table
  *   DATA/DUNGEON.DAT   (37954 bytes) — dungeon data
  *   DATA/GRAPHICS.DAT  (2783791 bytes) — GDAT v4 assets
+ *   AUTOEXEC.BAT                     — native boot sequence
+ *   SWOOSH, TITLE, TWANIM.EXP,
+ *   SKULL.EXP and END                — native startup programs/data
  *
  * Source: ISO 9660 primary volume descriptor analysis of HME-242 disc image.
  * Volume ID: "DUNGEONMASTER2_SKULLKEEP", System ID: "HME-242". */
@@ -47,17 +50,58 @@ typedef struct {
     DM2_V1_FmtownsIsoEntry cd_dat;
     DM2_V1_FmtownsIsoEntry dungeon_dat;
     DM2_V1_FmtownsIsoEntry graphics_dat;
+    DM2_V1_FmtownsIsoEntry autoexec_bat;
+    DM2_V1_FmtownsIsoEntry swoosh;
+    DM2_V1_FmtownsIsoEntry title;
+    DM2_V1_FmtownsIsoEntry twanim_exp;
+    DM2_V1_FmtownsIsoEntry skull_exp;
+    DM2_V1_FmtownsIsoEntry end;
 
     int has_cd_dat;
     int has_dungeon_dat;
     int has_graphics_dat;
+    int has_autoexec_bat;
+    int has_swoosh;
+    int has_title;
+    int has_twanim_exp;
+    int has_skull_exp;
+    int has_end;
+    /* All original files referenced by HME-242 AUTOEXEC.BAT are present.
+     * `valid` deliberately remains the data-pair admission predicate so
+     * callers can distinguish a readable data disc from a bootable retail
+     * FM Towns session. */
+    int startup_media_complete;
 } DM2_V1_FmtownsDiscReceipt;
+
+typedef enum {
+    DM2_FMTOWNS_STARTUP_STAGE_NONE = 0,
+    DM2_FMTOWNS_STARTUP_STAGE_SWOOSH,
+    DM2_FMTOWNS_STARTUP_STAGE_TITLE,
+    DM2_FMTOWNS_STARTUP_STAGE_SKULL,
+    DM2_FMTOWNS_STARTUP_STAGE_END
+} DM2_V1_FmtownsStartupStage;
+
+/* Exact source-owned execution order read from AUTOEXEC.BAT.  The strings
+ * are commands, not Firestaff-authored replacement UI. */
+typedef struct {
+    int valid;
+    int stage_count;
+    DM2_V1_FmtownsStartupStage stages[4];
+} DM2_V1_FmtownsStartupPlan;
 
 /* Probe a raw MODE1/2352 disc image for the DM2 FM Towns ISO 9660 filesystem.
  * The image must start at sector 0 of the data track.
  * Returns 0 on success and fills receipt, -1 on failure. */
 int dm2_v1_fmtowns_disc_probe(const uint8_t *image, size_t image_size,
                               DM2_V1_FmtownsDiscReceipt *out);
+
+/* Decode the HME-242 boot script from the selected in-memory disc image.
+ * Returns zero only for the original SWOOSH -> TITLE -> SKULL -> END route.
+ * No file is written or materialised on disk. */
+int dm2_v1_fmtowns_disc_startup_plan(
+    const uint8_t *image, size_t image_size,
+    const DM2_V1_FmtownsDiscReceipt *receipt,
+    DM2_V1_FmtownsStartupPlan *out);
 
 /* Extract a file from the disc image into a caller-allocated buffer.
  * entry must come from a successful probe.

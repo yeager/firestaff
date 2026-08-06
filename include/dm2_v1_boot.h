@@ -7,6 +7,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_gdat_scene_m11_command.h"
 #include "dm2_v1_weather_gdat.h"
+#include "dm2_v1_fmtowns_disc.h"
 #include <stddef.h>
 
 #define DM2_V1_GRAPHICSSET_SCENE_COLORKEY_PRESENT_MASK (1u << 0)
@@ -189,6 +190,10 @@ typedef struct {
     size_t   fmtowns_disc_image_size;
     uint32_t fmtowns_cdda_track_starts[9]; /* track_starts[2..8] */
     int      fmtowns_cdda_track_count;
+    /* Original HME-242 AUTOEXEC route, read directly from the selected
+     * in-memory IMG.  A Towns session is not admitted without this media. */
+    DM2_V1_FmtownsStartupPlan fmtowns_startup_plan;
+    int      fmtowns_startup_media_verified;
 
     /* ── Deterministic config ──────────────────────────────── */
     DM2_V1_DeterministicConfig deterministic;

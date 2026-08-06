@@ -1010,7 +1010,14 @@ level or consumer bindings.
   media remains non-launchable until it has the same in-memory owner.
   The callback-only `dm2_v1_anim_bootstrap` file-reader is now test-only: no
   M11/DM2 runtime consumer has authenticated an original animation stream.
-  Re-admit it only with a selected-media hash receipt, decoded stream bounds,
+  **2026-08-06 update:** HME-242's root boot corpus is now also required at
+  FM Towns admission. The in-memory ISO receipt binds `AUTOEXEC.BAT`,
+  `SWOOSH`, `TITLE`, `TWANIM.EXP`, `SKULL.EXP` and `END`; it decodes the
+  original `SWOOSH -> TITLE -> SKULL -> END` order before any Towns session
+  is admitted. The real-CD M12 regression covers the route without unpacking
+  a member. This is an authenticity gate, not an animation renderer.
+  Re-admit actual TWANIM playback only with a selected-media hash receipt,
+  decoded stream bounds,
   and an actual title/entrance execution handoff.
   **2026-08-06 update:** a shared data root can now retain all three verified
   DM2 editions at once. At M12→M11 launch, the selected DOS, FM Towns or

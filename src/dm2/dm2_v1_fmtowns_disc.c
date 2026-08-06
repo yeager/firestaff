@@ -94,6 +94,24 @@ static int scan_directory(const uint8_t *image, size_t image_size,
                            strcmp(name, "graphics.dat") == 0) {
                     out->graphics_dat = ent;
                     out->has_graphics_dat = 1;
+                } else if (strcmp(name, "AUTOEXEC.BAT") == 0) {
+                    out->autoexec_bat = ent;
+                    out->has_autoexec_bat = 1;
+                } else if (strcmp(name, "SWOOSH") == 0) {
+                    out->swoosh = ent;
+                    out->has_swoosh = 1;
+                } else if (strcmp(name, "TITLE") == 0) {
+                    out->title = ent;
+                    out->has_title = 1;
+                } else if (strcmp(name, "TWANIM.EXP") == 0) {
+                    out->twanim_exp = ent;
+                    out->has_twanim_exp = 1;
+                } else if (strcmp(name, "SKULL.EXP") == 0) {
+                    out->skull_exp = ent;
+                    out->has_skull_exp = 1;
+                } else if (strcmp(name, "END") == 0) {
+                    out->end = ent;
+                    out->has_end = 1;
                 }
             }
             pos += rec_len;
@@ -134,7 +152,62 @@ int dm2_v1_fmtowns_disc_probe(const uint8_t *image, size_t image_size,
         return -1;
 
     out->valid = (out->has_graphics_dat && out->has_dungeon_dat);
+    out->startup_media_complete =
+        out->has_autoexec_bat && out->has_swoosh && out->has_title &&
+        out->has_twanim_exp && out->has_skull_exp && out->has_end;
     return out->valid ? 0 : -1;
+}
+
+int dm2_v1_fmtowns_disc_startup_plan(
+    const uint8_t *image, size_t image_size,
+    const DM2_V1_FmtownsDiscReceipt *receipt,
+    DM2_V1_FmtownsStartupPlan *out) {
+    uint8_t *script = NULL;
+    size_t script_size = 0u;
+    const char *swoosh;
+    const char *title;
+    const char *skull;
+    const char *end;
+
+    if (!out) return -1;
+    memset(out, 0, sizeof(*out));
+    if (!image || !receipt || !receipt->startup_media_complete ||
+        dm2_v1_fmtowns_disc_extract_alloc(image, image_size,
+                                           &receipt->autoexec_bat,
+                                           &script, &script_size) != 0 ||
+        !script || script_size == 0u) {
+        free(script);
+        return -1;
+    }
+    /* The retail script is ASCII and ends well inside this bounded ISO file.
+     * A private terminator lets strstr operate without reading the disc arena
+     * beyond AUTOEXEC.BAT. */
+    {
+        uint8_t *terminated_script = realloc(script, script_size + 1u);
+        if (!terminated_script) {
+            free(script);
+            return -1;
+        }
+        script = terminated_script;
+    }
+    script[script_size] = '\0';
+    swoosh = strstr((const char *)script, "\\RUN386 TWANIM SWOOSH +AF +AH +AR");
+    title = strstr((const char *)script, "\\RUN386 TWANIM TITLE +AB +AE +AR");
+    skull = strstr((const char *)script, "\\RUN386 SKULL");
+    end = strstr((const char *)script, "\\RUN386 TWANIM END +AC7 +AR");
+    if (!swoosh || !title || !skull || !end ||
+        !(swoosh < title && title < skull && skull < end)) {
+        free(script);
+        return -1;
+    }
+    out->valid = 1;
+    out->stage_count = 4;
+    out->stages[0] = DM2_FMTOWNS_STARTUP_STAGE_SWOOSH;
+    out->stages[1] = DM2_FMTOWNS_STARTUP_STAGE_TITLE;
+    out->stages[2] = DM2_FMTOWNS_STARTUP_STAGE_SKULL;
+    out->stages[3] = DM2_FMTOWNS_STARTUP_STAGE_END;
+    free(script);
+    return 0;
 }
 
 int dm2_v1_fmtowns_disc_extract(const uint8_t *image, size_t image_size,

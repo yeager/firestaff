@@ -157,6 +157,19 @@ int main(void)
                    launch.profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
                    dm2_v1_runtime_i18n_ready(),
                "FM Towns runtime keeps Japanese CD ownership and binds English text only");
+        expect(launch.profile &&
+                   launch.profile->fmtowns_startup_media_verified &&
+                   launch.profile->fmtowns_startup_plan.valid &&
+                   launch.profile->fmtowns_startup_plan.stage_count == 4 &&
+                   launch.profile->fmtowns_startup_plan.stages[0] ==
+                       DM2_FMTOWNS_STARTUP_STAGE_SWOOSH &&
+                   launch.profile->fmtowns_startup_plan.stages[1] ==
+                       DM2_FMTOWNS_STARTUP_STAGE_TITLE &&
+                   launch.profile->fmtowns_startup_plan.stages[2] ==
+                       DM2_FMTOWNS_STARTUP_STAGE_SKULL &&
+                   launch.profile->fmtowns_startup_plan.stages[3] ==
+                       DM2_FMTOWNS_STARTUP_STAGE_END,
+               "FM Towns follows its original AUTOEXEC animation and startup order");
         expect_complete_english_text_overlay(launch.profile);
         text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
         expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,

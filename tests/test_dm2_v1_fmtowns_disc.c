@@ -64,6 +64,13 @@ static void test_disc_image(const char *path) {
     assert(receipt.has_cd_dat);
     assert(receipt.has_dungeon_dat);
     assert(receipt.has_graphics_dat);
+    assert(receipt.startup_media_complete);
+    assert(receipt.has_autoexec_bat);
+    assert(receipt.has_swoosh);
+    assert(receipt.has_title);
+    assert(receipt.has_twanim_exp);
+    assert(receipt.has_skull_exp);
+    assert(receipt.has_end);
 
     printf("  CD.DAT: LBA=%u size=%u\n", receipt.cd_dat.lba, receipt.cd_dat.size);
     printf("  DUNGEON.DAT: LBA=%u size=%u\n", receipt.dungeon_dat.lba, receipt.dungeon_dat.size);
@@ -72,6 +79,18 @@ static void test_disc_image(const char *path) {
     assert(receipt.cd_dat.size == 40);
     assert(receipt.dungeon_dat.size == 37954);
     assert(receipt.graphics_dat.size == 2783791);
+
+    {
+        DM2_V1_FmtownsStartupPlan plan;
+        assert(dm2_v1_fmtowns_disc_startup_plan(image, image_size,
+                                                 &receipt, &plan) == 0);
+        assert(plan.valid && plan.stage_count == 4);
+        assert(plan.stages[0] == DM2_FMTOWNS_STARTUP_STAGE_SWOOSH);
+        assert(plan.stages[1] == DM2_FMTOWNS_STARTUP_STAGE_TITLE);
+        assert(plan.stages[2] == DM2_FMTOWNS_STARTUP_STAGE_SKULL);
+        assert(plan.stages[3] == DM2_FMTOWNS_STARTUP_STAGE_END);
+        printf("  PASS: AUTOEXEC native startup order\n");
+    }
 
     /* Extract and validate CD.DAT */
     {
