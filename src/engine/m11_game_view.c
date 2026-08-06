@@ -6906,7 +6906,8 @@ static int m11_csb_build_fmtowns_utility_english(M11_GameViewState *state)
         state->csbFmtownsUtilityMenuReceipt.language !=
             CSB_FMTOWNS_SWITCH_ENGLISH ||
         !M11_Font_IsLoaded(&state->originalFont) ||
-        !csb_v1_fmtowns_utility_icon_palette_rgb6(palette)) {
+        !csb_v1_fmtowns_utility_icon_palette_rgb6(
+            &state->csbFmtownsUtilityMenuReceipt, palette)) {
         return 0;
     }
     memset(state->csbFmtownsUtilityPixels, 0,
@@ -6991,7 +6992,8 @@ static int m11_csb_present_fmtowns_utility(M11_GameViewState *state,
     uint8_t rgb6[256][3];
     int color;
     if (!state || !framebuffer || !state->csbFmtownsUtilityBound ||
-        !csb_v1_fmtowns_utility_icon_palette_rgb6(palette)) return 0;
+        !csb_v1_fmtowns_utility_icon_palette_rgb6(
+            &state->csbFmtownsUtilityMenuReceipt, palette)) return 0;
     for (color = 0; color < 256; ++color) {
         rgb6[color][0] = (uint8_t)(palette[color & 15][0] << 2u);
         rgb6[color][1] = (uint8_t)(palette[color & 15][1] << 2u);

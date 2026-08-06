@@ -196,7 +196,11 @@ int main(void)
               utility_hit.action == CSB_V1_FMTOWNS_UTILITY_ACTION_QUIT,
           "verified F31 profile retains its language-owned C06 input boxes");
     memset(utility_palette, 0, sizeof(utility_palette));
-    CHECK(csb_v1_fmtowns_utility_icon_palette_rgb6(utility_palette) &&
+    CHECK(csb_v1_fmtowns_utility_icon_palette_rgb6(&utility_menu,
+                                                    utility_palette) &&
+              utility_menu.icon_palette_verified &&
+              utility_menu.icon_palette_file_offset ==
+                  (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 0x17db0u : 0x17e18u) &&
               utility_palette[0][0] == 0x00u &&
               utility_palette[4][0] == 0x00u &&
               utility_palette[4][1] == 0x36u &&

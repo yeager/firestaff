@@ -191,6 +191,11 @@
   FM Towns ZIP media now materializes its original image into the user cache
   across volume boundaries, so this remaining work starts from the real CD
   payload rather than a partial archive extraction.
+  2026-08-06: C09_ICON no longer comes from a Firestaff palette mirror.
+  The verified UTILE.EXP/UTILJ.EXP C06 receipts retain their actual indexed
+  RGB6 table at raw offsets `0x17DB0`/`0x17E18`, including the `0xFF`
+  terminator. The remaining file-picker, save, portrait-edit and F31J glyph
+  consumers remain separate source-owned work.
 
 - **THERON-FORCEFIELD-REAL-DUNGEON:** Enter now reliably dispatches from the
   Soul Room forcefield focus, including the first attempt without prompt text.

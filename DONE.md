@@ -56004,3 +56004,14 @@ alcove runtime and archive-media tests passed (4/4).
 - Verification: real HME-242 M11 startup test confirms SWOOSH, TITLE, GDAT
   menu/credits, Quit-to-END, loop-expanded frame count and return only after
   END completes. No game media is unpacked to disk.
+# 2026-08-06 CSB FM Towns C06 palette receipt
+
+- ✅ Replaced the standalone C09_ICON palette copy with the indexed RGB6
+  table read from the selected, hash-verified C06 executable. `UTILE.EXP`
+  uses raw offset `0x17DB0`; `UTILJ.EXP` uses `0x17E18`. The reader verifies
+  all 16 source indices and the trailing `0xFF` entry before M11 receives
+  any palette value. ReDMCSB `CEDT027.C:45-62` defines C09_ICON and
+  `CEDT018.C:829-838` selects it for the editor.
+- ✅ The original F31E and F31J Game→Utility handoff test passes against the
+  local retail FM Towns archive. Japanese text and C06 file/save/portrait
+  transactions remain fail-closed pending their native owners.

@@ -21,6 +21,7 @@ extern "C" {
 #define CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT 6u
 #define CSB_V1_FMTOWNS_UTILITY_MENU_POOL_CAPACITY 76u
 #define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT 16u
+#define CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_RECORD_BYTES 68u
 
 /* ReDMCSB DEFS.H command ordinals consumed by CEDT006.C's C06 loop. */
 typedef enum CSB_V1_FmtownsUtilityMenuAction {
@@ -98,6 +99,12 @@ typedef struct CSB_V1_FmtownsUtilityHandoffReceipt {
     uint32_t p3_load_image_offset;
     uint32_t p3_load_image_size;
     uint32_t p3_initial_eip;
+    /* CEDT027.C's C09_ICON table is retained from this exact hash-verified
+     * F31 executable: 16 indexed RGB6 entries followed by its 0xFF sentinel.
+     * It is not a host palette approximation. */
+    int icon_palette_verified;
+    uint32_t icon_palette_file_offset;
+    uint8_t icon_palette_rgb6[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityHandoffReceipt;
 
@@ -114,6 +121,9 @@ typedef struct CSB_V1_FmtownsUtilityMenuReceipt {
     uint32_t source_fnv1a;
     uint16_t label_offsets[CSB_V1_FMTOWNS_UTILITY_MENU_ACTION_COUNT];
     uint8_t source_bytes[CSB_V1_FMTOWNS_UTILITY_MENU_POOL_CAPACITY];
+    int icon_palette_verified;
+    uint32_t icon_palette_file_offset;
+    uint8_t icon_palette_rgb6[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3];
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityMenuReceipt;
 
@@ -144,12 +154,12 @@ int csb_v1_fmtowns_utility_menu_action_at(
     int16_t source_x, int16_t source_y,
     CSB_V1_FmtownsUtilityMenuHitBox *out_hit_box);
 
-/* Copy the F31 C06 editor's active C09_ICON palette in native six-bit RGB.
- * CEDT018.C first blacks the curtain, applies C09_ICON, then restores the
- * curtain; CEDT027.C defines the 16 source entries.  This is deliberately a
- * palette-material receipt only: it does not infer a Utility screen layout
- * or make untranslated F31J text renderable. */
+/* Copy the receipt-bound F31 C06 editor C09_ICON palette in native six-bit
+ * RGB. CEDT018.C first blacks the curtain, applies C09_ICON, then restores
+ * it; CEDT027.C defines the table. A receipt is required so the live route
+ * never falls back to a hand-copied host palette. */
 int csb_v1_fmtowns_utility_icon_palette_rgb6(
+    const CSB_V1_FmtownsUtilityMenuReceipt *receipt,
     uint8_t out_rgb6[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3]);
 
 /* Return the native F31 music selector (zero means no selector) for one

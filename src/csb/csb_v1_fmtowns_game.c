@@ -22,6 +22,8 @@ enum {
     CSB_V1_FMTOWNS_UTILJ_MENU_BYTES = 68u,
     CSB_V1_FMTOWNS_UTILE_MENU_FNV1A = 0xfd9986bfu,
     CSB_V1_FMTOWNS_UTILJ_MENU_FNV1A = 0xdceefc60u,
+    CSB_V1_FMTOWNS_UTILE_ICON_PALETTE_OFFSET = 0x17db0u,
+    CSB_V1_FMTOWNS_UTILJ_ICON_PALETTE_OFFSET = 0x17e18u,
     /* The retail F31E/F31J programs carry identical 10*32*32 selector
      * tables. These offsets are from the raw verified executable image. */
     CSB_V1_FMTOWNS_CHTWE_MUSIC_TABLE_OFFSET = 271144u,
@@ -29,28 +31,43 @@ enum {
     CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_FNV1A = 0x3faffb70u
 };
 
-/* ReDMCSB CEDT018.C:829-838 clears the F31 screen, blacks its curtain and
- * loads C09_ICON before F7268 restores the normal curtain. CEDT027.C:45-62
- * owns C09_ICON itself. Keep the original Towns six-bit component values;
- * M11 is responsible for its RGB6-to-host presentation boundary. */
-static const uint8_t k_csb_v1_fmtowns_utility_icon_palette_rgb6[
-    CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3] = {
-    { 0x00u, 0x00u, 0x00u }, { 0x1bu, 0x1bu, 0x1bu },
-    { 0x24u, 0x24u, 0x24u }, { 0x1bu, 0x09u, 0x00u },
-    { 0x00u, 0x36u, 0x36u }, { 0x24u, 0x12u, 0x00u },
-    { 0x00u, 0x24u, 0x00u }, { 0x00u, 0x36u, 0x00u },
-    { 0x3fu, 0x00u, 0x00u }, { 0x3fu, 0x2du, 0x00u },
-    { 0x36u, 0x24u, 0x1bu }, { 0x3fu, 0x3fu, 0x00u },
-    { 0x12u, 0x12u, 0x12u }, { 0x2du, 0x2du, 0x2du },
-    { 0x00u, 0x00u, 0x3fu }, { 0x3fu, 0x3fu, 0x3fu }
-};
+static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
+                                         unsigned char *bytes, size_t size);
+
+static int csb_v1_fmtowns_utility_icon_palette_open(
+    const char *path, uint32_t file_offset,
+    CSB_V1_FmtownsUtilityHandoffReceipt *receipt)
+{
+    uint8_t source[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_RECORD_BYTES];
+    uint32_t index;
+
+    if (!path || !receipt ||
+        !csb_v1_fmtowns_game_read_span(path, file_offset, source,
+                                       sizeof(source))) return 0;
+    for (index = 0u;
+         index < CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT;
+         ++index) {
+        const uint8_t *entry = source + index * 4u;
+        if (entry[0] != index || entry[1] > 0x3fu || entry[2] > 0x3fu ||
+            entry[3] > 0x3fu) return 0;
+        receipt->icon_palette_rgb6[index][0] = entry[1];
+        receipt->icon_palette_rgb6[index][1] = entry[2];
+        receipt->icon_palette_rgb6[index][2] = entry[3];
+    }
+    if (source[64] != 0xffu || source[65] != 0u || source[66] != 0u ||
+        source[67] != 0u) return 0;
+    receipt->icon_palette_file_offset = file_offset;
+    receipt->icon_palette_verified = 1;
+    return 1;
+}
 
 int csb_v1_fmtowns_utility_icon_palette_rgb6(
+    const CSB_V1_FmtownsUtilityMenuReceipt *receipt,
     uint8_t out_rgb6[CSB_V1_FMTOWNS_UTILITY_ICON_PALETTE_COLOR_COUNT][3])
 {
-    if (!out_rgb6) return 0;
-    memcpy(out_rgb6, k_csb_v1_fmtowns_utility_icon_palette_rgb6,
-           sizeof(k_csb_v1_fmtowns_utility_icon_palette_rgb6));
+    if (!receipt || !receipt->valid || !receipt->icon_palette_verified ||
+        !out_rgb6) return 0;
+    memcpy(out_rgb6, receipt->icon_palette_rgb6, sizeof(receipt->icon_palette_rgb6));
     return 1;
 }
 
@@ -292,6 +309,7 @@ int csb_v1_fmtowns_utility_handoff_open(
     const char *name;
     uint32_t expected_size;
     uint32_t expected_hash;
+    uint32_t icon_palette_offset;
     uint32_t actual_size;
     uint32_t actual_hash;
     CSB_V1_VariantId expected_variant;
@@ -304,11 +322,13 @@ int csb_v1_fmtowns_utility_handoff_open(
         name = "UTILE.EXP";
         expected_size = CSB_V1_FMTOWNS_UTILE_SIZE;
         expected_hash = CSB_V1_FMTOWNS_UTILE_FNV1A;
+        icon_palette_offset = CSB_V1_FMTOWNS_UTILE_ICON_PALETTE_OFFSET;
         expected_variant = CSB_V1_VARIANT_FMTOWNS_EN;
     } else if (language == CSB_FMTOWNS_SWITCH_JAPANESE) {
         name = "UTILJ.EXP";
         expected_size = CSB_V1_FMTOWNS_UTILJ_SIZE;
         expected_hash = CSB_V1_FMTOWNS_UTILJ_FNV1A;
+        icon_palette_offset = CSB_V1_FMTOWNS_UTILJ_ICON_PALETTE_OFFSET;
         expected_variant = CSB_V1_VARIANT_FMTOWNS_JA;
     } else return 0;
     if (profile->variant_id != expected_variant ||
@@ -328,6 +348,15 @@ int csb_v1_fmtowns_utility_handoff_open(
      * any future TBIOS/CEDT decoder consumes a menu or save command. */
     if (!csb_v1_fmtowns_utility_p3_header_open(out_receipt->executable_path,
                                                 actual_size, out_receipt)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
+    /* ReDMCSB CEDT027.C:45-62 declares C09_ICON.  The exact indexed RGB6
+     * sequence is present in each verified F31 C06 image, at a different
+     * raw offset because the English and Japanese P3 layouts differ. */
+    if (!csb_v1_fmtowns_utility_icon_palette_open(out_receipt->executable_path,
+                                                  icon_palette_offset,
+                                                  out_receipt)) {
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
@@ -390,6 +419,10 @@ int csb_v1_fmtowns_utility_menu_open(
     }
     memcpy(out_receipt->label_offsets, offsets,
            sizeof(out_receipt->label_offsets));
+    out_receipt->icon_palette_verified = handoff.icon_palette_verified;
+    out_receipt->icon_palette_file_offset = handoff.icon_palette_file_offset;
+    memcpy(out_receipt->icon_palette_rgb6, handoff.icon_palette_rgb6,
+           sizeof(out_receipt->icon_palette_rgb6));
     out_receipt->valid = 1;
     out_receipt->language = language;
     out_receipt->variant_id = handoff.variant_id;
