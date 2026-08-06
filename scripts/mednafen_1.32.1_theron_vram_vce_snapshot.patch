@@ -1,0 +1,44 @@
+--- a/src/pce/pce.cpp
++++ b/src/pce/pce.cpp
+@@ -76,2 +76,34 @@
+ // Accessed in debug.cpp
++static void TheronDumpGraphicsSnapshot(void)
++{
++ const char *vram_path = getenv("FIRESTAFF_THERON_VRAM_SNAPSHOT");
++ const char *vce_path = getenv("FIRESTAFF_THERON_VCE_SNAPSHOT");
++ FILE *vram_file;
++ FILE *vce_file;
++ unsigned i;
++ if(!vce || !vram_path || !*vram_path || !vce_path || !*vce_path)
++  return;
++ vram_file = fopen(vram_path, "wb");
++ vce_file = fopen(vce_path, "wb");
++ if(!vram_file || !vce_file)
++ {
++  if(vram_file) fclose(vram_file);
++  if(vce_file) fclose(vce_file);
++  return;
++ }
++ for(i = 0; i < 32768; i++)
++ {
++  uint16 word = vce->PeekVDCVRAM(0, i);
++  fputc(word & 0xff, vram_file);
++  fputc((word >> 8) & 0xff, vram_file);
++ }
++ for(i = 0; i < 512; i++)
++ {
++  uint16 word = vce->PeekPRAM(i);
++  fputc(word & 0xff, vce_file);
++  fputc((word >> 8) & 0xff, vce_file);
++ }
++ fclose(vram_file);
++ fclose(vce_file);
++}
+ static uint8 BaseRAM[32768]; // 8KB for PCE, 32KB for Super Grafx
+@@ -739,5 +771,6 @@
+ static MDFN_COLD void CloseGame(void)
+ {
+  HuC_SaveNV();
++ TheronDumpGraphicsSnapshot();
+  Cleanup();
+ }

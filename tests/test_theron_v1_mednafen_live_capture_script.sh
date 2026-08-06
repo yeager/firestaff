@@ -37,6 +37,12 @@ if [[ ! -x "$build_script" ]] || ! grep -Fq -- '--without-libflac' "$build_scrip
     printf 'FAIL: raw Track 02 trace build must not depend on an unrelated FLAC header path\n' >&2
     exit 1
 fi
+if ! grep -Fq 'mednafen_1.32.1_theron_vram_vce_snapshot.patch' "$build_script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_VRAM_SNAPSHOT="$vram_snapshot"' "$script" ||
+   ! grep -Fq 'FIRESTAFF_THERON_VCE_SNAPSHOT="$vce_snapshot"' "$script"; then
+    printf 'FAIL: live capture must retain authentic VDC VRAM and VCE palette snapshots\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'mednafen_1.32.1_theron_main_ram_e009_register_trace.patch' "$build_script" ||
    ! grep -Fq 'main_ram_e009_register_writes=%s' "$script"; then
     printf 'FAIL: capture must retain bounded main-RAM e009 register-write provenance\n' >&2

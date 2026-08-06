@@ -4485,6 +4485,7 @@ if(DM2_SOURCES)
         # that read-only media route, so keep its bounded reader in the same
         # archive as the LZX admission code rather than relying on M11's
         # unrelated ADF consumer to satisfy a link by accident.
+        src/dm2/dm2_v1_amiga_lzx.c
         src/shared/firestaff_amiga_adf.c)
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     # dm2_v1_sound_sdl_backend.c (DM2-008 cycle 16) is the concrete SDL3
@@ -16597,7 +16598,8 @@ endif()
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
-    target_link_libraries(test_dm2_v1_world_state_minimap_level_transition PRIVATE firestaff_m10 m)
+    target_link_libraries(test_dm2_v1_world_state_minimap_level_transition PRIVATE
+        firestaff_dm2 firestaff_m10 m)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_world_state_minimap_level_transition PRIVATE -Wall -Wextra -O2)
     endif()
@@ -40148,6 +40150,24 @@ if(BUILD_TESTING AND THERON_SOURCES)
     endif()
     add_test(NAME theron_v1_vram_trace_loader COMMAND test_theron_v1_vram_trace_loader)
 
+    add_executable(test_theron_v1_vram_trace_real_capture
+        tests/test_theron_v1_vram_trace_real_capture.c
+        src/theron/theron_v1_vram_trace_loader.c
+        src/theron/theron_v1_viewport_runtime_noop.c
+        src/theron/theron_v1_palette.c)
+    target_link_libraries(test_theron_v1_vram_trace_real_capture PRIVATE
+        firestaff_theron firestaff_m12)
+    target_include_directories(test_theron_v1_vram_trace_real_capture PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_vram_trace_real_capture PRIVATE -Wall -Wextra -O2)
+    endif()
+    add_test(NAME theron_v1_vram_trace_real_capture
+        COMMAND test_theron_v1_vram_trace_real_capture)
+    set_tests_properties(theron_v1_vram_trace_real_capture PROPERTIES
+        SKIP_RETURN_CODE 77
+        LABELS "theron;capture;real_data;opaque")
+
     add_executable(test_theron_v1_srm_launch_discovery
         tests/test_theron_v1_srm_launch_discovery.c
     )
@@ -53734,3 +53754,23 @@ if(NOT MSVC)
         PRIVATE -Wall -Wextra -O2)
 endif()
 add_test(NAME dm2_v1_tim_proc_pc34_compat COMMAND test_dm2_v1_tim_proc_pc34_compat)
+
+# Standalone DM2 tests and probes often compile dm2_v1_boot.c directly rather
+# than linking firestaff_dm2. Keep the boot-owned Amiga media helpers attached
+# to every such target so the CI build cannot leave these symbols unresolved.
+get_property(_firestaff_build_targets DIRECTORY PROPERTY BUILDSYSTEM_TARGETS)
+foreach(_firestaff_target IN LISTS _firestaff_build_targets)
+    get_target_property(_firestaff_target_sources
+        "${_firestaff_target}" SOURCES)
+    if(_firestaff_target_sources)
+        string(FIND "${_firestaff_target_sources}" "dm2_v1_boot.c"
+            _firestaff_has_dm2_boot)
+        string(FIND "${_firestaff_target_sources}" "dm2_v1_amiga_lzx.c"
+            _firestaff_has_dm2_lzx)
+        if(_firestaff_has_dm2_boot GREATER -1 AND _firestaff_has_dm2_lzx EQUAL -1)
+            target_sources("${_firestaff_target}" PRIVATE
+                src/dm2/dm2_v1_amiga_lzx.c
+                src/shared/firestaff_amiga_adf.c)
+        endif()
+    endif()
+endforeach()

@@ -262,6 +262,23 @@ trace_files_are_line_delimited() {
     LC_ALL=C perl -ne 'exit 1 if index($_, chr(92) . chr(92) . "n") >= 0' "${existing_trace_files[@]}"
 }
 
+require_snapshot_size() {
+    local file=$1
+    local expected=$2
+    local label=$3
+    local actual
+
+    if [[ ! -f "$file" ]]; then
+        printf 'FAIL: Mednafen did not emit the %s snapshot\n' "$label" >&2
+        return 1
+    fi
+    actual=$(wc -c <"$file" | tr -d '[:space:]')
+    if [[ "$actual" != "$expected" ]]; then
+        printf 'FAIL: %s snapshot has %s bytes; expected %s\n' "$label" "$actual" "$expected" >&2
+        return 1
+    fi
+}
+
 trace_event_types() {
     local file=$1
 
@@ -434,6 +451,8 @@ cd_trace="${trace}.cd"
 input_trace="${trace}.input"
 main_ram_loader_trace="${trace}.main-ram-loader"
 main_ram_consumer_trace="${trace}.main-ram-consumer"
+vram_snapshot="${trace}.vram"
+vce_snapshot="${trace}.vce"
 transition_receipt="${trace}.transition"
 stage2_system_card_receipt="${trace}.stage2-system-card"
 stdout_file="$trace_dir/$(basename -- "$trace").stdout"
@@ -447,7 +466,7 @@ if [[ -n "$replay_input_script" ]] &&
 fi
 
 mkdir -p "$trace_dir"
-rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$transition_receipt" "$stage2_system_card_receipt"
+rm -f "$trace" "$memory_trace" "$cd_trace" "$input_trace" "$main_ram_loader_trace" "$main_ram_consumer_trace" "$vram_snapshot" "$vce_snapshot" "$transition_receipt" "$stage2_system_card_receipt"
 home_dir=$(mktemp -d "${TMPDIR:-/tmp}/firestaff-theron-mednafen.XXXXXX")
 cleanup_home=1
 if [[ -n "$configured_home" ]]; then
@@ -489,6 +508,8 @@ launch=(
     FIRESTAFF_THERON_REPLAY_INPUT_SCRIPT="$replay_input_script" \
     FIRESTAFF_THERON_MAIN_RAM_LOADER_TRACE="$main_ram_loader_trace" \
     FIRESTAFF_THERON_MAIN_RAM_CONSUMER_TRACE="$main_ram_consumer_trace" \
+    FIRESTAFF_THERON_VRAM_SNAPSHOT="$vram_snapshot" \
+    FIRESTAFF_THERON_VCE_SNAPSHOT="$vce_snapshot" \
     SDL_VIDEODRIVER="$capture_sdl_video_driver" \
     SDL_AUDIODRIVER=dummy \
     "$mednafen_bin" \
@@ -650,6 +671,8 @@ if ! trace_files_are_line_delimited "$trace" "$cd_trace" "$memory_trace" "$input
     printf '%s\n' 'FAIL: Mednafen emitted a literal backslash-n in a trace record' >&2
     exit 1
 fi
+require_snapshot_size "$vram_snapshot" 65536 'VDC VRAM' || exit 1
+require_snapshot_size "$vce_snapshot" 1024 'VCE palette RAM' || exit 1
 # The loader receipt is separate from the later dynamic game-data handoff.
 # Absence is expected for captures that do not reach this exact stage.
 if ! "$script_dir/verify_theron_stage2_system_card_call_trace.sh" "$trace" >"$stage2_system_card_receipt" 2>/dev/null; then
@@ -720,6 +743,8 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
     printf 'main_ram_e009_register_writes=%s\n' "$transition_main_ram_e009_register_write_count"
     printf 'main_ram_consumer_reads=%s\n' "$transition_main_ram_consumer_read_count"
     printf 'scripted_pce_input_events=%s\n' "$transition_scripted_input_count"
+    printf 'vdc_vram_snapshot_bytes=65536\n'
+    printf 'vce_palette_snapshot_bytes=1024\n'
     trace_input_order_receipt "$input_trace"
     if [[ "$host_input_requested" == 1 ]]; then
         if [[ -n "$host_key_sequence" ]]; then
