@@ -41,7 +41,6 @@
 #include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_sound.h"
-#include "dm2_v1_shop.h"
 #include "dm2_v1_trigger.h"
 #include "dm2_v1_world_model.h"
 #include "dm2_v1_i18n.h"
@@ -1887,7 +1886,10 @@ void dm2_v1_runtime_init(DM2_V1_BootProfile *boot_profile) {
     /* No merchant/NPC identity exists until an admitted AI-33 DB creature
      * and its source-owned CCM/UI chain have supplied one.  Do not expose a
      * friendly-merchant fixture through the runtime accessor. */
-    g_dm2_runtime.last_npc_id = DM2_NPC_NONE;
+    /* No merchant/NPC identity can exist until the source DB4/CCM owner is
+     * decoded; keep the runtime sentinel independent of the test-only shop
+     * catalog module. */
+    g_dm2_runtime.last_npc_id = -1;
     g_dm2_runtime.last_npc_dialog_line = -1;
     g_dm2_runtime.last_target_message[0] = '\0';
     g_dm2_runtime.last_spawn_instance_id = -1;
@@ -9088,7 +9090,7 @@ int dm2_v1_runtime_buy_from_shop(int stock_idx) {
 
     (void)stock_idx;
     if (!rt->boot || !rt->boot->dm2_state) return -1;
-    return (int)DM2_SHOP_RESULT_NO_ACTIVE_SHOP;
+    return -1;
 }
 
 int dm2_v1_runtime_sell_to_shop(int inv_idx) {
@@ -9096,7 +9098,7 @@ int dm2_v1_runtime_sell_to_shop(int inv_idx) {
 
     (void)inv_idx;
     if (!rt->boot || !rt->boot->dm2_state) return -1;
-    return (int)DM2_SHOP_RESULT_NO_ACTIVE_SHOP;
+    return -1;
 }
 
 int dm2_v1_runtime_npc_interact(int level, int x, int y) {

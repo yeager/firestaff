@@ -56355,7 +56355,6 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Added a regression assertion to `test_dm2_v1_sound_gdat_real_data` and
   kept `dm2_v1_sound_name()` fail-closed. No synthetic sound labels were
   admitted.
-
 # 2026-08-06 CSB Atari MSA save-disk admission
 
 - ✅ Added a strict Magic Shadow Archiver reader for CSB's Atari ST save-disk
@@ -56375,3 +56374,10 @@ alcove runtime and archive-media tests passed (4/4).
 - Verification: both synthetic Atari- and DOS-order FAT12 extraction paths,
   plus full decoding of the original two-sided 720 KiB MSA image, pass in
   `test_csb_v1_atari_msa`.
+# DM2 shop placeholder production isolation (2026-08-06)
+
+- ✅ Removed the empty fixed-catalog shop state carrier and coordinate-only
+  shop/NPC classifier from the `firestaff_dm2` production archive.
+- ✅ Removed M11's last call into that unavailable state carrier. Focused shop
+  tests retain explicit source-study coverage; production remains blocked until
+  the original `SHOP_GLASS`/`WALL_GFX`/`dt08` transaction is bound.

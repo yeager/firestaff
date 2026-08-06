@@ -31,7 +31,6 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_save_load.h"
-#include "dm2_v1_shop.h"
 #include "dm2_v1_sound.h"
 #include "dm2_v1_music_map.h"
 #include "dm2_v1_cdda_cd_dat.h"
@@ -9058,13 +9057,6 @@ int dm2_v1_boot_runtime_action_front_cell(
         if (square == 4 &&
             dm2_v1_runtime_door_action(level, fx, fy, dir, 0) == 0) {
             out_receipt->action_kind = DM2_V1_BOOT_ACTION_DOOR;
-        } else if (dm2_v1_runtime_npc_interact(level, fx, fy) == 0) {
-            int npc_id = dm2_v1_runtime_get_last_npc_id();
-            int npc_line_index = dm2_v1_runtime_get_last_npc_dialog_line();
-            out_receipt->action_kind = DM2_V1_BOOT_ACTION_NPC;
-            out_receipt->inspect_title = dm2_v1_npc_get_name(npc_id);
-            out_receipt->inspect_text =
-                dm2_v1_npc_get_dialog(npc_id, npc_line_index);
         } else if (dm2_v1_runtime_invoke_square_actuators(level, fx, fy) > 0) {
             out_receipt->action_kind = DM2_V1_BOOT_ACTION_ACTUATOR;
         } else {

@@ -4828,6 +4828,11 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # The animation bootstrap also has no M11/runtime consumer.  Its arbitrary
 # file-handle API cannot stand in for a mounted, hash-verified animation
 # stream, so compile it only in the focused bootstrap/chunk tests.
+# The shop module is an empty compatibility state carrier after its fixed
+# catalog, prices, NPC text and inventory writeback were removed. The
+# coordinate-only shop/NPC classifier has no live DB14/CCM consumer either.
+# Keep both explicit test seams out of the product archive until the original
+# SHOP_GLASS/WALL_GFX/dt08 transaction is imported.
 list(REMOVE_ITEM DM2_SOURCES
     # c_gfx_decode is physically included by dm2_v1_asset_loader.c because
     # the loader also belongs to firestaff_m10.  A separate DM2 archive
@@ -4874,7 +4879,9 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_step_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_anim_bootstrap.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_fmtowns_disc.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_fmtowns_disc.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_shop.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_shop_npc_pc34_compat.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES}
         # The original Amiga installer is an OFS ADF chain.  DM2 boot owns
@@ -18771,6 +18778,9 @@ endif()
     # persists the final gold value.
     add_executable(test_dm2_v1_runtime_shop_pc34_compat
         tests/test_dm2_v1_runtime_shop_pc34_compat.c
+        # dm2_v1_shop.c is a focused, unavailable-owner contract and is
+        # intentionally absent from firestaff_dm2; keep this test explicit.
+        src/dm2/dm2_v1_shop.c
     )
     target_include_directories(test_dm2_v1_runtime_shop_pc34_compat PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

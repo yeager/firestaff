@@ -55,7 +55,6 @@
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_sound.h"
 #include "dm2_v1_sound_sdl_backend.h"
-#include "dm2_v1_shop.h"
 #include "dm2_v1_startup_layout.h"
 #include "dm2_v1_startup_menu.h"
 #include "dm2_v1_startup_presentation.h"
@@ -26347,7 +26346,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                  * host rectangles and text instead. Do not retain its
                  * transaction state while the actual G1 -> WALL_GFX chain
                  * remains unbound. */
-                (void)dm2_v1_shop_leave(dm2_v1_shop_get_active_shop());
                 m11_set_status(state, NULL, NULL);
                 m11_sync_dm2_state_from_runtime(state);
                 return M11_GAME_INPUT_REDRAW;

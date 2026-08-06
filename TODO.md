@@ -3127,6 +3127,12 @@ level or consumer bindings.
   The runtime's last-NPC accessor also starts at `DM2_NPC_NONE`; an unbound
   merchant route cannot expose a friendly-merchant identity before its source
   creature/CCM/UI owner exists.
+  **2026-08-06 production-boundary update:** removed the empty
+  `dm2_v1_shop.c` state carrier and coordinate-only
+  `dm2_v1_shop_npc_pc34_compat.c` classifier from `firestaff_dm2`. Focused
+  shop tests still compile their explicit contracts, but no production code
+  can mistake a zero catalog or coordinate flag for a live SHOP_GLASS/CCM
+  transaction.
 
 - **DM2-DYNAMIC-CLIGHT-OWNER-HANDOFF:** The map-only dynamic-light fallback
   is closed. Port the complete `DM2_RECALC_LIGHT_LEVEL` inputs: leader and
