@@ -4323,6 +4323,12 @@ list(REMOVE_ITEM M10_SOURCES
 # it explicitly rather than exposing synthetic pixels through M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1r2_wall_pc34_compat.c")
+# `dm1_v1_viewport_f0099_row_local_flip_pc34_compat.c` is a contract-only
+# F0099 row-flip fixture: it uses caller-provided local buffers and fixed
+# dimensions, with no original DM1 data input or M11/runtime caller. Its
+# dedicated regression compiles it explicitly rather than exposing it via M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_f0099_row_local_flip_pc34_compat.c")
 # `dm1_v1_champion_panel_name_box_clip_pc34_compat.c` is an asset-free F0292
 # geometry fixture with synthetic champion/name/title inputs. It has no
 # M11/runtime caller; retain its source lock in the direct regression rather
@@ -54220,7 +54226,9 @@ add_executable(test_dm1_v1_viewport_d3l_d3r_wall_pc34_compat tests/test_dm1_v1_v
 target_include_directories(test_dm1_v1_viewport_d3l_d3r_wall_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_d3l_d3r_wall_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_d3l_d3r_wall_pc34_compat COMMAND test_dm1_v1_viewport_d3l_d3r_wall_pc34_compat)
-add_executable(test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat tests/test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat
+    tests/test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat.c
+    src/dm1/dm1_v1_viewport_f0099_row_local_flip_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat COMMAND test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat)

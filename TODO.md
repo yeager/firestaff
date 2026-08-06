@@ -10,6 +10,11 @@
   data and has no M11/runtime caller; retain it only as explicit ReDMCSB
   coverage until a source-bound command owner is recovered.
 
+- **DM1-F0099-ROW-FLIP-SYNTHETIC-AUDIT:** This F0099 row-flip fixture
+  fabricates caller buffers and fixed dimensions. It has no original DM1 data
+  input or M11/runtime caller; retain it only as explicit ReDMCSB coverage
+  until a source-bound flip owner is recovered.
+
 - **DM1-MIRROR-C546-C040-SYNTHETIC-AUDIT:** This C546/C040 fixture fabricates
   panel, chest and Thing state. It loads no original DM1 data and has no
   M11/runtime caller; retain it only as explicit ReDMCSB coverage until a

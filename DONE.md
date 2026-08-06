@@ -14,6 +14,13 @@
 - ✅ Verification: `dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 F0099 row-flip synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only F0099 row-flip fixture from M10. It uses
+  caller-provided local buffers and fixed dimensions, has no original DM1 data
+  input or M11/runtime caller, and its dedicated regression now compiles it
+  directly.
+
 # DM1 mirror C546/C040 synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C546/C040 panel/chest/Thing fixture from M10.
