@@ -264,6 +264,15 @@ static int test_source_evidence_cites_timeline_and_defs(void)
     return 1;
 }
 
+/* Door-state/type identifiers are source mechanics, not retail UI text. */
+static int test_door_debug_labels_are_not_exposed(void)
+{
+    return dm2_door_state_label(DM2_DOOR_STATE_OPEN) == NULL &&
+           dm2_door_state_label(DM2_DOOR_STATE_CLOSED) == NULL &&
+           dm2_door_type_label(DM2_DOOR_TYPE_WOODEN) == NULL &&
+           dm2_door_type_label(99) == NULL;
+}
+
 /* ── Main ────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -296,6 +305,7 @@ int main(void)
 
     /* Source evidence. */
     TEST(source_evidence_cites_timeline_and_defs);
+    TEST(door_debug_labels_are_not_exposed);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return (tests_passed == tests_run) ? 0 : 1;

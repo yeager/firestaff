@@ -576,32 +576,16 @@ int dm2_door_wounds_champion_on_close(
     return 1; /* closing door wounds party on same square */
 }
 
-/* ── Labels ────────────────────────────────────────────────────────── */
-
-static const char *state_labels[6] = {
-    "OPEN",          /* 0 */
-    "CLOSED_1/4",   /* 1 */
-    "CLOSED_1/2",    /* 2 */
-    "CLOSED_3/4",    /* 3 */
-    "CLOSED",        /* 4 */
-    "DESTROYED",     /* 5 */
-};
-
-static const char *type_labels[4] = {
-    "PORTCULLIS",    /* 0 */
-    "WOODEN",        /* 1 */
-    "IRON",          /* 2 */
-    "RA",            /* 3 */
-};
-
 const char *dm2_door_state_label(int state) {
-    if (state < 0 || state > 5) return "INVALID";
-    return state_labels[state];
+    (void)state;
+    /* Door states and types are numeric game mechanics.  The original UI
+     * selects GDAT art; it does not expose these host-authored diagnostics. */
+    return NULL;
 }
 
 const char *dm2_door_type_label(int type) {
-    if (type < 0 || type > 3) return "INVALID";
-    return type_labels[type];
+    (void)type;
+    return NULL;
 }
 
 const char *dm2_door_mechanics_source_evidence(void) {

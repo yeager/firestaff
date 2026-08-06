@@ -14,6 +14,14 @@
 - ✅ Verification: `test_dm1_v1_viewport_d2c_f0111_door_pc34_compat` passes;
   the source object is absent from both M10 and M11 archives.
 
+# DM2 door debug-text boundary (2026-08-06)
+
+- ✅ Removed host-authored labels for numeric door states and door types.
+  Original mechanics and GDAT door-image selection are unchanged; the label
+  APIs now return `NULL` because neither source owns retail display text.
+- ✅ Verification: `test_dm2_v1_door_button_toggle_pc34_compat` and the
+  production placeholder-boundary verifier pass.
+
 # DM2 inventory debug-text boundary (2026-08-06)
 
 - ✅ Removed host-authored inventory slot names and empty/unresolved DB

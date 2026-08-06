@@ -327,14 +327,10 @@ int dm2_door_wounds_champion_on_close(
     int door_vertical /* 0=horizontal, 1=vertical */
 );
 
-/*
- * dm2_door_state_label — human-readable door state name.
- */
+/* Door mechanics contain no source-owned display text; returns NULL. */
 const char *dm2_door_state_label(int state);
 
-/*
- * dm2_door_type_label — human-readable door type name.
- */
+/* Door mechanics contain no source-owned display text; returns NULL. */
 const char *dm2_door_type_label(int type);
 
 /*

@@ -617,6 +617,12 @@
   Bind the selected profile's authenticated item-name record and font route
   before presenting any inventory description.
 
+- **DM2-DOOR-TEXT-CONSUMER:** Door state and type constants own mechanics and
+  GDAT selects their image materials; no original text producer has been
+  recovered for `OPEN`, `CLOSED`, `WOODEN`, or similar labels. The compatibility
+  label APIs return `NULL`; bind an authenticated player-facing text route
+  before showing a door description.
+
 - **DM2-CDDA-OTHER-PLATFORM-MEDIA:** FM Towns CDDA now has a verified
   in-memory original-disc route only. Mega CD and PC-9821 still lack an
   equivalent selected-medium reader and therefore must remain silent rather
