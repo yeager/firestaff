@@ -22,8 +22,6 @@
 #include "csb_v1_viewport_wall_ornament_ordinal_resolver_pc34_compat.h"
 #include "dm2_v1_boot.h"
 #include "dm2_v1_runtime.h"
-#include "dm2_v2_hud_runtime.h"
-#include "dm2_v2_phase_gate.h"
 #include "nexus_v2_hud_runtime.h"
 #include <string.h>
 #include <stdio.h>
@@ -162,15 +160,11 @@ static void fs_game_render_viewport(FS_GameState *state) {
         csb_v1_viewport_render_frame(cv, dir, px, py);
 
     } else if (state->config.game == FS_GAME_DM2) {
-        /* DM2 presentation is owned by the M11 GDAT route. */
-        DM2_V1_BootProfile *boot = (DM2_V1_BootProfile *)state->dm2_boot;
-        if (boot && boot->dm2_state) {
-            /* Phase 3: V2 HUD overlay (gated on phase gate).
-             * Renders compass, depth, gold, champion bars, action strip
-             * on top of the V1 viewport.  No-op when V1 is active
-             * (framebuffer preserved for V1 chrome). */
-            dm2_v2_hud_runtime_render(g_framebuffer, FS_FB_W, FS_FB_H);
-        }
+        /* DM2 presentation is owned by M11's source-gated frame route.
+         * Do not invoke the V2 HUD here: this loop has neither M11's frame
+         * receipt nor its boot-profile GDAT binding, and a second pass could
+         * redraw over an already accepted source HUD. */
+        return;
     } else {
         /* A game without a live, source-backed renderer remains blank here.
          * Never substitute a procedural maze, wall, HUD, or palette. */
@@ -356,10 +350,6 @@ int fs_game_init(FS_GameState *state, const FS_GameConfig *config) {
             dm2_v1_runtime_set_viewport_asset_provider(
                 dm2_v1_boot_viewport_asset_fetch, &s_dm2_boot);
         }
-        /* Phase 3: init DM2 V2 HUD runtime (compass, depth, gold,
-         * champion bars, action strip).  Gated on phase gate.
-         * Source: dm2_v2_hud_runtime.c */
-        dm2_v2_hud_runtime_init();
         /* Store in state */
         state->dm2_boot = (void *)&s_dm2_boot;
         /* Print diagnostics */

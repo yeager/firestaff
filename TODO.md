@@ -1904,6 +1904,10 @@ diagnostic; it must not silently fall back to a generated visual.
   fields. The only remaining weather draw route is the original GDAT
   `ENVIRONMENT`/`DistantEnvironment` receipt chain; broader real-session state
   ownership is still required before all original weather paths can be shown.
+  **2026-08-06 HUD ownership update:** the legacy game loop no longer invokes
+  the V2 HUD renderer after declaring M11 the DM2 presentation owner. M11's
+  frame-receipt gate is now the only production route that may issue the
+  GDAT-backed V2 HUD pass; keep future HUD work on that route.
 - **DM2-ORIGINAL-REPLACE-002:** Replace the V2 HUD's synthetic 1x1/overlay
   route with real interface/widget records from `dm2/GRAPHICS.DAT`; do not
   use generated PNG pixels as a runtime fallback. **2026-07-30 update:** the

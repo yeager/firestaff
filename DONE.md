@@ -50509,3 +50509,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   bound. Verification: no-synthetic weather guard, weather material gate,
   real PC-DOS outdoor weather capture 21/21, boot profile 95/95, and full app
   build.
+- ✅ 2026-08-06 DM2 HUD single-owner closure: removed the legacy
+  `firestaff_game_loop` V2 HUD initialization and render call. That loop has
+  neither M11's accepted frame receipt nor its boot-profile GDAT binding, and
+  could have applied a second HUD pass over an M11-owned source frame. M11 is
+  now the sole production owner of the optional GDAT-backed V2 HUD pass.
+  Verification: full app build, real PC-DOS boot profile 95/95, and the M11
+  launcher-handoff regression's bounded SDL timeout exit.
