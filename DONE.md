@@ -80,8 +80,10 @@ were corrected to stop presenting DM1 provisions as Nexus data.
   no longer advance unbound action cooldowns, door animation or trap timers;
   retail movement no longer applies the inherited DM1 step-stamina mutation,
   and a local door record cannot open from movement without the Saturn action
-  receipt. Fixture behavior remains available for isolated tests. The focused
-  tick integration now covers the retail no-mutation boundary (18 tests).
+  receipt. Creature death/XP/script/spawner follow-up, damage-display/message
+  timers and game-over transitions are also closed. Fixture behavior remains
+  available for isolated tests. The focused tick integration now covers the
+  retail no-mutation boundary (19 tests).
 
 - ✅ 2026-08-06 Nexus retail provision mutation quarantine: the mechanics tick
   no longer decrements or penalizes unbound PLRD food/water in ISO/extracted

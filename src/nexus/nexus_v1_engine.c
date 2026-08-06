@@ -10500,7 +10500,13 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                 }
             }
         }
-        {
+        /* Creature follow-up (death XP, script callbacks and spawner state)
+         * is part of the same unbound Saturn action/event route as AI and
+         * attacks.  Do not let a stale or externally seeded actor mutate
+         * retail state after the primary actor loop was correctly blocked. */
+        if (engine->source == NEXUS_SRC_NONE ||
+            nexus_v1_action_semantics_proven()) {
+          {
             int ci2;
             for (ci2 = 0; ci2 < engine->creatures.active_count; ci2++) {
                 Nexus_Creature *cr = &engine->creatures.active[ci2];
@@ -10558,8 +10564,8 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                     }
                 }
             }
-        }
-        {
+          }
+          {
             int ci3;
             for (ci3 = 0; ci3 < engine->creatures.active_count; ci3++) {
                 Nexus_Creature *cr = &engine->creatures.active[ci3];
@@ -10590,6 +10596,7 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                     cr->type_index = -2;
                 }
             }
+          }
         }
         /* Torch/FUL expiry and ambient decay are likewise not promoted from
          * the DM1 compatibility layer without a Saturn action/render trace. */
@@ -10597,9 +10604,17 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
             nexus_v1_action_semantics_proven()) {
             nexus_v1_light_tick(&engine->light);
         }
-        nexus_v1_damage_display_tick(&engine->damage_display);
-        nexus_v1_messages_tick(&engine->messages);
-        for (ci = 0; ci < engine->champions.party_count; ++ci) {
+        /* These HUD timers and game-over transitions are also DM1-shaped
+         * consumers; retain fixture behavior but keep retail state opaque
+         * until the Saturn HUD/event trace is bound. */
+        if (engine->source == NEXUS_SRC_NONE ||
+            nexus_v1_action_semantics_proven()) {
+            nexus_v1_damage_display_tick(&engine->damage_display);
+            nexus_v1_messages_tick(&engine->messages);
+        }
+        if (engine->source == NEXUS_SRC_NONE ||
+            nexus_v1_action_semantics_proven()) {
+          for (ci = 0; ci < engine->champions.party_count; ++ci) {
             int idx = engine->champions.party[ci];
             if (idx >= 0 && idx < 4) {
                 Nexus_V1_Champion *ch = &engine->champions.champions[idx];
@@ -10621,9 +10636,13 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                     }
                 }
             }
+          }
         }
-        nexus_v1_gameover_check(&engine->gameover, &engine->champions);
-        nexus_v1_gameover_tick(&engine->gameover);
+        if (engine->source == NEXUS_SRC_NONE ||
+            nexus_v1_action_semantics_proven()) {
+            nexus_v1_gameover_check(&engine->gameover, &engine->champions);
+            nexus_v1_gameover_tick(&engine->gameover);
+        }
     }
 
     if (redraw && engine->game.game_started) {

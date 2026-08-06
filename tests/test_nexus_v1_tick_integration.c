@@ -372,11 +372,29 @@ int main(void) {
         destroy_engine(e);
     }
 
+    /* Test 19: retail ticks do not advance unbound HUD/game-over consumers. */
+    {
+        Nexus_V1_Engine *e = create_minimal_engine();
+        e->source = NEXUS_SRC_EXTRACTED;
+        nexus_v1_message_push_ex(&e->messages, "retail", 1, 0);
+        nexus_v1_damage_display_add(&e->damage_display, 0, 4,
+                                    NEXUS_DMG_TAKEN);
+        e->champions.champions[0].alive = 0;
+        nexus_v1_tick(e);
+        expect(e->messages.count == 1 && e->messages.current_ticks == 0,
+               "uncaptured retail HUD message timer does not tick");
+        expect(nexus_v1_damage_display_active(&e->damage_display, 0) == 1,
+               "uncaptured retail damage indicator does not tick");
+        expect(e->gameover.state == NEXUS_GAMEOVER_NONE,
+               "uncaptured retail game-over state does not mutate");
+        destroy_engine(e);
+    }
+
     if (g_fail) {
         fprintf(stderr, "%d failures\n", g_fail);
         return 1;
     }
 
-    printf("ok: Nexus tick integration verified (18 tests)\n");
+    printf("ok: Nexus tick integration verified (19 tests)\n");
     return 0;
 }
