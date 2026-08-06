@@ -1,3 +1,16 @@
+# DM2 CREATURES AI-row ownership for absent profile fields (2026-08-12)
+
+- ✅ The production AI loader now requires the source-owned
+  `CREATURES[type].word(0x05)` binding before publishing a creature row. A
+  missing word no longer falls through to authenticated row zero, so mounted
+  PC-DOS types 54 and 127 remain unavailable as documented until their
+  original owner is imported.
+- ✅ Updated the real `GRAPHICS.DAT` / SKSave regression to assert both raw
+  absences and the resulting unavailable AI rows. Source lock: SKProject
+  `c_record.cpp:1351-1354` and `skcrture.cpp::QUERY_CREATURE_AI_SPEC_FROM_TYPE`.
+- ✅ No release was made. Focused build and real-data regression verification
+  follows.
+
 # DM1 C045 non-candidate transition synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C045 close-after-transition fixture from M10.
@@ -36,7 +49,6 @@
   dedicated ReDMCSB regression now compiles the source explicitly.
 - ✅ Verification: `test_dm1_v1_chest_open_while_another_open_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
-
 # DM1 chest stack-split synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the local F0333 stack-split chain fixture from M10. It reads no

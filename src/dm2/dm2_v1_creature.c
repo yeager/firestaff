@@ -324,13 +324,13 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
         if (!dm2_v1_asset_load_word_value(
                 loader, DM2_GDAT_CATEGORY_CREATURES, creature_type, 0x05,
                 &ai_row)) {
-            /* SKProject c_querydb.cpp::DM2_QUERY_GDAT_CREATURE_WORD_VALUE
-             * falls through to QUERY_GDAT_ENTRY_DATA_INDEX.  Its absent
-             * dtWordValue result is the source scalar zero, and c_record.cpp
-             * then indexes table1d296c[0].  Do not convert that original
-             * default into an invented mapping or an unavailable creature;
-             * row zero is the authenticated executable AIDefinition. */
-            ai_row = 0u;
+            /* SKProject c_record.cpp:1351-1354 consumes the CREATURES
+             * word@0x05 as the first leg of the live owner chain.  The
+             * mounted PC-DOS profile has no such field for types 54 and 127;
+             * keep those records unavailable until their original owner is
+             * imported.  A scalar-zero query default is not an ownership
+             * proof and must not revive creature/CCM behavior. */
+            continue;
         }
         if (ai_row >= DM2_AI_TABLE_SIZE) {
             continue;

@@ -2407,12 +2407,13 @@ level or consumer bindings.
   override, not the PC-DOS baseline. The reader now represents all 256 source
   type keys while retaining that 63-row table. Against the mounted eight-file
   PC-DOS corpus all eight direct-root streams now decode. SKProject's scalar
-  result for a missing word is zero, so absent row-5 fields for type 54
-  (twice) and 127 select the authenticated `v1d296c[0]` rather than blocking
-  the stream or inventing a GDAT row. All remain non-resumable. The next work
-  is to locate their original active-profile owner and to bind
+  result for a missing word is zero at the query boundary, but the live
+  Firestaff handoff now treats that absence as an unowned creature record:
+  absent row-5 fields for type 54 (twice) and 127 do not select
+  `v1d296c[0]` or revive creature behavior. All remain non-resumable. The
+  next work is to locate their original active-profile owner and to bind
   allocation/possession/tile owners. The real-data regression locks both raw
-  absences and the exact eight-decoded/zero-blocked/zero-malformed outcome.
+  absences and the exact five-decoded/three-owner-blocked/zero-malformed outcome.
   **2026-08-06 follow-up:** the remaining `FS2RT01` live-runtime sidecar
   serializer/deserializer is removed from the production archive and public
   API. It wrote Firestaff's session, creature cache, mutable dungeon bytes and
