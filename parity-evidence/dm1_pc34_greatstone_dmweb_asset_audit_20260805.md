@@ -1,6 +1,6 @@
 # DM1 PC 3.4 asset audit: Greatstone and DMWeb
 
-Date: 2026-08-05
+Date: 2026-08-06
 
 ## Sources
 
@@ -33,11 +33,27 @@ and reports zero differing pixels. It includes the title source, action/spell
 HUD surfaces, champion panels, item sheet, floor/ceiling, door frame, wall
 depths, stairs, wall ornaments, and projectile/object sources.
 
+On 2026-08-06 the complete Greatstone `GRAPHICS.DAT` index was fetched to a
+temporary directory outside the repository. It contains 543 published PNG
+entries: 542 `IMG3` raster records and the separate `0695.FNT1` interface
+font. The local M11 decoder was compared against all 542 published `IMG3`
+records using decoded indexed pixels and dimensions. Result: **542/542 exact
+matches**, with zero dimension or pixel-digest differences. No downloaded
+reference media was added to the repository.
+
+Greatstone's `0696` entry is labelled unknown word data and has no `IMG3`
+reference image. It remains classified as a suspicious bitmap candidate only
+for the bounded audit path; it is not promoted to a visual asset. `0695` is
+consumed by the source-bound 1bpp interface-font loader, not the generic IMG3
+bitmap path. The authoritative SND3 records are rejected before IMG3 decoding.
+
 Focused title tests pass: 56/56 palette/step invariants, 371 C001 fallback
 checks, the 53-frame real `TITLE` decode probe, and the ReDMCSB cadence gate.
 
 ## Not yet proven
 
-This does not claim that all 713 records have been visually compared or that
-the packaged macOS window matches DOSBox pixel-for-pixel. The remaining audit
-is a complete 713-record decoded-pixel comparison plus a real Mac app capture.
+This proves every published Greatstone `IMG3` raster reference, but does not
+claim that all 713 records have a public raster reference or that the packaged
+macOS window matches DOSBox pixel-for-pixel. Remaining scope is the source
+consumer/capture for special records (especially 0696) and a real packaged
+macOS app capture.

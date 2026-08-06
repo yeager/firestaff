@@ -4507,15 +4507,17 @@ that its exact runtime path is not already source-locked and tested.
    doors being projected from object bytes. Real PC34 layout/state verification
    is covered by `test_firestaff_dm1_dungeon_state_real_data`; broader M11
    viewport capture remains open.
-2. **DM1-PC34-FULL-ASSET-VISUAL-AUDIT:** Compare every one of the 713
-   hash-verified PC 3.4 `GRAPHICS.DAT` records against Greatstone/SCK decoded
-   references and capture the packaged macOS app. 2026-08-06: the new real
-   corpus audit now classifies and decodes all 713 records through the M11
-   loader: 543 bitmap records, 1 suspicious bitmap, 34 non-bitmap records,
-   4 empty records and 131 zero-sized records. The 34 non-bitmap records
-   include the complete 33-item SND3 PCM bank; they are now rejected before
-   IMG3, fixing the old junk-icon path. Remaining scope is pixel comparison
-   against every Greatstone/SCK reference and packaged macOS app capture.
+2. **DM1-PC34-FULL-ASSET-VISUAL-AUDIT:** Finish the non-raster source
+   consumer audit and capture the packaged macOS app for the 713 hash-verified
+   PC 3.4 `GRAPHICS.DAT` records. 2026-08-06: the real corpus audit classifies
+   all 713 records through the M11 loader: 543 bitmap records, 1 suspicious
+   bitmap, 34 non-bitmap records, 4 empty records and 131 zero-sized records.
+   Greatstone publishes 542 `IMG3` raster references plus the separate 0695
+   `FNT1` font; all 542 `IMG3` records now match Firestaff dimensions and
+   decoded indexed pixels exactly. The 34 non-bitmap records include the
+   complete 33-item SND3 PCM bank and are rejected before IMG3, fixing the old
+   junk-icon path. Remaining scope is 0696 unknown-word-data consumer proof
+   and packaged macOS app capture; do not treat 0696 as a guessed bitmap.
    2026-08-06 test-path correction: the audit accepts both a direct PC34
    install root and its standard `DATA/GRAPHICS.DAT` layout, and the real
    extracted package now passes the complete 713-record audit without a path

@@ -52651,6 +52651,16 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   verifies the SND3 boundary and the audit is wired into CTest. Remaining
   visual Greatstone/SCK comparison and packaged macOS capture stay open in
   `DM1-PC34-FULL-ASSET-VISUAL-AUDIT`; no generated art was introduced.
+
+- ✅ 2026-08-06 DM1 PC34 Greatstone raster comparison: fetched the public
+  Greatstone index to a temporary directory and compared all 542 published
+  `IMG3` PNG records against the local hash-admitted PC3.4 `GRAPHICS.DAT`.
+  Every record matched dimensions and decoded indexed pixels exactly (542/542,
+  zero differences). The separate 0695 `FNT1` interface font and 0696 unknown
+  word-data entry were kept out of the raster claim; no reference media was
+  committed and no synthetic asset was introduced. Remaining 0696 consumer
+  proof and packaged macOS capture stay open in
+  `DM1-PC34-FULL-ASSET-VISUAL-AUDIT`.
 # Nexus portrait placement boundary
 
 2026-08-06: Removed the startup champion renderer's guessed 10×10 FACE.BIN
