@@ -11,7 +11,9 @@ static const char *graphics_path(void)
 {
     const char *path = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
     static char from_dir[1024];
+    static char from_data_dir[1024];
     const char *data_dir;
+    FILE *probe;
 
     if (path && path[0]) {
         return path;
@@ -21,7 +23,17 @@ static const char *graphics_path(void)
         return NULL;
     }
     (void)snprintf(from_dir, sizeof(from_dir), "%s/GRAPHICS.DAT", data_dir);
-    return from_dir;
+    probe = fopen(from_dir, "rb");
+    if (probe) {
+        fclose(probe);
+        return from_dir;
+    }
+    /* The scanner and packaged DOS archives commonly expose the install
+     * root, while PC34 keeps the two runtime files under DATA/. Accept both
+     * layouts so the real-corpus audit cannot fail on directory shape. */
+    (void)snprintf(from_data_dir, sizeof(from_data_dir),
+                   "%s/DATA/GRAPHICS.DAT", data_dir);
+    return from_data_dir;
 }
 
 static uint64_t fnv1a_update(uint64_t hash, const unsigned char *bytes,

@@ -23,6 +23,14 @@ were corrected to stop presenting DM1 provisions as Nexus data.
   This fixes test setup only; fixture-free original saves containing C13 events
   are still required.
 
+- ✅ 2026-08-06 DM1 full-asset audit path correction: the 713-record
+  `GRAPHICS.DAT` audit now accepts both a direct install root and the standard
+  PC34 `DATA/GRAPHICS.DAT` layout. The previous test-only path assumption
+  reported a false open failure for the real extracted DOS package. Ninja
+  rebuild and the full real 713-record audit pass: 543 bitmap records, 1
+  suspicious bitmap, 34 non-bitmap records, 4 empty records and 131
+  zero-sized records.
+
 - ✅ 2026-08-06 DM1 source SND3 binding: M11 now rebinds the original 35-event
   SND3 bank to the exact hash-admitted PC3.4 `GRAPHICS.DAT` path when the DM1
   startup graphics receipt is applied. This prevents an unrelated default

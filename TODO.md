@@ -4487,7 +4487,10 @@ that its exact runtime path is not already source-locked and tested.
    include the complete 33-item SND3 PCM bank; they are now rejected before
    IMG3, fixing the old junk-icon path. Remaining scope is pixel comparison
    against every Greatstone/SCK reference and packaged macOS app capture.
-   Keep C001 title timing/palette tied to ReDMCSB `TITLE.C`; do not replace
+   2026-08-06 test-path correction: the audit accepts both a direct PC34
+   install root and its standard `DATA/GRAPHICS.DAT` layout, and the real
+   extracted package now passes the complete 713-record audit without a path
+   false negative. Keep C001 title timing/palette tied to ReDMCSB `TITLE.C`; do not replace
    missing references with generated pixels.
 3. **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
    live group, line-of-sight, projectile-impact, teleporter, and spell-tick
