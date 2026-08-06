@@ -162,6 +162,11 @@
   Saturn loot writeback. The public route is now fail-closed; recover those
   real records and the original consumer before admitting chests or loot.
 
+- **NEXUS-SHOP-ACTION-CAPTURE:** DM.BIN's eight retail price rows remain a
+  verified catalog receipt, but the old host shop manager could still invent
+  shop instances and stock. Runtime shop registration, stock and open/lookup
+  admission is now blocked until the Saturn shop-object consumer is captured.
+
 - **THERON-REAL-CONSUMER-HANDOFF:** The authenticated US/JP Track 02 map,
   object, ground, door, teleporter and creature-bank records are retained, but
   a positive game-owned post-startup CD read is still missing. The current

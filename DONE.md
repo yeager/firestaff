@@ -1,3 +1,8 @@
+- ✅ 2026-08-06 Nexus shop-instance quarantine: retained the real DM.BIN price
+  receipt while blocking synthetic shop registration, stock, open and lookup
+  routes. Buy/sell remain no-op until the Saturn shop-object consumer and
+  inventory/gold dispatch are authenticated; focused shop-manager tests pass.
+
 - ✅ 2026-08-06 Nexus container/loot quarantine: removed the synthetic
   DM1-shaped chest/crate mutation route from production. Retail DGN item and
   location records remain diagnostic until a Saturn container owner, content

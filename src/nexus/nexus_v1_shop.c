@@ -78,38 +78,22 @@ void nexus_v1_shop_manager_init(Nexus_ShopManager *mgr) {
 
 int nexus_v1_shop_register(Nexus_ShopManager *mgr,
     int shop_id, const char *name) {
-    Nexus_ShopInstance *s;
-    if (!mgr || mgr->count >= NEXUS_MAX_SHOPS) return -1;
-    s = &mgr->shops[mgr->count];
-    memset(s, 0, sizeof(*s));
-    s->shop_id = shop_id;
-    if (name) {
-        strncpy(s->name, name, sizeof(s->name) - 1);
-        s->name[sizeof(s->name) - 1] = '\0';
-    }
-    return mgr->count++;
+    /* DM.BIN owns price rows only. Retail Nexus shop-object ownership,
+     * stock records and Saturn open/close dispatch are not captured. */
+    (void)mgr; (void)shop_id; (void)name;
+    return -1;
 }
 
 int nexus_v1_shop_add_stock(Nexus_ShopManager *mgr,
     int shop_idx, int item_id, int price, int stock) {
-    Nexus_ShopInstance *s;
-    Nexus_ShopStockEntry *e;
-    if (!mgr || shop_idx < 0 || shop_idx >= mgr->count) return -1;
-    s = &mgr->shops[shop_idx];
-    if (s->stock_count >= NEXUS_MAX_SHOP_STOCK) return -1;
-    e = &s->stock[s->stock_count];
-    e->item_id = item_id;
-    e->price = price;
-    e->stock = stock;
-    return s->stock_count++;
+    (void)mgr; (void)shop_idx; (void)item_id;
+    (void)price; (void)stock;
+    return -1;
 }
 
 int nexus_v1_shop_open(Nexus_ShopManager *mgr, int shop_idx) {
-    if (!mgr || shop_idx < 0 || shop_idx >= mgr->count) return 0;
-    mgr->active_shop = shop_idx;
-    mgr->selected_item = 0;
-    mgr->open = 1;
-    return 1;
+    (void)mgr; (void)shop_idx;
+    return 0;
 }
 
 void nexus_v1_shop_close(Nexus_ShopManager *mgr) {
@@ -144,11 +128,7 @@ int nexus_v1_shop_buy(Nexus_ShopManager *mgr,
 }
 
 int nexus_v1_shop_find_by_id(const Nexus_ShopManager *mgr, int shop_id) {
-    int i;
-    if (!mgr) return -1;
-    for (i = 0; i < mgr->count; i++) {
-        if (mgr->shops[i].shop_id == shop_id) return i;
-    }
+    (void)mgr; (void)shop_id;
     return -1;
 }
 

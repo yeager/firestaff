@@ -4,7 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
-/* Nexus shop item price table from DM.BIN at 0x037210.
+/* Nexus shop item price receipt from DM.BIN at 0x037210.
  * 8 entries: (item_id BE16, price BE16).
  * Item 0x009E appears twice (650 and 820 — likely different shops or tiers).
  * Source: DM.BIN yam\item.c 0x037210, Saturn binary. */
@@ -66,6 +66,8 @@ struct Nexus_ShopManager {
 
 void nexus_v1_shop_manager_init(Nexus_ShopManager *mgr);
 
+/* Runtime shop admission is blocked until the Saturn shop-object consumer
+ * and stock/open dispatch are authenticated. */
 int nexus_v1_shop_register(Nexus_ShopManager *mgr,
     int shop_id, const char *name);
 
