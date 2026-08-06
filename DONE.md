@@ -1,3 +1,11 @@
+# DM1 D3C F0111 door-front synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the fixed D3C F0111 door-front source-order/C10 model from M10.
+  It reads no original material and has no M11/runtime caller; its dedicated
+  ReDMCSB regression now compiles the source explicitly.
+- ✅ Verification: `test_dm1_v1_viewport_d3c_f0111_door_front_pair_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D3C F0108 floor-ceiling synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only D3C F0108 framebuffer model from M10. It uses

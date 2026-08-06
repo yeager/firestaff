@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D3C-F0111-SYNTHETIC-AUDIT:** This fixed D3C door-front source-order
+  and C10 model has no original-material input or M11/runtime caller. Retain
+  it as explicit ReDMCSB regression until a source-bound D3C door consumer is
+  recovered.
+
 - **DM1-D3C-F0108-SYNTHETIC-AUDIT:** This contract-only D3C model uses fixed
   floor, ceiling, ornament and thing probe pixels without original material.
   It has no M11/runtime caller; retain it as explicit ReDMCSB regression until
