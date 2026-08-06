@@ -29380,7 +29380,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   header and ULP span, validates the `0x8000 | version`/entry-count contract,
   checks the cumulative ULP raw boundary against the mounted file size, and
   closes the source file on every success/failure path. ENT1, underlay and
-  allocator admission remain gated.
+  allocator admission remain gated. **2026-08-13 progress:** the same
+  callback receipt now follows SKProject's little-/big-endian header, size
+  word and ULP decoding contract, with a regression fixture for 68k byte
+  order and the mounted PC-DOS GRAPHICS.DAT still passing. ENT1, underlay,
+  allocator lifetime and the secondary-file transaction remain gated.
 - [ ] DM2 combat source contract: a creature Defense GDAT row alone cannot
   author a player attack. Keep `dm2_v1_combat_resolve_attack_on_creature()`
   blocked until `DM2_ENGAGE_COMMAND`/`CALC_PLAYER_ATTACK_DAMAGE` has the

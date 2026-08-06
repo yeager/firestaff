@@ -878,12 +878,25 @@ static uint16_t dm2_gdat_le16(const uint8_t *p)
     return (uint16_t)p[0] | (uint16_t)((uint16_t)p[1] << 8);
 }
 
+static uint16_t dm2_gdat_be16(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[0] << 8) | (uint16_t)p[1]);
+}
+
 static uint32_t dm2_gdat_le32(const uint8_t *p)
 {
     return (uint32_t)p[0] |
            ((uint32_t)p[1] << 8) |
            ((uint32_t)p[2] << 16) |
            ((uint32_t)p[3] << 24);
+}
+
+static uint32_t dm2_gdat_be32(const uint8_t *p)
+{
+    return ((uint32_t)p[0] << 24) |
+           ((uint32_t)p[1] << 16) |
+           ((uint32_t)p[2] << 8) |
+           (uint32_t)p[3];
 }
 
 int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
@@ -898,6 +911,7 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
     uint32_t table_end;
     uint16_t entries;
     uint16_t version;
+    bool big_endian;
     uint32_t offset;
     uint16_t i;
     int opened = 0;
@@ -915,23 +929,37 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
         goto fail;
     }
 
+    /* SKProject v4/skcore.cpp accepts both DOS little-endian and 68k
+     * big-endian GRAPHICS.DAT words before LOAD_ENT1. Detect the marker
+     * from the raw bytes, rather than admitting only the PC byte order. */
     version = dm2_gdat_le16(header);
-    entries = dm2_gdat_le16(header + 2);
+    big_endian = false;
+    if ((version & 0x8000u) == 0u) {
+        version = dm2_gdat_be16(header);
+        big_endian = true;
+    }
+    entries = big_endian ? dm2_gdat_be16(header + 2) :
+                           dm2_gdat_le16(header + 2);
     if ((version & 0x8000u) == 0u ||
         (((version & 0x7fffu) != 2u) &&
          ((version & 0x7fffu) != 4u) &&
          ((version & 0x7fffu) != 5u)) || entries == 0u) {
         goto fail;
     }
+    state->versionlo = (int16_t)(version & 0x7fffu);
+    state->entries = entries;
+    state->big_endian = big_endian;
     if (out) {
         out->header_validated = true;
         out->versionlo = (int16_t)(version & 0x7fffu);
         out->entries = entries;
+        out->endian_swapped = big_endian;
     }
 
     /* bgdat.cpp reads a four-byte source-data offset, then entries-1 words;
      * the first ULP word is the zero origin and is supplied by the loader. */
-    source_data_offset = dm2_gdat_le32(header + 4);
+    source_data_offset = big_endian ? dm2_gdat_be32(header + 4) :
+                                      dm2_gdat_le32(header + 4);
     ulp_length = (uint32_t)entries * 2u;
     table_end = 8u + ulp_length - 2u;
     if (source_data_offset > (uint32_t)state->filesize ||
@@ -952,7 +980,9 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
     }
     offset = 0u;
     for (i = 0u; i < entries; ++i) {
-        uint16_t word = dm2_gdat_le16(ulp + (size_t)i * 2u);
+        uint16_t word = big_endian ?
+            dm2_gdat_be16(ulp + (size_t)i * 2u) :
+            dm2_gdat_le16(ulp + (size_t)i * 2u);
         if (i == 0u && word != 0u) goto fail;
         if (i != 0u) {
             offset += word;

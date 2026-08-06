@@ -1,3 +1,14 @@
+# DM2 GDAT source-endian structure boundary (2026-08-13)
+
+- ✅ Matched SKProject `DM2_READ_GRAPHICS_STRUCTURE` header, size-word and ULP
+  decoding for both DOS little-endian and 68k big-endian GRAPHICS.DAT files;
+  the receipt records the detected byte order and updates the source file
+  state with version/entry metadata.
+- ✅ Added a big-endian callback regression fixture and verified it together
+  with the mounted PC-DOS corpus: `test_dm2_v1_gdatfile_pc34_compat` passes
+  24/24. ENT1, underlay, allocator lifetime and the secondary-file
+  transaction remain explicitly gated; no release was made.
+
 # DM2 varelse- och drop-GDAT med vald korpus (2026-08-07)
 
 - ✅ Dropptabell-, dynamisk varelsematerial- och V5-animationstesterna läser

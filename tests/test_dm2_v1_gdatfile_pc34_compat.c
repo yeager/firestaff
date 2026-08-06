@@ -603,6 +603,41 @@ static int test_read_graphics_structure_binds_header_and_ulp(void)
            mctx.close_count == 1;
 }
 
+static int test_read_graphics_structure_accepts_big_endian_header_and_ulp(void)
+{
+    DM2_V1_GdatFileState state;
+    DM2_V1_GdatFileCallbacks cb = make_mock_callbacks();
+    MockCtx mctx;
+    DM2_V1_GdatReadStructureReceipt out;
+
+    memset(&mctx, 0, sizeof(mctx));
+    dm2_v1_gdat_file_init(&state, NULL);
+    /* 68k order: version=5|0x8000, entries=2, first ENT1 size=4,
+     * ULP offsets={0,1}. Keep the same source boundary as the LE fixture. */
+    mctx.file_data[0] = 0x80;
+    mctx.file_data[1] = 0x05;
+    mctx.file_data[2] = 0x00;
+    mctx.file_data[3] = 0x02;
+    mctx.file_data[4] = 0x00;
+    mctx.file_data[5] = 0x00;
+    mctx.file_data[6] = 0x00;
+    mctx.file_data[7] = 0x04;
+    mctx.file_data[8] = 0x00;
+    mctx.file_data[9] = 0x01;
+    mctx.file_data[14] = 0xA5;
+    mctx.file_data_len = 15;
+
+    if (!dm2_v1_gdat_read_graphics_structure(&state, &cb, &mctx, &out)) {
+        return 0;
+    }
+    if (!(out.valid && out.endian_swapped && out.entries == 2u &&
+           out.versionlo == 5 && out.source_data_offset == 4u &&
+           out.first_raw_offset == 15u && mctx.close_count == 1)) {
+        return 0;
+    }
+    return 1;
+}
+
 static int test_read_graphics_structure_real_dm2_data(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
@@ -691,6 +726,7 @@ int main(void)
     TEST(query_next_entry_filtered);
     TEST(load_raw_data);
     TEST(read_graphics_structure_binds_header_and_ulp);
+    TEST(read_graphics_structure_accepts_big_endian_header_and_ulp);
     TEST(read_graphics_structure_real_dm2_data);
 
     printf("----------------------------------\n");

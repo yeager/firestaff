@@ -97,6 +97,7 @@ typedef struct DM2_V1_GdatFileState {
     int32_t      filesize;
     int16_t      versionlo;
     uint16_t     entries;
+    bool         big_endian;
     bool         filetype1;
     bool         filetype2;
     const char  *filename1;  /* .Z020GRAPHICS.DAT */
@@ -201,6 +202,7 @@ typedef struct DM2_V1_GdatReadStructureReceipt {
     uint32_t first_raw_offset;
     bool     header_validated;
     bool     ulp_validated;
+    bool     endian_swapped;
 } DM2_V1_GdatReadStructureReceipt;
 
 /* ========================================================================
