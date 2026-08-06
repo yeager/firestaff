@@ -51518,3 +51518,9 @@ and `firestaff` build pass.
   including the champion-mirror backing frame. G0198/G0199 palette maps remain
   limited to their D3/D2 projections. The focused PC34 wall-ornament test now
   verifies native D1C output and all 126 assertions pass.
+
+- ✅ 2026-08-06 DM1 real PC34 floor-capture test: fixed the test data resolver
+  to recognize the original archive's `DATA/DUNGEON.DAT` and
+  `DATA/GRAPHICS.DAT` layout. The D0C F0115 material and final M11 capture
+  receipt now run instead of falsely skipping and pass against the extracted
+  original corpus.

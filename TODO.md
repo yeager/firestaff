@@ -4032,6 +4032,10 @@ that its exact runtime path is not already source-locked and tested.
     held object in another champion's hand uses `MASK0x0200_HANDS` instead of
     the unrestricted C00/C01-adjacent backpack masks. Remaining: real Mac
     pickup/placement/cursor/panel capture.
+    2026-08-06: the real floor-item F0115 capture test now accepts the
+    standard PC34 archive's `DATA/` root, so its previous false skip is gone;
+    the D0C source material and final M11 capture receipt pass against the
+    extracted original corpus.
 17. **DM1-SOUND-MUSIC-STARTUP:** Complete original DM1 sound/music playback,
     title/swoosh/entrance cadence, palette transitions, and runtime sound
     events with real media and no generated timing.

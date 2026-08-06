@@ -15,30 +15,54 @@ static int data_dir_has_pc34(const char* dir)
 {
     char dungeon[1024];
     char graphics[1024];
+    char data_dir[1024];
     if (!dir || !dir[0]) return 0;
     snprintf(dungeon, sizeof(dungeon), "%s/DUNGEON.DAT", dir);
     snprintf(graphics, sizeof(graphics), "%s/GRAPHICS.DAT", dir);
+    if (regular_file_has_bytes(dungeon) && regular_file_has_bytes(graphics)) {
+        return 1;
+    }
+    /* The normal PC34 archive layout stores the originals below DATA/. */
+    snprintf(data_dir, sizeof(data_dir), "%s/DATA", dir);
+    snprintf(dungeon, sizeof(dungeon), "%s/DUNGEON.DAT", data_dir);
+    snprintf(graphics, sizeof(graphics), "%s/GRAPHICS.DAT", data_dir);
     return regular_file_has_bytes(dungeon) && regular_file_has_bytes(graphics);
 }
 
 static const char* resolve_data_dir(void)
 {
     static char path[2048];
+    static char data_path[2048];
     const char* env = getenv("FIRESTAFF_DM1_DATA_DIR");
     const char* root = getenv("FIRESTAFF_DATA");
     const char* home = getenv("HOME");
 
-    if (data_dir_has_pc34(env)) return env;
-    if (data_dir_has_pc34(root)) return root;
+    if (data_dir_has_pc34(env)) {
+        snprintf(data_path, sizeof(data_path), "%s/DATA", env);
+        return data_dir_has_pc34(data_path) ? data_path : env;
+    }
+    if (data_dir_has_pc34(root)) {
+        snprintf(data_path, sizeof(data_path), "%s/DATA", root);
+        return data_dir_has_pc34(data_path) ? data_path : root;
+    }
     if (root && root[0]) {
         snprintf(path, sizeof(path), "%s/dm1", root);
-        if (data_dir_has_pc34(path)) return path;
+        if (data_dir_has_pc34(path)) {
+            snprintf(data_path, sizeof(data_path), "%s/DATA", path);
+            return data_dir_has_pc34(data_path) ? data_path : path;
+        }
     }
     if (home && home[0]) {
         snprintf(path, sizeof(path), "%s/.firestaff/data/dm1", home);
-        if (data_dir_has_pc34(path)) return path;
+        if (data_dir_has_pc34(path)) {
+            snprintf(data_path, sizeof(data_path), "%s/DATA", path);
+            return data_dir_has_pc34(data_path) ? data_path : path;
+        }
         snprintf(path, sizeof(path), "%s/.firestaff/data", home);
-        if (data_dir_has_pc34(path)) return path;
+        if (data_dir_has_pc34(path)) {
+            snprintf(data_path, sizeof(data_path), "%s/DATA", path);
+            return data_dir_has_pc34(data_path) ? data_path : path;
+        }
     }
     return NULL;
 }
