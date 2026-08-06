@@ -9,14 +9,8 @@
 static int data_path(char *out, size_t outSize)
 {
     const char *root = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char *home;
-    if (root && root[0]) {
-        snprintf(out, outSize, "%s/GRAPHICS.DAT", root);
-        return 1;
-    }
-    home = getenv("HOME");
-    if (!home || !home[0]) return 0;
-    snprintf(out, outSize, "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
+    if (!root || !root[0]) return 0;
+    snprintf(out, outSize, "%s/GRAPHICS.DAT", root);
     return 1;
 }
 
@@ -36,7 +30,7 @@ int main(void)
             fputs("FAIL: requested PC34 GRAPHICS.DAT could not be opened\n", stderr);
             return 1;
         }
-        puts("SKIP: PC34 GRAPHICS.DAT not installed");
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
         return 0;
     }
     memset(planes, 0, sizeof(planes));
