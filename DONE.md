@@ -64,6 +64,15 @@
   passes. The broader action/stamina suite remains externally red on its
   existing projectile-damage and fleeing-delay cases, unrelated to lookup.
 
+# DM1 procedural minimap source boundary (2026-08-06)
+
+- ✅ The host-drawn corner minimap is now rejected for authenticated PC34 DM1
+  sessions, including persisted/F7-enabled QoL state. Source viewport pixels
+  remain owned by the original game; the minimap stays available only in
+  diagnostic worlds.
+- ✅ Verification: `test_dm1_v1_minimap_pc34_compat` checks the enabled
+  minimap leaves an authenticated session framebuffer unchanged.
+
 # DM1 legacy ornament sensor-cell selection (2026-08-06)
 
 - ✅ The legacy DUNGEON.DAT bridge now matches a C03 wall sensor only when

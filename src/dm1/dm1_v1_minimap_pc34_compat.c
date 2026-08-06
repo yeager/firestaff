@@ -85,6 +85,11 @@ void DM1_V1_Minimap_RenderPc34Compat(M11_GameViewState* state,
     if (!fb || fbW <= 0 || fbH <= 0) return;
     if (!M11_QolRuntime_GetMinimapEnabled()) return;
     if (!state || !state->active) return;
+    if (!DM1_V1_Minimap_SourceAllowsDiagnosticOverlay(state->sourceKind)) {
+        /* This is a host-made navigational aid.  The authenticated PC34
+         * viewport owns every source-session pixel. */
+        return;
+    }
     dungeon = state->world.dungeon;
     if (!dungeon || !dungeon->loaded || !dungeon->tilesLoaded) return;
     mapIdx = state->world.party.mapIndex;

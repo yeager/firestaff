@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MINIMAP-SYNTHETIC-BOUNDARY:** The corner minimap is now blocked for
+  authenticated PC34 DM1 source sessions because it is a host-drawn
+  diagnostic surface, not an original game display. Keep it available only
+  to diagnostic worlds unless an authenticated source minimap owner is
+  recovered.
+
 - **DM1-LEGACY-DUNGEON-BRIDGE-ORNAMENT-OWNER:** The legacy
   `firestaff_dungeon_state` bridge now derives F0170/F0171 random wall/floor
   ordinals from the authenticated PC34 DUNGEON.DAT seed, map dimensions,
