@@ -1,3 +1,14 @@
+# Nexus retail mechanics mutation fence (2026-08-06)
+
+- ✅ Closed the remaining retail mechanics leak: `NEXUS_SRC_EXTRACTED` and
+  `NEXUS_SRC_ISO` now return before the DM1-shaped movement/turn loop can
+  mutate party pose or consume commands. The explicit `NEXUS_SRC_NONE` lane
+  remains available for isolated compatibility tests. Updated the integration
+  regression to prove decoded floor geometry alone cannot move the party.
+- ✅ Verification: `test_nexus_v1_tick_integration` (20 tests), including
+  retail hunger/status/light/door/teleport/HUD and movement immutability.
+  No game data was copied or committed.
+
 # Nexus startup ASCII-label provenance fence (2026-08-06)
 
 - ✅ Startup champion footer and row labels now require the isolated

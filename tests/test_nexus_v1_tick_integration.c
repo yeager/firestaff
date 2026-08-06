@@ -351,8 +351,8 @@ int main(void) {
         destroy_engine(e);
     }
 
-    /* Test 18: retail movement remains available on decoded floor geometry,
-     * but its DM1-derived step-stamina mutation stays closed. */
+    /* Test 18: decoded retail floor geometry does not authorize movement
+     * writes while the Saturn event/action consumer remains uncaptured. */
     {
         Nexus_V1_Engine *e = create_minimal_engine();
         int old_stamina;
@@ -365,8 +365,8 @@ int main(void) {
         old_stamina = e->champions.champions[0].stamina;
         nexus_mechanics_push_command(e->mechanics, NEXUS_CMD_FORWARD);
         nexus_v1_tick(e);
-        expect(e->mechanics->party_x != old_x || e->mechanics->party_y != old_y,
-               "retail movement still follows decoded floor geometry");
+        expect(e->mechanics->party_x == old_x && e->mechanics->party_y == old_y,
+               "uncaptured retail movement does not mutate the party pose");
         expect(e->champions.champions[0].stamina == old_stamina,
                "uncaptured retail step stamina does not mutate");
         destroy_engine(e);

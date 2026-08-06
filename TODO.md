@@ -6,6 +6,12 @@
   TEXT4/TABL/FONT256 consumer and placement before admitting real names,
   stats, or action labels to the menu.
 
+- **NEXUS-ACTION-DISPATCH-CAPTURE:** Retail mechanics no longer consume
+  queued movement or turn commands merely because DGN floor geometry decoded;
+  the prior compatibility loop could mutate party coordinates before the
+  action gate. Recover the Saturn event producer, command queue and SDDRVS
+  state-write owner before reopening any retail mechanics mutation.
+
 - **NEXUS-CREATURE-VDP1-CAPTURE:** The generic creature billboard API is now
   no-draw. Its old DM1-shaped perspective/flag behavior accepted a host
   texture without Saturn VDP1 command, CLUT, placement, or DMDF/MNS owner

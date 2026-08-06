@@ -568,6 +568,15 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     if (!st || !engine) return 0;
     saturn_actions = engine->source == NEXUS_SRC_NONE ||
                      nexus_v1_action_semantics_proven();
+
+    /* A decoded retail corpus is not an action-dispatch proof.  The old
+     * compatibility loop still allowed FORWARD/TURN and floor-geometry
+     * writes to mutate the party pose before its individual square effects
+     * were gated.  That made the host model appear playable while the
+     * Saturn event producer, SDDRVS state writes and command queue remain
+     * uncaptured.  Keep all mechanics state immutable until that owner is
+     * admitted; NEXUS_SRC_NONE remains the explicit isolated fixture lane. */
+    if (!saturn_actions) return 0;
     st->total_ticks++;
 
     /* Advance door animation each tick, independent of input cooldown.
