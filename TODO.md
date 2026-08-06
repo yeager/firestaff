@@ -1038,6 +1038,10 @@
   hand-written `Clear`/`Rain`/`Fog`/`Storm` compatibility labels are removed;
   `dm2_v1_weather_name()` now returns `NULL`. Bind an authenticated text
   producer before presenting weather text in a player-facing UI.
+  **2026-08-07 corpus update:** the IMG9 global-palette and
+  G1→GRAPHICSSET→weather/light real-data regressions now consume only the
+  selected `FIRESTAFF_DM2_DATA_DIR` corpus and fail an unreadable selection;
+  no private HOME installation can supply their material.
 
 - **DM2-FIXED-SPELL-AI-TEXT-CONSUMER:** The fixed `dSpellsTable` and genuine
   AI table own mechanics only. Names visible beside SKProject's fixed spell

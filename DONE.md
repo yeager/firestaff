@@ -9,6 +9,14 @@
   24/24. ENT1, underlay, allocator lifetime and the secondary-file
   transaction remain explicitly gated; no release was made.
 
+# DM2 väder-GDAT med vald korpus (2026-08-07)
+
+- ✅ IMG9-palett- och G1→GRAPHICSSET→väder/ljustesterna kräver nu en explicit
+  `FIRESTAFF_DM2_DATA_DIR`-korpus. En vald men oläsbar `GRAPHICS.DAT` eller
+  `DUNGEON.DAT` stoppar verifieringen. PC-DOS-media bekräftar alla nio
+  ENVIRONMENT-kommandon (`0x64..0x6c`) med 256-färgers identitetspalett och
+  den källbundna scen-/ljus-/väderkedjan för nivå 17, graphicsset 5.
+
 # DM2 varelse- och drop-GDAT med vald korpus (2026-08-07)
 
 - ✅ Dropptabell-, dynamisk varelsematerial- och V5-animationstesterna läser
