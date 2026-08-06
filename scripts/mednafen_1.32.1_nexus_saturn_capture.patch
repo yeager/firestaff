@@ -24,9 +24,13 @@
 @@ -27,0 +28,2 @@
 +#include <stdio.h>
 +#include <stdlib.h>
-@@ -44,0 +47,2 @@
+@@ -44,0 +47,6 @@
 +static FILE *FirestaffCaptureFile;
 +static unsigned FirestaffCaptureFrames;
++static unsigned FirestaffCaptureSkippedFrames;
++static unsigned FirestaffCaptureSkipTarget;
++static unsigned FirestaffCaptureFrameLimit = 2;
++static bool FirestaffCaptureConfigured;
 @@ -45,0 +50,2 @@
 +static void FirestaffCaptureFrame(void);
 +
@@ -34,13 +38,27 @@
 +  FirestaffCaptureFrame();
 @@ -985,0 +993 @@
 +  FirestaffCaptureFrames = 0;
-@@ -1400,0 +1409,20 @@
+@@ -1400,0 +1409,34 @@
 +}
 +
 +static void FirestaffCaptureFrame(void)
 +{
 + const char *path;
-+ if(FirestaffCaptureFrames >= 2) return;
++ if(!FirestaffCaptureConfigured)
++ {
++  const char *skip = getenv("FIRESTAFF_NEXUS_TRACE_SKIP_FRAMES");
++  const char *limit = getenv("FIRESTAFF_NEXUS_TRACE_FRAME_LIMIT");
++  if(skip && *skip) FirestaffCaptureSkipTarget = (unsigned)strtoul(skip, NULL, 10);
++  if(limit && *limit) FirestaffCaptureFrameLimit = (unsigned)strtoul(limit, NULL, 10);
++  if(!FirestaffCaptureFrameLimit) FirestaffCaptureFrameLimit = 1;
++  FirestaffCaptureConfigured = true;
++ }
++ if(FirestaffCaptureSkippedFrames < FirestaffCaptureSkipTarget)
++ {
++  FirestaffCaptureSkippedFrames++;
++  return;
++ }
++ if(FirestaffCaptureFrames >= FirestaffCaptureFrameLimit) return;
 + path = getenv("FIRESTAFF_NEXUS_TRACE_OUTPUT");
 + if(!path || !*path) return;
 + if(!FirestaffCaptureFile) FirestaffCaptureFile = fopen(path, "wb");

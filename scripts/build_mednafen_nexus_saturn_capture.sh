@@ -38,9 +38,13 @@ if [[ ! -f "$source_dir/configure" ]]; then
   fi
 fi
 marker="$source_dir/.firestaff-nexus-capture-patched"
+patch_id='FIRESTAFF_NEXUS_SATURN_CAPTURE_PATCH_V2_FRAME_WINDOW'
 if [[ ! -f "$marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_saturn_capture.patch"
-  touch "$marker"
+  printf '%s\n' "$patch_id" > "$marker"
+elif [[ "$(cat "$marker" 2>/dev/null)" != "$patch_id" ]]; then
+  echo "ERROR: external Mednafen source has an older or unknown Firestaff patch; use a fresh build directory" >&2
+  exit 2
 fi
 profile_marker="$source_dir/.firestaff-nexus-saturn-only"
 profile_id='FIRESTAFF_NEXUS_MEDNAFEN_PROFILE_V2_SATURN_ONLY'

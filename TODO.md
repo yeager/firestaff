@@ -155,10 +155,16 @@
 
 - **NEXUS-SATURN-RUNTIME-CAPTURE-PRODUCER:** The external-disk Mednafen 1.32.1
   producer is now compiled with Saturn support and has emitted a validated
-  two-frame raw VDP1/VDP2 witness from the hash-verified European DM Nexus ISO
-  and BIOS. The raw validator proves transport/layout only. Do not admit it as
-  PRS3, SLEV/SAL/SDDRVS, HUD, or viewport semantics until those consumers have
-  authenticated runtime observations and source-owned bindings.
+  two-frame raw VDP1/VDP2 witness. Region provenance is now explicit: the
+  English ISO is `SGAREA U`, the merged English image is `SGAREA J`, and only
+  the French ISO is `SGAREA E` for the supplied European E-BIOS. The raw
+  validator proves transport/layout only. Do not admit it as PRS3,
+  SLEV/SAL/SDDRVS, HUD, or viewport semantics until those consumers have
+  authenticated runtime observations and source-owned bindings. The producer
+  now supports an external skip/count window and captures after the VDP2 frame
+  boundary; E-BIOS + French-media windows show the real TrueMotion and orange
+  startup animation in VDP1 framebuffer data. This is still a raw witness,
+  not a menu/HUD/viewport import or a PRS3 decoder proof.
 - **NEXUS-MENU-CAPTURE-GATE:** TITLE.CG timing must remain on the title screen
   until the real MENU.BPK capture route is joined. A source-owned runtime
   capture is still required before menu, HUD, and viewport composition can be
@@ -992,8 +998,12 @@
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
   and the local English CUE by
   `b96f01e2f8ce3ab9c8e4a33d5a0c7076cdc1bfd247a85a1454e6c36c8a616f33`.
-  The operator preflight accepts both with the real `MENU.BPK`, `DM.BIN`,
-  and `LEV00.DGN` identities, but stock Mednafen is rejected at launch with
+  The English CUE/ISO is now known to be `SGAREA U`, not European media. The
+  extracted French ISO is `SGAREA E` (SHA-256
+  `a7644c7cfecda2d604a1bd6b1df70124eafe4357692eedfe60b1d9c3efc4dc43`) and is
+  the current European capture target. Its supplied CUE references Japanese
+  audio files that are absent locally, so only a temporary data-only CUE was
+  used for the E-BIOS startup witness. Stock Mednafen is rejected at launch with
   exit 78 because it lacks `FIRESTAFF_NEXUS_TRACE_OUTPUT`. No startup/menu,
   HUD, VDP1, SLEV, or SAL artifact may be admitted from that binary.
   2026-08-06 follow-up: the generic Mednafen launcher now rejects a shared

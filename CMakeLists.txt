@@ -39355,6 +39355,10 @@ add_test(
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_mednafen_vdp1_capture_launcher.sh
 )
 add_test(
+    NAME nexus_v1_saturn_raw_capture_launcher
+    COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_saturn_raw_capture_launcher.sh
+)
+add_test(
     NAME nexus_v1_mednafen_structure3_topology_capture_launcher
     COMMAND bash ${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_mednafen_structure3_topology_capture_launcher.sh
 )
@@ -39937,6 +39941,9 @@ target_include_directories(test_nexus_v1_dgn_campaign_engine_ingress PRIVATE ${C
 add_test(NAME nexus_v1_dgn_campaign_engine_ingress COMMAND test_nexus_v1_dgn_campaign_engine_ingress)
 set_tests_properties(nexus_v1_mednafen_capture_launcher PROPERTIES
     LABELS "tier4;nexus;prs3;mednafen;skip_safe"
+)
+set_tests_properties(nexus_v1_saturn_raw_capture_launcher PROPERTIES
+    LABELS "tier4;nexus;saturn;vdp1;vdp2;mednafen;skip_safe"
 )
 
 # Emits source-bound Structure3 face targets from canonical LEV bytes for an
