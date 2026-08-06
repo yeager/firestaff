@@ -7909,7 +7909,6 @@ static int m11_csb_apply_boot_runtime_receipt(
         state->csbStartupExpectedPackageIdentity =
             package_identity ? package_identity : 1u;
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
-        m11_csb_update_fmtowns_game_music(state);
         m11_csb_startup_init_state_receipt_to_m11(
             state, &receipt->receipts.init_state);
         state->csbState.startup_title_active = 1;
@@ -21837,6 +21836,7 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
         m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+        m11_csb_update_fmtowns_game_music(state);
         if (state->presentationMode != M12_PRESENTATION_V1_ORIGINAL &&
             csb_v2_runtime_is_bound()) {
             csb_v2_runtime_v1_tick(
