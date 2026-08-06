@@ -1,3 +1,11 @@
+# DM1 FM-Towns JA DYNA_BUTTONS placeholder audit (2026-08-06)
+
+- ✅ Confirmed that the JDM.EXP `DYNA_BUTTONS` `N`/`X` values are
+  byte-verified original control labels, not placeholders, and retained their
+  exact Shift-JIS/ASCII byte values.
+- ✅ Verification: `test_dm1_v1_fmtowns_dyna_buttons_ja` passes with the
+  336-byte source span unchanged.
+
 # DM1 mirror C040 pickup-rotate synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040/chest/rotation party/panel/Thing fixture

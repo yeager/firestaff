@@ -12,10 +12,10 @@
 
 static const char *const k_dm1_fmtowns_dyna_button_labels_ja_pc34[
         DM1_V1_FMTOWNS_DYNA_BUTTONS_COUNT_JA] = {
-    /*  0 */ "N",                                     /* placeholder */
+    /*  0 */ "N",                                     /* original control label */
     /*  1 */ "\x82\xb3\x82\xa6\x82\xac\x82\xe9",     /* さえぎる (BLOCK)     */
     /*  2 */ "\x92\x40\x82\xab\x90\xd8\x82\xe9",     /* 叩き切る (CHOP)      */
-    /*  3 */ "X",                                     /* placeholder */
+    /*  3 */ "X",                                     /* original control label */
     /*  4 */ "\x8a\x70\x93\x4a\x82\xf0\x90\x81\x82\xad",       /* 角笛を吹く (BLOW HORN) */
     /*  5 */ "\xba\xb2\xdd\xc4\xbd",                 /* ｺｲﾝﾄｽ (FLIP - half-width kana) */
     /*  6 */ "\x89\xa3\x82\xe9",                     /* 殴る (PUNCH)         */
@@ -38,7 +38,7 @@ static const char *const k_dm1_fmtowns_dyna_button_labels_ja_pc34[
     /* 23 */ "\x88\xee\x8d\xc8\x82\xcc\x8f\x70",     /* 稲妻の術 (LIGHTNING) */
     /* 24 */ "\x91\xce\x97\xec\x95\x90\x8a\xed",     /* 対霊武器 (DISRUPT)   */
     /* 25 */ "\x8e\x61\x82\xe8\x95\xa5\x82\xa4",     /* 斬り払う (MELEE)     */
-    /* 26 */ "X",                                     /* placeholder */
+    /* 26 */ "X",                                     /* original control label */
     /* 27 */ "\x94\x4f\x82\xb6\x82\xe9",             /* 念じる (INVOKE)      */
     /* 28 */ "\x8e\x61\x82\xe8\x89\xba\x82\xeb\x82\xb7", /* 斬り下ろす (SLASH) */
     /* 29 */ "\x8e\x61\x82\xe8\x97\xf4\x82\xad",     /* 斬り裂く (CLEAVE)    */
