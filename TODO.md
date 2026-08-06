@@ -29495,6 +29495,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   word and ULP decoding contract, with a regression fixture for 68k byte
   order and the mounted PC-DOS GRAPHICS.DAT still passing. ENT1, underlay,
   allocator lifetime and the secondary-file transaction remain gated.
+  **2026-08-07 allocator progress:** the validated source ULP words now remain
+  owned by `DM2_V1_GdatFileState` after the file close and require explicit
+  release, matching the source table lifetime. A second structure transaction
+  cannot orphan the first table. ENT1 admission and the secondary-file
+  transaction remain gated.
 - [ ] DM2 combat source contract: a creature Defense GDAT row alone cannot
   author a player attack. Keep `dm2_v1_combat_resolve_attack_on_creature()`
   blocked until `DM2_ENGAGE_COMMAND`/`CALC_PLAYER_ATTACK_DAMAGE` has the

@@ -921,6 +921,9 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
         !cb->get_file_size || !cb->alloc_memory || !cb->dealloc_memory) {
         return 0;
     }
+    /* Do not orphan a source-owned ULP allocation when a second structure
+     * transaction is attempted without an explicit release. */
+    if (state->ulp_table != NULL) return 0;
     if (!dm2_v1_gdat_graphics_data_open(state, cb, ctx, NULL)) return 0;
     opened = 1;
     state->filesize = cb->get_file_size(ctx, state->filehandle);
@@ -992,6 +995,12 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
             }
         }
     }
+    /* Retain the source ULP words for the following LOAD_ENT1/raw-data
+     * transaction. The words stay in file byte order, as they do in the
+     * source's dm2_ulp table; `big_endian` records how later users decode. */
+    state->ulp_table = ulp;
+    state->ulp_length = ulp_length;
+    state->ulp_count = entries;
     if (out) {
         out->valid = true;
         out->ulp_validated = true;
@@ -1000,14 +1009,36 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
         out->source_data_offset = source_data_offset;
         out->first_raw_offset = source_data_offset + ulp_length + 6u + offset;
     }
-    cb->dealloc_memory(ctx, (int32_t)ulp_length);
+    ulp = NULL;
     dm2_v1_gdat_graphics_data_close(state, cb, ctx, NULL);
     return 1;
 
 fail:
     if (ulp) cb->dealloc_memory(ctx, (int32_t)ulp_length);
+    if (state->ulp_table) {
+        cb->dealloc_memory(ctx, (int32_t)state->ulp_length);
+        state->ulp_table = NULL;
+    }
+    state->ulp_count = 0u;
+    state->ulp_length = 0u;
     if (opened && state->fileopencounter > 0)
         dm2_v1_gdat_graphics_data_close(state, cb, ctx, NULL);
     if (out) memset(out, 0, sizeof(*out));
     return 0;
+}
+
+int dm2_v1_gdat_release_graphics_structure(
+    DM2_V1_GdatFileState *state,
+    const DM2_V1_GdatFileCallbacks *cb,
+    void *ctx)
+{
+    if (!state) return 0;
+    if (state->ulp_table) {
+        if (!cb || !cb->dealloc_memory) return 0;
+        cb->dealloc_memory(ctx, (int32_t)state->ulp_length);
+        state->ulp_table = NULL;
+        state->ulp_count = 0u;
+        state->ulp_length = 0u;
+    }
+    return 1;
 }

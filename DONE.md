@@ -1,3 +1,13 @@
+# DM2 GDAT structure ULP lifetime boundary (2026-08-07)
+
+- ✅ Kept the validated source ULP table alive in `DM2_V1_GdatFileState` after
+  the header file transaction closes, and added an explicit idempotent release
+  API. Repeated structure reads now fail closed instead of orphaning source
+  allocation state.
+- ✅ Little-endian, 68k big-endian, and real PC-DOS `GRAPHICS.DAT` tests pass
+  (24/24). ENT1/allocator admission and secondary-file handling remain gated;
+  no release was made.
+
 # DM2 creature animation 0958 real-GDAT boundary (2026-08-07)
 
 - ✅ Added the source-shaped `DM2_1c9a_0958` GDAT lookup: it consumes the

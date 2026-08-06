@@ -596,11 +596,15 @@ static int test_read_graphics_structure_binds_header_and_ulp(void)
 
     DM2_V1_GdatReadStructureReceipt out;
     int r = dm2_v1_gdat_read_graphics_structure(&state, &cb, &mctx, &out);
-    return r == 1 && out.valid && out.header_validated && out.ulp_validated &&
+    if (!(r == 1 && out.valid && out.header_validated && out.ulp_validated &&
            out.entries == 2 && out.versionlo == 5 && out.ulp_length == 4 &&
            out.ulp_table_end == 10 && out.source_data_offset == 4 &&
            out.first_raw_offset == 15 &&
-           mctx.close_count == 1;
+           mctx.close_count == 1 && state.ulp_table != NULL &&
+           state.ulp_count == 2 && state.ulp_length == 4)) return 0;
+    if (!dm2_v1_gdat_release_graphics_structure(&state, &cb, &mctx) ||
+        state.ulp_table != NULL) return 0;
+    return 1;
 }
 
 static int test_read_graphics_structure_accepts_big_endian_header_and_ulp(void)
@@ -635,6 +639,9 @@ static int test_read_graphics_structure_accepts_big_endian_header_and_ulp(void)
            out.first_raw_offset == 15u && mctx.close_count == 1)) {
         return 0;
     }
+    if (!state.ulp_table || state.ulp_count != 2u ||
+        !dm2_v1_gdat_release_graphics_structure(&state, &cb, &mctx) ||
+        state.ulp_table != NULL) return 0;
     return 1;
 }
 
@@ -663,9 +670,14 @@ static int test_read_graphics_structure_real_dm2_data(void)
     if (!dm2_v1_gdat_read_graphics_structure(&state, &cb, &real, &receipt)) {
         return 0;
     }
-    return receipt.valid && receipt.header_validated && receipt.ulp_validated &&
+    if (!(receipt.valid && receipt.header_validated && receipt.ulp_validated &&
            receipt.entries > 100u && receipt.versionlo >= 2 &&
-           receipt.first_raw_offset > receipt.ulp_table_end;
+           receipt.first_raw_offset > receipt.ulp_table_end &&
+           state.ulp_table != NULL && state.ulp_count == receipt.entries)) {
+        return 0;
+    }
+    return dm2_v1_gdat_release_graphics_structure(&state, &cb, &real) == 1 &&
+           state.ulp_table == NULL;
 }
 
 static int test_struct_sizes(void)

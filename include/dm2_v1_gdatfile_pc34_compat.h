@@ -107,6 +107,11 @@ typedef struct DM2_V1_GdatFileState {
     const char  *filename5;  /* .Z022SKSAVE.Z023.DAT */
     const char  *filename6;  /* .Z022SKSAVE.Z023.BAK */
     const char  *filename7;  /* .Z020DUNGEON.FTL  */
+    /* Source DM2_READ_GRAPHICS_STRUCTURE keeps the decoded ULP ownership
+     * alive for subsequent LOAD_ENT1/raw-data work. */
+    uint8_t     *ulp_table;
+    uint16_t     ulp_count;
+    uint32_t     ulp_length;
 } DM2_V1_GdatFileState;
 
 /* ========================================================================
@@ -317,6 +322,13 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
                                          const DM2_V1_GdatFileCallbacks *cb,
                                          void *ctx,
                                          DM2_V1_GdatReadStructureReceipt *out);
+
+/* Release the source-owned decoded ULP table retained by the structure
+ * transaction. Safe to call repeatedly. */
+int dm2_v1_gdat_release_graphics_structure(
+    DM2_V1_GdatFileState *state,
+    const DM2_V1_GdatFileCallbacks *cb,
+    void *ctx);
 
 /* ========================================================================
  * GDAT entry data builder — skproject c_gdatfile.cpp:674
