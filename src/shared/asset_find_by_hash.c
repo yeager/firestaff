@@ -811,6 +811,12 @@ static int numbered_cd_track_payload_number(const char *path, int *outTrack) {
 static int external_archive_entry_may_match_md5(const char *entryName,
                                                 const char *expectedMd5) {
     int track;
+    /* A CUE is a transport manifest, never the game-data payload itself.
+     * Archive-backed CUE expansion is intentionally not an asset route: its
+     * relative files are not materialized beside the temporary manifest.
+     * Streaming it from a solid CD archive therefore cannot satisfy a
+     * GRAPHICS/DUNGEON or known whole-track hash and only delays the scan. */
+    if (has_case_suffix(entryName, ".cue")) return 0;
     if (is_kryoflux_raw_track_path(entryName)) return 0;
     if (!numbered_cd_track_payload_number(entryName, &track)) return 1;
     return track == 2 && is_known_large_whole_file_hash(expectedMd5);
@@ -819,6 +825,7 @@ static int external_archive_entry_may_match_md5(const char *entryName,
 static int external_archive_entry_may_match_md5_list(
     const char *entryName, const char *const *md5List, int md5Count) {
     int track;
+    if (has_case_suffix(entryName, ".cue")) return 0;
     if (is_kryoflux_raw_track_path(entryName)) return 0;
     if (!numbered_cd_track_payload_number(entryName, &track)) return 1;
     return track == 2 && md5_list_contains_large_whole_file_hash(md5List,

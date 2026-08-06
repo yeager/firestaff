@@ -1294,6 +1294,26 @@ int main(void) {
     remove("asset_find_by_hash_test_tmp/cd_track_payloads.7z");
     remove("asset_find_by_hash_test_tmp/Chaos (Track 03).bin");
 
+    /* A CUE inside an external archive is only a relative-path manifest.
+     * It cannot materialize its declared sibling track into this scanner, so
+     * it must not be streamed as a candidate game-data payload. */
+    if (write_fixture("asset_find_by_hash_test_tmp/disc.cue") &&
+        system("command -v 7zz >/dev/null 2>&1 && "
+               "(cd asset_find_by_hash_test_tmp && "
+               "7zz a -t7z archived_cue_manifest.7z disc.cue >/dev/null 2>&1)") == 0) {
+        remove("asset_find_by_hash_test_tmp/disc.cue");
+        memset(outPath, 0, sizeof(outPath));
+        if (asset_find_by_md5("asset_find_by_hash_test_tmp/archived_cue_manifest.7z",
+                              md5Upper, outPath, (int)sizeof(outPath), 2)) {
+            cleanup_fixture();
+            fprintf(stderr, "archived CUE manifest was treated as a game-data payload: %s\n",
+                    outPath);
+            return 1;
+        }
+    }
+    remove("asset_find_by_hash_test_tmp/archived_cue_manifest.7z");
+    remove("asset_find_by_hash_test_tmp/disc.cue");
+
     if (write_fixture("asset_find_by_hash_test_tmp/capture.raw") &&
         system("command -v 7zz >/dev/null 2>&1 && "
                "(cd asset_find_by_hash_test_tmp && "
