@@ -37,6 +37,12 @@ typedef struct {
     uint8_t unavailable_creature_type;
 } RecordChainInventory;
 
+typedef struct {
+    unsigned int decoded;
+    unsigned int blocked_missing_ai_mapping;
+    unsigned int malformed;
+} DirectRootStats;
+
 #define CHECK(condition, message) do { \
     if (condition) { ++passed; printf("  PASS: %s\n", message); } \
     else { ++failed; printf("  FAIL: %s\n", message); } \
@@ -241,7 +247,9 @@ static uint8_t *read_file(const char *path, size_t *out_size)
     return bytes;
 }
 
-static int load_real_creature_ai_table(const char *root)
+static int load_real_creature_ai_table(const char *root,
+                                       int *out_type54_absent,
+                                       int *out_type127_absent)
 {
     char path[600];
     uint8_t *bytes;
@@ -249,6 +257,8 @@ static int load_real_creature_ai_table(const char *root)
     DM2_V1_AssetLoader loader;
     int mapped;
 
+    if (out_type54_absent) *out_type54_absent = 0;
+    if (out_type127_absent) *out_type127_absent = 0;
     if (!root || !root[0]) return 0;
     snprintf(path, sizeof(path), "%s/graphics.dat", root);
     bytes = read_file(path, &byte_count);
@@ -257,6 +267,21 @@ static int load_real_creature_ai_table(const char *root)
     if (dm2_v1_asset_loader_init(&loader, bytes, byte_count) != 0) {
         free(bytes);
         return 0;
+    }
+    /* c_querydb.cpp::DM2_QUERY_GDAT_CREATURE_WORD_VALUE falls back to this
+     * exact category/index/dtWordValue query after its short cache. Record
+     * the mounted profile's absence explicitly; it is evidence for the
+     * SKSAVE reader's fail-closed result, never a replacement value. */
+    {
+        uint16_t ignored = 0u;
+        if (out_type54_absent) {
+            *out_type54_absent = !dm2_v1_asset_load_word_value(
+                &loader, DM2_GDAT_CATEGORY_CREATURES, 54, 0x05, &ignored);
+        }
+        if (out_type127_absent) {
+            *out_type127_absent = !dm2_v1_asset_load_word_value(
+                &loader, DM2_GDAT_CATEGORY_CREATURES, 127, 0x05, &ignored);
+        }
     }
     mapped = dm2_v1_creature_load_ai_table_from_gdat(&loader);
     dm2_v1_asset_loader_free(&loader);
@@ -331,7 +356,7 @@ static int verify_real_runtime_resume_is_blocked(const uint8_t *payload,
            !handoff.valid;
 }
 
-static void test_real_raw_save(const char *path)
+static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
 {
     DM2_V1_OriginalRawDungeonReceipt receipt;
     DM2_V1_OriginalRawSaveStateReceipt state_receipt;
@@ -367,9 +392,21 @@ static void test_real_raw_save(const char *path)
     CHECK(verify_real_db_pool_receipts(bytes + 42u, byte_count - 42u,
                                        &receipt),
           "real SKSave DB pools retain source-sized records inside the raw dungeon prefix");
-    CHECK(verify_real_direct_record_roots(bytes + 42u, byte_count - 42u,
-                                          &state_receipt) != 0,
+    {
+        const int direct_root_result = verify_real_direct_record_roots(
+            bytes + 42u, byte_count - 42u, &state_receipt);
+        if (direct_roots) {
+            if (direct_root_result == 1) {
+                ++direct_roots->decoded;
+            } else if (direct_root_result == 2) {
+                ++direct_roots->blocked_missing_ai_mapping;
+            } else {
+                ++direct_roots->malformed;
+            }
+        }
+        CHECK(direct_root_result != 0,
           "real SKSave direct roots decode or stop at an absent source AI mapping");
+    }
     CHECK(verify_real_runtime_resume_is_blocked(bytes + 42u, byte_count - 42u),
           "real SKSave cannot publish a partial GAME_LOAD runtime state");
     free(bytes);
@@ -444,6 +481,9 @@ int main(void)
     int parsed_last_session = -1;
     char parsed_root[512];
     char corpus_path[600];
+    DirectRootStats direct_roots;
+    int type54_absent = 0;
+    int type127_absent = 0;
 
     printf("DM2 real PC-DOS SKSave corpus tests:\n\n");
     if (!resolve_corpus_root(root, sizeof(root))) {
@@ -451,8 +491,11 @@ int main(void)
         return 0;
     }
 
-    CHECK(load_real_creature_ai_table(root),
+    memset(&direct_roots, 0, sizeof(direct_roots));
+    CHECK(load_real_creature_ai_table(root, &type54_absent, &type127_absent),
           "real CREATURES rows bind the original v1d296c AI table before SKSave decode");
+    CHECK(type54_absent && type127_absent,
+          "mounted PC-DOS GRAPHICS.DAT has no invented row-5 mapping for types 54 or 127");
 
     memset(&corpus, 0, sizeof(corpus));
     CHECK(dm2_v1_sksave_corpus_scan(root, &corpus),
@@ -469,7 +512,7 @@ int main(void)
             if (!file) continue;
             fclose(file);
             ++found;
-            test_real_raw_save(path);
+            test_real_raw_save(path, &direct_roots);
         }
     }
     if (found == 0u) {
@@ -478,6 +521,10 @@ int main(void)
     }
     CHECK(found == 8u,
           "the supplied PC-DOS corpus retains all four primary/backup saves");
+    CHECK(direct_roots.decoded == 5u &&
+              direct_roots.blocked_missing_ai_mapping == 3u &&
+              direct_roots.malformed == 0u,
+          "all eight real direct-root streams have the expected source-owned AI outcome");
     CHECK(corpus.valid_slot_count == 4u && corpus.valid_slot_mask == 0x000fu,
           "scanner preserves lower-case, single-digit original slots in the data root");
     CHECK(corpus.valid_slot_backup_count == 4u,

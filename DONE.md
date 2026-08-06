@@ -27,9 +27,13 @@
   In the mounted eight-file PC-DOS corpus this lets five direct-root streams
   decode with their source masks; three still stop safely because types 54
   (twice) and 127 lack a row-5 entry in that original `GRAPHICS.DAT`.
+  The real-data regression now asserts both absent fields and the exact 5/3/0
+  decoded/blocked/malformed corpus outcome, preventing a default mask or
+  fabricated mapping from silently promoting those streams.
   Verification: `test_dm2_v1_drops_gdat_real_data`,
   `test_dm2_v1_creature_animation_gdat_real_data`,
-  `test_dm2_v1_save_load_real_data`, and `test_dm2_v1_save_load` pass. No
+  `test_dm2_v1_save_load_real_data` (83/83), and `test_dm2_v1_save_load`
+  pass. No
   game data is copied, unpacked, or used to admit runtime resume.
 
 - ✅ 2026-08-06 DM2 canonical GRAPHICS.DAT probe correction: the real-data

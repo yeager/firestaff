@@ -1188,7 +1188,9 @@
   fail-closed because this `GRAPHICS.DAT` has no row-5 entry for type 54
   (twice) or 127. All remain non-resumable. The next work is to locate their
   original active-profile owner and to bind allocation/possession/tile owners,
-  not to assign a default mask.
+  not to assign a default mask. The real-data regression locks both absent
+  rows and the exact five-decoded/three-blocked/no-malformed outcome so this
+  boundary cannot be replaced by a default mask in a later refactor.
   **2026-08-06 follow-up:** the remaining `FS2RT01` live-runtime sidecar
   serializer/deserializer is removed from the production archive and public
   API. It wrote Firestaff's session, creature cache, mutable dungeon bytes and
