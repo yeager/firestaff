@@ -51677,3 +51677,8 @@ and `firestaff` build pass.
   carries the containing data root and slot to the validated loader, and
   continues to reject a partial raw `GAME_LOAD` as a playable session. The
   focused menu contract and the supplied `sksave0.dat` corpus path both pass.
+- ✅ 2026-08-06 DM2 raw-record timer gate: ornament animator/noise and timer
+  types `0x58`, `0x59`, `0x5B` and `0x5C` no longer mutate or requeue from a
+  boot-time raw record-pool address. The original GAME_LOAD timer queue,
+  actuator lifetime and record-write transaction are not yet restored, so
+  the runtime now leaves these source events unbound and fail-closed.

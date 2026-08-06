@@ -5827,8 +5827,10 @@ void dm2_v1_runtime_tick(void) {
         (void)dm2_runtime_actuate_door;
         (void)dm2_runtime_actuate_teleporter;
         (void)dm2_runtime_actuate_trickwall;
-        dispatcher.handlers[DM2_V1_TIMER_ORNATE_ANIMATOR] =
-            dm2_runtime_ornate_animator_timer;
+        /* Ornament animation/noise both mutate or requeue through an
+         * actuator record. A raw pool address is insufficient without the
+         * original animator/timer ownership, so retain no live callback. */
+        (void)dm2_runtime_ornate_animator_timer;
         /* CONTINUE_TICK_GENERATOR invokes the same incomplete actuator
          * transaction.  Do not let its convenience record decode enqueue a
          * guessed 0x04 mutation. */
@@ -5840,16 +5842,13 @@ void dm2_v1_runtime_tick(void) {
          * intentionally not registered in a real-data runtime. */
         (void)dm2_runtime_door_step_timer;
         (void)dm2_runtime_destroy_door_timer;
-        if (rt->record_pools_valid) {
-            dispatcher.handlers[DM2_V1_TIMER_RELEASE_DOOR_BUTTON] =
-                dm2_runtime_release_door_button_timer;
-            dispatcher.handlers[DM2_V1_TIMER_PROCESS_59] =
-                dm2_runtime_process_timer_59;
-            dispatcher.handlers[DM2_V1_TIMER_5B_RECORD_CLEAR] =
-                dm2_runtime_5b_record_clear;
-            dispatcher.handlers[DM2_V1_TIMER_5C_RECORD_SET] =
-                dm2_runtime_5c_record_set;
-        }
+        /* 0x58/0x59/0x5b/0x5c alter DB records. GAME_LOAD has not restored
+         * their original timer queue and record transaction as one unit, so
+         * do not treat a boot-time raw record pool as mutable live state. */
+        (void)dm2_runtime_release_door_button_timer;
+        (void)dm2_runtime_process_timer_59;
+        (void)dm2_runtime_5b_record_clear;
+        (void)dm2_runtime_5c_record_set;
         dispatcher.handlers[DM2_V1_TIMER_PROCESS_0C] =
             dm2_runtime_process_0c_timer;
         dispatcher.handlers[DM2_V1_TIMER_RESURRECTION] =
@@ -5865,8 +5864,7 @@ void dm2_v1_runtime_tick(void) {
          * could relocate original records or the party from timer bytes
          * alone, so both stay unbound until that source owner is present. */
         (void)dm2_runtime_process_3d_timer;
-        dispatcher.handlers[DM2_V1_TIMER_ORNATE_NOISE] =
-            dm2_runtime_ornate_noise_timer;
+        (void)dm2_runtime_ornate_noise_timer;
         (void)dm2_runtime_move_record_rotate_timer;
         /* Spell-effect timer delegation: 0x46 light, 0x47 hero ench flag,
          * 0x48 ench power, 0x4B poison, 0x19 cloud, 0x1E missile, 0x5E summon.
