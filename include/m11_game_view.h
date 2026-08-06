@@ -1565,6 +1565,11 @@ typedef struct {
     uint16_t csbFmtownsFrameTimerARemaining;
     int csbFmtownsTitleBound;
     int csbFmtownsTitleFinished;
+    /* STARTUP2.C F0750 runs ENDING.ANM synchronously after a winning F31
+     * game and terminates afterwards.  Keep that return mode distinct from
+     * the standalone TITLE/STORY owner's SWITCHTW return. */
+    int csbFmtownsEndingActive;
+    int csbFmtownsEndingFinished;
     /* The standalone FM Towns title returns to SWITCHTW.EXP. Its two pages
      * and buttons remain executable-owned IMG2 streams, never host text. */
     uint8_t *csbFmtownsSwitchBytes;

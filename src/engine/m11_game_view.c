@@ -222,6 +222,7 @@ static int m11_csb_dsa_overlay_material_current(
     const M11_GameViewState *state);
 static int m11_csb_original_save_runtime_receipt_current(
     const M11_GameViewState *state);
+static int m11_csb_activate_fmtowns_ending(M11_GameViewState *state);
 
 /* Extract only the assets referenced by CSB's reviewed V2.2 route table.
  * The archive stays user-owned and immutable; its MD5 becomes the cache key.
@@ -6561,6 +6562,8 @@ static void m11_csb_release_fmtowns_title(M11_GameViewState *state)
     state->csbFmtownsFrameTimerARemaining = 0u;
     state->csbFmtownsTitleBound = 0;
     state->csbFmtownsTitleFinished = 0;
+    state->csbFmtownsEndingActive = 0;
+    state->csbFmtownsEndingFinished = 0;
 }
 
 static void m11_csb_release_fmtowns_switch(M11_GameViewState *state)
@@ -6795,7 +6798,8 @@ static void m11_csb_advance_fmtowns_switch(M11_GameViewState *state)
 }
 
 static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
-                                      const char *animation_name);
+                                      const char *animation_name,
+                                      int ending_handoff);
 static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
                                       CSB_V1_FmtownsSwitchLanguage language);
 
@@ -6829,7 +6833,7 @@ static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
         /* AUTOEXEC.BAT invokes ANIMTW STORY.ANM and returns to the same
          * JAPANLOOP/USALOOP that selected this exit status. */
         state->csbFmtownsSwitchReturnLanguage = state->csbFmtownsSwitchLanguage;
-        if (!m11_csb_bind_fmtowns_title(state, "STORY.ANM")) {
+        if (!m11_csb_bind_fmtowns_title(state, "STORY.ANM", 0)) {
             return M11_GAME_INPUT_IGNORED;
         }
     } else if (receipt.action == CSB_FMTOWNS_SWITCH_ACTION_GAME) {
@@ -6849,7 +6853,8 @@ static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
 }
 
 static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
-                                      const char *animation_name)
+                                      const char *animation_name,
+                                      int ending_handoff)
 {
     const CSB_V1_BootProfile *profile;
     char path[sizeof(((CSB_V1_BootProfile *)0)->asset_root) + 16u];
@@ -6905,7 +6910,35 @@ static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
     state->csbFmtownsFrameTimerARemaining =
         state->csbFmtownsTitleFrameReceipt.timer_a_ticks;
     state->csbFmtownsTitleBound = 1;
+    state->csbFmtownsEndingActive = ending_handoff ? 1 : 0;
+    state->csbFmtownsEndingFinished = 0;
     m11_csb_dispatch_fmtowns_cdda(state, &state->csbFmtownsTitleFrameReceipt);
+    return 1;
+}
+
+static int m11_csb_activate_fmtowns_ending(M11_GameViewState *state)
+{
+    const CSB_V1_BootProfile *profile;
+    if (!state || !state->gameWon || !state->csbBootProfile ||
+        state->csbFmtownsEndingActive || state->csbFmtownsEndingFinished) {
+        return 0;
+    }
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_fmtowns_profile(profile) ||
+        !state->csbFmtownsGameHandoffReceipt.valid) {
+        return 0;
+    }
+    /* ReDMCSB STARTUP2.C F0750 pauses game music before F2248. F2275's
+     * first TD/TR command, if present, replaces that physical CUE track. */
+    if (state->csbFmtownsCddaPlaying && !state->csbFmtownsCddaPaused &&
+        M11_Audio_PauseCdda(&state->audioState)) {
+        state->csbFmtownsCddaPaused = 1;
+    }
+    if (!m11_csb_bind_fmtowns_title(state, "ENDING.ANM", 1)) {
+        m11_set_status(state, "CSB FM TOWNS", "ENDING.ANM DECODE FAILED");
+        return 0;
+    }
+    m11_set_status(state, "CSB FM TOWNS", "ENDING.ANM");
     return 1;
 }
 
@@ -6957,6 +6990,19 @@ static void m11_csb_advance_fmtowns_title(M11_GameViewState *state,
             state->csbFmtownsFrameTimerARemaining = next_frame.timer_a_ticks;
             m11_csb_dispatch_fmtowns_cdda(
                 state, &state->csbFmtownsTitleFrameReceipt);
+        } else if (state->csbFmtownsEndingActive) {
+            /* STARTUP2.C F0750 returns from F2248 to RestoreTowns and
+             * termination. Keep the final original frame visible until the
+             * host's normal return-to-launcher action releases this view;
+             * do not route a victory through SWITCHTW or a PC34 end screen. */
+            if (state->csbFmtownsCddaPlaying) {
+                (void)M11_Audio_StopCdda(&state->audioState);
+                state->csbFmtownsCddaPlaying = 0;
+                state->csbFmtownsCddaPaused = 0;
+            }
+            state->csbFmtownsCddaSourceTicksRemaining = 0u;
+            state->csbFmtownsTitleFinished = 1;
+            state->csbFmtownsEndingFinished = 1;
         } else {
             /* ANIMTOWN.C returns after F2275. The retail AUTOEXEC.BAT then
              * executes SWITCHTW JAPAN; it does not enter PC34 TITLE.C or
@@ -8173,7 +8219,7 @@ static int m11_csb_apply_boot_runtime_receipt(
             receipt->profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN
                 ? CSB_FMTOWNS_SWITCH_ENGLISH
                 : CSB_FMTOWNS_SWITCH_JAPANESE;
-        if (m11_csb_bind_fmtowns_title(state, "TITLE.ANM")) return 1;
+        if (m11_csb_bind_fmtowns_title(state, "TITLE.ANM", 0)) return 1;
         m11_set_status(state, "CSB FM TOWNS", "TITLE.ANM DECODE FAILED");
         return 0;
     }
@@ -16630,6 +16676,12 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                         int t = dm1_v1_fmtowns_cd_track_for_event(3);
                         if (t > 0) m11_dm1_dispatch_fmtowns_cdda(state, t);
                     }
+                    /* ReDMCSB STARTUP2.C F0750: F31 releases the game
+                     * runtime, enables its screen and calls F2248 with the
+                     * retail ENDING.ANM.  Only the admitted Towns Game
+                     * owner may enter this path; PC34 victories keep their
+                     * own ENDGAME.C presentation. */
+                    (void)m11_csb_activate_fmtowns_ending(state);
                 }
                 break;
             case EMIT_PARTY_DEAD:
@@ -21993,6 +22045,18 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         return M11_GAME_INPUT_IGNORED;
     }
     mouthRedraw = m11_tick_v1_mouth_animation(state);
+    /* F31 does not continue through PC34 ENDGAME.C's fuse replay once
+     * STARTUP2.C F0750 has handed victory to the Towns animation program. */
+    if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT && state->gameWon) {
+        if (m11_csb_activate_fmtowns_ending(state)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (state->csbFmtownsEndingActive && state->csbFmtownsTitleBound &&
+            !state->csbFmtownsEndingFinished) {
+            m11_csb_advance_fmtowns_title(state, 16000u);
+            return M11_GAME_INPUT_REDRAW;
+        }
+    }
     /* ReDMCSB ENDGAME.C F0445 lines 742-759 redraws one fuse-sequence
      * frame before the blocking delay phases in F0446.  Replay those
      * presentation frames first, then count down F0022_MAIN_Delay()
@@ -22083,10 +22147,18 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
             return M11_GAME_INPUT_REDRAW;
         }
+        /* Usually EMIT_GAME_WON enters this route immediately. Retain this
+         * state-derived guard for a restored/captured F31 runtime whose
+         * source game-won flag became visible at the M11 boundary first. */
+        if (m11_csb_activate_fmtowns_ending(state)) {
+            return M11_GAME_INPUT_REDRAW;
+        }
         if (m11_csb_is_fmtowns_profile(csb_profile) &&
-            state->csbState.startup_title_active &&
+            (state->csbState.startup_title_active ||
+             state->csbFmtownsEndingActive) &&
             (state->csbFmtownsTitleBound || state->csbFmtownsSwitchBound) &&
-            !state->csbStartupRuntimeAssetSession) {
+            (!state->csbStartupRuntimeAssetSession ||
+             state->csbFmtownsEndingActive)) {
             if (state->csbFmtownsTitleBound) {
                 m11_csb_advance_fmtowns_title(state, 16000u);
             } else {
@@ -53517,7 +53589,8 @@ void M11_GameView_Draw(const M11_GameViewState* state,
          * public draw API is const for ordinary renderers; a live game view
          * is nevertheless mutable here and owns this CSB-only transaction. */
         M11_GameViewState *csb_state = (M11_GameViewState *)state;
-        if (state->csbState.startup_title_active &&
+        if ((state->csbState.startup_title_active ||
+             state->csbFmtownsEndingActive) &&
             (m11_csb_present_fmtowns_switch(csb_state, framebuffer,
                                             framebufferWidth, framebufferHeight) ||
              m11_csb_present_fmtowns_title(csb_state, framebuffer,

@@ -451,6 +451,17 @@
   --target firestaff`, the CSB FM Towns ANM/CD probes (skip-safe without the
   materialized CUE/IMG pair), and `git diff --check`.
 
+- ✅ 2026-08-06 CSB FM Towns ending handoff: a verified F31E/F31J Game
+  victory now enters the original `ENDING.ANM` through the existing F2275
+  decoder instead of falling through to the PC34 endgame surface. The M11
+  bridge follows ReDMCSB `STARTUP2.C F0750`: game music pauses, `ENDING.ANM`
+  owns its Timer-A frames and CDDA TD/TR requests, and completion retains the
+  final original frame until the normal host return-to-launcher teardown.
+  It never chains a win into `SWITCHTW.EXP`. Verification: real-cache
+  `test_csb_v1_fmtowns_anm` (419 frames/5 352 Timer-A ticks) and
+  `test_csb_v1_fmtowns_m11_game_handoff`, plus `cmake --build build --target
+  firestaff` and `git diff --check`.
+
 - ✅ DM1 FM Towns no longer borrows the PC34 startup presentation. A selected
   `fmtowns-en` or `fmtowns-ja` edition is routed around the PC34
   `SWSH -> TITLE -> ENTRANCE` transaction and opens only its selected,

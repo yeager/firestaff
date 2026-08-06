@@ -656,8 +656,8 @@
   owns the separate player-selected `anim story.anm` route, and `STARTUP2.C`
   calls `F2248_PlayAnimation("ending.anm")` after a winning game. Do not
   auto-chain the title into Story. The distinct FM Towns switch-menu/story
-  owner, ending handoff, input, audio/CDDA playback and save handoff still
-  need original-media capture.
+  owner, input, audio/CDDA playback and save handoff still need
+  original-media capture.
   2026-08-06: `SWITCHTW.EXP` is now admitted as the source of the Japanese
   and English 320x200 Switch pages and its four exact button streams. The
   extractor requires the complete F2279 resource sequence and IMG2 decode;
@@ -671,8 +671,8 @@
   Switch loop when that stream completes. Utility and Game remain deliberately
   modal: `UTILJ`/`UTILE` are separate CEDT executables and `CHTWJ`/`CHTWE`
   are separate Game executables, so neither is routed through a PC34 surrogate.
-  Their authentic handoff, ending handoff and save
-  transfer still need original-media capture. The retail `CDATA/MINI.DAT`
+  Their authentic handoff and save transfer still need original-media
+  capture. The retail `CDATA/MINI.DAT`
   and `CJDATA/MINI.DAT` files are explicitly not admitted by the Atari/Amiga
   GAMEBLOCK decoder: both differ from that big-endian layout and remain
   outside Resume until the F31E/F31J save-header and runtime handoff have
@@ -696,7 +696,7 @@
   CJDATA cache now keeps its top-level hash-verified pair ahead of the CDATA
   sidecar directory, so the Japanese Switch Game exit reaches `CHTWJ.EXP`,
   door-opening and the same live C017/F0128 handoff. Original-media audio,
-  Utility, ending and save transactions remain required.
+  Utility and save transactions remain required.
   The selected FM Towns cache now retains the original CUE/IMG media pair,
   not a derived track map. M11 dispatches each F2275 TD/TR request through
   that CUE's physical Red Book track and ends its one-shot transport when the
@@ -713,12 +713,17 @@
   queued original CDDA span through F0740/F0738's pause/continue transition
   and excludes paused time from the source-duration counter; a following
   F0719 request resumes the stream device before replacing it. Utility UI
-  execution, ending and save transactions remain required. The Utility exit
+  execution and save transactions remain required. The Utility exit
   now admits only the selected retail C06_CEDT
   owner: F31E verifies `UTILE.EXP` (152387 bytes, FNV-1a `ff240e0c`) and
   F31J verifies `UTILJ.EXP` (152499 bytes, FNV-1a `bb3b47c2`). Its editor
   pixels and transactions are not represented by the C03 Game or PC34
-  utility surfaces.
+  utility surfaces. 2026-08-06: a real F31 Game victory now activates
+  `ENDING.ANM` through the retained F2275 interpreter. It uses the original
+  Timer-A frames and TD/TR CUE dispatch, holds its last decoded frame when
+  F0750 returns, and never chains back to `SWITCHTW.EXP` or a PC34 endgame
+  screen. The real English cache regression traverses Switch, Game, C004,
+  C002/C003, C017/F0128, then the complete 419-frame `ENDING.ANM` stream.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP

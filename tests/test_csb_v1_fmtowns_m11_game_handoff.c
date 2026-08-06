@@ -147,6 +147,7 @@ int main(void)
               view.csbState.startup_entrance_active &&
               !view.csbState.startup_title_active,
           "Game click opens only the verified language-owned entrance owner");
+    live_frame_nonblack = 0;
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
     CHECK(memcmp(framebuffer,
@@ -207,6 +208,33 @@ int main(void)
                          !view.csbFmtownsGameMusicPending;
     CHECK(game_music_started,
           "F31 live map music waits 100 F0743 updates then selects CUE track 2");
+
+    /* ReDMCSB STARTUP2.C F0750 invokes F2248("ending.anm") after the F31
+     * game has won. The live game state is already source-admitted above;
+     * latch its victory here so this regression can prove the host handoff
+     * without manufacturing a dungeon-side Lord Chaos encounter. */
+    view.gameWon = 1;
+    (void)M11_GameView_AdvanceIdleTick(&view);
+    CHECK(view.csbFmtownsEndingActive && view.csbFmtownsTitleBound &&
+              !view.csbFmtownsSwitchBound,
+          "F31 victory binds retail ENDING.ANM instead of returning to SWITCHTW");
+    live_frame_nonblack = 0;
+    memset(framebuffer, 0, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, 320, 200);
+    for (tick = 0u; tick < sizeof(framebuffer); ++tick) {
+        if (framebuffer[tick] != 0u) {
+            live_frame_nonblack = 1;
+            break;
+        }
+    }
+    CHECK(live_frame_nonblack,
+          "F31 victory presents an indexed frame decoded from ENDING.ANM");
+    for (tick = 0u; tick < 5600u && !view.csbFmtownsEndingFinished; ++tick) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+    }
+    CHECK(view.csbFmtownsEndingFinished && view.csbFmtownsTitleBound &&
+              !view.csbFmtownsSwitchBound,
+          "ENDING.ANM completion retains its final frame and never chains to Switch");
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     printf("PASS: real FM Towns SWITCHTW -> %s entrance handoff\n",
