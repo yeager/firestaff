@@ -1,3 +1,11 @@
+# DM1 mirror C159/C160 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C159/C160 party/panel/hand fixture from M10.
+  It loads no original DM1 data and has no M11/runtime caller; the generated
+  mirror regression continues to compile the source explicitly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c159_click_rotation_combo_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM2 startup status-panel host-text removal (2026-08-06)
 
 - ✅ Removed the last host-authored DM2 boot-failure labels and M11 startup/
