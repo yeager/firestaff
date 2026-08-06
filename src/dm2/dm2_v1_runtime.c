@@ -344,6 +344,10 @@ static int dm2_runtime_creature_read_door(void *user,
 {
     DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
     DM2_V1_DungeonData *dd;
+    const DM2_V1_G1DirectDoorRoot *door = NULL;
+    const DM2_V1_AssetLoader *loader;
+    uint16_t creature_passes_closed_door;
+    int door_gdat_index;
     int raw;
     int state;
 
@@ -356,16 +360,32 @@ static int dm2_runtime_creature_read_door(void *user,
     if (raw < 0 || !dm2_runtime_is_door_at(dd, level, x, y, raw)) {
         return 0;
     }
+    /* SKProject c_map.cpp selects the DB0 root, Door::DoorType() selects
+     * map-header slot 0/1, and skdoor.cpp::GET_DOOR_STAT_0D resolves that
+     * slot's real DOORS/dtWordValue/0x0d entry.  A terrain tag or the
+     * historical four-door compatibility table cannot supply this gameplay
+     * value: it belongs to the selected G1 map and its GDAT corpus. */
+    if (level != rt->dungeon_level || dd->square_bytes != 1 ||
+        !dm2_v1_g1_runtime_map_door_at(&rt->g1_runtime_map_doors,
+                                       x, y, &door) ||
+        !door || door->door_type >= 2u ||
+        !rt->map_door_gfx_active[door->door_type] ||
+        !(loader = dm2_v1_boot_asset_loader(rt->boot))) {
+        return 0;
+    }
+    door_gdat_index = (int)rt->map_door_gfx_list[door->door_type];
+    if (!dm2_v1_asset_load_word_value(loader, DM2_GDAT_CATEGORY_DOORS,
+                                      door_gdat_index, 0x0d,
+                                      &creature_passes_closed_door)) {
+        return 0;
+    }
     state = dm2_runtime_door_state((uint16_t)raw);
     *out_state = state;
-    /* DM2 door attributes relevant to creatures: bit 0 = creatures can see
-     * through (ReDMCSB TIMELINE.C/GROUP.C lineage).  The runtime supplies the
-     * default (closed doors block nonmaterial creatures unless the attribute
-     * says otherwise); full DB0 attribute decoding is future work. */
-    *out_attributes = 0;
-    (void)level;
-    (void)x;
-    (void)y;
+    /* The compact CCM boundary retains the existing bit-0 contract.  The
+     * value is nevertheless sourced only from SKProject's exact GDAT 0x0d
+     * query: nonzero lets a creature pass a fully closed door. */
+    *out_attributes = creature_passes_closed_door != 0u
+        ? DM2_DOOR_ATTR_CREATURES_CAN_SEE_THROUGH : 0u;
     return 1;
 }
 

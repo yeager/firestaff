@@ -928,6 +928,12 @@
   1B7D5 as callback-bound SKProject handler ports rather than stubs. This
   does not admit a live creature path: production still rejects absent
   command-stream, DB4/CAII and callback ownership.
+  **2026-08-06 CCM door-data correction:** the runtime no longer gives every
+  creature-facing door a fabricated zero attribute word. For the current G1
+  map it now requires the DB0 door root, its map-header slot, and the exact
+  `DOORS/dtWordValue/0x0d` GDAT value used by SKProject
+  `GET_DOOR_STAT_0D`; any missing source owner leaves the field unread.
+  This source lookup does not reopen the separately blocked live CCM path.
   **2026-08-06 callback-audit isolation:** the broad production compatibility
   glob no longer links `dm2_v1_runtime_parity_pc34_compat.c`. Its timer,
   record, creature and actuator callback bodies have no live DB/CCM owner.
