@@ -100,6 +100,14 @@
 - ✅ Verification: `test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 F0344 planar-fill audit isolation (2026-08-06)
+
+- ✅ Removed the standalone F0344 food/water planar-fill helper from M10. It
+  has no runtime caller and its callers supply test-owned bitmap/layout data;
+  the live source-bound champion status-box route remains separate.
+- ✅ Verification: `test_dm1_v1_viewport_food_water_fill_pc34_compat` passes;
+  the source object is absent from M10.
+
 # DM1 D2C F0107 wall-ornament synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the D2C F0107 wall-ornament probe from M10. It hard-codes

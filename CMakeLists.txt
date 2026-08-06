@@ -4302,6 +4302,13 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
+# `dm1_v1_viewport_food_water_fill_pc34_compat.c` is an isolated F0344
+# planar-fill contract. Its only callers provide test-owned bitmap buffers;
+# the live source-bound HUD uses the champion status-box route instead. Keep
+# this helper in its explicit regressions until a real material consumer owns
+# the original panel layout and pixels.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_food_water_fill_pc34_compat.c")
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_creature_viewport_pc34_compat.c")
 # `dm1_v1_viewport_d0c_f0108_floor_ceiling_ornament_pc34_compat.c` is a
@@ -54020,7 +54027,9 @@ target_include_directories(test_dm1_v1_viewport_planar_fill_material_pc34_compat
 target_link_libraries(test_dm1_v1_viewport_planar_fill_material_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_planar_fill_material_pc34_compat COMMAND test_dm1_v1_viewport_planar_fill_material_pc34_compat)
 
-add_executable(test_dm1_v1_viewport_food_water_fill_pc34_compat tests/test_dm1_v1_viewport_food_water_fill_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_food_water_fill_pc34_compat
+    tests/test_dm1_v1_viewport_food_water_fill_pc34_compat.c
+    src/dm1/dm1_v1_viewport_food_water_fill_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_food_water_fill_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_food_water_fill_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_food_water_fill_pc34_compat COMMAND test_dm1_v1_viewport_food_water_fill_pc34_compat)

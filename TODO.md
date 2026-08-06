@@ -104,6 +104,12 @@
   source-backed HUD handoff. Do not introduce a second production caller
   through this fixture.
 
+- **DM1-F0344-PLANAR-FILL-SYNTHETIC-AUDIT:** The standalone F0344 planar-fill
+  helper has no M11/runtime caller; its callers supply test-owned bitmap
+  buffers and layout boxes. The live HUD uses the independent source-bound
+  champion status-box route. Keep this helper test-only until a real panel
+  material consumer owns the original layout and pixels.
+
 - **DM1-D3C-STAIRS-PIT-SYNTHETIC-AUDIT:** The D3C stairs/pit dispatch helper
   remains a test-only contract fixture for ReDMCSB dispatch/C10 rules. The
   live M11 D3C route is now source-bound through the real floor-pit/stairs
