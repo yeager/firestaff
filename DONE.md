@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 M12 missing archive-tool recovery: when present game media is
+  inside an archive whose reader is unavailable, the launcher now shows a
+  localized popup naming the required extractor and asks the player to rescan
+  after installation, instead of presenting the generic no-data message. The
+  new three-line message is translated for all 19 shipped locales; the focused
+  launcher and hash-scanner tests plus PO-layout validation pass.
+
 - ✅ 2026-08-06 F10 runtime graphics and cheats panel: extended the existing
   all-game modal popup with a fourth CH page backed by the real shared
   launcher cheat toggle and live slower/normal/faster scheduler. Keyboard and

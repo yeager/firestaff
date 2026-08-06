@@ -296,3 +296,12 @@ msgstr "파일 관리자를 사용하여 게임 파일을 Documents/Firestaff/da
 #. iOS: instruction to copy game files via Files app
 msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
 msgstr "파일 앱을 사용하여 게임 파일을 이 앱의 Firestaff/data에 복사하세요"
+
+msgid "ARCHIVE TOOL REQUIRED"
+msgstr "압축 파일 도구가 필요합니다"
+
+msgid "INSTALL ARCHIVE TOOL"
+msgstr "압축 파일 도구를 설치하세요"
+
+msgid "RESCAN GAME DATA TO CONTINUE"
+msgstr "계속하려면 게임 데이터를 다시 검사하세요"

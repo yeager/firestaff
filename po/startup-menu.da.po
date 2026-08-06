@@ -296,3 +296,12 @@ msgstr "KOPIÉR SPILFILER TIL Documents/Firestaff/data MED EN FILHÅNDTERING"
 #. iOS: instruction to copy game files via Files app
 msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
 msgstr "BRUG FILER-APPEN TIL AT KOPIERE SPILFILER TIL Firestaff/data I DENNE APP"
+
+msgid "ARCHIVE TOOL REQUIRED"
+msgstr "ARKIVVÆRKTØJ KRÆVES"
+
+msgid "INSTALL ARCHIVE TOOL"
+msgstr "INSTALLER ARKIVVÆRKTØJ"
+
+msgid "RESCAN GAME DATA TO CONTINUE"
+msgstr "GENSCAN SPILDATA FOR AT FORTSÆTTE"

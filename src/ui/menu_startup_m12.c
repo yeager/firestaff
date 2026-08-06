@@ -883,6 +883,9 @@ typedef enum {
     M12_TEXT_DROP_ART_INTO_SLOT,
     M12_TEXT_CARD_ART_ACTIVE,
     M12_TEXT_CARD_ART_SLOT,
+    M12_TEXT_ARCHIVE_TOOL_REQUIRED,
+    M12_TEXT_INSTALL_ARCHIVE_TOOL,
+    M12_TEXT_RESCAN_GAME_DATA,
     M12_TEXT_COUNT
 } M12_TextId;
 
@@ -941,7 +944,10 @@ static const char* const g_localeTextEnglish[M12_TEXT_COUNT] = {
     _("ART SLOT EMPTY"),
     _("DROP ART INTO SLOT"),
     _("CARD ART ACTIVE"),
-    _("CARD ART SLOT")
+    _("CARD ART SLOT"),
+    _("ARCHIVE TOOL REQUIRED"),
+    _("INSTALL ARCHIVE TOOL"),
+    _("RESCAN GAME DATA TO CONTINUE")
 };
 
 static M12_RuntimeCatalog g_runtimeCatalogs[M12_UI_LANGUAGE_COUNT];
@@ -1811,6 +1817,26 @@ static void m12_show_no_game_data_popup(M12_StartupMenuState* state) {
                              line3);
 }
 
+static int m12_show_missing_archive_tool_popup(M12_StartupMenuState* state) {
+    const char* tools;
+    char line2[256];
+    if (!state || asset_scan_missing_extractor_count() <= 0) {
+        return 0;
+    }
+    tools = asset_scan_missing_extractor_tools(0);
+    if (!tools || tools[0] == '\0') {
+        return 0;
+    }
+    snprintf(line2, sizeof(line2), "%s: %s",
+             m12_text(state, M12_TEXT_INSTALL_ARCHIVE_TOOL), tools);
+    m12_enter_message_view(state);
+    m12_set_buffered_message(state,
+                             m12_text(state, M12_TEXT_ARCHIVE_TOOL_REQUIRED),
+                             line2,
+                             m12_text(state, M12_TEXT_RESCAN_GAME_DATA));
+    return 1;
+}
+
 static int m12_ready_game_count(const M12_StartupMenuState* state) {
     int ready = 0;
     int gi;
@@ -2236,7 +2262,9 @@ int M12_StartupMenu_SetDataDirectory(M12_StartupMenuState* state,
     }
     m12_preserve_selected_data_directory(state, selectedDataDir);
     m12_apply_completed_asset_scan(state);
-    m12_show_data_dir_result_popup(state, 1);
+    if (!m12_show_missing_archive_tool_popup(state)) {
+        m12_show_data_dir_result_popup(state, 1);
+    }
     return 1;
 }
 
@@ -4057,7 +4085,9 @@ void M12_StartupMenu_InitWithOptions(M12_StartupMenuState* state,
     state->dataDirScanCancelled = 0;
     memset(&state->dataDirScanProgress, 0, sizeof(state->dataDirScanProgress));
     state->dataDirScanJob = NULL;
-    m12_show_no_game_data_popup(state);
+    if (!m12_show_missing_archive_tool_popup(state)) {
+        m12_show_no_game_data_popup(state);
+    }
     state->frameTick = 0;
     state->hoverX = -1;
     state->hoverY = -1;
@@ -11691,7 +11721,9 @@ int M12_StartupMenu_Update(M12_StartupMenuState* state) {
             state->assetStatus = job->assetStatus;
             m12_preserve_selected_data_directory(state, job->dataDir);
             m12_apply_completed_asset_scan(state);
-            m12_show_data_dir_result_popup(state, 1);
+            if (!m12_show_missing_archive_tool_popup(state)) {
+                m12_show_data_dir_result_popup(state, 1);
+            }
         } else {
             char line3[160];
             m12_format_data_dir_line(state, line3, sizeof(line3));

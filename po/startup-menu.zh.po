@@ -90,3 +90,12 @@ msgstr "使用文件管理器将游戏文件复制到 Documents/Firestaff/data"
 #. iOS: instruction to copy game files via Files app
 msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
 msgstr "使用文件应用将游戏文件复制到此应用的 Firestaff/data"
+
+msgid "ARCHIVE TOOL REQUIRED"
+msgstr "需要压缩包工具"
+
+msgid "INSTALL ARCHIVE TOOL"
+msgstr "安装压缩包工具"
+
+msgid "RESCAN GAME DATA TO CONTINUE"
+msgstr "重新扫描游戏数据以继续"

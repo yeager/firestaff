@@ -63,6 +63,9 @@ static int test_dir_exists(const char* path) {
 static int test_setenv(const char* name, const char* value) {
     return _putenv_s(name, value) == 0;
 }
+static int test_unsetenv(const char* name) {
+    return _putenv_s(name, "") == 0;
+}
 static char* test_mkdtemp(char* templ) {
     char* marker = strstr(templ, "XXXXXX");
     int i;
@@ -83,6 +86,9 @@ static int test_dir_exists(const char* path) {
 }
 static int test_setenv(const char* name, const char* value) {
     return setenv(name, value, 1) == 0;
+}
+static int test_unsetenv(const char* name) {
+    return unsetenv(name) == 0;
 }
 static char* test_mkdtemp(char* templ) {
     return mkdtemp(templ);
@@ -359,6 +365,35 @@ static void check_initial_no_data_popup_appears_once(void) {
     /* A no-op BACK from MAIN must not re-surface the initial popup. */
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_BACK);
     CHECK(state.shouldExit == 1);
+}
+
+/* A data root can contain original media that the hash scanner cannot open
+ * without a host archive reader.  That is distinct from an empty directory:
+ * the launcher must name the missing tool instead of asking the player to
+ * copy files that are already present. */
+static void check_missing_archive_tool_popup(void) {
+    M12_StartupMenuState state;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char ignoredMd5[M12_ASSET_MD5_CAPACITY];
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(write_payload_with_md5(dataRoot, "original-media.7z",
+                                 "nonempty external archive fixture\n",
+                                 ignoredMd5));
+    CHECK(test_setenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS", "1"));
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    CHECK(test_unsetenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS"));
+
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 &&
+          strcmp(state.messageLine1, "ARCHIVE TOOL REQUIRED") == 0);
+    CHECK(state.messageLine2 &&
+          strstr(state.messageLine2, "7zz/7z/bsdtar") != NULL);
+    CHECK(state.messageLine3 &&
+          strcmp(state.messageLine3, "RESCAN GAME DATA TO CONTINUE") == 0);
+    dismiss_message(&state);
+    CHECK(launcher_has_clean_main_view(&state));
 }
 
 /* ------------------------------------------------------------------------- */
@@ -711,6 +746,7 @@ int main(void) {
     CHECK(test_setenv("SDL_VIDEODRIVER", "dummy"));
 
     check_initial_no_data_popup_appears_once();
+    check_missing_archive_tool_popup();
     check_unavailable_game_popup_appears_once_per_selection();
     check_data_dir_picker_cancel_does_not_re_show_no_data();
     check_rescan_with_empty_dir_shows_no_data_result_once();

@@ -280,3 +280,12 @@ msgstr ""
 #. Renderer/settings label
 msgid "VSYNC"
 msgstr ""
+
+msgid "ARCHIVE TOOL REQUIRED"
+msgstr ""
+
+msgid "INSTALL ARCHIVE TOOL"
+msgstr ""
+
+msgid "RESCAN GAME DATA TO CONTINUE"
+msgstr ""
