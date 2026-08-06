@@ -10,6 +10,18 @@ static uint32_t fnv1a(const uint8_t *bytes, size_t count) {
     return hash;
 }
 
+/* FNV-1a identities of the complete post-prologue spans in the supplied
+ * retail Track 02 BINs. These are media admission gates, not compression
+ * output claims. */
+static const uint32_t g_us_compressed_fnv1a[THERON_TRACK02_LEVEL_COUNT] = {
+    0xf7ccbfe9u, 0xf1a6b37au, 0x3c56f832u, 0xdf34534bu,
+    0xa1928360u, 0x64749f2fu, 0x33b93910u
+};
+static const uint32_t g_jp_compressed_fnv1a[THERON_TRACK02_LEVEL_COUNT] = {
+    0xa8818e93u, 0x13142c8fu, 0x4087881au, 0x5bc73358u,
+    0x326eff1fu, 0xff96a9afu, 0x930a5bf6u
+};
+
 /* Sources: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76) and JP
  * Track 02 BIN (MD5 b7afb338ad31be1025b53f9aff12d73a).
  *
@@ -61,14 +73,19 @@ int theron_v1_track02_level_data_block_read(
     Theron_Track02Variant variant, unsigned int level,
     Theron_LevelDataBlockReceipt *out) {
     const Theron_LevelDataBlockDesc *block;
+    const uint32_t *expected_hashes;
     size_t next_offset;
     size_t compressed_offset;
     size_t compressed_end;
 
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
-    if (!user_data || !theron_v1_track02_level_data_block_for_variant(
-            variant, level)) return 0;
+    if (!user_data ||
+        (variant != THERON_TRACK02_VARIANT_US_BIN &&
+         variant != THERON_TRACK02_VARIANT_JP_BIN)) return 0;
+    expected_hashes = variant == THERON_TRACK02_VARIANT_US_BIN
+        ? g_us_compressed_fnv1a : g_jp_compressed_fnv1a;
+    if (!theron_v1_track02_level_data_block_for_variant(variant, level)) return 0;
     block = theron_v1_track02_level_data_block_for_variant(variant, level);
     if ((size_t)block->ud_offset > user_data_size ||
         THERON_TRACK02_LEVEL_PROLOGUE_SIZE >
@@ -100,5 +117,6 @@ int theron_v1_track02_level_data_block_read(
         THERON_TRACK02_LEVEL_SHARED_PROLOGUE_SIZE);
     memcpy(out->per_level_meta, block->per_level_meta,
            sizeof(out->per_level_meta));
-    return out->compressed_bytes != 0u && out->compressed_fnv1a != 0u;
+    return out->compressed_bytes != 0u &&
+           out->compressed_fnv1a == expected_hashes[level];
 }

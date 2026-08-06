@@ -326,7 +326,9 @@
   Each of the seven real level banks now also exposes its complete opaque
   post-prologue compressed span and identity hash through a bounded receipt;
   the original decompressor and tile/material consumer are still required
-  before any drawing or map semantics can be enabled.
+  before any drawing or map semantics can be enabled. The receipt now
+  rejects a mutated span against the per-level US/JP retail FNV identities,
+  so a caller cannot substitute an arbitrary normalized buffer.
   The independent VRAM-trace diagnostic now maps captured VDC BAT words to
   the actual tile index and VCE palette group, including separate atlas entries
   when one tile is used with multiple groups. This is capture-side parity only;

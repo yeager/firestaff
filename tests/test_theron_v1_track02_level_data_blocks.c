@@ -104,6 +104,15 @@ static void verify_real_track02_level_blocks(const char *env_name,
                           sizeof(receipt.per_level_meta)) == 0);
         }
     }
+    {
+        Theron_LevelDataBlockReceipt rejected;
+        const Theron_LevelDataBlockDesc *first =
+            theron_v1_track02_level_data_block_for_variant(variant, 0u);
+        user_data[first->ud_offset + THERON_TRACK02_LEVEL_PROLOGUE_SIZE] ^= 1u;
+        assert(!theron_v1_track02_level_data_block_read(
+            user_data, user_data_size, variant, 0u, &rejected));
+        user_data[first->ud_offset + THERON_TRACK02_LEVEL_PROLOGUE_SIZE] ^= 1u;
+    }
     free(user_data);
     fclose(file);
     printf("PASS: authentic %s Track 02 level-block prologues and metadata\n", label);

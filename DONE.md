@@ -50463,7 +50463,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   for every one of the seven authenticated US and JP Track 02 level banks.
   Each receipt binds the exact post-`0xF0` compressed span, per-level metadata,
   shared-prologue hash, and payload FNV-1a without guessing decompression or
-  tile semantics. Real US/JP level-bank tests pass.
+  tile semantics. Per-level retail FNV gates reject mutated/substituted
+  normalized buffers. Real US/JP level-bank tests pass.
 
 - ✅ 2026-08-06 DM2 SKSAVE record container-map fidelity: corrected the
   isolated `READ_RECORD_CHECKCODE` port to preserve unmasked `c_record` bits
