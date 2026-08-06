@@ -93,6 +93,14 @@ int main(void) {
         view.csbState.startup_title_source_step = 0;
         expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 61u,
                         "CSB startup consumes the authenticated profile cadence");
+        profile.variant_id = CSB_V1_VARIANT_FMTOWNS_EN;
+        view.csbState.startup_title_active = 1;
+        view.csbState.startup_entrance_active = 0;
+        view.csbFmtownsTitleBound = 1;
+        expect_interval(M11_GameView_IdleTickIntervalMs(&view, 100), 16u,
+                        "FM Towns title wakes for its Timer-A accumulator");
+        view.csbFmtownsTitleBound = 0;
+        view.csbState.startup_title_active = 0;
         view.csbBootProfile = NULL;
     }
 

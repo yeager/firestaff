@@ -8103,6 +8103,16 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-06 CSB FM Towns M11 title handoff: the FM Towns variants now
+  bind `TITLE.ANM` only from the selected verified runtime cache and present
+  the real F2275 retained raster/palette in M11. `TOWNSIO.C F2263`'s
+  `SND_fm_timer_a_set(1, 100)` is scheduled with the YM2612 Timer-A period
+  of 16,632 µs through an accumulator, so PC34's 55/220 ms title machine
+  cannot speed up or replace the Towns animation. At EOF Firestaff retains
+  the final real page rather than inventing a PC34 entrance or game handoff.
+  Verification: CSB M11 cadence plus real TITLE/STORY/ENDING ANM playback;
+  CDDA, input and post-title behavior remain capture-gated.
+
 - ✅ 2026-08-06 CSB FM Towns ANM stream interpreter: added the retained-raster
   F2275 playback owner for original ANM chunks, including source palette
   changes, `BR` input admission and exact `FO`/`NE` loop control. It does not

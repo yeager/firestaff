@@ -9,6 +9,7 @@
 #include "dm1_v1_wall_ornament_pc34_compat.h"
 #include "dm1_v1_spell_casting_pc34_compat.h"
 
+#include <stddef.h>
 #include <stdint.h>
 #include "menu_startup_m12.h"
 #include "memory_tick_orchestrator_pc34_compat.h"
@@ -52,6 +53,7 @@
 #include "theron_v1_track02_live_loader_route_admission.h"
 #include "theron_v1_track02_g8_fifo_capture_binding.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_fmtowns_anm.h"
 #include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_f0128_entrance_runtime_consumer_pc34_compat.h"
 #include "csb_v1_startup_entrance_f0128_m11_handoff_pc34_compat.h"
@@ -1529,6 +1531,18 @@ typedef struct {
     int csbStartupSwooshPlayConsumed;
     int csbStartupSwooshReleaseConsumed;
     int csbStartupEntranceMusicTransitionConsumed;
+    /* FM Towns F2275 title owner. TITLE.ANM is retained only after the
+     * selected profile's real asset root has admitted it; no PC34 startup
+     * session or generated title surface may substitute for these pixels. */
+    uint8_t *csbFmtownsTitleBytes;
+    size_t csbFmtownsTitleByteCount;
+    CSB_V1_FmtownsAnmPlayback csbFmtownsTitlePlayback;
+    CSB_V1_FmtownsAnmFrameReceipt csbFmtownsTitleFrameReceipt;
+    uint8_t csbFmtownsTitlePixels[CSB_FMTOWNS_ANM_FRAME_PIXELS];
+    uint32_t csbFmtownsTimerAAccumulatorUs;
+    uint16_t csbFmtownsFrameTimerARemaining;
+    int csbFmtownsTitleBound;
+    int csbFmtownsTitleFinished;
     /* Atari ST ANIMATE.SCR runs at 50 VBlanks/sec while the shared CSB
      * startup state advances at its source-owned 55 ms cadence. Keep the
      * fractional conversion and last source framebuffer here, not in a

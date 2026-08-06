@@ -93,6 +93,16 @@ uint32_t M11_GameView_IdleTickIntervalMs(const M11_GameViewState* gameView,
         const CSB_V1_BootProfile* profile =
             (const CSB_V1_BootProfile*)gameView->csbBootProfile;
         uint32_t tick_ms;
+        if (profile &&
+            (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+             profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) &&
+            gameView->csbFmtownsTitleBound) {
+            /* TOWNSIO.C F2263 selects Timer A count 100. YM2612 Timer A is
+             * 18*(1024-count) us (16,632 us here); M11's 16-ms wakeup is
+             * only a scheduler quantum. The state-side accumulator keeps
+             * the original Timer-A period instead of rounding title frames. */
+            return 16u;
+        }
         /* TITLE.C F0437's waits are source VBlank waits.  The CSB runtime
          * profile owns the corresponding PC cadence (55 ms); using the host
          * display's 20 ms cadence made PRESENTS/CHAOS/STRIKES race through

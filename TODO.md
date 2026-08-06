@@ -7,8 +7,9 @@
   audio/CDDA playback and save handoff are demonstrated against original
   media. `TITLE.ANM`, `STORY.ANM` and `ENDING.ANM` now decode their real
   F2275/F8288 frame streams and retain their source Timer-A waits and loop
-  execution, but M11 still needs to schedule and display that FM
-  Towns-specific presentation.
+  execution. M11 now displays only the verified `TITLE.ANM` stream against
+  its Timer-A timing, but the distinct FM Towns story/ending owner, input,
+  audio/CDDA playback and save handoff still need original-media capture.
   The raw CDDA extractor now streams a
   selected CUE track sectorwise; binding that authenticated PCM to M11 timing
   remains separate.

@@ -3210,7 +3210,9 @@ static int m11_csb_startup_package_identity_current(
      * PC34 TITLE.C runtime session to authenticate, so retain the immutable
      * launch identity while that original animation is being presented. */
     if (profile && (profile->variant_id == CSB_V1_VARIANT_ST20_EN ||
-                    profile->variant_id == CSB_V1_VARIANT_ST21_EN) &&
+                    profile->variant_id == CSB_V1_VARIANT_ST21_EN ||
+                    profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+                    profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA) &&
         !state->csbStartupRuntimeAssetSession) {
         return 1;
     }
@@ -6130,6 +6132,144 @@ static void m11_csb_present_startup_raster(const unsigned char *source,
     }
 }
 
+#define M11_CSB_FMTOWNS_TIMER_A_COUNT 100u
+#define M11_CSB_FMTOWNS_TIMER_A_TICK_US \
+    (18u * (1024u - M11_CSB_FMTOWNS_TIMER_A_COUNT))
+
+static int m11_csb_is_fmtowns_profile(const CSB_V1_BootProfile *profile)
+{
+    return profile && (profile->variant_id == CSB_V1_VARIANT_FMTOWNS_EN ||
+                       profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA);
+}
+
+static void m11_csb_release_fmtowns_title(M11_GameViewState *state)
+{
+    if (!state) return;
+    free(state->csbFmtownsTitleBytes);
+    state->csbFmtownsTitleBytes = NULL;
+    state->csbFmtownsTitleByteCount = 0u;
+    memset(&state->csbFmtownsTitlePlayback, 0,
+           sizeof(state->csbFmtownsTitlePlayback));
+    memset(&state->csbFmtownsTitleFrameReceipt, 0,
+           sizeof(state->csbFmtownsTitleFrameReceipt));
+    state->csbFmtownsTimerAAccumulatorUs = 0u;
+    state->csbFmtownsFrameTimerARemaining = 0u;
+    state->csbFmtownsTitleBound = 0;
+    state->csbFmtownsTitleFinished = 0;
+}
+
+static int m11_csb_bind_fmtowns_title(M11_GameViewState *state)
+{
+    const CSB_V1_BootProfile *profile;
+    char path[sizeof(((CSB_V1_BootProfile *)0)->asset_root) + 16u];
+    FILE *file;
+    long file_size;
+    size_t bytes_read;
+    int step_result;
+
+    if (!state || !state->csbBootProfile) return 0;
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_fmtowns_profile(profile) || !profile->asset_root[0])
+        return 0;
+    m11_csb_release_fmtowns_title(state);
+    if (snprintf(path, sizeof(path), "%s/TITLE.ANM", profile->asset_root) < 0 ||
+        strlen(path) >= sizeof(path)) return 0;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0 || file_size > 4 * 1024 * 1024 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    state->csbFmtownsTitleBytes = (uint8_t *)malloc((size_t)file_size);
+    if (!state->csbFmtownsTitleBytes) {
+        fclose(file);
+        return 0;
+    }
+    bytes_read = fread(state->csbFmtownsTitleBytes, 1u, (size_t)file_size,
+                       file);
+    fclose(file);
+    if (bytes_read != (size_t)file_size ||
+        csb_v1_fmtowns_anm_playback_init(state->csbFmtownsTitleBytes,
+                                          (size_t)file_size,
+                                          &state->csbFmtownsTitlePlayback) != 0) {
+        m11_csb_release_fmtowns_title(state);
+        return 0;
+    }
+    state->csbFmtownsTitleByteCount = (size_t)file_size;
+    memset(state->csbFmtownsTitlePixels, 0,
+           sizeof(state->csbFmtownsTitlePixels));
+    step_result = csb_v1_fmtowns_anm_playback_step(
+        &state->csbFmtownsTitlePlayback, state->csbFmtownsTitlePixels,
+        sizeof(state->csbFmtownsTitlePixels),
+        &state->csbFmtownsTitleFrameReceipt);
+    if (step_result != 1 || !state->csbFmtownsTitleFrameReceipt.valid ||
+        !state->csbFmtownsTitleFrameReceipt.palette_applied) {
+        m11_csb_release_fmtowns_title(state);
+        return 0;
+    }
+    state->csbFmtownsFrameTimerARemaining =
+        state->csbFmtownsTitleFrameReceipt.timer_a_ticks;
+    state->csbFmtownsTitleBound = 1;
+    return 1;
+}
+
+static int m11_csb_present_fmtowns_title(M11_GameViewState *state,
+                                         unsigned char *framebuffer,
+                                         int framebuffer_width,
+                                         int framebuffer_height)
+{
+    const CSB_V1_FmtownsAnmFrameReceipt *frame;
+    uint8_t rgb6[256][3];
+    int color;
+    if (!state || !framebuffer || !state->csbFmtownsTitleBound ||
+        !state->csbFmtownsTitleFrameReceipt.valid ||
+        !state->csbFmtownsTitleFrameReceipt.palette_applied) return 0;
+    frame = &state->csbFmtownsTitleFrameReceipt;
+    for (color = 0; color < 256; ++color) {
+        const CSB_V1_FmtownsAnmColor *source =
+            &frame->palette[color & 15];
+        rgb6[color][0] = (uint8_t)(source->r << 2u);
+        rgb6[color][1] = (uint8_t)(source->g << 2u);
+        rgb6[color][2] = (uint8_t)(source->b << 2u);
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) return 0;
+    m11_csb_present_startup_raster(state->csbFmtownsTitlePixels, framebuffer,
+                                   framebuffer_width, framebuffer_height);
+    return 1;
+}
+
+static void m11_csb_advance_fmtowns_title(M11_GameViewState *state,
+                                           uint32_t elapsed_us)
+{
+    CSB_V1_FmtownsAnmFrameReceipt next_frame;
+    uint64_t accumulator;
+    int step_result;
+    if (!state || !state->csbFmtownsTitleBound ||
+        state->csbFmtownsTitleFinished) return;
+    accumulator = (uint64_t)state->csbFmtownsTimerAAccumulatorUs + elapsed_us;
+    while (accumulator >= M11_CSB_FMTOWNS_TIMER_A_TICK_US &&
+           !state->csbFmtownsTitleFinished) {
+        accumulator -= M11_CSB_FMTOWNS_TIMER_A_TICK_US;
+        if (state->csbFmtownsFrameTimerARemaining > 0u)
+            --state->csbFmtownsFrameTimerARemaining;
+        if (state->csbFmtownsFrameTimerARemaining != 0u) continue;
+        step_result = csb_v1_fmtowns_anm_playback_step(
+            &state->csbFmtownsTitlePlayback, state->csbFmtownsTitlePixels,
+            sizeof(state->csbFmtownsTitlePixels), &next_frame);
+        if (step_result == 1) {
+            state->csbFmtownsTitleFrameReceipt = next_frame;
+            state->csbFmtownsFrameTimerARemaining = next_frame.timer_a_ticks;
+        } else {
+            /* ANIMTOWN.C exits after F2275 ends. Its next launcher/game
+             * transition is not captured, so retain the final real page and
+             * never fall through into the unrelated PC34 entrance machine. */
+            state->csbFmtownsTitleFinished = 1;
+        }
+    }
+    state->csbFmtownsTimerAAccumulatorUs = (uint32_t)accumulator;
+}
+
 /* Atari ST CSB owns ANIMATE.SCR/ANIMATE.DAT rather than the PC34 TITLE.C
  * surface set. Preserve its four-bit page and P4B1 palette through M11; the
  * ordinary PC34 startup path remains the fallback for every other variant. */
@@ -7140,6 +7280,20 @@ static int m11_csb_apply_boot_runtime_receipt(
          * GRAPHICS.DAT/DUNGEON.DAT pair while omitting the optional Atari
          * ANIMATE.SCR/DAT program.  Continue below through the verified
          * GRAPHICS.DAT startup records; do not fake an Atari animation. */
+    }
+    if (m11_csb_is_fmtowns_profile(receipt->profile)) {
+        /* ReDMCSB ANIMTOWN.C invokes F2248/F2275 on TITLE.ANM; it does not
+         * enter the PC34 TITLE.C/ENTRANCE.C surface session. */
+        state->csbStartupExpectedPackageIdentity =
+            package_identity ? package_identity : 1u;
+        m11_sync_csb_state_from_boot_profile(state, state->csbBootProfile);
+        m11_csb_startup_init_state_receipt_to_m11(
+            state, &receipt->receipts.init_state);
+        state->csbState.startup_title_active = 1;
+        state->csbState.startup_entrance_active = 0;
+        if (m11_csb_bind_fmtowns_title(state)) return 1;
+        m11_set_status(state, "CSB FM TOWNS", "TITLE.ANM DECODE FAILED");
+        return 0;
     }
     state->csbStartupRuntimeAssetSession = calloc(
         1, sizeof(CSB_V1_StartupRuntimeAssetSession_PC34));
@@ -15612,6 +15766,7 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         free(state->csbStartupRuntimeAssetSession);
         state->csbStartupRuntimeAssetSession = NULL;
     }
+    m11_csb_release_fmtowns_title(state);
     free(state->csbViewportFloorPixels);
     free(state->csbViewportCeilingPixels);
     state->csbViewportFloorPixels = NULL;
@@ -20661,6 +20816,13 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
                 (uint16_t)(units % 1000u);
             m11_csb_play_due_atari_st_animation_sounds(state);
             (void)m11_csb_complete_atari_st_runtime_handoff(state);
+            return M11_GAME_INPUT_REDRAW;
+        }
+        if (m11_csb_is_fmtowns_profile(csb_profile) &&
+            state->csbState.startup_title_active &&
+            state->csbFmtownsTitleBound &&
+            !state->csbStartupRuntimeAssetSession) {
+            m11_csb_advance_fmtowns_title(state, 16000u);
             return M11_GAME_INPUT_REDRAW;
         }
         if (!m11_csb_original_save_runtime_receipt_current(state)) {
@@ -51938,6 +52100,16 @@ void M11_GameView_Draw(const M11_GameViewState* state,
          * public draw API is const for ordinary renderers; a live game view
          * is nevertheless mutable here and owns this CSB-only transaction. */
         M11_GameViewState *csb_state = (M11_GameViewState *)state;
+        if (state->csbState.startup_title_active &&
+            m11_csb_present_fmtowns_title(csb_state, framebuffer,
+                                          framebufferWidth, framebufferHeight)) {
+            m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
+                                framebufferHeight);
+            g_drawState = NULL;
+            g_activeOriginalFont = NULL;
+            g_m11_font_scale_override = 0;
+            return;
+        }
         if (state->csbState.startup_title_active &&
             m11_csb_present_atari_st_startup(csb_state, framebuffer,
                                               framebufferWidth,
