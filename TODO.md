@@ -15456,7 +15456,10 @@ lane is carried forward in the sections below.
   explicitly `NOT_APPLICABLE_ARCH`: they are DOS UI/event-loop owners
   replaced by M11, not callable game-data substitutes. Keep auditing the
   real M11/GDAT path for missing ownership; do not revive any retired
-  callback transcript merely to reduce a function-count metric.
+  callback transcript merely to reduce a function-count metric. **2026-08-06
+  eventqueue correction:** the retained test transcript now matches the
+  source `0x02`/`0x04` capacity edge, keyboard seven-entry cap and init-vs-
+  flush sentinel split; it remains excluded from every production path.
 
 - SKPROJECT-DM2-STARTUP-001 — `SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN`
   (`TITLE/0 dt07/4`): Firestaff now treats the menu as one static GDAT draw

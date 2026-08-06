@@ -26,6 +26,9 @@ typedef struct {
 typedef struct {
     int16_t idx, out_idx, entries;
     bool fetch_busy;
+    /* c_eventqueue.cpp::QUEUE_EVENT keeps this static edge across calls:
+     * a saturated 0x02 event changes only the following 0x04 capacity. */
+    bool button0x2;
     DM2_V1_EventEntry data[DM2_V1_EVENTQUEUE_LEN];
     bool singleevent_available;
     DM2_V1_EventEntry singleevent;

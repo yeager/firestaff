@@ -3005,6 +3005,16 @@ were corrected to stop presenting DM1 provisions as Nexus data.
   `NOT_APPLICABLE_ARCH` rows. No disabled callback/test transcript was
   promoted into a playable DM2 route.
 
+- ✅ 2026-08-06 DM2 `c_eventqueue` source-edge correction: the retained
+  test-only queue transcript now preserves `QUEUE_EVENT`'s saturated `0x02`
+  one-shot effect on the following `0x04` capacity, the source 7/9 entry
+  limits, and `QUEUE_0x20`'s seven-entry cap without inventing a zero y
+  coordinate. It also distinguishes `init()`'s zero sentinels from
+  `event_1031_098e()`'s `-1` flush reset. No callback event queue is linked
+  into M11 or production DM2 input. Verification:
+  `test_dm2_v1_eventqueue_pc34_compat` PASS. Source:
+  `SKULLWIN/c_eventqueue.cpp::init`, `QUEUE_EVENT`, `QUEUE_0x20`.
+
 - ✅ 2026-08-06 DM2 c_1c9a callback placeholder removal:
   `DM2_1c9a_09b9` now implements the exact SKProject
   `c_1c9a.cpp:5404-5413` DB4 record-link predicate: resolve the low-16-bit

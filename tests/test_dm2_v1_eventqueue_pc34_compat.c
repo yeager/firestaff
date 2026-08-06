@@ -19,8 +19,8 @@ static void test_init(void)
     assert(!eq.fetch_busy);
     assert(!eq.singleevent_available);
     assert(eq.event_heroidx == 0);
-    assert(eq.event_unk05 == -1);
-    assert(eq.event_unk09 == -1);
+    assert(eq.event_unk05 == 0);
+    assert(eq.event_unk09 == 0);
     assert(!eq.event_unk0f);
     printf("  PASS test_init\n");
 }
@@ -106,6 +106,39 @@ static void test_queue_0x20(void)
     printf("  PASS test_queue_0x20\n");
 }
 
+static void test_source_button_edge_and_keyboard_cap(void)
+{
+    DM2_V1_EventQueue eq;
+    DM2_V1_QueueEventReceipt r;
+    int i;
+
+    dm2_v1_eventqueue_init(&eq);
+    /* A normal 0x04 has the nine-entry source capacity. */
+    for (i = 0; i < 9; ++i) {
+        r = dm2_v1_eventqueue_queue_event(&eq, (int16_t)i, 0, 0x04);
+        assert(r.queued);
+    }
+    assert(eq.entries == 9);
+    /* At saturation 0x02 is not queued; it only sets the one-shot edge. */
+    r = dm2_v1_eventqueue_queue_event(&eq, 99, 0, 0x02);
+    assert(!r.queued && eq.button0x2);
+    r = dm2_v1_eventqueue_queue_event(&eq, 100, 0, 0x04);
+    assert(!r.queued && !eq.button0x2);
+
+    dm2_v1_eventqueue_init(&eq);
+    eq.data[1].y = 1234;
+    for (i = 0; i < 7; ++i) {
+        r = dm2_v1_eventqueue_queue_0x20(&eq, (int16_t)(0x10 + i));
+        assert(r.queued);
+    }
+    assert(eq.entries == 7);
+    r = dm2_v1_eventqueue_queue_0x20(&eq, 0x1f);
+    assert(!r.queued && eq.entries == 7);
+    /* First insertion is slot 1 and must retain source-owned y. */
+    assert(eq.data[1].y == 1234);
+    printf("  PASS test_source_button_edge_and_keyboard_cap\n");
+}
+
 static void test_flush_keeps_buttons(void)
 {
     DM2_V1_EventQueue eq;
@@ -157,6 +190,7 @@ int main(void)
     test_process_singleevent();
     test_process_singleevent_none();
     test_queue_0x20();
+    test_source_button_edge_and_keyboard_cap();
     test_flush_keeps_buttons();
     test_queue_overflow();
     printf("All tests passed.\n");

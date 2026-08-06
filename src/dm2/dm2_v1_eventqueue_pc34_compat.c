@@ -11,8 +11,10 @@ void dm2_v1_eventqueue_init(DM2_V1_EventQueue *eq)
 {
     memset(eq, 0, sizeof(*eq));
     eq->event_heroidx = 0;
-    eq->event_unk05 = -1;
-    eq->event_unk09 = -1;
+    /* SKProject c_eventqueue.cpp::init zeroes these.  -1 belongs only to
+     * event_1031_098e's explicit flush reset. */
+    eq->event_unk05 = 0;
+    eq->event_unk09 = 0;
 }
 
 void dm2_v1_eventqueue_set(DM2_V1_EventQueue *eq, int16_t i,
@@ -59,13 +61,24 @@ DM2_V1_QueueEventReceipt dm2_v1_eventqueue_queue_event(
         return r;
     }
 
-    /* Capacity depends on button type */
-    int16_t cap = 7;
-    if (mb == 0x04 || mb == 0x40 || mb == 0x60)
-        cap = 9;
+    /* QUEUE_EVENT owns fetch_busy while it reads the capacity edge and
+     * mutates the circular buffer.  A concurrent event is therefore retained
+     * in the one-entry source buffer above instead of racing the insert. */
+    eq->fetch_busy = true;
 
-    if (eq->entries >= cap)
+    /* c_eventqueue.cpp::QUEUE_EVENT: only 0x04 gets the 9-entry button
+     * capacity, and only when the preceding saturated 0x02 did not set its
+     * one-shot edge.  0x40 and 0x60 always retain the larger capacity. */
+    int16_t cap = 9;
+    if ((mb != 0x04 || eq->button0x2) && mb != 0x40 && mb != 0x60)
+        cap = 7;
+    eq->button0x2 = false;
+
+    if (cap <= eq->entries) {
+        if (mb == 0x02) eq->button0x2 = true;
+        eq->fetch_busy = false;
         return r;
+    }
 
     /* Insert at next slot after idx, wrapping */
     int16_t slot = (int16_t)((eq->idx + 1) % DM2_V1_EVENTQUEUE_LEN);
@@ -74,6 +87,7 @@ DM2_V1_QueueEventReceipt dm2_v1_eventqueue_queue_event(
     eq->data[slot].b = mb;
     eq->idx = slot;
     eq->entries++;
+    eq->fetch_busy = false;
     r.queued = true;
     r.slot = slot;
     return r;
@@ -82,19 +96,21 @@ DM2_V1_QueueEventReceipt dm2_v1_eventqueue_queue_event(
 DM2_V1_QueueEventReceipt dm2_v1_eventqueue_queue_0x20(
     DM2_V1_EventQueue *eq, int16_t key)
 {
+    DM2_V1_QueueEventReceipt r = {false, -1};
+
     eq->fetch_busy = true;
-
-    /* Insert keyboard event with b=0x20 */
-    int16_t slot = (int16_t)((eq->idx + 1) % DM2_V1_EVENTQUEUE_LEN);
-    eq->data[slot].x = key;
-    eq->data[slot].y = 0;
-    eq->data[slot].b = 0x20;
-    eq->idx = slot;
-    eq->entries++;
-
-    DM2_V1_QueueEventReceipt r;
-    r.queued = true;
-    r.slot = slot;
+    /* c_eventqueue.cpp::QUEUE_0x20 admits fewer than seven entries and
+     * writes only b/x.  Writing a host y=0 here would alter a wrapped source
+     * queue entry, so it remains untouched. */
+    if (eq->entries < 7) {
+        int16_t slot = (int16_t)((eq->idx + 1) % DM2_V1_EVENTQUEUE_LEN);
+        eq->data[slot].x = key;
+        eq->data[slot].b = 0x20;
+        eq->idx = slot;
+        eq->entries++;
+        r.queued = true;
+        r.slot = slot;
+    }
 
     eq->fetch_busy = false;
 
