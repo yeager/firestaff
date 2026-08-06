@@ -1039,13 +1039,40 @@ static int m12_csb_fmtowns_make_stage_path(char* path, size_t pathSize) {
 #endif
 }
 
+/* A retail FM Towns image expands to roughly half a gigabyte.  Staging it in
+ * /tmp can therefore fail even though the user deliberately selected an
+ * archive on a spacious external game-data volume.  Prefer a sibling
+ * temporary file on that volume; this keeps the read-only archive intact and
+ * falls back to the legacy /tmp route when its parent is not writable. */
+static int m12_csb_fmtowns_make_archive_stage_path(const char* archivePath,
+                                                   char* path,
+                                                   size_t pathSize) {
+#ifndef _WIN32
+    char parent[M12_ASSET_DATA_DIR_CAPACITY];
+    int descriptor;
+    if (archivePath && FSP_ParentDir(parent, sizeof(parent), archivePath) &&
+        snprintf(path, pathSize, "%s/.firestaff-csb-fmtowns-XXXXXX", parent) <
+            (int)pathSize) {
+        descriptor = mkstemp(path);
+        if (descriptor >= 0) {
+            close(descriptor);
+            return 1;
+        }
+    }
+#else
+    (void)archivePath;
+#endif
+    return m12_csb_fmtowns_make_stage_path(path, pathSize);
+}
+
 static int m12_csb_fmtowns_archive_stage(const char* archivePath,
                                          char* imagePath, size_t imagePathSize,
                                          CSB_V1_FmtownsCdLayout* layout) {
     char virtualPath[M12_ASSET_DATA_DIR_CAPACITY + 64U];
     int extracted = 0;
     if (!archivePath || !imagePath || !layout ||
-        !m12_csb_fmtowns_make_stage_path(imagePath, imagePathSize)) {
+        !m12_csb_fmtowns_make_archive_stage_path(archivePath, imagePath,
+                                                  imagePathSize)) {
         if (imagePath && imagePath[0] != '\0') remove(imagePath);
         return 0;
     }

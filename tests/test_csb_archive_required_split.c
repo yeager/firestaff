@@ -746,6 +746,8 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
     const M12_AssetVersionStatus* english;
     const M12_AssetVersionStatus* directEnglish;
     int index;
+    int englishIndex;
+    int japaneseIndex;
     char directArchivePath[ASSET_PATH_MAX];
     const M12_AssetVersionStatus* japanese;
     const M12_AssetRequiredFileStatus* graphics;
@@ -772,8 +774,17 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
         scanRoot = directArchivePath;
     }
     M12_AssetStatus_Scan(&status, scanRoot);
-    english = M12_AssetStatus_GetVersion(&status, "csb", 5U);
-    japanese = M12_AssetStatus_GetVersion(&status, "csb", 6U);
+    /* Version slots are catalog order, not a public ABI. Amiga 3.1 is
+     * registered ahead of the older 3.5 variants, so recover FM Towns by its
+     * stable version id rather than stale 5/6 ordinals. */
+    englishIndex = M12_AssetStatus_FindVersionIndex("csb", "fmtowns-en");
+    japaneseIndex = M12_AssetStatus_FindVersionIndex("csb", "fmtowns-ja");
+    english = englishIndex >= 0
+        ? M12_AssetStatus_GetVersion(&status, "csb", (size_t)englishIndex)
+        : NULL;
+    japanese = japaneseIndex >= 0
+        ? M12_AssetStatus_GetVersion(&status, "csb", (size_t)japaneseIndex)
+        : NULL;
     graphics = required_file_by_role(&status, "graphics");
     dungeon = required_file_by_role(&status, "dungeon");
     check_int(M12_AssetStatus_GameAvailable(&status, "csb") == 1,
