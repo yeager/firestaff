@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 Nexus documentation provenance correction: updated the
+  source-locked data audit so real LEV00–LEV15 Structure1B/Structure3
+  receipts, 16-file SLEV task profiles, SAL DataID-0/MAP metadata, the
+  authenticated 26,610-byte SDDRVS.TSK identity and the 20-record FACE.BIN
+  corpus are no longer incorrectly documented as “not parsed” or hypothetical.
+  The documentation preserves the actual Saturn-capture gates: no SLEV event
+  semantics, SAL playback, portrait placement or DGN/VDP1 presentation is
+  claimed from bounded file parsing alone.
+
 - ✅ 2026-08-06 Nexus viewport handoff return status: the verified legacy
   DGN material route now returns success from
   `nexus_viewport_dgn_host_route_receipt` when its receipt is

@@ -31,7 +31,8 @@
 | 14 | LEV14.DGN | 253,952 | 32×32 | |
 | 15 | LEV15.DGN | 270,336 | 32×32 | Final level |
 
-**Total: ~4.3 MB** — vs. DM1's ~33 KB. Ratio: ~130× larger.
+**Total: the checked European corpus is retained as source data; do not infer
+runtime presentation from file size alone.**
 
 ### Format Structure
 Each DGN file contains two sections:
@@ -56,9 +57,11 @@ return (int)((uint8_t *)level->grid)[y * width + x] & 0x1F;
 Lower 5 bits extracted, matching DM1 square type semantics.
 
 ### 3D Geometry Parsing
-**Status: NOT YET IMPLEMENTED in Firestaff.**
-The geometry blob parser is TODO — `nexus_v1_dungeon.c` only parses grid,
-not the post-grid 3D geometry section. This is a known gap.
+**Status: bounded real-data intake implemented.**
+`nexus_v1_dungeon.c` parses the 64×64 Structure1B grid and retains bounded
+post-grid/Structure3 source receipts across LEV00–LEV15. Transform, material,
+palette, VDP1 command ownership and final Saturn presentation remain
+capture-gated; no host fallback geometry is permitted.
 
 ---
 
@@ -132,18 +135,21 @@ SH2 is big-endian; x86/ARM (PC builds) are little-endian.
 - CD audio track for music + ADX/SEGA PCM for SFX
 
 ### Script Files: SLEV00-15.BIN
-- Per-level event scripts (2–12 KB each)
-- Processed by SDDRVS.TSK script VM
-- Declarative event rules for teleporters, traps, door animations
+- Real per-level SH-2 task candidates (the complete 16-file corpus)
+- Bounded 36-byte entry spine, literal and RTS/call-shape receipts
+- Task body, event ownership and SDDRVS dispatch remain opaque; no
+  declarative event rules are inferred
 
 ### Minimap Data: SMAP00-15.BIN
 - Per-level minimap images (17–30 KB each)
 - 2D overhead map for in-game map display
 
-### Sound File Format (from nexus_overview.md)
-- **CD-DA tracks** (tracks 2-9): Red Book Audio, per-level music
-- **SFX format**: ADX (Sega ADPCM) or SEGA PCM
-- **Streaming**: Audio streamed from CD in real-time via DMA (Saturn)
+### Sound File Format
+- **CD-DA tracks** (tracks 2–9): Red Book Audio, two levels per track
+- **SFX format**: real SAL DataID-0 directory and bounded PCM metadata
+- **MAP**: real eight-byte records from offset zero, retained as opaque
+  selector/attribute/SAL windows
+- **Streaming/playback**: not promoted without SDDRVS/event-dispatch evidence
 
 ---
 
@@ -154,24 +160,18 @@ SH2 is big-endian; x86/ARM (PC builds) are little-endian.
 - Loaded by `nexus_v1_font_load()` from `nexus_v1_saturn_font.c`
 - Used for all in-game text rendering
 
-### FACE.BIN (hypothetical)
-No FACE.BIN file found in Nexus source code or documentation.
-The task mentions FACE.BIN — possible candidates:
-- Champion face portrait data (for UI panels)
-- Stored as indexed bitmap (8bpp with palette)
-- Big-endian encoding on disc
+### FACE.BIN
+The European corpus contains the real FACE.BIN resource. The bounded loader
+admits its authenticated 20-record layout and retains 20 indexed 56×56
+portrait surfaces with their 64-entry BGR555 palettes. Saturn VDP1 command
+order, destination, scale and flip remain capture-gated; portraits are not
+drawn from guessed host rectangles.
 
-**Status: Not confirmed in codebase.** No references found in source/docs.
-
-### SDDRVS.TSK (Script/Task File)
-No SDDRVS.TSK implementation exists in Firestaff.
-The task file is mentioned in dungeon/squares docs as:
-- Declarative script processed by a virtual machine
-- Handles teleporters, trap triggers, door animations
-- Per-level scripts in SLEV00-15.BIN format
-- SDDRVS.TSK is the main task/script VM file
-
-**Status: SDDRVS.TSK parser NOT IMPLEMENTED in Firestaff.**
+### SDDRVS.TSK
+The real 26,610-byte SDDRVS.TSK is admitted as a Saturn sound-driver task
+identity. It is not treated as a script VM or event-table parser. SLEV task
+profiles and SAL/MAP metadata remain receipts only until an authenticated
+execution trace proves the owner and ABI.
 
 ---
 
@@ -179,14 +179,14 @@ The task file is mentioned in dungeon/squares docs as:
 
 | File | Format | Size | Purpose | Status |
 |------|--------|------|---------|--------|
-| LEV00-15.DGN | Binary (grid + 3D blob) | 147-322 KB each | Dungeon levels | Grid parsed; 3D geometry TODO |
+| LEV00-15.DGN | DMWeb DGN (Structure1B + bounded payload) | 147-322 KB each | Dungeon levels | Real grid/source receipts; Saturn mesh presentation gated |
 | *.MNS | DMDF (big-endian) | 46-88 KB each | 3D creature models | Header + vertices + faces parsed |
-| SNDLEV*.SAL | Binary | 290-460 KB each | Per-level audio bank | NOT PARSED |
-| SLEV*.BIN | Binary | 2-12 KB each | Per-level script | NOT PARSED |
+| SNDLEV*.SAL | SAL DataID 0 + bounded payload | 290-460 KB each | Per-level audio bank | Real directory/metadata parsed; playback gated |
+| SLEV*.BIN | SH-2 task candidate | 2-12 KB each | Per-level task payload | 16-file entry profile; dispatch opaque |
 | SMAP*.BIN | LVMP binary | 17-30 KB each | 80×76 tilemap + 256-colour BGR555 palette + 8×8 indexed tiles | Parsed to source RGBA; VDP2 placement remains gated |
 | FONT256.S2D | Saturn font binary | ~64 KB | 256-char font (incl. JP) | Parsed (Saturn font loader) |
 | DM.BIN | Binary | ~133 MB | Full disc image data | ISO reader exists |
-| FACE.BIN | Unknown | Unknown | Champion faces? | NOT FOUND in source |
+| FACE.BIN | Authenticated indexed portrait records | retail resource | Champion portraits | 20 records admitted; VDP1 placement gated |
 
 ---
 
