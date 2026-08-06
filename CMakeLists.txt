@@ -4649,6 +4649,11 @@ list(REMOVE_ITEM M10_SOURCES
 # the shared inventory helpers remain in M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_close_rewire_runtime_pc34_compat.c")
+# `dm1_v1_chest_empty_reopen_runtime_pc34_compat.c` is a contract-only empty
+# chest-state probe. Its direct target already compiles it; there is no M11
+# caller or original-DM1 input.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_empty_reopen_runtime_pc34_compat.c")
 # `dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c` is a
 # contract-only probe. It manufactures its chest stack, leader hand, floor
 # link and coordinates locally, reads no original save/dungeon/graphics data,
