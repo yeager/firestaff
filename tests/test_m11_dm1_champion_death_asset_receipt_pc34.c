@@ -27,8 +27,6 @@ static int count_bones_for_champion(const struct DungeonThings_Compat* things,
 
 int main(void) {
     const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char* home;
-    char defaultDataDir[1024];
     M11_GameViewState state;
     struct ChampionState_Compat* champion;
     unsigned char portraitBefore[CHAMPION_PORTRAIT_BITMAP_BYTE_COUNT];
@@ -36,16 +34,13 @@ int main(void) {
     int bonesAfter;
 
     if (!dataDir || !dataDir[0]) {
-        home = getenv("HOME");
-        if (!home || !home[0]) return 0;
-        snprintf(defaultDataDir, sizeof(defaultDataDir),
-                 "%s/.firestaff/data/dm1", home);
-        dataDir = defaultDataDir;
+        puts("skip: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
     }
     M11_GameView_Init(&state);
     if (!M11_GameView_StartDm1(&state, dataDir)) {
         M11_GameView_Shutdown(&state);
-        return getenv("FIRESTAFF_DM1_DATA_DIR") ? 1 : 0;
+        return 1;
     }
     if (M11_GameView_GetMirrorCatalogCount(&state) <= 0 ||
         !M11_GameView_RecruitChampionByMirrorOrdinal(&state, 0)) {
