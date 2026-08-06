@@ -83,7 +83,7 @@ static void test_run_accepted(void)
     int ok = dm1_v1_wound_probability_index_to_mask_run_pc34(&r);
     CHECK(ok == 1);
     CHECK(r.accepted == 1);
-    CHECK(r.assertionCount == 7);
+    CHECK(r.assertionCount == 6);
     CHECK(r.tableEntries[0] == 0x20);
     CHECK(r.tableEntries[1] == 0x10);
     CHECK(r.tableEntries[2] == 0x08);
@@ -94,7 +94,6 @@ static void test_run_accepted(void)
     CHECK(r.lookupBranchCorrect == 1);
     CHECK(r.fallbackBranchCorrect == 1);
     CHECK(r.lookupBranchGuardCorrect == 1);
-    CHECK(r.declarationMatchesInit == 1);
 }
 
 int main(void)

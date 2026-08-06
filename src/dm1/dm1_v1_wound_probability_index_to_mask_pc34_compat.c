@@ -194,23 +194,13 @@ dm1_v1_wound_probability_index_to_mask_run_pc34(
     out->fallbackBranchCorrect = fallback_branch_correct;
     out->lookupBranchGuardCorrect = ready_hand_branch_correct;
 
-    /* Phase 5: declaration-vs-init match. The s_g0024 table is the
-     * single source of truth for both the init-data values and the
-     * lookup values, so the per-element cross-check is the trivial
-     * self-equality. The real check is the four ordering checks in
-     * Phase 1 plus the four lookup checks in Phase 3; this phase
-     * remains as a placeholder for future use.
-     */
-    out->declarationMatchesInit = 1;
-
     out->accepted =
         out->allUnique &&
         out->correctOrdering &&
         out->allMasksInDefs &&
         out->lookupBranchCorrect &&
         out->fallbackBranchCorrect &&
-        out->lookupBranchGuardCorrect &&
-        out->declarationMatchesInit;
-    out->assertionCount = 7;
+        out->lookupBranchGuardCorrect;
+    out->assertionCount = 6;
     return out->accepted;
 }

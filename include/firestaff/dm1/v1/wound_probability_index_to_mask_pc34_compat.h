@@ -11,7 +11,6 @@ typedef struct DM1_V1_WoundProbabilityIndexToMaskResultPc34 {
     int lookupBranchCorrect;
     int fallbackBranchCorrect;
     int lookupBranchGuardCorrect;
-    int declarationMatchesInit;
 } DM1_V1_WoundProbabilityIndexToMaskResultPc34;
 
 const unsigned char *

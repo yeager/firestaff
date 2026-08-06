@@ -133,6 +133,7 @@ def resolve_build_dir(binary_name: str = "") -> Path:
         ROOT / "builds" / "nv1-build",
         ROOT / "builds" / "n2-build",
     ]
+    candidates.extend(sorted(ROOT.glob("build-*")))
     # Prefer the candidate that has both CMakeCache.txt and the binary
     if binary_name:
         for c in candidates:
@@ -204,9 +205,9 @@ def write_outputs(
         "wound-test branch. The fallback branch (PROJEXPL.C:1389) uses "
         "MASK0x0001_WOUND_READY_HAND when the test-mask bits 4,5,6 are "
         "all clear.",
-        "- Runtime assertion floor: 37 assertions in `tests/test_dm1_v1_"
+        "- Runtime assertion floor: 36 assertions in `tests/test_dm1_v1_"
         "wound_probability_index_to_mask_pc34_compat.c`.",
-        "- Expected test output: `37/37 assertions passed`.",
+        "- Expected test output: `36/36 assertions passed`.",
         "",
         "## ReDMCSB Anchors",
         "",

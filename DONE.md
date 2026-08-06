@@ -1,3 +1,14 @@
+# DM1 wound-probability placeholder audit (2026-08-06)
+
+- ✅ Confirmed the FMTowns `DYNA_BUTTONS` `N`/`X` values are original media
+  bytes, not placeholders, and kept them unchanged. ReDMCSB `DATA.C:243`
+  independently confirms the wound-mask table `{0x20, 0x10, 0x08, 0x04}`.
+- ✅ Removed the wound-mask result's self-equality “future” placeholder; it
+  now reports only six independently evaluated invariants. The source-locked
+  audit is also test-only because no M11/runtime caller consumes it.
+- ✅ Verification: targeted CTest
+  `dm1_v1_wound_probability_index_to_mask_pc34_compat` passes.
+
 # DM1 C040/C160 rotation-close synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C040/C160 rotation-close fixture from M10. It
