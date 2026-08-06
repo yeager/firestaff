@@ -4375,6 +4375,11 @@ diagnostic; it must not silently fall back to a generated visual.
   record-specific `DOORS` image, rather than treating `door_record_type != 0`
   as record presence. Remaining wall/door work is still limited to source
   records and decoded GDAT/RAW4 receipts.
+  **2026-08-06 V5 corpus correction:** canonical PC `GRAPHICS.DAT` does have
+  an authenticated FB/FC/FD chain for `CREATURES/02/dtImage/12`; its current
+  G1 maps do not contain a root that owns it. Keep every present G1 creature
+  fail-closed until its own DB4 record/animation chain is bound; do not infer
+  a sprite from this unrelated real material.
 - **DM2-ORIGINAL-REPLACE-002:** Replace the V2 HUD's synthetic 1x1/overlay
   route with real interface/widget records from `dm2/GRAPHICS.DAT`; do not
   use generated PNG pixels as a runtime fallback. **2026-07-30 update:** the

@@ -155,9 +155,10 @@ int main(void)
         }
     }
 
-    /* The hash-verified PC corpus exposes no complete V5 material chain.
-     * Do not manufacture one from map-chip F9 data: every creature remains
-     * fail-closed until its exact FB/FC/FD owner is admitted. */
+    /* The hash-verified PC corpus does expose authenticated FB/FC/FD V5
+     * material (currently CREATURES/02/dtImage/12).  It belongs to that
+     * GDAT creature type, not to an arbitrary G1 DB4 record.  None of the
+     * current-map roots above owns that chain, so they remain fail-closed. */
     {
         int chain_types = 0;
         for (int type = 0; type < 256 && chain_types < 1; ++type) {
@@ -168,8 +169,8 @@ int main(void)
                 ++chain_types;
             }
         }
-        CHECK("canonical GDAT exposes no unowned V5 material chain",
-              chain_types == 0);
+        CHECK("canonical GDAT exposes an authenticated V5 material chain",
+              chain_types == 1);
     }
     CHECK("no current-map creature record owns the full V5 chain",
           admitted == 0);

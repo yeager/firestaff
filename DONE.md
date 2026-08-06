@@ -46,6 +46,15 @@
 - ✅ Verification: `test_dm1_v1_viewport_d2c_f0111_door_pc34_compat` passes;
   the source object is absent from both M10 and M11 archives.
 
+# DM2 G1 creature V5 real-corpus correction (2026-08-06)
+
+- ✅ Corrected the real-data viewport regression: canonical PC-DOS
+  `GRAPHICS.DAT` contains the source-owned V5 chain
+  `CREATURES/02/dtImage/12`. The corpus's 33 current G1 creature roots do not
+  own that material, so all remain fail-closed rather than borrowing it.
+- ✅ Verification: dynamic-material receipt passes for the authenticated
+  chain; G1 creature viewport field regression passes with all 38 checks.
+
 # DM2 door debug-text boundary (2026-08-06)
 
 - ✅ Removed host-authored labels for numeric door states and door types.
