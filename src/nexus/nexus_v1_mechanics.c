@@ -339,24 +339,25 @@ int nexus_v1_mechanics_load_level(Nexus_V1_Engine *engine, int level_index) {
     (void)mechanics_spawn_creatures_from_dgn(engine, level_index);
 
     if (has_real_data) {
-        /* Drop real items on the floor only when ITEM.IBS has been
-         * authenticated and parsed.  The DGN item_id is an IBS declaration
-         * index; inventory_association gives the DM1-style inventory id used
-         * by the mechanics item catalog. */
+        /* Drop source-declared items only when ITEM.IBS has been
+         * authenticated and parsed.  DMWeb Nexus DGN Structure1Fa byte 4 is
+         * the ITEM.IBS item-declaration number.  ITEM.IBS word 20 is only the
+         * inventory image association; it is not a second runtime item ID.
+         * Keep the DGN declaration number as the source identity so a visual
+         * receipt cannot silently turn into a different item. */
         if (engine->item_ibs_runtime_source.source_bound &&
             engine->item_ibs_bank.valid) {
             for (i = 0; i < level->structure1f_entry_count; ++i) {
                 const Nexus_V1_DgnStructure1FEntry *e =
                     &level->structure1f_entries[i];
-                int inv_id;
                 if (e->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS) continue;
                 if (e->x >= (uint8_t)level->width || e->y >= (uint8_t)level->height)
                     continue;
                 if (e->item_id >= NEXUS_V1_ITEM_IBS_DECLARATION_COUNT) continue;
-                inv_id = (int)engine->item_ibs_bank.inventory_association[e->item_id];
-                if (inv_id < 0 || inv_id >= nexus_itemdef_count()) continue;
-                if (!nexus_itemdef_get(inv_id)) continue;
-                nexus_floor_drop(e->x, e->y, inv_id, 1);
+                if ((int)e->item_id >= nexus_itemdef_count()) continue;
+                if (!nexus_itemdef_get((int)e->item_id)) continue;
+                nexus_floor_drop_source(e->x, e->y, (int)e->item_id, 1,
+                                        e->attribute1, e->attribute2, i);
             }
         }
 

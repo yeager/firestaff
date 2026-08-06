@@ -867,6 +867,11 @@ level or consumer bindings.
   `palette_offset == 0` reuse rule per palette ID; the 75 retail descriptors
   that reuse an earlier palette no longer fail as if their source palette
   were missing. Item action, pickup and VDP1 command ownership remain gated.
+  2026-08-06 follow-up: live floor admission now keeps the DGN Structure1Fa
+  item declaration number instead of misusing ITEM.IBS word 20's inventory
+  image association as a runtime ID. Raw Structure1Fa attribute bytes 5 and
+  7, including LEV01 torch/waterskin charge values, are retained with the
+  floor provenance; they are not interpreted before Saturn action capture.
 
 - **NEXUS-DGN-CORPUS-IDENTITY:** The DGN level-content regression now requires
   the 16 production European `LEV00-15.DGN` MD5 identities before its

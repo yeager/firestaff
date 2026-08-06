@@ -80,6 +80,9 @@ typedef struct {
     int quantity;
     int x, y;             /* dungeon position */
     int on_ground;        /* 1 = on ground, 0 = in container */
+    uint8_t source_attribute1; /* DGN Structure1Fa byte 5 */
+    uint8_t source_attribute2; /* DGN Structure1Fa byte 7 (charges) */
+    int source_dgn_entry;      /* source entry ordinal, or -1 */
 } Nexus_FloorItem;
 
 /* Cursor state — item currently held by player */
@@ -173,8 +176,17 @@ int nexus_cursor_place(Nexus_CursorItem *cursor);
 /* Floor item management */
 void nexus_floor_init(void);
 int nexus_floor_drop(int x, int y, int item_id, int qty);
+/* Source-preserving floor admission.  The two attributes are retained as
+ * raw DGN bytes; they are not interpreted as gameplay until the Saturn
+ * action/slot consumer is source-bound. */
+int nexus_floor_drop_source(int x, int y, int item_id, int qty,
+                            uint8_t attribute1, uint8_t attribute2,
+                            int source_dgn_entry);
 int nexus_floor_pickup(int floor_idx, int *out_item_id, int *out_qty);
 int nexus_floor_count_at(int x, int y);
 int nexus_floor_get_at(int x, int y, int idx, int *out_item_id, int *out_qty);
+int nexus_floor_get_at_source(int x, int y, int idx, int *out_item_id,
+                              int *out_qty, uint8_t *out_attribute1,
+                              uint8_t *out_attribute2, int *out_dgn_entry);
 
 #endif /* NEXUS_V1_INVENTORY_H */

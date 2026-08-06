@@ -378,6 +378,12 @@ void nexus_floor_init(void) {
 }
 
 int nexus_floor_drop(int x, int y, int item_id, int qty) {
+    return nexus_floor_drop_source(x, y, item_id, qty, 0U, 0U, -1);
+}
+
+int nexus_floor_drop_source(int x, int y, int item_id, int qty,
+                            uint8_t attribute1, uint8_t attribute2,
+                            int source_dgn_entry) {
     if (x < 0 || x >= FLOOR_GRID || y < 0 || y >= FLOOR_GRID) return -1;
     if (g_floor_item_count >= FLOOR_MAX_ITEMS) return -1;
     g_floor_items[g_floor_item_count].item_id = item_id;
@@ -385,6 +391,9 @@ int nexus_floor_drop(int x, int y, int item_id, int qty) {
     g_floor_items[g_floor_item_count].x = x;
     g_floor_items[g_floor_item_count].y = y;
     g_floor_items[g_floor_item_count].on_ground = 1;
+    g_floor_items[g_floor_item_count].source_attribute1 = attribute1;
+    g_floor_items[g_floor_item_count].source_attribute2 = attribute2;
+    g_floor_items[g_floor_item_count].source_dgn_entry = source_dgn_entry;
     return g_floor_item_count++;
 }
 
@@ -412,6 +421,29 @@ int nexus_floor_get_at(int x, int y, int idx, int *out_item_id, int *out_qty) {
             if (c == idx) {
                 if (out_item_id) *out_item_id = g_floor_items[i].item_id;
                 if (out_qty) *out_qty = g_floor_items[i].quantity;
+                return i;
+            }
+            c++;
+        }
+    }
+    return -1;
+}
+
+int nexus_floor_get_at_source(int x, int y, int idx, int *out_item_id,
+                              int *out_qty, uint8_t *out_attribute1,
+                              uint8_t *out_attribute2, int *out_dgn_entry) {
+    int i, c = 0;
+    for (i = 0; i < g_floor_item_count; i++) {
+        if (g_floor_items[i].x == x && g_floor_items[i].y == y) {
+            if (c == idx) {
+                if (out_item_id) *out_item_id = g_floor_items[i].item_id;
+                if (out_qty) *out_qty = g_floor_items[i].quantity;
+                if (out_attribute1) *out_attribute1 =
+                    g_floor_items[i].source_attribute1;
+                if (out_attribute2) *out_attribute2 =
+                    g_floor_items[i].source_attribute2;
+                if (out_dgn_entry) *out_dgn_entry =
+                    g_floor_items[i].source_dgn_entry;
                 return i;
             }
             c++;

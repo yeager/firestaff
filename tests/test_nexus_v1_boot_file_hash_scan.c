@@ -695,6 +695,35 @@ int main(void) {
                           "real ITEM.IBS is source-bound before floor materialization");
                 check_int(declared_items == 8 && count_real_floor_items() == declared_items,
                           "real LEV01 materializes exactly its eight DGN floor-item records");
+                for (i = 0; i < item_engine.current_level.structure1f_entry_count; ++i) {
+                    const Nexus_V1_DgnStructure1FEntry *entry =
+                        &item_engine.current_level.structure1f_entries[i];
+                    int floor_count;
+                    int floor_index;
+                    int matched = 0;
+                    if (entry->family != NEXUS_V1_DGN_STRUCTURE1F_ITEMS) continue;
+                    floor_count = nexus_floor_count_at(entry->x, entry->y);
+                    for (floor_index = 0; floor_index < floor_count; ++floor_index) {
+                        int floor_item = -1;
+                        int floor_quantity = 0;
+                        uint8_t floor_attribute1 = 0;
+                        uint8_t floor_attribute2 = 0;
+                        int floor_source_entry = -1;
+                        if (nexus_floor_get_at_source(
+                                entry->x, entry->y, floor_index,
+                                &floor_item, &floor_quantity,
+                                &floor_attribute1, &floor_attribute2,
+                                &floor_source_entry) >= 0 &&
+                            floor_item == (int)entry->item_id && floor_quantity == 1) {
+                            matched = floor_attribute1 == entry->attribute1 &&
+                                floor_attribute2 == entry->attribute2 &&
+                                floor_source_entry >= 0;
+                            break;
+                        }
+                    }
+                    check_int(matched,
+                              "real LEV01 floor item keeps the DGN ITEM.IBS declaration number");
+                }
             }
             nexus_v1_shutdown(&item_engine);
         }

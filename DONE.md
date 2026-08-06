@@ -1,3 +1,16 @@
+# Nexus ITEM.IBS floor identity and attribute provenance (2026-08-06)
+
+- ✅ Corrected the retail floor-item handoff. DMWeb Structure1Fa byte 4 is
+  now kept as the ITEM.IBS declaration ID; ITEM.IBS word 20 remains only an
+  inventory-image association and can no longer substitute a different item.
+- ✅ Retained Structure1Fa attribute bytes 5 and 7 and the source-entry ordinal
+  on floor records. This preserves real LEV01 torch and waterskin charge bytes
+  without guessing their action semantics.
+- ✅ Verification: rebuilt `test_nexus_v1_boot_file_hash_scan` and
+  `test_nexus_v1_inventory_gameplay`; the real European Nexus corpus passed
+  the declaration-ID/attribute provenance checks and the inventory suite
+  passed 67 tests. No game data was copied or committed.
+
 # DM1 production placeholder re-audit (2026-08-06)
 
 - ✅ Disabled the synthetic English combat-log overlay for authenticated DM1
