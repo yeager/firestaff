@@ -1,6 +1,8 @@
 #ifndef FIRESTAFF_FONT_M11_H
 #define FIRESTAFF_FONT_M11_H
 
+#include <stddef.h>
+
 /*
  * font_m11 — Original DM1 font rendering from GRAPHICS.DAT.
  *
@@ -59,6 +61,12 @@ int M11_Font_LoadFromIndexedPixels(M11_FontState* font,
                                    const unsigned char* pixels,
                                    int width,
                                    int height);
+/* Bind the original M653 NOT_EXPANDED payload directly. The payload is the
+ * 1bpp 1024x6 bitmap itself, not an indexed IMG2 raster. */
+int M11_Font_LoadFromRawBitmap(M11_FontState* font,
+                               int graphicIndex,
+                               const unsigned char* bitmap,
+                               size_t byteCount);
 int M11_Font_IsLoaded(const M11_FontState* font);
 int M11_Font_FindGraphicIndex(void* runtimeState);
 int M11_Font_ResolvedGraphicIndex(const M11_FontState* font);

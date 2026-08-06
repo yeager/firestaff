@@ -31,6 +31,7 @@
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_fmtowns_cd.h"
+#include "csb_v1_fmtowns_graphics_dat.h"
 #include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_csbwin_planar_bitmap.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
@@ -6428,6 +6429,36 @@ static int m11_csb_is_fmtowns_profile(const CSB_V1_BootProfile *profile)
                        profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA);
 }
 
+static int m11_csb_load_fmtowns_m653_font(const char *graphics_path,
+                                          M11_FontState *font)
+{
+    FILE *file = NULL;
+    long file_size;
+    uint8_t *graphics = NULL;
+    uint8_t raw_font[M11_FONT_BITMAP_BYTES];
+    CSB_V1_FmtownsItemDecodeReceipt raw_receipt;
+    int result = 0;
+
+    if (!graphics_path || !graphics_path[0] || !font) return 0;
+    file = fopen(graphics_path, "rb");
+    if (!file || fseek(file, 0L, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0 || fseek(file, 0L, SEEK_SET) != 0 ||
+        (size_t)file_size > CSB_FMTOWNS_GRAPHICS_MAX_SIZE) goto done;
+    graphics = (uint8_t *)malloc((size_t)file_size);
+    if (!graphics || fread(graphics, 1u, (size_t)file_size, file) !=
+                         (size_t)file_size ||
+        !csb_v1_fmtowns_graphics_copy_raw_item(
+            graphics, (size_t)file_size, 695u, raw_font, sizeof(raw_font),
+            &raw_receipt) || !raw_receipt.valid ||
+        raw_receipt.stream_byte_count != M11_FONT_BITMAP_BYTES) goto done;
+    result = M11_Font_LoadFromRawBitmap(font, 695, raw_font,
+                                        sizeof(raw_font));
+done:
+    if (file) fclose(file);
+    free(graphics);
+    return result;
+}
+
 static void m11_csb_dispatch_fmtowns_cdda_track(M11_GameViewState *state,
                                                 uint16_t source_track)
 {
@@ -8177,9 +8208,17 @@ static int m11_csb_apply_boot_runtime_receipt(
         CSB_V1_StartupGraphicDecodeReceipt_PC34 font_receipt;
 
         memset(&font_receipt, 0, sizeof(font_receipt));
+        if (m11_csb_is_fmtowns_profile(receipt->profile)) {
+            /* ReDMCSB TEXT.C:2019-2022 reads F31 M653 with
+             * NOT_EXPANDED. Its 768 source bytes must never be sent through
+             * IMG2, which is reserved for drawable F31 records. */
+            state->originalFontAvailable = m11_csb_load_fmtowns_m653_font(
+                receipt->profile->graphics_path, &state->originalFont);
+        }
         /* ReDMCSB DEFS.H M653 resolves to C695 for the PC3.4 CSB media.
          * Do not let the DM1-oriented generic loader define CSB glyphs. */
-        if (csb_v1_boot_decode_graphics_dat_asset_pc34(
+        if (!state->originalFontAvailable &&
+            csb_v1_boot_decode_graphics_dat_asset_pc34(
                 receipt->profile->graphics_path, 695u, &font_pixels,
                 &font_width, &font_height, &font_receipt) &&
             font_receipt.valid &&

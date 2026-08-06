@@ -265,3 +265,56 @@ int csb_v1_fmtowns_graphics_decode_item(
     if (receipt) receipt->container_offset = payload_offset;
     return 1;
 }
+
+int csb_v1_fmtowns_graphics_copy_raw_item(
+    const uint8_t *data, size_t size, uint16_t item_index,
+    uint8_t *raw_bytes, size_t raw_capacity,
+    CSB_V1_FmtownsItemDecodeReceipt *receipt)
+{
+    uint16_t count;
+    size_t compressed_table;
+    size_t decompressed_table;
+    size_t payload_start;
+    size_t payload_offset;
+    uint16_t compressed_size;
+    uint16_t decompressed_size;
+    uint16_t index;
+
+    if (receipt) memset(receipt, 0, sizeof(*receipt));
+    if (!data || !raw_bytes || !csb_v1_fmtowns_graphics_probe(data, size)) {
+        return 0;
+    }
+    count = rd16le(data + 2u);
+    if (item_index >= count) return 0;
+    compressed_table = 4u;
+    decompressed_table = compressed_table + (size_t)count * 2u;
+    payload_start = decompressed_table + (size_t)count * 2u +
+                    (size_t)count * 4u;
+    if (payload_start > size) return 0;
+    payload_offset = payload_start;
+    for (index = 0u; index < item_index; ++index) {
+        uint16_t prior_size = rd16le(data + compressed_table +
+                                     (size_t)index * 2u);
+        if (prior_size > size - payload_offset) return 0;
+        payload_offset += prior_size;
+    }
+    compressed_size = rd16le(data + compressed_table +
+                             (size_t)item_index * 2u);
+    decompressed_size = rd16le(data + decompressed_table +
+                               (size_t)item_index * 2u);
+    if (compressed_size == 0u || compressed_size != decompressed_size ||
+        compressed_size > raw_capacity ||
+        compressed_size > size - payload_offset) return 0;
+    memcpy(raw_bytes, data + payload_offset, compressed_size);
+    if (receipt) {
+        receipt->valid = 1;
+        receipt->stream_byte_count = compressed_size;
+        receipt->stream_bytes_consumed = compressed_size;
+        receipt->container_offset = payload_offset;
+        receipt->pixel_count = compressed_size;
+        receipt->stream_fnv1a = fnv1a(raw_bytes, compressed_size);
+        receipt->pixel_fnv1a = receipt->stream_fnv1a;
+        receipt->is_data_record = 1;
+    }
+    return 1;
+}

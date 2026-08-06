@@ -112,6 +112,9 @@ int main(void)
     M11_GameView_Init(&view);
     CHECK(M11_GameView_Start(&view, &spec),
           "verified F31 media opens its real TITLE.ANM owner");
+    CHECK(view.originalFontAvailable &&
+              M11_Font_ResolvedGraphicIndex(&view.originalFont) == 695,
+          "verified F31 M653 raw interface font is bound before title playback");
     CHECK(view.csbFmtownsTitleBound && !view.csbStartupRuntimeAssetSession,
           "FM Towns title remains separate from the Game entrance session");
 

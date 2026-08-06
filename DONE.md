@@ -566,6 +566,14 @@
 
 # DM1 production placeholder re-audit (2026-08-06)
 
+- ✅ 2026-08-06 CSB FM Towns M653 font material: F31 `GRAPHICS.DAT` record
+  C695 is now copied as its original 768-byte, one-bit `NOT_EXPANDED` font
+  payload. M11 binds it before the real FM Towns title plays for both English
+  and Japanese data, rather than misclassifying it as an IMG2 image. Evidence:
+  ReDMCSB `DEFS.H M653_GRAPHIC_FONT` and `TEXT.C:2019-2022`. Verification:
+  `test_csb_v1_fmtowns_graphics_dat` plus real-cache English/Japanese
+  `test_csb_v1_fmtowns_m11_game_handoff`.
+
 - ✅ 2026-08-06 CSB FM Towns C06 menu input: retained the original F31E/F31J
   `CEDTDATA.C G2272_MouseInputs` rectangles for Load Champions, Save
   Champions, Make New Adventure, Revert, Undo and Quit. The new source-space

@@ -763,7 +763,10 @@
   the Towns text rasterizer is decoded. The six C06 source-coordinate input
   boxes are now bound separately for F31E/F31J, including the original
   inclusive edges and `CEDT006.C` action ordinals; EGB rendering and all save
-  transactions remain open. 2026-08-06: a real F31 Game victory now activates
+  transactions remain open. F31 M653 is now read as its real 768-byte
+  `NOT_EXPANDED` raw font record (C695), rather than being misclassified as
+  an IMG2 image; the remaining C06 screen must consume those source glyphs
+  and its Japanese text path before Utility may be presented. 2026-08-06: a real F31 Game victory now activates
   `ENDING.ANM` through the retained F2275 interpreter. It uses the original
   Timer-A frames and TD/TR CUE dispatch, holds its last decoded frame when
   F0750 returns, and never chains back to `SWITCHTW.EXP` or a PC34 endgame

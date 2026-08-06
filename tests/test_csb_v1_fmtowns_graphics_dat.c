@@ -55,6 +55,52 @@ static void test_probe_wrong_count(void) {
            "probe rejects wrong item count");
 }
 
+static void test_raw_record_copy(void) {
+    enum {
+        count = CSB_FMTOWNS_GRAPHICS_ITEM_COUNT,
+        item = 695,
+        payload_size = 768
+    };
+    const size_t compressed_table = 4u;
+    const size_t decompressed_table = compressed_table + count * 2u;
+    const size_t dimensions_table = decompressed_table + count * 2u;
+    const size_t payload_start = dimensions_table + count * 4u;
+    const size_t size = CSB_FMTOWNS_GRAPHICS_MIN_SIZE;
+    uint8_t *data = (uint8_t *)calloc(1u, size);
+    uint8_t raw[payload_size];
+    CSB_V1_FmtownsItemDecodeReceipt receipt;
+    size_t index;
+
+    ASSERT(data != NULL, "raw-record fixture allocates");
+    if (!data) return;
+    data[0] = 0x01u;
+    data[1] = 0x80u;
+    data[2] = 0xd8u;
+    data[3] = 0x02u;
+    data[compressed_table + item * 2u] = 0x00u;
+    data[compressed_table + item * 2u + 1u] = 0x03u;
+    data[decompressed_table + item * 2u] = 0x00u;
+    data[decompressed_table + item * 2u + 1u] = 0x03u;
+    for (index = 0u; index < payload_size; ++index) {
+        data[payload_start + index] = (uint8_t)(index ^ 0x5au);
+    }
+    memset(raw, 0, sizeof(raw));
+    ASSERT(csb_v1_fmtowns_graphics_copy_raw_item(
+               data, size, item, raw, sizeof(raw), &receipt) == 1 &&
+               receipt.valid && receipt.is_data_record &&
+               receipt.stream_byte_count == payload_size &&
+               memcmp(raw, data + payload_start, payload_size) == 0,
+           "uncompressed M653-style record remains byte-identical");
+    ASSERT(csb_v1_fmtowns_graphics_copy_raw_item(
+               data, size, item, raw, payload_size - 1u, &receipt) == 0,
+           "raw copy rejects a truncated destination");
+    data[decompressed_table + item * 2u] = 0xffu;
+    ASSERT(csb_v1_fmtowns_graphics_copy_raw_item(
+               data, size, item, raw, sizeof(raw), &receipt) == 0,
+           "raw copy rejects compressed source data");
+    free(data);
+}
+
 static void test_real_data(void) {
     char path_en[512], path_jp[512];
     const char *home = getenv("HOME");
@@ -225,6 +271,7 @@ int main(void) {
     test_probe_null();
     test_probe_wrong_marker();
     test_probe_wrong_count();
+    test_raw_record_copy();
     test_real_data();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);

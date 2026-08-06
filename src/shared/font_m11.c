@@ -243,6 +243,21 @@ int M11_Font_LoadFromIndexedPixels(M11_FontState* font,
     return 1;
 }
 
+int M11_Font_LoadFromRawBitmap(M11_FontState* font,
+                               int graphicIndex,
+                               const unsigned char* bitmap,
+                               size_t byteCount)
+{
+    if (!font || !bitmap || byteCount != M11_FONT_BITMAP_BYTES) {
+        return 0;
+    }
+    M11_Font_Init(font);
+    memcpy(font->bitmap, bitmap, M11_FONT_BITMAP_BYTES);
+    font->loaded = 1;
+    font->graphicIndex = graphicIndex;
+    return 1;
+}
+
 int M11_Font_IsLoaded(const M11_FontState* font) {
     return font && font->loaded;
 }

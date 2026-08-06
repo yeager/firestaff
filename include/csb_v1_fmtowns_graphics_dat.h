@@ -98,6 +98,16 @@ int csb_v1_fmtowns_graphics_decode_item(const uint8_t *data, size_t size,
                                         size_t pixel_capacity,
                                         CSB_V1_FmtownsItemDecodeReceipt *receipt);
 
+/* Copy a byte-identical uncompressed non-raster record.  M653 (graphic 695
+ * on F31) is the 1bpp 1024x6 interface font: ReDMCSB TEXT.C loads it with
+ * NOT_EXPANDED, so treating its 768 bytes as IMG2 pixels would be wrong.
+ * This routine intentionally accepts only records whose stored and decoded
+ * byte counts are equal. */
+int csb_v1_fmtowns_graphics_copy_raw_item(
+    const uint8_t *data, size_t size, uint16_t item_index,
+    uint8_t *raw_bytes, size_t raw_capacity,
+    CSB_V1_FmtownsItemDecodeReceipt *receipt);
+
 #ifdef __cplusplus
 }
 #endif
