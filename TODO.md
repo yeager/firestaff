@@ -532,6 +532,9 @@
   An explicit capture-only BAT preview now copies those authenticated tile
   pixels into the production framebuffer for pixel/app-capture inspection;
   world-driven dungeon and HUD drawing remain blocked pending the consumer.
+  Snapshot file intake now also requires exact 65536-byte VRAM and 1024-byte
+  VCE files; trailing or concatenated bytes are rejected before palette/tile
+  ownership is established.
 
   The raw media-intake regression now exercises the supplied assembled US ISO
   at `~/.firestaff/cache/theron/TQUS02-ceb02343868f80cec899e9b239aff2da.iso`

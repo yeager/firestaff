@@ -58,7 +58,10 @@ int theron_v1_vram_trace_load_files(Theron_V1_Viewport *vp,
     if (!fv) return -1;
     fseek(fv, 0, SEEK_END);
     long vram_sz = ftell(fv);
-    if (vram_sz < THERON_VRAM_SIZE) { fclose(fv); return -1; }
+    /* The capture contract is an exact raw VDC snapshot.  Do not silently
+     * truncate a concatenated/contaminated file into an apparently valid
+     * source bank. */
+    if (vram_sz != THERON_VRAM_SIZE) { fclose(fv); return -1; }
     fseek(fv, 0, SEEK_SET);
 
     uint8_t *vram = (uint8_t *)malloc(THERON_VRAM_SIZE);
@@ -72,7 +75,11 @@ int theron_v1_vram_trace_load_files(Theron_V1_Viewport *vp,
     if (!fc) { free(vram); return -1; }
     fseek(fc, 0, SEEK_END);
     long vce_sz = ftell(fc);
-    if (vce_sz < THERON_VCE_SIZE) { free(vram); fclose(fc); return -1; }
+    if (vce_sz != THERON_VCE_SIZE) {
+        free(vram);
+        fclose(fc);
+        return -1;
+    }
     fseek(fc, 0, SEEK_SET);
 
     uint8_t *vce = (uint8_t *)malloc(THERON_VCE_SIZE);

@@ -19,6 +19,11 @@
   now proves nonzero preview pixels, while world-driven dungeon/HUD drawing
   remains blocked until the HuC6280 consumer mapping is proven.
 
+- ✅ 2026-08-06 Theron VDC snapshot intake hardening: file-backed VRAM/VCE
+  mounting now requires exactly 65536 and 1024 bytes respectively, matching
+  the native Mednafen capture contract. Oversized or concatenated snapshots
+  are rejected before any real palette or tile data is mounted.
+
 - ✅ 2026-08-06 Nexus startup PLRD label provenance cleanup: authenticated
   RLOWFIX/PLRD champion rows no longer receive a host-generated ASCII/HP/MP
   label when the retail record carries only TABL/FONT256 glyph codes. The
