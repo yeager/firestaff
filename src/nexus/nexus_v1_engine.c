@@ -419,6 +419,28 @@ static int nexus_v1_level_aux_source_receipt(
                 }
             }
         }
+        /* The extracted European retail layout keeps some auxiliary DMDF
+         * resources only in the co-located Track 1 ISO.  Mirror
+         * nexus_v1_read_file() here so the provenance receipt authenticates
+         * the bytes that the decoder actually receives; absence of a loose
+         * file is not evidence that the canonical source is missing. */
+        if (!out_receipt->canonical_hash_verified &&
+            engine->supplemental_iso_valid) {
+            file = nexus_iso_find(&engine->supplemental_iso, name);
+            out_receipt->exact_source_entry_observed =
+                out_receipt->exact_source_entry_observed || file != NULL;
+            for (i = 0; g_nexus_known_boot_files[i].name &&
+                        !out_receipt->canonical_hash_verified; ++i) {
+                if (strcasecmp(g_nexus_known_boot_files[i].name, name) == 0 &&
+                    nexus_v1_iso_entry_matches_canonical_md5(
+                        engine, file, g_nexus_known_boot_files[i].md5)) {
+                    out_receipt->canonical_hash_verified = 1;
+                    strncpy(out_receipt->canonical_md5,
+                            g_nexus_known_boot_files[i].md5,
+                            sizeof(out_receipt->canonical_md5) - 1U);
+                }
+            }
+        }
     } else if (engine->source == NEXUS_SRC_ISO) {
         file = nexus_iso_find(&engine->iso, name);
         out_receipt->exact_source_entry_observed = file != NULL;

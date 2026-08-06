@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-DGN-MATERIAL-ISO-RECEIPT:** The extracted European retail layout now
+  authenticates `SN_FLOOR.MNS` and `SN_WALL.MNS` from the co-located Track 1
+  ISO through the same fallback used by the loader. Continue binding the
+  decoded descriptor records to Structure1B/VDP1 material ownership; palette,
+  transform and drawing evidence remain capture-gated.
+
 - **NEXUS-STALE-DOCUMENT-CLAIMS:** Older Nexus content/format documents still
   contain historical “implemented” wording for DM1-derived roster/combat,
   host mesh/title/HUD rendering, text conversion, and audio playback. The

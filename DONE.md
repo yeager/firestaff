@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus supplemental ISO MNS source receipt: the extracted
+  European retail boot now authenticates missing `SN_FLOOR.MNS` and
+  `SN_WALL.MNS` directly inside its co-located Track 1 ISO before admitting
+  their bytes to the real DMDF material decoder. This closes a provenance
+  mismatch between the read path and the receipt path; Structure1B material
+  ownership, palettes, transforms and VDP1 drawing remain blocked.
+
 - ✅ 2026-08-06 Nexus DGN corpus geometry receipt: fixed
   `nexus_v1_inspect_dgn_material_corpus()` to count the real Structure3 mesh
   extraction receipt instead of the unrelated post-grid/collision
