@@ -1,3 +1,13 @@
+# Nexus real MENU.BPK PRS3 decode audit (2026-08-06)
+
+- ✅ De verkliga `MENU.BPK`-proberna passerar för den europeiska korpusen:
+  162 PRS3-ytor, 8-bitars indexed output och korrekta deklarerade
+  pixel-/payloadstorlekar. `test_nexus_v1_prs3_decode`, decoder-admission,
+  loader-control-flow och SH-2-subset-proven passerar.
+- ✅ DMWebs bytegrammatik används i avkodaren och ogiltiga framtida
+  backreferenser avvisas fail-closed. Ingen CLUT-bindning, VDP1-upload,
+  skärmplacering eller menyroute har öppnats utan Saturn-capture.
+
 # Nexus SAL provenance real-corpus regression (2026-08-06)
 
 - ✅ `test_nexus_v1_sal_container_provenance` now admits all 16 European
