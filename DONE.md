@@ -82,6 +82,17 @@
   `test_theron_v1_combat_runtime_source` and `git diff --check`. No game data
   was copied or committed.
 
+# Theron production placeholder archive guard (2026-08-06)
+
+- ✅ Extended the Theron production-archive regression so every inventoried
+  fixture/compatibility module must have an explicit CMake exclusion and must
+  be absent from the final `firestaff_theron` archive. This keeps synthetic
+  startup, viewport, HUD and modern-art paths from re-entering through a broad
+  source glob. The guard does not promote any unproven consumer.
+- ✅ Verification: `test_theron_v1_production_archive_source_boundary` and
+  `git diff --check` on a clean worktree from current `main`. No game data was
+  copied or committed.
+
 # Nexus CDDA selection-only status (2026-08-06)
 
 # CSB Amiga GRAPHICS.DAT sound payload correction (2026-08-06)

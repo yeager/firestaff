@@ -8,6 +8,12 @@ if [[ -z "$archive" || ! -f "$archive" ]]; then
 fi
 
 objects=$(ar t "$archive")
+repo_root=$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)
+cmake_file="$repo_root/CMakeLists.txt"
+if [[ ! -f "$cmake_file" ]]; then
+    printf 'FAIL: CMake source graph is unavailable\n' >&2
+    exit 1
+fi
 
 # These translation units contain inferred/procedural or compatibility-only
 # routes. CMake must keep them outside the production archive until an
@@ -27,6 +33,14 @@ for source in \
     theron_v1_startup_receipt.c \
     theron_v2_hud_overlay_pc34.c; do
     object="${source}.o"
+    source_stem="${source%.c}"
+    if ! awk -v stem="$source_stem" '
+        /list\(FILTER THERON_SOURCES EXCLUDE REGEX/ && index($0, stem) { found = 1 }
+        END { exit found ? 0 : 1 }
+    ' "$cmake_file"; then
+        printf 'FAIL: excluded Theron source has no CMake source-graph guard: %s\n' "$source" >&2
+        exit 1
+    fi
     if grep -Fxq "$object" <<<"$objects"; then
         printf 'FAIL: excluded Theron source is linked into production: %s\n' "$object" >&2
         exit 1
