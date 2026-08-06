@@ -3097,7 +3097,8 @@ int nexus_v1_startup_presentation_build_champion(
                 return count;
             }
         }
-        if (!nexus_v1_startup_push_text(out_commands,
+        if (render_row->label[0] != '\0' &&
+            !nexus_v1_startup_push_text(out_commands,
                                         max_commands,
                                         &count,
                                         render_row->text_x,
@@ -3109,15 +3110,17 @@ int nexus_v1_startup_presentation_build_champion(
             return count;
         }
     }
-    (void)nexus_v1_startup_push_text(out_commands,
-                                     max_commands,
-                                     &count,
-                                     footer.text_x,
-                                     footer.text_y,
-                                     footer.label,
-                                     NEXUS_V1_STARTUP_TEXT_SMALL,
-                                     15,
-                                     0);
+    if (footer.label[0] != '\0') {
+        (void)nexus_v1_startup_push_text(out_commands,
+                                         max_commands,
+                                         &count,
+                                         footer.text_x,
+                                         footer.text_y,
+                                         footer.label,
+                                         NEXUS_V1_STARTUP_TEXT_SMALL,
+                                         15,
+                                         0);
+    }
     return count;
 }
 
