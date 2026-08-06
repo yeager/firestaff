@@ -26266,6 +26266,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   square-to-tile semantics, and production dungeon/UI admission remain
   blocked until the HuC6280 consumer is disassembled and tied to Track 02.
 
+- [ ] THERON-V1-HUC6280-RAM-CONSUMER: the real US/JP bank-$1f static support
+  fragment at `$243e` is now byte-verified in both retail ISO projections.
+  It proves the bounded bit/byte helper, bank-switch table and forward/reverse
+  byte paths, but it is not the post-CD `$2600` RAM-loaded consumer. Capture a
+  source-owned RAM instruction window around `$2400–$2800` with executing PCs
+  before promoting decompression, tiles, maps, objects or HUD pixels.
+
 - 🔧 DM2 HUD follow-up: M11 now leaves the accepted V1 runtime frame as the
   sole production HUD owner. The retired V2 compatibility blit used a static
   GDAT plan without SKProject's live GUI/session inputs, so it cannot return

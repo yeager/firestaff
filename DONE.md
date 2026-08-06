@@ -51369,6 +51369,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   coverage proves a damaged source is rejected and the previous receipt is
   retained; decompression, tile/map ownership and object semantics remain
   explicitly blocked by the HuC6280 consumer gate.
+- ✅ 2026-08-06 Theron HuC6280 static disassembly receipt: the real US
+  `TQUS19.iso` and JP `TQJP19.iso` projections now verify their exact 134-byte
+  bank-$1f fragment at `$243e` by file identity and bytes. The receipt records
+  the proven forward byte step, `$3b7e–$3b85` bank-switch table and reverse
+  `($36)` read path while keeping semantic publication closed. The missing
+  post-CD `$2600` RAM consumer remains explicitly capture-gated.
 - ✅ 2026-08-06 Theron JP Track 02 dungeon-map binding: the map loader now has
   a separate authenticated `TQJP02.bin` offset table and variant API. All
   seven real Japanese dungeon banks load with their retail map counts and hub

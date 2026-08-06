@@ -22560,6 +22560,10 @@ endif()
         src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        # Theron world.c binds authenticated later-level receipts through
+        # the Track 02 level-block reader. This standalone archive scanner
+        # target compiles world.c directly rather than linking firestaff_theron.
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -47366,6 +47370,26 @@ if(BUILD_TESTING AND THERON_SOURCES AND
     add_test(
         NAME theron_v1_runtime_level_data_receipt
         COMMAND test_theron_v1_runtime_level_data_receipt)
+endif()
+
+# Theron Track 02 bank-$1f static HuC6280 disassembly receipt. This verifies
+# only the byte-backed support fragment; the post-CD $2600 RAM consumer stays
+# a separate capture-gated boundary.
+if(BUILD_TESTING AND THERON_SOURCES AND
+        EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_huc6280_disassembly.c")
+    add_executable(test_theron_v1_huc6280_disassembly
+        tests/test_theron_v1_huc6280_disassembly.c)
+    target_link_libraries(test_theron_v1_huc6280_disassembly PRIVATE
+        firestaff_theron firestaff_m12)
+    target_include_directories(test_theron_v1_huc6280_disassembly PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_huc6280_disassembly PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_huc6280_disassembly
+        COMMAND test_theron_v1_huc6280_disassembly)
 endif()
 
 # Theron Track 02 dungeon text (stories, treasures, retrieval messages)
