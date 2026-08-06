@@ -1,3 +1,14 @@
+# Nexus startup PLRD animation quarantine (2026-08-06)
+
+- ✅ Removed the host-side 12-frame cursor blink and guessed palette metadata
+  from authenticated European PLRD render rows.
+- ✅ Kept the legacy blink/colors only in the isolated ASCII compatibility
+  fixture lane used by unit tests.
+- ✅ Real PLRD rows now expose only verified layout and TABL/FONT256 glyph
+  payload until the Saturn VDP2 cursor consumer and original frame timing are
+  captured.
+- ✅ `test_nexus_v1_champion_plrd` covers the no-synthetic-animation contract.
+
 # Theron startup font presentation gate (2026-08-06)
 
 # CSB FM Towns C06 Utility palette material (2026-08-06)

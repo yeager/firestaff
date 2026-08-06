@@ -2477,12 +2477,20 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
          * rectangle or scale in the startup presentation planner. */
         out->portrait_w = 0;
         out->portrait_h = 0;
-        out->highlight_visible = out->selected && blink_on ? 1 : 0;
-        out->text_color = out->selected && blink_on ? 11 : 15;
+        /* The 12-frame blink and palette indices below are only a retained
+         * compatibility-fixture receipt. Authenticated PLRD rows own their
+         * TABL/FONT256 payload, but the Saturn VDP2 cursor consumer and its
+         * timing have not been captured. Do not present host animation or
+         * guessed colors as retail source metadata. */
+        out->highlight_visible = host_label_fixture &&
+            out->selected && blink_on ? 1 : 0;
+        out->text_color = host_label_fixture ?
+            (out->selected && blink_on ? 11 : 15) : 0;
         out->shadow_color = 0;
-        out->portrait_border_color = out->selected && blink_on ? 11 :
-            (out->in_party ? 7 : 12);
-        out->party_marker_color = out->in_party ? 7 : 12;
+        out->portrait_border_color = host_label_fixture ?
+            (out->selected && blink_on ? 11 :
+             (out->in_party ? 7 : 12)) : 0;
+        out->party_marker_color = host_label_fixture && out->in_party ? 7 : 0;
         out->text_x = NEXUS_V1_STARTUP_CHAMPION_ROW_TEXT_X;
         out->text_y = out->rect.y + 1;
         {

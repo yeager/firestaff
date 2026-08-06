@@ -99,6 +99,10 @@ int main(void) {
             row.source_name_glyph_count != 4 ||
             row.source_name_glyphs[0] != 0x00c1U ||
             row.source_name_glyphs[3] != 0x00d8U ||
+            row.highlight_visible != 0 ||
+            row.text_color != 0 ||
+            row.portrait_border_color != 0 ||
+            row.party_marker_color != 0 ||
             row.label[0] != '\0' ||
             footer.label[0] != '\0') return 1;
         /* A stale host name must not reopen the ASCII compatibility lane for
