@@ -835,6 +835,10 @@ static int nexus_ui_face_compact_walk(const uint8_t *data, int data_size,
         }
         prs3_offset = cursor + NEXUS_UI_FACE_COMPACT_PREFIX_BYTES;
         prs3_offset = (prs3_offset + 3U) & ~(size_t)3U;
+        if (prs3_offset > (size_t)data_size ||
+            (size_t)data_size - prs3_offset < NEXUS_UI_FACE_PRS3_HEADER_BYTES) {
+            return 0;
+        }
         if (memcmp(data + prs3_offset, "PRS3", 4) != 0 ||
             nexus_ui_read_be32(data + prs3_offset + 4) != 1 ||
             nexus_ui_read_be32(data + prs3_offset + 8) !=

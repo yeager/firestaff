@@ -120,6 +120,28 @@ int main(void)
                                       "overflow-fixture") < 0 &&
                     ui.surfaces[NEXUS_SURFACE_TITLE].data == NULL,
                 "surface dimensions cannot overflow the allocation size");
+    {
+        unsigned char malformed_face[347];
+        Nexus_UI_FaceLayout face_layout;
+        memset(malformed_face, 0, sizeof(malformed_face));
+        memcpy(malformed_face, "FACE", 4);
+        malformed_face[4] = 0;
+        malformed_face[5] = 0;
+        malformed_face[6] = 1;
+        malformed_face[7] = 0x5b;
+        malformed_face[8] = 0;
+        malformed_face[9] = 20;
+        memcpy(malformed_face + 184, "PRS3", 4);
+        malformed_face[191] = 1;
+        malformed_face[194] = 0x0c;
+        malformed_face[195] = 0x40;
+        malformed_face[199] = 1;
+        expect_true(nexus_ui_face_layout_detect(malformed_face,
+                                                (int)sizeof(malformed_face),
+                                                &face_layout) == 0 &&
+                        face_layout.valid == 0,
+                    "aligned FACE PRS3 headers must stay inside the source");
+    }
     expect_true(nexus_ui_load_warning(&ui, opaque_warning,
                                       (int)sizeof(opaque_warning), NULL) < 0 &&
                     ui.surfaces[NEXUS_SURFACE_WARNING].data == NULL,
