@@ -56077,3 +56077,12 @@ alcove runtime and archive-media tests passed (4/4).
   tick 606, using the original `18 * (1024 - 100)` microsecond Timer-A period
   rather than the 16 ms host wake. The following 60-VBlank switch-page delay
   remains independently checked for both English and Japanese retail media.
+
+# 2026-08-06 CSB FM Towns F31J text-owner audit
+
+- ✅ Recovered the F31J C06 text ownership boundary from ReDMCSB
+  `JAPANESE.C` and `CEDT030.C`. The F31/F20 FM Towns build calls the EGB
+  `sjisString` service; PC-98 port-I/O and X68000 IOCS glyph paths are other
+  platform branches. The retail `T_OAK2.EXE` and `OAK2USR.DIC` do not prove a
+  game-owned C06 bitmap font, so Japanese Utility drawing remains correctly
+  fail-closed instead of borrowing a host font or an unrelated system file.

@@ -214,7 +214,12 @@
   The verified UTILE.EXP/UTILJ.EXP C06 receipts retain their actual indexed
   RGB6 table at raw offsets `0x17DB0`/`0x17E18`, including the `0xFF`
   terminator. The remaining file-picker, save, portrait-edit and F31J glyph
-  consumers remain separate source-owned work.
+  consumers remain separate source-owned work. 2026-08-06 source audit:
+  F31J's `F0952_JAPANESE_Print` is the FM Towns `EGB_sjisString` path, not the
+  PC-98 port-I/O or X68000 IOCS branch. `T_OAK2.EXE` and `OAK2USR.DIC` are
+  present on the retail CD but do not establish a C06 glyph bitmap owner.
+  Keep Japanese C06 drawing closed until an EGB/system-font capture proves
+  the actual glyph handoff; see `parity-evidence/csb_fmtowns_f31j_text_owner.md`.
 
 - **THERON-FORCEFIELD-REAL-DUNGEON:** Enter now reliably dispatches from the
   Soul Room forcefield focus, including the first attempt without prompt text.
