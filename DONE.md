@@ -166,6 +166,14 @@
   and pixel rendering pass from authentic bytes. The C15 and throw probes now
   reach the real corpus and skip only when it lacks their required live pose.
 
+# DM1 D0L/D0R F0108 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the D0 side-view F0108 contract from M10. It hard-codes zones,
+  seeds and probe pixels, reads no original DM1 bytes and has no M11/runtime
+  caller; its explicit ReDMCSB regression now compiles the fixture directly.
+- ✅ Verification: `test_dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the
