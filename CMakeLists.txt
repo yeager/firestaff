@@ -35538,6 +35538,15 @@ if(BUILD_TESTING)
         NAME nexus_v1_bpk_surface_class
         COMMAND test_nexus_v1_bpk_surface_class
     )
+    add_test(
+        NAME nexus_v1_bpk_surface_class_real
+        COMMAND test_nexus_v1_bpk_surface_class --real-only
+    )
+    set_tests_properties(nexus_v1_bpk_surface_class_real PROPERTIES
+        ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+        SKIP_RETURN_CODE 77
+        LABELS "nexus;prs3;real_data;skip_safe"
+    )
 
     # Nexus V1 DGN material rasterizer. Exercises the cache-ready indexed
     # sampling path without game media: non-power-of-two UV repeat, CLUT
@@ -38534,6 +38543,11 @@ target_include_directories(test_nexus_v1_stmp PRIVATE ${CMAKE_CURRENT_SOURCE_DIR
 target_link_libraries(test_nexus_v1_stmp PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_stmp COMMAND test_nexus_v1_stmp)
 set_tests_properties(nexus_v1_stmp PROPERTIES LABELS "nexus;saturn;tilemap;skip_safe")
+add_test(NAME nexus_v1_stmp_real COMMAND test_nexus_v1_stmp --real-only)
+set_tests_properties(nexus_v1_stmp_real PROPERTIES
+    ENVIRONMENT "FIRESTAFF_NEXUS_DATA_DIR=${FIRESTAFF_WORKSPACE_DATA_DIR}/nexus"
+    SKIP_RETURN_CODE 77
+    LABELS "nexus;saturn;tilemap;real_data;skip_safe")
 
 add_executable(test_nexus_v1_warning_dgt2_source_admission
     tests/test_nexus_v1_warning_dgt2_source_admission.c)

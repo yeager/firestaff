@@ -83,9 +83,11 @@ retail corpus, run:
     ctest --test-dir build --output-on-failure -R nexus
 
 The important current gates cover production source boundaries, startup,
-DGN/PRS3, all-16-file SLEV task-profile receipts, SLEV/SAL asset metadata and
-mechanics no-mutation. These prove bounded source handling, not full
-playability or task/event semantics.
+DGN/PRS3, explicit real-data MENU.BPK/STABG receipts, all-16-file SLEV
+task-profile receipts, SLEV/SAL asset metadata and mechanics no-mutation.
+The `*_real` variants bind `FIRESTAFF_NEXUS_DATA_DIR` and are skip-safe only
+when the private corpus is absent. These prove bounded source handling, not
+full playability or task/event semantics.
 
 ---
 

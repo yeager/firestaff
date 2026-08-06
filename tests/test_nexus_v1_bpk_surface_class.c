@@ -1245,7 +1245,7 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size) {
     return 1;
 }
 
-static void test_optional_local_menu_bpk(void) {
+static int test_optional_local_menu_bpk(int require_real_data) {
     const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[2048];
@@ -1262,20 +1262,20 @@ static void test_optional_local_menu_bpk(void) {
 
     if (data_dir && data_dir[0]) {
         if (snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) < 0) {
-            return;
+            return require_real_data ? 77 : 0;
         }
     } else if (home && home[0]) {
         if (snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/MENU.BPK",
                      home) < 0) {
-            return;
+            return require_real_data ? 77 : 0;
         }
     } else {
         puts("SKIP: Nexus data root is unset; no local MENU.BPK check");
-        return;
+        return require_real_data ? 77 : 0;
     }
     if (!read_file(path, &data, &size)) {
         printf("SKIP: local Nexus MENU.BPK not present at %s\n", path);
-        return;
+        return require_real_data ? 77 : 0;
     }
 
     memset(entries, 0, sizeof(entries));
@@ -1404,9 +1404,19 @@ static void test_optional_local_menu_bpk(void) {
            "local MENU.BPK upload row remains evidence-only");
 
     free(data);
+    return 0;
 }
 
-int main(void) {
+int main(int argc, char **argv) {
+    int require_real_data = 0;
+    int real_data_status;
+
+    if (argc == 2 && strcmp(argv[1], "--real-only") == 0) {
+        require_real_data = 1;
+    } else if (argc != 1) {
+        fprintf(stderr, "usage: %s [--real-only]\n", argv[0]);
+        return 2;
+    }
     test_mode_to_surface_class();
     test_mode_to_bpp();
     test_synthetic_surface_estimate();
@@ -1431,7 +1441,8 @@ int main(void) {
     test_bpx3_trailer_entry();
     test_bpx3_trailer_rejections();
     test_bpx3_prs3_span_rejections();
-    test_optional_local_menu_bpk();
+    real_data_status = test_optional_local_menu_bpk(require_real_data);
+    if (real_data_status == 77) return 77;
 
     if (g_failures) return 1;
     puts("test_nexus_v1_bpk_surface_class: PASS");

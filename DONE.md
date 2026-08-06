@@ -54520,3 +54520,14 @@ alcove runtime and archive-media tests passed (4/4).
   their real load-image offsets. `test_dm1_v1_fmtowns_startup` passes against
   the retained original FM Towns cache. This is source-plan evidence only;
   native M11 pixel/TBIOS playback and TMENU rendering remain open in TODO.
+# Nexus explicit real-data menu/HUD CTest gates (2026-08-06)
+
+- ✅ Added `nexus_v1_bpk_surface_class_real` and `nexus_v1_stmp_real`. They
+  select the external `FIRESTAFF_NEXUS_DATA_DIR`, require the real `MENU.BPK`
+  and `STABG.BIN` files, and return skip-safe code 77 when the private corpus
+  is unavailable.
+- ✅ The real MENU.BPK path verifies all 162 PRS3 surfaces and keeps runtime
+  decode/upload blocked; the real STABG path verifies the STMP receipt. The
+  data-free tests remain separate and continue to run without game media.
+- ✅ Focused CTest: 10/10 passed against `/Users/bosse/.firestaff/data/nexus`;
+  missing-data probes returned 77 as intended. `git diff --check` passed.

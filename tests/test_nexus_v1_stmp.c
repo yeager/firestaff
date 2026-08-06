@@ -33,17 +33,27 @@ static int test_reject_invalid(void) {
     return 0;
 }
 
-static int test_stabg(void) {
+static int test_stabg(int require_real_data) {
+    const char *data_dir = getenv("FIRESTAFF_NEXUS_DATA_DIR");
     const char *home = getenv("HOME");
     char path[512];
     uint8_t *data;
     int size = 0, i;
     Nexus_V1_StmpDecodeResult r;
 
-    if (!home) { printf("  SKIP (no HOME)\n"); return 0; }
-    snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/STABG.BIN", home);
+    if (data_dir && data_dir[0]) {
+        snprintf(path, sizeof(path), "%s/STABG.BIN", data_dir);
+    } else if (home && home[0]) {
+        snprintf(path, sizeof(path), "%s/.firestaff/data/nexus/STABG.BIN", home);
+    } else {
+        printf("  SKIP STABG.BIN (Nexus data root is unset)\n");
+        return require_real_data ? 77 : 0;
+    }
     data = load_file(path, &size);
-    if (!data) { printf("  SKIP STABG.BIN (not found)\n"); return 0; }
+    if (!data) {
+        printf("  SKIP STABG.BIN (not found at %s)\n", path);
+        return require_real_data ? 77 : 0;
+    }
 
     if (!nexus_v1_stmp_decode(data, size, &r)) {
         printf("  FAIL STABG.BIN decode\n");
@@ -63,11 +73,21 @@ static int test_stabg(void) {
     return 0;
 }
 
-int main(void) {
+int main(int argc, char **argv) {
     int fail = 0;
+    int require_real_data = 0;
+    int real_data_status;
+    if (argc == 2 && strcmp(argv[1], "--real-only") == 0) {
+        require_real_data = 1;
+    } else if (argc != 1) {
+        fprintf(stderr, "usage: %s [--real-only]\n", argv[0]);
+        return 2;
+    }
     printf("=== Nexus V1 STMP Decoder ===\n");
     fail += test_reject_invalid();
-    fail += test_stabg();
+    real_data_status = test_stabg(require_real_data);
+    if (real_data_status == 77) return 77;
+    fail += real_data_status;
     printf("summary: fail=%d\n", fail);
     return fail ? 1 : 0;
 }

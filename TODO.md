@@ -748,6 +748,10 @@
   European corpus is 87,684 bytes; this corrects stale 89,060-byte probe
   expectations only. Menu drawing, text ownership and VDP1/VDP2 composition
   remain capture-gated.
+  2026-08-06 test-harness follow-up: explicit `--real-only` CTest variants now
+  bind `MENU.BPK` through `FIRESTAFF_NEXUS_DATA_DIR` and require the real
+  archive before accepting the 162-surface receipt. The ordinary synthetic
+  test remains data-free; no fixture archive can satisfy the real-data gate.
 
 2026-08-06 Theron input follow-up: physical arrow keys arrive at M11 as
 `STRAFE_LEFT/STRAFE_RIGHT`; the startup adapter now treats those tokens as
