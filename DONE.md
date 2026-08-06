@@ -9,6 +9,12 @@
   geometry or gray creature placeholders as Nexus visuals. Build and relevant
   Nexus provenance tests pass; no retail data is changed or committed.
 
+- ✅ Closed the remaining direct UI host-copy path. `nexus_ui_blit_surface*`
+  no longer writes a framebuffer, and `nexus_ui_surface_remap_pal`/
+  `nexus_ui_surface_darken` no longer mutate retained retail pixels. The
+  startup-media regression proves source and framebuffer preservation until
+  Saturn VDP1/VDP2 placement and composition are captured.
+
 - ✅ Removed the default `SATURN_CDDA_AUDIO` capability from
   `src/nexus/nexus_v1_boot_profile.c`. The retail disc's Track 2–9
   declaration remains provenance only; level selection, CDDA handoff and

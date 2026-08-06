@@ -426,13 +426,12 @@ void nexus_ui_surface_free(Nexus_UI_Manager *mgr, Nexus_UISurfaceType which);
 
 /* ── Rendering entry points ────────────────────────────────────── */
 
-/* Simple 1:1 blit from surface → indexed framebuffer (320×200).
- * dx, dy = destination top-left in framebuffer.
- * Clips to framebuffer bounds.                               */
+/* Retained source-study API. No-draw until Saturn VDP1/VDP2 command order,
+ * CLUT/palette bank and destination ownership are captured. */
 void nexus_ui_blit_surface(const Nexus_UI_Surface *surf,
     uint8_t *fb, int fb_w, int fb_h, int dx, int dy);
 
-/* Blit with optional horizontal flip (for mirror-portrait champions) */
+/* Retained no-draw API; a host flip is not Saturn placement evidence. */
 void nexus_ui_blit_surface_flip(const Nexus_UI_Surface *surf,
     uint8_t *fb, int fb_w, int fb_h, int dx, int dy, int flip_h);
 
@@ -452,7 +451,7 @@ void nexus_ui_render_portrait(const Nexus_UI_Manager *mgr,
     uint8_t *fb, int fb_w, int fb_h,
     int dest_x, int dest_y, int flip_h);
 
-/* ── Blit helpers (palette index remap) ─────────────────────────── */
+/* ── Source-preserving diagnostic helpers ───────────────────────── */
 
 /* Remap surface palette indices to a different base.
  * e.g. portrait at pal_start=64 → remap to fb palette offset 192.   */

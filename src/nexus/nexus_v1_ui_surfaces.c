@@ -1319,55 +1319,32 @@ void nexus_ui_surface_free(Nexus_UI_Manager *mgr,
 
 /* ── Blit primitives ─────────────────────────────────────────────── */
 
-/* Simple 1:1 clip blit from surface → indexed framebuffer.
- * Source-lock: ReDMCSB BLIT.C F0132 (F0132 pixel copy).        */
+/* Source-lock boundary only. ReDMCSB BLIT.C F0132 describes a copy
+ * primitive, but it does not prove Nexus Saturn VDP1/VDP2 command order,
+ * CLUT bank or destination. Never expose that host copy as production art. */
 void nexus_ui_blit_surface(const Nexus_UI_Surface *surf,
     uint8_t *fb, int fb_w, int fb_h, int dx, int dy)
 {
-    int row, col;
-    if (!surf || !fb || !surf->data) return;
-    /* Clip destination */
-    if (dx < 0) { dx = 0; }
-    if (dy < 0) { dy = 0; }
-    if (dx + surf->w > fb_w)  dx = fb_w - surf->w;
-    if (dy + surf->h > fb_h)  dy = fb_h - surf->h;
-    if (dx < 0 || dy < 0 || dx + surf->w > fb_w
-        || dy + surf->h > fb_h) return;
-
-    for (row = 0; row < surf->h; row++) {
-        int sy = dy + row;
-        if (sy < 0 || sy >= fb_h) continue;
-        for (col = 0; col < surf->w; col++) {
-            int sx = dx + col;
-            if (sx < 0 || sx >= fb_w) continue;
-            fb[sy * fb_w + sx] = surf->data[row * surf->w + col];
-        }
-    }
+    (void)surf;
+    (void)fb;
+    (void)fb_w;
+    (void)fb_h;
+    (void)dx;
+    (void)dy;
 }
 
-/* Same but with optional horizontal flip (champion mirror) */
+/* Same source-study boundary with optional horizontal flip. */
 void nexus_ui_blit_surface_flip(const Nexus_UI_Surface *surf,
     uint8_t *fb, int fb_w, int fb_h,
     int dx, int dy, int flip_h)
 {
-    int row, col;
-    if (!surf || !fb || !surf->data) return;
-    if (dx < 0) dx = 0;
-    if (dy < 0) dy = 0;
-    if (dx + surf->w > fb_w) dx = fb_w - surf->w;
-    if (dy + surf->h > fb_h) dy = fb_h - surf->h;
-    if (dx < 0 || dy < 0) return;
-
-    for (row = 0; row < surf->h; row++) {
-        int sy = dy + row;
-        if (sy < 0 || sy >= fb_h) continue;
-        for (col = 0; col < surf->w; col++) {
-            int sx = dx + col;
-            int src_col = flip_h ? (surf->w - 1 - col) : col;
-            if (sx < 0 || sx >= fb_w) continue;
-            fb[sy * fb_w + sx] = surf->data[row * surf->w + src_col];
-        }
-    }
+    (void)surf;
+    (void)fb;
+    (void)fb_w;
+    (void)fb_h;
+    (void)dx;
+    (void)dy;
+    (void)flip_h;
 }
 
 /* ── Convenience render wrappers ─────────────────────────────── */
@@ -1433,31 +1410,16 @@ void nexus_ui_render_portrait(const Nexus_UI_Manager *mgr,
 void nexus_ui_surface_remap_pal(Nexus_UI_Surface *surf,
     uint8_t new_pal_start)
 {
-    int i;
-    if (!surf || !surf->data) return;
-    /* Shift all pixel values by (new - old) palette start */
-    int delta = (int)(new_pal_start - surf->pal_start);
-    if (delta == 0) return;
-    for (i = 0; i < surf->w * surf->h; i++) {
-        int v = (int)surf->data[i] + delta;
-        surf->data[i] = (v < 0) ? 0 : (v > 255) ? 255 : (uint8_t)v;
-    }
-    surf->pal_start = new_pal_start;
+    /* A palette-bank remap is a Saturn upload/composition decision, not a
+     * safe host-side pixel edit. Preserve the source receipt unchanged. */
+    (void)surf;
+    (void)new_pal_start;
 }
 
-/* Darken surface in-place for blur/focus states */
+/* Retained source-study API; no host-side brightness mutation. */
 void nexus_ui_surface_darken(Nexus_UI_Surface *surf, float factor) {
-    /* For indexed surfaces, we darken by halving palette indices.
-     * A real implementation would compose with the brightness in the
-     * V1 framebuffer pipeline.  Here we simply darken each pixel's
-     * index toward 0 (0 stays 0 = black).                         */
-    int i;
-    if (!surf || !surf->data) return;
-    if (factor <= 0.0f) factor = 0.5f;
-    for (i = 0; i < surf->w * surf->h; i++) {
-        int v = (int)((uint8_t)surf->data[i] * factor);
-        surf->data[i] = (v < 0) ? 0 : (uint8_t)v;
-    }
+    (void)surf;
+    (void)factor;
 }
 
 #if defined(__GNUC__) && !defined(__clang__)

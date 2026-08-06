@@ -78,6 +78,8 @@ int main(void)
     Nexus_UI_Dgt2PpView warning_view;
     unsigned char no_draw_fb[16];
     int no_draw_index;
+    Nexus_UI_Surface source_surface;
+    unsigned char source_pixels[4] = {1U, 2U, 3U, 4U};
 
     memset(&ui, 0, sizeof(ui));
     memset(&engine, 0, sizeof(engine));
@@ -97,6 +99,21 @@ int main(void)
         expect_true(no_draw_fb[no_draw_index] == 0xa5,
                     "startup UI convenience wrappers remain Saturn-capture no-draw");
     }
+    memset(&source_surface, 0, sizeof(source_surface));
+    source_surface.data = source_pixels;
+    source_surface.w = 2;
+    source_surface.h = 2;
+    source_surface.pal_start = 4;
+    memset(no_draw_fb, 0xa5, sizeof(no_draw_fb));
+    nexus_ui_blit_surface(&source_surface, no_draw_fb, 4, 4, 1, 1);
+    nexus_ui_blit_surface_flip(&source_surface, no_draw_fb, 4, 4, 1, 1, 1);
+    nexus_ui_surface_remap_pal(&source_surface, 32U);
+    nexus_ui_surface_darken(&source_surface, 0.25f);
+    expect_true(no_draw_fb[0] == 0xa5 && no_draw_fb[15] == 0xa5 &&
+                    memcmp(source_pixels, (unsigned char[]){1U, 2U, 3U, 4U},
+                           sizeof(source_pixels)) == 0 &&
+                    source_surface.pal_start == 4,
+                "UI blit, palette-remap and darken helpers preserve source/no-draw state");
     expect_true(nexus_ui_load_title(&ui, NULL, 0, NULL) < 0 &&
                     ui.surfaces[NEXUS_SURFACE_TITLE].data == NULL,
                 "missing TITLE.CG cannot become a generated title surface");

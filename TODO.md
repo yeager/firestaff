@@ -5,6 +5,11 @@
   texture without Saturn VDP1 command, CLUT, placement, or DMDF/MNS owner
   proof. Recover those bindings before admitting creature pixels.
 
+- **NEXUS-UI-VDP1-VDP2-CAPTURE:** UI surface loaders retain verified source
+  pixels and palettes, but the public blit, palette-remap and darken helpers
+  are now no-draw/source-preserving. Recover Saturn command order, CLUT bank,
+  destination and brightness/composition ownership before restoring them.
+
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
   and the local English CUE by
