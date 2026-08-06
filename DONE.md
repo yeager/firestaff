@@ -1,3 +1,13 @@
+# Nexus startup TITLE.BIN truncation gate (2026-08-06)
+
+- ✅ Hardened `nexus_title_load` so an incomplete `TITLE.BIN` cannot reach the
+  DMWeb MAPD/TIBG offset through the already-loaded title-surface path. This
+  keeps startup source handling fail-closed; it does not promote decoded title
+  tiles to Saturn VDP2 presentation. Verification: rebuilt `firestaff_nexus`
+  and `test_nexus_v1_title_mapd_real`; the aggregate `firestaff` link remains
+  blocked by unrelated concurrent Theron symbols. No game data was copied or
+  committed.
+
 # Nexus ITEM.IBS floor identity and attribute provenance (2026-08-06)
 
 - ✅ Corrected the retail floor-item handoff. DMWeb Structure1Fa byte 4 is

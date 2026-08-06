@@ -187,7 +187,10 @@ int nexus_title_load(Nexus_TitleScreen *title, Nexus_V1_Engine *engine) {
                                  surface) == 0) {
         title->loaded = 1;
         data = nexus_v1_read_file(engine, "TITLE.BIN", &size);
-        if (data && size > 0) {
+        /* A cached title surface does not make a truncated TITLE.BIN safe.
+         * The MAPD/TIBG block begins at 0x0e278 (DMWeb layout); reject the
+         * incomplete source before forming the offset or subtracting it. */
+        if (data && size > (int)0x0e278U) {
             int cg_size = 0;
             uint8_t *cg = nexus_v1_read_file(engine, "TITLE.CG", &cg_size);
             (void)nexus_v1_title_decode_mapd(

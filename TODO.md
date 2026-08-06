@@ -48,6 +48,12 @@
   exit 78 because it lacks `FIRESTAFF_NEXUS_TRACE_OUTPUT`. No startup/menu,
   HUD, VDP1, SLEV, or SAL artifact may be admitted from that binary.
 
+- **NEXUS-TITLE-TRUNCATED-SOURCE-GATE:** `nexus_title_load` now refuses to
+  form the DMWeb MAPD/TIBG offset when a cached title surface is paired with
+  a short `TITLE.BIN`. The remaining work is the original Saturn VDP2
+  tile-map/CLUT/timing capture; decoded retail MAPD/TIBG bytes are not yet a
+  presentation proof.
+
 - **NEXUS-EVENT-DISPATCH-CAPTURE:** The 61 `DM.BIN` event names remain a
   byte-exact source receipt at `0x36D04..0x3702F`, but the former host
   event→command map and accepting
