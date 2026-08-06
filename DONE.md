@@ -40,6 +40,17 @@
   ENVIRONMENT-kommandon (`0x64..0x6c`) med 256-färgers identitetspalett och
   den källbundna scen-/ljus-/väderkedjan för nivå 17, graphicsset 5.
 
+# DM2 FM Towns companion callback bridge (2026-08-13)
+
+- ✅ Added a range-checked runtime adapter with the source-shaped
+  `DM2_QUERY_GDAT_TEXT` callback signature. It returns only decoded bytes from
+  the authenticated PC-English companion and remains empty when no companion
+  is bound.
+- ✅ Routed the existing FM Towns save-panel override through that adapter and
+  extended real-media coverage to verify both `SAVE` and `CANCEL` via the
+  generic callback path. No host text or fallback was introduced; native
+  event/dialogue owners remain gated and no release was made.
+
 # DM2 varelse- och drop-GDAT med vald korpus (2026-08-07)
 
 - ✅ Dropptabell-, dynamisk varelsematerial- och V5-animationstesterna läser

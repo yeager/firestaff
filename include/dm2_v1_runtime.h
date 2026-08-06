@@ -1497,6 +1497,13 @@ const uint8_t *dm2_v1_runtime_i18n_text(int category, int index, int field,
                                         size_t *out_size);
 int dm2_v1_runtime_i18n_ready(void);
 
+/* Callback-shaped bridge for the source DM2_QUERY_GDAT_TEXT consumers.
+ * Returns only decoded text copied from the authenticated FM Towns
+ * companion; it never manufactures a string or substitutes a host label. */
+const uint8_t *dm2_v1_runtime_query_gdat_text_override(
+    void *context, int32_t category, int32_t index, int32_t field,
+    size_t *out_size);
+
 /* Adopt decoded text from the separately verified PC-English companion of a
  * selected FM Towns Japanese session. The caller retains file ownership; the
  * i18n context copies bounded decoded entries. Returns zero unless the live

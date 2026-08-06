@@ -29456,6 +29456,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   and per-frame PL palette selection, before returning to the launcher.
   This completes only the AUTOEXEC exit transition. Native P3 keyboard input,
   GAME_LOAD, save-resume and the remaining GUI text consumers stay open.
+  **2026-08-13 callback progress:** the authenticated companion is now also
+  exposed through a range-checked runtime callback matching generic
+  `DM2_QUERY_GDAT_TEXT` consumers; real-media coverage verifies both
+  `DIALOG_BOXES/0x81` labels through that bridge. The callback does not create
+  text or enable any unbound GUI owner; native event/dialogue routing remains
+  gated.
 
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN

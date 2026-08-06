@@ -130,7 +130,8 @@ static const uint8_t *dm2_v1_boot_fmtowns_english_dialogue_text(
         !dm2_v1_runtime_i18n_ready()) {
         return NULL;
     }
-    return dm2_v1_runtime_i18n_text(category, index, field, out_size);
+    return dm2_v1_runtime_query_gdat_text_override(
+        NULL, category, index, field, out_size);
 }
 
 /* The Towns CD remains the source owner, but an English session must not

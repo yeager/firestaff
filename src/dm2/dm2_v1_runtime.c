@@ -8369,6 +8369,20 @@ int dm2_v1_runtime_i18n_ready(void) {
     return g_dm2_runtime.i18n_ready;
 }
 
+const uint8_t *dm2_v1_runtime_query_gdat_text_override(
+    void *context, int32_t category, int32_t index, int32_t field,
+    size_t *out_size)
+{
+    (void)context;
+    if (out_size) *out_size = 0u;
+    if (category < 0 || category > 0xff || index < 0 || index > 0xff ||
+        field < 0 || field > 0xff) {
+        return NULL;
+    }
+    return dm2_v1_runtime_i18n_text((int)category, (int)index, (int)field,
+                                    out_size);
+}
+
 int dm2_v1_runtime_bind_fmtowns_english_text_companion(
     const uint8_t *graphics_data, size_t graphics_size)
 {

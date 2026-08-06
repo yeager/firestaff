@@ -439,6 +439,14 @@ int main(void)
         text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
         expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,
                "English text comes from the authenticated PC GDAT companion");
+        text = dm2_v1_runtime_query_gdat_text_override(
+            NULL, 0x1a, 0x81, 0, &text_size);
+        expect(text && text_size >= 4u && memcmp(text, "SAVE", 4u) == 0,
+               "generic DM2_QUERY_GDAT_TEXT callback reaches the real companion");
+        text = dm2_v1_runtime_query_gdat_text_override(
+            NULL, 0x1a, 0x81, 1, &text_size);
+        expect(text && text_size >= 6u && memcmp(text, "CANCEL", 6u) == 0,
+               "generic callback preserves the second source dialogue label");
         memset(&dialogue, 0, sizeof(dialogue));
         expect(dm2_v1_boot_dialogue_open_panel_host_command(
                    launch.profile, &dialogue) && dialogue.valid &&
