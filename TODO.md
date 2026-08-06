@@ -160,6 +160,11 @@
   reads no original DM1 data; retain it only in its explicit regression while
   the independent D0C real-material route remains the production owner.
 
+- **DM1-D0L2-D0R2-F0108-SYNTHETIC-AUDIT:** This D0 side-route F0108 contract
+  hard-codes rows, zones, seeds and pixels. It reads no original DM1 data and
+  has no M11/runtime caller; retain it only in its explicit regression until a
+  live F0108 consumer is bound to authenticated GRAPHICS.DAT material.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The
