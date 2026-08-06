@@ -53881,13 +53881,13 @@ konsument och placering är capture-bundna.
   hash-verified English pair instead of dereferencing an uninitialized
   `versionId`. Verified against the original 484 MiB MODE1/2352 image and
   both the file-backed ISO parser and scanner path.
-- ✅ 2026-08-06 Theron regular creature spawn bridge: production no longer
-  rejects every creature record. The five Track 02 regular spawn zones now
-  publish live HP/attack/defense from the authenticated category formulas,
-  but only on a loaded source-header-verified level. Scripted Thief/Demon
-  encounters, AI/combat behavior, loot and sound remain fail-closed. The world
-  spawn loop no longer consumes its budget when a source-unbound type is
-  rejected. Focused CTest: 3/3 passed.
+- ✅ 2026-08-06 Theron regular creature spawn boundary: corrected the real-data
+  mechanics probe so it no longer links `theron_v1_compat.c` over the
+  production archive. The five Track 02 spawn-zone/category tables remain
+  source receipts, while live creature publication, combat and loot stay
+  blocked until the bank-switched RNG consumer is captured. The probe now
+  verifies the production no-spawn/no-combat/no-drop boundary against the
+  authentic JP/US Track 02 level-0 grid.
 - 2026-08-06 Nexus event-owner quarantine: removed the production path that
   inferred live door, teleporter, pit, and stairs routes from DGN square
   values plus Structure1F destination fields. The verified SDDRVS asset is a

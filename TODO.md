@@ -1877,7 +1877,9 @@ level or consumer bindings.
   dungeon/coordinate replay seed was synthetic and is now removed from the
   live spawn path; diagnostic formula tests remain fixture-only.
   THIEF/DEMON scripted stats are blocked until their encounter records bind.
-  Category formulas wired into spawn path via dungeon_id-based zone lookup.
+  Category formulas remain diagnostic-only; the real-data playability probe now
+  links the production archive and verifies that no host-seeded creature is
+  published from a source level.
   Legacy DMWeb generator respawn is no longer a production route; generator
   timing and re-enable behavior remain closed until the Track 02 consumer is
   bound.

@@ -367,18 +367,18 @@ static void test_get_move_result_on_real_grid(Theron_V1_World *world,
 
 static void test_sound_validation(void) {
     printf("[test:sound_validation]\n");
-    CHECK_INT("sound valid for BOOT_MUSIC",
-              theron_v1_sound_is_valid(THERON_SOUND_BOOT_MUSIC), 1);
+    CHECK_INT("unbound Track 01 sound remains blocked",
+              theron_v1_sound_is_valid(THERON_SOUND_BOOT_MUSIC), 0);
     CHECK_INT("sound invalid for negative id",
               theron_v1_sound_is_valid((Theron_SoundID)-1), 0);
     CHECK_INT("sound invalid for out-of-range id",
               theron_v1_sound_is_valid(THERON_SOUND_COUNT), 0);
 }
 
-static void test_creature_spawn_and_attack(Theron_V1_World *world,
-                                           const Theron_V1_Level *level) {
+static void test_creature_spawn_and_combat_gate(Theron_V1_World *world,
+                                                const Theron_V1_Level *level) {
     int sx, sy, fx, fy, dir, cid;
-    printf("[test:creature_spawn_and_attack]\n");
+    printf("[test:creature_spawn_and_combat_gate]\n");
 
     if (!find_floor_with_neighbours(level, &sx, &sy) ||
         !find_adjacent_floor(level, sx, sy, &fx, &fy)) {
@@ -391,26 +391,22 @@ static void test_creature_spawn_and_attack(Theron_V1_World *world,
     world->party.leader_x = sx;
     world->party.leader_y = sy;
 
-    /* Spawn a weak creature on the adjacent floor square. */
+    /* The source monster occurrence and the bank-switched RNG consumer are
+     * not both available in this level-0 probe. Production must retain the
+     * source level without publishing a host-seeded creature. */
     cid = theron_v1_creature_spawn(world, THERON_CREATURE_SHADO,
                                    world->current_dungeon,
                                    world->current_level, fx, fy);
-    CHECK_INT("creature spawn returns positive id", cid > 0, 1);
-    CHECK_INT("creature count is 1",
+    CHECK_INT("source creature spawn remains blocked", cid, -1);
+    CHECK_INT("source creature count remains zero",
               theron_v1_creature_count(world, world->current_dungeon,
-                                       world->current_level), 1);
+                                       world->current_level), 0);
 
     /* Attack the creature from the adjacent square. */
     dir = direction_from_delta(fx - sx, fy - sy);
     world->party.leader_dir = dir;
-    int killed = theron_v1_champion_attack(world, world->party.active_slot, cid);
-    CHECK_INT("champion attack returns hit-or-kill", killed >= 0, 1);
-
-    Theron_V1_Creature *cr = theron_v1_creature_by_id(world, cid);
-    CHECK_INT("creature lookup succeeds", cr != NULL, 1);
-    if (cr) {
-        CHECK_INT("creature hp is non-negative after attack", cr->hp >= 0, 1);
-    }
+    CHECK_INT("source champion attack remains blocked",
+              theron_v1_champion_attack(world, world->party.active_slot, cid), -1);
 }
 
 static void test_creature_drop(Theron_V1_World *world,
@@ -430,16 +426,16 @@ static void test_creature_drop(Theron_V1_World *world,
     world->party.leader_y = sy;
     object_before = world->object_count;
 
-    /* Spawn and kill a creature that drops gold/items. */
+    /* No source-owned spawn record/RNG consumer is available here, so the
+     * production route must not create a creature or a drop. */
     cid = theron_v1_creature_spawn(world, THERON_CREATURE_AKUTUBA,
                                    world->current_dungeon,
                                    world->current_level, fx, fy);
-    theron_v1_creature_kill(world, cid);
-    CHECK_INT("creature kill removed active flag",
-              (world->object_count > object_before) ||
-              (theron_v1_creature_by_id(world, cid) == NULL) ||
-              !(theron_v1_creature_by_id(world, cid)->flags & THERON_CF_ACTIVE),
-              1);
+    CHECK_INT("source drop spawn remains blocked", cid, -1);
+    CHECK_INT("source drop kill remains blocked",
+              theron_v1_creature_kill(world, cid), -1);
+    CHECK_INT("source drop object count unchanged",
+              world->object_count, object_before);
 }
 
 static void test_object_table_decode_and_apply_real_data(
@@ -659,7 +655,7 @@ static void probe_real_track02(const char *label,
     test_get_move_result_on_real_grid(&world, &level);
 
     setup_world_from_level(&world, &level);
-    test_creature_spawn_and_attack(&world, &level);
+    test_creature_spawn_and_combat_gate(&world, &level);
 
     setup_world_from_level(&world, &level);
     test_creature_drop(&world, &level);

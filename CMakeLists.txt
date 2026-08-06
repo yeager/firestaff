@@ -40170,13 +40170,6 @@ endif()
 if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(firestaff_theron_v1_mechanics_playability_probe
         probes/theron/firestaff_theron_v1_mechanics_playability_probe.c
-        src/theron/theron_v1_compat.c
-        src/theron/theron_v1_track02_text_decode.c
-        src/theron/theron_v1_track02_item_properties.c
-        src/theron/theron_v1_track02_creature_spawn.c
-        src/theron/theron_v1_track02_item_categories.c
-        src/theron/theron_v1_track02_spell_descriptors.c
-        src/theron/theron_v1_track02_spell_descriptors.c
     )
     target_link_libraries(firestaff_theron_v1_mechanics_playability_probe PRIVATE
         firestaff_theron
