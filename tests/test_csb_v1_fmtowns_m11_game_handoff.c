@@ -65,7 +65,7 @@ int main(void)
     memset(&asset_status, 0, sizeof(asset_status));
     if (archive_data_dir && archive_data_dir[0]) {
         M12_AssetStatus_ScanGame(&asset_status, archive_data_dir, "csb");
-        if (!M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
+        if (!M12_AssetStatus_MaterializeCSBRuntimeVersion(
                 &asset_status, version_id, materialized_data_dir,
                 sizeof(materialized_data_dir))) {
             fprintf(stderr, "SKIP: verified FM Towns %s archive unavailable\n",

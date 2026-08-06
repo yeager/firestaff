@@ -17663,17 +17663,26 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
             version->matchedMd5[0] != '\0') {
             spec.verifiedAssetPath = version->matchedPath;
             spec.verifiedAssetMd5 = version->matchedMd5;
-            /* The menu's version picker is authoritative.  FM Towns shares
-             * a CSB catalogue with PC/Atari/Amiga releases, so its selected
-             * CDATA/CJDATA pair must never inherit that first-match cache.
-             * ReDMCSB COMPILE.H EXEID 60/61 assigns CHTWE/CHTWJ to those
-             * distinct F31E/F31J game programs. */
-            if (entry->gameId && strcmp(entry->gameId, "csb") == 0 &&
-                M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
-                    &menuState->assetStatus, version->versionId,
-                    selectedCsbRuntimeDataDir,
-                    sizeof(selectedCsbRuntimeDataDir))) {
-                spec.dataDir = selectedCsbRuntimeDataDir;
+            /* The menu's version picker is authoritative.  A shared CSB
+             * data root may contain PC, Atari, Amiga and FM Towns packages;
+             * materialize the selected package privately instead of letting
+             * its startup, HUD or title assets inherit the first-match cache.
+             * ReDMCSB COMPILE.H 199-243 separates these program families. */
+            if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
+                const M12_AssetVersionStatus* firstCsbVersion =
+                    M12_AssetStatus_GetFirstMatchedVersion(
+                        &menuState->assetStatus, "csb");
+                if (firstCsbVersion && firstCsbVersion->versionId &&
+                    strcmp(firstCsbVersion->versionId, version->versionId) != 0 &&
+                    strstr(version->matchedPath, "::") != NULL) {
+                    if (!M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                            &menuState->assetStatus, version->versionId,
+                            selectedCsbRuntimeDataDir,
+                            sizeof(selectedCsbRuntimeDataDir))) {
+                        return 0;
+                    }
+                    spec.dataDir = selectedCsbRuntimeDataDir;
+                }
             }
             /* DM2's PC, FM Towns and Amiga editions can all be present below
              * one configured data root.  The selected edition owns its

@@ -376,6 +376,10 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     char cachedFmtownsJapaneseProgram[512];
     char cachedFmtownsPortrait[512];
     char cachedCsbGraphics[512];
+    char selectedRuntimeDir[512];
+    char selectedGraphics[512];
+    char selectedDungeon[512];
+    char selectedSwoosh[512];
     const M12_AssetVersionStatus* version;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
@@ -407,6 +411,10 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
     memset(cachedFmtownsJapaneseProgram, 0, sizeof(cachedFmtownsJapaneseProgram));
     memset(cachedFmtownsPortrait, 0, sizeof(cachedFmtownsPortrait));
     memset(cachedCsbGraphics, 0, sizeof(cachedCsbGraphics));
+    memset(selectedRuntimeDir, 0, sizeof(selectedRuntimeDir));
+    memset(selectedGraphics, 0, sizeof(selectedGraphics));
+    memset(selectedDungeon, 0, sizeof(selectedDungeon));
+    memset(selectedSwoosh, 0, sizeof(selectedSwoosh));
     check_int(join_path(zipPath, sizeof(zipPath), root, "csb_graphics.zip"),
               "positive ZIP path should fit");
     check_int(join_path(isoPath, sizeof(isoPath), root, "csb_required.iso"),
@@ -520,8 +528,24 @@ static void check_csb_zip_graphics_iso_dungeon_materializes(
                                                kCsbGraphicsPayload),
               "materialized CSB GRAPHICS should match the ZIP payload");
     check_int(dungeon && file_matches_payload(dungeon->matchedPath,
-                                              kCsbDungeonPayload),
+                                               kCsbDungeonPayload),
               "materialized CSB DUNGEON should match the ISO payload");
+    check_int(M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                  &status, "pc34-en", selectedRuntimeDir,
+                  sizeof(selectedRuntimeDir)),
+              "selected PC CSB version should materialize a private cache");
+    check_int(FSP_JoinPath(selectedGraphics, sizeof(selectedGraphics),
+                           selectedRuntimeDir, "GRAPHICS.DAT") &&
+                  FSP_JoinPath(selectedDungeon, sizeof(selectedDungeon),
+                               selectedRuntimeDir, "DUNGEON.DAT") &&
+                  strstr(selectedRuntimeDir, "csb-pc34-en") != NULL &&
+                  file_matches_payload(selectedGraphics, kCsbGraphicsPayload) &&
+                  file_matches_payload(selectedDungeon, kCsbDungeonPayload),
+              "selected PC CSB private cache should contain its source pair");
+    check_int(FSP_JoinPath(selectedSwoosh, sizeof(selectedSwoosh),
+                           selectedRuntimeDir, "SWOOSH") &&
+                  file_matches_payload(selectedSwoosh, kCsbSwooshPayload),
+              "selected PC CSB private cache should contain its source startup sidecars");
     check_int(runtimeDir &&
                   FSP_JoinPath(csbCacheDir, sizeof(csbCacheDir), runtimeDir, "csb") &&
                   FSP_JoinPath(cachedBonusDungeon, sizeof(cachedBonusDungeon),
@@ -754,7 +778,7 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
                                "PORTRAIT/ALEX.CMP") &&
                   path_exists(titlePath) && path_exists(programPath) && path_exists(portraitPath),
               "real FM Towns ZIP should cache source title, program and portrait sidecars");
-    check_int(M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
+    check_int(M12_AssetStatus_MaterializeCSBRuntimeVersion(
                   &status, "fmtowns-en", selectedRuntimeRoot,
                   sizeof(selectedRuntimeRoot)) &&
                   FSP_JoinPath(programPath, sizeof(programPath),
@@ -766,7 +790,7 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
      * ReDMCSB COMPILE.H EXEID61 lines 367-375 maps F31J to CHTWJ; do not
      * let a prior F31E materialization satisfy the Japanese launch route by
      * filename alone. */
-    check_int(M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
+    check_int(M12_AssetStatus_MaterializeCSBRuntimeVersion(
                   &status, "fmtowns-ja", japaneseRuntimeRoot,
                   sizeof(japaneseRuntimeRoot)) &&
                   FSP_JoinPath(japaneseGraphicsPath,

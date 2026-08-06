@@ -4581,7 +4581,7 @@ int M12_AssetStatus_ResolveRuntimeDataDirForVersion(
     return FSP_ParentDir(outPath, outPathSize, version->matchedPath);
 }
 
-int M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
+int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize) {
     int gameIndex = m12_game_index_from_id("csb");
@@ -4589,12 +4589,18 @@ int M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
     const M12_AssetVersionStatus* version;
     char userDataDir[M12_ASSET_DATA_DIR_CAPACITY];
     char cacheRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char cacheLeaf[64];
+    char graphicsPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeonPath[M12_ASSET_DATA_DIR_CAPACITY];
+    char copiedMd5[M12_ASSET_MD5_CAPACITY];
+    M12_AssetRequiredFileStatus selectedGraphics;
+    const M12_AssetRequiredFileStatus* dungeon = NULL;
+    const char* expectedDungeonMd5 = NULL;
+    size_t i;
 
     if (outPath && outPathSize) outPath[0] = '\0';
     if (!status || !versionId || !outPath || outPathSize == 0U ||
-        gameIndex < 0 ||
-        (strcmp(versionId, "fmtowns-en") != 0 &&
-         strcmp(versionId, "fmtowns-ja") != 0)) return 0;
+        gameIndex < 0) return 0;
     versionIndex = M12_AssetStatus_FindVersionIndex("csb", versionId);
     if (versionIndex < 0) return 0;
     version = &status->versions[gameIndex][versionIndex];
@@ -4602,15 +4608,66 @@ int M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
         !FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
         !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir,
                       "asset-cache") ||
-        !FSP_JoinPath(outPath, outPathSize, cacheRoot,
-                      strcmp(versionId, "fmtowns-en") == 0
-                          ? "csb-fmtowns-en" : "csb-fmtowns-ja") ||
+        snprintf(cacheLeaf, sizeof(cacheLeaf), "csb-%s", versionId) < 0 ||
+        !FSP_JoinPath(outPath, outPathSize, cacheRoot, cacheLeaf) ||
         !FSP_CreateDirectoryRecursive(outPath)) {
         if (outPathSize) outPath[0] = '\0';
         return 0;
     }
-    return m12_materialize_csb_fmtowns_runtime_cache(
-        (M12_AssetStatus*)status, gameIndex, version, outPath, 0);
+    if (strcmp(versionId, "fmtowns-en") == 0 ||
+        strcmp(versionId, "fmtowns-ja") == 0) {
+        return m12_materialize_csb_fmtowns_runtime_cache(
+            (M12_AssetStatus*)status, gameIndex, version, outPath, 0);
+    }
+
+    /* All non-FM-Towns CSB ports share the authenticated original dungeon
+     * payload.  The selected GRAPHICS.DAT still determines the executable
+     * edition and presentation bank, so never take it from the scanner's
+     * first matched required-file row.  ReDMCSB COMPILE.H 199-243 keeps the
+     * Amiga, Atari and PC program families distinct even where dungeon bytes
+     * coincide. */
+    expectedDungeonMd5 = "6695d2acebce49f95db1d8f3a5c733de";
+#ifdef FIRESTAFF_ASSET_STATUS_TESTING
+    if (g_m12TestCsbDungeonMd5[0] != '\0') {
+        expectedDungeonMd5 = g_m12TestCsbDungeonMd5;
+    }
+#endif
+    for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+        const M12_AssetRequiredFileStatus* candidate =
+            &status->requiredFiles[gameIndex][i];
+        if (candidate->matched && candidate->roleId &&
+            strcmp(candidate->roleId, "dungeon") == 0 &&
+            strcmp(candidate->matchedHash, expectedDungeonMd5) == 0) {
+            dungeon = candidate;
+            break;
+        }
+    }
+    memset(&selectedGraphics, 0, sizeof(selectedGraphics));
+    selectedGraphics.matched = 1;
+    m12_copy_string(selectedGraphics.matchedPath,
+                    sizeof(selectedGraphics.matchedPath),
+                    version->matchedPath);
+    if (!dungeon ||
+        !FSP_JoinPath(graphicsPath, sizeof(graphicsPath), outPath,
+                      "GRAPHICS.DAT") ||
+        !FSP_JoinPath(dungeonPath, sizeof(dungeonPath), outPath,
+                      "DUNGEON.DAT") ||
+        !m12_materialize_required_file(&selectedGraphics, graphicsPath)) {
+        outPath[0] = '\0';
+        return 0;
+    }
+    if (!m12_file_md5_hex(graphicsPath, copiedMd5) ||
+        strcmp(copiedMd5, version->matchedMd5) != 0 ||
+        !m12_materialize_required_file(dungeon, dungeonPath) ||
+        !m12_file_md5_hex(dungeonPath, copiedMd5) ||
+        strcmp(copiedMd5, expectedDungeonMd5) != 0) {
+        (void)remove(graphicsPath);
+        (void)remove(dungeonPath);
+        outPath[0] = '\0';
+        return 0;
+    }
+    m12_materialize_csb_startup_optional_cache(version->matchedPath, outPath);
+    return 1;
 }
 
 const char* M12_AssetStatus_GetLegacyFallbackDir(const M12_AssetStatus* status) {

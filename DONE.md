@@ -53363,3 +53363,13 @@ alcove runtime and archive-media tests passed (4/4).
   `track02.wav/ogg/mp3` fallback from manual track selection. A local audio
   file can no longer masquerade as Saturn Red Book playback; selection remains
   provenance-only until an authenticated media handoff exists.
+- ✅ 2026-08-06 CSB selected-archive isolation: M12 can now materialize every
+  selected CSB edition into its own hash-checked runtime cache instead of
+  reusing the scanner's first-match `asset-cache/csb` view. The existing FM
+  Towns CD extractor uses the same API; PC, Atari and Amiga copies validate
+  their selected `GRAPHICS.DAT`, the authenticated shared `DUNGEON.DAT`, and
+  package-owned startup sidecars. M11 uses that private route whenever an
+  archive-backed non-first edition is selected, so title, entrance, HUD and
+  viewport data cannot silently come from another platform. The focused ZIP+
+  ISO split-archive regression passes; the real FM Towns handoff remains
+  skip-safe without user media.

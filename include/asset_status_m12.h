@@ -163,10 +163,11 @@ int M12_AssetStatus_ResolveRuntimeDataDirForVersion(
     const char* versionId,
     char* outPath,
     size_t outPathSize);
-/* Materialize the selected FM Towns CSB CD into a version-private runtime
- * directory.  This prevents a PC/Atari/Amiga default cache from satisfying a
- * deliberate F31E/F31J launcher selection. */
-int M12_AssetStatus_MaterializeCSBFmtownsRuntimeVersion(
+/* Materialize the selected CSB edition into a version-private runtime
+ * directory.  The menu's selected package, rather than the scanner's first
+ * match, owns GRAPHICS.DAT and optional presentation media.  FM Towns keeps
+ * its CD-specific extractor behind the same boundary. */
+int M12_AssetStatus_MaterializeCSBRuntimeVersion(
     const M12_AssetStatus* status, const char* versionId,
     char* outPath, size_t outPathSize);
 const char* M12_AssetStatus_GetLegacyFallbackDir(const M12_AssetStatus* status);
