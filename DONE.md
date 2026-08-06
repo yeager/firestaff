@@ -40,6 +40,14 @@
   passes with 445 assertions; the source object is absent from both M10 and
   M11 archives.
 
+# DM1 mirror chest-close pickup synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the fixed C040/C537/C162 party/chest/Thing scenario fixture from
+  M10. It has no original DM1 data input or M11/runtime caller; its dedicated
+  ReDMCSB regression is now registered and compiles the source explicitly.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_chest_close_leader_hand_pickup_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 C040/C537/C162 thought-cancel synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only thought-project cancel-after-pickup fixture

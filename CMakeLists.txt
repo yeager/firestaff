@@ -4810,6 +4810,13 @@ list(REMOVE_ITEM M10_SOURCES
 # its explicit regression compiles it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_reshuffle_panel_live_pc34_compat.c")
+
+# `dm1_v1_mirror_candidate_chest_close_leader_hand_pickup_pc34_compat.c`
+# is a C040/C537/C162 scenario fixture with fixed party, chest and Thing
+# values. It reads no original DM1 data and has no M11/runtime caller; keep it
+# test-only and compile the dedicated regression explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_chest_close_leader_hand_pickup_pc34_compat.c")
 # `dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c`
 # is a deterministic C040/chest/rotation scenario fixture. It reads no
 # original DM1 data and has no M11/runtime caller; its explicit regression
