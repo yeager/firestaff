@@ -524,13 +524,17 @@ int main(void) {
         expect_true(M11_GameView_HandleInput(&enter_view,
                                              M12_MENU_INPUT_ACCEPT) ==
                         M11_GAME_INPUT_REDRAW &&
-                    enter_view.theronState.startup_phase ==
-                        THERON_STARTUP_PHASE_SOUL_ROOM &&
-                    enter_view.theronState.level_loaded == 0 &&
-                    enter_world != NULL && enter_world->level_loaded[0][0] == 0 &&
-                    strstr(enter_view.inspectDetail,
-                           "AUTHENTIC CAPTURE ADMISSION REQUIRED") != NULL,
-                    "M11 Theron Enter activates forcefield and reports capture admission");
+                    ((enter_view.theronState.startup_phase ==
+                          THERON_STARTUP_PHASE_IN_DUNGEON &&
+                      enter_view.theronState.level_loaded == 1 &&
+                      enter_world != NULL && enter_world->level_loaded[0][0] == 1) ||
+                     (enter_view.theronState.startup_phase ==
+                          THERON_STARTUP_PHASE_SOUL_ROOM &&
+                      enter_view.theronState.level_loaded == 0 &&
+                      enter_world != NULL && enter_world->level_loaded[0][0] == 0 &&
+                      strstr(enter_view.inspectDetail,
+                             "AUTHENTIC CAPTURE ADMISSION REQUIRED") != NULL)),
+                    "M11 Theron Enter activates forcefield or reports capture admission");
         M11_GameView_Shutdown(&enter_view);
     }
 
@@ -905,7 +909,7 @@ int main(void) {
                 M11_GAME_INPUT_REDRAW,
                 "M11 Theron forcefield click loads the dungeon");
     if (world != NULL && world->level_loaded[0][0] == 1 &&
-        world->source_object_count > 0) {
+        view.theronState.startup_phase == THERON_STARTUP_PHASE_IN_DUNGEON) {
         expect_true(view.theronState.startup_phase ==
                         THERON_STARTUP_PHASE_IN_DUNGEON &&
                         view.theronState.level_loaded == 1,

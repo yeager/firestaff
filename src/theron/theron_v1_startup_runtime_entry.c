@@ -1,10 +1,12 @@
 #include "theron_v1_startup_runtime_entry.h"
 
 #include "theron_v1_boot.h"
+#include "theron_v1_track02_dungeon_loader.h"
 #include "theron_v1_stage2_runtime_handoff.h"
 #include "theron_v1_track02.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static int theron_v1_startup_runtime_has_verified_track02_request(
@@ -17,6 +19,58 @@ typedef struct {
     size_t hucard_rom_size;
     const char *md5_hex;
 } Theron_V1StartupRuntimeLevelLoadContext;
+
+/* Source-only handoff for interactive raw Track 02 forcefield entry. The
+ * loader consumes authentic map/thing bytes; visual and host-item consumers
+ * remain separate gates. */
+static int theron_v1_startup_runtime_load_raw_track02_source_level(
+    Theron_V1_World *world, const uint8_t *track02, size_t track02_size,
+    const char *md5_hex, Theron_DungeonID dungeon_id,
+    char *receipt, size_t receipt_cap) {
+    Theron_Track02Variant variant;
+    Theron_DungeonLoadResult load_result;
+    uint8_t *user_data;
+    size_t sectors, user_size, i;
+    int loaded;
+
+    if (!world || !track02 || !track02_size || !md5_hex ||
+        dungeon_id < THERON_DUNGEON_1_AKUTUBA ||
+        dungeon_id > THERON_DUNGEON_COUNT ||
+        track02_size % THERON_TRACK02_RAW_SECTOR_BYTES != 0u) return 0;
+    variant = theron_v1_track02_variant_for_md5(md5_hex);
+    if (variant != THERON_TRACK02_VARIANT_JP_BIN &&
+        variant != THERON_TRACK02_VARIANT_US_BIN) return 0;
+    sectors = track02_size / THERON_TRACK02_RAW_SECTOR_BYTES;
+    if (!sectors || sectors > SIZE_MAX / THERON_TRACK02_RAW_USER_DATA_BYTES) return 0;
+    user_size = sectors * THERON_TRACK02_RAW_USER_DATA_BYTES;
+    user_data = (uint8_t *)malloc(user_size);
+    if (!user_data) return 0;
+    for (i = 0u; i < sectors; ++i) {
+        memcpy(user_data + i * THERON_TRACK02_RAW_USER_DATA_BYTES,
+               track02 + i * THERON_TRACK02_RAW_SECTOR_BYTES +
+                   THERON_TRACK02_RAW_USER_DATA_OFFSET,
+               THERON_TRACK02_RAW_USER_DATA_BYTES);
+    }
+    memset(&load_result, 0, sizeof(load_result));
+    loaded = theron_v1_track02_load_full_dungeon_for_variant(
+        world, (int)dungeon_id, user_data, user_size, variant, &load_result);
+    free(user_data);
+    if (loaded != 0 || load_result.levels_loaded < 1) return 0;
+    world->current_dungeon = (int)dungeon_id;
+    world->current_level = 0;
+    if (!world->level_loaded[(int)dungeon_id - 1][0]) return 0;
+    theron_v1_party_place(world,
+                          world->levels[(int)dungeon_id - 1][0].start_x,
+                          world->levels[(int)dungeon_id - 1][0].start_y,
+                          world->levels[(int)dungeon_id - 1][0].start_dir);
+    if (receipt && receipt_cap > 0u) {
+        snprintf(receipt, receipt_cap,
+                 "Track 02 raw source handoff: dungeon=%d maps=%d objects=%u; visual capture remains gated",
+                 (int)dungeon_id, load_result.levels_loaded,
+                 world->source_object_count);
+    }
+    return 1;
+}
 
 static void theron_v1_startup_copy_object_anchor_receipt(
     int out_status[THERON_TRACK02_MAX_BANK_ANCHORS],
@@ -136,6 +190,9 @@ static int theron_v1_startup_runtime_level_load_callback(
     if (!ctx) {
         return 0;
     }
+    if (theron_v1_startup_runtime_load_raw_track02_source_level(
+            world, ctx->hucard_rom, ctx->hucard_rom_size, ctx->md5_hex,
+            dungeon_id, receipt, receipt_cap)) return 1;
     return theron_v1_startup_runtime_load_initial_level(world,
                                                         ctx->hucard_rom,
                                                         ctx->hucard_rom_size,
@@ -2460,14 +2517,11 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
     Theron_V1StartupRuntimeInitialRouteReceipt route_receipt;
     Theron_V1_World candidate_world;
 
-    /* Raw BINs have an independently proven IPL/IRQ2 route, so they retain
-     * its strict capture admission. A verified 2048-byte ISO has no raw
-     * sectors or IPL receipt; pass its exact MD5 and bytes to the normal
-     * source-bound Soul Room route instead. That route can publish a dungeon
-     * only when its own ISO semantics validate, and never falls back. */
+    /* Capture admission controls visual presentation. Verified raw BINs may
+     * still use the source-only map/thing handoff in the common route. */
     if (variant == THERON_TRACK02_VARIANT_JP_BIN ||
         variant == THERON_TRACK02_VARIANT_US_BIN) {
-        if (!theron_v1_boot_track02_capture_admission_allows_initial_level(
+        if (theron_v1_boot_track02_capture_admission_allows_initial_level(
                 profile, hucard_rom, hucard_rom_size,
                 flow ? flow->selected_dungeon : 0, 0)) {
             candidate_world = *world;
@@ -2475,6 +2529,34 @@ int theron_v1_startup_runtime_enter_from_forcefield_boot_profile_with_host_recei
                     profile, &candidate_world, hucard_rom, hucard_rom_size,
                     flow ? flow->selected_dungeon : 0, &route_receipt)) {
                 *world = candidate_world;
+            }
+        } else {
+            candidate_world = *world;
+            if (!theron_v1_startup_runtime_load_raw_track02_source_level(
+                    &candidate_world, hucard_rom, hucard_rom_size, md5_hex,
+                    flow ? flow->selected_dungeon : 0, NULL, 0u)) {
+                if (out_result) {
+                    theron_v1_startup_runtime_entry_result_init(out_result);
+                    out_result->result = THERON_STARTUP_ERR_DUNGEON_ENTRY;
+                }
+                if (out_host_receipt) {
+                    theron_v1_startup_host_receipt_init(out_host_receipt);
+                    out_host_receipt->input_result =
+                        THERON_STARTUP_INPUT_RESULT_REDRAW;
+                    out_host_receipt->status_scope = "TRACK02 ADMISSION";
+                    out_host_receipt->status =
+                        "AUTHENTIC CAPTURE ADMISSION REQUIRED; fallback visuals blocked";
+                    out_host_receipt->inspect_scope = "TRACK02 ADMISSION";
+                    snprintf(out_host_receipt->inspect_detail,
+                             sizeof(out_host_receipt->inspect_detail),
+                             "%s", out_host_receipt->status);
+                }
+                if (out_state_receipt)
+                    theron_v1_startup_state_receipt_init(out_state_receipt);
+                if (receipt && receipt_cap > 0u)
+                    snprintf(receipt, receipt_cap,
+                             "Track02 capture admission required before forcefield entry; fallback visuals blocked");
+                return 0;
             }
         }
     } else if (variant != THERON_TRACK02_VARIANT_JP_REV1_ISO &&
