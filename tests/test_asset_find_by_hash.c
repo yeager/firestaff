@@ -818,6 +818,19 @@ int main(void) {
             return 1;
         }
         remove("asset_find_by_hash_test_tmp/extracted.dat");
+        memset(outPaths, 0, sizeof(outPaths));
+        memset(matched, 0, sizeof(matched));
+        if (asset_find_all_by_md5_list(
+                "asset_find_by_hash_test_tmp/nested_atari.msa.7z", md5List,
+                outPaths, matched, 2, 2) != 1 ||
+            matched[0] || !matched[1] ||
+            !path_has_virtual_entry(outPaths[1], "nested_atari.msa.7z",
+                                    "chaos.msa::GRAPHICS.DAT")) {
+            cleanup_fixture();
+            fprintf(stderr, "nested Atari MSA list lookup failed: matched=%d,%d path=%s\n",
+                    matched[0], matched[1], outPaths[1]);
+            return 1;
+        }
         remove("asset_find_by_hash_test_tmp/nested_atari.msa.7z");
     }
     remove("asset_find_by_hash_test_tmp/chaos.msa");

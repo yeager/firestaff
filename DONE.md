@@ -8925,6 +8925,13 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-06 CSB nested-MSA profile-scan reuse: the external-archive
+  scanner now reads and decodes one Atari `.msa` member once for the complete
+  hash list, then preserves every matched `archive::msa::file` path. The
+  former per-hash extraction repeated source I/O for the same original disk.
+  The nested MSA list/materialization regression passes without changing any
+  hash or filename admission rule.
+
 - ✅ 2026-08-06 CSB Atari ST raw-floppy scanner admission: added a bounded
   GEMDOS/FAT12 reader for ordinary sector-image `.st` disks to the shared
   hash scanner, including nested `.st` entries in externally enumerated

@@ -4304,17 +4304,52 @@ static int scan_external_atari_msa_by_md5(const char *archive_path,
 static int scan_external_atari_msa_by_md5_list(
     const char *archive_path, const char *msa_entry, const char *const *md5_list,
     int md5_count, char out_paths[][ASSET_PATH_MAX], int matched[]) {
-    int i, found = 0;
+    uint8_t *packed, *image;
+    size_t packed_size, image_size;
+    AdfListMatch matches;
+    char local_paths[64][ASSET_PATH_MAX];
+    int local_matched[64];
+    int result;
     if (!archive_path || !msa_entry || !md5_list || md5_count <= 0 ||
         !out_paths || !matched) return 0;
-    for (i = 0; i < md5_count; ++i) {
-        if (!matched[i] && scan_external_atari_msa_by_md5(
-                archive_path, msa_entry, md5_list[i], out_paths[i], ASSET_PATH_MAX)) {
+    /* Decode a nested MSA once.  Profile discovery normally asks for both
+     * GRAPHICS.DAT and DUNGEON.DAT; extracting the enclosing 7z member once
+     * per hash made original Atari media needlessly expensive to scan.
+     * ReDMCSB-compatible FAT12 matching remains byte-identical to the
+     * direct-MSA path above. */
+    packed = external_read_entry_bytes(archive_path, msa_entry, &packed_size);
+    if (!packed) return 0;
+    image = atari_msa_decode_image(packed, packed_size, &image_size);
+    free(packed);
+    if (!image) return 0;
+    if (md5_count > 64) { free(image); return 0; }
+    memset(&matches, 0, sizeof(matches));
+    memset(local_paths, 0, sizeof(local_paths));
+    memset(local_matched, 0, sizeof(local_matched));
+    matches.container = archive_path;
+    matches.md5_list = md5_list;
+    matches.md5_count = md5_count;
+    matches.out_paths = local_paths;
+    matches.matched = local_matched;
+    result = atari_st_visit_files(image, image_size, adf_find_list_visitor, &matches);
+    if (result >= 0) {
+        int added = 0;
+        int i;
+        for (i = 0; i < md5_count; ++i) {
+            const char *inner;
+            if (!local_matched[i] || matched[i]) continue;
+            inner = strstr(local_paths[i], "::");
+            if (!inner || !copy_nested_virtual_match_path(
+                    archive_path, msa_entry, inner + 2, out_paths[i], ASSET_PATH_MAX)) {
+                continue;
+            }
             matched[i] = 1;
-            ++found;
+            ++added;
         }
+        matches.found_count = added;
     }
-    return found;
+    free(image);
+    return result < 0 ? 0 : matches.found_count;
 }
 
 static int external_atari_msa_extract_entry_to_path(const char *archive_path,
