@@ -6,6 +6,12 @@
   capture of torches, stairs, doors and the complete viewport; do not reopen
   the verified source routes without a failing real-data capture.
 
+  2026-08-06 interaction audit: the source-side map-index stale-target bug is
+  fixed and the real PC34 object/mirror/inscription tests remain green. The
+  remaining risk is visual/package-level evidence only: verify that the
+  packaged window shows the real torch plus holder, that side/depth mirrors
+  remain source-visible, and that a held object follows the F0702 cursor.
+
 - **DM1-HOC-ORNAMENT-RENDER-CAPTURE:** The generic DM1 dungeon bridge now
   consumes the real PC34 map ornament counts, seed, square attributes and
   F0169/F0170 random wall/floor ordinal formulas. The real PC34 map-0 receipt

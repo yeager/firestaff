@@ -843,6 +843,7 @@ static M11_Dm1FloorItemHostPresentationReceipt
 typedef struct M11_Dm1RenderedPileTarget {
     int valid;
     unsigned short thing;
+    int mapIndex;
     int mapX;
     int mapY;
     int x;
@@ -12466,6 +12467,7 @@ int M11_GameView_PickupItem(M11_GameViewState* state) {
             const M11_Dm1RenderedPileTarget* target =
                 &s_m11_dm1_rendered_pile_targets[targetIndex];
             if (target->valid &&
+                target->mapIndex == state->world.party.mapIndex &&
                 target->mapX == state->world.party.mapX &&
                 target->mapY == state->world.party.mapY) {
                 item = target->thing;
@@ -28820,13 +28822,14 @@ static int m11_c080_grab_rendered_pile_target(M11_GameViewState* state,
         const M11_Dm1RenderedPileTarget* target =
             &s_m11_dm1_rendered_pile_targets[i];
         char itemName[48];
-        if (!target->valid || screenX < target->x ||
+        if (!target->valid || target->mapIndex != state->world.party.mapIndex ||
+            screenX < target->x ||
             screenX >= target->x + target->w || screenY < target->y ||
             screenY >= target->y + target->h) {
             continue;
         }
         if (!m11_unlink_thing_from_square(&state->world,
-                                          state->world.party.mapIndex,
+                                          target->mapIndex,
                                           target->mapX, target->mapY,
                                           target->thing)) {
             return 0;
@@ -28834,7 +28837,7 @@ static int m11_c080_grab_rendered_pile_target(M11_GameViewState* state,
         if (!DM1_V1_M11Runtime_SetLeaderHandObjectPc34Compat(state,
                                                               target->thing)) {
             m11_prepend_thing_to_square(&state->world,
-                                        state->world.party.mapIndex,
+                                        target->mapIndex,
                                         target->mapX, target->mapY,
                                         target->thing);
             return 0;
@@ -33924,6 +33927,7 @@ static int m11_draw_dm1_f0115_floor_item_sprite(
         target->valid = presentation->valid && presentation->floorItemLane &&
                         presentation->destinationW > 0 && presentation->destinationH > 0;
         target->thing = thing;
+        target->mapIndex = state ? state->world.party.mapIndex : -1;
         target->mapX = mapX;
         target->mapY = mapY;
         target->x = presentation->destinationX;

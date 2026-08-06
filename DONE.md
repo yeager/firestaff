@@ -51727,3 +51727,11 @@ and `firestaff` build pass.
   boot-time raw record-pool address. The original GAME_LOAD timer queue,
   actuator lifetime and record-write transaction are not yet restored, so
   the runtime now leaves these source events unbound and fail-closed.
+- ✅ 2026-08-06 DM1 HoC interaction audit: real PC34 validation still passes
+  the 611-record M564 name/icon corpus, 8 HoC F0115 floor objects,
+  alcove pickup/placement, mirror orientation/click, wall-material and
+  inscription invalidation routes. Fixed a latent stale-click-target bug by
+  binding each rendered floor-item target to its source `mapIndex` before
+  pickup or mouse placement; a target from a previous map can no longer
+  unlink an object from the active square. Packaged macOS capture of torches,
+  holders, stairs, doors and the held-object cursor remains open in TODO.
