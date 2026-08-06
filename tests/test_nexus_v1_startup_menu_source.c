@@ -84,7 +84,10 @@ int main(void)
         ((uint32_t)data[0x18C20U] << 24 |
             (uint32_t)data[0x18C21U] << 16 |
             (uint32_t)data[0x18C22U] << 8 | data[0x18C23U]) !=
-            base + UINT32_C(0x373D8)) {
+            base + UINT32_C(0x373D8) ||
+        /* Register literals are retained as disassembly receipts only. */
+        count_be32(data, (size_t)file_size, UINT32_C(0x25F00006)) != 1U ||
+        count_be32(data, (size_t)file_size, UINT32_C(0x25F80000)) != 1U) {
         free(data);
         fprintf(stderr, "FAIL: DM.BIN startup/menu resource anchor mismatch\n");
         return 1;

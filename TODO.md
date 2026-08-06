@@ -232,6 +232,8 @@
   current host chrome strings are not proven TEXT4/TABL/FONT256 Saturn output;
   only an explicit external capture seam may open the save/champion fixture
   route.
+  The receipt now also counts the real DM.BIN register literals `0x25F00006`
+  and `0x25F80000`; their consumer and VDP2 role remain unproven.
   The same receipt now pins the SH-2 routine at `0x18B60` and its literal
   pool hash, including the `yam\\menu.c` and `STABG.BIN` address targets.
 

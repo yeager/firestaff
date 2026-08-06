@@ -52227,3 +52227,6 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   `menu-text-consumer-capture-required` and remains fail-closed.
   The compatibility test opts into this seam explicitly; initialized retail
   engines leave `startup_menu_text_consumer_capture_verified` clear.
+  The real DM.BIN startup receipt also records one occurrence each of the
+  SH-2-visible constants `0x25F00006` and `0x25F80000`; these remain address
+  receipts, not proof of text-layer placement.
