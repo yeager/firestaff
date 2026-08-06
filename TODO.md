@@ -3251,6 +3251,11 @@ level or consumer bindings.
   - 2026-08-06: CSB's shared cache may hold several admitted editions. A31E's
     TITL.DAT can discriminate its selected `csb-amiga31-en` cache package,
     but cannot rewrite a verified PC34 pair in a generic root.
+  - 2026-08-06: The normal M12→M11 route now materializes every
+    archive-selected CSB edition into its version-private cache, including
+    the scanner's first match. This keeps A31E's paired title/program media
+    from inheriting generic PC34 cache bytes; remaining Amiga title/entrance
+    presentation capture is tracked separately.
   - 2026-07-31: The unbound D0L2/D0R2 partly-open-door and D1L/D1R
     floor/ceiling-ornament contracts now compile only into their tests. Their
     source metadata stays available for verification, but live pixels still

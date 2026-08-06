@@ -18823,11 +18823,14 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
              * its startup, HUD or title assets inherit the first-match cache.
              * ReDMCSB COMPILE.H 199-243 separates these program families. */
             if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
-                const M12_AssetVersionStatus* firstCsbVersion =
-                    M12_AssetStatus_GetFirstMatchedVersion(
-                        &menuState->assetStatus, "csb");
-                if (firstCsbVersion && firstCsbVersion->versionId &&
-                    strcmp(firstCsbVersion->versionId, version->versionId) != 0 &&
+                /* Always give an archive-selected package its own cache.
+                 * The selected edition can itself be the scanner's first
+                 * match: A31E shares GRAPHICS.DAT with PC34 but owns a
+                 * distinct TITL.DAT/program family.  Reusing the generic
+                 * first-match cache would then make the boot detector see
+                 * PC34 bytes rather than the selected Amiga package.
+                 * ReDMCSB COMPILE.H 199-243 separates these media families. */
+                if (version->versionId &&
                     strstr(version->matchedPath, "::") != NULL) {
                     if (!M12_AssetStatus_MaterializeCSBRuntimeVersion(
                             &menuState->assetStatus, version->versionId,

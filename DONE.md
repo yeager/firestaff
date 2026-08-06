@@ -1470,6 +1470,10 @@
   exists only in an Amiga 3.1 package. The scanner verifies the A31E
   `TITL.DAT` companion hash for every shared-payload candidate and preserves a
   separate PC package only when its provenance is distinct.
+- ✅ The selected CSB archive now always crosses M12→M11 through a
+  version-private runtime cache, even when it was the scanner's first match.
+  The real A31E archive handoff retains `CSB_V1_VARIANT_AMIGA31_EN` and the
+  `csb-amiga31-en` cache root rather than silently booting generic PC34 bytes.
 
 - ✅ TQTR containers with an extended declared VRAM segment now advance to the
   declared VCE offset before loading the palette snapshot. The previous path

@@ -1783,6 +1783,51 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
     }
 }
 
+/* A31E has the PC34 GRAPHICS.DAT digest, but its paired TITL.DAT is a
+ * different source package.  Exercise the normal M12->M11 selection route
+ * against one supplied archive: because it is the only match, it also proves
+ * that first-match selection never falls back to the shared generic cache.
+ * ReDMCSB COMPILE.H 199-243 selects the A31E media/program family. */
+static void run_real_amiga31_selected_package_handoff_if_available(void) {
+    const char *data_dir = getenv("FIRESTAFF_CSB_AMIGA31_DATA_DIR");
+    M12_StartupMenuState menu;
+    M11_GameViewState view;
+    const M12_MenuEntry *entry;
+    const CSB_V1_BootProfile *profile;
+    int version_index;
+
+    if (!data_dir || !data_dir[0]) {
+        expect_skip("FIRESTAFF_CSB_AMIGA31_DATA_DIR not set");
+        return;
+    }
+    init_menu_without_gallery(&menu, data_dir, "csb");
+    dismiss_initial_message(&menu);
+    entry = M12_StartupMenu_GetEntry(&menu, 1);
+    version_index = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    if (!entry || !entry->available || version_index < 0 ||
+        !M12_AssetStatus_GetVersion(&menu.assetStatus, "csb",
+                                    (size_t)version_index)->matched) {
+        expect_skip("no verified Amiga 3.1 CSB package at requested data root");
+        M12_StartupMenu_Destroy(&menu);
+        return;
+    }
+
+    menu.selectedIndex = 1;
+    menu.activatedIndex = 1;
+    menu.launchRequested = 1;
+    menu.gameOptions[1].versionIndex = version_index;
+    M11_GameView_Init(&view);
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 1,
+                "M11 opens the selected Amiga 3.1 CSB archive through M12");
+    profile = (const CSB_V1_BootProfile *)view.csbBootProfile;
+    expect_true(profile && profile->variant_id == CSB_V1_VARIANT_AMIGA31_EN,
+                "M11 preserves the selected Amiga 3.1 CSB profile identity");
+    expect_true(profile && strstr(profile->asset_root, "csb-amiga31-en") != NULL,
+                "M11 starts Amiga 3.1 from its version-private runtime cache");
+    M11_GameView_Shutdown(&view);
+    M12_StartupMenu_Destroy(&menu);
+}
+
 int main(void) {
     printf("=== CSB V1 M12/M11 launcher handoff boundary ===\n");
     expect_true(csb_v1_startup_sequence_source_order_valid_pc34(),
@@ -1798,6 +1843,7 @@ int main(void) {
     run_real_launcher_handoff_if_available();
     run_real_v2_launcher_handoffs_if_available();
     run_real_atari_st_launcher_handoffs_if_available();
+    run_real_amiga31_selected_package_handoff_if_available();
 
     printf("\nCSB V1 M12/M11 launcher handoff boundary: %d passed, %d failed, %d skipped\n",
            g_passed, g_failures, g_skipped);
