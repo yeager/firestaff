@@ -94,8 +94,9 @@ int main(void)
                   archive + rows[0].compression.compressed_offset,
                   rows[0].compression.compressed_length),
           "upload receipt binds bounded payload FNV and header facts");
-    check(!nexus_v1_launcher_menu_bpk_no_draw_presentation_receipt(
-              &upload, &rows[0], &presentation) && !presentation.valid,
+    check(nexus_v1_launcher_menu_bpk_no_draw_presentation_receipt(
+              &upload, &rows[0], &presentation) && presentation.valid &&
+              presentation.no_draw_only,
           "matching entry is admitted as no-draw presentation evidence");
 
     ++rows[0].payload_fnv1a64;
