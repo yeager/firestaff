@@ -52,6 +52,12 @@
   remains an empty provenance seam until a real Saturn fountain record and
   action/effect consumer are authenticated.
 
+- ✅ 2026-08-06 DM1 YA shield expiry: potion consumption now mirrors the
+  source C72 status timeout in the runtime timeline, including the applied
+  defense delta, C72 event fields, expiry delay, and lifecycle shield mirror.
+  The existing M10 timeline dispatcher therefore owns the later subtraction;
+  no second host countdown is introduced.
+
 - ✅ 2026-08-06 Theron US roster/text audit: real US Track 02 still proves
   only the `GO AWAY AND RESURRECT THERON` prompt at `0xa0722`; the JP ASCII
   roster cluster is absent from the US receipt. Real US Track 19 item names,

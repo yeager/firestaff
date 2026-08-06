@@ -309,9 +309,9 @@
   transaction as ReDMCSB PANEL.C F0349, including source-owned stat/health/
   wound/poison/food/water/shield formulas, the correct empty-flask type C20
   (20), and raw Thing-byte rewrite. Focused consumable and live-transaction
-  tests pass. `YA` shield event scheduling and external packaged capture of
-  the complete interaction remain separate open work; do not mark the whole
-  HoC interaction audit complete from these headless tests.
+  tests pass. External packaged capture of the complete interaction remains
+  open; do not mark the whole HoC interaction audit complete from these
+  headless tests.
 
   2026-08-06 bug-hunt audit: real PC34 checks pass for 83/83 HoC floor-item
   render samples, 611 M564 object names/icons, F0115 pickup material and

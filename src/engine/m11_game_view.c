@@ -15515,6 +15515,38 @@ static int m11_v1_mouth_live_inventory_transaction(
     int woundRandomMaskCount,
     DM1_V1_InventoryLiveUseReceiptPc34* outReceipt);
 
+static void m11_schedule_source_potion_status_event_pc34(
+    M11_GameViewState* state,
+    const DM1ConsumableResultPc34* result)
+{
+    struct TimelineEvent_Compat event;
+
+    if (!state || !result || !result->consumed ||
+        result->eventType != DM1_EVENT_CHAMPION_SHIELD ||
+        result->eventDelay <= 0 || result->amountApplied <= 0) {
+        return;
+    }
+
+    /* ReDMCSB PANEL.C F0349 stores YA's C72 as a native status timeout:
+     * B.Defense = the applied shield delta, C72 in aux0/aux2, and Priority
+     * zero.  TIMELINE.C F0261 later subtracts B.Defense from the party
+     * shield.  Keep this event source-shaped so the existing M10 dispatch
+     * owns expiry instead of a second host countdown. */
+    memset(&event, 0, sizeof(event));
+    event.kind = TIMELINE_EVENT_STATUS_TIMEOUT;
+    event.fireAtTick = state->world.gameTick +
+                       (uint32_t)result->eventDelay;
+    event.mapIndex = state->world.party.mapIndex;
+    event.mapX = state->world.party.mapX;
+    event.mapY = state->world.party.mapY;
+    event.cell = -1;
+    event.aux0 = result->eventType;
+    event.aux1 = result->amountApplied;
+    event.aux2 = result->eventType;
+    event.aux4 = 0;
+    (void)F0721_TIMELINE_Schedule_Compat(&state->world.timeline, &event);
+}
+
 static int m11_apply_source_potion_effect_pc34(
     M11_GameViewState* state,
     struct ChampionState_Compat* champ,
@@ -15589,6 +15621,8 @@ static int m11_apply_source_potion_effect_pc34(
     champ->food = sourceChampion.food;
     champ->water = sourceChampion.water;
     state->world.magic.partyShieldDefense = sourceChampion.shieldDefense;
+    state->world.lifecycle.status.partyShieldDefense = sourceChampion.shieldDefense;
+    m11_schedule_source_potion_status_event_pc34(state, outResult);
     return 1;
 }
 
@@ -43557,6 +43591,10 @@ static int m11_process_v1_mouth_click(M11_GameViewState* state) {
         champ->wounds = consumableChampion.wounds;
         champ->poisonDose = consumableChampion.poisonDose;
         state->world.magic.partyShieldDefense = consumableChampion.shieldDefense;
+        state->world.lifecycle.status.partyShieldDefense =
+            consumableChampion.shieldDefense;
+        m11_schedule_source_potion_status_event_pc34(
+            state, &consumableResult);
         if (consumableResult.removeLeaderHandObject) {
             DM1_V1_M11Runtime_ClearLeaderHandObjectPc34Compat(state);
             (void)m11_start_v1_mouth_animation(state, &consumableResult);
