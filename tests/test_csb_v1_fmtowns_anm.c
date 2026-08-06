@@ -74,6 +74,26 @@ static void test_real_anm(void) {
         ASSERT(receipt.bpp == 4, "bpp 4");
         ASSERT(receipt.chunk_count > 0, "has chunks");
 
+        if (receipt.frame_count + receipt.delta_count > 0) {
+            uint8_t pixels[CSB_FMTOWNS_ANM_FRAME_PIXELS];
+            CSB_V1_FmtownsAnmFrameReceipt frame;
+            uint32_t frame_index =
+                (uint32_t)(receipt.frame_count + receipt.delta_count - 1);
+            ASSERT(csb_v1_fmtowns_anm_decode_frame(
+                       data, size, 0u, pixels, sizeof(pixels), &frame) == 0,
+                   "first source animation frame decodes");
+            ASSERT(frame.valid == 1 && frame.width == 320 && frame.height == 200,
+                   "first decoded frame retains source dimensions");
+            ASSERT(frame.pixel_fnv1a != 0u,
+                   "first decoded frame has source-derived pixels");
+            ASSERT(csb_v1_fmtowns_anm_decode_frame(
+                       data, size, frame_index, pixels, sizeof(pixels), &frame) == 0,
+                   "last source animation frame decodes");
+            ASSERT(frame.valid == 1 && frame.frame_index == frame_index &&
+                   frame.pixel_fnv1a != 0u,
+                   "last decoded frame is source-owned");
+        }
+
         printf("  %s: %ux%u %dbpp, %d chunks (%d frames, %d deltas, %d KF), "
                "palette=%s, BR=%s\n",
                files[i], receipt.width, receipt.height, receipt.bpp,

@@ -51193,3 +51193,11 @@ and `firestaff` build pass.
   accompany the native app capture. The captured run verifies 54 SCSI reads,
   171 raw MODE1/2352 sectors, and all 171 command bindings while retaining
   the semantic-publication block.
+- ✅ 2026-08-06 CSB FM Towns ANM frame decoding: replaced the former
+  structure-and-palette-only reader with a bounded decoder for the original
+  `EN`/`DL` command stream. It follows ReDMCSB `ANIM.C F2275` and
+  `ANIMIMG.C F8288`, retaining the prior source frame while applying literal,
+  fill, skip and previous-line commands. The real CD-cached `TITLE.ANM`,
+  `STORY.ANM` and `ENDING.ANM` now decode their first and final frames at
+  320×200/4bpp with source-derived hashes. M11 presentation scheduling stays
+  open; no host artwork or generated frame fallback was added.

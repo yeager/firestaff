@@ -24,14 +24,20 @@ extern "C" {
  *
  *   "BR" — wrapper/container (ENDING.ANM wraps multiple AN sections)
  *
- * This module provides structural parsing and palette extraction.
- * Full animation playback is a later iteration.
+ * ReDMCSB ANIM.C F2275 dispatches EN/DL chunks to ANIMIMG.C F8288.
+ * The decoder below is a bounded, indexed-pixel rendition of that command
+ * stream.  It has no host artwork or generated frame fallback: callers must
+ * supply the original ANM bytes and a 320x200 source surface.
  */
 
 #define CSB_FMTOWNS_ANM_MAGIC_AN     0x414Eu  /* "AN" */
 #define CSB_FMTOWNS_ANM_MAGIC_BR     0x4252u  /* "BR" */
 #define CSB_FMTOWNS_ANM_MAX_CHUNKS   256
 #define CSB_FMTOWNS_ANM_PALETTE_SIZE 16
+#define CSB_FMTOWNS_ANM_MAX_WIDTH    320u
+#define CSB_FMTOWNS_ANM_MAX_HEIGHT   200u
+#define CSB_FMTOWNS_ANM_FRAME_PIXELS \
+    (CSB_FMTOWNS_ANM_MAX_WIDTH * CSB_FMTOWNS_ANM_MAX_HEIGHT)
 
 typedef enum {
     CSB_FMTOWNS_ANM_CHUNK_UNKNOWN = 0,
@@ -73,6 +79,19 @@ typedef struct {
     uint32_t file_size;
 } CSB_V1_FmtownsAnmReceipt;
 
+typedef struct {
+    int valid;
+    uint16_t width;
+    uint16_t height;
+    uint32_t frame_index;
+    uint32_t source_chunk_offset;
+    uint32_t source_chunk_bytes;
+    int source_was_delta;
+    int palette_applied;
+    CSB_V1_FmtownsAnmColor palette[CSB_FMTOWNS_ANM_PALETTE_SIZE];
+    uint32_t pixel_fnv1a;
+} CSB_V1_FmtownsAnmFrameReceipt;
+
 /* Probe whether a buffer looks like an FM Towns ANM file.
  * Checks for "AN" or "BR" magic at the start. */
 int csb_v1_fmtowns_anm_probe(const uint8_t *data, size_t size);
@@ -81,6 +100,17 @@ int csb_v1_fmtowns_anm_probe(const uint8_t *data, size_t size);
  * Returns 0 on success, -1 on error. */
 int csb_v1_fmtowns_anm_parse(const uint8_t *data, size_t size,
                                CSB_V1_FmtownsAnmReceipt *out);
+
+/* Decode frame_index (zero based) into one palette index per output pixel.
+ * out_pixels must hold width*height bytes.  Earlier EN/DL chunks are applied
+ * in source order, exactly as the F2275/F8288 animation path retains its
+ * working bitmap.  Returns 0 on success and -1 on malformed or incomplete
+ * source data. */
+int csb_v1_fmtowns_anm_decode_frame(const uint8_t *data, size_t size,
+                                    uint32_t frame_index,
+                                    uint8_t *out_pixels,
+                                    size_t out_pixel_capacity,
+                                    CSB_V1_FmtownsAnmFrameReceipt *out);
 
 #ifdef __cplusplus
 }
