@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Theron chapter-marker loot parity: removed the duplicated,
+  incorrectly ordered quest-item table from the chapter marker and dungeon
+  progression diagnostic. Both now consume the authenticated US Track 02
+  retrieval table, restoring the real order `Shield Defiant`, `Taza Boots`,
+  `Taza Poleyn`, `Soulcage`, `Taza Armour`, `Tazahelm`, `Retaliator`.
+  The chapter-marker probe passes 65 checks with 0 failures.
+
 - ✅ 2026-08-06 Theron forcefield companion-record handoff: production
   `enter_forcefield_with_roster()` no longer advances empty companion slots
   when the US text consumer is unavailable. Selected Soul Room mirrors now

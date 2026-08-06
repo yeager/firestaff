@@ -19,21 +19,15 @@
  */
 
 #include "theron_v1_chapter_marker.h"
+#include "theron_v1_track02_dungeon_text.h"
 
 #include <stdio.h>
 #include <string.h>
 
-/* Quest item display names — copied from theron_v1_dungeon_progression.c.
- * Spelling from US Track 02 BIN retrieval messages at UD 0x27713D. */
-static const char *const trv_marker_quest_item_names[THERON_DUNGEON_COUNT] = {
-    "Shield Defiant",    /* dungeon 1 */
-    "Taza Poleyn",       /* dungeon 2 */
-    "Tazahelm",          /* dungeon 3 */
-    "Taza Boots",        /* dungeon 4 */
-    "Taza Armour",       /* dungeon 5 */
-    "Soulcage",          /* dungeon 6 */
-    "Retaliator",        /* dungeon 7 */
-};
+/* Quest item display names come from the authenticated US Track 02 retrieval
+ * table (UD 0x27715B-0x277272). Keep one source-owned order for both the
+ * progression model and this launcher marker; a duplicated host table had
+ * previously swapped the middle five treasures. */
 
 /* ── Local helpers ──────────────────────────────────────────────── */
 
@@ -204,7 +198,7 @@ int theron_v1_chapter_marker_compute(const Theron_V1_BootProfile *profile,
         if (have_current_item) {
             const char *name =
                 (cur_bit >= 0 && cur_bit < THERON_DUNGEON_COUNT)
-                ? trv_marker_quest_item_names[cur_bit]
+                ? theron_v1_track02_us_treasure_name((unsigned int)cur_bit)
                 : "(unknown item)";
             snprintf(marker->quest_summary,
                       sizeof(marker->quest_summary),
@@ -214,7 +208,8 @@ int theron_v1_chapter_marker_compute(const Theron_V1_BootProfile *profile,
             int next_bit = next_unset_bit(items, (uint8_t)THERON_QUEST_ITEM_COUNT);
             const char *next_name = "(unknown item)";
             if (next_bit >= 1 && next_bit <= THERON_DUNGEON_COUNT) {
-                next_name = trv_marker_quest_item_names[next_bit - 1];
+                next_name = theron_v1_track02_us_treasure_name(
+                    (unsigned int)(next_bit - 1));
             }
             snprintf(marker->quest_summary,
                       sizeof(marker->quest_summary),

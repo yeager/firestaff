@@ -23,6 +23,7 @@
  */
 
 #include "theron_v1_dungeon_progression.h"
+#include "theron_v1_track02_dungeon_text.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -115,19 +116,6 @@ static const Theron_DungeonMeta g_dungeon_table[THERON_DUNGEON_COUNT] = {
         .dungeon_seed      = 0u,
         .size_bytes        = 0,
     },
-};
-
-/* Quest item names (indexed by dungeon_id - 1).
- * Spelling from US Track 02 BIN retrieval messages at UD 0x27713D.
- * Dungeon-to-item assignment is not yet proven by loader evidence. */
-static const char *const g_quest_item_names[THERON_DUNGEON_COUNT] = {
-    "Shield Defiant",
-    "Taza Boots",
-    "Taza Poleyn",
-    "Soulcage",
-    "Taza Armour",
-    "Tazahelm",
-    "Retaliator",
 };
 
 /* ── API implementation ─────────────────────────────────────────── */
@@ -488,7 +476,7 @@ void theron_v1_dungeon_progression_print(const Theron_DungeonProgression *prog) 
         int collected = (prog->quest_items_collected & bit) != 0;
         printf("  [%u] %-22s %s\n",
                id,
-               g_quest_item_names[i],
+               theron_v1_track02_us_treasure_name((unsigned int)i),
                collected ? "COLLECTED" : "pending");
     }
     printf("=======================================\n");

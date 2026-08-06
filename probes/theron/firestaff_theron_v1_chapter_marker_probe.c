@@ -18,8 +18,8 @@
  *   4.  Boot profile with assets_verified == 1 + a fresh
  *       progression at dungeon 1 produces OK_PROGRESSION_ONLY
  *       with the canonical "Chapter 1: AKUTUBA" label.
- *   5.  Mid-progression (3 items collected) projects the right
- *       "next: Taza Boots" hint and chapter 4 label.
+ *   5.  Mid-progression (3 items collected) projects the source-owned
+ *       "next: Soulcage" hint and chapter 4 label.
  *   6.  Quest complete (7/7) flips verdict to OK_QUEST_COMPLETE.
  *   7.  In-memory save slot promotes verdict to OK_WITH_SAVE and
  *       surfaces the slot label + dungeon name.
@@ -267,11 +267,11 @@ static void check_mid_progression(void) {
           "mid: chapter label == Chapter 4: SARMON");
     CHECK(strstr(m.quest_summary, "3/7") != NULL,
           "mid: quest summary shows 3/7 collected");
-    /* Dungeon 4's item is bit 3 (Taza Boots) which is NOT yet
+    /* Dungeon 4's item is bit 3 (Soulcage) which is NOT yet
      * collected, so the summary should highlight it as the next
      * item, not the last one. */
-    CHECK(strstr(m.quest_summary, "next: Taza Boots") != NULL,
-          "mid: quest summary names Taza Boots as next");
+    CHECK(strstr(m.quest_summary, "next: Soulcage") != NULL,
+          "mid: quest summary names Soulcage as next");
     CHECK(m.quest_items_collected == 0x07,
           "mid: marker stores the 3-bit bitmask (0x07)");
 }
