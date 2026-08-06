@@ -958,6 +958,17 @@
   into production. The live masked-bitmap owner remains open.
 - ✅ No game data was copied or committed.
 
+# DM1 mirror resurrection cross-candidate synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the synthetic stale-panel
+  `dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat.c`
+  from the broad M10 source glob. Caller search found only its dedicated
+  contract test, and the helper consumes no original data.
+- ✅ The test now compiles the audit source explicitly, preserving the
+  ReDMCSB F0280/F0346 clear-order contract without linking fabricated
+  champion state into production. The live owner remains open.
+- ✅ No game data was copied or committed.
+
 # CSB FM Towns graphics real-cache regression (2026-08-06)
 
 - ✅ `test_csb_v1_fmtowns_graphics_dat` now takes

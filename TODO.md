@@ -41,6 +41,11 @@
   pixel or production-runtime input. Keep it test-only until the live chest
   transaction and original masked bitmap owner are bound.
 
+- **DM1-MIRROR-RESURRECT-CROSS-CANDIDATE-SYNTHETIC-AUDIT:** This helper
+  models stale mirror-panel state during resurrection with synthetic
+  champions and has no production caller or original-data input. Keep the
+  race/clear contract test-only until the live F0280/F0346 owner is bound.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

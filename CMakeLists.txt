@@ -4269,6 +4269,12 @@ list(REMOVE_ITEM M10_SOURCES
 # target instead of the production M10 archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat.c")
+# `dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat.c`
+# deliberately models a synthetic stale panel and has no M11/runtime caller
+# or original-data input.  Keep this regression in its explicit test target,
+# not in the production M10 archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
@@ -53054,7 +53060,9 @@ add_executable(test_dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_run
 target_include_directories(test_dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat COMMAND test_dm1_v1_mirror_candidate_resurrect_champion_switch_reopen_runtime_pc34_compat)
-add_executable(test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat tests/test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat.c)
+add_executable(test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat
+    tests/test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat.c
+    src/dm1/dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat.c)
 target_include_directories(test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat COMMAND test_dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat)
