@@ -38,6 +38,36 @@ int32_t dm2_v1_dir_from_5x5_pos(int32_t pos)
     return (pos == 0x0c) ? 4 : -1;
 }
 
+int16_t dm2_v1_query_creature_blit_recti(int16_t n, int16_t rotate,
+                                         int16_t wb)
+{
+    int16_t mod = (int16_t)(wb % 5 - 2);
+    int16_t div = (int16_t)(wb / 5 - 2);
+    int16_t tmp;
+
+    /* SKProject: v5/util.cpp::DM2_ROTATE_5x5_POS (147-177), then
+     * v5/skgdtqdb.cpp::DM2_QUERY_CREATURE_BLIT_RECTI (4995-4998). */
+    switch (rotate) {
+    case 1:
+        tmp = mod;
+        mod = div;
+        div = (int16_t)-tmp;
+        break;
+    case 2:
+        mod = (int16_t)-mod;
+        div = (int16_t)-div;
+        break;
+    case 3:
+        tmp = mod;
+        mod = (int16_t)-div;
+        div = tmp;
+        break;
+    default:
+        break;
+    }
+    return (int16_t)(5 * (div + 2) + mod + 2 + 25 * n + 5000);
+}
+
 /* ── Section 2: Tile queries ──────────────────────────────────────── */
 
 int32_t dm2_v1_is_tile_blocked(int32_t tile_value)

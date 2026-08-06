@@ -52841,6 +52841,11 @@ no-draw/capture-gates är oförändrade.
   decoded and `FORMAT_SKSTR`-expanded buffer, rejects out-of-range keys rather
   than wrapping them to unrelated data, and is covered with a `FIGHTER` text
   callback proof.
+- ✅ 2026-08-06 DM2 creature viewport rect index: restored the previously
+  missing `DM2_QUERY_CREATURE_BLIT_RECTI` from SKProject's
+  `skgdtqdb.cpp:4995` and its `util.cpp:147` 5×5 rotation. The QueryDB test
+  now covers the identity and all three clockwise rotations used by source
+  creature placement.
 - ✅ 2026-08-06 DM2 runtime text sanitization: removed host-authored action,
   shop, door, movement, inventory and quicksave labels from the live M11/boot
   route. Runtime receipts, save-writer refusal and real door/movement state

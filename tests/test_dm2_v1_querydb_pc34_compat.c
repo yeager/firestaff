@@ -31,26 +31,12 @@ static uint8_t mock_query_cls1_from_record(void *ctx __attribute__((unused)),
     return mock_cls1_return;
 }
 
-static uint8_t mock_cls2_return = 0;
-
-static uint8_t mock_query_cls2_from_record(void *ctx __attribute__((unused)),
-    int32_t record __attribute__((unused)))
-{
-    return mock_cls2_return;
-}
-
 static void *mock_ai_spec_ptr = NULL;
 
 static void *mock_query_creature_ai_spec_from_type(void *ctx __attribute__((unused)),
     int32_t type __attribute__((unused)))
 {
     return mock_ai_spec_ptr;
-}
-
-static int16_t mock_rotate_5x5_pos(void *ctx __attribute__((unused)),
-    int16_t pos, uint16_t rotate __attribute__((unused)))
-{
-    return pos; /* identity rotation */
 }
 
 static int mock_text_queries;
@@ -190,6 +176,12 @@ static void test_creature_blit_recti(void)
 
     /* n=3, rotate=0, wb=0 => 0 + 75 + 5000 = 5075 */
     assert(dm2_v1_query_creature_blit_recti(3, 0, 0) == 5075);
+
+    /* SKProject util.cpp rotates a 5x5 position before adding the
+     * depth row. Anchor 7 rotates to 11, 17 and 13 clockwise. */
+    assert(dm2_v1_query_creature_blit_recti(0, 1, 7) == 5011);
+    assert(dm2_v1_query_creature_blit_recti(0, 2, 7) == 5017);
+    assert(dm2_v1_query_creature_blit_recti(0, 3, 7) == 5013);
 
     printf("  PASS: test_creature_blit_recti\n");
 }
@@ -366,7 +358,7 @@ int main(void)
     test_is_cls1_critical_for_load();
     test_is_tile_blocked();
     test_dir_from_5x5_pos();
-    /* test_creature_blit_recti — disabled until function implemented */
+    test_creature_blit_recti();
     test_door_damage_resist();
     test_is_wall_ornate_alcove();
     test_is_miscitem_currency();
