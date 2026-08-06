@@ -14136,6 +14136,11 @@ endif()
 
     add_executable(test_dm2_v1_anim_chunk
         tests/test_dm2_v1_anim_chunk_pc34_compat.c
+        # dm2_v1_anim_chunk_pc34_compat.c is intentionally excluded from the
+        # product archive.  It uses the shared 4bpp writers from this source
+        # unit; compiling that owner here avoids static-archive link-order
+        # dependence through firestaff_m10.
+        src/dm2/dm2_v1_anim_bootstrap.c
     )
     target_include_directories(test_dm2_v1_anim_chunk PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include
