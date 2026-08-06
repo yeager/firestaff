@@ -27,3 +27,11 @@ the five G1-referenced graphics styles against their own exact, decodable GDAT
 floor/ceiling/control records. Its IMG9 path dispatches original modes 1, 2
 and 3 exactly as `SKULLWIN/c_gfx_decode.cpp::decode_img9`; it does not recode
 mode 1 as mode 3 or substitute a fallback image.
+
+The broader `test_dm2_v1_gdat_visual_corpus_real_data` walks every `dtImage`
+ENT1 row by its exact RAW index. On the mounted source corpus it observes
+5,676 image rows, 4,031 distinct RAW image payloads and 18,633,937 decoded
+source pixels (census hash `bf5050d3`). Every one decodes through the
+SKProject image path. This is a decoder/admission census, not a claim that all
+images have a live viewport or HUD owner yet; those consumers must still bind
+their exact GDAT address and source draw route.

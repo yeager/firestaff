@@ -9,6 +9,15 @@
   that result. The capture script now accepts `run` as an alias for physical
   `return`/Run input.
 
+- ✅ 2026-08-06 DM2 full PC-English visual corpus census: added the real-data
+  `test_dm2_v1_gdat_visual_corpus_real_data` regression. It reads the mounted
+  `GRAPHICS.DAT` only, walks every exact `dtImage` ENT1 row and decodes each
+  unique RAW payload directly through the source IMG3/U4/U8/IMG9 routes. The
+  verified corpus contains 5,676 image rows, 4,031 distinct image payloads
+  and 18,633,937 decoded source pixels; all pass without a cache, substitute
+  image, data extraction or fallback. Greatstone's 5,624 exported visual-item
+  count remains documented as a different presentation catalogue domain.
+
 - ✅ 2026-08-06 DM2 IMG9 real-data decoder dispatch: the active GDAT loader
   no longer treats every non-mode-2 C8/IMG9 payload as mode 3. It delegates to
   the complete SKProject `c_gfx_decode.cpp::decode_img9` port and accepts only
