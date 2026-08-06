@@ -346,10 +346,10 @@ static void test_item_sprite_metadata_ownership(void)
                                          0, 33, 0, 33, 224, 136,
                                          40, 20), 1,
                "G0209 GraphicInfo mirrors right-cell item aspects");
-    expect_int("item.blit_plan.mirror.aspect", plan.aspect_index, 63,
-               "junk subtype 39 maps to mirrored object aspect");
-    expect_int("item.blit_plan.mirror.flag", plan.use_mirror, 1,
-               "right-cell mirrored item flag");
+    expect_int("item.blit_plan.mirror.aspect", plan.aspect_index, 58,
+               "junk subtype 39 maps to its source object aspect");
+    expect_int("item.blit_plan.mirror.flag", plan.use_mirror, 0,
+               "junk subtype 39 source aspect has no right-cell mirror flag");
     expect_int("item.blit_plan.invalid", dm1_item_sprite_blit_plan(NULL, 5, 0, 2, 0, 1, 8,
                                                                     0, 33, 0, 33, 224, 136,
                                                                     32, 32), 0,

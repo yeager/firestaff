@@ -23,6 +23,13 @@
   dependent double-open regressions compile the source explicitly; it loads no
   original DM1 data and has no M11/runtime caller.
 
+# DM1 F0098 floor/ceiling synthetic audit isolation (2026-08-07)
+
+- ✅ Confirmed the contract-only F0098 dispatch model is excluded from M10 and
+  M11 while the data-owned floor/ceiling route remains active. Corrected its
+  adjacent F0115 regression to expect the original `G0237[166] -> G0209[58]`
+  mapping for junk subtype 39, whose `GraphicInfo` has no mirror-on-right bit.
+
 # DM1 C53 synthetic start-watchdog removal (2026-08-07)
 
 - ✅ Removed the host-only tick-1 C53 from dungeon startup. ReDMCSB
