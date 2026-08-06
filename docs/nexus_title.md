@@ -16,6 +16,11 @@ source-owned surface. The Saturn screen placement, palette consumer, and any
 animated executable-side title composition are not yet authenticated, so the
 surface remains a data receipt rather than a claim of final title parity.
 
+The same corpus contains `LOGOBG.DG2`, a separate retail PP layer. Firestaff
+now decodes its 320×224 indexed pixel plane and 256-word BGR555 palette into
+an optional source-owned surface. It remains no-draw until a Saturn VDP2
+capture proves layer selection, palette bank, timing and placement.
+
 ---
 
 ## 2. DM1 Title Screen (Reference)

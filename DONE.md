@@ -19,6 +19,12 @@
   files in `.firestaff/data/nexus`. This is provenance only; the Saturn
   VDP1/VDP2 capture gate and no-draw presentation boundary remain unchanged.
 
+- ✅ 2026-08-06 Nexus LOGOBG.DG2 source decode: the real 72,198-byte PP
+  startup layer now loads into its own indexed 320×224 UI surface, preserving
+  all 256 big-endian BGR555 palette words, RGBA expansion, palette receipt and
+  raw-byte provenance. It remains optional and no-draw until VDP2 layer and
+  placement capture proves the original startup composition.
+
 - ✅ 2026-08-06 DM2 M10 IMG9 decoder ownership: corrected a link boundary
   exposed by the full real GDAT census. `dm2_v1_asset_loader.c` is owned by
   `firestaff_m10`, but its source IMG9 decoder had only been emitted through

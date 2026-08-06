@@ -2526,6 +2526,29 @@ static void nexus_v1_load_startup_surface_file(Nexus_V1_Engine *engine,
     free(data);
 }
 
+/* LOGOBG.DG2 is a real startup layer, but its VDP2 ownership is not part of
+ * the four-surface launch gate. Decode and retain it when present without
+ * treating an absent optional layer as a synthetic fallback or a launch
+ * failure. */
+static void nexus_v1_load_optional_startup_surface_file(
+    Nexus_V1_Engine *engine,
+    const char *name,
+    int (*loader)(Nexus_UI_Manager *, const uint8_t *, int,
+                  const uint32_t *))
+{
+    int size = 0;
+    uint8_t *data;
+
+    if (!engine || !name || !loader) return;
+    data = nexus_v1_read_file(engine, name, &size);
+    if (!data || size <= 0) {
+        free(data);
+        return;
+    }
+    (void)loader(&engine->ui, data, size, NULL);
+    free(data);
+}
+
 static void nexus_v1_load_startup_surfaces(Nexus_V1_Engine *engine) {
     if (!engine) return;
     engine->ui_startup_surfaces_loaded = 0;
@@ -2539,6 +2562,8 @@ static void nexus_v1_load_startup_surfaces(Nexus_V1_Engine *engine) {
                                        nexus_ui_load_gameover);
     nexus_v1_load_startup_surface_file(engine, "STABG.BIN",
                                        nexus_ui_load_stabg);
+    nexus_v1_load_optional_startup_surface_file(engine, "LOGOBG.DG2",
+                                                nexus_ui_load_logobg);
 }
 
 static void nexus_v1_load_champion_panel_geometry(Nexus_V1_Engine *engine)

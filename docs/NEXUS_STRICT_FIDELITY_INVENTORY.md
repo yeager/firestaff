@@ -9,6 +9,7 @@ pixelavkodning och runtime-handoff måste också vara verifierade.
 | Källa/route | Status | Regel |
 |---|---|---|
 | `TITLE.CG` + `TITLE.BIN` MAPD | DMWeb-dekodern dokumenterar 5 MAPD-bilder på 64×28 tiles, 8×8 pixels, med 4bpp `TITLE.CG`-tiles och 16-färgspalett från MAPD; Firestaff avkodar nu alla fem retail-frames och paletten från MAPD-offset `0x8c54` | 512×224-bildernas Saturn→Firestaff-presentationsbindning är fortfarande blockerad; M11 gör ingen implicit top-left-kopia till 320×224 |
+| `LOGOBG.DG2` | Retailens `PP`-header, 320×224 indexpixlar och 256 big-endian BGR555-palette avkodas till en valfri source-owned UI-surface med råbytesproveniens | VDP2-lager, palette-bank, timing och placering saknar capture; ingen host-presentering |
 | Kodbyggda titelkanter/prompt | Borttagna från `nexus_v1_title.c` | Ingen syntetisk grafik läggs ovanpå `TITLE.CG` |
 | Saknad/ej redo titelasset | Blockerad | Ingen syntetisk titelbild |
 | Startup-fallback | Isolerad status/diagnostik | Får inte materialiseras som spelgrafik |
@@ -188,7 +189,7 @@ Alla primära Nexus-assets finns i `/Users/bosse/.firestaff/data/nexus`.
 Återstående gap gäller alltså inte assetförekomst utan byte-/pixelsemantik och
 verifierad runtime-bindning.
 
-1. Bind de fem verifierade `TITLE.BIN`/`TITLE.CG`-bilderna till korrekt uppstartsroute utan obevisad 320×200-cropping. `test_nexus_v1_title_mapd_real` verifierar nu retailens fem MAPD/TIBG-kartor, tilepixlar och paletteord; endast displayplaceringen återstår.
+1. Bind de fem verifierade `TITLE.BIN`/`TITLE.CG`-bilderna och `LOGOBG.DG2` till korrekt uppstartsroute utan obevisad 320×200-cropping. `test_nexus_v1_title_mapd_real` verifierar nu retailens fem MAPD/TIBG-kartor, tilepixlar och paletteord; endast displayplaceringen återstår.
 2. Bevisa `MENU.BPK`-ytornas Saturn-placering, palettbindning och betydelse i menyn.
 3. Bevisa Saturns VDP1/VDP2-placering för den nu verifierade `STABG.BIN`-dekodningen och bind HUD-ytan till verifierat runtime-state.
 

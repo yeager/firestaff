@@ -827,6 +827,51 @@ int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
     return 1;
 }
 
+int nexus_ui_load_logobg(Nexus_UI_Manager *mgr,
+    const uint8_t *data, int data_size,
+    const uint32_t *palette)
+{
+    Nexus_UI_Surface *surface;
+    uint16_t width;
+    uint16_t height;
+    size_t pixel_bytes;
+    size_t expected;
+    size_t i;
+
+    (void)palette; /* Never substitute the host palette for retail DG2. */
+    if (!mgr || !data || data_size < 6) return -1;
+    if (nexus_ui_read_be16(data) != 0x5050U) return -1;
+    width = nexus_ui_read_be16(data + 2U);
+    height = nexus_ui_read_be16(data + 4U);
+    if (width == 0U || height == 0U ||
+        (size_t)width > SIZE_MAX / (size_t)height) return -1;
+    pixel_bytes = (size_t)width * (size_t)height;
+    expected = 6U + 256U * 2U + pixel_bytes;
+    if ((size_t)data_size != expected) return -1;
+    if (nexus_ui_surface_load(mgr, NEXUS_SURFACE_LOGOBG,
+                               data + 6U + 256U * 2U,
+                               (int)pixel_bytes, width, height, 0, 256,
+                               "LOGOBG.DG2/PP") <= 0)
+        return -1;
+    surface = &mgr->surfaces[NEXUS_SURFACE_LOGOBG];
+    for (i = 0U; i < 256U; ++i) {
+        uint16_t bgr555 = nexus_ui_read_be16(data + 6U + i * 2U);
+        uint8_t red = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 10) & 0x1fU));
+        uint8_t green = nexus_ui_expand_5bit((uint16_t)((bgr555 >> 5) & 0x1fU));
+        uint8_t blue = nexus_ui_expand_5bit((uint16_t)(bgr555 & 0x1fU));
+        surface->source_palette_bgr555[i] = bgr555;
+        surface->source_palette_rgba[i] = 0xff000000U |
+            ((uint32_t)red << 16) | ((uint32_t)green << 8) | blue;
+    }
+    surface->source_palette_fnv1a32 =
+        nexus_ui_fnv1a32(data + 6U, 256U * 2U);
+    surface->source_palette_loaded = 1;
+    surface->source_bytes_fnv1a64 =
+        nexus_ui_fnv1a64(data, (size_t)data_size);
+    surface->source_bytes_size = (uint32_t)data_size;
+    return 1;
+}
+
 int nexus_ui_face_full_entry_count(int data_size, int portrait_w, int portrait_h) {
     /* FACE.BIN is a variable-length PRS3 container, not a raw portrait
      * table. Keep this legacy query inert so arbitrary bytes cannot admit a

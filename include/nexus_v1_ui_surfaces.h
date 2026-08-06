@@ -65,6 +65,7 @@ typedef enum {
     NEXUS_SURFACE_FACE0,    /* portrait 0-19 */
     NEXUS_SURFACE_FACE19 = NEXUS_SURFACE_FACE0 + 19,
     NEXUS_SURFACE_STABG,    /* status area background */
+    NEXUS_SURFACE_LOGOBG,   /* startup logo background */
     NEXUS_SURFACE_COUNT
 } Nexus_UISurfaceType;
 
@@ -357,6 +358,14 @@ int nexus_ui_load_gameover(Nexus_UI_Manager *mgr,
 
 /* Load STABG.BIN (52 KB) as status-area background (200×52 or 320×200) */
 int nexus_ui_load_stabg(Nexus_UI_Manager *mgr,
+    const uint8_t *data, int data_size,
+    const uint32_t *palette);
+
+/* Load the retail LOGOBG.DG2 PP surface. Its observed source layout is a
+ * 6-byte big-endian header (format, width, height), 256 big-endian BGR555
+ * words, then one 8-bit palette index per pixel. This is a source decode
+ * receipt only; Saturn VDP2 layer selection and placement remain capture-gated. */
+int nexus_ui_load_logobg(Nexus_UI_Manager *mgr,
     const uint8_t *data, int data_size,
     const uint32_t *palette);
 

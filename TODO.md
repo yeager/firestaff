@@ -207,6 +207,12 @@
   presentation fallback. Keep the game card capture-gated until the real
   Saturn title/menu owner and VDP1/VDP2 composition are authenticated.
 
+- **NEXUS-LOGOBG-VDP2-CAPTURE:** The real `LOGOBG.DG2` PP surface is now
+  decoded as 320×224 indexed pixels with its 256 BGR555 palette and raw-byte
+  provenance. It is retained as an optional startup surface, but VDP2 layer,
+  palette-bank, timing and display placement still require an authenticated
+  Saturn capture; no host draw is enabled.
+
 - **NEXUS-TITLE-VDP-CAPTURE:** Startup title reveal geometry now uses the
   verified 224-row Saturn surface from the DMWeb 64x28 TITLE.BIN map layout.
   The remaining work is still the captured VDP2 tilemap/CLUT owner and its

@@ -73,6 +73,7 @@ int main(void)
     unsigned char *local_warning;
     unsigned char *local_gameover;
     unsigned char *local_title;
+    unsigned char *local_logobg;
     size_t local_warning_size = 0U;
     Nexus_UI_Dgt2PpView warning_view;
     unsigned char no_draw_fb[16];
@@ -342,6 +343,25 @@ int main(void)
                     "local TITLE.CG expands its verified 328x1024 4bpp atlas");
         nexus_ui_manager_free(&ui);
         free(local_title);
+    }
+
+    local_logobg = read_local_nexus_file("LOGOBG.DG2", &local_warning_size);
+    if (!local_logobg) {
+        puts("SKIP: local Nexus LOGOBG.DG2 not present");
+    } else {
+        nexus_ui_manager_init(&ui);
+        expect_true(nexus_ui_load_logobg(&ui, local_logobg,
+                                         (int)local_warning_size, NULL) > 0 &&
+                        ui.surfaces[NEXUS_SURFACE_LOGOBG].w == 320 &&
+                        ui.surfaces[NEXUS_SURFACE_LOGOBG].h == 224 &&
+                        ui.surfaces[NEXUS_SURFACE_LOGOBG].data[0] == 1 &&
+                        ui.surfaces[NEXUS_SURFACE_LOGOBG].source_palette_loaded &&
+                        ui.surfaces[NEXUS_SURFACE_LOGOBG].source_bytes_fnv1a64 != 0U &&
+                        ui.surfaces[NEXUS_SURFACE_LOGOBG].source_bytes_size ==
+                            local_warning_size,
+                    "local LOGOBG.DG2 decodes its retail PP pixels and BGR555 palette");
+        nexus_ui_manager_free(&ui);
+        free(local_logobg);
     }
 
     engine.ui_faces_expected = NEXUS_FACE_BIN_PORTRAIT_COUNT;
