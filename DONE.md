@@ -57706,3 +57706,15 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Extended the DM2 catalog regression to cover the seventh version and
   PC-98 architecture classification. Runtime launch remains subject to the
   existing authenticated boot pair and native platform owners.
+# DM2 GDAT header/ULP source transaction (2026-08-13)
+
+- ✅ Replaced the callback seam's synthetic/unimplemented
+  `DM2_READ_GRAPHICS_STRUCTURE` result with source-owned validation of the
+  authenticated GDAT header, version, entry count, ULP span and cumulative raw
+  boundary, using the existing file callbacks and closing the source handle on
+  every path.
+- ✅ Added regression coverage for the complete header/ULP receipt (`23/23`),
+  including the mounted real DM2 `GRAPHICS.DAT` when
+  `FIRESTAFF_DM2_DATA_DIR` is set.
+  ENT1, underlay, image allocator and sound ownership remain explicitly gated;
+  no release was made.

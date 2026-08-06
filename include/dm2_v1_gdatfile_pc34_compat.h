@@ -194,6 +194,13 @@ typedef struct DM2_V1_GdatReadStructureReceipt {
     bool     valid;
     uint16_t entries;
     int16_t  versionlo;
+    /* Source bgdat.cpp:1027-1100 facts retained before LOAD_ENT1. */
+    uint32_t ulp_length;
+    uint32_t ulp_table_end;
+    uint32_t source_data_offset;
+    uint32_t first_raw_offset;
+    bool     header_validated;
+    bool     ulp_validated;
 } DM2_V1_GdatReadStructureReceipt;
 
 /* ========================================================================

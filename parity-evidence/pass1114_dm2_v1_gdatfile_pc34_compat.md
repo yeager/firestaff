@@ -39,12 +39,12 @@ error handling, raw data length queries) are provided via
 
 ## Test results
 
-22/22 tests pass covering: initialization, filename constants, struct sizes,
+23/23 tests pass covering: initialization, filename constants, struct sizes,
 byte swap, open/close reference counting, dual-file open, single-file read,
 entry value extraction (1-byte and 2-byte big-endian), raw data file position
 with and without cache, picture buffer allocation (4bpp and 8bpp), picture
 buffer free, GDAT query iteration (simple, empty, filtered), raw data loading,
-and graphics structure stub.
+and source header/ULP graphics-structure admission.
 
 ## Files
 
@@ -54,6 +54,8 @@ and graphics structure stub.
 
 ## Status
 
-PASS. Stub for `DM2_READ_GRAPHICS_STRUCTURE` (full implementation requires
-dballoc, ulp, image decoder, and sound subsystems). Core file I/O, entry
-query, and bitmap allocation logic is fully ported.
+PASS. `DM2_READ_GRAPHICS_STRUCTURE` now validates the source header and ULP
+span through the callback file stream and records the cumulative raw boundary.
+ENT1, underlay, image allocator, and sound ownership remain intentionally
+gated pending their source transactions. Core file I/O, entry query, and
+bitmap allocation logic is fully ported.

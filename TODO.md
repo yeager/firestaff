@@ -29243,6 +29243,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   alongside the raw-offset, ENT1 and underlay receipts. This is source data
   from the mounted v4/v5 file, never a host default; the remaining work is
   wiring the source allocator lifetime and secondary-file transaction.
+  **2026-08-13 progress:** the callback seam now consumes the real source
+  header and ULP span, validates the `0x8000 | version`/entry-count contract,
+  checks the cumulative ULP raw boundary against the mounted file size, and
+  closes the source file on every success/failure path. ENT1, underlay and
+  allocator admission remain gated.
 - [ ] DM2 combat source contract: a creature Defense GDAT row alone cannot
   author a player attack. Keep `dm2_v1_combat_resolve_attack_on_creature()`
   blocked until `DM2_ENGAGE_COMMAND`/`CALC_PLAYER_ATTACK_DAMAGE` has the

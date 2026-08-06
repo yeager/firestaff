@@ -867,23 +867,117 @@ int dm2_v1_gdat_resolve_deferred_sounds(
     return 1;
 }
 
-/* skproject: DM2_READ_GRAPHICS_STRUCTURE (bgdat.cpp:1027-1141).
+/* skproject: DM2_READ_GRAPHICS_STRUCTURE (bgdat.cpp:1027-1100).
  *
- * The source routine opens GRAPHICS.DAT, validates the four-byte header,
- * constructs the ULP offset table, loads ENT1, optionally retains the
- * underlay table, and configures the image allocator. This compatibility
- * adapter has none of those owners; reporting a valid structure from only
- * pre-filled entries/version words was a synthetic success receipt. Keep
- * the public seam fail-closed until that complete source transaction exists.
+ * Bind the source-owned file transaction through the existing callbacks. The
+ * later LOAD_ENT1/underlay/allocator stages intentionally remain outside this
+ * receipt; admitting them from caller-filled state would be synthetic.
  */
+static uint16_t dm2_gdat_le16(const uint8_t *p)
+{
+    return (uint16_t)p[0] | (uint16_t)((uint16_t)p[1] << 8);
+}
+
+static uint32_t dm2_gdat_le32(const uint8_t *p)
+{
+    return (uint32_t)p[0] |
+           ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) |
+           ((uint32_t)p[3] << 24);
+}
+
 int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
                                          const DM2_V1_GdatFileCallbacks *cb,
                                          void *ctx,
                                          DM2_V1_GdatReadStructureReceipt *out)
 {
-    (void)state;
-    (void)cb;
-    (void)ctx;
+    uint8_t header[8];
+    uint8_t *ulp = NULL;
+    uint32_t ulp_length;
+    uint32_t source_data_offset;
+    uint32_t table_end;
+    uint16_t entries;
+    uint16_t version;
+    uint32_t offset;
+    uint16_t i;
+    int opened = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!state || !cb || !cb->file_read || !cb->file_seek ||
+        !cb->get_file_size || !cb->alloc_memory || !cb->dealloc_memory) {
+        return 0;
+    }
+    if (!dm2_v1_gdat_graphics_data_open(state, cb, ctx, NULL)) return 0;
+    opened = 1;
+    state->filesize = cb->get_file_size(ctx, state->filehandle);
+    if (state->filesize < 8 ||
+        !dm2_v1_gdat_graphics_data_read(state, 0, 8, header, cb, ctx, NULL)) {
+        goto fail;
+    }
+
+    version = dm2_gdat_le16(header);
+    entries = dm2_gdat_le16(header + 2);
+    if ((version & 0x8000u) == 0u ||
+        (((version & 0x7fffu) != 2u) &&
+         ((version & 0x7fffu) != 4u) &&
+         ((version & 0x7fffu) != 5u)) || entries == 0u) {
+        goto fail;
+    }
+    if (out) {
+        out->header_validated = true;
+        out->versionlo = (int16_t)(version & 0x7fffu);
+        out->entries = entries;
+    }
+
+    /* bgdat.cpp reads a four-byte source-data offset, then entries-1 words;
+     * the first ULP word is the zero origin and is supplied by the loader. */
+    source_data_offset = dm2_gdat_le32(header + 4);
+    ulp_length = (uint32_t)entries * 2u;
+    table_end = 8u + ulp_length - 2u;
+    if (source_data_offset > (uint32_t)state->filesize ||
+        ulp_length < 2u ||
+        table_end > (uint32_t)state->filesize ||
+        ulp_length + 6u > (uint32_t)state->filesize ||
+        source_data_offset > (uint32_t)state->filesize - (ulp_length + 6u)) {
+        goto fail;
+    }
+    ulp = cb->alloc_memory(ctx, (int32_t)ulp_length, 0);
+    if (!ulp) {
+        goto fail;
+    }
+    memset(ulp, 0, 2u);
+    if (!dm2_v1_gdat_graphics_data_read(state, 8, (int32_t)ulp_length - 2,
+                                         ulp + 2, cb, ctx, NULL)) {
+        goto fail;
+    }
+    offset = 0u;
+    for (i = 0u; i < entries; ++i) {
+        uint16_t word = dm2_gdat_le16(ulp + (size_t)i * 2u);
+        if (i == 0u && word != 0u) goto fail;
+        if (i != 0u) {
+            offset += word;
+            if (offset > (uint32_t)state->filesize -
+                             (source_data_offset + ulp_length + 6u)) {
+                goto fail;
+            }
+        }
+    }
+    if (out) {
+        out->valid = true;
+        out->ulp_validated = true;
+        out->ulp_length = ulp_length;
+        out->ulp_table_end = table_end;
+        out->source_data_offset = source_data_offset;
+        out->first_raw_offset = source_data_offset + ulp_length + 6u + offset;
+    }
+    cb->dealloc_memory(ctx, (int32_t)ulp_length);
+    dm2_v1_gdat_graphics_data_close(state, cb, ctx, NULL);
+    return 1;
+
+fail:
+    if (ulp) cb->dealloc_memory(ctx, (int32_t)ulp_length);
+    if (opened && state->fileopencounter > 0)
+        dm2_v1_gdat_graphics_data_close(state, cb, ctx, NULL);
     if (out) memset(out, 0, sizeof(*out));
     return 0;
 }

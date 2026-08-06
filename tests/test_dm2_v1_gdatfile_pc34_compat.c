@@ -127,6 +127,82 @@ static DM2_V1_GdatFileCallbacks make_mock_callbacks(void)
     return cb;
 }
 
+typedef struct RealGdatCtx {
+    FILE *file;
+    char path[1024];
+    uint8_t *allocation;
+} RealGdatCtx;
+
+static int16_t real_gdat_open(void *ctx, const char *name)
+{
+    RealGdatCtx *real = (RealGdatCtx *)ctx;
+    (void)name;
+    real->file = fopen(real->path, "rb");
+    return real->file ? 7 : -1;
+}
+
+static void real_gdat_close(void *ctx, int16_t handle)
+{
+    RealGdatCtx *real = (RealGdatCtx *)ctx;
+    (void)handle;
+    if (real->file) {
+        fclose(real->file);
+        real->file = NULL;
+    }
+}
+
+static bool real_gdat_read(void *ctx, int16_t handle, void *buf, int32_t len)
+{
+    RealGdatCtx *real = (RealGdatCtx *)ctx;
+    (void)handle;
+    return real->file && len >= 0 && fread(buf, 1u, (size_t)len, real->file) ==
+        (size_t)len;
+}
+
+static bool real_gdat_seek(void *ctx, int16_t handle, int32_t pos)
+{
+    RealGdatCtx *real = (RealGdatCtx *)ctx;
+    (void)handle;
+    return real->file && fseek(real->file, (long)pos, SEEK_SET) == 0;
+}
+
+static int32_t real_gdat_size(void *ctx, int16_t handle)
+{
+    RealGdatCtx *real = (RealGdatCtx *)ctx;
+    long saved;
+    long end;
+    (void)handle;
+    if (!real->file) return 0;
+    saved = ftell(real->file);
+    if (fseek(real->file, 0L, SEEK_END) != 0) return 0;
+    end = ftell(real->file);
+    (void)fseek(real->file, saved, SEEK_SET);
+    return end > 0L ? (int32_t)end : 0;
+}
+
+static uint8_t *real_gdat_alloc(void *ctx, int32_t size, int16_t pool)
+{
+    RealGdatCtx *real = (RealGdatCtx *)ctx;
+    (void)pool;
+    real->allocation = size > 0 ? (uint8_t *)malloc((size_t)size) : NULL;
+    return real->allocation;
+}
+
+static void real_gdat_dealloc(void *ctx, int32_t size)
+{
+    RealGdatCtx *real = (RealGdatCtx *)ctx;
+    (void)size;
+    free(real->allocation);
+    real->allocation = NULL;
+}
+
+static const char *real_gdat_path(void *ctx, const char *name)
+{
+    RealGdatCtx *real = (RealGdatCtx *)ctx;
+    (void)name;
+    return real->path;
+}
+
 /* ======================================================================== */
 /* Tests                                                                    */
 /* ======================================================================== */
@@ -496,7 +572,7 @@ static int test_load_raw_data(void)
     return 1;
 }
 
-static int test_read_graphics_structure_unimplemented_fails_closed(void)
+static int test_read_graphics_structure_binds_header_and_ulp(void)
 {
     DM2_V1_GdatFileState state;
     DM2_V1_GdatFileCallbacks cb = make_mock_callbacks();
@@ -504,12 +580,57 @@ static int test_read_graphics_structure_unimplemented_fails_closed(void)
     memset(&mctx, 0, sizeof(mctx));
 
     dm2_v1_gdat_file_init(&state, NULL);
-    state.entries = 42;
-    state.versionlo = 5;
+    /* version=5|0x8000, entries=2, source offset=4, ULP offsets={0,1}. */
+    mctx.file_data[0] = 0x05;
+    mctx.file_data[1] = 0x80;
+    mctx.file_data[2] = 0x02;
+    mctx.file_data[3] = 0x00;
+    mctx.file_data[4] = 0x04;
+    mctx.file_data[5] = 0x00;
+    mctx.file_data[6] = 0x00;
+    mctx.file_data[7] = 0x00;
+    mctx.file_data[8] = 0x01;
+    mctx.file_data[9] = 0x00;
+    mctx.file_data[14] = 0xA5;
+    mctx.file_data_len = 15;
 
     DM2_V1_GdatReadStructureReceipt out;
     int r = dm2_v1_gdat_read_graphics_structure(&state, &cb, &mctx, &out);
-    return r == 0 && !out.valid && out.entries == 0 && out.versionlo == 0;
+    return r == 1 && out.valid && out.header_validated && out.ulp_validated &&
+           out.entries == 2 && out.versionlo == 5 && out.ulp_length == 4 &&
+           out.ulp_table_end == 10 && out.source_data_offset == 4 &&
+           out.first_raw_offset == 15 &&
+           mctx.close_count == 1;
+}
+
+static int test_read_graphics_structure_real_dm2_data(void)
+{
+    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    RealGdatCtx real;
+    DM2_V1_GdatFileCallbacks cb;
+    DM2_V1_GdatFileState state;
+    DM2_V1_GdatReadStructureReceipt receipt;
+
+    if (!root || !root[0]) return 1;
+    memset(&real, 0, sizeof(real));
+    if (snprintf(real.path, sizeof(real.path), "%s/GRAPHICS.DAT", root) >=
+            (int)sizeof(real.path)) return 0;
+    memset(&cb, 0, sizeof(cb));
+    cb.file_open = real_gdat_open;
+    cb.file_close = real_gdat_close;
+    cb.file_read = real_gdat_read;
+    cb.file_seek = real_gdat_seek;
+    cb.get_file_size = real_gdat_size;
+    cb.alloc_memory = real_gdat_alloc;
+    cb.dealloc_memory = real_gdat_dealloc;
+    cb.format_skstr = real_gdat_path;
+    dm2_v1_gdat_file_init(&state, NULL);
+    if (!dm2_v1_gdat_read_graphics_structure(&state, &cb, &real, &receipt)) {
+        return 0;
+    }
+    return receipt.valid && receipt.header_validated && receipt.ulp_validated &&
+           receipt.entries > 100u && receipt.versionlo >= 2 &&
+           receipt.first_raw_offset > receipt.ulp_table_end;
 }
 
 static int test_struct_sizes(void)
@@ -569,7 +690,8 @@ int main(void)
     TEST(query_next_entry_no_match);
     TEST(query_next_entry_filtered);
     TEST(load_raw_data);
-    TEST(read_graphics_structure_unimplemented_fails_closed);
+    TEST(read_graphics_structure_binds_header_and_ulp);
+    TEST(read_graphics_structure_real_dm2_data);
 
     printf("----------------------------------\n");
     printf("Results: %d/%d passed\n", tests_passed, tests_run);
