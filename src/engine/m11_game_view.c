@@ -24693,12 +24693,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02) {
         Theron_V1_World* world = (Theron_V1_World*)state->theronWorld;
-        if ((state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
-             !state->theronState.level_loaded) &&
-            !m11_theron_startup_has_verified_runtime_surfaces(state)) {
-            m11_set_status(state, "STARTUP", "TRACK02 ATLAS ROUTES INVALID");
-            return M11_GAME_INPUT_RETURN_TO_MENU;
-        }
         if (!world) {
             return M11_GAME_INPUT_IGNORED;
         }

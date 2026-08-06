@@ -192,11 +192,9 @@ static void run_track02_startup_overlay_regression(void) {
     view.active = 1;
     view.sourceKind = M11_GAME_SOURCE_THERON_TRACK02;
     view.theronState.startup_phase = THERON_STARTUP_PHASE_TITLE;
-    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
-                    M11_GAME_INPUT_RETURN_TO_MENU &&
-                    strcmp(view.lastAction, "STARTUP") == 0 &&
-                    strcmp(view.lastOutcome, "TRACK02 ATLAS ROUTES INVALID") == 0,
-                "M11 returns to launcher when Track02 startup atlas routes are absent");
+    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                    M11_GAME_INPUT_RETURN_TO_MENU,
+                "M11 keeps startup input alive when Track02 atlas routes are absent");
     M11_GameView_Shutdown(&view);
 
     memset(&spec, 0, sizeof(spec));
@@ -294,11 +292,22 @@ static void run_real_launcher_handoff_if_available(void) {
                 strcmp(version->matchedMd5, THERON_TRACK02_MD5_JP_BIN) == 0
             ? THERON_TRACK02_IPL_JP_INDEX01_RAW_SECTOR
             : THERON_TRACK02_IPL_US_INDEX01_RAW_SECTOR;
-        expect_true(version && loader_receipt && loader_receipt->valid == 1 &&
-                        strcmp(loader_receipt->track02_path, version->matchedPath) == 0 &&
-                        loader_receipt->ipl_loader.data_track_index01_raw_sector ==
-                            expected_index01_sector,
-                    "M12 scanner retains the raw Track 02 pregap through the IPL receipt");
+        if (loader_receipt && loader_receipt->valid) {
+            expect_true(version &&
+                            strcmp(loader_receipt->track02_path,
+                                   version->matchedPath) == 0 &&
+                            loader_receipt->ipl_loader.data_track_index01_raw_sector ==
+                                expected_index01_sector,
+                        "M12 scanner retains the raw Track 02 pregap through the IPL receipt");
+        } else {
+            /* A loose BIN has no CUE-owned INDEX 01 provenance.  Keep the
+             * receipt empty instead of fabricating a pregap; the direct BIN
+             * launch remains valid through the hash-verified media route. */
+            expect_true(version && loader_receipt &&
+                            loader_receipt->valid == 0 &&
+                            strstr(version->matchedPath, ".bin") != NULL,
+                        "M12 scanner leaves a loose raw Track 02 without a fabricated IPL receipt");
+        }
     } else {
         expect_true(version && loader_receipt && loader_receipt->valid == 0 &&
                         (strcmp(version->matchedMd5,
@@ -398,6 +407,28 @@ static void run_real_launcher_handoff_if_available(void) {
                 "M11 Theron launcher rows expose Soul Room state");
     expect_true(view.theronState.level_loaded == 0,
                 "M11 Theron launcher Soul Room still gates dungeon load");
+
+    /* Real BIN media has authenticated startup records but no source-owned
+     * post-startup VDC/VCE consumer capture yet.  Input must still reach the
+     * forcefield action so the runtime can report that precise admission
+     * boundary; the old M11 pre-dispatch atlas check returned to the launcher
+     * on the first key and made Enter appear broken. */
+    for (int i = 0; i < THERON_STARTUP_HERO_MIRROR_COUNT; ++i) {
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_RIGHT) ==
+                        M11_GAME_INPUT_REDRAW,
+                    "M11 Theron Soul Room advances to forcefield focus");
+    }
+    {
+        M11_GameInputResult enter_result =
+            M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT);
+        expect_true(enter_result != M11_GAME_INPUT_RETURN_TO_MENU,
+                    "M11 Theron Enter reaches forcefield admission instead of returning to launcher");
+        expect_true(view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_SOUL_ROOM ||
+                        view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_IN_DUNGEON,
+                    "M11 Theron forcefield keeps startup state bounded on admission failure");
+    }
 
     M11_GameView_Shutdown(&view);
 }
