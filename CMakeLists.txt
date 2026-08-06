@@ -4480,7 +4480,12 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_fmtowns_disc.c")
 if(DM2_SOURCES)
-    add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
+    add_library(firestaff_dm2 STATIC ${DM2_SOURCES}
+        # The original Amiga installer is an OFS ADF chain.  DM2 boot owns
+        # that read-only media route, so keep its bounded reader in the same
+        # archive as the LZX admission code rather than relying on M11's
+        # unrelated ADF consumer to satisfy a link by accident.
+        src/shared/firestaff_amiga_adf.c)
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
     # dm2_v1_sound_sdl_backend.c (DM2-008 cycle 16) is the concrete SDL3
     # playback backend; propagate SDL3 headers/symbols to every consumer.
@@ -14075,11 +14080,29 @@ if(BUILD_TESTING)
             target_compile_options(test_dm2_fmtowns_m12_real_media PRIVATE
                 -Wall -Wextra -Werror -O2)
         endif()
-        add_test(
-            NAME dm2_fmtowns_m12_real_media
-            COMMAND test_dm2_fmtowns_m12_real_media
-        )
+    add_test(
+        NAME dm2_fmtowns_m12_real_media
+        COMMAND test_dm2_fmtowns_m12_real_media
+    )
+
+    add_executable(test_dm2_amiga_m12_real_media
+        tests/test_dm2_amiga_m12_real_media.c
+    )
+    target_include_directories(test_dm2_amiga_m12_real_media PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(test_dm2_amiga_m12_real_media PRIVATE
+        firestaff_m12
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_amiga_m12_real_media PRIVATE
+            -Wall -Wextra -Werror -O2)
     endif()
+    add_test(
+        NAME dm2_amiga_m12_real_media
+        COMMAND test_dm2_amiga_m12_real_media
+    )
+endif()
 
     add_executable(test_dm2_v1_anim_bootstrap
         tests/test_dm2_v1_anim_bootstrap.c
@@ -52809,6 +52832,19 @@ add_executable(test_dm2_v1_amiga_lzx_real_media
 target_include_directories(test_dm2_v1_amiga_lzx_real_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm2_v1_amiga_lzx_real_media PRIVATE firestaff_zip_extract)
 add_test(NAME test_dm2_v1_amiga_lzx_real_media COMMAND test_dm2_v1_amiga_lzx_real_media)
+
+# Opt-in: proves the real Amiga installer reaches the normal DM2 boot owner
+# from nested media in memory.  Copyrighted media stays user supplied and the
+# test cleanly skips unless FIRESTAFF_DM2_AMIGA_ROOT is configured.
+add_executable(test_dm2_v1_amiga_boot_real_media
+    tests/test_dm2_v1_amiga_boot_real_media.c
+)
+target_include_directories(test_dm2_v1_amiga_boot_real_media PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm2_v1_amiga_boot_real_media PRIVATE firestaff_dm2)
+if(NOT MSVC)
+    target_compile_options(test_dm2_v1_amiga_boot_real_media PRIVATE -Wall -Wextra -Werror -O2)
+endif()
+add_test(NAME test_dm2_v1_amiga_boot_real_media COMMAND test_dm2_v1_amiga_boot_real_media)
 
 add_executable(test_dm2_v1_fmtowns_disc
     tests/test_dm2_v1_fmtowns_disc.c

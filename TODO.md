@@ -125,11 +125,12 @@
   `DM2_archive.LZX` index is now joined, bounded and decoded in memory through
   the real outer-ZIP → disk-ZIP → ADF chain, including the real
   `GRAPHICS.DAT`, `DUNGEON.DAT`, `CD.DAT` and MOD receipts; the decoded entries
-  retain their LZX CRC receipt. Wire the existing
-  original MD5 pair gate to that in-memory decoder before admitting the floppy
-  corpus. M12 now admits the FM Towns CD ZIP only after it reads the raw image
-  in memory and verifies its original GRAPHICS.DAT/DUNGEON.DAT pair; apply
-  that same requirement to Amiga.
+  retain their LZX CRC receipt. M12 and the boot profile now run the same
+  original MD5 pair gate over those RAM buffers, and an explicit Amiga archive
+  selection wins over a sibling PC install. M12 now admits the FM Towns CD ZIP
+  only after it reads the raw image in memory and verifies its original
+  GRAPHICS.DAT/DUNGEON.DAT pair; the same identity-first requirement now holds
+  for Amiga.
   Generic DM2 ZIP/ISO cache materialization is deliberately disabled: it must
   either gain a verified in-memory PC reader or remain non-launchable. Do not
   synthesize a compatible install, palette, dungeon, music map or save corpus

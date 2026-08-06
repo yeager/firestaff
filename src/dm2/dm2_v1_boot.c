@@ -39,9 +39,12 @@
 #include "dm2_v1_startup_presentation.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "asset_find_by_hash.h"
+#include "dm2_v1_amiga_lzx.h"
 #include "dm2_v1_fmtowns_disc.h"
+#include "firestaff_amiga_adf.h"
 #include "firestaff_zip_extract.h"
 #include "firestaff_fmtowns_disc.h"
+#include "fs_portable_compat.h"
 #include <stdio.h>
 #include <string.h>
 
@@ -1016,6 +1019,188 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
     }
 }
 
+typedef struct {
+    const char *name;
+    uint8_t *bytes;
+    size_t size;
+} DM2_V1_AmigaPartCapture;
+
+static int dm2_v1_boot_capture_amiga_part(const char *name,
+                                          const uint8_t *bytes,
+                                          size_t size,
+                                          void *user_data)
+{
+    DM2_V1_AmigaPartCapture *capture =
+        (DM2_V1_AmigaPartCapture *)user_data;
+    if (!capture || !capture->name || !name ||
+        strcmp(name, capture->name) != 0 || !bytes || size == 0u) {
+        return 0;
+    }
+    capture->bytes = (uint8_t *)malloc(size);
+    if (!capture->bytes) {
+        return -1;
+    }
+    memcpy(capture->bytes, bytes, size);
+    capture->size = size;
+    return 1;
+}
+
+/* The AGA release's install payload is not a loose directory and must not be
+ * unpacked into one.  The original outer archive contains one ZIP per ADF;
+ * each OFS volume contributes dm2_arcsplitN to the LZX archive.  Keep that
+ * whole transport chain private to boot and retain only the two authenticated
+ * runtime buffers.  This is deliberately the same nested-media order used by
+ * the real-media LZX receipt, not a filename-shaped fallback. */
+static int dm2_v1_boot_load_amiga_installer_from_zip(
+    DM2_V1_BootProfile *profile, const char *data_dir)
+{
+    static const char archive_name[] =
+        "Dungeon-Master-II-Skullkeep_Amiga_EN.zip";
+    char candidates[2][512];
+    size_t candidate_index;
+
+    if (!profile || !data_dir || !data_dir[0] ||
+        profile->graphics_mem || profile->dungeon_mem) {
+        return 0;
+    }
+    /* A direct archive selection is a valid launcher handoff.  It avoids
+     * letting a sibling PC install decide the platform when the user chose
+     * the Amiga release explicitly. */
+    if (strstr(data_dir, archive_name) != NULL && FSP_FileExists(data_dir)) {
+        snprintf(candidates[0], sizeof(candidates[0]), "%s", data_dir);
+        candidates[1][0] = '\0';
+    } else {
+        snprintf(candidates[0], sizeof(candidates[0]), "%s/%s",
+                 data_dir, archive_name);
+        snprintf(candidates[1], sizeof(candidates[1]), "%s/dm2/%s",
+                 data_dir, archive_name);
+    }
+    for (candidate_index = 0u; candidate_index < 2u; ++candidate_index) {
+        DM2_V1_AmigaLzxPart parts[DM2_V1_AMIGA_LZX_PART_COUNT] = {{0}};
+        DM2_V1_AmigaLzxArchive archive = {0};
+        const DM2_V1_AmigaLzxEntry *graphics_entry;
+        const DM2_V1_AmigaLzxEntry *dungeon_entry;
+        const DM2_V1_AmigaLzxEntry *music_entry;
+        uint8_t *joined = NULL;
+        size_t joined_size = 0u;
+        uint8_t *graphics = NULL;
+        size_t graphics_size = 0u;
+        uint8_t *dungeon = NULL;
+        size_t dungeon_size = 0u;
+        uint8_t *music = NULL;
+        size_t music_size = 0u;
+        unsigned int disk;
+        int accepted = 0;
+
+        if (!candidates[candidate_index][0] ||
+            !FSP_FileExists(candidates[candidate_index])) {
+            continue;
+        }
+        for (disk = 0u; disk < DM2_V1_AMIGA_LZX_PART_COUNT; ++disk) {
+            char inner_suffix[128];
+            char part_name[32];
+            uint8_t *inner = NULL;
+            uint8_t *adf = NULL;
+            size_t inner_size = 0u;
+            size_t adf_size = 0u;
+            DM2_V1_AmigaPartCapture capture = {0};
+            int visited;
+
+            snprintf(inner_suffix, sizeof(inner_suffix),
+                     "(1994)(Interplay)(AGA)(M3)(Disk %u of 6)[HD].zip",
+                     disk + 1u);
+            snprintf(part_name, sizeof(part_name), "dm2_arcsplit%u", disk + 1u);
+            if (firestaff_zip_extract_by_suffix(candidates[candidate_index],
+                                                inner_suffix,
+                                                &inner, &inner_size) != 0 ||
+                firestaff_zip_extract_memory_by_suffix(inner, inner_size,
+                                                       ".adf", &adf,
+                                                       &adf_size) != 0) {
+                free(inner);
+                free(adf);
+                break;
+            }
+            capture.name = part_name;
+            visited = firestaff_amiga_adf_visit_ofs_files(
+                adf, adf_size, dm2_v1_boot_capture_amiga_part, &capture);
+            free(inner);
+            free(adf);
+            if (visited < 0 || !capture.bytes || capture.size == 0u) {
+                free(capture.bytes);
+                break;
+            }
+            parts[disk].bytes = capture.bytes;
+            parts[disk].size = capture.size;
+        }
+        if (disk == DM2_V1_AMIGA_LZX_PART_COUNT &&
+            dm2_v1_amiga_lzx_join_parts(parts, &joined, &joined_size) &&
+            dm2_v1_amiga_lzx_parse(&archive, joined, joined_size) &&
+            dm2_v1_amiga_lzx_has_install_payload(&archive)) {
+            graphics_entry = dm2_v1_amiga_lzx_find(&archive, "GRAPHICS.DAT");
+            dungeon_entry = dm2_v1_amiga_lzx_find(&archive, "DUNGEON.DAT");
+            music_entry = dm2_v1_amiga_lzx_find(&archive, "CD.DAT");
+            if (graphics_entry && dungeon_entry &&
+                dm2_v1_amiga_lzx_extract_entry(&archive, joined, graphics_entry,
+                                                &graphics, &graphics_size) &&
+                dm2_v1_amiga_lzx_extract_entry(&archive, joined, dungeon_entry,
+                                                &dungeon, &dungeon_size)) {
+                char graphics_md5[33];
+                char dungeon_md5[33];
+                dm2_md5_bytes_hex(graphics, graphics_size, graphics_md5);
+                dm2_md5_bytes_hex(dungeon, dungeon_size, dungeon_md5);
+                accepted = dm2_v1_boot_asset_hash_pair_supported(
+                    graphics_md5, dungeon_md5) &&
+                    md5_matches(graphics_md5,
+                                "1c940ea95703eaea0ecdf84d17e954b9") &&
+                    md5_matches(dungeon_md5,
+                                "719ae78bc124027806c65491a256827d");
+                if (accepted && music_entry &&
+                    dm2_v1_amiga_lzx_extract_entry(&archive, joined, music_entry,
+                                                    &music, &music_size) &&
+                    music_size == sizeof(profile->music_map_data)) {
+                    char music_md5[33];
+                    dm2_md5_bytes_hex(music, music_size, music_md5);
+                    if (md5_matches(music_md5, g_dm2_music_map_hashes[1])) {
+                        memcpy(profile->music_map_data, music, music_size);
+                        profile->music_map_size = music_size;
+                        profile->music_map_verified = 1;
+                        snprintf(profile->music_map_md5,
+                                 sizeof(profile->music_map_md5), "%s", music_md5);
+                        snprintf(profile->music_map_path,
+                                 sizeof(profile->music_map_path),
+                                 "%s::DM2_archive.LZX/CD.DAT",
+                                 candidates[candidate_index]);
+                    }
+                }
+            }
+        }
+        dm2_v1_amiga_lzx_free(joined);
+        dm2_v1_amiga_lzx_free(music);
+        for (disk = 0u; disk < DM2_V1_AMIGA_LZX_PART_COUNT; ++disk) {
+            free((void *)parts[disk].bytes);
+        }
+        if (!accepted) {
+            dm2_v1_amiga_lzx_free(graphics);
+            dm2_v1_amiga_lzx_free(dungeon);
+            continue;
+        }
+        profile->graphics_mem = graphics;
+        profile->graphics_mem_size = graphics_size;
+        profile->dungeon_mem = dungeon;
+        profile->dungeon_mem_size = dungeon_size;
+        profile->graphics_size = graphics_size;
+        profile->dungeon_size = dungeon_size;
+        dm2_md5_bytes_hex(graphics, graphics_size, profile->graphics_md5);
+        dm2_md5_bytes_hex(dungeon, dungeon_size, profile->dungeon_md5);
+        snprintf(profile->graphics_path, sizeof(profile->graphics_path),
+                 "%s::DM2_archive.LZX/GRAPHICS.DAT", candidates[candidate_index]);
+        snprintf(profile->dungeon_path, sizeof(profile->dungeon_path),
+                 "%s::DM2_archive.LZX/DUNGEON.DAT", candidates[candidate_index]);
+        return 1;
+    }
+    return 0;
+}
+
 /* ── Scan and verify DM2 assets ─────────────────────────────────────── */
 
 int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
@@ -1063,6 +1248,9 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
     /* If no loose files found, try FM Towns disc image in ZIP */
     if (!profile->graphics_path[0] || !profile->dungeon_path[0]) {
         dm2_v1_boot_load_fmtowns_disc_from_zip(profile, base);
+    }
+    if (!profile->graphics_path[0] || !profile->dungeon_path[0]) {
+        (void)dm2_v1_boot_load_amiga_installer_from_zip(profile, base);
     }
 
     /* Determine if using DM2-specific filenames */

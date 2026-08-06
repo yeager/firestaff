@@ -2,6 +2,9 @@
 #include "asset_find_by_hash.h"
 #include "dm2_v1_fmtowns_disc.h"
 #include "csb_v1_fmtowns_cd.h"
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+#include "dm2_v1_boot.h"
+#endif
 #include "firestaff_zip_extract.h"
 #include "fs_portable_compat.h"
 #include "nexus_v1_bpk_archive.h"
@@ -61,6 +64,7 @@ typedef struct {
 static const M12_AssetVersionStatus* m12_first_matched_version(
     const M12_AssetStatus* status,
     int gameIndex);
+static int m12_path_is_virtual_asset(const char* path);
 static void m12_copy_string(char* out, size_t outSize, const char* value);
 static void m12_init_version_metadata(M12_AssetStatus* status);
 static void m12_init_required_file_metadata(M12_AssetStatus* status,
@@ -815,6 +819,116 @@ static int m12_admit_dm2_fmtowns_archive(M12_AssetStatus* status,
     return 0;
 }
 
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+/* The Amiga AGA release is a nested installer, not a ZIP with visible DAT
+ * members.  Let the DM2 boot owner perform its bounded RAM-only transport
+ * read, then copy only the verified identity receipt into M12.  M12 must not
+ * duplicate an LZX decoder or materialize the output as a cache. */
+static int m12_admit_dm2_amiga_archive(M12_AssetStatus* status,
+                                       int gameIndex,
+                                       const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
+                                       size_t rootCount,
+                                       const char* preferredArchive) {
+    static const char archiveName[] =
+        "Dungeon-Master-II-Skullkeep_Amiga_EN.zip";
+    size_t rootIndex;
+    size_t versionIndex;
+
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm2") != 0) {
+        return 0;
+    }
+    for (versionIndex = 0u; versionIndex < g_games[gameIndex].versionCount;
+         ++versionIndex) {
+        if (strcmp(g_games[gameIndex].versions[versionIndex].versionId,
+                   "amiga-en") == 0 &&
+            status->versions[gameIndex][versionIndex].matched) {
+            return 1;
+        }
+    }
+    for (rootIndex = 0u; rootIndex < rootCount; ++rootIndex) {
+        char candidates[3][M12_ASSET_DATA_DIR_CAPACITY];
+        size_t candidateIndex;
+        size_t candidateCount = 0u;
+        if (preferredArchive && preferredArchive[0] != '\0' &&
+            strstr(preferredArchive, archiveName) != NULL) {
+            snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s",
+                     preferredArchive);
+        }
+        snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/%s",
+                 roots[rootIndex], archiveName);
+        snprintf(candidates[candidateCount++], sizeof(candidates[0]), "%s/dm2/%s",
+                 roots[rootIndex], archiveName);
+        for (candidateIndex = 0u; candidateIndex < candidateCount; ++candidateIndex) {
+            DM2_V1_BootProfile profile;
+            if (!FSP_FileExists(candidates[candidateIndex])) {
+                continue;
+            }
+            dm2_v1_boot_profile_init(&profile);
+            if (dm2_v1_boot_scan_assets(&profile, candidates[candidateIndex]) != 0 ||
+                !profile.assets_verified ||
+                profile.platform != DM2_PLATFORM_AMIGA_EN ||
+                strcmp(profile.graphics_md5,
+                       "1c940ea95703eaea0ecdf84d17e954b9") != 0 ||
+                strcmp(profile.dungeon_md5,
+                       "719ae78bc124027806c65491a256827d") != 0) {
+                dm2_v1_boot_cleanup(&profile);
+                continue;
+            }
+            for (versionIndex = 0u;
+                 versionIndex < g_games[gameIndex].versionCount;
+                 ++versionIndex) {
+                M12_AssetVersionStatus* version =
+                    &status->versions[gameIndex][versionIndex];
+                if (strcmp(version->versionId, "amiga-en") != 0) {
+                    continue;
+                }
+                version->matched = 1;
+                if (preferredArchive &&
+                    strcmp(candidates[candidateIndex], preferredArchive) == 0) {
+                    size_t clearIndex;
+                    /* A direct archive request is an explicit platform
+                     * selection. Do not let a PC install beside it become
+                     * the launch pair merely because its catalogue row sorts
+                     * first. */
+                    for (clearIndex = 0u;
+                         clearIndex < g_games[gameIndex].versionCount;
+                         ++clearIndex) {
+                        if (clearIndex != versionIndex) {
+                            memset(&status->versions[gameIndex][clearIndex], 0,
+                                   sizeof(status->versions[gameIndex][clearIndex]));
+                            status->versions[gameIndex][clearIndex].gameId =
+                                g_games[gameIndex].versions[clearIndex].gameId;
+                            status->versions[gameIndex][clearIndex].versionId =
+                                g_games[gameIndex].versions[clearIndex].versionId;
+                            status->versions[gameIndex][clearIndex].label =
+                                g_games[gameIndex].versions[clearIndex].label;
+                            status->versions[gameIndex][clearIndex].shortLabel =
+                                g_games[gameIndex].versions[clearIndex].shortLabel;
+                        }
+                    }
+                }
+                snprintf(version->matchedPath, sizeof(version->matchedPath),
+                         "%s::DM2_archive.LZX/GRAPHICS.DAT",
+                         candidates[candidateIndex]);
+                snprintf(version->matchedMd5, sizeof(version->matchedMd5),
+                         "%s", profile.graphics_md5);
+                /* This exact archive pathname is the boot handoff.  Passing
+                 * its parent would let a sibling platform win a later
+                 * hash scan, which is both wrong and non-deterministic. */
+                m12_copy_string(status->runtimeDataDirs[gameIndex],
+                                sizeof(status->runtimeDataDirs[gameIndex]),
+                                candidates[candidateIndex]);
+                dm2_v1_boot_cleanup(&profile);
+                return 1;
+            }
+            dm2_v1_boot_cleanup(&profile);
+        }
+    }
+    return 0;
+}
+#endif
+
 static void m12_publish_dm2_fmtowns_required_files(M12_AssetStatus* status,
                                                     int gameIndex) {
     const M12_AssetVersionStatus* version;
@@ -1058,6 +1172,61 @@ static void m12_publish_csb_fmtowns_required_files(M12_AssetStatus* status,
         snprintf(required->matchedHash, sizeof(required->matchedHash), "%s", md5);
     }
 }
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+static void m12_publish_dm2_amiga_required_files(M12_AssetStatus* status,
+                                                  int gameIndex) {
+    const M12_AssetVersionStatus* version = NULL;
+    size_t versionIndex;
+    size_t requiredIndex;
+    if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
+        strcmp(g_games[gameIndex].gameId, "dm2") != 0) {
+        return;
+    }
+    /* Required rows describe the launch selection.  Do not replace an
+     * already selected PC/FM Towns pair merely because another archive was
+     * discovered beside it. */
+    version = m12_first_matched_version(status, gameIndex);
+    if (!version || !version->versionId ||
+        strcmp(version->versionId, "amiga-en") != 0) {
+        return;
+    }
+    for (versionIndex = 0u; versionIndex < g_games[gameIndex].versionCount;
+         ++versionIndex) {
+        if (strcmp(status->versions[gameIndex][versionIndex].versionId,
+                   "amiga-en") == 0 &&
+            status->versions[gameIndex][versionIndex].matched) {
+            version = &status->versions[gameIndex][versionIndex];
+            break;
+        }
+    }
+    if (!m12_path_is_virtual_asset(version->matchedPath)) {
+        return;
+    }
+    for (requiredIndex = 0u;
+         requiredIndex < status->requiredFileCounts[gameIndex];
+         ++requiredIndex) {
+        M12_AssetRequiredFileStatus* required =
+            &status->requiredFiles[gameIndex][requiredIndex];
+        const char* member = NULL;
+        const char* hash = NULL;
+        if (strcmp(required->roleId, "graphics") == 0) {
+            member = "GRAPHICS.DAT";
+            hash = "1c940ea95703eaea0ecdf84d17e954b9";
+        } else if (strcmp(required->roleId, "dungeon") == 0) {
+            member = "DUNGEON.DAT";
+            hash = "719ae78bc124027806c65491a256827d";
+        }
+        if (!member) {
+            continue;
+        }
+        required->matched = 1;
+        snprintf(required->matchedPath, sizeof(required->matchedPath),
+                 "%s::DM2_archive.LZX/%s",
+                 status->runtimeDataDirs[gameIndex], member);
+        snprintf(required->matchedHash, sizeof(required->matchedHash), "%s", hash);
+    }
+}
+#endif
 
 static void m12_copy_string(char* out, size_t outSize, const char* value) {
     if (!out || outSize == 0U) {
@@ -3135,12 +3304,13 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
             const M12_AssetVersionStatus* version =
                 m12_first_matched_version(status, gameIndex);
             if (version && version->versionId &&
-                strcmp(version->versionId, "fmtowns-ja") == 0 &&
+                (strcmp(version->versionId, "fmtowns-ja") == 0 ||
+                 strcmp(version->versionId, "amiga-en") == 0) &&
                 m12_path_is_virtual_asset(version->matchedPath)) {
-                /* The FM Towns raw image has a complete, verified memory
-                 * owner in dm2_v1_boot_load_fmtowns_disc_from_zip().  Keep
-                 * this virtual provenance and let that owner reopen it; no
-                 * generic cache is ever created for DM2. */
+                /* FM Towns and Amiga each have a complete, verified memory
+                 * owner in dm2_v1_boot.c. Keep virtual provenance and let
+                 * that owner reopen its original container; no generic cache
+                 * is ever created for DM2. */
                 return 1;
             }
         }
@@ -3917,6 +4087,10 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
                                csbFmtownsAdmitted);
         if (strcmp(g_games[i].gameId, "dm2") == 0) {
             (void)m12_admit_dm2_fmtowns_archive(status, i, roots, rootCount);
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+            (void)m12_admit_dm2_amiga_archive(status, i, roots, rootCount,
+                                              requestedDataDir);
+#endif
         } else if (strcmp(g_games[i].gameId, "csb") == 0) {
             if (csbFmtownsAdmitted) {
                 (void)m12_admit_csb_fmtowns_archive(status, i, roots, rootCount);
@@ -3935,6 +4109,9 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
         if (strcmp(g_games[i].gameId, "dm2") == 0) {
             size_t requiredIndex;
             m12_publish_dm2_fmtowns_required_files(status, i);
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+            m12_publish_dm2_amiga_required_files(status, i);
+#endif
             reqMatch = status->requiredFileCounts[i] > 0U;
             for (requiredIndex = 0U;
                  requiredIndex < status->requiredFileCounts[i];
@@ -4169,6 +4346,10 @@ void M12_AssetStatus_ScanGameWithOptions(
         if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
             (void)m12_admit_dm2_fmtowns_archive(status, gameIndex,
                                                  roots, rootCount);
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+            (void)m12_admit_dm2_amiga_archive(status, gameIndex,
+                                              roots, rootCount, requestedDataDir);
+#endif
         }
     }
     reqMatch = m12_fill_required_files(status,
@@ -4180,6 +4361,9 @@ void M12_AssetStatus_ScanGameWithOptions(
     if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
         size_t requiredIndex;
         m12_publish_dm2_fmtowns_required_files(status, gameIndex);
+#ifndef FIRESTAFF_ASSET_STATUS_TESTING
+        m12_publish_dm2_amiga_required_files(status, gameIndex);
+#endif
         reqMatch = status->requiredFileCounts[gameIndex] > 0U;
         for (requiredIndex = 0U;
              requiredIndex < status->requiredFileCounts[gameIndex];

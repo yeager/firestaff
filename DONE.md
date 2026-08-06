@@ -51128,3 +51128,14 @@ STX extraction remain explicitly open in TODO.
   fysiska bildens slut, precis som minnesvägen, utan att läsa in hela
   507 MB-bilden. Realt CUE/IMG-test bekräftar spårantalet och spår 2:s
   CUE-härledda längd. Uppspelningens M11-bindning är fortfarande öppen.
+- ✅ 2026-08-06 DM2 Amiga boot and M12 media handoff: the authentic Amiga AGA
+  installer can now reach the normal DM2 boot owner through outer ZIP → disk
+  ZIP → OFS ADF → six `dm2_arcsplit` parts → LZX entirely in RAM. Boot admits
+  GRAPHICS.DAT and DUNGEON.DAT only when their known Amiga pair hashes pass,
+  and admits the 176-byte CD.DAT MOD map only when its own original hash
+  passes. M12 invokes that same boot-owned verifier, retains nested virtual
+  provenance, passes the unchanged ZIP pathname to runtime, and never creates
+  a DM2 cache. Selecting the original Amiga archive directly selects that
+  platform even beside a PC install. The real-media boot and M12 regressions
+  both pass against the supplied archive; no game data was unpacked, copied or
+  tracked.
