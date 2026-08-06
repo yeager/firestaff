@@ -23,12 +23,14 @@ The raw Saturn launcher uses a non-quiet string scan for this check because
 closes the pipe after the first match.
 
 For startup/input experiments the launcher can request an operator-owned
-controller window with `--press-start-frame N --press-start-length N`. The
-external Mednafen SMPC hook drives the Saturn gamepad's real active-low START
-bit for that bounded window and releases it on the following frame. This is
-input provenance only: it does not write SH-2 state, VDP memory, host pixels,
-or a guessed menu. A resulting menu/HUD/viewport claim still requires the
-corresponding source identity and VDP1/VDP2 consumer artifact.
+controller window with `--press-start-frame N --press-start-length N` and
+choose the active-low Saturn button mask with `--press-button-mask`. The
+default `0x10` is START, `0x20` is A, and `0x30` tests both. The external
+Mednafen SMPC hook drives that real gamepad bit window and releases it on the
+following frame. This is input provenance only: it does not write SH-2 state,
+VDP memory, host pixels, or a guessed menu. A resulting menu/HUD/viewport claim
+still requires the corresponding source identity and VDP1/VDP2 consumer
+artifact.
 
 ## Artifact families
 

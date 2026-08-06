@@ -57941,6 +57941,10 @@ alcove runtime and archive-media tests passed (4/4).
   authentic intro imagery after the input window. Menu, HUD, viewport and
   PRS3/SLEV/SAL/SDDRVS semantic admission remain blocked pending a proved
   transition and source-owned consumer bindings.
+- ✅ Extended the operator route with the Saturn gamepad A-bit mask (`0x20`)
+  and combined START+A mask (`0x30`); launcher, patch dry-run and relinked
+  external binary checks pass. No menu claim was made from the frame-7500
+  intro capture.
 # DM2 PC-9821 catalog/hash-pair correction (2026-08-07)
 
 - ✅ Added the authenticated retail `pc9821-ja` DM2 version to the launcher

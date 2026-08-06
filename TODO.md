@@ -245,11 +245,12 @@
   import or a PRS3 decoder proof.
 - **NEXUS-SATURN-STARTUP-INPUT-CAPTURE:** The external Saturn producer now
   supports a bounded, active-low START pulse through Mednafen SMPC at an
-  operator-selected emulated frame. Initial E-region tests at frame 1000 and
-  4500 did not yet reach a menu; the captured framebuffer remains authentic
-  intro imagery. Do not infer that START is the correct skip control or admit
-  menu state until a post-input screen transition and source-owned menu
-  consumer are both observed.
+  operator-selected emulated frame, with an explicit mask for START (`0x10`),
+  A (`0x20`) or both (`0x30`). Initial E-region tests at frame 1000, 4500 and
+  6500 did not yet reach a menu; the captured framebuffer remains authentic
+  intro imagery. Do not infer the correct skip control or admit menu state
+  until a post-input screen transition and source-owned menu consumer are
+  both observed.
 - **NEXUS-MENU-CAPTURE-GATE:** TITLE.CG timing must remain on the title screen
   until the real MENU.BPK capture route is joined. A source-owned runtime
   capture is still required before menu, HUD, and viewport composition can be

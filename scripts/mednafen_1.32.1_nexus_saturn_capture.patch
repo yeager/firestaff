@@ -78,21 +78,25 @@
 @@ -27,0 +28,2 @@
 +#include <stdlib.h>
 +#include <stdint.h>
-@@ -233,0 +236,5 @@
+@@ -233,0 +236,6 @@
 +static uint64_t FirestaffInputFrame;
 +static uint64_t FirestaffPressStartFrame;
 +static uint64_t FirestaffPressStartLength = 1;
++static uint16_t FirestaffPressButtonMask = 0x10;
 +static bool FirestaffInputConfigured;
 +
-@@ -683,0 +684,21 @@
+@@ -683,0 +684,24 @@
 +static void FirestaffUpdateCaptureInput(void)
 +{
 + if(!FirestaffInputConfigured)
 + {
 +  const char *frame = getenv("FIRESTAFF_NEXUS_TRACE_PRESS_START_FRAME");
 +  const char *length = getenv("FIRESTAFF_NEXUS_TRACE_PRESS_START_LENGTH");
++  const char *mask = getenv("FIRESTAFF_NEXUS_TRACE_PRESS_BUTTON_MASK");
 +  if(frame && *frame) FirestaffPressStartFrame = strtoull(frame, NULL, 10);
 +  if(length && *length) FirestaffPressStartLength = strtoull(length, NULL, 10);
++  if(mask && *mask) FirestaffPressButtonMask = (uint16_t)strtoull(mask, NULL, 0);
++  FirestaffPressButtonMask &= 0x0fffU;
 +  if(!FirestaffPressStartLength) FirestaffPressStartLength = 1;
 +  FirestaffInputConfigured = true;
 + }
@@ -100,11 +104,11 @@
 + {
 +  const uint64_t end = FirestaffPressStartFrame + FirestaffPressStartLength;
 +  if(FirestaffInputFrame >= FirestaffPressStartFrame && FirestaffInputFrame < end)
-+   VirtualPortsDPtr[0][0] &= (uint8)~0x10;
++   VirtualPortsDPtr[0][0] &= (uint8)~FirestaffPressButtonMask;
 +  else if(FirestaffInputFrame == end)
-+   VirtualPortsDPtr[0][0] |= 0x10;
++   VirtualPortsDPtr[0][0] |= (uint8)FirestaffPressButtonMask;
 + }
 + FirestaffInputFrame++;
 +}
-@@ -685,0 +706,1 @@
+@@ -744,0 +776,1 @@
 + FirestaffUpdateCaptureInput();
