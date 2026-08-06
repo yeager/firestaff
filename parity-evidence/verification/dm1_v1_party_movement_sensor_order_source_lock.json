@@ -11,7 +11,7 @@
     "F0276 floor-party add/remove traversal/effect order: MOVESENS.C:1553-1793",
     "successful movement reaches F0267 only after block checks: CLIKMENU.C:269-345",
     "queued C003-C006 move dispatch: COMMAND.C:2045-2155",
-    "Firestaff enter/leave walker preserves sensor-list order: memory_sensor_execution_pc34_compat.c:427-487",
+    "Firestaff enter/leave walker preserves sensor-list order: memory_sensor_execution_pc34_compat.c:426-486",
     "probe successful move leave/enter order: test_dm1_v1_command_movement_sensor_timing_pc34_compat.c:267-284"
   ]
 }

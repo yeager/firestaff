@@ -8,7 +8,7 @@
       "id": "dm1_v1_command_movement_sensor_timing_source_lock",
       "returncode": 0,
       "summary": [
-        "dm1_v1_command_movement_sensor_timing_source_lock=pass citations=38 output=/Users/bosse/Documents/Firestaff-system/parity-evidence/verification/dm1_v1_command_movement_sensor_timing_source_lock.json"
+        "dm1_v1_command_movement_sensor_timing_source_lock=pass citations=38 output=/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/dm1_v1_command_movement_sensor_timing_source_lock.json"
       ]
     },
     {
@@ -19,7 +19,7 @@
       "id": "dm1_v1_party_movement_sensor_order_source_lock",
       "returncode": 0,
       "summary": [
-        "dm1_v1_party_movement_sensor_order_source_lock=pass citations=9 output=/Users/bosse/Documents/Firestaff-system/parity-evidence/verification/dm1_v1_party_movement_sensor_order_source_lock.json"
+        "dm1_v1_party_movement_sensor_order_source_lock=pass citations=9 output=/Volumes/Extern-disk/firestaff-claude/parity-evidence/verification/dm1_v1_party_movement_sensor_order_source_lock.json"
       ]
     },
     {
@@ -70,7 +70,7 @@
     },
     {
       "claim": "empty-party exception and group block seam.",
-      "source": "src/memory/memory_movement_pc34_compat.c:849"
+      "source": "src/memory/memory_movement_pc34_compat.c:848"
     },
     {
       "claim": "stamina/stairs/group/input-discard/timing command seam.",
@@ -82,7 +82,7 @@
     },
     {
       "claim": "source-ordered enter/leave sensor walking.",
-      "source": "src/memory/memory_sensor_execution_pc34_compat.c:427"
+      "source": "src/memory/memory_sensor_execution_pc34_compat.c:426"
     },
     {
       "claim": "covers queue gates, tile blockers, pits, and empty-party group bug.",
@@ -93,7 +93,7 @@
       "source": "tests/test_dm1_v1_command_movement_sensor_timing_pc34_compat.c"
     }
   ],
-  "generatedAt": "2026-08-05T22:09:45.853377+00:00",
+  "generatedAt": "2026-08-05T09:57:39.515101+00:00",
   "lane": "Lane A movement/stairs/group-collision/timing only; no viewport/pass435 dependency",
   "redmcsbEvidence": [
     {
