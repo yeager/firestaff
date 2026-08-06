@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-HUD-SATURN-DISPATCH-CAPTURE:** The real DM.BIN hit-rectangle
+  parser now rejects both inverted/out-of-range rectangles and signed
+  negative origins. Remaining work is still the Saturn input/VDP consumer
+  capture that binds each admitted region to its command semantics.
+
 - **NEXUS-SAL-MAP-DISPATCH-CAPTURE:** Retail `SNDLEV##.MAP` byte-zero
   records are now admitted independently of the legacy 24-byte fixture
   grammar, and the real 16-level corpus remains bounded and source-backed.
@@ -97,12 +102,15 @@
   placement, and runtime HUD/menu binding through an instrumented Saturn or
   Mednafen capture. Keep FACE/MENU/STABG/viewport presentation blocked until
   the capture binds bytes, palette, command order, and runtime state together;
-  do not replace the missing BIOS/capture artifact with synthetic data.
+  do not replace the missing capture artifact with synthetic data.
   2026-08-06: the real Nexus corpus also contains the complete merged English
   cue/ISO with Track 1 plus eight audio tracks. Mednafen identifies it as
   `T-9111G`/`DUNGEON MASTER NEXUS` and reaches the Saturn module; capture is
-  now blocked specifically by the missing European/Japan Saturn BIOS and not
-  by missing disc media.
+  now runs with the supplied European 1.00 BIOS (SHA-256
+  `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`) and
+  reaches the Saturn module. Remaining work is the instrumented VDP1/VDP2,
+  CRAM and runtime-state capture; stock Mednafen output alone is not enough
+  to promote pixels or command ownership.
   2026-08-05: bounded DMWeb PRS3 byte decoding is verified against all 20
   real FACE.BIN frames; this only advances diagnostics. Startup FACE, MENU,
   STABG, HUD, and viewport presentation remain blocked pending Saturn capture.

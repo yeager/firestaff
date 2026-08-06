@@ -18,6 +18,21 @@
   `GRAPHICS.DAT` command/palette receipts and their fail-closed M11 consumers.
   No production fallback was introduced.
 
+- ✅ 2026-08-06 Nexus European BIOS capture preflight: the supplied
+  `Sega Saturn BIOS (E) (1.00).bin` was verified as 524,288 bytes with
+  SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`.
+  Mednafen 1.32.1 accepts it with forced European region settings and boots
+  the authentic merged English Nexus cue/ISO to `T-9111G` / `DUNGEON MASTER
+  NEXUS`. The BIOS remains temporary and untracked; no pixels or VDP1/VDP2
+  ownership are promoted from the stock capture.
+
+- ✅ 2026-08-06 Nexus HUD rectangle envelope hardening: the DM.BIN-derived
+  40-entry parser now rejects signed negative origins as well as inverted or
+  out-of-screen corners. The real 320x224 table remains unchanged and the
+  regression checks the viewport/compass/movement-pad coordinates plus both
+  malformed classes. Verification: `test_nexus_v1_hud_hit_rects` passes with
+  the real `/Users/bosse/.firestaff/data/nexus/DM.BIN`; no game data added.
+
 - ✅ 2026-08-06 Nexus retail MAP minimum-size admission: `SNDLEV##.MAP`
   parsing now recognizes DMWeb's byte-zero retail record table even when the
   file contains only one eight-byte record and its `FF FF` terminator; the

@@ -57,6 +57,18 @@ int main(void)
         fprintf(stderr, "FAIL: out-of-screen HUD rectangle was accepted\n");
         return 1;
     }
+    /* A signed negative origin is also outside the Saturn display envelope;
+     * it must not pass merely because the far corner is in range. */
+    data[NEXUS_HIT_RECT_DM_BIN_OFFSET + 4U] = 0x00U;
+    data[NEXUS_HIT_RECT_DM_BIN_OFFSET + 5U] = 0x0aU;
+    data[NEXUS_HIT_RECT_DM_BIN_OFFSET + 0U] = 0xffU;
+    data[NEXUS_HIT_RECT_DM_BIN_OFFSET + 1U] = 0xffU;
+    if (nexus_v1_hud_hit_rects_parse_dm_bin(
+            data, (size_t)size, rects, NEXUS_HIT_RECT_COUNT, &count) == 0) {
+        free(data);
+        fprintf(stderr, "FAIL: negative-origin HUD rectangle was accepted\n");
+        return 1;
+    }
     free(data);
     puts("PASS: real DM.BIN HUD hit rectangles parsed (40 entries)");
     return 0;
