@@ -8,6 +8,8 @@ typedef struct {
     int raw_track02_usable;
     int end_variant_usable;
     int track19_usable;
+    /* Track 19 metadata is authenticated independently of runtime use. */
+    int track19_metadata_verified;
     int startup_eligible;
     int visual_fallback_allowed;
     int bitmap_route_usable;

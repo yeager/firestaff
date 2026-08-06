@@ -4,9 +4,7 @@ Theron_V1MediaInventoryReceipt theron_v1_media_inventory(
     const Theron_V1_TrackMediaAvailabilityReceipt *raw,
     const Theron_V1Track19InventoryReceipt *track19) {
     Theron_V1MediaInventoryReceipt receipt = {
-        0, 0, 0, 0,
-        0, 0, 0, 0,
-        "raw_track02_missing"
+        .diagnostic = "raw_track02_missing"
     };
 
     if (raw && raw->availability == THERON_V1_TRACK_MEDIA_RAW_READY &&
@@ -30,6 +28,13 @@ Theron_V1MediaInventoryReceipt theron_v1_media_inventory(
 
     if (track19 && track19->valid) {
         receipt.track19_usable = 0;
+        receipt.track19_metadata_verified =
+            track19->item_name_table_verified &&
+            track19->level_label_table_verified &&
+            track19->item_property_table_verified &&
+            track19->opaque_record_window_verified &&
+            track19->startup_level_envelope_verified &&
+            track19->source_md5[0] != '\0';
     }
     return receipt;
 }

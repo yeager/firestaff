@@ -15,7 +15,13 @@ int main(void) {
         .valid = 1,
         .sector_aligned = 1,
         .container_format_unproven = 1,
-        .variant = "us"
+        .variant = "us",
+        .item_name_table_verified = 1,
+        .level_label_table_verified = 1,
+        .item_property_table_verified = 1,
+        .opaque_record_window_verified = 1,
+        .startup_level_envelope_verified = 1,
+        .source_md5 = "51b40a17b92a30339957ba564aa0015c"
     };
     Theron_V1MediaInventoryReceipt a =
         theron_v1_media_inventory(&end_variant, &track19);
@@ -28,9 +34,11 @@ int main(void) {
         !a.level_route_usable &&
         !a.object_route_usable &&
         a.track19_usable == 0 &&
+        a.track19_metadata_verified == 1 &&
         strcmp(a.diagnostic, "raw_track02_iso_end_variant") == 0 &&
         b.startup_eligible &&
         !b.bitmap_route_usable &&
         !b.level_route_usable &&
-        !b.object_route_usable ? 0 : 1;
+        !b.object_route_usable &&
+        b.track19_metadata_verified == 1 ? 0 : 1;
 }
