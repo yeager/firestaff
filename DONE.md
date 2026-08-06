@@ -1,3 +1,9 @@
+# DM1 mirror C545 drop-panel-live synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C545/C040 fixture from M10 and made its
+  regression compile the source directly. It loads no original DM1 data and
+  has no M11/runtime caller.
+
 # DM2 SPELL_DEF-korpus med vald källa (2026-08-07)
 
 - ✅ SPELL_DEF-regressionens PC-DOS-resultat är nu ett uttryckligt källfaktum:

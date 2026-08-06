@@ -5019,6 +5019,12 @@ list(REMOVE_ITEM M10_SOURCES
 # test matrix compiles it directly rather than exposing it through M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_full_chain_pc34_compat.c")
+# `dm1_v1_mirror_candidate_c545_drop_while_panel_live_pc34_compat.c` is a
+# contract-only C545/C040 fixture with fabricated party, chest, panel and
+# Thing state. It loads no original DM1 data and has no M11/runtime caller;
+# its explicit regression compiles the fixture directly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c545_drop_while_panel_live_pc34_compat.c")
 # `dm1_v1_mirror_candidate_close_while_resurrect_pending_with_inventory_pickup_pc34_compat.c`
 # is a deterministic C040/C537 scenario fixture with synthetic champion,
 # hand and chest-chain state. It has no original DM1 data input or M11/runtime
@@ -54376,6 +54382,10 @@ target_include_directories(test_dm1_v1_mirror_candidate_scroll_pickup_non_leader
     ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1)
 target_link_libraries(test_dm1_v1_mirror_candidate_scroll_pickup_non_leader_panel_live_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_scroll_pickup_non_leader_panel_live_pc34_compat COMMAND test_dm1_v1_mirror_candidate_scroll_pickup_non_leader_panel_live_pc34_compat)
+if(TARGET test_dm1_v1_mirror_candidate_c545_drop_while_panel_live_pc34_compat)
+    add_test(NAME test_dm1_v1_mirror_candidate_c545_drop_while_panel_live_pc34_compat
+        COMMAND test_dm1_v1_mirror_candidate_c545_drop_while_panel_live_pc34_compat)
+endif()
 if(TARGET test_dm1_v1_mirror_candidate_close_while_c045_pending_pc34_compat)
     add_test(NAME test_dm1_v1_mirror_candidate_close_while_c045_pending_pc34_compat
         COMMAND test_dm1_v1_mirror_candidate_close_while_c045_pending_pc34_compat)
