@@ -4,6 +4,7 @@
 #include <stddef.h>
 #include <stdint.h>
 
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -37,11 +38,23 @@ typedef struct {
     uint32_t total_duration_vbl;
 } CSB_V1_AmigaTitlSchedule;
 
+/* ReDMCSB ANIM.C F1181 PL_DATA: one 16-bit colour count followed by indexed
+ * 8-bit RGB components. Values are the original four-bit Amiga components. */
+typedef struct {
+    uint8_t rgb4[16][3];
+    uint16_t color_count;
+} CSB_V1_AmigaTitlPalette;
+
 /* Decode the strict AN/PL/EN/DL.../DO record envelope and its real VBL
  * schedule.  Image and delta payloads stay opaque here; their decompression
  * belongs to the renderer once the IMGA delta operation is source-locked. */
 int csb_v1_amiga_titl_dat_decode(const uint8_t *data, size_t size,
                                  CSB_V1_AmigaTitlSchedule *out);
+
+/* Decode TITL.DAT's real PL step. The caller receives only the encoded
+ * source components; applying them to a display remains the renderer's job. */
+int csb_v1_amiga_titl_dat_decode_palette(const uint8_t *data, size_t size,
+                                         CSB_V1_AmigaTitlPalette *out);
 
 #ifdef __cplusplus
 }

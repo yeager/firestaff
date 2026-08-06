@@ -33,6 +33,7 @@ static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
 int main(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_AMIGA_TITL");
+    CSB_V1_AmigaTitlPalette palette;
     CSB_V1_AmigaTitlSchedule schedule;
     uint8_t *data;
     size_t size;
@@ -42,7 +43,8 @@ int main(void)
         return 77;
     }
     if (read_file(path, &data, &size) != 0 ||
-        csb_v1_amiga_titl_dat_decode(data, size, &schedule) != 0) {
+        csb_v1_amiga_titl_dat_decode(data, size, &schedule) != 0 ||
+        csb_v1_amiga_titl_dat_decode_palette(data, size, &palette) != 0) {
         free(data);
         fputs("FAIL: cannot decode real Amiga TITL.DAT\n", stderr);
         return 1;
@@ -57,6 +59,13 @@ int main(void)
         schedule.delta_durations_vbl[30] != 282u ||
         schedule.total_duration_vbl != 606u) {
         fputs("FAIL: unexpected Amiga TITL.DAT schedule\n", stderr);
+        return 1;
+    }
+    if (palette.color_count != 16u || palette.rgb4[0][0] != 0u ||
+        palette.rgb4[0][1] != 0u || palette.rgb4[0][2] != 0u ||
+        palette.rgb4[1][0] != 15u || palette.rgb4[1][1] != 0u ||
+        palette.rgb4[1][2] != 0u) {
+        fputs("FAIL: unexpected Amiga TITL.DAT palette\n", stderr);
         return 1;
     }
     puts("ok: real Amiga TITL.DAT has 32 title frames over 606 VBL");

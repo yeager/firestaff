@@ -1591,6 +1591,11 @@
   **2026-07-31 update:** C407-regressionen mappar nu probernas 320×200- och
   960×600-koordinater mot den begärda logiska ytan i stället för dummy-SDL:s
   gamla 1024×768-fönster.
+  **2026-08-06 update:** Amiga `TITL.DAT` now retains its source `PL` palette
+  as sixteen indexed 4-bit RGB components and verifies it against real media.
+  ReDMCSB `ANIM.C` F1181 owns that read. The `EN` base image and `DL` delta
+  expansion remain blocked on the distinct Amiga GRF1 decoder; do not route
+  them through the PC IMG2/IMG3 decoder or fill the unexpanded pixels.
 
 - **DM2-M11-GAME-LOAD-ORIGINAL-HANDOFF:** M11 now keeps New Game at the
   source `SHOW_MENU_SCREEN` → `GAME_LOAD` boundary rather than constructing

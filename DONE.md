@@ -13,6 +13,13 @@
   and VDP1 presentation remain blocked. `firestaff_nexus_v1_dgn_material_corpus_probe`
   passes against `/Users/bosse/.firestaff/data/nexus`.
 
+- ✅ 2026-08-06 CSB Amiga TITL.DAT palette receipt: the strict ANIM container
+  reader now follows ReDMCSB `ANIM.C` F1179's ByteCount boundary and decodes
+  the real `PL` step exactly as F1181's sixteen indexed Amiga 4-bit RGB
+  components. The opt-in real-media test verifies the 32-frame/606-VBL title
+  schedule and original palette values. `EN`/`DL` pixels remain fail-closed
+  until the separate Amiga GRF1 expansion route is implemented.
+
 - ✅ 2026-08-06 Nexus startup FONT256/TEXTTABL receipts: the real DM.BIN
   startup regression now verifies the literal-pool pointer at `0x18BF4` to
   retail `FONT256.S2D` and the adjacent `TEXTTABL` marker at `0x294C0`.

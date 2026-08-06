@@ -34,9 +34,10 @@ static int csb_v1_amiga_titl_take_record(const uint8_t *data, size_t size,
     }
     *payload = data + at;
     *payload_size = length;
-    /* Each payload is followed by an opaque BE16 trailer.  In particular,
-     * it is not the Greatstone display-order number, so retain it as part
-     * of the container envelope rather than inventing a meaning for it. */
+    /* ANIMSTEP's ByteCount starts after its attribute word. The two final
+     * bytes below therefore complete that body; they are not a separate
+     * record trailer. ReDMCSB ANIM.C F1179 advances by sizeof(ANIMSTEP) +
+     * ByteCount, exactly to this next record boundary. */
     *offset = at + length + 2u;
     return 0;
 }
@@ -98,5 +99,44 @@ int csb_v1_amiga_titl_dat_decode(const uint8_t *data, size_t size,
     out->bit_depth = CSB_V1_AMIGA_TITL_BIT_DEPTH;
     out->delta_count = CSB_V1_AMIGA_TITL_DELTA_COUNT;
     out->total_duration_vbl = total;
+    return 0;
+}
+
+int csb_v1_amiga_titl_dat_decode_palette(const uint8_t *data, size_t size,
+                                         CSB_V1_AmigaTitlPalette *out)
+{
+    const uint8_t *payload;
+    uint16_t payload_size;
+    uint16_t color_count;
+    uint16_t index;
+    size_t offset = 0u;
+
+    if (!data || !out ||
+        csb_v1_amiga_titl_take_record(data, size, &offset,
+                                      'A', 'N', &payload, &payload_size) != 0 ||
+        payload_size != 8u ||
+        csb_v1_amiga_titl_take_record(data, size, &offset,
+                                      'P', 'L', &payload, &payload_size) != 0 ||
+        payload_size < 2u || payload_size > 66u) {
+        return -1;
+    }
+    /* ReDMCSB ANIM.C F1181 sees PL_DATA at the byte after Attribute. Its
+     * ByteCount body includes the final two bytes immediately before EN. */
+    color_count = csb_v1_rd16be(payload + 2u);
+    if (color_count > 16u || (size_t)color_count * 4u + 2u != payload_size) {
+        return -1;
+    }
+    memset(out, 0, sizeof(*out));
+    for (index = 0u; index < color_count; ++index) {
+        const uint8_t *color = payload + 4u + (size_t)index * 4u;
+        if (color[0] >= 16u || color[1] >= 16u || color[2] >= 16u ||
+            color[3] >= 16u) {
+            return -1;
+        }
+        out->rgb4[color[0]][0] = color[1];
+        out->rgb4[color[0]][1] = color[2];
+        out->rgb4[color[0]][2] = color[3];
+    }
+    out->color_count = color_count;
     return 0;
 }
