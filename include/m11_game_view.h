@@ -1551,6 +1551,7 @@ typedef struct {
     CSB_V1_FmtownsSwitchReceipt csbFmtownsSwitchReceipt;
     uint8_t csbFmtownsSwitchPixels[CSB_FMTOWNS_SWITCH_PIXELS];
     CSB_V1_FmtownsSwitchLanguage csbFmtownsSwitchLanguage;
+    CSB_V1_FmtownsSwitchLanguage csbFmtownsSwitchReturnLanguage;
     uint16_t csbFmtownsSwitchVblanksRemaining;
     int csbFmtownsSwitchBound;
     /* Atari ST ANIMATE.SCR runs at 50 VBlanks/sec while the shared CSB

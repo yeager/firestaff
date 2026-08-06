@@ -6180,7 +6180,8 @@ static void m11_csb_release_fmtowns_switch(M11_GameViewState *state)
     state->csbFmtownsSwitchBound = 0;
 }
 
-static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state)
+static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state,
+                                       CSB_V1_FmtownsSwitchLanguage language)
 {
     const CSB_V1_BootProfile *profile;
     char path[sizeof(((CSB_V1_BootProfile *)0)->asset_root) + 20u];
@@ -6219,7 +6220,7 @@ static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state)
     state->csbFmtownsSwitchByteCount = (size_t)file_size;
     /* AUTOEXEC.BAT starts SWITCHTW JAPAN. SWITCH.C waits sixty F0693
      * VBlanks, flips the initial selector, and then expands G4167. */
-    state->csbFmtownsSwitchLanguage = CSB_FMTOWNS_SWITCH_JAPANESE;
+    state->csbFmtownsSwitchLanguage = language;
     state->csbFmtownsSwitchVblanksRemaining = 60u;
     state->csbFmtownsSwitchBound = 1;
     return 1;
@@ -6266,6 +6267,9 @@ static void m11_csb_advance_fmtowns_switch(M11_GameViewState *state)
     }
 }
 
+static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
+                                      const char *animation_name);
+
 static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
     M11_GameViewState *state, int x, int y, int button_mask)
 {
@@ -6292,14 +6296,22 @@ static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
         state->csbFmtownsSwitchVblanksRemaining = 60u;
         memset(state->csbFmtownsSwitchPixels, 0,
                sizeof(state->csbFmtownsSwitchPixels));
+    } else if (receipt.action == CSB_FMTOWNS_SWITCH_ACTION_STORY) {
+        /* AUTOEXEC.BAT invokes ANIMTW STORY.ANM and returns to the same
+         * JAPANLOOP/USALOOP that selected this exit status. */
+        state->csbFmtownsSwitchReturnLanguage = state->csbFmtownsSwitchLanguage;
+        if (!m11_csb_bind_fmtowns_title(state, "STORY.ANM")) {
+            return M11_GAME_INPUT_IGNORED;
+        }
     }
-    /* Story, utility, and game leave SWITCHTW through AUTOEXEC.BAT. Keep
+    /* Utility and game leave SWITCHTW through AUTOEXEC.BAT. Keep
      * their source exit receipts in the media layer, but do not misroute
      * them into a PC34 startup transaction before their own handoffs exist. */
     return M11_GAME_INPUT_REDRAW;
 }
 
-static int m11_csb_bind_fmtowns_title(M11_GameViewState *state)
+static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
+                                      const char *animation_name)
 {
     const CSB_V1_BootProfile *profile;
     char path[sizeof(((CSB_V1_BootProfile *)0)->asset_root) + 16u];
@@ -6308,13 +6320,14 @@ static int m11_csb_bind_fmtowns_title(M11_GameViewState *state)
     size_t bytes_read;
     int step_result;
 
-    if (!state || !state->csbBootProfile) return 0;
+    if (!state || !state->csbBootProfile || !animation_name) return 0;
     profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
     if (!m11_csb_is_fmtowns_profile(profile) || !profile->asset_root[0])
         return 0;
     m11_csb_release_fmtowns_title(state);
     m11_csb_release_fmtowns_switch(state);
-    if (snprintf(path, sizeof(path), "%s/TITLE.ANM", profile->asset_root) < 0 ||
+    if (snprintf(path, sizeof(path), "%s/%s", profile->asset_root,
+                 animation_name) < 0 ||
         strlen(path) >= sizeof(path)) return 0;
     file = fopen(path, "rb");
     if (!file || fseek(file, 0, SEEK_END) != 0 ||
@@ -6406,7 +6419,8 @@ static void m11_csb_advance_fmtowns_title(M11_GameViewState *state,
             /* ANIMTOWN.C returns after F2275. The retail AUTOEXEC.BAT then
              * executes SWITCHTW JAPAN; it does not enter PC34 TITLE.C or
              * chain directly into Story. */
-            if (m11_csb_bind_fmtowns_switch(state)) {
+            if (m11_csb_bind_fmtowns_switch(
+                    state, state->csbFmtownsSwitchReturnLanguage)) {
                 m11_csb_release_fmtowns_title(state);
             } else {
                 state->csbFmtownsTitleFinished = 1;
@@ -7437,7 +7451,8 @@ static int m11_csb_apply_boot_runtime_receipt(
             state, &receipt->receipts.init_state);
         state->csbState.startup_title_active = 1;
         state->csbState.startup_entrance_active = 0;
-        if (m11_csb_bind_fmtowns_title(state)) return 1;
+        state->csbFmtownsSwitchReturnLanguage = CSB_FMTOWNS_SWITCH_JAPANESE;
+        if (m11_csb_bind_fmtowns_title(state, "TITLE.ANM")) return 1;
         m11_set_status(state, "CSB FM TOWNS", "TITLE.ANM DECODE FAILED");
         return 0;
     }
