@@ -23,6 +23,8 @@ static int mock_cancel_calls = 0;
 static int mock_alloc_caii_calls = 0;
 static int16_t mock_last_schedule_delay = 0;
 static int32_t mock_creature_animation_frame_bit14 = 0;
+static uint8_t mock_record_bytes[16];
+static uint16_t mock_record_handle = 0xffffu;
 
 /* ========================================================================
  * Mock callbacks
@@ -50,8 +52,8 @@ static int16_t mock_get_next_record_link(void *ctx, uint16_t record) {
 }
 
 static void *mock_get_address_of_record(void *ctx, uint16_t record) {
-    (void)ctx; (void)record;
-    return NULL;
+    (void)ctx;
+    return record == mock_record_handle ? mock_record_bytes : NULL;
 }
 
 static int16_t mock_get_wall_tile_anyitem_record(void *ctx, int16_t x, int16_t y) {
@@ -296,6 +298,8 @@ static void reset_mock_state(void) {
     mock_alloc_caii_calls = 0;
     mock_last_schedule_delay = 0;
     mock_creature_animation_frame_bit14 = 0;
+    memset(mock_record_bytes, 0, sizeof(mock_record_bytes));
+    mock_record_handle = 0xffffu;
 }
 
 /* ========================================================================
@@ -601,6 +605,22 @@ TEST(0648_different_map) {
     assert(mock_current_map == 3); /* changed */
 }
 
+/* ---- 09b9 DB4 record link predicate ---- */
+
+TEST(09b9_compares_source_word_at_offset_8) {
+    DM2_V1_1c9aCallbacks cb = make_callbacks();
+    uint16_t linked_record = 0x4a31u;
+
+    memset(mock_record_bytes, 0, sizeof(mock_record_bytes));
+    memcpy(mock_record_bytes + 8, &linked_record, sizeof(linked_record));
+    mock_record_handle = 0x1234u;
+
+    assert(dm2_v1_1c9a_09b9(&cb, NULL, 0x1234, 0x4a31) == 1);
+    assert(dm2_v1_1c9a_09b9(&cb, NULL, 0x1234, 0x4a30) == 0);
+    assert(dm2_v1_1c9a_09b9(&cb, NULL, 0x1235, 0x4a31) == 0);
+    assert(dm2_v1_1c9a_09b9(&cb, NULL, -1, 0x4a31) == 0);
+}
+
 /* ---- Stub functions return fail-closed ---- */
 
 TEST(creature_go_there_stub) {
@@ -758,6 +778,7 @@ TEST(null_callbacks_all) {
     dm2_v1_1c9a_alloc_caii_to_creature(NULL, NULL, 0, 0, 0);
     dm2_v1_1c9a_0fcb(NULL, NULL, 0);
     dm2_v1_1c9a_0247(NULL, NULL, 0);
+    dm2_v1_1c9a_09b9(NULL, NULL, 0, 0);
     dm2_v1_1c9a_0648(NULL, NULL, 0);
     dm2_v1_1c9a_17c7(NULL, NULL, 0, 0, 0);
     dm2_v1_1c9a_19d4(NULL, NULL, 0, 0, 0, 0);
@@ -825,6 +846,9 @@ int main(void) {
     /* 0648 */
     RUN(0648_same_map);
     RUN(0648_different_map);
+
+    /* 09b9 DB4 record-link predicate */
+    RUN(09b9_compares_source_word_at_offset_8);
 
     /* Stubs */
     RUN(creature_go_there_stub);

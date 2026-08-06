@@ -1035,6 +1035,16 @@ were corrected to stop presenting DM1 provisions as Nexus data.
   `NOT_APPLICABLE_ARCH` rows. No disabled callback/test transcript was
   promoted into a playable DM2 route.
 
+- ✅ 2026-08-06 DM2 c_1c9a callback placeholder removal:
+  `DM2_1c9a_09b9` now implements the exact SKProject
+  `c_1c9a.cpp:5404-5413` DB4 record-link predicate: resolve the low-16-bit
+  record through its owner callback, read source word `+8`, and compare it
+  with the low-16-bit argument. Missing owners remain false. The source is
+  still excluded from the production AI archive until the surrounding
+  DB4/CAII/CCM ownership chain is complete, so this introduces neither an AI
+  fallback nor synthetic creature state. The focused regression passes
+  54/54.
+
 - ✅ 2026-08-06 Nexus WARNING DGT2 production quarantine: removed the direct
   WARNING.BIN M11 presentation/resource callback modules from the
   `firestaff_nexus` production library. They remain explicit real-data test

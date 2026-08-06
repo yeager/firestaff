@@ -442,8 +442,10 @@ int32_t dm2_v1_1c9a_0958(
     int32_t creature_index);
 
 /*
- * DM2_1c9a_09b9 — creature property getter.
- * skproject c_1c9a.cpp:5404-5413
+ * DM2_1c9a_09b9 — creature record-link predicate.
+ * Resolves the low-16-bit DB4 record through get_address_of_record and
+ * returns whether its source word at offset +8 equals property (low 16 bits).
+ * Source: SKProject c_1c9a.cpp:5404-5413.
  */
 int32_t dm2_v1_1c9a_09b9(
     const DM2_V1_1c9aCallbacks *cb, void *ctx,

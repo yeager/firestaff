@@ -771,18 +771,33 @@ int32_t dm2_v1_1c9a_0958(
 }
 
 /* ========================================================================
- * DM2_1c9a_09b9 — creature property getter
- * skproject c_1c9a.cpp:5404-5413
- * Stub: returns 0
+ * DM2_1c9a_09b9 — creature record-link predicate
+ *
+ * SKProject c_1c9a.cpp:5404-5413 resolves the DB4 record addressed by the
+ * low 16 bits of eax, then compares record word +8 with the low 16 bits of
+ * edx.  It is not a generic property getter.  Keep the record ownership in
+ * the callback: this layer must not assume a DB-pool base or fabricate a
+ * missing record.
  * ======================================================================== */
 
 int32_t dm2_v1_1c9a_09b9(
     const DM2_V1_1c9aCallbacks *cb, void *ctx,
     int32_t creature_index, int32_t property)
 {
-    (void)cb; (void)ctx;
-    (void)creature_index; (void)property;
-    return 0;
+    const uint8_t *record;
+    uint16_t linked_record;
+
+    if (!cb || !cb->get_address_of_record || creature_index < 0) {
+        return 0;
+    }
+    record = (const uint8_t *)cb->get_address_of_record(
+        ctx, (uint16_t)creature_index);
+    if (!record) {
+        return 0;
+    }
+    /* c_1c9a.cpp:5410: RG4W == word_at(RG1P, 0x8). */
+    memcpy(&linked_record, record + 8, sizeof(linked_record));
+    return linked_record == (uint16_t)property ? 1 : 0;
 }
 
 /* ========================================================================

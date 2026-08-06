@@ -2319,6 +2319,11 @@
   the active `CREATURES[type].word(0x05)` binding. Keep types 54 and 127
   unavailable for this mounted profile until their original owner is found;
   do not infer either row or revive creature, combat or CCM behaviour.
+  **2026-08-06 callback audit follow-up:** `DM2_1c9a_09b9` is no longer a
+  zero-return placeholder. It now performs SKProject's exact DB4 record
+  word-`+8` comparison through the record-owner callback. This isolated
+  helper does not re-enable the disconnected AI archive or substitute any
+  creature state; the remaining larger c_1c9a bodies stay fail-closed.
 
 - **DM2-LEGACY-GAME-LOOP-DATA-ADMISSION:** `src/engine/firestaff_game_loop.c`
   is not part of the built M11 DM2 launch route and still contains diagnostic
