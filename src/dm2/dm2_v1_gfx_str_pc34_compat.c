@@ -501,6 +501,8 @@ bool dm2_v1_gfx_str_query_gdat_text(DM2_V1_GfxStrState *state,
 {
     uint8_t raw[256];
     char formatted[256];
+    const uint8_t *override_text = NULL;
+    size_t override_size = 0u;
     int32_t len;
     int32_t i;
     uint8_t key;
@@ -509,6 +511,25 @@ bool dm2_v1_gfx_str_query_gdat_text(DM2_V1_GfxStrState *state,
     buf[0] = '\0';
 
     if (state == NULL || cb == NULL) return false;
+
+    /* A companion is source data, not a fallback string: it has already been
+     * MD5-admitted at FM Towns launch and decoded from its original GDAT
+     * entry.  Bypass only the selected GDAT's cipher stage; FORMAT_SKSTR
+     * remains the original common consumer. */
+    if (cb->query_gdat_text_override != NULL) {
+        override_text = cb->query_gdat_text_override(ctx, cls, sub, idx,
+                                                      &override_size);
+        if (override_text != NULL) {
+            if (override_size == 0u || override_size >= sizeof(raw)) {
+                return false;
+            }
+            memcpy(raw, override_text, override_size);
+            raw[override_size] = '\0';
+            dm2_v1_gfx_str_format_skstr((const char *)raw, formatted, cb, ctx);
+            memcpy(buf, formatted, strlen(formatted) + 1u);
+            return true;
+        }
+    }
     if (cb->query_gdat_entry_data_length == NULL) return false;
     if (cb->query_gdat_entry_data_buff == NULL) return false;
 

@@ -20,6 +20,7 @@
 
 #include <stdint.h>
 #include <stdbool.h>
+#include <stddef.h>
 
 #ifdef __cplusplus
 extern "C" {
@@ -113,6 +114,13 @@ typedef struct DM2_V1_GfxStrCallbacks {
                                        int32_t buflen);
     int32_t (*query_gdat_entry_data_length)(void *ctx, int32_t cls,
                                             int32_t sub, int32_t idx);
+    /* Optional, already-decoded text from an explicitly authenticated
+     * companion corpus.  QUERY_GDAT_TEXT still uses the selected platform
+     * GDAT when this returns NULL.  The returned bytes must remain valid for
+     * the call and include no host-generated replacement text. */
+    const uint8_t *(*query_gdat_text_override)(void *ctx, int32_t cls,
+                                               int32_t sub, int32_t idx,
+                                               size_t *out_size);
 
     /* ---- Numeric conversion ---- */
     void (*ltoa10)(void *ctx, int32_t value, char *buf);

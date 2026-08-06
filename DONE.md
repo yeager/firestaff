@@ -52790,6 +52790,11 @@ no-draw/capture-gates är oförändrade.
   lookup, disk extraction or generated translation. The real-media test proves
   the Towns CD stays the runtime owner while `FIGHTER` is read from the
   authenticated PC text corpus.
+- ✅ 2026-08-06 DM2 FM Towns text-query handoff: the source-locked
+  `c_gfx_str.cpp::DM2_QUERY_GDAT_TEXT` bridge can now consume a bounded,
+  already-decoded companion entry before the selected GDAT cipher path. It
+  leaves the native entry untouched when no companion post exists and still
+  runs the shared original `FORMAT_SKSTR` consumer.
 ✅ 2026-08-06 Nexus startup menu text sanitization: production save/chrome
 builders no longer emit hoststrängarna `DUNGEON MASTER NEXUS`, `LOAD GAME`,
 `NEW GAME` eller `LOAD SLOT ##`. Riktig radgeometri och källans slot-identitet

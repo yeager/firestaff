@@ -563,6 +563,37 @@ static void test_draw_uppercase(void)
     printf("  PASS: draw_uppercase\n");
 }
 
+static const uint8_t *mock_query_gdat_text_override(void *ctx,
+                                                     int32_t cls,
+                                                     int32_t sub,
+                                                     int32_t idx,
+                                                     size_t *out_size)
+{
+    static const uint8_t english[] = "FIGHTER";
+    (void)ctx;
+    if (out_size) *out_size = 0u;
+    if (cls != 0x07 || sub != 0x00 || idx != 0x00) return NULL;
+    if (out_size) *out_size = sizeof(english);
+    return english;
+}
+
+static void test_query_gdat_text_authentic_override(void)
+{
+    DM2_V1_GfxStrState state;
+    DM2_V1_GfxStrCallbacks cb;
+    char text[256];
+
+    dm2_v1_gfx_str_init(&state);
+    memset(&cb, 0, sizeof(cb));
+    cb.query_gdat_text_override = mock_query_gdat_text_override;
+    assert(dm2_v1_gfx_str_query_gdat_text(&state, 0x07, 0x00, 0x00,
+                                           text, &cb, NULL));
+    assert(strcmp(text, "FIGHTER") == 0);
+    assert(!dm2_v1_gfx_str_query_gdat_text(&state, 0x07, 0x00, 0x01,
+                                            text, &cb, NULL));
+    printf("  PASS: authenticated GDAT text override\n");
+}
+
 /* ── Main ──────────────────────────────────────────────────────────── */
 
 int main(void)
@@ -594,7 +625,8 @@ int main(void)
     test_draw_vp_str();
     test_print_syserr_text();
     test_draw_uppercase();
+    test_query_gdat_text_authentic_override();
 
-    printf("All 25 tests passed.\n");
+    printf("All 26 tests passed.\n");
     return 0;
 }
