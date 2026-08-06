@@ -1,3 +1,14 @@
+- ✅ 2026-08-06 Theron fresh FIFO-origin capture audit: rebuilt the patched
+  Mednafen binary against real SDL 2.32.8 and ran authenticated US Track 02
+  media. The replay receipt records 161 raw sector spans, 51 SCSI reads, 25
+  CD IRQs and 4,096 main-RAM consumer reads, while the six `$e009` windows
+  contain zero game-owned CD data reads. The two FIFO-origin rows are bounded
+  BIOS/CD-routine reads at `$21e7`/`$21e9`, so no `$2600`, object, level, tile,
+  palette, HUD or viewport semantics were promoted. Cocoa/Quartz input also
+  proved eight host events reached the emulated polling path without changing
+  that result. The capture script now accepts `run` as an alias for physical
+  `return`/Run input.
+
 - ✅ 2026-08-06 DM2 IMG9 real-data decoder dispatch: the active GDAT loader
   no longer treats every non-mode-2 C8/IMG9 payload as mode 3. It delegates to
   the complete SKProject `c_gfx_decode.cpp::decode_img9` port and accepts only

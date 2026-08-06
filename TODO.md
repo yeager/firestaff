@@ -302,6 +302,15 @@
   semantic publication blocked. The existing capture has not been retroactively
   promoted: it must be rerun with this instrumented binary before any `$2600`,
   object, level, tile, palette, HUD, or viewport meaning is admitted.
+  **2026-08-06 fresh capture result:** the rebuilt real-SDL2 binary was run
+  against authenticated US Track 02 (`BIN MD5 f23601102138f87c33025877767ebf76`)
+  and produced 161 raw sector spans, 51 SCSI reads, 25 CD IRQs and 4,096
+  main-RAM consumer reads. The six `$e009` windows still contain zero CD data
+  reads; the two FIFO-origin rows are BIOS/CD-routine reads at `$21e7`/`$21e9`,
+  not game-owned `$2600`. A second held replay and an eight-event Cocoa/Quartz
+  host-input capture reproduce the same absence. Keep the `$2600`/object/level/
+  tile/palette/HUD/viewport gates closed. The capture script now accepts
+  `run` as an alias for its physical `return`/Run key.
 
 - **THERON-V1-VIEWPORT-REAL-DATA:** the old inferred viewport renderer is now
   explicitly fixture-only and excluded from the production archive. Replace
