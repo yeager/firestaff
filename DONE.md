@@ -43,6 +43,17 @@
 - ✅ Verification: `dm1_v1_viewport_d2l_d2r_door_frame_top_edge_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# M11 action-icon hatch dependency repair (2026-08-06)
+
+- ✅ Restored the M11 link boundary after the synthetic disabled-icon audit was
+  removed from M10: M11 now owns its direct, source-cited ACTIDRAW F0386
+  global hatch predicate instead of calling the test-only model. This keeps
+  the synthetic champion rows excluded while preserving the real runtime
+  condition for candidate mirror and party rest.
+- ✅ Verification: `test_dm2_fmtowns_m11_title_real_media` passes from the
+  original FM Towns ZIP plus authenticated English GDAT companion; M11 Phase
+  A passes 24/24.
+
 # DM1 D3C back-wall item synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D3C F0115 back-wall item model from M10. It uses
@@ -55,9 +66,10 @@
 # DM1 champion disabled-icon synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the champion disabled-icon state model from M10. It synthesizes
-  champion rows and G0491 state, reads no original DM1 data, and has no M11
-  call site (only an unused header inclusion); its explicit ReDMCSB regression
-  already compiles the source directly.
+  champion rows and G0491 state, reads no original DM1 data, and its explicit
+  ReDMCSB regression already compiles the source directly. M11 separately
+  owns the narrow source-cited global hatch predicate; it does not link this
+  synthetic model.
 - ✅ Verification: `dm1_v1_champion_panel_disabled_icon_state_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 

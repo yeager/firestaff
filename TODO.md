@@ -35,8 +35,9 @@
 
 - **DM1-CHAMPION-DISABLED-ICON-SYNTHETIC-AUDIT:** The disabled-icon model
   synthesizes champion rows and G0491 state. It reads no original DM1 data;
-  M11 has only an unused header inclusion, not a runtime call. Retain it as
-  an explicit ReDMCSB regression until a source-bound action-icon consumer is
+  retain it as an explicit ReDMCSB regression. M11 owns only the separate,
+  source-cited ACTIDRAW F0386 global hatch predicate; it must not relink this
+  synthetic champion-row model until a source-bound action-icon consumer is
   recovered.
 
 - **DM1-D2C-F0115-FRONT-REAR-SYNTHETIC-AUDIT:** This door-pass helper

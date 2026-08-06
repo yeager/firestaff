@@ -38020,6 +38020,22 @@ static unsigned short m11_get_action_hand_thing(
     return champ->inventory[CHAMPION_SLOT_ACTION_HAND];
 }
 
+/* ReDMCSB ACTIDRAW.C F0386_MENUS_DrawActionIcon:282-286 hatches a
+ * living, non-empty action icon when the mirror candidate or the party-rest
+ * state is active.  The disabled-icon compatibility audit is deliberately
+ * test-only, so M11 owns this small runtime predicate instead of linking a
+ * synthetic champion-row model into the game.  M11 uses -1 for no candidate
+ * and retains 0 as its unselected sentinel; only a positive ordinal maps to
+ * the source candidate condition. */
+static int m11_v1_action_icon_global_hatch(
+    int candidate_mirror_ordinal,
+    int candidate_mirror_panel_active,
+    int party_is_resting)
+{
+    return candidate_mirror_ordinal > 0 ||
+        candidate_mirror_panel_active || party_is_resting;
+}
+
 int M11_GameView_ShouldHatchV1ActionIconCell(
     const M11_GameViewState* state, int championSlot)
 {
@@ -38046,7 +38062,7 @@ int M11_GameView_ShouldHatchV1ActionIconCell(
      * only the source-scheduled remaining-tick mirror, so this paints the
      * current receipt rather than starting another local timer. */
     return state->actionDisabledTicks[championSlot] > 0 ||
-           dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+           m11_v1_action_icon_global_hatch(
                state->candidateMirrorOrdinal,
                state->candidateMirrorPanelActive ? 1 : 0,
                state->resting ? 1 : 0);
@@ -45912,7 +45928,7 @@ static int m11_draw_dm_action_icon_cells(const M11_GameViewState* state,
         iconState.champion_present = champ->present;
         iconState.champion_dead = champ->hp.current == 0;
         iconState.global_hatch =
-            dm1_v1_champion_panel_action_icon_global_hatch_pc34(
+            m11_v1_action_icon_global_hatch(
                 state->candidateMirrorOrdinal,
                 state->candidateMirrorPanelActive ? true : false,
                 state->resting ? true : false);
