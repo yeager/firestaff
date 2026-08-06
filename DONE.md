@@ -36,6 +36,20 @@
   XP calls cannot mutate champion or creature state without a Saturn action
   and writeback capture.
 
+# DM2 static-object Rect14 runtime handoff (2026-08-06)
+
+- ✅ DB5 weapon and DB9 container roots that have passed the source
+  `DRAW_STATIC_OBJECT → DRAW_PUT_DOWN_ITEM → DRAW_ITEM` admission now carry
+  their matched `INTERFACE_GENERAL dt07/0x0A` Rect14 scale, lateral offset,
+  mirror flag and row identities through the runtime into the viewport blit.
+  This replaces the former frame-index interpretation for that route; it does
+  not invent placement when the source joins fail.
+- ✅ The handoff requires the Rect14 field to agree with the original F0/F4
+  selector. `test_dm2_v1_draw_item_source_placement` (107/107),
+  `test_dm2_v1_g1_static_m11_handoff_gate`,
+  `test_dm2_v1_static_object_m11_delivery_plan` and the real PC corpus
+  `test_dm2_v1_g1_static_object_visibility_real_data` (39/39) pass.
+
 # DM1 legacy dungeon bridge ornament fallback removal (2026-08-06)
 
 - ✅ Removed the legacy bridge's fabricated wall/floor ornament ordinal

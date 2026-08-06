@@ -27,8 +27,20 @@ int main(void)
     s.items[0].source_static_object_clip_rect_id=5081;
     s.items[0].source_static_object_raw_gfx256_hash=11; s.items[0].source_static_object_raw_gfx256_receipt_hash=12;
     s.items[0].source_static_object_raw4_hash=13; s.items[0].source_static_object_raw4_receipt_hash=14;
+    /* The static object already joined its source cell/pass/clip route to a
+     * real Rect14 row. Rendering must use that handoff instead of deriving a
+     * placement from the generic item frame. */
+    s.items[0].source_static_object_rect14_applied=1;
+    s.items[0].source_static_object_rect14_scale64=0x20;
+    s.items[0].source_static_object_rect14_lateral_offset=-3;
+    s.items[0].source_static_object_rect14_flip_mirror=1;
+    s.items[0].source_static_object_rect14_row_hash=15;
+    s.items[0].source_static_object_rect14_placement_hash=16;
     dm2_v1_render_items(&s);
-    ok &= s.asset_item_drawn_count==1;
+    ok &= s.asset_item_drawn_count==1 && s.last_item_asset_blit_valid &&
+          s.last_item_asset_blit.dst_rect.w==1 &&
+          s.last_item_asset_blit.dst_rect.h==1 &&
+          s.last_item_asset_blit.flip_mirror==1;
     s.items[0].source_static_object_raw4_hash=99; s.asset_item_drawn_count=0; s.blocked_material_mask=0;
     dm2_v1_render_items(&s); ok &= s.asset_item_drawn_count==0;
     s.items[0].source_gdat_field=0xf9; s.items[0].source_static_object_raw4_hash=13; s.asset_item_drawn_count=0; s.blocked_material_mask=0;

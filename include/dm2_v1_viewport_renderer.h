@@ -1340,6 +1340,16 @@ typedef struct {
     uint32_t source_static_object_raw_gfx256_receipt_hash;
     uint32_t source_static_object_raw4_hash;
     uint32_t source_static_object_raw4_receipt_hash;
+    /* A matched INTERFACE_GENERAL Rect14 row is carried from the exact
+     * DRAW_STATIC_OBJECT plan that admitted this DB5/DB9 root. These fields
+     * are separate from the generic frame-index Rect14 route: static objects
+     * are selected by source cell/pass/clip geometry, not a host frame. */
+    uint8_t source_static_object_rect14_applied;
+    int16_t source_static_object_rect14_scale64;
+    int16_t source_static_object_rect14_lateral_offset;
+    uint8_t source_static_object_rect14_flip_mirror;
+    uint32_t source_static_object_rect14_row_hash;
+    uint32_t source_static_object_rect14_placement_hash;
     /* Record-owned GDAT dtImageOffset for the DRAW_ITEM image field (the
      * signed high byte shifts x, the signed low byte shifts y).
      * Source: SKWIN/SkWinCore.cpp DRAW_ITEM lines 23973-23977. */

@@ -2938,15 +2938,39 @@ dm2_runtime_g1_static_object_material_for_object(
     return NULL;
 }
 
+static const DM2_V1_StaticObjectSourcePlan *
+dm2_runtime_g1_static_object_source_plan_for_object(
+    const DM2_V1_RuntimeState *rt, uint16_t object_id)
+{
+    int k;
+
+    if (!rt || !object_id) return NULL;
+    for (k = 0; k < rt->g1_static_object_material_count && k < 48; ++k) {
+        const DM2_V1_G1StaticObjectMaterialReceipt *material =
+            &rt->g1_static_object_materials[k];
+        const DM2_V1_StaticObjectSourcePlan *plan =
+            &rt->g1_static_object_source_plans[k];
+        if (material->selector.valid &&
+            material->selector.object_id == object_id &&
+            plan->source_cell >= 0 && plan->source_pass >= 0) {
+            return plan;
+        }
+    }
+    return NULL;
+}
+
 static void dm2_runtime_admit_static_object_draw_item_material(
     const DM2_V1_RuntimeState *rt, DM2_ItemSprite *dst)
 {
     const DM2_V1_G1StaticObjectMaterialReceipt *material;
+    const DM2_V1_StaticObjectSourcePlan *plan;
 
     if (!rt || !dst) return;
     material = dm2_runtime_g1_static_object_material_for_object(
         rt, dst->object_id);
-    if (!material) return;
+    plan = dm2_runtime_g1_static_object_source_plan_for_object(
+        rt, dst->object_id);
+    if (!material || !plan) return;
     /* The record has an admitted static-object delivery plan, so the sprite
      * may carry the DRAW_ITEM image field (F0/F4, never the F9 automap chip),
      * the expanded-clip rect identity, the raw GDAT/clip receipt hashes and
@@ -2961,6 +2985,24 @@ static void dm2_runtime_admit_static_object_draw_item_material(
     dst->source_static_object_raw4_receipt_hash =
         material->raw4_receipt_hash;
     dst->source_static_object_image_offset = material->selector.image_offset;
+    /* DRAW_ITEM's optional Rect14 lookup is part of the same source plan as
+     * this cell/pass/clip proof. Do not reinterpret a host frame index here.
+     * If the GDAT field selectors disagree, retain the independently proven
+     * non-Rect14 route rather than joining unrelated original records. */
+    if (plan->rect14_applied && plan->rect14_scale64 > 0 &&
+        plan->rect14_row_hash != 0u && plan->rect14_placement_hash != 0u &&
+        plan->rect14_image_field == material->selector.image_field) {
+        dst->source_static_object_rect14_applied = 1u;
+        dst->source_static_object_rect14_scale64 =
+            (int16_t)plan->rect14_scale64;
+        dst->source_static_object_rect14_lateral_offset =
+            (int16_t)plan->rect14_lateral_offset;
+        dst->source_static_object_rect14_flip_mirror =
+            (uint8_t)plan->rect14_flip_mirror;
+        dst->source_static_object_rect14_row_hash = plan->rect14_row_hash;
+        dst->source_static_object_rect14_placement_hash =
+            plan->rect14_placement_hash;
+    }
 }
 
 static void dm2_runtime_populate_g1_weapon_map_chip_items(

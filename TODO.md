@@ -23424,6 +23424,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   2026-08-06: Greatstone's PC English catalogue now proves decoded pixels for
   all 4,031 IMG3/IMG9/IMG11 rasters. FNT1 0203 remains a genuine font record
   pending source font rasterisation; do not substitute generated glyphs.
+  2026-08-06: an admitted DB5/DB9 root now carries the matching
+  `INTERFACE_GENERAL dt07/0x0A` Rect14 placement from its verified
+  `DRAW_STATIC_OBJECT` cell/pass/clip plan into the final item blit. Source
+  scale, lateral offset and mirror flag now replace the former host
+  frame-index lookup. A mismatched Rect14 image field stays outside that join;
+  unsupported item classes and missing source plans remain no-draw.
   - 2026-07-16 update: `DRAW_STATIC_OBJECT -> DRAW_PUT_DOWN_ITEM -> DRAW_ITEM` now has a bounded DB5/DB9 source-plan receipt for D1C/D2C: source 5x5 direction position, F0/F4 image field, `QUERY_CREATURE_BLIT_RECTI` key, distance stretch, slot delta, and container mirror. This corrected the earlier F9 conflation: DB5/DB9 F9 is `DRAW_MAP_CHIP`, not static-object material, and is now deliberately no-draw in this renderer path. Remaining before a positive static-object blit: the source 5x5 visibility mask, record-list ordinal, expanded clipping rectangle, `dtImageOffset`, and exact F0/F4 raw image/local-palette receipts through M11.
   - 2026-07-17 update: the bounded D1C/D2C static DB5/F0 and DB9/F0/F4 route now carries `dtImageOffset`, GFX256 raw bytes/receipt, IMG3 palette and RAW4 clip receipt through M11; frame-plan consumption requires all identities to match. F9 and unsupported cells remain no-draw. Remaining: source 5x5 visibility mask and record-list ordinal for wider static-object coverage.
   - 2026-07-17 update: DB5/F0 and DB9/F0/F4 now additionally have a separate

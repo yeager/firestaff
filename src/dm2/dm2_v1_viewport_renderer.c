@@ -4807,6 +4807,24 @@ int dm2_v1_viewport_build_item_render_plan(
         row->source_static_object_raw_gfx256_receipt_hash = src->source_static_object_raw_gfx256_receipt_hash;
         row->source_static_object_raw4_hash = src->source_static_object_raw4_hash;
         row->source_static_object_raw4_receipt_hash = src->source_static_object_raw4_receipt_hash;
+        if (src->source_static_object_rect14_applied &&
+            src->source_static_object_rect14_scale64 > 0 &&
+            src->source_static_object_rect14_row_hash != 0u &&
+            src->source_static_object_rect14_placement_hash != 0u) {
+            /* The runtime has already joined this root's cell/pass/clip plan
+             * to the matching original Rect14 row. Static-object placement
+             * must consume that result, rather than treating frame_index as
+             * a host-selected Rect14 row. */
+            row->rect14_applied = 1;
+            row->rect14_scale64 = src->source_static_object_rect14_scale64;
+            row->rect14_lateral_offset =
+                src->source_static_object_rect14_lateral_offset;
+            row->rect14_flip_mirror =
+                src->source_static_object_rect14_flip_mirror;
+            row->rect14_row_hash = src->source_static_object_rect14_row_hash;
+            row->rect14_placement_hash =
+                src->source_static_object_rect14_placement_hash;
+        }
         /* skproject SKWINSPX/src/v4/skcore.cpp::DRAW_ITEM draws only the
          * resolved GDAT map-chip.  This plan deliberately carries no
          * generated colour or radius substitute. */
@@ -4815,7 +4833,7 @@ int dm2_v1_viewport_build_item_render_plan(
          * INTERFACE_GENERAL dt07/0x0A Rect14 rows for source placement.  Static
          * objects already carry Rect14 through their own delivery plan; do not
          * duplicate that route here. */
-        if (!src->source_static_object_admitted &&
+        if (!src->source_static_object_admitted && !row->rect14_applied &&
             s->gdat_interface_rect14_rows &&
             src->frame_index < s->gdat_interface_rect14_row_count) {
             const uint8_t *rect14 = s->gdat_interface_rect14_rows +

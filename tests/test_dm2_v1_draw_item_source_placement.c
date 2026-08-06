@@ -292,6 +292,45 @@ static void test_asset_blit_scale_flip_slot(void)
           blit.flip_mirror == 0);
 }
 
+static void test_static_object_rect14_handoff(void)
+{
+    DM2_V1_ViewportState s;
+    DM2_V1_ItemRenderPlan plan;
+    uint8_t fb[DM2_VP_WIDTH * DM2_VP_HEIGHT];
+
+    memset(fb, 0, sizeof(fb));
+    dm2_v1_viewport_init(&s, fb, DM2_VP_WIDTH);
+    dm2_v1_viewport_set_party(&s, 0, 10, 10);
+    s.item_count = 1;
+    s.items[0].item_category = 0x10;
+    s.items[0].item_type = 0x22;
+    s.items[0].screen_x = 96;
+    s.items[0].screen_y = 88;
+    s.items[0].direction = 0;
+    s.items[0].source_gdat_field = 0;
+    s.items[0].source_g1_weapon = 1;
+    s.items[0].source_static_object_admitted = 1;
+    s.items[0].source_static_object_cell = 3;
+    s.items[0].source_static_object_pass = 17;
+    s.items[0].source_static_object_clip_rect_id = 5081;
+    s.items[0].source_static_object_rect14_applied = 1;
+    s.items[0].source_static_object_rect14_scale64 = 0x20;
+    s.items[0].source_static_object_rect14_lateral_offset = -3;
+    s.items[0].source_static_object_rect14_flip_mirror = 1;
+    s.items[0].source_static_object_rect14_row_hash = 0x11111111u;
+    s.items[0].source_static_object_rect14_placement_hash = 0x22222222u;
+
+    CHECK("static object carries its admitted Rect14 placement",
+          dm2_v1_viewport_build_item_render_plan(&s, &plan) == 1 &&
+          plan.item_count == 1 && plan.items[0].rect14_applied == 1 &&
+          plan.items[0].rect14_scale64 == 0x20 &&
+          plan.items[0].rect14_lateral_offset == -3 &&
+          plan.items[0].rect14_flip_mirror == 1 &&
+          plan.items[0].rect14_row_hash == 0x11111111u &&
+          plan.items[0].rect14_placement_hash == 0x22222222u &&
+          plan.items[0].source_static_object_placement_valid == 0);
+}
+
 static void test_side_deep_cell_plans(void)
 {
     DM2_V1_StaticObjectSourcePlan plan;
@@ -431,6 +470,7 @@ int main(void)
     test_side_deep_cell_plans();
     test_render_plan_placement_fill();
     test_asset_blit_scale_flip_slot();
+    test_static_object_rect14_handoff();
     test_delivery_plan_with_rotated_mask();
     printf("DM2 V1 DRAW_ITEM source placement: %d/%d passed\n", passed, checks);
     return passed == checks ? 0 : 1;
