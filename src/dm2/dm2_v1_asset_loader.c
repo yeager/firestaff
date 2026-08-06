@@ -755,67 +755,12 @@ static uint8_t *dm2_decode_img9_c8(const uint8_t *raw,
                                    int width,
                                    int height,
                                    DM2_ImageFormat *out_format) {
-    size_t pixel_total;
-    size_t in_pos = 8u;
-    size_t out_pos = 0u;
-    uint8_t *pixels;
-    uint8_t typex;
-
-    if (!raw || raw_size < 9u || width <= 0 || height <= 0) return NULL;
-    pixel_total = (size_t)width * (size_t)height;
-    if (pixel_total == 0 || pixel_total > (size_t)1024u * 1024u) return NULL;
-    pixels = (uint8_t *)malloc(pixel_total);
-    if (!pixels) return NULL;
-    typex = raw[6];
-
-    while (out_pos < pixel_total) {
-        uint8_t command;
-        int bit;
-        if (in_pos >= raw_size) {
-            free(pixels);
-            return NULL;
-        }
-        command = raw[in_pos++];
-        for (bit = 0; bit < 8 && out_pos < pixel_total; ++bit, command >>= 1) {
-            if ((command & 1u) != 0u) {
-                if (in_pos >= raw_size) {
-                    free(pixels);
-                    return NULL;
-                }
-                pixels[out_pos++] = raw[in_pos++];
-            } else {
-                int a;
-                int b;
-                int negative_offset;
-                int copy_length;
-                int i;
-                if (in_pos + 1u >= raw_size) {
-                    free(pixels);
-                    return NULL;
-                }
-                a = raw[in_pos++];
-                b = raw[in_pos++];
-                if (typex == 2u) {
-                    negative_offset = (a >> 4) + (16 * b);
-                    copy_length = (a & 0x0f) + 3;
-                } else {
-                    negative_offset = (a >> 5) + (8 * b);
-                    copy_length = (a & 0x1f) + 3;
-                }
-                if (negative_offset <= 0 ||
-                    (size_t)negative_offset > out_pos) {
-                    free(pixels);
-                    return NULL;
-                }
-                for (i = 0; i < copy_length && out_pos < pixel_total; ++i) {
-                    pixels[out_pos] = pixels[out_pos - (size_t)negative_offset];
-                    ++out_pos;
-                }
-            }
-        }
-    }
-    if (out_format) *out_format = DM2_IMG_FMT_IMG9;
-    return pixels;
+    /* SKProject c_gfx_decode.cpp::decode_img9 dispatches mode 1, 2, or 3.
+     * The former local shortcut decoded every non-2 stream as mode 3, so a
+     * real mode-1 GDAT image was silently interpreted as another format.
+     * Keep the active loader on the complete source-locked decoder shared by
+     * the focused decoder receipt instead of maintaining a partial copy. */
+    return dm2_v1_decode_img9(raw, raw_size, width, height, out_format);
 }
 
 /* ── Public API ─────────────────────────────────────────────────── */

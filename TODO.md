@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **DM2-REAL-DATA-RENDER-INVENTORY:** The PC English `GRAPHICS.DAT` corpus is
+  hash-locked and its G1-referenced scene sets now decode through the original
+  IMG9 mode-1/2/3 dispatcher. Continue inventorying real GDAT consumers by
+  source owner: Greatstone's 5,624 exported visual items are not a one-to-one
+  substitute for the file's 11,854 ENT1 rows, which also include text, words,
+  palettes and raw controls. Bind each remaining visible HUD/viewport route to
+  its exact GDAT record; do not make a count-derived asset table or fallback.
+
 - **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
   mirror side/depth, inscription/corridor invalidation and wall-material
   receipts pass on the current renderer. Remaining work is external Mac/app

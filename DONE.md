@@ -1,3 +1,13 @@
+- ✅ 2026-08-06 DM2 IMG9 real-data decoder dispatch: the active GDAT loader
+  no longer treats every non-mode-2 C8/IMG9 payload as mode 3. It delegates to
+  the complete SKProject `c_gfx_decode.cpp::decode_img9` port and accepts only
+  original modes 1, 2 and 3. The real DOS `GRAPHICS.DAT` G1 graphics-set gate
+  now passes all five referenced styles and rejects selector 0. Greatstone's
+  PC 1.0 English catalogue was cross-checked without copying game data:
+  5,624 exported visual items are correctly recorded as a different domain
+  from the authenticated file's 11,854 ENT1 rows. See
+  `docs/reference/audits/DM2_PC10_EN_GREATSTONE_CROSSCHECK.md`.
+
 - ✅ 2026-08-06 DM2 M11 real-data gate environment alignment: the M11
   startup/profile regression now recognizes `FIRESTAFF_DM2_DATA_DIR`, matching
   the shared PC-DOS corpus convention used by boot, GDAT and SKSave probes.

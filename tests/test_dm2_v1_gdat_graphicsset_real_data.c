@@ -135,12 +135,13 @@ static int verify_source_c8_selector_gate(DM2_V1_AssetLoader *loader,
     if (raw < graphics || raw >= graphics + graphics_size) return 0;
     raw_offset = (size_t)(raw - graphics);
     if (raw_offset > graphics_size - 8u ||
-        (graphics[raw_offset + 6u] != 2u &&
+        (graphics[raw_offset + 6u] != 1u &&
+         graphics[raw_offset + 6u] != 2u &&
          graphics[raw_offset + 6u] != 3u)) {
         return 0;
     }
 
-    /* skproject DECODE_IMG9 accepts only selectors 2 and 3. A source C8
+    /* skproject DECODE_IMG9 accepts selectors 1, 2, and 3. A source C8
      * plane with any other selector must fail before it reaches a scene. */
     saved_selector = graphics[raw_offset + 6u];
     graphics[raw_offset + 6u] = 0u;
@@ -342,7 +343,8 @@ int main(void)
         free(decoded_floor);
         free(decoded_ceiling);
     }
-    printf("referenced=%d exact-material-sets=%d c8-selector-gates=%d\n",
+    printf("entries=%u referenced=%d exact-material-sets=%d "
+           "c8-selector-gates=%d\n", (unsigned int)loader.entry_count,
            referenced_sets, exact_material_sets, c8_selector_checks);
     dm2_v1_asset_loader_free(&loader);
     dm2_v1_dungeon_free(&dungeon);
