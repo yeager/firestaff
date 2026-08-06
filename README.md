@@ -28,15 +28,21 @@ Nexus are development targets and are not presented as finished games.
 
 ## Screenshots
 
-Only real runtime captures appear here. The DM1 images below were captured
-from the macOS build using the verified PC DOS 3.4 data set. No generated,
-placeholder or fallback image is presented as game evidence.
+Only real DM1 v1 runtime captures appear here. The images below come from
+Firestaff's original-data runtime capture set; no generated, placeholder or
+fallback image is presented as game evidence.
 
 ### Dungeon Master v1
 
 | Presents / startup | Entrance | Dungeon viewport | HUD / HoC route |
 |--------------------|----------|------------------|-----------------|
 | ![Dungeon Master v1 Presents runtime capture](docs/screenshots/dm1-v1-runtime-presents-macos.png) | ![Dungeon Master v1 Entrance runtime capture](docs/screenshots/dm1-v1-runtime-entrance-macos.png) | ![Dungeon Master v1 dungeon runtime capture](docs/screenshots/dm1-v1-runtime-dungeon-macos.png) | ![Dungeon Master v1 HUD runtime capture](docs/screenshots/dm1-v1-runtime-hud.png) |
+
+Additional verified DM1 v1 in-game states:
+
+| Start | Movement | Spells | Inventory | Party HUD |
+|-------|----------|--------|-----------|----------|
+| ![DM1 v1 start](docs/screenshots/dm1-v1-runtime-start-latest.png) | ![DM1 v1 movement](docs/screenshots/dm1-v1-runtime-movement-latest.png) | ![DM1 v1 spells](docs/screenshots/dm1-v1-runtime-spells-latest.png) | ![DM1 v1 inventory](docs/screenshots/dm1-v1-runtime-inventory-latest.png) | ![DM1 v1 party HUD](docs/screenshots/dm1-v1-runtime-party-hud-latest.png) |
 
 Screenshots for CSB, DM2, Theron's Quest, DM Nexus and future custom art are
 **Coming soon** because those game versions are not currently available.
@@ -79,11 +85,11 @@ source-reference boundaries for all five games.
 
 | Platform | Status | Data directory |
 |----------|--------|---------------|
-| macOS | DM1 v1 runtime verified; captures taken on macOS | `~/.firestaff/data/` |
-| Linux | Build target; playable runtime capture pending | `~/.firestaff/data/` |
-| Windows | Build target; playable runtime capture pending | `%USERPROFILE%\.firestaff\data\` |
-| Steam Deck | Linux/AppImage target; playable runtime capture pending | `~/.firestaff/data/` |
-| iOS / Android | Not available | Coming soon |
+| macOS | DM1 v1 playable and runtime-verified | `~/.firestaff/data/` |
+| Linux | Build target; DM1 v1 runtime verification pending | `~/.firestaff/data/` |
+| Windows | Build target; DM1 v1 runtime verification pending | `%USERPROFILE%\.firestaff\data\` |
+| Steam Deck | Linux/AppImage target; DM1 v1 runtime verification pending | `~/.firestaff/data/` |
+| iOS / Android | Not currently supported | Coming soon |
 
 Suggested layout:
 
@@ -272,9 +278,9 @@ coverage is verified.
 
 | Language | Current status |
 |----------|----------------|
-| English | Verified for DM1 v1 |
+| English | Verified for the complete DM1 v1 playable path |
 | Swedish | Launcher/catalog work present; full DM1 v1 runtime verification pending |
-| Other languages | Catalog/runtime coverage pending |
+| Other languages | Catalog and runtime coverage pending |
 
 ## Wiki
 
