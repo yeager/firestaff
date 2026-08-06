@@ -1,3 +1,12 @@
+# DM1 D3L/D3R F0108 floor-ornament synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free D3L/D3R F0108 occlusion model from M10. It fixes
+  zones, cell orders and C10 probe pixels, reads no original DM1 material and
+  has no M11/runtime caller. The independent source-bound D3 renderer remains
+  the production owner.
+- ✅ Verification: `dm1_v1_viewport_d3l_d3r_f0108_floor_ornament_occlusion_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D3L2/D3R2 F0108 composition synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D3L2/D3R2 F0108/F0111/F0115 composition model

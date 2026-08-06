@@ -4347,6 +4347,12 @@ list(REMOVE_ITEM M10_SOURCES
 # this ReDMCSB contract model test-only.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3l2_d3r2_f0108_wall_composition_pc34_compat.c")
+# `dm1_v1_viewport_d3l_d3r_f0108_floor_ornament_occlusion_pc34_compat.c`
+# is an asset-free D3 side-lane F0108 contract. It has no M11/runtime caller
+# and reads no authenticated GRAPHICS.DAT material; retain it only in its
+# explicit ReDMCSB regression while the source-bound D3 renderer owns pixels.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3l_d3r_f0108_floor_ornament_occlusion_pc34_compat.c")
 # `dm1_v1_viewport_d2c_center_wall_composition_pc34_compat.c` is an
 # asset-free synthetic D2C pixel-trace audit with no M11/runtime caller.
 # Compile it only into its dedicated test and keep the broad M10 archive
