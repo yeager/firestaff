@@ -114,6 +114,16 @@ int main(void)
     CHECK(M11_GameView_GetPresentationSpecialPalette(&view) ==
               VGA_PALETTE_PC34_SPECIAL_CSB_ENTRANCE,
           "F31 C004 uses the source-owned entrance palette");
+    CHECK(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+              M11_GAME_INPUT_REDRAW,
+          "F31 CHTWE accepts the source-owned Prison command");
+    for (tick = 0u; tick < 240u && view.csbState.startup_entrance_active;
+         ++tick) {
+        (void)M11_GameView_AdvanceIdleTick(&view);
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+    }
+    CHECK(!view.csbState.startup_entrance_active && view.csbState.level_loaded,
+          "F31 Prison door handoff reaches the live CSB runtime");
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     puts("PASS: real FM Towns SWITCHTW -> CHTWE entrance handoff");

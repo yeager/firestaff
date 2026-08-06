@@ -5933,6 +5933,8 @@ static int m11_csb_boot_runtime_startup_idle(
 }
 
 static int m11_csb_is_fmtowns_profile(const CSB_V1_BootProfile *profile);
+static M11_GameInputResult m11_csb_handle_fmtowns_game_entrance_input(
+    M11_GameViewState *state, M12_MenuInput input);
 
 static int m11_csb_c001_palette_is_source_owned(
     const CSB_V1_BootStartupHostViewReceipt_PC34 *host_view)
@@ -7168,7 +7170,12 @@ static int m11_csb_enter_fmtowns_game(M11_GameViewState *state,
     state->csbState.startup_title_frame = 0;
     state->csbState.startup_title_source_step = 0;
     state->csbState.startup_entrance_active = 1;
-    state->csbState.startup_entrance_source_step = 0;
+    /* CHTWE/CHTWJ reaches ENTRANCE.C F0807's interactive C004 wait after
+     * the separate ANIMTW/SWITCHTW programs have returned. It is not the
+     * PC TITLE.C pre-Entrance phase, so make only the source wait stage
+     * eligible for the first Prison command. */
+    state->csbState.startup_entrance_source_step =
+        csb_v1_startup_entrance_wait_stage_pc34();
     state->csbState.startup_entrance_dismissed = 0;
     state->csbState.startup_entrance_credits_active = 0;
     state->csbState.startup_entrance_credits_remaining_ticks = 0;
@@ -7747,6 +7754,54 @@ static void m11_csb_startup_apply_entrance_action_state_receipt(
     m11_csb_startup_command_state_receipt_to_m11(
         state,
         &receipt->state_receipt);
+}
+
+static M11_GameInputResult m11_csb_handle_fmtowns_game_entrance_input(
+    M11_GameViewState *state, M12_MenuInput input)
+{
+    CSB_V1_StartupHostFacts_PC34 facts;
+    CSB_V1_StartupEntranceHostActionReceipt_PC34 action;
+
+    if (!state || input != M12_MENU_INPUT_ACCEPT ||
+        !m11_csb_is_fmtowns_profile(
+            (const CSB_V1_BootProfile *)state->csbBootProfile) ||
+        !state->csbFmtownsGameHandoffReceipt.valid ||
+        !state->csbState.startup_entrance_active ||
+        state->csbState.startup_title_active) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    /* ReDMCSB STARTUP1.C enters ENTRANCE.C F0807 from CHTWE/CHTWJ after
+     * ANIMTW/SWITCHTW. Build the source-owned Entrance facts directly, rather
+     * than requiring the unrelated PC TITLE.C host-dispatch receipt. */
+    if (!csb_v1_startup_host_facts_from_runtime_state_pc34(
+            &facts, state->csbState.startup_title_active,
+            state->csbState.startup_title_frame,
+            state->csbState.startup_title_source_step,
+            state->csbState.startup_entrance_active,
+            state->csbState.startup_entrance_source_step,
+            state->csbState.startup_entrance_dismissed,
+            state->csbState.startup_entrance_credits_active,
+            state->csbState.startup_entrance_credits_remaining_ticks,
+            state->csbState.startup_entrance_opening_active,
+            state->csbState.startup_entrance_opening_delay_ticks,
+            state->csbState.startup_entrance_opening_step,
+            state->csbState.startup_entrance_pending_command,
+            state->csbState.startup_entrance_frame,
+            state->csbState.startup_import_available,
+            state->csbState.startup_import_selected_action_index,
+            state->csbState.startup_import_champion_count,
+            state->csbState.startup_import_preview_active,
+            state->csbState.startup_import_utility_prompt,
+            state->csbState.startup_entrance_resume_available,
+            state->csbState.startup_entrance_resume_path,
+            state->csbBootProfile) ||
+        !csb_v1_startup_execute_entrance_command_from_host_facts_with_receipts_pc34(
+            &facts, CSB_V1_STARTUP_ENTRANCE_COMMAND_ENTER_DUNGEON_PC34,
+            &action) || !action.handled) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    m11_csb_startup_apply_entrance_action_state_receipt(state, &action);
+    return m11_csb_startup_apply_host_receipt(state, &action.host_receipt);
 }
 
 static M11_GameInputResult m11_csb_startup_apply_host_decision_receipt(
@@ -24301,6 +24356,11 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         CSB_V1_BootStartupHostInputDispatchReceipt_PC34 dispatch_receipt;
+        M11_GameInputResult fmtowns_result =
+            m11_csb_handle_fmtowns_game_entrance_input(state, input);
+        if (fmtowns_result != M11_GAME_INPUT_IGNORED) {
+            return fmtowns_result;
+        }
         if (m11_csb_boot_runtime_startup_keyboard_dispatch(
                 state,
                 (int)input,
