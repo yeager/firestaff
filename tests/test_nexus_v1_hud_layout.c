@@ -62,6 +62,10 @@ int main(void)
                 (long)NEXUS_HUD_LAYOUT_ENTRY_BYTES ||
         memcmp(data + NEXUS_HUD_LAYOUT_DM_BIN_OFFSET - 0x10U,
                "yam\\menuctrl.c", 14U) != 0 ||
+        /* Separate VDP2 owner marker: source receipt only, not placement
+         * or register-consumer proof. */
+        memcmp(data + 0x38CF4U, "yam\\vdp2.c", 10U) != 0 ||
+        count_be32(data, (size_t)size, UINT32_C(0x06048CF4)) != 6U ||
         fnv1a64(data + NEXUS_HUD_LAYOUT_DM_BIN_OFFSET,
                 NEXUS_HUD_LAYOUT_ENTRY_COUNT * NEXUS_HUD_LAYOUT_ENTRY_BYTES) !=
             UINT64_C(0x5fc435070d81882c) ||

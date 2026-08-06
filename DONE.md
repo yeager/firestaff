@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus HUD VDP2 owner receipt: the real `DM.BIN` HUD regression
+  now verifies the adjacent `yam\\vdp2.c` owner marker at `0x38CF4` and its
+  six big-endian literal references, alongside the existing `menuctrl.c`
+  layout table. This is disassembly/source ownership evidence only; no VDP2
+  layer, palette bank or runtime HUD presentation was enabled.
+
 - ✅ 2026-08-06 Nexus stale-claim documentation audit: added
   `docs/NEXUS_STALE_CLAIM_AUDIT.md` and corrected the high-traffic data,
   content, intro, graphics and audio audits so historical host-stub wording

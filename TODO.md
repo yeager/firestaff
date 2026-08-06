@@ -340,6 +340,9 @@
   FNV-1a64, and seven executable/static references to runtime address
   `0x060476D0`. This strengthens source ownership only; VDP1/VDP2 and event
   semantics remain capture-gated.
+  2026-08-06: the same regression binds `yam\\vdp2.c` at DM.BIN `0x38CF4`
+  with six literal references. This is source ownership evidence only;
+  register consumer, layer selection and runtime placement remain gated.
   retain the separate HUD capture requirement.
   The older synthetic `test_m11_nexus_startup_runtime_handoff` still reports
   four pre-existing fixture-route failures in both A/B runs; keep it separate
