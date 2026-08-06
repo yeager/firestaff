@@ -51466,3 +51466,9 @@ and `firestaff` build pass.
   `STORY.ANM` and `ENDING.ANM` now decode their first and final frames at
   320×200/4bpp with source-derived hashes. M11 presentation scheduling stays
   open; no host artwork or generated frame fallback was added.
+
+- ✅ 2026-08-06 DM1 HoC D1/D0 wall-ornament palette regression: restored the
+  ReDMCSB F0107/F0110 native C10 pixel route for D1/D0 wall ornaments,
+  including the champion-mirror backing frame. G0198/G0199 palette maps remain
+  limited to their D3/D2 projections. The focused PC34 wall-ornament test now
+  verifies native D1C output and all 126 assertions pass.

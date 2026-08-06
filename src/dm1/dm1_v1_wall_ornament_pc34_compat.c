@@ -311,11 +311,12 @@ int dm1_v1_wall_ornament_render_plan_pc34(
     } else if (viewWallIndex <= 9) {
         copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD2);
     } else {
-        /* ReDMCSB F0107 still applies the D2 wall palette to the D1/D0
-         * ornament pass.  Keeping the native indices here turns the real
-         * torch-holder/material pixels into black silhouettes on HoC walls. */
-        copy_palette(outPlan->paletteMap, s_wallOrnamentPaletteD2);
-        outPlan->paletteMapValid = 1;
+        /* ReDMCSB F0107/F0110: D1/D0 uses the native C10 ornament pixels.
+         * G0198/G0199 are the D3/D2 derived-bitmap palette changes only.
+         * Applying the D2 map here converts real torch-holder colours into
+         * black silhouettes on the HoC wall. */
+        memset(outPlan->paletteMap, 0, sizeof(outPlan->paletteMap));
+        outPlan->paletteMapValid = 0;
     }
     outPlan->isAlcove =
         dm1_v1_wall_ornament_is_alcove_global_pc34(globalIndex);

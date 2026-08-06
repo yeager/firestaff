@@ -197,9 +197,7 @@ int main(void)
     expect_int("plan.inscription.d1c.height", plan.height, 111);
     expect_int("plan.inscription.d1c.transparent", plan.transparentColor, 10);
     expect_int("plan.inscription.d1c.flip", plan.flipHorizontal, 0);
-    expect_int("plan.inscription.d1c.palette", plan.paletteMapValid, 1);
-    expect_int("plan.inscription.d1c.palette1", plan.paletteMap[1], 12);
-    expect_int("plan.inscription.d1c.palette14", plan.paletteMap[14], 14);
+    expect_int("plan.inscription.d1c.native_palette", plan.paletteMapValid, 0);
 
     expect_int("plan.inscription.clamp.ok",
                dm1_v1_wall_ornament_render_plan_pc34(0, 12, 9, &plan), 1);
@@ -242,8 +240,8 @@ int main(void)
     expect_int("mirror.plan.18.orn_h", mirrorPlan.ornament.height, 43);
     expect_int("mirror.plan.18.orn_transparent",
                mirrorPlan.ornament.transparentColor, 10);
-    expect_int("mirror.plan.18.orn_palette1",
-               mirrorPlan.ornament.paletteMap[1], 12);
+    expect_int("mirror.plan.18.orn_native_palette",
+               mirrorPlan.ornament.paletteMapValid, 0);
     expect_int("mirror.plan.18.portrait_graphic",
                mirrorPlan.portraitGraphicIndex, 26);
     expect_int("mirror.plan.18.srcX", mirrorPlan.portraitSrcX, 64);
