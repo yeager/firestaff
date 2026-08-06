@@ -26131,6 +26131,7 @@ endif()
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/shared/vga_palette_pc34_compat.c
     )
     add_executable(test_dm1_v2_runtime_shell_pc34
         tests/test_dm1_v2_runtime_shell_pc34.c
@@ -26138,6 +26139,7 @@ endif()
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
+        src/shared/vga_palette_pc34_compat.c
     )
     add_executable(test_dm1_v2_camera_controller_pc34
         tests/test_dm1_v2_camera_controller_pc34.c
