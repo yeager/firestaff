@@ -1198,6 +1198,7 @@ int main(void) {
     DM2_V1_BootStartupRenderOwnershipReceipt ownership_receipt;
     DM2_V1_BootStartupRealVisualCaptureReceipt real_visual_capture;
     DM2_V1_BootProfile* profile;
+    DM2_V1_BootChampionDyn4Receipt champion_dyn4;
     unsigned char framebuffer[320 * 200];
     unsigned char framebuffer_without_hand[320 * 200] __attribute__((unused));
     char direct_save_root[512] __attribute__((unused)) = {0};
@@ -1328,6 +1329,20 @@ int main(void) {
     expect_true(profile != NULL && profile->deterministic.max_levels == 28u &&
                     profile->deterministic.dungeon_seed == 257u,
                 "M11 DM2 launch retains the PC-DOS G1 level count and seed");
+    memset(&champion_dyn4, 0, sizeof(champion_dyn4));
+    expect_true(profile &&
+                    dm2_v1_boot_champion_dyn4_receipt(
+                        profile, &champion_dyn4) &&
+                    champion_dyn4.valid &&
+                    champion_dyn4.incomplete_champion_activation &&
+                    champion_dyn4.mirror_count == 16 &&
+                    champion_dyn4.dynamic_load_id == 0x16ffffffu &&
+                    champion_dyn4.block_count == 96u &&
+                    champion_dyn4.skipped_sound_entry_count == 0u &&
+                    champion_dyn4.byte_count == 149670u &&
+                    champion_dyn4.payload_hash == 0xa0af7ecau &&
+                    champion_dyn4.receipt_hash == 0x8ae00cc1u,
+                "M11 boot retains the original G1 mirror-selected DYN4 bytes in RAM");
     if (profile) {
         DM2_V1_StartupMenuPointerLayout pointer_layout;
         int source_x;

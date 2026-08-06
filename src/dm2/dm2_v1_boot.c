@@ -242,6 +242,10 @@ typedef struct {
     int startup_title_h;
     int ccm_program_count;
     int ccm_program_field;
+    DM2_V1_G1ChampionMirrorReceipt champion_mirrors;
+    DM2_V1_GdatDyn4MaterializedSelection champion_dyn4;
+    uint32_t champion_dynamic_load_id;
+    int champion_dyn4_verified;
 } DM2_V1_BootGraphicsDat;
 
 int dm2_v1_boot_dialogue_box_draw_plan(
@@ -632,12 +636,87 @@ static void dm2_v1_boot_graphics_free(DM2_V1_BootGraphicsDat *gfx) {
     }
     dm2_v1_asset_free_pixels(gfx->dialogue_box_pixels);
     dm2_v1_asset_free_pixels(gfx->startup_title_pixels);
+    dm2_v1_gdat_dyn4_materialized_selection_free(&gfx->champion_dyn4);
     dm2_v1_asset_loader_free(&gfx->loader);
     dm2_v1_creature_reset_ai_table();
     dm2_v1_creature_reset_ccm_programs();
     free(gfx->bytes);
     memset(gfx, 0, sizeof(*gfx));
     free(gfx);
+}
+
+static int dm2_v1_boot_bind_champion_dyn4(
+    DM2_V1_BootGraphicsDat *gfx, const DM2_V1_DungeonData *dungeon)
+{
+    DM2_V1_G1ChampionMirrorReceipt mirrors;
+    DM2_V1_GdatDyn4MaterializedSelection selection;
+    DM2_V1_GdatDyn4SoundState sound_state;
+    uint32_t dynamic_load_id;
+    int index;
+
+    if (!gfx || !dungeon || gfx->champion_dyn4_verified) return 0;
+    memset(&mirrors, 0, sizeof(mirrors));
+    memset(&selection, 0, sizeof(selection));
+    if (!dm2_v1_dungeon_collect_g1_champion_mirrors(dungeon, &mirrors) ||
+        !mirrors.committed || mirrors.mirror_count <= 0) {
+        return 0;
+    }
+    dynamic_load_id = mirrors.mirrors[0].dynamic_load_id;
+    if (dynamic_load_id == 0u) return 0;
+    for (index = 0; index < mirrors.mirror_count; ++index) {
+        if (mirrors.mirrors[index].dynamic_load_id != dynamic_load_id) {
+            return 0;
+        }
+    }
+
+    /* SKProject c_loadlevel.cpp DM2_MARK_DYN_LOAD queues each subtype-0x7e
+     * marker before c_gdatfile.cpp::DM2_LOAD_DYN4.  SOUND5 has established
+     * an empty, allocation-capable queue at this point, so type-2 source rows
+     * are admitted instead of silently omitted.  The materialised bytes stay
+     * in this graphics owner and never cross through a disk cache. */
+    dm2_v1_gdat_dyn4_sound_state_init(&sound_state);
+    if (!dm2_v1_gdat_dyn4_materialize_selection(
+            &gfx->loader, dynamic_load_id, &sound_state, &selection) ||
+        !selection.valid || selection.block_count == 0u ||
+        selection.byte_count == 0u) {
+        dm2_v1_gdat_dyn4_materialized_selection_free(&selection);
+        return 0;
+    }
+    gfx->champion_mirrors = mirrors;
+    gfx->champion_dyn4 = selection;
+    gfx->champion_dynamic_load_id = dynamic_load_id;
+    gfx->champion_dyn4_verified = 1;
+    return 1;
+}
+
+int dm2_v1_boot_champion_dyn4_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_BootChampionDyn4Receipt *out_receipt)
+{
+    const DM2_V1_BootGraphicsDat *gfx;
+
+    if (!out_receipt) return 0;
+    memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!profile || !profile->graphics_dat ||
+        !(gfx = (const DM2_V1_BootGraphicsDat *)profile->graphics_dat) ||
+        !gfx->champion_dyn4_verified ||
+        !gfx->champion_dyn4.valid ||
+        !gfx->champion_mirrors.committed) {
+        return 0;
+    }
+    out_receipt->valid = 1;
+    out_receipt->incomplete_champion_activation = 1;
+    out_receipt->mirror_count = gfx->champion_mirrors.mirror_count;
+    out_receipt->actuator_record_reads =
+        gfx->champion_mirrors.actuator_record_reads;
+    out_receipt->dynamic_load_id = gfx->champion_dynamic_load_id;
+    out_receipt->block_count = gfx->champion_dyn4.block_count;
+    out_receipt->skipped_sound_entry_count =
+        gfx->champion_dyn4.skipped_sound_entry_count;
+    out_receipt->byte_count = gfx->champion_dyn4.byte_count;
+    out_receipt->payload_hash = gfx->champion_dyn4.payload_hash;
+    out_receipt->receipt_hash = gfx->champion_dyn4.receipt_hash;
+    return 1;
 }
 
 static DM2_V1_BootGraphicsDat *dm2_v1_boot_graphics_load_from_buffer(
@@ -2076,6 +2155,11 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
     if (profile->graphics_dat) {
         DM2_V1_BootGraphicsDat *gfx =
             (DM2_V1_BootGraphicsDat *)profile->graphics_dat;
+        if (profile->platform == DM2_PLATFORM_PC_EN ||
+            profile->platform == DM2_PLATFORM_PC_FR ||
+            profile->platform == DM2_PLATFORM_PC_JEWEL) {
+            (void)dm2_v1_boot_bind_champion_dyn4(gfx, dd);
+        }
         /* c_sound.cpp consumes music through the already hash-admitted GDAT
          * handle.  Bind the same owner used by the title/HUD/viewport rather
          * than accepting loose HMP filenames from the data directory. */

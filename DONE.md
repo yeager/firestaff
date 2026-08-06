@@ -55804,7 +55804,6 @@ alcove runtime and archive-media tests passed (4/4).
 - Verification: `test_dm1_v1_fmtowns_egb_shim` passes; the real-media startup
   target remains an explicit skip when its runtime-root environment variable
   is absent.
-
 # 2026-08-06 DM1 FM Towns live DYNAMENU backdrop
 
 - The active English FM Towns action menu now builds the recovered eight-byte
@@ -55815,3 +55814,18 @@ alcove runtime and archive-media tests passed (4/4).
 - Native label rasterisation, icon decode and mouse capture remain closed;
   the live path intentionally leaves them blank and never substitutes PC34
   C079/C077/C011 art or M653 glyph pixels.
+
+# 2026-08-06 — DM2 PC champion DYN4 boot ownership
+
+- ✅ The verified PC boot now joins the canonical G1 dungeon's 16 original
+  subtype-`0x7e` champion-mirror roots to their shared
+  `DM2_MARK_DYN_LOAD(0x16ffffff)` selector and retains the resulting DYN4 raw
+  blocks in boot-owned RAM. The receipt locks 96 blocks, 149,670 allocated
+  bytes and source hashes `a0af7eca`/`8ae00cc1`; all 21 sound rows are admitted
+  from the explicit empty source queue state. Cleanup releases the cache with
+  `graphics_dat`, and no game member is written or unpacked to disk.
+- ✅ The full real PC-DOS M11 startup/profile gate consumes that receipt.
+  Champion creation remains deliberately unavailable until the original
+  event, possession-transfer and party/session mutations are connected. The
+  FM Towns HME-242 extension-pool gap remains explicit and is not replaced by
+  the PC layout.

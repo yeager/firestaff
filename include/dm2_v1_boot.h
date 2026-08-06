@@ -151,6 +151,23 @@ typedef struct {
     uint32_t reserved[4];
 } DM2_V1_DeterministicConfig;
 
+/* Boot-owned join between the original G1 champion-mirror actuators and the
+ * DYN4 raw blocks selected from the same admitted GRAPHICS.DAT.  This proves
+ * source data residency only.  Champion creation, possession transfer and
+ * party/session mutation remain separate, fail-closed transactions. */
+typedef struct {
+    int valid;
+    int incomplete_champion_activation;
+    int mirror_count;
+    int actuator_record_reads;
+    uint32_t dynamic_load_id;
+    uint16_t block_count;
+    uint16_t skipped_sound_entry_count;
+    uint32_t byte_count;
+    uint32_t payload_hash;
+    uint32_t receipt_hash;
+} DM2_V1_BootChampionDyn4Receipt;
+
 /* DM2 boot profile — collected at startup before game loop begins.
  * All fields are set once and read-only during gameplay. */
 typedef struct {
@@ -1398,6 +1415,13 @@ void dm2_v1_boot_build_deterministic_config(DM2_V1_BootProfile *profile,
  * Sets profile->dm2_state and profile->dungeon_data.
  * Returns 0 on success. */
 int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile);
+
+/* Returns the retained, RAM-only champion DYN4 source bundle created during
+ * enter_game.  The returned receipt contains no pointers and stays invalid
+ * when dungeon markers and GDAT selection cannot be joined exactly. */
+int dm2_v1_boot_champion_dyn4_receipt(
+    const DM2_V1_BootProfile *profile,
+    DM2_V1_BootChampionDyn4Receipt *out_receipt);
 
 /* Performs only the source-owned DUNGEON.DAT reload portion of GAME_LOAD.
  * It rechecks the selected asset hash when one was verified at boot and swaps

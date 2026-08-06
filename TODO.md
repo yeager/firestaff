@@ -28205,10 +28205,14 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   with the original length/payload/raw-index layout. The initial source sound
   state is also bound: an empty `DM2_SOUND7` queue and clear `v1e13fe[2]`
   admit the remaining sound records, while missing or failed state defers
-  them. Live champion selection remains blocked until that complete
-  dynamic-GDAT cache, event preconditions, possession transfer and
-  session-state updates are all connected. Do not treat a marker receipt as
-  a playable New Game path.
+  them. The hash-verified PC boot now joins its 16 G1 mirror roots to selector
+  `0x16ffffff` and retains the complete 96-block/149,670-byte DYN4 selection
+  inside the boot-owned graphics lifetime. Live champion selection remains
+  blocked until event preconditions, possession transfer and session-state
+  updates are connected. Do not treat the boot receipt as a playable New Game
+  path. FM Towns remains separate: the selected HME-242 corpus has 134 DB3
+  extension roots outside the currently decoded Towns record owner, so its
+  mirror-to-DYN4 join stays closed instead of borrowing the PC continuation.
   `DM2_SOUND9` now retains the original unbound `w_00/w_05 == -1` state.
   `DM2_482b_0684` now binds that queue only against the same materialised
   DYN4 selection and preserves the source's pool-capacity stop. The remaining
