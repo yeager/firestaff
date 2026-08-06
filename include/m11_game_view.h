@@ -1551,6 +1551,9 @@ typedef struct {
      * session or generated title surface may substitute for these pixels. */
     uint8_t *csbFmtownsTitleBytes;
     size_t csbFmtownsTitleByteCount;
+    /* F2275's TD/TR request playing through the authenticated FM Towns
+     * CUE/IMG pair materialized with this launch. */
+    int csbFmtownsCddaPlaying;
     CSB_V1_FmtownsAnmPlayback csbFmtownsTitlePlayback;
     CSB_V1_FmtownsAnmFrameReceipt csbFmtownsTitleFrameReceipt;
     uint8_t csbFmtownsTitlePixels[CSB_FMTOWNS_ANM_FRAME_PIXELS];

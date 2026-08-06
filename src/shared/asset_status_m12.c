@@ -1247,6 +1247,20 @@ static int m12_csb_fmtowns_archive_stage(const char* archivePath,
     return 1;
 }
 
+/* The original CUE is the only authority for Red Book boundaries.  Never
+ * derive a replacement from the ISO payload or an application track table. */
+static int m12_csb_fmtowns_archive_extract_cue(const char* archivePath,
+                                               const char* cuePath) {
+    char virtualPath[M12_ASSET_DATA_DIR_CAPACITY + 64U];
+    if (!archivePath || !cuePath) return 0;
+    if (firestaff_zip_extract_by_suffix_to_path(archivePath, ".cue", cuePath) == 0)
+        return 1;
+    if (snprintf(virtualPath, sizeof(virtualPath),
+                 "%s::Chaos Strikes Back for FM-Towns.cue", archivePath) >=
+            (int)sizeof(virtualPath)) return 0;
+    return asset_extract_virtual_path(virtualPath, cuePath);
+}
+
 static int m12_csb_fmtowns_extract_member(const char* imagePath,
                                           const CSB_V1_FmtownsCdLayout* layout,
                                           const char* directory,
@@ -3637,7 +3651,12 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
     char archivePath[M12_ASSET_DATA_DIR_CAPACITY];
     const char* selectedDirectory;
     char imagePath[M12_ASSET_DATA_DIR_CAPACITY] = {0};
+    char cachedImagePath[M12_ASSET_DATA_DIR_CAPACITY];
+    char cachedCuePath[M12_ASSET_DATA_DIR_CAPACITY];
+    unsigned char* cueBytes = NULL;
+    size_t cueSize = 0U;
     CSB_V1_FmtownsCdLayout layout;
+    CSB_V1_FmtownsCddaLayout cdda;
     int i;
     if (!status || !gameCacheDir) return 0;
     if (!version || !version->versionId ||
@@ -3653,6 +3672,28 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
     selectedDirectory = strcmp(version->versionId, "fmtowns-en") == 0
         ? "CDATA" : "CJDATA";
     if (!m12_csb_fmtowns_archive_stage(archivePath, imagePath, sizeof(imagePath), &layout)) return 0;
+    if (!FSP_JoinPath(cachedImagePath, sizeof(cachedImagePath), gameCacheDir,
+                      "FMTOWNS.IMG") ||
+        !FSP_JoinPath(cachedCuePath, sizeof(cachedCuePath), gameCacheDir,
+                      "FMTOWNS.CUE")) {
+        remove(imagePath);
+        return 0;
+    }
+    /* ReDMCSB ANIM.C F2275 lines 2243-2248 consumes TD/TR during playback.
+     * Keep this exact media pair alive for M11 instead of throwing away the
+     * source audio after extracting only the ISO files. */
+    remove(cachedCuePath);
+    if (!m12_csb_fmtowns_archive_extract_cue(archivePath, cachedCuePath) ||
+        !m12_read_file_bytes(cachedCuePath, &cueBytes, &cueSize) ||
+        csb_v1_fmtowns_cdda_parse_cue((const char*)cueBytes, cueSize, &cdda) != 0 ||
+        !cdda.valid ||
+        cdda.track_count != (int)CSB_FMTOWNS_CD_CDDA_TRACK_COUNT) {
+        free(cueBytes);
+        remove(cachedCuePath);
+        remove(imagePath);
+        return 0;
+    }
+    free(cueBytes);
     /* This cache leaf is shared by the selected CSB release.  The regular
      * archive materializer removes an optional member that is absent from the
      * current package, but the FM Towns path returns after extracting its CD
@@ -3684,6 +3725,7 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
             !(entry = csb_v1_fmtowns_cd_find(&layout, selectedDirectory, name)) ||
             csb_v1_fmtowns_cd_extract_file_to_path(imagePath, &layout, entry,
                                                     outPath) != 0) {
+            remove(cachedCuePath);
             remove(imagePath);
             return 0;
         }
@@ -3717,20 +3759,29 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
             if (!FSP_JoinPath(parent, sizeof(parent), gameCacheDir, entry->parent) ||
                 !FSP_CreateDirectoryRecursive(parent) ||
                 !FSP_JoinPath(outPath, sizeof(outPath), parent, entry->name)) {
+                remove(cachedCuePath);
                 remove(imagePath);
                 return 0;
             }
         } else if (!FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, entry->name)) {
+            remove(cachedCuePath);
             remove(imagePath);
             return 0;
         }
         if (csb_v1_fmtowns_cd_extract_file_to_path(imagePath, &layout, entry,
                                                     outPath) != 0) {
+            remove(cachedCuePath);
             remove(imagePath);
             return 0;
         }
     }
-    remove(imagePath);
+    /* Commit the image only after its entire ISO inventory was copied. */
+    remove(cachedImagePath);
+    if (rename(imagePath, cachedImagePath) != 0) {
+        remove(cachedCuePath);
+        remove(imagePath);
+        return 0;
+    }
     return 1;
 }
 

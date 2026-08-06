@@ -30,6 +30,7 @@
 #include "theron_v1_viewport.h"
 #include "theron_v1_world.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_fmtowns_cd.h"
 #include "csb_v1_csbwin_layout_0232.h"
 #include "csb_v1_csbwin_planar_bitmap.h"
 #include "csb_v1_audio_runtime_pc34_compat.h"
@@ -6302,9 +6303,89 @@ static int m11_csb_is_fmtowns_profile(const CSB_V1_BootProfile *profile)
                        profile->variant_id == CSB_V1_VARIANT_FMTOWNS_JA);
 }
 
+static void m11_csb_dispatch_fmtowns_cdda(
+    M11_GameViewState *state, const CSB_V1_FmtownsAnmFrameReceipt *frame)
+{
+    const CSB_V1_BootProfile *profile;
+    char cue_path[sizeof(((CSB_V1_BootProfile *)0)->asset_root) + 16u];
+    char image_path[sizeof(((CSB_V1_BootProfile *)0)->asset_root) + 16u];
+    FILE *cue_file = NULL;
+    long cue_size;
+    char *cue_bytes = NULL;
+    uint8_t *pcm = NULL;
+    size_t pcm_size = 0u;
+    CSB_V1_FmtownsCddaLayout layout;
+    const CSB_V1_FmtownsCddaTrack *track = NULL;
+    int i;
+
+    if (!state || !frame || !frame->cdda_track_requested ||
+        !state->csbBootProfile) return;
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_fmtowns_profile(profile) || !profile->asset_root[0] ||
+        snprintf(cue_path, sizeof(cue_path), "%s/FMTOWNS.CUE",
+                 profile->asset_root) < 0 ||
+        strlen(cue_path) >= sizeof(cue_path) ||
+        snprintf(image_path, sizeof(image_path), "%s/FMTOWNS.IMG",
+                 profile->asset_root) < 0 ||
+        strlen(image_path) >= sizeof(image_path)) return;
+
+    /* ReDMCSB ANIM.C F2275 lines 2243-2248 turns TD/TR into
+     * F0719_PlayMusicTrack. F0719 first pauses the old physical track, so a
+     * rejected cache receipt must be silent rather than leaving stale audio. */
+    if (state->csbFmtownsCddaPlaying) {
+        (void)M11_Audio_StopCdda(&state->audioState);
+        state->csbFmtownsCddaPlaying = 0;
+    }
+    cue_file = fopen(cue_path, "rb");
+    if (!cue_file || fseek(cue_file, 0, SEEK_END) != 0 ||
+        (cue_size = ftell(cue_file)) <= 0 || cue_size > 64 * 1024 ||
+        fseek(cue_file, 0, SEEK_SET) != 0) {
+        if (cue_file) fclose(cue_file);
+        return;
+    }
+    cue_bytes = (char *)malloc((size_t)cue_size);
+    if (!cue_bytes || fread(cue_bytes, 1u, (size_t)cue_size, cue_file) !=
+                          (size_t)cue_size) {
+        free(cue_bytes);
+        fclose(cue_file);
+        return;
+    }
+    fclose(cue_file);
+    if (csb_v1_fmtowns_cdda_parse_cue(cue_bytes, (size_t)cue_size, &layout) != 0 ||
+        !layout.valid ||
+        layout.track_count != (int)CSB_FMTOWNS_CD_CDDA_TRACK_COUNT) {
+        free(cue_bytes);
+        return;
+    }
+    free(cue_bytes);
+    for (i = 0; i < layout.track_count; ++i) {
+        if (layout.tracks[i].track_number == frame->cdda_track) {
+            track = &layout.tracks[i];
+            break;
+        }
+    }
+    if (!track || csb_v1_fmtowns_cdda_read_file_alloc(image_path, track,
+                                                       &pcm, &pcm_size) != 0) {
+        free(pcm);
+        return;
+    }
+    /* F0719's CD mtplay uses the next CUE track as the end boundary. It is
+     * not a host loop; replay occurs only if a later source TR asks for it. */
+    if (M11_Audio_PlayCdda(&state->audioState, pcm, pcm_size, 0))
+        state->csbFmtownsCddaPlaying = 1;
+    free(pcm);
+}
+
 static void m11_csb_release_fmtowns_title(M11_GameViewState *state)
 {
     if (!state) return;
+    /* F2275 ends in F0740_MUSIC_Pause (ANIM.C line 2329). M11 has no
+     * retained CD pause stream, so discard this one-shot source transport at
+     * the same title-owner boundary rather than allowing it into SWITCHTW. */
+    if (state->csbFmtownsCddaPlaying) {
+        (void)M11_Audio_StopCdda(&state->audioState);
+        state->csbFmtownsCddaPlaying = 0;
+    }
     free(state->csbFmtownsTitleBytes);
     state->csbFmtownsTitleBytes = NULL;
     state->csbFmtownsTitleByteCount = 0u;
@@ -6532,6 +6613,7 @@ static int m11_csb_bind_fmtowns_title(M11_GameViewState *state,
     state->csbFmtownsFrameTimerARemaining =
         state->csbFmtownsTitleFrameReceipt.timer_a_ticks;
     state->csbFmtownsTitleBound = 1;
+    m11_csb_dispatch_fmtowns_cdda(state, &state->csbFmtownsTitleFrameReceipt);
     return 1;
 }
 
@@ -6581,6 +6663,8 @@ static void m11_csb_advance_fmtowns_title(M11_GameViewState *state,
         if (step_result == 1) {
             state->csbFmtownsTitleFrameReceipt = next_frame;
             state->csbFmtownsFrameTimerARemaining = next_frame.timer_a_ticks;
+            m11_csb_dispatch_fmtowns_cdda(
+                state, &state->csbFmtownsTitleFrameReceipt);
         } else {
             /* ANIMTOWN.C returns after F2275. The retail AUTOEXEC.BAT then
              * executes SWITCHTW JAPAN; it does not enter PC34 TITLE.C or

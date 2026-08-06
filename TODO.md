@@ -654,7 +654,7 @@
   Switch loop when that stream completes. Utility and Game remain deliberately
   modal: `UTILJ`/`UTILE` are separate CEDT executables and `CHTWJ`/`CHTWE`
   are separate Game executables, so neither is routed through a PC34 surrogate.
-  Their authentic handoff, audio/CDDA playback, ending handoff and save
+  Their authentic handoff, ending handoff and save
   transfer still need original-media capture. The retail `CDATA/MINI.DAT`
   and `CJDATA/MINI.DAT` files are explicitly not admitted by the Atari/Amiga
   GAMEBLOCK decoder: both differ from that big-endian layout and remain
@@ -680,9 +680,12 @@
   sidecar directory, so the Japanese Switch Game exit reaches `CHTWJ.EXP`,
   door-opening and the same live C017/F0128 handoff. Original-media audio,
   Utility, ending and save transactions remain required.
-  The raw CDDA extractor now streams or allocates a selected CUE track from
-  authenticated Red Book sectors; binding that PCM to M11 timing remains
-  separate.
+  The selected FM Towns cache now retains the original CUE/IMG media pair,
+  not a derived track map. M11 dispatches each F2275 TD/TR request through
+  that CUE's physical Red Book track and ends its one-shot transport when the
+  animation owner returns, matching F0719's replacement boundary without
+  generated PCM or a loop. Native CD pause/resume, Utility, ending and save
+  transactions remain required.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP

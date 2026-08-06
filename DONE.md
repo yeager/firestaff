@@ -54580,6 +54580,18 @@ alcove runtime and archive-media tests passed (4/4).
   remaining intentional placeholder/capture boundaries.
 # DM1 legacy wall-index placeholder removed (2026-08-06)
 
+- ✅ 2026-08-06 CSB FM Towns ANM CDDA runtime handoff: the selected retail
+  FM Towns archive now materializes its original `FMTOWNS.CUE` and raw
+  `FMTOWNS.IMG` together with the verified ISO inventory. M11 reads the CUE
+  again for each source `TD`/`TR` receipt from `ANIM.C` F2275 and plays only
+  the requested physical Red Book span, with no generated PCM, filename
+  heuristic or host loop. It replaces a prior request and ends its one-shot
+  transport on the animation-owner boundary. Native F0740 pause/resume state
+  remains deliberately open. Verification: full `firestaff` build; real archive scan into
+  an isolated cache; cached CUE/IMG regression `36 passed, 0 failed`; and
+  authentic TITLE/STORY/ENDING playback timeline regression `1367 passed,
+  0 failed`.
+
 - ✅ Removed the remaining fixed arithmetic wall-index helper from the old
   `firestaff_dungeon_viewport_bridge` API. The previous `300 + distance * 18
   + position * 6` calculation was not a ReDMCSB or PC34 `GRAPHICS.DAT`
