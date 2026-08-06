@@ -132,6 +132,10 @@ void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index) {
     party->gold           = 0;
 }
 
+#if defined(THERON_CHAMPION_FIXTURE_HELPERS)
+
+/* Fixture-only reset. Production startup now keeps source-bound roster
+ * records and must never expose this synthetic zero-party helper. */
 void theron_v1_party_clear_fixture_defaults(Theron_V1_Party *party) {
     if (!party) return;
     for (int i = 0; i < THERON_MAX_CHAMPIONS; ++i) {
@@ -171,6 +175,8 @@ void theron_v1_party_clear_fixture_defaults(Theron_V1_Party *party) {
     party->active_slot = 0;
     party->gold = 0;
 }
+
+#endif /* THERON_CHAMPION_FIXTURE_HELPERS */
 
 /* ── Per-dungeon companion availability ───────────────────────────────
  * DOTAN (roster index 6) is absent from Dungeon 1 (AKUTUBA). */

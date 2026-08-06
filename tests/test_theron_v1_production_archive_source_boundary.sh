@@ -47,4 +47,23 @@ for source in \
     fi
 done
 
+# Fixture constructors/resetters are compile-time test helpers even when
+# their implementation shares a production translation unit. They must not
+# be exported by the shipped archive.
+if command -v nm >/dev/null 2>&1; then
+    symbols=$(nm -gU "$archive" 2>/dev/null || nm -g "$archive")
+    for symbol in theron_v1_party_clear_fixture_defaults \
+                  theron_v1_first_room_buffer_size \
+                  theron_v1_first_room_synthesize \
+                  theron_v1_startup_fallback_room_synthesize; do
+        if awk -v wanted="$symbol" '
+            { name = $NF; sub(/^_/, "", name); if (name == wanted) found = 1 }
+            END { exit found ? 0 : 1 }
+        ' <<<"$symbols"; then
+            printf 'FAIL: fixture-only Theron symbol is exported: %s\n' "$symbol" >&2
+            exit 1
+        fi
+    done
+fi
+
 printf 'PASS: inferred/procedural Theron sources are absent from firestaff_theron\n'

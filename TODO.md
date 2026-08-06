@@ -454,6 +454,10 @@
   MODE1/2352 bank-window offsets and regional stage-2 hashes. This closes
   only static code identity coverage; the executing consumer and semantic
   level/object/palette handoff remain capture-gated.
+  2026-08-06 production-boundary follow-up: the fixture-only party reset and
+  first-room constructors are now absent from the `firestaff_theron` archive;
+  keep this boundary when adding the authenticated consumer rather than
+  re-exporting the old synthetic helpers.
 
 - **THERON-M11-FORCEFIELD-INPUT:** M11 now lets authentic Track 02 startup
   input reach the forcefield admission path even when the source-owned

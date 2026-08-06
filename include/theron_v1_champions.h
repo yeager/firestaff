@@ -202,7 +202,9 @@ void theron_v1_party_init(Theron_V1_Party *party, int dungeon_index);
 /* Remove all fixture-only champion state from a verified Track 02 handoff.
  * Names, portraits, classes and numeric records stay unavailable until the
  * original champion records are decoded. */
+#if defined(THERON_CHAMPION_FIXTURE_HELPERS)
 void theron_v1_party_clear_fixture_defaults(Theron_V1_Party *party);
+#endif
 
 /* Returns 1 if roster_index is available in the given dungeon (1-7).
  * DOTAN (index 6) is absent from Dungeon 1 (AKUTUBA). */

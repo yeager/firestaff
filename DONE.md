@@ -1,3 +1,14 @@
+# Theron production fixture-symbol boundary (2026-08-06)
+
+- ✅ Removed the fixture-only `theron_v1_party_clear_fixture_defaults()` export
+  from the production archive. Its implementation and declaration now require
+  `THERON_CHAMPION_FIXTURE_HELPERS`, while source-bound startup keeps the real
+  Track 02 roster records. The production archive verifier also rejects the
+  fixture party reset and synthetic first-room constructors by symbol.
+- ✅ Verification: serial `firestaff_theron` build, production archive boundary,
+  `test_theron_v1_m11_direct_launch` and the real-data startup receipt probe
+  (`313 passed, 2 skipped, 0 failed`).
+
 # Nexus retail SLEV corpus receipt (2026-08-06)
 
 - ✅ Added `nexus_v1_slev_task_corpus_receipt`, which rehashes and reads all
