@@ -1179,6 +1179,10 @@ level or consumer bindings.
   its authenticated loose pair. The real-media regressions cover both direct
   archive and mixed-root scans. This is selection identity only, not a claim
   of complete platform gameplay parity.
+  **2026-08-06 lifetime update:** M11 shutdown now releases the selected
+  FM Towns TITLE/SWOOSH RAM member before its boot profile releases the
+  in-memory HME-242 image. Relaunch cannot retain a stale animation buffer;
+  no member is materialised on disk.
   **2026-08-06 English companion path update:** an explicit PC-English
   companion now accepts the original DOS ZIP member spelling
   `DATA/GRAPHICS.DAT` as well as the documented lower-case virtual spelling.

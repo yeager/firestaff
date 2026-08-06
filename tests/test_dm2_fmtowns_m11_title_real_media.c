@@ -92,6 +92,11 @@ int main(void)
                    M11_GAME_INPUT_IGNORED,
            "unimplemented FM Towns SKULL.EXP stays black and cannot use PC menu input");
     M11_GameView_Shutdown(&view);
+    expect(view.dm2FmtownsTitleBytes == NULL &&
+               view.dm2FmtownsTitleByteCount == 0u &&
+               !view.dm2FmtownsTitleBound &&
+               !view.dm2FmtownsSwooshActive,
+           "shutdown releases the RAM-only FM Towns animation member");
     if (failures) return 1;
     puts("PASS: DM2 FM Towns TITLE M11 presentation uses authenticated real media");
     return 0;

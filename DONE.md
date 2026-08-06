@@ -28,6 +28,13 @@
   table bound to the same source buffer. This is not a claim of native SKULL
   execution, menu rendering or input parity.
 
+# DM2 FM Towns animation-memory lifetime (2026-08-06)
+
+- ✅ M11 shutdown now releases the RAM-only TITLE/SWOOSH member before the
+  selected HME-242 boot profile is freed. The real-disc title regression
+  verifies that a stale member, frame state and SWOOSH state cannot survive
+  shutdown; no game-data member is written to disk.
+
 # GitHub release-notes specificity gate (2026-08-06)
 
 - ✅ Strengthened the release preflight so every published version must have

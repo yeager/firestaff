@@ -16427,6 +16427,11 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
     }
     theron_v1_track01_cdda_stream_stop(&state->theronTrack01CddaStream);
     m11_nexus_release_title(state);
+    /* FM Towns TITLE/SWOOSH is copied only into this state-owned RAM buffer
+     * from the selected HME-242 IMG.  Release it before its boot profile
+     * releases the backing disc receipt: shutdown/relaunch must neither
+     * retain the original member nor leave a stale presentation route. */
+    m11_dm2_release_fmtowns_title(state);
     {
         Theron_V1_BootProfile *theronProfile =
             (Theron_V1_BootProfile*)state->theronBootProfile;
