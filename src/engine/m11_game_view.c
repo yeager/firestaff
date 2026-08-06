@@ -117,6 +117,7 @@
 #include "dm1_v1_viewport_floor_ceiling_items_pc34_compat.h"
 #include "memory_creature_ai_pc34_compat.h"
 #include "dm1_v1_sensor_trigger_pc34_compat.h"
+#include "dm1_v1_actuator_execution_pc34_compat.h"
 #include "dm1_v1_collision_door_pc34_compat.h"
 #include "dm1_v1_combat_pc34_compat.h"
 #include "dm1_v1_creature_render_pc34_compat.h"
@@ -10618,6 +10619,51 @@ static int m11_print_dm1_sensor_message(M11_GameViewState* state,
     return 1;
 }
 
+/* ReDMCSB F0268/F0244 square-state effects must cross the DM1 actuator
+ * boundary before they mutate live map bytes.  Keep door animation on the
+ * F0713/F0714 timeline path below; this helper covers the immediate pit and
+ * fakewall state owners without duplicating their bit packing in M11. */
+static int m11_apply_dm1_square_actuator(
+    M11_GameViewState* state,
+    const struct SensorEffect_Compat* effect,
+    int targetElement,
+    int actuatorKind,
+    struct Dm1V1ActuatorResult* outResult) {
+    struct DungeonMapTiles_Compat* tiles;
+    const struct DungeonMapDesc_Compat* map;
+    struct SensorActuatorDispatch_Compat dispatch;
+    int action;
+    int mapIndex;
+
+    if (!state || !effect || !state->world.dungeon || !outResult) return 0;
+    mapIndex = state->world.party.mapIndex;
+    if (mapIndex < 0 ||
+        mapIndex >= (int)state->world.dungeon->header.mapCount) return 0;
+    map = &state->world.dungeon->maps[mapIndex];
+    tiles = &state->world.dungeon->tiles[mapIndex];
+
+    /* SET/CLEAR/TOGGLE are the only mutating F0268 effects. HOLD must
+     * preserve the source square and therefore has no actuator action. */
+    if (effect->textIndex == 0) action = DM1_ACTUATOR_ACTION_OPEN;
+    else if (effect->textIndex == 1) action = DM1_ACTUATOR_ACTION_CLOSE;
+    else if (effect->textIndex == 2) action = DM1_ACTUATOR_ACTION_TOGGLE;
+    else return 0;
+
+    memset(&dispatch, 0, sizeof(dispatch));
+    dispatch.valid = 1;
+    dispatch.targetMapX = effect->destMapX;
+    dispatch.targetMapY = effect->destMapY;
+    dispatch.targetSquareType = targetElement;
+    dispatch.targetEventType = DUNGEON_ELEMENT_PIT == targetElement
+        ? DM1_EVENT_PIT : DM1_EVENT_FAKEWALL;
+    dispatch.actuatorKindMask = actuatorKind;
+    dispatch.action = action;
+    dispatch.resolvedEffect = effect->textIndex;
+
+    return dm1_v1_actuator_execute_dispatch_pc34(
+        &dispatch, tiles, (int)map->width, (int)map->height, outResult);
+}
+
 static void m11_apply_sensor_effects(M11_GameViewState* state,
                                      const struct SensorEffectList_Compat* effects) {
     int i;
@@ -10697,54 +10743,33 @@ static void m11_apply_sensor_effects(M11_GameViewState* state,
                     m11_audio_emit_source_sound(state, 1, M11_AUDIO_MARKER_DOOR); /* C01_SOUND_SWITCH */
                 }
             } else if (targetElement == DUNGEON_ELEMENT_PIT) {
-                /* Toggle pit open/closed.
-                 * ReDMCSB DEFS.H: MASK0x0008_PIT_OPEN = bit 3. */
-                int pitBit = (targetSquare & DM1_PIT_MASK_OPEN) ? 1 : 0;
-                if (e->textIndex == 2) { /* TOGGLE */
-                    pitBit = !pitBit;
-                } else if (e->textIndex == 0) { /* SET = open */
-                    pitBit = 1;
-                } else if (e->textIndex == 1) { /* CLEAR = close */
-                    pitBit = 0;
+                struct Dm1V1ActuatorResult result;
+                if (m11_apply_dm1_square_actuator(
+                        state, e, targetElement, DM1_ACTUATOR_KIND_PIT,
+                        &result)) {
+                    m11_set_status(state, "SENSOR",
+                                   result.newState ? "PIT OPENED" : "PIT CLOSED");
+                    m11_refresh_hash(state);
                 }
-                {
-                    unsigned char newSq = (unsigned char)(
-                        (targetSquare & ~DM1_PIT_MASK_OPEN) |
-                        (pitBit ? DM1_PIT_MASK_OPEN : 0));
-                    m11_set_square_byte(&state->world,
-                                        state->world.party.mapIndex,
-                                        e->destMapX, e->destMapY, newSq);
-                }
-                m11_set_status(state, "SENSOR", pitBit ? "PIT OPENED" : "PIT CLOSED");
-                m11_refresh_hash(state);
             } else if (targetElement == DUNGEON_ELEMENT_FAKEWALL) {
-                /* Toggle fakewall to corridor (or vice versa).
-                 * ReDMCSB MOVESENS.C F0268: rewrites bits 7:5. */
-                int makeCorridor = 1;
-                if (e->textIndex == 1) makeCorridor = 0; /* CLEAR = restore fakewall */
-                else if (e->textIndex == 2) makeCorridor = 1; /* TOGGLE when fakewall */
-                {
-                    unsigned char newSq = (unsigned char)(
-                        (targetSquare & 0x1F) |
-                        ((makeCorridor ? DUNGEON_ELEMENT_CORRIDOR : DUNGEON_ELEMENT_FAKEWALL) << 5));
-                    m11_set_square_byte(&state->world,
-                                        state->world.party.mapIndex,
-                                        e->destMapX, e->destMapY, newSq);
+                struct Dm1V1ActuatorResult result;
+                if (m11_apply_dm1_square_actuator(
+                        state, e, targetElement, DM1_ACTUATOR_KIND_FAKEWALL,
+                        &result)) {
+                    m11_set_status(state, "SENSOR",
+                                   result.newState == DUNGEON_ELEMENT_CORRIDOR
+                                       ? "WALL REVEALED" : "WALL HIDDEN");
+                    m11_refresh_hash(state);
                 }
-                m11_set_status(state, "SENSOR",
-                               makeCorridor ? "WALL REVEALED" : "WALL HIDDEN");
-                m11_refresh_hash(state);
             } else if (targetElement == DUNGEON_ELEMENT_CORRIDOR &&
                        e->textIndex == 1) {
-                /* CLEAR on a corridor = restore it to fakewall */
-                unsigned char newSq = (unsigned char)(
-                    (targetSquare & 0x1F) |
-                    (DUNGEON_ELEMENT_FAKEWALL << 5));
-                m11_set_square_byte(&state->world,
-                                    state->world.party.mapIndex,
-                                    e->destMapX, e->destMapY, newSq);
-                m11_set_status(state, "SENSOR", "WALL HIDDEN");
-                m11_refresh_hash(state);
+                struct Dm1V1ActuatorResult result;
+                if (m11_apply_dm1_square_actuator(
+                        state, e, targetElement, DM1_ACTUATOR_KIND_FAKEWALL,
+                        &result)) {
+                    m11_set_status(state, "SENSOR", "WALL HIDDEN");
+                    m11_refresh_hash(state);
+                }
             } else if (targetElement == DUNGEON_ELEMENT_TELEPORTER) {
                 /* Toggle teleporter active/inactive */
                 int telBit = targetSquare & 0x01;

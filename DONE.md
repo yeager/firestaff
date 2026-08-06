@@ -53798,3 +53798,10 @@ alcove runtime and archive-media tests passed (4/4).
   confined to F9/host resume. The focused save/load suite passes 16/16 and
   the real PC34 graphics audit passes 713/713 structural records; authentic
   corpus-backed F0802/C13 writeback remains tracked in TODO.
+- ✅ 2026-08-06 DM1 live sensor actuator handoff: M11 pit and fakewall
+  SET/CLEAR/TOGGLE effects now use the source-bound
+  `SensorActuatorDispatch_Compat` and `dm1_v1_actuator_execute_dispatch_pc34()`
+  implementation instead of duplicating square-byte mutation in the host
+  loop. HOLD remains non-mutating; door animation stays on the source timeline
+  owner and teleporter state remains on its existing route. Ninja build,
+  actuator, pit/teleporter and game-loop integration regressions pass.
