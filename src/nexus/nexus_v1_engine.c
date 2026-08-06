@@ -8535,7 +8535,13 @@ int nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
     memset(&target, 0, sizeof(target));
     target.no_draw_only = 1;
     target.blocks_real_dgn_mesh_render = 1;
-    if (nexus_v1_engine_build_structure1f_direct_mesh_binding(
+    /* Real LEV00..15 selectors exceed the 15-entry MNS TEXT banks. Until
+     * Saturn proves the selector transform, this API must not claim a direct
+     * Structure1F-to-Structure2 material owner. The geometry/transform
+     * capture target remains available through the separate no-draw route. */
+    if (!engine ||
+        !engine->dgn_static_material_sources.structure1b_selector_binding_proven ||
+        nexus_v1_engine_build_structure1f_direct_mesh_binding(
             engine, structure1f_entry_index, &target.direct_mesh) != 1 ||
         !target.direct_mesh.valid || !target.direct_mesh.model_to_entry_proven ||
         !target.direct_mesh.face_ordinal_proven ||
@@ -11086,7 +11092,7 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
     Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt *out_receipt)
 {
     Nexus_V1_DgnM11Structure2FaceDescriptorIntakeReceipt receipt;
-    Nexus_V1_DgnStructure1FDirectStaticMaterialCaptureTarget target;
+    Nexus_V1_DgnStructure3StaticMaterialCaptureTarget material_target;
     const Nexus_V1_DgnStructure3StaticMaterialCaptureTarget *material;
     const Nexus_V1_DgnStructure2DescriptorCaptureTarget *descriptor;
     uint64_t descriptor_end;
@@ -11094,7 +11100,7 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
 
     if (!out_receipt) return 0;
     memset(&receipt, 0, sizeof(receipt));
-    memset(&target, 0, sizeof(target));
+    memset(&material_target, 0, sizeof(material_target));
     if (!engine || !route_epoch || level_index < 0 || !package_fnv1a64 ||
         !structure1f || !structure1f->valid ||
         structure1f->level_index != (uint32_t)level_index ||
@@ -11105,19 +11111,23 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
         !structure1f->no_draw_only ||
         structure1f->fallback_visuals_permitted ||
         !structure1f->blocks_real_dgn_mesh_render ||
-        nexus_v1_engine_build_structure1f_direct_static_material_capture_target(
-            engine, structure1f->structure1f_entry_index, &target) != 1 ||
-        !target.valid || !target.direct_face_material_bound ||
-        !target.capture_producer_required || !target.original_saturn_capture_required ||
-        !target.no_draw_only || target.fallback_visuals_permitted ||
-        !target.blocks_real_dgn_mesh_render ||
-        target.direct_mesh.structure1f_entry_index !=
-            structure1f->structure1f_entry_index ||
-        target.direct_mesh.source_bytes_fnv1a64 != package_fnv1a64) {
+        nexus_v1_engine_build_structure3_static_material_capture_target(
+            engine, structure1f->structure3_model_index,
+            structure1f->face_ordinal, &material_target) != 1 ||
+        !material_target.valid ||
+        !material_target.capture_producer_required ||
+        !material_target.original_saturn_capture_required ||
+        !material_target.no_draw_only ||
+        material_target.fallback_visuals_permitted ||
+        material_target.level_index != level_index ||
+        material_target.source_bytes_fnv1a64 != package_fnv1a64 ||
+        material_target.structure3_entry_index !=
+            (uint32_t)structure1f->structure3_model_index ||
+        material_target.face_ordinal != (uint32_t)structure1f->face_ordinal) {
         *out_receipt = receipt;
         return 0;
     }
-    material = &target.static_material;
+    material = &material_target;
     descriptor = &material->descriptor_target;
     if (!material->valid || !material->static_selector_descriptor_bound ||
         !material->image_payload_anchor_bound ||
@@ -11127,8 +11137,9 @@ static int nexus_v1_engine_build_m11_structure2_face_descriptor_intake(
         material->fallback_visuals_permitted ||
         material->level_index != level_index ||
         material->source_bytes_fnv1a64 != package_fnv1a64 ||
-        material->structure3_entry_index != target.direct_mesh.structure3_model_index ||
-        material->face_ordinal != target.direct_mesh.face_ordinal ||
+        material->structure3_entry_index !=
+            (uint32_t)structure1f->structure3_model_index ||
+        material->face_ordinal != (uint32_t)structure1f->face_ordinal ||
         material->face_byte_offset < 0 || !material->face_bytes_fnv1a64 ||
         !descriptor->valid || descriptor->level_index != level_index ||
         descriptor->source_bytes_fnv1a64 != package_fnv1a64 ||

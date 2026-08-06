@@ -61,6 +61,16 @@
   ABI pass; no runtime decoder, pixel intake, palette upload or VDP1 handoff was
   opened.
 
+- ✅ 2026-08-06 Nexus Structure1B material-owner quarantine: the retail
+  LEV00–LEV15 selector census disproves direct ordinal lookup into the 15-entry
+  MNS TEXT banks. Production no longer emits a valid direct
+  Structure1F→Structure2 material target while the selector-transform proof is
+  absent. M11's no-draw handoff path now binds the independently source-bound
+  Structure3 face and Structure2 descriptor directly, preserving opaque capture
+  windows without reintroducing the invalid material-owner claim. Focused DGN,
+  Structure3, material-provenance and campaign-ingress checks remain green;
+  Saturn selector/VDP1 semantics and all drawing remain closed.
+
 - ✅ 2026-08-06 CI Windows warning-as-error fix: confined the POSIX-only
   case-insensitive SKSave filename variant matcher to non-Windows builds.
   Windows no longer compiles an unused helper under `-Werror`; the focused

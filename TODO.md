@@ -31,7 +31,11 @@
   census reaches `0x7D`, while each MNS bank has only 15 TEXT descriptors;
   direct selector-to-descriptor ordinal binding is therefore disproven.
   Recover the Saturn selector transform and VDP1 ownership from executable or
-  runtime capture; palette, transform and drawing evidence remain gated.
+  runtime capture; palette, transform and drawing evidence remain gated. The
+  direct Structure1F→Structure2 material-target API now also rejects the retail
+  corpus while `structure1b_selector_binding_proven` is false; raw geometry and
+  Structure2 payload anchors remain separate capture evidence rather than a
+  guessed material owner.
 
 - **NEXUS-SAL-MAP-CORPUS-RECEIPT:** The 16 real European SAL/MAP pairs now
   pass the retail byte-zero MAP parser (154 bounded eight-byte rows, `FF FF`
