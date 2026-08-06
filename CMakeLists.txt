@@ -4644,6 +4644,11 @@ list(REMOVE_ITEM M10_SOURCES
 # helper remains in M10; this driver has no M11 caller.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_occupied_hand_drop_and_reinsert_pc34_compat.c")
+# `dm1_v1_chest_close_rewire_runtime_pc34_compat.c` is a fixed-value
+# close/rewire regression driver. Its direct target already compiles it;
+# the shared inventory helpers remain in M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_close_rewire_runtime_pc34_compat.c")
 # `dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c` is a
 # contract-only probe. It manufactures its chest stack, leader hand, floor
 # link and coordinates locally, reads no original save/dungeon/graphics data,
