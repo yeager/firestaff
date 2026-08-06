@@ -18,7 +18,9 @@ int main(void) {
     Theron_V1_Viewport viewport;
     int loaded;
     int preview_cells;
+    unsigned char m11_framebuffer[320u * 200u] = {0};
     size_t preview_nonzero;
+    size_t presented_nonzero;
     size_t vram_nonzero;
     size_t vce_nonzero;
 
@@ -57,10 +59,23 @@ int main(void) {
         theron_vp_free(&viewport);
         return 1;
     }
+    memset(viewport.fb.data, 0,
+           (size_t)viewport.fb.stride * (size_t)viewport.fb.h);
+    theron_vp_render_dungeon(&viewport, NULL);
+    theron_vp_present(&viewport, &viewport.palette,
+                      m11_framebuffer, 320, 200);
+    presented_nonzero = nonzero_bytes(m11_framebuffer,
+                                      sizeof(m11_framebuffer));
+    if (presented_nonzero == 0u) {
+        fprintf(stderr, "FAIL: authentic BAT frame was not presented to M11\n");
+        theron_vp_free(&viewport);
+        return 1;
+    }
     printf("PASS: vram_nonzero=%zu vce_nonzero=%zu bat_tiles=%d "
-           "preview_cells=%d preview_nonzero=%zu palette_entries=512 "
+           "preview_cells=%d preview_nonzero=%zu presented_nonzero=%zu palette_entries=512 "
            "pixels=source_only\n",
-           vram_nonzero, vce_nonzero, loaded, preview_cells, preview_nonzero);
+           vram_nonzero, vce_nonzero, loaded, preview_cells, preview_nonzero,
+           presented_nonzero);
     theron_vp_free(&viewport);
     return 0;
 }

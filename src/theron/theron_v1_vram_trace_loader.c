@@ -254,11 +254,19 @@ int theron_v1_vram_trace_render_bat_preview(Theron_V1_Viewport *vp,
             tile = &vp->palette.tiles[atlas_index];
             if (!tile->data) continue;
             for (int row = 0; row < TQR_TILE_DIM; ++row) {
-                memcpy(vp->fb.data +
-                           (dst_y + y * TQR_TILE_DIM + row) * vp->fb.stride +
-                           dst_x + x * TQR_TILE_DIM,
-                       tile->data + row * TQR_TILE_DIM,
-                       TQR_TILE_DIM);
+                uint8_t *dst = vp->fb.data +
+                    (dst_y + y * TQR_TILE_DIM + row) * vp->fb.stride +
+                    dst_x + x * TQR_TILE_DIM;
+                const uint8_t *src = tile->data + row * TQR_TILE_DIM;
+                uint8_t palette_base = (uint8_t)(tile->pal_group *
+                                                 TQR_PALETTE_GROUP_SIZE);
+                for (int px = 0; px < TQR_TILE_DIM; ++px) {
+                    /* BAT bits 12..15 select the VCE group.  Keep that
+                     * source-owned group in the indexed frame; copying only
+                     * the four-bit tile value silently collapsed every real
+                     * palette group into group zero. */
+                    dst[px] = (uint8_t)(palette_base + src[px]);
+                }
             }
             ++copied;
         }

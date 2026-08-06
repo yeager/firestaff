@@ -77,8 +77,14 @@ void theron_vp_set_synthetic_rendering_blocked(Theron_V1_Viewport *vp,
 
 void theron_vp_render_dungeon(Theron_V1_Viewport *vp,
                               const Theron_V1_World *world) {
-    (void)vp;
     (void)world;
+    /* An explicit VDC/VCE capture is already a source-owned screen-space
+     * BAT/tile binding.  Replay that captured frame here without assigning
+     * its cells to the still-unproven dungeon square/object model. */
+    if (vp && vp->vram_trace_loaded) {
+        (void)theron_v1_vram_trace_render_bat_preview(
+            vp, 0, 32, 28, 0, 0);
+    }
 }
 
 void theron_vp_render_ui(Theron_V1_Viewport *vp,
@@ -105,7 +111,23 @@ void theron_vp_draw_champion_slot(TQR_PlanarFramebuffer *fb, int slot_idx,
 void theron_vp_present(const Theron_V1_Viewport *vp,
                        const TQR_PaletteState *palette,
                        unsigned char *m11_fb, int m11_fb_w, int m11_fb_h) {
-    (void)vp; (void)palette; (void)m11_fb; (void)m11_fb_w; (void)m11_fb_h;
+    int y;
+    (void)palette;
+    if (!vp || !vp->initialized || !vp->fb.data || !m11_fb ||
+        m11_fb_w <= 0 || m11_fb_h <= 0 || !vp->vram_trace_loaded) {
+        return;
+    }
+    /* Present only an explicitly captured indexed frame.  The M11 surface
+     * is indexed too, so preserve the real BAT/VCE group index rather than
+     * folding it through a procedural palette or inventing a color map. */
+    for (y = 0; y < vp->fb.h && y + 24 < m11_fb_h; ++y) {
+        int x;
+        unsigned char *dst = m11_fb + (y + 24) * m11_fb_w;
+        const uint8_t *src = vp->fb.data + y * vp->fb.stride;
+        for (x = 0; x < vp->fb.w && x + 32 < m11_fb_w; ++x) {
+            dst[x + 32] = src[x];
+        }
+    }
 }
 
 int theron_vp_tile_for_square(int square_type, int depth, int is_wall) {
