@@ -9,8 +9,10 @@
 
 ## Overview
 
-Nexus V1 text rendering uses a Sega Saturn SCR font format (FONT256.S2D)
-with a 256-character bitmap font including Japanese Shift-JIS katakana.
+Nexus V1 retains the Sega Saturn SCR font format (FONT256.S2D), whose header
+declares 256 character codes while the authenticated European character
+generator region contains 242 real 8x8 tiles. The code-to-tile/page/attribute
+mapping is not yet proven, so production text rendering remains closed.
 Text rendering is split across two files:
 - `nexus_v1_saturn_font.c` — font file loading and glyph access
 - `nexus_v1_text.c` — text layout, string extraction, encoding conversion
@@ -20,19 +22,20 @@ The HUD does not yet render text — only the glyph infrastructure exists.
 ## Font File: FONT256.S2D
 
 Format: Sega Saturn SCR (screen font). Header "SEGA SATURN SCR" (15 bytes).
-Loaded by nexus_v1_font_load() in nexus_v1_engine.c.
+Loaded by the source-aware `nexus_v1_font_s2d_decode()` plus
+`nexus_v1_font_load_from_s2d()` path in `nexus_v1_engine.c`.
 
 Header format (Big-Endian SH2):
 - Bytes 0-14: "SEGA SATURN SCR" magic
-- Bytes 16-17: char_count (uint16, max 512, default 256)
-- Glyph data starts at offset 48
+- Bytes 16-19: declared character-code count (`0x00000100`)
+- Bytes 16-95: five named DMWeb S2D region descriptors
+- Character-generator region: offset `0x2130`, size `0x3c90`; 16-byte
+  prefix plus 242 real 64-byte tiles
+- Palette region: offset `0x5dc0`, size `0x210`
+- Attribute region: offset `0x5fd0`, size `0x1e4`
 
-Glyph dimensions auto-detected:
-- glyph_size >= 32: 16x16 px
-- glyph_size >= 18: 12x12 px
-- otherwise: 8px wide, glyph_size tall
-
-For 256 glyphs at 16x16 (1 bpp = 32 bytes/glyph): 8192 bytes of glyph data.
+The old flat 1bpp loader remains available only for isolated fixture probes;
+it must not be used to interpret the real FONT256.S2D stream.
 
 ## Font API (nexus_v1_saturn_font.h)
 
@@ -42,8 +45,8 @@ void nexus_v1_font_free(Nexus_V1_Font *font);
 const uint8_t *nexus_v1_font_get_glyph(const Nexus_V1_Font *font, int idx);
 ```
 
-nexus_v1_font_get_glyph() returns raw bitmap for character index 0-255.
-No glyph rendering function exists yet — glyphs are loaded but not blitted.
+`nexus_v1_font_load_from_s2d()` exposes only the 242 authenticated CG tiles.
+It does not assign those tiles to the 256 header character codes.
 
 ## Text Rendering (nexus_v1_text.c)
 

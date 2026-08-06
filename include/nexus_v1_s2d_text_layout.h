@@ -7,7 +7,7 @@
  * Background
  * ----------
  * The existing `nexus_v1_saturn_font` module already exposes:
- *   - the flat 1bpp glyph-loader (`nexus_v1_font_load()`),
+ *   - an isolated flat 1bpp fixture loader (`nexus_v1_font_load()`),
  *   - a per-pixel and per-glyph indexed-framebuffer draw API
  *     (`nexus_v1_font_get_glyph_pixel`, `nexus_v1_font_draw_glyph_indexed`),
  *   - a bounded 32-entry SEGA SATURN SCR section-table parser
@@ -69,12 +69,10 @@
  *
  * What this module does NOT do
  * -----------------------------
- * - It does NOT decode the actual glyph payload inside a populated
- *   section. The flat 1bpp loader (`nexus_v1_font_load`) already
- *   handles that, and `nexus_v1_font_draw_glyph_indexed` already
- *   draws bytes from a glyph into an indexed framebuffer. This
- *   module layers layout on top of those APIs and never re-decodes
- *   a glyph.
+ * - It does NOT decode the actual retail FONT256 glyph payload or
+ *   character-code mapping. Its bitmap draw path is fixture-only;
+ *   production uses the named S2D region/CG parser and keeps the
+ *   Saturn page/attribute consumer closed until source-bound.
  * - It does NOT claim full Saturn SCR font parity. Real Shift-JIS
  *   double-byte characters are not RENDERED; they are skipped via
  *   a deterministic lead-byte gate (see "Shift-JIS lead-byte skip
@@ -82,10 +80,9 @@
  *   are still NOT supported; the layout API advances by a fixed
  *   width derived from `Nexus_V1_Font.char_width`.
  * - It does NOT touch a real Nexus screen or render against a real
- *   DGN framebuffer. The probe renders into a synthetic indexed
- *   framebuffer that lives entirely in test memory; the optional
- *   real-asset branch just feeds the same layout over the real
- *   FONT256.S2D when the operator has staged the file.
+ *   DGN framebuffer. The layout probe renders only isolated fixture
+ *   bytes; the real FONT256 branch records source regions and CG tiles
+ *   without feeding them into a host framebuffer.
  *
  * Source-lock
  * -----------

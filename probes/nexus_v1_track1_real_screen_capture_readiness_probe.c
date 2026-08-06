@@ -41,7 +41,7 @@
  *  - nexus_v1_load_model("SCORPION.MNS") parses the real 53,052-byte
  *    MNS asset and registers it in engine.models[].
  *  - nexus_v1_read_file("FONT256.S2D") returns the verified 25,012-byte
- *    Saturn SCR font, re-parsed via nexus_v1_font_load().
+ *    Saturn SCR font, decoded through its S2D regions and 242 real CG tiles.
  *  - nexus_viewport_render() + nexus_viewport_to_rgba() produce a
  *    320x200 RGBA buffer while DGN remains no-draw/capture-required.
  *  - the local BMP receipt writer writes a 24-bit BMP whose SHA256 is
@@ -62,7 +62,7 @@
  *                                           _load_model, _read_file)
  *   src/nexus/nexus_v1_dungeon.c           (nexus_v1_level_load)
  *   src/nexus/nexus_v1_dmdf_model.c        (nexus_v1_load_model)
- *   src/nexus/nexus_v1_saturn_font.c       (nexus_v1_font_load/_free)
+ *   src/nexus/nexus_v1_saturn_font.c       (nexus_v1_font_load_from_s2d/_free)
  *   src/nexus/nexus_v1_viewport.c          (nexus_viewport_init/_render,
  *                                           _to_rgba)
  *   src/nexus/nexus_v1_palette.c           (nexus_palette_init_defaults,
@@ -534,6 +534,7 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
     int r;
     struct stat st;
     Nexus_V1_Font real_font;
+    Nexus_V1_FontS2dDecodeResult font_regions;
     int real_font_loaded = 0;
 
     if (!data_dir || !*data_dir) {
@@ -551,6 +552,7 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
 
     memset(&engine, 0, sizeof(engine));
     memset(&real_font, 0, sizeof(real_font));
+    memset(&font_regions, 0, sizeof(font_regions));
     r = nexus_v1_init(&engine, data_dir);
     if (r != 0) {
         SKIP("nexus_v1_init failed against real data_dir");
@@ -591,13 +593,17 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
         int s2d_size = 0;
         uint8_t *s2d_bytes = nexus_v1_read_file(&engine, "FONT256.S2D", &s2d_size);
         if (s2d_bytes && s2d_size > 0) {
-            int frc = nexus_v1_font_load(&real_font, s2d_bytes, s2d_size);
+            int frc = nexus_v1_font_s2d_decode(
+                s2d_bytes, s2d_size, &font_regions);
             CHECK(frc > 0,
-                  "real FONT256.S2D parses through nexus_v1_font_load");
+                  "real FONT256.S2D regions parse through the S2D decoder");
             if (frc > 0) {
-                CHECK(real_font.char_count >= 256,
-                      "real FONT256.S2D exposes >= 256 char slots");
-                real_font_loaded = 1;
+                int tile_count = nexus_v1_font_load_from_s2d(
+                    &real_font, s2d_bytes, s2d_size, &font_regions);
+                CHECK(tile_count == NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
+                      "real FONT256.S2D exposes exactly 242 CG tiles");
+                real_font_loaded = tile_count ==
+                    NEXUS_V1_FONT_S2D_REAL_TILE_COUNT;
             }
             free(s2d_bytes);
             font_size = s2d_size;
@@ -625,8 +631,8 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
 
     nexus_viewport_render(&vp, &engine);
     CHECK(real_font_loaded &&
-          real_font.char_count >= NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
-          "real FONT256.S2D remains parsed while DGN capture is blocked");
+          real_font.char_count == NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
+          "real FONT256.S2D CG tiles remain parsed while DGN capture is blocked");
     nexus_viewport_to_rgba(&vp, rgba);
 
     non_black = count_non_black_pixels((const uint8_t *)rgba,

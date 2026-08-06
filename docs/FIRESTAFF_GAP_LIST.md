@@ -14,6 +14,14 @@ module, which drew a hardcoded frame and 5×7 font rather than original Utility
 Disk pixels, was removed. HCSB.HTC parsing and source-verified text binding
 remain; a graphical Hint Oracle is open only with a source-owned UI route.
 
+2026-08-06 Nexus S2D correction: older rows below that describe the real
+`FONT256.S2D` handoff as a 256-slot/16×16 flat-font parse or as a real-font
+framebuffer stamp are historical wording and are superseded. The current
+retail receipt uses the named S2D regions and exactly 242 authenticated 8×8
+character-generator tiles. The 256 header codes, page/attribute character
+mapping, Shift-JIS glyph assignment and screen placement remain open; the
+flat 1bpp and section→glyph-range render paths are fixture-only.
+
 Classification:
 - **FIXED** — exists in main HEAD, source-locked.
 - **PARTIAL** — partially implemented; some sub-items in main, others not.

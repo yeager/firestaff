@@ -54578,6 +54578,20 @@ alcove runtime and archive-media tests passed (4/4).
   their real load-image offsets. `test_dm1_v1_fmtowns_startup` passes against
   the retained original FM Towns cache. This is source-plan evidence only;
   native M11 pixel/TBIOS playback and TMENU rendering remain open in TODO.
+# Nexus FONT256 real-data probe correction (2026-08-06)
+
+- ✅ Removed the stale real-data assertions that sent `FONT256.S2D` through
+  the flat 1bpp fixture parser and reported 256 drawable glyph slots.
+- ✅ Track-1 launch/readiness probes now use `nexus_v1_font_s2d_decode()` and
+  `nexus_v1_font_load_from_s2d()`, verifying the named retail regions and
+  exactly 242 real 8x8 character-generator tiles. Page/attribute character
+  mapping and HUD framebuffer placement remain blocked.
+- ✅ The S2D glyph-byte probe now treats its byte-window map as fixture-only;
+  its real branch verifies CG-region bytes and deterministic 242-tile source
+  handoff. The real text-layout branch records source regions without drawing.
+- ✅ Real-data verification: Track-1 phase launch 57/57, screen readiness
+  29/29, glyph-byte probe 250/250 and runtime layout probe 172/172 passed.
+
 # Nexus explicit real-data menu/HUD CTest gates (2026-08-06)
 
 - ✅ Added `nexus_v1_bpk_surface_class_real` and `nexus_v1_stmp_real`. They

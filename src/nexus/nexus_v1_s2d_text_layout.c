@@ -5,7 +5,8 @@
  * Implementation of the runtime S2D font layout API declared in
  * include/nexus_v1_s2d_text_layout.h.
  *
- * The layout layer sits between `nexus_v1_font_draw_glyph_indexed()`
+ * The layout layer sits between the fixture-only
+ * `nexus_v1_font_draw_glyph_indexed()`
  * (single-glyph draw) and a future M11 text primitive. It owns:
  *
  *   - a section→glyph-range map computed once at init time from the
@@ -31,9 +32,10 @@
  *   The map only walks populated sections in order, so the per-section
  *   char ranges form a contiguous partition from char 0 up to
  *   `sum(char_count)` (capped at the SCR header char_count). This is
- *   enough to route a glyph index to a specific section without
- *   claiming which bytes inside that section hold the actual glyph
- *   payload — that decode stays with the existing flat 1bpp loader.
+ *   enough to exercise isolated section/range fixtures without claiming
+ *   that the real FONT256 page words are character-code mappings. Retail
+ *   CG tiles are decoded by the S2D region path; production text remains
+ *   closed until page/attribute ownership and placement are source-bound.
  */
 
 #include "nexus_v1_s2d_text_layout.h"

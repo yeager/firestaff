@@ -54,9 +54,9 @@
  *  - Verifies the level width is 64 (real DMWeb DGN contract).
  *  - Advances 5 ticks and verifies tick_count increments.
  *  - Reads FONT256.S2D via the real file reader (Phase 6 launch) AND
- *    re-parses the same bytes through nexus_v1_font_load so we
- *    confirm the parser actually parses the verified 25,012-byte
- *    asset (not just that read_file returns non-zero bytes).
+ *    decodes the same bytes through the authenticated S2D region parser
+ *    and 242-tile character-generator handoff, not the obsolete flat
+ *    1bpp compatibility parser.
  *  - Loads SCORPION.MNS through nexus_v1_load_model (Phase 4 DMDF
  *    parser / MNS 3D model handoff) and verifies the engine returns
  *    a valid model index plus a parsed model header (magic + DMDF
@@ -484,23 +484,24 @@ static void probe_real_data_launch(const char *data_dir)
     if (font_data && font_size > 0) {
         CHECK(font_size >= 4096,
               "real FONT256.S2D payload is >= 4 KiB (verified marker ~25 KiB)");
-        /* Re-parse the same bytes through nexus_v1_font_load so we
-         * confirm the parser actually parses the verified 25,012-byte
-         * Saturn asset (not just that read_file returns bytes). The
-         * engine already loaded this font during init; this assertion
-         * additionally exercises the parser path end-to-end on Track 1
-         * data so the launch-phase row can claim S2D parser handoff. */
+        /* Decode through the source-bound S2D region path so this
+         * launch-phase row cannot be satisfied by the obsolete flat
+         * 1bpp compatibility parser. */
         Nexus_V1_Font real_font;
+        Nexus_V1_FontS2dDecodeResult font_regions;
         memset(&real_font, 0, sizeof(real_font));
-        int frc = nexus_v1_font_load(&real_font, font_data, font_size);
+        memset(&font_regions, 0, sizeof(font_regions));
+        int frc = nexus_v1_font_s2d_decode(
+            font_data, font_size, &font_regions);
         CHECK(frc > 0,
-              "font_load parses real FONT256.S2D bytes (>= 1 char slot)");
+              "S2D decoder parses real FONT256.S2D regions");
         if (frc > 0) {
-            CHECK(real_font.char_count >= 256,
-                  "real FONT256.S2D exposes >= 256 char slots");
-            CHECK(real_font.char_width >= 8 && real_font.char_width <= 32 &&
-                  real_font.char_height >= 8 && real_font.char_height <= 32,
-                  "real FONT256.S2D exposes bounded glyph dimensions (8..32)");
+            frc = nexus_v1_font_load_from_s2d(
+                &real_font, font_data, font_size, &font_regions);
+            CHECK(frc == NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
+                  "real FONT256.S2D exposes exactly 242 CG tiles");
+            CHECK(real_font.char_width == 8 && real_font.char_height == 8,
+                  "real FONT256.S2D CG tiles are 8x8");
             nexus_v1_font_free(&real_font);
         }
         /* The bytes are retained, but the flag is deliberately not a draw

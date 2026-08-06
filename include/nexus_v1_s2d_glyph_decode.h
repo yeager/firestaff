@@ -9,20 +9,17 @@
  * The existing modules cover the SCR section-table parse
  * (`nexus_v1_font_load_sections`) and a section→glyph-range map +
  * runtime text-layout cursor (`nexus_v1_s2d_text_layout`). What is
- * still missing is a bounded decoder that takes the parsed sections
- * and tells a caller EXACTLY which bytes inside each populated
- * section correspond to a given glyph index, and lets a caller copy
- * those glyph bytes out of the SCR file directly (without going
- * through the flat 1bpp loader's "data after offset 48" stream).
+ * still missing is a bounded fixture decoder that takes caller-supplied
+ * parsed sections and reports byte windows. It does not establish the
+ * retail FONT256 page/attribute character mapping or authorize production
+ * framebuffer drawing.
  *
  * Why this matters
  * ----------------
- * The flat 1bpp loader (`nexus_v1_font_load`) treats every byte
- * after offset 48 as one glyph stream. That works for FONT256.S2D
- * because the 32-byte header + 16-byte descriptor area overlap the
- * section-table start, and section [0]'s 8208 bytes start at offset
- * 0x120 — past the section-table end. But it bypasses the SCR
- * section table entirely, so the gap-list row
+ * The old flat 1bpp loader (`nexus_v1_font_load`) treats every byte
+ * after offset 48 as one glyph stream. That is not a retail FONT256
+ * interpretation and is retained only for isolated fixture tests. The
+ * actual gap-list row
  *
  *   "decode which bytes inside each populated section hold the
  *    actual glyph payload"
@@ -33,8 +30,8 @@
  *   - which populated section holds glyph N?
  *   - which byte window (offset within the file, size in bytes)
  *     inside that section holds glyph N's payload?
- *   - does that byte window match what the flat 1bpp loader reads
- *     for the same glyph index (consistency check)?
+ *   - does that fixture byte window stay inside the caller's section
+ *     envelope?
  *
  * The decode is bounded: every window is checked against the SCR
  * file size and against the section's own `(file_offset, size)`

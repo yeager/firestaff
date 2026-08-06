@@ -53,27 +53,20 @@
  *       across two runs that share the same embedded Shift-JIS
  *       bytes, both for the synthetic fixture and the optional
  *       real FONT256.S2D asset.
- *  [19] Real FONT256.S2D optional path: when the operator has
- *       staged the verified 25,012-byte asset, the probe builds a
- *       section→glyph-range map from the real parser output and
- *       draws "NEXUS" through the real layout. This proves the
- *       chain real_parser → real_map → real_layout → real_fb
- *       agrees with the synthetic-only contract above. The branch
- *       is skip-safe: missing asset prints SKIP and returns 0.
- *  [20] The full S2D run on the real asset is deterministic: 5
- *       repetitions of the same draw script yield the same
- *       FNV-1a framebuffer hash and the same chars_drawn /
- *       chars_skipped / writes counters.
- *  [21] Nexus runtime screen-text binding: the parsed section table
- *       initializes a `Nexus_V1_ScreenTextRuntime`, draws into the
- *       real Nexus 320x200 indexed framebuffer backing store, and
- *       produces a stable receipt/hash across repeated draws.
+ *  [19] Real FONT256.S2D optional path: the verified asset is decoded
+ *       through its named regions and 242 real CG tiles. The 256
+ *       header codes remain separate from the CG tile count; no real
+ *       glyph map or framebuffer draw is claimed. Missing asset is
+ *       skip-safe.
+ *  [20] The real source receipt is deterministic across repeated
+ *       region/tile reads; runtime text remains closed pending the
+ *       Saturn page/attribute consumer and placement capture.
  *
  * Non-claim:
  *   This probe does NOT prove full Saturn SCR text-layout parity.
- *   It locks only the bounded ASCII-only layout contract plus an
- *   optional real-asset receipt. Capturing an actual Nexus screen
- *   using the real font is a separate gap-list row.
+ *   It locks only the bounded ASCII-only fixture layout contract plus
+ *   an optional real source receipt. Capturing an actual Nexus screen
+ *   and binding character codes remain separate gap-list rows.
  *
  * Run:
  *   ./build/firestaff_nexus_v1_s2d_runtime_text_layout_probe
@@ -773,110 +766,41 @@ static void run_optional_real_asset_gate(void) {
     }
 
     {
+        Nexus_V1_FontS2dDecodeResult decoded;
         Nexus_V1_Font font;
-        Nexus_V1_FontSections sections;
-        Nexus_V1_S2D_SectionGlyphMap map;
-        Nexus_V1_S2D_TextLayout layout;
-        Nexus_V1_S2D_TextLayoutConfig cfg;
-        uint8_t fb[512 * 32];
         int rc;
-        int drawn;
-        uint64_t hash_a, hash_b, hash_c;
 
-        /* Pad the framebuffer ahead of memset. */
-        if ((long)sizeof(fb) < (long)size + 32) {
-            /* framebuffer is bigger than the asset; that's fine. */
-        }
-
-        rc = nexus_v1_font_load(&font, data, (int)size);
-        CHECK(rc > 0, "real FONT256.S2D parses into the flat 1bpp font");
-        CHECK(font.char_count == 256,
-              "real FONT256.S2D reports char_count=256");
-
-        rc = nexus_v1_font_load_sections(data, (int)size, &sections);
-        CHECK(rc == 0, "real FONT256.S2D section table parses");
-        CHECK(sections.section_count == 4,
-              "real FONT256.S2D reports 4 populated sections");
-
-        rc = nexus_v1_s2d_section_glyph_map(&sections, 32, &map);
-        CHECK(rc == 0, "real-asset section→glyph-range map builds");
-        CHECK(map.range_count == 1,
-              "real-asset map has 1 range (section [0] covers 256 chars alone)");
-        CHECK(map.ranges[0].table_index == 0,
-              "real-asset map covers table index 0");
-        CHECK(map.ranges[0].char_count == 256,
-              "real-asset range [0] char_count == 256 (8208 bytes / 32)");
-        CHECK(map.char_count == 256,
-              "real-asset map char_count == 256 (effective coverage)");
-        CHECK(map.header_char_count == 256,
-              "real-asset map header_char_count == 256");
-        CHECK(nexus_v1_s2d_glyph_map_total_chars(&map) == 256,
-              "real-asset map total_chars == 256");
-        CHECK(nexus_v1_s2d_glyph_range_lookup(&map, 0) == 0,
-              "real-asset lookup char 0 -> range 0");
-        CHECK(nexus_v1_s2d_glyph_range_lookup(&map, 255) == 0,
-              "real-asset lookup char 255 -> range 0 (same range as 0)");
-        CHECK(nexus_v1_s2d_glyph_range_lookup(&map, 256) == -1,
-              "real-asset lookup char 256 -> -1 (out of coverage)");
-
-        memset(&cfg, 0, sizeof(cfg));
-        cfg.fg_index = 1;
-        cfg.bg_index = 0;
-        cfg.letter_spacing_x = 0;
-        cfg.line_height = 0;
-        cfg.tab_stop = 0;
-        cfg.bytes_per_glyph = 32;
-        rc = nexus_v1_s2d_text_layout_init(&layout, &font, &map, &cfg);
-        CHECK(rc == 0, "real-asset layout inits");
-
-        /* Three independent runs of the same draw script must
-         * produce identical framebuffer hashes. */
-        memset(fb, 0, sizeof(fb));
-        nexus_v1_s2d_text_layout_reset_cursor(&layout);
-        drawn = nexus_v1_s2d_text_layout_draw_string(
-            &layout, fb, (int)sizeof(fb) / 32, 32, (int)sizeof(fb) / 32,
-            "NEXUS");
-        hash_a = fnv1a64(fb, sizeof(fb));
-
-        memset(fb, 0, sizeof(fb));
-        nexus_v1_s2d_text_layout_reset_cursor(&layout);
-        drawn = nexus_v1_s2d_text_layout_draw_string(
-            &layout, fb, (int)sizeof(fb) / 32, 32, (int)sizeof(fb) / 32,
-            "NEXUS");
-        hash_b = fnv1a64(fb, sizeof(fb));
-
-        memset(fb, 0, sizeof(fb));
-        nexus_v1_s2d_text_layout_reset_cursor(&layout);
-        drawn = nexus_v1_s2d_text_layout_draw_string(
-            &layout, fb, (int)sizeof(fb) / 32, 32, (int)sizeof(fb) / 32,
-            "NEXUS");
-        hash_c = fnv1a64(fb, sizeof(fb));
-
-        CHECK(drawn == 5, "real-asset layout draws 5 glyphs for \"NEXUS\"");
-        CHECK(layout.cursor.chars_drawn == 5,
-              "real-asset chars_drawn == 5 for \"NEXUS\"");
-        CHECK(layout.cursor.chars_skipped == 0,
-              "real-asset chars_skipped == 0 for \"NEXUS\" (all in coverage)");
-        CHECK(layout.cursor.writes > 0,
-              "real-asset writes > 0 (at least one fg pixel painted)");
-        CHECK(hash_a == hash_b && hash_b == hash_c,
-              "real-asset FNV-1a framebuffer hash is deterministic across 3 runs");
-
-        nexus_v1_s2d_text_layout_free(&layout);
+        memset(&decoded, 0, sizeof(decoded));
+        memset(&font, 0, sizeof(font));
+        rc = nexus_v1_font_s2d_decode(data, (int)size, &decoded);
+        CHECK(rc == 1 && decoded.valid,
+              "real FONT256.S2D regions parse through the S2D decoder");
+        rc = nexus_v1_font_load_from_s2d(
+            &font, data, (int)size, &decoded);
+        CHECK(rc == NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
+              "real FONT256.S2D source handoff exposes 242 CG tiles");
+        CHECK(decoded.character_generator_offset == 0x2130U &&
+              decoded.character_generator_size == 0x3c90U,
+              "real FONT256.S2D CG region remains source-bound");
+        CHECK(data[0x10] == 0x00U && data[0x11] == 0x00U &&
+              data[0x12] == 0x01U && data[0x13] == 0x00U &&
+              font.char_count ==
+              NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
+              "real FONT256.S2D keeps 256 header codes separate from 242 CG tiles");
+        CHECK(decoded.attribute_offset == 0x5fd0U &&
+              decoded.attribute_size == 0x1e4U,
+              "real FONT256.S2D attribute region remains source-bound");
         nexus_v1_font_free(&font);
     }
 
     free(data);
 }
 
-/* Real FONT256.S2D Shift-JIS skip gate. Mirrors the synthetic
- * [18a] path but drives the real parser→map→layout chain with an
- * embedded Shift-JIS script. Verifies the deterministic
- * framebuffer hash invariant survives the SJIS skip gate on the
- * real asset, so a future M11 runtime that feeds SJIS-laden
- * Japanese text into the layout can rely on bit-identical
- * framebuffer receipts. Skip-safe: returns SKIP when no
- * FONT256.S2D asset is staged. */
+/* Real FONT256.S2D Shift-JIS source gate. The synthetic [18a] path
+ * exercises only the byte classifier and fixture layout. The real branch
+ * records the authenticated S2D regions and CG tiles but does not feed
+ * them into that fixture layout until the Saturn character mapping exists.
+ * Skip-safe: returns SKIP when no FONT256.S2D asset is staged. */
 static void run_optional_real_asset_shift_jis_gate(void) {
     char path_buf[1024];
     const char *path = default_real_font_path(path_buf, sizeof(path_buf));
@@ -895,103 +819,21 @@ static void run_optional_real_asset_shift_jis_gate(void) {
     }
 
     {
+        Nexus_V1_FontS2dDecodeResult decoded;
         Nexus_V1_Font font;
-        Nexus_V1_FontSections sections;
-        Nexus_V1_S2D_SectionGlyphMap map;
-        Nexus_V1_S2D_TextLayout layout;
-        Nexus_V1_S2D_TextLayoutConfig cfg;
-        /* A 256x64 indexed framebuffer gives four lines of
-         * headroom for the SJIS-laden script without changing
-         * the hash arithmetic. */
-        uint8_t fb_a[256 * 64];
-        uint8_t fb_b[256 * 64];
-        char script[64];
-        int script_len = 0;
-        int drawn;
 
-        rc = nexus_v1_font_load(&font, data, (int)size);
-        if (rc <= 0) {
-            fprintf(stderr,
-                    "  SKIP: real FONT256.S2D fails to load into flat font\n");
-            free(data);
-            return;
-        }
-
-        rc = nexus_v1_font_load_sections(data, (int)size, &sections);
-        if (rc != 0) {
-            fprintf(stderr,
-                    "  SKIP: real FONT256.S2D section table fails to parse\n");
-            nexus_v1_font_free(&font);
-            free(data);
-            return;
-        }
-
-        rc = nexus_v1_s2d_section_glyph_map(&sections, 32, &map);
-        CHECK(rc == 0, "real-asset SJIS gate: section→glyph-range map builds");
-
-        memset(&cfg, 0, sizeof(cfg));
-        cfg.fg_index = 1;
-        cfg.bg_index = -1;
-        cfg.letter_spacing_x = 0;
-        cfg.line_height = 0;
-        cfg.tab_stop = 0;
-        cfg.bytes_per_glyph = 32;
-        rc = nexus_v1_s2d_text_layout_init(&layout, &font, &map, &cfg);
-        CHECK(rc == 0, "real-asset SJIS gate: layout inits on real FONT256.S2D");
-
-        /* Embed "NEXUS" with a Shift-JIS pair injected between
-         * the N and E bytes so a future operator who replaces
-         * "NEXUS" with Japanese sample text inherits the same
-         * gate invariants without re-deriving the hash math. */
-        script[script_len++] = 'N';
-        script[script_len++] = 'E';
-        script[script_len++] = (char)0x82; /* SJIS lead */
-        script[script_len++] = (char)0xC2; /* SJIS trail */
-        script[script_len++] = 'X';
-        script[script_len++] = 'U';
-        script[script_len++] = 'S';
-        script[script_len++] = (char)0x88; /* lone lead at end */
-        script[script_len] = '\0';
-
-        memset(fb_a, 0, sizeof(fb_a));
-        nexus_v1_s2d_text_layout_reset_cursor(&layout);
-        drawn = nexus_v1_s2d_text_layout_draw_string(
-            &layout, fb_a, 256, 64, 256, script);
-
-        /* The script is "NE\x82\xC2XUS\x88": printable ASCII
-         * bytes are 'N','E','X','U','S' (5); the embedded SJIS
-         * pair ('\x82\xC2') and the lone trailing lead ('\x88')
-         * are SKIPPED, not drawn. */
-        CHECK(drawn == 5,
-              "real-asset SJIS gate: drawn == 5 (N,E,X,U,S printable ASCII only)");
-        CHECK(layout.cursor.chars_drawn == 5,
-              "real-asset SJIS gate: chars_drawn == 5");
-        CHECK(layout.cursor.sjis_leads_seen == 2,
-              "real-asset SJIS gate: sjis_leads_seen == 2 (1 pair + 1 lone)");
-        CHECK(layout.cursor.sjis_leads_skipped == 2,
-              "real-asset SJIS gate: sjis_leads_skipped == 2");
-        CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_SHIFT_JIS_PAIR] == 1,
-              "real-asset SJIS gate: skip_reasons[SHIFT_JIS_PAIR] == 1");
-        CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_SHIFT_JIS_LEAD] == 1,
-              "real-asset SJIS gate: skip_reasons[SHIFT_JIS_LEAD] == 1 (lone trailing)");
-        CHECK(layout.cursor.skip_reasons[NEXUS_V1_S2D_SKIP_NON_PRINTABLE] == 0,
-              "real-asset SJIS gate: skip_reasons[NON_PRINTABLE] == 0");
-
-        {
-            uint64_t hash_a, hash_b;
-            memset(fb_b, 0, sizeof(fb_b));
-            nexus_v1_s2d_text_layout_reset_cursor(&layout);
-            nexus_v1_s2d_text_layout_draw_string(
-                &layout, fb_b, 256, 64, 256, script);
-            hash_a = fnv1a64(fb_a, sizeof(fb_a));
-            hash_b = fnv1a64(fb_b, sizeof(fb_b));
-            CHECK(hash_a == hash_b,
-                  "real-asset SJIS gate: FNV-1a framebuffer hash deterministic across two runs on real FONT256.S2D");
-            CHECK(hash_a != UINT64_C(0xcbf29ce484222325),
-                  "real-asset SJIS gate: hash differs from FNV-1a iv (draws actually painted)");
-        }
-
-        nexus_v1_s2d_text_layout_free(&layout);
+        memset(&decoded, 0, sizeof(decoded));
+        memset(&font, 0, sizeof(font));
+        rc = nexus_v1_font_s2d_decode(data, (int)size, &decoded);
+        CHECK(rc == 1 && decoded.valid,
+              "real-asset SJIS gate: S2D regions parse");
+        rc = nexus_v1_font_load_from_s2d(
+            &font, data, (int)size, &decoded);
+        CHECK(rc == NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
+              "real-asset SJIS gate: source handoff exposes 242 CG tiles");
+        CHECK(decoded.attribute_offset == 0x5fd0U &&
+              decoded.attribute_size == 0x1e4U,
+              "real-asset SJIS gate: attribute region is source-bound");
         nexus_v1_font_free(&font);
     }
 

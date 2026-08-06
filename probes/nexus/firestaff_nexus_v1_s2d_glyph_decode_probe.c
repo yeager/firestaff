@@ -27,33 +27,20 @@
  *   [7]  decode rejects an out-of-coverage char_index.
  *   [8]  decode rejects a too-small destination buffer.
  *   [9]  section_byte_count sums the bytes that land in a given
- *        parsed-section index. For FONT256.S2D section [0] is the
- *        only populated range so `section_byte_count(map, 0) ==
- *        256 * 32 == 8208` and `section_byte_count(map, 1..3) == 0`.
+ *        parsed-section index for isolated fixture layouts.
  *  [10]  Determinism: building the same byte map twice yields the
  *        same `bytes_total`, the same per-window byte content, and
  *        the same FNV-1a hash of the decode output.
- *  [11]  Real FONT256.S2D optional path: when the operator has
- *        staged the verified 25,012-byte asset, the probe builds a
- *        per-glyph byte-window map from the real parser output,
- *        confirms section [0] holds 8208 bytes covering all 256
- *        glyphs (so sections [2]/[4]/[6] are unused-by-layout
- *        trailing padding), decodes every glyph 0..255, and hashes
- *        the result. The branch is skip-safe: missing asset prints
- *        SKIP and returns 0.
- *  [12]  Real-asset consistency: for each glyph 0..255, the section-
- *        aware decode result must equal the byte window that the
- *        existing flat 1bpp loader reads (the flat loader consumes
- *        bytes after offset 48, but FONT256.S2D's section [0] sits
- *        inside that region starting at offset 0x120 = 288, so the
- *        per-glyph byte windows are identical for the first 256
- *        glyphs of section [0]).
+ *  [11]  Real FONT256.S2D optional path: the verified 25,012-byte
+ *        asset is decoded through its five named regions and the
+ *        character-generator region exposes exactly 242 real 8x8
+ *        tiles. No 256-slot or section-0 glyph map is inferred.
  *
  * Non-claim:
- *   This probe does NOT prove full Saturn SCR glyph parity. It
- *   locks only the bounded byte-window decoder contract plus an
- *   optional real-asset receipt. Capturing an actual Nexus screen
- *   using the real font is a separate gap-list row.
+ *   This probe does NOT prove full Saturn SCR glyph parity. Its byte-window
+ *   API remains fixture-only; the real branch locks named S2D regions and
+ *   the 242-tile source handoff. Capturing an actual Nexus screen and
+ *   binding character codes to page/attribute words remain separate gaps.
  *
  * Run:
  *   ./build/firestaff_nexus_v1_s2d_glyph_decode_probe
@@ -413,136 +400,60 @@ static void run_optional_real_asset_gate(void) {
     }
 
     {
-        Nexus_V1_FontSections sections;
-        Nexus_V1_S2D_SectionGlyphMap range_map;
-        Nexus_V1_S2D_GlyphByteMap byte_map;
+        Nexus_V1_FontS2dDecodeResult decoded;
         Nexus_V1_Font font;
-        uint8_t decoded[256 * 32];
-        uint64_t hash_a, hash_b;
+        uint8_t tile[64];
+        uint64_t hash_a = UINT64_C(0xcbf29ce484222325);
+        uint64_t hash_b = UINT64_C(0xcbf29ce484222325);
         int rc;
         int i;
 
-        rc = nexus_v1_font_load_sections(data, (int)size, &sections);
-        CHECK(rc == 0, "real FONT256.S2D section table parses");
-        CHECK(sections.section_count == 4,
-              "real FONT256.S2D reports 4 populated sections");
-
-        rc = nexus_v1_s2d_section_glyph_map(&sections, 32, &range_map);
-        CHECK(rc == 0, "real FONT256.S2D range_map builds");
-        CHECK(range_map.range_count == 1,
-              "real FONT256.S2D range_map has 1 range (section [0] covers 256 chars)");
-        CHECK(range_map.ranges[0].table_index == 0,
-              "real FONT256.S2D range covers table index 0");
-        CHECK(range_map.ranges[0].char_count == 256,
-              "real FONT256.S2D range covers 256 chars (8208 bytes / 32)");
-
-        rc = nexus_v1_s2d_glyph_byte_map_build(&sections, &range_map, &byte_map);
-        CHECK(rc == 0, "real FONT256.S2D byte_map builds");
-        CHECK(byte_map.window_count == 256,
-              "real FONT256.S2D byte_map has 256 windows (one per glyph)");
-        CHECK(byte_map.bytes_total == 256 * 32,
-              "real FONT256.S2D byte_map.bytes_total == 8192 (256 * 32)");
-        CHECK(byte_map.windows[0].file_offset == 0x120,
-              "real FONT256.S2D window 0 file_offset == 0x120 (section [0])");
-        CHECK(byte_map.windows[0].size_bytes == 32,
-              "real FONT256.S2D window 0 size_bytes == 32");
-        CHECK(byte_map.windows[255].file_offset == 0x120 + 255 * 32,
-              "real FONT256.S2D window 255 file_offset == section + 255*32");
-
-        /* Sections [2]/[4]/[6] are unused-by-layout trailing
-         * padding (the layout cursor caps at header char_count=256
-         * so they get zero coverage). */
-        CHECK(nexus_v1_s2d_glyph_byte_map_section_byte_count(&byte_map, 0) == 256 * 32,
-              "real FONT256.S2D section_byte_count(0) == 8192");
-        CHECK(nexus_v1_s2d_glyph_byte_map_section_byte_count(&byte_map, 1) == 0,
-              "real FONT256.S2D section_byte_count(1) == 0 (padding)");
-        CHECK(nexus_v1_s2d_glyph_byte_map_section_byte_count(&byte_map, 2) == 0,
-              "real FONT256.S2D section_byte_count(2) == 0 (padding)");
-        CHECK(nexus_v1_s2d_glyph_byte_map_section_byte_count(&byte_map, 3) == 0,
-              "real FONT256.S2D section_byte_count(3) == 0 (padding)");
-
-        /* Decode every glyph 0..255 through the section-aware
-         * decoder. */
-        for (i = 0; i < 256; ++i) {
-            int n = nexus_v1_s2d_glyph_byte_decode(
-                data, (int)size, &byte_map, i, decoded + i * 32, 32);
-            if (n != 32) {
-                CHECK(0, "real FONT256.S2D decode char i returns 32 bytes");
+        memset(&decoded, 0, sizeof(decoded));
+        memset(&font, 0, sizeof(font));
+        rc = nexus_v1_font_s2d_decode(data, (int)size, &decoded);
+        CHECK(rc == 1 && decoded.valid,
+              "real FONT256.S2D decodes through the S2D region parser");
+        CHECK(decoded.section_count == 5,
+              "real FONT256.S2D retains the five bounded SCR regions");
+        CHECK(decoded.character_generator_offset == 0x2130U &&
+              decoded.character_generator_size == 0x3c90U,
+              "real FONT256.S2D character-generator region is 0x2130/0x3c90");
+        CHECK(decoded.palette_offset == 0x5dc0U &&
+              decoded.palette_size == 0x210U,
+              "real FONT256.S2D palette region is 0x5dc0/0x210");
+        CHECK(nexus_v1_font_s2d_copy_character_generator_tile(
+                  data, (int)size, &decoded, 0, tile) == 0 &&
+              nexus_v1_font_s2d_copy_character_generator_tile(
+                  data, (int)size, &decoded, 241, tile) == 0 &&
+              nexus_v1_font_s2d_copy_character_generator_tile(
+                  data, (int)size, &decoded, 242, tile) != 0,
+              "real FONT256.S2D exposes exactly 242 bounded CG tiles");
+        rc = nexus_v1_font_load_from_s2d(&font, data, (int)size, &decoded);
+        CHECK(rc == NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
+              "real FONT256.S2D source handoff loads exactly 242 CG tiles");
+        for (i = 0; i < NEXUS_V1_FONT_S2D_REAL_TILE_COUNT; ++i) {
+            const uint8_t *glyph = nexus_v1_font_get_glyph(&font, i);
+            int j;
+            if (!glyph) {
+                CHECK(0, "real FONT256.S2D CG tile lookup stays bounded");
                 break;
             }
-        }
-        CHECK(i == 256, "real FONT256.S2D all 256 glyphs decode successfully");
-
-        /* [12] Consistency: the flat 1bpp loader (nexus_v1_font_load)
-         * also reads bytes from inside FONT256.S2D, and section [0]
-         * (offset 0x120, 8208 bytes) sits inside the flat loader's
-         * "data after offset 48" stream (offset 0x30..). The section-
-         * aware decode of glyph G must match the flat decode of the
-         * same glyph G. The flat loader reads glyph G from
-         * `data + 48 + G * glyph_size`, with `glyph_size = 24,964 /
-         * 256 = 97` for the 25,012-byte asset — but section [0] starts
-         * at offset 0x120 = 288, which is `288 - 48 = 240` bytes
-         * past the flat-loader's "data after offset 48" start. So
-         * the two decoders read DIFFERENT bytes for the same glyph
-         * index; we only check that section-aware decode reads bytes
-         * from the SCR file at the documented offsets. The flat
-         * decoder's coverage is its own contract and is checked
-         * separately by the existing saturn_font_render probe. */
-        {
-            int matches = 1;
-            for (i = 0; i < 256; ++i) {
-                const Nexus_V1_S2D_GlyphByteWindow *win =
-                    nexus_v1_s2d_glyph_byte_window_lookup(&byte_map, i);
-                if (!win) { matches = 0; break; }
-                if (memcmp(decoded + i * 32, data + win->file_offset, 32) != 0) {
-                    matches = 0;
-                    break;
-                }
+            for (j = 0; j < 64; ++j) {
+                hash_a ^= glyph[j];
+                hash_a *= UINT64_C(0x100000001b3);
             }
-            CHECK(matches,
-                  "real FONT256.S2D section-aware decode matches SCR bytes at file_offset");
         }
-
-        /* [10] Determinism on the real asset: hash the decoded
-         * bytes twice (no re-decode — same buffer) and confirm the
-         * build is deterministic. */
-        hash_a = fnv1a64(decoded, sizeof(decoded));
-        hash_b = fnv1a64(decoded, sizeof(decoded));
+        for (i = 0; i < NEXUS_V1_FONT_S2D_REAL_TILE_COUNT; ++i) {
+            const uint8_t *glyph = nexus_v1_font_get_glyph(&font, i);
+            int j;
+            for (j = 0; glyph && j < 64; ++j) {
+                hash_b ^= glyph[j];
+                hash_b *= UINT64_C(0x100000001b3);
+            }
+        }
         CHECK(hash_a == hash_b,
-              "real FONT256.S2D decoded FNV-1a hash is deterministic");
-
-        /* [12 cross-check] The flat 1bpp loader and the section-
-         * aware loader MUST agree on what the asset says about
-         * glyph 0 — both should pull bytes from a real location
-         * inside the file. The flat loader returns a borrowed
-         * pointer into its own copy of `data + 48`, so we compare
-         * the bytes (not the pointers) against the section-aware
-         * decode for any glyph whose flat-window overlaps
-         * section [0]. FONT256.S2D's flat loader sees glyph G at
-         * `data + 48 + G * glyph_size` where `glyph_size = 32`
-         * (the flat loader infers 16x16 from the bitmap_size).
-         * Glyph 0 is at flat offset 0x30, glyph 0 at section
-         * offset 0x120. They are NOT the same. The flat loader's
-         * contract is "data after offset 48" — the section-aware
-         * decoder's contract is "section table byte windows". They
-         * are different decode paths over the same file; both are
-         * real, both are deterministic, neither claims parity with
-         * the other. */
-        rc = nexus_v1_font_load(&font, data, (int)size);
-        CHECK(rc > 0, "real FONT256.S2D flat 1bpp load succeeds");
-        CHECK(font.char_count == 256, "flat loader reports char_count=256");
-        {
-            const uint8_t *flat_glyph_0 = nexus_v1_font_get_glyph(&font, 0);
-            int flat_offset = (int)(flat_glyph_0 - font.bitmap_data);
-            /* Flat loader copies `data + 48` into font->bitmap_data,
-             * so flat_glyph_0 == bitmap_data + 0. The flat loader's
-             * "data after offset 48" stream starts at SCR offset 48
-             * (0x30), which is inside the section-table area. */
-            CHECK(flat_offset == 0,
-                  "flat loader reports glyph 0 at bitmap_data + 0 (no parse fix-up)");
-        }
+              "real FONT256.S2D CG tile bytes are deterministic");
         nexus_v1_font_free(&font);
-
         free(data);
     }
 }

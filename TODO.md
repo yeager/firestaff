@@ -17,6 +17,10 @@
   is now fixture-only and the production draw seam stays fail-closed. Recover
   the Saturn page/tilemap/attribute-to-character mapping and screen placement
   before admitting real FONT256 text to the HUD or startup framebuffer.
+  2026-08-06 follow-up: Track-1 and S2D probes no longer use the flat parser
+  for the real `FONT256.S2D`; the retail receipt is now limited to five named
+  regions and 242 authenticated 8x8 CG tiles. The old 256-slot/map receipts
+  were removed from the real-data path.
 
 - **NEXUS-ACTION-DISPATCH-CAPTURE:** Retail mechanics no longer consume
   queued movement or turn commands merely because DGN floor geometry decoded;
