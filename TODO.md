@@ -609,6 +609,8 @@
   explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP
   selector bindings fail-closed until the authentic SLEV/SDDRVS event
   consumer is captured; do not infer semantics from selector ordering.
+  The real SLEV/SAL/MAP corpus regression now requires each level's
+  production MD5 identities before its bounded records count.
   2026-08-06: real SNDLEV00 SAL/MAP bytes now have a regression proving that
   neither event playback nor the legacy sample-index API creates a host voice.
   Capture launchers now reject stock Mednafen before creating a manifest when

@@ -28,6 +28,13 @@
 
 # Nexus boot-profile capability audit (2026-08-06)
 
+# Nexus SLEV/SAL/MAP retail identity gate (2026-08-06)
+
+- ✅ Hardened the 16-level SLEV/SAL/MAP corpus regression with the production
+  MD5 catalog before accepting bounded sound records. The 154 MAP records and
+  existing playback/event no-op gates remain intact; SDDRVS/event-consumer
+  capture is still required before runtime audio dispatch.
+
 # Nexus startup media retail identity gate (2026-08-06)
 
 - ✅ Added exact retail MD5 checks to the startup-media regression for

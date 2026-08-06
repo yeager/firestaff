@@ -39350,6 +39350,7 @@ set_tests_properties(nexus_v1_sound_runtime_receipt PROPERTIES
 
 add_executable(test_nexus_v1_sal_map_corpus
     tests/test_nexus_v1_sal_map_corpus.c
+    src/shared/asset_find_by_hash.c
 )
 target_link_libraries(test_nexus_v1_sal_map_corpus PRIVATE
     firestaff_nexus firestaff_m10
