@@ -1332,35 +1332,55 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "csb") != 0) return 0;
     for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-        for (archiveIndex = 0U; archiveNames[archiveIndex] != NULL; ++archiveIndex) {
-            char archivePath[M12_ASSET_DATA_DIR_CAPACITY];
-            char imagePath[M12_ASSET_DATA_DIR_CAPACITY] = {0};
-            CSB_V1_FmtownsCdLayout layout;
-            const char* archiveLeaf;
-            if (FSP_FileExists(roots[rootIndex]) &&
-                !FSP_DirExists(roots[rootIndex])) {
+        char candidateRoots[2][M12_ASSET_DATA_DIR_CAPACITY];
+        size_t candidateRootCount = 0U;
+        size_t candidateRootIndex;
+        m12_copy_string(candidateRoots[candidateRootCount++],
+                        sizeof(candidateRoots[0]), roots[rootIndex]);
+        /* Normal launcher scans select ~/.firestaff/data, while the
+         * documented CSB layout keeps the retail FM Towns archive below
+         * data/csb/.  The generic hash walker recurses into that child, but
+         * this CD intake owns a whole image and must name its candidate
+         * archive explicitly.  Keep a direct archive/file selection exact;
+         * only directory roots receive the documented game subdirectory. */
+        if (FSP_DirExists(roots[rootIndex]) &&
+            FSP_JoinPath(candidateRoots[candidateRootCount],
+                         sizeof(candidateRoots[0]), roots[rootIndex], "csb") &&
+            FSP_DirExists(candidateRoots[candidateRootCount])) {
+            ++candidateRootCount;
+        }
+        for (candidateRootIndex = 0U;
+             candidateRootIndex < candidateRootCount;
+             ++candidateRootIndex) {
+            for (archiveIndex = 0U; archiveNames[archiveIndex] != NULL; ++archiveIndex) {
+                char archivePath[M12_ASSET_DATA_DIR_CAPACITY];
+                char imagePath[M12_ASSET_DATA_DIR_CAPACITY] = {0};
+                CSB_V1_FmtownsCdLayout layout;
+                const char* archiveLeaf;
+                if (FSP_FileExists(candidateRoots[candidateRootIndex]) &&
+                    !FSP_DirExists(candidateRoots[candidateRootIndex])) {
                 /* `--data-dir <archive>` is a precise media selection, not
                  * permission to scan its parent and select a different CSB
                  * package. The generic hash walker accepts a file root, but
                  * FM Towns also has to unwrap the nested CD image here. */
-                archiveLeaf = strrchr(roots[rootIndex], '/');
-                if (!archiveLeaf) archiveLeaf = strrchr(roots[rootIndex], '\\');
-                archiveLeaf = archiveLeaf ? archiveLeaf + 1 : roots[rootIndex];
-                if (strcmp(archiveLeaf, archiveNames[archiveIndex]) != 0 ||
-                    snprintf(archivePath, sizeof(archivePath), "%s",
-                             roots[rootIndex]) >= (int)sizeof(archivePath)) {
+                    archiveLeaf = strrchr(candidateRoots[candidateRootIndex], '/');
+                    if (!archiveLeaf) archiveLeaf = strrchr(candidateRoots[candidateRootIndex], '\\');
+                    archiveLeaf = archiveLeaf ? archiveLeaf + 1 : candidateRoots[candidateRootIndex];
+                    if (strcmp(archiveLeaf, archiveNames[archiveIndex]) != 0 ||
+                        snprintf(archivePath, sizeof(archivePath), "%s",
+                                 candidateRoots[candidateRootIndex]) >= (int)sizeof(archivePath)) {
+                        continue;
+                    }
+                } else if (snprintf(archivePath, sizeof(archivePath), "%s/%s",
+                                    candidateRoots[candidateRootIndex], archiveNames[archiveIndex]) >=
+                               (int)sizeof(archivePath)) {
                     continue;
                 }
-            } else if (snprintf(archivePath, sizeof(archivePath), "%s/%s",
-                                roots[rootIndex], archiveNames[archiveIndex]) >=
-                           (int)sizeof(archivePath)) {
-                continue;
-            }
-            if (!m12_csb_fmtowns_archive_stage(archivePath, imagePath,
-                                               sizeof(imagePath), &layout)) {
-                continue;
-            }
-            for (languageIndex = 0U; languageIndex < 2U; ++languageIndex) {
+                if (!m12_csb_fmtowns_archive_stage(archivePath, imagePath,
+                                                    sizeof(imagePath), &layout)) {
+                    continue;
+                }
+                for (languageIndex = 0U; languageIndex < 2U; ++languageIndex) {
                 uint8_t* graphics = NULL;
                 uint8_t* dungeon = NULL;
                 size_t graphicsSize = 0U, dungeonSize = 0U;
@@ -1401,11 +1421,13 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
                     admitted = 1;
                     break;
                 }
+                }
+                remove(imagePath);
+                /* The parenthesized archive name is a downloader duplicate.
+                 * Once one retail image has verified both language payloads,
+                 * do not decompress its byte-identical sibling again. */
+                if (admitted) break;
             }
-            remove(imagePath);
-            /* The parenthesized archive name is a downloader duplicate.
-             * Once one retail image has verified both language payloads,
-             * do not decompress its byte-identical sibling again. */
             if (admitted) break;
         }
     }

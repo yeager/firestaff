@@ -991,6 +991,10 @@
   scanner now checks the paired, hash-verified A31E `TITL.DAT` receipt before
   publishing the PC row. An A31 disk can no longer be mislabeled as PC 3.4;
   a distinct shared-payload package is retained when one is actually present.
+  2026-08-06: a normal broad data-root scan now also admits the named retail
+  FM Towns archive below its documented `csb/` child, so the launcher retains
+  both F31 English and Japanese profiles rather than hiding them unless that
+  child is selected directly.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP

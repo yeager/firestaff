@@ -743,6 +743,7 @@ static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {
 static void check_csb_fmtowns_real_archive_when_available(const char* root) {
     M12_AssetStatus status;
     M12_AssetStatus directArchiveStatus;
+    M12_AssetStatus broadRootStatus;
     const M12_AssetVersionStatus* english;
     const M12_AssetVersionStatus* directEnglish;
     int index;
@@ -760,6 +761,7 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
     char japaneseRuntimeRoot[ASSET_PATH_MAX];
     char japaneseGraphicsPath[ASSET_PATH_MAX];
     char japaneseDungeonPath[ASSET_PATH_MAX];
+    const char* broadRoot = getenv("FIRESTAFF_CSB_FMTOWNS_BROAD_DATA_DIR");
     const char* scanRoot = root;
     if (!root || root[0] == '\0') {
         puts("skip: FIRESTAFF_CSB_FMTOWNS_DATA_DIR not set");
@@ -791,6 +793,21 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
               "real FM Towns ZIP should admit CSB for launch");
     check_int(english && english->matched && japanese && japanese->matched,
               "real FM Towns ZIP should verify both CDATA and CJDATA graphics");
+    /* A normal start-menu scan selects the shared data root, not csb/.
+     * Keep this corpus check opt-in: an owner can point it at a minimal root
+     * with the retail archive below csb/ without making every CSB archive
+     * test recurse through unrelated large-game media. */
+    if (broadRoot && broadRoot[0] != '\0') {
+        M12_AssetStatus_ScanGame(&broadRootStatus, broadRoot, "csb");
+        english = englishIndex >= 0
+            ? M12_AssetStatus_GetVersion(&broadRootStatus, "csb", (size_t)englishIndex)
+            : NULL;
+        japanese = japaneseIndex >= 0
+            ? M12_AssetStatus_GetVersion(&broadRootStatus, "csb", (size_t)japaneseIndex)
+            : NULL;
+        check_int(english && english->matched && japanese && japanese->matched,
+                  "broad data-root scan retains both CSB FM Towns profiles from csb/");
+    }
     check_int(graphics && dungeon && !strstr(graphics->matchedPath, "::") &&
                   !strstr(dungeon->matchedPath, "::"),
               "real FM Towns required files should materialize to ordinary runtime paths");
