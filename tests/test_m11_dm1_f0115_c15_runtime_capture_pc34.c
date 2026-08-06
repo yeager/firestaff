@@ -25,27 +25,10 @@ static const char* resolve_data_dir(void)
 {
     static char path[2048];
     const char* env = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char* root = getenv("FIRESTAFF_DATA");
-    const char* home = getenv("HOME");
 
     if (data_dir_has_pc34(env)) return env;
     if (env && env[0]) {
         snprintf(path, sizeof(path), "%s/DATA", env);
-        if (data_dir_has_pc34(path)) return path;
-    }
-    if (data_dir_has_pc34(root)) return root;
-    if (root && root[0]) {
-        snprintf(path, sizeof(path), "%s/dm1", root);
-        if (data_dir_has_pc34(path)) return path;
-        snprintf(path, sizeof(path), "%s/DATA", root);
-        if (data_dir_has_pc34(path)) return path;
-    }
-    if (home && home[0]) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1", home);
-        if (data_dir_has_pc34(path)) return path;
-        snprintf(path, sizeof(path), "%s/.firestaff/data", home);
-        if (data_dir_has_pc34(path)) return path;
-        snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/DATA", home);
         if (data_dir_has_pc34(path)) return path;
     }
     return NULL;
@@ -89,11 +72,17 @@ static int find_real_c15_capture(M11_GameViewState* state,
 int main(void)
 {
     const char* dataDir = resolve_data_dir();
+    const char* selectedDataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
     M11_GameViewState state;
     M11_Dm1F0115C15RuntimeCaptureReceipt receipt;
     unsigned char framebuffer[320 * 200];
 
     if (!dataDir) {
+        if (selectedDataDir && selectedDataDir[0]) {
+            fputs("configured PC34 DUNGEON.DAT/GRAPHICS.DAT is unavailable\n",
+                  stderr);
+            return 1;
+        }
         puts("skip: local DM1 PC34 DUNGEON.DAT/GRAPHICS.DAT not available");
         return 0;
     }
