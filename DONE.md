@@ -51742,13 +51742,20 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   until its LZW-to-IMG1/IMG2 pixel handoff is complete; no synthetic Atari
   gameplay path was enabled.
 - ✅ 2026-08-06 DM1 Atari ST GRAPHICS.DAT record handoff: added the DM1-owned
-  `dm1_v1_atari_st_graphics_dat` parser for the original big-endian 575-record
+  `dm1_v1_atari_st_graphics_dat` parser for the original big-endian 563-record
   table, exact data-section accounting, raw records, and Atari-LZW records
   using the ReDMCSB-compatible decoder. It is intentionally separate from the
   PC34 and FM Towns/Amiga IMAGE2 paths. Unit coverage verifies every table
   offset, final-record bounds, raw reads, and truncation rejection. This does
-  not claim Atari pixel rendering: IMG1/IMG2 interpretation and STX protected
-  media extraction remain open in TODO.
+  not claim Atari gameplay: STX extraction and the Atari dungeon/runtime owner
+  remain separate follow-up work in TODO.
+- ✅ 2026-08-06 DM1 Atari ST protected-media extraction: added the clean-room
+  `dm1_v1_atari_st_stx` reader for RSY v3 track blocks, real sector ordering,
+  the DM1 FAT12 directory and two-sector allocation units. The supplied retail
+  STX extracts GRAPHICS.DAT (271911 bytes) and DUNGEON.DAT (33286 bytes), and
+  the extracted graphics table passes the existing 563-record parser. The
+  parser rejects malformed/truncated tracks and stays separate from the
+  runtime until the Atari dungeon owner is wired.
 - ✅ 2026-08-06 DM1 PC34 GRAPHICS.DAT full record audit and SND3 boundary:
   added `test_m11_dm1_full_graphics_asset_audit_pc34`, which runs the real
   canonical 713-record PC3.4 corpus through the M11 classifier, dimensions

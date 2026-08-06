@@ -373,8 +373,14 @@
   all 532 real DM1 FM Towns IMG2 and Amiga IMG1 records from local corpora;
   non-raster code, sound, text, font and unused records fail closed before
   M11 caching. Their remaining dungeon/save/input/media capture gaps stay
-  separate. Atari still needs the source-bound IMG1/IMG2 pixel decoder and
-  reproducible STX protected-media extraction.
+  separate. Atari still needs the extracted GRAPHICS.DAT/DUNGEON.DAT pair to
+  join the Atari dungeon/runtime owner and validation of more STX variants.
+  2026-08-06: a clean-room
+  `dm1_v1_atari_st_stx` reader now validates the retail RSY v3 track blocks,
+  orders real 512-byte sectors, reads the DM1 FAT12 directory and extracts
+  GRAPHICS.DAT/DUNGEON.DAT from the supplied STX. Remaining work is joining
+  that extracted pair to the Atari dungeon/runtime owner and validating more
+  protected STX variants; no generic STX fallback is enabled.
 
 - **DM1-BLOCKED-STEP-AUDIO-DAMAGE-HUD:** The DM1 runtime now owns the remaining
   wall-step audio and damage-overlay corrections: blocked step commands emit

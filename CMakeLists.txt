@@ -53111,6 +53111,15 @@ add_executable(test_dm1_v1_atari_st_graphics_dat
 target_include_directories(test_dm1_v1_atari_st_graphics_dat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_atari_st_graphics_dat COMMAND test_dm1_v1_atari_st_graphics_dat)
 
+add_executable(test_dm1_v1_atari_st_stx
+    tests/test_dm1_v1_atari_st_stx.c
+    src/dm1/dm1_v1_atari_st_stx.c
+    src/dm1/dm1_v1_atari_st_graphics_dat.c
+    src/dm1/dm1_v1_graphics_loader_pc34_compat.c
+    src/dm1/dm1_v1_legacy_graphics_dat.c)
+target_include_directories(test_dm1_v1_atari_st_stx PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_atari_st_stx COMMAND test_dm1_v1_atari_st_stx)
+
 add_executable(test_dm1_v1_fmtowns_iso9660
     tests/test_dm1_v1_fmtowns_iso9660.c
     src/dm1/dm1_v1_fmtowns_iso9660.c
