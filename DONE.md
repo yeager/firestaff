@@ -1,3 +1,11 @@
+# DM2 inventarie- och ljud-GDAT med vald korpus (2026-08-07)
+
+- ✅ Inventarie-HUD- och ljudproverna använder nu endast den explicit valda
+  `FIRESTAFF_DM2_DATA_DIR/graphics.dat`-korpusen. En vald men oläsbar fil är
+  ett verifieringsfel i stället för en tyst reservväg till en privat
+  installation. PC-DOS-korpusen bekräftar 64 inventariehandrutter och dess
+  källbundna GDAT-ljudpayload (SOUND 3/0/129).
+
 # DM2 G1 objekt- och varelsematerial med vald korpus (2026-08-07)
 
 - ✅ Realdatatesterna för DB9-containrar, DB5-vapen samt DB4-scen- och

@@ -47,19 +47,11 @@ static int read_file(const char *path, uint8_t **out, size_t *out_size)
 static int load_canonical_graphics(uint8_t **graphics, size_t *graphics_size)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
     char path[2048];
 
-    if (root && root[0]) {
-        snprintf(path, sizeof(path), "%s/graphics.dat", root);
-        if (read_file(path, graphics, graphics_size)) return 1;
-    }
-    if (home && home[0]) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/dm2/data/graphics.dat",
-                 home);
-        if (read_file(path, graphics, graphics_size)) return 1;
-    }
-    return 0;
+    if (!root || !root[0]) return 0;
+    snprintf(path, sizeof(path), "%s/graphics.dat", root);
+    return read_file(path, graphics, graphics_size);
 }
 
 int main(void)
@@ -75,9 +67,14 @@ int main(void)
     const uint8_t *raw4 = NULL;
     size_t raw4_size = 0u;
 
-    if (!load_canonical_graphics(&graphics, &graphics_size)) {
-        puts("SKIP: no local canonical DM2 GRAPHICS.DAT");
+    if (!getenv("FIRESTAFF_DM2_DATA_DIR") ||
+        !getenv("FIRESTAFF_DM2_DATA_DIR")[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
         return 0;
+    }
+    if (!load_canonical_graphics(&graphics, &graphics_size)) {
+        fputs("FAIL: selected canonical DM2 GRAPHICS.DAT is unreadable\n", stderr);
+        return 1;
     }
     memset(&loader, 0, sizeof(loader));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||

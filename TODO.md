@@ -1013,6 +1013,9 @@
   rows are payload entries only. `test_dm2_v1_sound_gdat_real_data` now
   asserts this corpus fact, so no sound names may be derived from class
   triples or copied from a host table.
+  **2026-08-07 corpus update:** the SOUND-GDAT real-data probe now accepts
+  only explicit `FIRESTAFF_DM2_DATA_DIR/graphics.dat`; a selected unreadable
+  corpus fails instead of falling back to a private installation.
 
 - **DM2-WEATHER-TEXT-CONSUMER:** SKProject's `c_weather.cpp` exposes numeric
   state and GDAT command transitions, not display-name text. The former
@@ -1040,6 +1043,9 @@
   owners only; it has no M11/runtime caller and its description parameter is
   caller-supplied. It is now excluded from `firestaff_dm2` until the live
   `DRAW_ITEM_SURVEY`/`GET_ITEM_NAME()` handoff is connected.
+  **2026-08-07 corpus update:** the inventory-GDAT receipt probe likewise
+  accepts only explicit `FIRESTAFF_DM2_DATA_DIR/graphics.dat`; missing selected
+  media is a verification error rather than an implicit HOME fallback.
 
 - **DM2-DOOR-TEXT-CONSUMER:** Door state and type constants own mechanics and
   GDAT selects their image materials; no original text producer has been
