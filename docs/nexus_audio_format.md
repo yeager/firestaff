@@ -112,7 +112,7 @@ remains gated and no substitute WAV/OGG/MP3 is fabricated.
 
 | Audio Type | Format | Location | Status |
 |-----------|--------|----------|--------|
-| Music tracks | CD-DA (Red Book) | CD tracks 2-9 | Track switching implemented; playback TODO |
+| Music tracks | CD-DA (Red Book) | CD tracks 2-9 | Disc-layout receipt only; level selection and playback blocked |
 | SFX banks | SAL DataID 0 directory + bounded tone metadata | ISO Track 1 (SNDLEV*.SAL) | Real files loaded/provenance-bound; playback blocked |
 | SFX mapping | MAP format (66-90 B) | ISO Track 1 (SNDLEV*.MAP) | Bounded record parsing; event semantics unproven |
 | Sound driver | SH-2 binary | SDDRVS.TSK | Not reverse-engineered |

@@ -386,6 +386,9 @@
   capture remain open.
   The same launchers now reject raw ISO/BIN paths before writing a plan;
   Saturn CDDA capture requires the real CUE/CCD/TOC/M3U container route.
+  2026-08-06: the CDDA status table and runtime regression now explicitly
+  distinguish manual track selection from playback readiness; no level→track
+  binding or ready receipt is emitted without source-owned evidence.
 
 - **NEXUS-PALETTE-CAPTURE:** The retail SMAP/FACE/ITEM/MNS palette decoders
   now share the Saturn BGR555 channel order. Remaining work is an independent

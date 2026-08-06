@@ -54,6 +54,27 @@ static void test_level_cd_selector_stays_unbound(void) {
           "retail CDDA layout does not invent a level-to-track selector");
 }
 
+static void test_cd_selection_is_not_playback_readiness(void) {
+    Nexus_SoundEngine eng;
+    Nexus_SfxRuntimeReceipt receipt;
+
+    memset(&eng, 0, sizeof(eng));
+    memset(&receipt, 0, sizeof(receipt));
+    CHECK(nexus_sound_init(&eng) == 0,
+          "sound engine initializes for CD selection audit");
+    nexus_sound_set_data_root(&eng, "/tmp/firestaff-nexus-no-cd");
+    CHECK(nexus_sound_cd_track(&eng, 2) == 0 &&
+              eng.current_cd_track == 2 &&
+              eng.cd_playing == 0 &&
+              eng.cd_track_path[0] == '\0',
+          "manual CD selection records provenance without claiming playback");
+    CHECK(nexus_sound_level_runtime_receipt(&eng, &receipt) == 0 &&
+              receipt.cd_track == -1 &&
+              receipt.blocks_real_sfx_playback == 1,
+          "CD selection does not manufacture a level binding or ready receipt");
+    nexus_sound_shutdown(&eng);
+}
+
 static void test_size_matched_assets_block_decode(void) {
     Nexus_SoundEngine eng;
     Nexus_V1_AudioReceipt sal_expected;
@@ -755,6 +776,7 @@ static void test_mismatched_assets_block_playback(void) {
 
 int main(void) {
     test_level_cd_selector_stays_unbound();
+    test_cd_selection_is_not_playback_readiness();
     test_missing_assets_block_playback();
     test_size_matched_assets_block_decode();
     test_sal_package_profile_blocks_playback();

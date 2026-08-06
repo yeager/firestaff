@@ -53025,6 +53025,10 @@ konsument och placering är capture-bundna.
   sound-driver task, while SLEV/SAL event dispatch remains capture-gated;
   explicit source-bound registries and no-draw behavior remain available for
   future Saturn evidence.
+- ✅ 2026-08-06 Nexus CDDA readiness wording: corrected the audio status table
+  to say that tracks 2–9 are a disc-layout receipt only, and added a runtime
+  regression proving that manual track selection does not claim playback,
+  invent a level binding, or produce a ready receipt.
 - 2026-08-06 Nexus startup/menu regression: corrected the inverted exact-row
   assertion in `test_nexus_v1_launcher_bpk_no_draw_presentation`. A validated
   PRS3 row is now tested as admitted opaque no-draw evidence, while payload,
