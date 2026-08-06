@@ -7,12 +7,12 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Keep one active verification and one latest pending verification per ref.
-# This prevents rapid main pushes from exhausting the Actions queue while the
-# newest commit still gets a complete verification run.
+# Verify the latest main commit promptly.  While active development can push
+# several commits in quick succession, an older run no longer represents the
+# branch users will receive and only delays the current verification.
 concurrency:
   group: verify-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 env:
   SDL3_TAG: release-3.2.14
