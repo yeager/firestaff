@@ -1381,7 +1381,8 @@
   receipts, followed by an F7063 byte-sum check of the native dungeon tail.
   The shared dungeon reader now consumes MAP's real byte-6/7 coordinate
   origin rather than its byte-4/5 unreferenced padding, and can consume the
-  verified F31 tail bytes directly. User-save persistence and runtime
+  verified F31 tail bytes directly. It retains the original party's verified
+  `GLOBAL_DATA` pose/time, but user-save persistence and champion/runtime
   restoration remain open.
   2026-08-06: the F31E `CDATA/GRAPHICS.DAT` and `DUNGEON.DAT` pair now
   opens the source-bound C001--C005 entrance and C017/C040 HUD session only

@@ -56638,6 +56638,12 @@ alcove runtime and archive-media tests passed (4/4).
   CSB dungeon loader. The F31E corpus proves all 11 maps and its first map's
   `(17,14)` origin; no raw save bytes are promoted to a live resumed world.
 
+- ✅ 2026-08-06 CSB FM Towns MINI party-pose receipt: the F7057-decrypted
+  `GLOBAL_DATA` now retains GameTime and the original party pose, and F7063
+  rejects a pose outside its selected map. F31E proves tick 82 at map 4
+  `(22,18,S)`; F31J proves tick 88 at the same pose. Champion-body decoding
+  and live restoration remain deliberately separate.
+
 - ✅ 2026-08-06 CSB FM Towns Utility P3 boundary: `UTILE.EXP` and
   `UTILJ.EXP` now must pass their original Phar Lap level-1 P3 envelope in
   addition to the full-file identity gate. The receipt records the real

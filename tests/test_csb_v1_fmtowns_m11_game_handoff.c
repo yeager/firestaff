@@ -179,6 +179,12 @@ int main(void)
               direct_handoff.startup_mini_header_dungeon_id == 13u &&
               direct_handoff.startup_mini_save_parts_verified &&
               direct_handoff.startup_mini_party_champion_count == 1u &&
+              direct_handoff.startup_mini_game_time ==
+                  (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 82u : 88u) &&
+              direct_handoff.startup_mini_party_map_x == 22 &&
+              direct_handoff.startup_mini_party_map_y == 18 &&
+              direct_handoff.startup_mini_party_direction == 2 &&
+              direct_handoff.startup_mini_party_map_index == 4 &&
               direct_handoff.startup_mini_event_maximum_count == 436u &&
               direct_handoff.startup_mini_active_group_capacity == 60u &&
               direct_handoff.startup_mini_verified_save_body_offset == 8236u &&
