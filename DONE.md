@@ -50640,3 +50640,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   it cannot publish playable source ownership. Verified with the focused
   runtime handoff test and the real PC-DOS boot-profile render regression;
   no game data was copied or committed.
+- ✅ 2026-08-06 Nexus DGN Structure2 palette reuse: the real decoder now follows
+  DMWeb's `Palette offset = 0` rule by resolving the previous descriptor with
+  the same Palette ID, instead of rejecting valid retail images or substituting
+  palette 0. Hash-verified LEV00-LEV15 coverage decodes 1,678 descriptors:
+  1,553 indexed4 and 125 direct555. Structure3 VDP1 upload, CLUT ownership,
+  face texture selection and viewport placement remain capture-gated.

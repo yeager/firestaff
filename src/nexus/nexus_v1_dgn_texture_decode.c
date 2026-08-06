@@ -47,9 +47,34 @@ int nexus_v1_dgn_texture_decode(const uint8_t *dgn, int dgn_size,
          (uint32_t)width * height * 2U) > (uint32_t)pixel_capacity)
         return NEXUS_V1_DGN_TEXTURE_DECODE_OUTPUT_TOO_SMALL;
     if (encoding == 0x0008U) {
-        if (!palette || palette_capacity < 16 || !palette_rel || useful < 32U ||
+        if (!palette || palette_capacity < 16 || useful < 32U ||
             palette_rel > useful - 32U)
             return NEXUS_V1_DGN_TEXTURE_DECODE_BLOCKED_BOUNDS;
+        if (!palette_rel) {
+            int previous_image_id;
+            int association_found = 0;
+
+            /* DMWeb DGN Structure2 descriptor rule: a zero Palette offset
+             * reuses the palette previously associated with this Palette ID.
+             * Resolve that association from the real descriptor list; never
+             * substitute palette 0 or a host default. */
+            for (previous_image_id = image_id - 1;
+                 previous_image_id >= 0; --previous_image_id) {
+                uint32_t previous_cursor = block * NEXUS_DGN_BLOCK_SIZE +
+                    (uint32_t)previous_image_id * 20U;
+                if (rd16(dgn + previous_cursor + 4) == palette_id) {
+                    uint32_t previous_palette_rel =
+                        rd32(dgn + previous_cursor + 16);
+                    if (previous_palette_rel != 0U) {
+                        palette_rel = previous_palette_rel;
+                        association_found = 1;
+                        break;
+                    }
+                }
+            }
+            if (!association_found) return NEXUS_V1_DGN_TEXTURE_DECODE_BLOCKED_DESCRIPTOR;
+        }
+        if (palette_rel > useful - 32U) return NEXUS_V1_DGN_TEXTURE_DECODE_BLOCKED_BOUNDS;
         palette_abs = block * NEXUS_DGN_BLOCK_SIZE + palette_rel;
         if (palette_abs > (uint32_t)dgn_size || 32U > (uint32_t)dgn_size - palette_abs)
             return NEXUS_V1_DGN_TEXTURE_DECODE_BLOCKED_BOUNDS;

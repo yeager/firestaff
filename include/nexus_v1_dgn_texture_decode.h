@@ -32,9 +32,11 @@ typedef struct {
 
 /* DMWeb Translation Kit / DMNDataFileDecoder.vbs Structure2 decoder.
  * Output is indexed nibbles expanded to one byte per pixel for encoding 08,
- * or big-endian Saturn 5-5-5 words for encoding 28.  The receipt's decoded
- * bit is format evidence only; source_verified remains clear until a caller
- * binds the same bytes to a canonical LEV identity. */
+ * or big-endian Saturn 5-5-5 words for encoding 28.  DMWeb's Structure2
+ * palette-ID reuse rule is resolved from the preceding descriptor list when
+ * a descriptor has Palette offset 0. The receipt's decoded bit is format
+ * evidence only; source_verified remains clear until a caller binds the same
+ * bytes to a canonical LEV identity. */
 int nexus_v1_dgn_texture_decode(const uint8_t *dgn, int dgn_size,
                                 int image_id, uint8_t *pixels,
                                 int pixel_capacity, uint16_t *palette,

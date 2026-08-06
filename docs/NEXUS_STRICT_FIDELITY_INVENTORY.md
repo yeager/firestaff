@@ -240,3 +240,10 @@ orsakade tyst bortfall av riktiga modeller. Parsern avvisar i stället deklarati
 som inte ryms, utan att skapa en trunkerad giltig modell. Testet dekoder alla 30
 MNS-filer och renderar 815 källtexturer. Detta är fortsatt parser-/materialbevis,
 inte bevis på Saturns slutliga VDP1-kommandoordning eller viewport-pixlar.
+
+DGN Structure2-dekodern följer nu också DMWebs palette-ID-regel: en descriptor
+med `Palette offset = 0` återanvänder den senaste tidigare paletteassociationen
+med samma ID; den får inte falla tillbaka till palette 0. Hashverifierad testning
+av LEV00–LEV15 dekoderar 1 678 riktiga descriptors, varav 1 553 indexed-4bpp
+och 125 direct-color-555. Det bevisar descriptor-, pixel- och palettebytes, men
+inte ännu Structure3:s Saturn-VDP1-upload, UV-/draw-order eller viewportplacering.

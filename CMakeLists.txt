@@ -9,7 +9,8 @@ endif()
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_nexus_v1_dgn_texture_decode.c")
     add_executable(test_nexus_v1_dgn_texture_decode
         tests/test_nexus_v1_dgn_texture_decode.c
-        src/nexus/nexus_v1_dgn_texture_decode.c)
+        src/nexus/nexus_v1_dgn_texture_decode.c
+        src/shared/asset_find_by_hash.c)
     target_include_directories(test_nexus_v1_dgn_texture_decode PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     add_test(NAME nexus_v1_dgn_texture_decode
