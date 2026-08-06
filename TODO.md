@@ -559,6 +559,11 @@
   Saturn VDP1/VDP2 placement. Continue with capture-backed startup/menu
   handoff; do not promote these receipts into host rendering.
 
+  2026-08-06 follow-up: the real TITLE.BIN MAPD/TIBG regression now joins its
+  five authenticated 64x28 maps to the real TITLE.CG 8x8 atlas and checks
+  non-empty decoded source pixels. This remains format evidence only; Saturn
+  VDP2 tilemap, CLUT, timing and presentation ownership are still open.
+
   2026-08-06: the legacy Nexus overview/language/startup/champion/features
   documents were corrected to stop publishing synthetic Japanese-only claims,
   eight/24-name rosters, DM1-derived semantics, or completed renderer/audio

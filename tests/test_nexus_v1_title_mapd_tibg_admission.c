@@ -1,4 +1,5 @@
 #include "nexus_v1_title_mapd_tibg_admission.h"
+#include "nexus_v1_title.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -292,6 +293,45 @@ static void check_rejections(const uint8_t *pristine)
     free(copy);
 }
 
+static void check_real_mapd_tile_join(const uint8_t *title_bin,
+                                      size_t title_bin_size,
+                                      const uint8_t *title_cg,
+                                      size_t title_cg_size)
+{
+    Nexus_TitleScreen title;
+    int map;
+
+    memset(&title, 0, sizeof(title));
+    CHECK(title_bin && title_cg &&
+          title_bin_size > 0x0e278U &&
+          nexus_v1_title_decode_mapd(title_bin + 0x0e278U,
+                                     title_bin_size - 0x0e278U,
+                                     title_cg, title_cg_size,
+                                     &title) == 1);
+    CHECK(title.decoded_map_source_bound == 1 &&
+          title.decoded_map_count == NEXUS_V1_TITLE_MAP_COUNT);
+    for (map = 0; map < NEXUS_V1_TITLE_MAP_COUNT; ++map) {
+        size_t pixel;
+        int nonzero = 0;
+        CHECK(title.decoded_map_pixels[map] != NULL);
+        if (!title.decoded_map_pixels[map]) continue;
+        for (pixel = 0;
+             pixel < (size_t)NEXUS_V1_TITLE_MAP_WIDTH *
+                         (size_t)NEXUS_V1_TITLE_MAP_HEIGHT;
+             ++pixel) {
+            if (title.decoded_map_pixels[map][pixel] != 0U) {
+                nonzero = 1;
+                break;
+            }
+        }
+        CHECK(nonzero);
+    }
+    /* This join is deliberately source-format evidence only. The decoder
+     * does not establish Saturn VDP2 tilemap, CLUT, timing, or presentation
+     * ownership. */
+    nexus_title_free(&title);
+}
+
 int main(int argc, char **argv)
 {
     uint8_t *synthetic = build_synthetic();
@@ -313,6 +353,18 @@ int main(int argc, char **argv)
         CHECK(real_size == (size_t)NEXUS_V1_TITLE_BIN_BYTES);
         if (real_size == (size_t)NEXUS_V1_TITLE_BIN_BYTES) {
             check_receipt(real, real_size);
+            if (argc > 2) {
+                size_t cg_size = 0;
+                uint8_t *cg = read_file(argv[2], &cg_size);
+                if (!cg) {
+                    printf("SKIP: cannot read %s\n", argv[2]);
+                    free(real);
+                    free(synthetic);
+                    return 77;
+                }
+                check_real_mapd_tile_join(real, real_size, cg, cg_size);
+                free(cg);
+            }
         }
         free(real);
     }

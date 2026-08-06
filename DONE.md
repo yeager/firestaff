@@ -1,5 +1,14 @@
 # Theron TQTR capture-offset correction (2026-08-06)
 
+# Nexus TITLE.BIN/TITLE.CG real map join (2026-08-06)
+
+- ✅ Extended the real TITLE.BIN MAPD/TIBG regression to load the authenticated
+  TITLE.CG atlas and decode all five 64x28 source maps.
+- ✅ The regression checks every map is populated and has non-empty source
+  pixels, while explicitly retaining the no-presentation boundary.
+- ✅ No VDP2 tilemap, CLUT, timing, or framebuffer permission is inferred from
+  this format-only join.
+
 # Theron real Track 02 bank reload hygiene (2026-08-06)
 
 - ✅ The source-faithful world loader now clears the selected dungeon's level
