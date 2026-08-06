@@ -1,3 +1,13 @@
+# Nexus MENU.BPK bounded surface decode regression (2026-08-06)
+
+- ✅ `test_nexus_v1_bppk` now reads the real European `MENU.BPK` through
+  `FIRESTAFF_NEXUS_DATA_DIR` and decodes all 162 PRS3 surfaces via the
+  bounded public surface decoder. Every output has the declared indexed-8bpp
+  size and non-zero source pixels; the directory reports 164 entries/162
+  PRS3 entries.
+- ✅ The test remains source/pixel evidence only. CLUT ownership, VDP1 upload,
+  destination placement and menu presentation remain capture-gated.
+
 # Nexus startup real-corpus gate audit (2026-08-06)
 
 - ✅ `test_m11_nexus_startup_gate`, `test_nexus_v1_startup_menu_pc34_compat`
