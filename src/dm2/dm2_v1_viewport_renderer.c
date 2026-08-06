@@ -1418,16 +1418,6 @@ void dm2_v1_viewport_set_level(DM2_V1_ViewportState *s, int level)
     s->dirty = 1;
 }
 
-void dm2_v1_viewport_set_weather(DM2_V1_ViewportState *s,
-                                   int weather,
-                                   int rain_intensity)
-{
-    if (!s) return;
-    s->weather = weather;
-    s->rain_intensity = rain_intensity;
-    s->dirty = 1;
-}
-
 void dm2_v1_viewport_set_time(DM2_V1_ViewportState *s, float time_of_day)
 {
     if (!s) return;

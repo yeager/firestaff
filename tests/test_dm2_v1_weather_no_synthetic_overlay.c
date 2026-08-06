@@ -18,9 +18,8 @@ static void check(int condition, const char *name)
     }
 }
 
-static void check_weather(int weather, int intensity, int tick,
-                          uint16_t rain, uint16_t mist, uint16_t thunder,
-                          const char *name)
+static void check_weather_controls(uint16_t rain, uint16_t mist,
+                                   uint16_t thunder, const char *name)
 {
     uint8_t framebuffer[320 * 200];
     uint8_t before[320 * 200];
@@ -29,8 +28,6 @@ static void check_weather(int weather, int intensity, int tick,
     memset(framebuffer, 0x5a, sizeof(framebuffer));
     memcpy(before, framebuffer, sizeof(before));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
-    dm2_v1_viewport_set_weather(&viewport, weather, intensity);
-    viewport.tick_count = tick;
     dm2_v1_viewport_set_gdat_scene_control(
         &viewport, 1, 0, 0x12345678u, 0, 0, 0, 0, 0, 0,
         rain, mist, thunder, 0);
@@ -43,12 +40,12 @@ static void check_weather(int weather, int intensity, int tick,
 
 int main(void)
 {
-    check_weather(1, 64, 3, 1, 0, 0,
-                  "rain control does not create procedural pixels");
-    check_weather(2, 32, 0, 0, 1, 0,
-                  "mist control does not create procedural pixels");
-    check_weather(3, 70, 121, 1, 0, 1,
-                  "thunder control does not create procedural pixels");
+    check_weather_controls(1, 0, 0,
+                           "rain control does not create procedural pixels");
+    check_weather_controls(0, 1, 0,
+                           "mist control does not create procedural pixels");
+    check_weather_controls(1, 0, 1,
+                           "thunder control does not create procedural pixels");
 
     fprintf(stderr, "DM2 weather no-synthetic boundary: %d failure(s)\n",
             failures);

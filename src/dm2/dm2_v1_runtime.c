@@ -6691,9 +6691,6 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         }
     }
     dm2_v1_viewport_set_outdoor(&viewport, rt->outdoor);
-    dm2_v1_viewport_set_weather(&viewport,
-                                rt->outdoor ? 1 : 0,
-                                rt->weather.weather_intensity);
     if (rt->time_of_day_minutes >= 0 &&
         rt->time_of_day_minutes < DM2_TIME_MINUTES_MAX) {
         dm2_v1_viewport_set_time(

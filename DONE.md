@@ -50493,3 +50493,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   Verification: lighting/HUD/viewport gate 151/151, no-synthetic weather
   guard, weather material gate, real PC-DOS outdoor weather capture 21/21,
   and boot profile 95/95.
+- ✅ 2026-08-06 DM2 generic weather-state closure: removed the now-unused
+  viewport `weather`/`rain_intensity` fields and setter, plus the runtime call
+  that populated them. The real runtime still records its source weather state
+  and can draw only after the original GDAT `DistantEnvironment` receipt is
+  bound. Verification: no-synthetic weather guard, weather material gate,
+  real PC-DOS outdoor weather capture 21/21, boot profile 95/95, and full app
+  build.

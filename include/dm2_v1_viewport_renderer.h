@@ -1556,10 +1556,6 @@ typedef struct {
     int hud_party_valid;
     DM2_V1_HudHandActionSource hud_hand_action_source;
 
-    /* Weather */
-    int weather;               /* 0=clear, 1=rain, 2=fog, 3=storm */
-    int rain_intensity;        /* 0–100 */
-
     /* Outdoor state */
     int is_outdoor;
     DM2_V1_G1FirstMapRuntimeReceipt g1_first_map_runtime;
@@ -1953,7 +1949,6 @@ void dm2_v1_viewport_set_g1_map0_teleporter_transition(
     DM2_V1_ViewportState *s,
     const DM2_V1_G1TeleporterTransitionReceipt *receipt);
 void dm2_v1_viewport_set_level(DM2_V1_ViewportState *s, int level);
-void dm2_v1_viewport_set_weather(DM2_V1_ViewportState *s, int weather, int rain_intensity);
 void dm2_v1_viewport_set_time(DM2_V1_ViewportState *s, float time_of_day);
 void dm2_v1_viewport_set_hud_party(DM2_V1_ViewportState *s,
                                    const DM2_V1_HudPartyState *party);
