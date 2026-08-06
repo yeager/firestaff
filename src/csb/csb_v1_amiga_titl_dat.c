@@ -1,5 +1,6 @@
 #include "csb_v1_amiga_titl_dat.h"
 
+#include <stdlib.h>
 #include <string.h>
 
 /* ReDMCSB APPA.C:51-53 invokes SWSH followed by ANIM with FTL_TITL.  The
@@ -370,9 +371,13 @@ int csb_v1_amiga_titl_dat_apply_delta(
     uint16_t payload_size;
     size_t offset = 0u;
     uint16_t index;
+    uint8_t *working_pixels;
+    int decoded;
 
     if (out) memset(out, 0, sizeof(*out));
-    if (!data || !indexed_pixels || delta_index >= CSB_V1_AMIGA_TITL_DELTA_COUNT ||
+    if (!data || !indexed_pixels ||
+        indexed_pixel_capacity < CSB_V1_AMIGA_TITL_WIDTH * CSB_V1_AMIGA_TITL_HEIGHT ||
+        delta_index >= CSB_V1_AMIGA_TITL_DELTA_COUNT ||
         csb_v1_amiga_titl_take_record(data, size, &offset,
                                       'A', 'N', &payload, &payload_size) != 0 ||
         csb_v1_amiga_titl_take_record(data, size, &offset,
@@ -389,11 +394,26 @@ int csb_v1_amiga_titl_dat_apply_delta(
             return 0;
         }
     }
-    if (!csb_v1_amiga_grf1_apply_delta(
+    /* ANIM.C F1205 first prepares a separate draw buffer. Mirror that
+     * ownership here: an incomplete source stream may not partially alter
+     * the caller's displayed frame. This matters for final DL, whose F1177
+     * file allocation has no documented zero-filled tail. */
+    working_pixels = (uint8_t *)malloc(CSB_V1_AMIGA_TITL_WIDTH *
+                                       CSB_V1_AMIGA_TITL_HEIGHT);
+    if (!working_pixels) return 0;
+    memcpy(working_pixels, indexed_pixels,
+           CSB_V1_AMIGA_TITL_WIDTH * CSB_V1_AMIGA_TITL_HEIGHT);
+    decoded = csb_v1_amiga_grf1_apply_delta(
             payload + 2u, size - (size_t)((payload + 2u) - data),
-            indexed_pixels, indexed_pixel_capacity, out)) {
+            working_pixels, CSB_V1_AMIGA_TITL_WIDTH *
+                            CSB_V1_AMIGA_TITL_HEIGHT, out);
+    if (!decoded) {
+        free(working_pixels);
         return 0;
     }
+    memcpy(indexed_pixels, working_pixels,
+           CSB_V1_AMIGA_TITL_WIDTH * CSB_V1_AMIGA_TITL_HEIGHT);
+    free(working_pixels);
     if (out) {
         out->delta_index = delta_index;
         out->duration_vbl = csb_v1_rd16be(payload);

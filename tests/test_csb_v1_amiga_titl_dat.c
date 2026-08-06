@@ -5,6 +5,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static int read_file(const char *path, uint8_t **out_data, size_t *out_size)
 {
@@ -39,6 +40,7 @@ int main(void)
     CSB_V1_AmigaTitlSchedule schedule;
     uint8_t *data;
     uint8_t *pixels;
+    uint8_t *before_final_delta;
     size_t size;
     uint16_t delta_index;
     uint64_t frame_hash = UINT64_C(1469598103934665603);
@@ -112,6 +114,24 @@ int main(void)
         fputs("FAIL: unexpected real Amiga TITL.DAT DL pixels\n", stderr);
         return 1;
     }
+    before_final_delta = (uint8_t *)malloc(320u * 200u);
+    if (!before_final_delta) {
+        free(pixels);
+        free(data);
+        fputs("FAIL: cannot reserve final DL comparison frame\n", stderr);
+        return 1;
+    }
+    memcpy(before_final_delta, pixels, 320u * 200u);
+    if (csb_v1_amiga_titl_dat_apply_delta(
+            data, size, 30u, pixels, 320u * 200u, &delta) ||
+        memcmp(before_final_delta, pixels, 320u * 200u) != 0) {
+        free(before_final_delta);
+        free(pixels);
+        free(data);
+        fputs("FAIL: incomplete final Amiga TITL.DAT DL was not fail-closed\n", stderr);
+        return 1;
+    }
+    free(before_final_delta);
     free(pixels);
     free(data);
     puts("ok: real Amiga TITL.DAT has 32 title frames over 606 VBL");

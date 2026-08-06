@@ -1645,9 +1645,10 @@
   the source expander receives no ByteCount. The first 30 complete `DL`
   streams now apply through the source buffer-copy/flip model. The final
   282-VBL `DL` remains fail-closed: its GRF1 stream reaches the end of the
-  on-disk FTL item before filling the destination, and the allocation padding
-  used by the original has not yet been independently recovered. Do not route
-  it through PC IMG2/IMG3 or invent zero-padding for missing source bytes.
+  on-disk FTL item before filling the destination. ReDMCSB `ANIM.C` F1177
+  allocates exactly file size plus `ANIMDESC` through non-clearing MEM1, so
+  there is no source-defined allocation padding to recover. Do not route it
+  through PC IMG2/IMG3 or invent zero-padding for missing source bytes.
 
 - **DM2-M11-GAME-LOAD-ORIGINAL-HANDOFF:** M11 now keeps New Game at the
   source `SHOW_MENU_SCREEN` → `GAME_LOAD` boundary rather than constructing

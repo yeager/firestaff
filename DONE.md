@@ -67,7 +67,9 @@
   real-media regression locks all 30 decoded frames to a final indexed-frame
   hash, rather than accepting a fixture or generated pixels. The final
   282-VBL DL remains deliberately rejected because it reads beyond the
-  on-disk FTL item; no padding was invented.
+  on-disk FTL item; `ANIM.C` F1177's exact-size, non-clearing MEM1 allocation
+  provides no source-defined tail. Rejection is transactional, so the caller
+  retains its preceding real frame and no partial delta reaches presentation.
 
 - ✅ 2026-08-06 Nexus startup FONT256/TEXTTABL receipts: the real DM.BIN
   startup regression now verifies the literal-pool pointer at `0x18BF4` to
