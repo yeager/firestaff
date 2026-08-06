@@ -1,3 +1,18 @@
+- ✅ 2026-08-06 DM2 production-data inventory, creature-AI boundary: audited
+  the apparent hard-coded `dAITableGenuine` table and the V2 fixture modules
+  against the built production archives. The AI bytes are a source-executable
+  table, not generated game data; `dm2_v1_creature_reset_ai_table()` does not
+  mark any row live, and the production lookup still requires the original
+  `CREATURES[type].dtWordValue(0x05)` owner plus a loaded row. The real PC-DOS
+  `GRAPHICS.DAT` admits 57 creature-animation routes but no optional
+  CREATURE_AI override route, so the runtime correctly remains fail-closed
+  rather than substituting one. The synthetic PNG/HUD/touch/V2.2 fixture
+  modules are excluded from `firestaff_dm2_v2` by the explicit CMake source
+  list. Verification: `test_dm2_v1_creature_gdat_ai_table` 6/6 and
+  `test_dm2_v1_creature_something_real_data` pass with
+  `FIRESTAFF_DM2_DATA_DIR=/Users/bosse/.firestaff/data/dm2/dos_extract/data`;
+  no game data was unpacked, created or tracked.
+
 - ✅ 2026-08-06 DM2 HMP source-document correction: replaced the stale
   claim that SKProject directly parses original HMP or that Firestaff may use
   WAV/OGG replacements. `SkWinMIDI.cpp` actually consumes external converted

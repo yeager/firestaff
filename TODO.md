@@ -1161,6 +1161,15 @@
   AI bodies, is now compiled only by its named regression target rather than
   by either production archive. Re-admit individual functions only when the
   live DB4/CAII/CCM owners are imported together.
+  **2026-08-06 corpus clarification:** the mounted PC-DOS English
+  `GRAPHICS.DAT` has 57 authentic creature-animation table routes, but does
+  not admit the optional `CREATURES[type].dtWordValue(0x05)` →
+  `CREATURE_AI` override graph. That is a property of this original profile,
+  not missing data to substitute. The source executable's
+  `dAITableGenuine` bytes may remain as an inert source table, but a row must
+  still be unavailable unless its active profile supplies the complete
+  CREATURES owner binding. Do not mark a static row as loaded or use it to
+  revive creature, combat or CCM behaviour.
 
 - **DM2-LEGACY-GAME-LOOP-DATA-ADMISSION:** `src/engine/firestaff_game_loop.c`
   is not part of the built M11 DM2 launch route and still contains diagnostic
