@@ -67,7 +67,8 @@ int nexus_v1_game_apply_dungeon_start(
 const char *nexus_v1_dungeon_start_status_name(
     Nexus_V1_DungeonStartStatus status);
 
-/* CD Audio track mapping (Track 2-9 = game music) */
+/* CDDA level mapping is not authenticated. The retail disc declares tracks
+ * 2-9, but no level selector or host playback route is source-bound yet. */
 int nexus_v1_cd_track_for_level(int level);
 
 /* Event system — 61 event types from DM.BIN yam\event.c.
@@ -152,4 +153,3 @@ int nexus_v1_event_dispatch(Nexus_V1_GameState *state, const Nexus_Event *ev);
 int nexus_v1_event_to_command(Nexus_EventType ev);
 
 #endif
-

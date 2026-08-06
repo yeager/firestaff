@@ -40,7 +40,9 @@
  *   • NO_KINGS_WISDOM       — no Kings Wisdom scroll equivalent
  *   • NO_GANGULF_REVIVAL    — Gangulf mechanic absent
  *   • RESTRICTED_DOOR_CLOSES — doors auto-close after fixed duration
- *   • SATURN_CDDA_AUDIO     — audio via CDDA track when available
+ *   • SATURN_CDDA_AUDIO     — reserved for a captured CDDA consumer; the
+ *     default profile must not advertise it while level selection and
+ *     playback remain unbound
  */
 static const unsigned int g_defaultRuntimeFlags =
     NEXUS_V1_RF_USE_SATURN_CD
@@ -51,8 +53,7 @@ static const unsigned int g_defaultRuntimeFlags =
     | NEXUS_V1_RF_NO_PARTY_SWAP
     | NEXUS_V1_RF_NO_KINGS_WISDOM
     | NEXUS_V1_RF_NO_GANGULF_REVIVAL
-    | NEXUS_V1_RF_RESTRICTED_DOOR_CLOSES
-    | NEXUS_V1_RF_SATURN_CDDA_AUDIO;
+    | NEXUS_V1_RF_RESTRICTED_DOOR_CLOSES;
 
 /* ── Default boot profile ───────────────────────────────────────── */
 static const Nexus_V1_BootProfile g_defaultProfile = {

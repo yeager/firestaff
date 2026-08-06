@@ -96,6 +96,9 @@
   2026-08-06: removed the host `track02.wav/ogg/mp3` lookup and callback route;
   a user-supplied host audio file is not a Saturn CDDA handoff and now remains
   selection-only until source-bound media evidence exists.
+  2026-08-06 follow-up: the Nexus default boot profile no longer advertises
+  `SATURN_CDDA_AUDIO`; the flag is reserved for a future source-bound capture
+  and cannot be mistaken for playback readiness.
 
 - **NEXUS-STALE-ISSUE-PAGES:** The three historical Nexus issue pages are now
   explicitly labelled as snapshots. Keep the strict-fidelity inventory and

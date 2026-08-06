@@ -1,3 +1,14 @@
+# Nexus boot-profile capability audit (2026-08-06)
+
+- ✅ Removed the default `SATURN_CDDA_AUDIO` capability from
+  `src/nexus/nexus_v1_boot_profile.c`. The retail disc's Track 2–9
+  declaration remains provenance only; level selection, CDDA handoff and
+  playback are still unbound, so the default launcher profile must not
+  advertise that route. Updated the public header and CDDA API comment to
+  state the capture gate, and added a regression to
+  `tests/nexus_v1_boot_profile_smoke.c`. Verification: 27/27 smoke checks,
+  `git diff --check` clean.
+
 # Nexus PLRD provisions quarantine (2026-08-06)
 
 - ✅ 2026-08-06 DM2 canonical GRAPHICS.DAT probe correction: the real-data

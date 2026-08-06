@@ -122,8 +122,9 @@ typedef enum {
 
     /*
      * NEXUS_V1_RF_SATURN_CDDA_AUDIO:
-     *   Audio playback routes through Saturn CDDA (audio track) when
-     *   available, falling back to ADX/BRAM audio otherwise.
+     *   Reserved for a source-bound Saturn CDDA consumer. It is not part of
+     *   the default profile: the retail track range is known, but level
+     *   selection, media handoff and playback are still capture-gated.
      */
     NEXUS_V1_RF_SATURN_CDDA_AUDIO       = (1 << 9),
 } Nexus_V1_RuntimeFlags;
@@ -141,8 +142,7 @@ typedef struct {
      *   NEXUS_V1_RF_NO_PARTY_SWAP |
      *   NEXUS_V1_RF_NO_KINGS_WISDOM |
      *   NEXUS_V1_RF_NO_GANGULF_REVIVAL |
-     *   NEXUS_V1_RF_RESTRICTED_DOOR_CLOSES |
-     *   NEXUS_V1_RF_SATURN_CDDA_AUDIO
+     *   NEXUS_V1_RF_RESTRICTED_DOOR_CLOSES
      */
     unsigned int runtimeFlags;
 

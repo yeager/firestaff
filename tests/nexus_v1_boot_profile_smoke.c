@@ -29,6 +29,8 @@ int main(void) {
         CHECK(def->tickRateMs == NEXUS_V1_TICK_RATE_MS, "tickRateMs == 55 ms");
         CHECK(def->renderRateMs == NEXUS_V1_RENDER_RATE_MS, "renderRateMs == 33 ms");
         CHECK(def->presentationMode == 0, "presentationMode == 0 (V1_ORIGINAL)");
+        CHECK((def->runtimeFlags & NEXUS_V1_RF_SATURN_CDDA_AUDIO) == 0,
+              "default profile does not advertise uncaptured CDDA playback");
     }
 
     /* ── 2. Init and path resolution ── */
