@@ -354,7 +354,11 @@
   modal: `UTILJ`/`UTILE` are separate CEDT executables and `CHTWJ`/`CHTWE`
   are separate Game executables, so neither is routed through a PC34 surrogate.
   Their authentic handoff, audio/CDDA playback, ending handoff and save
-  transfer still need original-media capture.
+  transfer still need original-media capture. The retail `CDATA/MINI.DAT`
+  and `CJDATA/MINI.DAT` files are explicitly not admitted by the Atari/Amiga
+  GAMEBLOCK decoder: both differ from that big-endian layout and remain
+  outside Resume until the F31E/F31J save-header and runtime handoff have
+  source-backed corpus evidence.
   2026-08-06: the F31E `CDATA/GRAPHICS.DAT` and `DUNGEON.DAT` pair now
   opens the source-bound C001--C005 entrance and C017/C040 HUD session only
   after both original CD hashes admit. M11 binds its package-language Switch

@@ -31,6 +31,7 @@ int main(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_ATARI_MINI");
     const char *corpus_path = getenv("FIRESTAFF_CSB_ATARI_SAVE_CORPUS");
+    const char *fmtowns_mini = getenv("FIRESTAFF_CSB_FMTOWNS_MINI");
     CSB_V1_RuntimeProfile runtime;
     CSB_V1_AtariSaveInfo info;
     uint8_t *bytes = NULL;
@@ -39,6 +40,22 @@ int main(void)
     csb_v1_runtime_init(&runtime, NULL);
     if (csb_v1_atari_save_handoff_runtime_pc34_compat(&runtime, NULL, 0u, &info) !=
         CSB_V1_ATARI_RUNTIME_ERR_NULL) return 1;
+    /* ReDMCSB LOADSAVE.C F0435 selects F31E/F31J's native save-header path.
+     * Its CDATA/CJDATA MINI.DAT startup bytes are not Atari ST/Amiga
+     * GAMEBLOCK saves, despite sharing the filename.  Do not let the
+     * big-endian Atari decoder turn an unverified FM Towns layout into a
+     * Resume candidate while that platform-specific handoff is still open. */
+    if (fmtowns_mini && fmtowns_mini[0]) {
+        if (csb_v1_runtime_can_load_resume_path(fmtowns_mini) ||
+            csb_v1_runtime_load_game_from_path(&runtime, fmtowns_mini) ==
+                CSB_V1_LOAD_OK ||
+            runtime.dungeon_handle != NULL ||
+            runtime.party_state.ChampionCount != 0) {
+            csb_v1_runtime_cleanup(&runtime);
+            return 1;
+        }
+        puts("PASS: FM Towns MINI.DAT stays outside the Atari/Amiga save handoff");
+    }
     if (corpus_path && corpus_path[0]) {
         const char *written_path = "/tmp/CSBGAME2.DAT";
         const char *backup_path = "/tmp/CSBGAME2.BAK";

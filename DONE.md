@@ -53241,3 +53241,11 @@ alcove runtime and archive-media tests passed (4/4).
   `PORTRAIT/ALEX.CMP` cache member decodes successfully (MD5
   `e2a889bdb8e1923cb7f83989f92b53a2`); this is portrait metadata/pixel
   validation only and does not promote a portrait-only CMP to a party save.
+- ✅ 2026-08-06 CSB FM Towns MINI.DAT save-boundary gate: verified both
+  original CDATA (42,776-byte) and CJDATA (43,208-byte) MINI.DAT files
+  against the production Resume/runtime route. Neither file is an Atari/
+  Amiga big-endian GAMEBLOCK save, so the opt-in real-media regression now
+  requires both to remain rejected without changing the live dungeon or party.
+  ReDMCSB `LOADSAVE.C` F0435 selects the separate F31E/F31J save-header path;
+  that platform-specific decode and handoff remain open rather than being
+  substituted with the Atari reader.
