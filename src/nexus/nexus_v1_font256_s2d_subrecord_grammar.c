@@ -50,6 +50,14 @@ static int record_words_match(const uint8_t *record, const uint16_t *words)
     return 1;
 }
 
+static int section2_is_english_revision(uint64_t source_fnv1a64)
+{
+    /* SHA-256 admission is performed by the caller. This FNV is the live
+     * source binding for the admitted English revision, not a guessed name
+     * or a host-generated replacement. */
+    return source_fnv1a64 == UINT64_C(0x90c4ce611bd5f5fe);
+}
+
 int nexus_v1_font256_s2d_subrecord_admit(
     const uint8_t *source_bytes,
     size_t source_size,
@@ -127,6 +135,25 @@ int nexus_v1_font256_s2d_subrecord_admit(
         uint32_t b03_count = 0U;
         uint32_t b0f_count = 0U;
         uint32_t bff_count = 0U;
+        const int english = section2_is_english_revision(base.source_fnv1a64);
+        const uint32_t expected_populated = english ?
+            NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_POPULATED_BLOCK_COUNT :
+            NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT;
+        const uint32_t expected_runs = english ?
+            NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_POPULATED_RUN_COUNT :
+            NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT;
+        const uint32_t expected_zero = english ?
+            NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_BYTE_ZERO_COUNT :
+            NEXUS_V1_FONT256_S2D_SECTION2_BYTE_ZERO_COUNT;
+        const uint32_t expected_03 = english ?
+            NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_BYTE_03_COUNT :
+            NEXUS_V1_FONT256_S2D_SECTION2_BYTE_03_COUNT;
+        const uint32_t expected_0f = english ?
+            NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_BYTE_0F_COUNT :
+            NEXUS_V1_FONT256_S2D_SECTION2_BYTE_0F_COUNT;
+        const uint32_t expected_ff = english ?
+            NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_BYTE_FF_COUNT :
+            NEXUS_V1_FONT256_S2D_SECTION2_BYTE_FF_COUNT;
         int previous_populated = 0;
         uint32_t block;
         if (base.section_length !=
@@ -166,16 +193,13 @@ int nexus_v1_font256_s2d_subrecord_admit(
             }
             previous_populated = block_populated;
         }
-        if (populated != NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT ||
-            runs != NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT ||
+        if (populated != expected_populated || runs != expected_runs ||
             first_populated !=
                 NEXUS_V1_FONT256_S2D_SECTION2_FIRST_POPULATED_BLOCK ||
             last_populated !=
                 NEXUS_V1_FONT256_S2D_SECTION2_LAST_POPULATED_BLOCK ||
-            zero_count != NEXUS_V1_FONT256_S2D_SECTION2_BYTE_ZERO_COUNT ||
-            b03_count != NEXUS_V1_FONT256_S2D_SECTION2_BYTE_03_COUNT ||
-            b0f_count != NEXUS_V1_FONT256_S2D_SECTION2_BYTE_0F_COUNT ||
-            bff_count != NEXUS_V1_FONT256_S2D_SECTION2_BYTE_FF_COUNT) {
+            zero_count != expected_zero || b03_count != expected_03 ||
+            b0f_count != expected_0f || bff_count != expected_ff) {
             *out_receipt = receipt;
             return 0;
         }
@@ -282,25 +306,33 @@ int nexus_v1_font256_s2d_subrecord_corpus_admit(
     receipt.valid = 1;
     receipt.source_admission_bound = 1;
     receipt.all_sections_bound = 1;
+    receipt.source_fnv1a64 = receipt.sections[0].source_fnv1a64;
     receipt.section0_grammar_bound = receipt.sections[0].subrecord_grammar_bound;
     receipt.section2_grammar_negative =
         !receipt.sections[1].subrecord_grammar_bound &&
         receipt.sections[1].populated_block_count ==
-            NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT;
+            (section2_is_english_revision(receipt.source_fnv1a64) ?
+                NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_POPULATED_BLOCK_COUNT :
+                NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT);
     receipt.section2_composition_bound =
         receipt.sections[1].valid &&
         !receipt.sections[1].subrecord_grammar_bound &&
         receipt.sections[1].lead_block_all_ones &&
         receipt.sections[1].nonlead_high_nibble_clear &&
         receipt.sections[1].populated_run_count ==
-            NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT &&
+            (section2_is_english_revision(receipt.source_fnv1a64) ?
+                NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_POPULATED_RUN_COUNT :
+                NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT) &&
         receipt.sections[1].byte_03_count ==
-            NEXUS_V1_FONT256_S2D_SECTION2_BYTE_03_COUNT &&
+            (section2_is_english_revision(receipt.source_fnv1a64) ?
+                NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_BYTE_03_COUNT :
+                NEXUS_V1_FONT256_S2D_SECTION2_BYTE_03_COUNT) &&
         receipt.sections[1].byte_0f_count ==
-            NEXUS_V1_FONT256_S2D_SECTION2_BYTE_0F_COUNT;
+            (section2_is_english_revision(receipt.source_fnv1a64) ?
+                NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_BYTE_0F_COUNT :
+                NEXUS_V1_FONT256_S2D_SECTION2_BYTE_0F_COUNT);
     receipt.section4_grammar_bound = receipt.sections[2].subrecord_grammar_bound;
     receipt.section6_zero_bound = receipt.sections[3].section_all_zero;
-    receipt.source_fnv1a64 = receipt.sections[0].source_fnv1a64;
     receipt.populated_section_count = NEXUS_V1_FONT256_S2D_POPULATED_SECTION_COUNT;
 
     /* Live digests of the 38 raw subrecord spans in file order. */

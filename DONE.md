@@ -105,6 +105,20 @@
   that no retail stream fails. This proves the DMWeb-bounded byte decoder on
   real MENU.BPK data; it does not promote pixels to Saturn VDP1/VDP2 upload.
 
+# Nexus English FONT256 opaque subrecord receipt (2026-08-07)
+
+- ✅ The real European/English `FONT256.S2D` (`25,012` bytes, SHA-256
+  `764a2d6c…`, source FNV-1a64 `0x90c4ce611bd5f5fe`) no longer skips the
+  subrecord grammar test merely because its opaque section-2 composition
+  differs from the canonical corpus.
+- ✅ Its measured section-2 profile is bound separately: `857` populated
+  16-byte blocks in `68` runs, with byte counts `0x00=8890`, `0x03=3498`,
+  `0x0f=3100`, `0xff=16`. Section 0/4/6 receipts remain shared and all
+  values stay opaque source measurements.
+- ✅ Synthetic canonical regression and the real English test both pass.
+  This removes a false skip only; glyph mapping, pixel decode, VDP2 text
+  placement and production drawing remain capture-gated.
+
 # Nexus Saturn raw witness region analysis (2026-08-07)
 
 - ✅ Added `scripts/analyze_nexus_saturn_runtime_capture.py`, which validates

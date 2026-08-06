@@ -73,6 +73,15 @@ static void make_identity(const uint8_t *bytes, size_t size,
     out_identity->source_fnv1a64 = fnv1a64(bytes, size);
 }
 
+static void make_real_identity(const uint8_t *bytes, size_t size,
+                               Nexus_V1_Font256S2DSourceIdentity *out_identity)
+{
+    const char *sha256 = getenv("FIRESTAFF_NEXUS_FONT256_SHA256");
+    make_identity(bytes, size, out_identity);
+    if (sha256 && strcmp(sha256, NEXUS_V1_FONT256_S2D_SHA256_ENGLISH) == 0)
+        out_identity->sha256_hex = NEXUS_V1_FONT256_S2D_SHA256_ENGLISH;
+}
+
 static void put_record(uint8_t *record, const uint16_t *words)
 {
     uint32_t index;
@@ -187,7 +196,8 @@ static uint8_t *build_synthetic(void)
 }
 
 static void check_corpus_common(const uint8_t *bytes, size_t size,
-                                const Nexus_V1_Font256S2DAdmissionReceipt *admission)
+                                const Nexus_V1_Font256S2DAdmissionReceipt *admission,
+                                int english_revision)
 {
     Nexus_V1_Font256S2DSubrecordCorpusReceipt corpus;
     Nexus_V1_Font256S2DSubrecordReceipt section;
@@ -222,22 +232,28 @@ static void check_corpus_common(const uint8_t *bytes, size_t size,
     CHECK(corpus.sections[1].subrecord_grammar_bound == 0);
     CHECK(corpus.sections[1].block_count ==
           NEXUS_V1_FONT256_S2D_SECTION2_BLOCK_COUNT);
-    CHECK(corpus.sections[1].populated_block_count ==
-          NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT);
-    CHECK(corpus.sections[1].populated_run_count ==
-          NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT);
+    CHECK(corpus.sections[1].populated_block_count == (english_revision ?
+          NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_POPULATED_BLOCK_COUNT :
+          NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_BLOCK_COUNT));
+    CHECK(corpus.sections[1].populated_run_count == (english_revision ?
+          NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_POPULATED_RUN_COUNT :
+          NEXUS_V1_FONT256_S2D_SECTION2_POPULATED_RUN_COUNT));
     CHECK(corpus.sections[1].first_populated_block ==
           NEXUS_V1_FONT256_S2D_SECTION2_FIRST_POPULATED_BLOCK);
     CHECK(corpus.sections[1].last_populated_block ==
           NEXUS_V1_FONT256_S2D_SECTION2_LAST_POPULATED_BLOCK);
-    CHECK(corpus.sections[1].byte_zero_count ==
-          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_ZERO_COUNT);
-    CHECK(corpus.sections[1].byte_03_count ==
-          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_03_COUNT);
-    CHECK(corpus.sections[1].byte_0f_count ==
-          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_0F_COUNT);
-    CHECK(corpus.sections[1].byte_ff_count ==
-          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_FF_COUNT);
+    CHECK(corpus.sections[1].byte_zero_count == (english_revision ?
+          NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_BYTE_ZERO_COUNT :
+          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_ZERO_COUNT));
+    CHECK(corpus.sections[1].byte_03_count == (english_revision ?
+          NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_BYTE_03_COUNT :
+          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_03_COUNT));
+    CHECK(corpus.sections[1].byte_0f_count == (english_revision ?
+          NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_BYTE_0F_COUNT :
+          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_0F_COUNT));
+    CHECK(corpus.sections[1].byte_ff_count == (english_revision ?
+          NEXUS_V1_FONT256_S2D_ENGLISH_SECTION2_BYTE_FF_COUNT :
+          NEXUS_V1_FONT256_S2D_SECTION2_BYTE_FF_COUNT));
     CHECK(corpus.sections[1].lead_block_all_ones == 1);
     CHECK(corpus.sections[1].nonlead_high_nibble_clear == 1);
     CHECK(corpus.sections[2].subrecord_grammar_bound == 1);
@@ -417,7 +433,7 @@ int main(int argc, char **argv)
     make_identity(synthetic, SYNTH_BYTES, &identity);
     CHECK(nexus_v1_font256_s2d_admit(
               synthetic, SYNTH_BYTES, &identity, &admission) == 1);
-    check_corpus_common(synthetic, SYNTH_BYTES, &admission);
+    check_corpus_common(synthetic, SYNTH_BYTES, &admission, 0);
     check_rejections(synthetic, SYNTH_BYTES, &admission);
 
     if (argc > 1) {
@@ -431,10 +447,13 @@ int main(int argc, char **argv)
         }
         CHECK(real_size == (size_t)SYNTH_BYTES);
         if (real_size == (size_t)SYNTH_BYTES) {
-            make_identity(real, real_size, &identity);
+            make_real_identity(real, real_size, &identity);
             CHECK(nexus_v1_font256_s2d_admit(
                       real, real_size, &identity, &real_admission) == 1);
-            check_corpus_common(real, real_size, &real_admission);
+            check_corpus_common(real, real_size, &real_admission,
+                identity.sha256_hex &&
+                strcmp(identity.sha256_hex,
+                       NEXUS_V1_FONT256_S2D_SHA256_ENGLISH) == 0);
         }
         free(real);
     }

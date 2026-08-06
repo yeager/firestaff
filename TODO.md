@@ -1001,9 +1001,10 @@
   2026-08-06 follow-up: the documented English Saturn revision
   (`SHA-256 764a2d6c…`, `MD5 7bea3db1…`) now passes the common SCR header,
   section-table, four-section-chain and 242-CG-tile source receipts. Its
-  revision-specific subrecord statistics remain canonical-only; that test
-  stays skipped for the English bytes rather than treating differing source
-  data as a shared grammar.
+  revision-specific opaque section-2 statistics are now admitted separately
+  (`857` populated blocks, `68` runs, byte counts `8890/3498/3100/16`) by
+  the real-data grammar test. This closes a false SKIP only; glyph mapping,
+  pixels and VDP2 text placement remain capture-gated.
 
 - **NEXUS-ACTION-DISPATCH-CAPTURE:** Retail mechanics no longer consume
   queued movement or turn commands merely because DGN floor geometry decoded;
