@@ -64,8 +64,11 @@
   the eight Red Book tracks 2–9, but neither the retained DM.BIN disassembly
   nor DMWeb/Greatstone format material proves the old `level / 2` mapping.
   Runtime level-to-track selection now returns unbound (`-1`) instead of a
-  host-invented pair mapping. Recover the original Saturn music consumer or an
-  authenticated runtime trace before enabling CDDA selection/playback.
+  host-invented pair mapping. The CUE reader now separately reports whether
+  every declared `FILE` payload exists; a valid Track 1 ISO no longer implies
+  that the external CDDA files are available. Recover the original Saturn
+  music consumer or an authenticated runtime trace before enabling CDDA
+  selection/playback.
 
 - **NEXUS-STALE-ISSUE-PAGES:** The three historical Nexus issue pages are now
   explicitly labelled as snapshots. Keep the strict-fidelity inventory and

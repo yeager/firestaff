@@ -220,6 +220,55 @@ int nexus_iso_open_cue(Nexus_ISOReader *reader, const char *cue_path) {
     return matches == 1 ? reader->file_count : -1;
 }
 
+int nexus_iso_cue_media_receipt(const char *cue_path,
+                               Nexus_ISO_CueMediaReceipt *out)
+{
+    FILE *cue;
+    char line[512];
+    char cue_dir[512];
+    char candidate_name[256];
+    char candidate_path[768];
+    char *last_slash;
+
+    if (!cue_path || !out) return -1;
+    memset(out, 0, sizeof(*out));
+    cue = fopen(cue_path, "r");
+    if (!cue) return -1;
+
+    strncpy(cue_dir, cue_path, sizeof(cue_dir) - 1U);
+    cue_dir[sizeof(cue_dir) - 1U] = '\0';
+    last_slash = strrchr(cue_dir, '/');
+    if (!last_slash) last_slash = strrchr(cue_dir, '\\');
+    if (last_slash) {
+        last_slash[1] = '\0';
+    } else {
+        cue_dir[0] = '\0';
+    }
+
+    while (fgets(line, sizeof(line), cue)) {
+        FILE *payload;
+        if (!cue_file_name(line, candidate_name)) continue;
+        if (snprintf(candidate_path, sizeof(candidate_path), "%s%s",
+                     cue_dir, candidate_name) <= 0 ||
+            strlen(candidate_path) >= sizeof(candidate_path)) {
+            fclose(cue);
+            return -1;
+        }
+        ++out->declared_file_count;
+        payload = fopen(candidate_path, "rb");
+        if (payload) {
+            ++out->present_file_count;
+            fclose(payload);
+        } else {
+            ++out->missing_file_count;
+        }
+    }
+    fclose(cue);
+    out->valid = out->declared_file_count > 0 &&
+                 out->missing_file_count == 0;
+    return out->valid ? 0 : 1;
+}
+
 const Nexus_ISOFile *nexus_iso_find(const Nexus_ISOReader *reader, const char *name) {
     int i;
     if (!reader || !name) return NULL;

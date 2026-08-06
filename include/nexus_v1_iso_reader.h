@@ -32,11 +32,24 @@ typedef struct {
     int data_offset;
 } Nexus_ISOReader;
 
+typedef struct {
+    int valid;
+    int declared_file_count;
+    int present_file_count;
+    int missing_file_count;
+} Nexus_ISO_CueMediaReceipt;
+
 /* Open a Saturn BIN file (Track 1) and parse the ISO 9660 filesystem */
 int nexus_iso_open(Nexus_ISOReader *reader, const char *bin_path);
 
 /* Open from CUE file (finds Track 1 BIN automatically) */
 int nexus_iso_open_cue(Nexus_ISOReader *reader, const char *cue_path);
+
+/* Check every FILE payload named by a CUE sheet. This is deliberately
+ * separate from nexus_iso_open_cue(): a valid ISO data track does not prove
+ * that external CDDA payloads are present. */
+int nexus_iso_cue_media_receipt(const char *cue_path,
+                                Nexus_ISO_CueMediaReceipt *out);
 
 /* Find a file by name (case-insensitive) */
 const Nexus_ISOFile *nexus_iso_find(const Nexus_ISOReader *reader, const char *name);

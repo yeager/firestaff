@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus CUE external-media completeness gate: `nexus_iso_open_cue`
+  still selects only the authenticated Nexus data track, while the new
+  `nexus_iso_cue_media_receipt` checks every CUE `FILE` payload independently.
+  The real European loose CUE can therefore be reported as missing its
+  external CDDA files instead of being mistaken for a complete runnable disc;
+  this is a readiness correction only and does not claim audio playback.
+
 - ✅ 2026-08-06 DM2 original-SKSAVE fail-closed cleanup: removed the
   unreachable partial `GAME_LOAD` publication branch, including its
   synthetic session, timer-owner and raw-dungeon handoff helpers. Public

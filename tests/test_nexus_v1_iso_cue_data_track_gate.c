@@ -85,7 +85,10 @@ int main(void)
 {
     char root[256], audio[320], data[320], cue[320];
     char nested[320], nested_data[384], nested_cue[320];
+    char real_cue[768];
+    const char *real_root;
     Nexus_ISOReader reader;
+    Nexus_ISO_CueMediaReceipt media;
     FILE *audio_file;
 
     snprintf(root, sizeof(root), "/tmp/firestaff-nexus-cue-%ld", (long)getpid());
@@ -103,6 +106,13 @@ int main(void)
     CHECK("cue chooses data after audio", nexus_iso_open_cue(&reader, cue) == 2 &&
           nexus_iso_is_nexus(&reader) && strstr(reader.path, "data.bin") != NULL);
     nexus_iso_close(&reader);
+    CHECK("complete CUE media receipt", nexus_iso_cue_media_receipt(cue, &media) == 0 &&
+          media.valid && media.declared_file_count == 2 &&
+          media.present_file_count == 2 && media.missing_file_count == 0);
+    remove(audio);
+    CHECK("missing external CUE media is reported", nexus_iso_cue_media_receipt(cue, &media) == 1 &&
+          !media.valid && media.declared_file_count == 2 &&
+          media.present_file_count == 1 && media.missing_file_count == 1);
 
     snprintf(nested, sizeof(nested), "%s/nested", root);
     snprintf(nested_data, sizeof(nested_data), "%s/data.bin", nested);
@@ -115,6 +125,18 @@ int main(void)
     CHECK("cue normalizes Windows separator", nexus_iso_open_cue(&reader, nested_cue) == 2 &&
           nexus_iso_is_nexus(&reader));
     nexus_iso_close(&reader);
+
+    real_root = getenv("FIRESTAFF_NEXUS_DATA_DIR");
+    if (real_root && *real_root) {
+        snprintf(real_cue, sizeof(real_cue), "%s/Dungeon Master Nexus (English).cue",
+                 real_root);
+        if (access(real_cue, R_OK) == 0) {
+            CHECK("real European CUE exposes missing external CDDA media",
+                  nexus_iso_cue_media_receipt(real_cue, &media) == 1 &&
+                  !media.valid && media.declared_file_count == 9 &&
+                  media.present_file_count == 1 && media.missing_file_count == 8);
+        }
+    }
 
     remove(nested_cue); remove(nested_data); rmdir(nested);
     remove(cue); remove(data); remove(audio); rmdir(root);
