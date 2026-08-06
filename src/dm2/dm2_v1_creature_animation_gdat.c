@@ -1,6 +1,7 @@
 #include "dm2_v1_creature_animation_gdat.h"
 
 #include "dm2_v1_creature.h"
+#include "dm2_v1_skproject_core.h"
 
 #include <string.h>
 
@@ -17,6 +18,69 @@ static uint32_t dm2_v1_hash_bytes(uint32_t hash, const uint8_t *bytes,
         hash *= 16777619u;
     }
     return hash;
+}
+
+int dm2_v1_creature_animation_gdat_query_0958(
+    const DM2_V1_AssetLoader *loader,
+    int creature_type,
+    uint16_t animation_base,
+    uint16_t *io_timer_word,
+    uint32_t game_tick,
+    DM2_V1_CreatureAnimation0958Receipt *out_receipt)
+{
+    const uint8_t *table;
+    size_t table_size = 0u;
+    DM2_V1_SkprojectQuery4e26Receipt query_receipt;
+    DM2_V1_CreatureAnimation0958Receipt receipt;
+    uint16_t query_index = 0u;
+    size_t row;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.creature_type = (uint8_t)(creature_type & 0xff);
+    receipt.animation_base = animation_base;
+    if (!loader || !io_timer_word || creature_type < 0 || creature_type > 0xff) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    receipt.timer_word_before = *io_timer_word;
+    if (!dm2_v1_skproject_query_4e26(io_timer_word, game_tick,
+                                     &query_index, &query_receipt)) {
+        receipt.blocked_out_of_range = query_receipt.blocked_zero_divisor;
+        receipt.timer_word_after = *io_timer_word;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.timer_word_after = *io_timer_word;
+    receipt.query_index = query_index;
+
+    table = dm2_v1_asset_load_typed_sized(
+        loader, DM2_GDAT_CATEGORY_CREATURES, creature_type,
+        DM2_GDAT_ENTRY_TYPE_RAW7, DM2_GDAT_CREATURE_ANIM_INFO_SEQUENCE,
+        &table_size);
+    if (!table || table_size < 4u || (table_size % 4u) != 0u) {
+        receipt.blocked_missing_gdat = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    row = (size_t)animation_base + query_index;
+    if (row >= table_size / 4u) {
+        receipt.blocked_out_of_range = 1;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+
+    /* SKProject SK1C9A.cpp:5377-5400: DM2_4DEA copies four bytes from
+     * GDAT 0xfc, then CUTLX8(value) & 0x80 is shifted right by seven. */
+    receipt.blended_value = (uint32_t)table[row * 4u] |
+                            ((uint32_t)table[row * 4u + 1u] << 8) |
+                            ((uint32_t)table[row * 4u + 2u] << 16) |
+                            ((uint32_t)table[row * 4u + 3u] << 24);
+    receipt.frame_bit14 = (uint8_t)((receipt.blended_value & 0x80u) >> 7);
+    receipt.valid = 1;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }
 
 int dm2_v1_creature_animation_gdat_select_dynamic_v5(

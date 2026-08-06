@@ -29430,7 +29430,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   identity. Runtime no longer promotes the V5 FB/FC/FD route with fabricated
   command `0` and frame `0xffff`; the live CAII command and complete
   `DM2_1c9a_0958` traversal remain required before animation state can drive a
-  player-facing frame.
+  player-facing frame. **2026-08-07 source-data progress:** added a bounded
+  `DM2_1c9a_0958` GDAT `0xfc` fetch that applies `DM2_query_4E26(w2)` and
+  rejects missing/out-of-range rows. The real PC-DOS `GRAPHICS.DAT` FB/FC/FD
+  probe passes; the record/CAII owner is still required before runtime
+  promotion.
 
 - 2026-08-06: PC-DOS startup's decoded `TITLE/0/4` surface is now named and
   receipted as an original GDAT image route, not a fallback. It remains the

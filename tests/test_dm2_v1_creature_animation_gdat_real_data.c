@@ -42,6 +42,7 @@ int main(void)
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;
     int found = 0;
+    int found_0958 = 0;
 
     if (!root || !root[0]) {
         puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
@@ -90,6 +91,25 @@ int main(void)
                     free(graphics);
                     return 1;
                 }
+                {
+                    DM2_V1_CreatureAnimation0958Receipt frame_receipt;
+                    uint16_t timer_word = 0u;
+                    if (dm2_v1_creature_animation_gdat_query_0958(
+                            &loader, creature, receipt.sequence_offset,
+                            &timer_word, 0u, &frame_receipt) != 1 ||
+                        !frame_receipt.valid ||
+                        frame_receipt.animation_base != receipt.sequence_offset ||
+                        frame_receipt.query_index != 0u ||
+                        frame_receipt.timer_word_before != 0u ||
+                        frame_receipt.timer_word_after != 0u) {
+                        fputs("FAIL: DM2_1c9a_0958 lost the real 0xfc row owner\n",
+                              stderr);
+                        dm2_v1_asset_loader_free(&loader);
+                        free(graphics);
+                        return 1;
+                    }
+                    found_0958 = 1;
+                }
                 found = 1;
                 break;
             }
@@ -97,7 +117,7 @@ int main(void)
     }
     dm2_v1_asset_loader_free(&loader);
     free(graphics);
-    if (!found) {
+    if (!found || !found_0958) {
         fputs("FAIL: selected GRAPHICS.DAT has no admitted dynamic V5 animation route\n",
               stderr);
         return 1;

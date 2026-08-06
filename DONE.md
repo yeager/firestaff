@@ -1,3 +1,12 @@
+# DM2 creature animation 0958 real-GDAT boundary (2026-08-07)
+
+- ✅ Added the source-shaped `DM2_1c9a_0958` GDAT lookup: it consumes the
+  caller-owned `w0/w2` pair, applies `DM2_query_4E26(w2)`, bounds the real
+  `CREATURES/type/0xfc` row, and preserves the source bit result.
+- ✅ Extended the real PC-DOS FB/FC/FD probe; the canonical `GRAPHICS.DAT`
+  route passed. No fabricated record, CAII slot, command, or frame was added;
+  live runtime ownership remains fail-closed. No release was made.
+
 # DM2 SKSAVE possession continuation decoder boundary (2026-08-07)
 
 - ✅ Added the source-faithful `DM2_2066_062b` continuation decoder for

@@ -21,6 +21,31 @@ typedef struct {
     uint32_t table_hash;
 } DM2_V1_CreatureAnimationGdatReceipt;
 
+/* Source-owned DM2_1c9a_0958 GDAT fetch.  The caller supplies the exact
+ * `sk1c9a02c3::w0/w2` pair returned by DM2_query_1c9a_02c3; this helper does
+ * not derive a record, CAII slot, or animation cursor.  It performs the
+ * source's DM2_query_4E26(w2) lookup and reads the bounded 0xfc row. */
+typedef struct {
+    int valid;
+    int blocked_missing_gdat;
+    int blocked_out_of_range;
+    uint8_t creature_type;
+    uint16_t animation_base;
+    uint16_t timer_word_before;
+    uint16_t timer_word_after;
+    uint16_t query_index;
+    uint32_t blended_value;
+    uint8_t frame_bit14;
+} DM2_V1_CreatureAnimation0958Receipt;
+
+int dm2_v1_creature_animation_gdat_query_0958(
+    const DM2_V1_AssetLoader *loader,
+    int creature_type,
+    uint16_t animation_base,
+    uint16_t *io_timer_word,
+    uint32_t game_tick,
+    DM2_V1_CreatureAnimation0958Receipt *out_receipt);
+
 /* Returns zero unless the complete V5 table triad is present and the caller
  * supplies mutable state for a non-static creature. `previous_frame` is the
  * source-owned iAnimInfo value; 0xffff starts the sequence. */
