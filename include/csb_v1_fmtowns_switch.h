@@ -27,6 +27,21 @@ typedef enum {
     CSB_FMTOWNS_SWITCH_ENGLISH = 1
 } CSB_V1_FmtownsSwitchLanguage;
 
+typedef enum {
+    CSB_FMTOWNS_SWITCH_ACTION_NONE = 0,
+    CSB_FMTOWNS_SWITCH_ACTION_STORY = 1,
+    CSB_FMTOWNS_SWITCH_ACTION_UTILITY = 2,
+    CSB_FMTOWNS_SWITCH_ACTION_GAME = 3,
+    CSB_FMTOWNS_SWITCH_ACTION_TOGGLE_LANGUAGE = 4
+} CSB_V1_FmtownsSwitchAction;
+
+typedef struct {
+    int valid;
+    uint8_t button_index;
+    uint8_t source_exit_status;
+    CSB_V1_FmtownsSwitchAction action;
+} CSB_V1_FmtownsSwitchInputReceipt;
+
 typedef struct {
     uint8_t red6;
     uint8_t green6;
@@ -72,6 +87,15 @@ int csb_v1_fmtowns_switch_decode_page(const uint8_t *executable,
                                       uint8_t *out_pixels,
                                       size_t out_pixel_capacity,
                                       CSB_V1_FmtownsItemDecodeReceipt *out);
+
+/* ReDMCSB SWITCH.C main() sends buttons 1..3 through exit(), while button
+ * four restarts the loop in the other language. AUTOEXEC.BAT maps exits
+ * 1/4 to ANIMTW STORY.ANM, 2/5 to UTILJ/UTILE and 3/6 to CHTWJ/CHTWE. */
+int csb_v1_fmtowns_switch_route_click(const CSB_V1_FmtownsSwitchReceipt *receipt,
+                                      CSB_V1_FmtownsSwitchLanguage language,
+                                      int16_t x, int16_t y,
+                                      int left_button_down,
+                                      CSB_V1_FmtownsSwitchInputReceipt *out);
 
 #ifdef __cplusplus
 }

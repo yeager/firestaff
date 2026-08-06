@@ -32,8 +32,9 @@
   and English 320x200 Switch pages and its four exact button streams. The
   extractor requires the complete F2279 resource sequence and IMG2 decode;
   its `C26_SWITCH` (G8172_) palette is likewise read only from that verified
-  executable. It does not turn a matching 320x200 header into a menu. Bind
-  click routing and process-exit handoff before displaying it in M11.
+  executable. The original four button rectangles now retain their
+  `AUTOEXEC.BAT` Story/utility/game exit handoffs and language toggle.
+  Bind that source-owned Switch surface to M11 before displaying it.
   The raw CDDA extractor now streams a
   selected CUE track sectorwise; binding that authenticated PCM to M11 timing
   remains separate.

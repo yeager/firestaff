@@ -17,9 +17,11 @@
   pages plus all four registered button images, with their actual IMG2 stream
   boundaries, `C26_SWITCH` palette and ReDMCSB `SWITCH.C` F2279/F2280
   coordinates retained. The parser rejects unrelated 320x200 executable
-  payloads unless the complete F31E/F31J sequence decodes. Verification: 12
-  assertions against the local original executable. M11 presentation, input
-  and child process handoff remain explicitly open.
+  payloads unless the complete F31E/F31J sequence decodes. Its four source
+  rectangles now route through the original language-dependent exit statuses
+  into the verified `AUTOEXEC.BAT` Story, utility, game or language-toggle
+  handoff. Verification: 16 assertions against the local original executable.
+  M11 presentation remains explicitly open.
 
 - ✅ 2026-08-06 Nexus Saturn BGR555 channel-order correction: the real
   `SMAP00-15.BIN`, `FACE.BIN`, `ITEM.IBS` and `.MNS` palette decoders now map

@@ -208,3 +208,35 @@ int csb_v1_fmtowns_switch_decode_page(const uint8_t *executable,
                            CSB_FMTOWNS_SWITCH_WIDTH, CSB_FMTOWNS_SWITCH_HEIGHT,
                            out_pixels, out_pixel_capacity, out);
 }
+
+int csb_v1_fmtowns_switch_route_click(const CSB_V1_FmtownsSwitchReceipt *receipt,
+                                      CSB_V1_FmtownsSwitchLanguage language,
+                                      int16_t x, int16_t y,
+                                      int left_button_down,
+                                      CSB_V1_FmtownsSwitchInputReceipt *out)
+{
+    size_t index;
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!receipt || !receipt->valid || !left_button_down ||
+        (language != CSB_FMTOWNS_SWITCH_JAPANESE &&
+         language != CSB_FMTOWNS_SWITCH_ENGLISH)) return 0;
+    for (index = 0u; index < CSB_FMTOWNS_SWITCH_BUTTON_COUNT; ++index) {
+        const CSB_V1_FmtownsSwitchButton *button = &receipt->buttons[index];
+        uint32_t right = (uint32_t)button->x + button->width - 1u;
+        uint32_t bottom = (uint32_t)button->y + button->height - 1u;
+        if (x < (int16_t)button->x || y < (int16_t)button->y ||
+            (uint32_t)x > right || (uint32_t)y > bottom) continue;
+        out->valid = 1;
+        out->button_index = (uint8_t)index;
+        if (index == 3u) {
+            out->action = CSB_FMTOWNS_SWITCH_ACTION_TOGGLE_LANGUAGE;
+            return 1;
+        }
+        out->source_exit_status = (uint8_t)(index + 1u +
+            (language == CSB_FMTOWNS_SWITCH_ENGLISH ? 3u : 0u));
+        out->action = (CSB_V1_FmtownsSwitchAction)(index + 1u);
+        return 1;
+    }
+    return 0;
+}

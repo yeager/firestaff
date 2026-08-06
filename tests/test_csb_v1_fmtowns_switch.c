@@ -34,6 +34,7 @@ int main(int argc, char **argv)
     const char *path = argc == 2 ? argv[1] : getenv("FIRESTAFF_CSB_FMTOWNS_SWITCH");
     CSB_V1_FmtownsSwitchReceipt receipt;
     CSB_V1_FmtownsItemDecodeReceipt page;
+    CSB_V1_FmtownsSwitchInputReceipt click;
     uint8_t pixels[CSB_FMTOWNS_SWITCH_PIXELS];
     uint8_t *bytes;
     size_t byte_count;
@@ -72,6 +73,24 @@ int main(int argc, char **argv)
           "decodes the original English page");
     CHECK(page.pixel_fnv1a != 0u && page.pixel_fnv1a != receipt.japanese_page.pixel_fnv1a,
           "English page remains distinct from Japanese page");
+    CHECK(csb_v1_fmtowns_switch_route_click(&receipt, CSB_FMTOWNS_SWITCH_ENGLISH,
+                                            52, 15, 1, &click) && click.valid &&
+          click.button_index == 0u && click.source_exit_status == 4u &&
+          click.action == CSB_FMTOWNS_SWITCH_ACTION_STORY,
+          "English first button routes to AUTOEXEC Story exit 4");
+    CHECK(csb_v1_fmtowns_switch_route_click(&receipt, CSB_FMTOWNS_SWITCH_JAPANESE,
+                                            57, 59, 1, &click) &&
+          click.source_exit_status == 2u &&
+          click.action == CSB_FMTOWNS_SWITCH_ACTION_UTILITY,
+          "Japanese second button routes to utility exit 2");
+    CHECK(csb_v1_fmtowns_switch_route_click(&receipt, CSB_FMTOWNS_SWITCH_ENGLISH,
+                                            50, 150, 1, &click) &&
+          click.source_exit_status == 0u &&
+          click.action == CSB_FMTOWNS_SWITCH_ACTION_TOGGLE_LANGUAGE,
+          "fourth button toggles language without an exit status");
+    CHECK(!csb_v1_fmtowns_switch_route_click(&receipt, CSB_FMTOWNS_SWITCH_ENGLISH,
+                                             0, 0, 1, &click),
+          "does not invent a hit outside source button rectangles");
     CHECK(!csb_v1_fmtowns_switch_parse(bytes, 100u, &receipt),
           "rejects truncated executable");
     free(bytes);
