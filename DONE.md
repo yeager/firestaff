@@ -1,3 +1,9 @@
+# DM1 chest scroll-resurrect-confirmation synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C040/C545 confirmation fixture from M10 and
+  made its direct regression compile the source explicitly. It loads no
+  original DM1 data and has no M11/runtime caller.
+
 # DM1 mirror pickup-right-click synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C159-row fixture from M10 and made its direct

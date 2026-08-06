@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHEST-SCROLL-RESURRECT-CONFIRM-SYNTHETIC-AUDIT:** This C040/C545
+  confirmation fixture fabricates chest, party and command-queue state. It
+  loads no original DM1 data and has no M11/runtime caller; retain it only as
+  explicit ReDMCSB coverage until a source-bound interaction owner is
+  recovered.
+
 - **DM1-MIRROR-PICKUP-RIGHT-CLICK-SYNTHETIC-AUDIT:** This C159-row fixture
   fabricates party, panel and hand state. It loads no original DM1 data and
   has no M11/runtime caller; retain it only as explicit ReDMCSB coverage until
