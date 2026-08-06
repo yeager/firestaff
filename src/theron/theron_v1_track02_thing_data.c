@@ -156,6 +156,20 @@ int theron_v1_track02_thing_data_load(
     unsigned int ground_ref_count,
     Theron_ThingData *out)
 {
+    return theron_v1_track02_thing_data_load_for_variant(
+        ud_data, ud_size, THERON_TRACK02_VARIANT_US_BIN, dungeon_index,
+        object_counts, ground_ref_count, out);
+}
+
+int theron_v1_track02_thing_data_load_for_variant(
+    const uint8_t *ud_data,
+    size_t ud_size,
+    Theron_Track02Variant variant,
+    unsigned int dungeon_index,
+    const uint16_t *object_counts,
+    unsigned int ground_ref_count,
+    Theron_ThingData *out)
+{
     if (!ud_data || !out || !object_counts || dungeon_index >= 7 ||
         ground_ref_count > THERON_MAX_GROUND_REFS)
         return 0;
@@ -166,7 +180,8 @@ int theron_v1_track02_thing_data_load(
     out->ground_ref_count = (uint16_t)ground_ref_count;
 
     Theron_QuestBlockOffsets qb;
-    if (!theron_v1_track02_dungeon_map_quest_block_offsets(dungeon_index, &qb))
+    if (!theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
+            variant, dungeon_index, &qb))
         return 0;
 
     size_t gref_abs = UD_BASE + qb.ground_refs_offset;

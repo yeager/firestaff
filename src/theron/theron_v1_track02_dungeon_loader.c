@@ -100,6 +100,19 @@ int theron_v1_track02_load_full_dungeon(
     size_t ud_size,
     Theron_DungeonLoadResult *result)
 {
+    return theron_v1_track02_load_full_dungeon_for_variant(
+        world, dungeon_id, ud_data, ud_size,
+        THERON_TRACK02_VARIANT_US_BIN, result);
+}
+
+int theron_v1_track02_load_full_dungeon_for_variant(
+    Theron_V1_World *world,
+    int dungeon_id,
+    const uint8_t *ud_data,
+    size_t ud_size,
+    Theron_Track02Variant variant,
+    Theron_DungeonLoadResult *result)
+{
     if (!world || !ud_data || !result) return -1;
     if (dungeon_id < 1 || dungeon_id > 7) return -1;
 
@@ -107,7 +120,8 @@ int theron_v1_track02_load_full_dungeon(
     memset(result, 0, sizeof(*result));
 
     Theron_DungeonData dd;
-    if (!theron_v1_track02_dungeon_map_load(ud_data, ud_size, di, &dd))
+    if (!theron_v1_track02_dungeon_map_load_for_variant(
+            ud_data, ud_size, variant, di, &dd))
         return -1;
 
     result->levels_loaded = theron_v1_world_load_track02_dungeon(world, dungeon_id, &dd);
@@ -131,8 +145,9 @@ int theron_v1_track02_load_full_dungeon(
     Theron_ThingData *td = calloc(1, sizeof(Theron_ThingData));
     if (!td) return -1;
 
-    if (!theron_v1_track02_thing_data_load(ud_data, ud_size, di,
-                                            dd.object_counts, gref_count, td)) {
+    if (!theron_v1_track02_thing_data_load_for_variant(
+            ud_data, ud_size, variant, di, dd.object_counts,
+            gref_count, td)) {
         free(td);
         return -1;
     }

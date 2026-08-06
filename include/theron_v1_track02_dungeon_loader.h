@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 #include "theron_v1_track02_thing_data.h"
+#include "theron_v1_track02.h"
 
 typedef struct Theron_V1_World Theron_V1_World;
 
@@ -54,6 +55,14 @@ int theron_v1_track02_load_full_dungeon(
     int dungeon_id,
     const uint8_t *ud_data,
     size_t ud_size,
+    Theron_DungeonLoadResult *result);
+
+int theron_v1_track02_load_full_dungeon_for_variant(
+    Theron_V1_World *world,
+    int dungeon_id,
+    const uint8_t *ud_data,
+    size_t ud_size,
+    Theron_Track02Variant variant,
     Theron_DungeonLoadResult *result);
 
 #endif

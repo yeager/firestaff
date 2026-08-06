@@ -57,6 +57,20 @@ static const char *find_track02(void) {
     return NULL;
 }
 
+static const char *find_jp_track02(void) {
+    const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_JP_RAW");
+    const char *home = getenv("HOME");
+    static char path[512];
+    if (explicit_path && explicit_path[0]) return explicit_path;
+    if (!home || !home[0]) return NULL;
+    snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQJP02.bin",
+             home);
+    FILE *fp = fopen(path, "rb");
+    if (!fp) return NULL;
+    fclose(fp);
+    return path;
+}
+
 static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
     const char *names[] = {
         "AKUTUBA","DRATOR","FORMICIA","SARMON","SHADODAN","THIEVES","DEMON"
@@ -148,6 +162,27 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
     }
 }
 
+static void test_all_jp_dungeons(const uint8_t *ud, size_t ud_size) {
+    for (int d = 0; d < 7; d++) {
+        Theron_V1_World *world = calloc(1, sizeof(Theron_V1_World));
+        assert(world);
+        theron_v1_world_init(world);
+        world->current_dungeon = d + 1;
+
+        Theron_DungeonLoadResult result;
+        assert(theron_v1_track02_load_full_dungeon_for_variant(
+                   world, d + 1, ud, ud_size,
+                   THERON_TRACK02_VARIANT_JP_BIN, &result) == 0);
+        assert(result.levels_loaded > 0);
+        assert(result.source_records_decoded > 0);
+        assert(result.raw_only_item_refs == 0);
+        assert(result.source_object_count ==
+               (unsigned int)result.unbound_item_refs);
+        free(world);
+    }
+    printf("  JP Track 02: all dungeon object records OK\n");
+}
+
 int main(void) {
     printf("test_theron_v1_track02_dungeon_loader\n");
 
@@ -164,6 +199,18 @@ int main(void) {
     }
     test_all_dungeons(ud, ud_size);
     free(ud);
+
+    const char *jp_path = find_jp_track02();
+    if (jp_path) {
+        size_t jp_ud_size = 0;
+        uint8_t *jp_ud = load_track02_ud(jp_path, &jp_ud_size);
+        if (jp_ud) {
+            test_all_jp_dungeons(jp_ud, jp_ud_size);
+            free(jp_ud);
+        }
+    } else {
+        printf("  SKIP: Japanese Track 02 BIN not found\n");
+    }
     printf("PASS\n");
     return 0;
 }

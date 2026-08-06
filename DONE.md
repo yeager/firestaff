@@ -50923,3 +50923,8 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   exact cell owner on despawn; ownerless F0821 remains limited to worlds with
   no raw Thing table. Focused source-publication and moving-killed-all tests
   pass.
+- ✅ 2026-08-06 Theron JP Track 02 object handoff: ground references, item-part
+  records, linked source objects, and the full dungeon loader now use the JP
+  variant offset table instead of silently reusing US offsets. The real JP BIN
+  passes all seven dungeon object-record gates with zero raw-only records;
+  host item/combat/graphics semantics remain explicitly unbound.

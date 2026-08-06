@@ -423,6 +423,11 @@
   handoff only; the original consumer still has to bind item kind/index to
   host inventory semantics before these records may become live objects.
 
+  The same map/ground-reference/item-record handoff now accepts the
+  authenticated Japanese `TQJP02.bin` offset table through the full loader;
+  this verifies JP source records but does not bind their host gameplay or
+  graphics semantics. JP ISO offsets remain separately gated.
+
   The source receipt decoder now also reads the exact six-byte missile and
   two-byte cloud payloads after their linked-list references, matching the
   DMBUILDER `dm_missile`/`dm_cloud` layouts. This is still a source-data

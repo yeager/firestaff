@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "theron_v1_track02.h"
+
 #define THERON_ITEM_CATEGORY_COUNT   16
 #define THERON_MAX_GROUND_REFS       2048
 #define THERON_MAX_ITEMS_PER_CAT     512
@@ -133,6 +135,15 @@ typedef struct {
 int theron_v1_track02_thing_data_load(
     const uint8_t *ud_data,
     size_t ud_size,
+    unsigned int dungeon_index,
+    const uint16_t *object_counts,
+    unsigned int ground_ref_count,
+    Theron_ThingData *out);
+
+int theron_v1_track02_thing_data_load_for_variant(
+    const uint8_t *ud_data,
+    size_t ud_size,
+    Theron_Track02Variant variant,
     unsigned int dungeon_index,
     const uint16_t *object_counts,
     unsigned int ground_ref_count,
