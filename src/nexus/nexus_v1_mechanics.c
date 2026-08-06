@@ -1207,38 +1207,37 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
     /* Rest tick — regenerate stamina/mana/health while resting */
     nexus_v1_rest_tick(&engine->rest, &engine->champions);
 
-    /* Resource drain — every FOOD_DRAIN_TICKS ticks, drain 1 food from
-     * each living party champion. When food reaches 0, stamina drains
-     * at double rate. When food AND water both reach 0, champions take
-     * wound damage per tick.
-     * Source: DM1 CHAMPION.C food/water drain (F0325 stamina decrement). */
-    if (st->food_drain_timer > 0) st->food_drain_timer--;
-    if (st->water_drain_timer > 0) st->water_drain_timer--;
-    if (st->fire_shield_ticks > 0) st->fire_shield_ticks--;
-    if (st->food_drain_timer <= 0) {
-        st->food_drain_timer = FOOD_DRAIN_TICKS;
-        /* Drain 1 food from each living party champion.
-         * Source: DM1 food drain on party movement. */
-        for (i = 0; i < engine->champions.party_count; i++) {
-            int ci = engine->champions.party[i];
-            if (ci < 0 || ci >= engine->champions.champion_count) continue;
-            Nexus_V1_Champion *c = &engine->champions.champions[ci];
-            if (!c->alive) continue;
-            if (c->food > 0) c->food--;
-            /* When food=0, stamina penalty: -2 extra stamina per step.
-             * Source: DM1 CHAMPION.C — starving reduces stamina regen. */
-            if (c->food == 0) c->stamina -= 2;
+    /* Resource drain is a DM1-derived compatibility path, not a Nexus data
+     * fact. PLRD has no provision fields, and the Saturn start/save and
+     * hunger consumer is still uncaptured. Keep diagnostic fixture behavior
+     * for NEXUS_SRC_NONE, but never manufacture stamina damage in a real
+     * ISO/extracted engine with unbound food/water. */
+    if (engine->source == NEXUS_SRC_NONE ||
+        nexus_v1_action_semantics_proven()) {
+        if (st->food_drain_timer > 0) st->food_drain_timer--;
+        if (st->water_drain_timer > 0) st->water_drain_timer--;
+        if (st->fire_shield_ticks > 0) st->fire_shield_ticks--;
+        if (st->food_drain_timer <= 0) {
+            st->food_drain_timer = FOOD_DRAIN_TICKS;
+            for (i = 0; i < engine->champions.party_count; i++) {
+                int ci = engine->champions.party[i];
+                if (ci < 0 || ci >= engine->champions.champion_count) continue;
+                Nexus_V1_Champion *c = &engine->champions.champions[ci];
+                if (!c->alive) continue;
+                if (c->food > 0) c->food--;
+                if (c->food == 0) c->stamina -= 2;
+            }
         }
-    }
-    if (st->water_drain_timer <= 0) {
-        st->water_drain_timer = WATER_DRAIN_TICKS;
-        for (i = 0; i < engine->champions.party_count; i++) {
-            int ci = engine->champions.party[i];
-            if (ci < 0 || ci >= engine->champions.champion_count) continue;
-            Nexus_V1_Champion *c = &engine->champions.champions[ci];
-            if (!c->alive) continue;
-            if (c->water > 0) c->water--;
-            if (c->water == 0) c->stamina -= 2;
+        if (st->water_drain_timer <= 0) {
+            st->water_drain_timer = WATER_DRAIN_TICKS;
+            for (i = 0; i < engine->champions.party_count; i++) {
+                int ci = engine->champions.party[i];
+                if (ci < 0 || ci >= engine->champions.champion_count) continue;
+                Nexus_V1_Champion *c = &engine->champions.champions[ci];
+                if (!c->alive) continue;
+                if (c->water > 0) c->water--;
+                if (c->water == 0) c->stamina -= 2;
+            }
         }
     }
 

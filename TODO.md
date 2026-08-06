@@ -174,6 +174,12 @@
   new-game/save consumer is captured. Keep `alive` only as a menu-availability
   state and do not use it as save provenance.
 
+  2026-08-06 follow-up: the mechanics tick no longer drains unbound retail
+  food/water or applies the inherited starvation stamina penalty in ISO or
+  extracted engines. The compatibility fixture path remains available for
+  isolated tests; capture the Saturn hunger/start/save consumer before
+  enabling production resource mutation.
+
 - **NEXUS-CONTAINER-LOOT-CAPTURE:** The old DM1-shaped Nexus container helper
   accepted caller-supplied chest/crate contents despite the retail DGN corpus
   exposing no authenticated container owner, content chain, key dispatch or

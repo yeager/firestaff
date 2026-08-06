@@ -259,11 +259,29 @@ int main(void) {
         destroy_engine(e);
     }
 
+    /* Test 14: real retail engines do not apply DM1-derived hunger/thirst
+     * damage while PLRD provisions and the Saturn consumer are unbound. */
+    {
+        Nexus_V1_Engine *e = create_minimal_engine();
+        int old_stamina = e->champions.champions[0].stamina;
+        e->source = NEXUS_SRC_EXTRACTED;
+        e->champions.champions[0].food = 0;
+        e->champions.champions[0].water = 0;
+        e->mechanics->food_drain_timer = 1;
+        e->mechanics->water_drain_timer = 1;
+        nexus_v1_tick(e);
+        expect(e->champions.champions[0].stamina == old_stamina &&
+               e->mechanics->food_drain_timer == 1 &&
+               e->mechanics->water_drain_timer == 1,
+               "uncaptured retail provisions do not mutate stamina");
+        destroy_engine(e);
+    }
+
     if (g_fail) {
         fprintf(stderr, "%d failures\n", g_fail);
         return 1;
     }
 
-    printf("ok: Nexus tick integration verified (13 tests)\n");
+    printf("ok: Nexus tick integration verified (14 tests)\n");
     return 0;
 }

@@ -15,6 +15,12 @@ were corrected to stop presenting DM1 provisions as Nexus data.
   and creature docs are labelled historical/diagnostic instead of claiming
   source-locked live parity.
 
+- ✅ 2026-08-06 Nexus retail provision mutation quarantine: the mechanics tick
+  no longer decrements or penalizes unbound PLRD food/water in ISO/extracted
+  engines. The 14-test tick integration confirms the real-source path leaves
+  stamina and provision timers untouched; fixture-only DM1 behavior remains
+  isolated to `NEXUS_SRC_NONE`.
+
 - ✅ 2026-08-06 Nexus real startup probe correction: the Track 1 probe now
   accepts the complete 20-record FACE.BIN source receipt while separately
   requiring VDP1 placement for drawing, and treats the retained FONT256.S2D
