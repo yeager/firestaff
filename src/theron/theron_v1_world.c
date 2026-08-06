@@ -149,9 +149,11 @@ void theron_v1_world_reset_for_dungeon(Theron_V1_World *world,
     theron_v1_world_runtime_media_invalidate_cache(world);
     world->object_count              = 0;
     world->creature_count            = 0;
+    world->source_monster_count      = 0;
     world->timer_count               = 0;
     memset(world->objects, 0, sizeof(world->objects));
     memset(world->creatures, 0, sizeof(world->creatures));
+    memset(world->source_monsters, 0, sizeof(world->source_monsters));
     memset(world->timers,  0, sizeof(world->timers));
 }
 
@@ -262,6 +264,9 @@ int theron_v1_world_load_track02_dungeon(
 
     int slot = dungeon_id - 1;
     int loaded = 0;
+
+    world->source_monster_count = 0;
+    memset(world->source_monsters, 0, sizeof(world->source_monsters));
 
     memcpy(world->source_thing_descriptor_sizes[slot],
            dd->thing_descriptor_sizes,
@@ -753,47 +758,47 @@ int theron_v1_world_spawn_level_creatures(Theron_V1_World *world) {
     if (lvl < 0 || lvl >= THERON_MAX_LEVELS_PER_DUNGEON) return -1;
     if (!world->level_loaded[di][lvl]) return -1;
 
-    const Theron_V1_Level *level = &world->levels[di][lvl];
-    int budget = level->creature_budget;
-    if (budget <= 0) return 0;
+    /* Track 02's real monster records are bound by the thing-data loader.
+     * Until their type, graphics and AI handoff is source-proven, do not
+     * replace them with random placement or the legacy DM-style type table. */
+    if (world->source_thing_directory_verified[di]) return 0;
+    return 0;
+}
 
-    const Theron_DungeonCreatureTypes *ct = &theron_creature_types[di];
-    if (ct->count == 0) return 0;
-
-    world->creature_count = 0;
-
-    uint16_t seed = (uint16_t)(world->world_tick ^ (unsigned)(di * 7 + lvl * 31));
-    int spawned = 0;
-    for (int i = 0; i < budget && spawned < THERON_MAX_CREATURES_PER_LEVEL; i++) {
-        uint8_t ctype = ct->types[i % ct->count];
-        seed = (uint16_t)(seed * 25173u + 13849u);
-        int attempts = 0;
-        while (attempts < 50) {
-            seed = (uint16_t)(seed * 25173u + 13849u);
-            int cx = (seed >> 8) % level->width;
-            seed = (uint16_t)(seed * 25173u + 13849u);
-            int cy = (seed >> 8) % level->height;
-            uint8_t sq = level->squares[cy][cx];
-            if (!THERON_SQUARE_IS_PASSABLE(sq)) { attempts++; continue; }
-            if (sq == THERON_SQUARE_DOOR) { attempts++; continue; }
-            if (cx == world->party.leader_x && cy == world->party.leader_y) {
-                attempts++; continue;
-            }
-            if (theron_v1_creature_at(world, lvl, cx, cy)) {
-                attempts++; continue;
-            }
-            if (theron_v1_creature_spawn(
-                    world, (Theron_CreatureType)ctype,
-                    world->current_dungeon, lvl, cx, cy) > 0) {
-                ++spawned;
-                break;
-            }
-            /* A scripted or otherwise source-unbound type must not consume
-             * the level budget merely because a candidate square was found. */
-            ++attempts;
-        }
-    }
-    return spawned;
+int theron_v1_world_bind_track02_monster(
+    Theron_V1_World *world,
+    int dungeon_id,
+    int level_index,
+    uint16_t source_ref,
+    uint16_t source_index,
+    int x,
+    int y,
+    uint8_t type,
+    uint8_t position,
+    const uint16_t health[4],
+    uint8_t number,
+    uint8_t direction_flags)
+{
+    if (!world || !health || dungeon_id < 1 ||
+        dungeon_id > THERON_DUNGEON_COUNT ||
+        level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        world->source_monster_count >= THERON_MAX_SOURCE_MONSTERS)
+        return -1;
+    Theron_V1_SourceMonsterRecord *out =
+        &world->source_monsters[world->source_monster_count++];
+    memset(out, 0, sizeof(*out));
+    out->dungeon_id = dungeon_id;
+    out->level = level_index;
+    out->x = x;
+    out->y = y;
+    out->source_ref = source_ref;
+    out->source_index = source_index;
+    out->type = type;
+    out->position = position;
+    out->number = number;
+    out->direction_flags = direction_flags;
+    memcpy(out->health, health, sizeof(out->health));
+    return 0;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

@@ -205,6 +205,9 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(result.raw_only_item_refs == 0);
         assert(result.source_object_count ==
                (unsigned int)result.unbound_item_refs);
+        assert(world->source_monster_count ==
+               result.source_category_counts[THERON_CAT_MONSTER]);
+        assert(world->creature_count == 0);
         assert_source_category_census(&result);
         assert_source_type_census(&result);
         for (unsigned int i = 0; i < result.source_object_count; ++i) {
@@ -221,6 +224,37 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(occ->decoded_valid);
             assert(occ->decoded.category == occ->category);
             assert(occ->decoded.next_ref == occ->next_ref);
+        }
+        for (unsigned int i = 0; i < world->source_monster_count; ++i) {
+            const Theron_V1_SourceMonsterRecord *monster =
+                &world->source_monsters[i];
+            const Theron_Track02SourceObjectOccurrence *source = NULL;
+            assert(monster->dungeon_id == d + 1);
+            assert(monster->level >= 0 &&
+                   monster->level < THERON_MAX_LEVELS_PER_DUNGEON);
+            assert(monster->x < THERON_MAX_MAP_SIZE);
+            assert(monster->y < THERON_MAX_MAP_SIZE);
+            for (unsigned int j = 0; j < result.source_object_count; ++j) {
+                const Theron_Track02SourceObjectOccurrence *candidate =
+                    &result.source_objects[j];
+                if (candidate->category == THERON_CAT_MONSTER &&
+                    candidate->source_ref == monster->source_ref &&
+                    candidate->source_index == monster->source_index) {
+                    source = candidate;
+                    break;
+                }
+            }
+            assert(source != NULL);
+            assert(monster->level == (int)source->map);
+            assert(monster->x == (int)source->x);
+            assert(monster->y == (int)source->y);
+            assert(monster->type == source->decoded.value.monster.type);
+            assert(monster->position == source->decoded.value.monster.position);
+            assert(monster->number == source->decoded.value.monster.number);
+            assert(monster->direction_flags ==
+                   source->decoded.value.monster.direction_flags);
+            assert(memcmp(monster->health, source->decoded.value.monster.health,
+                          sizeof(monster->health)) == 0);
         }
         /* Champions and creatures are linked through actuators (champion
          * mirror type 127), not directly through ground refs. */

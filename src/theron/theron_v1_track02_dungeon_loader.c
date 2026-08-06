@@ -309,6 +309,18 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                     free(td);
                     return -1;
                 }
+                if (cat == THERON_CAT_MONSTER &&
+                    theron_v1_world_bind_track02_monster(
+                        world, dungeon_id, (int)map, ref, id, (int)tx, (int)ty,
+                        record.value.monster.type,
+                        record.value.monster.position,
+                        record.value.monster.health,
+                        record.value.monster.number,
+                        record.value.monster.direction_flags) != 0) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
                 /* Source record and chain are real and consumed. The host
                  * object kind/item-index owner is not yet proven, so keep
                  * the record out of Theron_V1_Object and continue the chain. */

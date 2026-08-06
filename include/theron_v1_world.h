@@ -300,6 +300,25 @@ typedef struct {
 
 #define THERON_MAX_OBJECTS 512
 
+/* A decoded source monster is retained separately from the live creature
+ * pool until the reviewed type/graphics/AI handoff is complete.  This keeps
+ * authentic Track 02 records available without promoting guessed semantics. */
+#define THERON_MAX_SOURCE_MONSTERS 128
+
+typedef struct {
+    int dungeon_id;
+    int level;
+    int x;
+    int y;
+    uint16_t source_ref;
+    uint16_t source_index;
+    uint8_t type;
+    uint8_t position;
+    uint8_t number;
+    uint8_t direction_flags;
+    uint16_t health[4];
+} Theron_V1_SourceMonsterRecord;
+
 /* ── Timer system ─────────────────────────────────────────────────── */
 typedef enum {
     THERON_TIMER_ONESHOT   = 0,
@@ -372,6 +391,11 @@ struct Theron_V1_World {
      * Source: THQUEST.ASM T500/T600 creature spawn + combat resolution. */
     Theron_V1_Creature creatures[THERON_MAX_CREATURES_PER_LEVEL];
     int creature_count;
+
+    /* Authentic category-4 thing-list records from the loaded Track 02
+     * dungeon.  These are source data, not yet live creatures. */
+    Theron_V1_SourceMonsterRecord source_monsters[THERON_MAX_SOURCE_MONSTERS];
+    unsigned int source_monster_count;
 
     /* Generator state (current dungeon, current level only) */
     int generator_spawn_count[5];
@@ -507,6 +531,19 @@ void theron_v1_timers_clear_level(Theron_V1_World *world, int level);
 Theron_TransitionType theron_v1_check_transition(Theron_V1_World *world, int x, int y);
 int theron_v1_transition_execute(Theron_V1_World *world);
 int theron_v1_world_spawn_level_creatures(Theron_V1_World *world);
+int theron_v1_world_bind_track02_monster(
+    Theron_V1_World *world,
+    int dungeon_id,
+    int level_index,
+    uint16_t source_ref,
+    uint16_t source_index,
+    int x,
+    int y,
+    uint8_t type,
+    uint8_t position,
+    const uint16_t health[4],
+    uint8_t number,
+    uint8_t direction_flags);
 void theron_v1_world_init_generators(Theron_V1_World *world);
 void theron_v1_world_tick_generators(Theron_V1_World *world);
 

@@ -1417,6 +1417,12 @@
   2026-08-06 generator-integrity update: a rejected legacy generator label no
   longer increments `generator_spawn_count`; bind the real Track 02 monster
   record/type consumer before admitting generator creatures or AI.
+  2026-08-06 source-record update: the full Track 02 loader now binds every
+  decoded category-4 monster occurrence into a world-owned source ledger with
+  its exact dungeon, level, coordinates, source reference, type, position,
+  health words, number and direction flags. Synthetic random level placement
+  is closed for verified Track 02 dungeons; the ledger remains data-only until
+  the original type-to-graphics, AI and live-combat consumers are proven.
 
 - **THERON-FORCEFIELD-MENU:** Closed 2026-08-06. `ENTER FORCEFIELD` is now
   enabled for both the Soul Room and READY phases, including a party with

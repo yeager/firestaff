@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Theron Track 02 monster source ledger: the authentic category-4
+  thing-list records from all loaded dungeons are now copied into world state
+  with source references, level coordinates, raw type/position, health words,
+  number and direction flags. Verified Track 02 levels no longer use the old
+  synthetic random placement/type table; live creature promotion remains
+  closed until the original graphics, AI and combat consumers are bound.
+
 - ✅ 2026-08-06 Theron forcefield menu admission: the startup layout now keeps
   `ENTER FORCEFIELD` actionable in both Soul Room and READY, so starting with
   Theron alone no longer gets trapped on the mirror list. The runtime still
