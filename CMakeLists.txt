@@ -4308,7 +4308,9 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_utility_save_transaction_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_import_path_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_cmp_import_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_graphics_hidden_item_skip_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_graphics_hidden_item_skip_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d2l_d2r_wall_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_viewport_d3l2_d3r2_wall_pc34_compat.c")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
@@ -37531,6 +37533,14 @@ add_executable(test_nexus_v1_dgn_material_raster
         set_tests_properties(csb_hidden_item_skip_production_boundary PROPERTIES
             LABELS "tier1;csb;graphics;production;source-boundary;no-synthetic-data"
         )
+        add_test(
+            NAME csb_viewport_side_wall_production_boundary
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_csb_viewport_side_wall_production_boundary.py
+        )
+        set_tests_properties(csb_viewport_side_wall_production_boundary PROPERTIES
+            LABELS "tier1;csb;viewport;production;source-boundary;no-synthetic-data"
+        )
     endif()
 
     add_executable(test_csb_v1_atari_save_decode_pc34_compat
@@ -52530,7 +52540,9 @@ target_include_directories(test_csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_comp
 target_link_libraries(test_csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat COMMAND test_csb_v1_viewport_d2l_d2r_f0107_ornament_pc34_compat)
 
-add_executable(test_csb_v1_viewport_d2l_d2r_wall_pc34_compat tests/test_csb_v1_viewport_d2l_d2r_wall_pc34_compat.c)
+add_executable(test_csb_v1_viewport_d2l_d2r_wall_pc34_compat
+    tests/test_csb_v1_viewport_d2l_d2r_wall_pc34_compat.c
+    src/csb/csb_v1_viewport_d2l_d2r_wall_pc34_compat.c)
 target_include_directories(test_csb_v1_viewport_d2l_d2r_wall_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_csb_v1_viewport_d2l_d2r_wall_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_viewport_d2l_d2r_wall_pc34_compat COMMAND test_csb_v1_viewport_d2l_d2r_wall_pc34_compat)
@@ -52545,7 +52557,9 @@ target_include_directories(test_csb_v1_viewport_d3l2_d3r2_door_ornament_zone_pc3
 target_link_libraries(test_csb_v1_viewport_d3l2_d3r2_door_ornament_zone_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_viewport_d3l2_d3r2_door_ornament_zone_pc34_compat COMMAND test_csb_v1_viewport_d3l2_d3r2_door_ornament_zone_pc34_compat)
 
-add_executable(test_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat tests/test_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat.c)
+add_executable(test_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat
+    tests/test_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat.c
+    src/csb/csb_v1_viewport_d3l2_d3r2_wall_pc34_compat.c)
 target_include_directories(test_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME csb_v1_viewport_d3l2_d3r2_wall_pc34_compat COMMAND test_csb_v1_viewport_d3l2_d3r2_wall_pc34_compat)

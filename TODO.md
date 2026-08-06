@@ -3144,6 +3144,10 @@ level or consumer bindings.
     only until a live platform renderer consumes it. Its real-media probes
     retain the dmweb/ReDMCSB hidden-code checks, but M10 has no caller and
     must not advertise a replacement bitmap route.
+  - 2026-08-06: The D2L/D2R and D3L2/D3R2 viewport wall traces are test-only.
+    They encode ReDMCSB order and local pixel probes but load no verified CSB
+    bitmap; only an authenticated viewport material consumer may reintroduce
+    either route to M10.
   - 2026-07-31: The unbound D0L2/D0R2 partly-open-door and D1L/D1R
     floor/ceiling-ornament contracts now compile only into their tests. Their
     source metadata stays available for verification, but live pixels still

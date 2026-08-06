@@ -57295,6 +57295,14 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ A required CI source boundary prevents the broad M10 source glob from
   relinking that test/probe helper until a live platform renderer owns it.
 
+# 2026-08-06 CSB viewport side-wall contract isolation
+
+- ✅ Removed the D2L/D2R and D3L2/D3R2 wall-contract traces from
+  `firestaff_m10`. They record ReDMCSB branch order with local source/dest
+  buffers, but do not bind an authenticated CSB viewport material source.
+- ✅ Their focused regressions now compile the traces explicitly, and CI
+  rejects a broad-glob relink until a real-data viewport consumer owns them.
+
 # 2026-08-06 Nexus UI-event dispatch boundary
 
 - ✅ Retail ISO/extracted Nexus now rejects host UI events before the Saturn
