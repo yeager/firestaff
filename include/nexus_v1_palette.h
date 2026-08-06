@@ -24,6 +24,38 @@
 #define NEXUS_PALETTE_SIZE     256
 #define NEXUS_MAX_TEXTURES     32
 
+/* DMWeb DecodeRawPPpp: STONE.BIN contains eight independent 550-byte
+ * records, each with a 6-byte `pp` header, 16 big-endian BGR555 words and
+ * 512 packed 4bpp texels. */
+#define NEXUS_STONE_PP_RECORD_COUNT 8
+#define NEXUS_STONE_PP_RECORD_BYTES 550
+#define NEXUS_STONE_PP_WIDTH 32
+#define NEXUS_STONE_PP_HEIGHT 32
+#define NEXUS_STONE_PP_PALETTE_COUNT 16
+#define NEXUS_STONE_PP_PACKED_BYTES 512
+
+typedef struct {
+    int valid;
+    int record_count;
+    int record_bytes;
+    int width;
+    int height;
+    int palette_count;
+    int packed_pixel_bytes;
+    uint32_t source_bytes_fnv1a32;
+} Nexus_StonePpReceipt;
+
+typedef struct {
+    int valid;
+    int record_index;
+    int record_offset;
+    int width;
+    int height;
+    int palette_count;
+    int packed_pixel_bytes;
+    uint32_t source_record_fnv1a32;
+} Nexus_StonePpRecordReceipt;
+
 /* Texture atlas entry — a (w × h) indexed bitmap */
 typedef struct {
     uint8_t *data;           /* indexed color buffer         */
@@ -57,6 +89,18 @@ typedef struct {
  * data, so this remains blocked and returns zero; use the STONE pp receipt/
  * decoder for source-owned palettes. */
 int nexus_palette_load_stone(Nexus_PaletteState *pal, const uint8_t *data, int size);
+
+/* Validate the complete retail STONE.BIN image-local pp corpus. */
+int nexus_palette_stone_pp_receipt(const uint8_t *data, int size,
+                                   Nexus_StonePpReceipt *out);
+
+/* Decode one authenticated pp record into caller-owned packed 4bpp texels
+ * and host-endian BGR555 palette words. No global palette state is changed. */
+int nexus_palette_decode_stone_pp_record(
+    const uint8_t *data, int size, int record_index,
+    uint8_t *out_packed_pixels, int out_pixel_capacity,
+    uint16_t *out_palette, int out_palette_capacity,
+    Nexus_StonePpRecordReceipt *out);
 
 /* Load extended palette from a surface file (TITLE.CG, ITEM.IBS, etc).
  * Reads BGR555 or RGB888 entries at a specific offset.

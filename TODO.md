@@ -230,6 +230,13 @@
   format receipts only until Structure3 face ownership and Saturn VDP1 CLUT,
   upload and command-order evidence are joined.
 
+- **NEXUS-STONE-PP-VDP1-BINDING:** The missing image-local `STONE.BIN`
+  decoder is now implemented from DMWeb `DecodeRawPPpp`: all eight retail
+  32×32 records, 16-entry big-endian BGR555 palettes and 512 packed texel
+  bytes are validated and a selected record can be decoded to caller-owned
+  buffers. The decoder does not create a global palette or authorize drawing;
+  bind each record to the DGN/VDP1 material consumer before viewport use.
+
 - **NEXUS-HUD-SATURN-DISPATCH-CAPTURE:** The real DM.BIN hit-rectangle
   parser now rejects both inverted/out-of-range rectangles and signed
   negative origins. Remaining work is still the Saturn input/VDP consumer

@@ -25,6 +25,14 @@
   raw-byte provenance. It remains optional and no-draw until VDP2 layer and
   placement capture proves the original startup composition.
 
+- ✅ 2026-08-06 Nexus STONE.BIN image-local PP decode: implemented the
+  missing documented `nexus_palette_stone_pp_receipt()` and
+  `nexus_palette_decode_stone_pp_record()` APIs. The real 4,400-byte corpus
+  verifies eight 550-byte `pp` records, each 32×32 with 16 big-endian BGR555
+  words and 512 packed 4bpp bytes; selected records decode into caller-owned
+  buffers without global palette promotion. `test_nexus_v1_raw_bin` verifies
+  the retail corpus.
+
 - ✅ 2026-08-06 DM2 M10 IMG9 decoder ownership: corrected a link boundary
   exposed by the full real GDAT census. `dm2_v1_asset_loader.c` is owned by
   `firestaff_m10`, but its source IMG9 decoder had only been emitted through

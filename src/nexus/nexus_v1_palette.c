@@ -17,6 +17,29 @@
 #include <stdlib.h>
 #include <limits.h>
 
+static uint16_t stone_read_be16(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+}
+
+static uint32_t stone_fnv1a32(const uint8_t *data, size_t size)
+{
+    uint32_t hash = 0x811c9dc5U;
+    size_t i;
+    for (i = 0U; i < size; ++i) {
+        hash ^= data[i];
+        hash *= 0x01000193U;
+    }
+    return hash;
+}
+
+static int stone_pp_record_valid(const uint8_t *record)
+{
+    return record && stone_read_be16(record) == 0x7070U &&
+           stone_read_be16(record + 2U) == NEXUS_STONE_PP_WIDTH &&
+           stone_read_be16(record + 4U) == NEXUS_STONE_PP_HEIGHT;
+}
+
 /* ── BGR555 → RGBA ─────────────────────────────────────────────────── */
 
 /* Saturn VDP1: Color RAM 16-bit BGR555. This conversion is useful only
@@ -62,6 +85,68 @@ int nexus_palette_load_stone(Nexus_PaletteState *pal,
     printf("Nexus palette: STONE.BIN uses image-local pp palettes; "
            "global palette load blocked\n");
     return 0;
+}
+
+int nexus_palette_stone_pp_receipt(const uint8_t *data, int size,
+                                   Nexus_StonePpReceipt *out)
+{
+    int record;
+
+    if (!out) return 0;
+    memset(out, 0, sizeof(*out));
+    if (!data || size != NEXUS_STONE_PP_RECORD_COUNT *
+                              NEXUS_STONE_PP_RECORD_BYTES)
+        return 0;
+    for (record = 0; record < NEXUS_STONE_PP_RECORD_COUNT; ++record) {
+        if (!stone_pp_record_valid(data + record * NEXUS_STONE_PP_RECORD_BYTES))
+            return 0;
+    }
+    out->valid = 1;
+    out->record_count = NEXUS_STONE_PP_RECORD_COUNT;
+    out->record_bytes = NEXUS_STONE_PP_RECORD_BYTES;
+    out->width = NEXUS_STONE_PP_WIDTH;
+    out->height = NEXUS_STONE_PP_HEIGHT;
+    out->palette_count = NEXUS_STONE_PP_PALETTE_COUNT;
+    out->packed_pixel_bytes = NEXUS_STONE_PP_PACKED_BYTES;
+    out->source_bytes_fnv1a32 = stone_fnv1a32(data, (size_t)size);
+    return 1;
+}
+
+int nexus_palette_decode_stone_pp_record(
+    const uint8_t *data, int size, int record_index,
+    uint8_t *out_packed_pixels, int out_pixel_capacity,
+    uint16_t *out_palette, int out_palette_capacity,
+    Nexus_StonePpRecordReceipt *out)
+{
+    const uint8_t *record;
+    int i;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!data || size != NEXUS_STONE_PP_RECORD_COUNT *
+                              NEXUS_STONE_PP_RECORD_BYTES ||
+        record_index < 0 || record_index >= NEXUS_STONE_PP_RECORD_COUNT ||
+        !out_packed_pixels || out_pixel_capacity < NEXUS_STONE_PP_PACKED_BYTES ||
+        !out_palette || out_palette_capacity < NEXUS_STONE_PP_PALETTE_COUNT)
+        return 0;
+    record = data + record_index * NEXUS_STONE_PP_RECORD_BYTES;
+    if (!stone_pp_record_valid(record)) return 0;
+    /* The palette precedes the 4bpp pixel bytes in each pp record. */
+    for (i = 0; i < NEXUS_STONE_PP_PALETTE_COUNT; ++i)
+        out_palette[i] = stone_read_be16(record + 6U + (size_t)i * 2U);
+    memcpy(out_packed_pixels, record + 6U + NEXUS_STONE_PP_PALETTE_COUNT * 2U,
+           NEXUS_STONE_PP_PACKED_BYTES);
+    if (out) {
+        out->valid = 1;
+        out->record_index = record_index;
+        out->record_offset = record_index * NEXUS_STONE_PP_RECORD_BYTES;
+        out->width = NEXUS_STONE_PP_WIDTH;
+        out->height = NEXUS_STONE_PP_HEIGHT;
+        out->palette_count = NEXUS_STONE_PP_PALETTE_COUNT;
+        out->packed_pixel_bytes = NEXUS_STONE_PP_PACKED_BYTES;
+        out->source_record_fnv1a32 = stone_fnv1a32(
+            record, NEXUS_STONE_PP_RECORD_BYTES);
+    }
+    return 1;
 }
 
 int nexus_palette_load_surface(Nexus_PaletteState *pal,

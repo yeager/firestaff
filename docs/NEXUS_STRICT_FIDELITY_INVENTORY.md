@@ -150,11 +150,11 @@ spärrad; image-local palette-bank får inte slås ihop utan källbevis.
 
 `nexus_palette_stone_pp_receipt()` verifierar nu exakt denna struktur mot
 retailfilen och rapporterar 8 poster, 32×32, 16 palette entries och 512
-packade pixelbyte per post. Det är ett formatbevis, inte ännu ett bevis för
-VDP1:s slutliga material- eller skärmplacering.
-`nexus_palette_decode_stone_pp_record()` kan nu dessutom läsa en vald verklig
-post till separata indexerade texels och image-local palette utan global
-palette-sammanslagning.
+packade pixelbyte per post. `nexus_palette_decode_stone_pp_record()` kan
+dessutom läsa en vald verklig post till separata indexerade texels och
+image-local palette utan global palette-sammanslagning. Detta är ett
+format-/bytesbevis, inte ännu ett bevis för VDP1:s slutliga material- eller
+skärmplacering.
 
 Startup-gaten accepterar inte längre en fil enbart för att den heter
 `DM.BIN`, `SN_FLOOR.MNS`, `SN_WALL.MNS` eller `LEV00.DGN`. Canonical paths
