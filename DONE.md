@@ -1,3 +1,11 @@
+# DM1 D2C F0111 door synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only/no-game-data D2C F0111 trace from M10. It has
+  no M11/runtime caller; its dedicated ReDMCSB regression now compiles the
+  source explicitly.
+- ✅ Verification: `test_dm1_v1_viewport_d2c_f0111_door_pc34_compat` passes;
+  the source object is absent from both M10 and M11 archives.
+
 # DM1 D2L/D2R F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D2L/D2R F0111 framebuffer simulation from M10.
