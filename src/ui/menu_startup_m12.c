@@ -5856,7 +5856,14 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                      * are not installed, the fallback chain kicks in at runtime
                      * (V2.2 → V2.1 → V2.0 → V1). No block here; launch proceeds
                      * and the best available shape source is used. */
-                    if (hasLaunchGate && !launchGate.presentationReady) {
+                    /* Missing source data is the first-order failure. Report
+                     * the actionable Nexus ISO/BIN/CUE recovery path before
+                     * renderer or Saturn-capture readiness; otherwise a
+                     * missing disc is misreported as a presentation defect. */
+                    if (hasLaunchGate && !launchGate.dataReady &&
+                               launchEntry && launchEntry->gameId) {
+                        m12_show_missing_game_data_popup(state, launchEntry->gameId);
+                    } else if (hasLaunchGate && !launchGate.presentationReady) {
                         state->launchRequested = 0;
                         state->quickResumeLaunchRequested = 0;
                         m12_enter_message_view(state);
@@ -5869,9 +5876,6 @@ void M12_StartupMenu_HandleInput(M12_StartupMenuState* state,
                         state->messageLine1 = launchGate.blockedLabel;
                         state->messageLine2 = launchGate.blockedDetail;
                         state->messageLine3 = m12_text(state, M12_TEXT_ESC_RETURNS_TO_MENU);
-                    } else if (hasLaunchGate && !launchGate.dataReady &&
-                               launchEntry && launchEntry->gameId) {
-                        m12_show_missing_game_data_popup(state, launchEntry->gameId);
                     } else if (hasLaunchGate && !launchGate.boot.versionReady) {
                         if (launchGate.autoSelectedVersionIndex < 0) {
                             state->launchRequested = 0;
@@ -8409,7 +8413,13 @@ int M12_StartupMenu_GetLaunchGate(
         }
     }
 
-    if (!gate.boot.supported) {
+    if (!gate.dataReady) {
+        /* Missing source data must win over presentation-mode diagnostics.
+         * The user needs the actual Nexus ISO/BIN/CUE recovery path, not a
+         * misleading V2.2 or renderer message. */
+        gate.blockedLabel = gate.boot.statusLabel;
+        gate.blockedDetail = gate.boot.detailLabel;
+    } else if (!gate.boot.supported) {
         gate.blockedLabel = "RUNTIME NOT READY";
         gate.blockedDetail = gate.boot.statusLabel;
     } else if (!gate.presentationReady) {
@@ -8418,9 +8428,6 @@ int M12_StartupMenu_GetLaunchGate(
     } else if (!gate.rendererReady) {
         gate.blockedLabel = m12_text(state, M12_TEXT_RENDERER_BACKEND_UNAVAILABLE);
         gate.blockedDetail = M12_StartupMenu_GetRendererBackendLabel(state);
-    } else if (!gate.dataReady) {
-        gate.blockedLabel = gate.boot.statusLabel;
-        gate.blockedDetail = gate.boot.detailLabel;
     } else if (!gate.versionReady) {
         gate.blockedLabel = "SELECTED VERSION NOT FOUND";
         gate.blockedDetail = m12_selected_version_label(state, gameIndex, 0);

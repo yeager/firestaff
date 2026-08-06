@@ -833,6 +833,11 @@
   bind `MENU.BPK` through `FIRESTAFF_NEXUS_DATA_DIR` and require the real
   archive before accepting the 162-surface receipt. The ordinary synthetic
   test remains data-free; no fixture archive can satisfy the real-data gate.
+  2026-08-06 launcher follow-up: removed the remaining procedural Saturn-ring/
+  obelisk card fallback. Nexus now shows only a capture-locked status in the
+  M12 launcher until a real title framebuffer is bound. Missing Nexus media is
+  also reported before presentation/runtime gates so the user receives the
+  actionable ISO/BIN/CUE recovery path.
 
 2026-08-06 Theron input follow-up: physical arrow keys arrive at M11 as
 `STRAFE_LEFT/STRAFE_RIGHT`; the startup adapter now treats those tokens as

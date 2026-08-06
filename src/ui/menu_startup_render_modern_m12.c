@@ -1108,9 +1108,13 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
             fill_rect(c, x + w / 2 - 54 + step * 12, y + h - 108 + step * 10,
                       108 - step * 24, 5, rgb(76, 60, 42));
         }
+    } else if (slotIdx == 3) {
+        /* Nexus has no authenticated launcher-card framebuffer. TITLE.CG is
+         * a Saturn character-generator atlas, not M12 card art; leave the
+         * panel on its source-lock background until VDP2 placement capture. */
     } else {
-        /* Saturn/Nexus — 3D dungeon stairway descending into darkness. */
-        /* Background: deep space gradient */
+        /* Unknown card slots remain a neutral panel, never an invented game
+         * image. */
         for (int gy = y + 12; gy < y + h - 16; gy++) {
             int t = (gy - y) * 255 / h;
             M12_RGB bg = rgb(8 + t/20, 4 + t/30, 24 + t/8);
@@ -1159,7 +1163,10 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
 
     if (!generated) {
         ModernTextStyle lbl = text_style_make(2, disabled ? rgb(176,176,180) : COLOR_TEXT(), 1);
-        const char* text = slotIdx == 0 ? "BOX ART" : (slotIdx == 1 ? "CSB BOX ART" : (slotIdx == 2 ? "DM2 BOX ART" : "NEXUS ART"));
+        const char* text = slotIdx == 0 ? "BOX ART" :
+                           (slotIdx == 1 ? "CSB BOX ART" :
+                            (slotIdx == 2 ? "DM2 BOX ART" :
+                             (slotIdx == 3 ? "CAPTURE LOCKED" : "SOURCE ART")));
         draw_text_centered(c, x + w / 2, y + h - 28, text, &lbl);
     }
 

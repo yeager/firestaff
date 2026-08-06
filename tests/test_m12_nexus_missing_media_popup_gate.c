@@ -125,7 +125,8 @@ static void check_nexus_missing_media_popup(void) {
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageIsMissingGameData == 1);
     CHECK(strcmp(state.messageGameId, "nexus") == 0);
-    CHECK(state.messageLine1 && strstr(state.messageLine1, "NEXUS") != NULL);
+    CHECK(state.messageLine1 &&
+          strstr(state.messageLine1, "Dungeon Master Nexus") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "ISO/BIN/CUE") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "DM.BIN") != NULL);
     CHECK(state.messageLine2 && strstr(state.messageLine2, "Saturn data marker") == NULL);

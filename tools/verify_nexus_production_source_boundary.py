@@ -10,6 +10,9 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 text = (ROOT / "CMakeLists.txt").read_text(encoding="utf-8")
+launcher_renderer = (ROOT / "src/ui/menu_startup_render_modern_m12.c").read_text(
+    encoding="utf-8"
+)
 
 
 def fail(message: str) -> None:
@@ -65,6 +68,13 @@ for forbidden in (
 ):
     if forbidden in runtime_body:
         fail(f"procedural presentation source entered runtime list: {forbidden}")
+
+if '"NEXUS ART"' in launcher_renderer:
+    fail("procedural NEXUS ART card label remains in the launcher")
+if "else if (slotIdx == 3)" not in launcher_renderer:
+    fail("Nexus launcher card does not have an explicit capture-locked branch")
+if '"CAPTURE LOCKED"' not in launcher_renderer:
+    fail("Nexus launcher card does not expose its capture-locked status")
 
 print(
     "nexus_production_source_boundary: PASS "

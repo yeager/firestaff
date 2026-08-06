@@ -7,6 +7,20 @@
   `firestaff_dm2_v2_phase2_asset_pipeline_probe` verifies the neutral path,
   an adjusted output and invalid-parameter rejection (94/94).
 
+# Nexus launcher placeholder removal and media-gate ordering (2026-08-06)
+
+- ✅ Removed the last procedural Nexus card fallback (Saturn ring, obelisk,
+  stairs and runes) from the M12 launcher. With no authenticated title
+  framebuffer, the card now remains a neutral source-lock panel labelled
+  `CAPTURE LOCKED`.
+- ✅ Moved missing-data handling ahead of runtime/presentation readiness so a
+  missing Nexus ISO/BIN/CUE produces the actionable `Dungeon Master Nexus`
+  recovery popup instead of a misleading presentation error.
+- ✅ Extended `verify_nexus_production_source_boundary.py` to reject the old
+  `NEXUS ART` label and require the explicit capture-locked branch. The
+  missing-media regression, `firestaff` build, verifier and real Nexus data
+  scan pass.
+
 # Nexus startup animation capture gate (2026-08-06)
 
 - ✅ Startup animation readiness now has a separate
