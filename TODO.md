@@ -1298,6 +1298,12 @@
   if no original save existed. Selection is separately regression-tested to
   return only a rescan/redraw failure until complete `DM2_GAME_LOAD` ownership
   can publish a session.
+  2026-08-06 slot-publication correction: the public slot and last-session
+  loaders now reject every raw candidate after its receipt is read. Previously
+  a valid raw prefix could return success with a zeroed `SessionState`, which
+  made an incomplete GAME_LOAD look resumable to M12 or the startup menu. The
+  real eight-save PC-DOS regression now verifies both that the slot call fails
+  and that its caller-owned session bytes remain unchanged.
   2026-08-06: `docs/dm2_test_coverage.md` no longer calls this codebase an
   untested stub. Its current coverage statement is intentionally limited to
   source-bound component and real-data receipts; the same document records

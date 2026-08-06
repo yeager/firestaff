@@ -412,6 +412,25 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
     free(bytes);
 }
 
+static void test_real_slot_load_is_blocked(const char *root)
+{
+    DM2_V1_SessionState sentinel;
+    DM2_V1_SessionState before;
+
+    if (!root || !root[0]) return;
+    memset(&sentinel, 0xa5, sizeof(sentinel));
+    before = sentinel;
+    CHECK(dm2_v1_session_load_slot(root, 0u, &sentinel) != 0 &&
+              memcmp(&sentinel, &before, sizeof(sentinel)) == 0,
+          "real SKSave slot cannot publish a zeroed partial session");
+
+    memset(&sentinel, 0x5a, sizeof(sentinel));
+    before = sentinel;
+    CHECK(dm2_v1_session_load_last_session(root, &sentinel) != 0 &&
+              memcmp(&sentinel, &before, sizeof(sentinel)) == 0,
+          "missing original last-session cannot mutate a caller session");
+}
+
 static void test_real_state_corpus(const char *root)
 {
     DM2_OriginalSaveStateCorpusReceipt state;
@@ -542,6 +561,7 @@ int main(void)
     CHECK(dm2_v1_startup_menu_scan_saves(&menu) &&
               menu.resume_available == 0 && menu.slot_mask == 0x000fu,
           "startup menu exposes the real slots without inventing a resume session");
+    test_real_slot_load_is_blocked(root);
     test_real_state_corpus(root);
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;

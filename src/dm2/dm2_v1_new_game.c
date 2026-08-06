@@ -1428,14 +1428,18 @@ int dm2_v1_session_load_slot(const char *save_base, uint8_t slot,
          * through a public slot loader would make a Firestaff-private
          * fixture look like a playable save. */
         /* D2RS is a Firestaff decoder fixture, never an original SKSave
-         * payload.  Slot selection is a player-facing GAME_LOAD boundary;
-         * accepting the fixture here would make synthetic state playable.
-         * The raw branch remains unavailable until its complete
-         * READ_SKSAVE_DUNGEON continuation has a source-owned runtime
-         * implementation. */
-        if (candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)
-            return -1;
-        *session = candidate.session;
+         * payload.  A raw candidate carries authenticated receipt facts but
+         * its SessionState is deliberately zeroed: GAME_LOAD has not yet
+         * restored c_record links, possessions, heroes, actuators or timers.
+         * Returning success here used to copy that zeroed placeholder to the
+         * caller, which made an incomplete original save look loadable.
+         *
+         * SKProject: sksvgame.cpp::DM2_GAME_LOAD continues with
+         * DM2_READ_SKSAVE_DUNGEON after this prefix.  Until that transaction
+         * is owned end-to-end, every player-facing slot load must fail without
+         * mutating the caller's state. */
+        (void)candidate;
+        return -1;
     }
 
     return 0;
@@ -1455,11 +1459,11 @@ int dm2_v1_session_load_last_session(const char *save_base,
         DM2_V1_SaveCandidate candidate;
         if (dm2_v1_session_parse_save_candidate(&candidate, buf, out_size) != 0)
             return -1;
-        /* See dm2_v1_session_load_slot(): a D2RS envelope is diagnostic
-         * material, not a resume candidate. */
-        if (candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_RAW)
-            return -1;
-        *session = candidate.session;
+        /* See dm2_v1_session_load_slot(): neither a diagnostic D2RS
+         * envelope nor an incomplete raw GAME_LOAD prefix is a resumable
+         * session. Keep the caller's state untouched. */
+        (void)candidate;
+        return -1;
     }
 
     return 0;

@@ -1,5 +1,11 @@
 # DM2 production placeholder inventory (2026-08-06)
 
+- ✅ 2026-08-06 DM2 raw-SKSAVE slot-publication fix: `dm2_v1_session_load_slot`
+  and `dm2_v1_session_load_last_session` no longer copy the intentionally empty
+  partial-GAME_LOAD session from an authenticated raw prefix. The real PC-DOS
+  corpus test proves the calls fail and preserve caller state. This removes a
+  false resume result; it does not claim complete `DM2_GAME_LOAD` support.
+
 - ✅ 2026-08-06 DM2 production placeholder inventory: added the CTest
   `dm2_production_placeholder_boundary`. It verifies that every identified
   DM2 callback transcript, inferred save/object route and V2 local-art

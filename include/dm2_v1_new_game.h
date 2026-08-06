@@ -432,14 +432,14 @@ int dm2_v1_session_save_last_session(const char *save_base,
                                       const char *name,
                                       const DM2_V1_SessionState *session);
 
-/* Load session from slot N using the slot manager.
- * Combines dm2_sl_load + deserialize.
- * Returns 0 on success.
- * Source: dm2_v1_save_load.h dm2_sl_load() */
+/* Player-facing load routes remain fail-closed until the complete original
+ * DM2_GAME_LOAD graph is implemented.  They may inspect a hash-validated
+ * slot but never publish its partial raw prefix as DM2_V1_SessionState.
+ * Source: SKProject sksvgame.cpp::DM2_GAME_LOAD. */
 int dm2_v1_session_load_slot(const char *save_base, uint8_t slot,
                                DM2_V1_SessionState *session);
 
-/* Load original-style last-session SKSave.dat, falling back to SKSave.bak. */
+/* Same fail-closed rule for SKSave.dat/SKSave.bak. */
 int dm2_v1_session_load_last_session(const char *save_base,
                                       DM2_V1_SessionState *session);
 
