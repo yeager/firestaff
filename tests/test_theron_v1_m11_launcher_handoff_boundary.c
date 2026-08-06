@@ -437,6 +437,18 @@ static void run_real_launcher_handoff_if_available(void) {
                         THERON_STARTUP_PHASE_SOUL_ROOM &&
                         view.theronState.level_loaded == 0,
                     "M11 Theron keeps the retry on the Soul Room admission gate");
+
+        /* The first attempt may have no diagnostic prompt at all.  The
+         * cursor is the source-owned focus state; Enter must still dispatch
+         * the forcefield action instead of toggling a mirror. */
+        view.theronState.startup_text_prompt[0] = '\0';
+        expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) !=
+                        M11_GAME_INPUT_RETURN_TO_MENU,
+                    "M11 Theron Enter uses forcefield focus without prompt text");
+        expect_true(view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_SOUL_ROOM &&
+                        view.theronState.level_loaded == 0,
+                    "M11 Theron prompt-free forcefield retry remains at admission gate");
     }
     if (view.theronState.startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM) {
         M11_GameInputResult pointer_result = M11_GameView_HandlePointer(

@@ -25248,15 +25248,16 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
             /* THQUEST.ASM T400 leaves the Soul Room on its forcefield
              * action.  If that action is rejected by Firestaff's authentic
              * Track 02 admission gate, the host deliberately rolls back to
-             * the Soul Room.  Keep Enter on the visible locked-forcefield
-             * prompt bound to the same action on retry; otherwise the
-             * restored cursor can make Enter toggle a mirror and make the
+             * the Soul Room.  Bind Enter from the actual forcefield cursor,
+             * not from the diagnostic prompt text: the first attempt and a
+             * restored state can legitimately have no prompt yet.  The old
+             * prompt-only check made Enter toggle a mirror and made the
              * forcefield appear inert. */
             if (input == M12_MENU_INPUT_ACCEPT &&
                 state->theronState.startup_phase ==
                     THERON_STARTUP_PHASE_SOUL_ROOM &&
-                strstr(state->theronState.startup_text_prompt,
-                       "FORCEFIELD LOCKED") != NULL) {
+                state->theronState.startup_cursor ==
+                    THERON_STARTUP_HERO_MIRROR_COUNT) {
                 input = M12_MENU_INPUT_ACTION;
             }
 

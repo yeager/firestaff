@@ -1,3 +1,12 @@
+# Theron forcefield focus dispatch (2026-08-06)
+
+- ✅ M11 now dispatches Enter from the authenticated Soul Room forcefield
+  cursor even when no diagnostic prompt text has been published yet. This
+  fixes the first-attempt/menu-state path without bypassing the Track 02
+  admission gate.
+- ✅ Added a prompt-free regression; the real-data test now reports 64 passed,
+  0 failed, 1 skipped.
+
 # Theron complete static decompressor listing (2026-08-06)
 
 - ✅ Expanded `docs/source-lock/theron-disassembly/theron-us-bank1f-consumer.asm`

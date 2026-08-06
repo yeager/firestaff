@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **THERON-FORCEFIELD-REAL-DUNGEON:** Enter now reliably dispatches from the
+  Soul Room forcefield focus, including the first attempt without prompt text.
+  The subsequent real Track 02 handoff remains intentionally gated until the
+  post-CD game-owned consumer binds the decompressed level/object records;
+  do not replace that gate with fallback dungeon data.
+
 - **NEXUS-PRS3-PIXEL-CAPTURE:** Retail Structure2 descriptors still expose
   bounded DMWeb format evidence, but the runtime no longer decodes their
   08h/28h payloads into host surfaces during LEV load or through the public
