@@ -15590,6 +15590,11 @@ endif()
         ${CMAKE_CURRENT_SOURCE_DIR}/include
         ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
     )
+    # This target retains the retired word-square fixture only to verify the
+    # historic parser contract. Product DM2 archives compile the loader
+    # without this definition and accept native byte-square media only.
+    target_compile_definitions(test_dm2_v1_dungeon_loader_first_map_gate PRIVATE
+        FIRESTAFF_DM2_SYNTHETIC_DUNGEON_FIXTURES=1)
     if(NOT MSVC)
         target_compile_options(test_dm2_v1_dungeon_loader_first_map_gate PRIVATE -Wall -Wextra -O2)
     endif()
@@ -15597,6 +15602,20 @@ endif()
         NAME dm2_v1_dungeon_loader_first_map_gate
         COMMAND test_dm2_v1_dungeon_loader_first_map_gate
     )
+
+    add_executable(test_dm2_v1_dungeon_loader_synthetic_rejected
+        tests/test_dm2_v1_dungeon_loader_synthetic_rejected.c)
+    target_include_directories(test_dm2_v1_dungeon_loader_synthetic_rejected PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_dungeon_loader_synthetic_rejected PRIVATE
+        firestaff_dm2 firestaff_m10 m)
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_dungeon_loader_synthetic_rejected PRIVATE
+            -Wall -Wextra -Werror -O2)
+    endif()
+    add_test(
+        NAME dm2_v1_dungeon_loader_synthetic_rejected
+        COMMAND test_dm2_v1_dungeon_loader_synthetic_rejected)
 
     add_executable(test_dm2_v1_dungeon_loader_fmtowns
         tests/test_dm2_v1_dungeon_loader_fmtowns.c

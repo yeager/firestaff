@@ -31,9 +31,9 @@
  *   from the trailing map-data block. It also bounds the G1-specific
  *   extension between the standard DB-pool prefix and map tail, without
  *   assigning it record ownership before source proof. Tile type is stored
- *   in the high three bits and bit 0x10 marks a thing-list square. The
- *   bounded legacy loader path still accepts older Firestaff synthetic
- *   16-bit map fixtures.
+ *   in the high three bits and bit 0x10 marks a thing-list square. The old
+ *   16-bit map-fixture reader is excluded from product builds; it exists
+ *   only in the explicit fixture test target.
  *
  *   Confirmed against: SKULL.ASM T560 DUNGEON_Load, local DUNGEON.DAT probe.
  *   Confirmed loader contract: level_count/map_count is byte offset 6. */

@@ -196,6 +196,24 @@ def verify(repo: Path) -> list[str]:
         if forbidden in runtime:
             errors.append(f"runtime retains timer-byte mutation study: {forbidden}")
 
+    dungeon_loader_path = repo / "src/dm2/dm2_v1_dungeon_loader.c"
+    if not dungeon_loader_path.exists():
+        errors.append(f"missing {dungeon_loader_path}")
+        return errors
+    dungeon_loader = dungeon_loader_path.read_text(encoding="utf-8")
+    required_fixture_guard = (
+        "#if !defined(FIRESTAFF_DM2_SYNTHETIC_DUNGEON_FIXTURES)",
+        "return -1;",
+        "#else",
+        "#endif",
+    )
+    if not all(fragment in dungeon_loader for fragment in required_fixture_guard):
+        errors.append(
+            "DM2 dungeon loader no longer excludes the word-square fixture "
+            "parser from product builds")
+    if "FIRESTAFF_DM2_SYNTHETIC_DUNGEON_FIXTURES=1" not in cmake:
+        errors.append("DM2 word-square fixture target has no explicit test-only definition")
+
     creature_path = repo / "src/dm2/dm2_v1_creature.c"
     if not creature_path.exists():
         errors.append(f"missing {creature_path}")

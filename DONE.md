@@ -56,6 +56,13 @@
   Verification: dialogue and weather receipt tests pass, and all five
   canonical PC G1 GRAPHICSSET material pairs still decode from original data.
 
+# DM2 word-square fixture parser isolated from product builds (2026-08-07)
+
+- ✅ The obsolete 16-bit-square dungeon reader is now compiled only for its
+  dedicated historical-fixture test. The product loader accepts native,
+  authenticated byte-square DM2 media only (DOS, FM Towns, PC-9821, Mac,
+  Amiga and Mega CD); unknown bytes fail closed rather than becoming a dungeon.
+
 # DM1 mirror cancel-rotation synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C040/C162 rotation fixture from M10. Its

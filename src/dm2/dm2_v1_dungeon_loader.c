@@ -207,6 +207,7 @@ static int dm2_v1_dungeon_record_list_traversal_allowed(
     return d && d->raw_data && d->record_graph_complete;
 }
 
+#if defined(FIRESTAFF_DM2_SYNTHETIC_DUNGEON_FIXTURES)
 static int dm2_v1_level_tiles_fit(const DM2_V1_DungeonData *d,
                                   int level,
                                   int raw_size) {
@@ -224,6 +225,7 @@ static int dm2_v1_level_tiles_fit(const DM2_V1_DungeonData *d,
     return offset <= (size_t)raw_size &&
            tile_bytes <= (size_t)raw_size - offset;
 }
+#endif
 
 static int dm2_decode_map_dimensions_from_w8(const uint8_t *map_desc,
                                              int *out_w,
@@ -714,8 +716,6 @@ static int dm2_v1_try_load_be_byte_layout(DM2_V1_DungeonData *out,
 
 int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
                          const uint8_t *dat, int size) {
-    uint8_t mc;
-    int i;
     int skproject_layout;
 
     if (!out || !dat || size < DM2_DUNGEON_HEADER_SIZE)
@@ -733,6 +733,18 @@ int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
     skproject_layout = dm2_v1_try_load_be_byte_layout(out, dat, size);
     if (skproject_layout != 0)
         return (skproject_layout > 0) ? 0 : -1;
+
+    /* The remaining word-square reader was written solely for the early
+     * Firestaff map fixtures.  It has no original DM2 media provenance: all
+     * supported DOS, FM Towns, PC-9821, Mac, Amiga and Mega CD members take
+     * one of the authenticated byte-square readers above.  Never compile
+     * that fixture parser into the product archive, where a caller could
+     * otherwise turn invented bytes into a playable-looking dungeon. */
+#if !defined(FIRESTAFF_DM2_SYNTHETIC_DUNGEON_FIXTURES)
+    return -1;
+#else
+    uint8_t mc;
+    int i;
 
     mc = dat[DM2_HDR_MAP_COUNT_OFFSET];
     if (mc < 1 || mc > DM2_V1_MAX_LEVELS)
@@ -805,6 +817,7 @@ int dm2_v1_dungeon_load(DM2_V1_DungeonData *out,
     out->raw_size = size;
 
     return 0;
+#endif
 }
 
 /*
