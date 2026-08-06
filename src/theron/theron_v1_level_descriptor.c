@@ -1,5 +1,27 @@
 #include "theron_v1_level_descriptor.h"
 
+#include <string.h>
+
+#define THERON_LEVEL_DESCRIPTOR_MD5_US \
+    "f23601102138f87c33025877767ebf76"
+#define THERON_LEVEL_DESCRIPTOR_MD5_JP \
+    "b7afb338ad31be1025b53f9aff12d73a"
+#define THERON_LEVEL_DESCRIPTOR_US_FNV1A 0x7aa82bc7u
+#define THERON_LEVEL_DESCRIPTOR_JP_FNV1A 0x63d8ddfdu
+
+static uint32_t theron_level_descriptor_fnv1a(
+    const uint8_t *bytes, size_t byte_count) {
+    uint32_t hash = 2166136261u;
+    size_t i;
+
+    if (!bytes && byte_count != 0u) return 0u;
+    for (i = 0u; i < byte_count; ++i) {
+        hash ^= bytes[i];
+        hash *= 16777619u;
+    }
+    return hash;
+}
+
 /* Source: US Track 02 BIN (MD5 f23601102138f87c33025877767ebf76).
  * UD offset 0x619900, 53 records x 6 bytes. */
 static const Theron_LevelDescriptor g_descriptors[THERON_LEVEL_DESCRIPTOR_COUNT] = {
@@ -101,4 +123,75 @@ int theron_v1_level_descriptor_read_us_track02(
         out[i] = parsed;
     }
     return 1;
+}
+
+int theron_v1_level_descriptor_read_authenticated_track02(
+    const uint8_t *user_data,
+    size_t user_data_size,
+    const char *track02_md5,
+    Theron_LevelDescriptor *out,
+    size_t out_count,
+    Theron_LevelDescriptorCorpusReceipt *out_receipt) {
+    const uint8_t *span;
+    size_t i;
+    int all_zero = 1;
+
+    if (out_receipt) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        out_receipt->source_user_data_offset =
+            THERON_LEVEL_DESCRIPTOR_USER_DATA_OFFSET;
+        out_receipt->byte_count = THERON_LEVEL_DESCRIPTOR_BYTES;
+    }
+    if (!user_data || !track02_md5 ||
+        THERON_LEVEL_DESCRIPTOR_USER_DATA_OFFSET > user_data_size ||
+        THERON_LEVEL_DESCRIPTOR_BYTES >
+            user_data_size - THERON_LEVEL_DESCRIPTOR_USER_DATA_OFFSET) {
+        return 0;
+    }
+
+    span = user_data + THERON_LEVEL_DESCRIPTOR_USER_DATA_OFFSET;
+    for (i = 0u; i < THERON_LEVEL_DESCRIPTOR_BYTES; ++i) {
+        if (span[i] != 0u) {
+            all_zero = 0;
+            break;
+        }
+    }
+    if (out_receipt) {
+        out_receipt->source_fnv1a = theron_level_descriptor_fnv1a(
+            span, THERON_LEVEL_DESCRIPTOR_BYTES);
+    }
+
+    if (strcmp(track02_md5, THERON_LEVEL_DESCRIPTOR_MD5_US) == 0) {
+        if (all_zero ||
+            theron_level_descriptor_fnv1a(
+                span, THERON_LEVEL_DESCRIPTOR_BYTES) !=
+                THERON_LEVEL_DESCRIPTOR_US_FNV1A ||
+            !out || out_count < THERON_LEVEL_DESCRIPTOR_COUNT ||
+            !theron_v1_level_descriptor_read_us_track02(
+                user_data, user_data_size, out, out_count)) {
+            return 0;
+        }
+        if (out_receipt) {
+            out_receipt->valid = 1;
+            out_receipt->records_available = 1;
+        }
+        return 1;
+    }
+
+    if (strcmp(track02_md5, THERON_LEVEL_DESCRIPTOR_MD5_JP) == 0) {
+        if (!all_zero ||
+            theron_level_descriptor_fnv1a(
+                span, THERON_LEVEL_DESCRIPTOR_BYTES) !=
+                THERON_LEVEL_DESCRIPTOR_JP_FNV1A) return 0;
+        if (out_receipt) {
+            out_receipt->valid = 1;
+            out_receipt->zero_fill = 1;
+        }
+        if (out && out_count >= THERON_LEVEL_DESCRIPTOR_COUNT) {
+            memset(out, 0, sizeof(*out) * THERON_LEVEL_DESCRIPTOR_COUNT);
+        }
+        return 1;
+    }
+
+    return 0;
 }

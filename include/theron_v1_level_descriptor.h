@@ -22,6 +22,15 @@ typedef struct {
     uint8_t  cumulative_sector_offset;
 } Theron_LevelDescriptor;
 
+typedef struct {
+    int valid;
+    int zero_fill;
+    int records_available;
+    size_t source_user_data_offset;
+    size_t byte_count;
+    uint32_t source_fnv1a;
+} Theron_LevelDescriptorCorpusReceipt;
+
 const Theron_LevelDescriptor *theron_v1_level_descriptor(unsigned int index);
 size_t theron_v1_level_descriptor_count(void);
 
@@ -34,5 +43,17 @@ int theron_v1_level_descriptor_read_us_track02(
     size_t user_data_size,
     Theron_LevelDescriptor *out,
     size_t out_count);
+
+/* Admit the authenticated regional Track 02 descriptor span.  The US
+ * receipt contains 53 real records; the retail JP BIN carries a verified
+ * zero-filled span at the same logical offset and is reported as ZERO_FILL,
+ * never decoded through the US table.  This is a source receipt only. */
+int theron_v1_level_descriptor_read_authenticated_track02(
+    const uint8_t *user_data,
+    size_t user_data_size,
+    const char *track02_md5,
+    Theron_LevelDescriptor *out,
+    size_t out_count,
+    Theron_LevelDescriptorCorpusReceipt *out_receipt);
 
 #endif

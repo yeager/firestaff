@@ -5,24 +5,22 @@
 #include <stdlib.h>
 #include <string.h>
 
-static void test_authentic_us_bin_receipt(void) {
+static uint8_t *read_normalized(const char *name, size_t *out_size) {
     const char *home = getenv("HOME");
     char path[1024];
     FILE *fp;
     long raw_size;
     uint8_t *raw;
     uint8_t *user_data;
-    Theron_LevelDescriptor parsed[THERON_LEVEL_DESCRIPTOR_COUNT];
     size_t sectors;
     size_t i;
 
-    if (!home) return;
-    (void)snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQUS02.bin", home);
+    if (out_size) *out_size = 0u;
+    if (!home) return NULL;
+    (void)snprintf(path, sizeof(path), "%s/.firestaff/data/theron/%s",
+                   home, name);
     fp = fopen(path, "rb");
-    if (!fp) {
-        printf("SKIP: authentic TQUS02.bin not available\n");
-        return;
-    }
+    if (!fp) return NULL;
     assert(fseek(fp, 0, SEEK_END) == 0);
     raw_size = ftell(fp);
     assert(raw_size > 0 && raw_size % 2352 == 0);
@@ -35,12 +33,52 @@ static void test_authentic_us_bin_receipt(void) {
     assert(fclose(fp) == 0);
     for (i = 0; i < sectors; ++i)
         (void)memcpy(user_data + i * 2048u, raw + i * 2352u + 16u, 2048u);
-    assert(theron_v1_level_descriptor_read_us_track02(
-        user_data, sectors * 2048u, parsed, THERON_LEVEL_DESCRIPTOR_COUNT));
+    free(raw);
+    if (out_size) *out_size = sectors * 2048u;
+    return user_data;
+}
+
+static void test_authentic_regional_receipts(void) {
+    Theron_LevelDescriptor parsed[THERON_LEVEL_DESCRIPTOR_COUNT];
+    Theron_LevelDescriptorCorpusReceipt receipt;
+    size_t us_size = 0u;
+    size_t jp_size = 0u;
+    uint8_t *us = read_normalized("TQUS02.bin", &us_size);
+    uint8_t *jp = read_normalized("TQJP02.bin", &jp_size);
+
+    if (!us || !jp) {
+        printf("SKIP: authentic US/JP Track 02 BINs not available\n");
+        free(us);
+        free(jp);
+        return;
+    }
+    assert(theron_v1_level_descriptor_read_authenticated_track02(
+        us, us_size, "f23601102138f87c33025877767ebf76",
+        parsed, THERON_LEVEL_DESCRIPTOR_COUNT, &receipt));
+    assert(receipt.valid && !receipt.zero_fill && receipt.records_available);
+    assert(receipt.source_fnv1a == 0x7aa82bc7u);
     assert(parsed[16].data_size == 0xE000);
     assert(parsed[52].cumulative_sector_offset == 2);
-    free(user_data);
-    free(raw);
+    assert(!theron_v1_level_descriptor_read_authenticated_track02(
+        jp, jp_size, "f23601102138f87c33025877767ebf76",
+        parsed, THERON_LEVEL_DESCRIPTOR_COUNT, &receipt));
+
+    memset(parsed, 0xA5, sizeof(parsed));
+    memset(&receipt, 0, sizeof(receipt));
+    assert(theron_v1_level_descriptor_read_authenticated_track02(
+        jp, jp_size, "b7afb338ad31be1025b53f9aff12d73a",
+        parsed, THERON_LEVEL_DESCRIPTOR_COUNT, &receipt));
+    assert(receipt.valid && receipt.zero_fill && !receipt.records_available);
+    assert(receipt.source_fnv1a == 0x63d8ddfdu);
+    for (size_t i = 0u; i < THERON_LEVEL_DESCRIPTOR_COUNT; ++i) {
+        assert(parsed[i].flags == 0u);
+        assert(parsed[i].data_size == 0u);
+    }
+    assert(!theron_v1_level_descriptor_read_authenticated_track02(
+        us, us_size, "b7afb338ad31be1025b53f9aff12d73a",
+        parsed, THERON_LEVEL_DESCRIPTOR_COUNT, &receipt));
+    free(us);
+    free(jp);
 }
 
 int main(void) {
@@ -84,7 +122,7 @@ int main(void) {
         assert(d->data_size > 0);
     }
 
-    test_authentic_us_bin_receipt();
+    test_authentic_regional_receipts();
 
     printf("PASS: theron_v1_level_descriptor\n");
     return 0;
