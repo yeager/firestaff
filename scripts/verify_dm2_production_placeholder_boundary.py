@@ -260,6 +260,18 @@ def verify(repo: Path) -> list[str]:
             errors.append(
                 "world model retains the retired inferred 16-bit dungeon fallback")
 
+    object_model_path = repo / "src/dm2/dm2_v1_object_model.c"
+    if not object_model_path.exists():
+        errors.append(f"missing {object_model_path}")
+        return errors
+    object_model = object_model_path.read_text(encoding="utf-8")
+    for forbidden in (
+            "size_t thing_data_start = header_size + map_desc_total + tile_total;",
+            "pool_offset_abs += (size_t)world->thing_pool_counts[t]",
+    ):
+        if forbidden in object_model:
+            errors.append("object model retains the inferred sequential-pool fallback")
+
     viewport_path = repo / "src/dm2/dm2_v1_viewport_renderer.c"
     if not viewport_path.exists():
         errors.append(f"missing {viewport_path}")

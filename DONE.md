@@ -473,6 +473,13 @@
 - ✅ Source-owned CMDSTR action, champion/target records, RNG and writeback are
   still required before a player attack can execute.
 
+# DM2 inferred object-pool parser removal (2026-08-06)
+
+- ✅ Removed the disabled parser that assumed records begin after all tile
+  bytes and pool arrays then continue sequentially.
+- ✅ Object inspection remains tied to the G1 loader's source-shaped square and
+  record links; the production boundary rejects restoring the guessed layout.
+
 # DM1 D2C F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only/no-game-data D2C F0111 trace from M10. It has
