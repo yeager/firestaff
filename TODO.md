@@ -2181,6 +2181,10 @@
   expose stock, prices, names, dialog or mutate party state. The latent
   inventory/gold writeback bridge is removed as well: an unadmitted shop
   state cannot copy arbitrary ObjectIDs into a session.
+  **2026-08-06 follow-up:** the residual public setters for gold, negotiator
+  and inventory now retain no caller-supplied values either. A zero-catalog
+  shop module cannot be used as a synthetic session sidecar while the original
+  `SHOP_GLASS` record transaction remains unbound.
   **2026-07-31 follow-up:** the last host-panel rectangle, English footer and
   empty-pack fallback are now no-draw as well. The exposed render contract
   clears its receipt and returns unavailable until the source-owned

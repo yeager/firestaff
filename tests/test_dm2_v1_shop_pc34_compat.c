@@ -33,9 +33,9 @@ int main(void)
               dm2_v1_shop_buy(DM2_SHOP_ID_GENERAL, 0) !=
                   (int)DM2_SHOP_RESULT_OK,
           "fixture catalog cannot create a transaction");
-    CHECK(dm2_v1_shop_get_party_gold() == 1000 &&
+    CHECK(dm2_v1_shop_get_party_gold() == 0 &&
               dm2_v1_shop_buy_count() == 0 && dm2_v1_shop_sell_count() == 0,
-          "rejected transaction preserves party state");
+          "unowned shop API retains no synthetic party state");
     e = dm2_v1_shop_source_evidence();
     CHECK(e && strstr(e, "legacy fixture shops") != NULL,
           "evidence declares the fixture catalog unavailable");

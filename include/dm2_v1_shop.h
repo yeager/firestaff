@@ -166,7 +166,11 @@ typedef struct {
     char footer[DM2_SHOP_RENDER_TEXT_MAX];
 } DM2_V1_ShopPanelRender;
 
-/* ── Lifecycle / state ──────────────────────────────────────────── */
+/* ── Lifecycle / state ────────────────────────────────────────────
+ * These compatibility calls retain no values until the source-owned
+ * SHOP_GLASS DB14/WALL_GFX/item-list transaction is imported. In particular,
+ * caller-supplied gold, negotiation and inventory are rejected rather than
+ * becoming a substitute shop session. */
 void dm2_v1_shop_reset_state(void);
 void dm2_v1_shop_set_party_gold(uint32_t gold);
 uint32_t dm2_v1_shop_get_party_gold(void);

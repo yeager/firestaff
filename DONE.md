@@ -14,6 +14,13 @@
   level/VDC/VCE capture gate remains fail-closed. The M12/M11 boundary now
   passes 52 checks against the real US Track 02 path.
 
+- ✅ 2026-08-06 DM2 unowned-shop state removal: the production shop API no
+  longer retains caller-provided gold, negotiation skill or inventory when no
+  source-owned `SHOP_GLASS` transaction exists. The empty catalog already
+  blocked normal M11 access, but exported helper calls could still create a
+  private host state; they now reject without mutation. The focused ownership
+  gate and the real PC-DOS M11 startup gate pass.
+
 - ✅ 2026-08-06 Theron palette admission cleanup: raw Track 02 asset loads no
   longer initialize the procedural stone palette. Verified media therefore
   begins with an empty, non-renderable palette until a captured HuC6260 span

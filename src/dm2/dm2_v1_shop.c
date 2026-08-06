@@ -58,12 +58,10 @@ static void ensure_init(void) {
     s_initialized = 1;
 }
 
-/* party_state_hash is captured by dm2_v1_shop_enter() and preserved
- * unchanged by dm2_v1_shop_leave() — see those functions and the
- * dm2_v1_shop_party_state_hash() accessor.  No per-tick recomputation
- * is performed, which is the V1 invariant: shop UI overlay must not
- * mutate party state.
- */
+/* A shop session has no valid host-owned state until SHOP_GLASS has resolved
+ * its live DB14/WALL_GFX/item-list chain.  Keep the retired state carrier
+ * empty in production: a caller-provided gold, skill or inventory value is
+ * not evidence of an original shop transaction. */
 
 /* Stack limits belong to a decoded source object/GDAT record. The former
  * local switch assigned limits to fabricated item IDs, even though the shop
@@ -96,8 +94,8 @@ void dm2_v1_shop_reset_state(void) {
 }
 
 void dm2_v1_shop_set_party_gold(uint32_t gold) {
+    (void)gold;
     ensure_init();
-    s_state.party_gold = gold;
 }
 
 uint32_t dm2_v1_shop_get_party_gold(void) {
@@ -107,90 +105,34 @@ uint32_t dm2_v1_shop_get_party_gold(void) {
 
 void dm2_v1_shop_commit_gold_to_game_state(struct DM2_V1_GameState *gs) {
     ensure_init();
-    if (!gs) return;
-    /* Shop gold is stored unsigned; game-state gold is signed int. */
-    gs->gold = (int)s_state.party_gold;
+    (void)gs;
+    /* SKProject c_shop.cpp writes gold through the active merchant's record
+     * transaction.  There is no source-owned shop session here, so never
+     * publish a module-local number into live game state. */
 }
 
 void dm2_v1_shop_set_negotiator(int skill) {
+    (void)skill;
     ensure_init();
-    if (skill < 0) skill = 0;
-    if (skill > 100) skill = 100;
-    s_state.party_negotiator_skill = skill;
 }
 
 void dm2_v1_shop_clear_inventory(void) {
     ensure_init();
-    memset(s_state.inventory_item, 0, sizeof(s_state.inventory_item));
-    memset(s_state.inventory_qty, 0, sizeof(s_state.inventory_qty));
-    memset(s_state.inventory_is_container, 0, sizeof(s_state.inventory_is_container));
-    memset(s_state.inventory_contents, 0, sizeof(s_state.inventory_contents));
-    s_state.inventory_count = 0;
 }
 
 int dm2_v1_shop_add_inventory(int item_id, int qty) {
-    int max_stack;
-    int total_existing = 0;
-    int slots_used = 0;
-    int new_total;
-    int required_slots;
-    int extra_slots;
-    int remaining;
-
+    (void)item_id;
+    (void)qty;
     ensure_init();
-    if (qty <= 0 || item_id <= 0) return 0;
-    max_stack = dm2_shop_item_max_stack(item_id);
-    for (int i = 0; i < s_state.inventory_count; i++) {
-        if (s_state.inventory_item[i] == (uint16_t)item_id) {
-            total_existing += (int)s_state.inventory_qty[i];
-            slots_used++;
-        }
-    }
-    new_total = total_existing + qty;
-    required_slots = (new_total + max_stack - 1) / max_stack;
-    extra_slots = required_slots - slots_used;
-    if (extra_slots < 0) extra_slots = 0;
-    if (s_state.inventory_count + extra_slots > 32) return 0;
-
-    remaining = qty;
-    /* Fill existing stacks first. */
-    for (int i = 0; i < s_state.inventory_count && remaining > 0; i++) {
-        if (s_state.inventory_item[i] == (uint16_t)item_id) {
-            int room = max_stack - (int)s_state.inventory_qty[i];
-            if (room > 0) {
-                int add = remaining < room ? remaining : room;
-                s_state.inventory_qty[i] += (uint16_t)add;
-                remaining -= add;
-            }
-        }
-    }
-    /* Allocate fresh stacks for the remainder. */
-    while (remaining > 0) {
-        int slot = s_state.inventory_count;
-        int add = remaining > max_stack ? max_stack : remaining;
-        s_state.inventory_item[slot] = (uint16_t)item_id;
-        s_state.inventory_qty[slot] = (uint16_t)add;
-        s_state.inventory_is_container[slot] = 0;
-        s_state.inventory_contents[slot] = 0;
-        s_state.inventory_count++;
-        remaining -= add;
-    }
-    return 1;
+    return 0;
 }
 
 int dm2_v1_shop_add_container(int item_id, int qty, int contents_count) {
+    (void)item_id;
+    (void)qty;
+    (void)contents_count;
     ensure_init();
-    if (qty <= 0 || item_id <= 0) return 0;
-    if (s_state.inventory_count + qty > 32) return 0;
-    for (int n = 0; n < qty; n++) {
-        int slot = s_state.inventory_count;
-        s_state.inventory_item[slot] = (uint16_t)item_id;
-        s_state.inventory_qty[slot] = 1;
-        s_state.inventory_is_container[slot] = 1;
-        s_state.inventory_contents[slot] = (uint16_t)(contents_count < 0 ? 0 : contents_count);
-        s_state.inventory_count++;
-    }
-    return 1;
+    return 0;
 }
 
 /* ── Catalog ────────────────────────────────────────────────────── */
