@@ -1184,6 +1184,12 @@
   hash discovery has not admitted both `GRAPHICS.DAT` and `DUNGEON.DAT`; it
   also stops if the verified source handoff fails. It cannot initialize a
   diagnostic DM2 state or draw any substitute frame.
+  **2026-08-06 object-model boundary:** the standalone
+  `dm2_v1_object_model.c` parser is no longer linked into `firestaff_dm2`.
+  Its loader-backed inspection remains available only in the dedicated probe;
+  the dormant sequential-pool branch is explicitly inferred and must not
+  become an alternate GAME_LOAD/M11 object-data owner. Re-admit it only after
+  its full G1 chain is consumed by a live source-owned runtime route.
 
 - **DM2-ACTUATOR-SHOOTER-OWNER-HANDOFF:** Port the actual shooter actuator's
   DB14/timer scheduling and record-owned projectile fields from SK-projects.

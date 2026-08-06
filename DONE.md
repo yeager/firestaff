@@ -1,3 +1,13 @@
+- ✅ 2026-08-06 DM2 production object-model isolation: removed
+  `dm2_v1_object_model.c` from the broad `firestaff_dm2` source glob. The
+  file's remaining sequential-pool parser is explicitly inferred and no M11
+  or GAME_LOAD production path calls its API; its real-G1 inspection is now
+  confined to `probe_dm2_v1_object_model`. This prevents an unaffiliated
+  object-data interpretation from becoming a future alternate runtime route.
+  Verification: rebuilt `firestaff_dm2` and `firestaff_m11`; the dedicated
+  probe still passes 34/34 against the mounted PC-DOS `dungeon.dat`. No game
+  data was unpacked, created or tracked.
+
 - ✅ 2026-08-06 DM2 production-data inventory, creature-AI boundary: audited
   the apparent hard-coded `dAITableGenuine` table and the V2 fixture modules
   against the built production archives. The AI bytes are a source-executable

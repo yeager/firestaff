@@ -4411,6 +4411,11 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # the broad V1 archive would make an unaffiliated HUD route look production
 # available. Compile them only in their focused tests until a source-owned
 # runtime handoff consumes their receipts.
+# dm2_v1_object_model.c is likewise an isolated diagnostic parser. Its
+# remaining sequential-pool implementation is explicitly inferred and its
+# only caller is the dedicated object-model probe. GAME_LOAD/M11 own real G1
+# record access through dm2_v1_dungeon_loader.c; do not ship the inference as
+# an alternate object-data route.
 list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_panel_routing.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_survey_helpers.c"
@@ -4439,7 +4444,8 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gdatfile_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_sfx_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_ccm.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_world_state.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_world_state.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_object_model.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES})
     target_include_directories(firestaff_dm2 PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include)
