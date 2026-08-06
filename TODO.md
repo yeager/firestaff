@@ -1370,6 +1370,11 @@
   longer invents fallback HP/attack/defense values outside the four
   disassembly-backed formulas.
 
+  2026-08-06 generator boundary: production no longer activates the legacy
+  DMWeb-derived generator table, nor retained Track 02 generator records whose
+  original timing/re-enable consumer is still unbound. Source records remain
+  diagnostic receipt data until the real generator consumer is captured.
+
   THIEF/DEMON scripted encounters no longer use approximated template stats;
   bind their source encounter records before admitting them to combat.
 

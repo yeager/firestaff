@@ -53536,6 +53536,11 @@ alcove runtime and archive-media tests passed (4/4).
   layouts, so the ISO route reaches its payload/hash gate instead of being
   rejected by a raw-BIN-only matcher. Shell syntax, regression test and diff
   checks pass; no semantic consumer handoff was promoted.
+- ✅ 2026-08-06 Theron generator fallback removal: production no longer
+  activates the legacy DMWeb-derived generator table or executable source
+  generator records before the original timing/re-enable consumer is bound.
+  The focused combat-runtime regression now asserts zero active generators in
+  that unbound state; source records remain available as diagnostic receipts.
 - ✅ 2026-08-06 CSB selected-archive isolation: M12 can now materialize every
   selected CSB edition into its own hash-checked runtime cache instead of
   reusing the scanner's first-match `asset-cache/csb` view. The existing FM

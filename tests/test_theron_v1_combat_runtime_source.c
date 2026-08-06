@@ -53,10 +53,8 @@ int main(void) {
     theron_v1_world_init_generators(&world);
     world.world_tick = 60;
     theron_v1_world_tick_generators(&world);
-    CHECK(world.generator_active_count == 1 &&
-              world.generator_spawn_count[0] == 0 &&
-              world.creature_count == 0,
-          "rejected legacy generator labels do not consume source spawn budget");
+    CHECK(world.generator_active_count == 0 && world.creature_count == 0,
+          "unbound legacy and source generator records stay out of production");
     memset(&world, 0, sizeof(world));
     world.level_loaded[0][0] = 1;
     world.levels[0][0].source_header_verified = 1;

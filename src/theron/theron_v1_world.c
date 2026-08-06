@@ -903,35 +903,17 @@ void theron_v1_world_init_generators(Theron_V1_World *world) {
     if (!world) return;
     int di = world->current_dungeon - 1;
     if (di < 0 || di >= THERON_DUNGEON_COUNT) return;
-    int lvl = world->current_level;
-
-    const Theron_DungeonGenerators *dg = &theron_dungeon_generators[di];
     world->generator_active_count = 0;
     for (int i = 0; i < THERON_MAX_GENERATORS; i++) {
         world->generator_spawn_count[i] = 0;
         world->generator_next_tick[i] = 0;
     }
-    if (world->source_thing_directory_verified[di]) {
-        for (unsigned int i = 0; i < world->source_generator_count &&
-                                  world->generator_active_count < THERON_MAX_GENERATORS;
-             ++i) {
-            const Theron_V1_SourceGeneratorRecord *source =
-                &world->source_generators[i];
-            if (source->dungeon_id != world->current_dungeon ||
-                source->level != lvl)
-                continue;
-            world->generator_next_tick[world->generator_active_count++] = 0;
-        }
-        return;
-    }
-    for (int i = 0; i < (int)dg->count; i++) {
-        if (dg->gens[i].level == lvl) {
-            int idx = world->generator_active_count++;
-            world->generator_spawn_count[idx] = 0;
-            world->generator_next_tick[idx] =
-                world->world_tick + THERON_GENERATOR_RESPAWN_INTERVAL;
-        }
-    }
+    /* The real source-generator records are retained above, but their
+     * consumer/timing/re-enable path is not source-bound yet.  Do not expose
+     * the old DMWeb-derived table as a production fallback when the Track 02
+     * thing directory is absent, and do not turn retained source records into
+     * executable generators before that consumer is authenticated. */
+    return;
 }
 
 void theron_v1_world_tick_generators(Theron_V1_World *world) {
