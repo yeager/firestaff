@@ -42,8 +42,20 @@ if [[ ! -f "$marker" ]]; then
   patch -d "$source_dir" -p0 < "$repo_root/scripts/mednafen_1.32.1_nexus_saturn_capture.patch"
   touch "$marker"
 fi
-if [[ ! -x "$source_dir/mednafen" ]]; then
-  (cd "$source_dir" && ./configure --prefix="$prefix")
+profile_marker="$source_dir/.firestaff-nexus-saturn-only"
+profile_id='FIRESTAFF_NEXUS_MEDNAFEN_PROFILE_V2_SATURN_ONLY'
+if [[ ! -f "$profile_marker" || "$(cat "$profile_marker" 2>/dev/null)" != "$profile_id" ]]; then
+  (cd "$source_dir" && ./configure --prefix="$prefix" \
+    --enable-ss \
+    --disable-apple2 --disable-gb --disable-gba --disable-lynx \
+    --disable-md --disable-nes --disable-ngp --disable-pce \
+    --disable-pce-fast --disable-pcfx --disable-psx --disable-sasplay \
+    --disable-sms --disable-snes --disable-snes-faust --disable-ssfplay \
+    --disable-vb --disable-wswan --disable-cjk-fonts \
+    --disable-fancy-scalers --disable-debugger --disable-alsa --disable-jack)
+  printf '%s\n' "$profile_id" > "$profile_marker"
+fi
+if [[ ! -x "$source_dir/src/mednafen" ]]; then
   make -C "$source_dir" -j"${FIRESTAFF_MEDNAFEN_JOBS:-2}"
 fi
 make -C "$source_dir" install
