@@ -4668,6 +4668,11 @@ list(REMOVE_ITEM M10_SOURCES
 # no M11 caller.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_c040_drop_during_rotation_pc34_compat.c")
+# `dm1_v1_mirror_candidate_inventory_toggle_pc34_compat.c` is a no-data
+# contract gate. It is used only by regression fixtures, which compile it
+# directly below.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_inventory_toggle_pc34_compat.c")
 # `dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c` is a
 # contract-only probe. It manufactures its chest stack, leader hand, floor
 # link and coordinates locally, reads no original save/dungeon/graphics data,
@@ -54393,7 +54398,9 @@ add_executable(test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat
 target_include_directories(test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat COMMAND test_dm1_v1_mirror_candidate_inventory_portrait_click_pc34_compat)
-add_executable(test_dm1_v1_mirror_candidate_inventory_toggle_pc34_compat tests/test_dm1_v1_mirror_candidate_inventory_toggle_pc34_compat.c)
+add_executable(test_dm1_v1_mirror_candidate_inventory_toggle_pc34_compat
+    tests/test_dm1_v1_mirror_candidate_inventory_toggle_pc34_compat.c
+    src/dm1/dm1_v1_mirror_candidate_inventory_toggle_pc34_compat.c)
 target_include_directories(test_dm1_v1_mirror_candidate_inventory_toggle_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_inventory_toggle_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_inventory_toggle_pc34_compat COMMAND test_dm1_v1_mirror_candidate_inventory_toggle_pc34_compat)
@@ -54489,7 +54496,8 @@ target_link_libraries(test_dm1_v1_mirror_candidate_pending_hand_queue_pc34_compa
 add_test(NAME test_dm1_v1_mirror_candidate_pending_hand_queue_pc34_compat COMMAND test_dm1_v1_mirror_candidate_pending_hand_queue_pc34_compat)
 add_executable(test_dm1_v1_mirror_candidate_pickup_right_click_pc34_compat
     tests/test_dm1_v1_mirror_candidate_pickup_right_click_pc34_compat.c
-    src/dm1/dm1_v1_mirror_candidate_pickup_right_click_pc34_compat.c)
+    src/dm1/dm1_v1_mirror_candidate_pickup_right_click_pc34_compat.c
+    src/dm1/dm1_v1_mirror_candidate_inventory_toggle_pc34_compat.c)
 target_include_directories(test_dm1_v1_mirror_candidate_pickup_right_click_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_pickup_right_click_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_pickup_right_click_pc34_compat COMMAND test_dm1_v1_mirror_candidate_pickup_right_click_pc34_compat)
