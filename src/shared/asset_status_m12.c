@@ -1845,9 +1845,47 @@ static int m12_materialize_authenticated_csb_amiga_sidecar(
     return 1;
 }
 
+/* These Atari ST utility/startup files are executable or save-bearing source
+ * media.  ReDMCSB ANIM.C, HINTLOAD.C and SWITCH.C open them by their original
+ * roles, not merely by filename.  Keep the cache boundary hash-locked so an
+ * incomplete external-archive extraction, a stale cache entry, or a loose
+ * same-name file cannot impersonate the original package. */
+static const char* m12_csb_atari_sidecar_expected_md5(const char* label) {
+    if (!label) {
+        return NULL;
+    }
+    if (strcmp(label, "HCSB.HTC") == 0) return "8ce69b54cf255a15e98e909bb45b9742";
+    if (strcmp(label, "HCSB.DAT") == 0) return "708e113c869ab922633e885aa72a3c77";
+    if (strcmp(label, "HINT.FTL") == 0) return "67007e7943f9ef6f0b12ff4bd1bef3d1";
+    if (strcmp(label, "ANIMATE.DAT") == 0) return "9f8feb269c959c9fe722ac08f99d9c35";
+    if (strcmp(label, "ANIMATE.SCR") == 0) return "4174d6de5384323072b185640ed31723";
+    if (strcmp(label, "ANIMATE.FTL") == 0) return "e7dedcff055c069e22d083b8015b48e0";
+    if (strcmp(label, "CHAOS.FTL") == 0) return "b170b74cfcca429dd54b07bbdc795484";
+    if (strcmp(label, "FTLCODE") == 0) return "18abdf771f37e8953bf95ba2f462469d";
+    if (strcmp(label, "SWITCH.DAT") == 0) return "b1fc60f2c0d8f8a89e5d4f295e93ae42";
+    if (strcmp(label, "MINI.DAT") == 0) return "531ea104a2fbc2011ea73d11f274c57d";
+    return NULL;
+}
+
+static int m12_materialize_authenticated_csb_atari_sidecar(
+    const char* seedPath, const char* label, const char* outPath) {
+    const char* expectedMd5 = m12_csb_atari_sidecar_expected_md5(label);
+    char md5[M12_ASSET_MD5_CAPACITY];
+    if (!expectedMd5 ||
+        !m12_materialize_optional_for_cache_seed(seedPath, label, outPath)) {
+        return 0;
+    }
+    if (!m12_file_md5_hex(outPath, md5) || strcmp(md5, expectedMd5) != 0) {
+        (void)remove(outPath);
+        return 0;
+    }
+    return 1;
+}
+
 static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
                                                        const char* gameCacheDir,
-                                                       int permitAmiga31Sidecars) {
+                                                       int permitAmiga31Sidecars,
+                                                       int permitAtariStSidecars) {
     static const char* const labels[] = {
         "SWOOSH", "SWOOSH.DAT",
         /* PC3.4 SWSHSND.C G0746 raw startup sample. Keep every accepted
@@ -1926,6 +1964,8 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
     for (i = 0U; i < sizeof(labels) / sizeof(labels[0]); ++i) {
         char outPath[M12_ASSET_DATA_DIR_CAPACITY];
         char outParent[M12_ASSET_DATA_DIR_CAPACITY];
+        const char* amigaExpectedMd5;
+        const char* atariExpectedMd5;
         if (!FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, labels[i])) {
             continue;
         }
@@ -1944,13 +1984,25 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
          * paired A31E version admission may retain these four sidecars.
          * ReDMCSB APPA.C:51-53 selects the Amiga FTL/TITL path, whereas
          * TITLE.C F0437 owns PC34's C001 sequence. */
-        if (m12_csb_amiga_sidecar_expected_md5(labels[i]) != NULL &&
+        amigaExpectedMd5 = m12_csb_amiga_sidecar_expected_md5(labels[i]);
+        atariExpectedMd5 = m12_csb_atari_sidecar_expected_md5(labels[i]);
+        if (amigaExpectedMd5 != NULL &&
             !permitAmiga31Sidecars) {
             (void)remove(outPath);
             continue;
         }
-        if (!(m12_csb_amiga_sidecar_expected_md5(labels[i]) != NULL
+        /* Do not turn filename-only Atari sidecars (including player save
+         * names) into runtime data.  Each admissible Atari member above has
+         * a byte identity in the source registry. */
+        if (permitAtariStSidecars && atariExpectedMd5 == NULL) {
+            (void)remove(outPath);
+            continue;
+        }
+        if (!(amigaExpectedMd5 != NULL
                   ? m12_materialize_authenticated_csb_amiga_sidecar(
+                        seedPath, labels[i], outPath)
+                  : permitAtariStSidecars && atariExpectedMd5 != NULL
+                    ? m12_materialize_authenticated_csb_atari_sidecar(
                         seedPath, labels[i], outPath)
                   : m12_materialize_optional_for_cache_seed(seedPath,
                                                             labels[i], outPath))) {
@@ -3605,7 +3657,9 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         m12_materialize_csb_startup_optional_cache(
             optionalSeedPath, gameCacheDir,
             selectedVersion && selectedVersion->versionId &&
-            strcmp(selectedVersion->versionId, "amiga31-en") == 0);
+            strcmp(selectedVersion->versionId, "amiga31-en") == 0,
+            selectedVersion && selectedVersion->versionId &&
+            strncmp(selectedVersion->versionId, "st20-21-", 8) == 0);
     }
     m12_copy_string(status->runtimeDataDirs[gameIndex],
                     sizeof(status->runtimeDataDirs[gameIndex]),
@@ -4875,7 +4929,7 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
                 m12_file_md5_hex(dungeonPath, copiedMd5) &&
                 strcmp(copiedMd5, expectedDungeonMd5) == 0) {
                 m12_materialize_csb_startup_optional_cache(version->matchedPath,
-                                                           outPath, 1);
+                                                           outPath, 1, 0);
                 return 1;
             }
             (void)remove(dungeonPath);
@@ -4903,7 +4957,9 @@ int M12_AssetStatus_MaterializeCSBRuntimeVersion(
         outPath[0] = '\0';
         return 0;
     }
-    m12_materialize_csb_startup_optional_cache(version->matchedPath, outPath, 0);
+    m12_materialize_csb_startup_optional_cache(
+        version->matchedPath, outPath, 0,
+        strncmp(versionId, "st20-21-", 8) == 0);
     return 1;
 }
 
