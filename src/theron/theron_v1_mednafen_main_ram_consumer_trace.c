@@ -3,6 +3,7 @@
 #include "asset_status_m12.h"
 
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <sys/stat.h>
 
@@ -119,4 +120,69 @@ int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
     snprintf(receipt.source_trace_md5, sizeof(receipt.source_trace_md5), "%s", md5);
     *out = receipt;
     return 1;
+}
+
+int theron_v1_mednafen_main_ram_consumer_trace_verify_code_window(
+    const char *path,
+    uint16_t start_pc,
+    const uint8_t *expected_bytes,
+    size_t expected_count)
+{
+    Theron_V1MednafenMainRamConsumerTraceReceipt receipt;
+    FILE *file;
+    char line[512];
+    uint8_t *seen;
+    size_t seen_count = 0u;
+
+    if (!path || !path[0] || !expected_bytes || expected_count == 0u ||
+        expected_count > 0x10000u ||
+        (size_t)start_pc + expected_count > 0x10000u ||
+        !theron_v1_mednafen_main_ram_consumer_trace_parse_file(path,
+                                                                &receipt) ||
+        receipt.status != THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_READY) {
+        return 0;
+    }
+    seen = (uint8_t *)calloc(expected_count, sizeof(*seen));
+    if (!seen || !(file = fopen(path, "rb"))) {
+        free(seen);
+        return 0;
+    }
+    while (fgets(line, sizeof(line), file)) {
+        unsigned logical_address, physical_address, value, reader_pc;
+        unsigned reader_physical_pc, sequence;
+        int consumed = 0;
+        size_t offset;
+
+        if (strncmp(line, "main_ram_consumer_read ", 23) != 0 ||
+            sscanf(line,
+                   "main_ram_consumer_read sequence=%u logical_address=%x "
+                   "physical_address=%x value=%x reader_pc=%x "
+                   "reader_physical_pc=%x%n",
+                   &sequence, &logical_address, &physical_address, &value,
+                   &reader_pc, &reader_physical_pc, &consumed) != 6) {
+            continue;
+        }
+        (void)sequence;
+        (void)physical_address;
+        if (line[consumed] != '\n' && line[consumed] != '\r' &&
+            line[consumed] != '\0') continue;
+        if (logical_address != reader_pc ||
+            physical_address != reader_physical_pc ||
+            reader_pc < start_pc ||
+            reader_pc >= (unsigned)start_pc + expected_count ||
+            value > 0xffu) continue;
+        offset = (size_t)(reader_pc - start_pc);
+        if ((uint8_t)value != expected_bytes[offset]) {
+            fclose(file);
+            free(seen);
+            return 0;
+        }
+        if (!seen[offset]) {
+            seen[offset] = 1u;
+            ++seen_count;
+        }
+    }
+    fclose(file);
+    free(seen);
+    return seen_count == expected_count;
 }

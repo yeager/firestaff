@@ -5,6 +5,14 @@
   action/event consumer is captured. `test_nexus_v1_item_use` now proves that
   unbound declarations leave champion and status state unchanged.
 
+- ✅ 2026-08-06 Theron executed HuC6280 consumer window: added a strict
+  code-fetch verifier for the authentic Mednafen main-RAM sidecar and recorded
+  the real `$2c54–$2c69` instruction window in
+  `docs/source-lock/theron-main-ram-consumer-disassembly-2026-08-06.md`.
+  The regression rejects a mutated window and requires logical/physical
+  reader-PC equality for every byte. This proves executed code provenance, not
+  level/object/tile/palette meaning; semantic publication remains blocked.
+
 - ✅ 2026-08-06 Theron raw VDC/VCE exact-size admission: tightened the
   in-memory snapshot loader to require exactly 65,536 VRAM bytes and 1,024 VCE
   bytes, matching the file-backed capture boundary. Oversized concatenated

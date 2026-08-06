@@ -227,7 +227,10 @@
   game-owned main RAM when the reader PC is also in game RAM, including logical
   and physical addresses, byte value, and reader-PC provenance. This is still
   opaque execution evidence: no level, object, tile, palette, or bitmap meaning
-  is assigned. The receipt test now auto-discovers a valid real loader sidecar
+  is assigned. A real capture now also verifies the executed HuC6280 window
+  `$2c54–$2c69` byte-for-byte from code-fetch coordinates; the disassembly
+  receipt is retained separately from semantic publication. The receipt test
+  now auto-discovers a valid real loader sidecar
   under `.firestaff/firestaff-probe-screenshots` when no override is set.
   Remaining: run the consumer-read trace against an authentic Track 02 CUE with
   a real SDL2 runtime and join the observed reads to source-LBA/FIFO receipts.

@@ -2,6 +2,7 @@
 #define THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_H
 
 #include <stdint.h>
+#include <stddef.h>
 
 #define THERON_V1_MEDNAFEN_MAIN_RAM_CONSUMER_TRACE_PATH_CAPACITY 512
 
@@ -37,5 +38,16 @@ typedef struct {
 int theron_v1_mednafen_main_ram_consumer_trace_parse_file(
     const char *path,
     Theron_V1MednafenMainRamConsumerTraceReceipt *out);
+
+/* Verify a byte-backed HuC6280 instruction window in a real consumer trace.
+ * Every byte must be fetched with logical==reader PC and physical==reader
+ * physical PC, so ordinary data reads cannot masquerade as code.  This is an
+ * execution receipt only; it does not classify the window as level, object,
+ * tile, palette or HUD data. */
+int theron_v1_mednafen_main_ram_consumer_trace_verify_code_window(
+    const char *path,
+    uint16_t start_pc,
+    const uint8_t *expected_bytes,
+    size_t expected_count);
 
 #endif
