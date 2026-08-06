@@ -97,16 +97,10 @@ Fontanel primary references:
      `TIMELINE_EVENT_MAGIC_LIGHT_DECAY` at `nowTick + 4` with
      `aux0 = weakerPower` (Fontanel TIMELINE.C:1764 schedules
      `G0313_ul_GameTime + 4`).
-   - **PowerOrdinalToLightAmount table**: Phase 14 defined a
-     placeholder `{3, 6, 10, 16, 24, 40}` marked
-     `NEEDS DISASSEMBLY REVIEW`. Phase 19 consumes that same
-     placeholder (via a shared constant array or via Phase 14's
-     header). The real table is `G0039_ai_Graphic562_LightPowerToLightAmount[16]`
-     loaded from GRAPHICS.DAT entry 562 — indices 0..15 where
-     index 0 = 0 (no light). Phase 19 uses indices 0..6 only
-     (index 0 = 0, indices 1..6 = placeholder values). Full 16-
-     entry table is post-M10 when GRAPHICS.DAT loader lands.
-     `NEEDS DISASSEMBLY REVIEW`.
+   - **PowerOrdinalToLightAmount table**: The canonical PC 3.4
+     `G0039_ai_Graphic562_LightPowerToLightAmount[16]` owner supplies
+     `{0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100}`
+     from DATA.C:359 / GRAPHICS.DAT item 562. C70 accepts magnitudes 1..15.
 
 3. **REMOVE_FLUXCAGE handler** (mirror of C24 inline handler).
    - Receives a fluxcage explosion slot reference (slotIndex into
@@ -148,8 +142,6 @@ Fontanel primary references:
 - Day/night cycles (DM1 is dungeon-only).
 - Dynamic difficulty scaling (not a Fontanel feature).
 - WATCHDOG event (C53; separate meta-concern, post-M10).
-- Full 16-entry `LightPowerToLightAmount` table (requires
-  GRAPHICS.DAT loader).
 - Fluxcage adjacency logic (`F0221_GROUP_IsFluxcageOnSquare` /
   `F0224_GROUP_FluxCageAction`) — that's Phase 17's domain; Phase
   19 only removes them by timer expiry.
@@ -320,20 +312,12 @@ struct GeneratorReEnableResult_Compat {
 #### 2.9  `PowerOrdinalToLightAmount` constant array
 
 ```
-static const int Phase19_PowerOrdinalToLightAmount[7] = {
-    0,   /* index 0: no light     */
-    3,   /* index 1: power 1      */
-    6,   /* index 2: power 2      */
-    10,  /* index 3: power 3      */
-    16,  /* index 4: power 4      */
-    24,  /* index 5: power 5      */
-    40   /* index 6: power 6      */
+static const int Phase19_PowerOrdinalToLightAmount[16] = {
+    0, 5, 12, 24, 33, 40, 46, 51,
+    59, 68, 76, 82, 89, 94, 97, 100
 };
-/* NEEDS DISASSEMBLY REVIEW — placeholder values mirroring Phase 14.
-   Real table is G0039_ai_Graphic562_LightPowerToLightAmount[16]
-   from GRAPHICS.DAT entry 562. Only indices 0-6 used in v1.
-   Phase 14 defined {3,6,10,16,24,40} for indices 1-6; Phase 19
-   adds index 0 = 0 and consumes identically. */
+/* ReDMCSB DATA.C:359 PC 3.4 G0039 initialization. The production runtime
+   consumes the canonical DM1 owner rather than maintaining this plan copy. */
 ```
 
 ### Structures NOT declared by Phase 19
@@ -546,20 +530,14 @@ FUNCTION F0864_HandleLightDecay(lightPower, nowTick, partyMapIndex, out):
     RETURN 1
 ```
 
-**PowerOrdinalToLightAmount table (NEEDS DISASSEMBLY REVIEW)**:
+**PowerOrdinalToLightAmount table:**
 
-Index 0 = 0 (sentinel). Indices 1–6: `{3, 6, 10, 16, 24, 40}`.
-These match Phase 14's placeholder. The real values are from
-GRAPHICS.DAT entry 562, `G0039_ai_Graphic562_LightPowerToLightAmount`.
+The PC 3.4 G0039 table is `{0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76,
+82, 89, 94, 97, 100}` from DATA.C:359 / GRAPHICS.DAT item 562. The runtime
+uses all source-valid magnitudes 1–15.
 
-The delta-per-step for a light power 6 spell would be:
-- Step 6→5: 40 - 24 = 16
-- Step 5→4: 24 - 16 = 8
-- Step 4→3: 16 - 10 = 6
-- Step 3→2: 10 - 6 = 4
-- Step 2→1: 6 - 3 = 3
-- Step 1→0: 3 - 0 = 3
-Total: 40 (= table[6]), which is correct — all light removed.
+The delta-per-step for a light power 6 spell is `46 - 40 = 6`; the full
+chain sums to `46`, matching G0039[6].
 
 Each step fires at `nowTick + 4`, so a power-6 light fully decays
 in 6 × 4 = 24 ticks.

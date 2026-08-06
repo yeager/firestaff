@@ -95,15 +95,13 @@
 /* ==========================================================
  *  PowerOrdinalToLightAmount sentinel bounds.
  *
- *  ReDMCSB DATA.C:225 + GRAPHICS.DAT entry 562
- *  (G0039_ai_Graphic562_LightPowerToLightAmount) store 16 light
- *  power→amount entries.  v1 mirrors Phase 14's placeholder for
- *  indices 1..6 and adds index 0 = 0.  The full 16-entry table
- *  is deferred to post-M10 when the GRAPHICS.DAT loader lands;
- *  see DATA.C:225 for the original 16-entry layout.
+ *  ReDMCSB DATA.C:45,359 + GRAPHICS.DAT entry 562
+ *  (G0039_ai_Graphic562_LightPowerToLightAmount) store the authoritative
+ *  16-entry light-power→amount table. C70 events preserve source values
+ *  1..15; the shared DM1 G0039 owner supplies the original bytes.
  * ========================================================== */
 
-#define RUNTIME_LIGHT_POWER_MAX   6
+#define RUNTIME_LIGHT_POWER_MAX   15
 
 /* ==========================================================
  *  Data structures.

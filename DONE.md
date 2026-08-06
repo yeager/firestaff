@@ -1,3 +1,10 @@
+# DM1 C70 full G0039 light table (2026-08-07)
+
+- ✅ Replaced the Phase 19 seven-entry light-table copy and its 0–6 clamp with
+  the canonical PC 3.4 `DATA.C:359` / GRAPHICS.DAT item 562 G0039 owner.
+  C70 decay and original-save bounds now admit source-valid magnitudes 1–15
+  and reject invalid values rather than silently clamping them.
+
 # DM1 mirror cancel-rotation synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C040/C162 rotation fixture from M10. Its

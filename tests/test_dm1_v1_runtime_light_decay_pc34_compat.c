@@ -84,6 +84,29 @@ static int test_c70_handle_light_decay_followups(void)
     ok &= expect_int("terminal power1 expired", out.expired, 1);
     ok &= expect_int("terminal power1 no followup", out.followupScheduled, 0);
 
+    /* DATA.C:359 G0039 has sixteen entries. Preserve source-valid high
+     * powers rather than collapsing them to the old six-step placeholder. */
+    memset(&out, 0, sizeof(out));
+    ok &= expect_int("high power15 handled",
+                     F0864_RUNTIME_HandleLightDecay_Compat(15, 400, 3, &out),
+                     1);
+    ok &= expect_int("high power15 delta", out.magicalLightAmountDelta, 3);
+    ok &= expect_int("high power15 followup", out.followupEvent.aux0, 14);
+
+    ok &= expect_int("high power7 delta",
+                     F0865_RUNTIME_ComputeLightDecayDelta_Compat(7,
+                                                                    &out.magicalLightAmountDelta),
+                     1);
+    ok &= expect_int("high power7 original delta", out.magicalLightAmountDelta, 5);
+    ok &= expect_int("negative high power15 delta",
+                     F0865_RUNTIME_ComputeLightDecayDelta_Compat(-15,
+                                                                    &out.magicalLightAmountDelta),
+                     1);
+    ok &= expect_int("negative high power15 original delta", out.magicalLightAmountDelta, -3);
+    ok &= expect_int("power16 rejected",
+                     F0864_RUNTIME_HandleLightDecay_Compat(16, 0, 0, &out),
+                     0);
+
     return ok ? 0 : 1;
 }
 

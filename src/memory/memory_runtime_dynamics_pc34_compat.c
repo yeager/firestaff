@@ -21,6 +21,7 @@
 #include <stdint.h>
 
 #include "memory_runtime_dynamics_pc34_compat.h"
+#include "firestaff/dm1/v1/light_power_to_light_amount_pc34_compat.h"
 
 /* -------- Invariants guaranteed by platform / plan -------- */
 
@@ -48,29 +49,8 @@ static int read_i32_le(const unsigned char* p) {
     return (int)u;
 }
 
-/* ==========================================================
- *  PowerOrdinalToLightAmount — exact slice of the canonical
- *  ReDMCSB G0039_ai_Graphic562_LightPowerToLightAmount[16] table.
- *
- *  ReDMCSB DATA.C:359,1088 — the full table is
- *    { 0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100 }
- *  consumed by TIMELINE.C:1754 (light decay delta) and
- *  PANEL.C:412 (torch / panel composition). Only indices 0..6
- *  are exercised by the DM1 V1 runtime dynamics path (light
- *  power ordinal range 0..6), so we mirror the first 7 entries
- *  verbatim. The full 16-entry table is also present in
- *  dm1_v1_light_pc34_compat.c::dm1_light_power_to_amount.
- * ========================================================== */
-
-static const int s_PowerOrdinalToLightAmount[RUNTIME_LIGHT_POWER_MAX + 1] = {
-    0,   /* index 0: no light / boundary (G0039[0])  */
-    5,   /* index 1 (G0039[1])  */
-    12,  /* index 2 (G0039[2])  */
-    24,  /* index 3 (G0039[3])  */
-    33,  /* index 4 (G0039[4])  */
-    40,  /* index 5 (G0039[5])  */
-    46   /* index 6 (G0039[6])  */
-};
+/* C70 light decay uses the canonical DATA.C:359 G0039 owner rather than a
+ * reduced local copy. G0039 has 16 entries, so source-valid powers are 1..15. */
 
 /* ==========================================================
  *  Creature base-health lookup (DM1 PC 3.4 / I34E).
@@ -417,13 +397,13 @@ int F0865_RUNTIME_ComputeLightDecayDelta_Compat(
         return 1;
     }
 
+    if (lightPower < -RUNTIME_LIGHT_POWER_MAX ||
+        lightPower > RUNTIME_LIGHT_POWER_MAX) return 0;
     absPower = lightPower < 0 ? -lightPower : lightPower;
-    if (absPower > RUNTIME_LIGHT_POWER_MAX) absPower = RUNTIME_LIGHT_POWER_MAX;
     weakerAbs = absPower - 1;
-    if (weakerAbs < 0) weakerAbs = 0;
 
-    delta = s_PowerOrdinalToLightAmount[absPower]
-          - s_PowerOrdinalToLightAmount[weakerAbs];
+    delta = dm1_v1_light_power_to_light_amount_pc34(absPower)
+          - dm1_v1_light_power_to_light_amount_pc34(weakerAbs);
     if (lightPower < 0) delta = -delta;
 
     *outDelta = delta;
@@ -489,11 +469,11 @@ int F0864_RUNTIME_HandleLightDecay_Compat(
         return 1;
     }
 
+    if (lightPower < -RUNTIME_LIGHT_POWER_MAX ||
+        lightPower > RUNTIME_LIGHT_POWER_MAX) return 0;
     isNegative = (lightPower < 0);
     absPower = isNegative ? -lightPower : lightPower;
-    if (absPower > RUNTIME_LIGHT_POWER_MAX) absPower = RUNTIME_LIGHT_POWER_MAX;
     weakerAbs = absPower - 1;
-    if (weakerAbs < 0) weakerAbs = 0;
 
     /* §4.2.1 — delta via F0865. */
     if (!F0865_RUNTIME_ComputeLightDecayDelta_Compat(lightPower, &delta)) {
