@@ -4391,6 +4391,7 @@ add_library(firestaff_m10 STATIC
     src/dm1/dm1_v1_fmtowns_jdm_bss.c
     src/dm1/dm1_v1_fmtowns_dynamenu.c
     src/dm1/dm1_v1_fmtowns_egb_shim.c
+    src/dm1/dm1_v1_fmtowns_font_asset.c
     src/dm1/dm1_v1_fmtowns_menu_regions.c
     src/dm1/dm1_v1_fmtowns_text_geometry.c
     src/dm1/dm1_v1_fmtowns_startup.c
@@ -53485,6 +53486,13 @@ add_executable(test_dm1_v1_fmtowns_jdm_bss
 )
 target_include_directories(test_dm1_v1_fmtowns_jdm_bss PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_jdm_bss COMMAND test_dm1_v1_fmtowns_jdm_bss)
+
+add_executable(test_dm1_v1_fmtowns_font_asset
+    tests/test_dm1_v1_fmtowns_font_asset.c
+    src/dm1/dm1_v1_fmtowns_font_asset.c
+)
+target_include_directories(test_dm1_v1_fmtowns_font_asset PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+add_test(NAME test_dm1_v1_fmtowns_font_asset COMMAND test_dm1_v1_fmtowns_font_asset)
 
 add_executable(test_dm1_v1_fmtowns_dynamenu
     tests/test_dm1_v1_fmtowns_dynamenu.c
