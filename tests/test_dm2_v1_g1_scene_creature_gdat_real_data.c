@@ -65,17 +65,10 @@ static int load_canonical_files(uint8_t **graphics, size_t *graphics_size,
                                 uint8_t **dungeon, size_t *dungeon_size)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
-    char fallback[1024];
     char graphics_path[1100];
     char dungeon_path[1100];
 
-    if (!root || !root[0]) {
-        if (!home || !home[0]) return 0;
-        snprintf(fallback, sizeof(fallback), "%s/.firestaff/data/dm2/data",
-                 home);
-        root = fallback;
-    }
+    if (!root || !root[0]) return 0;
     snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
     return read_file(graphics_path, graphics, graphics_size) &&
@@ -169,10 +162,15 @@ int main(void)
     uint32_t altered_identity = 0u;
     int failures = 0;
 
+    if (!getenv("FIRESTAFF_DM2_DATA_DIR") ||
+        !getenv("FIRESTAFF_DM2_DATA_DIR")[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+        return 0;
+    }
     if (!load_canonical_files(&graphics, &graphics_size,
                               &dungeon_bytes, &dungeon_size)) {
-        puts("SKIP: no local canonical DM2 data");
-        return 0;
+        fputs("FAIL: selected canonical DM2 data is unreadable\n", stderr);
+        return 1;
     }
     memset(&loader, 0, sizeof(loader));
     memset(&dungeon, 0, sizeof(dungeon));

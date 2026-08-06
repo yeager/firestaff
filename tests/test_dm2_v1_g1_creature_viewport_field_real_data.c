@@ -25,15 +25,12 @@ static int g_passed;
     else fprintf(stderr, "FAIL: %s (line %d)\n", label, __LINE__); \
 } while (0)
 
-static const char *data_root(char *fallback, size_t fallback_size)
+static const char *data_root(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
 
     if (root && root[0]) return root;
-    if (!home || !home[0]) return NULL;
-    snprintf(fallback, fallback_size, "%s/.firestaff/data/dm2/data", home);
-    return fallback;
+    return NULL;
 }
 
 static uint16_t rd16(const uint8_t *p)
@@ -44,8 +41,7 @@ static uint16_t rd16(const uint8_t *p)
 int main(void)
 {
     DM2_V1_BootProfile profile;
-    char fallback[1024];
-    const char *root = data_root(fallback, sizeof(fallback));
+    const char *root = data_root();
     int admitted = 0;
     int fail_closed = 0;
     int records = 0;
@@ -53,15 +49,15 @@ int main(void)
     int map;
 
     if (!root) {
-        puts("SKIP: no local canonical DM2 data");
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
         return 0;
     }
     dm2_v1_boot_profile_init(&profile);
     if (dm2_v1_boot_scan_assets(&profile, root) != 0 ||
         dm2_v1_boot_enter_game(&profile) != 0) {
-        puts("SKIP: no accepted canonical DM2 profile");
+        fputs("FAIL: selected canonical DM2 profile was not admitted\n", stderr);
         dm2_v1_boot_cleanup(&profile);
-        return 0;
+        return 1;
     }
 
     {

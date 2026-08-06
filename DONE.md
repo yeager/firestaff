@@ -1,3 +1,12 @@
+# DM2 G1 objekt- och varelsematerial med vald korpus (2026-08-07)
+
+- ✅ Realdatatesterna för DB9-containrar, DB5-vapen samt DB4-scen- och
+  viewportmaterial använder nu endast explicit argument eller
+  `FIRESTAFF_DM2_DATA_DIR`. En vald men oläsbar korpus ger fel i varje mål.
+  Med PC-DOS-media verifieras att DB9/DB5 saknar sina exakta F9-material och
+  därför blockeras, medan fem DB4-rötter når sina egna F9-payloads; de
+  återstående 33 V5-vägarna är explicit fail-closed.
+
 # DM2 GDAT-census med vald originalkorpus (2026-08-07)
 
 - ✅ De breda realdataproverna för CREATURES-animationstriad, GRAPHICSSET,

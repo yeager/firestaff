@@ -2348,6 +2348,9 @@ level or consumer bindings.
   **2026-08-07 GDAT verification update:** the broad creature-animation,
   visual-census, GRAPHICSSET, scene-plan and wall-plan probes now likewise
   require the selected corpus and fail an unreadable explicit selection.
+  **2026-08-07 G1 material update:** DB4 scene/viewport and DB5/DB9 map-chip
+  regressions now use only an explicit or selected corpus. Missing exact F9
+  material remains fail-closed; do not substitute a neighbouring GDAT row.
   **2026-08-06 update:** the generic DM2 boot reader also now rejects every
   virtual archive path instead of extracting it to `/tmp`. FM Towns and Amiga
   continue through their already authenticated in-memory buffers. PC archive

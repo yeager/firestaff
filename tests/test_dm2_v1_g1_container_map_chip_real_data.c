@@ -35,19 +35,12 @@ static int read_file(const char *path, uint8_t **out, size_t *out_size)
     return 1;
 }
 
-static const char *resolve_dm2_data_root(int argc, char **argv,
-                                         char *buf, size_t buf_size)
+static const char *resolve_dm2_data_root(int argc, char **argv)
 {
     const char *root;
-    const char *home;
     if (argc >= 2) return argv[1];
     root = getenv("FIRESTAFF_DM2_DATA_DIR");
     if (root && root[0]) return root;
-    home = getenv("HOME");
-    if (home && home[0]) {
-        snprintf(buf, buf_size, "%s/.firestaff/data/dm2/data", home);
-        return buf;
-    }
     return NULL;
 }
 
@@ -90,10 +83,9 @@ static int palette_read(void *user, int category, int index, int field,
 
 int main(int argc, char **argv)
 {
-    char root_buf[1024];
     char graphics_path[2048];
     char dungeon_path[2048];
-    const char *root = resolve_dm2_data_root(argc, argv, root_buf, sizeof(root_buf));
+    const char *root = resolve_dm2_data_root(argc, argv);
     uint8_t *graphics = NULL;
     uint8_t *dungeon_bytes = NULL;
     size_t graphics_size = 0u;
@@ -104,7 +96,7 @@ int main(int argc, char **argv)
     int ok;
 
     if (!root) {
-        puts("SKIP: no local canonical DM2 data");
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
         free(graphics);
         free(dungeon_bytes);
         return 0;
@@ -113,10 +105,10 @@ int main(int argc, char **argv)
     snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
     if (!read_file(graphics_path, &graphics, &graphics_size) ||
         !read_file(dungeon_path, &dungeon_bytes, &dungeon_size)) {
-        puts("SKIP: no local canonical DM2 data");
+        fputs("FAIL: selected canonical DM2 data is unreadable\n", stderr);
         free(graphics);
         free(dungeon_bytes);
-        return 0;
+        return 1;
     }
     memset(&loader, 0, sizeof(loader));
     memset(&dungeon, 0, sizeof(dungeon));
