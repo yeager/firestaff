@@ -51,6 +51,15 @@ void DM1_CombatLog_OnSpellCast(uint32_t gameTick,
                                const char* championName,
                                const char* spellName);
 
+/* Source gate: authenticated DM1 routes never use the diagnostic fallback
+ * font when the original GRAPHICS.DAT font is unavailable. */
+static inline int DM1_CombatLog_SourceAllowsFallbackFont(
+    M11_GameSourceKind sourceKind) {
+    return sourceKind != M11_GAME_SOURCE_BUILTIN_CATALOG &&
+           sourceKind != M11_GAME_SOURCE_CUSTOM_DUNGEON &&
+           sourceKind != M11_GAME_SOURCE_DIRECT_DUNGEON;
+}
+
 /* Render the overlay (no-op when disabled). */
 void DM1_CombatLog_Render(M11_GameViewState* gameView,
                           unsigned char* framebuffer,

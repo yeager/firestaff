@@ -60,12 +60,26 @@ static void test_text_field_capacity(void) {
     (void)entry;
 }
 
+static void test_source_font_gate(void) {
+    assert(DM1_CombatLog_SourceAllowsFallbackFont(
+               M11_GAME_SOURCE_BUILTIN_CATALOG) == 0);
+    assert(DM1_CombatLog_SourceAllowsFallbackFont(
+               M11_GAME_SOURCE_CUSTOM_DUNGEON) == 0);
+    assert(DM1_CombatLog_SourceAllowsFallbackFont(
+               M11_GAME_SOURCE_DIRECT_DUNGEON) == 0);
+    assert(DM1_CombatLog_SourceAllowsFallbackFont(
+               M11_GAME_SOURCE_CSB_BOOT) == 1);
+    assert(DM1_CombatLog_SourceAllowsFallbackFont(
+               M11_GAME_SOURCE_DM2_BOOT) == 1);
+}
+
 int main(void) {
     test_enum_values();
     test_enum_aliases();
     test_entry_struct_layout();
     test_typedef_aliases();
     test_text_field_capacity();
-    puts("ok: dm1_v1_combat_log_pc34_compat 5 tests passed");
+    test_source_font_gate();
+    puts("ok: dm1_v1_combat_log_pc34_compat 6 tests passed");
     return 0;
 }

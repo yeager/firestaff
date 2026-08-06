@@ -3,8 +3,8 @@
  *
  * Ring buffer of up to combatLogMaxLines entries.  Renders the last
  * N entries (where N fits along the bottom of the 320x200 framebuffer)
- * with a half-transparent dithered background.  Uses the M11 original
- * font when available, otherwise falls back to a built-in 3x5 mini font.
+ * with a half-transparent dithered background. Uses the M11 original font
+ * for authenticated DM1 routes; the built-in 3x5 font is diagnostic-only.
  */
 
 #include "dm1_v1_combat_log_pc34_compat.h"
@@ -208,11 +208,9 @@ void DM1_CombatLog_Render(M11_GameViewState* state,
     if (!M11_QolRuntime_GetCombatLogEnabled()) return;
     if (g_count <= 0) return;
 
-    /* The normal DM1 launch is source-owned: a missing GRAPHICS.DAT font is
-     * an asset failure, not permission to manufacture a replacement glyph
-     * set. Keep the mini-font available only to non-catalog diagnostic
-     * callers, where it is explicitly a QoL fallback. */
-    if (state && state->sourceKind == M11_GAME_SOURCE_BUILTIN_CATALOG &&
+    /* A missing GRAPHICS.DAT font is an asset failure, not permission to
+     * manufacture a replacement glyph set on any authenticated DM1 route. */
+    if (state && !DM1_CombatLog_SourceAllowsFallbackFont(state->sourceKind) &&
         !state->originalFontAvailable) {
         return;
     }

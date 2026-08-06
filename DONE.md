@@ -50872,3 +50872,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   helpers are now compiled only on POSIX, where the external archive scanner
   calls them. Windows keeps its explicit fail-closed stubs and no longer turns
   the unused POSIX definitions into `-Werror` failures.
+- ✅ 2026-08-06 DM1 combat-log source gate: closed the remaining synthetic
+  mini-font route for authenticated `BUILTIN_CATALOG`, `CUSTOM_DUNGEON` and
+  `DIRECT_DUNGEON` sessions. A missing original `GRAPHICS.DAT` font now leaves
+  the DM1 log unrendered instead of manufacturing glyphs; the 3x5 font remains
+  diagnostic-only for non-DM1 callers. Verification: the source-gate unit
+  test passes 6/6 and the real PC34 G0194, wall-ornament, alcove, 611-record
+  object-corpus and M564/F0702 cursor tests pass.
