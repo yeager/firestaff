@@ -26,8 +26,18 @@ int main(void) {
     world.levels[0][0].source_header_verified = 1;
     world.levels[0][0].dungeon_seed = 0x0108e938u;
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
+                                   1, 0, 1, 1) == -1,
+          "verified level header without a source monster stays blocked");
+    {
+        const uint16_t health[4] = { 10u, 20u, 30u, 40u };
+        CHECK(theron_v1_world_bind_track02_monster(
+                  &world, 1, 0, 0x1200u, 0x0042u, 1, 1, 0x0eu, 0u,
+                  health, 1u, 0u) == 0,
+              "authentic source monster ledger entry binds");
+    }
+    CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
                                    1, 0, 1, 1) == 1,
-          "regular Track02 spawn uses the authenticated category formula");
+          "regular Track02 spawn uses a matched source monster record");
     creature = theron_v1_creature_by_id(&world, 1);
     CHECK(creature != NULL && creature->hp > 0 &&
               creature->max_hp == creature->hp && creature->attack > 0 &&
@@ -59,6 +69,13 @@ int main(void) {
     world.level_loaded[0][0] = 1;
     world.levels[0][0].source_header_verified = 1;
     world.levels[0][0].dungeon_seed = 0x0108e938u;
+    {
+        const uint16_t health[4] = { 10u, 20u, 30u, 40u };
+        CHECK(theron_v1_world_bind_track02_monster(
+                  &world, 1, 0, 0x1201u, 0x0043u, 1, 1, 0x0eu, 0u,
+                  health, 1u, 0u) == 0,
+              "second source monster ledger entry binds");
+    }
     CHECK(theron_v1_creature_spawn(&world, THERON_CREATURE_AKUTUBA,
                                    1, 0, 1, 1) == 1,
           "regular spawn remains source-admitted after generator rejection");

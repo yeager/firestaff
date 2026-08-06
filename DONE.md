@@ -53579,6 +53579,11 @@ alcove runtime and archive-media tests passed (4/4).
   closing its generator route. The production archive was rebuilt and checked
   for absence of the legacy object; focused combat and real JP Track 02 loader
   regressions remain green.
+- ✅ 2026-08-06 Theron source-monster spawn gate: regular creature admission now
+  requires a matching authentic Track 02 source-monster ledger occurrence at
+  the requested dungeon/level/coordinate, not merely a verified level header.
+  The focused production regression covers header-only rejection and a bound
+  source record; no host-positioned monster can bypass the real-data ledger.
 - ✅ 2026-08-06 CSB selected-archive isolation: M12 can now materialize every
   selected CSB edition into its own hash-checked runtime cache instead of
   reusing the scanner's first-match `asset-cache/csb` view. The existing FM

@@ -1621,8 +1621,9 @@
   PCE rand() lives in bank-switched overlay ($4644/$4667) — not statically
   resolvable; current LCG assumption unconfirmed but unrefuted.
   2026-08-06 production-boundary update: the five regular Track 02 spawn
-  zones now create live records only after a source-header-verified level is
-  loaded, using the disassembly-bound category HP/attack/defense formulas.
+  zones now create live records only after a source-header-verified level and
+  matching source-monster ledger occurrence are loaded, using the
+  disassembly-bound category HP/attack/defense formulas.
   Scripted Thief/Demon records, AI/attack behavior, T900 loot and sound stay
   closed until their source consumers are captured.
   2026-08-06 generator-integrity update: a rejected legacy generator label no
