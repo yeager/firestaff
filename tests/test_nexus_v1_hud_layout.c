@@ -2,6 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include "asset_find_by_hash.h"
 #include "nexus_v1_hud_layout.h"
 
 static uint64_t fnv1a64(const uint8_t *data, size_t size)
@@ -57,6 +58,12 @@ int main(void)
         return 77;
     }
     fclose(file);
+    if (!asset_file_matches_md5(path,
+                                "e88d60859f65f08fa622e1992b02280f")) {
+        free(data);
+        fprintf(stderr, "FAIL: DM.BIN is not the authenticated retail source\n");
+        return 1;
+    }
     if (size < (long)NEXUS_HUD_LAYOUT_DM_BIN_OFFSET +
             (long)NEXUS_HUD_LAYOUT_ENTRY_COUNT *
                 (long)NEXUS_HUD_LAYOUT_ENTRY_BYTES ||

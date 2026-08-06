@@ -16,6 +16,13 @@
 
 # Nexus boot-profile capability audit (2026-08-06)
 
+# Nexus HUD DM.BIN retail identity gate (2026-08-06)
+
+- ✅ Hardened the 80-entry HUD layout and 40-entry hit-rectangle regressions
+  with the production DM.BIN MD5 before accepting real geometry. The parser
+  and source anchors remain verified; Saturn input dispatch, VDP2 ownership
+  and final HUD composition remain capture-gated.
+
 # Nexus FACE.BIN retail identity gate (2026-08-06)
 
 - ✅ Hardened `test_nexus_v1_face_bin` with the authenticated European

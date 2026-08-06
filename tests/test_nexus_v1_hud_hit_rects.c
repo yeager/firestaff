@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "asset_find_by_hash.h"
 #include "nexus_v1_hud_hit_rects.h"
 
 int main(void)
@@ -32,6 +33,12 @@ int main(void)
         return 77;
     }
     fclose(file);
+    if (!asset_file_matches_md5(path,
+                                "e88d60859f65f08fa622e1992b02280f")) {
+        free(data);
+        fprintf(stderr, "FAIL: DM.BIN is not the authenticated retail source\n");
+        return 1;
+    }
     if (nexus_v1_hud_hit_rects_parse_dm_bin(
             data, (size_t)size, rects, NEXUS_HIT_RECT_COUNT, &count) != 0 ||
         count != NEXUS_HIT_RECT_COUNT ||

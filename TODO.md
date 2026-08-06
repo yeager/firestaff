@@ -762,8 +762,10 @@ Soul Room focus movement. Keep the final dungeon handoff capture-gated.
 
 - **NEXUS-HUD-SATURN-DISPATCH-CAPTURE:** The real DM.BIN hit-rectangle
   parser now rejects both inverted/out-of-range rectangles and signed
-  negative origins. Remaining work is still the Saturn input/VDP consumer
-  capture that binds each admitted region to its command semantics.
+  negative origins. The HUD layout and hit-rectangle regressions now require
+  the authenticated retail DM.BIN before accepting their 80/40-entry census.
+  Remaining work is still the Saturn input/VDP consumer capture that binds
+  each admitted region to its command semantics.
   M11 no longer derives `startup_hud_ready` from a DGN viewport handoff;
   2026-08-06: the HUD layout regression now proves the `yam\\menuctrl.c`
   owner string immediately before `DM.BIN+0x376D0`, the exact 80-entry table

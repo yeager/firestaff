@@ -115,7 +115,8 @@ add_test(NAME nexus_v1_combat_tables COMMAND test_nexus_v1_combat_tables)
 set_tests_properties(nexus_v1_combat_tables PROPERTIES LABELS "nexus;combat;tier4")
 
 add_executable(test_nexus_v1_hud_layout
-    tests/test_nexus_v1_hud_layout.c)
+    tests/test_nexus_v1_hud_layout.c
+    src/shared/asset_find_by_hash.c)
 target_include_directories(test_nexus_v1_hud_layout PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_hud_layout PRIVATE firestaff_nexus)
@@ -151,7 +152,8 @@ add_test(NAME nexus_v1_shop_prices COMMAND test_nexus_v1_shop_prices)
 set_tests_properties(nexus_v1_shop_prices PROPERTIES LABELS "nexus;shop;tier4")
 
 add_executable(test_nexus_v1_hud_hit_rects
-    tests/test_nexus_v1_hud_hit_rects.c)
+    tests/test_nexus_v1_hud_hit_rects.c
+    src/shared/asset_find_by_hash.c)
 target_include_directories(test_nexus_v1_hud_hit_rects PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_hud_hit_rects PRIVATE firestaff_nexus)
