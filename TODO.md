@@ -291,6 +291,14 @@
   French-media windows show the real TrueMotion and changing startup scenes in
   VDP1 framebuffer data. This is still a raw witness, not a menu/HUD/viewport
   import or a PRS3 decoder proof.
+- **NEXUS-SATURN-RUNTIME-CAPTURE-REGION-IDENTITY:** The raw witness analyzer
+  now reports SHA-256 identities for every VDP1/VDP2 payload region and can
+  require observed changes between adjacent frames. The real French/E-region
+  four-frame startup witness changes VDP1 FB0, VDP1 VRAM and the draw-buffer
+  selector, while VDP2 registers/VRAM/CRAM remain unchanged in that sample.
+  This is stronger transport evidence for the authentic startup animation,
+  but it still does not identify a menu, HUD, viewport, CLUT, or source-owned
+  consumer; semantic admission remains blocked.
 - **NEXUS-SATURN-STARTUP-INPUT-CAPTURE:** The external Saturn producer now
   supports a bounded, active-low START pulse through Mednafen SMPC at an
   operator-selected emulated frame, with an explicit mask for START (`0x10`),

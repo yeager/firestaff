@@ -32,6 +32,13 @@ VDP memory, host pixels, or a guessed menu. A resulting menu/HUD/viewport claim
 still requires the corresponding source identity and VDP1/VDP2 consumer
 artifact.
 
+The raw witness can be inspected with
+`scripts/analyze_nexus_saturn_runtime_capture.py`. It reports SHA-256 values
+for each captured VDP1/VDP2 region and can require a region to differ between
+adjacent frames. This proves observed runtime change in the producer without
+identifying a menu, HUD, viewport, CLUT, or consumer; the tool always keeps
+semantic admission blocked.
+
 ## Artifact families
 
 | Route | Magic | Evidence still required |

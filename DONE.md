@@ -57,6 +57,16 @@
   that no retail stream fails. This proves the DMWeb-bounded byte decoder on
   real MENU.BPK data; it does not promote pixels to Saturn VDP1/VDP2 upload.
 
+# Nexus Saturn raw witness region analysis (2026-08-07)
+
+- ✅ Added `scripts/analyze_nexus_saturn_runtime_capture.py`, which validates
+  the existing raw capture layout, prints SHA-256 identities for each VDP1 and
+  VDP2 region, and supports an explicit adjacent-frame change requirement.
+- ✅ The real four-frame French/E-region startup witness changes VDP1 FB0,
+  VDP1 VRAM and the draw-buffer selector. The sample's VDP2 register/VRAM/CRAM
+  regions remain unchanged. The tool keeps semantic admission blocked: this
+  is runtime observation only, not menu/HUD/viewport or CLUT ownership proof.
+
 # DM2 SKSave-korpus med vald källa (2026-08-07)
 
 - ✅ Realdatatestet för original-SKSave använder nu bara
