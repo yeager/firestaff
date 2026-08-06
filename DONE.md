@@ -542,6 +542,15 @@
   the same source buffer. This is not a claim of native SKULL execution, menu
   rendering or input parity.
 
+# DM2 viewport fallback-counter production fence (2026-08-06)
+
+- ✅ `dm2_production_placeholder_boundary` now verifies that all eleven
+  production viewport `fallback_*_drawn_count` fields are reset-only. The
+  renderer must consume authenticated material or record a blocked-material
+  result; no future fallback increment or non-zero write can hide behind the
+  frame ownership receipt. This is a source-boundary guard, not a claim that
+  unimplemented material families are drawable.
+
 # DM2 FM Towns TWANIM P3 startup gate (2026-08-06)
 
 - ✅ The selected HME-242 TWANIM.EXP is now also extracted only into RAM and

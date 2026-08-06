@@ -100,6 +100,27 @@ EXPECTED_REMOVALS = {
 }
 
 
+# These are observability fields, not a renderer escape hatch.  The live
+# viewport clears them at the beginning of a frame and its material gates must
+# either consume a source-owned bitmap or report the blocked material.  A
+# future increment or non-zero assignment would mean an unowned draw path has
+# been reintroduced while callers still rely on a zero total as their
+# no-placeholder receipt.
+VIEWPORT_FALLBACK_COUNTERS = (
+    "fallback_floor_ceiling_drawn_count",
+    "fallback_wall_drawn_count",
+    "fallback_wall_ornament_drawn_count",
+    "fallback_door_drawn_count",
+    "fallback_creature_drawn_count",
+    "fallback_item_drawn_count",
+    "fallback_creature_possession_item_drawn_count",
+    "fallback_carried_item_drawn_count",
+    "fallback_projectile_drawn_count",
+    "fallback_hud_core_drawn_count",
+    "fallback_hud_portrait_drawn_count",
+)
+
+
 def removed_files(cmake: str, variable: str) -> set[str]:
     """Extract all quoted source names from list(REMOVE_ITEM <variable> ...)."""
     found: set[str] = set()
@@ -145,6 +166,22 @@ def verify(repo: Path) -> list[str]:
     for guard in required_guards:
         if guard not in m11:
             errors.append(f"M11 source gate missing: {guard}")
+
+    viewport_path = repo / "src/dm2/dm2_v1_viewport_renderer.c"
+    if not viewport_path.exists():
+        errors.append(f"missing {viewport_path}")
+        return errors
+    viewport = viewport_path.read_text(encoding="utf-8")
+    if "dm2_v1_block_source_material" not in viewport:
+        errors.append("viewport source-material block gate missing")
+    for counter in VIEWPORT_FALLBACK_COUNTERS:
+        assignments = re.findall(
+            rf"\bs->\s*{counter}\s*(?:=|\+=|-=|\+\+|--)", viewport)
+        reset = re.findall(
+            rf"\bs->\s*{counter}\s*=\s*0\s*;", viewport)
+        if len(assignments) != 1 or len(reset) != 1:
+            errors.append(
+                f"viewport fallback counter is not reset-only: {counter}")
     return errors
 
 

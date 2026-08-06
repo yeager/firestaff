@@ -97,9 +97,10 @@
   regression work, but none may enter `firestaff_m10`, `firestaff_dm2` or
   `firestaff_dm2_v2` without a live original-data owner. The CTest
   `dm2_production_placeholder_boundary` inventories the current excluded
-  modules. Remove an entry only together with its source-backed M11/runtime
-  handoff and real-data regression; never make a broad glob the admission
-  mechanism.
+  modules and now also locks the live viewport's named fallback counters to
+  reset-only observability fields. Remove an entry only together with its
+  source-backed M11/runtime handoff and real-data regression; never make a
+  broad glob the admission mechanism.
 
 - **DM2-SOUND-TEXT-CONSUMER:** `c_sound.cpp` binds class triples to GDAT sound
   payloads but does not supply a sound-name text producer. The production
