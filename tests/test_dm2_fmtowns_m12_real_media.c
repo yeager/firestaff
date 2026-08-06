@@ -9,6 +9,7 @@
 #include "asset_status_m12.h"
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_boot.h"
+#include "dm2_v1_fmtowns_disc.h"
 #include "dm2_v1_runtime.h"
 
 #include <stdio.h>
@@ -186,6 +187,49 @@ int main(void)
                    dm2_v1_fmtowns_anim_stream_is_hme242_end(
                        &launch.profile->fmtowns_end_stream),
                "FM Towns startup media has complete retail TWANIM stream bounds");
+        {
+            DM2_V1_FmtownsDiscReceipt disc;
+            DM2_V1_FmtownsAnimFrameReceipt first_frame;
+            DM2_V1_FmtownsAnimFrameReceipt last_frame;
+            uint8_t *title = NULL;
+            size_t title_size = 0u;
+            uint8_t pixels[320u * 200u / 2u];
+            int first_ok = 0;
+            int last_ok = 0;
+
+            memset(&disc, 0, sizeof(disc));
+            memset(&first_frame, 0, sizeof(first_frame));
+            memset(&last_frame, 0, sizeof(last_frame));
+            if (launch.profile && launch.profile->fmtowns_disc_image &&
+                       dm2_v1_fmtowns_disc_probe(
+                           launch.profile->fmtowns_disc_image,
+                           launch.profile->fmtowns_disc_image_size,
+                           &disc) == 0 &&
+                       dm2_v1_fmtowns_disc_extract_alloc(
+                           launch.profile->fmtowns_disc_image,
+                           launch.profile->fmtowns_disc_image_size,
+                           &disc.title, &title, &title_size) == 0) {
+                first_ok = dm2_v1_fmtowns_anim_stream_decode_frame(
+                           title, title_size, 0u, pixels, sizeof(pixels),
+                           &first_frame);
+                last_ok = dm2_v1_fmtowns_anim_stream_decode_frame(
+                           title, title_size, 224u, pixels, sizeof(pixels),
+                           &last_frame);
+            }
+            /* FNV-1a receipts are of the two 320x200/4bpp buffers decoded
+             * from the selected HME-242 TITLE stream, not stored artwork. */
+            expect(first_ok && last_ok && first_frame.valid &&
+                       first_frame.width == 320u && first_frame.height == 200u &&
+                       first_frame.decoded_frame_count == 1u &&
+                       last_frame.valid && last_frame.decoded_frame_count == 225u &&
+                       last_frame.display_duration == 6u &&
+                       first_frame.compressed_command_count == 14458u &&
+                       last_frame.compressed_command_count == 9u &&
+                       first_frame.output_fnv1a == 0xc7ad2279u &&
+                       last_frame.output_fnv1a == 0x5ef57a09u,
+                   "FM Towns TITLE decodes its first and final retail frames in RAM");
+            free(title);
+        }
         expect_complete_english_text_overlay(launch.profile);
         text = dm2_v1_runtime_i18n_text(0x07, 0x00, 0x00, &text_size);
         expect(text && text_size >= 7u && memcmp(text, "FIGHTER", 7u) == 0,

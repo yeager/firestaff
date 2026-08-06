@@ -1037,9 +1037,13 @@ level or consumer bindings.
   HME-242 inventories: SWOOSH 22 records (18 DL), TITLE 235 (224 DL, one SD,
   five SO) and END 401 (two AN phases, 382 DL). These are bounded source
   receipts, not decoded frames.
+  **2026-08-06 update:** the source-owned IMG1 decoder now replays TITLE's
+  EN/DL records from the same RAM-owned stream and validates first/final
+  retail 320x200 frames. It follows SKWIN `ANIM_DECODE_IMG1`, including its
+  contiguous-file read at a record boundary. The remaining gap is the M11
+  display/palette/timing and entrance handoff, not a replacement bitmap.
   Re-admit actual TWANIM playback only with a selected-media hash receipt,
-  source-owned frame decoding,
-  and an actual title/entrance execution handoff.
+  an actual title/entrance execution handoff.
   **2026-08-06 update:** a shared data root can now retain all three verified
   DM2 editions at once. At M12→M11 launch, the selected DOS, FM Towns or
   Amiga version resolves its own matched owner instead of inheriting the

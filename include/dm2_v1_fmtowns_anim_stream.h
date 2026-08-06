@@ -39,6 +39,19 @@ typedef struct {
     uint32_t bn_count;
 } DM2_V1_FmtownsAnimStreamReceipt;
 
+typedef struct {
+    int valid;
+    uint16_t width;
+    uint16_t height;
+    uint16_t bit_depth;
+    uint32_t requested_frame;
+    uint32_t decoded_frame_count;
+    uint16_t display_duration;
+    uint32_t source_bytes_consumed;
+    uint32_t compressed_command_count;
+    uint32_t output_fnv1a;
+} DM2_V1_FmtownsAnimFrameReceipt;
+
 /* Parses every complete record, rejects unknown tags and rejects trailing or
  * truncated bytes.  It does not render pixels; decoding stays unavailable
  * until a source-owned TWANIM execution handoff consumes this receipt. */
@@ -54,5 +67,14 @@ int dm2_v1_fmtowns_anim_stream_is_hme242_title(
     const DM2_V1_FmtownsAnimStreamReceipt *receipt);
 int dm2_v1_fmtowns_anim_stream_is_hme242_end(
     const DM2_V1_FmtownsAnimStreamReceipt *receipt);
+
+/* Replays EN/DL image records through SKWIN's `ANIM_DECODE_IMG1` semantics
+ * up to `requested_frame` (zero based), into a packed 4bpp canvas.  The
+ * caller supplies the original stream bytes and a 32000-byte canvas; no
+ * filesystem path or host-made art is accepted. */
+int dm2_v1_fmtowns_anim_stream_decode_frame(
+    const uint8_t *data, size_t data_size, uint32_t requested_frame,
+    uint8_t *out_pixels, size_t out_pixel_capacity,
+    DM2_V1_FmtownsAnimFrameReceipt *out);
 
 #endif /* FIRESTAFF_DM2_V1_FMTOWNS_ANIM_STREAM_H */

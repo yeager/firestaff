@@ -54153,6 +54153,16 @@ alcove runtime and archive-media tests passed (4/4).
   three receipts from the user's original ZIP in RAM; no title frame is
   invented or rendered by this boundary.
 
+- ✅ 2026-08-06 DM2 FM Towns TITLE IMG1 decoding: `dm2_v1_fmtowns_anim_stream`
+  now replays HME-242 EN/DL records into the original packed 320x200 4bpp
+  canvas directly from the selected CD stream. It follows SKWIN
+  `ANIM_DECODE_IMG1` (0759:0330), including its original contiguous-stream
+  boundary behaviour, while retaining strict whole-stream bounds. The
+  real-media test locks first/final TITLE frame command counts and FNV-1a
+  receipts (`c7ad2279`, `5ef57a09`) computed in RAM from the retail stream.
+  This is a decoder and source receipt only; M11 palette/timing/presentation
+  remains explicitly unclaimed until its own source-owned handoff exists.
+
 - ✅ 2026-08-06 Theron raw-BIN HuC6280 disassembly intake: the static bank-$1f
   receipt now verifies authentic `TQUS02.bin` and `TQJP02.bin` Track 02 files
   in addition to the ISO projections. Their real MODE1/2352 bank-window
