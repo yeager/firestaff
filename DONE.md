@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 GitHub Actions Windows-buildfix: UCRT64 no longer sees the
+  POSIX-only external-archive helpers as implicit declarations. Windows keeps
+  the existing fail-closed archive behavior through explicit stubs for nested
+  ADF reads/path publication. Local full CMake build passes; the fix targets
+  `cmake-build (windows-2022)` failure at `asset_find_by_hash.c`.
+
 - ✅ 2026-08-06 Theron Track 02 object-record handoff: full-dungeon loading now
   retains decoded source records alongside every authentic category 4–10, 14
   and 15 occurrence, including the missile/cloud payloads. Tests verify the
