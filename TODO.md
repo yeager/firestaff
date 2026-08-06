@@ -44,6 +44,12 @@
   rather than leaking synthetic pixels. Authentic font-tile bytes also remain
   behind this gate: host render-plan coordinates/styles cannot make them a
   visible startup menu until a captured VDC/VCE text consumer binds the route.
+  2026-08-06 follow-up: the authentic US RAR/CUE and hash-verified assembled
+  MODE1/2048 Track 02 ISO are accepted by the instrumented capture harness,
+  but the available headless SDL run remains before the game-owned CD read
+  (`non_system_card_pcecd_reads=0`). A real interactive SDL capture is still
+  required before admitting startup animation timing, menu input, or later
+  level consumers.
 
 - **NEXUS-PRS3-PIXEL-CAPTURE:** Retail Structure2 descriptors still expose
   bounded DMWeb format evidence, but the runtime no longer decodes their

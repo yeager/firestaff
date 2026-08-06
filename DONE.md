@@ -1,3 +1,15 @@
+# Theron authentic archive capture boundary (2026-08-06)
+
+- ✅ Extracted the supplied retail US archive through its original CUE layout
+  and verified the assembled Track 02 ISO against the authenticated
+  `ceb02343868f80cec899e9b239aff2da` identity.
+- ✅ The instrumented Mednafen receipt records the correct System Card and
+  Track 02 provenance, while keeping startup animation/menu/later-level
+  promotion closed because no game-owned CD read occurred in the available
+  headless capture (`non_system_card_pcecd_reads=0`).
+- ✅ No synthetic animation frame, input route, or later-level decoder was
+  promoted from this incomplete capture.
+
 # Theron TQTR capture-offset correction (2026-08-06)
 
 # M11 viewport build hygiene (2026-08-06)
