@@ -1,4 +1,5 @@
 #include "csb_v1_boot.h"
+#include "csb_v1_fmtowns_graphics_dat.h"
 
 #include <stdint.h>
 #include <stdio.h>
@@ -309,12 +310,36 @@ static void test_fmtowns_startup_surface_decode(void)
 {
     const char *path = getenv("FIRESTAFF_CSB_FMTOWNS_GRAPHICS");
     unsigned char *pixels = NULL;
+    uint8_t header[4];
+    FILE *file;
+    long file_size;
     int width = 0;
     int height = 0;
     CSB_V1_StartupGraphicDecodeReceipt_PC34 receipt;
 
     if (!path || path[0] == '\0') {
         printf("  SKIP: FIRESTAFF_CSB_FMTOWNS_GRAPHICS not set\n");
+        return;
+    }
+    /* This opt-in real-media test must not quietly exercise a stale PC,
+     * Atari, or Amiga cache entry merely because its leaf is GRAPHICS.DAT.
+     * ReDMCSB F31E/F31J uses the 0x8001, 728-item little-endian container
+     * that IMAGE2.C expands. */
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (file_size = ftell(file)) < 0 || fseek(file, 0, SEEK_SET) != 0 ||
+        fread(header, 1u, sizeof(header), file) != sizeof(header)) {
+        if (file) fclose(file);
+        printf("  SKIP: FIRESTAFF_CSB_FMTOWNS_GRAPHICS is unreadable\n");
+        return;
+    }
+    fclose(file);
+    if (file_size < (long)CSB_FMTOWNS_GRAPHICS_MIN_SIZE ||
+        file_size > (long)CSB_FMTOWNS_GRAPHICS_MAX_SIZE ||
+        header[0] != 0x01u || header[1] != 0x80u ||
+        header[2] != (CSB_FMTOWNS_GRAPHICS_ITEM_COUNT & 0xFFu) ||
+        header[3] != (CSB_FMTOWNS_GRAPHICS_ITEM_COUNT >> 8u)) {
+        printf("  SKIP: FIRESTAFF_CSB_FMTOWNS_GRAPHICS is not an F31E/F31J GRAPHICS.DAT\n");
         return;
     }
 #define CHECK_FMTOWNS_STARTUP_SURFACE(index, expected_width, expected_height, label) \
