@@ -71,6 +71,16 @@
   records and could select unrelated object art. The real PC3.4 corpus test
   now asserts the four tail aspects and passes all 611 object records.
 
+- ✅ 2026-08-06 DM1 G0237 object-aspect alignment correction: compared the
+  complete `kObjectInfoAspect[180]` sequence against ReDMCSB `G0237` row by
+  row. Four missing `62` entries for the Emerald, Ruby, Ra and Master Keys
+  had shifted Boulder and every later junk/object record, so appending the
+  final four values alone was insufficient. Restored the exact 180-row
+  sequence and expanded `test_m11_dm1_real_object_corpus` to assert the
+  affected key/object tail (subtypes 21..52). Verification: direct source
+  comparison 180/180 with zero mismatches; Ninja target build passed; the
+  real PC3.4 corpus passed all 611 records.
+
 - ✅ 2026-08-06 DM2 Amiga nested-media intake: the real-media receipt no
   longer shells out to `unzip` or `bsdtar`. A bounded ZIP reader now accepts
   an already-resident ZIP byte buffer, so the supplied outer archive, its

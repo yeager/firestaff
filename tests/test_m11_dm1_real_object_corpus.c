@@ -74,21 +74,27 @@ int main(void)
         M11_GameView_Shutdown(&state);
         return 1;
     }
-    /* ReDMCSB G0237 has 180 rows.  The last four junk records are easy to
-     * lose when hand-copying the aspect table and then silently render as
-     * object-0 art because C fills a short initializer with zeroes. */
+    /* ReDMCSB G0237 has 180 rows.  The key/junk tail is easy to shift when
+     * hand-copying the aspect table: a missing row silently selects a later
+     * object's art while C still accepts the initializer. */
     {
-        static const int expectedTail[4] = { 77, 78, 74, 41 };
+        static const int expectedJunkAspects[32] = {
+            62, 62, 62, 62,
+            76, 3, 60, 61, 27, 28, 25, 26,
+            71, 70, 5, 66, 15, 15, 58, 59,
+            59, 79, 63, 64, 72, 73, 74, 75,
+            77, 78, 74, 41
+        };
         int i;
-        for (i = 0; i < 4; ++i) {
-            int subtype = 49 + i;
+        for (i = 0; i < 32; ++i) {
+            int subtype = 21 + i;
             if (dm1_item_aspect_index(THING_TYPE_JUNK, subtype) !=
-                expectedTail[i]) {
+                expectedJunkAspects[i]) {
                 fprintf(stderr,
-                        "invalid G0237 tail: junk subtype %d aspect=%d expected=%d\n",
+                        "invalid G0237 junk aspect: subtype %d aspect=%d expected=%d\n",
                         subtype,
                         dm1_item_aspect_index(THING_TYPE_JUNK, subtype),
-                        expectedTail[i]);
+                        expectedJunkAspects[i]);
                 ++failures;
             }
         }
