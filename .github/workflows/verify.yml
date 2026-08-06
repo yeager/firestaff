@@ -7,13 +7,6 @@ on:
     branches: [main]
   workflow_dispatch:
 
-# Every main commit needs a complete verification receipt. Queue later runs
-# for the same ref rather than cancelling an in-flight matrix when several
-# verified changes are pushed close together.
-concurrency:
-  group: verify-${{ github.workflow }}-${{ github.ref }}
-  cancel-in-progress: false
-
 env:
   SDL3_TAG: release-3.2.14
 
