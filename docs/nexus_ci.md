@@ -3,8 +3,9 @@
 ## Overview
 
 Nexus V1 is built as a static library (libfirestaff_nexus.a) compiled via CMake.
-The CI pipeline in .github/workflows/ does not currently test Nexus specifically.
-All CI jobs test DM1/M11 via probes and headless drivers.
+The normal CMake matrix builds it on Ubuntu, macOS and Windows and hard-runs
+the data-free `nexus_production_source_boundary` test. Original Nexus data and
+the Saturn BIOS remain user-supplied and are never placed in CI.
 
 ---
 
@@ -20,7 +21,9 @@ Jobs:
 3. web-wasm-toolchain-probe: Check Web/WASM toolchain availability
 4. warnings-check: -Wall -Wextra -Werror on all probes
 
-**Nexus coverage:** NONE. verify.yml does not build or test Nexus.
+**Nexus coverage:** production library build on all three platforms plus the
+production-source boundary test. The broader CTest catalogue is also reported;
+private real-media tests remain skipped when their corpus is absent.
 
 ### release.yml
 
@@ -32,13 +35,15 @@ Jobs:
 3. linux-x86_64: Build on Ubuntu, package DEB/RPM, upload artifact
 4. linux-arm64: Build on Ubuntu ARM64 (Steam Deck), package DEB/RPM, upload artifact
 
-**Nexus coverage:** NONE. release.yml builds firestaff (DM1/CSB/DM2) only.
+**Nexus coverage:** release builds inherit the production source boundary, but
+packaging still targets the current DM1/CSB/DM2 products. Nexus is not claimed
+as a finished packaged game.
 
 ### pages.yml
 
 Runs on: push to docs/ on main branch
 
-**Nexus coverage:** NONE. Only deploys documentation pages.
+**Nexus coverage:** documentation only; no game data is published.
 
 ---
 
@@ -46,35 +51,40 @@ Runs on: push to docs/ on main branch
 
 Nexus V1 CI requires a fundamentally different setup because:
 1. No public disc image -- cannot ship original Sega Saturn data in CI
-2. No compiled binary output -- only a static library
-3. No regression tests -- 0 tests exist for Nexus
+2. No Saturn BIOS/capture artifact may be committed to CI
+3. Real-media tests require the user's private corpus
 
-### Minimum CI for Nexus (Phase 0-1)
+### Current CI for Nexus (Phase 0-1)
 
 - cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
 - cmake --build build --target firestaff_nexus
 - test -f build/libfirestaff_nexus.a
+- ctest --test-dir build -R '^nexus_production_source_boundary$'
 
 This minimal job proves the library compiles on every push.
 
-### After Phase 1 (Runtime Profile)
+### Remaining CI expansion after source-owned runtime handoff
 
-Add to verify.yml:
-- Build full firestaff binary (links Nexus)
-- Run: ./build/firestaff --profile nexus --data-dir tests/fixtures/ 2>&1
-- Must start without loading DM1 assets (smoke test for profile isolation)
+Add a full Nexus launch smoke test only after Saturn startup and VDP
+handoff are source-bound. An empty fixture directory must not be treated as
+positive playability proof.
 
-### After Phase 3 (World Model)
+### After the source-owned world model is admitted
 
 - Run: ./build/firestaff --profile nexus --seed 42 --ticks 100
 - Capture world state hash
 - Upload hash as artifact
 
-### After Phase 7 (Verification Suite)
+### Current local verification suite
 
-Add Nexus tests to CTest, run as part of verify.yml:
-- ctest --test-dir build --output-on-failure -R nexus
-- cppcheck --enable=all -std=c99 -I include src/nexus/
+Nexus tests are already wired into CTest. On a machine with the user-owned
+retail corpus, run:
+
+    ctest --test-dir build --output-on-failure -R nexus
+
+The important current gates cover production source boundaries, startup,
+DGN/PRS3, SLEV/SAL receipts and mechanics no-mutation. These prove bounded
+source handling, not full playability.
 
 ---
 
@@ -87,7 +97,7 @@ For Nexus, when integrated:
 - Same input script -> same world state hash
 - Add Nexus to the hash comparison job once Nexus binary exists
 
-Currently no such binary exists.
+The Nexus library is not yet a finished packaged game binary.
 
 ---
 
@@ -105,29 +115,18 @@ No DMG/EXE/DEB/RPM for Nexus until a proper game binary ships.
 
 ---
 
-## CI Gaps for Nexus
+## Remaining CI Gaps for Nexus
 
-1. No Nexus test target in CMakeLists.txt -- tests/ has no nexus_ tests, no CTest entries
-2. No Nexus build target linked to any executable -- library not tested in context
-3. No fixture or disc image in CI -- cannot run integration tests
-4. No linting for Nexus source -- cppcheck/pylint not run on src/nexus/
-5. No coverage measurement -- no coverage report for Nexus (0% coverage)
+1. CI cannot run the private retail corpus or the user's Saturn BIOS.
+2. Original Saturn VDP1/VDP2 capture remains a local evidence requirement.
+3. Coverage percentages are not a meaningful parity metric until blocked
+   source-format tests are separated from admitted runtime behavior.
+4. No full packaged Nexus product is claimed by the release workflow.
 
 ---
 
-## Recommendation: Add Minimal Nexus Job to verify.yml
+## Completed minimum Nexus CI boundary
 
-Add this job to .github/workflows/verify.yml:
-
-nexus-compile-check:
-  runs-on: ubuntu-24.04
-  steps:
-    - uses: actions/checkout@v4
-    - name: Configure
-      run: cmake -B build -G Ninja -DCMAKE_BUILD_TYPE=Release
-    - name: Build Nexus library
-      run: cmake --build build --target firestaff_nexus
-    - name: Verify artifact
-      run: test -f build/libfirestaff_nexus.a && echo OK
-
-This proves the library compiles on every push. Expand when Phase 3+ is done and tests exist.
+The normal `cmake-build` matrix now performs the build and hard-runs
+`nexus_production_source_boundary`. Broader real-data and original-Saturn
+capture tests remain local by design.

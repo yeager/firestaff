@@ -88,6 +88,11 @@ jobs:
             cmake --build build --parallel
           fi
 
+      - name: Run Nexus production source boundary
+        run: |
+          ctest --test-dir build --output-on-failure \
+            -R '^nexus_production_source_boundary$'
+
       - name: Run unit tests (ctest)
         run: |
           cd build

@@ -21,6 +21,14 @@
   out of `firestaff_nexus`. This protects the retail fail-closed boundary
   during future CMake/source-list changes.
 
+# Nexus CI source boundary (2026-08-06)
+
+- ✅ The cross-platform CMake workflow now runs
+  `nexus_production_source_boundary` as a hard check after building the Nexus
+  library. `docs/nexus_ci.md` no longer reports the obsolete zero-test state;
+  it documents the actual data-free CI boundary and the remaining private
+  retail/capture requirements.
+
 # Nexus direct Structure2 decode gate (2026-08-06)
 
 - ✅ Closed the remaining public retail bypass: the active canonical DGN
