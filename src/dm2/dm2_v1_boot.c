@@ -975,9 +975,6 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
     memcpy(profile->fmtowns_cdda_track_starts, track_starts,
            sizeof(profile->fmtowns_cdda_track_starts));
     profile->fmtowns_cdda_track_count = track_count;
-    profile->cdda_tracks_available = (int)(DM2_FMTOWNS_CDDA_LAST_TRACK -
-                                           DM2_FMTOWNS_CDDA_FIRST_TRACK + 1);
-
     /* Extract game files from the disc image if not already found */
     /* DM2's HME-242 image has its own audited raw-sector ISO reader.
      * Do not route it through the generic FM Towns iterator: that reader is
@@ -1034,9 +1031,19 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
                 if (dm2_v1_fmtowns_disc_extract_alloc(img_data, img_size,
                         &probe.cd_dat,
                         &cd_data, &cd_size) == 0 && cd_size == 40u) {
-                    memcpy(profile->cdda_cd_dat_data, cd_data, 40u);
-                    profile->cdda_cd_dat_size = 40u;
-                    profile->cdda_cd_dat_verified = 1;
+                    dm2_md5_bytes_hex(cd_data, cd_size,
+                                      profile->cdda_cd_dat_md5);
+                    if (md5_matches(profile->cdda_cd_dat_md5,
+                                    g_dm2_cdda_cd_dat_hashes[0])) {
+                        memcpy(profile->cdda_cd_dat_data, cd_data, 40u);
+                        profile->cdda_cd_dat_size = 40u;
+                        profile->cdda_cd_dat_verified = 1;
+                        snprintf(profile->cdda_cd_dat_path,
+                                 sizeof(profile->cdda_cd_dat_path),
+                                 "%s::CD.DAT", zip_path);
+                    } else {
+                        profile->cdda_cd_dat_md5[0] = '\0';
+                    }
                 }
                 free(cd_data);
             }
@@ -1437,30 +1444,13 @@ int dm2_v1_boot_scan_assets(DM2_V1_BootProfile *profile,
                 }
             }
 
-            if (profile->cdda_cd_dat_verified) {
-                int ti;
-                snprintf(profile->cdda_track_dir,
-                         sizeof(profile->cdda_track_dir),
-                         "%s/cdda", profile->asset_root);
-                profile->cdda_tracks_available = 0;
-                for (ti = 2; ti <= 10; ti++) {
-                    char tp[1024];
-                    FILE *tf;
-                    snprintf(tp, sizeof(tp), "%s/track%02d.raw",
-                             profile->cdda_track_dir, ti);
-                    tf = fopen(tp, "rb");
-                    if (tf) {
-                        fclose(tf);
-                        profile->cdda_tracks_available++;
-                    }
-                }
-
-                /* FM Towns: load disc image from ZIP for CDDA extraction */
-                if (profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
-                    profile->cdda_tracks_available == 0 &&
-                    !profile->fmtowns_disc_image) {
-                    dm2_v1_boot_load_fmtowns_disc_from_zip(profile, base);
-                }
+            if (profile->cdda_cd_dat_verified &&
+                profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+                !profile->fmtowns_disc_image) {
+                /* FM Towns CDDA is read only from the selected archive's
+                 * in-memory original image. Never accept a pre-extracted
+                 * host `trackNN.raw` substitute. */
+                dm2_v1_boot_load_fmtowns_disc_from_zip(profile, base);
             }
         }
     }
@@ -1536,14 +1526,19 @@ int dm2_v1_boot_music_track_for_level(const DM2_V1_BootProfile *profile,
 
 size_t dm2_v1_boot_load_cdda_track(const DM2_V1_BootProfile *profile,
                                     int disc_track,
-                                    uint8_t **out_data)
+                                    uint8_t **out_data,
+                                    int *out_media_verified)
 {
     if (out_data) *out_data = NULL;
-    if (!profile || !out_data) return 0;
+    if (out_media_verified) *out_media_verified = 0;
+    if (!profile || !out_data || !out_media_verified) return 0;
     if (disc_track < 2 || disc_track > 99) return 0;
 
-    /* Path 1: extract from in-memory FM Towns disc image */
-    if (profile->fmtowns_disc_image && profile->fmtowns_disc_image_size > 0 &&
+    /* The audio must come from this selected, hash-admitted original medium.
+     * CD.DAT supplies the matching original trigger table. */
+    if (profile->assets_verified && profile->cdda_cd_dat_verified &&
+        profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+        profile->fmtowns_disc_image && profile->fmtowns_disc_image_size > 0 &&
         disc_track >= (int)DM2_FMTOWNS_CDDA_FIRST_TRACK &&
         disc_track <= (int)DM2_FMTOWNS_CDDA_LAST_TRACK &&
         disc_track < profile->fmtowns_cdda_track_count + 2) {
@@ -1563,46 +1558,10 @@ size_t dm2_v1_boot_load_cdda_track(const DM2_V1_BootProfile *profile,
                     info.start_sector, info.sector_count,
                     &pcm, &pcm_size) == 0) {
                 *out_data = pcm;
+                *out_media_verified = 1;
                 return pcm_size;
             }
         }
-    }
-
-    /* Path 2: load from pre-extracted trackNN.raw files */
-    if (profile->cdda_track_dir[0] != '\0') {
-        char path[1024];
-        FILE *f;
-        long fsize;
-        uint8_t *buf;
-
-        snprintf(path, sizeof(path), "%s/track%02d.raw",
-                 profile->cdda_track_dir, disc_track);
-
-        f = fopen(path, "rb");
-        if (!f) return 0;
-
-        fseek(f, 0, SEEK_END);
-        fsize = ftell(f);
-        if (fsize <= 0 || fsize % 4 != 0) {
-            fclose(f);
-            return 0;
-        }
-        fseek(f, 0, SEEK_SET);
-
-        buf = (uint8_t *)malloc((size_t)fsize);
-        if (!buf) {
-            fclose(f);
-            return 0;
-        }
-        if (fread(buf, 1, (size_t)fsize, f) != (size_t)fsize) {
-            free(buf);
-            fclose(f);
-            return 0;
-        }
-        fclose(f);
-
-        *out_data = buf;
-        return (size_t)fsize;
     }
 
     return 0;

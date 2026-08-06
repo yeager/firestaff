@@ -525,10 +525,12 @@ int  dm2_v1_sound_inspect_music_data(const uint8_t *data, size_t size,
                                      DM2_V1_MusicStreamReceipt *out_receipt);
 int  dm2_v1_sound_queue_music(int track, int loop,
                               DM2_V1_MusicQueueReceipt *out_receipt);
-/* Queue CDDA music: raw 16-bit signed LE stereo 44100Hz PCM.
- * The queue takes ownership (copies the data); caller may free after. */
+/* Queue CDDA music: raw 16-bit signed LE stereo 44100Hz PCM from a verified
+ * original medium. The queue copies the data; caller may free after.
+ * `media_verified` must be the boot loader's receipt for the same buffer.
+ * Unpacked or caller-supplied PCM is deliberately rejected. */
 int  dm2_v1_sound_queue_cdda(const uint8_t *pcm_data, size_t pcm_size,
-                              int disc_track, int loop,
+                              int disc_track, int loop, int media_verified,
                               DM2_V1_MusicQueueReceipt *out_receipt);
 
 typedef struct {

@@ -183,10 +183,6 @@ typedef struct {
     uint8_t cdda_cd_dat_data[40];
     int     cdda_cd_dat_verified;
 
-    /* ── CDDA extracted track directory ────────────────────── */
-    char    cdda_track_dir[512];  /* e.g. ~/.firestaff/data/dm2-fmtowns-ja/cdda */
-    int     cdda_tracks_available; /* count of trackNN.raw files found */
-
     /* ── FM Towns disc image (loaded from ZIP, kept in memory) ── */
     char    fmtowns_zip_path[512];
     uint8_t *fmtowns_disc_image;
@@ -1315,12 +1311,15 @@ int dm2_v1_boot_music_track_for_level(const DM2_V1_BootProfile *profile,
                                        int x, int y,
                                        int *out_track);
 
-/* Load an extracted CDDA track's raw PCM data from the cdda_track_dir.
- * disc_track is the 1-based disc track number (2-8 for DM2 FM Towns).
- * Caller must free(*out_data) when done. Returns PCM size in bytes, 0 on failure. */
+/* Load a CDDA track directly from the selected, hash-verified FM Towns
+ * original disc image. No unpacked track directory is accepted. disc_track
+ * is the 1-based disc track number (2-8 for DM2 FM Towns). Caller must
+ * free(*out_data) when done. `out_media_verified` is set only when the
+ * returned bytes are bound to the verified game-data and CD.DAT receipts. */
 size_t dm2_v1_boot_load_cdda_track(const DM2_V1_BootProfile *profile,
                                     int disc_track,
-                                    uint8_t **out_data);
+                                    uint8_t **out_data,
+                                    int *out_media_verified);
 
 /* Probe a data_dir for DM2 assets without full verification.
  * Used by the launcher menu to determine DM2 availability.

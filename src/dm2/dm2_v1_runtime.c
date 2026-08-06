@@ -1115,12 +1115,14 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
         DM2_MUSIC_SYSTEM_CDDA_COORD) {
         uint8_t *pcm = NULL;
         size_t pcm_size;
+        int media_verified = 0;
         if (rt->cdda_stop_cb)
             rt->cdda_stop_cb(rt->cdda_cb_ctx);
-        pcm_size = dm2_v1_boot_load_cdda_track(rt->boot, track, &pcm);
+        pcm_size = dm2_v1_boot_load_cdda_track(rt->boot, track, &pcm,
+                                                &media_verified);
         if (pcm && pcm_size > 0) {
             receipt.queue_result = dm2_v1_sound_queue_cdda(
-                pcm, pcm_size, track, 1, &queue);
+                pcm, pcm_size, track, 1, media_verified, &queue);
             receipt.source_stream_resolved = queue.asset_resolved ? 1 : 0;
             free(pcm);
         }

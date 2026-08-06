@@ -239,33 +239,24 @@ int main(void)
     assert(!receipt.allocation_requested);
     assert(receipt.allocation_size == 0u);
 
-    /* ── CDDA queue (FM Towns raw PCM) ──────────────────────────────── */
+    /* ── CDDA queue provenance gate ─────────────────────────────────── */
     {
         DM2_V1_MusicQueueReceipt mq;
         /* 44100Hz stereo 16-bit: 1 second = 176400 bytes */
-        static uint8_t fake_pcm[176400];
-        memset(fake_pcm, 0, sizeof(fake_pcm));
+        static uint8_t unverified_pcm[176400];
+        memset(unverified_pcm, 0, sizeof(unverified_pcm));
 
-        assert(dm2_v1_sound_queue_cdda(NULL, 0, 2, 0, &mq) < 0);
-        assert(dm2_v1_sound_queue_cdda(fake_pcm, 5, 2, 0, &mq) < 0);
-        assert(dm2_v1_sound_queue_cdda(fake_pcm, sizeof(fake_pcm),
-                                       3, 1, &mq) == DM2_V1_MUSIC_QUEUE_READY);
-        assert(mq.asset_resolved == 1);
-        assert(mq.request_queued == 1);
-        assert(mq.decoder_proven == 1);
-        assert(mq.backend_proven == 1);
-        assert(mq.loop_duration_us >= 999000u && mq.loop_duration_us <= 1001000u);
+        assert(dm2_v1_sound_queue_cdda(NULL, 0, 2, 0, 0, &mq) < 0);
+        assert(dm2_v1_sound_queue_cdda(unverified_pcm, 5, 2, 0, 0, &mq) < 0);
+        assert(dm2_v1_sound_queue_cdda(unverified_pcm, sizeof(unverified_pcm),
+                                       3, 1, 0, &mq) ==
+               DM2_V1_MUSIC_QUEUE_ASSET_ROOT_UNVERIFIED);
+        assert(mq.asset_resolved == 0);
+        assert(mq.request_queued == 0);
 
-        /* Flush: should return the queued data */
+        /* A caller-owned PCM fixture cannot reach the playback handoff. */
         {
             DM2_V1_CddaFlushReceipt flush;
-            assert(dm2_v1_sound_flush_cdda(&flush) == 1);
-            assert(flush.valid == 1);
-            assert(flush.disc_track == 3);
-            assert(flush.pcm_size == sizeof(fake_pcm));
-            assert(flush.loop == 1);
-            assert(flush.pcm_data != NULL);
-            /* Second flush: nothing queued */
             assert(dm2_v1_sound_flush_cdda(&flush) == 0);
         }
         dm2_v1_sound_release_cdda();

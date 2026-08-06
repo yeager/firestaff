@@ -1655,10 +1655,12 @@ int dm2_v1_sound_queue_music(int track, int loop,
 }
 
 int dm2_v1_sound_queue_cdda(const uint8_t *pcm_data, size_t pcm_size,
-                             int disc_track, int loop,
+                             int disc_track, int loop, int media_verified,
                              DM2_V1_MusicQueueReceipt *out_receipt)
 {
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    if (!media_verified)
+        return DM2_V1_MUSIC_QUEUE_ASSET_ROOT_UNVERIFIED;
     if (!pcm_data || pcm_size < 4u)
         return DM2_V1_MUSIC_QUEUE_ASSET_MISSING;
     /* 16-bit stereo 44100Hz: 4 bytes per frame */

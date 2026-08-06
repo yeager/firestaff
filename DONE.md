@@ -1,5 +1,15 @@
 # DM2 production placeholder inventory (2026-08-06)
 
+- ✅ 2026-08-06 DM2 FM Towns CDDA media boundary: removed the production
+  `trackNN.raw` fallback and its unpacked-directory census. A CDDA buffer can
+  now be queued only when boot extracted it directly from the selected FM
+  Towns disc image in memory after the original GRAPHICS.DAT/DUNGEON.DAT pair
+  and `CD.DAT` have passed their registered hashes. The sound handoff carries
+  that receipt and rejects caller-owned PCM. Verification: full `firestaff`
+  build, `dm2_v1_sound_source_gate`, and
+  `dm2_production_placeholder_boundary` pass. No game data was copied,
+  unpacked or modified.
+
 - ✅ 2026-08-06 DM2 synthetic sound-label removal: removed the production
   hand-written English sound-name tables from `dm2_v1_sound_name()`. SKProject
   `c_sound.cpp` resolves GDAT sample class triples but contains no matching

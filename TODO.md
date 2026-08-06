@@ -29,6 +29,13 @@
   hand-written English labels. Recover an original text consumer and bind it
   to the exact GDAT entry before displaying sound names.
 
+- **DM2-CDDA-OTHER-PLATFORM-MEDIA:** FM Towns CDDA now has a verified
+  in-memory original-disc route only. Mega CD and PC-9821 still lack an
+  equivalent selected-medium reader and therefore must remain silent rather
+  than accepting pre-extracted `trackNN.raw` files or caller PCM. Recover
+  each platform's original disc container and its audio-track binding before
+  enabling playback.
+
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
   and the local English CUE by
