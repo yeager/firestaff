@@ -4605,6 +4605,11 @@ list(REMOVE_ITEM M10_SOURCES
 # compiles it, and it has no original-DM1 input or M11 runtime caller.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat.c")
+# `dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34_compat.c`
+# seeds synthetic items into a local chest-state probe; the shared inventory
+# helper remains in M10, while this regression driver has no M11 caller.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34_compat.c")
 # `dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c` is a
 # contract-only probe. It manufactures its chest stack, leader hand, floor
 # link and coordinates locally, reads no original save/dungeon/graphics data,
@@ -53926,7 +53931,9 @@ add_executable(test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_c
 target_include_directories(test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat COMMAND test_dm1_v1_chest_pickup_encumbrance_partial_stack_runtime_pc34_compat)
-add_executable(test_dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34_compat tests/test_dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34_compat.c)
+add_executable(test_dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34_compat
+    tests/test_dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34_compat.c
+    src/dm1/dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34_compat COMMAND test_dm1_v1_chest_pickup_skip_leader_full_hand_to_non_leader_pc34_compat)
