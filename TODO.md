@@ -3489,6 +3489,14 @@ that its exact runtime path is not already source-locked and tested.
    aspect. The complete 180-row sequence is now restored and the real-object
    corpus explicitly verifies the affected junk subtypes. Exact real door,
    stair, ornament and packaged-app pixel capture remain open.
+   2026-08-06: the legacy generic DUNGEON.DAT bridge no longer guesses the
+   raw-map base from EOF or skips the column/SFT/text/thing prefix. It now
+   follows the PC34 header, MAP descriptors, column bases, square-first-thing
+   table, text words and G0235 thing byte counts before reading column-major
+   squares, and retains door state bits. This removes a source of walls and
+   doors being projected from object bytes. Real PC34 layout/state verification
+   is covered by `test_firestaff_dm1_dungeon_state_real_data`; broader M11
+   viewport capture remains open.
 2. **DM1-PC34-FULL-ASSET-VISUAL-AUDIT:** Compare every one of the 713
    hash-verified PC 3.4 `GRAPHICS.DAT` records against Greatstone/SCK decoded
    references and capture the packaged macOS app. 2026-08-06: the new real

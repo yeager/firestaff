@@ -9525,6 +9525,21 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_firestaff_dm1_dungeon_state_real_data.c")
+        add_executable(test_firestaff_dm1_dungeon_state_real_data
+            tests/test_firestaff_dm1_dungeon_state_real_data.c
+            src/engine/firestaff_dungeon_state.c)
+        target_link_libraries(test_firestaff_dm1_dungeon_state_real_data PRIVATE firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_firestaff_dm1_dungeon_state_real_data PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME firestaff_dm1_dungeon_state_real_data
+            COMMAND test_firestaff_dm1_dungeon_state_real_data
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_f0115_floor_item_runtime_capture_pc34.c")
         add_executable(test_m11_dm1_f0115_floor_item_runtime_capture_pc34
             tests/test_m11_dm1_f0115_floor_item_runtime_capture_pc34.c)

@@ -97,6 +97,18 @@
   comparison 180/180 with zero mismatches; Ninja target build passed; the
   real PC3.4 corpus passed all 611 records.
 
+- ✅ 2026-08-06 DM1 PC34 dungeon-map offset correction: replaced the legacy
+  generic `DUNGEON.DAT` reader's EOF/fallback raw-map offset with the real
+  ReDMCSB/DMWeb layout: 44-byte header, 16-byte MAP descriptors, cumulative
+  column SFT bases, square-first-thing table, text words, and G0235 thing
+  records. Map bytes are now read from each descriptor's raw offset in
+  column-major order, with the lower five attribute bits retained for door
+  state. This prevents object records from becoming false walls/doors and
+  removes the hardcoded fallback map interpretation. Verification: extracted
+  PC3.4 `DUNGEON.DAT` passed 14-map, 18x19 map-0, start-position, door-type,
+  and door-state checks in `test_firestaff_dm1_dungeon_state_real_data`; the
+  no-argument CTest form remains skip-safe when original data is unavailable.
+
 - ✅ 2026-08-06 DM2 Amiga nested-media intake: the real-media receipt no
   longer shells out to `unzip` or `bsdtar`. A bounded ZIP reader now accepts
   an already-resident ZIP byte buffer, so the supplied outer archive, its
