@@ -82,6 +82,12 @@
   only for its real SCR section-table parser; `FIRESTAFF_NEXUS_PRODUCTION`
   compiles out the indexed host framebuffer writer. Keep the Saturn text
   consumer and VDP2 placement capture open.
+  2026-08-06 follow-up: the documented English Saturn revision
+  (`SHA-256 764a2d6c…`, `MD5 7bea3db1…`) now passes the common SCR header,
+  section-table, four-section-chain and 242-CG-tile source receipts. Its
+  revision-specific subrecord statistics remain canonical-only; that test
+  stays skipped for the English bytes rather than treating differing source
+  data as a shared grammar.
 
 - **NEXUS-ACTION-DISPATCH-CAPTURE:** Retail mechanics no longer consume
   queued movement or turn commands merely because DGN floor geometry decoded;

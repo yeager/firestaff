@@ -29,6 +29,15 @@
 - ✅ No VDP2 tilemap, CLUT, timing, or framebuffer permission is inferred from
   this format-only join.
 
+# Nexus English FONT256.S2D revision admission (2026-08-06)
+
+- ✅ Admitted the documented English Saturn FONT256.S2D SHA-256 revision for
+  common SCR framing, section-chain and source-tile receipts.
+- ✅ Kept the canonical-only subrecord grammar gate because the English
+  revision's byte counts differ; it remains explicitly skipped rather than
+  being forced through canonical statistics.
+- ✅ No text glyph mapping, VDP2 placement or framebuffer permission changed.
+
 # Theron real Track 02 bank reload hygiene (2026-08-06)
 
 - ✅ The source-faithful world loader now clears the selected dungeon's level

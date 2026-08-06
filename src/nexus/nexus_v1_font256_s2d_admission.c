@@ -13,6 +13,13 @@ static uint64_t fnv1a64(const uint8_t *bytes, size_t size)
     return value;
 }
 
+static int admitted_sha256(const char *sha256_hex)
+{
+    return sha256_hex &&
+        (strcmp(sha256_hex, NEXUS_V1_FONT256_S2D_SHA256) == 0 ||
+         strcmp(sha256_hex, NEXUS_V1_FONT256_S2D_SHA256_ENGLISH) == 0);
+}
+
 int nexus_v1_font256_s2d_admit(
     const uint8_t *source_bytes,
     size_t source_size,
@@ -31,7 +38,7 @@ int nexus_v1_font256_s2d_admit(
     memset(&receipt, 0, sizeof(receipt));
     if (!source_bytes || !identity || source_size != NEXUS_V1_FONT256_S2D_BYTES ||
         !identity->sha256_verified || !identity->sha256_hex ||
-        strcmp(identity->sha256_hex, NEXUS_V1_FONT256_S2D_SHA256) != 0 ||
+        !admitted_sha256(identity->sha256_hex) ||
         !identity->source_fnv1a64) {
         *out_receipt = receipt;
         return 0;

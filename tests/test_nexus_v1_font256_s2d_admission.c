@@ -58,7 +58,10 @@ int main(int argc, char **argv)
     }
     memset(&identity, 0, sizeof(identity));
     identity.sha256_verified = 1;
-    identity.sha256_hex = NEXUS_V1_FONT256_S2D_SHA256;
+    identity.sha256_hex = getenv("FIRESTAFF_NEXUS_FONT256_SHA256");
+    if (!identity.sha256_hex) {
+        identity.sha256_hex = NEXUS_V1_FONT256_S2D_SHA256;
+    }
     identity.source_fnv1a64 = fnv1a64(bytes, size);
     if (!nexus_v1_font256_s2d_admit(bytes, size, &identity, &receipt) ||
         !receipt.valid || !receipt.source_identity_bound ||

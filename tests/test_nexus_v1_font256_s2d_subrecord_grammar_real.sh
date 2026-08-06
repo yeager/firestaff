@@ -10,7 +10,7 @@ fi
 [[ "$(wc -c < "$font" | tr -d '[:space:]')" == "25012" ]]
 actual="$(shasum -a 256 "$font" | awk '{print $1}')"
 if [[ "$actual" != "$expected" ]]; then
-    echo "FONT256.S2D subrecord grammar: SKIP (retail variant SHA-256 $actual is not the admitted subrecord corpus)"
+    echo "FONT256.S2D subrecord grammar: SKIP (retail variant SHA-256 $actual is not the canonical subrecord corpus)"
     exit 77
 fi
 exec "$1" "$font"
