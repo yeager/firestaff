@@ -71,6 +71,11 @@
   real GROUP or DUNGEON bytes. Keep it in the explicit audit test until each
   listed function is bound to its live owner and authenticated DM1 state.
 
+- **DM1-L0201-L0250-LOCAL-OWNER-AUDIT:** This ReDMCSB local-label table is
+  source metadata only. It has no M11/runtime caller or authenticated game
+  input; retain it in the explicit audit test until a live owner needs its
+  local-storage evidence, never as standalone production state.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

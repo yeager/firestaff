@@ -16,6 +16,15 @@
 - ✅ Verification: `test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 L0201–L0250 local-owner audit isolation (2026-08-06)
+
+- ✅ Removed the ReDMCSB local-label inventory from the broad M10 archive.
+  It records DUNVIEW/BLIT/DUNGEON local ownership but has no M11/runtime
+  caller and consumes no authenticated DM1 bytes; the existing explicit
+  inventory test retains its source evidence.
+- ✅ Verification: `test_dm1_v1_l0201_l0250_local_owner_audit` passes; the
+  source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the
