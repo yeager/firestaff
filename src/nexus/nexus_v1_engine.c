@@ -335,6 +335,15 @@ static int nexus_v1_decode_structure2_animation_materials(
     nexus_v1_dmdf_free_material_bank(&engine->animated_floor_materials);
     engine->animated_floor_material_route_valid = 0;
     nexus_v1_free_structure2_surfaces(engine);
+
+    /* DMWeb identifies the Structure2 descriptor envelope and bounded
+     * payload candidates, but that is not a Saturn pixel/CLUT/VDP1 capture.
+     * Do not promote the documented 08h/28h hypotheses into host surfaces
+     * while the retail source lane lacks an authenticated original capture.
+     * The non-DMWeb lane remains available for isolated compatibility
+     * fixtures. */
+    if (engine->current_level.geometry_info.dmweb_container)
+        return 0;
     if (nexus_v1_current_level_decode_structure2_textures(
             engine, engine->structure2_surfaces,
             NEXUS_DGN_MAX_STRUCTURE2_TEXTURES,

@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-PRS3-PIXEL-CAPTURE:** Retail Structure2 descriptors still expose
+  bounded DMWeb format evidence, but the runtime no longer decodes their
+  08h/28h payloads into host surfaces during LEV load. Recover the Saturn
+  pixel order, CLUT owner and VDP1 command capture before reopening texture
+  surfaces, palette conversion or DGN raster submission.
+
 - **NEXUS-STARTUP-TEXT-CAPTURE:** Retail PLRD rows now refuse stale
   serialized ASCII names in the startup footer/row-label lane; only the
   isolated compatibility roster may expose host labels. Recover the Saturn

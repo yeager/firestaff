@@ -1,3 +1,12 @@
+# Nexus retail Structure2 decode fence (2026-08-06)
+
+- ✅ Closed a retail material-promotion leak: loading a hash-verified LEV no
+  longer decodes the DMWeb 08h/28h Structure2 hypotheses into host pixel and
+  palette surfaces. The bounded descriptor/format receipt remains available
+  as no-draw provenance; compatibility fixture lanes are unchanged.
+- ✅ Verification: `test_nexus_v1_dgn_geometry_readiness` and the real Nexus
+  boot/hash scan. No game data was copied or committed.
+
 # Nexus boot-profile synthetic feature fence (2026-08-06)
 
 - ✅ Removed unproven behavior claims from the default Nexus profile. It now

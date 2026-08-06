@@ -1343,7 +1343,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               structure2_format.pixel_span_proven &&
               structure2_format.palette_addressing_proven &&
               structure2_format.vdp1_format_proven &&
-              structure2_format.decoder_permitted &&
+              !structure2_format.decoder_permitted &&
               structure2_format.no_draw_only &&
               !structure2_format.fallback_visuals_permitted,
               "real Structure2 format evidence pipeline fully proven from DMWeb documentation");
@@ -1916,7 +1916,7 @@ static void test_real_dgn_structure1_layout_corpus(void) {
                               .non_textured_face_count &&
                       !complete_scene.transform_semantics_proven &&
                       !complete_scene.pixel_palette_vdp1_semantics_proven &&
-                      complete_scene.decoder_permitted &&
+                      !complete_scene.decoder_permitted &&
                       complete_scene.no_draw_only &&
                       !complete_scene.fallback_visuals_permitted &&
                       complete_scene.blocks_real_dgn_mesh_render,
