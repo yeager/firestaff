@@ -4439,6 +4439,9 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # original CCM, timer, creature and record-pool transaction that creates it.
 # Their only construction fixture is test-only; keep the focused contracts
 # out of the product archive until a source-owned producer consumes them.
+# The animation bootstrap also has no M11/runtime consumer.  Its arbitrary
+# file-handle API cannot stand in for a mounted, hash-verified animation
+# stream, so compile it only in the focused bootstrap/chunk tests.
 list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_panel_routing.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_survey_helpers.c"
@@ -4478,6 +4481,7 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_step_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_projectile_creature_collision_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_anim_bootstrap.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_fmtowns_disc.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES}
@@ -14123,6 +14127,9 @@ endif()
 
     add_executable(test_dm2_v1_anim_bootstrap
         tests/test_dm2_v1_anim_bootstrap.c
+        # The arbitrary-file reader is deliberately test-only until an
+        # authenticated original animation-media handoff owns it.
+        src/dm2/dm2_v1_anim_bootstrap.c
     )
     target_include_directories(test_dm2_v1_anim_bootstrap PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include

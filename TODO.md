@@ -261,6 +261,10 @@
   virtual archive path instead of extracting it to `/tmp`. FM Towns and Amiga
   continue through their already authenticated in-memory buffers. PC archive
   media remains non-launchable until it has the same in-memory owner.
+  The callback-only `dm2_v1_anim_bootstrap` file-reader is now test-only: no
+  M11/DM2 runtime consumer has authenticated an original animation stream.
+  Re-admit it only with a selected-media hash receipt, decoded stream bounds,
+  and an actual title/entrance execution handoff.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   deliberately non-mutating until the original 263-byte `c_hero` layout,

@@ -50792,6 +50792,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `dm2-startup-menu`. Ordinary virtual DM2 ISO media remains blocked unless it
   has a dedicated in-memory owner.
 
+- ✅ 2026-08-06 DM2 unauthenticated animation-reader closure:
+  `dm2_v1_anim_bootstrap.c` has no M11/runtime caller but exposed arbitrary
+  animation-file handles through the product archive. It is now compiled
+  only by its focused bootstrap/chunk tests. Production cannot open an
+  unverified animation path until a selected original-media stream, bounds,
+  and M11 title/entrance handoff are all present.
+
 - ✅ 2026-08-06 DM2 generic archive disk-unpack closure: removed the boot
   reader's `/tmp/firestaff-dm2-asset-*.dat` extraction of virtual ZIP/ISO
   paths. A virtual PC archive entry now fails closed until it has a verified
