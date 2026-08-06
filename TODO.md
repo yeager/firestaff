@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D2L-D2R-F0111-SYNTHETIC-AUDIT:** This asset-free F0111 model
+  simulates D2-side door composition in a local framebuffer without original
+  material. It has no M11/runtime caller; retain it as explicit ReDMCSB
+  coverage while the independent D2 side-door route owns source material.
+
 - **DM1-D3C-F0111-SYNTHETIC-AUDIT:** This fixed D3C door-front source-order
   and C10 model has no original-material input or M11/runtime caller. Retain
   it as explicit ReDMCSB regression until a source-bound D3C door consumer is

@@ -1,3 +1,11 @@
+# DM1 D2L/D2R F0111 door synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free D2L/D2R F0111 framebuffer simulation from M10.
+  It reads no original material and has no M11/runtime caller; its dedicated
+  ReDMCSB regression already compiles the source explicitly.
+- ✅ Verification: `dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D3C F0111 door-front synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the fixed D3C F0111 door-front source-order/C10 model from M10.

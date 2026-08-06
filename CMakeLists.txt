@@ -4396,6 +4396,11 @@ list(REMOVE_ITEM M10_SOURCES
 # it in its explicit ReDMCSB test instead of the M10 production archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3c_f0111_door_front_pair_pc34_compat.c")
+# `dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat.c` is an
+# asset-free 320x200 F0111 simulation. It has no original-material input or
+# M11 caller; keep its ReDMCSB source lock explicit to the test target.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l_d2r_f0111_partly_open_door_pc34_compat.c")
 # `dm1_v1_viewport_d2c_center_wall_composition_pc34_compat.c` is an
 # asset-free synthetic D2C pixel-trace audit with no M11/runtime caller.
 # Compile it only into its dedicated test and keep the broad M10 archive
