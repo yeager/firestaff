@@ -1,3 +1,11 @@
+# DM1 chest stack-split synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the local F0333 stack-split chain fixture from M10. It reads no
+  original material and has no M11/runtime caller; its dedicated ReDMCSB
+  regression now compiles the source explicitly.
+- ✅ Verification: `test_dm1_v1_chest_open_stack_split_pc34_compat` passes;
+  the source object is absent from both M10 and M11 archives.
+
 # DM1 D1L/D1R stairs-pit synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the fixed-slot D1L/D1R stairs/pit dispatch fixture from M10. It

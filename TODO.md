@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHEST-STACK-SPLIT-SYNTHETIC-AUDIT:** This F0333 chain model uses
+  fixed sentinel item values and a local Next array. It reads no original game
+  data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound chest owner is recovered.
+
 - **DM1-D1L-D1R-STAIRS-PIT-SYNTHETIC-AUDIT:** This D1 side stairs/pit
   dispatch model uses fixed graphics slots and zones. It reads no original
   game data and has no M11/runtime caller; retain it only as explicit ReDMCSB
