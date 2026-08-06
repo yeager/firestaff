@@ -51114,3 +51114,11 @@ TEXT/FONT256 consumer is captured, so no synthetic names are promoted.
 pixel digests and reject every non-raster index. No generated pixels or
 platform substitution was introduced. Atari ST IMG1/IMG2 pixel binding and
 STX extraction remain explicitly open in TODO.
+- ✅ 2026-08-06 CSB FM Towns nested-CD intake: the launcher now streams the
+  retail ZIP's raw MODE1/2352 image to a temporary file, reads ISO sectors on
+  demand and verifies the original English and Japanese GRAPHICS/DUNGEON hash
+  pairs before launch. It materializes the selected runtime pair together with
+  title, executable and portrait sidecars in the normal CSB cache, without a
+  507 MB heap allocation. The local real-media regression covers both language
+  receipts and the resulting ordinary runtime paths; the game image remains
+  user-supplied and untracked.

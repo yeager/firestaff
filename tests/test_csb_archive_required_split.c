@@ -706,10 +706,47 @@ static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {
               "ISO CSB DUNGEON may match, but should not materialize when CSB is unavailable");
 }
 
+static void check_csb_fmtowns_real_archive_when_available(const char* root) {
+    M12_AssetStatus status;
+    const M12_AssetVersionStatus* english;
+    const M12_AssetVersionStatus* japanese;
+    const M12_AssetRequiredFileStatus* graphics;
+    const M12_AssetRequiredFileStatus* dungeon;
+    char runtimeRoot[ASSET_PATH_MAX];
+    char titlePath[ASSET_PATH_MAX];
+    char portraitPath[ASSET_PATH_MAX];
+    char programPath[ASSET_PATH_MAX];
+    if (!root || root[0] == '\0') {
+        puts("skip: FIRESTAFF_CSB_FMTOWNS_DATA_DIR not set");
+        return;
+    }
+    M12_AssetStatus_ScanGame(&status, root, "csb");
+    english = M12_AssetStatus_GetVersion(&status, "csb", 5U);
+    japanese = M12_AssetStatus_GetVersion(&status, "csb", 6U);
+    graphics = required_file_by_role(&status, "graphics");
+    dungeon = required_file_by_role(&status, "dungeon");
+    check_int(M12_AssetStatus_GameAvailable(&status, "csb") == 1,
+              "real FM Towns ZIP should admit CSB for launch");
+    check_int(english && english->matched && japanese && japanese->matched,
+              "real FM Towns ZIP should verify both CDATA and CJDATA graphics");
+    check_int(graphics && dungeon && !strstr(graphics->matchedPath, "::") &&
+                  !strstr(dungeon->matchedPath, "::"),
+              "real FM Towns required files should materialize to ordinary runtime paths");
+    check_int(FSP_JoinPath(runtimeRoot, sizeof(runtimeRoot),
+                           M12_AssetStatus_GetRuntimeDataDir(&status, "csb"), "csb") &&
+                  FSP_JoinPath(titlePath, sizeof(titlePath), runtimeRoot, "TITLE.ANM") &&
+                  FSP_JoinPath(programPath, sizeof(programPath), runtimeRoot, "CHTWE.EXP") &&
+                  FSP_JoinPath(portraitPath, sizeof(portraitPath), runtimeRoot,
+                               "PORTRAIT/ALEX.CMP") &&
+                  path_exists(titlePath) && path_exists(programPath) && path_exists(portraitPath),
+              "real FM Towns ZIP should cache source title, program and portrait sidecars");
+}
+
 int main(void) {
     char home[512];
     char positiveRoot[512];
     char negativeRoot[512];
+    const char* realFmtownsRoot = getenv("FIRESTAFF_CSB_FMTOWNS_DATA_DIR");
 
     if (!make_isolated_home(home, sizeof(home)) ||
         !join_path(positiveRoot, sizeof(positiveRoot), home, "positive-data") ||
@@ -729,6 +766,7 @@ int main(void) {
               "negative FIRESTAFF_DATA should be set");
     check_csb_wrong_archive_graphics_blocks_launch(negativeRoot);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
+    check_csb_fmtowns_real_archive_when_available(realFmtownsRoot);
 
     if (failures) {
         fprintf(stderr, "%d failure(s)\n", failures);

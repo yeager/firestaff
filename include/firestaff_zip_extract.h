@@ -37,6 +37,11 @@ int firestaff_zip_extract_memory_by_suffix(const uint8_t *zip_data,
                                            const char *suffix,
                                            uint8_t **out_data,
                                            size_t *out_size);
+/* Stream a suffix-matched entry directly to an ordinary file.  This is for
+ * original disc images that are too large to materialize in one allocation. */
+int firestaff_zip_extract_by_suffix_to_path(const char *zip_path,
+                                            const char *suffix,
+                                            const char *out_path);
 
 #ifdef __cplusplus
 }

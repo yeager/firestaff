@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **CSB-FMTOWNS-RUNTIME-PARITY:** The authentic FM Towns CD's verified
+  `CDATA`/`CJDATA` files, title animation, portraits and executables now reach
+  the CSB runtime cache without synthetic replacements. Keep launch/runtime
+  behavior capture-gated until the FM Towns-specific presentation, input,
+  audio/CDDA and save handoff are demonstrated against original media.
+
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP
   selector bindings fail-closed until the authentic SLEV/SDDRVS event

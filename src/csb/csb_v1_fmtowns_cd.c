@@ -1,4 +1,6 @@
 #include "csb_v1_fmtowns_cd.h"
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
 
@@ -188,6 +190,166 @@ int csb_v1_fmtowns_cd_extract(const uint8_t *bin_data, size_t bin_size,
         remaining -= chunk;
         lba++;
     }
+    return 0;
+}
+
+static int read_sector_file(FILE *file, uint32_t lba, int is_raw,
+                            uint8_t out[COOKED]) {
+    long offset = (long)lba * (is_raw ? (long)RAW : (long)COOKED) +
+                  (is_raw ? (long)DOFF : 0L);
+    return file && offset >= 0L && fseek(file, offset, SEEK_SET) == 0 &&
+           fread(out, 1U, COOKED, file) == COOKED ? 0 : -1;
+}
+
+static int parse_directory_file(FILE *file, uint32_t dir_lba,
+                                uint32_t dir_size, const char *parent_name,
+                                CSB_V1_FmtownsCdLayout *layout) {
+    uint32_t sectors_needed = (dir_size + COOKED - 1U) / COOKED;
+    uint32_t sector_index;
+
+    for (sector_index = 0U;
+         sector_index < sectors_needed &&
+         layout->file_count < CSB_FMTOWNS_CD_MAX_FILES;
+         ++sector_index) {
+        uint8_t sector[COOKED];
+        uint32_t pos = 0U;
+        uint32_t remaining = dir_size > (sector_index + 1U) * COOKED
+            ? COOKED : dir_size - sector_index * COOKED;
+        if (read_sector_file(file, dir_lba + sector_index,
+                             layout->is_raw_2352, sector) != 0) return -1;
+        while (pos < remaining && pos < COOKED) {
+            uint8_t rec_len = sector[pos];
+            uint8_t name_len;
+            uint32_t extent, size;
+            uint8_t flags;
+            char name[CSB_FMTOWNS_CD_MAX_NAME_LEN];
+            int i;
+            if (rec_len == 0U) break;
+            if (rec_len < 33U || pos + rec_len > COOKED) break;
+            name_len = sector[pos + 32U];
+            if (33U + name_len > rec_len) break;
+            extent = rd32le(sector + pos + 2U);
+            size = rd32le(sector + pos + 10U);
+            flags = sector[pos + 25U];
+            if (name_len <= 1U) { pos += rec_len; continue; }
+            if (name_len >= CSB_FMTOWNS_CD_MAX_NAME_LEN)
+                name_len = CSB_FMTOWNS_CD_MAX_NAME_LEN - 1U;
+            memcpy(name, sector + pos + 33U, name_len);
+            name[name_len] = '\0';
+            for (i = 0; i < (int)name_len; ++i) {
+                if (name[i] == ';') { name[i] = '\0'; break; }
+            }
+            {
+                CSB_V1_FmtownsCdFile *entry =
+                    &layout->files[layout->file_count++];
+                memset(entry, 0, sizeof(*entry));
+                strncpy(entry->name, name, CSB_FMTOWNS_CD_MAX_NAME_LEN - 1U);
+                strncpy(entry->parent, parent_name,
+                        CSB_FMTOWNS_CD_MAX_NAME_LEN - 1U);
+                entry->lba = extent;
+                entry->size = size;
+                entry->is_directory = (flags & 2U) != 0U;
+            }
+            if ((flags & 2U) != 0U && name[0] != '.' &&
+                parse_directory_file(file, extent, size, name, layout) != 0)
+                return -1;
+            pos += rec_len;
+        }
+    }
+    return 0;
+}
+
+int csb_v1_fmtowns_cd_parse_file(const char *image_path,
+                                 CSB_V1_FmtownsCdLayout *out) {
+    FILE *file;
+    uint8_t pvd[COOKED];
+    long image_size;
+    uint32_t root_lba, root_size;
+    if (!image_path || !out || !(file = fopen(image_path, "rb"))) return -1;
+    memset(out, 0, sizeof(*out));
+    if (fseek(file, 0L, SEEK_END) != 0 || (image_size = ftell(file)) < 0L) {
+        fclose(file); return -1;
+    }
+    out->is_raw_2352 = 1;
+    if (read_sector_file(file, CSB_FMTOWNS_CD_PVD_SECTOR, 1, pvd) != 0 ||
+        pvd[0] != 1U || memcmp(pvd + 1U, "CD001", 5U) != 0) {
+        out->is_raw_2352 = 0;
+        if (read_sector_file(file, CSB_FMTOWNS_CD_PVD_SECTOR, 0, pvd) != 0 ||
+            pvd[0] != 1U || memcmp(pvd + 1U, "CD001", 5U) != 0) {
+            fclose(file); return -1;
+        }
+    }
+    memcpy(out->volume_id, pvd + 40U, 32U);
+    out->volume_id[32] = '\0';
+    for (int i = 31; i >= 0 && out->volume_id[i] == ' '; --i)
+        out->volume_id[i] = '\0';
+    out->data_track_sectors = (uint32_t)(image_size /
+        (out->is_raw_2352 ? (long)RAW : (long)COOKED));
+    root_lba = rd32le(pvd + 158U);
+    root_size = rd32le(pvd + 166U);
+    {
+        int result = parse_directory_file(file, root_lba, root_size, "", out);
+        fclose(file);
+        return result;
+    }
+}
+
+int csb_v1_fmtowns_cd_extract_file_to_path(
+    const char *image_path, const CSB_V1_FmtownsCdLayout *layout,
+    const CSB_V1_FmtownsCdFile *entry, const char *out_path) {
+    FILE *image, *out;
+    uint8_t sector[COOKED];
+    uint32_t lba;
+    size_t remaining;
+    if (!image_path || !layout || !entry || entry->is_directory ||
+        entry->size == 0U || !out_path || !(image = fopen(image_path, "rb")))
+        return -1;
+    if (!(out = fopen(out_path, "wb"))) { fclose(image); return -1; }
+    lba = entry->lba;
+    remaining = entry->size;
+    while (remaining > 0U) {
+        size_t count = remaining > COOKED ? COOKED : remaining;
+        if (read_sector_file(image, lba++, layout->is_raw_2352, sector) != 0 ||
+            fwrite(sector, 1U, count, out) != count) {
+            fclose(out); fclose(image); remove(out_path); return -1;
+        }
+        remaining -= count;
+    }
+    if (fclose(out) != 0) { fclose(image); remove(out_path); return -1; }
+    fclose(image);
+    return 0;
+}
+
+int csb_v1_fmtowns_cd_extract_file_alloc(
+    const char *image_path, const CSB_V1_FmtownsCdLayout *layout,
+    const CSB_V1_FmtownsCdFile *entry, uint8_t **out_data, size_t *out_size) {
+    FILE *image;
+    uint8_t *data = NULL;
+    uint8_t sector[COOKED];
+    uint32_t lba;
+    size_t remaining, written = 0U;
+    if (out_data) *out_data = NULL;
+    if (out_size) *out_size = 0U;
+    if (!image_path || !layout || !entry || entry->is_directory ||
+        entry->size == 0U || !out_data || !out_size ||
+        !(data = (uint8_t *)malloc(entry->size)) ||
+        !(image = fopen(image_path, "rb"))) {
+        free(data); return -1;
+    }
+    lba = entry->lba;
+    remaining = entry->size;
+    while (remaining > 0U) {
+        size_t count = remaining > COOKED ? COOKED : remaining;
+        if (read_sector_file(image, lba++, layout->is_raw_2352, sector) != 0) {
+            fclose(image); free(data); return -1;
+        }
+        memcpy(data + written, sector, count);
+        written += count;
+        remaining -= count;
+    }
+    fclose(image);
+    *out_data = data;
+    *out_size = written;
     return 0;
 }
 

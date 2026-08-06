@@ -75,6 +75,24 @@ int csb_v1_fmtowns_cd_probe(const uint8_t *bin_data, size_t bin_size);
 int csb_v1_fmtowns_cd_parse(const uint8_t *bin_data, size_t bin_size,
                              CSB_V1_FmtownsCdLayout *out);
 
+/* File-backed equivalents for disc images too large to keep in memory.  The
+ * parser reads ISO sectors on demand; extraction writes the selected member
+ * straight to out_path.  This is the intake path for retail ZIP-wrapped FM
+ * Towns images. */
+int csb_v1_fmtowns_cd_parse_file(const char *image_path,
+                                 CSB_V1_FmtownsCdLayout *out);
+int csb_v1_fmtowns_cd_extract_file_to_path(
+    const char *image_path,
+    const CSB_V1_FmtownsCdLayout *layout,
+    const CSB_V1_FmtownsCdFile *entry,
+    const char *out_path);
+int csb_v1_fmtowns_cd_extract_file_alloc(
+    const char *image_path,
+    const CSB_V1_FmtownsCdLayout *layout,
+    const CSB_V1_FmtownsCdFile *entry,
+    uint8_t **out_data,
+    size_t *out_size);
+
 /* Extract a file from the BIN image by its entry.
  * Reads from raw 2352-byte sectors, extracting the 2048-byte user data.
  * Returns 0 on success, -1 on error. */

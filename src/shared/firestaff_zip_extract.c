@@ -317,4 +317,61 @@ int firestaff_zip_extract_memory_by_suffix(const uint8_t *zip_data,
         return 0;
     }
     return -1;
+int firestaff_zip_extract_by_suffix_to_path(const char *zip_path,
+                                            const char *suffix,
+                                            const char *out_path)
+{
+    FILE *in = NULL, *out = NULL;
+    long size, start, eocd = -1;
+    unsigned char *tail = NULL;
+    size_t tail_size;
+    uint32_t cd_offset, cd_size, pos;
+    uint16_t count, i;
+    if (!zip_path || !suffix || !out_path) return -1;
+    in = fopen(zip_path, "rb");
+    if (!in || fseek(in, 0L, SEEK_END) != 0 || (size = ftell(in)) < 22L) goto fail;
+    tail_size = (size_t)(size < 65557L ? size : 65557L);
+    start = size - (long)tail_size;
+    tail = (unsigned char *)malloc(tail_size);
+    if (!tail || fseek(in, start, SEEK_SET) != 0 ||
+        fread(tail, 1U, tail_size, in) != tail_size) goto fail;
+    for (long j = (long)tail_size - 22L; j >= 0L; --j) {
+        if (zr_u32le(tail + j) == 0x06054b50U) {
+            eocd = start + j;
+            count = zr_u16le(tail + j + 10);
+            cd_size = zr_u32le(tail + j + 12);
+            cd_offset = zr_u32le(tail + j + 16);
+            break;
+        }
+    }
+    free(tail); tail = NULL;
+    if (eocd < 0L || cd_offset + cd_size > (uint32_t)size) goto fail;
+    pos = cd_offset;
+    for (i = 0U; i < count && pos + 46U <= cd_offset + cd_size; ++i) {
+        unsigned char h[46], local[30];
+        char name[512];
+        uint16_t method, name_len, extra_len, comment_len, local_name, local_extra;
+        uint32_t packed, unpacked, local_offset, data_offset;
+        if (fseek(in, (long)pos, SEEK_SET) != 0 || fread(h,1U,sizeof(h),in) != sizeof(h) ||
+            zr_u32le(h) != 0x02014b50U) break;
+        method=zr_u16le(h+10); packed=zr_u32le(h+20); unpacked=zr_u32le(h+24);
+        name_len=zr_u16le(h+28); extra_len=zr_u16le(h+30); comment_len=zr_u16le(h+32);
+        local_offset=zr_u32le(h+42); pos += 46U+name_len+extra_len+comment_len;
+        if (!name_len || name_len >= sizeof(name) || fread(name,1U,name_len,in) != name_len) break;
+        name[name_len]='\0';
+        if (name[name_len-1U]=='/' || !str_iends_with(name,suffix)) continue;
+        if (fseek(in,(long)local_offset,SEEK_SET)!=0 || fread(local,1U,sizeof(local),in)!=sizeof(local) ||
+            zr_u32le(local)!=0x04034b50U) goto fail;
+        local_name=zr_u16le(local+26); local_extra=zr_u16le(local+28);
+        data_offset=local_offset+30U+local_name+local_extra;
+        if (fseek(in,(long)data_offset,SEEK_SET)!=0 || !(out=fopen(out_path,"wb"))) goto fail;
+        if (method == 0U) { unsigned char b[32768]; uint32_t left=unpacked; while(left){size_t n=left>sizeof(b)?sizeof(b):left;if(fread(b,1U,n,in)!=n||fwrite(b,1U,n,out)!=n)goto fail;left-=(uint32_t)n;} }
+#ifdef FIRESTAFF_HAS_ZLIB
+        else if (method == 8U) { unsigned char ib[32768],ob[32768]; uint32_t left=packed,done=0U; z_stream z; int rc=Z_OK; memset(&z,0,sizeof(z)); if(inflateInit2(&z,-MAX_WBITS)!=Z_OK)goto fail; while(rc!=Z_STREAM_END){if(!z.avail_in&&left){size_t n=left>sizeof(ib)?sizeof(ib):left;if(fread(ib,1U,n,in)!=n){inflateEnd(&z);goto fail;}left-=(uint32_t)n;z.next_in=ib;z.avail_in=(uInt)n;}z.next_out=ob;z.avail_out=sizeof(ob);rc=inflate(&z,Z_NO_FLUSH);if(rc!=Z_OK&&rc!=Z_STREAM_END){inflateEnd(&z);goto fail;} {size_t n=sizeof(ob)-z.avail_out;if(n&&fwrite(ob,1U,n,out)!=n){inflateEnd(&z);goto fail;}done+=(uint32_t)n;} } inflateEnd(&z); if(done!=unpacked)goto fail; }
+#endif
+        else goto fail;
+        if (fclose(out)!=0) { out=NULL; goto fail; } fclose(in); return 0;
+    }
+fail:
+    free(tail); if (out) { fclose(out); remove(out_path); } if (in) fclose(in); return -1;
 }

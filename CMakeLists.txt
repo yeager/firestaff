@@ -4324,6 +4324,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_csbgraphics_dat_classify.c
     src/csb/csb_v1_csbgraphics_dat_real_scan.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
+    src/csb/csb_v1_fmtowns_cd.c
     src/csb/csb_v1_csbgraphics_runtime_binding.c
     src/csb/csb_v1_csbgraphics_runtime_plan.c
     src/csb/csb_v1_startup_real_asset_receipt.c
@@ -4679,7 +4680,6 @@ set(M11_SOURCES
     src/csb/csb_v1_animation_script.c
     src/csb/csb_v1_graphics_atari_st_loader_pc34_compat.c
     src/csb/csb_v1_fmtowns_graphics_dat.c
-    src/csb/csb_v1_fmtowns_cd.c
     src/csb/csb_v1_amiga_graphics_dat.c
     src/csb/csb_v1_amiga_titl_dat.c
     src/dm1/dm1_v1_amiga_graphics_dat.c
