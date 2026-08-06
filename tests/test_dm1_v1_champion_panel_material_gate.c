@@ -10,17 +10,17 @@ int main(void)
 {
     char path[2048];
     const char *root = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char *home = getenv("HOME");
     M11_AssetLoader loader;
     M11_FontState font;
     Dm1V1ChampionPanelMaterialReceiptPc34 receipt;
-    if (root && root[0]) snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
-    else if (home && home[0]) snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
-    else return 0;
-    if (!M11_AssetLoader_Init(&loader, path)) {
-        if (root && root[0]) return 1;
-        puts("SKIP: PC34 GRAPHICS.DAT not installed");
+    if (!root || !root[0]) {
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
         return 0;
+    }
+    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
+    if (!M11_AssetLoader_Init(&loader, path)) {
+        fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
+        return 1;
     }
     M11_Font_Init(&font);
     if (!M11_Font_LoadFromGraphicsDat(&font, loader.fileState, loader.runtimeState) ||
