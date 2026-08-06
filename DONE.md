@@ -51838,3 +51838,9 @@ and `firestaff` build pass.
   open-door states. Source material, HoC wall, orientation and final-capture
   tests pass against the real PC34 corpus; packaged macOS capture remains in
   TODO.
+- ✅ 2026-08-06 Nexus spell-cast mutation quarantine: retained the
+  hash/disassembly-backed DM.BIN spell lookup and mana-table probe, but made
+  `nexus_v1_cast_spell()` fail closed without mutating mana or synthesizing
+  damage. The live mechanics path was already action-gated; focused magic and
+  spell-cast tests now assert the no-mutation boundary. Saturn dispatcher,
+  effect/target, RNG and SLEV/SFX capture remain open.

@@ -26438,3 +26438,7 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   hash-verified LEV00-LEV15 corpus decodes 1,678 descriptors (1,553 indexed4,
   125 direct555). Remaining gap is Saturn VDP1 upload/CLUT and Structure3
   face-to-texture/draw-order capture; do not promote this byte proof to pixels.
+- 2026-08-06: Nexus spell lookup remains available from the real DM.BIN table,
+  but `nexus_v1_cast_spell()` is now side-effect free and returns `-1` until a
+  Saturn dispatcher capture binds mana commit, effect/target routing, RNG and
+  SLEV/SFX publication. The previous host mana/damage mutation was synthetic.

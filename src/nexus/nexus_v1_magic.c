@@ -1,6 +1,5 @@
 
 #include "nexus_v1_magic.h"
-#include "nexus_v1_combat.h"
 #include <stdio.h>
 
 /* Spell type lookup table — 32 BE16 entries from DM.BIN 0x038368.
@@ -34,7 +33,6 @@ Nexus_SpellLookup nexus_v1_spell_lookup(int power, int element, int form,
     Nexus_SpellLookup r = {0};
     int idx;
     unsigned short spell_type;
-    const int (*params)[2];
 
     if (element < 0 || element >= NEXUS_ELEMENT_RUNE_COUNT ||
         form < 0 || form >= NEXUS_FORM_RUNE_COUNT ||
@@ -72,41 +70,18 @@ static const int g_spell_magnitude[6] = {40, 80, 120, 160, 200, 240};
 int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int element,
                         int form, int align)
 {
-    Nexus_SpellLookup sp;
-    Nexus_SpellClass cls;
-    int cost, skill, base_dmg;
-
-    if (!caster || !caster->alive) return -1;
-
-    cls = (caster->wizard_level >= caster->priest_level)
-          ? NEXUS_SPELL_CLASS_WIZARD : NEXUS_SPELL_CLASS_PRIEST;
-
-    sp = nexus_v1_spell_lookup(power, element, form, cls);
-    if (!sp.valid) {
-        cls = (cls == NEXUS_SPELL_CLASS_PRIEST)
-              ? NEXUS_SPELL_CLASS_WIZARD : NEXUS_SPELL_CLASS_PRIEST;
-        sp = nexus_v1_spell_lookup(power, element, form, cls);
-        if (!sp.valid) return -1;
-    }
-
-    skill = (sp.spell_class == NEXUS_SPELL_CLASS_PRIEST)
-            ? caster->priest_level : caster->wizard_level;
-    cost = nexus_mana_cost(power);
-
-    if (caster->mana < cost) return -1;
-
-    if (sp.spell_class == NEXUS_SPELL_CLASS_PRIEST) {
-        if (caster->priest_level < sp.required_skill) return -1;
-    } else {
-        if (caster->wizard_level < sp.required_skill) return -1;
-    }
-
-    caster->mana -= cost;
-
-    base_dmg = g_spell_magnitude[power < 6 ? power : 5];
+    /* DM.BIN table rows are authenticated, but this helper still lacks the
+     * Saturn spell-dispatcher receipt: caster state, mana commit, effect
+     * handler, target routing, RNG and SLEV/SFX publication are not bound to
+     * the captured runtime.  Never spend host mana or synthesize damage from
+     * the old compatibility formula.  The live mechanics caller is already
+     * gated by nexus_v1_action_semantics_proven(). */
+    (void)caster;
+    (void)power;
+    (void)element;
+    (void)form;
     (void)align;
-
-    return base_dmg + nexus_v1_combat_random(base_dmg / 2 + 1);
+    return -1;
 }
 
 Nexus_SpellCategory nexus_v1_spell_category(int spell_type) {

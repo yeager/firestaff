@@ -62,7 +62,7 @@ int main(void) {
         }
     }
 
-    /* Test 5: cast spell deducts mana and returns damage */
+    /* Test 5: cast remains capture-gated and does not mutate host state */
     {
         Nexus_V1_Champion ch;
         int result;
@@ -73,14 +73,16 @@ int main(void) {
         ch.wizard_level = 5;
         result = nexus_v1_cast_spell(&ch, NEXUS_RUNE_ON, NEXUS_ELEM_FUL,
                                      NEXUS_FORM_IR, 0);
-        if (result <= 0) {
-            fprintf(stderr, "FAIL: cast spell returned %d (expected >0 damage)\n", result);
-            fail++;
-        } else if (ch.mana >= 500) {
-            fprintf(stderr, "FAIL: mana not deducted (still %d)\n", ch.mana);
+        if (result != -1) {
+            fprintf(stderr, "FAIL: blocked cast returned %d (expected -1)\n", result);
             fail++;
         } else {
-            printf("  Cast FUL+IR: damage=%d mana=%d/%d OK\n", result, ch.mana, 500);
+            if (ch.mana != 500) {
+                fprintf(stderr, "FAIL: blocked cast changed mana to %d\n", ch.mana);
+                fail++;
+            } else {
+                printf("  Cast FUL+IR: blocked without Saturn receipt, mana=%d OK\n", ch.mana);
+            }
         }
     }
 

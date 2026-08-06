@@ -46,8 +46,10 @@ typedef struct {
 Nexus_SpellLookup nexus_v1_spell_lookup(int power, int element, int form,
                                         Nexus_SpellClass spell_class);
 int nexus_v1_spell_mana_cost(int power, int element);
-/* Cast a spell and return the mana cost (or -1 on failure).
- * out_damage receives the computed damage value if non-NULL. */
+/* Attempt a spell cast. Returns -1 until a Saturn spell-dispatcher capture
+ * binds mana commit, effect/target routing, RNG and SLEV/SFX publication.
+ * The function is intentionally side-effect free while that receipt is
+ * absent. */
 int nexus_v1_cast_spell(Nexus_V1_Champion *caster, int power, int element,
                         int form, int align);
 
