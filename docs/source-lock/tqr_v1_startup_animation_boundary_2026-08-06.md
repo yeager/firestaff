@@ -6,16 +6,16 @@ not be conflated:
 - `theron_v1_startup_media.c` binds authenticated Track 02 bitmap samples,
   the four startup atlas routes, real font tiles, and a variant-specific
   palette candidate from the supplied US/JP BIN data.
-- `m11_game_view.c` currently exposes an eight-frame, six-tick title gate for
-  input readiness. The `title_frame` value is a host timing receipt only; the
-  startup draw path still presents the same source-backed atlas route for the
-  title phase and does not select a different source frame from that value.
+- The former M11 eight-frame, six-tick title gate has been removed. It never
+  selected a different source frame and was therefore synthetic timing, not
+  animation evidence. M11 now exposes one source-backed title frame and
+  accepts menu input immediately.
 
 This is intentionally not promoted as original animation parity. The real
 Track 02 atlas currently proves indexed startup pixels and their source byte
 spans, but not a game-owned frame table, VBlank cadence, animation command, or
-VDC destination sequence. The existing M11 timing constants therefore remain
-an explicit placeholder boundary, not a source-derived animation claim.
+VDC destination sequence. The static title is therefore an explicit evidence
+boundary, not a source-derived animation claim.
 
 The next valid promotion requires one of the following, tied to the same
 authenticated JP/US media identity:
@@ -35,7 +35,7 @@ Relevant implementation points:
 
 - `src/theron/theron_v1_startup_media.c` — raw startup atlas and palette
   admission.
-- `src/engine/m11_game_view.c` — title timing gate and startup presentation.
+- `src/engine/m11_game_view.c` — static title presentation and startup input.
 - `tests/test_theron_v1_m11_launcher_handoff_boundary.c` — real launcher
   handoff and title readiness receipt.
 - `tests/test_theron_v1_startup_media_palette_bind.c` — real US/JP palette

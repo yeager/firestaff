@@ -12,8 +12,9 @@
   original title/Soul Room animation command, frame table, VBlank cadence and
   VDC/VCE destination are not yet identified. Recover that consumer from the
   disassembly or an original-emulator/app capture before exposing changing
-  source frames or claiming animation parity. The current M11 timing receipt
-  is intentionally not a source-derived animation.
+  source frames or claiming animation parity. The former M11 timing receipt
+  has been removed; M11 now presents one static source-backed title frame until
+  the original consumer is identified.
 
 - **NEXUS-PRS3-PIXEL-CAPTURE:** Retail Structure2 descriptors still expose
   bounded DMWeb format evidence, but the runtime no longer decodes their

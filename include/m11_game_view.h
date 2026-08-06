@@ -1287,7 +1287,6 @@ typedef struct {
         int selected_dungeon;
         int companion_count;
         int startup_phase;
-        int startup_title_animation_tick;
         int startup_cursor;
         int selected_mirrors_mask;
         int selected_mirror_order[3];

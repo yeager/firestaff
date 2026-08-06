@@ -433,47 +433,26 @@ int main(void) {
     memset(&boot_receipt, 0, sizeof(boot_receipt));
     expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
                     boot_receipt.startupTitleFrame == 0 &&
-                    boot_receipt.startupTitleFrameMax == 7 &&
-                    boot_receipt.startupTitleReady == 0,
-                "M11 Theron title starts on animated Track02 title frame 0");
+                    boot_receipt.startupTitleFrameMax == 0 &&
+                    boot_receipt.startupTitleReady == 1,
+                "M11 Theron title exposes one source-backed static frame");
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW &&
                     view.theronState.startup_phase ==
-                        THERON_STARTUP_PHASE_TITLE,
-                "M11 Theron title input is blocked until title animation finishes");
-    {
-        int tick_guard = 0;
-        while (view.theronState.startup_title_animation_tick < 48 &&
-               tick_guard++ < 200) {
-            (void)M11_GameView_AdvanceIdleTick(&view);
-        }
-    }
-    memset(&boot_receipt, 0, sizeof(boot_receipt));
-    expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
-                    boot_receipt.startupTitleFrame == 7 &&
-                    boot_receipt.startupTitleFrameMax == 7 &&
-                    boot_receipt.startupTitleReady == 1,
-                "M11 Theron title reaches ready frame after startup animation ticks");
+                        THERON_STARTUP_PHASE_STAGE_SELECT,
+                "M11 Theron title accepts immediately without a synthetic timer");
     startup_row_count = M11_GameView_GetTheronStartupRenderRows(
         &view, startup_rows, 16);
-    expect_true(startup_row_count >= 3 &&
+    expect_true(startup_row_count >= 5 &&
                 startup_rows_contain(startup_rows, startup_row_count,
                                      "Chapter 1: AKUTUBA") &&
                 startup_rows_contain(startup_rows, startup_row_count,
-                                     "PRESS ENTER TO START"),
-                "M11 Theron startup render rows expose title gate");
-    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_UP) ==
-                    M11_GAME_INPUT_IGNORED &&
-                view.theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
-                view.theronState.level_loaded == 0,
-                "M11 Theron title gate ignores dungeon movement input");
-    expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
-                M11_GAME_INPUT_REDRAW,
-                "M11 Theron title gate advances to stage select");
+                                     "CHOOSE A STAGE"),
+                "M11 Theron startup rows expose stage selection immediately");
     expect_true(view.theronState.startup_phase ==
                     THERON_STARTUP_PHASE_STAGE_SELECT &&
-                view.theronState.level_loaded == 0,
-                "M11 Theron title gate keeps runtime unloaded");
+                    view.theronState.level_loaded == 0,
+                "M11 Theron title handoff keeps runtime unloaded");
 
     /* Regression for the visible "ENTER FORCEFIELD" command: exercise the
      * keyboard ACCEPT path end-to-end, independently of the later pointer
@@ -487,10 +466,6 @@ int main(void) {
         expect_true(M11_GameView_Start(&enter_view, &spec),
                     "M11 Theron Enter-forcefield view starts");
         enter_world = (Theron_V1_World *)enter_view.theronWorld;
-        while (enter_view.theronState.startup_title_animation_tick < 48 &&
-               enter_guard++ < 200) {
-            (void)M11_GameView_AdvanceIdleTick(&enter_view);
-        }
         expect_true(M11_GameView_HandleInput(&enter_view,
                                              M12_MENU_INPUT_ACCEPT) ==
                         M11_GAME_INPUT_REDRAW &&
@@ -701,11 +676,6 @@ int main(void) {
         expect_true(no_continue_view.theronState.startup_phase ==
                         THERON_STARTUP_PHASE_TITLE,
                     "M11 Theron save-present new-stage path starts at title gate");
-        int nc_guard = 0;
-        while (no_continue_view.theronState.startup_title_animation_tick < 48 &&
-               nc_guard++ < 200) {
-            (void)M11_GameView_AdvanceIdleTick(&no_continue_view);
-        }
         expect_true(M11_GameView_HandleInput(&no_continue_view,
                                              M12_MENU_INPUT_ACCEPT) ==
                         M11_GAME_INPUT_REDRAW,
@@ -1158,11 +1128,6 @@ theron_fake_track02_runtime_done:
                     srm_view.theronState.save_resume_srm_import_status ==
                         THERON_V1_SRM_PROGRESS_IMPORT_OK,
                     "M11 Theron exposes selected decoded SRM Continue slot");
-        int srm_guard = 0;
-        while (srm_view.theronState.startup_title_animation_tick < 48 &&
-               srm_guard++ < 200) {
-            (void)M11_GameView_AdvanceIdleTick(&srm_view);
-        }
         expect_true(srm_view.theronState.startup_phase ==
                         THERON_STARTUP_PHASE_TITLE &&
                     M11_GameView_HandleInput(&srm_view,

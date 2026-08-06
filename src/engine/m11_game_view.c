@@ -4062,11 +4062,6 @@ enum {
     M11_V1_ARROW_VIS_TICKS = DM1_V1_MOVEMENT_ARROW_VIS_TICKS_PC34
 };
 
-enum {
-    M11_THERON_STARTUP_TITLE_FRAME_COUNT = 8,
-    M11_THERON_STARTUP_TITLE_FRAME_TICKS = 6
-};
-
 /*
  * Pass 40 — source-anchored DM1 viewport constants (documentation-only).
  *
@@ -19473,19 +19468,14 @@ static void m11_theron_apply_startup_flow_snapshot(
     M11_GameViewState *state,
     const Theron_StartupFlowSnapshot *snapshot)
 {
-    int previous_phase;
     int i;
 
     if (!state || !snapshot) {
         return;
     }
-    previous_phase = state->theronState.startup_phase;
     state->theronState.selected_dungeon = (int)snapshot->selected_dungeon;
     state->theronState.companion_count = (int)snapshot->companion_count;
     state->theronState.startup_phase = (int)snapshot->phase;
-    if (state->theronState.startup_phase != previous_phase) {
-        state->theronState.startup_title_animation_tick = 0;
-    }
     state->theronState.selected_mirrors_mask =
         (int)snapshot->selected_mirrors_mask;
     for (i = 0; i < THERON_STARTUP_MAX_COMPANIONS; ++i) {
@@ -21096,23 +21086,14 @@ static int m11_theron_boot_runtime_startup_view_model(
         return 0;
     }
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE) {
-        int frame = state->theronState.startup_title_animation_tick /
-                    M11_THERON_STARTUP_TITLE_FRAME_TICKS;
-        if (frame < 0) {
-            frame = 0;
-        }
-        if (frame >= M11_THERON_STARTUP_TITLE_FRAME_COUNT) {
-            frame = M11_THERON_STARTUP_TITLE_FRAME_COUNT - 1;
-        }
-        out_view_model->title_frame = frame;
-        out_view_model->title_frame_max = M11_THERON_STARTUP_TITLE_FRAME_COUNT - 1;
-        out_view_model->title_ready =
-            state->theronState.startup_title_animation_tick >=
-            (M11_THERON_STARTUP_TITLE_FRAME_COUNT *
-             M11_THERON_STARTUP_TITLE_FRAME_TICKS)
-                ? 1
-                : 0;
-        out_view_model->animation_active = out_view_model->title_ready ? 0 : 1;
+        /* The raw Track 02 atlas currently proves indexed source pixels, not
+         * an original frame table or VBlank animation command.  Do not turn
+         * a host timer into a fake animation: expose one source-backed title
+         * frame and let the menu accept input immediately. */
+        out_view_model->title_frame = 0;
+        out_view_model->title_frame_max = 0;
+        out_view_model->title_ready = 1;
+        out_view_model->animation_active = 0;
     }
     return 1;
 }
@@ -21142,25 +21123,10 @@ static int m11_theron_boot_runtime_startup_full_start_receipt(
         return 0;
     }
     if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE) {
-        int frame = state->theronState.startup_title_animation_tick /
-                    M11_THERON_STARTUP_TITLE_FRAME_TICKS;
-        if (frame < 0) {
-            frame = 0;
-        }
-        if (frame >= M11_THERON_STARTUP_TITLE_FRAME_COUNT) {
-            frame = M11_THERON_STARTUP_TITLE_FRAME_COUNT - 1;
-        }
-        out_receipt->view_model.title_frame = frame;
-        out_receipt->view_model.title_frame_max =
-            M11_THERON_STARTUP_TITLE_FRAME_COUNT - 1;
-        out_receipt->view_model.title_ready =
-            state->theronState.startup_title_animation_tick >=
-            (M11_THERON_STARTUP_TITLE_FRAME_COUNT *
-             M11_THERON_STARTUP_TITLE_FRAME_TICKS)
-                ? 1
-                : 0;
-        out_receipt->view_model.animation_active =
-            out_receipt->view_model.title_ready ? 0 : 1;
+        out_receipt->view_model.title_frame = 0;
+        out_receipt->view_model.title_frame_max = 0;
+        out_receipt->view_model.title_ready = 1;
+        out_receipt->view_model.animation_active = 0;
         out_receipt->title_menu_ready =
             out_receipt->view_model.title_ready;
     }
@@ -22133,14 +22099,6 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         if (state->theronState.startup_phase != THERON_STARTUP_PHASE_IN_DUNGEON ||
             !state->theronState.level_loaded) {
-            if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
-                state->theronState.startup_title_animation_tick <
-                    (M11_THERON_STARTUP_TITLE_FRAME_COUNT *
-                     M11_THERON_STARTUP_TITLE_FRAME_TICKS)) {
-                state->theronState.startup_title_animation_tick++;
-                m11_theron_update_track01_cdda_lifecycle(state);
-                return M11_GAME_INPUT_REDRAW;
-            }
             m11_theron_update_track01_cdda_lifecycle(state);
             return mouthRedraw ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
         }
@@ -25660,12 +25618,6 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
              * below even when rebuilding the full-start package fails. */
             theron_v1_startup_action_host_receipt_init(&receipt);
 
-            if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
-                state->theronState.startup_title_animation_tick <
-                    (M11_THERON_STARTUP_TITLE_FRAME_COUNT *
-                     M11_THERON_STARTUP_TITLE_FRAME_TICKS)) {
-                return M11_GAME_INPUT_REDRAW;
-            }
             if (!m11_theron_boot_runtime_startup_full_start_receipt(
                     state,
                     NULL,
@@ -26275,13 +26227,6 @@ static M11_GameInputResult m11_theron_handle_startup_pointer(
      * exists; that is an in-menu admission boundary, not a request to leave
      * the Theron launcher.  Let the boot receipt publish the precise status
      * and keep the user on the Soul Room screen. */
-    if (state->theronState.startup_phase == THERON_STARTUP_PHASE_TITLE &&
-        state->theronState.startup_title_animation_tick <
-            (M11_THERON_STARTUP_TITLE_FRAME_COUNT *
-             M11_THERON_STARTUP_TITLE_FRAME_TICKS)) {
-        return M11_GAME_INPUT_REDRAW;
-    }
-
     if (!m11_theron_boot_runtime_startup_full_start_receipt(state,
                                                             NULL,
                                                             &full_start) ||

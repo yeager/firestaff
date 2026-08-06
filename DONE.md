@@ -67,6 +67,9 @@
 - ✅ Kept the original title/Soul Room animation consumer, frame table,
   VBlank cadence and VDC/VCE destination capture-gated. The M11 timing receipt
   is not presented as original animation parity.
+- ✅ Removed the synthetic M11 8-frame/6-tick title timer and its state field.
+  Authenticated startup now exposes one static title frame and accepts the
+  menu immediately; no changing frame is claimed without source evidence.
 
 # Nexus FONT256 host-draw seam quarantine (2026-08-06)
 
