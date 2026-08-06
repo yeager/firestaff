@@ -17,7 +17,9 @@
   the original consumer is identified. 2026-08-06 follow-up: authenticated
   Track 02 media now suppresses the host border/text fallback even when the
   graphics executor has not yet run; the startup surface remains capture-gated
-  rather than leaking synthetic pixels.
+  rather than leaking synthetic pixels. Authentic font-tile bytes also remain
+  behind this gate: host render-plan coordinates/styles cannot make them a
+  visible startup menu until a captured VDC/VCE text consumer binds the route.
 
 - **NEXUS-PRS3-PIXEL-CAPTURE:** Retail Structure2 descriptors still expose
   bounded DMWeb format evidence, but the runtime no longer decodes their

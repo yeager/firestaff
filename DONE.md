@@ -1,9 +1,10 @@
-# Nexus launcher V2.2 status gate (2026-08-06)
+# Theron startup font presentation gate (2026-08-06)
 
-- ✅ Nexus V2.2 now reports `CAPTURE LOCKED` in the game-options status tile
-  instead of the misleading `READY` state. The launcher still keeps the
-  source-locked panel and launch gate intact until Saturn VDP1/VDP2 capture.
-- ✅ `firestaff_m12` and `verify_nexus_production_source_boundary.py` pass.
+- ✅ M11 no longer renders authentic Track 02 font tiles through unverified
+  host render-plan coordinates or inferred palette styles.
+- ✅ Startup input and phase transitions remain available; visible startup
+  text now requires the same captured VDC/VCE presentation route as bitmap
+  art, preventing a synthetic menu from appearing over real media.
 
 # Nexus MENU.BPK raw PALT source lane (2026-08-06)
 

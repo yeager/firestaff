@@ -359,8 +359,8 @@ static void run_real_launcher_handoff_if_available(void) {
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, 320, 200);
-    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 1000,
-                "M11 Theron launcher stage select draws a nonblank frame");
+    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0,
+                "M11 Theron launcher keeps startup framebuffer empty until captured VDC/VCE presentation is bound");
     memset(&boot_receipt, 0, sizeof(boot_receipt));
     expect_true(M11_GameView_GetBootProbeReceipt(&view, &boot_receipt) &&
                     boot_receipt.startupTitleFrame == 0 &&

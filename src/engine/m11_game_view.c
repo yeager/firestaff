@@ -53159,12 +53159,13 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
                                                         framebufferWidth,
                                                         framebufferHeight,
                                                         &ui_caller);
-    /* When real font tiles are available, always render menu text from the
-     * Track 02 font — even when atlas graphics were drawn.  The atlas
-     * provides header art strips; the font tiles provide the menu text.
-     * Only fall back to synthetic M11 text when no font tiles exist AND
-     * no Track 02 atlas was drawn. */
-    if (state->theronState.startup_font_tiles_ready) {
+    /* Font tiles are authentic Track 02 bytes, but their screen coordinates,
+     * palette ownership and command meaning are not yet bound to a captured
+     * VDC/VCE consumer.  Do not let the host render plan turn those bytes into
+     * a synthetic startup menu.  The explicit presentation gate is the only
+     * path allowed to make source-backed startup pixels visible. */
+    if (world && world->runtime_media.startup_presentation_allowed &&
+        state->theronState.startup_font_tiles_ready) {
         /* The render plan still carries a host layout border for fixture and
          * no-media routes.  It is not a Track 02 bitmap, so never paint it
          * over an authenticated startup atlas.  THQUEST.ASM owns the
