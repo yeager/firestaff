@@ -3980,12 +3980,20 @@ static int m12_materialize_csb_fmtowns_runtime_cache(
             return 0;
         }
     }
-    /* Commit the image only after its entire ISO inventory was copied. */
+    /* Commit the image only after its entire ISO inventory was copied.  The
+     * staged image lives next to the user-selected archive so it does not
+     * consume a second full CD image in the Firestaff cache while extraction
+     * is in progress.  That archive may be on another mounted volume, where
+     * rename(2) cannot cross into the per-user cache.  Preserve the atomic
+     * same-volume fast path and copy only for that cross-volume case. */
     remove(cachedImagePath);
     if (rename(imagePath, cachedImagePath) != 0) {
-        remove(cachedCuePath);
+        if (!m12_copy_file_to_path(imagePath, cachedImagePath)) {
+            remove(cachedCuePath);
+            remove(imagePath);
+            return 0;
+        }
         remove(imagePath);
-        return 0;
     }
     return 1;
 }
