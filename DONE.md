@@ -53156,3 +53156,7 @@ platform package.
   bridge now returns a specific incomplete-contract receipt and no result
   until those original inputs and effects are connected. The focused combat
   regression covers missing, unproven and even proven Defense callbacks.
+- ✅ 2026-08-06 Nexus HUD placeholder audit: corrected the V2 HUD integration
+  test to require zero framebuffer writes while Saturn HUD/VDP1/VDP2 capture
+  is absent. The test now matches the production no-op gate and passes 9/9;
+  the standalone overlay smoke test passes 46/46 without synthetic pixels.

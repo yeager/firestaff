@@ -26818,6 +26818,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the European retail corpus. `startup_hud_ready` remains false: element
   surfaces, palette, FONT256 text and VDP1/VDP2 destinations still require one
   authenticated Saturn capture, so parser output cannot authorize HUD pixels.
+  2026-08-06 audit: the V2 HUD runtime integration test now asserts the
+  current no-draw invariant even under its force-active test hook; it no
+  longer treats synthetic overlay pixels as evidence of a usable HUD route.
 - 🔧 Nexus HUD click-route binding: the real `DM.BIN` ring-menu rectangle
   section at `0x38000` now parses and matches all 40 entries. Replace the
   removed screen-coordinate adapter only after an epoch/package-bound
