@@ -1,3 +1,10 @@
+# DM2 SPELL_DEF-korpus med vald källa (2026-08-07)
+
+- ✅ SPELL_DEF-regressionens PC-DOS-resultat är nu ett uttryckligt källfaktum:
+  den valda `GRAPHICS.DAT` saknar sådana rader och utökade spells förblir
+  otillgängliga. Testet använder endast explicit data och felar för oläsbar
+  vald korpus.
+
 # DM2 dörr-RAW4 med vald korpus (2026-08-07)
 
 - ✅ Dörrpanel-/knappplaceringstestet använder nu endast explicit

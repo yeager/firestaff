@@ -99,7 +99,6 @@ static int same_receipt(const DM2_V1_ExtendedSpellsDefinitionReceipt *a,
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
     char graphics_path[1024];
     char boot_root[1024];
     uint8_t *graphics = NULL;
@@ -115,20 +114,15 @@ int main(void)
     uint32_t expected_hash = 0u;
     int failures = 0;
 
-    if (root && root[0]) {
-        snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
-        snprintf(boot_root, sizeof(boot_root), "%s/..", root);
-    } else if (home && home[0]) {
-        snprintf(graphics_path, sizeof(graphics_path),
-                 "%s/.firestaff/data/dm2/data/graphics.dat", home);
-        snprintf(boot_root, sizeof(boot_root), "%s/.firestaff/data/dm2", home);
-    } else {
-        puts("SKIP: no DM2 data root");
+    if (!root || !root[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
         return 0;
     }
+    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
+    snprintf(boot_root, sizeof(boot_root), "%s/..", root);
     if (!read_file(graphics_path, &graphics, &graphics_size)) {
-        puts("SKIP: no local canonical DM2 GRAPHICS.DAT");
-        return 0;
+        fputs("FAIL: selected canonical DM2 GRAPHICS.DAT is unreadable\n", stderr);
+        return 1;
     }
     memset(&loader, 0, sizeof(loader));
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
@@ -139,7 +133,7 @@ int main(void)
         return 1;
     }
     if (expected_count == 0u) {
-        puts("SKIP: canonical GRAPHICS.DAT has no extended spell definitions");
+        puts("PASS: selected GRAPHICS.DAT has no source SPELL_DEF rows; extended spells remain unavailable");
         dm2_v1_asset_loader_free(&loader);
         free(graphics);
         return 0;
