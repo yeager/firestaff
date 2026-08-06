@@ -71,6 +71,12 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     uint32_t startup_mini_size;
     uint32_t startup_mini_fnv1a;
     char startup_mini_path[512];
+    /* F0435 reads and authenticates the F31 512-byte header with the CSB
+     * key at word 29.  This proves the selected seed is a native C5-format
+     * FM Towns save header; it does not yet decode its saved-game body. */
+    int startup_mini_header_verified;
+    uint16_t startup_mini_header_key;
+    uint8_t startup_mini_header_format_id;
     int music_table_verified;
     uint32_t music_table_source_offset;
     uint32_t music_table_size;

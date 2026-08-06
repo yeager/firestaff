@@ -36,6 +36,7 @@ int main(void)
     const char *expected_utility_program;
     uint32_t expected_mini_size;
     uint32_t expected_mini_fnv1a;
+    uint16_t expected_mini_header_key;
     uint32_t expected_utility_load_size;
     uint32_t expected_utility_initial_eip;
     CSB_V1_FmtownsSwitchLanguage language;
@@ -67,6 +68,7 @@ int main(void)
         expected_utility_program = "UTILJ.EXP";
         expected_mini_size = 43208u;
         expected_mini_fnv1a = 0x284799d1u;
+        expected_mini_header_key = 0xf77du;
         expected_utility_load_size = 151987u;
         expected_utility_initial_eip = 65200u;
     } else if (!language_name || language_name[0] == '\0' ||
@@ -77,6 +79,7 @@ int main(void)
         expected_utility_program = "UTILE.EXP";
         expected_mini_size = 42776u;
         expected_mini_fnv1a = 0x494999c9u;
+        expected_mini_header_key = 0x340fu;
         expected_utility_load_size = 151875u;
         expected_utility_initial_eip = 65024u;
     } else {
@@ -162,6 +165,9 @@ int main(void)
               direct_handoff.startup_mini_verified &&
               direct_handoff.startup_mini_size == expected_mini_size &&
               direct_handoff.startup_mini_fnv1a == expected_mini_fnv1a &&
+              direct_handoff.startup_mini_header_verified &&
+              direct_handoff.startup_mini_header_key == expected_mini_header_key &&
+              direct_handoff.startup_mini_header_format_id == 5u &&
               direct_handoff.music_table_verified &&
               csb_v1_fmtowns_game_music_track_at(&direct_handoff, 0u, 2u, 0u,
                                                   &music_track),

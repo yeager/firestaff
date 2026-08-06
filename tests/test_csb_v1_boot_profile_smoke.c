@@ -484,6 +484,9 @@ static void test_fmtowns_game_program_handoff(void)
                   receipt.startup_mini_verified &&
                   receipt.startup_mini_size == 42776u &&
                   receipt.startup_mini_fnv1a == 0x494999c9u &&
+                  receipt.startup_mini_header_verified &&
+                  receipt.startup_mini_header_key == 0x340fu &&
+                  receipt.startup_mini_header_format_id == 5u &&
                   receipt.music_table_verified &&
                   receipt.music_table_source_offset == 271144u &&
                   receipt.music_table_size ==

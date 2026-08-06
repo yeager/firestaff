@@ -56328,6 +56328,15 @@ alcove runtime and archive-media tests passed (4/4).
   either file to the Atari/Amiga GAMEBLOCK decoder or advertise Resume.
   Real English and Japanese F31 Switch→Game handoff tests pass.
 
+- ✅ 2026-08-06 CSB FM Towns MINI.DAT header verification: the F31 Game
+  receipt now runs the selected retail bootstrap's first 512 bytes through
+  ReDMCSB `CEDTINC6.C` F7061 with CSB key word 29, then requires its
+  decrypted header to be C5, the family that includes FM Towns CSB. The
+  English `CDATA/MINI.DAT` key is `0x340f`; Japanese `CJDATA/MINI.DAT` uses
+  `0xf77d`. This authenticates the native header without treating its body as
+  an Atari/Amiga save or enabling Resume. Real F31E and F31J handoff tests
+  pass.
+
 - ✅ 2026-08-06 CSB FM Towns Utility P3 boundary: `UTILE.EXP` and
   `UTILJ.EXP` now must pass their original Phar Lap level-1 P3 envelope in
   addition to the full-file identity gate. The receipt records the real

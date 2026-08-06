@@ -1,5 +1,7 @@
 #include "csb_v1_fmtowns_game.h"
 
+#include "redmcsb_f7061_save_header_pc34_compat.h"
+
 #include <stdio.h>
 #include <string.h>
 
@@ -16,6 +18,11 @@ enum {
     CSB_V1_FMTOWNS_CJDATA_MINI_SIZE = 43208u,
     CSB_V1_FMTOWNS_CDATA_MINI_FNV1A = 0x494999c9u,
     CSB_V1_FMTOWNS_CJDATA_MINI_FNV1A = 0x284799d1u,
+    CSB_V1_FMTOWNS_SAVE_HEADER_BYTES = 512u,
+    CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX = 29u,
+    CSB_V1_FMTOWNS_SAVE_HEADER_USELESS_OFFSET = 0x12cu,
+    CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_OFFSET = 0x12du,
+    CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_C5 = 5u,
     CSB_V1_FMTOWNS_UTILE_MENU_VIRTUAL_OFFSET = 0x11578u,
     CSB_V1_FMTOWNS_UTILJ_MENU_VIRTUAL_OFFSET = 0x11628u,
     CSB_V1_FMTOWNS_UTILE_MENU_BYTES = 76u,
@@ -33,6 +40,37 @@ enum {
 
 static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
                                          unsigned char *bytes, size_t size);
+static uint16_t csb_v1_fmtowns_game_read_le16(const unsigned char *bytes);
+
+static int csb_v1_fmtowns_game_startup_mini_header_open(
+    const char *path, CSB_V1_FmtownsGameHandoffReceipt *receipt)
+{
+    unsigned char header[CSB_V1_FMTOWNS_SAVE_HEADER_BYTES];
+    uint16_t key;
+
+    if (!path || !receipt ||
+        !csb_v1_fmtowns_game_read_span(path, 0u, header, sizeof(header))) {
+        return 0;
+    }
+    key = csb_v1_fmtowns_game_read_le16(
+        header + CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX * 2u);
+    /* ReDMCSB CEDTINCD.C F7051 lines 211-255 selects the CSB word-29
+     * header route for F31E/F31J. DEFS.H defines C5 as the family including
+     * FM Towns CSB. F7061 validates and deobfuscates the second 256 bytes. */
+    if (!redmcsb_f7061_is_read_save_header_successful_pc34(
+            header, sizeof(header),
+            CSB_V1_FMTOWNS_CSB_HEADER_KEY_WORD_INDEX) ||
+        header[CSB_V1_FMTOWNS_SAVE_HEADER_USELESS_OFFSET] != 1u ||
+        header[CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_OFFSET] !=
+            CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_C5) {
+        return 0;
+    }
+    receipt->startup_mini_header_key = key;
+    receipt->startup_mini_header_format_id =
+        header[CSB_V1_FMTOWNS_SAVE_HEADER_FORMAT_OFFSET];
+    receipt->startup_mini_header_verified = 1;
+    return 1;
+}
 
 static int csb_v1_fmtowns_utility_icon_palette_open(
     const char *path, uint32_t file_offset,
@@ -287,6 +325,12 @@ int csb_v1_fmtowns_game_handoff_open(
         out_receipt->startup_mini_verified =
             mini_actual_size == mini_expected_size &&
             mini_actual_hash == mini_expected_hash;
+        if (!out_receipt->startup_mini_verified ||
+            !csb_v1_fmtowns_game_startup_mini_header_open(
+                out_receipt->startup_mini_path, out_receipt)) {
+            memset(out_receipt, 0, sizeof(*out_receipt));
+            return 0;
+        }
     }
     out_receipt->music_table_verified = 1;
     out_receipt->music_table_source_offset = music_table_offset;
@@ -294,7 +338,8 @@ int csb_v1_fmtowns_game_handoff_open(
     out_receipt->music_table_fnv1a = CSB_V1_FMTOWNS_GAME_MUSIC_TABLE_FNV1A;
     out_receipt->source_evidence =
         "ReDMCSB COMPILE.H EXEID 60/61 lines 367-375; "
-        "STARTUP1.C F0435 line 163; CEDTDATA.C G2297 lines 380-387; "
+        "STARTUP1.C F0435 line 163; CEDTDATA.C G2297 lines 380-387/F7051 "
+        "lines 211-255; CEDTINC6.C F7061; DEFS.H C5 format; "
         "ENTRANCE.C F0807 line 85; "
         "MUSIC.C G4099 line 6/F0743 lines 632-646";
     out_receipt->valid = 1;
