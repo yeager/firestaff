@@ -25862,6 +25862,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the mapped pointer position. 2026-08-06 source-side proof: the real-data
   `test_m11_dm1_real_object_names` now verifies 169 non-zero F0702 pixels for
   `EYE OF TIME`; only the packaged macOS/window capture remains.
+- 2026-08-06 source-runtime hardening: authenticated DM1 V1 F0287 bar graphs
+  now ignore `FIRESTAFF_V1_BAR_GRAPHS=0` and never re-enable the retired
+  horizontal host bars. The switch remains available for non-source/debug and
+  V2 compatibility sessions. Real object-corpus and held-cursor tests pass;
+  packaged Mac capture remains governed by the open capture items above.
 - Theron teleporter resolution now rejects unresolved object-ID links and
   cycles; restore positive legacy links only when backed by an authenticated
   Track 02/T900 record corpus.

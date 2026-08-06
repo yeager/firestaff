@@ -48643,9 +48643,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * and prints the name (CHAMDRAW.C:816-842), so V1 must
              * leave the dead-box graphic unobscured by bar columns.
              *
-             * V2 vertical-slice / opt-out: legacy horizontal 59x{2,1,1}
-             * strip preserved so the pre-baked HUD sprite stays
-             * pixel-aligned.  Opt-out via FIRESTAFF_V1_BAR_GRAPHS=0.
+             * V2 vertical-slice / non-source opt-out: legacy horizontal
+             * 59x{2,1,1} strip is preserved so the pre-baked HUD sprite
+             * stays pixel-aligned.  Authenticated DM1 V1 ignores the
+             * opt-out and always uses the source model.
              *
              * Ref: firestaff_pc34_core_amalgam.c l.11229..11260 for
              * F0287; zones_h_reconstruction.json records 187..206;
@@ -48654,68 +48655,78 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
              * (2026-06-16) The amalgam reference is historical;
              * the file is unbuilt legacy code.  F0287 lives in
              * src/dm1/dm1_v1_champion_stats_pc34_compat.c. */
-            if (!isDead && m11_v1_bar_graphs_enabled(state)) {
-                int statIdx;
-                int curs[3];
-                int maxs[3];
-                curs[0] = (long)champ->hp.current;
-                maxs[0] = (long)champ->hp.maximum;
-                curs[1] = (long)champ->stamina.current;
-                maxs[1] = (long)champ->stamina.maximum;
-                curs[2] = (long)champ->mana.current;
-                maxs[2] = (long)champ->mana.maximum;
-                for (statIdx = 0; statIdx < 3; ++statIdx) {
-                    DM1_ChampionPanel_BarFillModel barModel;
-                    if (DM1_ChampionPanel_BuildPc34BarFillModel(
-                            slot, statIdx, curs[statIdx], maxs[statIdx],
-                            &barModel)) {
-                        if (barModel.emitsBlank) {
+            /* Authenticated DM1 V1 always owns F0287's source bar model.
+             * The environment switch is retained for non-source/debug A/B
+             * sessions, but must not re-enable the retired horizontal host
+             * bars in a real DM1 frame. */
+            {
+                const int sourceDm1BarGraphs =
+                    !useV2PartyHud && m11_is_dm1_source_kind(state->sourceKind);
+                if (!isDead &&
+                    (sourceDm1BarGraphs || m11_v1_bar_graphs_enabled(state))) {
+                    int statIdx;
+                    int curs[3];
+                    int maxs[3];
+                    curs[0] = (long)champ->hp.current;
+                    maxs[0] = (long)champ->hp.maximum;
+                    curs[1] = (long)champ->stamina.current;
+                    maxs[1] = (long)champ->stamina.maximum;
+                    curs[2] = (long)champ->mana.current;
+                    maxs[2] = (long)champ->mana.maximum;
+                    for (statIdx = 0; statIdx < 3; ++statIdx) {
+                        DM1_ChampionPanel_BarFillModel barModel;
+                        if (DM1_ChampionPanel_BuildPc34BarFillModel(
+                                slot, statIdx, curs[statIdx], maxs[statIdx],
+                                &barModel)) {
+                            if (barModel.emitsBlank) {
+                                m11_fill_rect(framebuffer, framebufferWidth,
+                                              framebufferHeight,
+                                              barModel.blankX,
+                                              barModel.blankY,
+                                              barModel.blankWidth,
+                                              barModel.blankHeight,
+                                              (unsigned char)barModel.blankColor);
+                            }
+                            if (barModel.emitsFill) {
+                                m11_fill_rect(framebuffer, framebufferWidth,
+                                              framebufferHeight,
+                                              barModel.fillX,
+                                              barModel.fillY,
+                                              barModel.fillWidth,
+                                              barModel.fillHeight,
+                                              (unsigned char)barModel.fillColor);
+                            }
+                        } else {
+                            DM1_V1_ChampionStatusRectPc34 barRect;
+                            if (!dm1_v1_champion_status_bar_rect_pc34(
+                                    slot, statIdx, &barRect)) {
+                                continue;
+                            }
                             m11_fill_rect(framebuffer, framebufferWidth,
                                           framebufferHeight,
-                                          barModel.blankX,
-                                          barModel.blankY,
-                                          barModel.blankWidth,
-                                          barModel.blankHeight,
-                                          (unsigned char)barModel.blankColor);
+                                          barRect.x, barRect.y, barRect.w, barRect.h,
+                                          (unsigned char)
+                                              DM1_COLOR_DARKEST_GRAY);
                         }
-                        if (barModel.emitsFill) {
-                            m11_fill_rect(framebuffer, framebufferWidth,
-                                          framebufferHeight,
-                                          barModel.fillX,
-                                          barModel.fillY,
-                                          barModel.fillWidth,
-                                          barModel.fillHeight,
-                                          (unsigned char)barModel.fillColor);
-                        }
-                    } else {
-                        DM1_V1_ChampionStatusRectPc34 barRect;
-                        if (!dm1_v1_champion_status_bar_rect_pc34(
-                                slot, statIdx, &barRect)) {
-                            continue;
-                        }
-                        m11_fill_rect(framebuffer, framebufferWidth,
-                                      framebufferHeight,
-                                      barRect.x, barRect.y, barRect.w, barRect.h,
-                                      (unsigned char)
-                                          DM1_COLOR_DARKEST_GRAY);
                     }
+                } else if (!sourceDm1BarGraphs &&
+                           !m11_v1_bar_graphs_enabled(state)) {
+                    int hpWidth = champ->hp.maximum > 0 ? (int)(champ->hp.current * 59) / (int)champ->hp.maximum : 0;
+                    int staminaWidth = champ->stamina.maximum > 0 ? (int)(champ->stamina.current * 59) / (int)champ->stamina.maximum : 0;
+                    int manaWidth = champ->mana.maximum > 0 ? (int)(champ->mana.current * 59) / (int)champ->mana.maximum : 0;
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  x + 4, y + 20, 59, 2, M11_COLOR_DARK_GRAY);
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  x + 4, y + 20, hpWidth, 2, isDead ? M11_COLOR_DARK_GRAY : M11_COLOR_LIGHT_RED);
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  x + 4, y + 23, 59, 1, M11_COLOR_DARK_GRAY);
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  x + 4, y + 23, staminaWidth, 1, M11_COLOR_LIGHT_GREEN);
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  x + 4, y + 25, 59, 1, M11_COLOR_DARK_GRAY);
+                    m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
+                                  x + 4, y + 25, manaWidth, 1, M11_COLOR_LIGHT_BLUE);
                 }
-            } else if (!m11_v1_bar_graphs_enabled(state)) {
-                int hpWidth = champ->hp.maximum > 0 ? (int)(champ->hp.current * 59) / (int)champ->hp.maximum : 0;
-                int staminaWidth = champ->stamina.maximum > 0 ? (int)(champ->stamina.current * 59) / (int)champ->stamina.maximum : 0;
-                int manaWidth = champ->mana.maximum > 0 ? (int)(champ->mana.current * 59) / (int)champ->mana.maximum : 0;
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 4, y + 20, 59, 2, M11_COLOR_DARK_GRAY);
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 4, y + 20, hpWidth, 2, isDead ? M11_COLOR_DARK_GRAY : M11_COLOR_LIGHT_RED);
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 4, y + 23, 59, 1, M11_COLOR_DARK_GRAY);
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 4, y + 23, staminaWidth, 1, M11_COLOR_LIGHT_GREEN);
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 4, y + 25, 59, 1, M11_COLOR_DARK_GRAY);
-                m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
-                              x + 4, y + 25, manaWidth, 1, M11_COLOR_LIGHT_BLUE);
             }
 
             /* V1 status-box hand slots.  Source F0292/F0291 draws

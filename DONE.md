@@ -50612,6 +50612,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   admission now requires decoded C010/C009 pixels as well as `loaded` and
   native dimensions, preventing an empty dimension-only cache entry from
   claiming the source-owned action/spell strip.
+- ✅ 2026-08-06 DM1 source bar fallback removal: authenticated DM1 V1 now
+  always consumes the ReDMCSB F0287 vertical bar model, even when the legacy
+  `FIRESTAFF_V1_BAR_GRAPHS=0` compatibility switch is present. The old
+  horizontal host bars remain limited to non-source/debug and V2 sessions.
+  Verified with a Ninja M11 rebuild, real 611-record object corpus, real
+  M564/F0702 pickup-cursor coverage, and the HoC frame-admission test.
 - ✅ 2026-08-06 DM1/CSB decoded-surface gate completion: hardened the remaining
   M11 source consumers so CSB Atari ceiling/floor/wall projection and DM1 HoC
   C027/C040 inventory input accept only decoded asset slots (`loaded &&
