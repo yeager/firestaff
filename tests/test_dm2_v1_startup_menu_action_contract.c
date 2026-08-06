@@ -774,15 +774,35 @@ int main(void)
     }
     if (real_data_dir && real_data_dir[0]) {
         /* The supplied DOS corpus contains lower-case raw SKSAVE files. Its
-         * raw dungeon prefix is authentic, but its later SUPPRESS state is
-         * intentionally not a runtime owner yet. It must not materialize a
-         * Continue/slot action merely because the container header exists. */
+         * raw dungeon prefix is authentic, so the startup scan must retain
+         * the real candidate instead of pretending that no save exists. Its
+         * later SUPPRESS state is intentionally not a runtime owner yet,
+         * however: selecting that genuine candidate must remain a redraw
+         * failure rather than publish a partial live session. */
         dm2_v1_startup_menu_init(&raw_corpus_menu, real_data_dir);
         check(dm2_v1_startup_menu_scan_saves(&raw_corpus_menu) &&
-                  raw_corpus_menu.resume_available == 0 &&
-                  raw_corpus_menu.slot_mask == 0u &&
-                  raw_corpus_menu.row_count == 1,
-              "real raw SKSave corpus remains unavailable until full GAME_LOAD ownership");
+                  (raw_corpus_menu.resume_available ||
+                   raw_corpus_menu.slot_mask != 0u) &&
+                  raw_corpus_menu.row_count > 1,
+              "real raw SKSave corpus is inventoried without fabricating a session");
+        memset(&action, 0, sizeof(action));
+        action.kind = raw_corpus_menu.resume_available
+            ? DM2_V1_STARTUP_ACTION_CONTINUE
+            : DM2_V1_STARTUP_ACTION_LOAD_SLOT;
+        if (action.kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT) {
+            for (action.slot = 0;
+                 action.slot < 10 &&
+                 !(raw_corpus_menu.slot_mask & (1u << action.slot));
+                 ++action.slot) {
+            }
+        }
+        memset(&execution, 0, sizeof(execution));
+        check(dm2_v1_startup_execute_action(&action,
+                                            real_data_dir,
+                                            &execution) &&
+                  execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
+                  execution.rescan_saves == 1,
+              "real raw SKSave selection stays blocked until full GAME_LOAD ownership");
         memset(&boot_launch, 0, sizeof(boot_launch));
         if (dm2_v1_boot_startup_launch_alloc(real_data_dir,
                                              &boot_launch) &&

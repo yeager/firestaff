@@ -52200,6 +52200,16 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   a dungeon graph nor publishes a resume session. Source: SKProject
   `SKULLWIN/c_savegame.cpp::DM2_READ_SKSAVE_DUNGEON` (hero roots and party
   root at lines 1180–1200).
+
+# 2026-08-06 DM2 startup real-save menu gate
+
+- ✅ Updated the real-data startup regression to distinguish inventory from
+  playback: the four supplied PC-DOS slots (and their backups) may be shown
+  only as authenticated original SKSave candidates, while selecting Continue
+  or a slot must return a redraw/rescan failure until the complete
+  SKProject `DM2_GAME_LOAD` stream owns the live session. This removes the
+  stale assertion that concealed real data in the menu and still forbids a
+  partial or synthetic resume.
 # 2026-08-06 Nexus HUD DM.BIN disassembly anchor
 
 - ✅ The real-data HUD regression now verifies the `yam\\menuctrl.c` owner

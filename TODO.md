@@ -747,6 +747,11 @@
   loaders. They remain explicit diagnostic inputs only; a player-facing
   Continue/slot action can admit neither a Firestaff private envelope nor the
   real raw corpus before complete `DM2_GAME_LOAD` support exists.
+  2026-08-06 menu-inventory correction: the source-authenticated raw PC-DOS
+  candidates remain visible to the startup scanner instead of being hidden as
+  if no original save existed. Selection is separately regression-tested to
+  return only a rescan/redraw failure until complete `DM2_GAME_LOAD` ownership
+  can publish a session.
   2026-08-06: `docs/dm2_test_coverage.md` no longer calls this codebase an
   untested stub. Its current coverage statement is intentionally limited to
   source-bound component and real-data receipts; the same document records
