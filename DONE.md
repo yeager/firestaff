@@ -13,6 +13,14 @@
   ReDMCSB regression now compiles the source explicitly.
 - ✅ Verification: `test_dm1_v1_viewport_d1l_d1r_stairs_pit_dispatch_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
+# DM1 C140/C040 save-gate synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C140/C040 save gate from M10. It fabricates
+  party, panel and candidate state, has no original DM1 data input or
+  M11/runtime caller, and the generated mirror regression compiles it directly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c040_save_game_while_panel_live_pc34_compat`
+  passes with 43 assertions; the pass789 ReDMCSB verifier passes and the source
+  object is absent from both M10 and M11 archives.
 
 # DM1 D0L/D0R F0111 synthetic audit isolation (2026-08-06)
 

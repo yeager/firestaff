@@ -9,6 +9,10 @@
   dispatch model uses fixed graphics slots and zones. It reads no original
   game data and has no M11/runtime caller; retain it only as explicit ReDMCSB
   coverage until a source-bound owner is recovered.
+- **DM1-MIRROR-C040-SAVE-GATE-SYNTHETIC-AUDIT:** This C140/C040 save gate
+  fabricates party, panel and candidate state. It has no original DM1 data
+  input or M11/runtime caller; retain it only as explicit ReDMCSB coverage
+  until a source-bound command owner is recovered.
 
 - **DM1-D0L-D0R-F0111-SYNTHETIC-AUDIT:** This D0 side-door composition uses
   fixed zones and blit rectangles. It reads no original game data and has no
