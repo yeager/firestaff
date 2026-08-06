@@ -18,7 +18,9 @@
  * TITLE.CG on the verified Saturn disc is a 32-byte zero prefix followed by
  * 0x29000 bytes. That payload is exactly 328x1024 packed 4bpp pixels.
  *
- * Failed real-media decodes leave the surface unavailable. */
+ * Failed real-media decodes leave the surface unavailable. Decoded FACE.BIN
+ * pixels remain source-owned here; the presentation entry points below still
+ * refuse to copy them to a host framebuffer without Saturn placement proof. */
 
 #include "nexus_v1_ui_surfaces.h"
 #include "nexus_v1_prs3_decode.h"
@@ -1138,19 +1140,78 @@ int nexus_ui_load_face_record(Nexus_UI_Manager *mgr,
     int portrait_h,
     const uint32_t *palette)
 {
+    enum {
+        face_palette_bytes = 128,
+        face_prs3_header_bytes = 16,
+        face_width = 56,
+        face_height = 56,
+        face_palette_count = 64,
+        face_pixel_count = face_width * face_height
+    };
+    Nexus_V1_Prs3Header header;
+    uint8_t pixels[face_pixel_count];
+    size_t prs3_offset = 0U;
+    Nexus_UI_Surface *surface;
+    int found = 0;
+    int i;
+
     (void)palette;
-    /* FACE.BIN's compact PRS3 streams have bounded structural receipts, but
-     * their Saturn pixel grammar is not authenticated.  The low-level
-     * expand helper remains available to isolated format diagnostics; the
-     * production startup loader must not promote those bytes into portraits
-     * until an original Saturn capture binds the decoder and palette lane. */
-    (void)mgr;
-    (void)record_data;
-    (void)record_size;
-    (void)face_index;
-    (void)portrait_w;
-    (void)portrait_h;
-    return -1;
+    if (!mgr || !record_data || record_size <= face_palette_bytes ||
+        face_index < 0 || face_index >= 20 ||
+        portrait_w != face_width || portrait_h != face_height) {
+        return -1;
+    }
+
+    /* The compact retail record has 128 palette bytes followed by up to
+     * three alignment bytes before the PRS3 header.  Accept only the exact
+     * bounded header position; arbitrary raw 48x48 tables remain rejected. */
+    for (i = 0; i < 4; ++i) {
+        size_t candidate = (size_t)face_palette_bytes + (size_t)i;
+        if (candidate + face_prs3_header_bytes <= (size_t)record_size &&
+            memcmp(record_data + candidate, "PRS3", 4) == 0) {
+            prs3_offset = candidate;
+            found = 1;
+            break;
+        }
+    }
+    if (!found || !nexus_v1_prs3_parse_header(
+                       record_data + prs3_offset,
+                       record_size - (int)prs3_offset, &header) ||
+        header.uncompressed_size != (uint32_t)face_pixel_count) {
+        return -1;
+    }
+    {
+        Nexus_V1_Prs3DecodeResult decoded = nexus_v1_prs3_decompress(
+            header.stream, (int)header.compressed_size, pixels,
+            (int)sizeof(pixels), (int)header.uncompressed_size);
+        if (!decoded.success || decoded.bytes_produced != face_pixel_count)
+            return -1;
+    }
+    for (i = 0; i < face_pixel_count; ++i) {
+        if (pixels[i] >= face_palette_count) return -1;
+    }
+    if (nexus_ui_surface_load(
+            mgr, (Nexus_UISurfaceType)(NEXUS_SURFACE_FACE0 + face_index),
+            pixels, (int)sizeof(pixels), face_width, face_height, 0,
+            face_palette_count, "FACE.BIN") < 0) {
+        return -1;
+    }
+    surface = &mgr->surfaces[NEXUS_SURFACE_FACE0 + face_index];
+    for (i = 0; i < face_palette_count; ++i) {
+        uint16_t bgr555 = nexus_ui_read_be16(record_data + i * 2);
+        uint8_t red = nexus_ui_expand_5bit((uint16_t)(bgr555 & 0x1fU));
+        uint8_t green = nexus_ui_expand_5bit(
+            (uint16_t)((bgr555 >> 5) & 0x1fU));
+        uint8_t blue = nexus_ui_expand_5bit(
+            (uint16_t)((bgr555 >> 10) & 0x1fU));
+        surface->source_palette_bgr555[i] = bgr555;
+        surface->source_palette_rgba[i] = 0xff000000U |
+            ((uint32_t)red << 16) | ((uint32_t)green << 8) | blue;
+    }
+    surface->source_palette_fnv1a32 = nexus_ui_fnv1a32(
+        record_data, face_palette_bytes);
+    surface->source_palette_loaded = 1;
+    return 1;
 }
 
 /* Legacy raw-face helper. DMWeb's retail FACE.BIN is a compact PRS3

@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus FACE source-owned startup decode: the real European
+  `FACE.BIN` records now pass the DMWeb 64-entry BGR555 + PRS3 decode contract
+  and load as 20 indexed 56×56 UI surfaces. The host portrait entry point
+  remains no-draw because Saturn VDP1 destination, scale, flip and command
+  order are still uncaptured. Verification: all 20 real portraits decode and
+  load, plus the Nexus startup-media gate; no game data was changed or tracked.
+
 - ✅ 2026-08-06 Nexus FACE invalid-layout fallback removal: rejected or
   incomplete FACE.BIN bytes no longer report the legacy synthetic 48×48
   portrait geometry. Valid DMWeb FACE.BIN data still reports its authenticated

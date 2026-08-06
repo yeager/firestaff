@@ -103,21 +103,23 @@ static int test_real_decode(void) {
                 nexus_ui_load_face_record(
                     &ui, data + descriptor.prefix_offset,
                     (int)descriptor.prefix_size + (int)descriptor.prs3_size,
-                    i, 56, 56, NULL) >= 0) {
-                printf("  FAIL startup_loader admitted unverified portrait %d\n", i);
+                    i, 56, 56, NULL) <= 0) {
+                printf("  FAIL startup_loader rejected verified portrait %d\n", i);
                 nexus_ui_manager_free(&ui);
                 free(data);
                 return 1;
             }
             surface = &ui.surfaces[NEXUS_SURFACE_FACE0 + i];
-            if (surface->data || surface->source_palette_loaded) {
-                printf("  FAIL startup_loader retained portrait pixels %d\n", i);
+            if (!surface->data || surface->w != 56 || surface->h != 56 ||
+                surface->pal_count != 64 || !surface->source_palette_loaded ||
+                surface->source_palette_fnv1a32 == 0U) {
+                printf("  FAIL startup_loader surface contract %d\n", i);
                 nexus_ui_manager_free(&ui);
                 free(data);
                 return 1;
             }
         }
-        printf("  PASS startup_loader: 20 retail portraits remain blocked\n");
+        printf("  PASS startup_loader: 20 verified 56x56 portraits loaded\n");
         nexus_ui_manager_free(&ui);
     }
 

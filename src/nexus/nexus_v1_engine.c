@@ -2437,9 +2437,10 @@ static void nexus_v1_load_startup_faces(Nexus_V1_Engine *engine) {
     if (!face_data) return;
     (void)nexus_ui_face_layout_detect(face_data, face_size, &face_layout);
 
-    /* Canonical FACE.BIN has 20 variable-length PRS3 frames. The descriptor
-     * proves their boundaries but not PRS3's opcode grammar, so no record may
-     * be padded or painted as a startup portrait. */
+    /* DMWeb defines the canonical FACE.BIN records as 20 56x56 portraits:
+     * each has a 64-entry BGR555 palette and a PRS3 pixel stream. The loader
+     * retains those source pixels; presentation remains no-draw until VDP1
+     * placement and command order are captured. */
     for (i = 0; i < engine->champions.champion_count && i < 24; ++i) {
         const int portrait_index = engine->champions.champions[i].portrait_index;
         int load_result;

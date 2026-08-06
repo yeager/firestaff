@@ -27,11 +27,12 @@
   consumer that renders those codes as champion names has not been captured.
   Keep live name fields empty until that Saturn text route is authenticated.
 
-- **NEXUS-FACE-VDP1-PLACEMENT:** FACE.BIN source portraits are verified as
-  20 decoded 56×56 frames. The startup planner no longer emits its former
+- **NEXUS-FACE-VDP1-PLACEMENT:** FACE.BIN source portraits are now loaded from
+  the real PRS3 streams as 20 indexed 56×56 surfaces with their 64-entry
+  BGR555 palettes retained. The startup planner no longer emits its former
   synthetic 10×10 host rectangles or borders; it retains only the PLRD
-  portrait ordinal. Bind the real Saturn VDP1 destination, scale and command
-  order before restoring portrait draw commands.
+  portrait ordinal. Bind the real Saturn VDP1 destination, scale, flip and
+  command order before restoring portrait draw commands.
 
 - **NEXUS-STARTUP-V2-LABEL:** The launcher no longer advertises a Nexus V2
   presentation fallback. Keep the game card capture-gated until the real
