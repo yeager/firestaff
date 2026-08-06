@@ -39,6 +39,16 @@
 - ✅ Verification: `test_dm1_v1_viewport_d3l_d3r_f0108_floor_ceiling_ornament_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM2 inventory-panel production owner boundary (2026-08-11)
+
+- ✅ Removed `dm2_v1_inventory_panel.c` from the broad `firestaff_dm2`
+  archive. Its GDAT-backed hand-slot/survey receipts remain available to
+  focused tests, but its selected-item description API accepts caller text
+  and has no M11/runtime caller, so it cannot masquerade as the original
+  `DRAW_ITEM_SURVEY` → `GET_ITEM_NAME()` owner.
+- ✅ Extended `dm2_production_placeholder_boundary` to require this archive
+  exclusion. The actual item-name/font handoff remains open in TODO.
+
 # DM1 D3L2/D3R2 F0108 floor-ceiling synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the fixed-zone D3L2/D3R2 F0108 floor/ceiling contract from M10.

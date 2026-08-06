@@ -5029,6 +5029,11 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # coordinate-only shop/NPC classifier has no live DB14/CCM consumer either.
 # Keep both explicit test seams out of the product archive until the original
 # SHOP_GLASS/WALL_GFX/dt08 transaction is imported.
+# The inventory-panel module has authenticated GDAT backdrop/frame receipts,
+# but no M11/runtime caller. Its selected-item description API accepts text
+# supplied by the caller and therefore cannot be the source-owned
+# DRAW_ITEM_SURVEY/GET_ITEM_NAME route. Keep it explicit-test-only until that
+# live item-name/font handoff exists.
 list(REMOVE_ITEM DM2_SOURCES
     # c_gfx_decode is physically included by dm2_v1_asset_loader.c because
     # the loader also belongs to firestaff_m10.  A separate DM2 archive
@@ -5077,7 +5082,8 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_anim_bootstrap.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_fmtowns_disc.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_shop.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_shop_npc_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_shop_npc_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_inventory_panel.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES}
         # The original Amiga installer is an OFS ADF chain.  DM2 boot owns
@@ -49618,7 +49624,8 @@ endif()
 
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_inventory_gdat_real_data.c")
     add_executable(test_dm2_v1_inventory_gdat_real_data
-        tests/test_dm2_v1_inventory_gdat_real_data.c)
+        tests/test_dm2_v1_inventory_gdat_real_data.c
+        src/dm2/dm2_v1_inventory_panel.c)
     target_include_directories(test_dm2_v1_inventory_gdat_real_data PRIVATE
         ${CMAKE_SOURCE_DIR}/include)
     target_link_libraries(test_dm2_v1_inventory_gdat_real_data PRIVATE

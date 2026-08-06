@@ -670,7 +670,11 @@
   is not yet bound in Firestaff. The inventory helper therefore emits no
   `ready_hand`, `EMPTY`, `POOL … INDEX …`, or `UNRESOLVED` fallback text.
   Bind the selected profile's authenticated item-name record and font route
-  before presenting any inventory description.
+  before presenting any inventory description. **2026-08-11 update:** the
+  inventory-panel module's GDAT backdrop/frame receipts remain explicit-test
+  owners only; it has no M11/runtime caller and its description parameter is
+  caller-supplied. It is now excluded from `firestaff_dm2` until the live
+  `DRAW_ITEM_SURVEY`/`GET_ITEM_NAME()` handoff is connected.
 
 - **DM2-DOOR-TEXT-CONSUMER:** Door state and type constants own mechanics and
   GDAT selects their image materials; no original text producer has been
