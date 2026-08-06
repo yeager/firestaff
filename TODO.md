@@ -4503,7 +4503,11 @@ that its exact runtime path is not already source-locked and tested.
     save namespace, and no-cross-game asset leakage.
 35. **DM2-GDAT-HUD-INTERFACE:** Complete skproject-derived interface panels,
     fonts, controls, inventories, spell/action widgets, cursors, and HUD
-    placement from real GDAT records.
+    placement from real GDAT records. **2026-08-06 HUD receipt correction:**
+    the source-plan renderer retains the exact decoded width, height and
+    palette from each validated original HUD command. A plan-owned top bar or
+    portrait panel no longer becomes a zero-sized host receipt merely because
+    a separate palette callback has not run.
 36. **DM2-GDAT-DUNGEON-MATERIALS:** Complete real GDAT wall/door/floor/ceiling,
     map-chip, ornament, object, projectile, cloud, and animation material
     decode across all indoor dungeon styles.

@@ -8148,6 +8148,7 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
                                         const DM2_V1_ViewportRect *rect,
                                         int gdat_index)
 {
+    const DM2_V1_GdatHudM11Command *plan_command = NULL;
     const uint8_t *pixels = NULL;
     DM2_V1_ViewportHudMaterialRequest request;
     DM2_V1_ViewportHudPresentationCommand command;
@@ -8155,14 +8156,36 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
     int h = 0;
     int stride = 0;
     int field;
+    int command_kind;
     if (!s || !s->framebuffer || !rect || rect->w <= 0 || rect->h <= 0 ||
         gdat_index == 0) return 0;
+    command_kind =
+        gdat_index == dm2_v1_viewport_hud_core_graphic_index(
+            DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR)
+            ? DM2_V1_GDAT_HUD_M11_COMMAND_TOP_BAR
+        : gdat_index == dm2_v1_viewport_hud_core_graphic_index(
+            DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP)
+            ? DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_STRIP
+        : gdat_index == dm2_v1_viewport_hud_core_graphic_index(
+            DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX)
+            ? DM2_V1_GDAT_HUD_M11_COMMAND_GOLD_BOX
+        : gdat_index == dm2_v1_viewport_hud_core_graphic_index(
+            DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL)
+            ? DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL
+            : DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON;
     if (s->source_materials_required && s->gdat_hud_material_plan) {
-        if (!dm2_v1_render_hud_plan_command(s, gdat_index, rect,
-                                             gdat_index == dm2_v1_viewport_hud_core_graphic_index(DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR) ? DM2_V1_GDAT_HUD_M11_COMMAND_TOP_BAR :
-                                             gdat_index == dm2_v1_viewport_hud_core_graphic_index(DM2_V1_VIEWPORT_GFX_HUD_CORE_ACTION_STRIP) ? DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_STRIP :
-                                             gdat_index == dm2_v1_viewport_hud_core_graphic_index(DM2_V1_VIEWPORT_GFX_HUD_CORE_GOLD_BOX) ? DM2_V1_GDAT_HUD_M11_COMMAND_GOLD_BOX :
-                                             gdat_index == dm2_v1_viewport_hud_core_graphic_index(DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL) ? DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL : DM2_V1_GDAT_HUD_M11_COMMAND_ACTION_ICON)) return 0;
+        plan_command = dm2_v1_hud_plan_command(s, gdat_index, rect,
+                                                command_kind);
+        if (!plan_command ||
+            !dm2_v1_render_hud_plan_command(s, gdat_index, rect,
+                                            command_kind)) return 0;
+        /* The plan is the original GDAT material owner.  Retain its exact
+         * decoded dimensions in the receipt below; otherwise a successful
+         * source blit is recorded as a zero-sized host substitute. */
+        pixels = plan_command->pixels;
+        w = plan_command->width;
+        h = plan_command->height;
+        stride = plan_command->width;
     } else if (
         dm2_v1_fetch_viewport_asset(s,
                                     gdat_index,
@@ -8209,9 +8232,15 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
     if (s->source_materials_required &&
         (field == DM2_V1_VIEWPORT_GFX_HUD_CORE_TOP_BAR ||
          field == DM2_V1_VIEWPORT_GFX_HUD_CORE_PORTRAIT_PANEL)) {
+        const uint8_t *source_palette = plan_command
+            ? plan_command->palette16 : s->gdat_interface_palette16;
+        uint32_t source_palette_hash = plan_command
+            ? plan_command->palette_hash : s->gdat_interface_palette_hash;
         memset(&request, 0, sizeof(request));
-        request.valid = s->gdat_interface_palette_ready &&
-            s->gdat_interface_palette_hash != 0u &&
+        /* A validated M11 HUD plan owns both its original indexed pixels
+         * and its palette.  Do not discard that coupled receipt merely
+         * because no separate viewport palette callback has run yet. */
+        request.valid = source_palette_hash != 0u &&
             field >= 0 && field <= DM2_V1_VIEWPORT_GFX_HUD_CORE_FIELD_MASK;
         request.gdat_index = gdat_index;
         request.gdat_category = DM2_GDAT_CATEGORY_INTERFACE_GENERAL;
@@ -8219,8 +8248,8 @@ static int dm2_v1_render_hud_core_asset(DM2_V1_ViewportState *s,
         request.gdat_entry = (uint8_t)field;
         request.field = (uint8_t)field;
         request.indexed_pixels = pixels;
-        request.palette16 = s->gdat_interface_palette16;
-        request.palette_hash = s->gdat_interface_palette_hash;
+        request.palette16 = source_palette;
+        request.palette_hash = source_palette_hash;
         request.palette_entry_count = 16;
         request.width = w;
         request.height = h;

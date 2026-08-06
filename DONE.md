@@ -51432,6 +51432,14 @@ verification item.
   square and record accessors; allocation failure is rejected before any
   partial handoff. The production PC G1 route remains hash-verified and
   source-byte backed; no fixture layout was promoted into the runtime.
+- ✅ 2026-08-06 DM2 HUD source-plan receipt correction: the active viewport
+  now retains the original GDAT command's decoded width, height, indexed
+  pixels and hash-verified palette after drawing a source-plan HUD panel.
+  The top-bar and portrait-panel presentation receipts therefore remain
+  source-backed even when no duplicate host palette callback ran. A new
+  real-`GRAPHICS.DAT` regression checks all nine static HUD commands and both
+  retained material receipts; missing or altered command data still blocks
+  drawing without a fallback surface.
 - ✅ 2026-08-06 DM2 legacy creature-fixture boundary: corrected the public
   contract for `dm2_v1_creature_tick()`. It advances only its isolated test
   pool and is not a `DM2_THINK_CREATURE`/CCM implementation or an M11 runtime

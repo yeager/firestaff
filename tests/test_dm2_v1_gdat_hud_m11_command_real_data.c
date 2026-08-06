@@ -194,7 +194,25 @@ int main(void)
         viewport.gdat_hud_material_plan_consumed_count !=
             9 ||
         viewport.fallback_hud_core_drawn_count != 0 ||
-        viewport.fallback_hud_portrait_drawn_count != 0) {
+        viewport.fallback_hud_portrait_drawn_count != 0 ||
+        !viewport.last_hud_top_bar_material_request.valid ||
+        viewport.last_hud_top_bar_material_request.indexed_pixels !=
+            plan.commands[0].pixels ||
+        viewport.last_hud_top_bar_material_request.width !=
+            plan.commands[0].width ||
+        viewport.last_hud_top_bar_material_request.height !=
+            plan.commands[0].height ||
+        viewport.last_hud_top_bar_material_request.stride !=
+            plan.commands[0].width ||
+        !viewport.last_hud_status_panel_material_request.valid ||
+        viewport.last_hud_status_panel_material_request.indexed_pixels !=
+            plan.commands[8].pixels ||
+        viewport.last_hud_status_panel_material_request.width !=
+            plan.commands[8].width ||
+        viewport.last_hud_status_panel_material_request.height !=
+            plan.commands[8].height ||
+        viewport.last_hud_status_panel_material_request.stride !=
+            plan.commands[8].width) {
         fputs("FAIL: HUD plan did not render directly from canonical GDAT material\n",
               stderr);
         fprintf(stderr, "core=%d portrait=%d consumed=%d fallback-core=%d fallback-portrait=%d callbacks=%d\n",
