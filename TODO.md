@@ -1,5 +1,12 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-MNS-SATURN-RENDER-HANDOFF:** Retail MNS admission now validates
+  DMDF block size plus MOTN/TEXT section envelopes, and the real corpus decodes
+  30/30 models with non-zero meshes and 815 source textures. Remaining work is
+  still the Saturn/VDP1 command-order capture that binds these source faces,
+  materials, palettes and poses to the live viewport; do not promote host mesh
+  output to a parity screenshot without that capture.
+
 - **NEXUS-PRS3-INVALID-REFERENCE-GATE:** PRS3-avkodaren avvisar nu framtida,
   ogiltiga backreferenser utan att skapa nollfyllda pixlar. Verifiera fortsatt att nya
   källkorpusar följer DMWebs fönsterregel; palettbindning, VDP1-upload och

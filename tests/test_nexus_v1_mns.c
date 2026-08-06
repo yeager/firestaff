@@ -42,6 +42,11 @@ static int test_synthetic(void) {
     bad[0x28 + 3] = 1;
     bad[0x1C + 3] = 0x34;
     if (nexus_v1_mns_decode(bad, 0x34, &r)) return 1;
+    /* DMWeb DMDF+04 is the exact block/file size, not an advisory value. */
+    memset(bad, 0, sizeof(bad));
+    bad[0] = 'D'; bad[1] = 'M'; bad[2] = 'D'; bad[3] = 'F';
+    write_be32(bad + 4, 0x34U - 1U);
+    if (nexus_v1_mns_decode(bad, (int)sizeof(bad), &r)) return 1;
     /* A declared skeleton beyond the bounded host representation must not be
      * accepted as a truncated prefix. */
     memset(bad, 0, sizeof(bad));

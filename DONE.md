@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 Nexus MNS DMDF envelope gate: `nexus_v1_mns_decode` now
+  requires DMWeb's exact DMDF block/file size and validates the declared MOTN
+  and TEXT section spans before accepting animation tables or texture pixels.
+  TEXT descriptors and pixel payloads must remain inside TEXT; malformed
+  prefixes are rejected. The real `/Users/bosse/.firestaff/data/nexus` corpus
+  remains intact: 30/30 MNS models decode, 815 source textures render, and
+  SCORPION/ROCKPILE/VEXIRK/D_GOLD retail-count assertions pass. Verification:
+  `test_nexus_v1_mns` (summary fail=0). No game data was added to the repo.
+
 - ✅ 2026-08-06 GitHub Actions Windows-buildfix: UCRT64 no longer sees the
   POSIX-only external-archive helpers as implicit declarations. Windows keeps
   the existing fail-closed archive behavior through explicit stubs for nested

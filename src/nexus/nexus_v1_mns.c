@@ -101,6 +101,10 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
     if (read_be32(data) != NEXUS_MNS_MAGIC) return 0;
 
     out->file_size = read_be32(data + 4);
+    /* DMWeb MNS study: DMDF+04 is the block size and is equal to the file
+     * size.  Do not decode a truncated prefix (or an appended synthetic
+     * tail) as a retail model. */
+    if (out->file_size != (uint32_t)data_size) return 0;
     out->motn_offset = read_be32(data + 0x20);
     out->text_offset = read_be32(data + 0x24);
     declared_joint_count = read_be32(data + 0x28);
@@ -149,16 +153,20 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
             int tex_count;
             uint32_t desc_start = out->text_offset + 0x24;
 
+            /* DMWeb StrucTextHeader: +04 is the complete TEXT section size. */
+            if (text_size < 12 ||
+                !range_in_file(out->text_offset, text_size, data_size))
+                return 0;
             if (declared_tex_count > NEXUS_MNS_MAX_TEXTURES) return 0;
             tex_count = (int)declared_tex_count;
-            (void)text_size;
-
             for (i = 0; i < tex_count; ++i) {
                 uint32_t doff = desc_start + (uint32_t)i * NEXUS_MNS_TEXT_DESC_SIZE;
                 Nexus_V1_MnsTextureDesc *td;
 
-                if (!range_in_file(doff, NEXUS_MNS_TEXT_DESC_SIZE,
-                                   data_size)) break;
+                if ((uint64_t)doff + NEXUS_MNS_TEXT_DESC_SIZE <=
+                        (uint64_t)out->text_offset + text_size &&
+                    range_in_file(doff, NEXUS_MNS_TEXT_DESC_SIZE,
+                                  data_size)) {
                 td = &out->textures[i];
                 td->image_id = read_be16(data + doff);
                 td->encoding = read_be16(data + doff + 2);
@@ -177,7 +185,9 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
                 if (td->pixel_count > 0 && td->image_offset) {
                     uint32_t abs_off = out->text_offset + td->image_offset;
                     int byte_count = td->pixel_count * 2;
-                    if (range_in_file(abs_off, (uint64_t)byte_count,
+                    if ((uint64_t)td->image_offset + (uint64_t)byte_count <=
+                            (uint64_t)text_size &&
+                        range_in_file(abs_off, (uint64_t)byte_count,
                                       data_size)) {
                         uint32_t rgba[16384];
                         int j;
@@ -192,19 +202,28 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
                     }
                 }
                 out->texture_count++;
+                } else {
+                    return 0;
+                }
             }
         }
     }
 
-    /* MOTN section: animation keyframes (DMWeb StrucMotnHeader) */
+    /* MOTN section: animation keyframes (DMWeb StrucMotnHeader).  Its
+     * declared section size is part of the source envelope; validate that
+     * envelope before the bounded offset walk below. */
     if (out->motn_offset && (int)(out->motn_offset + 0x20) <= data_size) {
         const uint8_t *motn = data + out->motn_offset;
         if (read_be32(motn) == NEXUS_MNS_MOTN_MAGIC) {
+            uint32_t motn_size = read_be32(motn + 4);
             uint32_t declared_table_count = read_be32(motn + 8);
             uint32_t declared_motn_joints = read_be32(motn + 0x0C);
             int table_count;
             int motn_joints;
             int t;
+            if (motn_size < 0x20 ||
+                !range_in_file(out->motn_offset, motn_size, data_size))
+                return 0;
             if (declared_table_count > NEXUS_MNS_MAX_MOTN_TABLES ||
                 declared_motn_joints > NEXUS_MNS_MAX_JOINTS) return 0;
             table_count = (int)declared_table_count;
