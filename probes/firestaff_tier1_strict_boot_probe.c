@@ -55,7 +55,10 @@ typedef struct {
 
 #define EXPECT_DM1_RUNTIME   0, 1, -1, "dm1-title", 0, 23, 23, 23, 1
 #define EXPECT_CSB_RUNTIME   0, 1, -1, "csb-runtime", 0, 53, 53, 53, 1
-#define EXPECT_DM2_RUNTIME   0, 1, -1, "dm2-runtime", 0, 0, 0, 0, 1
+/* DM2's original menu is the verified terminal boundary until the complete
+ * GAME_LOAD record/object path is available.  Enter must not fabricate a
+ * runtime handoff from merely present GRAPHICS/DUNGEON data. */
+#define EXPECT_DM2_STARTUP   1, 1, 0, "dm2-startup-menu", 1, 0, 0, 0, 1
 #define EXPECT_NEXUS_RUNTIME 0, 1, -1, "nexus-runtime", 0, -1, -1, 102, 1
 #define EXPECT_THERON_RUNTIME 0, 1, -1, "theron-runtime", 0, 0, 0, 0, 1
 
@@ -85,20 +88,20 @@ static const Tier1PathSpec kPaths[] = {
       "csb-runtime", "enter", 240,
       "CSB Amiga 3.3 Meynaf FR (M11 stderr-pipe)", EXPECT_CSB_RUNTIME },
     { "dm2",   "dm2",
-      "dm2-runtime", "enter", 2,
-      "DM2 canonical (M11 stderr-pipe)", EXPECT_DM2_RUNTIME },
+      "dm2-startup-menu", NULL, 1,
+      "DM2 canonical static menu (M11 stderr-pipe)", EXPECT_DM2_STARTUP },
     { "dm2",   "dm2-extras/dos-en",
-      "dm2-runtime", "enter", 2,
-      "DM2 DOS EN extras data/ layout (M11 stderr-pipe)", EXPECT_DM2_RUNTIME },
+      "dm2-startup-menu", NULL, 1,
+      "DM2 DOS EN extras static menu (M11 stderr-pipe)", EXPECT_DM2_STARTUP },
     { "dm2",   "dm2-extras/dos-fr",
-      "dm2-runtime", "enter", 2,
-      "DM2 DOS FR extras data/ layout (M11 stderr-pipe)", EXPECT_DM2_RUNTIME },
+      "dm2-startup-menu", NULL, 1,
+      "DM2 DOS FR extras static menu (M11 stderr-pipe)", EXPECT_DM2_STARTUP },
     { "dm2",   "dm2-extras/pc-fr",
-      "dm2-runtime", "enter", 2,
-      "DM2 PC FR extras DATA/ layout (M11 stderr-pipe)", EXPECT_DM2_RUNTIME },
+      "dm2-startup-menu", NULL, 1,
+      "DM2 PC FR extras static menu (M11 stderr-pipe)", EXPECT_DM2_STARTUP },
     { "dm2",   "dm2-extras/pc-de",
-      "dm2-runtime", "enter", 2,
-      "DM2 PC DE extras DATA/ layout (M11 stderr-pipe)", EXPECT_DM2_RUNTIME },
+      "dm2-startup-menu", NULL, 1,
+      "DM2 PC DE extras static menu (M11 stderr-pipe)", EXPECT_DM2_STARTUP },
     { "nexus", "nexus",
       "nexus-runtime", "wait120,enter,enter,action", 2,
       "Nexus canonical (Saturn ISO/CUE recursive scan)", EXPECT_NEXUS_RUNTIME },
@@ -279,7 +282,11 @@ static int make_startup_spec(const Tier1PathSpec *runtime_spec,
         startup_spec->expect_title_frame_min = 0;
         startup_spec->expect_title_frame_max = 0;
         startup_spec->expect_title_frame_boundary = 0;
-        startup_spec->expect_title_ready = 0;
+        /* SKProject SKWIN/startend.cpp::DM2_SHOW_MENU_SCREEN draws the
+         * static TITLE/0/dt07/4 menu before entering MessageLoop(true).
+         * It is immediately ready for input; unlike an animated title,
+         * there is no future frame to await. */
+        startup_spec->expect_title_ready = 1;
     } else if (strcmp(runtime_spec->game, "nexus") == 0) {
         startup_spec->expect_phase = "nexus-title";
         startup_spec->expect_startup_active = 1;

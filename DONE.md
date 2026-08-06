@@ -80,6 +80,16 @@
   PC-English corpus emitted the 320×200 indexed capture plus the actual
   post-presentation RGBA capture.
 
+- ✅ 2026-08-06 DM2 static-menu readiness correction: the Tier 1 strict boot
+  probe now expects `titleReady=1` for `dm2-startup-menu`. SKProject
+  `SKWIN/startend.cpp::DM2_SHOW_MENU_SCREEN` draws the static
+  `TITLE/0/dt07/4` menu before `MessageLoop(true)`, so it is immediately
+  interactive rather than waiting for a title-animation frame. It also
+  verifies that terminal menu state rather than pressing Enter and demanding
+  an unsupported `GAME_LOAD` handoff. A fresh read-only boot of the supplied
+  PC-DOS data reports the expected phase, ready state, raw 320×200 capture
+  and post-presentation capture; game data was neither copied nor unpacked.
+
 - ✅ 2026-08-06 Theron production archive boundary: the archive regression now
   checks every CMake-excluded inferred/procedural Theron translation unit,
   not only the legacy creature table. A future source binding must therefore

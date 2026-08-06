@@ -5690,6 +5690,12 @@ that its exact runtime path is not already source-locked and tested.
     capture even though the live SDL surface had the correct dtPalIRGB
     palette. Keep the packaged-app evidence task open; this closes only that
     unbundled capture fidelity defect.
+    2026-08-06 follow-up: the strict real-data boot probe now requires the
+    source-correct `titleReady=1` for DM2's immediately interactive static
+    `TITLE/0/dt07/4` menu. It no longer mistakes a ready menu for a pending
+    title animation or presses Enter to demand an unsupported `GAME_LOAD`
+    runtime handoff. A fresh PC-DOS capture is retained only as external
+    verification evidence; no game bytes are copied or unpacked.
 49. **DM2-REAL-DATA-REGRESSION-CORPUS:** Build hash/provenance-verified DM2
     GRAPHICS/DUNGEON/SKSAVE/SND test corpus and end-to-end runtime regressions
     that exercise the authentic production paths.
