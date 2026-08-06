@@ -11,21 +11,29 @@ int nexus_v1_sndlev_map_provenance_parse(const uint8_t *bytes, uint64_t size,
     Nexus_V1_SndlevMapProvenanceReceipt r; uint64_t h; uint64_t off;
     if (!out) return 0;
     memset(&r,0,sizeof(r));
-    if (!bytes || size > SIZE_MAX || size < NEXUS_V1_SNDLEV_MAP_HEADER_BYTES + 2U || !expected) { *out=r; return 0; }
+    /* DMWeb's retail decoder reads eight-byte records from offset zero.  The
+     * first selector byte is 0x20 in the verified SNDLEV00-15 corpus and the
+     * table ends with FF FF; do not accept the old synthetic 24-byte prefix. */
+    if (!bytes || size > SIZE_MAX || size < NEXUS_V1_SNDLEV_MAP_RECORD_BYTES + 2U ||
+        !expected || bytes[0] != 0x20U) { *out=r; return 0; }
     h=fnv(UINT64_C(1469598103934665603),bytes,(size_t)size);
     if (h!=expected) { *out=r; return 0; }
-    off=NEXUS_V1_SNDLEV_MAP_HEADER_BYTES;
+    off=0U;
     while (off+2U<=size) {
-        if (bytes[off]==0xffU && bytes[off+1U]==0xffU) break;
+        if (bytes[off]==0xffU && bytes[off+1U]==0xffU) {
+            /* Retail files contain no trailer after the terminator. */
+            if (off + 2U != size) { *out=r; return 0; }
+            break;
+        }
         if (off+NEXUS_V1_SNDLEV_MAP_RECORD_BYTES>size ||
-            (off-NEXUS_V1_SNDLEV_MAP_HEADER_BYTES)/NEXUS_V1_SNDLEV_MAP_RECORD_BYTES >= NEXUS_V1_SNDLEV_MAP_MAX_RECORDS) { *out=r; return 0; }
+            off/NEXUS_V1_SNDLEV_MAP_RECORD_BYTES >= NEXUS_V1_SNDLEV_MAP_MAX_RECORDS) { *out=r; return 0; }
         off+=NEXUS_V1_SNDLEV_MAP_RECORD_BYTES;
     }
-    if (off+2U>size || off==NEXUS_V1_SNDLEV_MAP_HEADER_BYTES) { *out=r; return 0; }
+    if (off+2U>size || off==0U) { *out=r; return 0; }
     r.valid=1; r.source_fnv1a64=h; r.source_byte_count=size;
-    r.header_length=NEXUS_V1_SNDLEV_MAP_HEADER_BYTES;
+    r.header_length=0U;
     r.header_fnv1a64=fnv(UINT64_C(1469598103934665603),bytes,(size_t)r.header_length);
-    r.table_offset=NEXUS_V1_SNDLEV_MAP_HEADER_BYTES; r.table_length=off-r.table_offset;
+    r.table_offset=0U; r.table_length=off;
     r.table_fnv1a64=fnv(UINT64_C(1469598103934665603),bytes+r.table_offset,(size_t)r.table_length);
     r.record_count=(uint32_t)(r.table_length/NEXUS_V1_SNDLEV_MAP_RECORD_BYTES); r.terminator_offset=(uint32_t)off;
     *out=r; return 1;

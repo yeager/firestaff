@@ -105,7 +105,10 @@
   The configured Nexus data root is now also passed into the sound engine;
   CD-DA candidate paths no longer fall back to a HOME-relative placeholder.
   SLEV00-15 real task-entry profiles and SAL/MAP metadata remain receipts only
-  until the Saturn event/audio consumer is captured.
+  until the Saturn event/audio consumer is captured. 2026-08-06: the
+  provenance route now follows the real DMWeb retail MAP layout (8-byte rows
+  from offset 0, terminal `FF FF`) across all sixteen MAP files; this fixes
+  the old 24-byte fixture-prefix assumption without permitting playback.
   generic storage remains diagnostic and no retail drop record is fabricated.
   MNS mesh/skeleton/texture decoding now rejects truncated declared joint
   tables and guards TEXT/mesh/MOTN/pixel ranges; keep creature rendering

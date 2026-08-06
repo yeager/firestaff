@@ -5,7 +5,11 @@
 
 #include <stdint.h>
 
-#define NEXUS_V1_SNDLEV_MAP_HEADER_BYTES 24U
+/* DMWeb DecodeSNDLEVxxMAP: retail MAP records start at byte zero.  There is
+ * no 24-byte file header; keep the field/macro for receipt compatibility and
+ * make its value explicit so admission cannot mistake a fixture header for
+ * retail data. */
+#define NEXUS_V1_SNDLEV_MAP_HEADER_BYTES 0U
 #define NEXUS_V1_SNDLEV_MAP_RECORD_BYTES 8U
 #define NEXUS_V1_SNDLEV_MAP_MAX_RECORDS 16U
 

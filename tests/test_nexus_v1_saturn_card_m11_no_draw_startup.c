@@ -183,7 +183,7 @@ int main(void)
     Nexus_V1_LauncherM12M11SlevSalCaptureRouteReceipt script_capture_route;
     Nexus_V1_LauncherM12M11SlevSalCaptureRouteReceipt script_capture_resume;
     uint8_t sal_bytes[] = { 'd','s','p','0','1','.','E','X', 1,2,3,4,5,6,7,8 };
-    uint8_t map_bytes[34] = { 0 };
+    uint8_t map_bytes[10] = { 0 };
     uint8_t capture_bytes[NEXUS_V1_M11_SLEV_SAL_CAPTURE_HEADER_BYTES + 12U];
     static const uint8_t opaque_capture_payload[12] = {
         0x42U, 0xd1U, 0x06U, 0x9aU, 0x35U, 0xe8U,
@@ -247,9 +247,9 @@ int main(void)
               task_body.blocks_real_sfx_playback &&
               task_body.slev.fnv1a64 == task_body.task_body.source_fnv1a64,
           "M11 binds a source-ordered original SLEV task-body target only to the exact card/package/epoch startup route");
-    map_bytes[24] = 1U;
-    map_bytes[32] = 0xffU;
-    map_bytes[33] = 0xffU;
+    map_bytes[0] = 0x20U;
+    map_bytes[8] = 0xffU;
+    map_bytes[9] = 0xffU;
     assets.levels[4].sal.byte_count = sizeof(sal_bytes);
     assets.levels[4].sal.fnv1a64 = fnv1a64(sal_bytes, sizeof(sal_bytes));
     assets.levels[4].map.byte_count = sizeof(map_bytes);

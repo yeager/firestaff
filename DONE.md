@@ -50847,3 +50847,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   every DMWeb-relative string offset against the section boundary and ordered
   span table. The European RLOWFIX corpus regression rejects a tampered
   neighbouring string offset without changing the unresolved text consumer.
+- ✅ 2026-08-06 Nexus SNDLEV MAP provenance now matches the real DMWeb retail
+  layout: eight-byte records begin at offset 0, the first selector byte is
+  the observed `0x20`, and `FF FF` must be the final two bytes. The old
+  24-byte synthetic prefix was removed from the provenance path and the
+  no-draw startup fixture was migrated to the same layout. The focused test
+  verifies all sixteen mounted `SNDLEV00-15.MAP` files (66–90 bytes, 154
+  bounded records in total); event dispatch and audio playback remain
+  capture-gated.

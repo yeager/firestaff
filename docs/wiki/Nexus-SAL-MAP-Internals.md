@@ -3,8 +3,10 @@
 ## DONE
 
 The retail Japanese corpus at `FIRESTAFF_NEXUS_DATA_DIR` contains sixteen
-`SNDLEV00` through `SNDLEV15` SAL/MAP pairs. Each MAP has a 24-byte leading
-region, a sequence of eight-byte records, and an `ffff` terminator. The
+`SNDLEV00` through `SNDLEV15` SAL/MAP pairs. Per DMWeb's
+`DecodeSNDLEVxxMAP`, each MAP is a sequence of eight-byte records beginning
+at byte zero and ending with an `ffff` terminator; the verified files are
+66–90 bytes, so there is no 24-byte leading file header. The
 implemented record route retains only the observed fields: raw selector byte,
 raw attribute byte, big-endian SAL offset, and big-endian SAL size. It accepts
 a selector only when it occurs exactly once and its complete SAL window is in
