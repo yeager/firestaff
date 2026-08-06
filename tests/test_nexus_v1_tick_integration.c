@@ -11,6 +11,8 @@
 #include "nexus_v1_mechanics.h"
 #include "nexus_v1_movement.h"
 #include "nexus_v1_encumbrance.h"
+#include "nexus_v1_switches.h"
+#include "nexus_v1_containers.h"
 
 static int g_fail;
 
@@ -228,10 +230,39 @@ int main(void) {
         destroy_engine(e);
     }
 
+    /* Test 13: interaction remains no-op until the Saturn action dispatcher
+     * is captured; isolated switch/container modules remain testable above. */
+    {
+        Nexus_V1_Engine *e = create_minimal_engine();
+        int switch_idx;
+        int container_idx;
+        switch_idx = nexus_v1_switch_register(&e->switches,
+                                              NEXUS_SWITCH_LEVER,
+                                              5, 5,
+                                              NEXUS_SWITCH_TARGET_DOOR,
+                                              0,
+                                              0);
+        container_idx = nexus_v1_container_register(&e->containers,
+                                                     NEXUS_CONTAINER_CHEST,
+                                                     5, 5,
+                                                     0,
+                                                     -1);
+        nexus_mechanics_push_command(e->mechanics, NEXUS_CMD_INTERACT);
+        nexus_v1_tick(e);
+        expect(switch_idx == 0 &&
+                   nexus_v1_switch_get_state(&e->switches, switch_idx) == 0,
+               "unproven interaction does not toggle a real switch");
+        expect(container_idx == 0 &&
+                   !nexus_v1_container_is_open(&e->containers, container_idx),
+               "unproven interaction does not open a real container");
+        destroy_engine(e);
+    }
+
     if (g_fail) {
         fprintf(stderr, "%d failures\n", g_fail);
         return 1;
     }
-    printf("ok: Nexus tick integration verified (12 tests)\n");
+
+    printf("ok: Nexus tick integration verified (13 tests)\n");
     return 0;
 }

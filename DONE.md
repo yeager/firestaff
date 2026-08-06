@@ -13,6 +13,14 @@
   model discovery remains unchanged. This closes the direct filename
   injection path used by startup, HUD and level auxiliary loaders.
 
+- ✅ 2026-08-06 Nexus interaction provenance gate: production
+  `NEXUS_CMD_INTERACT` no longer toggles DGN-derived switches, opens
+  containers, drinks from fountains, or performs altar rituals while the
+  Saturn action dispatcher is uncaptured. The isolated data modules remain
+  available for parser tests; the runtime tick regression now proves real
+  switch/container state stays unchanged until an authenticated action trace
+  binds the semantics.
+
 - ✅ 2026-08-06 Nexus DGN actor CRET provenance gate: a Structure1A/3 model
   signature no longer promotes an actor to a live creature type when its
   RLOWFIX CRET record is absent. Such actors remain untyped/idle instead of

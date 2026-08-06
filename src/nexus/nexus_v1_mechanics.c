@@ -724,7 +724,7 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                                                      st->party_x, st->party_y);
                 int ct_idx = nexus_v1_container_find_at(&engine->containers,
                                                         st->party_x, st->party_y);
-                if (sw_idx >= 0) {
+                if (sw_idx >= 0 && nexus_v1_action_semantics_proven()) {
                     Nexus_SwitchResult sr = nexus_v1_switch_activate(
                         &engine->switches, sw_idx);
                     if (sr.activated && sr.target_type == NEXUS_SWITCH_TARGET_DOOR)
@@ -736,16 +736,16 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                             st->party_x, st->party_y, door_is_open);
                     }
                     needs_redraw = 1;
-                } else if (ct_idx >= 0) {
+                } else if (ct_idx >= 0 && nexus_v1_action_semantics_proven()) {
                     nexus_v1_container_open(&engine->containers, ct_idx, -1);
                     needs_redraw = 1;
-                } else if (fnt_idx >= 0) {
+                } else if (fnt_idx >= 0 && nexus_v1_action_semantics_proven()) {
                     nexus_v1_fountain_drink(&engine->fountains, fnt_idx, leader);
                     /* Nexus HUD text ownership is not established by the
                      * retail fountain record. Do not substitute the DM1
                      * English action label in the production HUD. */
                     needs_redraw = 1;
-                } else if (altar_state != 0) {
+                } else if (altar_state != 0 && nexus_v1_action_semantics_proven()) {
                     /* Altar square: attempt ritual.  Real effect is blocked
                      * until COMMAND.C altar semantics are source-locked.
                      * Source: DM1 COMMAND.C altar use dispatch. */
