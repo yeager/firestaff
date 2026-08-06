@@ -25840,6 +25840,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   real capture is still required. Runtime now distinguishes the synthetic
   final local inscription slot from real global ornament 0, so a real
   ornament-0 torch/holder cannot enter the inscription path.
+  - 2026-08-06 fallback audit: the remaining legacy wall/door/floor helper
+    paths now fail closed unless the authentic per-map ornament table and
+    decoded pixel buffer are present. They cannot manufacture a global
+    ornament index or draw a dimension-only slot. This is code-side cleanup;
+    the real Mac/window torch-and-holder capture is still open.
 - [ ] DM1-HOC-OBJECTS-002 Capture a real PC34 HoC pickup/placement round trip
   for weapon, potion, scroll, container and junk objects. Confirm M564 names,
   C00/C01 hand masks and backpack ownership remain source-backed. The F0033

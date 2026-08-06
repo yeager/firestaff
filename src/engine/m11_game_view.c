@@ -33572,25 +33572,22 @@ static int m11_draw_wall_ornament(const M11_GameViewState* state,
      * doesn't change observable game state. */
     m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
 
-    /* Resolve the per-map ordinal to a global ornament index via
-     * the cached G0261 table.  Fall back to ordinal if the cache
-     * couldn't be loaded (identity mapping). */
-    if (mapIdx >= 0 && mapIdx < (int)32 &&
-        state->ornamentCacheLoaded[mapIdx] &&
-        ornamentOrdinal < 16) {
-        ornGlobalIdx = state->wallOrnamentIndices[mapIdx][ornamentOrdinal];
-    } else {
-        /* Fallback: direct mapping (old behaviour) */
-        int wallSet = 0;
-        if (mapIdx >= 0 && mapIdx < (int)state->world.dungeon->header.mapCount) {
-            wallSet = (int)state->world.dungeon->maps[mapIdx].wallSet;
-        }
-        ornGlobalIdx = wallSet * 16 + ornamentOrdinal;
+    /* ReDMCSB resolves the local ordinal through the loaded G0261 table.
+     * There is no valid identity mapping when that table is unavailable:
+     * drawing one would put an unrelated GRAPHICS.DAT record on the wall. */
+    if (mapIdx < 0 || mapIdx >= (int)32 ||
+        !state->ornamentCacheLoaded[mapIdx] || ornamentOrdinal >= 16) {
+        return 0;
+    }
+    ornGlobalIdx = state->wallOrnamentIndices[mapIdx][ornamentOrdinal];
+    if (ornGlobalIdx < 0) {
+        return 0;
     }
     gfxIdx = (unsigned int)(M11_GFX_WALL_ORNAMENT_BASE +
                             ornGlobalIdx * M11_GFX_WALL_ORNAMENTS_PER_SET);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
-    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) return 0;
 
     /* DM1-faithful wall ornament depth scaling.
      * The original uses specific perspective-scaled ornament sizes at
@@ -33649,21 +33646,20 @@ static int m11_draw_door_ornament(const M11_GameViewState* state,
     /* Ensure ornament cache and resolve via per-map door ornament table */
     m11_ensure_ornament_cache((M11_GameViewState*)state, mapIdx);
 
-    if (mapIdx >= 0 && mapIdx < (int)32 &&
-        state->ornamentCacheLoaded[mapIdx] &&
-        ornamentOrdinal < 16) {
-        ornGlobalIdx = state->doorOrnamentIndices[mapIdx][ornamentOrdinal];
-    } else {
-        /* Fallback: direct mapping */
-        int doorSet = 0;
-        if (mapIdx >= 0 && mapIdx < (int)state->world.dungeon->header.mapCount) {
-            doorSet = (int)state->world.dungeon->maps[mapIdx].doorSet0;
-        }
-        ornGlobalIdx = doorSet * M11_GFX_DOOR_ORNAMENTS_PER_SET + ornamentOrdinal;
+    /* Door ornament ordinals are also map-local.  Do not guess a door set
+     * or use the ordinal as a global index when the source table is absent. */
+    if (mapIdx < 0 || mapIdx >= (int)32 ||
+        !state->ornamentCacheLoaded[mapIdx] || ornamentOrdinal >= 16) {
+        return 0;
+    }
+    ornGlobalIdx = state->doorOrnamentIndices[mapIdx][ornamentOrdinal];
+    if (ornGlobalIdx < 0) {
+        return 0;
     }
     gfxIdx = (unsigned int)(M11_GFX_DOOR_ORNAMENT_BASE + ornGlobalIdx);
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
-    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) return 0;
 
     /* DM1-faithful door ornament depth scaling.
      * Door ornaments scale with perspective similarly to wall ornaments
@@ -33740,13 +33736,12 @@ static int m11_draw_floor_ornament(const M11_GameViewState* state,
      * ornamentOrdinal - 1 gives the 0-based per-map index. */
     {
         int localIdx = ornamentOrdinal - 1;
-        if (mapIdx >= 0 && mapIdx < (int)32 &&
-            state->ornamentCacheLoaded[mapIdx] &&
-            localIdx >= 0 && localIdx < 16) {
-            ornGlobalIdx = state->floorOrnamentIndices[mapIdx][localIdx];
-        } else {
-            ornGlobalIdx = localIdx; /* fallback: identity mapping */
+        if (mapIdx < 0 || mapIdx >= (int)32 ||
+            !state->ornamentCacheLoaded[mapIdx] ||
+            localIdx < 0 || localIdx >= 16) {
+            return 0;
         }
+        ornGlobalIdx = state->floorOrnamentIndices[mapIdx][localIdx];
     }
     if (ornGlobalIdx < 0) return 0;
 
@@ -33774,7 +33769,8 @@ static int m11_draw_floor_ornament(const M11_GameViewState* state,
         gfxIdx = (unsigned int)helperGfxIdx;
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&state->assetLoader, gfxIdx);
-    if (!slot || slot->width == 0 || slot->height == 0) return 0;
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) return 0;
 
     /* Scale ornament to fit the floor area of the cell rect.
      * Floor ornaments occupy the bottom portion of the cell face.

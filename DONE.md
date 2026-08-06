@@ -50699,3 +50699,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   The real US loader test verifies those fields for all seven dungeons and
   their complete 3-8-map retail spans; all existing object chains remain
   fail-closed and unbound where the consumer is unproven.
+- ✅ 2026-08-06 DM1 ornament fallback removal: the three legacy wall,
+  door, and floor ornament helpers no longer use identity/global-set guesses
+  when the authentic per-map DUNGEON.DAT tables are unavailable. They now
+  require a resolved map-local table entry and a decoded GRAPHICS.DAT pixel
+  buffer (`loaded && pixels`) before drawing. The authenticated DM1 source
+  route was already using the source-owned F0107/F0108/F0111 consumers; this
+  closes the remaining diagnostic/custom helper paths without inventing
+  ornament pixels. The supplied DOS manual remains behavioral evidence only;
+  the real Mac/window capture gaps stay open.
