@@ -11720,7 +11720,15 @@ static int m11_raw_group_record_matches_live(
         return 0;
     }
     raw = dm1_v1_dungeon_get_thing_data_pc34(things, groupThing);
-    if (!raw) return 1;
+    /* Data-free compatibility worlds have no raw group table at all and may
+     * still exercise the bounded F0190 contract. Once a raw table is
+     * present, however, a missing record is not source evidence and must
+     * fail closed instead of authorizing a drop or C040 smoke. */
+    if (!things->rawThingData[THING_TYPE_GROUP] ||
+        things->thingCounts[THING_TYPE_GROUP] <= 0) {
+        return 1;
+    }
+    if (!raw) return 0;
     group = &things->groups[groupIndex];
     bitfield = (unsigned short)(raw[14] | ((unsigned short)raw[15] << 8));
     if (raw[4] >= 27u ||
