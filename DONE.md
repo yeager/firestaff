@@ -14,6 +14,14 @@
 - ✅ Verification: `test_dm1_v1_viewport_d3c_f0111_door_front_pair_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 champion status-recompute synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only champion status-recompute model from M10. It
+  uses synthetic panel state, reads no original DM1 data and has no M11/runtime
+  caller; its explicit ReDMCSB regression compiles it directly.
+- ✅ Verification: `dm1_v1_champion_panel_status_recompute_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D3C F0108 floor-ceiling synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only D3C F0108 framebuffer model from M10. It uses

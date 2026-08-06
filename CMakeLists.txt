@@ -4669,6 +4669,12 @@ list(REMOVE_ITEM M10_SOURCES
 # already compiles it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_portrait_pc34_compat.c")
+# `dm1_v1_champion_panel_status_recompute_pc34_compat.c` is a contract-only
+# visible-delta model with synthetic panel state. It reads no original DM1
+# data and has no M11/runtime caller; its explicit regression compiles it
+# directly rather than exposing the model through M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_status_recompute_pc34_compat.c")
 # `dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c`
 # is a deterministic C040/chest/rotation scenario fixture. It reads no
 # original DM1 data and has no M11/runtime caller; its explicit regression
