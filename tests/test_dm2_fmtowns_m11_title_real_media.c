@@ -227,8 +227,52 @@ int main(void)
         y = aux_layout.quit_game.y + aux_layout.quit_game.h / 2;
         pointer_result = M11_GameView_HandlePointerButton(
             &view, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
-        expect(pointer_result == M11_GAME_INPUT_RETURN_TO_MENU,
-               "HME-242 quit rectangle dispatches the source-owned launcher return");
+        expect(pointer_result == M11_GAME_INPUT_REDRAW &&
+                   view.dm2FmtownsEndActive && view.dm2FmtownsTitleBound &&
+                   view.dm2FmtownsTitleFrameReceipt.requested_frame == 0u &&
+                   view.dm2FmtownsFrameCount == 420u,
+               "HME-242 quit rectangle follows SKULL with AUTOEXEC's real END stream");
+        for (step = 0; step < 10000 && view.dm2FmtownsTitleFrameIndex < 100u;
+             ++step) {
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        }
+        {
+            DM2_V1_FmtownsAnimPaletteReceipt expected_palette;
+            uint8_t presented_palette[256][3];
+            int color;
+
+            memset(&expected_palette, 0, sizeof(expected_palette));
+            memset(presented_palette, 0, sizeof(presented_palette));
+            expect(view.dm2FmtownsTitleFrameIndex == 100u &&
+                       dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+                           view.dm2FmtownsTitleBytes,
+                           view.dm2FmtownsTitleByteCount, 100u,
+                           &expected_palette),
+                   "HME-242 END reaches its native loop-expanded frame 100 palette");
+            memset(framebuffer, 0, sizeof(framebuffer));
+            M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+            expect(expected_palette.valid &&
+                       M11_Render_CopyIndexedPaletteRgb6(presented_palette),
+                   "HME-242 END presents a source palette at frame 100");
+            for (color = 0; expected_palette.valid && color < 16; ++color) {
+                expect(presented_palette[color][0] ==
+                           (uint8_t)(expected_palette.rgb4[color][0] << 2u) &&
+                           presented_palette[color][1] ==
+                           (uint8_t)(expected_palette.rgb4[color][1] << 2u) &&
+                           presented_palette[color][2] ==
+                           (uint8_t)(expected_palette.rgb4[color][2] << 2u),
+                       "HME-242 END frame palette remains the native PL record");
+            }
+        }
+        for (step = 0; step < 20000 && !view.dm2FmtownsEndComplete; ++step) {
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        }
+        expect(view.dm2FmtownsEndComplete && !view.dm2FmtownsEndActive &&
+                   !view.dm2FmtownsTitleBound,
+               "HME-242 END completes before the source-ordered launcher return");
+        expect(M11_GameView_AdvanceIdleTick(&view) ==
+                   M11_GAME_INPUT_RETURN_TO_MENU,
+               "HME-242 returns to the launcher only after END completes");
     }
     expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
                M11_GAME_INPUT_IGNORED,

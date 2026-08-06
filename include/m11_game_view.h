@@ -1726,6 +1726,11 @@ typedef struct {
      * assuming a retail frame total in M11. */
     uint32_t dm2FmtownsFrameCount;
     int dm2FmtownsSwooshActive;
+    /* HME-242 AUTOEXEC continues from SKULL.EXP to the separate END stream.
+     * This is set only after the source-owned 0xE0 Quit rectangle binds that
+     * authenticated in-memory member; it is not a generic host fade. */
+    int dm2FmtownsEndActive;
+    int dm2FmtownsEndComplete;
     int dm2FmtownsTitleBound;
     int dm2FmtownsTitleFinished;
     int dm2FmtownsTitleRejected;

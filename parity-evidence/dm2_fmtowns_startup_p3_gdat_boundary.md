@@ -61,6 +61,14 @@ the original SKULL continuation loop, and a real save-backed RESUME action
 remain unavailable. A NEW GAME click cannot construct a party or dungeon;
 RESUME remains inert without a boot-admitted original save.
 
+When the source-owned Quit (`0xE0`) rectangle returns from `SKULL.EXP`, M11
+now plays the selected `END` member before returning to Firestaff's launcher.
+`END` has 420 displayed frames: its 3 EN and 382 DL rows are extended by its
+native FO/NE loop records, so the raw EN+DL count is deliberately not used as
+an end condition. Its five PL records are decoded for each displayed source
+frame. This reuses only the in-memory HME-242 member and is not a generated
+fade, title replay or PC transition.
+
 ## Keyboard boundary
 
 The PC SKWIN reference maps its `0xD7` New Game event through the PC-only

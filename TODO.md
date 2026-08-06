@@ -28366,6 +28366,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   the authenticated `SKULL.EXP` load image, so generic M12 keyboard tokens
   remain correctly blocked for FM Towns. Decode the native P3 input route
   before enabling it; do not import the PC table.
+  **2026-08-06 END handoff:** the selected source `0xE0` Quit rectangle now
+  replays the authenticated HME-242 `END` stream, including its FO/NE loops
+  and per-frame PL palette selection, before returning to the launcher.
+  This completes only the AUTOEXEC exit transition. Native P3 keyboard input,
+  GAME_LOAD, save-resume and the remaining GUI text consumers stay open.
 
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN

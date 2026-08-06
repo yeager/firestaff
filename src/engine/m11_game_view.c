@@ -1494,6 +1494,36 @@ static int m11_dm2_fmtowns_stream_frame_count(
     return 1;
 }
 
+/* TITLE/SWOOSH expose one EN plus their DL rows, but END also contains FO/NE
+ * loop records. Count the actual displayable stream in RAM so the quit route
+ * cannot truncate its native loop at the raw EN+DL count. The bounded 4096
+ * cap is the same malformed-media guard used by the real-media regression. */
+static int m11_dm2_fmtowns_end_frame_count(const uint8_t *bytes,
+                                           size_t byte_count,
+                                           uint32_t *out_count)
+{
+    uint8_t pixels[320u * 200u / 2u];
+    DM2_V1_FmtownsAnimFrameReceipt frame;
+    uint32_t count = 0u;
+
+    if (!bytes || !out_count) {
+        return 0;
+    }
+    while (count < 4096u) {
+        memset(&frame, 0, sizeof(frame));
+        if (!dm2_v1_fmtowns_anim_stream_decode_frame(
+                bytes, byte_count, count, pixels, sizeof(pixels), &frame)) {
+            break;
+        }
+        ++count;
+    }
+    if (count == 0u || count == 4096u) {
+        return 0;
+    }
+    *out_count = count;
+    return 1;
+}
+
 /* AUTOEXEC transfers from TWANIM TITLE to SKULL.EXP.  We do not execute the
  * P3 program, but its authenticated GRAPHICS.DAT is the same source owner
  * that SKWIN's SHOW_MENU_SCREEN reads after SKULL has opened it.  Admit the
@@ -1612,6 +1642,8 @@ static void m11_dm2_release_fmtowns_title(M11_GameViewState *state)
     state->dm2FmtownsTitleSoundEventIndex = 0u;
     state->dm2FmtownsFrameCount = 0u;
     state->dm2FmtownsSwooshActive = 0;
+    state->dm2FmtownsEndActive = 0;
+    state->dm2FmtownsEndComplete = 0;
     state->dm2FmtownsTitleBound = 0;
     state->dm2FmtownsTitleFinished = 0;
     state->dm2FmtownsTitleRejected = 0;
@@ -1734,6 +1766,60 @@ static int m11_dm2_bind_fmtowns_swoosh(M11_GameViewState *state)
     return 1;
 }
 
+/* AUTOEXEC.BAT continues with TWANIM END after SKULL.EXP returns.  The
+ * selected HME-242 END member carries five PL records, unlike TITLE's single
+ * palette, so its palette is decoded for the current source frame instead of
+ * retaining TITLE's initial PL record.  No member is written to disk.
+ * Source: HME-242 AUTOEXEC.BAT; DMWeb "Animations" EN/DL/PL semantics. */
+static int m11_dm2_bind_fmtowns_end(M11_GameViewState *state)
+{
+    DM2_V1_BootProfile *profile;
+    DM2_V1_FmtownsDiscReceipt disc;
+    uint32_t frame_count;
+
+    if (!state || !(profile = (DM2_V1_BootProfile *)state->dm2BootProfile) ||
+        !m11_dm2_is_fmtowns_profile(profile) ||
+        !profile->fmtowns_startup_media_verified ||
+        !profile->fmtowns_animation_media_verified ||
+        !profile->fmtowns_animation_streams_verified ||
+        !dm2_v1_fmtowns_anim_stream_is_hme242_end(
+            &profile->fmtowns_end_stream)) {
+        return 0;
+    }
+    m11_dm2_release_fmtowns_title(state);
+    memset(&disc, 0, sizeof(disc));
+    if (!profile->fmtowns_disc_image ||
+        dm2_v1_fmtowns_disc_probe(profile->fmtowns_disc_image,
+                                  profile->fmtowns_disc_image_size, &disc) != 0 ||
+        dm2_v1_fmtowns_disc_extract_alloc(profile->fmtowns_disc_image,
+                                          profile->fmtowns_disc_image_size,
+                                          &disc.end,
+                                          &state->dm2FmtownsTitleBytes,
+                                          &state->dm2FmtownsTitleByteCount) != 0 ||
+        !state->dm2FmtownsTitleBytes ||
+        !m11_dm2_fmtowns_end_frame_count(
+            state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount,
+            &frame_count) ||
+        !dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+            state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount, 0u,
+            &state->dm2FmtownsTitlePalette) ||
+        !dm2_v1_fmtowns_anim_stream_decode_frame(
+            state->dm2FmtownsTitleBytes, state->dm2FmtownsTitleByteCount, 0u,
+            state->dm2FmtownsTitlePixels, sizeof(state->dm2FmtownsTitlePixels),
+            &state->dm2FmtownsTitleFrameReceipt)) {
+        m11_dm2_release_fmtowns_title(state);
+        state->dm2FmtownsTitleRejected = 1;
+        return 0;
+    }
+    state->dm2FmtownsFrameTimerARemaining =
+        state->dm2FmtownsTitleFrameReceipt.display_duration < 5u ? 5u :
+        state->dm2FmtownsTitleFrameReceipt.display_duration;
+    state->dm2FmtownsFrameCount = frame_count;
+    state->dm2FmtownsEndActive = 1;
+    state->dm2FmtownsTitleBound = 1;
+    return 1;
+}
+
 static int m11_dm2_present_fmtowns_title(const M11_GameViewState *state,
                                          unsigned char *framebuffer,
                                          int framebuffer_width,
@@ -1802,8 +1888,22 @@ static void m11_dm2_advance_fmtowns_title(M11_GameViewState *state,
                 state->dm2FmtownsTitleByteCount = 0u;
                 state->dm2FmtownsFrameCount = 0u;
                 state->dm2FmtownsTitleBound = 0;
-                state->dm2FmtownsTitleFinished = 1;
+                if (state->dm2FmtownsEndActive) {
+                    state->dm2FmtownsEndActive = 0;
+                    state->dm2FmtownsEndComplete = 1;
+                } else {
+                    state->dm2FmtownsTitleFinished = 1;
+                }
             }
+            break;
+        }
+        if (state->dm2FmtownsEndActive &&
+            !dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+                state->dm2FmtownsTitleBytes,
+                state->dm2FmtownsTitleByteCount,
+                state->dm2FmtownsTitleFrameIndex,
+                &state->dm2FmtownsTitlePalette)) {
+            state->dm2FmtownsTitleRejected = 1;
             break;
         }
         state->dm2FmtownsFrameTimerARemaining =
@@ -22585,6 +22685,12 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         if (state->dm2State.startup_menu_active) {
             DM2_V1_StartupIdleReceipt receipt;
             DM2_V1_MusicScheduleReceipt music_schedule;
+            if (state->dm2FmtownsEndComplete) {
+                /* The selected END stream has completed. AUTOEXEC has no
+                 * further game stage, so this is the one source-ordered
+                 * point at which M11 may return to its launcher. */
+                return M11_GAME_INPUT_RETURN_TO_MENU;
+            }
             if (state->dm2State.startup_credits_active) {
                 /* SKProject startend.cpp::DM2_SHOW_CREDITS decrements n once
                  * after each event-loop/SLEEP_SEVERAL_TIME(1) iteration. */
@@ -26873,7 +26979,14 @@ static M11_GameInputResult m11_dm2_handle_startup_pointer(
                               aux_layout.quit_game.y,
                               aux_layout.quit_game.w,
                               aux_layout.quit_game.h)) {
-            /* SKProject HANDLE_UI_EVENT 0xE0 → QUIT. */
+            /* SKProject HANDLE_UI_EVENT 0xE0 returns from SKULL.EXP; the
+             * selected AUTOEXEC then owns the HME-242 END stream. Do not
+             * replace that native transition with an immediate host exit. */
+            if (m11_dm2_is_fmtowns_profile(
+                    (const DM2_V1_BootProfile *)state->dm2BootProfile)) {
+                return m11_dm2_bind_fmtowns_end(state)
+                    ? M11_GAME_INPUT_REDRAW : M11_GAME_INPUT_IGNORED;
+            }
             return M11_GAME_INPUT_RETURN_TO_MENU;
         }
     }

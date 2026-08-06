@@ -55985,3 +55985,14 @@ alcove runtime and archive-media tests passed (4/4).
 - Verification: the authentic FM Towns title/menu real-media test with the
   selected DOS English ZIP companion, the full PC-DOS M11 startup/profile
   gate and the production placeholder boundary all pass.
+
+# 2026-08-06 — DM2 FM Towns original END transition
+
+- The source-owned HME-242 Quit rectangle now follows `SKULL.EXP` with the
+  next command in authenticated `AUTOEXEC.BAT`: `TWANIM END`. M11 retains the
+  selected member only in RAM, replays all 420 displayed frames (including
+  FO/NE loops), applies its source PL palette for each frame, then returns to
+  Firestaff's launcher. The former immediate host exit is gone for FM Towns.
+- Verification: real HME-242 M11 startup test confirms SWOOSH, TITLE, GDAT
+  menu/credits, Quit-to-END, loop-expanded frame count and return only after
+  END completes. No game media is unpacked to disk.
