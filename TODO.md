@@ -1,5 +1,16 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-SATURN-RUNTIME-CAPTURE-PRODUCER:** The repository now carries a
+  source patch and external-disk build script for a read-only Mednafen 1.32.1
+  Saturn VDP1/VDP2 frame witness, but the producer has not yet been compiled
+  or run against the European CUE. Do not admit its raw witness as PRS3,
+  SLEV/SAL/SDDRVS, HUD, or viewport semantics until authenticated runtime
+  observations are retained.
+- **NEXUS-MENU-CAPTURE-GATE:** TITLE.CG timing must remain on the title screen
+  until the real MENU.BPK capture route is joined. A source-owned runtime
+  capture is still required before menu, HUD, and viewport composition can be
+  enabled.
+
 - **DM1-MIRROR-C160-ROTATION-SYNTHETIC-AUDIT:** This C040/C160 rotation-close
   fixture fabricates party, chest and panel state. It has no original DM1 data
   input or M11/runtime caller; retain it only as explicit ReDMCSB coverage

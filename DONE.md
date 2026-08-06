@@ -57130,3 +57130,18 @@ alcove runtime and archive-media tests passed (4/4).
   pending compatibility transition cannot bypass the tick boundary and load a
   synthetic retail DGN level. The production regression covers the rejected
   call and output state.
+# Nexus title/menu runtime gate and external Saturn producer (2026-08-06)
+
+- ✅ M11 no longer clears the Nexus title screen after a timed ACCEPT unless
+  the host startup capture, real-asset menu capture, joined title/menu route,
+  and exact capture matrix are all present. Pointer input uses the same gate.
+- ✅ Added `scripts/mednafen_1.32.1_nexus_saturn_capture.patch`, a read-only
+  Mednafen 1.32.1 Saturn hook that records two runtime VDP1 VRAM/framebuffer
+  and VDP2 register/VRAM/CRAM snapshots, plus the external-disk build script.
+  The patch applies cleanly to the official 1.32.1 source archive.
+- ⚠️ Compilation/capture remains pending: the system volume is at 100% and
+  `configure` cannot create its temporary compiler files. No capture artifact
+  or runtime unlock was claimed.
+- ✅ Verification: `test_nexus_v1_m11_launcher_handoff_boundary` passes with
+  `103 passed, 0 failed, 0 skipped`; patch dry-run passes; `git diff --check`
+  passes.

@@ -1192,6 +1192,7 @@ typedef struct {
         int startup_dgn_render_blocked;
         int startup_host_caller_ready;
         int startup_host_capture_ready;
+        int startup_menu_capture_uses_real_assets;
         int startup_host_dgn_ready;
         int startup_host_execute_startup_draws;
         int startup_host_execute_dgn_draws;

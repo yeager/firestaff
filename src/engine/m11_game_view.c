@@ -17564,6 +17564,8 @@ static void m11_nexus_apply_startup_host_caller_receipt(
         receipt->host_caller_ready ? 1 : 0;
     state->nexusState.startup_host_capture_ready =
         receipt->host_startup_capture_ready ? 1 : 0;
+    state->nexusState.startup_menu_capture_uses_real_assets =
+        receipt->ownership.menu_capture_uses_real_assets ? 1 : 0;
     state->nexusState.startup_host_dgn_ready =
         receipt->host_runtime_dgn_ready ? 1 : 0;
     state->nexusState.startup_host_execute_startup_draws =
@@ -25993,16 +25995,18 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 return M11_GAME_INPUT_IGNORED;
             }
             result = m11_nexus_apply_startup_action_receipt(state, &receipt);
-            /* MENU.BPK may still be correctly fail-closed on PRS3 evidence,
-             * but that must not leave a completed real TITLE.CG sequence
-             * indefinitely waiting for an unreachable menu route. */
+            /* TITLE.CG timing alone does not authorize the next screen. The
+             * Saturn MENU.BPK route must have a real-asset capture joined to
+             * this exact host caller before ACCEPT can leave the title. */
             if (input == M12_MENU_INPUT_ACCEPT &&
                 state->nexusState.title_active &&
-                nexus_title_full_boot_start_ready(state->nexusState.title_frame)) {
-                state->nexusState.title_active = 0;
-                state->nexusState.startup_save_select_active = 0;
-                state->nexusState.champion_select_active = 0;
-                m11_set_status(state, "ASSETS", "MENU.BPK PRS3 CAPTURE REQUIRED");
+                nexus_title_full_boot_start_ready(state->nexusState.title_frame) &&
+                (!state->nexusState.startup_host_capture_ready ||
+                 !state->nexusState.startup_menu_capture_uses_real_assets ||
+                 !state->nexusState.startup_title_menu_capture_route_joined ||
+                 !state->nexusState.startup_host_route_capture_matrix_ready ||
+                 !state->nexusState.startup_host_route_capture_matrix_exact)) {
+                m11_set_status(state, "ASSETS", "NEXUS MENU CAPTURE REQUIRED");
                 return M11_GAME_INPUT_REDRAW;
             }
             return result;
@@ -26763,6 +26767,14 @@ static M11_GameInputResult m11_nexus_handle_startup_pointer(
         return M11_GAME_INPUT_IGNORED;
     }
     if (state->nexusState.title_active) {
+        if (!state->nexusState.startup_host_capture_ready ||
+            !state->nexusState.startup_menu_capture_uses_real_assets ||
+            !state->nexusState.startup_title_menu_capture_route_joined ||
+            !state->nexusState.startup_host_route_capture_matrix_ready ||
+            !state->nexusState.startup_host_route_capture_matrix_exact) {
+            m11_set_status(state, "ASSETS", "NEXUS MENU CAPTURE REQUIRED");
+            return M11_GAME_INPUT_IGNORED;
+        }
         Nexus_V1_LauncherRuntimeStartupSnapshot snapshot;
         Nexus_V1_StartupTitleExecution execution;
         Nexus_V1_StartupHostActionReceipt receipt;

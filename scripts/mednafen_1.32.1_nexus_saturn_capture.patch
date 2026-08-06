@@ -1,0 +1,57 @@
+--- src/ss/vdp1.h
++++ src/ss/vdp1.h
+@@ -51,0 +52,2 @@
++void FirestaffCaptureRaw(void *file);
++
+--- src/ss/vdp1.cpp
++++ src/ss/vdp1.cpp
+@@ -41,0 +42 @@
++#include <stdio.h>
+@@ -1637,0 +1639,11 @@
++}
++
++void FirestaffCaptureRaw(void *opaque)
++{
++ FILE *file = (FILE *)opaque;
++ if(!file) return;
++ fputs("FIRESTAFF_NEXUS_SATURN_VDP1_RAW_V1\n", file);
++ fwrite(VRAM, sizeof(VRAM[0]), sizeof(VRAM) / sizeof(VRAM[0]), file);
++ fwrite(FB[0], sizeof(FB[0][0]), sizeof(FB[0]) / sizeof(FB[0][0]), file);
++ fwrite(FB[1], sizeof(FB[1][0]), sizeof(FB[1]) / sizeof(FB[1][0]), file);
++ fputc((int)FBDrawWhich, file);
+--- src/ss/vdp2.cpp
++++ src/ss/vdp2.cpp
+@@ -27,0 +28,2 @@
++#include <stdio.h>
++#include <stdlib.h>
+@@ -44,0 +47,2 @@
++static FILE *FirestaffCaptureFile;
++static unsigned FirestaffCaptureFrames;
+@@ -45,0 +50,2 @@
++static void FirestaffCaptureFrame(void);
++
+@@ -398,0 +405 @@
++  FirestaffCaptureFrame();
+@@ -985,0 +993 @@
++  FirestaffCaptureFrames = 0;
+@@ -1400,0 +1409,20 @@
++}
++
++static void FirestaffCaptureFrame(void)
++{
++ const char *path;
++ if(FirestaffCaptureFrames >= 2) return;
++ path = getenv("FIRESTAFF_NEXUS_TRACE_OUTPUT");
++ if(!path || !*path) return;
++ if(!FirestaffCaptureFile) FirestaffCaptureFile = fopen(path, "wb");
++ if(!FirestaffCaptureFile) return;
++ if(FirestaffCaptureFrames == 0)
++  fputs("FIRESTAFF_NEXUS_SATURN_RUNTIME_CAPTURE_V1\n", FirestaffCaptureFile);
++ fprintf(FirestaffCaptureFile, "frame=%u\n", FirestaffCaptureFrames);
++ VDP1::FirestaffCaptureRaw(FirestaffCaptureFile);
++ fputs("VDP2_RAW\n", FirestaffCaptureFile);
++ fwrite(RawRegs, sizeof(RawRegs[0]), sizeof(RawRegs) / sizeof(RawRegs[0]), FirestaffCaptureFile);
++ fwrite(VRAM, sizeof(VRAM[0]), sizeof(VRAM) / sizeof(VRAM[0]), FirestaffCaptureFile);
++ fwrite(CRAM, sizeof(CRAM[0]), sizeof(CRAM) / sizeof(CRAM[0]), FirestaffCaptureFile);
++ fflush(FirestaffCaptureFile);
++ FirestaffCaptureFrames++;

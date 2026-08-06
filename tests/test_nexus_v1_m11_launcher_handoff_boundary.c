@@ -373,8 +373,8 @@ static void run_real_launcher_handoff_if_available(void) {
     expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
                     M11_GAME_INPUT_REDRAW,
                 "M11 Nexus launcher title advances on explicit accept after hold");
-    expect_true(view.nexusState.title_active == 0,
-                "M11 Nexus launcher title clears after accept");
+    expect_true(view.nexusState.title_active == 1,
+                "M11 Nexus launcher title stays active until menu capture");
     M11_GameView_Shutdown(&view);
     nexus_v1_launcher_shutdown();
 }
