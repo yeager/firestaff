@@ -178,6 +178,9 @@ static void test_optional_local_menu_bpk(void) {
     Nexus_V1_BpkPrs3Info prs3;
     uint32_t prs3_seen;
     uint32_t pix_matches;
+    uint32_t decoded_seen = 0U;
+    uint32_t decoded_failures = 0U;
+    uint64_t decoded_pixels = 0U;
 
     if (data_dir && data_dir[0]) {
         if (snprintf(path, sizeof(path), "%s/MENU.BPK", data_dir) < 0) {
@@ -296,11 +299,50 @@ static void test_optional_local_menu_bpk(void) {
         expect(!prs3.payload_available ||
                    prs3.compressed_size <= bounded_entry.payload_size,
                "local MENU.BPK PRS3 payload stays inside its entry span");
+
+        /* DMWeb DMNDataFileDecoder.vbs::DecodePRS3: verify the actual
+         * retail stream against its declared width*height output. This is
+         * a decoder regression only; Saturn VDP1/VDP2 upload remains a
+         * separate authenticated-capture gate in the runtime. */
+        {
+            Nexus_V1_BpkEntryPrefix surface_prefix;
+            size_t output_size;
+            uint8_t *decoded;
+            size_t written = 0U;
+            Nexus_V1_BpkSurfaceEntry surface;
+
+            expect(nexus_v1_bpk_archive_get_entry_prefix(
+                       data, size, i, &surface_prefix) == 0,
+                   "local MENU.BPK PRS3 prefix available for decode");
+            output_size = (size_t)surface_prefix.width *
+                          (size_t)surface_prefix.height;
+            decoded = (uint8_t *)malloc(output_size);
+            expect(decoded != NULL && output_size > 0U,
+                   "local MENU.BPK PRS3 decode buffer allocated");
+            if (decoded && output_size > 0U &&
+                nexus_v1_bpk_archive_decode_surface(
+                    data, size, i, decoded, output_size, &surface,
+                    &written) == NEXUS_V1_BPK_DECODE_OK &&
+                written == output_size &&
+                surface.pixel_count == output_size) {
+                ++decoded_seen;
+                decoded_pixels += (uint64_t)written;
+            } else {
+                ++decoded_failures;
+            }
+            free(decoded);
+        }
     }
     expect(prs3_seen == 162U,
            "local MENU.BPK inspected 162/162 PRS3-bearing entries");
     expect(pix_matches == 162U,
            "local MENU.BPK every PRS3 entry has width*height == pixel count");
+    expect(decoded_seen == 162U,
+           "local MENU.BPK every PRS3 entry decodes to its declared pixels");
+    expect(decoded_failures == 0U,
+           "local MENU.BPK has no retail PRS3 decode failures");
+    expect(decoded_pixels > 0U,
+           "local MENU.BPK PRS3 decode census emitted real pixels");
 
     free(data);
 }

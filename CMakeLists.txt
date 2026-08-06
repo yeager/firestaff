@@ -36811,8 +36811,9 @@ if(BUILD_TESTING)
     )
 
     # ── Nexus Saturn BPPK/BMPD packed-menu archive directory ────
-    # Directory gate only: validates the MENU.BPK BPPK/BMPD wrapper
-    # and PRS3 payload markers without claiming PRS3 decompression yet.
+    # Real-corpus gate: validates the MENU.BPK BPPK/BMPD wrapper and
+    # decodes every retail PRS3 surface. Renderer upload remains separately
+    # gated on authenticated Saturn VDP1/VDP2 capture evidence.
     add_executable(test_nexus_v1_bpk_archive
         tests/test_nexus_v1_bpk_archive.c
         src/nexus/nexus_v1_bpk_archive.c

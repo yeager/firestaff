@@ -282,6 +282,11 @@
   until the real MENU.BPK capture route is joined. A source-owned runtime
   capture is still required before menu, HUD, and viewport composition can be
   enabled.
+- **NEXUS-MENU-PRS3-CONSUMER:** The real retail `MENU.BPK` corpus now passes a
+  regression that decodes all 162 PRS3 surfaces and checks each output against
+  its declared `width × height`. This closes the byte-decoder gap only. The
+  decoded pixels remain evidence-only until Saturn VDP1/VDP2 capture identifies
+  the original CLUT, draw-command and layer-composition consumer.
 
 - **DM1-D1R2-WALL-SYNTHETIC-AUDIT:** This D1R2-wall fixture uses local
   320×200 probe buffers and fixed route metadata. It has no original DM1 data

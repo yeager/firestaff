@@ -1,3 +1,11 @@
+# Nexus MENU.BPK retail PRS3 decode census (2026-08-07)
+
+- ✅ `test_nexus_v1_bpk_archive` now loads the explicit
+  `FIRESTAFF_NEXUS_DATA_DIR` corpus and decodes all 162 retail PRS3 menu
+  surfaces, checking that every output has the declared `width × height` and
+  that no retail stream fails. This proves the DMWeb-bounded byte decoder on
+  real MENU.BPK data; it does not promote pixels to Saturn VDP1/VDP2 upload.
+
 # DM2 GDAT source-endian structure boundary (2026-08-13)
 
 - ✅ Matched SKProject `DM2_READ_GRAPHICS_STRUCTURE` header, size-word and ULP
@@ -8,7 +16,6 @@
   with the mounted PC-DOS corpus: `test_dm2_v1_gdatfile_pc34_compat` passes
   24/24. ENT1, underlay, allocator lifetime and the secondary-file
   transaction remain explicitly gated; no release was made.
-
 # DM2 väder-GDAT med vald korpus (2026-08-07)
 
 - ✅ IMG9-palett- och G1→GRAPHICSSET→väder/ljustesterna kräver nu en explicit
@@ -40,7 +47,6 @@
   ett verifieringsfel i stället för en tyst reservväg till en privat
   installation. PC-DOS-korpusen bekräftar 64 inventariehandrutter och dess
   källbundna GDAT-ljudpayload (SOUND 3/0/129).
-
 # DM2 G1 objekt- och varelsematerial med vald korpus (2026-08-07)
 
 - ✅ Realdatatesterna för DB9-containrar, DB5-vapen samt DB4-scen- och
