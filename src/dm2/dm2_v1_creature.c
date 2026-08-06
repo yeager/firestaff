@@ -108,19 +108,19 @@ static const char *const g_ai_names[DM2_AI_TABLE_SIZE] = {
  * Source: skproject/SKWIN/_4976_03a2.h + xcoreenh.cpp:61-217. */
 static DM2_AIDefinition g_ai_table[DM2_AI_TABLE_SIZE];
 static uint8_t g_ai_table_loaded[DM2_AI_TABLE_SIZE];
-static uint8_t g_creature_ai_row[DM2_AI_TABLE_SIZE];
-static uint8_t g_creature_ai_row_loaded[DM2_AI_TABLE_SIZE];
+static uint8_t g_creature_ai_row[DM2_CREATURE_TYPE_COUNT];
+static uint8_t g_creature_ai_row_loaded[DM2_CREATURE_TYPE_COUNT];
 /* DM2-006: imported CREATURES drop words (fields 0x0A..0x14) per
  * creature type, plus the skproject LCG stream consumed by
  * DROP_CREATURE_POSSESSION count rolls (c_random.cpp DM2_RAND16). */
-static uint16_t g_creature_drop_words[DM2_AI_TABLE_SIZE][DM2_DROP_SLOT_COUNT];
-static uint8_t g_creature_drop_words_loaded[DM2_AI_TABLE_SIZE];
+static uint16_t g_creature_drop_words[DM2_CREATURE_TYPE_COUNT][DM2_DROP_SLOT_COUNT];
+static uint8_t g_creature_drop_words_loaded[DM2_CREATURE_TYPE_COUNT];
 /* CREATURES word field 0x01 per creature type — the source's
  * table1d607e index (DM2_QUERY_GDAT_CREATURE_WORD_VALUE(type, 1),
  * c_creature.cpp:441 + 612, c_record.cpp:1387).  Captured by the AI
  * table loader alongside the drop words. */
-static uint16_t g_creature_gdat_word1[DM2_AI_TABLE_SIZE];
-static uint8_t g_creature_gdat_word1_loaded[DM2_AI_TABLE_SIZE];
+static uint16_t g_creature_gdat_word1[DM2_CREATURE_TYPE_COUNT];
+static uint8_t g_creature_gdat_word1_loaded[DM2_CREATURE_TYPE_COUNT];
 static DM2_V1_DropRng g_drop_rng;
 static DM2_V1_CCMProgram g_ccm_programs[DM2_AI_TABLE_SIZE];
 static uint8_t g_ccm_program_loaded[DM2_AI_TABLE_SIZE];
@@ -163,7 +163,7 @@ int dm2_v1_creature_ai_spec_flags(int creature_type, uint16_t *out_flags) {
         return 0;
     }
     *out_flags = 0u;
-    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) {
+    if (creature_type < 0 || creature_type >= DM2_CREATURE_TYPE_COUNT) {
         return 0;
     }
     if (!g_creature_ai_row_loaded[creature_type]) {
@@ -190,7 +190,7 @@ int dm2_v1_creature_ai_spec_def(int creature_type,
         return 0;
     }
     *out_def = NULL;
-    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) {
+    if (creature_type < 0 || creature_type >= DM2_CREATURE_TYPE_COUNT) {
         return 0;
     }
     if (!g_creature_ai_row_loaded[creature_type]) {
@@ -244,7 +244,7 @@ int dm2_v1_creature_gdat_word1(int creature_type, uint16_t *out_word) {
         return 0;
     }
     *out_word = 0u;
-    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) {
+    if (creature_type < 0 || creature_type >= DM2_CREATURE_TYPE_COUNT) {
         return 0;
     }
     if (!g_creature_gdat_word1_loaded[creature_type]) {
@@ -266,20 +266,26 @@ void dm2_v1_creature_reset_ai_table(void) {
     memset(g_creature_gdat_word1, 0, sizeof(g_creature_gdat_word1));
     memset(g_creature_gdat_word1_loaded, 0,
            sizeof(g_creature_gdat_word1_loaded));
-    /* EXTENDED_LOAD_AI_DEFINITION (xcoreenh.cpp:69): always copies
-     * dAITableGenuine first, then overrides from GDAT. */
+    /* SKProject SKULLWIN/c_dm2data::init() reads the original executable's
+     * `v1d296c.dat` table (63 × 36 bytes) before any GRAPHICS.DAT lookup.
+     * EXTENDED_LOAD_AI_DEFINITION may override rows later, but an ordinary
+     * PC-DOS GRAPHICS.DAT without a CREATURE_AI override category must retain
+     * this authenticated base table.  Leaving `g_ai_table_loaded` clear here
+     * discarded real source data and made every mapped DB4 creature appear
+     * unprovable. */
     for (i = 0; i < DM2_AI_TABLE_GENUINE_SIZE && i < DM2_AI_TABLE_SIZE; ++i) {
         g_ai_table[i] = dm2_v1_ai_table_genuine[i];
+        g_ai_table_loaded[i] = 1u;
     }
 }
 
 int dm2_v1_creature_drop_slots_loaded(int creature_type) {
-    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) return 0;
+    if (creature_type < 0 || creature_type >= DM2_CREATURE_TYPE_COUNT) return 0;
     return g_creature_drop_words_loaded[creature_type] != 0;
 }
 
 uint16_t dm2_v1_creature_drop_slot_word(int creature_type, int slot) {
-    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) return 0;
+    if (creature_type < 0 || creature_type >= DM2_CREATURE_TYPE_COUNT) return 0;
     if (slot < 0 || slot >= DM2_DROP_SLOT_COUNT) return 0;
     if (!g_creature_drop_words_loaded[creature_type]) return 0;
     return g_creature_drop_words[creature_type][slot];
@@ -339,7 +345,7 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
      * CREATURES[type] dtWordValue(0x05), then indexes the AIDefinition table
      * by that result.  Keep that indirection instead of treating creature
      * type as a CREATURE_AI row. */
-    for (creature_type = 0; creature_type < DM2_AI_TABLE_SIZE;
+    for (creature_type = 0; creature_type < DM2_CREATURE_TYPE_COUNT;
          ++creature_type) {
         uint16_t ai_row;
         uint16_t hit_points = 0u;
@@ -383,31 +389,28 @@ int dm2_v1_creature_load_ai_table_from_gdat(const DM2_V1_AssetLoader *loader) {
                 &ai_row) || ai_row >= DM2_AI_TABLE_SIZE) {
             continue;
         }
-        /* SKProject SkWinCore.cpp::EXTENDED_LOAD_AI_DEFINITION does not
-         * load a packed 36-byte record. Its real DM2 path queries the 36
-         * dtWordValue fields individually, treating absent optional fields
-         * as zero. Field four is BaseHP's low byte and is the source's
-         * admission probe for an AI row. */
-        if (!dm2_v1_asset_load_word_value(
+        /* `table1d296c` is the normal, source-owned table.  GDAT category
+         * CREATURE_AI is an optional extended override, not a requirement
+         * for a retail PC-DOS creature.  When the source exposes its field-4
+         * probe, reproduce the override's individual-word load; otherwise
+         * preserve the verified executable row installed above. */
+        if (dm2_v1_asset_load_word_value(
                 loader, DM2_GDAT_CATEGORY_CREATURE_AI, ai_row, 4,
-                &hit_points) || hit_points == 0u) {
-            continue;
-        }
-        memset(raw, 0, sizeof(raw));
-        for (int field = 0; field < (int)sizeof(raw); ++field) {
-            uint16_t value = 0u;
-            if (dm2_v1_asset_load_word_value(
-                    loader, DM2_GDAT_CATEGORY_CREATURE_AI, ai_row,
-                    field, &value)) {
-                raw[field] = (uint8_t)(value & 0xffu);
+                &hit_points) && hit_points != 0u) {
+            memset(raw, 0, sizeof(raw));
+            for (int field = 0; field < (int)sizeof(raw); ++field) {
+                uint16_t value = 0u;
+                if (dm2_v1_asset_load_word_value(
+                        loader, DM2_GDAT_CATEGORY_CREATURE_AI, ai_row,
+                        field, &value)) {
+                    raw[field] = (uint8_t)(value & 0xffu);
+                }
             }
-        }
-        if (!g_ai_table_loaded[ai_row]) {
             dm2_v1_creature_decode_ai_spec(raw, &g_ai_table[ai_row]);
-            g_ai_table_loaded[ai_row] = 1;
+            g_ai_table_loaded[ai_row] = 1u;
         }
         g_creature_ai_row[creature_type] = (uint8_t)ai_row;
-        g_creature_ai_row_loaded[creature_type] = 1;
+        g_creature_ai_row_loaded[creature_type] = 1u;
         ++loaded;
     }
 
@@ -857,7 +860,7 @@ void dm2_v1_creature_test_reset_instances(void) {
 
 void dm2_v1_creature_test_set_drop_slots(int creature_type,
                                          const uint16_t slot_words[11]) {
-    if (creature_type < 0 || creature_type >= DM2_AI_TABLE_SIZE) return;
+    if (creature_type < 0 || creature_type >= DM2_CREATURE_TYPE_COUNT) return;
     if (!slot_words) return;
     for (int slot = 0; slot < DM2_DROP_SLOT_COUNT; ++slot) {
         g_creature_drop_words[creature_type][slot] = slot_words[slot];

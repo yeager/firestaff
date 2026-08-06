@@ -17,6 +17,21 @@
 
 # Nexus PLRD provisions quarantine (2026-08-06)
 
+- ✅ 2026-08-06 DM2 PC-DOS source-AI baseline restoration: the retail
+  executable's original 63 × 36-byte `v1d296c.dat` table is now retained as
+  loaded source data before optional GDAT `CREATURE_AI` overrides. Source:
+  `SKProject/SKULLWIN/dm2data.cpp::c_dm2data::init` and
+  `c_record.cpp::DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD`. The
+  `CREATURES[type & 0xff].word(0x05)` mapping now accepts all 256 original
+  record type keys without expanding or fabricating the 63-row AI table.
+  In the mounted eight-file PC-DOS corpus this lets five direct-root streams
+  decode with their source masks; three still stop safely because types 54
+  (twice) and 127 lack a row-5 entry in that original `GRAPHICS.DAT`.
+  Verification: `test_dm2_v1_drops_gdat_real_data`,
+  `test_dm2_v1_creature_animation_gdat_real_data`,
+  `test_dm2_v1_save_load_real_data`, and `test_dm2_v1_save_load` pass. No
+  game data is copied, unpacked, or used to admit runtime resume.
+
 - ✅ 2026-08-06 DM2 canonical GRAPHICS.DAT probe correction: the real-data
   creature-animation regression now actually opens the DOS-uppercase
   `GRAPHICS.DAT` after its lowercase candidate fails. Previously it changed
@@ -28,12 +43,12 @@
 - ✅ 2026-08-06 DM2 original-SKSAVE creature-mask gate: the isolated
   `DM2_READ_RECORD_CHECKCODE` reader no longer substitutes the default DB4
   SUPPRESS mask when SKProject's
-  `DM2_QUERY_CREATURE_AI_SPEC_FLAGS` decision is unavailable. A callback must
-  provide the authenticated `CREATURES[type] → CREATURE_AI` GDAT result before
-  `v1d647f` or `v1d648f` is selected; otherwise the shared bitstream stops
-  fail-closed. The real eight-file PC-DOS corpus proves two direct-root
-  streams complete without DB4 creatures and six stop exactly at the missing
-  source AI owner. This remains diagnostic-only and does not admit a resume.
+  `DM2_QUERY_CREATURE_AI_SPEC_FLAGS` decision is unavailable. A source-owned
+  `CREATURES[type]` binding must exist before `v1d647f` or `v1d648f` is
+  selected; otherwise the shared bitstream stops fail-closed. The later
+  `v1d296c` baseline restoration above supplies the PC-DOS path where the
+  binding exists, while types without an original row remain blocked. This is
+  diagnostic-only and does not admit a resume.
   Verification: `test_dm2_v1_save_read_record_checkcode`,
   `test_dm2_v1_save_load_real_data` (80/80), and
   `test_dm2_v1_save_load` (26/26).

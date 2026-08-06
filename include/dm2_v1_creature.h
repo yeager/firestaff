@@ -112,6 +112,10 @@ typedef struct __attribute__((packed)) {
 
 #define DM2_AI_TABLE_SIZE         64   /* 0x00–0x3E used, index 62 duplicated */
 #define DM2_AI_INDEX_MAX          255  /* extended mode creature ID max */
+/* c_record.cpp::DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD masks the record
+ * type to one byte before looking up CREATURES[type] word@5.  That mapping
+ * has 256 possible source keys even though it selects one of 63 AI rows. */
+#define DM2_CREATURE_TYPE_COUNT   (DM2_AI_INDEX_MAX + 1)
 #define DM2_AI_MAX_NAME           32
 
 /* ── Companion/minion AI indices (DM2-specific, no DM1 equivalent) ─────

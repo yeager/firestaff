@@ -9,6 +9,8 @@
 
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_game.h"
+#include "dm2_v1_asset_loader.h"
+#include "dm2_v1_creature.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
 #include "dm2_v1_save_load.h"
@@ -32,6 +34,7 @@ typedef struct {
     unsigned int record_count;
     uint32_t record_hash;
     int creature_ai_unavailable;
+    uint8_t unavailable_creature_type;
 } RecordChainInventory;
 
 #define CHECK(condition, message) do { \
@@ -122,13 +125,18 @@ static int inventory_query_creature_ai_flags(void *context,
 {
     RecordChainInventory *inventory = (RecordChainInventory *)context;
     (void)record_link;
-    (void)creature_type;
-    (void)out_flags;
-    /* The supplied PC-DOS GRAPHICS.DAT has no authenticated CREATURE_AI
-     * category provider.  Returning a zero flag here would fabricate the
-     * v1d647f mask decision and desynchronise the remaining SKSAVE stream. */
-    if (inventory) inventory->creature_ai_unavailable = 1;
-    return -1;
+    /* SKProject c_dm2data::init has already loaded the retail v1d296c
+     * table. c_record.cpp::DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD then uses
+     * CREATURES[type] word 5 to select the row. This test initialises that
+     * exact pair from the mounted PC-DOS media before touching SKSAVE. */
+    if (!dm2_v1_creature_ai_spec_flags(creature_type, out_flags)) {
+        if (inventory) {
+            inventory->creature_ai_unavailable = 1;
+            inventory->unavailable_creature_type = creature_type;
+        }
+        return -1;
+    }
+    return 0;
 }
 
 /* 1 = every root decoded; 2 = stopped exactly at the missing source AI
@@ -174,6 +182,11 @@ static int verify_real_direct_record_roots(
         if (dm2_v1_read_record_checkcode(&reader, &callbacks, &root_link,
                                          -1, 0, 0, 0) != 0 ||
             reader.error) {
+            printf("  direct-root diagnostic: root=%u records=%d ai_unavailable=%d creature=%u reader_error=%d\n",
+                   root, reader.records_read,
+                   inventory.creature_ai_unavailable,
+                   (unsigned)inventory.unavailable_creature_type,
+                   reader.error);
             return inventory.creature_ai_unavailable ? 2 : 0;
         }
     }
@@ -226,6 +239,29 @@ static uint8_t *read_file(const char *path, size_t *out_size)
     fclose(file);
     *out_size = (size_t)end;
     return bytes;
+}
+
+static int load_real_creature_ai_table(const char *root)
+{
+    char path[600];
+    uint8_t *bytes;
+    size_t byte_count;
+    DM2_V1_AssetLoader loader;
+    int mapped;
+
+    if (!root || !root[0]) return 0;
+    snprintf(path, sizeof(path), "%s/graphics.dat", root);
+    bytes = read_file(path, &byte_count);
+    if (!bytes) return 0;
+    memset(&loader, 0, sizeof(loader));
+    if (dm2_v1_asset_loader_init(&loader, bytes, byte_count) != 0) {
+        free(bytes);
+        return 0;
+    }
+    mapped = dm2_v1_creature_load_ai_table_from_gdat(&loader);
+    dm2_v1_asset_loader_free(&loader);
+    free(bytes);
+    return mapped > 0;
 }
 
 static int verify_real_db_pool_receipts(const uint8_t *payload,
@@ -333,7 +369,7 @@ static void test_real_raw_save(const char *path)
           "real SKSave DB pools retain source-sized records inside the raw dungeon prefix");
     CHECK(verify_real_direct_record_roots(bytes + 42u, byte_count - 42u,
                                           &state_receipt) != 0,
-          "real SKSave direct roots either decode or stop at the missing source AI mask");
+          "real SKSave direct roots decode or stop at an absent source AI mapping");
     CHECK(verify_real_runtime_resume_is_blocked(bytes + 42u, byte_count - 42u),
           "real SKSave cannot publish a partial GAME_LOAD runtime state");
     free(bytes);
@@ -414,6 +450,9 @@ int main(void)
         printf("SKIP: no DM2 save corpus root configured\n");
         return 0;
     }
+
+    CHECK(load_real_creature_ai_table(root),
+          "real CREATURES rows bind the original v1d296c AI table before SKSave decode");
 
     memset(&corpus, 0, sizeof(corpus));
     CHECK(dm2_v1_sksave_corpus_scan(root, &corpus),

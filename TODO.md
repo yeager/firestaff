@@ -1168,12 +1168,18 @@
   allocator, tile-chain owner, possession-index owner, timer record owner, or
   `DM2_GAME_LOAD` publication exists, so no source save can resume yet.
   2026-08-06 AI-mask correction: the reader no longer silently treats an
-  unavailable `QUERY_CREATURE_AI_SPEC_FLAGS` lookup as zero. It now requires
-  an authenticated `CREATURES[type] → CREATURE_AI` GDAT callback before
-  selecting DB4's `v1d647f`/`v1d648f` mask. Against the supplied corpus two
-  direct-root streams complete before a DB4 creature and six stop precisely at
-  that unavailable original owner; all remain non-resumable. The next work is
-  to bind that provider and the remaining allocation/possession/tile owners,
+  unavailable `QUERY_CREATURE_AI_SPEC_FLAGS` lookup as zero. It requires the
+  original `CREATURES[type] → v1d296c` selection before choosing DB4's
+  `v1d647f`/`v1d648f` mask. `dm2data.cpp::c_dm2data::init` loads the
+  executable's 63 × 36-byte `v1d296c.dat` baseline, and
+  `c_record.cpp::DM2_QUERY_CREATURE_AI_SPEC_FROM_RECORD` selects its row
+  through `CREATURES[type & 0xff].word(0x05)`; optional `CREATURE_AI` is an
+  override, not the PC-DOS baseline. The reader now represents all 256 source
+  type keys while retaining that 63-row table. Against the mounted eight-file
+  PC-DOS corpus five direct-root streams now decode fully; three stop
+  fail-closed because this `GRAPHICS.DAT` has no row-5 entry for type 54
+  (twice) or 127. All remain non-resumable. The next work is to locate their
+  original active-profile owner and to bind allocation/possession/tile owners,
   not to assign a default mask.
   **2026-08-06 follow-up:** the remaining `FS2RT01` live-runtime sidecar
   serializer/deserializer is removed from the production archive and public
@@ -2272,14 +2278,13 @@
   by either production archive. Re-admit individual functions only when the
   live DB4/CAII/CCM owners are imported together.
   **2026-08-06 corpus clarification:** the mounted PC-DOS English
-  `GRAPHICS.DAT` has 57 authentic creature-animation table routes, but does
-  not admit the optional `CREATURES[type].dtWordValue(0x05)` →
-  `CREATURE_AI` override graph. That is a property of this original profile,
-  not missing data to substitute. The source executable's
-  `dAITableGenuine` bytes may remain as an inert source table, but a row must
-  still be unavailable unless its active profile supplies the complete
-  CREATURES owner binding. Do not mark a static row as loaded or use it to
-  revive creature, combat or CCM behaviour.
+  `GRAPHICS.DAT` has 57 authentic creature-animation table routes and no
+  optional `CREATURE_AI` override graph. That is a property of this original
+  profile, not missing data to substitute. Its executable-owned
+  `v1d296c.dat` table is the normal AI baseline, but a live row still requires
+  the active `CREATURES[type].word(0x05)` binding. Keep types 54 and 127
+  unavailable for this mounted profile until their original owner is found;
+  do not infer either row or revive creature, combat or CCM behaviour.
 
 - **DM2-LEGACY-GAME-LOOP-DATA-ADMISSION:** `src/engine/firestaff_game_loop.c`
   is not part of the built M11 DM2 launch route and still contains diagnostic

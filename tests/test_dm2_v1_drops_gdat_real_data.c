@@ -207,11 +207,13 @@ int main(void)
               "THORN DEMON has no GDAT drop words (fallback path intact)");
     }
 
-    /* ── Live creation gate: no CREATURE_AI row means no creature ───────
-     * The loaded PC-English file has real drop words but no AI definition.
-     * ALLOC_NEW_CREATURE cannot own a DB4 creature from those words alone. */
-    CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) >= 0,
-          "AI table loader accepts the real GDAT session");
+    /* ── Live creation gate: static v1d296c + CREATURES mapping ────────
+     * SKProject c_dm2data::init reads the original 63-row `v1d296c.dat`
+     * table before GRAPHICS.DAT. The PC-English GDAT supplies CREATURES
+     * word 5's row mapping even though it has no extended CREATURE_AI
+     * override category. */
+    CHECK(dm2_v1_creature_load_ai_table_from_gdat(&loader) > 0,
+          "real CREATURES rows map onto the original v1d296c AI table");
     CHECK(dm2_v1_creature_drop_slots_loaded(TEST_AI_GLOP) == 1,
           "GLOP drop words imported from real GDAT");
     CHECK(dm2_v1_creature_drop_slot_word(TEST_AI_GLOP, 0) == 0x8E10u,
@@ -227,29 +229,37 @@ int main(void)
         dm2_v1_creature_drop_rng_reset();
 
         slot = dm2_v1_creature_spawn(TEST_AI_GLOP, 3, 4, 0, 1, 0);
-        CHECK(slot == -1, "GLOP creation rejects missing real AI row");
+        CHECK(slot >= 0, "GLOP creation uses its source-owned AI row");
         CHECK(dm2_v1_creature_last_death_drop(&obs) == 0,
-              "no synthetic death observer is created from drop words");
+              "live GLOP creation does not invent a death observer");
     }
 
-    /* ── Combat defense route stays fail-closed against this GDAT ──
-     * The local PC English GRAPHICS.DAT has no CREATURE_AI (0x19)
-     * category, so no creature defense can be proven; the real-data
-     * combat route must reject explicitly instead of inventing one. */
+    /* ── Combat keeps its separate complete-contract gate ───────────── */
     {
         uint16_t defense = 0xFFFFu;
         DM2_V1_WeaponInfo melee = { DM2_WEAPON_MELEE, 10, 1, 0, 0 };
         DM2_V1_CombatCreatureReceipt cr;
+        int defense_rc;
+        int combat_rc;
 
-        CHECK(dm2_v1_creature_ai_defense(TEST_AI_GLOP, &defense) == 0 &&
-                  defense == 0u,
-              "creature defense unproven without a CREATURE_AI row");
+        defense_rc = dm2_v1_creature_ai_defense(TEST_AI_GLOP, &defense);
+        CHECK(defense_rc == 1 && defense == 5u,
+              "GLOP defense follows its real CREATURES-to-v1d296c mapping");
         dm2_v1_combat_bind_creature_defense_fn(dm2_v1_creature_ai_defense);
-        CHECK(dm2_v1_combat_resolve_attack_on_creature(
-                  &melee, 16, TEST_AI_GLOP, 100, 1, 0, 0, &cr) == 0,
-              "attack on creature rejected without proven defense");
-        CHECK(cr.valid && cr.rejected_defense_unproven && cr.damage == 0,
-              "defense-unproven receipt");
+        combat_rc = dm2_v1_combat_resolve_attack_on_creature(
+            &melee, 16, TEST_AI_GLOP, 100, 1, 0, 0, &cr);
+        if (defense_rc != 1 || defense != 5u || combat_rc != 0) {
+            fprintf(stderr,
+                    "GLOP source AI diagnostic: defense_rc=%d defense=%u "
+                    "combat_rc=%d valid=%d rejected=%d damage=%d\n",
+                    defense_rc, (unsigned)defense, combat_rc, cr.valid,
+                    cr.rejected_defense_unproven, cr.damage);
+        }
+        CHECK(combat_rc == 0,
+              "partial combat remains disabled despite proven source defense");
+        CHECK(cr.valid && cr.rejected_incomplete_source_contract &&
+                  !cr.rejected_defense_unproven && cr.damage == 0,
+              "combat receipt preserves the complete-contract gate");
         dm2_v1_combat_bind_creature_defense_fn(NULL);
     }
 
