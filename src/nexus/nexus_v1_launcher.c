@@ -8140,6 +8140,16 @@ int nexus_v1_launcher_startup_host_caller_receipt_from_runtime_state(
         return 0;
     }
 
+    /* DM.BIN's real HUD layout is useful provenance for the M11 handoff, but
+     * it is not a Saturn consumer receipt.  VDP1/VDP2 destinations, palette,
+     * FONT256 text and SLEV feedback still require an authenticated capture. */
+    out_receipt->hud_geometry_source_bound =
+        state->engine && nexus_v1_hud_geometry_ready(state->engine);
+    out_receipt->hud_layout_count =
+        state->engine ? (int)state->engine->hud_layout_count : 0;
+    out_receipt->hud_hit_rect_count =
+        state->engine ? (int)state->engine->hud_hit_rect_count : 0;
+
     if (!nexus_v1_launcher_startup_real_asset_ownership_from_runtime_state(
             runtime,
             state,

@@ -16147,6 +16147,10 @@ static void m11_nexus_apply_startup_host_caller_receipt(
      * SLEV feedback still need their own capture receipt; never promote HUD
      * readiness from a dungeon handoff. */
     state->nexusState.startup_hud_ready = 0;
+    state->nexusState.startup_hud_geometry_source_bound =
+        receipt->hud_geometry_source_bound ? 1 : 0;
+    state->nexusState.startup_hud_layout_count = receipt->hud_layout_count;
+    state->nexusState.startup_hud_hit_rect_count = receipt->hud_hit_rect_count;
     state->nexusState.startup_dgn_render_command_count =
         receipt->dgn_command_count;
     state->nexusState.startup_dgn_render_blocked =

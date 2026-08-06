@@ -1168,6 +1168,10 @@ typedef struct {
         int startup_runtime_handoff_ready;
         int startup_dgn_render_ready;
         int startup_hud_ready;
+        /* Source geometry is observable separately from Saturn HUD readiness. */
+        int startup_hud_geometry_source_bound;
+        int startup_hud_layout_count;
+        int startup_hud_hit_rect_count;
         int startup_dgn_render_command_count;
         int startup_dgn_render_blocked;
         int startup_host_caller_ready;

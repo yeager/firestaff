@@ -1843,6 +1843,10 @@ typedef struct {
     int host_caller_ready;
     int host_startup_capture_ready;
     int host_runtime_dgn_ready;
+    /* DM.BIN geometry provenance only; this does not authorize HUD pixels. */
+    int hud_geometry_source_bound;
+    int hud_layout_count;
+    int hud_hit_rect_count;
     int host_runtime_dgn_viewport_render_ready;
     int host_execute_startup_draws;
     int host_execute_dgn_draws;
