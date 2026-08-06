@@ -29,6 +29,12 @@
 - ✅ Verification: `dm1_v1_mirror_candidate_c045_food_water_accept_cross_rotation_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 F1506--F1525 metadata audit isolation (2026-08-06)
+
+- ✅ Removed the metadata-only SWITCH/VDI ownership inventory from M10. It
+  has no M11 caller or authenticated PC34 data input, and its dedicated
+  ReDMCSB audit continues to compile the source explicitly.
+
 # DM1 mirror C045 dead-owner synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free C045/C040 party/panel/item fixture from M10. It

@@ -10,6 +10,10 @@
   data and has no M11/runtime caller; retain it only as explicit ReDMCSB
   coverage until a source-bound interaction owner is recovered.
 
+- **DM1-F1506-F1525-METADATA-AUDIT:** This SWITCH/VDI ownership inventory has
+  no M11 caller or authenticated PC34 data input. Keep it as explicit
+  ReDMCSB coverage until a source-bound PC34 owner is recovered.
+
 - **DM1-MIRROR-C045-DEAD-OWNER-SYNTHETIC-AUDIT:** This asset-free C045/C040
   fixture fabricates party, panel and item state. It loads no original DM1
   data and has no M11/runtime caller; retain it only as explicit ReDMCSB

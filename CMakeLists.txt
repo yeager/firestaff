@@ -4523,6 +4523,12 @@ list(REMOVE_ITEM M10_SOURCES
 # source labels cannot be mistaken for a production group implementation.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0181_f0200_group_source_audit_pc34_compat.c")
+# `dm1_v1_f1506_f1525_source_ownership_pc34_compat.c` is a metadata-only
+# ReDMCSB inventory for platform-bound SWITCH/VDI routes. It has no M11
+# caller or authenticated PC34 data input, and its generic audit test already
+# compiles it explicitly; keep the inventory out of the M10 product archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1506_f1525_source_ownership_pc34_compat.c")
 # `dm1_v1_l0201_l0250_local_owner_audit.c` is a ReDMCSB-local-label
 # inventory, not a runtime implementation. It has no M11/runtime caller and
 # reads no authenticated DM1 data; its generic inventory target compiles it
