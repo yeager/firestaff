@@ -12,6 +12,12 @@
   generator execution remains closed pending the original timing, re-enable
   and spawn consumer.
 
+- ✅ 2026-08-06 Theron Track 02 source-object bank: all decoded map-reachable
+  non-host thing records are now retained in world state with their raw bytes,
+  chain links, category/index, position and exact level coordinates. No guessed
+  inventory or host-item semantics were promoted; the source records survive
+  beyond the temporary loader result for the next proven consumer.
+
 - ✅ 2026-08-06 Theron forcefield menu admission: the startup layout now keeps
   `ENTER FORCEFIELD` actionable in both Soul Room and READY, so starting with
   Theron alone no longer gets trapped on the mirror list. The runtime still

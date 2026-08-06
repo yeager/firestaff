@@ -151,11 +151,13 @@ void theron_v1_world_reset_for_dungeon(Theron_V1_World *world,
     world->creature_count            = 0;
     world->source_monster_count      = 0;
     world->source_generator_count    = 0;
+    world->source_object_count       = 0;
     world->timer_count               = 0;
     memset(world->objects, 0, sizeof(world->objects));
     memset(world->creatures, 0, sizeof(world->creatures));
     memset(world->source_monsters, 0, sizeof(world->source_monsters));
     memset(world->source_generators, 0, sizeof(world->source_generators));
+    memset(world->source_objects, 0, sizeof(world->source_objects));
     memset(world->timers,  0, sizeof(world->timers));
 }
 
@@ -269,8 +271,10 @@ int theron_v1_world_load_track02_dungeon(
 
     world->source_monster_count = 0;
     world->source_generator_count = 0;
+    world->source_object_count = 0;
     memset(world->source_monsters, 0, sizeof(world->source_monsters));
     memset(world->source_generators, 0, sizeof(world->source_generators));
+    memset(world->source_objects, 0, sizeof(world->source_objects));
 
     memcpy(world->source_thing_descriptor_sizes[slot],
            dd->thing_descriptor_sizes,
@@ -850,6 +854,42 @@ int theron_v1_world_bind_track02_generator(
     out->target_x = target_x;
     out->target_y = target_y;
     out->target_facing = target_facing;
+    return 0;
+}
+
+int theron_v1_world_bind_track02_source_object(
+    Theron_V1_World *world,
+    int dungeon_id,
+    int level_index,
+    uint16_t source_ref,
+    uint16_t next_ref,
+    uint16_t source_index,
+    uint8_t category,
+    uint8_t position,
+    int x,
+    int y,
+    const uint8_t *raw,
+    uint8_t raw_size)
+{
+    if (!world || !raw || raw_size == 0u || raw_size > 16u ||
+        dungeon_id < 1 || dungeon_id > THERON_DUNGEON_COUNT ||
+        level_index < 0 || level_index >= THERON_MAX_LEVELS_PER_DUNGEON ||
+        world->source_object_count >= THERON_MAX_SOURCE_OBJECT_RECORDS)
+        return -1;
+    Theron_V1_SourceObjectRecord *out =
+        &world->source_objects[world->source_object_count++];
+    memset(out, 0, sizeof(*out));
+    out->dungeon_id = dungeon_id;
+    out->level = level_index;
+    out->x = x;
+    out->y = y;
+    out->source_ref = source_ref;
+    out->next_ref = next_ref;
+    out->source_index = source_index;
+    out->category = category;
+    out->position = position;
+    out->raw_size = raw_size;
+    memcpy(out->raw, raw, raw_size);
     return 0;
 }
 

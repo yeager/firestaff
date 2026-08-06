@@ -320,6 +320,15 @@ int theron_v1_track02_load_full_dungeon_for_variant(
                     free(td);
                     return -1;
                 }
+                if (theron_v1_world_bind_track02_source_object(
+                        world, dungeon_id, (int)map, ref,
+                        record.next_ref, (uint16_t)id, (uint8_t)cat,
+                        (uint8_t)pos, (int)tx, (int)ty, raw,
+                        (uint8_t)theron_item_bytes[cat]) != 0) {
+                    free(pos_table);
+                    free(td);
+                    return -1;
+                }
                 if (cat == THERON_CAT_MONSTER &&
                     theron_v1_world_bind_track02_monster(
                         world, dungeon_id, (int)map, ref, id, (int)tx, (int)ty,

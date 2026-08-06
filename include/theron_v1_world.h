@@ -344,6 +344,25 @@ typedef struct {
     uint8_t target_facing;
 } Theron_V1_SourceGeneratorRecord;
 
+/* Opaque source occurrence for every decoded non-host object record.  The
+ * loader owns the category/index/chain contract; this bank keeps the actual
+ * bytes and map occurrence available after the temporary load result dies. */
+#define THERON_MAX_SOURCE_OBJECT_RECORDS 2048
+
+typedef struct {
+    int dungeon_id;
+    int level;
+    int x;
+    int y;
+    uint16_t source_ref;
+    uint16_t next_ref;
+    uint16_t source_index;
+    uint8_t category;
+    uint8_t position;
+    uint8_t raw_size;
+    uint8_t raw[16];
+} Theron_V1_SourceObjectRecord;
+
 /* ── Timer system ─────────────────────────────────────────────────── */
 typedef enum {
     THERON_TIMER_ONESHOT   = 0,
@@ -424,6 +443,9 @@ struct Theron_V1_World {
     Theron_V1_SourceGeneratorRecord
         source_generators[THERON_MAX_SOURCE_GENERATORS];
     unsigned int source_generator_count;
+    Theron_V1_SourceObjectRecord
+        source_objects[THERON_MAX_SOURCE_OBJECT_RECORDS];
+    unsigned int source_object_count;
 
     /* Generator state (current dungeon, current level only) */
     int generator_spawn_count[5];
@@ -591,6 +613,19 @@ int theron_v1_world_bind_track02_generator(
     uint8_t target_x,
     uint8_t target_y,
     uint8_t target_facing);
+int theron_v1_world_bind_track02_source_object(
+    Theron_V1_World *world,
+    int dungeon_id,
+    int level_index,
+    uint16_t source_ref,
+    uint16_t next_ref,
+    uint16_t source_index,
+    uint8_t category,
+    uint8_t position,
+    int x,
+    int y,
+    const uint8_t *raw,
+    uint8_t raw_size);
 void theron_v1_world_init_generators(Theron_V1_World *world);
 void theron_v1_world_tick_generators(Theron_V1_World *world);
 

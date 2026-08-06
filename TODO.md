@@ -1429,6 +1429,11 @@
   placement are bypassed for verified Track 02 worlds; source generator timing,
   re-enable and spawn consumers remain closed until the original route is
   bound.
+  2026-08-06 source-object update: every decoded map-reachable category
+  4–10/14/15 occurrence is now copied into a persistent world source bank
+  with raw bytes, chain links, category/index, position and map coordinates.
+  Host object, inventory and item-kind publication remains deliberately
+  unbound until the original ownership consumer is proven.
 
 - **THERON-FORCEFIELD-MENU:** Closed 2026-08-06. `ENTER FORCEFIELD` is now
   enabled for both the Soul Room and READY phases, including a party with

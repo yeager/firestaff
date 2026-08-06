@@ -213,6 +213,7 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
         assert(world->source_monster_count ==
                result.source_category_counts[THERON_CAT_MONSTER]);
         assert(world->source_generator_count == expected_source_generators[d]);
+        assert(world->source_object_count == result.source_object_count);
         assert(world->creature_count == 0);
         theron_v1_world_init_generators(world);
         world->world_tick = 60;
@@ -277,6 +278,23 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(generator->x < THERON_MAX_MAP_SIZE);
             assert(generator->y < THERON_MAX_MAP_SIZE);
             assert(generator->type == TQ_ACT_FLOOR_MONSTER_GEN);
+        }
+        for (unsigned int i = 0; i < world->source_object_count; ++i) {
+            const Theron_V1_SourceObjectRecord *object =
+                &world->source_objects[i];
+            const Theron_Track02SourceObjectOccurrence *source =
+                &result.source_objects[i];
+            assert(object->dungeon_id == d + 1);
+            assert(object->level == (int)source->map);
+            assert(object->x == (int)source->x);
+            assert(object->y == (int)source->y);
+            assert(object->source_ref == source->source_ref);
+            assert(object->next_ref == source->next_ref);
+            assert(object->source_index == source->source_index);
+            assert(object->category == source->category);
+            assert(object->position == source->position);
+            assert(object->raw_size == source->raw_size);
+            assert(memcmp(object->raw, source->raw, object->raw_size) == 0);
         }
         /* Champions and creatures are linked through actuators (champion
          * mirror type 127), not directly through ground refs. */
