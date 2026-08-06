@@ -93,6 +93,9 @@
   that the external CDDA files are available. Recover the original Saturn
   music consumer or an authenticated runtime trace before enabling CDDA
   selection/playback.
+  2026-08-06: removed the host `track02.wav/ogg/mp3` lookup and callback route;
+  a user-supplied host audio file is not a Saturn CDDA handoff and now remains
+  selection-only until source-bound media evidence exists.
 
 - **NEXUS-STALE-ISSUE-PAGES:** The three historical Nexus issue pages are now
   explicitly labelled as snapshots. Keep the strict-fidelity inventory and

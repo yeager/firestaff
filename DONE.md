@@ -53347,9 +53347,16 @@ alcove runtime and archive-media tests passed (4/4).
   `a6f2272a4f6cb3c6b3b33012bc5b15ed`, matching the boot profile. The real
   V3 sidecar/provenance regression now binds evidence while remaining
   fail-closed for Saturn authentication and runtime import.
+<<<<<<< Updated upstream
 - ✅ 2026-08-06 DM2 unowned-creature-pool removal: production no longer
   restores a caller-authored `DM2_V1_CreatureLiveState` into its global pool.
   The standalone structure remains an explicit fixture facility only; real
   creature restoration remains closed until the original SKSAVE, DB4, timer
   and CAII/CCM ownership chain is imported. The focused production gate
   verifies both rejection and no mutation.
+=======
+- ✅ 2026-08-06 Nexus CDDA fidelity boundary: removed the unproven host
+  `track02.wav/ogg/mp3` fallback from manual track selection. A local audio
+  file can no longer masquerade as Saturn Red Book playback; selection remains
+  provenance-only until an authenticated media handoff exists.
+>>>>>>> Stashed changes

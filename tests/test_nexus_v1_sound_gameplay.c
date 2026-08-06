@@ -3,6 +3,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <sys/stat.h>
+#include <unistd.h>
 
 static int g_fail = 0;
 static int g_count = 0;
@@ -92,6 +94,33 @@ static void test_cd_track_does_not_submit_empty_path(void) {
     nexus_sound_shutdown(&eng);
 }
 
+static void test_cd_track_rejects_host_audio_substitute(void) {
+    Nexus_SoundEngine eng;
+    const char *root = "/tmp/firestaff-nexus-cdda-substitute";
+    char path[128];
+    FILE *file;
+
+    memset(&eng, 0, sizeof(eng));
+    nexus_sound_init(&eng);
+    snprintf(path, sizeof(path), "%s/track02.wav", root);
+    (void)mkdir(root, 0700);
+    file = fopen(path, "wb");
+    if (file) {
+        fputs("synthetic host audio", file);
+        fclose(file);
+    }
+    nexus_sound_set_data_root(&eng, root);
+    nexus_sound_set_cd_callbacks(&eng, dummy_cd_play, dummy_cd_stop, NULL);
+    dummy_cd_play_called = 0;
+    expect(nexus_sound_cd_track(&eng, 2) == 0 &&
+               eng.current_cd_track == 2 && eng.cd_track_path[0] == '\0' &&
+               eng.cd_playing == 0 && !dummy_cd_play_called,
+           "a host track file cannot substitute for authenticated Saturn CDDA");
+    remove(path);
+    rmdir(root);
+    nexus_sound_shutdown(&eng);
+}
+
 static void test_event_selector_is_instance_local(void) {
     Nexus_SoundEngine first;
     Nexus_SoundEngine second;
@@ -162,6 +191,7 @@ int main(void) {
     test_mix_silence();
     test_cd_callbacks();
     test_cd_track_does_not_submit_empty_path();
+    test_cd_track_rejects_host_audio_substitute();
     test_event_selector_is_instance_local();
     test_event_names();
     test_sfx_music_toggle();

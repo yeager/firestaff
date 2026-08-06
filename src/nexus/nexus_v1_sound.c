@@ -6,7 +6,6 @@
 
 static void nexus_sound_free_decoded(Nexus_SoundEngine *eng);
 static void nexus_sound_trigger_tone(Nexus_SoundEngine *eng, int tone_index);
-static int nexus_file_exists(const char *path);
 
 /* Nexus V1 sound system — source-bound SAL directory implementation.
  * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
@@ -1152,26 +1151,14 @@ void nexus_sound_play_idx(Nexus_SoundEngine *eng, int sample_index) {
  * CD playback via host callback (set by M11 layer).
  * ═══════════════════════════════════════════════════════════════════ */
 
-static int nexus_file_exists(const char *path) {
-    FILE *f = fopen(path, "rb");
-    if (f) { fclose(f); return 1; }
-    return 0;
-}
-
 static void nexus_cd_build_track_path(Nexus_SoundEngine *eng, int track_number) {
-    if (!eng || !eng->data_root[0]) {
-        if (eng) eng->cd_track_path[0] = '\0';
-        return;
-    }
-    snprintf(eng->cd_track_path, sizeof(eng->cd_track_path),
-             "%s/track%02d.wav", eng->data_root, track_number);
-    if (nexus_file_exists(eng->cd_track_path)) return;
-    snprintf(eng->cd_track_path, sizeof(eng->cd_track_path),
-             "%s/track%02d.ogg", eng->data_root, track_number);
-    if (nexus_file_exists(eng->cd_track_path)) return;
-    snprintf(eng->cd_track_path, sizeof(eng->cd_track_path),
-             "%s/track%02d.mp3", eng->data_root, track_number);
-    if (nexus_file_exists(eng->cd_track_path)) return;
+    (void)track_number;
+    if (!eng) return;
+    /* The European retail corpus contains a CUE/ISO with Red Book track
+     * declarations, not an authenticated host PCM handoff. Do not accept
+     * arbitrary track02.wav/ogg/mp3 files as a substitute for Saturn CDDA;
+     * manual selection remains provenance-only until a source-bound decoder
+     * or runtime capture owns the media path. */
     eng->cd_track_path[0] = '\0';
 }
 
