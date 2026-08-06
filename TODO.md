@@ -3,11 +3,11 @@
 - **DM1-LEGACY-DUNGEON-BRIDGE-ORNAMENT-OWNER:** The legacy
   `firestaff_dungeon_state` bridge now derives F0170/F0171 random wall/floor
   ordinals from the authenticated PC34 DUNGEON.DAT seed, map dimensions,
-  counts and raw square flags, but only for object-free squares. It still
-  lacks F0172's compact Thing-chain sensor override and an authenticated
-  GRAPHICS.DAT consumer. Keep Thing-list squares no-draw and recover those
-  owners before claiming complete ornament parity; M11's source-owned
-  viewport remains separate.
+  counts and raw square flags. It also reads F0510/F0511's compact
+  Thing-list chain to let a source sensor's F0172 ornament ordinal replace
+  the random value. It still lacks an authenticated GRAPHICS.DAT consumer;
+  recover that owner before claiming complete ornament parity. M11's
+  source-owned viewport remains separate.
 
 - **NEXUS-SDDRVS-68K-EVENT-HANDOFF:** The authenticated `SDDRVS.TSK` is now
   byte-bound as a 26,610-byte 68000 sound-CPU image. Its entry, command-nibble

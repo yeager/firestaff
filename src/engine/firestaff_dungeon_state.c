@@ -2,6 +2,7 @@
 #include "firestaff_dungeon_query.h"
 #include <string.h>
 #include <stdio.h>
+#include <stdlib.h>
 
 /* ═══════════════════════════════════════════════════════════════
  * DM1 DUNGEON.DAT parser — extract the map grid.
@@ -35,8 +36,33 @@ static int g_current_level = 0;
 static int g_dungeon_loaded = 0;
 static int g_start_x = 0, g_start_y = 0, g_start_dir = 0;
 static uint16_t g_ornament_random_seed = 0;
+static uint16_t *g_columns_cumulative_sft = NULL;
+static uint16_t *g_square_first_things = NULL;
+static uint8_t *g_thing_bytes[16];
+static uint16_t g_thing_counts[16];
+static int g_column_count = 0;
+static int g_square_first_thing_count = 0;
 
 static uint16_t r16(const uint8_t *p) { return (uint16_t)p[0] | ((uint16_t)p[1] << 8); }
+
+static const uint8_t g_thing_byte_count[16] = {
+    4, 6, 4, 8, 16, 4, 4, 4, 4, 8, 4, 0, 0, 0, 8, 4
+};
+
+static void fs_dungeon_clear_thing_lookup(void) {
+    int type;
+    free(g_columns_cumulative_sft);
+    free(g_square_first_things);
+    g_columns_cumulative_sft = NULL;
+    g_square_first_things = NULL;
+    g_column_count = 0;
+    g_square_first_thing_count = 0;
+    for (type = 0; type < 16; ++type) {
+        free(g_thing_bytes[type]);
+        g_thing_bytes[type] = NULL;
+        g_thing_counts[type] = 0;
+    }
+}
 
 int fs_dungeon_load_dat(const uint8_t *data, int size) {
     /* ReDMCSB DUNGEON.C F0150/F0151 and DMWeb's Dungeon Files format:
@@ -58,6 +84,7 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
     uint16_t thing_counts[16];
 
     g_dungeon_loaded = 0;
+    fs_dungeon_clear_thing_lookup();
     g_dungeon_level_count = 0;
     memset(g_dungeon_grid, 0, sizeof(g_dungeon_grid));
     memset(g_dungeon_attributes, 0, sizeof(g_dungeon_attributes));
@@ -107,14 +134,45 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
      * from a filename, EOF guess, or a fallback offset. */
     if (cursor > (size_t)size ||
         (size_t)total_columns > (SIZE_MAX - cursor) / 2u) return -1;
+    g_columns_cumulative_sft = (uint16_t *)calloc((size_t)total_columns,
+                                                   sizeof(*g_columns_cumulative_sft));
+    if (!g_columns_cumulative_sft) return -1;
+    for (lv = 0; lv < total_columns; ++lv) {
+        g_columns_cumulative_sft[lv] = r16(data + cursor + (size_t)lv * 2u);
+    }
+    g_column_count = total_columns;
     cursor += (size_t)total_columns * 2u;
     if ((size_t)sft_count > (SIZE_MAX - cursor) / 2u) return -1;
+    if (sft_count > 0) {
+        g_square_first_things = (uint16_t *)calloc((size_t)sft_count,
+                                                    sizeof(*g_square_first_things));
+        if (!g_square_first_things) {
+            fs_dungeon_clear_thing_lookup();
+            return -1;
+        }
+        for (lv = 0; lv < sft_count; ++lv) {
+            g_square_first_things[lv] = r16(data + cursor + (size_t)lv * 2u);
+        }
+    }
+    g_square_first_thing_count = sft_count;
     cursor += (size_t)sft_count * 2u;
     if ((size_t)text_word_count > (SIZE_MAX - cursor) / 2u) return -1;
     cursor += (size_t)text_word_count * 2u;
     for (lv = 0; lv < 16; ++lv) {
         size_t bytes = (size_t)thing_counts[lv] * thing_bytes[lv];
-        if (bytes > (size_t)size - cursor) return -1;
+        if (bytes > (size_t)size - cursor) {
+            fs_dungeon_clear_thing_lookup();
+            return -1;
+        }
+        g_thing_counts[lv] = thing_counts[lv];
+        if (bytes > 0) {
+            g_thing_bytes[lv] = (uint8_t *)malloc(bytes);
+            if (!g_thing_bytes[lv]) {
+                fs_dungeon_clear_thing_lookup();
+                return -1;
+            }
+            memcpy(g_thing_bytes[lv], data + cursor, bytes);
+        }
         cursor += bytes;
     }
     raw_base = cursor;
@@ -161,6 +219,46 @@ int fs_dungeon_load_dat(const uint8_t *data, int size) {
     return level_count;
 }
 
+static uint16_t fs_dungeon_next_thing(uint16_t thing) {
+    unsigned int type = (thing >> 10) & 0x0fu;
+    unsigned int index = thing & 0x03ffu;
+    if (type >= 16 || index >= g_thing_counts[type] ||
+        !g_thing_bytes[type] || g_thing_byte_count[type] < 2) {
+        return 0xfffeu;
+    }
+    return r16(g_thing_bytes[type] + (size_t)index * g_thing_byte_count[type]);
+}
+
+static int fs_dungeon_sensor_ornament_override(int x, int y) {
+    int column = x;
+    int row;
+    int index;
+    uint16_t thing;
+    int guard = 0;
+
+    if (!g_square_first_things || !g_columns_cumulative_sft) return -1;
+    for (row = 0; row < g_current_level; ++row) {
+        column += g_dungeon_level_w[row];
+    }
+    if (column < 0 || column >= g_column_count) return -1;
+    index = g_columns_cumulative_sft[column];
+    for (row = 0; row < y; ++row) {
+        if (g_dungeon_attributes[g_current_level][row][x] & 0x10) ++index;
+    }
+    if (index < 0 || index >= g_square_first_thing_count) return -1;
+    thing = g_square_first_things[index];
+    while (thing != 0xffffu && thing != 0xfffeu && guard++ < 64) {
+        unsigned int type = (thing >> 10) & 0x0fu;
+        unsigned int item = thing & 0x03ffu;
+        if (type == 3 && item < g_thing_counts[3] && g_thing_bytes[3]) {
+            uint16_t bits = r16(g_thing_bytes[3] + (size_t)item * 8u + 4u);
+            return (int)((bits >> 12) & 0x0fu);
+        }
+        thing = fs_dungeon_next_thing(thing);
+    }
+    return -1;
+}
+
 void fs_dungeon_set_level(int level) {
     if (level >= 0 && level < g_dungeon_level_count)
         g_current_level = level;
@@ -196,6 +294,7 @@ int fs_dungeon_get_wall_ornament(int x, int y, int dir) {
     uint32_t mixed;
     int random_count;
     int random_index;
+    int sensor_ordinal;
 
     if (!g_dungeon_loaded || x < 0 || y < 0 ||
         x >= g_dungeon_level_w[g_current_level] ||
@@ -204,13 +303,15 @@ int fs_dungeon_get_wall_ornament(int x, int y, int dir) {
     }
     square = (uint8_t)((g_dungeon_grid[g_current_level][y][x] << 5) |
                        g_dungeon_attributes[g_current_level][y][x]);
-    /* F0172 lets sensor things replace random wall ordinals.  This legacy
-     * reader does not yet decode the compact Thing chain, so a square that
-     * owns one must remain no-draw rather than publishing an unverified
-     * random value. */
-    if ((square >> 5) != 0 || (square & 0x10) != 0 ||
-        (square & front_face_mask[dir]) == 0) {
+    /* F0172 lets a sensor in the source-owned compact Thing chain replace
+     * the random wall ordinal. A list without a sensor remains no-draw: a
+     * text, door or object must not be mistaken for ornament evidence. */
+    if ((square >> 5) != 0 || (square & front_face_mask[dir]) == 0) {
         return 0;
+    }
+    if (square & 0x10) {
+        sensor_ordinal = fs_dungeon_sensor_ornament_override(x, y);
+        return sensor_ordinal >= 0 ? sensor_ordinal : 0;
     }
     random_count = g_dungeon_random_wall_ornament_count[g_current_level];
     if (random_count <= 0) return 0;
@@ -237,6 +338,7 @@ int fs_dungeon_get_floor_ornament(int x, int y) {
     int element;
     int random_count;
     int random_index;
+    int sensor_ordinal;
 
     if (!g_dungeon_loaded || x < 0 || y < 0 ||
         x >= g_dungeon_level_w[g_current_level] ||
@@ -247,11 +349,15 @@ int fs_dungeon_get_floor_ornament(int x, int y) {
                        g_dungeon_attributes[g_current_level][y][x]);
     element = square >> 5;
     /* F0172 admits random floor ornament only on corridor/pit/teleporter
-     * cells. A Thing-list square is held closed until its sensor override is
-     * decoded from the original compact chain. */
+     * cells. A Thing-list square instead requires a source sensor override
+     * from the original compact chain. */
     if ((element != 1 && element != 2 && element != 5) ||
-        (square & 0x08) == 0 || (square & 0x10) != 0) {
+        (square & 0x08) == 0) {
         return 0;
+    }
+    if (square & 0x10) {
+        sensor_ordinal = fs_dungeon_sensor_ornament_override(x, y);
+        return sensor_ordinal >= 0 ? sensor_ordinal : 0;
     }
     random_count = g_dungeon_random_floor_ornament_count[g_current_level];
     if (random_count <= 0) return 0;

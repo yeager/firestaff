@@ -58,6 +58,10 @@ int main(int argc, char **argv)
      * (4,2) selects floor ordinal 3. */
     if (fs_dungeon_get_wall_ornament(0, 12, 3) != 2 ||
         fs_dungeon_get_floor_ornament(4, 2) != 3) ++failures;
+    /* Compact F0510/F0511 lookup reaches a source sensor in map 1 instead
+     * of substituting the random floor ordinal. */
+    fs_dungeon_set_level(1);
+    if (fs_dungeon_get_floor_ornament(2, 15) != 3) ++failures;
     free(bytes);
     if (failures) {
         fprintf(stderr, "FAIL: real DM1 DUNGEON.DAT state checks (%d)\n", failures);

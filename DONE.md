@@ -56060,15 +56060,18 @@ alcove runtime and archive-media tests passed (4/4).
 
 - The legacy DUNGEON.DAT bridge now retains the PC34 `OrnamentRandomSeed` and
   per-map random wall/floor counts rather than inventing ordinals from fixed
-  constants. Object-free wall, corridor, pit and teleporter squares use the
+  constants. Wall, corridor, pit and teleporter squares use the
   F0170/F0171 30-way source calculation with their real map dimensions and
   raw flag bits.
-- Any square with a Thing-list flag remains no-draw: F0172 lets a sensor
-  replace the calculated ordinal, and this legacy reader has not yet decoded
-  that compact chain. The bridge also has no authenticated graphics consumer,
-  so this is source-state recovery rather than a viewport-parity claim.
+- The reader now copies the source column bases, compact SquareFirstThings
+  table and raw Thing `Next` words. F0510/F0511 traversal finds a sensor at
+  any position in a list and applies its real four-bit `ornamentOrdinal`;
+  Thing lists with no sensor remain no-draw. The bridge still has no
+  authenticated graphics consumer, so this is source-state recovery rather
+  than a viewport-parity claim.
 - Regression: real PC34 `DUNGEON.DAT` asserts map-0's wall `(0,12)`/west
-  ordinal `2` and floor `(4,2)` ordinal `3`.
+  ordinal `2`, floor `(4,2)` ordinal `3`, and the map-1 `(2,15)` sensor
+  override ordinal `3`.
 
 # 2026-08-06 CSB FM Towns TITLE Timer-A hold
 
