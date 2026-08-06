@@ -1217,6 +1217,8 @@ int dm2_v1_runtime_quicksave_boot_profile_with_receipt(
 uint8_t dm2_v1_runtime_get_minion_count(void);
 int dm2_v1_runtime_get_minion_assoc(uint8_t index, DM2_MinionAssoc *out_assoc);
 uint32_t dm2_v1_runtime_get_weather_seed(void);
+/* Compatibility symbol only. Production ignores caller-provided seeds until
+ * GAME_LOAD/SKSAVE/ENVIRONMENT supplies the original weather-state owner. */
 void dm2_v1_runtime_set_weather_seed(uint32_t seed);
 int dm2_v1_runtime_last_set_timer_weather_receipt(
     DM2_V1_SetTimerWeatherReceipt *out_receipt);

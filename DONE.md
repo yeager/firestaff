@@ -53373,3 +53373,9 @@ alcove runtime and archive-media tests passed (4/4).
   viewport data cannot silently come from another platform. The focused ZIP+
   ISO split-archive regression passes; the real FM Towns handoff remains
   skip-safe without user media.
+
+- ✅ 2026-08-06 DM2 unowned-weather-seed removal: the production runtime no
+  longer accepts caller-provided weather seeds. Only the original
+  GAME_LOAD/SKSAVE/ENVIRONMENT route may establish that state; the focused
+  weather regression verifies that an outdoor flag plus a host seed retains
+  neither a seed nor a weather chain.

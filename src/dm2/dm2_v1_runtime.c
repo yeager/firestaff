@@ -8765,7 +8765,12 @@ uint32_t dm2_v1_runtime_get_weather_seed(void) {
 }
 
 void dm2_v1_runtime_set_weather_seed(uint32_t seed) {
-    dm2_v1_weather_set_seed(&g_dm2_runtime.weather, seed);
+    /* ReDMCSB BASE.C F0027/F0029 advances the environment seed only from
+     * the source-owned weather/timer state.  This public compatibility
+     * symbol used to accept a host number even though no live GAME_LOAD,
+     * SKSAVE or ENVIRONMENT handoff supplied it.  Do not retain an invented
+     * seed in the production runtime. */
+    (void)seed;
 }
 
 int dm2_v1_runtime_last_set_timer_weather_receipt(

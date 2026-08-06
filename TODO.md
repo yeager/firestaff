@@ -2029,6 +2029,10 @@
   `DM2_SET_TIMER_WEATHER` receipt. The runtime clears that receipt until the
   complete source-owned `v1e14xx` chain is present, preventing independently
   supplied GDAT slots from promoting an unowned weather overlay.
+  **2026-08-06 seed follow-up:** the residual public runtime seed setter now
+  ignores caller values. A host-provided number cannot persist in the live
+  weather state before the original GAME_LOAD/SKSAVE/ENVIRONMENT owner is
+  decoded.
   **2026-07-31 audit:** the legacy colour-only outdoor facade is outside the
   production archive. The active viewport's outdoor route requires G1 map,
   GDAT/local-palette, c_light and source timer-slot receipts together; seven

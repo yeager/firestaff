@@ -104,8 +104,8 @@ static void test_weather_ticks_require_source_chain_state(void)
 
     for (int tick = 0; tick < 200; tick++) {
         dm2_v1_runtime_tick();
-        CHECK(dm2_v1_runtime_get_weather_seed() == seed,
-              "indoor mode never advances weather seed");
+        CHECK(dm2_v1_runtime_get_weather_seed() == 0u,
+              "indoor mode rejects a caller-provided weather seed");
         CHECK(dm2_v1_runtime_get_weather() == DM2_WEATHER_UNKNOWN,
               "indoor mode keeps weather unavailable");
         CHECK(dm2_v1_runtime_weather_chain_started() == 0,
@@ -121,9 +121,9 @@ static void test_weather_ticks_require_source_chain_state(void)
     }
     CHECK(dm2_v1_runtime_weather_chain_started() == 0 &&
               dm2_v1_runtime_weather_source_timer_pending() == 0 &&
-              dm2_v1_runtime_get_weather_seed() == seed &&
+              dm2_v1_runtime_get_weather_seed() == 0u &&
               dm2_v1_runtime_get_weather() == DM2_WEATHER_UNKNOWN,
-          "outdoor flag and host seed cannot construct a weather chain");
+          "outdoor flag and rejected host seed cannot construct a weather chain");
 }
 
 int main(void)
