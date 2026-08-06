@@ -246,6 +246,12 @@ som inte ryms, utan att skapa en trunkerad giltig modell. Testet dekoder alla 30
 MNS-filer och renderar 815 källtexturer. Detta är fortsatt parser-/materialbevis,
 inte bevis på Saturns slutliga VDP1-kommandoordning eller viewport-pixlar.
 
+Alla 30 retail-MNS-identiteter finns nu också i den canonicala Track 1
+MD5-katalogen, så `nexus_v1_load_model()` kan faktiskt öppna verifierade
+creature-modeller (t.ex. `SCORPION.MNS`) från den riktiga dataroten. Detta
+öppnar inte modellrendering: VDP1-kommandon, placering och pose är fortfarande
+capture-gated.
+
 DGN Structure2-dekodern följer nu också DMWebs palette-ID-regel: en descriptor
 med `Palette offset = 0` återanvänder den senaste tidigare paletteassociationen
 med samma ID; den får inte falla tillbaka till palette 0. Hashverifierad testning

@@ -22,8 +22,10 @@ int nexus_v1_font_s2d_copy_character_generator_tile(
     uint32_t offset;
 
     if (!data || data_size <= 0 || !decoded || !out_tile ||
-        !decoded->valid || tile_index < 0 || tile_index >= 242 ||
-        decoded->character_generator_size < 16U + 242U * 64U) {
+        !decoded->valid || tile_index < 0 ||
+        tile_index >= NEXUS_V1_FONT_S2D_REAL_TILE_COUNT ||
+        decoded->character_generator_size <
+            16U + NEXUS_V1_FONT_S2D_REAL_TILE_COUNT * 64U) {
         return -1;
     }
     offset = decoded->character_generator_offset + 16U +
@@ -87,7 +89,8 @@ int nexus_v1_font_s2d_attribute_word(
 {
     if (!decoded) return -1;
     return copy_region_be16(data, data_size, decoded->attribute_offset,
-                            decoded->attribute_size, 0, tile_index, 242,
+                            decoded->attribute_size, 0, tile_index,
+                            NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
                             out_word);
 }
 

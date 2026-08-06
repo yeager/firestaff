@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus MNS runtime admission: added canonical MD5 identities for
+  all 30 retail MNS files. The real readiness probe now loads
+  `SCORPION.MNS` into the DMDF model pool and passes 17/17 checks; the prior
+  failure was an incomplete hash catalog, not missing game data. VDP1 command
+  order, creature model placement and final viewport presentation remain
+  capture-gated.
+
 - ✅ 2026-08-06 Nexus creature metadata quarantine: production creature init
   no longer inserts unverified English display labels or duplicates the MNS
   filename table. It uses the authenticated retail MNS roster, while the

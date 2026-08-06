@@ -6,6 +6,11 @@
 #define NEXUS_SCR_MAX_SECTIONS  16
 #define NEXUS_SCR_HEADER_SIZE   16
 #define NEXUS_SCR_DESC_SIZE     16
+/* The authenticated European FONT256.S2D CG region contains 242 actual
+ * 8x8/8bpp tiles after its 16-byte region prefix.  The SCR header still
+ * declares 256 character codes; the missing 14 code-to-tile mappings remain
+ * unproven and are never filled with synthetic tiles. */
+#define NEXUS_V1_FONT_S2D_REAL_TILE_COUNT 242
 
 typedef struct {
     uint32_t offset;
@@ -44,7 +49,8 @@ typedef struct {
 } Nexus_V1_FontS2dDecodeResult;
 
 /* DMWeb DecodeFONT256S2D: the Character Generator region contains a
- * 16-byte prefix followed by 242 raw 8x8, 8-bit tile images. This copies one
+ * 16-byte prefix followed by NEXUS_V1_FONT_S2D_REAL_TILE_COUNT raw 8x8,
+ * 8-bit tile images. This copies one
  * source tile only; it does not infer a character/glyph mapping. */
 int nexus_v1_font_s2d_copy_character_generator_tile(
     const uint8_t *data, int data_size,

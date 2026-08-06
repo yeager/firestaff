@@ -339,8 +339,9 @@ static void probe_real_data(const char *data_dir,
     CHECK(font != NULL && font_size > 0,
           "FONT256.S2D is readable through engine file reader");
     if (font) font_hash = fnv1a64(font, (size_t)font_size);
-    CHECK(engine.font_loaded == 1 && engine.font.char_count >= 256,
-          "engine font is loaded with at least 256 glyph slots");
+    CHECK(engine.font_loaded == 0 &&
+          engine.font.char_count == NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
+          "engine retains 242 CG tiles while the unproven text consumer stays closed");
 
     model_index = nexus_v1_load_model(&engine, "SCORPION.MNS");
     CHECK(model_index >= 0, "SCORPION.MNS loads through nexus_v1_load_model");

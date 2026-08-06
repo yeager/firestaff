@@ -491,6 +491,10 @@
   still the Saturn/VDP1 command-order capture that binds these source faces,
   materials, palettes and poses to the live viewport; do not promote host mesh
   output to a parity screenshot without that capture.
+  2026-08-06: the canonical Track 1 hash catalog now admits all 30 retail MNS
+  identities; `nexus_v1_load_model("SCORPION.MNS")` reaches the DMDF model pool
+  in the real Track 1 readiness probe. The source-only viewport remains
+  capture-gated.
 
 - **NEXUS-PRS3-INVALID-REFERENCE-GATE:** PRS3-avkodaren avvisar nu framtida,
   ogiltiga backreferenser utan att skapa nollfyllda pixlar. Verifiera fortsatt att nya

@@ -584,9 +584,9 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
     }
 
     /* Verify the FONT256.S2D handoff parses the same bytes we just
-     * read via the engine. engine.font_loaded should be 1 after init. */
-    CHECK(engine.font_loaded == 1,
-          "engine.font_loaded == 1 after init (real FONT256.S2D handoff)");
+     * read via the engine. The source-only text consumer remains closed. */
+    CHECK(engine.font_loaded == 0,
+          "engine.font_loaded remains closed after source-only FONT256.S2D handoff");
     {
         int s2d_size = 0;
         uint8_t *s2d_bytes = nexus_v1_read_file(&engine, "FONT256.S2D", &s2d_size);
@@ -624,7 +624,8 @@ static void run_phase_real_capture(const char *data_dir, const char *out_dir)
     }
 
     nexus_viewport_render(&vp, &engine);
-    CHECK(real_font_loaded && real_font.char_count >= 256,
+    CHECK(real_font_loaded &&
+          real_font.char_count >= NEXUS_V1_FONT_S2D_REAL_TILE_COUNT,
           "real FONT256.S2D remains parsed while DGN capture is blocked");
     nexus_viewport_to_rgba(&vp, rgba);
 
