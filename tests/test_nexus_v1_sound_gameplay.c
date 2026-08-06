@@ -129,8 +129,8 @@ static void test_event_selector_is_instance_local(void) {
 
     nexus_sound_init(&first);
     nexus_sound_set_event_selector(&first, NEXUS_SFX_DOOR_OPEN, 2);
-    expect(first.event_selector[NEXUS_SFX_DOOR_OPEN] == 2,
-           "diagnostic selector is stored on its owning engine");
+    expect(first.event_selector[NEXUS_SFX_DOOR_OPEN] == -1,
+           "unproven host selector cannot enter the SLEV dispatch table");
     nexus_sound_shutdown(&first);
 
     nexus_sound_init(&second);

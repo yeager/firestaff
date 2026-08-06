@@ -47,6 +47,12 @@ void nexus_sound_set_event_selector(Nexus_SoundEngine *eng,
                                     Nexus_SoundEvent event, int selector) {
     if (!eng || !eng->initialized) return;
     if (event <= NEXUS_SFX_NONE || event >= EVENT_COUNT) return;
+    /* A host setter cannot prove Saturn event order, MAP ownership or the
+     * SDDRVS callback. Keep the legacy API inert until a future capture
+     * admission path sets event_dispatch_source_verified from a complete
+     * source-owned trace. */
+    (void)selector;
+    if (!eng->event_dispatch_source_verified) return;
     eng->event_selector[event] = selector;
 }
 

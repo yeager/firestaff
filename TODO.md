@@ -1071,6 +1071,10 @@ level or consumer bindings.
   image association as a runtime ID. Raw Structure1Fa attribute bytes 5 and
   7, including LEV01 torch/waterskin charge values, are retained with the
   floor provenance; they are not interpreted before Saturn action capture.
+  2026-08-06 SLEV follow-up: the legacy host event-selector setter is now
+  inert until a complete Saturn event→MAP/SDDRVS capture authenticates the
+  dispatch owner; numeric host selectors cannot even populate the diagnostic
+  route.
 
 - **NEXUS-DGN-CORPUS-IDENTITY:** The DGN level-content regression now requires
   the 16 production European `LEV00-15.DGN` MD5 identities before its

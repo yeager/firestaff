@@ -356,9 +356,8 @@ int nexus_sound_map_lookup_raw_selector(const Nexus_SoundEngine *eng,
                                         int selector,
                                         Nexus_SoundMapWindow *out_window);
 
-/* Bind a host sound event to a raw MAP selector.  Default is unmapped (-1).
- * Only explicit source-bound selectors enable dispatch; this keeps the path
- * fail-closed until original Saturn event→selector evidence is available. */
+/* Legacy host binding hook. It remains inert until a complete original
+ * Saturn event→MAP/SDDRVS capture has authenticated event_dispatch_source_verified. */
 void nexus_sound_set_event_selector(Nexus_SoundEngine *eng,
                                     Nexus_SoundEvent event, int selector);
 

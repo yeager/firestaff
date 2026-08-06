@@ -38,6 +38,15 @@
 - ✅ Inventory and click-route fixtures now call the explicit source-admission
   lane and verify the generic drop mutator remains blocked.
 
+# Nexus SLEV selector quarantine (2026-08-06)
+
+- ✅ `nexus_sound_set_event_selector()` no longer accepts a host-supplied MAP
+  selector while Saturn event-dispatch provenance is absent.
+- ✅ The 16-level SAL/MAP metadata route remains available for opaque source
+  receipts, but neither selector diagnostics nor playback can be promoted by
+  a numeric caller hint.
+- ✅ `test_nexus_v1_sound_gameplay` covers the inert setter contract.
+
 # Theron startup font presentation gate (2026-08-06)
 
 # CSB FM Towns C06 Utility palette material (2026-08-06)
