@@ -96,6 +96,12 @@
   admitted with FNV-1a `7aa82bc7`; the authentic JP span is recorded as
   `ZERO_FILL` with FNV-1a `63d8ddfd` and cannot fall through the US decoder.
   Referenced payloads and their executing consumer remain blocked.
+  2026-08-06 probe-path update: the descriptor-table and level-handoff
+  probes now discover the supplied authentic `TQUS02.bin` and `TQJP02.bin`
+  directly under the documented `.firestaff/data/theron/` root instead of
+  skipping on obsolete `theron-extras/` filenames. Both raw variants now
+  exercise all three descriptor anchors and the real 32×27 startup candidate;
+  the semantic dungeon/object consumer remains capture-gated.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

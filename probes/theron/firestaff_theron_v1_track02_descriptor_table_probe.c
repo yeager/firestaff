@@ -688,7 +688,7 @@ static void probe_real_data_all_anchors(void) {
         probe_real_data_round_trip(label,
                                    THERON_TRACK02_MD5_US_BIN,
                                    "FIRESTAFF_THERON_TRACK02_US_BIN",
-                                   "theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin",
+                                   "theron/TQUS02.bin",
                                    g_us_bin_descriptor_offsets[i]);
     }
 
@@ -700,7 +700,7 @@ static void probe_real_data_all_anchors(void) {
         probe_real_data_round_trip(label,
                                    THERON_TRACK02_MD5_JP_BIN,
                                    "FIRESTAFF_THERON_TRACK02_JP_BIN",
-                                   "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin",
+                                   "theron/TQJP02.bin",
                                    g_jp_bin_descriptor_offsets[i]);
     }
 }

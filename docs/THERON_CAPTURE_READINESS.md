@@ -34,7 +34,10 @@ The strongest current proof is:
   real Track 02 data is present, both probes hash-gate the bank-anchor
   offsets and the 9-word little-endian stride table shape on the US ISO
   (`0x1584`) plus all three US raw BIN anchors and all three JP raw BIN
-  anchors. The descriptor-table decoder is shape-driven only: it validates
+  anchors. The probes discover the standard operator-supplied files
+  `~/.firestaff/data/theron/TQUS02.bin` and `TQJP02.bin` automatically, while
+  environment overrides remain available. The descriptor-table decoder is
+  shape-driven only: it validates
   the 9-word stride sequence (entries 0x0020..0x2020, stride 0x0400) without
   claiming per-entry semantic type, dungeon-level binding, or loader
   handoff.

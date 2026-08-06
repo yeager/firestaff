@@ -1542,12 +1542,12 @@ static void probe_real_data_if_present(void) {
         "US raw BIN",
         THERON_TRACK02_MD5_US_BIN,
         "FIRESTAFF_THERON_TRACK02_US_BIN",
-        "theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin");
+        "theron/TQUS02.bin");
     probe_real_data_initial_candidate(
         "JP raw BIN",
         THERON_TRACK02_MD5_JP_BIN,
         "FIRESTAFF_THERON_TRACK02_JP_BIN",
-        "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin");
+        "theron/TQJP02.bin");
 
     probe_real_data_handoff("US ISO descriptor handoff",
                             THERON_TRACK02_MD5_US_ISO,
@@ -1556,11 +1556,11 @@ static void probe_real_data_if_present(void) {
     probe_real_data_handoff("US raw BIN descriptor handoff",
                             THERON_TRACK02_MD5_US_BIN,
                             "FIRESTAFF_THERON_TRACK02_US_BIN",
-                            "theron-extras/usa/Dungeon Master - Theron's Quest (USA) (Track 02).bin");
+                            "theron/TQUS02.bin");
     probe_real_data_handoff("JP raw BIN descriptor handoff",
                             THERON_TRACK02_MD5_JP_BIN,
                             "FIRESTAFF_THERON_TRACK02_JP_BIN",
-                            "theron-extras/japan/Dungeon Master - Theron's Quest (Japan) (Track 02).bin");
+                            "theron/TQJP02.bin");
 }
 
 static void probe_media_gated_level_bank_selection(void) {

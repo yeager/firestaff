@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Theron real-data probe discovery: descriptor-table and
+  level-handoff probes now use the supplied standard-root
+  `.firestaff/data/theron/TQUS02.bin` and `TQJP02.bin` paths. Verification
+  passes all three US and JP raw descriptor anchors and binds each authentic
+  32×27 startup candidate; unresolved dungeon/object semantics remain
+  explicitly no-claim.
+
 - ✅ 2026-08-06 Theron regional level-descriptor receipt: the authenticated
   logical Track 02 span at UD `0x619900` now distinguishes the real US
   53-record table (`318` bytes, FNV-1a `7aa82bc7`) from the real JP
