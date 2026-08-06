@@ -34762,11 +34762,16 @@ static void m11_draw_side_feature(unsigned char* framebuffer,
     }
 
     if (cell->elementType == DUNGEON_ELEMENT_DOOR) {
-        /* Try real door side pillar graphic first */
-        if (!g_drawState ||
+        /* ReDMCSB DUNVIEW.C F0111 owns authenticated side-door panels and
+         * frame slices.  The old generic helper scaled the whole wall-set
+         * side bitmap over that source composition with the wrong C0 key,
+         * producing doubled/black door edges and inconsistent open states.
+         * Keep it only for the non-source diagnostic renderer. */
+        if (!m11_dm1_authenticated_viewport_source_active() &&
+            (!g_drawState ||
             !m11_draw_door_side_asset(g_drawState, framebuffer,
                                       framebufferWidth, framebufferHeight,
-                                      paneX, paneY, paneW, paneH, depthIndex)) {
+                                      paneX, paneY, paneW, paneH, depthIndex))) {
             /* Authenticated DM1/CSB views must fail closed when the original
              * side-door bitmap is unavailable.  The yellow line is retained
              * only for the non-source diagnostic renderer. */

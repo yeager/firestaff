@@ -12,6 +12,12 @@
   packaged window shows the real torch plus holder, that side/depth mirrors
   remain source-visible, and that a held object follows the F0702 cursor.
 
+  2026-08-06 source audit: removed a duplicate authenticated side-door blit
+  from the deferred F0115 content pass. ReDMCSB F0111's exact panel/frame
+  slices now remain the sole DM1/CSB source owner; the generic whole-pane
+  helper is retained only for non-source diagnostics. Remaining work is
+  packaged capture of door states, not another fallback texture.
+
 - **DM1-HOC-ORNAMENT-RENDER-CAPTURE:** The generic DM1 dungeon bridge now
   consumes the real PC34 map ornament counts, seed, square attributes and
   F0169/F0170 random wall/floor ordinal formulas. The real PC34 map-0 receipt
