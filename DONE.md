@@ -1,3 +1,9 @@
+# DM1 mirror thought-project synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C157/C158 overlay fixture from M10 and made its
+  direct regression compile the source explicitly. It loads no original DM1
+  data and has no M11/runtime caller.
+
 # DM1 champion dead-hand-refresh synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only F0296/F0295/F0386 fixture from M10. Its direct
