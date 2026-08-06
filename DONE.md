@@ -52561,3 +52561,12 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   matching SKProject `GET_GRAPHICS_FOR_DOOR` and `GET_DOOR_STAT_0D`
   (`skdoor.cpp`). Missing G1, map-header, or GDAT ownership now returns no
   field result instead of inventing a blocking attribute.
+
+- ✅ 2026-08-06 DM2 flat inventory ABI closure: the residual public
+  leader-hand and champion-inventory setters no longer mutate the retired
+  32-bit cache, and their getters cannot expose a fixture-written handle.
+  This matches SKProject `LeaderPossession`/`WRITE_RECORD_CHECKCODE` and
+  `c_hero::item[30]`: the original route owns 16-bit DB links and the cursor,
+  neither of which can be reconstructed from a host handle. The focused
+  save/load regression proves these calls stay fail-closed; M11's real
+  PC-DOS startup gate still passes.

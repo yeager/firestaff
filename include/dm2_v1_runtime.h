@@ -1162,6 +1162,9 @@ int dm2_v1_runtime_import_original_sksave_state_entry(
     const char *save_root,
     const DM2_OriginalSaveStateCorpusEntry *selected_entry,
     DM2_V1_RuntimeOriginalCorpusImportReceipt *out);
+/* Compatibility accessors for the retired flat ObjectID cache.  Production
+ * always reports no object; the setter is deliberately a no-op until the
+ * original LeaderPossession/record-checkcode ownership is imported. */
 uint32_t dm2_v1_runtime_get_leader_hand_object(void);
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
 /* DM2_LOAD_NEW_DUNGEON clears the old party before it admits the new G1
@@ -1170,6 +1173,8 @@ void dm2_v1_runtime_set_leader_hand_object(uint32_t object);
 void dm2_v1_runtime_clear_new_game_party_state(void);
 uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
                                                       uint8_t slot);
+/* Returns -1 without mutation: c_hero item links require the original DB
+ * record-chain allocator and may not be supplied as 32-bit host handles. */
 int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
                                                  uint8_t slot,
                                                  uint32_t object);

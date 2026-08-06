@@ -88,6 +88,25 @@ static uint32_t corpus_hash_words_le(const uint16_t *words, size_t count)
     return hash;
 }
 
+static int test_flat_inventory_cache_is_not_a_runtime_route(void)
+{
+    const uint32_t leader = dm2_db_make_handle(7, 0x2au);
+    const uint32_t item = dm2_db_make_handle(6, 0x23u);
+
+    /* LeaderPossession and c_hero::item[30] are source DB links.  These
+     * legacy compatibility symbols must never admit a caller-constructed
+     * 32-bit cache while the record-checkcode allocator is incomplete. */
+    dm2_v1_runtime_set_leader_hand_object(leader);
+    if (dm2_v1_runtime_get_leader_hand_object() != 0u ||
+        dm2_v1_runtime_set_champion_inventory_object(0u, 8u, item) != -1 ||
+        dm2_v1_runtime_get_champion_inventory_object(0u, 8u) != 0u) {
+        printf("    FAIL: flat inventory cache entered runtime state\n");
+        return 0;
+    }
+    printf("    PASS: flat leader/inventory cache setters remain fail-closed\n");
+    return 1;
+}
+
 static void cleanup_one_slot_dir(const char *dir, uint8_t slot)
 {
     char p[256];
@@ -3511,6 +3530,7 @@ int main(void)
     RUN(12, test_db_handle_roundtrip);
     RUN(13, test_invalid_slot_header_rejected);
     RUN(14, test_stale_fixture_metadata_guard);
+    RUN(15, test_flat_inventory_cache_is_not_a_runtime_route);
     RUN(15, test_resume_smoke_gate_position_facing_inventory);
     RUN(16, test_raw_sksave_resume_import);
     RUN(17, test_raw_sksave_scene_root_addressing);

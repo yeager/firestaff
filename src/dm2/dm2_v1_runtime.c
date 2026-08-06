@@ -8843,11 +8843,19 @@ int dm2_v1_runtime_import_sksave_corpus(
 }
 
 uint32_t dm2_v1_runtime_get_leader_hand_object(void) {
-    return g_dm2_runtime.leader_hand_object;
+    /* LeaderPossession is a source-owned 22-byte cursor.  The bounded
+     * SKSave receipt reaches only its 16-bit ObjectID and does not own the
+     * record-checkcode allocation or cursor pixels, so no public read may
+     * expose Firestaff's retired 32-bit cache as a live held object. */
+    return 0u;
 }
 
 void dm2_v1_runtime_set_leader_hand_object(uint32_t object) {
-    g_dm2_runtime.leader_hand_object = object;
+    /* See sksvgame.cpp WRITE_RECORD_CHECKCODE and sktypesx.h
+     * LeaderPossession.  A caller-provided 32-bit handle cannot be promoted
+     * to the original cursor; retain the compatibility symbol as a no-op so
+     * external callers cannot manufacture playable inventory state. */
+    (void)object;
 }
 
 void dm2_v1_runtime_clear_new_game_party_state(void) {
@@ -8869,7 +8877,9 @@ uint32_t dm2_v1_runtime_get_champion_inventory_object(uint8_t champion,
     if (champion >= 4u || slot >= 30u) {
         return 0u;
     }
-    return g_dm2_runtime.champion_inventory_objects[champion][slot];
+    /* c_hero::item is a 16-bit DB-link graph, not this retired flat cache.
+     * Do not leak a fixture-written value through the public runtime ABI. */
+    return 0u;
 }
 
 int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
@@ -8878,8 +8888,9 @@ int dm2_v1_runtime_set_champion_inventory_object(uint8_t champion,
     if (champion >= 4u || slot >= 30u) {
         return -1;
     }
-    g_dm2_runtime.champion_inventory_objects[champion][slot] = object;
-    return 0;
+    (void)object;
+    /* No source DB allocator/record-chain owner exists yet. */
+    return -1;
 }
 
 static int dm2_v1_runtime_raw_sksave_dungeon_matches_receipt(

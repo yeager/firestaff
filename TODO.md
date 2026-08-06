@@ -898,6 +898,11 @@
   cache on source-session admission, and reports inventory interaction as
   unavailable instead of swapping synthetic object handles. Implement the
   source record-checkcode/DB allocation chain before reopening this route.
+  **2026-08-06 ABI follow-up:** the residual public runtime setter symbols
+  are now no-ops/rejections as well. Neither a caller-provided 32-bit leader
+  handle nor a caller-provided 32-bit inventory slot can enter runtime state;
+  getters expose zero until the original `LeaderPossession` and `c_hero` DB
+  ownership is complete.
   2026-08-06 menu-inventory correction: the source-authenticated raw PC-DOS
   candidates remain visible to the startup scanner instead of being hidden as
   if no original save existed. Selection is separately regression-tested to
