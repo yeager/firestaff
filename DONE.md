@@ -54368,6 +54368,13 @@ alcove runtime and archive-media tests passed (4/4).
   (13 and 59 indexed pixels), prevents early SKULL input, and reaches TITLE.
   No file is unpacked and no PC GDAT screen substitutes for either stream.
 
+- ✅ 2026-08-06 DM2 FM Towns SKULL fallback fence: after the source TITLE
+  completes, M11 now stays black and ignores menu input until the native
+  `SKULL.EXP` menu renderer has an original execution/capture binding. It can
+  no longer show the PC GDAT menu as a platform substitute. The real-CD M11
+  regression covers this completion-state fence; this does not claim a usable
+  FM Towns menu yet.
+
 - ✅ 2026-08-06 Theron raw-BIN HuC6280 disassembly intake: the static bank-$1f
   receipt now verifies authentic `TQUS02.bin` and `TQJP02.bin` Track 02 files
   in addition to the ISO projections. Their real MODE1/2352 bank-window

@@ -83,6 +83,14 @@ int main(void)
     expect(view.dm2FmtownsTitleBound && !view.dm2FmtownsSwooshActive &&
                view.dm2FmtownsTitleFrameReceipt.requested_frame > 0u,
            "M11 advances real SWOOSH before binding TITLE through Timer-A units");
+    view.dm2FmtownsTitleBound = 0;
+    view.dm2FmtownsTitleFinished = 1;
+    memset(framebuffer, 0x7f, sizeof(framebuffer));
+    M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
+    expect(nonzero_pixels(framebuffer, sizeof(framebuffer)) == 0u &&
+               M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACCEPT) ==
+                   M11_GAME_INPUT_IGNORED,
+           "unimplemented FM Towns SKULL.EXP stays black and cannot use PC menu input");
     M11_GameView_Shutdown(&view);
     if (failures) return 1;
     puts("PASS: DM2 FM Towns TITLE M11 presentation uses authenticated real media");

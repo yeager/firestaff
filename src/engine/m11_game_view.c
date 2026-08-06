@@ -25120,10 +25120,10 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
     if (state->sourceKind == M11_GAME_SOURCE_DM2_BOOT) {
         int dir;
         int result;
-        if (state->dm2FmtownsTitleBound) {
+        if (state->dm2FmtownsTitleBound || state->dm2FmtownsTitleFinished) {
             /* AUTOEXEC's TITLE has no SKULL menu hit rectangles.  Do not
-             * leak clicks through the original animation into the later
-             * static menu before TWANIM finishes. */
+             * leak clicks through the original animation, or through an
+             * unimplemented SKULL.EXP handoff, into the PC static menu. */
             return M11_GAME_INPUT_IGNORED;
         }
         if (!state->dm2World) {
@@ -53266,9 +53266,11 @@ void M11_GameView_Draw(const M11_GameViewState* state,
             m11_fill_rect(framebuffer, framebufferWidth, framebufferHeight,
                           0, 0, framebufferWidth, framebufferHeight,
                           M11_COLOR_BLACK);
-            if (state->dm2FmtownsTitleRejected) {
+            if (state->dm2FmtownsTitleRejected ||
+                state->dm2FmtownsTitleFinished) {
                 /* Fail closed: selected FM Towns media cannot claim PC
-                 * GDAT's static startup page as an alternate TITLE. */
+                 * GDAT's static startup page as an alternate TITLE or as
+                 * the unimplemented native SKULL.EXP menu. */
             } else if (state->dm2FmtownsTitleBound) {
                 startup_menu_drawn = m11_dm2_present_fmtowns_title(
                     state, framebuffer, framebufferWidth, framebufferHeight);

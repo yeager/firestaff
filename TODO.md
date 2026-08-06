@@ -1112,7 +1112,9 @@ level or consumer bindings.
   stereo mixing from SO metadata. The remaining gap is source-owned
   END playback, TITLE sound-event/CDDA dispatch, and a captured
   title-to-SKULL menu handoff; do not replace them with host animation or
-  menus. **2026-08-06 update:** M11 now runs the selected HME-242 SWOOSH
+  menus. M11 now fails black and blocks input after TITLE instead of using
+  the PC GDAT menu as a substitute for native `SKULL.EXP`. **2026-08-06
+  update:** M11 now runs the selected HME-242 SWOOSH
   stream before TITLE, inferring only its documented EN-owned 320x200 canvas
   when AN says 0x0. Both streams remain RAM-only and Timer-A paced.
   **2026-08-06 update:** a shared data root can now retain all three verified
