@@ -5329,6 +5329,13 @@ int nexus_v1_current_level_decode_structure2_textures(
     receipt.level_index = -1;
     if (out_receipt) *out_receipt = receipt;
     if (!engine || !out_surfaces || max_surfaces <= 0) return 0;
+    /* The public helper is diagnostic/fixture-only.  A canonical retail
+     * level may expose DMWeb descriptor and payload-boundary evidence, but
+     * it cannot authorize host pixel or palette materialization without an
+     * authenticated Saturn VDP1/CLUT capture.  Keep this direct API aligned
+     * with the production LEV-load gate so callers cannot bypass it. */
+    if (engine->current_level.geometry_info.dmweb_container)
+        return 0;
     if (nexus_v1_current_level_structure2_format_evidence_receipt(
             engine, &evidence) != 1 || !evidence.valid ||
         !evidence.decoder_permitted) return 0;

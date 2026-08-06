@@ -2,9 +2,10 @@
 
 - **NEXUS-PRS3-PIXEL-CAPTURE:** Retail Structure2 descriptors still expose
   bounded DMWeb format evidence, but the runtime no longer decodes their
-  08h/28h payloads into host surfaces during LEV load. Recover the Saturn
-  pixel order, CLUT owner and VDP1 command capture before reopening texture
-  surfaces, palette conversion or DGN raster submission.
+  08h/28h payloads into host surfaces during LEV load or through the public
+  decode helper. Recover the Saturn pixel order, CLUT owner and VDP1 command
+  capture before reopening texture surfaces, palette conversion or DGN raster
+  submission.
 
 - **NEXUS-STARTUP-TEXT-CAPTURE:** Retail PLRD rows now refuse stale
   serialized ASCII names in the startup footer/row-label lane; only the

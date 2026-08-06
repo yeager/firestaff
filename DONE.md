@@ -1,3 +1,12 @@
+# Nexus direct Structure2 decode gate (2026-08-06)
+
+- ✅ Closed the remaining public retail bypass: the active canonical DGN
+  level now rejects direct Structure2 texture/palette decoding as well as
+  the LEV-load path. DMWeb descriptor and format receipts remain available
+  as no-draw evidence; only isolated non-DMWeb fixtures may use the helper.
+- ✅ Added a real-DGN regression proving the retail decode receipt stays
+  invalid with zero decoded surfaces until Saturn VDP1/CLUT capture exists.
+
 # Nexus retail Structure2 decode fence (2026-08-06)
 
 - ✅ Closed a retail material-promotion leak: loading a hash-verified LEV no

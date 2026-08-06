@@ -1347,6 +1347,18 @@ static void test_real_dgn_structure1_layout_corpus(void) {
               structure2_format.no_draw_only &&
               !structure2_format.fallback_visuals_permitted,
               "real Structure2 format evidence pipeline fully proven from DMWeb documentation");
+        {
+            Nexus_DMDFTextureSurface blocked_surfaces[4];
+            Nexus_V1_DgnStructure2TextureDecodeReceipt blocked_decode;
+
+            memset(blocked_surfaces, 0, sizeof(blocked_surfaces));
+            memset(&blocked_decode, 0, sizeof(blocked_decode));
+            CHECK(nexus_v1_current_level_decode_structure2_textures(
+                      &active_engine, blocked_surfaces, 4, &blocked_decode) == 0 &&
+                      blocked_decode.decoded_count == 0 &&
+                      blocked_decode.valid == 0,
+                  "retail Structure2 texture decode remains closed without Saturn VDP1 capture");
+        }
         structure2_encoding_0x0008_total += structure2_format.encoding_0x0008_count;
         structure2_encoding_0x0028_total += structure2_format.encoding_0x0028_count;
         structure2_palette_anchor_total += structure2_format.palette_payload_anchor_count;
