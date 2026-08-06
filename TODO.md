@@ -256,6 +256,9 @@
   Engine-init now retains the real RLOWFIX TEXT4/TABL/FONT012 source receipt,
   but the Saturn glyph consumer and placement are still not admitted. FONT256
   remains a separate champion/spell bank.
+  2026-08-06: the startup regression now also verifies the `FONT256.S2D`
+  literal-pool target at `DM.BIN+0x18BF4` and the adjacent `TEXTTABL` marker at
+  `0x294C0`; these are loader/table receipts only, not text-render proof.
   The same receipt now pins the SH-2 routine at `0x18B60` and its literal
   pool hash, including the `yam\\menu.c` and `STABG.BIN` address targets.
 

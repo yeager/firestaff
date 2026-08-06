@@ -74,6 +74,15 @@ int main(void)
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373CC)) != 1U ||
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373D8)) != 1U ||
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373C0)) != 10U ||
+        /* The same startup literal pool retains FONT256.S2D at 0x18BF4.
+         * TEXTTABL is an adjacent DM.BIN table marker only; neither receipt
+         * proves the Saturn glyph consumer or VDP2 placement. */
+        ((uint32_t)data[0x18BF4U] << 24 |
+            (uint32_t)data[0x18BF5U] << 16 |
+            (uint32_t)data[0x18BF6U] << 8 | data[0x18BF7U]) !=
+            base + UINT32_C(0x373CC) ||
+        0x294C0U + 8U > (size_t)file_size ||
+        memcmp(data + 0x294C0U, "TEXTTABL", 8U) != 0 ||
         /* The SH-2 routine at 0x18B60 is followed by its literal pool. */
         fnv1a64(data + 0x18B60U, 0x90U) !=
             UINT64_C(0xf6d5cc046bab98c7) ||

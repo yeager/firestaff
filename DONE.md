@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus startup FONT256/TEXTTABL receipts: the real DM.BIN
+  startup regression now verifies the literal-pool pointer at `0x18BF4` to
+  retail `FONT256.S2D` and the adjacent `TEXTTABL` marker at `0x294C0`.
+  These strengthen loader/table provenance only; the Saturn glyph consumer
+  and VDP2 placement remain capture-gated.
+
 - ✅ 2026-08-06 Nexus HUD VDP2 owner receipt: the real `DM.BIN` HUD regression
   now verifies the adjacent `yam\\vdp2.c` owner marker at `0x38CF4` and its
   six big-endian literal references, alongside the existing `menuctrl.c`
