@@ -22,8 +22,8 @@
  *                 (CRT scanlines + palette LUT)
  *       V2.1   -> v21_viewport_init + render_full_pipeline (EPX)
  *                 + M11_Render_PresentRGBA (640x400)
- *       V2.2   -> m11_v22_shape_cache_update + render_overlay
- *                 + M11_Render_PresentIndexed (320x200, V22 active)
+ *       V2.2   -> m11_v22_shape_cache_update + authenticated in-place art
+ *                 + M11_Render_PresentIndexed (320x200, only with real pack)
  *
  *   - STABLE RECEIPTS: every BMP is hashed with FNV-1a 32-bit, and the
  *     probe writes a single JSON manifest under the probe output root
@@ -73,6 +73,8 @@
 
 #include "dm1_v2_viewport_renderer_pc34.h"
 #include "dm1_v2_presentation_mode_pc34.h"
+#include "dm1_v22_finished_art_material_gate_pc34.h"
+#include "dm1_v22_finished_pack_receipt_pc34.h"
 #include "m11_v22_render_overlay_pc34.h"
 #include "m11_v22_shape_cache_pc34.h"
 #include "render_sdl_m11.h"
@@ -501,7 +503,8 @@ static int ensure_dir(const char* path) {
 
 static int run_mode_capture(ModeCapture* cap,
                             unsigned char* v1_framebuffer,
-                            unsigned char* v1_shadow) {
+                            unsigned char* v1_shadow,
+                            const unsigned char raw_squares[3][3]) {
     const unsigned char* rgba;
     int outW = 0, outH = 0;
     int rc;
@@ -545,15 +548,9 @@ static int run_mode_capture(ModeCapture* cap,
         }
     } else {
         if (cap->v22_overlay) {
-            /* Activate V2.2 in-place modern overlay. The cache update
-             * is driven by the composition squares; the overlay paints
-             * a placeholder rectangle at each V22-active cell. */
-            unsigned char raw_squares[3][3] = {
-                { 0x00, 0x04, 0x20 },
-                { 0x40, 0x10, 0x11 },
-                { 0x04, 0x20, 0x00 }
-            };
-            dm1_v2_presentation_mode_set_modern_pack_available(1);
+            /* Activate V2.2 only after the caller has authenticated the
+             * finished real pack. The legacy overlay is intentionally a
+             * no-draw boundary; real pixels come from the in-place cache. */
             dm1_v2_presentation_mode_set(DM1_V2_PM_V22_MODERN);
             m11_v22_shape_cache_update(0, raw_squares);
             (void)m11_v22_render_overlay_with_palette(
@@ -601,6 +598,30 @@ static int run_mode_capture(ModeCapture* cap,
     return 1;
 }
 
+static int load_real_v22_shape_squares(
+    const DM1_V2_DungeonDatState* dungeon,
+    int mapIndex, int mapX, int mapY, int direction,
+    unsigned char out_squares[3][3]) {
+    int depth;
+    int lateral;
+    if (!dungeon || !out_squares) return 0;
+    for (depth = 1; depth <= 3; ++depth) {
+        for (lateral = -1; lateral <= 1; ++lateral) {
+            int x;
+            int y;
+            uint8_t raw = 0;
+            if (!dm1_v2_vp_relative_coords(direction, mapX, mapY,
+                                           depth, lateral, &x, &y) ||
+                !dm1_v2_vp_dungeon_dat_get_square_raw(
+                    dungeon, mapIndex, x, y, &raw)) {
+                return 0;
+            }
+            out_squares[depth - 1][lateral + 1] = raw;
+        }
+    }
+    return 1;
+}
+
 /* ---------- Receipts writer ---------- */
 
 typedef struct ReceiptRow {
@@ -619,6 +640,7 @@ static int write_receipts_json(const char* path,
                                int mapIndex,
                                int mapX,
                                int mapY,
+                               int v22RealPack,
                                const ReceiptRow* rows,
                                int rowCount) {
     FILE* f;
@@ -643,8 +665,9 @@ static int write_receipts_json(const char* path,
                 rows[i].size, rows[i].fnv1a, (i + 1 < rowCount) ? "," : "");
     }
     fprintf(f, "  ],\n");
+    fprintf(f, "  \"v22RealPack\": %s,\n", v22RealPack ? "true" : "false");
     fprintf(f, "  \"noDosboxParityClaim\": true,\n");
-    fprintf(f, "  \"notes\": \"Firestaff-side receipts only. Same dungeon bytes + same composition state + same V2 mode produces a stable FNV-1a 32-bit hash of the presented BMP across runs/machines. No DOSBox capture or original-asset pairing is involved.\"\n");
+    fprintf(f, "  \"notes\": \"Firestaff-side receipts only. V2.2 is included only when the finished real artpack and reviewer receipt are authenticated; otherwise no V2.2 pixels are claimed. Same dungeon bytes + same composition state + same V2 mode produces a stable FNV-1a 32-bit hash of the presented BMP across runs/machines. No DOSBox capture or original-asset pairing is involved.\"\n");
     fprintf(f, "}\n");
     fclose(f);
     return 1;
@@ -669,6 +692,8 @@ int main(int argc, char** argv) {
     int mapIndex = 0, mapX = 1, mapY = 3;
     int directions[4] = { 0, 1, 2, 3 }; /* N, E, S, W */
     int d, m;
+    int hasV22RealPack = 0;
+    int modeCount = 3;
 
     /* Reuse across the 4 directions and 4 modes = 16 captures. */
     ModeCapture caps[4][4];
@@ -713,6 +738,20 @@ int main(int argc, char** argv) {
         printf("      ~/.openclaw/data/firestaff-original-games/DM/_canonical/dm1/DUNGEON.DAT\n");
         printf("      Receipt file path: %s\n", receipt_path);
         return 0;
+    }
+
+    /* A V2.2 receipt is meaningful only for an operator-reviewed real pack.
+     * The old probe forced the mode flag and then recorded the unchanged V1
+     * framebuffer as V2.2, which was a false claim rather than a render. */
+    if (argc > 1 && argv && argv[1] && argv[1][0]) {
+        dm1_v22_famg_set_manifest_path(argv[1]);
+        dm1_v22_fpr_set_receipt_path(argv[1]);
+    }
+    hasV22RealPack = dm1_v22_famg_is_finished_real() &&
+                     dm1_v22_fpr_is_promoted();
+    modeCount = hasV22RealPack ? 4 : 3;
+    if (!hasV22RealPack) {
+        printf("INFO: V2.2 capture omitted: no authenticated finished real DM1 artpack\n");
     }
 
     {
@@ -773,6 +812,7 @@ int main(int argc, char** argv) {
      * direction. */
     for (d = 0; d < 4; ++d) {
         int dir = directions[d];
+        unsigned char raw_squares[3][3] = {{0}};
         dm1_v2_vp_composition_init(&input);
         if (!dm1_v2_vp_build_composition_from_dungeon(&dungeon,
                                                       mapIndex, mapX, mapY,
@@ -787,6 +827,15 @@ int main(int argc, char** argv) {
         dm1_v2_vp_init(&viewport);
         if (!dm1_v2_vp_render_composition_flat(&viewport, &input)) {
             fprintf(stderr, "FAIL: render_composition_flat dir=%d returned 0\n", dir);
+            M11_Render_Shutdown();
+            SDL_Quit();
+            if (g_dungeon_bytes) { free(g_dungeon_bytes); g_dungeon_bytes = NULL; }
+            return 1;
+        }
+        if (hasV22RealPack &&
+            !load_real_v22_shape_squares(&dungeon, mapIndex, mapX, mapY,
+                                         dir, raw_squares)) {
+            fprintf(stderr, "FAIL: real V2.2 shape-square decode dir=%d\n", dir);
             M11_Render_Shutdown();
             SDL_Quit();
             if (g_dungeon_bytes) { free(g_dungeon_bytes); g_dungeon_bytes = NULL; }
@@ -828,11 +877,12 @@ int main(int argc, char** argv) {
         caps[d][3].label = "V2.2 in-place";
         caps[d][3].expected_w = 320;
         caps[d][3].expected_h = 200;
-        caps[d][3].v22_overlay = 1;
+        caps[d][3].v22_overlay = hasV22RealPack;
 
-        for (m = 0; m < 4; ++m) {
+        for (m = 0; m < modeCount; ++m) {
             char note[260];
-            int ok = run_mode_capture(&caps[d][m], framebuffer, v1_shadow);
+            int ok = run_mode_capture(&caps[d][m], framebuffer, v1_shadow,
+                                      raw_squares);
             if (ok) {
                 snprintf(note, sizeof(note),
                          "%s dir=%d(%s): %ld bytes, %dx%d, fnv1a=0x%08x",
@@ -860,29 +910,34 @@ int main(int argc, char** argv) {
         }
     }
 
-    /* Invariant 1: cross-mode distinctness PER DIRECTION. For each of the
-     * four directions, the V1 / V2.0 / V2.1 / V2.2 BMPs must all be
-     * distinct (different modes produce different presented pixels). */
+    /* Invariant 1: cross-mode distinctness PER DIRECTION. V2.2 participates
+     * only when its real pack was authenticated; no absent mode is fabricated
+     * from the V1 framebuffer. */
     {
         int perDirDistinct = 1;
         int perDirNote = 0;
         char note[260];
         for (d = 0; d < 4; ++d) {
-            uint32_t a = receipts[d * 4 + 0].fnv1a;
-            uint32_t b = receipts[d * 4 + 1].fnv1a;
-            uint32_t c = receipts[d * 4 + 2].fnv1a;
-            uint32_t e = receipts[d * 4 + 3].fnv1a;
-            if (a == b || a == c || a == e || b == c || b == e || c == e) {
+            uint32_t hashes[4];
+            int mode_i;
+            int distinct = 1;
+            for (mode_i = 0; mode_i < modeCount; ++mode_i) {
+                hashes[mode_i] = receipts[d * modeCount + mode_i].fnv1a;
+                for (int previous = 0; previous < mode_i; ++previous) {
+                    if (hashes[previous] == hashes[mode_i]) distinct = 0;
+                }
+            }
+            if (!distinct) {
                 perDirDistinct = 0;
                 fprintf(stderr,
-                        "FAIL: direction %d modes not distinct: V1=0x%08x V20=0x%08x V21=0x%08x V22=0x%08x\n",
-                        d, a, b, c, e);
+                        "FAIL: direction %d modes are not distinct (modeCount=%d)\n",
+                        d, modeCount);
             }
             perDirNote = d;
         }
         snprintf(note, sizeof(note),
-                 "last dir=%d modes all distinct (V1/V20/V21/V22)",
-                 perDirNote);
+                 "last dir=%d authenticated modes distinct (count=%d)",
+                 perDirNote, modeCount);
         probe_record(&stats, "DM1V2_SOURCE_OWNED_PER_DIR_MODES_DISTINCT",
                      perDirDistinct, note);
     }
@@ -898,11 +953,11 @@ int main(int argc, char** argv) {
         int perModeDistinct = 1;
         char note[260];
         const char* modeNames[4] = { "V1", "V20", "V21", "V22" };
-        for (m = 0; m < 4; ++m) {
-            uint32_t n_h = receipts[0 * 4 + m].fnv1a;
-            uint32_t e_h = receipts[1 * 4 + m].fnv1a;
-            uint32_t s_h = receipts[2 * 4 + m].fnv1a;
-            uint32_t w_h = receipts[3 * 4 + m].fnv1a;
+        for (m = 0; m < modeCount; ++m) {
+            uint32_t n_h = receipts[0 * modeCount + m].fnv1a;
+            uint32_t e_h = receipts[1 * modeCount + m].fnv1a;
+            uint32_t s_h = receipts[2 * modeCount + m].fnv1a;
+            uint32_t w_h = receipts[3 * modeCount + m].fnv1a;
             /* N must differ from S; at least one of {E,W} must differ from both N and S. */
             int nVsS = (n_h != s_h);
             int eOrWDiffers = (e_h != n_h) || (w_h != n_h);
@@ -921,7 +976,7 @@ int main(int argc, char** argv) {
             }
         }
         snprintf(note, sizeof(note),
-                 "all 4 modes: N, S, and (E or W) are pairwise distinct");
+                 "all authenticated modes: N, S, and (E or W) are distinct");
         probe_record(&stats, "DM1V2_SOURCE_OWNED_PER_MODE_DIRS_DISTINCT",
                      perModeDistinct, note);
     }
@@ -978,6 +1033,7 @@ int main(int argc, char** argv) {
     /* Write receipts JSON. */
     if (!write_receipts_json(receipt_path, dungeonPath, dungeonSize,
                              dungeonFnv1a, mapIndex, mapX, mapY,
+                             hasV22RealPack,
                              receipts, receiptCount)) {
         fprintf(stderr, "FAIL: failed to write receipts JSON at %s\n", receipt_path);
         M11_Render_Shutdown();

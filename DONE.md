@@ -53006,3 +53006,11 @@ out-of-range and absent-owner cases.
   `FIRESTAFF_BUILD_DIR` CMake environment for out-of-tree Ninja builds.
   Focused DM1 regression: 58/58 tests passed, including the full-leader-hand
   C539/C071/floor-drop chain and pass1091.
+- ✅ 2026-08-06 DM1 V2.2 screenshot receipt honesty: the source-owned V2
+  screenshot probe now requires an authenticated finished real V2.2 artpack
+  and reviewer receipt before emitting V2.2 rows. Without that real pack it
+  emits 12 authenticated V1/V2.0/V2.1 rows and explicitly omits V2.2 instead
+  of recording the unchanged V1 framebuffer as modern art. The receipt verifier
+  accepts both the 12-row no-pack state and the full 16-row state when a real
+  pack is present. Verification: probe and `dm1_v2_source_owned_screenshot_receipts`
+  passed with the real PC34 `DUNGEON.DAT`; 15/15 probe invariants passed.

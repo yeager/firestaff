@@ -189,7 +189,9 @@ def verify_row(receipt_dir: Path, row: dict[str, Any]) -> tuple[bool, list[str],
 def verify_cross_mode_invariants(rows: list[dict[str, Any]]) -> tuple[bool, list[str]]:
     """Cross-check the per-direction distinctness the probe asserts.
 
-    Each (direction) must yield 4 distinct hashes (V1 / V20 / V21 / V22).
+    Each direction must yield distinct hashes for every authenticated mode.
+    V2.2 is optional until a finished real artpack and reviewer receipt exist;
+    an absent V2.2 row is honest no-claim evidence, not a failure.
     E and W may legitimately match because the V2 composition renderer
     does not draw DOOR_SIDE elements. We require N, S, and at least one
     of {E, W} to be pairwise distinct (matching the probe's own invariants).
@@ -209,10 +211,16 @@ def verify_cross_mode_invariants(rows: list[dict[str, Any]]) -> tuple[bool, list
         except ValueError:
             continue
 
+    required_modes = {"v1", "v20", "v21"}
+    if any(row.get("mode") == "v22" for row in rows):
+        required_modes.add("v22")
+
     for d in EXPECTED_DIRECTIONS:
         h = by_dir[d]
-        if set(h.keys()) != set(EXPECTED_MODES):
-            errors.append(f"direction {d} missing some modes: {sorted(h.keys())}")
+        if set(h.keys()) != required_modes:
+            errors.append(
+                f"direction {d} missing some authenticated modes: {sorted(h.keys())}"
+            )
             continue
         if len(set(h.values())) != len(h):
             errors.append(
@@ -316,8 +324,22 @@ def main() -> int:
             errors.append(f"manifest.dungeon.fnv1a not valid hex: {dungeon_fnv!r}")
 
     rows = manifest.get("rows") or []
-    if len(rows) != 16:
-        errors.append(f"manifest.rows must have 16 entries (4 dirs x 4 modes), got {len(rows)}")
+    if not isinstance(rows, list):
+        errors.append("manifest.rows must be a list")
+        rows = []
+    else:
+        has_v22 = any(row.get("mode") == "v22" for row in rows if isinstance(row, dict))
+        expected_row_count = 16 if has_v22 else 12
+        if len(rows) != expected_row_count:
+            errors.append(
+                f"manifest.rows must have {expected_row_count} entries "
+                f"(4 dirs x {'4' if has_v22 else '3'} authenticated modes), got {len(rows)}"
+            )
+        declared_v22 = bool(manifest.get("v22RealPack"))
+        if declared_v22 != has_v22:
+            errors.append(
+                "manifest.v22RealPack must match the presence of v22 receipt rows"
+            )
 
     receipt_dir = receipts_path.parent
     row_fnv_hashes: list[int] = []
