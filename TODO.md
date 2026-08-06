@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHEST-OPEN-STACK-SPLIT-PRESS-EYE-SYNTHETIC-AUDIT:** This chest
+  close/pickup fixture fabricates linked items, stack and hand state. It
+  loads no original DM1 data and has no M11/runtime caller; retain it only as
+  explicit ReDMCSB coverage until a source-bound chest owner is recovered.
+
 - **DM1-MIRROR-CLOSE-C045-PENDING-SYNTHETIC-AUDIT:** This C045/C160 queue
   fixture fabricates candidate-chain, hand and panel state. It loads no
   original DM1 data and has no M11/runtime caller; retain it only as explicit
