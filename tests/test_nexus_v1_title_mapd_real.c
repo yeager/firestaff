@@ -52,6 +52,10 @@ int main(void)
     }
     memset(&title, 0, sizeof(title));
     check(nexus_v1_title_decode_mapd(
+              title_bin + 0x0e278U, 0x8c70U,
+              title_cg, cg_size, &title) == 0,
+          "truncated MAPD palette table is rejected before palette reads");
+    check(nexus_v1_title_decode_mapd(
               title_bin + 0x0e278U, bin_size - 0x0e278U,
               title_cg, cg_size, &title) == 1,
           "DMWeb MAPD/TIBG decoder accepts retail TITLE.BIN/TITLE.CG");

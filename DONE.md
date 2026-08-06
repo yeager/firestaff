@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 Nexus TITLE.BIN MAPD/TIBG bounds: corrected the DMWeb
+  section minimum from `0x8c70` to `0x8c74`, covering five 64×28 tilemaps
+  followed by all sixteen big-endian palette words. A truncated palette table
+  is now rejected before any out-of-range read. The real
+  `/Users/bosse/.firestaff/data/nexus/TITLE.BIN` + `TITLE.CG` corpus still
+  decodes all five maps and passes the truncation regression in
+  `test_nexus_v1_title_mapd_real`; Saturn VDP1/VDP2 placement remains capture-
+  gated.
+
 # ✅ 2026-08-06 DM2 unbound text and graphics-admission adapter isolation
 
 Removed the unconsumed `dm2_v1_gfx_str_pc34_compat` and standalone

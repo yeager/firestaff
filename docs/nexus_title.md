@@ -38,6 +38,11 @@ loaded by the Nexus engine. A complete Saturn title consumer is not yet
 implemented: no VDP1/VDP2 placement, palette upload order, or executable-side
 animation route is admitted without capture evidence.
 
+The bounded `MAPD/TIBG` receipt also requires the complete section: five
+64×28 maps followed by sixteen big-endian palette words (`0x8c74` bytes from
+the MAPD start). A shorter block is rejected before palette reads; this is
+format validation only and does not authorize Saturn presentation.
+
 ---
 
 ## 4. Title Screen vs Intro Movie

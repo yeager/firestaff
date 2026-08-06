@@ -10,6 +10,11 @@ static uint16_t nexus_title_be16(const uint8_t *p)
     return (uint16_t)(((uint16_t)p[0] << 8) | (uint16_t)p[1]);
 }
 
+/* DMWeb MAPD/TIBG layout: five 0x1c04-byte 64x28 maps begin at 0x40
+ * (ending at 0x8c54), followed by sixteen BE16 palette words at 0x8c54.
+ * The final palette word therefore ends at 0x8c74. */
+#define NEXUS_TITLE_MAPD_MIN_BYTES 0x8c74U
+
 /* DMWeb, Dungeon Master Nexus Data File Decoder: MAPD contains five
  * 64x28 tilemaps; TITLE.CG supplies the 5249 contiguous 8x8 4bpp tiles. */
 int nexus_v1_title_decode_mapd(const uint8_t *mapd,
@@ -19,7 +24,7 @@ int nexus_v1_title_decode_mapd(const uint8_t *mapd,
                                Nexus_TitleScreen *title)
 {
     int map;
-    if (!mapd || mapd_size < 0x8c70U || !title_cg || !title ||
+    if (!mapd || mapd_size < NEXUS_TITLE_MAPD_MIN_BYTES || !title_cg || !title ||
         title_cg_bytes < (size_t)5249U * 32U ||
         memcmp(mapd, "MAPD", 4) != 0 ||
         memcmp(mapd + 8U, "TIBG", 4) != 0) {
