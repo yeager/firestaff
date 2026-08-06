@@ -52757,3 +52757,10 @@ konsument och placering är capture-bundna.
   removed from runtime and audio receipts; unknown level→track selection now
   remains `-1` and playback stays gated. Related stale music docs are marked
   metadata-only.
+- ✅ 2026-08-06 CSB FM Towns ZIP scanner crash: initialized the M12 version
+  catalog before the special raw-CD admission path records its verified
+  `CDATA`/`CJDATA` language variant. A retail FM Towns ZIP as the only CSB
+  candidate now completes the scan, reports CSB READY and materializes the
+  hash-verified English pair instead of dereferencing an uninitialized
+  `versionId`. Verified against the original 484 MiB MODE1/2352 image and
+  both the file-backed ISO parser and scanner path.

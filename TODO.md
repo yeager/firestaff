@@ -4,9 +4,10 @@
   materializes a complete hash-verified `GRAPHICS.DAT`/`DUNGEON.DAT` pair
   into the launch cache instead of showing both files as FOUND and the game
   as MISSING. The M12 profile store now accommodates every declared profile,
-  rather than truncating after seven entries. Continue the same real-media
-  audit for CSB's FM Towns packages, and report the matched platform/profile
-  whenever only a partial or unsupported package is present. Raw GEMDOS
+  rather than truncating after seven entries. CSB's verified retail FM Towns
+  ZIP now stages and admits its raw CD image without crashing when it is the
+  only CSB candidate; continue to report the matched platform/profile whenever
+  only a partial or unsupported package is present. Raw GEMDOS
   Atari ST `.st` images now have a bounded FAT12 path, including `.st` media
   inside `.7z`; protected STX and compressed MSA remain intentionally
   unsupported until their transports are implemented and verified.

@@ -4072,6 +4072,13 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     m12_scan_progress_init(&status->scanProgress);
     progressCtx.status = status;
     FirestaffTheronMedia_Init(&status->theronMedia);
+    /* The FM Towns CSB admission path runs before the generic per-game hash
+     * pass, because it must unwrap its raw CD image first.  Give that path
+     * the same catalog metadata as the generic pass: it records a verified
+     * language variant before m12_fill_game_versions refreshes all entries.
+     * Without this initialization, its versionId comparison dereferences a
+     * NULL slot when a retail FM Towns ZIP is the only CSB candidate. */
+    m12_init_version_metadata(status);
     rootCount = m12_build_search_roots(roots, effectiveRequestedDataDir, status->legacyFallbackDir);
     m12_copy_string(legacyFallbackSnapshot, sizeof(legacyFallbackSnapshot),
                     status->legacyFallbackDir);
