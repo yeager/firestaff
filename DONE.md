@@ -53841,3 +53841,8 @@ alcove runtime and archive-media tests passed (4/4).
   it does not claim a game-owned dungeon consumer. Verification:
   `bash -n scripts/capture_theron_mednafen_live_trace.sh` and
   `tests/test_theron_v1_mednafen_live_capture_script.sh` pass.
+- ✅ 2026-08-06 DM1 GRAPHICS.DAT partial-surface quarantine: the legacy reader
+  now rejects short LZW decodes and undersized output buffers instead of
+  copying incomplete indexed pixels into a bitmap. The focused fail-closed
+  regression and the real 713-record PC34 audit pass; no generated surface is
+  admitted as a substitute.

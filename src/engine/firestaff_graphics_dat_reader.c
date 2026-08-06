@@ -230,7 +230,13 @@ int fs_gfx_extract_bitmap(const FS_GraphicsDat *gfx, int index,
     int expected_4bpp = (w * h + 1) / 2;
     int expected_8bpp = w * h;
 
+    /* A source bitmap is admitted only after the complete packed payload
+     * has decoded.  Returning a short buffer here makes callers paint a
+     * truncated surface, which is indistinguishable from corrupted or
+     * synthetic artwork in the launcher/legacy renderer. */
+    if (decomp_size < expected_4bpp) return -1;
     if (!out_indexed) return expected_8bpp;
+    if (max_pixels < expected_8bpp) return -1;
 
     if (decomp_size >= expected_8bpp) {
         /* Already 8bpp or raw */
@@ -243,8 +249,5 @@ int fs_gfx_extract_bitmap(const FS_GraphicsDat *gfx, int index,
             out_indexed, max_pixels);
     }
 
-    /* Fallback: copy what we have */
-    int copy = decomp_size < max_pixels ? decomp_size : max_pixels;
-    memcpy(out_indexed, decomp_buf, copy);
-    return copy;
+    return -1;
 }

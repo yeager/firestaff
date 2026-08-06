@@ -4567,6 +4567,10 @@ that its exact runtime path is not already source-locked and tested.
    extracted package now passes the complete 713-record audit without a path
    false negative. Keep C001 title timing/palette tied to ReDMCSB `TITLE.C`; do not replace
    missing references with generated pixels.
+   2026-08-06: the legacy `firestaff_graphics_dat_reader` now rejects a
+   short LZW decode and undersized output buffer instead of copying a partial
+   pixel stream. This closes the remaining partial-surface admission found in
+   the reader; 0696 consumer proof and packaged macOS app capture remain open.
 3. **DM1-GROUP-TIMELINE:** Complete the remaining F0190/F0207/F0209/F0245
    live group, line-of-sight, projectile-impact, teleporter, and spell-tick
    runtime paths using raw C04/C05/C14/C15 ownership and source scheduling.
