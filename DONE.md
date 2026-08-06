@@ -8342,6 +8342,12 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   fail-closed without changing authentic dungeon bytes; their focused source
   studies remain available outside the live dispatcher.
 
+- ✅ 2026-08-06 DM2 timer transaction boundary: production no longer binds
+  `PROCESS_0E`, `PROCESS_3D` or `MOVE_RECORD_ROTATE` from timer bytes to a
+  direct item, record or party-position write. The required original
+  `c_hero` inventory and `MOVE_RECORD_TO` link/wake/sleep/party transactions
+  are not yet imported, so these events now consume fail-closed instead.
+
 - ✅ 2026-08-06 CSB FM Towns ANM CD-DA command receipts: the F2275 stream
   interpreter now retains `TD`'s original physical-track table and surfaces
   `TR` requests at the following real presentation frame, rather than

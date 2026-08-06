@@ -5854,16 +5854,20 @@ void dm2_v1_runtime_tick(void) {
             dm2_runtime_process_0c_timer;
         dispatcher.handlers[DM2_V1_TIMER_RESURRECTION] =
             dm2_runtime_resurrection_timer;
-        dispatcher.handlers[DM2_V1_TIMER_PROCESS_0E] =
-            dm2_runtime_process_0e_timer;
+        /* PROCESS_0E temporarily changes an item record and must restore it
+         * through the same c_hero/inventory owner.  The local pool address
+         * alone is not that owner, so do not mutate it in production. */
+        (void)dm2_runtime_process_0e_timer;
         dispatcher.handlers[DM2_V1_TIMER_PROCESS_SOUND] =
             dm2_runtime_process_sound_timer;
-        dispatcher.handlers[DM2_V1_TIMER_PROCESS_3D] =
-            dm2_runtime_process_3d_timer;
+        /* PROCESS_3D and MOVE_RECORD_ROTATE require MOVE_RECORD_TO's full
+         * link, wake/sleep and party transaction.  Their old direct writes
+         * could relocate original records or the party from timer bytes
+         * alone, so both stay unbound until that source owner is present. */
+        (void)dm2_runtime_process_3d_timer;
         dispatcher.handlers[DM2_V1_TIMER_ORNATE_NOISE] =
             dm2_runtime_ornate_noise_timer;
-        dispatcher.handlers[DM2_V1_TIMER_MOVE_RECORD_ROTATE] =
-            dm2_runtime_move_record_rotate_timer;
+        (void)dm2_runtime_move_record_rotate_timer;
         /* Spell-effect timer delegation: 0x46 light, 0x47 hero ench flag,
          * 0x48 ench power, 0x4B poison, 0x19 cloud, 0x1E missile, 0x5E summon.
          * 0x47/0x48/0x4B consume in source order but are deliberately

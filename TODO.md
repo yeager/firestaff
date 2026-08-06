@@ -1489,6 +1489,10 @@
   the complete DB3/DB14/DB0 source transaction. `PROCEED_TIMERS` consumes
   those unbound events without mutation until their record link, payload,
   direction, map owner and follow-up timer are admitted together.
+  The same runtime boundary now leaves `PROCESS_0E`, `PROCESS_3D` and
+  `MOVE_RECORD_ROTATE` unbound: a record-pool address or timer coordinate is
+  not a substitute for the original `c_hero` inventory or `MOVE_RECORD_TO`
+  link/wake/sleep/party transaction.
 
 - **DM2-SHOP-GLASS-OWNER-HANDOFF:** The fixed-coordinate catalog path is
   closed. SKProject `DRAW_WALL_ORNATE` passes the live wall actuator into
