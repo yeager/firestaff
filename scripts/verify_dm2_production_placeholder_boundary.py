@@ -278,6 +278,17 @@ def verify(repo: Path) -> list[str]:
     if "receipt.damage = dm2_v1_combat_resolve_attack_full(" in combat:
         errors.append("combat retains the incomplete creature-damage bridge")
 
+    main_loop_path = repo / "src/engine/main_loop_m11.c"
+    if not main_loop_path.exists():
+        errors.append(f"missing {main_loop_path}")
+    else:
+        main_loop = main_loop_path.read_text(encoding="utf-8")
+        if main_loop.count("m11_dm2_host_save_log_allowed(") < 5:
+            errors.append(
+                "M11 DM2 quick-save/load text is not guarded by the source-GUI boundary")
+        if "gameView->sourceKind != M11_GAME_SOURCE_DM2_BOOT" not in main_loop:
+            errors.append("M11 DM2 quick-save/load source guard is missing")
+
     # The source-shaped player-attack and wound receipts are direct-regression
     # seams. Their caller-authored champion, item, target and RNG words must
     # not become a product damage path merely because a future source glob

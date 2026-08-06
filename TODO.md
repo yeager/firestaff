@@ -29339,6 +29339,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   boundary correction:** removed the remaining M11-only `DM2` inspect-title
   fallback when a partial action receipt is returned; M11 now requires the
   source dialogue producer to provide the complete title/text pair.
+  **2026-08-13 boundary correction:** M11 quick-save/load stderr strings are
+  now suppressed for `M11_GAME_SOURCE_DM2_BOOT`; save/load operations still
+  return their structured result, but no host-authored action/save text is
+  exposed until the original DM2 GUI producer is bound.
 - [ ] DM2 GDAT structure loader: `DM2_READ_GRAPHICS_STRUCTURE` remains
   unavailable until the source's complete GRAPHICS.DAT transaction is ported:
   header validation, ULP offsets, ENT1, optional underlay data and image

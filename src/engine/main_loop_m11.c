@@ -154,6 +154,15 @@ static int m11_should_use_modern_launcher(const M12_StartupMenuState* menuState)
     return menuState != NULL;
 }
 
+/* DM2 action/save feedback belongs to its original GUI/dialogue producer.
+ * Until that owner is bound, M11 must not expose host-authored SAVE/LOAD
+ * strings for the DM2 source route. Other source kinds retain their existing
+ * diagnostic logging. */
+static int m11_dm2_host_save_log_allowed(const M11_GameViewState* gameView)
+{
+    return gameView && gameView->sourceKind != M11_GAME_SOURCE_DM2_BOOT;
+}
+
 int M11_ResolveScaleModeForWindowMode(int requestedScaleMode, int windowMode);
 static int m11_running_from_macos_app_bundle(void);
 static int m11_map_window_pointer_to_game_source(const M11_GameViewState* gameView,
@@ -4856,8 +4865,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     /* F5 = quick save */
                     if (gameView && gameView->active) {
                         if (M11_GameView_QuickSave(gameView)) {
-                            fprintf(stderr, "SAVE: quicksave written\n");
-                        } else {
+                            if (m11_dm2_host_save_log_allowed(gameView)) {
+                                fprintf(stderr, "SAVE: quicksave written\n");
+                            }
+                        } else if (m11_dm2_host_save_log_allowed(gameView)) {
                             fprintf(stderr, "SAVE FAILED: quicksave rejected\n");
                         }
                         if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
@@ -4868,9 +4879,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     /* F9 = quick load */
                     if (gameView && gameView->active) {
                         if (M11_GameView_QuickLoad(gameView)) {
-                            fprintf(stderr, "LOAD: quicksave restored\n");
+                            if (m11_dm2_host_save_log_allowed(gameView)) {
+                                fprintf(stderr, "LOAD: quicksave restored\n");
+                            }
                             if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
-                        } else {
+                        } else if (m11_dm2_host_save_log_allowed(gameView)) {
                             fprintf(stderr, "LOAD FAILED: quicksave rejected\n");
                         }
                     }
@@ -5299,8 +5312,10 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     /* F5 = quick save */
                     if (gameView && gameView->active) {
                         if (M11_GameView_QuickSave(gameView)) {
-                            fprintf(stderr, "SAVE: quicksave written\n");
-                        } else {
+                            if (m11_dm2_host_save_log_allowed(gameView)) {
+                                fprintf(stderr, "SAVE: quicksave written\n");
+                            }
+                        } else if (m11_dm2_host_save_log_allowed(gameView)) {
                             fprintf(stderr, "SAVE FAILED: quicksave rejected\n");
                         }
                         if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
@@ -5311,9 +5326,11 @@ static M12_MenuInput m11_poll_menu_input(M11_GameViewState* gameView,
                     /* F9 = quick load */
                     if (gameView && gameView->active) {
                         if (M11_GameView_QuickLoad(gameView)) {
-                            fprintf(stderr, "LOAD: quicksave restored\n");
+                            if (m11_dm2_host_save_log_allowed(gameView)) {
+                                fprintf(stderr, "LOAD: quicksave restored\n");
+                            }
                             if (gameViewResult) *gameViewResult = M11_GAME_INPUT_REDRAW;
-                        } else {
+                        } else if (m11_dm2_host_save_log_allowed(gameView)) {
                             fprintf(stderr, "LOAD FAILED: quicksave rejected\n");
                         }
                     }

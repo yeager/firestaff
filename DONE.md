@@ -112,6 +112,14 @@
   individual costs and the accepted-move receipt; live stamina writeback and
   delayed-pose ownership remain fail-closed.
 
+# DM2 runtime action/save text boundary (2026-08-13)
+
+- ✅ M11 no longer writes host-authored quick-save/load status strings for the
+  DM2 source route. The underlying operation and structured result remain
+  unchanged; visible/source-owned feedback stays gated until the original
+  DM2 GUI/dialogue producer is connected. The production placeholder verifier
+  now locks both quick-save/load branches to this boundary.
+
 # DM2 G1 champion-mirror selection source binding (2026-08-07)
 
 - ✅ The champion-selection seam now consumes the committed real G1 mirror
