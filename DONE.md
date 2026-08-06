@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus startup-menu text boundary: the runtime save-menu
+  handoff now removes generic host ASCII `DRAW_TEXT` commands before M11/M12
+  consumption. The layout builder remains available for isolated tests, while
+  real startup text stays blocked pending authenticated TEXT4/TABL/FONT012
+  Saturn consumer and placement evidence.
+
 - ✅ 2026-08-06 Nexus shop-instance quarantine: retained the real DM.BIN price
   receipt while blocking synthetic shop registration, stock, open and lookup
   routes. Buy/sell remain no-op until the Saturn shop-object consumer and

@@ -8648,6 +8648,8 @@ int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
     int max_commands)
 {
     int count;
+    int read_index;
+    int write_index;
     if (!state) {
         return 0;
     }
@@ -8663,6 +8665,18 @@ int nexus_v1_launcher_startup_presentation_build_save_from_runtime_state(
      * CHCTLA at 0x25F00006 and CRAM upload at 0x25F80000 are source receipts
      * from SH-2 disassembly. They do not yet prove the live text consumer or
      * placement, so the startup builder emits no synthetic text command. */
+    if (out_commands && count > 0) {
+        /* The generic menu builder is also used by data-free layout tests.
+         * Do not let its host labels cross the runtime handoff: FONT012/TEXT4
+         * ownership and the Saturn text placement consumer are not yet
+         * authenticated. Retain only non-text capture-package tokens. */
+        for (read_index = 0, write_index = 0; read_index < count;
+             ++read_index) {
+            if (out_commands[read_index].kind != NEXUS_V1_STARTUP_DRAW_TEXT)
+                out_commands[write_index++] = out_commands[read_index];
+        }
+        count = write_index;
+    }
     return count;
 }
 

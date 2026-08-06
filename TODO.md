@@ -107,6 +107,8 @@
   2026-08-06: save/champion chrome and save-row builders no longer emit
   host-invented ASCII labels; bounded `DRAW_NONE` slots retain capture
   accounting until the real TEXT4/TABL/FONT012 consumer is captured.
+  The runtime save-menu handoff now applies the same boundary and strips
+  generic builder text commands before M11/M12 can consume the package.
 
 - **NEXUS-CREATURE-MNS-CONSUMER:** The 30-entry MNS filename roster is now
   authenticated byte-for-byte against European retail `DM.BIN` at `0x0385F0`.
