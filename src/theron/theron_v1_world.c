@@ -282,6 +282,8 @@ int theron_v1_world_load_track02_dungeon(
         lv->source_door_type1 = tm->header.door_type1;
         lv->source_door_type2 = tm->header.door_type2;
         lv->source_header_verified = 1;
+        lv->source_creature_gfx_bank = dd->creature_gfx_bank[m];
+        lv->source_cumulative_column_items = dd->cumulative_column_items[m];
         lv->start_dir = 0;
 
         int has_entrance = 0;

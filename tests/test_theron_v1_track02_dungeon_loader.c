@@ -89,6 +89,10 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
             assert(dst->source_xp_modifier == src->xp_modifier);
             assert(dst->source_door_type1 == src->door_type1);
             assert(dst->source_door_type2 == src->door_type2);
+            assert(dst->source_creature_gfx_bank ==
+                   source_maps.creature_gfx_bank[m]);
+            assert(dst->source_cumulative_column_items ==
+                   source_maps.cumulative_column_items[m]);
             assert(dst->creature_budget == src->creature_count);
         }
 

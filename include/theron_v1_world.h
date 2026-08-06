@@ -208,6 +208,11 @@ typedef struct {
     uint8_t source_door_type1;
     uint8_t source_door_type2;
     uint8_t source_header_verified;
+    /* Per-map source records retained from the real Track 02 map-bank
+     * directory. These are provenance fields only: no creature graphics or
+     * thing-list semantics are inferred from them. */
+    uint16_t source_creature_gfx_bank;
+    uint16_t source_cumulative_column_items;
     int   start_x, start_y;    /* party spawn position (THQUEST.ASM T520) */
     int   start_dir;            /* 0=N 1=E 2=S 3=W */
     uint8_t squares[THERON_MAX_MAP_SIZE][THERON_MAX_MAP_SIZE];

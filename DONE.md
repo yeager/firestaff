@@ -50693,6 +50693,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   size/nonzero count and payload FNV-1a through the file inventory receipt.
   The real ISO probe passes for both variants; no tile, object or later-level
   semantics are inferred or admitted.
+- ✅ 2026-08-06 Theron Track 02 per-map record retention: the world handoff now
+  copies each authentic map's creature-graphics bank id and cumulative column
+  thing-count from the real map directory. The US seven-dungeon loader test
+  verifies both fields for every loaded map without promoting graphics or
+  object semantics.
 - ✅ 2026-08-06 Theron Track 02 level-record retention: the world handoff now
   copies every decoded retail map-header byte into explicit source receipt
   fields without guessing seed, spawn direction or gameplay semantics.

@@ -24428,6 +24428,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   door bytes, map id and creature count). These fields remain semantic
   read-only evidence; seed, spawn direction and object-kind publication stay
   closed pending the original consumers.
+- 2026-08-06 update: the same world handoff now retains each real map's
+  `creature_gfx_bank` and cumulative column thing-count from the Track 02 map
+  directory. They remain raw level-record evidence; no creature graphics or
+  object semantics are inferred from either field.
 
 ## Theron Track 19 remaining evidence
 
