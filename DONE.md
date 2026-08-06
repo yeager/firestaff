@@ -22,8 +22,9 @@
 # Nexus startup VDP2 source-reference receipt (2026-08-06)
 
 - ✅ The authenticated European `DM.BIN` startup/menu source regression now
-  also verifies `yam\\vdp2.c` at `0x38CF4` and exactly six references to its
-  source-address literal.
+  also verifies `yam\\vdp2.c` at `0x38CF4` and the six exact source-address
+  literal slots at `0x28098`, `0x28640`, `0x28778`, `0x2887C`, `0x289E0` and
+  `0x28E1C`.
 - ✅ This extends byte-level source ownership evidence only; VDP2
   register/VRAM writes, tilemap/CLUT placement and runtime presentation remain
   capture-gated.

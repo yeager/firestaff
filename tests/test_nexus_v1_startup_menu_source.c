@@ -122,7 +122,12 @@ int main(void)
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373CC)) != 1U ||
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373D8)) != 1U ||
         count_be32(data, (size_t)file_size, base + UINT32_C(0x373C0)) != 10U ||
-        count_be32(data, (size_t)file_size, base + UINT32_C(0x38CF4)) != 6U ||
+        read_be32(data, 0x28098U) != base + UINT32_C(0x38CF4) ||
+        read_be32(data, 0x28640U) != base + UINT32_C(0x38CF4) ||
+        read_be32(data, 0x28778U) != base + UINT32_C(0x38CF4) ||
+        read_be32(data, 0x2887CU) != base + UINT32_C(0x38CF4) ||
+        read_be32(data, 0x289E0U) != base + UINT32_C(0x38CF4) ||
+        read_be32(data, 0x28E1CU) != base + UINT32_C(0x38CF4) ||
         /* The same startup literal pool retains FONT256.S2D at 0x18BF4.
          * TEXTTABL is an adjacent DM.BIN table marker only; neither receipt
          * proves the Saturn glyph consumer or VDP2 placement. */
