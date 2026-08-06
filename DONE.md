@@ -51651,6 +51651,7 @@ and `firestaff` build pass.
   boundary checks; the menu exposes only the real four slots and does not
   fabricate a resumable session from the still-partial raw save decoder.
 - ✅ 2026-08-06 DM1 HoC false-artifact audit: real PC34 `DUNGEON.DAT` sampled 2,172 open HoC cells and 83 source item cells. The projectile/explosion guard found zero compact projectile chains, zero explosions, zero viewport leaks, zero stale fields, zero debug-marker leaks and zero fire/explosion blob leaks; the floor-item guard found 83/83 real item renders with zero viewport mismatches. The prior 30-sample hot-color warning was a false positive, not missing game data.
+- ✅ 2026-08-06 DM1 HoC visual-asset audit: authenticated PC34 item labels resolve through the real M564 icon-name stream, object icons through the real G0237/F0033 mapping, and the held-object cursor through the source F0702 route. The 611-record object corpus, floor pickup-to-mouse-hand path, and rendered-pile hit targets pass. The D1/D2/D3 wall-ornament audit also confirms source GRAPHICS.DAT material, C10 transparency and ReDMCSB palette-depth routing; no active DM1 host subtype-name or synthetic wall-ornament fallback was found. Packaged macOS capture remains open in TODO.
 - ✅ 2026-08-06 Nexus SLEV/SAL playback provenance: the real renamed
   SNDLEV00.SAL/.MAP hash route now verifies that loaded diagnostic windows
   cannot create a host SFX voice through either `NEXUS_SFX_*` dispatch or the
