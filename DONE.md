@@ -17,6 +17,14 @@
   C70 decay and original-save bounds now admit source-valid magnitudes 1–15
   and reject invalid values rather than silently clamping them.
 
+# DM2 IMG3 source-depth ownership correction (2026-08-07)
+
+- ✅ Removed the fixture-only IMG3 depth override from the live GDAT metadata
+  path. `w4` now supplies a depth only for `OffsetY() == -32`; C8 uses
+  `OffsetY() == 31`, and every other compressed IMG3 record remains 4bpp.
+  Verification: dialogue and weather receipt tests pass, and all five
+  canonical PC G1 GRAPHICSSET material pairs still decode from original data.
+
 # DM1 mirror cancel-rotation synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C040/C162 rotation fixture from M10. Its
@@ -14087,9 +14095,10 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
     * `dm2_dialogue_open_panel_text_decode` now treats a missing GDAT
       0/0/dtWordValue/0 as unencrypted, preserves the source GDAT payload size
       in the receipt, and rejects empty labels.
-    * `dm2_v1_asset_load_image_metadata` (dm2_v1_weather_gdat.c) honours an
-      explicit bpp_word of 4/8 while keeping the source's 4bpp default for
-      compressed IMG3 records that store data after cy.
+    * Historical note corrected 2026-08-07: `dm2_v1_asset_load_image_metadata`
+      now reads `w4` only for the source raw-pixel `OffsetY() == -32` shape.
+      C8 derives 8bpp from `OffsetY() == 31`; other compressed IMG3 records
+      remain 4bpp regardless of `w4`.
   Build passed with `cmake --build build --parallel`.  Phase A probe passed
   24/24.  `test_dm2_v1_dialogue_gdat_receipt` went from 6 failures to 0/14
   PASS.  Weather/creature/AI tests (`test_dm2_v1_update_weather_pc34_compat`,

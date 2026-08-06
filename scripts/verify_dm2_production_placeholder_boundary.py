@@ -293,6 +293,21 @@ def verify(repo: Path) -> list[str]:
         if forbidden in v2_hud:
             errors.append(f"V2 HUD retains generated-pixel fallback: {forbidden}")
 
+    weather_path = repo / "src/dm2/dm2_v1_weather_gdat.c"
+    if not weather_path.exists():
+        errors.append(f"missing {weather_path}")
+        return errors
+    weather = weather_path.read_text(encoding="utf-8")
+    if "else if (bpp == 4u || bpp == 8u)" in weather:
+        errors.append(
+            "IMG3 metadata lets a fixture w4 word override compressed-source depth")
+    for required in (
+            "else if (offset_y == -32)",
+            "if (bpp != 4u && bpp != 8u)",
+    ):
+        if required not in weather:
+            errors.append(f"IMG3 Getpf source-depth guard missing: {required}")
+
     viewport_path = repo / "src/dm2/dm2_v1_viewport_renderer.c"
     if not viewport_path.exists():
         errors.append(f"missing {viewport_path}")

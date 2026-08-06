@@ -179,8 +179,16 @@ int main(void)
           "dialogue receipt rejects a glyph from another graphics set");
     entries[1].cls2 = 7u;
     raw[offsets[1] + 4u] = 8u;
+    check(dm2_v1_dialogue_gdat_receipt(&loader, 7u, 0xfdu, &receipt) &&
+              receipt.glyph_metadata.bits_per_pixel == 4u,
+          "compressed IMG3 ignores an unowned w4 depth value");
+    /* `OffsetY() == 31` is SKProject's C8/8bpp selector.  The fixture has
+     * no matching IMG9/global-palette ownership, so the dialogue consumer
+     * must reject it rather than treating the field at +4 as a format tag. */
+    raw[offsets[1] + 3u] = 0x7cu;
+    raw[offsets[1] + 4u] = 8u;
     check(!dm2_v1_dialogue_gdat_receipt(&loader, 7u, 0xfdu, &receipt),
-          "dialogue receipt rejects a non-4bpp image without a source palette");
+          "dialogue receipt rejects a source C8 image without its global palette");
 
     fprintf(stderr, "DM2 dialogue GDAT receipt: %d failure(s)\n", failures);
     return failures != 0;
