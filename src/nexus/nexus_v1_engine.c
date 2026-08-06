@@ -44,6 +44,7 @@ static int nexus_v1_slev_trace_hex_u64(const char *text,
                                        uint64_t *out_value);
 static uint64_t nexus_v1_slev_trace_fnv1a64(const uint8_t *data,
                                              size_t size);
+static void nexus_v1_load_shop_catalog(Nexus_V1_Engine *engine);
 
 static const Nexus_V1_KnownFileHash g_nexus_known_boot_files[] = {
     {"DM.BIN", "e88d60859f65f08fa622e1992b02280f"},
@@ -2928,6 +2929,7 @@ int nexus_v1_init(Nexus_V1_Engine *engine, const char *data_dir) {
     nexus_v1_gameover_init(&engine->gameover);
     nexus_v1_npc_manager_init(&engine->npcs);
     nexus_v1_shop_manager_init(&engine->shops);
+    nexus_v1_load_shop_catalog(engine);
     nexus_v1_trap_manager_init(&engine->traps);
     nexus_v1_transition_table_init(&engine->transitions);
     nexus_v1_experience_init(&engine->experience);
@@ -3335,6 +3337,27 @@ static void nexus_v1_load_item_ibs_runtime_source(Nexus_V1_Engine *engine)
             &engine->item_ibs_bank,
             NEXUS_V1_ITEM_IBS_DECLARATION_COUNT);
     }
+}
+
+static void nexus_v1_load_shop_catalog(Nexus_V1_Engine *engine)
+{
+    Nexus_V1_LevelAuxSourceReceipt source;
+    uint8_t *data;
+    int size = 0;
+
+    if (!engine) return;
+    engine->shops.catalog_count = 0;
+    engine->shops.catalog_source_bound = 0;
+    memset(engine->shops.catalog, 0, sizeof(engine->shops.catalog));
+    memset(&source, 0, sizeof(source));
+    if (nexus_v1_level_aux_source_receipt(engine, "DM.BIN", &source) != 0 ||
+        !source.canonical_hash_verified) {
+        return;
+    }
+    data = nexus_v1_read_file(engine, "DM.BIN", &size);
+    if (!data) return;
+    (void)nexus_v1_shop_bind_dm_bin(&engine->shops, data, (size_t)size, 1);
+    free(data);
 }
 
 static void nexus_v1_clear_structure3_runtime_source(Nexus_V1_Engine *engine)
@@ -4329,6 +4352,7 @@ int nexus_v1_load_level(Nexus_V1_Engine *engine, int level) {
 
     /* Only hash-bound canonical bytes may cross this point. */
     nexus_v1_load_item_ibs_runtime_source(engine);
+    nexus_v1_load_shop_catalog(engine);
     (void)nexus_v1_decode_structure2_animation_materials(engine, data, size);
 
     /* Nexus source-lock: docs/source-lock/nexus_v1_phase7_verification_suite_H0357.md

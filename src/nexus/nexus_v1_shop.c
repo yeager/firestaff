@@ -2,6 +2,9 @@
 #include "nexus_v1_shop.h"
 #include <string.h>
 
+#define NEXUS_SHOP_DM_BIN_OFFSET 0x37210U
+#define NEXUS_SHOP_ROW_BYTES 4U
+
 /* Shop item price table from DM.BIN yam\item.c at 0x037210.
  * Extracted from the real Saturn binary (555,144 bytes).
  * 8 entries of (item_id, price) as big-endian uint16 pairs,
@@ -21,6 +24,47 @@ static const Nexus_ShopEntry g_shop_table[NEXUS_SHOP_ITEM_COUNT] = {
 int nexus_v1_shop_table(const Nexus_ShopEntry **out) {
     if (out) *out = g_shop_table;
     return NEXUS_SHOP_ITEM_COUNT;
+}
+
+static uint16_t read_be16(const uint8_t *p)
+{
+    return (uint16_t)(((uint16_t)p[0] << 8) | p[1]);
+}
+
+int nexus_v1_shop_bind_dm_bin(Nexus_ShopManager *mgr,
+                              const uint8_t *dm_bin,
+                              size_t dm_bin_size,
+                              int source_hash_verified)
+{
+    size_t i;
+    size_t terminator;
+
+    if (!mgr || !dm_bin || !source_hash_verified ||
+        dm_bin_size < NEXUS_SHOP_DM_BIN_OFFSET +
+                       NEXUS_SHOP_ITEM_COUNT * NEXUS_SHOP_ROW_BYTES + 2U) {
+        return 0;
+    }
+    for (i = 0U; i < NEXUS_SHOP_ITEM_COUNT; ++i) {
+        const uint8_t *row = dm_bin + NEXUS_SHOP_DM_BIN_OFFSET +
+                             i * NEXUS_SHOP_ROW_BYTES;
+        mgr->catalog[i].item_id = read_be16(row);
+        mgr->catalog[i].price = read_be16(row + 2U);
+        if (mgr->catalog[i].price == 0U) {
+            mgr->catalog_count = 0;
+            mgr->catalog_source_bound = 0;
+            return 0;
+        }
+    }
+    terminator = NEXUS_SHOP_DM_BIN_OFFSET +
+                 NEXUS_SHOP_ITEM_COUNT * NEXUS_SHOP_ROW_BYTES;
+    if (read_be16(dm_bin + terminator) != 0xffffU) {
+        mgr->catalog_count = 0;
+        mgr->catalog_source_bound = 0;
+        return 0;
+    }
+    mgr->catalog_count = NEXUS_SHOP_ITEM_COUNT;
+    mgr->catalog_source_bound = 1;
+    return 1;
 }
 
 /* ── Shop runtime manager ──────────────────────────────────────────── */
@@ -121,7 +165,20 @@ int nexus_v1_shop_sell(Nexus_ShopManager *mgr,
     if (inventory_slot < 0 || inventory_slot >= NEXUS_INVENTORY_SLOTS) return 0;
     item_id = seller->inventory[inventory_slot];
     if (item_id == 0xFFU) return 0;
-    price = nexus_v1_shop_price(item_id);
+    price = -1;
+    if (mgr->catalog_source_bound) {
+        int i;
+        for (i = 0; i < mgr->catalog_count; ++i) {
+            if (mgr->catalog[i].item_id == item_id) {
+                price = (int)mgr->catalog[i].price;
+                break;
+            }
+        }
+    } else {
+        /* Legacy manager tests may still exercise the standalone table; the
+         * live engine binds catalog_source_bound from authentic DM.BIN. */
+        price = nexus_v1_shop_price(item_id);
+    }
     if (price < 0) return 0;
     price /= NEXUS_SHOP_SELL_RATIO;
     if (price < 1) price = 1;

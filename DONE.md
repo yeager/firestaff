@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus shop catalog provenance: the runtime shop manager now
+  binds the eight `(item_id, price)` rows and `0xFFFF` terminator directly
+  from hash-verified `DM.BIN` at `0x037210` instead of relying only on a
+  detached C table. Real-data coverage verifies every row and engine startup
+  exposes the bound catalog; legacy unbound manager tests retain their
+  compatibility lookup. No item action/combat semantics were inferred.
+
 - ✅ 2026-08-06 Nexus Saturn BGR555 channel-order correction: the real
   `SMAP00-15.BIN`, `FACE.BIN`, `ITEM.IBS` and `.MNS` palette decoders now map
   Saturn BGR555 bits 14..10/9..5/4..0 to host R/G/B consistently with the

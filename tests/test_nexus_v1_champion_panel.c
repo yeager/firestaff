@@ -117,6 +117,10 @@ int main(void) {
             memcmp(engine_inv, inv_slots, sizeof(inv_slots)) != 0 ||
             memcmp(engine_equip, equip_slots, sizeof(equip_slots)) != 0 ||
             !nexus_v1_hud_geometry_ready(&engine) ||
+            !engine.shops.catalog_source_bound ||
+            engine.shops.catalog_count != NEXUS_SHOP_ITEM_COUNT ||
+            engine.shops.catalog[0].item_id != 0x009cU ||
+            engine.shops.catalog[0].price != 500 ||
             nexus_v1_hud_geometry(&engine, engine_hud_layout,
                                   engine_hud_hit_rects,
                                   &engine_hud_layout_count,
@@ -128,7 +132,9 @@ int main(void) {
                    sizeof(hud_hit_rects)) != 0) {
             nexus_v1_shutdown(&engine);
             free(data);
-            fprintf(stderr, "FAIL: initialized engine did not expose retail HUD geometry\n");
+            fprintf(stderr, "FAIL: initialized engine did not expose retail HUD/shop geometry (shop_bound=%d count=%d id0=%u price0=%u)\n",
+                    engine.shops.catalog_source_bound, engine.shops.catalog_count,
+                    engine.shops.catalog[0].item_id, engine.shops.catalog[0].price);
             return 1;
         }
         {

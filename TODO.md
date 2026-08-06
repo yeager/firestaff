@@ -37,6 +37,12 @@
   display composition; decoded host surfaces are not themselves presentation
   evidence.
 
+- **NEXUS-SHOP-ACTION-CAPTURE:** The eight retail shop price rows are now
+  source-bound from `DM.BIN`, but shop stock placement, purchase/sell dispatch,
+  item ownership and UI feedback still require the authentic Saturn
+  action/event consumer. Do not treat the price catalog as proof of gameplay
+  semantics.
+
 - **NEXUS-MENU-SEQUENCE-CAPTURE:** `docs/nexus_menu.md` no longer treats the
   DM1/CSB flow or a 24-champion roster as Nexus evidence. Bind the real
   startup/champion/menu order, text consumer and VDP1/VDP2 composition from

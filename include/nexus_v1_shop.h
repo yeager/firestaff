@@ -1,6 +1,7 @@
 
 #ifndef NEXUS_V1_SHOP_H
 #define NEXUS_V1_SHOP_H
+#include <stddef.h>
 #include <stdint.h>
 
 /* Nexus shop item price table from DM.BIN at 0x037210.
@@ -15,12 +16,22 @@ typedef struct {
     uint16_t price;
 } Nexus_ShopEntry;
 
+typedef struct Nexus_ShopManager Nexus_ShopManager;
+
 /* Retrieve the shop price table.  Returns NEXUS_SHOP_ITEM_COUNT. */
 int nexus_v1_shop_table(const Nexus_ShopEntry **out);
 
 /* Look up the price for an item_id.  Returns the price or -1 if not found.
  * If the item appears multiple times, returns the first match. */
 int nexus_v1_shop_price(uint16_t item_id);
+
+/* Bind the retail DM.BIN yam\\item.c price rows at 0x037210.  The source
+ * hash gate belongs to the caller; unverified or truncated bytes are never
+ * accepted as a live shop catalog. */
+int nexus_v1_shop_bind_dm_bin(Nexus_ShopManager *mgr,
+                              const uint8_t *dm_bin,
+                              size_t dm_bin_size,
+                              int source_hash_verified);
 
 /* ── Shop runtime manager ──────────────────────────────────────────── */
 
@@ -42,13 +53,16 @@ typedef struct {
     char name[32];
 } Nexus_ShopInstance;
 
-typedef struct {
+struct Nexus_ShopManager {
     Nexus_ShopInstance shops[NEXUS_MAX_SHOPS];
     int count;
     int active_shop;
     int selected_item;
     int open;
-} Nexus_ShopManager;
+    Nexus_ShopEntry catalog[NEXUS_SHOP_ITEM_COUNT];
+    int catalog_count;
+    int catalog_source_bound;
+};
 
 void nexus_v1_shop_manager_init(Nexus_ShopManager *mgr);
 
