@@ -9,7 +9,7 @@ Checks:
   2. File sizes match the manifest (within tolerance)
   3. LEV*.DGN files start with valid DGN header (Layout A or Layout B)
   4. *.MNS files have DMDF magic (0x444D4446) at byte 0
-  5. STONE.BIN is exactly 4096 bytes (256 × 16-bit BGR555)
+  5. STONE.BIN is exactly 4400 bytes (eight 550-byte image-local pp records)
 
 Exit codes:
   0  — all checks pass
@@ -25,6 +25,7 @@ Provenance: docs/NEXUS_FILE_CLASSIFICATION.md (137 files, disc T-9111G V1.003)
 import sys
 import os
 import struct
+import hashlib
 from pathlib import Path
 
 import sys
@@ -126,6 +127,29 @@ MANIFEST = ACTUAL_SIZES
 
 SIZE_TOLERANCE = 512  # bytes — allow small variance from extraction rounding
 
+# The real corpus contains more than the original canonical extraction. These
+# alternate retail identities are accepted only when both size and SHA-256
+# match; an arbitrary same-sized replacement remains a failure.
+ALTERNATE_RETAIL_IDENTITIES = {
+    "MENU.BPK": {
+        87684: "f2f78dddfe37a5ff414775ae888f164624e987059934b034ba36299cc769d2ca",
+        87820: "c4e2427f54083e92cdf38f3b1f296e135bdb007de227431be690cc41381fd543",
+    },
+    "RLOWFIX.BIN": {
+        74980: "e5cce2db884320541f91c22c1ec1ffac6efea30b2b7c3c206a442980f241a833",
+    },
+}
+
+
+def matches_alternate_retail_identity(filename: str, path: Path) -> bool:
+    """Return true only for a documented alternate retail file identity."""
+    candidates = ALTERNATE_RETAIL_IDENTITIES.get(filename, {})
+    expected_sha256 = candidates.get(path.stat().st_size)
+    if not expected_sha256:
+        return False
+    digest = hashlib.sha256(path.read_bytes()).hexdigest()
+    return digest == expected_sha256
+
 
 def check_dgn_header(path: Path) -> tuple[bool, str]:
     """Check DGN file header (Layout A or Layout B)."""
@@ -195,7 +219,8 @@ def main():
         actual_size = path.stat().st_size
 
         # Size check (with tolerance)
-        if abs(actual_size - expected_size) > SIZE_TOLERANCE:
+        if (abs(actual_size - expected_size) > SIZE_TOLERANCE and
+                not matches_alternate_retail_identity(filename, path)):
             size_fail.append((filename, expected_size, actual_size))
 
         # Header checks for key formats

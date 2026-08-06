@@ -33,6 +33,14 @@
   buffers without global palette promotion. `test_nexus_v1_raw_bin` verifies
   the retail corpus.
 
+- ✅ 2026-08-06 Nexus manifest revision correction: the live-data verifier
+  now accepts only the documented SHA-256-authenticated English/French
+  `MENU.BPK` revisions and English `RLOWFIX.BIN` revision when their sizes
+  differ from the original canonical extraction. The stale 4,096-byte
+  `STONE.BIN` description is corrected to the real eight-record 4,400-byte
+  corpus. Container-only files remain reported as missing rather than being
+  falsely treated as loose-file verification passes.
+
 - ✅ 2026-08-06 DM2 M10 IMG9 decoder ownership: corrected a link boundary
   exposed by the full real GDAT census. `dm2_v1_asset_loader.c` is owned by
   `firestaff_m10`, but its source IMG9 decoder had only been emitted through

@@ -189,6 +189,13 @@
   the admitted PALT memory, palette-state and VDP1-command capture exists;
   decoder success alone no longer reports a drawable menu.
 
+- **NEXUS-MANIFEST-CONTAINER-COVERAGE:** The asset verifier now recognizes
+  the authenticated English/French `MENU.BPK` and English `RLOWFIX.BIN`
+  alternate retail identities by exact SHA-256 instead of reporting stale
+  canonical-size mismatches. It still reports media that exists only inside
+  an ISO/7z container as missing until container-aware inventory is added;
+  this must not be silently converted into a pass.
+
 - **NEXUS-PLRD-TABL-NAME-CONSUMER:** Production champion initialization is
   already fail-closed on the verified European `RLOWFIX.BIN` PLRD resource;
   the legacy hardcoded roster is test-fixture-only and must not populate live
