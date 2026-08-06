@@ -8814,6 +8814,12 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   regions. No HUD layout, portrait, tile-bank or viewport semantics were
   inferred or promoted.
 
+- ✅ 2026-08-06 Theron graphics-format provenance note: the historical
+  source-lock receipt now distinguishes its old operator-staged
+  `theron-extras` paths from the current canonical
+  `~/.firestaff/data/theron/TQJP02.bin` and `TQUS02.bin` copies. Hashes and
+  the capture-gated palette/stride decision are unchanged.
+
 - ✅ 2026-08-06 DM2 actuator synthetic-mutation removal: production
   `PROCEED_TIMERS` no longer registers byte-only pitfall, door, teleporter,
   trickwall, tick-generator, step-door or destroy-door handlers. Those

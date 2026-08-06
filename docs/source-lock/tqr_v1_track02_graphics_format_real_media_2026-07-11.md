@@ -17,6 +17,12 @@ It slides by 16-bit words within matching sectors and recognizes only a
 increasing little-endian `uint16_t` values with a positive, `0x20`-aligned
 constant stride.
 
+The paths above are the historical operator-staged paths used for this
+2026-07-11 receipt. The current canonical copies supplied to Firestaff are
+`~/.firestaff/data/theron/TQJP02.bin` and
+`~/.firestaff/data/theron/TQUS02.bin`; their hash identities are unchanged.
+Current probes discover those standard-root files directly.
+
 ## Receipt
 
 ```text
