@@ -3121,6 +3121,7 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
     Nexus_V1_BpkRuntimeUploadRow rows[NEXUS_V1_BPK_UPLOAD_PLAN_MAX_ROWS];
     Nexus_SfxRuntimeReceipt sfx;
     int title_capture_source_ready;
+    int menu_palt_trace_ready;
 
     if (!receipt) {
         return;
@@ -3133,6 +3134,17 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
     if (!engine) {
         return;
     }
+    menu_palt_trace_ready =
+        engine->menu_bpk_palt_trace_admission.status ==
+            NEXUS_V1_MENU_BPK_PALT_TRACE_ADMITTED_OPAQUE &&
+        engine->menu_bpk_palt_trace_admission.original_saturn_capture_verified &&
+        engine->menu_bpk_palt_trace_admission.opaque_trace_admitted &&
+        engine->menu_bpk_palt_trace_admission.raw_trace_bytes_bound &&
+        engine->menu_bpk_palt_trace_admission.palt_memory_bytes_bound &&
+        engine->menu_bpk_palt_trace_admission.palette_state_bytes_bound &&
+        engine->menu_bpk_palt_trace_admission.vdp1_command_bytes_bound &&
+        !engine->menu_bpk_palt_trace_admission.decoder_promoted &&
+        !engine->menu_bpk_palt_trace_admission.fallback_visuals_permitted;
 
     receipt->title_surface_loaded =
         nexus_v1_surface_loaded(engine, NEXUS_SURFACE_TITLE);
@@ -3184,7 +3196,7 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
         receipt->menu_bpk_blocked_prs3_uploads =
             (int)bpk.blocked_prs3_uploads;
         receipt->menu_bpk_blocks_real_menu_surface_render =
-            bpk.blocks_real_menu_surface_render;
+            bpk.blocks_real_menu_surface_render || !menu_palt_trace_ready;
         receipt->menu_bpk_fallback_visuals_permitted =
             bpk.fallback_visuals_permitted;
         {
@@ -3261,6 +3273,10 @@ static void nexus_v1_launcher_fill_startup_assets_receipt(
                NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_CAPACITY) {
         receipt->real_menu_surface_blocker = "menu-bpk-capacity";
         receipt->startup_menu_asset_route = "blocked-menu-bpk-capacity";
+    } else if (!menu_palt_trace_ready) {
+        receipt->real_menu_surface_blocker = "menu-bpk-vdp1-capture-required";
+        receipt->startup_menu_asset_route =
+            "menu-bpk-vdp1-capture-required";
     } else if (receipt->real_menu_surface_route_ready) {
         receipt->real_menu_surface_blocker = "none";
         receipt->startup_menu_asset_route = "ready-real-menu-surfaces";

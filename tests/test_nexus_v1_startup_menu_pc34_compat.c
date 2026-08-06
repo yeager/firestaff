@@ -962,6 +962,16 @@ int main(void)
         NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED;
     synthetic_engine.menu_bpk_decode_receipt.surface_entries = 3;
     synthetic_engine.menu_bpk_decode_receipt.ready_stored_surfaces = 3;
+    /* This isolated startup fixture explicitly represents the separately
+       admitted Saturn PALT/palette/VDP1 evidence required by production. */
+    synthetic_engine.menu_bpk_palt_trace_admission.status =
+        NEXUS_V1_MENU_BPK_PALT_TRACE_ADMITTED_OPAQUE;
+    synthetic_engine.menu_bpk_palt_trace_admission.original_saturn_capture_verified = 1;
+    synthetic_engine.menu_bpk_palt_trace_admission.opaque_trace_admitted = 1;
+    synthetic_engine.menu_bpk_palt_trace_admission.raw_trace_bytes_bound = 1;
+    synthetic_engine.menu_bpk_palt_trace_admission.palt_memory_bytes_bound = 1;
+    synthetic_engine.menu_bpk_palt_trace_admission.palette_state_bytes_bound = 1;
+    synthetic_engine.menu_bpk_palt_trace_admission.vdp1_command_bytes_bound = 1;
     synthetic_engine.sfx_runtime_receipt.status =
         NEXUS_SFX_RUNTIME_READY_DECODED;
     synthetic_engine.sfx_runtime_receipt.level_index = 0;
@@ -4439,9 +4449,9 @@ int main(void)
                                    runtime_receipt.startup_assets.save_menu_route_ready == 0 &&
                                    runtime_receipt.startup_assets.champion_menu_route_ready == 0 &&
                                    strcmp(runtime_receipt.startup_assets.real_menu_surface_blocker,
-                                          "faces") == 0 &&
+                                          "title-vdp-capture-required") == 0 &&
                                    strcmp(runtime_receipt.startup_assets.startup_menu_asset_route,
-                                          "blocked-faces") == 0,
+                                          "blocked-title-vdp-capture") == 0,
                                "Nexus launcher asset gate blocks unavailable startup menus");
                     } else {
                         expect(1, "Nexus launcher asset gate blocks unavailable startup menus");

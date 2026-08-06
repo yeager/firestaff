@@ -51623,6 +51623,13 @@ and `firestaff` build pass.
   boundary checks; the menu exposes only the real four slots and does not
   fabricate a resumable session from the still-partial raw save decoder.
 - ✅ 2026-08-06 DM1 HoC false-artifact audit: real PC34 `DUNGEON.DAT` sampled 2,172 open HoC cells and 83 source item cells. The projectile/explosion guard found zero compact projectile chains, zero explosions, zero viewport leaks, zero stale fields, zero debug-marker leaks and zero fire/explosion blob leaks; the floor-item guard found 83/83 real item renders with zero viewport mismatches. The prior 30-sample hot-color warning was a false positive, not missing game data.
+- ✅ 2026-08-06 Nexus MENU.BPK presentation gate: real PRS3 decode/upload
+  receipts no longer promote a menu to drawable merely because 162 surfaces
+  decoded. The renderer and launcher now require the independently admitted
+  Saturn PALT, palette-state and VDP1-command capture; missing capture stays
+  no-draw, while an authenticated opaque capture opens the route. Real
+  European boot and handoff regressions pass without fallback visuals.
+
 - ✅ 2026-08-06 Nexus PRS3 strict legacy API parity: the public decoder now
   enforces DMWeb PRS3 version 1 and rejects positive forward-window
   references that point beyond produced output instead of manufacturing

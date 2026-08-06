@@ -105,23 +105,55 @@ static void check_unverified_source_blocks_route(void)
            "unverified MENU.BPK route still forbids fallback visuals");
 }
 
+static void check_admitted_saturn_presentation_opens_route(void)
+{
+    Nexus_V1_Engine engine;
+    Nexus_V1_MenuBpkRendererHandoffReceipt receipt;
+
+    memset(&engine, 0, sizeof(engine));
+    engine.menu_bpk_decode_receipt_attempted = 1;
+    engine.menu_bpk_source.canonical_hash_verified = 1;
+    engine.menu_bpk_decode_receipt_valid = 1;
+    engine.menu_bpk_decode_receipt.route =
+        NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED;
+    engine.menu_bpk_decode_receipt.archive_entries = 163;
+    engine.menu_bpk_decode_receipt.surface_entries = 162;
+    engine.menu_bpk_decode_receipt.ready_stored_surfaces = 162U;
+    engine.menu_bpk_palt_trace_admission.status =
+        NEXUS_V1_MENU_BPK_PALT_TRACE_ADMITTED_OPAQUE;
+    engine.menu_bpk_palt_trace_admission.original_saturn_capture_verified = 1;
+    engine.menu_bpk_palt_trace_admission.opaque_trace_admitted = 1;
+    engine.menu_bpk_palt_trace_admission.raw_trace_bytes_bound = 1;
+    engine.menu_bpk_palt_trace_admission.palt_memory_bytes_bound = 1;
+    engine.menu_bpk_palt_trace_admission.palette_state_bytes_bound = 1;
+    engine.menu_bpk_palt_trace_admission.vdp1_command_bytes_bound = 1;
+
+    receipt = handoff_for(&engine);
+    expect(receipt.can_render_stored_surfaces == 1 &&
+               receipt.blocks_real_menu_surface_render == 0 &&
+               receipt.prs3_prerequisite_status ==
+                   NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_READY_STORED,
+           "admitted Saturn presentation capture opens the decoded menu route");
+}
+
 int main(void)
 {
     check_missing_engine_blocks();
     check_unverified_source_blocks_route();
     check_decode_route(NEXUS_V1_BPK_DECODE_ROUTE_INVALID,
-                       NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID, 0, 0);
+                       NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_INVALID, 0, 1);
     check_decode_route(NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES,
-                       NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_NO_SURFACES, 0, 0);
+                       NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_NO_SURFACES, 0, 1);
     check_decode_route(NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3,
                        NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_PRS3, 0, 1);
     check_decode_route(NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED,
                        NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_BLOCKED_TRUNCATED,
                        0, 1);
     check_decode_route(NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED,
-                       NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED, 1, 0);
+                       NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_STORED, 0, 1);
     check_decode_route(NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED,
-                       NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_DECODED, 1, 0);
+                       NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_DECODED, 0, 1);
+    check_admitted_saturn_presentation_opens_route();
 
     if (failures) {
         fprintf(stderr,

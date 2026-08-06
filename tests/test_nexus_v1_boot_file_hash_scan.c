@@ -446,10 +446,10 @@ int main(void) {
             check_int(handoff.status ==
                           NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_DECODED,
                       "Nexus MENU.BPK renderer handoff accepts decoded PRS3 surfaces");
-            check_int(handoff.can_render_stored_surfaces == 1 &&
-                          handoff.blocks_real_menu_surface_render == 0 &&
+            check_int(handoff.can_render_stored_surfaces == 0 &&
+                          handoff.blocks_real_menu_surface_render == 1 &&
                           handoff.fallback_visuals_permitted == 0,
-                      "Nexus MENU.BPK handoff exposes no unsupported surfaces");
+                      "Nexus MENU.BPK handoff remains blocked without Saturn presentation capture");
             check_int(handoff.surface_entries == 162U &&
                           handoff.blocked_prs3_surfaces == 162U,
                       "Nexus MENU.BPK handoff retains PRS3 source provenance");

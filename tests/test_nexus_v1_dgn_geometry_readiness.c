@@ -6100,11 +6100,11 @@ static void test_menu_bpk_handoff_requires_canonical_source(void) {
     CHECK(nexus_v1_menu_bpk_renderer_handoff_receipt(&engine, &handoff) == 0 &&
           handoff.status == NEXUS_V1_MENU_BPK_RENDERER_HANDOFF_READY_DECODED &&
           handoff.prs3_prerequisite_status ==
-              NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_READY_STORED &&
-          handoff.can_render_stored_surfaces &&
-          !handoff.blocks_real_menu_surface_render &&
+              NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION &&
+          !handoff.can_render_stored_surfaces &&
+          handoff.blocks_real_menu_surface_render &&
           !handoff.fallback_visuals_permitted,
-          "a decoded PRS3 route renders MENU.BPK surfaces");
+          "a decoded PRS3 route remains blocked without Saturn presentation capture");
 }
 
 static void test_slev_capture_target_binds_loaded_bytes(void) {

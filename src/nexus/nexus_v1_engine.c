@@ -11402,6 +11402,26 @@ nexus_v1_menu_bpk_prs3_prerequisite_from_handoff(
     }
 }
 
+/* Decoding MENU.BPK produces source pixels only.  The production menu route
+ * also needs the independently admitted PALT/palette-state/VDP1 capture;
+ * do not let a host decode masquerade as a Saturn presentation handoff. */
+static int nexus_v1_menu_bpk_palt_trace_is_admitted(
+    const Nexus_V1_Engine *engine)
+{
+    const Nexus_V1_MenuBpkPaltTraceAdmissionReceipt *trace;
+
+    if (!engine) return 0;
+    trace = &engine->menu_bpk_palt_trace_admission;
+    return trace->status == NEXUS_V1_MENU_BPK_PALT_TRACE_ADMITTED_OPAQUE &&
+        trace->original_saturn_capture_verified &&
+        trace->opaque_trace_admitted &&
+        trace->raw_trace_bytes_bound &&
+        trace->palt_memory_bytes_bound &&
+        trace->palette_state_bytes_bound &&
+        trace->vdp1_command_bytes_bound &&
+        !trace->decoder_promoted && !trace->fallback_visuals_permitted;
+}
+
 int nexus_v1_menu_bpk_renderer_handoff_receipt(
     const Nexus_V1_Engine *engine,
     Nexus_V1_MenuBpkRendererHandoffReceipt *out_receipt) {
@@ -11478,7 +11498,16 @@ int nexus_v1_menu_bpk_renderer_handoff_receipt(
          decode->route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED);
     out_receipt->blocks_real_menu_surface_render =
         (decode->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3 ||
-         decode->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED);
+         decode->route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED ||
+         decode->route == NEXUS_V1_BPK_DECODE_ROUTE_NO_SURFACES ||
+         decode->route == NEXUS_V1_BPK_DECODE_ROUTE_INVALID);
+    if (!out_receipt->blocks_real_menu_surface_render &&
+        !nexus_v1_menu_bpk_palt_trace_is_admitted(engine)) {
+        out_receipt->can_render_stored_surfaces = 0;
+        out_receipt->blocks_real_menu_surface_render = 1;
+        out_receipt->prs3_prerequisite_status =
+            NEXUS_V1_MENU_BPK_PRS3_PREREQUISITE_SATURN_PRESENTATION;
+    }
     /* Stored original bytes may be presented by their own route, but no
      * BPK status ever authorizes a generated replacement surface. */
     out_receipt->fallback_visuals_permitted = 0;

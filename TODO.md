@@ -89,6 +89,9 @@
   European corpus is 87,684 bytes; this corrects stale 89,060-byte probe
   expectations only. Menu drawing, text ownership and VDP1/VDP2 composition
   remain capture-gated.
+  2026-08-06: a decoded real MENU.BPK route is now explicitly blocked until
+  the admitted PALT memory, palette-state and VDP1-command capture exists;
+  decoder success alone no longer reports a drawable menu.
 
 - **NEXUS-PLRD-TABL-NAME-CONSUMER:** Production champion initialization is
   already fail-closed on the verified European `RLOWFIX.BIN` PLRD resource;
