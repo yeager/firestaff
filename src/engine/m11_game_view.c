@@ -27784,6 +27784,14 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
                           M11_CONTROL_STRIP_Y,
                           M11_CONTROL_STRIP_W,
                           M11_CONTROL_STRIP_H)) {
+        /* This is Firestaff's diagnostic control strip.  Classic DM1 owns
+         * movement through COMMAND.C G0448's C068..C073 zones in C013; the
+         * strip is neither drawn nor an input owner for a source DM1 frame. */
+        if (m11_is_dm1_source_kind(state->sourceKind) &&
+            strcmp(state->sourceId, "dm1") == 0 &&
+            !state->showDebugHUD && m11_v1_chrome_mode_enabled(state)) {
+            return M11_GAME_INPUT_IGNORED;
+        }
         /* v2.8.x: the on-screen arrow buttons mirror the keyboard
          * convention: Left/Right = strafe, Up/Down = forward/back
          * (matches the original DM1 PC 3.4 arrow-zone semantics

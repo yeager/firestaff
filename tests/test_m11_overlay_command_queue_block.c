@@ -1127,6 +1127,24 @@ static void test_mouse_positive_control_dispatches_without_overlay(void)
               "mouse strafe does NOT turn the party");
 }
 
+static void test_dm1_v1_rejects_hidden_procedural_control_strip(void)
+{
+    M11_GameViewState state;
+    M11_GameInputResult result;
+
+    seed_active_view(&state);
+    state.sourceKind = M11_GAME_SOURCE_DIRECT_DUNGEON;
+    (void)snprintf(state.sourceId, sizeof(state.sourceId), "%s", "dm1");
+
+    result = M11_GameView_HandlePointer(&state, 20, 170, 1);
+
+    ASSERT_EQ(result, M11_GAME_INPUT_IGNORED,
+              "DM1 V1 ignores the hidden procedural control strip");
+    assert_no_pipeline_activity(&state, 0, 0,
+                                "DM1 V1 control strip cannot enqueue movement");
+    M11_GameView_Shutdown(&state);
+}
+
 #if 0 /* Retired M11 viewport diagnostics are covered by DM1-owned receipts. */
 static void test_static_dungeon_effects_do_not_render_as_viewport_fireballs(void)
 {
@@ -1987,6 +2005,7 @@ int main(void)
     test_keyboard_positive_control_dispatches_without_overlay();
     test_keyboard_positive_control_dispatches_turn_without_overlay();
     test_mouse_positive_control_dispatches_without_overlay();
+    test_dm1_v1_rejects_hidden_procedural_control_strip();
     test_m11_runtime_center_wall_blocks_deeper_corridor();
 
     printf("\n%d passed, %d failed\n", g_pass, g_fail);

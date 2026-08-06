@@ -55906,6 +55906,16 @@ alcove runtime and archive-media tests passed (4/4).
 - The D2C order/pixel fixture remains test-only; the production path uses
   GRAPHICS.DAT wall-set material and the existing source-zone renderer.
 
+# 2026-08-06 DM1 hidden control-strip input removal
+
+- A source DM1 V1 session (`sourceId=dm1`) now rejects clicks in M11's hidden
+  procedural bottom-left control strip. ReDMCSB `COMMAND.C` G0448 owns DM1
+  movement through C013's C068--C073 zones, and the strip is neither source
+  pixels nor source input. The catalog/debug path remains available for its
+  explicit tooling use.
+- Regression: `test_m11_overlay_command_queue_block` verifies that a click at
+  the old strip coordinate returns ignored and enqueues no movement in DM1 V1.
+
 # 2026-08-06 DM1 FM Towns DRAW_DMENU backdrop binding
 
 - Bound the recovered EDM.EXP `DRAW_DMENU` backdrop order to the software
