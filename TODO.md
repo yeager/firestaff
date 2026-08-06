@@ -26400,6 +26400,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN
   tables). Remaining work is original Saturn/VDP1 capture and source-locked
   face/mesh texture placement; parser success is not viewport proof.
+- 2026-08-06: the MNS pose/texture helper is now excluded from the production
+  Nexus library because its fixed-point Taylor trig and BGR555 conversion
+  have no Saturn execution/capture receipt and no production caller. The
+  real-data decoder test still compiles it explicitly; restore a production
+  mesh route only after VDP1/VDP2 capture proves rotation, CLUT and draw order.
 
 - 2026-08-06: DGN Structure2 texture decode now resolves DMWeb's real
   `Palette offset = 0` reuse rule by prior Palette ID association. The

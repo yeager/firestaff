@@ -4550,6 +4550,11 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_screen_text\\.c$")
 # not a Saturn VDP capture and must not be exported by firestaff_nexus.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_warning_dgt2_m11_presentation\\.c$")
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_warning_dgt2_resource_corpus\\.c$")
+# MNS animation/texture math is a source-format probe only.  No production
+# caller binds its approximate pose transform to a Saturn VDP1/VDP2 receipt;
+# keep it available to the real-data decoder test without exporting a host
+# presentation path from firestaff_nexus.
+list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_mns\\.c$")
 # M11 owns the shared host lifecycle and calls these four runtime adapters.
 # Keep the procedural V2 renderer modules out of the production library, but
 # retain the explicit lifecycle implementations needed to satisfy M11.
@@ -38147,7 +38152,9 @@ target_include_directories(test_nexus_v1_item_ibs PRIVATE ${CMAKE_CURRENT_SOURCE
 target_link_libraries(test_nexus_v1_item_ibs PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_item_ibs COMMAND test_nexus_v1_item_ibs)
 set_tests_properties(nexus_v1_item_ibs PROPERTIES LABELS "nexus;saturn;items;skip_safe")
-add_executable(test_nexus_v1_mns tests/test_nexus_v1_mns.c)
+add_executable(test_nexus_v1_mns
+    tests/test_nexus_v1_mns.c
+    src/nexus/nexus_v1_mns.c)
 target_include_directories(test_nexus_v1_mns PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_nexus_v1_mns PRIVATE firestaff_nexus)
 add_test(NAME nexus_v1_mns COMMAND test_nexus_v1_mns)

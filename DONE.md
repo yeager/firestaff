@@ -51744,6 +51744,12 @@ and `firestaff` build pass.
   copies remain source-compatible; the legacy regression and real 162-entry
   MENU.BPK decode/upload receipt both pass.
 
+- ✅ 2026-08-06 Nexus MNS host-route quarantine: the unbound MNS pose/texture
+  helper is no longer exported by the production Nexus library. Its 30-file
+  retail corpus and 815 source textures remain covered by an explicit
+  real-data test, while approximate trig/BGR555 output cannot become a
+  viewport image before Saturn VDP1/VDP2 capture proves the consumer.
+
 - ✅ 2026-08-06 DM2 PC-DOS save-path handoff: direct startup save selection
   now accepts the real lower-case, one-digit `sksaveN.dat` filename shape,
   carries the containing data root and slot to the validated loader, and
