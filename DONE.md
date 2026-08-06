@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Theron split-CUE parity coverage: the raw Track 02 intake
+  regression now exercises the authentic Japanese CUE alias route as well as
+  the US route. It verifies that `TQJP02.iso` resolves only to the supplied
+  hash-verified `TQJP02End.iso` (`397039af02d50d15c70b74088eb8a1cb`, 149
+  MODE1/2048 sectors), without promoting any dungeon or tile semantics.
+  The real extracted US/JP CUE corpus passes the focused test.
+
 - ✅ 2026-08-06 DM2 silent startup/action receipt regression: the real
   PC-DOS startup smoke route now verifies that boot preserves structured
   `ACTION` and startup handoff receipts while leaving their player-visible
