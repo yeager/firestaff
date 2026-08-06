@@ -52049,9 +52049,12 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   passes and will reopen only after the original HuC6280 text consumer is
   identified.
 
-# 2026-08-06 Theron source-index receipt integrity
+# 2026-08-06 Nexus strict container manifest
 
-- ✅ Track 02 source occurrences now retain their full 16-bit category index
-  instead of an 8-bit field. This matches the 512-entry source-category
-  bound and prevents later real records from being truncated or rejected.
-  No category-local type was promoted to a host item index.
+- ✅ `verify_nexus_v1_asset_manifest.py` now excludes the local
+  `FILE_LISTING.txt` provenance artifact, streams direct ISO members through
+  7-Zip, and accepts only exact canonical or documented retail SHA-256
+  identities. The supplied European English ISO verifies all 137 disc assets
+  with 131 loose files plus six authenticated ISO members; no game data is
+  extracted or committed. Nested ISO files inside 7z remain explicitly
+  uninspected.

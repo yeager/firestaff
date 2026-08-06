@@ -195,9 +195,11 @@
 - **NEXUS-MANIFEST-CONTAINER-COVERAGE:** The asset verifier now recognizes
   the authenticated English/French `MENU.BPK` and English `RLOWFIX.BIN`
   alternate retail identities by exact SHA-256 instead of reporting stale
-  canonical-size mismatches. It still reports media that exists only inside
-  an ISO/7z container as missing until container-aware inventory is added;
-  this must not be silently converted into a pass.
+  canonical-size mismatches. Direct ISO members are now listed and streamed
+  through 7-Zip, then accepted only after exact size/SHA-256 identity checks;
+  the supplied English ISO therefore verifies all 137 disc assets without
+  extraction. Nested ISO files inside a 7z archive remain uninspected until
+  an explicit container traversal path is added.
 
 - **NEXUS-PLRD-TABL-NAME-CONSUMER:** Production champion initialization is
   already fail-closed on the verified European `RLOWFIX.BIN` PLRD resource;
