@@ -77,6 +77,18 @@
 
 # Nexus CDDA selection-only status (2026-08-06)
 
+# CSB Amiga GRAPHICS.DAT sound payload correction (2026-08-06)
+
+- ✅ Corrected the Amiga CSB sound boundary to follow ReDMCSB `SOUND.C`
+  F1051/F0709: playback length comes from the selected `GRAPHICS.DAT` item
+  table and the PCM view begins two bytes into that direct-loaded record. The
+  leading bytes are no longer misread as a synthetic PCM length. The new
+  container-to-view gate admits only an Amiga DMCSB2 item with matching
+  compressed/decompressed length and preserves its original sample bytes.
+  Verification: the focused audio suite passed 74 checks, the F0060 suite
+  passed, and the original Amiga 3.3 Graphic 672 switch record produced the
+  source-derived 130-byte view. No game data was copied or committed.
+
 - ✅ Corrected the Nexus sound runtime diagnostic so an unbound Saturn
   Red-Book track is reported as `selection-only` rather than as a missing host
   audio file. The real 16-level SAL/MAP corpus remains metadata-only and

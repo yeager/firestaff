@@ -73,14 +73,84 @@ static void test_pc34_source_sound_table(void)
 
 static void test_amiga_source_sound_record(void)
 {
-    const uint8_t record[] = { 0x00, 0x04, 0x80, 0x00, 0x7f, 0xff };
+    const uint8_t record[] = { 0x00, 0x01, 0x80, 0x00, 0x7f, 0xff };
     CsbV1AmigaSoundPayloadView view;
     CHECK(csb_v1_audio_runtime_amiga_sound_payload_view(record, sizeof(record), &view) == 1,
-          "Amiga F1051 sound record admits exact length");
+          "Amiga F1051 sound record admits table-sized data");
     CHECK(view.byteCount == 4u && view.samples == record + 2u,
-          "Amiga payload skips its source length word");
-    CHECK(csb_v1_audio_runtime_amiga_sound_payload_view(record, sizeof(record) - 1u, &view) == 0,
-          "Amiga sound record rejects a truncated payload");
+          "Amiga payload skips its two source header bytes");
+    CHECK(csb_v1_audio_runtime_amiga_sound_payload_view(record, 1u, &view) == 0,
+          "Amiga sound record rejects an absent source header");
+}
+
+static void test_amiga_graphics_sound_view(void)
+{
+    uint8_t graphics[400000];
+    const size_t headerSize = 4u + 749u * 8u;
+    CsbV1AmigaSoundPayloadView view;
+
+    memset(graphics, 0, sizeof(graphics));
+    graphics[0] = 0x80;
+    graphics[1] = 0x01;
+    graphics[2] = 0x02;
+    graphics[3] = 0xed;
+    /* Item zero has six direct-loaded bytes. */
+    graphics[4] = 0x00;
+    graphics[5] = 0x06;
+    graphics[4u + 749u * 2u] = 0x00;
+    graphics[4u + 749u * 2u + 1u] = 0x06;
+    graphics[headerSize + 0u] = 0x00;
+    graphics[headerSize + 1u] = 0x01;
+    graphics[headerSize + 2u] = 0x80;
+    graphics[headerSize + 3u] = 0x00;
+    graphics[headerSize + 4u] = 0x7f;
+    graphics[headerSize + 5u] = 0xff;
+    CHECK(csb_v1_audio_runtime_amiga_graphics_sound_view(
+              graphics, sizeof(graphics), 0u, &view) == 1,
+          "Amiga graphics item reaches F1051 sound view");
+    CHECK(view.byteCount == 4u && view.samples == graphics + headerSize + 2u,
+          "Amiga graphics sound view preserves source bytes");
+    graphics[4u + 749u * 2u + 1u] = 0x07;
+    CHECK(csb_v1_audio_runtime_amiga_graphics_sound_view(
+              graphics, sizeof(graphics), 0u, &view) == 0,
+          "Amiga graphics sound view rejects non-direct source item");
+}
+
+static void test_amiga_original_graphics_sound_view(void)
+{
+    const char *path = getenv("FIRESTAFF_CSB_AMIGA_GRAPHICS_DAT");
+    FILE *file;
+    long byteCount;
+    uint8_t *bytes;
+    CsbV1AmigaSoundPayloadView view;
+
+    if (!path || !*path) {
+        CHECK(1, "Amiga original graphics test skipped without local original media");
+        return;
+    }
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (byteCount = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        CHECK(0, "Amiga original graphics file opens");
+        return;
+    }
+    bytes = (uint8_t *)malloc((size_t)byteCount);
+    if (!bytes || fread(bytes, 1u, (size_t)byteCount, file) != (size_t)byteCount) {
+        free(bytes);
+        fclose(file);
+        CHECK(0, "Amiga original graphics file reads");
+        return;
+    }
+    fclose(file);
+    CHECK(csb_v1_audio_runtime_amiga_graphics_sound_view(
+              bytes, (size_t)byteCount, 672u, &view) == 1,
+          "original Amiga switch record reaches F1051 sound view");
+    CHECK(view.byteCount == 130u,
+          "original Amiga switch preserves F1051 table-derived byte count");
+    CHECK(view.samples != NULL && view.samples[0] == 0x00u,
+          "original Amiga switch begins after its two source bytes");
+    free(bytes);
 }
 
 static void test_pc34_source_sound_payload(void)
@@ -286,6 +356,8 @@ int main(void)
     test_init_contract();
     test_pc34_source_sound_table();
     test_amiga_source_sound_record();
+    test_amiga_graphics_sound_view();
+    test_amiga_original_graphics_sound_view();
     test_pc34_source_sound_payload();
     test_rejections();
     test_completed_play_history();

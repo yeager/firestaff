@@ -1360,6 +1360,7 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_csb_v1_f0060_sound_play_pc34_c
     add_executable(test_csb_v1_f0060_sound_play_pc34_compat
         tests/test_csb_v1_f0060_sound_play_pc34_compat.c
         src/csb/csb_v1_audio_runtime_pc34_compat.c
+        src/csb/csb_v1_amiga_graphics_dat.c
         src/memory/memory_graphics_dat_pc34_compat.c
         src/memory/memory_graphics_dat_header_pc34_compat.c
         src/memory/memory_graphics_dat_metadata_pc34_compat.c
@@ -4360,6 +4361,7 @@ add_library(firestaff_m10 STATIC
     src/csb/csb_v1_magic_rune_cost_pc34_compat.c
     src/csb/csb_v1_pc34_wallset_graphics_map.c
     src/csb/csb_v1_audio_runtime_pc34_compat.c
+    src/csb/csb_v1_amiga_graphics_dat.c
     src/csb/csb_v1_utility_flow_pc34.c
     src/csb/csb_v1_utility_import_pc34.c
     src/csb/csb_v1_utility_save_transaction_pc34_compat.c
@@ -35422,6 +35424,7 @@ if(BUILD_TESTING)
     add_executable(test_csb_v1_audio_runtime_pc34_compat
         tests/test_csb_v1_audio_runtime_pc34_compat.c
         src/csb/csb_v1_audio_runtime_pc34_compat.c
+        src/csb/csb_v1_amiga_graphics_dat.c
         src/memory/memory_graphics_dat_pc34_compat.c
         src/memory/memory_graphics_dat_header_pc34_compat.c
         src/memory/memory_graphics_dat_select_pc34_compat.c

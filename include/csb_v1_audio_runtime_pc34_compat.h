@@ -117,9 +117,10 @@ typedef struct CsbV1StSoundDecodeResult {
     size_t encodedBytesConsumed;
 } CsbV1StSoundDecodeResult;
 
-/* ReDMCSB SOUND.C F1051 / F0709 (Amiga 3.1/3.3): a decompressed sound
- * graphic begins with its big-endian byte count; exactly that many signed
- * 8-bit samples follow.  It is deliberately separate from PC/Atari F0060. */
+/* ReDMCSB SOUND.C F1051 / F0709 (Amiga 3.1/3.3): F1051 allocates the
+ * graphic's decompressed-byte-count and hands F0709 everything after the
+ * leading two source bytes.  Those bytes are not a PCM length field: F1051
+ * gets the playback length from the GRAPHICS.DAT item table. */
 typedef struct CsbV1AmigaSoundPayloadView {
     const uint8_t* samples;
     size_t byteCount;
@@ -193,6 +194,13 @@ int csb_v1_audio_runtime_decode_st_sound(const uint8_t* encoded,
 int csb_v1_audio_runtime_amiga_sound_payload_view(
     const uint8_t* decompressedRecord, size_t recordSize,
     CsbV1AmigaSoundPayloadView* outView);
+
+/* Resolve a raw CSB Amiga GRAPHICS.DAT item into F1051's signed 8-bit PCM
+ * view.  The item must be direct-loadable, as it is in the original Amiga
+ * releases; no synthetic decompression or sample data is accepted. */
+int csb_v1_audio_runtime_amiga_graphics_sound_view(
+    const uint8_t* graphicsDat, size_t graphicsDatSize,
+    uint16_t graphicIndex, CsbV1AmigaSoundPayloadView* outView);
 
 const char* csb_v1_audio_runtime_source_evidence(void);
 

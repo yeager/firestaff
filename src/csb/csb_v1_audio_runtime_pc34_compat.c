@@ -7,6 +7,8 @@
 
 #include "csb_v1_audio_runtime_pc34_compat.h"
 
+#include "csb_v1_amiga_graphics_dat.h"
+
 #include "memory_graphics_dat_header_pc34_compat.h"
 #include "memory_graphics_dat_select_pc34_compat.h"
 
@@ -46,17 +48,36 @@ int csb_v1_audio_runtime_amiga_sound_payload_view(
     const uint8_t* decompressedRecord, size_t recordSize,
     CsbV1AmigaSoundPayloadView* outView)
 {
-    uint16_t byteCount;
     if (!decompressedRecord || !outView || recordSize < 2u) return 0;
     memset(outView, 0, sizeof(*outView));
-    byteCount = csb_v1_audio_read_be16(decompressedRecord);
-    /* F1051 subtracts two from the decompressed graphic size, then F0709
-     * uses the following bytes unchanged.  Any tail would be a different
-     * record format, not valid Amiga PCM evidence. */
-    if ((size_t)byteCount + 2u != recordSize) return 0;
+    /* ReDMCSB SOUND.C F1051 lines 286-291: ByteCount is obtained from
+     * F0494's graphics-table entry, then FirstSample is assigned buffer + 2.
+     * Do not reinterpret the discarded bytes as a fabricated length field. */
     outView->samples = decompressedRecord + 2u;
-    outView->byteCount = byteCount;
+    outView->byteCount = recordSize - 2u;
     return 1;
+}
+
+int csb_v1_audio_runtime_amiga_graphics_sound_view(
+    const uint8_t* graphicsDat, size_t graphicsDatSize,
+    uint16_t graphicIndex, CsbV1AmigaSoundPayloadView* outView)
+{
+    CSB_V1_AmigaGraphicsItem item;
+
+    if (!outView) return 0;
+    memset(outView, 0, sizeof(*outView));
+    if (!csb_v1_amiga_graphics_item(graphicsDat, graphicsDatSize,
+                                    graphicIndex, &item) ||
+        item.compressedByteCount != item.decompressedByteCount ||
+        item.decompressedByteCount < 2u ||
+        (size_t)item.dataOffset + item.decompressedByteCount > graphicsDatSize) {
+        return 0;
+    }
+    /* Amiga F0490 takes the direct F0474 load branch; F1051 subsequently
+     * exposes buffer + 2 to F0709.  ReDMCSB MEMORY.C F0490 lines 2611-2639,
+     * SOUND.C F1051 lines 286-291. */
+    return csb_v1_audio_runtime_amiga_sound_payload_view(
+        graphicsDat + item.dataOffset, item.decompressedByteCount, outView);
 }
 
 static int csb_v1_audio_read_nibble(const uint8_t* encoded,
