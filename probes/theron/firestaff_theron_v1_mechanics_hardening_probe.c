@@ -421,6 +421,34 @@ static void test_post_move_effects(void) {
 }
 
 /* ═══════════════════════════════════════════════════════════════
+ * TEST: source-authenticated levels fail closed for unresolved T700 stats
+ * ═══════════════════════════════════════════════════════════════ */
+static void test_source_level_stat_consumer_gate(void) {
+    printf("[test:source_level_stat_consumer_gate]\n");
+
+    Theron_V1_World w;
+    make_world(&w);
+    Theron_V1_Level *level = &w.levels[0][0];
+    level->source_header_verified = 1;
+    w.world_tick = 17;
+    w.party.champions[0].stamina = 20;
+    w.party.champions[0].food = 20;
+    w.party.champions[0].water = 20;
+    w.party.champions[0].health = 50;
+    w.party.champions[0].attributes |= THERON_ATTR_POISONED;
+
+    theron_v1_apply_post_move_effects(&w);
+
+    CHECK_INT("source world tick unchanged", (int)w.world_tick, 17);
+    CHECK_INT("source stamina unchanged", w.party.champions[0].stamina, 20);
+    CHECK_INT("source food unchanged", w.party.champions[0].food, 20);
+    CHECK_INT("source water unchanged", w.party.champions[0].water, 20);
+    CHECK_INT("source health unchanged", w.party.champions[0].health, 50);
+    CHECK((w.party.champions[0].attributes & THERON_ATTR_POISONED) != 0,
+          "source poison unchanged");
+}
+
+/* ═══════════════════════════════════════════════════════════════
  * TEST: alarm trigger
  * ═══════════════════════════════════════════════════════════════ */
 static void test_alarm_trigger(void) {
@@ -577,6 +605,7 @@ int main(void) {
     test_altar_resurrection();
     test_pool_recovery();
     test_post_move_effects();
+    test_source_level_stat_consumer_gate();
     test_alarm_trigger();
     test_trigger_activate();
     test_turn_party();

@@ -77,6 +77,13 @@
   and could make an unbound bundle look renderable. Keep the runtime blocked
   until a captured HuC6260 palette span and consumer are hash/offset-bound.
 
+- **THERON-T700-STAT-CONSUMER:** The production mechanics path now leaves
+  source-authenticated levels completely unchanged after movement. The old
+  host-side T700 model drained stamina/food/water and cleared poison without a
+  recovered PCE bank-switched consumer, and therefore remains fixture-only.
+  Recover the original stat-write owner, cadence and poison lifetime from
+  disassembly/capture before reopening world ticks or champion mutations.
+
 - **THERON-BITMAP-ROUTE-PROVENANCE:** The raw Track 02 bitmap catalog and
   indexed atlas retain real byte spans from `TQUS02.bin`/`TQJP02.bin`, but the
   `title`, `stage`, `Soul Room`, and `forcefield` route bits are still bounded

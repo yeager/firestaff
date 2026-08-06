@@ -9783,6 +9783,13 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 
 # Firestaff DONE - Completed Work
 
+- ✅ 2026-08-06 Theron T700 stat-consumer quarantine: source-authenticated
+  levels now fail closed in `theron_v1_apply_post_move_effects()` instead of
+  applying the unrecovered host-side stamina/food/water/poison model. Fixture
+  worlds retain the existing hardening-probe behavior, and the new source-level
+  regression verifies that tick, stats and poison state remain unchanged until
+  the original PCE consumer is captured.
+
 - ✅ 2026-08-06 CSB Amiga 3.1 package binding: the scanner now distinguishes
   the retail A31E disk from PC 3.4 and other Amiga disks that share
   `GRAPHICS.DAT` or `TITL.DAT` bytes. It collects bounded title occurrences,

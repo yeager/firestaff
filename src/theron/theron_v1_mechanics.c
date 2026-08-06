@@ -622,8 +622,34 @@ int theron_v1_altar_of_vi_resurrect(Theron_V1_World *world,
  *   - Wound effects: leg wounds reduce max_load (handled at equip time)
  * ══════════════════════════════════════════════════════════════════════ */
 
+static int theron_v1_source_level_needs_stat_consumer(const Theron_V1_World *world) {
+    if (!world) return 0;
+    if (world->current_dungeon < 1 || world->current_dungeon > THERON_DUNGEON_COUNT ||
+        world->current_level < 0 || world->current_level >= THERON_MAX_LEVELS_PER_DUNGEON) {
+        return 0;
+    }
+
+    const Theron_V1_Level *level =
+        &world->levels[world->current_dungeon - 1][world->current_level];
+    return world->level_loaded[world->current_dungeon - 1][world->current_level] &&
+           level->source_header_verified;
+}
+
 void theron_v1_apply_post_move_effects(Theron_V1_World *world) {
     if (!world) return;
+
+    /*
+     * The current T700 reconstruction is still a host-side fixture model:
+     * its food/water cadence and poison lifetime are not connected to the
+     * PCE bank-switched stat-consumer routine.  Never mutate a real captured
+     * level with that model.  This keeps source-authenticated play fail-closed
+     * until the original consumer is recovered; fixture probes retain the
+     * legacy model so they can continue to exercise the surrounding routes.
+     *
+     * Source: THQUEST.ASM T700; consumer destination remains unresolved.
+     */
+    if (theron_v1_source_level_needs_stat_consumer(world)) return;
+
     world->world_tick++;
 
     for (int i = 0; i < THERON_MAX_CHAMPIONS; i++) {
