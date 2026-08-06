@@ -1,3 +1,12 @@
+# Nexus MENU.BPK raw PALT source lane (2026-08-06)
+
+- ✅ Added a bounded API that copies all 256 real PALT entries as
+  big-endian 16-bit source words and verifies the European trailer payload
+  FNV-1a64 `0ec4e98ca3a18f85`.
+- ✅ The API intentionally does not label the words BGR555/RGB555 or assign a
+  CLUT bank; colour conversion and VDP1 ownership still require source-backed
+  Saturn capture.
+
 # Nexus MENU.BPK bounded surface decode regression (2026-08-06)
 
 - ✅ `test_nexus_v1_bppk` now reads the real European `MENU.BPK` through

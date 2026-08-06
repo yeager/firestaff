@@ -52,6 +52,8 @@ static int test_real_menu_surface_decode(void) {
     uint8_t *data;
     int size = 0;
     Nexus_V1_BpkArchiveInfo archive;
+    uint16_t palette[NEXUS_V1_BPK_PALT_ENTRY_COUNT];
+    uint64_t palette_hash = 0U;
     int decoded = 0;
     int fail = 0;
     uint32_t index;
@@ -64,6 +66,14 @@ static int test_real_menu_surface_decode(void) {
     }
     if (nexus_v1_bpk_archive_parse(data, (size_t)size, &archive) != 0) {
         printf("  FAIL real MENU.BPK archive parse\n");
+        free(data);
+        return 1;
+    }
+    if (nexus_v1_bpk_archive_copy_palette_words_be16(
+            data, (size_t)size, palette, &palette_hash) != 0 ||
+        palette[0] != 0xffffU || palette[14] != 0U ||
+        palette_hash != UINT64_C(0x0ec4e98ca3a18f85)) {
+        printf("  FAIL real MENU.BPK raw PALT words\n");
         free(data);
         return 1;
     }

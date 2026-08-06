@@ -266,6 +266,31 @@ int nexus_v1_bpk_archive_inspect_palette_trailer(
     return 0;
 }
 
+int nexus_v1_bpk_archive_copy_palette_words_be16(
+    const uint8_t *data, size_t data_size,
+    uint16_t out_words[NEXUS_V1_BPK_PALT_ENTRY_COUNT],
+    uint64_t *out_words_fnv1a64)
+{
+    size_t offset;
+    size_t index;
+    uint64_t hash = UINT64_C(1469598103934665603);
+
+    if (!data || !out_words || !palette_trailer_offset(data, data_size,
+                                                        &offset)) {
+        return -1;
+    }
+    for (index = 0U; index < NEXUS_V1_BPK_PALT_ENTRY_COUNT; ++index) {
+        const uint8_t *word = data + offset + 12U + index * 2U;
+        out_words[index] = (uint16_t)(((uint16_t)word[0] << 8) | word[1]);
+        hash ^= word[0];
+        hash *= UINT64_C(1099511628211);
+        hash ^= word[1];
+        hash *= UINT64_C(1099511628211);
+    }
+    if (out_words_fnv1a64) *out_words_fnv1a64 = hash;
+    return 0;
+}
+
 int nexus_v1_bpk_archive_get_entry_prefix(const uint8_t *data,
                                           size_t data_size,
                                           uint32_t index,

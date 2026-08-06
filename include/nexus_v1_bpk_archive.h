@@ -13,6 +13,7 @@ extern "C" {
 #define NEXUS_V1_BPK_MAGIC_PRS3 0x50525333U
 #define NEXUS_V1_BPK_MAGIC_PALT 0x50414C54U
 #define NEXUS_V1_BPK_ENTRY_PREFIX_BYTES 20U
+#define NEXUS_V1_BPK_PALT_ENTRY_COUNT 256U
 
 /* Real MENU.BPK byte inspection (pass1082).
  *
@@ -343,6 +344,14 @@ int nexus_v1_bpk_archive_parse(const uint8_t *data,
 int nexus_v1_bpk_archive_inspect_palette_trailer(
     const uint8_t *data, size_t data_size,
     Nexus_V1_BpkPaletteTrailerReceipt *out_receipt);
+
+/* Copies the authenticated PALT payload as raw big-endian 16-bit words.
+ * This is a source-byte operation only: it deliberately does not claim
+ * BGR555/RGB555 ordering, CLUT ownership, palette bank, or VDP1 use. */
+int nexus_v1_bpk_archive_copy_palette_words_be16(
+    const uint8_t *data, size_t data_size,
+    uint16_t out_words[NEXUS_V1_BPK_PALT_ENTRY_COUNT],
+    uint64_t *out_words_fnv1a64);
 
 int nexus_v1_bpk_archive_get_entry(const uint8_t *data,
                                    size_t data_size,
