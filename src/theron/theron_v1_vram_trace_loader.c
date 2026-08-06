@@ -40,6 +40,9 @@ int theron_v1_vram_trace_load_raw(Theron_V1_Viewport *vp,
     memcpy(vp->vram_trace_data, vram_data, THERON_VRAM_SIZE);
     memcpy(vp->vce_trace_data, vce_data, THERON_VCE_SIZE);
 
+    for (int i = 0; i < 2048; ++i)
+        vp->bat_atlas_indices[i] = -1;
+
     tqr_palette_load_group(&vp->palette, vce_data, 0, 512);
 
     vp->vram_trace_loaded = 1;
@@ -130,6 +133,8 @@ void theron_v1_vram_trace_unload(Theron_V1_Viewport *vp) {
     vp->vram_trace_data = NULL;
     vp->vce_trace_data = NULL;
     vp->vram_trace_loaded = 0;
+    for (int i = 0; i < 2048; ++i)
+        vp->bat_atlas_indices[i] = -1;
     tqr_palette_free_tiles(&vp->palette);
 }
 
@@ -165,6 +170,8 @@ int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
     /* BG tiles start at VRAM word $0800 = byte offset $1000 */
     int tile_base_byte = 0x1000;
     tqr_palette_free_tiles(&vp->palette);
+    for (int i = 0; i < 2048; ++i)
+        vp->bat_atlas_indices[i] = -1;
 
     int loaded = 0;
     for (int y = 0; y < bat_h; ++y) {
@@ -180,6 +187,12 @@ int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
             if (off < tile_base_byte ||
                 off + THERON_VRAM_TILE_BYTES > 0xFE00 ||
                 tile_map[tile_index][pal_group] >= 0) {
+                if (off >= tile_base_byte &&
+                    off + THERON_VRAM_TILE_BYTES <= 0xFE00 &&
+                    tile_map[tile_index][pal_group] >= 0) {
+                    vp->bat_atlas_indices[bat_word] =
+                        (int16_t)tile_map[tile_index][pal_group];
+                }
                 continue;
             }
             atlas_index = tqr_tile_load_from_data(
@@ -187,9 +200,17 @@ int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
             if (atlas_index < 0) return -1;
             vp->palette.tiles[atlas_index].vram_index = (uint16_t)tile_index;
             tile_map[tile_index][pal_group] = atlas_index;
+            vp->bat_atlas_indices[bat_word] = (int16_t)atlas_index;
             ++loaded;
         }
     }
 
     return loaded;
+}
+
+int theron_v1_vram_trace_bat_atlas_index(const Theron_V1_Viewport *vp,
+                                         int bat_word) {
+    if (!vp || !vp->vram_trace_loaded || bat_word < 0 || bat_word >= 2048)
+        return -1;
+    return vp->bat_atlas_indices[bat_word];
 }

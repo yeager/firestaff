@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Theron VDC BAT binding retention: the authenticated 64 KiB
+  VRAM/1 KiB VCE viewport mount now persists each admitted BAT word's
+  source tile/palette atlas index instead of discarding the mapping after
+  tile population. Duplicate tile/palette pairs share the same real atlas
+  entry, invalid cells remain `-1`, and a public query exposes only the raw
+  BAT receipt. The loader regression and real Mednafen snapshot test pass;
+  no dungeon-square, object, or synthetic rendering semantics were inferred.
+
 - ✅ 2026-08-06 Nexus startup PLRD label provenance cleanup: authenticated
   RLOWFIX/PLRD champion rows no longer receive a host-generated ASCII/HP/MP
   label when the retail record carries only TABL/FONT256 glyph codes. The

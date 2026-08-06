@@ -24,4 +24,9 @@ int theron_v1_vram_trace_populate_tiles(Theron_V1_Viewport *vp,
                                         int bat_start_word,
                                         int bat_w, int bat_h);
 
+/* Return the source-owned atlas entry for one admitted BAT word, or -1.
+ * The word is an index in the 64x32 VDC BAT, not a Theron dungeon square. */
+int theron_v1_vram_trace_bat_atlas_index(const Theron_V1_Viewport *vp,
+                                         int bat_word);
+
 #endif

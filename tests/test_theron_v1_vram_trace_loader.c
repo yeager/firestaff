@@ -74,10 +74,15 @@ static void test_populate_tiles(void) {
     assert(vp.palette.tiles[1].pal_group == 4);
     assert(vp.palette.tiles[2].vram_index == 2);
     assert(vp.palette.tiles[2].pal_group == 5);
+    assert(theron_v1_vram_trace_bat_atlas_index(&vp, 0) == 0);
+    assert(theron_v1_vram_trace_bat_atlas_index(&vp, 1) == 1);
+    assert(theron_v1_vram_trace_bat_atlas_index(&vp, 2) == 2);
+    assert(theron_v1_vram_trace_bat_atlas_index(&vp, 3) == -1);
 
     assert(theron_v1_vram_trace_populate_tiles(&vp, -1, 32, 32) == -1);
     assert(theron_v1_vram_trace_populate_tiles(&vp, 0, 65, 1) == -1);
     assert(theron_v1_vram_trace_populate_tiles(&vp, 1900, 8, 4) == -1);
+    assert(theron_v1_vram_trace_bat_atlas_index(&vp, 2048) == -1);
 
     theron_v1_vram_trace_unload(&vp);
     printf("PASS: test_populate_tiles\n");

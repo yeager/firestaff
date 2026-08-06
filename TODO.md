@@ -522,6 +522,11 @@
   remaining handoff work is the authenticated non-startup level/object
   corpus and real bitmap/palette capture.
 
+  The real VDC BAT window is now retained as a raw BAT-word to atlas-index
+  binding after snapshot population, so later HuC6280 square/material work
+  can consume the exact captured tile/palette pairs. This still does not
+  assign a dungeon-square meaning to a BAT word or enable synthetic drawing.
+
   The raw media-intake regression now exercises the supplied assembled US ISO
   at `~/.firestaff/cache/theron/TQUS02-ceb02343868f80cec899e9b239aff2da.iso`
   when present, proving its direct MODE1/2048 hash, sector count, user-data

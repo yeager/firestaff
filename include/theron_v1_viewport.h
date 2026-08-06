@@ -98,6 +98,10 @@ typedef struct {
     int                   vram_trace_loaded;  /* 1=real VRAM trace data bound */
     uint8_t              *vram_trace_data;    /* 64KB VRAM snapshot (owned) */
     uint8_t              *vce_trace_data;     /* 1KB VCE palette snapshot (owned) */
+    /* Raw VDC BAT binding for the captured window.  Each entry is an atlas
+     * index, or -1 when that BAT cell was not admitted.  This is a source
+     * receipt only; it is not a dungeon-square/material mapping. */
+    int16_t               bat_atlas_indices[2048];
 } Theron_V1_Viewport;
 
 /* ── Camera / party view state ──────────────────────────────────── */
