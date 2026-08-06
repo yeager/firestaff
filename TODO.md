@@ -2912,6 +2912,12 @@ level or consumer bindings.
   every present hero independently; this is a provenance receipt only and
   does not promote their inventory links, stats or portrait data into a
   partial Resume session.
+  **2026-08-06 evidence update:**
+  `parity-evidence/dm2_sksave_game_load_boundary.md` now pins this stop point
+  to `SKULLWIN/c_savegame.cpp` and to the real eight-file corpus regression,
+  using the DM1 FM Towns evidence method only. The remaining map/DB/
+  possession/timer handoff is still open and cannot be replaced by the
+  test-only callback transcript.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

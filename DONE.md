@@ -75,6 +75,15 @@
   This is read-only provenance; Resume stays closed until the full original
   record-link, inventory and timer ownership chain is restored.
 
+# DM2 original SKSave source-boundary evidence (2026-08-06)
+
+- ✅ Added `parity-evidence/dm2_sksave_game_load_boundary.md`, documenting
+  the source-owned `GAME_LOAD` order, exact continuous-SUPPRESS handoff, and
+  why callback-only map/record readers cannot admit Resume.
+- ✅ Re-ran the isolated map-reader ABI regression and the eight-file
+  PC-DOS real-save regression; both pass without unpacking or writing game
+  data.
+
 # DM2 FM Towns credits palette and handoff (2026-08-06)
 
 - ✅ The original HME-242 credits page now overrides the completed static
