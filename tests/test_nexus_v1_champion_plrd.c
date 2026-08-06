@@ -85,6 +85,7 @@ int main(void) {
         pool.champions[0].health != 50 || pool.champions[0].stamina != 57 ||
         pool.champions[0].mana != 13 || pool.champions[19].health != 125 ||
         pool.champions[19].wizard_level != 2 ||
+        pool.champions[0].food != 0 || pool.champions[0].water != 0 ||
         pool.champions[0].name_tabl_index[0] != 0x21 ||
         pool.champions[0].name_tabl_code[0] != 0x00c1) return 1;
     {

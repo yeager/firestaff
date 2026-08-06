@@ -49,7 +49,9 @@ DM1 had 2-square visibility. Nexus has **4-square visibility**. This is a mechan
 - But deeper levels compensate with harder creatures and tighter spaces
 
 ### E. Food and Water
-Same 1500-unit food/water pool as DM1. No changes documented to consumption rate.
+The retail PLRD records do not contain a food/water pool, and the Saturn
+start/save consumer has not been captured. Firestaff therefore does not claim
+the DM1 value of 1500 units for Nexus.
 
 ---
 
@@ -82,7 +84,7 @@ No difficulty field exists.
 | Party size (max) | 4 | 4 | 4 + companions | **4** |
 | Levels (dungeon) | 10 | 10 | 10 + outdoor | **16** |
 | Visibility (squares) | 2 | 2 | 2 | **4** |
-| Food/Water pool | 1500 | 1500 | 1500 | **1500** |
+| Food/Water pool | unbound | unbound | unbound | **unbound** |
 | Creature difficulty scaling | Depth | Depth | Depth | **Depth + 16 levels** |
 
 ---

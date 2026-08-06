@@ -16,6 +16,13 @@
 > below as historical notes until they are rewritten from the DMWeb crawl.
 > Source-lock: `docs/source-lock/nexus_v1_dmweb_format_crawl_20260528.md`.
 
+> 2026-08-06 strict-fidelity correction: the champion section below is a
+> historical design note, not a production-status description. European
+> `RLOWFIX.BIN` PLRD records provide raw name/TABL references, statistics and
+> equipment ordinals; they do not prove Nexus provisions, gold, saved
+> alive/dead state, class labels, or portrait ownership. Production keeps
+> those routes unbound until the Saturn consumer is captured.
+
 ## Scope
 
 This document source-locks every data file format used by Dungeon Master Nexus (Sega Saturn), with byte layout, field definitions, and every known variant. Where format evidence is absent, the gap is explicitly noted with reasoning and a `TODO`.
@@ -538,8 +545,8 @@ typedef struct {
 |-------|-------------|---------------|
 | Anti-Magic | 0 | **5** |
 | Anti-Fire | 0 | **5** |
-| Food | 1500 | 1500 |
-| Water | 1500 | 1500 |
+| Food | 1500 | **unbound** |
+| Water | 1500 | **unbound** |
 
 ### 5.5 Champion Portrait — `FACE.BIN`
 
@@ -574,21 +581,20 @@ void nexus_v1_champions_init(Nexus_V1_ChampionPool *pool);
 int nexus_v1_champion_recruit(Nexus_V1_ChampionPool *pool, int mirror_index);
 int nexus_v1_champion_resurrect(Nexus_V1_ChampionPool *pool, int party_slot);
 
-/* Default resistance: src/nexus/nexus_v1_champions.c:nexus_v1_champions_init() */
-c->anti_magic = 5;
-c->anti_fire = 5;
-c->food = 1500;
-c->water = 1500;
-c->alive = 1;
-c->portrait_index = i;
+/* Production PLRD path: only fields read from authenticated PLRD bytes are
+ * source-bound. Provisions and save-state ownership remain unbound. */
+c->food = 0;       /* no PLRD field; not a Nexus default */
+c->water = 0;      /* no PLRD field; not a Nexus default */
+c->alive = 1;      /* menu availability only, not saved state */
+c->portrait_index = i; /* ordinal retained pending FACE consumer capture */
 ```
 
 ### 5.8 Status
 
 | Item | Status | Source |
 |------|--------|--------|
-| Roster init (8 champions) | ✅ Implemented | `nexus_v1_champions_init()` |
-| Full 24-slot roster | ❌ **Only 8 champions** | Gap |
+| Retail PLRD roster | ✅ 20 records parsed | `nexus_v1_champions_init_from_rlowfix()` |
+| Full 24-slot roster | ❌ **20 retail records; 24 is storage capacity** | Retail source |
 | Champion recruit/resurrect | ✅ Implemented | `nexus_v1_champion_recruit/resurrect()` |
 | FACE.BIN parsing | ❌ **NOT IMPLEMENTED** | Format unknown |
 | Portrait rendering | ❌ **NOT IMPLEMENTED** | |

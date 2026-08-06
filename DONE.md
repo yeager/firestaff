@@ -1,3 +1,12 @@
+# Nexus PLRD provisions quarantine (2026-08-06)
+
+`RLOWFIX.BIN/PLRD` is now treated as the source of its authenticated raw
+name/TABL references, statistics and equipment ordinals only. The production
+parser no longer seeds food/water with the inherited DM1 value `1500`; those
+fields remain unbound until the Saturn new-game/save consumer is captured.
+The real-data PLRD regression passes, and the historical save/inventory notes
+were corrected to stop presenting DM1 provisions as Nexus data.
+
 - ✅ 2026-08-06 Nexus creature runtime quarantine: production mechanics and
   engine ticks now keep creature AI, spawner admission, and projectile motion
   fail-closed while `nexus_v1_action_semantics_proven()` is false. Direct

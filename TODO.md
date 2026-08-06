@@ -168,6 +168,12 @@
   and dispatch traces before enabling movement, spawn, ranged attacks, or
   projectile ticks. The direct helper tests remain diagnostic only.
 
+- **NEXUS-PLRD-PROVISIONS-GATE:** `RLOWFIX.BIN/PLRD` does not carry food,
+  water, gold, or a saved alive/dead state. The production parser no longer
+  seeds the DM1 value `1500`; provisions stay unbound until the Saturn
+  new-game/save consumer is captured. Keep `alive` only as a menu-availability
+  state and do not use it as save provenance.
+
 - **NEXUS-CONTAINER-LOOT-CAPTURE:** The old DM1-shaped Nexus container helper
   accepted caller-supplied chest/crate contents despite the retail DGN corpus
   exposing no authenticated container owner, content chain, key dispatch or

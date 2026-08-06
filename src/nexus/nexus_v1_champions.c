@@ -257,7 +257,19 @@ int nexus_v1_champions_init_from_rlowfix(Nexus_V1_ChampionPool *pool,
             c->primary_class = NEXUS_CLASS_PRIEST;
         else if (wizard > fighter)
             c->primary_class = NEXUS_CLASS_WIZARD;
-        c->food = c->water = 1500; c->gold = 0; c->alive = 1; c->portrait_index = i;
+        /* PLRD carries the authenticated statistics and equipment words
+         * above, but not provisions, gold, or a live/dead flag.  The old
+         * parser copied the DM1 starting value 1500 into food/water; that
+         * was synthetic Nexus state.  Leave those runtime fields at their
+         * zeroed/unknown value until the Saturn new-game/save consumer is
+         * source-bound.  `alive` remains a menu-availability state only so
+         * the real PLRD rows can be navigated without claiming a save value.
+         */
+        c->food = 0;
+        c->water = 0;
+        c->gold = 0;
+        c->alive = 1;
+        c->portrait_index = i;
         for (j = 0; j < 30; ++j) c->inventory[j] = 0xffU;
         for (j = 0; j < NEXUS_SLOT_COUNT; ++j) {
             uint16_t item = (uint16_t)(((uint16_t)r[24U + 4U * (unsigned)j] << 8) |

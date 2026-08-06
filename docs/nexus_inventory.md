@@ -153,20 +153,24 @@ Source: `src/ui/firestaff_item_encyclopedia.c`, `docs/dm2_inventory.md`
 
 ---
 
-## 8. Food and Water (Separate from Inventory)
+## 8. Food and Water (Separate from Inventory, capture-gated)
 
-Champions have food and water stats stored directly in the struct:
+The in-memory structure has food and water fields, but the authenticated
+European PLRD records do not contain those values. Production therefore keeps
+them unbound rather than copying the DM1 starting value or enabling inherited
+consumption/effect logic:
 ```c
 int food, water;  /* resource tracking, not in inventory slots */
 ```
 
-Depleted over time. Restored by:
-- Food: eating food items (Corn, weight=3)
-- Water: drinking Water Flask items or consuming potions
+The Saturn new-game/save consumer must be captured before depletion or
+restoration is admitted. The old food/potion examples below are historical
+DM1-derived notes, not Nexus runtime behavior.
 
 Food and water are intrinsic champion stats, not items in a slot.
 
-Source: `include/nexus_v1_champions.h`, `include/firestaff_inventory_ui.h`
+Source: `include/nexus_v1_champions.h`, `src/nexus/nexus_v1_champions.c`,
+`TODO.md` (`NEXUS-PLRD-PROVISIONS-GATE`)
 
 ---
 

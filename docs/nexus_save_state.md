@@ -23,7 +23,9 @@ source currently supplies 20 PLRD records:
 - Resistances: `anti_magic`, `anti_fire`
 - Class levels: `fighter_level`, `ninja_level`, `priest_level`, `wizard_level`
 - Survival: `alive`
-- Provisions: `food`, `water` (starting at 1500 each)
+- Provisions: `food`, `water` are not present in the authenticated PLRD
+  resource; the runtime leaves them unbound until a Saturn start/save
+  consumer is captured.
 - Inventory: `inventory[30]` — array of item indices
 
 ### Champion Pool (`Nexus_V1_ChampionPool`)
@@ -57,7 +59,8 @@ A complete save would need to persist:
 
 ## Notes
 
-The current production labels are Japanese UTF-8 values decoded from PLRD's
-TABL indices. The former 8/24 fixture table is not used by production.
-DM1's system (same stats, classes, mechanics). The 30-slot champion inventory
-matches DM1's item capacity.
+Production retains PLRD's six raw TABL indices and codes, but does not invent
+host names or glyphs before the Saturn TEXT/TABL/FONT256 consumer is bound.
+The former 8/24 fixture table is not used by production. The 30-slot storage
+shape is retained for the authenticated PLRD equipment/backpack ordinals;
+Nexus gameplay semantics remain capture-gated.
