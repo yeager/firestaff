@@ -1366,7 +1366,7 @@ typedef enum {
     THERON_TRACK02_OBJECT_TABLE_REJECT_LEVEL_OUT_OF_RANGE
 } Theron_Track02ObjectTableRejectReason;
 
-typedef struct Theron_Track02ObjectTable {
+struct Theron_Track02ObjectTable {
     size_t declared_record_count;
     size_t record_count;
     size_t overflow_count;
@@ -1392,7 +1392,12 @@ typedef struct Theron_Track02ObjectTable {
     uint32_t level_position_hashes[THERON_TRACK02_DUNGEON_COUNT];
     Theron_Track02ObjectTableRecord
         records[THERON_TRACK02_OBJECT_TABLE_MAX_RECORDS];
-} Theron_Track02ObjectTable;
+};
+
+#ifndef THERON_TRACK02_OBJECT_TABLE_TYPEDEF
+typedef struct Theron_Track02ObjectTable Theron_Track02ObjectTable;
+#define THERON_TRACK02_OBJECT_TABLE_TYPEDEF
+#endif
 
 /* Object-table decoder receipt for the bytes following the initial level grid.
  *

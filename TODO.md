@@ -131,6 +131,10 @@
   both standard-root BINs and the startup binder no longer applies the US
   offset to JP media. This remains format evidence only; VCE ownership and
   production palette/viewport promotion still require an executing capture.
+  2026-08-06 header-warning update: the world/Track 02 object-table forward
+  declaration now has one guarded typedef owner. This removes the strict
+  C11 redefinition warning without changing the record layout or opening
+  object semantics.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

@@ -8814,6 +8814,12 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   regions. No HUD layout, portrait, tile-bank or viewport semantics were
   inferred or promoted.
 
+- ✅ 2026-08-06 Theron object-table header hygiene: guarded the shared
+  `Theron_Track02ObjectTable` forward typedef between `theron_v1_world.h` and
+  `theron_v1_track02.h`. Theron/M10 strict-warning builds no longer emit the
+  duplicate C11 typedef warning; object-record layout and capture gates are
+  unchanged.
+
 - ✅ 2026-08-06 Theron graphics-format provenance note: the historical
   source-lock receipt now distinguishes its old operator-staged
   `theron-extras` paths from the current canonical

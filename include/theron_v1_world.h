@@ -10,8 +10,13 @@ typedef struct Theron_V1_World Theron_V1_World;
 #define THERON_V1_WORLD_TYPEDEF
 
 /* Forward typedef for the Track 02 compact object table used by the real-data
- * initial-level decoder.  The full struct is defined in theron_v1_track02.h. */
+ * initial-level decoder. The full struct is defined in theron_v1_track02.h.
+ * The declaration marker prevents that header's complete definition from
+ * re-typedefing the same C11 tag in strict-warning builds. */
+#ifndef THERON_TRACK02_OBJECT_TABLE_TYPEDEF
 typedef struct Theron_Track02ObjectTable Theron_Track02ObjectTable;
+#define THERON_TRACK02_OBJECT_TABLE_TYPEDEF
+#endif
 
 #include "theron_v1_combat.h"
 #include "theron_v1_dungeon_progression.h"
