@@ -18816,10 +18816,22 @@ static void m11_theron_boot_host_set_status(
      * as ignored.  The status remains source-owned: this only reports the
      * capture gate and never admits a dungeon without the proven consumer. */
     if (state && state->sourceKind == M11_GAME_SOURCE_THERON_TRACK02 &&
-        state->theronState.startup_phase == THERON_STARTUP_PHASE_SOUL_ROOM &&
         scope &&
         (strcmp(scope, "TRACK02 ADMISSION") == 0 ||
          strcmp(scope, "TRACK02 ROUTE") == 0)) {
+        /* The runtime entry helper may publish its provisional forcefield
+         * state before the authenticated capture/route check rejects the
+         * handoff.  Never leave M11 in IN_DUNGEON with level_loaded=0: that
+         * makes Enter look inert and draws an empty runtime surface.  Roll
+         * the presentation state back to the actionable Soul Room while
+         * keeping the source-owned admission gate closed. */
+        if (status &&
+            (strstr(status, "CAPTURE") != NULL ||
+             strstr(status, "LEVEL ROUTE") != NULL ||
+             strstr(status, "AUTHENTIC") != NULL)) {
+            state->theronState.startup_phase = THERON_STARTUP_PHASE_SOUL_ROOM;
+            state->theronState.level_loaded = 0;
+        }
         snprintf(state->theronState.startup_text_prompt,
                  sizeof(state->theronState.startup_text_prompt),
                  "%s",
