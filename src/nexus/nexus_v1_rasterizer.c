@@ -530,32 +530,22 @@ void nexus_raster_creature_billboard(Nexus_Framebuffer *fb,
     uint32_t creature_flags,
     uint8_t base_color)
 {
-    Nexus_RasterVertex quad[4];
-    float dist;
-    float w;
-
-    if (!fb || !cam || !tex_data || !tex_palette || tex_w <= 0 || tex_h <= 0)
-        return;
-
-    /* LEVITATION: hover 0.2 units above floor */
-    if (creature_flags & 0x0001U)  /* NEXUS_CATTR_LEVITATION */
-        world_pos.y += 0.2f;
-
-    /* FIRE_RESIST: red-tint the flat shade toward palette entry 12 */
-    if (creature_flags & 0x0080U)  /* NEXUS_CATTR_FIRE_RESIST */
-        base_color = (base_color & 0xF0) | 12;
-
-    dist = v3_length(v3_sub(world_pos, cam->pos));
-    w = (height * 0.8f) / (dist > 0.1f ? dist : 0.1f);
-    if (w > 5.0f) w = 5.0f;
-
-    nexus_raster_billboard(quad, world_pos, w, height, cam);
-    quad[0].color = quad[1].color = quad[2].color = quad[3].color = base_color;
-    quad[0].texture_id = quad[1].texture_id =
-        quad[2].texture_id = quad[3].texture_id = texture_id;
-
-    nexus_raster_quad_tex(fb, quad[0], quad[1], quad[2], quad[3], cam,
-        tex_data, tex_w, tex_h, tex_palette);
+    /* A Saturn creature draw needs the original VDP1 command, CLUT,
+     * placement and DMDF/MNS owner.  This legacy API accepts only a host
+     * texture and inferred gameplay flags, so it cannot prove those facts.
+     * Retain the symbol for source-study callers, but never admit its
+     * synthetic billboard to the production viewport. */
+    (void)fb;
+    (void)cam;
+    (void)world_pos;
+    (void)height;
+    (void)texture_id;
+    (void)tex_data;
+    (void)tex_w;
+    (void)tex_h;
+    (void)tex_palette;
+    (void)creature_flags;
+    (void)base_color;
 }
 
 /* ── Projectile rendering ───────────────────────────────────────── */

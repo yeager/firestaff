@@ -171,9 +171,9 @@ void nexus_raster_billboard(Nexus_RasterVertex quad[4],
     Vec3 world_pos, float width, float height,
     const Nexus_Camera *cam);
 
-/* Render creature billboard from a verified texture surface.
- *LEVITATION: hovers 0.2 above floor.
- * FIRE_RESIST: source-bound material flag; no flat-color substitute. */
+/* Retained API boundary for the former generic creature billboard route.
+ * No-draw until Saturn VDP1 command/CLUT/placement and DMDF/MNS ownership
+ * are captured.  Host textures and inferred flags are not sufficient proof. */
 void nexus_raster_creature_billboard(Nexus_Framebuffer *fb,
     const Nexus_Camera *cam,
     Vec3 world_pos, float height,

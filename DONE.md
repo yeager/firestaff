@@ -1,5 +1,14 @@
 # Nexus boot-profile capability audit (2026-08-06)
 
+# Nexus viewport provenance quarantine (2026-08-06)
+
+- ✅ Closed the remaining generic creature billboard raster path. The public
+  API now remains no-draw because its host texture and inferred gameplay flags
+  did not prove Saturn VDP1 command/CLUT/placement or DMDF/MNS ownership. The
+  phase-4 source-lock document no longer advertises DM1 door/projectile
+  geometry or gray creature placeholders as Nexus visuals. Build and relevant
+  Nexus provenance tests pass; no retail data is changed or committed.
+
 - ✅ Removed the default `SATURN_CDDA_AUDIO` capability from
   `src/nexus/nexus_v1_boot_profile.c`. The retail disc's Track 2–9
   declaration remains provenance only; level selection, CDDA handoff and

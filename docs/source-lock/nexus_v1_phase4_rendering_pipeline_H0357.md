@@ -114,36 +114,25 @@ Floor: grid (x,z) to (x+1,z+1) at Y=0. Ceiling: same XZ at Y=1. Each drawn as a 
 
 ### 3.7 Door States — `nexus_draw_door()`
 
-**Source:** DM1 F0107 door panel states (DUNGEON.C F0107).
-
-| State | Visual |
-|-------|--------|
-| CLOSED | Full-height wall quad at door square, facing the party |
-| OPEN | Narrow slab (gap_w=0.30×0.75h) offset to one side, gap visible |
-| LOCKED | Full-height + warm color shift (palette 14 = gold, key needed indicator) |
-
-Party-facing direction → wall face (same as `nexus_draw_wall`).
+The API is retained for gameplay state, but is currently no-draw. The old
+DM1-shaped CLOSED/OPEN/LOCKED geometry and palette-14 claim are not Saturn
+Nexus evidence. A real door route requires captured VDP1 commands, CLUT,
+animation frame and placement tied to the Nexus DGN/MNS owner.
 
 ### 3.8 Creature Billboard — `nexus_raster_billboard()` + `nexus_raster_creature_billboard()`
 
-**Source:** ReDMCSB CHAMPDRW.C F0403 — creature sprite billboard projection; `dm1_v1_creature_viewport_pc34_compat.c` creature billboard rendering.
-
-Billboard width scales `∝ 1/dist` (perspective SOS). `NEXUS_CATTR_LEVITATION`: creature hovers 0.2 above floor. `NEXUS_CATTR_FIRE_RESIST`: flat shade shifted toward palette 12 (fire red). `NEXUS_CATTR_NON_MATERIAL`: alpha-blend ghost effect via palette index 0 (transparent) substitution.
-
-`nexus_project_model_vert()` maps DMDF local coords → world space → screen via `view_proj`.
+`nexus_project_model_vert()` and `nexus_raster_billboard()` remain geometry
+helpers, but `nexus_raster_creature_billboard()` is no-draw. DM1
+CHAMPDRW.C/F0403 projection, inferred gameplay flags and a host-supplied
+texture do not establish the Saturn VDP1 command, CLUT, placement or
+DMDF/MNS owner. No placeholder billboard is admitted.
 
 ### 3.9 Projectile Rendering — `nexus_raster_projectile()`
 
-**Source:** ReDMCSB OBJECT.C F0823 / F0841–F0843.
-
-| Type | Palette | Technique |
-|------|---------|-----------|
-| FIREBALL | 96–103 | DDA straight line start→end |
-| LIGHTNING | 108–111 | DDA line + per-step `±3px` horizontal jitter |
-| POISON_CLOUD | 112–119 | Filled ellipse in screen space |
-| GRABBER_BOLT | 144–151 | Multi-point quadratic Bézier sampling |
-
-Each projectile uses DDA pixel placement: step `(dx,dy,dz)` computed from start→end, steps = Chebyshev max of `(abs(dx), abs(dy), abs(dz))`. Z-buffer written to 0.0f to prevent overdraw.
+The API remains as a source-study boundary, but is no-draw. The former DM1
+OBJECT.C/DDA palette and primitive claims are not Nexus Saturn capture
+evidence. Real effects require the Saturn VDP1 command stream, CLUT,
+placement and SLEV/SAL/SFX ownership.
 
 ---
 
@@ -185,12 +174,11 @@ Clips source rect to destination framebuffer bounds. Per-pixel copy: `fb[dy*fb_w
 
 `nexus_v1_dmdf_model.c` parses DMDF `.MNS` files (big-endian, magic `"DMDF"`).
 
-For Phase 4: model-to-rasterizer bridge via `nexus_project_model_vert()` + `nexus_raster_creature_billboard()`. When a specific `.MNS` file is missing or corrupt:
-
-**Deterministic fallback (Phase 4 mandate):**
-1. Log diagnostic with missing filename + file hash (if available).
-2. Render placeholder billboard: flat shade palette 7 (mid-gray), width at expected scale.
-3. No crash, no zero return — placeholder always returns a visible quad.
+The geometry helpers are retained as source-study boundaries. The creature
+billboard route is no-draw until Saturn VDP1 command/CLUT/placement and
+DMDF/MNS ownership are captured. When a specific `.MNS` file is missing or
+corrupt, logging and receipt-only diagnostics are allowed; a gray placeholder
+or other visible fallback would be synthetic data and is not permitted.
 
 Full DMDF → rasterizer vertex pipeline (proper geometry, not just billboard) is scheduled for Nexus V2 Phase 2 (graphics pipeline).
 

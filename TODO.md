@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-CREATURE-VDP1-CAPTURE:** The generic creature billboard API is now
+  no-draw. Its old DM1-shaped perspective/flag behavior accepted a host
+  texture without Saturn VDP1 command, CLUT, placement, or DMDF/MNS owner
+  proof. Recover those bindings before admitting creature pixels.
+
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
   and the local English CUE by
