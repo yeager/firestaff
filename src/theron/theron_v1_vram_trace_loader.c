@@ -22,7 +22,11 @@ int theron_v1_vram_trace_load_raw(Theron_V1_Viewport *vp,
                                   const uint8_t *vram_data, int vram_size,
                                   const uint8_t *vce_data, int vce_size) {
     if (!vp || !vram_data || !vce_data) return -1;
-    if (vram_size < THERON_VRAM_SIZE || vce_size < THERON_VCE_SIZE) return -1;
+    /* A raw snapshot is a complete VDC/VCE capture, not a prefix view into a
+     * larger container.  The file-backed path already enforces these exact
+     * lengths; keep the in-memory API equally strict so callers cannot
+     * accidentally admit concatenated or container-tainted bytes. */
+    if (vram_size != THERON_VRAM_SIZE || vce_size != THERON_VCE_SIZE) return -1;
 
     if (!vp->vram_trace_data) {
         vp->vram_trace_data = (uint8_t *)malloc(THERON_VRAM_SIZE);

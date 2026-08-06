@@ -568,6 +568,8 @@
   Snapshot file intake now also requires exact 65536-byte VRAM and 1024-byte
   VCE files; trailing or concatenated bytes are rejected before palette/tile
   ownership is established.
+  The same exact-size rule now applies to the in-memory raw loader API, so a
+  caller cannot bypass the file boundary with a prefix of a larger capture.
 
   The raw media-intake regression now exercises the supplied assembled US ISO
   at `~/.firestaff/cache/theron/TQUS02-ceb02343868f80cec899e9b239aff2da.iso`

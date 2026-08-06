@@ -158,7 +158,15 @@ static void test_4bpp_interleaved(void) {
 }
 
 static void test_null_safety(void) {
+    uint8_t vram[THERON_VRAM_SIZE] = {0};
+    uint8_t vce[THERON_VCE_SIZE] = {0};
+    Theron_V1_Viewport vp;
+    memset(&vp, 0, sizeof(vp));
     assert(theron_v1_vram_trace_load_raw(NULL, NULL, 0, NULL, 0) == -1);
+    assert(theron_v1_vram_trace_load_raw(&vp, vram, THERON_VRAM_SIZE + 1,
+                                         vce, THERON_VCE_SIZE) == -1);
+    assert(theron_v1_vram_trace_load_raw(&vp, vram, THERON_VRAM_SIZE,
+                                         vce, THERON_VCE_SIZE + 1) == -1);
     theron_v1_vram_trace_unload(NULL);
     assert(theron_v1_vram_trace_populate_tiles(NULL, 0, 0, 0) == -1);
     printf("PASS: test_null_safety\n");

@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Theron raw VDC/VCE exact-size admission: tightened the
+  in-memory snapshot loader to require exactly 65,536 VRAM bytes and 1,024 VCE
+  bytes, matching the file-backed capture boundary. Oversized concatenated
+  buffers are now rejected, with regression coverage; the authenticated BAT
+  preview and all semantic no-draw gates remain unchanged.
+
 - ✅ 2026-08-06 Nexus startup title host no-draw gate: the public
   `nexus_render_title` entry point no longer copies authentic WARNING.BIN or
   TITLE.CG pixels/CLUT into a host framebuffer without a verified Saturn
