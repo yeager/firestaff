@@ -249,6 +249,12 @@ def verify(repo: Path) -> list[str]:
         if forbidden in creature:
             errors.append(
                 f"creature retains reduced-state CCM mutation study: {forbidden}")
+    if ("void dm2_v1_creature_tick(void) {\n"
+            "#ifndef FIRESTAFF_DM2_CREATURE_TESTING\n" not in creature or
+            "admitted only through dm2_v1_runtime's source-timer/DB4 route."
+            not in creature):
+        errors.append(
+            "production creature tick no longer closes the standalone fixture pool")
 
     actuator_path = repo / "src/dm2/dm2_v1_actuator_event_pc34_compat.c"
     if not actuator_path.exists():

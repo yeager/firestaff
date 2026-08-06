@@ -547,6 +547,7 @@ static DM2_V1_CreatureCCMTickObserver g_last_ccm_tick;
 static DM2_V1_CreatureDeathDropObserver g_last_death_drop;
 static int g_death_observer_count = 0;
 
+#ifdef FIRESTAFF_DM2_CREATURE_TESTING
 static void dm2_v1_creature_write_render_state(DM2_V1_CreatureInstance *c,
                                                int advance_tick)
 {
@@ -567,6 +568,7 @@ static void dm2_v1_creature_write_render_state(DM2_V1_CreatureInstance *c,
     }
     ++c->render_revision;
 }
+#endif
 
 /* dm2_v1_creature_spawn — spawn a creature instance.
  * Source: SkWinCore.cpp:16815 — ALLOC_NEW_CREATURE(type, mult, dir, x, y)
@@ -908,6 +910,7 @@ void dm2_v1_creature_reset_ccm_tick_observer(void) {
 }
 
 
+#ifdef FIRESTAFF_DM2_CREATURE_TESTING
 static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
                                          int slot) {
     if (!c) return;
@@ -930,6 +933,7 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
     g_last_ccm_tick.attack_cooldown_before = c->attack_cooldown;
     g_last_ccm_tick.attack_cooldown_after = c->attack_cooldown;
 }
+#endif
 
 /* Test-only legacy creature-fixture tick. It deliberately does not claim to
  * implement DM2_THINK_CREATURE or DM2_PROCEED_CCM: the isolated pool has no
@@ -937,6 +941,14 @@ static void dm2_v1_creature_run_ccm_tick(DM2_V1_CreatureInstance *c,
  * M11 never calls this helper; production creatures are owned by the
  * source-ordered timer/DB4 path in dm2_v1_runtime.c. */
 void dm2_v1_creature_tick(void) {
+#ifndef FIRESTAFF_DM2_CREATURE_TESTING
+    /* The standalone pool has no original DB4 record, CAII context, source
+     * timer, current-map chain, command stream or RNG owner.  It must not
+     * mutate a production session merely because an external caller reaches
+     * this legacy compatibility symbol.  DM2_THINK_CREATURE is instead
+     * admitted only through dm2_v1_runtime's source-timer/DB4 route. */
+    return;
+#else
     g_tick_counter++;
     for (int i = 0; i < DM2_MAX_CREATURE_INSTANCES; i++) {
         DM2_V1_CreatureInstance *c = &g_creature_pool[i];
@@ -963,6 +975,7 @@ void dm2_v1_creature_tick(void) {
             dm2_v1_creature_death_check(i);
         }
     }
+#endif
 }
 
 const char *dm2_v1_creature_source_evidence(void) {

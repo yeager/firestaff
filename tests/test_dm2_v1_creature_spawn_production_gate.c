@@ -39,12 +39,18 @@ int main(void)
         fputs("FAIL rejected creature pool changed production state\n", stderr);
         return 1;
     }
+    dm2_v1_creature_tick();
+    if (dm2_v1_creature_export_live_state(&after) != 0 ||
+        after.tick_counter != before.tick_counter) {
+        fputs("FAIL direct tick advanced the fixture-only creature pool\n", stderr);
+        return 1;
+    }
     dm2_v1_runtime_tick();
     if (dm2_v1_creature_export_live_state(&after) != 0 ||
         after.tick_counter != before.tick_counter) {
         fputs("FAIL runtime tick advanced the fixture-only creature pool\n", stderr);
         return 1;
     }
-    puts("PASS DM2 production creature-spawn gate");
+    puts("PASS DM2 production creature-fixture gate");
     return 0;
 }

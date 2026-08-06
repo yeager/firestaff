@@ -1,5 +1,4 @@
 # DM2 delayed movement receipt ownership (2026-08-07)
-
 - ✅ The DM2 movement execution boundary now keeps the source-authenticated
   `DM2_CALC_PLAYER_WALK_DELAY` result while refusing to claim that the
   `glbIsPlayerMoving` half-step interpolation has started. When the real
@@ -8,6 +7,13 @@
   The focused movement regression covers the real source delay and this
   fail-closed presentation contract. The live pose/countdown handoff remains
   open until those source owners are imported.
+
+# DM2 standalone creature-fixture tick production gate (2026-08-07)
+
+- ✅ The public legacy creature tick now returns without mutation in product
+  builds. Its standalone pool has no original DB4, CAII, timer, map-chain,
+  command-stream or RNG owner; focused fixture targets explicitly compile
+  `FIRESTAFF_DM2_CREATURE_TESTING=1` to retain their regression coverage.
 
 # DM1 champion dead-hand-refresh synthetic audit isolation (2026-08-07)
 
