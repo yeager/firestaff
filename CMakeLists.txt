@@ -4287,6 +4287,12 @@ list(REMOVE_ITEM M10_SOURCES
 # metadata-only audit out of the broad M10 production archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0601_g0650_mouse_graphics_memory_source_audit_pc34_compat.c")
+# `dm1_v1_f0181_f0200_group_source_audit_pc34_compat.c` is a metadata-only
+# source-owner inventory.  It has no M11/runtime caller and does not consume
+# GROUP/DUNGEON bytes; compile it only in its explicit audit test so its
+# source labels cannot be mistaken for a production group implementation.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0181_f0200_group_source_audit_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part

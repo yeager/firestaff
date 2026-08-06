@@ -7,6 +7,15 @@
   bounded frame contract; no decompression, tile, map or object semantics were
   promoted.
 
+# DM1 F0181–F0200 group source-owner audit isolation (2026-08-06)
+
+- ✅ Removed the metadata-only F0181–F0200 source-owner table from the broad
+  M10 compatibility archive. Caller search found no M11/runtime consumer, and
+  the table reads no real GROUP/DUNGEON bytes; its explicit audit test remains
+  available for ReDMCSB ownership and fail-closed checks.
+- ✅ Verification: `test_dm1_v1_f0181_f0200_group_source_audit_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the

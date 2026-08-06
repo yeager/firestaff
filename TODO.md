@@ -66,6 +66,11 @@
   the actual mouse, champion, GRAPHICS.DAT and runtime-memory owners are the
   modules named by its rows.
 
+- **DM1-F0181-F0200-OWNER-AUDIT:** The F0181–F0200 table is metadata-only
+  source-owner inventory. It has no M11/runtime caller and does not consume
+  real GROUP or DUNGEON bytes. Keep it in the explicit audit test until each
+  listed function is bound to its live owner and authenticated DM1 state.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The
