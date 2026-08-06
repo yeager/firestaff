@@ -33,16 +33,17 @@ static const Theron_QuestBlockOffsets g_quest_offsets[THERON_TRACK02_DUNGEON_COU
  * guesses: dimensions, map bytes, ground-reference tables, and item-part
  * boundaries were matched in the authenticated TQJP02.bin user-data image.
  * The field order is corroborated by DMBUILDER6/src/loaddungeon.c
- * loadTheronsQuestDungeonData().  JP text bytes are localized, so their
- * offsets are carried by the same record-size arithmetic as the US layout. */
+ * loadTheronsQuestDungeonData().  JP text ownership is deliberately not
+ * included here: candidate windows failed the real codon-structure check and
+ * remain fail-closed until their consumer is identified. */
 static const Theron_QuestBlockOffsets g_jp_quest_offsets[THERON_TRACK02_DUNGEON_COUNT] = {
-    { 0x0002991D, 0x00029B03, 0x0002A05D, 0x0002A53B, 0x0002B000, 0x0002C128 },
-    { 0x00069D50, 0x0006A006, 0x0006A5C2, 0x0006AA4E, 0x0006B000, 0x0006C6CC },
-    { 0x000AA261, 0x000AA422, 0x000AA8DA, 0x000AAD6E, 0x000AB000, 0x000AC4C8 },
-    { 0x000E9B47, 0x000E9CD4, 0x000EA188, 0x000EA5FA, 0x000EB000, 0x000ECA2C },
-    { 0x0012A3CB, 0x0012A544, 0x0012AABE, 0x0012AF6C, 0x0012B000, 0x0012C906 },
-    { 0x00169860, 0x00169A4C, 0x0016A118, 0x0016A618, 0x0016B000, 0x0016C084 },
-    { 0x001AA043, 0x001AA1FE, 0x001AA857, 0x001AACCF, 0x001AB000, 0x001AC40E },
+    { 0x0002991D, 0x00029B03, 0x0002A05D, 0x0002A53B, 0x0002B000, 0 },
+    { 0x00069D50, 0x0006A006, 0x0006A5C2, 0x0006AA4E, 0x0006B000, 0 },
+    { 0x000AA261, 0x000AA422, 0x000AA8DA, 0x000AAD6E, 0x000AB000, 0 },
+    { 0x000E9B47, 0x000E9CD4, 0x000EA188, 0x000EA5FA, 0x000EB000, 0 },
+    { 0x0012A3CB, 0x0012A544, 0x0012AABE, 0x0012AF6C, 0x0012B000, 0 },
+    { 0x00169860, 0x00169A4C, 0x0016A118, 0x0016A618, 0x0016B000, 0 },
+    { 0x001AA043, 0x001AA1FE, 0x001AA857, 0x001AACCF, 0x001AB000, 0 },
 };
 
 static const uint8_t g_maps_per_dungeon[THERON_TRACK02_DUNGEON_COUNT] = {

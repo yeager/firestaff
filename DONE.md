@@ -50948,3 +50948,7 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   variant offset table instead of silently reusing US offsets. The real JP BIN
   passes all seven dungeon object-record gates with zero raw-only records;
   host item/combat/graphics semantics remain explicitly unbound.
+- ✅ 2026-08-06 Theron JP text fail-closed correction: the JP variant no longer
+  exposes an unverified text offset or reads candidate ASCII/fill windows as
+  codons. US text decoding is unchanged; JP text remains blocked until its
+  actual source block and consumer are identified.

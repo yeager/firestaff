@@ -433,7 +433,9 @@
   The same map/ground-reference/item-record handoff now accepts the
   authenticated Japanese `TQJP02.bin` offset table through the full loader;
   this verifies JP source records but does not bind their host gameplay or
-  graphics semantics. JP ISO offsets remain separately gated.
+  graphics semantics. JP ISO offsets remain separately gated. JP text-codon
+  offsets are also intentionally gated after candidate windows failed the
+  real codon-structure check.
 
   The source receipt decoder now also reads the exact six-byte missile and
   two-byte cloud payloads after their linked-list references, matching the

@@ -216,7 +216,8 @@ int theron_v1_track02_thing_data_load_for_variant(
     }
 
     uint16_t text_size = theron_v1_track02_dungeon_text_data_size(dungeon_index);
-    if (text_size > 0) {
+    if (variant != THERON_TRACK02_VARIANT_US_BIN) text_size = 0;
+    if (text_size > 0 && qb.text_data_offset != 0) {
         size_t text_abs = UD_BASE + qb.text_data_offset;
         size_t text_bytes = (size_t)text_size * 2;
         if (!theron_range_fits(text_abs, text_bytes, ud_size)) return 0;

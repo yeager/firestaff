@@ -204,6 +204,7 @@ static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
     assert(qb.map_data_offset == 0x0012A544);
     assert(qb.items_part1_offset == 0x0012AF6C);
     assert(qb.items_part2_offset == 0x0012B000);
+    assert(qb.text_data_offset == 0);
 
     for (unsigned int d = 0; d < 7; d++) {
         Theron_DungeonData dd;
