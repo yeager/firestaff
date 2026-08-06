@@ -468,6 +468,16 @@
   `test_csb_v1_fmtowns_m11_game_handoff`, plus `cmake --build build --target
   firestaff` and `git diff --check`.
 
+- ✅ 2026-08-06 CSB scanner edition inventory: `firestaff --scan-data` now
+  lists every hash-verified CSB edition alongside the required launch pair.
+  This makes independently admitted FM Towns English and Japanese CDATA/CJDATA
+  payloads visible even if another original edition owns the selected cache.
+  The report retains each archive/member provenance and does not promote
+  optional source media into a launch requirement. Verification: a real CSB
+  data-root scan reports Amiga 3.1 plus both FM Towns editions;
+  `cmake --build build --target firestaff` and
+  `git diff --check` pass.
+
 - ✅ DM1 FM Towns no longer borrows the PC34 startup presentation. A selected
   `fmtowns-en` or `fmtowns-ja` edition is routed around the PC34
   `SWSH -> TITLE -> ENTRANCE` transaction and opens only its selected,

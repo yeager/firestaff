@@ -169,6 +169,32 @@ static void print_csb_verified_source_media(const M12_AssetStatus* status) {
     }
 }
 
+/* Required GRAPHICS.DAT/DUNGEON.DAT hashes establish launchability, but a
+ * shared data root can contain several authentic CSB editions.  Report each
+ * matched catalogue entry so the Victor FM Towns CD is visible even when a
+ * different valid edition supplies the selected runtime cache. */
+static void print_csb_verified_editions(const M12_AssetStatus* status) {
+    size_t count;
+    size_t i;
+    int heading_printed = 0;
+    if (!status) return;
+    count = M12_AssetStatus_GetVersionCount("csb");
+    for (i = 0U; i < count; ++i) {
+        const M12_AssetVersionStatus* version =
+            M12_AssetStatus_GetVersion(status, "csb", i);
+        if (!version || !version->matched || !version->versionId ||
+            !version->label || version->matchedPath[0] == '\0') {
+            continue;
+        }
+        if (!heading_printed) {
+            printf("  Verified CSB editions:\n");
+            heading_printed = 1;
+        }
+        printf("    %-26s FOUND  %s\n", version->label,
+               version->matchedPath);
+    }
+}
+
 static void print_scan_game(const M12_AssetStatus* status,
                             const char* gameId,
                             const char* title,
@@ -199,6 +225,7 @@ static void print_scan_game(const M12_AssetStatus* status,
         printf("\n");
     }
     if (strcmp(gameId, "csb") == 0) {
+        print_csb_verified_editions(status);
         print_csb_verified_source_media(status);
     }
     if (strcmp(gameId, "nexus") == 0) {

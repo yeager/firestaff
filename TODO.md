@@ -724,6 +724,9 @@
   F0750 returns, and never chains back to `SWITCHTW.EXP` or a PC34 endgame
   screen. The real English cache regression traverses Switch, Game, C004,
   C002/C003, C017/F0128, then the complete 419-frame `ENDING.ANM` stream.
+  The CLI scanner now reports every hash-verified CSB edition, including both
+  F31 English and Japanese archive members, rather than implying that only
+  the selected cache's `GRAPHICS.DAT`/`DUNGEON.DAT` pair was found.
 
 - **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
   explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP
