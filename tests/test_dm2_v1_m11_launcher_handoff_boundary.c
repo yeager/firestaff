@@ -18,14 +18,14 @@
  *      intent.gameId == "dm2" and intent.valid == 0 when assets
  *      are absent (without false-positive launch readiness).
  *   4. M11_GameView_Start with gameId="dm2" and an empty data
- *      dir returns 0, sets state->lastOutcome to "DM2 ASSETS
- *      MISSING", and reports sourceKind stays at the default
+ *      dir returns 0 without publishing host-authored status text, and
+ *      reports sourceKind stays at the default
  *      BUILTIN_CATALOG (proving the DM2 hand-off branch was
  *      entered and failed cleanly instead of falling through
  *      to the DM1 dungeon loader).
  *   5. When a directory contains synthetic GRAPHICS.DAT/DUNGEON.DAT
- *      lookalikes, M11 rejects it before allocating DM2 state. The outcome
- *      must name a DM2 asset failure, never reach a synthetic boot fallback.
+ *      lookalikes, M11 rejects it before allocating DM2 state and leaves the
+ *      visible status channel unbound.
  *   6. When real hash-verified DM2 data is available under the
  *      default Firestaff data root, the production M12 selected-entry
  *      path enters M11 DM2, keeps the startup menu active, blocks idle
@@ -296,9 +296,8 @@ static void run_m11_dm2_handoff_branch(void) {
 
     /* Boundary 3: M11_GameView_Start with gameId="dm2" reaches the
      * DM2 hand-off branch. With no DM2 assets in the data dir, the
-     * branch returns 0 and writes "DM2 ASSETS MISSING" to
-     * state->lastOutcome. The state remains inactive because
-     * dm2_v1_boot_enter_game never ran. */
+     * branch returns 0 without publishing host-authored status text.
+     * The state remains inactive because dm2_v1_boot_enter_game never ran. */
     memset(&spec, 0, sizeof(spec));
     spec.title = "DUNGEON MASTER II: SKULLKEEP";
     spec.gameId = "dm2";
@@ -315,11 +314,8 @@ static void run_m11_dm2_handoff_branch(void) {
                 "M11 view stays inactive when DM2 hand-off branch fails");
     expect_true(view.startedFromLauncher == 0,
                 "M11 did not mark a startedFromLauncher handoff on failure");
-    expect_true(view.lastOutcome[0] != '\0' &&
-                strstr(view.lastOutcome, "DM2") != NULL,
-                "M11 lastOutcome references DM2 (proves DM2 branch was reached)");
-    expect_true(strcmp(view.lastOutcome, "DM2 ASSETS MISSING") == 0,
-                "M11 lastOutcome is exactly \"DM2 ASSETS MISSING\"");
+    expect_true(view.lastOutcome[0] == '\0',
+                "M11 keeps lastOutcome empty without a source status producer");
     M11_GameView_Shutdown(&view);
 }
 
@@ -345,11 +341,9 @@ static void run_m11_dm2_unverified_happy_path(void) {
     snprintf(synthDataDir, sizeof(synthDataDir), "%s", synthRoot);
 
     /* Boundary 4: the production hash scanner must reject a synthetic
-     * lookalike before dm2_v1_boot_enter_game. Depending on whether the
-     * scanner reports no candidate or a candidate with an unrecognised hash,
-     * M11 reports MISSING or UNVERIFIED; neither state is launchable.
-     * Source: dm2_v1_boot_startup_launch_alloc, with the original
-     * SKProject GAME_LOAD boundary retaining ownership of game allocation. */
+     * lookalike before dm2_v1_boot_enter_game. The structured prepare result
+     * remains available to the caller, but no host-authored status text is
+     * allowed to stand in for the original GUI. */
     memset(&spec, 0, sizeof(spec));
     spec.title = "DUNGEON MASTER II: SKULLKEEP";
     spec.gameId = "dm2";
@@ -362,16 +356,8 @@ static void run_m11_dm2_unverified_happy_path(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec) == 0,
                 "M11 DM2 hand-off branch refuses unverified synthetic assets");
-    expect_true(view.lastOutcome[0] != '\0' &&
-                strstr(view.lastOutcome, "DM2") != NULL,
-                "M11 lastOutcome names DM2 on the unverified failure path");
-    /* Filename-only lookalikes can be hidden by the hash scanner and report
-     * MISSING; an explicitly discovered wrong-hash candidate reports
-     * UNVERIFIED. Both results prove no synthetic boot state was accepted. */
-    expect_true(strcmp(view.lastOutcome, "DM2 ASSETS MISSING") == 0 ||
-                strcmp(view.lastOutcome, "DM2 ASSETS UNVERIFIED") == 0 ||
-                strcmp(view.lastOutcome, "DM2 ENTER GAME FAILED") == 0,
-                "M11 lastOutcome rejects the synthetic DM2 lookalike");
+    expect_true(view.lastOutcome[0] == '\0',
+                "M11 keeps synthetic-data failure status unbound");
     M11_GameView_Shutdown(&view);
     /* Best-effort cleanup; not all hosts allow rmdir on the
      * scratch root, and the test is skip-safe by design. */
@@ -448,12 +434,15 @@ static void run_real_m12_dm2_handoff_if_available(void) {
                 "real DM2 M12 handoff loads the first DM2 level");
     expect_true(view.dm2State.startup_menu_active == 1,
                 "real DM2 M12 handoff stops at the DM2 startup menu");
+    expect_true(view.dm2FmtownsTitleBound == 1 &&
+                view.dm2FmtownsTitleFrameReceipt.valid == 1,
+                "real DM2 FM Towns title frame remains source-receipted");
     expect_true(view.dm2State.startup_menu_row_count >= 1,
                 "real DM2 startup menu exposes at least one row");
     expect_true(view.dungeonPath[0] != '\0',
                 "real DM2 M12 handoff exposes the verified dungeon path");
-    expect_true(strstr(view.lastOutcome, "DM2") != NULL,
-                "real DM2 M12 handoff reports a DM2 outcome");
+    expect_true(view.lastOutcome[0] == '\0',
+                "real DM2 M12 handoff keeps startup status source-owned");
 
     initialTick = view.dm2State.tick_count;
     idleResult = M11_GameView_AdvanceIdleTick(&view);
@@ -467,8 +456,10 @@ static void run_real_m12_dm2_handoff_if_available(void) {
 
     memset(framebuffer, 0, sizeof(framebuffer));
     M11_GameView_Draw(&view, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
-    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 200,
-                "real DM2 startup menu first frame is non-blank");
+    /* The first HME-242 animation frame is sparse; its source receipt, not a
+     * host status label or arbitrary pixel-count threshold, proves admission. */
+    expect_true(count_nonzero_pixels(framebuffer, sizeof(framebuffer)) > 0,
+                "real DM2 startup menu first source frame is non-blank");
     expect_true(view.lastOutcome[0] == '\0',
                 "real DM2 startup frame uses TITLE GDAT without host status text");
     expect_true(view.dm2State.startup_menu_active == 1 &&
@@ -554,8 +545,8 @@ static void run_real_m12_dm2_quick_resume_if_available(void) {
                 "real DM2 quick resume mirrors saved party pose");
     expect_true(view.dm2State.tick_count == 88,
                 "real DM2 quick resume mirrors saved game tick");
-    expect_true(strstr(view.lastOutcome, "DM2 RESUMED") != NULL,
-                "real DM2 quick resume reports resumed status");
+    expect_true(view.lastOutcome[0] == '\0',
+                "real DM2 quick resume keeps resumed status source-owned");
 
     M11_GameView_Shutdown(&view);
     M12_StartupMenu_Destroy(&menu);

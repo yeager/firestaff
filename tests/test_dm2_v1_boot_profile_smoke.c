@@ -457,10 +457,9 @@ static void test_startup_launch_alloc_missing_data(void)
           "startup launch failure has stable diagnostic name");
     CHECK(launch.failure_status_scope != NULL &&
               strcmp(launch.failure_status_scope, "BOOT") == 0,
-          "startup launch missing-data failure has boot status scope");
-    CHECK(launch.failure_status != NULL &&
-              strcmp(launch.failure_status, "DM2 ASSETS MISSING") == 0,
-          "startup launch missing-data failure has host status");
+          "startup launch missing-data failure retains structural scope");
+    CHECK(launch.failure_status == NULL,
+          "startup launch missing-data failure has no host-authored status");
     memset(&failure_receipt, 0xff, sizeof(failure_receipt));
     CHECK(dm2_v1_boot_startup_prepare_failure_host_receipt(
               &launch,
@@ -469,9 +468,8 @@ static void test_startup_launch_alloc_missing_data(void)
                   DM2_V1_STARTUP_HOST_INPUT_IGNORED &&
               failure_receipt.status_scope != NULL &&
               strcmp(failure_receipt.status_scope, "BOOT") == 0 &&
-              failure_receipt.status != NULL &&
-              strcmp(failure_receipt.status, "DM2 ASSETS MISSING") == 0,
-          "startup launch failure receipt is boot-owned and M11-ready");
+              failure_receipt.status == NULL,
+          "startup launch failure receipt keeps visible status unbound");
     dm2_v1_boot_startup_launch_cleanup(&launch);
 }
 

@@ -1,3 +1,18 @@
+# DM2 startup status-panel host-text removal (2026-08-06)
+
+- ✅ Removed the last host-authored DM2 boot-failure labels and M11 startup/
+  resume log substitutions from the live launch route. `prepare_result` and
+  the structural `BOOT` scope remain available, but `status`, `lastOutcome`,
+  and the generic log surface stay empty until SKProject
+  `c_gui_draw`/dialogue owns the visible producer.
+- ✅ Updated the handoff regression to prove source-owned status silence and
+  to accept the sparse first HME-242 animation frame through its authenticated
+  title-frame receipt rather than a host-defined pixel-density threshold.
+- ✅ Verification: `test_dm2_v1_boot_profile_smoke` (96/0),
+  `test_dm2_v1_m11_launcher_handoff_boundary` (33/0, 1 documented skip), and
+  `verify_dm2_production_placeholder_boundary.py` pass against the mounted
+  DM2 corpus. No release was made.
+
 # DM1 mirror C045/C160 rotation synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only C045/C160 party/panel/item fixture from M10.

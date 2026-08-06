@@ -18495,9 +18495,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             (void)m11_dm2_startup_apply_host_receipt(
                 state,
                 &failureReceipt);
-            m11_log_event(state, M11_COLOR_RED,
-                          "T0: DM2 BOOT PREPARE FAILED: %s",
-                          failureReceipt.status);
+            /* No source-owned c_gui_draw/log producer is bound for this
+             * failure path. Do not publish a host-authored English status or
+             * log line as a substitute for the original DM2 GUI. */
+            m11_set_status(state, NULL, NULL);
             return 0;
         }
         m11_dm2_bind_verified_sound_playback();
@@ -18505,10 +18506,11 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
             m11_dm2_cdda_play, m11_dm2_cdda_stop, state);
         if (spec->savePath && spec->savePath[0] != '\0') {
             if (!m11_dm2_resume_from_save_path(state, &launch, spec->savePath)) {
-                m11_log_event(state, M11_COLOR_RED,
-                              "T0: DM2 RESUME FAILED: %s",
-                              spec->savePath);
+                /* DM2's save/dialogue owner is not bound to M11's generic
+                 * status/log surfaces. Keep the structured failure in the
+                 * resume receipt, without inventing player-facing text. */
                 dm2_v1_boot_startup_launch_cleanup(&launch);
+                m11_set_status(state, NULL, NULL);
                 return 0;
             }
         } else {
@@ -18517,13 +18519,10 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                     &launch,
                     &receipt)) {
                 (void)m11_dm2_startup_apply_launch_receipt(state, &receipt);
-                m11_log_event(state,
-                              M11_COLOR_RED,
-                              "T0: %s",
-                              receipt.host_receipt.status
-                                  ? receipt.host_receipt.status
-                                  : "DM2 START MENU FAILED");
+                /* No source-owned c_gui_draw/log producer is bound for this
+                 * branch. Preserve the structured receipt, not a host label. */
                 dm2_v1_boot_startup_launch_cleanup(&launch);
+                m11_set_status(state, NULL, NULL);
                 return 0;
             }
             (void)m11_dm2_startup_apply_launch_receipt(state, &receipt);
@@ -18538,8 +18537,13 @@ int M11_GameView_Start(M11_GameViewState* state, const M11_GameLaunchSpec* spec)
                                                 spec,
                                                 &runtime_receipt)) {
             dm2_v1_boot_startup_launch_cleanup(&launch);
+            m11_set_status(state, NULL, NULL);
             return 0;
         }
+        /* The generic M11 initializer seeds a status line for other games.
+         * DM2 SHOW_MENU_SCREEN owns this surface; clear that seed before the
+         * source-owned title/menu frame is presented. */
+        m11_set_status(state, NULL, NULL);
         /* Tier 1 launch smoke: keep the DM2 direct-launch milestone
          * observable to headless probes, matching the CSB stderr-pipe above.
          * The boot itself stays owned by the DM2 V1 branch documented in

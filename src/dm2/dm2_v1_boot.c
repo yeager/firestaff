@@ -10641,22 +10641,14 @@ int dm2_v1_boot_complete_support_receipt_from_runtime_state(
 static const char *dm2_v1_boot_startup_prepare_host_status(
     DM2_V1_BootStartupPrepareResult result)
 {
-    switch (result) {
-    case DM2_V1_BOOT_STARTUP_PREPARE_BAD_INPUT:
-        return "DM2 BAD INPUT";
-    case DM2_V1_BOOT_STARTUP_PREPARE_OOM:
-        return "DM2 OOM";
-    case DM2_V1_BOOT_STARTUP_PREPARE_SCAN_FAILED:
-        return "DM2 ASSETS MISSING";
-    case DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS:
-        return "DM2 ASSETS UNVERIFIED";
-    case DM2_V1_BOOT_STARTUP_PREPARE_ENTER_GAME_FAILED:
-        return "DM2 ENTER GAME FAILED";
-    case DM2_V1_BOOT_STARTUP_PREPARE_RUNTIME_BIND_FAILED:
-        return "DM2 RUNTIME BIND FAILED";
-    default:
-        return dm2_v1_boot_startup_prepare_result_name(result);
-    }
+    /* SKProject c_gui_draw/DM2_DIALOGUE owns player-facing startup status.
+     * The compatibility layer has no authenticated status-panel producer,
+     * so a host-authored English label is not a valid failure receipt. Keep
+     * the structured prepare_result for control flow and diagnostics, but
+     * leave the visible status channel empty until the original GUI route is
+     * bound. */
+    (void)result;
+    return NULL;
 }
 
 static void dm2_v1_boot_startup_set_failure_status(
