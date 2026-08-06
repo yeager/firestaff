@@ -6,6 +6,13 @@
   in-memory PC reader is complete. FM Towns and Amiga still use their existing
   selected-media RAM owners, so their verified archive launches remain intact.
   ZIP, ISO, renamed-loose and real FM Towns direct/English-companion ZIP
+
+- ✅ 2026-08-06 Nexus PRS3 readiness correction: a successful bounded DMWeb
+  decode of the 162 real MENU.BPK streams no longer promotes a runtime upload
+  or renderer handoff. Runtime decode/upload receipts stay `BLOCKED_PRS3`,
+  expose only diagnostic byte counts/hashes, and emit no host pixels until
+  Saturn CLUT ownership, VDP1 upload framing and destination placement are
+  authenticated. Real-corpus, boot-hash, surface-class and renderer-handoff
   regressions pass.
 
 - ✅ 2026-08-06 Theron text/disassembly boundary verification: the real

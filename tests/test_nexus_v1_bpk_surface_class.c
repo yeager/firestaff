@@ -416,15 +416,15 @@ static void test_prs3_host_route_receipt(void) {
     rc = nexus_v1_dmdf_import_bpk_material_bank_host_route(
         data, sizeof(data), &bank, NEXUS_V1_DGN_MATERIAL_CATEGORY_FLOOR,
         &host);
-    expect(rc == 0, "PRS3 BPK host route accepts decoded floor surface");
-    expect(host.upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED &&
-               host.ready_uploads == 1U &&
-               host.blocked_prs3_uploads == 0U,
-           "PRS3 host route records a decoded upload, not a blocker");
+    expect(rc == 0, "PRS3 BPK host route keeps decoded floor evidence gated");
+    expect(host.upload_route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3 &&
+               host.ready_uploads == 0U &&
+               host.blocked_prs3_uploads == 1U,
+           "PRS3 host route keeps bounded decode evidence separate from upload readiness");
     expect(host.expected_upload_bytes == 4U &&
-               host.extractable_upload_bytes == 4U &&
+               host.extractable_upload_bytes == 0U &&
                host.fallback_visuals_permitted == 0,
-           "PRS3 host route exposes decoded upload byte count");
+           "PRS3 host route exposes expected bytes without upload permission");
 
     memset(&coverage, 0, sizeof(coverage));
     expect(nexus_v1_dmdf_material_category_coverage_receipt(
@@ -934,13 +934,15 @@ static void test_runtime_decode_receipt_routes(void) {
     rc = nexus_v1_bpk_archive_runtime_decode_receipt(
         data, sizeof(data), &receipt);
     expect(rc == 0, "decode receipt returns 0 for literal PRS3 archive");
-    expect(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED,
-           "decode receipt promotes literal PRS3 archive to decoded");
+    expect(receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3,
+           "decode receipt keeps literal PRS3 archive evidence-only");
     expect(receipt.prs3_decode_successes == 1U &&
                receipt.prs3_decode_failures == 0U &&
                receipt.prs3_decoded_surface_bytes > 0U &&
-               receipt.decode_blocked == 0,
-           "decode receipt decodes the literal PRS3 surface");
+               receipt.prs3_decoder_promoted == 0 &&
+               receipt.prs3_decoded_pixels_emitted == 0U &&
+               receipt.decode_blocked == 1,
+           "decode receipt records bounded bytes without renderer readiness");
 
     make_synthetic_stored_bpk(data, sizeof(data));
     memset(&receipt, 0, sizeof(receipt));
@@ -1359,14 +1361,16 @@ static void test_optional_local_menu_bpk(void) {
     expect(nexus_v1_bpk_archive_runtime_decode_receipt(
                data, size, &decode_receipt) == 0,
            "local MENU.BPK runtime decode receipt returns 0");
-expect(decode_receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED,
-           "local MENU.BPK decode route is ready-decoded");
+    expect(decode_receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3,
+           "local MENU.BPK decode route remains blocked for Saturn presentation proof");
     expect(decode_receipt.prs3_decode_successes == 162U &&
                decode_receipt.prs3_decode_failures == 0U &&
                decode_receipt.prs3_decoded_surface_bytes > 0U,
            "local MENU.BPK decodes all PRS3 surfaces");
-    expect(decode_receipt.decode_blocked == 0,
-           "local MENU.BPK decode receipt unblocks rendering");
+    expect(decode_receipt.decode_blocked == 1 &&
+               decode_receipt.prs3_decoder_promoted == 0 &&
+               decode_receipt.prs3_decoded_pixels_emitted == 0U,
+           "local MENU.BPK decode receipt keeps rendering blocked");
 
     memset(upload_rows, 0, sizeof(upload_rows));
     memset(&upload_receipt, 0, sizeof(upload_receipt));
@@ -1375,29 +1379,29 @@ expect(decode_receipt.route == NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED,
                (uint32_t)(sizeof(upload_rows) / sizeof(upload_rows[0])),
                &upload_receipt) == 0,
            "local MENU.BPK upload plan returns 0");
-    expect(upload_receipt.route == NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED,
-           "local MENU.BPK upload route is ready-decoded");
+    expect(upload_receipt.route == NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3,
+           "local MENU.BPK upload route remains blocked for Saturn presentation proof");
     expect(upload_receipt.surface_entries == 162U &&
                upload_receipt.directory_trailer_entries == 1U &&
                upload_receipt.directory_trailer_found == 1 &&
                upload_receipt.directory_trailer_at_entry_zero == 1 &&
                upload_receipt.directory_trailer_valid == 1 &&
-               upload_receipt.blocked_prs3_uploads == 0U &&
-               upload_receipt.ready_uploads == 162U &&
+               upload_receipt.blocked_prs3_uploads == 162U &&
+               upload_receipt.ready_uploads == 0U &&
                upload_receipt.planned_rows == 162U,
            "local MENU.BPK upload plan decodes all PRS3 surfaces");
     expect(upload_receipt.truncated == 1,
            "local MENU.BPK upload plan marks bounded row receipt");
-    expect(upload_receipt.extractable_upload_bytes > 0U &&
+    expect(upload_receipt.extractable_upload_bytes == 0U &&
                upload_receipt.fallback_visuals_permitted == 0,
-           "local MENU.BPK upload plan exposes decoded upload bytes");
+           "local MENU.BPK upload plan withholds decoded upload bytes");
     expect(upload_rows[0].entry_index == 1U &&
-               upload_rows[0].decode_blocked == 0 &&
-               upload_rows[0].upload_ready == 1 &&
+               upload_rows[0].decode_blocked == 1 &&
+               upload_rows[0].upload_ready == 0 &&
                upload_rows[0].expected_output_bytes ==
                    (uint32_t)upload_rows[0].width *
                        (uint32_t)upload_rows[0].height,
-           "local MENU.BPK upload row is decoded and ready");
+           "local MENU.BPK upload row remains evidence-only");
 
     free(data);
 }

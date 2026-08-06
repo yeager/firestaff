@@ -2262,13 +2262,19 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
                             (int)plan.pixel_count);
                     if (dr.success &&
                         dr.bytes_produced == plan.pixel_count) {
+                        /* DMWeb's PRS3 grammar is now useful for bounded
+                         * inspection, but a successful host decode does not
+                         * prove Saturn CLUT ownership, VDP1 upload framing,
+                         * or the renderer's destination semantics. Keep the
+                         * row evidence-only until the authenticated capture
+                         * gate is available. */
                         row.status =
-                            NEXUS_V1_BPK_SURFACE_HANDOFF_READY_DECODED;
-                        row.decode_blocked = 0;
-                        row.evidence_only = 0;
-                        row.renderer_handoff_blocked = 0;
-                        row.upload_blocked = 0;
-                        row.decoded_pixels_emitted = dr.bytes_produced;
+                            NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3;
+                        row.decode_blocked = 1;
+                        row.evidence_only = 1;
+                        row.renderer_handoff_blocked = 1;
+                        row.upload_blocked = 1;
+                        row.decoded_pixels_emitted = 0U;
                         row.fallback_visuals_permitted = 0;
                         ++out_receipt->prs3_decode_successes;
                         out_receipt->prs3_decoded_surface_bytes +=
@@ -2319,13 +2325,7 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
                     row.header_minus_payload;
                 out_receipt->first_prs3_compression = row.compression;
             }
-            if (row.status == NEXUS_V1_BPK_SURFACE_HANDOFF_READY_DECODED) {
-                row.upload_ready = 1;
-                ++out_receipt->ready_uploads;
-                out_receipt->extractable_upload_bytes += expected;
-            } else {
-                ++out_receipt->blocked_prs3_uploads;
-            }
+            ++out_receipt->blocked_prs3_uploads;
             out_receipt->expected_upload_bytes += expected;
         } else if ((uint64_t)entry.payload_size < expected) {
             row.status = NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_TRUNCATED;
@@ -2368,8 +2368,6 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_PRS3;
     } else if (out_receipt->blocked_truncated_uploads > 0U) {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_TRUNCATED;
-    } else if (out_receipt->ready_uploads > handoff.ready_stored_surfaces) {
-        out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_READY_DECODED;
     } else if (out_receipt->truncated) {
         out_receipt->route = NEXUS_V1_BPK_UPLOAD_ROUTE_BLOCKED_CAPACITY;
     } else {
@@ -2383,10 +2381,8 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
             ? 1 : 0;
     out_receipt->prs3_evidence_only =
         (out_receipt->blocked_prs3_uploads > 0U) ? 1 : 0;
-    out_receipt->prs3_decoder_promoted =
-        (out_receipt->prs3_decode_successes > 0U) ? 1 : 0;
-    out_receipt->prs3_decoded_pixels_emitted =
-        (uint32_t)out_receipt->prs3_decoded_surface_bytes;
+    out_receipt->prs3_decoder_promoted = 0;
+    out_receipt->prs3_decoded_pixels_emitted = 0U;
     out_receipt->prs3_upload_blocked =
         (out_receipt->blocked_prs3_uploads > 0U) ? 1 : 0;
     /* MENU.BPK is a production startup dependency. A stored directory entry
@@ -2551,8 +2547,11 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
         out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3;
     } else if (out_receipt->blocked_truncated_surfaces > 0U) {
         out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_TRUNCATED;
-    } else if (out_receipt->prs3_decode_successes > 0U) {
-        out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_READY_DECODED;
+    } else if (out_receipt->blocked_prs3_surfaces > 0U) {
+        /* A bounded PRS3 decode is diagnostic evidence only. It does not
+         * authenticate Saturn CLUT ownership, VDP1 upload framing, or the
+         * destination used by the original renderer. */
+        out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_BLOCKED_PRS3;
     } else {
         out_receipt->route = NEXUS_V1_BPK_DECODE_ROUTE_READY_STORED;
     }
@@ -2566,10 +2565,8 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
          out_receipt->prs3_stream_plans > 0U ||
          out_receipt->prs3_decode_failures > 0U)
             ? 1 : 0;
-    out_receipt->prs3_decoder_promoted =
-        (out_receipt->prs3_decode_successes > 0U) ? 1 : 0;
-    out_receipt->prs3_decoded_pixels_emitted =
-        (uint32_t)out_receipt->prs3_decoded_surface_bytes;
+    out_receipt->prs3_decoder_promoted = 0;
+    out_receipt->prs3_decoded_pixels_emitted = 0U;
     out_receipt->renderer_handoff_blocked =
         out_receipt->decode_blocked;
     out_receipt->fallback_visuals_permitted = 0;

@@ -93,6 +93,11 @@
   emission, destination placement or viewport/menu ownership. Do not promote
   the decoder or any VDP1 candidate into production pixels without an
   instrumented Saturn/Mednafen capture.
+  2026-08-06: runtime decode and upload receipts now remain
+  `BLOCKED_PRS3` even when the bounded DMWeb decoder succeeds. Decode byte
+  counts and hashes remain diagnostic evidence; no decoded pixels, upload row,
+  renderer handoff or fallback surface is marked ready without the missing
+  Saturn CLUT/VDP1 capture.
 
 - **NEXUS-PLRD-FIXTURE-QUARANTINE:** The inferred 24-name champion roster is
   no longer compiled into `firestaff_nexus`; it is isolated in the explicit
