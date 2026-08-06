@@ -39,3 +39,18 @@ real Cocoa/Quartz run additionally proved eight host key events and
 `host_input_order=followed_by_pce_input_poll`, but still produced no game-owned
 CD data read. These negative results are retained as capture receipts; no
 level, object, bitmap, palette, HUD, or viewport meaning is inferred.
+
+## Extended authentic replay result (2026-08-06)
+
+An additional 120-second replay used the raw US Track 02 CUE, the verified
+System Card, and repeated Run/I input. It reached 54 SCSI reads and again
+produced no game-owned post-startup Track 02 consumer, no `$2600` handoff, and
+no source-owned VDC/VCE destination receipt. The trace still ends in the
+bounded `$2286`/`$2b26`/`$2c68` main-RAM inspection windows already documented;
+those windows contain executable or loader-adjacent bytes and do not identify
+a level, object, tile, material, palette, HUD, or viewport record.
+
+This longer replay therefore strengthens the negative capture boundary only.
+It does not authorize a runtime mapping or a synthetic replacement. The next
+Theron handoff remains blocked on an authenticated game-owned consumer trace
+or a source-equivalent disassembly of the post-CD level/object path.

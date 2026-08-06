@@ -52021,3 +52021,12 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   HuC6280 consumer handoff, level decoding, JP text ownership, tile/material
   mapping and palette semantics. No runtime behavior or synthetic fallback was
   changed.
+
+# 2026-08-06 Theron extended authentic replay receipt
+
+- ✅ A 120-second Mednafen replay using the authenticated US Track 02 CUE,
+  verified System Card and repeated Run/I input produced 54 SCSI reads but no
+  game-owned post-startup Track 02 consumer, `$2600` handoff, or source-owned
+  VDC/VCE destination receipt. The bounded main-RAM windows remain retained as
+  loader evidence only; no level, object, tile, material, palette, HUD or
+  viewport semantics were enabled.

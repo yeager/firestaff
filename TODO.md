@@ -7,6 +7,11 @@
   diagnostic-only until an executing-PC/source-LBA payload proves the consumer
   format. Do not enable production dungeon, object, tile, palette or viewport
   semantics from those records alone.
+  2026-08-06 capture update: a 120-second authentic US Track 02 replay with
+  repeated Run/I input still produced no game-owned post-startup consumer, no
+  `$2600` handoff and no source-owned VDC/VCE destination receipt. The longer
+  trace only confirms the existing bounded loader/main-RAM windows; it does not
+  change the admission boundary.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size
