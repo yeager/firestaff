@@ -4603,6 +4603,12 @@ list(REMOVE_ITEM M10_SOURCES
 # M11/runtime caller and its dedicated regression compiles it explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0c_ceiling_f0098_pc34_compat.c")
+# `dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat.c`
+# is an asset-free source-lock fixture with fixed zones, ordinals and probe
+# pixels. It has no M11/runtime caller; its dedicated regression already
+# compiles the source explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat.c")
 # `dm1_v1_mirror_candidate_c146_sleep_wakeup_repaint_gate_pc34_compat.c`
 # simulates C040 panel and wake-up state with fixed fixture values.  It reads
 # no original DM1 material and has no M11/runtime caller; its generated
