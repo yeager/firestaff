@@ -53967,3 +53967,9 @@ alcove runtime and archive-media tests passed (4/4).
   Room focus. Enter can therefore reach the FORCEFIELD action instead of
   appearing inert; the source-owned capture gate still prevents an
   unverified dungeon handoff.
+
+- ✅ 2026-08-06 Theron real-data inventory: documented the authenticated US/JP
+  Track 02 BIN/ISO files, the separate US/JP Track 19 ISOs and the materialized
+  US split ISO, including size/MD5 ownership. The documentation explicitly
+  prevents Track 19 bytes from being reused as Track 02 data and lists the
+  remaining intentional placeholder/capture boundaries.

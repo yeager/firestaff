@@ -159,6 +159,8 @@ available as a finished playable release.
 Theron's Quest analysis and Track 02 bring-up are active. It is not currently
 available as a finished playable release. See
 [`docs/THERON_CAPTURE_READINESS.md`](docs/THERON_CAPTURE_READINESS.md).
+The authenticated media inventory and placeholder boundary are tracked in
+[`docs/THERON_REALDATA_INVENTORY.md`](docs/THERON_REALDATA_INVENTORY.md).
 
 The cross-game status and evidence boundary are kept in
 [`docs/PROJECT_STATUS.md`](docs/PROJECT_STATUS.md). Presentation work follows

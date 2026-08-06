@@ -661,6 +661,11 @@
 2026-08-06 Theron input follow-up: physical arrow keys arrive at M11 as
 `STRAFE_LEFT/STRAFE_RIGHT`; the startup adapter now treats those tokens as
 Soul Room focus movement. Keep the final dungeon handoff capture-gated.
+
+2026-08-06 media-inventory follow-up: `TQJP19.iso` is Track 19
+(`f9f069a5…`), not the JP Track 02 ISO (`TQJP02End.iso`, `397039af…`). Keep
+the separate loaders and do not reuse Track 19 offsets for Track 02 palette,
+level or consumer bindings.
   2026-08-06: a decoded real MENU.BPK route is now explicitly blocked until
   the admitted PALT memory, palette-state and VDP1-command capture exists;
   decoder success alone no longer reports a drawable menu.

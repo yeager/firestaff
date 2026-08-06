@@ -31,6 +31,7 @@ handoff is not proven.
 - [Verified hashes](VERIFIED_HASHES.md) — canonical data identities
 - [Gap list](FIRESTAFF_GAP_LIST.md) — active technical boundaries
 - [DMWeb and Greatstone references](DMWEB_REFERENCE.md) — external provenance index
+- [Theron real-data inventory](THERON_REALDATA_INVENTORY.md) — Track 02/19 media identities and placeholder boundaries
 
 ## Wiki map
 
