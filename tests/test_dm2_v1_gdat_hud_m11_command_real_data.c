@@ -58,7 +58,6 @@ static int unexpected_palette_fetch(void *user, int index, uint8_t palette[16],
 
 int main(void)
 {
-    const char *home = getenv("HOME");
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
     char path[2048];
     char boot_root[1024];
@@ -81,21 +80,16 @@ int main(void)
         DM2_V1_GDAT_HUD_M11_COMMAND_PORTRAIT_PANEL
     };
 
-    if (root && root[0]) {
-        snprintf(path, sizeof(path), "%s/graphics.dat", root);
-        snprintf(boot_root, sizeof(boot_root), "%s/..", root);
-    } else if (home && home[0]) {
-        snprintf(path, sizeof(path), "%s/.firestaff/data/dm2/data/graphics.dat",
-                 home);
-        snprintf(boot_root, sizeof(boot_root), "%s/.firestaff/data/dm2",
-                 home);
-    } else {
-        puts("SKIP: no DM2 data root");
+    if (!root || !root[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not configured");
         return 0;
     }
+    snprintf(path, sizeof(path), "%s/graphics.dat", root);
+    snprintf(boot_root, sizeof(boot_root), "%s/..", root);
     if (!read_file(path, &graphics, &graphics_size)) {
-        puts("SKIP: no local canonical DM2 GRAPHICS.DAT");
-        return 0;
+        fprintf(stderr,
+                "FAIL: configured DM2 GRAPHICS.DAT is unreadable: %s\n", path);
+        return 1;
     }
     memset(&loader, 0, sizeof(loader));
     dm2_v1_boot_profile_init(&boot);

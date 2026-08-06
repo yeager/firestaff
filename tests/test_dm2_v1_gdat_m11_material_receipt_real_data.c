@@ -41,7 +41,6 @@ static int read_file(const char *path, uint8_t **out, size_t *out_size)
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
     char path[2048];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
@@ -55,17 +54,14 @@ int main(void)
     int style = -1;
 
     if (!root || !root[0]) {
-        if (!home || !home[0]) {
-            puts("SKIP: no DM2 data root");
-            return 0;
-        }
-        snprintf(path, sizeof(path), "%s/.firestaff/data/dm2/data/graphics.dat", home);
-    } else {
-        snprintf(path, sizeof(path), "%s/graphics.dat", root);
-    }
-    if (!read_file(path, &graphics, &graphics_size)) {
-        puts("SKIP: no canonical DM2 GRAPHICS.DAT");
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not configured");
         return 0;
+    }
+    snprintf(path, sizeof(path), "%s/graphics.dat", root);
+    if (!read_file(path, &graphics, &graphics_size)) {
+        fprintf(stderr,
+                "FAIL: configured DM2 GRAPHICS.DAT is unreadable: %s\n", path);
+        return 1;
     }
     memset(&loader, 0, sizeof(loader));
     memset(&scene, 0, sizeof(scene));

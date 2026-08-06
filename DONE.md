@@ -9,6 +9,14 @@
 - ✅ Removed the contract-only F0296/F0295/F0386 fixture from M10. Its direct
   regression already compiles the source explicitly; it loads no original DM1
   data and has no M11/runtime caller.
+# DM2 real-media HUD/viewport verification ownership (2026-08-07)
+
+- ✅ The PC-DOS HUD command, dialogue/viewport and M11 material-receipt
+  regressions now use only an explicitly selected
+  `FIRESTAFF_DM2_DATA_DIR`. A configured but unreadable `graphics.dat` is a
+  failure, never a passing skip; CI without a supplied corpus still reports
+  an explicit skip. Verified against the retained PC-DOS `GRAPHICS.DAT`,
+  plus the complete eight-file SKSAVE corpus.
 
 # DM1 chest scroll-resurrect-confirmation synthetic audit isolation (2026-08-07)
 
