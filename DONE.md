@@ -1,5 +1,15 @@
 # DM2 class-0x30 spell-failure real GDAT binding (2026-08-13)
 
+# DM1 mirror C040 panel-exit synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only C040 close/reopen panel fixture from M10. It
+  loads no original DM1 assets and has no M11/runtime caller; the generated
+  mirror regression continues to compile the source explicitly.
+- ✅ Verification: `dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
+# DM1 wound-probability placeholder audit (2026-08-06)
+
 - ✅ Bound SKProject `DM2_PROCEED_SPELL_FAILURE` class `0x30` to the exact
   authenticated `INTERFACE_GENERAL/5/dtImage/0x0B` NEED_FLASK record and
   source destination rect `0x5C`; runtime records decoded-pixel and local-

@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-C040-PANEL-EXIT-SYNTHETIC-AUDIT:** This C040 close/reopen
+  fixture fabricates panel and candidate state. It loads no original DM1
+  assets and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound panel owner is recovered.
+
 - **DM1-MIRROR-C040-NONLEADER-SCROLL-SYNTHETIC-AUDIT:** This seeded
   C040/C537/C162 fixture fabricates party, chest and scroll state. It has no
   original DM1 data input or M11/runtime caller; retain it only as explicit
