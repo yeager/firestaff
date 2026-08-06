@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHEST-ROUND-TRIP-SYNTHETIC-AUDIT:** This C537/C538 hand-swap model
+  fabricates visible chest slots, item kinds and weights. It reads no original
+  game data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound chest transaction owner is recovered.
+
 - **DM1-C146-WAKE-UP-SYNTHETIC-AUDIT:** This C040/C146 wake-up regression
   simulates fixed panel and rest state with no original game-data input. It
   has no M11/runtime caller; retain it as explicit ReDMCSB coverage until a

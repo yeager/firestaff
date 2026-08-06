@@ -1,3 +1,11 @@
+# DM1 chest round-trip synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the C537/C538 chest hand-swap fixture from M10. It fabricates
+  slots, item kinds and weights, reads no original DM1 material and has no
+  M11/runtime caller; its dedicated regression now compiles it explicitly.
+- ✅ Verification: `test_dm1_v1_chest_round_trip_hand_swap_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 C146 wake-up synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the C040/C146 wake-up state simulation from M10. It reads no

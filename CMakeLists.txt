@@ -4431,6 +4431,12 @@ list(REMOVE_ITEM M10_SOURCES
 # the broad M10 glob cannot publish the synthetic transaction as live DM1.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c")
+# `dm1_v1_chest_round_trip_hand_swap_pc34_compat.c` fabricates visible chest
+# slots, item kinds and weights for a C537/C538 preservation contract. It
+# reads no original DM1 input and has no M11/runtime caller, so compile it
+# only into its explicit regression rather than the broad M10 archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_round_trip_hand_swap_pc34_compat.c")
 # `dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat.c` is a
 # contract-only race model. It fabricates its party, chest, leader hand and
 # queued pickup state, reads no original DM1 input, and has no M11/runtime
@@ -53224,7 +53230,9 @@ add_executable(test_dm1_v1_chest_resurrect_rotation_scroll_wheel_pc34_compat tes
 target_include_directories(test_dm1_v1_chest_resurrect_rotation_scroll_wheel_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_resurrect_rotation_scroll_wheel_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_resurrect_rotation_scroll_wheel_pc34_compat COMMAND test_dm1_v1_chest_resurrect_rotation_scroll_wheel_pc34_compat)
-add_executable(test_dm1_v1_chest_round_trip_hand_swap_pc34_compat tests/test_dm1_v1_chest_round_trip_hand_swap_pc34_compat.c)
+add_executable(test_dm1_v1_chest_round_trip_hand_swap_pc34_compat
+    tests/test_dm1_v1_chest_round_trip_hand_swap_pc34_compat.c
+    src/dm1/dm1_v1_chest_round_trip_hand_swap_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_round_trip_hand_swap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_round_trip_hand_swap_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_round_trip_hand_swap_pc34_compat COMMAND test_dm1_v1_chest_round_trip_hand_swap_pc34_compat)
