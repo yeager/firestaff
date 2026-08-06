@@ -348,6 +348,13 @@ theron_v22_shapes, m11_v22_shape_cache, m11_v22_render_overlay).
 **Manifest v1.1.0** validates as complete (`theron_v22_validate_manifest()` returns 1).
 **End-to-end smoke**: `theron_v22_modern_assets_available()=1` against real Theron data dir.
 
+**Production provenance correction (2026-08-06):** this smoke was only a
+manifest/category check. The listed PNGs are generated/procedural or
+`gpt-image-2` reference art, not original Track 02 assets. Production now
+rejects this pack unless the manifest contains
+`source_provenance="authenticated_track02"`; the historical batch remains
+fixture/reference material only.
+
 **Vision score summary**: 110/120 (18.3/20 average) — best Theron batch yet thanks to the floor_forest regeneration (11 → 18). 4 assets at 19-20, 1 at 18, 1 at 17.
 
 **Compare index**: `docs/v22-compare/compare_index.json` gains `theron_hero_batch_1_pairs` array of 6 entries.

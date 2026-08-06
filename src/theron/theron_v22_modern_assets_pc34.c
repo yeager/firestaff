@@ -20,9 +20,10 @@
  * Required categories for a complete install:
  *   wall_shapes, floor_shapes, creature_shapes, ui_chrome, champion_portraits
  *
- * Asset-not-found guard: if a specific modern asset referenced in the
- * manifest cannot be opened, the shape system fails closed rather than
- * manufacturing replacement pixels.
+ * Asset-not-found/provenance guard: a manifest is not production-eligible
+ * unless it declares an authenticated Track 02 source. Generated, procedural
+ * or AI-created art remains fixture-only; the shape system fails closed
+ * rather than manufacturing or admitting replacement pixels.
  */
 
 #include "theron_v22_modern_assets_pc34.h"
@@ -131,6 +132,30 @@ static int theron_v22_extract_string(const char* line, const char* key, char* ou
     }
     out[dst] = '\0';
     return dst > 0U ? 1 : 0;
+}
+
+static int theron_v22_manifest_has_authenticated_source(const char *path) {
+    FILE *fp;
+    char content[65536];
+    const char *p;
+    const char *value;
+    size_t length;
+
+    if (!path || path[0] == '\0') return 0;
+    fp = fopen(path, "rb");
+    if (!fp) return 0;
+    length = fread(content, 1, sizeof(content) - 1U, fp);
+    fclose(fp);
+    if (length == 0U || length >= sizeof(content) - 1U) return 0;
+    content[length] = '\0';
+    p = strstr(content, "\"source_provenance\"");
+    if (!p) return 0;
+    value = strchr(p, ':');
+    if (!value) return 0;
+    ++value;
+    while (*value == ' ' || *value == '\t' || *value == '"') ++value;
+    return strncmp(value, "authenticated_track02\"",
+                   sizeof("authenticated_track02\"") - 1U) == 0;
 }
 
 /* Extract an integer value for a key from a JSON line of the form: "key": 123
@@ -335,6 +360,10 @@ int theron_v22_validate_manifest(const char* manifest_path) {
 
     fclose(fp);
 
+    /* The existing local Theron pack is generated/procedural art.  It may be
+     * useful to fixture tests, but it cannot advertise a real-data install.
+     * Require the source receipt before reporting a complete manifest. */
+    if (!theron_v22_manifest_has_authenticated_source(manifest_path)) return 0;
     if (found_categories == 0) return -1;
     if (categories_with_entries < (int)k_num_required_cats) return 0;
     return 1;
@@ -352,6 +381,8 @@ int theron_v22_validate_manifest(const char* manifest_path) {
 int theron_v22_modern_assets_available(void) {
     if (g_v22_manifest_path[0] == '\0') return 0;
     if (!theron_v22_file_exists(g_v22_manifest_path)) return 0;
+    if (!theron_v22_manifest_has_authenticated_source(g_v22_manifest_path))
+        return 0;
 
     /* Quick check: open the manifest and look for at least the three
      * critical categories (wall_shapes, floor_shapes, creature_shapes)

@@ -198,6 +198,28 @@ static void test_assets_available_no_install(void) {
     CHECK(v == 0 || v == -1, "empty manifest not complete");
 }
 
+static void test_generated_manifest_is_not_production_data(void) {
+    const char *root = "/tmp/scratch/.firestaff";
+    const char *manifest =
+        "/tmp/scratch/.firestaff/assets/theron/modern/modern_asset_manifest.json";
+    const char *content =
+        "{\"manifestVersion\":\"1.1.0\","
+        "\"packId\":\"generated-test\","
+        "\"description\":\"procedural/gpt-image-2 fixture\","
+        "\"wall_shapes\":[{\"id\":\"w\",\"source_file\":\"w.png\",\"width\":1,\"height\":1}],"
+        "\"floor_shapes\":[{\"id\":\"f\",\"source_file\":\"f.png\",\"width\":1,\"height\":1}],"
+        "\"creature_shapes\":[{\"id\":\"c\",\"source_file\":\"c.png\",\"width\":1,\"height\":1}]}";
+    (void)root;
+    CHECK(mkdir_p("/tmp/scratch/.firestaff/assets/theron/modern"),
+          "created generated-manifest directory");
+    CHECK(write_file(manifest, content), "wrote generated manifest");
+    theron_v22_set_manifest_path("/tmp/scratch/.firestaff/data/theron");
+    CHECK(theron_v22_modern_assets_available() == 0,
+          "generated/procedural manifest is not production data");
+    CHECK(theron_v22_validate_manifest(manifest) == 0,
+          "generated/procedural manifest is partial for production");
+}
+
 /* ── Main ───────────────────────────────────────────────────────── */
 
 int main(void) {
@@ -215,6 +237,7 @@ int main(void) {
     test_missing_placeholder();
     test_source_evidence();
     test_assets_available_no_install();
+    test_generated_manifest_is_not_production_data();
 
     printf("theron_v22_modern_assets_pc34: checks=%d failures=%d\n", checks, failures);
     if (failures > 0) {

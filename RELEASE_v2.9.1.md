@@ -31,7 +31,7 @@ the real data dir.
 |---------|----------------------------------------|----------------------------------------|------------------------------|
 | DM1     | `dm1_v2_asset_pipeline_pc34.h` (existing v2.9.0) | `test_dm1_v22_verification` 7/7      | `m11_v22_modern_assets_available()=1` |
 | CSB     | `csb_v22_modern_assets_pc34.h` (new)   | `test_csb_v22_modern_assets_pc34` 33/33 | `csb_v22_modern_assets_available()=1` |
-| Theron  | `theron_v22_modern_assets_pc34.h` (new)| `test_theron_v22_modern_assets_pc34` 33/33 | `theron_v22_modern_assets_available()=1` |
+| Theron  | `theron_v22_modern_assets_pc34.h` (new)| `test_theron_v22_modern_assets_pc34` 36/36 | V2.2 remains unavailable until an authenticated Track 02 source manifest is supplied |
 | Nexus   | `nexus_v22_modern_assets_pc34.h` (new) | `test_nexus_v22_modern_assets_pc34` 33/33 | `nexus_v22_modern_assets_available()=1` |
 | DM2     | `dm2_v22_modern_assets_pc34.h` (new)   | `test_dm2_v22_modern_assets_pc34` 33/33 | `dm2_v22_modern_assets_available()=1` |
 
@@ -107,7 +107,7 @@ references (parallel to the DM1 module's ReDMCSB references):
 
 These are tracked in `TODO.md` under each game's Phase 2 section:
 
-1. **Real PBR hero art** for CSB/Theron/Nexus/DM2 via `gpt-image-2`
+1. Generated/PBR hero-art packs for CSB/Theron/Nexus/DM2 remain fixture/reference material; they are not authenticated game data and are not production-admitted.
    batches, parallel to DM1's 4 batches.
 2. **DM1 V2.2 in-place drawing pipeline** — separate dedicated pass:
    `m11_draw_dm1_*` consume V22 shape cache in-place instead of

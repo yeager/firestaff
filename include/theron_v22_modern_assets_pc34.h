@@ -58,8 +58,9 @@ void theron_v22_set_manifest_path(const char* dataDir);
  * Returns: 1=complete, 0=partial, -1=invalid/missing */
 int theron_v22_validate_manifest(const char* manifest_path);
 
-/* theron_v22_modern_assets_available — 1 if pack installed with critical
- * categories (wall_shapes, floor_shapes, creature_shapes), 0 otherwise. */
+/* theron_v22_modern_assets_available — 1 only for a manifest with critical
+ * categories and source_provenance="authenticated_track02". Generated,
+ * procedural and AI-created packs remain fixture-only. */
 int theron_v22_modern_assets_available(void);
 
 /* Installed flag — set by M12_AssetStatus_Scan at startup. */

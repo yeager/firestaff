@@ -52058,3 +52058,18 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   with 131 loose files plus six authenticated ISO members; no game data is
   extracted or committed. Nested ISO files inside 7z remain explicitly
   uninspected.
+
+# 2026-08-06 Theron source-index receipt integrity
+
+- ✅ Track 02 source occurrences now retain their full 16-bit category index
+  instead of an 8-bit field. This matches the 512-entry source-category
+  bound and prevents later real records from being truncated or rejected.
+  No category-local type was promoted to a host item index.
+
+# 2026-08-06 Theron synthetic V2.2 asset quarantine
+
+- ✅ The V2.2 modern-asset admission gate now requires
+  `source_provenance="authenticated_track02"` in the manifest. The existing
+  procedural and `gpt-image-2` Theron art pack is rejected by production and
+  remains available only to fixture/reference inspection. The focused asset
+  test passes 36/36.
