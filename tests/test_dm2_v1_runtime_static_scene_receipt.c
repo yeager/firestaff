@@ -22,8 +22,8 @@ int main(void)
     dm2_v1_runtime_init(&profile);
     memset(framebuffer, 0, sizeof(framebuffer));
     if (dm2_v1_runtime_render_frame(0, 0, 0, framebuffer, 320, 320, 200) !=
-        0) {
-        fprintf(stderr, "FAIL: runtime frame setup\n");
+        -1) {
+        fprintf(stderr, "FAIL: runtime frame without original assets must block\n");
         return 1;
     }
     memset(&receipt, 0xff, sizeof(receipt));

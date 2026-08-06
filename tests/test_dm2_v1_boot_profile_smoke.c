@@ -122,6 +122,7 @@ static int resolve_real_dm2_data_root(char *out, size_t out_size)
 static void test_defaults(void)
 {
     DM2_V1_BootProfile p;
+    uint8_t framebuffer[320 * 200];
     dm2_v1_boot_profile_init(&p);
     CHECK(strcmp(p.game_id, "dm2") == 0, "game id is dm2");
     CHECK(p.platform == DM2_PLATFORM_PC_EN, "default platform is PC English");
@@ -141,6 +142,10 @@ static void test_defaults(void)
           "level count remains unavailable before DUNGEON.DAT is verified");
     CHECK(p.deterministic.dungeon_seed == 0u,
           "dungeon seed remains unavailable before DUNGEON.DAT is verified");
+    memset(framebuffer, 0, sizeof(framebuffer));
+    dm2_v1_runtime_init(&p);
+    CHECK(dm2_v1_runtime_render_frame(0, 0, 0, framebuffer, 320, 320, 200) == -1,
+          "runtime refuses an unverified boot profile instead of drawing a fixture frame");
 }
 
 static void test_asset_hash_pairs_are_platform_bound(void)

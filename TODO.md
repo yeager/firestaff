@@ -288,6 +288,10 @@
   Only the mounted boot provider's raw and decoded `GRAPHICS.DAT` evidence
   can publish a valid M11 frame; fixture blit tests remain isolated and
   invalid by design.
+  2026-08-06: `dm2_v1_runtime_render_frame()` now also rejects an empty,
+  unhashed boot profile or a non-boot GDAT callback before it writes a pixel.
+  This closes the remaining direct-render fixture seam: only the mounted
+  `DM2_GAME_LOAD` graphics/dungeon owners can produce a runtime frame.
   **2026-08-06 CCM inventory correction:** the public opcode table now
   accurately labels CCM0B/CCM0C, wall activation, ladder/hole, transform and
   1B7D5 as callback-bound SKProject handler ports rather than stubs. This

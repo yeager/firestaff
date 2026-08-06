@@ -50646,3 +50646,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   palette 0. Hash-verified LEV00-LEV15 coverage decodes 1,678 descriptors:
   1,553 indexed4 and 125 direct555. Structure3 VDP1 upload, CLUT ownership,
   face texture selection and viewport placement remain capture-gated.
+
+- ✅ 2026-08-06 DM2 direct-frame data-admission gate: the V1 renderer now
+  rejects an empty/unverified boot profile and every non-boot GDAT callback
+  before framebuffer mutation. This removes the remaining public path that
+  could return a DM2 frame without the hash-verified `GRAPHICS.DAT` and
+  `DUNGEON.DAT` owners required by SKProject `DM2_GAME_LOAD`. Verification:
+  the boot-profile regression asserts the missing-data rejection, while the
+  real PC-DOS boot, M11 startup and eight-file SKSave corpus tests pass.

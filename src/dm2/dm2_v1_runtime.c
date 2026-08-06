@@ -6671,6 +6671,22 @@ int dm2_v1_runtime_render_frame(int party_dir, int party_x, int party_y,
         return -1;
     }
 
+    /* SKProject DM2_GAME_LOAD reaches DRAW_DUNGEON only after the original
+     * dungeon and graphics owners have both mounted.  A direct caller with
+     * an empty boot profile (or an injected fixture provider) used to obtain
+     * a successful no-source frame here.  That is not a playable DM2 state:
+     * require the same hash-verified boot-owned GDAT provider that M11 binds
+     * through dm2_v1_runtime_bind_boot_profile(). */
+    if (!rt->boot || !rt->boot->assets_verified ||
+        !rt->boot->graphics_dat || !rt->boot->dungeon_data ||
+        rt->viewport_asset_fetch != dm2_v1_boot_viewport_asset_fetch ||
+        rt->viewport_asset_user != rt->boot ||
+        rt->viewport_asset_palette_fetch !=
+            dm2_v1_boot_viewport_asset_palette_fetch ||
+        rt->viewport_asset_palette_user != rt->boot) {
+        return -1;
+    }
+
     memset(&g_dm2_last_creature_render, 0, sizeof(g_dm2_last_creature_render));
     memset(&g_dm2_last_item_render, 0, sizeof(g_dm2_last_item_render));
     memset(&g_dm2_last_projectile_render, 0,
