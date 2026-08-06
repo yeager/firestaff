@@ -535,6 +535,12 @@
   asserts this corpus fact, so no sound names may be derived from class
   triples or copied from a host table.
 
+- **DM2-WEATHER-TEXT-CONSUMER:** SKProject's `c_weather.cpp` exposes numeric
+  state and GDAT command transitions, not display-name text. The former
+  hand-written `Clear`/`Rain`/`Fog`/`Storm` compatibility labels are removed;
+  `dm2_v1_weather_name()` now returns `NULL`. Bind an authenticated text
+  producer before presenting weather text in a player-facing UI.
+
 - **DM2-CDDA-OTHER-PLATFORM-MEDIA:** FM Towns CDDA now has a verified
   in-memory original-disc route only. Mega CD and PC-9821 still lack an
   equivalent selected-medium reader and therefore must remain silent rather

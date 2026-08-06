@@ -360,6 +360,13 @@ int main(void)
           "a restored clock cannot replace GDAT-backed outdoor material");
     check(dm2_v1_weather_particle_count(&restored_weather) == 0,
           "a restored weather enum cannot manufacture particle multiplicity");
+    for (i = DM2_WEATHER_CLEAR; i < DM2_WEATHER_COUNT; ++i) {
+        check(dm2_v1_weather_name(i) == NULL,
+              "weather state cannot manufacture a host-language label");
+    }
+    check(dm2_v1_weather_name(-1) == NULL &&
+              dm2_v1_weather_name(DM2_WEATHER_COUNT) == NULL,
+          "invalid weather state has no placeholder label");
     {
         /* c_weather.cpp:441-474 — the bolt slot's byte 1 is the live
          * RANDDIR value the source writes after a successful retrieve,

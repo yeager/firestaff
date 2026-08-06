@@ -54,6 +54,22 @@
 - ⏳ Merchant interaction remains intentionally unavailable until the original
   DB4/CCM/merchandise/text transaction is imported.
 
+# DM2 weather text and IMG9 truncation boundary (2026-08-06)
+
+- ✅ Removed the production weather-name placeholder strings. SKProject
+  `c_weather.cpp` supplies state transitions and GDAT command selection but
+  no weather-label text owner, so `dm2_v1_weather_name()` now fails closed
+  instead of presenting host-authored English text.
+- ✅ IMG9 decoding now rejects a compressed stream that exhausts before its
+  header-owned pixel target is complete; it also rejects an overlong LZ copy
+  instead of truncating it. This prevents a partial GDAT payload from being
+  admitted as weather material.
+- ✅ Verification: `test_dm2_v1_weather_gdat_receipt` passes, including the
+  two malformed IMG9 cases; `test_dm2_v1_gdat_visual_corpus_real_data` passes
+  against the local original PC 1.0 English `GRAPHICS.DAT` census
+  (4,031 images, 18,633,937 pixels, hash `bf5050d3`), and the production
+  placeholder-boundary verifier passes.
+
 # DM1 D3L/D3R F0108 floor-ornament synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D3L/D3R F0108 occlusion model from M10. It fixes

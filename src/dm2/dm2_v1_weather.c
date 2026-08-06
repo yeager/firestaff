@@ -18,16 +18,6 @@
 #define DM2_WEATHER_LCG_MULTIPLIER 0xBB40E62Du
 #define DM2_WEATHER_LCG_INCREMENT 11u
 
-/* ── Weather names ────────────────────────────────────────────────────────
- * Source: docs/dm2_creatures_gfx.md, existing dm2_v1_outdoor_renderer.c */
-
-static const char *const g_weather_names[DM2_WEATHER_COUNT] = {
-    [DM2_WEATHER_CLEAR] = "Clear",
-    [DM2_WEATHER_RAIN]  = "Rain",
-    [DM2_WEATHER_FOG]   = "Fog",
-    [DM2_WEATHER_STORM] = "Storm",
-};
-
 static uint32_t dm2_weather_state_hash_step(uint32_t hash, uint32_t value)
 {
     hash ^= value;
@@ -337,8 +327,13 @@ int dm2_v1_weather_3df7_0037_receipt(
 }
 
 const char *dm2_v1_weather_name(int weather) {
-    if (weather < 0 || weather >= DM2_WEATHER_COUNT) return "?";
-    return g_weather_names[weather];
+    (void)weather;
+    /* SKProject/SKULLWIN/c_weather.cpp owns numeric state transitions only;
+     * it provides no weather-name text route.  Returning hand-written English
+     * labels made a host UI string look like original DM2 content.  Keep this
+     * compatibility accessor fail-closed until an authenticated text owner is
+     * recovered from the selected game data. */
+    return NULL;
 }
 
 const char *dm2_v1_weather_source_evidence(void) {

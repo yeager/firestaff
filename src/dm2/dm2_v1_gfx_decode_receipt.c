@@ -396,7 +396,10 @@ static int dm2_decode_img9_mode1_into(const uint8_t *data,
     s.decodew3 = 0x101;
 
     wordrg11 = dm2_decode_img9_dec9_1sub(&s);
-    if (wordrg11 < 0) return 1; /* empty stream: success with zero pixels */
+    /* The caller has already committed the exact IMG3 dimensions.  An empty
+     * compressed stream cannot describe even one required pixel; accepting it
+     * made a truncated GDAT raw look like valid material. */
+    if (wordrg11 < 0) return gfx_capacity == 0u;
 
     vw_10 = (unsigned)wordrg11;
     vb_18 = (uint8_t)wordrg11;
@@ -409,11 +412,15 @@ static int dm2_decode_img9_mode1_into(const uint8_t *data,
     }
 
     for (;;) {
+        /* c_gfx_decode.cpp's destination size is supplied by the image
+         * header.  Stop only after that whole target has been reconstructed;
+         * input exhaustion before this point is a malformed IMG9 stream. */
+        if (out_pos == gfx_capacity) return 1;
         int wordrg1 = dm2_decode_img9_dec9_1sub(&s);
         int vw_14 = wordrg1;
         unsigned vw_0c;
 
-        if (wordrg1 < 0) return 1; /* input exhausted */
+        if (wordrg1 < 0) return 0;
 
         if (wordrg1 != 0x100) {
             vw_0c = (unsigned)wordrg1;
@@ -505,14 +512,15 @@ static int dm2_decode_img9_mode2_into(const uint8_t *data,
     if (!data || !gfx) return 0;
 
     for (;;) {
+        if (out_pos == gfx_capacity) return 1;
         wmask >>= 1;
         if ((wmask & 0x100u) == 0u) {
-            if (in_pos >= data_size) return 1;
+            if (in_pos >= data_size) return 0;
             wmask = (unsigned)data[in_pos++] | 0xff00u;
         }
 
         if ((wmask & 1u) != 0u) {
-            if (in_pos >= data_size) return 1;
+            if (in_pos >= data_size) return 0;
             if (out_pos >= gfx_capacity) return 0;
             gfx[out_pos++] = data[in_pos++];
         } else {
@@ -521,13 +529,14 @@ static int dm2_decode_img9_mode2_into(const uint8_t *data,
             size_t negative_offset;
             size_t copy_length;
             size_t i;
-            if (in_pos + 1u >= data_size) return 1;
+            if (in_pos + 1u >= data_size) return 0;
             a = data[in_pos++];
             b = data[in_pos++];
             negative_offset = (a >> 4) + (16u * b);
             copy_length = (size_t)((a & 0x0fu) + 3);
             if (negative_offset == 0 || negative_offset > out_pos) return 0;
-            for (i = 0; i < copy_length && out_pos < gfx_capacity; ++i) {
+            if (copy_length > gfx_capacity - out_pos) return 0;
+            for (i = 0; i < copy_length; ++i) {
                 gfx[out_pos] = gfx[out_pos - negative_offset];
                 ++out_pos;
             }
@@ -550,14 +559,15 @@ static int dm2_decode_img9_mode3_into(const uint8_t *data,
     if (!data || !gfx) return 0;
 
     for (;;) {
+        if (out_pos == gfx_capacity) return 1;
         wmask >>= 1;
         if ((wmask & 0x100u) == 0u) {
-            if (in_pos >= data_size) return 1;
+            if (in_pos >= data_size) return 0;
             wmask = (unsigned)data[in_pos++] | 0xff00u;
         }
 
         if ((wmask & 1u) != 0u) {
-            if (in_pos >= data_size) return 1;
+            if (in_pos >= data_size) return 0;
             if (out_pos >= gfx_capacity) return 0;
             gfx[out_pos++] = data[in_pos++];
         } else {
@@ -566,13 +576,14 @@ static int dm2_decode_img9_mode3_into(const uint8_t *data,
             size_t negative_offset;
             size_t copy_length;
             size_t i;
-            if (in_pos + 1u >= data_size) return 1;
+            if (in_pos + 1u >= data_size) return 0;
             a = data[in_pos++];
             b = data[in_pos++];
             negative_offset = (a >> 5) + (8u * b);
             copy_length = (size_t)((a & 0x1fu) + 3);
             if (negative_offset == 0 || negative_offset > out_pos) return 0;
-            for (i = 0; i < copy_length && out_pos < gfx_capacity; ++i) {
+            if (copy_length > gfx_capacity - out_pos) return 0;
+            for (i = 0; i < copy_length; ++i) {
                 gfx[out_pos] = gfx[out_pos - negative_offset];
                 ++out_pos;
             }

@@ -157,6 +157,7 @@ int  dm2_v1_weather_sky_color(const DM2_V1_WeatherState *state);
 /* Legacy API deliberately reports no particles: it cannot carry source
  * ENVIRONMENT/GDAT command material. */
 int  dm2_v1_weather_particle_count(const DM2_V1_WeatherState *state);
+/* No source-owned weather-name text has been recovered; returns NULL. */
 const char *dm2_v1_weather_name(int weather);
 const char *dm2_v1_weather_source_evidence(void);
 int dm2_v1_weather_restored_state_receipt(
@@ -170,7 +171,5 @@ int dm2_v1_weather_3df7_0037_receipt(
     DM2_V1_WeatherState *state,
     const DM2_V1_SetTimerWeatherReceipt *timer,
     DM2_V1_Weather3df70037Receipt *out);
-const char *dm2_v1_weather_name(int weather);
-const char *dm2_v1_weather_source_evidence(void);
 
 #endif /* FIRESTAFF_DM2_V1_WEATHER_H */
