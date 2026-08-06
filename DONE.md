@@ -57434,3 +57434,17 @@ alcove runtime and archive-media tests passed (4/4).
   pic surface consumer and C068--C070 panel-global update are source-owned.
 - ✅ The real-data M11 startup/profile regression passes against the mounted
   PC-English DM2 corpus; no release was made.
+# Nexus Saturn raw VDP1/VDP2 runtime witness (2026-08-06)
+
+- ✅ Built the patched Mednafen 1.32.1 Saturn producer on the external disk.
+  The binary contains the `ss` module and the Firestaff raw-capture hook.
+- ✅ Ran the European BIOS against the European DM Nexus ISO through a
+  data-only CUE and retained a two-frame, 3,155,092-byte raw witness outside
+  the repository. Mednafen identified `T-9111G`, `DUNGEON MASTER NEXUS`, and
+  the European area.
+- ✅ Added `scripts/validate_nexus_saturn_runtime_capture.py`, which checks the
+  capture magic, ordered frame markers, and exact VDP1/VDP2 payload lengths.
+  It explicitly reports semantic admission as blocked: PRS3, SLEV/SAL/SDDRVS,
+  HUD, and viewport routes remain gated.
+- ⚠️ The supplied European CUE references missing Japanese audio-track files;
+  the capture used a temporary data-only CUE pointing at the same European ISO.

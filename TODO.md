@@ -94,12 +94,12 @@
   original DM1 data input or M11/runtime caller; retain it only as explicit
   ReDMCSB coverage until a source-bound interaction owner is recovered.
 
-- **NEXUS-SATURN-RUNTIME-CAPTURE-PRODUCER:** The repository now carries a
-  source patch and external-disk build script for a read-only Mednafen 1.32.1
-  Saturn VDP1/VDP2 frame witness, but the producer has not yet been compiled
-  or run against the European CUE. Do not admit its raw witness as PRS3,
-  SLEV/SAL/SDDRVS, HUD, or viewport semantics until authenticated runtime
-  observations are retained.
+- **NEXUS-SATURN-RUNTIME-CAPTURE-PRODUCER:** The external-disk Mednafen 1.32.1
+  producer is now compiled with Saturn support and has emitted a validated
+  two-frame raw VDP1/VDP2 witness from the hash-verified European DM Nexus ISO
+  and BIOS. The raw validator proves transport/layout only. Do not admit it as
+  PRS3, SLEV/SAL/SDDRVS, HUD, or viewport semantics until those consumers have
+  authenticated runtime observations and source-owned bindings.
 - **NEXUS-MENU-CAPTURE-GATE:** TITLE.CG timing must remain on the title screen
   until the real MENU.BPK capture route is joined. A source-owned runtime
   capture is still required before menu, HUD, and viewport composition can be
