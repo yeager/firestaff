@@ -9248,14 +9248,12 @@ int dm2_v1_runtime_load_last_session(const char *save_base)
 
 static void dm2_v1_quicksave_receipt_init(
     DM2_V1_QuicksaveReceipt *receipt,
-    DM2_V1_QuicksaveResult result,
-    const char *status)
+    DM2_V1_QuicksaveResult result)
 {
     if (!receipt) return;
     memset(receipt, 0, sizeof(*receipt));
     receipt->result = result;
     receipt->status_scope = "SAVE";
-    receipt->status = status;
 }
 
 int dm2_v1_runtime_quicksave_boot_profile_with_receipt(
@@ -9266,8 +9264,7 @@ int dm2_v1_runtime_quicksave_boot_profile_with_receipt(
     DM2_V1_QuicksaveReceipt *receipt = out_receipt ? out_receipt : &local;
 
     dm2_v1_quicksave_receipt_init(receipt,
-                                  DM2_V1_QUICKSAVE_PROFILE_MISSING,
-                                  "DM2 PROFILE MISSING");
+                                  DM2_V1_QUICKSAVE_PROFILE_MISSING);
     if (!profile) {
         return 0;
     }
@@ -9278,8 +9275,7 @@ int dm2_v1_runtime_quicksave_boot_profile_with_receipt(
      * non-original save.  Refuse before creating a directory, exporting a
      * session or writing the former SKSave.runtime sidecar. */
     dm2_v1_quicksave_receipt_init(
-        receipt, DM2_V1_QUICKSAVE_ORIGINAL_WRITER_REQUIRED,
-        "DM2 ORIGINAL SAVE WRITER REQUIRED");
+        receipt, DM2_V1_QUICKSAVE_ORIGINAL_WRITER_REQUIRED);
     if (profile->save_root[0]) {
         snprintf(receipt->save_root, sizeof(receipt->save_root), "%s",
                  profile->save_root);

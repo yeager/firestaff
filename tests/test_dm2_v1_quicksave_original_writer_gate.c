@@ -69,7 +69,7 @@ int main(void)
                                                             &receipt) != 0 ||
         receipt.result != DM2_V1_QUICKSAVE_ORIGINAL_WRITER_REQUIRED ||
         receipt.session_valid || receipt.save_path[0] != '\0' ||
-        strcmp(receipt.status, "DM2 ORIGINAL SAVE WRITER REQUIRED") != 0) {
+        receipt.status != NULL) {
         (void)DM2_TEST_RMDIR(parent);
         return 2;
     }

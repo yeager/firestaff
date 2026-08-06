@@ -8593,7 +8593,6 @@ static void dm2_v1_boot_runtime_action_receipt_clear(
         receipt->action_kind = DM2_V1_BOOT_ACTION_NO_TARGET;
         receipt->target_square = -1;
         receipt->status_scope = "ACTION";
-        receipt->status = "DM2 NO TARGET";
     }
 }
 
@@ -8634,31 +8633,25 @@ int dm2_v1_boot_runtime_action_front_cell(
 
     if (dm2_v1_runtime_enter_shop(level, fx, fy) == 0) {
         out_receipt->action_kind = DM2_V1_BOOT_ACTION_SHOP;
-        out_receipt->status = "DM2 SHOP";
         out_receipt->reset_shop_selection = 1;
     } else if (square >= 0) {
         if (square == 4 &&
             dm2_v1_runtime_door_action(level, fx, fy, dir, 0) == 0) {
             out_receipt->action_kind = DM2_V1_BOOT_ACTION_DOOR;
-            out_receipt->status = "DM2 DOOR";
         } else if (dm2_v1_runtime_npc_interact(level, fx, fy) == 0) {
             int npc_id = dm2_v1_runtime_get_last_npc_id();
             int npc_line_index = dm2_v1_runtime_get_last_npc_dialog_line();
             out_receipt->action_kind = DM2_V1_BOOT_ACTION_NPC;
-            out_receipt->status = "DM2 INTERACT";
             out_receipt->inspect_title = dm2_v1_npc_get_name(npc_id);
             out_receipt->inspect_text =
                 dm2_v1_npc_get_dialog(npc_id, npc_line_index);
         } else if (dm2_v1_runtime_invoke_square_actuators(level, fx, fy) > 0) {
             out_receipt->action_kind = DM2_V1_BOOT_ACTION_ACTUATOR;
-            out_receipt->status = "DM2 ACTUATOR";
         } else {
             out_receipt->action_kind = DM2_V1_BOOT_ACTION_NO_ACTION;
-            out_receipt->status = "DM2 NO ACTION";
         }
     } else {
         out_receipt->action_kind = DM2_V1_BOOT_ACTION_NO_TARGET;
-        out_receipt->status = "DM2 NO TARGET";
     }
     (void)dm2_v1_boot_runtime_capture(profile, &out_receipt->runtime);
     return 1;
@@ -8672,7 +8665,6 @@ static void dm2_v1_boot_runtime_inventory_receipt_clear(
         receipt->champion_index = -1;
         receipt->champion_slot = -1;
         receipt->status_scope = "INVENTORY";
-        receipt->status = "DM2 NO OBJECT";
     }
 }
 
@@ -8704,7 +8696,6 @@ int dm2_v1_boot_runtime_swap_inventory_slot(
     out_receipt->leader_hand_before = leader_object;
     out_receipt->slot_object_after = slot_object;
     out_receipt->leader_hand_after = leader_object;
-    out_receipt->status = "DM2 INVENTORY UNAVAILABLE";
     (void)dm2_v1_boot_runtime_capture(profile, &out_receipt->runtime);
     return 0;
 }

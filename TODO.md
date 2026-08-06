@@ -27006,9 +27006,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   actual `c_gui_draw`/dialogue status producer before displaying startup or
   resume feedback; the structured action and load results remain available to
   drive control flow without visible replacement text.
-- [ ] DM2 runtime action/save text ownership: action, shop and save receipts
-  still contain host-authored English labels. Retain their structural results,
-  then bind the matching original GUI/dialogue producer before rendering any
+- [ ] DM2 runtime action/save text ownership: action, shop, movement and save
+  receipts are structurally silent until their matching original GUI/dialogue
+  producer is connected. Bind that source-owned producer before rendering any
   player-facing feedback.
 - [ ] DM2 FM Towns English text consumption: a selected FM Towns Japanese CD
   can now carry an explicit, hash-verified PC-English GDAT text companion in

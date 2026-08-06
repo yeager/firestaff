@@ -2183,19 +2183,12 @@ int main(void) {
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 action input redraws through runtime interaction");
-        expect_true(strstr(view.lastOutcome, "DM2 SHOP") != NULL ||
-                    strstr(view.lastOutcome, "DM2 INTERACT") != NULL ||
-                    strstr(view.lastOutcome, "DM2 ACTUATOR") != NULL ||
-                    strstr(view.lastOutcome, "DM2 NO TARGET") != NULL,
-                    "M11 DM2 action reports a bounded runtime action status");
+        expect_true(view.lastOutcome[0] == '\0',
+                    "M11 DM2 action keeps host-authored status text unbound");
         expect_true(view.dm2State.party_x == 15 && view.dm2State.party_y == 15 &&
                     view.dm2State.party_dir == 0,
                     "M11 DM2 action does not move or rotate the party");
-        if (world && reputation_before >= 0 &&
-            strstr(view.lastOutcome, "DM2 INTERACT") != NULL) {
-            expect_true(world->reputation == reputation_before + 1,
-                        "DM2 runtime interaction mutates the boot-owned world");
-        }
+        (void)reputation_before;
     }
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
     if (world && profile && profile->dungeon_data) {
@@ -2221,8 +2214,8 @@ int main(void) {
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 action opens a front door through runtime");
-        expect_true(strstr(view.lastOutcome, "DM2 DOOR") != NULL,
-                    "M11 DM2 front-door action reports door status");
+        expect_true(view.lastOutcome[0] == '\0',
+                    "M11 DM2 front-door action keeps host text unbound");
         expect_true(dm2_v1_dungeon_get_tile_raw(
                         dungeon,
                         door_level, door_party_x, door_party_y - 1) == 0x83,
@@ -2269,18 +2262,13 @@ int main(void) {
                                                  M12_MENU_INPUT_ACTION) ==
                             M11_GAME_INPUT_REDRAW,
                         "M11 DM2 action drives bounded NPC interaction");
-            expect_true(strstr(view.lastOutcome, "DM2 INTERACT") != NULL,
-                        "M11 DM2 NPC interaction reports interact status");
+            expect_true(view.lastOutcome[0] == '\0',
+                        "M11 DM2 NPC interaction keeps host text unbound");
             expect_true(world->reputation == reputation_before + 1,
                         "M11 DM2 NPC interaction mutates reputation");
-            expect_true(strcmp(view.inspectTitle,
-                               dm2_v1_npc_get_name(
-                                   DM2_NPC_MERCHANT_FRIENDLY)) == 0,
-                        "M11 DM2 NPC interaction exposes NPC name");
-            expect_true(strcmp(view.inspectDetail,
-                               dm2_v1_npc_get_dialog(
-                                   DM2_NPC_MERCHANT_FRIENDLY, 0)) == 0,
-                        "M11 DM2 NPC interaction exposes NPC dialog line");
+            expect_true(view.inspectTitle[0] == '\0' &&
+                        view.inspectDetail[0] == '\0',
+                        "M11 DM2 NPC text remains unbound without source dialogue");
             expect_true(M11_GameView_HandleInput(&view,
                                                  M12_MENU_INPUT_ACTION) ==
                             M11_GAME_INPUT_REDRAW,
@@ -2292,10 +2280,8 @@ int main(void) {
                         "DM2 runtime records last NPC id for M11 readout");
             expect_true(dm2_v1_runtime_get_last_npc_dialog_line() == 1,
                         "DM2 runtime advances repeated same-square NPC dialog line");
-            expect_true(strcmp(view.inspectDetail,
-                               dm2_v1_npc_get_dialog(
-                                   DM2_NPC_MERCHANT_FRIENDLY, 1)) == 0,
-                        "M11 DM2 NPC interaction exposes advanced dialog line");
+            expect_true(view.inspectDetail[0] == '\0',
+                        "M11 DM2 repeated NPC text remains unbound");
             dm2_v1_runtime_set_position(0, 15, 15, 0);
             dm2_v1_runtime_set_outdoor(0);
         }
@@ -2533,8 +2519,8 @@ int main(void) {
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
                         M11_GAME_INPUT_REDRAW,
                     "M11 DM2 action handles a shop wall from the front square");
-        expect_true(strstr(view.lastOutcome, "DM2 SHOP GDAT REQUIRED") != NULL,
-                    "M11 DM2 shop action fails closed until the GDAT wall route exists");
+        expect_true(view.lastOutcome[0] == '\0',
+                    "M11 DM2 shop action fails closed without host status text");
         expect_true(dm2_v1_shop_is_active() == 0,
                     "M11 DM2 does not retain the catalog shop state");
         expect_true(dm2_v1_shop_get_party_gold() == 375u,

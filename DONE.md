@@ -52836,6 +52836,11 @@ no-draw/capture-gates är oförändrade.
   decoded and `FORMAT_SKSTR`-expanded buffer, rejects out-of-range keys rather
   than wrapping them to unrelated data, and is covered with a `FIGHTER` text
   callback proof.
+- ✅ 2026-08-06 DM2 runtime text sanitization: removed host-authored action,
+  shop, door, movement, inventory and quicksave labels from the live M11/boot
+  route. Runtime receipts, save-writer refusal and real door/movement state
+  remain intact, but no status or inspector replacement text is shown until a
+  matching original GDAT/dialogue owner is wired.
 ✅ 2026-08-06 Nexus startup menu text sanitization: production save/chrome
 builders no longer emit hoststrängarna `DUNGEON MASTER NEXUS`, `LOAD GAME`,
 `NEW GAME` eller `LOAD SLOT ##`. Riktig radgeometri och källans slot-identitet

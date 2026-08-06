@@ -20840,9 +20840,10 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         if (!dm2_v1_runtime_quicksave_boot_profile_with_receipt(
                 profile,
                 &receipt)) {
-            m11_set_status(state,
-                           receipt.status_scope ? receipt.status_scope : "SAVE",
-                           receipt.status ? receipt.status : "DM2 WRITE FAILED");
+            /* SAVE status text belongs to DM2's dialog/GDAT owner.  The
+             * original writer is not live, so retain the receipt but publish
+             * no host-authored failure label. */
+            m11_set_status(state, NULL, NULL);
             return 0;
         }
         if (receipt.save_path[0]) {
@@ -20853,15 +20854,9 @@ int M11_GameView_QuickSave(M11_GameViewState* state) {
         }
         m11_sync_dm2_state_from_runtime(state);
         state->lastSaveTick = (uint32_t)state->dm2State.tick_count;
-        m11_set_status(state,
-                       receipt.status_scope ? receipt.status_scope : "SAVE",
-                       receipt.status ? receipt.status : "DM2 SKSAVE WRITTEN");
-        snprintf(state->inspectTitle, sizeof(state->inspectTitle),
-                 "DM2 SAVE SLOT READY");
-        snprintf(state->inspectDetail, sizeof(state->inspectDetail),
-                 "RESUME TICK %u FROM %s",
-                 (unsigned int)state->dm2State.tick_count,
-                 receipt.save_root);
+        m11_set_status(state, NULL, NULL);
+        state->inspectTitle[0] = '\0';
+        state->inspectDetail[0] = '\0';
         return 1;
     }
 
@@ -24898,7 +24893,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 &receipt) ? receipt.operation_result : -1;
             if (result == 0) {
                 m11_sync_dm2_state_from_runtime(state);
-                m11_set_status(state, "TURN", "DM2 LEFT");
+                m11_set_status(state, NULL, NULL);
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
@@ -24912,7 +24907,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 &receipt) ? receipt.operation_result : -1;
             if (result == 0) {
                 m11_sync_dm2_state_from_runtime(state);
-                m11_set_status(state, "TURN", "DM2 RIGHT");
+                m11_set_status(state, NULL, NULL);
                 return M11_GAME_INPUT_REDRAW;
             }
             return M11_GAME_INPUT_IGNORED;
@@ -24925,8 +24920,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 &receipt);
             result = receipt.operation_result;
             m11_sync_dm2_state_from_runtime(state);
-            m11_set_status(state, "MOVE",
-                           result == 0 ? "DM2 FORWARD" : "BLOCKED");
+            m11_set_status(state, NULL, NULL);
             return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_DOWN) {
@@ -24937,8 +24931,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 &receipt);
             result = receipt.operation_result;
             m11_sync_dm2_state_from_runtime(state);
-            m11_set_status(state, "MOVE",
-                           result == 0 ? "DM2 BACKSTEP" : "BLOCKED");
+            m11_set_status(state, NULL, NULL);
             return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_STRAFE_LEFT) {
@@ -24949,8 +24942,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 &receipt);
             result = receipt.operation_result;
             m11_sync_dm2_state_from_runtime(state);
-            m11_set_status(state, "MOVE",
-                           result == 0 ? "DM2 STRAFE LEFT" : "BLOCKED");
+            m11_set_status(state, NULL, NULL);
             return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_STRAFE_RIGHT) {
@@ -24961,8 +24953,7 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                 &receipt);
             result = receipt.operation_result;
             m11_sync_dm2_state_from_runtime(state);
-            m11_set_status(state, "MOVE",
-                           result == 0 ? "DM2 STRAFE RIGHT" : "BLOCKED");
+            m11_set_status(state, NULL, NULL);
             return M11_GAME_INPUT_REDRAW;
         }
         if (input == M12_MENU_INPUT_ACCEPT ||
@@ -24987,15 +24978,15 @@ M11_GameInputResult M11_GameView_HandleInput(M11_GameViewState* state,
                  * transaction state while the actual G1 -> WALL_GFX chain
                  * remains unbound. */
                 (void)dm2_v1_shop_leave(dm2_v1_shop_get_active_shop());
-                m11_set_status(state, "ACTION", "DM2 SHOP GDAT REQUIRED");
+                m11_set_status(state, NULL, NULL);
                 m11_sync_dm2_state_from_runtime(state);
                 return M11_GAME_INPUT_REDRAW;
             }
-            m11_set_status(state,
-                           receipt.status_scope ? receipt.status_scope
-                                                : "ACTION",
-                           receipt.status ? receipt.status
-                                          : "DM2 NO TARGET");
+            if (receipt.status) {
+                m11_set_status(state, receipt.status_scope, receipt.status);
+            } else {
+                m11_set_status(state, NULL, NULL);
+            }
             if (receipt.inspect_title || receipt.inspect_text) {
                 m11_set_inspect_readout(
                     state,
