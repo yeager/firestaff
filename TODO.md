@@ -28308,12 +28308,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   only explicit decoded companion callbacks and otherwise consume the selected
   GDAT unchanged; remaining work is wiring that callback to every remaining
   live M11 GUI/dialogue owner. **2026-08-06 coverage update:** the real-media M12
-  regression now walks every non-empty text entry in the selected Japanese
-  GDAT and requires a non-empty entry with the same `(category,index,field)`
-  key in the authenticated PC-English companion. It performs that check for
-  both the direct file and the original DOS ZIP member, entirely in RAM. This
-  proves the companion corpus covers the selected CD's text keys; it does not
-  claim that unbound GUI/dialogue consumers already render them.
+  regression and the FM Towns English start gate both walk every non-empty text
+  entry in the selected Japanese GDAT and require a non-empty entry with the
+  same `(category,index,field)` key in the authenticated PC-English companion.
+  The check covers both a direct file and the original DOS ZIP member, entirely
+  in RAM. It proves the companion corpus covers the selected CD's text keys;
+  it does not claim that unbound GUI/dialogue consumers already render them.
 
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN

@@ -70,5 +70,12 @@ menu palette and the source rectangles while retaining all media in RAM.
 SWOOSH before TITLE, source-timed TITLE/SND2 events, the exact IMG2 menu frame,
 and the no-synthetic-party/no-unowned-resume boundary.
 
+The same complete-key check is also part of the English FM Towns boot gate.
+The selected PC-English `GRAPHICS.DAT` must supply a non-empty value for every
+non-empty text key in the selected Japanese GDAT before M11 reaches the native
+startup media. This retains the CD as the image, palette, coordinate and input
+owner; it merely refuses an English session with an incomplete original text
+corpus. It neither generates translations nor makes an unbound GUI call render.
+
 Both tests require the original disc and explicitly selected PC-English
 companion corpus; they skip rather than fabricate data when either is absent.

@@ -133,6 +133,53 @@ static const uint8_t *dm2_v1_boot_fmtowns_english_dialogue_text(
     }
     return dm2_v1_runtime_i18n_text(category, index, field, out_size);
 }
+
+/* The Towns CD remains the source owner, but an English session must not
+ * start unless its explicitly selected PC corpus covers every source text
+ * key. Checking one visible SAVE/CANCEL pair is not enough: a later native
+ * GUI owner could otherwise fall back to Japanese or a host-made string.
+ * This is the same keyed GDAT boundary that c_gfx_str.cpp::DM2_QUERY_GDAT_TEXT
+ * consumes, evaluated while both authenticated containers are still RAM-only.
+ */
+static int dm2_v1_boot_fmtowns_english_text_overlay_complete(
+    const DM2_V1_BootProfile *profile)
+{
+    const DM2_V1_AssetLoader *native_loader;
+    DM2_V1_GdatEntryIterator iterator;
+    DM2_V1_GdatEntryQueryReceipt entry;
+    unsigned int native_text_count = 0u;
+
+    if (!profile || profile->platform != DM2_PLATFORM_FMTOWNS_JA ||
+        !dm2_v1_runtime_i18n_ready()) {
+        return 0;
+    }
+    native_loader = dm2_v1_boot_asset_loader(profile);
+    if (!native_loader) {
+        return 0;
+    }
+    memset(&iterator, 0, sizeof(iterator));
+    iterator.category_first = 0;
+    iterator.category_last = DM2_GDAT_CATEGORY_LIMIT;
+    iterator.index_filter = -1;
+    iterator.type_filter = DM2_GDAT_ENTRY_TYPE_TEXT;
+    iterator.field_filter = -1;
+    while (dm2_v1_query_next_gdat_entry(native_loader, &iterator, &entry)) {
+        const uint8_t *english_text;
+        size_t english_text_size = 0u;
+
+        if (!entry.present || entry.raw_length == 0u) {
+            continue;
+        }
+        ++native_text_count;
+        english_text = dm2_v1_runtime_i18n_text(entry.category, entry.index,
+                                                 entry.field,
+                                                 &english_text_size);
+        if (!english_text || english_text_size == 0u) {
+            return 0;
+        }
+    }
+    return native_text_count != 0u;
+}
 #include <sys/stat.h>
 
 #define DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL 0x01
@@ -10812,8 +10859,9 @@ int dm2_v1_boot_startup_launch_alloc_with_language(
         return 0;
     }
     if (english_companion &&
-        !dm2_v1_runtime_bind_fmtowns_english_text_companion(
-            english_companion, english_companion_size)) {
+        (!dm2_v1_runtime_bind_fmtowns_english_text_companion(
+             english_companion, english_companion_size) ||
+         !dm2_v1_boot_fmtowns_english_text_overlay_complete(profile))) {
         out_launch->prepare_result = DM2_V1_BOOT_STARTUP_PREPARE_UNVERIFIED_ASSETS;
         dm2_v1_boot_startup_set_failure_status(out_launch->prepare_result,
                                                out_launch);

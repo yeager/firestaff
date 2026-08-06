@@ -2035,6 +2035,14 @@ were corrected to stop presenting DM1 provisions as Nexus data.
   conceal missing English companion text. This verifies corpus coverage, not
   the still-unbound original GUI/dialogue consumers.
 
+- ✅ 2026-08-06 DM2 FM Towns English launch coverage: the same complete-key
+  check is now an M11 boot gate rather than test-only evidence. A session
+  reaches the Japanese CD's original startup media only when the selected,
+  hash-verified PC-English corpus supplies non-empty text for every non-empty
+  native GDAT text key. Both corpus readers remain RAM-only; this adds no
+  translation or fallback text, and it does not claim unbound GUI consumers
+  are already rendered.
+
 - ✅ 2026-08-06 Theron forcefield menu input: pointer activation now uses the
   same boot-layer admission route as keyboard Enter/Action. When the real
   Track 02 dungeon capture is still missing, the Soul Room remains visible
