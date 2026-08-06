@@ -4484,6 +4484,12 @@ list(REMOVE_ITEM M10_SOURCES
 # it only into its explicit regression until a real D1 side owner is recovered.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d1l_d1r_f0107_wall_ornament_pc34_compat.c")
+# `dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat.c`
+# seeds synthetic party, chest, icon and panel state around inventory helpers.
+# It reads no original DM1 data and has no M11/runtime caller, so compile it
+# only into its explicit regression rather than the M10 production archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
@@ -52854,7 +52860,9 @@ add_executable(test_dm1_v1_chest_empty_party_group_cleanup_pc34_compat tests/tes
 target_include_directories(test_dm1_v1_chest_empty_party_group_cleanup_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_empty_party_group_cleanup_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_empty_party_group_cleanup_pc34_compat COMMAND test_dm1_v1_chest_empty_party_group_cleanup_pc34_compat)
-add_executable(test_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat tests/test_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat.c)
+add_executable(test_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat
+    tests/test_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat.c
+    src/dm1/dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat COMMAND test_dm1_v1_chest_inventory_c545_drop_to_leader_hand_already_occupied_pc34_compat)
