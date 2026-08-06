@@ -51,6 +51,11 @@
   joypad probe paths and made the POSIX canonical-path capacity contract
   explicit. `firestaff_theron` and the authentic US/JP font-tile regression
   build and pass without changing the source-bound media or admission gates.
+
+- ✅ 2026-08-06 Theron M11 forcefield input gate: removed the premature
+  startup-wide atlas rejection that returned to the launcher before keyboard
+  input was dispatched. Enter now reaches the forcefield admission result;
+  missing source-owned post-startup capture still blocks dungeon promotion.
 - ✅ 2026-08-06 DM1 archive-backed runtime handoff: hash-discovered ZIP
   members were previously passed directly to the ordinary-file ReDMCSB
   loaders, so a real archive could be detected but not launched. M11 now
@@ -8802,6 +8807,18 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
       real-data/capture paths unrelated to this mechanics change.
 
 # Firestaff DONE - Completed Work
+
+- ✅ 2026-08-06 CSB Atari ST raw-floppy scanner admission: added a bounded
+  GEMDOS/FAT12 reader for ordinary sector-image `.st` disks to the shared
+  hash scanner, including nested `.st` entries in externally enumerated
+  archives. It authenticates and materializes original `GRAPHICS.DAT` and
+  `DUNGEON.DAT` by content rather than filenames, so the CSB Atari ST 2.0
+  game disk reaches the same cache handoff as loose files and ADF media.
+  The reader validates the boot/BPB geometry, root entries, FAT12 chains and
+  file bounds; it deliberately does not claim support for protected STX or
+  compressed MSA transports. `test_asset_find_by_hash` now covers direct and
+  `.7z`-nested raw-ST discovery plus virtual-path extraction, and the real
+  839,680-byte CSB ST 2.0 disk scans READY.
 
 - ✅ 2026-08-06 CSB Amiga 3.1 English ADF scanner admission: registered the
   original A31E `GRAPHICS.DAT` MD5

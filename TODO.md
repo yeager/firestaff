@@ -5,8 +5,11 @@
   into the launch cache instead of showing both files as FOUND and the game
   as MISSING. The M12 profile store now accommodates every declared profile,
   rather than truncating after seven entries. Continue the same real-media
-  audit for CSB's Atari ST and FM Towns packages, and report the matched
-  platform/profile whenever only a partial or unsupported package is present.
+  audit for CSB's FM Towns packages, and report the matched platform/profile
+  whenever only a partial or unsupported package is present. Raw GEMDOS
+  Atari ST `.st` images now have a bounded FAT12 path, including `.st` media
+  inside `.7z`; protected STX and compressed MSA remain intentionally
+  unsupported until their transports are implemented and verified.
   The verified original Amiga 3.1 English ADF (A31E) now materializes and
   launches; keep the remaining title/entrance capture work separate from this
   data-admission boundary.
@@ -146,6 +149,13 @@
   locals and marked the POSIX-only canonical-path capacity parameter unused.
   This keeps the authentic Track 02 receipt path warning-clean without
   changing any media offsets, hashes or runtime admission gates.
+
+- **THERON-M11-FORCEFIELD-INPUT:** M11 now lets authentic Track 02 startup
+  input reach the forcefield admission path even when the source-owned
+  post-startup VDC/VCE capture is unavailable. The old pre-dispatch atlas
+  check returned to the launcher before Enter was interpreted. Keep dungeon
+  promotion fail-closed and replace the remaining capture gate only after a
+  real consumer receipt binds the level, object, tile and palette routes.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size

@@ -86,6 +86,37 @@ static int write_adf_fixture(const char* path) {
     return fclose(fp) == 0;
 }
 
+/* Minimal raw GEMDOS/FAT12 .ST image: root GRAPHICS.DAT at cluster 2. */
+static int write_atari_st_fixture(const char* path) {
+    static const char payload[] = "Firestaff hash identity fixture v1\n";
+    unsigned char image[10U * 512U] = {0};
+    unsigned char* root = image + 3U * 512U;
+    FILE* fp;
+    image[0] = 0x60U;
+    put16(image + 11U, 512U);
+    image[13] = 1U;
+    put16(image + 14U, 1U);
+    image[16] = 2U;
+    put16(image + 17U, 16U);
+    put16(image + 19U, 10U);
+    image[21] = 0xf9U;
+    put16(image + 22U, 1U);
+    memcpy(root, "GRAPHICS", 8U);
+    memcpy(root + 8U, "DAT", 3U);
+    put16(root + 26U, 2U);
+    put32(root + 28U, (unsigned int)(sizeof(payload) - 1U));
+    image[512U] = 0xf0U; image[513U] = 0xffU; image[514U] = 0xffU;
+    image[1024U] = 0xf0U; image[1025U] = 0xffU; image[1026U] = 0xffU;
+    memcpy(image + 4U * 512U, payload, sizeof(payload) - 1U);
+    fp = fopen(path, "wb");
+    if (!fp) return 0;
+    if (fwrite(image, 1U, sizeof(image), fp) != sizeof(image)) {
+        fclose(fp);
+        return 0;
+    }
+    return fclose(fp) == 0;
+}
+
 static int write_stored_zip_fixture(const char* path) {
     static const char payload[] = "Firestaff hash identity fixture v1\n";
     static const char name[] = "dm2/RENAMED.BIN";
@@ -492,6 +523,7 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/cue_b.payload");
     remove("asset_find_by_hash_test_tmp/split.cue");
     remove("asset_find_by_hash_test_tmp/chaos.adf");
+    remove("asset_find_by_hash_test_tmp/chaos.st");
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf");
     RMDIR("asset_find_by_hash_test_tmp/nested");
     RMDIR("asset_find_by_hash_test_tmp");
@@ -639,6 +671,41 @@ int main(void) {
         return 1;
     }
     remove("asset_find_by_hash_test_tmp/chaos.adf");
+    if (!write_atari_st_fixture("asset_find_by_hash_test_tmp/chaos.st")) {
+        cleanup_fixture();
+        fprintf(stderr, "Atari ST fixture setup failed\n");
+        return 1;
+    }
+    memset(outPath, 0, sizeof(outPath));
+    if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                           outPath, (int)sizeof(outPath), 2) ||
+        !path_has_virtual_entry(outPath, "chaos.st", "GRAPHICS.DAT") ||
+        !asset_extract_virtual_path(outPath, "asset_find_by_hash_test_tmp/extracted.dat") ||
+        !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+        cleanup_fixture();
+        fprintf(stderr, "Atari ST filesystem lookup/extraction failed: %s\n", outPath);
+        return 1;
+    }
+    remove("asset_find_by_hash_test_tmp/extracted.dat");
+    if (system("command -v 7zz >/dev/null 2>&1 && "
+               "cd asset_find_by_hash_test_tmp && "
+               "7zz a -t7z nested_atari.st.7z chaos.st >/dev/null 2>&1") == 0) {
+        memset(outPath, 0, sizeof(outPath));
+        if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                               outPath, (int)sizeof(outPath), 2) ||
+            !path_has_virtual_entry(outPath, "nested_atari.st.7z",
+                                    "chaos.st::GRAPHICS.DAT") ||
+            !asset_extract_virtual_path(outPath,
+                                        "asset_find_by_hash_test_tmp/extracted.dat") ||
+            !file_matches_fixture_payload("asset_find_by_hash_test_tmp/extracted.dat")) {
+            cleanup_fixture();
+            fprintf(stderr, "nested Atari ST filesystem lookup/extraction failed: %s\n", outPath);
+            return 1;
+        }
+        remove("asset_find_by_hash_test_tmp/extracted.dat");
+    }
+    remove("asset_find_by_hash_test_tmp/nested_atari.st.7z");
+    remove("asset_find_by_hash_test_tmp/chaos.st");
     if (!write_stored_zip_fixture("asset_find_by_hash_test_tmp/archive.zip")) {
         cleanup_fixture();
         fprintf(stderr, "ZIP fixture setup failed\n");
