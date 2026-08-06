@@ -4600,6 +4600,11 @@ list(REMOVE_ITEM M10_SOURCES
 # it has no original-DM1 input or M11 runtime caller.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_cross_champion_hand_swap_pc34_compat.c")
+# `dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat.c` is a local,
+# fixed-value chest/leader-load fixture. Its direct regression target already
+# compiles it, and it has no original-DM1 input or M11 runtime caller.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_scroll_wheel_pickup_overflow_pc34_compat.c")
 # `dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c` is a
 # contract-only probe. It manufactures its chest stack, leader hand, floor
 # link and coordinates locally, reads no original save/dungeon/graphics data,
