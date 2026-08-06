@@ -18,6 +18,15 @@
   helper is retained only for non-source diagnostics. Remaining work is
   packaged capture of door states, not another fallback texture.
 
+  2026-08-06 bug-hunt audit: real PC34 checks pass for 83/83 HoC floor-item
+  render samples, 611 M564 object names/icons, F0115 pickup material and
+  placement, mirror side/depth orientation, inscriptions, stairs, doors and
+  damage-panel geometry. No source-side evidence currently supports changing
+  those routes. The user-visible black/misdrawn torch-holder, held-object
+  cursor, full inventory placement and complete Mac viewport capture remain
+  open because they still need a packaged-window capture at the affected
+  real-data poses; do not close them from headless receipts alone.
+
 - **DM1-HOC-ORNAMENT-RENDER-CAPTURE:** The generic DM1 dungeon bridge now
   consumes the real PC34 map ornament counts, seed, square attributes and
   F0169/F0170 random wall/floor ordinal formulas. The real PC34 map-0 receipt
