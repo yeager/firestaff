@@ -148,6 +148,12 @@
   reads no original DM1 data; retain it only in its explicit regression until
   a live F0108 consumer is bound to authenticated GRAPHICS.DAT material.
 
+- **DM1-D1L2-D1R2-F0115-THING-PASS-SYNTHETIC-AUDIT:** This D1 side-route
+  table hard-codes rows, zones and cell orders. It reads no original DM1 data
+  and has no M11/runtime caller; retain it only in its explicit regression
+  until a live F0115 consumer is bound to authentic Thing and GRAPHICS.DAT
+  material.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The

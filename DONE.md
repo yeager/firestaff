@@ -174,6 +174,14 @@
 - ✅ Verification: `test_dm1_v1_viewport_d0l_d0r_f0108_floor_ceiling_ornament_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 D1L2/D1R2 F0115 thing-pass synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the fixed D1 side-route F0115 table from M10. It hard-codes
+  rows, zones and cell orders, reads no original DM1 bytes and has no
+  M11/runtime caller; its explicit ReDMCSB regression now compiles it directly.
+- ✅ Verification: `test_dm1_v1_viewport_d1l2_d1r2_f0115_thing_pass_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the
