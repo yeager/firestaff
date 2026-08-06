@@ -917,6 +917,16 @@
   entering production. Real D2C bitmap ownership remains open.
 - ✅ No game data was copied or committed.
 
+# DM1 F0241-F0260 source-receipt audit isolation (2026-08-06)
+
+- ✅ Removed the unused raw F0241–F0260 source-receipt audit from the broad
+  M10 source glob. Caller search found no M11/runtime consumer; its explicit
+  test remains the only compilation owner.
+- ✅ Preserved the ReDMCSB timeline admission and F0256 platform-boundary
+  evidence without linking an inert receipt into production. A live timeline
+  event owner remains open.
+- ✅ No game data was copied or committed.
+
 # CSB FM Towns graphics real-cache regression (2026-08-06)
 
 - ✅ `test_csb_v1_fmtowns_graphics_dat` now takes

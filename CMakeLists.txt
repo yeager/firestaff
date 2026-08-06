@@ -4257,6 +4257,12 @@ list(REMOVE_ITEM M10_SOURCES
 # limited to consumers that can bind authenticated source material.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2c_center_wall_composition_pc34_compat.c")
+# `dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat.c` is an admission
+# audit only.  It has no M11/runtime caller and its dedicated test already
+# compiles it explicitly; keep the raw-source receipt out of the broad M10
+# production archive until a live timeline owner consumes it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part

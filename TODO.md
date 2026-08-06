@@ -31,6 +31,11 @@
   Keep its ReDMCSB ordering/C10 contract test-only until the live D2C source
   bitmap consumer and original-data capture are bound.
 
+- **DM1-F0241-F0260-SOURCE-RECEIPT-AUDIT:** The raw F0241–F0260 timeline
+  receipt is currently an admission audit with no live caller. Keep its
+  source fingerprint and F0256 platform boundary test-only until a real
+  timeline event consumer is bound to authenticated DM1 runtime state.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The
