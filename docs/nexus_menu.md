@@ -24,17 +24,13 @@ palette ownership, and VDP1/VDP2 placement remain capture-gated.
 
 ---
 
-## 2. Expected Menu Flow (from DM1/CSB pattern)
+## 2. Verified menu boundary
 
-Based on the DM1 menu flow and Nexus-specific features:
-
-```
-Title Screen (3D animated)
-  -> Champion Selection (Hall of Champions, 24 JP champions)
-     -> Dungeon Entrance (3D entrance scene, party formation)
-        -> In-Game UI (champion panels, inventory, spell list)
-           -> ESC Menu (pause, stats, save/load)
-```
+No retail Nexus menu sequence is promoted from the DM1/CSB flow. The local
+Nexus corpus proves startup assets, a DM.BIN hit-rectangle table and 20 PLRD
+records, but it does not yet prove the Saturn screen order, champion-selection
+consumer, or the VDP1/VDP2 composition of those assets. Those relationships
+remain capture-gated.
 
 ---
 
@@ -47,10 +43,10 @@ Title Screen (3D animated)
   authenticated original capture.
 
 ### Champion Select State
-- 24 Japanese champions (Syra, Leyla, Nabi, etc.)
-- Shift-JIS text rendering for names
-- Party formation (up to 4 champions)
-- Similar to DM1's SELECTOR.C but with Japanese names and 3D portraits
+- 20 PLRD records are present in the real Nexus data; their runtime menu
+  ordering and screen consumer are not yet authenticated.
+- Japanese text rendering, party formation and portrait placement remain
+  unavailable until a real text/VDP1 consumer trace binds them.
 
 ### Options State
 - Display mode (fullscreen / windowed)

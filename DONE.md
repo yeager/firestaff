@@ -9,6 +9,13 @@
   real-media test streams nested ADFs through RAM only; no game data was
   unpacked, copied or tracked.
 
+- ✅ 2026-08-06 Nexus menu inventory hardening: removed the DM1/CSB-derived
+  menu-flow diagram and unsupported 24-champion claim from `docs/nexus_menu.md`.
+  The document now records only the verified startup assets, DM.BIN hit-table
+  handoff and 20 PLRD records; retail menu order, text consumption and
+  Saturn VDP1/VDP2 composition remain capture-gated. No runtime behavior or
+  game data was changed.
+
 - ✅ 2026-08-06 DM2 platform documentation: corrected the obsolete claim that
   DM2 had no Amiga release. The variant guide now records the documented
   European 1.0 EN/FR/DE port, its six-floppy installer and original

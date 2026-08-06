@@ -5,6 +5,12 @@
   selector bindings fail-closed until the authentic SLEV/SDDRVS event
   consumer is captured; do not infer semantics from selector ordering.
 
+- **NEXUS-MENU-SEQUENCE-CAPTURE:** `docs/nexus_menu.md` no longer treats the
+  DM1/CSB flow or a 24-champion roster as Nexus evidence. Bind the real
+  startup/champion/menu order, text consumer and VDP1/VDP2 composition from
+  an authenticated Saturn capture before adding menu transitions or screen
+  coordinates.
+
 - **NEXUS-DGN-MATERIAL-VDP1-CAPTURE:** The real Structure2 decoder now
   has a 16-level census guard (1,678 textures: 1,553 indexed-4bpp and 125
   direct-555) with non-zero output checks. Keep decoded pixels/palettes as
