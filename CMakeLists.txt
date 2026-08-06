@@ -37139,6 +37139,12 @@ endif()
 # the rest of firestaff_nexus which has pre-existing cross-file errors
 # tracked in the nexus V1 Phase 2+ work backlog.
 if(BUILD_TESTING)
+    add_test(
+        NAME nexus_production_source_boundary
+        COMMAND ${Python3_EXECUTABLE}
+            ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_nexus_production_source_boundary.py
+    )
+
     add_executable(test_nexus_v1_boot_profile_smoke
         tests/nexus_v1_boot_profile_smoke.c
         src/nexus/nexus_v1_boot_profile.c

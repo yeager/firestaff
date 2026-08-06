@@ -5,6 +5,13 @@
   its explicit fixture raster lane; production now returns no-draw until the
   Saturn page/tilemap/attribute and placement consumer is authenticated.
 
+# Nexus production source boundary (2026-08-06)
+
+- ✅ Added `nexus_production_source_boundary`, a CTest verifier that keeps
+  synthetic V2 HUD/renderer modules and unproven text/MNS presentation paths
+  out of `firestaff_nexus`. This protects the retail fail-closed boundary
+  during future CMake/source-list changes.
+
 # Nexus direct Structure2 decode gate (2026-08-06)
 
 - ✅ Closed the remaining public retail bypass: the active canonical DGN

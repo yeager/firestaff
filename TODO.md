@@ -27813,6 +27813,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     verified corpus and boot profile use `a6f2272a4f6cb3c6b3b33012bc5b15ed`.
     Update the capture-sidecar evidence only; Saturn authentication and
     runtime texture upload remain blocked until independent VDP1 capture.
+-  - 2026-08-06 Nexus production-source boundary now has a CTest verifier.
+  It keeps synthetic V2 HUD/renderer modules and unproven text/MNS
+  presentation paths out of `firestaff_nexus` during future source-list edits.
 2026-08-06 regional capture follow-up: the same private CUE normalization
 now accepts the archive's Japanese `TQJP02.iso` alias and binds the complete
 sibling `TQJP02End.iso` only after the authenticated JP ISO MD5 matches
