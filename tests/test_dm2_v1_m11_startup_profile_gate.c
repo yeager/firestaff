@@ -31,6 +31,7 @@
 #include "dm2_v1_trigger.h"
 #include "dm2_v2_runtime.h"
 #include "m11_game_view.h"
+#include "menu_startup_m12.h"
 #include "render_sdl_m11.h"
 
 #include <stdio.h>
@@ -1009,6 +1010,47 @@ static const char* dm2_data_dir(char fallback[512]) {
     return fallback;
 }
 
+/* The launcher scanner may be pointed at a DOS install root while the
+ * authenticated pair lives in its original DATA/ subdirectory.  Keep this
+ * as a real-data-only boundary test: M12 must hand M11 that owning directory,
+ * never merely the configured scan root.  SKULL.ASM T560 owns DUNGEON.DAT;
+ * dm2_v1_boot_scan_assets() is the corresponding hash-first Firestaff entry.
+ */
+static void expect_m12_dm2_verified_launch(const char* data_dir) {
+    M12_StartupMenuState menu;
+    M12_StartupMenuInitOptions options;
+    M11_GameViewState launched_view;
+    const char* runtime_dir;
+
+    if (!data_dir || !data_dir[0]) return;
+    memset(&options, 0, sizeof(options));
+    options.skipScreenshotGalleryScan = 1;
+    M12_StartupMenu_InitWithOptions(&menu, data_dir, "dm2", &options);
+    runtime_dir = M12_AssetStatus_GetRuntimeDataDir(&menu.assetStatus, "dm2");
+    expect_true(M12_AssetStatus_GameAvailable(&menu.assetStatus, "dm2") == 1,
+                "M12 finds the real DM2 DOS pair before launch");
+    expect_true(runtime_dir && runtime_dir[0] != '\0',
+                "M12 publishes a DM2 runtime data directory");
+    expect_true(runtime_dir && strstr(runtime_dir, "::") == NULL,
+                "loose DOS data keeps an ordinary runtime directory");
+
+    /* Main card -> options; first UP wraps the initial presentation row to
+     * the dedicated Launch row.  No option is changed by this sequence. */
+    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_UP);
+    M12_StartupMenu_HandleInput(&menu, M12_MENU_INPUT_ACCEPT);
+    expect_true(menu.launchRequested == 1,
+                "verified DM2 M12 launch row requests M11 handoff");
+
+    M11_GameView_Init(&launched_view);
+    expect_true(M11_GameView_OpenSelectedMenuEntry(&launched_view, &menu) == 1,
+                "M12 verified DM2 launch reaches the M11 boot owner");
+    expect_true(launched_view.sourceKind == M11_GAME_SOURCE_DM2_BOOT &&
+                    launched_view.dm2BootProfile != NULL,
+                "M12 DM2 launch retains the verified boot profile");
+    M11_GameView_Shutdown(&launched_view);
+}
+
 static int append_blob(uint8_t *dst, size_t cap, size_t *pos,
                        const void *src, size_t n)
 {
@@ -1167,6 +1209,8 @@ int main(void) {
         printf("skip: no hash-verified DM2 V1 profile at %s\n", data_dir);
         return g_failures == 0 ? 0 : 1;
     }
+
+    expect_m12_dm2_verified_launch(data_dir);
 
     fill_dm2_launch_spec(&spec, data_dir);
 
