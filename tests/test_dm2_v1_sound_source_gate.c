@@ -20,6 +20,14 @@ int main(void)
     assert(dm2_v1_sound_play_positional(DM2_SOUND_STD_EXPLOSION,
                                         1, 2, 3, 4) == -1);
     assert(dm2_v1_sound_play(-1, 0) == -1);
+    /* c_sound.cpp has no sound-name text producer. Known class/IDs must not
+     * leak hand-written English labels into a real-data runtime. */
+    assert(dm2_v1_sound_name(DM2_SOUND_CATEGORY_STANDARD,
+                             DM2_SOUND_STD_EXPLOSION) == NULL);
+    assert(dm2_v1_sound_name(DM2_SOUND_CATEGORY_CHAMPION,
+                             DM2_SOUND_CHAMPION_FOOTSTEP) == NULL);
+    assert(dm2_v1_sound_name(DM2_SOUND_CATEGORY_CREATURE,
+                             DM2_SOUND_CREATURE_DEATH) == NULL);
 
     /* Cycle 16: PCM decode and audible playback stay fail-closed without a
      * verified GDAT loader and playback backend. */

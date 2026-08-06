@@ -16,42 +16,6 @@
 #include <stdlib.h>
 #include <string.h>
 
-/* ── Sound name tables by category ────────────────────────────────────────
- * Source: docs/dm2_audio.md, docs/dm2_sound_combat.md
- * Names for major sound IDs. Full GDAT table lookup is runtime. */
-
-static const char *const g_std_sound_names[] = {
-    [0x81] = "Explosion",      /* DM2 new: bombs */
-    [0x84] = "Punch/Fall",
-    [0x85] = "Knock",
-    [0x86] = "Throw/Shoot",
-    [0x88] = "Activation",
-    [0x89] = "Teleport",
-};
-
-static const char *const g_champion_sound_names[] = {
-    [0x00] = "Champion Attack",
-    [0x01] = "Champion Shoot",
-    [0x82] = "Champion Gethit",   /* hex=130, fits in 160-bound array */
-    [0x83] = "Champion Eat/Drink",
-    [0x87] = "Champion Scream",    /* hex=135 */
-    [0x8A] = "Champion Bump",      /* hex=138 */
-    [0x92] = "Champion Footstep",  /* hex=146 */
-};
-
-static const char *const g_creature_sound_names[] = {
-    [0x00] = "Creature Move",
-    [0x01] = "Creature Turn",
-    [0x02] = "Creature Gethit",
-    [0x03] = "Creature Reflector",
-    [0x04] = "Creature Jump",
-    [0x07] = "Creature Attack",
-    [0x08] = "Creature Pick/Steal",
-    [0x10] = "Creature Spawn",
-    [0x11] = "Creature Death",
-    [0x12] = "Creature Attack 2",
-};
-
 static const uint16_t g_skproject_sound_bearing_table[24] = {
     0x25a0u, 0x11f0u, 0x0b00u, 0x0730u, 0x0490u, 0x0290u,
     0x00d0u, 0x0000u, 0x0800u, 0x1700u, 0x2600u, 0x3500u,
@@ -1826,29 +1790,16 @@ int dm2_v1_sound_stop_music(void) {
     return 0;
 }
 
-/* dm2_v1_sound_name — human-readable sound name
- * Source: docs/dm2_audio.md, docs/dm2_sound_combat.md */
+/* A sound class triple identifies a GDAT payload, not English display text.
+ * SKProject: SKWIN/c_sound.cpp::DM2_SOUND9 / DM2_QUERY_SND_ENTRY_INDEX
+ * (lines 650-673) resolves and plays the entry; it does not supply a name
+ * string. The old local table turned research notes into production UI data.
+ * Keep this compatibility API empty until an original GDAT text consumer is
+ * recovered and bound to the exact entry. */
 const char *dm2_v1_sound_name(int category, int sound_id) {
-    if (sound_id < 0) return "?";
-    switch (category) {
-        case DM2_SOUND_CATEGORY_STANDARD:
-            /* IDs 0x81, 0x84-0x89 are in the standard sparse array.
-             * Allow up to 160 entries so 0x81 (=129) fits. */
-            if (sound_id < 160 && g_std_sound_names[sound_id])
-                return g_std_sound_names[sound_id];
-            break;
-        case DM2_SOUND_CATEGORY_CHAMPION:
-            /* Champion SFX IDs include hex values 0x82, 0x83, 0x87, 0x8A, 0x92.
-             * These map to indices 130, 131, 135, 138, 146 — extend bound to 160. */
-            if (sound_id < 160 && g_champion_sound_names[sound_id])
-                return g_champion_sound_names[sound_id];
-            break;
-        case DM2_SOUND_CATEGORY_CREATURE:
-            if (sound_id < 160 && g_creature_sound_names[sound_id])
-                return g_creature_sound_names[sound_id];
-            break;
-    }
-    return "?";
+    (void)category;
+    (void)sound_id;
+    return NULL;
 }
 
 const char *dm2_v1_sound_source_evidence(void) {

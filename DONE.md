@@ -1,5 +1,17 @@
 # DM2 production placeholder inventory (2026-08-06)
 
+- ✅ 2026-08-06 DM2 synthetic sound-label removal: removed the production
+  hand-written English sound-name tables from `dm2_v1_sound_name()`. SKProject
+  `c_sound.cpp` resolves GDAT sample class triples but contains no matching
+  text consumer, so the compatibility API now returns `NULL` until that owner
+  is recovered. The source-gate regression proves known standard, champion
+  and creature IDs cannot publish host labels; the real PC-DOS GDAT sound
+  regression still resolves the original `3/0/129` sound entry. Verification:
+  full `firestaff` build, `dm2_v1_sound_source_gate`,
+  `dm2_v1_sound_gdat_real_data`, and
+  `dm2_production_placeholder_boundary` pass. No game data was copied,
+  unpacked or modified.
+
 - ✅ 2026-08-06 DM2 raw-SKSAVE slot-publication fix: `dm2_v1_session_load_slot`
   and `dm2_v1_session_load_last_session` no longer copy the intentionally empty
   partial-GAME_LOAD session from an authenticated raw prefix. The real PC-DOS

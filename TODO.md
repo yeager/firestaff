@@ -23,6 +23,12 @@
   handoff and real-data regression; never make a broad glob the admission
   mechanism.
 
+- **DM2-SOUND-TEXT-CONSUMER:** `c_sound.cpp` binds class triples to GDAT sound
+  payloads but does not supply a sound-name text producer. The production
+  compatibility name API deliberately returns `NULL` rather than exposing
+  hand-written English labels. Recover an original text consumer and bind it
+  to the exact GDAT entry before displaying sound names.
+
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
   and the local English CUE by

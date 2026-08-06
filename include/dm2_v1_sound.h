@@ -546,6 +546,9 @@ int  dm2_v1_sound_schedule_music(uint32_t elapsed_us,
                                   DM2_V1_MusicScheduleReceipt *out_receipt);
 int  dm2_v1_sound_play_music(int track);
 int  dm2_v1_sound_stop_music(void);
+/* Returns NULL until a source-owned GDAT text consumer proves a display
+ * label for this sound entry. Do not replace an unknown name with a host
+ * English description. */
 const char *dm2_v1_sound_name(int category, int sound_id);
 const char *dm2_v1_sound_source_evidence(void);
 
