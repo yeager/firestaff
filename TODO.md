@@ -938,7 +938,12 @@ level or consumer bindings.
   file-browser bindings, the language-specific EDM/JDM selection in TMENU.INF,
   and the game executable's original title/menu/dungeon/CD owner symbols. The
   bounded Phar Lap P3 header gate also records the real load-image offset/size,
-  symbol-table bounds and initial EIP for EDM/JDM and TMENU.
+  symbol-table bounds and initial EIP for EDM/JDM and TMENU. For the English
+  EDM.EXP, the receipt now parses the real `SYM1` table (1,174 entries) and
+  records the original entry addresses for `DO_TITLE_ANIMATION`,
+  `TITLE_PRESENTS`, `TITLE_DUNGEON`, `DRAW_DMENU`, `DYNAMENU`, `MENU_ICONS`
+  and `CD_LEVEL_SONG`; Japanese JDM remains accepted without a symbol table
+  because its verified P3 image has none.
   Remaining work is decoding and consuming the FM Towns-owned
   executable startup animation and menu in M11, with original timing/audio/
   input capture. Do not reuse the PC34 `TITLE`/`SWOOSH` path for this edition.

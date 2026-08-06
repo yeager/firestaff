@@ -158,6 +158,71 @@ static int validate_p3_header(const uint8_t *program, size_t size,
     return 1;
 }
 
+typedef struct {
+    int found;
+    uint32_t value;
+} SymbolMatch;
+
+/* Phar Lap's real SYM1 table is a compact sequence of
+ * [name-length][name][DWORD value][WORD type] records.  The first PROGRAM
+ * record occupies the format's fixed preamble; the regular sequence starts
+ * at byte 0x22.  Keep this parser deliberately bounded and source-neutral:
+ * it reports only names actually present in the executable and never invents
+ * a call target from a nearby string. */
+static int parse_sym1_table(const uint8_t *table, size_t size,
+                            uint32_t *entry_count,
+                            SymbolMatch *title_animation,
+                            SymbolMatch *title_presents,
+                            SymbolMatch *title_dungeon,
+                            SymbolMatch *draw_dmenu,
+                            SymbolMatch *dynamenu,
+                            SymbolMatch *menu_icons,
+                            SymbolMatch *cd_level_song) {
+    size_t cursor = 0x22u;
+    uint32_t count = 0u;
+    SymbolMatch *matches[] = {
+        title_animation, title_presents, title_dungeon, draw_dmenu,
+        dynamenu, menu_icons, cd_level_song
+    };
+    static const char *names[] = {
+        "DO_TITLE_ANIMATION", "TITLE_PRESENTS", "TITLE_DUNGEON",
+        "DRAW_DMENU", "DYNAMENU", "MENU_ICONS", "CD_LEVEL_SONG"
+    };
+    size_t i;
+    if (!table || size < cursor || memcmp(table, "SYM1", 4) != 0 ||
+        !entry_count || !title_animation || !title_presents ||
+        !title_dungeon || !draw_dmenu || !dynamenu || !menu_icons ||
+        !cd_level_song) return 0;
+    for (i = 0; i < 7u; ++i) {
+        matches[i]->found = 0;
+        matches[i]->value = 0u;
+    }
+    while (cursor < size) {
+        size_t name_size;
+        uint32_t value;
+        if (size - cursor < 1u) return 0;
+        name_size = table[cursor++];
+        if (name_size == 0u || name_size > 127u ||
+            name_size > size - cursor || size - cursor - name_size < 6u) return 0;
+        value = (uint32_t)table[cursor + name_size] |
+                ((uint32_t)table[cursor + name_size + 1u] << 8) |
+                ((uint32_t)table[cursor + name_size + 2u] << 16) |
+                ((uint32_t)table[cursor + name_size + 3u] << 24);
+        for (i = 0; i < 7u; ++i) {
+            size_t expected_size = strlen(names[i]);
+            if (name_size == expected_size &&
+                memcmp(table + cursor, names[i], expected_size) == 0) {
+                matches[i]->found = 1;
+                matches[i]->value = value;
+            }
+        }
+        cursor += name_size + 6u;
+        ++count;
+    }
+    *entry_count = count;
+    return count > 0u;
+}
+
 int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size,
     const uint8_t *game_program, size_t game_program_size,
     const uint8_t *menu_program, size_t menu_program_size,
@@ -180,6 +245,14 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
     uint32_t menuSymbolOffset = 0U;
     uint32_t menuSymbolSize = 0U;
     uint32_t menuInitialEip = 0U;
+    uint32_t gameSymbolCount = 0U;
+    SymbolMatch titleAnimation = {0, 0U};
+    SymbolMatch titlePresents = {0, 0U};
+    SymbolMatch titleDungeon = {0, 0U};
+    SymbolMatch drawDmenu = {0, 0U};
+    SymbolMatch dynamenu = {0, 0U};
+    SymbolMatch menuIcons = {0, 0U};
+    SymbolMatch cdLevelSong = {0, 0U};
     if (!out) return 0;
     memset(out,0,sizeof(*out));
     if (!autoexec || !game_program || !menu_program || !menu_icon || !menu_info ||
@@ -208,11 +281,24 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
                             &gameHeaderSize, &gameLoadOffset, &gameLoadSize,
                             &gameSymbolOffset, &gameSymbolSize,
                             &gameInitialEip)) return 0;
+    if (gameSymbolOffset != 0u && gameSymbolSize != 0u &&
+        gameSymbolOffset <= game_program_size &&
+        gameSymbolSize <= game_program_size - gameSymbolOffset) {
+        (void)parse_sym1_table(game_program + gameSymbolOffset,
+                               gameSymbolSize, &gameSymbolCount,
+                               &titleAnimation, &titlePresents, &titleDungeon,
+                               &drawDmenu, &dynamenu, &menuIcons,
+                               &cdLevelSong);
+    }
     if (strcmp(autoHash,k_autoexec_md5) || strcmp(menuHash,k_tmenu_exp_md5) ||
         strcmp(iconHash,k_tmenu_icn_md5) || strcmp(infoHash,k_tmenu_inf_md5) || (!english && !japanese) ||
         game_program[0] != 'P' || game_program[1] != '3' || game_program[2] != 1 || game_program[3] != 0 ||
         menu_program[0] != 'P' || menu_program[1] != '3' || menu_program[2] != 1 || menu_program[3] != 0 ||
-        !menuSymbols || !gameSymbols) return 0;
+        !menuSymbols || !gameSymbols ||
+        (english && (!titleAnimation.found || !titlePresents.found ||
+                     !titleDungeon.found || !drawDmenu.found ||
+                     !dynamenu.found || !menuIcons.found ||
+                     !cdLevelSong.found))) return 0;
     out->valid=1; out->language=english?DM1_FMTOWNS_LANG_EN:DM1_FMTOWNS_LANG_JP;
     out->autoexec_size=(uint32_t)autoexec_size; out->game_program_size=(uint32_t)game_program_size; out->menu_program_size=(uint32_t)menu_program_size; out->menu_icon_size=(uint32_t)menu_icon_size; out->menu_info_size=(uint32_t)menu_info_size;
     memcpy(out->game_program_name,english?"EDM.EXP":"JDM.EXP",7); out->game_program_name[7]='\0';
@@ -228,6 +314,15 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
     out->game_p3_symbol_table_offset = gameSymbolOffset;
     out->game_p3_symbol_table_size = gameSymbolSize;
     out->game_p3_initial_eip = gameInitialEip;
+    out->game_symbol_table_verified = gameSymbolCount > 0u;
+    out->game_symbol_table_entry_count = gameSymbolCount;
+    out->game_do_title_animation_entry = titleAnimation.value;
+    out->game_title_presents_entry = titlePresents.value;
+    out->game_title_dungeon_entry = titleDungeon.value;
+    out->game_draw_dmenu_entry = drawDmenu.value;
+    out->game_dynamenu_entry = dynamenu.value;
+    out->game_menu_icons_entry = menuIcons.value;
+    out->game_cd_level_song_entry = cdLevelSong.value;
     if (!out->menu_info_selects_game) {
         memset(out, 0, sizeof(*out));
         return 0;

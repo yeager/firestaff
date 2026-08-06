@@ -34,6 +34,15 @@ typedef struct {
     int game_program_symbols_verified;
     int menu_p3_header_verified;
     int game_p3_header_verified;
+    int game_symbol_table_verified;
+    uint32_t game_symbol_table_entry_count;
+    uint32_t game_do_title_animation_entry;
+    uint32_t game_title_presents_entry;
+    uint32_t game_title_dungeon_entry;
+    uint32_t game_draw_dmenu_entry;
+    uint32_t game_dynamenu_entry;
+    uint32_t game_menu_icons_entry;
+    uint32_t game_cd_level_song_entry;
     uint32_t game_p3_header_size;
     uint32_t game_p3_load_image_offset;
     uint32_t game_p3_load_image_size;

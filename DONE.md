@@ -54416,3 +54416,15 @@ alcove runtime and archive-media tests passed (4/4).
   `firestaff` and `test_firestaff_dm1_dungeon_state_real_data` build/pass,
   real PC34 `DUNGEON.DAT` state test passes, bridge syntax check passes, and
   `git diff --check` is clean.
+
+# DM1 FM Towns Phar Lap symbol ownership (2026-08-06)
+
+- ✅ The FM Towns startup receipt now parses the real English `EDM.EXP`
+  `SYM1` table from the authenticated P3 symbol span. It verifies all 1,174
+  bounded records and records the original entry addresses for
+  `DO_TITLE_ANIMATION`, `TITLE_PRESENTS`, `TITLE_DUNGEON`, `DRAW_DMENU`,
+  `DYNAMENU`, `MENU_ICONS` and `CD_LEVEL_SONG`. Japanese `JDM.EXP` remains
+  accepted as the verified no-symbol-table P3 variant. Focused real-cache
+  startup, FM Towns disc, ISO, graphics and CD-audio tests pass on the
+  external Ninja build. Pixel/TBIOS decoding and live M11 playback remain
+  explicitly open in TODO.
