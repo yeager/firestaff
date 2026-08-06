@@ -419,6 +419,16 @@
 
 # DM1 production placeholder re-audit (2026-08-06)
 
+- ✅ 2026-08-06 CSB FM Towns CDDA pause/continue: the dedicated source CDDA
+  stream now preserves its queued raw CUE/IMG span while CSB's F31 music
+  switch is off, matching ReDMCSB `MUSIC.C` F0740/F0738
+  `cdr_pause`/`cdr_continue`. Paused time no longer consumes the M11
+  source-duration counter, and F0719's later source track request resumes a
+  paused SDL device before it replaces the span. No decoded replacement or
+  PC music fallback is introduced. Verification: `cmake --build build
+  --target firestaff`, the CSB FM Towns ANM/CD probes (skip-safe without the
+  materialized CUE/IMG pair), and `git diff --check`.
+
 - ✅ DM1 FM Towns no longer borrows the PC34 startup presentation. A selected
   `fmtowns-en` or `fmtowns-ja` edition is routed around the PC34
   `SWSH -> TITLE -> ENTRANCE` transaction and opens only its selected,

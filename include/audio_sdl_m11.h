@@ -65,6 +65,7 @@ typedef struct {
     void* sdlStream;
     void* cddaStream;
     int   cddaPlaying;
+    int   cddaPaused;
     M11_SoundBuffer sounds[M11_AUDIO_MARKER_COUNT];
     M11_SoundBuffer originalSounds[M11_AUDIO_ORIGINAL_SOUND_COUNT];
     M11_SoundBuffer titleMusic;
@@ -194,6 +195,10 @@ int M11_Audio_BindOriginalSnd3Path(M11_AudioState* state,
 int M11_Audio_PlayCdda(M11_AudioState* state,
                        const uint8_t *pcm_data, size_t pcm_size,
                        int loop);
+/* Preserve the queued original CDDA stream across the FM Towns F0740/F0738
+ * pause/continue boundary. These never create replacement PCM. */
+int M11_Audio_PauseCdda(M11_AudioState* state);
+int M11_Audio_ResumeCdda(M11_AudioState* state);
 int M11_Audio_StopCdda(M11_AudioState* state);
 
 /* Nexus SAL SFX: mix any active Nexus voices into the SDL3 audio stream.

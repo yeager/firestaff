@@ -6437,6 +6437,7 @@ static void m11_csb_dispatch_fmtowns_cdda_track(M11_GameViewState *state,
     if (state->csbFmtownsCddaPlaying) {
         (void)M11_Audio_StopCdda(&state->audioState);
         state->csbFmtownsCddaPlaying = 0;
+        state->csbFmtownsCddaPaused = 0;
     }
     cue_file = fopen(cue_path, "rb");
     if (!cue_file || fseek(cue_file, 0, SEEK_END) != 0 ||
@@ -6475,6 +6476,7 @@ static void m11_csb_dispatch_fmtowns_cdda_track(M11_GameViewState *state,
      * not a host loop; replay occurs only if a later source TR asks for it. */
     if (M11_Audio_PlayCdda(&state->audioState, pcm, pcm_size, 0)) {
         state->csbFmtownsCddaPlaying = 1;
+        state->csbFmtownsCddaPaused = 0;
         /* F2257 polls the physical device. M11 retains a source-tick
          * duration from the original 44.1 kHz stereo CD-DA span so a later
          * F0743 update can observe completion instead of latching one host
@@ -6501,7 +6503,7 @@ static void m11_csb_update_fmtowns_game_music(M11_GameViewState *state)
 
     if (!state || !state->csbFmtownsGameHandoffReceipt.valid ||
         !state->csbState.level_loaded || !state->dm1MusicOn) return;
-    if (state->csbFmtownsCddaPlaying &&
+    if (state->csbFmtownsCddaPlaying && !state->csbFmtownsCddaPaused &&
         state->csbFmtownsCddaSourceTicksRemaining > 0u) {
         --state->csbFmtownsCddaSourceTicksRemaining;
         if (state->csbFmtownsCddaSourceTicksRemaining == 0u)
@@ -6539,12 +6541,13 @@ static void m11_csb_update_fmtowns_game_music(M11_GameViewState *state)
 static void m11_csb_release_fmtowns_title(M11_GameViewState *state)
 {
     if (!state) return;
-    /* F2275 ends in F0740_MUSIC_Pause (ANIM.C line 2329). M11 has no
-     * retained CD pause stream, so discard this one-shot source transport at
-     * the same title-owner boundary rather than allowing it into SWITCHTW. */
+    /* F2275 ends in F0740_MUSIC_Pause (ANIM.C line 2329). The title owner
+     * then releases its stream at the SWITCHTW boundary, so this is a stop,
+     * not the F0738 resume path used for a temporary music-off transition. */
     if (state->csbFmtownsCddaPlaying) {
         (void)M11_Audio_StopCdda(&state->audioState);
         state->csbFmtownsCddaPlaying = 0;
+        state->csbFmtownsCddaPaused = 0;
     }
     state->csbFmtownsCddaSourceTicksRemaining = 0u;
     free(state->csbFmtownsTitleBytes);
@@ -21890,6 +21893,7 @@ static void m11_dm1_f0740_bind_driver(M11_GameViewState *state)
 }
 
 int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled) {
+    const CSB_V1_BootProfile *csb_profile;
     if (!state) return 0;
     state->dm1MusicOn = enabled ? 1 : 0;
     (void)M11_Audio_SetTitleMusicEnabled(&state->audioState, state->dm1MusicOn);
@@ -21899,8 +21903,22 @@ int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled) {
             &state->dm1MusicSource, &state->dm1MusicState,
             &state->dm1MusicDriver, &receipt);
     }
-    if (!enabled)
+    csb_profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (m11_csb_is_fmtowns_profile(csb_profile) &&
+        state->csbFmtownsCddaPlaying) {
+        /* ReDMCSB MUSIC.C F0740/F0738, MEDIA670_F31E_F31J: the original
+         * pauses the physical CD stream when music is turned off and calls
+         * cdr_continue on the same stream when it is re-enabled. */
+        if (!enabled) {
+            if (M11_Audio_PauseCdda(&state->audioState))
+                state->csbFmtownsCddaPaused = 1;
+        } else if (state->csbFmtownsCddaPaused &&
+                   M11_Audio_ResumeCdda(&state->audioState)) {
+            state->csbFmtownsCddaPaused = 0;
+        }
+    } else if (!enabled) {
         m11_dm1_stop_fmtowns_cdda(state);
+    }
     return state->dm1MusicOn;
 }
 

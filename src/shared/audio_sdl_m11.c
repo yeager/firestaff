@@ -831,6 +831,7 @@ int M11_Audio_Init(M11_AudioState* state) {
     state->sdlStream    = NULL;
     state->cddaStream   = NULL;
     state->cddaPlaying  = 0;
+    state->cddaPaused   = 0;
 
     /* Pre-generate procedural sounds regardless of backend */
     m11_generate_sounds(state);
@@ -928,6 +929,7 @@ void M11_Audio_Shutdown(M11_AudioState* state) {
         SDL_DestroyAudioStream((SDL_AudioStream*)state->cddaStream);
         state->cddaStream = NULL;
         state->cddaPlaying = 0;
+        state->cddaPaused = 0;
     }
     if (state->sdlStream) {
         SDL_DestroyAudioStream((SDL_AudioStream*)state->sdlStream);
@@ -1602,11 +1604,20 @@ int M11_Audio_PlayCdda(M11_AudioState* state,
         return 0;
     if (pcm_size % 4u != 0u) return 0;
 
+    /* A later F0719 request replaces a paused F0740 track.  SDL keeps the
+     * dedicated device paused across ClearAudioStream, so resume it before
+     * queuing the next source-owned Red Book span. */
+    if (state->cddaPaused &&
+        !SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->cddaStream)) {
+        return 0;
+    }
+
     SDL_ClearAudioStream((SDL_AudioStream*)state->cddaStream);
     if (!SDL_PutAudioStreamData((SDL_AudioStream*)state->cddaStream,
                                 pcm_data, (int)pcm_size))
         return 0;
     state->cddaPlaying = 1;
+    state->cddaPaused = 0;
     (void)loop;
     return 1;
 #else
@@ -1615,12 +1626,46 @@ int M11_Audio_PlayCdda(M11_AudioState* state,
 #endif
 }
 
+int M11_Audio_PauseCdda(M11_AudioState* state)
+{
+#if M11_HAVE_SDL_AUDIO
+    if (!state || !state->cddaStream || !state->cddaPlaying ||
+        state->cddaPaused) return 0;
+    if (!SDL_PauseAudioStreamDevice((SDL_AudioStream*)state->cddaStream))
+        return 0;
+    state->cddaPaused = 1;
+    return 1;
+#else
+    (void)state;
+    return 0;
+#endif
+}
+
+int M11_Audio_ResumeCdda(M11_AudioState* state)
+{
+#if M11_HAVE_SDL_AUDIO
+    if (!state || !state->cddaStream || !state->cddaPlaying ||
+        !state->cddaPaused) return 0;
+    if (!SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->cddaStream))
+        return 0;
+    state->cddaPaused = 0;
+    return 1;
+#else
+    (void)state;
+    return 0;
+#endif
+}
+
 int M11_Audio_StopCdda(M11_AudioState* state)
 {
 #if M11_HAVE_SDL_AUDIO
     if (!state || !state->cddaStream) return 0;
+    if (state->cddaPaused) {
+        (void)SDL_ResumeAudioStreamDevice((SDL_AudioStream*)state->cddaStream);
+    }
     SDL_ClearAudioStream((SDL_AudioStream*)state->cddaStream);
     state->cddaPlaying = 0;
+    state->cddaPaused = 0;
     return 1;
 #else
     (void)state;

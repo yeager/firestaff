@@ -1556,6 +1556,7 @@ typedef struct {
     /* F2275's TD/TR request playing through the authenticated FM Towns
      * CUE/IMG pair materialized with this launch. */
     int csbFmtownsCddaPlaying;
+    int csbFmtownsCddaPaused;
     uint32_t csbFmtownsCddaSourceTicksRemaining;
     CSB_V1_FmtownsAnmPlayback csbFmtownsTitlePlayback;
     CSB_V1_FmtownsAnmFrameReceipt csbFmtownsTitleFrameReceipt;

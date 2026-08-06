@@ -709,9 +709,12 @@
   runs F0743's nonzero-selector change gate and 100-update delay against the
   live F31 party map/x/y, then requests that same physical CUE track. Its
   source-tick duration follows the original CD-DA byte span so later selector
-  changes do not remain blocked by a stale host stream. Native CD
-  pause/resume, Utility UI execution, ending and save transactions remain
-  required. The Utility exit now admits only the selected retail C06_CEDT
+  changes do not remain blocked by a stale host stream. M11 now preserves a
+  queued original CDDA span through F0740/F0738's pause/continue transition
+  and excludes paused time from the source-duration counter; a following
+  F0719 request resumes the stream device before replacing it. Utility UI
+  execution, ending and save transactions remain required. The Utility exit
+  now admits only the selected retail C06_CEDT
   owner: F31E verifies `UTILE.EXP` (152387 bytes, FNV-1a `ff240e0c`) and
   F31J verifies `UTILJ.EXP` (152499 bytes, FNV-1a `bb3b47c2`). Its editor
   pixels and transactions are not represented by the C03 Game or PC34
