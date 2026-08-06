@@ -4573,24 +4573,160 @@ static int zip_extract_nested_disk_entry_to_path(const char *zip_path,
 }
 
 #ifndef _WIN32
+/* A solid 7z can require decompressing its complete block merely to inspect
+ * one embedded ADF.  M12 asks independent hash questions while building its
+ * version matrix, so retain the real inner-file digests behind the archive
+ * identity.  This is a cache only: discovery and admission still compare the
+ * caller's expected MD5, never an ADF pathname. */
+static int external_adf_cache_prefix(const char *archive_path,
+                                     const char *adf_entry,
+                                     char *prefix, size_t prefix_size) {
+    return archive_path && adf_entry && prefix && prefix_size > 0U &&
+           snprintf(prefix, prefix_size, "%s::%s::", archive_path,
+                    adf_entry) < (int)prefix_size;
+}
+
+static int external_adf_cache_find(const char *archive_path,
+                                   const char *adf_entry,
+                                   const char *expected_md5,
+                                   char *out_path, int out_path_len,
+                                   int *out_complete) {
+    char prefix[sizeof(((ScanCacheEntry_I *)0)->path)];
+    char marker[sizeof(((ScanCacheEntry_I *)0)->path)];
+    struct stat st;
+    size_t prefix_len;
+    int i;
+    if (out_complete) *out_complete = 0;
+    if (!s_scan_cache || !expected_md5 ||
+        !external_adf_cache_prefix(archive_path, adf_entry, prefix,
+                                   sizeof(prefix)) ||
+        stat(archive_path, &st) != 0) {
+        return 0;
+    }
+    if (snprintf(marker, sizeof(marker), "%s@firestaff-adf-complete-v1",
+                 prefix) >= (int)sizeof(marker)) {
+        return 0;
+    }
+    prefix_len = strlen(prefix);
+    /* The completion marker is the archive-identity validation point.  Inner
+     * filesystem records may have been cached by an earlier direct virtual
+     * lookup with the ADF's own timestamp, so do not require them to mirror
+     * the enclosing archive timestamp once the current marker is present. */
+    for (i = 0; i < s_scan_cache->count; ++i) {
+        const ScanCacheEntry_I *entry = &s_scan_cache->entries[i];
+        if (entry->mtime != (int64_t)st.st_mtime ||
+            entry->size != (int64_t)st.st_size) {
+            continue;
+        }
+        if (strcmp(entry->path, marker) == 0) {
+            if (out_complete) *out_complete = 1;
+            break;
+        }
+    }
+    if (!out_complete || !*out_complete) return 0;
+    for (i = 0; i < s_scan_cache->count; ++i) {
+        const ScanCacheEntry_I *entry = &s_scan_cache->entries[i];
+        if (strncmp(entry->path, prefix, prefix_len) == 0 &&
+            strcmp(entry->md5, expected_md5) == 0) {
+            return copy_nested_virtual_match_path(archive_path, adf_entry,
+                                                  entry->path + prefix_len,
+                                                  out_path, out_path_len);
+        }
+    }
+    return 0;
+}
+
+static void external_adf_cache_store_file(const char *archive_path,
+                                          const char *adf_entry,
+                                          const char *name,
+                                          const char *md5) {
+    char prefix[sizeof(((ScanCacheEntry_I *)0)->path)];
+    char key[sizeof(((ScanCacheEntry_I *)0)->path)];
+    struct stat st;
+    if (!s_scan_cache || !name || !md5 ||
+        !external_adf_cache_prefix(archive_path, adf_entry, prefix,
+                                   sizeof(prefix)) ||
+        snprintf(key, sizeof(key), "%s%s", prefix, name) >= (int)sizeof(key) ||
+        stat(archive_path, &st) != 0) {
+        return;
+    }
+    scache_put(s_scan_cache, key, (int64_t)st.st_mtime, (int64_t)st.st_size,
+               md5);
+}
+
+static void external_adf_cache_mark_complete(const char *archive_path,
+                                             const char *adf_entry) {
+    char prefix[sizeof(((ScanCacheEntry_I *)0)->path)];
+    char marker[sizeof(((ScanCacheEntry_I *)0)->path)];
+    char archive_md5[33];
+    struct stat st;
+    if (!s_scan_cache ||
+        !external_adf_cache_prefix(archive_path, adf_entry, prefix,
+                                   sizeof(prefix)) ||
+        snprintf(marker, sizeof(marker), "%s@firestaff-adf-complete-v1",
+                 prefix) >= (int)sizeof(marker) ||
+        stat(archive_path, &st) != 0 ||
+        !file_md5(archive_path, archive_md5)) {
+        return;
+    }
+    scache_put(s_scan_cache, marker, (int64_t)st.st_mtime, (int64_t)st.st_size,
+               archive_md5);
+}
+
+typedef struct {
+    const char *archive;
+    const char *adf;
+    const char *expected_md5;
+    char matched_name[ASSET_PATH_MAX];
+    int found;
+} ExternalAdfSingleCacheMatch;
+
+static int external_adf_find_single_cache_visitor(const char *name,
+                                                   const uint8_t *bytes,
+                                                   size_t byte_count,
+                                                   void *user_data) {
+    ExternalAdfSingleCacheMatch *match =
+        (ExternalAdfSingleCacheMatch *)user_data;
+    AssetMd5Ctx ctx;
+    char hex[33];
+    md5_init(&ctx);
+    md5_update(&ctx, bytes, (unsigned int)byte_count);
+    md5_final(&ctx, hex);
+    external_adf_cache_store_file(match->archive, match->adf, name, hex);
+    if (!match->found && strcmp(hex, match->expected_md5) == 0 &&
+        strlen(name) < sizeof(match->matched_name)) {
+        strcpy(match->matched_name, name);
+        match->found = 1;
+    }
+    return 0;
+}
+
 static int scan_external_adf_by_md5(const char *archive_path,
                                     const char *adf_entry,
                                     const char *expected_md5,
                                     char *out_path, int out_path_len) {
     uint8_t *image;
     size_t image_size;
-    AdfSingleMatch match;
+    ExternalAdfSingleCacheMatch match;
     int result;
+    int cache_complete;
     if (!archive_path || !adf_entry || !expected_md5) return 0;
+    if (external_adf_cache_find(archive_path, adf_entry, expected_md5,
+                                out_path, out_path_len, &cache_complete)) {
+        return 1;
+    }
+    if (cache_complete) return 0;
     image = external_read_entry_bytes(archive_path, adf_entry, &image_size);
     if (!image) return 0;
     memset(&match, 0, sizeof(match));
     match.expected_md5 = expected_md5;
-    result = firestaff_amiga_adf_visit_ofs_files(image, image_size,
-                                                  adf_find_single_visitor, &match);
+    result = firestaff_amiga_adf_visit_ofs_files(
+        image, image_size, external_adf_find_single_cache_visitor, &match);
     free(image);
+    if (result >= 0) external_adf_cache_mark_complete(archive_path, adf_entry);
     return result >= 0 && match.found &&
-           copy_nested_virtual_match_path(archive_path, adf_entry, match.name,
+           copy_nested_virtual_match_path(archive_path, adf_entry,
+                                          match.matched_name,
                                           out_path, out_path_len);
 }
 
@@ -4613,6 +4749,7 @@ static int external_adf_find_list_visitor(const char *name, const uint8_t *bytes
     md5_init(&ctx);
     md5_update(&ctx, bytes, (unsigned int)byte_count);
     md5_final(&ctx, hex);
+    external_adf_cache_store_file(matches->archive, matches->adf, name, hex);
     index = md5_list_match_index(hex, matches->md5_list, matches->matched,
                                  matches->md5_count);
     if (index >= 0 && !matches->matched[index] &&
@@ -4649,6 +4786,7 @@ static int scan_external_adf_by_md5_list(const char *archive_path,
                                                   external_adf_find_list_visitor,
                                                   &matches);
     free(image);
+    if (result >= 0) external_adf_cache_mark_complete(archive_path, adf_entry);
     return result < 0 ? 0 : matches.found_count;
 }
 static int external_adf_extract_entry_to_path(const char *archive_path,

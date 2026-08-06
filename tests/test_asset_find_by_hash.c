@@ -1406,6 +1406,25 @@ int main(void) {
             return 1;
         }
         remove("asset_find_by_hash_test_tmp/extracted.dat");
+        /* The first hash walk has fully inspected the real ADF.  Later
+         * independent launcher queries must reuse those verified inner-file
+         * digests instead of decompressing this solid 7z again. */
+        if (!scan_cache_has_entry("nested_amiga.adf.7z::nested_amiga.adf::GRAPHICS.DAT") ||
+            !scan_cache_has_entry("nested_amiga.adf.7z::nested_amiga.adf::@firestaff-adf-complete-v1")) {
+            cleanup_fixture();
+            fprintf(stderr, "nested 7z/ADF inner-file cache was not recorded\n");
+            return 1;
+        }
+        memset(outPath, 0, sizeof(outPath));
+        if (!asset_find_by_md5("asset_find_by_hash_test_tmp", md5Upper,
+                               outPath, (int)sizeof(outPath), 2) ||
+            !path_has_virtual_entry(outPath, "nested_amiga.adf.7z",
+                                    "nested_amiga.adf::GRAPHICS.DAT")) {
+            cleanup_fixture();
+            fprintf(stderr, "nested 7z/ADF cached filesystem lookup failed: %s\n",
+                    outPath);
+            return 1;
+        }
         memset(outPaths, 0, sizeof(outPaths));
         memset(matched, 0, sizeof(matched));
         if (asset_find_all_by_md5_list("asset_find_by_hash_test_tmp", md5List,
