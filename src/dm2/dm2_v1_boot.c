@@ -712,7 +712,11 @@ static int dm2_v1_boot_bind_champion_dyn4(
         return 0;
     }
     dynamic_load_id = mirrors.mirrors[0].dynamic_load_id;
-    if (dynamic_load_id == 0u) return 0;
+    /* SKProject c_loadlevel.cpp:604-611 truncates the authenticated 0x1ff
+     * actuator data to 0xff and queues exactly 0x16ffffff before
+     * DM2_LOAD_DYN4. Do not promote another agreed-upon selector: that would
+     * turn an unrelated or caller-authored DYN4 bundle into champion data. */
+    if (dynamic_load_id != DM2_V1_G1_CHAMPION_DYN4_RESOURCE_ID) return 0;
     for (index = 0; index < mirrors.mirror_count; ++index) {
         if (mirrors.mirrors[index].dynamic_load_id != dynamic_load_id) {
             return 0;

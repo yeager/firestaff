@@ -590,6 +590,7 @@ typedef struct {
 } DM2_V1_G1ChampionMirrorRoot;
 
 #define DM2_V1_G1_MAX_CHAMPION_MIRRORS 16
+#define DM2_V1_G1_CHAMPION_DYN4_RESOURCE_ID 0x16ffffffu
 
 typedef struct {
     int committed;

@@ -1,3 +1,14 @@
+# DM2 champion mirror DYN4 selector boundary (2026-08-13)
+
+- ✅ Tightened the PC G1 mirror join to require SKProject's exact
+  `0x16ffffff` champion DYN4 resource ID after all source DB3 markers agree.
+  A different or caller-authored selector can no longer be promoted as hero
+  material.
+- ✅ The mounted PC-DOS startup/profile regression continues to verify the
+  authentic 16-marker, 96-block, 149,670-byte DYN4 selection; champion
+  creation, possession transfer and session mutation remain gated. No release
+  was made.
+
 # DM1 mirror C545 drop-panel-live synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only C545/C040 fixture from M10 and made its

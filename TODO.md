@@ -29332,6 +29332,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   accept only an explicit `GRAPHICS.DAT` argument or
   `FIRESTAFF_DM2_DATA_DIR`; a selected unreadable corpus fails verification
   instead of being reported as an unavailable local fixture.
+  **2026-08-13 selector-boundary progress:** the PC boot join now requires
+  the exact source `0x16ffffff` champion DYN4 resource ID in addition to
+  agreement across every authenticated G1 marker; unrelated selectors remain
+  fail-closed.
 
 - [ ] DM2 delayed movement ownership: `PERFORM_MOVE`'s real
   `glbIsPlayerMoving` path retains the old party pose and derives its countdown
