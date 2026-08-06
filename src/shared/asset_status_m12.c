@@ -1124,11 +1124,28 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
             char archivePath[M12_ASSET_DATA_DIR_CAPACITY];
             char imagePath[M12_ASSET_DATA_DIR_CAPACITY] = {0};
             CSB_V1_FmtownsCdLayout layout;
-            if (snprintf(archivePath, sizeof(archivePath), "%s/%s",
-                         roots[rootIndex], archiveNames[archiveIndex]) >=
-                    (int)sizeof(archivePath) ||
-                !m12_csb_fmtowns_archive_stage(archivePath, imagePath, sizeof(imagePath),
-                                               &layout)) {
+            const char* archiveLeaf;
+            if (FSP_FileExists(roots[rootIndex]) &&
+                !FSP_DirExists(roots[rootIndex])) {
+                /* `--data-dir <archive>` is a precise media selection, not
+                 * permission to scan its parent and select a different CSB
+                 * package. The generic hash walker accepts a file root, but
+                 * FM Towns also has to unwrap the nested CD image here. */
+                archiveLeaf = strrchr(roots[rootIndex], '/');
+                if (!archiveLeaf) archiveLeaf = strrchr(roots[rootIndex], '\\');
+                archiveLeaf = archiveLeaf ? archiveLeaf + 1 : roots[rootIndex];
+                if (strcmp(archiveLeaf, archiveNames[archiveIndex]) != 0 ||
+                    snprintf(archivePath, sizeof(archivePath), "%s",
+                             roots[rootIndex]) >= (int)sizeof(archivePath)) {
+                    continue;
+                }
+            } else if (snprintf(archivePath, sizeof(archivePath), "%s/%s",
+                                roots[rootIndex], archiveNames[archiveIndex]) >=
+                           (int)sizeof(archivePath)) {
+                continue;
+            }
+            if (!m12_csb_fmtowns_archive_stage(archivePath, imagePath,
+                                               sizeof(imagePath), &layout)) {
                 continue;
             }
             for (languageIndex = 0U; languageIndex < 2U; ++languageIndex) {
@@ -4126,7 +4143,14 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
     }
     if (FSP_FileExists(requestedDataDir) &&
         !FSP_DirExists(requestedDataDir) &&
-        FSP_ParentDir(containerParent, sizeof(containerParent), requestedDataDir)) {
+        m12_explicit_path_is_archive(requestedDataDir)) {
+        /* An archive is a precise user selection. Keep it as the root, so
+         * sibling game media cannot override the selected package. */
+        effectiveRequestedDataDir = requestedDataDir;
+        requestedFileScanParent = 1;
+    } else if (FSP_FileExists(requestedDataDir) &&
+               !FSP_DirExists(requestedDataDir) &&
+               FSP_ParentDir(containerParent, sizeof(containerParent), requestedDataDir)) {
         /* Hash-first explicit file handling. A direct path may be a
          * ZIP/ISO/BIN container, a correctly hashed Track/image file with an
          * arbitrary extension, or a renamed GRAPHICS/DUNGEON payload. Do not

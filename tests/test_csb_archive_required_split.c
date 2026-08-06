@@ -742,7 +742,11 @@ static void check_csb_wrong_archive_graphics_blocks_launch(const char* root) {
 
 static void check_csb_fmtowns_real_archive_when_available(const char* root) {
     M12_AssetStatus status;
+    M12_AssetStatus directArchiveStatus;
     const M12_AssetVersionStatus* english;
+    const M12_AssetVersionStatus* directEnglish;
+    int index;
+    char directArchivePath[ASSET_PATH_MAX];
     const M12_AssetVersionStatus* japanese;
     const M12_AssetRequiredFileStatus* graphics;
     const M12_AssetRequiredFileStatus* dungeon;
@@ -754,11 +758,20 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
     char japaneseRuntimeRoot[ASSET_PATH_MAX];
     char japaneseGraphicsPath[ASSET_PATH_MAX];
     char japaneseDungeonPath[ASSET_PATH_MAX];
+    const char* scanRoot = root;
     if (!root || root[0] == '\0') {
         puts("skip: FIRESTAFF_CSB_FMTOWNS_DATA_DIR not set");
         return;
     }
-    M12_AssetStatus_ScanGame(&status, root, "csb");
+    /* The real-data corpus may share a parent directory with other CSB
+     * platforms. Selecting this archive must therefore select its two FM
+     * Towns payloads rather than an earlier PC/Amiga profile. */
+    if (FSP_JoinPath(directArchivePath, sizeof(directArchivePath), root,
+                     "Chaos Strikes Back for FM-Towns.rar") &&
+        FSP_FileExists(directArchivePath)) {
+        scanRoot = directArchivePath;
+    }
+    M12_AssetStatus_Scan(&status, scanRoot);
     english = M12_AssetStatus_GetVersion(&status, "csb", 5U);
     japanese = M12_AssetStatus_GetVersion(&status, "csb", 6U);
     graphics = required_file_by_role(&status, "graphics");
@@ -807,6 +820,22 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
                                          "7ca51c17ef8bd542ca5f0273672ec1a5") &&
                   path_exists(programPath),
               "selected FM Towns Japanese version receives only its authenticated CJDATA pair");
+
+    /* A direct archive selection is deliberately narrower than its parent
+     * folder. Regressions here used an already cached PC/Amiga pair after
+     * `--data-dir <FM-Towns archive>` instead of unwrapping the selected CD. */
+    if (scanRoot == directArchivePath) {
+        M12_AssetStatus_Scan(&directArchiveStatus, directArchivePath);
+        index = M12_AssetStatus_FindVersionIndex("csb", "fmtowns-en");
+        directEnglish = index >= 0
+            ? M12_AssetStatus_GetVersion(&directArchiveStatus, "csb", (size_t)index)
+            : NULL;
+        check_int(M12_AssetStatus_GameAvailable(&directArchiveStatus, "csb") &&
+                      directEnglish && directEnglish->matched &&
+                      strstr(directEnglish->matchedPath,
+                             "Chaos Strikes Back for FM-Towns.rar::CDATA/GRAPHICS.DAT") != NULL,
+                  "direct FM Towns RAR selection should not borrow a sibling CSB cache/profile");
+    }
 }
 
 static void check_csb_amiga31_real_archive_when_available(const char* root) {
