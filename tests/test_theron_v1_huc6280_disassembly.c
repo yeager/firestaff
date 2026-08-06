@@ -34,6 +34,7 @@ static void verify(const char *env_name, const char *name, int variant,
     assert(receipt.bank_switch_table_verified);
     assert(receipt.reverse_byte_read_verified);
     assert(receipt.level_decompressor_fragment_verified);
+    assert(receipt.level_decompressor_caller_verified);
     assert(!receipt.semantic_publication_allowed);
     assert(receipt.fragment_address == 0x243eu);
     assert(receipt.fragment_bytes == 134u);
@@ -41,6 +42,9 @@ static void verify(const char *env_name, const char *name, int variant,
     assert(receipt.level_decompressor_address == 0x23adu);
     assert(receipt.level_decompressor_bytes == 382u);
     assert(receipt.level_decompressor_fnv1a == 0x3056f96cu);
+    assert(receipt.level_decompressor_caller_address == 0x2386u);
+    assert(receipt.level_decompressor_caller_bytes == 30u);
+    assert(receipt.level_decompressor_caller_fnv1a == 0x699e8da1u);
     printf("PASS: authentic %s bank-$1f HuC6280 fragment md5=%s fnv=%08x\n",
            label, receipt.source_md5, (unsigned)receipt.fragment_fnv1a);
 }

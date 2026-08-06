@@ -52210,3 +52210,10 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   menu order, text semantics or Saturn VDP1/VDP2 composition.
   The regression also pins the `0x18B60` SH-2 routine/literal-pool receipt
   (`FNV-1a64 0xF6D5CC046BAB98C7`) and its `yam\\menu.c`/`STABG.BIN` targets.
+- ✅ 2026-08-06 Theron's Quest HuC6280 decompressor caller receipt: the
+  hash-locked US/JP bank-$1f images now verify the byte-identical `$2386-$23A3`
+  caller tail (30 bytes, FNV-1a `699e8da1`) in addition to the 382-byte
+  `$23AD-$252A` decoder. The receipt records the source-owned output-length
+  measurement through `$3B7C/$3B7D` without promoting unknown input, bank or
+  level/object semantics into production. `test_theron_v1_huc6280_disassembly`
+  passes against both authentic regional ISOs.

@@ -29,6 +29,10 @@
   routine (382 bytes, FNV-1a 3056f96c). Its caller, destination and block
   contract are still unbound; do not apply it to the seven level blocks by
   byte-shape alone.
+  2026-08-06 caller update: the byte-identical `$2386-$23A3` caller tail is
+  now authenticated (30 bytes, FNV-1a 699e8da1). It proves `$30/$31` is
+  measured as the decompressed output length through `$3B7C/$3B7D`; input
+  block, destination bank and level/object meaning remain open.
 
 - **NEXUS-STARTUP-SOURCE-BYTES:** The verified TITLE.CG, WARNING.BIN,
   GAMEOVER.BIN and STABG.BIN loaders now retain a raw-source FNV-1a/size
