@@ -39,6 +39,18 @@
   passes with 74 assertions; the source object is absent from both M10 and M11
   archives.
 
+# DM2 STEP_MISSILE production owner boundary (2026-08-11)
+
+- ✅ Removed the callback-based `dm2_v1_tim_proc_pc34_compat.c`,
+  `dm2_v1_timer_ops_pc34_compat.c` and timer-dispatch wiring from the broad
+  `firestaff_dm2` archive. No M11/runtime caller supplies the source DB14,
+  `c_tim` and dungeon transaction required by `DM2_STEP_MISSILE`; exposing
+  these callback mutation entry points could publish a synthetic projectile
+  path.
+- ✅ Focused timer/dispatch regressions retain explicit source-study builds,
+  and `dm2_production_placeholder_boundary` now locks all three exclusions.
+  The complete source-owned projectile handoff remains open in TODO.
+
 # DM1 chest hidden-tail synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the deterministic ninth-item hidden-tail chest fixture from M10.

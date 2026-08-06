@@ -77,6 +77,9 @@ EXPECTED_REMOVALS = {
         "dm2_v1_shop.c",
         "dm2_v1_shop_npc_pc34_compat.c",
         "dm2_v1_inventory_panel.c",
+        "dm2_v1_tim_proc_pc34_compat.c",
+        "dm2_v1_timer_ops_pc34_compat.c",
+        "dm2_v1_timer_dispatch_wiring_pc34_compat.c",
     },
     "DM2_V2_SOURCES": {
         "dm2_v2_hud_widget_bitmap_blit.c",

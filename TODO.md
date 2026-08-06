@@ -3715,7 +3715,10 @@ level or consumer bindings.
   The timer handler is now disconnected from the live runtime too: its
   previous DB14 creation used replacement energy/effect fields, so a real
   timer is consumed without mutation until the complete DB14/timer owner
-  exists.
+  exists. **2026-08-11 production-boundary update:** the callback-based
+  `dm2_v1_tim_proc_pc34_compat.c`, `dm2_v1_timer_ops_pc34_compat.c` and
+  timer-dispatch wiring are now explicit-test-only; no live runtime caller
+  supplies their source DB14/c_tim/dungeon transaction.
 
 - **DM2-SKSAVE-ORIGINAL-WRITER:** `dm2_v1_world_state_serialize()` is now
   deliberately fail-closed. Port SK-projects

@@ -5061,6 +5061,10 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # supplied by the caller and therefore cannot be the source-owned
 # DRAW_ITEM_SURVEY/GET_ITEM_NAME route. Keep it explicit-test-only until that
 # live item-name/font handoff exists.
+# The timer-processing/dispatch modules contain the bounded STEP_MISSILE
+# callback studies, but no live runtime caller supplies the source DB14,
+# c_tim and dungeon transaction. Keep all three explicit-test-only until that
+# handoff exists; linking them would expose projectile mutation entry points.
 list(REMOVE_ITEM DM2_SOURCES
     # c_gfx_decode is physically included by dm2_v1_asset_loader.c because
     # the loader also belongs to firestaff_m10.  A separate DM2 archive
@@ -5110,7 +5114,10 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_fmtowns_disc.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_shop.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_shop_npc_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_inventory_panel.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_inventory_panel.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_tim_proc_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timer_ops_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_timer_dispatch_wiring_pc34_compat.c")
 if(DM2_SOURCES)
     add_library(firestaff_dm2 STATIC ${DM2_SOURCES}
         # The original Amiga installer is an OFS ADF chain.  DM2 boot owns
