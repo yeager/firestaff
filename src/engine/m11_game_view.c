@@ -21805,6 +21805,19 @@ int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled) {
     return state->dm1MusicOn;
 }
 
+int M11_GameView_PlayDm1FmtownsCddaTrack(M11_GameViewState* state,
+                                         int track_number)
+{
+    if (!state || !state->dm1FmtownsStartupReceiptValid ||
+        !state->dm1MusicOn ||
+        !dm1_v1_fmtowns_cd_track_info(track_number)) {
+        return 0;
+    }
+    m11_dm1_dispatch_fmtowns_cdda(state, track_number);
+    return state->dm1FmtownsCddaPlaying &&
+           state->dm1FmtownsCddaCurrentTrack == track_number;
+}
+
 int M11_GameView_SetCsbStartupSwooshSource(M11_GameViewState* state,
                                            const unsigned char* bytes,
                                            int byteCount,

@@ -2839,6 +2839,12 @@ static int m11_play_dm1_fmtowns_title_if_available(
     if (!title || !framebuffer || title->width < 320u || title->height < 200u) {
         return 0;
     }
+    /* DMWeb's authenticated FM Towns track table assigns CDDA track 02 to
+     * the title screen.  Start it before the first EDM.EXP presentation;
+     * the game-map dispatcher owns the later track change.  A missing or
+     * malformed original CUE/BIN stays silent rather than borrowing SONG.DAT.
+     */
+    (void)M11_GameView_PlayDm1FmtownsCddaTrack(gameView, plan->title_track);
     /* EDM.EXP DO_TITLE_ANIMATION presents the prepared zoom bitmaps in
      * reverse order: 48x12 first, then 16x4 larger per frame.  Use the
      * receipt-bound compositor for M11 as well, so the PRESENTS strip and

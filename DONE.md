@@ -416,6 +416,15 @@
   Verification: `test_dm1_v1_fmtowns_title`, `cmake --build build --target
   firestaff` and `git diff --check`.
 
+- ✅ 2026-08-06 DM1 FM Towns title CDDA handoff: M11 now starts the original
+  CUE/BIN track 02 at the EDM title boundary, before the first source-owned
+  frame is shown. The exposed game-view entry point rejects non-FM Towns,
+  disabled-music and out-of-range calls, and never substitutes PC `SONG.DAT`.
+  The normal map dispatcher remains responsible for changing track after
+  title handoff. Verification: `test_dm1_v1_fmtowns_title`,
+  `test_dm1_v1_fmtowns_cd_audio`, `cmake --build build --target firestaff`
+  and `git diff --check`.
+
 - ✅ DM1 FM Towns startup-owner gate: added a source-bound receipt for the
   real HMA-240 root startup chain. It verifies `AUTOEXEC.BAT`, the selected
   English `EDM.EXP` or Japanese `JDM.EXP` Phar Lap P3 owner, `TMENU.EXP`,

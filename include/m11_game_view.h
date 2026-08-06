@@ -1884,6 +1884,12 @@ int M11_GameView_GetSessionTimerForcedPauseDialogActive(
 int M11_GameView_GetSessionTimerReminderOverlayActive(
     const M11_GameViewState* state);
 int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled);
+/* Start an authenticated FM Towns DM1 CDDA track.  The selected runtime
+ * cache must provide the original CUE/BIN pair; there is no synthesized
+ * title audio fallback. Returns non-zero only when the host accepted the
+ * original PCM track. */
+int M11_GameView_PlayDm1FmtownsCddaTrack(M11_GameViewState* state,
+                                         int track_number);
 /* Binds the authenticated raw PC34 SWSH sample for the active CSB package.
  * Invalid/missing source data stays silent; no synthetic audio substitute is
  * used for title or Entrance. */

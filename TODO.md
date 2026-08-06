@@ -1016,11 +1016,14 @@ level or consumer bindings.
   graphic-1 title frames from the EDM.EXP receipt: PRESENTS, the native
   18-frame reverse zoom (48x12 through 320x80) and TITLE_MASTER. M11 now
   consumes that same compositor in its actual title loop, so it presents the
-  source order instead of a separate 320x80-to-48x12 approximation. Original
-  timing, CD-audio and TMENU input capture remain open. M11 routes a selected
-  FM Towns edition around the PC34 `SWSH -> TITLE -> ENTRANCE` transaction.
-  It opens only the selected hash-verified Towns data; do not restore the PC34
-  path as a presentation fallback.
+  source order instead of a separate 320x80-to-48x12 approximation. The
+  retained original CUE/BIN handoff now starts EDM's authenticated CDDA track
+  02 before the first title frame, then the gameplay map dispatcher owns the
+  later transition. Exact wall-clock timing and TMENU input capture remain
+  open. M11 routes a selected FM Towns edition around the PC34
+  `SWSH -> TITLE -> ENTRANCE` transaction. It opens only the selected
+  hash-verified Towns data; do not restore the PC34 path as a presentation
+  fallback.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1
