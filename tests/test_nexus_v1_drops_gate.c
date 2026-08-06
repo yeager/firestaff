@@ -25,13 +25,10 @@ int main(void) {
     check(nexus_gold_at(7, 9) == 0,
           "blocked loot roll does not manufacture a gold pile");
 
-    check(nexus_gold_add(7, 9, 12) >= 0,
-          "generic gold-pile storage accepts an explicit source-owned amount");
-    check(nexus_gold_at(7, 9) == 12,
-          "explicit gold-pile amount is retained");
-    nexus_gold_remove(7, 9);
+    check(nexus_gold_add(7, 9, 12) < 0,
+          "unproven gold producer cannot add a pile");
     check(nexus_gold_at(7, 9) == 0,
-          "gold-pile removal clears the explicit pile");
+          "blocked gold add leaves no pile");
 
     if (failures) {
         fprintf(stderr, "test_nexus_v1_drops_gate: %d failure(s)\n", failures);

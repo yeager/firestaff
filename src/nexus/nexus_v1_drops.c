@@ -46,24 +46,14 @@ void nexus_gold_init(void) {
 }
 
 int nexus_gold_add(int x, int y, int amount) {
-    int i;
-    if (amount <= 0) return -1;
-
-    /* Try to merge with existing pile at same location */
-    for (i = 0; i < g_gold_pile_count; i++) {
-        if (g_gold_piles[i].x == x && g_gold_piles[i].y == y) {
-            g_gold_piles[i].amount += amount;
-            return i;
-        }
-    }
-
-    /* New pile */
-    if (g_gold_pile_count >= NEXUS_MAX_GOLD_PILES) return -1;
-    i = g_gold_pile_count++;
-    g_gold_piles[i].x = x;
-    g_gold_piles[i].y = y;
-    g_gold_piles[i].amount = amount;
-    return i;
+    /* No retail Saturn drop/gold producer has been captured. A caller
+     * cannot turn a guessed amount into a live floor object through this
+     * compatibility API; keep storage reserved for an authenticated future
+     * capture importer. */
+    (void)x;
+    (void)y;
+    (void)amount;
+    return -1;
 }
 
 int nexus_gold_pickup(int *out_amount) {

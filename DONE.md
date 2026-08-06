@@ -51755,6 +51755,10 @@ and `firestaff` build pass.
   can no longer mutate champion inventory, gold or stock. Saturn shop/event
   capture is still required before those actions can be enabled.
 
+- ✅ 2026-08-06 Nexus gold-pile quarantine: `nexus_gold_add()` can no longer
+  manufacture a floor gold object without an authenticated Saturn drop
+  producer. The loot/drop gate and real boot regression remain green.
+
 - ✅ 2026-08-06 DM2 PC-DOS save-path handoff: direct startup save selection
   now accepts the real lower-case, one-digit `sksaveN.dat` filename shape,
   carries the containing data root and slot to the validated loader, and
