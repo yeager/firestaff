@@ -44157,6 +44157,11 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
             if (!m11_build_v1_object_panel_source_material(
                     state, thing, source_name, sizeof(source_name), source_body,
                     sizeof(source_body), &source_icon, &source_graphic_index)) {
+                /* ReDMCSB PANEL.C F0352 has already consumed the eye click
+                 * and CHEST.C F0334 has already closed G0426 above.  Missing
+                 * authenticated C101 object-description art must suppress
+                 * only the visual panel, not roll back that source mutation
+                 * or turn a valid C071 click into an ignored input. */
                 state->v1ObjectDescriptionPanelActive = 0;
                 state->v1ObjectDescriptionThing = THING_NONE;
                 state->v1ObjectDescriptionIconIndex = -1;
@@ -44164,7 +44169,8 @@ static int m11_process_v1_eye_click(M11_GameViewState* state) {
                 state->v1ObjectDescriptionSourceGraphicIndex = -1;
                 state->v1ObjectDescriptionName[0] = '\0';
                 state->v1ObjectDescriptionBody[0] = '\0';
-                return 0;
+                m11_set_status(state, "INSPECT", itemName);
+                return 1;
             }
             state->v1ObjectDescriptionPanelActive = 1;
             state->v1ObjectDescriptionThing = thing;

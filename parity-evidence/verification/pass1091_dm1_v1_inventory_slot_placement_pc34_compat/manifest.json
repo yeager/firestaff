@@ -139,11 +139,11 @@
     }
   ],
   "status": "PASS1091_DM1_V1_INVENTORY_SLOT_PLACEMENT_LOCKED",
-  "timestampUtc": "2026-08-05T10:03:39.634487+00:00",
+  "timestampUtc": "2026-08-06T10:06:29.520034+00:00",
   "verificationRuns": [
     {
       "command": [
-        "/Volumes/Extern-disk/firestaff-claude/build/test_dm1_v1_inventory_slot_placement_pc34_compat"
+        "/Volumes/Extern-disk/Firestaff-build-dm1/test_dm1_v1_inventory_slot_placement_pc34_compat"
       ],
       "outputTail": "PASS dm1_v1_inventory_slot_placement_pc34_compat 156/156 assertions",
       "passed": true,

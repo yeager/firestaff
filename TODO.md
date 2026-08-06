@@ -235,6 +235,15 @@
   packaged window shows the real torch plus holder, that side/depth mirrors
   remain source-visible, and that a held object follows the F0702 cursor.
 
+  2026-08-06 interaction-runtime follow-up: the C071 eye route now retains
+  its authenticated CHEST.C F0334 close mutation even when the source C101
+  object-description surface is unavailable. It suppresses only the missing
+  visual panel and still reports the consumed click, preserving the leader
+  hand and the eight visible chest entries. The external-build pass1091
+  verifier now consumes `FIRESTAFF_BUILD_DIR`, so out-of-tree Ninja builds
+  no longer produce a false missing-binary failure. Packaged Mac capture of
+  the held-object cursor and full inventory placement remains open.
+
   2026-08-06 source audit: removed a duplicate authenticated side-door blit
   from the deferred F0115 content pass. ReDMCSB F0111's exact panel/frame
   slices now remain the sole DM1/CSB source owner; the generic whole-pane

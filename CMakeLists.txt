@@ -42902,7 +42902,9 @@ if(BUILD_TESTING AND THERON_SOURCES)
             NAME pass1091_dm1_v1_inventory_slot_placement
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass1091_dm1_v1_inventory_slot_placement_pc34_compat.py
         )
-        set_tests_properties(pass1091_dm1_v1_inventory_slot_placement PROPERTIES DEPENDS dm1_v1_inventory_slot_placement_pc34_compat)
+        set_tests_properties(pass1091_dm1_v1_inventory_slot_placement PROPERTIES
+            DEPENDS dm1_v1_inventory_slot_placement_pc34_compat
+            ENVIRONMENT "FIRESTAFF_BUILD_DIR=${CMAKE_CURRENT_BINARY_DIR}")
         add_test(
             NAME pass864_dm1_v1_box_screen_top
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_pass864_dm1_v1_box_screen_top_pc34_compat.py

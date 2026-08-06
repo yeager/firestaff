@@ -52965,3 +52965,11 @@ out-of-range and absent-owner cases.
   to heap-owned state. The test now reaches and passes its existing
   `nexus_v1_save_full` -> `nexus_v1_load_full` `party_x` gate without changing
   serialized bytes or promoting the native FNXS format to Saturn-card parity.
+- ✅ 2026-08-06 DM1 chest eye/C071 mutation and external-build verification:
+  an eye click with a held real Thing now keeps the source CHEST.C F0334
+  close and leader-hand mutation successful when authenticated C101 object
+  panel art is unavailable; only the visual panel is suppressed, with no
+  host substitute. The pass1091 inventory-slot verifier now honors the
+  `FIRESTAFF_BUILD_DIR` CMake environment for out-of-tree Ninja builds.
+  Focused DM1 regression: 58/58 tests passed, including the full-leader-hand
+  C539/C071/floor-drop chain and pass1091.
