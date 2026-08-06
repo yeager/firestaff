@@ -50908,3 +50908,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   compressed span is admitted. Real BIN regressions cover mutations in the
   shared prologue, metadata, and payload; tile/object semantics remain
   capture/disassembly-gated.
+- ✅ 2026-08-06 Theron JP Track 02 dungeon-map binding: the map loader now has
+  a separate authenticated `TQJP02.bin` offset table and variant API. All
+  seven real Japanese dungeon banks load with their retail map counts and hub
+  dimensions; the SHADODAN item-part boundary is derived from the same source
+  record layout rather than a guessed offset. ISO variants remain fail-closed
+  until their own container-specific table is verified.

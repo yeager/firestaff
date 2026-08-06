@@ -29,6 +29,22 @@ static const Theron_QuestBlockOffsets g_quest_offsets[THERON_TRACK02_DUNGEON_COU
     { 0x001AA831, 0x001AA9EC, 0x001AB045, 0x001AB4BD, 0x001AB800, 0x001ACC0E },
 };
 
+/* Japanese raw-BIN map records are source-data bindings, not translated
+ * guesses: dimensions, map bytes, ground-reference tables, and item-part
+ * boundaries were matched in the authenticated TQJP02.bin user-data image.
+ * The field order is corroborated by DMBUILDER6/src/loaddungeon.c
+ * loadTheronsQuestDungeonData().  JP text bytes are localized, so their
+ * offsets are carried by the same record-size arithmetic as the US layout. */
+static const Theron_QuestBlockOffsets g_jp_quest_offsets[THERON_TRACK02_DUNGEON_COUNT] = {
+    { 0x0002991D, 0x00029B03, 0x0002A05D, 0x0002A53B, 0x0002B000, 0x0002C128 },
+    { 0x00069D50, 0x0006A006, 0x0006A5C2, 0x0006AA4E, 0x0006B000, 0x0006C6CC },
+    { 0x000AA261, 0x000AA422, 0x000AA8DA, 0x000AAD6E, 0x000AB000, 0x000AC4C8 },
+    { 0x000E9B47, 0x000E9CD4, 0x000EA188, 0x000EA5FA, 0x000EB000, 0x000ECA2C },
+    { 0x0012A3CB, 0x0012A544, 0x0012AABE, 0x0012AF6C, 0x0012B000, 0x0012C906 },
+    { 0x00169860, 0x00169A4C, 0x0016A118, 0x0016A618, 0x0016B000, 0x0016C084 },
+    { 0x001AA043, 0x001AA1FE, 0x001AA857, 0x001AACCF, 0x001AB000, 0x001AC40E },
+};
+
 static const uint8_t g_maps_per_dungeon[THERON_TRACK02_DUNGEON_COUNT] = {
     4, 8, 5, 6, 3, 4, 4
 };
@@ -51,6 +67,23 @@ int theron_v1_track02_dungeon_map_quest_block_offsets(
     return 1;
 }
 
+int theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
+    Theron_Track02Variant variant,
+    unsigned int dungeon_index,
+    Theron_QuestBlockOffsets *out)
+{
+    if (!out || dungeon_index >= THERON_TRACK02_DUNGEON_COUNT) return 0;
+    if (variant == THERON_TRACK02_VARIANT_US_BIN) {
+        *out = g_quest_offsets[dungeon_index];
+        return 1;
+    }
+    if (variant == THERON_TRACK02_VARIANT_JP_BIN) {
+        *out = g_jp_quest_offsets[dungeon_index];
+        return 1;
+    }
+    return 0;
+}
+
 int theron_v1_track02_dungeon_map_count(unsigned int dungeon_index) {
     if (dungeon_index >= THERON_TRACK02_DUNGEON_COUNT) return 0;
     return g_maps_per_dungeon[dungeon_index];
@@ -59,6 +92,18 @@ int theron_v1_track02_dungeon_map_count(unsigned int dungeon_index) {
 int theron_v1_track02_dungeon_map_load(
     const uint8_t *ud_data,
     size_t ud_size,
+    unsigned int dungeon_index,
+    Theron_DungeonData *out)
+{
+    return theron_v1_track02_dungeon_map_load_for_variant(
+        ud_data, ud_size, THERON_TRACK02_VARIANT_US_BIN,
+        dungeon_index, out);
+}
+
+int theron_v1_track02_dungeon_map_load_for_variant(
+    const uint8_t *ud_data,
+    size_t ud_size,
+    Theron_Track02Variant variant,
     unsigned int dungeon_index,
     Theron_DungeonData *out)
 {
@@ -71,9 +116,11 @@ int theron_v1_track02_dungeon_map_load(
     uint8_t nmaps = g_maps_per_dungeon[dungeon_index];
     out->map_count = nmaps;
 
-    const Theron_QuestBlockOffsets *qb = &g_quest_offsets[dungeon_index];
+    Theron_QuestBlockOffsets qb;
+    if (!theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
+            variant, dungeon_index, &qb)) return 0;
 
-    size_t dims_abs = UD_BASE + qb->dims_offset;
+    size_t dims_abs = UD_BASE + qb.dims_offset;
     if (!theron_map_range_fits(dims_abs, 9u * nmaps + 32u, ud_size)) return 0;
 
     const uint8_t *p = ud_data + dims_abs;
@@ -170,7 +217,7 @@ int theron_v1_track02_dungeon_map_load(
     list_off += THERON_TRACK02_THING_TYPE_COUNT;
 
     /* Remaining bytes before map tile data are thing list records. */
-    size_t map_abs = UD_BASE + qb->map_data_offset;
+    size_t map_abs = UD_BASE + qb.map_data_offset;
     out->thing_list_offset = list_off;
     out->thing_list_size = (list_off < map_abs) ? (map_abs - list_off) : 0;
 

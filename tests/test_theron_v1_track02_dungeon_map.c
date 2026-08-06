@@ -93,6 +93,19 @@ static const char *find_track02(void) {
     return NULL;
 }
 
+static const char *find_jp_track02(void) {
+    const char *explicit_path = getenv("FIRESTAFF_THERON_TRACK02_JP_RAW");
+    static char path[512];
+    const char *home = getenv("HOME");
+    if (explicit_path && explicit_path[0]) return explicit_path;
+    if (!home || !home[0]) return NULL;
+    snprintf(path, sizeof(path), "%s/.firestaff/data/theron/TQJP02.bin", home);
+    FILE *fp = fopen(path, "rb");
+    if (!fp) return NULL;
+    fclose(fp);
+    return path;
+}
+
 /* Expected dimensions from dmbuilder source (stored as dim-1). */
 static const uint8_t akutuba_xdims[] = { 5, 18, 18, 12 };
 static const uint8_t akutuba_ydims[] = { 7, 12, 16, 11 };
@@ -182,6 +195,27 @@ static void test_all_dungeons(const uint8_t *ud, size_t ud_size) {
     }
 }
 
+static void test_jp_maps(const uint8_t *ud, size_t ud_size) {
+    const uint8_t expected_maps[] = { 4, 8, 5, 6, 3, 4, 4 };
+    Theron_QuestBlockOffsets qb;
+    assert(theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
+        THERON_TRACK02_VARIANT_JP_BIN, 4, &qb));
+    assert(qb.dims_offset == 0x0012A3CB);
+    assert(qb.map_data_offset == 0x0012A544);
+    assert(qb.items_part1_offset == 0x0012AF6C);
+    assert(qb.items_part2_offset == 0x0012B000);
+
+    for (unsigned int d = 0; d < 7; d++) {
+        Theron_DungeonData dd;
+        assert(theron_v1_track02_dungeon_map_load_for_variant(
+            ud, ud_size, THERON_TRACK02_VARIANT_JP_BIN, d, &dd));
+        assert(dd.map_count == expected_maps[d]);
+        assert(dd.maps[0].header.x_dim == 5);
+        assert(dd.maps[0].header.y_dim == 7);
+    }
+    printf("  JP Track 02: all dungeon maps OK\n");
+}
+
 int main(void) {
     printf("test_theron_v1_track02_dungeon_map\n");
 
@@ -208,6 +242,18 @@ int main(void) {
     test_all_dungeons(ud, ud_size);
 
     free(ud);
+
+    const char *jp_path = find_jp_track02();
+    if (jp_path) {
+        size_t jp_ud_size = 0;
+        uint8_t *jp_ud = load_track02_ud(jp_path, &jp_ud_size);
+        if (jp_ud) {
+            test_jp_maps(jp_ud, jp_ud_size);
+            free(jp_ud);
+        }
+    } else {
+        printf("  SKIP: Japanese Track 02 BIN not found\n");
+    }
     printf("PASS\n");
     return 0;
 }

@@ -4,6 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#include "theron_v1_track02.h"
+
 #ifndef THERON_TRACK02_DUNGEON_COUNT
 #define THERON_TRACK02_DUNGEON_COUNT  7u
 #endif
@@ -69,11 +71,23 @@ int theron_v1_track02_dungeon_map_quest_block_offsets(
     unsigned int dungeon_index,
     Theron_QuestBlockOffsets *out);
 
+int theron_v1_track02_dungeon_map_quest_block_offsets_for_variant(
+    Theron_Track02Variant variant,
+    unsigned int dungeon_index,
+    Theron_QuestBlockOffsets *out);
+
 int theron_v1_track02_dungeon_map_count(unsigned int dungeon_index);
 
 int theron_v1_track02_dungeon_map_load(
     const uint8_t *ud_data,
     size_t ud_size,
+    unsigned int dungeon_index,
+    Theron_DungeonData *out);
+
+int theron_v1_track02_dungeon_map_load_for_variant(
+    const uint8_t *ud_data,
+    size_t ud_size,
+    Theron_Track02Variant variant,
     unsigned int dungeon_index,
     Theron_DungeonData *out);
 
