@@ -193,6 +193,10 @@
   either gain a verified in-memory PC reader or remain non-launchable. Do not
   synthesize a compatible install, palette, dungeon, music map or save corpus
   for any platform.
+  **2026-08-06 update:** a directly selected original FM Towns ZIP now stays
+  the exact M12-to-boot handoff, just like Amiga. Its CUE/IMG, G1 payload and
+  CD.DAT map are read only in RAM; a sibling DOS install cannot silently win
+  platform selection. The real archive passes M12, boot and `GAME_LOAD`.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   deliberately non-mutating until the original 263-byte `c_hero` layout,

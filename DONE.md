@@ -50916,6 +50916,13 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   as diagnostic-only, so it cannot be mistaken for original save I/O. The
   raw `DM2_READ_SKSAVE_DUNGEON` continuation remains fail-closed and no save
   is made playable by this change.
+- ✅ 2026-08-06 DM2 FM Towns direct-media handoff: fixed the selected HME-242
+  ZIP path at both M12 and boot. A direct original archive now retains virtual
+  `DATA/GRAPHICS.DAT` provenance, runs the CUE/IMG/G1/CD.DAT reads in RAM, and
+  hands the unchanged ZIP path to `GAME_LOAD`; it can no longer be interpreted
+  as a directory and lose to a sibling PC install. The supplied original ZIP
+  passes M12 admission, boot-profile `GAME_LOAD`, and a direct headless launch
+  as `FM Towns Japanese`. No game data was unpacked, cached, or tracked.
 - ✅ 2026-08-06 Nexus HUD runtime binding: production engine init now retains
   the 80-entry layout table at `DM.BIN+0x376D0` and 40-entry ring-menu hit
   table at `DM.BIN+0x38000` only after the exact real `DM.BIN` hash receipt is

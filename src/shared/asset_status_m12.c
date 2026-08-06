@@ -733,7 +733,8 @@ static void m12_bytes_md5_hex(const uint8_t* bytes,
 static int m12_admit_dm2_fmtowns_archive(M12_AssetStatus* status,
                                          int gameIndex,
                                          const char roots[M12_SEARCH_ROOT_COUNT][M12_ASSET_DATA_DIR_CAPACITY],
-                                         size_t rootCount) {
+                                         size_t rootCount,
+                                         const char* preferredArchive) {
     static const char archiveName[] =
         "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip";
     size_t rootIndex;
@@ -752,13 +753,19 @@ static int m12_admit_dm2_fmtowns_archive(M12_AssetStatus* status,
         }
     }
     for (rootIndex = 0U; rootIndex < rootCount; ++rootIndex) {
-        char candidate[2][M12_ASSET_DATA_DIR_CAPACITY];
+        char candidate[3][M12_ASSET_DATA_DIR_CAPACITY];
+        size_t candidateCount = 0U;
         size_t candidateIndex;
-        snprintf(candidate[0], sizeof(candidate[0]), "%s/%s",
+        if (preferredArchive && preferredArchive[0] != '\0' &&
+            strstr(preferredArchive, archiveName) != NULL) {
+            m12_copy_string(candidate[candidateCount++], sizeof(candidate[0]),
+                            preferredArchive);
+        }
+        snprintf(candidate[candidateCount++], sizeof(candidate[0]), "%s/%s",
                  roots[rootIndex], archiveName);
-        snprintf(candidate[1], sizeof(candidate[1]), "%s/dm2/%s",
+        snprintf(candidate[candidateCount++], sizeof(candidate[0]), "%s/dm2/%s",
                  roots[rootIndex], archiveName);
-        for (candidateIndex = 0U; candidateIndex < 2U; ++candidateIndex) {
+        for (candidateIndex = 0U; candidateIndex < candidateCount; ++candidateIndex) {
             uint8_t* image = NULL;
             size_t imageSize = 0U;
             uint8_t* graphics = NULL;
@@ -805,13 +812,39 @@ static int m12_admit_dm2_fmtowns_archive(M12_AssetStatus* status,
                     continue;
                 }
                 version->matched = 1;
+                if (preferredArchive &&
+                    strcmp(candidate[candidateIndex], preferredArchive) == 0) {
+                    size_t clearIndex;
+                    /* A selected retail archive is an explicit platform
+                     * choice.  Do not retain a sibling PC match merely
+                     * because the catalogue lists PC first. */
+                    for (clearIndex = 0U;
+                         clearIndex < g_games[gameIndex].versionCount;
+                         ++clearIndex) {
+                        if (clearIndex != versionIndex) {
+                            memset(&status->versions[gameIndex][clearIndex], 0,
+                                   sizeof(status->versions[gameIndex][clearIndex]));
+                            status->versions[gameIndex][clearIndex].gameId =
+                                g_games[gameIndex].versions[clearIndex].gameId;
+                            status->versions[gameIndex][clearIndex].versionId =
+                                g_games[gameIndex].versions[clearIndex].versionId;
+                            status->versions[gameIndex][clearIndex].label =
+                                g_games[gameIndex].versions[clearIndex].label;
+                            status->versions[gameIndex][clearIndex].shortLabel =
+                                g_games[gameIndex].versions[clearIndex].shortLabel;
+                        }
+                    }
+                }
                 snprintf(version->matchedPath, sizeof(version->matchedPath),
                          "%s::DATA/GRAPHICS.DAT", candidate[candidateIndex]);
                 snprintf(version->matchedMd5, sizeof(version->matchedMd5),
                          "%s", graphicsMd5);
+                /* The boot owner reads the raw CD image from this archive in
+                 * RAM.  A direct archive must remain the exact handoff, not
+                 * its parent directory where another port may be present. */
                 m12_copy_string(status->runtimeDataDirs[gameIndex],
                                 sizeof(status->runtimeDataDirs[gameIndex]),
-                                roots[rootIndex]);
+                                candidate[candidateIndex]);
                 return 1;
             }
         }
@@ -4086,7 +4119,8 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
                                userExplicitDataDir,
                                csbFmtownsAdmitted);
         if (strcmp(g_games[i].gameId, "dm2") == 0) {
-            (void)m12_admit_dm2_fmtowns_archive(status, i, roots, rootCount);
+            (void)m12_admit_dm2_fmtowns_archive(status, i, roots, rootCount,
+                                                requestedDataDir);
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
             (void)m12_admit_dm2_amiga_archive(status, i, roots, rootCount,
                                               requestedDataDir);
@@ -4345,7 +4379,8 @@ void M12_AssetStatus_ScanGameWithOptions(
         }
         if (strcmp(g_games[gameIndex].gameId, "dm2") == 0) {
             (void)m12_admit_dm2_fmtowns_archive(status, gameIndex,
-                                                 roots, rootCount);
+                                                 roots, rootCount,
+                                                 requestedDataDir);
 #ifndef FIRESTAFF_ASSET_STATUS_TESTING
             (void)m12_admit_dm2_amiga_archive(status, gameIndex,
                                               roots, rootCount, requestedDataDir);

@@ -908,6 +908,8 @@ static void copy_parent_dir(char dst[512], const char *path) {
 static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
                                                      const char *data_dir)
 {
+    static const char archive_name[] =
+        "Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip";
     char zip_path[512];
     char nested_zip_path[512];
     uint8_t *cue_data = NULL;
@@ -919,10 +921,18 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
      * directory itself.  The archive is retained in place and all following
      * extraction is memory-only; neither spelling authorizes a cache or an
      * unpacked copy. */
-    snprintf(nested_zip_path, sizeof(nested_zip_path),
-             "%s/dm2/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip", data_dir);
-    snprintf(zip_path, sizeof(zip_path),
-             "%s/Dungeon-Master-II-Skullkeep_FM-Towns_JA.zip", data_dir);
+    if (!profile || !data_dir || !data_dir[0]) return;
+    /* M12 passes an explicitly selected retail archive verbatim.  Preserve
+     * that choice: treating it as a directory would silently fall back to a
+     * sibling PC install and change the selected platform. */
+    if (strstr(data_dir, archive_name) != NULL && FSP_FileExists(data_dir)) {
+        snprintf(zip_path, sizeof(zip_path), "%s", data_dir);
+        nested_zip_path[0] = '\0';
+    } else {
+        snprintf(nested_zip_path, sizeof(nested_zip_path), "%s/dm2/%s",
+                 data_dir, archive_name);
+        snprintf(zip_path, sizeof(zip_path), "%s/%s", data_dir, archive_name);
+    }
 
     if (firestaff_zip_extract_by_suffix(zip_path, ".cue",
                                         &cue_data, &cue_size) != 0) {
