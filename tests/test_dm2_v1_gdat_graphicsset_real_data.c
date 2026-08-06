@@ -45,30 +45,17 @@ static int load_canonical_files(uint8_t **graphics, size_t *graphics_size,
                                 uint8_t **dungeon, size_t *dungeon_size)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
-    char base[1024];
     char graphics_path[1100];
     char dungeon_path[1100];
-    const char *bases[3];
-    int base_count = 0;
-
-    if (root && root[0]) bases[base_count++] = root;
-    if (home && home[0]) {
-        snprintf(base, sizeof(base), "%s/.firestaff/data/dm2/data", home);
-        bases[base_count++] = base;
-    }
-    for (int i = 0; i < base_count; ++i) {
-        snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", bases[i]);
-        snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", bases[i]);
-        if (read_file(graphics_path, graphics, graphics_size) &&
-            read_file(dungeon_path, dungeon, dungeon_size)) {
-            return 1;
-        }
-        free(*graphics);
-        free(*dungeon);
-        *graphics = NULL;
-        *dungeon = NULL;
-    }
+    if (!root || !root[0]) return 0;
+    snprintf(graphics_path, sizeof(graphics_path), "%s/graphics.dat", root);
+    snprintf(dungeon_path, sizeof(dungeon_path), "%s/dungeon.dat", root);
+    if (read_file(graphics_path, graphics, graphics_size) &&
+        read_file(dungeon_path, dungeon, dungeon_size)) return 1;
+    free(*graphics);
+    free(*dungeon);
+    *graphics = NULL;
+    *dungeon = NULL;
     return 0;
 }
 
@@ -171,10 +158,15 @@ int main(void)
     int c8_selector_checks = 0;
     int failures = 0;
 
+    if (!getenv("FIRESTAFF_DM2_DATA_DIR") ||
+        !getenv("FIRESTAFF_DM2_DATA_DIR")[0]) {
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+        return 0;
+    }
     if (!load_canonical_files(&graphics, &graphics_size,
                               &dungeon_bytes, &dungeon_size)) {
-        puts("SKIP: no local canonical DM2 data");
-        return 0;
+        fputs("FAIL: selected canonical DM2 data is unreadable\n", stderr);
+        return 1;
     }
     memset(&loader, 0, sizeof(loader));
     memset(&dungeon, 0, sizeof(dungeon));

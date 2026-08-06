@@ -2334,6 +2334,9 @@ level or consumer bindings.
   now receive `dungeon.dat` only from an explicit argument or selected
   `FIRESTAFF_DM2_DATA_DIR`; a selected unreadable corpus fails rather than
   using an implicit HOME-path fallback.
+  **2026-08-07 GDAT verification update:** the broad creature-animation,
+  visual-census, GRAPHICSSET, scene-plan and wall-plan probes now likewise
+  require the selected corpus and fail an unreadable explicit selection.
   **2026-08-06 update:** the generic DM2 boot reader also now rejects every
   virtual archive path instead of extracting it to `/tmp`. FM Towns and Amiga
   continue through their already authenticated in-memory buffers. PC archive

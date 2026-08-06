@@ -1,3 +1,12 @@
+# DM2 GDAT-census med vald originalkorpus (2026-08-07)
+
+- ✅ De breda realdataproverna för CREATURES-animationstriad, GRAPHICSSET,
+  scenplan, visuell GDAT-census och väggplan använder nu enbart den explicit
+  valda `FIRESTAFF_DM2_DATA_DIR`-korpusen. De failar för en vald oläsbar
+  fil i stället för att låna en privat HOME-installation. PC-DOS-media
+  verifierar 57 varelsetriader, 4 031 unika bildpayloads och samtliga
+  källbundna scen- och väggplaner.
+
 # DM2 direkt-G1-korpusverifiering (2026-08-07)
 
 - ✅ De nio realdatatesterna för direkta G1-rötter (DB0, DB3, DB4, DB5,
