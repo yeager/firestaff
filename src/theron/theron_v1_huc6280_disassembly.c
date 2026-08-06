@@ -55,8 +55,9 @@ static const uint8_t g_fragment[THERON_FRAGMENT_BYTES] = {
     0xb1, 0x36
 };
 
-/* THQUEST.ASM stage-2 labels L96A5/L96C2. This exact routine is byte
- * identical in the authenticated US and JP raw Track 02 BINs. */
+/* THQUEST.ASM stage-2 labels L96A5/L96C2. This exact 37-byte span contains
+ * the VCE consumer entry and its inline TIA helper, byte-identical in the
+ * authenticated US and JP raw Track 02 BINs. */
 static const uint8_t g_vce_palette_consumer[
     THERON_VCE_PALETTE_CONSUMER_BYTES] = {
     0xad, 0xc2, 0x27, 0x8d, 0x02, 0x04, 0xad, 0xc3, 0x27,

@@ -44,7 +44,7 @@ static void verify(const char *env_name, const char *name, int variant,
         assert(receipt.vce_palette_consumer_address == 0x96a5u);
         assert(receipt.vce_palette_consumer_bytes == 37u);
         assert(receipt.vce_palette_consumer_file_offset != 0u);
-        assert(receipt.vce_palette_consumer_fnv1a != 0u);
+        assert(receipt.vce_palette_consumer_fnv1a == 0xff51fac4u);
     } else {
         assert(!receipt.vce_palette_consumer_verified);
     }
