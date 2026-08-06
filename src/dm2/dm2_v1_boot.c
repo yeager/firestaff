@@ -10333,12 +10333,10 @@ static int dm2_v1_boot_read_english_companion(
         archive_path[archive_length] = '\0';
         if (basename) ++basename;
         else basename = member;
-        /* M12 retains the archive member's original spelling.  The supplied
-         * PC-DOS ZIP calls this DATA/GRAPHICS.DAT, while callers may also use
-         * the lower-case virtual spelling documented by the scanner.  ZIP
-         * member lookup and the canonical content hash below are both
-         * case-insensitive/source-bound, so do not reject the original
-         * uppercase member before that verification. */
+        /* The supplied PC-DOS ZIP calls this data/graphics.dat, while callers
+         * may also use an uppercase virtual spelling. ZIP member lookup and
+         * the canonical content hash below are both case-insensitive/source-
+         * bound, so do not reject either spelling before verification. */
         if (strcasecmp(basename, "graphics.dat") != 0 ||
             firestaff_zip_extract_by_name(archive_path, basename,
                                           out_bytes, out_size) != 0 ||
@@ -10358,9 +10356,26 @@ static int dm2_v1_boot_read_english_companion(
         }
         return 1;
     }
-    if (!asset_file_matches_md5(path, expected_md5)) return 0;
-    return dm2_v1_boot_read_asset_bytes(path, 64L * 1024L * 1024L,
-                                        out_bytes, out_size);
+    if (!asset_file_matches_md5(path, expected_md5) ||
+        !dm2_v1_boot_read_asset_bytes(path, 64L * 1024L * 1024L,
+                                      out_bytes, out_size) ||
+        !*out_bytes || *out_size == 0u) {
+        free(*out_bytes);
+        *out_bytes = NULL;
+        *out_size = 0u;
+        return 0;
+    }
+    /* Bind the admitted payload to the bytes that will be parsed. The file
+     * check above discovers a user-owned loose file; this second check closes
+     * the interval before the RAM-only companion reaches the GDAT reader. */
+    dm2_md5_bytes_hex(*out_bytes, *out_size, actual_md5);
+    if (strcmp(actual_md5, expected_md5) != 0) {
+        free(*out_bytes);
+        *out_bytes = NULL;
+        *out_size = 0u;
+        return 0;
+    }
+    return 1;
 }
 
 int dm2_v1_boot_startup_launch_alloc_with_language(

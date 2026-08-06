@@ -811,6 +811,9 @@
   The real-media regression also follows M12's scanned DOS-ZIP provenance
   through that companion handoff, rather than relying only on a caller-built
   virtual path.
+  A loose companion is now checked again after its bounded RAM read, so the
+  GDAT reader consumes the same canonical PC-English bytes that passed the
+  hash gate.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   deliberately non-mutating until the original 263-byte `c_hero` layout,

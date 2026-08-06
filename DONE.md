@@ -15,7 +15,8 @@
   The Japanese FM Towns CD remains the game-data owner and the companion is
   read solely in RAM. The real-media test verifies the complete English text
   overlay without extracting game data, including M12's scanned archive
-  provenance handoff.
+  provenance handoff. Loose companion bytes are re-hashed after their RAM
+  read before they may reach the GDAT text parser.
 - ✅ 2026-08-06 Theron Mednafen capture-module routing: the live original-media
   capture launcher now passes `-force_module pce`, preventing a mixed-audio
   CUE from entering Mednafen's CD-DA player instead of the HuC6280 PCE
