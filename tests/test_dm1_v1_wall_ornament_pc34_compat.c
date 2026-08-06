@@ -253,7 +253,7 @@ int main(void)
     expect_int("mirror.plan.18.ok",
                dm1_v1_front_mirror_render_plan_pc34(18, &mirrorPlan), 1);
     expect_int("mirror.plan.18.orn_graphic",
-               mirrorPlan.ornament.graphicIndex, 349);
+               mirrorPlan.ornament.graphicIndex, 346);
     expect_int("mirror.plan.18.orn_dstX", mirrorPlan.ornament.dstX, 80);
     expect_int("mirror.plan.18.orn_dstY", mirrorPlan.ornament.dstY, 29);
     expect_int("mirror.plan.18.orn_w", mirrorPlan.ornament.width, 64);

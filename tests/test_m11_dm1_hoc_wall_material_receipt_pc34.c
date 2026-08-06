@@ -82,7 +82,6 @@ static int verify_front_mirror_backing_pixel(
     DM1_FrontMirrorRenderPlanPc34 plan;
     M11_Dm1HoCMirrorHostPresentationReceipt presented;
     const M11_AssetSlot *backing;
-
     if (!state || !framebuffer ||
         !dm1_v1_front_mirror_render_plan_pc34(renderIndex, &plan)) {
         return 0;

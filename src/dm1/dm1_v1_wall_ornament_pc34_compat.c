@@ -8,6 +8,7 @@
 #include "firestaff/dm1/v1/G0192_pc34_compat.h"
 #include "firestaff/dm1/v1/G0194_pc34_compat.h"
 #include "firestaff/dm1/v1/G0205_pc34_compat.h"
+#include "dm1_v1_graphic_ids_pc34_compat.h"
 #include <string.h>
 
 enum {
@@ -376,6 +377,15 @@ int dm1_v1_front_mirror_render_plan_pc34(
             &outPlan->ornament)) {
         return 0;
     }
+
+    /* C127 is the one F0107 route whose wall ornament coordinate set is
+     * reused for the dedicated C346 Hall-of-Champions backing.  The generic
+     * global-index formula above selects the derived wall-ornament slot (349
+     * for global 43), but DUNVIEW.C F0791 consumes C346 here.  Keep the
+     * source-owned 48x43 C346 surface explicit; slot 349 is a different
+     * 16x19 GRAPHICS.DAT bitmap in the real PC34 data. */
+    outPlan->ornament.graphicIndex =
+        dm1_v1_graphic_endgame_champion_mirror_pc34();
 
     /* ReDMCSB DUNGEON.C:2608-2612 stores C127 sensorData as G0289.
      * DUNVIEW.C:3913-3928 sends C346 through F0791: its native 48x43

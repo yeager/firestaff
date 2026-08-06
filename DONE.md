@@ -55514,3 +55514,14 @@ alcove runtime and archive-media tests passed (4/4).
   synthetic creature metadata as real DM1 material.
 - Verification: production M10 archive-symbol check, focused creature
   viewport fixture test, and authenticated PC3.4 `GRAPHICS.DAT` header audit.
+
+# 2026-08-06 DM1 HoC C127/C346 real backing parity
+
+- Corrected the source-owned Hall-of-Champions C127 route to load dedicated
+  C346 (48x43) after applying the G0205 D1C destination; it no longer treats
+  the generic global-43 derived slot 349 (16x19 in the real PC34 archive) as
+  the mirror backing.
+- Removed temporary diagnostic output from the real-data verifier.
+- Verification: real PC34 `test_m11_dm1_hoc_wall_material_receipt_pc34`,
+  `test_dm1_v1_champion_mirror_pc34_compat`, and
+  `test_dm1_v1_hoc_graphics_material_receipts_pc34_compat` pass.

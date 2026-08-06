@@ -719,6 +719,13 @@
   focused wall-ornament test passes all 13 rows; packaged Mac pixel capture
   remains open.
 
+  2026-08-06 C127/C346 source-ID fix: the Hall-of-Champions mirror now binds
+  its dedicated C346 GRAPHICS.DAT surface after reusing the G0205 D1C zone.
+  The generic global-43 ornament calculation remains 349 for ordinary wall
+  rendering, but real PC34 slot 349 is 16x19 and cannot satisfy the native
+  48x43 C346 receipt. Real-data C127/C026 pixel verification now passes;
+  packaged Mac capture remains open.
+
   2026-08-06 macOS capture update: a clean real-data Entrance frame and a
   post-Entrance dungeon viewport frame are now checked in under
   `docs/screenshots/`. These prove the packaged window can present source
