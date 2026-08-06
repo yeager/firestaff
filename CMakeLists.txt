@@ -4629,6 +4629,12 @@ list(REMOVE_ITEM M10_SOURCES
 # data input or M11/runtime caller; compile it only in its explicit regression.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_party_direction_pc34_compat.c")
+# `dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c`
+# is a deterministic C040/chest/rotation scenario fixture. It reads no
+# original DM1 data and has no M11/runtime caller; its explicit regression
+# compiles it directly rather than exposing synthetic scenario state via M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
@@ -53467,6 +53473,14 @@ add_executable(test_dm1_v1_mirror_candidate_party_direction_pc34_compat
 target_include_directories(test_dm1_v1_mirror_candidate_party_direction_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_party_direction_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_candidate_party_direction_pc34_compat COMMAND test_dm1_v1_mirror_candidate_party_direction_pc34_compat)
+add_executable(test_dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat
+    tests/test_dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c
+    src/dm1/dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c)
+target_include_directories(test_dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+    ${CMAKE_CURRENT_SOURCE_DIR}/src/dm1)
+target_link_libraries(test_dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat COMMAND test_dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat)
 add_executable(test_dm1_v1_mirror_candidate_party_swap_pc34_compat tests/test_dm1_v1_mirror_candidate_party_swap_pc34_compat.c)
 target_include_directories(test_dm1_v1_mirror_candidate_party_swap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_candidate_party_swap_pc34_compat PRIVATE firestaff_m10)

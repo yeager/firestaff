@@ -25,6 +25,14 @@
 - ✅ Verification: `dm1_v1_viewport_d3l2_d3r2_f0108_floor_ornament_occlusion_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 mirror scroll-rotation synthetic audit isolation (2026-08-06)
+
+- ✅ Registered and removed the C040/chest/leader-rotation scenario fixture
+  from M10. It reads no original DM1 data and has no M11/runtime caller; its
+  explicit ReDMCSB regression compiles the source directly.
+- ✅ Verification: `test_dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D3L/D3R F0108 floor-ornament synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D3L/D3R F0108 occlusion model from M10. It fixes

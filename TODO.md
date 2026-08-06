@@ -16,6 +16,11 @@
   explicit ReDMCSB regression while the independent source-bound side-pair
   renderer owns live pixels.
 
+- **DM1-MIRROR-SCROLL-ROTATION-SYNTHETIC-AUDIT:** This deterministic C040,
+  chest and leader-rotation scenario fixture reads no original DM1 data and
+  has no M11/runtime caller. Retain it only as an explicit ReDMCSB regression
+  until a source-bound interaction consumer is recovered.
+
 - **DM1-D3L-D3R-F0108-SYNTHETIC-AUDIT:** This asset-free D3 side-lane F0108
   model fixes zones, cell orders and C10 probes. It has no original DM1 data
   input or M11/runtime caller; retain it as an explicit ReDMCSB regression
