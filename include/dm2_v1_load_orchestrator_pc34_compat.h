@@ -1,23 +1,15 @@
 #ifndef DM2_V1_LOAD_ORCHESTRATOR_PC34_COMPAT_H
 #define DM2_V1_LOAD_ORCHESTRATOR_PC34_COMPAT_H
 
-/* DM2 load orchestrator — top-level load pipeline.
- * Source: sksvgame.cpp:1415-1530 (DM2_GAME_LOAD).
+/* DM2 load-orchestrator compatibility seam.
+ * Source: SKProject SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD
+ * (1415-1530).
  *
- * Reads all save phases in the exact order of the original:
- * 1. Raw header (0x2a bytes)
- * 2. Read dungeon structure (sgwords + raw blocks + records + maps)
- * 3. SUPPRESS init
- * 4. SUPPRESS: savegame buffer (0x3c bytes, table1d631a mask)
- * 5. SUPPRESS: v1e0104 (1 byte x 8, all-ones mask)
- * 6. SUPPRESS: globalb (1 byte x 0x40, all-ones mask)
- * 7. SUPPRESS: globalw (2 bytes x 0x40, all-ones mask)
- * 8. SUPPRESS: heroes (263 bytes x hero_count, table1d6356 mask)
- * 9. SUPPRESS: save state (6 bytes, table1d645d mask)
- * 10. SUPPRESS: timers (12 bytes x num_timers, vsgame mask)
- * 11. READ_SKSAVE_DUNGEON (hero inventory + tile chains)
- *
- * Uses callbacks for all runtime data storage. */
+ * The ABI describes the eventual source order, but it is deliberately not a
+ * loader today.  A prior callback transcript skipped raw dungeon blocks and
+ * could begin SUPPRESS at an invented offset.  Until the raw-SKSave receipt,
+ * DM2_READ_SKSAVE_DUNGEON and live record allocation share one owner,
+ * dm2_v1_load_orchestrate() rejects atomically without calling callbacks. */
 
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
@@ -105,9 +97,13 @@ typedef struct {
     int error;
 } DM2_LoadOrchestratorResult;
 
-/* Run the full DM2 load pipeline.
- * in_buf/in_size: raw save file data.
- * Returns 0 on success. */
+enum {
+    DM2_LOAD_ORCHESTRATOR_ERROR_ARGUMENT = 1,
+    DM2_LOAD_ORCHESTRATOR_ERROR_RAW_LAYOUT_UNBOUND = 4
+};
+
+/* This currently returns -1.  It sets RAW_LAYOUT_UNBOUND for valid arguments
+ * and leaves all caller state untouched. */
 int dm2_v1_load_orchestrate(
     const DM2_LoadOrchestratorCallbacks *cb,
     const uint8_t *in_buf, size_t in_size,

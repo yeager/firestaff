@@ -1578,10 +1578,12 @@ level or consumer bindings.
   in source order.
   2026-08-06: the callback-only `dm2_v1_load_orchestrator_pc34_compat`
   transcript is no longer linked by the production M10/DM2 archives. It
-  omits source-owned raw-block/map sizing and full `READ_SKSAVE_DUNGEON`
-  ownership, and has no runtime caller; its narrow ABI contract remains
-  explicit-test-only while the real eight-file PC-DOS corpus stays fail-closed
-  after its verified dungeon prefixes.
+  formerly omitted source-owned raw-block/map sizing and could therefore
+  locate SUPPRESS after a fabricated raw prefix. It now rejects atomically
+  before any callback until raw-layout, `READ_SKSAVE_DUNGEON`, allocation and
+  runtime ownership are joined. The narrow ABI remains a future seam while
+  the real eight-file PC-DOS corpus stays fail-closed after its verified
+  dungeon prefixes.
   2026-08-06: the direct real-corpus regression now continues the same
   SKProject SUPPRESS reader through `s_savegamebuffer` (0x3c), `v1e0104`,
   `globalb`, `globalw`, `c_hero`, `c_wbbb`, and source-sized `c_tim` (0x0c)

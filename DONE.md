@@ -64,6 +64,14 @@
   but never guessed into a stereo or volume mix. The real-media M11 test
   verifies all five calls while the CD image remains in RAM.
 
+# DM2 SKSave callback-loader quarantine (2026-08-06)
+
+- ✅ The legacy callback load-orchestrator no longer claims to load an
+  original SKSave. Its previous transcript skipped the variable raw dungeon
+  blocks and could begin SUPPRESS at a fabricated offset. It now fails before
+  invoking any callback, leaving caller state untouched until the real
+  raw-layout, record-link and allocation path is owned end to end.
+
 # Theron startup menu availability boundary (2026-08-06)
 
 - ✅ Soul Room mirrors without an authenticated Track 02 roster record remain

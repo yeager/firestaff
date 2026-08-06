@@ -42,12 +42,48 @@ static void test_callback_struct(void)
     printf("  PASS: callback_struct\n");
 }
 
+typedef struct {
+    int calls;
+} LoadCallbackProbe;
+
+static int probe_set_header(void *ctx, const uint8_t *data)
+{
+    LoadCallbackProbe *probe = (LoadCallbackProbe *)ctx;
+    (void)data;
+    probe->calls++;
+    return 0;
+}
+
+/* A source raw save carries variable dungeon blocks before SUPPRESS.  The
+ * compatibility ABI must fail before publishing even its header, rather than
+ * invoking callbacks against a guessed stream offset. */
+static void test_raw_layout_is_fail_closed(void)
+{
+    DM2_LoadOrchestratorCallbacks cb;
+    DM2_LoadOrchestratorResult result;
+    LoadCallbackProbe probe;
+    const uint8_t source_candidate[1] = {0};
+
+    memset(&cb, 0, sizeof(cb));
+    memset(&result, 0, sizeof(result));
+    memset(&probe, 0, sizeof(probe));
+    cb.ctx = &probe;
+    cb.set_header = probe_set_header;
+    assert(dm2_v1_load_orchestrate(&cb, source_candidate,
+                                   sizeof(source_candidate), &result) == -1);
+    assert(result.valid == 0);
+    assert(result.error == DM2_LOAD_ORCHESTRATOR_ERROR_RAW_LAYOUT_UNBOUND);
+    assert(probe.calls == 0);
+    printf("  PASS: raw_layout_is_fail_closed\n");
+}
+
 int main(void)
 {
     printf("test_dm2_v1_load_orchestrator:\n");
     test_null_safety();
     test_result_fields();
     test_callback_struct();
+    test_raw_layout_is_fail_closed();
     printf("All load_orchestrator tests passed.\n");
     return 0;
 }
