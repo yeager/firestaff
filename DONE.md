@@ -50563,3 +50563,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   `dm2-startup-menu` with startup active, level 0 loaded, and no champion
   fabricated. The installed v3.0.288 app was observed only to classify it as
   stale and is not used as current-build capture evidence.
+- ✅ 2026-08-06 DM1 remaining inventory-panel surface gates: source slot-size
+  selection, rename/resurrection panels, FOOD/WATER labels and the 32x29
+  inventory damage overlay now require decoded `loaded` plus `pixels` before
+  layout selection or blitting. Empty metadata cannot alter source panel
+  geometry or paint a fake surface. Verified with a full Ninja `firestaff`
+  build and real PC34 HoC/object/name/cursor tests.

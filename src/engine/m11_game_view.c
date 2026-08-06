@@ -50188,7 +50188,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
         const M11_AssetSlot* testBox = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader,
             (unsigned int)dm1_v1_graphic_slot_box_normal_pc34());
-        if (testBox && testBox->width == 18 && testBox->height == 18)
+        if (testBox && testBox->loaded && testBox->pixels &&
+            testBox->width == 18 && testBox->height == 18)
             SZ = 18;
     }
 
@@ -50239,7 +50240,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 (unsigned int)(state->candidateMirrorRenameActive
                     ? M11_GFX_PANEL_RENAME_CHAMPION
                     : M11_GFX_PANEL_RESURRECT_REINCARNATE));
-            if (rrPanel && rrPanel->width == zw && rrPanel->height == zh) {
+            if (rrPanel && rrPanel->loaded && rrPanel->pixels &&
+                rrPanel->width == zw && rrPanel->height == zh) {
                 M11_AssetLoader_Blit(rrPanel, framebuffer, framebufferWidth,
                                      framebufferHeight,
                                      M11_VIEWPORT_X + zx,
@@ -50676,8 +50678,10 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             const M11_AssetSlot* waterLbl = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
                 (unsigned int)dm1_v1_graphic_water_label_pc34());
-            if (foodLbl && foodLbl->width > 0 && foodLbl->height > 0 &&
-                waterLbl && waterLbl->width > 0 && waterLbl->height > 0) {
+            if (foodLbl && foodLbl->loaded && foodLbl->pixels &&
+                foodLbl->width > 0 && foodLbl->height > 0 &&
+                waterLbl && waterLbl->loaded && waterLbl->pixels &&
+                waterLbl->width > 0 && waterLbl->height > 0) {
                 char numBuf[8];
                 M11_TextStyle fwNumStyle = g_text_small;
                 fwNumStyle.color = M11_COLOR_LIGHT_GRAY;
@@ -50725,7 +50729,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 const M11_AssetSlot* dmg16 = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
                     (unsigned int)dm1_v1_graphic_champion_damage_big_pc34());
-                if (dmg16 && dmg16->width == 32 && dmg16->height == 29) {
+                if (dmg16 && dmg16->loaded && dmg16->pixels &&
+                    dmg16->width == 32 && dmg16->height == 29) {
                     M11_AssetLoader_BlitRegion(dmg16,
                         0, 0, 32, 29,
                         framebuffer, framebufferWidth, framebufferHeight,

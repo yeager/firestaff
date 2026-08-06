@@ -6299,6 +6299,10 @@ lane is carried forward in the sections below.
   champion status-box consumer now also require `loaded` plus `pixels` before
   exposing or blitting a source surface. Remaining work is packaged Mac/app
   capture and original-pixel comparison, not another cache-metadata route.
+- 2026-08-06 update: the remaining active DM1 inventory-panel selectors and
+  blits now apply the same gate to slot-size probing, rename/resurrection
+  panels, FOOD/WATER labels and the inventory damage overlay. Remaining work
+  is packaged Mac/app capture and original-pixel comparison.
 
 - F0135/F0732/F0733/F0735 now have bounded planar dispatch coverage. The DM1
   viewport has a fail-closed F0134/F0135 material consumer that accepts only a
