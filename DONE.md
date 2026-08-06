@@ -1,3 +1,12 @@
+# DM1 D2C F0107 wall-ornament synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the D2C F0107 wall-ornament probe from M10. It hard-codes
+  ordinals, framebuffer pixels and test boxes, reads no original DM1 data or
+  GRAPHICS.DAT material and has no M11/runtime caller; its explicit ReDMCSB
+  regression now compiles the source directly.
+- ✅ Verification: `test_dm1_v1_viewport_d2c_f0107_wall_ornament_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D1L2/D1R2 F0108 floor-ceiling synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the fixed D1L2/D1R2 F0108 floor/ceiling-ornament model from M10.

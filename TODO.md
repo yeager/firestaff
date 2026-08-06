@@ -135,6 +135,12 @@
   explicit ReDMCSB regression until a source-bound D1L2/D1R2 owner is
   recovered.
 
+- **DM1-D2C-F0107-WALL-ORNAMENT-SYNTHETIC-AUDIT:** This D2C helper hard-codes
+  wall-ornament ordinals, framebuffer pixels and probe boxes. It reads no
+  original DM1 data or GRAPHICS.DAT material and has no M11/runtime caller;
+  retain it only as an explicit ReDMCSB regression until a source-bound D2C
+  F0107 consumer is recovered.
+
 - **DM1-F0449-F0450-FLOPPY-PLATFORM-AUDIT:** The F0449/F0450 helper is a
   fail-closed Atari-ST floppy boundary, not a PC34 runtime owner. Keep its
   source evidence test-only until a real platform-specific media consumer is
