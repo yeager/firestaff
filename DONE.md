@@ -1,3 +1,13 @@
+# DM2 production placeholder inventory (2026-08-06)
+
+- ✅ 2026-08-06 DM2 production placeholder inventory: added the CTest
+  `dm2_production_placeholder_boundary`. It verifies that every identified
+  DM2 callback transcript, inferred save/object route and V2 local-art
+  module remains excluded from all three production archives, while M11
+  retains the verified V2.1 fallback and language-aware DM2 boot boundary.
+  This is a production-link guard only; it does not claim that excluded
+  functionality is implemented.
+
 # Nexus boot-profile capability audit (2026-08-06)
 
 # Nexus viewport provenance quarantine (2026-08-06)

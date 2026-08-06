@@ -4714,6 +4714,16 @@ if(DM2_V2_SOURCES)
     endif()
 endif()
 
+if(Python3_EXECUTABLE)
+    add_test(
+        NAME dm2_production_placeholder_boundary
+        COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_dm2_production_placeholder_boundary.py
+                --repo ${CMAKE_CURRENT_SOURCE_DIR})
+    set_tests_properties(dm2_production_placeholder_boundary PROPERTIES
+        LABELS "tier1;dm2;production;source-boundary;no-placeholder")
+endif()
+
 # ── V2 static library (enhanced features) ──────────────────────────
 file(GLOB_RECURSE V2_SOURCES CONFIGURE_DEPENDS "src/dm1v2/*_pc34.c")
 # firestaff_v2 includes fs_portable_compat.c because dm1_v2_modern_assets_pc34.c

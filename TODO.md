@@ -10,6 +10,15 @@
   are now no-draw/source-preserving. Recover Saturn command order, CLUT bank,
   destination and brightness/composition ownership before restoring them.
 
+- **DM2-PRODUCTION-PLACEHOLDER-INVENTORY:** The source tree retains bounded
+  compatibility studies, fixture readers and modern-art probes for direct
+  regression work, but none may enter `firestaff_m10`, `firestaff_dm2` or
+  `firestaff_dm2_v2` without a live original-data owner. The CTest
+  `dm2_production_placeholder_boundary` inventories the current excluded
+  modules. Remove an entry only together with its source-backed M11/runtime
+  handoff and real-data regression; never make a broad glob the admission
+  mechanism.
+
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
   and the local English CUE by
