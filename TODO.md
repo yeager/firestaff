@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-INVENTORY-HAND-BELT-QUIVER-SWAP-SYNTHETIC-AUDIT:** This slot-mask
+  probe fabricates item types, weights and inventory state. It loads no
+  original DM1 data and has no M11/runtime caller; retain it only as explicit
+  ReDMCSB coverage until a source-bound inventory interaction owner is
+  recovered.
+
 - **DM1-CHEST-OPEN-STACK-SPLIT-PRESS-EYE-SYNTHETIC-AUDIT:** This chest
   close/pickup fixture fabricates linked items, stack and hand state. It
   loads no original DM1 data and has no M11/runtime caller; retain it only as
