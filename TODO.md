@@ -1286,8 +1286,10 @@ level or consumer bindings.
   `TITLE/0/dtImage+dtPalIRGB/4` surface through the FM Towns GDAT-v4 IMG2
   decoder and its local 16-colour palette. Its real `dt04/0` NEW GAME
   rectangle now reaches SKWIN's `0xD7` load boundary only after the verified
-  TITLE→SKULL handoff; TITLE/SWOOSH pointer events remain inert. Keyboard,
-  RESUME save execution and the native SKULL continuation are still unbound,
+  TITLE→SKULL handoff; TITLE/SWOOSH pointer events remain inert. The adjacent
+  real `0xD9` RESUME rectangle is also exercised against the selected disc
+  and stays inert without a boot-admitted original save. Keyboard, RESUME save
+  execution and the native SKULL continuation are still unbound,
   and `0xD7` deliberately cannot create a synthetic party; unverified media
   still fails black. **2026-08-06
   update:** M11 now runs the selected HME-242 SWOOSH

@@ -122,8 +122,9 @@ int main(void)
         expect(dm2_v1_boot_startup_menu_pointer_layout(
                    (DM2_V1_BootProfile *)view.dm2BootProfile, &layout) &&
                    layout.valid && layout.new_game.w > 0 &&
-                   layout.new_game.h > 0,
-               "HME-242 GDAT provides the source NEW GAME hit rectangle");
+                   layout.new_game.h > 0 && layout.resume_game.w > 0 &&
+                   layout.resume_game.h > 0,
+               "HME-242 GDAT provides the source NEW GAME and RESUME hit rectangles");
         x = layout.new_game.x + layout.new_game.w / 2;
         y = layout.new_game.y + layout.new_game.h / 2;
         pointer_result = M11_GameView_HandlePointerButton(
@@ -133,6 +134,15 @@ int main(void)
                    view.world.party.championCount == 0 &&
                    view.world.party.activeChampionIndex == -1,
                "HME-242 NEW GAME rectangle dispatches 0xD7 but cannot create a fake party");
+        x = layout.resume_game.x + layout.resume_game.w / 2;
+        y = layout.resume_game.y + layout.resume_game.h / 2;
+        pointer_result = M11_GameView_HandlePointerButton(
+            &view, x, y, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        expect(pointer_result == M11_GAME_INPUT_IGNORED &&
+                   view.dm2State.startup_menu_active &&
+                   view.world.party.championCount == 0 &&
+                   view.world.party.activeChampionIndex == -1,
+               "HME-242 RESUME rectangle dispatches 0xD9 only when an admitted real save exists");
     }
     expect(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==
                M11_GAME_INPUT_IGNORED,

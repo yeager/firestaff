@@ -183,6 +183,9 @@
   The real-disc regression locks the decoded 320×200 indexed result at
   FNV-1a `63310e49` and confirms that keyboard input remains blocked pending
   a recovered native SKULL input mapping.
+- ✅ The same real-disc TITLE→SKULL regression now proves both original GDAT
+  menu hit regions. `0xD7` New Game retains the no-synthetic-party boundary;
+  `0xD9` Resume remains inert until the boot-owned scan admits a real save.
 
 # DM2 FM Towns SKULL pointer handoff fence (2026-08-06)
 
