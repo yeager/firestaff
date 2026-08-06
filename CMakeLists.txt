@@ -4692,6 +4692,11 @@ list(REMOVE_ITEM M10_SOURCES
 # M11/runtime caller, so compile it only in its explicit regression target.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_c540_pickup_c040_live_pc34_compat.c")
+# `dm1_v1_chest_reopen_contents_order_pc34_compat.c` is a fixed-value
+# contract-only chest-order model with no original-DM1 input or M11/runtime
+# caller, so compile it only in its explicit regression target.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_reopen_contents_order_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
@@ -54177,7 +54182,9 @@ add_executable(test_dm1_v1_chest_reopen_after_leader_rotation_pc34_compat
 target_include_directories(test_dm1_v1_chest_reopen_after_leader_rotation_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_reopen_after_leader_rotation_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_reopen_after_leader_rotation_pc34_compat COMMAND test_dm1_v1_chest_reopen_after_leader_rotation_pc34_compat)
-add_executable(test_dm1_v1_chest_reopen_contents_order_pc34_compat tests/test_dm1_v1_chest_reopen_contents_order_pc34_compat.c)
+add_executable(test_dm1_v1_chest_reopen_contents_order_pc34_compat
+    tests/test_dm1_v1_chest_reopen_contents_order_pc34_compat.c
+    src/dm1/dm1_v1_chest_reopen_contents_order_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_reopen_contents_order_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_reopen_contents_order_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_reopen_contents_order_pc34_compat COMMAND test_dm1_v1_chest_reopen_contents_order_pc34_compat)
