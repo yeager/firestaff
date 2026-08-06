@@ -78,6 +78,11 @@ static int m12_explicit_path_is_archive(const char* path) {
     extension = strrchr(path, '.');
     return extension &&
         (strcmp(extension, ".7z") == 0 || strcmp(extension, ".7Z") == 0 ||
+         /* The CSB FM Towns retail CD is commonly distributed as a RAR.
+          * A direct selection must remain that exact container: otherwise
+          * scanning its parent can silently bind a sibling PC/Amiga cache
+          * entry instead of the selected CDATA/CJDATA package. */
+         strcmp(extension, ".rar") == 0 || strcmp(extension, ".RAR") == 0 ||
          strcmp(extension, ".zip") == 0 || strcmp(extension, ".ZIP") == 0 ||
          strcmp(extension, ".iso") == 0 || strcmp(extension, ".ISO") == 0);
 }

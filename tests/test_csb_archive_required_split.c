@@ -830,11 +830,13 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
         directEnglish = index >= 0
             ? M12_AssetStatus_GetVersion(&directArchiveStatus, "csb", (size_t)index)
             : NULL;
-        check_int(M12_AssetStatus_GameAvailable(&directArchiveStatus, "csb") &&
+        check_int(strcmp(M12_AssetStatus_GetDataDir(&directArchiveStatus),
+                          directArchivePath) == 0 &&
+                      M12_AssetStatus_GameAvailable(&directArchiveStatus, "csb") &&
                       directEnglish && directEnglish->matched &&
                       strstr(directEnglish->matchedPath,
                              "Chaos Strikes Back for FM-Towns.rar::CDATA/GRAPHICS.DAT") != NULL,
-                  "direct FM Towns RAR selection should not borrow a sibling CSB cache/profile");
+                  "direct FM Towns RAR selection should retain its archive root and not borrow a sibling CSB cache/profile");
     }
 }
 
