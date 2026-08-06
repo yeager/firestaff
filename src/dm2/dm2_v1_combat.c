@@ -360,12 +360,13 @@ int dm2_v1_combat_kills_creature(int current_hp, int damage)
     return damage >= current_hp ? 1 : 0;
 }
 
-/* ── Real-data creature combat route (Lane E, cycle 16) ─────────────────
- * Source: skproject/SKULLWIN/c_engage.cpp melee resolution reads the target
- * creature's Defense from its AIDefinition row (byte @8, DME.h:1505) via
- * QUERY_CREATURE_AI_SPEC_FROM_RECORD (c_record.cpp:1351-1354).  The provider
- * is bound by the caller; without proven defense data the attack is
- * rejected explicitly. */
+/* ── Creature-combat admission boundary ────────────────────────────────
+ * skchamp.cpp::CALC_PLAYER_ATTACK_DAMAGE (1402-1545) needs much more than
+ * the target AIDefinition Defense: champion/hand records, CMDSTR probability
+ * and damage, current difficulty/light, source RNG, skill and stamina
+ * mutation, poison and the concrete target record. The former callback
+ * bridge used only Defense, then manufactured the rest with this file's
+ * host formula. Never promote that partial input as real DM2 combat. */
 
 static DM2_V1_CombatCreatureDefenseFn g_dm2_combat_defense_fn;
 
@@ -385,12 +386,23 @@ int dm2_v1_combat_resolve_attack_on_creature(
     DM2_V1_CombatCreatureReceipt *out_receipt)
 {
     DM2_V1_CombatCreatureReceipt receipt;
-    uint16_t defense = 0u;
-
     memset(&receipt, 0, sizeof(receipt));
     if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
     receipt.creature_type = creature_type;
 
+    (void)weapon;
+    (void)attacker_strength;
+    (void)creature_hp;
+    (void)distance;
+    (void)is_outdoor;
+    (void)companion_count;
+    receipt.valid = 1u;
+    receipt.rejected_incomplete_source_contract = 1u;
+    if (out_receipt) *out_receipt = receipt;
+    return 0;
+
+#if 0 /* Kept as an implementation inventory until the complete source
+        * contract above can supply every input and consume every writeback. */
     if (!dm2_v1_combat_validate_weapon(weapon)) {
         receipt.rejected_invalid_weapon = 1u;
         receipt.valid = 1u;
@@ -421,6 +433,7 @@ int dm2_v1_combat_resolve_attack_on_creature(
     receipt.valid = 1u;
     if (out_receipt) *out_receipt = receipt;
     return 1;
+#endif
 }
 
 const char *dm2_v1_combat_source_evidence(void) {

@@ -107,6 +107,7 @@ void dm2_v1_combat_bind_creature_defense_fn(DM2_V1_CombatCreatureDefenseFn fn);
 
 typedef struct {
     uint8_t valid;
+    uint8_t rejected_incomplete_source_contract;
     uint8_t rejected_no_defense_provider;
     uint8_t rejected_defense_unproven;
     uint8_t rejected_invalid_weapon;
@@ -116,10 +117,11 @@ typedef struct {
     int kills;      /* damage >= creature_hp (c_combat.cpp:401-420) */
 } DM2_V1_CombatCreatureReceipt;
 
-/* Resolve a melee/ranged attack against a creature whose Defense comes from
- * verified data (bound provider).  Returns 1 when the attack was resolved
- * through the real-data route (check receipt.damage/kills), 0 when rejected
- * fail-closed.  creature_hp only feeds the kill-threshold check. */
+/* This bridge remains fail-closed until DM2_ENGAGE_COMMAND's complete source
+ * contract is bound: live champion/hand records, selected CMDSTR action,
+ * creature record, difficulty/light, GDAT item values, skill/stamina writes,
+ * and source RNG. A defense callback alone is insufficient. It always
+ * returns 0 with rejected_incomplete_source_contract set. */
 int dm2_v1_combat_resolve_attack_on_creature(
     const DM2_V1_WeaponInfo *weapon,
     int attacker_strength,

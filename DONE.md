@@ -53134,3 +53134,12 @@ platform package.
   inferred from two caller-populated words. The API now returns failure and
   clears its receipt until those original owners are implemented. The focused
   GDAT compatibility test verifies the rejection.
+- ✅ 2026-08-06 DM2 creature-combat synthetic-result gate: the former
+  provider-only creature-combat wrapper no longer converts one authenticated
+  AIDefinition Defense value into host-calculated damage or a kill. SKProject
+  `skchamp.cpp::CALC_PLAYER_ATTACK_DAMAGE` (1402-1545) requires live champion
+  and hand records, CMDSTR action values, target record, map difficulty/light,
+  source RNG, GDAT item fields and skill/stamina/poison writeback. The public
+  bridge now returns a specific incomplete-contract receipt and no result
+  until those original inputs and effects are connected. The focused combat
+  regression covers missing, unproven and even proven Defense callbacks.

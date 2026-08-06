@@ -457,17 +457,18 @@ static int test_defense_provider(int creature_type, uint16_t *out_defense) {
     return 1;
 }
 
-static int test_creature_route_fail_closed_without_provider(void) {
+static int test_creature_route_rejects_incomplete_source_contract(void) {
     DM2_V1_WeaponInfo w = make_melee(10, 1);
     DM2_V1_CombatCreatureReceipt r;
     dm2_v1_combat_bind_creature_defense_fn(NULL);
     int ok = dm2_v1_combat_resolve_attack_on_creature(&w, 16, 24, 100, 1,
                                                       0, 0, &r);
-    return ok == 0 && r.valid && r.rejected_no_defense_provider &&
+    return ok == 0 && r.valid && r.rejected_incomplete_source_contract &&
+           !r.rejected_no_defense_provider &&
            r.damage == 0 && r.kills == 0;
 }
 
-static int test_creature_route_fail_closed_unproven_defense(void) {
+static int test_creature_route_rejects_provider_only_contract(void) {
     DM2_V1_WeaponInfo w = make_melee(10, 1);
     DM2_V1_CombatCreatureReceipt r;
     g_test_defense_proven = 0;
@@ -475,52 +476,52 @@ static int test_creature_route_fail_closed_unproven_defense(void) {
     int ok = dm2_v1_combat_resolve_attack_on_creature(&w, 16, 24, 100, 1,
                                                       0, 0, &r);
     dm2_v1_combat_bind_creature_defense_fn(NULL);
-    return ok == 0 && r.valid && r.rejected_defense_unproven &&
+    return ok == 0 && r.valid && r.rejected_incomplete_source_contract &&
+           !r.rejected_defense_unproven &&
            r.damage == 0;
 }
 
-static int test_creature_route_resolves_with_proven_defense(void) {
+static int test_creature_route_rejects_proven_defense_alone(void) {
     DM2_V1_WeaponInfo w = make_melee(10, 1);
     DM2_V1_CombatCreatureReceipt r;
-    /* defense 5: damage = 10 + 16/4 - 5 = 9; hp 100 -> no kill */
     g_test_defense_proven = 1;
     g_test_defense_value = 5;
     dm2_v1_combat_bind_creature_defense_fn(test_defense_provider);
     int ok = dm2_v1_combat_resolve_attack_on_creature(&w, 16, 24, 100, 1,
                                                       0, 0, &r);
     dm2_v1_combat_bind_creature_defense_fn(NULL);
-    return ok == 1 && r.valid && !r.rejected_defense_unproven &&
-           r.defense == 5 && r.damage == 9 && r.kills == 0 &&
+    return ok == 0 && r.valid && r.rejected_incomplete_source_contract &&
+           r.defense == 0 && r.damage == 0 && r.kills == 0 &&
            r.creature_type == 24;
 }
 
-static int test_creature_route_kill_threshold(void) {
+static int test_creature_route_does_not_synthesize_kill(void) {
     DM2_V1_WeaponInfo w = make_melee(10, 1);
     DM2_V1_CombatCreatureReceipt r;
-    /* damage 9 vs hp 9 -> kill (c_combat.cpp:401-420: damage >= hp) */
     g_test_defense_proven = 1;
     g_test_defense_value = 5;
     dm2_v1_combat_bind_creature_defense_fn(test_defense_provider);
     int ok = dm2_v1_combat_resolve_attack_on_creature(&w, 16, 24, 9, 1,
                                                       0, 0, &r);
     dm2_v1_combat_bind_creature_defense_fn(NULL);
-    return ok == 1 && r.damage == 9 && r.kills == 1;
+    return ok == 0 && r.rejected_incomplete_source_contract &&
+           r.damage == 0 && r.kills == 0;
 }
 
-static int test_creature_route_undestroyable_defense_255(void) {
+static int test_creature_route_does_not_synthesize_defense_255(void) {
     DM2_V1_WeaponInfo w = make_melee(40, 1);
     DM2_V1_CombatCreatureReceipt r;
-    /* Defense 255 (AIDefinition undestroyable): damage floors to 0. */
     g_test_defense_proven = 1;
     g_test_defense_value = 255;
     dm2_v1_combat_bind_creature_defense_fn(test_defense_provider);
     int ok = dm2_v1_combat_resolve_attack_on_creature(&w, 100, 30, 1, 1,
                                                       0, 0, &r);
     dm2_v1_combat_bind_creature_defense_fn(NULL);
-    return ok == 1 && r.defense == 255 && r.damage == 0 && r.kills == 0;
+    return ok == 0 && r.rejected_incomplete_source_contract &&
+           r.defense == 0 && r.damage == 0 && r.kills == 0;
 }
 
-static int test_creature_route_rejects_invalid_weapon(void) {
+static int test_creature_route_contract_precedes_weapon_classification(void) {
     DM2_V1_WeaponInfo w = make_gun(10, 5);
     DM2_V1_CombatCreatureReceipt r;
     w.tech_level = 0;  /* invalid tech weapon */
@@ -530,22 +531,23 @@ static int test_creature_route_rejects_invalid_weapon(void) {
     int ok = dm2_v1_combat_resolve_attack_on_creature(&w, 16, 24, 100, 1,
                                                       0, 0, &r);
     dm2_v1_combat_bind_creature_defense_fn(NULL);
-    return ok == 0 && r.valid && r.rejected_invalid_weapon &&
+    return ok == 0 && r.valid && r.rejected_incomplete_source_contract &&
+           !r.rejected_invalid_weapon &&
            !r.rejected_no_defense_provider &&
            !r.rejected_defense_unproven;
 }
 
-static int test_creature_route_out_of_range_still_zero_damage(void) {
+static int test_creature_route_does_not_synthesize_range_damage(void) {
     DM2_V1_WeaponInfo w = make_thrown(8, 3);
     DM2_V1_CombatCreatureReceipt r;
-    /* Out of range stays 0 damage even with proven defense. */
     g_test_defense_proven = 1;
     g_test_defense_value = 5;
     dm2_v1_combat_bind_creature_defense_fn(test_defense_provider);
     int ok = dm2_v1_combat_resolve_attack_on_creature(&w, 12, 24, 100, 5,
                                                       0, 0, &r);
     dm2_v1_combat_bind_creature_defense_fn(NULL);
-    return ok == 1 && r.defense == 5 && r.damage == 0 && r.kills == 0;
+    return ok == 0 && r.rejected_incomplete_source_contract &&
+           r.defense == 0 && r.damage == 0 && r.kills == 0;
 }
 
 int main(void) {
@@ -604,13 +606,13 @@ int main(void) {
     TEST(door_info_wooden);
     TEST(door_info_iron);
     TEST(door_info_ra);
-    TEST(creature_route_fail_closed_without_provider);
-    TEST(creature_route_fail_closed_unproven_defense);
-    TEST(creature_route_resolves_with_proven_defense);
-    TEST(creature_route_kill_threshold);
-    TEST(creature_route_undestroyable_defense_255);
-    TEST(creature_route_rejects_invalid_weapon);
-    TEST(creature_route_out_of_range_still_zero_damage);
+    TEST(creature_route_rejects_incomplete_source_contract);
+    TEST(creature_route_rejects_provider_only_contract);
+    TEST(creature_route_rejects_proven_defense_alone);
+    TEST(creature_route_does_not_synthesize_kill);
+    TEST(creature_route_does_not_synthesize_defense_255);
+    TEST(creature_route_contract_precedes_weapon_classification);
+    TEST(creature_route_does_not_synthesize_range_damage);
 
     printf("\n%d/%d tests passed\n", tests_passed, tests_run);
     return (tests_passed == tests_run) ? 0 : 1;
