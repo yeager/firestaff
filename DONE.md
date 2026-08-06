@@ -1,3 +1,12 @@
+# DM1 D3L2/D3R2 F0108 composition synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free D3L2/D3R2 F0108/F0111/F0115 composition model
+  from M10. It fixes route/zone metadata and local C10 probe pixels, reads no
+  original DM1 material and has no M11/runtime caller. The separate D3 route
+  remains the GRAPHICS.DAT-bound production owner.
+- ✅ Verification: `test_dm1_v1_viewport_d3l2_d3r2_f0108_wall_composition_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D1C F0108 floor-ornament synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D1C F0108 occlusion model from M10. It fixes

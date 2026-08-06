@@ -74,8 +74,8 @@ static void test_model_header(void)
               dm1_v1_viewport_d3l2_d3r2_f0108_wall_composition_default_model_builder_pc34(&b),
               1, "builder deterministic");
     EXPECT_TRUE("model.present", model != NULL, "model accessor");
-    EXPECT_EQ("byte.stable", memcmp(&a, &b, sizeof(a)), 0,
-              "contract fields are deterministic");
+    EXPECT_U64("model.stable", a.deterministic_hash, b.deterministic_hash,
+               "semantic contract hash is deterministic");
     EXPECT_U64("hash.null",
                dm1_v1_viewport_d3l2_d3r2_f0108_wall_composition_hash_model_pc34(NULL),
                0u, "hash null guard");

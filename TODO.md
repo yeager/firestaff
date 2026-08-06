@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D3L2-D3R2-F0108-COMPOSITION-SYNTHETIC-AUDIT:** This contract model
+  fixes D3 side-pair routes, zones and local C10 pixel probes. It has no
+  original DM1 data input or M11/runtime caller; retain it as an explicit
+  ReDMCSB regression while the independent source-bound D3 route owns live
+  GRAPHICS.DAT pixels.
+
 - **DM1-D1C-F0108-SYNTHETIC-AUDIT:** This asset-free F0108 occlusion model
   fixes D1C zones, cell orders and C10 pixel probes. It has no original DM1
   data input or M11/runtime caller; retain it as an explicit ReDMCSB
