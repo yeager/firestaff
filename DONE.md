@@ -61,6 +61,14 @@
   original DB4 records. This removes a synthetic animation-state path without
   claiming that the complete animation owner is finished.
 
+# DM2 combat source-contract call-boundary audit (2026-08-13)
+
+- ✅ Added a production-boundary verifier for the source-shaped combat damage
+  seams. `CALC_PLAYER_ATTACK_DAMAGE`, `WOUND_PLAYER` and `ATTACK_PARTY`
+  compatibility receipts remain direct-regression only; any future `src/`
+  caller now fails the audit before synthetic damage can enter runtime. The
+  live champion/CMDSTR/target/RNG/writeback owner chain remains open.
+
 # DM2 G1 champion-mirror selection source binding (2026-08-07)
 
 - ✅ The champion-selection seam now consumes the committed real G1 mirror

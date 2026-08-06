@@ -29335,6 +29335,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   defense byte is now retained in the combat receipt when a real provider is
   bound. This is evidence only; damage, kills and feedback remain rejected
   until the full `DM2_CALC_PLAYER_ATTACK_DAMAGE` owner chain is connected.
+  **2026-08-13 boundary audit:** the source-shaped damage, wound and party
+  player-attack and wound helpers are direct-regression seams only; no `src/`
+  product source calls them, and the production-boundary verifier now locks
+  that condition. This
+  does not close the item: the live champion/CMDSTR/target/RNG/writeback owner
+  chain is still absent.
 - [ ] DM2 FM Towns English text consumption: a selected FM Towns Japanese CD
   can now carry an explicit, hash-verified PC-English GDAT text companion in
   RAM. The companion now admits both a direct user file and a selected

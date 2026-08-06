@@ -278,6 +278,25 @@ def verify(repo: Path) -> list[str]:
     if "receipt.damage = dm2_v1_combat_resolve_attack_full(" in combat:
         errors.append("combat retains the incomplete creature-damage bridge")
 
+    # The source-shaped player-attack and wound receipts are direct-regression
+    # seams. Their caller-authored champion, item, target and RNG words must
+    # not become a product damage path merely because a future source glob
+    # links them. `dm2_v1_attack_party` is intentionally not included here:
+    # creature-ops has a separate callback API with the same C identifier.
+    legacy_combat_prefix = re.compile(
+        r"\bdm2_v1_(?:calc_player_attack_damage_receipt|"
+        r"wound_player_receipt)\s*\(")
+    legacy_combat_definitions = {
+        repo / "src/dm2/dm2_v1_combat_damage_pc34_compat.c",
+    }
+    for source_path in sorted((repo / "src").rglob("*.c")):
+        if source_path in legacy_combat_definitions:
+            continue
+        if legacy_combat_prefix.search(source_path.read_text(encoding="utf-8")):
+            errors.append(
+                "product source calls caller-authored DM2 combat damage "
+                f"seam: {source_path.relative_to(repo)}")
+
     hud_path = repo / "src/dm2/dm2_v1_gdat_hud_m11_command.c"
     if not hud_path.exists():
         errors.append(f"missing {hud_path}")
