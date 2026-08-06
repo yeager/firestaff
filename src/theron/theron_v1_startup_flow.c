@@ -2,6 +2,7 @@
 #include "theron_v1_chapter_marker.h"
 #include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_startup_save_resume.h"
+#include "theron_v1_track02_champion_roster.h"
 #include "theron/theron_v1_asset_loader.h"
 
 #include <stdio.h>
@@ -1050,6 +1051,60 @@ static const char *tqr_startup_layout_roster_title(
     return state->startup_roster_titles[roster_index];
 }
 
+static int tqr_startup_layout_real_roster_class(
+    const Theron_StartupLayoutState *state,
+    int mirror_index,
+    const char *decoded_name) {
+    int roster_index;
+    const Theron_ChampionRecord *record;
+    uint8_t best;
+    Theron_ChampionClass primary_class;
+    int i;
+
+    if (!state || !decoded_name || !decoded_name[0]) {
+        return -1;
+    }
+    roster_index = theron_v1_startup_roster_index_for_mirror(mirror_index);
+    if (roster_index < 0 ||
+        roster_index >= (int)theron_v1_track02_us_champion_count()) {
+        return -1;
+    }
+    record = theron_v1_track02_us_champion((unsigned int)roster_index);
+    if (!record || !record->name || strcmp(record->name, decoded_name) != 0) {
+        return -1;
+    }
+
+    /* Match the source-owned champion initialisation rule: highest class
+     * skill wins, with Fighter winning ties.  This only publishes a class
+     * after the startup name itself has been decoded from Track 02. */
+    best = 0u;
+    primary_class = THERON_CLASS_FIGHTER;
+    for (i = 0; i < 4; ++i) {
+        if (record->fighter_skills[i] > best) {
+            best = record->fighter_skills[i];
+        }
+    }
+    for (i = 0; i < 4; ++i) {
+        if (record->ninja_skills[i] > best) {
+            best = record->ninja_skills[i];
+            primary_class = THERON_CLASS_NINJA;
+        }
+    }
+    for (i = 0; i < 4; ++i) {
+        if (record->priest_skills[i] > best) {
+            best = record->priest_skills[i];
+            primary_class = THERON_CLASS_PRIEST;
+        }
+    }
+    for (i = 0; i < 4; ++i) {
+        if (record->wizard_skills[i] > best) {
+            best = record->wizard_skills[i];
+            primary_class = THERON_CLASS_WIZARD;
+        }
+    }
+    return (int)primary_class;
+}
+
 int theron_v1_startup_layout_build(
     const Theron_StartupLayoutState *state,
     Theron_StartupLayoutElement *elements,
@@ -1172,11 +1227,17 @@ int theron_v1_startup_layout_build(
                      sizeof(elements[count].decoded_name),
                      "%s",
                      decoded_name);
+            elements[count].primary_class =
+                tqr_startup_layout_real_roster_class(
+                    state, i, elements[count].decoded_name);
 #if defined(THERON_STARTUP_RUNTIME_FIXTURE_FALLBACK)
         const Theron_StartupMirrorMeta *meta =
             theron_v1_startup_mirror_meta(i);
         elements[count].portrait_index = meta ? meta->portrait_index : -1;
-            elements[count].primary_class = meta ? (int)meta->primary_class : -1;
+            if (elements[count].primary_class < 0) {
+                elements[count].primary_class =
+                    meta ? (int)meta->primary_class : -1;
+            }
 #endif
         }
         if (decoded_title && decoded_title[0]) {

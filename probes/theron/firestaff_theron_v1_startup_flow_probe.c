@@ -2339,6 +2339,15 @@ int main(void) {
             check_int("layout mirror6 order",
                       elements[8].selected_order,
                       1);
+            check_int("layout HAKAR real class",
+                      elements[2].primary_class,
+                      THERON_CLASS_FIGHTER);
+            check_int("layout TIRAN real class",
+                      elements[4].primary_class,
+                      THERON_CLASS_FIGHTER);
+            check_int("layout PENTAI real class",
+                      elements[8].primary_class,
+                      THERON_CLASS_NINJA);
             check_int("layout forcefield enabled",
                       elements[9].enabled,
                       1);
