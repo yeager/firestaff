@@ -2793,10 +2793,11 @@ static int m11_dm1_selected_launch_mark_failed(void* user) {
 }
 
 /* The HMA-240 FM Towns executable owns DO_TITLE_ANIMATION and DYNAMENU.
- * Its P3/TBIOS renderer has not been decoded yet, so it must never enter
- * the PC34 SWSH -> TITLE -> ENTRANCE transaction merely because both games
- * share the dm1 catalog slot.  The generic route still opens the selected,
- * hash-verified Towns data; it just leaves native presentation unclaimed.
+ * It must never enter the PC34 SWSH -> TITLE -> ENTRANCE transaction merely
+ * because both releases share the dm1 catalog slot.  The selected Towns
+ * data is opened through the native route; English EDM title frames are
+ * consumed by the verified legacy runtime path, while Japanese P3/TBIOS and
+ * the native DYNAMENU remain fail-closed until their own consumers exist.
  * See dm1_v1_fmtowns_startup.c and TODO DM1-FMTOWNS-STARTUP-ANIMATION-MENU. */
 static int m11_selected_dm1_is_fmtowns(const M12_StartupMenuState* menuState,
                                        const M12_MenuEntry* entry) {
