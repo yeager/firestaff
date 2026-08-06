@@ -4755,7 +4755,7 @@ list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_mns\\.c$")
 # closed and no production caller binds these host mutations to Saturn's
 # combat/VDP consumer; keep the probe explicit in its focused test target.
 list(FILTER NEXUS_SOURCES EXCLUDE REGEX "nexus_v1_spell_effects\\.c$")
-# M11 owns the shared host lifecycle and calls these four runtime adapters.
+# M11 owns the shared host lifecycle and calls these runtime adapters.
 # Keep the procedural V2 renderer modules out of the production library, but
 # retain the explicit lifecycle implementations needed to satisfy M11.
 set(NEXUS_M11_RUNTIME_SOURCES
@@ -4764,8 +4764,7 @@ set(NEXUS_M11_RUNTIME_SOURCES
     src/nexus/nexus_v2_hud_runtime_noop.c
     src/nexus/nexus_v2_lighting_runtime_noop.c
     src/nexus/nexus_v2_smooth_movement_runtime_noop.c
-    src/nexus/nexus_v2_touch_controller_affordance.c
-    src/nexus/nexus_v2_touch_runtime.c
+    src/nexus/nexus_v2_touch_runtime_noop.c
 )
 if(NEXUS_SOURCES)
     add_library(firestaff_nexus STATIC ${NEXUS_SOURCES} ${NEXUS_M11_RUNTIME_SOURCES}

@@ -16,11 +16,12 @@
   are joined.
 
 - **NEXUS-V2-PROCEDURAL-PRESENTATION-BOUNDARY:** The production Nexus library
-  no longer links the procedural V2 lighting or smooth-movement implementations.
-  Their M11 adapters are fail-closed no-ops because the supplied Saturn corpus
-  has no authenticated VDP1/VDP2 lighting owner or presentation timing/camera
-  consumer. The original algorithms remain only in explicit probes; do not
-  restore them to production without real Saturn evidence.
+  no longer links the procedural V2 lighting, smooth-movement or touch/
+  controller implementations. Their M11 adapters are fail-closed no-ops
+  because the supplied Saturn corpus has no authenticated VDP1/VDP2 lighting
+  owner, presentation timing/camera consumer or `NEXUS.BIN` input consumer.
+  The original algorithms remain only in explicit probes; do not restore them
+  to production without real Saturn evidence.
 
 - **NEXUS-STARTUP-SH2-VDP2-CAPTURE:** The authenticated European `DM.BIN`
   startup/menu routine is now checked as an SH-2 function with exact

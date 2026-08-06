@@ -30,12 +30,12 @@
 
 # Nexus V2 production placeholder boundary (2026-08-06)
 
-- ✅ Removed procedural V2 lighting and smooth-movement runtime sources from
-  `firestaff_nexus`; the original implementations remain available only to
-  explicit probes.
+- ✅ Removed procedural V2 lighting, smooth-movement and touch/controller
+  runtime sources from `firestaff_nexus`; the original implementations remain
+  available only to explicit probes.
 - ✅ Added fail-closed production adapters and a CTest boundary proving that
-  neither route exposes active state, ticks, or a synthetic viewport/HUD
-  presentation path.
+  none of these routes exposes active state, queue translations, ticks, or a
+  synthetic viewport/HUD presentation path.
 
 # DM1 FM Towns DECODEGRAPHIC RLE decoder (2026-08-06)
 
