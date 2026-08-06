@@ -101,6 +101,63 @@ static int menu_info_selects_program(const uint8_t *menu_info, size_t size,
     return contains_ascii(menu_info + offset, entry_size, entry);
 }
 
+static uint16_t read_le16(const uint8_t *p) {
+    return (uint16_t)p[0] | (uint16_t)((uint16_t)p[1] << 8);
+}
+
+static uint32_t read_le32(const uint8_t *p) {
+    return (uint32_t)p[0] | ((uint32_t)p[1] << 8) |
+           ((uint32_t)p[2] << 16) | ((uint32_t)p[3] << 24);
+}
+
+static int validate_p3_header(const uint8_t *program, size_t size,
+                              uint32_t *header_size,
+                              uint32_t *load_image_offset,
+                              uint32_t *load_image_size,
+                              uint32_t *symbol_table_offset,
+                              uint32_t *symbol_table_size,
+                              uint32_t *initial_eip) {
+    uint32_t file_size;
+    uint32_t runtime_offset;
+    uint32_t runtime_size;
+    uint32_t relocation_offset;
+    uint32_t relocation_size;
+    uint32_t memory_requirements;
+    uint16_t level;
+    if (!program || size < 0x80u ||
+        program[0] != 'P' || program[1] != '3') return 0;
+    level = read_le16(program + 2);
+    if (level != 1u) return 0;
+    *header_size = read_le16(program + 4);
+    file_size = read_le32(program + 6);
+    runtime_offset = read_le32(program + 0x0cu);
+    runtime_size = read_le32(program + 0x10u);
+    relocation_offset = read_le32(program + 0x14u);
+    relocation_size = read_le32(program + 0x18u);
+    *load_image_offset = read_le32(program + 0x26u);
+    *load_image_size = read_le32(program + 0x2au);
+    *symbol_table_offset = read_le32(program + 0x2eu);
+    *symbol_table_size = read_le32(program + 0x32u);
+    *initial_eip = read_le32(program + 0x68u);
+    memory_requirements = read_le32(program + 0x74u);
+    if (*header_size < 0x80u || *header_size > size || file_size == 0u ||
+        file_size > size || runtime_offset < *header_size ||
+        runtime_offset > size || runtime_size > size - runtime_offset ||
+        *load_image_offset < *header_size ||
+        *load_image_offset > size ||
+        *load_image_size > size - *load_image_offset ||
+        *load_image_offset + *load_image_size > file_size ||
+        relocation_offset > size || relocation_size > size - relocation_offset ||
+        (relocation_size != 0u && relocation_offset < *header_size) ||
+        (*symbol_table_offset != 0u &&
+         (*symbol_table_offset < *header_size ||
+          *symbol_table_offset > size ||
+          *symbol_table_size > size - *symbol_table_offset)) ||
+        memory_requirements < *load_image_size ||
+        *initial_eip >= memory_requirements) return 0;
+    return 1;
+}
+
 int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size,
     const uint8_t *game_program, size_t game_program_size,
     const uint8_t *menu_program, size_t menu_program_size,
@@ -111,6 +168,18 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
     int english, japanese;
     int menuSymbols;
     int gameSymbols;
+    uint32_t gameHeaderSize = 0U;
+    uint32_t gameLoadOffset = 0U;
+    uint32_t gameLoadSize = 0U;
+    uint32_t gameSymbolOffset = 0U;
+    uint32_t gameSymbolSize = 0U;
+    uint32_t gameInitialEip = 0U;
+    uint32_t menuHeaderSize = 0U;
+    uint32_t menuLoadOffset = 0U;
+    uint32_t menuLoadSize = 0U;
+    uint32_t menuSymbolOffset = 0U;
+    uint32_t menuSymbolSize = 0U;
+    uint32_t menuInitialEip = 0U;
     if (!out) return 0;
     memset(out,0,sizeof(*out));
     if (!autoexec || !game_program || !menu_program || !menu_icon || !menu_info ||
@@ -131,6 +200,14 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
                   contains_ascii(game_program, game_program_size, "SHOW_DUNGEON") &&
                   contains_ascii(game_program, game_program_size, "LOAD_3D_GRAPHICS") &&
                   contains_ascii(game_program, game_program_size, "CD_LEVEL_SONG");
+    if (!validate_p3_header(menu_program, menu_program_size,
+                            &menuHeaderSize, &menuLoadOffset, &menuLoadSize,
+                            &menuSymbolOffset, &menuSymbolSize,
+                            &menuInitialEip) ||
+        !validate_p3_header(game_program, game_program_size,
+                            &gameHeaderSize, &gameLoadOffset, &gameLoadSize,
+                            &gameSymbolOffset, &gameSymbolSize,
+                            &gameInitialEip)) return 0;
     if (strcmp(autoHash,k_autoexec_md5) || strcmp(menuHash,k_tmenu_exp_md5) ||
         strcmp(iconHash,k_tmenu_icn_md5) || strcmp(infoHash,k_tmenu_inf_md5) || (!english && !japanese) ||
         game_program[0] != 'P' || game_program[1] != '3' || game_program[2] != 1 || game_program[3] != 0 ||
@@ -143,6 +220,14 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
     out->menu_info_selects_game = menu_info_selects_program(menu_info, menu_info_size, english);
     out->menu_program_symbols_verified = menuSymbols;
     out->game_program_symbols_verified = gameSymbols;
+    out->menu_p3_header_verified = 1;
+    out->game_p3_header_verified = 1;
+    out->game_p3_header_size = gameHeaderSize;
+    out->game_p3_load_image_offset = gameLoadOffset;
+    out->game_p3_load_image_size = gameLoadSize;
+    out->game_p3_symbol_table_offset = gameSymbolOffset;
+    out->game_p3_symbol_table_size = gameSymbolSize;
+    out->game_p3_initial_eip = gameInitialEip;
     if (!out->menu_info_selects_game) {
         memset(out, 0, sizeof(*out));
         return 0;
@@ -160,5 +245,7 @@ int dm1_v1_fmtowns_startup_receipt_has_native_owners(
     return dm1_v1_fmtowns_startup_receipt_is_native(receipt) &&
            receipt->menu_info_selects_game &&
            receipt->menu_program_symbols_verified &&
-           receipt->game_program_symbols_verified;
+           receipt->game_program_symbols_verified &&
+           receipt->menu_p3_header_verified &&
+           receipt->game_p3_header_verified;
 }

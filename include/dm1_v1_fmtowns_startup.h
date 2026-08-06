@@ -32,6 +32,14 @@ typedef struct {
     int menu_info_selects_game;
     int menu_program_symbols_verified;
     int game_program_symbols_verified;
+    int menu_p3_header_verified;
+    int game_p3_header_verified;
+    uint32_t game_p3_header_size;
+    uint32_t game_p3_load_image_offset;
+    uint32_t game_p3_load_image_size;
+    uint32_t game_p3_symbol_table_offset;
+    uint32_t game_p3_symbol_table_size;
+    uint32_t game_p3_initial_eip;
     uint8_t title_track;
     uint8_t hall_track;
     uint8_t entrance_track;

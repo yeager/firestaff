@@ -132,6 +132,16 @@
   HMA-240 cache passes `dm1_v1_fmtowns_startup`; no P3 instruction or TBIOS
   pixel decoding is claimed.
 
+- ✅ DM1 FM Towns Phar Lap P3 envelope gate: added a bounded parser for the
+  documented level-1 P3 header and validated the real EDM/TMENU metadata,
+  including header/runtime/load-image bounds, symbol-table bounds, memory
+  requirement and initial EIP. The receipt records EDM's actual `0x200` load
+  image offset, `0x46941` load image size and `0x42a48` initial EIP from the
+  original executable instead of treating the P3 file as an opaque blob.
+  Verification: the real English cache passes `dm1_v1_fmtowns_startup` and the
+  six-test FM Towns regression set. Instruction and TBIOS pixel decoding remain
+  explicitly open.
+
 - ✅ Disabled the synthetic English combat-log overlay for authenticated DM1
   source sessions. The real PC34 `TEXT.C`/C015 message lane remains visible;
   the diagnostic overlay is still available for non-source diagnostic worlds.

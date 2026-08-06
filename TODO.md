@@ -931,7 +931,9 @@ level or consumer bindings.
   the cache is accepted; its CD title/hall/entrance track ownership is also
   recorded. The receipt now additionally requires TMENU's real TownsOS
   file-browser bindings, the language-specific EDM/JDM selection in TMENU.INF,
-  and the game executable's original title/menu/dungeon/CD owner symbols.
+  and the game executable's original title/menu/dungeon/CD owner symbols. The
+  bounded Phar Lap P3 header gate also records the real load-image offset/size,
+  symbol-table bounds and initial EIP for EDM/JDM and TMENU.
   Remaining work is decoding and consuming the FM Towns-owned
   executable startup animation and menu in M11, with original timing/audio/
   input capture. Do not reuse the PC34 `TITLE`/`SWOOSH` path for this edition.
