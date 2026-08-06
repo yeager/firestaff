@@ -1,3 +1,11 @@
+# DM1 C146 wake-up synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the C040/C146 wake-up state simulation from M10. It reads no
+  original DM1 material and has no M11/runtime caller; its generated
+  ReDMCSB regression already compiles the source explicitly.
+- ✅ Verification: `dm1_v1_mirror_candidate_c146_sleep_wakeup_repaint_gate_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D2C F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only/no-game-data D2C F0111 trace from M10. It has

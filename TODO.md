@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-C146-WAKE-UP-SYNTHETIC-AUDIT:** This C040/C146 wake-up regression
+  simulates fixed panel and rest state with no original game-data input. It
+  has no M11/runtime caller; retain it as explicit ReDMCSB coverage until a
+  source-bound wake-up/panel owner is recovered.
+
 - **DM1-D2C-F0111-SYNTHETIC-AUDIT:** This contract-only D2C F0111 trace has
   no game-data input or M11/runtime caller. Retain it as explicit ReDMCSB
   coverage until a source-bound D2C door consumer is recovered.
