@@ -52,6 +52,13 @@ requires an observed END record when requested. Its output is still a state
 receipt: command type `0x09`, `0x0A`, or END does not establish a game-asset
 owner or authorize a host draw.
 
+`scripts/analyze_nexus_tm_bin_vdp_owner.py` records a separate static source
+receipt. On the authenticated retail `TM.BIN`, its SH-2 PC-relative literal
+loads reach the VDP1 register window (`0x25d00000` through the observed
+register offsets) and VDP2 register space. This narrows code ownership, but a
+literal corridor is not an execution trace and does not join `TM.BIN` to any
+captured command or source span.
+
 When a later frame contains a texture command, the same tool reports its
 bounded `SRCa`-derived VRAM byte span and SHA-256. That span is the join key
 for a future source-owned capture; it is not permission to reinterpret the

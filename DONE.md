@@ -140,6 +140,15 @@
   `TM.BIN`, `TITLE.CG`, `TITLE.BIN` or `STABG.BIN` files. It remains authentic
   runtime evidence, not a synthetic replacement.
 
+# Nexus TM.BIN VDP owner disassembly receipt (2026-08-07)
+
+- ✅ Added `scripts/analyze_nexus_tm_bin_vdp_owner.py`. Against the real
+  `TM.BIN` (`160044` bytes, SHA-256 `d87485fe…`), it finds the complete
+  observed VDP1 literal set (`0x25d00000`, `02`, `06`, `08`, `0a`, `10`) and
+  VDP2 register literals through SH-2 PC-relative loads.
+- ✅ This is static code-owner evidence only. It does not promote the runtime
+  VDP1 draw command, source span, CLUT or startup asset into production.
+
 # DM2 SKSave-korpus med vald källa (2026-08-07)
 
 - ✅ Realdatatestet för original-SKSave använder nu bara

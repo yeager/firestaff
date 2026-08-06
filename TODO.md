@@ -323,6 +323,13 @@
   (`d87485fe…`), `TITLE.CG` (`fda4da4c…`), `TITLE.BIN`
   (`a634e8da…`) or `STABG.BIN` (`7b8e44ff…`) corpus. This is a negative
   join receipt, not evidence that the bytes are synthetic.
+- **NEXUS-TM-BIN-VDP-OWNER-DISASSEMBLY:** The authenticated retail `TM.BIN`
+  (`160044` bytes, SHA-256 `d87485fe…`) contains SH-2 PC-relative literal
+  corridors to VDP1 register values `0x25d00000`, `0x25d00002`, `0x25d00006`,
+  `0x25d00008`, `0x25d0000a` and `0x25d00010`, plus VDP2 register literals.
+  `scripts/analyze_nexus_tm_bin_vdp_owner.py` verifies this against the real
+  file. This improves static owner evidence only; execution, command-source
+  identity, CLUT and asset join remain capture-gated.
 - **NEXUS-SATURN-STARTUP-INPUT-CAPTURE:** The external Saturn producer now
   supports a bounded, active-low START pulse through Mednafen SMPC at an
   operator-selected emulated frame, with an explicit mask for START (`0x10`),
