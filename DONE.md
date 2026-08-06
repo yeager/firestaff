@@ -168,6 +168,12 @@
   direct regression compile the source explicitly. It loads no original DM1
   data and has no M11/runtime caller.
 
+# DM1 mirror scroll-pickup-nonleader synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C038/C040 fixture from M10. Its generated
+  regression compiles the source directly; it loads no original DM1 data and
+  has no M11/runtime caller.
+
 # DM2 selected-corpus i18n verification (2026-08-07)
 
 - ✅ The focused DM2 i18n regression now reads only the explicitly selected
