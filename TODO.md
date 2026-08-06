@@ -26849,6 +26849,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   covering changed timeline and active-group states. The runtime fence now
   revokes stale C13 identity before presentation; generated saves are not
   accepted as positive evidence.
+  - 2026-08-06 runtime-fixture correction: the focused C13/M11 regression now
+    uses a live admitted champion (`hp.current == hp.maximum`), so its party-
+    death gate no longer masks the source C13 progression. The test passes;
+    this does not close the real-data C13 corpus requirement.
   - 2026-07-30 diagnostic update: the opt-in real-corpus probe now emits the
     per-file C3 record/byte count, C4 timeline index/byte count, C13 event
     count/bytes, staged event/C13 counts, and active-group count. A passing

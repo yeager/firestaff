@@ -103,6 +103,7 @@ int main(void)
     state.world.party.champions[0].present = 1;
     state.world.party.champions[0].cell = 1;
     state.world.party.champions[0].hp.maximum = 100;
+    state.world.party.champions[0].hp.current = 100;
     state.world.party.champions[0].inventory[0] = 0x1234u;
     CHECK(F0720_TIMELINE_Init_Compat(&state.world.timeline, 0u),
           "tail-backed C13 M11 timeline initializes");

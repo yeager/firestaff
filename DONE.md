@@ -7,6 +7,17 @@ fields remain unbound until the Saturn new-game/save consumer is captured.
 The real-data PLRD regression passes, and the historical save/inventory notes
 were corrected to stop presenting DM1 provisions as Nexus data.
 
+- ✅ 2026-08-06 DM1 C13 M11 runtime fixture correction: the focused runtime
+  regression now initializes its admitted champion with live current HP before
+  the first M11 tick. The previous fixture used `hp.maximum = 100` with
+  `hp.current = 0`, so the source `m11_check_party_death()` gate correctly
+  stopped all later input and made C13 appear not to advance. With the fixture
+  representing a live champion, the source C13 step-2 -> step-1 -> F0283
+  step-0 chain advances through the expected M11 ticks. The focused C13 test,
+  2/2 original PC34-backed save round trips, and the real-corpus probe pass.
+  This fixes test setup only; fixture-free original saves containing C13 events
+  are still required.
+
 - ✅ 2026-08-06 Nexus creature runtime quarantine: production mechanics and
   engine ticks now keep creature AI, spawner admission, and projectile motion
   fail-closed while `nexus_v1_action_semantics_proven()` is false. Direct
