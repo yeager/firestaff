@@ -55,6 +55,15 @@
 - ✅ Verification: `test_dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat`
   passes; the source object is absent from M10.
 
+# DM1 chest rotate-pickup synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the chest-pickup-during-party-rotation model from M10. It
+  locally fabricates party/chest/leader-hand/queue state, reads no original
+  DM1 input and has no runtime caller. Its existing ReDMCSB regression is now
+  registered and compiles the source explicitly.
+- ✅ Verification: `test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat`
+  passes; the source object is absent from M10.
+
 # DM1 D1L/D1R F0107 wall synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the D1L/D1R F0107 wall-ornament probe from M10. It hard-codes

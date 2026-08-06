@@ -4353,6 +4353,13 @@ list(REMOVE_ITEM M10_SOURCES
 # the broad M10 glob cannot publish the synthetic transaction as live DM1.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c")
+# `dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat.c` is a
+# contract-only race model. It fabricates its party, chest, leader hand and
+# queued pickup state, reads no original DM1 input, and has no M11/runtime
+# caller. Keep it test-only and make its existing regression compile the
+# source explicitly instead of admitting a synthetic transaction through M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat.c")
 # `dm1_v1_mirror_candidate_resurrect_cross_candidate_clear_pc34_compat.c`
 # deliberately models a synthetic stale panel and has no M11/runtime caller
 # or original-data input.  Keep this regression in its explicit test target,
@@ -52993,6 +53000,12 @@ add_executable(test_dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_com
 target_include_directories(test_dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat COMMAND test_dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat)
+add_executable(test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat
+    tests/dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat.c
+    src/dm1/dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat.c)
+target_include_directories(test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat PRIVATE firestaff_m10)
+add_test(NAME test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat COMMAND test_dm1_v1_chest_pickup_while_party_rotate_in_progress_pc34_compat)
 add_executable(test_dm1_v1_chest_partial_mask_swap_pc34_compat tests/test_dm1_v1_chest_partial_mask_swap_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_partial_mask_swap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_partial_mask_swap_pc34_compat PRIVATE firestaff_m10)

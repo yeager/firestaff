@@ -131,6 +131,12 @@
   graphics data; keep it test-only until a live source-backed chest
   transaction owns the behavior.
 
+- **DM1-CHEST-ROTATE-PICKUP-SYNTHETIC-AUDIT:** The chest-pickup-during-party-
+  rotation model creates party direction/cells, chest slots, leader hands and
+  queued pickup state locally. It reads no original DM1 input and has no
+  M11/runtime caller; retain it only as an explicit ReDMCSB regression until
+  the live source-backed transaction is recovered.
+
 - **DM1-MIRROR-RESURRECT-CROSS-CANDIDATE-SYNTHETIC-AUDIT:** This helper
   models stale mirror-panel state during resurrection with synthetic
   champions and has no production caller or original-data input. Keep the
