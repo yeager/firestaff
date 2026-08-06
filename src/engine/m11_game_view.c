@@ -49195,7 +49195,8 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
 
         const M11_AssetSlot* boxSlot = M11_AssetLoader_Load(
             (M11_AssetLoader*)&state->assetLoader, gfxIdx);
-        if (boxSlot && boxSlot->width == SZ_ORIG && boxSlot->height == SZ_ORIG) {
+        if (boxSlot && boxSlot->loaded && boxSlot->pixels &&
+            boxSlot->width == SZ_ORIG && boxSlot->height == SZ_ORIG) {
             M11_AssetLoader_Blit(boxSlot, fb, fbW, fbH, sx, sy, 0);
             drewSlotBox = 1;
             slotBoxW = SZ_ORIG;
@@ -49241,7 +49242,8 @@ static void m11_draw_inv_slot(const M11_GameViewState* state,
             if (gfxIdx > 0 && gfxIdx < M11_GFX_ITEM_SPRITE_END) {
                 const M11_AssetSlot* slot = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader, gfxIdx);
-                if (slot && slot->width > 0 && slot->height > 0) {
+                if (slot && slot->loaded && slot->pixels &&
+                    slot->width > 0 && slot->height > 0) {
                     /* Compatibility fallback: scale item sprite into the slot box. */
                     M11_AssetLoader_BlitScaled(slot, fb, fbW, fbH,
                                               sx + 1, sy + 1,
@@ -50356,7 +50358,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 const M11_AssetSlot* chestPanel = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
                     (unsigned int)M11_GFX_PANEL_OPEN_CHEST);
-                if (chestPanel &&
+                if (chestPanel && chestPanel->loaded && chestPanel->pixels &&
                     chestPanel->width == (unsigned short)chestPanelW &&
                     chestPanel->height == (unsigned short)chestPanelH) {
                     M11_AssetLoader_Blit(chestPanel, framebuffer, framebufferWidth,
@@ -50462,7 +50464,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
             const M11_AssetSlot* portraits = M11_AssetLoader_Load(
                 (M11_AssetLoader*)&state->assetLoader,
                 (unsigned int)dm1_v1_graphic_champion_portraits_pc34());
-            if (portraits && portraits->width >= 256 && portraits->height >= 29) {
+            if (portraits && portraits->loaded && portraits->pixels &&
+                portraits->width >= 256 && portraits->height >= 29) {
                 int pIdx = champ->portraitIndex & 0x1F; /* 0–23 range */
                 int srcPX = (pIdx & 7) * M11_PORTRAIT_W;
                 int srcPY = (pIdx >> 3) * M11_PORTRAIT_H;
@@ -50480,7 +50483,8 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                 const M11_AssetSlot* iconStrip = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
                     (unsigned int)dm1_v1_graphic_champion_icons_pc34());
-                if (iconStrip && iconStrip->width > 0 && iconStrip->height > 0) {
+                if (iconStrip && iconStrip->loaded && iconStrip->pixels &&
+                    iconStrip->width > 0 && iconStrip->height > 0) {
                     int iconCol = champ->portraitIndex & 3;
                     int srcX = iconCol * M11_CHAMPION_ICON_W;
                     if (srcX + M11_CHAMPION_ICON_W <= (int)iconStrip->width) {

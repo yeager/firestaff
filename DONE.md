@@ -50542,3 +50542,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   no M11 invocation. Verification: `firestaff` build, real PC-DOS
   GDAT HUD command family, material receipt, boot profile 95/95, lighting/HUD
   gate 151/151, portrait-palette gate 2/2, and M11 launcher-handoff boundary.
+- ✅ 2026-08-06 DM1 inventory-panel decoded-surface gate: live source-panel
+  slot boxes, fallback item blits, open-chest panel, champion portraits and
+  icon strips now require both `loaded` and `pixels` before any blit. Cache
+  dimensions alone can no longer paint empty metadata into the inventory or
+  champion panel. Verified with a full Ninja `firestaff` build, the real PC3.4
+  F0342 object-description test, and the real HoC inscription palette test
+  (2 inscriptions across 546 corridor transitions).

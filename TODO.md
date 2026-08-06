@@ -6290,6 +6290,11 @@ lane is carried forward in the sections below.
   the PC34 floor-set records. Dimension-only cache entries are rejected, so
   they cannot masquerade as real frame material. Remaining work is broader
   real multi-effect and packaged-app capture, not another frame fallback.
+- 2026-08-06 update: the active DM1 inventory/champion-panel consumers now
+  apply the same decoded-pixel gate to slot boxes, item fallback sprites,
+  open-chest panels, portrait strips and champion icon strips. Dimension-only
+  cache records cannot reach these source blits. Remaining work is real
+  packaged-app pickup/panel capture, not another metadata fallback.
 
 - F0135/F0732/F0733/F0735 now have bounded planar dispatch coverage. The DM1
   viewport has a fail-closed F0134/F0135 material consumer that accepts only a
