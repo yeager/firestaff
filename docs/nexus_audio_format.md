@@ -1,5 +1,8 @@
 # Nexus V1 — Audio Format
 
+> Statusen är källbunden metadata, inte färdig playback. Se
+> [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md).
+
 ## Overview
 
 Dungeon Master Nexus audio consists of two distinct systems:
@@ -73,8 +76,8 @@ Per-level SFX allows different sound environments per dungeon depth — deeper l
 - 26 KB — compact driver binary
 - Loads SNDLEV*.SAL and retains bounded MAP windows; event playback is gated
   until the Saturn event-to-selector and driver handoff are authenticated
-- Handles music track selection (CD audio)
-- Likely a lightweight RTOS task on the Saturn
+- Retailens `SDDRVS.TSK` är en verifierad task-identitet. Dess event- och
+  selector-ABI är inte fastställd; “likely” är inte ett runtime-bevis.
 
 ## Audio Engine (Firestaff Implementation)
 

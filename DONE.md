@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus stale-claim documentation audit: added
+  `docs/NEXUS_STALE_CLAIM_AUDIT.md` and corrected the high-traffic data,
+  content, intro, graphics and audio audits so historical host-stub wording
+  cannot be mistaken for Saturn parity. The documents now point to the real
+  retail receipts and preserve the no-draw/capture gates for startup, menu,
+  HUD, viewport, text and SLEV/SAL routes. No runtime route or synthetic asset
+  was enabled.
+
 - ✅ 2026-08-06 DM1 Atari ST IMG1 decoder: the real 563-record DMCSB1
   Atari-LZW/raw handoff now feeds a shared original IMG1/IMG2 nibble decoder.
   The decoder preserves the Atari big-endian dimensions and rejects invalid

@@ -1,5 +1,9 @@
 # Nexus V1 — Content Differences Between Versions
 
+> Historisk innehållsjämförelse. Rader om DM1-härledda stats, roster,
+> språk, rendering och save/audio ska inte läsas som implementeringsstatus.
+> Se [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md).
+
 ## Sources
 - `docs/NEXUS_FILE_CLASSIFICATION.md`
 - `docs/nexus_overview.md`
@@ -15,7 +19,9 @@
 
 ## 1. Content Overview: What Changed vs. DM1
 
-Nexus is a **3D remake of DM1**, not a sequel. The core dungeon, creatures, and game mechanics are derived from DM1. Here is what changed:
+Nexus är ett Saturn-spel med egen retailkorpus. Tabellen beskriver
+historiska/formatmässiga skillnader; den bevisar inte att Firestaffs
+DM1-kompatibilitet gäller Nexus runtime.
 
 | Aspect | DM1 (1987) | Nexus V1 (1998) | Delta |
 |--------|-----------|-----------------|-------|
@@ -42,7 +48,9 @@ Nexus is a **3D remake of DM1**, not a sequel. The core dungeon, creatures, and 
 ## 2. What Nexus Adds (New Content)
 
 ### 2.1 3D Graphics Pipeline
-- First-person 3D polygon view using Saturn VDP1 (or software fallback on PC)
+- Retailen innehåller DGN/MNS polygon- och materialkandidater för Saturn VDP1.
+- Firestaff behåller dem som bounded receipts; host fallback och färdig
+  polygonpresentation är inte tillåtna utan capture.
 - Per-level 3D wall/floor/ceiling geometry embedded in DGN files
 - Edge-function triangle rasterizer
 - Z-buffer for correct wall occlusion
@@ -81,16 +89,11 @@ Nexus is a **3D remake of DM1**, not a sequel. The core dungeon, creatures, and 
 
 ## 3. What Nexus Preserves from DM1 (Untouched)
 
-### 3.1 Core Mechanics
-- Same 4 champion classes: Fighter, Wizard, Priest, Ninja
-- 20 champion roster records are admitted from the real PLRD/TABL resource;
-  the current 24-slot array retains four reserved capacity slots.
-- Same spell system: 16 spells from DM1
-- Same food/water (1500 each), same consumption model
-- Same champion advancement (experience → stat increases)
-- Same inventory system (4 hand slots, pack, belt)
-- Same combat formula (attack roll, defense, damage)
-- Same dungeon square types (wall, floor, door, torch, teleporter, sensor, pit, altar, etc.)
+### 3.1 Core Mechanics – inte automatiskt ärvda
+- 20 PLRD-records är source-admitted; namn, stats, inventory, spells och
+  actionsemantik kräver separata Saturn-konsumentbevis.
+- DGN square-/Structure-records får läsas som bounded data; deras runtime-
+  dispatch och state writes är inte bevisade genom DM1-likhet.
 
 ### 3.2 Dungeon Layout
 - Nexus dungeon is based on DM1's dungeon layout

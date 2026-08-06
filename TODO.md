@@ -1,5 +1,13 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-STALE-DOCUMENT-CLAIMS:** Older Nexus content/format documents still
+  contain historical “implemented” wording for DM1-derived roster/combat,
+  host mesh/title/HUD rendering, text conversion, and audio playback. The
+  focused audit in `docs/NEXUS_STALE_CLAIM_AUDIT.md` quarantines those claims
+  and points to the current retail receipts and capture gates. Continue the
+  sweep when a new source-owned consumer is proven; do not reopen a route from
+  documentation alone.
+
 - **THERON-REAL-CONSUMER-HANDOFF:** The authenticated US/JP Track 02 map,
   object, ground, door, teleporter and creature-bank records are retained, but
   a positive game-owned post-startup CD read is still missing. The current

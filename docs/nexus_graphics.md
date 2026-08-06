@@ -1,5 +1,10 @@
 # Nexus V1 Graphics / Rendering Audit
 
+> Format- och rasteranteckningarna här är inte ett parity-påstående. Se
+> [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md) för äldre
+> “draws/transformed/loaded”-formuleringar som endast betyder diagnostic
+> receipt.
+
 ## 1. DMDF — Dungeon Master Data Format
 
 Nexus Saturn uses DMDF for all 3D creature models. Defined in nexus_v1_dmdf_model.h.
@@ -60,12 +65,13 @@ Wall geometry in DGN files: Pre-baked wall polygons per grid square per directio
 Each wall face has vertex list plus texture ID plus normal.
 No procedural geometry — geometry loaded from file.
 
-Floor/ceiling in DGN files: nexus_viewport.c draws floor/ceiling per open square.
-nexus_draw_floor() projects square polygon to screen. Texture ID determines tile.
+Floor/ceiling i DGN är source-data-/geometrykandidater. `nexus_viewport.c`
+får inte marknadsföras som Saturnens presenterade floor/ceiling; projection,
+material och VDP1/VDP2-placering är capture-gated.
 
-Creatures: DMDF 3D models (.MNS files) loaded on demand via nexus_v1_dmdf_load().
-3D mesh with vertices, normals, texture coordinates. Transformed and depth-sorted
-per frame. vs. DM1 is 2D billboard sprites.
+Creatures: DMDF/MNS bytes kan läsas till bounded mesh-/texture-receipts.
+Transform, depth-order, palette och VDP1-command ownership är fortfarande
+obundna; detta är inte en färdig creature-renderer.
 
 ## 4. Math3D System (nexus_v1_math3d.h/c)
 

@@ -1,5 +1,10 @@
 # Nexus V1 Data File Formats Audit — Source-Locked
 
+> Äldre formatanteckningar kan beskriva historiska host-stubbar som
+> “loading” eller “implemented”. De är inte runtime-bevis. Se
+> [`NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md) och den strikta
+> inventeringen innan en route öppnas.
+
 ## Sources
 - `src/nexus/nexus_v1_dungeon.c`, `nexus_v1_dmdf_model.c`, `nexus_v1_iso_reader.c`
 - `include/nexus_v1_engine.h`, `nexus_v1_dmdf_model.h`
@@ -117,12 +122,12 @@ The file contains multiple sections after the header:
 All multi-byte values read via `rb16()` / `rb32()` byte-swapping functions.
 SH2 is big-endian; x86/ARM (PC builds) are little-endian.
 
-### Loading (Firestaff)
+### Loading (historisk formatbeskrivning; presentation är spärrad)
 `nexus_v1_dmdf_load()` in `nexus_v1_dmdf_model.c`:
-1. Validates magic (0x444D4446)
-2. Reads vertex_count, face_count from header
-3. Allocates vertex array and face index array
-4. Loads embedded BITMAP texture data
+1. Retail-byteidentiteten och DMDF-envelope kan verifieras.
+2. Bounded vertex-/face-/texture-receipts får behållas som källproveniens.
+3. Hostens transform, materialbindning, palette och VDP1-command-order är
+   inte autentiserade och får därför inte presenteras som en färdig modell.
 
 ---
 
@@ -156,9 +161,10 @@ SH2 is big-endian; x86/ARM (PC builds) are little-endian.
 ## 4. Other Asset Files
 
 ### FONT256.S2D
-- 256-character font including Japanese Shift-JIS characters
-- Loaded by `nexus_v1_font_load()` from `nexus_v1_saturn_font.c`
-- Used for all in-game text rendering
+- `FONT256.S2D` har 242 verifierade CG-tiles från retail.
+- Loadern behåller bytes/glyph-åtkomst som receipt.
+- Saturns textkonsument, page/attribute mapping och synlig textplacering är
+  inte verifierade; den används inte som bevis för all in-game text.
 
 ### FACE.BIN
 The European corpus contains the real FACE.BIN resource. The bounded loader
