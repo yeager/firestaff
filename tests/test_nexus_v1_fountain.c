@@ -16,14 +16,14 @@ int main(void) {
         expect(mgr.count == 0, "init count 0");
     }
 
-    /* Test 2: register */
+    /* Test 2: unproven registration remains blocked */
     {
         Nexus_FountainManager mgr;
         int idx;
         nexus_v1_fountain_manager_init(&mgr);
         idx = nexus_v1_fountain_register(&mgr, NEXUS_FOUNTAIN_WATER, 5, 3, 3, 100);
-        expect(idx == 0, "first fountain idx 0");
-        expect(mgr.count == 1, "count 1");
+        expect(idx == -1, "unproven fountain registration blocked");
+        expect(mgr.count == 0, "blocked registration leaves count 0");
     }
 
     /* Test 3: find at position */
@@ -31,11 +31,12 @@ int main(void) {
         Nexus_FountainManager mgr;
         nexus_v1_fountain_manager_init(&mgr);
         nexus_v1_fountain_register(&mgr, NEXUS_FOUNTAIN_HEALTH, 2, 4, 5, 50);
-        expect(nexus_v1_fountain_find_at(&mgr, 2, 4) == 0, "found");
+        expect(nexus_v1_fountain_find_at(&mgr, 2, 4) == -1,
+               "unproven fountain not found");
         expect(nexus_v1_fountain_find_at(&mgr, 0, 0) == -1, "not found");
     }
 
-    /* Test 4: drink water fountain */
+    /* Test 4: unproven water effect remains blocked */
     {
         Nexus_FountainManager mgr;
         Nexus_V1_Champion ch;
@@ -44,12 +45,14 @@ int main(void) {
         idx = nexus_v1_fountain_register(&mgr, NEXUS_FOUNTAIN_WATER, 1, 1, 2, 200);
         memset(&ch, 0, sizeof(ch));
         ch.water = 500;
-        expect(nexus_v1_fountain_drink(&mgr, idx, &ch), "drink ok");
-        expect(ch.water == 700, "water restored");
-        expect(nexus_v1_fountain_uses_left(&mgr, idx) == 1, "1 use left");
+        expect(!nexus_v1_fountain_drink(&mgr, idx, &ch),
+               "unproven water effect blocked");
+        expect(ch.water == 500, "blocked water leaves champion unchanged");
+        expect(nexus_v1_fountain_uses_left(&mgr, idx) == 0,
+               "blocked fountain has no uses");
     }
 
-    /* Test 5: drink health fountain */
+    /* Test 5: unproven health effect remains blocked */
     {
         Nexus_FountainManager mgr;
         Nexus_V1_Champion ch;
@@ -59,11 +62,12 @@ int main(void) {
         memset(&ch, 0, sizeof(ch));
         ch.health = 50;
         ch.max_health = 100;
-        expect(nexus_v1_fountain_drink(&mgr, idx, &ch), "drink health");
-        expect(ch.health == 80, "health restored");
+        expect(!nexus_v1_fountain_drink(&mgr, idx, &ch),
+               "unproven health effect blocked");
+        expect(ch.health == 50, "blocked health leaves champion unchanged");
     }
 
-    /* Test 6: drink mana fountain */
+    /* Test 6: unproven mana effect remains blocked */
     {
         Nexus_FountainManager mgr;
         Nexus_V1_Champion ch;
@@ -73,11 +77,12 @@ int main(void) {
         memset(&ch, 0, sizeof(ch));
         ch.mana = 10;
         ch.max_mana = 100;
-        expect(nexus_v1_fountain_drink(&mgr, idx, &ch), "drink mana");
-        expect(ch.mana == 50, "mana restored");
+        expect(!nexus_v1_fountain_drink(&mgr, idx, &ch),
+               "unproven mana effect blocked");
+        expect(ch.mana == 10, "blocked mana leaves champion unchanged");
     }
 
-    /* Test 7: poison fountain */
+    /* Test 7: unproven poison effect remains blocked */
     {
         Nexus_FountainManager mgr;
         Nexus_V1_Champion ch;
@@ -87,11 +92,12 @@ int main(void) {
         memset(&ch, 0, sizeof(ch));
         ch.health = 80;
         ch.max_health = 100;
-        expect(nexus_v1_fountain_drink(&mgr, idx, &ch), "drink poison");
-        expect(ch.health == 55, "health reduced");
+        expect(!nexus_v1_fountain_drink(&mgr, idx, &ch),
+               "unproven poison effect blocked");
+        expect(ch.health == 80, "blocked poison leaves champion unchanged");
     }
 
-    /* Test 8: empty fountain */
+    /* Test 8: empty/unproven fountain */
     {
         Nexus_FountainManager mgr;
         Nexus_V1_Champion ch;
@@ -99,7 +105,8 @@ int main(void) {
         nexus_v1_fountain_manager_init(&mgr);
         idx = nexus_v1_fountain_register(&mgr, NEXUS_FOUNTAIN_WATER, 1, 1, 0, 100);
         memset(&ch, 0, sizeof(ch));
-        expect(!nexus_v1_fountain_drink(&mgr, idx, &ch), "empty fountain");
+        expect(!nexus_v1_fountain_drink(&mgr, idx, &ch),
+               "empty fountain remains blocked");
     }
 
     /* Test 9: NULL safety */
@@ -122,7 +129,7 @@ int main(void) {
         ch.health = 90;
         ch.max_health = 100;
         nexus_v1_fountain_drink(&mgr, idx, &ch);
-        expect(ch.health == 100, "health capped at max");
+        expect(ch.health == 90, "blocked health leaves cap test unchanged");
     }
 
     if (g_fail) {

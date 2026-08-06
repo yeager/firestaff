@@ -46,6 +46,12 @@
   while preserving Power, and passes the focused consumable/live-transaction
   tests. Full HoC packaged capture remains open.
 
+- ✅ 2026-08-06 Nexus fountain placeholder quarantine: removed the unproven
+  public DM1-shaped fountain registration/effect path. Caller-supplied water,
+  health, mana and poison values can no longer mutate a champion; the manager
+  remains an empty provenance seam until a real Saturn fountain record and
+  action/effect consumer are authenticated.
+
 - ✅ 2026-08-06 Theron US roster/text audit: real US Track 02 still proves
   only the `GO AWAY AND RESURRECT THERON` prompt at `0xa0722`; the JP ASCII
   roster cluster is absent from the US receipt. Real US Track 19 item names,

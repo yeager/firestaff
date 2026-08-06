@@ -613,6 +613,13 @@
   helper is now test-only. Bind the Saturn spell action, status writes,
   projectile DMA and HUD feedback before exporting any effect mutation.
 
+- **NEXUS-FOUNTAIN-ACTION-CAPTURE:** The former public fountain helper was a
+  DM1-shaped synthetic mutation path: caller-supplied type/coordinates and
+  restore values could change water, health or mana without a retail Nexus
+  fountain record or Saturn action/effect trace. Registration and drinking are
+  now fail-closed/no-op; recover the real DGN/DM.BIN consumer before restoring
+  any fountain state or effect.
+
 - **NEXUS-SAL-MAP-DISPATCH-CAPTURE:** Retail `SNDLEV##.MAP` byte-zero
   records are now admitted independently of the legacy 24-byte fixture
   grammar, and the real 16-level corpus remains bounded and source-backed.

@@ -2,10 +2,9 @@
 #ifndef NEXUS_V1_FOUNTAIN_H
 #define NEXUS_V1_FOUNTAIN_H
 
-/* Nexus V1 fountain/well system — interactive map objects that restore
- * water, health, or mana when the party drinks from them.
- * Source: DM1 DUNGEON.C fountain things, MOVESENS.C fountain sensor,
- *         DM Nexus Saturn: fountain squares in dungeon data. */
+/* Nexus V1 fountain/well provenance seam. No retail fountain record,
+ * effect magnitude, or Saturn action dispatcher is currently authenticated;
+ * registration and drinking therefore remain fail-closed/no-op. */
 
 #include "nexus_v1_champions.h"
 
@@ -40,8 +39,8 @@ int nexus_v1_fountain_register(Nexus_FountainManager *mgr,
 int nexus_v1_fountain_find_at(const Nexus_FountainManager *mgr,
     int map_x, int map_y);
 
-/* Drink from fountain. Applies effect to champion. Returns 1 on success,
- * 0 if empty or not found. */
+/* Drink from an admitted fountain. Current production implementation is
+ * always no-op until the original Saturn action/effect consumer is bound. */
 int nexus_v1_fountain_drink(Nexus_FountainManager *mgr,
     int fountain_idx, Nexus_V1_Champion *champion);
 
