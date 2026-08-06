@@ -5318,6 +5318,7 @@ add_executable(firestaff_theron_v1_startup_flow_probe
         src/theron/theron_v1_track02_champion_roster.c
     src/theron/theron_v1_dungeon_progression.c
     src/theron/theron_v1_track02.c
+    src/theron/theron_v1_track02_level_data_blocks.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_compat.c
     src/theron/theron_v1_track02_text_decode.c
@@ -5398,6 +5399,7 @@ add_executable(test_theron_v1_startup_save_resume_pc34
     tests/test_theron_v1_startup_save_resume_pc34.c
     src/theron/theron_v1_startup_receipt.c
     src/theron/theron_v1_startup_runtime_entry.c
+    src/theron/theron_v1_track02_level_data_blocks.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_compat.c
     src/theron/theron_v1_track02_text_decode.c
@@ -6461,6 +6463,7 @@ if(BUILD_TESTING)
         src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -7510,6 +7513,7 @@ add_executable(firestaff_theron_v2_hud_launch_mode_probe
     src/theron/theron_v1_viewport.c
     src/theron/theron_v1_vram_trace_loader.c
     src/theron/theron_v1_palette.c
+    src/theron/theron_v1_track02_level_data_blocks.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_compat.c
     src/theron/theron_v1_track02_text_decode.c
@@ -7711,6 +7715,7 @@ endif()
 # docs/source-lock/tqr_v1_phase0_provenance_gate_H2339.md.
 add_executable(firestaff_theron_v1_first_room_runtime_probe
     probes/firestaff_theron_v1_first_room_runtime_probe.c
+    src/theron/theron_v1_track02_level_data_blocks.c
     src/theron/theron_v1_world.c
     src/theron/theron_v1_track02.c
     src/theron/theron_v1_mechanics.c
@@ -9398,6 +9403,7 @@ if(BUILD_TESTING)
             src/shared/fs_portable_compat.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -22467,6 +22473,7 @@ endif()
         src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -22512,6 +22519,7 @@ endif()
         src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -22553,6 +22561,7 @@ endif()
         src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -22598,6 +22607,7 @@ endif()
         src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -22693,6 +22703,7 @@ endif()
         src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -22734,6 +22745,7 @@ endif()
         src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -22766,6 +22778,7 @@ endif()
         src/nexus/nexus_v1_prs3_decode.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -22806,6 +22819,7 @@ endif()
         src/nexus/nexus_v1_boot_profile.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -26174,6 +26188,7 @@ endif()
         src/dm1v2/dm1_v2_camera_controller_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/shared/vga_palette_pc34_compat.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_dm1_v2_movement_command_adapter_pc34
@@ -26183,6 +26198,7 @@ endif()
         src/dm1v2/dm1_v2_camera_controller_pc34.c
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
+        src/shared/vga_palette_pc34_compat.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_dm1_v2_touch_controller_affordance_pc34
@@ -26194,6 +26210,7 @@ endif()
         src/dm1v2/dm1_v2_movement_engine_pc34.c
         src/dm1v2/dm1_v2_viewport_renderer_pc34.c
         src/dm1v2/dm1_v2_minimap_pc34.c
+        src/shared/vga_palette_pc34_compat.c
         src/dm1v2/dm1_v2_anim_timing_pc34.c
     )
     add_executable(test_csb_v2_touch_controller_affordance
@@ -37671,6 +37688,7 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_modern_assets_pc34.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -37756,6 +37774,7 @@ if(BUILD_TESTING)
         src/theron/theron_v1_boot.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c
@@ -40537,6 +40556,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
         src/shared/fs_portable_compat.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c

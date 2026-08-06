@@ -599,10 +599,12 @@ static int dm2_sksave_basename_matches_variant(const char *name,
     return 1;
 }
 
+#if !defined(_WIN32)
 static int dm2_sksave_basename_is_candidate_ci(const char *name)
 {
     return dm2_sksave_basename_matches_variant(name, NULL, NULL, NULL);
 }
+#endif
 
 static int dm2_sksave_root_variant_path(const char *save_base,
                                         int last_session,
