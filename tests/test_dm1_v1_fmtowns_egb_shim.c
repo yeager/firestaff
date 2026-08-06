@@ -113,6 +113,21 @@ static void test_put_block_plain_copy(void) {
     assert(fb[10 * FB_W + 9] == 0);
 }
 
+static void test_native_dmenu_backdrop(void) {
+    static const uint8_t dynamenu[8] = { 0, 1, 0xFF, 0xFF, 0, 0, 0, 0 };
+    size_t touched;
+    reset_fb();
+    touched = dm1_v1_fmtowns_egb_draw_dmenu_backdrop_pc34(
+            fb, FB_W, FB_H, FB_W, dynamenu, 1);
+    /* FILL_CSCREEN and SPC_BLOT both touch the source-owned 87x45 panel. */
+    assert(touched == 2u * 87u * 45u);
+    assert(fb[77 * FB_W + 232] == 0x4Fu);
+    assert(fb[121 * FB_W + 318] == 0x4Fu);
+    assert(fb[76 * FB_W + 232] == 0);
+    assert(dm1_v1_fmtowns_egb_draw_dmenu_backdrop_pc34(
+            fb, FB_W, FB_H, FB_W, dynamenu, 0) == 87u * 45u);
+}
+
 static void test_put_block_masked(void) {
     /* Masked copy: zero pixels stay transparent, non-zero become
      * the caller's colour (WRITEMODE 6 emulation). */
@@ -168,6 +183,7 @@ int main(void) {
     test_clip_rect_swapped();
     test_fill_rect_pixel_count();
     test_fill_rect_menu_panel_region();
+    test_native_dmenu_backdrop();
     test_put_block_plain_copy();
     test_put_block_masked();
     test_put_block_clips_off_screen();

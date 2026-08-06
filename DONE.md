@@ -55671,3 +55671,14 @@ alcove runtime and archive-media tests passed (4/4).
 - Verification: all 27 native PC34 creature types, real F0115 D1–D3
   admission, host material receipt, creature tick receipt and 132 source-lock
   assertions pass.
+
+# 2026-08-06 DM1 FM Towns DRAW_DMENU backdrop binding
+
+- Bound the recovered EDM.EXP `DRAW_DMENU` backdrop order to the software
+  EGB shim: exact region-11 clear followed by exact region-10 panel fill,
+  with panel colour selected from the live DYNAMENU record. The helper
+  refuses to invent icon or text pixels; native icon/text/input work stays
+  open.
+- Verification: `test_dm1_v1_fmtowns_egb_shim` passes; the real-media startup
+  target remains an explicit skip when its runtime-root environment variable
+  is absent.

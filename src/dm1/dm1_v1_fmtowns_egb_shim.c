@@ -1,4 +1,6 @@
 #include "dm1_v1_fmtowns_egb_shim.h"
+#include "dm1_v1_fmtowns_dynamenu.h"
+#include "dm1_v1_fmtowns_menu_regions.h"
 
 /* Software shim for the TownsOS EGB primitives that the FM Towns
  * DM1 menu draw chain calls. See header for the disassembly evidence
@@ -94,4 +96,39 @@ size_t dm1_v1_fmtowns_egb_put_block_pc34(uint8_t *fb,
         }
     }
     return pixels;
+}
+
+size_t dm1_v1_fmtowns_egb_draw_dmenu_backdrop_pc34(
+        uint8_t *fb, int fb_width, int fb_height, int fb_stride,
+        const uint8_t *dynamenu_record, int menu_owner_present) {
+    DM1_V1_FmtownsRegionRecord panel;
+    DM1_V1_FmtownsRegionRecord clear;
+    int x1, y1, x2, y2;
+    size_t touched;
+
+    if (!fb) return 0;
+    if (!dm1_v1_fmtowns_region_menu_panel_pc34(&panel) ||
+        !dm1_v1_fmtowns_region_menu_clear_area_pc34(&clear)) {
+        return 0;
+    }
+
+    /* GET_COORD(-1, ..., region 11) resolves the menu-area anchor to
+     * the right edge of region 10: x = 319 - 87, y = 77.  These are
+     * source-owned fields, not a layout approximation. */
+    x1 = clear.a - panel.a;
+    y1 = clear.b;
+    x2 = clear.a - 1;
+    y2 = clear.b + panel.b - 1;
+
+    /* DRAW_DMENU calls FILL_CSCREEN before selecting the DYNAMENU
+     * colour and invoking SPC_BLOT. */
+    touched = dm1_v1_fmtowns_egb_fill_rect_pc34(
+            fb, fb_width, fb_height, fb_stride,
+            x1, y1, x2, y2, 0x00u);
+    if (!menu_owner_present || !dynamenu_record) return touched;
+    touched += dm1_v1_fmtowns_egb_fill_rect_pc34(
+            fb, fb_width, fb_height, fb_stride,
+            x1, y1, x2, y2,
+            dm1_v1_fmtowns_dynamenu_panel_colour_pc34(dynamenu_record));
+    return touched;
 }

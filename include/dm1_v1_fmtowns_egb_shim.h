@@ -72,6 +72,17 @@ size_t dm1_v1_fmtowns_egb_put_block_pc34(uint8_t *fb,
                                          int src_stride,
                                          int colour_or_negative);
 
+/* Source-locked DRAW_DMENU backdrop sequence.  This performs the two
+ * visible EGB operations owned by the recovered EDM.EXP routine:
+ * FILL_CSCREEN(region 11, colour 0), followed by SPC_BLOT(region 10,
+ * panel colour).  `dynamenu_record` is the live 8-byte DYNAMENU record;
+ * when `menu_owner_present` is zero the native routine stops after the
+ * clear operation and the panel is not painted.  The function returns
+ * the number of framebuffer pixels touched by both operations. */
+size_t dm1_v1_fmtowns_egb_draw_dmenu_backdrop_pc34(
+        uint8_t *fb, int fb_width, int fb_height, int fb_stride,
+        const uint8_t *dynamenu_record, int menu_owner_present);
+
 #ifdef __cplusplus
 }
 #endif

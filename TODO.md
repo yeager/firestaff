@@ -1268,6 +1268,12 @@ level or consumer bindings.
   MODE1/2048 + AUDIO/2352 sector layout of the original disc. No PC34
   synthesis. The `DRAW_DMENU`/`DYNAMENU` menu rendering itself remains
   open (requires Phar Lap P3 disassembly at the recorded entry points).
+  2026-08-06: the recovered `DRAW_DMENU` backdrop sequence is now bound to
+  the source-locked EGB shim: `FILL_CSCREEN` clears the exact region-11
+  87x45 menu rectangle and `SPC_BLOT` paints it with the authenticated
+  DYNAMENU colour selector. Native icon bitmap decode, text rasterisation,
+  mouse/input capture and timing remain open; this change does not claim
+  complete native menu parity.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
   `dm1_v1_atari_st_graphics_dat` now validates and reads the real DMCSB1

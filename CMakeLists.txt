@@ -53580,6 +53580,7 @@ add_test(NAME test_dm1_v1_fmtowns_dynamenu COMMAND test_dm1_v1_fmtowns_dynamenu)
 add_executable(test_dm1_v1_fmtowns_egb_shim
     tests/test_dm1_v1_fmtowns_egb_shim.c
     src/dm1/dm1_v1_fmtowns_egb_shim.c
+    src/dm1/dm1_v1_fmtowns_dynamenu.c
     src/dm1/dm1_v1_fmtowns_menu_regions.c
 )
 target_include_directories(test_dm1_v1_fmtowns_egb_shim PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
