@@ -24,12 +24,9 @@ static void fill_surface(void* context, const DM1_V1_F0732F0735BoxPc34* box,
 static int load_graphics(M11_AssetLoader* loader, char* path, size_t pathSize)
 {
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char* home = getenv("HOME");
 
-    if (root && root[0]) snprintf(path, pathSize, "%s/GRAPHICS.DAT", root);
-    else if (home && home[0]) {
-        snprintf(path, pathSize, "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
-    } else return 0;
+    if (!root || !root[0]) return 0;
+    snprintf(path, pathSize, "%s/GRAPHICS.DAT", root);
     return M11_AssetLoader_Init(loader, path);
 }
 
