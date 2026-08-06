@@ -4665,6 +4665,11 @@ list(REMOVE_ITEM M10_SOURCES
 # input or M11/runtime caller, so compile it only in its explicit regression.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_reopen_after_leader_rotation_pc34_compat.c")
+# `dm1_v1_chest_hand_swap_no_duplicate_gate_pc34_compat.c` is a
+# contract-only local chest/hand multiset model. It has no original-DM1 input
+# or M11/runtime caller; its direct regression target already compiles it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_hand_swap_no_duplicate_gate_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
