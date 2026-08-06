@@ -46,6 +46,12 @@ payload. V1 witnesses remain readable. The state line is an observation of
 the emulator's VDP1 model, not by itself proof that a particular MENU.BPK,
 DGN, HUD or viewport record owns the command stream.
 
+`scripts/analyze_nexus_vdp1_command_window.py` can then inspect the bounded
+record window ending at the captured `COPR`. It reports raw command words and
+requires an observed END record when requested. Its output is still a state
+receipt: command type `0x09`, `0x0A`, or END does not establish a game-asset
+owner or authorize a host draw.
+
 ## Artifact families
 
 | Route | Magic | Evidence still required |

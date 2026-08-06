@@ -305,6 +305,12 @@
   `RET=ffffffff`, and framebuffer selection `1 -> 0`. This binds observed
   VDP1 state to the emulator frame, but does not identify the active command
   list's source record, CLUT, destination or menu/HUD/viewport owner.
+- **NEXUS-SATURN-VDP1-COMMAND-WINDOW:** The real two-frame E-region witness
+  now has a bounded command-window inspection: `COPR=8` maps to VDP1 VRAM
+  offset `0x40`, whose raw record is END; the preceding records at `0x00` and
+  `0x20` have control types `0x09` and `0x0A`. This is a genuine command-state
+  receipt, not a texture/menu draw proof. The source record, CLUT, destination
+  and asset join remain open.
 - **NEXUS-SATURN-STARTUP-INPUT-CAPTURE:** The external Saturn producer now
   supports a bounded, active-low START pulse through Mednafen SMPC at an
   operator-selected emulated frame, with an explicit mask for START (`0x10`),

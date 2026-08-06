@@ -106,6 +106,15 @@
   only; no active command-list source, CLUT, placement or production draw route
   is inferred.
 
+# Nexus Saturn VDP1 command-window receipt (2026-08-07)
+
+- ✅ Added `scripts/analyze_nexus_vdp1_command_window.py`. Against the real
+  E-region two-frame witness, `COPR=8` maps to VDP1 VRAM offset `0x40`, whose
+  observed record is END; preceding bounded records at `0x00` and `0x20` have
+  control types `0x09` and `0x0A`.
+- ✅ This remains a raw hardware-state receipt only. No MENU.BPK/DGN owner,
+  CLUT, destination or production draw route is inferred.
+
 # DM2 SKSave-korpus med vald källa (2026-08-07)
 
 - ✅ Realdatatestet för original-SKSave använder nu bara
