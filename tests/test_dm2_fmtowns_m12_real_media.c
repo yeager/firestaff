@@ -196,6 +196,9 @@ int main(void)
             DM2_V1_FmtownsAnimFrameReceipt swoosh_last_frame;
             DM2_V1_FmtownsAnimFrameReceipt end_last_frame;
             DM2_V1_FmtownsAnimPaletteReceipt title_palette;
+            DM2_V1_FmtownsAnimPaletteReceipt end_first_palette;
+            DM2_V1_FmtownsAnimPaletteReceipt end_middle_palette;
+            DM2_V1_FmtownsAnimPaletteReceipt end_last_palette;
             DM2_V1_FmtownsAnimSoundReceipt title_sound;
             uint8_t *title = NULL;
             size_t title_size = 0u;
@@ -221,6 +224,9 @@ int main(void)
             memset(&swoosh_last_frame, 0, sizeof(swoosh_last_frame));
             memset(&end_last_frame, 0, sizeof(end_last_frame));
             memset(&title_palette, 0, sizeof(title_palette));
+            memset(&end_first_palette, 0, sizeof(end_first_palette));
+            memset(&end_middle_palette, 0, sizeof(end_middle_palette));
+            memset(&end_last_palette, 0, sizeof(end_last_palette));
             memset(&title_sound, 0, sizeof(title_sound));
             if (launch.profile && launch.profile->fmtowns_disc_image &&
                        dm2_v1_fmtowns_disc_probe(
@@ -285,6 +291,12 @@ int main(void)
                     end_last_frame = candidate;
                     ++end_frame_count;
                 }
+                (void)dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+                    end, end_size, 0u, &end_first_palette);
+                (void)dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+                    end, end_size, 100u, &end_middle_palette);
+                (void)dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+                    end, end_size, 421u, &end_last_palette);
             }
             if (launch.profile && launch.profile->fmtowns_disc_image &&
                 dm2_v1_fmtowns_disc_probe(
@@ -350,6 +362,16 @@ int main(void)
                        end_last_frame.display_duration == 2000u &&
                        end_last_frame.compressed_command_count == 1u,
                    "FM Towns END replays its original FO/NE loops in RAM");
+            expect(end_first_palette.valid &&
+                       end_first_palette.source_record_offset == 34u &&
+                       end_first_palette.output_fnv1a == 0xfd41be13u &&
+                       end_middle_palette.valid &&
+                       end_middle_palette.source_record_offset == 111174u &&
+                       end_middle_palette.output_fnv1a == 0xce718356u &&
+                       end_last_palette.valid &&
+                       end_last_palette.source_record_offset == 466082u &&
+                       end_last_palette.output_fnv1a == 0xc4440608u,
+                   "FM Towns END binds each displayed frame to its original PL palette");
             expect(skull && skull_size == 374416u &&
                        launch.profile->fmtowns_skull_p3.valid &&
                        launch.profile->fmtowns_skull_p3.level == 1u &&

@@ -1299,9 +1299,9 @@ level or consumer bindings.
   volume bytes and the source-invalid 1000 Hz field. SKWIN `0759:0E33/0EF0`
   establishes the selected slot and fixed 5500 Hz playback argument, so the
   next step is a separately source-proven 5500-Hz transport — not inferred
-  stereo mixing from SO metadata. END's source FO/NE loops now replay through
-  the RAM-only decoder (422 displayed frames from 385 EN/DL records), but its
-  per-frame PL palette route and game-won handoff remain unbound. The remaining
+  stereo mixing from SO metadata. END's source FO/NE loops and per-frame PL
+  palette route now replay through RAM-only receipts (422 displayed frames
+  from 385 EN/DL records), but its game-won handoff remains unbound. The remaining
   gap is source-owned END playback, TITLE sound-event/CDDA dispatch, and a captured
   title-to-SKULL menu handoff; do not replace them with host animation or
   menus. **2026-08-06 IMG2 menu update:** after the authenticated TITLE

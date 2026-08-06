@@ -22,8 +22,15 @@
   loop control records instead of treating its 385 `EN`/`DL` records as a
   linear sequence. The real HME-242 stream produces 422 display frames; the
   regression pins its final indexed frame to FNV-1a `553d172f`, duration
-  2,000 and one IMG1 command. This is decoder coverage only: END's palette
-  updates and game-won presentation handoff remain explicitly unbound.
+  2,000 and one IMG1 command. This is decoder coverage only: END's
+  game-won presentation handoff remains explicitly unbound.
+
+# DM2 FM Towns END palette timing (2026-08-06)
+
+- ✅ Added a frame-specific PL palette receipt that follows the same `FO`/`NE`
+  control flow as the original stream. The real HME-242 END regression locks
+  original palette records at frames 0, 100 and 421, including offsets 34,
+  111,174 and 466,082. This does not itself draw END or open a victory route.
 
 # DM2 V2 source-palette correction (2026-08-06)
 

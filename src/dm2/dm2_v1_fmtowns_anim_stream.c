@@ -408,6 +408,55 @@ int dm2_v1_fmtowns_anim_stream_decode_frame(
     return 0;
 }
 
+static int dm2_v1_fmtowns_anim_stream_decode_palette_record(
+    const uint8_t *data, size_t data_size, size_t offset,
+    DM2_V1_FmtownsAnimPaletteReceipt *out)
+{
+    DM2_V1_FmtownsAnimPaletteReceipt receipt;
+    size_t payload_size;
+    const uint8_t *payload;
+    uint16_t count;
+    uint16_t index;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || offset + 6u > data_size ||
+        read_be16(data + offset) != 0x504cu) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    payload_size = read_be16(data + offset + 2u);
+    payload = data + offset + 6u;
+    /* SkWinCore.cpp 0759:1018 reads 64 bytes from record+8: the first two
+     * payload bytes are the count and the sixteen entries follow. */
+    if (payload_size + 6u > data_size - offset || payload_size < 2u) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    count = read_be16(payload);
+    if (count != DM2_V1_FMTOWNS_ANIM_PALETTE_COLORS ||
+        payload_size < 2u + (size_t)count * 4u) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    for (index = 0u; index < count; ++index) {
+        const uint8_t *entry = payload + 2u + (size_t)index * 4u;
+        if (entry[0] >= DM2_V1_FMTOWNS_ANIM_PALETTE_COLORS) {
+            if (out) *out = receipt;
+            return 0;
+        }
+        receipt.rgb4[entry[0]][0] = entry[1];
+        receipt.rgb4[entry[0]][1] = entry[2];
+        receipt.rgb4[entry[0]][2] = entry[3];
+    }
+    receipt.valid = 1;
+    receipt.color_count = count;
+    receipt.source_record_offset = (uint32_t)offset;
+    receipt.output_fnv1a = fnv1a32((const uint8_t *)receipt.rgb4,
+                                   sizeof(receipt.rgb4));
+    if (out) *out = receipt;
+    return receipt.valid;
+}
+
 int dm2_v1_fmtowns_anim_stream_decode_palette(
     const uint8_t *data, size_t data_size,
     DM2_V1_FmtownsAnimPaletteReceipt *out)
@@ -422,49 +471,95 @@ int dm2_v1_fmtowns_anim_stream_decode_palette(
         return 0;
     }
     while (offset + 6u <= data_size) {
-        const uint16_t tag = read_be16(data + offset);
         const size_t payload_size = read_be16(data + offset + 2u);
-        const uint8_t *payload = data + offset + 6u;
-        uint16_t count;
-        uint16_t index;
-
         if (payload_size + 6u > data_size - offset) break;
-        if (tag != 0x504cu) {
-            offset += payload_size + 6u;
-            continue;
-        }
-        /* SkWinCore.cpp 0759:1018 reads 64 bytes from record+8: the first
-         * two payload bytes are the count and the sixteen entries follow. */
-        if (payload_size < 2u) {
+        if (read_be16(data + offset) == 0x504cu &&
+            !dm2_v1_fmtowns_anim_stream_decode_palette_record(
+                data, data_size, offset, &receipt)) {
             if (out) *out = receipt;
             return 0;
         }
-        count = read_be16(payload);
-        if (count != DM2_V1_FMTOWNS_ANIM_PALETTE_COLORS ||
-            payload_size < 2u + (size_t)count * 4u) {
-            if (out) *out = receipt;
-            return 0;
-        }
-        memset(receipt.rgb4, 0, sizeof(receipt.rgb4));
-        for (index = 0u; index < count; ++index) {
-            const uint8_t *entry = payload + 2u + (size_t)index * 4u;
-            if (entry[0] >= DM2_V1_FMTOWNS_ANIM_PALETTE_COLORS) {
-                if (out) *out = receipt;
-                return 0;
-            }
-            receipt.rgb4[entry[0]][0] = entry[1];
-            receipt.rgb4[entry[0]][1] = entry[2];
-            receipt.rgb4[entry[0]][2] = entry[3];
-        }
-        receipt.valid = 1;
-        receipt.color_count = count;
-        receipt.source_record_offset = (uint32_t)offset;
-        receipt.output_fnv1a = fnv1a32((const uint8_t *)receipt.rgb4,
-                                       sizeof(receipt.rgb4));
         offset += payload_size + 6u;
     }
     if (out) *out = receipt;
     return receipt.valid;
+}
+
+int dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+    const uint8_t *data, size_t data_size, uint32_t requested_frame,
+    DM2_V1_FmtownsAnimPaletteReceipt *out)
+{
+    typedef struct {
+        size_t resume_offset;
+        uint16_t remaining;
+    } FmtownsAnimLoop;
+    DM2_V1_FmtownsAnimStreamReceipt stream;
+    DM2_V1_FmtownsAnimPaletteReceipt receipt;
+    FmtownsAnimLoop loops[8];
+    size_t offset = 0u;
+    uint32_t frame = 0u;
+    uint32_t dispatch_count = 0u;
+    unsigned int loop_depth = 0u;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data || !dm2_v1_fmtowns_anim_stream_parse(data, data_size, &stream)) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    while (offset + 6u <= data_size) {
+        const uint16_t tag = read_be16(data + offset);
+        const size_t payload_size = read_be16(data + offset + 2u);
+        const uint16_t attribute = read_be16(data + offset + 4u);
+        const size_t next_offset = offset + payload_size + 6u;
+        if (payload_size + 6u > data_size - offset ||
+            ++dispatch_count > stream.chunk_count * 9u + 8u) {
+            if (out) *out = receipt;
+            return 0;
+        }
+        if (tag == 0x464fu) { /* FO */
+            if (loop_depth >= sizeof(loops) / sizeof(loops[0])) {
+                if (out) *out = receipt;
+                return 0;
+            }
+            loops[loop_depth].resume_offset = next_offset;
+            loops[loop_depth].remaining = attribute;
+            ++loop_depth;
+            offset = next_offset;
+            continue;
+        }
+        if (tag == 0x4e45u) { /* NE */
+            uint16_t remaining;
+            if (loop_depth == 0u) {
+                if (out) *out = receipt;
+                return 0;
+            }
+            remaining = (uint16_t)(loops[loop_depth - 1u].remaining - 1u);
+            loops[loop_depth - 1u].remaining = remaining;
+            if (remaining > 0u && remaining < 10u) {
+                offset = loops[loop_depth - 1u].resume_offset;
+            } else {
+                --loop_depth;
+                offset = next_offset;
+            }
+            continue;
+        }
+        if (tag == 0x504cu &&
+            !dm2_v1_fmtowns_anim_stream_decode_palette_record(
+                data, data_size, offset, &receipt)) {
+            if (out) *out = receipt;
+            return 0;
+        }
+        if (tag == 0x454eu || tag == 0x444cu) { /* EN / DL */
+            if (frame == requested_frame) {
+                if (out) *out = receipt;
+                return receipt.valid;
+            }
+            ++frame;
+        }
+        offset = next_offset;
+    }
+    if (out) *out = receipt;
+    return 0;
 }
 
 int dm2_v1_fmtowns_anim_stream_decode_title_sound(

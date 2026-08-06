@@ -124,6 +124,14 @@ int dm2_v1_fmtowns_anim_stream_decode_palette(
     const uint8_t *data, size_t data_size,
     DM2_V1_FmtownsAnimPaletteReceipt *out);
 
+/* Replays PL and FO/NE control records only as far as the requested displayed
+ * frame. This is the palette active when SKWIN 0759:0F64 presents that EN/DL
+ * image; it does not substitute the stream's final palette for earlier END
+ * frames. */
+int dm2_v1_fmtowns_anim_stream_decode_palette_for_frame(
+    const uint8_t *data, size_t data_size, uint32_t requested_frame,
+    DM2_V1_FmtownsAnimPaletteReceipt *out);
+
 /* Decodes the HME-242 TITLE SD/SO plan, including each original event's
  * source offset and preceding image-frame count.  The caller may schedule
  * playback later only from this receipt; no guessed GDAT sample is allowed.
