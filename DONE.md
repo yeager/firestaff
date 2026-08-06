@@ -947,6 +947,17 @@
   event owner remains open.
 - ✅ No game data was copied or committed.
 
+# DM1 chest partial-mask synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only
+  `dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat.c` from
+  the broad M10 source glob. Its evidence explicitly excludes real assets,
+  savegames and pixel parity; caller search found only its dedicated test.
+- ✅ The test now compiles the audit source explicitly, retaining the
+  ReDMCSB chest/mask ordering contract without linking synthetic runtime state
+  into production. The live masked-bitmap owner remains open.
+- ✅ No game data was copied or committed.
+
 # CSB FM Towns graphics real-cache regression (2026-08-06)
 
 - ✅ `test_csb_v1_fmtowns_graphics_dat` now takes

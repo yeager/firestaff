@@ -4263,6 +4263,12 @@ list(REMOVE_ITEM M10_SOURCES
 # production archive until a live timeline owner consumes it.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0241_f0260_timeline_source_receipt_pc34_compat.c")
+# `dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat.c` is an
+# explicitly contract-only synthetic chest regression.  It loads no real
+# assets/savegame/pixels and has no M11/runtime caller; keep it in its test
+# target instead of the production M10 archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
@@ -52646,7 +52652,9 @@ add_executable(test_dm1_v1_chest_partial_mask_swap_pc34_compat tests/test_dm1_v1
 target_include_directories(test_dm1_v1_chest_partial_mask_swap_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_partial_mask_swap_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_partial_mask_swap_pc34_compat COMMAND test_dm1_v1_chest_partial_mask_swap_pc34_compat)
-add_executable(test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat tests/test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat.c)
+add_executable(test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat
+    tests/test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat.c
+    src/dm1/dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat COMMAND test_dm1_v1_chest_partial_mask_swap_with_mirror_candidate_pc34_compat)

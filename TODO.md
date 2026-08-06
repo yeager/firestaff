@@ -36,6 +36,11 @@
   source fingerprint and F0256 platform boundary test-only until a real
   timeline event consumer is bound to authenticated DM1 runtime state.
 
+- **DM1-CHEST-PARTIAL-MASK-SYNTHETIC-AUDIT:** The chest partial-mask swap
+  helper is a contract-only synthetic regression with no real asset, savegame,
+  pixel or production-runtime input. Keep it test-only until the live chest
+  transaction and original masked bitmap owner are bound.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The
