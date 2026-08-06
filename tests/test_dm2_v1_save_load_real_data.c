@@ -384,12 +384,32 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
               state_receipt.fixed_sections_hash != 0u &&
               state_receipt.timer_bitstream_offset >=
                   state_receipt.dungeon.suppress_state_offset &&
-              state_receipt.timer_bitstream_offset <=
-                  state_receipt.record_link_bitstream_offset &&
-              state_receipt.record_link_bitstream_offset >
-                  state_receipt.dungeon.suppress_state_offset &&
-              state_receipt.record_link_bitstream_offset <= byte_count - 42u,
+                  state_receipt.timer_bitstream_offset <=
+                      state_receipt.record_link_bitstream_offset &&
+                  state_receipt.record_link_bitstream_offset >
+                      state_receipt.dungeon.suppress_state_offset &&
+                  state_receipt.record_link_bitstream_offset <= byte_count - 42u,
           "real SKSave follows SKProject's fixed SUPPRESS order through the record-link boundary");
+    {
+        size_t record_bytes = (size_t)state_receipt.timer_count *
+                              DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE;
+        uint8_t *timer_records = record_bytes ?
+            (uint8_t *)malloc(record_bytes) : NULL;
+        DM2_V1_OriginalRawTimerStreamReceipt timer_receipt;
+        memset(&timer_receipt, 0, sizeof(timer_receipt));
+        CHECK(dm2_v1_original_raw_sksave_decode_timer_stream(
+                  bytes + 42u, byte_count - 42u, &state_receipt,
+                  timer_records, state_receipt.timer_count,
+                  &timer_receipt) && timer_receipt.valid &&
+                  timer_receipt.timer_count == state_receipt.timer_count &&
+                  timer_receipt.start_offset ==
+                      state_receipt.timer_bitstream_offset &&
+                  timer_receipt.end_offset ==
+                      state_receipt.record_link_bitstream_offset &&
+                  timer_receipt.raw_hash == state_receipt.timers_hash,
+              "real SKSave preserves source-sized c_tim records at the shared bitstream boundary");
+        free(timer_records);
+    }
     CHECK(verify_real_db_pool_receipts(bytes + 42u, byte_count - 42u,
                                        &receipt),
           "real SKSave DB pools retain source-sized records inside the raw dungeon prefix");

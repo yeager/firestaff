@@ -103,6 +103,16 @@
 - ✅ Removed the contract-only F0433/F0435/C040 fixture from M10. Its
   generated regression compiles the source directly; it loads no original
   DM1 data and has no M11/runtime caller.
+# DM2 raw SKSAVE c_tim stream receipt (2026-08-07)
+
+- ✅ Added a source-sized timer-stream decoder for authenticated raw SKSAVE
+  state. It resumes at the recorded SUPPRESS carry byte/bits, preserves each
+  12-byte `c_tim` record, and verifies the ending position against the
+  `DM2_READ_SKSAVE_DUNGEON` record-link boundary.
+- ✅ The real PC-DOS corpus regression verifies the decoded timer hash against
+  the existing fixed-state receipt. The records remain diagnostic-only; no
+  incomplete save is admitted to the live runtime.
+
 # DM2 action receipt synthetic inspect-title removal (2026-08-07)
 
 - ✅ Removed the M11-only `DM2` inspect-title fallback from the DM2 action

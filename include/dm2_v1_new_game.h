@@ -193,9 +193,24 @@ typedef struct {
      * never reconstructs them with a different (legacy) state layout. */
     size_t timer_bitstream_offset;
     uint8_t timer_bitstream_bits_remaining;
+    uint8_t timer_bitstream_current_byte;
     size_t record_link_bitstream_offset;
     uint8_t record_link_bitstream_bits_remaining;
 } DM2_V1_OriginalRawSaveStateReceipt;
+
+/* Source-shaped c_tim record receipt.  The v5 save path allocates 12-byte
+ * c_tim entries and reads them through the shared SUPPRESS stream; the older
+ * 10-byte DM2_TimerEntry convenience type is not an original SKSAVE record. */
+#define DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE 12u
+typedef struct {
+    int valid;
+    uint16_t timer_count;
+    size_t start_offset;
+    size_t end_offset;
+    uint8_t start_bits_remaining;
+    uint8_t end_bits_remaining;
+    uint32_t raw_hash;
+} DM2_V1_OriginalRawTimerStreamReceipt;
 
 /* A decoded save candidate. dungeon_bytes aliases the caller-owned input and
  * is populated only for an original raw SKSave body. Its receipt is the
@@ -364,6 +379,18 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     const uint8_t *buf,
     size_t buf_size,
     DM2_V1_OriginalRawSaveStateReceipt *out_receipt);
+
+/* Decode only the authenticated c_tim section from the shared raw stream.
+ * This preserves source bytes for a future GAME_LOAD owner and never mutates
+ * a runtime session.  `out_records` is a caller-owned array of 12-byte
+ * records with `record_capacity` entries. */
+int dm2_v1_original_raw_sksave_decode_timer_stream(
+    const uint8_t *buf,
+    size_t buf_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
+    uint8_t *out_records,
+    size_t record_capacity,
+    DM2_V1_OriginalRawTimerStreamReceipt *out_receipt);
 int dm2_v1_original_raw_sksave_db_record_receipt(
     const uint8_t *buf,
     size_t buf_size,

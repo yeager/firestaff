@@ -980,6 +980,7 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     candidate.timer_bitstream_offset =
         candidate.dungeon.suppress_state_offset + reader.position;
     candidate.timer_bitstream_bits_remaining = reader.bits_remaining;
+    candidate.timer_bitstream_current_byte = reader.current_byte;
     for (i = 0u; i < timer_count; ++i) {
         if (dm2_suppress_reader_read(&reader, timer_mask, sizeof(timer), timer,
                                      0u) != 0) {
@@ -1002,6 +1003,73 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
                       candidate.fixed_sections_hash != 0u &&
                       candidate.record_link_bitstream_offset <= buf_size;
     if (!candidate.valid) return 0;
+    *out_receipt = candidate;
+    return 1;
+}
+
+int dm2_v1_original_raw_sksave_decode_timer_stream(
+    const uint8_t *buf,
+    size_t buf_size,
+    const DM2_V1_OriginalRawSaveStateReceipt *state_receipt,
+    uint8_t *out_records,
+    size_t record_capacity,
+    DM2_V1_OriginalRawTimerStreamReceipt *out_receipt)
+{
+    DM2_V1_OriginalRawTimerStreamReceipt candidate;
+    DM2_SuppressReader reader;
+    const uint8_t *timer_mask;
+    size_t timer_mask_size = 0u;
+    uint16_t i;
+    uint32_t raw_hash = 2166136261u;
+
+    if (out_receipt) memset(out_receipt, 0, sizeof(*out_receipt));
+    memset(&candidate, 0, sizeof(candidate));
+    if (!buf || !state_receipt || !state_receipt->valid || !out_receipt ||
+        state_receipt->timer_count > record_capacity ||
+        (state_receipt->timer_count > 0u && !out_records) ||
+        state_receipt->timer_bitstream_offset > buf_size ||
+        state_receipt->record_link_bitstream_offset > buf_size ||
+        state_receipt->timer_bitstream_bits_remaining > 7u) {
+        return 0;
+    }
+    timer_mask = dm2_v1_save_vsgame_raw(&timer_mask_size);
+    if (!timer_mask || timer_mask_size < DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE) {
+        return 0;
+    }
+
+    /* The fixed-state receipt records the exact carry byte and bit count at
+     * the c_tim boundary.  Re-enter the same MSB-first reader instead of
+     * treating the section as byte-aligned. Source: SKProject
+     * SKWINSPX/src/v5/sksvgame.cpp:1504-1519. */
+    reader.data = buf;
+    reader.size = buf_size;
+    reader.position = state_receipt->timer_bitstream_offset;
+    reader.current_byte = state_receipt->timer_bitstream_current_byte;
+    reader.bits_remaining = state_receipt->timer_bitstream_bits_remaining;
+    candidate.start_offset = reader.position;
+    candidate.start_bits_remaining = reader.bits_remaining;
+    candidate.timer_count = state_receipt->timer_count;
+    for (i = 0u; i < state_receipt->timer_count; ++i) {
+        uint8_t *record = out_records +
+            (size_t)i * DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE;
+        if (dm2_suppress_reader_read(
+                &reader, timer_mask,
+                DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE,
+                record, 0u) != 0) {
+            return 0;
+        }
+        raw_hash = dm2_v1_raw_sksave_hash_extend(
+            raw_hash, record, DM2_V1_ORIGINAL_RAW_TIMER_RECORD_SIZE);
+    }
+    if (reader.position != state_receipt->record_link_bitstream_offset ||
+        reader.bits_remaining !=
+            state_receipt->record_link_bitstream_bits_remaining) {
+        return 0;
+    }
+    candidate.end_offset = reader.position;
+    candidate.end_bits_remaining = reader.bits_remaining;
+    candidate.raw_hash = raw_hash ? raw_hash : 1u;
+    candidate.valid = 1;
     *out_receipt = candidate;
     return 1;
 }

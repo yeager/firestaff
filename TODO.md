@@ -2654,6 +2654,11 @@ level or consumer bindings.
   boundary. This is read-only evidence, not a resume admission: complete
   `DM2_GAME_LOAD` ownership is still required before any of these fields can
   change a live game.
+  2026-08-07 timer-stream update: the authenticated fixed-state receipt now
+  re-enters the shared MSB-first reader at the saved `c_tim` boundary and
+  preserves each source-sized 12-byte timer record through the exact
+  record-link boundary. The records remain read-only; timer-owner linking and
+  live `GAME_LOAD` publication are still blocked.
   2026-08-06 direct-root update: the real corpus now also traverses the
   source `DM2_READ_SKSAVE_DUNGEON` direct roots for all 30 item slots of each
   saved champion plus the party root, reusing the exact shared SUPPRESS
