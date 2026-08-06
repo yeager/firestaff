@@ -3363,6 +3363,84 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
     return 1;
 }
 
+int dm2_v1_dungeon_collect_g1_champion_mirrors(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1ChampionMirrorReceipt *out)
+{
+    DM2_V1_G1ChampionMirrorReceipt candidate;
+    int column_index = 0;
+
+    /* ReDMCSB/SKProject c_hero.cpp DM2_SELECT_CHAMPION:1081-1098 first
+     * reaches the tile root through c_map, then accepts DB3 only when
+     * Actuator::Type() (w2 & 0x7f) equals 0x7e.  PC G1 has a proven DB3
+     * continuation beyond the standard pool; c_record.cpp's address rule
+     * resolves both pools.  This walk deliberately never reads w0. */
+    if (!out || !d || !d->raw_data || d->square_bytes != 1 ||
+        d->level_count <= 0 || d->level_count > DM2_V1_MAX_LEVELS) {
+        return 0;
+    }
+    memset(&candidate, 0, sizeof(candidate));
+    candidate.incomplete_world = 1;
+    for (int map = 0; map < d->level_count; ++map) {
+        DM2_V1_G1RuntimeMapValidationReceipt validation;
+
+        if (!dm2_v1_dungeon_validate_g1_runtime_map(d, map, &validation) ||
+            !validation.committed || !validation.incomplete_world) {
+            return 0;
+        }
+        for (int x = 0; x < validation.width; ++x) {
+            int stack = (int)RD16(d->raw_data + d->column_index_base +
+                                  (column_index + x) * 2);
+            for (int y = 0; y < validation.height; ++y) {
+                int raw = dm2_v1_dungeon_get_tile_raw(d, map, x, y);
+                uint16_t root;
+                int type = -1;
+                int record_size = 0;
+                const uint8_t *record;
+                uint16_t w2;
+                DM2_V1_G1ChampionMirrorRoot *mirror;
+
+                if (raw < 0) return 0;
+                if ((raw & 0x10) == 0) continue;
+                if (stack < 0 || stack >= d->square_first_thing_count) return 0;
+                root = RD16(d->raw_data + d->square_first_thing_base +
+                            stack * 2);
+                if (((root >> 10) & 0x0fu) != 3u) {
+                    ++stack;
+                    continue;
+                }
+                record = dm2_v1_dungeon_get_thing_record(
+                    d, root, &type, NULL, &record_size);
+                if (!record || type != 3 || record_size < 8) return 0;
+                ++candidate.actuator_record_reads;
+                w2 = RD16(record + 2);
+                if ((w2 & 0x007fu) == 0x007eu) {
+                    if (candidate.mirror_count >=
+                        DM2_V1_G1_MAX_CHAMPION_MIRRORS) {
+                        return 0;
+                    }
+                    mirror = &candidate.mirrors[candidate.mirror_count++];
+                    mirror->map = map;
+                    mirror->x = x;
+                    mirror->y = y;
+                    mirror->object_id = root;
+                    mirror->direction = (uint8_t)(root >> 14);
+                    mirror->actuator_data =
+                        (uint16_t)((w2 >> 7) & 0x01ffu);
+                }
+                ++stack;
+            }
+        }
+        column_index += validation.width;
+    }
+    if (candidate.mirror_count <= 0 || candidate.actuator_record_reads <= 0) {
+        return 0;
+    }
+    candidate.committed = 1;
+    *out = candidate;
+    return 1;
+}
+
 int dm2_v1_dungeon_materialize_g1_runtime_map_creatures(
     const DM2_V1_DungeonData *d,
     int map,

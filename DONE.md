@@ -52073,3 +52073,12 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   procedural and `gpt-image-2` Theron art pack is rejected by production and
   remains available only to fixture/reference inspection. The focused asset
   test passes 36/36.
+# 2026-08-06 DM2 G1 champion-mirror source inventory
+
+- ✅ The canonical PC G1 `DUNGEON.DAT` now has a source-locked receipt for
+  every DB3 `Actuator::Type() == 0x7e` champion-mirror marker root. It uses
+  the same `c_map` tile-root address transform and proven DB3 continuation as
+  the original, reads only `w2`, and never follows raw `GenericRecord::w0`.
+  The real-data regression finds exactly 16 marker roots. This is evidence
+  only: marker data has not been promoted to a fabricated champion or a
+  playable entrance state.

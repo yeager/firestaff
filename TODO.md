@@ -26572,6 +26572,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   record/object/possession restoration path is live; do not substitute D2RS
   fixtures or inferred session state.
 
+- [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
+  source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw
+  `Actuator::Data()` values are retained, but live champion selection remains
+  blocked until the original event preconditions, GDAT champion lookup,
+  possession transfer and session-state updates are all connected. Do not
+  treat a marker receipt as a playable New Game path.
+
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN
   tables). Remaining work is original Saturn/VDP1 capture and source-locked

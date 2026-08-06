@@ -565,6 +565,32 @@ typedef struct {
         actuators[DM2_V1_G1_RUNTIME_MAP_MAX_ACTUATOR_ROOTS];
 } DM2_V1_G1RuntimeMapActuatorReceipt;
 
+/* A champion-mirror marker is not a made-up UI object: c_hero.cpp
+ * DM2_SELECT_CHAMPION identifies it by Actuator::Type() == 0x7e and reads
+ * the raw Actuator::Data() field.  This receipt deliberately admits
+ * only a source-addressed DB3 root, including the proven PC G1 DB3
+ * continuation.  It neither walks GenericRecord::w0 nor claims that the
+ * surrounding world is playable. */
+typedef struct {
+    int map;
+    int x;
+    int y;
+    uint16_t object_id;
+    uint8_t direction;
+    uint16_t actuator_data;
+} DM2_V1_G1ChampionMirrorRoot;
+
+#define DM2_V1_G1_MAX_CHAMPION_MIRRORS 16
+
+typedef struct {
+    int committed;
+    int incomplete_world;
+    int mirror_count;
+    int actuator_record_reads;
+    DM2_V1_G1ChampionMirrorRoot
+        mirrors[DM2_V1_G1_MAX_CHAMPION_MIRRORS];
+} DM2_V1_G1ChampionMirrorReceipt;
+
 typedef struct {
     int x;
     int y;
@@ -1541,6 +1567,13 @@ int dm2_v1_dungeon_materialize_g1_runtime_map_actuators(
     const DM2_V1_DungeonData *d,
     int map,
     DM2_V1_G1RuntimeMapActuatorReceipt *out);
+/* Enumerate only real G1 champion-mirror marker roots (DB3 Actuator type
+ * 0x7e).  c_hero.cpp::DM2_SELECT_CHAMPION reads the same w2 fields after locating
+ * the tile record.  The receipt remains fail-closed if c_map cannot resolve
+ * a root through either the declared or proven DB3 continuation pool. */
+int dm2_v1_dungeon_collect_g1_champion_mirrors(
+    const DM2_V1_DungeonData *d,
+    DM2_V1_G1ChampionMirrorReceipt *out);
 /* Consume only declared direct DB4 roots on a runtime-admitted G1 map. It
  * reads the source-defined Creature b4 and w6 fields, never the w0 next link,
  * the w2 possession ObjectID, extension DB4 records, or an unvalidated map. */

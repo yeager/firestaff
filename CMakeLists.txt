@@ -14708,6 +14708,21 @@ endif()
             -Wall -Wextra -O2)
     endif()
 
+    # Canonical G1-only champion mirror receipt; requires user-supplied media.
+    add_executable(test_dm2_v1_g1_champion_mirror_real_data
+        tests/test_dm2_v1_g1_champion_mirror_real_data.c
+        src/dm2/dm2_v1_dungeon_loader.c
+        src/dm2/dm2_v1_asset_loader.c
+    )
+    target_include_directories(test_dm2_v1_g1_champion_mirror_real_data PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+        ${CMAKE_CURRENT_SOURCE_DIR}/src/shared
+    )
+    if(NOT MSVC)
+        target_compile_options(test_dm2_v1_g1_champion_mirror_real_data PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+
     # Canonical G1-only DB4 creature receipt; built in CI but requires user
     # media, so it is deliberately not registered as a data-free CTest.
     add_executable(test_dm2_v1_g1_direct_creature_runtime_real_data
