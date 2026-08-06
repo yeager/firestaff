@@ -66,6 +66,12 @@
   a `.7z`, without renaming or synthetic disk content; raw and nested tests
   cover discovery and materialization.
 
+- ✅ 2026-08-06 CSB Amiga KryoFlux archive scan: archive members named
+  `<track>.<side>.raw` are now recognized as flux tracks rather than hashed
+  as loose ISO/game-file payloads. This prevents a supplied Amiga archive's
+  hundreds of raw tracks from delaying the usable ADF path, while a normal
+  `.raw` member and top-level raw CD-image support remain unchanged.
+
 - ✅ 2026-08-06 External archive cache regression: the hash-scanner fixture
   now runs under an isolated home and asserts that a real `.7z` member writes
   its complete virtual path to the persisted cache. Fixture cleanup also

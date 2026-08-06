@@ -557,6 +557,36 @@ static int is_atari_msa_path(const char *path) {
     return has_case_suffix(path, ".msa");
 }
 
+/* KryoFlux streams store one raw flux track per file as
+ * "<track>.<side>.raw" (for example "79.1.raw").  That transport is not an
+ * ISO image and its individual track files cannot directly contain a named
+ * GRAPHICS.DAT/DUNGEON.DAT payload.  In particular, do not make an enclosing
+ * archive scan extract and MD5 every track as though it were an ordinary
+ * game file: an Amiga set can contain hundreds of them beside an already
+ * usable .adf.  This deliberately applies only to archive members; a plain
+ * top-level .raw keeps the existing ISO/BIN image path. */
+static int is_kryoflux_raw_track_path(const char *path) {
+    size_t length;
+    size_t side_begin;
+    size_t track_begin;
+    if (!path || !has_case_suffix(path, ".raw")) return 0;
+    length = strlen(path);
+    if (length < 8U) return 0; /* minimum: 0.0.raw */
+    side_begin = length - 4U;
+    while (side_begin > 0U &&
+           isdigit((unsigned char)path[side_begin - 1U])) {
+        --side_begin;
+    }
+    if (side_begin == length - 4U || side_begin == 0U ||
+        path[side_begin - 1U] != '.') return 0;
+    track_begin = side_begin - 1U;
+    while (track_begin > 0U &&
+           isdigit((unsigned char)path[track_begin - 1U])) {
+        --track_begin;
+    }
+    return track_begin < side_begin - 1U;
+}
+
 static int is_external_archive_path(const char *path) {
     return is_external_tar_archive_path(path) ||
            has_case_suffix(path, ".7z") || has_case_suffix(path, ".rar") ||
@@ -3289,9 +3319,11 @@ static int scan_external_archive_by_md5(const char *archivePath,
                     (void)pclose(pipe);
                     return 1;
                 }
-                (void)external_archive_commit_entry(archivePath, expectedMd5,
-                                                    line, UINT32_MAX,
-                                                    bestName, &hasMatch);
+                if (!is_kryoflux_raw_track_path(line)) {
+                    (void)external_archive_commit_entry(archivePath, expectedMd5,
+                                                        line, UINT32_MAX,
+                                                        bestName, &hasMatch);
+                }
             }
             continue;
         }
@@ -3312,9 +3344,11 @@ static int scan_external_archive_by_md5(const char *archivePath,
                     (void)pclose(pipe);
                     return 1;
                 }
-                (void)external_archive_commit_entry(archivePath, expectedMd5,
-                                                    entryName, entrySize,
-                                                    bestName, &hasMatch);
+                if (!is_kryoflux_raw_track_path(entryName)) {
+                    (void)external_archive_commit_entry(archivePath, expectedMd5,
+                                                        entryName, entrySize,
+                                                        bestName, &hasMatch);
+                }
             }
             value = line + 7;
             strncpy(entryName, value, sizeof(entryName) - 1U);
@@ -3345,9 +3379,11 @@ static int scan_external_archive_by_md5(const char *archivePath,
             (void)pclose(pipe);
             return 1;
         }
-        (void)external_archive_commit_entry(archivePath, expectedMd5,
-                                            entryName, entrySize,
-                                            bestName, &hasMatch);
+        if (!is_kryoflux_raw_track_path(entryName)) {
+            (void)external_archive_commit_entry(archivePath, expectedMd5,
+                                                entryName, entrySize,
+                                                bestName, &hasMatch);
+        }
     }
     (void)pclose(pipe);
     return hasMatch ? copy_virtual_match_path(archivePath, bestName,
@@ -3400,7 +3436,8 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
                 }
                 char hex[33];
                 int matchIndex;
-                if (external_entry_md5(archivePath, line, hex)) {
+                if (!is_kryoflux_raw_track_path(line) &&
+                    external_entry_md5(archivePath, line, hex)) {
                     matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
                     if (matchIndex >= 0 &&
                         is_better_zip_entry(line,
@@ -3431,7 +3468,8 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
             }
             char hex[33];
             int matchIndex;
-            if (external_entry_md5(archivePath, entryName, hex)) {
+            if (!is_kryoflux_raw_track_path(entryName) &&
+                external_entry_md5(archivePath, entryName, hex)) {
                 matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
                 if (matchIndex >= 0 &&
                     is_better_zip_entry(entryName,
@@ -3471,7 +3509,8 @@ static int scan_external_archive_by_md5_list(const char *archivePath,
         }
         char hex[33];
         int matchIndex;
-        if (external_entry_md5(archivePath, entryName, hex)) {
+        if (!is_kryoflux_raw_track_path(entryName) &&
+            external_entry_md5(archivePath, entryName, hex)) {
             matchIndex = md5_list_match_index(hex, md5List, NULL, md5Count);
             if (matchIndex >= 0 &&
                 is_better_zip_entry(entryName,
@@ -4788,6 +4827,7 @@ static void scan_cache_end(void) {
 int asset_find_by_md5(const char *searchDir, const char *expectedMd5,
                       char *outPath, int outPathLen, int maxDepth) {
     char normalizedMd5[33];
+    char actualMd5[33];
     int result;
     if (!searchDir || !expectedMd5 || !outPath || outPathLen <= 0) return 0;
     if (!normalize_md5(expectedMd5, normalizedMd5)) return 0;
@@ -4797,7 +4837,11 @@ int asset_find_by_md5(const char *searchDir, const char *expectedMd5,
         scan_cache_end();
         return 1;
     }
-    if (file_md5(searchDir, normalizedMd5) &&
+    /* Keep the normalized caller expectation separate from the root-file
+     * digest.  Reusing normalizedMd5 here made every direct file search a
+     * false positive after file_md5() overwrote the expected value. */
+    if (file_md5(searchDir, actualMd5) &&
+        strcmp(actualMd5, normalizedMd5) == 0 &&
         copy_match_path(searchDir, outPath, outPathLen)) {
         scan_cache_end();
         return 1;

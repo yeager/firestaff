@@ -21,7 +21,11 @@
   member hashes now share a bounded cache keyed by archive identity, so
   repeated profile scans do not re-extract already-verified members. Continue
   to profile first-time scans of the full supplied corpus, especially nested
-  Amiga/Atari media. Raw GEMDOS Atari ST `.st` images and standard Magic
+  Amiga/Atari media. KryoFlux `<track>.<side>.raw` streams inside external
+  archives are now excluded from loose-file hashing: they are flux tracks,
+  not ISO or named game-file containers, while ordinary `.raw` members and
+  top-level raw CD images retain their supported paths. Raw GEMDOS Atari ST
+  `.st` images and standard Magic
   Shadow Archiver `.msa` images now have bounded FAT12 paths, including
   `.st`/`.msa` media inside `.7z`. A nested MSA is decoded once for the
   complete profile hash list rather than once per required file. Windows

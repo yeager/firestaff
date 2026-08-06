@@ -563,12 +563,16 @@ static void cleanup_fixture(void) {
     remove("asset_find_by_hash_test_tmp/archive.lzh");
     remove("asset_find_by_hash_test_tmp/archive.tgz");
     remove("asset_find_by_hash_test_tmp/archive.7z");
+    remove("asset_find_by_hash_test_tmp/kryoflux_tracks.7z");
+    remove("asset_find_by_hash_test_tmp/ordinary_raw_member.7z");
     remove("asset_find_by_hash_test_tmp/nested_atari.st.7z");
     remove("asset_find_by_hash_test_tmp/nested_atari.msa.7z");
     remove("asset_find_by_hash_test_tmp/nested_amiga.adf.7z");
     remove("asset_find_by_hash_test_tmp/archive.dmg");
     remove("asset_find_by_hash_test_tmp/renamed_tar.payload");
     remove("asset_find_by_hash_test_tmp/packed_payload.bin");
+    remove("asset_find_by_hash_test_tmp/79.1.raw");
+    remove("asset_find_by_hash_test_tmp/capture.raw");
     remove("asset_find_by_hash_test_tmp/GRAPHICS.DAT.gz");
     remove("asset_find_by_hash_test_tmp/disc.iso");
     remove("asset_find_by_hash_test_tmp/disc.img");
@@ -1245,6 +1249,46 @@ int main(void) {
     }
     remove("asset_find_by_hash_test_tmp/archive.7z");
     remove("asset_find_by_hash_test_tmp/packed_payload.bin");
+
+    /* KryoFlux floppy streams use <track>.<side>.raw members. They are raw
+     * flux tracks, not ISO images or loose game files, so an outer archive
+     * scanner must not extract/hash each one. Keep ordinary .raw member
+     * hashing intact for archive formats that genuinely store a raw payload.
+     */
+    if (write_fixture("asset_find_by_hash_test_tmp/79.1.raw") &&
+        system("command -v 7zz >/dev/null 2>&1 && "
+               "(cd asset_find_by_hash_test_tmp && "
+               "7zz a -t7z kryoflux_tracks.7z 79.1.raw >/dev/null 2>&1)") == 0) {
+        remove("asset_find_by_hash_test_tmp/79.1.raw");
+        memset(outPath, 0, sizeof(outPath));
+        if (asset_find_by_md5("asset_find_by_hash_test_tmp/kryoflux_tracks.7z",
+                              md5Upper, outPath, (int)sizeof(outPath), 2)) {
+            cleanup_fixture();
+            fprintf(stderr, "KryoFlux raw track was treated as a loose payload: %s\n",
+                    outPath);
+            return 1;
+        }
+    }
+    remove("asset_find_by_hash_test_tmp/kryoflux_tracks.7z");
+    remove("asset_find_by_hash_test_tmp/79.1.raw");
+
+    if (write_fixture("asset_find_by_hash_test_tmp/capture.raw") &&
+        system("command -v 7zz >/dev/null 2>&1 && "
+               "(cd asset_find_by_hash_test_tmp && "
+               "7zz a -t7z ordinary_raw_member.7z capture.raw >/dev/null 2>&1)") == 0) {
+        remove("asset_find_by_hash_test_tmp/capture.raw");
+        memset(outPath, 0, sizeof(outPath));
+        if (!asset_find_by_md5("asset_find_by_hash_test_tmp/ordinary_raw_member.7z",
+                               md5Upper, outPath, (int)sizeof(outPath), 2) ||
+            !path_has_virtual_entry(outPath, "ordinary_raw_member.7z",
+                                    "capture.raw")) {
+            cleanup_fixture();
+            fprintf(stderr, "ordinary raw archive member lookup failed: %s\n", outPath);
+            return 1;
+        }
+    }
+    remove("asset_find_by_hash_test_tmp/ordinary_raw_member.7z");
+    remove("asset_find_by_hash_test_tmp/capture.raw");
 
     if (write_fixture("asset_find_by_hash_test_tmp/packed_payload.bin") &&
         system("command -v 7zz >/dev/null 2>&1 && "
