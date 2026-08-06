@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus startup-surface allocation bounds: `nexus_ui_surface_load`
+  now validates width/height products with `size_t` before comparing source
+  bytes or allocating. Overflowing dimensions remain unavailable instead of
+  becoming a negative/truncated requirement; the real WARNING/GAMEOVER/TITLE
+  and STABG startup media path still passes. Verification:
+  `test_nexus_v1_startup_media_gate` against
+  `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
+
 - ✅ 2026-08-06 Nexus MENU.BPK PRS3 span hardening: bounded compressed-size
   inspection now stops at each directory entry's `next_offset`, including the
   final entry's authenticated `PALT` boundary, instead of scanning to the end

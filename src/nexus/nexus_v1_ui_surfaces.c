@@ -113,6 +113,7 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
     const char *source)
 {
     Nexus_UI_Surface *surf;
+    size_t required_bytes;
 
     if (!mgr || which >= NEXUS_SURFACE_COUNT) return -1;
     surf = &mgr->surfaces[which];
@@ -123,11 +124,18 @@ int nexus_ui_surface_load(Nexus_UI_Manager *mgr,
     }
     memset(surf, 0, sizeof(*surf));
 
-    if (!data || data_size < w * h) {
+    if (!data || w <= 0 || h <= 0 ||
+        (size_t)w > SIZE_MAX / (size_t)h) {
+        printf("Nexus UI: rejecting invalid surface dimensions %d [%s] (%dx%d)\n",
+               which, source ? source : "?", w, h);
+        return -1;
+    }
+    required_bytes = (size_t)w * (size_t)h;
+    if ((size_t)data_size < required_bytes) {
         /* Saturn startup media is all-or-nothing. A missing or short source
          * must reach the launch gate instead of becoming a plausible UI. */
-        printf("Nexus UI: rejecting incomplete surface %d [%s] (%d < %d)\n",
-               which, source ? source : "?", data_size, w * h);
+        printf("Nexus UI: rejecting incomplete surface %d [%s] (%d < %zu)\n",
+               which, source ? source : "?", data_size, required_bytes);
         return -1;
     }
 

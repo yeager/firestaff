@@ -114,6 +114,12 @@ int main(void)
                                     (int)sizeof(opaque_title), NULL) < 0 &&
                     ui.surfaces[NEXUS_SURFACE_TITLE].data == NULL,
                 "opaque TITLE.CG bytes cannot become a startup raster");
+    expect_true(nexus_ui_surface_load(&ui, NEXUS_SURFACE_TITLE,
+                                      opaque_title, (int)sizeof(opaque_title),
+                                      65535, 65535, 0, 0,
+                                      "overflow-fixture") < 0 &&
+                    ui.surfaces[NEXUS_SURFACE_TITLE].data == NULL,
+                "surface dimensions cannot overflow the allocation size");
     expect_true(nexus_ui_load_warning(&ui, opaque_warning,
                                       (int)sizeof(opaque_warning), NULL) < 0 &&
                     ui.surfaces[NEXUS_SURFACE_WARNING].data == NULL,
