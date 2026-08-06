@@ -14,6 +14,17 @@
   `test_nexus_v1_startup_media_gate` against
   `FIRESTAFF_NEXUS_DATA_DIR=/Users/bosse/.firestaff/data/nexus`.
 
+- ✅ 2026-08-06 DM2 original-SKSave runtime gate: M11 no longer promotes the
+  decoded `DM2_V1_SessionState` subset into a playable runtime. SKProject
+  `DM2_GAME_LOAD` continues the original stream with record pools, timers,
+  actuator-generator initialization, map selection and entrance placement;
+  the incomplete subset now fails atomically and leaves the startup menu
+  active. This prevents real save files from being misrepresented as fully
+  imported gameplay. Verification: rebuilt `firestaff_m11`; real PC-DOS
+  `test_dm2_v1_m11_startup_profile_gate` passes with
+  `FIRESTAFF_DM2_DATA_DIR=/Users/bosse/.firestaff/data/dm2/dos_extract/data`.
+  No game data was unpacked, copied or tracked.
+
 - ✅ 2026-08-06 Nexus MENU.BPK PRS3 span hardening: bounded compressed-size
   inspection now stops at each directory entry's `next_offset`, including the
   final entry's authenticated `PALT` boundary, instead of scanning to the end

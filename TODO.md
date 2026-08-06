@@ -1052,6 +1052,10 @@
   **2026-07-31 update:** the boot profile no longer preloads the PC-English
   G1 seed (`257`) or level count (`28`). Both remain zero until the
   hash-verified `DUNGEON.DAT` header supplies the real values.
+  **2026-08-06 update:** M11 now also rejects decoded SKSave session subsets
+  at the runtime boundary. `DM2_GAME_LOAD` must restore the complete original
+  record pools, timer queue, actuator-generator pass and entrance placement
+  before Continue or Load Slot can leave the source menu.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its

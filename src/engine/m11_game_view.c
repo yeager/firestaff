@@ -1221,17 +1221,20 @@ _Static_assert(M12_MENU_INPUT_TURN_RIGHT == 8,
 static int m11_dm2_startup_apply_session(M11_GameViewState *state,
                                          const DM2_V1_SessionState *session)
 {
-    if (!state || !session ||
-        dm2_v1_runtime_apply_session(session) != 0) {
-        return 0;
-    }
-    m11_dm2_mirror_session_party(state, session);
-    m11_sync_dm2_state_from_runtime(state);
-    /* The decoded SKSave session is the resume authority. Do not let a
-     * pre-existing process hand object survive the M11 mirror boundary. */
-    dm2_v1_runtime_set_leader_hand_object(session->original_leader_hand_object);
-    state->dm2State.leader_hand_object = session->original_leader_hand_object;
-    return 1;
+    (void)state;
+    (void)session;
+    /* SKProject: SKWINSPX/src/v5/sksvgame.cpp::DM2_GAME_LOAD (1541-1565)
+     * continues a raw SKSave with its complete dungeon record pools, timer
+     * queue, actuator generator pass, current-map selection and entrance
+     * placement.  DM2_V1_SessionState is only the currently decoded subset
+     * of that stream.  Applying it to the M11 runtime would make a partial
+     * reconstruction playable as if it were the original save.
+     *
+     * Reject the handoff atomically until the complete original continuation
+     * owns the runtime. The startup receipt then keeps the source menu open
+     * and reports its normal load failure; no party, inventory, time or map
+     * state is copied into a game session. */
+    return 0;
 }
 
 static int m11_dm2_startup_apply_session_callback(
