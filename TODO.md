@@ -1311,7 +1311,12 @@ level or consumer bindings.
   the source-locked EGB shim: `FILL_CSCREEN` clears the exact region-11
   87x45 menu rectangle and `SPC_BLOT` paints it with the authenticated
   DYNAMENU colour selector. Native icon bitmap decode, text rasterisation,
-  mouse/input capture and timing remain open; this change does not claim
+  mouse/input capture and timing remain open.
+  2026-08-06 follow-up: the live English FM Towns action-menu path now
+  materializes the three source action indices into the ephemeral DYNAMENU
+  record and presents only this EGB-owned backdrop. It deliberately leaves
+  the panel text and icons blank until `DO_DRAW_CTEXT` and the icon consumer
+  are decoded, rather than leaking the PC34 action chrome or M653 glyphs.
   complete native menu parity.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but

@@ -55795,3 +55795,14 @@ alcove runtime and archive-media tests passed (4/4).
 - Verification: `test_dm1_v1_fmtowns_egb_shim` passes; the real-media startup
   target remains an explicit skip when its runtime-root environment variable
   is absent.
+
+# 2026-08-06 DM1 FM Towns live DYNAMENU backdrop
+
+- The active English FM Towns action menu now builds the recovered eight-byte
+  DYNAMENU record from the live action-set indices and sends it through the
+  source-locked DRAW_DMENU EGB backdrop route. The result is the native
+  region-11 clear followed by the region-10 panel colour selected by the
+  real DYNAMENU sentinel bytes.
+- Native label rasterisation, icon decode and mouse capture remain closed;
+  the live path intentionally leaves them blank and never substitutes PC34
+  C079/C077/C011 art or M653 glyph pixels.

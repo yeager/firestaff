@@ -108,6 +108,8 @@
 #include "dm1_v2_camera_controller_pc34.h"
 #include "dm1_v2_boot_pc34.h"
 #include "dm1_v1_fmtowns_cd_audio.h"
+#include "dm1_v1_fmtowns_dynamenu.h"
+#include "dm1_v1_fmtowns_egb_shim.h"
 #include "firestaff_fmtowns_disc.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_c15_layout_pc34_compat.h"
@@ -38892,6 +38894,44 @@ static int m11_count_source_action_menu_rows(const unsigned char actions[3]) {
     return 3;
 }
 
+/* EDM.EXP DRAW_DMENU owns a distinct FM Towns action panel.  Its mutable
+ * DYNAMENU record contains precisely the three action-label indices that
+ * F0389 has selected for the active champion.  The recovered EGB path can
+ * safely present the source-owned clear/panel pixels, but DO_DRAW_CTEXT and
+ * the icon route are not yet decoded; keep those pixels blank instead of
+ * borrowing the PC34 C079/C077/C011 panel or M653 text. */
+static int m11_draw_dm1_fmtowns_dmenu_backdrop(
+        const M11_GameViewState *state,
+        const unsigned char actions[3],
+        unsigned char *framebuffer,
+        int framebufferWidth,
+        int framebufferHeight)
+{
+    uint8_t dynamenu[DM1_V1_FMTOWNS_DYNAMENU_BYTES] = {0};
+    unsigned int slot;
+
+    if (!state || !actions || !framebuffer || framebufferWidth <= 0 ||
+        framebufferHeight <= 0 || !state->dm1FmtownsStartupReceiptValid ||
+        state->dm1FmtownsStartupReceipt.language != DM1_FMTOWNS_LANG_EN ||
+        !state->dm1FmtownsStartupReceipt.game_symbol_table_verified ||
+        state->dm1FmtownsStartupReceipt.game_draw_dmenu_entry == 0u ||
+        state->dm1FmtownsStartupReceipt.game_dynamenu_entry == 0u) {
+        return 0;
+    }
+    for (slot = 0; slot < DM1_V1_FMTOWNS_DYNAMENU_BUTTON_COUNT; ++slot) {
+        unsigned char action = actions[slot];
+        if (action != DM1_V1_FMTOWNS_DYNAMENU_SLOT_DISABLED &&
+            (action >= state->dm1FmtownsStartupReceipt.game_action_name_count ||
+             state->dm1FmtownsStartupReceipt.game_action_names[action][0] == '\0')) {
+            return 0;
+        }
+        dynamenu[DM1_V1_FMTOWNS_DYNAMENU_OFFSET_BUTTON0 + slot] = action;
+    }
+    return dm1_v1_fmtowns_egb_draw_dmenu_backdrop_pc34(
+               framebuffer, framebufferWidth, framebufferHeight,
+               framebufferWidth, dynamenu, 1) != 0u;
+}
+
 static int m11_apply_champion_stamina_cost_f0325(M11_GameViewState* state,
                                                  int championIndex,
                                                  int cost) {
@@ -45534,6 +45574,16 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
         blitPlan.clearW != dm1_v1_box_action_area_w_pc34() ||
         blitPlan.clearH != dm1_v1_box_action_area_h_pc34()) {
         return 0;
+    }
+
+    /* The selected English FM Towns EDM image has its own DRAW_DMENU
+     * owner.  Its EGB panel is source-bound to regions 10/11 and the live
+     * DYNAMENU indices above, so do not replace it with PC34 action chrome.
+     * A malformed receipt or undersized framebuffer fails closed. */
+    if (state->dm1FmtownsStartupReceiptValid &&
+        state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN) {
+        return m11_draw_dm1_fmtowns_dmenu_backdrop(
+            state, actions, framebuffer, framebufferWidth, framebufferHeight);
     }
 
     /* F0387 always fills the full action area with black before
