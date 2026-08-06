@@ -1,3 +1,11 @@
+# DM2 varelse- och drop-GDAT med vald korpus (2026-08-07)
+
+- ✅ Dropptabell-, dynamisk varelsematerial- och V5-animationstesterna läser
+  nu endast explicit `FIRESTAFF_DM2_DATA_DIR`. En vald men oläsbar korpus,
+  ogiltig bootprofil eller frånvarande autentisk V5-väg är ett fel. PC-DOS
+  verifierar GLOP/ATTACK MINION/TREE:s källord, `CREATURES/02`-materialet och
+  den äkta FB/FC/FD-animationstabellvägen.
+
 # DM2 champion-DYN4 med vald korpus (2026-08-07)
 
 - ✅ Champion-/DYN4-proverna kräver nu en uttryckligen vald `GRAPHICS.DAT`

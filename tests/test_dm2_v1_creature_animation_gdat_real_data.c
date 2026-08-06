@@ -37,21 +37,15 @@ static int read_file(const char *path, uint8_t **out, size_t *out_size)
 int main(void)
 {
     const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
-    const char *home = getenv("HOME");
     char path[1100];
-    char fallback[1024];
     uint8_t *graphics = NULL;
     size_t graphics_size = 0u;
     DM2_V1_AssetLoader loader;
     int found = 0;
 
     if (!root || !root[0]) {
-        if (!home || !home[0]) {
-            puts("SKIP: no local canonical DM2 data");
-            return 0;
-        }
-        snprintf(fallback, sizeof(fallback), "%s/.firestaff/data/dm2/data", home);
-        root = fallback;
+        puts("SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+        return 0;
     }
     /* Asset admission is hash based and case-preserving external media often
      * uses the DOS spelling. The real-data probe must not turn that into a
@@ -60,8 +54,8 @@ int main(void)
     if (!read_file(path, &graphics, &graphics_size)) {
         snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
         if (!read_file(path, &graphics, &graphics_size)) {
-            puts("SKIP: no local canonical DM2 data");
-            return 0;
+            fputs("FAIL: selected canonical DM2 GRAPHICS.DAT is unreadable\n", stderr);
+            return 1;
         }
     }
     memset(&loader, 0, sizeof(loader));
@@ -71,10 +65,11 @@ int main(void)
         return 1;
     }
     if (dm2_v1_creature_load_ai_table_from_gdat(&loader) <= 0) {
-        puts("SKIP: canonical GRAPHICS.DAT has no admitted source AI classification");
+        fputs("FAIL: selected GRAPHICS.DAT has no admitted source AI classification\n",
+              stderr);
         dm2_v1_asset_loader_free(&loader);
         free(graphics);
-        return 0;
+        return 1;
     }
 
     for (int creature = 0; creature < DM2_AI_TABLE_SIZE && !found; ++creature) {
@@ -103,8 +98,9 @@ int main(void)
     dm2_v1_asset_loader_free(&loader);
     free(graphics);
     if (!found) {
-        puts("SKIP: canonical GRAPHICS.DAT has no admitted dynamic V5 animation route");
-        return 0;
+        fputs("FAIL: selected GRAPHICS.DAT has no admitted dynamic V5 animation route\n",
+              stderr);
+        return 1;
     }
     puts("PASS: canonical dynamic creature command resolves only through real FB/FC/FD GDAT tables");
     return 0;

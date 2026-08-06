@@ -3974,6 +3974,9 @@ level or consumer bindings.
   the active `CREATURES[type].word(0x05)` binding. Keep types 54 and 127
   unavailable for this mounted profile until their original owner is found;
   do not infer either row or revive creature, combat or CCM behaviour.
+  **2026-08-07 corpus update:** the dynamic V5 material and animation
+  real-data probes now require the explicit selected corpus and fail when it
+  cannot supply an accepted boot profile, AI classification or FB/FC/FD route.
   **2026-08-06 callback audit follow-up:** `DM2_1c9a_09b9` is no longer a
   zero-return placeholder. It now performs SKProject's exact DB4 record
   word-`+8` comparison through the record-owner callback. This isolated
@@ -8086,7 +8089,7 @@ file and DONE.md after every completed job.
   - Tests: `test_dm2_v1_combat_pc34_compat` 49 → 56 checks (provider-bound
     resolution, kill threshold, undestroyable Defense=255, invalid-weapon
     rejection, out-of-range zero damage, both fail-closed gates); new
-    `test_dm2_v1_drops_gdat_real_data` (skip-safe; proven drop words, RNG
+    `test_dm2_v1_drops_gdat_real_data` (explicit-corpus; proven drop words, RNG
     replica, death-observer chain, fail-closed defense); creature/combat
     probe 158 → 166 assertions (fail-closed gates for all three modules).
   Verify: `ctest --test-dir build -R 'dm2_v1_(combat|drops|creature_death_drop|creature_combat_probe)'`
