@@ -199,6 +199,25 @@ def verify(repo: Path) -> list[str]:
         if forbidden in runtime:
             errors.append(f"runtime retains timer-byte mutation study: {forbidden}")
 
+    # dm2_v1_sound.c still carries a compact SKProject transcription model for
+    # its direct regression.  Its state is caller-authored (including made-up
+    # MIDI handles and queue capacity), so it must never become a second live
+    # sound owner beside the GDAT/DYN4/SDL and FM Towns CDDA paths.  Keep the
+    # implementation available to its narrow test while rejecting every
+    # product-side call site.  The definition file itself is intentionally
+    # excluded from this search.
+    legacy_sound_prefix = re.compile(
+        r"\bdm2_v1_skproject_(?:sound\w*|process_sound|"
+        r"query_snd_entry_index|get_music_index_from_modlist)\s*\(")
+    legacy_sound_definition = repo / "src/dm2/dm2_v1_sound.c"
+    for source_path in sorted((repo / "src").rglob("*.c")):
+        if source_path == legacy_sound_definition:
+            continue
+        if legacy_sound_prefix.search(source_path.read_text(encoding="utf-8")):
+            errors.append(
+                "product source calls legacy caller-authored SKProject sound "
+                f"model: {source_path.relative_to(repo)}")
+
     dungeon_loader_path = repo / "src/dm2/dm2_v1_dungeon_loader.c"
     if not dungeon_loader_path.exists():
         errors.append(f"missing {dungeon_loader_path}")

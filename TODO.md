@@ -7904,6 +7904,11 @@ file and DONE.md after every completed job.
   `docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv` plus
   `SYMBOL_DISPOSITIONS.tsv`.
 
+- **DM2 legacy SKProject sound-model reachability audit (2026-08-07):** Done.
+  The caller-authored regression model has no M10/M11 call site; the
+  production-boundary verifier now rejects one if added. Real sound remains
+  limited to verified GDAT/DYN4, SDL playback and native FM Towns CDDA media.
+
 - **Lane C — DM2 real-data startup/dungeon gate repair (cycle 16):** Done
   (v3.0.181). Fixed 5 of 7 target tests: boot_profile_smoke,
   startup_audio_menu, dungeon_loader_first_map_gate, c_map_tile_access,
