@@ -1,5 +1,18 @@
 # Nexus PLRD provisions quarantine (2026-08-06)
 
+- ✅ 2026-08-06 DM2 original-SKSAVE creature-mask gate: the isolated
+  `DM2_READ_RECORD_CHECKCODE` reader no longer substitutes the default DB4
+  SUPPRESS mask when SKProject's
+  `DM2_QUERY_CREATURE_AI_SPEC_FLAGS` decision is unavailable. A callback must
+  provide the authenticated `CREATURES[type] → CREATURE_AI` GDAT result before
+  `v1d647f` or `v1d648f` is selected; otherwise the shared bitstream stops
+  fail-closed. The real eight-file PC-DOS corpus proves two direct-root
+  streams complete without DB4 creatures and six stop exactly at the missing
+  source AI owner. This remains diagnostic-only and does not admit a resume.
+  Verification: `test_dm2_v1_save_read_record_checkcode`,
+  `test_dm2_v1_save_load_real_data` (80/80), and
+  `test_dm2_v1_save_load` (26/26).
+
 - ✅ 2026-08-06 DM2 V2.2 local-art cache removal: removed the dormant
   `v22_inplace_cache.bin` parser and its invented wall/floor/creature RGBA
   cache admission from the production-linked compatibility module. Its public

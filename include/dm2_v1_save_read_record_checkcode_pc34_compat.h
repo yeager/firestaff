@@ -51,12 +51,26 @@ typedef int (*DM2_ReadRecordChildOwnerFn)(void *ctx, uint16_t record_link,
 typedef void (*DM2_ReadRecordAddPossessionIndexFn)(void *ctx,
                                                     uint16_t record_link);
 
+/* Resolve the original AI-spec flags for a just-allocated DB4 creature.
+ * SKProject c_savegame.cpp::DM2_READ_RECORD_CHECKCODE selects v1d648f rather
+ * than the default v1d647f mask when QUERY_CREATURE_AI_SPEC_FLAGS(record)
+ * has bit 0 set.  The creature type is byte 4, read before its body mask.
+ * Return zero only when the result comes from the authenticated CREATURES →
+ * CREATURE_AI GDAT chain.  A missing provider is deliberately not equivalent
+ * to zero flags: accepting that would desynchronise the shared SKSAVE stream.
+ */
+typedef int (*DM2_ReadRecordCreatureAiFlagsFn)(void *ctx,
+                                               uint16_t record_link,
+                                               uint8_t creature_type,
+                                               uint16_t *out_flags);
+
 typedef struct {
     DM2_ReadRecordAllocFn alloc_record;
     DM2_ReadRecordSetDataFn set_data;
     DM2_ReadRecordAppendFn append_record;
     DM2_ReadRecordChildOwnerFn child_owner;
     DM2_ReadRecordAddPossessionIndexFn add_possession_index;
+    DM2_ReadRecordCreatureAiFlagsFn query_creature_ai_flags;
     void *ctx;
 } DM2_ReadRecordCallbacks;
 

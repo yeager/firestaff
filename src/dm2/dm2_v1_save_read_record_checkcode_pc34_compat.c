@@ -164,9 +164,25 @@ int dm2_v1_read_record_checkcode(
         } else if (record_type == 4) {
             /* Creature: read b_04 with 7-bit mask. */
             uint8_t b04 = 0;
+            uint16_t ai_flags = 0u;
             uint8_t b04_mask = 0x7f;
             if (read_suppress(session, &b04, &b04_mask, 1)) return 1;
             rec_data[4] = b04;
+            /* SKProject SKULLWIN/c_savegame.cpp::DM2_READ_RECORD_CHECKCODE
+             * lines 876-881 obtains this from
+             * QUERY_CREATURE_AI_SPEC_FLAGS(vl_1c).  Do not silently select
+             * the default v1d647f mask when the live CREATURES →
+             * CREATURE_AI GDAT lookup is unavailable: every subsequent
+             * record in this one SUPPRESS stream would then be misread. */
+            if (!cb->query_creature_ai_flags ||
+                cb->query_creature_ai_flags(cb->ctx, record_link, b04,
+                                            &ai_flags) != 0) {
+                session->error = 1;
+                return -1;
+            }
+            if ((ai_flags & 0x0001u) != 0u) {
+                mask = dm2_v1_save_record_mask_creature_ai_spec();
+            }
             session->creatures_read++;
         } else if (record_type == 9) {
             /* sksvgame.cpp::DM2_IS_CONTAINER_MAP tests c_record b_04

@@ -54,6 +54,7 @@ static uint16_t mock_get_next(void *ctx, uint16_t link)
 }
 
 static int mock_ai_spec(void *ctx, uint16_t link) { (void)ctx; (void)link; return 0; }
+static int mock_ai_spec_alt(void *ctx, uint16_t link) { (void)ctx; (void)link; return 1; }
 static int mock_is_map(void *ctx, uint16_t link) { (void)ctx; (void)link; return 0; }
 static int mock_is_moneybox(void *ctx, uint16_t link) { (void)ctx; (void)link; return 0; }
 static void mock_add_poss(void *ctx, uint16_t link) { (void)ctx; (void)link; }
@@ -137,6 +138,30 @@ static void read_add_possession(void *ctx, uint16_t link)
     pool->last_possession_link = link;
 }
 
+static int read_creature_ai_flags(void *ctx, uint16_t link,
+                                  uint8_t creature_type,
+                                  uint16_t *out_flags)
+{
+    (void)ctx;
+    (void)link;
+    (void)creature_type;
+    if (!out_flags) return -1;
+    *out_flags = 0u;
+    return 0;
+}
+
+static int read_creature_ai_flags_alt(void *ctx, uint16_t link,
+                                      uint8_t creature_type,
+                                      uint16_t *out_flags)
+{
+    (void)ctx;
+    (void)link;
+    (void)creature_type;
+    if (!out_flags) return -1;
+    *out_flags = 1u;
+    return 0;
+}
+
 /* ---- Helpers ---- */
 
 static DM2_WriteRecordCallbacks make_writer_cb(void)
@@ -161,6 +186,7 @@ static DM2_ReadRecordCallbacks make_reader_cb(ReadPool *pool)
     cb.append_record = read_append;
     cb.child_owner = read_child_owner;
     cb.add_possession_index = read_add_possession;
+    cb.query_creature_ai_flags = read_creature_ai_flags;
     cb.ctx = pool;
     return cb;
 }
@@ -408,6 +434,64 @@ static void test_round_trip_map_container(void)
     printf("  PASS: round_trip_map_container\n");
 }
 
+static void test_creature_requires_source_ai_mask(void)
+{
+    uint8_t buf[256];
+    DM2_ReadRecordSession rd;
+    DM2_ReadRecordCallbacks rcb;
+    ReadPool pool;
+    size_t written;
+
+    mock_init();
+    g_mock_records[0][4] = 7u;
+    written = write_and_flush(4, 0, 1, buf, sizeof(buf));
+    assert(written > 0u);
+    memset(&pool, 0, sizeof(pool));
+    dm2_v1_read_record_session_init(&rd, buf, written);
+    rcb = make_reader_cb(&pool);
+    rcb.query_creature_ai_flags = NULL;
+    assert(read_from_root(&rd, &rcb, NULL, 0, 1) == -1);
+    assert(rd.error == 1);
+    printf("  PASS: creature_requires_source_ai_mask\n");
+}
+
+static void test_creature_uses_source_ai_mask(void)
+{
+    uint8_t buf[256];
+    DM2_WriteRecordSession wr;
+    DM2_ReadRecordSession rd;
+    DM2_WriteRecordCallbacks wcb;
+    DM2_ReadRecordCallbacks rcb;
+    ReadPool pool;
+    int ci[4], co[4];
+    size_t flushed;
+
+    mock_init();
+    g_mock_records[0][2] = 0xfeu;
+    g_mock_records[0][3] = 0xffu;
+    g_mock_records[0][4] = 7u;
+    g_mock_records[0][5] = 0x5au;
+    wcb = make_writer_cb();
+    wcb.query_creature_ai_spec_flags = mock_ai_spec_alt;
+    dm2_v1_write_record_session_init(&wr, buf, sizeof(buf), ci, 4, co, 4,
+                                     NULL, 0);
+    assert(dm2_v1_write_record_checkcode(&wr, &wcb,
+                                         mock_make_link(0, 4), 0, 1) == 0);
+    assert(dm2_suppress_writer_flush(&wr.writer, buf + wr.out_written,
+                                     sizeof(buf) - wr.out_written,
+                                     &flushed) == 0);
+    wr.out_written += flushed;
+    memset(&pool, 0, sizeof(pool));
+    dm2_v1_read_record_session_init(&rd, buf, wr.out_written);
+    rcb = make_reader_cb(&pool);
+    rcb.query_creature_ai_flags = read_creature_ai_flags_alt;
+    assert(read_from_root(&rd, &rcb, NULL, 0, 1) == 0);
+    assert(pool.count == 1);
+    assert(pool.records[0].type == 4);
+    assert(pool.records[0].data[4] == 7u);
+    printf("  PASS: creature_uses_source_ai_mask\n");
+}
+
 static void test_session_counters(void)
 {
     DM2_ReadRecordSession rd;
@@ -431,6 +515,8 @@ int main(void)
     test_round_trip_chain();
     test_round_trip_sub_chain_bits();
     test_round_trip_map_container();
+    test_creature_requires_source_ai_mask();
+    test_creature_uses_source_ai_mask();
     test_session_counters();
     printf("All read_record_checkcode tests passed.\n");
     return 0;

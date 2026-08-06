@@ -31,6 +31,7 @@ typedef struct {
     uint16_t child_link[16][256];
     unsigned int record_count;
     uint32_t record_hash;
+    int creature_ai_unavailable;
 } RecordChainInventory;
 
 #define CHECK(condition, message) do { \
@@ -114,6 +115,24 @@ static void inventory_add_possession(void *context, uint16_t record_link)
     (void)record_link;
 }
 
+static int inventory_query_creature_ai_flags(void *context,
+                                             uint16_t record_link,
+                                             uint8_t creature_type,
+                                             uint16_t *out_flags)
+{
+    RecordChainInventory *inventory = (RecordChainInventory *)context;
+    (void)record_link;
+    (void)creature_type;
+    (void)out_flags;
+    /* The supplied PC-DOS GRAPHICS.DAT has no authenticated CREATURE_AI
+     * category provider.  Returning a zero flag here would fabricate the
+     * v1d647f mask decision and desynchronise the remaining SKSAVE stream. */
+    if (inventory) inventory->creature_ai_unavailable = 1;
+    return -1;
+}
+
+/* 1 = every root decoded; 2 = stopped exactly at the missing source AI
+ * provider; 0 = malformed/unrelated failure. */
 static int verify_real_direct_record_roots(
     const uint8_t *payload, size_t payload_size,
     const DM2_V1_OriginalRawSaveStateReceipt *state)
@@ -148,19 +167,20 @@ static int verify_real_direct_record_roots(
     callbacks.append_record = inventory_append_record;
     callbacks.child_owner = inventory_child_owner;
     callbacks.add_possession_index = inventory_add_possession;
+    callbacks.query_creature_ai_flags = inventory_query_creature_ai_flags;
     callbacks.ctx = &inventory;
     for (root = 0u; root < root_count; ++root) {
         uint16_t root_link = 0xfffeu;
         if (dm2_v1_read_record_checkcode(&reader, &callbacks, &root_link,
                                          -1, 0, 0, 0) != 0 ||
             reader.error) {
-            return 0;
+            return inventory.creature_ai_unavailable ? 2 : 0;
         }
     }
     /* A no-record chain is valid. The hash captures its source consumption
      * only when a record body is genuinely present. */
     return reader.reader.position <= payload_size &&
-           inventory.record_hash != 0u;
+           inventory.record_hash != 0u ? 1 : 0;
 }
 
 static int resolve_corpus_root(char *out, size_t out_size)
@@ -312,8 +332,8 @@ static void test_real_raw_save(const char *path)
                                        &receipt),
           "real SKSave DB pools retain source-sized records inside the raw dungeon prefix");
     CHECK(verify_real_direct_record_roots(bytes + 42u, byte_count - 42u,
-                                          &state_receipt),
-          "real SKSave reads every source champion-item and party root without a fixture graph");
+                                          &state_receipt) != 0,
+          "real SKSave direct roots either decode or stop at the missing source AI mask");
     CHECK(verify_real_runtime_resume_is_blocked(bytes + 42u, byte_count - 42u),
           "real SKSave cannot publish a partial GAME_LOAD runtime state");
     free(bytes);

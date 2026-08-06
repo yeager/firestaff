@@ -1162,6 +1162,14 @@
   through this contract. This is still diagnostic-only: no production G1 DB
   allocator, tile-chain owner, possession-index owner, timer record owner, or
   `DM2_GAME_LOAD` publication exists, so no source save can resume yet.
+  2026-08-06 AI-mask correction: the reader no longer silently treats an
+  unavailable `QUERY_CREATURE_AI_SPEC_FLAGS` lookup as zero. It now requires
+  an authenticated `CREATURES[type] → CREATURE_AI` GDAT callback before
+  selecting DB4's `v1d647f`/`v1d648f` mask. Against the supplied corpus two
+  direct-root streams complete before a DB4 creature and six stop precisely at
+  that unavailable original owner; all remain non-resumable. The next work is
+  to bind that provider and the remaining allocation/possession/tile owners,
+  not to assign a default mask.
   **2026-08-06 follow-up:** the remaining `FS2RT01` live-runtime sidecar
   serializer/deserializer is removed from the production archive and public
   API. It wrote Firestaff's session, creature cache, mutable dungeon bytes and
@@ -27349,9 +27357,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   callback-only `DM2_READ_RECORD_CHECKCODE` transcript cannot be promoted as
   a raw-save reader: SKProject `sksvgame.cpp:880-881` selects the DB4 record
   SUPPRESS mask through `DM2_QUERY_CREATURE_AI_SPEC_FLAGS` (the authenticated
-  `CREATURES[type] → AIDefinition` GDAT chain), whereas the transcript always
-  consumes the default mask. All eight supplied PC-DOS saves reject after the
-  champion-item/leader roots as a result. Its remaining source dependencies
+  `CREATURES[type] → AIDefinition` GDAT chain). The reader now fails closed
+  when that source lookup is unavailable: two supplied PC-DOS direct-root
+  streams need no DB4 creature while the other six stop at that exact owner.
+  Its remaining source dependencies
   also include the c_record allocator/append graph, container-moneybox mask
   swap, timer links, `DM2_2066_062b` possession continuation and source
   item-bonus pass. Bind those real owners before retrying corpus promotion.
