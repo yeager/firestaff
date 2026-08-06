@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 CSB FM Towns Game-session provenance gate: the F31E CDATA
+  pair now has an opt-in real-media regression that scans the exact
+  `405b757038eea3c263e60f240854d6de` GRAPHICS.DAT and
+  `83c56cf1b779e7460a55c9299ebeb04b` DUNGEON.DAT identities before opening
+  the startup session. It proves C001--C005 entrance and C017/C040 HUD
+  surfaces are decoder-bound to original FM Towns media, rather than an
+  identically named PC, Atari or Amiga cache file. `CHTWE.EXP` presentation,
+  audio and save ownership remain capture-gated.
+
 - ✅ 2026-08-06 Nexus HUD layout envelope gate: the real DM.BIN 80-entry
   `menuctrl.c` layout parser now rejects non-sentinel coordinates outside the
   Saturn 320×224 display envelope, matching the existing hit-rectangle
@@ -50956,6 +50965,11 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   compressed-span hashes. The real US and JP ISO files pass all seven blocks;
   raw BIN offsets are no longer treated as ISO offsets. Decompression and
   tile/map/object ownership remain intentionally closed.
+- ✅ 2026-08-06 Theron ISO runtime level handoff: `Theron_RuntimeLevelMedia`
+  now admits authenticated US/JP direct ISO variants through the same
+  lifetime-safe receipt path as raw BIN. The focused runtime test passes all
+  four real sources and still proves `no_semantic_promotion`; no compressed
+  bytes are borrowed into runtime and no tiles, maps or objects are inferred.
 - ✅ 2026-08-06 DM2 CCM synthetic-execution closure: removed
   `dm2_v1_ccm.c` from both production archives and retired creature-tick
   flag-to-action writeback. The compact opcode interpreter lacks the original

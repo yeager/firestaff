@@ -1177,7 +1177,9 @@ int theron_v1_world_runtime_media_bind_level_data_block(
         !world->runtime_media.restored ||
         !world->runtime_media.identity.ready ||
         (variant != THERON_TRACK02_VARIANT_US_BIN &&
-         variant != THERON_TRACK02_VARIANT_JP_BIN) ||
+         variant != THERON_TRACK02_VARIANT_JP_BIN &&
+         variant != THERON_TRACK02_VARIANT_US_ISO &&
+         variant != THERON_TRACK02_VARIANT_JP_REV1_ISO) ||
         world->runtime_media.identity.track02_variant != track02_variant ||
         !theron_v1_track02_level_data_block_read(
             user_data, user_data_size, variant, level, &source)) {

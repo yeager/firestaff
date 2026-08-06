@@ -56,6 +56,11 @@
   are separate Game executables, so neither is routed through a PC34 surrogate.
   Their authentic handoff, audio/CDDA playback, ending handoff and save
   transfer still need original-media capture.
+  2026-08-06: the F31E `CDATA/GRAPHICS.DAT` and `DUNGEON.DAT` pair now
+  opens the source-bound C001--C005 entrance and C017/C040 HUD session only
+  after both original CD hashes admit. The remaining M11 work is to attach
+  that verified session to the separate `CHTWE.EXP` handoff rather than use a
+  PC3.4 transition, then capture its first entrance/HUD frame and save path.
   The raw CDDA extractor now streams a
   selected CUE track sectorwise; binding that authenticated PCM to M11 timing
   remains separate.
@@ -26267,6 +26272,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   graphics-consumer handoff remains gated. The direct `TQJP19.iso` projection
   now has its own seven authenticated level-block offsets and EOF-bounded
   hashes; no BIN offset is reused as a container guess.
+  The runtime level receipt now accepts both direct ISO variants as well as
+  the two raw BIN variants, while retaining only byte-range/hash metadata.
+  Decompression and tile/map/object publication remain gated.
 
 - [ ] THERON-V1-TRACK02-VRAM-CONSUMER: bind the real VDC BAT/tile and VCE
   palette snapshot to the source-owned square/material/UI consumer. A native
