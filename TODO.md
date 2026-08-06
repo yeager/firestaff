@@ -27303,11 +27303,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `REVIVE_PLAYER`; direct `CHAMPIONS/255` text/stat rows are absent from the
   on-disk GDAT. The read-only first DYN4 selection pass is now verified
   against all 277 original category-0x16 rows (including 21 sound rows). Its
-  source-independent part now materialises 85 deduplicated raw blocks in RAM
-  with the original length/payload/raw-index layout. The 21 sound rows remain
-  explicitly deferred until `DM2_SOUND7` and `v1e13fe[2]` have real state
-  owners. Live champion selection remains blocked until that complete
-  dynamic-GDAT load, event preconditions, possession transfer and
+  source-independent part now materialises deduplicated raw blocks in RAM
+  with the original length/payload/raw-index layout. The initial source sound
+  state is also bound: an empty `DM2_SOUND7` queue and clear `v1e13fe[2]`
+  admit the remaining sound records, while missing or failed state defers
+  them. Live champion selection remains blocked until that complete
+  dynamic-GDAT cache, event preconditions, possession transfer and
   session-state updates are all connected. Do not treat a marker receipt as
   a playable New Game path.
 

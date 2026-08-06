@@ -57,6 +57,8 @@ int main(int argc, char **argv)
     size_t graphics_size;
     DM2_V1_AssetLoader loader;
     DM2_V1_GdatDyn4MaterializedSelection selection;
+    DM2_V1_GdatDyn4MaterializedSelection deferred;
+    DM2_V1_GdatDyn4SoundState sound_state;
     uint16_t i;
     uint32_t payload_bytes = 0u;
 
@@ -65,9 +67,16 @@ int main(int argc, char **argv)
         return 0;
     }
     memset(&selection, 0, sizeof(selection));
+    memset(&deferred, 0, sizeof(deferred));
+    dm2_v1_gdat_dyn4_sound_state_init(&sound_state);
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
         !dm2_v1_asset_loader_verify(&loader) ||
         !dm2_v1_gdat_dyn4_materialize_selection(&loader, 0x16ffffffu,
+                                                 NULL, &deferred) ||
+        deferred.block_count != 85u ||
+        deferred.skipped_sound_entry_count != 21u ||
+        !dm2_v1_gdat_dyn4_materialize_selection(&loader, 0x16ffffffu,
+                                                 &sound_state,
                                                  &selection) ||
         !selection.valid || selection.block_count == 0u ||
         !selection.bytes || !selection.raw_indices || !selection.block_offsets) {
@@ -77,6 +86,7 @@ int main(int argc, char **argv)
         fputs("FAIL: champion DYN4 source blocks were not materialized\n", stderr);
         return 1;
     }
+    dm2_v1_gdat_dyn4_materialized_selection_free(&deferred);
     for (i = 0; i < selection.block_count; ++i) {
         uint32_t offset = selection.block_offsets[i];
         uint16_t length;
@@ -100,17 +110,17 @@ int main(int argc, char **argv)
         }
         payload_bytes += length;
     }
-    if (selection.block_count == 85u && selection.byte_count == 25074u &&
-        payload_bytes == 24701u && selection.skipped_sound_entry_count == 21u &&
-        selection.payload_hash == 0x82fa9459u &&
-        selection.receipt_hash == 0x193ee5d4u) {
-        printf("PASS: 16ffffff materialized %u non-sound raw blocks "
+    if (selection.block_count == 96u && selection.byte_count == 149670u &&
+        payload_bytes == 149244u && selection.skipped_sound_entry_count == 0u &&
+        selection.payload_hash == 0xa0af7ecau &&
+        selection.receipt_hash == 0x8ae00cc1u) {
+        printf("PASS: 16ffffff materialized %u source-admitted raw blocks "
                "(%u bytes, payload %u; %u sound rows deferred, hash %08x/%08x)\n",
                selection.block_count, selection.byte_count, payload_bytes,
                selection.skipped_sound_entry_count, selection.payload_hash,
                selection.receipt_hash);
     } else {
-        fputs("FAIL: DYN4 sound rows were not explicitly deferred\n", stderr);
+        fputs("FAIL: DYN4 source-empty sound admission drifted\n", stderr);
         return 1;
     }
     dm2_v1_gdat_dyn4_materialized_selection_free(&selection);

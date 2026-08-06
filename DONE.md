@@ -52999,6 +52999,15 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   and a 25,074-byte RAM image. All 21 selected sound rows are deliberately
   deferred instead of assuming `DM2_SOUND7` or `v1e13fe[2]`; no data is
   written to disk and no gameplay route is opened.
+
+- ✅ Bound DYN4's initial source sound admission state. SKProject's
+  `c_dballoc` initializes `v1e13fe[2]` clear and `c_sound.cpp::DM2_SOUND7`
+  returns zero for the empty queue, so the canonical champion selector now
+  materialises all 96 deduplicated raw blocks in RAM, including its real sound
+  samples. A non-empty matching queue, failed allocation flag or absent state
+  still defers those entries. The real-media regression locks 149,244 payload
+  bytes in a 149,670-byte source-layout image; it neither decodes nor plays
+  a sample and does not open a gameplay path.
 # 2026-08-06 Nexus mixed extracted/ISO runtime source
 
 - ✅ `nexus_v1_init()` now retains the hash-verified extracted corpus as the

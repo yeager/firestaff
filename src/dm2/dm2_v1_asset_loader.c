@@ -1542,9 +1542,33 @@ void dm2_v1_gdat_dyn4_materialized_selection_free(
     memset(selection, 0, sizeof(*selection));
 }
 
+void dm2_v1_gdat_dyn4_sound_state_init(DM2_V1_GdatDyn4SoundState *state)
+{
+    if (!state) return;
+    /* SKProject SKULLWIN/c_dballoc.cpp:208 and c_sound.cpp:608-617:
+     * initial allocation state has v1e13fe[2] == 0 and an empty SOUND7
+     * queue, so no raw sample is already resident. */
+    memset(state, 0, sizeof(*state));
+    state->valid = 1u;
+}
+
+static int dm2_gdat_dyn4_sound7_loaded(
+    const DM2_V1_GdatDyn4SoundState *state,
+    uint16_t raw_index)
+{
+    uint16_t i;
+
+    if (!state || !state->valid || !state->active_raw_indices) return 0;
+    for (i = 0; i < state->active_raw_index_count; ++i) {
+        if (state->active_raw_indices[i] == raw_index) return 1;
+    }
+    return 0;
+}
+
 int dm2_v1_gdat_dyn4_materialize_selection(
     const DM2_V1_AssetLoader *loader,
     uint32_t resource_id,
+    const DM2_V1_GdatDyn4SoundState *sound_state,
     DM2_V1_GdatDyn4MaterializedSelection *out_selection)
 {
     DM2_V1_GdatDyn4SelectionReceipt receipt;
@@ -1585,7 +1609,10 @@ int dm2_v1_gdat_dyn4_materialize_selection(
             (entry->data_index & 0x8000u) != 0u) {
             continue;
         }
-        if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_SOUND) {
+        if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_SOUND &&
+            (!sound_state || !sound_state->valid ||
+             sound_state->allocation_failed ||
+             dm2_gdat_dyn4_sound7_loaded(sound_state, entry->data_index))) {
             ++out_selection->skipped_sound_entry_count;
             continue;
         }
@@ -1641,7 +1668,10 @@ int dm2_v1_gdat_dyn4_materialize_selection(
             (entry->data_index & 0x8000u) != 0u) {
             continue;
         }
-        if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_SOUND) {
+        if (entry->cls3 == DM2_GDAT_ENTRY_TYPE_SOUND &&
+            (!sound_state || !sound_state->valid ||
+             sound_state->allocation_failed ||
+             dm2_gdat_dyn4_sound7_loaded(sound_state, entry->data_index))) {
             continue;
         }
         raw_index = entry->data_index;

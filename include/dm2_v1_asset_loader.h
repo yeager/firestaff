@@ -467,6 +467,17 @@ typedef struct {
     uint32_t *block_offsets;
 } DM2_V1_GdatDyn4MaterializedSelection;
 
+/* Minimal source state read by DM2_LOAD_DYN4 for type-2 rows.  The original
+ * DM2_SOUND7 returns a non-zero queue position when a raw index is already
+ * active, and c_dballoc's v1e13fe[2] blocks fresh sample materialisation.
+ * The index array is borrowed from the live sound owner. */
+typedef struct {
+    uint8_t valid;
+    uint8_t allocation_failed;
+    const uint16_t *active_raw_indices;
+    uint16_t active_raw_index_count;
+} DM2_V1_GdatDyn4SoundState;
+
 typedef struct {
     uint16_t cursor;
     int category_first;
@@ -934,13 +945,17 @@ int dm2_v1_gdat_dyn4_selection_receipt(
     const DM2_V1_AssetLoader *loader,
     uint32_t resource_id,
     DM2_V1_GdatDyn4SelectionReceipt *out_receipt);
-/* Materialize one selector's source-owned non-sound raw blocks in RAM.  This
- * is only the final raw-copy layout of DM2_LOAD_DYN4, not its allocator,
- * cache eviction, sound admission or gameplay state machine.  Type-2 sound
- * rows remain excluded until DM2_SOUND7 and v1e13fe[2] have real owners. */
+/* Initializes the source's empty c_dballoc/DM2_SOUND5 state. */
+void dm2_v1_gdat_dyn4_sound_state_init(
+    DM2_V1_GdatDyn4SoundState *state);
+/* Materialize one selector's source-owned raw blocks in RAM.  This is only
+ * the final raw-copy layout of DM2_LOAD_DYN4, not its allocator, cache
+ * eviction or gameplay state machine.  `sound_state` must be a real live
+ * owner or an explicit source-empty state; NULL defers type-2 rows. */
 int dm2_v1_gdat_dyn4_materialize_selection(
     const DM2_V1_AssetLoader *loader,
     uint32_t resource_id,
+    const DM2_V1_GdatDyn4SoundState *sound_state,
     DM2_V1_GdatDyn4MaterializedSelection *out_selection);
 void dm2_v1_gdat_dyn4_materialized_selection_free(
     DM2_V1_GdatDyn4MaterializedSelection *selection);
