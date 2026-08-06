@@ -152,11 +152,73 @@ diagnostic perimeter that the user asked to keep.
 
 - **Cross-game modules** under `src/csb/`, `src/dm2/`, `src/nexus/`,
   `src/theron/`. DM2 has its own active DM2-only queue in TODO.md;
-  Nexus, Theron and CSB have their own inventories in TODO.md.
+  Nexus, Theron and CSB have their own inventories in TODO.md. Other
+  agents own commit rights to those lanes.
 - **Test fixtures** in `tests/` that construct synthetic worlds to
   exercise a specific code path. These are testing infrastructure.
 - **Contract-only receipts** whose whole purpose is to declare "no
   host substitute is allowed"; they carry no pixels.
+
+### Extended scans of the excluded categories (2026-08-06)
+
+For completeness, the same triage was re-run against the excluded
+categories. Nothing found there requires a DM1 code change, but the
+scan is recorded so the inventory is verifiably total:
+
+#### Test fixtures (`tests/*dm1*`, 1,516 files)
+
+- **20 files** match `synthetic|placeholder`. Every one is a test
+  that constructs a bounded synthetic world to exercise a
+  source-lock's rejection path (e.g. "does this asset gate refuse
+  a tampered fingerprint?"). Test-only synthesis is the whole
+  point of the fixture; no runtime pixels reach the framebuffer
+  from a test. Not counted as a placeholder.
+
+#### Contract-only receipts (296 files)
+
+- Every hit is a `contract_only=1` receipt whose docstring already
+  explains that it exists to declare a source-only rejection contract
+  — no rendering path exists. Removing them would relax the
+  authenticated-source gates the runtime relies on. Not counted as
+  a placeholder.
+
+#### "stub" / "unimplemented" / "not implemented" (6 files)
+
+- 3× `src/dm1/dm1_v1_{game_loop,input_poll,endgame_system}_pc34_compat.c`
+  — every hit is a comment noting that the referenced ReDMCSB
+  function (e.g. `F0507_AMIGA_D`, `F0527_FLOPPY_R`) is
+  platform-specific to Amiga or floppy media and therefore "not
+  implemented for PC-34". These are correctness annotations, not
+  runtime stubs — the PC-34 code deliberately skips those
+  platform hooks because they do not exist on PC.
+- 1× `include/dm1_v1_spell_effect_render_pc34_compat.h` — a comment
+  pointing to `CASTER.C` for the spell-definition tables, which are
+  implemented in a sibling file. Not a stub.
+- 1× `include/dm1_v2_camera_controller_pc34.h:54` — `dm1_v2_*`
+  modern-presentation lane, safe-stub returning 0 for horizontal
+  pan until the modern camera adds those fields. Same slice as
+  V2.2 modern art: intentional modernization scaffolding, not a
+  V1 parity placeholder.
+- 1× `include/dm1_v22_shapes.h:228` — V2.2 modernization lane:
+  unimplemented shapes fall back to the `PLAIN` default. Gated
+  behind the finished-art material gate (see slice 2 above).
+
+#### ReDMCSB source-cite density
+
+- 337 `/* ReDMCSB FILE.C:LINE */` cites across `src/dm1/`. Every
+  DM1 module anchors its behaviour to the reconstructed C source;
+  this is the mechanism that lets the inventory claim "no
+  unlabelled synthesis" — every decision point is traceable back
+  to a named ReDMCSB line.
+
+### Verdict after the extended scan
+
+The four-slice classification stands unchanged. The excluded
+categories either (a) exist precisely to declare "no synthesis" as
+policy (contract-only receipts), (b) construct synthesis on purpose
+to test the rejection paths (test fixtures), or (c) belong to
+modernization lanes that are already gated behind the
+finished-art material gate (V2 camera, V2.2 shapes).
 
 ## Cross-references
 
