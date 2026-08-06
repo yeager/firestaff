@@ -4735,6 +4735,10 @@ list(REMOVE_ITEM M10_SOURCES
 # source-locked synthetic race model compiled by its direct regression target.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_close_while_party_rotate_pickup_pending_pc34_compat.c")
+# `dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat.c`
+# is a seeded pass723 contract model compiled by its direct regression target.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_close_while_candidate_open_reopen_side_effects_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
