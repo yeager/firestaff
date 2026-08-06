@@ -4643,6 +4643,12 @@ list(REMOVE_ITEM M10_SOURCES
 # M11/runtime caller, so compile it only in its explicit regression target.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_scroll_wheel_leader_stack_rotation_pc34_compat.c")
+# `dm1_v1_chest_close_stack_merge_pc34_compat.c` is a contract-only sparse
+# chest-chain model with fixed item ids and local F0163 bookkeeping. It has no
+# original-DM1 input or M11/runtime caller; its direct regression target
+# already compiles the source explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_close_stack_merge_pc34_compat.c")
 # `dm1_v1_chest_cross_champion_pickup_race_pc34_compat.c` is a contract-only
 # fixed-value race model. Its direct regression target already compiles it;
 # no original-DM1 input or M11 runtime caller exists.
