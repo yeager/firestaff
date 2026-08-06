@@ -4401,6 +4401,12 @@ list(REMOVE_ITEM M10_SOURCES
 # caller; retain this source-only fixture outside the broad M10 archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_teleporter_survival_pc34_compat.c")
+# `dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat.c` is a
+# contract-only C040 race trace with fabricated party, candidate-chain, panel
+# and slot state. It loads no original DM1 data and has no M11/runtime caller;
+# its direct ReDMCSB regression is its only intended build owner.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_click_cancel_with_rotation_pc34_compat.c")
 # `dm1_v1_viewport_d3c_stairs_pit_dispatch_pc34_compat.c` contains only the
 # asset-free D3C stairs/pit dispatch and transparent-byte fixture contract;
 # no M11/runtime caller consumes it.  Keep its source-lock test explicit and
