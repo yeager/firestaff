@@ -6266,6 +6266,39 @@ static void m11_csb_advance_fmtowns_switch(M11_GameViewState *state)
     }
 }
 
+static M11_GameInputResult m11_csb_handle_fmtowns_switch_pointer(
+    M11_GameViewState *state, int x, int y, int button_mask)
+{
+    CSB_V1_FmtownsSwitchInputReceipt receipt;
+    if (!state || !state->csbFmtownsSwitchBound ||
+        state->csbFmtownsSwitchVblanksRemaining != 0u) {
+        return M11_GAME_INPUT_IGNORED;
+    }
+    if (!csb_v1_fmtowns_switch_route_click(
+            &state->csbFmtownsSwitchReceipt, state->csbFmtownsSwitchLanguage,
+            (int16_t)x, (int16_t)y,
+            (button_mask & DM1_V1_MOUSE_MASK_LEFT_PC34) != 0, &receipt)) {
+        /* SWITCH.C main is modal. A missed click must not fall through into
+         * COMMAND.C's unrelated PC34 command rectangles. */
+        return M11_GAME_INPUT_REDRAW;
+    }
+    if (receipt.action == CSB_FMTOWNS_SWITCH_ACTION_TOGGLE_LANGUAGE) {
+        /* ReDMCSB SWITCH.C main redraws the selected fourth bitmap, enters
+         * its outer loop, waits sixty F0693 VBlanks, then flips L6590 before
+         * expanding the next executable-owned page. */
+        state->csbFmtownsSwitchLanguage =
+            state->csbFmtownsSwitchLanguage == CSB_FMTOWNS_SWITCH_JAPANESE
+                ? CSB_FMTOWNS_SWITCH_ENGLISH : CSB_FMTOWNS_SWITCH_JAPANESE;
+        state->csbFmtownsSwitchVblanksRemaining = 60u;
+        memset(state->csbFmtownsSwitchPixels, 0,
+               sizeof(state->csbFmtownsSwitchPixels));
+    }
+    /* Story, utility, and game leave SWITCHTW through AUTOEXEC.BAT. Keep
+     * their source exit receipts in the media layer, but do not misroute
+     * them into a PC34 startup transaction before their own handoffs exist. */
+    return M11_GAME_INPUT_REDRAW;
+}
+
 static int m11_csb_bind_fmtowns_title(M11_GameViewState *state)
 {
     const CSB_V1_BootProfile *profile;
@@ -25438,7 +25471,15 @@ M11_GameInputResult M11_GameView_HandlePointerButton(M11_GameViewState* state,
     }
 
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
+        const CSB_V1_BootProfile *csb_profile =
+            (const CSB_V1_BootProfile *)state->csbBootProfile;
         CSB_V1_BootStartupHostInputDispatchReceipt_PC34 dispatch_receipt;
+        if (m11_csb_is_fmtowns_profile(csb_profile) &&
+            state->csbState.startup_title_active &&
+            state->csbFmtownsSwitchBound) {
+            return m11_csb_handle_fmtowns_switch_pointer(state, x, y,
+                                                         buttonMask);
+        }
         if (m11_csb_boot_runtime_startup_pointer_dispatch(
                 state,
                 x,
