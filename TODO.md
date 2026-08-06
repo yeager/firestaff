@@ -11,6 +11,11 @@
   ReDMCSB regression while the independent source-bound D3 route owns live
   GRAPHICS.DAT pixels.
 
+- **DM1-MIRROR-PARTY-DIRECTION-SYNTHETIC-AUDIT:** This C040/G0299 harness
+  uses a synthetic portrait token and has no original DM1 data input or
+  M11/runtime caller. Retain it only as an explicit ReDMCSB regression until
+  a source-bound mirror-direction consumer is recovered.
+
 - **DM1-D1C-F0108-SYNTHETIC-AUDIT:** This asset-free F0108 occlusion model
   fixes D1C zones, cell orders and C10 pixel probes. It has no original DM1
   data input or M11/runtime caller; retain it as an explicit ReDMCSB
