@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-MIRROR-C160-ROTATION-SYNTHETIC-AUDIT:** This C040/C160 rotation-close
+  fixture fabricates party, chest and panel state. It has no original DM1 data
+  input or M11/runtime caller; retain it only as explicit ReDMCSB coverage
+  until a source-bound interaction owner is recovered.
+
 - **DM1-MIRROR-INVENTORY-PORTRAIT-SYNTHETIC-AUDIT:** This C175 portrait-click
   guard fabricates party, hand and candidate state. It has no original DM1
   data input or M11/runtime caller; retain it only as explicit ReDMCSB coverage
