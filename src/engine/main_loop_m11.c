@@ -1593,6 +1593,13 @@ static int m11_play_redmcsb_entrance_transition(
     dungeonFrame = (unsigned char*)malloc((size_t)M11_FB_BYTES);
     if (!dungeonFrame) return 0;
 
+    if (gameView->dm1FmtownsStartupReceiptValid) {
+        int entranceTrack = DM1_FMTOWNS_TRACK_ENTRANCE_MAP6;
+        if (gameView->dm1FmtownsCddaCurrentTrack != entranceTrack) {
+            M11_GameView_PlayFmtownsCdda(gameView, entranceTrack);
+        }
+    }
+
     M11_GameView_Draw(gameView, framebuffer, M11_FB_WIDTH, M11_FB_HEIGHT);
     memcpy(dungeonFrame, framebuffer, (size_t)M11_FB_BYTES);
 
