@@ -83,6 +83,16 @@ require_capture_profile_mappings() {
     require_capture_profile_mapping pce.input.port1.gamepad.right 7 RIGHT
 }
 
+track02_mode=$(awk '
+    /^[[:space:]]*TRACK[[:space:]]+02[[:space:]]+MODE1\/(2352|2048)[[:space:]]*$/ {
+        if ($0 ~ /MODE1\/2352/) print "MODE1/2352"; else print "MODE1/2048"
+        exit
+    }
+' "$cue")
+if [[ "$track02_mode" != 'MODE1/2352' && "$track02_mode" != 'MODE1/2048' ]]; then
+    printf '%s\n' 'FAIL: CUE has no safe TRACK 02 MODE1/2352 or MODE1/2048 member' >&2
+    exit 1
+fi
 track02_member=$(awk '
     /^FILE "/ {
         line = $0
@@ -97,7 +107,7 @@ track02_member=$(awk '
     }
 ' "$cue")
 if [[ -z "$track02_member" || "$track02_member" == */* || "$track02_member" == *\\* ]]; then
-    printf '%s\n' 'FAIL: CUE has no safe TRACK 02 MODE1/2352 member' >&2
+    printf '%s\n' 'FAIL: CUE has no safe TRACK 02 data member' >&2
     exit 1
 fi
 track02_path="$(dirname -- "$cue")/$track02_member"
@@ -121,13 +131,26 @@ if [[ "$system_card_md5" != ff1a674273fe3540ccef576376407d1d ]]; then
     printf '%s\n' 'FAIL: System Card 3.0 MD5 mismatch' >&2
     exit 1
 fi
-case "$track02_md5" in
-    b7afb338ad31be1025b53f9aff12d73a|f23601102138f87c33025877767ebf76) ;;
-    *)
-        printf '%s\n' 'FAIL: CUE TRACK 02 is not an authenticated Theron JP/US raw BIN' >&2
-        exit 1
-        ;;
-esac
+if [[ "$track02_mode" == 'MODE1/2352' ]]; then
+    case "$track02_md5" in
+        b7afb338ad31be1025b53f9aff12d73a|f23601102138f87c33025877767ebf76) ;;
+        *)
+            printf '%s\n' 'FAIL: CUE TRACK 02 is not an authenticated Theron JP/US raw BIN' >&2
+            exit 1
+            ;;
+    esac
+else
+    # The retail CUE sheets also carry a MODE1/2048 data track. These are the
+    # complete canonical ISO identities admitted by the runtime intake; they
+    # are not interchangeable with the raw BIN identities above.
+    case "$track02_md5" in
+        397039af02d50d15c70b74088eb8a1cb|ceb02343868f80cec899e9b239aff2da) ;;
+        *)
+            printf '%s\n' 'FAIL: CUE TRACK 02 is not an authenticated Theron JP/US ISO' >&2
+            exit 1
+            ;;
+    esac
+fi
 if [[ ! "$seconds" =~ ^[1-9][0-9]*$ ]]; then
     printf '%s\n' 'FAIL: THERON_CAPTURE_SECONDS must be a positive integer' >&2
     exit 1
@@ -712,6 +735,7 @@ transition_scripted_input_count=$(trace_count '^scripted_pce_input_event ' "$inp
 {
     printf '%s\n' 'source=authentic-mednafen-transition-receipt'
     printf 'mednafen_binary_md5=%s\n' "$mednafen_binary_md5"
+    printf 'track02_mode=%s\n' "$track02_mode"
     printf 'track02_md5=%s\n' "$track02_md5"
     printf 'system_card_md5=%s\n' "$system_card_md5"
     printf 'input_transactions=%s\n' "$transition_input_count"

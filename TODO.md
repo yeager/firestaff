@@ -1250,6 +1250,11 @@
   all seven US and seven JP Track 02 banks and the authenticated US/JP Track
   19 level offsets; the 653-case startup-flow probe and 57-case M11/M12 handoff
   boundary also pass. The semantic consumer gate remains unchanged.
+  The live Mednafen launcher now admits authenticated MODE1/2048 Track 02 ISO
+  CUEs separately from raw MODE1/2352 BINs (`ceb023...` US and `397039...` JP),
+  so the retail split-ISO route can reach the same capture gate. This is an
+  intake/capture change only; it does not promote a consumer, level, object,
+  bitmap or palette binding.
 
   The supplied retail US ISO now contributes one bounded real startup-level
   envelope at `0x5a9114`, linked to the first retail descriptor by `0x92f2`.

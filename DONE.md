@@ -73,6 +73,12 @@
   checks, and the 57-case M11/M12 launcher handoff boundary. The raw split-CUE
   case remains an explicit skip when `FIRESTAFF_THERON_CUE` is unset.
 
+- ✅ 2026-08-06 Theron ISO capture intake: the live Mednafen launcher now
+  distinguishes authenticated MODE1/2048 Track 02 ISO CUEs from raw
+  MODE1/2352 BIN CUEs and admits the canonical US/JP ISO hashes separately.
+  `bash -n` and the capture-script regression pass; no consumer, level,
+  object, bitmap or palette semantics are promoted by this route alone.
+
 - ✅ 2026-08-06 Theron chapter-marker loot parity: removed the duplicated,
   incorrectly ordered quest-item table from the chapter marker and dungeon
   progression diagnostic. Both now consume the authenticated US Track 02

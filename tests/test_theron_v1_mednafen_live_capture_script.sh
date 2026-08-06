@@ -94,6 +94,12 @@ if ! grep -Fq -- '-force_module pce' "$script" ||
     printf 'FAIL: capture script must force the PCE module and disable unrelated Arcade Card emulation\n' >&2
     exit 1
 fi
+if ! grep -Fq 'MODE1/2048' "$script" ||
+   ! grep -Fq '397039af02d50d15c70b74088eb8a1cb|ceb02343868f80cec899e9b239aff2da' "$script" ||
+   ! grep -Fq 'track02_mode=%s' "$script"; then
+    printf 'FAIL: live capture must admit the authenticated MODE1/2048 ISO route separately from raw BIN\n' >&2
+    exit 1
+fi
 if ! grep -Fq 'FIRESTAFF_THERON_IRQ2_INPUT_TRACE="$input_trace"' "$script"; then
     printf 'FAIL: capture script must retain a raw controller input receipt\n' >&2
     exit 1
