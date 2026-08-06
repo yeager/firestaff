@@ -20,6 +20,8 @@ int nexus_v1_rlowfix_text_parse(const uint8_t *data, size_t size,
 {
     uint32_t table_end;
     uint32_t cursor;
+    uint32_t previous_start = 0U;
+    uint16_t string_index;
     if (!out) return 0;
     memset(out, 0, sizeof(*out));
     if (!data || resource_offset > size || size - resource_offset < 8 ||
@@ -38,6 +40,21 @@ int nexus_v1_rlowfix_text_parse(const uint8_t *data, size_t size,
         }
     }
     if (out->resource_end < table_end) return 0;
+    /* DMWeb TEXT offsets are relative to the eight-byte resource header.
+     * Validate the complete ordered span table before exposing the resource;
+     * accepting only the requested string could hide a malformed neighbour. */
+    for (string_index = 0; string_index < out->string_count;
+         ++string_index) {
+        uint32_t start = (uint32_t)be16(
+            data + resource_offset + 10U + (uint32_t)string_index * 2U) +
+            resource_offset + 8U;
+        if (start < table_end || start > out->resource_end ||
+            (string_index > 0U && start < previous_start)) {
+            memset(out, 0, sizeof(*out));
+            return 0;
+        }
+        previous_start = start;
+    }
     out->valid = 1;
     return 1;
 }

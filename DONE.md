@@ -50843,3 +50843,7 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   decoder now requires an exact declared file size, a bounded entry count and
   strictly increasing payload spans. Real TITLE.BIN, RLOWFIX.BIN, RHIFIX.BIN
   and POTEFT.BIN tests include a mutation that must be rejected.
+- ✅ 2026-08-06 Nexus RLOWFIX TEXT admission: the real TEXT parser now checks
+  every DMWeb-relative string offset against the section boundary and ordered
+  span table. The European RLOWFIX corpus regression rejects a tampered
+  neighbouring string offset without changing the unresolved text consumer.

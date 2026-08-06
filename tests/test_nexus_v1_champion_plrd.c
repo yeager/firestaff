@@ -60,9 +60,23 @@ int main(void) {
     {
         const uint8_t *span;
         size_t span_size;
-        if (!nexus_v1_rlowfix_text_span(bytes, (size_t)size, &text, 0,
+    if (!nexus_v1_rlowfix_text_span(bytes, (size_t)size, &text, 0,
                                         &span, &span_size) || !span ||
             span_size == 0) { fprintf(stderr,"span\\n"); return 1; }
+    }
+    {
+        uint8_t *tampered = (uint8_t *)malloc((size_t)size);
+        if (!tampered) return 1;
+        memcpy(tampered, bytes, (size_t)size);
+        /* TEXT#0 string 1 offset is relative to the eight-byte header. */
+        tampered[0xa374U + 10U + 2U] = 0U;
+        tampered[0xa374U + 10U + 3U] = 0U;
+        if (nexus_v1_rlowfix_text_parse(tampered, (size_t)size,
+                                        0xa374U, &text)) {
+            free(tampered);
+            return 1;
+        }
+        free(tampered);
     }
     if (pool.champion_count != NEXUS_NEXUS_PLRD_CHAMPION_COUNT) return 1;
     if (pool.champions[0].name_jp[0] != '\0' ||
