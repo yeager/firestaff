@@ -1,3 +1,16 @@
+# DM1 production placeholder re-audit (2026-08-06)
+
+- ✅ Re-audited the active DM1 V1 M11 renderer against the real PC34
+  `GRAPHICS.DAT`/`DUNGEON.DAT` path and the `DM1-ORIGINAL-REPLACE-003` through
+  `DM1-ORIGINAL-REPLACE-026` inventory. No open production placeholder was
+  found: source sessions either consume an authenticated decoded surface or
+  fail closed/no-draw. The remaining DM1 TODO entries are original-save
+  corpus breadth and external original/Mac capture, not an untracked
+  synthetic renderer.
+- ✅ Promoted three fresh Firestaff DM1 v1 runtime frames to the README from
+  the real PC34 data and operator save route. These are Firestaff captures
+  only; they do not count as original-vs-Firestaff pixel parity evidence.
+
 # DM2 production placeholder inventory (2026-08-06)
 
 - ✅ 2026-08-06 DM2 New Game cache-clear handoff: `LOAD_NEW_DUNGEON` now

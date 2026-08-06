@@ -27053,6 +27053,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
     This independently rules out treating blank host-window frames as panel
     evidence. Resolve the emulator capture binding before repeating the
     operator capture route.
+  - 2026-08-06 README refresh: three new Firestaff DM1 v1 frames were captured
+    from the real PC34 data and operator save route. They are public runtime
+    documentation only and deliberately do not close this original-vs-Firestaff
+    panel capture requirement.
   - 2026-07-31 screencapture recheck: the same route reported `Claude` as
     the active macOS app after every reactivation attempt, while its complete
     `320x200` image was black and rawshot recovery remained unavailable. The
