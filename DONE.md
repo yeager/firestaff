@@ -1,3 +1,13 @@
+# Theron complete static decompressor listing (2026-08-06)
+
+- ✅ Expanded `docs/source-lock/theron-disassembly/theron-us-bank1f-consumer.asm`
+  with the authenticated caller/output-size tail `$2386–$23a3` and the
+  resource framing/variable-bit entry `$23ad–$243d`, using the real US ISO
+  projection and the byte-identical JP bank span.
+- ✅ The listing now shows the real six-byte resource-frame advance,
+  destination-pointer table writes and widening `$0100` token contract. It
+  still publishes no level, object, tile or palette semantics.
+
 # Theron forcefield Enter retry boundary (2026-08-06)
 
 - ✅ After a failed authentic Track 02 admission, M11 now keeps Enter bound

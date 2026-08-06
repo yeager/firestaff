@@ -1105,6 +1105,11 @@ level or consumer bindings.
   host-input capture reproduce the same absence. Keep the `$2600`/object/level/
   tile/palette/HUD/viewport gates closed. The capture script now accepts
   `run` as an alias for its physical `return`/Run key.
+  2026-08-06 static-listing update: the checked-in bank-$1f disassembly now
+  includes the authenticated `$2386–$23a3` output-size caller and
+  `$23ad–$243d` resource framing/variable-bit entry. This strengthens the
+  source contract only; the live `$2600` RAM consumer and its level/object
+  destination remain unbound.
 
 - **THERON-V1-VIEWPORT-REAL-DATA:** the old inferred viewport renderer is now
   explicitly fixture-only and excluded from the production archive. Replace

@@ -14,6 +14,114 @@
 
         .setcpu  "huc6280"
 
+; The caller and entry prologue below are byte-backed by the same
+; hash-locked US/JP bank-$1f span. The caller measures the output length
+; through $3b7c/$3b7d; it does not identify a level or object record.
+
+        .org    $2386
+
+L2386:  lda     $30
+        sta     $3B7C
+        lda     $31
+        sta     $3B7D
+        bsr     L23AD
+        sec
+        lda     $30
+        sbc     $3B7C
+        sta     $3B7C
+        lda     $31
+        sbc     $3B7D
+        sta     $3B7D
+        rts
+
+        lda     #$01
+        sta     $0F
+        lda     #$09
+        sta     $14
+        rts
+
+        .org    $23AD
+
+L23AD:  lda     $2E
+        sta     $32
+        sta     $34
+        lda     $2F
+        sta     $33
+        sta     $35
+        ldy     #$02
+        lda     ($2E),y
+        sta     $00
+        iny
+        lda     ($2E),y
+        sta     $01
+        sec
+        lda     $00
+        sbc     #$05
+        sta     $12
+        lda     $01
+        sbc     #$00
+        sta     $13
+        clc
+        lda     $2E
+        adc     #$06
+        sta     $2E
+        bcc     L23DC
+        inc     $2F
+
+L23DC:  bsr     L23AD
+L23DE:  cly
+        lda     $30
+        sta     ($34),y
+        iny
+        lda     $31
+        sta     ($34),y
+        clc
+        lda     $34
+        adc     #$02
+        sta     $34
+        bcc     L23F3
+        inc     $35
+L23F3:  bsr     L242A
+        lda     $10
+        bne     L2403
+        lda     $11
+        cmp     #$01
+        bne     L2403
+        inc     $14
+        bra     L23F3
+L2403:  lda     $12
+        ora     $13
+        beq     L2429
+        bsr     L2483
+        bsr     L2459
+L240D:  bsr     L242A
+        lda     $10
+        bne     L241D
+        lda     $11
+        cmp     #$01
+        bne     L241D
+        inc     $14
+        bra     L240D
+L241D:  lda     $12
+        ora     $13
+        beq     L2429
+        bsr     L2483
+        bsr     L2459
+        bra     L23DE
+L2429:  rts
+
+L242A:  stz     $10
+        ldy     $14
+        ldx     #$08
+L2430:  dec     $0F
+        beq     L243E
+L2434:  rol     $0E
+        rol     $10
+        rol     $11
+        dey
+        bne     L2430
+        rts
+
         .org    $243e
 
 L243E:  lda     ($2E)

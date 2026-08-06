@@ -2,7 +2,7 @@
 
 ## Status
 
-The first static consumer fragment is now checked in at
+The complete static consumer/decompressor chain is now checked in at
 `docs/source-lock/theron-disassembly/theron-us-bank1f-consumer.asm`.
 It is generated from the hash-locked US retail projection, not from a
 synthetic fixture:
@@ -19,7 +19,8 @@ hash-locked JP retail image `TQJP19.iso` (MD5
 static-bank receipt only; it does not turn the absent post-CD `$2600` RAM
 consumer into a static disassembly.
 
-The receipt now also covers the contiguous 382-byte routine at bank address
+The listing includes the caller/output-size tail at `$2386–$23a3`, the
+entry/framing routine at `$23ad–$2429`, and the contiguous 382-byte routine at bank address
 `$23AD–$252A` (FNV-1a `3056f96c`). The verified listing contains the real
 variable-bit reader at `$242A–$2458`, HuC6280 bank-window switches at
 `$2459–$2482`, literal output at `$2483–$2495`, and the back-reference path at
@@ -33,7 +34,11 @@ block, destination bank, or level/object meaning.
 
 ## What the fragment proves
 
-The `$2450–$24b0` region is real code. It performs a bounded byte/bitstream
+The `$2386–$23A3` caller measures the output pointer delta in
+`$3b7c/$3b7d`; `$23AD–$2429` initializes the resource header, advances past
+the six-byte frame, writes the destination pointer table, and widens the
+variable-bit width when token `$0100` is encountered. The `$2450–$24b0`
+region is real code. It performs a bounded byte/bitstream
 step and uses `$2459`/`$246e` to load HuC6280 memory-mapping registers from the
 table at `$3b7e–$3b85`. The forward path writes through `($30)`; the reverse
 path computes an indexed source address through `$32/$33` and reads through
