@@ -53687,6 +53687,22 @@ target_include_directories(test_csb_v1_amiga_graphics_dat PRIVATE ${CMAKE_CURREN
 add_test(NAME test_csb_v1_amiga_graphics_dat COMMAND test_csb_v1_amiga_graphics_dat)
 set_tests_properties(test_csb_v1_amiga_graphics_dat PROPERTIES LABELS "csb;amiga")
 
+add_executable(test_csb_v1_amiga_runtime_graphics_real
+    tests/test_csb_v1_amiga_runtime_graphics_real.c
+)
+target_include_directories(test_csb_v1_amiga_runtime_graphics_real PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include)
+target_link_libraries(test_csb_v1_amiga_runtime_graphics_real PRIVATE
+    firestaff_m11 firestaff_m10 firestaff_m12)
+if(NOT MSVC)
+    target_compile_options(test_csb_v1_amiga_runtime_graphics_real PRIVATE
+        -std=gnu11 -Wall -Wextra -Werror -pedantic -O2)
+endif()
+add_test(NAME csb_v1_amiga_runtime_graphics_real
+         COMMAND test_csb_v1_amiga_runtime_graphics_real)
+set_tests_properties(csb_v1_amiga_runtime_graphics_real PROPERTIES
+    LABELS "csb;amiga;real_data" TIMEOUT 60)
+
 add_executable(test_dm1_v1_creature_behavior_bootstrap
     tests/test_dm1_v1_creature_behavior_bootstrap.c
     src/dm1/dm1_v1_creature_behavior_bootstrap_pc34_compat.c
