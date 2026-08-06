@@ -1,3 +1,12 @@
+# DM1 champion portrait-box redraw synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the portrait-box redraw-state matrix from M10. It fabricates
+  panel geometry, champion ownership and dirty-bit flows, reads no original
+  DM1 data and has no M11/runtime caller; its explicit ReDMCSB regression
+  continues to compile the source directly.
+- ✅ Verification: `test_dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D2C F0107 wall-ornament synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the D2C F0107 wall-ornament probe from M10. It hard-codes
