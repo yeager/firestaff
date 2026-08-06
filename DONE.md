@@ -10,6 +10,15 @@
   never copies or unpacks it. Verification: 119/119 GDAT receipts against
   the real DOS `GRAPHICS.DAT`, and `firestaff_m11_phase_a_probe` 24/24.
 
+# DM1 D1L/D1R F0107 wall synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the D1L/D1R F0107 wall-ornament probe from M10. It hard-codes
+  zones, ordinals and framebuffer pixels, reads no original DM1 data or
+  GRAPHICS.DAT material and has no M11/runtime caller; its explicit ReDMCSB
+  regression now compiles the source directly.
+- ✅ Verification: `test_dm1_v1_viewport_d1l_d1r_f0107_wall_ornament_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D2L2/D2R2 F0115 synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the D2L2/D2R2 F0115 no-draw receipt from M10. It has fixed
