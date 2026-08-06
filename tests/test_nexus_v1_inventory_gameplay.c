@@ -202,6 +202,24 @@ static void test_floor_items(void) {
     }
 }
 
+static void test_raw_item_declaration_does_not_infer_gameplay_flags(void) {
+    uint8_t record[40];
+    const Nexus_ItemDef *def;
+
+    memset(record, 0, sizeof(record));
+    record[0] = 0;
+    record[1] = NEXUS_ITEM_POTION;
+    record[2] = 0x01; /* carry-location bit, not a proven action flag */
+    record[8] = 3;
+    nexus_itemdef_bind_ibs_raw(record, 1);
+    def = nexus_itemdef_get(0);
+    expect(def != NULL, "raw ITEM.IBS declaration is retained");
+    expect(def && def->carry_locations == 0x01,
+           "raw ITEM.IBS carry-location byte is retained");
+    expect(def && def->flags == 0,
+           "raw ITEM.IBS carry-location does not infer consumable gameplay");
+}
+
 int main(void) {
     Nexus_V1_ItemIbsBank bank;
     uint8_t *item_ibs;
@@ -217,6 +235,8 @@ int main(void) {
     nexus_itemdef_bind_ibs_bank(&bank, NEXUS_V1_ITEM_IBS_DECLARATION_COUNT);
     free(item_ibs);
 
+    test_raw_item_declaration_does_not_infer_gameplay_flags();
+    nexus_itemdef_bind_ibs_bank(&bank, NEXUS_V1_ITEM_IBS_DECLARATION_COUNT);
     test_item_pickup_empty_slot();
     test_item_drop();
     test_equip_unequip();

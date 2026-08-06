@@ -29,7 +29,10 @@ void nexus_itemdef_bind_ibs_raw(const uint8_t *data, int count) {
         g_ibs_defs[i].weight = rec[8];
         g_ibs_defs[i].attack = 0;
         g_ibs_defs[i].defense = 0;
-        g_ibs_defs[i].flags = (rec[2] & 0x01) ? NEXUS_ITEMF_CONSUMABLE : 0;
+        /* DMWeb defines byte 2 as carry-location bits. The raw declaration
+         * route does not prove the Saturn action dispatcher, so do not turn
+         * one carry bit into a gameplay consumable flag. */
+        g_ibs_defs[i].flags = 0;
         g_ibs_defs[i].action_id[0] = rec[16];
         g_ibs_defs[i].action_id[1] = rec[17];
         g_ibs_defs[i].action_id[2] = rec[18];

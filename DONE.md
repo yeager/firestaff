@@ -1,3 +1,11 @@
+- ✅ 2026-08-06 Nexus ITEM raw-declaration provenance cleanup: the legacy
+  40-byte ITEM.IBS binder now retains `carry_locations` as source metadata
+  without inferring a consumable gameplay flag from bit 0. The authenticated
+  `Nexus_V1_ItemIbsBank` route was already fail-closed and remains unchanged;
+  a regression covers the raw route, and the real ITEM.IBS/inventory suite
+  passes 67 gameplay checks plus the decoder corpus. No item action or armor
+  semantics were promoted.
+
 - ✅ 2026-08-06 Nexus SCR no-draw boundary cleanup: removed the unreachable
   flat-glyph decode/raster branch from `nexus_v1_screen_text_draw_s2d_bytes`.
   Real `FONT256.S2D` input now has one explicit, auditable `GLYPH_MAP`
