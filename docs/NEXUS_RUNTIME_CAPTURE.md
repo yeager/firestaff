@@ -22,6 +22,14 @@ The raw Saturn launcher uses a non-quiet string scan for this check because
 `set -o pipefail` makes `strings | grep -q` report a false failure when grep
 closes the pipe after the first match.
 
+For startup/input experiments the launcher can request an operator-owned
+controller window with `--press-start-frame N --press-start-length N`. The
+external Mednafen SMPC hook drives the Saturn gamepad's real active-low START
+bit for that bounded window and releases it on the following frame. This is
+input provenance only: it does not write SH-2 state, VDP memory, host pixels,
+or a guessed menu. A resulting menu/HUD/viewport claim still requires the
+corresponding source identity and VDP1/VDP2 consumer artifact.
+
 ## Artifact families
 
 | Route | Magic | Evidence still required |

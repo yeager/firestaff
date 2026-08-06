@@ -20,6 +20,16 @@ disc_sha=$(shasum -a 256 "$tmp_dir/disc.cue" | awk '{print $1}')
 
 grep -Fq 'skip_frames=300' "$tmp_dir/manifest.txt"
 grep -Fq 'frame_limit=8' "$tmp_dir/manifest.txt"
+grep -Fq 'press_start_frame=0' "$tmp_dir/manifest.txt"
+grep -Fq 'press_start_length=1' "$tmp_dir/manifest.txt"
+"$launcher" --operator-only --mednafen /usr/bin/true \
+  --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
+  --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \
+  --trace "$tmp_dir/trace-custom.raw" --validator "$validator" \
+  --manifest "$tmp_dir/manifest-custom.txt" --skip-frames 12 --frame-limit 2 \
+  --press-start-frame 1000 --press-start-length 60 >/dev/null
+grep -Fq 'press_start_frame=1000' "$tmp_dir/manifest-custom.txt"
+grep -Fq 'press_start_length=60' "$tmp_dir/manifest-custom.txt"
 if "$launcher" --operator-only --launch --mednafen /usr/bin/true \
   --bios "$tmp_dir/bios.bin" --bios-sha256 "$bios_sha" \
   --disc "$tmp_dir/disc.cue" --disc-sha256 "$disc_sha" \

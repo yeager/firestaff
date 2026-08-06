@@ -73,3 +73,38 @@
 + fwrite(CRAM, sizeof(CRAM[0]), sizeof(CRAM) / sizeof(CRAM[0]), FirestaffCaptureFile);
 + fflush(FirestaffCaptureFile);
 + FirestaffCaptureFrames++;
+--- src/ss/smpc.cpp
++++ src/ss/smpc.cpp
+@@ -27,0 +28,2 @@
++#include <stdlib.h>
++#include <stdint.h>
+@@ -233,0 +236,5 @@
++static uint64_t FirestaffInputFrame;
++static uint64_t FirestaffPressStartFrame;
++static uint64_t FirestaffPressStartLength = 1;
++static bool FirestaffInputConfigured;
++
+@@ -683,0 +684,21 @@
++static void FirestaffUpdateCaptureInput(void)
++{
++ if(!FirestaffInputConfigured)
++ {
++  const char *frame = getenv("FIRESTAFF_NEXUS_TRACE_PRESS_START_FRAME");
++  const char *length = getenv("FIRESTAFF_NEXUS_TRACE_PRESS_START_LENGTH");
++  if(frame && *frame) FirestaffPressStartFrame = strtoull(frame, NULL, 10);
++  if(length && *length) FirestaffPressStartLength = strtoull(length, NULL, 10);
++  if(!FirestaffPressStartLength) FirestaffPressStartLength = 1;
++  FirestaffInputConfigured = true;
++ }
++ if(VirtualPortsDPtr[0] && FirestaffPressStartFrame)
++ {
++  const uint64_t end = FirestaffPressStartFrame + FirestaffPressStartLength;
++  if(FirestaffInputFrame >= FirestaffPressStartFrame && FirestaffInputFrame < end)
++   VirtualPortsDPtr[0][0] &= (uint8)~0x10;
++  else if(FirestaffInputFrame == end)
++   VirtualPortsDPtr[0][0] |= 0x10;
++ }
++ FirestaffInputFrame++;
++}
+@@ -685,0 +706,1 @@
++ FirestaffUpdateCaptureInput();

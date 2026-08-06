@@ -223,6 +223,13 @@
   French-media windows show the real TrueMotion and changing startup scenes in
   VDP1 framebuffer data. This is still a raw witness, not a menu/HUD/viewport
   import or a PRS3 decoder proof.
+- **NEXUS-SATURN-STARTUP-INPUT-CAPTURE:** The external Saturn producer now
+  supports a bounded, active-low START pulse through Mednafen SMPC at an
+  operator-selected emulated frame. Initial E-region tests at frame 1000 and
+  4500 did not yet reach a menu; the captured framebuffer remains authentic
+  intro imagery. Do not infer that START is the correct skip control or admit
+  menu state until a post-input screen transition and source-owned menu
+  consumer are both observed.
 - **NEXUS-MENU-CAPTURE-GATE:** TITLE.CG timing must remain on the title screen
   until the real MENU.BPK capture route is joined. A source-owned runtime
   capture is still required before menu, HUD, and viewport composition can be

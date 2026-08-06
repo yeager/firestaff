@@ -57852,6 +57852,18 @@ alcove runtime and archive-media tests passed (4/4).
   added.
 - ✅ The Japanese BIOS attachment was hash-verified separately for the J-region
   comparison path; its evidence remains separate from the European chain.
+
+# Nexus Saturn startup input capture route (2026-08-07)
+
+- ✅ Added an external-only Mednafen SMPC route for a bounded active-low START
+  pulse, selected by emulated frame and hold length. It writes no VDP/SH-2
+  state and records the input window in the operator manifest.
+- ✅ Rebuilt the existing external Saturn producer’s SMPC object and relinked
+  the instrumented binary; patch dry-run and launcher regression pass.
+- ⚠️ E-region tests at frame 1000/60 frames and frame 4500/2 frames still show
+  authentic intro imagery after the input window. Menu, HUD, viewport and
+  PRS3/SLEV/SAL/SDDRVS semantic admission remain blocked pending a proved
+  transition and source-owned consumer bindings.
 # DM2 PC-9821 catalog/hash-pair correction (2026-08-07)
 
 - ✅ Added the authenticated retail `pc9821-ja` DM2 version to the launcher
