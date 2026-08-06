@@ -215,6 +215,10 @@ typedef struct {
      * program image is unpacked or executed by either receipt. */
     DM2_V1_FmtownsP3Receipt fmtowns_twanim_p3;
     DM2_V1_FmtownsP3Receipt fmtowns_skull_p3;
+    /* Retail identities of those same in-memory P3 members.  Header facts
+     * alone are not admission: a name-compatible executable is rejected. */
+    char     fmtowns_twanim_md5[33];
+    char     fmtowns_skull_md5[33];
     /* HMP-to-CDDA selection read from the native SKULL.EXP member in the
      * selected disc buffer.  The receipt owns only copied table bytes. */
     DM2_V1_FmtownsCddaMusicReceipt fmtowns_cdda_music;

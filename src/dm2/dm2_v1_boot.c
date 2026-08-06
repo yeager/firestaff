@@ -1036,6 +1036,8 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
            sizeof(profile->fmtowns_twanim_p3));
     memset(&profile->fmtowns_skull_p3, 0,
            sizeof(profile->fmtowns_skull_p3));
+    profile->fmtowns_twanim_md5[0] = '\0';
+    profile->fmtowns_skull_md5[0] = '\0';
     /* M12 passes an explicitly selected retail archive verbatim.  Preserve
      * that choice: treating it as a directory would silently fall back to a
      * sibling PC install and change the selected platform. */
@@ -1154,6 +1156,8 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
                        sizeof(profile->fmtowns_twanim_p3));
                 return;
             }
+            memcpy(profile->fmtowns_twanim_md5, twanim_md5,
+                   sizeof(profile->fmtowns_twanim_md5));
             free(twanim_data);
         }
         for (animation_index = 0; animation_index < 3; ++animation_index) {
@@ -1206,6 +1210,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
                    sizeof(profile->fmtowns_end_stream));
             memset(&profile->fmtowns_twanim_p3, 0,
                    sizeof(profile->fmtowns_twanim_p3));
+            profile->fmtowns_twanim_md5[0] = '\0';
             return;
         }
         /* SKULL.EXP is the native next startup stage after the verified
@@ -1213,11 +1218,28 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
          * before keeping the selected disc.  Retain no executable bytes
          * beyond the original IMG and do not claim native menu execution. */
         {
+            static const char fmtowns_skull_md5[] =
+                "0f4b44d286cbee35924a95e7d75ad7e5";
             uint8_t *skull_data = NULL;
             size_t skull_size = 0u;
+            char skull_md5[33];
+            memset(skull_md5, 0, sizeof(skull_md5));
             if (dm2_v1_fmtowns_disc_extract_alloc(
                     img_data, img_size, &probe.skull_exp,
                     &skull_data, &skull_size) != 0 ||
+                !skull_data || skull_size != 374416u) {
+                free(skull_data);
+                free(profile->fmtowns_disc_image);
+                profile->fmtowns_disc_image = NULL;
+                profile->fmtowns_disc_image_size = 0u;
+                profile->fmtowns_zip_path[0] = '\0';
+                memset(profile->fmtowns_cdda_track_starts, 0,
+                       sizeof(profile->fmtowns_cdda_track_starts));
+                profile->fmtowns_cdda_track_count = 0;
+                return;
+            }
+            dm2_md5_bytes_hex(skull_data, skull_size, skull_md5);
+            if (!md5_matches(skull_md5, fmtowns_skull_md5) ||
                 !dm2_v1_boot_parse_fmtowns_p3(
                     skull_data, skull_size, &profile->fmtowns_skull_p3)) {
                 free(skull_data);
@@ -1230,6 +1252,8 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
                 profile->fmtowns_cdda_track_count = 0;
                 return;
             }
+            memcpy(profile->fmtowns_skull_md5, skull_md5,
+                   sizeof(profile->fmtowns_skull_md5));
             /* The HMP-to-CDDA table is optional music evidence only.  A
              * malformed table stays silent; it cannot become a source
              * literal or invalidate the independently verified P3 program. */

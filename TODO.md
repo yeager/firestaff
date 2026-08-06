@@ -1309,11 +1309,12 @@ level or consumer bindings.
   a member. `SWOOSH`, `TITLE` and `END` are also checked against the published
   HME-242 retail MD5 identities before their startup plan is accepted. This is
   an authenticity gate, not an animation renderer.
-  **2026-08-06 update:** The selected original SKULL.EXP must now also pass
-  its bounded Phar Lap P3 header receipt in RAM, including the declared load
-  image, relocation range and entry point, before the startup media is
-  retained. This remains an executable identity gate only: native P3/TBIOS
-  execution, menu pixels and input still need capture.
+  **2026-08-06 update:** The selected original SKULL.EXP must now match the
+  authenticated HME-242 MD5 as well as pass its bounded Phar Lap P3 header
+  receipt in RAM, including the declared load image, relocation range and
+  entry point, before the startup media is retained. This remains an
+  executable identity gate only: native P3/TBIOS execution, menu pixels and
+  input still need capture.
   **2026-08-06 TWANIM update:** the player for the visible SWOOSH/TITLE/END
   stages now has the same in-memory P3 ownership requirement. The selected
   HME-242 TWANIM.EXP must match its retail MD5 and bounded Phar Lap header

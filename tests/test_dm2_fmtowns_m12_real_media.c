@@ -163,6 +163,10 @@ int main(void)
                    launch.profile->fmtowns_startup_media_verified &&
                    launch.profile->fmtowns_animation_media_verified &&
                    launch.profile->fmtowns_animation_streams_verified &&
+                   strcmp(launch.profile->fmtowns_twanim_md5,
+                          "07a5629466e0c941bdc27c78cf8b9941") == 0 &&
+                   strcmp(launch.profile->fmtowns_skull_md5,
+                          "0f4b44d286cbee35924a95e7d75ad7e5") == 0 &&
                    strcmp(launch.profile->fmtowns_swoosh_md5,
                           "ecec4d7ac081b099056531043191b55a") == 0 &&
                    strcmp(launch.profile->fmtowns_title_md5,
@@ -187,7 +191,7 @@ int main(void)
                        &launch.profile->fmtowns_title_stream) &&
                    dm2_v1_fmtowns_anim_stream_is_hme242_end(
                        &launch.profile->fmtowns_end_stream),
-               "FM Towns startup media has complete retail TWANIM stream bounds");
+                   "FM Towns startup media has complete retail executable and stream identities");
         {
             DM2_V1_FmtownsDiscReceipt disc;
             DM2_V1_FmtownsAnimFrameReceipt first_frame;
