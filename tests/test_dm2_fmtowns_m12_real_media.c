@@ -186,10 +186,22 @@ int main(void)
                    "ZIP companion supplies authenticated English text");
             memset(&dialogue, 0, sizeof(dialogue));
             expect(dm2_v1_boot_dialogue_open_panel_host_command(
-                       launch.profile, &dialogue) && dialogue.valid &&
-                       strcmp((const char *)dialogue.draw.text[0], "SAVE") == 0 &&
-                       strcmp((const char *)dialogue.draw.text[1], "CANCEL") == 0,
+                   launch.profile, &dialogue) && dialogue.valid &&
+                   strcmp((const char *)dialogue.draw.text[0], "SAVE") == 0 &&
+                   strcmp((const char *)dialogue.draw.text[1], "CANCEL") == 0,
                    "FM Towns save dialogue uses English labels from the ZIP companion");
+            dm2_v1_boot_startup_launch_cleanup(&launch);
+
+            /* The real DOS archive stores the member as DATA/GRAPHICS.DAT.
+             * M12 keeps that source spelling in virtual provenance, so it
+             * must pass the same RAM-only, hash-verified companion gate. */
+            memset(&launch, 0, sizeof(launch));
+            snprintf(virtual_companion, sizeof(virtual_companion),
+                     "%s::DATA/GRAPHICS.DAT", english_companion_archive);
+            expect(dm2_v1_boot_startup_launch_alloc_with_language(
+                       selectedRuntime, virtual_companion, 0, &launch) == 1,
+                   "FM Towns English accepts the original uppercase ZIP member");
+            expect_complete_english_text_overlay(launch.profile);
             dm2_v1_boot_startup_launch_cleanup(&launch);
         }
     } else {

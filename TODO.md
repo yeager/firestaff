@@ -781,6 +781,11 @@
   its authenticated loose pair. The real-media regressions cover both direct
   archive and mixed-root scans. This is selection identity only, not a claim
   of complete platform gameplay parity.
+  **2026-08-06 English companion path update:** an explicit PC-English
+  companion now accepts the original DOS ZIP member spelling
+  `DATA/GRAPHICS.DAT` as well as the documented lower-case virtual spelling.
+  Both forms still resolve only in RAM and require the canonical PC-English
+  content hash before their text overlay can be bound to the Japanese CD.
 
 - **DM2-RESURRECTION-OWNERSHIP:** Production type-0x0D resurrection remains
   deliberately non-mutating until the original 263-byte `c_hero` layout,

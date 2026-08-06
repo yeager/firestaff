@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 DM2 FM Towns English ZIP companion: an explicitly selected,
+  hash-verified PC-English `GRAPHICS.DAT` now accepts the DOS archive's real
+  `DATA/GRAPHICS.DAT` member spelling as well as lower-case virtual paths.
+  The Japanese FM Towns CD remains the game-data owner and the companion is
+  read solely in RAM. The real-media test verifies the complete English text
+  overlay without extracting game data.
+
 - ✅ 2026-08-06 Theron chapter-marker loot parity: removed the duplicated,
   incorrectly ordered quest-item table from the chapter marker and dungeon
   progression diagnostic. Both now consume the authenticated US Track 02

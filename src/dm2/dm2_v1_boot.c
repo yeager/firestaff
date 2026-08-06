@@ -10333,7 +10333,13 @@ static int dm2_v1_boot_read_english_companion(
         archive_path[archive_length] = '\0';
         if (basename) ++basename;
         else basename = member;
-        if (strcmp(basename, "graphics.dat") != 0 ||
+        /* M12 retains the archive member's original spelling.  The supplied
+         * PC-DOS ZIP calls this DATA/GRAPHICS.DAT, while callers may also use
+         * the lower-case virtual spelling documented by the scanner.  ZIP
+         * member lookup and the canonical content hash below are both
+         * case-insensitive/source-bound, so do not reject the original
+         * uppercase member before that verification. */
+        if (strcasecmp(basename, "graphics.dat") != 0 ||
             firestaff_zip_extract_by_name(archive_path, basename,
                                           out_bytes, out_size) != 0 ||
             !*out_bytes || *out_size == 0u ||
