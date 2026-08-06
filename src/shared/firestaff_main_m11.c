@@ -260,18 +260,23 @@ static int run_data_scan(const char* dataDir, int verbose) {
         }
         printf("Firestaff game-data scan (verbose)\n");
         printf("Scanning...\n");
+        fflush(stdout);
         (void)M12_AssetStatus_ScanWithOptions(&status,
                                               dataDir ? dataDir : "", &scanOptions);
     } else if (dataDir && dataDir[0] != '\0') {
         M12_AssetStatusScanOptions scanOptions;
         memset(&scanOptions, 0, sizeof(scanOptions));
         scanOptions.honorRequestedDataDir = 1;
+        /* Archive-backed original media can take a while to inspect.  Emit
+         * and flush the same immediate acknowledgement as verbose mode so
+         * --scan-data never looks hung before its final availability report. */
+        printf("Firestaff game-data scan\nScanning...\n");
+        fflush(stdout);
         (void)M12_AssetStatus_ScanWithOptions(&status, dataDir, &scanOptions);
     } else {
+        printf("Firestaff game-data scan\nScanning...\n");
+        fflush(stdout);
         M12_AssetStatus_Scan(&status, dataDir);
-    }
-    if (!verbose) {
-        printf("Firestaff game-data scan\n");
     }
     printf("Data dir: %s\n", M12_AssetStatus_GetDataDir(&status));
     if (verbose) {
