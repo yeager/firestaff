@@ -38,9 +38,20 @@
   `CEDT018.C:829-838` supplies the clear/black/apply/restore order and
   `CEDT027.C:45-62` supplies the entries.
 - ✅ The real F31E and F31J handoff regressions verify the original C06 P3
-  envelope, menu bytes, input rectangles and palette material. M11 remains
-  compositor-gated until the original Utility layout and Shift-JIS glyph
-  consumer are recovered.
+  envelope, menu bytes, input rectangles and palette material. The F31E
+  editor now consumes this palette in M11; F31J remains gated pending its
+  native Shift-JIS glyph consumer.
+
+# CSB FM Towns C06 English editor frame (2026-08-06)
+
+- ✅ The English SWITCHTW Utility action now enters an M11 rendering path for
+  the original empty C06 editor. It uses authenticated `UTILE.EXP` strings,
+  the raw M653 font, C09_ICON palette and the exact `CEDT006.C` F7030/F7034/
+  F7042 box, button and swatch order. No host text or inferred layout is used.
+- ✅ C06 QUIT returns through the original English AUTOEXEC loop and observes
+  SWITCH.C's 60-VBlank delay. The F31J utility screen and all file-picker,
+  save and portrait-edit transactions remain deliberately closed pending
+  their native text and state consumers.
 
 - ✅ M11 no longer renders authentic Track 02 font tiles through unverified
   host render-plan coordinates or inferred palette styles.

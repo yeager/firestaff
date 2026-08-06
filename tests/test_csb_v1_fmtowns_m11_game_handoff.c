@@ -209,6 +209,35 @@ int main(void)
               utility_palette[15][2] == 0x3fu,
           "C06 retains its source-owned C09_ICON six-bit palette");
 
+    if (language == CSB_FMTOWNS_SWITCH_ENGLISH) {
+        /* SWITCH.C button two exits with status five and AUTOEXEC.BAT opens
+         * UTILE.EXP. CEDT006.C F7042 owns this empty-editor composition. */
+        result = M11_GameView_HandlePointerButton(
+            &view, 57, 59, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW && view.csbFmtownsUtilityBound &&
+                  !view.csbFmtownsSwitchBound &&
+                  view.csbFmtownsUtilityMenuReceipt.valid,
+              "F31E SWITCHTW Utility rectangle opens verified C06");
+        memset(framebuffer, 0, sizeof(framebuffer));
+        M11_GameView_Draw(&view, framebuffer, 320, 200);
+        CHECK(framebuffer[41u * 320u + 284u] == 0u &&
+                  framebuffer[42u * 320u + 285u] == 15u &&
+                  framebuffer[51u * 320u + 286u] == 1u &&
+                  framebuffer[60u * 320u + 157u] == 0u,
+              "C06 F7042 frame uses its source boxes and selected C09_ICON swatch");
+        result = M11_GameView_HandlePointerButton(
+            &view, 288, 5, DM1_V1_MOUSE_MASK_LEFT_PC34);
+        CHECK(result == M11_GAME_INPUT_REDRAW && !view.csbFmtownsUtilityBound &&
+                  view.csbFmtownsSwitchBound &&
+                  view.csbFmtownsSwitchVblanksRemaining == 60u,
+              "C06 QUIT returns through AUTOEXEC.BAT to the English SWITCHTW loop");
+        for (tick = 0u; tick < 60u; ++tick) {
+            (void)M11_GameView_AdvanceIdleTick(&view);
+        }
+        CHECK(view.csbFmtownsSwitchVblanksRemaining == 0u,
+              "C06 return observes SWITCH.C's sixty-VBlank page delay");
+    }
+
     /* ReDMCSB SWITCH.C F2279 registers G4171 at (47,105), 62x39. */
     result = M11_GameView_HandlePointerButton(&view, 52, 110,
                                                DM1_V1_MOUSE_MASK_LEFT_PC34);

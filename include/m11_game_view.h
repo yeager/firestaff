@@ -1579,6 +1579,12 @@ typedef struct {
     CSB_V1_FmtownsSwitchLanguage csbFmtownsSwitchReturnLanguage;
     uint16_t csbFmtownsSwitchVblanksRemaining;
     int csbFmtownsSwitchBound;
+    /* C06_CEDT is a separate F31 executable selected by SWITCHTW.  The
+     * retained screen is only the source-proven English empty-editor frame;
+     * F31J stays closed until its Shift-JIS glyph consumer is recovered. */
+    CSB_V1_FmtownsUtilityMenuReceipt csbFmtownsUtilityMenuReceipt;
+    uint8_t csbFmtownsUtilityPixels[CSB_FMTOWNS_SWITCH_PIXELS];
+    int csbFmtownsUtilityBound;
     /* The selected SWITCHTW Game exit is a separate F31 C03_GAME program.
      * Retain its verified identity alongside the launch gate so M11 can open
      * the source-owned entrance session only after CHTWE/CHTWJ admission. */

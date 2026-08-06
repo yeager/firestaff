@@ -1,11 +1,11 @@
 # Firestaff TODO - Open Work
 
-- **CSB-FMTOWNS-C06-UTILITY-COMPOSITOR:** C06 now has its exact F31
-  `C09_ICON` six-bit palette material bound from `CEDT018.C`/`CEDT027.C`, in
-  addition to its P3 envelope, raw menu bytes, mouse rectangles, M653 font,
-  and champion portraits. Recover the original Utility menu compositor and
-  Japanese glyph consumer before presenting a C06 screen in M11; do not turn
-  hit rectangles or English strings into an inferred host UI.
+- **CSB-FMTOWNS-C06-UTILITY-TRANSACTIONS:** The F31E empty editor frame now
+  reaches M11 from SWITCHTW with original C06 coordinates, UTILE strings,
+  M653 metrics and C09_ICON palette. Recover the F31J Shift-JIS glyph
+  consumer and the original file-picker/save/portrait-edit transaction
+  owners before exposing those commands; a C06 hit rectangle must not mutate
+  a Firestaff save or manufacture a champion.
 
 - **THERON-FORCEFIELD-REAL-DUNGEON:** Enter now reliably dispatches from the
   Soul Room forcefield focus, including the first attempt without prompt text.
