@@ -124,6 +124,11 @@
 - ✅ This remains a raw source-join target. No TITLE.CG, MENU.BPK, PRS3,
   STABG, FACE or DGN ownership is inferred, and no production draw route is
   enabled.
+- ✅ The captured source span is retained as a negative join receipt:
+  SHA-256 `0a87c97db9dcaf9e74df11cb85b35084edc0e37daa74e6012ce1fc131a2d5575`,
+  with no exact-file or first-32-byte match against the local retail
+  `TM.BIN`, `TITLE.CG`, `TITLE.BIN` or `STABG.BIN` files. It remains authentic
+  runtime evidence, not a synthetic replacement.
 
 # DM2 SKSave-korpus med vald källa (2026-08-07)
 

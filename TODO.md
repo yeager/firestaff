@@ -318,6 +318,11 @@
   not identify whether the bytes belong to TITLE.CG, an intro decoder, or
   another retail source; that source join and CLUT/placement ownership remain
   required before any production presentation route changes.
+  The observed source span hashes to `0a87c97db9dcaf9e74df11cb85b35084edc0e37daa74e6012ce1fc131a2d5575`;
+  it has no exact-file or first-32-byte match in the local `TM.BIN`
+  (`d87485fe…`), `TITLE.CG` (`fda4da4c…`), `TITLE.BIN`
+  (`a634e8da…`) or `STABG.BIN` (`7b8e44ff…`) corpus. This is a negative
+  join receipt, not evidence that the bytes are synthetic.
 - **NEXUS-SATURN-STARTUP-INPUT-CAPTURE:** The external Saturn producer now
   supports a bounded, active-low START pulse through Mednafen SMPC at an
   operator-selected emulated frame, with an explicit mask for START (`0x10`),
