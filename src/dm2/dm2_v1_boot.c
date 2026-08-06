@@ -2287,9 +2287,29 @@ int dm2_v1_boot_startup_launch_from_runtime_state(
             &facts)) {
         return 0;
     }
-    return dm2_v1_startup_launch_from_host_facts_with_receipt(
-        &facts,
-        out_receipt);
+    if (!dm2_v1_startup_launch_from_host_facts_with_receipt(
+            &facts, out_receipt)) {
+        return 0;
+    }
+    /* The real HME-242 menu calls DM2_PLAY_MUSIC(0, true), but its native
+     * SKULL.EXP HMP-to-CDDA table maps cue zero to zero (silence).  Do not
+     * route that request through the PC HMP scheduler or invent a CD track.
+     * The table is parsed from the selected original executable in RAM.
+     * Source: SKULLWIN/startend.cpp:545; HME-242 SKULL.EXP+0x3dac. */
+    if (profile && profile->platform == DM2_PLATFORM_FMTOWNS_JA &&
+        profile->fmtowns_cdda_music.valid &&
+        dm2_v1_fmtowns_hmp_to_cdda(&profile->fmtowns_cdda_music, 0) == 0) {
+        out_receipt->runtime_handoff.music_cue_played = 0;
+        out_receipt->runtime_handoff.music_cue_source_silence = 1;
+    } else if (profile && startup_menu_active &&
+               dm2_v1_platform_music_system(profile->platform) ==
+                   DM2_MUSIC_SYSTEM_HMP_SONGLIST) {
+        /* Preserve the prior PC-only HMP route. Other platforms require
+         * their own source media owner instead of falling through to it. */
+        out_receipt->runtime_handoff.music_cue_played =
+            dm2_v1_sound_play_music(0) == 0 ? 1 : 0;
+    }
+    return 1;
 }
 
 int dm2_v1_boot_startup_launch_from_snapshot(

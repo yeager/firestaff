@@ -24,6 +24,7 @@ int main(void)
         handoff.music_cue != 0 ||
         handoff.music_loop != 1 ||
         handoff.music_cue_played != 0 ||
+        handoff.music_cue_source_silence != 0 ||
         handoff.show_menu_screen_after_music != 1) {
         fprintf(stderr, "DM2 startup music/menu handoff mismatch\n");
         return 1;

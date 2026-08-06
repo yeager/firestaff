@@ -232,6 +232,9 @@ typedef struct DM2_V1_StartupRuntimeHandoffReceipt {
     int music_cue;
     int music_loop;
     int music_cue_played;
+    /* A selected platform can prove that the source cue maps to silence.
+     * This is distinct from a missing backend: no substitute track may play. */
+    int music_cue_source_silence;
     int show_menu_screen_after_music;
     int initialize_v2_runtime;
     int initialize_hud_runtime;

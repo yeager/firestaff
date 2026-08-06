@@ -184,6 +184,15 @@ int main(void)
                    launch.profile->fmtowns_startup_plan.stages[3] ==
                        DM2_FMTOWNS_STARTUP_STAGE_END,
                "FM Towns follows its original AUTOEXEC animation and startup order");
+        {
+            DM2_V1_StartupLaunchReceipt startup;
+            memset(&startup, 0, sizeof(startup));
+            expect(dm2_v1_boot_startup_launch_from_launch(&launch, &startup) &&
+                       startup.runtime_handoff.music_cue == 0 &&
+                       !startup.runtime_handoff.music_cue_played &&
+                       startup.runtime_handoff.music_cue_source_silence,
+                   "FM Towns menu cue zero remains source-proven silence");
+        }
         expect(launch.profile &&
                    dm2_v1_fmtowns_anim_stream_is_hme242_swoosh(
                        &launch.profile->fmtowns_swoosh_stream) &&
@@ -396,6 +405,8 @@ int main(void)
                        launch.profile->fmtowns_cdda_music.source_offset == 0x3dacu &&
                        launch.profile->fmtowns_cdda_music.source_size == 29u &&
                        skull[0x3dacu] == 0u && skull[0x3db0u] == 1u &&
+                       dm2_v1_fmtowns_hmp_to_cdda(
+                           &launch.profile->fmtowns_cdda_music, 0) == 0 &&
                        dm2_v1_fmtowns_hmp_to_cdda(
                            &launch.profile->fmtowns_cdda_music, 4) == 1 &&
                        dm2_v1_fmtowns_cdda_map_table(

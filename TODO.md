@@ -1359,8 +1359,10 @@ level or consumer bindings.
   call passes `0xff` and 5500 instead. END's source FO/NE/BN loops and per-frame PL
   palette route now replay through RAM-only receipts (420 displayed frames
   from 385 EN/DL records), but its game-won handoff remains unbound. The remaining
-  gap is TITLE CDDA dispatch and a captured title-to-SKULL menu handoff; do
-  not replace them with host animation or menus. **2026-08-06 IMG2 menu update:** after the authenticated TITLE
+  gap is a captured title-to-SKULL menu handoff; the real SKULL.EXP table
+  maps the source menu cue 0 to silence, so TITLE has no missing CDDA track
+  to substitute. Do not replace them with host animation or menus.
+  **2026-08-06 IMG2 menu update:** after the authenticated TITLE
   stream completes, M11 now presents the selected HME-242
   `TITLE/0/dtImage+dtPalIRGB/4` surface through the FM Towns GDAT-v4 IMG2
   decoder and its local 16-colour palette. Its real `dt04/0` NEW GAME

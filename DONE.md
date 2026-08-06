@@ -55243,8 +55243,16 @@ alcove runtime and archive-media tests passed (4/4).
   DOS GDAT HUD/material receipts also pass, confirming four source-owned HUD
   commands and palette rejection. The stale TODO statement that listed END
   playback as missing is corrected: END's 420 source frames already replay;
-  only its game-won handoff, TITLE CDDA dispatch and native SKULL continuation
-  remain open. No game data was unpacked or copied to disk.
+  only its game-won handoff and native SKULL continuation remain open. The
+  title cue is source-proven silence rather than an unimplemented CDDA route.
+  No game data was unpacked or copied to disk.
+
+- ✅ 2026-08-06 FM Towns menu-cue correction: SKProject
+  `startend.cpp` calls `DM2_PLAY_MUSIC(0, true)` before the menu, but the
+  selected original `SKULL.EXP+0x3dac` HMP-to-CDDA receipt maps cue 0 to
+  silence. Startup no longer asks the PC HMP path to stand in for FM Towns or
+  invents a CDDA track. The real-CD M12 regression verifies the table byte and
+  records source-proven silence; user media remains in RAM only.
 
 - ✅ The FM Towns startup receipt now parses the real English `EDM.EXP`
   `SYM1` table from the authenticated P3 symbol span. It verifies all 1,174

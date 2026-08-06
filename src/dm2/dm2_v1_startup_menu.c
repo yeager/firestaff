@@ -1,5 +1,4 @@
 #include "dm2_v1_startup_menu.h"
-#include "dm2_v1_sound.h"
 #include "dm2_v1_save_load.h"
 
 #include <stdio.h>
@@ -1386,14 +1385,12 @@ int dm2_v1_startup_runtime_handoff_receipt_from_tick(
     out_receipt->music_cue = active ? 0 : -1;
     out_receipt->music_loop = active;
     /* SKWIN startend.cpp calls DM2_PLAY_MUSIC(0, true) immediately before
-     * SHOW_MENU_SCREEN.  Preserve that order, but do not claim that a cue
-     * played unless the verified original music path and backend accepted it.
-     * SHOW_MENU_SCREEN itself is independent of playback, so missing HMP
-     * material leaves the menu visible and audio silent. */
-    if (active) {
-        out_receipt->music_cue_played =
-            dm2_v1_sound_play_music(0) == 0 ? 1 : 0;
-    }
+     * SHOW_MENU_SCREEN.  This profile-neutral receipt records that source
+     * request only. The boot layer owns the selected medium and may either
+     * bind the native music system or prove that this cue is silence; it must
+     * never let the PC HMP path stand in for another platform. */
+    out_receipt->music_cue_played = 0;
+    out_receipt->music_cue_source_silence = 0;
     out_receipt->show_menu_screen_after_music = active;
     /* skproject/SKWIN SkWinCore startup keeps title/menu presentation and
      * HUD/game runtime as one boot handoff; Firestaff records the same
