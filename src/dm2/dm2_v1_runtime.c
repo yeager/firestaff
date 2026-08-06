@@ -668,16 +668,6 @@ static uint16_t dm2_runtime_door_set_state(uint16_t square_raw, int state) {
     return (uint16_t)((square_raw & ~0x0007u) | (uint16_t)(state & 0x0007));
 }
 
-static int dm2_runtime_door_step(int current_state, int action) {
-    if (current_state == 5) return 5;
-    if (action == 1) {
-        if (current_state >= 4) return 4;
-        return current_state + 1;
-    }
-    if (current_state <= 0) return 0;
-    return current_state - 1;
-}
-
 static void dm2_runtime_refresh_map_wall_gfx_list(DM2_V1_RuntimeState *rt) {
     DM2_V1_DungeonData *dd;
     int count;
@@ -8925,26 +8915,16 @@ int dm2_v1_runtime_door_action(int level,
                                int y,
                                int facing_dir,
                                int action) {
-    DM2_V1_RuntimeState *rt = &g_dm2_runtime;
-    DM2_V1_DungeonData *dd;
-    int raw;
-    int state;
-    int next_state;
-
+    (void)level;
+    (void)x;
+    (void)y;
     (void)facing_dir;
-    if (!rt->boot || !rt->boot->dungeon_data) return -1;
-    dd = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-    raw = dm2_v1_dungeon_get_tile_raw(dd, level, x, y);
-    if (raw < 0) return -1;
-    if (!dm2_runtime_is_door_at(dd, level, x, y, raw)) return -1;
-
-    state = dm2_runtime_door_state((uint16_t)raw);
-    next_state = dm2_runtime_door_step(state, action);
-    if (next_state == state) return 0;
-
-    return dm2_v1_dungeon_set_tile_raw(
-        dd, level, x, y,
-        dm2_runtime_door_set_state((uint16_t)raw, next_state));
+    (void)action;
+    /* SKProject's c_tim_proc.cpp::DM2_ACTUATE_DOOR resolves a live DB0
+     * record and actuator/timer context before it writes map state, handles
+     * party collision and queues the next door step. A coordinate plus tile
+     * bits cannot substitute for that transaction. */
+    return -1;
 }
 
 int dm2_v1_runtime_get_door_state(int level, int x, int y) {

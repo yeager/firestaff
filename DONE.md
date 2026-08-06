@@ -4,6 +4,14 @@
   and consumer are explicitly bound; fixture tests that need a palette still
   initialize it locally. Theron asset-loader and rendering tests pass.
 
+- ✅ 2026-08-06 DM2 coordinate-only door-action removal: M11 Action could
+  formerly advance a door state by writing its G1 tile directly. The route
+  lacked SKProject `DM2_ACTUATE_DOOR`'s DB0 record, actuator/timer context,
+  collision, sound and follow-up scheduling, so it is now explicitly
+  non-mutating and rejected. Door state remains readable from the original
+  dungeon; production actuation stays blocked until the complete source
+  transaction is owned.
+
 - ✅ 2026-08-06 Nexus CUE external-media completeness gate: `nexus_iso_open_cue`
   still selects only the authenticated Nexus data track, while the new
   `nexus_iso_cue_media_receipt` checks every CUE `FILE` payload independently.

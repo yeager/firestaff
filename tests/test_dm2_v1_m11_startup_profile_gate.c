@@ -2197,29 +2197,25 @@ int main(void) {
         int door_level = 0;
         int door_party_x = 15;
         int door_party_y = 15;
+        int raw_before;
         int has_door_pose = find_in_bounds_door_pose(
             dungeon, &door_level, &door_party_x, &door_party_y);
         expect_true(has_door_pose,
-                    "M11 DM2 door test finds an in-bounds real-data pose");
-        expect_true(dm2_v1_dungeon_set_tile_raw(
-                        dungeon,
-                        door_level, door_party_x, door_party_y - 1, 4u) == 0,
-                    "M11 DM2 door test seeds closed front door tile");
+                    "M11 DM2 action test finds an in-bounds real-data pose");
+        raw_before = dm2_v1_dungeon_get_tile_raw(
+            dungeon, door_level, door_party_x, door_party_y - 1);
         dm2_v1_runtime_set_position(
             door_level, door_party_x, door_party_y, 0);
         dm2_v1_runtime_set_outdoor(0);
-        expect_true(dm2_v1_runtime_get_door_state(
-                        door_level, door_party_x, door_party_y - 1) == 4,
-                    "M11 DM2 door test starts with closed front door");
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_ACTION) ==
                         M11_GAME_INPUT_REDRAW,
-                    "M11 DM2 action opens a front door through runtime");
+                    "M11 DM2 action rejects an unowned door transaction");
         expect_true(view.lastOutcome[0] == '\0',
-                    "M11 DM2 front-door action keeps host text unbound");
+                    "M11 DM2 rejected action keeps host text unbound");
         expect_true(dm2_v1_dungeon_get_tile_raw(
-                        dungeon,
-                        door_level, door_party_x, door_party_y - 1) == 0x83,
-                    "M11 DM2 front-door action writes stepped door state");
+                        dungeon, door_level, door_party_x, door_party_y - 1) ==
+                        raw_before,
+                    "M11 DM2 action cannot rewrite an original dungeon tile");
         dm2_v1_runtime_set_position(0, 15, 15, 0);
         view.dm2State.party_x = 15;
         view.dm2State.party_y = 15;

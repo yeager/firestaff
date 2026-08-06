@@ -2149,6 +2149,9 @@
   `MOVE_RECORD_ROTATE` unbound: a record-pool address or timer coordinate is
   not a substitute for the original `c_hero` inventory or `MOVE_RECORD_TO`
   link/wake/sleep/party transaction.
+  The M11 Action-door shortcut now follows the same rule: it cannot rewrite
+  a G1 tile from a coordinate-only query while the live DB0 door record,
+  direction, collision, sound and follow-up timer transaction are absent.
   Ornament animator/noise and the `0x58/0x59/0x5B/0x5C` DB-bit timers are
   likewise unbound in production: their raw record addresses are authentic
   bytes but not proof that the original `GAME_LOAD` timer queue, actuator

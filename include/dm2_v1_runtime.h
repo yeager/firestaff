@@ -1309,10 +1309,12 @@ typedef enum {
     DM2_RUNTIME_DOOR_CLOSING = 3,   /* DoorBit09=0, animates closed */
 } DM2_RuntimeDoorMotionState;
 
-/* Attempt to open or close the door at (level, x, y, facing_dir).
- * Returns 0 on success, -1 if no door at that location. */
+/* Door actuation is unavailable until the original DB0 door record, actuator
+ * transaction and follow-up timer owner are bound. This returns -1 and makes
+ * no mutation; callers may use dm2_v1_runtime_get_door_state() for a
+ * read-only source receipt. */
 int dm2_v1_runtime_door_action(int level, int x, int y, int facing_dir, int action);
-/*  action: 0=open, 1=close, 2=toggle */
+/*  action: 0=open, 1=close, 2=toggle (reserved for the source-owned path) */
 
 /* Get door state at a position. Returns -1 if no door. */
 int dm2_v1_runtime_get_door_state(int level, int x, int y);

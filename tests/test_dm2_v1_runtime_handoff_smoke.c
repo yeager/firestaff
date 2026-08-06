@@ -1057,6 +1057,7 @@ static void test_first_tick_after_boot_profile_handoff(void)
         int door_x = 0;
         int door_y = 0;
         int found_door_site = 0;
+        int raw_before;
         uint8_t framebuffer[320 * 200];
         int fetch_count = 0;
         for (int y = 0; y < 63 && !found_door_site; ++y) {
@@ -1074,21 +1075,16 @@ static void test_first_tick_after_boot_profile_handoff(void)
             }
         }
         CHECK(found_door_site,
-              "runtime smoke finds a valid adjacent front-door site");
+              "runtime smoke finds a valid adjacent source-map site");
         dm2_v1_runtime_set_position(0, door_x, door_y + 1, 0);
-        CHECK(dm2_v1_dungeon_set_tile_raw(
+        raw_before = dm2_v1_dungeon_get_tile_raw(
+            (DM2_V1_DungeonData *)profile.dungeon_data, 0, door_x, door_y);
+        CHECK(dm2_v1_runtime_door_action(0, door_x, door_y, 0, 0) == -1,
+          "runtime rejects a coordinate-only door transaction");
+        CHECK(dm2_v1_dungeon_get_tile_raw(
                   (DM2_V1_DungeonData *)profile.dungeon_data,
-                  0, door_x, door_y, 4u) == 0,
-          "runtime smoke seeds a closed front door tile");
-        CHECK(dm2_v1_runtime_get_door_state(0, door_x, door_y) == 4,
-          "runtime door state reads closed front door");
-        CHECK(dm2_v1_runtime_door_action(0, door_x, door_y, 0, 0) == 0,
-          "runtime door action opens one door step");
-        CHECK(dm2_v1_runtime_get_door_state(0, door_x, door_y) == -1 ||
-              dm2_v1_dungeon_get_tile_raw(
-                  (DM2_V1_DungeonData *)profile.dungeon_data,
-                  0, door_x, door_y) == 3,
-          "runtime door action writes the stepped raw tile state");
+                  0, door_x, door_y) == raw_before,
+          "runtime door action cannot rewrite a source-map tile");
         {
             int slot;
             DM2_V1_CreatureCCMTickObserver obs;
