@@ -3218,7 +3218,11 @@ level or consumer bindings.
   `dm2_v1_shop_npc_pc34_compat.c` classifier from `firestaff_dm2`. Focused
   shop tests still compile their explicit contracts, but no production code
   can mistake a zero catalog or coordinate flag for a live SHOP_GLASS/CCM
-  transaction.
+  transaction. **2026-08-08 real-data audit:** the mounted PC-DOS
+  `GRAPHICS.DAT` was admitted through the same production field-probe gate;
+  no source-owned CCM byteprogram field was found. Merchant enablement still
+  requires the live DB4 creature, its b_1a/b_17 record operands, and the
+  source merchandise/text owner.
 
 - **DM2-DYNAMIC-CLIGHT-OWNER-HANDOFF:** The map-only dynamic-light fallback
   is closed. Port the complete `DM2_RECALC_LIGHT_LEVEL` inputs: leader and

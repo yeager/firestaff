@@ -41,6 +41,18 @@
   explicit ReDMCSB regression compiles the source directly.
 - ✅ Verification: `test_dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
+# DM2 merchant CCM owner real-data gate (2026-08-08)
+
+- ✅ Ran the mounted PC-DOS `GRAPHICS.DAT` through the production CCM field
+  gate. It correctly refuses to infer `PLACE_MERCHANDISE`/`TAKE_MERCHANDISE`
+  from decodable CREATURE_AI bytes; the real owner remains the live DB4
+  creature record and its CCM operands, as required by SKProject
+  `c_creature.cpp::DM2_PROCEED_CCM`.
+- ✅ Extended `test_dm2_v1_creature_ccm_production_gate` with an optional
+  `FIRESTAFF_DM2_GRAPHICS_DAT` real-file check. Verification passes against
+  `/Users/bosse/.firestaff/data/dm2/dos_extract/data/graphics.dat`.
+- ⏳ Merchant interaction remains intentionally unavailable until the original
+  DB4/CCM/merchandise/text transaction is imported.
 
 # DM1 D3L/D3R F0108 floor-ornament synthetic audit isolation (2026-08-06)
 
