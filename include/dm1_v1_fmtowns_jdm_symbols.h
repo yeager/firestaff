@@ -52,7 +52,9 @@ extern "C" {
 
 /* DYNA_BUTTONS Shift-JIS label pool (from structural map §3, re-verified
  * by direct byte-content inspection in symbol-recovery evidence). */
+#ifndef DM1_V1_FMTOWNS_JDM_DYNA_BUTTONS_VADDR
 #define DM1_V1_FMTOWNS_JDM_DYNA_BUTTONS_VADDR      0x000243bcu
+#endif
 
 /*
  * Look up a JDM.EXP symbol by its ASCII SYM1 name (case-sensitive,

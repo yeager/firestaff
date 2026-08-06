@@ -55883,6 +55883,11 @@ alcove runtime and archive-media tests passed (4/4).
   source-locked DRAW_DMENU EGB backdrop route. The result is the native
   region-11 clear followed by the region-10 panel colour selected by the
   real DYNAMENU sentinel bytes.
+- The selected hash-admitted Japanese JDM.EXP route now uses its separately
+  recovered `DRAW_DMENU` and `DYNAMENU` addresses for the same EGB backdrop,
+  rather than falling through to PC34 action chrome. It intentionally draws
+  no labels or icons: the recovered Shift-JIS label pool does not decode a
+  native text or icon consumer.
 - Native label rasterisation, icon decode and mouse capture remain closed;
   the live path intentionally leaves them blank and never substitutes PC34
   C079/C077/C011 art or M653 glyph pixels.

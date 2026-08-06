@@ -110,6 +110,8 @@
 #include "dm1_v1_fmtowns_cd_audio.h"
 #include "dm1_v1_fmtowns_dynamenu.h"
 #include "dm1_v1_fmtowns_egb_shim.h"
+#include "dm1_v1_fmtowns_jdm_bss.h"
+#include "dm1_v1_fmtowns_jdm_symbols.h"
 #include "firestaff_fmtowns_disc.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_c15_layout_pc34_compat.h"
@@ -38894,7 +38896,17 @@ static int m11_count_source_action_menu_rows(const unsigned char actions[3]) {
     return 3;
 }
 
-/* EDM.EXP DRAW_DMENU owns a distinct FM Towns action panel.  Its mutable
+/* JDM.EXP has no SYM1 table, but its DRAW_DMENU and DYNAMENU owners were
+ * recovered independently from the hash-admitted P3 image.  Keep the two
+ * recovered facts coupled before presenting the common EGB backdrop. */
+static int m11_dm1_fmtowns_jdm_dmenu_owner_is_recovered(void) {
+    return dm1_v1_fmtowns_jdm_symbol_vaddr_pc34("DRAW_DMENU") ==
+               DM1_V1_FMTOWNS_JDM_DRAW_DMENU_VADDR &&
+           dm1_v1_fmtowns_jdm_bss_vaddr_pc34("DYNAMENU") ==
+               DM1_V1_FMTOWNS_JDM_DYNAMENU_VADDR;
+}
+
+/* EDM.EXP/JDM.EXP DRAW_DMENU owns a distinct FM Towns action panel.  Its mutable
  * DYNAMENU record contains precisely the three action-label indices that
  * F0389 has selected for the active champion.  The recovered EGB path can
  * safely present the source-owned clear/panel pixels, but DO_DRAW_CTEXT and
@@ -38911,16 +38923,24 @@ static int m11_draw_dm1_fmtowns_dmenu_backdrop(
     unsigned int slot;
 
     if (!state || !actions || !framebuffer || framebufferWidth <= 0 ||
-        framebufferHeight <= 0 || !state->dm1FmtownsStartupReceiptValid ||
-        state->dm1FmtownsStartupReceipt.language != DM1_FMTOWNS_LANG_EN ||
-        !state->dm1FmtownsStartupReceipt.game_symbol_table_verified ||
-        state->dm1FmtownsStartupReceipt.game_draw_dmenu_entry == 0u ||
-        state->dm1FmtownsStartupReceipt.game_dynamenu_entry == 0u) {
+        framebufferHeight <= 0 || !state->dm1FmtownsStartupReceiptValid) {
+        return 0;
+    }
+    if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN) {
+        if (!state->dm1FmtownsStartupReceipt.game_symbol_table_verified ||
+            state->dm1FmtownsStartupReceipt.game_draw_dmenu_entry == 0u ||
+            state->dm1FmtownsStartupReceipt.game_dynamenu_entry == 0u) {
+            return 0;
+        }
+    } else if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP) {
+        if (!m11_dm1_fmtowns_jdm_dmenu_owner_is_recovered()) return 0;
+    } else {
         return 0;
     }
     for (slot = 0; slot < DM1_V1_FMTOWNS_DYNAMENU_BUTTON_COUNT; ++slot) {
         unsigned char action = actions[slot];
-        if (action != DM1_V1_FMTOWNS_DYNAMENU_SLOT_DISABLED &&
+        if (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN &&
+            action != DM1_V1_FMTOWNS_DYNAMENU_SLOT_DISABLED &&
             (action >= state->dm1FmtownsStartupReceipt.game_action_name_count ||
              state->dm1FmtownsStartupReceipt.game_action_names[action][0] == '\0')) {
             return 0;
@@ -45576,12 +45596,14 @@ static int m11_draw_dm_action_menu(const M11_GameViewState* state,
         return 0;
     }
 
-    /* The selected English FM Towns EDM image has its own DRAW_DMENU
-     * owner.  Its EGB panel is source-bound to regions 10/11 and the live
-     * DYNAMENU indices above, so do not replace it with PC34 action chrome.
-     * A malformed receipt or undersized framebuffer fails closed. */
+    /* The selected FM Towns EDM/JDM image has its own DRAW_DMENU owner.  Its
+     * EGB panel is source-bound to regions 10/11 and the live DYNAMENU
+     * indices above, so do not replace it with PC34 action chrome.  The JDM
+     * branch deliberately supplies no text or icon substitute: its recovered
+     * label pool proves owner layout, not a decoded text/pixel consumer. */
     if (state->dm1FmtownsStartupReceiptValid &&
-        state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN) {
+        (state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_EN ||
+         state->dm1FmtownsStartupReceipt.language == DM1_FMTOWNS_LANG_JP)) {
         return m11_draw_dm1_fmtowns_dmenu_backdrop(
             state, actions, framebuffer, framebufferWidth, framebufferHeight);
     }

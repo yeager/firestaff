@@ -1361,6 +1361,11 @@ level or consumer bindings.
   record and presents only this EGB-owned backdrop. It deliberately leaves
   the panel text and icons blank until `DO_DRAW_CTEXT` and the icon consumer
   are decoded, rather than leaking the PC34 action chrome or M653 glyphs.
+  2026-08-06 follow-up: the hash-admitted Japanese JDM path now consumes the
+  independently recovered `DRAW_DMENU` and `DYNAMENU` owners for that same
+  EGB clear/panel sequence. It remains blank: the recovered Shift-JIS label
+  pool establishes layout ownership only and is not permission to synthesize
+  text, icons or input.
   complete native menu parity.
 - **DM1-PLATFORM-ATARI-ST-PIXELS:** DM1 Atari ST 1.0a/1.0b/1.1/1.2/1.3
   graphics hashes are now catalogued and discovered from STX/archives, but
