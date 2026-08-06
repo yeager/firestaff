@@ -8267,6 +8267,13 @@ static void m11_audio_emit_source_sound_with_volume(
     if (!state) {
         return;
     }
+    if (m11_is_dm1_source_kind(state->sourceKind)) {
+        /* DM1 SOUND.C F0060 owns the event's SND3 sample.  A missing or
+         * malformed source record is silent; a generated marker would make
+         * an unverified effect sound plausible while being wrong. */
+        (void)M11_Audio_EmitSourceSoundIndex(&state->audioState, soundIndex);
+        return;
+    }
     if (state->sourceKind == M11_GAME_SOURCE_CSB_BOOT) {
         /* CSB PC3.4 owns its effect samples in the executable-selected
          * GRAPHICS.DAT table, not DM1's SND3 namespace. Do not turn a missing

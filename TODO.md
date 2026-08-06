@@ -25449,6 +25449,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## DM1 F0248/F0213 timeline ownership follow-up
 
+- 2026-08-06 source-audio audit: authenticated DM1 event calls no longer use
+  the procedural marker path when SND3 data is unavailable. The remaining
+  audio scope is real original capture/corpus breadth, not replacement audio.
+
 - [ ] Capture broader original PC34 launcher and impact sequences. F0248 now
   publishes C007/C008/C009/C010/C014/C015 launcher projectiles only through
   a reserved raw C14 and its C48/C49 owner; loaded worlds reject an exhausted,

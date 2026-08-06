@@ -50712,3 +50712,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   regler för oanvänd tilemap-bit 0, alltid-satt palette-bit 15 och bounded
   tile-index. Alla 16 verkliga `SMAP00-15.BIN`-filer verifieras och dekoderas;
   inga syntetiska automap-pixlar används.
+- ✅ 2026-08-06 DM1 source-audio fallback removal: all authenticated DM1
+  effect calls now use `M11_Audio_EmitSourceSoundIndex`, which accepts only
+  the decoded original SND3 sample. Missing or malformed source audio is
+  silent instead of becoming a generated door/combat/creature marker. CSB's
+  existing GRAPHICS.DAT PCM route and non-source diagnostic marker behavior
+  are unchanged.
