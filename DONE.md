@@ -1,3 +1,11 @@
+# DM1 D1L/D1R stairs-pit synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the fixed-slot D1L/D1R stairs/pit dispatch fixture from M10. It
+  reads no original material and has no M11/runtime caller; its dedicated
+  ReDMCSB regression now compiles the source explicitly.
+- ✅ Verification: `test_dm1_v1_viewport_d1l_d1r_stairs_pit_dispatch_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D0L/D0R F0111 synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the fixed-rectangle D0L/D0R door composition contract from M10.

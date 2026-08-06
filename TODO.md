@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D1L-D1R-STAIRS-PIT-SYNTHETIC-AUDIT:** This D1 side stairs/pit
+  dispatch model uses fixed graphics slots and zones. It reads no original
+  game data and has no M11/runtime caller; retain it only as explicit ReDMCSB
+  coverage until a source-bound owner is recovered.
+
 - **DM1-D0L-D0R-F0111-SYNTHETIC-AUDIT:** This D0 side-door composition uses
   fixed zones and blit rectangles. It reads no original game data and has no
   M11/runtime caller; retain it only as explicit ReDMCSB coverage until a
