@@ -51749,3 +51749,10 @@ and `firestaff` build pass.
   pickup or mouse placement; a target from a previous map can no longer
   unlink an object from the active square. Packaged macOS capture of torches,
   holders, stairs, doors and the held-object cursor remains open in TODO.
+- ✅ 2026-08-06 DM1 C015/C016 damage transparency: fixed the authenticated
+  PC34 champion damage overlays to use ReDMCSB `C10_COLOR_FLESH` (palette slot
+  10) for both normal and inventory damage surfaces. Black source pixels are
+  artwork, not the transparency key; this removes the block/name corruption
+  seen during creature damage. `test_m11_dm1_damage_indicator_source_gate`
+  and `test_dm1_v1_champion_panel_damage_indicator_pc34_compat` pass. A real
+  packaged macOS capture is still intentionally tracked in TODO.

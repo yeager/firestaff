@@ -11746,6 +11746,11 @@ lane is carried forward in the sections below.
   must leave the status clear unchanged; do not restore generic M11 text or
   default status-box coordinates.
 
+  2026-08-06 source audit: corrected the C015/C016 transparency slot to the
+  ReDMCSB C10_COLOR_FLESH route. The previous black-key treatment could paint
+  the damage bitmap over champion names. Focused source and PC34 contract
+  tests now pass; real packaged Mac capture remains open.
+
 - 2026-07-15 DM1 status-hand HUD follow-up: F0291 now accepts only exact
   loaded-pixel C033/C034/C035 at C211..C218 before it may draw a source icon.
   Remaining work is real PC34/Mac capture for ready, wounded, and acting-hand

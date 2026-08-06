@@ -3727,6 +3727,7 @@ enum {
     M11_COLOR_GRAY = 1,         /* DM PC VGA slot 1  — Gray           */
     M11_COLOR_DARK_BROWN = 5,   /* DM PC VGA slot 5  — Dark Brown     */
     M11_COLOR_ORANGE = 9,       /* DM PC VGA slot 9  — Orange/Gold    */
+    M11_COLOR_FLESH = 10,      /* DM PC VGA slot 10 — C10 flesh/transparency */
     M11_COLOR_SILVER = 13       /* DM PC VGA slot 13 — Silver         */
 };
 
@@ -49316,7 +49317,10 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                             M11_AssetLoader_BlitRegion(dmgAsset,
                                 0, 0, dmgW, dmgH,
                                 framebuffer, framebufferWidth, framebufferHeight,
-                                dmgX, dmgY, 0);
+                                /* ReDMCSB CHAMPION.C F0320 uses
+                                 * C10_COLOR_FLESH for both C015 and C016.
+                                 * Black is source artwork, not transparency. */
+                                dmgX, dmgY, M11_COLOR_FLESH);
                             drewDamageSurface = 1;
                         }
                     }
@@ -51203,7 +51207,7 @@ static void m11_draw_inventory_panel(const M11_GameViewState* state,
                     M11_AssetLoader_BlitRegion(dmg16,
                         0, 0, 32, 29,
                         framebuffer, framebufferWidth, framebufferHeight,
-                        portX, portY, 0);
+                        portX, portY, M11_COLOR_FLESH);
                     dmgDrawn = 1;
                 }
             }
