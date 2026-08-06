@@ -115,11 +115,14 @@ Japanese text extraction (dungeon names, monster names, inscriptions, UI) from S
 ### M5: CD Audio Not Integrated
 
 **Severity:** MEDIUM
-**Status:** nexus_v1_game.c has stub nexus_v1_cd_track_for_level() returning 2+(level/2)
+**Status:** `nexus_v1_cd_track_for_level()` is intentionally unbound (`-1`)
+until a source-owned Saturn selector is recovered.
 
 Red Book Audio tracks (Tracks 2-9 on the disc) are not played. No music in game. Sound effects also not wired (unknown format).
 
-**Action required:** Integrate SDL_mixer for CD audio playback. Map level to track. Fade on level transition.
+**Action required:** recover the original level-to-track consumer, then bind
+authenticated CDDA playback and transition timing. Do not infer a map from
+track count or level order.
 
 ---
 

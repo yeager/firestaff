@@ -15,7 +15,8 @@ Dungeon Master Nexus was an **exclusive Sega Saturn title, Japanese only** (1998
 FTL Games / Athena chose Saturn for its:
 - **VDP1 polygon rendering** — hardware-accelerated 3D triangles (critical for a 3D remake)
 - **VDP2 for backgrounds** — layer support for UI overlays
-- **CD-ROM + Red Book Audio** — 8 CD audio tracks for per-level music
+- **CD-ROM + Red Book Audio** — 8 retail CD audio tracks; level selection is
+  not source-bound
 - **SH2 CPU architecture** — 32-bit dual-processor (master/slave)
 
 ### Saturn Hardware Specs
@@ -104,7 +105,8 @@ Discovery priority:
 
 Saturn disc image structure:
 - **Track 1**: MODE1/2352, ISO 9660 filesystem, game data (133 MB)
-- **Tracks 2-9**: Red Book Audio CD-DA, per-level music tracks
+- **Tracks 2-9**: Red Book Audio CD-DA layout receipt; per-level selector
+  unbound
 
 ---
 
@@ -124,7 +126,7 @@ Saturn disc image structure:
 
 ### CD Audio Architecture
 - 8 CD-DA tracks (tracks 2-9 of disc)
-- Per-level music: track N plays on level N-1
+- Per-level music selector: not authenticated
 - Audio streamed from CD in real-time via DMA
 
 ---

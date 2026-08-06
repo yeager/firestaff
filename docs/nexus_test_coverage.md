@@ -123,7 +123,9 @@ No equivalent probes exist in probes/nexus/.
 5. **Text extraction test**: Verify Shift-JIS to UTF-8 produces valid Japanese text (or English if translated)
 6. **Render smoke test**: Render a single frame at 320x224, verify output buffer has non-zero content
 7. **Game init test**: Initialize game state, verify party position, direction, level
-8. **CD audio track mapping test**: Verify level -> track mapping (Track 2-9 for levels 0-15)
+8. **CD audio selector test**: Verify unbound level→track behavior until the
+original Saturn selector is captured; separately verify the retail track 2–9
+disc-layout receipt.
 9. **Deterministic hash test**: Run game for 100 ticks, hash state, compare across platforms
 
 None of these can be written without the Sega Saturn disc image.

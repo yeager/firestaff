@@ -83,16 +83,13 @@ engine->audio_enabled = 1;  // audio subsystem init
 
 int nexus_v1_load_level(...) {
     int new_track = nexus_v1_cd_track_for_level(level);
-    if (new_track != engine->current_cd_track && engine->audio_enabled) {
-        engine->current_cd_track = new_track;
-        printf("Nexus: CD track %d for level %d\n", new_track, level);
-        /* FUTURE: CD audio playback via SDL_mixer.
-         * DM Nexus (Saturn) uses CD-DA tracks for music. */
-    }
+    /* new_track is currently -1: the Saturn level-to-CDDA selector is not
+       source-bound, so no track is selected from the level number. */
 }
 ```
 
-Current state: track number is computed and stored. The sound engine now
+Current state: the CDDA track layout is retained as a receipt, but no level
+track number is computed or stored. The sound engine now
 receives the active Nexus data root from `nexus_v1_engine.c`; any future
 verified host CD-DA materialization is therefore resolved against the selected
 source root, not a hardcoded `HOME/.firestaff/data/nexus` path. The retail

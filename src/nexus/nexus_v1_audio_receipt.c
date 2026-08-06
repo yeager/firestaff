@@ -31,8 +31,8 @@ static const uint8_t g_sal_opaque_prefix[NEXUS_V1_SAL_OPAQUE_PREFIX_BYTES] = {
  *   and SNDLEV00-15.MAP as 16 per-level sound banks + 16 mapping tables.
  * - docs/VERIFIED_HASHES.md:154-185 records the verified size/SHA256
  *   pairs for every SNDLEV##.SAL and SNDLEV##.MAP asset.
- * - docs/nexus_audio_format.md records CD-DA tracks 2-9 and the
- *   2-levels-per-track mapping.
+ * - docs/nexus_audio_format.md records the CD-DA track layout; level
+ *   selection remains unbound.
  *
  * This module is a receipt/classification gate only. It does not parse SAL,
  * decode MAP tables, read CD sectors, or start audio playback.

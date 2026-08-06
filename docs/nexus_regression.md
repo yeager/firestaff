@@ -52,7 +52,9 @@ Every claimed feature in TODO.md for Nexus V1 has a regression relative to plan 
 
 ### 8. No CD audio integration
 **Severity:** MEDIUM
-**Details:** nexus_v1_game.c has nexus_v1_cd_track_for_level stub returning 2+(level/2), but no SDL_mixer integration. Tracks 2-9 Red Book Audio not played.
+**Details:** `nexus_v1_cd_track_for_level()` now returns `-1` because the
+retained DM.BIN/disassembly does not bind a level-to-CDDA selector. Tracks 2–9
+are a retail disc-layout receipt; playback is not promoted.
 
 ### 9. No save/load implementation
 **Severity:** MEDIUM

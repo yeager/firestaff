@@ -25,7 +25,7 @@ extern "C" {
  * - nexus_v1_dmdf_model.c     DMDF (Dungeon Master Data Format) decoder
  * - nexus_v1_dungeon.c        DGN level loader, 16 levels
  * - nexus_v1_engine.c         V1 engine singleton (data + state)
- * - nexus_v1_game.c           game state init, level load, CD track map
+ * - nexus_v1_game.c           game state init and level load; CD selector gated
  * - nexus_v1_champions.c      4-champion party (DM1 + Nexus variants)
  * - nexus_v1_creatures.c      creature AI + render (MNS files)
  * - nexus_v1_movement.c       NEXUS_CMD_* (F0365/F0366 analogues)
@@ -82,7 +82,7 @@ typedef enum {
 
     NEXUS_V2_PHASE_DOMAIN_GAME_STATE_INIT = 2,
         /* nexus_v1_game.c + nexus_v1_launcher.c - state init,
-         * party spawn (11,29,N), level load, CD audio track map. */
+         * party spawn (11,29,N), level load, and CDDA layout receipt. */
 
     NEXUS_V2_PHASE_DOMAIN_CHAMPION_PARTY = 3,
         /* nexus_v1_champions.c - 4-champion party, stats, level-up,

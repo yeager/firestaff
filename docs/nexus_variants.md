@@ -28,13 +28,14 @@ Dungeon Master Nexus was **exclusive to the Sega Saturn**, released in Japan onl
 - **CPU:** 2× Hitachi SH-2 @ ~10.5 MHz (big-endian)
 - **3D:** Sega VDP1 polygon rasterizer (software on SH-2)
 - **Resolution:** 320×224 (NTSC), 16-bit framebuffer
-- **Audio:** Red Book CD-DA (tracks 2–9), ADX/SEGA PCM sfx
+- **Audio:** Red Book CD-DA layout (tracks 2–9); level selector and ADX/SEGA
+  PCM SFX consumer remain unbound
 - **Storage:** CD-ROM + Saturn SRAM cartridge (8 KB save)
 
 ### Disc Image Structure
 ```
 Track 1 (133 MB):  MODE1/2352 — ISO 9660 filesystem, game data
-Tracks 2–9:        Red Book Audio CD-DA — per-level music
+Tracks 2–9:        Red Book Audio CD-DA — retail layout receipt
 Total:             9 tracks, ~228 MB disc
 ```
 
