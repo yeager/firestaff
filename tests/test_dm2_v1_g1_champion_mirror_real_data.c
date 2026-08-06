@@ -74,9 +74,12 @@ int main(int argc, char **argv)
         if (mirror->map < 0 || mirror->map >= dungeon.level_count ||
             mirror->x < 0 || mirror->x >= dungeon.level_widths[mirror->map] ||
             mirror->y < 0 || mirror->y >= dungeon.level_heights[mirror->map] ||
-            mirror->actuator_data > 0x1ffu) {
+            mirror->actuator_data != 0x1ffu ||
+            mirror->dynamic_hero_type != 0xffu ||
+            mirror->dynamic_load_id != 0x16ffffffu) {
             dm2_v1_dungeon_free(&dungeon);
-            fputs("FAIL: invalid source champion mirror payload\n", stderr);
+            fputs("FAIL: source champion mirror lost its dynamic-load key\n",
+                  stderr);
             return 1;
         }
     }

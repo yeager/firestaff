@@ -3427,6 +3427,18 @@ int dm2_v1_dungeon_collect_g1_champion_mirrors(
                     mirror->direction = (uint8_t)(root >> 14);
                     mirror->actuator_data =
                         (uint16_t)((w2 >> 7) & 0x01ffu);
+                    /* SKProject c_loadlevel.cpp:604-611 reads the same w2,
+                     * keeps RG1Blo, and calls DM2_MARK_DYN_LOAD with
+                     * (hero_type << 16) + 0x1600ffff.  The byte is also what
+                     * c_hero.cpp::DM2_SELECT_CHAMPION passes to the signed
+                     * i8 REVIVE_PLAYER htype parameter.  Retain both forms:
+                     * raw 9-bit data is evidence, the dynamic key is the
+                     * source-owned handoff required before GDAT queries. */
+                    mirror->dynamic_hero_type =
+                        (uint8_t)mirror->actuator_data;
+                    mirror->dynamic_load_id =
+                        ((uint32_t)mirror->dynamic_hero_type << 16) |
+                        0x1600ffffu;
                 }
                 ++stack;
             }

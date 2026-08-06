@@ -52923,6 +52923,15 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   The real-data regression finds exactly 16 marker roots. This is evidence
   only: marker data has not been promoted to a fabricated champion or a
   playable entrance state.
+
+- ✅ Corrected the marker-data interpretation against SKProject
+  `c_loadlevel.cpp:604-611` and `c_hero.cpp:1098-1117`. Every real PC G1
+  marker has raw `Actuator::Data() == 0x1ff`; the original consumes its low
+  byte (`0xff`) and queues the dynamic resource key `0x16ffffff`. The receipt
+  now retains that exact byte/key pair and the real-media regression verifies
+  all sixteen roots. This replaces the unsafe assumption that `0x1ff` was a
+  static `CHAMPIONS` GDAT index. Dynamic GDAT materialisation and the complete
+  `GAME_LOAD` selection path remain deliberately blocked.
 # 2026-08-06 Nexus mixed extracted/ISO runtime source
 
 - ✅ `nexus_v1_init()` now retains the hash-verified extracted corpus as the

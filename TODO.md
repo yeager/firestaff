@@ -27254,10 +27254,15 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 - [ ] DM2 champion-mirror activation: the canonical PC G1 dungeon has 16
   source-addressed DB3 `Actuator::Type() == 0x7e` marker roots. Their raw
-  `Actuator::Data()` values are retained, but live champion selection remains
-  blocked until the original event preconditions, GDAT champion lookup,
-  possession transfer and session-state updates are all connected. Do not
-  treat a marker receipt as a playable New Game path.
+  `Actuator::Data()` values are retained. **2026-08-06 inventory correction:**
+  all sixteen are the original `0x1ff`, not static hero IDs. SKProject
+  `c_loadlevel.cpp:604-611` truncates that value to `0xff` and queues
+  `DM2_MARK_DYN_LOAD(0x16ffffff)` before `c_hero.cpp` reaches
+  `REVIVE_PLAYER`; direct `CHAMPIONS/255` text/stat rows are absent from the
+  on-disk GDAT. Live champion selection remains blocked until that original
+  dynamic-GDAT load, event preconditions, possession transfer and
+  session-state updates are all connected. Do not treat a marker receipt as
+  a playable New Game path.
 
 - [ ] DM2 delayed movement ownership: `PERFORM_MOVE`'s real
   `glbIsPlayerMoving` path retains the old party pose and derives its countdown
