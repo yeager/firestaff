@@ -9632,6 +9632,21 @@ if(BUILD_TESTING)
         )
     endif()
 
+    if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm1_v1_legacy_graphics_real_corpus.c")
+        add_executable(test_dm1_v1_legacy_graphics_real_corpus
+            tests/test_dm1_v1_legacy_graphics_real_corpus.c
+            src/dm1/dm1_v1_fmtowns_iso9660.c)
+        target_link_libraries(test_dm1_v1_legacy_graphics_real_corpus PRIVATE firestaff_m11)
+        if(NOT MSVC)
+            target_compile_options(test_dm1_v1_legacy_graphics_real_corpus PRIVATE -Wall -Wextra -O2)
+        endif()
+        add_test(
+            NAME dm1_v1_legacy_graphics_real_corpus
+            COMMAND test_dm1_v1_legacy_graphics_real_corpus
+            WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+        )
+    endif()
+
     if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_m11_dm1_hoc_mirror_side_depth_material_receipt.c")
         add_executable(test_m11_dm1_hoc_mirror_side_depth_material_receipt
             tests/test_m11_dm1_hoc_mirror_side_depth_material_receipt.c)

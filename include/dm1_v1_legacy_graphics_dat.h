@@ -15,6 +15,11 @@ extern "C" {
 int dm1_v1_legacy_graphics_probe(const uint8_t *data, size_t size,
                                  int big_endian);
 
+/* DM1 FM Towns/Amiga v2.x stores non-raster code, sound, text and font
+ * records in the same 575-entry table.  Only 0..20 and 22..532 are IMG1/
+ * IMG2 bitmaps in the original DM1 data files. */
+int dm1_v1_legacy_graphics_is_bitmap_index(uint16_t graphic_index);
+
 int dm1_v1_legacy_graphics_query(const uint8_t *data, size_t size,
                                  int big_endian, uint16_t graphic_index,
                                  uint16_t *out_width, uint16_t *out_height);

@@ -307,6 +307,9 @@ const M11_AssetSlot* M11_AssetLoader_Load(M11_AssetLoader* loader,
     }
 
     if (loader->legacyDm1) {
+        if (!dm1_v1_legacy_graphics_is_bitmap_index((uint16_t)graphicIndex)) {
+            return NULL;
+        }
         uint16_t legacyWidth = 0u;
         uint16_t legacyHeight = 0u;
         size_t capacity = 1024u * 1024u;

@@ -51,9 +51,13 @@
   big-endian 575-record table and Atari-LZW/raw record handoff. The production
   M11 renderer still lacks the final source-bound IMG1/IMG2 interpretation
   after that handoff. Keep these variants launch-blocked for gameplay rather
-  than routing their bytes through the PC34 loader. FM Towns legacy IMAGE2 and
-  Amiga legacy IMAGE2 graphics are handled by the endian-aware DM1 cache path;
-  their remaining dungeon/save/input/media capture gaps stay separate.
+  than routing their bytes through the PC34 loader. 2026-08-06: the
+  endian-aware legacy path now uses the DMWeb bitmap index table and decodes
+  all 532 real DM1 FM Towns IMG2 and Amiga IMG1 records from local corpora;
+  non-raster code, sound, text, font and unused records fail closed before
+  M11 caching. Their remaining dungeon/save/input/media capture gaps stay
+  separate. Atari still needs the source-bound IMG1/IMG2 pixel decoder and
+  reproducible STX protected-media extraction.
 
 - **NEXUS-MNS-SATURN-RENDER-HANDOFF:** Retail MNS admission now validates
   DMDF block size plus MOTN/TEXT section envelopes, and the real corpus decodes

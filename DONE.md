@@ -51095,3 +51095,15 @@ remains isolated to compatibility fixtures. PLRD health/stamina/mana,
 attributes, equipment ordinals, and six TABL indices/codes are source-backed.
 Rendered names remain intentionally unavailable until the Saturn
 TEXT/FONT256 consumer is captured, so no synthetic names are promoted.
+- ✅ 2026-08-06 DM1 FM Towns/Amiga real IMAGE1/IMAGE2 support: replaced the
+  legacy decoder's incorrect byte-command interpretation with the DMWeb and
+  ReDMCSB nibble RLE algorithm, including literal, previous-row, long-run and
+  transparent-run commands. Added the DM1 legacy raster index boundary
+  (0-20, 22-532) so shared 575-entry tables cannot send COD/SND/TXT/FNT or
+  unused records through the bitmap cache. The new
+  `test_dm1_v1_legacy_graphics_real_corpus` reads a real FM Towns MODE1/2048
+  track through its ISO DATA/JDATA entries and a real Amiga ADF-extracted
+  `GRAPHICS.DAT`; both decode all 532 original image records with stable
+pixel digests and reject every non-raster index. No generated pixels or
+platform substitution was introduced. Atari ST IMG1/IMG2 pixel binding and
+STX extraction remain explicitly open in TODO.

@@ -10,6 +10,12 @@ static uint16_t rd16(const uint8_t *p, int be)
               : (uint16_t)(p[0] | ((uint16_t)p[1] << 8));
 }
 
+int dm1_v1_legacy_graphics_is_bitmap_index(uint16_t graphic_index)
+{
+    return graphic_index <= 20u ||
+           (graphic_index >= 22u && graphic_index <= 532u);
+}
+
 static int record_bounds(const uint8_t *data, size_t size, int be,
                          uint16_t index, size_t *out_offset,
                          size_t *out_length)
@@ -68,6 +74,7 @@ int dm1_v1_legacy_graphics_query(const uint8_t *data, size_t size, int be,
     size_t offset, length;
     uint16_t width, height;
     if (!dm1_v1_legacy_graphics_probe(data, size, be) ||
+        !dm1_v1_legacy_graphics_is_bitmap_index(index) ||
         !record_bounds(data, size, be, index, &offset, &length)) return 0;
     width = rd16(data + offset, be);
     height = rd16(data + offset + 2u, be);
@@ -78,15 +85,45 @@ int dm1_v1_legacy_graphics_query(const uint8_t *data, size_t size, int be,
     return 1;
 }
 
-/* IMAGE2 command stream.  Counts are byte/BE16 encoded by the original
- * image format on both targets; only the embedded dimensions follow the
- * target byte order. */
+static int read_nibble(const uint8_t *data, size_t offset, size_t length,
+                       size_t *nibble_pos, uint8_t *out)
+{
+    size_t byte_pos;
+    if (!data || !nibble_pos || !out || *nibble_pos >= (length - 4u) * 2u)
+        return 0;
+    byte_pos = offset + 4u + (*nibble_pos / 2u);
+    *out = ((*nibble_pos & 1u) == 0u)
+        ? (uint8_t)(data[byte_pos] >> 4)
+        : (uint8_t)(data[byte_pos] & 0x0fu);
+    ++*nibble_pos;
+    return 1;
+}
+
+static int read_nibble_value(const uint8_t *data, size_t offset, size_t length,
+                             size_t *nibble_pos, unsigned int nibble_count,
+                             size_t *out)
+{
+    unsigned int i;
+    size_t value = 0u;
+    uint8_t nibble;
+    for (i = 0u; i < nibble_count; ++i) {
+        if (!read_nibble(data, offset, length, nibble_pos, &nibble)) return 0;
+        value = (value << 4) | (size_t)nibble;
+    }
+    *out = value;
+    return 1;
+}
+
+/* IMAGE1/IMAGE2 command stream.  The format is nibble-based RLE as
+ * documented by DMWeb's data-files page and ReDMCSB IMAGE2.C.  IMG1 uses a
+ * big-endian width/height header; IMG2 uses little endian.  The pixel stream
+ * itself is identical on both targets. */
 int dm1_v1_legacy_graphics_decode(const uint8_t *data, size_t size, int be,
                                   uint16_t index, uint8_t *pixels,
                                   size_t capacity, uint16_t *out_width,
                                   uint16_t *out_height)
 {
-    size_t offset, length, src = 4u, pos = 0u, total, count, i;
+    size_t offset, length, nibble_pos = 0u, pos = 0u, total, count, i;
     uint16_t width, height;
     if (!pixels || !dm1_v1_legacy_graphics_query(data, size, be, index,
                                                   &width, &height) ||
@@ -94,50 +131,95 @@ int dm1_v1_legacy_graphics_decode(const uint8_t *data, size_t size, int be,
     total = (size_t)width * height;
     if (capacity < total) return 0;
     memset(pixels, 0, total);
-    while (pos < total && src < length) {
-        uint8_t command = data[offset + src++];
-        uint8_t color = (uint8_t)(command & 0x0fu);
-        if ((command & 0x80u) == 0u) {
-            count = (size_t)((command >> 4) & 7u) + 1u;
-            if (count > total - pos) return 0;
-            memset(pixels + pos, color, count);
-            pos += count;
-            continue;
-        }
-        if ((command & 0x40u) == 0u) {
-            if (src >= length) return 0;
-            count = (size_t)data[offset + src++] + 1u;
-        } else {
-            if (src + 1u >= length) return 0;
-            count = (size_t)(((uint16_t)data[offset + src] << 8) |
-                             data[offset + src + 1u]) + 1u;
-            src += 2u;
-        }
-        switch ((command >> 4) & 3u) {
-        case 0u:
+    while (pos < total) {
+        uint8_t control;
+        uint8_t color;
+        if (!read_nibble(data, offset, length, &nibble_pos, &control) ||
+            !read_nibble(data, offset, length, &nibble_pos, &color)) return 0;
+
+        switch (control) {
+        case 0u: case 1u: case 2u: case 3u:
+        case 4u: case 5u: case 6u: case 7u:
+            count = (size_t)control + 1u;
             if (count > total - pos) return 0;
             memset(pixels + pos, color, count);
             pos += count;
             break;
-        case 1u:
-            if (count > total - pos || src + (count + 1u) / 2u > length)
-                return 0;
-            if (count & 1u) pixels[pos++] = color;
-            for (i = 0u; i < count / 2u; ++i) {
-                uint8_t packed = data[offset + src++];
-                pixels[pos++] = (uint8_t)(packed >> 4);
-                pixels[pos++] = (uint8_t)(packed & 0x0fu);
+        case 8u:
+            if (!read_nibble_value(data, offset, length, &nibble_pos, 2u,
+                                   &count)) return 0;
+            ++count;
+            if (count > total - pos) return 0;
+            memset(pixels + pos, color, count);
+            pos += count;
+            break;
+        case 9u:
+        case 0x0du:
+            if (!read_nibble_value(data, offset, length, &nibble_pos,
+                                   control == 9u ? 2u : 4u, &count)) return 0;
+            if ((count & 1u) == 0u) {
+                if (pos >= total) return 0;
+                pixels[pos++] = color;
+            } else {
+                count += 1u;
             }
-            break;
-        case 3u:
+            /* For an even source count the leading Nibble2 is one pixel and
+             * the source count remains the number of literal color nibbles.
+             * For an odd source count Nibble2 is ignored and the literal run
+             * is source_count + 1 pixels. */
             if (count > total - pos) return 0;
             for (i = 0u; i < count; ++i) {
-                if (pos < width) return 0;
+                if (!read_nibble(data, offset, length, &nibble_pos, &color))
+                    return 0;
+                pixels[pos++] = color;
+            }
+            break;
+        case 0x0bu:
+        case 0x0fu:
+            if (!read_nibble_value(data, offset, length, &nibble_pos,
+                                   control == 0x0bu ? 2u : 4u, &count)) return 0;
+            ++count;
+            if (count + 1u > total - pos) return 0;
+            for (i = 0u; i < count; ++i) {
+                if (pos < (size_t)width) return 0;
                 pixels[pos] = pixels[pos - width];
                 ++pos;
             }
-            if (pos >= total) return 0;
             pixels[pos++] = color;
+            break;
+        case 0x0cu:
+            if (!read_nibble_value(data, offset, length, &nibble_pos, 4u,
+                                   &count)) return 0;
+            ++count;
+            if (count > total - pos) return 0;
+            memset(pixels + pos, color, count);
+            pos += count;
+            break;
+        case 0x0au:
+            count = (size_t)color + 1u;
+            if (count > total - pos) return 0;
+            memset(pixels + pos, 0, count);
+            pos += count;
+            break;
+        case 0x0eu:
+            if (color <= 0x0cu) {
+                count = (size_t)color + 17u;
+            } else if (color == 0x0du) {
+                if (!read_nibble_value(data, offset, length, &nibble_pos, 2u,
+                                       &count)) return 0;
+                ++count;
+            } else if (color == 0x0eu) {
+                if (!read_nibble_value(data, offset, length, &nibble_pos, 2u,
+                                       &count)) return 0;
+                count += 257u;
+            } else {
+                if (!read_nibble_value(data, offset, length, &nibble_pos, 4u,
+                                       &count)) return 0;
+                ++count;
+            }
+            if (count > total - pos) return 0;
+            memset(pixels + pos, 0, count);
+            pos += count;
             break;
         default:
             return 0;
