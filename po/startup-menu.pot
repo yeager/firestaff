@@ -281,11 +281,11 @@ msgstr ""
 msgid "VSYNC"
 msgstr ""
 
-msgid "ARCHIVE TOOL REQUIRED"
+msgid "GAME DATA ARCHIVE NEEDS A TOOL"
 msgstr ""
 
-msgid "INSTALL ARCHIVE TOOL"
+msgid "INSTALL ONE OF: %s"
 msgstr ""
 
-msgid "RESCAN GAME DATA TO CONTINUE"
+msgid "INSTALL IT, THEN RESCAN GAME DATA"
 msgstr ""

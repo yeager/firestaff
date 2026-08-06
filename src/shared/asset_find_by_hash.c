@@ -2922,6 +2922,19 @@ static int shell_tool_exists(const char *tool) {
 #endif
 }
 
+/* Defined with the scanner diagnostics below. CHD media is a container too,
+ * but chdman is deliberately separate from the generic archive tools. */
+static void record_missing_tool(const char *mediaPath, const char *tools);
+
+static int chd_tool_available(void) {
+    /* Keep the test-only scanner override consistent for every host helper,
+     * including CHD, rather than making CI depend on its installed tools. */
+    if (getenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS") != NULL) {
+        return 0;
+    }
+    return shell_tool_exists("chdman");
+}
+
 static int make_chd_temp_dir(char *outDir, size_t outDirSize) {
     char tmpl[ASSET_PATH_MAX];
     char *made;
@@ -2952,7 +2965,11 @@ static int chd_extractcd_to_cue(const char *chdPath,
 #else
     char cmd[ASSET_PATH_MAX * 3];
     if (!chdPath || !outCuePath || outCuePathSize == 0U ||
-        !outTempDir || outTempDirSize == 0U || !shell_tool_exists("chdman")) {
+        !outTempDir || outTempDirSize == 0U) {
+        return 0;
+    }
+    if (!chd_tool_available()) {
+        record_missing_tool(chdPath, "chdman");
         return 0;
     }
     if (!make_chd_temp_dir(outTempDir, outTempDirSize)) return 0;
@@ -3918,24 +3935,29 @@ const char *asset_scan_missing_extractor_tools(int index) {
     return g_missingExtractorTools[index];
 }
 
-static void record_missing_extractor(const char *archivePath) {
+static void record_missing_tool(const char *mediaPath, const char *tools) {
     int i;
-    const char *tools;
-    if (!archivePath || archivePath[0] == '\0') return;
+    if (!mediaPath || mediaPath[0] == '\0' || !tools || tools[0] == '\0') return;
     for (i = 0; i < g_missingExtractorCount; ++i) {
-        if (strcmp(g_missingExtractorPaths[i], archivePath) == 0) return;
+        if (strcmp(g_missingExtractorPaths[i], mediaPath) == 0) return;
     }
     if (g_missingExtractorCount >= ASSET_SCAN_MISSING_EXTRACTOR_MAX) return;
+    snprintf(g_missingExtractorPaths[g_missingExtractorCount],
+             ASSET_PATH_MAX, "%s", mediaPath);
+    snprintf(g_missingExtractorTools[g_missingExtractorCount],
+             sizeof(g_missingExtractorTools[0]), "%s", tools);
+    ++g_missingExtractorCount;
+}
+
+static void record_missing_extractor(const char *archivePath) {
+    const char *tools;
+    if (!archivePath || archivePath[0] == '\0') return;
     tools = is_external_tar_archive_path(archivePath)
                 ? "bsdtar/7zz/7z"
                 : has_case_suffix(archivePath, ".rar")
                     ? "unrar/7zz/7z/bsdtar"
                     : "7zz/7z/bsdtar";
-    snprintf(g_missingExtractorPaths[g_missingExtractorCount],
-             ASSET_PATH_MAX, "%s", archivePath);
-    snprintf(g_missingExtractorTools[g_missingExtractorCount],
-             sizeof(g_missingExtractorTools[0]), "%s", tools);
-    ++g_missingExtractorCount;
+    record_missing_tool(archivePath, tools);
 }
 
 static int external_tool_available_for_path(const char *path) {

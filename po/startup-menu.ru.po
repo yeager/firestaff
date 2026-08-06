@@ -297,11 +297,11 @@ msgstr "СКОПИРУЙТЕ ФАЙЛЫ ИГРЫ В Documents/Firestaff/data С 
 msgid "USE THE FILES APP TO COPY GAME FILES TO Firestaff/data IN THIS APP"
 msgstr "ИСПОЛЬЗУЙТЕ ПРИЛОЖЕНИЕ ФАЙЛЫ ДЛЯ КОПИРОВАНИЯ ФАЙЛОВ ИГРЫ В Firestaff/data В ЭТОМ ПРИЛОЖЕНИИ"
 
-msgid "ARCHIVE TOOL REQUIRED"
-msgstr "ТРЕБУЕТСЯ АРХИВАТОР"
+msgid "GAME DATA ARCHIVE NEEDS A TOOL"
+msgstr "АРХИВ С ДАННЫМИ ИГРЫ ТРЕБУЕТ ИНСТРУМЕНТА"
 
-msgid "INSTALL ARCHIVE TOOL"
-msgstr "УСТАНОВИТЕ АРХИВАТОР"
+msgid "INSTALL ONE OF: %s"
+msgstr "УСТАНОВИТЕ ОДИН ИЗ ВАРИАНТОВ: %s"
 
-msgid "RESCAN GAME DATA TO CONTINUE"
-msgstr "ПОВТОРНО ПРОСКАНИРУЙТЕ ДАННЫЕ ИГРЫ, ЧТОБЫ ПРОДОЛЖИТЬ"
+msgid "INSTALL IT, THEN RESCAN GAME DATA"
+msgstr "УСТАНОВИТЕ ЕГО, ЗАТЕМ ПОВТОРНО ПРОСКАНИРУЙТЕ ДАННЫЕ ИГРЫ"

@@ -945,9 +945,9 @@ static const char* const g_localeTextEnglish[M12_TEXT_COUNT] = {
     _("DROP ART INTO SLOT"),
     _("CARD ART ACTIVE"),
     _("CARD ART SLOT"),
-    _("ARCHIVE TOOL REQUIRED"),
-    _("INSTALL ARCHIVE TOOL"),
-    _("RESCAN GAME DATA TO CONTINUE")
+    _("GAME DATA ARCHIVE NEEDS A TOOL"),
+    _("INSTALL ONE OF: %s"),
+    _("INSTALL IT, THEN RESCAN GAME DATA")
 };
 
 static M12_RuntimeCatalog g_runtimeCatalogs[M12_UI_LANGUAGE_COUNT];
@@ -1827,7 +1827,7 @@ static int m12_show_missing_archive_tool_popup(M12_StartupMenuState* state) {
     if (!tools || tools[0] == '\0') {
         return 0;
     }
-    snprintf(line2, sizeof(line2), "%s: %s",
+    snprintf(line2, sizeof(line2),
              m12_text(state, M12_TEXT_INSTALL_ARCHIVE_TOOL), tools);
     m12_enter_message_view(state);
     m12_set_buffered_message(state,

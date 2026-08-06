@@ -80,14 +80,15 @@ int asset_extract_virtual_path(const char *virtualPath, const char *outFilePath)
 /*
  * Missing-extractor diagnostics.
  *
- * When the scan meets an external archive (.7z, .rar, .cab, ...) but no
- * supported extractor (7zz/7z/bsdtar) is installed, the archive is
- * skipped and recorded here so the launcher and --scan-data output can
- * tell the user which archives were skipped and which tool would unlock
- * them. The store is bounded (16 entries), deduplicated by archive path,
- * and process-global; clear it before a fresh multi-game scan pass.
+ * When the scan meets game media that needs a host extraction tool (.7z,
+ * .rar, .cab, CHD, ...) and that tool is unavailable, the media is skipped
+ * and recorded here so the launcher and --scan-data output can tell the
+ * user which archives were skipped and which tool would unlock them. The
+ * store is bounded (16 entries), deduplicated by archive path, and
+ * process-global; clear it before a fresh multi-game scan pass.
  * *_path() / *_tools() return NULL for out-of-range indices. *_tools()
- * returns a static "preferred/fallback" tool list such as "7zz/7z/bsdtar".
+ * returns a static "preferred/fallback" tool list such as "7zz/7z/bsdtar"
+ * or "chdman".
  */
 void asset_scan_clear_missing_extractor_diagnostics(void);
 int asset_scan_missing_extractor_count(void);

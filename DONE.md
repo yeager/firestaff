@@ -53307,3 +53307,10 @@ alcove runtime and archive-media tests passed (4/4).
   ReDMCSB `LOADSAVE.C` F0435 selects the separate F31E/F31J save-header path;
   that platform-specific decode and handoff remain open rather than being
   substituted with the Atari reader.
+- ✅ 2026-08-06 launcher missing-extractor popup: archive-backed game data
+  now gives an actionable, localized installation instruction instead of a
+  generic missing-data result. The scanner identifies the actual required
+  host tool (`unrar/7zz/7z/bsdtar` for external archives, `chdman` for CHD),
+  and the M12 popup tells the player to install one and rescan. The three
+  strings are translated in every shipped startup-menu catalog (19 locales
+  plus English); focused 7z and CHD popup regression coverage is included.
