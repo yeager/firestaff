@@ -50839,3 +50839,7 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   now validates every ordered record's bounded header and matching resource id
   before selecting a payload. A real WARNING.BIN mutation regression proves
   an unselected malformed record cannot be hidden by resource-zero lookup.
+- ✅ 2026-08-06 Nexus RES* source admission: the shared resource-directory
+  decoder now requires an exact declared file size, a bounded entry count and
+  strictly increasing payload spans. Real TITLE.BIN, RLOWFIX.BIN, RHIFIX.BIN
+  and POTEFT.BIN tests include a mutation that must be rejected.

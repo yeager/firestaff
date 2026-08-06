@@ -80,6 +80,22 @@ static int test_res_file(const char *name) {
     }
     if (r.entry_count > 8) printf("    ... +%d more\n", r.entry_count - 8);
 
+    {
+        uint8_t *tampered = (uint8_t *)malloc((size_t)size);
+        if (!tampered) {
+            free(data);
+            return 1;
+        }
+        memcpy(tampered, data, (size_t)size);
+        tampered[7] ^= 1U; /* RES* declared size must equal the source. */
+        if (nexus_v1_res_decode(tampered, size, &r)) {
+            free(tampered);
+            free(data);
+            return 1;
+        }
+        free(tampered);
+    }
+
     free(data);
     return 0;
 }
