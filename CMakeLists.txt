@@ -4615,6 +4615,11 @@ list(REMOVE_ITEM M10_SOURCES
 # shared inventory implementation stays in M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_pickup_at_max_stack_count_overflow_pc34_compat.c")
+# `dm1_v1_chest_nested_tail_reopen_after_drop_gate_pc34_compat.c` explicitly
+# models a synthetic nested-container state machine. Its direct regression
+# target already compiles it; it has no M11 caller or original-DM1 input.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_nested_tail_reopen_after_drop_gate_pc34_compat.c")
 # `dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c` is a
 # contract-only probe. It manufactures its chest stack, leader hand, floor
 # link and coordinates locally, reads no original save/dungeon/graphics data,
