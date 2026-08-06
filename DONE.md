@@ -57217,6 +57217,15 @@ alcove runtime and archive-media tests passed (4/4).
   reader explicitly, and a required CI boundary prevents a broad M10 glob
   from restoring it.
 
+# 2026-08-06 CSB CMP fixture production isolation
+
+- ✅ Removed the portrait-only CMP helper from `firestaff_m10`. Its contract
+  fixtures can initialise a party slot, but an original CMP does not own the
+  champion's vitals, skills, inventory, world state or slot ownership.
+- ✅ The focused CMP tests and real-media probe compile the helper explicitly.
+  Production remains limited to an overlay on an authenticated champion, and
+  CI now rejects a broad-glob regression.
+
 # 2026-08-06 Nexus UI-event dispatch boundary
 
 - ✅ Retail ISO/extracted Nexus now rejects host UI events before the Saturn
