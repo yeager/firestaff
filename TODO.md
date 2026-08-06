@@ -26789,6 +26789,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   horizontal host bars. The switch remains available for non-source/debug and
   V2 compatibility sessions. Real object-corpus and held-cursor tests pass;
   packaged Mac capture remains governed by the open capture items above.
+
+- 2026-08-06 CI follow-up: the CSB V2 touch/controller test now has its
+  source-required PC34 VGA palette module. Continue watching the main build
+  matrix; this closes only the missing-link regression, not a presentation
+  parity claim.
 - Theron teleporter resolution now rejects unresolved object-ID links and
   cycles; restore positive legacy links only when backed by an authenticated
   Track 02/T900 record corpus.

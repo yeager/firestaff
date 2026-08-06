@@ -52522,3 +52522,8 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   PC-DOS corpus traverses every hero-item and party root (72 PASS). This is a
   test-only source receipt, not a playable restore path: production remains
   fail-closed until a genuine G1 DB/tile/possession/timer allocator exists.
+
+- ✅ 2026-08-06 CI CSB V2 touch/controller link correction: added
+  `vga_palette_pc34_compat.c` to the standalone CSB test target that compiles
+  the V2 viewport renderer. The focused CMake build and CTest pass locally;
+  the main GitHub matrix remains the cross-platform verification.
