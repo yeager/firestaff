@@ -4353,6 +4353,12 @@ list(REMOVE_ITEM M10_SOURCES
 # explicit ReDMCSB regression while the source-bound D3 renderer owns pixels.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3l_d3r_f0108_floor_ornament_occlusion_pc34_compat.c")
+# `dm1_v1_viewport_d3l2_d3r2_f0108_floor_ornament_occlusion_pc34_compat.c`
+# is an asset-free F0676/F0677 ordering probe. Its explicit regression owns
+# the source; the live D3 side-pair renderer independently binds verified
+# GRAPHICS.DAT material, so do not admit this contract model through M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3l2_d3r2_f0108_floor_ornament_occlusion_pc34_compat.c")
 # `dm1_v1_viewport_d2c_center_wall_composition_pc34_compat.c` is an
 # asset-free synthetic D2C pixel-trace audit with no M11/runtime caller.
 # Compile it only into its dedicated test and keep the broad M10 archive

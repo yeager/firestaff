@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D3L2-D3R2-F0108-OCCLUSION-SYNTHETIC-AUDIT:** This asset-free F0676/
+  F0677 ordering model fixes side-pair zones, cell orders and C10 probes. It
+  has no original DM1 data input or M11/runtime caller; retain it as an
+  explicit ReDMCSB regression while the independent source-bound side-pair
+  renderer owns live pixels.
+
 - **DM1-D3L-D3R-F0108-SYNTHETIC-AUDIT:** This asset-free D3 side-lane F0108
   model fixes zones, cell orders and C10 probes. It has no original DM1 data
   input or M11/runtime caller; retain it as an explicit ReDMCSB regression
