@@ -4307,7 +4307,8 @@ list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_export_import_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_utility_save_transaction_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_save_import_path_pc34_compat.c"
-    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_cmp_import_pc34_compat.c")
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_cmp_import_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/csb/csb_v1_graphics_hidden_item_skip_pc34_compat.c")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_engine_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_minimap_pc34_compat\\.c$")
 list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_automap_pc34_compat\\.c$")
@@ -37509,6 +37510,14 @@ add_executable(test_nexus_v1_dgn_material_raster
         )
         set_tests_properties(csb_cmp_import_production_boundary PROPERTIES
             LABELS "tier1;csb;utility;production;source-boundary;no-synthetic-data"
+        )
+        add_test(
+            NAME csb_hidden_item_skip_production_boundary
+            COMMAND ${Python3_EXECUTABLE}
+                ${CMAKE_CURRENT_SOURCE_DIR}/scripts/verify_csb_hidden_item_skip_production_boundary.py
+        )
+        set_tests_properties(csb_hidden_item_skip_production_boundary PROPERTIES
+            LABELS "tier1;csb;graphics;production;source-boundary;no-synthetic-data"
         )
     endif()
 

@@ -57263,6 +57263,15 @@ alcove runtime and archive-media tests passed (4/4).
   Production remains limited to an overlay on an authenticated champion, and
   CI now rejects a broad-glob regression.
 
+# 2026-08-06 CSB hidden-item safety-loader isolation
+
+- ✅ Removed the unconsumed CSB Atari/Amiga hidden-code safety loader from
+  `firestaff_m10`. It remains explicitly available to its real-media probe
+  and focused regression, where the dmweb/ReDMCSB hidden GRAPHICS.DAT entries
+  are checked without making a synthetic bitmap route part of production.
+- ✅ A required CI source boundary prevents the broad M10 source glob from
+  relinking that test/probe helper until a live platform renderer owns it.
+
 # 2026-08-06 Nexus UI-event dispatch boundary
 
 - ✅ Retail ISO/extracted Nexus now rejects host UI events before the Saturn

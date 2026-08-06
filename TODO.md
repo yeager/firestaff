@@ -3126,6 +3126,10 @@ level or consumer bindings.
   - 2026-08-06: Portrait-only CMP helpers are test/probe-only. Runtime CMP
     admission stays limited to a verified portrait/name/title overlay on an
     already authenticated champion; a CMP may not manufacture party state.
+  - 2026-08-06: The CSB Atari/Amiga hidden-item safety loader is test/probe-
+    only until a live platform renderer consumes it. Its real-media probes
+    retain the dmweb/ReDMCSB hidden-code checks, but M10 has no caller and
+    must not advertise a replacement bitmap route.
   - 2026-07-31: The unbound D0L2/D0R2 partly-open-door and D1L/D1R
     floor/ceiling-ornament contracts now compile only into their tests. Their
     source metadata stays available for verification, but live pixels still
