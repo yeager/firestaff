@@ -56492,6 +56492,12 @@ alcove runtime and archive-media tests passed (4/4).
   slots and end the authenticated part sequence at byte 8 236. This is a
   source-backed corpus check, not a dungeon-tail decoder or Resume path.
 
+- ✅ 2026-08-06 CSB FM Towns MINI.DAT dungeon-tail receipt: the F31 Game
+  handoff now follows ReDMCSB `CEDTINCA.C` F7063's native tail order after
+  the four external portraits. Both retail files verify 11 maps, 296 columns
+  and their trailing F7059 byte-sum checksum (English `0x62df`, Japanese
+  `0x6671`). The result remains an admission receipt, not a live save restore.
+
 - ✅ 2026-08-06 CSB FM Towns Utility P3 boundary: `UTILE.EXP` and
   `UTILJ.EXP` now must pass their original Phar Lap level-1 P3 envelope in
   addition to the full-file identity gate. The receipt records the real

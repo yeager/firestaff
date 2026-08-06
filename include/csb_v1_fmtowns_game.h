@@ -87,6 +87,13 @@ typedef struct CSB_V1_FmtownsGameHandoffReceipt {
     uint16_t startup_mini_event_maximum_count;
     uint16_t startup_mini_active_group_capacity;
     uint32_t startup_mini_verified_save_body_offset;
+    /* F7063 consumes the raw dungeon tail after the four F31 portraits and
+     * compares its source byte-sum footer. This remains validation only: it
+     * does not publish a resumed dungeon into the live runtime. */
+    int startup_mini_dungeon_tail_verified;
+    uint8_t startup_mini_dungeon_map_count;
+    uint16_t startup_mini_dungeon_column_count;
+    uint16_t startup_mini_dungeon_tail_checksum;
     int music_table_verified;
     uint32_t music_table_source_offset;
     uint32_t music_table_size;
