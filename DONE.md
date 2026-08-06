@@ -57968,6 +57968,16 @@ alcove runtime and archive-media tests passed (4/4).
   and combined START+A mask (`0x30`); launcher, patch dry-run and relinked
   external binary checks pass. No menu claim was made from the frame-7500
   intro capture.
+
+# Nexus Saturn A/START+A runtime window (2026-08-07)
+
+- ✅ Ran the real European ISO with E-BIOS, a 60-frame combined START+A
+  window at emulated frame 6500, and raw VDP1/VDP2 capture beginning at frame
+  8000. The four captured frames remain authentic intro/fire imagery; no menu
+  transition was observed.
+- ✅ Re-ran the real DM.BIN startup/menu resource-anchor test and startup-media
+  gate against `/Users/bosse/.firestaff/data/nexus`; both passed. These prove
+  source ownership and asset admission, not Saturn menu placement.
 # DM2 PC-9821 catalog/hash-pair correction (2026-08-07)
 
 - ✅ Added the authenticated retail `pc9821-ja` DM2 version to the launcher
