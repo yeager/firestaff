@@ -1336,6 +1336,12 @@
   so portraits remain solely V1 source-state material until V2 carries that
   same receipt.
 
+  **2026-08-06 M11 gate environment correction:** the real M11 startup/profile
+  regression now accepts the shared `FIRESTAFF_DM2_DATA_DIR` root used by the
+  other PC-DOS corpus probes. This removes an accidental scan-root mismatch
+  from verification only; it neither supplies fixture data nor admits an
+  incomplete save/session into runtime.
+
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   four PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`
   phase on its own cadence and independent of gameplay speed multipliers.

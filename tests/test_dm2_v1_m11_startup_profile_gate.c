@@ -999,6 +999,12 @@ static const char* dm2_data_dir(char fallback[512]) {
     if (!data_dir || !data_dir[0]) {
         data_dir = getenv("FIRESTAFF_DM2_CANONICAL_DIR");
     }
+    /* Keep the M11 gate aligned with the public DM2 real-data convention
+     * used by the other corpus probes and by the launcher smoke command.
+     * This is a selected original-data root, not a fallback fixture path. */
+    if (!data_dir || !data_dir[0]) {
+        data_dir = getenv("FIRESTAFF_DM2_DATA_DIR");
+    }
     if (data_dir && data_dir[0]) {
         return data_dir;
     }
