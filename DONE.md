@@ -1,3 +1,12 @@
+- ✅ 2026-08-06 DM2 silent startup/action receipt regression: the real
+  PC-DOS startup smoke route now verifies that boot preserves structured
+  `ACTION` and startup handoff receipts while leaving their player-visible
+  host status strings null. This matches the current fail-closed
+  `c_gui_draw`/dialogue ownership boundary: no English replacement status is
+  reintroduced merely to make a menu or front-cell action look playable.
+  Verified against the authenticated local PC-DOS `GRAPHICS.DAT` and
+  `DUNGEON.DAT` route.
+
 - ✅ 2026-08-06 DM2 FM Towns English save-dialogue labels: a selected,
   hash-verified PC-English `GRAPHICS.DAT` companion now supplies the two
   `c_dialog.cpp::DM2_dialog_OPEN_DIALOG_PANEL` GDAT labels to the real FM

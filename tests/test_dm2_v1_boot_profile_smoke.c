@@ -952,10 +952,10 @@ static void test_startup_launch_alloc_real_assets_when_available(void)
               action.runtime.runtime_ready == 1 &&
               action.status_scope != NULL &&
               strcmp(action.status_scope, "ACTION") == 0 &&
-              action.status != NULL &&
+              action.status == NULL &&
               action.target_x >= 0 &&
               action.target_y >= 0,
-          "boot runtime action owns DM2 front-cell receipt");
+          "boot runtime action owns a silent DM2 front-cell receipt");
     memset(&after, 0, sizeof(after));
     CHECK(dm2_v1_boot_runtime_turn(launch.profile, 1, &after) == 1 &&
               after.operation_result == 0 &&
@@ -1025,7 +1025,7 @@ static void test_startup_host_facts_from_boot_profile(void)
               0,
               &launch_receipt) == 1 &&
               launch_receipt.menu_state_receipt_valid &&
-              launch_receipt.host_receipt.status != NULL &&
+              launch_receipt.host_receipt.status == NULL &&
               launch_receipt.runtime_handoff.valid &&
               strcmp(launch_receipt.runtime_handoff.animation,
                      "dm2-startup-menu") == 0 &&
@@ -1034,21 +1034,21 @@ static void test_startup_host_facts_from_boot_profile(void)
               launch_receipt.runtime_handoff.runtime_menu_ready == 1 &&
               launch_receipt.runtime_handoff.runtime_action_ready == 0 &&
               launch_receipt.runtime_handoff.first_hud_frame_ready == 0,
-          "DM2 boot builds startup launch receipt with menu/HUD runtime handoff");
+          "DM2 boot builds a silent startup receipt with menu/HUD runtime handoff");
     snapshot.startup_menu_active = 0;
     snapshot.startup_save_root = "/tmp/firestaff-dm2-menu-saves";
     CHECK(dm2_v1_boot_startup_launch_from_launch_snapshot(
               &launch,
               &snapshot,
               &launch_receipt) == 1 &&
-              launch_receipt.host_receipt.status != NULL,
-          "DM2 boot builds startup launch receipt from launch-owned profile");
+              launch_receipt.host_receipt.status == NULL,
+          "DM2 boot keeps launch-owned startup receipt silent");
     CHECK(dm2_v1_boot_startup_launch_from_launch(
               &launch,
               &launch_receipt) == 1 &&
               launch_receipt.menu_state_receipt_valid &&
-              launch_receipt.host_receipt.status != NULL,
-          "DM2 boot builds initial startup launch receipt without M11 snapshot");
+              launch_receipt.host_receipt.status == NULL,
+          "DM2 boot keeps initial startup receipt silent without M11 snapshot");
     launch.profile = NULL;
     CHECK(dm2_v1_boot_startup_launch_from_launch_snapshot(
               &launch,
