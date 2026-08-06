@@ -51762,6 +51762,12 @@ and `firestaff` build pass.
   pickup or mouse placement; a target from a previous map can no longer
   unlink an object from the active square. Packaged macOS capture of torches,
   holders, stairs, doors and the held-object cursor remains open in TODO.
+- ✅ 2026-08-06 DM2 incomplete SKSave resume closure: public raw-candidate,
+  slot and last-session resume entry points now reject before touching live
+  state. The real raw prefix remains available to the read-only corpus
+  diagnostics, but cannot become a partial `GAME_LOAD` session before the
+  complete record/possession/hero/actuator/timer chain is ported.
+
 - ✅ 2026-08-06 DM2 session-publication boundary: made session application a
   private helper of the parsed original-save candidate transaction and removed
   the public runtime API. Caller-constructed session structs can no longer

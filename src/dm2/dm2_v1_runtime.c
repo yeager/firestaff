@@ -9060,9 +9060,21 @@ int dm2_v1_runtime_restore_save_candidate(const uint8_t *data,
     DM2_V1_RuntimeTimerPostLoadReceipt timer_preflight;
     int parsed_original_dungeon = 0;
 
-    if (!data || !g_dm2_runtime.boot || !g_dm2_runtime.boot->dm2_state ||
-        !g_dm2_runtime.boot->dungeon_data ||
-        dm2_v1_session_parse_save_candidate(&candidate, data, data_size) != 0) {
+    if (!data || data_size == 0u || !g_dm2_runtime.boot ||
+        !g_dm2_runtime.boot->dm2_state || !g_dm2_runtime.boot->dungeon_data) {
+        return -1;
+    }
+    /* SKProject GAME_LOAD continues after the bounded c_hex2a/SUPPRESS
+     * sections with the linked c_record, possession, c_hero, actuator and
+     * timer graph. Firestaff can currently receipt the raw prefix but cannot
+     * publish that partial graph as a session. Keep every public resume route
+     * unavailable rather than turning authentic-but-incomplete bytes into a
+     * playable state. The parser below remains a diagnostic/source-study path
+     * until the full read order is imported. */
+    return -1;
+
+    /* Unreachable pending the complete GAME_LOAD owner handoff. */
+    if (dm2_v1_session_parse_save_candidate(&candidate, data, data_size) != 0) {
         return -1;
     }
     if (candidate.kind != DM2_V1_SAVE_CANDIDATE_ORIGINAL_ENVELOPE &&

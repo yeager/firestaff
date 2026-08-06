@@ -538,6 +538,11 @@
   `dm2_v1_runtime_apply_session` API could write a caller-built session into
   the live party/map state; it is no longer exported or linkable outside the
   source-candidate path.
+  **2026-08-06 follow-up:** the remaining public raw-candidate/slot resume
+  entry points now reject before publication as well. A valid SKSave prefix
+  is still a useful diagnostic receipt, but it lacks the later source record,
+  possession, hero, actuator and timer ownership required by complete
+  `GAME_LOAD`; it must not create a partially playable runtime.
   2026-08-06: D2RS decoder envelopes are now rejected by both public slot
   loaders. They remain explicit diagnostic inputs only; a player-facing
   Continue/slot action can admit neither a Firestaff private envelope nor the
