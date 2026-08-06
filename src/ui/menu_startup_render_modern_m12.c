@@ -1017,6 +1017,16 @@ static void draw_generated_card_art(M12_ModernCanvas* c,
     }
 }
 
+static const M12_GeneratedCardArt* generated_card_art_for_game(const char* gameId) {
+    /* The compiled Nexus card was procedural placeholder art.  Authentic
+     * TITLE.CG is an atlas, not a proven M12 framebuffer, so keep this
+     * launcher route source-locked until Saturn VDP2 placement is captured. */
+    if (gameId && strcmp(gameId, "nexus") == 0) {
+        return NULL;
+    }
+    return M12_GeneratedCardArt_Find(gameId);
+}
+
 static void draw_box_art_panel(M12_ModernCanvas* c,
                                const char* gameId,
                                int slotIdx,
@@ -1051,7 +1061,7 @@ static void draw_box_art_panel(M12_ModernCanvas* c,
     stroke_rounded_rect(c, x, y, w, h, 10, disabled ? rgb(118, 118, 126) : accent);
     fill_rect(c, x + 12, y + 12, w - 24, 3, disabled ? rgb(116, 116, 116) : COLOR_ACCENT_HI());
 
-    const M12_GeneratedCardArt* generated = M12_GeneratedCardArt_Find(gameId);
+    const M12_GeneratedCardArt* generated = generated_card_art_for_game(gameId);
     if (generated) {
         draw_generated_card_art(c, generated, x + 8, y + 12, w - 16, h - 20, disabled);
     } else if (slotIdx == 0) {
@@ -2115,7 +2125,7 @@ static void draw_missing_data_message_view(M12_ModernCanvas* c,
     int panelX = (c->w - panelW) / 2;
     int panelY = (c->h - panelH) / 2;
     const char* gameId = state->messageGameId[0] ? state->messageGameId : NULL;
-    const M12_GeneratedCardArt* generated = M12_GeneratedCardArt_Find(gameId);
+    const M12_GeneratedCardArt* generated = generated_card_art_for_game(gameId);
     const char* line1 = state->messageLine1 ? state->messageLine1 : "";
     const char* line2 = state->messageLine2 ? state->messageLine2 : "";
     const char* line3 = state->messageLine3 ? state->messageLine3 : "";

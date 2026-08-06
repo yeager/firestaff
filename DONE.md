@@ -8,6 +8,17 @@
   destination-pointer table writes and widening `$0100` token contract. It
   still publishes no level, object, tile or palette semantics.
 
+# Nexus launcher synthetic card-art quarantine (2026-08-06)
+
+- ✅ Removed the compiled procedural Nexus card from the M12 startup and
+  missing-media views. Nexus now reports `SATURN TITLE SOURCE (CAPTURE
+  LOCKED)` and stays image-less unless a caller supplies an actual card file.
+- ✅ This keeps authentic `TITLE.CG`/`TITLE.BIN` available as source media
+  without pretending their Saturn VDP2 tile-map/CLUT placement is a launcher
+  framebuffer. `m12_nexus_missing_media_popup_gate`, the Nexus startup-menu
+  regression and the startup-media gate pass; no runtime Nexus presentation
+  route was opened.
+
 # Theron forcefield Enter retry boundary (2026-08-06)
 
 - ✅ After a failed authentic Track 02 admission, M11 now keeps Enter bound

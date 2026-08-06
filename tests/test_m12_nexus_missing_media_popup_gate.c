@@ -102,6 +102,7 @@ static void check_nexus_missing_media_popup(void) {
     char home[M12_ASSET_DATA_DIR_CAPACITY];
     M12_StartupMenuState state;
     M12_LaunchIntent intent;
+    const int gi = 3;
 
     CHECK(isolate_home(home, sizeof(home)));
     seed_nexus_missing_media_state(&state, home);
@@ -111,6 +112,9 @@ static void check_nexus_missing_media_popup(void) {
     CHECK(M12_AssetStatus_GameVerifiedFileCount("nexus") == 1U);
     CHECK(M12_AssetStatus_GameAvailable(&state.assetStatus, "nexus") == 0);
     CHECK(M12_AssetStatus_HasOriginalFileCandidate(&state.assetStatus) == 1);
+    CHECK(state.cardArt[gi].hasImageFile == 0);
+    CHECK(strcmp(state.cardArt[gi].slotLabel,
+                 "SATURN TITLE SOURCE (CAPTURE LOCKED)") == 0);
 
     M12_StartupMenu_HandleInput(&state, M12_MENU_INPUT_ACCEPT);
 

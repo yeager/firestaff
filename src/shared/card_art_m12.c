@@ -59,7 +59,7 @@ static const M12_CardArtSpec g_cardSpecs[] = {
     {"dm1", "ORIGINAL DM1 CARD", g_dm1CardCandidates},
     {"csb", "ORIGINAL CSB CARD", g_csbCardCandidates},
     {"dm2", "ORIGINAL DM2 CARD", g_dm2CardCandidates},
-    {"nexus", "GENERATED NEXUS CARD", g_nexusCardCandidates},
+    {"nexus", "SATURN TITLE SOURCE (CAPTURE LOCKED)", g_nexusCardCandidates},
     {"theron", "GENERATED THERON CARD", g_theronCardCandidates},
 };
 
@@ -275,7 +275,11 @@ void M12_CardArt_Resolve(M12_GameCardArt* art,
         return;
     }
 
-    art->hasImageFile = 1;
+    /* Nexus has no source-proven launcher card image.  TITLE.CG/TITLE.BIN
+     * are authentic Saturn inputs, but their VDP2 tile-map/CLUT placement is
+     * still capture-gated; do not turn the compiled procedural art into a
+     * false source surface.  A caller-supplied card remains opt-in. */
+    art->hasImageFile = strcmp(gameId, "nexus") == 0 ? 0 : 1;
     m12_copy_text(art->slotLabel, sizeof(art->slotLabel), spec->slotLabel);
     m12_copy_text(art->fileName, sizeof(art->fileName), "internal-original");
 
@@ -290,6 +294,7 @@ void M12_CardArt_Resolve(M12_GameCardArt* art,
             continue;
         }
         if (FSP_FileExists(art->resolvedPath)) {
+            art->hasImageFile = 1;
             art->hasExternalFile = 1;
             m12_copy_text(art->fileName,
                           sizeof(art->fileName),
