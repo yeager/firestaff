@@ -1,3 +1,13 @@
+- ✅ 2026-08-06 DM2 SKProject function-coverage audit: reconciled the old
+  “31 missing functions” report with the current named-symbol audit. All
+  `DM2_SOUND1`–`DM2_SOUND7`, applicable `c_move.cpp`, and source-owned
+  `c_map.cpp` entries are `IMPLEMENTED_PARITY`; the remaining `c_dialog.cpp`
+  and `c_eventqueue.cpp` rows are explicitly `NOT_APPLICABLE_ARCH` under the
+  M11 UI/event architecture, not production fallbacks. The audit contains
+  1,118 `IMPLEMENTED_PARITY`, 73 `NONAPPLICABLE`, and 560
+  `NOT_APPLICABLE_ARCH` rows. No disabled callback/test transcript was
+  promoted into a playable DM2 route.
+
 - ✅ 2026-08-06 Nexus WARNING DGT2 production quarantine: removed the direct
   WARNING.BIN M11 presentation/resource callback modules from the
   `firestaff_nexus` production library. They remain explicit real-data test

@@ -13524,6 +13524,17 @@ lane is carried forward in the sections below.
 
 ## Skproject Audit (DM2)
 
+- **SKPROJECT-DM2-FUNCTION-COVERAGE-2026-08-06:** The earlier informal
+  “31 missing functions” count is stale. The current named-symbol audit
+  (`docs/reference/audits/SKPROJECT_DM2_NAMED_SYMBOL_AUDIT.tsv`) records
+  `DM2_SOUND1` through `DM2_SOUND7`, the applicable `c_move.cpp` paths, and
+  all source-owned `c_map.cpp` paths as `IMPLEMENTED_PARITY` (1,118 total
+  symbols). The remaining `c_dialog.cpp` and `c_eventqueue.cpp` entries are
+  explicitly `NOT_APPLICABLE_ARCH`: they are DOS UI/event-loop owners
+  replaced by M11, not callable game-data substitutes. Keep auditing the
+  real M11/GDAT path for missing ownership; do not revive any retired
+  callback transcript merely to reduce a function-count metric.
+
 - SKPROJECT-DM2-STARTUP-001 — `SKWIN/SkWinCore.cpp::SHOW_MENU_SCREEN`
   (`TITLE/0 dt07/4`): Firestaff now treats the menu as one static GDAT draw
   command owned by DM2 startup presentation; `TITLE/0 dt07/1` is retained as
