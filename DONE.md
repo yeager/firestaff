@@ -57356,6 +57356,15 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Their focused regressions now compile the traces explicitly, and CI
   rejects a broad-glob relink until a real-data viewport consumer owns them.
 
+# 2026-08-06 CSB viewport contract-bundle isolation
+
+- ✅ Removed the D1C F0115, D1L2/D1R2 F0111, D2L2/D2R2 F0111/wall and D3C
+  F0107/F0108 contract traces from `firestaff_m10`. They retain ReDMCSB/CSBWin
+  branch evidence and local-buffer checks, but no live M11 caller consumes
+  authenticated CSB bitmap material through them.
+- ✅ The four focused regressions and the D1C real-asset ornament probe now
+  own their sources explicitly. CI rejects a broad-glob relink.
+
 # 2026-08-06 Nexus UI-event dispatch boundary
 
 - ✅ Retail ISO/extracted Nexus now rejects host UI events before the Saturn

@@ -104,7 +104,7 @@ jobs:
       - name: Run CSB FSSB production boundary
         run: |
           ctest --test-dir build --output-on-failure \
-            -R '^(csb_fssb_production_boundary|csb_compact_save_import_production_boundary|csb_cmp_import_production_boundary|csb_hidden_item_skip_production_boundary|csb_viewport_side_wall_production_boundary)$'
+            -R '^(csb_fssb_production_boundary|csb_compact_save_import_production_boundary|csb_cmp_import_production_boundary|csb_hidden_item_skip_production_boundary|csb_viewport_side_wall_production_boundary|csb_viewport_contract_bundle_production_boundary)$'
 
       - name: Run unit tests (ctest)
         run: |
