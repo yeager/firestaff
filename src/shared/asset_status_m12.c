@@ -3890,6 +3890,29 @@ static int m12_materialize_dm1_fmtowns_runtime_cache(
         }
         free(bytes);
     }
+    /* Save the raw disc image and CUE sheet for CDDA playback at runtime.
+     * Tracks 2-20 carry the original CD-DA audio (44100 Hz stereo PCM). */
+    {
+        char cachedBinPath[M12_ASSET_DATA_DIR_CAPACITY];
+        char cachedCuePath[M12_ASSET_DATA_DIR_CAPACITY];
+        if (!FSP_JoinPath(cachedBinPath, sizeof(cachedBinPath), gameCacheDir,
+                          "FMTOWNS.BIN") ||
+            !FSP_JoinPath(cachedCuePath, sizeof(cachedCuePath), gameCacheDir,
+                          "FMTOWNS.CUE")) {
+            free(image);
+            return 0;
+        }
+        if (!m12_write_bytes(cachedBinPath, image, imageSize)) {
+            free(image);
+            return 0;
+        }
+        if (firestaff_zip_extract_by_suffix_to_path(archivePath, ".cue",
+                                                    cachedCuePath) != 0) {
+            remove(cachedBinPath);
+            free(image);
+            return 0;
+        }
+    }
     free(image);
     {
         const char* gameName = strcmp(version->versionId, "fmtowns-en") == 0

@@ -53390,6 +53390,7 @@ add_test(NAME test_dm1_v1_fmtowns_iso9660 COMMAND test_dm1_v1_fmtowns_iso9660)
 add_executable(test_dm1_v1_fmtowns_cd_audio
     tests/test_dm1_v1_fmtowns_cd_audio.c
     src/dm1/dm1_v1_fmtowns_cd_audio.c
+    src/shared/firestaff_fmtowns_disc.c
 )
 target_include_directories(test_dm1_v1_fmtowns_cd_audio PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 add_test(NAME test_dm1_v1_fmtowns_cd_audio COMMAND test_dm1_v1_fmtowns_cd_audio)

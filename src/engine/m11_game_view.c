@@ -106,6 +106,8 @@
 #include "dm1_v1_resurrection_pc34_compat.h"
 #include "dm1_v2_camera_controller_pc34.h"
 #include "dm1_v2_boot_pc34.h"
+#include "dm1_v1_fmtowns_cd_audio.h"
+#include "firestaff_fmtowns_disc.h"
 #include "dm1_v1_endgame_system_pc34_compat.h"
 #include "dm1_v1_c15_layout_pc34_compat.h"
 #include "dm1_v1_endgame_presentation_pc34_compat.h"
@@ -6474,6 +6476,134 @@ static void m11_csb_release_fmtowns_switch(M11_GameViewState *state)
     state->csbFmtownsSwitchBound = 0;
 }
 
+/* ------------------------------------------------------------------ */
+/* DM1 FM Towns CDDA dispatch                                        */
+/* ------------------------------------------------------------------ */
+
+static int m11_dm1_fmtowns_cdda_data_dir(const M11_GameViewState *state,
+                                          char *out, size_t out_size)
+{
+    if (!state || !state->dungeonPath[0] || !out || out_size == 0) return 0;
+    return FSP_ParentDir(out, out_size, state->dungeonPath) && out[0] != '\0';
+}
+
+static void m11_dm1_dispatch_fmtowns_cdda(M11_GameViewState *state,
+                                           int track_number)
+{
+    char data_dir[M11_GAME_VIEW_PATH_CAPACITY];
+    char cue_path[M11_GAME_VIEW_PATH_CAPACITY];
+    char bin_path[M11_GAME_VIEW_PATH_CAPACITY];
+    FILE *cue_file, *bin_file;
+    long cue_size, bin_size;
+    char *cue_bytes;
+    uint32_t track_starts[24];
+    int track_count;
+    uint32_t data_track_end, this_start, next_start;
+    size_t data_byte_offset, audio_byte_offset, pcm_size;
+    uint8_t *pcm;
+
+    if (!state || !state->dm1FmtownsStartupReceiptValid || track_number < 2)
+        return;
+    if (!m11_dm1_fmtowns_cdda_data_dir(state, data_dir, sizeof(data_dir)))
+        return;
+    if (snprintf(cue_path, sizeof(cue_path), "%s/FMTOWNS.CUE", data_dir) < 0 ||
+        strlen(cue_path) >= sizeof(cue_path) ||
+        snprintf(bin_path, sizeof(bin_path), "%s/FMTOWNS.BIN", data_dir) < 0 ||
+        strlen(bin_path) >= sizeof(bin_path))
+        return;
+
+    if (state->dm1FmtownsCddaPlaying) {
+        (void)M11_Audio_StopCdda(&state->audioState);
+        state->dm1FmtownsCddaPlaying = 0;
+        state->dm1FmtownsCddaCurrentTrack = 0;
+    }
+
+    cue_file = fopen(cue_path, "rb");
+    if (!cue_file) return;
+    if (fseek(cue_file, 0, SEEK_END) != 0 ||
+        (cue_size = ftell(cue_file)) <= 0 || cue_size > 64 * 1024 ||
+        fseek(cue_file, 0, SEEK_SET) != 0) {
+        fclose(cue_file);
+        return;
+    }
+    cue_bytes = (char *)malloc((size_t)cue_size);
+    if (!cue_bytes ||
+        fread(cue_bytes, 1u, (size_t)cue_size, cue_file) != (size_t)cue_size) {
+        free(cue_bytes);
+        fclose(cue_file);
+        return;
+    }
+    fclose(cue_file);
+
+    memset(track_starts, 0, sizeof(track_starts));
+    track_count = fmtowns_cue_parse_track_starts(cue_bytes, (size_t)cue_size,
+                                                  track_starts, 24);
+    free(cue_bytes);
+    if (track_count < 20 || track_number >= track_count ||
+        track_starts[track_number] == 0)
+        return;
+
+    /* DM1 FM Towns BIN uses MODE1/2048 for the data track (track 1) and
+     * raw 2352-byte sectors for audio tracks 2-20.  The first audio track's
+     * sector offset marks the boundary between the two sector sizes. */
+    data_track_end = track_starts[2];
+    this_start = track_starts[track_number];
+
+    bin_file = fopen(bin_path, "rb");
+    if (!bin_file) return;
+    if (fseek(bin_file, 0, SEEK_END) != 0 ||
+        (bin_size = ftell(bin_file)) <= 0) {
+        fclose(bin_file);
+        return;
+    }
+
+    if (track_number + 1 < track_count && track_starts[track_number + 1] != 0)
+        next_start = track_starts[track_number + 1];
+    else
+        next_start = 0;
+
+    data_byte_offset = (size_t)data_track_end * 2048u;
+    audio_byte_offset = data_byte_offset +
+        (size_t)(this_start - data_track_end) * FMTOWNS_CDDA_SECTOR_SIZE;
+
+    if (next_start > this_start)
+        pcm_size = (size_t)(next_start - this_start) * FMTOWNS_CDDA_SECTOR_SIZE;
+    else
+        pcm_size = (size_t)bin_size - audio_byte_offset;
+
+    if (audio_byte_offset + pcm_size > (size_t)bin_size || pcm_size == 0) {
+        fclose(bin_file);
+        return;
+    }
+
+    pcm = (uint8_t *)malloc(pcm_size);
+    if (!pcm) {
+        fclose(bin_file);
+        return;
+    }
+    if (fseek(bin_file, (long)audio_byte_offset, SEEK_SET) != 0 ||
+        fread(pcm, 1u, pcm_size, bin_file) != pcm_size) {
+        free(pcm);
+        fclose(bin_file);
+        return;
+    }
+    fclose(bin_file);
+
+    if (M11_Audio_PlayCdda(&state->audioState, pcm, pcm_size, 0)) {
+        state->dm1FmtownsCddaPlaying = 1;
+        state->dm1FmtownsCddaCurrentTrack = track_number;
+    }
+    free(pcm);
+}
+
+static void m11_dm1_stop_fmtowns_cdda(M11_GameViewState *state)
+{
+    if (!state || !state->dm1FmtownsCddaPlaying) return;
+    (void)M11_Audio_StopCdda(&state->audioState);
+    state->dm1FmtownsCddaPlaying = 0;
+    state->dm1FmtownsCddaCurrentTrack = 0;
+}
+
 static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state,
                                        CSB_V1_FmtownsSwitchLanguage language)
 {
@@ -11551,6 +11681,11 @@ static int m11_try_stairs_transition(M11_GameViewState* state) {
             &state->dm1MusicSource, &state->dm1MusicState,
             stairs.toMapIndex, &musicReceipt);
     }
+    if (state->dm1FmtownsStartupReceiptValid) {
+        int cdTrack = dm1_v1_fmtowns_cd_track_for_map(stairs.toMapIndex);
+        if (cdTrack > 0 && cdTrack != state->dm1FmtownsCddaCurrentTrack)
+            m11_dm1_dispatch_fmtowns_cdda(state, cdTrack);
+    }
     memset(state->exploredBits, 0, sizeof(state->exploredBits));
     m11_mark_explored(state);
     m11_refresh_hash(state);
@@ -11629,6 +11764,11 @@ static int m11_apply_post_move_environment_from_compat(M11_GameViewState* state)
         (void)dm1_v1_f0742_set_map_track_pc34(
             &state->dm1MusicSource, &state->dm1MusicState,
             resolution.finalMapIndex, &musicReceipt);
+    }
+    if (state->dm1FmtownsStartupReceiptValid) {
+        int cdTrack = dm1_v1_fmtowns_cd_track_for_map(resolution.finalMapIndex);
+        if (cdTrack > 0 && cdTrack != state->dm1FmtownsCddaCurrentTrack)
+            m11_dm1_dispatch_fmtowns_cdda(state, cdTrack);
     }
     for (i = 0; i < CHAMPION_MAX_PARTY; ++i) {
         if (resolution.championFallDamage[i] > 0 &&
@@ -16384,6 +16524,10 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                     snprintf(state->inspectDetail,
                              sizeof(state->inspectDetail),
                              "LORD CHAOS IS DEFEATED. THE FIRESTAFF IS RESTORED.");
+                    if (state->dm1FmtownsStartupReceiptValid) {
+                        int t = dm1_v1_fmtowns_cd_track_for_event(3);
+                        if (t > 0) m11_dm1_dispatch_fmtowns_cdda(state, t);
+                    }
                 }
                 break;
             case EMIT_PARTY_DEAD:
@@ -16398,6 +16542,10 @@ void M11_GameView_ProcessTickEmissions(M11_GameViewState* state) {
                     snprintf(state->inspectDetail,
                              sizeof(state->inspectDetail),
                              "THE DUNGEON CLAIMS YOUR SOULS. LOAD A SAVE OR RETURN TO MENU.");
+                    if (state->dm1FmtownsStartupReceiptValid) {
+                        int t = dm1_v1_fmtowns_cd_track_for_event(2);
+                        if (t > 0) m11_dm1_dispatch_fmtowns_cdda(state, t);
+                    }
                 }
                 break;
             case EMIT_CREATURE_MOVED:
@@ -21652,6 +21800,8 @@ int M11_GameView_SetMusicEnabled(M11_GameViewState* state, int enabled) {
             &state->dm1MusicSource, &state->dm1MusicState,
             &state->dm1MusicDriver, &receipt);
     }
+    if (!enabled)
+        m11_dm1_stop_fmtowns_cdda(state);
     return state->dm1MusicOn;
 }
 
@@ -22096,6 +22246,13 @@ static int m11_process_dm1_v1_pipeline_tick(M11_GameViewState* state,
         (void)dm1_v1_f0743_update_music_pc34(
             &state->dm1MusicSource, &state->dm1MusicState,
             &state->dm1MusicDriver, &musicReceipt);
+    }
+    if (state->dm1FmtownsStartupReceiptValid &&
+        !state->dm1FmtownsCddaPlaying && state->dm1MusicOn) {
+        int cdTrack = dm1_v1_fmtowns_cd_track_for_map(
+            state->world.party.mapIndex);
+        if (cdTrack > 0)
+            m11_dm1_dispatch_fmtowns_cdda(state, cdTrack);
     }
     m11_decrement_action_disabled_ticks(state);
     if (state->lastDm1V1MovementPipelineResult.anyMovementOccurred) {

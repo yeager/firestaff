@@ -1,6 +1,8 @@
 #include "dm1_v1_fmtowns_cd_audio.h"
+#include "firestaff_fmtowns_disc.h"
 #include <assert.h>
 #include <stdio.h>
+#include <string.h>
 #include <stddef.h>
 
 static void test_track_for_map(void) {
@@ -62,11 +64,52 @@ static void test_all_tracks_covered(void) {
     }
 }
 
+static void test_cue_parse_dm1_fmtowns(void) {
+    static const char cue[] =
+        "FILE \"Dungeon Master (1987)(FTL)(Jp-En).bin\" BINARY\n"
+        "  TRACK 01 MODE1/2048\n"
+        "    INDEX 01 00:00:00\n"
+        "  TRACK 02 AUDIO\n"
+        "    PREGAP 00:02:00\n"
+        "    INDEX 01 00:28:50\n"
+        "  TRACK 03 AUDIO\n"
+        "    INDEX 00 02:26:50\n"
+        "    INDEX 01 02:28:50\n"
+        "  TRACK 05 AUDIO\n"
+        "    INDEX 00 06:18:50\n"
+        "    INDEX 01 06:20:50\n"
+        "  TRACK 20 AUDIO\n"
+        "    INDEX 00 29:46:52\n"
+        "    INDEX 01 29:48:52\n";
+    uint32_t starts[24];
+    int count;
+    memset(starts, 0, sizeof(starts));
+    count = fmtowns_cue_parse_track_starts(cue, strlen(cue), starts, 24);
+    assert(count >= 20);
+    assert(starts[1] == 0);
+    assert(starts[2] == 28u * 75u + 50u);
+    assert(starts[3] == 2u * 60u * 75u + 28u * 75u + 50u);
+    assert(starts[5] == 6u * 60u * 75u + 20u * 75u + 50u);
+    assert(starts[20] == 29u * 60u * 75u + 48u * 75u + 52u);
+}
+
+static void test_cdda_byte_offset_calculation(void) {
+    uint32_t data_track_end = 28u * 75u + 50u;
+    uint32_t track5_sector = 6u * 60u * 75u + 20u * 75u + 50u;
+    size_t data_bytes = (size_t)data_track_end * 2048u;
+    size_t audio_offset = data_bytes +
+        (size_t)(track5_sector - data_track_end) * FMTOWNS_CDDA_SECTOR_SIZE;
+    assert(data_bytes == 4403200u);
+    assert(audio_offset == 66496000u);
+}
+
 int main(void) {
     test_track_for_map();
     test_track_for_event();
     test_track_info();
     test_all_tracks_covered();
+    test_cue_parse_dm1_fmtowns();
+    test_cdda_byte_offset_calculation();
     printf("All dm1_v1_fmtowns_cd_audio tests passed.\n");
     return 0;
 }

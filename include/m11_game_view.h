@@ -842,6 +842,8 @@ typedef struct {
     int      fmtownsCddaTrackCount;
     DM1_V1_FmtownsStartupReceipt dm1FmtownsStartupReceipt;
     int      dm1FmtownsStartupReceiptValid;
+    int      dm1FmtownsCddaPlaying;
+    int      dm1FmtownsCddaCurrentTrack;
 
     /* Asset loader for GRAPHICS.DAT-backed rendering */
     M11_AssetLoader assetLoader;
