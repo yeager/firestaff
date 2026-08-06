@@ -6,6 +6,10 @@
   decoded descriptor records to Structure1B/VDP1 material ownership; palette,
   transform and drawing evidence remain capture-gated.
 
+- **NEXUS-STALE-ISSUE-PAGES:** The three historical Nexus issue pages are now
+  explicitly labelled as snapshots. Keep the strict-fidelity inventory and
+  capture gates authoritative when further format or runtime gaps are found.
+
 - **NEXUS-STALE-DOCUMENT-CLAIMS:** Older Nexus content/format documents still
   contain historical “implemented” wording for DM1-derived roster/combat,
   host mesh/title/HUD rendering, text conversion, and audio playback. The

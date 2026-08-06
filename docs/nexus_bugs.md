@@ -1,5 +1,12 @@
 # Nexus V1 Known Bugs and Quirks — Source-Locked
 
+> **Historical snapshot — not current status.** This page contains legacy
+> issue assumptions from before the real European retail corpus and the
+> current source-bound Nexus runtime gates. It must not be used to claim that
+> the present tree lacks tests, disc data, DGN/PRS3 parsing or launcher
+> integration. See [`docs/NEXUS_STRICT_FIDELITY_INVENTORY.md`](NEXUS_STRICT_FIDELITY_INVENTORY.md)
+> and [`docs/NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md).
+
 ## Summary
 Nexus carries forward DM1 bugs (BUG0 series) since it re-implements DM1
 game logic. There are also Nexus-specific gaps and known issues in the

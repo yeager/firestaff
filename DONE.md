@@ -5,6 +5,11 @@
   mismatch between the read path and the receipt path; Structure1B material
   ownership, palettes, transforms and VDP1 drawing remain blocked.
 
+- ✅ 2026-08-06 Nexus stale issue-page audit: marked the old
+  `nexus_issues.md`, `nexus_regression.md` and `nexus_bugs.md` scaffolding/
+  no-disc/no-tests claims as historical snapshots and linked the current
+  strict-fidelity inventory. No runtime status was changed.
+
 - ✅ 2026-08-06 Nexus DGN corpus geometry receipt: fixed
   `nexus_v1_inspect_dgn_material_corpus()` to count the real Structure3 mesh
   extraction receipt instead of the unrelated post-grid/collision

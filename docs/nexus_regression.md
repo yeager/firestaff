@@ -1,5 +1,11 @@
 # Nexus V1 Known Regressions
 
+> **Historical snapshot — not current status.** The claims below were written
+> before real European Nexus media, source-bound parsers, tests and launcher
+> receipts were present. They are retained for provenance of the old issue
+> list only. Use [`docs/NEXUS_STRICT_FIDELITY_INVENTORY.md`](NEXUS_STRICT_FIDELITY_INVENTORY.md)
+> for the current verified gaps and gates.
+
 ## Overview
 
 Nexus V1 implementation is not complete enough to have regression tests. What exists is scaffolding only (20 source files, no tests, no linked executable).

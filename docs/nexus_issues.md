@@ -1,5 +1,13 @@
 # Nexus V1 Open Issues
 
+> **Historical snapshot — not current status.** This document predates the
+> authenticated European retail corpus, the Nexus CTest/probe suite, the
+> production launcher handoff, and the DMWeb-bound DGN/PRS3/ITEM/SLEV parsers.
+> For the current source-faithful inventory, see
+> [`docs/NEXUS_STRICT_FIDELITY_INVENTORY.md`](NEXUS_STRICT_FIDELITY_INVENTORY.md)
+> and [`docs/NEXUS_STALE_CLAIM_AUDIT.md`](NEXUS_STALE_CLAIM_AUDIT.md). The
+> issue labels below are retained as historical context, not as current claims.
+
 ## Summary
 
 Nexus V1 implementation is in scaffolding phase. All Phase 0-7 items are NOT DONE in TODO.md. No tests, no linked executable, no disc image. The open issues below span blocking infrastructure problems, missing implementations, and unknown risks.
@@ -10,8 +18,8 @@ Nexus V1 implementation is in scaffolding phase. All Phase 0-7 items are NOT DON
 
 ### B1: No Sega Saturn Disc Image
 
-**Severity:** CRITICAL  
-**Status:** No disc image present in repository  
+**Severity:** CRITICAL
+**Status:** No disc image present in repository
 
 No parity work can begin without the Sega Saturn disc image. The disc image is the single source of truth for all Nexus assets, formats, and behavior. Without it:
 
@@ -27,8 +35,8 @@ No parity work can begin without the Sega Saturn disc image. The disc image is t
 
 ### B2: Nexus Static Library Not Linked Into Any Binary
 
-**Severity:** CRITICAL  
-**Status:** libfirestaff_nexus.a builds but nothing links against it  
+**Severity:** CRITICAL
+**Status:** libfirestaff_nexus.a builds but nothing links against it
 
 The CMake target `firestaff_nexus` produces a static library, but no `firestaff` or `firestaff_*` binary links to it. There is no `--profile nexus` entry point.
 
@@ -38,8 +46,8 @@ The CMake target `firestaff_nexus` produces a static library, but no `firestaff`
 
 ### B3: No Tests for Nexus
 
-**Severity:** CRITICAL  
-**Status:** 0 tests, 0 CTest entries, 0% test coverage  
+**Severity:** CRITICAL
+**Status:** 0 tests, 0 CTest entries, 0% test coverage
 
 The test suite has 387 tests (DM1/M11/memory), none for Nexus. Cannot measure progress, detect regressions, or verify parity.
 
@@ -49,8 +57,8 @@ The test suite has 387 tests (DM1/M11/memory), none for Nexus. Cannot measure pr
 
 ### B4: No Game Loop Integration
 
-**Severity:** CRITICAL  
-**Status:** nexus_v1_engine.c is isolated dead code  
+**Severity:** CRITICAL
+**Status:** nexus_v1_engine.c is isolated dead code
 
 firestaff_game_loop.c runs DM1 game loop. nexus_v1_engine.c is not invoked. Nexus game tick never runs.
 
@@ -62,8 +70,8 @@ firestaff_game_loop.c runs DM1 game loop. nexus_v1_engine.c is not invoked. Nexu
 
 ### M1: VDP1/VDP2 Texture Format Not Implemented
 
-**Severity:** HIGH  
-**Status:** nexus_v1_rasterizer.c scaffolding only  
+**Severity:** HIGH
+**Status:** nexus_v1_rasterizer.c scaffolding only
 
 Saturn VDP1 textures (4bpp/8bpp paletted, 15-bit RGB, SH2 big-endian) are not parsed. No texture data loads. No renderer output possible without textures.
 
@@ -73,8 +81,8 @@ Saturn VDP1 textures (4bpp/8bpp paletted, 15-bit RGB, SH2 big-endian) are not pa
 
 ### M2: DMDF Model Format Not Documented
 
-**Severity:** HIGH  
-**Status:** nexus_v1_dmdf_model.c scaffolding only  
+**Severity:** HIGH
+**Status:** nexus_v1_dmdf_model.c scaffolding only
 
 DMDF format (3D model, quad list, texture references) is not documented. No model data loads. 3D creatures and geometry not rendered.
 
@@ -84,8 +92,8 @@ DMDF format (3D model, quad list, texture references) is not documented. No mode
 
 ### M3: ISO 9660 + Saturn Header Parser Incomplete
 
-**Severity:** MEDIUM  
-**Status:** tools/extract_nexus_iso.py exists but not tested  
+**Severity:** MEDIUM
+**Status:** tools/extract_nexus_iso.py exists but not tested
 
 The extract_nexus_iso.py script exists but has not been run against a real disc image. Its correctness is unverified.
 
@@ -95,8 +103,8 @@ The extract_nexus_iso.py script exists but has not been run against a real disc 
 
 ### M4: Shift-JIS Text Decoding Not Implemented
 
-**Severity:** MEDIUM  
-**Status:** nexus_v1_text.c scaffolding only  
+**Severity:** MEDIUM
+**Status:** nexus_v1_text.c scaffolding only
 
 Japanese text extraction (dungeon names, monster names, inscriptions, UI) from Shift-JIS to UTF-8 not implemented. Text will be garbled or missing.
 
@@ -106,8 +114,8 @@ Japanese text extraction (dungeon names, monster names, inscriptions, UI) from S
 
 ### M5: CD Audio Not Integrated
 
-**Severity:** MEDIUM  
-**Status:** nexus_v1_game.c has stub nexus_v1_cd_track_for_level() returning 2+(level/2)  
+**Severity:** MEDIUM
+**Status:** nexus_v1_game.c has stub nexus_v1_cd_track_for_level() returning 2+(level/2)
 
 Red Book Audio tracks (Tracks 2-9 on the disc) are not played. No music in game. Sound effects also not wired (unknown format).
 
@@ -117,8 +125,8 @@ Red Book Audio tracks (Tracks 2-9 on the disc) are not played. No music in game.
 
 ### M6: No Save/Load Implementation
 
-**Severity:** MEDIUM  
-**Status:** No save/load code exists for Nexus  
+**Severity:** MEDIUM
+**Status:** No save/load code exists for Nexus
 
 Saturn save format unknown. No save/load round-trip possible.
 
@@ -128,8 +136,8 @@ Saturn save format unknown. No save/load round-trip possible.
 
 ### M7: V2 Renderer Not Wired to Game Loop
 
-**Severity:** MEDIUM  
-**Status:** nexus_v2_*.c files exist (lighting, atmosphere, particles, render_pipeline, upscaler) but are isolated  
+**Severity:** MEDIUM
+**Status:** nexus_v2_*.c files exist (lighting, atmosphere, particles, render_pipeline, upscaler) but are isolated
 
 V2 enhanced renderer exists but is not connected to game loop or viewport. V2.0 (filtered original), V2.1 (upscale), V2.2 (modern) all need wiring.
 
@@ -141,8 +149,8 @@ V2 enhanced renderer exists but is not connected to game loop or viewport. V2.0 
 
 ### R1: No Source Disassembly Available
 
-**Severity:** HIGH  
-**Status:** No ReDMCSB equivalent for Nexus  
+**Severity:** HIGH
+**Status:** No ReDMCSB equivalent for Nexus
 
 DM1 has ReDMCSB (WIP20210206) disassembly providing exact source-lock reference. Nexus has no equivalent. All format reverse-engineering must be done from disc inspection alone.
 
@@ -152,8 +160,8 @@ DM1 has ReDMCSB (WIP20210206) disassembly providing exact source-lock reference.
 
 ### R2: Region/Version Variants Unknown
 
-**Severity:** MEDIUM  
-**Status:** Unknown if other Nexus releases exist  
+**Severity:** MEDIUM
+**Status:** Unknown if other Nexus releases exist
 
 It is unknown if Dungeon Master Nexus was released in other regions (only Japanese known). No other versions confirmed. Disc used for implementation may not represent all releases.
 
@@ -163,8 +171,8 @@ It is unknown if Dungeon Master Nexus was released in other regions (only Japane
 
 ### R3: No Equivalent to DM1 PC34 Compatibility Layer
 
-**Severity:** HIGH  
-**Status:** DM1 has a full compatibility layer (pc34_compat) proving file format compatibility  
+**Severity:** HIGH
+**Status:** DM1 has a full compatibility layer (pc34_compat) proving file format compatibility
 
 DM1 V1 tests prove binary compatibility with original GRAPHICS.DAT and DUNGEON.DAT. Nexus has no such layer -- there is no confirmed reference for binary formats.
 
@@ -174,8 +182,8 @@ DM1 V1 tests prove binary compatibility with original GRAPHICS.DAT and DUNGEON.D
 
 ### R4: Compatibility with DM1 Dungeon Data Is Assumed, Not Proven
 
-**Severity:** MEDIUM  
-**Status:** TODO.md says Nexus is DM1 underneath, but no evidence  
+**Severity:** MEDIUM
+**Status:** TODO.md says Nexus is DM1 underneath, but no evidence
 
 TODO.md claims Nexus dungeon format is an extended DM1 dungeon.dat format. This is unverified. If Nexus uses a different dungeon format, Phase 3 (world model) may be fundamentally wrong.
 
@@ -187,8 +195,8 @@ TODO.md claims Nexus dungeon format is an extended DM1 dungeon.dat format. This 
 
 ### D1: NEXUS_PLAN.md Incomplete
 
-**Severity:** LOW  
-**Status:** Plan exists but lacks time estimate for later phases and detailed risk mitigation  
+**Severity:** LOW
+**Status:** Plan exists but lacks time estimate for later phases and detailed risk mitigation
 
 Phase 1-6 time estimates present. Phase 7 (verification suite) time estimate missing. Several "TBD" entries in risk table.
 
@@ -196,8 +204,8 @@ Phase 1-6 time estimates present. Phase 7 (verification suite) time estimate mis
 
 ### D2: No Nexus-Specific README
 
-**Severity:** LOW  
-**Status:** README.md covers firestaff broadly, no Nexus section  
+**Severity:** LOW
+**Status:** README.md covers firestaff broadly, no Nexus section
 
 README.md does not mention Nexus at all. No user-facing documentation for how to run Nexus mode.
 
