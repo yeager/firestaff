@@ -1268,7 +1268,7 @@ static M11_GameInputResult m11_dm2_startup_apply_host_receipt(
         return M11_GAME_INPUT_IGNORED;
     }
     m11_dm2_startup_apply_mode_update(state, &host_receipt->mode_update);
-    if (host_receipt->status_scope || host_receipt->status) {
+    if (host_receipt->status) {
         m11_set_status(state,
                        host_receipt->status_scope
                            ? host_receipt->status_scope
@@ -1315,8 +1315,6 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
         if (route->status_scope &&
             strcmp(route->status_scope, "GAME_LOAD") == 0) {
             DM2_V1_BootNewDungeonReceipt new_dungeon;
-            const char *status = route->status
-                ? route->status : "DM2 GAME_LOAD DATA REQUIRED";
             /* SKWINSPX SkWinCore.cpp::SHOW_MENU_SCREEN returns to INIT,
              * which calls GAME_LOAD()/LOAD_NEW_DUNGEON.  Do not replace that
              * source-owned load with a test fixture: its canned party, gold
@@ -1332,10 +1330,11 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
                 new_dungeon.valid && new_dungeon.reloaded &&
                 !new_dungeon.synthetic_party_created) {
                 m11_dm2_clear_new_game_party_state(state);
-                status = "DM2 GAME_LOAD DUNGEON READY: INITIALIZATION REQUIRED";
             }
             state->dm2State.startup_menu_active = 1;
-            m11_set_status(state, route->status_scope, status);
+            if (route->status) {
+                m11_set_status(state, route->status_scope, route->status);
+            }
             return M11_GAME_INPUT_REDRAW;
         }
         if (route->close_startup_menu) {
@@ -1343,7 +1342,7 @@ static M11_GameInputResult m11_dm2_startup_apply_host_action_receipt(
         }
         state->dm2State.startup_menu_selected_row =
             route->selected_row_after;
-        if (route->status_scope || route->status) {
+        if (route->status) {
             m11_set_status(state,
                            route->status_scope ? route->status_scope
                                                : "STARTUP",

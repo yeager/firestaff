@@ -929,14 +929,11 @@ int dm2_v1_startup_plan_for_action(
     }
     if (action->kind == DM2_V1_STARTUP_ACTION_NONE) {
         out_plan->kind = DM2_V1_STARTUP_PLAN_IGNORE;
-        out_plan->success_status = "DM2 START SELECT";
         return 1;
     }
     if (action->kind == DM2_V1_STARTUP_ACTION_CONTINUE) {
         out_plan->kind = DM2_V1_STARTUP_PLAN_CONTINUE;
         out_plan->rescan_saves_on_failure = 1;
-        out_plan->success_status = "DM2 CONTINUED";
-        out_plan->failure_status = "DM2 CONTINUE FAILED";
         return 1;
     }
     if (action->kind == DM2_V1_STARTUP_ACTION_LOAD_SLOT &&
@@ -944,18 +941,14 @@ int dm2_v1_startup_plan_for_action(
         out_plan->kind = DM2_V1_STARTUP_PLAN_LOAD_SLOT;
         out_plan->slot = action->slot;
         out_plan->rescan_saves_on_failure = 1;
-        out_plan->success_status = "DM2 SLOT LOADED";
-        out_plan->failure_status = "DM2 SLOT LOAD FAILED";
         return 1;
     }
     if (action->kind == DM2_V1_STARTUP_ACTION_NEW_GAME) {
         out_plan->kind = DM2_V1_STARTUP_PLAN_NEW_GAME;
-        out_plan->success_status = "DM2 NEW GAME";
         return 1;
     }
     if (action->kind == DM2_V1_STARTUP_ACTION_RETURN_TO_LAUNCHER) {
         out_plan->kind = DM2_V1_STARTUP_PLAN_RETURN_TO_LAUNCHER;
-        out_plan->success_status = "BACK TO LAUNCHER";
         return 1;
     }
     return 0;
@@ -1013,7 +1006,6 @@ int dm2_v1_startup_execute_plan(
          * which invokes LOAD_NEW_DUNGEON(). Do not replace that original
          * DUNGEON.DAT path with a test fixture or a synthetic party. */
         out_execution->kind = DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED;
-        out_execution->status = "DM2 GAME_LOAD DATA REQUIRED";
         return 1;
     }
     if (plan->kind == DM2_V1_STARTUP_PLAN_RETURN_TO_LAUNCHER) {
@@ -1062,6 +1054,7 @@ int dm2_v1_startup_execution_input_outcome(
     int session_applied,
     DM2_V1_StartupInputOutcome *out_outcome)
 {
+    (void)session_applied;
     if (!out_outcome) {
         return 0;
     }
@@ -1073,34 +1066,26 @@ int dm2_v1_startup_execution_input_outcome(
         out_outcome->result = DM2_V1_STARTUP_INPUT_RESULT_REDRAW;
         out_outcome->rescan_saves = execution->rescan_saves;
         out_outcome->status_scope = "STARTUP";
-        out_outcome->status = execution->status
-            ? execution->status
-            : "DM2 START SELECT";
+        out_outcome->status = execution->status;
         return 1;
     }
     if (execution->kind == DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED) {
         out_outcome->result = DM2_V1_STARTUP_INPUT_RESULT_REDRAW;
         out_outcome->status_scope = "GAME_LOAD";
-        out_outcome->status = execution->status
-            ? execution->status
-            : "DM2 GAME_LOAD DATA REQUIRED";
+        out_outcome->status = execution->status;
         return 1;
     }
     if (execution->kind == DM2_V1_STARTUP_EXEC_SESSION_READY) {
         out_outcome->result = DM2_V1_STARTUP_INPUT_RESULT_REDRAW;
         out_outcome->status_scope = "STARTUP";
-        out_outcome->status = session_applied
-            ? (execution->status ? execution->status : "DM2 STARTED")
-            : "DM2 LOAD FAILED";
+        out_outcome->status = execution->status;
         return 1;
     }
     if (execution->kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER) {
         out_outcome->result =
             DM2_V1_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER;
         out_outcome->status_scope = "RETURN";
-        out_outcome->status = execution->status
-            ? execution->status
-            : "BACK TO LAUNCHER";
+        out_outcome->status = execution->status;
         return 1;
     }
     return 0;
@@ -1443,7 +1428,6 @@ int dm2_v1_startup_launch_from_host_facts_with_receipt(
     if (!facts || !out_receipt) {
         if (out_receipt) {
             out_receipt->host_receipt.status_scope = "BOOT";
-            out_receipt->host_receipt.status = "DM2 START MENU FAILED";
         }
         return 0;
     }
@@ -1461,11 +1445,6 @@ int dm2_v1_startup_launch_from_host_facts_with_receipt(
     out_receipt->host_receipt.input_result =
         DM2_V1_STARTUP_HOST_INPUT_REDRAW;
     out_receipt->host_receipt.status_scope = "BOOT";
-    out_receipt->host_receipt.status = "DM2 START MENU";
-    out_receipt->host_receipt.inspect_scope = "READY";
-    out_receipt->host_receipt.inspect_detail =
-        "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE";
-    out_receipt->host_receipt.log_line = "T0: DM2 START MENU";
     (void)dm2_v1_startup_runtime_handoff_receipt_from_state(
         &out_receipt->runtime_handoff,
         out_receipt->host_receipt.mode_update.startup_menu_active,
@@ -1488,7 +1467,6 @@ int dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
         mouth_redraw ? DM2_V1_STARTUP_HOST_INPUT_REDRAW
                      : DM2_V1_STARTUP_HOST_INPUT_IGNORED;
     out_receipt->host_receipt.status_scope = "STARTUP";
-    out_receipt->host_receipt.status = "DM2 STARTUP MENU";
     return 1;
 }
 
@@ -1723,23 +1701,17 @@ int dm2_v1_startup_resume_status_host_receipt(
     }
     dm2_v1_startup_host_receipt_clear(out_receipt);
     out_receipt->status_scope = "BOOT";
+    /* No original startup status glyph/panel consumer is bound yet. Keep the
+     * structured outcome but never inject an English host message into M11. */
     switch (status) {
     case DM2_V1_STARTUP_RESUME_STATUS_PATH_INVALID:
-        out_receipt->status = "DM2 RESUME PATH INVALID";
         break;
     case DM2_V1_STARTUP_RESUME_STATUS_FAILED:
-        out_receipt->status = "DM2 RESUME FAILED";
         break;
     case DM2_V1_STARTUP_RESUME_STATUS_RESUMED:
-        out_receipt->status = "DM2 RESUMED";
-        out_receipt->inspect_scope = "READY";
-        out_receipt->inspect_detail =
-            "DM2 V1 ASSETS VERIFIED; V2 RUNTIMES LIVE";
-        out_receipt->log_line = "T0: DM2 RESUMED";
         out_receipt->input_result = DM2_V1_STARTUP_HOST_INPUT_REDRAW;
         break;
     default:
-        out_receipt->status = "DM2 RESUME FAILED";
         break;
     }
     return 1;
@@ -1766,16 +1738,13 @@ int dm2_v1_startup_execute_save_path(
         NULL);
     if (result == DM2_V1_STARTUP_SAVE_PATH_INVALID) {
         out_execution->kind = DM2_V1_STARTUP_EXEC_STATUS_REDRAW;
-        out_execution->status = "DM2 RESUME PATH INVALID";
         return 1;
     }
     if (result != DM2_V1_STARTUP_SAVE_PATH_LOADED) {
         out_execution->kind = DM2_V1_STARTUP_EXEC_STATUS_REDRAW;
-        out_execution->status = "DM2 RESUME FAILED";
         return 1;
     }
     out_execution->kind = DM2_V1_STARTUP_EXEC_SESSION_READY;
-    out_execution->status = "DM2 RESUMED";
     return 1;
 }
 
@@ -1815,10 +1784,7 @@ int dm2_v1_startup_execute_save_path_with_host_receipt(
         out_receipt->save_root_valid = 1;
     }
     if (execution->kind != DM2_V1_STARTUP_EXEC_SESSION_READY) {
-        status = execution->kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
-                         execution->status &&
-                         strcmp(execution->status,
-                                "DM2 RESUME PATH INVALID") == 0
+        status = save_root[0] == '\0'
                      ? DM2_V1_STARTUP_RESUME_STATUS_PATH_INVALID
                      : DM2_V1_STARTUP_RESUME_STATUS_FAILED;
         (void)dm2_v1_startup_resume_status_host_receipt(

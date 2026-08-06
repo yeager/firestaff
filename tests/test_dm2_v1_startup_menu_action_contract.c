@@ -186,7 +186,7 @@ int main(void)
               (int)sizeof(save_root),
               &execution) &&
               execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
-              strcmp(execution.status, "DM2 RESUME PATH INVALID") == 0 &&
+              execution.status == NULL &&
               save_root[0] == '\0',
           "direct resume path execution reports invalid save path");
     memset(save_root, 0, sizeof(save_root));
@@ -196,31 +196,28 @@ int main(void)
               (int)sizeof(save_root),
               &execution) &&
               execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
-              strcmp(execution.status, "DM2 RESUME FAILED") == 0 &&
+              execution.status == NULL &&
               strcmp(save_root, "/tmp/firestaff-dm2-startup-missing") == 0,
           "direct resume path execution reports missing parsed slot");
     check(dm2_v1_startup_resume_status_host_receipt(
               DM2_V1_STARTUP_RESUME_STATUS_PATH_INVALID,
               &host_receipt) &&
               strcmp(host_receipt.status_scope, "BOOT") == 0 &&
-              strcmp(host_receipt.status, "DM2 RESUME PATH INVALID") == 0,
-          "direct resume host receipt owns invalid-path status");
+              host_receipt.status == NULL,
+          "direct resume host receipt keeps invalid-path text unbound");
     check(dm2_v1_startup_resume_status_host_receipt(
               DM2_V1_STARTUP_RESUME_STATUS_FAILED,
               &host_receipt) &&
               strcmp(host_receipt.status_scope, "BOOT") == 0 &&
-              strcmp(host_receipt.status, "DM2 RESUME FAILED") == 0,
-          "direct resume host receipt owns failed status");
+              host_receipt.status == NULL,
+          "direct resume host receipt keeps failed text unbound");
     check(dm2_v1_startup_resume_status_host_receipt(
               DM2_V1_STARTUP_RESUME_STATUS_RESUMED,
               &host_receipt) &&
               host_receipt.input_result == DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
-              strcmp(host_receipt.status, "DM2 RESUMED") == 0 &&
-              host_receipt.inspect_scope &&
-              strcmp(host_receipt.inspect_scope, "READY") == 0 &&
-              host_receipt.log_line &&
-              strcmp(host_receipt.log_line, "T0: DM2 RESUMED") == 0,
-          "direct resume host receipt owns resumed redraw status, inspect, and log");
+              host_receipt.status == NULL &&
+              host_receipt.inspect_scope == NULL && host_receipt.log_line == NULL,
+          "direct resume host receipt keeps resumed text, inspect, and log unbound");
     memset(save_root, 0, sizeof(save_root));
     check(dm2_v1_startup_execute_save_path_with_host_receipt(
               "/tmp/firestaff-dm2-startup-missing/Other.dat",
@@ -232,9 +229,8 @@ int main(void)
               !direct_resume_receipt.session_applied &&
               !direct_resume_receipt.save_root_valid &&
               strcmp(direct_resume_receipt.host_receipt.status_scope, "BOOT") == 0 &&
-              strcmp(direct_resume_receipt.host_receipt.status,
-                     "DM2 RESUME PATH INVALID") == 0,
-          "direct resume wrapper owns invalid-path host receipt");
+              direct_resume_receipt.host_receipt.status == NULL,
+          "direct resume wrapper keeps invalid-path text unbound");
     check(dm2_v1_startup_execute_save_path_with_host_receipt(
               "/tmp/firestaff-dm2-startup-missing/SKSave03.dat",
               test_apply_session,
@@ -247,9 +243,8 @@ int main(void)
               strcmp(direct_resume_receipt.save_root,
                      "/tmp/firestaff-dm2-startup-missing") == 0 &&
               strcmp(direct_resume_receipt.host_receipt.status_scope, "BOOT") == 0 &&
-              strcmp(direct_resume_receipt.host_receipt.status,
-                     "DM2 RESUME FAILED") == 0,
-          "direct resume wrapper owns missing-slot host receipt and parsed save root");
+              direct_resume_receipt.host_receipt.status == NULL,
+          "direct resume wrapper keeps missing-slot text unbound and parsed root");
 
     dm2_v1_startup_menu_init(&menu, "/tmp/firestaff-dm2-startup");
     check(dm2_v1_startup_menu_refresh(&menu, 1, (1u << 2)) &&
@@ -364,15 +359,10 @@ int main(void)
               launch_receipt.host_receipt.mode_update.startup_menu_active == 1 &&
               launch_receipt.host_receipt.input_result ==
                   DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
-              strcmp(launch_receipt.host_receipt.status, "DM2 START MENU") == 0 &&
-              launch_receipt.host_receipt.inspect_scope &&
-              strcmp(launch_receipt.host_receipt.inspect_scope, "READY") == 0 &&
-              launch_receipt.host_receipt.inspect_detail &&
-              strstr(launch_receipt.host_receipt.inspect_detail,
-                     "DM2 V1 ASSETS VERIFIED") != NULL &&
-              launch_receipt.host_receipt.log_line &&
-              strcmp(launch_receipt.host_receipt.log_line,
-                     "T0: DM2 START MENU") == 0 &&
+              launch_receipt.host_receipt.status == NULL &&
+              launch_receipt.host_receipt.inspect_scope == NULL &&
+              launch_receipt.host_receipt.inspect_detail == NULL &&
+              launch_receipt.host_receipt.log_line == NULL &&
               launch_receipt.runtime_handoff.valid &&
               launch_receipt.runtime_handoff.startup_menu_active == 1 &&
               launch_receipt.runtime_handoff.animation_active == 1 &&
@@ -407,10 +397,8 @@ int main(void)
               &launch_receipt) &&
               launch_receipt.host_receipt.status_scope &&
               strcmp(launch_receipt.host_receipt.status_scope, "BOOT") == 0 &&
-              launch_receipt.host_receipt.status &&
-              strcmp(launch_receipt.host_receipt.status,
-                     "DM2 START MENU FAILED") == 0,
-          "launch receipt owns DM2 startup menu failure status");
+              launch_receipt.host_receipt.status == NULL,
+          "launch receipt keeps startup failure text unbound");
     row_count = dm2_v1_startup_menu_build_render_rows(
         &menu,
         rows,
@@ -907,8 +895,7 @@ int main(void)
                              "dm2-startup-menu") == 0 &&
                       strcmp(boot_real_visual_capture.status_scope,
                              "STARTUP") == 0 &&
-                      strcmp(boot_real_visual_capture.status,
-                             "DM2 STARTUP MENU") == 0 &&
+                      boot_real_visual_capture.status == NULL &&
                       boot_real_visual_capture.real_gdat_title_asset_required == 1 &&
                       boot_real_visual_capture.real_gdat_title_asset_consumed == 1 &&
                       boot_real_visual_capture.real_gdat_menu_asset_consumed == 1 &&
@@ -968,20 +955,19 @@ int main(void)
               plan.kind == DM2_V1_STARTUP_PLAN_CONTINUE &&
               plan.slot == -1 &&
               plan.rescan_saves_on_failure == 1 &&
-              strcmp(plan.success_status, "DM2 CONTINUED") == 0 &&
-              strcmp(plan.failure_status, "DM2 CONTINUE FAILED") == 0,
+              plan.success_status == NULL && plan.failure_status == NULL,
           "Continue action resolves to DM2-owned startup load plan");
     check(dm2_v1_startup_execute_plan(
               &plan, "/tmp/firestaff-dm2-startup-missing", &execution) &&
               execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
               execution.rescan_saves == 1 &&
-              strcmp(execution.status, "DM2 CONTINUE FAILED") == 0,
+              execution.status == NULL,
           "Continue plan execution reports failed load and rescan");
     check(dm2_v1_startup_execute_action(
               &action, "/tmp/firestaff-dm2-startup-missing", &execution) &&
               execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
               execution.rescan_saves == 1 &&
-              strcmp(execution.status, "DM2 CONTINUE FAILED") == 0,
+              execution.status == NULL,
           "Continue action executes through DM2-owned startup wrapper");
     check(dm2_v1_startup_execution_mode_update(&execution, &mode_update) &&
               !mode_update.set_startup_menu_active,
@@ -990,7 +976,7 @@ int main(void)
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               outcome.rescan_saves == 1 &&
               strcmp(outcome.status_scope, "STARTUP") == 0 &&
-              strcmp(outcome.status, "DM2 CONTINUE FAILED") == 0,
+              outcome.status == NULL,
           "failed Continue execution owns redraw input outcome");
     check(dm2_v1_startup_apply_receipt_from_execution(
               &execution, 0, &receipt) &&
@@ -1108,7 +1094,7 @@ int main(void)
     check(dm2_v1_startup_plan_for_action(&action, &plan) &&
               plan.kind == DM2_V1_STARTUP_PLAN_IGNORE &&
               plan.slot == -1 &&
-              strcmp(plan.success_status, "DM2 START SELECT") == 0,
+              plan.success_status == NULL,
           "navigation action resolves to DM2-owned redraw plan");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_ACTION, &action) &&
@@ -1120,20 +1106,19 @@ int main(void)
               plan.kind == DM2_V1_STARTUP_PLAN_LOAD_SLOT &&
               plan.slot == 2 &&
               plan.rescan_saves_on_failure == 1 &&
-              strcmp(plan.success_status, "DM2 SLOT LOADED") == 0 &&
-              strcmp(plan.failure_status, "DM2 SLOT LOAD FAILED") == 0,
+              plan.success_status == NULL && plan.failure_status == NULL,
           "Load Slot action resolves to DM2-owned startup load plan");
     check(dm2_v1_startup_execute_plan(
               &plan, "/tmp/firestaff-dm2-startup-missing", &execution) &&
               execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
               execution.rescan_saves == 1 &&
-              strcmp(execution.status, "DM2 SLOT LOAD FAILED") == 0,
+              execution.status == NULL,
           "Load Slot plan execution reports failed load and rescan");
     check(dm2_v1_startup_execute_action(
               &action, "/tmp/firestaff-dm2-startup-missing", &execution) &&
               execution.kind == DM2_V1_STARTUP_EXEC_STATUS_REDRAW &&
               execution.rescan_saves == 1 &&
-              strcmp(execution.status, "DM2 SLOT LOAD FAILED") == 0,
+              execution.status == NULL,
           "Load Slot action executes through DM2-owned startup wrapper");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_DOWN, &action) &&
@@ -1150,19 +1135,19 @@ int main(void)
               plan.kind == DM2_V1_STARTUP_PLAN_NEW_GAME &&
               plan.slot == -1 &&
               plan.rescan_saves_on_failure == 0 &&
-              strcmp(plan.success_status, "DM2 NEW GAME") == 0,
+              plan.success_status == NULL,
           "New Game action preserves the source-owned startup selection");
     check(dm2_v1_startup_execute_plan(
               &plan, "/tmp/firestaff-dm2-startup-missing", &execution) &&
               execution.kind == DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED &&
               execution.rescan_saves == 0 &&
-              strcmp(execution.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+              execution.status == NULL,
           "New Game plan requires the original GAME_LOAD data path");
     check(dm2_v1_startup_execute_action(
               &action, "/tmp/firestaff-dm2-startup-missing", &execution) &&
               execution.kind == DM2_V1_STARTUP_EXEC_GAME_LOAD_REQUIRED &&
               execution.rescan_saves == 0 &&
-              strcmp(execution.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+              execution.status == NULL,
           "New Game action keeps the original GAME_LOAD boundary explicit");
     check(dm2_v1_startup_execution_mode_update(&execution, &mode_update) &&
               !mode_update.set_startup_menu_active,
@@ -1171,7 +1156,7 @@ int main(void)
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               outcome.rescan_saves == 0 &&
               strcmp(outcome.status_scope, "GAME_LOAD") == 0 &&
-              strcmp(outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+              outcome.status == NULL,
           "New Game outcome reports the source-owned GAME_LOAD boundary");
     check(dm2_v1_startup_apply_receipt_from_execution(
               &execution, 1, &receipt) &&
@@ -1179,7 +1164,7 @@ int main(void)
               receipt.session_applied &&
               !receipt.mode_update.set_startup_menu_active &&
               receipt.outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
-              strcmp(receipt.outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+              receipt.outcome.status == NULL,
           "New Game receipt blocks synthetic session handoff");
     g_apply_calls = 0;
     g_apply_result = 1;
@@ -1195,7 +1180,7 @@ int main(void)
               !receipt.session_should_apply &&
               !receipt.session_applied &&
               !receipt.mode_update.set_startup_menu_active &&
-              strcmp(receipt.outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+              receipt.outcome.status == NULL,
           "combined action execution blocks synthetic Game Load handoff");
     g_apply_calls = 0;
     g_apply_result = 1;
@@ -1211,7 +1196,7 @@ int main(void)
               host_receipt.input_result ==
                   DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
               !host_receipt.mode_update.set_startup_menu_active &&
-              strcmp(host_receipt.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+              host_receipt.status == NULL,
           "combined action execution preserves M11 title/menu gate");
     host_facts.resume_available = 1;
     host_facts.slot_mask = (1u << 2);
@@ -1266,14 +1251,14 @@ int main(void)
     check(dm2_v1_startup_execution_input_outcome(&execution, 0, &outcome) &&
               outcome.result == DM2_V1_STARTUP_INPUT_RESULT_REDRAW &&
               strcmp(outcome.status_scope, "GAME_LOAD") == 0 &&
-              strcmp(outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+              outcome.status == NULL,
           "GAME_LOAD requirement ignores synthetic session apply state");
     check(dm2_v1_startup_apply_receipt_from_execution(
               &execution, 0, &receipt) &&
               !receipt.session_should_apply &&
               !receipt.session_applied &&
               !receipt.mode_update.set_startup_menu_active &&
-              strcmp(receipt.outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+              receipt.outcome.status == NULL,
           "GAME_LOAD receipt keeps startup open without a session");
     g_apply_calls = 0;
     g_apply_result = 0;
@@ -1289,7 +1274,7 @@ int main(void)
               !receipt.session_should_apply &&
               !receipt.session_applied &&
               !receipt.mode_update.set_startup_menu_active &&
-              strcmp(receipt.outcome.status, "DM2 GAME_LOAD DATA REQUIRED") == 0,
+              receipt.outcome.status == NULL,
           "combined action execution keeps GAME_LOAD behind the title menu");
     check(dm2_v1_startup_menu_handle_input(
               &menu, DM2_V1_STARTUP_INPUT_BACK, &action) &&
@@ -1299,17 +1284,17 @@ int main(void)
           "keyboard Back returns launcher action directly");
     check(dm2_v1_startup_plan_for_action(&action, &plan) &&
               plan.kind == DM2_V1_STARTUP_PLAN_RETURN_TO_LAUNCHER &&
-              strcmp(plan.success_status, "BACK TO LAUNCHER") == 0,
+              plan.success_status == NULL,
           "Back action resolves to DM2-owned launcher-return plan");
     check(dm2_v1_startup_execute_plan(
               &plan, "/tmp/firestaff-dm2-startup-missing", &execution) &&
               execution.kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER &&
-              strcmp(execution.status, "BACK TO LAUNCHER") == 0,
+              execution.status == NULL,
           "Back plan execution returns launcher command");
     check(dm2_v1_startup_execute_action(
               &action, "/tmp/firestaff-dm2-startup-missing", &execution) &&
               execution.kind == DM2_V1_STARTUP_EXEC_RETURN_TO_LAUNCHER &&
-              strcmp(execution.status, "BACK TO LAUNCHER") == 0,
+              execution.status == NULL,
           "Back action executes through DM2-owned startup wrapper");
     check(dm2_v1_startup_execution_mode_update(&execution, &mode_update) &&
               !mode_update.set_startup_menu_active,
@@ -1319,14 +1304,14 @@ int main(void)
                   DM2_V1_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER &&
               outcome.rescan_saves == 0 &&
               strcmp(outcome.status_scope, "RETURN") == 0 &&
-              strcmp(outcome.status, "BACK TO LAUNCHER") == 0,
+              outcome.status == NULL,
           "launcher-return execution owns return input outcome");
     check(dm2_v1_startup_apply_receipt_from_execution(
               &execution, 0, &receipt) &&
               !receipt.session_should_apply &&
               receipt.outcome.result ==
                   DM2_V1_STARTUP_INPUT_RESULT_RETURN_TO_LAUNCHER &&
-              strcmp(receipt.outcome.status, "BACK TO LAUNCHER") == 0,
+              receipt.outcome.status == NULL,
           "launcher-return receipt owns return policy");
 
     hit.kind = DM2_V1_STARTUP_HIT_PANEL;
@@ -1385,7 +1370,7 @@ int main(void)
               &host_facts, 1, &idle_receipt) &&
               idle_receipt.host_receipt.input_result ==
                   DM2_V1_STARTUP_HOST_INPUT_REDRAW &&
-              strcmp(idle_receipt.host_receipt.status, "DM2 STARTUP MENU") == 0,
+              idle_receipt.host_receipt.status == NULL,
           "startup idle receipt owns DM2 menu redraw policy");
     check(dm2_v1_startup_advance_idle_from_host_facts_with_receipt(
               &host_facts, 0, &idle_receipt) &&

@@ -663,8 +663,7 @@ static void expect_dm2_startup_layout_contract(void) {
                     boot_view_model.host_view_receipt.m11_host_view_ready == 1 &&
                     strcmp(boot_view_model.host_view_receipt.status_scope,
                            "STARTUP") == 0 &&
-                    strcmp(boot_view_model.host_view_receipt.status,
-                           "DM2 STARTUP MENU") == 0 &&
+                    boot_view_model.host_view_receipt.status == NULL &&
                     strcmp(boot_view_model.phase, "dm2-startup-menu") == 0 &&
                     boot_view_model.startup_active == 1 &&
                     strcmp(boot_view_model.animation,
@@ -744,10 +743,9 @@ static void expect_dm2_startup_layout_contract(void) {
                     host_view_receipt.capture_proof.title_capture_ready == 0 &&
                     host_view_receipt.capture_proof.packaged_capture_hash != 0u &&
                     strcmp(host_view_receipt.status_scope, "STARTUP") == 0 &&
-                    strcmp(host_view_receipt.status, "DM2 STARTUP MENU") == 0 &&
-                    strcmp(host_view_receipt.log_line,
-                           "T0: DM2 STARTUP MENU") == 0,
-                "DM2 boot host-view receipt lets M11 consume startup state/status without loose command-count gates");
+                    host_view_receipt.status == NULL &&
+                    host_view_receipt.log_line == NULL,
+                "DM2 boot host-view receipt keeps startup text unbound");
     expect_true(dm2_v1_boot_startup_packaged_full_start_receipt_from_snapshot(
                     &boot_snapshot,
                     &full_start_package) &&
@@ -1350,9 +1348,8 @@ int main(void) {
         expect_true(M11_GameView_HandlePointerButton(
                         &view, source_x, source_y,
                         DM1_V1_MOUSE_MASK_LEFT_PC34) == M11_GAME_INPUT_REDRAW &&
-                        view.dm2State.startup_menu_active == 1 &&
-                        strstr(view.lastOutcome, "DM2 GAME_LOAD") != NULL,
-                    "M11 DM2 source NEW GAME click reaches the source-owned load gate");
+                        view.dm2State.startup_menu_active == 1,
+                    "M11 DM2 source NEW GAME click reaches the source-owned load gate without host text");
     }
     if (profile && profile->graphics_dat) {
         DM2_V1_BootRuntimeStartupSnapshot startup_snapshot;
@@ -1459,8 +1456,7 @@ int main(void) {
                         host_view_receipt.capture_proof.title_gdat_asset_w == 320 &&
                         host_view_receipt.capture_proof.title_gdat_asset_h == 200 &&
                         host_view_receipt.capture_proof.packaged_capture_hash != 0u &&
-                        strcmp(host_view_receipt.status,
-                               "DM2 STARTUP MENU") == 0 &&
+                        host_view_receipt.status == NULL &&
                         host_view_receipt.full_start
                                 .title_gdat_asset_ready == 1 &&
                         host_view_receipt.full_start
@@ -2013,10 +2009,8 @@ int main(void) {
     expect_true(M11_GameView_HandlePointer(&view, 100, 60, 1) ==
                     M11_GAME_INPUT_REDRAW,
                 "M11 DM2 source NEW GAME rectangle reaches GAME_LOAD gate");
-    expect_true(view.dm2State.startup_menu_active == 1 &&
-                    strstr(view.lastOutcome,
-                           "DM2 GAME_LOAD DUNGEON READY: INITIALIZATION REQUIRED") != NULL,
-                "M11 DM2 startup reloads the original dungeon but keeps missing source initialization gated");
+    expect_true(view.dm2State.startup_menu_active == 1,
+                "M11 DM2 startup reloads the original dungeon but keeps missing source initialization gated without host text");
     expect_true(view.world.party.championCount == 0 &&
                     view.world.party.activeChampionIndex == -1 &&
                     view.dm2State.leader_hand_object == 0u &&
@@ -3169,8 +3163,8 @@ int main(void) {
         M11_GameView_Init(&view);
         expect_true(M11_GameView_Start(&view, &spec) == 0,
                     "M11 DM2 rejects the D2RS SUPPRESS fixture as a resume");
-        expect_true(strstr(view.lastOutcome, "DM2 RESUME FAILED") != NULL,
-                    "M11 DM2 reports the D2RS resume blocker");
+        expect_true(strstr(view.lastOutcome, "DM2 RESUME FAILED") == NULL,
+                    "M11 DM2 keeps the D2RS resume blocker text unbound");
         expect_true(view.active == 0,
                     "D2RS rejection leaves no synthetic DM2 runtime active");
         M11_GameView_Shutdown(&view);
@@ -3181,8 +3175,8 @@ int main(void) {
     M11_GameView_Init(&view);
     expect_true(M11_GameView_Start(&view, &spec) == 0,
                 "M11 DM2 rejects invalid savePath shape");
-    expect_true(strstr(view.lastOutcome, "DM2 RESUME PATH INVALID") != NULL,
-                "M11 DM2 invalid savePath reports path blocker");
+    expect_true(strstr(view.lastOutcome, "DM2 RESUME PATH INVALID") == NULL,
+                "M11 DM2 keeps invalid-save-path text unbound");
     expect_true(view.active == 0,
                 "M11 DM2 invalid savePath leaves view inactive");
     M11_GameView_Shutdown(&view);

@@ -3355,11 +3355,11 @@ static int dm2_v1_boot_startup_fill_host_view_receipt(
          receipt->runtime_handoff_ready);
     receipt->status_scope =
         receipt->draw_startup_menu ? "STARTUP" : "RUNTIME";
-    receipt->status =
-        receipt->draw_startup_menu ? "DM2 STARTUP MENU" : "DM2 RUNTIME";
-    receipt->log_line =
-        receipt->draw_startup_menu ? "T0: DM2 STARTUP MENU"
-                                   : "T0: DM2 RUNTIME";
+    /* M11 may use the structured scope to select a flow, but must not render
+     * a host-authored label while the original status-panel text owner is
+     * absent. */
+    receipt->status = NULL;
+    receipt->log_line = NULL;
     receipt->full_start = *full_start;
     receipt->capture_proof_valid =
         dm2_v1_boot_startup_packaged_capture_proof_from_host_view(
@@ -4692,8 +4692,7 @@ static int dm2_v1_boot_startup_real_visual_breadth_probe(
             runtime_view.first_hud_frame_ready &&
             runtime_view.runtime_action_ready &&
             !runtime_view.draw_startup_menu &&
-            runtime_view.status &&
-            strcmp(runtime_view.status, "DM2 RUNTIME") == 0) {
+            runtime_view.status == NULL) {
             out_receipt->sampled_runtime_hud_handoff_capture_ready = 1;
         }
     }

@@ -52732,6 +52732,13 @@ no-draw/capture-gates är oförändrade.
   established PC-DOS profile uses that real 320×200 GDAT image when no raw
   `SHOW_MENU_SCREEN` record exists; the startup gate still rejects every
   generated menu overlay and every missing original route.
+
+- ✅ 2026-08-06 DM2 startup host-text closure: removed active hard-coded
+  English startup, new-game, resume and load status strings from the M11
+  receipt path. Menu actions preserve their source-gated structured result,
+  including the `GAME_LOAD` control-flow boundary, but M11 now leaves status,
+  inspect and log text empty until an original GUI/dialogue text owner is
+  connected.
 ✅ 2026-08-06 Nexus startup menu text sanitization: production save/chrome
 builders no longer emit hoststrängarna `DUNGEON MASTER NEXUS`, `LOAD GAME`,
 `NEW GAME` eller `LOAD SLOT ##`. Riktig radgeometri och källans slot-identitet

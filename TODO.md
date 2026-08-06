@@ -26959,6 +26959,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   verified alternative only when `SHOW_MENU_SCREEN` has no source raw-screen
   record; generated menu text or rectangles remain forbidden.
 
+- [ ] DM2 startup status-panel ownership: host-authored English status,
+  inspector and log labels are now absent from the live menu path. Bind an
+  actual `c_gui_draw`/dialogue status producer before displaying startup or
+  resume feedback; the structured action and load results remain available to
+  drive control flow without visible replacement text.
+
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN
   tables). Remaining work is original Saturn/VDP1 capture and source-locked
