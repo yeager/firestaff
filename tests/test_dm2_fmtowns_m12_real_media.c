@@ -309,6 +309,21 @@ int main(void)
                        swoosh_last_frame.output_fnv1a != 0u,
                    "FM Towns SWOOSH infers its retail IMG1 canvas from EN/DL records in RAM");
             expect(skull && skull_size == 374416u &&
+                       launch.profile->fmtowns_skull_p3.valid &&
+                       launch.profile->fmtowns_skull_p3.level == 1u &&
+                       launch.profile->fmtowns_skull_p3.header_size == 0x180u &&
+                       launch.profile->fmtowns_skull_p3.file_size == skull_size &&
+                       launch.profile->fmtowns_skull_p3.runtime_offset == 0x180u &&
+                       launch.profile->fmtowns_skull_p3.runtime_size == 0x80u &&
+                       launch.profile->fmtowns_skull_p3.relocation_offset == 0x200u &&
+                       launch.profile->fmtowns_skull_p3.relocation_size == 0u &&
+                       launch.profile->fmtowns_skull_p3.load_image_offset == 0x200u &&
+                       launch.profile->fmtowns_skull_p3.load_image_size == 0x5b490u &&
+                       launch.profile->fmtowns_skull_p3.symbol_table_offset == 0u &&
+                       launch.profile->fmtowns_skull_p3.symbol_table_size == 0u &&
+                       launch.profile->fmtowns_skull_p3.initial_eip == 0x5741cu &&
+                       launch.profile->fmtowns_skull_p3.memory_requirements ==
+                           0x5b490u &&
                        launch.profile->fmtowns_cdda_music.valid &&
                        launch.profile->fmtowns_cdda_music.source_offset == 0x3dacu &&
                        launch.profile->fmtowns_cdda_music.source_size == 29u &&
@@ -317,7 +332,7 @@ int main(void)
                            &launch.profile->fmtowns_cdda_music, 4) == 1 &&
                        dm2_v1_fmtowns_cdda_map_table(
                            &launch.profile->fmtowns_cdda_music) != NULL,
-                   "FM Towns SKULL supplies its HMP-to-CDDA map from RAM");
+                   "FM Towns SKULL is a bounded native P3 program and supplies its HMP-to-CDDA map from RAM");
             free(title);
             free(swoosh);
             free(skull);

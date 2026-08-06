@@ -76,6 +76,9 @@
   party X/Y after a committed move, rather than the former invented `(0,0)`
   coordinate. Continue validating the complete native music-dispatch timing
   against executable capture before claiming full audio parity.
+  SKULL.EXP now also has a bounded original P3 header receipt before the
+  disc can enter the startup route. Recover the native P3/TBIOS menu code,
+  its input loop and the handoff back to M11 before showing any SKULL menu.
 
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
@@ -1132,6 +1135,11 @@ level or consumer bindings.
   a member. `SWOOSH`, `TITLE` and `END` are also checked against the published
   HME-242 retail MD5 identities before their startup plan is accepted. This is
   an authenticity gate, not an animation renderer.
+  **2026-08-06 update:** The selected original SKULL.EXP must now also pass
+  its bounded Phar Lap P3 header receipt in RAM, including the declared load
+  image, relocation range and entry point, before the startup media is
+  retained. This remains an executable identity gate only: native P3/TBIOS
+  execution, menu pixels and input still need capture.
   **2026-08-06 update:** production now also parses each selected stream in
   RAM using DMWeb's big-endian record framing and requires the complete
   HME-242 inventories: SWOOSH 22 records (18 DL), TITLE 235 (224 DL, one SD,

@@ -94,6 +94,24 @@ static inline DM2_MusicSystem dm2_v1_platform_music_system(DM2_Platform p) {
     }
 }
 
+/* Bounded Phar Lap P3 header facts for the native FM Towns SKULL.EXP. */
+typedef struct {
+    int      valid;
+    uint16_t level;
+    uint32_t header_size;
+    uint32_t file_size;
+    uint32_t runtime_offset;
+    uint32_t runtime_size;
+    uint32_t relocation_offset;
+    uint32_t relocation_size;
+    uint32_t load_image_offset;
+    uint32_t load_image_size;
+    uint32_t symbol_table_offset;
+    uint32_t symbol_table_size;
+    uint32_t initial_eip;
+    uint32_t memory_requirements;
+} DM2_V1_FmtownsP3Receipt;
+
 /* DM2 deterministic config.
  * Fixed gameplay constants that ensure reproducible runs.
  * These mirror the original DM2 fixed-point arithmetic timing. */
@@ -192,6 +210,10 @@ typedef struct {
     size_t   fmtowns_disc_image_size;
     uint32_t fmtowns_cdda_track_starts[9]; /* track_starts[2..8] */
     int      fmtowns_cdda_track_count;
+    /* Phar Lap P3 executable receipt for the selected native SKULL.EXP.
+     * It records only bounded header facts from the in-memory disc member;
+     * no program image is unpacked or executed by this receipt. */
+    DM2_V1_FmtownsP3Receipt fmtowns_skull_p3;
     /* HMP-to-CDDA selection read from the native SKULL.EXP member in the
      * selected disc buffer.  The receipt owns only copied table bytes. */
     DM2_V1_FmtownsCddaMusicReceipt fmtowns_cdda_music;

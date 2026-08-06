@@ -47,6 +47,7 @@
 #include "firestaff_fmtowns_disc.h"
 #include "fs_portable_compat.h"
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 static uint32_t dm2_v1_boot_packaged_capture_hash_step(uint32_t hash,
@@ -55,6 +56,70 @@ static int dm2_v1_boot_viewport_asset_address(int gdat_index,
                                               int *out_category,
                                               int *out_index,
                                               int *out_field);
+
+static uint16_t dm2_v1_boot_read_le16(const uint8_t *data)
+{
+    return (uint16_t)data[0] | ((uint16_t)data[1] << 8);
+}
+
+static uint32_t dm2_v1_boot_read_le32(const uint8_t *data)
+{
+    return (uint32_t)data[0] | ((uint32_t)data[1] << 8) |
+           ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
+}
+
+static int dm2_v1_boot_parse_fmtowns_skull_p3(
+    const uint8_t *program, size_t size, DM2_V1_FmtownsP3Receipt *receipt)
+{
+    if (!receipt) return 0;
+    memset(receipt, 0, sizeof(*receipt));
+    if (!program || size < 0x80u || program[0] != 'P' ||
+        program[1] != '3') return 0;
+
+    receipt->level = dm2_v1_boot_read_le16(program + 2u);
+    receipt->header_size = dm2_v1_boot_read_le16(program + 4u);
+    receipt->file_size = dm2_v1_boot_read_le32(program + 6u);
+    receipt->runtime_offset = dm2_v1_boot_read_le32(program + 0x0cu);
+    receipt->runtime_size = dm2_v1_boot_read_le32(program + 0x10u);
+    receipt->relocation_offset = dm2_v1_boot_read_le32(program + 0x14u);
+    receipt->relocation_size = dm2_v1_boot_read_le32(program + 0x18u);
+    receipt->load_image_offset = dm2_v1_boot_read_le32(program + 0x26u);
+    receipt->load_image_size = dm2_v1_boot_read_le32(program + 0x2au);
+    receipt->symbol_table_offset = dm2_v1_boot_read_le32(program + 0x2eu);
+    receipt->symbol_table_size = dm2_v1_boot_read_le32(program + 0x32u);
+    receipt->initial_eip = dm2_v1_boot_read_le32(program + 0x68u);
+    receipt->memory_requirements = dm2_v1_boot_read_le32(program + 0x74u);
+
+    /* The bounded fields match the Phar Lap P3 layout used by the native
+     * FM Towns program loader.  This is the same size/offset discipline as
+     * DM1's HMA-240 P3 reader, applied only to the selected HME-242 member.
+     * A header receipt does not claim native SKULL execution or menu parity. */
+    if (receipt->level != 1u || receipt->header_size < 0x80u ||
+        receipt->header_size > size || receipt->file_size != size ||
+        receipt->runtime_offset < receipt->header_size ||
+        receipt->runtime_offset > size ||
+        receipt->runtime_size > size - receipt->runtime_offset ||
+        receipt->load_image_offset < receipt->header_size ||
+        receipt->load_image_offset > size ||
+        receipt->load_image_size > size - receipt->load_image_offset ||
+        receipt->load_image_offset + receipt->load_image_size >
+            receipt->file_size ||
+        receipt->relocation_offset > size ||
+        receipt->relocation_size > size - receipt->relocation_offset ||
+        (receipt->relocation_size != 0u &&
+         receipt->relocation_offset < receipt->header_size) ||
+        (receipt->symbol_table_offset != 0u &&
+         (receipt->symbol_table_offset < receipt->header_size ||
+          receipt->symbol_table_offset > size ||
+          receipt->symbol_table_size > size - receipt->symbol_table_offset)) ||
+        receipt->memory_requirements < receipt->load_image_size ||
+        receipt->initial_eip >= receipt->memory_requirements) {
+        memset(receipt, 0, sizeof(*receipt));
+        return 0;
+    }
+    receipt->valid = 1;
+    return 1;
+}
 
 static const uint8_t *dm2_v1_boot_fmtowns_english_dialogue_text(
     void *userdata, int category, int index, int field, size_t *out_size)
@@ -68,7 +133,6 @@ static const uint8_t *dm2_v1_boot_fmtowns_english_dialogue_text(
     }
     return dm2_v1_runtime_i18n_text(category, index, field, out_size);
 }
-#include <stdlib.h>
 #include <sys/stat.h>
 
 #define DM2_GDAT_MAP_GRAPHICSSET_BOOT_WALL 0x01
@@ -968,6 +1032,8 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
            sizeof(profile->fmtowns_end_stream));
     memset(&profile->fmtowns_cdda_music, 0,
            sizeof(profile->fmtowns_cdda_music));
+    memset(&profile->fmtowns_skull_p3, 0,
+           sizeof(profile->fmtowns_skull_p3));
     /* M12 passes an explicitly selected retail archive verbatim.  Preserve
      * that choice: treating it as a directory would silently fall back to a
      * sibling PC install and change the selected platform. */
@@ -1093,20 +1159,33 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
                    sizeof(profile->fmtowns_end_stream));
             return;
         }
-        /* SKULL.EXP is the source owner for this HMP-to-CDDA selection
-         * table.  Retain only its bounded parsed receipt; the selected IMG
-         * remains the backing media and no executable or data file is
-         * materialised on disk.  A failed optional music receipt stays
-         * silent and cannot substitute a source literal. */
+        /* SKULL.EXP is the native next startup stage after the verified
+         * AUTOEXEC/TWANIM sequence.  Require a bounded Phar Lap P3 receipt
+         * before keeping the selected disc.  Retain no executable bytes
+         * beyond the original IMG and do not claim native menu execution. */
         {
             uint8_t *skull_data = NULL;
             size_t skull_size = 0u;
             if (dm2_v1_fmtowns_disc_extract_alloc(
                     img_data, img_size, &probe.skull_exp,
-                    &skull_data, &skull_size) == 0) {
-                (void)dm2_v1_fmtowns_cdda_music_parse(
-                    skull_data, skull_size, &profile->fmtowns_cdda_music);
+                    &skull_data, &skull_size) != 0 ||
+                !dm2_v1_boot_parse_fmtowns_skull_p3(
+                    skull_data, skull_size, &profile->fmtowns_skull_p3)) {
+                free(skull_data);
+                free(profile->fmtowns_disc_image);
+                profile->fmtowns_disc_image = NULL;
+                profile->fmtowns_disc_image_size = 0u;
+                profile->fmtowns_zip_path[0] = '\0';
+                memset(profile->fmtowns_cdda_track_starts, 0,
+                       sizeof(profile->fmtowns_cdda_track_starts));
+                profile->fmtowns_cdda_track_count = 0;
+                return;
             }
+            /* The HMP-to-CDDA table is optional music evidence only.  A
+             * malformed table stays silent; it cannot become a source
+             * literal or invalidate the independently verified P3 program. */
+            (void)dm2_v1_fmtowns_cdda_music_parse(
+                skull_data, skull_size, &profile->fmtowns_cdda_music);
             free(skull_data);
         }
         profile->fmtowns_startup_media_verified = 1;

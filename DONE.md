@@ -1,5 +1,15 @@
 # Theron production fixture-symbol boundary (2026-08-06)
 
+# DM2 FM Towns SKULL P3 startup gate (2026-08-06)
+
+- ✅ The selected HME-242 SKULL.EXP is now extracted only into RAM and must
+  pass its actual Phar Lap level-1 P3 header before FM Towns startup media is
+  retained. The receipt records the original header, runtime, relocation,
+  load-image, symbol-table, entry-point and memory fields. A real-disc M12
+  test verifies the 374 416-byte executable and keeps the existing HMP-to-CDDA
+  table bound to the same source buffer. This is not a claim of native SKULL
+  execution, menu rendering or input parity.
+
 # GitHub release-notes specificity gate (2026-08-06)
 
 - ✅ Strengthened the release preflight so every published version must have
