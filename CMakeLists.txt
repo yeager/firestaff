@@ -4458,6 +4458,12 @@ list(REMOVE_ITEM M10_SOURCES
 # regression already compiles it directly, so keep it out of the M10 archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_portrait_box_redraw_states_pc34_compat.c")
+# `dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat.c` is a
+# source-locked no-draw receipt for lanes which never enter F0115. It reads no
+# original DM1 data and has no M11/runtime caller; its explicit regressions
+# compile it directly, so keep it out of the broad M10 production archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part

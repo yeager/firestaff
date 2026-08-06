@@ -1,3 +1,12 @@
+# DM1 D2L2/D2R2 F0115 synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the D2L2/D2R2 F0115 no-draw receipt from M10. It has fixed
+  F0115 rows and suppression values, reads no original DM1 data and has no
+  M11/runtime caller; its explicit ReDMCSB regressions continue to compile it
+  directly.
+- ✅ Verification: `test_dm1_v1_viewport_d2l2_d2r2_f0115_thing_pass_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 champion portrait-box redraw synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the portrait-box redraw-state matrix from M10. It fabricates

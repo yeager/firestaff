@@ -148,6 +148,12 @@
   as an explicit ReDMCSB regression until the live HUD binds authentic panel
   and champion state.
 
+- **DM1-D2L2-D2R2-F0115-SYNTHETIC-AUDIT:** This D2 side-lane helper is a
+  no-draw receipt with fixed F0115 rows and suppression values. It reads no
+  original DM1 data and has no M11/runtime caller; retain it only as an
+  explicit ReDMCSB regression until a source-bound D2 side-lane consumer is
+  recovered.
+
 - **DM1-F0449-F0450-FLOPPY-PLATFORM-AUDIT:** The F0449/F0450 helper is a
   fail-closed Atari-ST floppy boundary, not a PC34 runtime owner. Keep its
   source evidence test-only until a real platform-specific media consumer is
