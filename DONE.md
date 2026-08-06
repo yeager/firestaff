@@ -50549,3 +50549,10 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   champion panel. Verified with a full Ninja `firestaff` build, the real PC3.4
   F0342 object-description test, and the real HoC inscription palette test
   (2 inscriptions across 546 corridor transitions).
+- ✅ 2026-08-06 DM1 remaining panel/background metadata gates: the live
+  F0098 floor/ceiling provider and empty champion status-box path now require
+  decoded pixel ownership before exposing source surfaces. Dimension-only
+  cache entries are rejected instead of being passed to `BlitRegion` or the
+  viewport provider. Verified with a full Ninja `firestaff` build, the real
+  PC34 HoC inscription transition test, the 611-record object corpus, and
+  real M564/F0702 pickup-cursor coverage.

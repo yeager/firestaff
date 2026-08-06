@@ -6295,6 +6295,10 @@ lane is carried forward in the sections below.
   open-chest panels, portrait strips and champion icon strips. Dimension-only
   cache records cannot reach these source blits. Remaining work is real
   packaged-app pickup/panel capture, not another metadata fallback.
+- 2026-08-06 update: the active DM1 F0098 floor/ceiling provider and empty
+  champion status-box consumer now also require `loaded` plus `pixels` before
+  exposing or blitting a source surface. Remaining work is packaged Mac/app
+  capture and original-pixel comparison, not another cache-metadata route.
 
 - F0135/F0732/F0733/F0735 now have bounded planar dispatch coverage. The DM1
   viewport has a fail-closed F0134/F0135 material consumer that accepts only a

@@ -30121,7 +30121,8 @@ static int m11_dm1_f0098_graphic_provider(void* user_data,
     }
     slot = M11_AssetLoader_Load((M11_AssetLoader*)&provider->state->assetLoader,
                                 source_graphic);
-    if (!slot || !slot->pixels || slot->width == 0 || slot->height == 0) {
+    if (!slot || !slot->loaded || !slot->pixels ||
+        slot->width == 0 || slot->height == 0) {
         return 0;
     }
     *out_pixels = slot->pixels;
@@ -48919,7 +48920,8 @@ static void m11_draw_party_panel(const M11_GameViewState* state,
                 const M11_AssetSlot* boxAsset = M11_AssetLoader_Load(
                     (M11_AssetLoader*)&state->assetLoader,
                     (unsigned int)dm1_v1_champion_status_box_graphic_pc34());
-                if (boxAsset && boxAsset->width == 67 && boxAsset->height == 29) {
+                if (boxAsset && boxAsset->loaded && boxAsset->pixels &&
+                    boxAsset->width == 67 && boxAsset->height == 29) {
                     M11_AssetLoader_BlitRegion(boxAsset,
                         0, 0, 67, 29,
                         framebuffer, framebufferWidth, framebufferHeight,
