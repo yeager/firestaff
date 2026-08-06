@@ -20,6 +20,15 @@ require_file_hash() {
 
 require_fnv() { [[ "$1" =~ ^[[:xdigit:]]{1,16}$ && "$1" != 0 ]]; }
 
+require_saturn_disc_container() {
+  case "${1##*/}" in
+    *.cue|*.ccd|*.toc|*.m3u) return 0 ;;
+    *)
+      echo "ERROR: Saturn capture requires a CUE/CCD/TOC/M3U disc container; raw ISO/BIN lacks CDDA layout" >&2
+      return 1 ;;
+  esac
+}
+
 require_capture_hook() {
   local marker=$1
   strings "$mednafen" | grep -Fq "$marker" || {
@@ -51,6 +60,7 @@ done
 [[ -x "$mednafen" ]] || exit 1
 require_file_hash "$bios" "$bios_sha256" || exit 1
 require_file_hash "$disc" "$disc_sha256" || exit 1
+require_saturn_disc_container "$disc" || exit 1
 [[ "$route_epoch" =~ ^[1-9][0-9]*$ && "$dgn_size" =~ ^[1-9][0-9]*$ ]] || exit 1
 require_fnv "$package_fnv" && require_fnv "$card_fnv" && require_fnv "$dgn_fnv" && \
   require_fnv "$face_fnv" && require_fnv "$descriptor_fnv" && \

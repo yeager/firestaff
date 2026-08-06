@@ -16,6 +16,15 @@ require_file_hash() {
   [[ "$(lower "$actual")" == "$(lower "$expected")" ]]
 }
 require_fnv() { [[ "$1" =~ ^[[:xdigit:]]{1,16}$ && "$1" != 0 ]]; }
+
+require_saturn_disc_container() {
+  case "${1##*/}" in
+    *.cue|*.ccd|*.toc|*.m3u) return 0 ;;
+    *)
+      echo "ERROR: Saturn capture requires a CUE/CCD/TOC/M3U disc container; raw ISO/BIN lacks CDDA layout" >&2
+      return 1 ;;
+  esac
+}
 require_uint() { [[ "$1" =~ ^[0-9]+$ ]]; }
 
 launch=0
@@ -42,6 +51,7 @@ done
 [[ -x "$mednafen" ]] || exit 1
 require_file_hash "$bios" "$bios_sha256" || exit 1
 require_file_hash "$disc" "$disc_sha256" || exit 1
+require_saturn_disc_container "$disc" || exit 1
 require_uint "$route_epoch" && ((route_epoch > 0)) || exit 1
 for value in "$dgn_size" "$structure1f_index" "$structure3_index" "$face_ordinal" "$vertex_offset" "$vertex_length" "$normal_offset" "$normal_length"; do
   require_uint "$value" || exit 1

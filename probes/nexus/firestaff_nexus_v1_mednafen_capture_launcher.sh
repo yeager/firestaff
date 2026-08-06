@@ -17,6 +17,15 @@ require_file_hash() {
   [[ "$actual_lower" == "$expected_lower" ]]
 }
 
+require_saturn_disc_container() {
+  case "${1##*/}" in
+    *.cue|*.ccd|*.toc|*.m3u) return 0 ;;
+    *)
+      echo "ERROR: Saturn capture requires a CUE/CCD/TOC/M3U disc container; raw ISO/BIN lacks CDDA layout" >&2
+      return 1 ;;
+  esac
+}
+
 require_capture_hook() {
   local marker=$1
   strings "$mednafen" | grep -Fq "$marker" || {
@@ -45,6 +54,7 @@ done
 [[ -x "$mednafen" && -x "$validator" ]] || exit 1
 require_file_hash "$bios" "$bios_sha256" || exit 1
 require_file_hash "$disc" "$disc_sha256" || exit 1
+require_saturn_disc_container "$disc" || exit 1
 require_file_hash "$menu_bpk" "$menu_bpk_sha256" || exit 1
 require_file_hash "$dm_bin" "$dm_bin_sha256" || exit 1
 require_file_hash "$dgn" "$dgn_sha256" || exit 1

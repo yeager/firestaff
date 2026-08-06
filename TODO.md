@@ -384,6 +384,8 @@
   `ss.bios_us_path`/`ss.bios_eu_path` spellings could never start an
   instrumented stock-derived build. The Firestaff hook and event consumer
   capture remain open.
+  The same launchers now reject raw ISO/BIN paths before writing a plan;
+  Saturn CDDA capture requires the real CUE/CCD/TOC/M3U container route.
 
 - **NEXUS-PALETTE-CAPTURE:** The retail SMAP/FACE/ITEM/MNS palette decoders
   now share the Saturn BGR555 channel order. Remaining work is an independent

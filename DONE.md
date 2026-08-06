@@ -85,6 +85,8 @@
   and replay launchers plus their shell regressions. Real retail CD startup
   was confirmed with the extracted merged English CUE and the owned European
   BIOS; the absent Firestaff capture hook still correctly blocks promotion.
+  Raw ISO/BIN capture inputs now fail closed before manifest creation because
+  they do not carry the Saturn CDDA track layout Mednafen requires.
 
 - ✅ 2026-08-06 Theron Track 02 monster source ledger: the authentic category-4
   thing-list records from all loaded dungeons are now copied into world state
