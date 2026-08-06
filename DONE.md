@@ -38,6 +38,14 @@
 - ✅ Verification: `test_dm1_v1_l0201_l0250_local_owner_audit` passes; the
   source object is absent from both M10 and M11 archives.
 
+# DM1 M151–M200 absent-label audit isolation (2026-08-06)
+
+- ✅ Removed the M151–M200 absence receipt from the broad M10 archive.
+  ReDMCSB's full label inventory has no labels in this range; the source is
+  a test-only fail-closed table with no M11/runtime caller or DM1 data input.
+- ✅ Verification: `test_dm1_v1_m151_m200_source_audit_pc34_compat` passes;
+  the source object is absent from both M10 and M11 archives.
+
 # Nexus startup/menu SH-2 source corridor (2026-08-06)
 
 - ✅ Extended the authenticated European `DM.BIN` receipt to validate the

@@ -4299,6 +4299,12 @@ list(REMOVE_ITEM M10_SOURCES
 # explicitly, so keep the label table out of the broad M10 archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_l0201_l0250_local_owner_audit.c")
+# `dm1_v1_m151_m200_source_audit_pc34_compat.c` records an absent ReDMCSB
+# label range and intentionally provides no owner or synthetic route. Its
+# generic inventory test compiles it explicitly; do not link this metadata
+# into M10 where an absent source label could be mistaken for runtime code.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m151_m200_source_audit_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part

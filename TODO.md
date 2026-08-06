@@ -79,6 +79,11 @@
   input; retain it in the explicit audit test until a live owner needs its
   local-storage evidence, never as standalone production state.
 
+- **DM1-M151-M200-ABSENT-LABEL-AUDIT:** ReDMCSB has no M151–M200 labels.
+  This table is a fail-closed absence receipt with no runtime caller or game
+  data input. Keep it test-only; do not invent a production route for an
+  unassigned source range.
+
 - **NEXUS-FULL-BUILD-EXTERNAL-LINK-GAP:** The Nexus production archive now
   links the real SCR section-table parser while compiling out the unproven
   flat glyph/framebuffer writer. Focused Font256 S2D targets are green. The
