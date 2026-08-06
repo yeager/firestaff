@@ -24,14 +24,20 @@ int nexus_v1_hud_hit_rects_parse_dm_bin(
     for (i = 0U; i < NEXUS_HIT_RECT_COUNT; ++i) {
         const uint8_t *entry = data + NEXUS_HIT_RECT_DM_BIN_OFFSET +
                                i * NEXUS_HIT_RECT_ENTRY_BYTES;
+        int empty = 0;
         out[i].x1 = (int16_t)read_be16(entry + 0U);
         out[i].y1 = (int16_t)read_be16(entry + 2U);
         out[i].x2 = (int16_t)read_be16(entry + 4U);
         out[i].y2 = (int16_t)read_be16(entry + 6U);
+        empty = out[i].x1 == 0 && out[i].y1 == 0 &&
+                out[i].x2 == 0 && out[i].y2 == 0;
         /* DM.BIN's rectangles are Saturn screen coordinates, not host-space
-         * placeholders. The retail display envelope is 320x224. */
-        if (out[i].x1 < 0 || out[i].y1 < 0 ||
-            out[i].x2 < out[i].x1 || out[i].y2 < out[i].y1 ||
+         * placeholders. The retail display envelope is 320x224. Exact
+         * zeroed entries are unused retail table slots; any other degenerate
+         * rectangle is malformed and must not become a HUD region. */
+        if ((!empty && (out[i].x2 <= out[i].x1 ||
+                        out[i].y2 <= out[i].y1)) ||
+            out[i].x1 < 0 || out[i].y1 < 0 ||
             out[i].x2 > 320 || out[i].y2 > 224) {
             if (out_count) *out_count = 0U;
             return -2;

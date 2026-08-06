@@ -33,6 +33,12 @@
   instead of reconstructing a misleading canonical filename. The real boot
   hash regression verifies the renamed level path survives the runtime handoff.
 
+- ✅ 2026-08-06 Nexus HUD rectangle admission: the DM.BIN parser now rejects
+  non-empty zero-width/zero-height regions while preserving the retail
+  table's exact all-zero unused entries. The real 40-entry HUD corpus and
+  malformed-region regression both pass; no hit-region semantics or pixels
+  are promoted beyond the source-bound raw table.
+
 - ✅ 2026-08-06 Nexus DGN actor CRET provenance gate: a Structure1A/3 model
   signature no longer promotes an actor to a live creature type when its
   RLOWFIX CRET record is absent. Such actors remain untyped/idle instead of
