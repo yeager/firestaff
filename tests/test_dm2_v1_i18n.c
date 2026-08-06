@@ -57,7 +57,7 @@ static void test_null_guards(void) {
     printf("  PASS: null guards\n");
 }
 
-static void test_english_overlay(const char *pc_path) {
+static int test_english_overlay(const char *pc_path) {
     DM2_V1_I18nContext ctx;
     uint8_t *data;
     size_t data_size;
@@ -66,8 +66,8 @@ static void test_english_overlay(const char *pc_path) {
 
     data = read_file(pc_path, &data_size);
     if (!data) {
-        printf("  SKIP: cannot read PC GRAPHICS.DAT at %s\n", pc_path);
-        return;
+        printf("  FAIL: cannot read selected PC GRAPHICS.DAT at %s\n", pc_path);
+        return 0;
     }
 
     dm2_v1_i18n_init(&ctx);
@@ -137,6 +137,7 @@ static void test_english_overlay(const char *pc_path) {
     free(data);
     dm2_v1_i18n_destroy(&ctx);
     printf("  PASS: english overlay\n");
+    return 1;
 }
 
 static void test_locale_overlay(const char *en_path, const char *locale_path,
@@ -220,27 +221,32 @@ static void test_locale_overlay(const char *en_path, const char *locale_path,
 }
 
 int main(void) {
-    const char *home;
-    char en_path[512], fr_path[512], de_path[512];
+    const char *data_dir;
+    const char *french_graphics;
+    const char *german_graphics;
+    char en_path[1024];
 
     printf("dm2_v1_i18n tests:\n");
     test_init_destroy();
     test_locale_codes();
     test_null_guards();
 
-    home = getenv("HOME");
-    if (home) {
-        snprintf(en_path, sizeof(en_path),
-                 "%s/.firestaff/data/dm2/GRAPHICS.DAT", home);
-        test_english_overlay(en_path);
-
-        snprintf(fr_path, sizeof(fr_path),
-                 "%s/.firestaff/data/dm2-extras/pc-fr/DATA/GRAPHICS.DAT", home);
-        test_locale_overlay(en_path, fr_path, DM2_LOCALE_FR, "FR");
-
-        snprintf(de_path, sizeof(de_path),
-                 "%s/.firestaff/data/dm2-extras/pc-de/DATA/GRAPHICS.DAT", home);
-        test_locale_overlay(en_path, de_path, DM2_LOCALE_DE, "DE");
+    data_dir = getenv("FIRESTAFF_DM2_DATA_DIR");
+    if (!data_dir || !data_dir[0]) {
+        puts("  SKIP: FIRESTAFF_DM2_DATA_DIR is not set");
+    } else {
+        snprintf(en_path, sizeof(en_path), "%s/graphics.dat", data_dir);
+        if (!test_english_overlay(en_path)) return 1;
+        /* Additional retail corpora stay opt-in and must be selected
+         * explicitly; never infer a sibling installation from HOME. */
+        french_graphics = getenv("FIRESTAFF_DM2_FRENCH_GRAPHICS");
+        if (french_graphics && french_graphics[0])
+            test_locale_overlay(en_path, french_graphics,
+                                DM2_LOCALE_FR, "FR");
+        german_graphics = getenv("FIRESTAFF_DM2_GERMAN_GRAPHICS");
+        if (german_graphics && german_graphics[0])
+            test_locale_overlay(en_path, german_graphics,
+                                DM2_LOCALE_DE, "DE");
     }
 
     printf("\nAll dm2_v1_i18n tests passed.\n");

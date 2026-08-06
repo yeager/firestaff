@@ -10,6 +10,16 @@
   made its direct regression compile the source explicitly. It loads no
   original DM1 data and has no M11/runtime caller.
 
+# DM2 selected-corpus i18n verification (2026-08-07)
+
+- ✅ The focused DM2 i18n regression now reads only the explicitly selected
+  `FIRESTAFF_DM2_DATA_DIR/graphics.dat` corpus. A selected but unreadable file
+  fails verification instead of silently skipping behind an obsolete
+  home-directory path; optional French and German corpora are likewise
+  explicit inputs. The PC-DOS corpus verifies all 781 extracted English text
+  keys, and the FM Towns M11 title path still accepts only the authenticated,
+  RAM-resident English companion.
+
 # DM2 G1 champion-mirror selection source binding (2026-08-07)
 
 - ✅ The champion-selection seam now consumes the committed real G1 mirror
