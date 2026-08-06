@@ -29284,6 +29284,10 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   source DB3 marker, raw actuator data and `0x16ffffff` dynamic-load key
   before returning its still-fail-closed result. It does not create a hero;
   `REVIVE_PLAYER`, possession transfer and session mutation remain open.
+  **2026-08-07 corpus update:** the three champion/DYN4 real-data probes now
+  accept only an explicit `GRAPHICS.DAT` argument or
+  `FIRESTAFF_DM2_DATA_DIR`; a selected unreadable corpus fails verification
+  instead of being reported as an unavailable local fixture.
 
 - [ ] DM2 delayed movement ownership: `PERFORM_MOVE`'s real
   `glbIsPlayerMoving` path retains the old party pose and derives its countdown

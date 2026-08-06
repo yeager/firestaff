@@ -57,9 +57,13 @@ int main(int argc, char **argv)
     DM2_ImageFormat format = DM2_IMG_FMT_UNKNOWN;
     uint8_t *pixels;
 
-    if (!path || !(graphics = read_file(path, &graphics_size))) {
-        puts("SKIP: no local canonical DM2 data");
+    if (!path) {
+        puts("SKIP: provide GRAPHICS.DAT or set FIRESTAFF_DM2_DATA_DIR");
         return 0;
+    }
+    if (!(graphics = read_file(path, &graphics_size))) {
+        fputs("FAIL: selected canonical DM2 GRAPHICS.DAT is unreadable\n", stderr);
+        return 1;
     }
     if (dm2_v1_asset_loader_init(&loader, graphics, graphics_size) != 0 ||
         !dm2_v1_asset_loader_verify(&loader)) {

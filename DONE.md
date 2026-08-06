@@ -1,3 +1,11 @@
+# DM2 champion-DYN4 med vald korpus (2026-08-07)
+
+- ✅ Champion-/DYN4-proverna kräver nu en uttryckligen vald `GRAPHICS.DAT`
+  eller `FIRESTAFF_DM2_DATA_DIR`; de får inte längre tyst passera när vald
+  media är oläsbar. PC-DOS-korpusen verifierar den källbundna
+  `0x16ffffff`-selektionen (277 rader), dess 96 materialiserade råblock samt
+  den autentiska `CHAMPIONS/255`-fallbacken till `MISCELLANEOUS/254/IMG/254`.
+
 # DM2 inventarie- och ljud-GDAT med vald korpus (2026-08-07)
 
 - ✅ Inventarie-HUD- och ljudproverna använder nu endast den explicit valda
