@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **NEXUS-SFX-EVENT-DISPATCH-CAPTURE:** Host sound-request names are now
+  explicitly documented as non-retail labels. Keep all `NEXUS_SFX_*` to MAP
+  selector bindings fail-closed until the authentic SLEV/SDDRVS event
+  consumer is captured; do not infer semantics from selector ordering.
+
 - **NEXUS-DGN-MATERIAL-VDP1-CAPTURE:** The real Structure2 decoder now
   has a 16-level census guard (1,678 textures: 1,553 indexed-4bpp and 125
   direct-555) with non-zero output checks. Keep decoded pixels/palettes as

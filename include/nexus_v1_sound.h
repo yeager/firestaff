@@ -22,7 +22,9 @@
  * Event→MAP selector mapping remains unverified; actual SFX playback
  * stays blocked until a verified selector table is established. */
 
-/* Sound event types (matching SNDLEV*.MAP event IDs) */
+/* Host-side sound requests. These names describe Firestaff call sites only;
+ * no SNDLEV*.MAP event-ID correspondence is claimed until Saturn dispatch
+ * evidence binds a request to an on-disk selector. */
 typedef enum {
     NEXUS_SFX_NONE = 0,
     NEXUS_SFX_FOOTSTEP       = 1,   /* party footstep */

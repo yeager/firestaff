@@ -18,6 +18,11 @@
   `GRAPHICS.DAT` command/palette receipts and their fail-closed M11 consumers.
   No production fallback was introduced.
 
+- ✅ 2026-08-06 Nexus SFX provenance wording correction: `NEXUS_SFX_*`
+  enum names and diagnostic labels are now explicitly host-side requests,
+  not claimed retail `SNDLEV##.MAP` event IDs. Runtime selector binding and
+  playback remain fail-closed pending authentic SLEV/SDDRVS dispatch capture.
+
 - ✅ 2026-08-06 Nexus DGN real texture census guard: the hash-verified
   `LEV00.DGN`–`LEV15.DGN` regression now requires the exact 1,678 decoded
   Structure2 images (1,553 indexed-4bpp and 125 direct-555) and aggregate

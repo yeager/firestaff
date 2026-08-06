@@ -22,7 +22,8 @@ static int nexus_file_exists(const char *path);
  * unproven, so no actual SFX playback is admitted.
  * Source: docs/nexus_sfx.md (no SFX implementation found in current source). */
 
-/* Event name table */
+/* Diagnostic names for host-side requests. They are not decoded from, or
+ * asserted to match, the opaque retail MAP selector bytes. */
 static const char *g_event_names[] = {
     "NONE", "FOOTSTEP", "DOOR_OPEN", "DOOR_CLOSE",
     "ATTACK_HIT", "ATTACK_MISS", "CHAMPION_HURT", "CREATURE_DEATH",
