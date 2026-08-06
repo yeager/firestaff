@@ -171,6 +171,23 @@ int main(void)
             (uint32_t)data[0x18C21U] << 16 |
             (uint32_t)data[0x18C22U] << 8 | data[0x18C23U]) !=
             base + UINT32_C(0x373D8) ||
+        /* The authenticated yam\vdp2.c corridor contains the retail SH-2
+         * MMIO literal loads and the following word stores. These receipts
+         * bind source ownership for the startup/menu colour-offset path;
+         * they do not claim that Firestaff has captured Saturn VRAM, CRAM,
+         * tilemaps, CLUT consumption, or final VDP2 composition. */
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x28E78U, 0U,
+            0x28F34U, UINT32_C(0x25F00018)) ||
+        read_be16(data, 0x28E7CU) != UINT16_C(0x2421) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x28E98U, 2U,
+            0x28F44U, UINT32_C(0x25F00100)) ||
+        read_be16(data, 0x28E9AU) != UINT16_C(0x2211) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x28EAAU, 0U,
+            0x28F48U, UINT32_C(0x25F00102)) ||
+        read_be16(data, 0x28EACU) != UINT16_C(0x2011) ||
+        !check_sh2_mov_l_literal(data, (size_t)file_size, 0x28EB8U, 1U,
+            0x28F4CU, UINT32_C(0x25F00104)) ||
+        read_be16(data, 0x28EBCU) != UINT16_C(0x2131) ||
         /* Register literals are retained as disassembly receipts only. */
         count_be32(data, (size_t)file_size, UINT32_C(0x25F00006)) != 1U ||
         count_be32(data, (size_t)file_size, UINT32_C(0x25F80000)) != 1U ||

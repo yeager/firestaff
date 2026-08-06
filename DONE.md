@@ -5117,6 +5117,13 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 - ✅ 2026-08-01 v3.0.216 Theron Track 02 item name module and test:
   theron_v1_track02_item_names.{h,c} with 66-entry lookup table from binary
   evidence. 6 tests wired into CMakeLists.txt (all pass).
+- ✅ 2026-08-06 Nexus VDP2 source receipt: the authenticated European
+  `DM.BIN` startup/menu regression now binds the retail `yam\vdp2.c` corridor
+  to exact SH-2 `MOV.L`/`MOV.W` instruction pairs for `MPOFN`, `COAR`, `COAG`
+  and `COAB`. This strengthens source ownership for startup/menu/HUD colour
+  offset writes only; VDP2 runtime capture, VRAM/CRAM tile and CLUT consumers,
+  and final composition remain intentionally capture-gated. Real-data test
+  passes against `DM.BIN` MD5 `e88d60859f65f08fa622e1992b02280f`.
 - ✅ 2026-08-06 Nexus SAL host-PCM boundary: production now retains the
   source-owned SAL/DataID-0 and MAP receipts but does not materialize retail
   SAL bytes as host PCM candidates.  Playback remains blocked pending Saturn

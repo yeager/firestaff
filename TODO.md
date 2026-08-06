@@ -193,7 +193,10 @@
   The static receipt now also verifies the nine retail SH-2 `MOV.L` loads at
   `0x27FE6`, `0x28002`, `0x285C6`, `0x28710`, `0x287AA`, `0x2880A`,
   `0x2885A`, `0x288B2` and `0x28D76` that target those slots. This still proves
-  source/code ownership only. Recover the
+  source/code ownership only. The receipt now additionally verifies the
+  `MPOFN`, `COAR`, `COAG` and `COAB` literal loads at file offsets `0x28E78`,
+  `0x28E98`, `0x28EAA` and `0x28EB8`, plus their adjacent SH-2 word stores.
+  Recover the
   executed VDP2 register/VRAM writes and tile/CLUT consumer from an
   instrumented Saturn capture before admitting menu placement, FONT256 text,
   HUD composition or viewport pixels.
