@@ -153,6 +153,8 @@
   absent; authentic WARNING.BIN/TITLE.CG bytes remain diagnostic receipts.
   M11's separate startup executors are now no-draw for the same reason; timing
   receipts cannot authorize a direct source-to-host framebuffer copy.
+  WARNING DGT2 M11 callback modules are also excluded from the production
+  library and remain explicit probe/test sources only.
 
 - **NEXUS-DGN-MATERIAL-VDP1-CAPTURE:** The real Structure2 decoder now
   has a 16-level census guard (1,678 textures: 1,553 indexed-4bpp and 125

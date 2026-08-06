@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus WARNING DGT2 production quarantine: removed the direct
+  WARNING.BIN M11 presentation/resource callback modules from the
+  `firestaff_nexus` production library. They remain explicit real-data test
+  sources for byte/CLUT regression, while no exported production route can
+  copy decoded warning pixels into a host framebuffer without Saturn capture.
+
 - ✅ 2026-08-06 Nexus capture producer preflight: the PRS3, VDP1 and SLEV/SAL
   Mednafen launchers now require their advertised Firestaff output hook before
   writing a manifest or starting an external run. Stock Mednafen exits 78 with
