@@ -5079,6 +5079,12 @@ list(REMOVE_ITEM M10_SOURCES
 # its direct regression compiles it explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_pickup_during_resurrect_pending_non_leader_pc34_compat.c")
+# `dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat.c` is a
+# contract-only chest close/swap model with fabricated linked items, slots and
+# hand state. It loads no original DM1 data and has no M11/runtime caller; its
+# direct regression already compiles it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_auto_chest_action_hand_swap_during_close_gate_pc34_compat.c")
 # `dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat.c`
 # is a contract-only C111/C040 gate with fabricated party, panel and G0299
 # state. It loads no original DM1 data and has no M11/runtime caller; its
