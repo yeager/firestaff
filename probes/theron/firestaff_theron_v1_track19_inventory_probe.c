@@ -295,6 +295,11 @@ int main(void) {
              THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES ||
          file_receipt.startup_level_envelope_fnv1a !=
              THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_FNV1A ||
+         file_receipt.startup_level_width != 32u ||
+         file_receipt.startup_level_height != 27u ||
+         file_receipt.startup_level_payload_bytes != 864u ||
+         file_receipt.startup_level_nonzero_payload_bytes == 0u ||
+         file_receipt.startup_level_payload_fnv1a == 0u ||
          file_receipt.startup_usable || file_receipt.level_usable ||
          file_receipt.bitmap_usable ||
          file_receipt.source_md5[0] == '\0')) return 1;
@@ -319,6 +324,11 @@ int main(void) {
              THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_BYTES ||
          file_receipt.startup_level_envelope_fnv1a !=
              THERON_TRACK19_STARTUP_LEVEL_ENVELOPE_FNV1A ||
+         file_receipt.startup_level_width != 32u ||
+         file_receipt.startup_level_height != 27u ||
+         file_receipt.startup_level_payload_bytes != 864u ||
+         file_receipt.startup_level_nonzero_payload_bytes == 0u ||
+         file_receipt.startup_level_payload_fnv1a == 0u ||
          file_receipt.startup_usable || file_receipt.level_usable ||
          file_receipt.bitmap_usable ||
          file_receipt.source_md5[0] == '\0')) return 1;

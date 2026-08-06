@@ -29,6 +29,12 @@ typedef struct {
     size_t startup_level_envelope_offset;
     size_t startup_level_envelope_bytes;
     uint32_t startup_level_envelope_fnv1a;
+    uint16_t startup_level_width;
+    uint16_t startup_level_height;
+    uint16_t startup_level_header_words[6];
+    size_t startup_level_payload_bytes;
+    size_t startup_level_nonzero_payload_bytes;
+    uint32_t startup_level_payload_fnv1a;
     char source_md5[33];
 } Theron_V1Track19InventoryReceipt;
 

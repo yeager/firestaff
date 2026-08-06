@@ -24420,6 +24420,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
 
 ## Theron Track 19 remaining evidence
 
+- 2026-08-06 update: the authenticated 32x27 Track 19 startup-level record now
+  survives the file-inventory handoff with its six raw header words, payload
+  size/nonzero count and payload FNV-1a. This remains a source receipt only;
+  tile, object and later-level semantics still require the original consumer.
+
 - 2026-08-06 update: the real US and JP Track 19 startup envelope now has a
   bounded structural reader: big-endian 32×27 dimensions, six retained raw
   header words, and an 864-byte borrowed payload span are checked against the

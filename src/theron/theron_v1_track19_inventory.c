@@ -153,16 +153,25 @@ int theron_v1_track19_inventory_file(
         free(data);
         return 0;
     }
-    if (!theron_v1_track19_startup_level_envelope_validate(
-            data, bytes, &out->startup_level_envelope_offset,
-            &out->startup_level_envelope_bytes,
-            &out->startup_level_envelope_fnv1a)) {
+    Theron_Track19LevelEnvelope envelope;
+    if (!theron_v1_track19_startup_level_envelope_read(data, bytes,
+                                                        &envelope)) {
         free(data);
         return 0;
     }
     out->item_property_table_verified = 1;
     out->opaque_record_window_verified = 1;
     out->startup_level_envelope_verified = 1;
+    out->startup_level_envelope_offset = envelope.envelope_offset;
+    out->startup_level_envelope_bytes = envelope.envelope_bytes;
+    out->startup_level_envelope_fnv1a = envelope.envelope_fnv1a;
+    out->startup_level_width = envelope.width;
+    out->startup_level_height = envelope.height;
+    memcpy(out->startup_level_header_words, envelope.header_words,
+           sizeof(out->startup_level_header_words));
+    out->startup_level_payload_bytes = envelope.payload_bytes;
+    out->startup_level_nonzero_payload_bytes = envelope.nonzero_payload_bytes;
+    out->startup_level_payload_fnv1a = envelope.payload_fnv1a;
     free(data);
     return 1;
 }
