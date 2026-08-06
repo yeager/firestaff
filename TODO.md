@@ -25,6 +25,14 @@
   supplemental-ISO MNS material binding and the closed TEXT4/TABL/FONT012
   capture gate green while the Saturn VDP1/VDP2/text consumer remains open.
 
+- **NEXUS-PRS3-VDP1-STATE-RECEIPT:** The real MENU.BPK PRS3 decoder now
+  passes all 162 retail surfaces, and DM.BIN's VDP1 register/state corridors
+  are hash-bound. Keep this as byte/source evidence only: the current static
+  receipts do not prove PRS3 opcode execution, CLUT upload, draw-command
+  emission, destination placement or viewport/menu ownership. Do not promote
+  the decoder or any VDP1 candidate into production pixels without an
+  instrumented Saturn/Mednafen capture.
+
 - **NEXUS-STALE-DOCUMENT-CLAIMS:** Older Nexus content/format documents still
   contain historical “implemented” wording for DM1-derived roster/combat,
   host mesh/title/HUD rendering, text conversion, and audio playback. The

@@ -52363,6 +52363,16 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   level/object semantics into production. `test_theron_v1_huc6280_disassembly`
   passes against both authentic regional ISOs.
 
+# 2026-08-06 Nexus PRS3/VDP1 static-state audit
+
+- ✅ The real European `MENU.BPK` PRS3 route passes all 162 retail surfaces;
+  the combined launch-smoke and DGN corpus probes also remain green. Audited
+  the hash-bound `DM.BIN` VDP1 register/state receipts and confirmed they stay
+  no-draw evidence: no PRS3 execution, CLUT upload, command emission,
+  destination placement or menu/viewport ownership is promoted without an
+  instrumented Saturn/Mednafen capture. Added the boundary to TODO so future
+  work cannot mistake the decoder receipt for VDP1 presentation proof.
+
 # 2026-08-06 Nexus startup menu text-consumer gate
 
 - ✅ Added an explicit `menu_text_consumer_bound` production gate. The real
