@@ -1,8 +1,9 @@
 /*
- * dm2_v1_runtime.c — DM2 V1 Runtime Stub
+ * dm2_v1_runtime.c — DM2 V1 source-bound runtime
  *
- * Phase 1: Provides the game tick path for DM2 when launched.
- * The actual game logic (movement, combat, spells) is Phases 2-6.
+ * Provides the source-gated M11 tick and real-GDAT frame path for an
+ * admitted boot profile. Gameplay families whose original runtime state is
+ * not yet owned remain fail-closed rather than becoming a host substitute.
  * This stub wires the DM2 viewport into the Firestaff game loop
  * so that a DM2 launch can display a viewport frame without crashes.
  *
@@ -10118,7 +10119,7 @@ int dm2_v1_runtime_engage_command(
 
 const char *dm2_v1_runtime_source_evidence(void) {
     return
-        "DM2 V1 Runtime Stub — Phase 1\n"
+        "DM2 V1 Runtime — source-bound boot and frame gates\n"
         "Source: SKULL.ASM T048  — input dispatch / tick update\n"
         "Source: SKULL.ASM T520  — movement speed and party placement\n"
         "Source: SKULL.ASM T560  — dungeon tick and viewport rendering\n"

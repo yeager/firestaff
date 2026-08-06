@@ -51242,6 +51242,12 @@ verification item.
   the source build, not a
   separately installed stale application bundle; no game data was written,
   unpacked or tracked.
+- ✅ 2026-08-06 DM2 runtime provenance wording: removed the obsolete “Runtime
+  Stub — Phase 1” declaration from the linked DM2 runtime. Its public source
+  evidence now accurately identifies the hash-verified boot and real-GDAT
+  frame gates, while unowned gameplay remains explicitly fail-closed. This is
+  a provenance correction only; it does not promote partial save or gameplay
+  state into a playable session.
 # ✅ 2026-08-06 DM1 inventory fallback removal
 
 Authenticated DM1 inventory frames no longer draw a red host rectangle or a
