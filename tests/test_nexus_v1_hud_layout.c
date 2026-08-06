@@ -46,6 +46,15 @@ int main(void)
         fprintf(stderr, "FAIL: real DM.BIN HUD layout mismatch\n");
         return 1;
     }
+    data[NEXUS_HUD_LAYOUT_DM_BIN_OFFSET + 2U] = 0U;
+    data[NEXUS_HUD_LAYOUT_DM_BIN_OFFSET + 3U] = 1U;
+    if (nexus_v1_hud_layout_parse_dm_bin(
+            data, (size_t)size, entries, NEXUS_HUD_LAYOUT_ENTRY_COUNT,
+            &count) == 0) {
+        free(data);
+        fprintf(stderr, "FAIL: reserved HUD layout word was accepted\n");
+        return 1;
+    }
     free(data);
     puts("PASS: real DM.BIN HUD layout parsed (80 entries)");
     return 0;

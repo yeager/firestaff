@@ -17,6 +17,7 @@ typedef struct {
 
 #define NEXUS_HUD_LAYOUT_DM_BIN_OFFSET 0x376D0U
 #define NEXUS_HUD_LAYOUT_ENTRY_BYTES    8U
+#define NEXUS_HUD_LAYOUT_SENTINEL_COUNT 9U
 #define NEXUS_HUD_LAYOUT_ENTRY_COUNT    80U
 
 /* Element ID constants from the layout table. */

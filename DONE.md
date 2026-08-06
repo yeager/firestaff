@@ -50879,3 +50879,9 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   diagnostic-only for non-DM1 callers. Verification: the source-gate unit
   test passes 6/6 and the real PC34 G0194, wall-ornament, alcove, 611-record
   object-corpus and M564/F0702 cursor tests pass.
+- ✅ 2026-08-06 Nexus HUD DM.BIN admission hardening: the 80-entry layout
+  parser now verifies all nine retail menuctrl sentinel positions and rejects
+  nonzero reserved words or unlisted sentinels. The 40 ring-menu hit
+  rectangles now reject coordinates outside the Saturn 320x224 envelope.
+  Mutation tests exercise both rejection paths against the mounted real
+  `DM.BIN`; no HUD rendering or Saturn input semantics are promoted.

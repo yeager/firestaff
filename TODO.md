@@ -153,6 +153,9 @@
   HUD layout and ring-menu hit rectangles are now bound into the live engine
   from verified DM.BIN; connect them to Saturn input/text/VDP consumers only
   after the corresponding runtime dispatch and placement capture is proven.
+  2026-08-06: the DM.BIN HUD parsers now require the authenticated menuctrl
+  sentinel-group positions, zero reserved words, and 320x224 Saturn screen
+  bounds; malformed fixture-shaped tables cannot enter the HUD receipt.
   Startup runtime receipts now also keep `hud_ready` clear after a DGN handoff;
   level-loaded state alone cannot promote an unbound Saturn HUD consumer.
   FONT256.S2D loader now exposes only the 242 real character-generator tiles

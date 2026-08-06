@@ -28,7 +28,10 @@ int nexus_v1_hud_hit_rects_parse_dm_bin(
         out[i].y1 = (int16_t)read_be16(entry + 2U);
         out[i].x2 = (int16_t)read_be16(entry + 4U);
         out[i].y2 = (int16_t)read_be16(entry + 6U);
-        if (out[i].x2 < out[i].x1 || out[i].y2 < out[i].y1) {
+        /* DM.BIN's rectangles are Saturn screen coordinates, not host-space
+         * placeholders. The retail display envelope is 320x224. */
+        if (out[i].x2 < out[i].x1 || out[i].y2 < out[i].y1 ||
+            out[i].x2 > 320 || out[i].y2 > 224) {
             if (out_count) *out_count = 0U;
             return -2;
         }

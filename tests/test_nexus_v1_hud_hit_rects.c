@@ -49,6 +49,14 @@ int main(void)
         fprintf(stderr, "FAIL: real DM.BIN HUD hit rectangles mismatch\n");
         return 1;
     }
+    data[NEXUS_HIT_RECT_DM_BIN_OFFSET + 4U] = 0x01U;
+    data[NEXUS_HIT_RECT_DM_BIN_OFFSET + 5U] = 0x41U;
+    if (nexus_v1_hud_hit_rects_parse_dm_bin(
+            data, (size_t)size, rects, NEXUS_HIT_RECT_COUNT, &count) == 0) {
+        free(data);
+        fprintf(stderr, "FAIL: out-of-screen HUD rectangle was accepted\n");
+        return 1;
+    }
     free(data);
     puts("PASS: real DM.BIN HUD hit rectangles parsed (40 entries)");
     return 0;
