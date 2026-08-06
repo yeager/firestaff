@@ -20,6 +20,7 @@
 #include "theron_v1_track02.h"
 #include "theron_v1_track02_creature.h"
 #include "theron_v1_track02_dungeon_map.h"
+#include "theron_v1_track02_level_data_blocks.h"
 #include "theron_v1_track02_text_decode.h"
 #include <string.h>
 #include <stdio.h>
@@ -1158,6 +1159,44 @@ int theron_v1_world_runtime_media_select_level_bank(
     selection.identity_checksum = world->runtime_media.identity.checksum;
     selection.cache_generation = ++world->runtime_media.cache_generation;
     world->runtime_media.level_bank = selection;
+    return 1;
+}
+
+int theron_v1_world_runtime_media_bind_level_data_block(
+    Theron_V1_World *world,
+    const uint8_t *user_data,
+    size_t user_data_size,
+    int track02_variant,
+    unsigned int level) {
+
+    Theron_LevelDataBlockReceipt source;
+    Theron_RuntimeLevelDataBlockReceipt receipt;
+    Theron_Track02Variant variant = (Theron_Track02Variant)track02_variant;
+
+    if (!world || !user_data || user_data_size == 0u ||
+        !world->runtime_media.restored ||
+        !world->runtime_media.identity.ready ||
+        (variant != THERON_TRACK02_VARIANT_US_BIN &&
+         variant != THERON_TRACK02_VARIANT_JP_BIN) ||
+        world->runtime_media.identity.track02_variant != track02_variant ||
+        !theron_v1_track02_level_data_block_read(
+            user_data, user_data_size, variant, level, &source)) {
+        return 0;
+    }
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.ready = 1;
+    receipt.no_semantic_promotion = 1;
+    receipt.track02_variant = track02_variant;
+    receipt.level = source.level;
+    receipt.block_ud_offset = source.block_ud_offset;
+    receipt.compressed_ud_offset = source.compressed_ud_offset;
+    receipt.compressed_bytes = source.compressed_bytes;
+    receipt.compressed_fnv1a = source.compressed_fnv1a;
+    receipt.shared_prologue_fnv1a = source.shared_prologue_fnv1a;
+    memcpy(receipt.per_level_meta, source.per_level_meta,
+           sizeof(receipt.per_level_meta));
+    world->runtime_media.later_level_data = receipt;
     return 1;
 }
 

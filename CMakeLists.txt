@@ -47348,6 +47348,26 @@ if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_level_data_b
     )
 endif()
 
+# Theron Track 02 later-level source receipt runtime handoff. The target
+# copies only authenticated byte-range/hash/meta fields; no decompression,
+# tile, map, or object semantics are admitted here.
+if(BUILD_TESTING AND THERON_SOURCES AND
+        EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_runtime_level_data_receipt.c")
+    add_executable(test_theron_v1_runtime_level_data_receipt
+        tests/test_theron_v1_runtime_level_data_receipt.c)
+    target_link_libraries(test_theron_v1_runtime_level_data_receipt PRIVATE
+        firestaff_theron)
+    target_include_directories(test_theron_v1_runtime_level_data_receipt PRIVATE
+        "${CMAKE_CURRENT_SOURCE_DIR}/include")
+    if(NOT MSVC)
+        target_compile_options(test_theron_v1_runtime_level_data_receipt PRIVATE
+            -Wall -Wextra -O2)
+    endif()
+    add_test(
+        NAME theron_v1_runtime_level_data_receipt
+        COMMAND test_theron_v1_runtime_level_data_receipt)
+endif()
+
 # Theron Track 02 dungeon text (stories, treasures, retrieval messages)
 if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_theron_v1_track02_dungeon_text.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/theron/theron_v1_track02_dungeon_text.c"

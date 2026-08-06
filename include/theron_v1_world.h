@@ -155,6 +155,25 @@ typedef struct {
     uint64_t cache_generation;
 } Theron_RuntimeLevelBankSelection;
 
+/* One authenticated later-level block copied into runtime state.  The
+ * source parser borrows its compressed span from the caller, so runtime keeps
+ * only the byte-range/hash/meta receipt and deliberately no source pointer.
+ * This is a source handoff, not a decompressed tile, map, or object claim.
+ * The HuC6280 consumer/decompressor remains gated by the reviewed
+ * bank-1f disassembly in docs/source-lock/theron-disassembly/. */
+typedef struct {
+    int ready;
+    int no_semantic_promotion;
+    int track02_variant;
+    unsigned int level;
+    uint32_t block_ud_offset;
+    uint32_t compressed_ud_offset;
+    size_t compressed_bytes;
+    uint32_t compressed_fnv1a;
+    uint32_t shared_prologue_fnv1a;
+    uint8_t per_level_meta[8];
+} Theron_RuntimeLevelDataBlockReceipt;
+
 typedef struct {
     int restored;
     unsigned int route_mask;
@@ -170,6 +189,7 @@ typedef struct {
     Theron_RuntimeMediaIdentity identity;
     uint64_t cache_generation;
     Theron_RuntimeLevelBankSelection level_bank;
+    Theron_RuntimeLevelDataBlockReceipt later_level_data;
     int startup_palette_valid;
     uint8_t startup_palette_rgb8[16][3];
 } Theron_RuntimeLevelMedia;
@@ -532,6 +552,12 @@ int theron_v1_world_runtime_media_select_level_bank(
     Theron_RuntimeLevelBankKind kind,
     Theron_DungeonID dungeon_id,
     int level_index);
+int theron_v1_world_runtime_media_bind_level_data_block(
+    Theron_V1_World *world,
+    const uint8_t *user_data,
+    size_t user_data_size,
+    int track02_variant,
+    unsigned int level);
 
 /* ── Deterministic world hash (FNV-1a 64-bit) ─────────────────────── */
 #define THERON_HASH_SEED_PARTY     0x50415254UL  /* 'PART' */

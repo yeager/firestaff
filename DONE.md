@@ -51318,6 +51318,14 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   compressed span is admitted. Real BIN regressions cover mutations in the
   shared prologue, metadata, and payload; tile/object semantics remain
   capture/disassembly-gated.
+- ✅ 2026-08-06 Theron later-level runtime receipt handoff: the authenticated
+  US/JP Track 02 level block is now copied into `Theron_RuntimeLevelMedia`
+  without retaining a borrowed source pointer. Runtime preserves the exact
+  block/user-data offsets, compressed-span size/FNV, shared-prologue FNV and
+  eight metadata bytes for all seven real levels in each variant. Mutation
+  coverage proves a damaged source is rejected and the previous receipt is
+  retained; decompression, tile/map ownership and object semantics remain
+  explicitly blocked by the HuC6280 consumer gate.
 - ✅ 2026-08-06 Theron JP Track 02 dungeon-map binding: the map loader now has
   a separate authenticated `TQJP02.bin` offset table and variant API. All
   seven real Japanese dungeon banks load with their retail map counts and hub
