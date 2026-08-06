@@ -43,6 +43,15 @@
   table bound to the same source buffer. This is not a claim of native SKULL
   execution, menu rendering or input parity.
 
+# DM2 FM Towns TWANIM P3 startup gate (2026-08-06)
+
+- ✅ The selected HME-242 TWANIM.EXP is now also extracted only into RAM and
+  must match the original MD5 plus a valid Phar Lap level-1 P3 header. The
+  real-disc test verifies its 72,184-byte file, 0x10470 entry point and
+  0x117f8 load image before TITLE/SWOOSH streams are admitted. This identifies
+  the real native player; it does not claim its unported audio mixer or native
+  menu execution.
+
 # DM2 FM Towns animation-memory lifetime (2026-08-06)
 
 - ✅ M11 shutdown now releases the RAM-only TITLE/SWOOSH member before the

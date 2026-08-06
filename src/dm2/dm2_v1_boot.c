@@ -68,7 +68,7 @@ static uint32_t dm2_v1_boot_read_le32(const uint8_t *data)
            ((uint32_t)data[2] << 16) | ((uint32_t)data[3] << 24);
 }
 
-static int dm2_v1_boot_parse_fmtowns_skull_p3(
+static int dm2_v1_boot_parse_fmtowns_p3(
     const uint8_t *program, size_t size, DM2_V1_FmtownsP3Receipt *receipt)
 {
     if (!receipt) return 0;
@@ -1032,6 +1032,8 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
            sizeof(profile->fmtowns_end_stream));
     memset(&profile->fmtowns_cdda_music, 0,
            sizeof(profile->fmtowns_cdda_music));
+    memset(&profile->fmtowns_twanim_p3, 0,
+           sizeof(profile->fmtowns_twanim_p3));
     memset(&profile->fmtowns_skull_p3, 0,
            sizeof(profile->fmtowns_skull_p3));
     /* M12 passes an explicitly selected retail archive verbatim.  Preserve
@@ -1109,6 +1111,51 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
             profile->fmtowns_cdda_track_count = 0;
             return;
         }
+        /* AUTOEXEC runs TWANIM.EXP for all three visible animation stages.
+         * Its file name and the stream MD5s alone do not authenticate the
+         * native player.  HME-242's original P3 image is 72,184 bytes and
+         * must retain its own header/load-image facts before M11 is allowed
+         * to decode TITLE/SWOOSH from this selected disc.  The extraction is
+         * bounded RAM-only and is released before boot continues. */
+        {
+            static const char fmtowns_twanim_md5[] =
+                "07a5629466e0c941bdc27c78cf8b9941";
+            uint8_t *twanim_data = NULL;
+            size_t twanim_size = 0u;
+            char twanim_md5[33];
+            memset(twanim_md5, 0, sizeof(twanim_md5));
+            if (dm2_v1_fmtowns_disc_extract_alloc(
+                    img_data, img_size, &probe.twanim_exp,
+                    &twanim_data, &twanim_size) != 0 ||
+                !twanim_data || twanim_size != 72184u) {
+                free(twanim_data);
+                free(profile->fmtowns_disc_image);
+                profile->fmtowns_disc_image = NULL;
+                profile->fmtowns_disc_image_size = 0u;
+                profile->fmtowns_zip_path[0] = '\0';
+                memset(profile->fmtowns_cdda_track_starts, 0,
+                       sizeof(profile->fmtowns_cdda_track_starts));
+                profile->fmtowns_cdda_track_count = 0;
+                return;
+            }
+            dm2_md5_bytes_hex(twanim_data, twanim_size, twanim_md5);
+            if (!md5_matches(twanim_md5, fmtowns_twanim_md5) ||
+                !dm2_v1_boot_parse_fmtowns_p3(
+                    twanim_data, twanim_size, &profile->fmtowns_twanim_p3)) {
+                free(twanim_data);
+                free(profile->fmtowns_disc_image);
+                profile->fmtowns_disc_image = NULL;
+                profile->fmtowns_disc_image_size = 0u;
+                profile->fmtowns_zip_path[0] = '\0';
+                memset(profile->fmtowns_cdda_track_starts, 0,
+                       sizeof(profile->fmtowns_cdda_track_starts));
+                profile->fmtowns_cdda_track_count = 0;
+                memset(&profile->fmtowns_twanim_p3, 0,
+                       sizeof(profile->fmtowns_twanim_p3));
+                return;
+            }
+            free(twanim_data);
+        }
         for (animation_index = 0; animation_index < 3; ++animation_index) {
             uint8_t *animation_data = NULL;
             size_t animation_size = 0u;
@@ -1157,6 +1204,8 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
                    sizeof(profile->fmtowns_title_stream));
             memset(&profile->fmtowns_end_stream, 0,
                    sizeof(profile->fmtowns_end_stream));
+            memset(&profile->fmtowns_twanim_p3, 0,
+                   sizeof(profile->fmtowns_twanim_p3));
             return;
         }
         /* SKULL.EXP is the native next startup stage after the verified
@@ -1169,7 +1218,7 @@ static void dm2_v1_boot_load_fmtowns_disc_from_zip(DM2_V1_BootProfile *profile,
             if (dm2_v1_fmtowns_disc_extract_alloc(
                     img_data, img_size, &probe.skull_exp,
                     &skull_data, &skull_size) != 0 ||
-                !dm2_v1_boot_parse_fmtowns_skull_p3(
+                !dm2_v1_boot_parse_fmtowns_p3(
                     skull_data, skull_size, &profile->fmtowns_skull_p3)) {
                 free(skull_data);
                 free(profile->fmtowns_disc_image);

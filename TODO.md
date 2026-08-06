@@ -1144,6 +1144,12 @@ level or consumer bindings.
   image, relocation range and entry point, before the startup media is
   retained. This remains an executable identity gate only: native P3/TBIOS
   execution, menu pixels and input still need capture.
+  **2026-08-06 TWANIM update:** the player for the visible SWOOSH/TITLE/END
+  stages now has the same in-memory P3 ownership requirement. The selected
+  HME-242 TWANIM.EXP must match its retail MD5 and bounded Phar Lap header
+  (entry 0x10470, load image 0x117f8) before the source streams are admitted.
+  This verifies the native player identity, not its unported sound mixer or
+  a native SKULL-menu handoff.
   **2026-08-06 update:** production now also parses each selected stream in
   RAM using DMWeb's big-endian record framing and requires the complete
   HME-242 inventories: SWOOSH 22 records (18 DL), TITLE 235 (224 DL, one SD,

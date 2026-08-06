@@ -210,9 +210,10 @@ typedef struct {
     size_t   fmtowns_disc_image_size;
     uint32_t fmtowns_cdda_track_starts[9]; /* track_starts[2..8] */
     int      fmtowns_cdda_track_count;
-    /* Phar Lap P3 executable receipt for the selected native SKULL.EXP.
-     * It records only bounded header facts from the in-memory disc member;
-     * no program image is unpacked or executed by this receipt. */
+    /* Phar Lap P3 executable receipts for the selected native programs.
+     * They record only bounded header facts from in-memory disc members; no
+     * program image is unpacked or executed by either receipt. */
+    DM2_V1_FmtownsP3Receipt fmtowns_twanim_p3;
     DM2_V1_FmtownsP3Receipt fmtowns_skull_p3;
     /* HMP-to-CDDA selection read from the native SKULL.EXP member in the
      * selected disc buffer.  The receipt owns only copied table bytes. */

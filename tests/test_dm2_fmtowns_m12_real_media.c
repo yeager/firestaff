@@ -200,6 +200,8 @@ int main(void)
             size_t title_size = 0u;
             uint8_t *swoosh = NULL;
             size_t swoosh_size = 0u;
+            uint8_t *twanim = NULL;
+            size_t twanim_size = 0u;
             uint8_t *skull = NULL;
             size_t skull_size = 0u;
             uint8_t pixels[320u * 200u / 2u];
@@ -234,6 +236,15 @@ int main(void)
                     title, title_size, &title_palette);
                 (void)dm2_v1_fmtowns_anim_stream_decode_title_sound(
                     title, title_size, &title_sound);
+            }
+            if (launch.profile && launch.profile->fmtowns_disc_image &&
+                dm2_v1_fmtowns_disc_extract_alloc(
+                    launch.profile->fmtowns_disc_image,
+                    launch.profile->fmtowns_disc_image_size,
+                    &disc.twanim_exp, &twanim, &twanim_size) != 0) {
+                free(twanim);
+                twanim = NULL;
+                twanim_size = 0u;
             }
             if (launch.profile && launch.profile->fmtowns_disc_image &&
                 dm2_v1_fmtowns_disc_probe(
@@ -333,8 +344,26 @@ int main(void)
                        dm2_v1_fmtowns_cdda_map_table(
                            &launch.profile->fmtowns_cdda_music) != NULL,
                    "FM Towns SKULL is a bounded native P3 program and supplies its HMP-to-CDDA map from RAM");
+            expect(twanim && twanim_size == 72184u &&
+                       launch.profile->fmtowns_twanim_p3.valid &&
+                       launch.profile->fmtowns_twanim_p3.level == 1u &&
+                       launch.profile->fmtowns_twanim_p3.header_size == 0x180u &&
+                       launch.profile->fmtowns_twanim_p3.file_size == twanim_size &&
+                       launch.profile->fmtowns_twanim_p3.runtime_offset == 0x180u &&
+                       launch.profile->fmtowns_twanim_p3.runtime_size == 0x80u &&
+                       launch.profile->fmtowns_twanim_p3.relocation_offset == 0x200u &&
+                       launch.profile->fmtowns_twanim_p3.relocation_size == 0u &&
+                       launch.profile->fmtowns_twanim_p3.load_image_offset == 0x200u &&
+                       launch.profile->fmtowns_twanim_p3.load_image_size == 0x117f8u &&
+                       launch.profile->fmtowns_twanim_p3.symbol_table_offset == 0u &&
+                       launch.profile->fmtowns_twanim_p3.symbol_table_size == 0u &&
+                       launch.profile->fmtowns_twanim_p3.initial_eip == 0x10470u &&
+                       launch.profile->fmtowns_twanim_p3.memory_requirements ==
+                           0x117f8u,
+                   "FM Towns TWANIM is the authenticated native P3 player for the retained title streams");
             free(title);
             free(swoosh);
+            free(twanim);
             free(skull);
         }
         expect_complete_english_text_overlay(launch.profile);
