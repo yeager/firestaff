@@ -6228,9 +6228,8 @@ int nexus_v1_launcher_startup_route_proof_from_runtime_state(
         assets.startup_surfaces_fallback == 0;
     out_receipt->faces_real_ready =
         assets.faces_expected > 0 &&
-        assets.faces_loaded > 0 &&
-        assets.faces_loaded + assets.faces_fallback ==
-            assets.faces_expected;
+        assets.faces_fallback == 0 &&
+        assets.faces_loaded == assets.faces_expected;
     out_receipt->full_start_graphics_ready =
         out_receipt->startup_surfaces_real_ready &&
         out_receipt->faces_real_ready &&
@@ -6471,9 +6470,8 @@ int nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
         assets.startup_surfaces_fallback == 0;
     out_receipt->faces_real_ready =
         assets.faces_expected > 0 &&
-        assets.faces_loaded > 0 &&
-        assets.faces_loaded + assets.faces_fallback ==
-            assets.faces_expected;
+        assets.faces_fallback == 0 &&
+        assets.faces_loaded == assets.faces_expected;
     out_receipt->menu_bpk_route_ready =
         assets.real_menu_surface_route_ready ? 1 : 0;
     out_receipt->save_menu_route_ready =

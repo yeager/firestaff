@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus startup FACE receipt hardening: both launcher full-start
+  receipt paths now require `faces_loaded == faces_expected` and zero fallback
+  portraits. The former arithmetic `loaded + fallback == expected` could mark
+  incomplete source coverage as real-ready. Verification: explicit 19/20
+  partial-coverage blocker plus real European startup media/menu tests pass.
+
 - ✅ 2026-08-06 Nexus FACE startup-count placeholder removal: production
   startup loading no longer uses the inherited 24-portrait bound. It now
   checks the authenticated 20-record FACE.BIN layout from the real European

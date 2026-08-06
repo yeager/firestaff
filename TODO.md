@@ -50,6 +50,10 @@
   Bind the real Saturn VDP1 destination, scale, flip and command order before
   restoring portrait draw commands.
 
+  2026-08-06: launcherns full-start receipts kräver nu exakt full FACE-täckning
+  utan fallback; partiell `loaded + fallback == expected` räknas inte längre
+  som real-ready.
+
 - **NEXUS-STARTUP-V2-LABEL:** The launcher no longer advertises a Nexus V2
   presentation fallback. Keep the game card capture-gated until the real
   Saturn title/menu owner and VDP1/VDP2 composition are authenticated.

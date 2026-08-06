@@ -1116,8 +1116,12 @@ int main(void)
         expect(nexus_v1_launcher_startup_full_start_receipt_from_runtime_state(
                    &synthetic_runtime_receipt,
                    &runtime_state,
-                   &full_start_receipt),
-               "Nexus package receipt evaluates incomplete FACE coverage");
+                   &full_start_receipt) &&
+               full_start_receipt.faces_real_ready == 0 &&
+               full_start_receipt.full_start_graphics_ready == 0 &&
+               full_start_receipt.full_start_menu_ready == 0 &&
+               strcmp(full_start_receipt.startup_ui_blocker, "faces") == 0,
+               "Nexus package receipt blocks incomplete FACE coverage");
         synthetic_engine.ui_faces_loaded = old_faces_loaded;
         synthetic_engine.ui_faces_fallback = old_faces_fallback;
     }
