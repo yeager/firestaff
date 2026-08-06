@@ -31,6 +31,11 @@
   capture is still required before menu, HUD, and viewport composition can be
   enabled.
 
+- **DM1-D1R2-WALL-SYNTHETIC-AUDIT:** This D1R2-wall fixture uses local
+  320×200 probe buffers and fixed route metadata. It has no original DM1 data
+  input or M11/runtime caller; retain it only as explicit ReDMCSB coverage
+  until a source-bound D1R wall owner is recovered.
+
 - **DM1-F0292-NAME-BOX-CLIP-SYNTHETIC-AUDIT:** This F0292 name/title clip
   fixture fabricates champion, name and title inputs. It has no original DM1
   data input or M11/runtime caller; retain it only as explicit ReDMCSB

@@ -14,6 +14,12 @@
 - ✅ Verification: `dm1_v1_mirror_candidate_c040_action_area_click_while_panel_live_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM1 D1R2 wall synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the contract-only D1R2-wall probe fixture from M10. It uses local
+  320×200 buffers and fixed route metadata, has no original DM1 data input or
+  M11/runtime caller, and its dedicated regression now compiles it directly.
+
 # DM2 class-0x30 spell-failure real GDAT binding (2026-08-13)
 
 # DM1 F0292 name-box clip synthetic audit isolation (2026-08-06)
