@@ -61,6 +61,12 @@
   regression already compiles the source explicitly; it loads no original DM1
   data and has no M11/runtime caller.
 
+# DM1 C161 cancel-after-F0334 synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C161 cancel fixture from M10. It fabricates
+  champion, chest-slot and pending state, reads no original DM1 input and has
+  no M11/runtime caller; its direct regression now compiles the source.
+
 # DM1 chest partial-mask synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only partial-mask chest swap model from M10. It

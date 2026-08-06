@@ -4555,6 +4555,11 @@ list(REMOVE_ITEM M10_SOURCES
 # it in the explicit regression target rather than the production M10 archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_partial_mask_swap_pc34_compat.c")
+# `dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat.c` is a
+# contract-only state fixture: it fabricates champion, chest-slot and pending
+# cancel state, reads no original DM1 data and has no M11/runtime caller.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat.c")
 # `dm1_v1_chest_partial_drop_to_floor_while_chest_open_pc34_compat.c` is a
 # contract-only probe. It manufactures its chest stack, leader hand, floor
 # link and coordinates locally, reads no original save/dungeon/graphics data,
@@ -54145,7 +54150,9 @@ add_executable(test_dm1_v1_main_math_f0024_f0026_f0030_pc34_compat tests/test_dm
 target_include_directories(test_dm1_v1_main_math_f0024_f0026_f0030_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_main_math_f0024_f0026_f0030_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_main_math_f0024_f0026_f0030_pc34_compat COMMAND test_dm1_v1_main_math_f0024_f0026_f0030_pc34_compat)
-add_executable(test_dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat tests/test_dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat.c)
+add_executable(test_dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat
+    tests/test_dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat.c
+    src/dm1/dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat.c)
 target_include_directories(test_dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat COMMAND test_dm1_v1_mirror_c161_cancel_after_f0334_pending_pc34_compat)
