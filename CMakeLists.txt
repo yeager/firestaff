@@ -5034,6 +5034,11 @@ list(REMOVE_ITEM M10_SOURCES
 # regression compiles it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_reopen_after_save_load_pc34_compat.c")
+# `dm1_v1_chest_multi_champion_close_pc34_compat.c` is a contract-only chest
+# close fixture with local champions, Things and weights. It loads no original
+# DM1 data and has no M11/runtime caller; its explicit regression compiles it.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_multi_champion_close_pc34_compat.c")
 # `dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_pc34_compat.c`
 # is a contract-only C040 close/reopen model with local panel and candidate
 # state. It loads no original DM1 assets and has no M11/runtime caller; its
@@ -53600,7 +53605,9 @@ add_executable(test_dm1_v1_chest_link_corruption_recovery_pc34_compat tests/test
 target_include_directories(test_dm1_v1_chest_link_corruption_recovery_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_link_corruption_recovery_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_link_corruption_recovery_pc34_compat COMMAND test_dm1_v1_chest_link_corruption_recovery_pc34_compat)
-add_executable(test_dm1_v1_chest_multi_champion_close_pc34_compat tests/test_dm1_v1_chest_multi_champion_close_pc34_compat.c)
+add_executable(test_dm1_v1_chest_multi_champion_close_pc34_compat
+    tests/test_dm1_v1_chest_multi_champion_close_pc34_compat.c
+    src/dm1/dm1_v1_chest_multi_champion_close_pc34_compat.c)
 target_include_directories(test_dm1_v1_chest_multi_champion_close_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_chest_multi_champion_close_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_chest_multi_champion_close_pc34_compat COMMAND test_dm1_v1_chest_multi_champion_close_pc34_compat)

@@ -1,3 +1,9 @@
+# DM1 chest multi-champion-close synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only multi-champion chest-close fixture from M10 and
+  made its regression compile the source explicitly. It loads no original DM1
+  data and has no M11/runtime caller.
+
 # DM1 mirror reopen-after-save-load synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only F0433/F0435/C040 fixture from M10. Its
