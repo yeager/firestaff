@@ -8,7 +8,10 @@
   Greatstone's 5,624 exported visual items are not a one-to-one substitute for
   the file's 11,854 ENT1 rows, which also include text, words, palettes and
   raw controls. Bind each remaining visible HUD/viewport route to its exact
-  GDAT record; do not make a count-derived asset table or fallback.
+  GDAT record; do not make a count-derived asset table or fallback. The shared
+  IMG3/IMG9 decoder now belongs to the M10 loader boundary, so future
+  real-data consumers must link that owner rather than introduce a parallel
+  decoder or fallback.
 
 - **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
   mirror side/depth, inscription/corridor invalidation and wall-material

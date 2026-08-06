@@ -4444,6 +4444,10 @@ file(GLOB DM2_SOURCES CONFIGURE_DEPENDS "src/dm2/dm2_v1_*.c")
 # file-handle API cannot stand in for a mounted, hash-verified animation
 # stream, so compile it only in the focused bootstrap/chunk tests.
 list(REMOVE_ITEM DM2_SOURCES
+    # c_gfx_decode is physically included by dm2_v1_asset_loader.c because
+    # the loader also belongs to firestaff_m10.  A separate DM2 archive
+    # object would duplicate the decoder and leave M10-only users unresolved.
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_gfx_decode_receipt.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_panel_routing.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_hud_survey_helpers.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_combat.c"

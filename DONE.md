@@ -1,3 +1,13 @@
+- ✅ 2026-08-06 DM2 M10 IMG9 decoder ownership: corrected a link boundary
+  exposed by the full real GDAT census. `dm2_v1_asset_loader.c` is owned by
+  `firestaff_m10`, but its source IMG9 decoder had only been emitted through
+  the higher-level DM2 archive. The decoder is now compiled with the loader,
+  so bounded M10-only real-data consumers do not fail unresolved on
+  `dm2_v1_decode_img9`; the duplicate DM2 archive object is removed. Verified
+  with the GDAT creature-table, CCM source-alignment and entire PC-English
+  visual-corpus regressions. No image substitute or data materialization was
+  introduced.
+
 - ✅ 2026-08-06 Theron fresh FIFO-origin capture audit: rebuilt the patched
   Mednafen binary against real SDL 2.32.8 and ran authenticated US Track 02
   media. The replay receipt records 161 raw sector spans, 51 SCSI reads, 25

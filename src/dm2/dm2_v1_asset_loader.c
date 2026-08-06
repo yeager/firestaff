@@ -3982,3 +3982,13 @@ const char *dm2_v1_asset_loader_source_evidence(void) {
         "Source: SKULL.ASM — decode_img3_underlay/overlay, decode_img9\n"
         "Asset: DM2 PC English GRAPHICS.DAT 25247ede4dabb6a71e5dabdfbcd5907d (~8.6 MB)\n";
 }
+
+/* IMG3/IMG9 decode is part of the loader's source-owned raw-image boundary.
+ * Keep its implementation in this translation unit: firestaff_m10 owns the
+ * loader and several bounded real-data tests deliberately link M10 without
+ * the higher-level DM2 archive.  Leaving the decoder solely in firestaff_dm2
+ * made those callers fail at link time after IMG9 began using the complete
+ * SKProject mode-1/2/3 dispatcher.  The included implementation remains the
+ * separately named c_gfx_decode.cpp receipt surface; it is not a fallback or
+ * a generated-image path. */
+#include "dm2_v1_gfx_decode_receipt.c"
