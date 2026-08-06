@@ -1,5 +1,10 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHEST-OPEN-MIRROR-ROTATION-SYNTHETIC-AUDIT:** This C540 wheel-swap
+  fixture fabricates chest, candidate and command-queue state. It loads no
+  original DM1 data and has no M11/runtime caller; retain it only as explicit
+  ReDMCSB coverage until a source-bound interaction owner is recovered.
+
 - **DM1-MIRROR-KEYBOARD-BROWSE-SYNTHETIC-AUDIT:** This keyboard-browse fixture
   fabricates roster and C127 portrait-token state. It loads no original DM1
   data and has no M11/runtime caller; retain it only as explicit ReDMCSB

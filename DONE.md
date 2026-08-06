@@ -8,6 +8,14 @@
   fail-closed presentation contract. The live pose/countdown handoff remains
   open until those source owners are imported.
 
+# DM1 chest open-mirror-rotation synthetic audit isolation (2026-08-07)
+
+- ✅ Removed the contract-only C540 wheel-swap fixture from M10 and made its
+  direct regression compile the source explicitly. It loads no original DM1
+  data and has no M11/runtime caller.
+
+# DM1 mirror keyboard-browse synthetic audit isolation (2026-08-07)
+
 # DM2 standalone creature-fixture tick production gate (2026-08-07)
 
 - ✅ The public legacy creature tick now returns without mutation in product
