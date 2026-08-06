@@ -6165,6 +6165,107 @@ static void m11_csb_release_fmtowns_title(M11_GameViewState *state)
     state->csbFmtownsTitleFinished = 0;
 }
 
+static void m11_csb_release_fmtowns_switch(M11_GameViewState *state)
+{
+    if (!state) return;
+    free(state->csbFmtownsSwitchBytes);
+    state->csbFmtownsSwitchBytes = NULL;
+    state->csbFmtownsSwitchByteCount = 0u;
+    memset(&state->csbFmtownsSwitchReceipt, 0,
+           sizeof(state->csbFmtownsSwitchReceipt));
+    memset(state->csbFmtownsSwitchPixels, 0,
+           sizeof(state->csbFmtownsSwitchPixels));
+    state->csbFmtownsSwitchLanguage = CSB_FMTOWNS_SWITCH_JAPANESE;
+    state->csbFmtownsSwitchVblanksRemaining = 0u;
+    state->csbFmtownsSwitchBound = 0;
+}
+
+static int m11_csb_bind_fmtowns_switch(M11_GameViewState *state)
+{
+    const CSB_V1_BootProfile *profile;
+    char path[sizeof(((CSB_V1_BootProfile *)0)->asset_root) + 20u];
+    FILE *file;
+    long file_size;
+    size_t bytes_read;
+    if (!state || !state->csbBootProfile) return 0;
+    profile = (const CSB_V1_BootProfile *)state->csbBootProfile;
+    if (!m11_csb_is_fmtowns_profile(profile) || !profile->asset_root[0])
+        return 0;
+    m11_csb_release_fmtowns_switch(state);
+    if (snprintf(path, sizeof(path), "%s/SWITCHTW.EXP", profile->asset_root) < 0 ||
+        strlen(path) >= sizeof(path)) return 0;
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (file_size = ftell(file)) <= 0 || file_size > 4 * 1024 * 1024 ||
+        fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    state->csbFmtownsSwitchBytes = (uint8_t *)malloc((size_t)file_size);
+    if (!state->csbFmtownsSwitchBytes) {
+        fclose(file);
+        return 0;
+    }
+    bytes_read = fread(state->csbFmtownsSwitchBytes, 1u, (size_t)file_size,
+                       file);
+    fclose(file);
+    if (bytes_read != (size_t)file_size ||
+        !csb_v1_fmtowns_switch_parse(state->csbFmtownsSwitchBytes,
+                                     (size_t)file_size,
+                                     &state->csbFmtownsSwitchReceipt)) {
+        m11_csb_release_fmtowns_switch(state);
+        return 0;
+    }
+    state->csbFmtownsSwitchByteCount = (size_t)file_size;
+    /* AUTOEXEC.BAT starts SWITCHTW JAPAN. SWITCH.C waits sixty F0693
+     * VBlanks, flips the initial selector, and then expands G4167. */
+    state->csbFmtownsSwitchLanguage = CSB_FMTOWNS_SWITCH_JAPANESE;
+    state->csbFmtownsSwitchVblanksRemaining = 60u;
+    state->csbFmtownsSwitchBound = 1;
+    return 1;
+}
+
+static int m11_csb_present_fmtowns_switch(M11_GameViewState *state,
+                                          unsigned char *framebuffer,
+                                          int framebuffer_width,
+                                          int framebuffer_height)
+{
+    uint8_t rgb6[256][3];
+    int color;
+    if (!state || !framebuffer || !state->csbFmtownsSwitchBound) return 0;
+    if (state->csbFmtownsSwitchVblanksRemaining != 0u) {
+        memset(framebuffer, 0, (size_t)framebuffer_width * framebuffer_height);
+        return 1;
+    }
+    for (color = 0; color < 256; ++color) {
+        const CSB_V1_FmtownsSwitchColor *source =
+            &state->csbFmtownsSwitchReceipt.palette[color & 15];
+        rgb6[color][0] = (uint8_t)(source->red6 << 2u);
+        rgb6[color][1] = (uint8_t)(source->green6 << 2u);
+        rgb6[color][2] = (uint8_t)(source->blue6 << 2u);
+    }
+    if (M11_Render_SetIndexedPaletteRgb6(rgb6) != M11_RENDER_OK) return 0;
+    m11_csb_present_startup_raster(state->csbFmtownsSwitchPixels, framebuffer,
+                                   framebuffer_width, framebuffer_height);
+    return 1;
+}
+
+static void m11_csb_advance_fmtowns_switch(M11_GameViewState *state)
+{
+    if (!state || !state->csbFmtownsSwitchBound) return;
+    if (state->csbFmtownsSwitchVblanksRemaining > 0u) {
+        --state->csbFmtownsSwitchVblanksRemaining;
+        if (state->csbFmtownsSwitchVblanksRemaining != 0u) return;
+    }
+    if (!csb_v1_fmtowns_switch_compose_page(
+            state->csbFmtownsSwitchBytes, state->csbFmtownsSwitchByteCount,
+            &state->csbFmtownsSwitchReceipt, state->csbFmtownsSwitchLanguage,
+            state->csbFmtownsSwitchPixels,
+            sizeof(state->csbFmtownsSwitchPixels))) {
+        m11_csb_release_fmtowns_switch(state);
+    }
+}
+
 static int m11_csb_bind_fmtowns_title(M11_GameViewState *state)
 {
     const CSB_V1_BootProfile *profile;
@@ -6179,6 +6280,7 @@ static int m11_csb_bind_fmtowns_title(M11_GameViewState *state)
     if (!m11_csb_is_fmtowns_profile(profile) || !profile->asset_root[0])
         return 0;
     m11_csb_release_fmtowns_title(state);
+    m11_csb_release_fmtowns_switch(state);
     if (snprintf(path, sizeof(path), "%s/TITLE.ANM", profile->asset_root) < 0 ||
         strlen(path) >= sizeof(path)) return 0;
     file = fopen(path, "rb");
@@ -6268,10 +6370,14 @@ static void m11_csb_advance_fmtowns_title(M11_GameViewState *state,
             state->csbFmtownsTitleFrameReceipt = next_frame;
             state->csbFmtownsFrameTimerARemaining = next_frame.timer_a_ticks;
         } else {
-            /* ANIMTOWN.C exits after F2275 ends. Its next launcher/game
-             * transition is not captured, so retain the final real page and
-             * never fall through into the unrelated PC34 entrance machine. */
-            state->csbFmtownsTitleFinished = 1;
+            /* ANIMTOWN.C returns after F2275. The retail AUTOEXEC.BAT then
+             * executes SWITCHTW JAPAN; it does not enter PC34 TITLE.C or
+             * chain directly into Story. */
+            if (m11_csb_bind_fmtowns_switch(state)) {
+                m11_csb_release_fmtowns_title(state);
+            } else {
+                state->csbFmtownsTitleFinished = 1;
+            }
         }
     }
     state->csbFmtownsTimerAAccumulatorUs = (uint32_t)accumulator;
@@ -15774,6 +15880,7 @@ void M11_GameView_Shutdown(M11_GameViewState* state) {
         state->csbStartupRuntimeAssetSession = NULL;
     }
     m11_csb_release_fmtowns_title(state);
+    m11_csb_release_fmtowns_switch(state);
     free(state->csbViewportFloorPixels);
     free(state->csbViewportCeilingPixels);
     state->csbViewportFloorPixels = NULL;
@@ -20827,9 +20934,13 @@ M11_GameInputResult M11_GameView_AdvanceIdleTick(M11_GameViewState* state) {
         }
         if (m11_csb_is_fmtowns_profile(csb_profile) &&
             state->csbState.startup_title_active &&
-            state->csbFmtownsTitleBound &&
+            (state->csbFmtownsTitleBound || state->csbFmtownsSwitchBound) &&
             !state->csbStartupRuntimeAssetSession) {
-            m11_csb_advance_fmtowns_title(state, 16000u);
+            if (state->csbFmtownsTitleBound) {
+                m11_csb_advance_fmtowns_title(state, 16000u);
+            } else {
+                m11_csb_advance_fmtowns_switch(state);
+            }
             return M11_GAME_INPUT_REDRAW;
         }
         if (!m11_csb_original_save_runtime_receipt_current(state)) {
@@ -52108,8 +52219,10 @@ void M11_GameView_Draw(const M11_GameViewState* state,
          * is nevertheless mutable here and owns this CSB-only transaction. */
         M11_GameViewState *csb_state = (M11_GameViewState *)state;
         if (state->csbState.startup_title_active &&
-            m11_csb_present_fmtowns_title(csb_state, framebuffer,
-                                          framebufferWidth, framebufferHeight)) {
+            (m11_csb_present_fmtowns_switch(csb_state, framebuffer,
+                                            framebufferWidth, framebufferHeight) ||
+             m11_csb_present_fmtowns_title(csb_state, framebuffer,
+                                           framebufferWidth, framebufferHeight))) {
             m11_draw_ra_overlay(state, framebuffer, framebufferWidth,
                                 framebufferHeight);
             g_drawState = NULL;

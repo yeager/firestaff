@@ -54,6 +54,7 @@
 #include "theron_v1_track02_g8_fifo_capture_binding.h"
 #include "csb_v1_boot.h"
 #include "csb_v1_fmtowns_anm.h"
+#include "csb_v1_fmtowns_switch.h"
 #include "csb_v1_atari_st_animation_assets.h"
 #include "csb_v1_f0128_entrance_runtime_consumer_pc34_compat.h"
 #include "csb_v1_startup_entrance_f0128_m11_handoff_pc34_compat.h"
@@ -1543,6 +1544,15 @@ typedef struct {
     uint16_t csbFmtownsFrameTimerARemaining;
     int csbFmtownsTitleBound;
     int csbFmtownsTitleFinished;
+    /* The standalone FM Towns title returns to SWITCHTW.EXP. Its two pages
+     * and buttons remain executable-owned IMG2 streams, never host text. */
+    uint8_t *csbFmtownsSwitchBytes;
+    size_t csbFmtownsSwitchByteCount;
+    CSB_V1_FmtownsSwitchReceipt csbFmtownsSwitchReceipt;
+    uint8_t csbFmtownsSwitchPixels[CSB_FMTOWNS_SWITCH_PIXELS];
+    CSB_V1_FmtownsSwitchLanguage csbFmtownsSwitchLanguage;
+    uint16_t csbFmtownsSwitchVblanksRemaining;
+    int csbFmtownsSwitchBound;
     /* Atari ST ANIMATE.SCR runs at 50 VBlanks/sec while the shared CSB
      * startup state advances at its source-owned 55 ms cadence. Keep the
      * fractional conversion and last source framebuffer here, not in a
