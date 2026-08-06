@@ -156,6 +156,9 @@
   empty palette. The former procedural stone palette was not source evidence
   and could make an unbound bundle look renderable. Keep the runtime blocked
   until a captured HuC6260 palette span and consumer are hash/offset-bound.
+  2026-08-06 follow-up: the raw 4bpp window remains diagnostic evidence only;
+  `theron_v1_startup_media_bind_runtime_palette()` now refuses to promote it
+  into `runtime_media`, so a candidate palette cannot unlock M11 startup art.
 
 - **THERON-T700-STAT-CONSUMER:** The production mechanics path now leaves
   source-authenticated levels completely unchanged after movement. The old

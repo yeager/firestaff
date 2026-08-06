@@ -236,10 +236,10 @@ int theron_v1_startup_media_bind_runtime_receipt(
     Theron_V1_World *world,
     const Theron_StartupMediaStateReceipt *receipt);
 
-/* Bind the VCE title-screen palette from a known Track 02 offset into the
- * world's runtime media.  Call after bind_runtime_receipt.  The palette is
- * extracted from the raw Track 02 bytes using the hash-gated palette
- * window inspector. */
+/* Candidate-only palette inspection entry point.  The hash-gated raw window
+ * remains available for diagnostics, but no palette is promoted into runtime
+ * media until a captured HuC6260 write, consumer and destination are bound.
+ * Therefore this function currently returns 0 for authenticated candidates. */
 int theron_v1_startup_media_bind_runtime_palette(
     Theron_V1_World *world,
     const uint8_t *track02_data,

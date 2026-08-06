@@ -708,7 +708,6 @@ int theron_v1_startup_media_bind_runtime_palette(
     Theron_Track02Variant variant;
     Theron_Track02SignalStatus status;
     size_t offset;
-    size_t i;
 
     if (!world || !track02_data || !md5_hex || track02_size == 0u) {
         return 0;
@@ -731,16 +730,12 @@ int theron_v1_startup_media_bind_runtime_palette(
         !evidence.palette.valid) {
         return 0;
     }
-    for (i = 0u; i < 16u; ++i) {
-        world->runtime_media.startup_palette_rgb8[i][0] =
-            evidence.palette.entries[i].red;
-        world->runtime_media.startup_palette_rgb8[i][1] =
-            evidence.palette.entries[i].green;
-        world->runtime_media.startup_palette_rgb8[i][2] =
-            evidence.palette.entries[i].blue;
-    }
-    world->runtime_media.startup_palette_valid = 1;
-    return 1;
+    /* This is a real byte-span candidate, not a captured HuC6260 write.  The
+     * palette consumer, timing and destination are still unbound, so never
+     * promote the candidate into runtime_media where M11 could present an
+     * inferred RGB surface. Keep the source inspection available through
+     * theron_v1_track02_inspect_4bpp_palette_window(). */
+    return 0;
 }
 
 int theron_v1_startup_media_bind_runtime_receipt(

@@ -55,6 +55,9 @@ static void check_real_palette(
     const char *md5,
     const char *label) {
     Theron_V1_World world;
+    Theron_Track02PaletteWindowEvidence evidence;
+    size_t palette_offset = strstr(label, "JP") != NULL ?
+        0x29fd70u : 0x2a06a0u;
     uint8_t *track02;
     size_t track02_bytes = 0u;
 
@@ -64,16 +67,21 @@ static void check_real_palette(
         return;
     }
     memset(&world, 0, sizeof(world));
-    CHECK(theron_v1_startup_media_bind_runtime_palette(
+    memset(&evidence, 0, sizeof(evidence));
+    CHECK(theron_v1_track02_inspect_4bpp_palette_window(
+        track02, track02_bytes, md5, palette_offset, &evidence) ==
+        THERON_TRACK02_SIGNAL_OK);
+    CHECK(evidence.format_valid && evidence.palette.valid);
+    CHECK(evidence.palette.entries[0].red == 0);
+    CHECK(evidence.palette.entries[0].green == 0);
+    CHECK(evidence.palette.entries[0].blue == 0);
+    CHECK(evidence.palette.entries[15].red == 255);
+    CHECK(evidence.palette.entries[15].green == 255);
+    CHECK(evidence.palette.entries[15].blue == 255);
+    CHECK(!theron_v1_startup_media_bind_runtime_palette(
         &world, track02, track02_bytes, md5));
-    CHECK(world.runtime_media.startup_palette_valid);
-    CHECK(world.runtime_media.startup_palette_rgb8[0][0] == 0);
-    CHECK(world.runtime_media.startup_palette_rgb8[0][1] == 0);
-    CHECK(world.runtime_media.startup_palette_rgb8[0][2] == 0);
-    CHECK(world.runtime_media.startup_palette_rgb8[15][0] == 255);
-    CHECK(world.runtime_media.startup_palette_rgb8[15][1] == 255);
-    CHECK(world.runtime_media.startup_palette_rgb8[15][2] == 255);
-    fprintf(stderr, "%s palette bind from real Track 02 OK\n", label);
+    CHECK(!world.runtime_media.startup_palette_valid);
+    fprintf(stderr, "%s palette candidate retained; runtime bind stays gated\n", label);
     free(track02);
 }
 

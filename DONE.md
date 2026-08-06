@@ -24,6 +24,13 @@
 - ✅ M11 and boot-contract regressions verify that missing original startup
   graphics stay capture-gated instead of becoming synthetic UI pixels.
 
+# Theron startup palette promotion gate (2026-08-06)
+
+- ✅ Authenticated raw palette windows remain inspectable as source candidates,
+  but no longer become a runtime palette without HuC6260 consumer evidence.
+- ✅ Real US/JP palette-window regressions verify the candidate bytes while
+  confirming that runtime presentation remains gated.
+
 # Theron JP startup roster real-data regression (2026-08-06)
 
 - ✅ The startup-media regression now reads the authenticated local
