@@ -761,10 +761,15 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
                 nexus_mechanics_clear_spell(st);
             }
         } else if (cmd == NEXUS_CMD_REST) {
-            if (nexus_v1_rest_is_resting(&engine->rest))
-                nexus_v1_rest_stop(&engine->rest);
-            else
-                nexus_v1_rest_start(&engine->rest);
+            /* Rest input and its regeneration are still DM1-shaped.  A
+             * retail Saturn source may not mutate champion state until the
+             * original action dispatcher/consumer is captured. */
+            if (nexus_v1_action_semantics_proven()) {
+                if (nexus_v1_rest_is_resting(&engine->rest))
+                    nexus_v1_rest_stop(&engine->rest);
+                else
+                    nexus_v1_rest_start(&engine->rest);
+            }
         } else if (cmd == NEXUS_CMD_SET_LEADER) {
             int slot = st->set_leader_slot;
             if (slot >= 0 && slot < engine->champions.party_count) {
@@ -1184,28 +1189,31 @@ int nexus_mechanics_tick(Nexus_MechanicsState *st, Nexus_V1_Engine *engine) {
         }
     }
 
-    /* Light tick — decay ambient light, burn torches/FUL spells */
-    nexus_v1_light_tick(&engine->light);
+    if (engine->source == NEXUS_SRC_NONE ||
+        nexus_v1_action_semantics_proven()) {
+        /* Light tick — decay ambient light, burn torches/FUL spells */
+        nexus_v1_light_tick(&engine->light);
 
-    /* Status effect tick — poison damage, buff expiry */
-    for (i = 0; i < engine->champions.party_count && i < 4; i++) {
-        int ci = engine->champions.party[i];
-        if (ci < 0 || ci >= engine->champions.champion_count) continue;
-        if (!engine->champions.champions[ci].alive) continue;
-        nexus_v1_status_tick(&engine->champion_status[i]);
-        {
-            int pdmg = nexus_v1_status_poison_damage(&engine->champion_status[i]);
-            if (pdmg > 0) {
-                int was_alive = engine->champions.champions[ci].alive;
-                int died = nexus_v1_take_damage(&engine->champions.champions[ci], pdmg);
-                if (died && was_alive)
-                    nexus_v1_champion_on_death_update_leader(&engine->champions, ci);
+        /* Status effect tick — poison damage, buff expiry */
+        for (i = 0; i < engine->champions.party_count && i < 4; i++) {
+            int ci = engine->champions.party[i];
+            if (ci < 0 || ci >= engine->champions.champion_count) continue;
+            if (!engine->champions.champions[ci].alive) continue;
+            nexus_v1_status_tick(&engine->champion_status[i]);
+            {
+                int pdmg = nexus_v1_status_poison_damage(&engine->champion_status[i]);
+                if (pdmg > 0) {
+                    int was_alive = engine->champions.champions[ci].alive;
+                    int died = nexus_v1_take_damage(&engine->champions.champions[ci], pdmg);
+                    if (died && was_alive)
+                        nexus_v1_champion_on_death_update_leader(&engine->champions, ci);
+                }
             }
         }
-    }
 
-    /* Rest tick — regenerate stamina/mana/health while resting */
-    nexus_v1_rest_tick(&engine->rest, &engine->champions);
+        /* Rest tick — regenerate stamina/mana/health while resting */
+        nexus_v1_rest_tick(&engine->rest, &engine->champions);
+    }
 
     /* Resource drain is a DM1-derived compatibility path, not a Nexus data
      * fact. PLRD has no provision fields, and the Saturn start/save and

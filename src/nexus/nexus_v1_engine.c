@@ -10417,7 +10417,12 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
 
     if (engine->game.game_started) {
         int ci;
-        nexus_v1_rest_tick(&engine->rest, &engine->champions);
+        /* DM1-derived rest regeneration has no authenticated Saturn
+         * dispatcher or HUD/VDP consumer yet; keep retail state immutable. */
+        if (engine->source == NEXUS_SRC_NONE ||
+            nexus_v1_action_semantics_proven()) {
+            nexus_v1_rest_tick(&engine->rest, &engine->champions);
+        }
         nexus_v1_hunger_tick(&engine->hunger, &engine->champions);
         if (nexus_v1_action_semantics_proven()) {
             Nexus_SpawnEvent spawn_events[8];
@@ -10573,7 +10578,12 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                 }
             }
         }
-        nexus_v1_light_tick(&engine->light);
+        /* Torch/FUL expiry and ambient decay are likewise not promoted from
+         * the DM1 compatibility layer without a Saturn action/render trace. */
+        if (engine->source == NEXUS_SRC_NONE ||
+            nexus_v1_action_semantics_proven()) {
+            nexus_v1_light_tick(&engine->light);
+        }
         nexus_v1_damage_display_tick(&engine->damage_display);
         nexus_v1_messages_tick(&engine->messages);
         for (ci = 0; ci < engine->champions.party_count; ++ci) {
@@ -10581,18 +10591,21 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
             if (idx >= 0 && idx < 4) {
                 Nexus_V1_Champion *ch = &engine->champions.champions[idx];
                 if (ch->alive) {
-                    int poison_dmg = nexus_v1_status_poison_damage(
-                        &engine->champion_status[idx]);
-                    if (poison_dmg > 0) {
-                        ch->health -= poison_dmg;
-                        if (ch->health <= 0) {
-                            ch->health = 0;
-                            ch->alive = 0;
-                            nexus_v1_champion_on_death_update_leader(
-                                &engine->champions, ci);
+                    if (engine->source == NEXUS_SRC_NONE ||
+                        nexus_v1_action_semantics_proven()) {
+                        int poison_dmg = nexus_v1_status_poison_damage(
+                            &engine->champion_status[idx]);
+                        if (poison_dmg > 0) {
+                            ch->health -= poison_dmg;
+                            if (ch->health <= 0) {
+                                ch->health = 0;
+                                ch->alive = 0;
+                                nexus_v1_champion_on_death_update_leader(
+                                    &engine->champions, ci);
+                            }
                         }
+                        nexus_v1_status_tick(&engine->champion_status[idx]);
                     }
-                    nexus_v1_status_tick(&engine->champion_status[idx]);
                 }
             }
         }

@@ -277,11 +277,40 @@ int main(void) {
         destroy_engine(e);
     }
 
+    /* Test 15: real retail engines do not apply unbound DM1 rest/status/light
+     * consumers.  The fixture source remains eligible for unit behavior. */
+    {
+        Nexus_V1_Engine *e = create_minimal_engine();
+        int old_hp = e->champions.champions[0].health;
+        int old_rest_ticks;
+        int old_light_ticks;
+        e->source = NEXUS_SRC_EXTRACTED;
+        nexus_v1_rest_start(&e->rest);
+        e->rest.regen_timer = 1;
+        old_rest_ticks = e->rest.rest_ticks;
+        nexus_v1_status_apply(&e->champion_status[0],
+                              NEXUS_STATUS_POISON, 5, 8);
+        old_light_ticks = e->light.decay_timer;
+        e->light.torch_active = 1;
+        e->light.torch_ticks = 5;
+        nexus_v1_tick(e);
+        expect(e->champions.champions[0].health == old_hp,
+               "uncaptured retail status does not mutate health");
+        expect(e->rest.rest_ticks == old_rest_ticks,
+               "uncaptured retail rest does not mutate timer");
+        expect(e->light.torch_ticks == 5 &&
+               e->light.decay_timer == old_light_ticks,
+               "uncaptured retail light does not mutate timer");
+        expect(e->champion_status[0].ticks[NEXUS_STATUS_POISON] == 5,
+               "uncaptured retail status does not expire");
+        destroy_engine(e);
+    }
+
     if (g_fail) {
         fprintf(stderr, "%d failures\n", g_fail);
         return 1;
     }
 
-    printf("ok: Nexus tick integration verified (14 tests)\n");
+    printf("ok: Nexus tick integration verified (15 tests)\n");
     return 0;
 }

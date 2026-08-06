@@ -53618,3 +53618,11 @@ alcove runtime and archive-media tests passed (4/4).
   GAME_LOAD/SKSAVE/ENVIRONMENT route may establish that state; the focused
   weather regression verifies that an outdoor flag plus a host seed retains
   neither a seed nor a weather chain.
+
+- ✅ 2026-08-06 Nexus unbound rest/status/light quarantine: retail ISO and
+  extracted engines no longer advance the DM1-shaped rest regeneration,
+  poison/status expiry or torch/FUL/ambient-light timers while the Saturn
+  action dispatcher and HUD/VDP consumers remain uncaptured. The explicit
+  fixture source keeps isolated module tests usable, and the Nexus tick
+  integration regression now covers the retail no-mutation boundary (15
+  tests). No game data or BIOS was copied into the repository.

@@ -180,6 +180,14 @@
   isolated tests; capture the Saturn hunger/start/save consumer before
   enabling production resource mutation.
 
+- **NEXUS-REST-STATUS-LIGHT-CAPTURE:** The DM1-shaped rest regeneration,
+  poison/status expiry and torch/FUL/ambient-light tick paths remain diagnostic
+  until Saturn action dispatch and the corresponding HUD/VDP consumer are
+  captured. Retail ISO/extracted engines must not mutate champion health,
+  rest timers, status timers or light timers through these compatibility
+  helpers. Keep fixture-only behavior for isolated unit tests and recover the
+  original state-write/timing trace before reopening the runtime route.
+
 - **NEXUS-CONTAINER-LOOT-CAPTURE:** The old DM1-shaped Nexus container helper
   accepted caller-supplied chest/crate contents despite the retail DGN corpus
   exposing no authenticated container owner, content chain, key dispatch or
