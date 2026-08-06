@@ -521,6 +521,13 @@
 - ✅ Manifest format parsing remains diagnostic-only. M11 still requires an
   original-data receipt before admitting any V2.2 material.
 
+# DM2 V2 procedural HUD removal (2026-08-06)
+
+- ✅ Removed the disabled generated-pixel HUD renderer, including its compass,
+  host font, action labels and champion bars.
+- ✅ The no-draw direct API and GDAT-backed HUD runtime boundary remain; no
+  synthetic V2 HUD pixels can be restored without a source-material owner.
+
 # DM1 D2C F0111 door synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the contract-only/no-game-data D2C F0111 trace from M10. It has

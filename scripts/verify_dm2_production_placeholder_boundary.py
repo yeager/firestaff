@@ -280,6 +280,19 @@ def verify(repo: Path) -> list[str]:
     if "found_critical[0] && found_critical[1] && found_critical[2]" in modern_assets:
         errors.append("modern-assets availability retains the local-manifest admission study")
 
+    v2_hud_path = repo / "src/dm2/dm2_v2_hud_overlay.c"
+    if not v2_hud_path.exists():
+        errors.append(f"missing {v2_hud_path}")
+        return errors
+    v2_hud = v2_hud_path.read_text(encoding="utf-8")
+    for forbidden in (
+            "static void hud_plot(",
+            "static const uint8_t g_digit_bits",
+            "static const char *g_action_icon_labels",
+    ):
+        if forbidden in v2_hud:
+            errors.append(f"V2 HUD retains generated-pixel fallback: {forbidden}")
+
     viewport_path = repo / "src/dm2/dm2_v1_viewport_renderer.c"
     if not viewport_path.exists():
         errors.append(f"missing {viewport_path}")

@@ -894,6 +894,9 @@
   path. Manifest parsing remains diagnostic-only; neither a local pack nor
   its category names can make DM2 material playable without an original-data
   receipt.
+  **2026-08-06 V2 HUD update:** removed the disabled procedural pixel renderer
+  rather than retaining generated compass, label, bar and action-strip code.
+  The source-backed GDAT HUD runtime remains the only admissible draw owner.
 
 - **DM2-SOUND-TEXT-CONSUMER:** `c_sound.cpp` binds class triples to GDAT sound
   payloads but does not supply a sound-name text producer. The production
