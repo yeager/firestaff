@@ -16,6 +16,14 @@
 
 # Nexus boot-profile capability audit (2026-08-06)
 
+# Nexus ITEM.IBS retail identity gate (2026-08-06)
+
+- ✅ Hardened `test_nexus_v1_item_ibs` with the authenticated European retail
+  MD5 before accepting the decoder census. Same-sized synthetic or renamed
+  ITEM.IBS data can no longer count as the 243-item/223-image source corpus.
+  No runtime item-use or loot mutation was enabled; Saturn action/VDP1
+  provenance remains capture-gated.
+
 # Nexus MNS retail corpus identity gate (2026-08-06)
 
 - ✅ Hardened `test_nexus_v1_mns` so all 30 expected retail `.MNS` files must

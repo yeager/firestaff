@@ -634,6 +634,8 @@
 - **NEXUS-GOLD-DROP-CAPTURE:** Creature gold/drop producer and pickup event
   remain unbound. The public gold-pile add path is now fail-closed as well;
   no host amount may become a floor object without a Saturn capture.
+  The real ITEM.IBS corpus regression now also requires the authenticated
+  retail hash before its 243-item/223-image census is accepted.
   The exported item-use helpers now also remain no-op/fail-closed; the old
   DM1-derived food/potion magnitudes and status durations are not inferred from
   the unproven `ITEM.IBS` Word36 field.

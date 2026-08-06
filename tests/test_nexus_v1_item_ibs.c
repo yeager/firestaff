@@ -1,4 +1,5 @@
 #include "nexus_v1_item_ibs.h"
+#include "asset_find_by_hash.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -66,6 +67,15 @@ static int test_real_decode(void) {
     }
     data = load_file(path, &size);
     if (!data) { printf("  SKIP real_decode (no ITEM.IBS)\n"); return 0; }
+
+    /* The format/size census is not enough to establish retail provenance:
+     * a same-sized synthetic IBS could otherwise pass every decoder check. */
+    if (!asset_file_matches_md5(path,
+                                "be3ea97919c7e802e5b151aad20fd6ec")) {
+        printf("  FAIL ITEM.IBS is not the authenticated retail source\n");
+        free(data);
+        return 1;
+    }
 
     if (size != 100352) {
         printf("  FAIL unexpected file size %d (expected 100352)\n", size);
