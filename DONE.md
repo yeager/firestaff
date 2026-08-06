@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus FACE startup-count placeholder removal: production
+  startup loading no longer uses the inherited 24-portrait bound. It now
+  checks the authenticated 20-record FACE.BIN layout from the real European
+  corpus, so the loaded startup set is exactly the source-owned 20×56×56
+  portraits. Verification: real startup media gate and startup-menu runtime
+  test pass; no game data was tracked. Saturn VDP1 placement remains gated.
+
 - ✅ 2026-08-06 Nexus MENU.BPK receipt aligned with the real European retail
   corpus: the structural probe now recognizes the verified canonical,
   English and French archive identities, checks the observed 536-byte

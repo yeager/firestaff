@@ -3,6 +3,7 @@
 #include "nexus_v1_rasterizer.h"
 #include "nexus_v1_title.h"
 #include "nexus_v1_ui_surfaces.h"
+#include "nexus_v1_face_bin.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -323,12 +324,12 @@ int main(void)
         free(local_title);
     }
 
-    engine.ui_faces_expected = 24;
+    engine.ui_faces_expected = NEXUS_FACE_BIN_PORTRAIT_COUNT;
     engine.ui_faces_loaded = 0;
-    engine.ui_faces_fallback = 24;
+    engine.ui_faces_fallback = NEXUS_FACE_BIN_PORTRAIT_COUNT;
     expect_true(!nexus_v1_startup_faces_ready(&engine),
                 "startup face placeholders cannot satisfy the route");
-    engine.ui_faces_loaded = 24;
+    engine.ui_faces_loaded = NEXUS_FACE_BIN_PORTRAIT_COUNT;
     engine.ui_faces_fallback = 0;
     expect_true(nexus_v1_startup_faces_ready(&engine),
                 "only complete decoded face records satisfy the route");

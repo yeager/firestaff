@@ -45,8 +45,10 @@
   the real PRS3 streams as 20 indexed 56×56 surfaces with their 64-entry
   BGR555 palettes retained. The startup planner no longer emits its former
   synthetic 10×10 host rectangles or borders; it retains only the PLRD
-  portrait ordinal. Bind the real Saturn VDP1 destination, scale, flip and
-  command order before restoring portrait draw commands.
+  portrait ordinal. The production loader's old 24-entry bound has also been
+  removed; it now admits only the authenticated 20-record FACE.BIN layout.
+  Bind the real Saturn VDP1 destination, scale, flip and command order before
+  restoring portrait draw commands.
 
 - **NEXUS-STARTUP-V2-LABEL:** The launcher no longer advertises a Nexus V2
   presentation fallback. Keep the game card capture-gated until the real
