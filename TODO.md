@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-CHEST-PICKUP-PENDING-RESURRECT-SYNTHETIC-AUDIT:** This asset-free
+  chest/pending-resurrect fixture fabricates chest, candidate and queue
+  state. It loads no original DM1 data and has no M11/runtime caller; retain
+  it only as explicit ReDMCSB coverage until a source-bound chest owner is
+  recovered.
+
 - **DM1-INVENTORY-HAND-BELT-QUIVER-SWAP-SYNTHETIC-AUDIT:** This slot-mask
   probe fabricates item types, weights and inventory state. It loads no
   original DM1 data and has no M11/runtime caller; retain it only as explicit
