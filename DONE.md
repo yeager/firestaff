@@ -1,3 +1,16 @@
+# Nexus startup animation capture gate (2026-08-06)
+
+- ✅ Startup animation readiness now has a separate
+  `saturn_presentation_capture_bound` requirement. Correct timing, real
+  package assets and capture frame numbers are insufficient without an
+  original Saturn VDP1/VDP2 presentation frame bound to the route.
+- ✅ Added and registered
+  `test_nexus_v1_startup_presentation_animation_receipt`; it verifies that
+  source assets plus timing remain no-draw until that binding exists.
+- ✅ `firestaff`, the startup-menu regressions, the M11 startup gate and the
+  production source-boundary verifier pass. This does not claim the animation
+  capture itself is complete.
+
 # Nexus English/French ISO provenance profiles (2026-08-06)
 
 - ✅ Added exact container-hash profiles for the English fan-translation v2

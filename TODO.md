@@ -109,6 +109,15 @@
   tile-map/CLUT/timing capture; decoded retail MAPD/TIBG bytes are not yet a
   presentation proof.
 
+- **NEXUS-STARTUP-ANIMATION-CAPTURE:** Startup timing and real
+  `WARNING.BIN`/`TITLE.CG`/`TITLE.BIN` source receipts remain available for
+  diagnostics, but they are not a Saturn presentation capture. The animation
+  package gate now requires an explicit original VDP1/VDP2 frame binding before
+  it can ever report draw permission. Recover the title/roster animation
+  command order, palette/tile ownership and frame capture before setting that
+  binding; no host timing plan or source asset alone may unlock animation
+  pixels.
+
 - **NEXUS-EVENT-DISPATCH-CAPTURE:** The 61 `DM.BIN` event names remain a
   byte-exact source receipt at `0x36D04..0x3702F`, but the former host
   event→command map and accepting

@@ -3500,6 +3500,8 @@ int nexus_v1_startup_presentation_animation_package_gate(
     out_receipt->saturn_timing_exact = input->saturn_timing_exact ? 1 : 0;
     out_receipt->saturn_capture_frames_exact =
         input->saturn_capture_frames_exact ? 1 : 0;
+    out_receipt->saturn_presentation_capture_bound =
+        input->saturn_presentation_capture_bound ? 1 : 0;
     out_receipt->fallback_visuals_permitted =
         input->fallback_visuals_permitted ? 1 : 0;
     out_receipt->menu_bpk_prs3_blocked =
@@ -3511,6 +3513,7 @@ int nexus_v1_startup_presentation_animation_package_gate(
         input->real_package_assets_bound &&
         input->saturn_timing_exact &&
         input->saturn_capture_frames_exact &&
+        input->saturn_presentation_capture_bound &&
         !input->fallback_visuals_permitted &&
         !input->menu_bpk_prs3_blocked;
 

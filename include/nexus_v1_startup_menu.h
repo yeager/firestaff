@@ -863,6 +863,9 @@ typedef struct {
     int real_package_assets_bound;
     int saturn_timing_exact;
     int saturn_capture_frames_exact;
+    /* Source assets and timing are not a presentation capture. This is set
+     * only after an original Saturn VDP1/VDP2 frame is bound to the route. */
+    int saturn_presentation_capture_bound;
     int fallback_visuals_permitted;
     int menu_bpk_prs3_blocked;
 } Nexus_V1_StartupPresentationAnimationPackageGateInput;
@@ -878,6 +881,7 @@ typedef struct {
     int real_package_assets_bound;
     int saturn_timing_exact;
     int saturn_capture_frames_exact;
+    int saturn_presentation_capture_bound;
     int fallback_visuals_permitted;
     int menu_bpk_prs3_blocked;
     int package_animation_bound;

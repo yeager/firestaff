@@ -187,6 +187,7 @@ static Nexus_V1_StartupPresentationAnimationPackageGateInput package_gate_input(
     input.real_package_assets_bound = 1;
     input.saturn_timing_exact = 1;
     input.saturn_capture_frames_exact = 1;
+    input.saturn_presentation_capture_bound = 1;
     return input;
 }
 
@@ -354,6 +355,18 @@ int main(void)
                            1,
                            0,
                            "inexact Saturn timing keeps animation no-draw");
+    }
+    {
+        Nexus_V1_StartupPresentationAnimationPackageGateInput blocked =
+            package_gate_input("nexus-title", 1, 1, 0, 0);
+        blocked.saturn_presentation_capture_bound = 0;
+        check_package_gate(blocked,
+                           0,
+                           0,
+                           1,
+                           0,
+                           0,
+                           "source assets and timing without Saturn presentation capture remain no-draw");
     }
     check_package_gate(package_gate_input("nexus-runtime", 0, 0, 1, 0),
                        1,
