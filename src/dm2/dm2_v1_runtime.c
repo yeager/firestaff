@@ -4543,48 +4543,6 @@ static int dm2_runtime_spell_timer_delegate(void *user,
  * dm2_runtime_spell_timer_delegate. */
 
 /*
- * Source: skproject/SKULLWIN/c_tim_proc.cpp:4214 (class-0 dispatch)
- *         skproject/SKULLWIN/c_tim_proc.cpp:1923 (DM2_ACTUATE_WALL_MECHA)
- */
-static int dm2_runtime_actuate_wall_mecha(void *user,
-                                          const DM2_V1_SourceTimer *timer,
-                                          uint16_t source_index,
-                                          DM2_V1_ProceedTimersReceipt *receipt)
-{
-    DM2_V1_RuntimeState *rt = (DM2_V1_RuntimeState *)user;
-    DM2_V1_DungeonData *dungeon;
-    DM2_V1_ActuatorEventReceipt actu_receipt;
-    int x, y, action_type, direction;
-
-    (void)source_index;
-    (void)receipt;
-
-    rt->actuator_tile_timers++;
-    rt->actuator_tile_wall_mecha++;
-
-    if (!rt->record_pools_valid || !rt->boot || !rt->boot->dungeon_data) {
-        return 1;
-    }
-    dungeon = (DM2_V1_DungeonData *)rt->boot->dungeon_data;
-
-    x = (int)(int8_t)(timer->value_a & 0xFF);
-    y = (int)(int8_t)((timer->value_a >> 8) & 0xFF);
-    direction   = (int)(timer->value_b & 0xFF);
-    action_type = (int)((timer->value_b >> 8) & 0xFF);
-
-    memset(&actu_receipt, 0, sizeof(actu_receipt));
-    dm2_v1_actuate_wall_mecha(&rt->record_pools, dungeon,
-                              &rt->caii, &rt->timer_queue,
-                              rt->dungeon_level, x, y,
-                              action_type, direction,
-                              (uint32_t)rt->tick_count,
-                              NULL, 0,
-                              NULL, NULL,
-                              &actu_receipt);
-    return 1;
-}
-
-/*
  * dm2_runtime_actuate_teleporter — DM2-owned class-5 handler for the 0x04
  * actuator tile subdispatch (Lane B, cycle 8).
  *
@@ -4854,7 +4812,6 @@ void dm2_v1_runtime_tick(void) {
          * above exists. */
         /* Keep only the remaining bounded source studies explicit. These
          * expressions take no action and do not install a callback. */
-        (void)dm2_runtime_actuate_wall_mecha;
         (void)dm2_runtime_actuate_teleporter;
         (void)dm2_runtime_actuate_trickwall;
         dispatcher.handlers[DM2_V1_TIMER_UPDATE_WEATHER] =
