@@ -16,6 +16,11 @@
   capture is still required before menu, HUD, and viewport composition can be
   enabled.
 
+- **DM1-F0296-INVENTORY-VIEWPORT-WALK-SYNTHETIC-AUDIT:** This F0296
+  inventory/chest sub-walk fixture fabricates party, slot and icon state. It
+  has no original DM1 data input or M11/runtime caller; retain it only as
+  explicit ReDMCSB coverage until a source-bound panel owner is recovered.
+
 - **DM1-MIRROR-C160-ROTATION-SYNTHETIC-AUDIT:** This C040/C160 rotation-close
   fixture fabricates party, chest and panel state. It has no original DM1 data
   input or M11/runtime caller; retain it only as explicit ReDMCSB coverage

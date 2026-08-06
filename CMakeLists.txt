@@ -4316,6 +4316,12 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
 # regression compiles the fixture explicitly rather than exposing it via M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_chest_open_while_another_open_pc34_compat.c")
+# `dm1_v1_champion_panel_hand_slot_inventory_viewport_walk_pc34_compat.c`
+# is an asset-free F0296 walk fixture with fabricated party, slot and icon
+# state. It has no M11/runtime caller; its dedicated regression compiles it
+# explicitly, so do not expose this synthetic panel model through M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_hand_slot_inventory_viewport_walk_pc34_compat.c")
 # `dm1_v1_wound_probability_index_to_mask_pc34_compat.c` is a source-locked
 # ReDMCSB table/branch audit, not the runtime projectile owner. Its dedicated
 # regression compiles it explicitly; keep this diagnostic result surface out

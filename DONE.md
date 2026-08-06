@@ -1,3 +1,9 @@
+# DM1 F0296 inventory-viewport walk synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free F0296 inventory/chest sub-walk fixture from M10.
+  It fabricates party, slot and icon state, has no original DM1 data input or
+  M11/runtime caller, and its dedicated regression compiles it directly.
+
 # DM1 wound-probability placeholder audit (2026-08-06)
 
 - ✅ Confirmed the FMTowns `DYNA_BUTTONS` `N`/`X` values are original media
