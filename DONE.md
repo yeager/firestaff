@@ -51598,3 +51598,10 @@ and `firestaff` build pass.
   object-name, alcove placement, HoC orientation/mirror, inscription
   invalidation, wall-material and viewport-wall capture tests pass after the
   change.
+
+- ✅ 2026-08-06 DM2 PC-DOS SKSave corpus spelling: the source-backed corpus
+  and startup menu now recognize the supplied lower-case, single-digit
+  `sksave0.dat`…`sksave3.dat` files and their four `.bak` counterparts.
+  All eight files pass the authenticated 42-byte header and raw-dungeon
+  boundary checks; the menu exposes only the real four slots and does not
+  fabricate a resumable session from the still-partial raw save decoder.

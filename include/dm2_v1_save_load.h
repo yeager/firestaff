@@ -122,7 +122,9 @@ int dm2_v1_save_suppress_symbol_receipt(
     DM2_V1_SaveSuppressSymbolReceipt *out_receipt);
 
 /* ════════════════════════════════════════════════════════════════
- * Slot manager — 10-slot system matching SKSave%02u.dat layout
+ * Slot manager — 10-slot system.  Firestaff writes SKSave%02u.dat, while
+ * the supplied original PC-DOS corpus is also accepted as lower-case,
+ * single-digit sksave0.dat … sksave9.dat input.
  * A slot is a source-shaped c_hex2a header (version 1, printable name);
  * c_hex2a::l_26 == 0xDEADBEEF means an empty in-memory dialog entry.
  * Source: docs/dm2_save_slots.md
@@ -165,6 +167,7 @@ typedef enum {
 
 typedef struct {
     uint8_t  valid_slot_count;
+    uint8_t  valid_slot_backup_count;
     uint16_t valid_slot_mask;
     bool     has_last_session;
     bool     has_last_session_backup;

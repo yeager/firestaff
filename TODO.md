@@ -4553,7 +4553,12 @@ that its exact runtime path is not already source-locked and tested.
     a runtime source route.
 39. **DM2-SKSAVE-ORIGINAL-INTEROP:** Complete original SKSAVE corpus loading,
     validation, save/export, resume, party, map, timers, objects, weather,
-    and backup behavior without Firestaff-only approximations.
+    and backup behavior without Firestaff-only approximations. **2026-08-06
+    corpus spelling correction:** root-level scanning now authenticates the
+    supplied PC-DOS `sksave0.dat`…`sksave3.dat` and matching `.bak` files as
+    real, unpadded case variants. It inventories their actual slots and
+    backups without promoting the incomplete raw payload into a playable
+    resume session.
 40. **DM2-MENU-STARTUP-COMPLETE:** Complete skproject title/menu state machine,
     clickable buttons, palette, animation, audio, save selection, new game,
     options, error states, and first HUD handoff.

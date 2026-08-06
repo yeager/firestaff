@@ -231,24 +231,22 @@ int dm2_v1_startup_menu_count_rows(int resume_available,
 
 int dm2_v1_startup_menu_scan_saves(DM2_V1_StartupMenu *menu)
 {
-    unsigned int slot_mask = 0u;
-    int resume_available;
-    int slot;
+    DM2_SKSaveCorpusReceipt corpus;
 
     if (!menu) {
         return 0;
     }
-    resume_available =
-        dm2_v1_save_has_valid_last_session(menu->save_root) ? 1 : 0;
-    for (slot = 0; slot < 10; ++slot) {
-        if (dm2_v1_save_has_valid_slot(menu->save_root, (uint8_t)slot)) {
-            slot_mask |= (1u << slot);
-        }
+    /* The menu must reflect the original corpus spelling actually supplied
+     * by the user (including PC-DOS's lower-case, unpadded SKSave slots),
+     * rather than manufacture an empty-looking save list from only the
+     * title-cased output names Firestaff itself would write. */
+    if (!dm2_v1_sksave_corpus_scan(menu->save_root, &corpus)) {
+        return 0;
     }
     return dm2_v1_startup_menu_refresh(
         menu,
-        resume_available,
-        slot_mask);
+        corpus.has_last_session ? 1 : 0,
+        corpus.valid_slot_mask);
 }
 
 int dm2_v1_startup_menu_refresh(DM2_V1_StartupMenu *menu,

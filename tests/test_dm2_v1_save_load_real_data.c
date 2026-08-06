@@ -9,6 +9,7 @@
 
 #include "dm2_v1_new_game.h"
 #include "dm2_v1_save_load.h"
+#include "dm2_v1_startup_menu.h"
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -147,6 +148,7 @@ int main(void)
     char root[512];
     unsigned int found = 0u;
     DM2_SKSaveCorpusReceipt corpus;
+    DM2_V1_StartupMenu menu;
 
     printf("DM2 real PC-DOS SKSave corpus tests:\n\n");
     if (!resolve_corpus_root(root, sizeof(root))) {
@@ -178,8 +180,17 @@ int main(void)
     }
     CHECK(found == 8u,
           "the supplied PC-DOS corpus retains all four primary/backup saves");
-    CHECK(corpus.recursive_candidate_count >= found,
-          "scanner records the lower-case original corpus as recursive candidates");
+    CHECK(corpus.valid_slot_count == 4u && corpus.valid_slot_mask == 0x000fu,
+          "scanner preserves lower-case, single-digit original slots in the data root");
+    CHECK(corpus.valid_slot_backup_count == 4u,
+          "scanner authenticates and inventories all four supplied slot backups");
+    CHECK(dm2_v1_save_has_valid_slot(root, 0u) &&
+              dm2_v1_save_has_valid_slot(root, 3u),
+          "slot selection resolves the real PC-DOS filenames before decoding");
+    dm2_v1_startup_menu_init(&menu, root);
+    CHECK(dm2_v1_startup_menu_scan_saves(&menu) &&
+              menu.resume_available == 0 && menu.slot_mask == 0x000fu,
+          "startup menu exposes the real slots without inventing a resume session");
     printf("\nPASSED: %d\nFAILED: %d\n", passed, failed);
     return failed == 0 ? 0 : 1;
 }

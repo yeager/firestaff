@@ -546,22 +546,105 @@ static int dm2_sksave_basename_is_canonical_direct(const char *name)
     return 0;
 }
 
-static int __attribute__((unused)) dm2_sksave_basename_is_candidate_ci(const char *name)
+/* Original PC-DOS media commonly spells the four supplied slot saves as
+ * lower-case, unpadded `sksave0.dat` … `sksave3.dat`.  SKProject's source
+ * constructs the title-cased, two-digit path for its own output, but its
+ * file-format gate is independent of that spelling.  Accept only the same
+ * SKSave stem, a slot in the source's ten-slot range, and .dat/.bak here;
+ * arbitrary header-shaped files remain recursive corpus candidates only. */
+static int dm2_sksave_basename_matches_variant(const char *name,
+                                               int *out_last_session,
+                                               int *out_slot,
+                                               int *out_backup)
 {
-    char canonical_slot[16];
+    const char *suffix;
+    unsigned int slot = 0u;
+    unsigned int digits = 0u;
 
-    if (!name) return 0;
-    if (dm2_sksave_ascii_equal_ci(name, "SKSave.dat") ||
-        dm2_sksave_ascii_equal_ci(name, "SKSave.bak")) {
+    if (!name || strlen(name) < 7u ||
+        dm2_sksave_ascii_lower((unsigned char)name[0]) != 's' ||
+        dm2_sksave_ascii_lower((unsigned char)name[1]) != 'k' ||
+        dm2_sksave_ascii_lower((unsigned char)name[2]) != 's' ||
+        dm2_sksave_ascii_lower((unsigned char)name[3]) != 'a' ||
+        dm2_sksave_ascii_lower((unsigned char)name[4]) != 'v' ||
+        dm2_sksave_ascii_lower((unsigned char)name[5]) != 'e') {
+        return 0;
+    }
+    if (dm2_sksave_ascii_equal_ci(name, "SKSave.dat")) {
+        if (out_last_session) *out_last_session = 1;
+        if (out_slot) *out_slot = -1;
+        if (out_backup) *out_backup = 0;
         return 1;
     }
-    for (unsigned int slot = 0u; slot < DM2_SLOT_MAX; ++slot) {
-        snprintf(canonical_slot, sizeof(canonical_slot),
-                 "SKSave%02u.dat", slot);
-        if (dm2_sksave_ascii_equal_ci(name, canonical_slot)) {
+    if (dm2_sksave_ascii_equal_ci(name, "SKSave.bak")) {
+        if (out_last_session) *out_last_session = 1;
+        if (out_slot) *out_slot = -1;
+        if (out_backup) *out_backup = 1;
+        return 1;
+    }
+    while (digits < 2u && name[6u + digits] >= '0' &&
+           name[6u + digits] <= '9') {
+        slot = slot * 10u + (unsigned int)(name[6u + digits] - '0');
+        ++digits;
+    }
+    if (digits == 0u || slot >= DM2_SLOT_MAX) return 0;
+    suffix = name + 6u + digits;
+    if (!dm2_sksave_ascii_equal_ci(suffix, ".dat") &&
+        !dm2_sksave_ascii_equal_ci(suffix, ".bak")) {
+        return 0;
+    }
+    if (out_last_session) *out_last_session = 0;
+    if (out_slot) *out_slot = (int)slot;
+    if (out_backup) *out_backup = dm2_sksave_ascii_equal_ci(suffix, ".bak");
+    return 1;
+}
+
+static int dm2_sksave_basename_is_candidate_ci(const char *name)
+{
+    return dm2_sksave_basename_matches_variant(name, NULL, NULL, NULL);
+}
+
+static int dm2_sksave_root_variant_path(const char *save_base,
+                                        int last_session,
+                                        unsigned int slot,
+                                        int backup,
+                                        char *out_path,
+                                        size_t out_path_size)
+{
+    const char *formats[4];
+    unsigned int format_count;
+
+    if (!save_base || !out_path || out_path_size == 0u ||
+        (!last_session && slot >= DM2_SLOT_MAX)) {
+        return 0;
+    }
+    if (last_session) {
+        formats[0] = backup ? "SKSave.bak" : "SKSave.dat";
+        formats[1] = backup ? "sksave.bak" : "sksave.dat";
+        format_count = 2u;
+    } else {
+        formats[0] = backup ? "SKSave%02u.bak" : "SKSave%02u.dat";
+        formats[1] = backup ? "SKSave%u.bak" : "SKSave%u.dat";
+        formats[2] = backup ? "sksave%02u.bak" : "sksave%02u.dat";
+        formats[3] = backup ? "sksave%u.bak" : "sksave%u.dat";
+        format_count = 4u;
+    }
+    for (unsigned int i = 0u; i < format_count; ++i) {
+        FILE *file;
+        if (last_session) {
+            snprintf(out_path, out_path_size, "%s/%s", save_base, formats[i]);
+        } else {
+            snprintf(out_path, out_path_size, "%s/", save_base);
+            snprintf(out_path + strlen(out_path),
+                     out_path_size - strlen(out_path), formats[i], slot);
+        }
+        file = fopen(out_path, "rb");
+        if (file) {
+            fclose(file);
             return 1;
         }
     }
+    out_path[0] = '\0';
     return 0;
 }
 
@@ -789,13 +872,13 @@ static void dm2_sksave_corpus_scan_recursive_impl(
         if (!S_ISREG(st.st_mode)) {
             continue;
         }
-        /* Direct canonical names were already scanned in exact SKProject
-         * resume order above. Recursive pass adds nested or case-varied real
-         * corpus files without double-counting those primary candidates. */
+        /* Root-level source spellings were already scanned in the direct
+         * title/load order above. Recursive pass adds nested or renamed real
+         * corpus files without double-counting the supplied DOS corpus. */
         is_root_exact_canonical =
             depth == 0 &&
             strcmp(dir, root) == 0 &&
-            dm2_sksave_basename_is_canonical_direct(ent->d_name);
+            dm2_sksave_basename_is_candidate_ci(ent->d_name);
         if (is_root_exact_canonical) continue;
         named_candidate = dm2_sksave_basename_is_candidate_ci(ent->d_name);
         if (!named_candidate) {
@@ -874,19 +957,6 @@ void dm2_sl_init(DM2_SL_State *state, const char *save_base)
     state->initialized = true;
 }
 
-static void slot_path(const DM2_SL_State *state, uint8_t slot,
-                      char *buf, size_t bufsz, bool backup)
-{
-    const char *base = state->save_base[0] ? state->save_base : ".";
-    if (backup) {
-        snprintf(buf, bufsz, "%s/SKSave.bak", base);
-    } else if (slot < DM2_SLOT_MAX) {
-        snprintf(buf, bufsz, "%s/SKSave%02u.dat", base, (unsigned)slot);
-    } else {
-        snprintf(buf, bufsz, "%s/SKSave.dat", base);
-    }
-}
-
 bool dm2_sl_slot_occupied(const DM2_SL_State *state, uint8_t slot)
 {
     if (!state || slot >= DM2_SLOT_MAX) return false;
@@ -907,15 +977,18 @@ bool dm2_sl_scan_slots(DM2_SL_State *state)
     state->slot_count = 0;
     for (uint8_t i = 0; i < DM2_SLOT_MAX; i++) {
         char path[512];
-        slot_path(state, i, path, sizeof(path), false);
+        const char *base = state->save_base[0] ? state->save_base : ".";
 
-        FILE *f = fopen(path, "rb");
-        if (!f) {
+        if (!dm2_sksave_root_variant_path(base, 0, i, 0, path,
+                                          sizeof(path))) {
             state->slots[i].occupied = false;
             memset(state->slots[i].name, 0, sizeof(state->slots[i].name));
             state->slots[i].timestamp = 0;
             continue;
         }
+
+        FILE *f = fopen(path, "rb");
+        if (!f) continue;
 
         uint8_t hdr[42];
         if (fread(hdr, 42, 1, f) != 1) {
@@ -1008,17 +1081,26 @@ int dm2_sl_load(const char *save_base, uint8_t slot,
     if (slot >= DM2_SLOT_MAX) return -1;
 
     char path[256], bak[256];
-    snprintf(path, sizeof(path), "%s/SKSave%02u.dat", save_base, (unsigned)slot);
-    snprintf(bak,  sizeof(bak),  "%s/SKSave.bak",   save_base);
+    int has_primary = dm2_sksave_root_variant_path(
+        save_base, 0, slot, 0, path, sizeof(path));
 
     int status = 0;
-    FILE *f = dm2_sl_open_valid_payload(path, &status);
+    FILE *f = has_primary ? dm2_sl_open_valid_payload(path, &status) : NULL;
     if (!f) {
-        /* Try backup when the primary slot is missing, truncated, or corrupt.
+        /* Try the observed same-slot backup first when the primary is
+         * missing, truncated, or corrupt, then preserve the legacy generic
+         * SKSave.bak fallback used by the source compatibility path.
          * ReDMCSB LOADSAVE.C F0435 lines 2560-2583 tries the backup save after
          * primary-open failure; Firestaff extends the same safety net to
          * invalid DM2 slot headers so runtime load never accepts stale data. */
-        f = dm2_sl_open_valid_payload(bak, &status);
+        if (dm2_sksave_root_variant_path(save_base, 0, slot, 1, bak,
+                                         sizeof(bak))) {
+            f = dm2_sl_open_valid_payload(bak, &status);
+        }
+        if (!f && dm2_sksave_root_variant_path(save_base, 1, 0u, 1, bak,
+                                               sizeof(bak))) {
+            f = dm2_sl_open_valid_payload(bak, &status);
+        }
         if (!f) return status ? status : -2;
     }
 
@@ -1036,15 +1118,18 @@ int dm2_sl_load_last_session(const char *save_base,
     if (!save_base || !data || !out_size) return -1;
 
     char path[256], bak[256];
-    snprintf(path, sizeof(path), "%s/SKSave.dat", save_base);
-    snprintf(bak,  sizeof(bak),  "%s/SKSave.bak", save_base);
+    int has_primary = dm2_sksave_root_variant_path(
+        save_base, 1, 0u, 0, path, sizeof(path));
 
     int status = 0;
-    FILE *f = dm2_sl_open_valid_payload(path, &status);
+    FILE *f = has_primary ? dm2_sl_open_valid_payload(path, &status) : NULL;
     if (!f) {
         /* SKWin/DM2 resume path: last-session primary first, backup second,
          * then caller may fall back to a fresh dungeon start. */
-        f = dm2_sl_open_valid_payload(bak, &status);
+        if (dm2_sksave_root_variant_path(save_base, 1, 0u, 1, bak,
+                                         sizeof(bak))) {
+            f = dm2_sl_open_valid_payload(bak, &status);
+        }
         if (!f) return status ? status : -2;
     }
 
@@ -1077,7 +1162,10 @@ bool dm2_v1_save_has_valid_slot(const char *save_base, uint8_t slot)
 {
     if (!save_base) return false;
     char path[256];
-    snprintf(path, sizeof(path), "%s/SKSave%02u.dat", save_base, (unsigned)slot);
+    if (!dm2_sksave_root_variant_path(save_base, 0, slot, 0, path,
+                                      sizeof(path))) {
+        return false;
+    }
     FILE *f = fopen(path, "rb");
     if (!f) return false;
     uint8_t hdr[42];
@@ -1092,11 +1180,13 @@ bool dm2_v1_save_has_valid_last_session(const char *save_base)
     FILE *f;
     char path[256];
     if (!save_base) return false;
-    snprintf(path, sizeof(path), "%s/SKSave.dat", save_base);
-    f = dm2_sl_open_valid_payload(path, &status);
+    f = dm2_sksave_root_variant_path(save_base, 1, 0u, 0, path,
+                                     sizeof(path))
+        ? dm2_sl_open_valid_payload(path, &status) : NULL;
     if (!f) {
-        snprintf(path, sizeof(path), "%s/SKSave.bak", save_base);
-        f = dm2_sl_open_valid_payload(path, &status);
+        f = dm2_sksave_root_variant_path(save_base, 1, 0u, 1, path,
+                                         sizeof(path))
+            ? dm2_sl_open_valid_payload(path, &status) : NULL;
     }
     if (!f) {
         return false;
@@ -1122,8 +1212,12 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
      * preference so real corpus scans tell the runtime which file would win.
      * The authenticated 42-byte container header is the same initial gate
      * used by slot loads. */
-    snprintf(path, sizeof(path), "%s/SKSave.dat", save_base);
-    status = dm2_sksave_probe_path(path, &payload_size);
+    if (dm2_sksave_root_variant_path(save_base, 1, 0u, 0, path,
+                                     sizeof(path))) {
+        status = dm2_sksave_probe_path(path, &payload_size);
+    } else {
+        status = DM2_SK_CORPUS_MISSING;
+    }
     if (status == DM2_SK_CORPUS_VALID) {
         out_receipt->has_last_session = true;
         dm2_sksave_corpus_accept(out_receipt, path, payload_size);
@@ -1132,9 +1226,13 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
         out_receipt->invalid_candidate_count++;
     }
 
-    snprintf(path, sizeof(path), "%s/SKSave.bak", save_base);
     payload_size = 0;
-    status = dm2_sksave_probe_path(path, &payload_size);
+    if (dm2_sksave_root_variant_path(save_base, 1, 0u, 1, path,
+                                     sizeof(path))) {
+        status = dm2_sksave_probe_path(path, &payload_size);
+    } else {
+        status = DM2_SK_CORPUS_MISSING;
+    }
     if (status == DM2_SK_CORPUS_VALID) {
         out_receipt->has_last_session_backup = true;
         if (!out_receipt->has_last_session) {
@@ -1152,13 +1250,30 @@ bool dm2_v1_sksave_corpus_scan(const char *save_base,
     }
 
     for (uint8_t slot = 0; slot < DM2_SLOT_MAX; slot++) {
-        snprintf(path, sizeof(path), "%s/SKSave%02u.dat", save_base,
-                 (unsigned)slot);
         payload_size = 0;
-        status = dm2_sksave_probe_path(path, &payload_size);
+        if (dm2_sksave_root_variant_path(save_base, 0, slot, 0, path,
+                                         sizeof(path))) {
+            status = dm2_sksave_probe_path(path, &payload_size);
+        } else {
+            status = DM2_SK_CORPUS_MISSING;
+        }
         if (status == DM2_SK_CORPUS_VALID) {
             out_receipt->valid_slot_count++;
             out_receipt->valid_slot_mask |= (uint16_t)(1u << slot);
+            dm2_sksave_corpus_accept(out_receipt, path, payload_size);
+            dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size);
+        } else if (status == DM2_SK_CORPUS_INVALID) {
+            out_receipt->invalid_candidate_count++;
+        }
+        payload_size = 0;
+        if (dm2_sksave_root_variant_path(save_base, 0, slot, 1, path,
+                                         sizeof(path))) {
+            status = dm2_sksave_probe_path(path, &payload_size);
+        } else {
+            status = DM2_SK_CORPUS_MISSING;
+        }
+        if (status == DM2_SK_CORPUS_VALID) {
+            out_receipt->valid_slot_backup_count++;
             dm2_sksave_corpus_accept(out_receipt, path, payload_size);
             dm2_sksave_corpus_classify_payload(out_receipt, path, payload_size);
         } else if (status == DM2_SK_CORPUS_INVALID) {
