@@ -54486,3 +54486,11 @@ alcove runtime and archive-media tests passed (4/4).
   startup, FM Towns disc, ISO, graphics and CD-audio tests pass on the
   external Ninja build. Pixel/TBIOS decoding and live M11 playback remain
   explicitly open in TODO.
+
+- ✅ 2026-08-06 DM1 FM Towns native title-plan receipt: the authenticated
+  English EDM P3 load image now verifies the original title animation's
+  GRAPHICS.DAT graphic 1 owner, PRESENTS source y=137, MASTER source y=80,
+  destination rectangles, 320x80 zoom region and 18-step 16x4 shrink loop at
+  their real load-image offsets. `test_dm1_v1_fmtowns_startup` passes against
+  the retained original FM Towns cache. This is source-plan evidence only;
+  native M11 pixel/TBIOS playback and TMENU rendering remain open in TODO.

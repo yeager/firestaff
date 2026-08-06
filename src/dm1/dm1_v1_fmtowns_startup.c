@@ -163,6 +163,80 @@ typedef struct {
     uint32_t value;
 } SymbolMatch;
 
+static int bytes_equal_at(const uint8_t *bytes, size_t size, size_t offset,
+                          const uint8_t *expected, size_t expected_size) {
+    return bytes && expected && offset <= size && expected_size <= size - offset &&
+           memcmp(bytes + offset, expected, expected_size) == 0;
+}
+
+static int parse_title_animation_plan(const uint8_t *program, size_t size,
+                                      uint32_t load_offset,
+                                      uint32_t load_size,
+                                      DM1_V1_FmtownsStartupReceipt *out) {
+    static const uint8_t k_get_title_graphic[] = {
+        0x6a, 0x00, 0x6a, 0x00, 0x50, 0x6a, 0x01
+    };
+    static const uint8_t k_presents_source[] = {
+        0x68, 0x40, 0x01, 0x00, 0x00, 0x68, 0x89, 0x00, 0x00, 0x00
+    };
+    static const uint8_t k_master_source[] = {
+        0x6a, 0x50, 0x6a, 0x00
+    };
+    static const uint8_t k_zoom_count[] = {0x66, 0x83, 0xff, 0x12};
+    static const uint8_t k_zoom_width_step[] = {0x66, 0x83, 0xeb, 0x04};
+    static const uint8_t k_zoom_height_step[] = {0x66, 0x83, 0xee, 0x10};
+    static const uint16_t k_swoosh_rect[4] = {0u, 319u, 0u, 56u};
+    static const uint16_t k_presents_rect[4] = {0u, 319u, 90u, 105u};
+    static const uint16_t k_master_rect[4] = {0u, 319u, 118u, 174u};
+    size_t base;
+    size_t i;
+    if (!program || !out || load_offset > size || load_size > size - load_offset ||
+        load_size < 0xc600u) return 0;
+    base = (size_t)load_offset;
+    if (!bytes_equal_at(program, size, base + 0xc3d1u,
+                        k_get_title_graphic, sizeof(k_get_title_graphic)) ||
+        !bytes_equal_at(program, size, base + 0xc3f9u,
+                        k_presents_source, sizeof(k_presents_source)) ||
+        !bytes_equal_at(program, size, base + 0xc440u,
+                        k_master_source, sizeof(k_master_source)) ||
+        !bytes_equal_at(program, size, base + 0xc45fu,
+                        k_zoom_count, sizeof(k_zoom_count)) ||
+        !bytes_equal_at(program, size, base + 0xc522u,
+                        k_zoom_width_step, sizeof(k_zoom_width_step)) ||
+        !bytes_equal_at(program, size, base + 0xc526u,
+                        k_zoom_height_step, sizeof(k_zoom_height_step))) return 0;
+    for (i = 0; i < 4u; ++i) {
+        size_t rect_base = base + 0x28f50u + i * 2u;
+        if (rect_base > size || sizeof(uint16_t) > size - rect_base) return 0;
+        /* The verified FM Towns P3 image is little-endian. */
+        if (read_le16(program + rect_base) != k_master_rect[i]) return 0;
+        out->game_title_master_rect[i] = k_master_rect[i];
+    }
+    for (i = 0; i < 4u; ++i) {
+        size_t swoosh_base = base + 0x28f58u + i * 2u;
+        size_t presents_base = base + 0x28f60u + i * 2u;
+        if (swoosh_base > size || presents_base > size ||
+            sizeof(uint16_t) > size - swoosh_base ||
+            sizeof(uint16_t) > size - presents_base ||
+            read_le16(program + swoosh_base) != k_swoosh_rect[i] ||
+            read_le16(program + presents_base) != k_presents_rect[i]) return 0;
+        out->game_title_swoosh_rect[i] = k_swoosh_rect[i];
+        out->game_title_presents_rect[i] = k_presents_rect[i];
+    }
+    out->game_title_animation_plan_verified = 1;
+    out->game_title_graphic_index = 1u;
+    out->game_title_presents_source_y = 137u;
+    out->game_title_master_source_y = 80u;
+    out->game_title_zoom_source_width = 320u;
+    out->game_title_zoom_source_height = 80u;
+    out->game_title_zoom_start_width = 320u;
+    out->game_title_zoom_start_height = 80u;
+    out->game_title_zoom_width_step = 16u;
+    out->game_title_zoom_height_step = 4u;
+    out->game_title_zoom_step_count = 18u;
+    return 1;
+}
+
 /* Phar Lap's real SYM1 table is a compact sequence of
  * [name-length][name][DWORD value][WORD type] records.  The first PROGRAM
  * record occupies the format's fixed preamble; the regular sequence starts
@@ -323,6 +397,11 @@ int dm1_v1_fmtowns_startup_receipt(const uint8_t *autoexec, size_t autoexec_size
     out->game_dynamenu_entry = dynamenu.value;
     out->game_menu_icons_entry = menuIcons.value;
     out->game_cd_level_song_entry = cdLevelSong.value;
+    if (english && !parse_title_animation_plan(
+            game_program, game_program_size, gameLoadOffset, gameLoadSize, out)) {
+        memset(out, 0, sizeof(*out));
+        return 0;
+    }
     if (!out->menu_info_selects_game) {
         memset(out, 0, sizeof(*out));
         return 0;

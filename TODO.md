@@ -950,6 +950,12 @@ level or consumer bindings.
   `TITLE_PRESENTS`, `TITLE_DUNGEON`, `DRAW_DMENU`, `DYNAMENU`, `MENU_ICONS`
   and `CD_LEVEL_SONG`; Japanese JDM remains accepted without a symbol table
   because its verified P3 image has none.
+  2026-08-06: the English EDM P3 receipt now also binds the executable's
+  native title plan: GRAPHICS.DAT graphic 1, PRESENTS source y=137,
+  MASTER source y=80, destination rectangles y=90..105 and y=118..174,
+  the 320x80 swoosh/zoom source region and the 18-step 16x4 shrink loop.
+  These values are checked at the original load-image offsets and are not
+  copied from the PC34 title frontend.
   Remaining work is decoding and consuming the FM Towns-owned
   executable startup animation and menu in M11, with original timing/audio/
   input capture. 2026-08-06: M11 now routes a selected FM Towns edition
