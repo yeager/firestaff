@@ -37,6 +37,17 @@ static uint32_t csb_v1_fmtowns_game_bytes_fnv1a(const unsigned char *bytes,
     return hash;
 }
 
+static uint16_t csb_v1_fmtowns_game_read_le16(const unsigned char *bytes)
+{
+    return (uint16_t)bytes[0] | ((uint16_t)bytes[1] << 8);
+}
+
+static uint32_t csb_v1_fmtowns_game_read_le32(const unsigned char *bytes)
+{
+    return (uint32_t)bytes[0] | ((uint32_t)bytes[1] << 8) |
+           ((uint32_t)bytes[2] << 16) | ((uint32_t)bytes[3] << 24);
+}
+
 static int csb_v1_fmtowns_game_read_span(const char *path, uint32_t offset,
                                          unsigned char *bytes, size_t size)
 {
@@ -86,6 +97,47 @@ static uint32_t csb_v1_fmtowns_game_file_fnv1a(const char *path,
     fclose(file);
     if (out_size) *out_size = size;
     return hash;
+}
+
+static int csb_v1_fmtowns_utility_p3_header_open(
+    const char *path, uint32_t expected_file_size,
+    CSB_V1_FmtownsUtilityHandoffReceipt *receipt)
+{
+    unsigned char header[0x78];
+    uint32_t header_size;
+    uint32_t declared_file_size;
+    uint32_t runtime_offset;
+    uint32_t runtime_size;
+    uint32_t load_offset;
+    uint32_t load_size;
+    uint32_t memory_size;
+    uint32_t initial_eip;
+
+    if (!path || !receipt ||
+        !csb_v1_fmtowns_game_read_span(path, 0u, header, sizeof(header)) ||
+        header[0] != 'P' || header[1] != '3' ||
+        csb_v1_fmtowns_game_read_le16(header + 2u) != 1u) return 0;
+    header_size = csb_v1_fmtowns_game_read_le16(header + 4u);
+    declared_file_size = csb_v1_fmtowns_game_read_le32(header + 6u);
+    runtime_offset = csb_v1_fmtowns_game_read_le32(header + 0x0cu);
+    runtime_size = csb_v1_fmtowns_game_read_le32(header + 0x10u);
+    load_offset = csb_v1_fmtowns_game_read_le32(header + 0x26u);
+    load_size = csb_v1_fmtowns_game_read_le32(header + 0x2au);
+    initial_eip = csb_v1_fmtowns_game_read_le32(header + 0x68u);
+    memory_size = csb_v1_fmtowns_game_read_le32(header + 0x74u);
+    if (header_size < 0x80u || header_size > expected_file_size ||
+        declared_file_size != expected_file_size ||
+        runtime_offset < header_size || runtime_offset > expected_file_size ||
+        runtime_size > expected_file_size - runtime_offset ||
+        load_offset < header_size || load_offset > expected_file_size ||
+        load_size > expected_file_size - load_offset ||
+        memory_size < load_size || initial_eip >= memory_size) return 0;
+    receipt->p3_header_verified = 1;
+    receipt->p3_header_size = header_size;
+    receipt->p3_load_image_offset = load_offset;
+    receipt->p3_load_image_size = load_size;
+    receipt->p3_initial_eip = initial_eip;
+    return 1;
 }
 
 int csb_v1_fmtowns_game_handoff_open(
@@ -240,6 +292,14 @@ int csb_v1_fmtowns_utility_handoff_open(
         memset(out_receipt, 0, sizeof(*out_receipt));
         return 0;
     }
+    /* COMPILE.H EXEID 63/64 lines 379-385 identifies these P3 executables
+     * as separate C06_CEDT programs. Bind their native entry envelopes before
+     * any future TBIOS/CEDT decoder consumes a menu or save command. */
+    if (!csb_v1_fmtowns_utility_p3_header_open(out_receipt->executable_path,
+                                                actual_size, out_receipt)) {
+        memset(out_receipt, 0, sizeof(*out_receipt));
+        return 0;
+    }
     out_receipt->valid = 1;
     out_receipt->executable_verified = 1;
     out_receipt->language_matches_profile = 1;
@@ -252,7 +312,7 @@ int csb_v1_fmtowns_utility_handoff_open(
              "%s", name);
     out_receipt->source_evidence =
         "ReDMCSB SWITCH.C F2279; AUTOEXEC.BAT exits 2/5; "
-        "COMPILE.H C06_CEDT";
+        "COMPILE.H EXEID 63/64 lines 379-385 C06_CEDT";
     return 1;
 }
 

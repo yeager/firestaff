@@ -54965,3 +54965,13 @@ alcove runtime and archive-media tests passed (4/4).
   `LOADSAVE.C` F0435's native header path. It deliberately does not pass
   either file to the Atari/Amiga GAMEBLOCK decoder or advertise Resume.
   Real English and Japanese F31 Switch→Game handoff tests pass.
+
+- ✅ 2026-08-06 CSB FM Towns Utility P3 boundary: `UTILE.EXP` and
+  `UTILJ.EXP` now must pass their original Phar Lap level-1 P3 envelope in
+  addition to the full-file identity gate. The receipt records the real
+  384-byte header, 512-byte load-image offset, English 151 875-byte / EIP
+  `0xfe00` and Japanese 151 987-byte / EIP `0xfeb0` program boundaries.
+  ReDMCSB `COMPILE.H` EXEID 63/64 identifies the pair as C06_CEDT. This
+  intentionally does not substitute the existing PC34 utility flow for the
+  native TBIOS editor or its save transactions. Real F31E and F31J handoff
+  tests pass.

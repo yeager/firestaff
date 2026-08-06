@@ -741,7 +741,11 @@
   owner: F31E verifies `UTILE.EXP` (152387 bytes, FNV-1a `ff240e0c`) and
   F31J verifies `UTILJ.EXP` (152499 bytes, FNV-1a `bb3b47c2`). Its editor
   pixels and transactions are not represented by the C03 Game or PC34
-  utility surfaces. 2026-08-06: a real F31 Game victory now activates
+  utility surfaces. Each C06 handoff now also validates its native Phar Lap
+  P3 envelope and exposes only the real load image/entrypoint: UTILE has
+  load image `0x200..0x25343`, EIP `0xfe00`; UTILJ has
+  `0x200..0x253b3`, EIP `0xfeb0`. This is an executable boundary, not a
+  decoded Utility UI. 2026-08-06: a real F31 Game victory now activates
   `ENDING.ANM` through the retained F2275 interpreter. It uses the original
   Timer-A frames and TD/TR CUE dispatch, holds its last decoded frame when
   F0750 returns, and never chains back to `SWITCHTW.EXP` or a PC34 endgame

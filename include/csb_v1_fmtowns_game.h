@@ -67,6 +67,14 @@ typedef struct CSB_V1_FmtownsUtilityHandoffReceipt {
     uint32_t executable_fnv1a;
     char executable_name[16];
     char executable_path[512];
+    /* Bounded Phar Lap level-1 P3 envelope from the verified C06 image.
+     * This exposes the real native entry point without claiming to emulate
+     * its TBIOS menu, editor pixels, or save transactions. */
+    int p3_header_verified;
+    uint32_t p3_header_size;
+    uint32_t p3_load_image_offset;
+    uint32_t p3_load_image_size;
+    uint32_t p3_initial_eip;
     const char *source_evidence;
 } CSB_V1_FmtownsUtilityHandoffReceipt;
 

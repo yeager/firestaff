@@ -494,7 +494,12 @@ static void test_fmtowns_game_program_handoff(void)
                   utility.utility_program_is_c06_cedt &&
                   strcmp(utility.executable_name, "UTILE.EXP") == 0 &&
                   utility.executable_size == 152387u &&
-                  utility.executable_fnv1a == 0xff240e0cu,
+                  utility.executable_fnv1a == 0xff240e0cu &&
+                  utility.p3_header_verified &&
+                  utility.p3_header_size == 384u &&
+                  utility.p3_load_image_offset == 512u &&
+                  utility.p3_load_image_size == 151875u &&
+                  utility.p3_initial_eip == 65024u,
               "SWITCHTW English Utility exit admits only retail UTILE.EXP");
         music_track = 0u;
         CHECK(csb_v1_fmtowns_game_music_track_at(&receipt, 0u, 2u, 0u,

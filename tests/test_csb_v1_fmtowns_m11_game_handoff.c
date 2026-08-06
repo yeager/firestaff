@@ -8,6 +8,7 @@
 #include "m11_game_view.h"
 #include "asset_status_m12.h"
 #include "csb_v1_boot.h"
+#include "csb_v1_fmtowns_game.h"
 #include "csb_v1_fmtowns_switch.h"
 #include "vga_palette_pc34_compat.h"
 
@@ -32,8 +33,11 @@ int main(void)
     const char *language_name = getenv("FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE");
     const char *version_id;
     const char *expected_program;
+    const char *expected_utility_program;
     uint32_t expected_mini_size;
     uint32_t expected_mini_fnv1a;
+    uint32_t expected_utility_load_size;
+    uint32_t expected_utility_initial_eip;
     CSB_V1_FmtownsSwitchLanguage language;
     char materialized_data_dir[M12_ASSET_DATA_DIR_CAPACITY];
     M12_AssetStatus asset_status;
@@ -49,6 +53,7 @@ int main(void)
     CSB_V1_StartupRuntimeAssetSession_PC34 direct_session;
     CSB_V1_StartupFullRuntimeReceipt_PC34 direct_runtime;
     CSB_V1_FmtownsGameHandoffReceipt direct_handoff;
+    CSB_V1_FmtownsUtilityHandoffReceipt utility_handoff;
     CSB_V1_StartupSessionTerminalReceipt_PC34 terminal;
     uint8_t music_track;
 
@@ -56,15 +61,21 @@ int main(void)
         language = CSB_FMTOWNS_SWITCH_JAPANESE;
         version_id = "fmtowns-ja";
         expected_program = "CHTWJ.EXP";
+        expected_utility_program = "UTILJ.EXP";
         expected_mini_size = 43208u;
         expected_mini_fnv1a = 0x284799d1u;
+        expected_utility_load_size = 151987u;
+        expected_utility_initial_eip = 65200u;
     } else if (!language_name || language_name[0] == '\0' ||
                strcmp(language_name, "en") == 0) {
         language = CSB_FMTOWNS_SWITCH_ENGLISH;
         version_id = "fmtowns-en";
         expected_program = "CHTWE.EXP";
+        expected_utility_program = "UTILE.EXP";
         expected_mini_size = 42776u;
         expected_mini_fnv1a = 0x494999c9u;
+        expected_utility_load_size = 151875u;
+        expected_utility_initial_eip = 65024u;
     } else {
         fprintf(stderr, "SKIP: unsupported FIRESTAFF_CSB_FMTOWNS_GAME_LANGUAGE\n");
         return 0;
@@ -142,6 +153,18 @@ int main(void)
               csb_v1_fmtowns_game_music_track_at(&direct_handoff, 0u, 2u, 0u,
                                                   &music_track),
           "verified F31 profile resolves its language-owned Game program and MINI.DAT");
+    memset(&utility_handoff, 0, sizeof(utility_handoff));
+    CHECK(csb_v1_fmtowns_utility_handoff_open(
+              (const CSB_V1_BootProfile *)view.csbBootProfile,
+              language, &utility_handoff) &&
+              strcmp(utility_handoff.executable_name,
+                     expected_utility_program) == 0 &&
+              utility_handoff.p3_header_verified &&
+              utility_handoff.p3_header_size == 384u &&
+              utility_handoff.p3_load_image_offset == 512u &&
+              utility_handoff.p3_load_image_size == expected_utility_load_size &&
+              utility_handoff.p3_initial_eip == expected_utility_initial_eip,
+          "verified F31 profile resolves its language-owned C06 P3 envelope");
 
     /* ReDMCSB SWITCH.C F2279 registers G4171 at (47,105), 62x39. */
     result = M11_GameView_HandlePointerButton(&view, 52, 110,
