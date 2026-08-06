@@ -4855,6 +4855,12 @@ list(REMOVE_ITEM M10_SOURCES
 # mirror regression compiles it explicitly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c040_eye_live_candidate_pc34_compat.c")
+# `dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.c`
+# is a contract-only C007/C011/C040 gate with fabricated party, panel and
+# G0299 state. It loads no original DM1 data and has no M11/runtime caller;
+# its generated mirror regression compiles it explicitly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c040_inventory_toggle_while_panel_live_pc34_compat.c")
 # `dm1_v1_mirror_candidate_panel_redraw_after_inventory_exit_pc34_compat.c`
 # is a contract-only C040 close/reopen model with local panel and candidate
 # state. It loads no original DM1 assets and has no M11/runtime caller; its
