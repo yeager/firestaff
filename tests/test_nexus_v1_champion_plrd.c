@@ -95,7 +95,8 @@ int main(void) {
             !row.source_name_glyphs_valid ||
             row.source_name_glyph_count != 4 ||
             row.source_name_glyphs[0] != 0x00c1U ||
-            row.source_name_glyphs[3] != 0x00d8U) return 1;
+            row.source_name_glyphs[3] != 0x00d8U ||
+            row.label[0] != '\0') return 1;
     }
     {
         FILE *item_file = fopen(item_path, "rb");

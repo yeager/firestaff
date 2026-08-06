@@ -1,3 +1,10 @@
+- ✅ 2026-08-06 Nexus startup PLRD label provenance cleanup: authenticated
+  RLOWFIX/PLRD champion rows no longer receive a host-generated ASCII/HP/MP
+  label when the retail record carries only TABL/FONT256 glyph codes. The
+  source glyph sequence remains available for the future Saturn text capture;
+  legacy labels remain limited to compatibility fixtures. The real PLRD test
+  now asserts that no host label is emitted.
+
 - ✅ 2026-08-06 Nexus level provenance gate: removed the filename-only
   `LEV%02d.DGN` fallback from `nexus_v1_game_load_level`. Level state now
   accepts only an MD5-resolved Saturn payload, while renamed authentic bytes

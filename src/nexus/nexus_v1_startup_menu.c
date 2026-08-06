@@ -2507,14 +2507,20 @@ int nexus_v1_startup_menu_build_champion_render_rows_for_frame(
                 out->source_name_glyphs[out->source_name_glyph_count++] = code;
             }
         }
-        snprintf(out->label,
-                 sizeof(out->label),
-                 "%c %s %s HP %d MP %d",
-                 out->selected ? '>' : ' ',
-                 out->in_party ? "*" : " ",
-                 pool->champions[row].name_ascii,
-                 pool->champions[row].max_health,
-                 pool->champions[row].max_mana);
+        /* The retail PLRD path retains TABL/FONT256 codes, not an ASCII
+         * champion name or a host-formatted HP/MP line.  Keep this legacy
+         * label lane empty for authenticated records until the Saturn text
+         * consumer and glyph placement are captured. */
+        if (pool->champions[row].name_ascii[0] != '\0') {
+            snprintf(out->label,
+                     sizeof(out->label),
+                     "%c %s %s HP %d MP %d",
+                     out->selected ? '>' : ' ',
+                     out->in_party ? "*" : " ",
+                     pool->champions[row].name_ascii,
+                     pool->champions[row].max_health,
+                     pool->champions[row].max_mana);
+        }
         ++count;
     }
     return count;
