@@ -290,6 +290,11 @@
   negative origins. Remaining work is still the Saturn input/VDP consumer
   capture that binds each admitted region to its command semantics.
   M11 no longer derives `startup_hud_ready` from a DGN viewport handoff;
+  2026-08-06: the HUD layout regression now proves the `yam\\menuctrl.c`
+  owner string immediately before `DM.BIN+0x376D0`, the exact 80-entry table
+  FNV-1a64, and seven executable/static references to runtime address
+  `0x060476D0`. This strengthens source ownership only; VDP1/VDP2 and event
+  semantics remain capture-gated.
   retain the separate HUD capture requirement.
   The older synthetic `test_m11_nexus_startup_runtime_handoff` still reports
   four pre-existing fixture-route failures in both A/B runs; keep it separate

@@ -1,7 +1,32 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "nexus_v1_hud_layout.h"
+
+static uint64_t fnv1a64(const uint8_t *data, size_t size)
+{
+    uint64_t hash = UINT64_C(0xcbf29ce484222325);
+    size_t i;
+    for (i = 0U; i < size; ++i) {
+        hash ^= data[i];
+        hash *= UINT64_C(0x100000001b3);
+    }
+    return hash;
+}
+
+static size_t count_be32(const uint8_t *data, size_t size, uint32_t value)
+{
+    size_t i;
+    size_t count = 0U;
+    for (i = 0U; i + 4U <= size; ++i) {
+        uint32_t observed = ((uint32_t)data[i] << 24) |
+            ((uint32_t)data[i + 1U] << 16) |
+            ((uint32_t)data[i + 2U] << 8) | data[i + 3U];
+        if (observed == value) ++count;
+    }
+    return count;
+}
 
 int main(void)
 {
@@ -32,6 +57,20 @@ int main(void)
         return 77;
     }
     fclose(file);
+    if (size < (long)NEXUS_HUD_LAYOUT_DM_BIN_OFFSET +
+            (long)NEXUS_HUD_LAYOUT_ENTRY_COUNT *
+                (long)NEXUS_HUD_LAYOUT_ENTRY_BYTES ||
+        memcmp(data + NEXUS_HUD_LAYOUT_DM_BIN_OFFSET - 0x10U,
+               "yam\\menuctrl.c", 14U) != 0 ||
+        fnv1a64(data + NEXUS_HUD_LAYOUT_DM_BIN_OFFSET,
+                NEXUS_HUD_LAYOUT_ENTRY_COUNT * NEXUS_HUD_LAYOUT_ENTRY_BYTES) !=
+            UINT64_C(0x5fc435070d81882c) ||
+        count_be32(data, (size_t)size, UINT32_C(0x060476d0)) != 7U) {
+        free(data);
+        fprintf(stderr,
+                "FAIL: DM.BIN menuctrl disassembly/table anchor mismatch\n");
+        return 1;
+    }
     if (nexus_v1_hud_layout_parse_dm_bin(
             data, (size_t)size, entries, NEXUS_HUD_LAYOUT_ENTRY_COUNT,
             &count) != 0 || count != NEXUS_HUD_LAYOUT_ENTRY_COUNT ||

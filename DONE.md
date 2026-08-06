@@ -52159,3 +52159,10 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   a dungeon graph nor publishes a resume session. Source: SKProject
   `SKULLWIN/c_savegame.cpp::DM2_READ_SKSAVE_DUNGEON` (hero roots and party
   root at lines 1180–1200).
+# 2026-08-06 Nexus HUD DM.BIN disassembly anchor
+
+- ✅ The real-data HUD regression now verifies the `yam\\menuctrl.c` owner
+  string, the 80-entry table at `DM.BIN+0x376D0`, its exact FNV-1a64 receipt,
+  and seven occurrences of the SH-2 runtime address `0x060476D0`. This is a
+  stronger disassembly/source-ownership receipt; it does not infer VDP1/VDP2
+  drawing or event-command semantics.
