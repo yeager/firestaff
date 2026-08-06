@@ -1097,9 +1097,15 @@ level or consumer bindings.
   with the SKWIN TWANIM Timer-A quantum and source durations (minimum five
   ticks). It blocks SKULL-menu input until TITLE ends and fails closed rather
   than drawing the PC static GDAT menu when this binding is rejected. The
-  remaining gap is source-owned SWOOSH/END playback, TITLE sound-event/CDDA
-  dispatch, and a captured title-to-SKULL menu handoff; do not replace them
-  with host animation or menus.
+  `decode_title_sound` now retains TITLE's one real signed SND2 sample and
+  all five SO events in RAM, including source offsets, frame positions,
+  volume bytes and the source-invalid 1000 Hz field. SKWIN `0759:0E33/0EF0`
+  establishes the selected slot and fixed 5500 Hz playback argument, so the
+  next step is a separately source-proven 5500-Hz transport — not inferred
+  stereo mixing from SO metadata. The remaining gap is source-owned
+  SWOOSH/END playback, TITLE sound-event/CDDA dispatch, and a captured
+  title-to-SKULL menu handoff; do not replace them with host animation or
+  menus.
   **2026-08-06 update:** a shared data root can now retain all three verified
   DM2 editions at once. At M12→M11 launch, the selected DOS, FM Towns or
   Amiga version resolves its own matched owner instead of inheriting the

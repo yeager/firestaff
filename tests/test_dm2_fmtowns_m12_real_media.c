@@ -192,6 +192,7 @@ int main(void)
             DM2_V1_FmtownsAnimFrameReceipt first_frame;
             DM2_V1_FmtownsAnimFrameReceipt last_frame;
             DM2_V1_FmtownsAnimPaletteReceipt title_palette;
+            DM2_V1_FmtownsAnimSoundReceipt title_sound;
             uint8_t *title = NULL;
             size_t title_size = 0u;
             uint8_t pixels[320u * 200u / 2u];
@@ -202,6 +203,7 @@ int main(void)
             memset(&first_frame, 0, sizeof(first_frame));
             memset(&last_frame, 0, sizeof(last_frame));
             memset(&title_palette, 0, sizeof(title_palette));
+            memset(&title_sound, 0, sizeof(title_sound));
             if (launch.profile && launch.profile->fmtowns_disc_image &&
                        dm2_v1_fmtowns_disc_probe(
                            launch.profile->fmtowns_disc_image,
@@ -219,6 +221,8 @@ int main(void)
                            &last_frame);
                 (void)dm2_v1_fmtowns_anim_stream_decode_palette(
                     title, title_size, &title_palette);
+                (void)dm2_v1_fmtowns_anim_stream_decode_title_sound(
+                    title, title_size, &title_sound);
             }
             /* FNV-1a receipts are of the two 320x200/4bpp buffers decoded
              * from the selected HME-242 TITLE stream, not stored artwork. */
@@ -236,6 +240,25 @@ int main(void)
                        title_palette.source_record_offset != 0u &&
                        title_palette.output_fnv1a != 0u,
                    "FM Towns TITLE decodes its original PL palette in RAM");
+            expect(title_sound.valid && title_sound.source_record_offset == 14u &&
+                       title_sound.sample_count == 12862u &&
+                       title_sound.samples != NULL &&
+                       title_sound.sample_fnv1a == 0x0b829ae7u &&
+                       title_sound.event_count == 5u &&
+                       title_sound.events[0].source_record_offset == 101790u &&
+                       title_sound.events[0].preceding_frame_count == 14u &&
+                       title_sound.events[0].sound_index == 1u &&
+                       title_sound.events[0].left_volume == 70u &&
+                       title_sound.events[0].right_volume == 10u &&
+                       title_sound.events[4].source_record_offset == 492266u &&
+                       title_sound.events[4].preceding_frame_count == 131u &&
+                       title_sound.events[4].left_volume == 255u &&
+                       title_sound.events[4].right_volume == 255u &&
+                       title_sound.events[0].source_frequency_hz == 1000u &&
+                       title_sound.events[4].source_frequency_hz == 1000u &&
+                       title_sound.events[0].player_frequency_hz == 5500u &&
+                       title_sound.events[4].player_frequency_hz == 5500u,
+                   "FM Towns TITLE retains its retail SND2 and five SO events in RAM");
             free(title);
         }
         expect_complete_english_text_overlay(launch.profile);

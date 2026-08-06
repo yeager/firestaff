@@ -390,3 +390,78 @@ int dm2_v1_fmtowns_anim_stream_decode_palette(
     if (out) *out = receipt;
     return receipt.valid;
 }
+
+int dm2_v1_fmtowns_anim_stream_decode_title_sound(
+    const uint8_t *data, size_t data_size,
+    DM2_V1_FmtownsAnimSoundReceipt *out)
+{
+    DM2_V1_FmtownsAnimStreamReceipt stream;
+    DM2_V1_FmtownsAnimSoundReceipt receipt;
+    size_t offset = 0u;
+    uint32_t frame_count = 0u;
+    int have_sound = 0;
+
+    memset(&receipt, 0, sizeof(receipt));
+    if (!data ||
+        !dm2_v1_fmtowns_anim_stream_parse(data, data_size, &stream) ||
+        !dm2_v1_fmtowns_anim_stream_is_hme242_title(&stream)) {
+        if (out) *out = receipt;
+        return 0;
+    }
+
+    while (offset + 6u <= data_size) {
+        const uint16_t tag = read_be16(data + offset);
+        const size_t payload_size = read_be16(data + offset + 2u);
+        const uint16_t attribute = read_be16(data + offset + 4u);
+        const uint8_t *payload = data + offset + 6u;
+
+        if (payload_size > data_size - offset - 6u) break;
+        if (tag == 0x5344u) { /* SD */
+            const uint16_t sample_count =
+                payload_size >= 2u ? read_be16(payload) : 0u;
+            /* SKWIN 0759:0E33 stores each SD at a zero-based array slot;
+             * TITLE's one SD uses slot zero.  SO's documented index is
+             * one-based and therefore selects this source span with 0001. */
+            if (have_sound || attribute != 0u || payload_size < 2u ||
+                (size_t)sample_count + 2u != payload_size) {
+                if (out) *out = receipt;
+                return 0;
+            }
+            have_sound = 1;
+            receipt.source_record_offset = (uint32_t)offset;
+            receipt.sample_count = sample_count;
+            receipt.samples = (const int8_t *)(const void *)(payload + 2u);
+            receipt.sample_fnv1a = fnv1a32(payload + 2u, sample_count);
+        } else if (tag == 0x534fu) { /* SO */
+            DM2_V1_FmtownsAnimSoundEventReceipt *event;
+            /* DMWeb Animations: SO carries a one-based SD/SF/TD index plus
+             * left volume, right volume and BE frequency.  DMWeb also calls
+             * TITLE's 03E8 frequency invalid; SKWIN 0759:0EF0 supplies the
+             * effective fixed 5500 Hz argument to _0759_0739. */
+            if (!have_sound || payload_size != 4u || attribute != 1u ||
+                receipt.event_count >= DM2_V1_FMTOWNS_TITLE_SOUND_EVENT_COUNT) {
+                if (out) *out = receipt;
+                return 0;
+            }
+            event = &receipt.events[receipt.event_count++];
+            event->source_record_offset = (uint32_t)offset;
+            event->preceding_frame_count = frame_count;
+            event->sound_index = attribute;
+            event->left_volume = payload[0];
+            event->right_volume = payload[1];
+            event->source_frequency_hz = read_be16(payload + 2u);
+            event->player_frequency_hz = 5500u;
+        } else if (tag == 0x444cu || tag == 0x454eu) { /* DL / EN */
+            ++frame_count;
+        }
+        offset += payload_size + 6u;
+    }
+    if (!have_sound || receipt.event_count !=
+                           DM2_V1_FMTOWNS_TITLE_SOUND_EVENT_COUNT) {
+        if (out) *out = receipt;
+        return 0;
+    }
+    receipt.valid = 1;
+    if (out) *out = receipt;
+    return 1;
+}

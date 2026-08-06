@@ -64,6 +64,34 @@ typedef struct {
     uint32_t output_fnv1a;
 } DM2_V1_FmtownsAnimPaletteReceipt;
 
+/* TITLE owns one SD/SND2 sound definition and invokes it five times through
+ * SO records.  These receipts retain pointers into the caller-owned original
+ * TITLE buffer; they neither allocate nor convert the sample to host audio.
+ * DMWeb documents SD as a big-endian sample-count followed by signed 8-bit
+ * mono PCM, while SKWIN's 0759:0E33/0EF0 reconstruction establishes the
+ * HME-242 player rate as 5500 Hz despite TITLE's invalid 03E8 SO value. */
+#define DM2_V1_FMTOWNS_TITLE_SOUND_EVENT_COUNT 5u
+typedef struct {
+    uint32_t source_record_offset;
+    uint32_t preceding_frame_count;
+    uint16_t sound_index;
+    uint8_t left_volume;
+    uint8_t right_volume;
+    uint16_t source_frequency_hz;
+    uint16_t player_frequency_hz;
+} DM2_V1_FmtownsAnimSoundEventReceipt;
+
+typedef struct {
+    int valid;
+    uint32_t source_record_offset;
+    uint16_t sample_count;
+    const int8_t *samples; /* signed 8-bit mono PCM; owned by TITLE buffer */
+    uint32_t sample_fnv1a;
+    uint32_t event_count;
+    DM2_V1_FmtownsAnimSoundEventReceipt
+        events[DM2_V1_FMTOWNS_TITLE_SOUND_EVENT_COUNT];
+} DM2_V1_FmtownsAnimSoundReceipt;
+
 /* Parses every complete record, rejects unknown tags and rejects trailing or
  * truncated bytes.  It does not render pixels; decoding stays unavailable
  * until a source-owned TWANIM execution handoff consumes this receipt. */
@@ -95,5 +123,13 @@ int dm2_v1_fmtowns_anim_stream_decode_frame(
 int dm2_v1_fmtowns_anim_stream_decode_palette(
     const uint8_t *data, size_t data_size,
     DM2_V1_FmtownsAnimPaletteReceipt *out);
+
+/* Decodes the HME-242 TITLE SD/SO plan, including each original event's
+ * source offset and preceding image-frame count.  The caller may schedule
+ * playback later only from this receipt; no guessed GDAT sample is allowed.
+ */
+int dm2_v1_fmtowns_anim_stream_decode_title_sound(
+    const uint8_t *data, size_t data_size,
+    DM2_V1_FmtownsAnimSoundReceipt *out);
 
 #endif /* FIRESTAFF_DM2_V1_FMTOWNS_ANIM_STREAM_H */

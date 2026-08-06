@@ -54300,6 +54300,16 @@ alcove runtime and archive-media tests passed (4/4).
   verifies the first rendered frame and a source-timed advance; the focused
   `test_dm2_fmtowns_m12_real_media` also passes without unpacking game data.
 
+- ✅ 2026-08-06 DM2 FM Towns TITLE sound-plan receipt:
+  `dm2_v1_fmtowns_anim_stream_decode_title_sound` now retains the HME-242
+  TITLE's real 12,862-byte signed SND2 PCM span and its five SO events from
+  the selected CD buffer. The real-media regression locks the source offsets
+  (14, 101790 … 492266), frame positions (14 … 131), sample FNV-1a
+  `0b829ae7`, source volume bytes and `03e8` field. DMWeb identifies that
+  frequency as invalid for this title; SKWIN `0759:0E33/0EF0` proves slot 1
+  and fixed 5500 Hz instead. This is a read-only source receipt, not an SDL
+  playback claim; no game member was unpacked or copied to disk.
+
 - ✅ 2026-08-06 Theron raw-BIN HuC6280 disassembly intake: the static bank-$1f
   receipt now verifies authentic `TQUS02.bin` and `TQJP02.bin` Track 02 files
   in addition to the ISO projections. Their real MODE1/2352 bank-window
