@@ -2325,6 +2325,10 @@ level or consumer bindings.
   now receives that corpus only through `FIRESTAFF_DM2_DATA_DIR`; a selected
   but unreadable `graphics.dat` is a failure, never an implicit HOME-path
   skip. Keep the remaining non-English overlays explicit as well.
+  **2026-08-07 G1 verification update:** direct G1 root receipt regressions
+  now receive `dungeon.dat` only from an explicit argument or selected
+  `FIRESTAFF_DM2_DATA_DIR`; a selected unreadable corpus fails rather than
+  using an implicit HOME-path fallback.
   **2026-08-06 update:** the generic DM2 boot reader also now rejects every
   virtual archive path instead of extracting it to `/tmp`. FM Towns and Amiga
   continue through their already authenticated in-memory buffers. PC archive

@@ -1,3 +1,12 @@
+# DM2 direkt-G1-korpusverifiering (2026-08-07)
+
+- ✅ De nio realdatatesterna för direkta G1-rötter (DB0, DB3, DB4, DB5,
+  DB9, kedjor, familjecensus, record-adresser och scenklassning) använder nu
+  endast ett explicit argument eller `FIRESTAFF_DM2_DATA_DIR/dungeon.dat`.
+  En vald men oläsbar fil är ett fel i stället för att tyst falla tillbaka
+  till en privat HOME-sökväg. Den kanoniska PC-DOS-korpusen verifierar alla
+  nio källbundna receipts.
+
 # DM1 inventory hand-belt round-trip synthetic audit isolation (2026-08-07)
 
 - ✅ Removed the contract-only hand/belt swap probe from M10 and made its
