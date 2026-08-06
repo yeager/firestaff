@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Nexus MNS roster provenance: the complete 30-entry
+  `nexus_v1_creature_names` table is now checked against the mounted European
+  retail `DM.BIN` string table at `0x0385F0`, rather than relying only on
+  hardcoded spot-checks. The roster remains source metadata; no creature stats,
+  AI semantics or model drawing were promoted from filenames.
+
 - ✅ 2026-08-06 Theron real-data probe discovery: descriptor-table and
   level-handoff probes now use the supplied standard-root
   `.firestaff/data/theron/TQUS02.bin` and `TQJP02.bin` paths. Verification

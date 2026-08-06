@@ -25,6 +25,12 @@
   supplemental-ISO MNS material binding and the closed TEXT4/TABL/FONT012
   capture gate green while the Saturn VDP1/VDP2/text consumer remains open.
 
+- **NEXUS-CREATURE-MNS-CONSUMER:** The 30-entry MNS filename roster is now
+  authenticated byte-for-byte against European retail `DM.BIN` at `0x0385F0`.
+  Keep its API as source metadata only until a production creature-model
+  consumer binds CRET indices to DGN/MNS records; do not infer creature stats
+  or render models from filenames alone.
+
 - **NEXUS-PRS3-VDP1-STATE-RECEIPT:** The real MENU.BPK PRS3 decoder now
   passes all 162 retail surfaces, and DM.BIN's VDP1 register/state corridors
   are hash-bound. Keep this as byte/source evidence only: the current static
