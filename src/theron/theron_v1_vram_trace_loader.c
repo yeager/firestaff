@@ -125,6 +125,13 @@ int theron_v1_vram_trace_load_tqtr(Theron_V1_Viewport *vp,
     if (!vram || !vce) { free(vram); free(vce); fclose(f); return -1; }
 
     if (fread(vram, 1, THERON_VRAM_SIZE, f) != THERON_VRAM_SIZE ||
+        /* TQTR may carry an extended VRAM segment.  The VCE segment starts
+         * after the complete declared VRAM span, not after the 64 KiB slice
+         * Firestaff consumes.  Skipping the extension keeps the palette
+         * aligned with the source container instead of admitting shifted
+         * colours as a seemingly valid capture. */
+        (vram_sz > THERON_VRAM_SIZE &&
+         fseek(f, (long)(vram_sz - THERON_VRAM_SIZE), SEEK_CUR) != 0) ||
         fread(vce, 1, THERON_VCE_SIZE, f) != THERON_VCE_SIZE) {
         free(vram); free(vce); fclose(f); return -1;
     }

@@ -43,6 +43,58 @@ static void test_load_raw(void) {
     printf("PASS: test_load_raw\n");
 }
 
+static void write_u32_le(FILE *file, uint32_t value) {
+    uint8_t bytes[4] = {
+        (uint8_t)(value & 0xffu),
+        (uint8_t)((value >> 8) & 0xffu),
+        (uint8_t)((value >> 16) & 0xffu),
+        (uint8_t)((value >> 24) & 0xffu)
+    };
+    assert(fwrite(bytes, 1, sizeof(bytes), file) == sizeof(bytes));
+}
+
+static void test_load_tqtr_extended_vram_alignment(void) {
+    const char *path = "/tmp/firestaff_theron_vram_trace_loader.tqtr";
+    const uint32_t vram_size = THERON_VRAM_SIZE + 16u;
+    const uint32_t vce_size = THERON_VCE_SIZE + 8u;
+    uint8_t vram[THERON_VRAM_SIZE];
+    uint8_t vce[THERON_VCE_SIZE];
+    uint8_t extension[16];
+    uint8_t vce_extension[8];
+    FILE *file;
+    Theron_V1_Viewport vp;
+
+    memset(vram, 0, sizeof(vram));
+    memset(vce, 0, sizeof(vce));
+    memset(extension, 0xee, sizeof(extension));
+    memset(vce_extension, 0xdd, sizeof(vce_extension));
+    vce[2] = 0x07; /* VCE entry 1: red in BGR333. */
+
+    file = fopen(path, "wb");
+    assert(file != NULL);
+    assert(fwrite("TQTR", 1, 4, file) == 4);
+    write_u32_le(file, 1u); /* version */
+    write_u32_le(file, 0u); /* screen type */
+    write_u32_le(file, vram_size);
+    write_u32_le(file, vce_size);
+    write_u32_le(file, 0u); /* cdram size */
+    write_u32_le(file, 0u); /* sysram size */
+    assert(fwrite(vram, 1, sizeof(vram), file) == sizeof(vram));
+    assert(fwrite(extension, 1, sizeof(extension), file) == sizeof(extension));
+    assert(fwrite(vce, 1, sizeof(vce), file) == sizeof(vce));
+    assert(fwrite(vce_extension, 1, sizeof(vce_extension), file) ==
+           sizeof(vce_extension));
+    assert(fclose(file) == 0);
+
+    memset(&vp, 0, sizeof(vp));
+    assert(theron_v1_vram_trace_load_tqtr(&vp, path) == 0);
+    assert(vp.vram_trace_loaded == 1);
+    assert(((vp.palette.entries[1].rgba >> 16) & 0xffu) == 252u);
+    theron_v1_vram_trace_unload(&vp);
+    assert(remove(path) == 0);
+    printf("PASS: test_load_tqtr_extended_vram_alignment\n");
+}
+
 static void test_populate_tiles(void) {
     Theron_V1_Viewport vp;
     uint8_t framebuffer[TQR_FB_W * TQR_FB_H];
@@ -177,6 +229,7 @@ int main(void) {
     test_tile_decode_msb_first();
     test_4bpp_interleaved();
     test_load_raw();
+    test_load_tqtr_extended_vram_alignment();
     test_populate_tiles();
     test_null_safety();
     printf("All VRAM trace loader tests passed.\n");

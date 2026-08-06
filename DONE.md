@@ -1,3 +1,13 @@
+# Theron TQTR capture-offset correction (2026-08-06)
+
+- ✅ TQTR containers with an extended declared VRAM segment now advance to the
+  declared VCE offset before loading the palette snapshot. The previous path
+  read VCE immediately after the 64 KiB Firestaff slice and could admit a
+  shifted palette from a valid larger capture container.
+- ✅ Added a container regression with extended VRAM/VCE spans and a real
+  BGR333 palette check. Theron launcher, direct-start, rendering, real VDC/VCE,
+  HuC6280 disassembly and production-source-boundary tests remain green.
+
 # Nexus startup PLRD animation quarantine (2026-08-06)
 
 - ✅ Removed the host-side 12-frame cursor blink and guessed palette metadata
