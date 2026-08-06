@@ -1338,9 +1338,11 @@
 
   **2026-08-06 M11 gate environment correction:** the real M11 startup/profile
   regression now accepts the shared `FIRESTAFF_DM2_DATA_DIR` root used by the
-  other PC-DOS corpus probes. This removes an accidental scan-root mismatch
-  from verification only; it neither supplies fixture data nor admits an
-  incomplete save/session into runtime.
+  other PC-DOS corpus probes. Its default is now the mounted PC-DOS owner
+  directory rather than the broad multi-game root, and watchdog expiry is a
+  nonzero test failure rather than a false passing skip. This is verification
+  discovery only; it neither supplies fixture data nor admits an incomplete
+  save/session into runtime.
 
 - **CSB-TITLE-CADENCE:** The M11 CSB title zoom now holds frames 60--79 for
   four PC3.4 cadence slots. Keep the following TITLE.C F0437 `Delay(20)`

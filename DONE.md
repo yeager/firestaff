@@ -2,9 +2,11 @@
   startup/profile regression now recognizes `FIRESTAFF_DM2_DATA_DIR`, matching
   the shared PC-DOS corpus convention used by boot, GDAT and SKSave probes.
   With `/Users/bosse/.firestaff/data/dm2/dos_extract/data`, the gate reaches
-  the verified source startup boundary without its previous ambiguous
-  watchdog output. This changes verification discovery only; no synthetic
-  profile or runtime route was enabled.
+  the verified source startup boundary. Its no-environment fallback now points
+  directly at the mounted PC-DOS owner directory, and a watchdog expiration
+  exits nonzero rather than being misreported as a passing skip. This changes
+  verification discovery only; no synthetic profile or runtime route was
+  enabled.
 
 - ✅ 2026-08-06 DM2 SKProject function-coverage audit: reconciled the old
   “31 missing functions” report with the current named-symbol audit. All

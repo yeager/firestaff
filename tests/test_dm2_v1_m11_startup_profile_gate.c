@@ -56,7 +56,10 @@ static void alarm_handler(int sig) {
     (void)sig;
     const char msg[] = "\nTIMEOUT: DM2 startup profile gate test exceeded 20s (SDL blocked?)\n";
     (void)write(STDERR_FILENO, msg, sizeof(msg) - 1);
-    _exit(0);
+    /* A watchdog expiry is never a skipped test.  Returning success hid an
+     * incomplete real-data gate from CTest and could promote a hung M11 path
+     * as verified. */
+    _exit(124);
 }
 
 
@@ -1012,7 +1015,11 @@ static const char* dm2_data_dir(char fallback[512]) {
     if (!home || !home[0]) {
         return NULL;
     }
-    snprintf(fallback, 512, "%s/.firestaff/data", home);
+    /* Keep the fallback bounded to the mounted PC-DOS owner directory.
+     * Scanning every installed game's assets makes this real-data gate
+     * needlessly slow, and passing its parent would defeat the M12-to-M11
+     * asset-owner identity assertion below. */
+    snprintf(fallback, 512, "%s/.firestaff/data/dm2/data", home);
     return fallback;
 }
 
