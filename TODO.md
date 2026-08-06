@@ -342,6 +342,11 @@
   parameters in DM1 viewport helpers: each helper samples the live viewport
   cell through its source-owned state instead. This is warning hygiene only;
   it does not alter DM2 admission, drawing or source ownership.
+  **2026-08-06 outdoor-facade update:** removed the legacy
+  `dm2_v1_outdoor_renderer` no-draw/procedural-sky facade from `firestaff_dm2`.
+  Its focused material-boundary test still compiles it explicitly; production
+  outdoor presentation remains owned by the authenticated
+  `ENVIRONMENT`/`DistantEnvironment` GDAT runtime chain.
 
 - **DM2-SOUND-TEXT-CONSUMER:** `c_sound.cpp` binds class triples to GDAT sound
   payloads but does not supply a sound-name text producer. The production

@@ -4713,6 +4713,9 @@ list(REMOVE_ITEM DM2_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_ui_event_name_helper.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_champion_hud_helpers.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_food_water_bridge.c"
+    # This legacy facade only returns a procedural-sky no-draw sentinel. The
+    # source-owned ENVIRONMENT/DistantEnvironment route lives in the mounted
+    # DM2 weather/runtime chain; keep this compatibility contract test-only.
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_outdoor_renderer.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_1c9a_pc34_compat.c"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_0aaf_pc34_compat.c"

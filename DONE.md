@@ -56061,7 +56061,6 @@ alcove runtime and archive-media tests passed (4/4).
   event, possession-transfer and party/session mutations are connected. The
   FM Towns HME-242 extension-pool gap remains explicit and is not replaced by
   the PC layout.
-
 # 2026-08-06 — DM2 FM Towns boot-profile lifetime and input boundary
 
 - Boot cleanup now releases the DM2 runtime only when it is bound to the
@@ -56130,7 +56129,6 @@ alcove runtime and archive-media tests passed (4/4).
   platform branches. The retail `T_OAK2.EXE` and `OAK2USR.DIC` do not prove a
   game-owned C06 bitmap font, so Japanese Utility drawing remains correctly
   fail-closed instead of borrowing a host font or an unrelated system file.
-
 # 2026-08-06 CMake DM2 world-state probe dependencies
 
 - ✅ Restored the two direct source dependencies of `probe_dm2_v1_world_state`:
@@ -56139,3 +56137,12 @@ alcove runtime and archive-media tests passed (4/4).
   failures reported by the macOS, Windows and Linux CMake jobs.
 - Verification: clean Release configuration, focused probe link and the
   registered `dm2_v1_world` CTest pass locally.
+
+# DM2 legacy outdoor facade production isolation (2026-08-06)
+
+- ✅ Removed `dm2_v1_outdoor_renderer.c` from the production DM2 archive. It
+  only exposed a procedural-sky compatibility facade and returned a no-draw
+  sentinel; it had no original GDAT image/palette consumer.
+- ✅ Kept the focused material-boundary test compiling the source explicitly.
+  The production outdoor route remains the authenticated
+  `ENVIRONMENT`/`DistantEnvironment` weather/runtime chain.
