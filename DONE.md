@@ -1,3 +1,12 @@
+# DM1 D2L/D2R door-frame-top synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the asset-free D2L/D2R door-frame-top trace from M10. It uses
+  fixed strides, zones and synthetic framebuffer fields, has no original DM1
+  data input or M11/runtime caller, and its explicit test and gate probe
+  compile the source directly.
+- ✅ Verification: `dm1_v1_viewport_d2l_d2r_door_frame_top_edge_pc34_compat`
+  passes; the source object is absent from both M10 and M11 archives.
+
 # DM1 D3C back-wall item synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the asset-free D3C F0115 back-wall item model from M10. It uses

@@ -1,5 +1,11 @@
 # Firestaff TODO - Open Work
 
+- **DM1-D2L-D2R-DOOR-FRAME-TOP-SYNTHETIC-AUDIT:** This asset-free door-frame
+  trace uses fixed strides, zones and synthetic framebuffer fields. It has no
+  original DM1 data input or M11/runtime caller; retain it only as an explicit
+  ReDMCSB regression until a source-bound D2-side door-frame consumer is
+  recovered.
+
 - **DM1-D3C-BACK-WALL-ITEM-SYNTHETIC-AUDIT:** This asset-free F0115 model
   uses synthetic framebuffer writes, cells and zones. It has no original DM1
   data input or M11/runtime caller; retain it as an explicit ReDMCSB

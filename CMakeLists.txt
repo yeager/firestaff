@@ -4576,6 +4576,12 @@ list(REMOVE_ITEM M10_SOURCES
 # gate probe compile it directly.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3c_back_wall_item_pc34_compat.c")
+# `dm1_v1_viewport_d2l_d2r_door_frame_top_edge_pc34_compat.c` is an
+# asset-free source-lock trace with fixed door-frame strides, zones and
+# synthetic framebuffer fields. It has no original DM1 data input or
+# M11/runtime caller; its explicit test and gate probe compile it directly.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d2l_d2r_door_frame_top_edge_pc34_compat.c")
 # `dm2_v1_1c9a_pc34_compat.c` is a callback-contract audit with 24
 # intentionally fail-closed AI bodies.  M11 and the DM2 runtime have no
 # caller for it, so a broad compatibility glob must not make those stubs part
