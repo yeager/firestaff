@@ -94,8 +94,8 @@ msgstr "ファイルアプリを使ってゲームファイルをこのアプリ
 msgid "GAME DATA ARCHIVE NEEDS A TOOL"
 msgstr "ゲームデータのアーカイブにはツールが必要です"
 
-msgid "INSTALL ONE OF: %s"
-msgstr "次のいずれかをインストールしてください: %s"
+msgid "ARCHIVE: %s  INSTALL: %s"
+msgstr "アーカイブ: %s　インストール: %s"
 
 msgid "INSTALL IT, THEN RESCAN GAME DATA"
 msgstr "インストール後、ゲームデータを再スキャンしてください"

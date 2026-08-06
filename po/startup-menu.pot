@@ -284,7 +284,7 @@ msgstr ""
 msgid "GAME DATA ARCHIVE NEEDS A TOOL"
 msgstr ""
 
-msgid "INSTALL ONE OF: %s"
+msgid "ARCHIVE: %s  INSTALL: %s"
 msgstr ""
 
 msgid "INSTALL IT, THEN RESCAN GAME DATA"

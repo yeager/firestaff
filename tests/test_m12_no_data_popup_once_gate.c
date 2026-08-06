@@ -389,7 +389,35 @@ static void check_missing_archive_tool_popup(void) {
     CHECK(state.messageLine1 &&
           strcmp(state.messageLine1, "GAME DATA ARCHIVE NEEDS A TOOL") == 0);
     CHECK(state.messageLine2 &&
+          strstr(state.messageLine2, "original-media.7z") != NULL &&
           strstr(state.messageLine2, "7zz/7z/bsdtar") != NULL);
+    CHECK(state.messageLine3 &&
+          strcmp(state.messageLine3, "INSTALL IT, THEN RESCAN GAME DATA") == 0);
+    dismiss_message(&state);
+    CHECK(launcher_has_clean_main_view(&state));
+}
+
+/* RAR offers `unrar` first, then compatible archive readers. A supplied RAR
+ * must get an actionable tool list, rather than being reported as no data. */
+static void check_missing_rar_tool_popup(void) {
+    M12_StartupMenuState state;
+    char dataRoot[M12_ASSET_DATA_DIR_CAPACITY];
+    char ignoredMd5[M12_ASSET_MD5_CAPACITY];
+
+    reset_dialog_stub();
+    CHECK(isolate_home_and_data_root(dataRoot));
+    CHECK(write_payload_with_md5(dataRoot, "original-media.rar",
+                                 "nonempty RAR fixture\n", ignoredMd5));
+    CHECK(test_setenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS", "1"));
+    M12_StartupMenu_InitWithDataDir(&state, dataRoot, NULL);
+    CHECK(test_unsetenv("FIRESTAFF_TEST_DISABLE_EXTERNAL_ARCHIVE_TOOLS"));
+
+    CHECK(state.view == M12_MENU_VIEW_MESSAGE);
+    CHECK(state.messageLine1 &&
+          strcmp(state.messageLine1, "GAME DATA ARCHIVE NEEDS A TOOL") == 0);
+    CHECK(state.messageLine2 &&
+          strstr(state.messageLine2, "original-media.rar") != NULL &&
+          strstr(state.messageLine2, "unrar/7zz/7z/bsdtar") != NULL);
     CHECK(state.messageLine3 &&
           strcmp(state.messageLine3, "INSTALL IT, THEN RESCAN GAME DATA") == 0);
     dismiss_message(&state);
@@ -414,7 +442,9 @@ static void check_missing_chd_tool_popup(void) {
     CHECK(state.view == M12_MENU_VIEW_MESSAGE);
     CHECK(state.messageLine1 &&
           strcmp(state.messageLine1, "GAME DATA ARCHIVE NEEDS A TOOL") == 0);
-    CHECK(state.messageLine2 && strstr(state.messageLine2, "chdman") != NULL);
+    CHECK(state.messageLine2 &&
+          strstr(state.messageLine2, "original-media.chd") != NULL &&
+          strstr(state.messageLine2, "chdman") != NULL);
     CHECK(state.messageLine3 &&
           strcmp(state.messageLine3, "INSTALL IT, THEN RESCAN GAME DATA") == 0);
     dismiss_message(&state);
@@ -772,6 +802,7 @@ int main(void) {
 
     check_initial_no_data_popup_appears_once();
     check_missing_archive_tool_popup();
+    check_missing_rar_tool_popup();
     check_unavailable_game_popup_appears_once_per_selection();
     check_data_dir_picker_cancel_does_not_re_show_no_data();
     check_rescan_with_empty_dir_shows_no_data_result_once();

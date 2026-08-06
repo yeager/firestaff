@@ -884,7 +884,7 @@ typedef enum {
     M12_TEXT_CARD_ART_ACTIVE,
     M12_TEXT_CARD_ART_SLOT,
     M12_TEXT_ARCHIVE_TOOL_REQUIRED,
-    M12_TEXT_INSTALL_ARCHIVE_TOOL,
+    M12_TEXT_ARCHIVE_TOOL_DETAILS,
     M12_TEXT_RESCAN_GAME_DATA,
     M12_TEXT_COUNT
 } M12_TextId;
@@ -946,7 +946,7 @@ static const char* const g_localeTextEnglish[M12_TEXT_COUNT] = {
     _("CARD ART ACTIVE"),
     _("CARD ART SLOT"),
     _("GAME DATA ARCHIVE NEEDS A TOOL"),
-    _("INSTALL ONE OF: %s"),
+    _("ARCHIVE: %s  INSTALL: %s"),
     _("INSTALL IT, THEN RESCAN GAME DATA")
 };
 
@@ -1713,6 +1713,8 @@ static void m12_format_data_dir_line(const M12_StartupMenuState* state,
     }
 }
 
+static const char* m12_path_basename_local(const char* path);
+
 static void m12_format_missing_files_for_game(const M12_StartupMenuState* state,
                                               const char* gameId,
                                               char* out,
@@ -1818,6 +1820,7 @@ static void m12_show_no_game_data_popup(M12_StartupMenuState* state) {
 }
 
 static int m12_show_missing_archive_tool_popup(M12_StartupMenuState* state) {
+    const char* archivePath;
     const char* tools;
     char line2[256];
     if (!state || asset_scan_missing_extractor_count() <= 0) {
@@ -1827,8 +1830,10 @@ static int m12_show_missing_archive_tool_popup(M12_StartupMenuState* state) {
     if (!tools || tools[0] == '\0') {
         return 0;
     }
+    archivePath = asset_scan_missing_extractor_path(0);
     snprintf(line2, sizeof(line2),
-             m12_text(state, M12_TEXT_INSTALL_ARCHIVE_TOOL), tools);
+             m12_text(state, M12_TEXT_ARCHIVE_TOOL_DETAILS),
+             m12_path_basename_local(archivePath), tools);
     m12_enter_message_view(state);
     m12_set_buffered_message(state,
                              m12_text(state, M12_TEXT_ARCHIVE_TOOL_REQUIRED),

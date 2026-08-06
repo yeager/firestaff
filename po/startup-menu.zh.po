@@ -94,8 +94,8 @@ msgstr "使用文件应用将游戏文件复制到此应用的 Firestaff/data"
 msgid "GAME DATA ARCHIVE NEEDS A TOOL"
 msgstr "游戏数据压缩包需要工具"
 
-msgid "INSTALL ONE OF: %s"
-msgstr "安装以下任一工具: %s"
+msgid "ARCHIVE: %s  INSTALL: %s"
+msgstr "压缩包：%s  安装：%s"
 
 msgid "INSTALL IT, THEN RESCAN GAME DATA"
 msgstr "安装后重新扫描游戏数据"
