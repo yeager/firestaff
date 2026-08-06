@@ -52660,6 +52660,13 @@ no-draw/capture-gates är oförändrade.
   DM1-style party fields. It sends movement and turning to the verified DM2
   boot/runtime boundary, then mirrors only the returned source state; absent
   boot state drains stale commands without creating a session.
+
+- ✅ 2026-08-06 DM2 source-owned HUD stat pairs: M11 now reads the three
+  current/maximum pairs directly from authenticated PC-DOS `c_hero` records
+  (offsets 54/56, 58/60 and 62/64) and applies SKProject's effective-max-MP
+  rule through the existing champion-stat bridge. The old convenience record
+  never supplied the stamina/mana maxima, so it can no longer create an
+  apparently complete dynamic HUD; unbound records remain no-draw.
 ✅ 2026-08-06 Nexus startup menu text sanitization: production save/chrome
 builders no longer emit hoststrängarna `DUNGEON MASTER NEXUS`, `LOAD GAME`,
 `NEW GAME` eller `LOAD SLOT ##`. Riktig radgeometri och källans slot-identitet

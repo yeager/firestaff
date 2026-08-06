@@ -169,6 +169,11 @@
   none of their render or bitmap-loader entry points; V2.2 remains routed to
   the source-preserving V1/V2.1 path. Keep this boundary while no original
   DM2 V2 art owner exists.
+  2026-08-06 HUD-stat update: authenticated `c_hero` records now supply the
+  live HP/stamina/mana current-and-maximum pairs to the M11 HUD. Continue
+  requiring an original session handoff before showing dynamic bars; the
+  legacy 261-byte convenience view deliberately cannot substitute for the
+  missing maxima.
 
 - **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
   mirror side/depth, inscription/corridor invalidation and wall-material

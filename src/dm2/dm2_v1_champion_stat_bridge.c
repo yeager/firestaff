@@ -3,12 +3,12 @@
 
 #include <string.h>
 
-static uint8_t compute_bar_pct(int16_t cur, int16_t max)
+static uint8_t compute_bar_pct(int32_t cur, uint32_t max)
 {
-    if (max <= 0) return 0;
+    if (max == 0u) return 0;
     if (cur <= 0) return 0;
-    if (cur >= max) return 100;
-    return (uint8_t)(((int)cur * 100) / (int)max);
+    if ((uint32_t)cur >= max) return 100;
+    return (uint8_t)(((uint32_t)cur * 100u) / max);
 }
 
 int dm2_v1_champion_stat_bridge_compute(
@@ -45,7 +45,7 @@ int dm2_v1_champion_stat_bridge_compute(
         c->hp_pct = compute_bar_pct(in->cur_hp, in->max_hp);
         c->stamina_pct = compute_bar_pct(in->cur_stamina, in->max_stamina);
 
-        int16_t effective_max_mp = in->max_mp;
+        uint16_t effective_max_mp = in->max_mp;
         if (in->cur_mp > effective_max_mp)
             effective_max_mp = in->cur_mp;
         c->mana_pct = compute_bar_pct(in->cur_mp, effective_max_mp);

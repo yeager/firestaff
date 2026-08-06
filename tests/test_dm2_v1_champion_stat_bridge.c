@@ -61,6 +61,22 @@ static void test_mana_exceeds_max(void)
     assert(r.champions[0].mana_pct == 100);
 }
 
+/* c_hero stores every maximum plus stamina/mana current as U16.  Keep the
+ * bridge from silently turning a valid high source word negative. */
+static void test_unsigned_source_stat_words(void)
+{
+    DM2_V1_ChampionStatInput in = {
+        .cur_hp = 25000, .max_hp = 50000u,
+        .cur_stamina = 40000u, .max_stamina = 50000u,
+        .cur_mp = 60000u, .max_mp = 50000u,
+    };
+    DM2_V1_ChampionStatBridgeReceipt r;
+    assert(dm2_v1_champion_stat_bridge_compute(&in, NULL, 1, 9, &r));
+    assert(r.champions[0].hp_pct == 50);
+    assert(r.champions[0].stamina_pct == 80);
+    assert(r.champions[0].mana_pct == 100);
+}
+
 static void test_four_heroes_source_bar_color(void)
 {
     DM2_V1_ChampionStatInput ins[4];
@@ -139,6 +155,7 @@ int main(void)
     test_partial_health();
     test_dead_hero();
     test_mana_exceeds_max();
+    test_unsigned_source_stat_words();
     test_four_heroes_source_bar_color();
     test_redraw_with_prev();
     test_gdat_override();

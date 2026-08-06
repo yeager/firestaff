@@ -37,6 +37,7 @@
 #include "dm2_v1_spell_timer_handlers_pc34_compat.h"
 #include "dm2_v1_think_creature_pc34_compat.h"
 #include "dm2_v1_creature_schedule_pc34_compat.h"
+#include "dm2_v1_champion_stat_bridge.h"
 #include "dm2_v1_update_weather_pc34_compat.h"
 #include "dm2_v1_viewport_renderer.h"
 #include "dm2_v1_sound.h"
@@ -6299,10 +6300,14 @@ static uint8_t dm2_runtime_hud_pct_from_current_max(uint16_t current,
     return (uint8_t)(((uint32_t)current * 100u) / (uint32_t)max);
 }
 
-static uint8_t dm2_runtime_hud_pct_from_current(uint16_t current)
+static uint16_t dm2_runtime_read_u16_le(const uint8_t *src)
 {
-    if (current >= 100u) return 100u;
-    return (uint8_t)current;
+    return (uint16_t)((uint16_t)src[0] | ((uint16_t)src[1] << 8));
+}
+
+static int16_t dm2_runtime_read_i16_le(const uint8_t *src)
+{
+    return (int16_t)dm2_runtime_read_u16_le(src);
 }
 
 static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
@@ -6338,9 +6343,8 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
         dst->hp_pct =
             dm2_runtime_hud_pct_from_current_max(champ->cur_hp,
                                                  champ->max_hp);
-        dst->stamina_pct =
-            dm2_runtime_hud_pct_from_current(champ->stamina);
-        dst->mana_pct = dm2_runtime_hud_pct_from_current(champ->mana);
+        dst->stamina_pct = 0u;
+        dst->mana_pct = 0u;
         /* SKProject INIT sets glbChampionColor to 7,11,8,14 before its HUD
          * path. Keep the bootstrap value explicit until a source save/runtime
          * mutation of that global is independently admitted. */
@@ -6348,21 +6352,43 @@ static void dm2_runtime_populate_hud_party(const DM2_V1_RuntimeState *rt,
             DM2_V1_HUD_CHAMPION_SLOT_COUNT] = { 7u, 11u, 8u, 14u };
         dst->stat_bar_color = source_default_stat_bar_color[slot];
         dst->stat_bar_color_source_bound = 1;
+        dst->state_source_bound = 0;
         dst->portrait_index = 0u;
         /* SKWINDOS/src/c_hero.h places herotype at byte 257 of the PC-DOS
          * 0x107-byte c_hero record.  REVIVE_PLAYER writes it from the source
          * mirror actuator and DRAW_CHAMPION_PICTURE uses that exact GDAT
          * index.  The local portrait_index tail is not a substitute. */
         dst->portrait_type_source_bound = 0;
-        char source_first_name[DM2_V1_HUD_CHAMPION_NAME_MAX + 1];
-        memset(source_first_name, 0, sizeof(source_first_name));
-        memcpy(source_first_name, champ->first_name,
-               DM2_V1_HUD_CHAMPION_NAME_MAX);
-        source_first_name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
         if (dst->occupied && rt->session_snapshot.original_champion_records_valid) {
-            dst->portrait_index = rt->session_snapshot
-                .original_champion_records[slot][257];
-            dst->portrait_type_source_bound = 1;
+            const uint8_t *raw = rt->session_snapshot
+                .original_champion_records[slot];
+            DM2_V1_ChampionStatInput stat_input;
+            DM2_V1_ChampionStatBridgeReceipt stat_receipt;
+
+            /* SKProject/SKWINSPX c_hero has the three current/max pairs at
+             * 54/56, 58/60, and 62/64.  The old 261-byte convenience view
+             * does not retain the latter two maxima, so it cannot own a
+             * drawable stat bar.  DRAW_PLAYER_3STAT_HEALTH_BAR also expands
+             * max MP to max(current MP, max MP); the shared source bridge
+             * retains that rule. */
+            memset(&stat_input, 0, sizeof(stat_input));
+            stat_input.cur_hp = dm2_runtime_read_i16_le(raw + 54);
+            stat_input.max_hp = dm2_runtime_read_u16_le(raw + 56);
+            stat_input.cur_stamina = dm2_runtime_read_u16_le(raw + 58);
+            stat_input.max_stamina = dm2_runtime_read_u16_le(raw + 60);
+            stat_input.cur_mp = dm2_runtime_read_u16_le(raw + 62);
+            stat_input.max_mp = dm2_runtime_read_u16_le(raw + 64);
+            stat_input.is_leader = (uint8_t)dst->leader;
+            if (dm2_v1_champion_stat_bridge_compute(
+                    &stat_input, NULL, 1, dst->stat_bar_color,
+                    &stat_receipt) && stat_receipt.valid) {
+                dst->hp_pct = stat_receipt.champions[0].hp_pct;
+                dst->stamina_pct = stat_receipt.champions[0].stamina_pct;
+                dst->mana_pct = stat_receipt.champions[0].mana_pct;
+                dst->state_source_bound = 1;
+                dst->portrait_index = raw[257];
+                dst->portrait_type_source_bound = 1;
+            }
         }
         memcpy(dst->name, champ->first_name, DM2_V1_HUD_CHAMPION_NAME_MAX);
         dst->name[DM2_V1_HUD_CHAMPION_NAME_MAX] = '\0';
