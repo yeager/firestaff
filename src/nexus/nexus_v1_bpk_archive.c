@@ -32,6 +32,19 @@ static uint64_t fnv1a64(const uint8_t *data, size_t size) {
     return hash;
 }
 
+static uint64_t fnv1a64_append(uint64_t hash,
+                               const uint8_t *data,
+                               size_t size) {
+    size_t index;
+    if (!data || size == 0U) return hash;
+    if (hash == 0U) hash = UINT64_C(1469598103934665603);
+    for (index = 0U; index < size; ++index) {
+        hash ^= (uint64_t)data[index];
+        hash *= UINT64_C(1099511628211);
+    }
+    return hash;
+}
+
 /* DMWeb Translation Kit: every PRS3 bitmap is 256-colour indexed output.
  * The prefix mode byte is retained as opaque source flags for PRS3; it must
  * not be promoted to a host RGB byte width. Stored/non-PRS3 surfaces retain
@@ -2260,6 +2273,10 @@ int nexus_v1_bpk_archive_runtime_upload_plan(
                         ++out_receipt->prs3_decode_successes;
                         out_receipt->prs3_decoded_surface_bytes +=
                             dr.bytes_produced;
+                        out_receipt->prs3_decoded_pixels_fnv1a64 =
+                            fnv1a64_append(
+                                out_receipt->prs3_decoded_pixels_fnv1a64,
+                                decode_buf, dr.bytes_produced);
                     } else {
                         row.status =
                             NEXUS_V1_BPK_SURFACE_HANDOFF_BLOCKED_PRS3;
@@ -2493,6 +2510,10 @@ int nexus_v1_bpk_archive_runtime_decode_receipt(
                         ++out_receipt->prs3_decode_successes;
                         out_receipt->prs3_decoded_surface_bytes +=
                             dr.bytes_produced;
+                        out_receipt->prs3_decoded_pixels_fnv1a64 =
+                            fnv1a64_append(
+                                out_receipt->prs3_decoded_pixels_fnv1a64,
+                                dbuf, dr.bytes_produced);
                         decoded = 1;
                     }
                     free(dbuf);

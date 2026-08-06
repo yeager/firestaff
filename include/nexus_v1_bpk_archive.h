@@ -804,6 +804,7 @@ typedef struct {
     uint32_t prs3_decode_successes;
     uint32_t prs3_decode_failures;
     uint64_t prs3_decoded_surface_bytes;
+    uint64_t prs3_decoded_pixels_fnv1a64;
     uint32_t first_blocked_entry;
     uint32_t first_blocked_stream_offset;
     uint32_t first_blocked_stream_size;
@@ -887,6 +888,7 @@ typedef struct {
     uint32_t prs3_decode_successes;
     uint32_t prs3_decode_failures;
     uint64_t prs3_decoded_surface_bytes;
+    uint64_t prs3_decoded_pixels_fnv1a64;
     uint32_t blocked_truncated_uploads;
     uint32_t planned_rows;
     uint32_t capacity;

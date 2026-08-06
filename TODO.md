@@ -26285,8 +26285,9 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   key flags; the compatibility fixture still belongs only to isolated tests.
 - 🔧 Nexus viewport material admission: the DGN host now fails closed for
   out-of-range or incomplete MNS/BPK/Structure2 surfaces. The remaining gap is
-  still the authenticated Saturn PRS3 pixel/palette and VDP1 placement route;
-  no replacement texture or procedural viewport may be added.
+  still the authenticated Saturn PRS3 palette and VDP1 placement route; real
+  MENU.BPK PRS3 output is retained as a deterministic diagnostic pixel hash,
+  but no replacement texture or procedural viewport may be added.
 - 🔧 Nexus startup menu pixels: M11 no longer paints the planner's procedural
   save/champion fill- and outline-rectangles. Bind `MENU.BPK`/`STABG.BIN`
   surfaces, text glyphs, palette and VDP1 placement from one authenticated

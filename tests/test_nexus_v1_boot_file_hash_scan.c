@@ -427,8 +427,9 @@ int main(void) {
                           receipt.prs3_decode_failures == 0U &&
                           receipt.decode_blocked == 0 &&
                           receipt.prs3_decoder_promoted == 1 &&
-                          receipt.prs3_decoded_pixels_emitted > 0U,
-                      "Nexus MENU.BPK receipt records bounded PRS3 decode success");
+                          receipt.prs3_decoded_pixels_emitted > 0U &&
+                          receipt.prs3_decoded_pixels_fnv1a64 != 0U,
+                      "Nexus MENU.BPK receipt records bounded PRS3 pixel bytes");
             memset(&upload_receipt, 0, sizeof(upload_receipt));
             memset(upload_rows, 0, sizeof(upload_rows));
             check_int(nexus_v1_menu_bpk_upload_plan_receipt(
@@ -440,7 +441,9 @@ int main(void) {
                       "Nexus MENU.BPK upload plan accepts decoded PRS3 surfaces");
             check_int(upload_receipt.ready_uploads == 162U &&
                           upload_receipt.blocked_prs3_uploads == 0U &&
-                          upload_receipt.planned_rows == 162U,
+                          upload_receipt.planned_rows == 162U &&
+                          upload_receipt.prs3_decoded_pixels_fnv1a64 ==
+                              receipt.prs3_decoded_pixels_fnv1a64,
                       "Nexus MENU.BPK upload plan records every decoded surface");
             check_int(upload_receipt.fallback_visuals_permitted == 0,
                       "Nexus MENU.BPK upload plan forbids unsupported rendering");

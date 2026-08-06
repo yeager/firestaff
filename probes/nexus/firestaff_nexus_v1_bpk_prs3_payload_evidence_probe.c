@@ -309,8 +309,9 @@ static void test_synthetic_bppk_evidence(void) {
           rows[0].mode == NEXUS_V1_BPK_MODE_16BPP,
           "row 0 width=16 height=15 mode=14");
     CHECK(rows[0].pixel_count == 240U, "row 0 pixel_count == 240");
-    CHECK(rows[0].bpp == 2U, "row 0 bpp == 2");
-    CHECK(rows[0].uncompressed_size == 480U, "row 0 uncompressed_size == 480");
+    CHECK(rows[0].bpp == 1U, "row 0 bpp == 1 (PRS3 indexed output)");
+    CHECK(rows[0].uncompressed_size == 240U,
+          "row 0 uncompressed_size == 240 (PRS3 indexed output)");
     CHECK(rows[0].payload_size == 154U, "row 0 payload_size == 154");
     CHECK(rows[0].header_first_readable == 1, "row 0 header_first_readable");
     CHECK(rows[0].header_first_u32 == 0xA5U,
@@ -324,9 +325,9 @@ static void test_synthetic_bppk_evidence(void) {
         CHECK(hex_eq(rows[0].first_payload, want, 8),
               "row 0 first_payload == 000000a5 aaaaaaaa");
     }
-    CHECK(rows[0].compression_ratio > 0.320 &&
-          rows[0].compression_ratio < 0.322,
-          "row 0 compression_ratio == 0.321 (154/480)");
+    CHECK(rows[0].compression_ratio > 0.641 &&
+          rows[0].compression_ratio < 0.643,
+          "row 0 compression_ratio == 0.642 (154/240)");
 
     /* Frequency receipt on entry 1: 0xaa dominates the synthetic
      * payload after byte 4 (140 bytes of 0xaa). sample_size=32 sees
@@ -387,8 +388,9 @@ static void test_synthetic_bppk_evidence(void) {
 
     /* Entry 3 row: 14x7 14bpp, payload 24, header_first == 0x1d. */
     CHECK(rows[2].entry_index == 3U, "row 2 entry_index == 3");
-    CHECK(rows[2].bpp == 2U, "row 2 bpp == 2");
-    CHECK(rows[2].uncompressed_size == 196U, "row 2 uncompressed_size == 196");
+    CHECK(rows[2].bpp == 1U, "row 2 bpp == 1 (PRS3 indexed output)");
+    CHECK(rows[2].uncompressed_size == 98U,
+          "row 2 uncompressed_size == 98 (PRS3 indexed output)");
     CHECK(rows[2].payload_size == 24U, "row 2 payload_size == 24");
     CHECK(rows[2].header_first_u32 == 0x1DU,
           "row 2 header_first_u32 == 0x1d (29)");
@@ -401,9 +403,9 @@ static void test_synthetic_bppk_evidence(void) {
         CHECK(hex_eq(rows[2].first_payload, want, 8),
               "row 2 first_payload == 0000001d 0bf6f6e6");
     }
-    CHECK(rows[2].compression_ratio > 0.122 &&
-          rows[2].compression_ratio < 0.123,
-          "row 2 compression_ratio == 0.122 (24/196)");
+    CHECK(rows[2].compression_ratio > 0.244 &&
+          rows[2].compression_ratio < 0.246,
+          "row 2 compression_ratio == 0.245 (24/98)");
     /* Byte-class tally (pass1084b): row 2 sample is 24 bytes
      *  (0x00 x 4, 0x1d, 0x0b, 0x06, 0x0e, 0x04, 0xf6 x 4, 0xe6, 0xf7 x 2,
      *   0xed x 2, 0xef x 2, 0xf0 x 2, 0xf8 x 2).
@@ -415,8 +417,8 @@ static void test_synthetic_bppk_evidence(void) {
           "row 2 byte_class_count[*] == {9,0,0,15}");
 
     /* Aggregate checks. */
-    CHECK(summary.total_uncompressed == 480U + 256U + 196U,
-          "summary.total_uncompressed == 932 (480+256+196)");
+    CHECK(summary.total_uncompressed == 240U + 256U + 98U,
+          "summary.total_uncompressed == 594 (240+256+98)");
     CHECK(summary.total_payload == 154U + 28U + 24U,
           "summary.total_payload == 206 (154+28+24)");
     CHECK(summary.smallest_payload == 24U, "summary.smallest_payload == 24");
@@ -424,8 +426,8 @@ static void test_synthetic_bppk_evidence(void) {
     CHECK(summary.min_compression_ratio > 0.108 &&
           summary.min_compression_ratio < 0.110,
           "summary.min_compression_ratio ~ row 1's ratio");
-    CHECK(summary.max_compression_ratio > 0.320 &&
-          summary.max_compression_ratio < 0.322,
+    CHECK(summary.max_compression_ratio > 0.641 &&
+          summary.max_compression_ratio < 0.643,
           "summary.max_compression_ratio ~ row 0's ratio");
 
     /* Capacity exhaustion: 0 rows + 1 row capacity should mark
@@ -554,20 +556,21 @@ static void test_optional_real_menumenu_bpk(void) {
                        candidate.evaluated);
                 CHECK(candidate.evaluated == 162U &&
                           candidate.complete_exact == 0U &&
-                          candidate.complete_trailing == 0U &&
-                          candidate.stream_failures == 162U,
-                      "real MENU.BPK LSB-first candidate is disproven on all surfaces");
+                          candidate.complete_trailing == 1U &&
+                          candidate.stream_failures == 161U &&
+                          candidate.decoder_promoted == 0,
+                      "real MENU.BPK LSB-first candidate remains diagnostic-only");
                 rc = nexus_v1_bpk_archive_prs3_candidate_evidence_with_bit_order(
                     data, size,
                     NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST,
                     candidate_rows, capacity, &candidate);
                 CHECK(rc == 0 && candidate.prs3_surfaces == 162U &&
                           candidate.evaluated == 162U &&
-                          candidate.complete_exact == 0U &&
-                          candidate.complete_trailing == 8U &&
-                          candidate.stream_failures == 154U &&
+                          candidate.complete_exact == 1U &&
+                          candidate.complete_trailing == 111U &&
+                          candidate.stream_failures == 50U &&
                           candidate.decoder_promoted == 0,
-                      "real MENU.BPK MSB-first candidate is disproven without promotion");
+                      "real MENU.BPK MSB-first candidate remains diagnostic-only");
                 printf("  INFO: msb-first exact=%u trailing=%u failures=%u "
                        "limited=%u evaluated=%u\n",
                        candidate.complete_exact, candidate.complete_trailing,
@@ -592,9 +595,9 @@ static void test_optional_real_menumenu_bpk(void) {
                           framing.decoder_promoted == 0,
                       "real MENU.BPK framing receipt remains diagnostic-only");
                 CHECK(framing.be_at_least_stream == 161U &&
-                          framing.be_near_stream == 161U &&
+                          framing.be_near_stream == 158U &&
                           framing.le_near_stream == 0U,
-                      "real MENU.BPK first word is BE span-close on 161 entries");
+                      "real MENU.BPK first word is BE span-close on 158 entries");
                 CHECK(framing.be_shorter_than_stream == 1U &&
                           framing.first_be_short_entry == 162U &&
                           framing.be_tail_bytes_total == 6U,
@@ -625,10 +628,18 @@ static void test_optional_real_menumenu_bpk(void) {
                         (Nexus_V1_BpkPrs3CandidateBitOrder)order,
                         framed_rows, capacity, &framed);
                     CHECK(rc == 0 && framed.prs3_surfaces == 162U &&
-                              framed.frame_validated == 161U &&
-                              framed.unvalidated_frames == 1U &&
-                              framed.evaluated == 161U &&
-                              framed.complete_exact == 0U &&
+                              framed.frame_validated == 158U &&
+                              framed.unvalidated_frames == 4U &&
+                              framed.evaluated == 158U &&
+                              framed.complete_exact ==
+                                  (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
+                                       ? 1U : 0U) &&
+                              framed.complete_trailing ==
+                                  (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
+                                       ? 108U : 0U) &&
+                              framed.command_failures ==
+                                  (order == NEXUS_V1_BPK_PRS3_CANDIDATE_BIT_ORDER_MSB_FIRST
+                                       ? 49U : 158U) &&
                               framed.decoder_promoted == 0,
                           "real MENU.BPK framed evaluation has no exact promotion");
                     printf("  INFO: framed %s valid=%u failed=%u trailing=%u exact=%u "

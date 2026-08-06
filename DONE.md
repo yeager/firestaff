@@ -51962,3 +51962,8 @@ This fixes the source path for torch holders, mirrors, inscriptions and
   `csb_v1_fmtowns_m11_game_handoff` regression runs against original F31E
   media and verifies TITLE.ANM → SWITCHTW → CHTWE, C001--C005/C017/C040
   session admission and exact C004 pixels.
+- ✅ 2026-08-06 Nexus MENU.BPK PRS3 pixel provenance: the real 162-surface
+  DMWeb PRS3 decode now records an aggregate FNV-1a hash over the emitted
+  indexed pixel bytes, and the upload-plan regression requires the same hash.
+  This is diagnostic source output only; palette interpretation and VDP1/VDP2
+  presentation remain capture-gated.
