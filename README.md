@@ -28,14 +28,15 @@ Nexus are development targets and are not presented as finished games.
 
 ## Screenshots
 
-Only real runtime captures appear here. The captures below are from the
-currently available DM1 v1 PC34 runtime and original game data.
+Only real runtime captures appear here. The DM1 images below were captured
+from the macOS build using the verified PC DOS 3.4 data set. No generated,
+placeholder or fallback image is presented as game evidence.
 
-### Dungeon Master
+### Dungeon Master v1
 
-| DM1 v1 dungeon | DM1 v1 HUD / HoC route |
-|----------------|------------------------|
-| ![Dungeon Master v1 dungeon runtime capture](docs/screenshots/dm1-v1-runtime-dungeon.png) | ![Dungeon Master v1 HUD runtime capture](docs/screenshots/dm1-v1-runtime-hud.png) |
+| Entrance | Dungeon viewport | HUD / HoC route |
+|----------|------------------|-----------------|
+| ![Dungeon Master v1 Entrance runtime capture](docs/screenshots/dm1-v1-runtime-entrance-macos.png) | ![Dungeon Master v1 dungeon runtime capture](docs/screenshots/dm1-v1-runtime-dungeon-macos.png) | ![Dungeon Master v1 HUD runtime capture](docs/screenshots/dm1-v1-runtime-hud.png) |
 
 Screenshots for CSB, DM2, Theron's Quest, DM Nexus and future custom art are
 **Coming soon** because those game versions are not currently available.
@@ -78,11 +79,11 @@ source-reference boundaries for all five games.
 
 | Platform | Status | Data directory |
 |----------|--------|---------------|
-| macOS | DM1 v1 development/release builds | `~/.firestaff/data/` |
-| Linux | DM1 v1 build target | `~/.firestaff/data/` |
-| Windows | DM1 v1 build target | `%USERPROFILE%\.firestaff\data\` |
-| Steam Deck | Linux/AppImage packaging target; DM1 v1 only | `~/.firestaff/data/` |
-| iOS / Android | Not currently available | Coming soon |
+| macOS | DM1 v1 playable; current capture target | `~/.firestaff/data/` |
+| Linux | DM1 v1 playable build target | `~/.firestaff/data/` |
+| Windows | DM1 v1 playable build target | `%USERPROFILE%\.firestaff\data\` |
+| Steam Deck | DM1 v1 Linux/AppImage target | `~/.firestaff/data/` |
+| iOS / Android | Not available | Coming soon |
 
 Suggested layout:
 
@@ -260,14 +261,19 @@ Launcher UI (M12)
 - [Greatstone](http://greatstone.free.fr/dm/) — dungeon maps, data notes, graphics atlas
 - [DMWeb](http://dmweb.free.fr/) — community documentation, file format specs, tools
 
-## Localization
+## Languages
 
-The launcher contains gettext catalogs and language-selection plumbing for
-multiple languages, including Swedish, but the currently available DM1 v1
-playable scope is verified in English. Do not interpret the presence of PO
-files as proof that every game and every string is fully localized. Swedish
-and the other language targets remain incomplete until their runtime coverage
-is verified.
+The currently playable game scope is verified in **English only**. The
+launcher has gettext catalogs and language-selection plumbing, including
+Swedish, but those catalogs do not yet mean that every menu, runtime message,
+font and game asset is fully translated. Swedish and other languages remain
+development targets until their complete runtime coverage is verified.
+
+| Language | Current status |
+|----------|----------------|
+| English | Verified for DM1 v1 |
+| Swedish | Launcher/catalog work present; full DM1 v1 verification pending |
+| Other languages | Catalog/runtime coverage pending |
 
 ## Wiki
 
