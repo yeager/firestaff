@@ -502,7 +502,16 @@ int main(void) {
                         M11_GAME_INPUT_REDRAW &&
                     enter_view.theronState.startup_phase ==
                         THERON_STARTUP_PHASE_SOUL_ROOM,
-                    "M11 Theron Enter-forcefield stage accepts");
+                "M11 Theron Enter-forcefield stage accepts");
+        expect_true(M11_GameView_HandleInput(&enter_view,
+                                             M12_MENU_INPUT_ACCEPT) ==
+                        M11_GAME_INPUT_REDRAW &&
+                    enter_view.theronState.startup_phase ==
+                        THERON_STARTUP_PHASE_SOUL_ROOM &&
+                    enter_view.theronState.level_loaded == 0 &&
+                    strstr(enter_view.inspectDetail,
+                           "AUTHENTIC CAPTURE ADMISSION REQUIRED") != NULL,
+                    "M11 Theron Enter-forcefield is actionable with Theron alone");
         expect_true(M11_GameView_HandleInput(&enter_view,
                                              M12_MENU_INPUT_ACCEPT) ==
                         M11_GAME_INPUT_REDRAW &&
@@ -797,12 +806,12 @@ int main(void) {
                     strcmp(mirror0->decodedName, "HAKAR") == 0 &&
                     strcmp(mirror0->decodedTitle, "THE BRAVE") == 0 &&
                     forcefield != NULL &&
-                    forcefield->enabled == 0 &&
+                    forcefield->enabled == 1 &&
                     forcefield->x == 46 &&
                     forcefield->y == 160 &&
                     forcefield->w > 0 &&
                     forcefield->h > 0,
-                    "M11 Theron startup layout exposes Soul Room mirrors and gated forcefield");
+                    "M11 Theron startup layout exposes an actionable forcefield");
     }
     for (i = 0; i < 6; ++i) {
         expect_true(M11_GameView_HandleInput(&view, M12_MENU_INPUT_DOWN) ==

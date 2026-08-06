@@ -1193,7 +1193,8 @@ int theron_v1_startup_layout_build(
         elements[count].cursor =
             (state->soul_cursor == THERON_STARTUP_HERO_MIRROR_COUNT) ? 1 : 0;
         elements[count].enabled =
-            (state->phase == THERON_STARTUP_PHASE_READY) ? 1 : 0;
+            (state->phase == THERON_STARTUP_PHASE_SOUL_ROOM ||
+             state->phase == THERON_STARTUP_PHASE_READY) ? 1 : 0;
         elements[count].selected = elements[count].cursor;
         tqr_startup_layout_set_label(&elements[count], "FORCEFIELD");
         tqr_startup_layout_set_rect(&elements[count], 46, 160, 154, 10);

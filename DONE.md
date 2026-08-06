@@ -1,3 +1,9 @@
+- ✅ 2026-08-06 Theron forcefield menu admission: the startup layout now keeps
+  `ENTER FORCEFIELD` actionable in both Soul Room and READY, so starting with
+  Theron alone no longer gets trapped on the mirror list. The runtime still
+  fails closed with the authenticated-capture status when the dungeon handoff
+  capture is absent. Direct-launch and launcher-handoff regressions pass.
+
 - ✅ 2026-08-06 M12 missing archive-tool recovery: when present game media is
   inside an archive whose reader is unavailable, the launcher now shows a
   localized popup naming the required extractor and asks the player to rescan
