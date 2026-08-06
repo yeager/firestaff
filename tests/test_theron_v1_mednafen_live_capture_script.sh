@@ -96,6 +96,7 @@ if ! grep -Fq -- '-force_module pce' "$script" ||
 fi
 if ! grep -Fq 'MODE1/2048' "$script" ||
    ! grep -Fq '397039af02d50d15c70b74088eb8a1cb|ceb02343868f80cec899e9b239aff2da' "$script" ||
+   ! grep -Fq 'MODE1\/(2352|2048)' "$script" ||
    ! grep -Fq 'track02_mode=%s' "$script"; then
     printf 'FAIL: live capture must admit the authenticated MODE1/2048 ISO route separately from raw BIN\n' >&2
     exit 1

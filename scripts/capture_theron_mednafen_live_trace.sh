@@ -101,7 +101,7 @@ track02_member=$(awk '
         file = line
         next
     }
-    /^[[:space:]]*TRACK[[:space:]]+02[[:space:]]+MODE1\/2352[[:space:]]*$/ {
+    /^[[:space:]]*TRACK[[:space:]]+02[[:space:]]+MODE1\/(2352|2048)[[:space:]]*$/ {
         print file
         exit
     }

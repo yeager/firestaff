@@ -53517,6 +53517,11 @@ alcove runtime and archive-media tests passed (4/4).
   `track02.wav/ogg/mp3` fallback from manual track selection. A local audio
   file can no longer masquerade as Saturn Red Book playback; selection remains
   provenance-only until an authenticated media handoff exists.
+- ✅ 2026-08-06 Theron ISO capture parser correction: the CUE `FILE`/`TRACK 02`
+  association now matches both authenticated `MODE1/2352` and `MODE1/2048`
+  layouts, so the ISO route reaches its payload/hash gate instead of being
+  rejected by a raw-BIN-only matcher. Shell syntax, regression test and diff
+  checks pass; no semantic consumer handoff was promoted.
 - ✅ 2026-08-06 CSB selected-archive isolation: M12 can now materialize every
   selected CSB edition into its own hash-checked runtime cache instead of
   reusing the scanner's first-match `asset-cache/csb` view. The existing FM

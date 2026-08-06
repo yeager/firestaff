@@ -188,6 +188,11 @@
   authentic Track 02 sectors and emits VDC/VCE snapshots, but still reports
   `non_system_card_pcecd=0` and no `$2600` handoff; semantic promotion remains
   closed.
+  2026-08-06 ISO parser correction: the capture runner's `FILE`/`TRACK 02`
+  association now accepts both authenticated `MODE1/2352` raw BIN and
+  `MODE1/2048` ISO layouts. The previous mixed parser could identify the ISO
+  mode and then reject its track member as raw-only. This closes only the
+  capture-intake mismatch; it does not promote a game-owned consumer.
   2026-08-06 input-bound follow-up: a real PID-bound macOS key pair was
   observed by the instrumented SDL boundary. The source-locked raw intake
   still requires US `INDEX 01 = 225` and the BIN has a second valid MODE1
