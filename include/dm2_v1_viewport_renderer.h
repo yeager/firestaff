@@ -1506,51 +1506,6 @@ typedef struct {
     int projectile_count;
 } DM2_V1_ProjectileRenderPlan;
 
-typedef enum {
-    DM2_V1_WEATHER_OVERLAY_NONE = 0,
-    DM2_V1_WEATHER_OVERLAY_RAIN = 1,
-    DM2_V1_WEATHER_OVERLAY_FOG = 2,
-    DM2_V1_WEATHER_OVERLAY_STORM = 3
-} DM2_V1_WeatherOverlayKind;
-
-typedef struct {
-    DM2_V1_WeatherOverlayKind kind;
-    int intensity;
-    int density;
-    int scroll;
-    int alpha;
-    int streak_step;
-    int lightning_flash;
-    uint8_t rain_color;
-    uint8_t fog_target_color;
-    uint8_t lightning_color;
-} DM2_V1_WeatherOverlayRenderPlan;
-
-typedef enum {
-    DM2_V1_WEATHER_COMMAND_NONE = 0,
-    DM2_V1_WEATHER_COMMAND_RAIN_STREAKS = 1,
-    DM2_V1_WEATHER_COMMAND_FOG_BLEND = 2,
-    DM2_V1_WEATHER_COMMAND_LIGHTNING_FILL = 3
-} DM2_V1_WeatherOverlayCommandKind;
-
-typedef struct {
-    DM2_V1_WeatherOverlayCommandKind kind;
-    int density;
-    int scroll;
-    int streak_step;
-    int alpha;
-    uint8_t color;
-    uint8_t target_color;
-} DM2_V1_WeatherOverlayCommand;
-
-#define DM2_V1_WEATHER_OVERLAY_COMMAND_MAX 3
-
-typedef struct {
-    DM2_V1_WeatherOverlayCommand commands[
-        DM2_V1_WEATHER_OVERLAY_COMMAND_MAX];
-    int command_count;
-} DM2_V1_WeatherOverlayCommandPlan;
-
 typedef int (*DM2_V1_ViewportAssetFetch)(
     void *user,
     int gdat_index,
@@ -2406,13 +2361,6 @@ int dm2_v1_viewport_projectile_asset_blit(
     int tick_count,
     uint32_t *random_seed,
     DM2_V1_ProjectileAssetBlit *out_blit);
-int dm2_v1_viewport_build_weather_overlay_render_plan(
-    const DM2_V1_ViewportState *s,
-    DM2_V1_WeatherOverlayRenderPlan *out_plan);
-int dm2_v1_viewport_build_weather_overlay_commands(
-    const DM2_V1_WeatherOverlayRenderPlan *plan,
-    DM2_V1_WeatherOverlayCommandPlan *out_commands);
-
 /* ── Lighting helpers ─────────────────────────────────────────── */
 /* dm2_v1_viewport_object_light_level — compute object light intensity
  * for a tile at `distance_tiles`.

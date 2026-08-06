@@ -50478,3 +50478,12 @@ and the PC English boot probe reaches `dm2-startup-menu`. Source:
   popped, or dispatched before an original dungeon/session supplies timer
   rows. Verification: timer guard, real PC-DOS boot profile 95/95, startup
   menu action contract 103/103, and GDAT RAW4 pointer contract all pass.
+- ✅ 2026-08-06 DM2 weather placeholder closure: removed the uncalled public
+  rain/fog/storm overlay planner that generated density, colours and flash
+  commands from generic weather values. Production weather now has only the
+  source-owned GDAT `ENVIRONMENT` plus `DistantEnvironment` renderer route.
+  The formerly disabled no-synthetic overlay test is enabled through the DM2
+  archive and proves scene controls cannot alter pixels without that receipt.
+  Verification: lighting/HUD/viewport gate 151/151, no-synthetic weather
+  guard, weather material gate, real PC-DOS outdoor weather capture 21/21,
+  and boot profile 95/95.

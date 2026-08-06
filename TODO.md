@@ -1887,7 +1887,12 @@ diagnostic; it must not silently fall back to a generated visual.
   authenticated `dm2_v1_dungeon_*` record chain; if that chain cannot bind a
   button, the button is absent instead of obtaining a guessed WALL_GFX
   selection. Complete the G1 record-chain ownership before restoring any
-  missing source button.
+  missing source button. **2026-08-06 weather inventory update:** the unused
+  generic rain/fog/storm planner with fixed colours and generated commands
+  has been removed. The only remaining weather draw route is the original
+  GDAT `ENVIRONMENT`/`DistantEnvironment` receipt chain; broader real-session
+  state ownership is still required before all original weather paths can be
+  shown.
 - **DM2-ORIGINAL-REPLACE-002:** Replace the V2 HUD's synthetic 1x1/overlay
   route with real interface/widget records from `dm2/GRAPHICS.DAT`; do not
   use generated PNG pixels as a runtime fallback. **2026-07-30 update:** the

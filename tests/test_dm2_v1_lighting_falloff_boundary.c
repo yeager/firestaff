@@ -467,119 +467,27 @@ static void test_hud_chrome_render_plan(void)
               outdoor.champion_slot_count == 0);
 }
 
-static void test_weather_overlay_render_plan(void)
+static void test_weather_overlay_requires_source_receipt(void)
 {
     uint8_t framebuffer[320 * 200];
+    uint8_t before[320 * 200];
     DM2_V1_ViewportState viewport;
-    DM2_V1_WeatherOverlayRenderPlan plan;
-    DM2_V1_WeatherOverlayCommandPlan commands;
 
     memset(framebuffer, 7, sizeof(framebuffer));
+    memcpy(before, framebuffer, sizeof(before));
     dm2_v1_viewport_init(&viewport, framebuffer, 320);
-
-    CHECK("DM2 weather plan rejects null output",
-          dm2_v1_viewport_build_weather_overlay_render_plan(
-              &viewport, NULL) == 0);
-    CHECK("DM2 clear weather builds empty overlay plan",
-          dm2_v1_viewport_build_weather_overlay_render_plan(
-              &viewport, &plan) == 1 &&
-              plan.kind == DM2_V1_WEATHER_OVERLAY_NONE);
-
-    viewport.weather = DM2_V1_WEATHER_OVERLAY_RAIN;
-    viewport.rain_intensity = 64;
-    viewport.tick_count = 3;
-    CHECK("DM2 rain plan owns density and scroll",
-          dm2_v1_viewport_build_weather_overlay_render_plan(
-              &viewport, &plan) == 1 &&
-              plan.kind == DM2_V1_WEATHER_OVERLAY_RAIN &&
-              plan.density == 7 &&
-              plan.scroll == 4 &&
-              plan.streak_step == 3 &&
-              plan.rain_color == 15);
-    CHECK("DM2 rain weather command owns streak material",
-          dm2_v1_viewport_build_weather_overlay_commands(
-              &plan, &commands) == 1 &&
-              commands.command_count == 1 &&
-              commands.commands[0].kind ==
-                  DM2_V1_WEATHER_COMMAND_RAIN_STREAKS &&
-              commands.commands[0].density == 7 &&
-              commands.commands[0].scroll == 4 &&
-              commands.commands[0].streak_step == 3 &&
-              commands.commands[0].color == 15);
+    dm2_v1_viewport_set_outdoor(&viewport, 1);
+    dm2_v1_viewport_set_gdat_scene_control(
+        &viewport, 1, 0, 0x12345678u, 0, 0, 0, 0, 0, 0,
+        1, 1, 1, 0);
     dm2_v1_render_weather_overlay(&viewport);
-    /* skproject c_weather.cpp:221-266 paints only through the receipt-owned
-     * ENVIRONMENT transaction (c_querydb.cpp DM2_QUERY_TEMP_PICST:2381), so
-     * an enum-only viewport without the outdoor receipt stays fail-closed.
-     * Pixel application through a complete receipt fixture is proven by
-     * test_dm2_v1_weather_renderer_material_gate.c. */
-    CHECK("DM2 rain overlay cannot paint synthetic streaks without the source receipt",
+    /* c_weather.cpp:221-266 reaches DRAW_TEMP_PICST only from the live
+     * DistantEnvironment records. Scene-control words cannot substitute an
+     * image selector or a renderer receipt. */
+    CHECK("DM2 weather controls cannot create a procedural overlay",
           viewport.asset_weather_drawn_count == 0 &&
-              framebuffer[1] == 7 &&
-              framebuffer[4] == 7 &&
-              framebuffer[(3 * 320) + 4] == 7);
-
-    memset(framebuffer, 8, sizeof(framebuffer));
-    dm2_v1_viewport_init(&viewport, framebuffer, 320);
-    viewport.weather = DM2_V1_WEATHER_OVERLAY_FOG;
-    viewport.rain_intensity = 32;
-    CHECK("DM2 fog plan owns alpha blend",
-          dm2_v1_viewport_build_weather_overlay_render_plan(
-              &viewport, &plan) == 1 &&
-              plan.kind == DM2_V1_WEATHER_OVERLAY_FOG &&
-              plan.alpha == 4 &&
-              plan.fog_target_color == 0);
-    CHECK("DM2 fog weather command owns blend material",
-          dm2_v1_viewport_build_weather_overlay_commands(
-              &plan, &commands) == 1 &&
-              commands.command_count == 1 &&
-              commands.commands[0].kind ==
-                  DM2_V1_WEATHER_COMMAND_FOG_BLEND &&
-              commands.commands[0].alpha == 4 &&
-              commands.commands[0].target_color == 0);
-    dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 fog overlay cannot paint synthetic alpha without the source receipt",
-          viewport.asset_weather_drawn_count == 0 &&
-              framebuffer[0] == 8);
-
-    memset(framebuffer, 3, sizeof(framebuffer));
-    dm2_v1_viewport_init(&viewport, framebuffer, 320);
-    viewport.weather = DM2_V1_WEATHER_OVERLAY_STORM;
-    viewport.rain_intensity = 70;
-    viewport.tick_count = 121;
-    CHECK("DM2 storm plan owns lightning gate",
-          dm2_v1_viewport_build_weather_overlay_render_plan(
-              &viewport, &plan) == 1 &&
-              plan.kind == DM2_V1_WEATHER_OVERLAY_STORM &&
-              plan.density == 7 &&
-              plan.scroll == 1 &&
-              plan.lightning_flash == 1);
-    CHECK("DM2 storm weather commands preserve pass order",
-          dm2_v1_viewport_build_weather_overlay_commands(
-              &plan, &commands) == 1 &&
-              commands.command_count == 2 &&
-              commands.commands[0].kind ==
-                  DM2_V1_WEATHER_COMMAND_RAIN_STREAKS &&
-              commands.commands[1].kind ==
-                  DM2_V1_WEATHER_COMMAND_LIGHTNING_FILL &&
-              commands.commands[1].color == 15);
-    dm2_v1_render_weather_overlay(&viewport);
-    CHECK("DM2 storm lightning cannot paint a synthetic flash without the source receipt",
-          viewport.asset_weather_drawn_count == 0 &&
-              framebuffer[0] == 3 &&
-              framebuffer[(199 * 320) + 319] == 3);
-
-    memset(&plan, 0x55, sizeof(plan));
-    CHECK("DM2 weather plan is null-state safe",
-          dm2_v1_viewport_build_weather_overlay_render_plan(
-              NULL, &plan) == 1 &&
-              plan.kind == DM2_V1_WEATHER_OVERLAY_NONE);
-    CHECK("DM2 weather command plan is null-plan safe",
-          dm2_v1_viewport_build_weather_overlay_commands(
-              NULL, &commands) == 1 &&
-              commands.command_count == 0);
-    CHECK("DM2 weather command plan rejects null output",
-          dm2_v1_viewport_build_weather_overlay_commands(
-              &plan, NULL) == 0);
+              viewport.gdat_scene_weather_consumed_count == 0 &&
+              memcmp(framebuffer, before, sizeof(framebuffer)) == 0);
 }
 
 static void test_floor_ceiling_asset_provider(void)
@@ -1957,7 +1865,7 @@ int main(void)
     }
     test_door_rect_contracts();
     test_hud_chrome_render_plan();
-    test_weather_overlay_render_plan();
+    test_weather_overlay_requires_source_receipt();
     test_floor_ceiling_asset_provider();
     test_sprite_asset_provider();
 

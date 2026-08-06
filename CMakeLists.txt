@@ -48607,21 +48607,16 @@ if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_wall_ornate_a
     )
 endif()
 
-# DISABLED: deep-dependency link failure
-if(FALSE AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_no_synthetic_overlay.c"
+# Source weather is drawable only through an admitted GDAT renderer receipt;
+# scene controls and generic weather state cannot create host-side effects.
+if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/tests/test_dm2_v1_weather_no_synthetic_overlay.c"
         AND EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/src/dm2/dm2_v1_viewport_renderer.c")
     add_executable(test_dm2_v1_weather_no_synthetic_overlay
         tests/test_dm2_v1_weather_no_synthetic_overlay.c
-        src/dm2/dm2_v1_viewport_renderer.c
-        src/dm2/dm2_v1_asset_loader.c
-        src/dm2/dm2_v1_creature.c
-        src/dm2/dm2_v1_creature_tables.c
-        src/dm2/dm2_v1_dungeon_loader.c
-        src/dm2/dm2_v1_gdat_door_overlay_m11_command.c
-        src/dm2/dm2_v1_gdat_hud_m11_command.c
-        src/dm2/dm2_v1_gdat_scene_m11_command.c
     )
     target_include_directories(test_dm2_v1_weather_no_synthetic_overlay PRIVATE ${CMAKE_SOURCE_DIR}/include)
+    target_link_libraries(test_dm2_v1_weather_no_synthetic_overlay
+        PRIVATE firestaff_dm2 firestaff_m10 m)
     if(CMAKE_C_COMPILER_ID MATCHES "Clang|GNU")
         target_compile_options(test_dm2_v1_weather_no_synthetic_overlay PRIVATE -Wall -Wextra -O2)
     endif()

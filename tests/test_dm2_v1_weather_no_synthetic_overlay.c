@@ -43,11 +43,11 @@ static void check_weather(int weather, int intensity, int tick,
 
 int main(void)
 {
-    check_weather(DM2_V1_WEATHER_OVERLAY_RAIN, 64, 3, 1, 0, 0,
+    check_weather(1, 64, 3, 1, 0, 0,
                   "rain control does not create procedural pixels");
-    check_weather(DM2_V1_WEATHER_OVERLAY_FOG, 32, 0, 0, 1, 0,
+    check_weather(2, 32, 0, 0, 1, 0,
                   "mist control does not create procedural pixels");
-    check_weather(DM2_V1_WEATHER_OVERLAY_STORM, 70, 121, 1, 0, 1,
+    check_weather(3, 70, 121, 1, 0, 1,
                   "thunder control does not create procedural pixels");
 
     fprintf(stderr, "DM2 weather no-synthetic boundary: %d failure(s)\n",
