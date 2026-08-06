@@ -52317,14 +52317,22 @@ static void m11_theron_draw_startup_screen(const M11_GameViewState* state,
         for (ri = 0; ri < (int)atlas->route_count; ++ri) {
             const Theron_Track02StartupBitmapAtlasRoute *route =
                 &atlas->routes[ri];
-            if (!(phase_route & (1u << (unsigned)ri))) continue;
+            /* Routes are identified by their source-owned bit, not by the
+             * order in which the decoder happened to append them.  The
+             * atlas pixels use the fixed 256-pixel row stride from
+             * THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH; a narrower
+             * route therefore cannot be read as a tightly packed image. */
+            if (route->route_bit != phase_route) continue;
             if (route->width > 0u && route->height > 0u) {
                 int bx = (framebufferWidth - (int)route->width) / 2;
                 int by = plan->border_y > 0 ? plan->border_y : 8;
                 int px, py;
                 for (py = 0; py < (int)route->height; ++py) {
                     for (px = 0; px < (int)route->width; ++px) {
-                        uint8_t idx = route->pixels[py * route->width + px];
+                        uint8_t idx = route->pixels[
+                            (size_t)py *
+                                THERON_TRACK02_STARTUP_BITMAP_ATLAS_MAX_WIDTH +
+                            (size_t)px];
                         if (idx > 0u) {
                             m11_put_pixel(framebuffer, framebufferWidth,
                                           framebufferHeight,
