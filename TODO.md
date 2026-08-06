@@ -3167,6 +3167,12 @@ diagnostic; it must not silently fall back to a generated visual.
   literal matches still require consumer-by-consumer classification: V2
   no-draw/fail-closed boundaries, test seams and narrow source-state adapters
   are not interchangeable with synthetic runtime pixels.
+  **2026-08-06 cache boundary update:** removed the remaining local
+  `v22_inplace_cache.bin` reader from the production V2.2 compatibility
+  module. It was already unable to draw, but it still admitted locally
+  generated RGBA bytes into memory. The API now stays explicitly inactive and
+  no-draw without opening a cache file. Future V2 work must start with an
+  original-data provenance policy, not revive the generated-art cache.
 - **THERON-ORIGINAL-REPLACE-001:** Replace the coloured UI chrome, checkerboard
   palette and chapter-marker placeholders with real US/JP Track 02 bitmap,
   palette and loader-selected records.  The supplied `TQUS02.bin`, CUE and

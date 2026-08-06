@@ -3,24 +3,10 @@
  *
  * DM2 V2.2 GPU render path: V22 modern-art IN-PLACE bitmap lookup.
  *
- * This is the foundation for switching the V22 render mode from
- * "overlay" (placeholder colored rectangle on top of V1) to
- * "in-place" (replace V1 sprite with V22 PBR PNG at the same cell).
- *
- * Architecture:
- *   dm2_v22_shape_cache_update -> per-cell V22 shape (params, variant)
- *     -> dm2_v22_inplace_get_cell_bitmap(depth, lateral, &w, &h)
- *        -> variant -> asset_id in modern_asset_manifest.json
- *        -> asset_id -> file path (via dm2_v22_get_shape_path)
- *        -> PNG decode to RGBA buffer (cached at init)
- *        -> return RGBA* + width + height
- *   dm2_draw_* (9-square viewport) passes consult the bitmap and blit it instead of
- *   the V1 sprite when V22 is active.
- *
- * When V22 is NOT active (modern assets not installed or
- * presentation_mode != V22), every cell returns NULL and the
- * V1 draw path is used unchanged. This is the migration safety
- * path: in-place is opt-in.
+ * Local V2.2 art caches are not original DM2 data. This compatibility API is
+ * intentionally no-draw: it neither opens operator-provided RGBA cache files
+ * nor returns pixels. V1's verified GDAT route remains the only material
+ * owner until a separately source-proven policy is available.
  *
  * Source-lock: dm2_v22_shape_cache_pc34.h (the cache),
  * dm2_v22_modern_assets_pc34.c (manifest lookup),
@@ -41,19 +27,13 @@
 extern "C" {
 #endif
 
-/* Initialize the in-place bitmap cache. Loads every PNG referenced
- * by ~/.firestaff/assets/dm2/modern/modern_asset_manifest.json into
- * RGBA buffers keyed by (category, asset_id). Call once at startup
- * after dm2_v22_set_manifest_path() and dm2_v22_validate_manifest().
- *
- * Returns 1 on success (at least one bitmap cached), 0 if no assets
- * are available (V22 not installed — fallback to V1). */
+/* Compatibility no-op. Always returns 0 and does not open local art files. */
 int dm2_v22_inplace_draw_init(void);
 
-/* Free all cached RGBA buffers. Call once at shutdown. */
+/* Compatibility no-op. */
 void dm2_v22_inplace_draw_shutdown(void);
 
-/* True when in-place has at least one cached bitmap. */
+/* Always false: no unproven local RGBA art is admitted. */
 int dm2_v22_inplace_draw_active(void);
 
 /* Get the cached RGBA bitmap for a V22 cell. depth in {1,2,3},

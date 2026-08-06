@@ -1,5 +1,15 @@
 # Nexus PLRD provisions quarantine (2026-08-06)
 
+- ✅ 2026-08-06 DM2 V2.2 local-art cache removal: removed the dormant
+  `v22_inplace_cache.bin` parser and its invented wall/floor/creature RGBA
+  cache admission from the production-linked compatibility module. Its public
+  API remains an explicit no-op/no-draw boundary, so local generated art is
+  neither opened nor retained as possible DM2 material. The verified V1 GDAT
+  route remains the only visual owner. Verification:
+  `test_dm2_v22_inplace_draw_pc34` (17/17),
+  `test_dm2_v22_viewport_swap_wireup_pc34` (10/10), and the full `firestaff`
+  target build pass.
+
 - ✅ 2026-08-06 DM2 external BPP8 screenshot palette correction:
   `M11_Screenshot_CaptureCurrent` no longer folds framebuffer indices through
   `0x0f` after M11 has installed a source-owned 256-colour palette. This makes

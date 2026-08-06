@@ -33,13 +33,14 @@ static int checks = 0;
 static void test_init_shutdown(void) {
     int r1 = dm2_v22_inplace_draw_init();
     int r2 = dm2_v22_inplace_draw_init();
-    CHECK(r1 == r2, "init is idempotent (same return on repeat call)");
+    CHECK(r1 == 0 && r2 == 0,
+          "local V22 cache is never admitted as DM2 material");
     int active_after = dm2_v22_inplace_draw_active();
-    CHECK((active_after == 0) || (active_after == 1), "active is 0 or 1");
+    CHECK(active_after == 0, "in-place local-art route is always inactive");
     dm2_v22_inplace_draw_shutdown();
     CHECK(dm2_v22_inplace_draw_active() == 0, "active==0 after shutdown");
     int r3 = dm2_v22_inplace_draw_init();
-    CHECK((r3 == 0) || (r3 == 1), "re-init returns 0 or 1");
+    CHECK(r3 == 0, "re-init does not open a local art cache");
     dm2_v22_inplace_draw_shutdown();
 }
 
@@ -68,11 +69,8 @@ static void test_source_evidence(void) {
 static void test_cache_load_path(void) {
     int r = dm2_v22_inplace_draw_init();
     int active = dm2_v22_inplace_draw_active();
-    if (r == 1) {
-        CHECK(active == 1, "active==1 after successful init");
-    } else {
-        CHECK(active == 0, "active==0 when cache missing/invalid");
-    }
+    CHECK(r == 0 && active == 0,
+          "cache presence cannot admit unproven local V22 pixels");
     dm2_v22_inplace_draw_shutdown();
 }
 
