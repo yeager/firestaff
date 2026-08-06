@@ -9,6 +9,10 @@
   weaknesses/lore and generated art indices with the exact ReDMCSB PC34
   G0243 creature identities/base-health records C00-C26. Uncaptured attack,
   placement, weakness and pixel ownership remains explicitly unavailable.
+- ✅ Removed the unused legacy creature renderer's approximate sprite-index
+  table, guessed distance rectangles and synthetic health-bar draw. Its API
+  now fails closed; active DM1 creature presentation remains owned by the
+  authenticated M11 group/GRAPHICS.DAT consumer.
 - ✅ Re-audited the active DM1 V1 M11 renderer against the real PC34
   `GRAPHICS.DAT`/`DUNGEON.DAT` path and the `DM1-ORIGINAL-REPLACE-003` through
   `DM1-ORIGINAL-REPLACE-026` inventory. No open production placeholder was

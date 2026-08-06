@@ -5,12 +5,10 @@
 #include "firestaff_viewport_renderer.h"
 #include <stdint.h>
 
-/* Creature rendering — draws creatures in the viewport.
- * DM1 creatures are 2D sprites from GRAPHICS.DAT, drawn at distance-based scale.
- *
- * Creature sprite indices in GRAPHICS.DAT:
- *   Each creature type has 4 facing sprites × animation frames.
- *   Creatures at D0 are largest, D3 smallest. */
+/* Legacy compatibility surface only.  It is not the active DM1 renderer:
+ * without authenticated DUNGEON.DAT group state, GRAPHICS.DAT sprite
+ * placement and M11 viewport receipts it fails closed.  The production path
+ * is the source-bound M11 creature consumer. */
 
 #define MAX_VISIBLE_CREATURES 16
 
@@ -38,4 +36,3 @@ void fs_creature_draw_health(FS_ViewportRenderer *vp,
     int screen_x, int screen_y, int width, int health_pct);
 
 #endif
-

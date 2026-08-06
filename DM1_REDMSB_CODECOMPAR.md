@@ -1,8 +1,8 @@
 # DM1 — ReDMCSB vs Firestaff Code Comparison
 
-**Generated:** 2026-05-26 19:05 GMT+2  
-**ReDMCSB:** ReDMCSB_WIP20210206/Toolchains/Common/Source/ (289 C-files total)  
-**Firestaff:** src/dm1/, src/engine/, src/memory/  
+**Generated:** 2026-05-26 19:05 GMT+2
+**ReDMCSB:** ReDMCSB_WIP20210206/Toolchains/Common/Source/ (289 C-files total)
+**Firestaff:** src/dm1/, src/engine/, src/memory/
 **Purpose:** Source-lock audit — every ReDMCSB C-file vs its Firestaff counterpart, identify gaps
 
 ---
@@ -23,7 +23,7 @@
 ## Priority 1: Core Input / Command System
 
 ### COMMAND.C
-**ReDMCSB:** 3242 lines — Central input router, mouse hit-test, command queue, keyboard  
+**ReDMCSB:** 3242 lines — Central input router, mouse hit-test, command queue, keyboard
 **Firestaff:** dm1_v1_input_command_queue_pc34_compat.c (360L) + main_loop_m11.c + dm1_v1_click_routing_pc34_compat.c
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -46,7 +46,7 @@
 ---
 
 ### CLIKVIEW.C
-**ReDMCSB:** 517 lines — Dungeon viewport click handling (Type 80)  
+**ReDMCSB:** 517 lines — Dungeon viewport click handling (Type 80)
 **Firestaff:** dm1_v1_click_routing_pc34_compat.c (160L) + dm1_v1_viewport_click_pc34_compat.c (310L)
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -68,7 +68,7 @@
 ## Priority 2: Resurrection / Mirror Issue
 
 ### REVIVE.C
-**ReDMCSB:** 943 lines — Champion resurrect/reincarnate, candidate add to party  
+**ReDMCSB:** 943 lines — Champion resurrect/reincarnate, candidate add to party
 **Firestaff:** dm1_v1_resurrection_pc34_compat.c (433 lines, 7 ReDMCSB citations)
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -89,7 +89,7 @@
 ---
 
 ### CLIKCHAM.C
-**ReDMCSB:** Champion status box click handling (part of CLIKVIEW/Champion click)  
+**ReDMCSB:** Champion status box click handling (part of CLIKVIEW/Champion click)
 **Firestaff:** dm1_v1_champion_panel_hud_pc34_compat.c — champion status box clicks
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -104,7 +104,7 @@
 ## Priority 3: Viewport Rendering
 
 ### DUNVIEW.C
-**ReDMCSB:** 8619 lines — Dungeon view rendering, draw order, floor/ceiling/walls  
+**ReDMCSB:** 8619 lines — Dungeon view rendering, draw order, floor/ceiling/walls
 **Firestaff:** dm1_v1_viewport_3d_pc34_compat.c + fakewall + floor/ceiling + wall_ornament + firestaff_viewport_renderer.c
 
 | ReDMCSB area | Firestaff counterpart | Status |
@@ -124,7 +124,7 @@
 ---
 
 ### VBLANK.C
-**ReDMCSB:** 695 lines — Vertical blank interrupt handler, per-frame timing  
+**ReDMCSB:** 695 lines — Vertical blank interrupt handler, per-frame timing
 **Firestaff:** dm1_v1_vblank_timing.c (standalone, well-contained)
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -143,7 +143,7 @@
 ## Priority 4: Save/Load System
 
 ### LOADSAVE.C
-**ReDMCSB:** 3049 lines — Save game, load game, format disk, copy protection  
+**ReDMCSB:** 3049 lines — Save game, load game, format disk, copy protection
 **Firestaff:** dm1_v1_save_load_system_pc34_compat.c (203L) + dm1_v1_save_load.c + firestaff_save.c
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -166,7 +166,7 @@
 ## Priority 5: Movement / Walls
 
 ### MOVESENS.C
-**ReDMCSB:** 1795 lines — Movement sensing, wall blocking, physics  
+**ReDMCSB:** 1795 lines — Movement sensing, wall blocking, physics
 **Firestaff:** dm1_v1_movement_pipeline_pc34_compat.c (476L) + movement_pc34 + movement_command_core + collision_door
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -185,7 +185,7 @@
 ---
 
 ### DUNGEON.C
-**ReDMCSB:** 2763 lines — Dungeon map, square data, thing list, map utilities  
+**ReDMCSB:** 2763 lines — Dungeon map, square data, thing list, map utilities
 **Firestaff:** dm1_v1_dungeon_data_pc34_compat.c + dungeon_square_structs + dungeon_loader + memory_dungeon_dat
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -215,7 +215,7 @@
 ## Priority 6: Champion System
 
 ### CHAMPION.C
-**ReDMCSB:** 2502 lines — Champion state, stats, needs, time effects  
+**ReDMCSB:** 2502 lines — Champion state, stats, needs, time effects
 **Firestaff:** dm1_v1_champion_stats_pc34_compat.c (7 citations) + champion_needs + food_water + memory_champion_state
 
 | ReDMCSB area | Firestaff counterpart | Status |
@@ -236,7 +236,7 @@
 ---
 
 ### PANEL.C
-**ReDMCSB:** 2449 lines — Inventory panel, champion panel, chest, object description  
+**ReDMCSB:** 2449 lines — Inventory panel, champion panel, chest, object description
 **Firestaff:** dm1_v1_champion_panel_hud_pc34_compat.c + portrait_panel + inventory + inventory_consumables + champion_needs
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -264,7 +264,7 @@
 ## Priority 7: Endgame / Hall of Champions
 
 ### ENDGAME.C
-**ReDMCSB:** 1024 lines — Endgame screen, Hall of Champions, champion portraits  
+**ReDMCSB:** 1024 lines — Endgame screen, Hall of Champions, champion portraits
 **Firestaff:** dm1_v1_endgame_system_pc34_compat.c (only 2 ReDMCSB citations)
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -280,7 +280,7 @@
 ## Priority 8: Audio
 
 ### AUDIO.C / DOSOUND.C
-**ReDMCSB:** Sound request/play, sound effect dispatch  
+**ReDMCSB:** Sound request/play, sound effect dispatch
 **Firestaff:** dm1_v1_sound_pc34_compat.c + firestaff_audio.c
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -295,7 +295,7 @@
 ## Priority 9: Combat
 
 ### COMBAT.C
-**ReDMCSB:** Combat resolution, damage calculation, attack/defense  
+**ReDMCSB:** Combat resolution, damage calculation, attack/defense
 **Firestaff:** dm1_v1_combat_pc34_compat.c (28 ReDMCSB citations — strong coverage)
 
 | ReDMCSB area | Firestaff counterpart | Status |
@@ -313,7 +313,7 @@
 ## Priority 10: Spell Casting
 
 ### CASTER.C
-**ReDMCSB:** 103 lines — Spell casting trigger, magic system  
+**ReDMCSB:** 103 lines — Spell casting trigger, magic system
 **Firestaff:** dm1_v1_spell_casting_pc34_compat.c + dm1_v1_spell_effect_render_pc34_compat.c
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -328,7 +328,7 @@
 ## Priority 11: Dungeon Loading / Data
 
 ### DUNGEON_DAT.C
-**ReDMCSB:** Dungeon data file loading, decompression  
+**ReDMCSB:** Dungeon data file loading, decompression
 **Firestaff:** dm1_v1_dungeon_loader_pc34_compat.c + dungeon_decompressor + memory_dungeon_dat
 
 | ReDMCSB function | Firestaff counterpart | Status |
@@ -358,7 +358,7 @@
 | ANIM.C | dm1_v1_projectile_explosion_render_pc34_compat.c | SOURCE-LOCKED | Animation system |
 | GRAPHICS.C | firestaff_graphics_dat_reader.c | PARTIAL | Graphics data loading |
 | PALETTE.C | firestaff_dm1_palette.c + firestaff_vga_palette.c | SOURCE-LOCKED | VGA palette |
-| SPRITES.C | firestaff_creature_renderer.c | SOURCE-LOCKED | Creature sprite |
+| SPRITES.C | firestaff_creature_renderer.c | LEGACY DISABLED | The old generic API has no source receipt and is fail-closed; active DM1 creature drawing belongs to the M11 source-bound consumer. |
 | EVENTS.C | dm1_v1_event_timer_pc34_compat.c | SOURCE-LOCKED | Event system |
 | TIMELINE.C | memory_timeline_pc34_compat.c | SOURCE-LOCKED | Time events |
 | SWSH.C | dm1_v1_fade_transition_pc34_compat.c | SOURCE-LOCKED | Fade/shake |
@@ -444,7 +444,7 @@
 |---|---|---|---|
 | GRAPHICS.C / GRF*.C | — | firestaff_graphics_dat_reader.c | PARTIAL |
 | BITMAPS.C | — | firestaff_bitmap_extract.c | PARTIAL |
-| SPRITES.C | — | firestaff_creature_renderer.c | SOURCE-LOCKED |
+| SPRITES.C | — | firestaff_creature_renderer.c | LEGACY DISABLED; active M11 source-bound consumer required |
 | PALETTE.C | — | firestaff_dm1_palette.c | SOURCE-LOCKED |
 | BLIT.C + BLIT*.C | — | dm1_v1_blit_fill_pc34_compat.c | SOURCE-LOCKED |
 | ANIM.C + ANIM*.C | — | projectile_explosion_render_pc34_compat.c | SOURCE-LOCKED |
@@ -497,6 +497,6 @@ AMIGA*.C, FLOPPYAM.C, FLOPPYST.C, BOOTSECT.C, etc. — N/A for PC DM1
 
 ---
 
-*Generated by: Firestaff subagent — 2026-05-26*  
-*Source: ReDMCSB_WIP20210206/Toolchains/Common/Source/*  
+*Generated by: Firestaff subagent — 2026-05-26*
+*Source: ReDMCSB_WIP20210206/Toolchains/Common/Source/*
 *Firestaff: /home/trv2/work/firestaff*
