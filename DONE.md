@@ -8,6 +8,15 @@
 - ✅ M11 launcher handoff and direct-launch regressions pass with the real US
   Track 02 asset.
 
+# DM2 FM Towns END loop decoder (2026-08-06)
+
+- ✅ The RAM-only TWANIM frame decoder now follows END's original `FO`/`NE`
+  loop control records instead of treating its 385 `EN`/`DL` records as a
+  linear sequence. The real HME-242 stream produces 422 display frames; the
+  regression pins its final indexed frame to FNV-1a `553d172f`, duration
+  2,000 and one IMG1 command. This is decoder coverage only: END's palette
+  updates and game-won presentation handoff remain explicitly unbound.
+
 # DM2 V2 source-palette correction (2026-08-06)
 
 - ✅ Replaced the DM2 V2 palette-LUT stub with bounded gamma, brightness and

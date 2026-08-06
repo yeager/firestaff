@@ -254,10 +254,17 @@ int dm2_v1_fmtowns_anim_stream_decode_frame(
     uint8_t *out_pixels, size_t out_pixel_capacity,
     DM2_V1_FmtownsAnimFrameReceipt *out)
 {
+    typedef struct {
+        size_t resume_offset;
+        uint16_t remaining;
+    } FmtownsAnimLoop;
     DM2_V1_FmtownsAnimFrameReceipt receipt;
     DM2_V1_FmtownsAnimStreamReceipt stream;
     size_t offset = 0u;
     uint32_t frame = 0u;
+    uint32_t dispatch_count = 0u;
+    FmtownsAnimLoop loops[8];
+    unsigned int loop_depth = 0u;
     size_t canvas_bytes;
     uint16_t canvas_width;
     uint16_t canvas_height;
@@ -288,13 +295,51 @@ int dm2_v1_fmtowns_anim_stream_decode_frame(
     while (offset + 6u <= data_size) {
         const uint16_t tag = read_be16(data + offset);
         const size_t payload_size = read_be16(data + offset + 2u);
+        const uint16_t attribute = read_be16(data + offset + 4u);
+        const size_t next_offset = offset + payload_size + 6u;
         const uint8_t *image;
         size_t image_size;
         uint32_t commands = 0u;
 
         if (payload_size + 6u > data_size - offset) break;
+        /* SKWIN's 0759:0F64 interpreter can revisit a bounded FO/NE body.
+         * The original code admits only loop counts 1..9 after decrement;
+         * retain a small source-shaped stack and a hard dispatch bound so a
+         * damaged source stream cannot turn the RAM-only reader into a host
+         * animation loop. Source: SKProject skibmio.cpp 0759:1160-121E. */
+        if (++dispatch_count > stream.chunk_count * 9u + 8u) {
+            if (out) *out = receipt;
+            return 0;
+        }
+        if (tag == 0x464fu) { /* FO */
+            if (loop_depth >= sizeof(loops) / sizeof(loops[0])) {
+                if (out) *out = receipt;
+                return 0;
+            }
+            loops[loop_depth].resume_offset = next_offset;
+            loops[loop_depth].remaining = attribute;
+            ++loop_depth;
+            offset = next_offset;
+            continue;
+        }
+        if (tag == 0x4e45u) { /* NE */
+            uint16_t remaining;
+            if (loop_depth == 0u) {
+                if (out) *out = receipt;
+                return 0;
+            }
+            remaining = (uint16_t)(loops[loop_depth - 1u].remaining - 1u);
+            loops[loop_depth - 1u].remaining = remaining;
+            if (remaining > 0u && remaining < 10u) {
+                offset = loops[loop_depth - 1u].resume_offset;
+            } else {
+                --loop_depth;
+                offset = next_offset;
+            }
+            continue;
+        }
         if (tag != 0x454eu && tag != 0x444cu) {
-            offset += payload_size + 6u;
+            offset = next_offset;
             continue;
         }
         /* SkWinCore.cpp 0759:0F64: normal records have a two-byte duration
@@ -350,14 +395,14 @@ int dm2_v1_fmtowns_anim_stream_decode_frame(
             receipt.requested_frame = requested_frame;
             receipt.decoded_frame_count = frame + 1u;
             receipt.display_duration = read_be16(data + offset + 4u);
-            receipt.source_bytes_consumed = (uint32_t)(offset + payload_size + 6u);
+            receipt.source_bytes_consumed = (uint32_t)next_offset;
             receipt.compressed_command_count = commands;
             receipt.output_fnv1a = fnv1a32(out_pixels, canvas_bytes);
             if (out) *out = receipt;
             return 1;
         }
         ++frame;
-        offset += payload_size + 6u;
+        offset = next_offset;
     }
     if (out) *out = receipt;
     return 0;

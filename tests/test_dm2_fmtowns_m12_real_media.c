@@ -194,12 +194,15 @@ int main(void)
             DM2_V1_FmtownsAnimFrameReceipt last_frame;
             DM2_V1_FmtownsAnimFrameReceipt swoosh_first_frame;
             DM2_V1_FmtownsAnimFrameReceipt swoosh_last_frame;
+            DM2_V1_FmtownsAnimFrameReceipt end_last_frame;
             DM2_V1_FmtownsAnimPaletteReceipt title_palette;
             DM2_V1_FmtownsAnimSoundReceipt title_sound;
             uint8_t *title = NULL;
             size_t title_size = 0u;
             uint8_t *swoosh = NULL;
             size_t swoosh_size = 0u;
+            uint8_t *end = NULL;
+            size_t end_size = 0u;
             uint8_t *twanim = NULL;
             size_t twanim_size = 0u;
             uint8_t *skull = NULL;
@@ -209,12 +212,14 @@ int main(void)
             int last_ok = 0;
             int swoosh_first_ok = 0;
             int swoosh_last_ok = 0;
+            unsigned int end_frame_count = 0u;
 
             memset(&disc, 0, sizeof(disc));
             memset(&first_frame, 0, sizeof(first_frame));
             memset(&last_frame, 0, sizeof(last_frame));
             memset(&swoosh_first_frame, 0, sizeof(swoosh_first_frame));
             memset(&swoosh_last_frame, 0, sizeof(swoosh_last_frame));
+            memset(&end_last_frame, 0, sizeof(end_last_frame));
             memset(&title_palette, 0, sizeof(title_palette));
             memset(&title_sound, 0, sizeof(title_sound));
             if (launch.profile && launch.profile->fmtowns_disc_image &&
@@ -260,6 +265,26 @@ int main(void)
                 swoosh_last_ok = dm2_v1_fmtowns_anim_stream_decode_frame(
                     swoosh, swoosh_size, 18u, pixels, sizeof(pixels),
                     &swoosh_last_frame);
+            }
+            if (launch.profile && launch.profile->fmtowns_disc_image &&
+                dm2_v1_fmtowns_disc_probe(
+                    launch.profile->fmtowns_disc_image,
+                    launch.profile->fmtowns_disc_image_size, &disc) == 0 &&
+                dm2_v1_fmtowns_disc_extract_alloc(
+                    launch.profile->fmtowns_disc_image,
+                    launch.profile->fmtowns_disc_image_size,
+                    &disc.end, &end, &end_size) == 0) {
+                while (end_frame_count < 4096u) {
+                    DM2_V1_FmtownsAnimFrameReceipt candidate;
+                    memset(&candidate, 0, sizeof(candidate));
+                    if (!dm2_v1_fmtowns_anim_stream_decode_frame(
+                            end, end_size, end_frame_count, pixels,
+                            sizeof(pixels), &candidate)) {
+                        break;
+                    }
+                    end_last_frame = candidate;
+                    ++end_frame_count;
+                }
             }
             if (launch.profile && launch.profile->fmtowns_disc_image &&
                 dm2_v1_fmtowns_disc_probe(
@@ -319,6 +344,12 @@ int main(void)
                        swoosh_first_frame.output_fnv1a != 0u &&
                        swoosh_last_frame.output_fnv1a != 0u,
                    "FM Towns SWOOSH infers its retail IMG1 canvas from EN/DL records in RAM");
+            expect(end_frame_count == 422u && end_last_frame.valid &&
+                       end_last_frame.requested_frame == 421u &&
+                       end_last_frame.output_fnv1a == 0x553d172fu &&
+                       end_last_frame.display_duration == 2000u &&
+                       end_last_frame.compressed_command_count == 1u,
+                   "FM Towns END replays its original FO/NE loops in RAM");
             expect(skull && skull_size == 374416u &&
                        launch.profile->fmtowns_skull_p3.valid &&
                        launch.profile->fmtowns_skull_p3.level == 1u &&
@@ -363,6 +394,7 @@ int main(void)
                    "FM Towns TWANIM is the authenticated native P3 player for the retained title streams");
             free(title);
             free(swoosh);
+            free(end);
             free(twanim);
             free(skull);
         }
