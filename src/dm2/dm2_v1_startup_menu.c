@@ -1491,9 +1491,13 @@ int dm2_v1_startup_execute_action_from_host_facts_with_receipt(
         return 0;
     }
 
-    save_root = facts->fallback_save_root && facts->fallback_save_root[0]
-                    ? facts->fallback_save_root
-                    : facts->save_root;
+    /* Every snapshot/scan path uses the explicitly selected root first.
+     * Keep execution on that same authenticated save corpus: profile-root is
+     * only the absence fallback and must not silently replace a user-selected
+     * save directory. */
+    save_root = facts->save_root && facts->save_root[0]
+                    ? facts->save_root
+                    : facts->fallback_save_root;
     execution = out_execution ? out_execution : &local_execution;
     if (!dm2_v1_startup_execute_action_with_host_receipt(
             action,

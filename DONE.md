@@ -122,6 +122,14 @@
   placeholder. The HUD still rejects every other absent or malformed portrait
   material and does not create a host portrait.
 
+# DM2 startup save-root ownership (2026-08-06)
+
+- ✅ Fixed the action handoff to retain the explicitly selected save corpus.
+  The profile root is used only when no selected root exists, consistent with
+  startup snapshot and scan ownership.
+- ✅ The menu action contract now covers distinct selected and fallback roots,
+  preventing a stale profile directory from being selected silently.
+
 # DM2 inferred dungeon parser removal (2026-08-06)
 
 - ✅ Removed the retired 16-bit descriptor/tile parser from the world-model
