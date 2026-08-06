@@ -56,6 +56,18 @@
   compatibility tests and the real PLRD parser test; no game data was copied
   or committed.
 
+# Theron source roster survives forcefield admission (2026-08-06)
+
+- ✅ Fixed a production startup data-loss bug where the forcefield handoff
+  cleared the source-bound champion roster immediately before the authenticated
+  Track 02 level-load gate. Real HP, skills and equipment now remain available
+  even when dungeon promotion is correctly capture-gated.
+- ✅ Added a regression through the runtime entry path using the US Track 02
+  identity with deliberately invalid media: the capture gate still rejects the
+  handoff, while Hakar's source roster records remain intact. Verification:
+  `test_theron_v1_combat_runtime_source` and `git diff --check`. No game data
+  was copied or committed.
+
 # Nexus CDDA selection-only status (2026-08-06)
 
 - ✅ Corrected the Nexus sound runtime diagnostic so an unbound Saturn

@@ -1840,6 +1840,10 @@ level or consumer bindings.
   but creature loot publication is blocked until source T900 records bind
   category, item index, quantity and gold generation. Previous host gold
   ranges/category lists are no longer admitted.
+  The authenticated forcefield-entry path now retains the source-bound
+  champion HP/skills/equipment while the later dungeon capture gate rejects
+  unproven media. Remaining roster work is the US/JP text/portrait consumer;
+  do not clear the source roster as a fixture fallback after handoff.
   Dungeon seeds: TQ data blocks have no DM1-style global header with
   randomGeneratorSeed; seeds are likely in PCE code, not data.
   Remaining: portrait graphics from tile banks.

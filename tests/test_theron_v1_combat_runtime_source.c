@@ -1,4 +1,5 @@
 #include "theron_v1_combat.h"
+#include "theron_v1_startup_runtime_entry.h"
 #include "theron_v1_world.h"
 
 #include <stdio.h>
@@ -91,6 +92,45 @@ int main(void) {
     CHECK(strstr(theron_v1_combat_source_evidence(), "regular") != NULL &&
               strstr(theron_v1_combat_source_evidence(), "blocked") != NULL,
           "production evidence names the narrow blocked regular-spawn boundary");
+
+    {
+        Theron_StartupFlow flow;
+        Theron_DungeonProgression progression;
+        Theron_V1_World startup_world;
+        Theron_V1StartupRuntimeEntryRequest request;
+        Theron_V1StartupRuntimeEntryResult entry_result;
+        uint8_t fake_media = 0;
+        char receipt[256];
+
+        theron_v1_dungeon_progression_init(&progression);
+        theron_v1_startup_flow_init(&flow);
+        CHECK(theron_v1_startup_show_stage_select(
+                  &flow, THERON_DUNGEON_1_AKUTUBA) == THERON_STARTUP_OK,
+              "startup roster regression reaches stage select");
+        CHECK(theron_v1_startup_choose_stage(
+                  &flow, &progression, THERON_DUNGEON_1_AKUTUBA) ==
+                  THERON_STARTUP_OK,
+              "startup roster regression chooses Akutuba");
+        CHECK(theron_v1_startup_select_mirror(&flow, 0) == THERON_STARTUP_OK,
+              "startup roster regression selects Hakar mirror");
+
+        theron_v1_world_init_runtime(&startup_world);
+        memset(&request, 0, sizeof(request));
+        request.hucard_rom = &fake_media;
+        request.hucard_rom_size = sizeof(fake_media);
+        request.md5_hex = THERON_TRACK02_MD5_US_BIN;
+        receipt[0] = '\0';
+        CHECK(!theron_v1_startup_runtime_enter_from_forcefield(
+                  &flow, &startup_world, &request, &entry_result,
+                  receipt, sizeof(receipt)),
+              "capture gate still blocks fake Track 02 media");
+        CHECK(startup_world.party.champion_count == 2 &&
+                  startup_world.party.champions[0].health == 175 &&
+                  startup_world.party.champions[1].health == 400 &&
+                  startup_world.party.champions[1].strength == 60 &&
+                  startup_world.party.champions[1].slots[THERON_ESLOT_WEAPON] == 8,
+              "verified startup retains source roster stats and equipment before capture gate");
+    }
 
     if (failures) return 1;
     puts("PASS: Theron production regular-spawn bridge and combat gates are wired");

@@ -1583,12 +1583,12 @@ int theron_v1_startup_runtime_enter_from_forcefield(
             request->hucard_rom,
             request->hucard_rom_size,
             request->md5_hex);
-    if (verified_track02_request) {
-        /* The startup-flow API is also used by data-free fixtures and seeds
-         * canonical 10-point champion defaults for them.  Never carry those
-         * inferred records into an authenticated Track 02 session. */
-        theron_v1_party_clear_fixture_defaults(&world->party);
-    }
+    /* `enter_forcefield_with_roster()` has already replaced the fixture
+     * party with source-bound roster records.  Do not clear that party here:
+     * the old cleanup erased the real HP/skills/equipment immediately before
+     * the authenticated level-load gate.  Fixture callers remain isolated by
+     * the compile-time fallback route; a verified request must retain its
+     * source roster even when capture later blocks dungeon promotion. */
     theron_v1_startup_media_capture_track02_state_receipt(
         request->hucard_rom, request->hucard_rom_size, request->md5_hex,
         &media_receipt);

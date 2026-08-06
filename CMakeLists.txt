@@ -40074,7 +40074,7 @@ if(BUILD_TESTING AND THERON_SOURCES)
     add_executable(test_theron_v1_combat_runtime_source
         tests/test_theron_v1_combat_runtime_source.c)
     target_link_libraries(test_theron_v1_combat_runtime_source PRIVATE
-        firestaff_theron)
+        firestaff_theron firestaff_m12 firestaff_m10 m)
     target_include_directories(test_theron_v1_combat_runtime_source PRIVATE
         ${CMAKE_CURRENT_SOURCE_DIR}/include)
     if(NOT MSVC)
