@@ -13,11 +13,12 @@
  * owners. This module accepts only an explicit bounded SLEV rule-table
  * envelope and otherwise keeps real candidate bytes blocked from dispatch.
  *
- * Provisional format: [WHEN condition] THEN [action] rules.
- * Unlike DM1 (tile-type hardwired) or DM2 (actuator enum dispatch), this API
- * models a declarative condition -> action dispatcher for future Nexus proof.
+ * Provisional format: [WHEN condition] THEN [action] rules. This is a
+ * compatibility/test envelope only; no retail SLEV bytes are promoted into
+ * it unless an authenticated Saturn dispatch trace establishes the ABI.
  *
- * Opcode constants are defined in nexus_v1_world.h (Nexus_WorldOpcode).
+ * Provisional identifiers are defined in nexus_v1_world.h
+ * (Nexus_WorldOpcode); they are not source-locked Saturn opcode values.
  * Current status: bounded SLEV rule-table parser plus no-fallback receipts for
  * candidate bytes that do not match the supported envelope. */
 

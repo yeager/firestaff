@@ -27068,3 +27068,8 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   decoder drift, payload/hash drift, unknown modes and malformed spans must
   remain rejected before M11. The previously inverted matching-row assertion
   is corrected and the focused BPK/M11/Saturn-card gates are green.
+- **NEXUS-WORLD-SCRIPT-CLAIM-QUARANTINE:** The linked native world/save state
+  now labels its event, timer, hash and provisional action vocabulary as
+  Firestaff-native/test state rather than recovered SDDRVS/SLEV semantics.
+  Keep the actual SLEV task body, callback owner, event selector and dispatch
+  capture-gated; do not promote the compatibility enum into Saturn opcodes.

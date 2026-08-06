@@ -38,8 +38,8 @@ static uint64_t fnv64(uint64_t h, uint64_t val) {
 }
 
 uint64_t nexus_v1_world_hash(Nexus_V1_World *world) {
-    /* Source-lock: DUNGEON.C F0029 (world hash) — deterministic state
-     * snapshot from provenance-locked fixtures. */
+    /* Native Firestaff save-state hash. This is not a recovered Saturn
+     * world-hash routine and does not establish Nexus event semantics. */
     uint64_t h = FNV64_OFFSET;
     int i;
 
@@ -227,10 +227,8 @@ int nexus_v1_object_clear_flag(Nexus_V1_World *world, int id,
 /* Event system                                                        */
 /* ------------------------------------------------------------------ */
 
-/* ReDMCSB: MOVESENS.C F0067 — sensor fire and event record logging.
- * Source-lock: nexus_v1_event_fire mirrors the event-dispatch
- * pattern of DM1 MOVESENS sensor triggers, adapted to the
- * SDDRVS.TSK event model documented in docs/nexus_triggers.md. */
+/* Native save-state event logging. The owning Saturn event source and
+ * dispatch order are unresolved; this helper is not a SDDRVS implementation. */
 int nexus_v1_event_fire(Nexus_V1_World *world, Nexus_V1_EventType type,
                          int level, int x, int y,
                          int arg0, int arg1) {
@@ -268,9 +266,8 @@ void nexus_v1_events_clear_all(Nexus_V1_World *world) {
 /* Timer system                                                        */
 /* ------------------------------------------------------------------ */
 
-/* ReDMCSB: MOVESENS.C F0071 — timer queue and tick dispatch.
- * Nexus timers drive SDDRVS.TSK delayed actions and creature
- * spawn cycles.  Tick rate matches V1: 18.2 Hz. */
+/* Native save-state timer queue. It does not prove a Saturn SLEV/SDDRVS
+ * delayed-action ABI or a Nexus tick rate. */
 static int next_timer_id = 1;
 
 int nexus_v1_timer_add(Nexus_V1_World *world, Nexus_TimerKind kind,
@@ -682,10 +679,8 @@ int nexus_v1_world_deserialize(Nexus_V1_World *world,
 /* World tick entry point                                            */
 /* ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ */
 
-/* ReDMCSB: DUNGEON.C F0001 — main tick entry point.
- * nexus_v1_world_tick is called once per V1 tick (55 ms).
- * It advances the world clock, ticks timers, processes queued
- * transitions, and updates the world-state hash. */
+/* Native world-state tick used by save/probe state. It is not the recovered
+ * Saturn main-loop timing or a source-owned SLEV/SDDRVS dispatcher. */
 void nexus_v1_world_tick(Nexus_V1_World *world) {
     if (!world) return;
 

@@ -52924,3 +52924,8 @@ konsument och placering är capture-bundna.
   `test_m11_dm1_hoc_mirror_side_depth_material_receipt`, and
   `test_m11_dm1_hoc_real_mirror_viewport_material` pass against the real
   PC34 `GRAPHICS.DAT`/`DUNGEON.DAT` corpus.
+- 2026-08-06 Nexus stale-claim quarantine: corrected the linked world and
+  provisional script-VM comments so native save/event/timer state no longer
+  claims ReDMCSB or SDDRVS source equivalence. The runtime's existing
+  authenticated-dispatch gate remains unchanged; no unproven gameplay action
+  was enabled.

@@ -81,7 +81,8 @@ and transition dispatch are not source-locked.
 
 nexus_v1_dungeon.c: only square type loading is implemented (grid parsing).
 Square type semantics (teleporter vs door vs trap) are NOT yet implemented;
-those need SDDRVS.TSK script VM integration.
+their owner and dispatch need original-Saturn capture. SDDRVS.TSK must not be
+treated as a script VM without that evidence.
 
 nexus_viewport.c: draws walls where sq == 0, floors where sq != 0.
 No special handling yet for door animations, teleporter effects, or trap triggers.

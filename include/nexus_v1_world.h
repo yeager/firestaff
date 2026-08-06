@@ -7,9 +7,12 @@
 #include <stdint.h>
 
 /* ──────────────────────────────────────────────────────────────────
- * Script VM opcodes — SDDRVS.TSK bytecode for Nexus V1.
- * These mirror the WHEN-condition / THEN-action opcodes in the
- * Nexus script engine. Source: docs/nexus_triggers.md.
+ * Provisional script/action identifiers.
+ *
+ * These values are a bounded compatibility vocabulary used by isolated
+ * parser/receipt tests. They are not decoded SDDRVS.TSK opcodes: SDDRVS is
+ * authenticated as a Saturn sound-driver task, while SLEV/event ownership
+ * and action dispatch remain unresolved and capture-gated.
  * ────────────────────────────────────────────────────────────────── */
 typedef enum {
     /* WHEN condition opcodes */
@@ -46,8 +49,9 @@ typedef enum {
  *            COMMAND.C (movement, action dispatch)
  *            MOVESENS.C (sensor/trigger invocation, timer events)
  *
- * Nexus-specific: DGN grid (nexus_v1_dungeon.h) + SDDRVS.TSK script VM
- * (script opcodes documented in docs/nexus_triggers.md).
+ * Nexus-specific: DGN grid (nexus_v1_dungeon.h) plus bounded, provisional
+ * event state. The native save model must not be read as a recovered Saturn
+ * script VM; source-owned event dispatch remains capture-gated.
  */
 
 /* ------------------------------------------------------------------ */
@@ -111,7 +115,7 @@ typedef struct {
 /* Trigger / Event records                                             */
 /* ------------------------------------------------------------------ */
 
-/* Event types — mirrors SDDRVS.TSK opcodes */
+/* Native event-state categories. They are not a recovered SDDRVS opcode map. */
 typedef enum {
     NEXUS_EVT_NONE           = 0,
     NEXUS_EVT_PARTY_STEP      = 1,   /* party stepped on square        */

@@ -138,5 +138,6 @@ FONT256.S2D      — Japanese font (new concept)
 ITEM.IBS         — item icon bitmap set
 MENU.BPK         — menu graphics
 TM.BIN           — texture map / tilemap
-SDDRVS.TSK       — sound driver task / script VM
+SDDRVS.TSK       — Saturn sound-driver task; trigger/script ownership remains
+                   unresolved and capture-gated
 ```
