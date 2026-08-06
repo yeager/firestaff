@@ -26,8 +26,9 @@
   audio/CDDA playback and save handoff are demonstrated against original
   media. `TITLE.ANM`, `STORY.ANM` and `ENDING.ANM` now decode their real
   F2275/F8288 frame streams and retain their source Timer-A waits and loop
-  execution and source `TD`/`TR` CD-DA track requests. M11 now displays only
-  the verified `TITLE.ANM` stream against its Timer-A timing. ReDMCSB
+  execution and source `TD`/`TR` CD-DA track requests. M11 now displays the
+  verified `TITLE.ANM` stream against its Timer-A timing and, at EOF, the
+  source-owned `SWITCHTW JAPAN` surface. ReDMCSB
   `NECIO.C` launches `anim title.anm` as a standalone program; `SWITCH.C`
   owns the separate player-selected `anim story.anm` route, and `STARTUP2.C`
   calls `F2248_PlayAnimation("ending.anm")` after a winning game. Do not
@@ -42,8 +43,13 @@
   `AUTOEXEC.BAT` Story/utility/game exit handoffs and language toggle.
   M11 now follows `TITLE.ANM`'s return into the original Japanese Switch
   surface after SWITCH.C's sixty source-VBlank wait, retaining executable
-  palette, page and button pixels. Its selected Story/utility/game handoffs,
-  language input, audio/CDDA playback and save handoff remain capture-gated.
+  palette, page and button pixels. It also reproduces the language toggle and
+  hands Story to `ANIMTW STORY.ANM`, returning to the selected language's
+  Switch loop when that stream completes. Utility and Game remain deliberately
+  modal: `UTILJ`/`UTILE` are separate CEDT executables and `CHTWJ`/`CHTWE`
+  are separate Game executables, so neither is routed through a PC34 surrogate.
+  Their authentic handoff, audio/CDDA playback, ending handoff and save
+  transfer still need original-media capture.
   The raw CDDA extractor now streams a
   selected CUE track sectorwise; binding that authenticated PCM to M11 timing
   remains separate.

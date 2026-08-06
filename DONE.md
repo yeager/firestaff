@@ -88,13 +88,15 @@
   streams. M11 now transfers from the completed source-owned `TITLE.ANM`
   playback into the `AUTOEXEC.BAT` `SWITCHTW JAPAN` route, preserves
   SWITCH.C's sixty-VBlank reveal, and displays the executable's authenticated
-  palette/page/button pixels. The focused original-media Switch test passes
+  palette/page/button pixels. M11 also reproduces Switch's language toggle and
+  starts the selected-language `STORY.ANM` handoff, returning to the matching
+  Switch loop at animation EOF. The focused original-media Switch test passes
   18/18 and `firestaff_m11` builds successfully.
   payloads unless the complete F31E/F31J sequence decodes. Its four source
-  rectangles now route through the original language-dependent exit statuses
-  into the verified `AUTOEXEC.BAT` Story, utility, game or language-toggle
-  handoff. Verification: 16 assertions against the local original executable.
-  M11 presentation remains explicitly open.
+  rectangles now retain the original language-dependent exit statuses for
+  `AUTOEXEC.BAT` Story, utility, game and language-toggle handling. The M11
+  Story route is implemented; Utility and Game remain intentionally unbound
+  until their distinct CEDT/Game executables have a source-captured handoff.
 
 - ✅ 2026-08-06 Nexus Saturn BGR555 channel-order correction: the real
   `SMAP00-15.BIN`, `FACE.BIN`, `ITEM.IBS` and `.MNS` palette decoders now map
