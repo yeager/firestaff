@@ -13,6 +13,14 @@
   regression already compiles the source explicitly.
 - ✅ Verification: `dm1_v1_viewport_d3l2_d3r2_f0108_floor_ceiling_ornament_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
+# DM1 mirror full-chain synthetic audit isolation (2026-08-06)
+
+- ✅ Removed the deterministic mirror-candidate full-chain fixture from M10.
+  It synthesizes party and hand state, has no original DM1 data input or
+  M11/runtime caller, and the generated ReDMCSB regression compiles it
+  directly.
+- ✅ Verification: `dm1_v1_mirror_candidate_full_chain_pc34_compat` passes;
+  the source object is absent from both M10 and M11 archives.
 
 # DM1 D0C F0098 synthetic audit isolation (2026-08-06)
 

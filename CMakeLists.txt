@@ -4720,6 +4720,12 @@ list(REMOVE_ITEM M10_SOURCES
 # directly, so it must not remain in M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_c045_food_water_close_no_candidate_pc34_compat.c")
+# `dm1_v1_mirror_candidate_full_chain_pc34_compat.c` is a deterministic
+# mirror-candidate scenario fixture with synthetic party and hand state. It
+# has no original DM1 data input or M11/runtime caller; the generated mirror
+# test matrix compiles it directly rather than exposing it through M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_mirror_candidate_full_chain_pc34_compat.c")
 # `dm1_v1_mirror_candidate_scroll_pickup_leader_rotation_inventory_click_pc34_compat.c`
 # is a deterministic C040/chest/rotation scenario fixture. It reads no
 # original DM1 data and has no M11/runtime caller; its explicit regression

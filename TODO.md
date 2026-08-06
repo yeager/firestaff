@@ -9,6 +9,10 @@
   floor/ceiling contract uses fixed zones, ordinals and probe pixels. It reads
   no original game data and has no M11/runtime caller; retain it only as
   explicit ReDMCSB coverage until a source-bound owner is recovered.
+- **DM1-MIRROR-FULL-CHAIN-SYNTHETIC-AUDIT:** This deterministic mirror-candidate
+  chain synthesizes party and hand state. It has no original DM1 data input or
+  M11/runtime caller; retain it only as an explicit ReDMCSB regression until a
+  source-bound interaction owner is recovered.
 
 - **DM1-D0C-F0098-SYNTHETIC-AUDIT:** This D0C floor/ceiling row-ownership
   model uses fixed viewport rows and C10 probe pixels. It reads no original
