@@ -1095,15 +1095,34 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
 {
     DM2_V1_RuntimeMusicMapReceipt receipt;
     DM2_V1_MusicQueueReceipt queue;
+    DM2_MusicSystem music_system;
+    int party_x = 0;
+    int party_y = 0;
     int track = -1;
 
     memset(&receipt, 0, sizeof(receipt));
     receipt.map_index = rt ? rt->dungeon_level : -1;
     receipt.selected_track = -1;
     if (!rt || !rt->boot) return;
+    music_system = dm2_v1_platform_music_system(rt->boot->platform);
     receipt.source_songlist_verified = rt->boot->songlist_verified ? 1 : 0;
+    /* DMWeb's 40-byte CD.DAT format is a level/X/Y trigger table, not a
+     * map-default playlist.  A missing live party owner must therefore
+     * produce no CDDA request instead of probing the synthetic (0,0) cell.
+     * Source: DMWeb "Dungeon Master II Music Triggers", format 1; SKProject
+     * SKULLWIN/c_sound.cpp::DM2_GET_MUSIC_INDEX_FROM_MODLIST call boundary. */
+    if (music_system == DM2_MUSIC_SYSTEM_CDDA_COORD) {
+        const DM2_V1_GameState *game_state =
+            (const DM2_V1_GameState *)rt->boot->dm2_state;
+        if (!game_state) {
+            rt->music_map_receipt = receipt;
+            return;
+        }
+        party_x = game_state->party_x;
+        party_y = game_state->party_y;
+    }
     if (!dm2_v1_boot_music_track_for_level(rt->boot, rt->dungeon_level,
-                                            0, 0, &track)) {
+                                            party_x, party_y, &track)) {
         rt->music_map_receipt = receipt;
         return;
     }
@@ -1111,8 +1130,7 @@ static void dm2_runtime_refresh_music_map_trigger(DM2_V1_RuntimeState *rt)
     receipt.selected_track = track;
     memset(&queue, 0, sizeof(queue));
 
-    if (dm2_v1_platform_music_system(rt->boot->platform) ==
-        DM2_MUSIC_SYSTEM_CDDA_COORD) {
+    if (music_system == DM2_MUSIC_SYSTEM_CDDA_COORD) {
         uint8_t *pcm = NULL;
         size_t pcm_size;
         int media_verified = 0;
@@ -8247,6 +8265,13 @@ int dm2_v1_runtime_move(int dir) {
          * viewport offset after an immediate move. */
         gs->party_x = nx;
         gs->party_y = ny;
+        /* CD.DAT's trigger keys include the party's exact square. Re-evaluate
+         * only CDDA after a committed step; PC HMP map music remains a
+         * level-transition concern. */
+        if (dm2_v1_platform_music_system(rt->boot->platform) ==
+            DM2_MUSIC_SYSTEM_CDDA_COORD) {
+            dm2_runtime_refresh_music_map_trigger(rt);
+        }
         for (int i = 1; i <= dm2_v1_trigger_get_builtin_count(); ++i) {
             DM2_V1_TriggerEvent event;
             const DM2_V1_Trigger *trigger =

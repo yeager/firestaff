@@ -54444,6 +54444,12 @@ alcove runtime and archive-media tests passed (4/4).
   separately blocked until native SKULL execution and CDDA transport are
   joined.
 
+- ✅ 2026-08-06 DM2 FM Towns CDDA coordinate correction: runtime CDDA
+  dispatch now reads the live source party X/Y for the original 40-byte
+  CD.DAT level-coordinate trigger table, and reevaluates only this route
+  after a committed party step. It no longer probes a fabricated `(0,0)`
+  cell. Missing source party state remains silent.
+
 - ✅ 2026-08-06 Theron raw-BIN HuC6280 disassembly intake: the static bank-$1f
   receipt now verifies authentic `TQUS02.bin` and `TQJP02.bin` Track 02 files
   in addition to the ISO projections. Their real MODE1/2352 bank-window

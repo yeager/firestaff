@@ -72,6 +72,10 @@
   `SKULL.EXP+0x3dac` buffer in RAM. Keep playback itself silent until native
   SKULL execution and CDDA transport ownership are joined; do not revive a
   source-literal lookup table.
+  FM Towns runtime now queries the authenticated CD.DAT table with its live
+  party X/Y after a committed move, rather than the former invented `(0,0)`
+  coordinate. Continue validating the complete native music-dispatch timing
+  against executable capture before claiming full audio parity.
 
 - **NEXUS-STARTUP-CAPTURE-ENVIRONMENT:** The supplied European BIOS is
   authenticated by SHA-256 `96e106f740ab448cf89f0dd49dfbac7fe5391cb6bd6e14ad5e3061c13330266f`
