@@ -6,7 +6,6 @@
 #include <limits.h>
 
 static void nexus_sound_free_decoded(Nexus_SoundEngine *eng);
-static void nexus_sound_trigger_tone(Nexus_SoundEngine *eng, int tone_index);
 
 /* Nexus V1 sound system — source-bound SAL directory implementation.
  * Source: docs/nexus_audio_format.md, docs/nexus_sfx.md,
@@ -1091,7 +1090,10 @@ void nexus_sound_play(Nexus_SoundEngine *eng, Nexus_SoundEvent event) {
         eng->event_dispatch_source_verified && eng->sal_decode_ready &&
         selector >= 0 &&
         selector < eng->sal_decoded_tone_count) {
-        nexus_sound_trigger_tone(eng, selector);
+        /* This branch remains unreachable while SAL decode is capture-gated.
+         * Keep the selector/window receipt above, but never hand a host PCM
+         * voice to an unproven audio backend. */
+        (void)selector;
         return;
     }
 
@@ -1291,13 +1293,6 @@ static void nexus_sound_free_decoded(Nexus_SoundEngine *eng) {
 }
 
 int nexus_sound_decode_sal(Nexus_SoundEngine *eng) {
-    int tone_offset;
-    int tone_bytes;
-    int entry_count;
-    int entry_offset;
-    int decoded = 0;
-    int i;
-
     /* The directory parser is a byte-level receipt only.  Without a Saturn
      * SCSP/SDDRVS capture proving PCM format, rate, looping, voice ownership
      * and MAP-to-event handoff, retail SAL bytes must not become host PCM
@@ -1306,192 +1301,13 @@ int nexus_sound_decode_sal(Nexus_SoundEngine *eng) {
     if (!eng) return 0;
     nexus_sound_free_decoded(eng);
     return 0;
-
-    /* Unreachable until the Saturn capture gate above is reopened. */
-    if (!eng->sal_data || eng->sal_size <= 0) return 0;
-    if (!eng->sal_tone_bank_directory_supported) return 0;
-
-    nexus_sound_free_decoded(eng);
-
-    tone_offset = eng->sal_tone_bank_offset;
-    tone_bytes = eng->sal_tone_bank_bytes;
-    if (tone_offset < 0 || tone_bytes < 2 ||
-        tone_offset > eng->sal_size - tone_bytes) return 0;
-
-    {
-        int dir_off = read_u16_be(eng->sal_data + tone_offset);
-        if (dir_off < 8 || dir_off > tone_bytes || (dir_off & 1) != 0) return 0;
-        entry_count = dir_off / 2;
-        if (entry_count < 5 || entry_count > 1024) return 0;
-    }
-
-    entry_offset = read_u16_be(eng->sal_data + tone_offset);
-    for (i = 0; i < entry_count && decoded < 64; i++) {
-        const uint8_t *entry;
-        int entry_size;
-        int bytes_per_sample;
-        int layer_start;
-        int loop_end;
-        int sample_count;
-        int pcm_offset;
-        int pcm_bytes;
-        int16_t *samples;
-        int j;
-
-        if (i < entry_count - 1) {
-            int a = read_u16_be(eng->sal_data + tone_offset + i * 2);
-            int next = read_u16_be(eng->sal_data + tone_offset + (i + 1) * 2);
-            if (a != entry_offset || next < a || next > tone_bytes) break;
-            entry_size = next - a;
-        } else {
-            entry_size = 4;
-            if (entry_offset > tone_bytes - entry_size) break;
-        }
-
-        if (i < 4) {
-            if (entry_size < 1) break;
-            entry_offset += entry_size;
-            continue;
-        }
-
-        entry = eng->sal_data + tone_offset + entry_offset;
-        if (entry_size < 4 || entry[2] > 0x7fU) break;
-        entry_size = 4 + 32 * ((int)entry[2] + 1);
-        if (entry_offset > tone_bytes - entry_size) break;
-
-        bytes_per_sample = (((entry[7] >> 4) & 1) != 0) ? 1 : 2;
-        layer_start = ((entry[7] & 0x0f) << 16) |
-                      ((int)entry[8] << 8) | entry[9];
-        loop_end = ((int)entry[12] << 8) | entry[13];
-        sample_count = loop_end + 1;
-
-        pcm_offset = tone_offset + layer_start;
-        pcm_bytes = sample_count * bytes_per_sample;
-        if (layer_start < 0 || pcm_bytes < 0 ||
-            layer_start > tone_bytes ||
-            pcm_bytes > tone_bytes - layer_start) {
-            entry_offset += entry_size;
-            continue;
-        }
-        if (pcm_offset < 0 || pcm_offset > eng->sal_size - pcm_bytes) {
-            entry_offset += entry_size;
-            continue;
-        }
-
-        samples = (int16_t *)malloc(sample_count * sizeof(int16_t));
-        if (!samples) break;
-
-        if (bytes_per_sample == 2) {
-            for (j = 0; j < sample_count; j++) {
-                int off = pcm_offset + j * 2;
-                samples[j] = (int16_t)((eng->sal_data[off] << 8) |
-                                        eng->sal_data[off + 1]);
-            }
-        } else {
-            for (j = 0; j < sample_count; j++) {
-                samples[j] = (int16_t)((int8_t)eng->sal_data[pcm_offset + j]) << 8;
-            }
-        }
-
-        eng->sal_decoded_samples[decoded] = samples;
-        eng->sal_decoded_sample_count[decoded] = sample_count;
-        decoded++;
-        entry_offset += entry_size;
-    }
-
-    eng->sal_decoded_tone_count = decoded;
-    eng->sal_decoded_sample_rate = 22050;
-    eng->sal_decode_ready = decoded > 0 ? 1 : 0;
-
-    printf("Nexus sound: retained %d diagnostic SAL tone candidates "
-           "(%d entries; playback remains capture-gated)\n",
-           decoded, entry_count);
-    return decoded;
 }
-
-/* ═══════════════════════════════════════════════════════════════════
- * Voice trigger — start playing a decoded tone
- * ═══════════════════════════════════════════════════════════════════ */
-
-static void nexus_sound_trigger_tone(Nexus_SoundEngine *eng, int tone_index) {
-    int i;
-    int oldest = -1;
-    int oldest_pos = -1;
-
-    if (!eng || !eng->sal_decode_ready) return;
-    if (tone_index < 0 || tone_index >= eng->sal_decoded_tone_count) return;
-    if (!eng->sal_decoded_samples[tone_index]) return;
-
-    for (i = 0; i < NEXUS_SOUND_MAX_VOICES; i++) {
-        if (!eng->voices[i].active) {
-            eng->voices[i].active = 1;
-            eng->voices[i].tone_index = tone_index;
-            eng->voices[i].position = 0;
-            return;
-        }
-        if (oldest < 0 || eng->voices[i].position > oldest_pos) {
-            oldest = i;
-            oldest_pos = eng->voices[i].position;
-        }
-    }
-    if (oldest >= 0) {
-        eng->voices[oldest].active = 1;
-        eng->voices[oldest].tone_index = tone_index;
-        eng->voices[oldest].position = 0;
-    }
-}
-
-/* ═══════════════════════════════════════════════════════════════════
- * Mixer — mix active voices into output buffer
- * ═══════════════════════════════════════════════════════════════════ */
 
 int nexus_sound_mix(Nexus_SoundEngine *eng, int16_t *out, int max_samples) {
-    int i;
-    int s;
-
     if (!eng || !out || max_samples <= 0) return 0;
-
+    /* No Saturn SCSP/SDDRVS capture has admitted a host audio backend.  The
+     * public mixer is therefore a silence-producing compatibility seam, not
+     * a synthetic PCM renderer. */
     memset(out, 0, max_samples * sizeof(int16_t));
-
-    for (i = 0; i < NEXUS_SOUND_MAX_VOICES; i++) {
-        int tone_idx;
-        int pos;
-        int count;
-        const int16_t *src;
-        int remaining;
-        int to_mix;
-
-        if (!eng->voices[i].active) continue;
-        tone_idx = eng->voices[i].tone_index;
-        if (tone_idx < 0 || tone_idx >= eng->sal_decoded_tone_count) {
-            eng->voices[i].active = 0;
-            continue;
-        }
-        src = eng->sal_decoded_samples[tone_idx];
-        count = eng->sal_decoded_sample_count[tone_idx];
-        if (!src || count <= 0) {
-            eng->voices[i].active = 0;
-            continue;
-        }
-
-        pos = eng->voices[i].position;
-        remaining = count - pos;
-        if (remaining <= 0) {
-            eng->voices[i].active = 0;
-            continue;
-        }
-        to_mix = remaining < max_samples ? remaining : max_samples;
-
-        for (s = 0; s < to_mix; s++) {
-            int mixed = (int)out[s] + (int)src[pos + s];
-            if (mixed > 32767) mixed = 32767;
-            if (mixed < -32768) mixed = -32768;
-            out[s] = (int16_t)mixed;
-        }
-        eng->voices[i].position = pos + to_mix;
-        if (eng->voices[i].position >= count) {
-            eng->voices[i].active = 0;
-        }
-    }
     return max_samples;
 }

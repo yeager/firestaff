@@ -194,13 +194,14 @@ typedef struct {
     uint16_t event_sal_last_nonzero_relative_offset[32];
     uint16_t event_sal_distinct_byte_count[32];
     uint16_t event_sal_transition_count[32];
-    /* Decoded PCM sample cache (extracted from tone bank) */
+    /* Reserved diagnostic ABI fields.  Production never materializes SAL
+     * bytes as host PCM until Saturn SCSP/SDDRVS capture admits the format. */
     int sal_decode_ready;
     int sal_decoded_tone_count;
     int16_t *sal_decoded_samples[64];
     int sal_decoded_sample_count[64];
     int sal_decoded_sample_rate;
-    /* Active playback voices */
+    /* Reserved diagnostic voice slots; production mixer remains silent. */
 #define NEXUS_SOUND_MAX_VOICES 8
     struct {
         int active;

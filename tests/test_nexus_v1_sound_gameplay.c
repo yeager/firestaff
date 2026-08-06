@@ -45,6 +45,16 @@ static void test_mix_silence(void) {
     memset(&eng, 0, sizeof(eng));
     nexus_sound_init(&eng);
 
+    /* Even a manually populated diagnostic voice must not reach a host
+     * mixer before Saturn SCSP/SDDRVS capture admits the PCM contract. */
+    eng.sal_decoded_samples[0] = (int16_t *)malloc(2 * sizeof(int16_t));
+    eng.sal_decoded_sample_count[0] = 2;
+    eng.sal_decoded_tone_count = 1;
+    eng.sal_decode_ready = 1;
+    eng.voices[0].active = 1;
+    eng.voices[0].tone_index = 0;
+    eng.voices[0].position = 0;
+
     int16_t buf[256];
     memset(buf, 0xAB, sizeof(buf));
     int n = nexus_sound_mix(&eng, buf, 256);

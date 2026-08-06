@@ -85,7 +85,8 @@
   byte-level receipt path only.  PCM format/rate/looping, voice ownership and
   MAP→event handoff still require a Saturn SCSP/SDDRVS execution capture;
   `nexus_sound_decode_sal()` is therefore kept as an explicit no-op until
-  that capture is admitted.
+  that capture is admitted. The public mixer is also silence-only, even when
+  diagnostic voice fields are manually populated.
 
 - **NEXUS-V2-PROCEDURAL-PRESENTATION-BOUNDARY:** The production Nexus library
   no longer links the procedural V2 lighting, smooth-movement or touch/

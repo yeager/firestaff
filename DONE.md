@@ -4972,7 +4972,8 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
 - ✅ 2026-08-06 Nexus SAL host-PCM boundary: production now retains the
   source-owned SAL/DataID-0 and MAP receipts but does not materialize retail
   SAL bytes as host PCM candidates.  Playback remains blocked pending Saturn
-  SCSP/SDDRVS capture; the public decode seam is explicitly fail-closed.
+  SCSP/SDDRVS capture; the public decode and mixer seams are explicitly
+  fail-closed, including manually populated diagnostic voices.
 - ✅ 2026-08-01 v3.0.215 Theron Track 02 binary analysis and text extraction:
   Complete region map (7 quest blocks + code + dense graphics). 66 US item
   names extracted (11 Theron-unique). 15 level names, 7 quest retrieval
