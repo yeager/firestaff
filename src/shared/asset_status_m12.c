@@ -1903,38 +1903,6 @@ static void m12_materialize_csb_startup_optional_cache(const char* seedPath,
     }
 }
 
-static void m12_materialize_dm2_startup_optional_cache(const char* seedPath,
-                                                       const char* gameCacheDir) {
-    static const char* const labels[] = {
-        "DM2GRAPHICS.DAT", "DM2DUNGEON.DAT", "SKULLKEEP.GFX",
-        "DUNGEON_PC9821.dat", "DUNGEON_MOD.DAT", "DUNGEON_BETA.dat",
-        "DUNGEON_TEST.DAT", "DUNGEON_XMAP.dat", "DUNGEON_SHOP.DAT",
-        "DUNGEON_1MONS.dat",
-        "00.hmp.mid", "01.hmp.mid", "02.hmp.mid", "03.hmp.mid",
-        "04.hmp.mid", "05.hmp.mid", "06.hmp.mid", "07.hmp.mid",
-        "08.hmp.mid", "09.hmp.mid", "0a.hmp.mid", "0b.hmp.mid",
-        "0c.hmp.mid", "0d.hmp.mid", "0e.hmp.mid", "0f.hmp.mid",
-        "10.hmp.mid", "11.hmp.mid", "12.hmp.mid", "13.hmp.mid",
-        "14.hmp.mid", "15.hmp.mid", "16.hmp.mid", "17.hmp.mid",
-        "18.hmp.mid", "19.hmp.mid", "1a.hmp.mid", "1b.hmp.mid",
-        "1c.hmp.mid"
-    };
-    size_t i;
-    if (!seedPath || !gameCacheDir || seedPath[0] == '\0' ||
-        gameCacheDir[0] == '\0') {
-        return;
-    }
-    for (i = 0U; i < sizeof(labels) / sizeof(labels[0]); ++i) {
-        char outPath[M12_ASSET_DATA_DIR_CAPACITY];
-        if (!FSP_JoinPath(outPath, sizeof(outPath), gameCacheDir, labels[i])) {
-            continue;
-        }
-        (void)m12_materialize_optional_for_cache_seed(seedPath,
-                                                      labels[i],
-                                                      outPath);
-    }
-}
-
 static int m12_required_file_needs_runtime_cache(const M12_AssetStatus* status,
                                                  int gameIndex,
                                                  const M12_AssetRequiredFileStatus* fileStatus) {
@@ -3377,28 +3345,22 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         return 1;
     }
     if (strcmp(gameId, "dm2") == 0) {
-        /* DM2's FM Towns and Amiga readers own their native containers.
-         * PC-DOS archives, however, are ordinary installs wrapped in a ZIP
-         * and M11 opens GRAPHICS.DAT/DUNGEON.DAT as ordinary paths.  Once
-         * both hash-pinned required members have matched, materialize that
-         * complete pair into the per-user runtime cache just as DM1 and CSB
-         * do. This preserves virtual-path provenance on the version row
-         * while making a READY result launchable instead of reporting both
-         * members FOUND and then downgrading the game to MISSING. */
-        {
-            const M12_AssetVersionStatus* version =
-                m12_first_matched_version(status, gameIndex);
-            if (version && version->versionId &&
-                (strcmp(version->versionId, "fmtowns-ja") == 0 ||
-                 strcmp(version->versionId, "amiga-en") == 0) &&
-                m12_path_is_virtual_asset(version->matchedPath)) {
-                /* FM Towns and Amiga each have a complete, verified memory
-                 * owner in dm2_v1_boot.c. Keep virtual provenance and let
-                 * that owner reopen its original container; no generic cache
-                 * is ever created for DM2. */
-                return 1;
-            }
+        const M12_AssetVersionStatus* version =
+            m12_first_matched_version(status, gameIndex);
+        /* FM Towns and Amiga own their original container in bounded RAM.
+         * They need no cache and retain their selected virtual provenance. */
+        if (version && version->versionId &&
+            (strcmp(version->versionId, "fmtowns-ja") == 0 ||
+             strcmp(version->versionId, "amiga-en") == 0) &&
+            m12_path_is_virtual_asset(version->matchedPath)) {
+            return 1;
         }
+        /* PC-DOS ZIP/ISO media has no equivalent in-memory runtime owner
+         * yet. A renamed loose pair also stays closed rather than being
+         * copied to asset-cache/dm2 under canonical filenames. The matched
+         * source paths remain diagnostic evidence and M12 marks this launch
+         * unavailable below. */
+        return 0;
     }
     if (!FSP_GetUserDataDir(userDataDir, sizeof(userDataDir)) ||
         !FSP_JoinPath(cacheRoot, sizeof(cacheRoot), userDataDir, "asset-cache") ||
@@ -3455,12 +3417,6 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
          * opens ordinary paths under asset-cache/csb/, so archive-backed CSB
          * launches must carry these startup/utility siblings with GRAPHICS.DAT. */
         m12_materialize_csb_startup_optional_cache(optionalSeedPath, gameCacheDir);
-    }
-    if (strcmp(gameId, "dm2") == 0 && optionalSeedPath[0] != '\0') {
-        /* skproject/SKWin opens GRAPHICS.DAT plus DATA/%02x.hmp.mid music and
-         * alternate DUNGEON_*.dat startup/runtime variants from the install
-         * data directory. M11 gets ordinary paths under asset-cache/dm2/. */
-        m12_materialize_dm2_startup_optional_cache(optionalSeedPath, gameCacheDir);
     }
     m12_copy_string(status->runtimeDataDirs[gameIndex],
                     sizeof(status->runtimeDataDirs[gameIndex]),

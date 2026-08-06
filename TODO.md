@@ -6,11 +6,12 @@
   source/runtime owner is proven for that game; research those controls as
   separate source-locked work rather than fabricating behavior.
 
-- **ASSET-SCAN-CROSS-PLATFORM-CORPUS:** The PC-DOS DM2 ZIP route now
-  materializes a complete hash-verified `GRAPHICS.DAT`/`DUNGEON.DAT` pair
-  into the launch cache instead of showing both files as FOUND and the game
-  as MISSING. The M12 profile store now accommodates every declared profile,
-  rather than truncating after seven entries. CSB's verified retail FM Towns
+- **ASSET-SCAN-CROSS-PLATFORM-CORPUS:** DM2 never materializes game data:
+  FM Towns and Amiga retain their platform-owned bounded RAM readers, while
+  PC-DOS ZIP/ISO media and renamed loose pairs remain source-path diagnostics
+  and block launch until a complete in-memory PC reader exists. The M12
+  profile store now accommodates every declared profile, rather than
+  truncating after seven entries. CSB's verified retail FM Towns
   ZIP now stages and admits its raw CD image without crashing when it is the
   only CSB candidate; continue to report the matched platform/profile whenever
   only a partial or unsupported package is present. The authentic legacy FM

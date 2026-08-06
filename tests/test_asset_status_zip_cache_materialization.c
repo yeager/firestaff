@@ -88,36 +88,11 @@ static int write_payload_file(const char* path,
     return fclose(fp) == 0;
 }
 
-static int file_matches_payload(const char* path,
-                                const unsigned char* payload,
-                                size_t payloadSize) {
-    unsigned char buf[128];
-    FILE* fp = fopen(path, "rb");
-    size_t n;
-    if (!fp || payloadSize > sizeof(buf)) {
-        if (fp) {
-            fclose(fp);
-        }
-        return 0;
-    }
-    n = fread(buf, 1U, sizeof(buf), fp);
-    fclose(fp);
-    return n == payloadSize && memcmp(buf, payload, payloadSize) == 0;
-}
-
 static int path_has_virtual_entry(const char* path,
                                   const char* zipName,
                                   const char* entryName) {
     return path && strstr(path, zipName) && strstr(path, "::") &&
            strstr(path, entryName);
-}
-
-static int path_has_cache_leaf(const char* path,
-                               const char* cacheRoot,
-                               const char* gameId,
-                               const char* leaf) {
-    return path && strstr(path, cacheRoot) && strstr(path, gameId) &&
-           strstr(path, leaf) && !strstr(path, "::");
 }
 
 static int prepare_entry_payload(ZipEntryFixture* entry) {
@@ -343,8 +318,8 @@ int main(void) {
 
     M12_AssetStatus_Scan(&status, dataRoot);
 
-    check_int(M12_AssetStatus_GameAvailable(&status, "dm2"),
-              "DM2 should be available when both required hashes are ZIP-backed");
+    check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
+              "DM2 ZIP media stays blocked without a complete in-memory PC reader");
     version = M12_AssetStatus_GetVersion(&status, "dm2", 0U);
     check_int(version && version->matched &&
               path_has_virtual_entry(version->matchedPath, "dm2-required.zip",
@@ -360,51 +335,39 @@ int main(void) {
                            cacheRoot, "dm2/DUNGEON.DAT"),
               "expected cached DM2 paths should resolve");
     check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                     cacheRoot) == 0,
-              "DM2 runtime data root should point at the asset cache root");
+                     dataRoot) == 0,
+              "DM2 ZIP media must not redirect the runtime to asset-cache");
 
     required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
     check_int(required && required->matched &&
-              path_has_cache_leaf(required->matchedPath, cacheRoot,
-                                  "dm2", "GRAPHICS.DAT"),
-              "required graphics path should be materialized into cache");
+              path_has_virtual_entry(required->matchedPath, "dm2-required.zip",
+                                     "renamed/inside/DM2GRAPHICS.RENAMED"),
+              "required graphics path must retain its ZIP provenance");
     required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 1U);
     check_int(required && required->matched &&
-              path_has_cache_leaf(required->matchedPath, cacheRoot,
-                                  "dm2", "DUNGEON.DAT"),
-              "required dungeon path should be materialized into cache");
-    check_int(file_matches_payload(cachedGraphics, graphicsPayload,
-                                   sizeof(graphicsPayload) - 1U),
-              "cached GRAPHICS.DAT should contain the ZIP entry payload");
-    check_int(file_matches_payload(cachedDungeon, dungeonPayload,
-                                   sizeof(dungeonPayload) - 1U),
-              "cached DUNGEON.DAT should contain the ZIP entry payload");
+              path_has_virtual_entry(required->matchedPath, "dm2-required.zip",
+                                     "renamed/inside/DM2DUNGEON.RENAMED"),
+              "required dungeon path must retain its ZIP provenance");
+    check_int(!FSP_FileExists(cachedGraphics) && !FSP_FileExists(cachedDungeon),
+              "DM2 ZIP entries must never be unpacked into asset-cache");
 
     M12_AssetStatus_Scan(&status, rawGraphicsPath);
 
-    check_int(M12_AssetStatus_GameAvailable(&status, "dm2"),
-              "direct renamed raw graphics file should hash-scan its parent "
-              "and make DM2 available");
+    check_int(!M12_AssetStatus_GameAvailable(&status, "dm2"),
+              "renamed loose DM2 files stay blocked rather than being copied");
     check_int(strcmp(M12_AssetStatus_GetRuntimeDataDir(&status, "dm2"),
-                     cacheRoot) == 0,
-              "direct renamed raw file request should use asset-cache as the "
-              "DM2 runtime root");
+                     rawDir) == 0,
+              "renamed loose DM2 files must retain their original directory");
     required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 0U);
     check_int(required && required->matched &&
-              path_has_cache_leaf(required->matchedPath, cacheRoot,
-                                  "dm2", "GRAPHICS.DAT"),
-              "direct renamed raw graphics should materialize as GRAPHICS.DAT");
+              strcmp(required->matchedPath, rawGraphicsPath) == 0,
+              "renamed loose graphics path must stay source-owned");
     required = M12_AssetStatus_GetRequiredFile(&status, "dm2", 1U);
     check_int(required && required->matched &&
-              path_has_cache_leaf(required->matchedPath, cacheRoot,
-                                  "dm2", "DUNGEON.DAT"),
-              "direct renamed raw dungeon should materialize as DUNGEON.DAT");
-    check_int(file_matches_payload(cachedGraphics, graphicsPayload,
-                                   sizeof(graphicsPayload) - 1U),
-              "direct renamed raw graphics cache should match the payload");
-    check_int(file_matches_payload(cachedDungeon, dungeonPayload,
-                                   sizeof(dungeonPayload) - 1U),
-              "direct renamed raw dungeon cache should match the payload");
+              strcmp(required->matchedPath, rawDungeonPath) == 0,
+              "renamed loose dungeon path must stay source-owned");
+    check_int(!FSP_FileExists(cachedGraphics) && !FSP_FileExists(cachedDungeon),
+              "renamed loose DM2 files must never be copied into asset-cache");
 
     M12_AssetStatus_TestSetDm2SyntheticHashes(NULL, NULL);
     (void)test_setenv("FIRESTAFF_DATA", NULL);
@@ -412,10 +375,6 @@ int main(void) {
         fprintf(stderr, "%d failure(s)\n", failures);
         return 1;
     }
-#ifdef FIRESTAFF_HAS_ZLIB
-    puts("ok: ZIP deflate virtual required files materialize into asset cache");
-#else
-    puts("ok: ZIP stored virtual required files materialize into asset cache");
-#endif
+    puts("ok: DM2 ZIP and renamed loose files retain source paths and stay uncopied");
     return 0;
 }

@@ -1,3 +1,13 @@
+- ✅ 2026-08-06 DM2 no-disk-materialization enforcement: removed the stale
+  M12 PC-DOS archive and renamed-loose-file cache path that could write
+  `GRAPHICS.DAT`, `DUNGEON.DAT`, music and alternate dungeon sidecars under
+  `asset-cache/dm2`. PC ZIP/ISO and renamed loose data now retain their
+  matched source paths as diagnostics and block launch until a bounded
+  in-memory PC reader is complete. FM Towns and Amiga still use their existing
+  selected-media RAM owners, so their verified archive launches remain intact.
+  ZIP, ISO, renamed-loose and real FM Towns direct/English-companion ZIP
+  regressions pass.
+
 - ✅ 2026-08-06 Theron text/disassembly boundary verification: the real
   US/JP Track 02 HuC6280 bank-$1f receipt passes with the authenticated
   decompressor fragment, caller output-size contract and stage-2 resource
