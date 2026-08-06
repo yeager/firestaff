@@ -37703,6 +37703,7 @@ if(BUILD_TESTING)
     add_executable(test_firestaff_asset_pipeline_hash_scan
         tests/test_firestaff_asset_pipeline_hash_scan.c
         src/engine/firestaff_asset_pipeline.c
+        src/dm1/dm1_v1_atari_st_stx.c
         src/shared/asset_status_m12.c
         src/shared/asset_find_by_hash.c
         src/shared/fs_portable_compat.c
@@ -37712,6 +37713,7 @@ if(BUILD_TESTING)
         src/dm1v2/dm1_v2_modern_assets_pc34.c
         src/theron/theron_v1_track02_campaign_media_discovery.c
         src/theron/theron_v1_track02.c
+        src/theron/theron_v1_track02_level_data_blocks.c
         src/theron/theron_v1_world.c
         src/theron/theron_v1_compat.c
         src/theron/theron_v1_track02_text_decode.c

@@ -33,6 +33,15 @@
   HUD, viewport, text and SLEV/SAL routes. No runtime route or synthetic asset
   was enabled.
 
+- ✅ 2026-08-06 DM1 Atari STX asset-pipeline handoff: the hash-first asset
+  pipeline now accepts each of the six catalogued retail Atari ST disk-image
+  identities, including STX members found inside supported archives. It
+  validates the RSY v3 image, extracts the original FAT12
+  `GRAPHICS.DAT`/`DUNGEON.DAT` bytes, and tags the bundle as Atari STX so a
+  PC34 renderer cannot consume it accidentally. Direct-file verification
+  against the real DM1 STX passed; the Atari dungeon/runtime join remains
+  open in TODO.
+
 - ✅ 2026-08-06 DM1 Atari ST IMG1 decoder: the real 563-record DMCSB1
   Atari-LZW/raw handoff now feeds a shared original IMG1/IMG2 nibble decoder.
   The decoder preserves the Atari big-endian dimensions and rejects invalid

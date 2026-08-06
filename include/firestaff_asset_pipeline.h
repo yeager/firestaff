@@ -16,10 +16,23 @@ typedef struct {
     int dungeon_size;
     uint32_t palette[256];
     int loaded;
+    /* Identifies the admitted source container.  Callers that only support
+     * the PC34 renderer must reject non-PC bundles instead of guessing. */
+    int source_format;
 } FS_AssetBundle;
+
+enum {
+    FS_ASSET_SOURCE_PC34 = 0,
+    FS_ASSET_SOURCE_DM1_ATARI_ST_STX = 1
+};
 
 int fs_assets_load_game(FS_AssetBundle *bundle, const char *data_dir, const char *game_subdir);
 int fs_assets_load_dm1(FS_AssetBundle *bundle, const char *data_dir);
+/* Load a real protected Atari ST DM1 disk image.  The input is found by
+ * hash, including inside supported archives; GRAPHICS.DAT and DUNGEON.DAT
+ * are extracted from the STX image without filename admission. */
+int fs_assets_load_dm1_atari_st_stx(FS_AssetBundle *bundle,
+                                     const char *data_dir);
 int fs_assets_load_csb(FS_AssetBundle *bundle, const char *data_dir);
 int fs_assets_load_dm2(FS_AssetBundle *bundle, const char *data_dir);
 void fs_assets_free(FS_AssetBundle *bundle);

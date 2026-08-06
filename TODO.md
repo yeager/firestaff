@@ -400,9 +400,12 @@
   2026-08-06: a clean-room
   `dm1_v1_atari_st_stx` reader now validates the retail RSY v3 track blocks,
   orders real 512-byte sectors, reads the DM1 FAT12 directory and extracts
-  GRAPHICS.DAT/DUNGEON.DAT from the supplied STX. Remaining work is joining
-  that extracted pair to the Atari dungeon/runtime owner and validating more
-  protected STX variants; no generic STX fallback is enabled.
+  GRAPHICS.DAT/DUNGEON.DAT from the supplied STX. The hash-first asset
+  pipeline now also materializes all six catalogued retail STX identities
+  from a selected file or supported archive into a source-tagged bundle.
+  Remaining work is joining that extracted pair to the Atari dungeon/runtime
+  owner and validating more protected STX variants; the PC34 runtime still
+  rejects the non-PC34 bundle rather than guessing.
 
 - **DM1-BLOCKED-STEP-AUDIO-DAMAGE-HUD:** The DM1 runtime now owns the remaining
   wall-step audio and damage-overlay corrections: blocked step commands emit

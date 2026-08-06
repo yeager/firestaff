@@ -152,6 +152,51 @@ static void check_named_unverified_pair_is_rejected(const char* root) {
     fs_assets_free(&bundle);
 }
 
+static void check_optional_real_dm1_atari_stx(const char* root,
+                                              const char* originalHome) {
+    FS_AssetBundle bundle;
+    char source[FSP_PATH_MAX];
+    char isolated[FSP_PATH_MAX];
+    char archive[FSP_PATH_MAX];
+    const char* direct = getenv("FIRESTAFF_DM1_ATARI_STX");
+    if (direct && direct[0] != '\0') {
+        memset(&bundle, 0, sizeof(bundle));
+        check_int(fs_assets_load_dm1_atari_st_stx(&bundle, direct) == 0,
+                  "real DM1 Atari STX file loads by hash");
+        if (bundle.loaded) {
+            check_int(bundle.source_format == FS_ASSET_SOURCE_DM1_ATARI_ST_STX,
+                      "real DM1 Atari STX file is source-tagged");
+            fs_assets_free(&bundle);
+        }
+        return;
+    }
+    if (!originalHome || originalHome[0] == '\0' ||
+        !root ||
+        !FSP_JoinPath(source, sizeof(source), originalHome,
+                      ".firestaff/data/dm1/Dungeon-Master_Atari-ST_EN_Version-12.zip") ||
+        !FSP_JoinPath(isolated, sizeof(isolated), root, "dm1-atari-stx") ||
+        !FSP_CreateDirectoryRecursive(isolated) ||
+        !FSP_JoinPath(archive, sizeof(archive), isolated,
+                      "original-atari-st.zip") ||
+        !copy_file_bytes(source, archive)) {
+        printf("skip: DM1 Atari ST data root unavailable (%s)\n", source);
+        return;
+    }
+    memset(&bundle, 0, sizeof(bundle));
+    if (fs_assets_load_dm1_atari_st_stx(&bundle, isolated) != 0) {
+        printf("skip: verified DM1 Atari ST STX not present\n");
+        return;
+    }
+    check_int(bundle.loaded == 1 &&
+              bundle.source_format == FS_ASSET_SOURCE_DM1_ATARI_ST_STX,
+              "real DM1 Atari STX bundle is source-tagged");
+    check_int(bundle.graphics_size == 271911 || bundle.graphics_size > 0,
+              "real Atari STX GRAPHICS.DAT was extracted");
+    check_int(bundle.dungeon_size == 33286 || bundle.dungeon_size > 0,
+              "real Atari STX DUNGEON.DAT was extracted");
+    fs_assets_free(&bundle);
+}
+
 static void check_optional_real_multilang_renamed_hash(const char* root,
                                                        const char* originalHome) {
     char graphicsSrc[FSP_PATH_MAX];
@@ -218,7 +263,10 @@ int main(void) {
     char csbDungeonMd5[M12_ASSET_MD5_CAPACITY];
     char dm2GraphicsMd5[M12_ASSET_MD5_CAPACITY];
     char dm2DungeonMd5[M12_ASSET_MD5_CAPACITY];
-    const char* originalHome = getenv("HOME");
+    char originalHome[FSP_PATH_MAX];
+
+    snprintf(originalHome, sizeof(originalHome), "%s", getenv("HOME") ?
+             getenv("HOME") : "");
 
     check_int(make_root(root, sizeof(root)), "temp root created");
     check_int(test_setenv("HOME", root), "isolated HOME set");
@@ -270,6 +318,7 @@ int main(void) {
     check_named_unverified_pair_is_rejected(root);
 
     check_optional_real_multilang_renamed_hash(root, originalHome);
+    check_optional_real_dm1_atari_stx(root, originalHome);
 
     M12_AssetStatus_TestSetDm1Pc34EnglishSyntheticHashes(NULL, NULL);
     M12_AssetStatus_TestSetCsbSyntheticHashes(NULL, NULL);

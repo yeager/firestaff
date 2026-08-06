@@ -2,10 +2,85 @@
 #include "firestaff_asset_pipeline.h"
 #include "asset_find_by_hash.h"
 #include "asset_status_m12.h"
+#include "dm1_v1_atari_st_stx.h"
 #include "firestaff_l10n.h"
+#include "fs_portable_compat.h"
 #include <stdio.h>
+#include <limits.h>
 #include <stdlib.h>
 #include <string.h>
+
+#ifdef _WIN32
+#include <process.h>
+#define FIRESTAFF_PIPELINE_GETPID _getpid
+#else
+#include <unistd.h>
+#define FIRESTAFF_PIPELINE_GETPID getpid
+#endif
+
+static const char *const g_dm1_atari_st_stx_md5[] = {
+    "58286fceb935b18a84413c760464a6ca",
+    "3fd743a3aa08706cf1c52a87de37b860",
+    "5ee3f90245a1cc54fec84a12b450b4e4",
+    "279e322b837e98ea258f0b16a736f9ca",
+    "97cc99bf5b594b8260f42d9d81320308",
+    "933955a6a596081b4bc62655efeafde5",
+    NULL
+};
+
+static int load_file_alloc(const char *path, uint8_t **out, int *out_size)
+{
+    FILE *f;
+    long size;
+    size_t got;
+    if (!path || !out || !out_size) return -1;
+    *out = NULL;
+    *out_size = 0;
+    f = fopen(path, "rb");
+    if (!f || fseek(f, 0, SEEK_END) != 0) {
+        if (f) fclose(f);
+        return -1;
+    }
+    size = ftell(f);
+    if (size <= 0 || fseek(f, 0, SEEK_SET) != 0) {
+        fclose(f);
+        return -1;
+    }
+    *out = (uint8_t *)malloc((size_t)size);
+    if (!*out) {
+        fclose(f);
+        return -1;
+    }
+    got = fread(*out, 1u, (size_t)size, f);
+    fclose(f);
+    if (got != (size_t)size || size > INT_MAX) {
+        free(*out);
+        *out = NULL;
+        return -1;
+    }
+    *out_size = (int)size;
+    return 0;
+}
+
+static int load_stx_file_or_virtual(const char *path,
+                                    uint8_t **out,
+                                    int *out_size)
+{
+    char temp[256];
+    int written;
+    int result;
+    if (!path || !out || !out_size) return -1;
+    if (!strstr(path, "::")) return load_file_alloc(path, out, out_size);
+    written = snprintf(temp, sizeof(temp), "/tmp/firestaff-dm1-stx-%ld.stx",
+                       (long)FIRESTAFF_PIPELINE_GETPID());
+    if (written <= 0 || (size_t)written >= sizeof(temp) ||
+        !asset_extract_virtual_path(path, temp)) {
+        return -1;
+    }
+    result = load_file_alloc(temp, out, out_size);
+    (void)remove(temp);
+    return result;
+}
 
 static int load_file(const char *path, uint8_t **out, int *out_size) {
     FILE *f = fopen(path, "rb");
@@ -120,6 +195,67 @@ void fs_assets_free(FS_AssetBundle *bundle) {
     free(bundle->graphics_data); bundle->graphics_data = NULL;
     free(bundle->dungeon_data); bundle->dungeon_data = NULL;
     bundle->loaded = 0;
+    bundle->source_format = FS_ASSET_SOURCE_PC34;
+}
+
+int fs_assets_load_dm1_atari_st_stx(FS_AssetBundle *bundle,
+                                     const char *data_dir)
+{
+    char path[ASSET_PATH_MAX];
+    int match_index = -1;
+    uint8_t *stx_bytes = NULL;
+    int stx_size = 0;
+    uint8_t *graphics = NULL;
+    uint8_t *dungeon = NULL;
+    size_t graphics_size = 0U;
+    size_t dungeon_size = 0U;
+    DM1_V1_AtariStx stx;
+    if (!bundle || !data_dir) return -1;
+    memset(bundle, 0, sizeof(*bundle));
+    if (FSP_FileExists(data_dir)) {
+        char md5[33];
+        size_t i;
+        if (!asset_file_md5_hex(data_dir, md5)) return -1;
+        for (i = 0U; g_dm1_atari_st_stx_md5[i] != NULL; ++i) {
+            if (strcmp(md5, g_dm1_atari_st_stx_md5[i]) == 0) {
+                snprintf(path, sizeof(path), "%s", data_dir);
+                match_index = (int)i;
+                break;
+            }
+        }
+    } else {
+        (void)asset_find_by_md5_list(data_dir, g_dm1_atari_st_stx_md5,
+                                     path, (int)sizeof(path), &match_index, 32);
+    }
+    if (match_index < 0 ||
+        load_stx_file_or_virtual(path, &stx_bytes, &stx_size) != 0 ||
+        !dm1_v1_atari_st_stx_open(stx_bytes, (size_t)stx_size, &stx)) {
+        free(stx_bytes);
+        return -1;
+    }
+    graphics = (uint8_t *)malloc(1024U * 1024U);
+    dungeon = (uint8_t *)malloc(128U * 1024U);
+    if (!graphics || !dungeon ||
+        !dm1_v1_atari_st_stx_extract_file(&stx, "GRAPHICS.DAT",
+                                           graphics, 1024U * 1024U,
+                                           &graphics_size) ||
+        !dm1_v1_atari_st_stx_extract_file(&stx, "DUNGEON.DAT",
+                                           dungeon, 128U * 1024U,
+                                           &dungeon_size) ||
+        graphics_size == 0U || dungeon_size == 0U) {
+        free(stx_bytes);
+        free(graphics);
+        free(dungeon);
+        return -1;
+    }
+    free(stx_bytes);
+    bundle->graphics_data = graphics;
+    bundle->graphics_size = (int)graphics_size;
+    bundle->dungeon_data = dungeon;
+    bundle->dungeon_size = (int)dungeon_size;
+    bundle->source_format = FS_ASSET_SOURCE_DM1_ATARI_ST_STX;
+    bundle->loaded = 1;
+    return 0;
 }
 
 void fs_assets_expand_vga_palette(const uint8_t *vga_6bit, uint32_t *rgba_out, int count) {
