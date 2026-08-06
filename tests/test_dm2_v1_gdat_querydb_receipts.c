@@ -785,10 +785,10 @@ static void test_fixture_pict_allocation_receipts(void)
 static void test_querydb_word_and_ornate_receipts(void)
 {
     DM2_V1_AssetLoader loader;
-    uint8_t data[160];
-    uint32_t raw_offsets[5];
-    uint32_t raw_sizes[5];
-    DM2_V1_GdatEntry entries[20];
+    uint8_t data[320];
+    uint32_t raw_offsets[6];
+    uint32_t raw_sizes[6];
+    DM2_V1_GdatEntry entries[21];
     DM2_V1_QueryOrnateAnimFrameReceipt frame;
     DM2_V1_GetOrnateAnimLenReceipt len;
     DM2_V1_GdatWordQueryReceipt word;
@@ -812,6 +812,8 @@ static void test_querydb_word_and_ornate_receipts(void)
     memcpy(data + 64u, "BLADE:SK=4SK=8DM=-5HN=12", 26u);
     data[90u] = 0u;
     memcpy(data + 96u, "J0-5", 5u);
+    memset(data + 160u, 'A', 128u);
+    data[288u] = 0u;
     raw_offsets[0] = 0u;
     raw_sizes[0] = 4u;
     raw_offsets[1] = 8u;
@@ -822,6 +824,8 @@ static void test_querydb_word_and_ornate_receipts(void)
     raw_sizes[3] = 27u;
     raw_offsets[4] = 96u;
     raw_sizes[4] = 5u;
+    raw_offsets[5] = 160u;
+    raw_sizes[5] = 129u;
 
     memset(entries, 0, sizeof(entries));
     entries[0] = (DM2_V1_GdatEntry){
@@ -884,16 +888,19 @@ static void test_querydb_word_and_ornate_receipts(void)
     entries[19] = (DM2_V1_GdatEntry){
         DM2_GDAT_CATEGORY_CONTAINERS, 7u, DM2_GDAT_ENTRY_TYPE_TEXT,
         0x40u, 0u, 0u, 4u};
+    entries[20] = (DM2_V1_GdatEntry){
+        DM2_GDAT_CATEGORY_WEAPONS, 4u, DM2_GDAT_ENTRY_TYPE_TEXT,
+        0x18u, 0u, 0u, 5u};
 
     loader.data = data;
     loader.data_size = sizeof(data);
     loader.loaded = 1;
     loader.category_count = DM2_GDAT_CATEGORY_LIMIT + 1;
-    loader.raw_data_count = 5u;
+    loader.raw_data_count = 6u;
     loader.raw_offsets = raw_offsets;
     loader.raw_sizes = raw_sizes;
     loader.entries = entries;
-    loader.entry_count = 20u;
+    loader.entry_count = 21u;
 
     CHECK(dm2_v1_query_ornate_anim_frame_receipt(
               &loader, DM2_GDAT_CATEGORY_WALL_GFX, 7, 4u, 1u, &frame) &&
@@ -950,6 +957,10 @@ static void test_querydb_word_and_ornate_receipts(void)
               strcmp(name.text, "AXE") == 0 &&
               name.text_hash != 0u,
           "DM2_QUERY_GDAT_ITEM_NAME binds real dtText field 0x18 and stops at colon");
+    CHECK(!dm2_v1_query_gdat_item_name_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 4, &name) &&
+              !name.accepted && name.truncated && name.text[0] == '\0',
+          "DM2_QUERY_GDAT_ITEM_NAME rejects over-cap source text without a partial name");
     CHECK(dm2_v1_query_cmdstr_name_receipt(
               &loader, DM2_GDAT_CATEGORY_WEAPONS, 2, 0x08u, &name) &&
               name.accepted && strcmp(name.text, "BLADE") == 0,
@@ -1137,6 +1148,7 @@ static void test_real_graphics_census(void)
     DM2_V1_GdatEntryIterator iterator;
     DM2_V1_GdatEntryQueryReceipt iter_receipt;
     DM2_V1_GdatGfxMaterialReceipt material;
+    DM2_V1_GdatNameReceipt item_name;
     unsigned int loadable_count = 0u;
     unsigned int scalar_count = 0u;
     unsigned int gfx_material_count = 0u;
@@ -1158,6 +1170,16 @@ static void test_real_graphics_census(void)
               (structure_receipt.source_image_cache_limit == 0x001fu ||
                structure_receipt.source_image_cache_limit == 0x03e8u),
           "real GRAPHICS.DAT retains its source startup allocator mode");
+    CHECK(dm2_v1_query_gdat_item_name_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 0, &item_name) &&
+              item_name.accepted && !item_name.truncated &&
+              strcmp(item_name.text, "EYE OF TIME") == 0,
+          "real GDAT item-name receipt preserves WEAPONS/0 dtText/0x18 in full");
+    CHECK(dm2_v1_query_gdat_item_name_receipt(
+              &loader, DM2_GDAT_CATEGORY_WEAPONS, 3, &item_name) &&
+              item_name.accepted && !item_name.truncated &&
+              strcmp(item_name.text, "KALAN GAUNTLET") == 0,
+          "real GDAT item-name receipt preserves the complete longest PC weapon name");
 
     for (uint16_t i = 0u; i < loader.entry_count; ++i) {
         DM2_V1_GdatEntryQueryReceipt receipt;

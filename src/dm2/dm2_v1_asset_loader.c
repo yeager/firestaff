@@ -3022,6 +3022,42 @@ static int dm2_v1_text_has_nul(const uint8_t *text, size_t text_size,
     return 0;
 }
 
+/* SKWIN/SkWinCore.cpp::QUERY_GDAT_TEXT reads GDAT 0/0/dtWordValue/0
+ * before applying its bytewise `~value - ordinal` transform.  The raw loader
+ * intentionally exposes source bytes; consumers of player-visible dtText
+ * must make this source-owned conversion before searching for the NUL. */
+static int dm2_v1_decode_gdat_text(
+    const DM2_V1_AssetLoader *loader,
+    const uint8_t *raw,
+    size_t raw_size,
+    uint8_t *decoded,
+    size_t decoded_capacity,
+    const uint8_t **out_text)
+{
+    uint16_t flags = 0u;
+    size_t i;
+
+    if (out_text) *out_text = NULL;
+    if (!loader || !raw || !decoded || !out_text || raw_size == 0u ||
+        raw_size > decoded_capacity) {
+        return 0;
+    }
+    /* A tiny caller-built test loader may not carry GDAT 0/0/0.  Such a
+     * loader is expressly literal; hash-admitted retail media always owns
+     * this setup word and thus selects the original cipher when bit 0x08 is
+     * present. */
+    if (!dm2_v1_asset_load_word_value(loader, 0, 0, 0, &flags) ||
+        (flags & 0x08u) == 0u) {
+        *out_text = raw;
+        return 1;
+    }
+    for (i = 0u; i < raw_size; ++i) {
+        decoded[i] = (uint8_t)((uint8_t)~raw[i] - (uint8_t)i);
+    }
+    *out_text = decoded;
+    return 1;
+}
+
 static int dm2_v1_query_cmdstr_text_value(
     const uint8_t *text,
     size_t text_size,
@@ -3092,7 +3128,9 @@ int dm2_v1_query_cmdstr_name_receipt(
     int field,
     DM2_V1_GdatNameReceipt *out_receipt)
 {
+    const uint8_t *raw;
     const uint8_t *text;
+    uint8_t decoded[DM2_V1_CMDSTR_TEXT_CAP];
     size_t text_size = 0u;
     size_t text_len = 0u;
     size_t copy_len = 0u;
@@ -3106,22 +3144,32 @@ int dm2_v1_query_cmdstr_name_receipt(
     out_receipt->category = (uint8_t)category;
     out_receipt->index = (uint8_t)index;
     out_receipt->field = (uint8_t)field;
-    text = dm2_v1_asset_load_text_sized(loader, category, index, field,
-                                        &text_size);
-    if (!text || !dm2_v1_text_has_nul(text, text_size, &text_len) ||
+    raw = dm2_v1_asset_load_text_sized(loader, category, index, field,
+                                       &text_size);
+    if (!raw || text_size > sizeof(decoded)) {
+        out_receipt->truncated = 1u;
+        return 0;
+    }
+    if (!dm2_v1_decode_gdat_text(loader, raw, text_size, decoded,
+                                 sizeof(decoded), &text) ||
+        !dm2_v1_text_has_nul(text, text_size, &text_len) ||
         text_len == 0u) {
         return 0;
     }
 
     while (copy_len < text_len && text[copy_len] != ':') ++copy_len;
     if (copy_len >= sizeof(out_receipt->text)) {
-        copy_len = sizeof(out_receipt->text) - 1u;
+        /* SKWIN's QUERY_GDAT_ITEM_NAME hands FORMAT_SKSTR the complete
+         * dtText/0x18 value (SkWinCore.cpp:13434-13442).  A clipped prefix
+         * is not an original item name, so leave it unavailable rather than
+         * exposing a host-truncated substitute. */
         out_receipt->truncated = 1u;
+        return 0;
     }
     memcpy(out_receipt->text, text, copy_len);
     out_receipt->text[copy_len] = '\0';
     out_receipt->byte_count = (uint16_t)copy_len;
-    out_receipt->text_hash = dm2_fnv1a_bytes(text, text_len);
+    out_receipt->text_hash = dm2_fnv1a_bytes(raw, text_size);
     out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
         (uint32_t)category, (uint32_t)index,
         ((uint32_t)(uint8_t)field << 16) | (uint32_t)copy_len,
@@ -3139,7 +3187,9 @@ int dm2_v1_query_cmdstr_entry_receipt(
     DM2_V1_CmdstrEntryReceipt *out_receipt)
 {
     const char *key;
+    const uint8_t *raw;
     const uint8_t *text;
+    uint8_t decoded[DM2_V1_CMDSTR_TEXT_CAP];
     size_t text_size = 0u;
     size_t text_len = 0u;
     int found = 0;
@@ -3159,9 +3209,12 @@ int dm2_v1_query_cmdstr_entry_receipt(
     out_receipt->key[1] = key[1];
     out_receipt->key[2] = '\0';
 
-    text = dm2_v1_asset_load_text_sized(loader, category, index, field,
-                                        &text_size);
-    if (!text || !dm2_v1_text_has_nul(text, text_size, &text_len) ||
+    raw = dm2_v1_asset_load_text_sized(loader, category, index, field,
+                                       &text_size);
+    if (!raw || text_size > sizeof(decoded) ||
+        !dm2_v1_decode_gdat_text(loader, raw, text_size, decoded,
+                                 sizeof(decoded), &text) ||
+        !dm2_v1_text_has_nul(text, text_size, &text_len) ||
         text_len == 0u) {
         return 0;
     }
@@ -3171,7 +3224,7 @@ int dm2_v1_query_cmdstr_entry_receipt(
     out_receipt->accepted = 1u;
     out_receipt->found = (uint8_t)(found ? 1u : 0u);
     out_receipt->value = value;
-    out_receipt->text_hash = dm2_fnv1a_bytes(text, text_len);
+    out_receipt->text_hash = dm2_fnv1a_bytes(raw, text_size);
     out_receipt->receipt_hash = dm2_gdat_file_receipt_hash(
         (uint32_t)category, (uint32_t)index,
         ((uint32_t)(uint8_t)field << 16) | (uint32_t)(uint8_t)key_index,

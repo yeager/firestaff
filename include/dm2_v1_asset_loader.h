@@ -775,6 +775,8 @@ typedef struct {
     uint8_t category;
     uint8_t index;
     uint8_t field;
+    /* A source text that cannot fit is rejected: accepted and truncated are
+     * never both true, so a UI consumer cannot render a partial name. */
     uint8_t truncated;
     uint16_t byte_count;
     char text[DM2_V1_CMDSTR_TEXT_CAP];

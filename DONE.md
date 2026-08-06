@@ -67,6 +67,19 @@
 - ✅ Verification: `test_dm1_v1_viewport_d1l2_d1r2_f0111_partly_open_door_pc34_compat`
   passes; the source object is absent from both M10 and M11 archives.
 
+# DM2 source GDAT item-name receipt (2026-08-06)
+
+- ✅ `dm2_v1_query_gdat_item_name_receipt()` now follows
+  SKProject `SkWinCore.cpp::QUERY_GDAT_TEXT` for the original GDAT setup-word
+  cipher before it reads `dtText/0x18`. It rejects an over-capacity string
+  instead of presenting a truncated prefix; no host name table was added.
+- ✅ The authenticated PC-DOS `GRAPHICS.DAT` regression verifies full original
+  values `EYE OF TIME` and `KALAN GAUNTLET`. The FM Towns real-media startup,
+  menu, palette and RAM-only English-companion regression also passes.
+- ℹ️ This repairs the data receipt only. Item HUD text remains deliberately
+  unavailable until a live object record supplies its original CLS1/CLS2
+  owner.
+
 # DM1 D2L2/D2R2 F0108 floor-ceiling synthetic audit isolation (2026-08-06)
 
 - ✅ Removed the fixed-zone D2L2/D2R2 F0108 floor/ceiling contract from M10.

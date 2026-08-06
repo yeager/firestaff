@@ -3674,6 +3674,13 @@ level or consumer bindings.
   tuple-only signature cannot authenticate a buffer, so command-text events
   remain blocked until a mounted original GDAT query returns the raw record
   together with provenance.
+  **2026-08-06 GDAT receipt correction:** the bounded item-name receipt now
+  applies the source `GDAT 0/0/dtWordValue/0` bit-0x08 `~byte - ordinal`
+  transform before it finds the terminator, and rejects a name that exceeds
+  its bounded receipt buffer instead of publishing a prefix. The PC corpus
+  confirms `WEAPONS/0/dtText/0x18 = EYE OF TIME` and
+  `WEAPONS/3/dtText/0x18 = KALAN GAUNTLET`; this does not yet supply the
+  required live ObjectID-to-CLS1/CLS2 M11 owner, so the HUD remains unnamed.
 
 - **DM2-DIALOGUE-TEXT-OWNER-HANDOFF:** Save/load-dialogue labels require the
   original `GDAT 0/0/dtWordValue/0` transform owner as well as their
