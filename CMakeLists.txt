@@ -4356,6 +4356,11 @@ list(REMOVE_ITEM M10_SOURCES
 # evidence, so keep it out of the production M10 archive.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0651_g0700_cache_lzw_viewport_source_audit_pc34_compat.c")
+# F0786--F0805 records existing panel/runtime owners and fail-closed gaps;
+# it has no production caller.  Preserve it in the direct ReDMCSB audit
+# instead of linking its evidence table into M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0786_f0805_runtime_panel_source_audit_pc34_compat.c")
 # `dm1_v1_g0117_pc34_compat.c` is a source-locked copy of the PC34
 # Graphic558 D1C stair-frame coordinates.  It has no runtime caller or
 # authenticated GRAPHICS.DAT binding; its dedicated regression compiles the
