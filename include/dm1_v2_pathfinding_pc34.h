@@ -3,8 +3,6 @@
 
 #include <stdint.h>
 #include <stdbool.h>
-#include <string.h>
-#include <stdlib.h>
 
 typedef struct M11_V2_PathNode {
     int x, y;
@@ -19,6 +17,7 @@ typedef struct M11_V2_Path {
     bool valid;
 } M11_V2_Path;
 
+/* Retained for callers compiled against the former V2 extension. */
 void v2_path_init(void);
 bool v2_path_find(int* map, int map_w, int map_h, int sx, int sy, int gx, int gy, M11_V2_Path* out);
 void v2_path_clear(void);

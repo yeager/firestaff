@@ -1,0 +1,10 @@
+{
+  "status": "passed",
+  "redmcsbSource": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source/GROUP.C",
+  "anchors": [
+    "F0202_GROUP_IsMovementPossible",
+    "F0203_GROUP_GetFirstPossibleMovementDirectionOrdinal",
+    "T0209084_SingleSquareMoveTowardTargetSquare"
+  ],
+  "errors": []
+}

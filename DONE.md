@@ -1,3 +1,11 @@
+# DM1 V2:s syntetiska A*-sökning spärrad (2026-08-07)
+
+- ✅ Tog bort V2:s egna öppna lista, Manhattan-heuristik och vägrekonstruktion.
+  PC34 provar varelserörelse riktning för riktning i `GROUP.C` F0202/F0203
+  med dungeon- och varelsetillstånd. Kompatibilitetsytan skriver därför inte
+  längre några rutter till en fristående heltalskarta. CTesten och källåset
+  kontrollerar spärren och ReDMCSB-rutterna.
+
 # DM1 V2:s syntetiska ljudmixer spärrad (2026-08-07)
 
 - ✅ Tog bort V2:s host-samplebuffertar, åtta kanaler, panorering och PCM-mixning.

@@ -67,7 +67,8 @@
 
 ### Milestone 7: Kartfunktioner
 - [ ] `dm1_v2_minimap` + `dm1_v2_minimap_pc34` — automap med fog of war (84+90 rader)
-- [ ] `dm1_v2_pathfinding_pc34` — A* pathfinding för creature AI (123 rader)
+- [x] `dm1_v2_pathfinding_pc34` — syntetisk A*-sökning spärrad; PC34 väljer
+  i stället varje varelseriktning i `GROUP.C` F0202/F0203.
 
 ### Milestone 8: Inventory och champion
 - [ ] `dm1_v2_inventory_sort_pc34` — sortera inventariet (93 rader)
