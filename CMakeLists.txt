@@ -4871,6 +4871,11 @@ list(REMOVE_ITEM M10_SOURCES
 # inventory with no runtime route. Its generated direct test owns the audit.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m301_m350_source_audit_pc34_compat.c")
+# `dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat.c` models source
+# routing with synthetic pixel buffers and has no live M11 owner. Its direct
+# contract tests compile the fixture until an authenticated asset path exists.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
@@ -55327,7 +55332,9 @@ add_executable(test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat
 target_include_directories(test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat COMMAND test_dm1_v1_viewport_f0099_row_local_flip_pc34_compat)
-add_executable(test_dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat tests/test_dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat.c)
+add_executable(test_dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat
+    tests/test_dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat.c
+    src/dm1/dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat.c)
 target_include_directories(test_dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat COMMAND test_dm1_v1_viewport_f0107_wall_ornament_alcove_pc34_compat)
