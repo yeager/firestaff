@@ -278,6 +278,11 @@ int dm2_v1_spell_proceed_failure(int code,
     r->valid = 1;
     r->code = code;
     r->glob_var = -1;
+    r->glob_update_index = -1;
+    r->glob_update_op = -1;
+    r->glob_update_operand = 0;
+    r->display_window_base = -1;
+    r->display_window_min = -1;
 
     /* c_events.cpp:2694-2733 — class on the high nibble. */
     failure_class = code & 0xf0;
@@ -307,8 +312,17 @@ int dm2_v1_spell_proceed_failure(int code,
         return code; /* returned unchanged, no side effect */
     }
 
-    /* DM2_UPDATE_GLOB_VAR + v1e0b6c window: not yet bound — receipted
-     * as pending instead of simulated. */
+    /* SKProject SKWINSPX/src/v5/skevents.cpp:2730-2733 calls
+     * DM2_UPDATE_GLOB_VAR(RG1W, 1, 3), then computes
+     * DM2_MAX(3, 8 - updated_value) for ddat.v1e0b6c. Keep the exact
+     * operation inputs visible to the eventual live global-state owner;
+     * do not invent an old value or mutate an unrelated host variable. */
+    r->glob_update_index = r->glob_var;
+    r->glob_update_op = 3;
+    r->glob_update_operand = 1;
+    r->display_window_base = 8;
+    r->display_window_min = 3;
+    /* The global state and resulting window remain unbound to live M11. */
     r->glob_update_bound = 0;
     return code;
 }

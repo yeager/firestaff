@@ -274,6 +274,11 @@ typedef struct {
     int flask_pic_drawn;  /* 1 for class 0x30 (draw call receipted) */
     int glob_var;         /* 0x45/0x46/0x44, or -1 when not written */
     int glob_update_bound;/* 0: DM2_UPDATE_GLOB_VAR not yet bound */
+    int glob_update_index;   /* exact DM2_UPDATE_GLOB_VAR eax index */
+    int glob_update_op;      /* exact source mode: 3 (add) */
+    int glob_update_operand; /* exact source operand: 1 */
+    int display_window_base; /* 8 - updated global value */
+    int display_window_min;  /* source DM2_MAX floor: 3 */
     int clears_runes;     /* DM2_TRY_CAST_SPELL: class != 0x30 */
 } DM2_V1_SpellFailureReceipt;
 

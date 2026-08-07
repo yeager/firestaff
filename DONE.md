@@ -1,3 +1,14 @@
+# DM2 spell-feedback panel-global receipt (2026-08-07)
+- ✅ Bound the source-level failure receipt to the exact SKProject
+  `DM2_UPDATE_GLOB_VAR` target (0x45/0x46/0x44), add-one operation, and
+  `DM2_MAX(3, 8 - updated_value)` display-window contract for all handled
+  spell-failure classes.
+- ✅ Kept the live mutation fail-closed because M11 does not yet own the
+  original global state; tests prove the inputs are source-exact and never
+  simulated. The real NEED_FLASK material remains a separate no-draw GDAT
+  receipt until its transparent-static-pic consumer is bound. No release was
+  made.
+
 # DM2 creature AI row handoff (2026-08-07)
 - ✅ Replaced the runtime's stale 62-row duplicate AI baseline with the
   authenticated 63×36-byte `table1d296c` byte table retained from the

@@ -116,16 +116,28 @@ int main(void)
                   r.status == -5 && r.status_written &&
                   r.glob_var == 0x45 && r.clears_runes,
               "class 0x10 low!=3 → status -5, glob 0x45");
+        CHECK(r.glob_update_index == 0x45 && r.glob_update_op == 3 &&
+                  r.glob_update_operand == 1 && r.display_window_base == 8 &&
+                  r.display_window_min == 3 && !r.glob_update_bound,
+              "class 0x10 global update exact and fail-closed");
         CHECK(dm2_v1_spell_proceed_failure(0x13, &r) == 0x13 && r.handled &&
                   r.status == -4 && r.glob_var == 0x45,
               "class 0x10 low==3 → status -4");
         CHECK(dm2_v1_spell_proceed_failure(0x20, &r) == 0x20 && r.handled &&
                   r.status == -3 && r.glob_var == 0x46 && r.clears_runes,
               "class 0x20 unknown runes → status -3, glob 0x46");
+        CHECK(r.glob_update_index == 0x46 && r.glob_update_op == 3 &&
+                  r.glob_update_operand == 1 && r.display_window_base == 8 &&
+                  r.display_window_min == 3 && !r.glob_update_bound,
+              "class 0x20 global update exact and fail-closed");
         CHECK(dm2_v1_spell_proceed_failure(0x30, &r) == 0x30 && r.handled &&
                   r.flask_pic_drawn && r.glob_var == 0x44 &&
                   !r.clears_runes && !r.status_written,
               "class 0x30 flask → pic, glob 0x44, runes kept");
+        CHECK(r.glob_update_index == 0x44 && r.glob_update_op == 3 &&
+                  r.glob_update_operand == 1 && r.display_window_base == 8 &&
+                  r.display_window_min == 3 && !r.glob_update_bound,
+              "class 0x30 panel update exact and fail-closed");
         CHECK(dm2_v1_spell_proceed_failure(0x40, &r) == 0x40 && !r.handled &&
                   r.glob_var == -1,
               "class 0x40 unchanged, no side effect");

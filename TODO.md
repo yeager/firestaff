@@ -1728,6 +1728,11 @@
   receipt. The receipt remains no-draw until the M11 transparent-static-pic
   consumer and C068--C070 panel-global owner are bound; no text or synthetic
   image fallback is allowed.
+  **2026-08-07 panel-global source update:** the spell-failure receipt now
+  carries the exact `DM2_UPDATE_GLOB_VAR` inputs for classes 0x10/0x20/0x30
+  (target 0x45/0x46/0x44, add-one mode) and the source `DM2_MAX(3, 8 - value)`
+  window contract. The live global state remains explicitly unbound, so no
+  guessed old value or unrelated host mutation is presented as parity.
 
 - **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
   mirror side/depth, inscription/corridor invalidation and wall-material
