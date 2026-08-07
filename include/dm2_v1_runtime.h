@@ -986,9 +986,14 @@ typedef struct {
     uint8_t destination_rect;
     uint16_t width;
     uint16_t height;
+    int16_t destination_x;
+    int16_t destination_y;
+    uint16_t destination_width;
+    uint16_t destination_height;
     DM2_ImageFormat format;
     uint32_t decoded_pixels_hash;
     uint32_t palette_hash;
+    uint32_t destination_table_hash;
     uint32_t identity_hash;
 } DM2_V1_RuntimeSpellFailureGdatReceipt;
 

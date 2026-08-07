@@ -1749,6 +1749,11 @@
   (target 0x45/0x46/0x44, add-one mode) and the source `DM2_MAX(3, 8 - value)`
   window contract. The live global state remains explicitly unbound, so no
   guessed old value or unrelated host mutation is presented as parity.
+  **2026-08-07 destination update:** class 0x30 now also resolves destination
+  rect `0x5C` through the authenticated `INTERFACE_GENERAL/0/dt04/0` RAW4
+  table, retaining its expanded coordinates and table hash beside the real
+  NEED_FLASK material. The receipt remains no-draw until transparent-static-pic
+  surface ownership and the C068--C070 global owner are complete.
 
 - **DM1-HOC-VIEWPORT-AUDIT:** Real PC34 HoC object-name, alcove placement,
   mirror side/depth, inscription/corridor invalidation and wall-material

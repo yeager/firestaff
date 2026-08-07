@@ -58541,3 +58541,12 @@ alcove runtime and archive-media tests passed (4/4).
   `DOORS` GDAT category contains no typed text rows. Door status/type labels
   therefore remain unavailable, while the real RAW4/GDAT panel and button
   placement still passes.
+
+# DM2 spell-feedback destination provenance (2026-08-07)
+
+- ✅ Bound the class-0x30 NEED_FLASK receipt to the source `0x5C` rectangle
+  expanded from `INTERFACE_GENERAL/0/dt04/0`, retaining its coordinates and
+  RAW4 table hash alongside the real image/local-palette hashes.
+- ✅ Rebuilt and passed the mounted PC-English DM2 M11 startup/profile gate;
+  transparent-static-pic drawing and C068--C070 panel ownership remain
+  deliberately no-draw, and no release was made.

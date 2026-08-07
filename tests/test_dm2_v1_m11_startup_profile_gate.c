@@ -3255,10 +3255,15 @@ int main(void) {
                         spell_gdat.image_field == 0x0bu &&
                         spell_gdat.destination_rect == 0x5cu &&
                         spell_gdat.width > 0u && spell_gdat.height > 0u &&
+                        spell_gdat.destination_width > 0u &&
+                        spell_gdat.destination_height > 0u &&
+                        spell_gdat.destination_x >= 0 &&
+                        spell_gdat.destination_y >= 0 &&
                         spell_gdat.decoded_pixels_hash != 0u &&
                         spell_gdat.palette_hash != 0u &&
+                        spell_gdat.destination_table_hash != 0u &&
                         spell_gdat.identity_hash != 0u,
-                        "DM2 class-30 failure binds real NEED_FLASK GDAT material");
+                        "DM2 class-30 failure binds real NEED_FLASK GDAT material and destination");
             dm2_v1_boot_cleanup(&spell_profile);
             dm2_v1_runtime_init(NULL);
         } else {

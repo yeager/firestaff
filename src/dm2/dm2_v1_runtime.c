@@ -4680,6 +4680,7 @@ void dm2_v1_runtime_note_spell_cast_apply_receipt(
     uint8_t palette16[16];
     uint32_t palette_hash = 0u;
     uint32_t pixel_hash = 2166136261u;
+    DM2_V1_BootExpandedRectReceipt destination;
     size_t pixel_count;
     int width = 0;
     int height = 0;
@@ -4708,6 +4709,8 @@ void dm2_v1_runtime_note_spell_cast_apply_receipt(
          * GRAPHICS.DAT; never substitute a text label or another image. */
         if (a->failure_class == 0x30 && g_dm2_runtime.boot &&
             (loader = dm2_v1_boot_asset_loader(g_dm2_runtime.boot)) != NULL &&
+            dm2_v1_boot_query_expanded_rect_receipt(
+                g_dm2_runtime.boot, 0x5cu, &destination) && destination.valid &&
             dm2_v1_asset_load_image_local_palette(
                 loader, DM2_GDAT_CATEGORY_INTERFACE_GENERAL, 5, 0x0b,
                 palette16, &palette_hash)) {
@@ -4732,10 +4735,16 @@ void dm2_v1_runtime_note_spell_cast_apply_receipt(
                     r->destination_rect = 0x5cu;
                     r->width = (uint16_t)width;
                     r->height = (uint16_t)height;
+                    r->destination_x = (int16_t)destination.rect.x;
+                    r->destination_y = (int16_t)destination.rect.y;
+                    r->destination_width = (uint16_t)destination.rect.w;
+                    r->destination_height = (uint16_t)destination.rect.h;
                     r->format = format;
                     r->decoded_pixels_hash = pixel_hash;
                     r->palette_hash = palette_hash;
+                    r->destination_table_hash = destination.raw4_hash;
                     r->identity_hash = pixel_hash ^ palette_hash ^
+                        destination.receipt_hash ^
                         ((uint32_t)r->destination_rect << 16);
                     if (r->identity_hash == 0u) r->identity_hash = 1u;
                 }
