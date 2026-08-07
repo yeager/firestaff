@@ -25,6 +25,17 @@
   not a private HOME fallback or a silent skip.
 # CSB selected-package cache handoff (2026-08-07)
 
+# DM2 GDAT open-transaction rollback (2026-08-07)
+
+- ✅ The callback implementation now rolls back failed `GRAPHICS_DATA_OPEN`
+  attempts: a missing primary resets the open counter, and a missing optional
+  `GRAPHIC2.DAT` closes the already-open primary before returning. Closing an
+  unopened transaction is rejected instead of underflowing its counter.
+- ✅ `test_dm2_v1_gdatfile_pc34_compat` covers both failure paths and still
+  passes the real PC-DOS `GRAPHICS.DAT` structure regression (`26/26`). This
+  hardens the source transaction boundary only; `BUILD_GDAT_ENTRY_DATA`,
+  underlay admission and full secondary-file loading remain open in TODO.
+
 - ✅ M12 now materializes every explicitly selected CSB version into its own
   authenticated runtime cache, not only archive-backed selections. This keeps
   a directory-backed Atari ST, Amiga or PC choice from silently booting the

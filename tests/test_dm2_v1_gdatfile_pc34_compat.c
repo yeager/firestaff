@@ -48,6 +48,22 @@ static int16_t mock_file_open(void *ctx, const char *name)
     return 42;
 }
 
+static int16_t mock_file_open_fail_first(void *ctx, const char *name)
+{
+    MockCtx *m = (MockCtx *)ctx;
+    m->open_count++;
+    (void)name;
+    return -1;
+}
+
+static int16_t mock_file_open_fail_second(void *ctx, const char *name)
+{
+    MockCtx *m = (MockCtx *)ctx;
+    m->open_count++;
+    (void)name;
+    return m->open_count == 2 ? -1 : 42;
+}
+
 static void mock_file_close(void *ctx, int16_t handle)
 {
     MockCtx *m = (MockCtx *)ctx;
@@ -770,6 +786,54 @@ static int test_open_dual_file(void)
     return 1;
 }
 
+static int test_open_failure_rolls_back_transaction(void)
+{
+    DM2_V1_GdatFileState state;
+    DM2_V1_GdatFileCallbacks cb = make_mock_callbacks();
+    MockCtx mctx;
+    DM2_V1_GdatOpenReceipt out;
+
+    memset(&mctx, 0, sizeof(mctx));
+    dm2_v1_gdat_file_init(&state, NULL);
+    cb.file_open = mock_file_open_fail_first;
+    if (dm2_v1_gdat_graphics_data_open(&state, &cb, &mctx, &out) != 0 ||
+        out.opened || out.open_count != 0 || state.fileopencounter != 0 ||
+        mctx.syserr_code != 0x29) {
+        return 0;
+    }
+
+    memset(&mctx, 0, sizeof(mctx));
+    dm2_v1_gdat_file_init(&state, NULL);
+    state.filetype1 = false;
+    state.filetype2 = true;
+    cb = make_mock_callbacks();
+    cb.file_open = mock_file_open_fail_second;
+    if (dm2_v1_gdat_graphics_data_open(&state, &cb, &mctx, &out) != 0 ||
+        out.opened || out.open_count != 0 || state.fileopencounter != 0 ||
+        state.filehandle != -1 || state.xfilehandle != -1 ||
+        mctx.open_count != 2 || mctx.close_count != 1 ||
+        mctx.syserr_code != 0x1f) {
+        return 0;
+    }
+    return 1;
+}
+
+static int test_close_rejects_counter_underflow(void)
+{
+    DM2_V1_GdatFileState state;
+    DM2_V1_GdatFileCallbacks cb = make_mock_callbacks();
+    DM2_V1_GdatCloseReceipt out;
+    MockCtx mctx;
+
+    memset(&state, 0, sizeof(state));
+    memset(&mctx, 0, sizeof(mctx));
+    if (dm2_v1_gdat_graphics_data_close(&state, &cb, &mctx, &out) != 0 ||
+        out.closed || out.open_count != 0 || mctx.close_count != 0) {
+        return 0;
+    }
+    return 1;
+}
+
 /* ======================================================================== */
 /* Main                                                                     */
 /* ======================================================================== */
@@ -787,6 +851,8 @@ int main(void)
     TEST(byte_swap_16);
     TEST(open_increments_counter);
     TEST(close_decrements_counter);
+    TEST(open_failure_rolls_back_transaction);
+    TEST(close_rejects_counter_underflow);
     TEST(open_dual_file);
     TEST(read_single_file);
     TEST(entry_value_single_byte);

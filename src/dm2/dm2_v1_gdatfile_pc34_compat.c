@@ -52,6 +52,11 @@ int dm2_v1_gdat_graphics_data_open(DM2_V1_GdatFileState *state,
         state->filehandle = cb->file_open(ctx, name);
         if (state->filehandle < 0) {
             if (cb->raise_syserr) cb->raise_syserr(ctx, 0x29);
+            /* A failed first open does not leave an active source
+             * transaction.  The original routine raises immediately; the C
+             * callback boundary must also be reusable after a reported
+             * failure instead of trapping the next call at open-count 1. */
+            state->fileopencounter = 0;
             if (out) { out->opened = false; out->open_count = state->fileopencounter; }
             return 0;
         }
@@ -63,6 +68,12 @@ int dm2_v1_gdat_graphics_data_open(DM2_V1_GdatFileState *state,
             state->xfilehandle = cb->file_open(ctx, name);
             if (state->xfilehandle < 0) {
                 if (cb->raise_syserr) cb->raise_syserr(ctx, 0x1f);
+                /* The primary handle belongs to this same open transaction;
+                 * do not leak it when GRAPHIC2.DAT cannot be admitted. */
+                if (cb->file_close) cb->file_close(ctx, state->filehandle);
+                state->filehandle = -1;
+                state->xfilehandle = -1;
+                state->fileopencounter = 0;
                 if (out) { out->opened = false; out->open_count = state->fileopencounter; }
                 return 0;
             }
@@ -83,7 +94,13 @@ int dm2_v1_gdat_graphics_data_close(DM2_V1_GdatFileState *state,
                                      void *ctx,
                                      DM2_V1_GdatCloseReceipt *out)
 {
-    if (!state || !cb) return 0;
+    if (!state || !cb || state->fileopencounter <= 0) {
+        if (out) {
+            out->closed = false;
+            out->open_count = state ? state->fileopencounter : 0;
+        }
+        return 0;
+    }
 
     int16_t cnt = state->fileopencounter - 1;
     state->fileopencounter = cnt;

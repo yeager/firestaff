@@ -29944,6 +29944,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   descriptors, and proves alternate descriptor order plus the mounted PC-DOS
   layout. The complete BUILD_GDAT_ENTRY_DATA transaction, underlay admission
   and secondary-file transaction remain gated.
+  **2026-08-07 transaction-boundary progress:** the callback port now rolls
+  back a failed primary or optional GRAPHIC2.DAT open, closes the already-open
+  primary handle on the secondary failure path, and rejects close-counter
+  underflow. This keeps the source GRAPHICS_DATA_OPEN transaction reusable
+  after an I/O error without admitting any synthetic GDAT state. The complete
+  BUILD_GDAT_ENTRY_DATA transaction, underlay admission and secondary-file
+  transaction remain gated.
 - **2026-08-07 save-dungeon parity correction:** the isolated
   `DM2_STORE_EXTRA_DUNGEON_DATA` teleporter gate now matches SKProject's
   `current_map > target_map` backward-reference skip; the complete raw-dungeon
