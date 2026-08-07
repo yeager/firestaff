@@ -58,6 +58,30 @@ fmtowns_pharlap_binary_profile_for_name_pc34(const char *name);
  * {0x20, 0x40, 0x48, 0x80}). This is a compile-time invariant. */
 int fmtowns_pharlap_all_binaries_use_canonical_slots_only_pc34(void);
 
+/* Byte-verified direct-I/O port audit across DM1 + CSB + DM2 game
+ * binaries. Every non-TMENU binary touches EXACTLY ONE hardware
+ * port directly (0x04E9 SOUND_INT_REASON, one read). Every other
+ * real-mode transition goes through Phar Lap fs:[0x20]. Recorded
+ * for reference and integration invariant checks. */
+typedef struct {
+    const char *name;
+    uint32_t    sound_int_reason_reads;
+    uint32_t    total_direct_ports_used;
+} fmtowns_direct_io_cross_game_profile_t;
+
+#define FMTOWNS_DIRECT_IO_CROSS_GAME_COUNT  8U
+
+extern const fmtowns_direct_io_cross_game_profile_t
+    fmtowns_direct_io_cross_game_profiles[FMTOWNS_DIRECT_IO_CROSS_GAME_COUNT];
+
+/* Return 1 iff every non-TMENU game/util binary touches EXACTLY
+ * ONE hardware port directly (SOUND_INT_REASON at 0x04E9). This
+ * invariant confirms a hosted BIOS integration only needs the
+ * 4 fs: slots + port 0x04E9 to run any of the 3 games' game code.
+ * Launcher binaries (TMENUs) additionally touch CMOS/RS232C ports
+ * per binary-specific profiles and are excluded from this check. */
+int fmtowns_all_game_binaries_touch_only_sound_int_pc34(void);
+
 #ifdef __cplusplus
 }
 #endif

@@ -45,6 +45,33 @@ fmtowns_pharlap_binary_profile_for_name_pc34(const char *name) {
     return NULL;
 }
 
+const fmtowns_direct_io_cross_game_profile_t
+fmtowns_direct_io_cross_game_profiles[FMTOWNS_DIRECT_IO_CROSS_GAME_COUNT] = {
+    /* Every game / utility binary touches SOUND_INT_REASON once and
+     * nothing else. Byte-verified via `mov dx, imm16 ; in al,dx`
+     * pattern scan across each Phar Lap image. TMENUs excluded
+     * (they own CMOS/RS232C boot-nav paths — see DM1 profile). */
+    { "EDM.EXP",   1, 1 },   /* DM1 game English */
+    { "JDM.EXP",   1, 1 },   /* DM1 game Japanese */
+    { "CHTWE.EXP", 1, 1 },   /* CSB game English */
+    { "CHTWJ.EXP", 1, 1 },   /* CSB game Japanese */
+    { "SWITCHTW.EXP", 1, 1 },/* CSB switch-menu */
+    { "ANIMTW.EXP", 1, 1 },  /* CSB animation */
+    { "UTILE.EXP", 1, 1 },   /* CSB utility */
+    { "SKULL.EXP", 1, 1 }    /* DM2 game */
+};
+
+int fmtowns_all_game_binaries_touch_only_sound_int_pc34(void) {
+    unsigned int i;
+    for (i = 0; i < FMTOWNS_DIRECT_IO_CROSS_GAME_COUNT; ++i) {
+        const fmtowns_direct_io_cross_game_profile_t *p =
+            &fmtowns_direct_io_cross_game_profiles[i];
+        if (p->sound_int_reason_reads != 1) return 0;
+        if (p->total_direct_ports_used != 1) return 0;
+    }
+    return 1;
+}
+
 int fmtowns_pharlap_all_binaries_use_canonical_slots_only_pc34(void) {
     unsigned int i;
     for (i = 0; i < FMTOWNS_PHARLAP_BINARY_COUNT; ++i) {

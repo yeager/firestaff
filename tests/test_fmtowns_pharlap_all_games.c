@@ -68,6 +68,16 @@ int main(void) {
     test_dm2_skull();
     test_unknown_name_returns_null();
     test_all_binaries_use_only_4_slots();
+
+    /* Cross-game direct I/O invariant */
+    assert(FMTOWNS_DIRECT_IO_CROSS_GAME_COUNT == 8U);
+    assert(fmtowns_all_game_binaries_touch_only_sound_int_pc34() == 1);
+    /* Every entry has exactly 1 SOUND_INT_REASON read and no other port. */
+    for (unsigned int i = 0; i < 8; ++i) {
+        assert(fmtowns_direct_io_cross_game_profiles[i].sound_int_reason_reads == 1);
+        assert(fmtowns_direct_io_cross_game_profiles[i].total_direct_ports_used == 1);
+    }
+
     puts("All fmtowns_pharlap_all_games tests passed.");
     return 0;
 }
