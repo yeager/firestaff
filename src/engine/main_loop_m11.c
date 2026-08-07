@@ -3208,6 +3208,7 @@ void M11_PhaseA_SetDefaultOptions(M11_PhaseA_Options* opts) {
     opts->script         = NULL;
     opts->dataDir        = NULL;
     opts->savePath       = NULL;
+    opts->dm2EnglishCompanionPath = NULL;
     opts->gameId         = NULL;
     opts->architectureOverride = -1;
     opts->directLaunch   = 0;
@@ -5548,6 +5549,11 @@ int M11_PhaseA_Run(const M11_PhaseA_Options* opts) {
             M11_Render_Shutdown();
             return 2;
         }
+    }
+    if (o->dm2EnglishCompanionPath && o->dm2EnglishCompanionPath[0] != '\0') {
+        snprintf(menuState.dm2EnglishCompanionPath,
+                 sizeof(menuState.dm2EnglishCompanionPath), "%s",
+                 o->dm2EnglishCompanionPath);
     }
     /* The playback device is a launcher-wide host preference, not a
      * per-game effect.  Bind it before title/entrance audio can create a

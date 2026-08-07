@@ -38,6 +38,7 @@ static void usage(const char* prog) {
             "  --script <cmds>     Comma-separated input script: up,down,left,right,enter,action,esc\n"
             "  --data-dir <path>   Asset directory (default: FIRESTAFF_DATA env var)\n"
             "  --save <path>       Resume a validated save for --game\n"
+            "  --dm2-english-companion <path>  Hash-verified PC-English GRAPHICS.DAT for DM2 FM Towns\n"
             "  --scan-data         Recursively scan asset directory by hash and exit\n"
             "  --scan-game-data    Alias for --scan-data\n"
             "  --boot-probe        With --game, verify selected-entry boot handoff and exit\n"
@@ -589,6 +590,10 @@ int main(int argc, char** argv) {
             opts.savePath = argv[++i];
             continue;
         }
+        if (strcmp(a, "--dm2-english-companion") == 0 && i + 1 < argc) {
+            opts.dm2EnglishCompanionPath = argv[++i];
+            continue;
+        }
         if (strcmp(a, "--retroachievements") == 0) {
             opts.retroAchievementsEnabled = 1;
             continue;
@@ -661,6 +666,12 @@ int main(int argc, char** argv) {
     }
     if (opts.savePath && !opts.gameId) {
         fprintf(stderr, "firestaff: --save requires --game <id>\n");
+        return 2;
+    }
+    if (opts.dm2EnglishCompanionPath &&
+        (!opts.gameId || strcmp(opts.gameId, "dm2") != 0)) {
+        fprintf(stderr,
+                "firestaff: --dm2-english-companion requires --game dm2\n");
         return 2;
     }
 

@@ -30157,6 +30157,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   definition and one render call for that consumer. Any new GUI/text route
   must be source-bound before it can enter the product tree; the native
   `c_dialog`/`c_gfx_str` event owners are still absent.
+  **2026-08-13 direct-launch parity:** `firestaff --game dm2 --fm-towns`
+  now accepts `--dm2-english-companion <PC-English GRAPHICS.DAT>`, forwarding
+  that explicit path through the same M12→M11 launch receipt as the menu.
+  The boot layer still verifies its canonical hash and keeps it in RAM; the
+  option does not broaden text-consumer admission or unpack game data.
 
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN

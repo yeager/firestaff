@@ -634,6 +634,10 @@ typedef struct M12_StartupMenuState {
     int quickResumeLaunchRequested;
     char quickResumeGameId[32];
     char quickResumeSavePath[256];
+    /* CLI-only explicit companion for a selected DM2 FM Towns launch. M12's
+     * normal game picker discovers the same corpus by hash; this path keeps
+     * direct launch equally source-gated without unpacking either archive. */
+    char dm2EnglishCompanionPath[1024];
     uint32_t csbSaveCandidateIdentity;
     Theron_V1SrmCampaignReplayReceipt theronSrmCampaignReplay;
     int theronSrmCampaignReplayBound;

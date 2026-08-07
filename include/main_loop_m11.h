@@ -40,6 +40,10 @@ typedef struct {
     const char* dataDir;   /* Optional override for asset detection.
                               Falls back to FIRESTAFF_DATA. */
     const char* savePath;  /* Optional validated save to resume after launch. */
+    /* Explicit hash-verified PC-English GRAPHICS.DAT companion for a
+       Japanese DM2 FM Towns launch.  The boot layer consumes it only in RAM;
+       it is never extracted beside the selected game media. */
+    const char* dm2EnglishCompanionPath;
     const char* gameId;    /* Optional game to pre-select: dm1, csb, dm2,
                               nexus, theron. Overrides auto-detection. */
     int architectureOverride; /* M12_ARCH_*; -1 keeps the saved/menu choice.

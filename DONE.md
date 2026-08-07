@@ -59693,6 +59693,16 @@ companion.
 - ✅ Verified with the selected FM Towns disc in RAM and the PC-English
   companion; the ordinary PC-DOS M11 startup regression also passes.
 
+# DM2 FM Towns English direct-launch handoff (2026-08-13)
+
+- ✅ Added `--dm2-english-companion <GRAPHICS.DAT>` to the direct DM2 launch
+  path. It reaches the selected FM Towns boot profile through the same M12/M11
+  handoff as the start menu and takes precedence over automatic companion
+  discovery only when the caller explicitly supplied it.
+- ✅ The original HME-242 ZIP and the canonical PC-English companion remain
+  RAM-only. The boot probe passes with the mounted FM Towns archive; M11 and
+  M12 real-media regressions pass unchanged.
+
 # DM2 delayed-movement source-owner audit (2026-08-13)
 
 - ✅ Added an explicit six-bit missing-owner mask to the source half-step

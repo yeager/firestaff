@@ -18819,6 +18819,15 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     spec.sourceId = entry->gameId;
     spec.dataDir = M12_AssetStatus_GetRuntimeDataDir(&menuState->assetStatus,
                                                      entry->gameId);
+    /* Direct CLI launch has no M12 game-version picker to discover a
+     * companion.  Preserve its explicit path until the selected FM Towns
+     * branch validates the canonical PC-English hash in RAM.  An automatic
+     * M12 companion discovered below may only fill an empty field; it must
+     * never replace an explicit user selection. */
+    if (entry->gameId && strcmp(entry->gameId, "dm2") == 0 &&
+        menuState->dm2EnglishCompanionPath[0] != '\0') {
+        spec.dm2EnglishCompanionPath = menuState->dm2EnglishCompanionPath;
+    }
     if (entry->gameId && strcmp(entry->gameId, "dm1") == 0) {
         gameOptionSlot = 0;
     } else if (entry->gameId && strcmp(entry->gameId, "csb") == 0) {
@@ -18907,7 +18916,7 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
                  * RAM and verifying the canonical PC-English hash.  Keep its
                  * archive provenance intact; it must never be unpacked into
                  * the data directory merely to satisfy fopen(). */
-                if (englishVersion && englishVersion->matched &&
+                if (!spec.dm2EnglishCompanionPath && englishVersion && englishVersion->matched &&
                     englishVersion->matchedMd5[0] != '\0') {
                     spec.dm2EnglishCompanionPath = englishVersion->matchedPath;
                 }
@@ -18982,6 +18991,17 @@ int M11_GameView_OpenSelectedMenuEntry(M11_GameViewState* state,
     } else {
         /* Non-launched path (menu browsing): use the current settings */
         spec.fontScale = menuState->settings.fontScale;
+    }
+    /* The explicit CLI companion requests the only language it can prove:
+     * canonical PC English.  The host launcher language otherwise remains
+     * independent from the selected Japanese FM Towns program, but allowing
+     * a Swedish (or any other) host locale to bypass this companion would
+     * silently boot Japanese after the caller explicitly asked for English.
+     * Source: dm2_v1_boot_startup_launch_alloc_with_language() accepts the
+     * companion only for its language-index-0 English branch. */
+    if (entry->gameId && strcmp(entry->gameId, "dm2") == 0 &&
+        menuState->dm2EnglishCompanionPath[0] != '\0') {
+        spec.languageIndex = 0;
     }
     if (menuState->quickResumeAvailable &&
         menuState->quickResumeSavePath[0] != '\0' &&
