@@ -145,10 +145,41 @@ via `fmtowns_bios_host_bind_pc34()`. Tests cover fail-closed,
 partial-host (unsupported slot), bad-slot, bad-args, and bound-
 dispatch paths.
 
-An adapter still needs to be written (Tsugaru's C++ ABI wrapped
-behind an `extern "C"` shim built as an optional shared library,
-or the Option-B minimal in-process TBIOS shim). The C-side plumbing
-consumers dispatch through is now in place and tested.
+## Option-B minimal TBIOS shim (implemented 2026-08-07)
+
+`include/fmtowns_tbios_shim.h` + `src/shared/fmtowns_tbios_shim.c`
+ship the Option-B path. The shim:
+
+- Reads a real Fujitsu `FMT_F20.ROM` via
+  `fmtowns_tbios_shim_load_rom_pc34(bytes, size)`. Rejects buffers
+  that fail the "V" + digit / "towns" / "tbios" signature check
+  every FMT_F20 revision carries, and buffers smaller than
+  `KANJI_OFFSET + 94*94*32` bytes.
+- Exposes a `fmtowns_bios_host_t*` via
+  `fmtowns_tbios_shim_host_pc34()` that consumers can bind through
+  `fmtowns_bios_host_bind_pc34()`. Only `tbios_fetch_sjis_glyph` is
+  populated — every other slot returns `UNSUPPORTED`, which is the
+  correct behaviour when only the JDM text-render surface is being
+  served (games' Phar Lap thunks would need a full CPU emulator
+  such as Tsugaru).
+- Fetches Shift-JIS glyphs by direct table lookup: ANK 8x16 at
+  ROM offset `0x3d800` (16 bytes/glyph), JIS X 0208 16x16 at
+  `0x40000` (32 bytes/glyph). Shift-JIS to JIS conversion follows
+  the standard row/col formula.
+- Fail-closed contract: `UNBOUND` until a ROM is loaded; `FAILED`
+  for pairs that fall outside a recognised region; `BAD_ARGS` for
+  undersized destination buffers.
+
+Tests cover fail-closed, bogus ROM rejection, undersized ROM,
+ANK path, SJIS path with planted glyph bytes, out-of-range trail,
+buffer-too-small, unload, and end-to-end dispatch through
+`fmtowns_bios_host_fetch_sjis_glyph_pc34()`.
+
+A Tsugaru `extern "C"` bridge is still open for the remaining
+three slots (call_tbios / call_timing / call_hardware_init) and
+I/O ports, but the JDM text-render surface — the specific gap the
+Japanese release depends on — is now closable with a ROM dump and
+one `bind` call at startup.
 
 ## References
 
