@@ -39,6 +39,12 @@ predicate is deliberately false until a live V1 champion record and the
 CHAMDRAW/PANEL source surfaces are bound together. This leaves the existing
 source-owned V1 HUD as the only pixel owner.
 
+The same scan found a V2 footstep helper that generated random noise, decay,
+surface variants and echo despite the PC34 audit finding no party-footstep
+sound request. It now returns no sample and does not alter the caller's audio
+buffer. Actual sound remains limited to the authenticated `GRAPHICS.DAT`
+SND3 event path.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564

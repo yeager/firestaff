@@ -22,6 +22,14 @@
 
 # Scanner provenance after cache materialization (2026-08-07)
 
+# DM1 V2 syntetiskt fotstegsljud borttaget (2026-08-07)
+
+- ✅ Tog bort V2-hjälparens brusgenerator för partifotsteg. ReDMCSB- och
+  DMWeb-/Greatstone-korsreferensen för PC34 visar ingen motsvarande
+  ljudbegäran; verkliga DM1-effekter går i stället via `GRAPHICS.DAT` SND3.
+  API:t returnerar nu ingen sample och låter anroparens buffert vara orörd.
+  Den registrerade CTesten `dm1_v2_footstep_audio_pc34` passerar.
+
 # DM1 V2 champion-select synthetic-data removal (2026-08-07)
 
 - ✅ Utökade DM1-inventeringen till `src/dm1v2/` och tog bort den vilande

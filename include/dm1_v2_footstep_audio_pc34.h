@@ -28,6 +28,8 @@ void v2_footstep_set_surface(M11_V2_SurfaceType type);
 void v2_footstep_trigger(bool left_right);
 void v2_footstep_set_echo(bool enabled);
 int v2_footstep_get_sample(int16_t* buf, int* len);
+/* Returns -1 with *len = 0: DM1 PC34 has no source-backed party-footstep
+ * sample. The function must not manufacture audio from host noise. */
 
 #ifdef __cplusplus
 }
