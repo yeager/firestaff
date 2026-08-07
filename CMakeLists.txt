@@ -5035,6 +5035,11 @@ list(REMOVE_ITEM M10_SOURCES
 # test retains the ReDMCSB DUNVIEW evidence.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d3c_d2_f0108_floor_ornament_occlusion_pc34_compat.c")
+# The mana-bar repaint model uses synthetic champion state and makes no
+# GRAPHICS.DAT/DUNGEON.DAT parity claim. Its direct test retains the
+# source-locked CHAMDRAW repaint contract.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_mana_bar_repaint_pc34_compat.c")
 # dm1_v1_viewport_d0l2_d0r2_f0111_door_pc34_compat.c is an explicitly
 # contract-only, no-game-data F0111 trace model with no production caller.
 # Its direct regression target retains the D0L2/D0R2 source lock.
