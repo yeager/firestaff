@@ -5087,6 +5087,10 @@ list(REMOVE_ITEM M10_SOURCES
 # Its direct viewport-contract test retains the ReDMCSB coverage.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_viewport_d0c_f0111_partly_open_door_pc34_compat.c")
+# The leader-swap food/water model is a synthetic F0302/UI flicker contract.
+# Its direct regression retains the source evidence without entering M10.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_leader_swap_food_water_pc34_compat.c")
 # The clock-tick attribute repaint helper uses deterministic scratch state
 # and is contract-only. Its direct CHAMPION regression keeps the source
 # evidence without placing the synthetic model in M10.
@@ -54475,7 +54479,9 @@ add_executable(test_dm1_v1_champion_panel_hud_food_water_recompute_pc34_compat t
 target_include_directories(test_dm1_v1_champion_panel_hud_food_water_recompute_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_champion_panel_hud_food_water_recompute_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_champion_panel_hud_food_water_recompute_pc34_compat COMMAND test_dm1_v1_champion_panel_hud_food_water_recompute_pc34_compat)
-add_executable(test_dm1_v1_champion_panel_leader_swap_food_water_pc34_compat tests/test_dm1_v1_champion_panel_leader_swap_food_water_pc34_compat.c)
+add_executable(test_dm1_v1_champion_panel_leader_swap_food_water_pc34_compat
+    tests/test_dm1_v1_champion_panel_leader_swap_food_water_pc34_compat.c
+    src/dm1/dm1_v1_champion_panel_leader_swap_food_water_pc34_compat.c)
 target_include_directories(test_dm1_v1_champion_panel_leader_swap_food_water_pc34_compat PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 target_link_libraries(test_dm1_v1_champion_panel_leader_swap_food_water_pc34_compat PRIVATE firestaff_m10)
 add_test(NAME test_dm1_v1_champion_panel_leader_swap_food_water_pc34_compat COMMAND test_dm1_v1_champion_panel_leader_swap_food_water_pc34_compat)
