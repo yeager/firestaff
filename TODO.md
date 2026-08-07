@@ -3925,6 +3925,11 @@ level or consumer bindings.
   **2026-08-06 update:** projectile, step and creature-collision receipts are
   now test-only too. Bind their private F0810 list to the original
   CCM/timer/DB transaction before a projectile can exist in a live DM2 frame.
+  **2026-08-07 real-data gate correction:** the selected-corpus champion-
+  mirror regression no longer treats an unreadable or wrong-sized
+  `DUNGEON.DAT` as a skip. It now fails the selected input, then verifies the
+  actual 16 source G1 mirror roots and keeps selection fail-closed until the
+  remaining `GAME_LOAD` hero/record handoff exists.
 
 - **DM2-MERCHANT-CCM-OWNER-HANDOFF:** The coordinate-only NPC route is
   closed. Bind a live AI-33 DB creature through `DM2_THINK_CREATURE` and its

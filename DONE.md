@@ -58452,3 +58452,10 @@ alcove runtime and archive-media tests passed (4/4).
   file remains byte-fingerprint identical.
 - ✅ Revalidated the mounted SKSave census: 8 original files, with no private
   export admitted; no release was made.
+
+# DM2 selected-corpus mirror gate (2026-08-07)
+
+- ✅ Tightened the real G1 champion-mirror regression so a selected but
+  unreadable or malformed `DUNGEON.DAT` fails instead of being reported as a
+  skip. The mounted PC-DOS corpus still verifies 16 source mirror roots, while
+  champion selection remains blocked before incomplete `GAME_LOAD` ownership.

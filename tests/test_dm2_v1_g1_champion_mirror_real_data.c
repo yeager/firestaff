@@ -3,6 +3,7 @@
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_champion_lifecycle_pc34_compat.h"
 
+#include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -14,7 +15,8 @@ static unsigned char *read_file(const char *path, int *out_size)
 
     *out_size = 0;
     if (!file || fseek(file, 0, SEEK_END) != 0 ||
-        (size = ftell(file)) != 39437L || fseek(file, 0, SEEK_SET) != 0) {
+        (size = ftell(file)) <= 0 || size > INT_MAX ||
+        fseek(file, 0, SEEK_SET) != 0) {
         if (file) fclose(file);
         return NULL;
     }
@@ -52,9 +54,15 @@ int main(int argc, char **argv)
     DM2_V1_DungeonData dungeon;
     DM2_V1_G1ChampionMirrorReceipt mirrors;
 
-    if (!path || !(bytes = read_file(path, &size))) {
+    if (!path) {
         puts("SKIP: no local canonical DM2 data");
         return 0;
+    }
+    bytes = read_file(path, &size);
+    if (!bytes) {
+        fprintf(stderr, "FAIL: selected canonical DM2 data is unreadable: %s\n",
+                path);
+        return 1;
     }
     if (bytes[2] != 0x47 || bytes[3] != 0x31 || bytes[6] != 28 ||
         dm2_v1_dungeon_load(&dungeon, bytes, size) != 0) {
@@ -97,7 +105,8 @@ int main(int argc, char **argv)
             select_receipt.source_actuator_data != mirror->actuator_data ||
             select_receipt.source_dynamic_load_id !=
                 mirror->dynamic_load_id ||
-            select_receipt.hero_type != mirror->dynamic_hero_type ||
+            select_receipt.hero_type !=
+                (int16_t)(int8_t)mirror->dynamic_hero_type ||
             select_receipt.champion_selected) {
             dm2_v1_dungeon_free(&dungeon);
             fputs("FAIL: source mirror did not bind to fail-closed selection\n",
