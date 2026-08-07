@@ -40,6 +40,10 @@ typedef struct {
     int required;
     int matched;
     char matchedPath[M12_ASSET_DATA_DIR_CAPACITY];
+    /* Immutable discovery provenance. matchedPath may be replaced by the
+     * local runtime cache after a verified archive member is materialized;
+     * scanner/UI reports retain the user-supplied original source here. */
+    char sourcePath[M12_ASSET_DATA_DIR_CAPACITY];
     char matchedHash[M12_ASSET_MD5_CAPACITY];
 } M12_AssetRequiredFileStatus;
 

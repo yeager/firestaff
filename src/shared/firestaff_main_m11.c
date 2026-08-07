@@ -219,7 +219,12 @@ static void print_scan_game(const M12_AssetStatus* status,
         }
         printf("  %-28s %s", file->label, file->matched ? "FOUND" : "MISSING");
         if (file->matched) {
-            printf("  %s", file->matchedPath);
+            /* The runtime cache is an implementation detail. `--scan-data`
+             * must report the hash-verified user-supplied container/member,
+             * otherwise a scan of an archive misleadingly appears to have
+             * found loose files under Application Support. */
+            printf("  %s", file->sourcePath[0] != '\0'
+                              ? file->sourcePath : file->matchedPath);
             if (verbose && file->matchedHash[0] != '\0') {
                 printf("\n    md5: %s", file->matchedHash);
             }

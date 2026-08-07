@@ -4283,6 +4283,9 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
         if (!m12_materialize_required_file(fileStatus, outPath)) {
             return 0;
         }
+        m12_copy_string(fileStatus->sourcePath,
+                        sizeof(fileStatus->sourcePath),
+                        fileStatus->matchedPath);
         m12_copy_string(fileStatus->matchedPath, sizeof(fileStatus->matchedPath), outPath);
         /* Keep the version match as provenance for the original asset.  The
          * required-file row is the runtime contract and may point at the

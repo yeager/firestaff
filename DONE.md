@@ -1,3 +1,13 @@
+# Scanner provenance after cache materialization (2026-08-07)
+
+- ✅ `--scan-data` now retains and reports each required file's verified
+  source path after runtime-cache materialization. Archive members therefore
+  stay visible as `archive::member` instead of being misreported as loose
+  files under Firestaff's application-support cache.
+- ✅ Verified against the supplied CSB archive corpus: GRAPHICS.DAT and
+  DUNGEON.DAT report their authenticated archive members while launch still
+  uses the ordinary cache files internally.
+
 # DM2 selected Amiga installer corpus (2026-08-07)
 
 - ✅ The Amiga six-disk LZX regression now accepts only an explicit
@@ -13,7 +23,6 @@
   The mounted PC-DOS media verifies the real map, material and item receipts.
 - ✅ An unreadable selected `dungeon.dat` or `graphics.dat` is now a failure,
   not a private HOME fallback or a silent skip.
-
 # CSB selected-package cache handoff (2026-08-07)
 
 - ✅ M12 now materializes every explicitly selected CSB version into its own
