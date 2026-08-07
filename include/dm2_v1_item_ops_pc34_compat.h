@@ -13,6 +13,9 @@
 
 #include <stdint.h>
 
+#include "dm2_v1_asset_loader.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -109,6 +112,28 @@ typedef struct {
 DM2_V1_ItemNameReceipt dm2_v1_get_item_name(
     uint16_t record_word,
     const DM2_V1_ItemNameCallbacks *cb, void *ctx);
+
+/* Source-owned DB item -> GDAT name receipt.  This is the authenticated
+ * bridge needed by the DM2 leader-hand HUD: c_record.cpp resolves cls1/cls2
+ * from the decoded DB record, then c_item.cpp/SkWinCore.cpp queries
+ * GDAT dtText/0x18.  It never accepts a bare item index or a host catalog. */
+typedef struct {
+    uint8_t accepted;
+    uint8_t record_type;
+    uint8_t cls1;
+    uint8_t cls2;
+    uint16_t record_word;
+    uint8_t blocked_not_item;
+    uint8_t blocked_record_owner;
+    uint8_t blocked_classification;
+    DM2_V1_GdatNameReceipt gdat;
+} DM2_V1_SourceItemNameReceipt;
+
+int dm2_v1_query_source_item_name_receipt(
+    uint16_t record_word,
+    const DM2_V1_RecordPoolSet *pools,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_SourceItemNameReceipt *out_receipt);
 
 #ifdef __cplusplus
 }

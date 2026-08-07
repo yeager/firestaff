@@ -4261,6 +4261,12 @@ level or consumer bindings.
   confirms `WEAPONS/0/dtText/0x18 = EYE OF TIME` and
   `WEAPONS/3/dtText/0x18 = KALAN GAUNTLET`; this does not yet supply the
   required live ObjectID-to-CLS1/CLS2 M11 owner, so the HUD remains unnamed.
+  **2026-08-13 owner-receipt update:** added a source-bound read-only bridge
+  that requires a validated DB5..DB10 record in the record pool, derives its
+  CLS1/CLS2 with the SKProject record routines, and only then queries the
+  original GDAT name stream. The real PC-DOS corpus resolves DB5 subtype 3
+  through `WEAPONS/3` to `KALAN GAUNTLET`; M11 still does not admit the route
+  until its live leader-hand ObjectID owner is connected.
 
 - **DM2-DIALOGUE-TEXT-OWNER-HANDOFF:** Save/load-dialogue labels require the
   original `GDAT 0/0/dtWordValue/0` transform owner as well as their

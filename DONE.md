@@ -1,3 +1,13 @@
+# DM2 DB-record to GDAT object-name receipt (2026-08-13)
+- ✅ Added `dm2_v1_query_source_item_name_receipt()`, which authenticates the
+  complete source chain: validated DB5..DB10 record ownership, SKProject
+  `QUERY_CLS1_FROM_RECORD`/`QUERY_CLS2_FROM_RECORD`, then original GDAT
+  `dtText/0x18` name decoding with provenance in one receipt.
+- ✅ Real PC-DOS DM2 `GRAPHICS.DAT` verification resolves source DB5 subtype 3
+  as `WEAPONS/3 = KALAN GAUNTLET`; a bare category/index or missing record
+  owner is rejected. The live M11 leader-hand consumer remains closed and no
+  release was made.
+
 # DM2 shooter source launch receipt (2026-08-13)
 - ✅ Aligned the fail-closed shooter receipt with SKProject
   `src/v5/sktimprc.cpp:1611-1800` and `src/v4/skevent.cpp:1536-1631`:

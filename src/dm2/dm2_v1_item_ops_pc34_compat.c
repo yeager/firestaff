@@ -1,7 +1,10 @@
 /* DM2 V1 item operations — skproject c_item.cpp. */
 
 #include "dm2_v1_item_ops_pc34_compat.h"
+
+#include "dm2_v1_skproject_core.h"
 #include <stddef.h>
+#include <string.h>
 
 #define OBJECT_NULL_WORD 0xFFFFu
 
@@ -158,6 +161,59 @@ DM2_V1_ItemNameReceipt dm2_v1_get_item_name(
     }
     receipt.name = cb->query_gdat_item_name(ctx, cls1, cls2);
     return receipt;
+}
+
+/* Source: SKULLWIN/c_record.cpp:454, c_record.cpp:203 and
+ * c_item.cpp:502; SkWinCore.cpp QUERY_GDAT_ITEM_NAME.  Keep the complete
+ * owner chain in one receipt.  In particular, a caller cannot turn a
+ * category/index fixture into a name without first proving that the DB5..10
+ * record exists in the validated source pool. */
+int dm2_v1_query_source_item_name_receipt(
+    uint16_t record_word,
+    const DM2_V1_RecordPoolSet *pools,
+    const DM2_V1_AssetLoader *loader,
+    DM2_V1_SourceItemNameReceipt *out_receipt)
+{
+    DM2_V1_SourceItemNameReceipt receipt;
+    DM2_V1_SkprojectQueryCls1Receipt cls1_receipt;
+    DM2_V1_SkprojectQueryCls2Receipt cls2_receipt;
+    uint8_t cls1 = 0xffu;
+    uint8_t cls2 = 0xffu;
+
+    memset(&receipt, 0, sizeof(receipt));
+    receipt.record_word = record_word;
+    receipt.record_type = (uint8_t)((record_word >> 10) & 0x0fu);
+    if (receipt.record_type < 5u || receipt.record_type > 10u) {
+        receipt.blocked_not_item = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!pools || !loader ||
+        !dm2_v1_record_pool_address(pools, (int16_t)record_word)) {
+        receipt.blocked_record_owner = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    if (!dm2_v1_skproject_query_cls1_from_record_ex(
+            record_word, pools, &cls1, &cls1_receipt) ||
+        !dm2_v1_skproject_query_cls2_from_record(
+            record_word, pools, &cls2, &cls2_receipt) ||
+        !cls1_receipt.valid || !cls2_receipt.valid ||
+        cls1 == 0xffu || cls2 == 0xffu) {
+        receipt.blocked_classification = 1u;
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.cls1 = cls1;
+    receipt.cls2 = cls2;
+    if (!dm2_v1_query_gdat_item_name_receipt(
+            loader, (int)cls1, (int)cls2, &receipt.gdat)) {
+        if (out_receipt) *out_receipt = receipt;
+        return 0;
+    }
+    receipt.accepted = 1u;
+    if (out_receipt) *out_receipt = receipt;
+    return 1;
 }
 
 

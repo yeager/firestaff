@@ -3,6 +3,7 @@
 #include "dm2_v1_item_ops_pc34_compat.h"
 #include <assert.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 /* ---- F958 ---- */
@@ -152,12 +153,79 @@ static void test_take_object(void)
     printf("  PASS: take_object\n");
 }
 
+static int read_graphics_from_env(uint8_t **out_bytes, size_t *out_size)
+{
+    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    char path[1024];
+    FILE *file;
+    long size;
+    uint8_t *bytes;
+
+    *out_bytes = NULL;
+    *out_size = 0u;
+    if (!root || !root[0]) return 0;
+    snprintf(path, sizeof(path), "%s/graphics.dat", root);
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        return 0;
+    }
+    bytes = (uint8_t *)malloc((size_t)size);
+    if (!bytes || fread(bytes, 1u, (size_t)size, file) != (size_t)size) {
+        free(bytes);
+        fclose(file);
+        return 0;
+    }
+    fclose(file);
+    *out_bytes = bytes;
+    *out_size = (size_t)size;
+    return 1;
+}
+
+static void test_source_item_name_receipt_real_gdat(void)
+{
+    uint8_t *graphics = NULL;
+    size_t graphics_size = 0u;
+    DM2_V1_AssetLoader loader;
+    DM2_V1_RecordPoolSet pools;
+    DM2_V1_SourceItemNameReceipt receipt;
+    uint8_t weapon_record[4] = { 0u, 0u, 3u, 0u };
+
+    if (!read_graphics_from_env(&graphics, &graphics_size)) {
+        puts("  SKIP: source_item_name_receipt_real_gdat (no DM2 data)");
+        return;
+    }
+    memset(&loader, 0, sizeof(loader));
+    memset(&pools, 0, sizeof(pools));
+    assert(dm2_v1_asset_loader_init(&loader, graphics, graphics_size) == 0);
+    assert(dm2_v1_asset_loader_verify(&loader));
+    pools.valid = 1;
+    pools.pools[5].bytes = weapon_record;
+    pools.pools[5].record_count = 1;
+    pools.pools[5].record_size = 4;
+
+    /* A source DB5 record with item subtype 3 must resolve through
+     * CLS1=WEAPONS (0x10), CLS2=3, then the real GDAT name stream. */
+    assert(dm2_v1_query_source_item_name_receipt(
+               0x1400u, &pools, &loader, &receipt) == 1);
+    assert(receipt.accepted == 1u);
+    assert(receipt.cls1 == DM2_GDAT_CATEGORY_WEAPONS);
+    assert(receipt.cls2 == 3u);
+    assert(strcmp(receipt.gdat.text, "KALAN GAUNTLET") == 0);
+
+    dm2_v1_asset_loader_free(&loader);
+    free(graphics);
+    printf("  PASS: source_item_name_receipt_real_gdat\n");
+}
+
 int main(void)
 {
     printf("test_dm2_v1_item_ops:\n");
     test_f958();
     test_drink_water();
     test_take_object();
+    test_source_item_name_receipt_real_gdat();
     printf("All item_ops tests passed.\n");
     return 0;
 }
