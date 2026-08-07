@@ -29723,6 +29723,12 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `0x1000`/`0x2400` link markers and fail-closed underflow behavior. It is
   callback-only until the authenticated `savegamep3` owner and record pool
   are connected; Continue and slot admission remain disabled.
+  **2026-08-13 continuation-type correction:** `DM2_2066_062b` consumes its
+  10-bit stream only for record types 9 and `0xE`; types 0 through 8 are the
+  source's empty branch and consume no bits. The reader and its ordering
+  regression now retain that boundary, preventing a type-5 link from shifting
+  the later type-9/`0xE` continuations. This remains callback-only and does
+  not admit a partial save.
   **2026-08-06 tile-link correction:** the bounded
   `DM2_READ_SKSAVE_DUNGEON` reader now retains each decoded tile-chain root
   through `set_tile_record_link`, matching `sksvgame.cpp:1390-1399`. This fixes

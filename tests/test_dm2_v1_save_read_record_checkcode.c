@@ -662,16 +662,16 @@ static void test_session_counters(void)
 static void test_possession_continuations(void)
 {
     const uint16_t links[] = {
+        mock_make_link(2, 5),
         mock_make_link(0, 9),
         mock_make_link(1, 0x0e),
-        mock_make_link(2, 5)
+        mock_make_link(3, 0)
     };
     const uint8_t values[] = {
         0x23, 0x01, /* source continuation payload 0x0123 */
-        0xab, 0x02, /* source continuation payload 0x02ab */
-        0x55, 0x00  /* source continuation payload 0x0055 */
+        0xab, 0x02  /* source continuation payload 0x02ab */
     };
-    const uint8_t mask[] = { 0xff, 0x03, 0xff, 0x03, 0xff, 0x03 };
+    const uint8_t mask[] = { 0xff, 0x03, 0xff, 0x03 };
     uint8_t encoded[8] = {0};
     DM2_SuppressReader reader;
     DM2_ReadPossessionContinuationCallbacks cb;
@@ -688,14 +688,15 @@ static void test_possession_continuations(void)
     assert(dm2_v1_read_possession_continuations(&reader, links,
                                                 sizeof(links) / sizeof(links[0]),
                                                 &cb) == 0);
-    assert(mock.count == 3);
-    assert(mock.links[0] == links[0]);
+    assert(mock.count == 2);
+    assert(mock.links[0] == links[1]);
     assert(mock.continuations[0] == 0x1123);
-    assert(mock.links[1] == links[1]);
+    assert(mock.links[1] == links[2]);
     assert(mock.continuations[1] == 0x26ab);
-    assert(mock.links[2] == links[2]);
-    assert(mock.continuations[2] == 0x1055);
-    printf("  PASS: possession_continuations_source_markers\n");
+    /* SKProject's `if (type < 9) ; else if (type <= 9)` deliberately
+     * consumes no continuation bits for the 0..8 record classes. Placing
+     * type 5 first makes an accidental read shift both asserted payloads. */
+    printf("  PASS: possession_continuations_source_type_gate\n");
 }
 
 static void test_possession_continuations_underflow(void)

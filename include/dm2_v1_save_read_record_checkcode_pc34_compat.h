@@ -110,10 +110,10 @@ typedef struct {
 } DM2_ReadRecordSession;
 
 /* Restore the continuation links collected by
- * SKProject::DM2_2066_062b (sksvgame.cpp:1003-1040).  The source walks
- * savegamep3, decodes one 10-bit SUPPRESS value for ordinary records and
+ * SKProject::DM2_2066_062b (sksvgame.cpp:1003-1040). The source walks
+ * savegamep3 and decodes one 10-bit SUPPRESS value only for type 9 and
  * type 0xE records, then writes it to the record's uw_02 field with the
- * source-owned type marker.  The possession-index owner remains external
+ * source-owned type marker. The possession-index owner remains external
  * until the runtime save buffer binds it. */
 typedef int (*DM2_ReadPossessionSetContinuationFn)(void *ctx,
                                                     uint16_t record_link,
@@ -124,9 +124,9 @@ typedef struct {
     void *ctx;
 } DM2_ReadPossessionContinuationCallbacks;
 
-/* Decode one source possession continuation stream.  `record_links` is the
- * exact savegamep3 array, in source order; links whose encoded type is not
- * 0..9 or 0xE consume no stream bits, matching DM2_2066_062b. */
+/* Decode one source possession continuation stream. `record_links` is the
+ * exact savegamep3 array, in source order; only encoded types 9 and 0xE
+ * consume stream bits, matching DM2_2066_062b. */
 int dm2_v1_read_possession_continuations(
     DM2_SuppressReader *reader,
     const uint16_t *record_links,

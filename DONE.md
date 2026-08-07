@@ -59602,3 +59602,13 @@ companion.
   GfxStr consumers. The remaining native event/dialogue owners are still
   clearly open rather than being replaced with host text.
 - ✅ The DM2 production placeholder boundary verifier passes.
+
+# DM2 SKSAVE possession-continuation type parity (2026-08-13)
+
+- ✅ Corrected `DM2_2066_062b` so its 10-bit SUPPRESS continuation stream is
+  consumed only by source record types 9 and `0xE`. Types 0 through 8 now
+  follow SKProject's empty branch and cannot shift later continuation values.
+- ✅ Added a source-order regression with a type-5 link before the type-9 and
+  type-`0xE` links, plus the mounted PC-DOS SKSAVE corpus gate (135/135).
+- ✅ Continue remains fail-closed: this fixes a real record-link decode edge,
+  but does not claim the missing record, possession and timer runtime owners.

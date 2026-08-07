@@ -76,7 +76,10 @@ int dm2_v1_read_possession_continuations(
 {
     /* Source: SKProject sksvgame.cpp::DM2_2066_062b, lines 1003-1040.
      * Its `wordrg4 &= 0x3c00; wordrg4 >>= 10` type test is deliberately
-     * performed on the source link, before the 10-bit read. */
+     * performed on the source link before the 10-bit read. In particular,
+     * the empty branch is for types 0..8; only type 9 receives 0x1000 and
+     * type 0xE receives 0x2400. Reading for the other types would consume
+     * bits belonging to a later source record. */
     static const uint8_t continuation_mask[2] = { 0xffu, 0x03u };
     size_t i;
 
@@ -92,7 +95,7 @@ int dm2_v1_read_possession_continuations(
         uint8_t decoded_bytes[2] = { 0u, 0u };
         uint16_t continuation;
 
-        if (record_type > 9u && record_type != 0x0eu) continue;
+        if (record_type != 9u && record_type != 0x0eu) continue;
         if (dm2_suppress_reader_read(reader, continuation_mask, 2u,
                                      decoded_bytes, 0u) != 0) {
             return -1;
