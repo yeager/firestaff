@@ -4929,6 +4929,11 @@ list(REMOVE_ITEM M10_SOURCES
 # retains the documented ReDMCSB mutation audit.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_pending_damage_apply_pc34_compat.c")
+# `dm1_v1_action_spell_runtime_host_m11_bridge_pc34_compat.c` is a receipt
+# bridge with no production caller and depends on an isolated lifecycle chain.
+# Its direct regression target retains the host-output contract.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_runtime_host_m11_bridge_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
