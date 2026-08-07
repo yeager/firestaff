@@ -29828,6 +29828,16 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `DIALOG_BOXES/0x81` labels through that bridge. The callback does not create
   text or enable any unbound GUI owner; native event/dialogue routing remains
   gated.
+  **2026-08-13 live-owner census:** the current production M11 tree has one
+  DM2 GDAT-text consumer, `m11_draw_dm2_save_dialogue_panel`, and it already
+  enters through `dm2_v1_boot_dialogue_open_panel_host_command`, which passes
+  the authenticated FM Towns callback into the source panel receipt. The
+  source-shaped `0AAF`, QueryDB, GfxStr and generic GUI draw consumers have no
+  M11 call site and remain excluded from product archives. The production
+  placeholder verifier now rejects a future direct M11 call to those owners.
+  This is an ownership audit, not completion of native event/dialogue routing;
+  keep the item open until those source consumers are genuinely live and use
+  the companion callback.
 
 - 2026-08-06: the full 30-file retail MNS corpus now decodes without silent
   texture/MOTN truncation (VEXIRK=64 TEXT descriptors, D_GOLD=11 MOTN

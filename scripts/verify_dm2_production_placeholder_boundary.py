@@ -176,6 +176,30 @@ def verify(repo: Path) -> list[str]:
         if guard not in m11:
             errors.append(f"M11 source gate missing: {guard}")
 
+    # FM Towns English keeps the Japanese CD as the native owner and admits
+    # the PC-English companion only through dm2_v1_boot's explicit callback.
+    # The source-shaped GUI/query modules below remain direct-regression
+    # studies and are removed from product archives. Reject a future M11
+    # call site that bypasses the authenticated companion boundary.
+    if "dm2_v1_boot_dialogue_open_panel_host_command(" not in m11:
+        errors.append("M11 DM2 dialogue owner no longer uses the boot text boundary")
+    boot_path = repo / "src/dm2/dm2_v1_boot.c"
+    if boot_path.exists():
+        boot = boot_path.read_text(encoding="utf-8")
+        if ("dm2_v1_boot_fmtowns_english_dialogue_text" not in boot or
+                "dm2_v1_runtime_query_gdat_text_override" not in boot):
+            errors.append("FM Towns English dialogue callback no longer reaches the runtime companion")
+    else:
+        errors.append(f"missing {boot_path}")
+    legacy_text_call = re.compile(
+        r"\bdm2_v1_(?:query_gdat_text|gfx_str_query_gdat_text|"
+        r"0aaf_|draw_dialogue_)\w*\s*\(")
+    for source_path in sorted((repo / "src/engine").rglob("*.c")):
+        if legacy_text_call.search(source_path.read_text(encoding="utf-8")):
+            errors.append(
+                "M11 calls an unbound DM2 compatibility text owner: "
+                f"{source_path.relative_to(repo)}")
+
     runtime_path = repo / "src/dm2/dm2_v1_runtime.c"
     if not runtime_path.exists():
         errors.append(f"missing {runtime_path}")

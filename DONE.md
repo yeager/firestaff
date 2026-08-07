@@ -58831,3 +58831,15 @@ viewport offset and c_hero/inventory ownership remain fail-closed.
   production face/mesh/texture, HUD/viewport, SLEV/SAL/SDDRVS and PRS3
   consumer admission closed until a trace joins a live writer/consumer to
   the authenticated retail bytes.
+
+# DM2 FM Towns live text-owner census (2026-08-13)
+
+Audited the production M11 DM2 text consumers against SKProject
+`v5/uidialog.cpp:352-415` and `v5/gfxstr.cpp:576-602`. The only current M11
+GDAT-text consumer is the save/load panel, which enters through
+`dm2_v1_boot_dialogue_open_panel_host_command` and its authenticated FM Towns
+companion callback. The source-shaped 0AAF, QueryDB, GfxStr and generic GUI
+draw modules have no M11 call site and remain excluded from product archives.
+Extended `verify_dm2_production_placeholder_boundary.py` to reject a future
+direct M11 call to those unbound owners. Native event/dialogue routing remains
+open; no host text or synthetic companion data was introduced.
