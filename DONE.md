@@ -58430,3 +58430,11 @@ alcove runtime and archive-media tests passed (4/4).
 - ✅ Kept dynamic maps unavailable until the original runtime/save owners for
   `v1e0974`, savegame light, party possessions, spells and weather state are
   connected; no release was made.
+
+# DM2 real ObjectID text boundary audit (2026-08-13)
+
+- ✅ Exercised the source text bridge with the mounted G1 DB5 object `0xD407`.
+  Its record ownership and `WEAPONS/126` classification are accepted, while
+  the missing original GDAT text keeps the result unnamed.
+- ✅ Confirmed that M11 cannot turn a missing source text record into a fixture
+  or diagnostic item label; no release was made.

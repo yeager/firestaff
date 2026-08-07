@@ -1,6 +1,7 @@
 /* Test DM2 V1 item operations (c_item.cpp). */
 
 #include "dm2_v1_item_ops_pc34_compat.h"
+#include "dm2_v1_dungeon_loader.h"
 #include <assert.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -219,6 +220,63 @@ static void test_source_item_name_receipt_real_gdat(void)
     printf("  PASS: source_item_name_receipt_real_gdat\n");
 }
 
+static void test_source_item_name_receipt_real_record(void)
+{
+    const char *root = getenv("FIRESTAFF_DM2_DATA_DIR");
+    char path[1024];
+    FILE *file;
+    long size;
+    uint8_t *dungeon_bytes = NULL;
+    DM2_V1_DungeonData dungeon;
+    DM2_V1_RecordPoolSet pools;
+    uint8_t *graphics = NULL;
+    size_t graphics_size = 0u;
+    DM2_V1_AssetLoader loader;
+    DM2_V1_SourceItemNameReceipt receipt;
+
+    if (!root || !root[0]) {
+        puts("  SKIP: source_item_name_receipt_real_record (no DM2 data)");
+        return;
+    }
+    snprintf(path, sizeof(path), "%s/dungeon.dat", root);
+    file = fopen(path, "rb");
+    if (!file || fseek(file, 0, SEEK_END) != 0 ||
+        (size = ftell(file)) <= 0 || fseek(file, 0, SEEK_SET) != 0) {
+        if (file) fclose(file);
+        puts("  SKIP: source_item_name_receipt_real_record (no DUNGEON.DAT)");
+        return;
+    }
+    dungeon_bytes = (uint8_t *)malloc((size_t)size);
+    assert(dungeon_bytes != NULL);
+    assert(fread(dungeon_bytes, 1u, (size_t)size, file) == (size_t)size);
+    fclose(file);
+    memset(&dungeon, 0, sizeof(dungeon));
+    memset(&pools, 0, sizeof(pools));
+    assert(dm2_v1_dungeon_load(&dungeon, dungeon_bytes, (int)size) == 0);
+    assert(dm2_v1_record_pool_set_init_from_dungeon(&pools, &dungeon) == 1);
+    free(dungeon_bytes);
+
+    assert(read_graphics_from_env(&graphics, &graphics_size));
+    memset(&loader, 0, sizeof(loader));
+    assert(dm2_v1_asset_loader_init(&loader, graphics, graphics_size) == 0);
+    assert(dm2_v1_asset_loader_verify(&loader));
+
+    /* G1 direct DB5 weapon receipt: map 17, object 0xD407, source index 7.
+     * The name must come from this decoded record and the real GDAT stream. */
+    assert(dm2_v1_query_source_item_name_receipt(
+               0xd407u, &pools, &loader, &receipt) == 0);
+    assert(receipt.cls1 == DM2_GDAT_CATEGORY_WEAPONS);
+    assert(receipt.cls2 == 126u);
+    assert(receipt.accepted == 0u && receipt.gdat.accepted == 0u);
+    printf("  PASS: source_item_name_receipt_real_record (WEAPONS/%u unnamed)\n",
+           receipt.cls2);
+
+    dm2_v1_asset_loader_free(&loader);
+    dm2_v1_record_pool_set_free(&pools);
+    dm2_v1_dungeon_free(&dungeon);
+    free(graphics);
+}
+
 int main(void)
 {
     printf("test_dm2_v1_item_ops:\n");
@@ -226,6 +284,7 @@ int main(void)
     test_drink_water();
     test_take_object();
     test_source_item_name_receipt_real_gdat();
+    test_source_item_name_receipt_real_record();
     printf("All item_ops tests passed.\n");
     return 0;
 }

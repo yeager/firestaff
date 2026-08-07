@@ -4276,7 +4276,11 @@ level or consumer bindings.
   CLS1/CLS2 with the SKProject record routines, and only then queries the
   original GDAT name stream. The real PC-DOS corpus resolves DB5 subtype 3
   through `WEAPONS/3` to `KALAN GAUNTLET`; M11 still does not admit the route
-  until its live leader-hand ObjectID owner is connected.
+  until its live leader-hand ObjectID owner is connected. **2026-08-13
+  real-record audit:** the mounted G1 DB5 object `0xD407` resolves to
+  `WEAPONS/126`, but the selected PC-DOS GDAT has no admissible text for that
+  index; the test now verifies that the HUD remains unnamed instead of
+  inventing a label.
 
 - **DM2-DIALOGUE-TEXT-OWNER-HANDOFF:** Save/load-dialogue labels require the
   original `GDAT 0/0/dtWordValue/0` transform owner as well as their
