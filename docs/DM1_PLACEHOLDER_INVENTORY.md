@@ -101,25 +101,27 @@ Every candidate that survived the scan is one of:
 
 ### 2. DM1 V2.2 — modern-presentation lane (`include/dm1_v22_*`)
 
-**Verdict: intentional placeholder art gated by an explicit
-material-state gate.**
+**Verdict: optional modern art remains blocked unless it is derived from
+the original PC34 `GRAPHICS.DAT`.**
 
 `include/dm1_v22_finished_art_material_gate_pc34.h` is a policy
-module that classifies each modern-art slot into
-`ART_STATE_{PLACEHOLDER, SYNTHETIC_TEST, REAL}` via a manifest with
-required fields (`generator`, `source_file`, `resolution`). Slots
-whose generator is `"placeholder"` are procedurally generated on
-purpose — the V2.2 lane is a modernization target, not a parity
-target, and the gate exists precisely so no V2.2 placeholder can
-leak into a parity claim.
+module that classifies each modern-art slot via a manifest. A PNG is
+source-backed only when its generator is exactly
+`original_graphics_dat_10x_palette_expansion`, the provenance emitted
+by `scripts/build_dm1_v22_source_fsart.py`. PBR, AI and generic
+review-generator labels are not game-data provenance and are treated
+as blocked placeholder material even if a file exists on disk. This
+prevents an AI-generated or hand-authored modern asset from activating
+the V2.2 path or contributing to a parity claim.
 
 `include/dm1_v2_asset_pipeline_pc34.h:213` warns not to use
 placeholder pixels when real data is available or expected — this is
 the policy statement, not a violation.
 
-**Action:** none required at the DM1 parity level. V2.2 modern-art
-work is a separate deliverable; the gate correctly prevents its
-placeholder art from being counted as parity.
+**Action:** construct a complete source-derived slot mapping before
+promoting V2.2. The local `pbr_hero`/`gpt-image-2` manifest remains
+installed but is now `SYNTHETIC_PLACEHOLDER` (`0/7` real slots), so
+the normal route stays on source-owned V1/V2.1 material.
 
 ### 3. DM1 FM Towns
 

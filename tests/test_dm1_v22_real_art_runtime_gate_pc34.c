@@ -51,11 +51,11 @@ static int write_real_pack(const char *modern_dir, int placeholder) {
     size_t used;
     static const char json_format[] =
         "{\"wall_shapes\":[{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"%s\",\"source_file\":\"wall_d3_carved_hero_01.png\",\"width\":64,\"height\":64}],"
-        "\"floor_shapes\":[{\"id\":\"floor_plain_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"floor_plain_hero_01.png\",\"width\":64,\"height\":64},{\"id\":\"floor_pit_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"floor_pit_hero_01.png\",\"width\":64,\"height\":64}],"
-        "\"creature_shapes\":[{\"id\":\"creature_demon_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"creature_demon_hero_01.png\",\"width\":48,\"height\":48}],"
-        "\"champion_portraits\":[{\"id\":\"champion_warrior_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"champion_warrior_hero_01.png\",\"width\":48,\"height\":48}],"
-        "\"door_shapes\":[{\"id\":\"door_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}],"
-        "\"field_shapes\":[{\"id\":\"field_teleporter_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"field_teleporter_hero_01.png\",\"width\":64,\"height\":64}]}";
+        "\"floor_shapes\":[{\"id\":\"floor_plain_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"floor_plain_hero_01.png\",\"width\":64,\"height\":64},{\"id\":\"floor_pit_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"floor_pit_hero_01.png\",\"width\":64,\"height\":64}],"
+        "\"creature_shapes\":[{\"id\":\"creature_demon_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"creature_demon_hero_01.png\",\"width\":48,\"height\":48}],"
+        "\"champion_portraits\":[{\"id\":\"champion_warrior_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"champion_warrior_hero_01.png\",\"width\":48,\"height\":48}],"
+        "\"door_shapes\":[{\"id\":\"door_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}],"
+        "\"field_shapes\":[{\"id\":\"field_teleporter_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"field_teleporter_hero_01.png\",\"width\":64,\"height\":64}]}";
     int i;
 
     for (i = 0; i < 7; ++i) {
@@ -69,7 +69,7 @@ static int write_real_pack(const char *modern_dir, int placeholder) {
     }
     {
         int written = snprintf(json, sizeof(json), json_format,
-                               placeholder ? "placeholder" : "reviewed_art");
+                               placeholder ? "placeholder" : "original_graphics_dat_10x_palette_expansion");
         if (written < 0 || (size_t)written >= sizeof(json)) return 0;
         used = (size_t)written;
     }

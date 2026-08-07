@@ -8,8 +8,8 @@
  * This module is the CI-runnable distinction between:
  *   - SYNTHETIC_PLACEHOLDER (procedural / "placeholder" generator,
  *     the current honest runtime default)
- *   - FINISHED_REAL        (operator-installed hero PNGs with
- *     generator != "placeholder" and source_file resolving on disk)
+ *   - FINISHED_REAL        (PNG material derived from the original
+ *     GRAPHICS.DAT with source provenance and a resolvable source_file)
  *
  * It runs in CI without requiring real PBR art on disk by:
  *   1. Reading the existing modern_asset_manifest.json (when present)
@@ -19,11 +19,10 @@
  *
  * The manifest schema reuses the modern_asset_manifest.json format
  * defined for include/dm1_v2_asset_pipeline_pc34.h, with the
- * addition of an optional `generator` field. When `generator` ==
- * "placeholder", the slot is the procedural fallback. Any other
- * value (e.g. "pbr_hero", "ai_upscale", "reviewed") is a non-
- * placeholder marker that, combined with a disk-resolvable PNG whose
- * IHDR dimensions match the manifest, promotes the slot to REAL.
+ * addition of an optional `generator` field. Only the explicit
+ * `original_graphics_dat_10x_palette_expansion` provenance emitted by
+ * build_dm1_v22_source_fsart.py can promote a slot to REAL. PBR, AI and
+ * operator-review markers never establish original-game-data provenance.
  *
  * Source-lock:
  *   - ReDMCSB DUNVIEW.C:6697-6816 (DM1 viewport composition order)
@@ -35,11 +34,10 @@
  *   - sibling dm2_v2_hud_widget_assets.c (placeholder-vs-real pattern)
  *
  * Honest boundary: this gate tracks manifest classification only.
- * It does NOT claim finished PBR art has been reviewed or shipped.
- * FINISHED_REAL is reachable only when an operator has dropped a
- * non-placeholder manifest with source_file paths that resolve on
- * disk; until then the gate stays in SYNTHETIC_PLACEHOLDER, which
- * matches the honest current default.
+ * It does NOT claim a source-derived PNG has been reviewed or shipped.
+ * FINISHED_REAL is reachable only for a complete original-GRAPHICS.DAT
+ * manifest with source files that resolve on disk; until then the gate
+ * stays in SYNTHETIC_PLACEHOLDER, which matches the honest current default.
  */
 
 #include "dm1_v22_finished_art_material_gate_pc34.h"
@@ -567,6 +565,12 @@ static int dm1_v22_famg_generator_is_synthetic(const char* generator) {
             strcmp(generator, "synthetic_test") == 0) ? 1 : 0;
 }
 
+static int dm1_v22_famg_generator_is_source_derived(const char* generator) {
+    return generator &&
+           strcmp(generator,
+                  "original_graphics_dat_10x_palette_expansion") == 0;
+}
+
 /* ── Validation ────────────────────────────────────────────────── */
 int dm1_v22_famg_validate_manifest(const char* manifest_path) {
     const char* p = manifest_path ? manifest_path : g_manifest_path;
@@ -611,12 +615,14 @@ DM1_V22_FamgClass dm1_v22_famg_classify_slot(DM1_V22_FamgSlot slot) {
         return DM1_V22_FAMG_CLASS_PARTIAL;
     }
 
-    /* generator == "placeholder" is the explicit fallback marker */
-    if (strcmp(raw.generator, "placeholder") == 0) {
+    /* Only source-derived GRAPHICS.DAT records may become real material.
+     * A non-placeholder label is not provenance: it can describe PBR, AI
+     * or hand-authored pixels. Keep every such entry in the blocked class. */
+    if (!dm1_v22_famg_generator_is_source_derived(raw.generator)) {
         return DM1_V22_FAMG_CLASS_PLACEHOLDER;
     }
 
-    /* Real asset: required fields + non-placeholder generator +
+    /* Real asset: required fields + source-derived generator +
      * source_file resolves on disk + PNG IHDR dimensions match the
      * manifest. This keeps text files renamed to .png from promoting
      * the finished-art gate. */
@@ -950,10 +956,11 @@ const char* dm1_v22_famg_source_evidence(void) {
         "Source: docs/FIRESTAFF_GAP_LIST.md B3 V2 per-mode material row\n"
         "Manifest path: ~/.firestaff/assets/dm1/modern/modern_asset_manifest.json\n"
         "Schema: { id, generator, source_file, width, height } per slot entry\n"
-        "Generator 'placeholder' is the procedural fallback marker (synthetic)\n"
-        "Non-placeholder generator + source_file resolves on disk + PNG IHDR dimensions match = REAL\n"
+        "Only 'original_graphics_dat_10x_palette_expansion' is source-derived\n"
+        "PBR, AI and review generators remain synthetic/blocked\n"
+        "Source-derived generator + source_file resolves on disk + PNG IHDR dimensions match = REAL\n"
         "Gate states: NOT_PROBED / NO_MANIFEST / SYNTHETIC_PLACEHOLDER / PARTIAL / FINISHED_REAL\n"
-        "FINISHED_REAL requires every tracked slot to be REAL with non-placeholder generator\n"
+        "FINISHED_REAL requires every tracked slot to be REAL with source-derived generator\n"
         "Receipt id: dm1_v22_real_screenshot_material_receipt_01\n"
         "Receipt schema: { id, generator, source_file, width, height, frame_hash, material_gate }\n"
         "Receipt source_file resolves under ~/.firestaff/assets/dm1/modern/receipts/\n"
@@ -961,10 +968,10 @@ const char* dm1_v22_famg_source_evidence(void) {
         "V1 invariant: V1 command routes, dungeon state, save/restore NEVER bypassed\n"
         "V2 rule: finished-art material only activates when V2 launch+profile enabled\n"
         "Honest boundary: this gate tracks manifest classification only.\n"
-        "It does NOT claim finished PBR art has been reviewed or shipped.\n"
-        "FINISHED_REAL promotion requires operator-installed hero PNGs at\n"
+        "It does NOT claim source-derived art has been reviewed or shipped.\n"
+        "FINISHED_REAL promotion requires original-GRAPHICS.DAT-derived PNGs at\n"
         "~/.firestaff/assets/dm1/modern/<category>/<source_file> with\n"
-        "generator != 'placeholder', PNG signature + IHDR dimensions matching\n"
+        "generator == 'original_graphics_dat_10x_palette_expansion', PNG signature + IHDR dimensions matching\n"
         "the manifest width/height, plus a\n"
         "sibling gap-list update to mark the real-asset promotion gate green.\n";
 }

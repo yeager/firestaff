@@ -59002,6 +59002,17 @@ Corrected `dm2_v1_recalc_light_level_pc34()` to match SKProject
 before the final clamp, rather than being subtracted as an unrestricted host
 delta. Added regression coverage and reran the real GRAPHICSSET scene/light
 admission tests; dynamic-map runtime ownership remains fail-closed.
+
+# DM1 V2.2 source-art provenance gate (2026-08-07)
+
+DM1 V2.2 no longer treats every non-placeholder generator label as real
+material. Only `original_graphics_dat_10x_palette_expansion`, emitted by the
+source-only `build_dm1_v22_source_fsart.py` pipeline, may promote a PNG slot
+to `FINISHED_REAL`. PBR, AI and generic review labels remain blocked even with
+matching PNG dimensions. The local PBR/GPT manifest now evaluates to
+`SYNTHETIC_PLACEHOLDER` with zero real slots; focused material, receipt and
+runtime-admission tests cover both source-derived promotion and the PBR
+negative case.
 # Nexus relocated-code loader receipt (2026-08-07)
 
 - ✅ Added a bounded Mednafen SH-2 high-RAM write producer and validator.

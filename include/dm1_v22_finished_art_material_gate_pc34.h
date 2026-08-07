@@ -7,9 +7,9 @@
  * per-shape material PNGs (wall/floor/creature/door/champion). When the
  * pack is shipped it is procedurally generated (placeholder colors) — the
  * honest baseline for this pass. When a reviewer has signed off on real
- * finished art, the manifest entries for those slots carry:
+ * source-derived art, the manifest entries for those slots carry:
  *
- *   generator    != "placeholder"  (e.g. "pbr_hero" | "ai_upscale")
+ *   generator    == "original_graphics_dat_10x_palette_expansion"
  *   source_file  resolves on disk under the modern asset root
  *   file bytes   start with the PNG signature
  *   width,height match the on-disk PNG IHDR header
@@ -23,8 +23,8 @@
  *                          generator == "placeholder" (the CI default)
  *   PARTIAL            — at least one slot is REAL, at least one is
  *                          PLACEHOLDER / MISSING / UNKNOWN
- *   FINISHED_REAL      — every required material slot is REAL with
- *                          generator != "placeholder", source_file
+ *   FINISHED_REAL      — every required material slot is REAL with the
+ *                          original-GRAPHICS.DAT generator, source_file
  *                          resolving on disk, and PNG IHDR matching
  *                          the declared dimensions
  *
@@ -44,9 +44,9 @@
  *   - sibling dm2_v2_hud_widget_assets.h (placeholder-vs-real pattern)
  *
  * Honest boundary: this gate reports the manifest state. It does NOT
- * claim any finished PBR art has been reviewed or shipped. The
+ * claim any source-derived art has been reviewed or shipped. The
  * FINISHED_REAL state is reachable only when an operator has dropped a
- * non-placeholder manifest with source_file paths that resolve on disk;
+ * original-GRAPHICS.DAT manifest with source_file paths that resolve on disk;
  * until then the gate stays in SYNTHETIC_PLACEHOLDER, which matches the
  * honest current default.
  */
@@ -101,9 +101,9 @@ typedef enum {
     DM1_V22_FAMG_CLASS_MISSING     = 1, /* manifest valid but slot absent */
     DM1_V22_FAMG_CLASS_PLACEHOLDER = 2, /* slot present, generator ==
                                           "placeholder" (procedural) */
-    DM1_V22_FAMG_CLASS_PARTIAL     = 3, /* real asset metadata but some
+    DM1_V22_FAMG_CLASS_PARTIAL     = 3, /* source asset metadata but some
                                           required fields missing */
-    DM1_V22_FAMG_CLASS_REAL        = 4  /* real PBR/PNG asset, all
+    DM1_V22_FAMG_CLASS_REAL        = 4  /* original-GRAPHICS.DAT PNG asset, all
                                           required fields present, source
                                           file resolves on disk */
 } DM1_V22_FamgClass;
@@ -120,7 +120,7 @@ typedef enum {
  *   FINISHED_REAL         -> every required slot is REAL
  *
  * FINISHED_REAL is reachable only when an operator has dropped the
- * full hero manifest under ~/.firestaff/assets/dm1/modern/ with
+ * full source-derived manifest under ~/.firestaff/assets/dm1/modern/ with
  * source_file paths that resolve on disk. Until that happens the
  * gate stays in SYNTHETIC_PLACEHOLDER, which is the honest current
  * default and the value CI should expect. */
@@ -169,7 +169,7 @@ typedef struct {
     char            id[64];            /* manifest id (stable) */
     char            category[32];      /* "wall_shapes" / "creature_shapes" /
                                          "champion_portraits" / "door_shapes" */
-    char            generator[32];     /* "placeholder" / "pbr_hero" / "" */
+    char            generator[64];     /* source provenance marker or "" */
     char            source_file[256];  /* manifest source_file or "" */
     char            resolved_path[1024];/* full path or "" */
     int             width;

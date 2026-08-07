@@ -283,13 +283,13 @@ static int write_reviewed_pack_fixture(const char* modern_dir) {
     snprintf(manifest, sizeof(manifest), "%s/modern_asset_manifest.json", modern_dir);
     if (!write_text_file(manifest,
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-inplace-probe\","
-        "\"wall_shapes\":[{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"wall_d3_carved_hero_01.png\",\"width\":64,\"height\":64}],"
-        "\"floor_shapes\":[{\"id\":\"floor_plain_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"floor_plain_hero_01.png\",\"width\":64,\"height\":64},"
-        "{\"id\":\"floor_pit_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"floor_pit_hero_01.png\",\"width\":64,\"height\":64}],"
-        "\"creature_shapes\":[{\"id\":\"creature_demon_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"creature_demon_hero_01.png\",\"width\":48,\"height\":48}],"
-        "\"champion_portraits\":[{\"id\":\"champion_warrior_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"champion_warrior_hero_01.png\",\"width\":48,\"height\":48}],"
-        "\"door_shapes\":[{\"id\":\"door_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}],"
-        "\"field_shapes\":[{\"id\":\"field_teleporter_hero_01\",\"generator\":\"reviewed_art\",\"source_file\":\"field_teleporter_hero_01.png\",\"width\":64,\"height\":64}]}")) {
+        "\"wall_shapes\":[{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"wall_d3_carved_hero_01.png\",\"width\":64,\"height\":64}],"
+        "\"floor_shapes\":[{\"id\":\"floor_plain_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"floor_plain_hero_01.png\",\"width\":64,\"height\":64},"
+        "{\"id\":\"floor_pit_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"floor_pit_hero_01.png\",\"width\":64,\"height\":64}],"
+        "\"creature_shapes\":[{\"id\":\"creature_demon_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"creature_demon_hero_01.png\",\"width\":48,\"height\":48}],"
+        "\"champion_portraits\":[{\"id\":\"champion_warrior_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"champion_warrior_hero_01.png\",\"width\":48,\"height\":48}],"
+        "\"door_shapes\":[{\"id\":\"door_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}],"
+        "\"field_shapes\":[{\"id\":\"field_teleporter_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\",\"source_file\":\"field_teleporter_hero_01.png\",\"width\":64,\"height\":64}]}")) {
         return 0;
     }
     hash = dm1_v22_fpr_fnv1a_file(manifest);

@@ -14,7 +14,7 @@
  *      (declared slots are all PLACEHOLDER, others MISSING)
  *   6. PARTIAL (one slot REAL, others PLACEHOLDER) -> PARTIAL gate
  *   7. PARTIAL (real metadata, missing file)       -> SYNTHETIC_PLACEHOLDER gate
- *      (the manifest declares pbr_hero but the file is not on disk;
+ *      (the manifest declares original_graphics_dat_10x_palette_expansion but the file is not on disk;
  *       PARTIAL-only slots route through the placeholder fallback,
  *       so the gate stays SYNTHETIC_PLACEHOLDER)
  *   8. PARTIAL (incomplete fields)  -> SYNTHETIC_PLACEHOLDER gate
@@ -137,30 +137,30 @@ static int write_all_real_manifest_with_receipt(const char* path,
     fprintf(fp,
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
         "\"wall_shapes\":["
-        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"wall_d3_carved_hero_01.png\",\"width\":64,\"height\":64}"
         "],"
         "\"floor_shapes\":["
-        "{\"id\":\"floor_plain_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"floor_plain_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"floor_plain_hero_01.png\",\"width\":64,\"height\":64},"
-        "{\"id\":\"floor_pit_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"floor_pit_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"floor_pit_hero_01.png\",\"width\":64,\"height\":64}"
         "],"
         "\"creature_shapes\":["
-        "{\"id\":\"creature_demon_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"creature_demon_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"creature_demon_hero_01.png\",\"width\":48,\"height\":48}"
         "],"
         "\"champion_portraits\":["
-        "{\"id\":\"champion_warrior_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"champion_warrior_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"champion_warrior_hero_01.png\","
         "\"width\":48,\"height\":48}"
         "],"
         "\"door_shapes\":["
-        "{\"id\":\"door_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"door_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}"
         "],"
         "\"field_shapes\":["
-        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"field_teleporter_hero_01.png\","
         "\"width\":64,\"height\":64}"
         "]");
@@ -424,34 +424,34 @@ static void test_real_slot_classifies_as_real(void) {
              assets_root);
     CHECK(system(mkdir_cmd) == 0, "mkdir category dirs");
 
-    /* All seven slots fully REAL with pbr_hero generator + on-disk file. */
+    /* All seven slots fully REAL with original_graphics_dat_10x_palette_expansion generator + on-disk file. */
     const char* content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
         "\"wall_shapes\":["
-        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"wall_d3_carved_hero_01.png\",\"width\":64,\"height\":64}"
         "],"
         "\"floor_shapes\":["
-        "{\"id\":\"floor_plain_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"floor_plain_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"floor_plain_hero_01.png\",\"width\":64,\"height\":64},"
-        "{\"id\":\"floor_pit_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"floor_pit_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"floor_pit_hero_01.png\",\"width\":64,\"height\":64}"
         "],"
         "\"creature_shapes\":["
-        "{\"id\":\"creature_demon_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"creature_demon_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"creature_demon_hero_01.png\",\"width\":48,\"height\":48}"
         "],"
         "\"champion_portraits\":["
-        "{\"id\":\"champion_warrior_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"champion_warrior_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"champion_warrior_hero_01.png\","
         "\"width\":48,\"height\":48}"
         "],"
         "\"door_shapes\":["
-        "{\"id\":\"door_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"door_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"door_hero_01.png\",\"width\":32,\"height\":48}"
         "],"
         "\"field_shapes\":["
-        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"field_teleporter_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"field_teleporter_hero_01.png\","
         "\"width\":64,\"height\":64}"
         "]}";
@@ -542,7 +542,7 @@ static void test_partial_when_some_real(void) {
     const char* content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
         "\"wall_shapes\":["
-        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"wall_d3_carved_hero_01.png\",\"width\":64,\"height\":64}"
         "],"
         "\"floor_shapes\":["
@@ -612,11 +612,11 @@ static void test_partial_when_real_but_missing_source_file(void) {
              "mkdir -p '%s/wall_shapes'", assets_root);
     system(mkdir_cmd);
 
-    /* Manifest declares pbr_hero but the file does not exist on disk. */
+    /* Manifest declares original_graphics_dat_10x_palette_expansion but the file does not exist on disk. */
     const char* content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
         "\"wall_shapes\":["
-        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"missing_on_disk.png\",\"width\":64,\"height\":64}"
         "]}";
     CHECK(write_file(manifest_path, content), "wrote manifest with missing source");
@@ -638,6 +638,41 @@ static void test_partial_when_real_but_missing_source_file(void) {
           "PARTIAL-only slots -> SYNTHETIC_PLACEHOLDER gate");
 }
 
+static void test_non_source_generator_is_blocked(void) {
+    clean_scratch();
+    const char* dataDir = "/tmp/scratch/dm1-famg-data/data/dm1";
+    char manifest_path[FSP_PATH_MAX];
+    char assets_root[FSP_PATH_MAX];
+    build_expected_manifest_path(manifest_path, sizeof(manifest_path), dataDir);
+    snprintf(assets_root, sizeof(assets_root),
+             "%s/../../assets/dm1/modern", dataDir);
+    char mkdir_cmd[1200];
+    snprintf(mkdir_cmd, sizeof(mkdir_cmd),
+             "mkdir -p '%s/wall_shapes'", assets_root);
+    CHECK(system(mkdir_cmd) == 0, "mkdir AI-generator fixture directory");
+
+    const char* content =
+        "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
+        "\"wall_shapes\":["
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"pbr_hero\","
+        "\"source_file\":\"wall_d3_carved_hero_01.png\",\"width\":64,\"height\":64}"
+        "]}";
+    CHECK(write_file(manifest_path, content), "wrote PBR provenance manifest");
+
+    char asset_path[FSP_PATH_MAX];
+    snprintf(asset_path, sizeof(asset_path),
+             "%s/wall_shapes/wall_d3_carved_hero_01.png", assets_root);
+    CHECK(write_png_header_file(asset_path, 64U, 64U),
+          "wrote PBR-labelled PNG fixture");
+
+    dm1_v22_famg_set_manifest_path(dataDir);
+    CHECK(dm1_v22_famg_classify_slot(DM1_V22_FAMG_WALL_D3_CARVED) ==
+              DM1_V22_FAMG_CLASS_PLACEHOLDER,
+          "PBR-labelled PNG cannot claim original-game-data provenance");
+    CHECK(dm1_v22_famg_gate() == DM1_V22_FAMG_GATE_SYNTHETIC_PLACEHOLDER,
+          "PBR-labelled manifest cannot promote the finished-art gate");
+}
+
 static void test_real_metadata_requires_png_header_match(void) {
     clean_scratch();
     const char* dataDir = "/tmp/scratch/dm1-famg-data/data/dm1";
@@ -654,7 +689,7 @@ static void test_real_metadata_requires_png_header_match(void) {
     const char* content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
         "\"wall_shapes\":["
-        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"wall_d3_carved_hero_01.png\","
         "\"width\":64,\"height\":64}"
         "]}";
@@ -711,7 +746,7 @@ static void test_partial_when_fields_missing(void) {
     const char* content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
         "\"wall_shapes\":["
-        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"x.png\"}"
         "]}";
     CHECK(write_file(manifest_path, content), "wrote manifest with incomplete entry");
@@ -747,7 +782,7 @@ static void test_get_slot_info_populates_fields(void) {
     const char* content =
         "{\"manifestVersion\":\"1.0.0\",\"packId\":\"dm1-v22-famg-test\","
         "\"wall_shapes\":["
-        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"pbr_hero\","
+        "{\"id\":\"wall_d3_carved_hero_01\",\"generator\":\"original_graphics_dat_10x_palette_expansion\","
         "\"source_file\":\"wall_d3_carved_hero_01.png\","
         "\"width\":64,\"height\":64}"
         "]}";
@@ -762,7 +797,7 @@ static void test_get_slot_info_populates_fields(void) {
           "slot info id correct");
     CHECK(strcmp(info.category, "wall_shapes") == 0,
           "slot info category correct");
-    CHECK(strcmp(info.generator, "pbr_hero") == 0,
+    CHECK(strcmp(info.generator, "original_graphics_dat_10x_palette_expansion") == 0,
           "slot info generator correct");
     CHECK(strcmp(info.source_file, "wall_d3_carved_hero_01.png") == 0,
           "slot info source_file correct");
@@ -1156,6 +1191,7 @@ int main(void) {
     test_real_slot_classifies_as_real();
     test_partial_when_some_real();
     test_partial_when_real_but_missing_source_file();
+    test_non_source_generator_is_blocked();
     test_real_metadata_requires_png_header_match();
     test_partial_when_fields_missing();
     test_get_slot_info_populates_fields();
