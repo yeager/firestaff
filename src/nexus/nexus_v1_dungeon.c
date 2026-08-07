@@ -6750,7 +6750,8 @@ int nexus_v1_dgn_bind_structure1f_item_materials(
         image = bank->association_image[association];
         if (palette >= NEXUS_V1_ITEM_IBS_PALETTE_COUNT ||
             image >= NEXUS_V1_ITEM_IBS_REGULAR_IMAGE_COUNT ||
-            receipt.bound_regular_inventory_count >= max_bindings) {
+            receipt.bound_regular_inventory_count +
+                receipt.bound_special_floor_palette_count >= max_bindings) {
             ++receipt.blocked_invalid_item_count;
             continue;
         }
@@ -7337,10 +7338,10 @@ int nexus_v1_item_ibs_decode_0008_vdp1_4bpp(
     /* Mednafen Saturn VDP1 TexFetch(), colour modes 0/1: x=0 consumes the
      * high nibble of the first byte.  This is reachable only through the
      * original-command provenance gate above, never from ITEM.IBS alone. */
-    for (i = 0; i < (int)expected_bytes; ++i) {
-        uint8_t packed = floor->packed_4bpp_texels[i];
-        out_texels[i * 2] = (uint8_t)(packed >> 4);
-        out_texels[i * 2 + 1] = (uint8_t)(packed & 0x0fU);
+    for (i = 0; i < texel_count; ++i) {
+        uint8_t packed = floor->packed_4bpp_texels[i / 2];
+        out_texels[i] = (i & 1) == 0 ? (uint8_t)(packed >> 4)
+                                      : (uint8_t)(packed & 0x0fU);
     }
     receipt.decoded_texel_count = texel_count;
     receipt.decode_authorized = 1;

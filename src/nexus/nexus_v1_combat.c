@@ -91,16 +91,21 @@ static int combat_stamina_cost(int strength) {
 }
 
 /* DM.BIN 0x01D144: apply wound penalty as multiplicative damage.
- * penalty = wound_table[wound_level] * base_damage / 8. */
+ * Body/head wounds use g_wound_table_body (strength scaling),
+ * arm/leg wounds use g_wound_table_limbs (dexterity scaling). */
 static int apply_wound_penalty(int damage, int wounds) {
-    int wound_level = 0;
-    if (wounds & NEXUS_WOUND_HEAD) wound_level++;
-    if (wounds & NEXUS_WOUND_BODY) wound_level++;
-    if (wounds & NEXUS_WOUND_ARMS) wound_level++;
-    if (wounds & NEXUS_WOUND_LEGS) wound_level++;
-    if (wound_level <= 0) return damage;
-    if (wound_level > 5) wound_level = 5;
-    return (damage * g_wound_table_body[wound_level]) / 8;
+    int body_level = 0, limb_level = 0;
+    if (wounds & NEXUS_WOUND_HEAD) body_level++;
+    if (wounds & NEXUS_WOUND_BODY) body_level++;
+    if (wounds & NEXUS_WOUND_ARMS) limb_level++;
+    if (wounds & NEXUS_WOUND_LEGS) limb_level++;
+    if (body_level > 5) body_level = 5;
+    if (limb_level > 5) limb_level = 5;
+    if (body_level > 0)
+        damage = (damage * g_wound_table_body[body_level]) / 8;
+    if (limb_level > 0)
+        damage = (damage * g_wound_table_limbs[limb_level]) / 8;
+    return damage;
 }
 
 Nexus_CombatResult nexus_v1_champion_melee_attack(

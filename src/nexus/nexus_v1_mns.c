@@ -184,7 +184,7 @@ int nexus_v1_mns_decode(const uint8_t *data, int data_size,
                 td->pixel_count = td->width * td->height;
                 if (td->pixel_count > 0 && td->image_offset) {
                     uint32_t abs_off = out->text_offset + td->image_offset;
-                    int byte_count = td->pixel_count * 2;
+                    uint64_t byte_count = (uint64_t)td->pixel_count * 2;
                     if ((uint64_t)td->image_offset + (uint64_t)byte_count <=
                             (uint64_t)text_size &&
                         range_in_file(abs_off, (uint64_t)byte_count,

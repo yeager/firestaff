@@ -366,6 +366,9 @@ static Nexus_SaveResult do_load(const char *path,
             fclose(f); return NEXUS_SAVE_ERR_READ;
         }
     }
+    if (read_champ < champ_size) {
+        fseek(f, (long)(champ_size - read_champ), SEEK_CUR);
+    }
     if (world_data && read_world > 0) {
         if (fread(world_data, 1, read_world, f) != read_world) {
             fclose(f); return NEXUS_SAVE_ERR_READ;

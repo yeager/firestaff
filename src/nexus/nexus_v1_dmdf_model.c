@@ -498,7 +498,8 @@ int nexus_v1_dmdf_parse_texture_section(const uint8_t *data, int size,
         descriptor->pixel_offset = rb32(entry + 12U);
         descriptor->reserved = rb32(entry + 16U);
         pixel_bytes = (uint64_t)descriptor->width * descriptor->height * 2U;
-        descriptor->valid = descriptor->width >= 8U && descriptor->width <= 256U &&
+        descriptor->valid = descriptor->material_id < NEXUS_DMDF_MATERIAL_COUNT &&
+            descriptor->width >= 8U && descriptor->width <= 256U &&
             descriptor->height >= 8U && descriptor->height <= 256U &&
             descriptor->pixel_offset >= pixel_data_offset &&
             (uint64_t)descriptor->pixel_offset + pixel_bytes <= bytes;

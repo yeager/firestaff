@@ -10580,7 +10580,7 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                                     engine->champions.champions[idx].health = 0;
                                     engine->champions.champions[idx].alive = 0;
                                     nexus_v1_champion_on_death_update_leader(
-                                        &engine->champions, li);
+                                        &engine->champions, idx);
                                 }
                                 nexus_v1_damage_display_add(&engine->damage_display,
                                                             idx, dmg, NEXUS_DMG_TAKEN);
@@ -10588,7 +10588,7 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                                     int psn = engine->creatures.types[cr->type_index].poison;
                                     if (psn > 0)
                                         nexus_v1_status_apply(
-                                            &engine->champion_status[idx],
+                                            &engine->champion_status[li],
                                             NEXUS_STATUS_POISON, psn, 10);
                                 }
                             }
@@ -10654,17 +10654,17 @@ void nexus_v1_tick(Nexus_V1_Engine *engine) {
                     if (engine->source == NEXUS_SRC_NONE ||
                         nexus_v1_action_semantics_proven()) {
                         int poison_dmg = nexus_v1_status_poison_damage(
-                            &engine->champion_status[idx]);
+                            &engine->champion_status[ci]);
                         if (poison_dmg > 0) {
                             ch->health -= poison_dmg;
                             if (ch->health <= 0) {
                                 ch->health = 0;
                                 ch->alive = 0;
                                 nexus_v1_champion_on_death_update_leader(
-                                    &engine->champions, ci);
+                                    &engine->champions, idx);
                             }
                         }
-                        nexus_v1_status_tick(&engine->champion_status[idx]);
+                        nexus_v1_status_tick(&engine->champion_status[ci]);
                     }
                 }
             }
