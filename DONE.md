@@ -58731,6 +58731,13 @@ query. It admits only DB3 records, reads `w2` with the original low-seven-bit
 `ActuatorType()` mask, rejects ObjectID sentinels/missing records, and adds
 focused coverage for source-shaped records. Activation, DB14 and timer
 transactions remain fail-closed.
+# DM2 c_light modifier parity correction (2026-08-13)
+
+Corrected `dm2_v1_recalc_light_level_pc34()` to match SKProject
+`src/v5/sklight.cpp:186-190`: `v1e0978` is normalized to `1` above `0x0c`
+before the final clamp, rather than being subtracted as an unrestricted host
+delta. Added regression coverage and reran the real GRAPHICSSET scene/light
+admission tests; dynamic-map runtime ownership remains fail-closed.
 # Nexus relocated-code loader receipt (2026-08-07)
 
 - ✅ Added a bounded Mednafen SH-2 high-RAM write producer and validator.
