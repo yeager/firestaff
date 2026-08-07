@@ -31,6 +31,10 @@
   `TITLE.C`/`ENTRANCE.C` startup session. The native `TITL.DAT`/APPA.C chain
   is left fail-closed until its application handoff is source-bound, so M11
   cannot present PC title, entrance, HUD or viewport pixels as Amiga output.
+- ✅ The real A31 launcher boundary now first materializes the selected
+  nested 7z→ADF package and verifies its selected `GRAPHICS.DAT` identity
+  plus the original `DUNGEON.DAT` pair. A fail-closed M11 result can no
+  longer hide a missing or cross-bound package core.
 
 # CSB PC34 launcher regression isolation (2026-08-07)
 

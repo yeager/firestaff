@@ -1867,9 +1867,14 @@ static void run_real_atari_st_launcher_handoffs_if_available(void) {
  * COMPILE.H 199-243. */
 static void run_real_amiga31_selected_package_handoff_if_available(void) {
     const char *data_dir = getenv("FIRESTAFF_CSB_AMIGA31_DATA_DIR");
+    char runtime_dir[M12_ASSET_DATA_DIR_CAPACITY];
+    char graphics_path[M12_ASSET_DATA_DIR_CAPACITY];
+    char dungeon_path[M12_ASSET_DATA_DIR_CAPACITY];
+    char md5[33];
     M12_StartupMenuState menu;
     M11_GameViewState view;
     const M12_MenuEntry *entry;
+    const M12_AssetVersionStatus *amiga_version;
     const CSB_V1_BootProfile *profile;
     int version_index;
 
@@ -1881,9 +1886,12 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     dismiss_initial_message(&menu);
     entry = M12_StartupMenu_GetEntry(&menu, 1);
     version_index = M12_AssetStatus_FindVersionIndex("csb", "amiga31-en");
+    amiga_version = version_index >= 0
+        ? M12_AssetStatus_GetVersion(&menu.assetStatus, "csb",
+                                     (size_t)version_index)
+        : NULL;
     if (!entry || !entry->available || version_index < 0 ||
-        !M12_AssetStatus_GetVersion(&menu.assetStatus, "csb",
-                                    (size_t)version_index)->matched) {
+        !amiga_version || !amiga_version->matched) {
         expect_skip("no verified Amiga 3.1 CSB package at requested data root");
         M12_StartupMenu_Destroy(&menu);
         return;
@@ -1893,6 +1901,26 @@ static void run_real_amiga31_selected_package_handoff_if_available(void) {
     menu.activatedIndex = 1;
     menu.launchRequested = 1;
     menu.gameOptions[1].versionIndex = version_index;
+    /* The selected A31E path is archive.7z -> ADF -> graphics.dat.  Test
+     * the real materialization transaction separately from M11's native
+     * startup boundary: a bare fail return could otherwise conceal a missing
+     * selected-package core and make the title-family regression vacuous.
+     * ReDMCSB APPA.C:51-53 owns this package's SWSH/ANIM application chain. */
+    memset(runtime_dir, 0, sizeof(runtime_dir));
+    expect_true(M12_AssetStatus_MaterializeCSBRuntimeVersion(
+                    &menu.assetStatus, "amiga31-en", runtime_dir,
+                    sizeof(runtime_dir)) == 1,
+                "M12 materializes the selected A31E archive/ADF package");
+    expect_true(runtime_dir[0] != '\0' &&
+                    snprintf(graphics_path, sizeof(graphics_path), "%s/GRAPHICS.DAT",
+                             runtime_dir) > 0 &&
+                    snprintf(dungeon_path, sizeof(dungeon_path), "%s/DUNGEON.DAT",
+                             runtime_dir) > 0 &&
+                    asset_file_md5_hex(graphics_path, md5) &&
+                    strcmp(md5, amiga_version->matchedMd5) == 0 &&
+                    asset_file_md5_hex(dungeon_path, md5) &&
+                    strcmp(md5, "6695d2acebce49f95db1d8f3a5c733de") == 0,
+                "A31E materialization retains its real graphics and dungeon pair");
     M11_GameView_Init(&view);
     expect_true(M11_GameView_OpenSelectedMenuEntry(&view, &menu) == 0,
                 "M11 rejects Amiga 3.1 before the PC34 startup fallback");
