@@ -67,23 +67,19 @@ static int front_square_is_wall(const M11_GameViewState *state,
 int main(void)
 {
     const char *dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
-    char defaultDataDir[1024];
-    const char *home;
     M11_GameViewState state;
     unsigned char framebuffer[kFramebufferWidth * kFramebufferHeight];
     int mapIndex;
 
     if (!dataDir || !dataDir[0]) {
-        home = getenv("HOME");
-        if (!home || !home[0]) return 0;
-        snprintf(defaultDataDir, sizeof(defaultDataDir),
-                 "%s/.firestaff/data/dm1", home);
-        dataDir = defaultDataDir;
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
     }
     M11_GameView_Init(&state);
     if (!M11_GameView_StartDm1(&state, dataDir)) {
         M11_GameView_Shutdown(&state);
-        return getenv("FIRESTAFF_DM1_DATA_DIR") ? 1 : 0;
+        fputs("configured DM1 corpus is unavailable\n", stderr);
+        return 1;
     }
     /* OBJECT.C F0031 resolves display names from M564 by icon index.  A
      * verified PC34 launch must therefore own the decoded original table,
