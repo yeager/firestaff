@@ -77,6 +77,17 @@
   no title-palette CRAM match. This is negative source-join evidence only;
   STABG/dungeon/CLUT ownership and host composition remain blocked.
 
+# Nexus second VDP1 source-span capture (2026-08-07)
+
+- ✅ Ran and validated an additional external E-BIOS/French START+A capture
+  (eight active frames; raw SHA-256 `d648bd88…`). Every frame has active VDP1
+  state and the same bounded type-2 command shape. The later source span is
+  16bpp, 33280 bytes at VDP1 VRAM `0x63e00`, with observed hashes
+  `5cca9793…` and `58afb9c9…`.
+- ✅ An exact-byte scan against the local Nexus data directory finds no file
+  owner. VDP2 registers/VRAM/CRAM are unchanged, so this is negative VDP1
+  provenance only; no DGN/MNS/ITEM/HUD/viewport route was opened.
+
 # Nexus STABG bitmap/CRAM negative join (2026-08-07)
 
 - ✅ Extended the comparator with the hash-verified DMWeb STMP decode for the

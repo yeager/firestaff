@@ -45,6 +45,14 @@
   DGN/mesh/texture, HUD, menu or CLUT record. Keep production presentation
   gated until those identities are bound.
 
+- **NEXUS-SATURN-VDP1-SECOND-SOURCE-SPAN:** A second authenticated European
+  START+A capture (raw SHA-256 `d648bd88…`) has active VDP1 draws in all eight
+  frames. Its later type-2 source span is 16bpp, 33280 bytes at `0x63e00`, with
+  source hashes `5cca9793…` and `58afb9c9…`; neither span has an exact match in
+  the local Nexus corpus. VDP2 remains byte-stable. Keep this as negative
+  source evidence and recover the `0x06013098` writer's relocated/decompressed
+  owner before admitting DGN/MNS/ITEM/HUD pixels.
+
 - **NEXUS-SATURN-VDP1-PC-SOURCE-JOIN:** The external producer now supports an
   operator-only VDP1 VRAM-write trace with SH-2 PC values. The first bounded
   source probe reached the live VRAM window but was dominated by colour/

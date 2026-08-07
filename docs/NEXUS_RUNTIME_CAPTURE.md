@@ -98,6 +98,18 @@ runtime writer PC `0x06013098`. The captured source span is
 the source span is still not joined to a decoded MENU/DGN/ITEM record or a
 VDP2 CLUT/tile owner, so production menu/HUD/viewport drawing remains gated.
 
+A second authenticated E-BIOS/French run with START+A held at frames 18000–18119
+and capture beginning at frame 18500 is retained outside the repository at
+`/Volumes/Extern-disk/nexus-saturn-capture/run-french-start18000x120-skip18500-live2/runtime-vdp12.raw`.
+Its SHA-256 is `d648bd88…`, and the eight-frame validator reports active VDP1
+draws in every frame. Frames 0–1 retain a 16bpp type-2 source at `0x63e00`
+whose 33280-byte span hashes `5cca9793…`; frames 3–7 retain the same command
+shape and span address but hash `58afb9c9…`. A bounded exact-byte scan of the
+authenticated Nexus data directory finds no owning file for either span.
+VDP2 registers, VRAM and CRAM remain byte-stable with the earlier witness, so
+this run adds VDP1 source-span evidence only; it does not authorize a DGN,
+MENU, ITEM, HUD or viewport interpretation.
+
 The same producer run also emitted a bounded VDP2 write witness. The trace
 contains 15,365 register writes in `0x180000..0x18011e`, 183,355 VRAM writes
 in `0x000000..0x0743fe`, and 1,280 CRAM writes in `0x100000..0x1007fe`.
