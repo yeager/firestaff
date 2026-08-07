@@ -4,7 +4,11 @@
 #include <string.h>
 #include <assert.h>
 #include <sys/stat.h>
+#ifdef _WIN32
+#include <direct.h>
+#else
 #include <unistd.h>
+#endif
 
 static int g_fail = 0;
 static int g_count = 0;
@@ -113,7 +117,11 @@ static void test_cd_track_rejects_host_audio_substitute(void) {
     memset(&eng, 0, sizeof(eng));
     nexus_sound_init(&eng);
     snprintf(path, sizeof(path), "%s/track02.wav", root);
+#ifdef _WIN32
+    (void)mkdir(root);
+#else
     (void)mkdir(root, 0700);
+#endif
     file = fopen(path, "wb");
     if (file) {
         fputs("synthetic host audio", file);

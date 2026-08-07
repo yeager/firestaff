@@ -1,5 +1,16 @@
 /* Canonical GRAPHICS.DAT proof for the source-owned dynamic V5 creature
  * animation table route. No fixture, art, save, or runtime AI state is made. */
+
+/* GCC 14 -Werror=use-after-free is over-eager on this test: the DM2 asset
+ * loader retains a borrowed pointer to `graphics`, and the analyzer treats
+ * the caller-owned free(graphics) after dm2_v1_asset_loader_free(&loader)
+ * as a possible use after free even though loader_free does not free the
+ * borrowed buffer. Suppression scoped to this file only; clang builds are
+ * unaffected because clang does not implement this warning. */
+#if defined(__GNUC__) && !defined(__clang__)
+#pragma GCC diagnostic ignored "-Wuse-after-free"
+#endif
+
 #include "dm2_v1_asset_loader.h"
 #include "dm2_v1_creature.h"
 #include "dm2_v1_creature_animation_gdat.h"
