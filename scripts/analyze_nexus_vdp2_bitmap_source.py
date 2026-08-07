@@ -22,6 +22,7 @@ ASSET_HASHES = {
     "FONT256.S2D": "764a2d6ce11b463817f5c1f2dfefbf55ff9221a1362cb5e4366998100d8ff3bb",
     "TITLE.BIN": "a634e8daf2a581df154b454919ee2ed44e937371668219d7cdf6d0983a613e44",
     "TITLE.CG": "fda4da4ca1f344c93a4ae8455dcd7d92bcae0510784e5e4fa40e2ffc9e4fb580",
+    "STABG.BIN": "7b8e44ffd1249175da1c407993b983a26bc180204e63f9b69274014b336c6913",
 }
 
 
@@ -134,6 +135,52 @@ def title_maps(title_bin: bytes, title_cg: bytes) -> tuple[list[tuple[str, bytes
     return maps, record[palette_offset:palette_offset + 32]
 
 
+def stabg_first_map(data: bytes) -> tuple[bytes, bytes]:
+    if data[:4] != b"STMP" or int.from_bytes(data[4:8], "big") != len(data):
+        raise ValueError("STABG.BIN STMP header invalid")
+    part1 = int.from_bytes(data[8:12], "big")
+    part1_size = int.from_bytes(data[12:16], "big")
+    part2 = int.from_bytes(data[16:20], "big")
+    part2_size = int.from_bytes(data[20:24], "big")
+    part3 = int.from_bytes(data[24:28], "big")
+    part3_size = int.from_bytes(data[28:32], "big")
+    if (part1 < 0x20 or part2 != part1 + part1_size or part2_size != 512 or
+            part3 != part2 + part2_size or part3 + part3_size != len(data) or
+            part3_size != 791 * 64):
+        raise ValueError("STABG.BIN STMP regions invalid")
+    cursor = part1
+    while cursor + 4 <= part2:
+        offset = int.from_bytes(data[cursor:cursor + 4], "big")
+        cursor += 4
+        if offset == 0:
+            break
+    if cursor + 2 > part2:
+        raise ValueError("STABG.BIN map directory unterminated")
+    map_offset = int.from_bytes(data[part1:part1 + 4], "big")
+    if map_offset < 48 or (map_offset - 48) & 1:
+        raise ValueError("STABG.BIN first map offset invalid")
+    word_addr = cursor + ((map_offset - 48) // 2) * 2
+    width = int.from_bytes(data[word_addr:word_addr + 2], "big")
+    height = int.from_bytes(data[word_addr + 2:word_addr + 4], "big")
+    if (width, height) != (40, 21):
+        raise ValueError("STABG.BIN first map dimensions invalid")
+    pixels = bytearray(width * 8 * height * 8)
+    for y in range(height):
+        for x in range(width):
+            cell_offset = word_addr + 4 + (y * width + x) * 2
+            cell = int.from_bytes(data[cell_offset:cell_offset + 2], "big")
+            if cell & 0x8000:
+                raise ValueError("STABG.BIN vertical flip is not supported")
+            tile = (cell // 2) & 0x07FF
+            hflip = bool(cell & 0x4000)
+            for tile_y in range(8):
+                for tile_x in range(8):
+                    source_x = 7 - tile_x if hflip else tile_x
+                    dst = ((y * 8 + tile_y) * (width * 8) + x * 8 + tile_x)
+                    pixels[dst] = data[part3 + tile * 64 + tile_y * 8 + source_x]
+    return bytes(pixels), data[part2:part2 + 512]
+
+
 def longest_nonzero_match(source: bytes, target: bytes) -> tuple[int, int, int]:
     best = (0, 0, 0)
     if len(source) < 32:
@@ -171,7 +218,10 @@ def main() -> int:
         title_bin = read_asset(args.data_dir, "TITLE.BIN")
         title_cg = read_asset(args.data_dir, "TITLE.CG")
         title, title_palette = title_maps(title_bin, title_cg)
+        stabg = read_asset(args.data_dir, "STABG.BIN")
+        stabg_pixels, stabg_palette = stabg_first_map(stabg)
         sources = menu_surfaces(menu) + font_tiles(font) + title
+        sources.append(("STABG.BIN[map=0]", stabg_pixels))
     except (OSError, ValueError) as error:
         print(f"NEXUS_VDP2_BITMAP_SOURCE_INVALID: {error}")
         return 1
@@ -214,6 +264,10 @@ def main() -> int:
                              for offset in range(0, len(title_palette), 2))
     print(f"title_palette_cram_match={cram.find(title_palette)}")
     print(f"title_palette_cram_word_swap_match={cram.find(palette_swap)}")
+    stabg_palette_swap = b"".join(stabg_palette[offset:offset + 2][::-1]
+                                   for offset in range(0, len(stabg_palette), 2))
+    print(f"stabg_palette_cram_match={cram.find(stabg_palette)}")
+    print(f"stabg_palette_cram_word_swap_match={cram.find(stabg_palette_swap)}")
     print(f"decoded_sources={len(sources)}")
     print(f"exact_source_matches={exact}")
     print("source_join=verified" if exact else "source_join=unbound")

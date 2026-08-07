@@ -48,6 +48,16 @@
   no title-palette CRAM match. This is negative source-join evidence only;
   STABG/dungeon/CLUT ownership and host composition remain blocked.
 
+# Nexus STABG bitmap/CRAM negative join (2026-08-07)
+
+- ✅ Extended the comparator with the hash-verified DMWeb STMP decode for the
+  first 40×21 `STABG.BIN` map: tile cells, horizontal flips, 791 8×8 indexed
+  tiles, and the 256-entry palette are retained as authentic source bytes.
+- ✅ Both European NBG1 captures examine 410 bounded sources, report zero
+  non-zero exact bitmap matches, and report no STABG palette match in CRAM in
+  either byte order. The result remains source-unbound and no-draw; dungeon
+  bitmap, CLUT ownership and final HUD composition remain open.
+
 # DM2 GDAT source allocator table lifetime (2026-08-07)
 
 - ✅ Extended the bounded `DM2_READ_GRAPHICS_STRUCTURE` transaction with the
