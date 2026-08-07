@@ -324,6 +324,23 @@ int main(void)
             }
         }
     }
+    for (int i = 0; i < wall_plan.command_count; ++i) {
+        int resolved_graphicsset = -1;
+        int resolved_field = -1;
+        const DM2_V1_GdatWallM11Command *command = &wall_plan.commands[i];
+        if (wall_plan.graphicsset != (uint8_t)graphicsset ||
+            !dm2_v1_viewport_wall_graphic_address(
+                dm2_v1_viewport_wall_graphic_index_for_graphicsset(
+                    graphicsset, command->view_square),
+                &resolved_graphicsset, &resolved_field) ||
+            resolved_graphicsset != graphicsset ||
+            resolved_field != command->field) {
+            fputs("FAIL: real wall command was not bound to its live GRAPHICSSET address\n",
+                  stderr);
+            failures = 1;
+            goto done;
+        }
+    }
 
     memset(&trace, 0, sizeof(trace));
     memset(framebuffer, 0, sizeof(framebuffer));

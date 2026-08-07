@@ -5200,6 +5200,11 @@ diagnostic; it must not silently fall back to a generated visual.
   record-specific `DOORS` image, rather than treating `door_record_type != 0`
   as record presence. Remaining wall/door work is still limited to source
   records and decoded GDAT/RAW4 receipts.
+  **2026-08-13 real-wall address audit:** the canonical PC-English wall-plan
+  regression now verifies every emitted wall command round-trips through the
+  live `GRAPHICSSET/<MapGraphicsStyle>` address and exact viewport field.
+  A default-set or mismatched command cannot satisfy the real-data wall draw;
+  unresolved wall/door material remains no-draw.
   **2026-08-06 V5 corpus correction:** canonical PC `GRAPHICS.DAT` does have
   an authenticated FB/FC/FD chain for `CREATURES/02/dtImage/12`; its current
   G1 maps do not contain a root that owns it. Keep every present G1 creature

@@ -58647,6 +58647,13 @@ Extended the canonical G1 actuator regression to count creature-generator
 PC-English dungeon contains neither class; no host-authored generator default
 is promoted in their place, and profiles with those classes still require the
 source DB14/DB-record/timer owner.
+
+# DM2 real wall GRAPHICSSET address audit (2026-08-13)
+
+The canonical PC-English wall-plan regression now round-trips every emitted
+wall command through the live `GRAPHICSSET/<MapGraphicsStyle>` address and
+exact viewport field before M11 consumes it. The real wall frame remains
+source-owned with zero fallback draws; mismatched material is rejected.
 # Nexus VDP1 writer code-window receipt (2026-08-07)
 
 - ✅ Added a reproducible Mednafen producer patch that captures the live SH-2
