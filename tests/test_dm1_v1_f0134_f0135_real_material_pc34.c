@@ -6,23 +6,10 @@
 
 static const char *graphics_dat_path(void)
 {
-    const char *configured = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
-    const char *home = getenv("HOME");
+    const char *root = getenv("FIRESTAFF_DM1_DATA_DIR");
     static char path[2048];
-    FILE *file;
-
-    if (configured && configured[0] != '\0') {
-        return configured;
-    }
-    if (!home || home[0] == '\0') {
-        return NULL;
-    }
-    snprintf(path, sizeof(path), "%s/.firestaff/data/dm1/GRAPHICS.DAT", home);
-    file = fopen(path, "rb");
-    if (!file) {
-        return NULL;
-    }
-    fclose(file);
+    if (!root || root[0] == '\0') return NULL;
+    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
     return path;
 }
 
@@ -36,7 +23,7 @@ int main(void)
     dm1_v1_champion_panel_food_water_material_receipt_pc34_t receipt;
 
     if (!path) {
-        puts("SKIP: no local DM1 GRAPHICS.DAT");
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
         return 0;
     }
     if (!M11_AssetLoader_Init(&loader, path)) {
