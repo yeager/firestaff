@@ -1440,7 +1440,8 @@ static int m12_admit_csb_fmtowns_archive(M12_AssetStatus* status,
 }
 
 static void m12_publish_csb_fmtowns_required_files(M12_AssetStatus* status,
-                                                    int gameIndex) {
+                                                    int gameIndex,
+                                                    int preferFmtowns) {
     const M12_AssetVersionStatus* version;
     const char* separator;
     char archivePath[M12_ASSET_DATA_DIR_CAPACITY];
@@ -1450,6 +1451,27 @@ static void m12_publish_csb_fmtowns_required_files(M12_AssetStatus* status,
     if (!status || gameIndex < 0 || gameIndex >= M12_ASSET_GAME_COUNT ||
         strcmp(g_games[gameIndex].gameId, "csb") != 0) return;
     version = m12_first_matched_version(status, gameIndex);
+    /* A direct CSB scan has already authenticated the F31E/F31J CD pair.
+     * Its generic required-file walker is deliberately loose-only so it
+     * does not inflate the same CD image again.  A sibling Amiga/Atari
+     * package can precede FM Towns in catalogue order, though, and must not
+     * hide the just-admitted source pair from the direct launch gate.  The
+     * full launcher inventory retains its normal first-match report. */
+    if (preferFmtowns) {
+        size_t versionIndex;
+        for (versionIndex = 0U;
+             versionIndex < g_games[gameIndex].versionCount;
+             ++versionIndex) {
+            const M12_AssetVersionStatus* candidate =
+                &status->versions[gameIndex][versionIndex];
+            if (candidate->matched && candidate->versionId &&
+                (strcmp(candidate->versionId, "fmtowns-en") == 0 ||
+                 strcmp(candidate->versionId, "fmtowns-ja") == 0)) {
+                version = candidate;
+                break;
+            }
+        }
+    }
     if (!version || !version->versionId ||
         (strcmp(version->versionId, "fmtowns-en") != 0 &&
          strcmp(version->versionId, "fmtowns-ja") != 0)) return;
@@ -4246,6 +4268,39 @@ static int m12_materialize_runtime_cache_for_game(M12_AssetStatus* status,
     }
     {
         selectedVersion = m12_first_matched_version(status, gameIndex);
+        /* Required rows identify the package that the launch gate actually
+         * admitted.  Catalogue order is not a package selector: a broad CSB
+         * root may contain Amiga, Atari and FM Towns editions at once.
+         * Prefer the matched edition whose GRAPHICS.DAT identity owns the
+         * required graphics row before materializing a flat runtime cache.
+         * This keeps direct --platform fm-towns launches on their verified
+         * F31E/F31J pair instead of trying to cache an earlier Amiga row.
+         * ReDMCSB COMPILE.H 199-243 separates these media families. */
+        if (strcmp(gameId, "csb") == 0) {
+            const M12_AssetRequiredFileStatus* graphics = NULL;
+            for (i = 0U; i < status->requiredFileCounts[gameIndex]; ++i) {
+                const M12_AssetRequiredFileStatus* candidate =
+                    &status->requiredFiles[gameIndex][i];
+                if (candidate->matched && candidate->roleId &&
+                    strcmp(candidate->roleId, "graphics") == 0 &&
+                    candidate->matchedHash[0] != '\0') {
+                    graphics = candidate;
+                    break;
+                }
+            }
+            if (graphics) {
+                for (i = 0U; i < g_games[gameIndex].versionCount; ++i) {
+                    const M12_AssetVersionStatus* candidate =
+                        &status->versions[gameIndex][i];
+                    if (candidate->matched &&
+                        strcmp(candidate->matchedMd5,
+                               graphics->matchedHash) == 0) {
+                        selectedVersion = candidate;
+                        break;
+                    }
+                }
+            }
+        }
         if (strcmp(gameId, "dm1") == 0 && selectedVersion &&
             selectedVersion->versionId &&
             (strcmp(selectedVersion->versionId, "fmtowns-en") == 0 ||
@@ -5099,7 +5154,7 @@ int M12_AssetStatus_ScanWithOptions(M12_AssetStatus* status,
             }
         } else if (strcmp(g_games[i].gameId, "csb") == 0) {
             size_t requiredIndex;
-            m12_publish_csb_fmtowns_required_files(status, i);
+            m12_publish_csb_fmtowns_required_files(status, i, 0);
             reqMatch = status->requiredFileCounts[i] > 0U;
             for (requiredIndex = 0U;
                  requiredIndex < status->requiredFileCounts[i];
@@ -5321,6 +5376,17 @@ void M12_AssetStatus_ScanGameWithOptions(
         if (strcmp(g_games[gameIndex].gameId, "csb") == 0) {
             m12_admit_csb_amiga31_title_package(status, gameIndex, roots,
                                                  rootCount);
+            /* Keep direct --game scans on the same package-selection path
+             * as the full launcher scan.  A broad CSB root can contain the
+             * A31 title package before the FM Towns CD.  Without this
+             * separation pass, the generic Amiga GRAPHICS.DAT row remains
+             * the first match, so the already-admitted F31E/F31J pair never
+             * becomes the selected launch receipt.  That made
+             * --game csb --fm-towns report the game as unavailable even
+             * though --scan-data had verified both FM Towns editions.
+             * ReDMCSB COMPILE.H 199-243 keeps these media families apart. */
+            m12_separate_csb_pc34_from_amiga31_package(
+                status, gameIndex, roots, rootCount);
         }
         /* m12_fill_game_versions retains the verified nested-CD rows, so a
          * direct CSB scan does not reopen the selected multi-hundred-megabyte
@@ -5376,7 +5442,8 @@ void M12_AssetStatus_ScanGameWithOptions(
         }
     } else if (strcmp(g_games[gameIndex].gameId, "csb") == 0) {
         size_t requiredIndex;
-        m12_publish_csb_fmtowns_required_files(status, gameIndex);
+        m12_publish_csb_fmtowns_required_files(status, gameIndex,
+                                                csbFmtownsAdmitted);
         reqMatch = status->requiredFileCounts[gameIndex] > 0U;
         for (requiredIndex = 0U;
              requiredIndex < status->requiredFileCounts[gameIndex];

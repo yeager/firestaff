@@ -9,6 +9,17 @@
   ordinary parser test is now explicitly a fixture test, never evidence of
   original media.
 
+# CSB FM Towns direct-launch package selection (2026-08-07)
+
+- ✅ Direct CSB scans now materialize the same authenticated package that
+  owns the required `GRAPHICS.DAT` receipt. A mixed CSB data root therefore
+  no longer lets an earlier Amiga/Atari catalogue row make verified FM Towns
+  F31E/F31J data unavailable.
+- ✅ Verified with the supplied archive corpus: `firestaff --data-dir
+  ~/.firestaff/data/csb --game csb --platform fm-towns --boot-probe` reaches
+  the FM Towns cache and source-locked boot handoff; the real TITLE.ANM →
+  SWITCHTW → CHTWE.EXP test also passes.
+
 # Scanner provenance after cache materialization (2026-08-07)
 
 # DM1 V2 champion-select synthetic-data removal (2026-08-07)

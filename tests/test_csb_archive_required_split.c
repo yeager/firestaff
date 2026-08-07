@@ -807,6 +807,15 @@ static void check_csb_fmtowns_real_archive_when_available(const char* root) {
             : NULL;
         check_int(english && english->matched && japanese && japanese->matched,
                   "broad data-root scan retains both CSB FM Towns profiles from csb/");
+        graphics = required_file_by_role(&broadRootStatus, "graphics");
+        dungeon = required_file_by_role(&broadRootStatus, "dungeon");
+        check_int(M12_AssetStatus_GameAvailable(&broadRootStatus, "csb") &&
+                      graphics && dungeon && graphics->matched && dungeon->matched &&
+                      strcmp(graphics->matchedHash,
+                             "405b757038eea3c263e60f240854d6de") == 0 &&
+                      strcmp(dungeon->matchedHash,
+                             "83c56cf1b779e7460a55c9299ebeb04b") == 0,
+                  "direct CSB scan keeps the verified F31E pair launchable when sibling editions share the root");
     }
     check_int(graphics && dungeon && !strstr(graphics->matchedPath, "::") &&
                   !strstr(dungeon->matchedPath, "::"),
