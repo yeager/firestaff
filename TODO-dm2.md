@@ -2242,3 +2242,10 @@ enums or intensity.
   variants remain separately gated until their catalog and runtime owners are
   proven.
 
+# DM2 PC-DOS File_header continuation and champion activation (2026-08-07)
+
+- [ ] Derive the PC-DOS record/map continuation after the 44-entry
+  `File_header` from an original-loader trace. The former 28-map pseudo-header
+  accidentally produced 16 champion mirrors and a DYN4 selection; it is not
+  valid evidence and must not be restored. Champion selection remains gated
+  until the real DB3/DB4 ownership and marker route are independently proven.
