@@ -71,7 +71,7 @@ int main(void) {
 
     lighting = dm1_v2_vfx_compute_lighting(0, true);
     CHECK(lighting.source_palette_index == 0);
-    CHECK(lighting.enhanced_effects_enabled);
+    CHECK(!lighting.enhanced_effects_enabled);
     CHECK(!lighting.deterministic_fallback);
 
     lighting = dm1_v2_vfx_compute_lighting(-1, true);

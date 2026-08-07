@@ -1,5 +1,15 @@
 # DM2 selected SONGLIST corpus (2026-08-07)
 
+# DM1 V2 syntetisk dynamisk belysning spärrad (2026-08-07)
+
+- ✅ Delade upp V2-belysningen i dess två faktiska delar. Palettbryggan
+  behåller PC34:s G0040-trösklar `99, 75, 50, 25, 1, 0` från DATA.C och
+  PANEL.C. Däremot saknar RGB-källor, flimmer och 32×32-ljusspridning en
+  PC34-rutt och är nu helt spärrade. F0337/F0338:s autentiska fackelljus,
+  magiska ljus och palettval är fortsatt ensamma ljusägare. De berörda
+  CTester kontrollerar både den verkliga tabellen och att lokala ljuskällor
+  inte kan rita eller behålla tillstånd.
+
 # DM1 V2 generiska partiklar spärrade (2026-08-07)
 
 - ✅ Spärrade hela V2-kedjan för generiska emitterpartiklar. Den kunde skapa

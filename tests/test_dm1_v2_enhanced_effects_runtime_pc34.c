@@ -116,7 +116,7 @@ static void test_indexed_render_gate_rejects_generated_dynamic_lights(void) {
     v2_particle_init();
     v2_light_init();
     memset(framebuffer, 0, sizeof(framebuffer));
-    CHECK(v2_light_add_source(1.0f, 1.0f, 2.0f, 255, 255, 190, 64) == 0);
+    CHECK(v2_light_add_source(1.0f, 1.0f, 2.0f, 255, 255, 190, 64) == -1);
     v2_light_compute_map();
 
     CHECK(dm1_v2_enhanced_effects_runtime_render_indexed(

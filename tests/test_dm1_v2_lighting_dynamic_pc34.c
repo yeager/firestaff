@@ -1,92 +1,47 @@
 #include "dm1_v2_lighting_dynamic_pc34.h"
-#include <stdio.h>
+
 #include <stdint.h>
+#include <stdio.h>
 
 static int failures = 0;
-#define CHECK(expr) do { if (!(expr)) { fprintf(stderr, "FAIL %s:%d: %s\n", __FILE__, __LINE__, #expr); failures++; } } while (0)
-
-static void get_rgb(int x, int y, uint8_t *r, uint8_t *g, uint8_t *b) {
-    *r = *g = *b = 99;
-    v2_light_get_tile(x, y, r, g, b);
-}
+#define CHECK(expr) do { if (!(expr)) { \
+    fprintf(stderr, "FAIL %s:%d: %s\n", __FILE__, __LINE__, #expr); failures++; \
+} } while (0)
 
 int main(void) {
-    uint8_t r, g, b;
+    static const uint8_t expected[6] = { 99, 75, 50, 25, 1, 0 };
+    M11_V2_SourcePaletteLighting plan;
+    uint8_t r = 99, g = 99, b = 99;
+    int i;
 
-    v2_light_init();
-
-    M11_V2_SourcePaletteLighting plan = v2_light_build_source_palette_lighting(0, true);
-    CHECK(plan.source_palette_index == 0);
-    CHECK(plan.source_light_amount_floor == 99);
-    CHECK(plan.darkness_percent == 1);
-    CHECK(plan.shadow_alpha == 2);
-    CHECK(plan.enhanced_effects_enabled);
-    CHECK(!plan.deterministic_fallback);
-
-    plan = v2_light_build_source_palette_lighting(5, true);
-    CHECK(plan.source_palette_index == 5);
-    CHECK(plan.source_light_amount_floor == 0);
-    CHECK(plan.darkness_percent == 100);
-    CHECK(plan.shadow_alpha == 192);
-    CHECK(plan.enhanced_effects_enabled);
-    CHECK(!plan.deterministic_fallback);
-
+    for (i = 0; i < 6; ++i) {
+        plan = v2_light_build_source_palette_lighting(i, true);
+        CHECK(plan.source_palette_index == i);
+        CHECK(plan.source_light_amount_floor == expected[i]);
+        CHECK(plan.darkness_percent == 100 - expected[i]);
+        CHECK(!plan.enhanced_effects_enabled);
+        CHECK(!plan.deterministic_fallback);
+    }
     plan = v2_light_build_source_palette_lighting(6, true);
     CHECK(plan.source_palette_index == 5);
     CHECK(plan.source_light_amount_floor == 0);
     CHECK(!plan.enhanced_effects_enabled);
     CHECK(plan.deterministic_fallback);
 
-    v2_light_compute_map();
-    get_rgb(16, 16, &r, &g, &b);
-    CHECK(r == 0 && g == 0 && b == 0);
-    get_rgb(-1, 16, &r, &g, &b);
-    CHECK(r == 0 && g == 0 && b == 0);
-
-    CHECK(v2_light_add_source(16.0f, 16.0f, 4.0f, 255, 100, 50, 25) == 0);
-    CHECK(v2_light_source_count() == 1);
-    v2_light_compute_map();
-    get_rgb(16, 16, &r, &g, &b);
-    CHECK(r == 100 && g == 50 && b == 25);
-    get_rgb(18, 16, &r, &g, &b);
-    CHECK(r == 25 && g == 12 && b == 6); /* half radius => squared falloff */
-    get_rgb(20, 16, &r, &g, &b);
-    CHECK(r == 0 && g == 0 && b == 0);   /* radius boundary is exclusive */
-
-    CHECK(v2_light_add_source(16.0f, 16.0f, 2.0f, 255, 240, 240, 240) == 1);
-    v2_light_compute_map();
-    get_rgb(16, 16, &r, &g, &b);
-    CHECK(r == 255 && g == 255 && b == 255); /* additive overlay clamps */
-
-    v2_light_remove_source(1);
-    CHECK(v2_light_source_count() == 1);
-    v2_light_compute_map();
-    get_rgb(16, 16, &r, &g, &b);
-    CHECK(r == 100 && g == 50 && b == 25);
-
     v2_light_init();
-    for (int i = 0; i < M11_V2_LIGHT_MAX_SOURCES; ++i) {
-        CHECK(v2_light_add_source(0.0f, 0.0f, 1.0f, 1, 1, 1, 1) == i);
-    }
-    CHECK(v2_light_source_count() == M11_V2_LIGHT_MAX_SOURCES);
-    CHECK(v2_light_add_source(0.0f, 0.0f, 1.0f, 1, 1, 1, 1) == -1);
-    v2_light_clear_sources();
+    CHECK(v2_light_add_source(16.0f, 16.0f, 4.0f, 255, 100, 50, 25) == -1);
     CHECK(v2_light_source_count() == 0);
     v2_light_compute_map();
-    get_rgb(0, 0, &r, &g, &b);
+    v2_light_get_tile(16, 16, &r, &g, &b);
     CHECK(r == 0 && g == 0 && b == 0);
 
-    v22_light_clear();
+    v22_light_set_ambient(1.0f);
+    CHECK(v22_light_add(4, 5, 1.0f, 3.0f, 0xffaa00ffu, 1) == -1);
+    v22_light_rebuild_map();
     CHECK(v22_light_source_count() == 0);
-    CHECK(v22_light_add(4, 5, 1.0f, 3.0f, 0xffaa00ffu, 1) == 0);
-    CHECK(v22_light_source_count() == 1);
-    v22_light_clear();
-    CHECK(v22_light_source_count() == 0);
+    CHECK(v22_light_get(4, 5) == 0.0f);
 
-    if (failures) {
-        fprintf(stderr, "%d failure(s)\n", failures);
-        return 1;
-    }
+    if (failures) return 1;
     puts("dm1_v2_lighting_dynamic_pc34: ok");
     return 0;
 }

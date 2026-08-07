@@ -50,9 +50,10 @@ int dm1_v2_vfx_trigger_explosion_thing(int16_t dm1Thing, int mapX, int mapY);
 int dm1_v2_vfx_trigger_field(int mapX, int mapY,
     DM1_V2_FieldProjectileEffectFamily family);
 
-/* Compute V2 source-palette lighting from the source palette index
- * (0=brightest, 5=darkest). The enhanced_effects_enabled flag gates
- * V2-only additive light-map effects; source lighting is always mirrored.
+/* Compute source-palette lighting from the source palette index
+ * (0=brightest, 5=darkest). The enhanced_effects_enabled input is retained
+ * for ABI compatibility; PC34 has no additive light-map route and the
+ * returned flag is always false.
  *
  * Source: ReDMCSB PANEL.C:367-428 via dm1_v2_lighting_dynamic_pc34.c */
 M11_V2_SourcePaletteLighting dm1_v2_vfx_compute_lighting(

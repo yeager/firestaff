@@ -71,6 +71,12 @@ and blit APIs now fail closed without storing or drawing a particle. The VFX
 metadata bridge may still recognise source explosion things, but cannot turn
 them into a V2 overlay.
 
+The V2 lighting module mixed the real six-entry PC34 palette threshold table
+with an unbound RGB light engine: local sources, random/hash flicker and
+32×32 propagation. The palette bridge now retains only the exact `G0040`
+values `{99, 75, 50, 25, 1, 0}` from DATA.C/PANEL.C. All local-light APIs are
+inert, so F0337/F0338 and the V1 palette route remain the only light owners.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564
