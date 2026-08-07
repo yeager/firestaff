@@ -13,6 +13,7 @@
 #include "dm2_v1_creature.h"
 #include "dm2_v1_runtime.h"
 #include "dm2_v1_record_pool_pc34_compat.h"
+#include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_save_read_record_checkcode_pc34_compat.h"
 #include "dm2_v1_save_load.h"
 #include "dm2_v1_startup_menu.h"
@@ -381,6 +382,39 @@ static int verify_real_db_pool_receipts(const uint8_t *payload,
     return ok;
 }
 
+static int verify_real_raw_dungeon_model(
+    const uint8_t *payload, size_t payload_size,
+    const DM2_V1_OriginalRawDungeonReceipt *receipt)
+{
+    DM2_V1_DungeonData dungeon;
+    int map;
+
+    if (!payload || !receipt || !receipt->valid ||
+        receipt->suppress_state_offset > payload_size) return 0;
+    memset(&dungeon, 0, sizeof(dungeon));
+    if (dm2_v1_dungeon_load(&dungeon, payload,
+                            (int)receipt->suppress_state_offset) != 0 ||
+        dungeon.square_bytes != 1 || dungeon.g1_extension_base >= 0 ||
+        dungeon.level_count != (int)receipt->map_count ||
+        dungeon.raw_size != (int)receipt->suppress_state_offset) {
+        dm2_v1_dungeon_free(&dungeon);
+        return 0;
+    }
+    for (map = 0; map < dungeon.level_count; ++map) {
+        if (dungeon.level_widths[map] != (int)receipt->map_widths[map] ||
+            dungeon.level_heights[map] != (int)receipt->map_heights[map] ||
+            dm2_v1_dungeon_get_tile_raw(&dungeon, map, 0, 0) < 0 ||
+            dm2_v1_dungeon_get_tile_raw(
+                &dungeon, map, dungeon.level_widths[map] - 1,
+                dungeon.level_heights[map] - 1) < 0) {
+            dm2_v1_dungeon_free(&dungeon);
+            return 0;
+        }
+    }
+    dm2_v1_dungeon_free(&dungeon);
+    return 1;
+}
+
 /* READ_DUNGEON_STRUCTURE owns the raw DB baseline before GAME_LOAD begins
  * its shared SUPPRESS stream.  Verify the production pool owner against
  * every actual DOS SKSave body, not a hand-built record fixture.  This stays
@@ -672,6 +706,9 @@ static void test_real_raw_save(const char *path, DirectRootStats *direct_roots)
     CHECK(verify_real_db_pool_receipts(bytes + 42u, byte_count - 42u,
                                        &receipt),
           "real SKSave DB pools retain source-sized records inside the raw dungeon prefix");
+    CHECK(verify_real_raw_dungeon_model(bytes + 42u, byte_count - 42u,
+                                        &receipt),
+          "real SKSave raw dungeon enters the source c_map byte-square model");
     CHECK(verify_real_raw_pool_baseline(bytes + 42u, byte_count - 42u,
                                         &receipt),
           "real SKSave DB baseline is owned in RAM before source record-link restoration");

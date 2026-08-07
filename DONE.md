@@ -59841,3 +59841,16 @@ companion.
   real-data regression therefore proves fail-closed behavior instead of
   admitting an empty or synthetic table.
 - ✅ `test_dm2_v1_gdatfile_pc34_compat`: 26/26 passed.
+
+# DM2 SKSAVE raw c_map capacity correction (2026-08-13)
+
+- ✅ Corrected the loader capacity from the standalone G1 dungeon's 28-map
+  profile to the source `File_header::nMaps` six-bit range. Original PC-DOS
+  SKSAVE prefixes contain 44 map descriptors; they were previously rejected
+  by Firestaff's artificial 30-map bound before the c_map byte-square model
+  could inspect them.
+- ✅ Kept weather-state initialization on the same loader-owned bound. No
+  map, record or runtime session is invented and Continue remains gated on
+  the unimplemented complete `DM2_READ_SKSAVE_DUNGEON` transaction.
+- ✅ Verified in place against all eight PC-DOS primary/backup saves:
+  `test_dm2_v1_save_load_real_data` 151/151.

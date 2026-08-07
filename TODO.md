@@ -29794,6 +29794,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   `READ_SKSAVE_DUNGEON` owner source geometry without reconstructing a map
   from DUNGEON.DAT or inventing tile/object links. Complete record-graph,
   possession, timer and runtime-session admission remain open.
+  **2026-08-13 raw c_map capacity correction:** the mounted PC-DOS SKSAVE
+  corpus serializes 44 `File_header::nMaps` entries even though the standalone
+  G1 dungeon has 28. `DM2_V1_MAX_LEVELS` now follows the source six-bit map
+  field, so all eight raw prefixes enter the byte-square c_map model with
+  their authenticated dimensions and tile bounds. This establishes only the
+  raw-dungeon container; record graph, possession, timer and Continue
+  admission remain closed.
   **2026-08-13 AI-row correction:** `QUERY_GDAT_ENTRY_DATA_INDEX` returns
   zero for a missing `dtWordValue`; `QUERY_CREATURE_AI_SPEC_FROM_TYPE` uses
   that value as the real `table1d296c` index. The mounted PC-DOS corpus omits

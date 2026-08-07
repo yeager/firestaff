@@ -38,7 +38,13 @@
  *   Confirmed against: SKULL.ASM T560 DUNGEON_Load, local DUNGEON.DAT probe.
  *   Confirmed loader contract: level_count/map_count is byte offset 6. */
 
-#define DM2_V1_MAX_LEVELS 30
+/* The shipped PC G1 DUNGEON.DAT describes 28 maps, while a source SKSave
+ * serializes 44 map definitions in its c_savegame raw-dungeon prefix.  The
+ * loader owns both representations, so its storage bound follows the
+ * six-bit map field and the real save corpus rather than the new-game map
+ * count.  Source: SKWIN/DME.h::File_header::nMaps; SKWINSPX/src/v5/
+ * sksvgame.cpp::DM2_READ_SKSAVE_DUNGEON. */
+#define DM2_V1_MAX_LEVELS 64
 #define DM2_V1_MAX_MAP_SIZE 64
 
 /* G1 record pool thing-list link terminators. Source: ReDMCSB DEFS.H. */
