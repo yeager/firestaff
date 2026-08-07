@@ -59032,6 +59032,18 @@ possession or hero-stat mutation was enabled.
   writer's decoded face/mesh/texture consumer, VDP2 tilemap/CLUT ownership,
   HUD/viewport draw order, or SLEV/SAL/SDDRVS event semantics. Production
   semantic admission therefore remains fail-closed.
+# DM2 G1 continuation record-pool address ownership (2026-08-07)
+
+Extended the source-ordered c_record pool address path to resolve loader-proven
+PC G1 DB3/DB4 continuation records at their original 10-bit ObjectID indexes,
+using the validated extension byte spans and per-pool record strides. Added
+synthetic boundary coverage and extended the real PC-DOS champion-mirror probe;
+all 16 marker roots now resolve through owned record bytes. Champion creation,
+possession transfer and session mutation remain fail-closed. Verification:
+`test_dm2_v1_record_pool_pc34_compat`,
+`test_dm2_v1_dungeon_loader_first_map_gate`, and the real-data
+`test_dm2_v1_g1_champion_mirror_real_data` probe.
+
 # DM2 half-step movement UseAltic parity (2026-08-07)
 
 Corrected `dm2_v1_source_half_step_should_enter` against SKProject

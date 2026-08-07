@@ -2,6 +2,7 @@
 
 #include "dm2_v1_dungeon_loader.h"
 #include "dm2_v1_champion_lifecycle_pc34_compat.h"
+#include "dm2_v1_record_pool_pc34_compat.h"
 
 #include <limits.h>
 #include <stdio.h>
@@ -52,6 +53,7 @@ int main(int argc, char **argv)
     unsigned char *bytes;
     int size;
     DM2_V1_DungeonData dungeon;
+    DM2_V1_RecordPoolSet record_pools;
     DM2_V1_G1ChampionMirrorReceipt mirrors;
 
     if (!path) {
@@ -76,6 +78,11 @@ int main(int argc, char **argv)
         mirrors.mirror_count != 16 || mirrors.actuator_record_reads <= 0) {
         dm2_v1_dungeon_free(&dungeon);
         fputs("FAIL: source G1 champion mirrors were not retained\n", stderr);
+        return 1;
+    }
+    if (!dm2_v1_record_pool_set_init_from_dungeon(&record_pools, &dungeon)) {
+        dm2_v1_dungeon_free(&dungeon);
+        fputs("FAIL: validated G1 record pools were not owned\n", stderr);
         return 1;
     }
     for (int i = 0; i < mirrors.mirror_count; ++i) {
@@ -108,14 +115,24 @@ int main(int argc, char **argv)
             select_receipt.hero_type !=
                 (int16_t)(int8_t)mirror->dynamic_hero_type ||
             select_receipt.champion_selected) {
+            dm2_v1_record_pool_set_free(&record_pools);
             dm2_v1_dungeon_free(&dungeon);
             fputs("FAIL: source mirror did not bind to fail-closed selection\n",
+                  stderr);
+            return 1;
+        }
+        if (dm2_v1_record_pool_address(&record_pools,
+                                       (int16_t)mirror->object_id) == NULL) {
+            dm2_v1_record_pool_set_free(&record_pools);
+            dm2_v1_dungeon_free(&dungeon);
+            fputs("FAIL: source mirror ObjectID did not resolve in owned pool\n",
                   stderr);
             return 1;
         }
     }
     printf("PASS: retained %d source G1 champion-mirror marker roots\n",
            mirrors.mirror_count);
+    dm2_v1_record_pool_set_free(&record_pools);
     dm2_v1_dungeon_free(&dungeon);
     return 0;
 }

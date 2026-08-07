@@ -77,13 +77,26 @@ uint8_t *dm2_v1_record_pool_address_mut(DM2_V1_RecordPoolSet *set,
     pool = dm2_v1_record_handle_pool(handle);
     index = dm2_v1_record_handle_index(handle);
     p = &set->pools[pool];
-    if (p->record_size <= 0 || p->bytes == NULL ||
-        index < 0 || index >= p->record_count) {
+    if (p->record_size <= 0 || index < 0) {
         return NULL;
     }
     /* c_record.cpp:48-51 — ofs = recordsize[idx] * (r & 0x3ff) added to the
-     * pool base as a byte offset. */
-    return p->bytes + (size_t)index * (size_t)p->record_size;
+     * pool base as a byte offset.  PC G1's validated DB3/DB4 continuation
+     * keeps the same ObjectID index space after the declared pool span; the
+     * loader owns that continuation separately because it is not contiguous
+     * with p->bytes. */
+    if (index < p->record_count) {
+        if (p->bytes == NULL) {
+            return NULL;
+        }
+        return p->bytes + (size_t)index * (size_t)p->record_size;
+    }
+    if (p->extension_bytes == NULL || p->extension_count <= 0 ||
+        index - p->record_count >= p->extension_count) {
+        return NULL;
+    }
+    return p->extension_bytes +
+           (size_t)(index - p->record_count) * (size_t)p->record_size;
 }
 
 const uint8_t *dm2_v1_record_pool_address(const DM2_V1_RecordPoolSet *set,

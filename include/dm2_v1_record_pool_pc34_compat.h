@@ -69,7 +69,8 @@ int dm2_v1_record_handle_index(int16_t handle);
 
 /* DM2_GET_ADDRESS_OF_RECORD equivalent: bounded pointer into the owned pool
  * copy.  NULL for null/end handles, absent or zero-sized pools, and indexes
- * outside the declared record count (fail-closed). */
+ * outside the declared record count and any loader-proven G1 continuation
+ * (fail-closed). */
 const uint8_t *dm2_v1_record_pool_address(const DM2_V1_RecordPoolSet *set,
                                           int16_t handle);
 uint8_t *dm2_v1_record_pool_address_mut(DM2_V1_RecordPoolSet *set,

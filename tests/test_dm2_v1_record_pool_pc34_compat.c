@@ -44,6 +44,9 @@ static void build_synthetic(DM2_V1_RecordPoolSet *set)
     set->pools[3].record_count = 2;
     set->pools[3].source_base = 12;
     set->pools[3].bytes = calloc(2, 8);
+    set->pools[3].extension_count = 2;
+    set->pools[3].extension_base = 28;
+    set->pools[3].extension_bytes = calloc(2, 8);
     set->valid = 1;
 }
 
@@ -91,6 +94,14 @@ int main(void)
           "DB0 record 2 address (ofs = size * index)");
     CHECK(dm2_v1_record_pool_address(&set, mk_handle(0, 3)) == NULL,
           "out-of-range index fails closed");
+    CHECK(dm2_v1_record_pool_address(&set, mk_handle(3, 2)) ==
+              set.pools[3].extension_bytes,
+          "G1 continuation starts at the declared pool count");
+    CHECK(dm2_v1_record_pool_address(&set, mk_handle(3, 3)) ==
+              set.pools[3].extension_bytes + 8,
+          "G1 continuation preserves record stride");
+    CHECK(dm2_v1_record_pool_address(&set, mk_handle(3, 4)) == NULL,
+          "G1 continuation bound fails closed");
     CHECK(dm2_v1_record_pool_address(&set, mk_handle(11, 0)) == NULL,
           "zero-sized DB11 fails closed");
     CHECK(dm2_v1_record_pool_address(&set, mk_handle(1, 0)) == NULL,

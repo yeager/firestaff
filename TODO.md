@@ -29735,6 +29735,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   PC-DOS chain: 16/16 mirror roots, 96 DYN4 blocks, 149,670 selected bytes,
   payload hash `0xa0af7eca`, receipt hash `0x8ae00cc1`, and the M11 boot
   receipt. No static or synthetic champion row was admitted.
+  **2026-08-07 record-owner progress:** the owned c_record pools now resolve
+  validated PC G1 DB3/DB4 continuation ObjectIDs using the original 10-bit
+  index and record stride. The real champion-mirror regression resolves all
+  16 marker roots through that owner; hero creation, possession transfer and
+  session mutation remain open.
 
 - [ ] DM2 delayed movement ownership: `PERFORM_MOVE`'s real
   `glbIsPlayerMoving` path retains the old party pose and derives its countdown
