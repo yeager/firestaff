@@ -14,15 +14,11 @@ enum { kMaterialCount = 4 };
 static const char* data_path(const char* name, char path[2048])
 {
     const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
-    const char* home;
     if (root && root[0]) {
         snprintf(path, 1024, "%s/%s", root, name);
         return path;
     }
-    home = getenv("HOME");
-    if (!home || !home[0]) return 0;
-    snprintf(path, 1024, "%s/.firestaff/data/dm1/%s", home, name);
-    return path;
+    return 0;
 }
 
 static unsigned char* read_file(const char* path, int* outSize)
@@ -98,7 +94,10 @@ int main(void)
     int i;
 
     if (!data_path("GRAPHICS.DAT", graphicsPath) ||
-        !data_path("DUNGEON.DAT", dungeonPath)) return 0;
+        !data_path("DUNGEON.DAT", dungeonPath)) {
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
+    }
     dungeon = read_file(dungeonPath, &dungeonSize);
     if (!dungeon || !M11_AssetLoader_Init(&loader, graphicsPath)) {
         free(dungeon);
