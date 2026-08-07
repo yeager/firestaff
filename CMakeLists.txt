@@ -28542,6 +28542,10 @@ endif()
         src/dm1v2/dm1_v2_filter_sharpen_pc34.c
         src/shared/vga_palette_pc34_compat.c
     )
+    add_executable(test_dm1_v2_level_transition_pc34
+        tests/test_dm1_v2_level_transition_pc34.c
+        src/dm1v2/dm1_v2_level_transition_pc34.c
+    )
     add_executable(test_dm1_v2_screen_transition_pc34
         tests/test_dm1_v2_screen_transition_pc34.c
         src/dm1v2/dm1_v2_screen_transition_pc34.c
@@ -29314,6 +29318,7 @@ endif()
         target_compile_options(test_dm1_v2_damage_numbers_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_weather_fx_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_filter_chain_pc34 PRIVATE -Wall -Wextra -O2)
+        target_compile_options(test_dm1_v2_level_transition_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_screen_transition_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_hud_interaction_pc34 PRIVATE -Wall -Wextra -O2)
         target_compile_options(test_dm1_v2_selected_resolution_input_mapping_pc34 PRIVATE -Wall -Wextra -O2)
@@ -29505,6 +29510,14 @@ endif()
     add_test(
         NAME dm1_v2_filter_chain_source_lock
         COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_filter_chain_source_lock.py
+    )
+    add_test(
+        NAME dm1_v2_level_transition_pc34
+        COMMAND test_dm1_v2_level_transition_pc34
+    )
+    add_test(
+        NAME dm1_v2_level_transition_source_lock
+        COMMAND ${Python3_EXECUTABLE} ${CMAKE_CURRENT_SOURCE_DIR}/tools/verify_dm1_v2_level_transition_source_lock.py
     )
     add_test(
         NAME dm1_v2_screen_transition_pc34

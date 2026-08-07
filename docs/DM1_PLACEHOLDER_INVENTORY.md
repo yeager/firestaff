@@ -122,6 +122,13 @@ filters now accept valid compatibility calls without changing a buffer, while
 the LUT builder copies the authenticated `G9010` VGA table exactly regardless
 of its host adjustment arguments.
 
+The V2 level-transition file duplicated that issue with two local animation
+models. It could blacken stairs, fade a pit fall, flash teleports and draw a
+portal mask, then separately estimate transition durations from invented tick
+counts. ReDMCSB instead updates map coordinates through F0150 and draws the
+committed party tuple through F0128. Both V2 APIs now retain no transition
+state, render no overlay and report no synthetic duration.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564

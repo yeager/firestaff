@@ -75,6 +75,16 @@
   indexerade och RGBA-buffertar lämnas orörda och att LUT:en är identisk med
   originaltabellen; källåset förbjuder de tidigare filteralgoritmerna.
 
+# DM1 V2:s syntetiska nivåövergångar spärrade (2026-08-07)
+
+- ✅ Tog bort två V2-modeller som kunde svartmåla trappor, tona pitfall,
+  blinka teleporter och rita en portal, samt deras egna tidsuppskattningar.
+  PC34 uppdaterar i stället karta och partytupel i den källägda rörelsen och
+  ritar sedan F0128 direkt. Kompatibilitets-API:t har nu inget tillstånd,
+  kan inte skriva en överlagring och rapporterar ingen hittepåvaraktighet.
+  CTesten kontrollerar en oförändrad framebuffer och källåset binder vägen
+  till ReDMCSB:s F0150/F0128-rutiner.
+
 # DM1 V2-föremålsmetadata källbunden (2026-08-07)
 
 - ✅ Ersatte två påhittade V2-ID:n för föremål med den faktiska PC34-ikonen

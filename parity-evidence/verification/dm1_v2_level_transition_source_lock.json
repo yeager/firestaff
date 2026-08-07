@@ -1,0 +1,45 @@
+{
+  "anchors": [
+    {
+      "end": 96,
+      "file": "GAMELOOP.C",
+      "meaning": "main loop draws the committed party tuple directly through F0128",
+      "needles": [
+        "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY)"
+      ],
+      "start": 84
+    },
+    {
+      "end": 1391,
+      "file": "DUNGEON.C",
+      "meaning": "source dungeon movement owns party-coordinate changes",
+      "needles": [
+        "P0256_pi_MapX",
+        "P0257_pi_MapY",
+        "DirectionToStepEastCount"
+      ],
+      "start": 1371
+    }
+  ],
+  "errors": [],
+  "firestaffFiles": [
+    "include/dm1_v2_level_transition_pc34.h",
+    "src/dm1v2/dm1_v2_level_transition_pc34.c",
+    "tests/test_dm1_v2_level_transition_pc34.c"
+  ],
+  "forbiddenSyntheticRules": [
+    "g_transition",
+    "g_level_trans",
+    "TRANS_STAIRS_DOWN:",
+    "TRANS_PIT_FALL:",
+    "TRANS_TELEPORT:",
+    "sqrtf(",
+    "V22_TRANS_STAIRS_TICKS",
+    "V22_TRANS_PIT_TICKS",
+    "V22_TRANS_TELEPORT_TICKS",
+    "V1_TICK_MS"
+  ],
+  "redmcsbSourceRoot": "/Users/bosse/.openclaw/data/firestaff-redmcsb-source/ReDMCSB_WIP20210206/Toolchains/Common/Source",
+  "scope": "dm1_v2 level-transition compatibility bridge",
+  "status": "passed"
+}
