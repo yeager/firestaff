@@ -27,14 +27,18 @@ REQUIRED = [
     (SOURCE / 'DUNGEON.C', 'G0234_ai_Graphic559_DirectionToStepNorthCount', 40),
     (SOURCE / 'DUNGEON.C', 'F0150_DUNGEON_UpdateMapCoordinatesAfterRelativeMovement', 1371),
     (SOURCE / 'DUNGEON.C', 'G0233_ai_Graphic559_DirectionToStepEastCount', 1389),
-    (SOURCE / 'GAMELOOP.C', 'F0128_DUNGEONVIEW_Draw_CPSF', 90),
+    (SOURCE / 'GAMELOOP.C', 'F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY)', 90),
     (SOURCE / 'GAMELOOP.C', 'F0380_COMMAND_ProcessQueue_CPSC', 215),
+    (SOURCE / 'DUNVIEW.C', 'void F0128_DUNGEONVIEW_Draw_CPSF', 8318),
+    (SOURCE / 'DUNVIEW.C', 'F0097_DUNGEONVIEW_DrawViewport(G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE);', 8606),
 ]
 FIRESTAFF = [
-    (ROOT / 'src/dm1v2/dm1_v2_camera_controller_pc34.c', 'presentation-only'),
+    (ROOT / 'src/dm1v2/dm1_v2_camera_controller_pc34.c', 'already-mutated G0308/G0306/G0307 tuple'),
+    (ROOT / 'src/dm1v2/dm1_v2_camera_controller_pc34.c', 'no transient camera state or offsets'),
     (ROOT / 'src/dm1v2/dm1_v2_camera_controller_pc34.c', 'DUNGEON.C:1371-1391'),
     (ROOT / 'src/dm1v2/dm1_v2_camera_controller_pc34.c', 'GAMELOOP.C:90'),
-    (ROOT / 'tests/test_dm1_v2_camera_controller_pc34.c', 'dm1_v2_camera_begin_move'),
+    (ROOT / 'tests/test_dm1_v2_camera_controller_pc34.c', 'dm1_v2_camera_horizontal_pan_offset'),
+    (ROOT / 'tests/test_dm1_v2_phase5_runtime_bridge_pc34.c', 'bridge.cameraStarted == 0'),
 ]
 errors=[]; anchors=[]
 for path, needle, line in REQUIRED:

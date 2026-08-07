@@ -45,14 +45,11 @@ int32_t dm1_v2_camera_offset_x(const DM1_V2_CameraController* camera);
 int32_t dm1_v2_camera_offset_y(const DM1_V2_CameraController* camera);
 int32_t dm1_v2_camera_turn_pan_offset_x(const DM1_V2_CameraController* camera);
 
-/* pass601a: vertical turn-pan for diagonal/lateral facing transitions.
- * Source-lock: ReDMCSB DUNVIEW.C:8318 depth-perspective draw order. */
+/* PC34 has no interpolated turn-pan route. These compatibility queries remain
+ * zero so a V2 caller cannot create presentation-only camera pixels. */
 int32_t dm1_v2_camera_turn_pan_offset_y(const DM1_V2_CameraController* camera);
 
-/* pass601a: combined lateral pan for strafe/multi-step movement.
- * Source-lock: ReDMCSB DUNVIEW.C:8318.
- * Currently returns 0 as a safe stub until horizontal pan fields are added
- * to DM1_V2_CameraController. */
+/* PC34 has no horizontal camera-pan route. */
 int32_t dm1_v2_camera_horizontal_pan_offset(const DM1_V2_CameraController* camera);
 
 #ifdef __cplusplus

@@ -317,7 +317,7 @@ static void test_runtime_apply_flow_from_affordance_route(void) {
         CHECK(runtime.lastCommand == route.route.runtimeCommand);
     }
 
-    CHECK(dm1_v2_camera_is_active(&camera));
+    CHECK(!dm1_v2_camera_is_active(&camera));
 }
 
 static void test_phase_gate_domain_name_coverage(void) {

@@ -27,7 +27,7 @@
     {
       "file": "GAMELOOP.C",
       "line": 90,
-      "needle": "F0128_DUNGEONVIEW_Draw_CPSF",
+      "needle": "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY)",
       "text": "F0128_DUNGEONVIEW_Draw_CPSF(G0308_i_PartyDirection, G0306_i_PartyMapX, G0307_i_PartyMapY);"
     },
     {
@@ -35,6 +35,18 @@
       "line": 215,
       "needle": "F0380_COMMAND_ProcessQueue_CPSC",
       "text": "F0380_COMMAND_ProcessQueue_CPSC();"
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8318,
+      "needle": "void F0128_DUNGEONVIEW_Draw_CPSF",
+      "text": "void F0128_DUNGEONVIEW_Draw_CPSF("
+    },
+    {
+      "file": "DUNVIEW.C",
+      "line": 8606,
+      "needle": "F0097_DUNGEONVIEW_DrawViewport(G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE);",
+      "text": "F0097_DUNGEONVIEW_DrawViewport(G0309_i_PartyMapIndex != C255_MAP_INDEX_ENTRANCE);"
     }
   ],
   "errors": [],

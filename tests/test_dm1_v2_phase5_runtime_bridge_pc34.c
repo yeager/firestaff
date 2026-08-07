@@ -137,8 +137,8 @@ static void test_forward_source_tick_starts_presentation_camera_only(void)
     CHECK(bridge.sourceTickAccepted == 1);
     CHECK(bridge.sourceStepAccepted == 1);
     CHECK(bridge.sourceTurnAccepted == 0);
-    CHECK(bridge.cameraStarted == 1);
-    CHECK(bridge.cameraMoveStarted == 1);
+    CHECK(bridge.cameraStarted == 0);
+    CHECK(bridge.cameraMoveStarted == 0);
     CHECK(bridge.sourceCooldownTicks == pipelineAfterSource.disabledMovementTicks);
     CHECK(bridge.sourceProjectileCooldownTicks == pipelineAfterSource.projectileDisabledMovementTicks);
     CHECK(bridge.sourceGameTick == pipelineAfterSource.gameTick);
@@ -146,8 +146,8 @@ static void test_forward_source_tick_starts_presentation_camera_only(void)
     CHECK(bridge.viewportRedrawRequested == sourceTickAfterSource.viewportDirty);
     CHECK(bridge.redrawCadencePreserved == 1);
     CHECK(bridge.sourceMutationForbidden == 1);
-    CHECK(camera.fromX == partyBefore.mapX * DM1_V2_SUBPIXEL_SCALE);
-    CHECK(camera.fromY == partyBefore.mapY * DM1_V2_SUBPIXEL_SCALE);
+    CHECK(camera.fromX == party.mapX * DM1_V2_SUBPIXEL_SCALE);
+    CHECK(camera.fromY == party.mapY * DM1_V2_SUBPIXEL_SCALE);
     CHECK(camera.targetX == party.mapX * DM1_V2_SUBPIXEL_SCALE);
     CHECK(camera.targetY == party.mapY * DM1_V2_SUBPIXEL_SCALE);
 
@@ -247,9 +247,9 @@ static void test_turn_source_tick_starts_turn_camera_without_cooldown(void)
         &pipeline, &sourceTick, &party, &camera, 80, &bridge) == 1);
     CHECK(bridge.sourceTurnAccepted == 1);
     CHECK(bridge.sourceStepAccepted == 0);
-    CHECK(bridge.cameraTurnStarted == 1);
+    CHECK(bridge.cameraTurnStarted == 0);
     CHECK(bridge.sourceCooldownTicks == 0);
-    CHECK(camera.fromFacingDir == DIR_NORTH);
+    CHECK(camera.fromFacingDir == DIR_WEST);
     CHECK(camera.targetFacingDir == DIR_WEST);
     CHECK(camera.visualX == 4 * DM1_V2_SUBPIXEL_SCALE);
     CHECK(camera.visualY == 4 * DM1_V2_SUBPIXEL_SCALE);
@@ -265,10 +265,10 @@ static void test_turn_source_tick_starts_turn_camera_without_cooldown(void)
     CHECK(dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_ex_pc34(
         &pipeline, &sourceTick, &party, &camera, 80, 1, &bridge) == 1);
     CHECK(bridge.sourceTurnAccepted == 1);
-    CHECK(bridge.cameraTurnStarted == 1);
+    CHECK(bridge.cameraTurnStarted == 0);
     CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 0);
     dm1_v2_camera_tick(&camera, 20);
-    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == -128);
+    CHECK(dm1_v2_camera_turn_pan_offset_x(&camera) == 0);
     CHECK(party.mapX == 4);
     CHECK(party.mapY == 4);
     CHECK(party.direction == DIR_WEST);

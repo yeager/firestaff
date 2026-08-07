@@ -147,7 +147,7 @@ static void test_v2_affordance_runtime_bridge_uses_existing_command_routes(void)
         CHECK(result.sourceCommand == route.route.sourceCommand);
         CHECK(result.runtimeCommand == route.route.runtimeCommand);
         CHECK(runtime.lastCommand == route.route.runtimeCommand);
-        CHECK(dm1_v2_camera_is_active(&camera));
+        CHECK(!dm1_v2_camera_is_active(&camera));
     }
 }
 

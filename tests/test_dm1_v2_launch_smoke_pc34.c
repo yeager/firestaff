@@ -218,7 +218,7 @@ int main(void) {
     CHECK(move.runtimeCommand == 1);
     CHECK(runtime.lastCommand == 1);
     CHECK(dm1_v2_has_moved(&runtime.player));
-    CHECK(dm1_v2_camera_is_active(&camera));
+    CHECK(!dm1_v2_camera_is_active(&camera));
 
     dm1_v2_runtime_stop(&runtime);
     CHECK(!dm1_v2_runtime_is_running(&runtime));

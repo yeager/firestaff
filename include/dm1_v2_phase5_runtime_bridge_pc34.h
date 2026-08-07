@@ -30,9 +30,9 @@ typedef struct {
 
 /*
  * Phase 5 runtime bridge: consume an already processed, source-accepted V1
- * movement tick and start V2 presentation interpolation from the resulting
- * source party tuple. The V1 pipeline, result, and party pointers are const:
- * this seam is allowed to touch only the V2 camera controller.
+ * movement tick and mirror the resulting source party tuple. The V1 pipeline,
+ * result, and party pointers are const: this seam is allowed to touch only the
+ * V2 camera controller, which exposes no interpolated presentation state.
  */
 int dm1_v2_phase5_runtime_bridge_start_camera_from_v1_tick_pc34(
     const struct Dm1V1MovementPipelinePc34Compat* sourcePipeline,

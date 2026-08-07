@@ -45,7 +45,7 @@ static int test_source_ids_translate_to_runtime_ids(void) {
     return 0;
 }
 
-static int test_turns_start_presentation_only_camera_turns(void) {
+static int test_turns_mirror_source_direction_without_camera_animation(void) {
     DM1_V2_RuntimeState rt;
     DM1_V2_CameraController camera;
     DM1_V2_MovementCommandResult result;
@@ -63,9 +63,9 @@ static int test_turns_start_presentation_only_camera_turns(void) {
     CHECK(result.fromFacingDir == 0);
     CHECK(result.targetFacingDir == 7);
     CHECK(rt.player.facingDir == 7);
-    CHECK(camera.turning == 1);
-    CHECK(dm1_v2_camera_is_active(&camera));
-    CHECK(camera.fromFacingDir == 0);
+    CHECK(camera.turning == 0);
+    CHECK(!dm1_v2_camera_is_active(&camera));
+    CHECK(camera.fromFacingDir == 7);
     CHECK(camera.targetFacingDir == 7);
 
     result = dm1_v2_movement_command_apply(&rt, &camera, DM1_V2_MOVEMENT_COMMAND_TURN_RIGHT, 1200, 80);
@@ -75,8 +75,9 @@ static int test_turns_start_presentation_only_camera_turns(void) {
     CHECK(result.fromFacingDir == 7);
     CHECK(result.targetFacingDir == 0);
     CHECK(rt.player.facingDir == 0);
-    CHECK(camera.turning == 1);
-    CHECK(camera.fromFacingDir == 7);
+    CHECK(camera.turning == 0);
+    CHECK(!dm1_v2_camera_is_active(&camera));
+    CHECK(camera.fromFacingDir == 0);
     CHECK(camera.targetFacingDir == 0);
 
     return 0;
@@ -176,7 +177,7 @@ static int test_rejects_stopped_commands(void) {
 
 int main(void) {
     if (test_source_ids_translate_to_runtime_ids()) return 1;
-    if (test_turns_start_presentation_only_camera_turns()) return 1;
+    if (test_turns_mirror_source_direction_without_camera_animation()) return 1;
     if (test_source_strafes_translate_to_runtime_ids()) return 1;
     if (test_v1_presentation_route_keeps_source_command_ids()) return 1;
     if (test_rejects_stopped_commands()) return 1;

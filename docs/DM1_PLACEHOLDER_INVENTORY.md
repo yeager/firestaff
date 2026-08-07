@@ -90,6 +90,14 @@ no corresponding record: F0115 resolves the live Thing's own G0209/G0219
 aspect. That V2 binding now returns no material, leaving the authenticated V1
 object pass as the only floor-item pixel owner.
 
+The V2 camera controller also invented intermediate tile coordinates, a
+mid-turn facing change and subpixel pan offsets. ReDMCSB's command path first
+mutates `G0308/G0306/G0307`; GAMELOOP then calls F0128 with that complete tuple,
+and F0128 presents the composed viewport. The local PC34 archive contains no
+separate camera material or verified interpolation route. The V2 controller
+now mirrors the accepted tuple immediately, reports zero offsets and cannot
+schedule completion callbacks or V2 HUD signals.
+
 ### 1. DM1 V1 — PC 3.4 parity lane (`src/dm1/*_pc34_compat.*`)
 
 **Verdict: no open placeholders.** DONE.md line 558-564

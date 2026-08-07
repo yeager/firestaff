@@ -16,6 +16,18 @@
 
 # DM1 V2 fri varelseanimation spärrad (2026-08-07)
 
+# DM1 V2-kamerainterpolering spärrad (2026-08-07)
+
+- ✅ Tog bort V2-kamerans egna mellanrutor, mellanriktning, svängpanorering
+  och HUD-slutsignaler. ReDMCSB muterar först partiets riktning och position,
+  varefter GAMELOOP anropar F0128 direkt med `G0308/G0306/G0307`. F0128
+  komponerar och presenterar sedan vyn. Kamerabryggan speglar därför den
+  accepterade PC34-tupeln omedelbart och rapporterar alltid noll för alla
+  offsetar. Den lokala PC34-arkivkontrollen innehåller ingen separat
+  kamerayta, och den befintliga disassemblyinventeringen saknar en validerad
+  FIRES-symbolbindning som skulle kunna styrka en alternativ animeringsrutt.
+  Åtta berörda DM1/CSB CTester kontrollerar den diskreta vägen.
+
 # DM1 V2-föremålsmetadata källbunden (2026-08-07)
 
 - ✅ Ersatte två påhittade V2-ID:n för föremål med den faktiska PC34-ikonen
