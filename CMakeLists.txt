@@ -4857,6 +4857,11 @@ list(REMOVE_ITEM M10_SOURCES
 # target compiles it until a live M11 source-frame owner is wired.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_action_spell_source_frame_m11_lifecycle_pc34_compat.c")
+# `dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat.c` is a
+# contract-only F0320/F0292 model with no production caller or asset path.
+# Its direct regression target retains the documented ReDMCSB bitfield audit.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_hud_damage_attribute_cascade_pc34_compat.c")
 # `dm1_v1_chest_scroll_wheel_close_race_pc34_compat.c` is a local queued
 # command race model. Its direct regression target compiles the fixture.
 list(REMOVE_ITEM M10_SOURCES
