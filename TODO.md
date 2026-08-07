@@ -29907,6 +29907,11 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   real PC-DOS GRAPHICS.DAT receipt verifies the full `5624 * 2` table. The
   later `LOAD_ENT1` population, decoded allocator tables and secondary-file
   transaction remain gated.
+  **2026-08-07 field-layout progress:** retained ENT1 state now preserves each
+  source-derived T/I/D/S/F/G/P byte offset and field size, rejects duplicate
+  descriptors, and proves alternate descriptor order plus the mounted PC-DOS
+  layout. The complete BUILD_GDAT_ENTRY_DATA transaction, underlay admission
+  and secondary-file transaction remain gated.
 - [ ] DM2 combat source contract: a creature Defense GDAT row alone cannot
   author a player attack. Keep `dm2_v1_combat_resolve_attack_on_creature()`
   blocked until `DM2_ENGAGE_COMMAND`/`CALC_PLAYER_ATTACK_DAMAGE` has the

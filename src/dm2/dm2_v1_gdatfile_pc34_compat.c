@@ -936,6 +936,8 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
     uint8_t ent1_group_count = 0u;
     uint8_t ent1_stride = 0u;
     uint8_t ent1_seen = 0u;
+    uint8_t ent1_field_offset[7] = {0};
+    uint8_t ent1_field_size[7] = {0};
     bool ent1_big_endian = false;
     uint16_t i;
     int opened = 0;
@@ -1065,13 +1067,16 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
         }
         for (i = 0u; i < ent1_group_count; ++i) {
             const uint8_t *descriptor = ent1 + 6u + (size_t)i * 2u;
-            if (dm2_gdat_ent1_tag_index(descriptor[0]) < 0 ||
+            int field = dm2_gdat_ent1_tag_index(descriptor[0]);
+            if (field < 0 || (ent1_seen & (uint8_t)(1u << field)) != 0u ||
                 descriptor[1] == 0u ||
                 (uint16_t)ent1_stride + descriptor[1] > 0xffu) {
                 goto fail;
             }
+            ent1_field_offset[field] = ent1_stride;
+            ent1_field_size[field] = descriptor[1];
             ent1_stride = (uint8_t)(ent1_stride + descriptor[1]);
-            ent1_seen |= (uint8_t)(1u << dm2_gdat_ent1_tag_index(descriptor[0]));
+            ent1_seen |= (uint8_t)(1u << field);
         }
         if ((ent1_seen & 0x7fu) != 0x7fu || ent1_stride == 0u ||
             6u + (uint32_t)ent1_group_count * 2u +
@@ -1116,6 +1121,10 @@ int dm2_v1_gdat_read_graphics_structure(DM2_V1_GdatFileState *state,
     state->ent1_entry_count = ent1_entry_count;
     state->ent1_group_count = ent1_group_count;
     state->ent1_stride = ent1_stride;
+    memcpy(state->ent1_field_offset, ent1_field_offset,
+           sizeof(state->ent1_field_offset));
+    memcpy(state->ent1_field_size, ent1_field_size,
+           sizeof(state->ent1_field_size));
     ent1 = NULL;
     ulp = NULL;
     dm2_v1_gdat_graphics_data_close(state, cb, ctx, NULL);
@@ -1143,6 +1152,8 @@ fail:
     state->ent1_entry_count = 0u;
     state->ent1_group_count = 0u;
     state->ent1_stride = 0u;
+    memset(state->ent1_field_offset, 0, sizeof(state->ent1_field_offset));
+    memset(state->ent1_field_size, 0, sizeof(state->ent1_field_size));
     if (opened && state->fileopencounter > 0)
         dm2_v1_gdat_graphics_data_close(state, cb, ctx, NULL);
     if (out) memset(out, 0, sizeof(*out));
@@ -1178,6 +1189,8 @@ int dm2_v1_gdat_release_graphics_structure(
         state->ent1_entry_count = 0u;
         state->ent1_group_count = 0u;
         state->ent1_stride = 0u;
+        memset(state->ent1_field_offset, 0, sizeof(state->ent1_field_offset));
+        memset(state->ent1_field_size, 0, sizeof(state->ent1_field_size));
     }
     return 1;
 }

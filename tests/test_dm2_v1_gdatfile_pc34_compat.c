@@ -649,9 +649,11 @@ static int test_read_graphics_structure_accepts_big_endian_header_and_ulp(void)
     mctx.file_data[18] = 'I'; mctx.file_data[19] = 1;
     mctx.file_data[20] = 'D'; mctx.file_data[21] = 1;
     mctx.file_data[22] = 'S'; mctx.file_data[23] = 1;
-    mctx.file_data[24] = 'F'; mctx.file_data[25] = 1;
-    mctx.file_data[26] = 'G'; mctx.file_data[27] = 1;
-    mctx.file_data[28] = 'P'; mctx.file_data[29] = 2;
+    /* Source accepts descriptor order per platform; exercise TIDSPFG,
+     * while the real PC-DOS file below uses TIDSFGP. */
+    mctx.file_data[24] = 'P'; mctx.file_data[25] = 2;
+    mctx.file_data[26] = 'F'; mctx.file_data[27] = 1;
+    mctx.file_data[28] = 'G'; mctx.file_data[29] = 1;
     mctx.file_data_len = 38;
 
     if (!dm2_v1_gdat_read_graphics_structure(&state, &cb, &mctx, &out)) {
@@ -662,7 +664,9 @@ static int test_read_graphics_structure_accepts_big_endian_header_and_ulp(void)
            out.source_data_offset == 10u && out.first_raw_offset == 10u &&
            out.raw_data_end == 38u && out.ent1_validated &&
            out.ent1_entry_count == 1u && out.ent1_group_count == 7u &&
-           out.ent1_stride == 8u && mctx.close_count == 1)) {
+           out.ent1_stride == 8u && mctx.close_count == 1 &&
+           state.ent1_field_offset[6] == 4u && state.ent1_field_size[6] == 2u &&
+           state.ent1_field_offset[4] == 6u && state.ent1_field_offset[5] == 7u)) {
         return 0;
     }
     if (!state.ulp_table || state.ulp_count != 2u ||
@@ -723,7 +727,15 @@ static int test_read_graphics_structure_real_dm2_data(void)
            state.ent1_data != NULL && state.ent1_length == receipt.first_entry_size &&
            state.ent1_entry_count == receipt.ent1_entry_count &&
            state.ent1_group_count == receipt.ent1_group_count &&
-           state.ent1_stride == receipt.ent1_stride)) {
+           state.ent1_stride == receipt.ent1_stride &&
+           state.ent1_field_offset[0] == 0u && state.ent1_field_offset[1] == 1u &&
+           state.ent1_field_offset[2] == 2u && state.ent1_field_offset[3] == 3u &&
+           state.ent1_field_offset[4] == 4u && state.ent1_field_offset[5] == 5u &&
+           state.ent1_field_offset[6] == 6u &&
+           state.ent1_field_size[0] == 1u && state.ent1_field_size[1] == 1u &&
+           state.ent1_field_size[2] == 1u && state.ent1_field_size[3] == 1u &&
+           state.ent1_field_size[4] == 1u && state.ent1_field_size[5] == 1u &&
+           state.ent1_field_size[6] == 2u)) {
         return 0;
     }
     return dm2_v1_gdat_release_graphics_structure(&state, &cb, &real) == 1 &&

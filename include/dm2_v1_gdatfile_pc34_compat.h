@@ -126,6 +126,9 @@ typedef struct DM2_V1_GdatFileState {
     uint16_t     ent1_entry_count;
     uint8_t      ent1_group_count;
     uint8_t      ent1_stride;
+    /* LOAD_ENT1's source-owned field-position/size tables. */
+    uint8_t      ent1_field_offset[7];
+    uint8_t      ent1_field_size[7];
 } DM2_V1_GdatFileState;
 
 /* ========================================================================

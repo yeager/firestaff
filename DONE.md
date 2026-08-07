@@ -1,3 +1,10 @@
+# DM2 GDAT LOAD_ENT1 field layout (2026-08-07)
+
+- ✅ Retained the source-derived byte offset and size for every ENT1
+  T/I/D/S/F/G/P field, rejected duplicate descriptors, and verified alternate
+  descriptor order plus the real PC-DOS GRAPHICS.DAT layout. The complete
+  `BUILD_GDAT_ENTRY_DATA` transaction and `GRAPHIC2.DAT` remain gated.
+
 # Nexus VDP2 writer candidate receipt (2026-08-07)
 
 - ✅ Added `scripts/analyze_nexus_vdp2_writer_candidates.py` for the
