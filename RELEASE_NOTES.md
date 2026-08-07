@@ -1,3 +1,30 @@
+# Firestaff v3.0.294
+
+## Added
+
+- **DM1 FM Towns end-to-end menu text pipeline**: startup receipt →
+  M11_GameView_LoadDm1FmtownsMenuFontIfAvailable (asset 557) →
+  M11_GameView_RenderDm1FmtownsMenu → M11 action-menu path now
+  paints English DYNAMENU labels byte-exact against EDM.EXP into
+  the source-owned EGB backdrop. Japanese sessions keep the
+  documented blank-text policy pending a JDM-owned Shift-JIS font.
+
+## Fixed
+
+- **CI Windows**: `-Werror=unused-function` on
+  `external_archive_entry_may_match_md5(_list)` — both are only
+  called from the POSIX-only external-archive scan block; guard
+  the definitions with `#ifndef _WIN32` too.
+- **CI macOS**: undefined `_DM1_V1_MirrorCandidateIconRefresh_*`
+  and `_dm1_v1_mirror_candidate_close_button_*` symbols in
+  `test_dm1_v1_hoc_champion_portrait_13_double_click_stability_pc34_compat`
+  — target now lists the `icon_refresh` and `close_button` sibling
+  sources it calls.
+- **CI Linux**: undefined `csb_v1_build_csb_save_buffer` in
+  `test_m12_quick_resume_gate` — same fix as
+  `test_csb_v1_m11_startup_resume_gate` (the builder is REMOVE_ITEM'd
+  from firestaff_m10; add the source directly).
+
 # Firestaff v3.0.293
 
 ## Added
