@@ -26,6 +26,7 @@ typedef struct {
     uint8_t (*get_map_tile_byte)(void *ctx, int16_t map_idx, int offset);
 
     /* Party item enumeration */
+    int16_t (*get_leader_item)(void *ctx);
     int16_t (*get_heros_in_party)(void *ctx);
     int16_t (*get_hero_item)(void *ctx, int hero_idx, int hand);
     /* Returns -1 for no item, else item record index */

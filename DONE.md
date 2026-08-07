@@ -1,3 +1,14 @@
+# DM2 c_light source formula correction (2026-08-13)
+- ✅ Corrected `dm2_v1_recalc_light_level_pc34()` against SKProject
+  `src/v5/sklight.cpp:24-198`: tile high-nibble branching, leader-hand
+  lighting, source DBSPEC key 0, six-bit charge scaling, inverse weather
+  table mapping, dtWordValue/0x68 minimum and `v1e0978` final modifier are
+  now represented instead of the previous additive approximation.
+- ✅ Focused light-ops tests pass, the real PC-DOS c_light receipt scan passes
+  26/26, and the real scene/weather chain rejects synthetic fallback. The
+  live runtime handoff remains closed until original party/save-state owners
+  are connected; no release was made.
+
 # DM2 dialogue text source-owner gate (2026-08-13)
 - ✅ Open-panel dialogue now authenticates both original `DIALOG_BOXES/0x81/dtText`
   records and the source `GDAT 0/0/dtWordValue/0` transform before accepting a

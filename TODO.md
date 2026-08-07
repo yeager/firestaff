@@ -3976,6 +3976,15 @@ level or consumer bindings.
   longer linked into the production archive. It carried a host-side 1,440
   minute day and named weather states without a session/GDAT owner; only a
   decoded `timdat`/environment chain may supply those facts to a live route.
+  **2026-08-13 source-formula update:** `dm2_v1_recalc_light_level_pc34()` now
+  follows SKProject `src/v5/sklight.cpp:24-198`: the map byte is a branch
+  guard, the leader hand is included, DBSPEC is queried with source key 0,
+  charge contributions use the descending six-bit shift, weather uses the
+  inverse `table1d6712` mapping, and dtWordValue/0x68 plus `v1e0978` are
+  applied before the final clamp. The focused helper is no longer a synthetic
+  map-only calculation; the live M11 runtime still requires the original
+  party hand/inventory, spell, weather and save-state owner before it can
+  publish a dynamic c_light receipt.
 
 - **DM2-SKSAVE-SESSION-OWNER-HANDOFF:** Original SKSave import currently
   decodes the source `skload_table_60` game-state block and its following

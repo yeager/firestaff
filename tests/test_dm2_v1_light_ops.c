@@ -10,6 +10,75 @@ static int16_t g_queued_val;
 static uint32_t g_queued_tick;
 static int g_recalc;
 
+static uint8_t g_map_tile_byte;
+static int16_t g_light_level;
+static int16_t g_dbspec_key;
+static int16_t g_light_charges[16];
+static int16_t g_hero_items[4][2];
+
+static uint8_t mock_map_tile(void *ctx, int16_t map, int offset)
+{
+    (void)ctx; (void)map; assert(offset == 0x0d); return g_map_tile_byte;
+}
+static int16_t mock_leader_item(void *ctx) { (void)ctx; return 1; }
+static int16_t mock_hero_count(void *ctx) { (void)ctx; return 0; }
+static int16_t mock_hero_item(void *ctx, int hero, int hand)
+{
+    (void)ctx; return g_hero_items[hero][hand];
+}
+static uint16_t mock_dbspec(void *ctx, int16_t item, int key)
+{
+    (void)ctx; (void)item; g_dbspec_key = (int16_t)key; return 0x10;
+}
+static int16_t mock_charge(void *ctx, int16_t item, int mode)
+{
+    (void)ctx; (void)mode; return g_light_charges[item];
+}
+static int16_t mock_gdat(void *ctx, int a, int b, int c, int d)
+{
+    (void)ctx; (void)a; (void)b; (void)c; (void)d; return 0;
+}
+static void mock_set_level(void *ctx, int16_t level)
+{
+    (void)ctx; g_light_level = level;
+}
+
+static void test_recalc_light_level_source_branches(void)
+{
+    static const int16_t table_light[16] = {
+        0, 5, 12, 24, 33, 40, 46, 51, 59, 68, 76, 82, 89, 94, 97, 100
+    };
+    static const int16_t table_weather[6] = { 99, 75, 50, 25, 1, 0 };
+    DM2_V1_RecalcLightLevelCallbacks cb;
+    memset(&cb, 0, sizeof(cb));
+    cb.get_map_tile_byte = mock_map_tile;
+    cb.get_leader_item = mock_leader_item;
+    cb.get_heros_in_party = mock_hero_count;
+    cb.get_hero_item = mock_hero_item;
+    cb.query_gdat_dbspec_word = mock_dbspec;
+    cb.add_item_charge = mock_charge;
+    cb.query_gdat_entry_data_index = mock_gdat;
+    cb.table1d6702 = table_light;
+    cb.table1d6702_size = 16;
+    cb.table1d6712 = table_weather;
+    cb.table1d6712_size = 6;
+    cb.set_light_level = mock_set_level;
+    memset(g_light_charges, 0, sizeof(g_light_charges));
+    g_light_charges[1] = 5;
+    g_dbspec_key = -1;
+    g_map_tile_byte = 0x40;
+    cb.v1e0978 = 0;
+    dm2_v1_recalc_light_level_pc34(&cb, NULL);
+    assert(g_light_level == 3);
+    assert(g_dbspec_key == 0);
+
+    g_map_tile_byte = 0;
+    cb.v1e0978 = 2;
+    dm2_v1_recalc_light_level_pc34(&cb, NULL);
+    assert(g_light_level == 0);
+    printf("  PASS: recalc_light_level follows source tile branches\n");
+}
+
 static void mock_queue(void *ctx, int16_t val, uint32_t tick)
 {
     (void)ctx;
@@ -145,6 +214,7 @@ int main(void)
     test_proceed_light_darkness();
     test_proceed_light_torch();
     test_proceed_light_invalid();
+    test_recalc_light_level_source_branches();
     test_add_background_light();
     test_add_background_light_clamped();
     test_check_recompute_clean();
