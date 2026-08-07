@@ -1404,9 +1404,10 @@ int dm2_v1_boot_probe_available(const char *data_dir);
 void dm2_v1_boot_set_save_root(DM2_V1_BootProfile *profile,
                                 const char *save_dir);
 
-/* Build deterministic config from detected dungeon header.
- * Reads dungeon_seed from the DUNGEON.DAT header word at offset 8.
- * Source: SKULL.ASM T560 — DUNGEON_Load header parsing */
+/* Build deterministic config from the source File_header: random seed at
+ * word +0 and map count at byte +4. `w8` at +8 is party position.
+ * Source: SKProject SKWIN/DME.h::File_header; SkWinCore.cpp
+ * READ_DUNGEON_STRUCTURE. */
 void dm2_v1_boot_build_deterministic_config(DM2_V1_BootProfile *profile,
                                             const uint8_t *dungeon_header,
                                             int dungeon_size);

@@ -5,30 +5,26 @@
  * Parses DM2 DUNGEON.DAT into DM2_V1_DungeonData.
  *
  * DM2 PC English DUNGEON.DAT format (39,437 bytes, MD5 6caccd7875009e82fe2e28e7f6d6adc0):
- *   - Pre-decompressed (no FTL wrapper — bytes 0-1=0x0000, not 0x8104)
- *   - 'G1' magic at header bytes 2-3 (DM2 file format ID)
- *   - DUNGEON_HEADER-style preamble at byte 0 (44 bytes)
- *   - Map definitions at byte 44: 28 x 16 bytes each
+ *   - Pre-decompressed (no FTL wrapper — File_header.w0=0x0000)
+ *   - SKProject File_header at byte 0 (44 bytes)
+ *   - Map definitions at byte 44: 44 x 16 bytes each
  *   - Byte-sized map squares are stored in the trailing map-data block
  *   - Square type is stored in the high three bits, column-major
  *
- *   PC English G1 preamble fields:
- *     offset 0:  uint16_t reserved (0x0000)
- *     offset 2:  uint16_t magic ('G1')
- *     offset 4:  uint16_t first_data_offset (=44)
- *     offset 6:  uint8_t  map_count (=28)
- *     offset 8:  uint16_t dungeon_seed
- *     offset 10: uint16_t initial_party_location / flags
- *     offset 12: uint16_t ground-stack list size
- *     offset 14: uint16_t thing_count[dbDoor]
- *     offset 16: uint16_t thing_count[dbTeleporter]
+ *   PC English File_header fields:
+ *     offset 0:  uint16_t random-decoration seed
+ *     offset 2:  uint16_t global map-data byte count (=0x3147)
+ *     offset 4:  uint8_t  map_count (=44)
+ *     offset 6:  uint16_t text-word count
+ *     offset 8:  uint16_t initial party position
+ *     offset 10: uint16_t ground-stack list size
+ *     offset 12: uint16_t thing_count[dbDoor]
+ *     offset 14: uint16_t thing_count[dbTeleporter]
  *     ...
  *     offset 42: uint16_t thing_count[dbCloud]
  *
- *   The seed/count profile is effectively the skproject File_header shifted
- *   two bytes after the leading reserved word/G1 marker, while map
- *   definitions still start at byte 44.  Firestaff currently treats the
- *   real-data DB pool bases as unproven because the bytes between the
+ *   The PC retail member is a direct File_header image. Firestaff currently
+ *   treats the real-data DB pool bases as unproven because the bytes between the
  *   skproject-sized DB pools and the trailing map-data block contain an
  *   additional PC G1 block that still needs source proof.
  *
@@ -48,7 +44,7 @@
  *   synthetic fixtures only. Real PC G1 data uses the byte-square path.
  *
  * FIXES vs stub:
- *   - level_count read from DUNGEON_HEADER.map_count byte offset 6 (stub read byte 0)
+ *   - level_count read from File_header.nMaps byte offset 4
  *   - Real PC G1 map definitions use w8 dimensions and byte-sized squares
  *   - Tile data offset is relative to the trailing byte map-data block
  *
@@ -117,11 +113,10 @@ static uint16_t rd16be(const uint8_t *p) {
 #define DM2_MAP_DESC_SIZE 16
 #define DM2_THING_TYPE_COUNT 16
 
-/* PC DOS G1 keeps a 256-byte extension between the 28 Map_definitions and
- * the c_map.cpp-owned tables.  The real EN/FR dungeon member is identical;
- * the offsets below are derived from its 480-column monotonic prefix table.
- * skproject/SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE reads the same table
- * before dunGroundStacks, and c_map.cpp maps tile bit 0x10 through it. */
+/* Legacy non-File_header byte-layout fallback: its 256-byte continuation
+ * follows 28 Map_definitions. The canonical PC-DOS File_header has 44 maps
+ * and takes the source-locked SKProject route above; it must never be
+ * reclassified through this fallback. */
 #define DM2_PC_G1_MAP_EXTENSION_BYTES       256
 #define DM2_PC_G1_GROUND_STACK_COUNT_OFFSET 10
 #define DM2_PC_G1_DB3_EXTENDED_COUNT        1024
@@ -312,6 +307,23 @@ static int dm2_v1_try_load_skproject_layout(DM2_V1_DungeonData *out,
         out->map_door_ornate_count[i] = (int)(RD16(map_desc + 12) & 0x0fu);
         out->level_types[i] = (i == 0) ? DM2_LEVEL_OUTDOOR : DM2_LEVEL_INDOOR;
         total_columns += w;
+    }
+
+    /* File_header::w8 is the source 5/5/2 start pose in map-0 coordinates.
+     * Map_definitions owns cross-map relocation, but must not be applied to
+     * this initial map-0 placement. SKProject SKWIN/SkWinCore.cpp
+     * READ_DUNGEON_STRUCTURE lines 39936-39943 assigns w8 directly after
+     * CHANGE_CURRENT_MAP_TO(0). */
+    {
+        uint16_t start = RD16(dat + 8);
+        int x = (int)(start & 0x1fu);
+        int y = (int)((start >> 5) & 0x1fu);
+        if (x < out->level_widths[0] && y < out->level_heights[0]) {
+            out->initial_party_pose_valid = 1;
+            out->initial_party_x = x;
+            out->initial_party_y = y;
+            out->initial_party_dir = (int)((start >> 10) & 0x03u);
+        }
     }
 
     column_index_base = out->column_index_base;
@@ -5647,10 +5659,10 @@ const char *dm2_v1_dungeon_source_evidence(void) {
         "Source: skproject SKWIN/DME.h File_header/Map_definitions/ObjectID/Door\n"
         "Source: skproject SKWIN/SkWinCore.cpp READ_DUNGEON_STRUCTURE + GET_TILE_RECORD_LINK\n"
         "Source: skproject SKWINSPX/src/v4/skcore.cpp GET_NEXT_RECORD_LINK reads record w0\n"
-        "Fix: level_count from DUNGEON_HEADER.map_count (byte offset 6), not byte offset 0\n"
+        "Fix: level_count from File_header::nMaps (byte offset 4), not a fabricated G1 word\n"
         "Fix: PC G1 real-data maps use byte squares with high-bit tile types from Map_definitions.w8\n"
         "Fix: skproject layout reads column object indexes, square-first things, text, DB pools, then byte map data\n"
-        "Fix: tile offset = DM2_TILE_DATA_START(492) + raw_map_data_byte_offset\n"
+        "Fix: tile offset = trailing File_header/44-Map_definitions map-data base + raw offset\n"
         "Fix: column-major tile offset formula (col*height+row)*2\n"
         "Asset: DM2 PC English DUNGEON.DAT 6caccd7875009e82fe2e28e7f6d6adc0\n";
 }

@@ -12,7 +12,7 @@ void dm2_v1_init(DM2_V1_GameState *state, const char *data_dir) {
     memset(state, 0, sizeof(*state));
     state->data_dir = data_dir;
     /* This is allocation only.  A real new game receives its party pose
-     * from the hash-verified G1 header in dm2_v1_boot_enter_game(); session
+     * from the hash-verified File_header in dm2_v1_boot_enter_game(); session
      * fields such as gold and time arrive only from their original owner.
      * Do not seed a playable-looking state with the former fixture values. */
 }

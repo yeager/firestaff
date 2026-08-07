@@ -1,12 +1,11 @@
-/* Real-data-only champion mirror receipt for canonical PC DM2 G1. */
+/* Real-data-only boundary test for canonical PC-DOS DM2 File_header. */
 
 #include "dm2_v1_dungeon_loader.h"
-#include "dm2_v1_champion_lifecycle_pc34_compat.h"
-#include "dm2_v1_record_pool_pc34_compat.h"
 
 #include <limits.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 static unsigned char *read_file(const char *path, int *out_size)
 {
@@ -53,7 +52,6 @@ int main(int argc, char **argv)
     unsigned char *bytes;
     int size;
     DM2_V1_DungeonData dungeon;
-    DM2_V1_RecordPoolSet record_pools;
     DM2_V1_G1ChampionMirrorReceipt mirrors;
 
     if (!path) {
@@ -66,73 +64,30 @@ int main(int argc, char **argv)
                 path);
         return 1;
     }
-    if (bytes[2] != 0x47 || bytes[3] != 0x31 || bytes[6] != 28 ||
+    if (bytes[2] != 0x47 || bytes[3] != 0x31 || bytes[4] != 44 ||
+        bytes[6] != 28 ||
         dm2_v1_dungeon_load(&dungeon, bytes, size) != 0) {
         free(bytes);
         fputs("FAIL: canonical G1 input was not accepted\n", stderr);
         return 1;
     }
     free(bytes);
-    if (!dm2_v1_dungeon_collect_g1_champion_mirrors(&dungeon, &mirrors) ||
-        !mirrors.committed || !mirrors.incomplete_world ||
-        mirrors.mirror_count != 16 || mirrors.actuator_record_reads <= 0) {
+    if (dungeon.level_count != 44 || !dungeon.initial_party_pose_valid ||
+        dungeon.initial_party_x != 1 || dungeon.initial_party_y != 8 ||
+        dungeon.initial_party_dir != 0) {
         dm2_v1_dungeon_free(&dungeon);
-        fputs("FAIL: source G1 champion mirrors were not retained\n", stderr);
+        fputs("FAIL: canonical File_header did not retain its 44-map boot state\n",
+              stderr);
         return 1;
     }
-    if (!dm2_v1_record_pool_set_init_from_dungeon(&record_pools, &dungeon)) {
+    memset(&mirrors, 0, sizeof(mirrors));
+    if (dm2_v1_dungeon_collect_g1_champion_mirrors(&dungeon, &mirrors)) {
         dm2_v1_dungeon_free(&dungeon);
-        fputs("FAIL: validated G1 record pools were not owned\n", stderr);
+        fputs("FAIL: File_header parser promoted an unproven champion continuation\n",
+              stderr);
         return 1;
     }
-    for (int i = 0; i < mirrors.mirror_count; ++i) {
-        const DM2_V1_G1ChampionMirrorRoot *mirror = &mirrors.mirrors[i];
-        DM2_V1_SelectChampionRequest select_request;
-        DM2_V1_SelectChampionReceipt select_receipt;
-        if (mirror->map < 0 || mirror->map >= dungeon.level_count ||
-            mirror->x < 0 || mirror->x >= dungeon.level_widths[mirror->map] ||
-            mirror->y < 0 || mirror->y >= dungeon.level_heights[mirror->map] ||
-            mirror->actuator_data != 0x1ffu ||
-            mirror->dynamic_hero_type != 0xffu ||
-            mirror->dynamic_load_id != 0x16ffffffu) {
-            dm2_v1_dungeon_free(&dungeon);
-            fputs("FAIL: source champion mirror lost its dynamic-load key\n",
-                  stderr);
-            return 1;
-        }
-        select_request.tile_x = (int16_t)mirror->x;
-        select_request.tile_y = (int16_t)mirror->y;
-        select_request.direction = (int16_t)mirror->direction;
-        select_request.map_level = (int16_t)mirror->map;
-        select_request.heroes_in_party = 0;
-        select_request.source_mirrors = &mirrors;
-        if (dm2_v1_select_champion(&select_request, &select_receipt) != 0 ||
-            !select_receipt.valid || !select_receipt.fail_closed ||
-            !select_receipt.source_mirror_bound ||
-            select_receipt.source_actuator_data != mirror->actuator_data ||
-            select_receipt.source_dynamic_load_id !=
-                mirror->dynamic_load_id ||
-            select_receipt.hero_type !=
-                (int16_t)(int8_t)mirror->dynamic_hero_type ||
-            select_receipt.champion_selected) {
-            dm2_v1_record_pool_set_free(&record_pools);
-            dm2_v1_dungeon_free(&dungeon);
-            fputs("FAIL: source mirror did not bind to fail-closed selection\n",
-                  stderr);
-            return 1;
-        }
-        if (dm2_v1_record_pool_address(&record_pools,
-                                       (int16_t)mirror->object_id) == NULL) {
-            dm2_v1_record_pool_set_free(&record_pools);
-            dm2_v1_dungeon_free(&dungeon);
-            fputs("FAIL: source mirror ObjectID did not resolve in owned pool\n",
-                  stderr);
-            return 1;
-        }
-    }
-    printf("PASS: retained %d source G1 champion-mirror marker roots\n",
-           mirrors.mirror_count);
-    dm2_v1_record_pool_set_free(&record_pools);
+    puts("PASS: canonical 44-map File_header is loaded and champion DYN4 stays gated");
     dm2_v1_dungeon_free(&dungeon);
     return 0;
 }

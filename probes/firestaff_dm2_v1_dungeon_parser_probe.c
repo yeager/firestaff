@@ -140,22 +140,22 @@ int main(int argc, char **argv) {
     /* ── Parse header ── */
     /* DM2 PC English DUNGEON.DAT header format (from
      * dm2_v1_dungeon_loader.c):
-     *   offset 0: uint16 LE reserved
-     *   offset 2: uint16 LE "G1" format marker
-     *   offset 4: uint16 LE header size (44)
-     *   offset 6: uint8 map_count / level_count
-     *   offset 44+: 16-byte DM1 MAP descriptors with DM2 width/height
-     *   overrides at bytes 12..15.
+     *   offset 0: uint16 LE File_header.w0 random-decoration seed
+     *   offset 2: uint16 LE File_header.cbMapData
+     *   offset 4: uint8 File_header.nMaps
+     *   offset 8: uint16 LE File_header.w8 initial party position
+     *   offset 44+: 16-byte Map_definitions records.
      *
      * SKULL.ASM T560 source evidence:
      *   44-byte DUNGEON_HEADER followed by MAP descriptors and tile data.
      */
 
-    uint16_t level_count = raw[6];
+    uint16_t level_count = raw[4];
     fprintf(stderr, "INFO: level_count from header = %u\n", level_count);
 
     PROBE_ASSERT(level_count > 0, "level_count > 0 (got %u)", level_count);
-    PROBE_ASSERT(level_count <= 30, "level_count <= DM2_V1_MAX_LEVELS(30), got %u", level_count);
+    PROBE_ASSERT(level_count <= DM2_V1_MAX_LEVELS,
+                 "level_count <= DM2_V1_MAX_LEVELS, got %u", level_count);
 
     /* ── Load via dm2_v1_dungeon_load ── */
     DM2_V1_DungeonData dungeon;
@@ -164,7 +164,7 @@ int main(int argc, char **argv) {
     PROBE_ASSERT(load_result == 0, "dm2_v1_dungeon_load returns 0 (success)");
     PROBE_ASSERT(dungeon.level_count > 0, "dungeon.level_count > 0 (got %d)", dungeon.level_count);
     PROBE_ASSERT(dungeon.level_count <= DM2_V1_MAX_LEVELS,
-                 "dungeon.level_count <= MAX_LEVELS(30), got %d", dungeon.level_count);
+                 "dungeon.level_count <= DM2_V1_MAX_LEVELS, got %d", dungeon.level_count);
     PROBE_ASSERT(dungeon.raw_data != NULL, "dungeon.raw_data != NULL (data retained)");
     PROBE_ASSERT(dungeon.raw_size == file_size,
                  "dungeon.raw_size == file_size (%d == %d)", dungeon.raw_size, file_size);

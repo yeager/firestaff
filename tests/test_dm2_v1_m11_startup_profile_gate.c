@@ -1282,17 +1282,20 @@ int main(void) {
                 "M11 DM2 mirror state reports level loaded");
     expect_true(dm2_v1_sound_playback_backend_bound(),
                 "M11 DM2 binds playback only after the verified boot profile");
-    expect_true(view.dm2State.party_x == 3 && view.dm2State.party_y == 5 &&
-                view.dm2State.party_dir == 2,
-                "M11 DM2 mirror state reports the boot pose");
+    /* File_header::w8 is 0x0101, directly yielding the map-0 (1,8,0)
+     * pose. Do not retain the former +10 fixture word as an entrance.
+     * SKProject SkWinCore.cpp:39936-39943. */
+    expect_true(view.dm2State.party_x == 1 && view.dm2State.party_y == 8 &&
+                view.dm2State.party_dir == 0,
+                "M11 DM2 mirror state reports the File_header boot pose");
     expect_true(view.dm2State.tick_count == 0,
                 "M11 DM2 mirror state starts at tick zero");
     expect_true(dm2_v1_runtime_has_dungeon_data() == 1,
                 "DM2 V1 runtime singleton has the boot profile");
-    expect_true(dm2_v1_runtime_get_party_x() == 3 &&
-                dm2_v1_runtime_get_party_y() == 5 &&
-                dm2_v1_runtime_get_party_dir() == 2,
-                "DM2 V1 runtime accessors report the boot pose");
+    expect_true(dm2_v1_runtime_get_party_x() == 1 &&
+                dm2_v1_runtime_get_party_y() == 8 &&
+                dm2_v1_runtime_get_party_dir() == 0,
+                "DM2 V1 runtime accessors report the File_header boot pose");
     expect_true(dm2_v1_runtime_get_tick_count() == 0,
                 "DM2 V1 runtime tick counter starts at zero");
     expect_true(view.dm2State.startup_menu_active == 1,
@@ -1339,23 +1342,20 @@ int main(void) {
     expect_true(view.dm2State.startup_title_animation_tick == 0,
                 "M11 DM2 startup never manufactures a title tick");
     profile = (DM2_V1_BootProfile*)view.dm2BootProfile;
-    expect_true(profile != NULL && profile->deterministic.max_levels == 28u &&
-                    profile->deterministic.dungeon_seed == 257u,
-                "M11 DM2 launch retains the PC-DOS G1 level count and seed");
+    expect_true(profile != NULL && profile->deterministic.max_levels == 44u &&
+                    profile->deterministic.dungeon_seed == 0u,
+                "M11 DM2 launch retains the PC-DOS File_header map count and seed");
     memset(&champion_dyn4, 0, sizeof(champion_dyn4));
+    /* The old 28-map pseudo-header happened to manufacture a 16-marker
+     * continuation and thereby admitted a DYN4 bundle. The real 44-map
+     * File_header parser has no complete PC continuation proof yet, so boot
+     * must keep champion activation unavailable rather than bind unrelated
+     * GDAT bytes. */
     expect_true(profile &&
-                    dm2_v1_boot_champion_dyn4_receipt(
+                    !dm2_v1_boot_champion_dyn4_receipt(
                         profile, &champion_dyn4) &&
-                    champion_dyn4.valid &&
-                    champion_dyn4.incomplete_champion_activation &&
-                    champion_dyn4.mirror_count == 16 &&
-                    champion_dyn4.dynamic_load_id == 0x16ffffffu &&
-                    champion_dyn4.block_count == 96u &&
-                    champion_dyn4.skipped_sound_entry_count == 0u &&
-                    champion_dyn4.byte_count == 149670u &&
-                    champion_dyn4.payload_hash == 0xa0af7ecau &&
-                    champion_dyn4.receipt_hash == 0x8ae00cc1u,
-                "M11 boot retains the original G1 mirror-selected DYN4 bytes in RAM");
+                    !champion_dyn4.valid,
+                "M11 does not promote an unproven champion DYN4 bundle");
     if (profile) {
         DM2_V1_StartupMenuPointerLayout pointer_layout;
         int source_x;

@@ -14015,11 +14015,11 @@ independently buildable; no game-data bytes were copied, unpacked or tracked.
   tick does not advance that fixture clock. Focused production gate and
   source-timer regression pass against the real PC-DOS corpus.
 
-- ✅ 2026-08-05 DM2 G1 boot-summary truthfulness: moved the DM2 profile
-  summary until after hash-verified `DUNGEON.DAT` admission, so it reports
-  the original PC-DOS G1 values (`seed=257`, `levels=28`) instead of the
-  deliberately unavailable pre-load zeroes. The M11 startup real-data gate
-  now asserts those values alongside the source start pose. Verification:
+- ✅ 2026-08-05 DM2 boot-summary truthfulness: moved the DM2 profile summary
+  until after hash-verified `DUNGEON.DAT` admission. **Corrected 2026-08-07:**
+  the source values are `File_header.w0=0` and `File_header.nMaps=44`, not
+  the old misread `257/28` pair. The M11 startup real-data gate asserts those
+  values alongside the source start pose. Verification:
   direct `--game dm2 --boot-probe` capture and
   `dm2_v1_m11_startup_profile_gate`.
 - ✅ 2026-08-05 DM2 hash-verified PC-DOS boot repair: expanded the temporary
@@ -53723,10 +53723,11 @@ the supplied root and selected MD5 to prove this without shipping game data.
   `test_dm2_v1_m11_startup_profile_gate` pass against
   `~/.firestaff/data/dm2`.
 - ✅ 2026-07-31 DM2 boot dungeon-seed fixture removal: an unverified boot
-  profile no longer starts with the PC-English G1 seed (`257`) or level count
-  (`28`). Both are unavailable until `DUNGEON_Load` reads the hash-verified
-  original `DUNGEON.DAT` header at offsets 8 and 6 respectively. Source:
-  SKProject `DUNGEON_Load` G1-header route.
+  profile no longer starts with a PC-English seed or map count. **Corrected
+  2026-08-07:** both remain unavailable until the hash-verified original
+  `DUNGEON.DAT` `File_header` supplies `w0` at offset 0 and `nMaps` at byte 4.
+  Source: SKProject `SKWIN/DME.h::File_header` and
+  `SkWinCore.cpp::READ_DUNGEON_STRUCTURE`.
   Verification: `test_dm2_v1_boot_profile_smoke` and real-data
   `test_dm2_v1_m11_startup_profile_gate` pass against
   `~/.firestaff/data/dm2`.
@@ -59894,3 +59895,20 @@ companion.
   mounted and requires fail-closed behavior when the source AI mapping blocks;
   the current workspace has no raw SKSAVE files, so the corpus test reports a
   documented skip. Build and focused test target pass.
+
+# DM2 PC-DOS File_header boot contract (2026-08-07)
+
+- ✅ Replaced the fabricated G1-header interpretation at the M11 boot boundary
+  with SKProject's `SKWIN/DME.h::File_header`: `w0` at byte 0 is the
+  decoration seed, `nMaps` at byte 4 is 44, `cwTextData` is at byte 6 and
+  `w8` at byte 8 supplies the map-0 start pose `(1,8,N)`. The boot profile,
+  real-data parser probe, new-dungeon reload and M11 runtime now share that
+  contract; `SkWinCore.cpp::READ_DUNGEON_STRUCTURE` lines 39933–39945 is the
+  matching original-loader reference.
+- ✅ Removed the false 28-map champion-DYN4 admission from the startup proof.
+  It had treated File_header fields as a different format and could retain an
+  unrelated GDAT bundle. Champion DYN4 is now fail-closed until the actual
+  PC-DOS continuation has source proof. No game data is written or unpacked.
+- ✅ Verified against the mounted original PC-DOS corpus:
+  `test_dm2_v1_m11_startup_profile_gate`, the File_header/champion boundary
+  test and `probe_dm2_v1_dungeon_loader` (412 passed, 0 failed).

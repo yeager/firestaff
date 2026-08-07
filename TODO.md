@@ -4114,9 +4114,9 @@ level or consumer bindings.
   installer format before exposing those ports in the launcher.
   The FM Towns CD ZIP is accepted with either the global data root or `dm2/`
   itself as the configured root, while the payload remains memory-only.
-  **2026-07-31 update:** the boot profile no longer preloads the PC-English
-  G1 seed (`257`) or level count (`28`). Both remain zero until the
-  hash-verified `DUNGEON.DAT` header supplies the real values.
+  **2026-07-31 update, corrected 2026-08-07:** the boot profile no longer
+  preloads a PC-English seed or map count. Both remain zero until the
+  hash-verified `DUNGEON.DAT` File_header supplies `w0` and `nMaps`.
   **2026-08-06 update:** M11 now also rejects decoded SKSave session subsets
   at the runtime boundary. `DM2_GAME_LOAD` must restore the complete original
   record pools, timer queue, actuator-generator pass and entrance placement
@@ -30326,3 +30326,11 @@ required before semantic promotion.
   baseline and never publishes a session. The mounted workspace has no raw
   SKSAVE corpus, so this positive path remains compile/test-gated until one is
   supplied.
+
+# DM2 PC-DOS File_header continuation and champion activation (2026-08-07)
+
+- [ ] Derive the PC-DOS record/map continuation after the 44-entry
+  `File_header` from an original-loader trace. The former 28-map pseudo-header
+  accidentally produced 16 champion mirrors and a DYN4 selection; it is not
+  valid evidence and must not be restored. Champion selection remains gated
+  until the real DB3/DB4 ownership and marker route are independently proven.

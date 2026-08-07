@@ -14,19 +14,19 @@
  *   - Weather zones (rain, fog)
  * Source: SKULL.ASM (522128 lines disassembly) */
 
-/* PROBE_NOTES — DM2 DUNGEON.DAT header contract (PC English, 39437 bytes):
+/* PROBE_NOTES — DM2 DUNGEON.DAT File_header (PC English, 39437 bytes):
  *
- *   Byte offset  0: uint16_le: 0x0000 (reserved/padding)
- *   Byte offset  2: uint16_le: 0x4731 ("G1" format magic/version, ASCII)
- *   Byte offset  4: uint16_le: 0x002c (44) — first level data offset or header size
- *   Byte offset  6: uint16_le: 0x001c (28) — LEVEL COUNT
- *   Byte offset  8: uint16_le: 0x0101 (257) — dungeon seed
- *   Byte offset 10: uint16_le: 0x0938 (2360) — dungeon flags/metadata
- *   Byte offset 12: uint16_le: 0x0035 (53) — ???
- *   Byte offset 14: uint16_le: 0x00d9 (217) — ???
- *   Byte offset 16: uint16_le: 0x0240 (576) — ???
+ *   Byte offset  0: uint16_le: w0 random-decoration seed (0x0000)
+ *   Byte offset  2: uint16_le: cbMapData (0x3147 bytes)
+ *   Byte offset  4: uint8:     nMaps (44)
+ *   Byte offset  5: uint8:     padding
+ *   Byte offset  6: uint16_le: cwTextData (28 words)
+ *   Byte offset  8: uint16_le: w8 initial party position (0x0101)
+ *   Byte offset 10: uint16_le: cwListSize (2360 words)
+ *   Byte offset 12: uint16_le: nRecords[0] (53)
+ *   Byte offset 14: uint16_le: nRecords[1] (217)
  *   ...
- *   The PC G1 real-data path reads 16-byte skproject-compatible
+ *   The PC real-data path reads 16-byte skproject-compatible
  *   Map_definitions from byte 44 and byte-sized column-major map squares
  *   from the trailing map-data block. It also bounds the G1-specific
  *   extension between the standard DB-pool prefix and map tail, without
@@ -35,15 +35,14 @@
  *   16-bit map-fixture reader is excluded from product builds; it exists
  *   only in the explicit fixture test target.
  *
- *   Confirmed against: SKULL.ASM T560 DUNGEON_Load, local DUNGEON.DAT probe.
- *   Confirmed loader contract: level_count/map_count is byte offset 6. */
+ *   Confirmed against: SKProject SKWIN/DME.h::File_header and
+ *   SkWinCore.cpp::READ_DUNGEON_STRUCTURE, plus the mounted PC-DOS member.
+ *   Confirmed loader contract: map_count is File_header::nMaps at byte 4. */
 
-/* The shipped PC G1 DUNGEON.DAT describes 28 maps, while a source SKSave
- * serializes 44 map definitions in its c_savegame raw-dungeon prefix.  The
- * loader owns both representations, so its storage bound follows the
- * six-bit map field and the real save corpus rather than the new-game map
- * count.  Source: SKWIN/DME.h::File_header::nMaps; SKWINSPX/src/v5/
- * sksvgame.cpp::DM2_READ_SKSAVE_DUNGEON. */
+/* The shipped PC-DOS DUNGEON.DAT and its raw SKSave prefix both declare 44
+ * File_header::nMaps entries. The storage bound follows that source field
+ * and the real save corpus. Source: SKWIN/DME.h::File_header::nMaps;
+ * SKWINSPX/src/v5/sksvgame.cpp::DM2_READ_SKSAVE_DUNGEON. */
 #define DM2_V1_MAX_LEVELS 64
 #define DM2_V1_MAX_MAP_SIZE 64
 

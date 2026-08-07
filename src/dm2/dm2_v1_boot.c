@@ -2028,10 +2028,10 @@ void dm2_v1_boot_profile_init(DM2_V1_BootProfile *profile) {
      * globals. Do not publish a guessed 24-hour day-cycle configuration. */
     profile->deterministic.day_cycle_minutes  = 0u;
     profile->deterministic.day_cycle_ticks    = 0u;
-    /* The G1 header names the actual level count.  Keep it unavailable until
-     * that original DUNGEON.DAT payload has been admitted. */
+    /* SKProject's File_header names the actual map count. Keep it unavailable
+     * until that original DUNGEON.DAT payload has been admitted. */
     profile->deterministic.max_levels         = 0u;
-    /* DUNGEON_Load obtains this from the verified G1 header.  A boot profile
+    /* DUNGEON_Load obtains this from the verified File_header. A boot profile
      * without that file must not impersonate the PC-English seed. */
     profile->deterministic.dungeon_seed       = 0u;
 }
@@ -2072,15 +2072,17 @@ void dm2_v1_boot_set_save_root(DM2_V1_BootProfile *profile,
 /* ── Deterministic config from dungeon header ────────────────────────── */
 
 /*
- * DM2 DUNGEON.DAT header (offset bytes):
- *   0-1:  0x0000 (reserved)
- *   2-3:  0x4731 ("G1" magic)
- *   4-5:  0x002c (44) first level data offset
- *   6-7:  level_count = 28 (PC English)
- *   8-9:  dungeon_seed = 257 (word at offset 8)
- *   10-11: metadata
+ * DM2 DUNGEON.DAT starts with SKProject's 44-byte File_header:
+ *   0-1:  w0, random-decoration seed
+ *   2-3:  cbMapData, source map-data byte count (0x3147 on PC DOS)
+ *   4:    nMaps, 44 in the shipped PC-DOS member
+ *   5:    padding
+ *   6-7:  cwTextData
+ *   8-9:  w8, initial party position, not a random seed
+ *   10-11: cwListSize
  *
- * Source: SKULL.ASM T560 DUNGEON_Load
+ * Source: SKProject SKWIN/DME.h::File_header; SKWIN/SkWinCore.cpp
+ * READ_DUNGEON_STRUCTURE.
  */
 static uint16_t dm2_rd16_le(const uint8_t *p) {
     return (uint16_t)p[0] | ((uint16_t)p[1] << 8);
@@ -2091,13 +2093,16 @@ void dm2_v1_boot_build_deterministic_config(DM2_V1_BootProfile *profile,
                                             int dungeon_size) {
     if (!profile || !dungeon_header || dungeon_size < 12) return;
 
-    /* Read dungeon seed from header offset 8 */
-    uint16_t seed = dm2_rd16_le(dungeon_header + 8);
+    /* File_header::w0 drives the source random-decoration calculation.
+     * `w8` at +8 is party position and must never become a synthetic seed. */
+    uint16_t seed = dm2_rd16_le(dungeon_header + 0);
     profile->deterministic.dungeon_seed = seed;
 
-    /* Read level count from header offset 6 */
-    uint16_t level_count = dm2_rd16_le(dungeon_header + 6);
-    if (level_count > 0 && level_count <= DM2_V1_MAX_LEVELS + 2) {
+    /* File_header::nMaps is one byte at +4. The retail PC-DOS member has 44
+     * maps, including maps that the former fabricated G1 header reported as
+     * an unrelated value at +6. */
+    uint16_t level_count = dungeon_header[4];
+    if (level_count > 0 && level_count <= DM2_V1_MAX_LEVELS) {
         profile->deterministic.max_levels = level_count;
     }
 
@@ -2245,9 +2250,9 @@ int dm2_v1_boot_enter_game(DM2_V1_BootProfile *profile) {
         dm2_v1_sound_bind_gdat_loader(NULL, 0);
     }
 
-    /* skproject/SKWIN DME.h File_header stores the new-game party pose in
-     * the G1 header. The dungeon loader has already admitted that pose
-     * against map 0 dimensions and origin; do not replace it with the old
+    /* SKProject/SKWIN DME.h File_header stores the new-game party pose in
+     * w8. The dungeon loader has already admitted that pose against map-0
+     * dimensions; do not replace it with the old
      * synthetic Hall-of-Champions default. */
     if (dd->initial_party_pose_valid) {
         gs->party_x = dd->initial_party_x;
@@ -2332,8 +2337,8 @@ int dm2_v1_boot_load_new_dungeon(
     receipt.source_leader_hand_reset_required = 1;
     receipt.synthetic_party_created = 0;
     receipt.map_count = candidate.level_count;
-    receipt.dungeon_seed = candidate.raw_data && candidate.raw_size >= 10
-        ? (int)dm2_rd16_le(candidate.raw_data + 8) : -1;
+    receipt.dungeon_seed = candidate.raw_data && candidate.raw_size >= 2
+        ? (int)dm2_rd16_le(candidate.raw_data) : -1;
     receipt.raw_byte_count = (uint32_t)candidate.raw_size;
     receipt.raw_hash = hash;
     if (receipt.raw_byte_count == 0u) {
