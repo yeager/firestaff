@@ -4380,6 +4380,16 @@ list(REMOVE_ITEM M10_SOURCES
 # no runtime caller; preserve the direct audit without linking it into M10.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0501_g0550_graphic560_save_source_audit_pc34_compat.c")
+# These six adjacent FIO/save/media source audits expose only static ReDMCSB
+# ownership tables.  They have no M10 caller and are compiled by their direct
+# regressions, so keep audit-only evidence out of the production archive.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0421_f0440_save_endgame_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0946_f0965_source_ownership_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1286_f1305_language_fio_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f1346_f1365_fio_floppy_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_g0551_g0600_save_media_input_source_audit_pc34_compat.c"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_m201_m250_source_audit_pc34_compat.c")
 # `dm1_v1_g0117_pc34_compat.c` is a source-locked copy of the PC34
 # Graphic558 D1C stair-frame coordinates.  It has no runtime caller or
 # authenticated GRAPHICS.DAT binding; its dedicated regression compiles the
