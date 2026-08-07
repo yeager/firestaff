@@ -1,3 +1,38 @@
+# Firestaff v3.0.293
+
+## DM1
+
+- FM Towns menu font rasteriser shipped with round-trip verification
+  against real EDM.EXP asset 557 from the shipping Japanese Track 01
+  GRAPHICS.DAT. Layout: 6 rows × 128 ASCII glyphs, MSB-first,
+  CHAR_X_SIZE (=5) body pixels right-aligned in bits 4..0.
+  `dm1_v1_fmtowns_font_rasterise_glyph_pc34` and
+  `..._rasterise_string_pc34` blit into an M11 8bpp framebuffer with
+  fg/bg palette indices and optional bg-write.
+- FM Towns menu-render harness (previous release's shipped modules)
+  now has a concrete glyph consumer.
+
+## Cross-cutting
+
+- CI: fixed cross-platform build failures — 18 test/probe targets
+  gained the missing `theron_v1_track02_dungeon_text.c` source,
+  Windows `mkdir()` signature guarded, and Ubuntu GCC 14
+  `-Werror=use-after-free` suppressed file-scope in a DM2 test.
+- Docs: TODO.md and DONE.md split into per-game files
+  (`TODO-dm1.md`, `TODO-csb.md`, `TODO-dm2.md`, `TODO-nexus.md`,
+  `TODO-theron.md` and DONE equivalents). 990 misclassified H1
+  items relocated to correct game bucket, 1 exact duplicate
+  removed.
+- Docs: 30 stray root markdown files reorganised into
+  `docs/releases/`, `docs/qa/`, `docs/reviews/`, `docs/plans/`.
+- Docs: new `docs/fmtowns/CROSS_GAME_INVENTORY.md` inventories
+  every FM Towns module across DM1/DM2/CSB and flags reuse
+  opportunities.
+- Repo: removed synthetic README screenshots pending re-capture
+  from source-locked runtime output.
+- Releases: pruned to the 10 most recent tags; kept releases were
+  rewritten with per-game changelog grouping.
+
 # Firestaff v3.0.292
 
 ## Added
