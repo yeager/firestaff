@@ -63,6 +63,12 @@ extern "C" {
  * dm2data.cpp::table1d6356. */
 #define DM2_V1_ORIGINAL_CHAMPION_RECORD_SIZE 263
 
+/* SKProject c_wbbb/savegames1 is the six-byte source state read by
+ * DM2_GAME_LOAD immediately before c_tim. It is raw provenance, not a
+ * Firestaff session projection: no scalar gold, reputation, or time owner
+ * has been proven in this record. */
+#define DM2_V1_ORIGINAL_SAVEGAMES1_SIZE 6
+
 typedef struct DM2_V1_SessionState {
     /* Game tick counter — SUPPRESS-encoded 4-byte field */
     uint32_t game_tick;
@@ -189,6 +195,7 @@ typedef struct {
      * sksvgame.cpp:47/1415 source buffer and DM2_GAME_LOAD own these bytes;
      * this is deliberately not a Firestaff session-field projection. */
     uint32_t savegame_buffer_hash;
+    /* Exact c_wbbb/ddat.savegames1 source section; provenance only. */
     uint32_t save_state_hash;
     uint32_t timers_hash;
     uint32_t fixed_sections_hash;

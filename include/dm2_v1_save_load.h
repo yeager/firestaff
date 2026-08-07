@@ -269,6 +269,8 @@ typedef struct {
     uint32_t raw_hero_hashes[4];
     uint32_t raw_heroes_hash;
     uint32_t raw_savegame_buffer_hash;
+    /* Exact c_wbbb/ddat.savegames1 six-byte source section; provenance only.
+     * It does not populate unowned session gold, reputation, or time. */
     uint32_t raw_save_state_hash;
     uint32_t raw_fixed_sections_hash;
     uint32_t raw_timers_hash;

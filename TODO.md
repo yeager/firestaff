@@ -4169,6 +4169,12 @@ level or consumer bindings.
   has no scalar gold or reputation field, and `gametime` is maintained
   separately; coin records and the separate time state still need their
   complete runtime owners before raw resume can be admitted.
+  **2026-08-07 source-owner update:** the fixed receipt now names the six-byte
+  `c_wbbb`/`ddat.savegames1` section explicitly and centralizes its source
+  size. Real saves retain its raw hash only. The surrounding
+  `globalb`/`globalw`/hero/timer reads provide no proven scalar gold,
+  reputation, or time owner, so those session fields remain unavailable
+  rather than being seeded from fixture defaults.
 
 - **DM2-CREATURE-AI-ROW-HANDOFF:** Replace the data-free direct
   `creature_type -> AIDefinition` fallback with the original two-stage

@@ -3,6 +3,7 @@
 
 #include "dm2_v1_save_suppress_masks_pc34_compat.h"
 #include "dm2_v1_save_record_masks_pc34_compat.h"
+#include "dm2_v1_new_game.h"
 
 /* table1d631a[60] — save game buffer (s_savegamebuffer) mask. */
 static const uint8_t g_savegame_buffer_mask[60] = {
@@ -53,8 +54,8 @@ static const uint8_t g_hero_mask[263] = {
     0x00, 0x3f, 0x0f, 0x00, 0x00, 0x00, 0x00
 };
 
-/* table1d645d[6] — save state (c_wbbb) mask. */
-static const uint8_t g_save_state_mask[6] = {
+/* table1d645d[6] — c_wbbb/ddat.savegames1 mask. */
+static const uint8_t g_save_state_mask[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE] = {
     0x00, 0x00, 0x00, 0xff, 0xff, 0x00
 };
 

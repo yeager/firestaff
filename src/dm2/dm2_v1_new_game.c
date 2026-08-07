@@ -874,7 +874,7 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
     uint8_t globalb[64];
     uint8_t globalw[128];
     uint8_t hero[263];
-    uint8_t save_state[6];
+    uint8_t save_state[DM2_V1_ORIGINAL_SAVEGAMES1_SIZE];
     uint8_t timer[12];
     const uint8_t *hero_mask;
     const uint8_t *save_state_mask;
@@ -981,9 +981,10 @@ int dm2_v1_original_raw_sksave_fixed_state_receipt(
                                                         sizeof(save_state));
     fixed_hash = dm2_v1_raw_sksave_hash_extend(fixed_hash, save_state,
                                                 sizeof(save_state));
-    /* sksvgame.cpp::DM2_GAME_LOAD reads c_wbbb before c_tim, without
-     * flushing SUPPRESS.  This is a bitstream boundary, not an invented
-     * byte-aligned record stream. */
+    /* SKProject sksvgame.cpp::DM2_GAME_LOAD reads the six-byte c_wbbb
+     * (ddat.savegames1) before c_tim, without flushing SUPPRESS. This is a
+     * bitstream boundary; retain only the raw hash because no source field
+     * here owns session gold, reputation, or time. */
     candidate.timer_bitstream_offset =
         candidate.dungeon.suppress_state_offset + reader.position;
     candidate.timer_bitstream_bits_remaining = reader.bits_remaining;

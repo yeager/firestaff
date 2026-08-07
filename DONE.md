@@ -58777,3 +58777,10 @@ mutation remains fail-closed.
 - ✅ Kept source identity, relocated-code admission, SLEV/SAL playback and
   VDP1/VDP2 production composition blocked until a later CDB window reaches
   and joins an authenticated ISO file span.
+
+# DM2 SKSave savegames1 owner receipt (2026-08-07)
+
+Named the six-byte `c_wbbb`/`ddat.savegames1` section from SKProject
+`sksvgame.cpp::DM2_GAME_LOAD` and centralized its source size. The mounted
+real-save corpus keeps this section as a raw hash only; no unproven scalar
+gold, reputation, or time value is promoted into the Firestaff session.
