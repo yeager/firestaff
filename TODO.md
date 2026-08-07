@@ -30103,6 +30103,13 @@ This file tracks remaining work only. Completed work belongs in `DONE.md`.
   checks the cumulative raw boundary and returns a source payload hash. The
   real PC-DOS regression reads raw entries 0 and 1; image decoding, allocator
   cache lifetime, underlay and GRAPHIC2.DAT admission remain gated.
+  **2026-08-07 underlay progress:** a source-owned materializer now resolves
+  the exact `dtRaw8/0/0` ENT1 row, reads its real four-byte image-to-underlay
+  table through the ULP raw-entry reader, validates source raw-index bounds
+  and sorted order, and returns payload/pair hashes. The mounted PC-DOS v5
+  corpus has no such source row, so its regression stays fail-closed; no
+  empty or synthetic underlay table is admitted. Positive underlay-corpus
+  wiring and decoded overlay/cache ownership remain gated.
 - **2026-08-07 save-dungeon parity correction:** the isolated
   `DM2_STORE_EXTRA_DUNGEON_DATA` teleporter gate now matches SKProject's
   `current_map > target_map` backward-reference skip; the complete raw-dungeon

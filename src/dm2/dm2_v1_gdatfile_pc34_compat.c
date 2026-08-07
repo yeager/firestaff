@@ -1486,25 +1486,16 @@ static uint16_t dm2_v1_gdat_source_ulp_length(
     return state->big_endian ? dm2_gdat_be16(word) : dm2_gdat_le16(word);
 }
 
-int dm2_v1_gdat_load_source_raw_entry(
-    DM2_V1_GdatFileState *state,
-    uint16_t raw_index,
-    uint8_t *destination,
-    uint32_t destination_capacity,
-    const DM2_V1_GdatFileCallbacks *cb,
-    void *ctx,
-    DM2_V1_GdatSourceRawEntryReceipt *out)
+static int dm2_v1_gdat_source_raw_span(
+    const DM2_V1_GdatFileState *state, uint16_t raw_index,
+    uint32_t *out_offset, uint32_t *out_length)
 {
     uint64_t file_offset;
     uint32_t byte_length;
     uint16_t index;
-    DM2_V1_GdatLoadRawDataReceipt load_receipt;
 
-    if (out) memset(out, 0, sizeof(*out));
-    if (!state || !state->ulp_table || !cb || !destination ||
-        raw_index >= state->ulp_count || state->raw_data_end == 0u) {
-        return 0;
-    }
+    if (!state || !state->ulp_table || raw_index >= state->ulp_count ||
+        state->raw_data_end == 0u || !out_offset || !out_length) return 0;
     byte_length = raw_index == 0u ? state->first_entry_size :
         (uint32_t)dm2_v1_gdat_source_ulp_length(state, raw_index);
     file_offset = state->first_raw_offset;
@@ -1514,9 +1505,35 @@ int dm2_v1_gdat_load_source_raw_entry(
             file_offset += dm2_v1_gdat_source_ulp_length(state, index);
     }
     if (file_offset > UINT32_MAX || byte_length == 0u ||
-        byte_length > destination_capacity ||
         file_offset > state->raw_data_end ||
         byte_length > state->raw_data_end - (uint32_t)file_offset ||
+        byte_length > INT32_MAX || file_offset > INT32_MAX) return 0;
+    *out_offset = (uint32_t)file_offset;
+    *out_length = byte_length;
+    return 1;
+}
+
+int dm2_v1_gdat_load_source_raw_entry(
+    DM2_V1_GdatFileState *state,
+    uint16_t raw_index,
+    uint8_t *destination,
+    uint32_t destination_capacity,
+    const DM2_V1_GdatFileCallbacks *cb,
+    void *ctx,
+    DM2_V1_GdatSourceRawEntryReceipt *out)
+{
+    uint32_t file_offset;
+    uint32_t byte_length;
+    DM2_V1_GdatLoadRawDataReceipt load_receipt;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!state || !state->ulp_table || !cb || !destination ||
+        raw_index >= state->ulp_count || state->raw_data_end == 0u) {
+        return 0;
+    }
+    if (!dm2_v1_gdat_source_raw_span(state, raw_index, &file_offset,
+                                     &byte_length) ||
+        byte_length > destination_capacity ||
         byte_length > INT32_MAX || file_offset > INT32_MAX) {
         return 0;
     }
@@ -1538,4 +1555,99 @@ int dm2_v1_gdat_load_source_raw_entry(
         if (out->payload_hash == 0u) out->payload_hash = 1u;
     }
     return 1;
+}
+
+int dm2_v1_gdat_materialize_source_underlays(
+    DM2_V1_GdatFileState *state,
+    DM2_V1_GdatSourceUnderlayPair *pairs,
+    uint16_t pair_capacity,
+    const DM2_V1_GdatFileCallbacks *cb,
+    void *ctx,
+    DM2_V1_GdatSourceUnderlayReceipt *out)
+{
+    DM2_V1_GdatEnt1Row *rows = NULL;
+    DM2_V1_GdatEnt1RowsReceipt rows_receipt;
+    uint8_t *payload = NULL;
+    DM2_V1_GdatSourceRawEntryReceipt raw_receipt;
+    uint16_t raw_index = 0u;
+    uint16_t pair_count;
+    uint16_t row_index;
+    uint32_t payload_hash;
+    uint32_t pairs_hash = 2166136261u;
+    int found = 0;
+
+    if (out) memset(out, 0, sizeof(*out));
+    if (!state || !pairs || pair_capacity == 0u || !cb ||
+        state->ent1_entry_count == 0u) return 0;
+    rows = (DM2_V1_GdatEnt1Row *)calloc(state->ent1_entry_count,
+                                        sizeof(*rows));
+    if (!rows) return 0;
+    memset(&rows_receipt, 0, sizeof(rows_receipt));
+    if (!dm2_v1_gdat_materialize_ent1_rows(
+            state, rows, state->ent1_entry_count, &rows_receipt)) goto fail;
+    /* c_gdatfile.cpp::DM2_READ_GRAPHICS_STRUCTURE asks for
+     * QUERY_GDAT_ENTRY_DATA_INDEX(0, 0, dtRaw8, 0).  The ENT1 projection is
+     * T/I/D/S/F/G/P => cls1/cls2/cls3/cls4/cls5/cls6/data_index. */
+    for (row_index = 0u; row_index < rows_receipt.entry_count; ++row_index) {
+        const DM2_V1_GdatEnt1Row *row = &rows[row_index];
+        if (row->cls1 == 0u && row->cls2 == 0u && row->cls3 == 0x08u &&
+            row->cls4 == 0u) {
+            raw_index = row->data_index;
+            found = 1;
+            break;
+        }
+    }
+    {
+        uint32_t ignored_offset;
+        uint32_t ignored_length;
+        if (!found || raw_index >= state->ulp_count ||
+            !dm2_v1_gdat_source_raw_span(state, raw_index,
+                                         &ignored_offset, &ignored_length))
+            goto fail;
+    }
+    {
+        uint32_t payload_length;
+        uint32_t ignored_offset;
+        if (!dm2_v1_gdat_source_raw_span(state, raw_index, &ignored_offset,
+                                         &payload_length) ||
+            payload_length < 4u || (payload_length % 4u) != 0u ||
+            payload_length / 4u > pair_capacity || payload_length / 4u > UINT16_MAX)
+            goto fail;
+        payload = (uint8_t *)malloc(payload_length);
+        if (!payload) goto fail;
+        memset(&raw_receipt, 0, sizeof(raw_receipt));
+        if (!dm2_v1_gdat_load_source_raw_entry(
+                state, raw_index, payload, payload_length, cb, ctx,
+                &raw_receipt) || !raw_receipt.valid) goto fail;
+        payload_hash = raw_receipt.payload_hash;
+        pair_count = (uint16_t)(payload_length / 4u);
+    }
+    for (row_index = 0u; row_index < pair_count; ++row_index) {
+        const uint8_t *raw = payload + (size_t)row_index * 4u;
+        const uint16_t image = (uint16_t)(raw[0] | ((uint16_t)raw[1] << 8));
+        const int16_t underlay = (int16_t)(uint16_t)(raw[2] |
+            ((uint16_t)raw[3] << 8));
+        if (image >= state->ulp_count || underlay < 0 ||
+            (uint16_t)underlay >= state->ulp_count ||
+            (row_index != 0u && image <= pairs[row_index - 1u].image_raw_index))
+            goto fail;
+        pairs[row_index].image_raw_index = image;
+        pairs[row_index].underlay_raw_index = underlay;
+        pairs_hash = dm2_gdat_ent1_hash_bytes(pairs_hash, raw, 4u);
+    }
+    free(payload);
+    free(rows);
+    if (out) {
+        out->valid = true;
+        out->raw_index = raw_index;
+        out->pair_count = pair_count;
+        out->payload_hash = payload_hash;
+        out->pairs_hash = pairs_hash ? pairs_hash : 1u;
+    }
+    return 1;
+
+fail:
+    free(payload);
+    free(rows);
+    return 0;
 }

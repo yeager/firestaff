@@ -395,6 +395,19 @@ typedef struct {
     uint32_t payload_hash;
 } DM2_V1_GdatSourceRawEntryReceipt;
 
+typedef struct {
+    uint16_t image_raw_index;
+    int16_t  underlay_raw_index;
+} DM2_V1_GdatSourceUnderlayPair;
+
+typedef struct {
+    bool     valid;
+    uint16_t raw_index;
+    uint16_t pair_count;
+    uint32_t payload_hash;
+    uint32_t pairs_hash;
+} DM2_V1_GdatSourceUnderlayReceipt;
+
 /* Resolve and read one source raw GDAT entry from the retained ULP table.
  * Index zero uses the source first-ENT1 length; later indices use the
  * source ULP continuation lengths. The caller owns `destination`. */
@@ -406,6 +419,16 @@ int dm2_v1_gdat_load_source_raw_entry(
     const DM2_V1_GdatFileCallbacks *cb,
     void *ctx,
     DM2_V1_GdatSourceRawEntryReceipt *out);
+
+/* Materialize SKProject's sorted dtRaw8/0/0 underlay table from the
+ * authenticated ENT1 source row and GRAPHICS.DAT raw payload. */
+int dm2_v1_gdat_materialize_source_underlays(
+    DM2_V1_GdatFileState *state,
+    DM2_V1_GdatSourceUnderlayPair *pairs,
+    uint16_t pair_capacity,
+    const DM2_V1_GdatFileCallbacks *cb,
+    void *ctx,
+    DM2_V1_GdatSourceUnderlayReceipt *out);
 
 /* ========================================================================
  * GDAT entry data builder — skproject c_gdatfile.cpp:674

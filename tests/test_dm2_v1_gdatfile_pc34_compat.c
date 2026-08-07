@@ -870,6 +870,38 @@ static int test_read_graphics_structure_real_dm2_data(void)
         free(raw1);
         if (!raw_ok) return 0;
     }
+    {
+        DM2_V1_GdatSourceUnderlayPair *pairs =
+            (DM2_V1_GdatSourceUnderlayPair *)calloc(
+                state.ulp_count, sizeof(*pairs));
+        DM2_V1_GdatSourceUnderlayReceipt underlay_receipt;
+        int underlay_ok = pairs != NULL &&
+            dm2_v1_gdat_materialize_source_underlays(
+                &state, pairs, state.ulp_count, &cb, &real,
+                &underlay_receipt) && underlay_receipt.valid &&
+            underlay_receipt.raw_index < state.ulp_count &&
+            underlay_receipt.pair_count > 0u &&
+            underlay_receipt.pair_count <= state.ulp_count &&
+            underlay_receipt.payload_hash != 0u &&
+            underlay_receipt.pairs_hash != 0u &&
+            pairs[0].image_raw_index < state.ulp_count &&
+            pairs[0].underlay_raw_index >= 0 &&
+            (uint16_t)pairs[0].underlay_raw_index < state.ulp_count;
+        if (underlay_ok) {
+            DM2_V1_GdatSourceUnderlayPair *last =
+                &pairs[underlay_receipt.pair_count - 1u];
+            underlay_ok = last->image_raw_index >=
+                pairs[0].image_raw_index &&
+                last->underlay_raw_index >= 0 &&
+                (uint16_t)last->underlay_raw_index < state.ulp_count;
+        }
+        free(pairs);
+        /* The mounted PC-DOS v5 corpus has no source dtRaw8/0/0 row.
+         * The source owner must remain gated rather than admitting a guessed
+         * empty table or a host-generated underlay pair list. */
+        if (underlay_ok || underlay_receipt.valid ||
+            underlay_receipt.pair_count != 0u) return 0;
+    }
     return dm2_v1_gdat_release_graphics_structure(&state, &cb, &real) == 1 &&
            state.ulp_table == NULL && state.allocator_table == NULL &&
            state.ent1_data == NULL;

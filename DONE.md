@@ -59825,3 +59825,13 @@ companion.
 - ✅ Verified the clean chain against the external Mednafen source and compiled
   the affected `vdp2.o`, `cdb.o` and `ss.o` objects. This proves the producer
   toolchain is buildable; it does not claim a new authenticated runtime capture.
+
+# DM2 GDAT source underlay-table boundary (2026-08-07)
+
+- ✅ Added source-owned `dtRaw8/0/0` underlay materialization. When the
+  authenticated ENT1 row exists, its real ULP raw payload is parsed as sorted
+  image-to-underlay pairs with raw-index bounds and payload/pair hashes.
+- ✅ The mounted PC-DOS v5 `GRAPHICS.DAT` contains no `dtRaw8/0/0` row; the
+  real-data regression therefore proves fail-closed behavior instead of
+  admitting an empty or synthetic table.
+- ✅ `test_dm2_v1_gdatfile_pc34_compat`: 26/26 passed.
