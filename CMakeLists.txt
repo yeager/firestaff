@@ -4047,7 +4047,7 @@ endif()
 if(POLICY CMP0179)
     cmake_policy(SET CMP0179 NEW)
 endif()
-project(Firestaff VERSION 3.0.298 LANGUAGES C)
+project(Firestaff VERSION 3.0.299 LANGUAGES C)
 
 set(FIRESTAFF_DUNGEON_STUDIO_VERSION "0.1")
 set(FIRESTAFF_SAVEGAME_EDITOR_VERSION "0.1")
@@ -7181,6 +7181,8 @@ endif()
 # pull) so the linker resolves M12 symbols referenced from M11-transitively
 # pulled objects in both directions.
 target_link_libraries(firestaff PRIVATE firestaff_m12 firestaff_m12 SDL3::SDL3)
+target_compile_definitions(firestaff PRIVATE
+    FIRESTAFF_SOURCE_DIR="${CMAKE_CURRENT_SOURCE_DIR}")
 if(NOT MSVC)
     target_compile_options(firestaff PRIVATE -Wall -Wextra -O2)
 endif()

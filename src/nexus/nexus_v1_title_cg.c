@@ -34,7 +34,7 @@ int nexus_v1_title_cg_render_tile(const uint8_t *data, int data_size,
 
     if (!data || !palette || !rgba_out) return 0;
     if (tile_index < 0) return 0;
-    if ((tile_index + 1) * NEXUS_TITLE_CG_TILE_BYTES > data_size) return 0;
+    if ((uint64_t)(tile_index + 1) * NEXUS_TITLE_CG_TILE_BYTES > (uint64_t)data_size) return 0;
 
     tile = data + tile_index * NEXUS_TITLE_CG_TILE_BYTES;
     for (i = 0; i < NEXUS_TITLE_CG_TILE_BYTES; ++i) {

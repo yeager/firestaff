@@ -9,8 +9,9 @@
 
 static int read_sector_payload(FILE *fp, uint32_t sector, int sector_size,
                                int data_offset, uint8_t *buf) {
-    long offset = (long)sector * sector_size + data_offset;
-    if (fseek(fp, offset, SEEK_SET) != 0) return -1;
+    int64_t offset = (int64_t)sector * sector_size + data_offset;
+    memset(buf, 0, NEXUS_ISO_DATA_SIZE);
+    if (fseek(fp, (long)offset, SEEK_SET) != 0) return -1;
     return (int)fread(buf, 1, NEXUS_ISO_DATA_SIZE, fp);
 }
 
@@ -19,17 +20,23 @@ static uint32_t r32le(const uint8_t *p) {
 }
 
 /* Parse one ISO 9660 directory record */
-static int parse_dir_record(const uint8_t *data, int offset, Nexus_ISOFile *out) {
+static int parse_dir_record(const uint8_t *data, int offset, int buf_size,
+                            Nexus_ISOFile *out) {
     int rec_len, name_len, i;
     if (!data || !out) return 0;
+    if (offset + 34 > buf_size) return 0;
     rec_len = data[offset];
     if (rec_len == 0) return 0;
+    if (offset + rec_len > buf_size) return 0;
 
     out->lba = r32le(data + offset + 2);
     out->size = r32le(data + offset + 10);
     out->is_dir = (data[offset + 25] & 0x02) != 0;
 
     name_len = data[offset + 32];
+    if (offset + 33 + name_len > buf_size)
+        name_len = buf_size - offset - 33;
+    if (name_len < 0) name_len = 0;
     memset(out->name, 0, sizeof(out->name));
     for (i = 0; i < name_len && i < 63; i++)
         out->name[i] = data[offset + 33 + i];
@@ -57,7 +64,8 @@ static int parse_directory(FILE *fp, uint32_t dir_lba, uint32_t dir_size,
         offset = 0;
         while (offset < NEXUS_ISO_DATA_SIZE && *count < max_files) {
             Nexus_ISOFile entry;
-            int rec_len = parse_dir_record(sector_buf, offset, &entry);
+            int rec_len = parse_dir_record(sector_buf, offset,
+                                             NEXUS_ISO_DATA_SIZE, &entry);
             if (rec_len == 0) break;
 
             if (entry.name[0] && entry.name[0] != 0 && entry.name[0] != 1) {

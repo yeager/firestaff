@@ -454,7 +454,7 @@ int nexus_v1_champion_on_death_update_leader(Nexus_V1_ChampionPool *pool,
  *              CHAMPION.C F0309 (champion save format).
  * ═══════════════════════════════════════════════════════════════════ */
 
-/* Helper: write a 32-bit little-endian value and advance pointer */
+/* Helper: write a 32-bit big-endian value and advance pointer */
 static uint8_t *wr32(uint8_t *p, uint32_t v) {
     p[0] = (uint8_t)(v >> 24);
     p[1] = (uint8_t)(v >> 16);
@@ -463,7 +463,7 @@ static uint8_t *wr32(uint8_t *p, uint32_t v) {
     return p + 4;
 }
 
-/* Helper: read a 32-bit little-endian value and advance pointer */
+/* Helper: read a 32-bit big-endian value and advance pointer */
 static const uint8_t *rd32(const uint8_t *p, uint32_t *out) {
     *out = ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) |
            ((uint32_t)p[2] << 8) | p[3];
@@ -575,7 +575,7 @@ int nexus_v1_champion_pool_deserialize(Nexus_V1_ChampionPool *pool,
     uint32_t magic, version;
     int i, j;
 
-    if (!pool || !buf || bufsize < 4) return -1;
+    if (!pool || !buf || bufsize < 32) return -1;
 
     /* Magic + version */
     p = rd32(p, &magic);
@@ -591,6 +591,15 @@ int nexus_v1_champion_pool_deserialize(Nexus_V1_ChampionPool *pool,
 
     if (pool->champion_count > NEXUS_MAX_CHAMPIONS) pool->champion_count = NEXUS_MAX_CHAMPIONS;
     if (pool->party_count > NEXUS_MAX_PARTY) pool->party_count = NEXUS_MAX_PARTY;
+
+    {
+        const uint8_t *end = (const uint8_t *)buf + bufsize;
+        size_t per_champion = 32 + 64 + 21 * 4 + 30 + NEXUS_SLOT_COUNT * 4;
+        size_t needed = 32 + (size_t)pool->champion_count * per_champion +
+                        NEXUS_MAX_PARTY * 4;
+        if (needed > bufsize) return -1;
+        (void)end;
+    }
 
     /* Champions */
     for (i = 0; i < pool->champion_count && i < NEXUS_MAX_CHAMPIONS; i++) {

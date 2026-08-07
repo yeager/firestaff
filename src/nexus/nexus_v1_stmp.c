@@ -32,12 +32,12 @@ int nexus_v1_stmp_decode(const uint8_t *data, int data_size,
         uint32_t entry_off = table_offset + (uint32_t)i * 4;
         uint32_t rel_off, abs_off;
 
-        if ((int)(entry_off + 4) > data_size) break;
+        if ((uint64_t)entry_off + 4 > (uint64_t)data_size) break;
         rel_off = read_be32(data + entry_off);
         if (rel_off == 0) break;
 
         abs_off = table_offset + rel_off;
-        if ((int)(abs_off + 6) > data_size) break;
+        if ((uint64_t)abs_off + 6 > (uint64_t)data_size) break;
 
         out->planes[i].rel_offset = rel_off;
         out->planes[i].width = read_be16(data + abs_off);

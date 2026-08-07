@@ -38,9 +38,9 @@ int nexus_v1_dgn_decode(const uint8_t *data, int data_size,
     s2_abs = (uint32_t)out->s2_block_offset * NEXUS_DGN_BLOCK_SIZE;
     s3_abs = (uint32_t)out->s3_block_offset * NEXUS_DGN_BLOCK_SIZE;
 
-    if ((int)(s1_abs + out->s1_data_size) > data_size) return 0;
-    if ((int)(s2_abs + out->s2_data_size) > data_size) return 0;
-    if ((int)(s3_abs + out->s3_data_size) > data_size) return 0;
+    if ((uint64_t)s1_abs + out->s1_data_size > (uint64_t)data_size) return 0;
+    if ((uint64_t)s2_abs + out->s2_data_size > (uint64_t)data_size) return 0;
+    if ((uint64_t)s3_abs + out->s3_data_size > (uint64_t)data_size) return 0;
 
     s1 = data + s1_abs;
     out->ceiling_tex[0] = s1[0x09];
@@ -97,7 +97,7 @@ int nexus_v1_dgn_decode(const uint8_t *data, int data_size,
         out->s2_hash = s2fnv;
     }
 
-    if (out->s1e_offset && s1_abs + out->s1e_offset + 16 <= (uint32_t)data_size) {
+    if (out->s1e_offset && (uint64_t)s1_abs + out->s1e_offset + 16 <= (uint64_t)data_size) {
         const uint8_t *doors = data + s1_abs + out->s1e_offset;
         int dc = 0;
         for (i = 0; i < NEXUS_DGN_MAX_DOORS; ++i) {

@@ -319,7 +319,7 @@ static int nexus_v1_boot_check_asset_file(const char *dir,
     }
 
     if (missing) {
-        if (*outIndex < (size_t)NEXUS_V1_DIAG_OK) {
+        if (*outIndex >= (size_t)NEXUS_V1_DIAG_COUNT) {
             return -1;
         }
         if (diagCode != okCode) {
@@ -362,7 +362,7 @@ static int nexus_v1_boot_check_asset_hash_or_file(const char *dir,
          * ambiguous.  Do not let canonical naming hide mixed media. */
         if (md5 && asset_find_by_md5(dir, md5, matched, (int)sizeof(matched), 8) &&
             strcmp(matched, canonical) != 0) {
-            if (*outIndex < (size_t)NEXUS_V1_DIAG_OK) return -1;
+            if (*outIndex >= (size_t)NEXUS_V1_DIAG_COUNT) return -1;
             diags[*outIndex].code = NEXUS_V1_DIAG_MISSING_DM_BIN;
             snprintf(diags[*outIndex].message, sizeof(diags[*outIndex].message),
                      "Ambiguous Nexus asset: %s", filename);

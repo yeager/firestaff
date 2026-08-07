@@ -165,15 +165,18 @@ int nexus_v1_dgn_scene_runtime_plan_build(
 
     vertices = (Nexus_V1_DgnStructure3Vector *)calloc(
         (size_t)mesh_entry.vertex_count, sizeof(*vertices));
-    normals = (Nexus_V1_DgnStructure3Vector *)calloc(
-        (size_t)mesh_entry.normal_count, sizeof(*normals));
+    normals = mesh_entry.normal_count > 0
+        ? (Nexus_V1_DgnStructure3Vector *)calloc(
+              (size_t)mesh_entry.normal_count, sizeof(*normals))
+        : NULL;
     faces = (Nexus_V1_DgnStructure3Face *)calloc(
         (size_t)mesh_entry.face_count, sizeof(*faces));
     mesh_vertices = (Nexus_V1_DgnMeshFixedVertex *)calloc(
         (size_t)mesh_entry.vertex_count, sizeof(*mesh_vertices));
     mesh_faces = (Nexus_V1_DgnMeshSourceFace *)calloc(
         (size_t)mesh_entry.face_count, sizeof(*mesh_faces));
-    if (!vertices || !normals || !faces || !mesh_vertices || !mesh_faces) {
+    if (!vertices || (mesh_entry.normal_count > 0 && !normals) ||
+        !faces || !mesh_vertices || !mesh_faces) {
         out_receipt->status =
             NEXUS_V1_DGN_SCENE_RUNTIME_PLAN_BLOCKED_MESH_ENTRY;
         goto cleanup;

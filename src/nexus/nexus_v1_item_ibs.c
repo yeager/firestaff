@@ -218,8 +218,8 @@ int nexus_v1_item_ibs_decode(const uint8_t *data, int data_size,
             if (fd->image_id == 0xFFFF) break;
 
             if (fd->encoding == 0x0008 && fd->width > 0 && fd->height > 0) {
-                int px_count = fd->width * fd->height;
-                int byte_count = (px_count + 1) / 2;
+                uint32_t px_count = (uint32_t)fd->width * (uint32_t)fd->height;
+                uint32_t byte_count = (px_count + 1) / 2;
                 uint32_t abs_img = floor_base + fd->image_offset;
                 uint32_t pal_rgba[16];
                 int pid = fd->palette_id < 64 ? fd->palette_id : -1;
@@ -304,7 +304,8 @@ int nexus_v1_item_ibs_render_floor_image(const uint8_t *data, int data_size,
     const Nexus_V1_ItemIbsFloorDesc *fd;
     uint32_t floor_base, abs_img;
     uint32_t pal_rgba[16];
-    int px_count, byte_count, j;
+    uint32_t px_count, byte_count;
+    int j;
     const uint8_t *src;
 
     if (!data || data_size <= 0 || !rgba_out || !result || !result->valid)
@@ -314,7 +315,7 @@ int nexus_v1_item_ibs_render_floor_image(const uint8_t *data, int data_size,
     fd = &result->floor_descs[floor_index];
     if (fd->encoding != 0x0008 || fd->width == 0 || fd->height == 0) return 0;
 
-    px_count = fd->width * fd->height;
+    px_count = (uint32_t)fd->width * (uint32_t)fd->height;
     if (rgba_capacity < px_count) return 0;
 
     floor_base = result->header.floor_section_offset;
