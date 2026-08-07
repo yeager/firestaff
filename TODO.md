@@ -29895,3 +29895,8 @@ required before semantic promotion.
   This is a BIOS/runtime-loader receipt only; the trace does not yet expose
   the CD source read or identify the retail member that supplied the bytes.
   Keep the VDP1 source join and production composition blocked.
+- 2026-08-07: The Saturn-CDB hook now traces the real `cdb.cpp` data-sector
+  path. The current bounded run reaches only BIOS LBA `0..16` (1,024 reads);
+  no `DM.BIN`/`TM.BIN`/other retail member has been joined yet. Continue with
+  a capture route that reaches the authenticated game startup window; do not
+  promote the BIOS sector receipt to SLEV/SAL or VDP1 source evidence.

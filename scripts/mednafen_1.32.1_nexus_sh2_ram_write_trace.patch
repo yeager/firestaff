@@ -83,7 +83,3 @@
 + count++;
 + if((count & 0x3ffU) == 0) fflush(file);
 +}
---- src/ss/scu.inc
-+++ src/ss/scu.inc
-@@ -1601,0 +1602,1 @@
-+ FirestaffTraceSH2RAMDMAWrite(A, sizeof(T), DB, d->CurReadAddr, d->ReadBus);

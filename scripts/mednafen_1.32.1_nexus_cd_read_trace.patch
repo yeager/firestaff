@@ -1,0 +1,32 @@
+--- src/ss/cdb.cpp
++++ src/ss/cdb.cpp
+@@ -140,0 +140,2 @@
++#include <stdio.h>
++#include <stdlib.h>
+@@ -534,0 +536,24 @@
++static void FirestaffTraceNexusCDRead(uint32 lba)
++{
++ static FILE *file;
++ static unsigned count;
++ static bool configured;
++ static unsigned limit = 100000;
++ const char *path = getenv("FIRESTAFF_NEXUS_TRACE_CD_READS");
++ if(!configured)
++ {
++  const char *limit_text = getenv("FIRESTAFF_NEXUS_TRACE_CD_READ_LIMIT");
++  if(limit_text && *limit_text) limit = strtoul(limit_text, NULL, 10);
++  configured = true;
++ }
++ if(!path || !*path || count >= limit) return;
++ if(!file)
++ {
++  file = fopen(path, "wb");
++  if(!file) return;
++  fputs("FIRESTAFF_NEXUS_CD_READ_TRACE_V1\n", file);
++ }
++ fprintf(file, "lba=%u\n", (unsigned)lba);
++ count++;
++ if((count & 0x3ffU) == 0) fflush(file);
++}
+@@ -2367,0 +2393,1 @@
++ FirestaffTraceNexusCDRead(CurSector - 150);

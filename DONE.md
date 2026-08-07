@@ -58766,3 +58766,14 @@ source constants identify pit `0x02`, stairs `0x03`, and teleporter `0x05`.
 The former stairs/teleporter values were host-side misclassifications. Added
 public declarations and regression coverage; actuator DB3/DB14/timer
 mutation remains fail-closed.
+# Nexus Saturn CDB sector-trace receipt (2026-08-07)
+
+- ✅ Added a bounded Mednafen Saturn-CDB read hook at the actual
+  `src/ss/cdb.cpp` data-sector path, with an external-only patch and no game
+  data copied into the repository.
+- ✅ Compiled the instrumented Mednafen build and captured the BIOS window:
+  1,024 reads covering LBA `0..16`; this is authentic BIOS/CD startup traffic,
+  not yet a retail Nexus member read.
+- ✅ Kept source identity, relocated-code admission, SLEV/SAL playback and
+  VDP1/VDP2 production composition blocked until a later CDB window reaches
+  and joins an authenticated ISO file span.
