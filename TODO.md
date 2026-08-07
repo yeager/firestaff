@@ -1222,6 +1222,9 @@
   `test_dm2_v1_spell_rune_lookup_pc34_compat` also pass. No retail text owner
   was found, so the open consumer remains fail-closed rather than receiving
   guessed names.
+  **2026-08-07 corpus update:** the SPELL_DEF regression reads only explicit
+  `FIRESTAFF_DM2_DATA_DIR/graphics.dat`; the PC-DOS corpus's zero-row result
+  is asserted as a source fact, while an unreadable selected file fails.
 
 - **DM2-INVENTORY-TEXT-CONSUMER:** `defines.h`'s inventory-slot constants are
   internal indices, not display strings. SKProject `DRAW_ITEM_SURVEY` renders
