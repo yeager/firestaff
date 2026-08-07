@@ -4327,6 +4327,11 @@ list(FILTER M10_SOURCES EXCLUDE REGEX "dm1_v1_combat_log_pc34_compat\\.c$")
 # the fixture; production rendering stays with the data-backed M11 route.
 list(REMOVE_ITEM M10_SOURCES
     "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_champion_panel_pressing_mouth_eye_statusbox_pc34_compat.c")
+# F0481--F0500 is an evidence-only receipt over caller-supplied authenticated
+# byte spans.  It has no runtime caller; keep the direct source audit out of
+# the production archive while the M11 cache route owns real GRAPHICS.DAT.
+list(REMOVE_ITEM M10_SOURCES
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/dm1/dm1_v1_f0481_f0500_graphics_cache_source_receipt_pc34_compat.c")
 # `dm1_v1_g0117_pc34_compat.c` is a source-locked copy of the PC34
 # Graphic558 D1C stair-frame coordinates.  It has no runtime caller or
 # authenticated GRAPHICS.DAT binding; its dedicated regression compiles the
