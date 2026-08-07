@@ -60,7 +60,7 @@ static int find_hoc_portrait_sensor(const struct DungeonDatState_Compat* dungeon
                             SENSOR_WALL_TYPE_PORTRAIT &&
                         things->sensors[index].sensorData >= 0 &&
                         things->sensors[index].sensorData <
-                            DM1_V1_CHAMPION_PORTRAIT_COUNT_PC34) {
+                            DM1_V1_CHAMPION_MIRROR_PORTRAIT_ATLAS_COUNT_PC34_COMPAT) {
                         *outSensor = &things->sensors[index];
                         *outCell = THING_GET_CELL(thing);
                         return 1;
@@ -76,10 +76,8 @@ static int find_hoc_portrait_sensor(const struct DungeonDatState_Compat* dungeon
 int main(void)
 {
     const char* dataDir = getenv("FIRESTAFF_DM1_DATA_DIR");
-    char defaultDir[1024];
     char dungeonPath[1200];
     char graphicsPath[1200];
-    const char* home;
     struct DungeonDatState_Compat dungeon;
     struct DungeonThings_Compat things;
     const struct DungeonSensor_Compat* sensor = NULL;
@@ -93,21 +91,14 @@ int main(void)
     int result = 1;
 
     if (!dataDir || !dataDir[0]) {
-        home = getenv("HOME");
-        if (!home || !home[0]) {
-            return 0;
-        }
-        snprintf(defaultDir, sizeof(defaultDir), "%s/.firestaff/data/dm1", home);
-        dataDir = defaultDir;
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
+        return 0;
     }
     snprintf(dungeonPath, sizeof(dungeonPath), "%s/DUNGEON.DAT", dataDir);
     snprintf(graphicsPath, sizeof(graphicsPath), "%s/GRAPHICS.DAT", dataDir);
     if (!regular_file_has_bytes(dungeonPath) || !regular_file_has_bytes(graphicsPath)) {
-        if (getenv("FIRESTAFF_DM1_DATA_DIR")) {
-            fprintf(stderr, "configured PC34 DUNGEON.DAT/GRAPHICS.DAT is unavailable\n");
-            return 1;
-        }
-        return 0;
+        fprintf(stderr, "configured PC34 DUNGEON.DAT/GRAPHICS.DAT is unavailable\n");
+        return 1;
     }
 
     memset(&dungeon, 0, sizeof(dungeon));
@@ -128,9 +119,9 @@ int main(void)
             sensor->sensorData, &expectedPortrait) ||
         !dm1_v1_front_mirror_render_plan_pc34(
             sensor->sensorData, &expectedMirror) ||
-        !DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+        !DM1_V1_ChampionMirror_BuildSourceOwnedHostDrawReceiptPc34(
             &render, 0, 1, &material) ||
-        !DM1_V1_ChampionMirror_BuildHostDrawReceiptPc34(
+        !DM1_V1_ChampionMirror_BuildSourceOwnedHostDrawReceiptPc34(
             &render, 0, 0, &noDraw)) {
         fprintf(stderr, "could not build a real HoC C127/C346/C026 receipt\n");
         result = 0;
@@ -163,7 +154,7 @@ int main(void)
 
     if (noDraw.valid || noDraw.drawChampionPortrait ||
         noDraw.drawMirrorBackingAsset || noDraw.drawMirrorBackingFallbackRect ||
-        noDraw.drawInvariantBackingRect || noDraw.suppressHostFallbackVisuals) {
+        noDraw.drawInvariantBackingRect || !noDraw.suppressHostFallbackVisuals) {
         fprintf(stderr, "missing real C346 backing did not fail closed\n");
         result = 0;
         goto cleanup;
