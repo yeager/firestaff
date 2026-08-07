@@ -18,19 +18,11 @@ static const int kDoorGraphics[kDoorGraphicCount] = {
 
 static const char* graphics_path(void)
 {
-    static char fallback[1024];
-    const char* configured = getenv("FIRESTAFF_DM1_GRAPHICS_DAT");
-    const char* home;
-    if (configured && configured[0]) {
-        return configured;
-    }
-    home = getenv("HOME");
-    if (!home || !home[0]) {
-        return 0;
-    }
-    snprintf(fallback, sizeof(fallback), "%s/.firestaff/data/dm1/GRAPHICS.DAT",
-             home);
-    return fallback;
+    static char path[1024];
+    const char* root = getenv("FIRESTAFF_DM1_DATA_DIR");
+    if (!root || !root[0]) return NULL;
+    snprintf(path, sizeof(path), "%s/GRAPHICS.DAT", root);
+    return path;
 }
 
 int main(void)
@@ -41,13 +33,13 @@ int main(void)
     int i;
 
     memset(&loader, 0, sizeof(loader));
-    if (!M11_AssetLoader_Init(&loader, path)) {
-        if (getenv("FIRESTAFF_DM1_GRAPHICS_DAT")) {
-            fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
-            return 1;
-        }
-        puts("SKIP: PC34 GRAPHICS.DAT not installed");
+    if (!path) {
+        puts("SKIP: FIRESTAFF_DM1_DATA_DIR is not selected");
         return 0;
+    }
+    if (!M11_AssetLoader_Init(&loader, path)) {
+        fputs("configured PC34 GRAPHICS.DAT is unavailable\n", stderr);
+        return 1;
     }
     memset(materials, 0, sizeof(materials));
     for (i = 0; i < kDoorGraphicCount; ++i) {
