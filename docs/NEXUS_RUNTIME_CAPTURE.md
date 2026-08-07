@@ -122,6 +122,16 @@ ten-word match belongs to another runtime PC and is shared by both retail
 files. These are review leads only, not source ownership or tilemap/CLUT
 consumer proof.
 
+The authentic raw witness can now be decoded at the VDP2 register-field level
+with `scripts/analyze_nexus_vdp2_composition.py`. In both the one-frame and
+eight-frame European samples, `TVMD=0x0080` and `BGON=0x0002` show display
+enabled with only `NBG1` enabled; the captured values are `CHCTLA=0x1211`,
+`PNCN1=0x00c0`, `MPOFN=0x3000`, `CRAOFA=0x1000`, and `PRINA=0x0503`.
+This is the first bounded layer/map/priority/CRAM-offset observation from the
+real frame. It still does not identify which retail asset filled the NBG1
+map/character data, so the text/menu/HUD consumer and host composition remain
+blocked.
+
 The same producer has an independent SCSP trace patch for the audio lane.
 Against the European gameplay window, the authenticated 68K task observed
 nonzero mailbox writes at `0x100400` from PCs inside `SDDRVS.TSK` when loaded at
