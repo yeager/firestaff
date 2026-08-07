@@ -1136,6 +1136,11 @@
   G1→GRAPHICSSET→weather/light real-data regressions now consume only the
   selected `FIRESTAFF_DM2_DATA_DIR` corpus and fail an unreadable selection;
   no private HOME installation can supply their material.
+  **2026-08-07 source-text audit:** the selected PC-DOS set-5 corpus contains
+  nine ENVIRONMENT text rows at fields `0x64..0x6c`; these are the
+  `RETRIEVE_ENVIRONMENT_CMD_CD_FW` command payloads, not weather display-name
+  records. The real-data regression now asserts that exact count and keeps
+  `dm2_v1_weather_name()` unavailable.
 
 - **DM2-FIXED-SPELL-AI-TEXT-CONSUMER:** The fixed `dSpellsTable` and genuine
   AI table own mechanics only. Names visible beside SKProject's fixed spell

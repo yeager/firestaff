@@ -58459,3 +58459,11 @@ alcove runtime and archive-media tests passed (4/4).
   unreadable or malformed `DUNGEON.DAT` fails instead of being reported as a
   skip. The mounted PC-DOS corpus still verifies 16 source mirror roots, while
   champion selection remains blocked before incomplete `GAME_LOAD` ownership.
+
+# DM2 weather text-source audit (2026-08-07)
+
+- ✅ Audited the mounted PC-DOS `GRAPHICS.DAT`: set 5 has nine ENVIRONMENT
+  text rows at fields `0x64..0x6c`, and those rows are the source weather
+  command payloads consumed by `RETRIEVE_ENVIRONMENT_CMD_CD_FW`, not display
+  names. The real IMG9 regression now asserts that exact source shape; weather
+  names remain unavailable rather than synthetic.

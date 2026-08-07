@@ -97,6 +97,7 @@ int main(void)
     DM2_V1_WeatherGdatReceipt weather;
     DM2_V1_WeatherOverlayPlan plan;
     uint32_t identity_hash;
+    unsigned int weather_command_text_count = 0u;
     int failures = 0;
     int i;
 
@@ -115,6 +116,19 @@ int main(void)
         free(graphics);
         return 1;
     }
+
+    for (i = 0; i < (int)loader.entry_count; ++i) {
+        if (loader.entries[i].cls1 == DM2_GDAT_CATEGORY_ENVIRONMENT &&
+            loader.entries[i].cls2 == 5u &&
+            loader.entries[i].cls3 == DM2_GDAT_ENTRY_TYPE_TEXT &&
+            loader.entries[i].cls4 >= 0x64u &&
+            loader.entries[i].cls4 <= 0x6cu) {
+            ++weather_command_text_count;
+        }
+    }
+    failures += !check(
+        weather_command_text_count == 9u,
+        "real set 5 text rows are the nine source weather command payloads");
 
     identity_hash = summary_image_identity_hash();
     failures += !check(identity_hash != 0u,
